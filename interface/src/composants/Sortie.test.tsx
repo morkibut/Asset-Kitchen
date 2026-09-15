@@ -260,7 +260,7 @@ describe("le bouton", () => {
   test("il porte le compte exact et le poids", async () => {
     monter()
 
-    expect(await screen.findByText("Sortir 4 fichiers ›")).toBeTruthy()
+    expect(await screen.findByText("Livrer 4 fichiers ›")).toBeTruthy()
     expect(screen.getByText("8 ko · rien ne part sur le réseau")).toBeTruthy()
   })
 
@@ -277,7 +277,7 @@ describe("le bouton", () => {
     })
     monter()
 
-    const bouton = (await screen.findByText(/Sortir/)) as HTMLButtonElement
+    const bouton = (await screen.findByText(/Livrer \d+ fichier/)) as HTMLButtonElement
     expect(bouton.disabled).toBe(true)
     // **Le grisé porte sa raison**, et jamais dans une infobulle.
     expect(
@@ -287,7 +287,7 @@ describe("le bouton", () => {
 
   test("cliquer sort, puis redemande un aperçu", async () => {
     monter()
-    fireEvent.click(await screen.findByText("Sortir 4 fichiers ›"))
+    fireEvent.click(await screen.findByText("Livrer 4 fichiers ›"))
 
     await waitFor(() => expect(sortir).toHaveBeenCalledTimes(1))
     // Le compte rendu paraît, et il dit le chemin.

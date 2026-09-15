@@ -35,6 +35,11 @@ class LivraisonRefusee(ErreurAtelier):
     code = "livraison_refusee"
 
 
+#: Les trois décisions qu'un conflit accepte, et rien d'autre (`RP10`).
+#: `conserver` n'écrit rien, `copier` écrit à côté, `remplacer` écrit par-dessus.
+DECISIONS = ("conserver", "copier", "remplacer")
+
+
 def _erreurs_disque(geste):
     @functools.wraps(geste)
     def appeler(*args, **kwargs):
@@ -66,6 +71,22 @@ def _relatif(chemin: str) -> str:
     if any(any(ord(c) < 32 for c in p) for p in parties):
         raise LivraisonRefusee("Le chemin contient un caractère de contrôle.")
     return PurePosixPath(*parties).as_posix()
+
+
+def _destination(fichier: dict[str, Any]) -> str:
+    """Où ce fichier s'écrit : chez lui, ou à côté si l'auteur a dit *copier*."""
+    return fichier.get("voisin") or fichier["chemin"]
+
+
+def _voisin(chemin: str) -> str:
+    """Le nom de la copie posée à côté d'un fichier qu'on ne remplace pas.
+
+    Un segment ajouté avant l'extension, jamais une extension changée : Godot
+    reconnaît une scène à son `.tscn`, et un `personnage.tscn.copie` ne
+    s'ouvrirait nulle part.
+    """
+    nom = PurePosixPath(chemin)
+    return str(nom.with_name(nom.stem + ".copie-atelier" + nom.suffix))
 
 
 def _borne(racine: Path, relatif: str) -> Path:
@@ -259,6 +280,10 @@ class ServiceLivraison:
                 bande = self._base.lire_bande(identifiant)
                 if not bande or bande.supprime or bande.projet != projet or bande.personnage != personnage:
                     raise LivraisonRefusee(f"« {identifiant} » n'est pas une animation disponible de ce personnage.")
+                # Un brouillon ne vise aucune case : son nom dans le jeu serait
+                # son identifiant, et il changerait le jour où on la range.
+                if bande.brouillon:
+                    raise LivraisonRefusee(f"« {bande.nom or identifiant} » est un brouillon : lui donner son mouvement et sa direction avant de la livrer.")
                 bande, _, planche, descriptif, animee = self._export.trois_fichiers(identifiant)
                 if bande.compte == 0 or bande.case_largeur <= 0 or bande.case_hauteur <= 0:
                     raise LivraisonRefusee(f"« {bande.nom} » ne contient aucune frame exportable.")
@@ -375,9 +400,20 @@ class ServiceLivraison:
 
     def _examiner(self, preparation: dict[str, Any], possedes: dict[str, str],
                   *, reprise: bool = False) -> None:
+        """Relit le dossier du jeu, et confronte chaque décision à ce qu'il contient.
+
+        Une décision n'est retenue que si le fichier du jeu est **encore celui
+        qu'elle a vu** (`RP10`) : elle porte son empreinte, et une empreinte qui
+        a bougé rend le conflit à décider. Sans ça, une décision prise sur un
+        écran ouvert depuis dix minutes écraserait autre chose que le fichier lu.
+        """
         racine = Path(preparation["association"]["dossier"])
+        prises = preparation.get("decisions") or {}
+        retenues: dict[str, dict[str, Any]] = {}
         conflits = []
         for fichier in preparation["fichiers"]:
+            for cle in ("decision", "voisin", "voisin_avant"):
+                fichier.pop(cle, None)
             chemin = _borne(racine, fichier["chemin"])
             actuelle = _hash_du_fichier(chemin)
             connue = possedes.get(fichier["chemin"])
@@ -386,13 +422,41 @@ class ServiceLivraison:
             fait = reprise and fichier["chemin"] in preparation.get("intentions", []) and actuelle == fichier["empreinte"]
             if actuelle is not None and not fait and (connue is None or actuelle != connue):
                 fichier["etat"] = "conflit"
-                conflits.append({"chemin": fichier["chemin"], "raison":
-                                 "Fichier inconnu de l'atelier." if connue is None else "Fichier modifié dans le jeu."})
+                conflit = {"chemin": fichier["chemin"], "decision": None, "raison":
+                           "Fichier inconnu de l'atelier." if connue is None else "Fichier modifié dans le jeu."}
+                prise = prises.get(fichier["chemin"]) or {}
+                if prise.get("decision") in DECISIONS and prise.get("sur") == actuelle:
+                    empeche = self._preparer_decision(racine, fichier, prise["decision"], possedes)
+                    if empeche:
+                        conflit["raison"] += " " + empeche
+                    else:
+                        conflit["decision"] = prise["decision"]
+                        retenues[fichier["chemin"]] = {"decision": prise["decision"], "sur": actuelle}
+                        if fichier.get("voisin"):
+                            conflit["voisin"] = fichier["voisin"]
+                conflits.append(conflit)
             else:
                 fichier["etat"] = "inchange" if actuelle == fichier["empreinte"] else "nouveau" if actuelle is None else "remplace"
             fichier["avant"] = actuelle
+        preparation["decisions"] = retenues
         preparation["conflits"] = conflits
-        preparation["pret"] = not conflits
+        preparation["pret"] = all(c["decision"] for c in conflits)
+
+    @staticmethod
+    def _preparer_decision(racine: Path, fichier: dict[str, Any], decision: str,
+                           possedes: dict[str, str]) -> str | None:
+        """Pose sur le fichier ce que la décision demande ; rend ce qui l'empêche."""
+        fichier["decision"] = decision
+        if decision != "copier":
+            return None
+        voisin = _voisin(fichier["chemin"])
+        actuelle = _hash_du_fichier(_borne(racine, voisin))
+        if actuelle is not None and actuelle != possedes.get(voisin):
+            fichier.pop("decision")
+            return f"La copie « {voisin} » existe déjà et n'est pas de l'atelier."
+        fichier["voisin"] = voisin
+        fichier["voisin_avant"] = actuelle
+        return None
 
     @staticmethod
     def _vue(preparation: dict[str, Any]) -> dict[str, Any]:
@@ -435,25 +499,31 @@ class ServiceLivraison:
             self._examiner(preparation, possedes, reprise=reprise)
             if not preparation["pret"]:
                 _poser(chemin_preparation, _json(preparation))
-                noms = ", ".join(c["chemin"] for c in preparation["conflits"])
-                raise LivraisonRefusee(f"Conflit : {noms}. Les fichiers du jeu sont conservés.")
+                noms = ", ".join(c["chemin"] for c in preparation["conflits"] if not c["decision"])
+                raise LivraisonRefusee(f"Conflit : {noms}. Décider de chacun avant de livrer ; les fichiers du jeu sont conservés.")
             # Vérifier tous les octets avant le premier fichier du jeu.
             for fichier in preparation["fichiers"]:
                 self._octets(fichier["empreinte"])
             preparation["etat"] = "en_cours"
-            preparation["intentions"] = [f["chemin"] for f in preparation["fichiers"]]
+            preparation["intentions"] = [_destination(f) for f in preparation["fichiers"]
+                                         if f.get("decision") != "conserver"]
             _poser(chemin_preparation, _json(preparation))
             racine = Path(preparation["association"]["dossier"])
             try:
                 for fichier in preparation["fichiers"]:
-                    cible = _borne(racine, fichier["chemin"])
+                    # « Conserver » est une décision écrite de ne rien écrire là.
+                    if fichier.get("decision") == "conserver":
+                        continue
+                    ou = _destination(fichier)
+                    attendue = fichier["voisin_avant"] if fichier.get("voisin") else fichier["avant"]
+                    cible = _borne(racine, ou)
                     actuelle = _hash_du_fichier(cible)
-                    if actuelle != fichier["avant"]:
-                        raise LivraisonRefusee(f"« {fichier['chemin']} » a changé pendant la livraison. Le fichier est conservé.")
+                    if actuelle != attendue:
+                        raise LivraisonRefusee(f"« {ou} » a changé pendant la livraison. Le fichier est conservé.")
                     if actuelle != fichier["empreinte"]:
                         _poser(cible, self._octets(fichier["empreinte"]))
-                    possedes[fichier["chemin"]] = fichier["empreinte"]
-                    preparation["ecrits"].append(fichier["chemin"])
+                    possedes[ou] = fichier["empreinte"]
+                    preparation["ecrits"].append(ou)
                     _poser(chemin_preparation, _json(preparation))
                 preparation["etat"] = "terminee"
                 preparation["livre_le"] = time.time()
@@ -468,6 +538,42 @@ class ServiceLivraison:
                 _poser(chemin_preparation, _json(preparation))
                 raise LivraisonRefusee(f"Livraison interrompue : {erreur}. Réessayer reprend la même préparation.") from erreur
             self._diffusion.publier("livraison", {"projet": projet, "jeton": jeton, "etat": "terminee"})
+            return self._vue(preparation)
+
+    @_erreurs_disque
+    def decider(self, projet: str, jeton: str, chemin: str, decision: str) -> dict[str, Any]:
+        """Écrit la décision de l'auteur sur un conflit, et relit la préparation.
+
+        Rien n'est écrit dans le jeu ici : la décision vit dans le journal de la
+        préparation, et c'est `livrer` qui l'applique.
+        """
+        dossier = self._dossier(projet)
+        if decision not in DECISIONS:
+            raise LivraisonRefusee("Décider entre conserver, copier à côté et remplacer.")
+        if not re.fullmatch(r"[a-f0-9]{32}", jeton):
+            raise LivraisonRefusee("La préparation de livraison est inconnue.")
+        chemin_preparation = dossier / "preparations" / f"{jeton}.json"
+        with _verrou(dossier / ".verrou"):
+            preparation = _lire(chemin_preparation)
+            if not preparation:
+                raise LivraisonRefusee("Relire les fichiers avant de décider.")
+            if preparation["etat"] == "terminee":
+                raise LivraisonRefusee("Cette livraison est terminée. Relire les fichiers pour en préparer une autre.")
+            if chemin not in {f["chemin"] for f in preparation["fichiers"]}:
+                raise LivraisonRefusee("Ce fichier n'est pas dans la livraison relue.")
+            precedente = _lire(dossier / "cibles" / f"{preparation.get('cible_livraison') or _cle(preparation['personnage'])}.json", {})
+            possedes = dict(precedente.get("possedes", {})) if precedente.get("association") == preparation["association"] else {}
+            actuelle = _hash_du_fichier(_borne(Path(preparation["association"]["dossier"]), chemin))
+            preparation["decisions"] = dict(preparation.get("decisions") or {}) | {
+                chemin: {"decision": decision, "sur": actuelle}}
+            self._examiner(preparation, possedes,
+                           reprise=preparation["etat"] in ("en_cours", "interrompue"))
+            retenue = next((c for c in preparation["conflits"] if c["chemin"] == chemin), None)
+            if retenue is None:
+                raise LivraisonRefusee(f"« {chemin} » n'est pas en conflit : il n'y a rien à décider.")
+            if not retenue["decision"]:
+                raise LivraisonRefusee(retenue["raison"])
+            _poser(chemin_preparation, _json(preparation))
             return self._vue(preparation)
 
     @_erreurs_disque
@@ -488,7 +594,8 @@ class ServiceLivraison:
                 raise LivraisonRefusee("Cette révision appartient à un autre dossier Godot. Réassocier ce dossier avant de la reprendre.")
             presente = _lire(dossier / "cibles" / f"{ancienne.get('cible_livraison') or _cle(ancienne['personnage'])}.json", {})
             preparation = copy.deepcopy(ancienne)
-            for cle in ("livre_le", "possedes", "intentions", "raison"):
+            # Les décisions ne se reconduisent pas : reprendre, c'est redécider.
+            for cle in ("livre_le", "possedes", "intentions", "raison", "decisions"):
                 preparation.pop(cle, None)
             preparation.update(jeton=uuid.uuid4().hex, etat="preparee", prepare_le=time.time(),
                                base=presente.get("jeton"), reprise_de=jeton, ecrits=[])

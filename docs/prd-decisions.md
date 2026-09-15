@@ -289,3 +289,13 @@ après, jamais exigé. La raison est la même que celle qui fait exister *Pas en
 case est prise dès qu'une image la porte, donc une case devinée de travers **cache ce qui
 manque** — et une image sans case, elle, se voit.
 
+### La décision de RP10 — 16 septembre 2026
+
+**Un conflit de fichier se décide, il ne bloque plus — et la décision ne se reconduit jamais.**
+Trois réponses, et rien d'autre : *conserver*, *copier à côté*, *remplacer*. Elle vaut pour la
+livraison qui la porte et meurt avec elle. Ce qui est refusé, c'est la case *se souvenir de mon
+choix* : elle écraserait un jour un fichier que l'auteur n'a pas relu, et l'invariant dit que ce
+que l'auteur a joint ne cède jamais. Le prix est qu'un fichier du jeu qu'on garde redemandera à
+chaque livraison — c'est le bon prix : rien n'a changé, donc la question est la même. Et une
+décision est attachée à l'empreinte du fichier qu'elle a vu : ce qui s'écrit dans le jeu est
+exactement ce que la relecture annonçait, sans quoi « décider » ne voudrait rien dire.

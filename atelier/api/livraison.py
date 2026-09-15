@@ -1,6 +1,6 @@
 """Les mêmes livraisons que le MCP, depuis l'interface de l'atelier."""
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
@@ -23,6 +23,13 @@ class PreparationLivraison(BaseModel):
 
 class PublicationLivraison(BaseModel):
     jeton: str
+
+
+class DecisionSurUnConflit(BaseModel):
+    """Ce que l'auteur décide d'un fichier du jeu qu'il n'a pas écrit (`RP10`)."""
+
+    chemin: str
+    decision: Literal["conserver", "copier", "remplacer"]
 
 
 @routeur.get("/projects/{projet}/godot-link")
@@ -53,6 +60,12 @@ def prevoir(requete: Request, projet: str, corps: PreparationLivraison) -> dict[
 @routeur.post("/projects/{projet}/deliveries")
 def livrer(requete: Request, projet: str, corps: PublicationLivraison) -> dict[str, Any]:
     return requete.app.state.atelier.livraison.livrer(projet, corps.jeton)
+
+
+@routeur.post("/projects/{projet}/deliveries/{jeton}/decisions")
+def decider(requete: Request, projet: str, jeton: str, corps: DecisionSurUnConflit) -> dict[str, Any]:
+    """Pose une décision sur un conflit ; la livraison part quand tous en ont une."""
+    return requete.app.state.atelier.livraison.decider(projet, jeton, corps.chemin, corps.decision)
 
 
 @routeur.post("/projects/{projet}/deliveries/{jeton}/preview")

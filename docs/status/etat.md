@@ -11,6 +11,29 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP10 · La livraison décide au lieu de bloquer — 16 septembre 2026
+
+**Ce qui bloquait n'était pas l'écran, c'était une ligne du serveur** : `prêt = aucun conflit`.
+Tant qu'elle tenait, l'écran ne pouvait rien proposer — il n'y avait rien à poser. La tranche a
+donc commencé par inventer une forme de données qui n'existait pas, *la décision sur un conflit*,
+et l'écran n'a été qu'un habillage une fois qu'elle était écrite.
+
+**La décision porte l'empreinte du fichier qu'elle a vu, et c'est ce détail qui la rend sûre.**
+Décider « remplacer », aller déjeuner, revenir et livrer écrirait sinon par-dessus autre chose que
+le fichier relu. L'empreinte suffit : si elle a bougé, la décision tombe et le conflit redevient à
+décider. Un essai le tient, et il tombe si on retire la comparaison.
+
+**Aucune décision ne se reconduit d'une livraison à l'autre**, et c'est volontaire. *Conserver* et
+*copier à côté* laissent le fichier du jeu tel quel : le même conflit reviendra, et c'est la bonne
+réponse — rien n'a changé. Seul *remplacer* ne revient pas, parce que le fichier est alors
+devenu celui de l'atelier. Une décision qui se reconduirait serait un écrasement que l'auteur n'a
+pas revu.
+
+**Ce qui a été laissé de côté, et pourquoi.** La maquette demande de cocher les fichiers un par
+un. Les cases sont restées sur les versions à livrer — avec *Tout sélectionner* — et pas sur les
+lignes de fichiers : un paquet Godot écrit à moitié, une scène sans sa planche, ne s'ouvre pas.
+Le seul choix par fichier qui ait un sens est la décision de conflit.
+
 ## RP12 · Comparer deux versions d'une même animation — 16 septembre 2026
 
 **La règle du temps commun a été écrite avant la première ligne de code, et elle a évité un

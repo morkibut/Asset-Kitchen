@@ -449,7 +449,7 @@ export function Sortie({
           >
             {encours
               ? "…"
-              : `Sortir ${apercu?.compte ?? 0} fichier${(apercu?.compte ?? 0) > 1 ? "s" : ""} ›`}
+              : `Livrer ${apercu?.compte ?? 0} fichier${(apercu?.compte ?? 0) > 1 ? "s" : ""} ›`}
           </button>
           <p className="text-center text-[11.5px] text-encre-4">
             {apercu?.refus

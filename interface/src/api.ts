@@ -13,9 +13,17 @@ export type LiaisonGodot = { dossier: string; sous_dossier: string }
 export type FichierLivraison = {
   chemin: string; role: string; etat: string; empreinte: string; octets: number
 }
+/** Les trois décisions qu'un conflit accepte, et rien d'autre (`RP10`). */
+export type DecisionSurConflit = "conserver" | "copier" | "remplacer"
+
 export type ApercuLivraison = {
   jeton: string; projet: string; personnage: string | null; revision: string
-  dossier: string; fichiers: FichierLivraison[]; conflits: { chemin: string; raison: string }[]; pret: boolean
+  dossier: string; fichiers: FichierLivraison[]; pret: boolean
+  /** Un fichier du jeu que l'atelier n'a pas écrit. **`pret` ne veut plus dire
+   *  « aucun conflit » mais « chacun a sa décision »** (`RP10`) : tant que
+   *  `decision` est nul, la livraison refuse. `voisin` est le nom que prendra la
+   *  copie, et il n'apparaît qu'après un *copier à côté*. */
+  conflits: { chemin: string; raison: string; decision: DecisionSurConflit | null; voisin?: string }[]
   scene: string; sprite_frames: string | null; pivot?: { x: number; y: number }
   nature?: string; nom?: string; ressource?: string
   animations: { identifiant?: string; bande?: string; nom: string; cadence?: number; compte?: number; boucle?: boolean }[]
@@ -4695,6 +4703,11 @@ export const api = {
 
   // ── L'installation de la machine (B15) ────────────────────────────────────
   //
+  /** La décision de l'auteur sur un fichier du jeu qu'il n'a pas écrit (`RP10`).
+   *  Rien n'est écrit dans le jeu ici : la préparation relue revient, et c'est
+   *  *Livrer* qui l'applique. */
+  deciderConflit: (projet: string, jeton: string, chemin: string, decision: DecisionSurConflit) =>
+    appeler<ApercuLivraison>(`/projects/${encodeURIComponent(projet)}/deliveries/${encodeURIComponent(jeton)}/decisions`, { method: "POST", body: JSON.stringify({ chemin, decision }) }),
   // **Rien ici ne transporte une valeur de secret.** Les deux fonctions
   // ci-dessus sont les seules qui en envoient une, et aucune n'en relit : le
   // serveur ne rend jamais qu'un aperçu de six caractères.

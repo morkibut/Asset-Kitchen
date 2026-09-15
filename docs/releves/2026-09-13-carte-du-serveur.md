@@ -294,6 +294,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST /projects/{p}/deliveries/preview | Prépare une livraison d'animations sans écrire dans le jeu | Oui | preview_animation_delivery |
 | POST /projects/{p}/deliveries | Publie une livraison préparée dans le projet Godot | Oui | publish_animation_delivery |
 | POST /projects/{p}/deliveries/{jeton}/preview | Relit une livraison déjà publiée | Oui | preview_delivery_revision |
+| POST /projects/{p}/deliveries/{jeton}/decisions | Décide d'un conflit — conserver, copier à côté, remplacer (`RP10`) | Oui — écran *Livrer au jeu* | — |
 | GET /projects/{p}/characters/{s}/delivery-images | Les images livrables d'un personnage | Oui | list_image_delivery_versions |
 | POST /projects/{p}/image-deliveries/preview | Prépare la livraison d'une image fixe vers Godot | Oui | preview_image_delivery |
 

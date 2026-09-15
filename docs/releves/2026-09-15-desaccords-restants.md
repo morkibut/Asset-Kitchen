@@ -84,10 +84,10 @@ de la colonne de gauche qui fait foi, pas la ligne.
 
 | Aujourd'hui | Où | Le mot |
 |---|---|---|
-| Associer ce projet → Projet associé | `Livraisons.tsx:99-101` | **Associer ce jeu → Jeu associé** — *projet* est sur la liste noire |
-| Les livraisons conservées | `Livraisons.tsx:141` | **Historique** — le mot *livraison* reste ; c'est le nom de la section qui manque |
-| Reprendre cette révision · Reprendre la livraison | `Livraisons.tsx:153` | **Relire cette livraison** |
-| Sortir {N} fichier(s) › | `Sortie.tsx:452` | **Livrer {N} fichier(s)** — la décision 1 de RP3 retire *sortie* comme nom de ce travail |
+| ~~Associer ce projet → Projet associé~~ | `Livraisons.tsx` | **Associer ce jeu → Jeu associé** — *projet* est sur la liste noire. *Appliqué en `RP10`, avec la légende « 1 · Le jeu Godot ».* |
+| ~~Les livraisons conservées~~ | `Livraisons.tsx` | **Historique** — le mot *livraison* reste ; c'est le nom de la section qui manque. *Appliqué en `RP10`.* |
+| ~~Reprendre cette révision · Reprendre la livraison~~ | `Livraisons.tsx` | **Relire cette livraison** — un seul mot pour les deux états. *Appliqué en `RP10`.* |
+| ~~Sortir {N} fichier(s) ›~~ | `Sortie.tsx` | **Livrer {N} fichier(s)** — la décision 1 de RP3 retire *sortie* comme nom de ce travail. *Appliqué en `RP10`.* |
 
 *« Dossier contenant project.godot » (`Livraisons.tsx:93`) n'est pas un désaccord : c'est un
 vrai dossier sur le disque, et `dossier` n'est sur la liste noire que lorsqu'il désigne une

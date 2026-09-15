@@ -496,12 +496,13 @@ La toile est l'outil de conception du projet. Aujourd'hui elle ne mène nulle pa
 - [ ] Les notes libres de la toile ne partent pas dans la demande sans qu'on le dise.
 - [ ] Les positions et la réserve se retrouvent après fermeture.
 
-## RP10 · La livraison décide au lieu de bloquer
+## RP10 · La livraison décide au lieu de bloquer ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : rien.
 ### Les gestes des deux côtés
 
-`BibliothequePourImage.tsx` (« Choisir une référence ») :
+Un conflit de fichier arrête tout : l'écran écrit la raison en rouge et éteint le bouton. La
+maquette proposait trois décisions par conflit — conserver, copier à côté, remplacer.
 
 - [x] Chercher par texte, filtrer par collection, filtrer par favoris.
 - [x] Pagination (« Afficher les suivantes »).
@@ -511,40 +512,52 @@ La toile est l'outil de conception du projet. Aujourd'hui elle ne mène nulle pa
 - [x] Montée à neuf endroits : *Ce qui part*, Fabriquer en 3D, Vidéo libre, Les tuiles (deux
   fois), Workflows locaux, Importer des images, Superposition.
 
-`ChoisirImageEquipement.tsx` (choisir une image pour un équipement) :
+### La forme de la décision
 
-- [x] Chercher par texte, filtrer par favoris.
-- [x] Pagination (« Afficher les images suivantes »).
-- [x] Importer un fichier depuis le disque.
-- [x] Un clic sélectionne l'image, puis demande son rôle — corps équipé, calque, ou référence —
-  avant de confirmer.
-- [x] Un mode *référence seulement* : le rôle est fixé, aucun sélecteur ne se montre.
-- [x] Montée à deux endroits : les calques d'un emploi, la référence commune d'une pièce.
+**Un conflit** est un chemin du dossier du jeu où un fichier existe déjà et que l'atelier ne
+reconnaît pas : soit il ne l'a jamais écrit, soit il l'a écrit et quelqu'un l'a changé depuis.
+Il porte son chemin, sa raison, et **l'empreinte du fichier tel qu'il est maintenant**.
 
-**La fusion.** `BibliothequePourImage.tsx` porte désormais tous ces gestes ; `ChoisirImageEquipement.tsx`
-a disparu et ses deux montages lisent la grille unique avec `role="choix"` ou `role="reference"`.
-Sans rôle demandé, le clic choisit tout de suite, comme avant ; avec un rôle demandé, il ouvre le
-même temps de relecture qu'avant. Au passage, deux mots de
-[`docs/releves/2026-09-15-desaccords-restants.md`](releves/2026-09-15-desaccords-restants.md)
-§ RP6 se ferment : le bouton de fermeture porte désormais `‹ ` suivi du nom de l'écran d'où l'on
-vient, et la pagination porte *Suivant* / *Précédent* au lieu d'« Afficher les suivantes ».
+**Trois décisions, et rien d'autre** : *conserver* — le fichier du jeu reste, l'atelier n'écrit
+rien à cet endroit ; *copier à côté* — l'atelier écrit son fichier sous le nom voisin
+`<nom>.copie-atelier.<extension>`, celui du jeu ne bouge pas ; *remplacer* — l'atelier écrit
+par-dessus, et le fichier devient sien.
 
 
-Un conflit de fichier arrête tout : l'écran écrit la raison en rouge et éteint le bouton. La
-maquette proposait trois décisions par conflit — conserver, copier à côté, remplacer.
+**Elle est attachée à ce que l'auteur a vu.** La décision garde l'empreinte du fichier du jeu au
+moment où elle a été prise. Si ce fichier change ensuite, elle ne vaut plus et le conflit
+redevient à décider. *Sa raison* : sans ça, on écrirait par-dessus autre chose que ce que la
+relecture annonçait.
 
-S'y ajoutent trois manques : pas de *Tout sélectionner*, pas de case par fichier, et **un
-brouillon non enregistré part sans avertir**. Les tuiles et les sons ont déjà ce garde-fou ; la
-livraison ne l'a pas.
+**À la livraison suivante, elle ne survit pas.** Une décision vaut pour une préparation et meurt
+avec elle. *Conserver* et *copier à côté* laissent le fichier du jeu tel quel : le même conflit
+revient, et c'est voulu. *Remplacer* fait entrer le fichier dans ce que l'atelier possède, donc
+il ne reviendra que si quelqu'un y retouche. *Sa raison* : une décision reconduite toute seule
+serait un écrasement que l'auteur n'a pas revu, et *ce que l'auteur a joint ne cède jamais*.
+
+**La règle de départ change** : *prêt = aucun conflit* devient **prêt = chaque conflit a sa
+décision**. Aucun fichier du jeu n'est écrasé sans une décision écrite ; sans décision, la
+livraison refuse comme avant.
 
 ### Critères d'acceptation
 
-- [ ] Chaque conflit propose trois décisions, et l'écran dit ce que chacune fait avant de la
-  prendre.
-- [ ] Les fichiers se cochent un par un, et tous d'un coup.
-- [ ] Un brouillon non enregistré arrête la livraison et demande, comme ailleurs.
-- [ ] Ce qui est écrit dans le jeu est exactement ce que la relecture annonçait.
-- [ ] Aucune livraison ne change la cadence ni le sens de lecture de ce qui a été préparé.
+- [x] Chaque conflit propose trois décisions, et l'écran dit ce que chacune fait avant de la
+  prendre. *`POST …/deliveries/{jeton}/decisions` pose la décision, `_examiner` la relit, et
+  l'écran pose les trois boutons sous chaque conflit avec la phrase de chacun.*
+- [x] Les fichiers se cochent un par un, et tous d'un coup. *Une case par version, plus
+  *Tout sélectionner* / *Tout décocher* et le compte « N sur M ». **Les cases restent sur les
+  versions, pas sur les lignes de fichiers** : un paquet Godot à moitié écrit — une scène sans sa
+  planche — ne s'ouvre pas, et le seul choix par fichier qui ait un sens est la décision de
+  conflit ci-dessus.*
+- [x] Un brouillon non enregistré arrête la livraison et demande, comme ailleurs. *Une animation
+  sans mouvement ni direction est mise de côté sur l'écran, nommée, et le serveur la refuse :
+  son nom dans le jeu serait son identifiant, et il changerait le jour où on la range.*
+- [x] Ce qui est écrit dans le jeu est exactement ce que la relecture annonçait. *La décision
+  porte l'empreinte du fichier qu'elle a vue ; changer ce fichier entre la décision et la
+  livraison annule la décision et refuse la livraison (`tests/test_rp10.py`).*
+- [x] Aucune livraison ne change la cadence ni le sens de lecture de ce qui a été préparé. *La
+  bibliothèque peut bouger pendant qu'on décide : la préparation garde sa cadence, son ordre et
+  son temps d'image, et ce sont eux qui s'écrivent.*
 
 ## RP11 · La galerie se trie, se filtre et se regroupe
 
