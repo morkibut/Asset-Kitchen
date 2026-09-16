@@ -68,6 +68,7 @@ const UN_MODELE: ModeleVideo = {
   duree_conseillee: 5,
   raison_de_la_duree: "",
   images_par_duree: { "5": 81 },
+  attente: null,
 } as ModeleVideo
 
 const bouton = () =>
@@ -78,7 +79,7 @@ beforeEach(() => {
     asset: null,
     raison: "aucune image",
   } as Awaited<ReturnType<typeof api.imageDeDepart>>)
-  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [] } as Awaited<
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [], masques: [] } as Awaited<
     ReturnType<typeof api.mouvements>
   >)
 })

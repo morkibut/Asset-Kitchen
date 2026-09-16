@@ -908,8 +908,8 @@ async def grille_de_famille(
     page : une collection vide n'apparaît sur la carte d'aucun sujet, et
     resterait donc invisible comme cible de dépôt — or c'est justement celle
     qu'on veut remplir. Le filtre `projet is None or projet == jeu` est celui
-    que l'arbre de la galerie applique déjà (`interface/src/composants/Arbre.tsx`)
-    : une seule règle pour dire *les collections de ce jeu*.
+    que l'arbre de la galerie appliquait déjà avant de partir avec `RP1`
+    (13 septembre 2026) : une seule règle pour dire *les collections de ce jeu*.
 
     **`collection` restreint la grille à un groupe** — la ligne qu'on ouvre sous
     une famille dans le carnet. C'est ici que les deux questions se rejoignent une

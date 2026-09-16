@@ -2097,7 +2097,7 @@ describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)
 // **La capacité n'avait pas bougé, la couverture si**, et c'est exactement la
 // forme de perte que ce chantier existe pour clore : un réglage sans essai
 // repart à la refonte suivante sans que rien ne refuse. Le domaine les tient de
-// son côté (`tests/test_b17.py`, `tests/test_b18.py`) ; ce qui suit tient le
+// son côté (`tests/test_b17.py`, les huit `tests/test_b18_*.py`) ; ce qui suit tient le
 // seul fait dont l'écran répond — **la valeur réglée part dans la recette
 // envoyée**.
 //
