@@ -111,7 +111,7 @@ export function RelireAvantEnvoi({
               cours : rien de tout ça n'est une raison de retenir l'auteur ici.
               Seul l'envoi en cours l'est, parce qu'il est déjà parti. */}
           <button className={BOUTON} onClick={onFermer} disabled={fermetureBloquee}>
-            Revenir à la préparation
+            Fermer
           </button>
         </div>
       </header>

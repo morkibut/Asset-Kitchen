@@ -1333,7 +1333,7 @@ function Cases({
             ? `Un ${personnage.type} n'a pas d'attitudes : il ne bouge pas, il se `
               + `raccorde. Une seule image le remplit.`
             : "Rien à remplir pour l'instant — une attitude s'écrit à gauche, ou "
-              + "se pose sur le type de cette chose dans les réglages du jeu."}
+              + "se pose sur le type de ce sujet dans les réglages du jeu."}
         </p>
       ) : piece ? (
         <ul className="flex flex-col gap-px">
@@ -1481,7 +1481,7 @@ function Cases({
         personnage.cases.some((c) => c.bandes.length > 0) && (
         <div className="flex items-center gap-2 pt-1">
           <span className="mesure text-[10px] text-encre-4">
-            planche de sprites, son descriptif, et une image qui tourne
+            planche d'images, son descriptif, et une image qui tourne
           </span>
           <button
             type="button"
@@ -1507,7 +1507,7 @@ function Cases({
       {ecartees.length > 0 && (
         <div className="flex flex-col gap-1 border-t border-trait pt-2">
           <span className="mesure text-[9.5px] tracking-[.11em] text-encre-4 uppercase">
-            rangé — pas pour cette chose
+            rangé — pas pour ce sujet
           </span>
           <div className="flex flex-wrap items-center gap-2">
             {ecartees.map((pose) => (
@@ -1585,11 +1585,11 @@ function AjoutDePose({
         }}
         placeholder="une attitude pour elle seule…"
         aria-label={`Ajouter une attitude à ${personnage.nom}`}
-        title="elle n'existera que pour cette chose — les autres du même type ne la verront pas"
+        title="elle n'existera que pour ce sujet — les autres du même type ne la verront pas"
         className="champ h-[26px] w-[240px] rounded-[2px] border border-trait bg-papier-cote px-2 text-[11px] text-encre placeholder:text-encre-4"
       />
       <span className="mesure text-[9.5px] text-encre-4">
-        pour cette chose seule — rien n'est fabriqué
+        pour ce sujet seul — rien n'est fabriqué
       </span>
     </div>
   )
@@ -1713,7 +1713,7 @@ function LigneCase({
         {origine === "ici" && (
           <span
             className="mesure text-[9px] leading-3 text-encre-4"
-            title="ajoutée sur cette chose seule — changer son type ne l'emporte pas"
+            title="ajoutée sur ce sujet seul — changer son type ne l'emporte pas"
           >
             ajoutée ici
           </span>
@@ -1844,7 +1844,7 @@ function LigneCase({
         }
         title={
           origine === "ici"
-            ? "elle n'existe que sur cette chose — ses images restent en bibliothèque"
+            ? "elle n'existe que sur ce sujet — ses images restent en bibliothèque"
             : "ce personnage n'a pas besoin de cette attitude"
         }
         className="mesure shrink-0 px-1 text-[10px] text-encre-4 hover:text-echec"
@@ -1893,7 +1893,7 @@ function LigneCase({
                 aria-label={`Rendre ${angle.nom} à ${pose.nom}`}
                 title={
                   angle.portee === "ici"
-                    ? "rangée sur cette chose seule"
+                    ? "rangée sur ce sujet seul"
                     : "rangée sur l'attitude, pour tout le jeu"
                 }
                 className="mesure text-[10px] text-encre-4 line-through opacity-60 hover:text-signal hover:no-underline hover:opacity-100"
@@ -2125,7 +2125,7 @@ function SousLigneDirection({
         type="button"
         onClick={onRanger}
         aria-label={`Ranger ${angle.nom} pour ${pose.nom}`}
-        title="cette chose ne réclame pas cet angle — elle reste montrée, barrée, et un clic la rend"
+        title="ce sujet ne réclame pas cet angle — elle reste montrée, barrée, et un clic la rend"
         className="mesure shrink-0 px-1 text-[10px] text-encre-4 hover:text-echec"
       >
         ×

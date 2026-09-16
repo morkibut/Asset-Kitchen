@@ -672,14 +672,14 @@ export function CoutAttendu({
         title={
           cout === null
             ? "ce modèle n'a encore rien consommé sur cette machine"
-            : "médiane des derniers appels réussis de ce modèle"
+            : "médiane des dernières générations réussies de ce modèle"
         }
       >
         {cout === null
-          ? "jamais appelé"
+          ? "jamais généré"
           : cases
             ? `${combien(cout)} · ${cases} cases`
-            : `${combien(cout * variations)}${variations > 1 ? ` · ${variations} appels` : ""}`}
+            : `${combien(cout * variations)}${variations > 1 ? ` · ${variations} générations` : ""}`}
       </dd>
       {cases > 0 && (
         <>
@@ -692,7 +692,7 @@ export function CoutAttendu({
                 chez un gratuit (F2) : repayer ce qui ne coûte rien n'aurait
                 aucun sens, et le lot est quand même entier à refaire. */}
             {cout === null
-              ? "jamais appelé"
+              ? "jamais généré"
               : `${combien(cout)} ${argent ? "à repayer" : "à reprendre"}`}
           </dd>
         </>

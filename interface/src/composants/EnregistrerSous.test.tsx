@@ -287,7 +287,7 @@ function atelierDeBande(recette: Recette) {
 
 test("l'atelier d'une animation grise le geste tant qu'aucune retouche n'est appliquée", async () => {
   atelierDeBande({ ...RECETTE_VIDE })
-  await screen.findByLabelText("Outil de retouche")
+  await screen.findByLabelText("Table de retouche")
   expect(geste().disabled).toBe(true)
   expect(geste().title).toContain("aucune retouche")
 })
@@ -299,7 +299,7 @@ test("l'atelier d'une animation offre le même geste, préremplu sur la directio
       proposition({ quoi: "animation", source: "bande-main", nom: "marche vers l'ouest" }),
     )
   atelierDeBande(MIROIR)
-  await screen.findByLabelText("Outil de retouche")
+  await screen.findByLabelText("Table de retouche")
   expect(geste().disabled).toBe(false)
 
   fireEvent.click(geste())

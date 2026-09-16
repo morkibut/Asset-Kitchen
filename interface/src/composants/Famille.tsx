@@ -118,7 +118,7 @@ function motsDe(famille: string | null): { pluriel: string; singulier: string } 
 /** L'exemple que porte le champ qui nomme, famille par famille (repris de
  *  l'ancien codex, `C3`) — **un exemple, pas une étiquette**. */
 const PLACEHOLDER_DE_LA_FAMILLE: Record<string, string> = {
-  personnages: "nommer une chose du jeu",
+  personnages: "nommer un sujet du jeu",
   decors: "les cavernes du nord, une salle du trône…",
   objets: "un tonneau cerclé de fer, un coffre…",
   interface: "un bouton, un cadre, une jauge…",
@@ -1258,8 +1258,8 @@ export function EcranFamille({
                     if (e.key === "Escape") setCreationOuverte(false)
                   }}
                   disabled={creationEnCours}
-                  placeholder={PLACEHOLDER_DE_LA_FAMILLE[famille ?? ""] ?? "nommer une chose du jeu"}
-                  aria-label="Nom de la chose du jeu à créer"
+                  placeholder={PLACEHOLDER_DE_LA_FAMILLE[famille ?? ""] ?? "nommer un sujet du jeu"}
+                  aria-label="Nom du sujet du jeu à créer"
                   className="h-[34px] min-w-0 flex-1 rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre outline-none"
                 />
                 <span className="shrink-0 text-[11px] text-encre-4">Entrée le crée</span>

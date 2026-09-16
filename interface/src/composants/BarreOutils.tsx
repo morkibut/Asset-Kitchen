@@ -37,17 +37,17 @@ const LIBELLES_TRI: Record<TriDeGalerie, string> = {
 
 const LIBELLES_ROLE: Record<RoleDeGalerie, string> = {
   tous: "tous les rôles",
-  origine: "origines",
-  derivee: "dérivées",
+  origine: "une origine",
+  derivee: "une dérivée",
   calque: "calques",
   equipement: "équipements",
-  seule: "images seules",
+  seule: "une image seule",
 }
 
 const LIBELLES_JUGEMENT: Record<Jugement, string> = {
   tous: "jugés ou non",
-  favori: "favoris",
-  "non-juge": "non jugés",
+  favori: "favori",
+  "non-juge": "non jugé",
 }
 
 export function BarreOutils({

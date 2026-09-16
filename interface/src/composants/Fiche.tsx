@@ -375,7 +375,7 @@ export function Fiche({
               }}
               className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
             >
-              Le remettre sur l'univers du projet ›
+              Le remettre sur l'univers du jeu ›
             </button>
           </div>
         )}
@@ -395,7 +395,7 @@ export function Fiche({
           )}
           {onOuvrirLEtabli && !asset.personnage && (
             <Raison
-              texte="cette image n'appartient à aucune chose du jeu — la rattacher plus haut lui ouvre son établi"
+              texte="cette image n'appartient à aucun sujet du jeu — la rattacher plus haut lui ouvre son établi"
             />
           )}
           {/* **Le bouton nomme ce qu'il ouvre** (`B25`) : il disait *Ouvrir les
@@ -524,7 +524,7 @@ function ImposeParLeProjet({
       <Bloc
         cle="fiche.impose"
         aide="fiche.impose"
-        titre="Imposé par le projet"
+        titre="Imposé par le jeu"
         etat="on ne sait pas"
         mesure="la génération n'est plus sur le disque"
       >
@@ -633,7 +633,7 @@ function ImposeParLeProjet({
     <Bloc
       cle="fiche.impose"
       aide="fiche.impose"
-      titre="Imposé par le projet"
+      titre="Imposé par le jeu"
       /* Replié, le bloc porte les trois valeurs du projet — c'est ce qui permet
          de lire la fiche entière sans rien ouvrir. Ouvert, il garde sous les
          yeux ce que la lecture décide : combien de lignes ont été reprises à la
@@ -934,7 +934,7 @@ function Jugement({
               : "border-contour bg-carte text-encre-3 hover:bg-papier-cote",
           ].join(" ")}
         >
-          {asset.favori ? "◤ favori" : "favori"}
+          Favori
         </button>
         {/* **Le prix, ou le mot « gratuit »** — et ce qu'il a consommé
             derrière, avec son unité (F2). La fiche est le seul des deux
@@ -1156,7 +1156,7 @@ function Descendance({
 
   return (
     <div className="border-t border-trait pt-2">
-      <Bloc cle="fiche.filiation" titre="Filiation" etat={resume}>
+      <Bloc cle="fiche.filiation" titre="Ouvrir les dérivés" etat={resume}>
         <div className="flex flex-col gap-1">
           {filiation.parent && (
             <button

@@ -242,7 +242,7 @@ export function EnregistrerSous({
 
           <footer className="flex shrink-0 items-center justify-between gap-[22px] border-t border-trait bg-carte px-[30px] py-[14px]">
             <p className="text-[13px] text-encre-3">
-              Aucun appel, rien n’est payé.
+              Aucune génération, rien n’est payé.
             </p>
             <button
               type="submit"

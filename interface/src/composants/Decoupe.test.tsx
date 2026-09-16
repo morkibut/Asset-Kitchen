@@ -129,7 +129,7 @@ test("les sorties se relisent avant d'être créées, et une zone écartée n'en
   fireEvent.click(screen.getByLabelText("Garder la zone 2"))
 
   fireEvent.click(screen.getByRole("button", { name: "Relire 1 sortie" }))
-  const fenetre = await screen.findByRole("dialog", { name: "Créer les images découpées" })
+  const fenetre = await screen.findByRole("dialog", { name: "Découper une image" })
   expect(fenetre).toHaveTextContent("tête")
   expect(fenetre).toHaveTextContent("20 × 20 px")
   expect(decouper).not.toHaveBeenCalled()
@@ -138,12 +138,12 @@ test("les sorties se relisent avant d'être créées, et une zone écartée n'en
   await waitFor(() => expect(decouper).toHaveBeenCalledWith("planche", [[10, 10, 29, 29]], ["tête"]))
 })
 
-test("la relecture propose « Revenir aux zones » sans rien créer", async () => {
+test("la relecture propose « ‹ Les zones » sans rien créer", async () => {
   const decouper = poser()
   await screen.findByLabelText("Nom de la zone 1")
   fireEvent.click(screen.getByRole("button", { name: "Relire 1 sortie" }))
-  await screen.findByRole("dialog", { name: "Créer les images découpées" })
-  fireEvent.click(screen.getByRole("button", { name: "Revenir aux zones" }))
+  await screen.findByRole("dialog", { name: "Découper une image" })
+  fireEvent.click(screen.getByRole("button", { name: "‹ Les zones" }))
   expect(screen.queryByRole("dialog")).toBeNull()
   expect(decouper).not.toHaveBeenCalled()
 })
@@ -158,7 +158,7 @@ test("découper une carte relit avant de créer, avec la réserve pour destinati
     onFermer={vi.fn()} onFente={vi.fn()} />)
   await screen.findByLabelText("Nom de la zone 1")
   fireEvent.click(screen.getByRole("button", { name: "Relire 1 sortie" }))
-  const fenetre = await screen.findByRole("dialog", { name: "Créer les images découpées" })
+  const fenetre = await screen.findByRole("dialog", { name: "Découper une image" })
   expect(fenetre).toHaveTextContent("la réserve")
   fireEvent.click(screen.getByRole("button", { name: "Créer ces résultats" }))
   await waitFor(() => expect(decouperCarte).toHaveBeenCalledWith("carte", [[0, 0, 19, 19]], false))

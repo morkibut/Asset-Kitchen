@@ -49,7 +49,7 @@ export function SurfaceZoomable({ largeur, hauteur, children, libelle = "la surf
       <label className="flex items-center gap-[4px]"><input aria-label={`Zoom de ${libelle}`} type="number" min={3.125} max={3200}
         value={Math.round(facteur * 100)} onChange={(e) => changer(Number(e.target.value) / 100)} className="w-[70px] rounded-5 border border-trait bg-carte p-[4px]" /> %</label>
       <button type="button" aria-label={`Agrandir ${libelle}`} onClick={() => changer(facteur * 1.5)}>+</button>
-      <button type="button" onClick={() => { setZoom(null); if (vue.current) { vue.current.scrollLeft = 0; vue.current.scrollTop = 0 } }}>Ajuster</button>
+      <button type="button" onClick={() => { setZoom(null); if (vue.current) { vue.current.scrollLeft = 0; vue.current.scrollTop = 0 } }}>Adapter</button>
       <button type="button" onClick={() => changer(1)}>100 %</button>
       <span className="text-[11px] text-encre-3">Ctrl + molette · Espace + glisser</span>
     </div>

@@ -212,29 +212,29 @@ export function EcranEnvoi({
     // images jointes, son fond, ses consignes.
     const resume: ResumeDeLEnvoi | null = !envoi ? null : {
       modele: envoi.modele.identifiant,
-      resultat: <><p>{reglages?.proportions ?? "Format du modèle"} · {envoi.prix.appels} appel{envoi.prix.appels > 1 ? "s" : ""}{envoi.cases > 1 ? ` · ${envoi.cases} cases sur une planche` : ""}</p>{reglages && Object.entries(reglages.options).filter(([,v]) => v !== "").map(([k,v]) => <p key={k} className="mt-[4px] text-encre-3">{k} : {v}</p>)}</>,
+      resultat: <><p>{reglages?.proportions ?? "Format du modèle"} · {envoi.prix.appels} génération{envoi.prix.appels > 1 ? "s" : ""}{envoi.cases > 1 ? ` · ${envoi.cases} cases sur une planche` : ""}</p>{reglages && Object.entries(reglages.options).filter(([,v]) => v !== "").map(([k,v]) => <p key={k} className="mt-[4px] text-encre-3">{k} : {v}</p>)}</>,
       consommation: prixEcrit,
       mesure: <>
           {/* **La mesure se lit à côté du prix, jamais fondue dedans** (T1, E13).
-              Le chiffre au-dessus est une moyenne relevée sur les appels déjà
-              payés à ce modèle-ci — pas un tarif annoncé par le fournisseur —,
-              et le pas d'une image jointe est mesuré sur ses propres appels.
+              Le chiffre au-dessus est une moyenne relevée sur les générations déjà
+              payées à ce modèle-ci — pas un tarif annoncé par le fournisseur —,
+              et le pas d'une image jointe est mesuré sur ses propres générations.
               Sans la phrase qui suit, la moyenne se lirait comme une facture. */}
           {envoi.prix.mesure.prix === null
-            ? <p className="mt-[4px] text-encre-3">{envoi.prix.mesure.appels ? `Mesurée sur ${envoi.prix.mesure.appels} appels précédents.` : "Aucune mesure disponible pour ce modèle."}</p>
-            : <p className="mt-[4px] leading-relaxed text-encre-3">mesuré sur {envoi.prix.mesure.appels} appel{envoi.prix.mesure.appels > 1 ? "s" : ""} {estArgent(envoi.prix.mesure.unite) ? "payé" : "passé"}{envoi.prix.mesure.appels > 1 ? "s" : ""} à <span className="text-encre-2">{envoi.modele.nom}</span>.{envoi.prix.mesure.par_image !== null && envoi.prix.mesure.base !== null && <> Un appel sans image jointe a {estArgent(envoi.prix.mesure.unite) ? "coûté" : "pris"} {quantite(envoi.prix.mesure.base, envoi.prix.mesure.unite)} sur {envoi.prix.mesure.sur_base} appels ; chaque image jointe en ajoute <span className="text-encre-attention">{quantite(envoi.prix.mesure.par_image, envoi.prix.mesure.unite)}</span>, mesuré sur {envoi.prix.mesure.sur_jointes}. Une moyenne n'est le prix de personne : elle ne tombera juste sur aucun appel donné.</>}{envoi.prix.mesure.par_image === null && <> Le pas d'une image jointe n'est pas mesurable ici — il y faudrait des appels à plusieurs comptes d'images. Le chiffre affiché est la médiane, images comprises.</>}</p>}
+            ? <p className="mt-[4px] text-encre-3">{envoi.prix.mesure.appels ? `Mesurée sur ${envoi.prix.mesure.appels} générations précédentes.` : "Aucune mesure disponible pour ce modèle."}</p>
+            : <p className="mt-[4px] leading-relaxed text-encre-3">mesuré sur {envoi.prix.mesure.appels} génération{envoi.prix.mesure.appels > 1 ? "s" : ""} {estArgent(envoi.prix.mesure.unite) ? "payée" : "passée"}{envoi.prix.mesure.appels > 1 ? "s" : ""} à <span className="text-encre-2">{envoi.modele.nom}</span>.{envoi.prix.mesure.par_image !== null && envoi.prix.mesure.base !== null && <> Une génération sans image jointe a {estArgent(envoi.prix.mesure.unite) ? "coûté" : "pris"} {quantite(envoi.prix.mesure.base, envoi.prix.mesure.unite)} sur {envoi.prix.mesure.sur_base} générations ; chaque image jointe en ajoute <span className="text-encre-attention">{quantite(envoi.prix.mesure.par_image, envoi.prix.mesure.unite)}</span>, mesuré sur {envoi.prix.mesure.sur_jointes}. Une moyenne n'est le prix de personne : elle ne tombera juste sur aucune génération donnée.</>}{envoi.prix.mesure.par_image === null && <> Le pas d'une image jointe n'est pas mesurable ici — il y faudrait des générations à plusieurs comptes d'images. Le chiffre affiché est la médiane, images comprises.</>}</p>}
         </>,
     }
     return <RelireAvantEnvoi
       type="image"
-      sousTitre={edition ? "Les modifications s’appliquent à cet appel. L’univers reste inchangé." : "Voici les textes et les images qui seront transmis au modèle."}
+      sousTitre={edition ? "Les modifications s’appliquent à cette génération. L’univers reste inchangé." : "Voici les textes et les images qui seront transmis au modèle."}
       resume={resume}
       modification={{ active: edition, onBasculer: () => setEdition(v => !v), bloquee: enPaiement }}
       onFermer={onFermer}
       fermetureBloquee={enPaiement}
       refus={refus}
       echec={echec}
-      etat={actualisation ? "Actualisation des textes, des images et du coût…" : enPaiement ? "L’envoi est en cours." : "Aucun appel au modèle avant de lancer."}
+      etat={actualisation ? "Actualisation des textes, des images et du coût…" : enPaiement ? "L’envoi est en cours." : "Aucune génération avant de lancer."}
       /* **Le compte des avertissements, à côté du prix** : on sait qu'il y en a
          sans être descendu jusqu'à eux, et l'on sait qu'ils ne retiennent pas
          l'appel. Chacun reste écrit là où il porte — sur la ligne du texte, ou
@@ -249,7 +249,7 @@ export function EcranEnvoi({
          premier jour. **Pas de case du tout sans série** : sans chose du jeu
          visée, chaque texte est écrit à la main, et l'offrir là reviendrait à
          éteindre l'écran pour toutes les générations libres à venir. */
-      avantLeBouton={onSauter ? <div className="shrink-0"><label className="flex cursor-pointer items-center gap-[8px]"><input type="checkbox" className="h-[14px] w-[14px] accent-signal" onChange={(e) => onSauter(e.target.checked)} /><span>ne plus me le montrer pour cette série</span></label><p className="mt-[4px] text-encre-3">il revient dès qu'on change de chose ou de pose. Il n'y a pas de case « pour toujours ».</p></div> : null}
+      avantLeBouton={onSauter ? <div className="shrink-0"><label className="flex cursor-pointer items-center gap-[8px]"><input type="checkbox" className="h-[14px] w-[14px] accent-signal" onChange={(e) => onSauter(e.target.checked)} /><span>ne plus me le montrer pour cette série</span></label><p className="mt-[4px] text-encre-3">il revient dès qu'on change de sujet ou de pose. Il n'y a pas de case « pour toujours ».</p></div> : null}
       paiement={{
         libelle: enPaiement ? "Envoi en cours…" : envoi && estArgent(envoi.prix.mesure.unite) ? `Payer et lancer${envoi.prix.total != null ? ` ${prixEcrit}` : ""}` : "Lancer la fabrication",
         onPayer,
@@ -296,7 +296,7 @@ export function EcranEnvoi({
             title="Échap revient sans rien dépenser"
             className="mesure ml-auto px-1 text-[10px] text-encre-4 hover:text-encre"
           >
-            ‹ revenir
+            Fermer
           </button>
         </div>
 
@@ -362,7 +362,7 @@ export function EcranEnvoi({
             {envoi.corrections > 0 && (
               <p className="mesure text-[10px] leading-4 text-encre-attention">
                 {envoi.corrections} correction
-                {envoi.corrections > 1 ? "s" : ""} pour cet appel
+                {envoi.corrections > 1 ? "s" : ""} pour cette génération
               </p>
             )}
 
@@ -388,7 +388,7 @@ export function EcranEnvoi({
                 </ul>
                 <p className="mesure text-[9.5px] leading-4 text-encre-4">
                   sur la machine, après coup, et sans un centime. Ces réglages-là
-                  se font dans les tables — une chose est réglée à un seul
+                  se font dans les tables — un sujet est réglé à un seul
                   endroit.
                 </p>
               </section>
@@ -512,7 +512,7 @@ export function EcranEnvoi({
             !envoi.images.gabarit &&
             !envoi.images.palette ? (
               <p className="mesure text-[10px] leading-4 text-encre-4">
-                aucune image ne part avec cet appel.
+                aucune image ne part avec cette génération.
               </p>
             ) : (
               <ul className="flex flex-col border-t border-trait">
@@ -697,8 +697,8 @@ export function EcranEnvoi({
             <section className="flex flex-col gap-1.5 border-t border-trait pt-4">
               {/* **Ce qui reste chez ce fournisseur, avant de partir** (F2).
                   Le même objet que l'écran où l'on choisit lit : deux calculs à
-                  deux endroits ont déjà annoncé deux chiffres pour le même
-                  appel, à trois centimètres l'un de l'autre (E13). */}
+                  deux endroits ont déjà annoncé deux chiffres pour la même
+                  génération, à trois centimètres l'un de l'autre (E13). */}
               {envoi.reserve && <LigneReserve reserve={envoi.reserve} />}
 
               {envoi.prix.mesure.prix === null ? (
@@ -709,19 +709,19 @@ export function EcranEnvoi({
                 </p>
               ) : (
                 <p className="mesure text-[9.5px] leading-4 text-encre-4">
-                  mesuré sur {envoi.prix.mesure.appels} appel
+                  mesuré sur {envoi.prix.mesure.appels} génération
                   {envoi.prix.mesure.appels > 1 ? "s" : ""}{" "}
-                  {estArgent(envoi.prix.mesure.unite) ? "payé" : "passé"}
+                  {estArgent(envoi.prix.mesure.unite) ? "payée" : "passée"}
                   {envoi.prix.mesure.appels > 1 ? "s" : ""} à{" "}
                   <span className="text-encre-3">{envoi.modele.nom}</span>.
                   {envoi.prix.mesure.par_image !== null &&
                     envoi.prix.mesure.base !== null && (
                       <>
                         {" "}
-                        Un appel sans image jointe a{" "}
+                        Une génération sans image jointe a{" "}
                         {estArgent(envoi.prix.mesure.unite) ? "coûté" : "pris"}{" "}
                         {quantite(envoi.prix.mesure.base, envoi.prix.mesure.unite)}{" "}
-                        sur {envoi.prix.mesure.sur_base} appels ; chaque image
+                        sur {envoi.prix.mesure.sur_base} générations ; chaque image
                         jointe en ajoute{" "}
                         <span className="text-encre-attention">
                           {quantite(
@@ -731,14 +731,14 @@ export function EcranEnvoi({
                         </span>
                         , mesuré sur {envoi.prix.mesure.sur_jointes}. Une moyenne
                         n'est le prix de personne : elle ne tombera juste sur
-                        aucun appel donné.
+                        aucune génération donnée.
                       </>
                     )}
                   {envoi.prix.mesure.par_image === null && (
                     <>
                       {" "}
                       Le pas d'une image jointe n'est pas mesurable ici — il y
-                      faudrait des appels à plusieurs comptes d'images. Le
+                      faudrait des générations à plusieurs comptes d'images. Le
                       chiffre affiché est la médiane, images comprises.
                     </>
                   )}
@@ -784,7 +784,7 @@ export function EcranEnvoi({
                 className="mesure h-[26px] text-[10px] text-encre-4 hover:text-encre-3 disabled:cursor-not-allowed disabled:hover:text-encre-4"
               >
                 {enPaiement
-                  ? "l'appel est parti — il ne se rattrape plus"
+                  ? "la génération est partie — elle ne se rattrape plus"
                   : "Revenir sans rien dépenser"}
               </button>
               <p className="mesure text-[9.5px] leading-4 text-encre-4">
@@ -816,7 +816,7 @@ export function EcranEnvoi({
                     <span>ne plus me le montrer pour cette série</span>
                   </label>
                   <p className="mesure text-[9.5px] leading-4 text-encre-4">
-                    il revient dès qu'on change de chose ou de pose. Il n'y a pas
+                    il revient dès qu'on change de sujet ou de pose. Il n'y a pas
                     de case « pour toujours ».
                   </p>
                 </>
@@ -870,7 +870,7 @@ function SectionFond({
             <input
               type="color"
               value={fond.couleur}
-              aria-label="Couleur du fond, pour cet appel"
+              aria-label="Couleur du fond, pour cette génération"
               onChange={(e) => onFond(e.target.value)}
               className="h-[26px] w-[34px] shrink-0 rounded-[2px] border border-trait bg-carte"
             />
@@ -879,7 +879,7 @@ function SectionFond({
               <input
                 type="color"
                 value={propose.couleur || "#FF00FF"}
-                aria-label="Couleur du fond, pour cet appel"
+                aria-label="Couleur du fond, pour cette génération"
                 onChange={(e) => onFond(e.target.value)}
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               />
@@ -913,7 +913,7 @@ function SectionFond({
         </div>
 
         {fond.corrige && (
-          <Raison texte="corrigé pour cet appel seulement — le jeu garde le sien" />
+          <Raison texte="corrigé pour cette génération seulement — le jeu garde le sien" />
         )}
 
         {/* **La proposition n'apparaît que si elle ajoute quelque chose** : la
@@ -1043,7 +1043,7 @@ function Ligne({
             {ligne.nom}
           </span>
           <span className="mesure text-[9.5px] text-encre-4">
-            {ligne.corrigee ? "corrigé pour cet appel" : ligne.origine}
+            {ligne.corrigee ? "corrigé pour cette génération" : ligne.origine}
           </span>
           {remplacee && (
             <span className="mesure text-[9.5px] text-encre-4">remplacé ↓</span>
@@ -1078,7 +1078,7 @@ function Ligne({
                 onClick={onGarder}
                 className="mesure text-[10px] text-signal hover:opacity-70"
               >
-                garder sur la chose ›
+                garder sur le sujet ›
               </button>
             )}
             <button

@@ -121,7 +121,7 @@ describe("L’atelier unifié · bibliothèque et fabrications réelles", () => 
     const personnage = { identifiant: "hero", nom: "Le héros", ecartees: [], plan: [{ identifiant: "marche", nom: "Marche" }], cases: [{ pose: "marche", directions: [] }] } as unknown as Personnage
     const clip = { identifiant: "importe-1", personnage: "hero", modele: "video-importee", pose: "marche", statut: "reussie", demande: { prompt: "marche.mp4" }, parametres_resolus: {}, clip: { nature: "importe", jete: false, secondes: 3, cadence: 12, images: 36, extraction_refus: null } } as unknown as Generation
     render(<SourcesDuSujet personnage={personnage} clips={[clip]} onAnimer={vi.fn()} onMontage={vi.fn()} />)
-    expect(screen.getByText("vidéo importée · aucun appel")).toBeVisible()
+    expect(screen.getByText("vidéo importée · aucune génération")).toBeVisible()
     expect(screen.queryByText("Demande et paramètres conservés")).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Monter une animation" })).toBeEnabled()
   })

@@ -75,7 +75,7 @@ export function FileDesCalculsLocaux({ projet }: { projet: string | null }) {
       {e.etat === "a_reprendre" && <button disabled={occupe !== null} className={BOUTON} onClick={() => void agir(e, false)}>Reprendre le suivi</button>}
       {e.etat === "en_attente" && !e.soumission_engagee && <button disabled={occupe !== null} className={BOUTON} onClick={() => void agir(e, true)}>Annuler cette attente</button>}
     </li>)}</ol>
-    {!!file?.mesures.length && <details className="mt-[14px] text-[12px] text-encre-3"><summary className="cursor-pointer">Les durées mesurées sur cette machine</summary><ul className="mt-[8px] space-y-[4px]">{file.mesures.map((m) => <li key={`${m.moteur}:${m.modele}:${m.temperature}`}>{m.modele} · {duree(m.mediane_s)} · {TEMPERATURE[m.temperature]} · {m.mesures} mesure(s)</li>)}</ul><p className="mt-[8px]">Ces durées décrivent les calculs terminés. Le chargement du modèle peut changer entre deux appels.</p></details>}
+    {!!file?.mesures.length && <details className="mt-[14px] text-[12px] text-encre-3"><summary className="cursor-pointer">Les durées mesurées sur cette machine</summary><ul className="mt-[8px] space-y-[4px]">{file.mesures.map((m) => <li key={`${m.moteur}:${m.modele}:${m.temperature}`}>{m.modele} · {duree(m.mediane_s)} · {TEMPERATURE[m.temperature]} · {m.mesures} mesure(s)</li>)}</ul><p className="mt-[8px]">Ces durées décrivent les calculs terminés. Le chargement du modèle peut changer entre deux générations.</p></details>}
     <p className="mt-[14px] text-[12px] text-encre-3">{file?.regle || "L’état inconnu d’un moteur reste à vérifier. La file n’arrête jamais les calculs lancés par une autre application."}</p>
   </section>
 }

@@ -48,9 +48,9 @@ test("créer un sujet n’appelle que la création, et aucune génération", asy
   const onPersonnage = vi.fn()
   render(<CreerUnAsset familleInitiale="personnages" onFermer={vi.fn()} onPersonnage={onPersonnage} onPiece={vi.fn()} />)
 
-  fireEvent.change(screen.getByLabelText("Nom de l’asset"), { target: { value: "La sentinelle de contrôle" } })
+  fireEvent.change(screen.getByLabelText("Nom du sujet"), { target: { value: "La sentinelle de contrôle" } })
   fireEvent.change(screen.getByLabelText("Description créative"), { target: { value: "Immobile, casquée, lance au sol." } })
-  fireEvent.click(screen.getByRole("button", { name: "Créer l’asset" }))
+  fireEvent.click(screen.getByRole("button", { name: "Créer le sujet" }))
 
   await waitFor(() => expect(onPersonnage).toHaveBeenCalledWith(sentinelle))
   expect(creer).toHaveBeenCalledWith("La sentinelle de contrôle", "Immobile, casquée, lance au sol.", "personnages")
@@ -64,12 +64,12 @@ test("un sujet sans nom ne part pas, et un refus laisse la saisie en place", asy
   const creer = vi.spyOn(api, "creerPersonnage").mockRejectedValue(new Error("Ce nom est déjà pris dans ce jeu."))
   render(<CreerUnAsset familleInitiale="personnages" onFermer={vi.fn()} onPersonnage={vi.fn()} onPiece={vi.fn()} />)
 
-  expect(screen.getByRole("button", { name: "Créer l’asset" })).toBeDisabled()
-  fireEvent.change(screen.getByLabelText("Nom de l’asset"), { target: { value: "La sentinelle de contrôle" } })
-  fireEvent.click(screen.getByRole("button", { name: "Créer l’asset" }))
+  expect(screen.getByRole("button", { name: "Créer le sujet" })).toBeDisabled()
+  fireEvent.change(screen.getByLabelText("Nom du sujet"), { target: { value: "La sentinelle de contrôle" } })
+  fireEvent.click(screen.getByRole("button", { name: "Créer le sujet" }))
 
   expect(await screen.findByRole("alert")).toHaveTextContent("Ce nom est déjà pris")
-  expect(screen.getByLabelText("Nom de l’asset")).toHaveValue("La sentinelle de contrôle")
+  expect(screen.getByLabelText("Nom du sujet")).toHaveValue("La sentinelle de contrôle")
   expect(creer).toHaveBeenCalledTimes(1)
 })
 
@@ -80,8 +80,8 @@ test("la famille Équipement crée une pièce, jamais un personnage", async () =
   const onPiece = vi.fn()
   render(<CreerUnAsset familleInitiale="equipement" onFermer={vi.fn()} onPersonnage={vi.fn()} onPiece={onPiece} />)
 
-  fireEvent.change(screen.getByLabelText("Nom de l’asset"), { target: { value: "Un casque de garde" } })
-  fireEvent.click(screen.getByRole("button", { name: "Créer l’asset" }))
+  fireEvent.change(screen.getByLabelText("Nom du sujet"), { target: { value: "Un casque de garde" } })
+  fireEvent.click(screen.getByRole("button", { name: "Créer le sujet" }))
 
   await waitFor(() => expect(onPiece).toHaveBeenCalledWith(casque))
   expect(piece).toHaveBeenCalledWith({ nom: "Un casque de garde", description: "" })
@@ -92,8 +92,8 @@ test("le sujet créé reçoit son objectif dans l’interface, et le relit aprè
   vi.spyOn(api, "creerPersonnage").mockResolvedValue({ personnage: sentinelle })
   const onPersonnage = vi.fn()
   const creation = render(<CreerUnAsset familleInitiale="personnages" onFermer={vi.fn()} onPersonnage={onPersonnage} onPiece={vi.fn()} />)
-  fireEvent.change(screen.getByLabelText("Nom de l’asset"), { target: { value: "La sentinelle de contrôle" } })
-  fireEvent.click(screen.getByRole("button", { name: "Créer l’asset" }))
+  fireEvent.change(screen.getByLabelText("Nom du sujet"), { target: { value: "La sentinelle de contrôle" } })
+  fireEvent.click(screen.getByRole("button", { name: "Créer le sujet" }))
   await waitFor(() => expect(onPersonnage).toHaveBeenCalledOnce())
   const cree = onPersonnage.mock.calls[0][0] as Personnage
   creation.unmount()

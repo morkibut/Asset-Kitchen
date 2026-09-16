@@ -467,7 +467,7 @@ test("sans référence d'exemple, la fiche dit ce que ça coûte", async () => {
   monter()
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   const dialogue = screen.getByRole("dialog")
-  expect(await within(dialogue).findByText(/Dix-sept appels payés sur vingt-huit/)).toBeTruthy()
+  expect(await within(dialogue).findByText(/Dix-sept générations payées sur vingt-huit/)).toBeTruthy()
 })
 
 test("éteindre un texte de style écrit un refus, et rallumer le défait", async () => {

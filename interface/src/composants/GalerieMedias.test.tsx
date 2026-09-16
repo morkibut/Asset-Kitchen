@@ -63,7 +63,7 @@ test("une source 3D sans frame ne reçoit pas de fausse vignette", async () => {
   monter()
   fireEvent.click(screen.getByRole("button", { name: "Modèles 3D" }))
   expect(await screen.findByText("Aperçu image indisponible")).toBeTruthy()
-  expect(screen.getByRole("button", { name: "Ouvrir la source 3D ›" })).toHaveProperty("disabled", true)
+  expect(screen.getByRole("button", { name: "Préparer des rendus 3D" })).toHaveProperty("disabled", true)
 })
 
 test("les cartes de sons demandent une forme d’onde sans créer de lecteur", async () => {

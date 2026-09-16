@@ -183,7 +183,7 @@ export function BarreQuiPaie({
         <label className="col-span-2 space-y-[8px]"><span className="block font-medium">{CHAMP_DU_MODELE}</span><select className={champ} value={modele?.identifiant ?? ""} onChange={(e) => onChoisirModele(e.target.value)}><option value="" disabled>Choisir un modèle</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.fournisseur} · {m.nom}{m.refus ? ` — ${m.refus}` : ""}</option>)}</select></label>
         <label className="space-y-[8px]"><span className="block font-medium">Format de l’image</span><select className={champ} value={proportions} disabled={!modele} onChange={(e) => onProportions(e.target.value)}>{!modele?.proportions.includes(proportions) && <option value={proportions} disabled>{proportions} — indisponible</option>}{modele?.proportions.map((p) => <option key={p}>{p}</option>)}</select></label>
         <label className="space-y-[8px]"><span className="block font-medium">Variations</span><input type="number" className={champ} min={1} max={modele?.variations_max ?? 1} step={1} disabled={!!cases || !modele} value={cases ? 1 : variations} onChange={(e) => { const v = e.target.valueAsNumber; if (Number.isFinite(v)) onVariations(Math.max(1, Math.min(modele?.variations_max ?? 1, Math.floor(v)))) }} /></label>
-        {cases > 0 && <p className="col-span-2 text-encre-3">{cases} cases réunies sur une planche · un appel pour la planche.</p>}
+        {cases > 0 && <p className="col-span-2 text-encre-3">{cases} cases réunies sur une planche · une génération pour la planche.</p>}
         {modele && Object.entries(modele.options).map(([cle, option]) => <label key={cle} className="space-y-[8px]"><span className="block font-medium">{option.nom}</span>{option.genre === "choix" ? <select className={champ} value={options[cle] ?? ""} onChange={(e) => reglerOption(cle, e.target.value)}><option value="">Défaut du modèle</option>{option.valeurs.map((v) => <option key={v}>{v}</option>)}</select> : option.genre === "booleen" ? <select className={champ} value={options[cle] ?? ""} onChange={(e) => reglerOption(cle, e.target.value)}><option value="">Défaut du modèle</option><option value="false">Désactivé</option><option value="true">Activé</option></select> : <input type="number" className={champ} min={option.minimum ?? undefined} max={option.maximum ?? undefined} value={options[cle] ?? ""} placeholder="Réglage du modèle" onChange={(e) => reglerOption(cle, e.target.value)} />}</label>)}
       </section>
       <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Prompt négatif{promptNegatif ? " · renseigné" : " · facultatif"}</summary><textarea aria-label="Prompt négatif" rows={2} className={`${champ} mt-[14px]`} value={promptNegatif} onChange={(e) => onPromptNegatif(e.target.value)} placeholder="Ce qui doit être évité…" /></details>
@@ -295,7 +295,7 @@ export function BarreQuiPaie({
         className="mesure flex h-[26px] shrink-0 items-center gap-2 border-b border-trait bg-carte px-4 text-left text-[10px] text-encre-4 hover:text-encre-3"
       >
         <span aria-hidden>{reglagesOuverts ? "−" : "+"}</span>
-        <span>réglages de l'appel</span>
+        <span>réglages de la génération</span>
         <span className="text-encre-3">
           {modele ? nomDuModele(modele.identifiant) : "aucun modèle"} · {proportions} ·{" "}
           {variations} variation{variations > 1 ? "s" : ""}

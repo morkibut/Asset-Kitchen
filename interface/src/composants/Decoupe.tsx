@@ -1228,12 +1228,12 @@ function FenetreRelecture({
     <div className="fixed inset-0 z-50 bg-papier/85" onMouseDown={onFermer} role="presentation">
       <div
         role="dialog"
-        aria-label="Créer les images découpées"
+        aria-label="Découper une image"
         className="volet mx-auto mt-[9%] flex max-h-[80vh] w-[380px] max-w-full flex-col overflow-hidden rounded-10 border border-contour bg-carte"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header className="flex shrink-0 items-baseline gap-[14px] border-b border-trait px-[22px] py-[14px]">
-          <h1 className="font-serif text-[25px] leading-none text-encre">Créer les images découpées</h1>
+          <h1 className="font-serif text-[25px] leading-none text-encre">Découper une image</h1>
         </header>
         <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[22px]">
           <p className="text-[12px] text-encre-2">
@@ -1259,7 +1259,7 @@ function FenetreRelecture({
             onClick={onFermer}
             className="h-[34px] rounded-7 border border-trait px-[14px] text-[13px] text-encre transition-colors duration-120 hover:bg-papier"
           >
-            Revenir aux zones
+            ‹ Les zones
           </button>
           <button
             type="button"

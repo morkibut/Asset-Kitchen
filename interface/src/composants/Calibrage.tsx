@@ -148,7 +148,7 @@ export function EcranCalibrage({
   const raisonDuBouton = !lu
     ? null
     : lu.poses.length === 0
-      ? "aucune pose de cette chose n'a encore de corps — il n'y a rien à empiler"
+      ? "aucune pose de ce sujet n'a encore de corps — il n'y a rien à empiler"
       : retenues.length === 0
         ? "toutes les poses sont mises de côté — il ne reste rien à caler ensemble"
         : lu.a_faire === 0
@@ -313,7 +313,7 @@ export function EcranCalibrage({
                 ))}
               </ul>
               {lu.poses.length === 0 && (
-                <Raison texte="aucune pose de cette chose n'a encore de corps — il n'y a rien à empiler" />
+                <Raison texte="aucune pose de ce sujet n'a encore de corps — il n'y a rien à empiler" />
               )}
             </section>
 
@@ -767,7 +767,7 @@ function Scene({
               Rien à calibrer.
             </p>
             <p className="text-[12px] leading-[1.5] text-encre-4">
-              Les poses de cette chose atteignent déjà la même hauteur. Le bouton
+              Les poses de ce sujet atteignent déjà la même hauteur. Le bouton
               se rallumera de lui-même dès qu'une pose sortira à une autre taille.
             </p>
           </div>

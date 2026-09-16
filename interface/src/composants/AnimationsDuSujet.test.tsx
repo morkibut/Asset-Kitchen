@@ -450,7 +450,7 @@ describe("les trois marques", () => {
     const { appels } = monter()
     const vignette = rangee("repos/sud").querySelectorAll("[data-vignette-de-bande]")[2] as HTMLElement
     const bloc = vignette.closest("span")?.parentElement as HTMLElement
-    fireEvent.click(within(bloc).getAllByLabelText("La retenir")[2])
+    fireEvent.click(within(bloc).getAllByLabelText("Choisir pour le jeu")[2])
     await waitFor(() => expect(appels).toHaveLength(2))
     // La démotion part la première : un échec à ce moment-là laisse l'état
     // d'avant intact, au lieu de deux retenues dans la même case.

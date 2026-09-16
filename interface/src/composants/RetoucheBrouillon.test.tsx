@@ -65,7 +65,7 @@ test("la vraie retouche peint un aperçu, demande comment quitter et conserve so
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", "") }
   HTMLDialogElement.prototype.close = function () { this.removeAttribute("open") }
   render(<Retouche asset={disque} soeurs={[]} univers={UNIVERS_VIDE} traitement={{ moteurs: [], silhouettes: [], reductions: [], quantification: { raison: null } } as unknown as EtatTraitement} onFermer={fermer} onSoeur={vi.fn()} decoupe={() => null} onErreur={vi.fn()} />)
-  fireEvent.change(screen.getByLabelText("Outil de retouche"), { target: { value: "main" } })
+  fireEvent.change(screen.getByLabelText("Table de retouche"), { target: { value: "main" } })
   fireEvent.click(screen.getByRole("button", { name: /^ôter$/ }))
   const toile = document.querySelector("[data-toile-main]") as HTMLElement
   vi.spyOn(toile, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 320, height: 320, right: 320, bottom: 320, x: 0, y: 0, toJSON() {} })

@@ -32,7 +32,7 @@ export function AssocierImageEquipement({ image, projet, onFermer, onAssocie }: 
   const sienne = vestiaire?.pieces.find((p) => p.piece.identifiant === piece)
   const visee = donnees?.cibles.find((c) => cleCible(c.cible) === cible)
   return <section aria-label="Associer cette image à un équipement" className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto bg-papier p-[22px]">
-    <header className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px] text-encre">Utiliser cette image pour un équipement</h2><button className={CONTROLE} disabled={attente} onClick={onFermer}>Revenir à la retouche</button></header>
+    <header className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px] text-encre">Utiliser cette image pour un équipement</h2><button className={CONTROLE} disabled={attente} onClick={onFermer}>‹ La retouche</button></header>
     <p className="text-[13px] text-encre-3">Une pièce peut appartenir à plusieurs héros. Choisissez son emploi et l’image précise sur laquelle ce résultat doit servir.</p>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}{message && <p role="status" className="text-[13px] text-encre-2">{message}</p>}
     <div className="flex items-start gap-[22px]"><img src={imageAsset(image)} alt={image.label} className="damier-papier w-[128px] shrink-0 object-contain" /><div className="flex min-w-0 flex-1 flex-col gap-[14px]">

@@ -153,8 +153,8 @@ import {
 
 /** **Les noms que l'auteur lit, en face des clés que le domaine écrit.**
  *
- *  Les planches et le code ne nomment pas les mêmes choses : `Pixéliser` est
- *  `grille`, `Couleurs` est `quantification`, `Nettoyer` est `bords`, et
+ *  Les planches et le code ne nomment pas les mêmes choses : `Pixelisation` est
+ *  `grille`, `Couleurs` est `quantification`, `Nettoyage` est `bords`, et
  *  `Superposer` est `superposition`. C'est le vocabulaire des planches qui
  *  gagne à l'écran — *le sujet entre dans la case du jeu* se comprend, *la
  *  grille* ne se comprend qu'après avoir lu le code.
@@ -162,14 +162,14 @@ import {
  *  ⚠️ **La clé, elle, ne bouge pas** : c'est celle de la recette, et la
  *  renommer changerait l'empreinte de tout ce qui est déjà écrit. */
 const NOM_DE_LA_TABLE: Record<Table, string> = {
-  detourage: "Détourer",
-  recadrage: "Recadrer",
-  grille: "Pixéliser",
+  detourage: "Détourage",
+  recadrage: "Recadrage",
+  grille: "Pixelisation",
   quantification: "Couleurs",
-  bords: "Nettoyer",
-  contours: "Le contour",
-  retournement: "Retourner",
-  main: "La main",
+  bords: "Nettoyage",
+  contours: "Contour",
+  retournement: "Retournement",
+  main: "Main",
   decoupage: "Découper",
   superposition: "Superposer",
 }
@@ -335,7 +335,7 @@ function Etiquette({ children, barree }: { children: ReactNode; barree?: boolean
  *  Règle 2 de `docs/DESIGN.md` : *un bouton éteint dit à côté de lui pourquoi
  *  il l'est, et donne le geste qui le rallume. Jamais une infobulle.* Le geste
  *  est un vrai bouton quand il mène quelque part — la marge du recadrage
- *  renvoie vers *Pixéliser*, où la hauteur fait ce qu'on croyait lui demander. */
+ *  renvoie vers *Pixelisation*, où la hauteur fait ce qu'on croyait lui demander. */
 function Pourquoi({
   texte,
   geste,
@@ -1237,7 +1237,7 @@ function PromotionDuDetourage({
           }}
           className="text-[12px] text-encre-2 underline decoration-pointille underline-offset-2 transition-colors duration-120 hover:text-encre"
         >
-          enregistrer ce réglage comme défaut du projet ›
+          enregistrer ce réglage comme défaut du jeu ›
         </button>
         {/* **Ce qui vient d'être posé se dit ici, et dit où le relire.** Un
             geste dont l'effet vit dans un autre écran doit nommer cet écran. */}
@@ -1255,7 +1255,7 @@ function PromotionDuDetourage({
       data-portee-du-defaut
       className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]"
     >
-      <Etiquette>en faire un défaut du projet</Etiquette>
+      <Etiquette>en faire un défaut du jeu</Etiquette>
       <p className="text-[12px] leading-[1.5] text-encre-3">{resume}</p>
       {/* **Deux portées, nommées par ce qu'elles couvrent** — jamais par le
           mot du dépôt. */}
@@ -1386,7 +1386,7 @@ export function ReglagesDuRecadrage({ recette, mesures, regler, poser, ouvrir }:
       {margeAvalee && (
         <Pourquoi
           texte="la case avale la marge : c'est la hauteur qui donne l'air autour du sujet"
-          geste="Pixéliser"
+          geste="Pixelisation"
           onGeste={ouvrir ? () => ouvrir("grille") : undefined}
         />
       )}
@@ -3097,8 +3097,8 @@ export function ReglagesDeLaMain({
  * leurs propres écrans et ne figurent pas parmi les traitements d'une image. */
 export function SelecteurDeTable({ table, onTable }: { table: Table; onTable: (table: Table) => void }) {
   return <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">
-    Outil de retouche
-    <select aria-label="Outil de retouche" value={table} onChange={(event) => onTable(event.target.value as Table)}
+    Table de retouche
+    <select aria-label="Table de retouche" value={table} onChange={(event) => onTable(event.target.value as Table)}
       className="h-[34px] w-full rounded-7 border border-trait bg-carte px-[8px] text-[13px] text-encre">
       {TABLES.filter((outil) => !outil.fabrique).map((outil) => <option key={outil.cle} value={outil.cle}>{NOM_DE_LA_TABLE[outil.cle]}</option>)}
     </select>
@@ -4189,10 +4189,10 @@ export function Retouche({
           catch (e) { onErreur((e as Error).message) }
         }} className="h-[34px] rounded-7 border border-signal px-[14px] text-[12px]">Appliquer les réglages repris à l’image</button>}
         <div className="flex flex-wrap items-center gap-[8px]">
-          <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("decoupage") })} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Découpe · plusieurs images</button>
+          <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("decoupage") })} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Découper une image</button>
           <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("superposition") })} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Extraire un élément</button>
-          {onAssocierEquipement && <button type="button" onClick={() => sortir(onAssocierEquipement)} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Associer à un équipement</button>}
-          {(ouverte === "decoupage" || ouverte === "superposition") && <button type="button" onClick={() => setOuverte("main")} className="h-[30px] px-[8px] text-[12.5px] text-signal">Revenir à la retouche</button>}
+          {onAssocierEquipement && <button type="button" onClick={() => sortir(onAssocierEquipement)} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Utiliser comme équipement…</button>}
+          {(ouverte === "decoupage" || ouverte === "superposition") && <button type="button" onClick={() => setOuverte("main")} className="h-[30px] px-[8px] text-[12.5px] text-signal">‹ Main</button>}
         </div>
         <details className="shrink-0 text-[12px] text-encre-3"><summary className="cursor-pointer">Toutes les tables et leur état</summary>
         <div data-barre-des-tables className="flex flex-wrap items-center gap-[4px] pt-[8px]">
@@ -4221,7 +4221,7 @@ export function Retouche({
                   // ⚠️ **Pas d'infobulle ici.** Vu au navigateur : un `title`
                   // sur un bouton devient son nom dans l'arbre
                   // d'accessibilité — la barre s'annonçait « Les bords vides
-                  // sautent. » au lieu de « Recadrer ». La phrase est déjà
+                  // sautent. » au lieu de « Recadrage ». La phrase est déjà
                   // écrite en clair sous la barre pour la table ouverte ; la
                   // répéter au survol coûtait le nom du bouton.
                   className={[
@@ -4260,7 +4260,7 @@ export function Retouche({
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] grid-rows-[minmax(0,1fr)_auto] gap-[14px] overflow-hidden">
           {/* ── L'image, et rien par-dessus ─────────────────────────────── */}
           <div className="col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col gap-[8px]">
-            {!enregistrementImmediat && <div className="flex gap-[8px]"><button type="button" disabled={!session.peutDefaire} onClick={session.defaire} className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] disabled:opacity-50">Défaire</button><button type="button" disabled={!session.peutRefaire} onClick={session.refaire} className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] disabled:opacity-50">Refaire</button>{!session.valide && !enVol && <button type="button" onClick={() => void poser(recette)} className="text-[12px] text-signal">Recalculer l’aperçu</button>}</div>}
+            {!enregistrementImmediat && <div className="flex gap-[8px]"><button type="button" disabled={!session.peutDefaire} onClick={session.defaire} className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] disabled:opacity-50">Annuler</button><button type="button" disabled={!session.peutRefaire} onClick={session.refaire} className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] disabled:opacity-50">Rétablir</button>{!session.valide && !enVol && <button type="button" onClick={() => void poser(recette)} className="text-[12px] text-signal">Recalculer l’aperçu</button>}</div>}
             <div className="flex flex-wrap items-center justify-between gap-[8px]">
               <div className="flex flex-wrap items-center gap-[8px]">
                 {/* ⚠️ **Un grossissement affiché est un grossissement
@@ -4655,14 +4655,14 @@ export function Retouche({
                 onClick={() => void revenirAuBrut()}
                 className="h-[30px] rounded-7 border border-trait bg-carte text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
               >
-                Revenir au brut
+                Tout remettre à zéro
               </button>
               {/* ⚠️ **On n'annule pas un calcul ; on annule un réglage**
                   (B16). Rien n'interrompt un calcul en route : la route est
                   synchrone, le calcul a lieu dans le gestionnaire de requête,
                   et couper la connexion n'arrêterait pas la machine. Le dire
                   vaut mieux qu'un bouton qui aurait l'air de le faire. */}
-              <details className="text-[12px] text-encre-3"><summary className="cursor-pointer">Ce que fait cette table</summary><p className="pt-[8px]">{CE_QUE_LA_TABLE_FAIT[ouverte]} Chaque étape reste réversible, sans nouvel appel de génération. Un calcul ne s’interrompt pas : ce qui se défait, c’est le réglage.</p></details>
+              <details className="text-[12px] text-encre-3"><summary className="cursor-pointer">Ce que fait cette table</summary><p className="pt-[8px]">{CE_QUE_LA_TABLE_FAIT[ouverte]} Chaque étape reste réversible, sans nouvelle génération. Un calcul ne s’interrompt pas : ce qui se défait, c’est le réglage.</p></details>
             </div>
             </div>
           </aside>
@@ -4825,7 +4825,7 @@ function CommandesDuZoom({
           zoom === "ajuste" ? "bg-carte font-medium text-encre" : "text-encre-3 hover:text-encre",
         ].join(" ")}
       >
-        ajusté
+        Adapter
       </button>
     </span>
   )

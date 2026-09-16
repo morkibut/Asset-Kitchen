@@ -158,7 +158,7 @@ export function GalerieMedias({
           <p className="mt-[4px] text-[13px] text-encre-3">Chaque résultat conservé, quel que soit son média.</p>
         </div>
         <label className="flex min-w-[240px] flex-1 flex-col gap-[4px] text-[12px] text-encre-3 sm:max-w-[380px]">
-          Rechercher dans les résultats
+          Rechercher un résultat
           <input
             type="search"
             value={filtre.recherche}
@@ -233,7 +233,7 @@ function Carte3D({ source, onOuvrir }: { source: Source3D; onOuvrir?: (source: S
       {apercu ? <img src={apercu} alt={`Première frame de ${source.nom}`} loading="lazy" className="h-full w-full object-contain [image-rendering:pixelated]" /> : <span className="text-[12px] text-encre-sur-signal">Aperçu image indisponible</span>}
     </div>
     <div className="min-w-0"><h2 className="truncate text-[14px] font-medium text-encre" title={source.nom}>{source.nom}</h2><p className="mt-[4px] text-[12px] text-encre-3">{source.images} frames · {source.largeur} × {source.hauteur} px · {source.cadence} i/s</p></div>
-    <button type="button" disabled={!onOuvrir} onClick={() => onOuvrir?.(source)} className="self-start text-[12px] text-signal disabled:text-eteint">Ouvrir la source 3D ›</button>
+    <button type="button" disabled={!onOuvrir} onClick={() => onOuvrir?.(source)} className="self-start text-[12px] text-signal disabled:text-eteint">Préparer des rendus 3D</button>
   </article>
 }
 

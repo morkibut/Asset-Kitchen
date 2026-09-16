@@ -687,7 +687,7 @@ describe("le bouton « Ajouter » nomme et crée sur-le-champ", () => {
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
     fireEvent.click(screen.getByRole("button", { name: "Ajouter un personnage" }))
 
-    const champ = screen.getByLabelText("Nom de la chose du jeu à créer")
+    const champ = screen.getByLabelText("Nom du sujet du jeu à créer")
     fireEvent.change(champ, { target: { value: "Le nain" } })
     fireEvent.keyDown(champ, { key: "Enter" })
 
@@ -714,7 +714,7 @@ describe("le bouton « Ajouter » nomme et crée sur-le-champ", () => {
 
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
     fireEvent.click(screen.getByRole("button", { name: "Ajouter un personnage" }))
-    fireEvent.keyDown(screen.getByLabelText("Nom de la chose du jeu à créer"), { key: "Enter" })
+    fireEvent.keyDown(screen.getByLabelText("Nom du sujet du jeu à créer"), { key: "Enter" })
 
     expect(appels.some((a) => a.methode === "POST" && a.url === "/api/characters")).toBe(false)
   })

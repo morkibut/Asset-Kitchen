@@ -339,7 +339,7 @@ export function CalquesAnimes({
             onClick={onRevenirALEmploi}
             className="h-[30px] shrink-0 rounded-7 px-[14px] text-[13px] text-encre-3 transition-colors duration-120 hover:text-encre"
           >
-            Revenir aux calques de {matrice.piece.nom} ›
+            ‹ {matrice.piece.nom} · {matrice.porteur.nom}
           </button>
         </div>
 

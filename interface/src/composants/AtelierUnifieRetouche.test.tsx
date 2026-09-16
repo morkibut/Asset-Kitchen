@@ -33,7 +33,7 @@ test("la Main touche la frame visible pendant la lecture, se défait et se retro
   HTMLElement.prototype.setPointerCapture = vi.fn()
   const props = { identifiant: "bande-main", univers: UNIVERS_VIDE, traitement, onFermer: vi.fn(), onErreur: vi.fn() }
   const vue = render(<EcranAtelierDeBande {...props} />)
-  fireEvent.change(await screen.findByLabelText("Outil de retouche"), { target: { value: "main" } })
+  fireEvent.change(await screen.findByLabelText("Table de retouche"), { target: { value: "main" } })
   fireEvent.click(screen.getByRole("button", { name: /^ôter$/ }))
   await waitFor(() => expect(document.querySelector("[data-case-en-grand]")?.getAttribute("data-case-en-grand")).toBe("1"))
   const surface = document.querySelector("[data-toile-main]") as HTMLElement
@@ -53,7 +53,7 @@ test("la Main touche la frame visible pendant la lecture, se défait et se retro
   expect(disque.bande.prises[1].identifiant).toBe("occurrence-1")
   vue.unmount()
   render(<EcranAtelierDeBande {...props} />)
-  fireEvent.change(await screen.findByLabelText("Outil de retouche"), { target: { value: "main" } })
+  fireEvent.change(await screen.findByLabelText("Table de retouche"), { target: { value: "main" } })
   fireEvent.click(document.querySelector('[data-image-de-la-bande="1"]')!)
   expect(await screen.findByText(/l'opacité · 1 passage/)).toBeTruthy()
   expect(props.onErreur).not.toHaveBeenCalled()
@@ -75,7 +75,7 @@ test("un brouillon de frame se reprend après fermeture sans écrire la bande av
   const garder = vi.spyOn(api, "corrigerLaBande").mockResolvedValue(disque.bande)
   const props = { identifiant: "bande-main", univers: UNIVERS_VIDE, traitement, onFermer: vi.fn(), onErreur: vi.fn() }
   const vue = render(<EcranAtelierDeBande {...props} />)
-  await screen.findByLabelText("Outil de retouche")
+  await screen.findByLabelText("Table de retouche")
   fireEvent.click(screen.getByRole("button", { name: "arrêter l'animation" }))
   fireEvent.click(document.querySelector('[data-image-de-la-bande="2"]')!)
   ;(document.querySelector("[data-case-en-grand]") as HTMLElement).focus()
@@ -103,7 +103,7 @@ test("découper le rendu d’une frame revient au montage sans perdre ses change
   const decouper = vi.spyOn(api, "decouper").mockResolvedValue({ decoupes: [asset, asset] } as never)
   const garder = vi.spyOn(api, "corrigerLaBande").mockResolvedValue(disque.bande)
   render(<EcranAtelierDeBande identifiant="bande-main" univers={UNIVERS_VIDE} traitement={traitement} onFermer={vi.fn()} onErreur={vi.fn()} />)
-  await screen.findByLabelText("Outil de retouche")
+  await screen.findByLabelText("Table de retouche")
   fireEvent.click(screen.getByRole("button", { name: "arrêter l'animation" }))
   // Un changement préalable doit encore attendre l’enregistrement au retour.
   ;(document.querySelector("[data-case-en-grand]") as HTMLElement).focus()
@@ -166,8 +166,8 @@ test("le montage retrouve son nom, sa vitesse et son ordre après fermeture sans
   const props = { clip: disque.clip, onFermer: vi.fn(), onErreur: vi.fn() }
   const vue = render(<EcranMontage {...props} />)
   fireEvent.change(await screen.findByLabelText("Le nom de l'animation"), { target: { value: "Attaque lourde" } })
-  fireEvent.change(screen.getByLabelText("Vitesse, en chiffres"), { target: { value: "13" } })
-  fireEvent.blur(screen.getByLabelText("Vitesse, en chiffres"))
+  fireEvent.change(screen.getByLabelText("Cadence, en chiffres"), { target: { value: "13" } })
+  fireEvent.blur(screen.getByLabelText("Cadence, en chiffres"))
   const boutons = document.querySelectorAll('[aria-label="Ordre des frames retenues"] button')
   fireEvent.keyDown(boutons[2], { key: "ArrowLeft", altKey: true })
   await screen.findByText("Brouillon conservé sur cet ordinateur.")
@@ -178,7 +178,7 @@ test("le montage retrouve son nom, sa vitesse et son ordre après fermeture sans
   expect(screen.queryByText(/La version enregistrée a changé/)).toBeNull()
   fireEvent.click(reprendre)
   expect(garder).not.toHaveBeenCalled()
-  expect((screen.getByLabelText("Vitesse, en chiffres") as HTMLInputElement).value).toBe("13 images / s")
+  expect((screen.getByLabelText("Cadence, en chiffres") as HTMLInputElement).value).toBe("13 images / s")
   fireEvent.click(screen.getByRole("button", { name: /Garder « Attaque lourde »/ }))
   await waitFor(() => expect(garder).toHaveBeenCalledOnce())
   expect(garder.mock.calls[0][0]).toMatchObject({ nom: "Attaque lourde", cadence: 13, images: [0, 2, 1] })
@@ -200,7 +200,7 @@ test("RP22 — un sens déjà choisi se déclique, et l'aperçu porte le retourn
   const props = { identifiant: "bande-main", univers: UNIVERS_VIDE, traitement, onFermer: vi.fn(), onErreur: vi.fn() }
   render(<EcranAtelierDeBande {...props} />)
   fireEvent.click(await screen.findByRole("button", { name: "arrêter l'animation" }))
-  fireEvent.change(await screen.findByLabelText("Outil de retouche"), { target: { value: "retournement" } })
+  fireEvent.change(await screen.findByLabelText("Table de retouche"), { target: { value: "retournement" } })
   const bouton = await screen.findByRole("button", { name: "miroir gauche-droite" })
 
   // Rien n'est posé au départ : le cran ne se montre pas pressé pour une
@@ -236,7 +236,7 @@ test("RP22 — l'atelier d'une animation endort, réveille et vide une table, et
   const props = { identifiant: "bande-main", univers: UNIVERS_VIDE, traitement, onFermer: vi.fn(), onErreur: vi.fn() }
   render(<EcranAtelierDeBande {...props} />)
   fireEvent.click(await screen.findByRole("button", { name: "arrêter l'animation" }))
-  fireEvent.change(await screen.findByLabelText("Outil de retouche"), { target: { value: "retournement" } })
+  fireEvent.change(await screen.findByLabelText("Table de retouche"), { target: { value: "retournement" } })
   await screen.findByRole("button", { name: "miroir gauche-droite" })
 
   // La bascule de l'établi, posée contre la même table.

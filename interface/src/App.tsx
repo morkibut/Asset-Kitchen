@@ -1552,7 +1552,7 @@ function AtelierApp() {
    *  quatorze remises à zéro que les anciens `onAller` faisaient à la main. */
   const chemin: Segment[] = filDAriane(
     pile,
-    projetCourant?.nom ?? "sans projet",
+    projetCourant?.nom ?? "sans jeu",
     nommerLeLieu({
       choseOuverte,
       collectionOuverte,
@@ -1810,7 +1810,7 @@ function AtelierApp() {
   return (
     <div className="flex h-full bg-papier">
       <NavigationAtelier
-        jeu={projetCourant?.nom ?? "Sans projet"}
+        jeu={projetCourant?.nom ?? "Sans jeu"}
         descriptionJeu={`${projetCourant?.assets ?? 0} images dans ce jeu`}
         actif={installationOuverte || reglesOuvertes ? "reglages" : sortieOuverte ? "livraison" : surface === "fabrications" ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
         // **Toutes les familles, pas une seule** (`RP16`) : les emplacements
@@ -1857,7 +1857,7 @@ function AtelierApp() {
         // **Le nom du jeu ne s'écrit qu'une fois dans la bande.** Déployé, le
         // fil le porte à son premier étage ; sans fil, c'est le total qui le
         // porte.
-        nomDuJeu={chemin.length ? null : (projetCourant?.nom ?? "sans projet")}
+        nomDuJeu={chemin.length ? null : (projetCourant?.nom ?? "sans jeu")}
         montant={dollars(
           projetCourant ? projetCourant.total_usd : bibliotheque.sans_projet.total_usd,
         )}
@@ -2115,7 +2115,7 @@ function AtelierApp() {
           qu'on descend, et c'est vers lui qu'on remonte. */}
       {surfaceDisponible && tableauDeBord && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && (
         <TableauDeBord
-          jeu={projetCourant?.nom ?? "sans projet"}
+          jeu={projetCourant?.nom ?? "sans jeu"}
           images={projetCourant?.assets ?? 0}
           depense={
             projetCourant
@@ -2335,7 +2335,7 @@ function AtelierApp() {
           className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 bg-papier p-4"
         >
           <p className="mesure max-w-[420px] text-center text-[12px] leading-5 text-encre-4">
-            Choisis une famille dans le carnet à gauche, nomme une chose du jeu,
+            Choisis une famille dans le carnet à gauche, nomme un sujet du jeu,
             ou écris directement ce que tu veux fabriquer.
           </p>
           <input
@@ -2343,8 +2343,8 @@ function AtelierApp() {
             onChange={(e) => setNomDeLaCreationRapide(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") void creerRapidement() }}
             disabled={creationRapideEnCours}
-            placeholder="nommer une chose du jeu"
-            aria-label="Nom de la chose du jeu à créer"
+            placeholder="nommer un sujet du jeu"
+            aria-label="Nom du sujet du jeu à créer"
             className="mesure h-[34px] w-full max-w-[380px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre outline-none"
           />
           <button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal" onClick={() => { setCible(null); setPreparation({ type: "image" }) }}>Fabriquer une image libre</button>
@@ -2587,7 +2587,7 @@ function AtelierApp() {
             emploiOuvert
               ? libelleDEmploi(emploiOuvert)
               : surface === "galerie"
-                ? "La galerie"
+                ? "Galerie"
                 : "Ses images"
           }
           tableDeLaPorte={tableDeLaPorte}
@@ -2965,7 +2965,7 @@ function AtelierApp() {
            donnait déjà à l'autre import, aux mêmes signatures. */
         onDecouper={(id) => { setImportDuSujet(null); ouvrirLaRetouche(id, "decoupage") }}
         onMonter={(clip) => { setImportDuSujet(null); poserLaRacine("galerie"); setMontageOuvert(clip) }} />}
-      {tuilesOuvertes && bibliotheque.courant && <CadreDialogue titre="Les tuiles du jeu" onFermer={() => setTuilesOuvertes(false)} enfants={<><div className="flex justify-end border-b border-trait px-[22px] py-[8px]"><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setTuilesOuvertes(false)}>Revenir aux assets</button></div><Tuiles projet={bibliotheque.courant} onAsset={a => { setTuilesOuvertes(false); setPile(entrer(poser("galerie"), { genre: "retouche", asset: a.identifiant })) }} onLivraisons={() => { setTuilesOuvertes(false); setSortieOuverte(true) }} /></>} />}
+      {tuilesOuvertes && bibliotheque.courant && <CadreDialogue titre="Les tuiles du jeu" onFermer={() => setTuilesOuvertes(false)} enfants={<><div className="flex justify-end border-b border-trait px-[22px] py-[8px]"><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setTuilesOuvertes(false)}>‹ Les sujets</button></div><Tuiles projet={bibliotheque.courant} onAsset={a => { setTuilesOuvertes(false); setPile(entrer(poser("galerie"), { genre: "retouche", asset: a.identifiant })) }} onLivraisons={() => { setTuilesOuvertes(false); setSortieOuverte(true) }} /></>} />}
       {sonsOuverts && bibliotheque.courant && <CadreDialogue titre="Les sons du jeu" onFermer={() => setSonsOuverts(null)} enfants={<AtelierSon projet={bibliotheque.courant} identifiantInitial={sonsOuverts.identifiant} onFermer={() => setSonsOuverts(null)} onLivraisons={() => { setSonsOuverts(null); setSortieOuverte(true) }} />} />}
       {apercu && <Apercu sujet={apercu} onFermer={fermerApercu} />}
       </div>

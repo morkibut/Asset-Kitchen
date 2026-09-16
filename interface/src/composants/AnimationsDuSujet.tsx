@@ -223,7 +223,7 @@ function Marques({
         type="button"
         onClick={onRetenir}
         aria-pressed={retenue}
-        aria-label={`La retenir${contexte}`}
+        aria-label={`Choisir pour le jeu${contexte}`}
         className={`${commun} border-r border-trait-faible ${
           retenue ? "bg-ok text-encre-sur-signal" : "text-eteint hover:text-encre"
         }`}

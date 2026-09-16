@@ -568,7 +568,7 @@ export function EcranMontage({
             title="Échap referme — les bandes gardées sont déjà rangées"
             className="mesure ml-auto px-1 text-[10px] text-encre-4 hover:text-encre"
           >
-            ‹ revenir
+            {reprise ? "‹ L'atelier" : "‹ Galerie"}
           </button>
         </div>
 
@@ -845,7 +845,7 @@ export function EcranMontage({
             }
             setCadre(choisi)
           }}
-          libelles={{ clip: "du clip", bande: "de la bande", main: "à la main" }}
+          libelles={{ clip: "du clip", bande: "de l'animation", main: "à la main" }}
         />
         )}
         {!reprise && (
@@ -1020,7 +1020,7 @@ export function EcranMontage({
           <Libelle aide="bande.vitesse">le jeu</Libelle>
         </div>
         <Curseur
-          libelle="Vitesse"
+          libelle="Cadence"
           valeur={cadence}
           min={2}
           max={24}
@@ -1031,7 +1031,7 @@ export function EcranMontage({
           valeurs={["boucle", "aller-retour"] as const}
           valeur={sens}
           onChange={setSens}
-          libelles={{ boucle: "en boucle", "aller-retour": "aller-retour" }}
+          libelles={{ boucle: "Boucler", "aller-retour": "aller-retour" }}
         />
         <p className="mesure text-[10px] leading-4 text-encre-4">
           Cette vitesse est <b className="text-encre-3">celle qui partira dans le
@@ -1067,7 +1067,7 @@ export function EcranMontage({
                     disabled={sort !== null}
                     onClick={() => void sortir(bande.identifiant)}
                     aria-label={`Sortir l'animation ${bande.nom}`}
-                    title="planche de sprites, son descriptif, et une image qui tourne"
+                    title="planche d'images, son descriptif, et une image qui tourne"
                     className="mesure text-[10px] text-encre-4 hover:text-encre disabled:opacity-40"
                   >
                     {sort === bande.identifiant ? "…" : "Sortir ›"}
@@ -1412,11 +1412,11 @@ function Pellicule({
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="mesure text-[10px] text-encre-4">image 0</span>
+        <span className="mesure text-[10px] text-encre-4">frame 0</span>
         <span className="mesure text-[10px] text-encre-3">
-          {retenues.length} {retenues.length > 1 ? "images retenues" : "image retenue"}
+          {retenues.length} {retenues.length > 1 ? "frames retenues" : "frame retenue"}
         </span>
-        <span className="mesure text-[10px] text-encre-4">image {images - 1}</span>
+        <span className="mesure text-[10px] text-encre-4">frame {images - 1}</span>
       </div>
 
       {/* **La loupe, parce qu'à sept pixels de large on ne sait pas ce qu'on
@@ -1441,7 +1441,7 @@ function Pellicule({
           }}
         />
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="mesure text-[10px] text-encre-4">image {regarde}</span>
+          <span className="mesure text-[10px] text-encre-4">frame {regarde}</span>
 
           {/* **Le second geste de la pellicule** (A13), et il est ici plutôt que
               sur le ruban : à sept pixels de large, une cellule ne porte pas
@@ -1454,8 +1454,8 @@ function Pellicule({
           <button
             type="button"
             onClick={() => onPrelever(regarde)}
-            aria-label={`Mettre l'image ${regarde} de côté`}
-            title="elle entre en bibliothèque — rien n'est dépensé, et les images retenues ne bougent pas"
+            aria-label={`Mettre la frame ${regarde} de côté`}
+            title="elle entre en bibliothèque — rien n'est dépensé, et les frames retenues ne bougent pas"
             className="mesure w-fit px-1 text-[10px] text-signal hover:opacity-70"
           >
             Mettre de côté ›
@@ -1523,7 +1523,7 @@ function Retenues({
   if (retenues.length === 0) {
     return (
       <p className="mesure rounded-[2px] border border-dashed border-trait p-3 text-[10px] text-encre-4">
-        aucune image retenue — cliquez la pellicule, ou posez une des deux
+        aucune frame retenue — cliquez la pellicule, ou posez une des deux
         propositions
       </p>
     )

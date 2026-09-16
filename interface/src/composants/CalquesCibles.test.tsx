@@ -146,7 +146,7 @@ test("l'écran des calques nomme son porteur, y revient d'un clic, et garde ses 
   // Les versions de la cible restent atteignables : choisir une variante ne
   // supprime pas les autres (US-541), et le retour ne les cache pas.
   expect(within(screen.getByLabelText("Versions de cette cible")).getAllByRole("button")).toHaveLength(1)
-  fireEvent.click(screen.getByRole("button", { name: "Revenir à Le pèlerin" }))
+  fireEvent.click(screen.getByRole("button", { name: "‹ Le pèlerin" }))
   expect(onPorteur).toHaveBeenCalledTimes(1)
   expect(screen.getByLabelText("Versions de cette cible")).toBeInTheDocument()
 })
@@ -196,5 +196,5 @@ test("un passage peint sur cette frame se compte, et l'ordre par défaut reste l
 test("sans rappel de retour, l'écran n'invente aucun bouton vers le personnage", async () => {
   render(<CalquesDeLEmploi projet="marais" emploi={emploi} piece={piece} porteur={personnage} emplacements={[]} onRegler={vi.fn()} onHistorique={vi.fn()} onLesAutresEmplois={vi.fn()} />)
   await screen.findByRole("button", { name: /Marche lente · frame 1/ })
-  expect(screen.queryByRole("button", { name: /^Revenir à/ })).toBeNull()
+  expect(screen.queryByRole("button", { name: /^‹ / })).toBeNull()
 })

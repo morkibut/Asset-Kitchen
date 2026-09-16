@@ -290,7 +290,7 @@ export function Emploi({
               Un calque se pose sur le personnage. Il ne le remplace pas et ne le
               modifie pas.
             </p>
-            {projet && porte && porteur !== null && <button className="mt-[8px] h-[30px] self-start rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle" onClick={() => setHistorique(false)}>Revenir aux calques par image et par frame</button>}
+            {projet && porte && porteur !== null && <button className="mt-[8px] h-[30px] self-start rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle" onClick={() => setHistorique(false)}>‹ Calques par image et par frame</button>}
           </div>
           <div className="flex shrink-0 items-center gap-[8px]">
             {onPorteur && porteur !== null && (
@@ -299,7 +299,7 @@ export function Emploi({
                 onClick={onPorteur}
                 className="h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle transition-colors duration-120 hover:border-encre-3"
               >
-                Revenir à {porteur.nom}
+                ‹ {porteur.nom}
               </button>
             )}
             <button

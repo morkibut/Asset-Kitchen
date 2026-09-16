@@ -87,7 +87,7 @@ export function phrasesDeReserve(reserve: Reserve): string[] {
 
   if (reserve.cadence_s)
     dit.push(
-      `un appel toutes les ${reserve.cadence_s} secondes, pas davantage — c'est une cadence, pas un quota.`,
+      `une génération toutes les ${reserve.cadence_s} secondes, pas davantage — c'est une cadence, pas un quota.`,
     )
 
   // **Ce qui manquerait pour finir ce lot-ci**, annoncé avant qu'il ne parte.

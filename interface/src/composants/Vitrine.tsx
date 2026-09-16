@@ -94,7 +94,7 @@ export function EcranVitrine({
             onChange={(v) => setEchelle(Number(v) as Echelle)}
             libelles={Object.fromEntries(ECHELLES.map((e) => [String(e), `×${e}`]))}
           />
-          <Raison texte="multiples entiers seulement — un sprite agrandi d'une fois et demie fabrique des pixels qui n'existent pas" />
+          <Raison texte="multiples entiers seulement — une image agrandie d'une fois et demie fabrique des pixels qui n'existent pas" />
         </div>
 
         <div className="flex flex-col gap-1">
@@ -174,7 +174,7 @@ export function EcranVitrine({
       >
         {images.length === 0 ? (
           <p className="max-w-[504px] text-center font-serif text-[32px] leading-tight text-encre-4">
-            Rien n'est encore fait pour cette chose.
+            Rien n'est encore fait pour ce sujet.
           </p>
         ) : ensemble ? (
           // **Toutes ses poses dans la même boîte, au même facteur.** C'est

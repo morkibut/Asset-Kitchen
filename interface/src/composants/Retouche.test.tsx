@@ -412,17 +412,18 @@ describe("la barre : huit tables, un trait, deux fabriques", () => {
 
   test("le vocabulaire est celui des planches, pas celui du code", () => {
     monter()
-    // `grille` se lit *Pixéliser*, `quantification` se lit *Couleurs*, `bords`
-    // se lit *Nettoyer* — la planche nomme le geste, le code nomme la place.
+    // `grille` se lit *Pixelisation*, `quantification` se lit *Couleurs*,
+    // `bords` se lit *Nettoyage* — la planche nomme le geste, le code nomme
+    // la place.
     for (const nom of [
-      "Détourer",
-      "Recadrer",
-      "Pixéliser",
+      "Détourage",
+      "Recadrage",
+      "Pixelisation",
       "Couleurs",
-      "Nettoyer",
-      "Le contour",
-      "Retourner",
-      "La main",
+      "Nettoyage",
+      "Contour",
+      "Retournement",
+      "Main",
       "Découper",
       "Superposer",
     ])
@@ -466,7 +467,7 @@ describe("la barre : huit tables, un trait, deux fabriques", () => {
 describe("le grisé porte sa raison, et le geste qui le rallume", () => {
   test("la marge est éteinte quand la case l'avale, et dit où aller", async () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
 
     const marge = await screen.findByLabelText("marge du recadrage")
     // ⚠️ **Éteinte pour de bon** : c'est la moitié de la règle que le code ne
@@ -477,7 +478,7 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
     ).toBeTruthy()
     // Et le geste qui la remplace est un vrai bouton, pas une phrase.
     expect(
-      within(colonne()).getByRole("button", { name: /Pixéliser/ }),
+      within(colonne()).getByRole("button", { name: /Pixelisation/ }),
     ).toBeTruthy()
   })
 
@@ -487,7 +488,7 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
       recadrage: { ...MESURES.recadrage, marge_sans_effet: false },
     }
     monter({ mesures: sansCase })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
 
     const marge = await screen.findByLabelText("marge du recadrage")
     expect((marge as HTMLInputElement).disabled).toBe(false)
@@ -498,7 +499,7 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
     // Une image entièrement opaque — une tuile de terrain qui remplit son
     // carré. Le critère est la mesure, jamais la famille.
     monter({ mesures: { ...MESURES, opaque: true } })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Le contour" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Contour" }))
 
     expect(
       await within(colonne()).findByText(/entièrement opaque/i),
@@ -515,7 +516,7 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
 
   test("un moteur que la machine n'a pas est montré grisé, jamais retiré", async () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     const modele = await within(colonne()).findByRole("button", { name: "modèle" })
     expect((modele as HTMLButtonElement).disabled).toBe(true)
     // **Montré, pas caché** : c'est ce qui dit ce que l'atelier saurait faire.
@@ -529,14 +530,14 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
     // `docs/DESIGN.md` règle 2 l'interdit. L'essai passe les huit tables.
     monter()
     for (const nom of [
-      "Détourer",
-      "Recadrer",
-      "Pixéliser",
+      "Détourage",
+      "Recadrage",
+      "Pixelisation",
       "Couleurs",
-      "Nettoyer",
-      "Le contour",
-      "Retourner",
-      "La main",
+      "Nettoyage",
+      "Contour",
+      "Retournement",
+      "Main",
     ]) {
       fireEvent.click(within(barre()).getByRole("button", { name: nom }))
       const col = colonne()
@@ -555,7 +556,7 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
     // c'était la table la plus creuse de la chaîne. Elle ne l'est plus : les
     // dix boutons doivent tous répondre à un clic, aucun grisé.
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Retourner" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Retournement" }))
     const col = colonne()
     await waitFor(() => expect(col.textContent).toBeTruthy())
 
@@ -579,7 +580,7 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
 
   test("le détourage dit que la couleur du fond se devine, sauf si une passe la vise", async () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     expect(
       await within(colonne()).findByText(
         /sauf si elle vise la couleur déclarée du jeu/i,
@@ -591,7 +592,7 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
 describe("le plafond : la case en pixel art, la finesse en dessin", () => {
   test("en pixel art la table propose des carrés, jusqu'à 512", async () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Pixéliser" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Pixelisation" }))
     const col = colonne()
     await waitFor(() => expect(within(col).getByText("taille de case")).toBeTruthy())
     expect(within(col).getByRole("button", { name: "512" })).toBeTruthy()
@@ -602,7 +603,7 @@ describe("le plafond : la case en pixel art, la finesse en dessin", () => {
     // ⚠️ La moitié visible de la contradiction du plafond : la route refusait
     // 1024, et la table n'avait de toute façon aucun cran pour le demander.
     monter({ univers: univers({ style: "dessin", cible_px: 1024 }) })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Pixéliser" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Pixelisation" }))
     const col = colonne()
     await waitFor(() => expect(within(col).getByText("finesse")).toBeTruthy())
     expect(within(col).getByRole("button", { name: "1024" })).toBeTruthy()
@@ -616,7 +617,7 @@ describe("le plafond : la case en pixel art, la finesse en dessin", () => {
     const { appels } = monter({
       univers: univers({ style: "dessin", cible_px: 1024 }),
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Pixéliser" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Pixelisation" }))
     const col = colonne()
     await waitFor(() => expect(within(col).getByText("finesse")).toBeTruthy())
     await act(async () => {
@@ -792,7 +793,7 @@ describe("le grossissement libre entre 1 et 250 % (B24, déménagé de Tables.ts
       expect(
         (within(zoom).getByLabelText("Pour cent d'agrandissement") as HTMLInputElement).value,
       ).toBe("100")
-      fireEvent.click(within(zoom).getByRole("button", { name: "ajusté" }))
+      fireEvent.click(within(zoom).getByRole("button", { name: "Adapter" }))
       expect(
         Number(
           (within(zoom).getByLabelText("Pour cent d'agrandissement") as HTMLInputElement).value,
@@ -825,7 +826,7 @@ describe("le grossissement libre entre 1 et 250 % (B24, déménagé de Tables.ts
           recette: recetteDeTravail(),
         }),
       })
-      fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+      fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
       const boite = await waitFor(() => {
         const f = document.querySelector("[data-surface='recadrage']")
         expect(f?.getAttribute("data-surface-au-cadre")).toBe("")
@@ -983,7 +984,7 @@ describe("un curseur prend un chiffre", () => {
   /** *Nettoyer*, et sa tache minimale — de zéro à soixante-quatre pixels. */
   const ouvrirNettoyer = async () => {
     const rendu = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyage" }))
     const champ = (await screen.findByLabelText(
       "tache minimale, en chiffres",
     )) as HTMLInputElement
@@ -1173,7 +1174,7 @@ describe("la jauge", () => {
         onErreur={vi.fn()}
       />,
     )
-    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyage" }))
     const seuil = await screen.findByLabelText("tache minimale")
     fireEvent.change(seuil, { target: { value: "6" } })
     fireEvent.pointerUp(seuil)
@@ -1217,7 +1218,7 @@ describe("la jauge", () => {
         onErreur={vi.fn()}
       />,
     )
-    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyage" }))
     const seuil = await screen.findByLabelText("tache minimale")
     fireEvent.change(seuil, { target: { value: "6" } })
     fireEvent.pointerUp(seuil)
@@ -1236,7 +1237,7 @@ describe("la jauge", () => {
 describe("une place s'éteint sans se vider", () => {
   test("l'interrupteur envoie la veille et ne touche à aucune valeur", async () => {
     const { appels } = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
     fireEvent.click(await within(colonne()).findByRole("button", { name: "L'endormir" }))
 
     const pose = appels.filter((a) => a.methode === "PUT" && a.url.includes("/recipe")).at(-1)
@@ -1252,7 +1253,7 @@ describe("une place s'éteint sans se vider", () => {
         recette: recetteDeTravail({ veille: ["recadrage"] } as Partial<Recette>),
       }),
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
     expect(
       await within(colonne()).findByText(/ses réglages sont gardés/i),
     ).toBeTruthy()
@@ -1293,7 +1294,7 @@ describe("une coordonnée ne voyage pas, et l'écran le dit", () => {
 
   test("la main dit que le pinceau se pose sur l'image", () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "La main" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Main" }))
     expect(
       within(colonne()).getByText(/un passage de la main ne voyage pas/i),
     ).toBeTruthy()
@@ -1324,7 +1325,7 @@ describe("les deux fabriques s'ouvrent dans le cadre, sans repasser par l'ancien
     fireEvent.click(within(barre()).getByRole("button", { name: "Découper" }))
     fireEvent.click(await screen.findByRole("button", { name: "fermer la fabrique" }))
 
-    expect(await screen.findByRole("button", { name: "Recadrer" })).toBeTruthy()
+    expect(await screen.findByRole("button", { name: "Recadrage" })).toBeTruthy()
     expect(colonne()).toBeTruthy()
     expect(onFermer).not.toHaveBeenCalled()
   })
@@ -1406,7 +1407,7 @@ const dernierePose = (appels: { url: string; methode: string; corps: unknown }[]
 describe("les quatre surfaces se posent depuis l'écran neuf", () => {
   test("le rectangle de recadrage se glisse sur l'image, et part dans la recette", async () => {
     const { appels } = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
 
     const toile = await waitFor(() => {
       const noeud = document.querySelector("[data-cadre-recadrage]")
@@ -1430,7 +1431,7 @@ describe("les quatre surfaces se posent depuis l'écran neuf", () => {
 
   test("le rectangle réellement gardé se voit en pointillé, sous le tracé", async () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
     const obtenue = await waitFor(() => {
       const noeud = document.querySelector("[data-boite-obtenue]")
       if (!noeud) throw new Error("pas de boîte obtenue")
@@ -1443,7 +1444,7 @@ describe("les quatre surfaces se posent depuis l'écran neuf", () => {
 
   test("« une boîte tracée » n'est plus grisée pour toujours, et sa raison dit le geste", async () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
     const cran = await within(colonne()).findByRole("button", { name: "une boîte tracée" })
     expect((cran as HTMLButtonElement).disabled).toBe(true)
     // La raison ne renvoie plus ailleurs : le geste se fait sur cet écran-ci.
@@ -1458,7 +1459,7 @@ describe("les quatre surfaces se posent depuis l'écran neuf", () => {
         } as Partial<Recette>),
       }),
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
     expect(
       (
         (await within(colonne()).findByRole("button", {
@@ -1525,7 +1526,7 @@ describe("les quatre surfaces se posent depuis l'écran neuf", () => {
 
   test("la main peint sur le rendu, et le curseur est le carré du pixel visé", async () => {
     const { appels } = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "La main" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Main" }))
 
     const toile = await waitFor(() => {
       const noeud = document.querySelector("[data-toile-main]")
@@ -1584,7 +1585,7 @@ describe("les trois réglages du retournement se règlent dans l'écran neuf", (
         recette: recetteDeTravail({ retournement: { sens } } as unknown as Partial<Recette>),
       }),
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Retourner" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Retournement" }))
     return rendu
   }
 
@@ -1635,7 +1636,7 @@ describe("le retournement se déclique, et la table s'endort et se vide comme le
         recette: recetteDeTravail({ retournement: { sens } } as unknown as Partial<Recette>),
       }),
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Retourner" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Retournement" }))
     return rendu
   }
 
@@ -1654,7 +1655,7 @@ describe("le retournement se déclique, et la table s'endort et se vide comme le
 
   test("une place sans retournement ne montre aucun sens pressé", async () => {
     monter({ asset: image({ recette: recetteDeTravail({ retournement: null }) }) })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Retourner" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Retournement" }))
     const bouton = await within(colonne()).findByRole("button", { name: "miroir gauche-droite" })
     // **La panne trouvée par l'auteur** : le cran restait pressé même la
     // table vide, si bien qu'un premier clic ne semblait rien changer.
@@ -1684,7 +1685,7 @@ describe("le retournement se déclique, et la table s'endort et se vide comme le
 describe("le nettoyage part de zéro", () => {
   test("sans place posée, le seuil affiché est zéro et rien n'est annoncé effacé", async () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyage" }))
     const seuil = (await screen.findByLabelText("tache minimale")) as HTMLInputElement
     // ⚠️ **Zéro, pas trois.** L'écran affichait 3 px et annonçait des taches
     // effacées alors que rien n'était posé et que l'image n'avait pas bougé.
@@ -1727,7 +1728,7 @@ describe("la colonne des sœurs (B24, déménagée de Tables.tsx)", () => {
         image({ identifiant: "img-2", label: "le pèlerin, en marche" }),
       ],
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
     await screen.findByLabelText("marge du recadrage")
 
     fireEvent.click(within(soeursColonne()).getByTitle("le pèlerin, en marche"))
@@ -1744,12 +1745,12 @@ describe("la colonne des sœurs (B24, déménagée de Tables.tsx)", () => {
       image({ identifiant: "img-2", label: "le pèlerin, en marche" }),
     ]
     const { reouvrir } = monter({ asset: soeurs[0], soeurs })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Recadrage" }))
     await screen.findByLabelText("marge du recadrage")
 
     reouvrir({ asset: soeurs[1], soeurs })
 
-    expect(within(barre()).getByRole("button", { name: "Recadrer" }).getAttribute("aria-pressed")).toBe(
+    expect(within(barre()).getByRole("button", { name: "Recadrage" }).getAttribute("aria-pressed")).toBe(
       "true",
     )
     expect(screen.getByLabelText("marge du recadrage")).toBeTruthy()
@@ -1903,27 +1904,27 @@ describe("le presse-papiers et les recettes nommées (B24, U5 déménagé de Tab
   test("la recette courante en un mot se lit au pied du panneau", () => {
     monter()
     const panneau = ouvrirLePanneau()
-    expect(panneau.getByText(/Détourer/)).toBeTruthy()
+    expect(panneau.getByText(/Détourage/)).toBeTruthy()
   })
 })
 
 describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)", () => {
   test("le geste est proposé sous la table du détourage, jamais imposé", async () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     expect(
       await within(colonne()).findByRole("button", {
-        name: /enregistrer ce réglage comme défaut du projet/i,
+        name: /enregistrer ce réglage comme défaut du jeu/i,
       }),
     ).toBeTruthy()
   })
 
   test("ouvrir le geste propose deux portées, choisies — jamais devinées", async () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     fireEvent.click(
       await within(colonne()).findByRole("button", {
-        name: /enregistrer ce réglage comme défaut du projet/i,
+        name: /enregistrer ce réglage comme défaut du jeu/i,
       }),
     )
     expect(
@@ -1941,10 +1942,10 @@ describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)
         detourage: { ...IMPOSE_PAR_DEFAUT.detourage, famille: "" },
       },
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     fireEvent.click(
       await within(colonne()).findByRole("button", {
-        name: /enregistrer ce réglage comme défaut du projet/i,
+        name: /enregistrer ce réglage comme défaut du jeu/i,
       }),
     )
     expect(within(colonne()).queryByRole("button", { name: /pour tout ce que/i })).toBeNull()
@@ -1953,10 +1954,10 @@ describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)
 
   test("poser la portée « nature » écrit dans l'univers, et le dit", async () => {
     const { onUnivers, appels } = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     fireEvent.click(
       await within(colonne()).findByRole("button", {
-        name: /enregistrer ce réglage comme défaut du projet/i,
+        name: /enregistrer ce réglage comme défaut du jeu/i,
       }),
     )
     await act(async () => {
@@ -1974,10 +1975,10 @@ describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)
     const { appels } = monter({
       univers: univers({ detourages: { objets: { ...recetteDeTravail().passes[0] } } }),
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     fireEvent.click(
       await within(colonne()).findByRole("button", {
-        name: /enregistrer ce réglage comme défaut du projet/i,
+        name: /enregistrer ce réglage comme défaut du jeu/i,
       }),
     )
     await act(async () => {
@@ -2011,10 +2012,10 @@ describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)
         } as Partial<Recette>),
       }),
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     fireEvent.click(
       await within(colonne()).findByRole("button", {
-        name: /enregistrer ce réglage comme défaut du projet/i,
+        name: /enregistrer ce réglage comme défaut du jeu/i,
       }),
     )
     expect(within(colonne()).getByText(/la passe 1 seule/i)).toBeTruthy()
@@ -2040,10 +2041,10 @@ describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)
         } as Partial<Recette>),
       }),
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     fireEvent.click(
       await within(colonne()).findByRole("button", {
-        name: /enregistrer ce réglage comme défaut du projet/i,
+        name: /enregistrer ce réglage comme défaut du jeu/i,
       }),
     )
     expect(within(colonne()).getByText(/ne part pas avec/i)).toBeTruthy()
@@ -2051,10 +2052,10 @@ describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)
 
   test("annuler referme le geste sans rien poser", async () => {
     const { appels } = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     fireEvent.click(
       await within(colonne()).findByRole("button", {
-        name: /enregistrer ce réglage comme défaut du projet/i,
+        name: /enregistrer ce réglage comme défaut du jeu/i,
       }),
     )
     fireEvent.click(within(colonne()).getByRole("button", { name: "annuler" }))
@@ -2066,10 +2067,10 @@ describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)
 
   test("aucune image déjà faite n'est retouchée — l'écran le rappelle", async () => {
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     fireEvent.click(
       await within(colonne()).findByRole("button", {
-        name: /enregistrer ce réglage comme défaut du projet/i,
+        name: /enregistrer ce réglage comme défaut du jeu/i,
       }),
     )
     expect(within(colonne()).getByText(/vaut pour ce qui arrivera/i)).toBeTruthy()
@@ -2077,9 +2078,9 @@ describe("promouvoir un détourage en défaut du projet (M7, déménagé en B24)
 
   test("sans passe posée, le geste ne paraît pas — un défaut sans réglage n'a rien à garder", () => {
     monter({ asset: image({ recette: RECETTE_VIDE }) })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     expect(
-      screen.queryByRole("button", { name: /enregistrer ce réglage comme défaut du projet/i }),
+      screen.queryByRole("button", { name: /enregistrer ce réglage comme défaut du jeu/i }),
     ).toBeNull()
   })
 })
@@ -2122,19 +2123,19 @@ describe("les réglages rendus sans essai par le départ de Places.test.tsx", ()
 
   test("le grain de couleur part dans la recette", async () => {
     const { appels } = monter()
-    await glisser("Nettoyer", "grain de couleur", 3)
+    await glisser("Nettoyage", "grain de couleur", 3)
     await waitFor(() => expect(dernierePose(appels)?.bords?.grain_min).toBe(3))
   })
 
   test("le lissage part dans la recette", async () => {
     const { appels } = monter()
-    await glisser("Nettoyer", "lissage", 2)
+    await glisser("Nettoyage", "lissage", 2)
     await waitFor(() => expect(dernierePose(appels)?.bords?.lissage).toBe(2))
   })
 
   test("le vote des voisins part dans la recette", async () => {
     const { appels } = monter()
-    await glisser("Nettoyer", "vote des voisins", 2)
+    await glisser("Nettoyage", "vote des voisins", 2)
     await waitFor(() => expect(dernierePose(appels)?.bords?.vote_voisins).toBe(2))
   })
 
@@ -2144,11 +2145,11 @@ describe("les réglages rendus sans essai par le départ de Places.test.tsx", ()
     // la même clé rendrait l'un des deux curseurs muet sans que rien ne le
     // dise.
     const { appels } = monter()
-    await glisser("Nettoyer", "ronger puis regonfler", 2)
+    await glisser("Nettoyage", "ronger puis regonfler", 2)
     await waitFor(() => expect(dernierePose(appels)?.bords?.ronger_regonfler).toBe(2))
     expect(dernierePose(appels)?.bords?.regonfler_ronger).toBe(0)
 
-    await glisser("Nettoyer", "regonfler puis ronger", 3)
+    await glisser("Nettoyage", "regonfler puis ronger", 3)
     await waitFor(() => expect(dernierePose(appels)?.bords?.regonfler_ronger).toBe(3))
     // Et le premier n'a pas été effacé au passage : la table part entière.
     expect(dernierePose(appels)?.bords?.ronger_regonfler).toBe(2)
@@ -2159,10 +2160,10 @@ describe("les réglages rendus sans essai par le départ de Places.test.tsx", ()
     // entouré de sujet, une poche de fond est opaque et enfermée. Les
     // confondre a déjà coûté cher au détourage.
     const { appels } = monter()
-    await glisser("Nettoyer", "boucher les trous jusqu'à", 5)
+    await glisser("Nettoyage", "boucher les trous jusqu'à", 5)
     await waitFor(() => expect(dernierePose(appels)?.bords?.boucher_jusqua).toBe(5))
 
-    await glisser("Nettoyer", "reboucher les poches de fond jusqu'à", 7)
+    await glisser("Nettoyage", "reboucher les poches de fond jusqu'à", 7)
     await waitFor(() => expect(dernierePose(appels)?.bords?.reboucher_jusqua).toBe(7))
     expect(dernierePose(appels)?.bords?.boucher_jusqua).toBe(5)
   })
@@ -2171,13 +2172,13 @@ describe("les réglages rendus sans essai par le départ de Places.test.tsx", ()
     // **Un rang, jamais une taille** : ce que la tache minimale ne peut pas
     // faire — effacer un amas collé au sujet, quelle que soit son aire.
     const { appels } = monter()
-    await glisser("Nettoyer", "garder les plus grandes", 2)
+    await glisser("Nettoyage", "garder les plus grandes", 2)
     await waitFor(() => expect(dernierePose(appels)?.bords?.garder).toBe(2))
   })
 
   test("épargner les traits fins s'éteint, et l'écran dit ce que ça change", async () => {
     const { appels } = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Nettoyage" }))
     expect(
       await within(colonne()).findByText(/un pixel de large — survit au rongement/),
     ).toBeTruthy()
@@ -2318,7 +2319,7 @@ describe("les six capacités rattrapées par B26", () => {
 
   const ouvrirLeDetourage = (surplus: Parameters<typeof monter>[0] = {}) => {
     const rendu = monter(surplus)
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourer" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
     return rendu
   }
 
@@ -2422,7 +2423,7 @@ describe("les six capacités rattrapées par B26", () => {
     // **Un pour cent n'est pas une mesure** : ce que la hauteur décide est un
     // nombre de carrés, et c'est celui-là qu'on compare d'une image à l'autre.
     monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Pixéliser" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Pixelisation" }))
     expect(
       await within(colonne()).findByText("100 % d'un personnage"),
     ).toBeTruthy()
@@ -2445,7 +2446,7 @@ describe("les six capacités rattrapées par B26", () => {
         } as Partial<Recette>),
       }),
     })
-    fireEvent.click(within(barre()).getByRole("button", { name: "Pixéliser" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Pixelisation" }))
     expect(await within(colonne()).findByText("3 personnages de haut")).toBeTruthy()
     expect(
       within(colonne()).getByText("l'image revient en 192 carrés de côté"),
@@ -2458,7 +2459,7 @@ describe("les six capacités rattrapées par B26", () => {
     // **Un libellé de trois mots ne dit pas ce qu'on gagne et ce qu'on perd**,
     // et c'est précisément ce qui départage les quatre.
     const { appels } = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Pixéliser" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Pixelisation" }))
     expect(
       await within(colonne()).findByText("brut : un pixel sur N gardé, les autres jetés"),
     ).toBeTruthy()
@@ -2518,7 +2519,7 @@ describe("les six capacités rattrapées par B26", () => {
     // un jeu est un fait qui se lit, et il mérite d'être dit ici puisque la
     // réduction des couleurs est déjà passée et ne la rattrapera pas.
     const { appels } = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Le contour" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Contour" }))
 
     // Rien n'est posé : la couleur montrée est proposée, pas choisie.
     expect(
@@ -2539,7 +2540,7 @@ describe("les six capacités rattrapées par B26", () => {
 
   test("la palette entière se prend à la pastille, pas seulement ses douze premières", async () => {
     const { appels } = monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Le contour" }))
+    fireEvent.click(within(barre()).getByRole("button", { name: "Contour" }))
     fireEvent.click(
       await within(colonne()).findByRole("button", { name: "Prendre #8a5a2c" }),
     )
@@ -2557,12 +2558,12 @@ describe("associer le rendu à une pièce", () => {
   test("le bouton mène à l'association, sans rien enregistrer d'autre", () => {
     const onAssocierEquipement = vi.fn()
     monter({ onAssocierEquipement })
-    fireEvent.click(screen.getByRole("button", { name: "Associer à un équipement" }))
+    fireEvent.click(screen.getByRole("button", { name: "Utiliser comme équipement…" }))
     expect(onAssocierEquipement).toHaveBeenCalledTimes(1)
   })
 
   test("sans jeu ouvert, la retouche n'invente pas cette porte", () => {
     monter()
-    expect(screen.queryByRole("button", { name: "Associer à un équipement" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Utiliser comme équipement…" })).toBeNull()
   })
 })

@@ -494,13 +494,13 @@ describe("le volet", () => {
 describe("revenir au personnage qui porte", () => {
   test("le bouton nomme le porteur et remonte `onPorteur`", () => {
     const { onPorteur } = monter()
-    fireEvent.click(screen.getByRole("button", { name: "Revenir à Le goliath" }))
+    fireEvent.click(screen.getByRole("button", { name: "‹ Le goliath" }))
     expect(onPorteur).toHaveBeenCalledTimes(1)
   })
 
   test("un emploi dont le porteur n'est plus dans le jeu n'offre nulle part où revenir", () => {
     monter({ porteur: null })
-    expect(screen.queryByRole("button", { name: /^Revenir à/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: /^‹ / })).toBeNull()
   })
 
   test("il ne remplace pas l'accès aux autres emplois de la pièce", () => {

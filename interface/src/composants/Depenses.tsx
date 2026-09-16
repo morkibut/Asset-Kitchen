@@ -55,9 +55,9 @@ const MARQUES: Record<Issue, { nom: string; explication: string }> = {
   garde: { nom: "gardé", explication: "l'image est en bibliothèque" },
   perdu: {
     nom: "payé pour rien",
-    explication: "l'appel a réussi, il a été facturé, rien n'en est resté",
+    explication: "la génération a réussi, elle a été facturée, rien n'en est resté",
   },
-  refuse: { nom: "refusé", explication: "l'appel a échoué avant de rendre une image" },
+  refuse: { nom: "refusé", explication: "la génération a échoué avant de rendre une image" },
 }
 
 /** L'issue d'un appel entier, déduite de ses emplacements.
@@ -263,7 +263,7 @@ export function EcranDepenses({
               (F2). Jamais additionnés : un total en dollars reste un total en
               dollars, et une quantité de jetons ne s'y fond pas. */}
           <span className="mesure ml-auto shrink-0 whitespace-nowrap text-[10.5px] text-encre-3">
-            {retenus.length} appel{retenus.length > 1 ? "s" : ""} ·{" "}
+            {retenus.length} génération{retenus.length > 1 ? "s" : ""} ·{" "}
             {dollars(retenus.reduce((somme, a) => somme + a.cout_usd, 0))}
             {sansArgent(retenus).map((ligne) => (
               <span key={ligne.unite}> · {quantite(ligne.quantite, ligne.unite)}</span>
@@ -294,7 +294,7 @@ export function EcranDepenses({
               <div className="mesure flex h-[26px] items-center gap-[8px] border-b border-trait bg-papier-cote px-[8px] text-[10.5px] tracking-[0.14em] text-encre-4 uppercase">
                 <span>{paquet.jour}</span>
                 <span className="normal-case tracking-normal">
-                  · {paquet.appels.length} appel{paquet.appels.length > 1 ? "s" : ""}
+                  · {paquet.appels.length} génération{paquet.appels.length > 1 ? "s" : ""}
                 </span>
                 {/* Le total du jour en argent, et ce qui est parti sans argent
                     à côté (F2). */}
@@ -335,7 +335,7 @@ export function EcranDepenses({
         {/* Le seul écran du produit qui ne dépense ni n'efface, et il le dit. */}
         <div className="mesure flex h-[26px] shrink-0 items-center gap-[14px] border-t border-trait px-[8px] text-[10.5px] text-encre-3">
           <span>
-            {appels.length} appel{appels.length > 1 ? "s" : ""} ·{" "}
+            {appels.length} génération{appels.length > 1 ? "s" : ""} ·{" "}
             {appels.reduce((somme, a) => somme + a.garde, 0)} images gardées
           </span>
           <span className="ml-auto">rien ne se paie ni ne s'efface depuis cet écran</span>
@@ -500,7 +500,7 @@ function ColonneTotaux({
         {(tout?.par_unite ?? []).map((u) => (
           <Total
             key={u.unite}
-            nom={`et, sans argent, ${u.appels} appel${u.appels > 1 ? "s" : ""}`}
+            nom={`et, sans argent, ${u.appels} génération${u.appels > 1 ? "s" : ""}`}
             texte={quantite(u.quantite, u.unite)}
           />
         ))}
@@ -762,7 +762,7 @@ function FicheAppel({
   if (!appel)
     return (
       <aside {...PANNEAU} className="flex min-h-0 flex-col bg-papier-cote">
-        <EnTete>L'appel choisi</EnTete>
+        <EnTete>La génération choisie</EnTete>
         <p className="mesure p-[8px] text-[10.5px] text-encre-3">
           choisis une ligne — le texte envoyé, l'image revenue et le détail du prix
           sont ici, et pas dans la liste
@@ -786,7 +786,7 @@ function FicheAppel({
 
   return (
     <aside {...PANNEAU} className="flex min-h-0 flex-col bg-papier-cote">
-      <EnTete>L'appel de {HEURE.format(new Date(appel.cree_le * 1000))}</EnTete>
+      <EnTete>La génération de {HEURE.format(new Date(appel.cree_le * 1000))}</EnTete>
       <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[8px]">
         <div className="flex flex-col gap-[4px]">
           <Rangee cle_="sujet" valeur={sujet(appel).nom} />
@@ -798,7 +798,7 @@ function FicheAppel({
           <Rangee cle_="jeu" valeur={appel.projet_nom ?? "hors jeu"} />
         </div>
 
-        <Bloc titre="Ce que l'appel a consommé">
+        <Bloc titre="Ce que la génération a consommé">
           <Rangee cle_="payé" valeur={depense(appel.cout_usd, appel.unite)} />
           {/* **Ce qu'il a consommé, avec son mot** (F2). */}
           {!estArgent(appel.unite) && (
@@ -840,11 +840,11 @@ function FicheAppel({
         {(rafale || surLeSujet > 0) && (
           <div className="border-l-2 border-signal pl-[8px]">
             <p className="mesure mb-[4px] text-[10.5px] tracking-[0.14em] text-signal uppercase">
-              Ce que la liste dit de cet appel
+              Ce que la liste dit de cette génération
             </p>
             {rafale && (
               <Rangee
-                cle_={`${rafale.appels} appels d'affilée sur ce sujet`}
+                cle_={`${rafale.appels} générations d'affilée sur ce sujet`}
                 valeur={`${Math.max(1, Math.round((rafale.fin - rafale.debut) / 60))} min · ${
                   estArgent(rafale.unite)
                     ? dollars(rafale.cout_usd)

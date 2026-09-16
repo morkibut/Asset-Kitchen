@@ -129,23 +129,20 @@ TITRE_A_L_ECRAN = {
     "interface/src/composants/Guide.tsx": 8,
 }
 
-# Les écrans de l'ossature, et ceux qui pendent directement sous eux : c'est là
-# que se lisent les retours en arrière. Un retour vers l'intérieur d'un écran —
-# une frame, un calque, une étape — n'est pas un retour d'ossature.
-ECRANS_DE_L_OSSATURE = (
-    CARNET,
-    FICHE,
-    GUIDE,
-    "interface/src/composants/TableauDeBord.tsx",
-    "interface/src/composants/Univers.tsx",
-    "interface/src/composants/Famille.tsx",
-    "interface/src/composants/GalerieMedias.tsx",
-    "interface/src/composants/Fabrications.tsx",
-    "interface/src/composants/Livraisons.tsx",
-    "interface/src/composants/Sortie.tsx",
-    "interface/src/composants/Comparer.tsx",
-    "interface/src/composants/GrilleDuJeu.tsx",
-)
+# La forme d'un retour en arrière n'est pas réservée à l'ossature : un écran
+# de fabrication, une fenêtre d'équipement, une table de retouche s'y sont mis
+# à écrire « ‹ revenir » aussi bien qu'un écran du carnet. Le relevé du
+# 15 septembre en a compté trente-deux, dispersés bien au-delà des douze
+# fichiers qu'une première liste fixe avait fini par oublier. Le registre 4 lit
+# donc **tous les composants**, et seuls les essais en sont exclus — un nom de
+# variable de test qui commence par `‹` n'existe pas, mais autant le dire.
+def fichiers_de_composants() -> list[str]:
+    dossier = SRC / "composants"
+    return sorted(
+        str(chemin.relative_to(RACINE)).replace("\\", "/")
+        for chemin in dossier.glob("*.tsx")
+        if not chemin.name.endswith(".test.tsx")
+    )
 
 
 # ── Lire du code sans lire ses commentaires ─────────────────────────────────
@@ -184,13 +181,19 @@ def lire(relatif: str) -> tuple[str, str] | None:
 # ── Les quatre registres ────────────────────────────────────────────────────
 
 
-def suite_nommee(propre: str, nom_du_tableau: str) -> list[tuple[str, int]]:
-    """Les `nom: "…"` d'un tableau déclaré, dans l'ordre, avec leur ligne.
+def suite_nommee(
+    propre: str, nom_du_tableau: str, champ: str = "nom"
+) -> list[tuple[str, int]]:
+    """Les `champ: "…"` d'un tableau déclaré, dans l'ordre, avec leur ligne.
 
     ⚠️ **Le crochet du type n'est pas celui du tableau.** `const PORTES: {…}[] =
     [` en porte deux paires, et s'arrêter au premier `]` venu rend une liste
     vide — un banc qui annonce alors « zéro porte » envoie chercher un défaut
     qui n'existe pas. On part donc du `= [`, et on compte les crochets.
+
+    `champ` vaut `"nom"` par défaut ; `portes_du_carnet` l'appelle aussi avec
+    `"court"`, pour le libellé replié du carnet — un second nom, jamais lu par
+    ce banc jusqu'ici, et qui peut tout autant porter un mot de la liste noire.
     """
     depart = re.search(rf"const\s+{nom_du_tableau}\b[^=]*=\s*\[", propre)
     if depart is None:
@@ -202,7 +205,7 @@ def suite_nommee(propre: str, nom_du_tableau: str) -> list[tuple[str, int]]:
     tranche = propre[depart.end() : fin]
     return [
         (trouve.group(1), ligne_de(propre, depart.end() + trouve.start()))
-        for trouve in re.finditer(r'nom:\s*"((?:[^"\\]|\\.)*)"', tranche)
+        for trouve in re.finditer(rf'{champ}:\s*"((?:[^"\\]|\\.)*)"', tranche)
     ]
 
 
@@ -368,6 +371,13 @@ def main() -> int:
         lignes.append(
             "  " + " · ".join(nom for nom, _ in trouvees) if trouvees else "  aucune porte lue"
         )
+        # Le libellé replié du carnet (`court:`) n'est pas dans la liste fermée
+        # — « Jeu », « Toile », « File » n'ont pas à reprendre le mot de la
+        # porte à la lettre — mais il reste un libellé d'ossature à part
+        # entière, affiché tel quel quand le carnet se replie. Un mot de la
+        # liste noire s'y niche aussi facilement que dans `nom`.
+        courts = suite_nommee(propre, "PORTES", champ="court")
+        libelles += [(f"{CARNET}:{no} · court", court) for court, no in courts]
     lignes.append("")
 
     # ── 2 · Les onglets de la fiche d'un sujet ───────────────────────────────
@@ -474,7 +484,8 @@ def main() -> int:
     lignes.append("4 · Le mot d'un retour en arrière")
     lignes.append("-" * 46)
     comptes = 0
-    for relatif in ECRANS_DE_L_OSSATURE:
+    composants = fichiers_de_composants()
+    for relatif in composants:
         lu = lire(relatif)
         if lu is None:
             continue
@@ -492,7 +503,7 @@ def main() -> int:
                     f"{relatif}:{no} · retour — « {libelle} » ; attendu : « ‹ » suivi du"
                     " nom de l'endroit où l'on revient, écrit là-bas tel quel"
                 )
-    lignes.append(f"  {comptes} retours lus dans {len(ECRANS_DE_L_OSSATURE)} écrans d'ossature.")
+    lignes.append(f"  {comptes} retours lus dans {len(composants)} composants.")
     lignes.append("")
 
     # ── 5 · La liste noire dans les libellés d'ossature ──────────────────────

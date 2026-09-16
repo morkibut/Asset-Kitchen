@@ -76,7 +76,7 @@ test("fabriquer l’image annonce deux étapes et fige le texte composé avant l
   await waitFor(() => expect(screen.getByRole("button", { name: "Relire avant l’envoi" })).toBeEnabled())
   fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await screen.findByText(/L’univers composé/)
-  expect(screen.getByText(/2 appel/)).toBeInTheDocument()
+  expect(screen.getByText(/2 génération/)).toBeInTheDocument()
   expect(videoLibre.demarrer).not.toHaveBeenCalled()
   expect(videoLibre.preparer).toHaveBeenCalledWith("jeu", expect.objectContaining({ modele_image: "Image:dessin", prompt_image: "Une île", reference_asset: null }))
 })

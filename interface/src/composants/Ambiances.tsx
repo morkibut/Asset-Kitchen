@@ -277,7 +277,7 @@ function ListeDAmbiances({
               <span className="shrink-0 text-encre-4">
                 {ambiance.emplois.length === 0
                   ? "personne"
-                  : `${ambiance.emplois.length} chose${ambiance.emplois.length > 1 ? "s" : ""}`}
+                  : `${ambiance.emplois.length} sujet${ambiance.emplois.length > 1 ? "s" : ""}`}
               </span>
             </button>
           </li>
@@ -949,7 +949,7 @@ function PanneauAmbiance({
 
       {onglet === "ses références" && (
         <div className="flex flex-col gap-2">
-          <Raison texte="elles partent en image avec les générations qui utilisent l'ambiance, et prennent les places que le projet aurait remplies" />
+          <Raison texte="elles partent en image avec les générations qui utilisent l'ambiance, et prennent les places que le jeu aurait remplies" />
           {ambiance.references.length === 0 ? (
             <p className="mesure text-[10.5px] leading-4 text-encre-4">
               Aucune encore. Une carte du tableau d'inspiration se désigne ici —
@@ -1011,7 +1011,7 @@ function PanneauAmbiance({
         <div className="flex flex-col gap-2">
           {ambiance.emplois.length === 0 ? (
             <p className="mesure text-[10.5px] leading-4 text-encre-4">
-              Personne encore. Une chose du jeu la désigne sur sa fiche — jamais
+              Personne encore. Un sujet du jeu la désigne sur sa fiche — jamais
               par la collection où elle est rangée : une collection est un
               dossier, et un rangement ne change pas un style.
             </p>

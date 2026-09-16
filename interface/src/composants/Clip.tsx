@@ -447,7 +447,7 @@ export function EcranClip({
             title="Échap revient sans rien dépenser"
             className="mesure ml-auto px-1 text-[10px] text-encre-4 hover:text-encre"
           >
-            ‹ revenir
+            Fermer
           </button>
         </div>
 
@@ -459,9 +459,9 @@ export function EcranClip({
             : (depart?.raison ?? "…")}
         </p>
         <p className="mesure text-[10px] leading-4 text-encre-4">
-          Le sprite est agrandi sur la toile du format demandé avant de partir :
+          L'image est agrandie sur la toile du format demandé avant de partir :
           un modèle qui rend du grand format inventerait tout ce qu'il ne voit
-          pas d'un sprite de soixante-quatre pixels.
+          pas d'une image de soixante-quatre pixels.
         </p>
 
         <button
@@ -602,7 +602,7 @@ export function EcranClip({
 
         <p className="rounded-[2px] border-l-2 border-signal bg-carte p-3 text-[11.5px] leading-relaxed text-encre-3">
           <strong className="text-encre">Ce clip n'hérite que de votre
-          sprite.</strong> Ni les textes du jeu, ni ses images d'ambiance ne
+          image.</strong> Ni les textes du jeu, ni ses images d'ambiance ne
           partent avec lui : un modèle vidéo ne prend qu'une seule image, et
           c'est celle du personnage.
         </p>
@@ -879,7 +879,7 @@ function ConfirmationClip({
             title="Échap revient sans rien dépenser"
             className="mesure ml-auto px-1 text-[10px] text-encre-4 hover:text-encre"
           >
-            ‹ revenir
+            Fermer
           </button>
         </div>
 
@@ -954,7 +954,7 @@ function ConfirmationClip({
               onCorriger(e.target.value)
             }}
             rows={6}
-            aria-label="Corriger le texte du clip, pour cet appel"
+            aria-label="Corriger le texte du clip, pour cette génération"
             data-correction-clip
             className="mesure min-h-[120px] resize-y rounded-[2px] border border-signal bg-carte px-2 py-1 text-[10.5px] leading-[1.45] text-encre"
           />
@@ -970,7 +970,7 @@ function ConfirmationClip({
         <div className="flex items-baseline gap-2">
           {corrigee && (
             <span className="mesure text-[9.5px] leading-4 text-encre-attention">
-              corrigé pour cet appel seulement
+              corrigé pour cette génération seulement
             </span>
           )}
           <span className="ml-auto flex items-center gap-2">
@@ -1085,7 +1085,7 @@ function ConfirmationClip({
             className="mesure h-[26px] text-[10px] text-encre-4 hover:text-encre-3 disabled:cursor-not-allowed"
           >
             {enVol
-              ? "l'appel est parti — il ne se rattrape plus"
+              ? "la génération est partie — elle ne se rattrape plus"
               : "Revenir sans rien dépenser"}
           </button>
           <p className="mesure text-[9.5px] leading-4 text-encre-4">

@@ -390,14 +390,14 @@ function SonAllure({
       <section className="flex flex-col gap-[8px]">
         <Intitule>
           {enPixel
-            ? "La taille — le côté du sprite, en pixels"
+            ? "La taille — le côté de l'image, en pixels"
             : "La finesse — combien de détail le fichier garde"}
         </Intitule>
         <div
           data-echelle-du-jeu
           className="flex flex-wrap gap-[4px]"
           role="group"
-          aria-label={enPixel ? "La taille du sprite" : "La finesse"}
+          aria-label={enPixel ? "La taille de l'image" : "La finesse"}
         >
           {echelle.map(({ cible }) => (
             <button
@@ -496,7 +496,7 @@ function SonAllure({
               pas comme une panne. */}
           <p className="text-[11.5px] leading-[1.45] text-encre-3">
             {paliers.length < 6
-              ? `Un sprite de ${univers.cible_px} carrés de côté ne porte pas plus de ${paliers[paliers.length - 1]} couleurs — au-delà, l'image n'a plus assez de teintes distinctes.`
+              ? `Une image de ${univers.cible_px} carrés de côté ne porte pas plus de ${paliers[paliers.length - 1]} couleurs — au-delà, l'image n'a plus assez de teintes distinctes.`
               : "Avec une palette, c'est le nombre de teintes à y lire ; sans palette, le nombre à garder sur chaque image."}
           </p>
           <button
@@ -940,7 +940,7 @@ function ReglesDAilleurs({ univers }: { univers: Univers }) {
         : "aucune couleur encore — elle se lit sur les images promues",
       ou: "la toile de l'univers",
     },
-    { quoi: "Le détourage de départ", etat: "par nature et par famille", ou: "l'atelier Détourer" },
+    { quoi: "Le détourage de départ", etat: "par nature et par famille", ou: "Détourage" },
     {
       quoi: "Les natures de sujets",
       etat: `${univers.bareme.length} réparties sur les familles`,
@@ -1644,14 +1644,14 @@ export function ReglesDuJeu({
     <main
       data-regles-du-jeu
       data-mode={mode}
-      aria-label={mode === "creation" ? "Commencer un jeu" : "Les règles du jeu"}
+      aria-label={mode === "creation" ? "Commencer un jeu" : "Réglages"}
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-papier"
     >
       {/* ── L'en-tête et les quatre étapes ──────────────────────────────── */}
       <header className="flex shrink-0 items-end justify-between gap-[22px] border-b border-trait px-[30px] pb-[14px] pt-[22px]">
         <div className="flex min-w-0 flex-col gap-[4px]">
           <h1 className="font-serif text-[38px] leading-[1.05] text-encre">
-            {mode === "creation" ? "Commencer un jeu" : "Les règles de ce jeu"}
+            {mode === "creation" ? "Commencer un jeu" : "Réglages"}
           </h1>
           <p className="text-[13px] text-encre-2">
             {mode === "creation"
@@ -1787,7 +1787,7 @@ export function ReglesDuJeu({
             onClick={() => (rang > 0 ? setOuverte(ETAPES[rang - 1].clef) : onFerme())}
             className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
           >
-            {rang > 0 ? `‹ Revenir à ${ETAPES[rang - 1].titre.toLowerCase()}` : "‹ Fermer"}
+            {rang > 0 ? `‹ ${ETAPES[rang - 1].titre}` : mode === "reglages" ? "‹ Réglages" : "Fermer"}
           </button>
           <div className="flex items-center gap-[14px]">
             <span className="text-[11.5px] text-encre-4">
@@ -1818,7 +1818,7 @@ export function ReglesDuJeu({
  *  En création, l'étape du nom crée ; les suivantes se sautent et le disent, parce
  *  qu'un « suivant » aurait laissé croire qu'il faut régler pour avancer. */
 function libelleDuBouton(mode: Mode, ouverte: Etape, rang: number, cree: boolean): string {
-  if (mode === "reglages") return "Revenir à la liste"
+  if (mode === "reglages") return "‹ Réglages"
   if (ouverte === "nom") return cree ? "Choisir son allure" : "Créer et choisir son allure"
   if (rang === ETAPES.length - 1) return "Ouvrir le jeu"
   return `Passer à ${ETAPES[rang + 1].titre.toLowerCase()}`

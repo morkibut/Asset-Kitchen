@@ -1188,7 +1188,7 @@ export function EcranAtelierDeBande({
   facteurVue.current = facteur
 
   if (decoupe) return <div className="flex h-full min-h-0 flex-col">
-    <div className="flex shrink-0 items-center justify-between border-b border-trait p-[8px] text-[12px]"><span>Découpe de {decoupe.label}</span><button type="button" onClick={() => setDecoupe(null)}>Revenir à l’animation</button></div>
+    <div className="flex shrink-0 items-center justify-between border-b border-trait p-[8px] text-[12px]"><span>Découpe de {decoupe.label}</span><button type="button" onClick={() => setDecoupe(null)}>‹ {bande.nom}</button></div>
     <EcranDecoupe sujet={{ famille: "planche", planche: decoupe, onDecoupe: (nees) => { setMessageDecoupe(`${nees.length} image${nees.length > 1 ? "s" : ""} ajoutée${nees.length > 1 ? "s" : ""} à la bibliothèque.`); setDecoupe(null); onChangee?.() } }} onFermer={() => setDecoupe(null)} onFente={(fente) => { if (fente?.ton === "echec") onErreur(String(fente.texte)) }} />
   </div>
 
@@ -1199,7 +1199,7 @@ export function EcranAtelierDeBande({
     >
       <header className="col-span-2 flex min-w-0 items-center justify-between gap-[22px]">
         <div className="min-w-0"><h1 className="truncate font-serif text-[25px] text-encre">{bande.nom}</h1><p className="mt-[4px] text-[12px] text-encre-3">Animation · {compte} frames · {change ? "Brouillon de retouche" : "Version enregistrée"}</p></div>
-        <div className="flex shrink-0 items-center gap-[8px]"><button type="button" onClick={onFermer} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle">‹ fermer</button><button type="button" onClick={() => void enregistrer()} disabled={!change || enregistre} className="h-[34px] rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">{enregistre ? "on enregistre…" : "Enregistrer ›"}</button><button type="button" title={raisonDEnregistrerSous(recette) ?? "Le résultat devient une autre pose ou direction"} disabled={!!raisonDEnregistrerSous(recette)} onClick={() => { setJoue(false); setEnregistrerSous(true) }} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle disabled:opacity-50">Enregistrer sous…</button></div>
+        <div className="flex shrink-0 items-center gap-[8px]"><button type="button" onClick={onFermer} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle">‹ Animations</button><button type="button" onClick={() => void enregistrer()} disabled={!change || enregistre} className="h-[34px] rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">{enregistre ? "on enregistre…" : "Enregistrer ›"}</button><button type="button" title={raisonDEnregistrerSous(recette) ?? "Le résultat devient une autre pose ou direction"} disabled={!!raisonDEnregistrerSous(recette)} onClick={() => { setJoue(false); setEnregistrerSous(true) }} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle disabled:opacity-50">Enregistrer sous…</button></div>
       </header>
       {/* ── Les tables de la frame choisie ───────────────────────────────── */}
       <aside
@@ -2288,7 +2288,7 @@ function PelliculeDuClip({
           onClick={onFermer}
           className="mesure ml-auto text-[10px] text-encre-3 hover:text-signal"
         >
-          ‹ revenir à l'image
+          Fermer
         </button>
       </div>
 
@@ -2489,7 +2489,7 @@ function ZoomDeLaFrame({
         title={`revenir au facteur qui fait tenir la pose entière — ${ajuste}×`}
         className="border border-trait px-1.5 py-0.5 hover:text-encre disabled:opacity-40"
       >
-        ajuster
+        adapter
       </button>
     </div>
   )
@@ -2525,8 +2525,8 @@ function Lecteur({
         <span className="text-[12px] text-encre-3">
           {rang + 1} / {compte}
         </span>
-        <label className="ml-auto flex items-center gap-[8px] text-[12px] text-encre-3">Vitesse
-          <input type="number" aria-label="Vitesse, en chiffres" min={1} max={30} value={cadence} onChange={(event) => { const valeur = Number(event.target.value); if (Number.isFinite(valeur) && valeur >= 1 && valeur <= 30) onCadence(valeur) }} className="h-[30px] w-[70px] rounded-7 border border-trait bg-carte px-[8px] text-encre" />
+        <label className="ml-auto flex items-center gap-[8px] text-[12px] text-encre-3">Cadence
+          <input type="number" aria-label="Cadence, en chiffres" min={1} max={30} value={cadence} onChange={(event) => { const valeur = Number(event.target.value); if (Number.isFinite(valeur) && valeur >= 1 && valeur <= 30) onCadence(valeur) }} className="h-[30px] w-[70px] rounded-7 border border-trait bg-carte px-[8px] text-encre" />
           images/s
         </label>
     </div>
@@ -2782,7 +2782,7 @@ function ReglagesDeLaBande({
     <div className="flex flex-col gap-1 border-t border-trait pt-2">
       <Libelle aide="bande.recette">ce qui vaut pour l'animation</Libelle>
       <div className="mt-1 flex items-center gap-2">
-        <span className="mesure text-[10px] text-encre-3">sens de lecture</span>
+        <span className="mesure text-[10px] text-encre-3">Boucler</span>
         {(["boucle", "aller-retour"] as const).map((choix) => (
           <button
             key={choix}

@@ -26,9 +26,9 @@ de la colonne de gauche qui fait foi, pas la ligne.
 
 | Aujourd'hui | Où | Le mot |
 |---|---|---|
-| Créer un asset | `TableauDeBord.tsx:124`, `CreerUnAsset.tsx:28` | **Créer un sujet** — *asset* est sur la liste noire |
-| Parcourir les assets | `TableauDeBord.tsx:130` | **Parcourir les sujets** |
-| Choisissez une chose du jeu | `TableauDeBord.tsx:130` | **Choisissez un sujet** — *chose* est sur la liste noire |
+| ~~Créer un asset~~ | `TableauDeBord.tsx:124`, `CreerUnAsset.tsx:28` | ✅ **Créer un sujet** — *asset* est sur la liste noire — fermé le 16 septembre 2026 par la passe de liste noire (aucune tranche n'a ouvert cet écran) |
+| ~~Parcourir les assets~~ | `TableauDeBord.tsx:130` | ✅ **Parcourir les sujets** — fermé le 16 septembre 2026, même passe |
+| ~~Choisissez une chose du jeu~~ | `TableauDeBord.tsx:130` | ✅ **Choisissez un sujet** — *chose* est sur la liste noire — fermé le 16 septembre 2026, même passe |
 
 ## ~~Univers & toile~~ — **RP9, fait le 16 septembre 2026**
 
@@ -76,13 +76,13 @@ de la laisser muette. À rouvrir le jour où une collection saura ranger une pi�
 | Aujourd'hui | Où | Le mot |
 |---|---|---|
 | ~~sans chose du jeu~~ | `BarreOutils.tsx` | ✅ **sans sujet** — fermé par RP11, le 16 septembre 2026 |
-| Rechercher dans les résultats | `GalerieMedias.tsx:161` | **Rechercher un résultat** |
-| Modèles 3D · Vidéos | `GalerieMedias.tsx:21-22` | **3D · Vidéo** — les autres onglets du même sélecteur sont au singulier |
-| Ouvrir la fiche | `Tuile.tsx:248` | **Ouvrir le résultat** |
-| Filiation | `Fiche.tsx:1120` | **Ouvrir les dérivés** |
-| favori · ◤ favori | `Fiche.tsx:898` | **Favori** — un seul mot, une seule casse |
-| ● (`aria-label="La retenir"`) | `ImagesDuSujet.tsx:266`, `AnimationsDuSujet.tsx:230` | **Choisir pour le jeu** |
-| Ouvrir la source 3D › | `GalerieMedias.tsx:236` | **Préparer des rendus 3D** |
+| ~~Rechercher dans les résultats~~ | `GalerieMedias.tsx` | ✅ **Rechercher un résultat** — fermé le 16 septembre 2026 |
+| Modèles 3D · Vidéos | `GalerieMedias.tsx:21-22` | **3D · Vidéo** — les autres onglets du même sélecteur sont au singulier — ⚠️ **note du 16 septembre 2026** : faux à la lecture du code, `Images` / `Animations` / `Sons` sont au pluriel dans ce même sélecteur ; appliquer la ligne telle quelle mélangerait un singulier au milieu de quatre pluriels. Laissé en l'état, à trancher par qui rouvrira cet écran. |
+| ~~Ouvrir la fiche~~ | `Tuile.tsx` | ✅ **Ouvrir le résultat** — fermé le 16 septembre 2026 |
+| ~~Filiation~~ | `Fiche.tsx` | ✅ **Ouvrir les dérivés** — fermé le 16 septembre 2026 |
+| ~~favori · ◤ favori~~ | `Fiche.tsx` | ✅ **Favori** — un seul mot, une seule casse — fermé le 16 septembre 2026 |
+| ~~● (`aria-label="La retenir"`)~~ | `ImagesDuSujet.tsx`, `AnimationsDuSujet.tsx` | ✅ **Choisir pour le jeu** — fermé le 16 septembre 2026 |
+| ~~Ouvrir la source 3D ›~~ | `GalerieMedias.tsx` | ✅ **Préparer des rendus 3D** — fermé le 16 septembre 2026 |
 
 ## Fabrications — **RP4** (la préparation) et **RP16** (le compteur)
 
@@ -121,12 +121,12 @@ collection.*
 | ~~La page du sujet (nom du groupe d'onglets)~~ | `PageDuSujet.tsx` | **Les onglets de sa fiche** — l'écran s'appelle du nom du sujet, pas *La page du sujet*. *Appliqué en `RP8`.* |
 | Cases, planches et calibrage | `PageDuSujet.tsx:345` | **sans objet** — la fiche longue fondue dedans ne s'était jamais lue dans ce nom ; ce que le bouton ouvre encore — cases, planches, calibrage — est ce qu'il dit toujours. *Tranché en `RP8`.* |
 
-## Onglet Animations — **RP12**
+## ~~Onglet Animations~~ — **RP12, fait le 16 septembre 2026**
 
-| Aujourd'hui | Où | Le mot |
+| ~~Aujourd'hui~~ | ~~Où~~ | ~~Le mot~~ |
 |---|---|---|
-| À juger · Retenue · Écartée | `AnimationsDuSujet.tsx:731` | **Non jugé · Retenu · Écarté** |
-| animation / bande, sur deux boutons voisins | `Montage.tsx:930` et `:934` | **animation** — *bande* ne s'écrit pas |
+| ~~À juger · Retenue · Écartée~~ | ~~`AnimationsDuSujet.tsx`~~ | ~~**Non jugé · Retenu · Écarté**~~ |
+| ~~animation / bande, sur deux boutons voisins~~ | ~~`Montage.tsx`~~ | ~~**animation** — *bande* ne s'écrit pas~~ |
 
 ## Onglet Sources & clips — **RP4**
 
@@ -135,11 +135,11 @@ collection.*
 | Préparer un clip vidéo | `SourcesDuSujet.tsx:87` | **Créer un clip vidéo** |
 | Importer une vidéo | `SourcesDuSujet.tsx:87` | **Importer une image de départ** — le bouton de la maquette ouvre une source, pas un clip fini |
 
-## Onglet Objectif & règles — **RP13**
+## ~~Onglet Objectif & règles~~ — **RP13, fait le 16 septembre 2026**
 
-| Aujourd'hui | Où | Le mot |
+| ~~Aujourd'hui~~ | ~~Où~~ | ~~Le mot~~ |
 |---|---|---|
-| Ce qu'il faut pour le jeu | `ObjectifDuSujet.tsx:87` | **Ce qui doit exister dans le jeu** |
+| ~~Ce qu'il faut pour le jeu~~ | ~~`ObjectifDuSujet.tsx`~~ | ~~**Ce qui doit exister dans le jeu**~~ |
 
 ## Réglages — **RP2**, qui garde un critère ouvert
 
@@ -153,34 +153,45 @@ collection.*
 | Autoriser la vidéo locale | `DelegationDuJeu.tsx:95` | **Autoriser les méthodes locales** — le réglage ne porte pas que la vidéo |
 | Enregistrer le cadre du jeu | `DelegationDuJeu.tsx:110` | **Garder le cadre de l'agent** — c'est l'agent qu'il borne, pas le jeu |
 
-## Retouche et atelier d'une animation — **RP20**
+## ~~Retouche et atelier d'une animation~~ — **RP20/RP22, fait le 16 septembre 2026**
 
-| Aujourd'hui | Où | Le mot |
+~~Les seize lignes sont corrigées.~~
+
+| ~~Aujourd'hui~~ | ~~Où~~ | ~~Le mot~~ |
 |---|---|---|
-| Détourer · Recadrer · Pixéliser · Nettoyer | `Retouche.tsx:163-166` | **Détourage · Recadrage · Pixelisation · Nettoyage** — décision 2 de RP3 |
-| La main · Le contour | `Retouche.tsx:167`, `:169` | **Main · Contour** — sans article : les huit sont côte à côte |
-| Retourner | `Retouche.tsx:168` | **Retournement** |
-| Outil de retouche | `Retouche.tsx:3058` | **Table de retouche** |
-| Défaire · Refaire | `Retouche.tsx:4211` | **Annuler · Rétablir** |
-| ajusté · Ajuster · ajuster | `Retouche.tsx:4771`, `SurfaceZoomable.tsx:52`, `AtelierDeBande.tsx:2445` | **Adapter** — un seul mot, une seule casse |
-| Vitesse | `Montage.tsx:878`, `AtelierDeBande.tsx:2481` | **Cadence** — c'est déjà le mot de la 3D (`Fabrication3D.tsx:82`) |
-| en boucle · sens de lecture | `Montage.tsx:889`, `AtelierDeBande.tsx:2739-2751` | **Boucler** |
-| image 0 · les images retenues | `Montage.tsx:1270-1272` | **frame** — le même écran écrit déjà *Ordre des frames retenues* en `:1387` |
-| Découpe · plusieurs images | `Retouche.tsx:4141` | **Découper une image** |
-| superposition · Superposer · Extraire un élément | `Superposition.tsx:447`, `Retouche.tsx:172`, `:4142` | **Extraire un élément** pour le geste, **Superposer** pour la fabrique |
-| Associer à un équipement | `Retouche.tsx:4143` | **Utiliser comme équipement…** |
-| ‹ revenir | `Montage.tsx:560`, `Clip.tsx:420`, `:833`, `Envoi.tsx:268`, `AtelierDeBande.tsx:2244` | **‹ suivi du nom de l'endroit** — un retour sans destination ne dit rien |
-| ‹ fermer | `AtelierDeBande.tsx:1194` | idem |
-| Revenir à l'animation · Revenir à la frame | `AtelierDeBande.tsx:1183`, `SourceDeFrame.tsx:26` | **‹ {nom de l'animation}**, **‹ Frame {n}** |
-| Revenir à la retouche | `Retouche.tsx:4143`, `AssocierImageEquipement.tsx:35` | **‹ La retouche** |
+| ~~Détourer · Recadrer · Pixéliser · Nettoyer~~ | ~~`Retouche.tsx:163-166`~~ | ~~**Détourage · Recadrage · Pixelisation · Nettoyage** — décision 2 de RP3~~ |
+| ~~La main · Le contour~~ | ~~`Retouche.tsx:167`, `:169`~~ | ~~**Main · Contour** — sans article : les huit sont côte à côte~~ |
+| ~~Retourner~~ | ~~`Retouche.tsx:168`~~ | ~~**Retournement**~~ |
+| ~~Outil de retouche~~ | ~~`Retouche.tsx:3058`~~ | ~~**Table de retouche**~~ |
+| ~~Défaire · Refaire~~ | ~~`Retouche.tsx:4211`~~ | ~~**Annuler · Rétablir**~~ |
+| ~~ajusté · Ajuster · ajuster~~ | ~~`Retouche.tsx:4771`, `SurfaceZoomable.tsx:52`, `AtelierDeBande.tsx:2445`~~ | ~~**Adapter** — un seul mot, une seule casse~~ |
+| ~~Vitesse~~ | ~~`Montage.tsx:878`, `AtelierDeBande.tsx:2481`~~ | ~~**Cadence** — c'est déjà le mot de la 3D (`Fabrication3D.tsx:82`)~~ |
+| ~~en boucle · sens de lecture~~ | ~~`Montage.tsx:889`, `AtelierDeBande.tsx:2739-2751`~~ | ~~**Boucler**~~ |
+| ~~image 0 · les images retenues~~ | ~~`Montage.tsx:1270-1272`~~ | ~~**frame** — le même écran écrit déjà *Ordre des frames retenues* en `:1387`~~ |
+| ~~Découpe · plusieurs images~~ | ~~`Retouche.tsx:4141`~~ | ~~**Découper une image**~~ |
+| ~~superposition · Superposer · Extraire un élément~~ | ~~`Superposition.tsx:447`, `Retouche.tsx:172`, `:4142`~~ | ~~**Extraire un élément** pour le geste, **Superposer** pour la fabrique~~ |
+| ~~Associer à un équipement~~ | ~~`Retouche.tsx:4143`~~ | ~~**Utiliser comme équipement…**~~ |
+| ~~‹ revenir~~ | ~~`Montage.tsx:560`, `Clip.tsx:420`, `:833`, `Envoi.tsx:268`, `AtelierDeBande.tsx:2244`~~ | ~~**‹ suivi du nom de l'endroit** — un retour sans destination ne dit rien~~ |
+| ~~‹ fermer~~ | ~~`AtelierDeBande.tsx:1194`~~ | ~~idem~~ |
+| ~~Revenir à l'animation · Revenir à la frame~~ | ~~`AtelierDeBande.tsx:1183`, `SourceDeFrame.tsx:26`~~ | ~~**‹ {nom de l'animation}**, **‹ Frame {n}**~~ |
+| ~~Revenir à la retouche~~ | ~~`Retouche.tsx:4143`, `AssocierImageEquipement.tsx:35`~~ | ~~**‹ La retouche**~~ |
 
-## Découper une image — **RP21**
+⚠️ **Note du 16 septembre 2026.** Plusieurs cases ne se lisent pas telles
+quelles : les retours partagés par plusieurs contextes (`Clip.tsx`,
+`Montage.tsx`, `Envoi.tsx`) referment vers une fenêtre plutôt que vers un nom
+d'écran fixe — le geste variait déjà selon l'appelant, et un seul libellé ne
+pouvait pas nommer une destination qui change ; ils portent donc `Fermer`. Le
+retour de `AssocierImageEquipement.tsx` (« La retouche ») et celui interne à
+`Retouche.tsx` (qui revient à la table *Main*, pas à l'écran entier) ne sont
+pas le même geste malgré le même texte de départ : le second porte `‹ Main`.
 
-| Aujourd'hui | Où | Le mot |
+## ~~Découper une image~~ — **RP21, fait le 16 septembre 2026**
+
+| ~~Aujourd'hui~~ | ~~Où~~ | ~~Le mot~~ |
 |---|---|---|
-| *aucun titre dans l'écran* | `Decoupe.tsx` n'a ni `<h1>` ni `<h2>` | **Découper une image** |
-| Découper en N asset(s) | `Decoupe.tsx:517` | **Découper en N sujets** — *asset* est sur la liste noire |
-| Revenir aux zones | `Decoupe.tsx:1246` | **‹ Les zones** |
+| ~~Créer les images découpées~~ | ~~`Decoupe.tsx`, titre et `aria-label`~~ | ~~**Découper une image** — le relevé du 13 septembre le disait absent ; il existait mais portait le mauvais mot~~ |
+| ~~Découper en N asset(s)~~ | ~~`Decoupe.tsx:517`~~ | ~~**sans objet le 16 septembre 2026** — cette phrase n'existe plus dans le code ; l'écran compte des « sorties », pas des assets~~ |
+| ~~Revenir aux zones~~ | ~~`Decoupe.tsx`~~ | ~~**‹ Les zones**~~ |
 
 ## Choisir dans la bibliothèque — **RP6** ✅ fermé le 15 septembre 2026
 
@@ -242,6 +253,17 @@ l'état et cette page le dit.
 |---|---|---|
 | Revenir à ce qui va être demandé · Revenir aux images · Revenir aux animations · Revenir à où tout se range | `Installation.tsx:103`, `:110`, `:117`, `:124` | **‹ {nom de l'étape}** — quatre retours écrits à la main, et les quatre commencent par le verbe |
 | Revenir au sommaire · Revenir à la liste | `Installation.tsx:1305`, `ReglesDuJeu.tsx:1821` | **‹ Réglages** |
+
+---
+
+## Vu à la relecture du 16 septembre 2026
+
+Trouvé en appliquant la liste noire partout où elle porte (item 4), sur un écran qu'aucune
+tranche n'a ouvert. Laissé tel quel plutôt que deviné : une vraie décision de sens y manque.
+
+| Aujourd'hui | Où | Pourquoi ça reste ouvert |
+|---|---|---|
+| Projet Godot et historique | `Tuiles.tsx:130` | *projet* est sur la liste noire, mais ici il nomme le projet **Godot** lui-même — le dossier `project.godot` — et pas le jeu que l'atelier fabrique. Remplacer par « jeu » dirait autre chose. À trancher par qui rouvrira cet écran. |
 
 ---
 

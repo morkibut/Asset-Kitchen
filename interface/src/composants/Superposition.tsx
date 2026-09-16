@@ -445,7 +445,7 @@ export function EcranSuperposition({
     >
       {/* ── La colonne de gauche ─────────────────────────────────────────── */}
       <aside {...PANNEAU} className="col-start-2 row-span-2 row-start-1 flex min-h-0 flex-col border-l border-trait bg-papier-cote">
-        <EnTete>superposition</EnTete>
+        <EnTete>Superposer</EnTete>
         <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[8px]">
           <AvisBrouillon brouillon={brouillon} />
           {/* Les deux images. Le dessus se déplace, le dessous ne bouge pas. */}
@@ -639,7 +639,7 @@ export function EcranSuperposition({
             {(
               [
                 ["calque", "ce que le dessus ajoute · va au vestiaire"],
-                ["aplat", "les deux fondues · un asset ordinaire"],
+                ["aplat", "les deux fondues · une image ordinaire"],
               ] as const
             ).map(([nom, quoi]) => (
               <label key={nom} className="flex items-start gap-[8px] text-[11px] text-encre-2">
@@ -748,7 +748,7 @@ export function EcranSuperposition({
           {apercu && (
             <span className="whitespace-nowrap">ajout {Math.round(apercu.mesures.ajout * 100)} %</span>
           )}
-          <span className="ml-auto whitespace-nowrap text-encre-4">aucun appel ne part d'ici</span>
+          <span className="ml-auto whitespace-nowrap text-encre-4">aucune génération ne part d'ici</span>
         </div>
       </div>
 

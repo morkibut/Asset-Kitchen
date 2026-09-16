@@ -402,11 +402,12 @@ describe("le sommaire des quatre étapes", () => {
   })
 
   test("les boutons de navigation nomment l'étape en français", async () => {
-    // ⚠️ Les libellés se composaient à partir du titre : `Revenir à ${titre}`
-    // donnait « revenir à les images », et le tour affichait « Passer à les
-    // images ». Le français n'a pas de règle qui se calcule ici — il faudrait
-    // le genre et l'article de chaque titre —, alors chaque étape porte ses
-    // deux phrases. Vu au navigateur le 9 septembre 2026 ; aucun essai ne
+    // ⚠️ Le libellé d'avance se composait à partir du titre : `Passer à
+    // ${titre}` donnait « Passer à les images ». Le français n'a pas de règle
+    // qui se calcule ici — il faudrait le genre et l'article de chaque
+    // titre —, alors chaque étape porte sa propre phrase. Le retour, lui, n'a
+    // plus ce problème depuis que la liste fermée l'écrit « ‹ {titre} », sans
+    // verbe à accorder. Vu au navigateur le 9 septembre 2026 ; aucun essai ne
     // regardait ces deux boutons.
     construireDouble({ installation: { premiere_ouverture: true } })
     poser({ mode: "premiere" })
@@ -417,13 +418,13 @@ describe("le sommaire des quatre étapes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Passer aux images" }))
 
     expect(
-      await screen.findByRole("button", { name: "‹ Revenir à ce qui va être demandé" }),
+      await screen.findByRole("button", { name: "‹ Ce qui va être demandé" }),
     ).toBeTruthy()
     expect(screen.getByRole("button", { name: "Passer aux animations" })).toBeTruthy()
 
     fireEvent.click(screen.getByRole("button", { name: "Passer aux animations" }))
     expect(
-      await screen.findByRole("button", { name: "‹ Revenir aux images" }),
+      await screen.findByRole("button", { name: "‹ Les images" }),
     ).toBeTruthy()
     expect(
       screen.getByRole("button", { name: "Passer au dossier de travail" }),
@@ -431,7 +432,7 @@ describe("le sommaire des quatre étapes", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Passer au dossier de travail" }))
     expect(
-      await screen.findByRole("button", { name: "‹ Revenir aux animations" }),
+      await screen.findByRole("button", { name: "‹ Les animations" }),
     ).toBeTruthy()
     // La dernière étape ne dit pas « passer à » : elle ouvre l'atelier.
     expect(

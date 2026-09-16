@@ -862,10 +862,10 @@ export const AIDE: Record<string, Explication> = {
     ou: "sujet",
     quoi: "Ce qui s'ouvre entre le bouton et la dépense. Il montre, ligne par ligne et rangé en trois parties, tout ce qui va être envoyé — le contexte du jeu, les références, la demande — avec un interrupteur sur chacune et son prix à côté.",
     change:
-      "Rien tout seul : c'est une relecture. Ce qu'on y éteint ou corrige ne vaut que pour cet appel-là, et rien ne remonte dans les réglages du jeu ni dans l'ambiance.",
+      "Rien tout seul : c'est une relecture. Ce qu'on y éteint ou corrige ne vaut que pour cette génération-là, et rien ne remonte dans les réglages du jeu ni dans l'ambiance.",
     origine: "composé par l'atelier · l'ordre est celui de l'envoi",
     long:
-      "Garder une correction est un **second geste, écrit** : le bouton « garder sur la chose » l'inscrit sur la fiche de la chose visée, et il ne paraît que là où il a une case où aller. Sans chose visée, la correction part quand même — ce qui manque est l'endroit où la garder.\n\nLe sujet et la consigne de la pose ne s'éteignent pas, et leur marque grise le dit : sans le premier l'appel ne demande rien, sans la seconde l'image qui revient n'appartient à aucune case.\n\nUne case le saute **pour la série en cours**, et il revient dès qu'on change de chose ou de pose. Il n'y a pas de case « pour toujours » : on la cocherait le premier jour, quand on ne sait pas encore qu'on en aura besoin.\n\nOn y lit aussi, en gris, ce qui n'agira qu'**au retour** — le découpage, la remise sur grille, le détourage. Rien de tout ça ne part au modèle et rien ne coûte un centime, mais l'image qu'on verra revenir n'est pas celle que le modèle envoie, et il vaut mieux le savoir avant.\n\n**Les trois parties sont celles du texte qui part**, et les mots qui les annoncent — CONTEXT, REFERENCES, REQUEST — partent avec, en anglais, comme les intitulés de la bible. Chaque image jointe porte son numéro sur sa ligne, et le même numéro dans le texte : « Image 3 » à l'écran est « Image 3 » chez le modèle. La caméra reste la dernière phrase, parce qu'un modèle d'image pondère la fin — trente images payées l'ont établi.\n\n**Ce rangement ne promet aucune image meilleure**, et c'est mesuré : cinq façons de ranger ont été tirées, aucune n'a battu le texte d'avant. Ce qu'il donne à coup sûr est un texte qu'on relit sans démêler un pavé.",
+      "Garder une correction est un **second geste, écrit** : le bouton « garder sur le sujet » l'inscrit sur la fiche du sujet visé, et il ne paraît que là où il a une case où aller. Sans sujet visé, la correction part quand même — ce qui manque est l'endroit où la garder.\n\nLe sujet et la consigne de la pose ne s'éteignent pas, et leur marque grise le dit : sans le premier la génération ne demande rien, sans la seconde l'image qui revient n'appartient à aucune case.\n\nUne case le saute **pour la série en cours**, et il revient dès qu'on change de sujet ou de pose. Il n'y a pas de case « pour toujours » : on la cocherait le premier jour, quand on ne sait pas encore qu'on en aura besoin.\n\nOn y lit aussi, en gris, ce qui n'agira qu'**au retour** — le découpage, la remise sur grille, le détourage. Rien de tout ça ne part au modèle et rien ne coûte un centime, mais l'image qu'on verra revenir n'est pas celle que le modèle envoie, et il vaut mieux le savoir avant.\n\n**Les trois parties sont celles du texte qui part**, et les mots qui les annoncent — CONTEXT, REFERENCES, REQUEST — partent avec, en anglais, comme les intitulés de la bible. Chaque image jointe porte son numéro sur sa ligne, et le même numéro dans le texte : « Image 3 » à l'écran est « Image 3 » chez le modèle. La caméra reste la dernière phrase, parce qu'un modèle d'image pondère la fin — trente images payées l'ont établi.\n\n**Ce rangement ne promet aucune image meilleure**, et c'est mesuré : cinq façons de ranger ont été tirées, aucune n'a battu le texte d'avant. Ce qu'il donne à coup sûr est un texte qu'on relit sans démêler un pavé.",
   },
 
   // ── Le calibrage ──────────────────────────────────────────────────────────
@@ -1901,14 +1901,14 @@ export const AIDE: Record<string, Explication> = {
   // ── La retouche — ce que la fiche fait d'un asset ─────────────────────────
 
   "fiche.impose": {
-    nom: "Imposé par le projet",
+    nom: "Imposé par le jeu",
     ou: "case",
-    quoi: "Ce que l'univers de ton projet a appliqué à cette image-là — la taille de pixel, la part de case qu'elle occupe, la palette.",
+    quoi: "Ce que l'univers de ton jeu a appliqué à cette image-là — la taille de pixel, la part de case qu'elle occupe, la palette.",
     change:
-      "Rien : c'est une lecture. Chaque ligne dit si la valeur du projet est encore appliquée ou si tu l'as réglée à la main depuis, et les huit places en dessous sont l'endroit où l'on change.",
-    origine: "l'univers du projet, tel qu'il est maintenant · l'échelle demandée à la naissance",
+      "Rien : c'est une lecture. Chaque ligne dit si la valeur du jeu est encore appliquée ou si tu l'as réglée à la main depuis, et les huit places en dessous sont l'endroit où l'on change.",
+    origine: "l'univers du jeu, tel qu'il est maintenant · l'échelle demandée à la naissance",
     long:
-      "Sans cette rubrique, tu vois une image qui ne ressemble pas à ce que le modèle a rendu, sans jamais savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, sans rien demander et sans rien dire.\n\nElle est calculée à la lecture, jamais rangée avec l'asset : la question posée est « qu'est-ce que le projet impose *maintenant* », et une valeur enregistrée aurait vieilli au premier réglage d'univers.\n\nElle dit « on ne sait pas » quand la génération de l'image n'est plus sur le disque. Une image importée n'en a jamais eu : le produit préfère l'avouer que de répondre « rien d'imposé », qui est une réponse différente et fausse.",
+      "Sans cette rubrique, tu vois une image qui ne ressemble pas à ce que le modèle a rendu, sans jamais savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, sans rien demander et sans rien dire.\n\nElle est calculée à la lecture, jamais rangée avec l'image : la question posée est « qu'est-ce que le jeu impose *maintenant* », et une valeur enregistrée aurait vieilli au premier réglage d'univers.\n\nElle dit « on ne sait pas » quand la génération de l'image n'est plus sur le disque. Une image importée n'en a jamais eu : le produit préfère l'avouer que de répondre « rien d'imposé », qui est une réponse différente et fausse.",
   },
 
   "fiche.recettes": {
@@ -2107,7 +2107,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "sujet",
     quoi: "Peindre ou gommer la frame affichée, avec son propre masque et ses calques de dessin.",
     change: "Une seule frame. Le début du trait arrête la lecture sur l’image touchée ; les autres frames gardent leurs retouches.",
-    origine: "atelier de l’animation · Outil de retouche → La main",
+    origine: "atelier de l’animation · Table de retouche → Main",
     long: "Les traits se posent après le placement de la frame : le pixel sous le pinceau est celui qui sera modifié, même si l’image a été déplacée. Le masque contrôle la transparence ; les calques permettent d’ajouter des couleurs, de les masquer ou de les renommer. Une recette nommée conserve ces retouches. Elles suivent leur occurrence lors d’un déplacement ou d’un passage au chutier. Remplacer la source de cette frame efface ses retouches, car les coordonnées ne désignent plus la même image. Enregistrer les conserve après fermeture et réouverture.",
   },
   "bande.historique": {

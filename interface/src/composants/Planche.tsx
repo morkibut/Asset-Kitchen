@@ -181,7 +181,7 @@ export function EcranPlanche({
             <section className="flex flex-col gap-1.5">
               <Libelle>les images jointes</Libelle>
               <Mesure
-                nom="partent avec l'appel"
+                nom="partent avec la génération"
                 valeur={`${lu.jointes.total}`}
               />
               <p className="mesure text-[9.5px] leading-4 text-encre-4">
@@ -225,7 +225,7 @@ export function EcranPlanche({
               <Libelle>ce qui entre en bibliothèque</Libelle>
               <p className="mesure text-[10px] leading-4 text-encre-4">
                 la planche <span className="text-encre-3">y entre</span>, et
-                elle porte le prix de l'appel — ses {lu.geometrie.cases}{" "}
+                elle porte le prix de la génération — ses {lu.geometrie.cases}{" "}
                 morceaux entrent à côté, chacun dans sa direction, sans prix
                 propre. Ce qui a été payé se regarde donc en entier : la feuille
                 telle qu'elle est revenue, et ce que l'atelier en a tiré.
@@ -286,7 +286,7 @@ export function EcranPlanche({
             </div>
 
             {lu.cases.length < 2 && (
-              <Raison texte="ce jeu ne déclare qu'une direction pour cette pose — il n'y a rien à plier, et un appel simple suffit" />
+              <Raison texte="ce jeu ne déclare qu'une direction pour cette pose — il n'y a rien à plier, et une génération simple suffit" />
             )}
 
             {/* ── Les cases, dans l'ordre de lecture de la grille ────────── */}
@@ -316,16 +316,16 @@ export function EcranPlanche({
 
               {/* **Les deux moitiés de ce que la mesure dit**, et la seconde
                   n'est pas un détail : elle explique pourquoi il n'y a qu'un
-                  prix d'appel ici plutôt qu'un par nombre de cases. */}
+                  prix de génération ici plutôt qu'un par nombre de cases. */}
               {lu.prix.mesure ? (
                 <p className="mesure text-[9.5px] leading-4 text-encre-4">
                   une planche coûte le prix d'{" "}
-                  <span className="text-encre-3">un appel</span>, quel que soit
+                  <span className="text-encre-3">une génération</span>, quel que soit
                   ce qu'elle porte : {dollars(lu.prix.prix)} en médiane sur{" "}
-                  {lu.prix.appels} appels{" "}
+                  {lu.prix.appels} générations{" "}
                   {lu.prix.origine === "ici"
-                    ? "payés par ce modèle sur cette machine"
-                    : "payés par les bancs du dépôt"}
+                    ? "payées par ce modèle sur cette machine"
+                    : "payées par les bancs du dépôt"}
                   . Le gain est par image — plus il y a de cases, moins chaque
                   image revient cher.
                   {lu.modele && (
@@ -338,13 +338,13 @@ export function EcranPlanche({
                     </>
                   )}
                   {/* **L'écart de cette machine, quand il y en a un.** Deux
-                      appels d'un même modèle peuvent avoir coûté exactement le
+                      générations d'un même modèle peuvent avoir coûté exactement le
                       même prix ; l'écrire « de $0,0342 à $0,0342 » ne dit rien
                       et fait perdre confiance dans le reste. */}
                   {lu.prix.haut > lu.prix.bas && (
                     <>
                       <br />
-                      Ici même, un appel a coûté de {dollars(lu.prix.bas)} à{" "}
+                      Ici même, une génération a coûté de {dollars(lu.prix.bas)} à{" "}
                       {dollars(lu.prix.haut)}.
                     </>
                   )}
@@ -355,12 +355,12 @@ export function EcranPlanche({
                   {lu.banc.mesure && (
                     <>
                       <br />
-                      Les bancs du dépôt ont payé {lu.banc.appels} appels, de une
+                      Les bancs du dépôt ont payé {lu.banc.appels} générations, de une
                       à six cases : de {dollars(lu.banc.bas)} à{" "}
                       {dollars(lu.banc.haut)}, sans que le nombre de cases
                       explique l'écart —{" "}
                       <span className="text-encre-3">
-                        deux appels identiques s'écartent plus que deux tailles
+                        deux générations identiques s'écartent plus que deux tailles
                         de planche
                       </span>
                       . Un prix par nombre de cases montrerait donc du bruit
@@ -370,7 +370,7 @@ export function EcranPlanche({
                 </p>
               ) : (
                 <p className="mesure text-[9.5px] leading-4 text-encre-4">
-                  aucun appel de planche n'a encore été mesuré dans ce dépôt —
+                  aucune génération de planche n'a encore été mesurée dans ce dépôt —
                   les prix restent inconnus plutôt que devinés.
                 </p>
               )}
@@ -572,7 +572,7 @@ function LigneDeChoix({
         {/* **L'étayage à côté du prix**, jamais ailleurs : un gain annoncé sur
             une mesure unique est un gain encadré, pas un gain affirmé. */}
         <span className="w-[92px] shrink-0 text-right text-encre-4">
-          {ligne.appels} appel{ligne.appels > 1 ? "s" : ""}
+          {ligne.appels} génération{ligne.appels > 1 ? "s" : ""}
         </span>
         <span className="w-[64px] shrink-0 text-right">
           {ligne.mesure && ligne.cases > 0 ? dollars(ligne.prix) : "?"}

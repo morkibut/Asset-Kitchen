@@ -116,7 +116,7 @@ function LivraisonDuJeu({ projet, onFerme }: { projet: string; onFerme: () => vo
       <label className="flex flex-col gap-[4px] text-[13px]">Dossier contenant project.godot
         <input className={champ} value={dossier} placeholder="C:\Jeux\Mon jeu" onChange={e => { invalider(); setDossier(e.target.value); setAssocie(false) }} />
       </label>
-      <label className="flex flex-col gap-[4px] text-[13px]">Sous-dossier des assets
+      <label className="flex flex-col gap-[4px] text-[13px]">Sous-dossier des images
         <input className={champ} value={sousDossier} onChange={e => { invalider(); setSousDossier(e.target.value); setAssocie(false) }} />
       </label>
       <div className="flex items-center gap-[14px]"><button className={bouton} disabled={!dossier.trim() || associe} onClick={() => agir(async () => {
@@ -125,13 +125,13 @@ function LivraisonDuJeu({ projet, onFerme }: { projet: string; onFerme: () => vo
     </fieldset>
     <fieldset disabled={occupe} className="flex flex-col gap-[14px] rounded-10 border border-trait bg-carte p-[14px]">
       <legend className="font-serif text-[25px]">2 · Les versions à livrer</legend>
-      <label className="flex items-center gap-[14px] text-[13px]">Asset<select className={champ} value={sujetId} onChange={e => { invalider(); setSujetId(e.target.value); setChoisies([]); setBoucles({}) }}>
-        {!sujets.length && <option value="">Aucun asset créé</option>}
+      <label className="flex items-center gap-[14px] text-[13px]">Sujet<select className={champ} value={sujetId} onChange={e => { invalider(); setSujetId(e.target.value); setChoisies([]); setBoucles({}) }}>
+        {!sujets.length && <option value="">Aucun sujet créé</option>}
         {sujets.map(s => <option key={s.identifiant} value={s.identifiant}>{s.nom}</option>)}
       </select></label>
       <div className="flex gap-[8px]" aria-label="Nature des versions"><button className={bouton} aria-pressed={nature === "animation"} onClick={() => { invalider(); setNature("animation") }}>Animations</button><button className={bouton} aria-pressed={nature === "image"} onClick={() => { invalider(); setNature("image") }}>Images fixes</button></div>
       {nature === "image" ? sujetId && <ImagesALivrer key={sujetId} projet={projet} personnage={sujetId} associe={associe} onApercu={setApercu} onInvalider={invalider} onOccupation={setOccupe} /> : <>
-      {!bandes.length && <p className="text-[13px] text-encre-3">Cet asset n’a pas encore d’animation. Crée ou importe un clip, puis garde une bande dans le montage.</p>}
+      {!bandes.length && <p className="text-[13px] text-encre-3">Ce sujet n’a pas encore d’animation. Crée ou importe un clip, puis garde une bande dans le montage.</p>}
       {!!brouillons.length && <p role="status" className="rounded-7 border border-trait bg-papier-cote p-[8px] text-[11.5px] text-encre-3">
         {brouillons.length} brouillon{brouillons.length > 1 ? "s" : ""} mis de côté : {brouillons.map(b => b.nom).join(", ")}. Donne-leur leur mouvement et leur direction pour pouvoir les livrer — sans case visée, leur nom dans le jeu changerait le jour où on les range.
       </p>}
@@ -158,7 +158,7 @@ function LivraisonDuJeu({ projet, onFerme }: { projet: string; onFerme: () => vo
       <h2 className="font-serif text-[25px]">3 · Ce qui va être écrit</h2>
       <p className="break-all text-[11.5px] text-encre-3">{apercu.dossier}</p>
       {apercu.pivot && <p className="text-[13px]">Repère relu : X {apercu.pivot.x} · Y {apercu.pivot.y} pixels.</p>}
-      <p className="text-[11.5px] text-encre-3">La scène de l’asset garde la même adresse dans le jeu. Les anciennes révisions restent conservées.</p>
+      <p className="text-[11.5px] text-encre-3">La scène du sujet garde la même adresse dans le jeu. Les anciennes révisions restent conservées.</p>
       {apercu.ressource && <p className="break-all text-[12px] text-encre-3">Texture à utiliser directement : {apercu.ressource}</p>}
       <ul className="flex flex-col gap-[8px]">{apercu.fichiers.map(f => <li key={f.chemin} className="flex items-center justify-between gap-[14px] text-[12px]"><span className="min-w-0 break-all font-mono">{f.chemin}</span><span className="shrink-0 text-encre-3">{({ inchange: "inchangé", nouveau: "nouveau", remplace: "remplacé", conflit: "conflit" } as Record<string, string>)[f.etat] ?? f.etat}{f.etat === "conflit" && ` · ${decide(apercu.conflits.find(c => c.chemin === f.chemin)?.decision)}`} · {Math.ceil(f.octets / 1024)} ko</span></li>)}</ul>
       {!!apercu.conflits.length && <div className="flex flex-col gap-[14px] rounded-7 border border-trait-echec bg-fond-echec p-[14px]" aria-label="Conflits à décider">

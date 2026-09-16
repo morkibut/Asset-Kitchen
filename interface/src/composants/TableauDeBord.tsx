@@ -95,7 +95,7 @@ export function TableauDeBord({
   return (
     <main
       data-tableau-de-bord
-      aria-label="Le tableau de bord du jeu"
+      aria-label="Le jeu"
       className="defile min-h-0 flex-1 overflow-y-auto bg-papier p-[30px]"
     >
       {/* ── Le jeu ouvert ─────────────────────────────────────────────────── */}
@@ -121,13 +121,13 @@ export function TableauDeBord({
           onClick={surCreerUnAsset ?? surDemanderUneImage}
           className="h-[34px] shrink-0 rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal transition-colors duration-120 hover:bg-echec"
         >
-          {surCreerUnAsset ? "Créer un asset" : "Demander une image"}
+          {surCreerUnAsset ? "Créer un sujet" : "Demander une image"}
         </button>
       </div>
 
       {surLaToile && <div className="mt-[22px] grid grid-cols-2 gap-[14px]">
         <section className="rounded-8 border border-trait bg-carte p-[22px]"><p className="mesure text-[10.5px] uppercase tracking-[0.14em] text-encre-4">Imaginer le monde</p><h2 className="mt-[8px] font-serif text-[25px] text-encre">L’univers commence sur la toile</h2><p className="mt-[8px] text-[13px] leading-[1.5] text-encre-3">Références, notes et îlots composent le monde. Les règles du jeu accompagnent ensuite les fabrications.</p><button onClick={surLaToile} className="mt-[14px] h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle">Ouvrir la toile</button></section>
-        <section className="rounded-8 border border-trait bg-carte p-[22px]"><p className="mesure text-[10.5px] uppercase tracking-[0.14em] text-encre-4">Fabriquer pour le jeu</p><h2 className="mt-[8px] font-serif text-[25px] text-encre">Des assets fixes et animés</h2><p className="mt-[8px] text-[13px] leading-[1.5] text-encre-3">Choisissez une chose du jeu, préparez ses mouvements et ses directions, puis retouchez ses images avant de les livrer.</p><div className="mt-[14px] flex flex-wrap gap-[8px]"><button onClick={surLesAssets} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle">Parcourir les assets</button><button onClick={surLivrer} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle">Préparer la livraison</button></div></section>
+        <section className="rounded-8 border border-trait bg-carte p-[22px]"><p className="mesure text-[10.5px] uppercase tracking-[0.14em] text-encre-4">Fabriquer pour le jeu</p><h2 className="mt-[8px] font-serif text-[25px] text-encre">Des sujets fixes et animés</h2><p className="mt-[8px] text-[13px] leading-[1.5] text-encre-3">Choisissez un sujet du jeu, préparez ses mouvements et ses directions, puis retouchez ses images avant de les livrer.</p><div className="mt-[14px] flex flex-wrap gap-[8px]"><button onClick={surLesAssets} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle">Parcourir les sujets</button><button onClick={surLivrer} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle">Préparer la livraison</button></div></section>
         <button onClick={surLesFabrications} className="col-span-2 rounded-8 border border-trait bg-carte px-[22px] py-[14px] text-left text-[13px] text-encre-controle">Suivre les fabrications et reprendre les résultats →</button>
       </div>}
 

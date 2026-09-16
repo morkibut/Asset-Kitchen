@@ -1548,8 +1548,8 @@ export function Galerie({
               <span />
             )}
             <span className="text-right">
-              aucun appel ne part d'ici — on paie depuis le codex et depuis
-              l'établi d'une chose du jeu
+              aucune génération ne part d'ici — on paie depuis le codex et depuis
+              l'établi d'un sujet du jeu
             </span>
           </div>
           </>}

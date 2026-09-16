@@ -245,7 +245,7 @@ export function Tuile({
           // le clic mène là où le bouton du bas mène, et pas ailleurs.
           if (attend && lot && emplacement) onChoisir(lot.identifiant, emplacement.rang)
         }}
-        aria-label={attend ? "Ouvrir la planche" : "Ouvrir la fiche"}
+        aria-label={attend ? "Ouvrir la planche" : "Ouvrir le résultat"}
         className={`relative aspect-square w-full cursor-pointer overflow-hidden disabled:cursor-default ${
           detouree ? "damier-papier" : "bg-pourtour"
         }`}

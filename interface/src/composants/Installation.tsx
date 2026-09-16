@@ -85,43 +85,34 @@ const ETAPES: readonly {
   clef: Etape
   titre: string
   question: string
-  /** Comment le bouton du bas nomme cette étape-là quand il y revient.
-   *
-   *  Écrit à la main, et pas dérivé du titre : `Revenir à ${titre}` donnait
-   *  « revenir à les images ». Le français n'a pas de règle qui se calcule ici —
-   *  il faudrait connaître le genre et l'article de chaque titre —, alors la
-   *  phrase se pose à côté du titre, une fois. */
-  retour: string
-  /** Et comment le bouton du bas nomme cette étape-là quand il y va. Même
-   *  raison : « passer à les images » ne s'écrit pas. */
+  /** Et comment le bouton du bas nomme cette étape-là quand il y va. « Passer
+   *  à les images » ne s'écrit pas, alors la phrase se pose à côté du titre,
+   *  une fois. Le retour, lui, n'a plus ce problème : un retour dit où l'on
+   *  va, jamais d'où l'on vient, et « ‹ {titre} » ne conjugue rien. */
   suite: string
 }[] = [
   {
     clef: "tour",
     titre: "Ce qui va être demandé",
     question: "Trois choses à brancher — et aucune n'est obligatoire",
-    retour: "Revenir à ce qui va être demandé",
     suite: "à ce qui va être demandé",
   },
   {
     clef: "images",
     titre: "Les images",
     question: "Avec quoi fabrique-t-on les images ?",
-    retour: "Revenir aux images",
     suite: "aux images",
   },
   {
     clef: "animations",
     titre: "Les animations",
     question: "Animer sur cette machine ?",
-    retour: "Revenir aux animations",
     suite: "aux animations",
   },
   {
     clef: "dossier",
     titre: "Où tout se range",
     question: "Un seul dossier, pour tout",
-    retour: "Revenir à où tout se range",
     suite: "au dossier de travail",
   },
 ]
@@ -1276,7 +1267,7 @@ export function Installation({
             onClick={() => (rang > 0 ? setOuverte(ETAPES[rang - 1].clef) : fermer())}
             className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
           >
-            {rang > 0 ? `‹ ${ETAPES[rang - 1].retour}` : "‹ Fermer"}
+            {rang > 0 ? `‹ ${ETAPES[rang - 1].titre}` : mode === "reglages" ? "‹ Réglages" : "Fermer"}
           </button>
           <div className="flex items-center gap-[14px]">
             <span className="text-[11.5px] text-encre-4">
@@ -1302,7 +1293,7 @@ export function Installation({
 
 /** Ce que le bouton de pied annonce — **ce qu'il fait, pas « suivant »**. */
 function libelleDuBouton(mode: Mode, rang: number): string {
-  if (mode === "reglages") return "Revenir au sommaire"
+  if (mode === "reglages") return "‹ Réglages"
   if (rang === ETAPES.length - 1) return "C'est prêt — ouvrir l'atelier"
   return `Passer ${ETAPES[rang + 1].suite}`
 }

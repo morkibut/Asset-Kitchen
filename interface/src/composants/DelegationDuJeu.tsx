@@ -66,13 +66,13 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
       return
     }
     if (!Number.isFinite(cadre.plafond_usd) || cadre.plafond_usd < 0 || !Number.isInteger(cadre.plafond_appels) || cadre.plafond_appels < 0) {
-      setErreur("Les limites doivent être positives ou nulles ; le nombre d’appels doit être entier.")
+      setErreur("Les limites doivent être positives ou nulles ; le nombre de générations doit être entier.")
       return
     }
     setOccupe(true); setErreur(""); setConfirmation("")
     try {
       const c = await travaux.reglerCadre(projet, cadre)
-      setCadre(c); setSauve(JSON.stringify(c)); setConfirmation("Cadre enregistré pour ce jeu. Il sera relu avant chaque nouvel appel.")
+      setCadre(c); setSauve(JSON.stringify(c)); setConfirmation("Cadre enregistré pour ce jeu. Il sera relu avant chaque nouvelle génération.")
     } catch (e) { setErreur(message(e)) }
     finally { setOccupe(false) }
   }
@@ -90,16 +90,16 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
     <header><h2 className="font-serif text-[38px]">Déléguer à l’agent</h2><p className="mt-[8px] max-w-[880px] text-[13px] text-encre-3">L’agent qui développe le jeu dans Godot peut demander une animation complète. Vous fixez ici ce qu’il peut fabriquer et livrer de lui-même.</p></header>
     {erreur && <div role="alert" className="rounded-7 border border-trait-echec bg-fond-echec p-[14px] text-[13px] text-echec">{erreur}{!cadre && <button className={`${BOUTON} ml-[14px]`} onClick={() => setChargement(n => n + 1)}>Réessayer</button>}</div>}
     {!cadre ? <p className="text-[13px] text-encre-3">Lecture du cadre…</p> : <form onSubmit={e => { e.preventDefault(); void enregistrer() }} className="space-y-[22px]">
-      {cadre.origine === "garde-fous-existants" && <p className="text-[13px] text-encre-3">Ce jeu reprend pour l’instant le modèle d’image et le plafond de l’ancien cadre. La vidéo locale est permise ; les appels payants restent désactivés. Enregistrer lui donne son propre cadre durable.</p>}
+      {cadre.origine === "garde-fous-existants" && <p className="text-[13px] text-encre-3">Ce jeu reprend pour l’instant le modèle d’image et le plafond de l’ancien cadre. La vidéo locale est permise ; les générations payantes restent désactivées. Enregistrer lui donne son propre cadre durable.</p>}
       <fieldset disabled={occupe} className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">Ce qui est permis</legend><div className="grid grid-cols-2 gap-[22px]">
         <label className="flex items-start gap-[8px] text-[13px]"><input type="checkbox" className="mt-[4px] accent-ok" checked={cadre.autoriser_local} onChange={e => changer({ autoriser_local: e.target.checked })} /><span>Autoriser la vidéo locale<span className="mt-[4px] block text-[12px] text-encre-3">Utilise la carte graphique. Le temps mesuré reste distinct des dollars ; les modèles et moteurs doivent déjà être disponibles.</span></span></label>
-        <label className="flex items-start gap-[8px] text-[13px]"><input type="checkbox" className="mt-[4px] accent-ok" checked={cadre.autoriser_payant} onChange={e => changer({ autoriser_payant: e.target.checked })} /><span>Autoriser les appels payants<span className="mt-[4px] block text-[12px] text-encre-3">Pour la référence et la vidéo, dans les limites ci-dessous. Activer cette option ne lance aucune génération.</span></span></label>
+        <label className="flex items-start gap-[8px] text-[13px]"><input type="checkbox" className="mt-[4px] accent-ok" checked={cadre.autoriser_payant} onChange={e => changer({ autoriser_payant: e.target.checked })} /><span>Autoriser les générations payantes<span className="mt-[4px] block text-[12px] text-encre-3">Pour la référence et la vidéo, dans les limites ci-dessous. Activer cette option ne lance aucune génération.</span></span></label>
       </div></fieldset>
       <fieldset disabled={occupe} className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">Les limites du jeu</legend><div className="grid grid-cols-2 gap-[22px]">
-        <label className="flex flex-col gap-[8px] text-[13px]">Nombre total d’appels autorisés<input type="number" min={0} step={1} className={CHAMP} value={cadre.plafond_appels} onChange={e => changer({ plafond_appels: Number(e.target.value) })} /></label>
+        <label className="flex flex-col gap-[8px] text-[13px]">Nombre total de générations autorisées<input type="number" min={0} step={1} className={CHAMP} value={cadre.plafond_appels} onChange={e => changer({ plafond_appels: Number(e.target.value) })} /></label>
         <label className="flex flex-col gap-[8px] text-[13px]">Budget total en dollars<input type="number" min={0} step="0.01" className={CHAMP} value={cadre.plafond_usd} onChange={e => changer({ plafond_usd: Number(e.target.value) })} /></label>
-      </div><div className="mt-[14px] text-[12px] text-encre-3"><Libelle aide="agent.cadre-durable">Le budget est réservé avant les appels</Libelle><p className="mt-[8px]">Une nouvelle référence puis un clip demandent deux appels. Deux demandes simultanées partagent les mêmes limites. Les prix annoncés sont estimés : une facture plus élevée reste comptée et peut bloquer la suite.</p><p className="mt-[8px]">Ce total couvre les demandes complètes de l’agent conservées dans ce jeu, même après fermeture. Modifier la limite n’efface pas leur consommation. Une acceptation inconnue garde sa réservation.</p></div>
-      {!cadre.autoriser_payant && <p className="mt-[8px] text-[12px] text-encre-3">Les appels payants sont désactivés ; le montant reste mémorisé.</p>}</fieldset>
+      </div><div className="mt-[14px] text-[12px] text-encre-3"><Libelle aide="agent.cadre-durable">Le budget est réservé avant les générations</Libelle><p className="mt-[8px]">Une nouvelle référence puis un clip demandent deux générations. Deux demandes simultanées partagent les mêmes limites. Les prix annoncés sont estimés : une facture plus élevée reste comptée et peut bloquer la suite.</p><p className="mt-[8px]">Ce total couvre les demandes complètes de l’agent conservées dans ce jeu, même après fermeture. Modifier la limite n’efface pas leur consommation. Une acceptation inconnue garde sa réservation.</p></div>
+      {!cadre.autoriser_payant && <p className="mt-[8px] text-[12px] text-encre-3">Les générations payantes sont désactivées ; le montant reste mémorisé.</p>}</fieldset>
       <fieldset disabled={occupe} className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">Les méthodes autorisées</legend>
         {catalogueAbsent && <p className="mb-[14px] text-[13px] text-encre-3">{catalogueAbsent}</p>}
         <div className="grid grid-cols-2 gap-[22px]"><ChoixMethodes nom="Image de référence" methodes={images} selection={cadre.modeles_image} restreint={choisirImages} onMode={v => { setChoisirImages(v); if (!v) changer({ modeles_image: [] }); else setConfirmation("") }} onSelection={v => changer({ modeles_image: v })} />

@@ -158,7 +158,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     if (!window.confirm(`Retirer « ${personnage.nom} » du jeu ? Ses fichiers restent conservés dans la bibliothèque.`)) return
     setOccupe(true)
     try { await api.supprimerPersonnage(personnage.identifiant); onPersonnage({ ...personnage, supprime: true }); setEdition(false) }
-    catch (e) { onErreur(e, "L’asset n’a pas pu être retiré.") }
+    catch (e) { onErreur(e, "Le sujet n’a pas pu être retiré.") }
     finally { setOccupe(false) }
   }
   return <>
@@ -175,19 +175,19 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     {edition && <CadreDialogue titre="La fiche du sujet" format="preparation" onFermer={fermer} enfants={<>
       <header className="flex items-center justify-between border-b border-trait p-[22px]"><h2 className="font-serif text-[25px]">La fiche du sujet</h2><button className={BOUTON} onClick={fermer}>Fermer</button></header>
       <div className="defile space-y-[22px] overflow-y-auto p-[22px]">
-        <p className="text-[12px] text-encre-3">Ce qui est réglé ici part avec chaque demande de cette chose, et se relit avant chaque envoi.</p>
+        <p className="text-[12px] text-encre-3">Ce qui est réglé ici part avec chaque demande de ce sujet, et se relit avant chaque envoi.</p>
         <label className="flex flex-col gap-[8px] text-[13px]">Nom<input aria-label="Nom du sujet" className="h-[34px] rounded-7 border border-contour bg-carte px-[14px]" value={nom} onChange={e => setNom(e.target.value)} /></label>
 
         <section className="flex flex-col gap-[8px]">
           <EnTeteDeSection aide="codex.chose.sujet" compte={`${description.length} lettres`} />
           <textarea
             aria-label="Description du sujet"
-            placeholder="ce qu’il faut redire au modèle à chaque image de cette chose"
+            placeholder="ce qu’il faut redire au modèle à chaque image de ce sujet"
             className="min-h-[128px] resize-y rounded-7 border border-contour bg-carte p-[14px] text-[13px]"
             value={description}
             onChange={e => setDescription(e.target.value)}
           />
-          {!personnage.description && <p className="text-[12px] text-encre-3">aucun signalement — chaque appel part sans dire de quoi il s’agit</p>}
+          {!personnage.description && <p className="text-[12px] text-encre-3">aucun signalement — chaque génération part sans dire de quoi il s’agit</p>}
         </section>
 
         <section className="flex flex-col gap-[8px]">
@@ -208,7 +208,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
           />
         </section>
 
-        <details className="text-[13px]"><summary className="cursor-pointer">Rangement et retrait du jeu</summary><p className="mt-[8px] text-[12px] text-encre-3">Type : {personnage.type || personnage.famille}. Retirer l’asset du jeu conserve ses fichiers et ses images.</p><button className={`${BOUTON} mt-[14px] text-echec`} disabled={occupe} onClick={() => void retirer()}>Le retirer du jeu</button></details>
+        <details className="text-[13px]"><summary className="cursor-pointer">Rangement et retrait du jeu</summary><p className="mt-[8px] text-[12px] text-encre-3">Type : {personnage.type || personnage.famille}. Retirer le sujet du jeu conserve ses fichiers et ses images.</p><button className={`${BOUTON} mt-[14px] text-echec`} disabled={occupe} onClick={() => void retirer()}>Le retirer du jeu</button></details>
         <section><h3 className="text-[13px] font-medium">Collections</h3><div className="mt-[8px] flex flex-wrap gap-[8px]">{collections?.map(c => <span key={c.identifiant} data-collection-du-sujet={c.identifiant} className="flex items-center gap-[8px] rounded-5 bg-papier-cote px-[8px] py-[4px] text-[13px]">{c.nom}<button disabled={occupe} aria-label={`Retirer de ${c.nom}`} onClick={() => void ranger(c.identifiant, true)}>×</button></span>)}</div><div className="mt-[14px] flex gap-[8px]"><select aria-label="Ajouter à une collection" className="h-[34px] min-w-0 flex-1 rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={collection} onChange={e => setCollection(e.target.value)}><option value="">Choisir une collection</option>{groupes.filter(g => !collections?.some(c => c.identifiant === g.identifiant)).map(g => <option key={g.identifiant} value={g.identifiant}>{g.nom}</option>)}</select><button className={BOUTON} disabled={occupe || !collection} onClick={() => void ranger(collection)}>Ranger</button></div><p className="mt-[8px] text-[12px] text-encre-3">Le rangement est conservé immédiatement. Il ne change pas les règles de fabrication.</p></section>
       </div>
       <footer className="flex justify-end gap-[8px] border-t border-trait p-[14px]"><button className={BOUTON} onClick={fermer}>Annuler</button><button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50" disabled={occupe || !nom.trim() || !modifie} onClick={() => void garder()}>Garder la fiche</button></footer>
@@ -315,7 +315,7 @@ function ChampDeStyle({
           <button
             type="button"
             onClick={() => void onPoser({ eteindre: champ.nom })}
-            title="ce champ ne partira plus pour cette chose — un refus écrit, pas une case vide"
+            title="ce champ ne partira plus pour ce sujet — un refus écrit, pas une case vide"
             className="mesure ml-auto px-1 text-[9.5px] text-encre-4 hover:text-echec"
           >
             éteindre
@@ -382,9 +382,9 @@ function SesReferences({
     <div className="flex flex-col gap-3">
       {references.lignes.length === 0 ? (
         <p className="mesure text-[10px] leading-4 text-encre-3">
-          Aucune encore. Dix-sept appels payés sur vingt-huit sont partis sans
-          une seule image de référence, sur des modèles qui en acceptent
-          quatorze.
+          Aucune encore. Dix-sept générations payées sur vingt-huit sont
+          parties sans une seule image de référence, sur des modèles qui en
+          acceptent quatorze.
         </p>
       ) : (
         <ul className="flex flex-col">

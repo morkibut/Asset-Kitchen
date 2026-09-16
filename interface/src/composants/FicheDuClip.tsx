@@ -188,8 +188,8 @@ export function FicheDuClip({
               type="button"
               onClick={() => onOuvrir(depart.identifiant)}
               className="shrink-0"
-              title="le sprite dont ce clip est parti"
-              aria-label="le sprite dont ce clip est parti — ouvrir sa fiche"
+              title="l'image dont ce clip est parti"
+              aria-label="l'image dont ce clip est parti — ouvrir sa fiche"
             >
               <img
                 src={vignetteAsset(depart, 96)}
@@ -199,7 +199,7 @@ export function FicheDuClip({
               />
             </button>
             <div className="flex min-w-0 flex-col gap-1">
-              <Libelle aide="clip.fiche">le sprite dont il part</Libelle>
+              <Libelle aide="clip.fiche">l'image dont il part</Libelle>
               <p className="mesure truncate text-[10.5px] leading-4 text-encre-4">
                 {depart.label}
               </p>

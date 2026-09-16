@@ -425,7 +425,7 @@ describe("le vide dit une phrase et un geste, rien d'autre", () => {
   test("revenir à l'emploi remonte le geste", () => {
     const { onRevenirALEmploi } = monter()
 
-    fireEvent.click(screen.getByRole("button", { name: /Revenir aux calques/ }))
+    fireEvent.click(screen.getByRole("button", { name: "‹ Epée · Le goliath" }))
 
     expect(onRevenirALEmploi).toHaveBeenCalled()
   })

@@ -468,7 +468,7 @@ describe("l'étape de l'allure", () => {
 
     ouvrir("Son allure")
 
-    expect(await screen.findByText(/La taille — le côté du sprite/)).toBeTruthy()
+    expect(await screen.findByText(/La taille — le côté de l'image/)).toBeTruthy()
     expect(screen.getByText(/La pixelisation/)).toBeTruthy()
     expect(screen.getByRole("button", { name: "au plus proche" })).toBeTruthy()
   })
