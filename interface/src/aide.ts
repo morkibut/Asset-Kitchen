@@ -488,14 +488,14 @@ export const AIDE: Record<string, Explication> = {
   // l'écran ne les distinguait.
 
   "carte.groupe": {
-    nom: "groupe",
+    nom: "îlot",
     ou: "inspiration",
-    quoi: "Un nom libre pour ranger les cartes du tableau. Vide = hors groupe.",
+    quoi: "Un nom libre pour ranger les cartes du tableau. Vide = hors îlot.",
     change:
       "Rien à la génération. C'est un rangement pour l'œil. Ce qui décide des références envoyées, c'est artwork officiel + famille.",
     origine: "toi · aucun défaut",
     long:
-      "Un tableau d'inspiration monte vite à cent cartes, et le groupe est ce qui te permet d'en retrouver douze. Il ne voyage nulle part : ni dans un prompt, ni dans une référence envoyée au fournisseur, ni dans un export. Tu peux le remplir, le changer, le vider sans qu'aucune image déjà produite ne bouge, et sans qu'aucune génération à venir ne change de résultat ni de prix.\n\nSi tu cherches le champ qui agit, c'est famille — juste à côté, dans le même menu.",
+      "Un tableau d'inspiration monte vite à cent cartes, et l'îlot est ce qui te permet d'en retrouver douze. Il ne voyage nulle part : ni dans un prompt, ni dans une référence envoyée au fournisseur, ni dans un export. Tu peux le remplir, le changer, le vider sans qu'aucune image déjà produite ne bouge, et sans qu'aucune génération à venir ne change de résultat ni de prix.\n\nSi tu cherches le champ qui agit, c'est famille — juste à côté, dans le même menu.",
   },
 
   "carte.famille": {
