@@ -321,7 +321,7 @@ ne se perdent pas pendant qu'on déclare la ligne ou la colonne qui manque.
 lien — et l'onglet qu'elle nommait ne savait pas encore le faire. Les deux corrections vont
 ensemble : le texte est devenu un bouton, et l'onglet qu'il vise sait maintenant répondre.
 
-## RP20 · Enregistrer sous — un rendu devient une autre pose ou direction — 16 septembre 2026
+## RP20 · Enregistrer sous — une image ou une animation modifiée devient une autre pose ou direction — 16 septembre 2026
 
 **Ce que la tranche a appris tient dans une distinction qu'on croyait déjà faite.** Le produit
 avait déjà une façon de ranger un miroir dans une autre direction : `B1`. Elle ne pouvait pas
@@ -445,13 +445,13 @@ aucun outil ne l'écrit, et un essai le vérifie sur les noms d'outils. Ce n'est
 prudence : à quoi une chose du jeu ressemble est un jugement de l'auteur, pas une décision
 d'agent.
 
-## RP3 · Le vocabulaire de l'ossature est fermé — 15 septembre 2026
+## RP3 · Fermer le vocabulaire de l'ossature — 15 septembre 2026
 
 **Seize écarts de nom fermés en une passe.** Une porte : « Les assets » → « Les sujets ». Deux entrées du fil d'Ariane. Six noms d'écran dans le guide. Deux titres écrits en toutes lettres. Cinq retours en arrière portaient le mauvais mot ou la mauvaise forme. `essai_vocabulaire.py` les a nommés ligne par ligne — fichier, lieu, mot trouvé, mot attendu —, et chacun a été corrigé à l'endroit où il était écrit.
 
 **Huit essais d'écran ont changé le mot cherché.** Les tests qui cherchaient `getByRole("button", { name: "Les assets" })` cherchent maintenant `"Les sujets"`  ; ceux qui cherchaient `"‹ Sa page"` cherchent maintenant le nom du personnage mis en contexte (`"‹ Le pèlerin"`, `"‹ Animations"`). La logique des essais n'a pas changé, seulement le mot qui est cherché.
 
-**Le relevé des désaccords restants** — soixante-quatre mots qui ne s'accordent pas encore — reste dans `docs/releves/2026-09-15-desaccords-restants.md`, écran par écran. Chaque tranche qui touche un écran ferme les siens. La liste noire à appliquer (`asset` → `sujet` ou `image`, `composant` → `sujet`, `projet` → `jeu`, `appel` ou `requête` → `génération`) vaut pour toutes. Les trois désaccords non tranchés par la règle sont décidés : l'écran de livraison s'appelle « Livrer au jeu » et rien d'autre ; la table s'appelle « Détourage » et les sept autres de même ; le champ du modèle attend RP4.
+**Le relevé des désaccords restants** — soixante-neuf mots qui ne s'accordent pas encore, au 16 septembre — reste dans `docs/releves/2026-09-15-desaccords-restants.md`, écran par écran. Chaque tranche qui touche un écran ferme les siens. La liste noire à appliquer (`asset` → `sujet` ou `image`, `composant` → `sujet`, `projet` → `jeu`, `appel` ou `requête` → `génération`) vaut pour toutes. Les trois désaccords non tranchés par la règle sont décidés : l'écran de livraison s'appelle « Livrer au jeu » et rien d'autre ; la table s'appelle « Détourage » et les sept autres de même ; le champ du modèle attend RP4.
 
 ## Le quatrième dégraissage, et trois manques nommés par l'usage — 15 septembre 2026
 
@@ -491,6 +491,61 @@ image sait faire les trois premiers ; l'atelier ne les a pas repris.
 le cadrage du fil et de la 3D, les étiquettes livrées, l'inventaire d'`AU4`, quatre relevés
 de septembre, et la photo du tableau de bord.
 
+## RP15 · Le cadre du montage se règle, ou ne se propose plus — 13 septembre 2026
+
+**Un choix qui ne faisait rien.** L'écran de montage proposait *à la main* comme une des trois
+façons de mesurer le cadre, mais aucun contrôle ne le modifiait : choisir *à la main* reposait
+le rectangle que la machine venait de mesurer, sans pivot non plus. Un choix qui promet ce qu'il
+ne fait pas est pire qu'un choix absent — décision : donner les champs, puisque le relevé du
+cadre et du pivot avait déjà son outillage depuis `AU11`, et que la maquette les demande.
+
+**Quatre champs, deux champs, et un seul qui fait foi.** Le cadre se règle par quatre champs —
+gauche, haut, largeur, hauteur —, le pivot par deux. Ce qui est réglé à la main survit à une
+nouvelle mesure automatique, l'écran dit lequel des deux fait foi, et c'est le cadre réglé qui
+sort à l'export.
+
+## RP14 · La découpe se règle — 13 septembre 2026
+
+**Des zones anonymes, sans retour arrière.** Une zone de découpe n'avait ni nom, ni case
+*garder*, ni coordonnées réglables ; on ne pouvait ni en ajouter, ni la déplacer ou la
+redimensionner, et rien ne se relisait avant de créer les sorties — une découpe ratée se
+refaisait en entier.
+
+**Ce que la tranche donne.** Une zone se nomme, se garde ou s'écarte, et ses coordonnées se
+règlent au clavier ; une zone s'ajoute, se déplace, se redimensionne, et le dernier geste se
+défait. Les sorties se relisent avant d'être créées, la source reste conservée, et une découpe
+ratée se reprend désormais depuis un résultat plutôt que de repartir de zéro.
+
+## RP2 · Rendre les quatre règles du jeu — 13 septembre 2026
+
+**Un écran de création devenu aussi l'écran des réglages.** Le nom du jeu, sa description du
+monde, sa direction artistique et sa taille de référence ne se réglaient qu'une fois, à la
+création ; l'écran qui les rouvrait n'était atteint par aucune porte. *Réglages* ouvre
+maintenant un écran à onglets — Univers, Moteurs & workflows, Agent MCP, Consommations —, et le
+premier onglet est cet écran-là : ce qui y est changé repart dans la demande suivante, vérifié
+en relisant `CONTEXT` / `World:` sous *Relire avant envoi*, avant le bouton qui paie.
+
+**Un second écran mort revit avec le premier.** L'onglet *Agent MCP* rouvre le cadre de
+délégation — plafond d'appels, plafond en argent, droit de payer, droit d'appeler la machine —,
+seul endroit du produit qui borne la dépense de l'agent. Les modèles autorisés par type pour la
+3D et l'audio restent un manque à construire, pas une capacité perdue : l'écran ne les a jamais
+montrés. `PanneauAtelier` est dissous au passage : les fournisseurs rejoignent *Moteurs &
+workflows*, l'agent, les dossiers et les mouvements rejoignent *Agent MCP*.
+
+## RP1 · Retirer ce qui est mort, garder ce qui n'a pas de remplaçant — 13 septembre 2026
+
+**Un point dur tranché avant d'ouvrir la tranche.** L'écran de l'agent et le mode *réglages* des
+règles du jeu avaient l'air morts, mais le premier est le seul endroit du produit qui borne ce
+que l'agent a le droit de dépenser ; les supprimer aurait retiré à l'auteur ce frein. Les deux
+restent, en attendant que `RP2` les rebranche. Le champ de nouvelle collection d'une famille,
+lui, reste mort jusqu'à `RP7`.
+
+**Ce qui est parti.** Deux fichiers entiers — la colonne de gauche d'avant et le composant du
+carnet, dont les constantes restent employées par cinq écrans vivants — et sept morceaux morts
+logés dans des fichiers vivants, retirés sans toucher au reste de ces fichiers. Aucun essai ne
+teste plus un écran injoignable, et le nombre d'essais a baissé exactement du nombre d'essais
+orphelins retirés.
+
 ## RP · L'ouverture de la remise à plat — 13 septembre 2026
 
 **Née d'une phrase de l'auteur** : *« c'est quand même encore pas mal le bordel l'interface…
@@ -513,8 +568,8 @@ n'existent pas dans la maquette, et la plupart sont à garder — l'atelier d'un
 calibrage, la planche de poses, les tuiles, les sons, l'aide, la barre de gestes. Sur chaque
 écran il manque deux ou trois gestes, il en ajoute cinq, et il les nomme autrement. **Quatre-
 vingts désaccords de nom** : c'est cette dérive-là qui fait le désordre, pas un manque de
-travail. D'où la règle posée en tête du plan : la maquette fait foi sur l'ossature et le
-vocabulaire, le produit sur la profondeur.
+travail. D'où la règle posée en tête du plan : la maquette fait foi sur l'ossature,
+`docs/vocabulaire.html` sur les mots, le produit sur la profondeur.
 
 **3. Un écran mort peut être le seul à porter une capacité.** L'écran de délégation de l'agent
 n'est monté nulle part, et le relevé le classait donc mort. Il est pourtant le **seul** du

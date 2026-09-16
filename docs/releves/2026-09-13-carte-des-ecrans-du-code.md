@@ -1,5 +1,8 @@
 # Carte des écrans du code — 13 septembre 2026
 
+Relevé du 13 septembre 2026 ; les tranches RP l'ont mis à jour au fil de l'eau, mais il décrit
+l'état d'alors : le plan fait foi.
+
 Ce que l'interface contient vraiment, et ce que l'auteur peut réellement atteindre en cliquant.
 
 Relevé fait sur la branche `codex/atelier-unifie`, sans rien modifier. Chaque « mort »
@@ -26,7 +29,9 @@ ils ne sont pas des écrans.
 La navigation tient dans un seul état : une **pile de lieux** (`interface/src/lieux.ts`).
 `App.tsx` lit cette pile et décide quel composant occupe la surface centrale.
 
-Sept portes dans la colonne de gauche (`NavigationAtelier.tsx`) :
+Huit portes dans la colonne de gauche (`NavigationAtelier.tsx`) : les six du tableau `PORTES`,
+plus *Réglages* et *Guide*, montés à part du tableau mais comptés avec lui (`docs/vocabulaire.html`
+en porte huit, dans le même ordre) :
 
 - **Le jeu** → lieu `tableau-de-bord` → `TableauDeBord`
 - **Univers & toile** → lieu `univers` → `EcranUnivers`
@@ -40,12 +45,14 @@ Sept portes dans la colonne de gauche (`NavigationAtelier.tsx`) :
 - **Fabrications** → lieu `fabrications` → `Fabrications`
 - **Livrer au jeu** → lieu `sortie` → `Livraisons`
 - **Réglages** → lieu `installation` → `Installation`
+- **Guide** → ouvre `VoletGuide`
 
-Le nom du jeu, en haut de cette colonne, ouvre `Ouverture` (choisir ou créer un jeu).
-Le bouton **Guide** ouvre `VoletGuide`. **Rechercher un geste** (Ctrl K) ouvre `Barre`.
+Le nom du jeu, en haut de cette colonne, ouvre `Ouverture` (choisir ou créer un jeu) ; ce n'est
+pas une porte. **Rechercher un geste** (Ctrl K) ouvre `Barre` ; ce n'en est pas une non plus.
 
 Dans la bande du haut (`EnTeteDeSurface.tsx`) : le total ouvre lieu `depenses` →
-`EcranDepenses` ; le bouton *Réglages* et l'état de la clé ouvrent `PanneauAtelier`.
+`EcranDepenses` ; le bouton *Réglages* et l'état de la clé ouvrent `PanneauAtelier` — dissous par
+RP2, son contenu vit désormais dans `Reglages.tsx`.
 
 Sous la racine `codex`, les lieux d'un sujet et d'un équipement :
 
@@ -141,7 +148,9 @@ Voir *Les écrans morts*.
 ### PanneauAtelier — la fenêtre « Réglages »
 - **On y arrive par** : le bouton *Réglages* ou l'état de la clé, dans la bande du haut ; ou *Les autres réglages* depuis l'installation.
 - **Ce qu'il fait** : les clés, les garde-fous de l'agent, le dossier du jeu, les mouvements.
-- **Fichier** : `interface/src/composants/ReglesDuJeu.tsx`
+- **Fichier** : `interface/src/composants/ReglesDuJeu.tsx` (le composant `PanneauAtelier`, à l'intérieur).
+- **Depuis** : dissous par RP2 le 13 septembre 2026 ; ce contenu vit désormais dans l'onglet
+  *Agent MCP* de `interface/src/composants/Reglages.tsx`.
 
 ### EcranDepenses — « Les dépenses »
 - **On y arrive par** : le montant, dans la bande du haut ; ou *Les dépenses* depuis les Fabrications.
@@ -384,7 +393,7 @@ Ils ne s'ouvrent pas seuls : ils vivent dans un des écrans ci-dessus. Tous sont
 ### Carnet
 - **Pourquoi il est mort** : le composant `Carnet` n'est monté que dans son propre essai. Recherche de `<Carnet` dans tout `interface/src/` : une seule ligne, `composants/Carnet.test.tsx:65`. Les cinq fichiers qui importent `./Carnet` ne lui prennent que des constantes (`FAMILLES`, `NOM_DANS_LE_CARNET`, `NOM_DE_LA_RUBRIQUE`) et un type (`LigneDeFamille`) — vérifié ligne à ligne dans `App.tsx`, `BibliothequeDesAssets.tsx`, `CreerUnAsset.tsx`, `TableauDeBord.tsx` et `lieux-noms.ts`.
 - **Ce qu'il faisait** : la colonne de gauche de la V4 — les familles dépliables, les collections, les cibles de dépôt du glisser-déposer, le pied avec les réglages.
-- **Ce qui l'a remplacé** : `NavigationAtelier.tsx`, qui a sept portes fixes et ne déplie rien.
+- **Ce qui l'a remplacé** : `NavigationAtelier.tsx`, qui a huit portes fixes et ne déplie rien.
 - **Conséquence à retenir** : deux fonctions d'`EcranFamille` dépendaient du carnet et sont tombées avec lui — le « ＋ Nouvelle collection » et la cible de dépôt du glisser-déposer (voir plus bas).
 - **Encore testé ?** : oui — `interface/src/composants/Carnet.test.tsx`, 244 lignes.
 - **Fichier** : `interface/src/composants/Carnet.tsx` (le composant seulement ; le reste du fichier sert encore)

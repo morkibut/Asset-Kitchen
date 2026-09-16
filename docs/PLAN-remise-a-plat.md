@@ -16,7 +16,7 @@
 > |---|---|
 > | [la maquette](releves/2026-09-13-carte-de-la-maquette.md) | les 26 écrans validés le 12 septembre, et ce qu'on fait dans chacun. **C'est le contrat.** |
 > | [les écrans du code](releves/2026-09-13-carte-des-ecrans-du-code.md) | les 99 écrans réels : atteignables, morts, en double |
-> | [le serveur](releves/2026-09-13-carte-du-serveur.md) | 314 routes, 85 outils pour l'agent, ce que plus personne n'appelle |
+> | [le serveur](releves/2026-09-13-carte-du-serveur.md) | 316 routes, 87 outils pour l'agent, ce que plus personne n'appelle |
 > | [**l'écart**](releves/2026-09-13-ecart-maquette-produit.md) | **le croisement des deux premiers, geste par geste.** C'est lui qui commande ce plan |
 > | [les documents](releves/2026-09-13-etat-des-docs.md) | ce qui fait foi, ce qui est périmé, ce qui est descendu en archive |
 
@@ -124,7 +124,7 @@ Temps 4 — les décisions       RP17 · RP18
 
 **Bloquée par** : rien. **Elle bloque** : rien, mais elle rend tout le reste lisible.
 
-Quatre écrans et sept morceaux sont morts, chacun prouvé par une recherche dans
+Deux fichiers, un écran dans un fichier vivant et sept morceaux sont morts, chacun prouvé par une recherche dans
 [la carte des écrans du code](releves/2026-09-13-carte-des-ecrans-du-code.md) § *Les écrans
 morts*. Ils font croire que le produit contient des choses qu'il ne contient pas.
 
@@ -543,8 +543,9 @@ l'aperçu en grand d'un côté, le rôle demandé après le choix et l'import de
 - [x] L'aperçu en grand : le pointeur vise, la barre d'espace ouvre.
 - [x] Reçoit des images voisines déjà connues (`voisines`), utilisé par la Superposition.
 - [x] Un clic choisit l'image tout de suite, sans étape de confirmation.
-- [x] Montée à neuf endroits : *Ce qui part*, Fabriquer en 3D, Vidéo libre, Les tuiles (deux
-  fois), Workflows locaux, Importer des images, Superposition.
+- [x] Montée à dix endroits, depuis la fusion : *Ce qui part*, Fabriquer en 3D, Vidéo libre,
+  Les tuiles (deux fois), Workflows locaux, Importer des images, Superposition, les calques
+  d'un emploi, la référence commune d'une pièce.
 
 `ChoisirImageEquipement.tsx` (choisir une image pour un équipement) :
 
@@ -639,10 +640,11 @@ toujours. C'est maintenant le « ＋ Collection » de la colonne qui l'ouvre.
   aux deux endroits, et `BibliothequeDesAssets.tsx` est retiré. Un essai compte un seul
   `[data-grille-dassets]` dans le document.*
 - [x] Le glisser-déposer vers une collection marche, d'un seul type, et un essai le prouve.
-  *Cinq essais de `Famille.test.tsx` § le glisser-déposer : le type et la charge utile écrits au
-  `dragstart`, le « déjà + arrivants » au survol, le dépôt sur une puce du volet, le dépôt sur une
-  ligne de la colonne, et le refus d'un glisser d'un autre type. Le `DataTransfer` doublé
-  transporte vraiment les identifiants.*
+  *Six essais de `Famille.test.tsx` § le glisser-déposer : le type et la charge utile écrits au
+  `dragstart`, le refus d'un glisser sur une carte non choisie, le « déjà + arrivants » au
+  survol, le dépôt qui range chaque sujet et relit la grille, le dépôt sur une ligne de la
+  colonne, et le refus d'un glisser d'un autre type. Le `DataTransfer` doublé transporte
+  vraiment les identifiants.*
 - [x] Créer une collection depuis la grille marche de nouveau. *Le « ＋ Collection » de la
   colonne ouvre le champ ; un essai vérifie qu'il n'est pas là avant le clic, qu'il l'est après,
   et que `POST /api/collections` part avec le nom saisi sans qu'aucun rangement ne suive.*
@@ -940,9 +942,11 @@ des images, ils ne sont pas dans cette table, et l'écran les tient déjà à pa
   `regrouper_par_origine` ; un groupe replié montre son origine et compte ses dérivés.*
 - [x] La galerie reste lisible avec plusieurs centaines de résultats, et un essai le mesure.
   *`test_rp11.py` monte cinq cents images, dont une feuille de soixante cases : la grille
-  repliée rend 441 tuiles au lieu de 500, en une requête. Et le même essai vérifie que le tri
+  repliée rend 440 tuiles au lieu de 500, en une requête. Et le même essai vérifie que le tri
   porte sur les cinq cents et non sur la page — avec un plafond de dix, le plus ancien de la
   bibliothèque est en tête.*
+  *Les mots de l'écran (la galerie) sont fermés le 16 septembre 2026, après relecture — voir
+  `docs/releves/2026-09-15-desaccords-restants.md`.*
 
 **Ce qui a dû bouger à l'écran pour que la route serve.** La galerie re-triait par date tout
 ce qu'elle assemblait — images, clips, emplacements en cours. Tant que la route n'avait qu'un
@@ -1230,6 +1234,7 @@ sur l'un de deux chemins n'est tenue que sur celui-là.*
       marqué *remplace*, le disque porte encore l'ancien, et après écriture rien n'a changé qui
       n'ait été annoncé (`tests/test_rp17.py`). *S'arrêter s'il y a un doublon* refuse le lot
       entier en nommant le premier fichier, et n'écrit rien.*
+
 ## RP18 · Les neuf routes sans écran  ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : rien.
@@ -1282,7 +1287,7 @@ routes que l'écran connaît ; il faut chercher **aussi** les adresses que le se
       (`tests/test_b20.py`), remplacés par un essai qui vérifie que les adresses ne répondent
       plus — sans quoi une route retirée pourrait revenir sans que rien ne tombe.*
 - [x] Le relevé du serveur est mis à jour, et le compte des routes y redescend d'autant.
-      *318 → 314 routes. Les quatre retirées sont rayées avec leur date, les cinq construites
+      *321 → 316 routes. Les quatre retirées sont rayées avec leur date, les cinq construites
       perdent leur mention* sans emprunteur *, et les deux qui l'étaient déjà portent la preuve
       qui manquait.*
 
@@ -1416,7 +1421,10 @@ la même image brute.
   *`save_render_as` et `preview_save_render_as`, tous deux sur `kind: image | animation`. Ils
   appellent le même service et refusent avec la même phrase — un essai le vérifie.*
 
-## RP21 · Une planche découpée sur la toile devient une animation
+*Les mots de l'écran (tables et sélecteur) sont fermés le 16 septembre 2026, après relecture —
+voir `docs/releves/2026-09-15-desaccords-restants.md`.*
+
+## RP21 · Une planche découpée sur la toile devient une animation ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : rien. **Elle s'appuie sur** : `AU19` — une feuille de sprites découpée
 devient un clip et ses bandes — et `RP14` — la découpe se règle.
@@ -1462,6 +1470,9 @@ du produit depuis `E1` — l'établi est une profondeur, pas un lieu de plus.
 - [x] Les huit images restent en bibliothèque après le montage ; en faire une bande ne les
   consomme pas.
 
+*Les mots de l'écran (la découpe) sont fermés le 16 septembre 2026, après relecture — voir
+`docs/releves/2026-09-15-desaccords-restants.md`.*
+
 ## RP22 · Une table se défait, se remet à zéro, et se voit avant d'enregistrer ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : rien. **Elle s'appuie sur** : l'invariant du lot U — *une place s'éteint
@@ -1504,11 +1515,15 @@ Réparé avec le déclique du critère suivant : les deux venaient de la même c
 - [x] Chaque table de l'atelier d'une animation a la bascule *L'endormir / La réveiller* de
   l'établi, et un geste *Remettre à zéro* qui vide la table sans l'éteindre.
 - [x] L'aperçu se refait à chaque geste sur la recette, retournement compris ; un essai le
-  tient en comparant l'aperçu avant *Enregistrer* au rendu après.
+  tient en vérifiant que chaque geste renvoie une nouvelle requête d'aperçu, et que cette
+  requête porte le retournement en cours (`AtelierUnifieRetouche.test.tsx`, mock
+  d'`apercuDeBande`).
 - [x] La section *Position, source et pelure d'oignon* porte un titre qui dit ses trois
   gestes, et chacun a une explication atteignable depuis lui, lue dans le recueil.
 - [x] Les mêmes mots pour les mêmes gestes sur l'établi d'une image et dans l'atelier d'une
   animation — `docs/vocabulaire.html` les fixe.
+  *Les mots de l'écran (tables et sélecteur) sont fermés le 16 septembre 2026, après
+  relecture — voir `docs/releves/2026-09-15-desaccords-restants.md`.*
 - [x] Aucun de ces gestes n'écrit sur le disque avant *Enregistrer*, et *Défaire* les reprend.
 
 ---
@@ -1523,7 +1538,7 @@ Réparé avec le déclique du critère suivant : les deux venaient de la même c
   demandent un essai au navigateur, et ils sont nommés en fin du
   [relevé d'écart](releves/2026-09-13-ecart-maquette-produit.md) § *Ce que je n'ai pas pu
   vérifier*. Le premier à lever est le glisser-déposer, parce que RP7 en dépend.
-- **Les 57 ateliers jetables** de la configuration de lancement. Ils ne gênent personne et se
+- **Les 58 ateliers jetables** de la configuration de lancement. Ils ne gênent personne et se
   relisent ; les ranger n'apporte rien à l'auteur.
 - **Les images payées déjà versées dans l'historique.** Les retirer demanderait de réécrire
   l'historique, et la règle du dépôt dit de ne pas le faire.
