@@ -36,10 +36,10 @@
 |---|---|
 | `docs/DESIGN.md` | **le système de design**, réécrit de zéro le 4 septembre 2026 — ce à quoi l'atelier doit ressembler |
 | `docs/design-decisions.md` | **le journal des décisions**, datées, avec leur raison et leur coût. On l'ouvre pour rouvrir une décision |
-| `docs/archive/vocabulaire-a-fermer.md` | **un mot par geste** : les 179 libellés du produit ramenés à un vocabulaire fermé |
+| `docs/vocabulaire.html` | **un mot par geste** : le vocabulaire fermé du produit |
 | `docs/parcours.html` | **le parcours en une image** : les trois lieux, les trois profondeurs, la règle de lecture et le budget d'écrans (41 → 22 → 11). Deuxième version, après sept relectures qui ont démoli la première |
-| `docs/archive/design-preview-refonte.html` | **le spécimen vivant** du système : polices, palette, formes de contrôle, et une maquette d'écran |
-| `docs/archive/DESIGN-avant-refonte-2026-09-04.md` | **le système d'avant**, qui décrit encore le code tant que la refonte n'est pas livrée |
+| `docs/design-preview.html` | **le spécimen vivant** du système : polices, palette, formes de contrôle, et une maquette d'écran |
+| `docs/archive/DESIGN-avant-refonte-2026-09-04.md` | **le système d'avant le papier** — remplacé par `docs/DESIGN.md` depuis le 6 septembre 2026 ; à ne pas confondre avec l'autre système d'avant, `docs/archive/DESIGN-chassis-chaud-2026-09-04.md` |
 
 ---
 

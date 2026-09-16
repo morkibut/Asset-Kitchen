@@ -115,7 +115,7 @@ compté ici.)*
 | `docs/cadrage-fil-et-3d.md` | 14 Ko | 2026-09-08 | 1 fichier | Vivant | Préparation pour après la V4 ; rien construit encore, mais toujours valable |
 | `docs/archive/` (17 fichiers) | 894 Ko | 2026-09-11 | 97 fichiers | Vivant | Le dossier d'archive joue son rôle : versions tenues, études closes, plans périmés |
 | `docs/tranches/` (27 fichiers) | 696 Ko | 2026-09-11 | 39 fichiers | Vivant | Critères d'acceptation par tranche — T1 à V4.md |
-| `docs/status/` (`etat.md` + 2 fichiers) | 570 Ko | 2026-09-13 | 22 fichiers | Vivant | `etat.md` est le journal qui fait foi ; les 2 autres fichiers sont un tableau de bord — voir doublon |
+| `docs/status/` (`etat.md` + 2 fichiers) | 570 Ko | 2026-09-13 | 22 fichiers | Vivant | `etat.md` est le journal des tranches — il « ne fait foi sur rien » (`etat.md:4`) ; les 2 autres fichiers sont un tableau de bord — voir doublon |
 | `docs/archive/status-atelier-unifie/` (2 fichiers) | 305 Ko | 2026-09-12 | 1 fichier | Doublon | Second tableau de bord, généré avant AU18-AU20, sans lien depuis aucun document d'autorité |
 
 ### L'architecture et ses annexes
@@ -166,7 +166,7 @@ compté ici.)*
 | `docs/archive/releve-fournisseurs.md` | 25 Ko | 2026-08-31 | 12 fichiers | Périmé | Recommande Cloudflare comme fournisseur principal ; retiré par l'auteur le 8 septembre |
 | `docs/revue-conformite-carnet-2026-09-11.md` | 49 Ko | 2026-09-12 | 4 fichiers | Vivant | Écarts maquettes / code du carnet |
 | `docs/revue-ux-complete-2026-09-12.md` | 36 Ko | 2026-09-12 | 3 fichiers | Vivant | Comparaison prototype / interface réelle / anciennes planches |
-| `docs/releves/` (10 fichiers dont un README) | 762 Ko | 2026-09-13 | 8 fichiers | Vivant | Notes datées mesurant le produit tel qu'il est, sans opinion |
+| `docs/releves/` (17 fichiers dont un README) | 762 Ko | 2026-09-13 | 8 fichiers | Vivant | Notes datées mesurant le produit tel qu'il est, sans opinion |
 | `docs/remarques.md` + `docs/remarques/` (22 fichiers) | 30 Ko + 364 Ko | 2026-09-04 | 6 + 12 fichiers | Vivant | Journal de remarques d'usage. Absent de l'index `docs/README.md` — à y ajouter |
 | `docs/archive/v21-arbitrages.md` | 49 Ko | 2026-08-31 | 16 fichiers | À archiver | Arbitrages d'une version (V2.1) entièrement tenue ; ne fait foi sur rien par construction |
 | `docs/archive/questions-du-lot-U.md` | 17 Ko | 2026-09-01 | 4 fichiers | À archiver | Questions ouvertes du lot U, clos depuis et repris par l'usage |

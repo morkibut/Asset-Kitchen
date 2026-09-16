@@ -6,9 +6,9 @@ Ce relevé décrit ce que le serveur (`atelier/`) sait faire : ses routes HTTP, 
 
 | | Nombre |
 |---|---|
-| Routes HTTP | **313** *(318 avant `RP18` puis `RP17`, le 16 septembre 2026)* |
-| Outils MCP | 87 *(`RP17` en retire deux et en ajoute deux)* |
-| Routes que l'interface n'appelle pas | **0** (+ `/health`, à part — voir plus bas) |
+| Routes HTTP | **316** *(318 avant `RP18` puis `RP17`, le 16 septembre 2026)* |
+| Outils MCP | 87 *(`RP17` retire `export_assets` et `export_character`, ajoute `preview_output` et `write_output` ; `RP20` avait déjà ajouté `save_render_as` et `preview_save_render_as`)* |
+| Routes que l'interface n'appelle pas | **1** — `POST /strips/{id}/layer/align` (+ `/health`, à part — voir plus bas) |
 | Doublons de capacité | 2 *(`RP17` a refermé le troisième)* |
 | Modules plus importés (services/ + domaine/) | 0 |
 
@@ -24,7 +24,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 
 ## Les routes
 
-### Le cœur : état, clé, installation, catalogue, générations, assets, recettes (`routes.py`, 58 routes depuis RP18)
+### Le cœur : état, clé, installation, catalogue, générations, assets, recettes (`routes.py`, 57 routes depuis RP18)
 
 | Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
 |---|---|---|---|
@@ -112,7 +112,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST /exports | Exporte une sélection d'assets en archive ZIP | Oui | — *(`export_assets` retiré par `RP17`)* |
 | GET /assets/{id}/lineage | D'où vient cet asset, et ce qui en descend | Oui | — |
 
-### Le tableau d'inspiration et l'univers du projet (`univers.py`, 38 routes)
+### Le tableau d'inspiration et l'univers du projet (`univers.py`, 37 routes)
 
 | Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
 |---|---|---|---|
@@ -154,7 +154,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | PUT /moods/{id} | Règle une ambiance (palette, références, éclairage) | Oui | — |
 | DELETE /moods/{id} | Supprime une ambiance (ce qui s'en servait retombe sur le jeu) | Oui | — |
 
-### Les personnages, poses, directions, le vestiaire (`production.py`, 55 routes depuis RP17)
+### Les personnages, poses, directions, le vestiaire (`production.py`, 56 routes depuis RP17)
 
 | Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
 |---|---|---|---|
@@ -215,7 +215,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST /characters/{id}/strips/export | Toutes les animations d'un personnage, en une archive | Oui | — |
 | PUT /references | Décoche une référence, pour un personnage ou tout le projet | Oui | — |
 
-### Les mouvements, clips, le montage, les bandes (`animation.py`, 44 routes depuis RP18)
+### Les mouvements, clips, le montage, les bandes (`animation.py`, 47 routes depuis RP18)
 
 | Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
 |---|---|---|---|
@@ -256,7 +256,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST /strips/restore | Annule un écart récent | Oui | — |
 | POST /strips/{id}/layer | Pose le calque d'une pièce sur chaque image d'une animation | Oui | — |
 | PUT /strips/{id}/layer | Règle un calque animé (il tient, ou il glisse) | Oui | — |
-| POST /strips/{id}/layer/align | Cale un calque animé à la main, et garde le réglage | Oui | — |
+| POST /strips/{id}/layer/align | Cale un calque animé à la main, et garde le réglage | Non — son seul appelant, `calerLeCalqueAnime` dans `interface/src/api.ts`, n'est employé par aucun composant (voir *Ce qui est parti*) | — |
 | ~~DELETE /strips/{id}/layer/align~~ | ~~Oublie le calage d'un calque animé~~ | **retirée le 16 septembre 2026** (`RP18`) | — |
 | GET /strips/{id}/layer/preview | Aperçu d'un calque animé | Oui — écran *Ses animations, image par image* (`RP18`) | — |
 | DELETE /strips/{id}/layer | L'habillage s'en va, le corps et le calque restent | Oui | — |
@@ -282,7 +282,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | POST /output/preview | Ce qui sortirait, et pas un octet n'est écrit | Oui | preview_output |
 | POST /output | Écrit la sortie pour de vrai, rend le compte rendu | Oui | write_output |
 
-### La livraison vers Godot — animations (`livraison.py`, 7 routes) et images (`livraison_images.py`, 2 routes)
+### La livraison vers Godot — animations (`livraison.py`, 8 routes) et images (`livraison_images.py`, 2 routes)
 
 | Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
 |---|---|---|---|
@@ -460,7 +460,7 @@ Deux par calque, et la coupure est celle du miroir : ce qui ne crée rien se red
 | realign_project | Réapplique palette et grille à tout un jeu, sans appel payant | Oui — POST /api/universe/realign |
 | refresh_models | Relit le catalogue chez les fournisseurs | Oui — POST /api/models/refresh |
 
-### Équipement, tenues, tuiles, sons, 3D, workflows locaux, livraison (64 outils)
+### Équipement, tenues, tuiles, sons, 3D, workflows locaux, livraison (66 outils)
 
 | Outil | Ce qu'il fait | Même capacité côté écran ? |
 |---|---|---|

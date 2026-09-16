@@ -88,7 +88,6 @@ la même raison de forme : elles écrivent une donnée neuve dans le dossier du 
 | **RP5** `[MEDIUM]` | Décider quand la pose et la direction se demandent, et quand elles se déduisent | Opus, réflexion moyenne |
 | **RP11** `[MEDIUM]` | Le contrat de tri et de regroupement sur la route de la grille unique, qui sert aussi l'agent | Opus, réflexion moyenne |
 | **RP12** `[MEDIUM]` | La règle du temps commun à deux cadences différentes, sans toucher à ce qui sort à l'export | Opus, réflexion moyenne |
-| **RP14** `[MEDIUM]` | Ce qui voyage et ce qui ne voyage pas — l'invariant « une coordonnée ne voyage pas » tient dans les deux sens | Opus, réflexion moyenne |
 | **RP16** `[MEDIUM]` | La forme de l'index des brouillons : ce qu'un brouillon porte pour être retrouvé depuis un tiroir | Opus, réflexion moyenne |
 | **RP18** `[MEDIUM]` | Les neuf décisions elles-mêmes — construire ou retirer, une par route | Opus, réflexion moyenne |
 
