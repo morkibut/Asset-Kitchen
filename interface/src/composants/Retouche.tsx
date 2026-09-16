@@ -3734,6 +3734,7 @@ export function Retouche({
   useEffect(() => setAAppliquer(false), [asset.identifiant])
   const brouillonHistorique = useBrouillonLocal({
     cle: `retouche:${asset.projet ?? ""}:${asset.identifiant}`, pret: enregistrementImmediat, reference: asset.recette, etat: recette,
+    ecran: "La retouche", quoi: asset.label || asset.identifiant,
     appliquer: (suite) => { setRecette(suite); setAAppliquer(true) },
   })
   const brouillon = enregistrementImmediat ? brouillonHistorique : session.brouillon

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { beforeEach, expect, test, vi } from "vitest"
 import { CorrectionsDuSquelette } from "./CorrectionsDuSquelette"
 import { sources3d, type Corrections3D } from "../api-3d"
+import { brouillonsLaissesEnPlan } from "../brouillons"
 
 vi.mock("../api-3d", () => ({ sources3d: { corrections: vi.fn(), poserCorrections: vi.fn(), rig: (_id: string, animation: string, revision: number) => `/rig?animation=${animation}&r=${revision}` } }))
 vi.mock("./ApercuModele3D", () => ({ default: ({ url }: { url: string }) => <img alt="Aperçu du rig enregistré" src={url} /> }))
@@ -23,6 +24,8 @@ test("une correction non enregistrée se reprend sans appel ; sauvegarde puis r�
   fireEvent.change(screen.getByLabelText("Vrille du squelette — curseur"), { target: { value: "-43" } })
   fireEvent.change(screen.getByLabelText("Flexion du squelette"), { target: { value: "27" } })
   await waitFor(() => expect(bloque).toHaveBeenLastCalledWith(true))
+  // **Et le tiroir le voit** (`RP16`), écran nommé et sujet reconnaissable.
+  expect(brouillonsLaissesEnPlan()[0]).toMatchObject({ ecran: "Les corrections du squelette", quoi: "hero · Marche" })
   ecran.unmount()
   ecran = render(<CorrectionsDuSquelette personnage="hero" animation="Marche" />)
   fireEvent.click(await screen.findByRole("button", { name: "Reprendre le brouillon" }))

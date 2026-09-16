@@ -58,7 +58,8 @@ export function useRetoucheBrouillon(asset: Asset, onErreur: (texte: string) => 
       if (vivant.current && tour === ticket.current && id.current === pour) onErreur(e instanceof Error ? e.message : "L’aperçu n’a pas pu être calculé. Le brouillon est conservé.")
     } finally { if (vivant.current && tour === ticket.current && id.current === pour) setEnVol(null) }
   }
-  const brouillon = useBrouillonLocal({ cle: `retouche-explicite:${asset.projet ?? ""}:${asset.identifiant}`, pret: actif, reference, etat, appliquer: (suite) => montrer(suite) })
+  const brouillon = useBrouillonLocal({ cle: `retouche-explicite:${asset.projet ?? ""}:${asset.identifiant}`, pret: actif, reference, etat, appliquer: (suite) => montrer(suite),
+    ecran: "La retouche", quoi: asset.label || asset.identifiant })
   const poser = (recette: Recette) => montrer({ ...courant.current, recette })
   const regler = (recette: Recette) => {
     ticket.current += 1; courant.current = { ...courant.current, recette }; setEtat(courant.current); setValide(false); setEnVol(null)

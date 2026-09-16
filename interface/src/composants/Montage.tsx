@@ -151,6 +151,7 @@ export function EcranMontage({
   const brouillon = useBrouillonLocal({
     cle: `montage:${clip}:${reprise?.bande.identifiant ?? "nouveau"}`, pret: montage !== null,
     reference: referenceMontage ?? etatMontage, etat: etatMontage,
+    ecran: "Le montage", quoi: nom || reprise?.bande.nom || "Sans nom",
     // Les nouvelles occurrences reçoivent des UUID à l’ouverture ; elles ne
     // rendent pas à elles seules le contenu d’un même montage différent.
     signature: (etat) => JSON.stringify({ ...etat, occurrences: etat.occurrences.map(({ identifiant: _id, ...prise }) => prise) }),

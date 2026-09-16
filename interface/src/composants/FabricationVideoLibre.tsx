@@ -34,6 +34,7 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
   const [fabriquerImage, setFabriquerImage] = useState(false)
   const brouillon = useBrouillonLocal({ cle: `video-libre:${projet}:${modeleInitial || "libre"}`, pret: edition,
     reference: initiale, etat: demande, signature: ({ cle: _cle, ...reste }) => JSON.stringify(reste),
+    ecran: "Une vidéo libre", quoi: demande.prompt_video || "Sans texte",
     appliquer: d => { setDemande({ ...d, cle: crypto.randomUUID() }); setFabriquerImage(!!d.modele_image && !d.reference_asset) } })
   const video = videos.find(m => m.identifiant === demande.modele_video)
   const image = images.find(m => m.identifiant === demande.modele_image)

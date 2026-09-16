@@ -896,7 +896,7 @@ AU11, et la maquette les demande.
   fait foi.
 - [x] Le cadre réglé est celui qui sort à l'export.
 
-## RP16 · Savoir ce qu'on a laissé en plan
+## RP16 · Savoir ce qu'on a laissé en plan  ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : rien.
 
@@ -909,10 +909,22 @@ L'auteur ne peut donc pas savoir ce qui est en cours, ni ce qu'il a laissé à m
 
 ### Critères d'acceptation
 
-- [ ] Un tiroir rassemble tous les brouillons, avec ce que chacun reprend et depuis quand.
-- [ ] Un brouillon s'ouvre depuis ce tiroir, et s'y jette.
-- [ ] Le compteur de la colonne compte tous les travaux, pas une seule famille.
-- [ ] Un travail interrompu par un redémarrage paraît dans le tiroir, avec ce qu'il attendait.
+- [x] Un tiroir rassemble tous les brouillons, avec ce que chacun reprend et depuis quand.
+  *Rangés par écran, chacun avec sa ligne et sa date* (`composants/Brouillons.tsx`).
+- [x] Un brouillon s'ouvre depuis ce tiroir, et s'y jette. *« Reprendre » repose la pile de
+  lieux qu'il a gardée ; « Jeter le brouillon » efface le brouillon et sa ligne d'un geste.*
+- [x] Le compteur de la colonne compte tous les travaux, pas une seule famille. *Les
+  emplacements d'images encore en route **plus** les fabrications du serveur qui ne sont ni
+  finies ni annulées — animations, équipements, images locales, vidéos libres, 3D, sons.*
+- [x] Un travail interrompu par un redémarrage paraît dans le tiroir, avec ce qu'il attendait.
+  *Section « Fabrications interrompues », lue chez le serveur : « À reprendre · attendait :
+  Fabrication du clip ».*
+
+**Les treize brouillons branchés**, par la seule porte commune (`useBrouillonLocal`) : la
+retouche (deux modes), le montage, l'atelier d'une animation, la découpe, l'extraction, les
+tuiles, les corrections du squelette, une animation, une vidéo libre, une image locale, un son,
+une source 3D. Un essai lit les sources et refuse un écran qui garderait un brouillon sans se
+déclarer — pas de liste blanche, un écran neuf est tenu d'office.
 
 ---
 
@@ -963,6 +975,41 @@ route.** Une route sans emprunteur n'est pas neutre : elle se teste, elle se mai
 fait croire à une capacité qui n'existe pas pour l'auteur.
 
 ### Les neuf décisions
+### La forme de l'index
+
+**Ce qu'un brouillon porte** — cinq choses, et pas une de plus : la **clé** du brouillon (celle
+qui existe déjà, `asset-kitchen:brouillon:v1:{clé}`), l'**écran** qui l'a laissé, **de quoi il
+s'agit** en une ligne (le sujet, le mouvement, le nom du fichier — ce que l'auteur reconnaîtra),
+**depuis quand**, et **la pile de lieux** où le reprendre.
+
+**Le chemin du retour est la pile, pas une adresse inventée.** `lieux.ts` tient déjà « où l'on
+est, et par où on y est arrivé » ; le brouillon en garde une copie au moment où il s'écrit, et
+le tiroir la repose telle quelle. Un écran n'a donc rien à dire de sa position, et aucun genre
+de lieu n'a besoin d'être traduit une seconde fois — ce qui aurait été une seconde vérité à
+tenir à jour, et la panne qu'`essai_docs.py` trouve partout ailleurs.
+
+**Où l'index vit : dans le navigateur, à côté des brouillons qu'il indexe.** Un brouillon
+d'écran n'est pas un fichier du jeu — *les fichiers font foi* (T3) veut dire que ce qui n'est
+pas un fichier ne prétend pas l'être. Et ce qui est **déjà** sur le disque — un travail lancé,
+une bande sans case — a déjà son foyer côté serveur : le tiroir **le lit là**, il n'en garde pas
+une copie. Deux copies d'une même vérité divergent, et c'est le compteur qui l'aurait payé le
+premier. Le tiroir a donc **deux sources et une seule liste** : les brouillons du navigateur, et
+les travaux que le serveur donne pour non finis.
+
+**Qui l'écrit : la porte qui écrit déjà les brouillons**, `useBrouillonLocal`, et elle seule. Un
+écran déclare deux mots — son nom, et de quoi il s'agit —, jamais l'index lui-même ; un écran
+qui ne les déclare pas garde son brouillon et n'entre pas au tiroir, ce qui reste vrai plutôt
+que faux.
+
+**Quand une entrée meurt** : exactement quand le brouillon meurt, dans le même geste — enregistré
+(l'état redevient celui de la version enregistrée, et le brouillon s'efface tout seul), repris,
+ou abandonné. Et à la lecture, le tiroir rejette toute ligne dont le brouillon n'est plus dans
+ce navigateur : une ligne morte ne se montre jamais, même si quelque chose a mal tourné en
+l'écrivant.
+
+**Ce qu'il n'y a pas** : aucune couleur d'alerte, aucun compte à rebours, aucune relance — un
+brouillon attend, il ne réclame pas (E2).
+
 
 | La route | Ce qu'elle promet | L'emprunteur qu'elle aurait | Décision | Pourquoi |
 |---|---|---|---|---|

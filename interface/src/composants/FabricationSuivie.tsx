@@ -1,7 +1,7 @@
 import { SuiviFabrication3D } from "./Fabrication3D"
 import { useEffect, useRef, useState } from "react"
 import { api, dollars, Refus, type Asset, type Modele, type ModeleVideo, type Personnage } from "../api"
-import { travaux, type DemandeTravail, type Travail, type TravailSuivi } from "../api-travaux"
+import { nomDuTravail, travaux, NOM_DE_L_ETAPE, NOM_DE_L_ETAT, type DemandeTravail, type Travail, type TravailSuivi } from "../api-travaux"
 import { vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
 import { RelectureEquipement } from "./RelectureEquipement"
@@ -15,8 +15,10 @@ const CHAMP = "h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[14p
 const BOUTON = `${CHAMP} hover:border-encre-3`
 // Les deux états du même bouton (relecture / lancement) sont exclusifs.
 const PRINCIPAL = "h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50"
-const ETATS: Record<Travail["etat"], string> = { prepare: "Prête à lancer", en_cours: "En cours", a_reprendre: "À reprendre", a_verifier: "À vérifier", externe_inconnu: "État à vérifier chez le fournisseur", termine: "Terminée", annule: "Annulée" }
-const ETAPES: Record<string, string> = { file_locale: "Calcul local", annule: "Annulée", reference: "Image de départ", reference_soumise: "Fabrication de l’image", video: "Vidéo", video_soumise: "Fabrication du clip", montage: "Extraction des frames", livraison: "Livraison Godot", termine: "Terminée" }
+// Les deux tables vivent dans `api-travaux.ts` depuis `RP16` : le tiroir des
+// brouillons les écrit aussi, et deux copies auraient divergé au premier mot.
+const ETATS = NOM_DE_L_ETAT
+const ETAPES = NOM_DE_L_ETAPE
 const message = (e: unknown) => e instanceof Refus ? e.message : "Impossible de relire cette fabrication. Réessayez."
 const prix = (montant: number | null) => montant === null ? "coût inconnu" : dollars(montant)
 const nouvelle = (personnage = ""): DemandeTravail => ({ cle: crypto.randomUUID(), personnage, pose: "", direction: "", modele_video: "", prompt_video: "", secondes: 5, resolution: "480p", proportions: "1:1", nombre_images: 8, cadence: 8, sens: "boucle" })
@@ -60,14 +62,18 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   const [optionsVideo, setOptionsVideo] = useState(JSON.stringify(demande.options_video ?? {}, null, 2))
   const [optionsImage, setOptionsImage] = useState(JSON.stringify(demande.options_image ?? {}, null, 2))
   const [videosLues, setVideosLues] = useState(false)
+  const personnage = personnages.find((p) => p.identifiant === demande.personnage)
   const brouillon = useBrouillonLocal({
     cle: `fabrication-video:${projet}:${initiale?.identifiant ?? (cibleInitiale ? `${cibleInitiale.personnage}:${cibleInitiale.pose}:${cibleInitiale.direction}` : "nouvelle")}:${modeleInitial ?? "auto"}`, pret: edition,
     reference: { demande: depart, optionsVideo: JSON.stringify(depart.options_video ?? {}, null, 2), optionsImage: JSON.stringify(depart.options_image ?? {}, null, 2) },
     etat: { demande, optionsVideo, optionsImage },
+    ecran: "Une animation",
+    quoi: [personnage?.nom ?? demande.personnage,
+      personnage?.plan.find((p) => p.identifiant === demande.pose)?.nom ?? demande.pose,
+      personnage?.cases.find((c) => c.pose === demande.pose)?.directions.find((d) => d.identifiant === demande.direction)?.nom ?? demande.direction].filter(Boolean).join(" · "),
     signature: ({ demande: { cle: _cle, ...champs }, ...options }) => JSON.stringify({ demande: champs, ...options }),
     appliquer: (recu) => { setDemande({ ...recu.demande, cle: crypto.randomUUID() }); setOptionsVideo(recu.optionsVideo); setOptionsImage(recu.optionsImage); setErreur("") },
   })
-  const personnage = personnages.find((p) => p.identifiant === demande.personnage)
   const cases = personnage?.objectif?.sorties.filter((s) => s.nature === "animation" && s.quantite > 0)
   const poses = personnage?.plan.filter((p) => !personnage.ecartees.includes(p.identifiant) && (!cases || cases.some((s) => s.pose === p.identifiant))) ?? []
   const directions = personnage?.cases.find((c) => c.pose === demande.pose)?.directions.filter((d) => !cases || cases.some((s) => s.pose === demande.pose && s.direction === d.identifiant)) ?? []
@@ -205,7 +211,7 @@ export function SuiviDesTravaux({ projet, personnages, onClip, onBande, onCalque
     <div className="flex items-center justify-between gap-[14px]"><div><h2 className="font-serif text-[25px]">Créer et suivre les fabrications</h2><p className="mt-[8px] text-[13px] text-encre-3">Images, clips, frames, équipements et sons : retrouvez chaque demande et ses résultats ici.</p></div><button className={BOUTON} disabled={!personnages.length} onClick={() => setOuvert("nouveau")}>Nouvelle animation</button></div>
     {erreur && <p role="alert" className="mt-[14px] text-echec">{erreur}</p>}
     <div className="mt-[14px] space-y-[8px]">{liste.map((t) => <button key={t.identifiant} className="flex w-full items-center justify-between gap-[14px] rounded-7 border border-trait p-[14px] text-left hover:border-contour" onClick={() => setOuvert(t)}>
-      <span className="text-[13px]">{t.nature === "audio" ? `Son · ${t.demande.nom || t.demande.prompt}` : t.nature === "3d" ? `3D · ${t.demande.nom || t.demande.personnage || t.modele} · ${t.etape}` : t.nature === "equipement" ? `${t.piece_fiche.nom} · ${personnages.find((p) => p.identifiant === t.personnage)?.nom ?? t.personnage} · ${t.annonce.images_ciblees} images équipées` : t.nature === "image-locale" ? `Image locale · ${t.demande.prompt}` : t.nature === "video-libre" ? `Vidéo libre · ${t.demande.prompt_video}` : `${personnages.find((p) => p.identifiant === t.demande.personnage)?.nom ?? t.demande.personnage} · ${t.demande.pose} · ${t.demande.direction || "Sans direction"}`}<small className="mt-[4px] block text-encre-3">{t.acteur === "agent" ? "Agent" : "Création manuelle"} · {new Date(t.cree_le * 1000).toLocaleString("fr-FR")}</small></span><span className="text-[12px] text-encre-3">{ETATS[t.etat]}</span>
+      <span className="text-[13px]">{nomDuTravail(t, personnages)}<small className="mt-[4px] block text-encre-3">{t.acteur === "agent" ? "Agent" : "Création manuelle"} · {new Date(t.cree_le * 1000).toLocaleString("fr-FR")}</small></span><span className="text-[12px] text-encre-3">{ETATS[t.etat]}</span>
     </button>)}</div>
     {ouvert === "nouveau" ? <FabricationSuivie projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} onFermer={() => setOuvert(null)} /> : ouvert && <FenetreDuTravail key={ouvert.identifiant} travail={ouvert} projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} onFermer={() => setOuvert(null)} onCalqueEquipement={onCalqueEquipement} onAsset={onAsset} onToile={onToile} onSon={onSon} />}
   </section>

@@ -17,7 +17,8 @@ export function CorrectionsDuSquelette({ personnage, animation, onChangement, on
   const [message, setMessage] = useState("")
   const [apercu, setApercu] = useState(false)
   const [revision, setRevision] = useState(0)
-  const brouillon = useBrouillonLocal({ cle: `corrections-3d:${catalogue?.adresse}:${personnage}`, pret: !!catalogue, reference: catalogue?.corrections ?? {}, etat: valeurs, appliquer: setValeurs, signature: forme })
+  const brouillon = useBrouillonLocal({ cle: `corrections-3d:${catalogue?.adresse}:${personnage}`, pret: !!catalogue, reference: catalogue?.corrections ?? {}, etat: valeurs, appliquer: setValeurs, signature: forme,
+    ecran: "Les corrections du squelette", quoi: animation ? `${personnage} · ${animation}` : personnage })
   const modifie = !!catalogue && forme(valeurs) !== forme(catalogue.corrections)
   useEffect(() => {
     let vivant = true

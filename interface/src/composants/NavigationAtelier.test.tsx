@@ -18,6 +18,23 @@ it('garde les six destinations de la maquette et un seul chemin vers les réglag
   expect(replier).toHaveBeenCalledWith(true)
 })
 
+it('ouvre le tiroir des brouillons depuis le pied de la colonne, sans devenir une neuvième porte', () => {
+  const tiroir = vi.fn()
+  render(<NavigationAtelier jeu="Le marais" actif="galerie" travauxEnCours={5} brouillons={3} replie={false} onReplier={vi.fn()} onAller={vi.fn()} onChangerJeu={vi.fn()} onGuide={vi.fn()} onRecherche={vi.fn()} onBrouillons={tiroir} />)
+  // Ni dans « Atelier », ni dans « Préférences » : la liste fermée des huit
+  // portes ne bouge pas (`docs/vocabulaire.html`).
+  expect(within(screen.getByRole('navigation', { name: 'Atelier' })).queryByText(/Brouillons/)).not.toBeInTheDocument()
+  expect(within(screen.getByRole('navigation', { name: 'Préférences' })).queryByText(/Brouillons/)).not.toBeInTheDocument()
+  const porte = screen.getByRole('button', { name: 'Brouillons à reprendre · 3' })
+  expect(porte).toHaveTextContent('Brouillons · 3')
+  fireEvent.click(porte)
+  expect(tiroir).toHaveBeenCalled()
+  // Le compteur est celui qu'on lui donne, toutes familles comprises, et il ne
+  // porte aucune couleur d'alerte.
+  expect(screen.getByLabelText('5 fabrications en cours')).toHaveTextContent('5')
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
 it('garde toutes les destinations nommées et atteignables pendant le repli', () => {
   const aller = vi.fn()
   render(<NavigationAtelier jeu="Le marais" actif="univers" replie onReplier={vi.fn()} onAller={aller} onChangerJeu={vi.fn()} onGuide={vi.fn()} onRecherche={vi.fn()} />)

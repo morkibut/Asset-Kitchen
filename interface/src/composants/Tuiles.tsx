@@ -84,7 +84,8 @@ function EditeurTuiles({ ensemble: e, onGarder, onAsset, onLivraisons }: { ensem
   const [extraite, setExtraite] = useState<Asset | null>(null)
   const cellule = regles.cellules[selection] || regles.cellules[0]
   const modifie = JSON.stringify(regles) !== JSON.stringify(reglesTuiles(e))
-  const brouillon = useBrouillonLocal({ cle: `tuiles:${e.projet}:${e.identifiant}`, pret: true, reference: reglesTuiles(e), etat: regles, appliquer: setRegles })
+  const brouillon = useBrouillonLocal({ cle: `tuiles:${e.projet}:${e.identifiant}`, pret: true, reference: reglesTuiles(e), etat: regles, appliquer: setRegles,
+    ecran: "Les tuiles", quoi: e.nom || e.identifiant })
   useEffect(() => { setRegles(reglesTuiles(e)); setRevision(e.revision); setLivraison(null); setPublie(false) }, [e])
   function changer(r: ReglesTuiles) { setRegles(r); setLivraison(null); setPublie(false) }
   const changerCellule = (r: Partial<CelluleTuile>) => changer({ ...regles, cellules: regles.cellules.map((c, i) => i === selection ? { ...c, ...r } : c) })

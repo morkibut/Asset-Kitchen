@@ -410,6 +410,7 @@ export function EcranAtelierDeBande({
     cle: `bande:${recu?.bande.projet ?? ""}:${identifiant}`, pret: recu !== null,
     reference: { prises: recu?.bande.prises ?? [], chutier: recu?.bande.chutier ?? [], recette: recu?.bande.recette ?? null, cadence: recu?.bande.cadence ?? 8, sens: recu?.bande.sens ?? "boucle" },
     etat: { prises, chutier, recette, cadence, sens }, appliquer: restaurer,
+    ecran: "L’atelier d’une animation", quoi: recu?.bande.nom || identifiant,
   })
   useEffect(() => {
     const element = espace.current

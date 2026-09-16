@@ -19,7 +19,8 @@ export function FabricationAudio({ projet, modeleInitial = "", identifiantInitia
   const [erreur, setErreur] = useState("")
   const [occupe, setOccupe] = useState(false)
   const p = profils.find((p) => p.modele === d.modele)
-  const brouillon = useBrouillonLocal({ cle: `audio:${projet}`, pret: !identifiantInitial, reference: depart, etat: d, appliquer: setD, signature: ({ cle: _cle, ...reste }) => JSON.stringify(reste) })
+  const brouillon = useBrouillonLocal({ cle: `audio:${projet}`, pret: !identifiantInitial, reference: depart, etat: d, appliquer: setD, signature: ({ cle: _cle, ...reste }) => JSON.stringify(reste),
+    ecran: "Un son", quoi: d.prompt || "Sans texte" })
   useEffect(() => {
     let vivant = true
     workflows.lister().then(({ profils }) => { if (!vivant) return; setProfils(profils.filter((p) => p.nature === "audio")); const p = profils.find((p) => p.modele === modeleInitial); if (p && !identifiantInitial) setD((d) => ({ ...d, secondes: p.durees[0], options: Object.fromEntries(Object.entries(p.parametres).map(([n, p]) => [n, p.defaut])) })) }).catch((e) => vivant && setErreur(message(e)))

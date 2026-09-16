@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState } from "react"
+import { adresseDuBrouillon as adresse, declarerLeBrouillon, ouLonEst, retirerLeBrouillon } from "../brouillons"
 
 type Brouillon<T> = { version: 1; reference: string; etat: T; modifie: number }
-const adresse = (cle: string) => `asset-kitchen:brouillon:v1:${cle}`
 
-/** Un brouillon reste séparé du résultat enregistré ; la reprise est explicite. */
-export function useBrouillonLocal<T>({ cle, pret, reference, etat, appliquer, signature = JSON.stringify }: {
+/** Un brouillon reste séparé du résultat enregistré ; la reprise est explicite.
+ *
+ *  **C'est aussi la porte unique de l'index** (`RP16`) : un écran qui donne son
+ *  nom (`ecran`) et de quoi il s'agit (`quoi`) entre au tiroir des brouillons,
+ *  sans rien changer à ce qu'il garde. Un écran qui ne les donne pas garde son
+ *  brouillon et n'y entre pas — ce qui reste vrai plutôt que faux. */
+export function useBrouillonLocal<T>({ cle, pret, reference, etat, appliquer, signature = JSON.stringify, ecran, quoi }: {
   cle: string; pret: boolean; reference: T; etat: T; appliquer: (etat: T) => void | Promise<void>
   signature?: (etat: T) => string
+  /** L'écran qui laisse ce brouillon — *La retouche*, *Le montage*… */
+  ecran?: string
+  /** De quoi il s'agit, en une ligne : le sujet, le mouvement, le nom. */
+  quoi?: string
 }) {
   const [lecture, setLecture] = useState<{ cle: string; candidat: Brouillon<T> | null; decide: boolean } | null>(null)
   const [erreur, setErreur] = useState("")
@@ -29,14 +38,22 @@ export function useBrouillonLocal<T>({ cle, pret, reference, etat, appliquer, si
   useEffect(() => {
     if (!pret || lecture?.cle !== cle || !lecture.decide || ignore.current === contenu) return
     try {
-      if (identique) { localStorage.removeItem(adresse(cle)); setConserve(false) }
-      else { localStorage.setItem(adresse(cle), JSON.stringify({ version: 1, reference: original, etat: JSON.parse(contenu), modifie: Date.now() })); setConserve(true) }
+      if (identique) { localStorage.removeItem(adresse(cle)); retirerLeBrouillon(cle); setConserve(false) }
+      else {
+        const modifie = Date.now()
+        localStorage.setItem(adresse(cle), JSON.stringify({ version: 1, reference: original, etat: JSON.parse(contenu), modifie }))
+        // L'index s'écrit **après** le brouillon : une ligne sans brouillon
+        // derrière elle serait un tiroir qui ment.
+        if (ecran) declarerLeBrouillon({ cle, ecran, quoi: quoi ?? "", modifie, retour: ouLonEst() })
+        setConserve(true)
+      }
       setErreur("")
     } catch { setErreur("Le brouillon ne peut pas être conservé. Enregistre ton travail avant de quitter cet écran.") }
-  }, [cle, pret, contenu, original, identique, lecture])
+  }, [cle, pret, contenu, original, identique, lecture, ecran, quoi])
   const candidat = lecture?.cle === cle && !lecture.decide ? lecture.candidat : null
   const effacer = () => {
     try { localStorage.removeItem(adresse(cle)); setErreur("") } catch { setErreur("Le brouillon ne peut pas être retiré de cet ordinateur.") }
+    retirerLeBrouillon(cle)
     ignore.current = contenu; setConserve(false); setLecture({ cle, candidat: null, decide: true })
   }
   return {

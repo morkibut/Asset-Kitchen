@@ -11,6 +11,31 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP16 · Savoir ce qu'on a laissé en plan — 16 septembre 2026
+
+**Le tiroir n'avait pas besoin d'un index nouveau : il avait besoin que la porte existante en
+tienne un.** Treize écrans gardaient déjà un brouillon, et tous par la même fonction
+(`useBrouillonLocal`). Deux mots de plus dans son appel — l'écran, et de quoi il s'agit — ont
+suffi : ni format de brouillon changé, ni second endroit où écrire, ni écran qui sache que le
+tiroir existe. Ce qui aurait coûté cher, c'est d'avoir inventé un second stockage à côté.
+
+**Le chemin du retour ne se traduit pas, il se copie.** La tentation était de faire dire à
+chaque écran *comment on revient chez lui* — un genre de lieu, ses paramètres, une fonction
+d'ouverture dans `App.tsx` par famille. Ça aurait fait une seconde carte de la navigation, à
+tenir d'accord avec `lieux.ts` pour toujours. À la place, le brouillon garde **la pile telle
+qu'elle est** au moment où il s'écrit, et le tiroir la repose. Un seul endroit publie cette
+pile, et les treize écrans n'en savent rien.
+
+**Deux sources, et surtout : pas de copie.** Un brouillon d'écran vit dans le navigateur, un
+travail lancé vit sur le disque. Le tiroir lit les deux et n'en recopie aucun — le critère
+« un travail interrompu par un redémarrage paraît dans le tiroir » tombe alors tout seul, parce
+que le serveur savait déjà, et que personne ne le lui demandait.
+
+**Le compteur comptait une famille sur six, et la raison est qu'il avait un nom trop court.**
+`enVol.images` est ce que la galerie a en route ; le carnet l'affichait à côté de
+*Fabrications*, un mot qui, lui, couvre les six familles. Un nombre juste sous un mot faux se
+lit comme un nombre faux, et rien dans le code ne pouvait le signaler.
+
 ## RP18 · Les neuf routes sans écran — 16 septembre 2026
 
 **Deux des neuf n'étaient pas orphelines, et c'est la méthode du relevé qui les avait

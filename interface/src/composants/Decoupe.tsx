@@ -248,6 +248,7 @@ export function EcranDecoupe({
   const brouillon = useBrouillonLocal({
     cle: `decoupe:${vu.quoi}:${vu.identifiant}`, pret: origineDecoupe?.id === vu.identifiant,
     reference: origineDecoupe?.etat ?? etatDecoupe, etat: etatDecoupe,
+    ecran: "La découpe", quoi: vu.alt || vu.identifiant,
     appliquer: (recu) => {
       revisionProposition.current += 1
       propositionAignorer.current = JSON.stringify([vu.identifiant, recu.mode, recu.colonnes, recu.lignes, recu.coteMin])

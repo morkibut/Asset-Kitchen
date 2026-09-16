@@ -76,6 +76,8 @@ import {
   type LigneDeFamille,
 } from "./composants/Carnet"
 import { NavigationAtelier } from "./composants/NavigationAtelier"
+import { TiroirDesBrouillons, useBrouillonsEnPlan } from "./composants/Brouillons"
+import { noterOuLonEst } from "./brouillons"
 import { ChoisirFabricationDuSujet } from "./composants/ChoisirFabricationDuSujet"
 import { ImporterPourUnSujet } from "./composants/ImporterPourUnSujet"
 import { Tuiles } from "./composants/Tuiles"
@@ -245,6 +247,12 @@ function AtelierApp() {
   // reconstruire (`interface/src/lieux.ts`, `filDAriane`), et un lieu que plus
   // rien n'ouvre se voit — `decoupeOuverte` avait sept écritures, toutes à
   // `null`, et son écran était injoignable depuis des jours.
+  // **Où l'on est, dit une fois pour toutes** (`RP16`). Un brouillon garde la
+  // pile du moment où il s'écrit, et le tiroir la repose : la porte commune la
+  // lit ici plutôt que de la faire descendre en propriété jusqu'aux treize
+  // écrans qui gardent un brouillon.
+  useEffect(() => { noterOuLonEst(pile) }, [pile])
+  const [tiroirDesBrouillons, setTiroirDesBrouillons] = useState(false)
   const [pile, setPile] = useState<Lieu[]>(() => [...PILE_INITIALE])
   const [imageAEquiper, setImageAEquiper] = useState<Asset | null>(null)
 
@@ -504,6 +512,11 @@ function AtelierApp() {
   // vers l'atelier, et le serveur renverrait l'état complet à chaque fois.
   const [plan, setPlan] = useState<Pose[]>([])
   const [personnages, setPersonnages] = useState<Personnage[]>([])
+  /** **Ce qu'on a laissé en plan** (`RP16`) — les brouillons de ce navigateur
+   *  et les travaux que le serveur donne pour non finis. Le carnet en tire son
+   *  compteur, le tiroir sa liste. */
+  const enPlan = useBrouillonsEnPlan(bibliotheque.courant)
+
 
   // **Ce que le flux a besoin de savoir, sans le faire se rebrancher.**
   //
@@ -1800,7 +1813,13 @@ function AtelierApp() {
         jeu={projetCourant?.nom ?? "Sans projet"}
         descriptionJeu={`${projetCourant?.assets ?? 0} images dans ce jeu`}
         actif={installationOuverte || reglesOuvertes ? "reglages" : sortieOuverte ? "livraison" : surface === "fabrications" ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
-        travauxEnCours={enVol?.images ?? 0}
+        // **Toutes les familles, pas une seule** (`RP16`) : les emplacements
+        // d'images encore en route, et les travaux du serveur qui ne sont ni
+        // finis ni annulés — animations, équipements, images locales, vidéos
+        // libres, 3D, sons.
+        travauxEnCours={(enVol?.images ?? 0) + enPlan.fabricationsEnCours}
+        brouillons={enPlan.nombre}
+        onBrouillons={() => setTiroirDesBrouillons(true)}
         replie={navigationRepliee}
         onReplier={setNavigationRepliee}
         onAller={(destination) => {
@@ -2857,6 +2876,18 @@ function AtelierApp() {
           setCreationAssetOuverte(null)
           setPile(entrer(poser("codex"), { genre: "sujet", sujet: personnage.identifiant }))
           void relireProduction().catch(e => echouer(e, "L’asset est créé ; sa liste n’a pas pu être actualisée."))
+      {/* **Le tiroir des brouillons** (`RP16`) — une fenêtre partagée, pas un
+          lieu : on l'ouvre du pied du carnet, on y reprend un travail, et il se
+          referme sur l'écran qu'on rejoint. */}
+      {tiroirDesBrouillons && <TiroirDesBrouillons
+        lignes={enPlan.lignes}
+        travauxEnPlan={enPlan.travauxEnPlan}
+        sujets={personnages}
+        onReprendre={(retour) => { if (retour.length) setPile(retour) }}
+        onTravail={(identifiant) => setPile((p) => entrer(p, { genre: "travail", travail: identifiant }))}
+        onChangement={enPlan.relireLesBrouillons}
+        onFermer={() => setTiroirDesBrouillons(false)}
+      />}
         }}
         onPiece={(piece) => {
           setPieces(deja => [...deja.filter(p => p.identifiant !== piece.identifiant), piece])

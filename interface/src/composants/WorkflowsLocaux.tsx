@@ -95,7 +95,8 @@ export function FabricationImageLocale({ projet, identifiantInitial, modeleIniti
   const [bibliotheque, setBibliotheque] = useState(false)
   const [edition, setEdition] = useState(!identifiantInitial)
   const [diagnostic, setDiagnostic] = useState<DiagnosticWorkflow | null>(null)
-  const brouillon = useBrouillonLocal({ cle: `image-locale:${projet}:${personnage || "libre"}`, pret: !identifiantInitial, reference: initiale, etat: demande, appliquer: setDemande })
+  const brouillon = useBrouillonLocal({ cle: `image-locale:${projet}:${personnage || "libre"}`, pret: !identifiantInitial, reference: initiale, etat: demande, appliquer: setDemande,
+    ecran: "Une image locale", quoi: demande.prompt || "Sans texte" })
   useEffect(() => {
     let vivant = true
     workflows.lister().then(r => { if (vivant) setProfils(r.profils.filter(p => p.nature === "image")) }).catch(e => vivant && setErreur(message(e))).finally(() => vivant && setChargement(false))

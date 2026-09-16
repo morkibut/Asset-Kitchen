@@ -60,7 +60,8 @@ export function Parcours3D({ personnage, onBande }: { personnage: Personnage; on
   const [corriger, setCorriger] = useState(false)
   const [correctionsEnCours, setCorrectionsEnCours] = useState(false)
   const relire = () => travaux.lister(personnage.projet).then((ts) => setListe(ts.filter((t): t is Travail3D => t.nature === "3d" && t.demande.personnage === personnage.identifiant)))
-  const brouillon = useBrouillonLocal({ cle: `3d:${personnage.projet}:${personnage.identifiant}`, pret: true, reference: depart, etat: d, appliquer: setD, signature: ({ cle: _cle, ...champs }) => JSON.stringify(champs) })
+  const brouillon = useBrouillonLocal({ cle: `3d:${personnage.projet}:${personnage.identifiant}`, pret: true, reference: depart, etat: d, appliquer: setD, signature: ({ cle: _cle, ...champs }) => JSON.stringify(champs),
+    ecran: "Une source 3D", quoi: personnage.nom })
   useEffect(() => { void relire().catch((e) => setErreur(raison(e))) }, [personnage.projet, personnage.identifiant])
   const consulter = async () => {
     setOuvert(true); setOccupe(true); setErreur("")

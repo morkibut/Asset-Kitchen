@@ -301,6 +301,21 @@ chaque livraison — c'est le bon prix : rien n'a changé, donc la question est 
 décision est attachée à l'empreinte du fichier qu'elle a vu : ce qui s'écrit dans le jeu est
 exactement ce que la relecture annonçait, sans quoi « décider » ne voudrait rien dire.
 
+### La décision de RP16 — 16 septembre 2026
+
+**Un brouillon est un état d'écran, sur cette machine, et l'index reste avec lui.** Ce qui a été
+commencé sans être enregistré ni envoyé vit dans le navigateur, avec l'inventaire qui le
+retrouve ; ce qui est déjà engagé sur le disque — une fabrication lancée — reste chez le
+serveur, et le tiroir l'y lit sans en garder de copie. Le prix est qu'un brouillon ne suit pas
+l'auteur d'un ordinateur à l'autre, et c'est le bon prix : le faire suivre demanderait d'écrire
+dans le jeu quelque chose qui n'est pas encore un fichier du jeu, contre *les fichiers font
+foi*. Ce qui est refusé avec lui : garder deux copies d'une même fabrication, l'une sur le
+disque et l'autre au tiroir — elles auraient divergé, et c'est le compteur qui l'aurait payé.
+
+Une entrée du tiroir meurt **avec** son brouillon — enregistré, repris ou abandonné — et jamais
+après : ce qui n'a plus de brouillon derrière lui ne se montre pas, même si son inscription est
+restée. Et rien n'y réclame : pas de couleur d'alerte, pas de relance, pas de compte à rebours.
+
 ### La décision de RP18 — 16 septembre 2026
 
 **On rejoue les réglages d'une image, pas ceux d'un nom.** Le produit a longtemps porté les deux

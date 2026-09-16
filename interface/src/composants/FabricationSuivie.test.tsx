@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { api, type Personnage } from "../api"
 import { travaux, type Travail } from "../api-travaux"
+import { brouillonsLaissesEnPlan } from "../brouillons"
 import { FabricationSuivie } from "./FabricationSuivie"
 
 const personnage = { identifiant: "pelerin", nom: "Pèlerin", type: "personnage", ecartees: [], plan: [{ identifiant: "marche", nom: "Marche" }], cases: [{ pose: "marche", directions: [{ identifiant: "sud", nom: "Sud" }] }] } as unknown as Personnage
@@ -69,6 +70,9 @@ test("le profil vidéo choisi et les réglages du brouillon reviennent sans pré
   fireEvent.change(screen.getByLabelText("Durée du clip"), { target: { value: "10" } })
   fireEvent.change(screen.getByLabelText("Paramètres vidéo JSON"), { target: { value: '{"seed":83}' } })
   await screen.findByText("Brouillon conservé sur cet ordinateur.")
+  // **Et le tiroir le voit** (`RP16`) : l'écran se déclare, avec de quoi le
+  // reconnaître sans l'ouvrir.
+  expect(brouillonsLaissesEnPlan()[0]).toMatchObject({ ecran: "Une animation", quoi: "Pèlerin · Marche · Sud" })
   vue.unmount()
   render(<FabricationSuivie {...props} />)
   fireEvent.click(await screen.findByRole("button", { name: "Reprendre le brouillon" }))

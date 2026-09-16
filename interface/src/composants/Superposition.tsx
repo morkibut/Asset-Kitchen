@@ -330,6 +330,7 @@ export function EcranSuperposition({
   const brouillon = useBrouillonLocal({
     cle: `extraction:${asset.identifiant}`, pret: originePose?.id === asset.identifiant,
     reference: { pose: originePose?.pose ?? pose, sorties: ["calque"], garder: false }, etat: { pose, sorties, garder },
+    ecran: "L’extraction", quoi: asset.label || asset.identifiant,
     appliquer: async (recu) => {
       const sources = await api.ouvrirSuperposition(recu.pose.dessus, recu.pose.dessous || undefined)
       if (!sources.pose) throw new Error("Sources indisponibles")
