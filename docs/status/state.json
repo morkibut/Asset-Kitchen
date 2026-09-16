@@ -3328,13 +3328,13 @@
         "id": "RP3",
         "type": "epic",
         "parent": null,
-        "title": "Fermer le vocabulaire de l'ossature",
-        "status": "todo",
+        "title": "Fermer le vocabulaire de l'ossature ✅ **close le 15 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
+          "done": 7,
           "total": 7
         },
         "source": "plan",
@@ -3346,7 +3346,7 @@
         "type": "check",
         "parent": "RP3",
         "title": "Aucun mot de la liste noire de `docs/vocabulaire.html` ne paraît plus dans un libellé",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3362,7 +3362,7 @@
         "type": "check",
         "parent": "RP3",
         "title": "Les portes de la colonne sont celles de la maquette, en nombre et en ordre, avec les mots",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3378,7 +3378,7 @@
         "type": "check",
         "parent": "RP3",
         "title": "Les onglets de la fiche d'un sujet sont ceux de la maquette, en nombre et en ordre.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3394,7 +3394,7 @@
         "type": "check",
         "parent": "RP3",
         "title": "Chaque titre d'écran est le mot par lequel on y entre : on ne clique pas *Livrer au jeu*",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3410,7 +3410,7 @@
         "type": "check",
         "parent": "RP3",
         "title": "Les trois désaccords non tranchés ci-dessus le sont, et la décision est écrite dans",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3426,7 +3426,7 @@
         "type": "check",
         "parent": "RP3",
         "title": "La liste des désaccords restants est écrite, écran par écran, et chaque tranche d'après",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3442,7 +3442,7 @@
         "type": "check",
         "parent": "RP3",
         "title": "Un essai tient la liste fermée des noms de portes, d'onglets et de titres, comme les",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3457,13 +3457,13 @@
         "id": "RP4",
         "type": "epic",
         "parent": null,
-        "title": "Une seule préparation, une seule relecture",
-        "status": "todo",
+        "title": "Une seule préparation, une seule relecture ✅ **close le 16 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
+          "done": 6,
           "total": 6
         },
         "source": "plan",
@@ -3475,7 +3475,7 @@
         "type": "check",
         "parent": "RP4",
         "title": "Une seule fenêtre prépare, et le type de résultat — image fixe, clip, son, rendu 3D — s'y",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3490,8 +3490,8 @@
         "id": "RP4.2",
         "type": "check",
         "parent": "RP4",
-        "title": "Une seule fenêtre relit avant l'envoi, quel que soit le type.",
-        "status": "todo",
+        "title": "Une seule fenêtre relit avant l'envoi, quel que soit le type. *`Relecture.tsx` porte le",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3507,7 +3507,7 @@
         "type": "check",
         "parent": "RP4",
         "title": "Ce qui est montré avant de payer vient du chemin que l'envoi emprunte, et un essai le",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3522,8 +3522,8 @@
         "id": "RP4.4",
         "type": "check",
         "parent": "RP4",
-        "title": "Le prix s'écrit d'une seule façon dans tout le produit.",
-        "status": "todo",
+        "title": "Le prix s'écrit d'une seule façon dans tout le produit. *`prix()` dans `api.ts` ; les sept",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3539,7 +3539,7 @@
         "type": "check",
         "parent": "RP4",
         "title": "Aucune capacité des huit fenêtres n'est perdue : chacune est nommée, puis retrouvée dans",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3554,8 +3554,8 @@
         "id": "RP4.6",
         "type": "check",
         "parent": "RP4",
-        "title": "Les deux lieux d'où l'argent part restent deux, et pas trois.",
-        "status": "todo",
+        "title": "Les deux lieux d'où l'argent part restent deux, et pas trois. *`E2` est intact : la barre",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3570,14 +3570,14 @@
         "id": "RP5",
         "type": "epic",
         "parent": null,
-        "title": "Un seul écran d'import sur une fiche",
-        "status": "todo",
+        "title": "Un seul écran d'import sur une fiche ✅ **close le 15 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
-          "total": 5
+          "done": 33,
+          "total": 33
         },
         "source": "plan",
         "order": 220,
@@ -3587,8 +3587,8 @@
         "id": "RP5.1",
         "type": "check",
         "parent": "RP5",
-        "title": "Un seul écran d'import pour un sujet, atteint depuis le bandeau **et** depuis une rangée",
-        "status": "todo",
+        "title": "Prendre un fichier du disque.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3603,8 +3603,8 @@
         "id": "RP5.2",
         "type": "check",
         "parent": "RP5",
-        "title": "Entrer par une rangée vide range dans cette case-là, sans reposer la question.",
-        "status": "todo",
+        "title": "Reconnaître une vidéo à son type ou à son extension.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3619,8 +3619,8 @@
         "id": "RP5.3",
         "type": "check",
         "parent": "RP5",
-        "title": "L'import accepte plusieurs fichiers, et une image déjà en bibliothèque.",
-        "status": "todo",
+        "title": "Une vidéo entre comme clip du sujet, sans case.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3635,8 +3635,8 @@
         "id": "RP5.4",
         "type": "check",
         "parent": "RP5",
-        "title": "Une vidéo et une planche ouvrent toujours la suite qui convient.",
-        "status": "todo",
+        "title": "Une vidéo déjà entrée est signalée en doublon, et son montage s'ouvre quand même.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3651,8 +3651,8 @@
         "id": "RP5.5",
         "type": "check",
         "parent": "RP5",
-        "title": "Ce qui entre sans case reste visible dans *Pas encore rangé*.",
-        "status": "todo",
+        "title": "Ouvrir le montage sur le clip qui vient d'entrer.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3664,28 +3664,27 @@
         "order": 225
       },
       {
-        "id": "RP6",
-        "type": "epic",
-        "parent": null,
-        "title": "Une seule grille de choix d'image",
-        "status": "todo",
+        "id": "RP5.6",
+        "type": "check",
+        "parent": "RP5",
+        "title": "Une image entre puis est rattachée au sujet — jamais l'inverse.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
           "done": 0,
-          "total": 4
+          "total": 0
         },
         "source": "plan",
-        "order": 226,
-        "blocked_by": "RP3."
+        "order": 226
       },
       {
-        "id": "RP6.1",
+        "id": "RP5.7",
         "type": "check",
-        "parent": "RP6",
-        "title": "Une seule grille de choix d'image dans tout le produit.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Détecter les cases d'une image ; deux ou plus, c'est une planche.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3697,11 +3696,11 @@
         "order": 227
       },
       {
-        "id": "RP6.2",
+        "id": "RP5.8",
         "type": "check",
-        "parent": "RP6",
-        "title": "Elle porte le filtre par collection, l'aperçu en grand, l'import de fichier, et le rôle",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Ouvrir la découpe sur la planche qui vient d'entrer.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3713,11 +3712,11 @@
         "order": 228
       },
       {
-        "id": "RP6.3",
+        "id": "RP5.9",
         "type": "check",
-        "parent": "RP6",
-        "title": "Le rôle ne se demande que là où il a un sens.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Une détection qui échoue ne perd rien.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3729,11 +3728,11 @@
         "order": 229
       },
       {
-        "id": "RP6.4",
+        "id": "RP5.10",
         "type": "check",
-        "parent": "RP6",
-        "title": "L'invariant tient : cette grille n'est pas *la* grille d'assets du produit, et elle n'a ni",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Dire ce qui s'est passé en une phrase, avec le nombre de cases ou d'images.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3745,28 +3744,27 @@
         "order": 230
       },
       {
-        "id": "RP7",
-        "type": "epic",
-        "parent": null,
-        "title": "Une seule grille d'assets",
-        "status": "todo",
+        "id": "RP5.11",
+        "type": "check",
+        "parent": "RP5",
+        "title": "Refuser un second fichier pendant l'import en cours.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
           "done": 0,
-          "total": 5
+          "total": 0
         },
         "source": "plan",
-        "order": 231,
-        "blocked_by": "RP3, RP6."
+        "order": 231
       },
       {
-        "id": "RP7.1",
+        "id": "RP5.12",
         "type": "check",
-        "parent": "RP7",
-        "title": "Une seule grille d'assets, qui montre toutes les familles ou une seule selon ce qu'on",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Écrire l'erreur. *Remplacé : elle s'écrit sur la ligne du fichier, et non plus dans le",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3778,11 +3776,11 @@
         "order": 232
       },
       {
-        "id": "RP7.2",
+        "id": "RP5.13",
         "type": "check",
-        "parent": "RP7",
-        "title": "Le glisser-déposer vers une collection marche, d'un seul type, et un essai le prouve.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Prévenir la page que quelque chose a changé.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3794,11 +3792,11 @@
         "order": 233
       },
       {
-        "id": "RP7.3",
+        "id": "RP5.14",
         "type": "check",
-        "parent": "RP7",
-        "title": "Créer une collection depuis la grille marche de nouveau.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Une fenêtre, qui s'ouvre et se ferme.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3810,11 +3808,11 @@
         "order": 234
       },
       {
-        "id": "RP7.4",
+        "id": "RP5.15",
         "type": "check",
-        "parent": "RP7",
-        "title": "Les réglages d'une famille restent atteignables depuis la famille.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Choisir la pose où ranger, ou *sans mouvement encore*. *Déplacé après l'entrée, sauf quand",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3826,11 +3824,11 @@
         "order": 235
       },
       {
-        "id": "RP7.5",
+        "id": "RP5.16",
         "type": "check",
-        "parent": "RP7",
-        "title": "La vue *Les poses* n'est pas perdue.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Choisir la direction, ou *à préciser ensuite*. *Idem.*",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3842,28 +3840,27 @@
         "order": 236
       },
       {
-        "id": "RP8",
-        "type": "epic",
-        "parent": null,
-        "title": "Une seule fiche de sujet",
-        "status": "todo",
+        "id": "RP5.17",
+        "type": "check",
+        "parent": "RP5",
+        "title": "Arriver pointé sur la case d'où l'on a cliqué.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
           "done": 0,
-          "total": 4
+          "total": 0
         },
         "source": "plan",
-        "order": 237,
-        "blocked_by": "RP3."
+        "order": 237
       },
       {
-        "id": "RP8.1",
+        "id": "RP5.18",
         "type": "check",
-        "parent": "RP8",
-        "title": "Une seule fiche de sujet, atteinte en ouvrant le sujet.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Accepter plusieurs fichiers d'un coup.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3875,11 +3872,11 @@
         "order": 238
       },
       {
-        "id": "RP8.2",
+        "id": "RP5.19",
         "type": "check",
-        "parent": "RP8",
-        "title": "Le signalement, les textes de style et les images de référence s'y règlent.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Déposer des fichiers sur la zone.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3891,11 +3888,11 @@
         "order": 239
       },
       {
-        "id": "RP8.3",
+        "id": "RP5.20",
         "type": "check",
-        "parent": "RP8",
-        "title": "Le portrait, le nom et la description ne sont plus écrits deux fois.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Téléverser puis rattacher, dans cet ordre, et conserver l'image quand le rangement échoue.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3907,11 +3904,11 @@
         "order": 240
       },
       {
-        "id": "RP8.4",
+        "id": "RP5.21",
         "type": "check",
-        "parent": "RP8",
-        "title": "Ce que la fiche règle et qui part au modèle se relit avant de payer.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Reprendre une image de la bibliothèque, sans la recopier.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3923,28 +3920,27 @@
         "order": 241
       },
       {
-        "id": "RP9",
-        "type": "epic",
-        "parent": null,
-        "title": "La toile donne du travail",
-        "status": "todo",
+        "id": "RP5.22",
+        "type": "check",
+        "parent": "RP5",
+        "title": "Signaler un doublon et ne le ranger qu'après un clic explicite.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
           "done": 0,
-          "total": 5
+          "total": 0
         },
         "source": "plan",
-        "order": 242,
-        "blocked_by": "RP4 — elle débouche sur la fenêtre de préparation unique."
+        "order": 242
       },
       {
-        "id": "RP9.1",
+        "id": "RP5.23",
         "type": "check",
-        "parent": "RP9",
-        "title": "Plusieurs cartes se sélectionnent sur la toile.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Ranger après coup une entrée en doublon ou en échec.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3956,11 +3952,11 @@
         "order": 243
       },
       {
-        "id": "RP9.2",
+        "id": "RP5.24",
         "type": "check",
-        "parent": "RP9",
-        "title": "Une sélection se met en réserve, et s'efface, d'un geste.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Montrer la vignette de chaque entrée et son état.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3972,11 +3968,11 @@
         "order": 244
       },
       {
-        "id": "RP9.3",
+        "id": "RP5.25",
         "type": "check",
-        "parent": "RP9",
-        "title": "*Fabriquer depuis la sélection* ouvre la préparation avec les images cochées d'avance.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Ouvrir l'image entrée.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -3988,11 +3984,11 @@
         "order": 245
       },
       {
-        "id": "RP9.4",
+        "id": "RP5.26",
         "type": "check",
-        "parent": "RP9",
-        "title": "Les notes libres de la toile ne partent pas dans la demande sans qu'on le dise.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Rattacher au sujet même sans mouvement (`AU20`).",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4004,11 +4000,11 @@
         "order": 246
       },
       {
-        "id": "RP9.5",
+        "id": "RP5.27",
         "type": "check",
-        "parent": "RP9",
-        "title": "Les positions et la réserve se retrouvent après fermeture.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Dire que les originaux restent conservés.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4020,28 +4016,27 @@
         "order": 247
       },
       {
-        "id": "RP10",
-        "type": "epic",
-        "parent": null,
-        "title": "La livraison décide au lieu de bloquer",
-        "status": "todo",
+        "id": "RP5.28",
+        "type": "check",
+        "parent": "RP5",
+        "title": "Dire où passer pour une vidéo. *Remplacé : l'écran la prend lui-même et ouvre le montage.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
           "done": 0,
-          "total": 5
+          "total": 0
         },
         "source": "plan",
-        "order": 248,
-        "blocked_by": null
+        "order": 248
       },
       {
-        "id": "RP10.1",
+        "id": "RP5.29",
         "type": "check",
-        "parent": "RP10",
-        "title": "Chaque conflit propose trois décisions, et l'écran dit ce que chacune fait avant de la",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Un seul écran d'import pour un sujet, atteint depuis le bandeau **et** depuis une rangée",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4053,11 +4048,11 @@
         "order": 249
       },
       {
-        "id": "RP10.2",
+        "id": "RP5.30",
         "type": "check",
-        "parent": "RP10",
-        "title": "Les fichiers se cochent un par un, et tous d'un coup.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Entrer par une rangée vide range dans cette case-là, sans reposer la question.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4069,11 +4064,11 @@
         "order": 250
       },
       {
-        "id": "RP10.3",
+        "id": "RP5.31",
         "type": "check",
-        "parent": "RP10",
-        "title": "Un brouillon non enregistré arrête la livraison et demande, comme ailleurs.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "L'import accepte plusieurs fichiers, et une image déjà en bibliothèque.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4085,11 +4080,11 @@
         "order": 251
       },
       {
-        "id": "RP10.4",
+        "id": "RP5.32",
         "type": "check",
-        "parent": "RP10",
-        "title": "Ce qui est écrit dans le jeu est exactement ce que la relecture annonçait.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Une vidéo et une planche ouvrent toujours la suite qui convient.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4101,11 +4096,11 @@
         "order": 252
       },
       {
-        "id": "RP10.5",
+        "id": "RP5.33",
         "type": "check",
-        "parent": "RP10",
-        "title": "Aucune livraison ne change la cadence ni le sens de lecture de ce qui a été préparé.",
-        "status": "todo",
+        "parent": "RP5",
+        "title": "Ce qui entre sans case reste visible dans *Pas encore rangé*.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4117,28 +4112,28 @@
         "order": 253
       },
       {
-        "id": "RP11",
+        "id": "RP6",
         "type": "epic",
         "parent": null,
-        "title": "La galerie se trie, se filtre et se regroupe",
-        "status": "todo",
+        "title": "Une seule grille de choix d'image ✅ **close le 15 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
-          "total": 4
+          "done": 16,
+          "total": 16
         },
         "source": "plan",
         "order": 254,
         "blocked_by": "RP3."
       },
       {
-        "id": "RP11.1",
+        "id": "RP6.1",
         "type": "check",
-        "parent": "RP11",
-        "title": "Le tri se choisit, et le choix se retrouve après fermeture.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Chercher par texte, filtrer par collection, filtrer par favoris.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4150,11 +4145,11 @@
         "order": 255
       },
       {
-        "id": "RP11.2",
+        "id": "RP6.2",
         "type": "check",
-        "parent": "RP11",
-        "title": "Le filtre par rôle et le filtre par jugement existent.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Pagination (« Afficher les suivantes »).",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4166,11 +4161,11 @@
         "order": 256
       },
       {
-        "id": "RP11.3",
+        "id": "RP6.3",
         "type": "check",
-        "parent": "RP11",
-        "title": "Une planche et ses dérivés se regroupent, et le groupe se déplie.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "L'aperçu en grand : le pointeur vise, la barre d'espace ouvre.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4182,11 +4177,11 @@
         "order": 257
       },
       {
-        "id": "RP11.4",
+        "id": "RP6.4",
         "type": "check",
-        "parent": "RP11",
-        "title": "La galerie reste lisible avec plusieurs centaines de résultats, et un essai le mesure.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Reçoit des images voisines déjà connues (`voisines`), utilisé par la Superposition.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4198,28 +4193,27 @@
         "order": 258
       },
       {
-        "id": "RP12",
-        "type": "epic",
-        "parent": null,
-        "title": "Comparer deux versions d'une même animation",
-        "status": "todo",
+        "id": "RP6.5",
+        "type": "check",
+        "parent": "RP6",
+        "title": "Un clic choisit l'image tout de suite, sans étape de confirmation.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
           "done": 0,
-          "total": 4
+          "total": 0
         },
         "source": "plan",
-        "order": 259,
-        "blocked_by": null
+        "order": 259
       },
       {
-        "id": "RP12.1",
+        "id": "RP6.6",
         "type": "check",
-        "parent": "RP12",
-        "title": "Deux versions d'un même résultat se lisent côte à côte, sur le même temps.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Montée à dix endroits, depuis la fusion : *Ce qui part*, Fabriquer en 3D, Vidéo libre,",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4231,11 +4225,11 @@
         "order": 260
       },
       {
-        "id": "RP12.2",
+        "id": "RP6.7",
         "type": "check",
-        "parent": "RP12",
-        "title": "Chacune tourne à sa propre cadence, et la cadence lue est celle qui sortira à l'export.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Chercher par texte, filtrer par favoris.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4247,11 +4241,11 @@
         "order": 261
       },
       {
-        "id": "RP12.3",
+        "id": "RP6.8",
         "type": "check",
-        "parent": "RP12",
-        "title": "*Choisir pour le jeu* existe de chaque côté.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Pagination (« Afficher les images suivantes »).",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4263,11 +4257,11 @@
         "order": 262
       },
       {
-        "id": "RP12.4",
+        "id": "RP6.9",
         "type": "check",
-        "parent": "RP12",
-        "title": "Le favori reste distinct du choix pour le jeu.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Importer un fichier depuis le disque.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4279,28 +4273,27 @@
         "order": 263
       },
       {
-        "id": "RP13",
-        "type": "epic",
-        "parent": null,
-        "title": "Déclarer un mouvement et une direction là où on les regarde",
-        "status": "todo",
+        "id": "RP6.10",
+        "type": "check",
+        "parent": "RP6",
+        "title": "Un clic sélectionne l'image, puis demande son rôle — corps équipé, calque, ou référence —",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
           "done": 0,
-          "total": 4
+          "total": 0
         },
         "source": "plan",
-        "order": 264,
-        "blocked_by": "RP3."
+        "order": 264
       },
       {
-        "id": "RP13.1",
+        "id": "RP6.11",
         "type": "check",
-        "parent": "RP13",
-        "title": "Un mouvement et une direction s'ajoutent depuis l'onglet qui dit ce qu'il faut produire.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Un mode *référence seulement* : le rôle est fixé, aucun sélecteur ne se montre.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4312,11 +4305,11 @@
         "order": 265
       },
       {
-        "id": "RP13.2",
+        "id": "RP6.12",
         "type": "check",
-        "parent": "RP13",
-        "title": "Le renvoi de la fenêtre de fabrication mène à l'endroit qui sait le faire.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Montée à deux endroits : les calques d'un emploi, la référence commune d'une pièce.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4328,11 +4321,11 @@
         "order": 266
       },
       {
-        "id": "RP13.3",
+        "id": "RP6.13",
         "type": "check",
-        "parent": "RP13",
-        "title": "Ce qui est ajouté paraît immédiatement dans la matrice et dans la fabrication.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Une seule grille de choix d'image dans tout le produit.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4344,11 +4337,11 @@
         "order": 267
       },
       {
-        "id": "RP13.4",
+        "id": "RP6.14",
         "type": "check",
-        "parent": "RP13",
-        "title": "Écrire un nom crée la chose, sur-le-champ, sans formulaire et sans rien payer.",
-        "status": "todo",
+        "parent": "RP6",
+        "title": "Elle porte le filtre par collection, l'aperçu en grand, l'import de fichier, et le rôle",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4358,6 +4351,957 @@
         },
         "source": "plan",
         "order": 268
+      },
+      {
+        "id": "RP6.15",
+        "type": "check",
+        "parent": "RP6",
+        "title": "Le rôle ne se demande que là où il a un sens.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 269
+      },
+      {
+        "id": "RP6.16",
+        "type": "check",
+        "parent": "RP6",
+        "title": "L'invariant tient : cette grille n'est pas *la* grille d'assets du produit, et elle n'a ni",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 270
+      },
+      {
+        "id": "RP7",
+        "type": "epic",
+        "parent": null,
+        "title": "Une seule grille d'assets ✅ **close le 16 septembre 2026**",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 271,
+        "blocked_by": "RP3, RP6."
+      },
+      {
+        "id": "RP7.1",
+        "type": "check",
+        "parent": "RP7",
+        "title": "Une seule grille d'assets, qui montre toutes les familles ou une seule selon ce qu'on",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 272
+      },
+      {
+        "id": "RP7.2",
+        "type": "check",
+        "parent": "RP7",
+        "title": "Le glisser-déposer vers une collection marche, d'un seul type, et un essai le prouve.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 273
+      },
+      {
+        "id": "RP7.3",
+        "type": "check",
+        "parent": "RP7",
+        "title": "Créer une collection depuis la grille marche de nouveau. *Le « ＋ Collection » de la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 274
+      },
+      {
+        "id": "RP7.4",
+        "type": "check",
+        "parent": "RP7",
+        "title": "Les réglages d'une famille restent atteignables depuis la famille. *Le bouton",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 275
+      },
+      {
+        "id": "RP7.5",
+        "type": "check",
+        "parent": "RP7",
+        "title": "La vue *Les poses* n'est pas perdue. *Les trois onglets de vue sont intacts, et l'essai qui",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 276
+      },
+      {
+        "id": "RP8",
+        "type": "epic",
+        "parent": null,
+        "title": "Une seule fiche de sujet ✅ **close le 16 septembre 2026**",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 23,
+          "total": 23
+        },
+        "source": "plan",
+        "order": 277,
+        "blocked_by": "RP3."
+      },
+      {
+        "id": "RP8.1",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Le portrait (image, ou l'animation retenue qui tourne au survol).",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 278
+      },
+      {
+        "id": "RP8.2",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Le résumé : description, nombre de résultats, nombre de retenus pour le jeu, collections.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 279
+      },
+      {
+        "id": "RP8.3",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Le bouton « Modifier la fiche ».",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 280
+      },
+      {
+        "id": "RP8.4",
+        "type": "check",
+        "parent": "RP8",
+        "title": "La ligne d'objectif (couverture images/animations, « Revoir » ou « Définir l'objectif »).",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 281
+      },
+      {
+        "id": "RP8.5",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Éditer le nom.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 282
+      },
+      {
+        "id": "RP8.6",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Éditer la description (le signalement).",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 283
+      },
+      {
+        "id": "RP8.7",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Avertir avant de fermer un brouillon non enregistré.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 284
+      },
+      {
+        "id": "RP8.8",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Ranger et retirer d'une collection, en créer le rangement.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 285
+      },
+      {
+        "id": "RP8.9",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Retirer le sujet du jeu.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 286
+      },
+      {
+        "id": "RP8.10",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Un sommaire qui suit le défilement, sur cinq sections. *Sans objet : le dialogue tient",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 287
+      },
+      {
+        "id": "RP8.11",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Le bandeau d'identité — portrait, nom, résumé. *Retiré, pas fusionné : la page du sujet",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 288
+      },
+      {
+        "id": "RP8.12",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Section « Ce qu'il est » (signalement). *Fusionnée avec le champ « Description du sujet »",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 289
+      },
+      {
+        "id": "RP8.13",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Section « Ce qui l'habille » (sept textes de style, origine, éteindre/rallumer, désaccord",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 290
+      },
+      {
+        "id": "RP8.14",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Section « Ses images d'exemple » (retenues, proposées, promotion d'un clic). *Fusionnée,",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 291
+      },
+      {
+        "id": "RP8.15",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Section « Ce que le jeu réclame » (poses tenues et rangées). *Repris ailleurs : l'onglet",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 292
+      },
+      {
+        "id": "RP8.16",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Section « Ce qui est fait » (vignettes des cases remplies). *Repris ailleurs : les onglets",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 293
+      },
+      {
+        "id": "RP8.17",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Lien vers le calibrage. *Repris ailleurs : le geste direct « le calibrage › » de la matrice,",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 294
+      },
+      {
+        "id": "RP8.18",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Lien vers la vitrine. *Repris ailleurs : le geste direct « la vitrine › » de la matrice,",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 295
+      },
+      {
+        "id": "RP8.19",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Fermeture par Échap ou par un bouton. *Reprise sous une autre forme : le dialogue se ferme",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 296
+      },
+      {
+        "id": "RP8.20",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Une seule fiche de sujet, atteinte en ouvrant le sujet. *`FicheChose.tsx` est retiré ;",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 297
+      },
+      {
+        "id": "RP8.21",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Le signalement, les textes de style et les images de référence s'y règlent. *Vérifié aux",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 298
+      },
+      {
+        "id": "RP8.22",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Le portrait, le nom et la description ne sont plus écrits deux fois. *Un essai dédié compte",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 299
+      },
+      {
+        "id": "RP8.23",
+        "type": "check",
+        "parent": "RP8",
+        "title": "Ce que la fiche règle et qui part au modèle se relit avant de payer. *Inchangé par cette",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 300
+      },
+      {
+        "id": "RP9",
+        "type": "epic",
+        "parent": null,
+        "title": "La toile donne du travail ✅ **close le 16 septembre 2026**",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 301,
+        "blocked_by": "RP4 — elle débouche sur la fenêtre de préparation unique."
+      },
+      {
+        "id": "RP9.1",
+        "type": "check",
+        "parent": "RP9",
+        "title": "Plusieurs cartes se sélectionnent sur la toile. — Ctrl (ou ⌘) et un clic, comme dans la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 302
+      },
+      {
+        "id": "RP9.2",
+        "type": "check",
+        "parent": "RP9",
+        "title": "Une sélection se met en réserve, et s'efface, d'un geste. — et le lot est **une** entrée",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 303
+      },
+      {
+        "id": "RP9.3",
+        "type": "check",
+        "parent": "RP9",
+        "title": "*Fabriquer depuis la sélection* ouvre la préparation avec les images cochées d'avance. —",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 304
+      },
+      {
+        "id": "RP9.4",
+        "type": "check",
+        "parent": "RP9",
+        "title": "Les notes libres de la toile ne partent pas dans la demande sans qu'on le dise. — une",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 305
+      },
+      {
+        "id": "RP9.5",
+        "type": "check",
+        "parent": "RP9",
+        "title": "Les positions et la réserve se retrouvent après fermeture. — inchangé, et l'essai d'`AU2`",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 306
+      },
+      {
+        "id": "RP10",
+        "type": "epic",
+        "parent": null,
+        "title": "La livraison décide au lieu de bloquer ✅ **close le 16 septembre 2026**",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 307,
+        "blocked_by": null
+      },
+      {
+        "id": "RP10.1",
+        "type": "check",
+        "parent": "RP10",
+        "title": "Chaque conflit propose trois décisions, et l'écran dit ce que chacune fait avant de la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 308
+      },
+      {
+        "id": "RP10.2",
+        "type": "check",
+        "parent": "RP10",
+        "title": "Les fichiers se cochent un par un, et tous d'un coup. *Une case par version, plus",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 309
+      },
+      {
+        "id": "RP10.3",
+        "type": "check",
+        "parent": "RP10",
+        "title": "Un brouillon non enregistré arrête la livraison et demande, comme ailleurs. *Une animation",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 310
+      },
+      {
+        "id": "RP10.4",
+        "type": "check",
+        "parent": "RP10",
+        "title": "Ce qui est écrit dans le jeu est exactement ce que la relecture annonçait. *La décision",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 311
+      },
+      {
+        "id": "RP10.5",
+        "type": "check",
+        "parent": "RP10",
+        "title": "Aucune livraison ne change la cadence ni le sens de lecture de ce qui a été préparé. *La",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 312
+      },
+      {
+        "id": "RP11",
+        "type": "epic",
+        "parent": null,
+        "title": "La galerie se trie, se filtre et se regroupe ✅ **close le 16 septembre 2026**",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 4,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 313,
+        "blocked_by": "RP3."
+      },
+      {
+        "id": "RP11.1",
+        "type": "check",
+        "parent": "RP11",
+        "title": "Le tri se choisit, et le choix se retrouve après fermeture. *`tri` sur la route, les",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 314
+      },
+      {
+        "id": "RP11.2",
+        "type": "check",
+        "parent": "RP11",
+        "title": "Le filtre par rôle et le filtre par jugement existent. *`role` et `jugement`, côté",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 315
+      },
+      {
+        "id": "RP11.3",
+        "type": "check",
+        "parent": "RP11",
+        "title": "Une planche et ses dérivés se regroupent, et le groupe se déplie. *`groupe=true`,",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 316
+      },
+      {
+        "id": "RP11.4",
+        "type": "check",
+        "parent": "RP11",
+        "title": "La galerie reste lisible avec plusieurs centaines de résultats, et un essai le mesure.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 317
+      },
+      {
+        "id": "RP12",
+        "type": "epic",
+        "parent": null,
+        "title": "Comparer deux versions d'une même animation  ✅ **close le 16 septembre 2026**",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 4,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 318,
+        "blocked_by": null
+      },
+      {
+        "id": "RP12.1",
+        "type": "check",
+        "parent": "RP12",
+        "title": "Deux versions d'un même résultat se lisent côte à côte, sur le même temps. *Le troisième",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 319
+      },
+      {
+        "id": "RP12.2",
+        "type": "check",
+        "parent": "RP12",
+        "title": "Chacune tourne à sa propre cadence, et la cadence lue est celle qui sortira à l'export.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 320
+      },
+      {
+        "id": "RP12.3",
+        "type": "check",
+        "parent": "RP12",
+        "title": "*Choisir pour le jeu* existe de chaque côté. *Il retient l'animation et éteint ses sœurs",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 321
+      },
+      {
+        "id": "RP12.4",
+        "type": "check",
+        "parent": "RP12",
+        "title": "Le favori reste distinct du choix pour le jeu. *Une animation n'a pas d'étoile : son",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 322
+      },
+      {
+        "id": "RP13",
+        "type": "epic",
+        "parent": null,
+        "title": "Déclarer un mouvement et une direction là où on les regarde  ✅ **close le 16 septembre 2026**",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 4,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 323,
+        "blocked_by": "RP3."
+      },
+      {
+        "id": "RP13.1",
+        "type": "check",
+        "parent": "RP13",
+        "title": "Un mouvement et une direction s'ajoutent depuis l'onglet qui dit ce qu'il faut produire.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 324
+      },
+      {
+        "id": "RP13.2",
+        "type": "check",
+        "parent": "RP13",
+        "title": "Le renvoi de la fenêtre de fabrication mène à l'endroit qui sait le faire.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 325
+      },
+      {
+        "id": "RP13.3",
+        "type": "check",
+        "parent": "RP13",
+        "title": "Ce qui est ajouté paraît immédiatement dans la matrice et dans la fabrication.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 326
+      },
+      {
+        "id": "RP13.4",
+        "type": "check",
+        "parent": "RP13",
+        "title": "Écrire un nom crée la chose, sur-le-champ, sans formulaire et sans rien payer.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 327
       },
       {
         "id": "RP14",
@@ -4373,7 +5317,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 269,
+        "order": 328,
         "blocked_by": null
       },
       {
@@ -4390,7 +5334,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 270
+        "order": 329
       },
       {
         "id": "RP14.2",
@@ -4406,7 +5350,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 271
+        "order": 330
       },
       {
         "id": "RP14.3",
@@ -4422,7 +5366,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 272
+        "order": 331
       },
       {
         "id": "RP14.4",
@@ -4438,7 +5382,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 273
+        "order": 332
       },
       {
         "id": "RP14.5",
@@ -4454,7 +5398,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 274
+        "order": 333
       },
       {
         "id": "RP15",
@@ -4470,7 +5414,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 275,
+        "order": 334,
         "blocked_by": null
       },
       {
@@ -4487,7 +5431,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 276
+        "order": 335
       },
       {
         "id": "RP15.2",
@@ -4503,7 +5447,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 277
+        "order": 336
       },
       {
         "id": "RP15.3",
@@ -4519,7 +5463,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 278
+        "order": 337
       },
       {
         "id": "RP15.4",
@@ -4535,23 +5479,23 @@
           "total": 0
         },
         "source": "plan",
-        "order": 279
+        "order": 338
       },
       {
         "id": "RP16",
         "type": "epic",
         "parent": null,
-        "title": "Savoir ce qu'on a laissé en plan",
-        "status": "todo",
+        "title": "Savoir ce qu'on a laissé en plan  ✅ **close le 16 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
+          "done": 4,
           "total": 4
         },
         "source": "plan",
-        "order": 280,
+        "order": 339,
         "blocked_by": null
       },
       {
@@ -4559,7 +5503,7 @@
         "type": "check",
         "parent": "RP16",
         "title": "Un tiroir rassemble tous les brouillons, avec ce que chacun reprend et depuis quand.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4568,14 +5512,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 281
+        "order": 340
       },
       {
         "id": "RP16.2",
         "type": "check",
         "parent": "RP16",
-        "title": "Un brouillon s'ouvre depuis ce tiroir, et s'y jette.",
-        "status": "todo",
+        "title": "Un brouillon s'ouvre depuis ce tiroir, et s'y jette. *« Reprendre » repose la pile de",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4584,14 +5528,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 282
+        "order": 341
       },
       {
         "id": "RP16.3",
         "type": "check",
         "parent": "RP16",
-        "title": "Le compteur de la colonne compte tous les travaux, pas une seule famille.",
-        "status": "todo",
+        "title": "Le compteur de la colonne compte tous les travaux, pas une seule famille. *Les",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4600,14 +5544,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 283
+        "order": 342
       },
       {
         "id": "RP16.4",
         "type": "check",
         "parent": "RP16",
         "title": "Un travail interrompu par un redémarrage paraît dans le tiroir, avec ce qu'il attendait.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4616,23 +5560,23 @@
           "total": 0
         },
         "source": "plan",
-        "order": 284
+        "order": 343
       },
       {
         "id": "RP17",
         "type": "epic",
         "parent": null,
-        "title": "Une seule porte pour faire sortir un personnage",
-        "status": "todo",
+        "title": "Une seule porte pour faire sortir un personnage ✅ **close le 16 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
+          "done": 5,
           "total": 5
         },
         "source": "plan",
-        "order": 285,
+        "order": 344,
         "blocked_by": null
       },
       {
@@ -4640,7 +5584,7 @@
         "type": "check",
         "parent": "RP17",
         "title": "Un seul chemin écrit dans le dossier du jeu, et il prévisualise avant d'écrire.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4649,14 +5593,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 286
+        "order": 345
       },
       {
         "id": "RP17.2",
         "type": "check",
         "parent": "RP17",
         "title": "Sortir un seul personnage reste possible, par ce chemin-là.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4665,14 +5609,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 287
+        "order": 346
       },
       {
         "id": "RP17.3",
         "type": "check",
         "parent": "RP17",
         "title": "Ce que l'agent peut faire, l'écran le peut aussi, et l'inverse.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4681,14 +5625,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 288
+        "order": 347
       },
       {
         "id": "RP17.4",
         "type": "check",
         "parent": "RP17",
-        "title": "Les variantes archive — un fichier compressé au lieu d'une écriture disque — restent",
-        "status": "todo",
+        "title": "Les variantes archive restent disponibles ou sont retirées explicitement.",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4697,14 +5641,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 289
+        "order": 348
       },
       {
         "id": "RP17.5",
         "type": "check",
         "parent": "RP17",
         "title": "Rien n'est écrasé sans que la comparaison l'ait annoncé.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4713,23 +5657,23 @@
           "total": 0
         },
         "source": "plan",
-        "order": 290
+        "order": 349
       },
       {
         "id": "RP18",
         "type": "epic",
         "parent": null,
-        "title": "Les neuf routes sans écran",
-        "status": "todo",
+        "title": "Les neuf routes sans écran  ✅ **close le 16 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
+          "done": 4,
           "total": 4
         },
         "source": "plan",
-        "order": 291,
+        "order": 350,
         "blocked_by": null
       },
       {
@@ -4737,7 +5681,7 @@
         "type": "check",
         "parent": "RP18",
         "title": "Chacune des neuf routes a reçu une décision écrite : construite, ou retirée.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4746,14 +5690,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 292
+        "order": 351
       },
       {
         "id": "RP18.2",
         "type": "check",
         "parent": "RP18",
         "title": "Aucune route retirée n'emportait une capacité que l'agent emprunte.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4762,14 +5706,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 293
+        "order": 352
       },
       {
         "id": "RP18.3",
         "type": "check",
         "parent": "RP18",
         "title": "Les essais des routes retirées partent avec elles.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4778,14 +5722,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 294
+        "order": 353
       },
       {
         "id": "RP18.4",
         "type": "check",
         "parent": "RP18",
         "title": "Le relevé du serveur est mis à jour, et le compte des routes y redescend d'autant.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4794,23 +5738,23 @@
           "total": 0
         },
         "source": "plan",
-        "order": 295
+        "order": 354
       },
       {
         "id": "RP19",
         "type": "epic",
         "parent": null,
-        "title": "L'image de référence d'une fiche se choisit",
-        "status": "todo",
+        "title": "L'image de référence d'une fiche se choisit  ✅ **close le 15 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
+          "done": 6,
           "total": 6
         },
         "source": "plan",
-        "order": 296,
+        "order": 355,
         "blocked_by": null
       },
       {
@@ -4818,7 +5762,7 @@
         "type": "check",
         "parent": "RP19",
         "title": "Depuis une image fixe du sujet, un geste en fait l'image de référence de la fiche, et la",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4827,14 +5771,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 297
+        "order": 356
       },
       {
         "id": "RP19.2",
         "type": "check",
         "parent": "RP19",
         "title": "Le choix survit à la fermeture et à la réouverture du jeu ; il est écrit dans le dossier",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4843,14 +5787,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 298
+        "order": 357
       },
       {
         "id": "RP19.3",
         "type": "check",
         "parent": "RP19",
         "title": "Une fiche sans choix montre ce qu'elle montrait avant, et rien d'autre ne change.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4859,14 +5803,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 299
+        "order": 358
       },
       {
         "id": "RP19.4",
         "type": "check",
         "parent": "RP19",
         "title": "Choisir une image de référence ne promeut aucun artwork officiel, ne retient aucune case,",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4875,14 +5819,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 300
+        "order": 359
       },
       {
         "id": "RP19.5",
         "type": "check",
         "parent": "RP19",
         "title": "Supprimer l'image de référence ramène la fiche au choix du produit, sans message d'erreur.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4891,14 +5835,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 301
+        "order": 360
       },
       {
         "id": "RP19.6",
         "type": "check",
         "parent": "RP19",
         "title": "L'agent peut lire quelle image est la référence d'un sujet ; il ne peut pas la choisir.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4907,23 +5851,23 @@
           "total": 0
         },
         "source": "plan",
-        "order": 302
+        "order": 361
       },
       {
         "id": "RP20",
         "type": "epic",
         "parent": null,
-        "title": "Enregistrer sous — une image ou une animation modifiée devient une autre pose ou direction",
-        "status": "todo",
+        "title": "Enregistrer sous — une image ou une animation modifiée devient une autre pose ou direction ✅ **close le 16 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
+          "done": 8,
           "total": 8
         },
         "source": "plan",
-        "order": 303,
+        "order": 362,
         "blocked_by": null
       },
       {
@@ -4931,7 +5875,7 @@
         "type": "check",
         "parent": "RP20",
         "title": "Depuis l'atelier d'une image et depuis l'atelier d'une animation, un geste *Enregistrer",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4940,14 +5884,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 304
+        "order": 363
       },
       {
         "id": "RP20.2",
         "type": "check",
         "parent": "RP20",
         "title": "L'écran demande le sujet, la pose et la direction d'arrivée, préremplis ; avec un miroir",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4956,14 +5900,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 305
+        "order": 364
       },
       {
         "id": "RP20.3",
         "type": "check",
         "parent": "RP20",
         "title": "Le nouvel asset entre en bibliothèque avec le rendu pour image brute et une recette",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4972,14 +5916,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 306
+        "order": 365
       },
       {
         "id": "RP20.4",
         "type": "check",
         "parent": "RP20",
         "title": "Pour une animation, la nouvelle bande a le même nombre de frames et la même cadence, et",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -4988,14 +5932,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 307
+        "order": 366
       },
       {
         "id": "RP20.5",
         "type": "check",
         "parent": "RP20",
         "title": "Le nouvel asset dit son origine — original et recette —, et la fiche de l'original le",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5004,14 +5948,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 308
+        "order": 367
       },
       {
         "id": "RP20.6",
         "type": "check",
         "parent": "RP20",
         "title": "La nouvelle case n'est pas retenue pour le jeu ; la retenir est un second geste.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5020,14 +5964,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 309
+        "order": 368
       },
       {
         "id": "RP20.7",
         "type": "check",
         "parent": "RP20",
         "title": "Aucun appel au fournisseur ; le geste marche réseau coupé, et un essai le tient.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5036,14 +5980,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 310
+        "order": 369
       },
       {
         "id": "RP20.8",
         "type": "check",
         "parent": "RP20",
         "title": "L'agent dispose du même geste par l'outil MCP correspondant, avec les mêmes règles.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5052,23 +5996,23 @@
           "total": 0
         },
         "source": "plan",
-        "order": 311
+        "order": 370
       },
       {
         "id": "RP21",
         "type": "epic",
         "parent": null,
-        "title": "Une planche découpée sur la toile devient une animation",
-        "status": "todo",
+        "title": "Une planche découpée sur la toile devient une animation ✅ **close le 16 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
+          "done": 6,
           "total": 6
         },
         "source": "plan",
-        "order": 312,
+        "order": 371,
         "blocked_by": null
       },
       {
@@ -5076,7 +6020,7 @@
         "type": "check",
         "parent": "RP21",
         "title": "Sur la toile, la découpe d'une carte importée offre *Animer*, et une bande en sort avec",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5085,14 +6029,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 313
+        "order": 372
       },
       {
         "id": "RP21.2",
         "type": "check",
         "parent": "RP21",
         "title": "Une sélection d'images fixes d'un même sujet offre *En faire une animation* ; l'atelier",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5101,14 +6045,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 314
+        "order": 373
       },
       {
         "id": "RP21.3",
         "type": "check",
         "parent": "RP21",
         "title": "La bande créée se range sous le sujet, la pose et la direction nommés, et chaque frame",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5117,14 +6061,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 315
+        "order": 374
       },
       {
         "id": "RP21.4",
         "type": "check",
         "parent": "RP21",
         "title": "Une sélection qui mélange deux sujets ne propose pas le geste, et dit pourquoi.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5133,14 +6077,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 316
+        "order": 375
       },
       {
         "id": "RP21.5",
         "type": "check",
         "parent": "RP21",
         "title": "Aucun appel au fournisseur, aucun encodage vidéo : la transparence des images est",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5149,14 +6093,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 317
+        "order": 376
       },
       {
         "id": "RP21.6",
         "type": "check",
         "parent": "RP21",
         "title": "Les huit images restent en bibliothèque après le montage ; en faire une bande ne les",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5165,23 +6109,23 @@
           "total": 0
         },
         "source": "plan",
-        "order": 318
+        "order": 377
       },
       {
         "id": "RP22",
         "type": "epic",
         "parent": null,
-        "title": "Une table se défait, se remet à zéro, et se voit avant d'enregistrer",
-        "status": "todo",
+        "title": "Une table se défait, se remet à zéro, et se voit avant d'enregistrer ✅ **close le 16 septembre 2026**",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
         "checks": {
-          "done": 0,
+          "done": 6,
           "total": 6
         },
         "source": "plan",
-        "order": 319,
+        "order": 378,
         "blocked_by": null
       },
       {
@@ -5189,7 +6133,7 @@
         "type": "check",
         "parent": "RP22",
         "title": "Dans l'atelier d'une animation, cliquer un *sens* déjà choisi le retire ; la recette",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5198,14 +6142,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 320
+        "order": 379
       },
       {
         "id": "RP22.2",
         "type": "check",
         "parent": "RP22",
         "title": "Chaque table de l'atelier d'une animation a la bascule *L'endormir / La réveiller* de",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5214,14 +6158,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 321
+        "order": 380
       },
       {
         "id": "RP22.3",
         "type": "check",
         "parent": "RP22",
         "title": "L'aperçu se refait à chaque geste sur la recette, retournement compris ; un essai le",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5230,14 +6174,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 322
+        "order": 381
       },
       {
         "id": "RP22.4",
         "type": "check",
         "parent": "RP22",
         "title": "La section *Position, source et pelure d'oignon* porte un titre qui dit ses trois",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5246,14 +6190,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 323
+        "order": 382
       },
       {
         "id": "RP22.5",
         "type": "check",
         "parent": "RP22",
         "title": "Les mêmes mots pour les mêmes gestes sur l'établi d'une image et dans l'atelier d'une",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5262,14 +6206,14 @@
           "total": 0
         },
         "source": "plan",
-        "order": 324
+        "order": 383
       },
       {
         "id": "RP22.6",
         "type": "check",
         "parent": "RP22",
         "title": "Aucun de ces gestes n'écrit sur le disque avant *Enregistrer*, et *Défaire* les reprend.",
-        "status": "todo",
+        "status": "done",
         "status_raw": null,
         "team": null,
         "path": "docs/PLAN-remise-a-plat.md",
@@ -5278,7 +6222,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 325
+        "order": 384
       }
     ],
     "sources": [
@@ -5334,7 +6278,7 @@
         "detail": ""
       }
     ],
-    "scanned_at": "2026-09-15"
+    "scanned_at": "2026-09-16"
   },
   "manual": {
     "items": [
@@ -5944,64 +6888,64 @@
   "milestones": [],
   "activity": [
     {
-      "hash": "9783269",
-      "date": "2026-09-15",
-      "text": "DÃ©graisser le plan et les docs, et nommer trois manques venus de l'usage"
+      "hash": "4f20a81",
+      "date": "2026-09-16",
+      "text": "Relecture croisÃ©e, troisiÃ¨me passage : les mots des Ã©crans ouverts sont fermÃ©s"
     },
     {
-      "hash": "cd943e4",
-      "date": "2026-09-13",
-      "text": "Clore RP14 et RP15 au tableau d'Ã©tat, et rafraÃ®chir l'avancement"
+      "hash": "77705be",
+      "date": "2026-09-16",
+      "text": "Le tableau d'Ã©tat ferme la remise Ã  plat : vingt-deux sur vingt-deux, et le parcours Ã  cliquer au journal"
     },
     {
-      "hash": "a16ebe4",
-      "date": "2026-09-13",
-      "text": "RP2: rendre les quatre rÃ¨gles du jeu, et le cadre qui borne l'agent"
+      "hash": "efa27ad",
+      "date": "2026-09-16",
+      "text": "Relecture croisÃ©e, second passage : le plan, le journal et les deux cartes"
     },
     {
-      "hash": "2e824c9",
-      "date": "2026-09-13",
-      "text": "RP14 : la dÃ©coupe se rÃ¨gle â€” zones nommÃ©es, gardÃ©es, rÃ©glables et relues"
+      "hash": "173bc82",
+      "date": "2026-09-16",
+      "text": "Relecture croisÃ©e : deux renvois pÃ©rimÃ©s, et l'essai du catalogue vidÃ©o connaÃ®t attente et masques"
     },
     {
-      "hash": "66d18d9",
-      "date": "2026-09-13",
-      "text": "RP15: le cadre du montage se rÃ¨gle Ã  la main, et le pivot aussi"
+      "hash": "d3679e2",
+      "date": "2026-09-16",
+      "text": "RP4 : une seule prÃ©paration, une seule relecture"
     },
     {
-      "hash": "e868dbc",
-      "date": "2026-09-13",
-      "text": "RÃ©Ã©crire la fin du relevÃ© des documents : ce qui a Ã©tÃ© dÃ©placÃ©, et ce qui est revenu"
+      "hash": "d9b084e",
+      "date": "2026-09-16",
+      "text": "Relecture croisÃ©e, premier passage : les comptes de routes et les renvois vivants"
     },
     {
-      "hash": "3f52dff",
-      "date": "2026-09-13",
-      "text": "Verser la leÃ§on du vocabulaire au journal"
+      "hash": "5e4fd31",
+      "date": "2026-09-16",
+      "text": "RP17 : une seule porte pour faire sortir un personnage"
     },
     {
-      "hash": "70f689b",
-      "date": "2026-09-13",
-      "text": "Remonter le vocabulaire fermÃ© hors de l'archive â€” il gouverne encore"
+      "hash": "0027a5b",
+      "date": "2026-09-16",
+      "text": "RP7 : une seule grille d'assets"
     },
     {
-      "hash": "c718f4f",
-      "date": "2026-09-13",
-      "text": "RP1 close : cocher ses critÃ¨res et le dire dans le tableau d'Ã©tat"
+      "hash": "2342633",
+      "date": "2026-09-16",
+      "text": "RP16 : savoir ce qu'on a laissÃ© en plan"
     },
     {
-      "hash": "51b38e5",
-      "date": "2026-09-13",
-      "text": "RP1 : retirer ce qui est mort"
+      "hash": "444b0fc",
+      "date": "2026-09-16",
+      "text": "Vocabulaire : l'aide du tableau dit Â« Ã®lot Â», comme la toile depuis RP3"
     },
     {
-      "hash": "4f20476",
-      "date": "2026-09-13",
-      "text": "RafraÃ®chir le tableau de bord : il voit les deux plans, et il dit ce que ses 100 % valent"
+      "hash": "e7c2449",
+      "date": "2026-09-16",
+      "text": "Le banc des docs lit les titres HTML, et le renvoi de la barre d'outils y rÃ©pond"
     },
     {
-      "hash": "47dd330",
-      "date": "2026-09-13",
-      "text": "Verser au journal ce que les cinq relevÃ©s ont appris"
+      "hash": "b39e622",
+      "date": "2026-09-16",
+      "text": "RP8 : une seule fiche de sujet"
     }
   ]
 }
