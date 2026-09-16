@@ -11,6 +11,39 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## La relecture croisée du chantier — 16 septembre 2026
+
+**Vingt agents qui ne se parlaient pas ont écrit vingt fiches, et les fiches se contredisaient sur
+ce qu'aucun d'eux ne regardait.** Le code de chaque tranche tenait ; ce qui ne tenait pas, c'était
+les comptes (313, 314 et 318 routes pour un serveur qui en a 316), les cartes (six fichiers décrits
+qui n'existaient plus), et les mots : quatre tranches avaient ouvert un écran sans fermer les mots
+de son tableau, comme le relevé des désaccords le demande. Deux passages ont tout remis d'accord,
+et un banc voit désormais les champs courts des portes et la forme *Revenir à…* dans tous les
+composants.
+
+**Aucune tranche n'a été regardée au navigateur** : le serveur n'a pas été lancé, l'auteur s'en
+servait peut-être. Les essais d'écran ne voient pas ce que le serveur ne remonte pas, et le
+glisser-déposer de la grille d'assets (`RP7`) est le premier doute à lever. Le parcours qui couvre
+dix-huit tranches en quinze gestes, dans l'ordre du carnet :
+
+| # | Le geste | Couvre |
+|---|---|---|
+| 1 | Ouvrir un jeu et lire la colonne de gauche — huit portes ; la replier et relire les libellés courts | RP3 |
+| 2 | Univers & toile → Ctrl-clic sur deux cartes → *Mettre en réserve* → Ctrl+Z → *Fabriquer depuis la sélection* | RP9 |
+| 3 | Sur la toile, découper une carte importée → *Animer* | RP21 |
+| 4 | Les sujets → quatre familles ; « ＋ Collection » ; glisser un sujet sur une ligne de collection | RP7 |
+| 5 | Cliquer une famille → *Réglages de la famille ›* → vue *Les poses* | RP7 |
+| 6 | Cliquer un personnage → *Modifier la fiche* → signalement, textes de style, images d'exemple | RP8, RP3 |
+| 7 | Onglet Images fixes → une rangée vide : l'import pointé sur la case ; *Importer…* du bandeau : le même écran | RP5 |
+| 8 | Volet d'une image → *En faire l'image de référence* | RP19 |
+| 9 | Onglet Objectif & règles → écrire un nom de mouvement | RP13 |
+| 10 | Onglet Animations → atelier → miroir deux fois ; endormir ; *Remettre à zéro* ; l'aperçu avant *Enregistrer* → *Enregistrer sous…* | RP22, RP20 |
+| 11 | Comparer deux versions de la même case | RP12 |
+| 12 | Galerie → tri, filtres, *Regrouper* ; sélection d'images fixes → *En faire une animation* | RP11, RP21 |
+| 13 | Planche → *Découper* ; clip → *Montage* | RP14, RP15 |
+| 14 | Fabrications → *Fabriquer…* : le type de résultat se choisit dans la fenêtre ; le compteur ; le tiroir des brouillons → *Reprendre* ; *Regarder les images* | RP4, RP16, RP18 |
+| 15 | Livrer au jeu → un conflit, trois décisions ; *Exporter des fichiers* → *un seul sujet* → aperçu ; Réglages → quatre onglets, *Agent MCP* | RP10, RP17, RP2 |
+
 ## RP4 · Une seule préparation, une seule relecture — 16 septembre 2026
 
 **La fusion la plus lourde du plan a été la moins invasive, et c'est ce qu'on a appris.** Huit
