@@ -21,10 +21,20 @@ de son tableau, comme le relevé des désaccords le demande. Deux passages ont t
 et un banc voit désormais les champs courts des portes et la forme *Revenir à…* dans tous les
 composants.
 
-**Aucune tranche n'a été regardée au navigateur** : le serveur n'a pas été lancé, l'auteur s'en
-servait peut-être. Les essais d'écran ne voient pas ce que le serveur ne remonte pas, et le
-glisser-déposer de la grille d'assets (`RP7`) est le premier doute à lever. Le parcours qui couvre
-dix-huit tranches en quinze gestes, dans l'ordre du carnet :
+**Puis les quinze gestes ont été cliqués**, sur un atelier jetable (`essais/atelier_jetable_rp.py`,
+dossier temporaire, fournisseur double, port 8424 — l'atelier de l'auteur n'a pas bougé). Deux
+pannes que 1 413 essais d'écran ne voyaient pas : un rendu *enregistré sous* une autre pose n'a
+pas de `prompt`, et l'onglet *Vidéos* de la galerie mourait dessus — page blanche, une fois pour
+toutes ; et le dossier de sortie s'effaçait à chaque rendu de l'atelier, parce qu'un effet
+dépendait d'une fonction recréée à chaque rendu. Les deux sont réparées avec leur essai. Reste
+ce que le navigateur a montré et qui demande une décision : les portes *Livrer au jeu* et
+*Réglages* empilent le fil au lieu de remonter (quatre étages où `lieux.ts` en promet trois) ;
+`prompt` est déclaré obligatoire côté écran alors que le serveur écrit un clip sans ; le
+vocabulaire annonce six familles et le serveur en accepte quatre ; `aide.ts` dit encore « chose »
+une vingtaine de fois, et le banc du vocabulaire ne lit ni les cartes ni l'aide. Le glisser-déposer
+de la grille d'assets a été joué par script (`DataTransfer` réel), pas à la souris ; « Regarder
+les images » demande un calque d'équipement que le double ne sait pas fabriquer. Le parcours,
+dans l'ordre du carnet :
 
 | # | Le geste | Couvre |
 |---|---|---|
