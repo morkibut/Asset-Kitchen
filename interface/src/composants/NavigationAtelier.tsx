@@ -40,7 +40,7 @@ export function NavigationAtelier({ jeu, descriptionJeu, actif, travauxEnCours =
     </div>}
     <nav aria-label="Atelier" className="flex flex-col gap-[4px]">{PORTES.map(p => <button key={p.cle} type="button" onClick={() => onAller(p.cle)} aria-current={actif === p.cle ? 'page' : undefined} aria-label={p.nom} title={replie ? p.nom : undefined}
       className={`${ligne} ${actif === p.cle ? 'bg-ligne-ouverte text-encre' : 'text-encre-controle'} ${replie ? 'justify-center px-[4px] text-[11px]' : ''}`}>
-      <span>{replie ? p.court : p.nom}</span>{p.cle === 'fabrications' && travauxEnCours > 0 && <span className={`mesure text-[11px] text-encre-3 ${replie ? 'ml-[4px]' : 'ml-auto'}`} aria-label={`${travauxEnCours} fabrications en cours`}>{travauxEnCours}</span>}
+      <span>{replie ? p.court : p.nom}</span>{p.cle === 'fabrications' && travauxEnCours > 0 && <span className={`mesure text-[11px] text-encre-3 ${replie ? 'ml-[4px]' : 'ml-auto'}`} aria-label={`${travauxEnCours} fabrication${travauxEnCours > 1 ? 's' : ''} en cours`}>{travauxEnCours}</span>}
     </button>)}</nav>
     <nav aria-label="Préférences" className="flex flex-col gap-[4px] border-t border-trait pt-[14px]">
       <button type="button" onClick={() => onAller('reglages')} aria-current={actif === 'reglages' ? 'page' : undefined} aria-label="Réglages" title={replie ? 'Réglages' : undefined} className={`${ligne} ${actif === 'reglages' ? 'bg-ligne-ouverte' : ''} ${replie ? 'justify-center px-[4px] text-[11px]' : ''}`}>{replie ? 'Régl.' : 'Réglages'}</button>

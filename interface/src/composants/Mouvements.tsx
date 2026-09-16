@@ -67,7 +67,7 @@ export function BlocMouvements() {
       </p>
       <p className="mt-2 text-[12.5px] leading-relaxed text-encre-2">
         Cette liste-ci <strong className="text-encre">appartient à l'atelier</strong>,
-        pas à un jeu : elle suit tous les projets suivants. Rien ici ne part
+        pas à un jeu : elle suit tous les jeux suivants. Rien ici ne part
         chez un fournisseur et rien ici ne coûte.
       </p>
 

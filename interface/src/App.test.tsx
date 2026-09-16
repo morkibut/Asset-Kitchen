@@ -4465,7 +4465,11 @@ describe("l'écran de l'atelier", () => {
     // où le succès serait arrivé » — mais la bibliothèque, elle, reste vide.
     expect(await screen.findByText("crédit épuisé")).toBeTruthy()
     expect(screen.getByRole("button", { name: "Relancer" })).toBeTruthy()
-    expect(screen.getByText("0 image")).toBeTruthy()
+    // **Deux endroits disent ce zéro**, et c'est le cas depuis le 16 septembre
+    // 2026 : le compteur de la grille, et le pied de l'atelier, qui compte
+    // maintenant des *images* et non des « assets » — le mot est sur la liste
+    // noire de `docs/vocabulaire.html`.
+    expect(screen.getAllByText("0 image")).toHaveLength(2)
   })
 
   // ── T4 : coller une adresse fait paraître une carte **avant** l'image ──────
@@ -14825,13 +14829,13 @@ describe("l'écran de confirmation", () => {
     // file où ce qui part est suivi. Ce que l'essai tient est le même : depuis
     // un écran qui ne paie pas, la navigation est le seul témoin de ce qui est
     // en route.
-    const pastille = await screen.findByLabelText("1 fabrications en cours")
+    const pastille = await screen.findByLabelText("1 fabrication en cours")
     expect(pastille.textContent).toContain("1")
 
     // On part à l'Univers : le guichet n'y est pas, donc son compte non plus.
     // La pastille, elle, est dans la navigation — rendue partout.
     allerA("Univers")
-    expect(screen.getByLabelText("1 fabrications en cours")).toBeTruthy()
+    expect(screen.getByLabelText("1 fabrication en cours")).toBeTruthy()
   })
 
   // ── U9 · Il se lit d'un coup d'œil ────────────────────────────────────────

@@ -162,6 +162,12 @@ export type Generation = {
     /** Ce prompt-là est celui que l'auteur a écrit, pas celui que l'atelier a
      *  composé (US-160). Absent des générations d'avant R2. */
     repris?: boolean
+    /** **Le nom donné à la main**, quand la génération ne vient d'aucun appel :
+     *  « Enregistrer sous… » dans l'atelier d'animation écrit un clip de frames
+     *  rendues qui porte un `nom` et **pas de `prompt`**
+     *  (`atelier/services/enregistrer_sous.py`). Tout ce qui affiche le texte
+     *  d'un clip doit donc se replier dessus. */
+    nom?: string
     /** **Le mouvement que l'écran a fait choisir** (A6), par son identifiant.
      *  Inscrit à la commande et jamais écrasé par une correction (V3.01.1) :
      *  c'est lui que le montage lit pour nommer ses bandes. Présent

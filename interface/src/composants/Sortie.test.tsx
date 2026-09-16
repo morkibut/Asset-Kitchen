@@ -14,6 +14,7 @@
 // navigateur, sur `essais/atelier_jetable_b21.py`.
 
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { useState } from "react"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 import { MOTS, parDossier, poids, quand, Sortie } from "./Sortie"
@@ -439,5 +440,45 @@ describe("quand", () => {
   test("elle se lit en français", () => {
     expect(quand(1_757_000_400)).toContain("septembre")
     expect(quand(1_757_000_400)).toContain(" h ")
+  })
+})
+
+// ── Le chemin tapé survit aux rendus de l'atelier ───────────────────────────
+
+describe("le dossier de destination", () => {
+  test("un rendu de l'atelier ne réécrit pas le chemin qu'on est en train de taper", async () => {
+    // **`onErreur` arrive en fonction fléchée**, recréée à chaque rendu de
+    // `App.tsx` — et l'atelier se rend à chaque événement du serveur. Quand
+    // l'effet qui relit les réglages en dépendait, il repartait tout seul et
+    // remettait le chemin conservé à la place de celui qu'on tapait : mesuré
+    // au navigateur le 16 septembre 2026, le champ se vidait au bout de six
+    // secondes et le bouton retombait à « Livrer 0 fichier ».
+    function Atelier() {
+      const [rendus, refaire] = useState(0)
+      return (
+        <>
+          <button onClick={() => refaire(rendus + 1)}>refaire un rendu</button>
+          <Sortie
+            projet="le-marais"
+            onFerme={() => {}}
+            onErreur={() => {
+              /* une identité neuve à chaque rendu, comme dans App.tsx */
+            }}
+          />
+        </>
+      )
+    }
+
+    render(<Atelier />)
+    const champ = (await screen.findByLabelText("Le dossier du jeu")) as HTMLInputElement
+    expect(champ.value).toBe(REGLAGES.dossier)
+
+    fireEvent.change(champ, { target: { value: "E:\\ailleurs\\assets" } })
+    fireEvent.click(screen.getByRole("button", { name: "refaire un rendu" }))
+
+    await waitFor(() =>
+      expect(prevoir.mock.calls.at(-1)?.[0]).toMatchObject({ dossier: "E:\\ailleurs\\assets" }),
+    )
+    expect(champ.value).toBe("E:\\ailleurs\\assets")
   })
 })

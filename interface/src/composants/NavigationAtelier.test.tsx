@@ -35,6 +35,13 @@ it('ouvre le tiroir des brouillons depuis le pied de la colonne, sans devenir un
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })
 
+it('compte une seule fabrication au singulier', () => {
+  // Le lecteur d'écran entendait « 1 fabrications en cours ». Le chiffre est
+  // celui qui s'affiche ; la phrase est celle qui s'entend, et elle s'accorde.
+  render(<NavigationAtelier jeu="Le marais" actif="galerie" travauxEnCours={1} replie={false} onReplier={vi.fn()} onAller={vi.fn()} onChangerJeu={vi.fn()} onGuide={vi.fn()} onRecherche={vi.fn()} />)
+  expect(screen.getByLabelText('1 fabrication en cours')).toHaveTextContent('1')
+})
+
 it('garde toutes les destinations nommées et atteignables pendant le repli', () => {
   const aller = vi.fn()
   render(<NavigationAtelier jeu="Le marais" actif="univers" replie onReplier={vi.fn()} onAller={aller} onChangerJeu={vi.fn()} onGuide={vi.fn()} onRecherche={vi.fn()} />)

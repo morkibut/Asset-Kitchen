@@ -208,3 +208,33 @@ describe("Tuile — un clip gardé (B22)", () => {
     }
   })
 })
+
+// ── Le clip qui ne vient d'aucun appel ───────────────────────────────────────
+
+describe("Tuile — un clip enregistré à la main", () => {
+  /** « Enregistrer sous… », dans l'atelier d'animation, écrit une génération
+   *  qui n'a été demandée à personne : `enregistrer_sous.py` lui donne un `nom`
+   *  et **n'écrit pas de `prompt`**. La clé manque, elle n'est pas vide. */
+  function rendu(): Generation {
+    const depart = clip()
+    const demande: Partial<Generation["demande"]> = {
+      ...depart.demande,
+      nom: "Marche — retenue",
+    }
+    delete demande.prompt
+    return {
+      ...depart,
+      modele: "rendu:enregistre",
+      demande: demande as Generation["demande"],
+    }
+  }
+
+  test("se nomme par le nom donné à la main, et ne jette pas faute de texte", () => {
+    // Le repli n'est pas un confort : sans lui, la tuile jetait, et c'est la
+    // page entière qui disparaissait — l'onglet Vidéos de la galerie rendait
+    // l'atelier blanc dès qu'un clip enregistré s'y trouvait.
+    render(<Tuile entree={entreeClip(rendu())} {...PROPS_DE_BASE} />)
+
+    expect(screen.getByRole("img", { name: "Marche — retenue" })).toBeTruthy()
+  })
+})

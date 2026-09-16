@@ -154,8 +154,15 @@ export function Tuile({
     clip !== null && (entree.sorte === "clip" || emplacement?.statut === "reussie")
   const clipEnImages = clipArrive && clip.images > 0
 
+  // **Un clip n'a pas toujours de texte.** « Enregistrer sous… » écrit une
+  // génération qui ne vient d'aucun appel : elle porte un `nom` et pas de
+  // `prompt`. Sans ce repli, `titre.slice` jetait, et ce n'était pas la tuile
+  // qui disparaissait mais la page entière — l'onglet Vidéos de la galerie
+  // rendait l'atelier blanc.
   const titre =
-    entree.sorte === "asset" ? entree.asset.label : entree.generation.demande.prompt
+    entree.sorte === "asset"
+      ? entree.asset.label
+      : entree.generation.demande.prompt || entree.generation.demande.nom || ""
 
   // **La tuile montre ce que l'asset est devenu**, pas ce que le fournisseur a
   // rendu : dès qu'une recette existe, c'est le rendu qui s'affiche. Juger sur

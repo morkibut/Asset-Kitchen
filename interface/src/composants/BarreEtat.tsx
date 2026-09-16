@@ -85,8 +85,12 @@ export function BarreEtat({
           ici : elle est le seul préalable dur du produit, elle se lit dès la
           première seconde, et la même valeur à deux endroits serait deux
           endroits à tenir d'accord. */}
+      {/* **Des images, pas des « assets »** : le mot est sur la liste noire de
+          `docs/vocabulaire.html`, et ce compteur-ci compte bien des images —
+          c'est déjà le mot que la barre du carnet emploie pour le même
+          nombre, « N images dans ce jeu ». */}
       <span className="ml-auto">
-        {assets} asset{assets > 1 ? "s" : ""}
+        {assets} image{assets > 1 ? "s" : ""}
       </span>
     </footer>
   )

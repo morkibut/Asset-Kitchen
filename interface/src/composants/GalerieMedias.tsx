@@ -141,7 +141,9 @@ export function GalerieMedias({
   const contient = (texte: string) => !recherche || texte.toLocaleLowerCase("fr").includes(recherche)
   const animations = (mediaLu === "animations" ? animationsLues ?? [] : []).filter((bande) => contient(`${bande.nom} ${bande.pose ?? ""} ${bande.direction ?? ""}`))
   const videos = clipsVivants
-    .filter((clip) => contient(clip.demande.prompt))
+    // Un clip enregistré à la main porte un `nom` et pas de `prompt` : la
+    // recherche doit trouver ce nom-là, et surtout ne pas jeter dessus.
+    .filter((clip) => contient(clip.demande.prompt || clip.demande.nom || ""))
     .map((generation) => ({ cle: generation.identifiant, date: generation.cree_le, rang: 0, sorte: "clip" as const, generation }))
   const modeles = (mediaLu === "modeles-3d" ? sources ?? [] : []).filter((source) => contient(`${source.nom} ${source.origine}`))
   const sonsFiltres = (mediaLu === "sons" ? listeSons ?? [] : []).filter((son) => contient(`${son.nom} ${son.etat}`))

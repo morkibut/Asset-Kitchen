@@ -166,11 +166,21 @@ return (ou, _profondeur, dedans) => {
 
     // La grille du jeu, et comparer (`B13`) — deux profondeurs de plus de
     // la page d'un sujet, chacune avec son propre dernier nom.
+    //
+    // **Mais le sujet ne se nomme pas deux fois**, et c'est la même garde que
+    // le codex ci-dessus : on descend ici *depuis* la page du sujet, qui a
+    // déjà écrit son nom. Sans elle, le fil disait « Personnages › Le pèlerin
+    // › Le pèlerin › Sur la grille du jeu » — vu à l'écran le 16 septembre
+    // 2026. On ne garde alors que le dernier nom, celui de l'étage qu'on
+    // vient de descendre ; la liste des deux noms reste pour le jour où l'on
+    // ouvrirait ces écrans d'ailleurs que de la fiche.
     case "grille": {
+      if (dedans.some((l) => l.genre === "sujet")) return "Sur la grille du jeu"
       const chose = personnages.find((p) => p.identifiant === ou.sujet)
       return chose ? [chose.nom, "Sur la grille du jeu"] : null
     }
     case "comparer": {
+      if (dedans.some((l) => l.genre === "sujet")) return "Comparer"
       const chose = personnages.find((p) => p.identifiant === ou.sujet)
       return chose ? [chose.nom, "Comparer"] : null
     }

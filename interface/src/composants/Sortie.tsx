@@ -38,7 +38,7 @@
  * dessous dit ce qui se passe s'il n'existe pas encore.
  */
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
   api,
   Refus,
@@ -278,6 +278,17 @@ export function Sortie({
   const [bilan, setBilan] = useState<BilanDeSortie | null>(null)
   const [encours, setEncours] = useState(false)
 
+  /** ⚠️ **`onErreur` ne peut pas être une dépendance de l'effet ci-dessous.**
+   *  `App.tsx` le passe en fonction fléchée : il change d'identité à chaque
+   *  rendu de l'atelier, et l'atelier se rend à chaque événement du serveur.
+   *  L'effet repartait donc tout seul, et son `setDossier` réécrivait le
+   *  chemin de destination **pendant qu'on le tapait** — mesuré le
+   *  16 septembre 2026 : le champ se vidait au bout de six secondes, et le
+   *  bouton retombait à « Livrer 0 fichier ». Le rappel se lit donc d'une
+   *  référence, qui ne réveille rien. */
+  const direLErreur = useRef(onErreur)
+  direLErreur.current = onErreur
+
   useEffect(() => {
     let vivant = true
     api
@@ -287,11 +298,11 @@ export function Sortie({
         setReglages(lus)
         setDossier(lus.dossier)
       })
-      .catch((panne) => onErreur?.(panne as Refus))
+      .catch((panne) => direLErreur.current?.(panne as Refus))
     return () => {
       vivant = false
     }
-  }, [projet, onErreur])
+  }, [projet])
 
   const reglage = useMemo(
     () => ({ projet, lot, dossier, rangement, collision, moteur, sujet }),
@@ -307,11 +318,11 @@ export function Sortie({
       .then((vu) => {
         if (vivant) setApercu(vu)
       })
-      .catch((panne) => onErreur?.(panne as Refus))
+      .catch((panne) => direLErreur.current?.(panne as Refus))
     return () => {
       vivant = false
     }
-  }, [reglage, onErreur])
+  }, [reglage])
 
   const sortir = useCallback(() => {
     setEncours(true)
@@ -324,9 +335,9 @@ export function Sortie({
         // fait de toute façon en rouvrant son dossier.
         return api.prevoirLaSortie(reglage).then(setApercu)
       })
-      .catch((panne) => onErreur?.(panne as Refus))
+      .catch((panne) => direLErreur.current?.(panne as Refus))
       .finally(() => setEncours(false))
-  }, [reglage, onErreur])
+  }, [reglage])
 
   const comptes = apercu?.comptes ?? {}
   const montres =
