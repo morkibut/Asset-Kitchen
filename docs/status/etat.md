@@ -11,6 +11,24 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP23 · Tester les animations comme dans le jeu — 16 septembre 2026
+
+L'auteur avait deux courses, est et ouest, et l'onglet disait « Aucune animation ». L'écran
+n'était pas cassé : il ouvrait sur le repos vers la première direction du jeu, que ce
+personnage n'a pas. Mais l'auteur a surtout rappelé à quoi sert l'écran : **on teste
+l'animation dans le jeu**, donc le personnage se déplace, et un trou ne doit pas arrêter
+l'essai.
+
+- **Le déplacement** bat sur `setInterval` et relit `performance.now()`, pour la raison déjà
+  écrite dans `useMetronome` : le volet de l'atelier ne compose pas `requestAnimationFrame`.
+- **La caméra se lit dans la vue du jeu.** Un sol *plat / en pente* n'a de sens que de côté ;
+  vu de dessus, il disparaît et les deux axes se déplacent.
+- **Deux pièges vus au navigateur, pas par les essais.** Un jeu sans direction déclarée
+  rendait toutes les touches muettes. Et deux touches enfoncées dans le même instant
+  s'écrasaient : la seconde lisait l'état d'avant la première, d'où une référence.
+- **Ce qui manque devient un rectangle plein** qui porte son nom. L'ancienne règle, « il
+  reste au repos », cachait le déplacement dès que le repos manquait aussi.
+
 ## La relecture croisée du chantier — 16 septembre 2026
 
 **Vingt agents qui ne se parlaient pas ont écrit vingt fiches, et les fiches se contredisaient sur

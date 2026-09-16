@@ -1528,6 +1528,44 @@ Réparé avec le déclique du critère suivant : les deux venaient de la même c
 
 ---
 
+## RP23 · Tester les animations comme dans le jeu ✅ **close le 16 septembre 2026**
+
+**Bloquée par** : rien. **Elle s'appuie sur** : l'essai `B12` (la vitesse jouée est celle de
+l'export) et la vue du jeu déclarée dans ses règles (`atelier/domaine/vue.py`).
+
+L'auteur ouvre *Tester les animations* sur un personnage qui a deux courses, est et ouest, et
+lit « Aucune animation ». L'écran ouvrait sur le repos dans la première direction du jeu, que
+ce personnage n'a pas ; et même avec la bonne touche, le personnage jouait sur place. Tester
+une animation, c'est la voir **dans le jeu** : le personnage se déplace, et un trou ne doit
+pas arrêter l'essai. Le sol *plat / en pente* ne veut rien dire vu de dessus.
+
+Ce qui se livre, sur l'onglet de l'essai seulement — aucune donnée ne change :
+
+- **on s'y déplace** : tenir une touche fait avancer le personnage, à une vitesse en cases du
+  jeu par seconde réglable pour la marche et pour la course ; il s'arrête au bord de la scène ;
+- **la caméra suit la vue du jeu** : de côté, gauche et droite sur un sol plat ou en pente, les
+  pieds posés dessus ; de dessus (trois quarts, oblique, isométrique compris), tous les sens,
+  diagonales comprises, sans sol. La vue non déclarée se lit dans les directions, et
+  l'auteur bascule à la main dans *La scène* ;
+- **une animation qui manque devient un rectangle plein** à la taille des autres, qui porte
+  son nom — jamais une autre animation à sa place ;
+- **l'écran ouvre sur la première direction qui a quelque chose**, et une ligne de *Ce qu'il
+  fait* se clique pour jouer cette animation ;
+- **la scène est plus haute** (70 % de la fenêtre, entre 440 et 760 px).
+
+### Critères d'acceptation
+
+- [x] Tenir une touche déplace le personnage, le lâcher l'arrête ; *Remettre au début* le
+  ramène au milieu (`EssaiDuSujet.test.tsx`, minuteurs simulés).
+- [x] Un jeu sans direction déclarée se déplace quand même.
+- [x] De dessus il n'y a ni sol ni réglage de pente ; de côté, le sol est plat ou en pente.
+- [x] Une animation qui manque montre un rectangle, et celle d'une autre direction ne joue
+  jamais à sa place.
+- [x] Vérifié au navigateur sur l'atelier jetable : marche jouée en avançant, course en
+  rectangle avec Maj, arrêt au bord, diagonale de dessus, montée de la pente.
+
+---
+
 ## Ce que ce plan ne couvre pas
 
 - **Les capacités neuves.** Elles restent dans [le plan de l'atelier unifié](PLAN-atelier-unifie.md).

@@ -30,10 +30,17 @@
  *
  * ── **Ce qu'il ne fait jamais** ──────────────────────────────────────────────
  *
- * **Il ne remplace pas une animation qui manque.** Une attaque vers le sud qui
- * n'existe pas laisse le personnage au repos et le dit ; jouer l'attaque vers
- * l'est à sa place ferait croire que la case est faite. C'est la même règle que
- * la matrice tient sur les images, appliquée au mouvement.
+ * **Il ne remplace pas une animation qui manque par une autre.** Une attaque
+ * vers le sud qui n'existe pas devient un rectangle plein, à la taille des
+ * autres, et le personnage continue de se déplacer ; jouer l'attaque vers l'est
+ * à sa place ferait croire que la case est faite.
+ *
+ * ── **On s'y déplace, comme dans le jeu** ────────────────────────────────────
+ *
+ * Tenir une touche fait avancer le personnage dans la scène, à une vitesse en
+ * cases par seconde qui se règle. La caméra suit la vue du jeu : de côté, il va
+ * à gauche et à droite sur un sol plat ou en pente ; de dessus (trois quarts,
+ * oblique, isométrique compris), il va dans tous les sens et il n'y a pas de sol.
  *
  * **Il ne fabrique rien et ne dépense rien.** Aucun `fetch` ne part de ce
  * fichier : tout arrive en props, comme `GrilleDuJeu.tsx` et `Comparer.tsx`. Le
@@ -105,6 +112,74 @@ const DIRECTIONS_DE_LA_TOUCHE: Record<string, readonly string[]> = {
   d: ["est", "droite"],
   arrowright: ["est", "droite"],
 }
+
+/** Le sens de déplacement de chaque direction livrée, en cases de l'écran.
+ *  Une diagonale n'est pas ici : elle naît de deux touches tenues ensemble. */
+const VECTEUR_DE_LA_DIRECTION: Record<string, readonly [number, number]> = {
+  nord: [0, -1],
+  sud: [0, 1],
+  est: [1, 0],
+  droite: [1, 0],
+  ouest: [-1, 0],
+  gauche: [-1, 0],
+}
+
+/** **D'où la caméra regarde, donc comment on se déplace.**
+ *
+ *  `cote` — un jeu de plateforme ou de défilement : le personnage va à gauche
+ *  et à droite, les pieds sur un sol. `dessus` — vue de dessus, trois quarts,
+ *  oblique, isométrique : il se déplace sur le plan, dans tous les sens, et il
+ *  n'y a pas de ligne de sol.
+ *
+ *  La vue déclarée dans les règles du jeu décide (`atelier/domaine/vue.py`).
+ *  Un jeu qui n'en déclare pas : ses directions le disent — `droite` et
+ *  `gauche` seules, c'est un jeu de côté ; un nord ou un sud, c'est un jeu vu
+ *  d'en haut. L'auteur peut toujours basculer dans *La scène*. */
+export type Camera = "cote" | "dessus"
+
+export function cameraDuJeu(vue: string, directions: readonly { identifiant: string }[]): Camera {
+  if (vue.startsWith("vue-cote") || vue === "vue-face-fixe") return "cote"
+  if (vue.startsWith("vue-dessus") || vue === "vue-oblique" || vue === "vue-isometrique")
+    return "dessus"
+  const siennes = directions.map((d) => d.identifiant)
+  if (siennes.some((d) => d.startsWith("nord") || d.startsWith("sud"))) return "dessus"
+  return "cote"
+}
+
+/** Où vont les touches tenues : un vecteur de longueur 1 (ou nul), et la
+ *  direction que le personnage regarde — la diagonale si le jeu la déclare,
+ *  sinon la dernière touche appuyée. */
+export function versOuVaIl(
+  directionsTenues: readonly string[],
+  camera: Camera,
+  declarees: ReadonlySet<string>,
+): { dx: number; dy: number; regarde: string | null } {
+  let dx = 0
+  let dy = 0
+  for (const d of new Set(directionsTenues)) {
+    const [x, y] = VECTEUR_DE_LA_DIRECTION[d] ?? [0, 0]
+    dx += x
+    dy += y
+  }
+  if (camera === "cote") dy = 0
+  dx = Math.sign(dx)
+  dy = Math.sign(dy)
+  const longueur = Math.hypot(dx, dy)
+  let regarde = directionsTenues.at(-1) ?? null
+  if (dx !== 0 && dy !== 0) {
+    const diagonale = `${dy < 0 ? "nord" : "sud"}-${dx > 0 ? "est" : "ouest"}`
+    if (declarees.has(diagonale)) regarde = diagonale
+  }
+  return longueur === 0
+    ? { dx: 0, dy: 0, regarde }
+    : { dx: dx / longueur, dy: dy / longueur, regarde }
+}
+
+/** Les vitesses de déplacement par défaut, **en cases du jeu par seconde**.
+ *  Réglables dans *La scène* : ce sont celles du jeu qu'on juge, pas une
+ *  vérité du produit. */
+const MARCHE_PAR_DEFAUT = 2
+const COURSE_PAR_DEFAUT = 4.5
 
 /** Les quatre fonds de la planche. `jeu` prend la couleur que les règles du
  *  jeu portent — le même geste que `Comparer.tsx`, au même nom. */
@@ -232,6 +307,31 @@ function BandeAuJeu({ bande, rang, zoom }: { bande: Bande; rang: number; zoom: Z
   )
 }
 
+/** **Ce qui tient la place d'une animation qui manque** : un rectangle plein,
+ *  à la taille des autres, qui porte le nom de ce qui manque. Le personnage se
+ *  déplace quand même — on juge le jeu, et un trou ne doit pas l'arrêter —,
+ *  mais on ne peut pas le prendre pour une animation faite. */
+function Remplacant({
+  largeur,
+  hauteur,
+  mot,
+}: {
+  largeur: number
+  hauteur: number
+  mot: string
+}) {
+  return (
+    <span
+      data-remplacant={mot}
+      title={`${mot} — pas encore faite`}
+      className="mesure flex items-center justify-center overflow-hidden rounded-5 border border-trait-echec bg-fond-echec px-[4px] text-center text-[10.5px] leading-[1.1] text-echec"
+      style={{ width: largeur, height: hauteur }}
+    >
+      {largeur >= 40 ? mot : ""}
+    </span>
+  )
+}
+
 /** Une étiquette de scène — posée sur le pourtour, donc sur du papier et non
  *  sur un voile sombre : le carnet n'a pas de couleur pour ça. */
 function Marque({ children, marqueur }: { children: ReactNode; marqueur?: string }) {
@@ -335,13 +435,31 @@ export function EssaiDuSujet({
   // cases, donc au premier changement de retenue fait ailleurs.
   const [directionVoulue, setDirectionVoulue] = useState<string | null>(null)
   const [poseeVoulue, setPoseeVoulue] = useState<string | null>(null)
-  const [tenues, setTenues] = useState<ReadonlySet<string>>(new Set())
+  const [tenues, setTenuesEtat] = useState<ReadonlySet<string>>(new Set())
+  // Deux touches enfoncées dans le même instant arrivent avant que l'écran se
+  // redessine : la seconde doit voir la première, donc on lit une référence.
+  const tenuesRef = useRef<ReadonlySet<string>>(tenues)
+  const setTenues = useCallback((suite: ReadonlySet<string>) => {
+    tenuesRef.current = suite
+    setTenuesEtat(suite)
+  }, [])
   const [court, setCourt] = useState(false)
 
+  // **La direction de départ est la première qui a quelque chose à jouer.**
+  // Ouvrir sur un nord vide quand seules l'est et l'ouest sont faites laisse
+  // croire que l'écran ne marche pas.
+  const directionDeDepart =
+    sesDirections.find((d) =>
+      personnage.cases.some(
+        (c) => (c.directions.find((x) => x.identifiant === d.identifiant)?.bandes.length ?? 0) > 0,
+      ),
+    )?.identifiant ??
+    sesDirections[0]?.identifiant ??
+    null
   const direction =
     directionVoulue !== null && sesDirections.some((d) => d.identifiant === directionVoulue)
       ? directionVoulue
-      : (sesDirections[0]?.identifiant ?? null)
+      : directionDeDepart
   const posee =
     poseeVoulue !== null && connues.has(poseeVoulue)
       ? poseeVoulue
@@ -358,12 +476,17 @@ export function EssaiDuSujet({
       : (sesDirections.find((d) => d.identifiant === identifiant)?.nom ?? identifiant)
 
   const voulue = bandeQuiSortirait(personnage.cases, demandee, direction)
-  const repos = bandeQuiSortirait(personnage.cases, AU_REPOS, direction)
-  // **Elle manque, donc il reste au repos** — et jamais une autre animation à
-  // sa place. Le repos est le seul repli que le critère autorise ; s'il manque
-  // aussi, rien ne bouge et la scène le dit.
-  const jouee = voulue ?? repos
+  // **Elle manque, donc un rectangle plein prend sa place** — jamais une autre
+  // animation, qui ferait croire que la case est faite. Le personnage se
+  // déplace quand même : c'est le jeu qu'on juge.
+  const jouee = voulue
   const manque = voulue === null
+
+  // La taille d'une case de ce sujet, pour que le remplaçant ait la taille des
+  // animations qui existent — et la case du jeu s'il n'en a aucune.
+  const uneBande =
+    personnage.cases.flatMap((c) => [...c.bandes, ...c.directions.flatMap((d) => d.bandes)])[0] ??
+    null
 
   const pasMs = jouee ? dureeImageMs(jouee.cadence) : 0
   const pas = useMetronome(pasMs, jouee !== null && jouee.compte > 1)
@@ -392,6 +515,117 @@ export function EssaiDuSujet({
 
   const cible = univers.cible_px || CIBLE_DE_REFERENCE
 
+  /** La direction que cette touche vise, **si le jeu la déclare**. */
+  const dirigerVers = useCallback(
+    (touche: string): string | null => {
+      // **Un jeu qui ne déclare aucune direction se déplace quand même** : ses
+      // animations valent sous tous les angles, et la touche garde son sens.
+      if (sesDirections.length === 0) return DIRECTIONS_DE_LA_TOUCHE[touche]?.[0] ?? null
+      for (const candidate of DIRECTIONS_DE_LA_TOUCHE[touche] ?? [])
+        if (sesDirections.some((d) => d.identifiant === candidate)) return candidate
+      return null
+    },
+    [sesDirections],
+  )
+
+  // ── Le déplacement ────────────────────────────────────────────────────────
+  const cameraDeduite = cameraDuJeu(univers.vue ?? "", sesDirections)
+  const [cameraVoulue, setCameraVoulue] = useState<Camera | null>(null)
+  const camera = cameraVoulue ?? cameraDeduite
+  const [vitesseMarche, setVitesseMarche] = useState(MARCHE_PAR_DEFAUT)
+  const [vitesseCourse, setVitesseCourse] = useState(COURSE_PAR_DEFAUT)
+  /** Où il est, **en pixels du jeu**, depuis le milieu de la scène. */
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [tailleScene, setTailleScene] = useState({ largeur: 0, hauteur: 0 })
+
+  useEffect(() => {
+    const element = scene.current
+    if (!element || typeof ResizeObserver === "undefined") return
+    const mesurer = () =>
+      setTailleScene({ largeur: element.clientWidth, hauteur: element.clientHeight })
+    mesurer()
+    const observateur = new ResizeObserver(mesurer)
+    observateur.observe(element)
+    return () => observateur.disconnect()
+  }, [])
+
+  const largeurActeur = (jouee ?? uneBande)?.case_largeur ?? cible
+  const hauteurActeur = (jouee ?? uneBande)?.case_hauteur ?? cible
+
+  const declarees = useMemo(
+    () => new Set(sesDirections.map((d) => d.identifiant)),
+    [sesDirections],
+  )
+  const directionsTenues = [...tenues]
+    .map((t) => dirigerVers(t))
+    .filter((d): d is string => d !== null)
+  const { dx, dy } = versOuVaIl(directionsTenues, camera, declarees)
+  const vitesse = (court && connues.has(QUI_COURT) ? vitesseCourse : vitesseMarche) * cible
+
+  /** Les bornes de la scène, relues à chaque battement sans relancer la boucle. */
+  const bornes = useRef({ x: Infinity, y: Infinity })
+  bornes.current = {
+    x: tailleScene.largeur > 0 ? Math.max(0, (tailleScene.largeur / zoom - largeurActeur) / 2) : Infinity,
+    y:
+      tailleScene.hauteur > 0 ? Math.max(0, (tailleScene.hauteur / zoom - hauteurActeur) / 2) : Infinity,
+  }
+  const borner = (x: number, y: number) => ({
+    x: Math.max(-bornes.current.x, Math.min(bornes.current.x, x)),
+    y: camera === "cote" ? 0 : Math.max(-bornes.current.y, Math.min(bornes.current.y, y)),
+  })
+  const bornerRef = useRef(borner)
+  bornerRef.current = borner
+
+  // Le même choix d'horloge que `useMetronome`, pour la même raison :
+  // `setInterval` bat dans le volet de l'atelier, `requestAnimationFrame` non.
+  // Le temps écoulé est relu à chaque réveil, donc un réveil en retard avance
+  // d'autant plus loin.
+  useEffect(() => {
+    if ((dx === 0 && dy === 0) || vitesse <= 0) return
+    let avant = performance.now()
+    const minuteur = window.setInterval(() => {
+      const maintenant = performance.now()
+      const secondes = Math.min(0.1, (maintenant - avant) / 1000)
+      avant = maintenant
+      setPosition((p) => bornerRef.current(p.x + dx * vitesse * secondes, p.y + dy * vitesse * secondes))
+    }, 16)
+    return () => window.clearInterval(minuteur)
+  }, [dx, dy, vitesse])
+
+  // Changer de caméra ou de zoom peut laisser le personnage hors du cadre.
+  useEffect(() => {
+    setPosition((p) => bornerRef.current(p.x, p.y))
+  }, [camera, zoom, tailleScene.largeur, tailleScene.hauteur])
+
+  /** La hauteur du sol sous un point de la scène, en pixels de l'écran — la
+   *  vue de côté seulement. En pente, il monte de gauche à droite. */
+  const epaisseurSol = Math.max(24, Math.round(cible * zoom * 0.5))
+  const montee = sol === "pente" ? Math.round(Math.min(cible * zoom * 1.5, (tailleScene.hauteur || 400) * 0.4)) : 0
+  const solSous = (xEcran: number) => {
+    if (montee === 0 || tailleScene.largeur === 0) return epaisseurSol
+    const part = Math.max(0, Math.min(1, (tailleScene.largeur / 2 + xEcran) / tailleScene.largeur))
+    return Math.round(epaisseurSol + part * montee)
+  }
+
+  /** Où poser un acteur : le milieu en largeur, les pieds sur le sol de côté,
+   *  le centre sur le plan vu de dessus — et, de dessus, celui qui est plus bas
+   *  passe devant. */
+  const placer = (x: number, y: number): React.CSSProperties =>
+    camera === "cote"
+      ? {
+          position: "absolute",
+          left: `calc(50% + ${Math.round(x * zoom)}px)`,
+          bottom: solSous(x * zoom),
+          transform: "translateX(-50%)",
+        }
+      : {
+          position: "absolute",
+          left: `calc(50% + ${Math.round(x * zoom)}px)`,
+          top: `calc(50% + ${Math.round(y * zoom)}px)`,
+          transform: "translate(-50%, -50%)",
+          zIndex: 1000 + Math.round(y),
+        }
+
   /** Ce que chaque pose a pour la direction regardée — c'est la colonne de
    *  droite, et c'est aussi ce qui grise une touche. */
   const ceQuIlFait = sesPoses.map((p, rangee) => ({
@@ -413,17 +647,8 @@ export function EssaiDuSujet({
     setDirectionVoulue(null)
     setTenues(new Set())
     setCourt(false)
-  }, [])
-
-  /** La direction que cette touche vise, **si le jeu la déclare**. */
-  const dirigerVers = useCallback(
-    (touche: string): string | null => {
-      for (const candidate of DIRECTIONS_DE_LA_TOUCHE[touche] ?? [])
-        if (sesDirections.some((d) => d.identifiant === candidate)) return candidate
-      return null
-    },
-    [sesDirections],
-  )
+    setPosition({ x: 0, y: 0 })
+  }, [setTenues])
 
   // **Le clavier est celui de la scène, jamais celui de la fenêtre.** Un
   // écouteur posé sur `window` volerait Ctrl+K à la barre et `?` au guide —
@@ -441,9 +666,13 @@ export function EssaiDuSujet({
     const vers = dirigerVers(touche)
     if (vers !== null) {
       e.preventDefault()
-      setDirectionVoulue(vers)
+      const suite = new Set(tenuesRef.current)
+      suite.delete(touche)
+      suite.add(touche)
+      const visees = [...suite].map((t) => dirigerVers(t)).filter((d): d is string => d !== null)
+      setDirectionVoulue(versOuVaIl(visees, camera, declarees).regarde ?? vers)
       setCourt(e.shiftKey)
-      setTenues((avant) => new Set(avant).add(touche))
+      setTenues(suite)
       // Se remettre à marcher efface la pose qu'on avait posée à la main :
       // sans ça, lâcher la touche rendrait une attaque qu'on croyait finie.
       setPoseeVoulue(null)
@@ -470,12 +699,15 @@ export function EssaiDuSujet({
       setCourt(false)
       return
     }
-    if (DIRECTIONS_DE_LA_TOUCHE[touche])
-      setTenues((avant) => {
-        const suite = new Set(avant)
-        suite.delete(touche)
-        return suite
-      })
+    if (DIRECTIONS_DE_LA_TOUCHE[touche] && tenuesRef.current.has(touche)) {
+      const suite = new Set(tenuesRef.current)
+      suite.delete(touche)
+      // Lâcher une touche d'une diagonale : il regarde vers celle qui reste.
+      const visees = [...suite].map((t) => dirigerVers(t)).filter((d): d is string => d !== null)
+      const regarde = versOuVaIl(visees, camera, declarees).regarde
+      if (regarde !== null) setDirectionVoulue(regarde)
+      setTenues(suite)
+    }
   }
 
   const fondDeScene =
@@ -534,7 +766,8 @@ export function EssaiDuSujet({
           onKeyDown={surTouche}
           onKeyUp={surRelache}
           className={[
-            "relative flex min-h-[300px] flex-1 items-end justify-center gap-[22px] overflow-hidden rounded-8 p-[30px] outline-none",
+            // **Haute**, parce qu'on s'y déplace : de dessus, on monte et on descend.
+            "relative h-[clamp(440px,70vh,760px)] w-full overflow-hidden rounded-8 outline-none",
             fond === "damier" ? "damier-papier" : "",
             fond === "clair" ? "bg-papier-cote" : "",
             fond === "neutre" || fond === "jeu" ? "bg-pourtour" : "",
@@ -556,34 +789,26 @@ export function EssaiDuSujet({
               : fondDeScene
           }
         >
-          <span
-            aria-hidden
-            data-sol={sol}
-            className="pointer-events-none absolute inset-x-0 bottom-0 bg-encre/20"
-            style={{
-              height: Math.round(cible * zoom * 0.5),
-              clipPath:
-                sol === "pente" ? "polygon(0 34%, 100% 0, 100% 100%, 0 100%)" : undefined,
-            }}
-          />
-
-          {cadre && (
+          {camera === "cote" && (
             <span
               aria-hidden
-              data-cadre-de-la-case
-              className="pointer-events-none absolute rounded-5 border border-dashed border-eteint"
+              data-sol={sol}
+              className="pointer-events-none absolute inset-x-0 bottom-0 bg-encre/20"
               style={{
-                width: cible * zoom,
-                height: cible * zoom,
-                left: "50%",
-                bottom: 30,
-                transform: "translateX(-50%)",
+                height: epaisseurSol + montee,
+                clipPath:
+                  montee > 0
+                    ? `polygon(0 ${Math.round((montee / (epaisseurSol + montee)) * 100)}%, 100% 0, 100% 100%, 0 100%)`
+                    : undefined,
               }}
             />
           )}
 
           {sonVoisin && (
-            <figure className="relative flex flex-col items-center gap-[4px]">
+            <figure
+              data-voisin={sonVoisin.identifiant}
+              style={placer(borner(-2.5 * cible, 0).x, 0)}
+            >
               {bandeDuVoisin ? (
                 <BandeAuJeu
                   bande={bandeDuVoisin}
@@ -600,25 +825,38 @@ export function EssaiDuSujet({
                   className="block"
                 />
               ) : (
-                <span className="mesure rounded-5 bg-carte px-[8px] py-[4px] text-[11px] text-encre-3">
-                  {sonVoisin.nom} n'a ni animation ni image
-                </span>
+                <Remplacant largeur={cible * zoom} hauteur={cible * zoom} mot={`${sonVoisin.nom} · repos`} />
               )}
-              <figcaption className="mesure text-[10.5px] text-carte">
+              <figcaption className="mesure absolute left-1/2 top-full mt-[4px] -translate-x-1/2 whitespace-nowrap text-[10.5px] text-carte">
                 {sonVoisin.nom}
               </figcaption>
             </figure>
           )}
 
-          <figure className="relative flex flex-col items-center gap-[4px]">
+          <figure data-acteur style={placer(position.x, position.y)}>
+            {cadre && (
+              <span
+                aria-hidden
+                data-cadre-de-la-case
+                className="pointer-events-none absolute left-1/2 rounded-5 border border-dashed border-eteint"
+                style={{
+                  width: cible * zoom,
+                  height: cible * zoom,
+                  bottom: 0,
+                  transform: "translateX(-50%)",
+                }}
+              />
+            )}
             {jouee ? (
               <BandeAuJeu bande={jouee} rang={rang} zoom={zoom} />
             ) : (
-              <span className="mesure rounded-5 bg-carte px-[8px] py-[4px] text-[11px] text-encre-3">
-                Aucune animation, pas même au repos — rien à jouer.
-              </span>
+              <Remplacant
+                largeur={largeurActeur * zoom}
+                hauteur={hauteurActeur * zoom}
+                mot={`${nomDeLaPose(demandee)}${direction ? ` · ${nomDeLaDirection(direction)}` : ""}`}
+              />
             )}
-            <figcaption className="mesure text-[10.5px] text-carte">
+            <figcaption className="mesure absolute left-1/2 top-full mt-[4px] -translate-x-1/2 whitespace-nowrap text-[10.5px] text-carte">
               {personnage.nom}
             </figcaption>
           </figure>
@@ -729,9 +967,9 @@ export function EssaiDuSujet({
                   {direction ? ` vers ${nomDeLaDirection(direction)}` : ""} n'existe pas
                 </p>
                 <p className="text-[12px] leading-[1.5] text-encre-2">
-                  {repos
-                    ? "Le personnage reste au repos et le dit. Il ne joue pas une autre animation à la place : on croirait que ça marche."
-                    : "Il n'a pas non plus de repos dans cette direction — rien ne bouge, et c'est ce qu'il faut voir."}
+                  Un rectangle plein tient sa place, et le personnage se déplace quand
+                  même. Aucune autre animation ne la remplace : on croirait qu'elle est
+                  faite.
                 </p>
               </div>
             )}
@@ -759,17 +997,20 @@ export function EssaiDuSujet({
             )}
 
             <p className="text-[12.5px] leading-[1.5] text-encre-2">
-              Les touches 1 à 6 jouent une animation directement. Se déplacer au clavier
-              la choisit tout seul.
+              Cliquer une ligne, ou les touches 1 à 6, joue cette animation sur place.
+              Se déplacer au clavier choisit la marche ou la course tout seul.
             </p>
 
             <div className="flex flex-col gap-[8px]">
               {ceQuIlFait.map((p) => (
-                <div
+                <button
+                  type="button"
                   key={p.identifiant}
                   data-ce-qu-il-fait={p.identifiant}
+                  aria-pressed={p.identifiant === demandee}
+                  onClick={() => setPoseeVoulue(p.identifiant)}
                   className={[
-                    "flex items-center gap-[8px] rounded-8 px-[14px] py-[8px]",
+                    "flex items-center gap-[8px] rounded-8 px-[14px] py-[8px] text-left transition-colors duration-120 hover:border-encre-4",
                     p.bande
                       ? p.identifiant === demandee
                         ? "border border-signal bg-carte"
@@ -808,7 +1049,7 @@ export function EssaiDuSujet({
                       ●
                     </span>
                   )}
-                </div>
+                </button>
               ))}
             </div>
 
@@ -956,27 +1197,82 @@ export function EssaiDuSujet({
               </div>
             ))}
 
-            <div className="flex items-center justify-between gap-[8px]">
-              <span className="text-[12.5px] text-encre-2">le sol</span>
-              <div className="flex gap-[4px] rounded-8 bg-carte p-[4px]">
-                {(["plat", "pente"] as const).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    aria-pressed={sol === v}
-                    onClick={() => setSol(v)}
-                    className={[
-                      "flex h-[22px] items-center rounded-7 px-[8px] text-[12px] transition-colors duration-120",
-                      sol === v
-                        ? "bg-papier-cote font-medium text-encre"
-                        : "text-encre-3 hover:text-encre",
-                    ].join(" ")}
-                  >
-                    {v === "plat" ? "plat" : "en pente"}
-                  </button>
-                ))}
+            <div className="flex flex-col gap-[8px] border-t border-trait pt-[14px]">
+              <div className="flex items-center justify-between gap-[8px]">
+                <span className="text-[12.5px] text-encre-2">la caméra</span>
+                <div className="flex gap-[4px] rounded-8 bg-carte p-[4px]">
+                  {(["cote", "dessus"] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      aria-pressed={camera === v}
+                      onClick={() => setCameraVoulue(v)}
+                      className={[
+                        "flex h-[22px] items-center rounded-7 px-[8px] text-[12px] transition-colors duration-120",
+                        camera === v
+                          ? "bg-papier-cote font-medium text-encre"
+                          : "text-encre-3 hover:text-encre",
+                      ].join(" ")}
+                    >
+                      {v === "cote" ? "de côté" : "de dessus"}
+                    </button>
+                  ))}
+                </div>
               </div>
+              <p className="text-[11.5px] leading-[1.45] text-encre-3">
+                {camera === "cote"
+                  ? "De côté : il va à gauche et à droite, les pieds sur le sol."
+                  : "De dessus : il se déplace sur le plan, dans tous les sens. Pas de sol, la grille du jeu dessine les cases."}
+                {cameraVoulue === null ? " Choisi d'après la vue du jeu." : ""}
+              </p>
             </div>
+
+            {camera === "cote" && (
+              <div className="flex items-center justify-between gap-[8px]">
+                <span className="text-[12.5px] text-encre-2">le sol</span>
+                <div className="flex gap-[4px] rounded-8 bg-carte p-[4px]">
+                  {(["plat", "pente"] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      aria-pressed={sol === v}
+                      onClick={() => setSol(v)}
+                      className={[
+                        "flex h-[22px] items-center rounded-7 px-[8px] text-[12px] transition-colors duration-120",
+                        sol === v
+                          ? "bg-papier-cote font-medium text-encre"
+                          : "text-encre-3 hover:text-encre",
+                      ].join(" ")}
+                    >
+                      {v === "plat" ? "plat" : "en pente"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(
+              [
+                ["vitesse de marche", vitesseMarche, setVitesseMarche],
+                ["vitesse de course", vitesseCourse, setVitesseCourse],
+              ] as const
+            ).map(([mot, valeur, poser]) => (
+              <label key={mot} className="flex items-center justify-between gap-[8px]">
+                <span className="text-[12.5px] text-encre-2">{mot}</span>
+                <span className="flex items-center gap-[4px] text-[11.5px] text-encre-3">
+                  <input
+                    type="number"
+                    min={0}
+                    max={40}
+                    step={0.5}
+                    value={valeur}
+                    onChange={(e) => poser(Math.max(0, Number(e.target.value) || 0))}
+                    className="mesure h-[26px] w-[70px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle"
+                  />
+                  cases / s
+                </span>
+              </label>
+            ))}
 
             <div className="flex flex-col gap-[8px] border-t border-trait pt-[14px]">
               <span className="text-[10.5px] uppercase tracking-[0.14em] text-encre-4">

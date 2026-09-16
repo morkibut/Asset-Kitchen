@@ -6,14 +6,16 @@
 // `GrilleDuJeu.tsx` et `Comparer.tsx`. Le double de `fetch` n'est là que pour
 // prouver qu'il ne part rien — c'est le quatrième critère de la tranche.
 
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import {
   EssaiDuSujet,
   bandeQuiSortirait,
+  cameraDuJeu,
   directionsDuSujet,
   poseJouee,
+  versOuVaIl,
 } from "./EssaiDuSujet"
 import {
   RECETTE_VIDE,
@@ -223,6 +225,8 @@ const jouee = () =>
 /** La première étiquette de la scène — *ce qu'on regarde*, pose et direction.
  *  Elle est faite de deux morceaux de texte, donc on lit son contenu entier
  *  plutôt que de chercher une chaîne qui n'existe dans aucun nœud. */
+const remplacant = () =>
+  laScene().querySelector("[data-remplacant]")?.getAttribute("data-remplacant") ?? null
 const cequOnRegarde = () =>
   laScene().querySelector("[data-marque-de-la-scene]")?.textContent?.trim() ?? null
 
@@ -378,13 +382,13 @@ describe("le clavier", () => {
 // ── « Une animation qui manque le dit, et il reste au repos » ────────────────
 
 describe("une animation qui manque", () => {
-  test("elle le dit, et ne joue jamais celle d'à côté", () => {
+  test("elle le dit, un rectangle tient sa place, et celle d'à côté ne joue jamais", () => {
     monter()
     fireEvent.keyDown(laScene(), { key: "4" })
     expect(screen.getByText("attaque vers sud n'existe pas")).toBeTruthy()
     // **Le cœur du critère** : l'attaque vers l'est existe, et elle ne joue pas.
-    expect(jouee()).toBe("repos-sud")
-    expect(jouee()).not.toBe("attaque-est")
+    expect(jouee()).toBeNull()
+    expect(remplacant()).toBe("attaque · sud")
   })
 
   test("elle montre ce qui existe ailleurs, sans y aller toute seule", () => {
@@ -392,17 +396,19 @@ describe("une animation qui manque", () => {
     fireEvent.keyDown(laScene(), { key: "4" })
     const vers = screen.getByRole("button", { name: /vers est/ })
     expect(vers.textContent).toContain("4 images")
-    expect(jouee()).toBe("repos-sud")
+    expect(jouee()).toBeNull()
     fireEvent.click(vers)
     // On y va parce qu'on l'a demandé, jamais parce que l'écran l'a décidé.
     expect(jouee()).toBe("attaque-est")
   })
 
-  test("sans repos non plus, rien ne bouge et la scène le dit", () => {
+  test("un sujet sans repos ouvre sur la direction qui a quelque chose", () => {
+    // Le cas de l'auteur : deux courses, est et ouest, et rien d'autre.
     monter({ cases: [caseTenue("repos", {}), caseTenue("attaque", { est: ATTAQUE_EST })] })
-    fireEvent.keyDown(laScene(), { key: "2" })
-    expect(jouee()).toBeNull()
-    expect(screen.getByText(/Il n'a pas non plus de repos dans cette direction/)).toBeTruthy()
+    expect(cequOnRegarde()).toBe("repos · est")
+    expect(remplacant()).toBe("repos · est")
+    fireEvent.click(document.querySelector("[data-ce-qu-il-fait='attaque']") as HTMLElement)
+    expect(jouee()).toBe("attaque-est")
   })
 
   test("une pose sans animation dit pourquoi sa touche ne fait rien", () => {
@@ -455,6 +461,7 @@ describe("la scène", () => {
     fireEvent.click(screen.getByRole("button", { name: "Fond un décor du jeu" }))
     fireEvent.click(screen.getAllByRole("button", { name: "cachée" })[0])
     fireEvent.click(screen.getAllByRole("button", { name: "caché" })[0])
+    fireEvent.click(screen.getByRole("button", { name: "de côté" }))
     fireEvent.click(screen.getByRole("button", { name: "en pente" }))
     fireEvent.change(screen.getByLabelText("Poser un deuxième sujet à côté"), {
       target: { value: "la-grenouille" },
@@ -496,11 +503,95 @@ describe("la scène", () => {
     expect(within(laScene()).getByText("La grenouille")).toBeTruthy()
   })
 
+  test("de dessus, pas de sol ; de côté, un sol plat ou en pente", () => {
+    monter({}, { vue: "vue-dessus-34" })
+    fireEvent.click(screen.getByRole("tab", { name: "La scène" }))
+    expect(laScene().querySelector("[data-sol]")).toBeNull()
+    expect(screen.queryByRole("button", { name: "en pente" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "de côté" }))
+    expect(laScene().querySelector("[data-sol]")?.getAttribute("data-sol")).toBe("plat")
+    fireEvent.click(screen.getByRole("button", { name: "en pente" }))
+    expect(laScene().querySelector("[data-sol]")?.getAttribute("data-sol")).toBe("pente")
+  })
+
   test("« Remettre au début » rend la pose et la direction de départ", () => {
     monter()
     fireEvent.keyDown(laScene(), { key: "d" })
     fireEvent.keyDown(laScene(), { key: "3" })
     fireEvent.click(screen.getByRole("button", { name: "Remettre au début" }))
     expect(jouee()).toBe("repos-sud")
+  })
+})
+
+// ── « On s'y déplace, comme dans le jeu » ────────────────────────────────────
+
+describe("le déplacement", () => {
+  const acteur = () => laScene().querySelector("[data-acteur]") as HTMLElement
+
+  test("la caméra suit la vue du jeu, et à défaut ses directions", () => {
+    expect(cameraDuJeu("vue-cote-plateforme", [])).toBe("cote")
+    expect(cameraDuJeu("vue-isometrique", [])).toBe("dessus")
+    expect(cameraDuJeu("vue-dessus-34", [])).toBe("dessus")
+    expect(cameraDuJeu("", [{ identifiant: "droite" }, { identifiant: "gauche" }])).toBe("cote")
+    expect(cameraDuJeu("", [{ identifiant: "sud" }, { identifiant: "est" }])).toBe("dessus")
+  })
+
+  test("de côté on ne monte pas ; de dessus, deux touches font une diagonale", () => {
+    const toutes = new Set(["nord", "sud", "est", "ouest", "nord-est"])
+    expect(versOuVaIl(["nord"], "cote", toutes)).toMatchObject({ dx: 0, dy: 0 })
+    const diag = versOuVaIl(["est", "nord"], "dessus", toutes)
+    expect(diag.regarde).toBe("nord-est")
+    expect(diag.dx).toBeCloseTo(Math.SQRT1_2)
+    expect(diag.dy).toBeCloseTo(-Math.SQRT1_2)
+    // Sans diagonale déclarée, il regarde la dernière touche appuyée.
+    expect(versOuVaIl(["est", "nord"], "dessus", new Set(["nord", "est"])).regarde).toBe("nord")
+  })
+
+  test("tenir une touche le fait avancer, et la lâcher l'arrête", () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "performance"] })
+    try {
+      monter({}, { vue: "vue-dessus-34" })
+      expect(acteur().style.left).toBe("calc(50% + 0px)")
+      fireEvent.keyDown(laScene(), { key: "d" })
+      act(() => vi.advanceTimersByTime(500))
+      // Marche à 2 cases par seconde, cases de 64 px, zoom ×3 : une demi-seconde
+      // fait 64 px du jeu, donc 192 px à l'écran.
+      const apres = Number(/\+ (-?\d+)px/.exec(acteur().style.left)?.[1])
+      expect(apres).toBeGreaterThan(150)
+      expect(apres).toBeLessThanOrEqual(192)
+      fireEvent.keyUp(laScene(), { key: "d" })
+      act(() => vi.advanceTimersByTime(500))
+      expect(Number(/\+ (-?\d+)px/.exec(acteur().style.left)?.[1])).toBe(apres)
+      fireEvent.click(screen.getByRole("button", { name: "Remettre au début" }))
+      expect(acteur().style.left).toBe("calc(50% + 0px)")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("un jeu sans direction déclarée se déplace quand même", () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "performance"] })
+    try {
+      monter({ cases: [sienne({ pose: "repos" }), sienne({ pose: "marche", bandes: [MARCHE_SUD] })] })
+      fireEvent.keyDown(laScene(), { key: "d" })
+      act(() => vi.advanceTimersByTime(300))
+      expect(jouee()).toBe("marche-sud")
+      expect(acteur().style.left).toMatch(/50% \+ [1-9]\d*px/)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("une marche qui manque se déplace quand même, sous un rectangle", () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "performance"] })
+    try {
+      monter({}, { vue: "vue-dessus-34" })
+      fireEvent.keyDown(laScene(), { key: "q" })
+      act(() => vi.advanceTimersByTime(300))
+      expect(remplacant()).toBe("marche · ouest")
+      expect(acteur().style.left).toMatch(/50% - \d+px/)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

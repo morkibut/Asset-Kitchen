@@ -68,10 +68,11 @@ ligne-là qu'il faut ouvrir.
 | **RP20** · Enregistrer sous | `[HARD]` | crée un asset sur le disque à partir d'un rendu, écrit une filiation neuve, vaut pour l'image et pour la bande, et ouvre un outil à l'agent |
 | **RP21** · Une planche découpée sur la toile devient une animation | `[MEDIUM]` | la route qui anime une feuille existe ; il reste à l'ouvrir aux cartes de la toile et à écrire le chemin sélection → montage, une route neuve |
 | **RP22** · Une table se défait, se remet à zéro, et se voit avant d'enregistrer | `[MEDIUM]` | la bascule et l'aperçu à chaque geste existent sur l'établi ; il reste à les porter dans l'atelier d'une animation, à trouver pourquoi l'aperçu n'y suit pas la recette, et à expliquer une section depuis le recueil — une règle d'écran, pas de données |
+| **RP23** · Tester les animations comme dans le jeu | `[MEDIUM]` | un seul écran, sans données : une boucle de déplacement, deux caméras lues dans la vue du jeu, un remplaçant pour ce qui manque |
 
-**Compte** : 1 `[VERY-HARD]`, 7 `[HARD]`, 11 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 1 `[VERY-HARD]`, 7 `[HARD]`, 12 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
 
-Huit tranches sur vingt-deux sont en `[HARD]` ou au-dessus — un peu plus d'un tiers. RP2 y
+Huit tranches sur vingt-trois sont en `[HARD]` ou au-dessus — un peu plus d'un tiers. RP2 y
 est montée après coup : en tranchant le point dur de RP1, on a découvert que l'onglet *Agent MCP*
 rebranche le seul écran qui borne la dépense de l'agent. Une tranche qui touche à l'argent est
 `[HARD]`, quelle que soit sa taille. RP19 et RP20, ajoutées le 15 septembre 2026, y sont pour
