@@ -3845,7 +3845,7 @@ const CHAMP_DE_RECHERCHE = "Rechercher dans les résultats"
  *  Il s'appelait *Générer* quand il était au pied d'une barre ; il dit
  *  maintenant ce qu'il fait — relire avant d'envoyer —, et c'est l'écran de
  *  confirmation qui paie. Le partage des deux gestes, lui, n'a pas bougé. */
-const BOUTON_DE_RELECTURE = /^Relire avant envoi/
+const BOUTON_DE_RELECTURE = /^Relire avant l’envoi/
 
 async function champDePrompt() {
   const deja = screen.queryByPlaceholderText(PLACEHOLDER_DU_PROMPT)
@@ -3860,7 +3860,7 @@ async function champDePrompt() {
 /** Le guichet, **et borné à lui** : une assertion posée sur tout le document
  *  trouverait la navigation et l'écran resté monté dessous. */
 function guichet() {
-  return screen.getByRole("dialog", { name: "Préparer une image" })
+  return screen.getByRole("dialog", { name: "Préparer une fabrication" })
 }
 
 /** Ce que le guichet dit viser — « Le nain · marche », ou « Image libre ».

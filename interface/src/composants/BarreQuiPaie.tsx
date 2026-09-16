@@ -23,6 +23,7 @@ import type {
   Role,
   Univers,
 } from "../api"
+import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { usePli } from "./pieces"
 import { nomDuModele } from "./Fiche"
 import { Cible, Reinjections } from "./Galerie"
@@ -179,7 +180,7 @@ export function BarreQuiPaie({
         {repris ? <p className="text-signal">Ce texte part mot pour mot. <button type="button" className="underline" onClick={onRendre}>Rétablir les consignes de l’univers</button></p> : <p className="text-encre-3">Le style du jeu et la cible complètent cette description. Tu pourras relire et modifier le texte complet avant l’envoi.</p>}
       </section>
       <section className="grid grid-cols-2 gap-[14px] rounded-7 border border-trait bg-carte p-[22px]">
-        <label className="col-span-2 space-y-[8px]"><span className="block font-medium">Modèle · fournisseur</span><select className={champ} value={modele?.identifiant ?? ""} onChange={(e) => onChoisirModele(e.target.value)}><option value="" disabled>Choisir un modèle</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.fournisseur} · {m.nom}{m.refus ? ` — ${m.refus}` : ""}</option>)}</select></label>
+        <label className="col-span-2 space-y-[8px]"><span className="block font-medium">{CHAMP_DU_MODELE}</span><select className={champ} value={modele?.identifiant ?? ""} onChange={(e) => onChoisirModele(e.target.value)}><option value="" disabled>Choisir un modèle</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.fournisseur} · {m.nom}{m.refus ? ` — ${m.refus}` : ""}</option>)}</select></label>
         <label className="space-y-[8px]"><span className="block font-medium">Format de l’image</span><select className={champ} value={proportions} disabled={!modele} onChange={(e) => onProportions(e.target.value)}>{!modele?.proportions.includes(proportions) && <option value={proportions} disabled>{proportions} — indisponible</option>}{modele?.proportions.map((p) => <option key={p}>{p}</option>)}</select></label>
         <label className="space-y-[8px]"><span className="block font-medium">Variations</span><input type="number" className={champ} min={1} max={modele?.variations_max ?? 1} step={1} disabled={!!cases || !modele} value={cases ? 1 : variations} onChange={(e) => { const v = e.target.valueAsNumber; if (Number.isFinite(v)) onVariations(Math.max(1, Math.min(modele?.variations_max ?? 1, Math.floor(v)))) }} /></label>
         {cases > 0 && <p className="col-span-2 text-encre-3">{cases} cases réunies sur une planche · un appel pour la planche.</p>}
@@ -206,7 +207,7 @@ export function BarreQuiPaie({
             {enVol && enVol.images > 0 ? (
               <EnRoute {...enVol} />
             ) : (
-              <button type="button" disabled={!!refus || !!enPaiement} onClick={onGenerer} className="h-[42px] shrink-0 rounded-7 bg-signal px-[22px] text-encre-sur-signal disabled:opacity-50">{enPaiement ? "Envoi en cours…" : "Relire avant envoi"}</button>
+              <button type="button" disabled={!!refus || !!enPaiement} onClick={onGenerer} className="h-[42px] shrink-0 rounded-7 bg-signal px-[22px] text-encre-sur-signal disabled:opacity-50">{enPaiement ? "Envoi en cours…" : VERS_LA_RELECTURE}</button>
             )}
             {/* La fente, **jamais deux locataires à la fois**. Le geste ne
                 disparaît pas pendant qu'un lot est en route — lancer une

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { api, dollars, type Asset, type Modele, type Piece } from "../api"
+import { api, dollars, prix as prixEcrit, type Asset, type Modele, type Piece } from "../api"
+import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { apiCalques, type CheminEmploi, type CibleCalque } from "../api-calques"
 import { equipements, type DemandeEquipement, type OuvrirCalque, type TravailEquipement } from "../api-travaux-equipement"
 import { vignetteAsset } from "./Apercu"
@@ -9,7 +10,10 @@ const CHAMP = "h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[14p
 const ACTION = "h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50"
 const ETATS = { prepare: "À relire", en_cours: "Fabrication en cours", a_reprendre: "Suivi interrompu", a_verifier: "Résultats à vérifier", externe_inconnu: "Acceptation à vérifier", termine: "Images équipées reçues", annule: "Fabrication arrêtée" }
 const message = (e: unknown) => e instanceof Error ? e.message : "Impossible de relire cette fabrication."
-const montant = (n: number | null, unite: string | null) => n === null ? "Consommation encore non mesurée" : !unite || unite === "usd" ? dollars(n) : `${n} ${unite}`
+// **Le prix s'écrit d'une seule façon dans tout le produit** (RP4) : cet écran
+// avait le sien — « Consommation encore non mesurée », et une unité sans
+// pluriel. C'est `prix()` qui l'écrit maintenant, comme partout ailleurs.
+const montant = (n: number | null, unite: string | null) => prixEcrit(n, unite)
 
 /** La relecture est l'envoi enregistré ; rééditer crée une nouvelle demande.
  * Fermer le dialogue ne ferme pas le suivi du serveur. */
@@ -89,7 +93,7 @@ export function RelectureEquipement({ chemin, initiale, cibles, nomPiece, piece,
   }
   const titre = `Images équipées · ${nomPiece ?? travail?.piece_fiche.nom ?? "cet équipement"}`
   return <CadreDialogue titre={titre} onFermer={onFermer} enfants={<>
-    <header className="flex shrink-0 items-center justify-between gap-[14px] border-b border-trait px-[30px] py-[14px]"><div><h1 className="font-serif text-[38px]">{titre}</h1><p className="mt-[4px] text-[13px] text-encre-3">{edition ? "Préparer l’envoi" : travail ? ETATS[travail.etat] : "Relire avant envoi"} · une pièce, aucune combinaison à générer</p></div><button className={CHAMP} onClick={onFermer}>Fermer</button></header>
+    <header className="flex shrink-0 items-center justify-between gap-[14px] border-b border-trait px-[30px] py-[14px]"><div><h1 className="font-serif text-[38px]">{titre}</h1><p className="mt-[4px] text-[13px] text-encre-3">{edition ? "Préparer l’envoi" : travail ? ETATS[travail.etat] : VERS_LA_RELECTURE} · une pièce, aucune combinaison à générer</p></div><button className={CHAMP} onClick={onFermer}>Fermer</button></header>
     {erreur && <p role="alert" className="border-b border-trait px-[30px] py-[8px] text-[13px] text-echec">{erreur}</p>}
     <div className="defile min-h-0 flex-1 overflow-y-auto p-[30px]">
       {edition ? <div className="grid grid-cols-2 items-start gap-[22px]">
@@ -101,7 +105,7 @@ export function RelectureEquipement({ chemin, initiale, cibles, nomPiece, piece,
           <p className="mt-[22px] text-[12px] text-encre-3">Les frames issues d’une vidéo ou d’un modèle 3D passent par ce même pliage 2D. Une graine identique ne garantit pas une vidéo identique.</p>
         </section>
         <section className="rounded-10 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">La méthode et sa demande</h2>
-          <label className="mt-[14px] flex flex-col gap-[4px] text-[13px]">Fournisseur et modèle<select className={CHAMP} value={demande.modele} onChange={(e) => changer({ modele: e.target.value, resolution: null, options: {} })}><option value="">Choisir une méthode</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus || m.references_max < 1}>{m.identifiant}{m.refus ? ` — ${m.refus}` : m.references_max < 1 ? " — sans image d’entrée" : ""}</option>)}</select></label>
+          <label className="mt-[14px] flex flex-col gap-[4px] text-[13px]">{CHAMP_DU_MODELE}<select className={CHAMP} value={demande.modele} onChange={(e) => changer({ modele: e.target.value, resolution: null, options: {} })}><option value="">Choisir une méthode</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus || m.references_max < 1}>{m.identifiant}{m.refus ? ` — ${m.refus}` : m.references_max < 1 ? " — sans image d’entrée" : ""}</option>)}</select></label>
           <p className="mt-[8px] text-[12px] text-encre-3">Format carré 1:1 · une planche de bases obligatoire par appel{modele ? ` · ${modele.references_max} références maximum` : ""}.</p>
           {modele && modele.resolutions.length > 0 && <label className="mt-[14px] flex flex-col gap-[4px] text-[13px]">Résolution<select className={CHAMP} value={demande.resolution ?? ""} onChange={(e) => changer({ resolution: e.target.value || null })}><option value="">Celle du modèle</option>{modele.resolutions.map((r) => <option key={r}>{r}</option>)}</select></label>}
           {modele && Object.entries(modele.options).map(([cle, o]) => <label key={cle} className="mt-[14px] flex flex-col gap-[4px] text-[13px]">{o.nom}{o.genre === "choix" ? <select className={CHAMP} value={String(demande.options?.[cle] ?? "")} onChange={(e) => changer({ options: { ...demande.options, [cle]: e.target.value } })}><option value="">Réglage du modèle</option>{o.valeurs.map((v) => <option key={v}>{v}</option>)}</select> : o.genre === "booleen" ? <input type="checkbox" checked={!!demande.options?.[cle]} onChange={(e) => changer({ options: { ...demande.options, [cle]: e.target.checked } })} /> : <input className={CHAMP} type="number" min={o.minimum ?? undefined} max={o.maximum ?? undefined} value={String(demande.options?.[cle] ?? "")} onChange={(e) => changer({ options: { ...demande.options, [cle]: Number(e.target.value) } })} />}</label>)}
@@ -140,7 +144,7 @@ export function RelectureEquipement({ chemin, initiale, cibles, nomPiece, piece,
       </>}
     </div>
     <footer className="flex shrink-0 items-center justify-between gap-[14px] border-t border-trait bg-carte px-[30px] py-[14px]"><p className="max-w-prose text-[12px] text-encre-3">{edition ? "La prochaine étape montre l’envoi exact, sans appeler le fournisseur." : "Les retours restent à extraire et à vérifier. Fermer conserve le suivi et les résultats."}</p><div className="flex gap-[8px]">
-      {edition ? <button className={ACTION} disabled={occupe || !demande.modele || !!modele?.refus} onClick={() => void agir(() => equipements.preparer(chemin, demande))}>{occupe ? "Préparation…" : "Relire avant envoi"}</button> : travail && <>
+      {edition ? <button className={ACTION} disabled={occupe || !demande.modele || !!modele?.refus} onClick={() => void agir(() => equipements.preparer(chemin, demande))}>{occupe ? "Préparation…" : VERS_LA_RELECTURE}</button> : travail && <>
         {!["termine", "annule"].includes(travail.etat) && <button className={CHAMP} disabled={occupe || annulation} onClick={() => { setAnnulation(true); void agir(() => equipements.annuler(chemin, travail.identifiant)) }}>{annulation ? "Arrêt demandé" : "Arrêter les appels restants"}</button>}
         {travail.etat === "prepare" && <button className={ACTION} disabled={occupe} onClick={() => void agir(() => equipements.demarrer(chemin, travail.identifiant))}>Lancer {travail.annonce.appels} appel{travail.annonce.appels > 1 ? "s" : ""} · {dollars(travail.annonce.reservation_usd)} réservés</button>}
         {["a_verifier", "a_reprendre"].includes(travail.etat) && <button className={ACTION} disabled={occupe} onClick={() => void agir(() => equipements.demarrer(chemin, travail.identifiant, true))}>Reprendre les résultats conservés</button>}

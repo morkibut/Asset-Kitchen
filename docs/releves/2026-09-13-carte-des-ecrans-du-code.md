@@ -254,14 +254,21 @@ Voir *Les écrans morts*.
 - **Ce qu'il fait** : le seul endroit d'où une image se commande — modèle, proportions, références, prompt, prix.
 - **Fichier** : `interface/src/composants/BarreQuiPaie.tsx`
 
-### ChoisirFabricationDuSujet — « Fabriquer… »
-- **On y arrive par** : page d'un sujet → *Fabriquer…*.
-- **Ce qu'il fait** : demande quelle pose, quelle direction, et quoi — image, vidéo, ou 3D.
-- **Fichier** : `interface/src/composants/ChoisirFabricationDuSujet.tsx`
+### PreparerUneFabrication — « Préparer une fabrication »
+- **On y arrive par** : page d'un sujet → *Fabriquer…* ; *Fabriquer une image libre* (repos du codex) ; *Demander une image* (tableau de bord) ; *Préparer une image*, *Préparer une vidéo*, *Préparer un son*, *Nouvelle animation* et *Utiliser ce workflow* (Fabrications) ; ou en armant une case.
+- **Ce qu'il fait** : la **seule** fenêtre de préparation du produit. Le type de résultat — image fixe, clip, son, rendu 3D — s'y choisit ; le bouton pressé ne fait que dire lequel est ouvert en arrivant. Le corps du type est l'ancienne fenêtre, sans son cadre.
+- **RP4 (16 septembre 2026)** : elle remplace `ChoisirFabricationDuSujet.tsx`, l'écran d'aiguillage à trois portes, qui a disparu — ses deux listes, *Mouvement ou pose* et *Direction*, sont ici, avec leurs deux groupes.
+- **Fichier** : `interface/src/composants/PreparerUneFabrication.tsx`
 
-### FabricationSuivie — suivre une fabrication
-- **On y arrive par** : *Fabriquer… → vidéo* sur un sujet ; ou une ligne de la file des Fabrications.
-- **Ce qu'il fait** : suit une demande jusqu'à son résultat.
+### Relecture — « Relire avant l'envoi »
+- **On y arrive par** : le bouton *Relire avant l'envoi*, quel que soit le type préparé.
+- **Ce qu'il fait** : le cadre unique de la relecture — le résumé en trois cases (*Fournisseur et modèle*, *Résultat demandé*, *Consommation estimée*), le message rouge qui bloque, et le pied qui paie. Ce qui part, chaque type le lit sur l'objet que l'envoi emprunte ; ce fichier ne compose rien.
+- **RP4 (16 septembre 2026)** : six écrans de relecture écrivaient chacun leur en-tête, leur prix et leur bouton.
+- **Fichier** : `interface/src/composants/Relecture.tsx`
+
+### FabricationSuivie — préparer et suivre un clip pour un sujet
+- **On y arrive par** : le type *Clip* de la fenêtre unique, pour un sujet ; ou une ligne de la file des Fabrications.
+- **Ce qu'il fait** : suit une demande jusqu'à son résultat. Son corps sert de type *Clip* dans la fenêtre unique (`autonome={false}`).
 - **Fichier** : `interface/src/composants/FabricationSuivie.tsx`
 
 ### ImporterPourUnSujet — « Importer… »

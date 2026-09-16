@@ -21,7 +21,7 @@ test("modèle puis squelette : la suite réutilise la source, aucun calcul ne pa
   await screen.findByRole("option", { name: "Trellis" })
   fireEvent.click(screen.getByRole("button", { name: "Choisir l’image de départ" }))
   fireEvent.click(screen.getByRole("button", { name: "Choisir la référence filtrée" }))
-  fireEvent.click(screen.getByRole("button", { name: "Relire cette étape avant de lancer" }))
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await screen.findByRole("button", { name: "Lancer cette étape locale" })
   expect(sources3d.lancer).not.toHaveBeenCalled()
   expect(screen.getByAltText("Référence du modèle 3D")).toHaveAttribute("src", "/reference-figee.png")

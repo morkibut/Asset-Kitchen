@@ -11,6 +11,34 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP4 · Une seule préparation, une seule relecture — 16 septembre 2026
+
+**La fusion la plus lourde du plan a été la moins invasive, et c'est ce qu'on a appris.** Huit
+fenêtres de préparation, un aiguillage à trois portes, six écrans de relecture : plus de cinq
+mille lignes annoncées. Ce qui les séparait vraiment tenait en trois choses — le cadre, le
+titre, et le bouton par lequel on était entré. Pas un formulaire n'a été réécrit : chaque corps
+a reçu un `autonome={false}` qui lui retire son cadre et son titre, et la fenêtre unique les
+monte tels quels. C'est ce qui a permis à l'invariant de l'argent de tenir sans être défendu :
+**le chemin qu'emprunte l'envoi n'a pas bougé d'une ligne, parce que personne n'y a touché.**
+
+**Trois types sur quatre tenaient déjà l'invariant, et aucun essai ne le disait.** Pour le clip,
+le son et le rendu 3D, le travail préparé *est* ce qui part — le lancer relit un identifiant, il
+ne recompose rien. L'invariant était donc vrai par construction, et personne n'aurait vu le jour
+où il aurait cessé de l'être. Les quatre essais de `tests/test_rp4.py` mesurent tous la même
+chose, et c'est la seule mesure qui compte : ce que l'écran affiche, contre ce que la doublure du
+fournisseur a réellement reçu. Rien entre les deux n'est doublé.
+
+**Deux morceaux restent dehors, et ils sont nommés.** L'atelier d'un clip déjà commandé
+(`Clip.tsx`) n'est pas une préparation : on y règle un clip qui existe. Et la fabrication
+d'images équipées part d'une pièce, pas d'un sujet ; l'y faire entrer demanderait un cinquième
+type de résultat que la maquette ne dessine pas. Les deux sont dans la table du plan, § RP4, avec
+leur raison — un morceau laissé dehors sans être écrit est un morceau qu'on redécouvre par
+accident trois tranches plus tard. Enfin, deux mots que `RP3` avait inscrits sans les trancher le
+sont : *Fournisseur et modèle* pour le champ du modèle, huit noms avant, et *Relire avant
+l'envoi* pour le bouton qui y mène, cinq noms avant. Ils vivent dans `interface/src/fabrication.ts`
+— écrits une fois, donc incapables de redériver ; la dernière section de `docs/vocabulaire.html`
+est vide pour la première fois.
+
 ## RP17 · Une seule porte pour faire sortir un personnage — 16 septembre 2026
 
 **Le doublon ne tenait pas à deux codes, mais à deux granularités.** L'ancienne porte savait

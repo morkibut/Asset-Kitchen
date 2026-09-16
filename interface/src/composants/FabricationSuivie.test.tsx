@@ -38,8 +38,8 @@ test("modifier le texte ou les références demande une nouvelle relecture avec 
   expect(texte).toHaveValue("Le vrai texte composé avec l’univers")
   fireEvent.change(texte, { target: { value: "Une correction précise" } })
   fireEvent.click(screen.getByRole("button", { name: "Retirer de cet envoi" }))
-  await waitFor(() => expect(screen.getByRole("button", { name: "Relire les envois" })).toBeEnabled())
-  fireEvent.click(screen.getByRole("button", { name: "Relire les envois" }))
+  await waitFor(() => expect(screen.getByRole("button", { name: "Relire avant l’envoi" })).toBeEnabled())
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await waitFor(() => expect(travaux.preparer).toHaveBeenCalledOnce())
   const [projet, demande] = vi.mocked(travaux.preparer).mock.calls[0]
   expect(projet).toBe("jeu")
@@ -64,7 +64,7 @@ test("le profil vidéo choisi et les réglages du brouillon reviennent sans pré
   const props = { projet: "jeu", personnages: [personnage], modeleInitial: "Video:modele", onClip() {}, onFermer() {} }
   const vue = render(<FabricationSuivie {...props} />)
   await screen.findByRole("option", { name: /Video:modele ·/ })
-  expect(screen.getByLabelText("Fournisseur et modèle vidéo")).toHaveValue("Video:modele")
+  expect(screen.getByLabelText("Fournisseur et modèle")).toHaveValue("Video:modele")
   fireEvent.change(screen.getByLabelText("Mouvement"), { target: { value: "marche" } })
   fireEvent.change(screen.getByLabelText("Décrire l’animation"), { target: { value: "Tourne sur place avec son casque rouge" } })
   fireEvent.change(screen.getByLabelText("Durée du clip"), { target: { value: "10" } })
@@ -81,7 +81,7 @@ test("le profil vidéo choisi et les réglages du brouillon reviennent sans pré
   expect(screen.getByLabelText("Paramètres vidéo JSON")).toHaveValue('{"seed":83}')
   expect(travaux.preparer).not.toHaveBeenCalled()
   expect(travaux.demarrer).not.toHaveBeenCalled()
-  fireEvent.click(screen.getByRole("button", { name: "Relire les envois" }))
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await waitFor(() => expect(travaux.preparer).toHaveBeenCalledOnce())
   expect(vi.mocked(travaux.preparer).mock.calls[0][1]).toMatchObject({ modele_video: "Video:modele", secondes: 10, options_video: { seed: 83 } })
   expect(travaux.demarrer).not.toHaveBeenCalled()
@@ -90,8 +90,8 @@ test("le profil vidéo choisi et les réglages du brouillon reviennent sans pré
 test("un profil vidéo disparu reste nommé avec sa raison et bloque la relecture", async () => {
   render(<FabricationSuivie projet="jeu" personnages={[personnage]} modeleInitial="ComfyUI:profil-disparu" onClip={() => {}} onFermer={() => {}} />)
   expect(await screen.findByText(/il n’est plus proposé par le catalogue/)).toBeTruthy()
-  expect(screen.getByLabelText("Fournisseur et modèle vidéo")).toHaveValue("ComfyUI:profil-disparu")
-  expect(screen.getByRole("button", { name: "Relire les envois" })).toBeDisabled()
+  expect(screen.getByLabelText("Fournisseur et modèle")).toHaveValue("ComfyUI:profil-disparu")
+  expect(screen.getByRole("button", { name: "Relire avant l’envoi" })).toBeDisabled()
 })
 
 test("la fabrication ouverte depuis une cible garde le personnage, le mouvement et sa cadence", async () => {

@@ -90,13 +90,13 @@ de la laisser muette. À rouvrir le jour où une collection saura ranger une pi�
 |---|---|---|
 | Nouvelle fabrication | `Fabrications.tsx:55` | **Fabriquer librement** |
 | Une image libre · Une vidéo libre · Un son | `Fabrications.tsx:59`, `:62`, `:63` | **Explorations libres** — une section, pas trois cartes |
-| Relire les envois · Relire l'envoi vidéo · Relire avant envoi · Relire avant de générer le son · Relire cette étape avant de lancer | `FabricationSuivie.tsx:173`, `FabricationVideoLibre.tsx:137`, `RelectureEquipement.tsx:143`, `FabricationAudio.tsx:55`, `Fabrication3D.tsx:85` | **Relire avant l'envoi** — un seul mot pour une seule fenêtre (RP4) |
+| ~~Relire les envois · Relire l'envoi vidéo · Relire avant envoi · Relire avant de générer le son · Relire cette étape avant de lancer~~ | `FabricationSuivie.tsx`, `FabricationVideoLibre.tsx`, `RelectureEquipement.tsx`, `FabricationAudio.tsx`, `Fabrication3D.tsx`, `WorkflowsLocaux.tsx`, `BarreQuiPaie.tsx` | **Relire avant l'envoi** — un seul mot pour une seule fenêtre. *Appliqué en `RP4`, depuis `VERS_LA_RELECTURE` dans `interface/src/fabrication.ts` : les sept boutons lisent la même constante, donc ils ne peuvent plus diverger.* |
 | Arrêter les appels restants | `RelectureEquipement.tsx:144` | **Interrompre** — *appel* est sur la liste noire |
 | Annuler cette attente | `FileDesCalculsLocaux.tsx:76` | **Interrompre** |
 | Ouvrir le clip et son montage | `FabricationSuivie.tsx:170` | **Voir le résultat** |
 | Images équipées · {pièce} | `RelectureEquipement.tsx:90` | **Équipements · images fabriquées** |
 | De l'image aux sprites en 3D | `Fabrication3D.tsx:76` | **Des images depuis un modèle 3D** — *sprite* est sur la liste noire |
-| Modèle · fournisseur · Modèle · Modèle vidéo · Fournisseur et modèle vidéo · Fournisseur et modèle · Méthode locale · Workflow et version · Moteur du modèle | huit fichiers, voir le relevé du 13 septembre § D | **pas encore tranché** — c'est le désaccord que RP3 a inscrit dans `docs/vocabulaire.html`, dernière section |
+| ~~Modèle · fournisseur · Modèle · Modèle vidéo · Fournisseur et modèle vidéo · Fournisseur et modèle · Méthode locale · Workflow et version · Moteur du modèle~~ | huit fichiers, voir le relevé du 13 septembre § D | **Fournisseur et modèle** — il dit les deux moitiés qu'un modèle porte, et il tient pour les quatre types. *Tranché et appliqué en `RP4` ; la décision est écrite dans `docs/vocabulaire.html`, et le mot vit dans `CHAMP_DU_MODELE`.* |
 | Travaux · Reprendre ce travail | `FabricationSuivie.tsx:173`, `:208` | **fabrication** — le mot est désormais défini, et c'est lui que le compteur du carnet compte (RP16) |
 
 ## Livrer au jeu — **RP10**
@@ -232,7 +232,7 @@ l'état et cette page le dit.
 
 | Aujourd'hui | Où | Le mot |
 |---|---|---|
-| Moteur du modèle | `Fabrication3D.tsx:81` | voir le champ du modèle, tranché en **RP4** |
+| ~~Moteur du modèle~~ | `Fabrication3D.tsx` | **Fournisseur et modèle** — *Appliqué en `RP4`, avec les sept autres noms du même champ.* |
 | Revenir à l'étape | `Fabrication3D.tsx:45` | **‹ {nom de l'étape}** |
 | Ouvrir le personnage | `Source3DConservee.tsx:25` | **‹ {nom du sujet}** |
 

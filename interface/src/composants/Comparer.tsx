@@ -59,6 +59,7 @@ import {
 import {
   api,
   dureeImageMs,
+  prix,
   type Asset,
   type Bande,
   type Personnage,
@@ -245,7 +246,10 @@ function Etiquette({ children }: { children: ReactNode }) {
 function Prix({ image }: { image: Asset | null }) {
   if (!image || image.cout_usd <= 0)
     return <span className="mesure text-encre-3">gratuite</span>
-  return <span className="mesure text-signal">${image.cout_usd.toFixed(4)}</span>
+  // **Le point décimal était le dernier du produit** (RP4) : `$0.0143` ici,
+  // `$0,0143` partout ailleurs, pour le même montant. C'est `prix()` qui
+  // l'écrit maintenant, comme les six autres endroits qui annoncent un prix.
+  return <span className="mesure text-signal">{prix(image.cout_usd, image.unite)}</span>
 }
 
 export function Comparer({

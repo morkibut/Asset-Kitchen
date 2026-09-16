@@ -132,7 +132,11 @@ export type Emplacement = {
 
 export type Role = "reference" | "edition" | "style"
 
-export type Reinjection = { asset: string; role: Role }
+/** **`origine` est entrée avec `RP9`**, et son absence veut dire `asset` : une
+ *  référence posée à la main vient de la bibliothèque, sauf à dire le contraire.
+ *  Ce qui a changé est que la toile en donne un lot — et une carte ne part qu'en
+ *  guide de style, la bibliothèque ne la connaissant pas. */
+export type Reinjection = { asset: string; role: Role; origine?: "asset" | "carte" }
 
 export const ROLES: { role: Role; libelle: string; explique: string }[] = [
   { role: "reference", libelle: "référence", explique: "elle inspire" },
@@ -1030,6 +1034,9 @@ export type Bande = {
    *  ne sert qu'à l'écran *Ses animations*, qui départage comme la matrice le
    *  fait déjà pour les images (`docs/PIEGES.md`). */
   favori: boolean
+  /** D'où elle vient quand elle a été *enregistrée sous* une autre case
+   *  (`RP20`) — le pendant exact d'`Asset.origine`. */
+  origine?: OrigineDuRendu | null
   /** Un départage de plus à date égale, comme sur un asset. Aucun geste de ce
    *  dépôt ne le règle encore : il existe pour que le tri `cree_le, rang`
    *  s'écrive une fois, à la même forme des deux côtés du calque. */
@@ -1042,9 +1049,6 @@ export type Bande = {
    *  refaire ce calcul à chaque écran. */
   supprime: boolean
   /** **La pièce que cette animation porte** (B20), ou `null` pour le corps nu.
-  /** D'où elle vient quand elle a été *enregistrée sous* une autre case
-   *  (`RP20`) — le pendant exact d'`Asset.origine`. */
-  origine?: OrigineDuRendu | null
    *
    *  C'est le champ qui manquait au rangement : une bande portait le projet, le
    *  personnage, la pose et la direction, et rien ne pouvait dire *celle-ci est
@@ -1858,6 +1862,10 @@ export type Asset = {
    *  sait seulement d'où il ne vient plus (US-29). */
   parent_supprime: boolean
   favori: boolean
+  /** D'où elle vient quand elle a été *enregistrée sous* une autre case
+   *  (`RP20`). Sa recette est vide — son brut **est** le rendu —, donc c'est le
+   *  seul endroit qui dise encore ce qui lui a été appliqué. */
+  origine?: OrigineDuRendu | null
   /** Hors bibliothèque. Le temps que dure l'annulation, l'asset existe encore
    *  sur le disque — mais plus rien ne le montre ni ne le compte. */
   supprime_le: number | null
@@ -1870,10 +1878,6 @@ export type Asset = {
    *  ici — deux empreintes calculées à deux endroits finiraient par diverger. */
   empreinte: string
 }
-  /** D'où elle vient quand elle a été *enregistrée sous* une autre case
-   *  (`RP20`). Sa recette est vide — son brut **est** le rendu —, donc c'est le
-   *  seul endroit qui dise encore ce qui lui a été appliqué. */
-  origine?: OrigineDuRendu | null
 
 /** Ce qu'un lot plié a mesuré sur une de ses cases (C2, US-135).
  *
@@ -3262,6 +3266,11 @@ export type LigneReference = {
      *  art épinglé sur la chose : la corriger là-bas la corrige pour tout ce
      *  qui s'en sert. */
     | "image de son ambiance"
+    /** **Sixième provenance depuis `RP9`** : une carte prise sur la toile pour
+     *  cet appel-ci. Ce n'est ni un artwork — rien n'a été promu — ni un
+     *  concept art : c'est un choix fait pour cette image-là, et il se décoche
+     *  comme les autres. */
+    | "carte de la toile"
   /** La portée qui l'écarte, ou rien. **Durable** — le projet, le personnage,
    *  le mode de son ambiance — ou celle de cet appel-ci, qui ne s'écrit nulle
    *  part : elle vit dans l'onglet et part avec l'appel. */
@@ -3799,23 +3808,6 @@ export type MiroirPropose = {
   raison: string | null
 }
 
-/** La même chose d'une carte du tableau d'inspiration. **`carte` et non
- *  `asset`, et le mot compte** : les deux familles d'images ne se confondent
- *  pas, et un morceau de carte est une carte. */
-export type PropositionDeCarte = Decoupable & {
-  carte: string
-  largeur: number
-  hauteur: number
-  mode: ModeDecoupe
-}
-
-/** Ce que la palette lit d'une carte promue.
- *
- *  **`entiere` n'est pas un détail** : quand le détourage a tout mangé — une
- *  matière plein cadre, une texture sans bord franc —, la palette reprend
- *  l'image entière. Écrire « 0 % » serait alors faux au sens exactement
- *  inverse de ce qui se passe. */
-export type LectureDePalette = {
 /** Une entrée d'une des trois listes de la fenêtre *Enregistrer sous…* — un
  *  sujet, une pose, une direction. Le nom se lit, l'identifiant s'envoie. */
 export type CaseNommee = { identifiant: string; nom: string }
@@ -3896,6 +3888,23 @@ export type EnregistrementFait = {
   clip?: string
 }
 
+/** La même chose d'une carte du tableau d'inspiration. **`carte` et non
+ *  `asset`, et le mot compte** : les deux familles d'images ne se confondent
+ *  pas, et un morceau de carte est une carte. */
+export type PropositionDeCarte = Decoupable & {
+  carte: string
+  largeur: number
+  hauteur: number
+  mode: ModeDecoupe
+}
+
+/** Ce que la palette lit d'une carte promue.
+ *
+ *  **`entiere` n'est pas un détail** : quand le détourage a tout mangé — une
+ *  matière plein cadre, une texture sans bord franc —, la palette reprend
+ *  l'image entière. Écrire « 0 % » serait alors faux au sens exactement
+ *  inverse de ce qui se passe. */
+export type LectureDePalette = {
   carte: string
   part: number
   entiere: boolean
@@ -3913,6 +3922,67 @@ export const FILTRE_VIDE: Filtre = { collection: null, favoris: false, recherche
 
 export const filtreActif = (filtre: Filtre) =>
   filtre.collection !== null || filtre.favoris || filtre.recherche.trim() !== ""
+
+// ── Trier, filtrer, regrouper la grille — le contrat de RP11 ────────────────
+//
+// **Les mêmes valeurs que la route et que l'outil de l'agent.** Elles sont
+// écrites une fois côté serveur (`atelier/domaine/galerie.py`) ; ces trois
+// listes-ci sont ce que l'écran en propose, et elles doivent lui rester
+// identiques — le contrat entier vit dans `docs/PLAN-remise-a-plat.md` § RP11.
+
+/** L'ordre de la grille. Les trois de la maquette, et rien d'autre.
+ *
+ *  **`TriDeGalerie` et non `Tri`** : `Tri` est pris depuis E14, et il y désigne
+ *  les écarts de l'écran de confirmation. Deux choses, deux noms. */
+export const TRIS_DE_GALERIE = ["recent", "ancien", "nom"] as const
+export type TriDeGalerie = (typeof TRIS_DE_GALERIE)[number]
+
+/** Ce qu'une image **est**. `origine` se lit sur ce qui en descend. */
+export const ROLES_DE_GALERIE = [
+  "tous",
+  "origine",
+  "derivee",
+  "calque",
+  "equipement",
+  "seule",
+] as const
+export type RoleDeGalerie = (typeof ROLES_DE_GALERIE)[number]
+
+/** Ce que l'auteur en a **décidé**. Juger, c'est marquer favori ou supprimer. */
+export const JUGEMENTS = ["tous", "favori", "non-juge"] as const
+export type Jugement = (typeof JUGEMENTS)[number]
+
+/** Ce que la galerie choisit de la grille, en plus du filtre — et ce qu'elle
+ *  retrouve après fermeture. */
+export type VueDeLaGalerie = {
+  tri: TriDeGalerie
+  role: RoleDeGalerie
+  jugement: Jugement
+  groupe: boolean
+}
+
+export const VUE_PAR_DEFAUT: VueDeLaGalerie = {
+  tri: "recent",
+  role: "tous",
+  jugement: "tous",
+  groupe: false,
+}
+
+/** La vue écarte-t-elle des images, ou se contente-t-elle de les ranger ?
+ *
+ *  **Le tri et le regroupement ne comptent pas** : ils déplacent, ils ne
+ *  retirent rien. Les deux filtres, si — et c'est ce qui décide si la grille
+ *  montre encore ce qui n'est pas arrivé. Un lot en cours n'a rien à quoi un
+ *  filtre puisse s'appliquer, et le faire paraître sous un filtre mentirait sur
+ *  ce que celui-ci a trouvé. La règle est écrite ici, à côté des listes, plutôt
+ *  que dans l'écran : c'est la même que `filtreActif` juste au-dessus. */
+export const vueRestreint = (vue: VueDeLaGalerie) =>
+  vue.role !== "tous" || vue.jugement !== "tous"
+
+/** Une origine et ce qui en est sorti, tel que la route le rend. Les deux
+ *  portent des identifiants d'image : la liste plate reste la vérité, celle-ci
+ *  dit seulement comment la poser. */
+export type GroupeDeGalerie = { origine: string; derives: string[] }
 
 
 // ── Ce qui part, ligne par ligne — l'écran de confirmation (E14) ────────────
@@ -4617,6 +4687,11 @@ export const api = {
   animationsDeLivraison: (projet: string) => appeler<AnimationDeLivraison[]>(`/projects/${encodeURIComponent(projet)}/delivery-animations`),
   livrerGodot: (projet: string, jeton: string) => appeler<LivraisonGodot>(`/projects/${encodeURIComponent(projet)}/deliveries`, { method: "POST", body: JSON.stringify({ jeton }) }),
   reprendreLivraison: (projet: string, jeton: string) => appeler<ApercuLivraison>(`/projects/${encodeURIComponent(projet)}/deliveries/${encodeURIComponent(jeton)}/preview`, { method: "POST" }),
+  /** La décision de l'auteur sur un fichier du jeu qu'il n'a pas écrit (`RP10`).
+   *  Rien n'est écrit dans le jeu ici : la préparation relue revient, et c'est
+   *  *Livrer* qui l'applique. */
+  deciderConflit: (projet: string, jeton: string, chemin: string, decision: DecisionSurConflit) =>
+    appeler<ApercuLivraison>(`/projects/${encodeURIComponent(projet)}/deliveries/${encodeURIComponent(jeton)}/decisions`, { method: "POST", body: JSON.stringify({ chemin, decision }) }),
   etat: () => appeler<Etat>("/status"),
 
   /** Le catalogue, le grisé de chaque modèle, **et le compte de références**.
@@ -4676,11 +4751,6 @@ export const api = {
 
   // ── L'installation de la machine (B15) ────────────────────────────────────
   //
-  /** La décision de l'auteur sur un fichier du jeu qu'il n'a pas écrit (`RP10`).
-   *  Rien n'est écrit dans le jeu ici : la préparation relue revient, et c'est
-   *  *Livrer* qui l'applique. */
-  deciderConflit: (projet: string, jeton: string, chemin: string, decision: DecisionSurConflit) =>
-    appeler<ApercuLivraison>(`/projects/${encodeURIComponent(projet)}/deliveries/${encodeURIComponent(jeton)}/decisions`, { method: "POST", body: JSON.stringify({ chemin, decision }) }),
   // **Rien ici ne transporte une valeur de secret.** Les deux fonctions
   // ci-dessus sont les seules qui en envoient une, et aucune n'en relit : le
   // serveur ne rend jamais qu'un aperçu de six caractères.
@@ -4958,15 +5028,29 @@ export const api = {
    *  images sans le dire, et l'écran croyait avoir tout vu. `limite` ne fait
    *  monter que ce qui revient — la même requête, plus large, jamais un
    *  second appel qui s'additionnerait à la première page. */
-  assets: (filtre: Partial<Filtre> & { sansProjet?: boolean; limite?: number } = {}) => {
+  assets: (
+    filtre: Partial<Filtre> &
+      Partial<VueDeLaGalerie> & { sansProjet?: boolean; limite?: number } = {},
+  ) => {
     const parametres = new URLSearchParams()
     if (filtre.sansProjet) parametres.set("sans_projet", "true")
     if (filtre.collection) parametres.set("collection", filtre.collection)
     if (filtre.favoris) parametres.set("favoris", "true")
     if (filtre.recherche?.trim()) parametres.set("recherche", filtre.recherche.trim())
     if (filtre.limite) parametres.set("limite", String(filtre.limite))
+    // **Seul ce qui n'est pas le défaut part** (RP11) : une adresse porte ce
+    // qu'on a choisi, pas ce qu'on a laissé, et les grilles qui ne trient ni ne
+    // regroupent — la bibliothèque d'un choix d'image, celle d'un calque —
+    // continuent d'appeler exactement la même adresse qu'avant la tranche.
+    if (filtre.tri && filtre.tri !== "recent") parametres.set("tri", filtre.tri)
+    if (filtre.role && filtre.role !== "tous") parametres.set("role", filtre.role)
+    if (filtre.jugement && filtre.jugement !== "tous")
+      parametres.set("jugement", filtre.jugement)
+    if (filtre.groupe) parametres.set("groupe", "true")
     const suite = parametres.toString()
-    return appeler<{ assets: Asset[]; total: number }>(`/assets${suite ? `?${suite}` : ""}`)
+    return appeler<{ assets: Asset[]; total: number; groupes?: GroupeDeGalerie[] }>(
+      `/assets${suite ? `?${suite}` : ""}`,
+    )
   },
 
   arbre: () => appeler<Bibliotheque>("/library"),
@@ -5161,6 +5245,40 @@ export const api = {
       body: JSON.stringify({ direction: direction ?? null }),
     }),
 
+  // ── Enregistrer sous — un rendu devient une autre case (`RP20`) ───────────
+  //
+  // **Quatre appels, deux par calque, et la même coupure que le miroir** : ce
+  // qui ne crée rien se redemande à chaque ouverture de fenêtre, ce qui crée un
+  // objet ne se redemande jamais.
+  //
+  // La proposition est un `POST` parce qu'elle emporte **la recette en cours**,
+  // celle que l'écran tient et qui n'est pas forcément enregistrée : c'est tout
+  // l'intérêt du geste, et une recette ne tient pas dans une adresse.
+
+  enregistrementProposePourImage: (identifiant: string, recette: Recette | null) =>
+    appeler<EnregistrementPropose>(`/assets/${identifiant}/save-as/preview`, {
+      method: "POST",
+      body: JSON.stringify({ recette }),
+    }),
+
+  enregistrerImageSous: (identifiant: string, corps: EnregistrerSous) =>
+    appeler<EnregistrementFait>(`/assets/${identifiant}/save-as`, {
+      method: "POST",
+      body: JSON.stringify(corps),
+    }),
+
+  enregistrementProposePourBande: (identifiant: string, recette: Recette | null) =>
+    appeler<EnregistrementPropose>(`/strips/${identifiant}/save-as/preview`, {
+      method: "POST",
+      body: JSON.stringify({ recette }),
+    }),
+
+  enregistrerBandeSous: (identifiant: string, corps: EnregistrerSous) =>
+    appeler<EnregistrementFait>(`/strips/${identifiant}/save-as`, {
+      method: "POST",
+      body: JSON.stringify(corps),
+    }),
+
   // ── La superposition — la seconde fabrique (E6) ────────────────────────────
   //
   // **Aucune de ces routes ne coûte un centime**, et c'est tout leur intérêt :
@@ -5247,40 +5365,6 @@ export const api = {
   // `rendreClips`, qui remontre un clip écarté, ne fait que défaire une marque
   // sur le disque.
 
-  // ── Enregistrer sous — un rendu devient une autre case (`RP20`) ───────────
-  //
-  // **Quatre appels, deux par calque, et la même coupure que le miroir** : ce
-  // qui ne crée rien se redemande à chaque ouverture de fenêtre, ce qui crée un
-  // objet ne se redemande jamais.
-  //
-  // La proposition est un `POST` parce qu'elle emporte **la recette en cours**,
-  // celle que l'écran tient et qui n'est pas forcément enregistrée : c'est tout
-  // l'intérêt du geste, et une recette ne tient pas dans une adresse.
-
-  enregistrementProposePourImage: (identifiant: string, recette: Recette | null) =>
-    appeler<EnregistrementPropose>(`/assets/${identifiant}/save-as/preview`, {
-      method: "POST",
-      body: JSON.stringify({ recette }),
-    }),
-
-  enregistrerImageSous: (identifiant: string, corps: EnregistrerSous) =>
-    appeler<EnregistrementFait>(`/assets/${identifiant}/save-as`, {
-      method: "POST",
-      body: JSON.stringify(corps),
-    }),
-
-  enregistrementProposePourBande: (identifiant: string, recette: Recette | null) =>
-    appeler<EnregistrementPropose>(`/strips/${identifiant}/save-as/preview`, {
-      method: "POST",
-      body: JSON.stringify({ recette }),
-    }),
-
-  enregistrerBandeSous: (identifiant: string, corps: EnregistrerSous) =>
-    appeler<EnregistrementFait>(`/strips/${identifiant}/save-as`, {
-      method: "POST",
-      body: JSON.stringify(corps),
-    }),
-
   /** Les modèles vidéo et **le prix du jour pour ce réglage-là**.
    *
    *  Le prix se recalcule à chaque changement de durée ou de format : une
@@ -5292,6 +5376,20 @@ export const api = {
         `&resolution=${encodeURIComponent(resolution)}` +
         `&proportions=${encodeURIComponent(proportions)}`,
     ),
+
+  /** Redemander le catalogue vidéo aux fournisseurs — **le pendant exact de
+   *  `rafraichirCatalogue`**, et il ne dépense rien : on demande à un
+   *  fournisseur la liste de ce qu'il vend, pas une image.
+   *
+   *  Branché le 16 septembre 2026 (`RP18`). La route existait depuis `A9` et
+   *  personne ne l'appelait : une liste vidéo vide se lisait jusqu'à ce qu'on
+   *  ferme l'atelier, alors que la même panne côté image se répare d'un clic.
+   *  Le prix du jour n'est pas dans ce retour — il se recalcule par réglage —,
+   *  donc l'appelant relit `modelesVideo` derrière. */
+  rafraichirCatalogueVideo: () =>
+    appeler<Omit<BaseModelesVideo, "demande">>("/clips/models/refresh", {
+      method: "POST",
+    }),
 
   /** Ce que la carte de la maison peut faire aujourd'hui (A11).
    *
@@ -5377,20 +5475,6 @@ export const api = {
       direction = null,
       forcer = false,
     }: {
-  /** Redemander le catalogue vidéo aux fournisseurs — **le pendant exact de
-   *  `rafraichirCatalogue`**, et il ne dépense rien : on demande à un
-   *  fournisseur la liste de ce qu'il vend, pas une image.
-   *
-   *  Branché le 16 septembre 2026 (`RP18`). La route existait depuis `A9` et
-   *  personne ne l'appelait : une liste vidéo vide se lisait jusqu'à ce qu'on
-   *  ferme l'atelier, alors que la même panne côté image se répare d'un clic.
-   *  Le prix du jour n'est pas dans ce retour — il se recalcule par réglage —,
-   *  donc l'appelant relit `modelesVideo` derrière. */
-  rafraichirCatalogueVideo: () =>
-    appeler<Omit<BaseModelesVideo, "demande">>("/clips/models/refresh", {
-      method: "POST",
-    }),
-
       nom?: string
       personnage?: string | null
       pose?: string | null
@@ -5411,8 +5495,13 @@ export const api = {
   /** **Une image découpée montée en animation** (`AU19`, `RP21`).
    *
    *  Les cases deviennent les images d'un clip, et une bande en est gardée —
-   *  prête à se ranger sur un mouvement et une direction. **Rien n'est
+   *  prête à se ranger sur un sujet, une pose et une direction. **Rien n'est
    *  dépensé** : l'image a été payée une fois, à son entrée.
+   *
+   *  `source` désigne l'image de départ — une planche de la bibliothèque, ou
+   *  une carte de la toile (`RP21`) : les deux offrent le même geste, aux
+   *  mêmes conditions, et c'est cette union qui le dit plutôt que deux
+   *  fonctions.
    *
    *  `directions` fait une bande par ligne de la feuille, dans l'ordre des
    *  lignes. Vide, toute la feuille fait une seule animation. */
@@ -5446,6 +5535,30 @@ export const api = {
         direction,
         directions,
       }),
+    }),
+
+  /** **Une sélection d'images fixes devient une animation** (`RP21`,
+   *  chemin 2). Les images entrent telles quelles, dans l'ordre de la
+   *  sélection ; aucune n'est consommée, aucune ne se dépense, aucun encodage
+   *  vidéo. Le sujet, la pose et la direction se préremplissent côté serveur
+   *  quand toutes les images choisies s'accordent sur l'un d'eux. */
+  assemblerAnimation: (
+    images: string[],
+    {
+      nom = "",
+      personnage = null,
+      pose = null,
+      direction = null,
+    }: {
+      nom?: string
+      personnage?: string | null
+      pose?: string | null
+      direction?: string | null
+    } = {},
+  ) =>
+    appeler<{ clip: Generation; bandes: Bande[] }>("/clips/assemble", {
+      method: "POST",
+      body: JSON.stringify({ images, nom, personnage, pose, direction }),
     }),
 
   /** Ceux qui sont payés — ou peut-être payés — et attendent un geste. **La
@@ -5537,11 +5650,6 @@ export const api = {
    *  ⚠️ Ça n'existait pas : le produit savait garder une animation et **pas la
    *  rouvrir**. La vignette de la matrice remontait au clip, donc l'écran
    *  repartait des réglages du jeu, et corriger une virgule demandait de tout
-   *  `source` désigne l'image de départ — une planche de la bibliothèque, ou
-   *  une carte de la toile (`RP21`) : les deux offrent le même geste, aux
-   *  mêmes conditions, et c'est cette union qui le dit plutôt que deux
-   *  fonctions.
-   *
    *  refaire de mémoire. Sa planche part avec, en `data:` — un écran qui
    *  s'ouvre en tournant déjà n'a pas le temps de poser deux questions. */
   ouvrirLaBande: (identifiant: string) =>
@@ -5574,30 +5682,6 @@ export const api = {
   /** La fenêtre d'une animation gardée, remesurée **sur ses images à elle** (A7).
    *
    *  Pas sur celles du clip : une bande peut prendre ses images dans deux
-  /** **Une sélection d'images fixes devient une animation** (`RP21`,
-   *  chemin 2). Les images entrent telles quelles, dans l'ordre de la
-   *  sélection ; aucune n'est consommée, aucune ne se dépense, aucun encodage
-   *  vidéo. Le sujet, la pose et la direction se préremplissent côté serveur
-   *  quand toutes les images choisies s'accordent sur l'un d'eux. */
-  assemblerAnimation: (
-    images: string[],
-    {
-      nom = "",
-      personnage = null,
-      pose = null,
-      direction = null,
-    }: {
-      nom?: string
-      personnage?: string | null
-      pose?: string | null
-      direction?: string | null
-    } = {},
-  ) =>
-    appeler<{ clip: Generation; bandes: Bande[] }>("/clips/assemble", {
-      method: "POST",
-      body: JSON.stringify({ images, nom, personnage, pose, direction }),
-    }),
-
    *  clips, et elle n'a alors de fenêtre dans ni l'un ni l'autre. Le rectangle
    *  et la planche sont refaits dans le même geste — jamais l'un sans l'autre.
    *
@@ -6236,6 +6320,20 @@ export const api = {
       { method: "PUT", body: JSON.stringify({ asset, promue }) },
     ),
 
+  /** **L'image de référence de sa fiche** (RP19) — celle qui dit à quoi le
+   *  sujet ressemble, montrée en grand en haut de sa page. `null` la retire, et
+   *  la fiche retombe alors sur le choix du produit.
+   *
+   *  Ce n'est ni un artwork officiel — qui sert la palette et part avec les
+   *  demandes —, ni l'image retenue d'une case — qui part dans le jeu. C'est un
+   *  portrait : la choisir ne promeut rien, ne retient rien, et n'appelle
+   *  jamais le fournisseur. */
+  poserImageDeReference: (personnage: string, asset: string | null) =>
+    appeler<{ personnage: Personnage; image_de_reference: string }>(
+      `/characters/${personnage}/reference-image`,
+      { method: "PUT", body: JSON.stringify({ asset }) },
+    ),
+
   /** De quoi regarder une chose finie : les fonds du projet, et la taille
    *  commune de ses images (E16). Rien n'est fabriqué, rien n'est modifié. */
   vitrine: (personnage = "") =>
@@ -6267,20 +6365,6 @@ export const api = {
    *  deux compositions à deux endroits auraient fini par demander deux choses
    *  différentes pour la même case.
    *
-  /** **L'image de référence de sa fiche** (RP19) — celle qui dit à quoi le
-   *  sujet ressemble, montrée en grand en haut de sa page. `null` la retire, et
-   *  la fiche retombe alors sur le choix du produit.
-   *
-   *  Ce n'est ni un artwork officiel — qui sert la palette et part avec les
-   *  demandes —, ni l'image retenue d'une case — qui part dans le jeu. C'est un
-   *  portrait : la choisir ne promeut rien, ne retient rien, et n'appelle
-   *  jamais le fournisseur. */
-  poserImageDeReference: (personnage: string, asset: string | null) =>
-    appeler<{ personnage: Personnage; image_de_reference: string }>(
-      `/characters/${personnage}/reference-image`,
-      { method: "PUT", body: JSON.stringify({ asset }) },
-    ),
-
    *  **Depuis E14, c'est le signalement seul.** La consigne de l'attitude et
    *  celle de l'angle sont ajoutées par le composeur du prompt, où elles font
    *  leur propre ligne avec leur propre origine : le champ porte ce qu'on
@@ -6482,6 +6566,19 @@ export const api = {
       { method: "DELETE" },
     ),
 
+  /** Les images d'une animation habillée, **le calque posé dessus**, et rien
+   *  n'est écrit sur le disque.
+   *
+   *  Branchée le 16 septembre 2026 (`RP18`). La route existait depuis `B20` et
+   *  aucun écran ne l'appelait : *Ses animations, image par image* annonçait
+   *  « huit calculs » et ne montrait pas un pixel. Les images reviennent en
+   *  `data:` — un aperçu n'existe nulle part, et lui donner une adresse
+   *  obligerait à ranger un brouillon, donc à le nettoyer. */
+  apercuDuCalqueAnime: (habillee: string) =>
+    appeler<{ bande: Bande; images: string[]; calque: string }>(
+      `/strips/${encodeURIComponent(habillee)}/layer/preview`,
+    ),
+
   /** Tout ce qui se règle sur une pièce, **en un seul geste** — la portée
    *  comprise, et elle n'est jamais devinée (US-139). */
   reglerPiece: (
@@ -6566,19 +6663,6 @@ export const api = {
 
   /** Les directions de ce jeu, et d'où la liste lui vient. */
   directions: () => appeler<DirectionsDuJeu>("/characters/directions"),
-  /** Les images d'une animation habillée, **le calque posé dessus**, et rien
-   *  n'est écrit sur le disque.
-   *
-   *  Branchée le 16 septembre 2026 (`RP18`). La route existait depuis `B20` et
-   *  aucun écran ne l'appelait : *Ses animations, image par image* annonçait
-   *  « huit calculs » et ne montrait pas un pixel. Les images reviennent en
-   *  `data:` — un aperçu n'existe nulle part, et lui donner une adresse
-   *  obligerait à ranger un brouillon, donc à le nettoyer. */
-  apercuDuCalqueAnime: (habillee: string) =>
-    appeler<{ bande: Bande; images: string[]; calque: string }>(
-      `/strips/${encodeURIComponent(habillee)}/layer/preview`,
-    ),
-
 
   /** Une direction de plus. **Nommer, c'est créer**, et rien ne coûte. */
   ajouterDirection: (nom: string, consigne = "") =>
@@ -6923,6 +7007,9 @@ export type ReglageDeSortie = {
   rangement: string
   collision: string
   moteur: string
+  /** Un seul sujet, et il gagne sur le lot (`RP17`). Vide, c'est le lot qui
+   *  décide ; posé, ce sujet-là sort en entier — ses images et ses animations. */
+  sujet: string
 }
 
 export type ReglagesDeLaSortie = {
@@ -6930,6 +7017,9 @@ export type ReglagesDeLaSortie = {
   rangements: string[]
   collisions: string[]
   moteurs: string[]
+  /** Les sujets du jeu, servis par le serveur comme les quatre listes : l'écran
+   *  ne peut pas en proposer un que la sortie refuserait (`RP17`). */
+  sujets: { identifiant: string; nom: string }[]
   dossier: string
   precedente: SortiePrecedente | null
 }
@@ -7007,9 +7097,6 @@ export type Archive = { nom: string; octets: Blob }
  *  nommeraient la même archive finiraient par ne plus dire la même date. */
 async function archive(url: string, corps: unknown): Promise<Archive> {
   let reponse: Response
-  /** Un seul sujet, et il gagne sur le lot (`RP17`). Vide, c'est le lot qui
-   *  décide ; posé, ce sujet-là sort en entier — ses images et ses animations. */
-  sujet: string
   try {
     reponse = await fetch(url, {
       method: "POST",
@@ -7017,9 +7104,6 @@ async function archive(url: string, corps: unknown): Promise<Archive> {
       body: JSON.stringify(corps),
     })
   } catch {
-  /** Les sujets du jeu, servis par le serveur comme les quatre listes : l'écran
-   *  ne peut pas en proposer un que la sortie refuserait (`RP17`). */
-  sujets: { identifiant: string; nom: string }[]
     throw new Refus("l'atelier ne répond pas", "atelier_arrete")
   }
   if (!reponse.ok) {
@@ -7219,6 +7303,22 @@ export const quantite = (valeur: number, unite?: string | null) => {
  *  s'écrit à côté, avec `quantite`, jamais à la place. */
 export const depense = (valeur: number, unite?: string | null) =>
   estArgent(unite) ? dollars(valeur) : "gratuit"
+
+/** **Ce qu'une fabrication va coûter — une seule écriture dans tout le produit**
+ *  (RP4).
+ *
+ *  Avant cette tranche, sept fenêtres écrivaient le même prix de sept façons :
+ *  `$0,0410`, `$0.0410`, `environ $0,0410`, `0,041 usd`, `coût à vérifier`,
+ *  `Coût inconnu`, `Consommation encore non mesurée`. Le montant était le même ;
+ *  seul le mot changeait, et c'est le mot qu'on lit avant de payer.
+ *
+ *  **Le montant inconnu n'est pas zéro**, et c'est la raison d'être de cette
+ *  fonction plutôt que de `quantite` toute seule : `$0,0000` se lit *gratuit* là
+ *  où il faut lire *personne ne sait encore*. */
+export const prix = (montant: number | null | undefined, unite?: string | null) =>
+  montant === null || montant === undefined
+    ? "Coût inconnu"
+    : quantite(montant, unite)
 
 /** Cette recette retourne-t-elle l'image ? (B1)
  *

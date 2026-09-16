@@ -56,7 +56,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
   api,
-  dollars,
+  prix,
   type Asset,
   type AttenteVideo,
   type BaseModelesVideo,
@@ -352,7 +352,7 @@ export function EcranClip({
     attenteDuLot !== null
       ? `≈ ${duree(attenteDuLot)}`
       : montant !== null
-        ? `≈ ${dollars(montant)}`
+        ? `≈ ${prix(montant)}`
         : null
 
   const empeche = !image
@@ -1039,7 +1039,7 @@ function ConfirmationClip({
         ) : montant !== null ? (
           <>
             <span className="mesure text-[11.5px] text-encre">
-              ≈ {dollars(montant)}
+              ≈ {prix(montant)}
               <span className="ml-1.5 text-[9.5px] text-encre-4">
                 {modele.prix.nature}
                 {nombre > 1 ? ` · ${nombre} clips` : ""}
@@ -1246,7 +1246,7 @@ function CarteModele({
             </span>
           ) : modele.prix.montant !== null ? (
             <span className="mesure text-[11.5px] text-encre">
-              ≈ {dollars(modele.prix.montant * nombre)}
+              ≈ {prix(modele.prix.montant * nombre)}
               <span className="ml-1.5 text-[9.5px] text-encre-4">
                 {modele.prix.nature}
                 {nombre > 1 ? ` · ${nombre} clips` : ""}

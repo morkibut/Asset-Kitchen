@@ -50,7 +50,7 @@ test("éditer un texte exact et retirer une référence crée une nouvelle relec
   expect(screen.getByLabelText("Place occupée par le corps (%)")).toHaveValue(63)
   fireEvent.change(screen.getByLabelText("Texte exact de l’appel 1"), { target: { value: "Casque corrigé, chaque corps inchangé" } })
   fireEvent.click(screen.getByRole("checkbox", { name: "Référence 1" }))
-  fireEvent.click(screen.getByRole("button", { name: "Relire avant envoi" }))
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await waitFor(() => expect(equipements.preparer).toHaveBeenCalledOnce())
   const [c, d] = vi.mocked(equipements.preparer).mock.calls[0]
   expect(c).toEqual(chemin)
@@ -87,7 +87,7 @@ test("la couverture n’invente aucune frame pour une animation absente et fabri
   fireEvent.click(screen.getByRole("button", { name: "Fabriquer les 1 manques" }))
   expect(await screen.findByLabelText("Fournisseur et modèle")).toBeInTheDocument()
   fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: "essai:image" } })
-  fireEvent.click(screen.getByRole("button", { name: "Relire avant envoi" }))
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await waitFor(() => expect(equipements.preparer).toHaveBeenCalledOnce())
   expect(vi.mocked(equipements.preparer).mock.calls[0][1].cibles).toEqual([cible])
 })
@@ -125,7 +125,7 @@ test("les références communes de la pièce se voient et s’écartent avant la
   expect(screen.getByText("Références ajoutées à cet envoi (0)")).toBeInTheDocument()
   fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: "essai:image" } })
   fireEvent.click(screen.getByRole("checkbox", { name: "Référence commune 2" }))
-  fireEvent.click(screen.getByRole("button", { name: "Relire avant envoi" }))
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await waitFor(() => expect(equipements.preparer).toHaveBeenCalledOnce())
   const envoye = vi.mocked(equipements.preparer).mock.calls[0][1]
   expect(envoye.references_ecartees).toEqual(["ref-commune-2"])

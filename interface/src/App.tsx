@@ -65,6 +65,8 @@ import {
   type Segment,
 } from "./composants/EnTeteDeSurface"
 import { BarreQuiPaie } from "./composants/BarreQuiPaie"
+import { PreparerUneFabrication } from "./composants/PreparerUneFabrication"
+import type { TypeDeResultat } from "./fabrication"
 import { EcranClip, type CibleDuClip } from "./composants/Clip"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { Emplois } from "./composants/Emplois"
@@ -78,7 +80,6 @@ import {
 import { NavigationAtelier } from "./composants/NavigationAtelier"
 import { TiroirDesBrouillons, useBrouillonsEnPlan } from "./composants/Brouillons"
 import { noterOuLonEst } from "./brouillons"
-import { ChoisirFabricationDuSujet } from "./composants/ChoisirFabricationDuSujet"
 import { ImporterPourUnSujet } from "./composants/ImporterPourUnSujet"
 import { Tuiles } from "./composants/Tuiles"
 import { AtelierSon } from "./composants/AtelierSon"
@@ -87,7 +88,7 @@ import { ReglagesDeFamille } from "./composants/ReglagesDeFamille"
 import { TableauDeBord } from "./composants/TableauDeBord"
 import { CreerUnAsset } from "./composants/CreerUnAsset"
 import { Fabrications } from "./composants/Fabrications"
-import { FabricationSuivie, TravailConserve } from "./composants/FabricationSuivie"
+import { TravailConserve } from "./composants/FabricationSuivie"
 import { Ouverture } from "./composants/Ouverture"
 import { Installation } from "./composants/Installation"
 import { Livraisons } from "./composants/Livraisons"
@@ -1034,9 +1035,13 @@ function AtelierApp() {
 
   const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
   const [prompt, setPrompt] = useState("")
-  const [preparationImageOuverte, setPreparationImageOuverte] = useState(false)
-  const [fabricationDuSujet, setFabricationDuSujet] = useState(false)
-  const [animationDuSujet, setAnimationDuSujet] = useState<{ personnage: string; pose: string; direction: string } | null>(null)
+  /** **Une seule fenêtre de préparation, et son type de départ** (RP4).
+   *
+   *  Trois états vivaient ici : l'image, l'aiguillage à trois portes, et
+   *  l'animation d'un sujet. Trois fenêtres, trois façons d'entrer, et aucun
+   *  passage de l'une à l'autre. Il n'en reste qu'un : le bouton pressé dit
+   *  seulement sur *quel type* la fenêtre s'ouvre — elle sait changer d'elle-même. */
+  const [preparation, setPreparation] = useState<{ type: TypeDeResultat; pose?: string; direction?: string; modele?: string; avecQuoi?: "catalogue" | "workflow" } | null>(null)
   // **L'import vise une case, ou n'en vise aucune.** Ouvert par le bouton du
   // haut il ne sait rien ; ouvert depuis une rangée vide d'*Images fixes* ou
   // depuis « Fabriquer… », il arrive déjà pointé sur la pose qu'on regardait.
@@ -1465,7 +1470,7 @@ function AtelierApp() {
     setRepris,
     setTri,
     setVariations,
-    ouvrirPreparation: () => setPreparationImageOuverte(true),
+    ouvrirPreparation: () => setPreparation({ type: "image" }),
   })
   const armer = (...parametres: Parameters<typeof armerLaCible>) => void armerLaCible(...parametres)
   // ── L'écran ───────────────────────────────────────────────────────────────
@@ -2124,7 +2129,7 @@ function AtelierApp() {
           }
           surLaFamille={ouvrirLaFamille}
           surLeSujet={(id) => { memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "objectif"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
-          surDemanderUneImage={() => { setCible(null); setPreparationImageOuverte(true) }}
+          surDemanderUneImage={() => { setCible(null); setPreparation({ type: "image" }) }}
           surCreerUnAsset={() => setCreationAssetOuverte("personnages")}
           // **La galerie montre déjà la tuile en attente** (elle en tient le
           // chantier) : B5 n'ouvre donc aucun lieu de plus, elle y ramène.
@@ -2163,7 +2168,8 @@ function AtelierApp() {
           onToile={(id) => { if (bibliotheque.courant) void api.poserAssetSurToile(bibliotheque.courant, id).then(async () => { await relireTableau(); allerA("univers") }).catch((e) => echouer(e, "L’image n’a pas pu être posée sur la toile.")) }}
           onCalqueEquipement={(piece, emploi, cible, variante) => setPile(entrer(entrer(poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi, cible, variante }))}
           onBande={ouvrirLAtelierDeBande}
-          onCreer={() => { setCible(null); setPreparationImageOuverte(true) }} onGalerie={() => allerA("galerie")}
+          onCreer={() => { setCible(null); setPreparation({ type: "image" }) }} onGalerie={() => allerA("galerie")}
+          onPreparer={(type, modele, avecQuoi) => { setCible(null); setPreparation({ type, modele, avecQuoi }) }}
           onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))}
           onSujet={(id) => { memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "animations"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
           onDepenses={() => setDepensesOuvertes(true)} />
@@ -2264,7 +2270,7 @@ function AtelierApp() {
             ])
             if (notes.length)
               setPrompt((texte) => [texte.trim(), ...notes].filter(Boolean).join("\n"))
-            setPreparationImageOuverte(true)
+            setPreparation({ type: "image" })
           }}
         />
       )}
@@ -2341,7 +2347,7 @@ function AtelierApp() {
             aria-label="Nom de la chose du jeu à créer"
             className="mesure h-[34px] w-full max-w-[380px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre outline-none"
           />
-          <button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal" onClick={() => { setCible(null); setPreparationImageOuverte(true) }}>Fabriquer une image libre</button>
+          <button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal" onClick={() => { setCible(null); setPreparation({ type: "image" }) }}>Fabriquer une image libre</button>
         </div>
       )}
 
@@ -2402,7 +2408,7 @@ function AtelierApp() {
            signatures : la page en sert la moitié et passe l'autre à la
            matrice. */
         <PageDuSujet
-          onFabriquer={() => setFabricationDuSujet(true)}
+          onFabriquer={() => setPreparation({ type: "image" })}
           onImporter={(cible) => setImportDuSujet(cible ?? {})}
           onDecouper={(id) => ouvrirLaRetouche(id, "decoupage")}
           onExtraire={(id) => ouvrirLaRetouche(id, "superposition")}
@@ -2661,16 +2667,16 @@ function AtelierApp() {
           // (`imageDeLaRetouche`, plus haut) ; ouvrir sans changer de sujet lui
           // faisait chercher une image absente de la page affichée. Changer de
           // sujet d'abord referme Comparer de lui-même — `entrer` coupe tout ce
-          // **« La retoucher », du côté des animations** (RP12). L'atelier est
-          // plus profond que Comparer, donc l'ouvrir referme la comparaison de
-          // lui-même — le même geste que pour une image.
-          onOuvrirLaBande={ouvrirLAtelierDeBande}
           // qui est plus profond que l'étage remplacé (`lieux.ts`) — ce qui est
           // le geste juste : on va corriger l'image là où elle vit.
           onOuvrirCase={(sujet, asset) => {
             setChoseOuverte(sujet)
             ouvrirLaRetouche(asset)
           }}
+          // **« La retoucher », du côté des animations** (RP12). L'atelier est
+          // plus profond que Comparer, donc l'ouvrir referme la comparaison de
+          // lui-même — le même geste que pour une image.
+          onOuvrirLaBande={ouvrirLAtelierDeBande}
         />
       )}
 
@@ -2850,7 +2856,7 @@ function AtelierApp() {
           }}
           surUneGeneration={() => setPile(poser("galerie"))}
           surUnLieu={(ou) => {
-            // **Six destinations, et le défaut est la galerie.** Un `ou` que
+            // **Sept destinations, et le défaut est la galerie.** Un `ou` que
             // cet écran ne connaît pas — parce qu'un outil neuf en a déclaré un
             // — mène quelque part plutôt que nulle part.
             if (ou === "codex") setPile(poser("codex"))
@@ -2858,16 +2864,16 @@ function AtelierApp() {
             else if (ou === "depenses") setDepensesOuvertes(true)
             else if (ou === "reglages") setInstallationOuverte(true)
             else if (ou === "jeux") setChoixDuJeu("jeux")
+            // La sortie vers le dossier du jeu (`RP17`) : les deux outils de la
+            // porte unique la déclarent, et sans cette ligne ils menaient à la
+            // galerie — un lieu qui ne porte pas le geste qu'ils nomment.
+            else if (ou === "sortie") setSortieOuverte(true)
             else setPile(poser("galerie"))
           }}
           surEnvoi={() => setEnvoiOuvert(true)}
           surJouer={(action) => {
             // Gratuit, sur place, et par la route que le serveur a servie. Ce
             // qui revient n'est pas lu : le flux d'événements annonce déjà ce
-            // La sortie vers le dossier du jeu (`RP17`) : les deux outils de la
-            // porte unique la déclarent, et sans cette ligne ils menaient à la
-            // galerie — un lieu qui ne porte pas le geste qu'ils nomment.
-            else if (ou === "sortie") setSortieOuverte(true)
             // que l'atelier vient de faire, et le relire ici en ferait deux
             // vérités.
             void api
@@ -2886,7 +2892,42 @@ function AtelierApp() {
       {tiroirDesBrouillons && <TiroirDesBrouillons
         lignes={enPlan.lignes}
         travauxEnPlan={enPlan.travauxEnPlan}
-      {preparationImageOuverte && !envoiOuvert && <CadreDialogue titre="Préparer une image" format="preparation" onFermer={() => setPreparationImageOuverte(false)} enfants={<><header className="flex shrink-0 items-center justify-between gap-[22px] border-b border-trait px-[30px] py-[22px]"><div><h1 className="font-serif text-[25px]">Préparer une image</h1><p className="mt-[8px] text-[13px] text-encre-3">{personnageCible ? `${personnageCible.nom} · ${posesCible.map(p => p.nom).join(", ")}${cible?.direction ? ` · ${personnageCible.cases.flatMap(c => c.directions ?? []).find(d => d.identifiant === cible.direction)?.nom ?? cible.direction}` : ""}` : "Image libre"}</p></div><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setPreparationImageOuverte(false)}>Fermer</button></header>{barreQuiPaie}</>} />}
+        sujets={personnages}
+        onReprendre={(retour) => { if (retour.length) setPile(retour) }}
+        onTravail={(identifiant) => setPile((p) => entrer(p, { genre: "travail", travail: identifiant }))}
+        onChangement={enPlan.relireLesBrouillons}
+        onFermer={() => setTiroirDesBrouillons(false)}
+      />}
+      {/* ── La fenêtre unique de préparation (`RP4`) ──────────────────────
+          Huit fenêtres et un aiguillage se sont rangés là-dedans. Le type de
+          résultat s'y choisit ; le bouton pressé ne fait plus que dire lequel
+          est ouvert en arrivant. */}
+      {preparation && !envoiOuvert && <PreparerUneFabrication
+        projet={bibliotheque.courant}
+        sujet={choseOuverte ?? personnageCible}
+        plan={plan}
+        personnages={personnages}
+        typeInitial={preparation.type}
+        poseInitiale={preparation.pose ?? posesCible[0]?.identifiant ?? ""}
+        posesVisees={posesCible}
+        sujetVise={personnageCible}
+        directionInitiale={preparation.direction ?? cible?.direction ?? ""}
+        modeleInitial={preparation.modele}
+        avecQuoiInitial={preparation.avecQuoi}
+        preparationImage={barreQuiPaie}
+        onViser={(pose, direction) => {
+          const vise = choseOuverte ?? personnageCible
+          if (vise && pose) armer(vise, [pose], null, direction)
+          else setCible(null)
+        }}
+        onObjectif={() => { setPreparation(null); setOngletDuSujet("objectif") }}
+        onClip={(id) => { setPreparation(null); setPile(entrer(poser("galerie"), { genre: "montage", clip: id })) }}
+        onBande={(id) => { setPreparation(null); ouvrirLAtelierDeBande(id) }}
+        onAsset={(id) => { setPreparation(null); ouvrirLaRetouche(id) }}
+        onSon={(id) => { setPreparation(null); setSonsOuverts({ identifiant: id }) }}
+        onLivraisons={() => { setPreparation(null); setSortieOuverte(true) }}
+        onFermer={() => { setPreparation(null); void relireProduction() }}
+      />}
       {creationAssetOuverte && <CreerUnAsset familleInitiale={creationAssetOuverte} onFermer={() => setCreationAssetOuverte(null)}
         onPersonnage={(personnage) => {
           fondrePersonnage(personnage)
@@ -2894,12 +2935,6 @@ function AtelierApp() {
           setCreationAssetOuverte(null)
           setPile(entrer(poser("codex"), { genre: "sujet", sujet: personnage.identifiant }))
           void relireProduction().catch(e => echouer(e, "L’asset est créé ; sa liste n’a pas pu être actualisée."))
-        sujets={personnages}
-        onReprendre={(retour) => { if (retour.length) setPile(retour) }}
-        onTravail={(identifiant) => setPile((p) => entrer(p, { genre: "travail", travail: identifiant }))}
-        onChangement={enPlan.relireLesBrouillons}
-        onFermer={() => setTiroirDesBrouillons(false)}
-      />}
         }}
         onPiece={(piece) => {
           setPieces(deja => [...deja.filter(p => p.identifiant !== piece.identifiant), piece])
@@ -2916,19 +2951,12 @@ function AtelierApp() {
           demande : on le tient une seconde au-dessus de ce qu'on faisait, on le
           referme, et on n'a rien quitté. Il ne porte pas de fente de refus,
           pour la même raison que le Guide : il ne demande rien au serveur. */}
-      {fabricationDuSujet && choseOuverte && <ChoisirFabricationDuSujet personnage={choseOuverte} plan={plan} onFermer={() => setFabricationDuSujet(false)} onImage={(pose, direction) => { setFabricationDuSujet(false); armer(choseOuverte, [pose], null, direction) }} onVideo={(pose, direction) => { setFabricationDuSujet(false); setAnimationDuSujet({ personnage: choseOuverte.identifiant, pose: pose.identifiant, direction: direction ?? "" }) }} on3D={() => { setFabricationDuSujet(false); setOngletDuSujet("sources") }}
-        onObjectif={() => { setFabricationDuSujet(false); setOngletDuSujet("objectif") }} />}
-      {animationDuSujet && bibliotheque.courant && <FabricationSuivie projet={bibliotheque.courant} personnages={personnages} cibleInitiale={animationDuSujet}
-        onFermer={() => { setAnimationDuSujet(null); void relireProduction() }}
-        // **Une vidéo entre ici aussi depuis `RP5`** : sans cette relecture,
-        // le clip qui vient d'entrer n'existe pour aucun autre écran.
-        void relireClipsDuJeu()
-        onClip={(id) => { setAnimationDuSujet(null); setPile(entrer(poser("galerie"), { genre: "montage", clip: id })) }}
-        onBande={(id) => { setAnimationDuSujet(null); ouvrirLAtelierDeBande(id) }}
-        onLivraisons={() => { setAnimationDuSujet(null); setSortieOuverte(true) }} />}
       {importDuSujet && choseOuverte && <ImporterPourUnSujet personnage={choseOuverte} plan={plan} poseInitiale={importDuSujet.pose} directionInitiale={importDuSujet.direction} onFermer={() => setImportDuSujet(null)} onChange={() => {
         void relireProduction()
         void relireEtat()
+        // **Une vidéo entre ici aussi depuis `RP5`** : sans cette relecture,
+        // le clip qui vient d'entrer n'existe pour aucun autre écran.
+        void relireClipsDuJeu()
         void api.arbre().then(setBibliotheque).catch(e => echouer(e, "L’image est importée ; les comptes du jeu n’ont pas pu être actualisés."))
         setGrilleARelire(n => n + 1)
       }} onOuvrir={(id) => { setImportDuSujet(null); ouvrirLaRetouche(id) }}

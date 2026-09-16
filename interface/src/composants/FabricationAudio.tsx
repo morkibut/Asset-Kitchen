@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { travauxAudio, type DemandeAudio, type TravailAudio } from "../api-travaux-audio"
+import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { workflows, type ProfilWorkflow } from "../api-workflows"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { CadreDialogue } from "./CadreDialogue"
@@ -8,8 +9,10 @@ const CHAMP = "min-w-0 rounded-7 border border-contour bg-carte px-[14px] py-[8p
 const ETATS = { prepare: "À relire", en_cours: "Calcul en cours", a_reprendre: "À reprendre", a_verifier: "À vérifier", externe_inconnu: "Acceptation à retrouver", termine: "Son reçu", annule: "Annulée" }
 const message = (e: unknown) => e instanceof Error ? e.message : "Le bruitage ne peut pas être relu. Les résultats conservés restent disponibles."
 
-export function FabricationAudio({ projet, modeleInitial = "", identifiantInitial, onSon, onFermer }: {
+export function FabricationAudio({ projet, modeleInitial = "", identifiantInitial, onSon, onFermer, autonome = true }: {
   projet: string; modeleInitial?: string; identifiantInitial?: string; onSon?: (id: string) => void; onFermer: () => void
+  /** **Sa propre fenêtre, ou le corps d'une autre** (RP4). */
+  autonome?: boolean
 }) {
   const [depart] = useState<DemandeAudio>({ cle: crypto.randomUUID(), modele: modeleInitial, prompt: "", secondes: 2, options: {} })
   const [d, setD] = useState(depart)
@@ -37,13 +40,15 @@ export function FabricationAudio({ projet, modeleInitial = "", identifiantInitia
     setOccupe(true); setErreur("")
     try { setT(await fonction()); setEdition(false); brouillon.effacer() } catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
   }
-  return <CadreDialogue titre="Fabriquer un bruitage" onFermer={onFermer} enfants={<>
-    <header className="flex shrink-0 items-center justify-between gap-[22px] border-b border-trait p-[22px]"><div><h1 className="font-serif text-[38px]">Fabriquer un bruitage</h1><p className="mt-[8px] text-[13px] text-encre-3">Décrire, écouter, ajuster, puis livrer au jeu.</p></div><button className={CHAMP} onClick={onFermer}>Fermer</button></header>
+  const corps = <>
+    {autonome
+      ? <header className="flex shrink-0 items-center justify-between gap-[22px] border-b border-trait p-[22px]"><div><h1 className="font-serif text-[38px]">Fabriquer un bruitage</h1><p className="mt-[8px] text-[13px] text-encre-3">Décrire, écouter, ajuster, puis livrer au jeu.</p></div><button className={CHAMP} onClick={onFermer}>Fermer</button></header>
+      : <p className="shrink-0 border-b border-trait p-[22px] text-[13px] text-encre-3">Décrire, écouter, ajuster, puis livrer au jeu.</p>}
     <div className="defile min-h-0 flex-1 space-y-[22px] overflow-y-auto p-[30px]">
       {erreur && <p role="alert" className="text-echec">{erreur}</p>}
       {edition ? <><AvisBrouillon brouillon={brouillon} /><fieldset disabled={occupe} className="space-y-[14px]">
         <label className="flex flex-col gap-[4px] text-[13px]">Nom du son<input aria-label="Nom du bruitage" className={CHAMP} value={d.nom || ""} onChange={(e) => changer({ nom: e.target.value })} /></label>
-        <label className="flex flex-col gap-[4px] text-[13px]">Méthode locale<select aria-label="Workflow sonore" className={CHAMP} value={d.modele} onChange={(e) => { const p = profils.find((p) => p.modele === e.target.value); changer({ modele: e.target.value, secondes: p?.durees[0] || 2, options: Object.fromEntries(Object.entries(p?.parametres || {}).map(([n, p]) => [n, p.defaut])) }) }}><option value="">Choisir un workflow sonore…</option>{profils.map((p) => <option key={p.modele} value={p.modele} disabled={p.diagnostic?.disponible === false}>{p.nom} · {p.diagnostic?.disponible === false ? p.diagnostic.problemes.join(" · ") : `version du ${new Date(p.cree_le * 1000).toLocaleDateString("fr-FR")}`}</option>)}</select></label>
+        <label className="flex flex-col gap-[4px] text-[13px]">{CHAMP_DU_MODELE}<select aria-label="Workflow sonore" className={CHAMP} value={d.modele} onChange={(e) => { const p = profils.find((p) => p.modele === e.target.value); changer({ modele: e.target.value, secondes: p?.durees[0] || 2, options: Object.fromEntries(Object.entries(p?.parametres || {}).map(([n, p]) => [n, p.defaut])) }) }}><option value="">Choisir un workflow sonore…</option>{profils.map((p) => <option key={p.modele} value={p.modele} disabled={p.diagnostic?.disponible === false}>{p.nom} · {p.diagnostic?.disponible === false ? p.diagnostic.problemes.join(" · ") : `version du ${new Date(p.cree_le * 1000).toLocaleDateString("fr-FR")}`}</option>)}</select></label>
         {!profils.length && <p className="text-[13px] text-encre-3">Ajoutez un workflow sonore dans Fabrications → Mes méthodes locales. Vous pouvez déjà importer et retoucher un fichier dans la bibliothèque des sons.</p>}
         <label className="flex flex-col gap-[4px] text-[13px]">Description sonore<textarea aria-label="Description sonore exacte" className={`${CHAMP} min-h-[128px]`} placeholder="Exemple : une épée sort lentement d’un fourreau de cuir, son sec, sans musique, pour un univers médiéval." value={d.prompt} onChange={(e) => changer({ prompt: e.target.value })} /></label><p className="text-[12px] text-encre-3">Ce texte part tel quel. Décrivez aussi l’ambiance de votre univers ; aucune instruction visuelle n’est ajoutée au son.</p>
         {p?.liaisons.prompt_negatif && <label className="flex flex-col gap-[4px] text-[13px]">À éviter<input aria-label="Son à éviter" className={CHAMP} value={d.prompt_negatif || ""} onChange={(e) => changer({ prompt_negatif: e.target.value })} /></label>}
@@ -53,6 +58,7 @@ export function FabricationAudio({ projet, modeleInitial = "", identifiantInitia
         {t.raison && <p role="status" className="text-[13px] text-encre-3">{t.raison}</p>}{t.son && onSon && <button className={CHAMP} onClick={() => { onFermer(); onSon(t.son!) }}>Écouter et retoucher le son reçu</button>}{t.consommations.map((c, i) => <p key={i} className="text-[12px] text-encre-3">{Math.round(c.consomme)} {c.unite} mesurées · coût fournisseur en argent : 0</p>)}
       </>}
     </div>
-    <footer className="flex shrink-0 items-center justify-between gap-[14px] border-t border-trait bg-carte p-[22px]"><p className="text-[12px] text-encre-3">Fermer garde le brouillon, le travail et ses résultats.</p>{edition ? <button className={CHAMP} disabled={occupe || !p || p.diagnostic?.disponible === false || !d.prompt.trim()} onClick={() => void agir(() => travauxAudio.preparer(projet, d))}>Relire avant de générer le son</button> : t && <div className="flex gap-[8px]"><button className={CHAMP} onClick={() => { changer({}); setEdition(true) }}>{t.etat === "prepare" ? "Modifier cet envoi" : "Préparer un autre son"}</button>{["prepare", "a_reprendre", "a_verifier"].includes(t.etat) && !t.son && <button className={CHAMP} disabled={occupe} onClick={() => void agir(() => travauxAudio.lancer(t))}>{t.etat === "prepare" ? "Lancer ce calcul local" : "Reprendre le suivi sonore"}</button>}</div>}</footer>
-  </>} />
+    <footer className="flex shrink-0 items-center justify-between gap-[14px] border-t border-trait bg-carte p-[22px]"><p className="text-[12px] text-encre-3">Fermer garde le brouillon, le travail et ses résultats.</p>{edition ? <button className={CHAMP} disabled={occupe || !p || p.diagnostic?.disponible === false || !d.prompt.trim()} onClick={() => void agir(() => travauxAudio.preparer(projet, d))}>{VERS_LA_RELECTURE}</button> : t && <div className="flex gap-[8px]"><button className={CHAMP} onClick={() => { changer({}); setEdition(true) }}>{t.etat === "prepare" ? "Modifier cet envoi" : "Préparer un autre son"}</button>{["prepare", "a_reprendre", "a_verifier"].includes(t.etat) && !t.son && <button className={CHAMP} disabled={occupe} onClick={() => void agir(() => travauxAudio.lancer(t))}>{t.etat === "prepare" ? "Lancer ce calcul local" : "Reprendre le suivi sonore"}</button>}</div>}</footer>
+  </>
+  return autonome ? <CadreDialogue titre="Fabriquer un bruitage" onFermer={onFermer} enfants={corps} /> : corps
 }

@@ -144,6 +144,11 @@ LA_GEOMETRIE_D_AVANT = (
     # `RP8` fond `FicheChose.tsx` dans `FicheDuSujet.tsx` — la géométrie
     # d'avant migre avec le code qui la porte, le nom du fichier suit.
     "interface/src/composants/FicheDuSujet.tsx",
+    # `RP4` sort le cadre de la relecture d'`Envoi.tsx` pour que les quatre
+    # types de résultat le partagent. Le bouton qui paie part avec : ses 42 px
+    # sont la géométrie d'avant, migrée telle quelle, comme `FicheDuSujet.tsx`
+    # ci-dessus. Rien de neuf n'est dessiné hors des listes.
+    "interface/src/composants/Relecture.tsx",
     "interface/src/composants/Montage.tsx",
     "interface/src/composants/Mouvements.tsx",
     "interface/src/composants/Planche.tsx",

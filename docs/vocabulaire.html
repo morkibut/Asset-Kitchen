@@ -288,8 +288,10 @@
     </div>
 
     <div class="carte" style="padding: 15px 18px">
-      <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px">3 · Le champ du modèle — <em>pas tranché ici</em></div>
-      <div style="font-size: 12.5px; color: #4e483f; line-height: 1.55">Le produit lui donne huit noms : <em>Modèle · fournisseur</em>, <em>Modèle</em>, <em>Modèle vidéo</em>, <em>Fournisseur et modèle vidéo</em>, <em>Fournisseur et modèle</em>, <em>Méthode locale</em>, <em>Workflow et version</em>, <em>Moteur du modèle</em>. Un seul doit rester, et il doit tenir pour l'image, le clip, le son et la 3D à la fois. <strong>Deux contraintes à respecter</strong> : <em>Moyen de fabrication</em> — le mot de la maquette — <strong>est déjà pris</strong>, pour le choix entre plier plusieurs bases dans une planche ou faire un appel par image ; et un modèle se nomme par son fournisseur <em>et</em> par son nom, les deux ensemble. <strong>Se règle avec la tranche qui réunit les huit fenêtres de préparation</strong> (RP4), parce que le nom ne se choisit qu'une fois qu'on sait ce que la fenêtre unique doit couvrir.</div>
+      <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px">3 · Le champ du modèle — <strong>Fournisseur et modèle</strong>, tranché le 16 septembre 2026 par <code class="mono">RP4</code></div>
+      <div style="font-size: 12.5px; color: #4e483f; line-height: 1.55">Le produit lui donnait huit noms : <em>Modèle · fournisseur</em>, <em>Modèle</em>, <em>Modèle vidéo</em>, <em>Fournisseur et modèle vidéo</em>, <em>Fournisseur et modèle</em>, <em>Méthode locale</em>, <em>Workflow et version</em>, <em>Moteur du modèle</em>. <strong>Un seul reste : <em>Fournisseur et modèle</em></strong>, et il s'écrit ainsi partout — sur une image fixe, sur un clip, sur un son, sur un rendu 3D, et dans la fenêtre qui relit avant l'envoi.<br><br>
+      <strong>Pourquoi celui-là.</strong> Il dit les deux moitiés qu'un modèle porte — <em>qui le sert</em> et <em>lequel c'est</em> —, et c'est ce que la liste affiche déjà, ligne par ligne. Il tient pour les quatre types sans changer un mot : un workflow importé a un fournisseur, c'est cette machine. <em>Moyen de fabrication</em>, le mot de la maquette, <strong>était déjà pris</strong> — c'est le choix entre plier plusieurs bases dans une planche ou faire une image à la fois. <em>Modèle vidéo</em>, <em>Méthode locale</em> et <em>Moteur du modèle</em> nommaient le type du résultat en même temps que le champ : la fenêtre unique le dit déjà au-dessus, et le redire deux fois est ce que RP4 existe pour arrêter.<br><br>
+      <strong>Le bouton qui mène à la relecture est tranché du même geste</strong> : <em>Relire avant l'envoi</em>, et lui seul. Cinq fenêtres l'écrivaient autrement. Les deux mots vivent dans <code class="mono">interface/src/fabrication.ts</code>, écrits une fois — c'est ce qui les empêche de redériver.</div>
     </div>
   </div>
 
@@ -358,8 +360,9 @@
     <p class="st">Un mot par ligne, avec la tranche qui le tranchera. Cette liste ne grossit pas toute seule : un mot n'y entre que si un écran en a besoin et qu'aucune règle de cette page ne le donne.</p>
     <table class="sp">
       <tr><th style="width: 230px">Le mot qui manque</th><th style="width: 380px">La contrainte</th><th>Qui tranche</th></tr>
-      <tr><td class="m">Le champ du modèle</td><td>Huit noms dans le produit. <em>Moyen de fabrication</em> est déjà pris. Un modèle se nomme par son fournisseur et par son nom.</td><td class="x">RP4 — la préparation unique</td></tr>
+      <tr><td class="m"><s>Le champ du modèle</s></td><td><s>Huit noms dans le produit. <em>Moyen de fabrication</em> est déjà pris. Un modèle se nomme par son fournisseur et par son nom.</s><br><strong>Tranché le 16 septembre 2026</strong> : <em>Fournisseur et modèle</em>. Voir la section précédente.</td><td class="x">RP4 — <strong>fait</strong></td></tr>
     </table>
+    <p class="st" style="margin-top: 12px">La liste est vide, et c'est son état normal : un mot n'y entre que le jour où un écran en a besoin.</p>
     <p class="st" style="margin-top: 14px"><strong>Et les désaccords qui vivent à l'intérieur d'un écran</strong> — ils ne sont pas ici : ils se ferment dans la tranche qui touche leur écran, sinon on renomme deux fois. Ils sont relevés écran par écran dans <a href="releves/2026-09-15-desaccords-restants.md">le relevé du 15 septembre 2026</a>.</p>
   </div>
 

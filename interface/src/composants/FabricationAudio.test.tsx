@@ -41,7 +41,7 @@ test("les réglages sonores se relisent exactement avant tout calcul et le résu
   fireEvent.change(screen.getByLabelText("Son à éviter"), { target: { value: "Sans voix" } })
   fireEvent.change(screen.getByLabelText("Durée du bruitage"), { target: { value: "2.5" } })
   fireEvent.change(screen.getByLabelText("Graine"), { target: { value: "357" } })
-  fireEvent.click(screen.getByRole("button", { name: "Relire avant de générer le son" }))
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await screen.findByRole("button", { name: "Lancer ce calcul local" })
   expect(travauxAudio.preparer).toHaveBeenCalledWith("jeu", expect.objectContaining({ nom: "Épée divine", secondes: 2.5, options: { seed: 357 }, prompt_negatif: "Sans voix" }))
   expect(travauxAudio.lancer).not.toHaveBeenCalled()

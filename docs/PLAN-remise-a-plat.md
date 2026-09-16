@@ -273,7 +273,7 @@ Trois désaccords ne sont tranchés par personne et se décident ici, une fois :
 Cinq tranches, une par doublon, plus celle qui les rend possibles. Chacune suit la décision 2 :
 **un seul écran qui sait tout ce que les deux savaient.**
 
-## RP4 · Une seule préparation, une seule relecture
+## RP4 · Une seule préparation, une seule relecture ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : RP3. **Elle bloque** : rien, mais c'est la plus grosse.
 
@@ -288,17 +288,131 @@ Chacune a ses libellés, son bouton de relecture, son format de prix.
 sans changer : le texte montré avant de payer est demandé par le chemin même que l'envoi
 emprunte.
 
+### La forme de la fenêtre unique
+
+*Écrite le 16 septembre 2026, avant la première ligne de code.*
+
+**Le type de résultat est le premier choix, et c'est une liste fermée de quatre** — *Image fixe ·
+Clip · Son · Rendu 3D*. Elle vit dans `interface/src/fabrication.ts`, à un seul endroit : un
+cinquième type ne s'ajoute pas à un écran, il s'ajoute là. Un type qu'on ne peut pas préparer
+d'où l'on est se montre **grisé avec sa raison** — c'est la règle du produit depuis `T1`, et elle
+vaut ici comme ailleurs.
+
+**Ce que la fenêtre unique fait, et ce qu'elle ne fait pas.** Elle porte le cadre, le titre, le
+choix du type, et ce que le bouton pressé décidait à la place de l'auteur. Elle **ne réécrit
+aucun formulaire** : le corps de chaque type est la fenêtre d'avant, à laquelle on a seulement
+retiré son cadre et son titre — un `autonome={false}`, et rien d'autre. C'est ce qui garde
+l'invariant de l'argent intact : **le chemin qu'emprunte l'envoi n'a pas bougé d'une ligne**, et
+il ne pouvait pas bouger, puisque personne n'y a touché.
+
+**Deux choix de plus s'y font, et ce sont les deux autres que le bouton faisait.** *Avec quoi* —
+le catalogue de modèles, ou un workflow importé : c'était la différence entre *Préparer une
+image* et *Fabriquer une image locale*. *Pour* — le sujet ouvert, ou sans sujet : c'était la
+différence entre *Préparer une animation* et *Fabriquer une vidéo libre*. Aucun des deux
+n'ouvrait l'autre ; les deux sont maintenant une liste à deux valeurs.
+
+**La pose et la direction ne se demandent qu'une fois.** Un clip les choisit dans son corps
+(*Asset · Mouvement · Direction*), un rendu 3D dans les siens (*Mouvement dans le jeu*,
+*Direction dans le jeu*), un son n'a pas de case. Il ne restait que l'image fixe, dont le corps
+sait **montrer** la case visée sans savoir la **choisir** : c'est exactement ce que l'écran
+d'aiguillage servait à faire, et c'est tout ce qu'il faisait. Ses deux listes sont donc à cet
+étage-là, avec leurs deux groupes — *Dans l'objectif*, *Autres poses du plan*.
+
+**Et la case ne se réarme qu'au geste.** Armer repose le champ avec le signalement du sujet
+(`gestes.ts`) : le faire à l'ouverture effacerait ce que l'auteur vient d'écrire, et le faire à
+chaque rendu l'effacerait à chaque frappe.
+
+#### La relecture, et pourquoi elle tient sans toucher à l'argent
+
+**Un seul cadre, `Relecture.tsx`, et il ne compose rien.** Il dessine le titre *Relire avant
+l'envoi*, le résumé en trois cases — *Fournisseur et modèle*, *Résultat demandé*, *Consommation
+estimée* —, le message rouge qui bloque, et le pied qui paie. Ce qui part, **chaque type le lit
+sur l'objet que l'envoi emprunte** :
+
+| Type | Ce que la relecture montre | Ce que l'envoi emprunte | L'essai |
+|---|---|---|---|
+| Image fixe | la réponse de `POST /api/outgoing` | `POST /api/generations`, même composeur côté serveur | `tests/test_rp4.py`, plus `test_e14.py` |
+| Clip | le travail rendu par `travaux.preparer` | `travaux.demarrer` **relit ce travail-là**, par son identifiant | `tests/test_rp4.py` |
+| Son | `snapshot_audio` du travail préparé | le nœud du graphe que `liaisons.prompt` désigne | `tests/test_rp4.py` |
+| Rendu 3D | `apercu_3d` du travail préparé | le corps posté au pont, `/stages` | `tests/test_rp4.py` |
+
+**Trois types sur quatre tenaient déjà l'invariant sans qu'aucun essai ne le dise** : le travail
+préparé *est* ce qui part, et le lancer ne recompose rien. Ce que la tranche ajoute est la preuve,
+pas le mécanisme — et c'est la preuve qui manquait, parce qu'un mécanisme que rien ne tient se
+défait à la tranche suivante sans qu'on l'ait voulu.
+
+#### Le prix
+
+**Une seule fonction, `prix()`, dans `api.ts`**, à côté de `dollars` et de `quantite` qui la
+composent. Sept endroits écrivaient le même montant de sept façons : `$0,0410`, `$0.0410`,
+`environ $0,0410`, `0,041 usd`, `coût à vérifier`, `Coût inconnu`, `Consommation encore non
+mesurée`. Le montant était le même ; seul le mot changeait, et **c'est le mot qu'on lit avant de
+payer**. Un montant inconnu s'écrit *Coût inconnu* et jamais `$0,0000`, qui se lit *gratuit*.
+
+#### Le champ du modèle, et le bouton qui mène à la relecture
+
+Les deux mots que `RP3` avait inscrits sans les trancher le sont ici, et ils vivent dans
+`fabrication.ts` — écrits une fois, donc incapables de redériver :
+
+- **`Fournisseur et modèle`** remplace huit noms. Il dit les deux moitiés qu'un modèle porte, il
+  tient pour les quatre types, et *Moyen de fabrication* — le mot de la maquette — était déjà pris.
+- **`Relire avant l'envoi`** remplace cinq noms, sur sept boutons.
+
+La décision est écrite dans [`docs/vocabulaire.html`](vocabulaire.html) § *Le champ du modèle*,
+et sa dernière section — *ce qui n'est pas encore tranché* — est vide.
+
+### Chaque fenêtre nommée, puis retrouvée
+
+*Fusionnée* veut dire : son corps est celui d'un type de la fenêtre unique, sans un geste de
+moins. *Retirée* veut dire : elle n'existe plus, et ce qu'elle faisait se fait ailleurs.
+
+| L'ancienne fenêtre | Ce qu'elle devient |
+|---|---|
+| « Fabriquer pour {nom} » — l'aiguillage à trois portes (`ChoisirFabricationDuSujet.tsx`) | **Retirée, fichier compris.** Ses trois portes sont les valeurs de *Type de résultat* ; ses deux listes — *Mouvement ou pose*, *Direction* — sont en tête de la fenêtre unique, avec leurs deux groupes ; son renvoi vers *Objectif & règles* (`RP13`) y est aussi |
+| « Préparer une image » (`App.tsx` + `BarreQuiPaie.tsx`) | **Fusionnée** : corps du type *Image fixe*, choix *Avec quoi = Le catalogue de modèles*. La barre qui paie n'est pas reconstruite — c'est la même, montée par l'atelier |
+| « Fabriquer une image locale » (`WorkflowsLocaux.tsx`) | **Fusionnée** : même type, choix *Avec quoi = Un workflow importé* |
+| « Préparer une animation » (`FabricationSuivie.tsx`) | **Fusionnée** : corps du type *Clip*, choix *Pour = {le sujet}* |
+| « Fabriquer une vidéo libre » (`FabricationVideoLibre.tsx`) | **Fusionnée** : même type, choix *Pour = Sans sujet* |
+| « Fabriquer un bruitage » (`FabricationAudio.tsx`) | **Fusionnée** : corps du type *Son* |
+| « De l'image aux sprites en 3D » (`Fabrication3D.tsx`) | **Fusionnée** : corps du type *Rendu 3D*, et le parcours s'ouvre tout seul — on a déjà dit qu'on préparait un rendu en le choisissant |
+| « Animer {nom} — {pose} » (`Clip.tsx`) | **Gardée, et ce n'est pas une préparation de plus.** C'est l'écran d'un clip déjà commandé : on y règle l'image de départ et le mouvement d'un clip qui existe. La fenêtre unique ne l'ouvre pas et ne le remplace pas |
+| « Images équipées · {pièce} » (`RelectureEquipement.tsx`) | **Gardée, et rangée du côté de la relecture.** Elle prépare *et* relit un travail d'équipement, qui part d'une pièce et non d'un sujet ; son bouton et son champ du modèle portent désormais les mots uniques, et son prix passe par `prix()`. La faire entrer dans la fenêtre unique demanderait un cinquième type — *une pièce équipée* — que la maquette ne dessine pas ; **c'est le seul morceau que la tranche laisse dehors, et il est nommé ici pour qu'on ne l'oublie pas** |
+| « Nouvelle animation » (`SuiviDesTravaux`, la neuvième porte) | **Retirée** : le bouton ouvre la fenêtre unique sur le type *Clip* |
+
+**Ce que les essais d'écran cherchaient, et où ils le retrouvent.** Quatre essais de
+`ChoisirFabricationDuSujet.test.tsx` sont repris un par un dans
+`PreparerUneFabrication.test.tsx` — l'animation visée qui l'emporte, les deux groupes de poses,
+la première pose historique sans objectif, le renvoi de `RP13`. Seuls les noms qu'ils cherchent
+ont changé, parce que les boutons ont changé de nom : c'est la décision de vocabulaire ci-dessus,
+et une vingtaine d'assertions d'écran la suivent, réparties sur sept fichiers — les boutons
+*Relire avant l'envoi*, les champs *Fournisseur et modèle*, et le titre du dialogue, devenu
+*Préparer une fabrication*.
+**Aucun essai n'a été mis en `skip`, et aucune assertion de fond n'a bougé.**
+
 ### Critères d'acceptation
 
-- [ ] Une seule fenêtre prépare, et le type de résultat — image fixe, clip, son, rendu 3D — s'y
-  choisit.
-- [ ] Une seule fenêtre relit avant l'envoi, quel que soit le type.
-- [ ] Ce qui est montré avant de payer vient du chemin que l'envoi emprunte, et un essai le
-  prouve pour chacun des quatre types.
-- [ ] Le prix s'écrit d'une seule façon dans tout le produit.
-- [ ] Aucune capacité des huit fenêtres n'est perdue : chacune est nommée, puis retrouvée dans
-  la fenêtre unique.
-- [ ] Les deux lieux d'où l'argent part restent deux, et pas trois.
+- [x] Une seule fenêtre prépare, et le type de résultat — image fixe, clip, son, rendu 3D — s'y
+  choisit. *`PreparerUneFabrication.tsx`, un seul `CadreDialogue`, un seul `<h1>` ; un essai
+  traverse les quatre types d'affilée et vérifie qu'il n'y a jamais qu'un titre et que la fenêtre
+  ne s'est pas fermée entre-temps.*
+- [x] Une seule fenêtre relit avant l'envoi, quel que soit le type. *`Relecture.tsx` porte le
+  cadre, le résumé en trois cases et le pied qui paie ; `EcranEnvoi` n'écrit plus que ce qu'une
+  image fixe a de particulier. Le `data-type` du cadre dit lequel des quatre est à l'écran.*
+- [x] Ce qui est montré avant de payer vient du chemin que l'envoi emprunte, et un essai le
+  prouve pour chacun des quatre types. *`tests/test_rp4.py`, quatre essais, une seule mesure :
+  ce que l'écran affiche contre ce que la doublure du fournisseur a reçu. Rien entre les deux
+  n'est doublé.*
+- [x] Le prix s'écrit d'une seule façon dans tout le produit. *`prix()` dans `api.ts` ; les sept
+  écritures divergentes ont disparu, dont le dernier point décimal du produit (`Comparer.tsx`
+  écrivait `$0.0143` quand tout le reste écrivait `$0,0143`).*
+- [x] Aucune capacité des huit fenêtres n'est perdue : chacune est nommée, puis retrouvée dans
+  la fenêtre unique. *La table ci-dessus. Sept fenêtres sur neuf sont dans la fenêtre unique,
+  deux restent dehors et disent pourquoi — l'atelier d'un clip déjà commandé n'est pas une
+  préparation, et l'équipement demanderait un cinquième type que la maquette ne dessine pas.*
+- [x] Les deux lieux d'où l'argent part restent deux, et pas trois. *`E2` est intact : la barre
+  qui paie n'est pas reconstruite dans la fenêtre unique, elle y est **montée** — `App.tsx` lui
+  passe le même nœud qu'avant. La fenêtre unique n'appelle ni `api.generer`, ni `travaux.demarrer`,
+  ni aucune route qui facture : elle ne fait que choisir quel corps est à l'écran.*
 
 ## RP5 · Un seul écran d'import sur une fiche ✅ **close le 15 septembre 2026**
 

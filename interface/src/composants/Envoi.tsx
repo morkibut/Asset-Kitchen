@@ -41,6 +41,7 @@ import { useEffect, useRef, useState } from "react"
 import {
   dollars,
   estArgent,
+  prix,
   quantite,
   type Envoi,
   type ImageQuiPart,
@@ -51,6 +52,7 @@ import {
 } from "../api"
 import { Bouton, Libelle, LigneReserve, Raison } from "./pieces"
 import { sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
+import { RelireAvantEnvoi, type ResumeDeLEnvoi } from "./Relecture"
 
 /** Le tri de départ — **rien**. Il ne porte que des écarts, jamais un état
  *  complet : c'est ce qui fait qu'éteindre les trois lignes d'une ambiance
@@ -202,11 +204,17 @@ export function EcranEnvoi({
 
   if (presentation === "atelier") {
     const bouton = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] disabled:opacity-50"
-    const prix = envoi?.prix.total == null ? "Coût inconnu" : quantite(envoi.prix.total, envoi.prix.mesure.unite)
-    return <main data-envoi aria-label="Relire avant envoi" className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier text-[13px]">
-      <header className="flex shrink-0 items-start justify-between gap-[22px] border-b border-trait px-[30px] py-[22px]"><div><h1 className="font-serif text-[38px]">Relire avant envoi</h1><p className="mt-[8px] text-encre-3">{edition ? "Les modifications s’appliquent à cet appel. L’univers reste inchangé." : "Voici les textes et les images qui seront transmis au modèle."}</p></div><div className="flex shrink-0 gap-[8px]"><button className={bouton} aria-pressed={edition} onClick={() => setEdition(v => !v)} disabled={enPaiement}>{edition ? "Terminer les modifications" : "Modifier l’envoi"}</button><button className={bouton} onClick={onFermer} disabled={enPaiement}>Revenir à la préparation</button></div></header>
-      {!envoi ? <p role="status" className="p-[30px] text-encre-3">Composition de l’envoi…</p> : <div className="defile min-h-0 flex-1 overflow-y-auto p-[30px]">
-        <section aria-label="Modèle et réglages de l’envoi" className="mb-[22px] grid grid-cols-3 gap-[22px] rounded-7 border border-trait bg-carte p-[22px]"><div><p className="text-encre-3">Modèle · fournisseur</p><p className="mt-[8px] font-medium">{envoi.modele.identifiant}</p></div><div><p className="text-encre-3">Résultat demandé</p><p className="mt-[8px]">{reglages?.proportions ?? "Format du modèle"} · {envoi.prix.appels} appel{envoi.prix.appels > 1 ? "s" : ""}{envoi.cases > 1 ? ` · ${envoi.cases} cases sur une planche` : ""}</p>{reglages && Object.entries(reglages.options).filter(([,v]) => v !== "").map(([k,v]) => <p key={k} className="mt-[4px] text-encre-3">{k} : {v}</p>)}</div><div><p className="text-encre-3">Consommation estimée</p><p className="mt-[8px] font-medium">{prix}</p>
+    const prixEcrit = prix(envoi?.prix.total ?? null, envoi?.prix.mesure.unite)
+    // **Le cadre, le résumé en trois cases et le pied qui paie ne sont plus
+    // dessinés ici** (RP4) : ils appartiennent à la fenêtre unique de
+    // relecture, celle que les quatre types partagent. Cet écran-ci n'écrit
+    // plus que ce qu'une image fixe a de particulier — ses lignes de texte, ses
+    // images jointes, son fond, ses consignes.
+    const resume: ResumeDeLEnvoi | null = !envoi ? null : {
+      modele: envoi.modele.identifiant,
+      resultat: <><p>{reglages?.proportions ?? "Format du modèle"} · {envoi.prix.appels} appel{envoi.prix.appels > 1 ? "s" : ""}{envoi.cases > 1 ? ` · ${envoi.cases} cases sur une planche` : ""}</p>{reglages && Object.entries(reglages.options).filter(([,v]) => v !== "").map(([k,v]) => <p key={k} className="mt-[4px] text-encre-3">{k} : {v}</p>)}</>,
+      consommation: prixEcrit,
+      mesure: <>
           {/* **La mesure se lit à côté du prix, jamais fondue dedans** (T1, E13).
               Le chiffre au-dessus est une moyenne relevée sur les appels déjà
               payés à ce modèle-ci — pas un tarif annoncé par le fournisseur —,
@@ -215,7 +223,40 @@ export function EcranEnvoi({
           {envoi.prix.mesure.prix === null
             ? <p className="mt-[4px] text-encre-3">{envoi.prix.mesure.appels ? `Mesurée sur ${envoi.prix.mesure.appels} appels précédents.` : "Aucune mesure disponible pour ce modèle."}</p>
             : <p className="mt-[4px] leading-relaxed text-encre-3">mesuré sur {envoi.prix.mesure.appels} appel{envoi.prix.mesure.appels > 1 ? "s" : ""} {estArgent(envoi.prix.mesure.unite) ? "payé" : "passé"}{envoi.prix.mesure.appels > 1 ? "s" : ""} à <span className="text-encre-2">{envoi.modele.nom}</span>.{envoi.prix.mesure.par_image !== null && envoi.prix.mesure.base !== null && <> Un appel sans image jointe a {estArgent(envoi.prix.mesure.unite) ? "coûté" : "pris"} {quantite(envoi.prix.mesure.base, envoi.prix.mesure.unite)} sur {envoi.prix.mesure.sur_base} appels ; chaque image jointe en ajoute <span className="text-encre-attention">{quantite(envoi.prix.mesure.par_image, envoi.prix.mesure.unite)}</span>, mesuré sur {envoi.prix.mesure.sur_jointes}. Une moyenne n'est le prix de personne : elle ne tombera juste sur aucun appel donné.</>}{envoi.prix.mesure.par_image === null && <> Le pas d'une image jointe n'est pas mesurable ici — il y faudrait des appels à plusieurs comptes d'images. Le chiffre affiché est la médiane, images comprises.</>}</p>}
-        </div></section>
+        </>,
+    }
+    return <RelireAvantEnvoi
+      type="image"
+      sousTitre={edition ? "Les modifications s’appliquent à cet appel. L’univers reste inchangé." : "Voici les textes et les images qui seront transmis au modèle."}
+      resume={resume}
+      modification={{ active: edition, onBasculer: () => setEdition(v => !v), bloquee: enPaiement }}
+      onFermer={onFermer}
+      fermetureBloquee={enPaiement}
+      refus={refus}
+      echec={echec}
+      etat={actualisation ? "Actualisation des textes, des images et du coût…" : enPaiement ? "L’envoi est en cours." : "Aucun appel au modèle avant de lancer."}
+      /* **Le compte des avertissements, à côté du prix** : on sait qu'il y en a
+         sans être descendu jusqu'à eux, et l'on sait qu'ils ne retiennent pas
+         l'appel. Chacun reste écrit là où il porte — sur la ligne du texte, ou
+         dans le bloc des images —, jamais en bandeau : un bandeau dirait
+         « attention » et laisserait chercher où. Le serveur rend la liste
+         entière, lignes et images mêlées ; l'écran la compte, il ne la
+         recompose pas. */
+      pied={envoi && envoi.avertissements.length > 0 ? <p className="mt-[4px] text-encre-attention">{envoi.avertissements.length} avertissement{envoi.avertissements.length > 1 ? "s" : ""} — non bloquant{envoi.avertissements.length > 1 ? "s, écrits là où ils portent" : ", écrit là où il porte"}</p> : null}
+      /* **Il s'évite, et jamais pour toujours.** Refaire dix fois la même chose
+         et relire dix fois est une punition ; mais une case définitive
+         éteindrait le seul écran qui montre ce qui part, et on la cocherait le
+         premier jour. **Pas de case du tout sans série** : sans chose du jeu
+         visée, chaque texte est écrit à la main, et l'offrir là reviendrait à
+         éteindre l'écran pour toutes les générations libres à venir. */
+      avantLeBouton={onSauter ? <div className="shrink-0"><label className="flex cursor-pointer items-center gap-[8px]"><input type="checkbox" className="h-[14px] w-[14px] accent-signal" onChange={(e) => onSauter(e.target.checked)} /><span>ne plus me le montrer pour cette série</span></label><p className="mt-[4px] text-encre-3">il revient dès qu'on change de chose ou de pose. Il n'y a pas de case « pour toujours ».</p></div> : null}
+      paiement={{
+        libelle: enPaiement ? "Envoi en cours…" : envoi && estArgent(envoi.prix.mesure.unite) ? `Payer et lancer${envoi.prix.total != null ? ` ${prixEcrit}` : ""}` : "Lancer la fabrication",
+        onPayer,
+        prix: <>{prixEcrit}{envoi?.prix.total !== null && envoi && " · estimation"}</>,
+        empeche: !!refus || !envoi || enPaiement || actualisation,
+      }}
+      enfants={envoi && <>
         <div className="grid grid-cols-[minmax(0,1fr)_300px] items-start gap-[22px]">
           <div className="space-y-[22px]">
             <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="mb-[14px] font-serif text-[25px]">Textes envoyés</h2>{edition ? <div className="space-y-[14px] [&_.mesure]:text-[12px]">{envoi.groupes.filter(g => envoi.lignes.some(l => l.groupe === g.clef)).map(g => <section key={g.clef}><h3 className="font-medium">{g.nom}</h3><ul>{envoi.lignes.filter(l => l.groupe === g.clef).map(l => <Ligne key={l.clef} ligne={l} onBasculer={() => basculer(l.clef, l.allumee)} onCorriger={t => corriger(l.clef, t)} onRemettre={() => remettre(l.clef)} onGarder={() => onGarder(l)} />)}</ul></section>)}</div> : <div className="space-y-[22px]">{parties.filter(p => p.texte.trim()).map(p => <section key={p.clef}><h3 className="mb-[8px] font-medium">{p.nom}</h3><p className="mesure whitespace-pre-wrap break-words rounded-7 border border-trait bg-papier p-[14px] text-[12px] leading-relaxed">{p.titre && `${p.titre}\n\n`}{p.texte}</p></section>)}{!envoi.texte && <p className="text-encre-3">Aucun texte à envoyer.</p>}</div>}{edition && <button className={`${bouton} mt-[14px]`} onClick={() => onReprendre(envoi.texte)} disabled={!envoi.texte}>Modifier le texte complet à la main</button>}</section>
@@ -234,18 +275,8 @@ export function EcranEnvoi({
             {envoi.options.length > 0 && <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Consignes facultatives</h2><fieldset disabled={!edition || enPaiement} className="mt-[14px] [&_.mesure]:text-[12px]"><ul>{envoi.options.map(o => <LigneOption key={o.clef} option={o} onBasculer={() => basculer(o.clef, o.allumee)} />)}</ul></fieldset></section>}
           </div>
         </div>
-      </div>}
-      <footer className="flex shrink-0 items-center justify-between gap-[22px] border-t border-trait bg-carte px-[30px] py-[14px]"><div>{echec && <p role="alert" className="text-echec">{echec}</p>}{refus && <p className="text-echec">{refus}</p>}<p>{prix}{envoi?.prix.total !== null && envoi && " · estimation"}</p><p className="mt-[4px] text-encre-3">{actualisation ? "Actualisation des textes, des images et du coût…" : enPaiement ? "L’envoi est en cours." : "Aucun appel au modèle avant de lancer."}</p>
-        {/* **Le compte des avertissements, à côté du prix** : on sait qu'il y en
-            a sans être descendu jusqu'à eux, et l'on sait qu'ils ne retiennent
-            pas l'appel. Chacun reste écrit là où il porte — sur la ligne du
-            texte, ou dans le bloc des images —, jamais en bandeau : un bandeau
-            dirait « attention » et laisserait chercher où. Le serveur rend la
-            liste entière, lignes et images mêlées ; l'écran la compte, il ne la
-            recompose pas. */}
-        {envoi && envoi.avertissements.length > 0 && <p className="mt-[4px] text-encre-attention">{envoi.avertissements.length} avertissement{envoi.avertissements.length > 1 ? "s" : ""} — non bloquant{envoi.avertissements.length > 1 ? "s, écrits là où ils portent" : ", écrit là où il porte"}</p>}</div>{/* **Il s'évite, et jamais pour toujours.** Refaire dix fois la même chose et relire dix fois est une punition ; mais une case définitive éteindrait le seul écran qui montre ce qui part, et on la cocherait le premier jour. **Pas de case du tout sans série** : sans chose du jeu visée, chaque texte est écrit à la main, et l'offrir là reviendrait à éteindre l'écran pour toutes les générations libres à venir. */}
-        {onSauter && <div className="shrink-0"><label className="flex cursor-pointer items-center gap-[8px]"><input type="checkbox" className="h-[14px] w-[14px] accent-signal" onChange={(e) => onSauter(e.target.checked)} /><span>ne plus me le montrer pour cette série</span></label><p className="mt-[4px] text-encre-3">il revient dès qu'on change de chose ou de pose. Il n'y a pas de case « pour toujours ».</p></div>}<button className="h-[42px] shrink-0 rounded-7 bg-signal px-[22px] text-encre-sur-signal disabled:opacity-50" disabled={!!refus || !envoi || enPaiement || actualisation} onClick={onPayer}>{enPaiement ? "Envoi en cours…" : envoi && estArgent(envoi.prix.mesure.unite) ? `Payer et lancer${envoi.prix.total != null ? ` ${prix}` : ""}` : "Lancer la fabrication"}</button></footer>
-    </main>
+      </>}
+    />
   }
 
   return (

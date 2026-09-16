@@ -350,3 +350,27 @@ sujet, une bande : les trois rendent un fichier compressé au navigateur. Elles 
 dans le dossier du jeu, donc elles ne sont pas une seconde porte — et retirer le seul moyen
 d'emporter une sélection sans nommer de dossier aurait coûté à l'auteur quelque chose que rien
 ne remplace.
+
+### La décision de RP4 — 16 septembre 2026
+
+**Le type de résultat se choisit dans la fenêtre, plus par la porte qu'on a poussée.** Le produit
+posait la question deux fois : d'abord un bouton — *Préparer une image*, *Préparer une vidéo*,
+*Préparer un son* — puis, une fois entré, un formulaire qui ne savait plus rien changer. Ce qui
+est décidé est que la question se pose une seule fois, au premier contrôle de la fenêtre unique,
+et qu'on peut en changer d'avis sans refermer. Le prix est qu'un type indisponible doit se
+montrer quand même, grisé avec sa raison — *un rendu 3D part d'un sujet ; ouvre-le d'abord* —
+là où huit fenêtres séparées se contentaient de ne pas exister. C'est le bon prix, et c'est
+d'ailleurs déjà la règle du produit : *ce qui est indisponible est grisé avec sa raison, jamais
+proposé puis refusé*.
+
+**Ce qui est refusé avec elle** : la fenêtre qui ne faisait que demander *que veux-tu fabriquer ?*
+avant d'en ouvrir une autre. Elle ne portait aucun réglage, ne montrait aucun prix, et sa seule
+fonction était de nommer trois chemins — trois chemins qui sont devenus trois valeurs d'une liste
+déroulante. Un écran dont on ressort toujours par une autre fenêtre n'est pas un écran, c'est un
+couloir. Disparaît avec elle la neuvième porte, *Nouvelle animation*, que le suivi des travaux
+ouvrait sur lui-même : on y revient maintenant par le même chemin que partout ailleurs.
+
+**Le prix s'écrit d'une seule façon**, et la fonction qui l'écrit est unique. Ce qui n'a pas de
+montant dit *Coût inconnu* — jamais un tiret, jamais un zéro, qui se liraient *gratuit* là où il
+faut lire *on ne sait pas*. C'est la même distinction que *gratuit* ≠ *0,00 $* plus haut, à
+l'autre bout : un prix absent n'est pas un prix nul.

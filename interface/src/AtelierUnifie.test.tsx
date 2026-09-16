@@ -79,7 +79,7 @@ describe("L’atelier unifié · bibliothèque et fabrications réelles", () => 
     vi.spyOn(api, "journal").mockResolvedValue({ projet: "jeu", appels: [appel], total_usd: 0, rates: 0, cout_rate_usd: 0 })
     const clip = { ...appel, projet: "jeu", demande: { prompt: appel.prompt }, clip: { fichier: "clip.mp4" } } as unknown as Generation
     const ouvrir = vi.fn()
-    const props = { projet: "jeu", chantier: [clip], clips: [clip], personnages: [], onCreer: vi.fn(), onGalerie: vi.fn(), onClip: ouvrir, onSujet: vi.fn(), onDepenses: vi.fn() }
+    const props = { projet: "jeu", chantier: [clip], clips: [clip], personnages: [], onCreer: vi.fn(), onPreparer: vi.fn(), onGalerie: vi.fn(), onClip: ouvrir, onSujet: vi.fn(), onDepenses: vi.fn() }
     const { unmount } = render(<Fabrications {...props} />)
     await waitFor(() => expect(screen.queryByText("Lecture des fabrications…")).not.toBeInTheDocument())
     expect(screen.getAllByRole("article")).toHaveLength(1)

@@ -31,7 +31,7 @@ test("relire conserve le texte composé et ne soumet qu’après le bouton de la
   await screen.findByText("Prérequis présents · calcul local gratuit")
   fireEvent.change(screen.getByLabelText("L’image à fabriquer"), { target: { value: "Un pèlerin" } })
   fireEvent.change(screen.getByLabelText("seed"), { target: { value: "321" } })
-  fireEvent.click(screen.getByRole("button", { name: "Relire l’envoi" }))
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await screen.findByText(/L’univers exact/)
   expect(workflows.demarrerImage).not.toHaveBeenCalled()
   expect(workflows.preparerImage).toHaveBeenCalledWith("jeu", expect.objectContaining({ modele: profil.modele, resolution: "64", options: { seed: 321 }, prompt: "Un pèlerin" }))
@@ -57,7 +57,7 @@ test("un prérequis absent empêche la relecture et explique le manque", async (
   render(<FabricationImageLocale projet="jeu" modeleInitial={profil.modele} />)
   await screen.findByText("Le modèle local manque dans ComfyUI.")
   fireEvent.change(screen.getByLabelText("L’image à fabriquer"), { target: { value: "Un pèlerin" } })
-  expect(screen.getByRole("button", { name: "Relire l’envoi" })).toBeDisabled()
+  expect(screen.getByRole("button", { name: "Relire avant l’envoi" })).toBeDisabled()
   expect(workflows.preparerImage).not.toHaveBeenCalled()
 })
 
