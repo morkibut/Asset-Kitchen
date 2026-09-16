@@ -36,6 +36,31 @@ que le serveur savait déjà, et que personne ne le lui demandait.
 *Fabrications*, un mot qui, lui, couvre les six familles. Un nombre juste sous un mot faux se
 lit comme un nombre faux, et rien dans le code ne pouvait le signaler.
 
+## RP7 · Une seule grille d'assets — 16 septembre 2026
+
+**Les deux défauts « hérités du carnet mort » n'étaient pas deux bugs, c'était un seul
+déménagement à finir.** Le champ qui nomme une collection s'ouvrait sur un compteur que le
+carnet incrémentait ; le carnet parti, `App.tsx` passait `0` en dur, pour toujours, et plus rien
+ne pouvait l'ouvrir sans sélection. La seconde cible de dépôt était une ligne du même carnet. Les
+deux capacités vivaient au même endroit et sont revenues au même endroit : la colonne des
+familles et des collections, qui n'existait plus que dans la porte *Les assets* et qui est
+maintenant dans l'écran unique. Chercher deux correctifs séparés aurait produit deux rustines.
+
+**Deux types de glisser incompatibles, et le plus intéressant n'est pas lequel gagne.** C'est
+qu'aucun des deux n'était vérifié de bout en bout. Les essais d'avant passaient un `DataTransfer`
+dont `getData` rendait toujours la chaîne vide : la cible relisait alors l'état que le parent lui
+avait redonné, et la charge utile ne voyageait jamais. Un essai qui ne fait pas voyager la charge
+utile ne peut pas voir deux formats divergents — c'est exactement comme ça que le dépôt a pu
+porter deux types six mois sans que rien ne crie. Le double d'ici garde ce qu'on lui écrit et le
+rend au `drop` ; c'est huit lignes, et c'est ce qui rend le critère mesurable.
+
+**Le tri local est la seule chose que la fusion ajoute au calcul côté écran, et il fallait le
+borner.** La règle du fichier est que le serveur trie et que l'écran ne retrie jamais, sinon le
+« x des y » et les comptes d'onglet mentent. Mais sur *toutes les familles*, quatre réponses déjà
+triées arrivent côte à côte, et les concaténer donnerait A A A A B B B B. La recouture est donc
+gardée sous une condition explicite — plus d'une famille lue —, et l'essai qui vérifie qu'une
+famille seule n'est jamais retriée est resté tel quel à côté du nouveau.
+
 ## RP18 · Les neuf routes sans écran — 16 septembre 2026
 
 **Deux des neuf n'étaient pas orphelines, et c'est la méthode du relevé qui les avait

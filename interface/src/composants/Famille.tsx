@@ -1,33 +1,45 @@
 /**
- * La grille d'une famille — B9.4 à B9.6 : la surface centrale (et son volet de
- * droite) quand on ouvre « Les personnages », « Les objets », « Les décors » ou
- * « L'interface » depuis le carnet.
+ * **La grille d'assets — il n'y en a qu'une** (`RP7`, 16 septembre 2026).
  *
- * `docs/archive/pistes-2026-09-04/carnet/Famille.dc.html`. Le carnet (300px, à gauche)
- * et ses cibles de dépôt propres appartiennent à `Carnet.tsx` — branché par
- * ailleurs — et ne sont **pas** dans ce fichier ; le volet (380px, à droite)
- * l'est, lui, parce que c'est ici qu'on sait ce qui est choisi.
+ * Elle montre *toutes les familles* quand on ouvre la porte « Les sujets », et
+ * *une seule* quand on en ouvre une. C'est le même composant, le même appel
+ * (`api.familleDeSujets`), les mêmes filtres et les mêmes gestes : avant `RP7`
+ * il y avait deux écrans, `BibliothequeDesAssets.tsx` pour la porte et
+ * celui-ci pour la famille, et l'auteur atteignait les deux.
  *
- * **Le filtre, la recherche et la collection ouverte partent au serveur, jamais
- * recalculés ici** (`api.familleDeSujets`) : les trois comptes de `filtres`
- * portent sur la famille entière, la page n'en montre qu'une partie. `complet`
- * ne regarde que les images ; les poses et les animations se lisent à côté,
- * telles quelles.
+ * `docs/PLAN.md` § Les invariants du produit dit ce qui n'est **pas** une
+ * grille d'assets, et ne doit donc jamais être ramené ici : la matrice d'un
+ * sujet, la réserve, les dépenses, la colonne des sœurs, la toile.
+ *
+ * **Le filtre, la recherche, la collection et le tri partent au serveur, jamais
+ * recalculés ici** : les trois comptes de `filtres` portent sur la famille
+ * entière, la page n'en montre qu'une partie. `complet` ne regarde que les
+ * images ; les poses et les animations se lisent à côté, telles quelles. Une
+ * seule exception, et elle est nommée : sur *toutes les familles*, quatre
+ * réponses triées arrivent côte à côte et il faut bien les remettre dans
+ * l'ordre — le tri local ne sert qu'à recoudre ces quatre listes, jamais à
+ * trier une famille seule.
  *
  * **Un chiffre est en chasse fixe par la classe `mesure`**, la seule que
  * `index.css` déclare pour ça. Une classe inventée ne lève aucune erreur —
  * Tailwind ne produit rien pour un utilitaire inconnu, et le nombre s'affiche
  * simplement dans la chasse du texte, ce que personne ne voit.
  *
- * **Le glisser-déposer** suit le patron de `AtelierDeBande.tsx` : attraper une
- * carte qui n'est pas dans la sélection en fait une sélection à elle seule.
- * Les cibles sont les puces du panneau « Les ranger » — rien d'autre dans cet
- * écran n'accepte un dépôt. ⚠️ `getData` est vide pendant `dragover` ; le
- * compte projeté (« déjà + arrivants ») se calcule donc **au `dragstart`** et
- * part au parent avec la sélection — l'autre cible de dépôt vit dans le carnet,
- * qui n'a pas les sujets de la page pour le calculer lui-même. **Une collection
- * additionne, elle ne déplace rien** : ranger un sujet ne le retire d'aucune
- * autre collection.
+ * **Le glisser-déposer : un seul type, `GLISSE_DES_SUJETS`.** Les deux écrans
+ * d'avant en employaient deux, incompatibles — du JSON sous
+ * `application/x-asset-kitchen-library-subjects` d'un côté, des identifiants
+ * séparés par un saut de ligne sous `application/x-sujets-atelier` de l'autre —
+ * si bien qu'attraper une carte dans un écran et la lâcher dans l'autre ne
+ * faisait rien. Le type retenu est le second ; la raison est écrite dans
+ * `docs/PLAN-remise-a-plat.md` § RP7.
+ *
+ * **Deux cibles de dépôt, et c'est voulu** : les lignes de collection de la
+ * colonne de gauche — qu'on voit toujours —, et les puces du volet de droite —
+ * qu'on ne voit qu'avec une sélection. La seconde avait disparu avec le carnet
+ * mort ; elle est revenue avec la colonne. ⚠️ `getData` est vide pendant
+ * `dragover` : le compte projeté (« déjà + arrivants ») se calcule donc **au
+ * `dragstart`**, et se garde le temps du geste. **Une collection additionne,
+ * elle ne déplace rien** : ranger un sujet ne le retire d'aucune autre.
  *
  * **Aucune couleur d'alerte sur un manque** — ni sur une carte à `0 / N`, ni
  * dans le tableau des poses, ni dans le panneau « Ce qui leur manque » : c'est
@@ -35,40 +47,71 @@
  * l'impose explicitement pour la vue « Les poses ». La maquette, elle, teinte
  * ces chiffres en rouille — **contradiction assumée** : le rouille du système
  * ne sert qu'au bouton qui lance et au chiffre qui coûte
- * (`interface/src/index.css`), et un manque n'est ni l'un ni l'autre. C'est
- * assumé, pas oublié.
+ * (`interface/src/index.css`), et un manque n'est ni l'un ni l'autre.
  *
  * ⚠️ Le fantôme du glisser est un unique rectangle penché portant le compte —
  * pas la pile de deux ou trois cartes de la maquette : construire proprement
- * une pile aurait demandé plus de temps que ce panneau n'en valait, et un
- * fantôme simplifié mais fonctionnel vaut mieux qu'un fantôme à moitié fait.
+ * une pile aurait demandé plus de temps que ce panneau n'en valait.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   api,
   Refus,
   type FiltreDeFamille,
-  type GrilleDeFamille,
   type GroupeDeRangement,
   type Personnage,
+  type Piece,
   type SujetDeLaGrille,
 } from "../api"
+import { vignetteAsset } from "./Apercu"
+import { FAMILLES } from "./Carnet"
+import { useEtatDuParcours } from "./MemoireDuParcours"
 
-/** Le type MIME du glisser d'un ou plusieurs sujets — le parent en a besoin
- *  pour ses propres cibles de dépôt (le carnet). */
+/** **Le seul type de glisser d'un ou plusieurs sujets du produit.**
+ *
+ *  Charge utile : les identifiants, séparés par un saut de ligne. Pas de JSON —
+ *  une liste plate se relit sans `JSON.parse` ni `try`, et un `DataTransfer`
+ *  doublé dans un essai tient en trois lignes. */
 export const GLISSE_DES_SUJETS = "application/x-sujets-atelier"
 
+/** Ce qu'on écrit dans le presse-papier du glisser. */
+export function ecrireLeGlisser(identifiants: readonly string[]): string {
+  return identifiants.join("\n")
+}
+
+/** Ce qu'on y relit. Rend une liste vide plutôt que de lever : un navigateur
+ *  peut rendre une chaîne vide, et un `DataTransfer` d'essai peut n'avoir aucun
+ *  `getData`. */
+export function lireLeGlisser(transfert: DataTransfer | null | undefined): string[] {
+  let brut = ""
+  try {
+    brut = transfert?.getData?.(GLISSE_DES_SUJETS) ?? ""
+  } catch {
+    brut = ""
+  }
+  return brut
+    .split("\n")
+    .map((identifiant) => identifiant.trim())
+    .filter(Boolean)
+}
+
 // ── Les mots de chaque famille ───────────────────────────────────────────────
+
+const FAMILLES_DE_SUJETS = FAMILLES.filter((f) => f.cle !== "equipement")
 
 const MOTS_DE_FAMILLE: Record<string, { pluriel: string; singulier: string }> = {
   personnages: { pluriel: "personnages", singulier: "personnage" },
   objets: { pluriel: "objets", singulier: "objet" },
   decors: { pluriel: "décors", singulier: "décor" },
   interface: { pluriel: "éléments d'interface", singulier: "élément d'interface" },
+  equipement: { pluriel: "équipements", singulier: "équipement" },
 }
 
-function motsDe(famille: string): { pluriel: string; singulier: string } {
+/** Sans famille, on parle de *sujets* — le mot de `docs/vocabulaire.html` pour
+ *  une chose du jeu, quelle que soit sa famille. */
+function motsDe(famille: string | null): { pluriel: string; singulier: string } {
+  if (famille === null) return { pluriel: "sujets", singulier: "sujet" }
   return MOTS_DE_FAMILLE[famille] ?? { pluriel: famille, singulier: famille }
 }
 
@@ -87,6 +130,23 @@ const AUCUN_COMPTE: Record<FiltreDeFamille, number> = {
   tous: 0,
   incomplets: 0,
   "sans-description": 0,
+}
+
+export type TriDesSujets = "nom" | "nom-desc" | "resultats"
+
+/** Un sujet de la page, et la famille d'où il vient — utile seulement sur
+ *  *toutes les familles*, où quatre listes se mélangent. */
+type SujetAffiche = SujetDeLaGrille & { famille: string }
+
+function trierLesSujets(sujets: SujetAffiche[], tri: TriDesSujets): SujetAffiche[] {
+  return [...sujets].sort((a, b) =>
+    tri === "resultats"
+      ? b.compte.images.fait +
+        b.compte.bandes.fait -
+        (a.compte.images.fait + a.compte.bandes.fait) ||
+        a.nom.localeCompare(b.nom, "fr")
+      : (tri === "nom-desc" ? -1 : 1) * a.nom.localeCompare(b.nom, "fr"),
+  )
 }
 
 // ── Ce qu'une collection contient déjà, et ce qui arriverait ────────────────
@@ -124,6 +184,9 @@ function arrivantsParmi(
 }
 
 // ── Les pièces ────────────────────────────────────────────────────────────
+
+const BOUTON =
+  "h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[13px] text-encre transition-colors duration-120 hover:border-contour disabled:opacity-50"
 
 function Onglet({
   actif,
@@ -284,6 +347,61 @@ function LigneDeListe({
   )
 }
 
+/** Une pièce d'équipement.
+ *
+ *  **Elle n'est pas un sujet** : elle a des emplois, pas des poses, et aucune
+ *  collection ne la range. Elle n'est donc ni glissable ni sélectionnable — le
+ *  pied de grille le dit en toutes lettres. */
+function LigneDePiece({
+  piece,
+  apercu,
+  enGrille,
+  onOuvrir,
+}: {
+  piece: Piece
+  apercu: string | null
+  enGrille: boolean
+  onOuvrir: () => void
+}) {
+  return (
+    <li data-piece-dequipement={piece.identifiant} className="min-w-0">
+      <button
+        type="button"
+        onClick={onOuvrir}
+        className={[
+          "flex w-full items-center gap-[14px] rounded-8 border border-trait bg-carte px-[14px] py-[8px] text-left transition-colors duration-120 hover:border-contour",
+          enGrille ? "flex-col items-start" : "",
+        ].join(" ")}
+      >
+        <span
+          className={[
+            "flex shrink-0 items-center justify-center overflow-hidden rounded-5 bg-pourtour",
+            enGrille ? "aspect-square w-full" : "h-[34px] w-[34px]",
+          ].join(" ")}
+        >
+          {apercu ? (
+            <img
+              src={apercu}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-contain [image-rendering:pixelated]"
+            />
+          ) : (
+            <span className="bg-carte p-[4px] text-[10.5px] text-encre-3">À créer</span>
+          )}
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-[4px]">
+          <span className="truncate text-[13px] text-encre">{piece.nom}</span>
+          <span className="truncate text-[11.5px] text-encre-3">
+            Équipement · {piece.description || "Description à écrire"}
+          </span>
+        </span>
+        <span className="shrink-0 text-[12px] text-encre-3">Voir les emplois ›</span>
+      </button>
+    </li>
+  )
+}
+
 /** L'union des poses de la page, dans l'ordre où elles apparaissent — jamais
  *  triée, jamais recalculée : c'est `compte.detail` qui les nomme. */
 function colonnesDesPoses(
@@ -399,8 +517,9 @@ function ChipDeRangement({
  *
  *  **Il n'y en a qu'un à la fois dans l'écran** : dans le volet quand des
  *  sujets sont choisis — la collection naît pleine —, sous la barre d'outils
- *  sinon, puisque le volet n'existe pas alors et que le carnet, lui, sait
- *  demander une collection sans rien avoir choisi. */
+ *  sinon, puisque le volet n'existe pas alors. Le « ＋ Collection » de la
+ *  colonne de gauche ouvre celui-là : c'est le geste qui ne marchait plus
+ *  depuis la mort du carnet, faute d'un endroit où le champ pût paraître. */
 function ChampDeCollection({
   nom,
   onNom,
@@ -439,51 +558,57 @@ export function EcranFamille({
   famille,
   nom,
   jeu,
-  collection,
-  glisses,
-  surGlisser,
-  surGroupes,
+  collectionInitiale = null,
+  pieces = [],
+  personnages = [],
   rafraichi,
-  creerUnGroupe,
+  surGroupes,
+  surCollection,
+  surFamille,
+  surToutesLesFamilles,
   surRange,
   surReglages,
   surErreur,
   onOuvrir,
   onCree,
+  onPiece,
+  onGalerie,
+  onTuiles,
+  onSons,
+  onCreer,
 }: {
-  /** La clé de la famille : "personnages", "objets", "decors", "interface". */
-  famille: string
-  /** Son nom dans le carnet — « Les personnages ». */
-  nom: string
+  /** La clé de la famille — "personnages", "objets", "decors", "interface",
+   *  "equipement" —, ou `null` pour **toutes les familles** : c'est ce que la
+   *  porte « Les sujets » ouvre. */
+  famille: string | null
+  /** Son nom dans le carnet — « Les personnages ». Ignoré sans famille. */
+  nom?: string
   /** L'identifiant du jeu ouvert. Il part avec chaque rangement : un sujet
    *  n'est unique que par jeu. */
   jeu: string
-  /** La collection ouverte sous la famille dans le carnet, ou `null` pour toute
-   *  la famille. **Elle part au serveur** : restreindre ici, sur la page en
-   *  mémoire, ferait mentir les trois comptes de filtre et le « x des y ». */
-  collection: string | null
-  /** Ce qu'on traîne en ce moment, ou `null`. Tenu par le parent parce que les
-   *  cibles de dépôt du carnet, elles, ne sont pas dans cet écran. */
-  glisses: readonly string[] | null
-  /** Ce qu'on traîne, et **ce que chaque collection gagnerait si on lâchait
-   *  là** — le second argument, parce que le carnet en a besoin pour écrire
-   *  « 10 + 3 » et qu'il ne connaît pas les sujets de la page. */
-  surGlisser: (
-    sujets: readonly string[] | null,
-    arrivants?: Record<string, number>,
-  ) => void
-  /** Les collections où l'on peut ranger, remontées au parent pour que le
-   *  carnet puisse les montrer. Appelé dans le `.then` du chargement, jamais
-   *  pendant le rendu. */
-  surGroupes: (groupes: GroupeDeRangement[]) => void
+  /** La collection ouverte au premier rendu. **Ensuite l'écran en est seul
+   *  maître** — c'est sa colonne de gauche qui les liste —, et il prévient le
+   *  parent par `surCollection`, qui n'en a besoin que pour le fil d'Ariane. */
+  collectionInitiale?: string | null
+  /** Les pièces d'équipement. Montrées sur *toutes les familles* et sur
+   *  *Les équipements*, jamais ailleurs : elles ne sortent pas de la même
+   *  route et n'entrent dans aucune collection. */
+  pieces?: readonly Piece[]
+  /** Les sujets du jeu, pour retrouver l'aperçu d'une pièce équipée. */
+  personnages?: readonly Personnage[]
   /** Un compteur que le parent incrémente quand il a rangé quelque chose
-   *  ailleurs (une ligne du carnet) : la grille se relit. */
+   *  ailleurs : la grille se relit. */
   rafraichi: number
-  /** Le « ＋ Nouvelle collection » du carnet. **Un compteur, pas un booléen** :
-   *  deux clics de suite doivent rouvrir le champ, et un booléen déjà à vrai ne
-   *  redéclencherait rien. Ignoré à zéro, sinon le champ volerait le curseur à
-   *  chaque ouverture de famille. */
-  creerUnGroupe: number
+  /** Les collections où l'on peut ranger, remontées au parent pour que le fil
+   *  d'Ariane puisse nommer celle qui est ouverte. Appelé dans le `.then` du
+   *  chargement, jamais pendant le rendu. */
+  surGroupes: (groupes: GroupeDeRangement[]) => void
+  /** La collection ouverte a changé — pour le fil d'Ariane, rien d'autre. */
+  surCollection?: (collection: string | null) => void
+  /** Ouvrir une famille : c'est un lieu, et c'est donc le parent qui y va. */
+  surFamille?: (famille: string) => void
+  /** Revenir à toutes les familles — la porte « Les sujets ». */
+  surToutesLesFamilles?: () => void
   /** À appeler après un rangement fait ici, pour que le parent relise l'arbre. */
   surRange: () => void
   surReglages: () => void
@@ -496,8 +621,17 @@ export function EcranFamille({
    *  désignerait un identifiant que `personnages` ne connaît pas encore, et la
    *  page resterait introuvable jusqu'au prochain message du flux. */
   onCree: (personnage: Personnage) => void
+  /** Ouvrir une pièce d'équipement et ses emplois. */
+  onPiece?: (identifiant: string) => void
+  onGalerie?: () => void
+  onTuiles?: () => void
+  onSons?: () => void
+  /** Le guichet « Créer un sujet », là où nommer sur-le-champ n'a pas de sens :
+   *  sans famille choisie, et sur les équipements. */
+  onCreer?: (famille: string) => void
 }) {
   const mots = motsDe(famille)
+  const cle = `grille-assets:${jeu}:${famille ?? ""}`
 
   /** **Nommer, c'est créer** (US-115) — le geste que le codex portait seul
    *  avant `C3`. Écrire un nom crée la chose sur-le-champ, sans formulaire et
@@ -507,6 +641,9 @@ export function EcranFamille({
   const [nomDeLaCreation, setNomDeLaCreation] = useState("")
   const [creationEnCours, setCreationEnCours] = useState(false)
   const champDeCreation = useRef<HTMLInputElement>(null)
+  /** Une famille de sujets sait nommer sur-le-champ ; les équipements et
+   *  *toutes les familles* passent par le guichet, qui demande la famille. */
+  const nommeSurLeChamp = famille !== null && famille !== "equipement"
 
   useEffect(() => {
     if (!creationOuverte) return
@@ -516,7 +653,7 @@ export function EcranFamille({
 
   const creer = async () => {
     const propre = nomDeLaCreation.trim()
-    if (!propre) return
+    if (!propre || famille === null) return
     setCreationEnCours(true)
     try {
       const { personnage } = await api.creerPersonnage(propre, "", famille)
@@ -531,10 +668,20 @@ export function EcranFamille({
     }
   }
 
-  const [recherche, setRecherche] = useState("")
-  const [filtre, setFiltre] = useState<FiltreDeFamille>("tous")
+  // **Ce que l'écran retient d'un aller-retour** : la recherche, le filtre, le
+  // tri, la vue et la collection ouverte survivent à un détour par une fiche.
+  // La limite, non : revenir sur une page déroulée à 600 sujets la ferait
+  // recharger entière.
+  const [recherche, setRecherche] = useEtatDuParcours(`${cle}:recherche`, "")
+  const [filtre, setFiltre] = useEtatDuParcours<FiltreDeFamille>(`${cle}:filtre`, "tous")
+  const [tri, setTri] = useEtatDuParcours<TriDesSujets>(`${cle}:tri`, "nom")
+  const [vue, setVue] = useEtatDuParcours<"grille" | "liste" | "poses">(`${cle}:vue`, "grille")
+  const [collection, setCollection] = useEtatDuParcours<string | null>(
+    `${cle}:collection`,
+    collectionInitiale,
+  )
   const [limite, setLimite] = useState(120)
-  const [vue, setVue] = useState<"grille" | "liste" | "poses">("grille")
+  const [rechercheDeCollection, setRechercheDeCollection] = useState("")
   /** **Le clic ouvre par défaut.** Ranger est un geste choisi, pas la
    *  réponse au premier clic sur une carte : sans ce bouton, un clic pour
    *  regarder un sujet le sélectionnait à la place de l'ouvrir. Couper le
@@ -542,12 +689,30 @@ export function EcranFamille({
    *  sens. */
   const [modeSelection, setModeSelection] = useState(false)
   const [selection, setSelection] = useState<string[]>([])
-  const [donnee, setDonnee] = useState<GrilleDeFamille | null>(null)
+  const [donnee, setDonnee] = useState<{
+    sujets: SujetAffiche[]
+    groupes: GroupeDeRangement[]
+    filtres: Record<FiltreDeFamille, number>
+    total: number
+  } | null>(null)
+  /** Les collections connues, gardées d'une lecture à l'autre : la colonne de
+   *  gauche les montre même pendant qu'une autre famille charge, et surtout
+   *  même sur *Les équipements*, qui n'interroge aucune route de famille. */
+  const [collectionsConnues, setCollectionsConnues] = useState<GroupeDeRangement[]>([])
+  /** Le compte de chaque famille, tel que la dernière lecture *sans filtre*
+   *  l'a rendu : filtrée, la somme dirait autre chose que ce que la ligne
+   *  annonce. */
+  const [comptes, setComptes] = useState<Record<string, number>>({})
   const [version, setVersion] = useState(0)
   const [survolee, setSurvolee] = useState<string | null>(null)
   const [rangerOuvert, setRangerOuvert] = useState(false)
   const [nouvelleOuverte, setNouvelleOuverte] = useState(false)
   const [nomNouvelle, setNomNouvelle] = useState("")
+  const [occupe, setOccupe] = useState(false)
+  const [retourRangement, setRetourRangement] = useState("")
+  /** Ce qu'on traîne, et ce que chaque collection gagnerait si on lâchait là.
+   *  Calculé au `dragstart` : `getData` est vide pendant un `dragover`. */
+  const [glisses, setGlisses] = useState<readonly string[] | null>(null)
   const fantomeRef = useRef<HTMLDivElement | null>(null)
 
   // **La limite repart à 120 dès qu'on change de famille ou de collection** —
@@ -559,46 +724,83 @@ export function EcranFamille({
   // premier était le gros (360 sujets pour rien). Écrire l'état pendant le
   // rendu relance la passe avant que le chargement ne parte, si bien qu'un seul
   // appel sort.
-  const cleDeLaGrille = `${famille} / ${collection ?? ""}`
+  const cleDeLaGrille = `${famille ?? ""} / ${collection ?? ""}`
   const [cleVue, setCleVue] = useState(cleDeLaGrille)
   if (cleVue !== cleDeLaGrille) {
     setCleVue(cleDeLaGrille)
     setLimite(120)
   }
 
-  // **Le « ＋ Nouvelle collection » du carnet ouvre le champ d'ici**, pour qu'il
-  // n'y ait qu'un seul endroit au monde où l'on nomme une collection.
-  useEffect(() => {
-    if (creerUnGroupe <= 0) return
-    setNouvelleOuverte(true)
-  }, [creerUnGroupe])
+  /** Les familles que cette page interroge : les quatre, une seule, ou aucune
+   *  — les équipements ne sortent pas de cette route. */
+  const famillesALire =
+    famille === null
+      ? FAMILLES_DE_SUJETS.map((f) => f.cle)
+      : famille === "equipement"
+        ? []
+        : [famille]
+  const signatureDesFamilles = famillesALire.join(",")
 
   useEffect(() => {
     let vivant = true
     setDonnee(null)
-    api
-      .familleDeSujets(famille, {
-        recherche: recherche.trim() || undefined,
-        filtre,
-        collection,
-        limite,
-      })
-      .then((recu) => {
+    const cles = signatureDesFamilles ? signatureDesFamilles.split(",") : []
+    Promise.all(
+      cles.map(
+        async (cleDeFamille) =>
+          [
+            cleDeFamille,
+            await api.familleDeSujets(cleDeFamille, {
+              recherche: recherche.trim() || undefined,
+              filtre,
+              collection,
+              limite,
+              tri,
+            }),
+          ] as const,
+      ),
+    )
+      .then((lues) => {
         if (!vivant) return
         // **Une réponse se lit, elle ne se croit pas.** Le double de `fetch`
         // des essais d'écran rend `{}` pour une route qu'il ne connaît pas, et
-        // `groupes` remonterait alors `undefined` au carnet — qui le tranche.
+        // `groupes` remonterait alors `undefined` au parent — qui le tranche.
+        const sujets = lues.flatMap(([cleDeFamille, recue]) =>
+          (recue.personnages ?? []).map((s) => ({ ...s, famille: cleDeFamille })),
+        )
+        const groupes = [
+          ...new Map(
+            lues.flatMap(([, recue]) => recue.groupes ?? []).map((g) => [g.identifiant, g]),
+          ).values(),
+        ].sort((a, b) => a.nom.localeCompare(b.nom, "fr"))
+        const filtres = lues.reduce(
+          (somme, [, recue]) => ({
+            tous: somme.tous + (recue.filtres?.tous ?? 0),
+            incomplets: somme.incomplets + (recue.filtres?.incomplets ?? 0),
+            "sans-description":
+              somme["sans-description"] + (recue.filtres?.["sans-description"] ?? 0),
+          }),
+          AUCUN_COMPTE,
+        )
         setDonnee({
-          personnages: recu.personnages ?? [],
-          groupes: recu.groupes ?? [],
-          filtres: recu.filtres ?? AUCUN_COMPTE,
-          total: recu.total ?? 0,
+          // Une seule famille : l'ordre est celui du serveur, et rien ne le
+          // retouche. Plusieurs : il faut bien recoudre les listes.
+          sujets: cles.length > 1 ? trierLesSujets(sujets, tri) : sujets,
+          groupes,
+          filtres,
+          total: lues.reduce((n, [, recue]) => n + (recue.total ?? 0), 0),
         })
-        surGroupes(recu.groupes ?? [])
+        if (lues.length > 0) setCollectionsConnues(groupes)
+        if (!recherche.trim() && !collection && filtre === "tous")
+          setComptes((avant) => ({
+            ...avant,
+            ...Object.fromEntries(lues.map(([k, recue]) => [k, recue.total ?? 0])),
+          }))
+        surGroupes(groupes)
       })
       .catch((erreur: unknown) => {
         if (!vivant) return
-        setDonnee({ personnages: [], groupes: [], filtres: AUCUN_COMPTE, total: 0 })
+        setDonnee({ sujets: [], groupes: [], filtres: AUCUN_COMPTE, total: 0 })
         surGroupes([])
         surErreur(erreur instanceof Refus ? erreur.message : "la famille n'a pas pu être lue")
       })
@@ -608,31 +810,95 @@ export function EcranFamille({
     // surGroupes et surErreur sont des rappels du parent, pas des données à
     // relire : les inclure ferait recharger la grille à chaque rendu du parent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [famille, collection, recherche, filtre, limite, rafraichi, version])
+  }, [signatureDesFamilles, collection, recherche, filtre, limite, tri, rafraichi, version])
 
-  const sujets = donnee?.personnages ?? []
-  const groupes = donnee?.groupes ?? []
+  const sujets = donnee?.sujets ?? []
+  const groupes = donnee ? donnee.groupes : collectionsConnues
   const total = donnee?.total ?? 0
   const filtres = donnee?.filtres ?? AUCUN_COMPTE
-  const groupeOuvert = groupes.find((g) => g.identifiant === collection) ?? null
+  const groupeOuvert = collectionsConnues.find((g) => g.identifiant === collection) ?? null
+
+  /** Les pièces d'équipement de la page. **Une pièce n'est dans aucune
+   *  collection** : dès qu'une collection est ouverte, il n'y en a aucune à
+   *  montrer. */
+  const equipements = useMemo(() => {
+    if (famille !== null && famille !== "equipement") return []
+    if (collection) return []
+    const cherche = recherche.trim().toLocaleLowerCase("fr")
+    return pieces
+      .filter(
+        (p) =>
+          `${p.nom} ${p.description}`.toLocaleLowerCase("fr").includes(cherche) &&
+          (filtre !== "sans-description" || !p.description.trim()),
+      )
+      .sort((a, b) => (tri === "nom-desc" ? -1 : 1) * a.nom.localeCompare(b.nom, "fr"))
+  }, [pieces, famille, collection, recherche, filtre, tri])
+
+  /** L'aperçu d'une pièce : le calque retenu sur un sujet qui la porte, sinon
+   *  son artwork, sinon rien — et la vignette dit « À créer » plutôt que de
+   *  montrer un cadre vide sans explication. */
+  const apercusDesPieces = useMemo(
+    () =>
+      new Map(
+        pieces.map((piece) => {
+          const cases = personnages.flatMap((p) => p.cases)
+          const calques = cases.flatMap((c) => c.calques[piece.identifiant] ?? [])
+          const retenus = new Set(cases.map((c) => c.retenus[piece.identifiant]))
+          const calque = calques.find((a) => retenus.has(a.identifiant)) ?? calques[0]
+          return [
+            piece.identifiant,
+            calque
+              ? vignetteAsset(calque, 128)
+              : piece.concept_arts[0]
+                ? api.imageCarte(piece.concept_arts[0], "")
+                : null,
+          ] as const
+        }),
+      ),
+    [pieces, personnages],
+  )
 
   // **Un monde vide n'a qu'un geste à proposer** (repris de l'ancien codex,
   // `C3`) : sur la famille entière, sans filtre ni recherche, le champ qui
   // nomme s'ouvre de lui-même plutôt que d'attendre un clic sur « Ajouter ».
   useEffect(() => {
-    if (donnee && donnee.total === 0 && collection === null && filtre === "tous" && !recherche.trim())
+    if (
+      nommeSurLeChamp &&
+      donnee &&
+      donnee.total === 0 &&
+      collection === null &&
+      filtre === "tous" &&
+      !recherche.trim()
+    )
       setCreationOuverte(true)
-  }, [donnee, collection, filtre, recherche])
+  }, [nommeSurLeChamp, donnee, collection, filtre, recherche])
 
-  const choisirCollection = useCallback((f: FiltreDeFamille) => {
-    setFiltre(f)
-    setLimite(120)
-  }, [])
+  const choisirFiltre = useCallback(
+    (f: FiltreDeFamille) => {
+      setFiltre(f)
+      setLimite(120)
+    },
+    [setFiltre],
+  )
 
-  const chercher = useCallback((texte: string) => {
-    setRecherche(texte)
-    setLimite(120)
-  }, [])
+  const chercher = useCallback(
+    (texte: string) => {
+      setRecherche(texte)
+      setLimite(120)
+    },
+    [setRecherche],
+  )
+
+  /** Ouvrir une collection, ou revenir à toute la famille. Le parent l'apprend
+   *  parce que le fil d'Ariane la nomme. */
+  const ouvrirLaCollection = useCallback(
+    (identifiant: string | null) => {
+      setCollection(identifiant)
+      setSelection([])
+      surCollection?.(identifiant)
+    },
+    [setCollection, surCollection],
+  )
 
   const basculerChoix = useCallback((identifiant: string) => {
     setSelection((avant) =>
@@ -659,64 +925,79 @@ export function EcranFamille({
     [modeSelection, basculerChoix, onOuvrir],
   )
 
-  /** Ce que chaque collection du jeu gagnerait si on lâchait `ids` dessus.
-   *
-   *  **Calculé au `dragstart`, pas au survol** : `getData` est vide pendant un
-   *  `dragover`, et le carnet — qui est l'autre cible de dépôt — n'a pas les
-   *  sujets de la page pour le savoir lui-même. */
-  const arrivantsParGroupe = useCallback(
-    (ids: readonly string[]): Record<string, number> =>
-      Object.fromEntries(
-        groupes.map((g) => [g.identifiant, arrivantsParmi(sujets, ids, g.identifiant).length]),
-      ),
-    [groupes, sujets],
-  )
-
   const prendreEnMain = useCallback(
     (identifiant: string) => (evenement: React.DragEvent<HTMLButtonElement>) => {
       const cible = selection.includes(identifiant) ? selection : [identifiant]
       if (cible !== selection) setSelection(cible)
-      evenement.dataTransfer.setData(GLISSE_DES_SUJETS, cible.join("\n"))
+      evenement.dataTransfer.setData(GLISSE_DES_SUJETS, ecrireLeGlisser(cible))
       evenement.dataTransfer.effectAllowed = "move"
-      surGlisser(cible, arrivantsParGroupe(cible))
+      setGlisses(cible)
       if (fantomeRef.current && typeof evenement.dataTransfer.setDragImage === "function") {
         fantomeRef.current.textContent =
           cible.length === 1 ? `1 ${mots.singulier}` : `${cible.length} ${mots.pluriel}`
         evenement.dataTransfer.setDragImage(fantomeRef.current, 16, 16)
       }
     },
-    [selection, surGlisser, arrivantsParGroupe, mots.singulier, mots.pluriel],
+    [selection, mots.singulier, mots.pluriel],
   )
 
   const finDeGlissement = useCallback(() => {
-    surGlisser(null)
-  }, [surGlisser])
+    setGlisses(null)
+    setSurvolee(null)
+  }, [])
 
+  /** Ranger, et **garder les refusés choisis** : réessayer doit porter sur ce
+   *  qui a manqué, pas sur tout. `allSettled`, jamais une boucle qui s'arrête
+   *  au premier refus. */
   const rangerDans = useCallback(
-    async (collection: string, ids: readonly string[]) => {
+    async (collectionVisee: string, ids: readonly string[], retirer = false) => {
       if (ids.length === 0) return
+      setOccupe(true)
       try {
-        for (const sujet of ids) await api.rangerSujet(collection, jeu, sujet)
+        const resultats = await Promise.allSettled(
+          ids.map((sujet) =>
+            retirer
+              ? api.retirerSujet(collectionVisee, jeu, sujet)
+              : api.rangerSujet(collectionVisee, jeu, sujet),
+          ),
+        )
+        const refuses = ids.filter((_, i) => resultats[i]!.status === "rejected")
+        setSelection([...refuses])
         setVersion((n) => n + 1)
         surRange()
-      } catch (erreur) {
-        surErreur(erreur instanceof Refus ? erreur.message : "le rangement a été refusé")
+        setRetourRangement(
+          `${ids.length - refuses.length} ${
+            ids.length - refuses.length > 1 ? "sujets" : "sujet"
+          } ${retirer ? "retirés de la collection" : "rangés"}. Les images restent conservées.`,
+        )
+        if (refuses.length)
+          surErreur(
+            `${refuses.length} rangement(s) n'ont pas abouti. Les sujets concernés restent sélectionnés pour réessayer.`,
+          )
+      } finally {
+        setOccupe(false)
       }
     },
     [jeu, surRange, surErreur],
   )
 
+  /** Lâcher sur une collection. **La charge utile se relit d'abord dans le
+   *  `DataTransfer`** — un seul type, un seul format — et l'état interne ne
+   *  sert que de filet, pour les navigateurs qui vident `getData` au drop. */
   const deposerSur = useCallback(
-    (collection: string) => {
-      const arrivants = arrivantsParmi(sujets, glisses ?? [], collection)
-      void rangerDans(collection, arrivants)
+    (collectionVisee: string, evenement: React.DragEvent<HTMLElement>) => {
+      const lus = lireLeGlisser(evenement.dataTransfer)
+      const ids = lus.length ? lus : (glisses ?? [])
+      const arrivants = arrivantsParmi(sujets, ids, collectionVisee)
+      setGlisses(null)
+      void rangerDans(collectionVisee, arrivants)
     },
     [sujets, glisses, rangerDans],
   )
 
   /** Nommer une collection, et y ranger ce qui est choisi — **s'il y a quelque
    *  chose de choisi**. Sans sélection, elle naît vide, et c'est justement le
-   *  cas où le carnet doit l'apprendre tout de suite : une collection vide
+   *  cas où le parent doit l'apprendre tout de suite : une collection vide
    *  n'apparaît sur la carte d'aucun sujet. */
   const creerEtRanger = useCallback(async () => {
     const nomSaisi = nomNouvelle.trim()
@@ -737,12 +1018,14 @@ export function EcranFamille({
   const montres = sujets.length
   const resteAChanger = montres < total
   const choisis = sujets.filter((s) => selection.includes(s.identifiant))
+  const filtresPoses = recherche.trim() !== "" || filtre !== "tous" || collection !== null
 
   // « Les 1 personnages » ne se dit pas, et une collection d'un seul sujet est
   // le cas ordinaire le jour où on la crée.
+  const nomDeLEcran = famille === null ? "Les sujets" : (nom ?? famille)
   const titre =
     total === 0 ? (
-      nom
+      nomDeLEcran
     ) : total === 1 ? (
       <>
         <span className="mesure">1</span> {mots.singulier}
@@ -753,13 +1036,65 @@ export function EcranFamille({
       </>
     )
 
+  const cibleAccepte = (evenement: React.DragEvent<HTMLElement>) =>
+    evenement.dataTransfer.types.includes(GLISSE_DES_SUJETS)
+
+  /** Une ligne de collection de la colonne de gauche — **et une cible de dépôt
+   *  qu'on voit sans rien avoir choisi**, contrairement aux puces du volet. */
+  const ligneDeCollection = (groupe: GroupeDeRangement) => {
+    const ouverte = collection === groupe.identifiant
+    const cetteSurvolee = survolee === `colonne:${groupe.identifiant}`
+    return (
+      <button
+        type="button"
+        key={groupe.identifiant}
+        data-collection-de-la-colonne={groupe.identifiant}
+        onClick={() => ouvrirLaCollection(groupe.identifiant)}
+        onDragOver={(e) => {
+          if (!cibleAccepte(e)) return
+          e.preventDefault()
+          setSurvolee(`colonne:${groupe.identifiant}`)
+        }}
+        onDragLeave={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return
+          setSurvolee((c) => (c === `colonne:${groupe.identifiant}` ? null : c))
+        }}
+        onDrop={(e) => {
+          if (!cibleAccepte(e)) return
+          e.preventDefault()
+          setSurvolee(null)
+          deposerSur(groupe.identifiant, e)
+        }}
+        aria-current={ouverte ? "page" : undefined}
+        className={[
+          "flex min-h-[26px] w-full items-center justify-between gap-[8px] rounded-5 px-[8px] text-left text-[12.5px]",
+          cetteSurvolee
+            ? "border border-dashed border-signal text-echec"
+            : ouverte
+              ? "bg-ligne-ouverte text-encre"
+              : "text-encre-2 hover:bg-papier-cote",
+        ].join(" ")}
+      >
+        <span className="truncate">{groupe.nom}</span>
+        <span className="mesure text-[11px] text-encre-3">
+          {cetteSurvolee
+            ? `${dejaParmi(sujets, glisses ?? [], groupe.identifiant)} + ${
+                arrivantsParmi(sujets, glisses ?? [], groupe.identifiant).length
+              }`
+            : groupe.sujets}
+        </span>
+      </button>
+    )
+  }
+
   return (
     // `bg-papier` sur la racine, comme `TableauDeBord.tsx` : le châssis autour
     // est encore sombre, et un écran de la V4 qui ne pose pas son fond se
     // retrouve à dessiner des cartes claires sur le noir de l'ancien atelier.
     <main
       data-ecran-famille
-      aria-label={`La famille ${nom}`}
+      data-grille-dassets
+      aria-label={famille === null ? "Les sujets du jeu" : `La famille ${nomDeLEcran}`}
       className="flex min-h-0 flex-1 overflow-hidden bg-papier"
     >
       {/* Le fantôme du glisser — hors écran, son contenu est écrit à la main au
@@ -771,13 +1106,113 @@ export function EcranFamille({
         className="pointer-events-none fixed left-[-1000px] top-[-1000px] flex items-center gap-[8px] rounded-8 border border-signal bg-carte px-[14px] py-[8px] text-[12px] text-encre"
       />
 
+      {/* ── La colonne des familles et des collections ─────────────────────
+          Elle vivait dans la seule porte « Les assets » ; la grille d'une
+          famille n'en avait aucune depuis la mort du carnet, et perdait du
+          même coup sa seconde cible de dépôt. */}
+      <nav
+        aria-label="Familles et collections"
+        className="defile w-navigation-atelier shrink-0 overflow-y-auto border-r border-trait px-[14px] py-[22px]"
+      >
+        <label className="mb-[8px] flex flex-col gap-[4px] text-[12px] text-encre-3">
+          Trouver une collection
+          <input
+            type="text"
+            value={rechercheDeCollection}
+            onChange={(e) => setRechercheDeCollection(e.target.value)}
+            className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12.5px] text-encre outline-none"
+          />
+        </label>
+        <button
+          type="button"
+          className={`mb-[8px] w-full text-left ${BOUTON}`}
+          aria-current={famille === null && !collection ? "page" : undefined}
+          onClick={() => {
+            ouvrirLaCollection(null)
+            surToutesLesFamilles?.()
+          }}
+        >
+          Toutes les familles
+        </button>
+        {FAMILLES.map((f) => (
+          <div className="mb-[8px]" key={f.cle}>
+            <button
+              type="button"
+              aria-expanded={famille === f.cle}
+              onClick={() => {
+                ouvrirLaCollection(null)
+                surFamille?.(f.cle)
+              }}
+              className={[
+                "flex min-h-[34px] w-full items-center gap-[8px] rounded-7 px-[8px] text-left text-[13px]",
+                famille === f.cle ? "bg-ligne-ouverte text-encre" : "text-encre-2 hover:bg-papier-cote",
+              ].join(" ")}
+            >
+              <span aria-hidden>{famille === f.cle ? "▾" : "▸"}</span>
+              <span className="truncate">{f.nom}</span>
+              <span className="mesure ml-auto text-[11px] text-encre-3">
+                {f.cle === "equipement" ? pieces.length : (comptes[f.cle] ?? "")}
+              </span>
+            </button>
+            {(famille === f.cle || rechercheDeCollection) && f.cle !== "equipement" && (
+              <div className="ml-[14px] border-l border-trait pl-[8px]">
+                <button
+                  type="button"
+                  className="min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-encre-2 hover:text-encre"
+                  onClick={() => ouvrirLaCollection(null)}
+                >
+                  Tout voir
+                </button>
+                {collectionsConnues
+                  .filter((g) =>
+                    g.nom
+                      .toLocaleLowerCase("fr")
+                      .includes(rechercheDeCollection.toLocaleLowerCase("fr")),
+                  )
+                  .map(ligneDeCollection)}
+                <button
+                  type="button"
+                  className="min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-signal"
+                  onClick={() => setNouvelleOuverte(true)}
+                >
+                  ＋ Collection
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+        {(onTuiles || onSons) && (
+          <div className="mt-[14px] space-y-[8px] border-t border-trait pt-[14px]">
+            {onTuiles && (
+              <button type="button" className={`w-full text-left ${BOUTON}`} onClick={onTuiles}>
+                Les tuiles
+              </button>
+            )}
+            {onSons && (
+              <button type="button" className={`w-full text-left ${BOUTON}`} onClick={onSons}>
+                Les sons
+              </button>
+            )}
+          </div>
+        )}
+        {onGalerie && (
+          <button
+            type="button"
+            className="mt-[14px] min-h-[26px] text-left text-[12px] text-encre-3 underline"
+            onClick={onGalerie}
+          >
+            Tous les résultats dans la galerie
+          </button>
+        )}
+      </nav>
+
       <section className="flex min-h-0 flex-1 flex-col gap-[14px] overflow-hidden px-[30px] pt-[22px]">
         {/* ── Le fil, le titre, les actions ─────────────────────────────── */}
         <div className="flex items-baseline gap-[8px] text-[12.5px] text-encre-3">
-          <span>{nom}</span>
+          <span>{nomDeLEcran}</span>
           <span aria-hidden>›</span>
-          {/* Tant que la grille charge, `groupes` est vide et le nom de la
-              collection reste inconnu : on n'écrit rien plutôt qu'« Tous »,
+          {/* Tant que la grille charge, les collections ne sont pas connues et
+              le nom reste introuvable : on n'écrit rien plutôt qu'« Tous »,
               qui serait faux. */}
           <span className="text-encre">
             {collection === null ? "Tous" : (groupeOuvert?.nom ?? "")}
@@ -786,25 +1221,33 @@ export function EcranFamille({
 
         <div className="flex items-end justify-between gap-[22px]">
           <div className="flex flex-col gap-[4px]">
-            <h1 className="font-serif text-[38px] leading-[1.05] text-encre">{titre}</h1>
+            {famille === null ? (
+              <h1 className="font-serif text-[38px] leading-[1.05] text-encre">Les sujets</h1>
+            ) : (
+              <h1 className="font-serif text-[38px] leading-[1.05] text-encre">{titre}</h1>
+            )}
             <p className="text-[13px] text-encre-2">
-              {groupes.length > 0
-                ? `Rangés dans ${groupes.length} collections. Un même ${mots.singulier} peut être dans plusieurs.`
-                : "Aucune collection encore. Une collection range sans contraindre."}
+              {famille === null
+                ? "Les sujets du jeu, rangés par famille et par collection."
+                : collectionsConnues.length > 0
+                  ? `Rangés dans ${collectionsConnues.length} collections. Un même ${mots.singulier} peut être dans plusieurs.`
+                  : "Aucune collection encore. Une collection range sans contraindre."}
             </p>
           </div>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-[8px]">
-            <button
-              type="button"
-              onClick={surReglages}
-              className="flex h-[34px] shrink-0 items-center gap-[4px] rounded-7 border border-trait bg-carte px-[14px] text-[13px] text-encre transition-colors duration-120 hover:border-contour"
-            >
-              <span>Réglages de la famille</span>
-              <span aria-hidden className="text-encre-4">
-                ›
-              </span>
-            </button>
-            {creationOuverte ? (
+            {nommeSurLeChamp && (
+              <button
+                type="button"
+                onClick={surReglages}
+                className="flex h-[34px] shrink-0 items-center gap-[4px] rounded-7 border border-trait bg-carte px-[14px] text-[13px] text-encre transition-colors duration-120 hover:border-contour"
+              >
+                <span>Réglages de la famille</span>
+                <span aria-hidden className="text-encre-4">
+                  ›
+                </span>
+              </button>
+            )}
+            {nommeSurLeChamp && creationOuverte ? (
               <>
                 <input
                   ref={champDeCreation}
@@ -815,37 +1258,47 @@ export function EcranFamille({
                     if (e.key === "Escape") setCreationOuverte(false)
                   }}
                   disabled={creationEnCours}
-                  placeholder={PLACEHOLDER_DE_LA_FAMILLE[famille] ?? "nommer une chose du jeu"}
+                  placeholder={PLACEHOLDER_DE_LA_FAMILLE[famille ?? ""] ?? "nommer une chose du jeu"}
                   aria-label="Nom de la chose du jeu à créer"
                   className="h-[34px] min-w-0 flex-1 rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre outline-none"
                 />
                 <span className="shrink-0 text-[11px] text-encre-4">Entrée le crée</span>
               </>
             ) : (
+              // **Un seul bouton rouille par écran** (`docs/DESIGN.md` § Les onze
+              // pièces) : c'est celui-ci, et son libellé change avec ce qu'on
+              // peut faire ici. Dans une famille, nommer suffit à créer ; sans
+              // famille choisie, il faut d'abord dire laquelle, et c'est le
+              // guichet qui le demande.
               <button
                 type="button"
-                onClick={() => setCreationOuverte(true)}
+                onClick={() =>
+                  // Sur *Les équipements*, le guichet s'ouvre déjà sur la bonne
+                  // famille : on y vient pour créer une pièce, pas un
+                  // personnage. Sans famille choisie, il le demande.
+                  nommeSurLeChamp ? setCreationOuverte(true) : onCreer?.(famille ?? "personnages")
+                }
                 className="h-[34px] shrink-0 rounded-7 bg-signal px-[14px] text-[13px] text-encre-sur-signal transition-colors duration-120 hover:bg-echec"
               >
-                Ajouter un {mots.singulier}
+                {nommeSurLeChamp ? `Ajouter un ${mots.singulier}` : "Créer un sujet"}
               </button>
             )}
           </div>
         </div>
 
         {/* ── La barre d'outils ──────────────────────────────────────────── */}
-        <div className="flex items-center gap-[8px]">
-          <span className="flex h-[34px] shrink-0 items-center gap-[8px] rounded-7 border border-trait bg-carte px-[14px]">
+        <div className="flex flex-wrap items-center gap-[8px]">
+          <span className="flex h-[34px] flex-1 items-center gap-[8px] rounded-7 border border-trait bg-carte px-[14px]">
             <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-encre-4)" strokeWidth="2">
               <circle cx="11" cy="11" r="7" />
               <path d="M20 20l-4-4" />
             </svg>
             <input
-              type="text"
+              type="search"
               value={recherche}
               onChange={(e) => chercher(e.target.value)}
               placeholder="Chercher…"
-              aria-label={`Chercher un ${mots.singulier}`}
+              aria-label={famille === null ? "Rechercher un sujet" : `Chercher un ${mots.singulier}`}
               className="w-full bg-transparent text-[13px] text-encre outline-none placeholder:text-encre-4"
             />
           </span>
@@ -863,19 +1316,33 @@ export function EcranFamille({
           </div>
 
           <div role="tablist" aria-label="Le filtre" className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]">
-            <Onglet actif={filtre === "tous"} onClic={() => choisirCollection("tous")}>
-              Tous
+            <Onglet actif={filtre === "tous"} onClic={() => choisirFiltre("tous")}>
+              Tous les sujets
             </Onglet>
-            <Onglet actif={filtre === "incomplets"} onClic={() => choisirCollection("incomplets")}>
+            <Onglet actif={filtre === "incomplets"} onClic={() => choisirFiltre("incomplets")}>
               Incomplets <span className="mesure ml-[4px]">{filtres.incomplets}</span>
             </Onglet>
             <Onglet
               actif={filtre === "sans-description"}
-              onClic={() => choisirCollection("sans-description")}
+              onClic={() => choisirFiltre("sans-description")}
             >
               Sans description <span className="mesure ml-[4px]">{filtres["sans-description"]}</span>
             </Onglet>
           </div>
+
+          <label className="flex items-center gap-[4px] text-[12px] text-encre-3">
+            Trier
+            <select
+              value={tri}
+              onChange={(e) => setTri(e.target.value as TriDesSujets)}
+              aria-label="Trier les sujets"
+              className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12.5px] text-encre"
+            >
+              <option value="nom">Nom A → Z</option>
+              <option value="nom-desc">Nom Z → A</option>
+              <option value="resultats">Plus de résultats</option>
+            </select>
+          </label>
 
           <button
             type="button"
@@ -890,7 +1357,38 @@ export function EcranFamille({
           >
             Sélection
           </button>
+          {/* **Cocher la page d'un coup** — le geste de l'ancienne porte
+              « Les assets ». Il vit à côté du bouton qui arme le mode, et non
+              dans la barre de masse : celle-ci ne paraît qu'avec une sélection,
+              et le geste qui la crée ne peut pas attendre qu'elle existe. */}
+          {modeSelection && (
+            <button
+              type="button"
+              disabled={sujets.length === 0 || occupe}
+              onClick={() => setSelection(sujets.map((s) => s.identifiant))}
+              className={`shrink-0 ${BOUTON}`}
+            >
+              Sélectionner cette page
+            </button>
+          )}
         </div>
+
+        {filtresPoses && (
+          <div className="flex flex-wrap items-center gap-[8px] text-[12.5px]">
+            <button
+              type="button"
+              className="text-encre-2 underline"
+              onClick={() => {
+                setRecherche("")
+                setFiltre("tous")
+                ouvrirLaCollection(null)
+                setLimite(120)
+              }}
+            >
+              Réinitialiser les filtres
+            </button>
+          </div>
+        )}
 
         {/* ── Nommer une collection sans rien avoir choisi ────────────────── */}
         {nouvelleOuverte && selection.length === 0 && (
@@ -899,7 +1397,7 @@ export function EcranFamille({
             className="flex items-center gap-[8px] rounded-8 border border-trait bg-carte px-[14px] py-[8px]"
           >
             <span className="text-[12.5px] text-encre-2">
-              Une collection de plus dans {nom.toLowerCase()} :
+              Une collection de plus dans {nomDeLEcran.toLowerCase()} :
             </span>
             <ChampDeCollection
               nom={nomNouvelle}
@@ -921,7 +1419,7 @@ export function EcranFamille({
         {selection.length > 0 && (
           <div
             data-barre-de-masse
-            className="flex items-center gap-[8px] rounded-8 border border-trait-echec bg-fond-echec px-[14px] py-[8px]"
+            className="flex flex-wrap items-center gap-[8px] rounded-8 border border-trait-echec bg-fond-echec px-[14px] py-[8px]"
           >
             <span className="whitespace-nowrap text-[13px] font-medium text-echec">
               <span className="mesure">{selection.length}</span>{" "}
@@ -932,11 +1430,22 @@ export function EcranFamille({
             </span>
             <button
               type="button"
+              disabled={occupe}
               onClick={() => setRangerOuvert((v) => !v)}
-              className="h-[26px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre"
+              className="h-[26px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre disabled:opacity-50"
             >
               Ranger dans…
             </button>
+            {collection && (
+              <button
+                type="button"
+                disabled={occupe}
+                onClick={() => void rangerDans(collection, selection, true)}
+                className="h-[26px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre disabled:opacity-50"
+              >
+                Retirer de cette collection
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setSelection([])}
@@ -945,6 +1454,12 @@ export function EcranFamille({
               Ne rien choisir
             </button>
           </div>
+        )}
+
+        {retourRangement && (
+          <p role="status" className="text-[12px] text-encre-ok">
+            {retourRangement}
+          </p>
         )}
 
         {rangerOuvert && selection.length > 0 && (
@@ -970,42 +1485,81 @@ export function EcranFamille({
 
         {/* ── Les trois vues ──────────────────────────────────────────────── */}
         {vue === "grille" && (
-          <div
-            data-grille-de-sujets
-            className="defile min-h-0 flex-1 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] content-start gap-[8px] overflow-y-auto"
-          >
-            {sujets.map((sujet) => (
-              <CarteDeGrille
-                key={sujet.identifiant}
-                sujet={sujet}
-                choisi={selection.includes(sujet.identifiant)}
-                onChoisir={() => surClicDeCarte(sujet.identifiant)}
-                onPrendreEnMain={prendreEnMain(sujet.identifiant)}
-                onFinDeGlissement={finDeGlissement}
-              />
-            ))}
+          <div className="defile min-h-0 flex-1 overflow-y-auto">
+            <div
+              data-grille-de-sujets
+              className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] content-start gap-[8px]"
+            >
+              {sujets.map((sujet) => (
+                <CarteDeGrille
+                  key={sujet.identifiant}
+                  sujet={sujet}
+                  choisi={selection.includes(sujet.identifiant)}
+                  onChoisir={() => surClicDeCarte(sujet.identifiant)}
+                  onPrendreEnMain={prendreEnMain(sujet.identifiant)}
+                  onFinDeGlissement={finDeGlissement}
+                />
+              ))}
+            </div>
+            {equipements.length > 0 && (
+              <ul
+                data-equipements
+                className="mt-[14px] grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] content-start gap-[8px]"
+              >
+                {equipements.map((piece) => (
+                  <LigneDePiece
+                    key={piece.identifiant}
+                    piece={piece}
+                    apercu={apercusDesPieces.get(piece.identifiant) ?? null}
+                    enGrille
+                    onOuvrir={() => onPiece?.(piece.identifiant)}
+                  />
+                ))}
+              </ul>
+            )}
           </div>
         )}
 
         {vue === "liste" && (
-          <div
-            data-liste-de-sujets
-            className="defile min-h-0 flex-1 flex flex-col gap-[4px] overflow-y-auto"
-          >
-            {sujets.map((sujet) => (
-              <LigneDeListe
-                key={sujet.identifiant}
-                sujet={sujet}
-                choisi={selection.includes(sujet.identifiant)}
-                onChoisir={() => surClicDeCarte(sujet.identifiant)}
-                onPrendreEnMain={prendreEnMain(sujet.identifiant)}
-                onFinDeGlissement={finDeGlissement}
-              />
-            ))}
+          <div className="defile min-h-0 flex-1 overflow-y-auto">
+            <div data-liste-de-sujets className="flex flex-col gap-[4px]">
+              {sujets.map((sujet) => (
+                <LigneDeListe
+                  key={sujet.identifiant}
+                  sujet={sujet}
+                  choisi={selection.includes(sujet.identifiant)}
+                  onChoisir={() => surClicDeCarte(sujet.identifiant)}
+                  onPrendreEnMain={prendreEnMain(sujet.identifiant)}
+                  onFinDeGlissement={finDeGlissement}
+                />
+              ))}
+            </div>
+            {equipements.length > 0 && (
+              <ul data-equipements className="mt-[14px] flex flex-col gap-[4px]">
+                {equipements.map((piece) => (
+                  <LigneDePiece
+                    key={piece.identifiant}
+                    piece={piece}
+                    apercu={apercusDesPieces.get(piece.identifiant) ?? null}
+                    enGrille={false}
+                    onOuvrir={() => onPiece?.(piece.identifiant)}
+                  />
+                ))}
+              </ul>
+            )}
           </div>
         )}
 
         {vue === "poses" && <TableauDesPoses sujets={sujets} />}
+
+        {donnee && total === 0 && equipements.length === 0 && (
+          <div className="rounded-8 border border-dashed border-contour p-[22px]">
+            <h2 className="font-serif text-[25px]">Aucun sujet pour ces filtres</h2>
+            <p className="mt-[8px] text-[13px] text-encre-3">
+              Choisissez toutes les familles, une autre collection, ou créez le premier.
+            </p>
+          </div>
+        )}
 
         {/* ── Le pied de grille ───────────────────────────────────────────── */}
         <div className="flex items-center justify-between gap-[22px] border-t border-trait py-[8px] text-[12.5px] text-encre-3">
@@ -1013,13 +1567,20 @@ export function EcranFamille({
             <span>
               <span className="mesure">{montres}</span> des <span className="mesure">{total}</span> affichés.
             </span>
+            {equipements.length > 0 && (
+              <span>
+                <span className="mesure">{equipements.length}</span>{" "}
+                {equipements.length > 1 ? "équipements" : "équipement"}. Ils se retrouvent par leur
+                nom et leurs emplois ; une collection ne les range pas.
+              </span>
+            )}
             {resteAChanger && (
               <button
                 type="button"
                 onClick={() => setLimite((l) => l + 120)}
                 className="h-[26px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre"
               >
-                Charger la suite
+                Afficher davantage de sujets
               </button>
             )}
             {totalIncomplets > 0 && (
@@ -1040,7 +1601,7 @@ export function EcranFamille({
           {totalIncomplets > 0 && filtre !== "incomplets" && (
             <button
               type="button"
-              onClick={() => choisirCollection("incomplets")}
+              onClick={() => choisirFiltre("incomplets")}
               className="whitespace-nowrap text-[12.5px] text-encre-2 underline"
             >
               Voir seulement ce qui manque ›
@@ -1110,7 +1671,7 @@ export function EcranFamille({
                     survolee={cetteSurvolee}
                     arrivants={arrivantsParmi(sujets, glisses ?? [], groupe.identifiant).length}
                     onDragOver={(e) => {
-                      if (!e.dataTransfer.types.includes(GLISSE_DES_SUJETS)) return
+                      if (!cibleAccepte(e)) return
                       e.preventDefault()
                       setSurvolee(groupe.identifiant)
                     }}
@@ -1119,10 +1680,10 @@ export function EcranFamille({
                       setSurvolee((c) => (c === groupe.identifiant ? null : c))
                     }}
                     onDrop={(e) => {
-                      if (!e.dataTransfer.types.includes(GLISSE_DES_SUJETS)) return
+                      if (!cibleAccepte(e)) return
                       e.preventDefault()
                       setSurvolee(null)
-                      deposerSur(groupe.identifiant)
+                      deposerSur(groupe.identifiant, e)
                     }}
                   />
                 )

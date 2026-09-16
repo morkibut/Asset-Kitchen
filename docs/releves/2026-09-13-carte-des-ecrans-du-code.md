@@ -33,7 +33,7 @@ Sept portes dans la colonne de gauche (`NavigationAtelier.tsx`) :
   - vue grille → `Tableau` · vue toile → `Toile` + `Reserve`
   - côté *Ambiances et couleurs* → `CoteAmbiancesEtCouleurs`
   - découper une carte → lieu `carte` → `EcranDecoupe`
-- **Les assets** → lieu `bibliotheque` → `BibliothequeDesAssets`
+- **Les assets** → lieu `bibliotheque` → `EcranFamille` (sans famille : les quatre d'un coup)
 - **Galerie** → lieu `galerie` → `Galerie`
   - une planche à déplier → `EcranDepliage`
   - un clip → lieu `montage` → `EcranMontage`
@@ -97,10 +97,11 @@ Voir *Les écrans morts*.
 - **Ce qu'il fait** : taille une planche ou une carte en plusieurs images (et en bandes).
 - **Fichier** : `interface/src/composants/Decoupe.tsx`
 
-### BibliothequeDesAssets — « Les assets »
-- **On y arrive par** : colonne de gauche → *Les assets* ; ou *Les assets* depuis le tableau de bord.
-- **Ce qu'il fait** : la liste des sujets et des équipements du jeu, par famille, avec recherche, collections et tri.
-- **Fichier** : `interface/src/composants/BibliothequeDesAssets.tsx`
+### EcranFamille — « Les sujets », et la grille d'une famille
+- **On y arrive par** : colonne de gauche → *Les sujets* ; ou *Les sujets* depuis le tableau de bord ; ou en cliquant une famille dans la colonne de l'écran lui-même.
+- **Ce qu'il fait** : la liste des sujets et des équipements du jeu, par famille, avec recherche, filtres, collections, tri, glisser-déposer et trois vues.
+- **RP7 (16 septembre 2026)** : c'est la fusion de cet écran et de l'ancien `BibliothequeDesAssets.tsx`, qui a disparu — c'était une seconde grille d'assets faisant le même travail. Voir *Les doublons*.
+- **Fichier** : `interface/src/composants/Famille.tsx`
 
 ### Galerie — « Galerie »
 - **On y arrive par** : colonne de gauche → *Galerie* ; c'est aussi l'écran de départ à l'ouverture.
@@ -437,12 +438,13 @@ Ils ne s'ouvrent pas seuls : ils vivent dans un des écrans ci-dessus. Tous sont
 - **Lequel l'auteur atteint** : **les deux.** `ImporterIntelligemment` par le bouton *Importer…* du bandeau ; `ImporterPourUnSujet` par une rangée vide de l'onglet *Images fixes*.
 - **Fichiers** : `interface/src/composants/ImporterIntelligemment.tsx`, `interface/src/composants/ImporterPourUnSujet.tsx`
 
-### BibliothequeDesAssets et EcranFamille font le même travail
-- **Ce que fait `BibliothequeDesAssets`** : la porte *Les assets*. Elle interroge `api.familleDeSujets` pour chaque famille, avec recherche, filtre (tous / incomplets / sans description), collection, tri, vue liste ou grille, sélection multiple et rangement en collection. Elle montre aussi les pièces d'équipement, et porte les boutons *Tuiles* et *Sons*.
-- **Ce que fait `EcranFamille`** : la grille d'**une** famille. Elle interroge la même route `api.familleDeSujets`, avec recherche, les mêmes trois filtres, la collection ouverte, un volet de droite, le glisser-déposer vers les collections, et *nommer une chose* pour créer un sujet.
-- **Ce qui les sépare vraiment** : la portée (toutes les familles contre une seule) et deux gestes que la seconde a en plus — le glisser-déposer et les réglages de famille. Tout le reste est la même lecture du même serveur. `EcranFamille` a de plus été dessiné pour vivre à côté du carnet, qui est mort : son champ de nouvelle collection ne s'ouvre plus, et sa seconde cible de dépôt a disparu avec le carnet.
-- **Lequel l'auteur atteint** : **les deux.** `BibliothequeDesAssets` par la porte *Les assets* ; `EcranFamille` en cliquant une famille depuis le tableau de bord ou depuis *Les assets* — c'est-à-dire depuis l'autre.
-- **Fichiers** : `interface/src/composants/BibliothequeDesAssets.tsx`, `interface/src/composants/Famille.tsx`
+### BibliothequeDesAssets et EcranFamille font le même travail — **résolu par `RP7`, le 16 septembre 2026**
+- **Ce qui reste** : `EcranFamille` seul, dans `interface/src/composants/Famille.tsx`. Monté sans famille il montre les quatre d'un coup — c'est la porte *Les sujets* ; monté sur une famille il la montre seule. `BibliothequeDesAssets.tsx` **a été retiré**, et sa colonne des familles et des collections est passée dans l'écran unique. La suite du relevé décrit l'état d'avant.
+- **Ce que faisait `BibliothequeDesAssets`** : la porte *Les assets*. Elle interrogeait `api.familleDeSujets` pour chaque famille, avec recherche, filtre (tous / incomplets / sans description), collection, tri, vue liste ou grille, sélection multiple et rangement en collection. Elle montrait aussi les pièces d'équipement, et portait les boutons *Tuiles* et *Sons*.
+- **Ce que faisait `EcranFamille`** : la grille d'**une** famille. Elle interrogeait la même route `api.familleDeSujets`, avec recherche, les mêmes trois filtres, la collection ouverte, un volet de droite, le glisser-déposer vers les collections, la vue *Les poses*, et *nommer une chose* pour créer un sujet.
+- **Ce qui les séparait vraiment** : la portée (toutes les familles contre une seule) et deux gestes que la seconde avait en plus — le glisser-déposer et les réglages de famille. Tout le reste était la même lecture du même serveur. `EcranFamille` avait de plus été dessiné pour vivre à côté du carnet, qui est mort : son champ de nouvelle collection ne s'ouvrait plus, et sa seconde cible de dépôt avait disparu avec lui. **Les deux employaient aussi deux types de glisser incompatibles** — du JSON sous `application/x-asset-kitchen-library-subjects` d'un côté, des identifiants séparés par un saut de ligne sous `application/x-sujets-atelier` de l'autre : attraper une carte dans l'un et la lâcher dans l'autre ne faisait rien. Le second l'a emporté.
+- **Lequel l'auteur atteignait** : **les deux.** `BibliothequeDesAssets` par la porte *Les assets* ; `EcranFamille` en cliquant une famille depuis le tableau de bord ou depuis *Les assets* — c'est-à-dire depuis l'autre.
+- **Fichiers** : `interface/src/composants/Famille.tsx` (reste), `interface/src/composants/BibliothequeDesAssets.tsx` (retiré).
 
 ### BibliothequePourImage et ChoisirImageEquipement font le même travail
 - **Ce que fait `BibliothequePourImage`** : une grille de vignettes de 128 px, lue par `api.assets({ recherche, collection, favoris, limite })`, avec une recherche, un choix de collection, une case *Favoris*, un bouton *Afficher les suivantes*, et l'aperçu en grand au survol. Un clic choisit l'image.
@@ -462,8 +464,9 @@ Ils ne s'ouvrent pas seuls : ils vivent dans un des écrans ci-dessus. Tous sont
 
 ## Les douteux
 
-### Le glisser-déposer d'EcranFamille
-- **Ce qui empêche de trancher** : l'écran calcule ce qu'on traîne et le remonte à `App.tsx` (`surGlisser` → l'état `glisses`), qui le lui rend aussitôt et ne s'en sert nulle part ailleurs. La deuxième cible de dépôt vivait dans le carnet, qui est mort. Les cibles écrites dans le fichier lui-même — les puces du panneau *Les ranger* — ont l'air intactes, mais je n'ai pas pu vérifier au navigateur que le dépôt aboutit encore. **À essayer à la main** : ouvrir une famille, traîner un sujet sur une puce de collection, et voir si le compte bouge.
+### Le glisser-déposer d'EcranFamille — **tranché par `RP7`, le 16 septembre 2026**
+- **Ce qui empêchait de trancher** : l'écran calculait ce qu'on traîne et le remontait à `App.tsx` (`surGlisser` → l'état `glisses`), qui le lui rendait aussitôt et ne s'en servait nulle part ailleurs. La deuxième cible de dépôt vivait dans le carnet, qui est mort.
+- **Ce qui a été fait** : l'aller-retour par le parent est supprimé — les deux cibles sont maintenant dans l'écran, les puces du volet et les lignes de collection de la colonne de gauche, revenue avec la fusion. Un seul type, `application/x-sujets-atelier`, et la charge utile voyage vraiment : deux essais de `Famille.test.tsx` la relisent au `drop` avec un `DataTransfer` doublé, un par cible.
 
 ### Le journal des appels ratés
 - **Ce qui empêche de trancher** : il vivait dans `Arbre.tsx`, qui est mort. Je n'ai trouvé aucun autre écran qui liste les générations en échec — `EcranDepenses` liste ce qui a été dépensé, la galerie montre ce qui est en cours. Il se peut qu'une de ces deux listes couvre le besoin ; il se peut aussi que la capacité soit simplement perdue. **Pour trancher, il faudrait** savoir si un appel raté apparaît quelque part dans les dépenses.

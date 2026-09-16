@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { api, type Appel, type Generation, type GrilleDeFamille, type SujetDeLaGrille, type Personnage } from "./api"
-import { BibliothequeDesAssets } from "./composants/BibliothequeDesAssets"
+import { EcranFamille } from "./composants/Famille"
 import { Fabrications } from "./composants/Fabrications"
 import { entrer, poser, racine, sortir } from "./lieux"
 import { SourcesDuSujet } from "./composants/SourcesDuSujet"
@@ -9,10 +9,20 @@ import { SourcesDuSujet } from "./composants/SourcesDuSujet"
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 const vide = (): GrilleDeFamille => ({ personnages: [], groupes: [], filtres: { tous: 0, incomplets: 0, "sans-description": 0 }, total: 0 })
 const sujet = (id: string, nom: string): SujetDeLaGrille => ({ identifiant: id, projet: "jeu", nom, description: "Un héros", type: "personnage", cree_le: 1, collections: [{ identifiant: "heros", nom: "Héros" }], vignette: { identifiant: `image-${id}`, empreinte: "v1" }, compte: { images: { fait: 1, attendu: 1 }, bandes: { fait: 0, attendu: 4 }, poses: { fait: 1, attendu: 4 }, complet: true, detail: [] } })
+// **La porte « Les sujets » et la grille d'une famille sont le même composant**
+// depuis `RP7` (16 septembre 2026) : `BibliothequeDesAssets.tsx` a disparu, et
+// `EcranFamille` monté sans famille montre les quatre d'un coup.
 function monterBibliotheque() {
   const ouvrir = vi.fn()
   const organiser = vi.fn()
-  render(<BibliothequeDesAssets jeu="jeu" pieces={[]} rafraichi={0} onOuvrir={ouvrir} onPiece={vi.fn()} onFamille={organiser} onGalerie={vi.fn()} />)
+  render(
+    <EcranFamille famille={null} jeu="jeu" pieces={[]} rafraichi={0}
+      surGroupes={vi.fn()} surRange={vi.fn()} surReglages={vi.fn()} surErreur={vi.fn()}
+      onOuvrir={ouvrir} onCree={vi.fn()} onPiece={vi.fn()} surFamille={organiser} onGalerie={vi.fn()} />,
+  )
+  // La liste nomme le type et les collections ; la grille, elle, ne montre que
+  // la vignette et les deux comptes.
+  fireEvent.click(screen.getByRole("tab", { name: "La liste" }))
   return { ouvrir, organiser }
 }
 
@@ -28,24 +38,25 @@ describe("L’atelier unifié · bibliothèque et fabrications réelles", () => 
   it("cherche côté serveur, affiche les deux couvertures et ouvre la vraie fiche", async () => {
     const lister = vi.spyOn(api, "familleDeSujets").mockImplementation(async (famille, options) => famille === "personnages" && (!options?.recherche || options.recherche === "pèlerin") ? { ...vide(), personnages: [sujet("pelerin", "Le pèlerin")], total: 1 } : vide())
     const { ouvrir } = monterBibliotheque()
-    const carte = await screen.findByRole("button", { name: /Le pèlerin/ })
-    expect(carte).toHaveTextContent("Images 1/1 · Animations 0/4")
-    expect(carte).toHaveTextContent("Héros")
-    fireEvent.click(carte)
+    const ligne = (await screen.findByText("Le pèlerin")).closest("[data-ligne-de-sujet]") as HTMLElement
+    expect(ligne).toHaveTextContent("1 / 4")
+    expect(ligne).toHaveTextContent("1 im.")
+    expect(ligne).toHaveTextContent("Héros")
+    fireEvent.click(ligne)
     expect(ouvrir).toHaveBeenCalledWith("pelerin")
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "pèlerin" } })
-    await waitFor(() => expect(lister).toHaveBeenCalledWith("personnages", expect.objectContaining({ recherche: "pèlerin", limite: 60 })))
+    await waitFor(() => expect(lister).toHaveBeenCalledWith("personnages", expect.objectContaining({ recherche: "pèlerin", limite: 120 })))
     expect(lister).toHaveBeenCalledWith("objets", expect.objectContaining({ recherche: "pèlerin" }))
   })
 
   it("ne compte pas une page comme toute la famille et charge la suite", async () => {
-    const lister = vi.spyOn(api, "familleDeSujets").mockImplementation(async (famille, options) => famille === "personnages" ? { ...vide(), personnages: options?.limite === 120 ? [sujet("a", "Alpha"), sujet("b", "Bêta")] : [sujet("a", "Alpha")], total: 2 } : vide())
+    const lister = vi.spyOn(api, "familleDeSujets").mockImplementation(async (famille, options) => famille === "personnages" ? { ...vide(), personnages: (options?.limite ?? 0) >= 240 ? [sujet("a", "Alpha"), sujet("b", "Bêta")] : [sujet("a", "Alpha")], total: 2 } : vide())
     monterBibliotheque()
-    expect(await screen.findByText("1 affichés sur 2. La recherche porte sur toute la famille.")).toBeVisible()
-    fireEvent.click(screen.getByRole("button", { name: "Afficher davantage d’assets" }))
-    expect(await screen.findByRole("button", { name: /Bêta/ })).toBeVisible()
-    expect(lister).toHaveBeenCalledWith("personnages", expect.objectContaining({ limite: 120 }))
-    expect(screen.queryByRole("button", { name: "Afficher davantage d’assets" })).not.toBeInTheDocument()
+    await waitFor(() => expect(document.body.textContent).toMatch(/1 des 2 affichés/))
+    fireEvent.click(screen.getByRole("button", { name: "Afficher davantage de sujets" }))
+    expect(await screen.findByText("Bêta")).toBeVisible()
+    expect(lister).toHaveBeenCalledWith("personnages", expect.objectContaining({ limite: 240 }))
+    expect(screen.queryByRole("button", { name: "Afficher davantage de sujets" })).not.toBeInTheDocument()
   })
 
   it("une ancienne recherche retardée ne remplace pas la recherche courante", async () => {
@@ -58,9 +69,9 @@ describe("L’atelier unifié · bibliothèque et fabrications réelles", () => 
     monterBibliotheque()
     await waitFor(() => expect(finir).toBeTypeOf("function"))
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "bêta" } })
-    await screen.findByRole("button", { name: /Bêta/ })
+    await screen.findByText("Bêta")
     finir({ ...vide(), personnages: [sujet("a", "Alpha")], total: 1 })
-    await waitFor(() => expect(screen.queryByRole("button", { name: /Alpha/ })).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.queryByText("Alpha")).not.toBeInTheDocument())
   })
 
   it("retrouve un clip après fermeture et fusionne journal et chantier sans doublon", async () => {

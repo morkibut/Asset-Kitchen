@@ -459,7 +459,7 @@ vient, et la pagination porte *Suivant* / *Précédent* au lieu d'« Afficher le
 - [x] L'invariant tient : cette grille n'est pas *la* grille d'assets du produit, et elle n'a ni
   filtres multiples ni sélection multiple.
 
-## RP7 · Une seule grille d'assets
+## RP7 · Une seule grille d'assets ✅ **close le 16 septembre 2026**
 
 **Bloquée par** : RP3, RP6.
 
@@ -475,14 +475,70 @@ tranche.
 **L'invariant** : une seule grille d'assets dans tout le produit. Il est enfreint depuis la mort
 du carnet ; cette tranche le rend vrai.
 
+**Ce qui gagne** : `Famille.tsx`, parce qu'il porte déjà ce que l'autre n'a pas — la vue
+*Les poses*, le volet de la sélection, le glisser-déposer, *nommer c'est créer*. Il apprend la
+portée de l'autre : **une famille, ou toutes**. `BibliothequeDesAssets.tsx` fond dedans et le
+fichier part, avec son essai. C'est la décision 2 du plan, et c'est aussi ce que
+[le relevé d'écart](releves/2026-09-13-ecart-maquette-produit.md) recommandait déjà.
+
+### Le type de glisser retenu
+
+`application/x-sujets-atelier`, **et les identifiants séparés par un saut de ligne**. L'autre
+type — `application/x-asset-kitchen-library-subjects`, qui portait un tableau JSON — a disparu
+avec l'écran qui l'écrivait.
+
+Trois raisons, dans cet ordre :
+
+1. **Une liste plate se relit sans `JSON.parse` ni `try`.** L'ancien dépôt entourait sa lecture
+   d'un `catch` qui affichait *« Le groupe d'assets glissé ne peut pas être relu »* — un message
+   que personne ne pouvait provoquer autrement qu'en glissant depuis l'autre écran, c'est-à-dire
+   précisément le cas que cette tranche supprime.
+2. **Un essai le prouve sans navigateur.** Un `DataTransfer` doublé — une `Map`, un `setData`, un
+   `getData` — tient en une douzaine de lignes (`Famille.test.tsx` § *le glisser-déposer*), et la
+   charge utile y voyage vraiment : elle est écrite au `dragstart` et relue au `drop`. Deux types
+   incompatibles ne se reliraient pas l'un l'autre, et l'essai le dirait. ⚠️ **C'est ce qui
+   manquait avant** : les essais des deux écrans passaient un `getData` qui rendait toujours la
+   chaîne vide, si bien qu'aucun n'aurait pu voir la divergence.
+3. **C'est le type de l'écran qui gagne.** Le garder évite de réécrire la source du glisser en
+   même temps que ses cibles, et laisse l'essai porter sur une seule des deux moitiés à la fois.
+
+Le glisser des cartes de la toile (`GLISSE_CARTE`, `Tableau.tsx` / `Toile.tsx`) n'est pas
+concerné : une carte de toile n'est pas un sujet, et la toile n'est pas une grille d'assets.
+
+### Les deux cibles de dépôt, et pourquoi il en faut deux
+
+La colonne des familles et des collections — celle qui vivait dans la porte *Les assets* — est
+passée dans l'écran unique. Ses lignes de collection **sont** la seconde cible, celle qui avait
+disparu avec le carnet. Elle se voit sans rien avoir choisi ; les puces du volet de droite, elles,
+n'existent qu'avec une sélection. Ranger un sujet unique ne demande donc plus d'armer d'abord le
+mode sélection.
+
+Le même déménagement referme le second défaut : le champ qui nomme une collection s'ouvrait
+depuis un compteur que seul le carnet mort incrémentait — `App.tsx` lui passait `0`, pour
+toujours. C'est maintenant le « ＋ Collection » de la colonne qui l'ouvre.
+
 ### Critères d'acceptation
 
-- [ ] Une seule grille d'assets, qui montre toutes les familles ou une seule selon ce qu'on
-  ouvre.
-- [ ] Le glisser-déposer vers une collection marche, d'un seul type, et un essai le prouve.
-- [ ] Créer une collection depuis la grille marche de nouveau.
-- [ ] Les réglages d'une famille restent atteignables depuis la famille.
-- [ ] La vue *Les poses* n'est pas perdue.
+- [x] Une seule grille d'assets, qui montre toutes les familles ou une seule selon ce qu'on
+  ouvre. *`EcranFamille` prend `famille: string | null` ; à `null` il lit les quatre familles en
+  parallèle et recoud les listes, sinon il n'en lit qu'une et ne retrie rien. `App.tsx` le monte
+  aux deux endroits, et `BibliothequeDesAssets.tsx` est retiré. Un essai compte un seul
+  `[data-grille-dassets]` dans le document.*
+- [x] Le glisser-déposer vers une collection marche, d'un seul type, et un essai le prouve.
+  *Cinq essais de `Famille.test.tsx` § le glisser-déposer : le type et la charge utile écrits au
+  `dragstart`, le « déjà + arrivants » au survol, le dépôt sur une puce du volet, le dépôt sur une
+  ligne de la colonne, et le refus d'un glisser d'un autre type. Le `DataTransfer` doublé
+  transporte vraiment les identifiants.*
+- [x] Créer une collection depuis la grille marche de nouveau. *Le « ＋ Collection » de la
+  colonne ouvre le champ ; un essai vérifie qu'il n'est pas là avant le clic, qu'il l'est après,
+  et que `POST /api/collections` part avec le nom saisi sans qu'aucun rangement ne suive.*
+- [x] Les réglages d'une famille restent atteignables depuis la famille. *Le bouton
+  « Réglages de la famille › » ne paraît que sur une famille de sujets — il n'aurait pas de sens
+  sur *toutes les familles*, qui n'en désigne aucune, ni sur les équipements, qui n'ont ni nature
+  ni pose. `App.tsx` ouvre `ReglagesDeFamille` comme avant.*
+- [x] La vue *Les poses* n'est pas perdue. *Les trois onglets de vue sont intacts, et l'essai qui
+  tient sa règle — une case vide, pas un zéro, pour une pose qu'un sujet ne tient pas — passe
+  inchangé.*
 
 ## RP8 · Une seule fiche de sujet ✅ **close le 16 septembre 2026**
 

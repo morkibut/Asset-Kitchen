@@ -245,7 +245,7 @@ export const AIDE: Record<string, Explication> = {
   "assets-recherche": {
     nom: "Rechercher dans les assets",
     quoi: "La recherche porte sur les noms et descriptions de toutes les familles du jeu.",
-    change: "Le filtre est envoyé au serveur : les assets non encore affichés sont recherchés eux aussi. Ouvrir et organiser retrouve les collections et leur rangement.",
+    change: "Le filtre est envoyé au serveur : les sujets non encore affichés sont recherchés eux aussi. La colonne de gauche retrouve les collections et leur rangement.",
     origine: "toi · bibliothèque du jeu",
     ou: "codex",
   },

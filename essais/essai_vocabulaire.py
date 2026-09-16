@@ -119,7 +119,9 @@ NOM_DANS_LE_GUIDE = {
 # règles, l'installation — ne sont pas mesurés ici : leur titre est ailleurs,
 # et le fil et le guide le tiennent déjà.
 TITRE_A_L_ECRAN = {
-    "interface/src/composants/BibliothequeDesAssets.tsx": 3,
+    # La porte « Les sujets » et la grille d'une famille sont le même écran
+    # depuis `RP7` : `BibliothequeDesAssets.tsx` est parti le 16 septembre 2026.
+    "interface/src/composants/Famille.tsx": 3,
     "interface/src/composants/GalerieMedias.tsx": 4,
     "interface/src/composants/Fabrications.tsx": 5,
     "interface/src/composants/Livraisons.tsx": 6,
@@ -136,7 +138,7 @@ ECRANS_DE_L_OSSATURE = (
     GUIDE,
     "interface/src/composants/TableauDeBord.tsx",
     "interface/src/composants/Univers.tsx",
-    "interface/src/composants/BibliothequeDesAssets.tsx",
+    "interface/src/composants/Famille.tsx",
     "interface/src/composants/GalerieMedias.tsx",
     "interface/src/composants/Fabrications.tsx",
     "interface/src/composants/Livraisons.tsx",

@@ -4034,16 +4034,16 @@ async function modifierLEnvoi() {
  *  le même cadre qu'avant. Ceux qui visent la page neuve, eux, ont leurs
  *  propres essais, dans `PageDuSujet.test.tsx` et `ImagesDuSujet.test.tsx`. */
 async function ouvrirLEtabli(nom?: string) {
-  // La sixième porte a remplacé le carnet : la bibliothèque donne accès à la
-  // famille, puis « Ouvrir et organiser » descend vers sa grille. Ce détour
-  // conserve le parcours réel avant d'ouvrir la fiche et sa matrice.
+  // La sixième porte a remplacé le carnet : elle ouvre la grille d'assets sur
+  // toutes les familles, et cliquer une famille dans sa colonne la restreint —
+  // **c'est le même écran depuis `RP7`**, plus un détour par « Ouvrir et
+  // organiser ». Ce parcours reste celui de l'auteur avant la fiche.
   fireEvent.click(screen.getByRole("button", { name: "Les sujets" }))
   const bibliotheque = await screen.findByRole("main", { name: "Les sujets du jeu" })
   // Le nom accessible du bouton porte aussi le compte de la famille dès que la
   // grille a répondu (« Personnages 1 ») : une chaîne exacte gagne la course
   // tant que le compte n'est pas encore arrivé, et la perd sous charge.
   fireEvent.click(await within(bibliotheque).findByRole("button", { name: /^Personnages/ }))
-  fireEvent.click(await within(bibliotheque).findByRole("button", { name: "Ouvrir et organiser" }))
   const cadre = await waitFor(() => {
     const c = document.querySelector("[data-ecran-famille], [data-etabli], [data-univers]")
     if (!c) throw new Error("aucune famille en profondeur n'est montée")
@@ -13066,9 +13066,6 @@ describe("le premier lancement", () => {
     // course tant que le compte n'est pas encore arrivé, et la perd sous charge.
     fireEvent.click(
       await within(bibliotheque).findByRole("button", { name: /^Personnages/ }),
-    )
-    fireEvent.click(
-      await within(bibliotheque).findByRole("button", { name: "Ouvrir et organiser" }),
     )
     const champ = await screen.findByLabelText("Nom de la chose du jeu à créer")
     fireEvent.change(champ, { target: { value: "un tonneau cerclé de fer" } })

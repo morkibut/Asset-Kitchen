@@ -42,18 +42,34 @@ suivent.~~
 | ~~Groupe (le champ qui crée un îlot)~~ | ~~`Tableau.tsx:1439`~~ | ~~**Îlot**~~ |
 | ~~Retirer (qui supprime la carte)~~ | ~~`Tableau.tsx:1664`~~ | ~~**Supprimer** — *Retirer* est le mot d'un rangement, pas d'une suppression~~ |
 
-## Les sujets — **RP7**
+## ~~Les sujets~~ — **RP7, fait le 16 septembre 2026**
 
-| Aujourd'hui | Où | Le mot |
+~~Les huit mots sont corrigés. Ils vivaient dans `BibliothequeDesAssets.tsx`, qui
+a fondu dans `Famille.tsx` : la grille d'assets est unique depuis cette
+tranche, et c'est elle qui les porte.~~
+
+| ~~Aujourd'hui~~ | ~~Où~~ | ~~Le mot~~ |
 |---|---|---|
-| Les assets du jeu | `BibliothequeDesAssets.tsx:90` | **Les sujets du jeu** |
-| Les choses du jeu, rangées par famille et collection | `BibliothequeDesAssets.tsx:92` | **Les sujets du jeu, rangés par famille et par collection** |
-| Rechercher un asset | `:112` | **Rechercher un sujet** |
-| Tous les assets | `:113` | **Tous les sujets** |
-| Sélectionner les sujets affichés | `:119` | **Sélectionner cette page** — le geste coche la page, pas les seuls sujets ; les pièces d'équipement doivent se cocher aussi |
-| Afficher davantage d'assets | `:136` | **Afficher davantage de sujets** |
-| Les assets concernés restent sélectionnés | `:80` | **Les sujets concernés restent sélectionnés** |
-| Créer un asset | `:93` | **Créer un sujet** |
+| ~~Les assets du jeu~~ | ~~`BibliothequeDesAssets.tsx:90`~~ | ~~**Les sujets du jeu**~~ |
+| ~~Les choses du jeu, rangées par famille et collection~~ | ~~`:92`~~ | ~~**Les sujets du jeu, rangés par famille et par collection**~~ |
+| ~~Rechercher un asset~~ | ~~`:112`~~ | ~~**Rechercher un sujet**~~ |
+| ~~Tous les assets~~ | ~~`:113`~~ | ~~**Tous les sujets**~~ |
+| ~~Sélectionner les sujets affichés~~ | ~~`:119`~~ | ~~**Sélectionner cette page**~~ |
+| ~~Afficher davantage d'assets~~ | ~~`:136`~~ | ~~**Afficher davantage de sujets**~~ |
+| ~~Les assets concernés restent sélectionnés~~ | ~~`:80`~~ | ~~**Les sujets concernés restent sélectionnés**~~ |
+| ~~Créer un asset~~ | ~~`:93`~~ | ~~**Créer un sujet**~~ |
+
+Trois mots de plus ont suivi dans la même passe, pour la même raison : *Trier les
+assets* → **Trier les sujets**, *Aucun asset pour ces filtres* → **Aucun sujet pour
+ces filtres**, et *Catalogue des assets*, qui a simplement disparu — l'écran n'a
+plus qu'une région centrale, et elle n'a pas besoin d'être nommée deux fois.
+
+⚠️ **Un point de ce tableau reste ouvert, et il n'est pas un mot.** La note de
+*Sélectionner cette page* demandait que les pièces d'équipement se cochent
+aussi. Elles ne se cochent pas : une pièce n'entre dans aucune collection — elle
+a des emplois, pas des poses —, et la cocher promettrait un rangement que le
+serveur refuse. Le pied de grille le dit maintenant en toutes lettres plutôt que
+de la laisser muette. À rouvrir le jour où une collection saura ranger une pièce.
 
 ## Galerie — **RP11**
 

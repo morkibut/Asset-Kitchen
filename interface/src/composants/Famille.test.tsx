@@ -1,18 +1,26 @@
-// Ce que la grille d'une famille fait : ses trois filtres et sa pagination
+// Ce que **la** grille d'assets fait : ses trois filtres et sa pagination
 // (B9.6), sa sélection et son glisser-déposer vers les collections (B9.5),
 // et ses trois vues (B9.4). `fetch` est doublé à la main, comme partout dans
 // le dépôt — aucun essai ne coûte un centime.
 //
-// `glisses` est un état du PARENT (le contrat de `EcranFamille` le dit) : un
-// petit composant de contrôle le porte ici, pour que `surGlisser` mis à jour
-// se voie redescendre dans la prop, exactement comme `App.tsx` le ferait.
+// **Il n'y en a qu'une depuis `RP7`** (16 septembre 2026) : montée sans
+// famille elle est la porte « Les sujets », montée sur une famille elle est
+// sa grille. Les essais des deux écrans d'avant vivent donc tous ici.
 
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { useState } from "react"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { EcranFamille, GLISSE_DES_SUJETS } from "./Famille"
-import type { GrilleDeFamille, Personnage, SujetDeLaGrille } from "../api"
+import { MemoireDuParcours } from "./MemoireDuParcours"
+import { api } from "../api"
+import type {
+  GrilleDeFamille,
+  GroupeDeRangement,
+  Personnage,
+  Piece,
+  SujetDeLaGrille,
+} from "../api"
 
 afterEach(() => {
   cleanup()
@@ -193,54 +201,66 @@ function construireDouble() {
 
 // ── Le montage ───────────────────────────────────────────────────────────────
 
-/** Porte `glisses` comme le ferait le parent réel : `surGlisser` le met à
- *  jour, et la prop redescend aussitôt dans `EcranFamille`. */
+/** La grille, montée comme `App.tsx` la monte. **Plus de `glisses` porté par
+ *  le parent depuis `RP7`** : les deux cibles de dépôt — la colonne de gauche
+ *  et le volet de droite — sont maintenant dans l'écran, qui n'a donc plus
+ *  besoin de faire remonter ce qu'il traîne. */
 function Controle(props: {
-  surGlisser: (s: readonly string[] | null, arrivants?: Record<string, number>) => void
-  surGroupes: (g: GrilleDeFamille["groupes"]) => void
+  surGroupes: (g: GroupeDeRangement[]) => void
   rafraichi: number
-  collection?: string | null
-  creerUnGroupe?: number
+  famille?: string | null
+  collectionInitiale?: string | null
+  pieces?: Piece[]
   surRange: () => void
   surReglages: () => void
   surErreur: (r: string) => void
+  surFamille?: (famille: string) => void
+  surCollection?: (collection: string | null) => void
   onOuvrir?: (identifiant: string) => void
+  onPiece?: (identifiant: string) => void
   onCree?: (personnage: Personnage) => void
 }) {
-  const [glisses, setGlisses] = useState<readonly string[] | null>(null)
   return (
     <EcranFamille
-      famille="personnages"
+      famille={props.famille === undefined ? "personnages" : props.famille}
       nom="Les personnages"
       jeu="le-marais"
-      collection={props.collection ?? null}
-      glisses={glisses}
-      surGlisser={(s, arrivants) => {
-        setGlisses(s)
-        props.surGlisser(s, arrivants)
-      }}
+      collectionInitiale={props.collectionInitiale ?? null}
+      pieces={props.pieces ?? []}
       surGroupes={props.surGroupes}
+      surCollection={props.surCollection}
+      surFamille={props.surFamille}
       rafraichi={props.rafraichi}
-      creerUnGroupe={props.creerUnGroupe ?? 0}
       surRange={props.surRange}
       surReglages={props.surReglages}
       surErreur={props.surErreur}
       onOuvrir={props.onOuvrir ?? (() => {})}
+      onPiece={props.onPiece ?? (() => {})}
       onCree={props.onCree ?? (() => {})}
     />
   )
 }
 
-function monter(surplus: { collection?: string | null; creerUnGroupe?: number } = {}) {
+function monter(
+  surplus: {
+    famille?: string | null
+    collectionInitiale?: string | null
+    pieces?: Piece[]
+    surFamille?: (famille: string) => void
+    surCollection?: (collection: string | null) => void
+  } = {},
+) {
   const { fetchDouble, appels } = construireDouble()
   vi.stubGlobal("fetch", fetchDouble)
   const rappels = {
-    surGlisser: vi.fn(),
     surGroupes: vi.fn(),
     surRange: vi.fn(),
     surReglages: vi.fn(),
     surErreur: vi.fn(),
     onOuvrir: vi.fn(),
+    onPiece: vi.fn(),
+    surCollection: vi.fn(),
+    surFamille: vi.fn(),
   }
   render(<Controle {...rappels} rafraichi={0} {...surplus} />)
   return { ...rappels, appels }
@@ -249,6 +269,24 @@ function monter(surplus: { collection?: string | null; creerUnGroupe?: number } 
 const grille = () => document.querySelector("[data-grille-de-sujets]") as HTMLElement
 const carte = (identifiant: string) =>
   document.querySelector(`[data-carte-de-sujet="${identifiant}"]`) as HTMLElement
+
+/** Un `DataTransfer` doublé — **la charge utile voyage vraiment**, écrite au
+ *  `dragstart` et relue au `drop`. C'est ce qui rend le type unique vérifiable
+ *  sans navigateur : deux types incompatibles ne se reliraient pas l'un
+ *  l'autre, et l'essai le dirait. */
+function transfertDouble() {
+  const contenu = new Map<string, string>()
+  return {
+    get types() {
+      return [...contenu.keys()]
+    },
+    setData: (type: string, valeur: string) => contenu.set(type, valeur),
+    getData: (type: string) => contenu.get(type) ?? "",
+    setDragImage: () => {},
+    effectAllowed: "move",
+    files: [],
+  }
+}
 
 /** Le clic ouvre par défaut (B9 corrigé le 10 septembre 2026) : les essais de
  *  sélection et de rangement entrent d'abord dans le mode dédié, exactement
@@ -278,7 +316,7 @@ describe("la recherche et les filtres partent au serveur", () => {
 
     // On pousse d'abord la limite, pour vérifier qu'une recherche la remet à
     // son premier cran plutôt que de la garder.
-    fireEvent.click(await screen.findByRole("button", { name: "Charger la suite" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Afficher davantage de sujets" }))
     await waitFor(() => expect(appelsDeFamille(appels)).toHaveLength(2))
 
     fireEvent.change(screen.getByLabelText("Chercher un personnage"), {
@@ -311,11 +349,11 @@ describe("la recherche et les filtres partent au serveur", () => {
     expect(ordre).toEqual(["c", "b"])
   })
 
-  test("« Charger la suite » redemande la même page avec une limite plus grande", async () => {
+  test("« Afficher davantage de sujets » redemande la même page avec une limite plus grande", async () => {
     const { appels } = monter()
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
 
-    fireEvent.click(screen.getByRole("button", { name: "Charger la suite" }))
+    fireEvent.click(screen.getByRole("button", { name: "Afficher davantage de sujets" }))
 
     await waitFor(() => expect(appelsDeFamille(appels)).toHaveLength(2))
     const derniere = appelsDeFamille(appels).at(-1)!
@@ -324,15 +362,15 @@ describe("la recherche et les filtres partent au serveur", () => {
     expect(params.get("filtre")).toBeNull()
   })
 
-  test("le bouton « Charger la suite » n'est là que s'il reste des sujets à charger", async () => {
+  test("le bouton « Afficher davantage de sujets » n'est là que s'il reste des sujets à charger", async () => {
     monter()
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
-    expect(screen.getByRole("button", { name: "Charger la suite" })).toBeTruthy()
+    expect(screen.getByRole("button", { name: "Afficher davantage de sujets" })).toBeTruthy()
 
-    fireEvent.click(screen.getByRole("button", { name: "Charger la suite" }))
+    fireEvent.click(screen.getByRole("button", { name: "Afficher davantage de sujets" }))
 
     await waitFor(() => expect(document.body.textContent).toMatch(/5 des 5 affichés/))
-    expect(screen.queryByRole("button", { name: "Charger la suite" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Afficher davantage de sujets" })).toBeNull()
   })
 
   test("le lien « Voir seulement ce qui manque » bascule sur le filtre des incomplets", async () => {
@@ -406,25 +444,48 @@ describe("la sélection", () => {
   })
 })
 
+// ── Le glisser-déposer, d'un seul type (`RP7`) ───────────────────────────────
+//
+// Avant le 16 septembre 2026 il y en avait deux, incompatibles : la porte
+// « Les assets » écrivait du JSON sous
+// `application/x-asset-kitchen-library-subjects`, la grille d'une famille des
+// identifiants séparés par un saut de ligne sous `application/x-sujets-atelier`.
+// Ces essais tiennent le type retenu **et son format** : le `DataTransfer`
+// doublé transporte vraiment la charge utile, écrite au `dragstart` et relue
+// au `drop`.
+
 describe("le glisser-déposer", () => {
-  const glisserDepuis = (cible: HTMLElement, types: string[] = [GLISSE_DES_SUJETS]) =>
-    fireEvent.dragStart(cible, {
-      dataTransfer: { types, getData: () => "", files: [], setData: vi.fn() },
-    })
+  /** Attraper une carte, et rendre le transfert pour la suite du geste. */
+  const glisserDepuis = (cible: HTMLElement) => {
+    const dataTransfer = transfertDouble()
+    fireEvent.dragStart(cible, { dataTransfer })
+    return dataTransfer
+  }
+
+  test("un seul type, et la charge utile est la liste des identifiants", async () => {
+    monter()
+    await screen.findByRole("heading", { name: /Les 5 personnages/ })
+    activerLaSelection()
+
+    fireEvent.click(carte("a"))
+    fireEvent.click(carte("c"))
+    const transfert = glisserDepuis(carte("a"))
+
+    expect(transfert.types).toEqual([GLISSE_DES_SUJETS])
+    expect(transfert.getData(GLISSE_DES_SUJETS)).toBe("a\nc")
+    // Et rien sous l'ancien type de la porte « Les assets ».
+    expect(transfert.getData("application/x-asset-kitchen-library-subjects")).toBe("")
+  })
 
   test("glisser une carte non choisie ne fait porter le geste que sur elle", async () => {
-    const { surGlisser } = monter()
+    monter()
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
     activerLaSelection()
 
     fireEvent.click(carte("a")) // « a » est choisie…
-    glisserDepuis(carte("c")) // …mais on attrape « c », qui ne l'est pas.
+    const transfert = glisserDepuis(carte("c")) // …mais on attrape « c ».
 
-    // **Et le geste part avec ce que chaque collection gagnerait**, parce que
-    // le carnet est l'autre cible de dépôt et qu'il n'a pas les sujets de la
-    // page pour le calculer : « c » n'est pas dans « Les boss » et l'est déjà
-    // dans « Les PNJ ».
-    expect(surGlisser).toHaveBeenLastCalledWith(["c"], { boss: 1, pnj: 0 })
+    expect(transfert.getData(GLISSE_DES_SUJETS)).toBe("c")
   })
 
   test("la collection visée annonce « déjà + arrivants » pendant le survol", async () => {
@@ -434,12 +495,10 @@ describe("le glisser-déposer", () => {
 
     fireEvent.click(carte("a")) // déjà dans « Les boss »
     fireEvent.click(carte("c")) // pas dans « Les boss »
-    glisserDepuis(carte("a"))
+    const transfert = glisserDepuis(carte("a"))
 
     const puce = document.querySelector('[data-puce-de-rangement="boss"]') as HTMLElement
-    fireEvent.dragOver(puce, {
-      dataTransfer: { types: [GLISSE_DES_SUJETS], getData: () => "", files: [] },
-    })
+    fireEvent.dragOver(puce, { dataTransfer: transfert })
 
     expect(within(puce).getByText("1 + 1")).toBeTruthy()
   })
@@ -451,15 +510,11 @@ describe("le glisser-déposer", () => {
 
     fireEvent.click(carte("a")) // déjà dans « Les boss »
     fireEvent.click(carte("c")) // pas dans « Les boss »
-    glisserDepuis(carte("a"))
+    const transfert = glisserDepuis(carte("a"))
 
     const puce = document.querySelector('[data-puce-de-rangement="boss"]') as HTMLElement
-    fireEvent.dragOver(puce, {
-      dataTransfer: { types: [GLISSE_DES_SUJETS], getData: () => "", files: [] },
-    })
-    fireEvent.drop(puce, {
-      dataTransfer: { types: [GLISSE_DES_SUJETS], getData: () => "", files: [] },
-    })
+    fireEvent.dragOver(puce, { dataTransfer: transfert })
+    fireEvent.drop(puce, { dataTransfer: transfert })
 
     await waitFor(() => expect(surRange).toHaveBeenCalledTimes(1))
     const rangements = appels.filter((a) => a.methode === "PUT" && a.url.includes("/members"))
@@ -467,6 +522,38 @@ describe("le glisser-déposer", () => {
     expect(rangements[0]!.corps).toEqual({ jeu: "le-marais", sujet: "c" })
     // La grille se relit : un appel de plus vers la route de la famille.
     expect(appelsDeFamille(appels).length).toBeGreaterThan(1)
+  })
+
+  test("la seconde cible est revenue : une ligne de collection de la colonne accepte le même glisser", async () => {
+    // Elle avait disparu avec le carnet mort. Sans elle, ranger demandait
+    // d'abord d'ouvrir le volet — donc d'avoir déjà choisi quelque chose.
+    const { appels, surRange } = monter()
+    await screen.findByRole("heading", { name: /Les 5 personnages/ })
+
+    // Hors mode sélection, et sans rien avoir choisi : on attrape une carte et
+    // on la lâche sur la ligne « Les boss » de la colonne de gauche.
+    const transfert = glisserDepuis(carte("c"))
+    const ligne = document.querySelector('[data-collection-de-la-colonne="boss"]') as HTMLElement
+    expect(ligne).toBeTruthy()
+    fireEvent.dragOver(ligne, { dataTransfer: transfert })
+    fireEvent.drop(ligne, { dataTransfer: transfert })
+
+    await waitFor(() => expect(surRange).toHaveBeenCalledTimes(1))
+    const rangements = appels.filter((a) => a.methode === "PUT" && a.url.includes("/members"))
+    expect(rangements).toHaveLength(1)
+    expect(rangements[0]!.corps).toEqual({ jeu: "le-marais", sujet: "c" })
+  })
+
+  test("un glisser d'un autre type n'est pas accepté", async () => {
+    const { appels } = monter()
+    await screen.findByRole("heading", { name: /Les 5 personnages/ })
+
+    const etranger = { types: ["text/plain"], getData: () => "c", files: [] }
+    const ligne = document.querySelector('[data-collection-de-la-colonne="boss"]') as HTMLElement
+    fireEvent.dragOver(ligne, { dataTransfer: etranger })
+    fireEvent.drop(ligne, { dataTransfer: etranger })
+
+    expect(appels.filter((a) => a.url.includes("/members"))).toHaveLength(0)
   })
 })
 
@@ -501,14 +588,14 @@ describe("la vignette", () => {
   })
 })
 
-// ── Ce que le carnet demande à la grille (B9.5) ──────────────────────────────
+// ── La colonne des familles et des collections (`RP7`) ───────────────────────
 //
-// Le carnet est à gauche, la grille au centre : deux composants, un seul geste.
-// Ces trois essais tiennent la couture entre eux.
+// Elle vivait dans la porte « Les assets » et nulle part ailleurs ; depuis la
+// fusion elle est dans l'écran, et c'est elle qui ouvre une collection.
 
-describe("la collection ouverte dans le carnet", () => {
+describe("la collection ouverte dans la colonne", () => {
   test("elle part au serveur, elle n'est pas triée ici", async () => {
-    const { appels } = monter({ collection: "boss" })
+    const { appels } = monter({ collectionInitiale: "boss" })
     await screen.findByRole("heading", { name: "1 personnage" })
 
     const lecture = appels.find((a) => a.url.includes("/characters/families/"))!
@@ -520,50 +607,46 @@ describe("la collection ouverte dans le carnet", () => {
   })
 
   test("le fil d'Ariane nomme la collection, pas « Tous »", async () => {
-    monter({ collection: "boss" })
-    await screen.findByText("Les boss")
+    monter({ collectionInitiale: "boss" })
+    await screen.findAllByText("Les boss")
   })
 
-  test("en changer ne part chercher qu'une fois, et à la première page", async () => {
+  test("en ouvrir une depuis la colonne ne part chercher qu'une fois, et à la première page", async () => {
     // Mesuré au navigateur, sur 260 sujets : la grille partait chercher la
     // collection neuve **avec la limite déroulée d'avant**, puis repartait la
     // chercher à 120. Deux allers-retours, et le premier était le gros.
-    const { fetchDouble, appels } = construireDouble()
-    vi.stubGlobal("fetch", fetchDouble)
+    const { appels, surCollection } = monter()
     const lectures = () =>
       appels.filter((a) => a.url.includes("/characters/families/")).map((a) => a.url)
-    const commun = {
-      surGlisser: vi.fn(),
-      surGroupes: vi.fn(),
-      rafraichi: 0,
-      surRange: vi.fn(),
-      surReglages: vi.fn(),
-      surErreur: vi.fn(),
-    }
 
-    const { rerender } = render(<Controle {...commun} />)
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
-    fireEvent.click(screen.getByRole("button", { name: "Charger la suite" }))
+    fireEvent.click(screen.getByRole("button", { name: "Afficher davantage de sujets" }))
     await waitFor(() => expect(lectures().some((u) => u.includes("limite=240"))).toBe(true))
 
     const avant = lectures().length
-    rerender(<Controle {...commun} collection="boss" />)
+    fireEvent.click(document.querySelector('[data-collection-de-la-colonne="boss"]')!)
     await screen.findByRole("heading", { name: "1 personnage" })
 
     const neuves = lectures().slice(avant)
     expect(neuves).toHaveLength(1)
     expect(neuves[0]).toContain("collection=boss")
     expect(neuves[0]).toContain("limite=120")
+    // Le fil d'Ariane l'apprend d'elle : ce n'est pas un lieu, mais il le nomme.
+    expect(surCollection).toHaveBeenLastCalledWith("boss")
   })
 })
 
 describe("nommer une collection sans rien avoir choisi", () => {
-  test("le « ＋ Nouvelle collection » du carnet ouvre le champ ici", async () => {
-    // Sans sélection il n'y a pas de volet, donc pas de puce « + nouvelle » :
-    // le champ doit paraître ailleurs, sinon le bouton du carnet ne mènerait
-    // nulle part.
-    const { surRange, appels } = monter({ creerUnGroupe: 1 })
+  test("le « ＋ Collection » de la colonne ouvre le champ", async () => {
+    // **Le défaut que `RP7` referme.** Sans sélection il n'y a pas de volet,
+    // donc pas de puce « + nouvelle », et le seul bouton qui ouvrait ce champ
+    // vivait dans le carnet mort : depuis sa disparition, créer une collection
+    // depuis la grille était devenu impossible.
+    const { surRange, appels } = monter()
     await screen.findByRole("heading", { name: /Les 5 personnages/ })
+
+    expect(screen.queryByLabelText("Nom de la nouvelle collection")).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "＋ Collection" }))
 
     const champ = screen.getByLabelText("Nom de la nouvelle collection")
     fireEvent.change(champ, { target: { value: "Les noyés" } })
@@ -592,7 +675,6 @@ describe("le bouton « Ajouter » nomme et crée sur-le-champ", () => {
     const onOuvrir = vi.fn()
     render(
       <Controle
-        surGlisser={vi.fn()}
         surGroupes={vi.fn()}
         rafraichi={0}
         surRange={vi.fn()}
@@ -623,7 +705,6 @@ describe("le bouton « Ajouter » nomme et crée sur-le-champ", () => {
     const { fetchDouble, appels } = construireDouble()
     vi.stubGlobal("fetch", fetchDouble)
     render(<Controle {...{
-      surGlisser: vi.fn(),
       surGroupes: vi.fn(),
       rafraichi: 0,
       surRange: vi.fn(),
@@ -651,7 +732,6 @@ describe("une réponse tronquée", () => {
     const surGroupes = vi.fn()
     render(
       <Controle
-        surGlisser={vi.fn()}
         surGroupes={surGroupes}
         rafraichi={0}
         surRange={vi.fn()}
@@ -662,5 +742,165 @@ describe("une réponse tronquée", () => {
 
     await waitFor(() => expect(surGroupes).toHaveBeenCalledWith([]))
     expect(screen.getByRole("heading", { name: "Les personnages" })).toBeTruthy()
+  })
+})
+
+// ── L'invariant : une seule grille d'assets (`RP7`) ──────────────────────────
+//
+// Ces essais viennent de `BibliothequeDesAssets.test.tsx`, qui est parti avec
+// son écran le 16 septembre 2026. Ils tiennent ici ce que la porte
+// « Les sujets » savait faire et que la grille d'une famille ne savait pas :
+// montrer les quatre familles d'un coup, montrer les pièces d'équipement, et
+// garder les refusés choisis après un rangement à moitié réussi.
+
+describe("toutes les familles dans la même grille", () => {
+  test("sans famille, elle lit les quatre et n'écrit qu'un titre", async () => {
+    const { appels } = monter({ famille: null })
+
+    expect(await screen.findByRole("heading", { name: "Les sujets" })).toBeTruthy()
+    await waitFor(() => expect(appelsDeFamille(appels)).toHaveLength(4))
+    const familles = appelsDeFamille(appels).map((a) => a.url.split("?")[0]!.split("/").at(-1))
+    expect(new Set(familles)).toEqual(new Set(["personnages", "decors", "objets", "interface"]))
+
+    // Un seul écran, un seul cadre : l'ancienne porte en montait un second.
+    expect(document.querySelectorAll("[data-grille-dassets]")).toHaveLength(1)
+    expect(screen.getByRole("main", { name: "Les sujets du jeu" })).toBeTruthy()
+  })
+
+  test("le tri recoud les quatre listes, il ne trie pas une famille seule", async () => {
+    monter({ famille: null })
+    await screen.findByRole("heading", { name: "Les sujets" })
+
+    // Quatre fois [A, B, C] : sans recouture, on lirait A A A A B B B B…
+    await waitFor(() =>
+      expect(
+        [...grille().querySelectorAll("[data-carte-de-sujet]")].map((n) =>
+          n.getAttribute("data-carte-de-sujet"),
+        ),
+      ).toEqual(["b", "b", "b", "b", "c", "c", "c", "c", "a", "a", "a", "a"]),
+    )
+  })
+
+  test("cliquer une famille dans la colonne est un lieu : le parent y va", async () => {
+    const surFamille = vi.fn()
+    monter({ famille: null, surFamille })
+    await screen.findByRole("heading", { name: "Les sujets" })
+
+    const colonne = within(screen.getByRole("navigation", { name: "Familles et collections" }))
+    fireEvent.click(colonne.getByRole("button", { name: /^Personnages/ }))
+    expect(surFamille).toHaveBeenCalledWith("personnages")
+  })
+})
+
+describe("les pièces d'équipement", () => {
+  const heaume: Piece = {
+    identifiant: "heaume",
+    nom: "Le heaume",
+    description: "",
+    emplacement: "",
+    portee: "contenue",
+    concept_arts: ["carte-du-heaume"],
+  }
+  const sac: Piece = {
+    identifiant: "sac",
+    nom: "Le sac",
+    description: "",
+    emplacement: "",
+    portee: "contenue",
+    concept_arts: [],
+  }
+
+  test("un équipement montre un aperçu identifiable, ou dit qu'il reste à créer", async () => {
+    monter({ famille: "equipement", pieces: [heaume, sac] })
+
+    // `alt=""` retire l'image de l'arbre d'accessibilité (c'est voulu, la
+    // légende voisine porte déjà le nom) : on la retrouve par sa balise.
+    const ligneHeaume = (await screen.findByText("Le heaume")).closest("li")!
+    expect(ligneHeaume.querySelector("img")?.getAttribute("src")).toBe(
+      api.imageCarte("carte-du-heaume", ""),
+    )
+
+    const ligneSac = screen.getByText("Le sac").closest("li")!
+    expect(within(ligneSac).getByText("À créer")).toBeTruthy()
+    expect(ligneSac.querySelector("img")).toBeNull()
+  })
+
+  test("les équipements n'interrogent aucune route de famille, et aucune collection ne les range", async () => {
+    const { appels, onPiece } = monter({ famille: "equipement", pieces: [heaume] })
+    await screen.findByText("Le heaume")
+
+    expect(appelsDeFamille(appels)).toHaveLength(0)
+    expect(document.body.textContent).toContain("une collection ne les range pas")
+
+    fireEvent.click(screen.getByText("Le heaume"))
+    expect(onPiece).toHaveBeenCalledWith("heaume")
+  })
+})
+
+describe("un rangement à moitié réussi", () => {
+  test("les refusés restent choisis, et le reste est rangé", async () => {
+    const { surErreur } = monter()
+    const ranger = vi
+      .spyOn(api, "rangerSujet")
+      .mockImplementation(async (_collection, _jeu, sujet) => {
+        if (sujet === "c") throw new Error("Disque momentanément occupé")
+        return {} as never
+      })
+
+    await screen.findByRole("heading", { name: /Les 5 personnages/ })
+    activerLaSelection()
+    fireEvent.click(screen.getByRole("button", { name: "Sélectionner cette page" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Ranger dans…" }))
+    fireEvent.click(screen.getByRole("button", { name: "Les PNJ" }))
+
+    await waitFor(() => expect(ranger).toHaveBeenCalledTimes(3))
+    await waitFor(() =>
+      expect(surErreur).toHaveBeenCalledWith(expect.stringContaining("restent sélectionnés")),
+    )
+    // Seul « c » a été refusé : lui seul reste choisi, pour réessayer.
+    await waitFor(() => expect(carte("c").getAttribute("aria-pressed")).toBe("true"))
+    expect(carte("a").getAttribute("aria-pressed")).toBe("false")
+  })
+})
+
+describe("ce que l'écran retient d'un aller-retour", () => {
+  test("la recherche, la vue et la collection reviennent après un détour", async () => {
+    const { fetchDouble } = construireDouble()
+    vi.stubGlobal("fetch", fetchDouble)
+
+    function Parcours() {
+      const [visible, setVisible] = useState(true)
+      return (
+        <MemoireDuParcours>
+          <button onClick={() => setVisible((v) => !v)}>Changer d'écran</button>
+          {visible && (
+            <Controle
+              surGroupes={vi.fn()}
+              rafraichi={0}
+              surRange={vi.fn()}
+              surReglages={vi.fn()}
+              surErreur={vi.fn()}
+            />
+          )}
+        </MemoireDuParcours>
+      )
+    }
+    render(<Parcours />)
+    await screen.findByRole("heading", { name: /Les 5 personnages/ })
+
+    fireEvent.click(document.querySelector('[data-collection-de-la-colonne="boss"]')!)
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "passeur" } })
+    fireEvent.click(screen.getByRole("tab", { name: "La liste" }))
+
+    fireEvent.click(screen.getByRole("button", { name: "Changer d'écran" }))
+    fireEvent.click(screen.getByRole("button", { name: "Changer d'écran" }))
+
+    expect(await screen.findByRole("searchbox")).toHaveValue("passeur")
+    expect(screen.getByRole("tab", { name: "La liste" }).getAttribute("aria-selected")).toBe("true")
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-collection-de-la-colonne="boss"]')?.getAttribute("aria-current"),
+      ).toBe("page"),
+    )
   })
 })

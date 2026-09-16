@@ -85,7 +85,6 @@ import { AtelierSon } from "./composants/AtelierSon"
 import { EcranFamille } from "./composants/Famille"
 import { ReglagesDeFamille } from "./composants/ReglagesDeFamille"
 import { TableauDeBord } from "./composants/TableauDeBord"
-import { BibliothequeDesAssets } from "./composants/BibliothequeDesAssets"
 import { CreerUnAsset } from "./composants/CreerUnAsset"
 import { Fabrications } from "./composants/Fabrications"
 import { FabricationSuivie, TravailConserve } from "./composants/FabricationSuivie"
@@ -247,13 +246,13 @@ function AtelierApp() {
   // reconstruire (`interface/src/lieux.ts`, `filDAriane`), et un lieu que plus
   // rien n'ouvre se voit — `decoupeOuverte` avait sept écritures, toutes à
   // `null`, et son écran était injoignable depuis des jours.
+  const [pile, setPile] = useState<Lieu[]>(() => [...PILE_INITIALE])
   // **Où l'on est, dit une fois pour toutes** (`RP16`). Un brouillon garde la
   // pile du moment où il s'écrit, et le tiroir la repose : la porte commune la
   // lit ici plutôt que de la faire descendre en propriété jusqu'aux treize
   // écrans qui gardent un brouillon.
   useEffect(() => { noterOuLonEst(pile) }, [pile])
   const [tiroirDesBrouillons, setTiroirDesBrouillons] = useState(false)
-  const [pile, setPile] = useState<Lieu[]>(() => [...PILE_INITIALE])
   const [imageAEquiper, setImageAEquiper] = useState<Asset | null>(null)
 
   /** L'ouverture (B4) — **prend la fenêtre entière**, comme le parcours de
@@ -512,11 +511,11 @@ function AtelierApp() {
   // vers l'atelier, et le serveur renverrait l'état complet à chaque fois.
   const [plan, setPlan] = useState<Pose[]>([])
   const [personnages, setPersonnages] = useState<Personnage[]>([])
+
   /** **Ce qu'on a laissé en plan** (`RP16`) — les brouillons de ce navigateur
    *  et les travaux que le serveur donne pour non finis. Le carnet en tire son
    *  compteur, le tiroir sa liste. */
   const enPlan = useBrouillonsEnPlan(bibliotheque.courant)
-
 
   // **Ce que le flux a besoin de savoir, sans le faire se rebrancher.**
   //
@@ -814,10 +813,6 @@ function AtelierApp() {
    *  montre sans aller les chercher lui-même : une seconde lecture dirait un
    *  compte d'un autre instant. */
   const [groupesDeLaFamille, setGroupesDeLaFamille] = useState<GroupeDeRangement[]>([])
-  /** Ce qu'on traîne, et ce qui arriverait dans chaque groupe si l'on lâchait.
-   *  Tenu ici parce que la cible du geste — une ligne du carnet — n'est pas dans
-   *  l'écran d'où il part. */
-  const [glisses, setGlisses] = useState<readonly string[] | null>(null)
   /** Un compteur, pas un drapeau : deux rangements de suite doivent relire deux
    *  fois, et un booléen déjà à vrai ne redéclencherait rien (le patron de
    *  `nommer`, E19). */
@@ -2141,11 +2136,23 @@ function AtelierApp() {
         />
       )}
 
+      {/* ── La porte « Les sujets » — **la même grille qu'une famille** (`RP7`)
+          Elle montre toutes les familles ; ouvrir une famille montre la même
+          grille restreinte. Un seul composant, un seul appel, un seul type de
+          glisser : `BibliothequeDesAssets.tsx` est parti le 16 septembre 2026. */}
       {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "bibliotheque" && (
-        <BibliothequeDesAssets key={`${bibliotheque.courant}:${lieu(pile, "bibliotheque")?.famille ?? ""}`} familleInitiale={lieu(pile, "bibliotheque")?.famille} jeu={bibliotheque.courant ?? ""} pieces={pieces} personnages={personnages} rafraichi={grilleARelire}
+        <EcranFamille key={`${bibliotheque.courant}:${lieu(pile, "bibliotheque")?.famille ?? ""}`}
+          famille={lieu(pile, "bibliotheque")?.famille ?? null}
+          nom={NOM_DANS_LE_CARNET[lieu(pile, "bibliotheque")?.famille ?? ""]}
+          jeu={bibliotheque.courant ?? ""} pieces={pieces} personnages={personnages} rafraichi={grilleARelire}
+          surGroupes={setGroupesDeLaFamille} surCollection={setCollectionOuverte}
+          surFamille={ouvrirLaFamille} surToutesLesFamilles={() => allerA("bibliotheque")}
+          surRange={() => void api.arbre().then(setBibliotheque).catch(() => {})}
+          surReglages={() => setReglagesDeFamille(true)} surErreur={setPanne}
           onTuiles={() => setTuilesOuvertes(true)} onSons={() => setSonsOuverts({})}
           onOuvrir={(id) => { setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
-          onPiece={ouvrirLaPiece} onFamille={ouvrirLaFamille} onGalerie={() => allerA("galerie")}
+          onCree={fondrePersonnage}
+          onPiece={ouvrirLaPiece} onGalerie={() => allerA("galerie")}
           onCreer={(famille) => setCreationAssetOuverte(famille)} />
       )}
 
@@ -2273,14 +2280,21 @@ function AtelierApp() {
           famille={familleOuverte}
           nom={NOM_DANS_LE_CARNET[familleOuverte] ?? familleOuverte}
           jeu={bibliotheque.courant ?? ""}
-          collection={collectionOuverte}
-          glisses={glisses}
+          collectionInitiale={collectionOuverte}
+          pieces={pieces}
+          personnages={personnages}
           rafraichi={grilleARelire}
-          creerUnGroupe={0}
-          surGlisser={(sujets) => {
-            setGlisses(sujets)
-          }}
           surGroupes={setGroupesDeLaFamille}
+          // La collection ouverte n'est pas un lieu, mais le fil la nomme : la
+          // grille la choisit, et le fil l'apprend d'elle.
+          surCollection={setCollectionOuverte}
+          surFamille={ouvrirLaFamille}
+          surToutesLesFamilles={() => allerA("bibliotheque")}
+          onPiece={ouvrirLaPiece}
+          onGalerie={() => allerA("galerie")}
+          onTuiles={() => setTuilesOuvertes(true)}
+          onSons={() => setSonsOuverts({})}
+          onCreer={(famille) => setCreationAssetOuverte(famille)}
           // Le carnet compte les groupes ; un rangement fait dans la grille
           // doit donc redescendre jusqu'à lui, sans quoi la ligne resterait à
           // son chiffre d'avant.
@@ -2653,6 +2667,10 @@ function AtelierApp() {
           // (`imageDeLaRetouche`, plus haut) ; ouvrir sans changer de sujet lui
           // faisait chercher une image absente de la page affichée. Changer de
           // sujet d'abord referme Comparer de lui-même — `entrer` coupe tout ce
+          // **« La retoucher », du côté des animations** (RP12). L'atelier est
+          // plus profond que Comparer, donc l'ouvrir referme la comparaison de
+          // lui-même — le même geste que pour une image.
+          onOuvrirLaBande={ouvrirLAtelierDeBande}
           // qui est plus profond que l'étage remplacé (`lieux.ts`) — ce qui est
           // le geste juste : on va corriger l'image là où elle vit.
           onOuvrirCase={(sujet, asset) => {
@@ -2682,10 +2700,6 @@ function AtelierApp() {
             porteurs={vestiaireDuJeu?.porteurs ?? []}
             onEmploi={(emploi) => ouvrirLEmploi(emploi)}
             onAjouterEmploi={(corps) =>
-          // **« La retoucher », du côté des animations** (RP12). L'atelier est
-          // plus profond que Comparer, donc l'ouvrir referme la comparaison de
-          // lui-même — le même geste que pour une image.
-          onOuvrirLaBande={ouvrirLAtelierDeBande}
               void ajouterUnEmploi(pieceEtSesEmplois.piece.identifiant, corps)
             }
             onRetirerLaPiece={() =>
@@ -2868,6 +2882,12 @@ function AtelierApp() {
 
       {travailOuvert && bibliotheque.courant && <TravailConserve projet={bibliotheque.courant} identifiant={travailOuvert} personnages={personnages} onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))} onToile={async (id) => { await api.poserAssetSurToile(bibliotheque.courant!, id); await relireTableau(); allerA("univers") }} onCalqueEquipement={(piece, emploi, cible, variante) => setPile(entrer(entrer(poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi, cible, variante }))} onFermer={() => setPile((p) => sortir(p, "travail"))} onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))} onBande={(id) => setPile(entrer(poser("codex"), { genre: "bande", bande: id }))} onSon={(identifiant) => setSonsOuverts({ identifiant })} />}
 
+      {/* **Le tiroir des brouillons** (`RP16`) — une fenêtre partagée, pas un
+          lieu : on l'ouvre du pied du carnet, on y reprend un travail, et il se
+          referme sur l'écran qu'on rejoint. */}
+      {tiroirDesBrouillons && <TiroirDesBrouillons
+        lignes={enPlan.lignes}
+        travauxEnPlan={enPlan.travauxEnPlan}
       {preparationImageOuverte && !envoiOuvert && <CadreDialogue titre="Préparer une image" format="preparation" onFermer={() => setPreparationImageOuverte(false)} enfants={<><header className="flex shrink-0 items-center justify-between gap-[22px] border-b border-trait px-[30px] py-[22px]"><div><h1 className="font-serif text-[25px]">Préparer une image</h1><p className="mt-[8px] text-[13px] text-encre-3">{personnageCible ? `${personnageCible.nom} · ${posesCible.map(p => p.nom).join(", ")}${cible?.direction ? ` · ${personnageCible.cases.flatMap(c => c.directions ?? []).find(d => d.identifiant === cible.direction)?.nom ?? cible.direction}` : ""}` : "Image libre"}</p></div><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setPreparationImageOuverte(false)}>Fermer</button></header>{barreQuiPaie}</>} />}
       {creationAssetOuverte && <CreerUnAsset familleInitiale={creationAssetOuverte} onFermer={() => setCreationAssetOuverte(null)}
         onPersonnage={(personnage) => {
@@ -2876,12 +2896,6 @@ function AtelierApp() {
           setCreationAssetOuverte(null)
           setPile(entrer(poser("codex"), { genre: "sujet", sujet: personnage.identifiant }))
           void relireProduction().catch(e => echouer(e, "L’asset est créé ; sa liste n’a pas pu être actualisée."))
-      {/* **Le tiroir des brouillons** (`RP16`) — une fenêtre partagée, pas un
-          lieu : on l'ouvre du pied du carnet, on y reprend un travail, et il se
-          referme sur l'écran qu'on rejoint. */}
-      {tiroirDesBrouillons && <TiroirDesBrouillons
-        lignes={enPlan.lignes}
-        travauxEnPlan={enPlan.travauxEnPlan}
         sujets={personnages}
         onReprendre={(retour) => { if (retour.length) setPile(retour) }}
         onTravail={(identifiant) => setPile((p) => entrer(p, { genre: "travail", travail: identifiant }))}
@@ -2908,6 +2922,9 @@ function AtelierApp() {
         onObjectif={() => { setFabricationDuSujet(false); setOngletDuSujet("objectif") }} />}
       {animationDuSujet && bibliotheque.courant && <FabricationSuivie projet={bibliotheque.courant} personnages={personnages} cibleInitiale={animationDuSujet}
         onFermer={() => { setAnimationDuSujet(null); void relireProduction() }}
+        // **Une vidéo entre ici aussi depuis `RP5`** : sans cette relecture,
+        // le clip qui vient d'entrer n'existe pour aucun autre écran.
+        void relireClipsDuJeu()
         onClip={(id) => { setAnimationDuSujet(null); setPile(entrer(poser("galerie"), { genre: "montage", clip: id })) }}
         onBande={(id) => { setAnimationDuSujet(null); ouvrirLAtelierDeBande(id) }}
         onLivraisons={() => { setAnimationDuSujet(null); setSortieOuverte(true) }} />}
@@ -2930,6 +2947,3 @@ function AtelierApp() {
   )
 }
 
-        // **Une vidéo entre ici aussi depuis `RP5`** : sans cette relecture,
-        // le clip qui vient d'entrer n'existe pour aucun autre écran.
-        void relireClipsDuJeu()
