@@ -8,6 +8,6 @@ garantit que ce qu'un agent peut faire est exactement ce que l'écran peut faire
 
 Une dizaine d'outils épais viendront s'y poser, chacun façade d'un geste déjà
 livré : `generate_asset` (T1), `edit_asset` (T2), `list_assets` (T3),
-`export_assets` (T6). Les noms d'outils sont en anglais — ils sont lus par des
-modèles entraînés en anglais.
+`preview_output` / `write_output` (B21, `RP17`). Les noms d'outils sont en
+anglais — ils sont lus par des modèles entraînés en anglais.
 """

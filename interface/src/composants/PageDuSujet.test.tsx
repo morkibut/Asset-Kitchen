@@ -193,7 +193,7 @@ function construireDouble() {
   return { fetchDouble, appels }
 }
 
-function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu", onLivrer?: () => void, avecMemoire = false) {
+function monter(surplus: Partial<Personnage> = {}, _dossierJeu = "D:/jeu", onLivrer?: () => void, avecMemoire = false) {
   const { fetchDouble, appels } = construireDouble()
   vi.stubGlobal("fetch", fetchDouble)
   const rappels = {
@@ -233,7 +233,6 @@ function monter(surplus: Partial<Personnage> = {}, dossierJeu = "D:/jeu", onLivr
       emplacements={[]}
       pieces={[]}
       vestiaire={null}
-      dossierJeu={dossierJeu}
       onLivrer={onLivrer}
       barreQuiPaie={<div data-barre-qui-paie />}
       {...rappels}

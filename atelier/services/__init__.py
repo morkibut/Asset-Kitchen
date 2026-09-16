@@ -56,7 +56,7 @@ from atelier.services.mouvements import MouvementRefuse, ServiceMouvements
 from atelier.services.superposition import ServiceSuperposition, SuperpositionRefusee
 from atelier.services.envoi import EnvoiRefuse, ServiceEnvoi
 from atelier.services.evenements import Diffusion, Evenement
-from atelier.services.export import Archive, ExportRefuse, ServiceExport, Sortie
+from atelier.services.export import Archive, ExportRefuse, ServiceExport
 from atelier.services.fournisseurs import Fournisseurs
 from atelier.services.generation import ServiceGenerations
 from atelier.services.installation import ServiceInstallation
@@ -153,7 +153,6 @@ __all__ = [
     "ServicePliage",
     "ServiceProduction",
     "ServiceUnivers",
-    "Sortie",
     "UniversRefuse",
 ]
 
@@ -547,8 +546,8 @@ class Atelier:
             self.assets,
             self.bibliotheque,
             self.production,
-            self.equipement,
-            self.agent,
+            # **Ni vestiaire ni dépôt** (`RP17`) : l'export ne pose plus rien
+            # dans le dossier du jeu, c'est `self.sortie` et elle seule.
             # **Le montage, pour une seule chose** (A4) : la planche de sprites
             # d'une bande, refaite si son cache a sauté. Il est monté bien plus
             # haut et n'apporte ici ni fournisseur, ni catalogue, ni animateur —

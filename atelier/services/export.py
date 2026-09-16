@@ -21,18 +21,18 @@ rien n'est rangé, rien n'est jugé, rien n'est créé. Un service qui ne modifi
 rien n'a rien à diffuser — c'est la raison pour laquelle il ne reçoit pas la
 diffusion, pas un oubli.
 
-**C5 lui donne une seconde sortie, pas un second descriptif.** T6 fabrique une
-archive qu'un navigateur télécharge ; C5 pose des fichiers dans le dossier du
-jeu. Les deux écrivent **la même fiche**, par le même code — un personnage y
-ajoute seulement ce que la V2 sait de plus : le rôle du fichier, sa pose, sa
-pièce. Deux formats de descriptif auraient divergé au premier champ ajouté d'un
-seul côté.
+⚠️ **Il n'écrit plus dans le dossier du jeu depuis `RP17`** (16 septembre 2026).
+C5 lui avait donné une seconde sortie — poser les fichiers d'un personnage sur
+le disque —, et B21 en a construit une troisième à côté, celle qui montre ses
+fichiers avant de les écrire. Deux portes vers le même dossier, dont une sans
+filet : la sienne est partie. Ce qui reste ici **fabrique** — le rendu d'une
+image, sa fiche, les trois fichiers d'une animation — et rend des archives que
+le navigateur télécharge. Celui qui pose dans le jeu est
+`atelier/services/sortie.py`, et il est seul.
 
-**Poser un fichier dehors reste le geste de T7**, et ce service ne le réécrit
-pas : `ServiceAgent.deposer` porte les trois règles du dossier du jeu — dossier
-manquant créé, fichier existant jamais écrasé, dossier non inscriptible refusé
-avec son chemin. Un second endroit qui écrirait dans le dossier du jeu serait un
-second endroit où oublier la deuxième.
+**Les fiches, elles, n'ont pas bougé** : `fiche_de_l_asset` et
+`fiche_de_la_bande` sont écrites ici et lues par la sortie. Deux formats de
+descriptif auraient divergé au premier champ ajouté d'un seul côté.
 
 **Et il n'écrit pas une ligne de code de jeu.** Le descriptif dit ce qu'est
 chaque fichier ; ce qu'on en fait — une ressource, une ligne de catalogue, un
@@ -49,7 +49,6 @@ import json
 import time
 import zipfile
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 from atelier.depot import Base
@@ -60,12 +59,10 @@ from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.projet import repere
 from atelier.image import mesurer, rendre_en_png
 from atelier.image.bande import en_image_animee
-from atelier.services.agent import ServiceAgent
 from atelier.services.assets import ServiceAssets
 from atelier.services.bibliotheque import ServiceBibliotheque
-from atelier.services.equipement import ServiceEquipement
 from atelier.services.montage import ServiceMontage
-from atelier.services.production import ServiceProduction, corps_retenu
+from atelier.services.production import ServiceProduction
 
 # Le nom du descriptif, à la racine de l'archive. **Un seul**, et en JSON : le
 # doubler d'une version lisible à l'œil créerait deux vérités sur le même lot,
@@ -121,35 +118,6 @@ class Archive:
     compte: int
 
 
-@dataclass(frozen=True, slots=True)
-class Sortie:
-    """Ce qui vient d'être posé dans le dossier du jeu (US-154).
-
-    **Des chemins absolus, et c'est ce qui compte.** L'auteur veut savoir où
-    c'est parti ; l'agent va l'écrire dans le code de son jeu, et un chemin
-    relatif y serait relatif à un dossier de travail que l'atelier ne connaît
-    pas. C'est déjà la règle de `ServiceAgent.deposer`, dont ces chemins
-    viennent — ils ne sont pas recomposés ici.
-
-    `dossier` est celui où les fichiers ont **réellement** atterri, jamais celui
-    qui a été demandé : entre les deux il y a un `~` déplié et un chemin résolu,
-    et c'est le second qu'on colle dans un moteur de jeu.
-    """
-
-    dossier: str
-    fichiers: tuple[dict[str, Any], ...]
-    descriptif: str
-    compte: int
-
-    def en_json(self) -> dict[str, Any]:
-        return {
-            "dossier": self.dossier,
-            "fichiers": list(self.fichiers),
-            "descriptif": self.descriptif,
-            "compte": self.compte,
-        }
-
-
 class ServiceExport:
     def __init__(
         self,
@@ -157,23 +125,22 @@ class ServiceExport:
         assets: ServiceAssets,
         bibliotheque: ServiceBibliotheque,
         production: ServiceProduction,
-        equipement: ServiceEquipement,
-        agent: ServiceAgent,
         montage: ServiceMontage,
     ) -> None:
         self._base = base
         self._assets = assets
         self._bibliotheque = bibliotheque
-        # **C5 — le personnage et son vestiaire, lus et jamais recalculés.**
-        # « Cette pose est remplie » a déjà une seule écriture dans le produit,
-        # celle qui dessine la matrice ; un second parcours des assets ici en
-        # aurait fait une deuxième, et l'écran aurait fini par montrer une
-        # colonne pleine que l'export aurait dite vide.
+        # **C5 — le personnage, lu et jamais recalculé.** « Cette pose est
+        # remplie » a déjà une seule écriture dans le produit, celle qui dessine
+        # la matrice ; un second parcours des assets ici en aurait fait une
+        # deuxième, et l'écran aurait fini par montrer une colonne pleine que
+        # l'export aurait dite vide.
         self._production = production
-        self._equipement = equipement
-        # **Le dossier du jeu reste celui de T7**, avec ses trois règles. Ce
-        # service ne les réécrit pas : il les appelle.
-        self._agent = agent
+        # ⚠️ **Ni le vestiaire ni le dépôt de fichiers depuis `RP17`.** Les deux
+        # ne servaient qu'à poser un personnage dans le dossier du jeu, et ce
+        # geste vit maintenant dans `atelier/services/sortie.py`, seul. Les
+        # garder ici aurait laissé croire que ce service peut encore écrire
+        # dehors.
         # **A4 — celui qui sait fabriquer une planche de sprites.** Il n'entame
         # rien de ce que la première phrase de ce fichier promet : le montage
         # n'a ni fournisseur, ni catalogue, ni animateur, et découper un clip
@@ -239,158 +206,6 @@ class ServiceExport:
         return Archive(
             nom=_nom_archive(instant), octets=tampon.getvalue(), compte=len(fiches)
         )
-
-    # ── L'autre sortie : le dossier du jeu ───────────────────────────────────
-
-    def deposer(self, identifiants: Iterable[str], dossier: str | None = None) -> Sortie:
-        """Une sélection posée en fichiers dans un dossier, avec son descriptif.
-
-        L'archive de T6, **ouverte** : ce qui est utile à un agent n'est pas un
-        zip qu'il devrait dézipper, c'est une liste de fichiers déjà posés. Même
-        sélection, même fiche, même règle de nom — seul le contenant change.
-
-        C'était jusqu'ici la seule fonction du serveur MCP qui *faisait* quelque
-        chose : elle rouvrait l'archive pour en ressortir les fichiers un par un.
-        Le geste vit ici depuis C5, et l'outil n'est plus qu'une façade — c'est
-        l'invariant de T7, rendu vrai là où il ne l'était pas tout à fait.
-        """
-        voulus = list(dict.fromkeys(i for i in identifiants if i))
-        if not voulus:
-            raise ExportRefuse("aucune image sélectionnée")
-
-        parts: list[tuple[Asset, dict[str, Any]]] = []
-        pris: set[str] = set()
-        for identifiant in voulus:
-            asset = self._assets.lire(identifiant)
-            if asset is None:
-                raise ExportRefuse(f"« {identifiant} » n'est plus dans la bibliothèque")
-            nom = self._nommer(asset, pris)
-            pris.add(nom.removesuffix(".png"))
-            parts.append((asset, {"nom": nom, "contexte": {}}))
-        return self._poser(parts, dossier, {}, DESCRIPTIF)
-
-    def exporter_personnage(
-        self, projet: str, personnage: str, dossier: str | None = None
-    ) -> Sortie:
-        """Un personnage complet part dans le jeu (US-154, US-155).
-
-        **Ce qui sort est ce que la matrice retient** : un corps par pose et un
-        calque par pièce, choisis par la règle qui existe déjà — le favori
-        d'abord, sinon la plus récente (`corps_retenu`). Sortir les quatre
-        variations d'une pose aurait rendu le tri à l'agent, alors que l'auteur
-        y a déjà répondu en marquant son favori ; et « utilisable sans
-        manipulation » dit exactement le contraire de « choisis toi-même ».
-
-        **Une pose sans corps ne sort pas**, ses calques compris. Un calque est
-        une différence posée sur un corps : seul dans un dossier de jeu, il ne
-        se pose sur rien. La pose reste vide dans la matrice, et c'est là qu'on
-        va la remplir.
-
-        **Et tout ce qui porte une pièce n'est pas un calque.** Une pièce qui
-        agrandit la silhouette et revient à une autre échelle est gardée comme
-        un corps habillé (US-148) : il sort lui aussi — l'appel a été payé, et
-        l'image est utilisable —, mais le descriptif dit qu'il **remplace** le
-        corps au lieu de s'empiler dessus.
-
-        **Rien n'est écrit tant que le dossier n'a pas répondu.** Le premier
-        dépôt crée le dossier, et c'est lui qui refuse — avec son chemin — quand
-        il n'est pas inscriptible. Le descriptif part en dernier, parce qu'il
-        nomme les fichiers **tels qu'ils ont été posés** : c'est le dépôt qui
-        numérote les homonymes, pas nous.
-        """
-        vise = self._production.personnage(projet, personnage)
-        poses = {p.identifiant: p for p in self._production.plan(projet)}
-        pieces = {p.identifiant: p for p in self._equipement.pieces(projet)}
-        emplacements = {e.identifiant: e for e in self._equipement.emplacements(projet)}
-        racine = repere(vise.nom or vise.identifiant, (), "personnage")
-
-        parts: list[tuple[Asset, dict[str, Any]]] = []
-        for case in self._production.cases(projet, vise):
-            corps = self._assets.lire(case["corps"]) if case["corps"] else None
-            if corps is None:
-                continue
-            pose = poses.get(case["pose"])
-            mot_pose = repere(pose.nom if pose else case["pose"], (), "pose")
-            parts.append(
-                (
-                    corps,
-                    {
-                        "nom": f"{racine}-{mot_pose}.png",
-                        "contexte": {
-                            "role": CORPS,
-                            "pose": _nomme(case["pose"], pose),
-                            "piece": None,
-                        },
-                    },
-                )
-            )
-            for identifiant_piece, liste in case["calques"].items():
-                retenu = corps_retenu(
-                    [
-                        asset
-                        for asset in (
-                            self._assets.lire(a["identifiant"]) for a in liste
-                        )
-                        if asset is not None
-                    ]
-                )
-                if retenu is None:
-                    continue
-                piece = pieces.get(identifiant_piece)
-                mot_piece = repere(
-                    piece.nom if piece else identifiant_piece, (), "piece"
-                )
-                parts.append(
-                    (
-                        retenu,
-                        {
-                            "nom": f"{racine}-{mot_pose}-{mot_piece}.png",
-                            "contexte": {
-                                # Calque ou corps habillé : la recette le dit,
-                                # et le descriptif le répète — l'un s'empile sur
-                                # le corps, l'autre le remplace.
-                                "role": CALQUE if retenu.recette.calque else HABILLE,
-                                "pose": _nomme(case["pose"], pose),
-                                "piece": _piece_en_json(
-                                    identifiant_piece, piece, emplacements
-                                ),
-                            },
-                        },
-                    )
-                )
-
-        if not parts:
-            # **Le filet, et la phrase que l'écran grise** (`docs/design-motifs.md`
-            # § Le grisé porte sa raison). L'agent, lui, n'a pas d'écran : c'est
-            # cette phrase-là qu'il répétera à l'auteur.
-            raise ExportRefuse(
-                f"« {vise.nom} » n'a aucune pose remplie — il n'y a rien à sortir"
-            )
-
-        objet = self._base.lire_projet(projet)
-        entete = {
-            "projet": {
-                "identifiant": projet,
-                "nom": objet.nom if objet else projet,
-            },
-            "personnage": {
-                "identifiant": vise.identifiant,
-                "nom": vise.nom,
-                "description": vise.description,
-            },
-            # **L'ordre dans lequel on habille quelqu'un**, et il ne se devine
-            # pas : c'est le rang des emplacements du projet, celui que l'auteur
-            # a posé. Sans lui, un agent qui empile un casque et une cape doit
-            # inventer lequel passe devant — et « aucune structure inventée »
-            # vaut aussi pour l'ordre des calques.
-            "emplacements": [
-                e.en_json()
-                for e in sorted(
-                    emplacements.values(), key=lambda e: (e.rang, e.identifiant)
-                )
-            ],
-        }
-        return self._poser(parts, dossier, entete, f"{racine}-descriptif.json")
 
     # ── Les animations sortent (A4) ──────────────────────────────────────────
 
@@ -621,59 +436,6 @@ class ServiceExport:
             "generation": self._generation(bande.clip),
         }
 
-    def _poser(
-        self,
-        parts: Sequence[tuple[Asset, dict[str, Any]]],
-        dossier: str | None,
-        entete: dict[str, Any],
-        nom_descriptif: str,
-    ) -> Sortie:
-        """Pose les fichiers, puis le descriptif qui les nomme.
-
-        **Le descriptif en dernier, et jamais l'inverse** : le nom qu'il annonce
-        est celui que le dépôt a retenu, homonyme numéroté compris. Écrit
-        d'avance, il aurait annoncé `epee.png` là où le dossier a reçu
-        `epee-2.png`, et l'agent aurait chargé le fichier de la semaine dernière.
-        """
-        instant = time.time()
-        fiches: list[dict[str, Any]] = []
-        for asset, quoi in parts:
-            octets = self.octets_du_rendu(asset)
-            chemin = self._agent.deposer(octets, quoi["nom"], dossier)
-            fiches.append(
-                {
-                    "chemin": chemin,
-                    **quoi["contexte"],
-                    **self.fiche_de_l_asset(asset, Path(chemin).name, octets),
-                }
-            )
-
-        descriptif = self._agent.deposer(
-            json.dumps(
-                {
-                    "atelier": "Asset Kitchen",
-                    "format": FORMAT,
-                    "exporte_le": instant,
-                    **entete,
-                    "compte": len(fiches),
-                    # **La même clé que l'archive de T6.** Un dossier et un zip
-                    # ne sont pas deux descriptifs : c'est le même, écrit par le
-                    # même code, et un agent qui sait lire l'un lit l'autre.
-                    "assets": fiches,
-                },
-                ensure_ascii=False,
-                indent=2,
-            ).encode("utf-8"),
-            nom_descriptif,
-            dossier,
-        )
-        return Sortie(
-            dossier=str(Path(descriptif).parent),
-            fichiers=tuple(fiches),
-            descriptif=descriptif,
-            compte=len(fiches),
-        )
-
     # ── Ce qui part, et sous quel nom ────────────────────────────────────────
 
     def octets_du_rendu(self, asset: Asset) -> bytes:
@@ -794,42 +556,6 @@ class ServiceExport:
             return None
         projet = self._base.lire_projet(identifiant)
         return {"identifiant": identifiant, "nom": projet.nom if projet else identifiant}
-
-
-def _nomme(identifiant: str, pose: Any) -> dict[str, str]:
-    """Une pose, dite par son identifiant **et** par son nom.
-
-    Les deux, parce qu'ils ne servent pas à la même chose : l'identifiant est ce
-    qui relie le fichier à la matrice de l'atelier, le nom est ce que l'auteur a
-    écrit et ce qu'un agent affichera. Une pose retirée du plan depuis l'export
-    garde son identifiant et retombe sur lui — un descriptif incomplet reste un
-    descriptif, comme la filiation d'un parent supprimé.
-    """
-    return {
-        "identifiant": identifiant,
-        "nom": getattr(pose, "nom", "") or identifiant,
-    }
-
-
-def _piece_en_json(
-    identifiant: str, piece: Any, emplacements: dict[str, Any]
-) -> dict[str, Any]:
-    """La pièce d'un calque, avec sa place sur le corps et son rang.
-
-    Le rang est ce qui dit à l'agent **dans quel ordre empiler** ; la portée est
-    ce qui lui dit si la pièce tient dans la silhouette ou l'agrandit, donc si
-    le calque se pose tel quel ou déborde. Ni l'un ni l'autre ne se devine à
-    partir du fichier.
-    """
-    place = emplacements.get(getattr(piece, "emplacement", "") or "")
-    return {
-        "identifiant": identifiant,
-        "nom": getattr(piece, "nom", "") or identifiant,
-        "emplacement": getattr(place, "identifiant", None),
-        "emplacement_nom": getattr(place, "nom", None),
-        "rang": getattr(place, "rang", None),
-        "portee": getattr(piece, "portee", None),
-    }
 
 
 def _nom_archive(instant: float, racine: str = "", quoi: str = "") -> str:

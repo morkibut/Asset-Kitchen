@@ -24,6 +24,10 @@ const REGLAGES: ReglagesDeLaSortie = {
   rangements: ["a_plat", "en_dossiers"],
   collisions: ["remplacer", "numeroter", "arreter", "effacer"],
   moteurs: ["aucun", "godot", "unity", "phaser"],
+  sujets: [
+    { identifiant: "le-pelerin", nom: "le pèlerin" },
+    { identifiant: "le-passeur", nom: "le passeur" },
+  ],
   dossier: "D:\\jeux\\marais\\assets",
   precedente: null,
 }
@@ -84,6 +88,7 @@ const APERCU: ApercuDeSortie = {
     rangement: "a_plat",
     collision: "remplacer",
     moteur: "aucun",
+    sujet: "",
   },
   compte: 4,
   octets: 8192,
@@ -357,6 +362,58 @@ describe("poids", () => {
     expect(poids(14_260_000)).toBe("13,6 Mo")
     expect(poids(2048)).toBe("2 ko")
     expect(poids(12)).toBe("12 o")
+  })
+})
+
+// ── Un seul sujet, à la place du lot (`RP17`) ───────────────────────────────
+
+describe("un seul asset", () => {
+  test("le choix paraît avec les lots, et la liste vient du serveur", async () => {
+    monter()
+
+    expect(await screen.findByRole("radio", { name: "Un seul sujet" })).toBeTruthy()
+    // Tant qu'on ne l'a pas pris, le lot décide et aucune liste de sujets ne
+    // s'affiche : un menu sans objet se lit comme un réglage à remplir.
+    expect(screen.queryByLabelText("Lequel")).toBeNull()
+
+    fireEvent.click(screen.getByRole("radio", { name: "Un seul sujet" }))
+    const lequel = screen.getByLabelText("Lequel") as HTMLSelectElement
+    expect([...lequel.options].map((o) => o.textContent)).toEqual([
+      "le pèlerin",
+      "le passeur",
+    ])
+  })
+
+  test("le prendre envoie le sujet, et le reprendre au lot le relâche", async () => {
+    monter()
+    await screen.findByRole("radio", { name: "Un seul sujet" })
+
+    fireEvent.click(screen.getByRole("radio", { name: "Un seul sujet" }))
+    await waitFor(() =>
+      expect(prevoir.mock.calls.at(-1)?.[0]).toMatchObject({
+        sujet: "le-pelerin",
+      }),
+    )
+    // Le lot n'est plus allumé : deux réponses à la même question se
+    // contrediraient, et l'écran le montre au lieu de l'expliquer.
+    expect(
+      screen.getByRole("radio", { name: MOTS.tout }).getAttribute("aria-checked"),
+    ).toBe("false")
+
+    fireEvent.change(screen.getByLabelText("Lequel"), {
+      target: { value: "le-passeur" },
+    })
+    await waitFor(() =>
+      expect(prevoir.mock.calls.at(-1)?.[0]).toMatchObject({
+        sujet: "le-passeur",
+      }),
+    )
+
+    fireEvent.click(screen.getByRole("radio", { name: MOTS.tout }))
+    await waitFor(() =>
+      expect(prevoir.mock.calls.at(-1)?.[0]).toMatchObject({ sujet: "" }),
+    )
+    expect(screen.queryByLabelText("Lequel")).toBeNull()
   })
 })
 

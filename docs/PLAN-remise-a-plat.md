@@ -963,74 +963,6 @@ pas la 3D, pas les sons.
 
 L'auteur ne peut donc pas savoir ce qui est en cours, ni ce qu'il a laissé à moitié.
 
-### Critères d'acceptation
-
-- [x] Un tiroir rassemble tous les brouillons, avec ce que chacun reprend et depuis quand.
-  *Rangés par écran, chacun avec sa ligne et sa date* (`composants/Brouillons.tsx`).
-- [x] Un brouillon s'ouvre depuis ce tiroir, et s'y jette. *« Reprendre » repose la pile de
-  lieux qu'il a gardée ; « Jeter le brouillon » efface le brouillon et sa ligne d'un geste.*
-- [x] Le compteur de la colonne compte tous les travaux, pas une seule famille. *Les
-  emplacements d'images encore en route **plus** les fabrications du serveur qui ne sont ni
-  finies ni annulées — animations, équipements, images locales, vidéos libres, 3D, sons.*
-- [x] Un travail interrompu par un redémarrage paraît dans le tiroir, avec ce qu'il attendait.
-  *Section « Fabrications interrompues », lue chez le serveur : « À reprendre · attendait :
-  Fabrication du clip ».*
-
-**Les treize brouillons branchés**, par la seule porte commune (`useBrouillonLocal`) : la
-retouche (deux modes), le montage, l'atelier d'une animation, la découpe, l'extraction, les
-tuiles, les corrections du squelette, une animation, une vidéo libre, une image locale, un son,
-une source 3D. Un essai lit les sources et refuse un écran qui garderait un brouillon sans se
-déclarer — pas de liste blanche, un écran neuf est tenu d'office.
-
----
-
-# Temps 4 — Les décisions
-
-Deux tranches qui demandent de trancher avant d'écrire. Elles se placent en dernier parce que
-rien ne les bloque et qu'elles ne bloquent rien — mais elles ne se referment pas toutes seules.
-
-## RP17 · Une seule porte pour faire sortir un personnage
-
-**Bloquée par** : rien.
-
-Deux chemins sortent un personnage du jeu. L'ancien écrit un personnage nommé directement dans le
-dossier, **sans aperçu et sans comparaison**. Le nouveau écrit un lot entier, avec aperçu avant
-écriture et comparaison à la sortie précédente.
-
-Le second a été construit **à côté** du premier, jamais à sa place — le code le dit lui-même — et
-personne n'a retiré l'ancien depuis. L'auteur a donc deux boutons dans deux écrans, l'un sans
-filet, l'autre avec, et rien ne dit lequel préférer.
-
-⚠️ **C'est le doublon le plus gênant du serveur**, et le seul qui écrit dans le dossier du jeu.
-
-### Critères d'acceptation
-
-- [ ] Un seul chemin écrit dans le dossier du jeu, et il prévisualise avant d'écrire.
-- [ ] Sortir un seul personnage reste possible, par ce chemin-là.
-- [ ] Ce que l'agent peut faire, l'écran le peut aussi, et l'inverse.
-- [ ] Les variantes archive — un fichier compressé au lieu d'une écriture disque — restent
-  disponibles ou sont retirées explicitement, jamais laissées de côté sans le dire.
-- [ ] Rien n'est écrasé sans que la comparaison l'ait annoncé.
-
-## RP18 · Les neuf routes sans écran  ✅ **close le 16 septembre 2026**
-
-**Bloquée par** : rien.
-
-Neuf routes du serveur ne sont appelées ni par l'écran, ni par un script, et n'ont pas d'outil
-pour l'agent. Elles fonctionnent, elles sont testées, et personne ne les emprunte :
-
-- les jeux de réglages nommés — trois routes, déclarées à la première tranche du produit et
-  restées vides depuis ;
-- chercher un sujet par son nom dans tout le projet, au-delà d'une famille ;
-- redemander le catalogue vidéo — son pendant image, lui, est bien appelé ;
-- défaire le calage d'un calque animé, et en voir l'aperçu ;
-- l'image de référence et l'image de départ d'un travail en cours.
-
-Chacune se tranche séparément : **soit on construit l'écran qui l'emprunte, soit on retire la
-route.** Une route sans emprunteur n'est pas neutre : elle se teste, elle se maintient, et elle
-fait croire à une capacité qui n'existe pas pour l'auteur.
-
-### Les neuf décisions
 ### La forme de l'index
 
 **Ce qu'un brouillon porte** — cinq choses, et pas une de plus : la **clé** du brouillon (celle
@@ -1066,6 +998,143 @@ l'écrivant.
 **Ce qu'il n'y a pas** : aucune couleur d'alerte, aucun compte à rebours, aucune relance — un
 brouillon attend, il ne réclame pas (E2).
 
+### Critères d'acceptation
+
+- [x] Un tiroir rassemble tous les brouillons, avec ce que chacun reprend et depuis quand.
+  *Rangés par écran, chacun avec sa ligne et sa date* (`composants/Brouillons.tsx`).
+- [x] Un brouillon s'ouvre depuis ce tiroir, et s'y jette. *« Reprendre » repose la pile de
+  lieux qu'il a gardée ; « Jeter le brouillon » efface le brouillon et sa ligne d'un geste.*
+- [x] Le compteur de la colonne compte tous les travaux, pas une seule famille. *Les
+  emplacements d'images encore en route **plus** les fabrications du serveur qui ne sont ni
+  finies ni annulées — animations, équipements, images locales, vidéos libres, 3D, sons.*
+- [x] Un travail interrompu par un redémarrage paraît dans le tiroir, avec ce qu'il attendait.
+  *Section « Fabrications interrompues », lue chez le serveur : « À reprendre · attendait :
+  Fabrication du clip ».*
+
+**Les treize brouillons branchés**, par la seule porte commune (`useBrouillonLocal`) : la
+retouche (deux modes), le montage, l'atelier d'une animation, la découpe, l'extraction, les
+tuiles, les corrections du squelette, une animation, une vidéo libre, une image locale, un son,
+une source 3D. Un essai lit les sources et refuse un écran qui garderait un brouillon sans se
+déclarer — pas de liste blanche, un écran neuf est tenu d'office.
+
+---
+
+# Temps 4 — Les décisions
+
+Deux tranches qui demandent de trancher avant d'écrire. Elles se placent en dernier parce que
+rien ne les bloque et qu'elles ne bloquent rien — mais elles ne se referment pas toutes seules.
+
+## RP17 · Une seule porte pour faire sortir un personnage ✅ **close le 16 septembre 2026**
+
+**Bloquée par** : rien.
+
+Deux chemins sortent un personnage du jeu. L'ancien écrit un personnage nommé directement dans le
+dossier, **sans aperçu et sans comparaison**. Le nouveau écrit un lot entier, avec aperçu avant
+écriture et comparaison à la sortie précédente.
+
+Le second a été construit **à côté** du premier, jamais à sa place — le code le dit lui-même — et
+personne n'a retiré l'ancien depuis. L'auteur a donc deux boutons dans deux écrans, l'un sans
+filet, l'autre avec, et rien ne dit lequel préférer.
+
+⚠️ **C'est le doublon le plus gênant du serveur**, et le seul qui écrit dans le dossier du jeu.
+
+### La porte retenue
+
+**Celle qui montre avant d'écrire** : `POST /api/output`, précédée de `POST /api/output/preview`
+et de `GET /api/output/settings` — l'écran *Livrer au jeu › Exporter des fichiers* (B21). Elle
+liste chaque fichier avec sa marque face au dossier — *nouveau*, *remplace*, *inchangé* — et
+nomme ce que la sortie précédente avait posé et qui ne sort plus.
+
+**Ce qui part** :
+
+- `POST /api/characters/{id}/export`, la route de C5 ;
+- les outils MCP `export_character` et `export_assets` ;
+- le bouton *Poser dans le dossier du jeu*, sur la fiche du sujet — la fiche garde *Livrer…*, en
+  tête, qui ouvre la sortie ;
+- côté services, `ServiceExport.exporter_personnage`, `ServiceExport.deposer` et leur dépôt
+  commun. Le service qui **fabrique** ne sait plus écrire dehors, et ses deux dépendances
+  devenues inutiles — le vestiaire, le dépôt de fichiers — sont retirées de son constructeur.
+
+**Ce qui le remplace, et ne perd rien** : *sortir un seul personnage* est devenu un réglage de la
+porte retenue, `sujet`. Posé, il emporte ce sujet-là en entier — ses images **et** ses animations
+— et le lot n'est plus lu : deux réglages qui trancheraient la même question auraient fini par se
+contredire, et *lot = les décors, sujet = un personnage* n'a aucune réponse juste. Le descriptif
+écrit dans le dossier reprend alors le bloc `personnage` que C5 y mettait, sans quoi un dossier
+reçu seul ne dirait plus de qui il est.
+
+**Le sort des archives : elles restent, et c'est une décision.** `POST /api/exports` (une
+sélection de la galerie), `POST /api/strips/export` (une sélection d'animations) et
+`POST /api/characters/{id}/strips/export` (toutes celles d'un sujet) rendent un fichier compressé
+au navigateur. Elles n'écrivent rien dans le dossier du jeu, donc elles ne sont pas une seconde
+porte ; et elles sont le seul moyen d'emporter une sélection sans nommer de dossier.
+`tests/test_rp17.py` vérifie que les trois répondent encore — sans quoi elles partiraient un jour
+sans que personne ne l'ait décidé.
+
+**Le seul autre écrivain du dossier du jeu, et il est nommé** : l'argument `folder` des outils MCP
+de génération et de retouche (`generate_asset`, `edit_asset`, `generate_pose`, `equip_character`,
+`check_generation`). Il pose **l'image que l'agent vient de payer**, une à la fois, là où il code.
+Ce n'est pas une sortie — aucun lot composé, aucun nom tiré de la matrice, aucune comparaison — et
+c'est la promesse de T7. Il reste, et `tests/test_rp17.py` refuse un troisième appelant.
+
+**Ce qui n'est pas cette porte-ci et ne le devient pas** : la livraison Godot
+(`POST /api/projects/{p}/deliveries`) écrit dans le **projet Godot associé**, en révisions, avec
+les décisions par conflit de `RP10`. Ce n'est ni le dossier du jeu de l'installation, ni un export
+d'images : c'est un paquet Godot — scènes, `SpriteFrames`, manifeste. Les deux ne se recouvrent
+pas, et aucune ne peut faire le travail de l'autre.
+
+**Ce que la tranche a trouvé en refermant l'autre porte.** La sortie de B21 laissait partir les
+calques d'équipement d'une pose **dont le corps avait disparu** — un calque seul dans un dossier
+de jeu ne se pose sur rien. La règle existait depuis C5 et son docstring la réclamait ici ; ce qui
+manquait est que l'essai qui la tenait visait la porte d'à côté. *Une règle qui n'est éprouvée que
+sur l'un de deux chemins n'est tenue que sur celui-là.*
+
+### Critères d'acceptation
+
+- [x] Un seul chemin écrit dans le dossier du jeu, et il prévisualise avant d'écrire.
+      *`ServiceAgent.deposer` est le geste qui écrit dehors ; ils étaient trois à l'appeler, il en
+      reste un — `atelier/services/sortie.py` —, plus la façade de T7 qui pose l'image de l'agent
+      une à la fois. `tests/test_rp17.py` lit les appelants dans tout `atelier/` par l'arbre
+      syntaxique et refuse le troisième ; un autre demande dix fois l'aperçu d'un dossier qui
+      n'existe pas, et il n'existe toujours pas.*
+- [x] Sortir un seul personnage reste possible, par ce chemin-là.
+      *`sujet` sur les trois routes de la sortie et sur les deux outils MCP. Les essais de C5 —
+      les fichiers, le descriptif, les rôles, les refus — ont été réécrits sur elle et passent
+      tels quels (`tests/test_c5.py`). À l'écran, *un seul asset* est le sixième choix du premier
+      bloc, avec la liste des sujets servie par le serveur.*
+- [x] Ce que l'agent peut faire, l'écran le peut aussi, et l'inverse.
+      *`preview_output` et `write_output` sont les deux routes, aux mêmes sept réglages ; un essai
+      compare les deux aperçus fichier par fichier — chemins, marques, rôles et poids — et exige
+      qu'ils soient identiques. Avant la tranche, l'agent avait `export_assets` que l'écran
+      n'avait pas, et l'écran avait `/output` que l'agent n'avait pas.*
+- [x] Les variantes archive restent disponibles ou sont retirées explicitement.
+      *Les trois restent, pour la raison écrite ci-dessus, et un essai les appelle.
+      `export_assets`, lui, est retiré explicitement : il déposait une sélection sur le disque
+      sans rien montrer, et aucun écran ne faisait ce geste — le retirer est ce qui rend la parité
+      vraie.*
+- [x] Rien n'est écrasé sans que la comparaison l'ait annoncé.
+      *On sort, on retouche une image, on redemande l'aperçu : le fichier qui va changer est
+      marqué *remplace*, le disque porte encore l'ancien, et après écriture rien n'a changé qui
+      n'ait été annoncé (`tests/test_rp17.py`). *S'arrêter s'il y a un doublon* refuse le lot
+      entier en nommant le premier fichier, et n'écrit rien.*
+## RP18 · Les neuf routes sans écran  ✅ **close le 16 septembre 2026**
+
+**Bloquée par** : rien.
+
+Neuf routes du serveur ne sont appelées ni par l'écran, ni par un script, et n'ont pas d'outil
+pour l'agent. Elles fonctionnent, elles sont testées, et personne ne les emprunte :
+
+- les jeux de réglages nommés — trois routes, déclarées à la première tranche du produit et
+  restées vides depuis ;
+- chercher un sujet par son nom dans tout le projet, au-delà d'une famille ;
+- redemander le catalogue vidéo — son pendant image, lui, est bien appelé ;
+- défaire le calage d'un calque animé, et en voir l'aperçu ;
+- l'image de référence et l'image de départ d'un travail en cours.
+
+Chacune se tranche séparément : **soit on construit l'écran qui l'emprunte, soit on retire la
+route.** Une route sans emprunteur n'est pas neutre : elle se teste, elle se maintient, et elle
+fait croire à une capacité qui n'existe pas pour l'auteur.
+
+### Les neuf décisions
 
 | La route | Ce qu'elle promet | L'emprunteur qu'elle aurait | Décision | Pourquoi |
 |---|---|---|---|---|

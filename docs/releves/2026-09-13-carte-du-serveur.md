@@ -6,10 +6,10 @@ Ce relevé décrit ce que le serveur (`atelier/`) sait faire : ses routes HTTP, 
 
 | | Nombre |
 |---|---|
-| Routes HTTP | **314** *(318 avant `RP18`, le 16 septembre 2026)* |
-| Outils MCP | 87 *(inchangé : `RP18` a ajouté un argument, pas un outil)* |
+| Routes HTTP | **313** *(318 avant `RP18` puis `RP17`, le 16 septembre 2026)* |
+| Outils MCP | 87 *(`RP17` en retire deux et en ajoute deux)* |
 | Routes que l'interface n'appelle pas | **0** (+ `/health`, à part — voir plus bas) |
-| Doublons de capacité | 3 |
+| Doublons de capacité | 2 *(`RP17` a refermé le troisième)* |
 | Modules plus importés (services/ + domaine/) | 0 |
 
 Deux essais tombent pour une raison d'environnement, pas de code — voir la dernière section.
@@ -109,7 +109,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | PUT /assets/favorite | Marque des assets favoris | Oui | — |
 | POST /assets/delete | Supprime une sélection d'assets (annulable un temps) | Oui | — |
 | POST /assets/restore | Annule une suppression récente | Oui | — |
-| POST /exports | Exporte une sélection d'assets en archive ZIP | Oui | export_assets |
+| POST /exports | Exporte une sélection d'assets en archive ZIP | Oui | — *(`export_assets` retiré par `RP17`)* |
 | GET /assets/{id}/lineage | D'où vient cet asset, et ce qui en descend | Oui | — |
 
 ### Le tableau d'inspiration et l'univers du projet (`univers.py`, 38 routes)
@@ -154,7 +154,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | PUT /moods/{id} | Règle une ambiance (palette, références, éclairage) | Oui | — |
 | DELETE /moods/{id} | Supprime une ambiance (ce qui s'en servait retombe sur le jeu) | Oui | — |
 
-### Les personnages, poses, directions, le vestiaire (`production.py`, 56 routes)
+### Les personnages, poses, directions, le vestiaire (`production.py`, 55 routes depuis RP17)
 
 | Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
 |---|---|---|---|
@@ -212,7 +212,6 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | PUT /assets/{id}/hand | Pose une couche de retouche à la main sur un calque | Oui | — |
 | POST /assets/{id}/realign | Rejoue le recalage de la planche dont l'image est sortie | Oui | — |
 | POST /characters/subject | Le sujet qu'une case demande au modèle | Oui | — |
-| POST /characters/{id}/export | Un personnage complet part dans le dossier du jeu | Oui | export_character |
 | POST /characters/{id}/strips/export | Toutes les animations d'un personnage, en une archive | Oui | — |
 | PUT /references | Décoche une référence, pour un personnage ou tout le projet | Oui | — |
 
@@ -275,13 +274,13 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 |---|---|---|---|
 | GET /actions | Ce que la barre peut proposer maintenant — dérivé en direct de la liste des outils MCP | Oui | — (elle *lit* la liste des outils, voir plus bas) |
 
-### La sortie (`sortie.py`, 3 routes — B21)
+### La sortie (`sortie.py`, 3 routes — B21, `RP17`)
 
 | Verbe et chemin | Ce qu'elle fait | Appelée par l'interface ? | Outil MCP équivalent ? |
 |---|---|---|---|
-| GET /output/settings | Les listes fermées de la sortie, et la fois d'avant | Oui | — |
-| POST /output/preview | Ce qui sortirait, et pas un octet n'est écrit | Oui | — |
-| POST /output | Écrit la sortie pour de vrai, rend le compte rendu | Oui | — |
+| GET /output/settings | Les listes fermées de la sortie, ses sujets, et la fois d'avant | Oui | — |
+| POST /output/preview | Ce qui sortirait, et pas un octet n'est écrit | Oui | preview_output |
+| POST /output | Écrit la sortie pour de vrai, rend le compte rendu | Oui | write_output |
 
 ### La livraison vers Godot — animations (`livraison.py`, 7 routes) et images (`livraison_images.py`, 2 routes)
 
@@ -450,12 +449,12 @@ Deux par calque, et la coupure est celle du miroir : ce qui ne crée rien se red
 | edit_asset | Retouche la recette d'un asset (recadrage, couleurs, détourage) | Oui — écran galerie |
 | slice_asset | Découpe une image en plusieurs assets | Oui — écran galerie |
 | animate_sheet | Monte une feuille de sprites en clip et en bandes | Oui — écran galerie |
-| export_assets | Exporte une sélection en archive ZIP | Oui — écran galerie |
+| preview_output | Ce qui serait écrit dans le dossier du jeu, marque par marque — rien n'est posé | Oui — écran *Livrer au jeu › Exporter des fichiers* |
+| write_output | Écrit dans le dossier du jeu ce que l'aperçu annonçait | Oui — le même écran |
 | list_characters | Liste les personnages/objets d'un jeu — et, depuis `RP19`, l'**image de référence** de chacun, en lecture seule : aucun outil ne la choisit. Depuis `RP18`, un terme `search` restreint la liste aux sujets dont le nom ou la description répond, par `GET /characters/search` | Oui — codex |
 | add_pose | Ajoute une pose au plan du projet | Oui — univers |
 | generate_pose | Génère une planche remplissant une ou plusieurs poses | Ouvre l'écran d'envoi |
 | equip_character | Associe une pièce d'équipement à un personnage | Oui — codex |
-| export_character | Exporte un personnage complet dans le dossier du jeu | Oui — codex |
 | get_budget | Le budget et la consommation de l'agent | Oui — dépenses |
 | rebuild_library | Reconstruit l'index de la bibliothèque depuis le disque | Oui — POST /api/library/rebuild |
 | realign_project | Réapplique palette et grille à tout un jeu, sans appel payant | Oui — POST /api/universe/realign |
@@ -542,12 +541,19 @@ Remarque : les fiches déclarent une correspondance d'écran pour les **87** out
 - **Chemin B** : `POST /assets/upload` — des octets envoyés par le navigateur (glisser-déposer à l'écran).
 - **Ce qui les sépare** : rien, côté fabrication — la docstring de `importer_asset` le dit explicitement : *« l'un et l'autre passent par `ServiceGenerations.importer`, et c'est ça qui garantit que ce que l'agent peut faire, l'écran le peut aussi »*. Les deux routes existent parce qu'un agent a un chemin de fichier et qu'un navigateur n'en a jamais un — c'est une différence d'entrée, pas une capacité dupliquée. Rien à corriger ici.
 
-### Faire sortir un personnage du jeu
+### Faire sortir un personnage du jeu — **refermé le 16 septembre 2026 (`RP17`)**
 
-- **Chemin A (ancien, ciblé)** : `POST /characters/{id}/export` écrit un personnage nommé directement dans le dossier du jeu — sans aperçu, sans comparaison à la fois d'avant. `POST /characters/{id}/strips/export`, `POST /strips/export` et `POST /exports` en sont les variantes archive (un ZIP au lieu d'une écriture disque).
-- **Chemin B (nouveau, B21)** : `POST /output` (avec `GET /output/settings` et `POST /output/preview`) écrit tout un *lot* (tous les personnages, tous les décors, toutes les animations…) dans le dossier du jeu, avec aperçu avant écriture et comparaison à la sortie précédente (ce qui a changé, ce qui doit être effacé).
-- **Ce qui les sépare** : la granularité (un personnage nommé contre une famille entière) et l'outillage (le nouveau chemin prévisualise et compare, l'ancien écrit tout de suite). Ce n'est pas un doublon accidentel — le code le documente lui-même : *« L'atelier savait sortir par quatre portes […] Ce service ne refait aucune des quatre »* (`atelier/services/sortie.py`, en-tête). Autrement dit, B21 a été construit **à côté** des quatre anciennes portes, pas à leur place, et personne n'a depuis retiré les anciennes. **C'est le doublon le plus gênant** : un auteur qui veut sortir un seul personnage a deux boutons possibles dans deux écrans différents, l'un sans filet (écrase tout de suite) et l'autre avec (prévisualise, compare) — et rien ne dit lequel préférer.
+Il n'y a plus qu'une porte. Ce qui suit est ce qu'elle a remplacé, et ce qui l'accompagne.
 
+- **Ce qui est parti** : `POST /characters/{id}/export` — un personnage nommé écrit directement dans le dossier du jeu, sans aperçu et sans comparaison. Avec elle, les outils MCP `export_character` et `export_assets`, et le bouton *Poser dans le dossier du jeu* de la fiche du sujet.
+- **Ce qui reste** : `POST /output`, précédée de `POST /output/preview` et de `GET /output/settings` — l'écran *Livrer au jeu › Exporter des fichiers*. Elle montre chaque fichier avec sa marque (`nouveau`, `remplace`, `inchangé`) avant d'écrire, et dit ce que la sortie précédente avait posé et qui ne sort plus. **Sortir un seul personnage est devenu un réglage de celle-ci**, `sujet` : posé, il emporte ce sujet-là en entier — ses images et ses animations — et le lot n'est plus lu.
+- **La parité, enfin vraie** : `preview_output` et `write_output` sont les deux outils MCP de ces deux routes, aux mêmes sept réglages. Avant, l'agent avait une porte que l'écran n'avait pas (`export_assets`) et l'écran en avait une que l'agent n'avait pas (`/output`).
+- **Les variantes archive restent** : `POST /exports`, `POST /strips/export` et `POST /characters/{id}/strips/export` rendent un ZIP au navigateur. Elles n'écrivent rien dans le dossier du jeu, donc elles ne sont pas une seconde porte — c'est une décision, pas un oubli.
+- **Le seul autre écrivain du dossier du jeu**, et il est nommé : l'argument `folder` des outils MCP de génération et de retouche (`generate_asset`, `edit_asset`, `generate_pose`, `equip_character`, `check_generation`). Il pose **l'image que l'agent vient de payer**, une à la fois, là où il code — c'est la promesse de T7, pas une sortie : il ne compose aucun lot, ne nomme rien d'après la matrice et n'écrase jamais. `tests/test_rp17.py` lit les appelants de `ServiceAgent.deposer` dans tout `atelier/` et refuse le troisième.
+
+### La livraison Godot, qui n'est pas la même chose
+
+`POST /projects/{p}/deliveries` écrit elle aussi des fichiers, mais **ailleurs** : dans le projet Godot associé au jeu, sous `assets/asset-kitchen/…`, en révisions, avec les décisions par conflit de `RP10`. Ce n'est pas le « dossier du jeu » de l'installation, et ce n'est pas un export d'images : c'est un paquet Godot — scènes, `SpriteFrames`, manifeste. Les deux portes ne se recouvrent pas, et aucune ne peut faire le travail de l'autre.
 ### Commander un clip vidéo payant
 
 - **Chemin A (direct)** : `POST /clips` — un bouton qui commande tout de suite un lot de clips chez un fournisseur payant.

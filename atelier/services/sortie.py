@@ -26,6 +26,13 @@ ajoute les trois choses qui manquaient :
 l'export : ni fournisseur, ni animateur, ni catalogue. Sortir est du disque et du
 processeur.
 
+**Et depuis `RP17`, c'est le seul code du serveur qui écrit dans le dossier du
+jeu.** L'ancienne porte — un personnage nommé posé sur le disque, sans aperçu et
+sans comparaison — est retirée ; ce qu'elle savait faire est devenu un réglage
+d'ici, `Reglage.sujet`. Un seul écrivain veut dire une seule liste de fichiers
+annoncée avant d'être écrite, et c'est ce qui rend « rien n'est écrasé sans que
+la comparaison l'ait dit » vérifiable plutôt que promis.
+
 **Les octets ne s'accumulent jamais.** La planche relève, sur l'archive
 d'aujourd'hui, qu'elle est « construite entièrement en mémoire avant de partir,
 et rien ne borne le nombre d'images acceptées ». L'aperçu serait le pire endroit
@@ -456,6 +463,15 @@ class ServiceSortie:
         if objet is None:
             raise SortieRefusee("ce jeu n'existe plus")
 
+        # **Un sujet nommé qui n'est pas de ce jeu est une faute d'appel**, pas
+        # un lot vide : sans ce refus, l'agent recevrait « rien ne sort de ce
+        # lot » pour une coquille dans un identifiant, et chercherait la panne
+        # du côté des images.
+        if reglage.sujet and not self._sujets(projet, objet, reglage):
+            raise SortieRefusee(
+                f"« {reglage.sujet} » n'est pas un sujet de ce jeu"
+            )
+
         pris: set[str] = set()
         pieces = {p.identifiant: p for p in self._equipement.pieces(projet)}
         poses = {p.identifiant: p for p in self._production.plan(projet)}
@@ -472,21 +488,27 @@ class ServiceSortie:
             sans_poids.append(replace(morceau, octets=b"", fiche=None))
             return morceau
 
-        if reglage.lot != vocabulaire.ANIMATIONS:
+        # **Un sujet nommé sort en entier** (`RP17`) : ses images *et* ses
+        # animations, quel que soit le lot. C'est ce que l'ancienne porte
+        # promettait — « un personnage complet » — et ce que l'auteur attend
+        # quand il en désigne un.
+        un_seul = bool(reglage.sujet)
+
+        if un_seul or reglage.lot != vocabulaire.ANIMATIONS:
             for personnage, famille in self._sujets(projet, objet, reglage):
                 for morceau in self._images_du_sujet(
                     projet, personnage, famille, reglage, poses, pieces, pris
                 ):
                     yield _retenir(morceau)
 
-        if reglage.lot in (vocabulaire.TOUT, vocabulaire.ANIMATIONS):
+        if un_seul or reglage.lot in (vocabulaire.TOUT, vocabulaire.ANIMATIONS):
             for morceau in self._animations(projet, objet, reglage, pris):
                 yield _retenir(morceau)
 
         if not sans_poids:
             return
 
-        yield self._descriptif(projet, fiches, animees)
+        yield self._descriptif(projet, reglage, fiches, animees)
         catalogue = self._catalogue(projet, reglage, sans_poids)
         if catalogue is not None:
             yield catalogue
@@ -498,11 +520,17 @@ class ServiceSortie:
 
         La famille se **lit dans le type**, comme partout ailleurs — c'est la
         règle d'`E15`, et la redire ici en aurait fait une seconde.
+
+        **Un sujet nommé réduit la liste à lui seul** (`RP17`), et le lot n'est
+        plus consulté : c'est le sens de `Reglage.sujet`, écrit une fois.
         """
         voulus = []
         for personnage in self._production.personnages(projet):
             famille = objet.univers.famille_du_type(personnage.type)
-            if reglage.lot == vocabulaire.TOUT or reglage.lot == famille:
+            if reglage.sujet:
+                if personnage.identifiant == reglage.sujet:
+                    voulus.append((personnage, famille))
+            elif reglage.lot == vocabulaire.TOUT or reglage.lot == famille:
                 voulus.append((personnage, famille))
         return voulus
 
@@ -540,6 +568,12 @@ class ServiceSortie:
             pose = poses.get(case["pose"])
             mot_pose = repere(pose.nom if pose else case["pose"], (), "pose")
             colonnes = case.get("directions") or []
+            # **Aucun corps sorti de cette pose, aucun calque non plus.** La
+            # règle est celle de C5, et elle ne tenait pas ici : un corps
+            # supprimé laissait partir ses calques seuls, que rien dans le jeu
+            # ne peut poser sur quoi que ce soit. Trouvé en refermant l'autre
+            # porte (`RP17`), sur l'essai que C5 avait écrit pour elle.
+            un_corps = False
 
             for colonne in colonnes or [None]:
                 images = self._assets_de(
@@ -548,6 +582,7 @@ class ServiceSortie:
                 corps = corps_retenu(images)
                 if corps is None:
                     continue
+                un_corps = True
                 mot_direction = (
                     repere(colonne["nom"] or colonne["identifiant"], (), "direction")
                     if colonne
@@ -574,6 +609,9 @@ class ServiceSortie:
                         "piece": None,
                     },
                 )
+
+            if not un_corps:
+                continue
 
             # **Les calques, une fois par pose et non par direction.** La matrice
             # ne range les pièces que sur l'axe des poses (`C3`) : les répéter
@@ -654,7 +692,7 @@ class ServiceSortie:
             if reglage.rangement == vocabulaire.EN_DOSSIERS
             else ""
         )
-        for gardee in self._bandes(projet):
+        for gardee in self._bandes(projet, reglage.sujet):
             bande, nom, planche, descriptif, animee = self._export.trois_fichiers(
                 gardee.identifiant, "", pris
             )
@@ -703,19 +741,23 @@ class ServiceSortie:
                 animation=True,
             )
 
-    def _bandes(self, projet: str) -> list[Bande]:
+    def _bandes(self, projet: str, sujet: str = "") -> list[Bande]:
         """Les animations de ce jeu, écartées et vides exclues.
 
         **Une bande sans image ne sort pas** : elle ne peut pas faire de planche
         de sprites, et la demander en ferait une panne au milieu d'un lot. Elle
         se dit dans le panneau de ce qui n'est pas prêt, ce qui est le bon
         endroit pour en parler.
+
+        `sujet` réduit la liste à celles d'un seul personnage (`RP17`).
         """
         gardees = []
         for bande in self._base.bandes():
             if bande.projet != projet or bande.supprime_le is not None:
                 continue
             if bande.compte <= 0:
+                continue
+            if sujet and bande.personnage != sujet:
                 continue
             gardees.append(bande)
         return gardees
@@ -729,6 +771,7 @@ class ServiceSortie:
     def _descriptif(
         self,
         projet: str,
+        reglage: Reglage,
         fiches: Sequence[dict[str, Any]],
         animations: Sequence[dict[str, Any]],
     ) -> Morceau:
@@ -738,8 +781,19 @@ class ServiceSortie:
         plutôt que sous `assets` — c'est la décision d'`A4`, et la reprendre
         telle quelle évite qu'un agent charge une planche de sprites comme un
         sprite.
+
+        **`personnage` quand un seul sujet est sorti** (`RP17`), et rien sinon :
+        c'est ce que l'ancienne porte écrivait en tête de son descriptif, et
+        sans lui un dossier reçu tout seul ne dit plus de qui il est. Un lot
+        entier n'a pas de personnage, et écrire `null` là serait une clé à
+        interpréter plutôt qu'une absence.
         """
         objet = self._base.lire_projet(projet)
+        sujet = (
+            self._production.personnage(projet, reglage.sujet)
+            if reglage.sujet
+            else None
+        )
         return Morceau(
             sous_dossier="",
             nom=DESCRIPTIF,
@@ -752,6 +806,17 @@ class ServiceSortie:
                         "identifiant": projet,
                         "nom": objet.nom if objet else projet,
                     },
+                    **(
+                        {
+                            "personnage": {
+                                "identifiant": sujet.identifiant,
+                                "nom": sujet.nom,
+                                "description": sujet.description,
+                            }
+                        }
+                        if sujet is not None
+                        else {}
+                    ),
                     "emplacements": [
                         e.en_json()
                         for e in sorted(
@@ -834,7 +899,7 @@ class ServiceSortie:
         une_direction: list[dict[str, str]] = []
         habilles: list[dict[str, str]] = []
 
-        if reglage.lot != vocabulaire.ANIMATIONS:
+        if reglage.sujet or reglage.lot != vocabulaire.ANIMATIONS:
             for personnage, _famille in self._sujets(projet, objet, reglage):
                 cases = self._production.cases(projet, personnage)
                 remplies = [c for c in cases if c.get("corps")]
@@ -885,7 +950,11 @@ class ServiceSortie:
                 "quoi": "aucune image",
             }
             for b in self._base.bandes()
-            if b.projet == projet and b.supprime_le is None and b.compte <= 0
+            if b.projet == projet
+            and b.supprime_le is None
+            and b.compte <= 0
+            # Un sujet nommé ne fait pas parler des animations d'un autre.
+            and (not reglage.sujet or b.personnage == reglage.sujet)
         ]
 
         alertes = []

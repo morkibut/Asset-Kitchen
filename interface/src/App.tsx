@@ -2519,12 +2519,6 @@ function AtelierApp() {
               })
             })
           }}
-          // **Le dossier du jeu, tenu par les Réglages et lu ici** (C5). L'écran
-          // ne s'en sert que pour griser avec sa raison : le geste, lui, le
-          // redemande au serveur, qui en est le seul dépositaire. Il arrive par
-          // le flux comme le reste du cadre de l'agent, donc le bouton
-          // s'allume à l'instant où l'auteur pose le dossier dans l'autre écran.
-          dossierJeu={etat?.agent.garde_fous.dossier_jeu ?? ""}
           // **B13** — la grille du jeu et comparer, ouvertes depuis le
           // bandeau d'onglets. Deux profondeurs de plus, comme la matrice.
           onGrille={() => setGrilleOuverte(choseOuverte.identifiant)}
@@ -2870,6 +2864,10 @@ function AtelierApp() {
           surJouer={(action) => {
             // Gratuit, sur place, et par la route que le serveur a servie. Ce
             // qui revient n'est pas lu : le flux d'événements annonce déjà ce
+            // La sortie vers le dossier du jeu (`RP17`) : les deux outils de la
+            // porte unique la déclarent, et sans cette ligne ils menaient à la
+            // galerie — un lieu qui ne porte pas le geste qu'ils nomment.
+            else if (ou === "sortie") setSortieOuverte(true)
             // que l'atelier vient de faire, et le relire ici en ferait deux
             // vérités.
             void api

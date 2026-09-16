@@ -218,14 +218,14 @@ déjà portés par l'univers.
 | `import_asset` | faire entrer un fichier local — telle quelle ou avec le traitement du projet, et le doublon se dit plutôt que d'entrer deux fois |
 | `edit_asset` | détourer, recadrer, remettre sur grille, revenir au brut |
 | `slice_asset` | proposer des rectangles sur une planche, puis les découper |
-| `export_assets` | poser une sélection dans un dossier |
+| `preview_output` | voir ce qui serait écrit dans le dossier du jeu, marque par marque — rien n'est posé (`RP17`) |
 | `list_models` | le catalogue et ses plafonds |
 | `get_budget` | ce qui reste avant le plafond de la séance |
 | `list_characters` | qui il y a, ce que le plan réclame, ce qui manque, et le vestiaire |
 | `add_pose` | ajouter une attitude au plan du projet |
 | `generate_pose` | remplir une case, ou N d'un seul appel plié |
 | `equip_character` | poser une pièce sur des poses qui ont un corps |
-| `export_character` | poser un personnage entier dans le dossier du jeu, avec son descriptif |
+| `write_output` | écrire dans le dossier du jeu ce que l'aperçu annonçait — tout le jeu, une famille, ou un seul sujet avec son descriptif (`RP17`) |
 
 **Seize depuis C5, et les cinq ajouts sont la boucle de la V2** : lire ce qui manque,
 compléter le plan, remplir, habiller, livrer. Aucun ne fait ce que l'écran ne fait pas —

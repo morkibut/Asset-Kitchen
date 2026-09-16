@@ -61,6 +61,10 @@ class CorpsSortie(BaseModel):
     rangement: str = vocabulaire.A_PLAT
     collision: str = vocabulaire.REMPLACER
     moteur: str = vocabulaire.AUCUN
+    # **Un seul sujet** (`RP17`) : posé, il emporte ce sujet-là en entier et le
+    # lot n'est plus lu. C'est l'ancienne route `POST /characters/{id}/export`,
+    # devenue un réglage d'une porte qui prévisualise.
+    sujet: str = ""
 
     def reglage(self) -> Reglage:
         return Reglage(
@@ -69,6 +73,7 @@ class CorpsSortie(BaseModel):
             rangement=self.rangement,
             collision=self.collision,
             moteur=self.moteur,
+            sujet=self.sujet,
         )
 
 
@@ -94,6 +99,16 @@ async def reglages_de_la_sortie(
         "rangements": list(vocabulaire.RANGEMENTS),
         "collisions": list(vocabulaire.COLLISIONS),
         "moteurs": list(vocabulaire.MOTEURS),
+        # **Les sujets viennent d'ici aussi** (`RP17`), pour la raison déjà
+        # écrite au-dessus : l'écran ne peut pas proposer un sujet que le
+        # serveur refuserait, et *sortir un seul personnage* se choisit dans la
+        # même liste que le reste.
+        "sujets": [
+            {"identifiant": p.identifiant, "nom": p.nom or p.identifiant}
+            for p in atelier.production.personnages(vise)
+        ]
+        if vise
+        else [],
         "dossier": atelier.sortie.dossier(vise),
         "precedente": precedente.en_json() if precedente else None,
     }

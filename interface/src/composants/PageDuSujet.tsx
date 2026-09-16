@@ -59,7 +59,6 @@ export function PageDuSujet(proprietes: {
     pose: Pose,
     direction?: { identifiant: string; nom: string } | null,
   ) => void
-  dossierJeu: string
   onFente: (fente: Fente) => void
   barreQuiPaie: ReactNode
   onOuvrirCase: (identifiant: string) => void

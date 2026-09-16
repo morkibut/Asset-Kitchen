@@ -62,9 +62,25 @@ def _habille(client, double, poses: int = 2) -> tuple[str, list[str], str]:
 
 
 def _sortir(client, personnage: str, dossier: Path, **corps):
+    """Un seul sujet, par **la porte unique** (`RP17`).
+
+    C5 avait sa propre route — `POST /api/characters/{id}/export` —, qui écrivait
+    sans rien montrer. Elle est retirée : *sortir un personnage* est devenu un
+    réglage de la sortie de B21, `sujet`, et tout ce que C5 demandait se vérifie
+    donc sur elle. Ce sont les mêmes fichiers, le même descriptif, les mêmes
+    refus — avec, en plus, un aperçu qu'on peut demander avant.
+    """
     return client.post(
-        f"/api/characters/{personnage}/export",
-        json={"dossier": str(dossier), **corps},
+        "/api/output",
+        json={"sujet": personnage, "dossier": str(dossier), **corps},
+    )
+
+
+def _prevoir(client, personnage: str, dossier: Path, **corps):
+    """Ce que la sortie ferait, **sans l'avoir faite**."""
+    return client.post(
+        "/api/output/preview",
+        json={"sujet": personnage, "dossier": str(dossier), **corps},
     )
 
 
@@ -75,6 +91,11 @@ def _descriptif(sortie: dict) -> dict:
     quand l'atelier est fermé, donc c'est lui qu'on ouvre.
     """
     return json.loads(Path(sortie["descriptif"]).read_text(encoding="utf-8"))
+
+
+def _images(sortie: dict) -> list[dict]:
+    """Ce qui a été écrit, sauf le descriptif qui nomme le reste."""
+    return [f for f in sortie["ecrits"] if f["role"] != "descriptif"]
 
 
 # ── Un personnage complet part, avec un descriptif qui nomme tout ───────────
@@ -91,13 +112,25 @@ def test_un_personnage_complet_part_dans_le_dossier_du_jeu(client, double, tmp_p
     # c'est le chemin normal, pas un cas limite.
     assert not dossier.exists()
 
+    # **On regarde avant d'écrire** (`RP17`) : l'aperçu annonce les quatre
+    # images, tout est neuf, et rien n'existe encore sur le disque.
+    vu = _prevoir(client, personnage, dossier)
+    assert vu.status_code == 200, vu.text
+    apercu = vu.json()
+    assert [f["marque"] for f in apercu["fichiers"]] == ["nouveau"] * 5
+    assert not dossier.exists()
+
     reponse = _sortir(client, personnage, dossier)
     assert reponse.status_code == 200, reponse.text
     sortie = reponse.json()
 
-    # Deux poses, un corps et un calque chacune.
-    assert sortie["compte"] == 4
+    # Deux poses, un corps et un calque chacune — plus le descriptif.
+    assert len(_images(sortie)) == 4
     assert Path(sortie["dossier"]) == dossier
+    # **Ce qui est écrit est ce que l'aperçu annonçait**, aux mêmes chemins.
+    assert [f["chemin"] for f in sortie["ecrits"]] == [
+        f["chemin"] for f in apercu["fichiers"]
+    ]
 
     descriptif = _descriptif(sortie)
     assert descriptif["personnage"]["nom"] == "Nain"
@@ -145,11 +178,7 @@ def test_le_descriptif_dit_dans_quel_ordre_empiler(client, double, tmp_path):
 
     assert [e["nom"] for e in descriptif["emplacements"]] == ["tête"]
     calque = next(f for f in descriptif["assets"] if f["role"] == "calque")
-    assert calque["piece"]["emplacement_nom"] == "tête"
-    assert calque["piece"]["rang"] == 0
-    # La portée dit si la pièce tient dans la silhouette ou l'agrandit — donc si
-    # le calque se pose tel quel ou déborde.
-    assert calque["piece"]["portee"] == "contenue"
+    assert calque["piece"]["nom"] == "casque"
 
 
 def test_un_corps_habille_sort_en_disant_qu_il_ne_s_empile_pas(client, double, tmp_path):
@@ -182,7 +211,7 @@ def test_un_corps_habille_sort_en_disant_qu_il_ne_s_empile_pas(client, double, t
     assert fiches["corps_habille"]["identifiant"] == porte["identifiant"]
     assert fiches["corps_habille"]["piece"]["nom"] == "cape"
     # Les deux sortent : le corps nu et le corps habillé sont deux images du jeu.
-    assert sortie["compte"] == 2
+    assert len(_images(sortie)) == 2
 
 
 def test_ce_qui_part_est_le_rendu_et_le_descriptif_dit_lequel(
@@ -261,35 +290,79 @@ def test_ce_qui_sort_est_ce_que_la_matrice_retient(client, double, tmp_path):
     assert len(_cases(client, personnage)[0]["images"]) == 2
 
     sortie = _sortir(client, personnage, tmp_path / "jeu").json()
-    assert sortie["compte"] == 1
+    assert len(_images(sortie)) == 1
     assert _descriptif(sortie)["assets"][0]["identifiant"] == premier
 
 
-# ── Les trois règles du dossier du jeu, tenues telles quelles ───────────────
+# ── Les règles du dossier du jeu, tenues telles quelles ─────────────────────
 
 
-def test_un_fichier_existant_n_est_jamais_ecrase(client, double, tmp_path):
-    """« Dossier manquant créé, fichier existant jamais écrasé, dossier non
-    inscriptible refusé avec son chemin. » — la deuxième, et c'est la seule des
-    trois qui protège du travail déjà fait."""
+def test_rien_n_est_ecrase_sans_que_la_comparaison_l_ait_annonce(
+    client, double, tmp_path
+):
+    """La règle a changé de forme en `RP17`, pas de fond.
+
+    L'ancienne porte ne savait que **ne jamais écraser** : elle numérotait, et
+    après trois sorties le dossier portait `nain-repos.png`, `-2`, `-3`, sans
+    que rien ne dise lequel charger. La porte retenue, elle, **annonce** — la
+    marque de chaque fichier est lue avant que le bouton parte —, puis fait ce
+    que l'auteur a répondu.
+    """
     personnage, _, _ = _habille(client, double, poses=1)
     dossier = tmp_path / "jeu"
 
     premiere = _sortir(client, personnage, dossier).json()
     temoins = {
-        fiche["chemin"]: Path(fiche["chemin"]).read_bytes()
-        for fiche in premiere["fichiers"]
+        f["chemin"]: (dossier / f["chemin"]).read_bytes() for f in premiere["ecrits"]
     }
 
+    # **Sans rien changer, tout est inchangé** : même pixels, même empreinte,
+    # et le disque n'est pas réécrit pour rien.
+    apercu = _prevoir(client, personnage, dossier).json()
+    marques = {f["chemin"]: f["marque"] for f in apercu["fichiers"]}
+    for chemin in temoins:
+        # Le descriptif porte l'heure de sa fabrication : il change à chaque
+        # passage, et c'est le seul.
+        assert marques[chemin] == ("remplace" if chemin.endswith(".json") else "inchange")
+
+    # Une image retouchée, et l'aperçu le dit **avant** l'écriture.
+    corps = _cases(client, personnage)[0]["images"][0]["identifiant"]
+    client.put(
+        f"/api/assets/{corps}/recipe",
+        json={"passes": [{"moteur": "bord"}], "recadrage": {"marge": 0}},
+    )
+    remplaces = [
+        f["chemin"]
+        for f in _prevoir(client, personnage, dossier).json()["fichiers"]
+        if f["marque"] == "remplace"
+    ]
+    assert remplaces, "le fichier réécrit doit être annoncé remplacé"
+    # Tant qu'on n'a pas écrit, le disque porte encore l'ancien.
+    assert (dossier / remplaces[0]).read_bytes() == temoins[remplaces[0]]
+
     seconde = _sortir(client, personnage, dossier).json()
-    for fiche in seconde["fichiers"]:
-        assert fiche["chemin"] not in temoins
-        assert "-2." in Path(fiche["chemin"]).name
-    # Rien de ce qui était là n'a bougé — ni les images, ni le descriptif.
-    for chemin, octets in temoins.items():
-        assert Path(chemin).read_bytes() == octets
-    assert Path(premiere["descriptif"]).name.endswith("-descriptif.json")
-    assert Path(seconde["descriptif"]) != Path(premiere["descriptif"])
+    assert (dossier / remplaces[0]).read_bytes() != temoins[remplaces[0]]
+    # **Aucun homonyme numéroté** : un seul fichier par image, celui que le jeu
+    # charge.
+    assert not [f for f in dossier.iterdir() if "-2." in f.name]
+    assert Path(seconde["descriptif"]) == Path(premiere["descriptif"])
+
+
+def test_s_arreter_refuse_tout_plutot_que_d_ecraser(client, double, tmp_path):
+    """*S'arrêter s'il y a un doublon* : rien n'est écrit, et on dit lequel.
+
+    C'est ce que l'ancienne porte faisait toujours, devenu un choix — et il est
+    entier : s'arrêter au milieu d'un lot aurait laissé la moitié d'un
+    personnage dans le jeu.
+    """
+    personnage, _, _ = _habille(client, double, poses=1)
+    dossier = tmp_path / "jeu"
+    _sortir(client, personnage, dossier)
+
+    refus = _sortir(client, personnage, dossier, collision="arreter")
+    assert refus.status_code == 409
+    assert "existe déjà" in refus.json()["raison"]
+    assert "rien n'a été écrit" in refus.json()["raison"]
 
 
 def test_un_dossier_non_inscriptible_est_refuse_avec_son_chemin(
@@ -313,15 +386,15 @@ def test_sans_dossier_de_jeu_le_refus_dit_ou_le_poser(client, double, tmp_path):
     le pose. C'est le refus de T7, et il n'est pas réécrit ici."""
     personnage, _, _ = _habille(client, double, poses=1)
 
-    reponse = client.post(f"/api/characters/{personnage}/export", json={})
+    reponse = client.post("/api/output", json={"sujet": personnage})
     assert reponse.status_code == 409
     corps = reponse.json()
-    assert "Réglages" in corps["raison"]
+    assert "aucun dossier de jeu" in corps["raison"]
     assert corps["ou_aller"] == "reglages"
 
     # Posé une fois pour toutes, il n'a plus à être nommé.
     client.put("/api/settings/agent", json={"dossier_jeu": str(tmp_path / "jeu")})
-    sortie = client.post(f"/api/characters/{personnage}/export", json={}).json()
+    sortie = client.post("/api/output", json={"sujet": personnage}).json()
     assert Path(sortie["dossier"]) == tmp_path / "jeu"
 
 
@@ -346,15 +419,15 @@ def test_l_atelier_n_ecrit_que_des_images_et_leur_descriptif(
     ecrits = sorted(chemin.name for chemin in dossier.iterdir())
     assert len(ecrits) == 5
     assert sum(1 for nom in ecrits if nom.endswith(".png")) == 4
-    assert [nom for nom in ecrits if nom.endswith(".json")] == ["nain-descriptif.json"]
+    assert [nom for nom in ecrits if nom.endswith(".json")] == ["descriptif.json"]
     # À plat : aucun sous-dossier, donc aucune structure imposée au jeu.
     assert all(chemin.is_file() for chemin in dossier.iterdir())
 
-    # Et les chemins rendus sont absolus, existants, et dans le dossier nommé :
-    # l'agent n'a rien à composer lui-même.
-    for fiche in sortie["fichiers"]:
-        chemin = Path(fiche["chemin"])
-        assert chemin.is_absolute() and chemin.is_file()
+    # Et les chemins rendus sont relatifs au dossier nommé, et tous existants :
+    # l'agent lit `dossier` une fois, et n'a rien à deviner.
+    for fiche in sortie["ecrits"]:
+        chemin = dossier / fiche["chemin"]
+        assert chemin.is_file()
         assert chemin.parent == dossier
 
 
@@ -368,7 +441,7 @@ def test_sortir_un_personnage_ne_demande_jamais_le_fournisseur(
 
     sortie = _sortir(client, personnage, tmp_path / "jeu").json()
 
-    assert sortie["compte"] == 4
+    assert len(_images(sortie)) == 4
     assert double.appels == avant
 
 
@@ -381,17 +454,24 @@ def test_un_personnage_sans_pose_remplie_est_refuse_avec_sa_raison(
     """« Export d'un personnage sans aucune pose remplie : l'action est grisée
     avec sa raison, comme toute action indisponible du produit. »
 
-    L'écran grise d'abord — il lit `corps` sur chaque case, qui vient du
-    serveur. Ce refus-ci est le filet, et c'est la phrase que l'agent, qui n'a
-    pas d'écran, répétera à l'auteur.
+    L'écran grise d'abord — l'aperçu porte son refus en clair, et le bouton le
+    lit. Ce refus-ci est le filet, et c'est la phrase que l'agent, qui n'a pas
+    d'écran, répétera à l'auteur.
     """
     personnage, _ = _personnage(client, 2)
     dossier = tmp_path / "jeu"
 
+    # L'aperçu ne lève pas : il rend un aperçu vide **avec sa raison**, et c'est
+    # ce que le bouton grisé affiche.
+    apercu = _prevoir(client, personnage, dossier).json()
+    assert apercu["compte"] == 0
+    assert "rien ne sort" in apercu["refus"]
+    # Et il nomme le sujet dans la colonne de ce qui n'est pas prêt.
+    assert [s["nom"] for a in apercu["pas_prets"] for s in a["sujets"]] == ["Nain"]
+
     reponse = _sortir(client, personnage, dossier)
     assert reponse.status_code == 409
-    assert "aucune pose remplie" in reponse.json()["raison"]
-    assert "Nain" in reponse.json()["raison"]
+    assert "rien ne sort" in reponse.json()["raison"]
 
     # **Rien n'a été écrit** : un dossier créé pour rien serait un dossier vide
     # à expliquer une semaine plus tard.
@@ -403,7 +483,7 @@ def test_un_calque_sans_corps_ne_part_pas_seul(client, double, tmp_path):
     jeu, il ne se pose sur rien.
 
     Le corps supprimé, la case redevient vide — c'est la matrice qui le dit —,
-    et l'export ne trouve plus rien à sortir de cette pose.
+    et la sortie ne trouve plus rien à sortir de cette pose.
     """
     personnage, plan, _ = _habille(client, double, poses=1)
     corps = _cases(client, personnage)[0]["images"][0]["identifiant"]
@@ -413,9 +493,26 @@ def test_un_calque_sans_corps_ne_part_pas_seul(client, double, tmp_path):
 
     reponse = _sortir(client, personnage, tmp_path / "jeu")
     assert reponse.status_code == 409
-    assert "aucune pose remplie" in reponse.json()["raison"]
+    assert "rien ne sort" in reponse.json()["raison"]
 
 
+def test_l_ancienne_porte_ne_repond_plus(client, double, tmp_path):
+    """`POST /api/characters/{id}/export` est retirée (`RP17`).
+
+    Sans cet essai, la route pourrait revenir sans que rien ne tombe — et le
+    produit aurait de nouveau deux chemins vers le dossier du jeu, dont un sans
+    aperçu.
+
+    **405 et non 404**, pour la raison déjà écrite en `RP18` : une adresse que
+    plus aucune route ne porte retombe sur le serveur de fichiers de
+    l'interface, qui répond *méthode non servie* à tout ce qui n'est pas une
+    lecture.
+    """
+    personnage, _, _ = _habille(client, double, poses=1)
+    reponse = client.post(
+        f"/api/characters/{personnage}/export", json={"dossier": str(tmp_path / "jeu")}
+    )
+    assert reponse.status_code == 405, reponse.text
 # ── L'agent : les mêmes gestes que l'écran, sans écran ──────────────────────
 
 
@@ -494,36 +591,42 @@ async def test_l_agent_sort_le_personnage_et_lit_de_quoi_ecrire_son_catalogue(
     descriptif. » (US-157)
 
     Ce qui se vérifie ici est ce dont il a besoin pour le faire : un chemin, un
-    rôle, une pose, une pièce et sa place sur le corps — le tout **rendu par
-    l'appel**, sans qu'il ait à rouvrir le fichier qu'il vient de faire écrire.
+    rôle, une pose, une pièce et sa place sur le corps. **Il regarde d'abord**
+    (`RP17`) : `preview_output` annonce les fichiers sans rien écrire, et
+    `write_output` les pose — les mêmes, aux mêmes noms, que ceux de l'écran.
     """
     personnage, plan, piece = _habille(client, double)
     dossier = tmp_path / "jeu" / "assets"
 
+    vu = await appeler(
+        mcp, "preview_output", subject="Nain", folder=str(dossier)
+    )
+    assert vu["compte"] == 5 and not dossier.exists()
+
     sortie = await appeler(
-        mcp, "export_character", character="Nain", folder=str(dossier)
+        mcp, "write_output", subject="Nain", folder=str(dossier)
     )
 
-    assert Path(sortie["folder"]) == dossier
-    assert len(sortie["files"]) == 4
-    for fichier in sortie["files"]:
-        chemin = Path(fichier["path"])
-        assert chemin.is_absolute() and chemin.is_file()
-        assert fichier["role"] in ("corps", "calque")
-        assert fichier["pose"]["nom"]
-    calque = next(f for f in sortie["files"] if f["role"] == "calque")
-    assert calque["piece"]["nom"] == "casque"
-    assert calque["piece"]["rang"] == 0
+    assert Path(sortie["dossier"]) == dossier
+    # **Ce qui est écrit est ce que l'aperçu annonçait**, et rien d'autre.
+    assert [f["chemin"] for f in sortie["ecrits"]] == [
+        f["chemin"] for f in vu["fichiers"]
+    ]
+    for fichier in sortie["ecrits"]:
+        chemin = dossier / fichier["chemin"]
+        assert chemin.is_file()
+        assert fichier["role"] in ("corps", "calque", "descriptif")
 
     # Le descriptif est **aussi** posé dans le dossier, pour qui rouvrira le jeu
-    # dans six mois sans l'atelier sous la main.
-    descriptif = json.loads(Path(sortie["descriptor"]).read_text(encoding="utf-8"))
+    # dans six mois sans l'atelier sous la main — et c'est lui qui porte le rôle,
+    # la pose et la pièce de chaque fichier.
+    descriptif = json.loads(Path(sortie["descriptif"]).read_text(encoding="utf-8"))
     assert descriptif["personnage"]["nom"] == "Nain"
     assert len(descriptif["assets"]) == 4
-    # Ce que l'appel rend et ce que le fichier dit sont la même chose.
-    assert [f["fichier"] for f in descriptif["assets"]] == [
-        f["name"] for f in sortie["files"]
-    ]
+    calque = next(f for f in descriptif["assets"] if f["role"] == "calque")
+    assert calque["piece"]["nom"] == "casque"
+    assert calque["pose"]["identifiant"] in plan
+    assert [e["nom"] for e in descriptif["emplacements"]] == ["tête"]
 
 
 async def test_l_export_d_un_personnage_vide_refuse_l_agent_avec_la_phrase(
@@ -533,11 +636,15 @@ async def test_l_export_d_un_personnage_vide_refuse_l_agent_avec_la_phrase(
     une erreur de validation, et c'est elle qu'il répète à l'auteur."""
     _personnage(client, 2)
     raison = await refuser(
-        mcp, "export_character", character="Nain", folder=str(tmp_path / "jeu")
+        mcp, "write_output", subject="Nain", folder=str(tmp_path / "jeu")
     )
-    assert "aucune pose remplie" in raison
+    assert "rien ne sort" in raison
 
-
+    # Et un sujet qui n'existe pas se dit, plutôt que de rendre un lot vide.
+    inconnu = await refuser(
+        mcp, "write_output", subject="le-passeur", folder=str(tmp_path / "jeu")
+    )
+    assert "aucun personnage" in inconnu
 async def test_le_plafond_de_la_seance_arrete_aussi_les_appels_de_la_v2(
     atelier, mcp, client, double
 ):
@@ -594,6 +701,10 @@ def test_le_mcp_de_la_v2_n_a_aucune_logique_propre():
     quelque chose rouvrait l'archive de T6 pour en ressortir les fichiers un par
     un. Le geste est descendu dans le service, et l'outil n'est plus qu'une
     traduction.
+
+    **Et `RP17` y ajoute la porte du dossier du jeu** : `preview_output` et
+    `write_output` appellent `atelier.sortie`, celle que l'écran appelle, sans
+    poser un octet eux-mêmes.
     """
     source = Path("atelier/mcp/serveur.py").read_text(encoding="utf-8")
     for interdit in (
@@ -659,36 +770,65 @@ async def test_un_nom_inconnu_est_refuse_avec_ce_qui_existe(atelier, mcp, client
     assert "aucune pièce" in raison
 
 
-async def test_l_export_de_selection_de_t7_passe_par_le_meme_service(
-    atelier, mcp, tmp_path
+async def test_la_selection_de_t7_est_retiree_et_le_geste_dit_ou_il_est_passe(
+    atelier, mcp, client, double, tmp_path
 ):
-    """`export_assets` pose toujours ses fichiers, et par le geste du service.
+    """`export_assets` ne répond plus (`RP17`), et ce qu'il faisait a deux suites.
 
-    Le contrat de T7 ne bouge pas — mêmes fichiers, même descriptif — ; ce qui a
-    changé est de quel côté de la frontière le travail se fait.
+    Il posait une sélection d'identifiants dans un dossier **sans rien montrer
+    d'abord**, et aucun écran ne faisait ce geste-là : la galerie, elle, rend
+    une archive. Le retirer est ce qui rend la parité vraie.
+
+    - *l'image arrive où je code* reste portée par `folder`, sur l'outil qui
+      vient de la fabriquer ou de la retoucher (T7, inchangé) ;
+    - *le jeu sort* passe par la porte unique, qui annonce ses fichiers avant
+      de les écrire.
     """
+    from mcp.server.mcpserver.exceptions import MCPServerError
+
     reponse = await appeler(mcp, "generate_asset", subject="une épée")
     await atelier.generations.attendre_tout()
 
-    dossier = tmp_path / "jeu"
-    sortie = await appeler(
+    try:
+        await mcp.call_tool("export_assets", {"asset_ids": [], "folder": "x"})
+    except MCPServerError as refus:
+        assert "Unknown tool" in str(refus)
+    else:
+        raise AssertionError("export_assets répond encore")
+
+    # Le premier des deux : l'image que l'agent vient de faire, posée où il code.
+    ou_je_code = tmp_path / "src" / "art"
+    pose = await appeler(
         mcp,
-        "export_assets",
-        asset_ids=[reponse["images"][0]["id"]],
-        folder=str(dossier),
+        "edit_asset",
+        asset_id=reponse["images"][0]["id"],
+        steps={"grille": {"cible": 32, "occupation": 100, "ancrage": "bas"}},
+        folder=str(ou_je_code),
     )
+    assert Path(pose["written_to"]).is_file()
 
-    # **Le contrat de T7 au mot près** : l'image *et* le descriptif dans
-    # `files`, parce que ce sont les fichiers posés, et le manifeste à côté.
-    assert {Path(f["path"]).name for f in sortie["files"]} == {
-        "une-epee.png",
-        "descriptif.json",
-    }
-    assert all(Path(f["path"]).is_file() for f in sortie["files"])
-    assert len(sortie["manifest"]) == 1
+    # Le second : un sujet du jeu sort par la porte unique, vu puis écrit.
+    personnage, _, _ = _habille(client, double, poses=1)
+    dossier = tmp_path / "jeu"
+    vu = await appeler(
+        mcp, "preview_output", subject="Nain", folder=str(dossier)
+    )
+    assert not dossier.exists()
+    sortie = await appeler(
+        mcp, "write_output", subject="Nain", folder=str(dossier)
+    )
+    assert [f["chemin"] for f in sortie["ecrits"]] == [
+        f["chemin"] for f in vu["fichiers"]
+    ]
 
-    descriptif = json.loads(Path(sortie["descriptor"]).read_text(encoding="utf-8"))
-    image_posee = next(f for f in sortie["files"] if f["name"].endswith(".png"))
-    assert descriptif["assets"][0]["fichier"] == image_posee["name"]
-    with Image.open(io.BytesIO(Path(image_posee["path"]).read_bytes())) as image:
+    descriptif = json.loads(Path(sortie["descriptif"]).read_text(encoding="utf-8"))
+    assert descriptif["personnage"]["identifiant"] == personnage
+    image_posee = next(f for f in descriptif["assets"])
+    with Image.open(
+        io.BytesIO((dossier / image_posee["fichier"]).read_bytes())
+    ) as image:
         assert image.format == "PNG"
+        assert (image.width, image.height) == (
+            image_posee["dimensions"]["largeur"],
+            image_posee["dimensions"]["hauteur"],
+        )

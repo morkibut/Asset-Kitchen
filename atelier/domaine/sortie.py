@@ -116,10 +116,10 @@ CATALOGUE = "catalogue"
 class Reglage:
     """Ce que l'écran a choisi — les cinq réponses, et rien d'autre.
 
-    **Aucune valeur libre en dehors du dossier.** Le reste est pris dans les
-    listes fermées du dessus : c'est ce qui permet à l'écran de se dessiner en
-    boutons plutôt qu'en champs, et au serveur de refuser une valeur inconnue
-    plutôt que de la deviner.
+    **Aucune valeur libre en dehors du dossier et du sujet.** Le reste est pris
+    dans les listes fermées du dessus : c'est ce qui permet à l'écran de se
+    dessiner en boutons plutôt qu'en champs, et au serveur de refuser une valeur
+    inconnue plutôt que de la deviner.
     """
 
     lot: str = TOUT
@@ -127,6 +127,13 @@ class Reglage:
     rangement: str = A_PLAT
     collision: str = REMPLACER
     moteur: str = AUCUN
+    # **Un seul sujet, et il gagne sur le lot** (`RP17`). Sortir un personnage
+    # nommé avait sa propre porte, sans aperçu ; c'est devenu un réglage de
+    # celle-ci. Posé, il emporte ce sujet-là *en entier* — ses images et ses
+    # animations —, et le lot n'a plus rien à dire : deux réglages qui
+    # trancheraient la même question auraient fini par se contredire, et
+    # « lot = objets, sujet = un personnage » n'a aucune réponse juste.
+    sujet: str = ""
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -135,6 +142,7 @@ class Reglage:
             "rangement": self.rangement,
             "collision": self.collision,
             "moteur": self.moteur,
+            "sujet": self.sujet,
         }
 
 

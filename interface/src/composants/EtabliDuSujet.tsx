@@ -58,12 +58,11 @@ import {
   type Piece,
   type Pose,
   type PosesDesTypes,
-  type Sortie as SortieAuJeu,
 } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
 import { BandeQuiTourne, sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
-import { Bouton, Libelle, Segments, ZoneTexte } from "./pieces"
+import { Libelle, Segments, ZoneTexte } from "./pieces"
 import { PANNEAU } from "./Infobulle"
 import { EcranCalibrage } from "./Calibrage"
 import { EcranPlanche } from "./Planche"
@@ -195,7 +194,6 @@ export function EcranEtabli({
   onPersonnage,
   onArmer,
   onAnimer,
-  dossierJeu,
   onFente,
   barreQuiPaie,
   onOuvrirCase,
@@ -256,17 +254,10 @@ export function EcranEtabli({
     pose: Pose,
     direction?: { identifiant: string; nom: string } | null,
   ) => void
-  /** **Où le jeu range ses images** (C5) — le dossier posé dans les Réglages.
-   *
-   *  L'écran ne s'en sert que pour griser avec sa raison ; le geste, lui, le
-   *  redemande au serveur, qui en est le seul dépositaire. Vide, ce n'est pas
-   *  une erreur : c'est un réglage que personne n'a encore posé, et le bouton
-   *  le dit au lieu de partir puis d'échouer. */
   /** La chose du jeu ouverte — **c'est le codex qui la désigne**, en descendant
    *  d'un étage. L'établi n'en choisit aucune : il est la profondeur d'une
    *  chose, et sans elle il n'existe pas. */
   ouvert: Personnage
-  dossierJeu: string
   /** Ce que cet onglet a à dire dans la barre du châssis. **Il n'a plus sa
    *  fente à lui** : elle n'existait que parce que cet écran couvrait
    *  l'atelier, et qu'une raison envoyée à la barre d'état se serait rendue
@@ -446,7 +437,6 @@ export function EcranEtabli({
           onVitrine={() => setVitrineOuverte(true)}
           onCalibrage={() => setCalibrageOuvert(true)}
           onPlanche={setPlanchePose}
-          dossierJeu={dossierJeu}
           onErreur={echouer}
         />
         {ouvertCalque && piece && (
@@ -511,7 +501,6 @@ function Fiche({
   onVitrine,
   onCalibrage,
   onPlanche,
-  dossierJeu,
   onErreur,
 }: {
   plan: Pose[]
@@ -554,7 +543,6 @@ function Fiche({
   /** **Ouvrir la planche d'une pose** (E13). Portée par la fiche parce que
    *  c'est sa matrice qui la déclenche, ligne par ligne. */
   onPlanche: (pose: string) => void
-  dossierJeu: string
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   if (!personnage) {
@@ -594,7 +582,11 @@ function Fiche({
           onCalibrage={onCalibrage}
           onErreur={onErreur}
         />
-        <Sortie personnage={personnage} dossierJeu={dossierJeu} />
+        {/* ⚠️ **Plus de bouton de sortie ici** (`RP17`). Il posait le
+            personnage dans le dossier du jeu tout de suite, sans montrer les
+            fichiers ni dire lesquels écrasaient quoi. *Livrer…*, en tête de la
+            page du sujet, ouvre la sortie qui le montre — et on y choisit ce
+            sujet-là. */}
       </aside>
 
       <div className="defile flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto p-4">
@@ -627,99 +619,6 @@ function Fiche({
         />
       </div>
     </div>
-  )
-}
-
-/** Le personnage part dans le jeu (US-154, US-155).
- *
- *  **En bas de la fiche, et c'est l'ordre du geste** : on regarde ce qui est
- *  fait, ce qui manque, et alors seulement on livre. Un bouton posé en tête
- *  aurait proposé de sortir avant d'avoir montré ce qu'il y a à sortir.
- *
- *  **Grisé avec sa raison**, jamais caché (`docs/design-motifs.md` § Le grisé porte sa
- *  raison) : ici la chose existe — c'est un personnage —, et ce qui manque est
- *  nommé. Deux raisons, et l'ordre compte : ce qu'il faut fabriquer d'abord, le
- *  réglage ensuite.
- *
- *  **Ce qui décide, c'est `corps`**, calculé par le serveur — celui-là même qui
- *  écrira les fichiers. L'écran ne rejoue pas la règle « cette pose est
- *  remplie » : il la lit, comme la planche d'équipement la lit déjà pour savoir
- *  quelle attitude est éligible. */
-function Sortie({
-  personnage,
-  dossierJeu,
-}: {
-  personnage: Personnage
-  dossierJeu: string
-}) {
-  const [sortie, setSortie] = useState<SortieAuJeu | null>(null)
-  const [refus, setRefus] = useState<string | null>(null)
-  const [enCours, setEnCours] = useState(false)
-  const dernier = useRef(personnage.identifiant)
-
-  // Changer de personnage efface le compte rendu du précédent : « 12 fichiers
-  // posés » sous le nom de quelqu'un d'autre serait un mensonge, et c'est le
-  // geste de la fiche asset, repris tel quel.
-  useEffect(() => {
-    if (dernier.current === personnage.identifiant) return
-    dernier.current = personnage.identifiant
-    setSortie(null)
-    setRefus(null)
-  }, [personnage])
-
-  const remplies = personnage.cases.filter((c) => c.corps).length
-  const raison =
-    remplies === 0
-      ? "aucune attitude remplie — il n'y a rien à sortir"
-      : !dossierJeu.trim()
-        ? "aucun dossier de jeu — pose-le dans l'écran Réglages"
-        : null
-
-  const sortir = async () => {
-    setEnCours(true)
-    setRefus(null)
-    try {
-      setSortie(await api.sortirPersonnage(personnage.identifiant))
-    } catch (erreur) {
-      setSortie(null)
-      setRefus(erreur instanceof Error ? erreur.message : "sortie refusée")
-    } finally {
-      setEnCours(false)
-    }
-  }
-
-  return (
-    <section className="flex flex-col gap-2 border-t border-trait pt-4">
-      <Libelle>Sortir vers le jeu</Libelle>
-      <div className="flex items-center gap-3">
-        <Bouton
-          inactif={raison !== null || enCours}
-          onClick={() => void sortir()}
-          titre={raison ?? dossierJeu}
-          enfants={enCours ? "Sortie…" : "Poser dans le dossier du jeu"}
-        />
-        <span className="mesure min-w-0 flex-1 truncate text-[10px] text-encre-4">
-          {raison ?? dossierJeu}
-        </span>
-      </div>
-      <p className="mesure text-[10px] leading-4 text-encre-4">
-        Un fichier par attitude et par pièce, plus un descriptif qui dit ce
-        qu'est chacun. C'est le rendu qui part ; l'image payée reste ici.
-      </p>
-      {sortie && (
-        <p className="mesure text-[10px] leading-4 text-encre-3">
-          {sortie.compte} fichiers posés dans{" "}
-          <span className="text-encre">{sortie.dossier}</span>. Rien n'a été
-          écrasé.
-        </p>
-      )}
-      {refus && (
-        <p className="mesure flex items-center gap-1.5 text-[10px] text-echec">
-          <span aria-hidden className="inline-block h-px w-2 bg-echec" />
-          {refus}
-        </p>
-      )}
-    </section>
   )
 }
 

@@ -7,6 +7,12 @@
  * disait quels fichiers allaient sortir, et aucun ne savait ce qu'il avait
  * écrit la fois d'avant.
  *
+ * ⚠️ **Depuis `RP17`, « remplace » est vrai pour celui qui écrivait dans le jeu.**
+ * Le bouton de la fiche d'un sujet posait les fichiers sur le disque tout de
+ * suite ; il est parti, et *un seul sujet* — premier bloc — fait le même geste
+ * en le montrant d'abord. Les trois autres rendaient une archive au navigateur,
+ * pas une écriture : ils restent où ils sont.
+ *
  * **Trois colonnes.** À gauche, cinq blocs numérotés qui se lisent de haut en
  * bas comme une phrase — ce qui sort, où, comment ça se range, ce qu'on fait de
  * ce qui est déjà là, pour quel moteur — et le bouton qui porte le compte exact
@@ -260,6 +266,9 @@ export function Sortie({
 }) {
   const [reglages, setReglages] = useState<ReglagesDeLaSortie | null>(null)
   const [lot, setLot] = useState("tout")
+  /** Un seul sujet, choisi dans la même liste que les lots (`RP17`). Vide, le
+   *  lot décide ; posé, il emporte ce sujet-là en entier. */
+  const [sujet, setSujet] = useState("")
   const [dossier, setDossier] = useState("")
   const [rangement, setRangement] = useState("a_plat")
   const [collision, setCollision] = useState("remplacer")
@@ -285,8 +294,8 @@ export function Sortie({
   }, [projet, onErreur])
 
   const reglage = useMemo(
-    () => ({ projet, lot, dossier, rangement, collision, moteur }),
-    [projet, lot, dossier, rangement, collision, moteur],
+    () => ({ projet, lot, dossier, rangement, collision, moteur, sujet }),
+    [projet, lot, dossier, rangement, collision, moteur, sujet],
   )
 
   /** L'aperçu se redemande à chaque réglage. **Il ne coûte rien** : ni réseau,
@@ -349,15 +358,46 @@ export function Sortie({
                 key={valeur}
                 nom={MOTS[valeur] ?? valeur}
                 decale={valeur !== "tout" && valeur !== "animations"}
-                choisi={lot === valeur}
-                onChoisir={() => setLot(valeur)}
+                choisi={sujet === "" && lot === valeur}
+                onChoisir={() => {
+                  setSujet("")
+                  setLot(valeur)
+                }}
               />
             ))}
+            {/* **Un seul sujet, et il prend la place du lot** (`RP17`) : la
+                fiche d'un sujet avait son propre bouton de sortie, qui écrivait
+                sans rien montrer. Il est ici, au-dessus du même arbre. */}
+            {(reglages?.sujets ?? []).length > 0 && (
+              <Choix
+                nom="Un seul sujet"
+                choisi={sujet !== ""}
+                onChoisir={() =>
+                  setSujet(sujet || (reglages?.sujets[0]?.identifiant ?? ""))
+                }
+              />
+            )}
           </div>
+          {sujet !== "" && (
+            <select
+              aria-label="Lequel"
+              value={sujet}
+              onChange={(e) => setSujet(e.target.value)}
+              className="ml-[22px] h-[30px] max-w-full self-start rounded-7 border border-contour bg-carte px-[8px] text-[12.5px] text-encre outline-none focus:border-encre-4"
+            >
+              {(reglages?.sujets ?? []).map((s) => (
+                <option key={s.identifiant} value={s.identifiant}>
+                  {s.nom}
+                </option>
+              ))}
+            </select>
+          )}
           <Raison
             enfants={
-              "Les calques d'équipement suivent leur corps : un calque seul dans" +
-              " un dossier de jeu ne se pose sur rien."
+              sujet !== ""
+                ? "Ses images et ses animations, tout ce qu'il a. Le reste du jeu ne sort pas."
+                : "Les calques d'équipement suivent leur corps : un calque seul dans" +
+                  " un dossier de jeu ne se pose sur rien."
             }
           />
         </Bloc>

@@ -21,6 +21,9 @@ par le double.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from conftest import image_sujet
 from test_c3 import (
     MODELE,
@@ -125,16 +128,21 @@ def test_le_retenu_est_celui_que_l_export_sort(client, double, tmp_path):
         json={"identifiants": [plus_ancien["identifiant"]], "favori": True},
     ).raise_for_status()
 
+    # **Par la porte unique** (`RP17`) : la route de C5 est retirée, et sortir
+    # un sujet nommé est un réglage de la sortie qui montre avant d'écrire.
     dossier = tmp_path / "jeu"
     sortie = client.post(
-        f"/api/characters/{monte['personnage']}/export",
-        json={"dossier": str(dossier)},
+        "/api/output",
+        json={"sujet": monte["personnage"], "dossier": str(dossier)},
     )
     assert sortie.status_code == 200, sortie.text
 
+    descriptif = json.loads(
+        Path(sortie.json()["descriptif"]).read_text(encoding="utf-8")
+    )
     # **Un seul fichier par pièce et par pose** — jamais les deux essais —, et
     # c'est celui que la matrice désignait.
-    portant_une_piece = [f for f in sortie.json()["fichiers"] if f.get("piece")]
+    portant_une_piece = [f for f in descriptif["assets"] if f.get("piece")]
     assert len(portant_une_piece) == len(monte["plan"])
     assert plus_ancien["identifiant"] in {f["identifiant"] for f in portant_une_piece}
 

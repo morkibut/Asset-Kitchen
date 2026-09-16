@@ -326,3 +326,27 @@ où il veut refaire quelque chose : une image qui lui plaît, pas un nom qu'il a
 écrire avant d'en avoir envie. Le prix est qu'il faut posséder un résultat pour en rejouer les
 réglages — c'est le bon prix : refaire *comme celle-là* est la demande réelle, et *comme le jeu
 de réglages « mes nains »* ne l'a jamais été en trois versions du produit.
+
+### La décision de RP17 — 16 septembre 2026
+
+**Rien ne s'écrit dans le dossier du jeu sans avoir été montré d'abord.** Le produit avait deux
+portes vers ce dossier : l'une posait un personnage nommé tout de suite, l'autre montre ses
+fichiers, dit lesquels remplacent quoi, et écrit ensuite. La seconde avait été construite à côté
+de la première, jamais à sa place. On garde celle qui montre. *Sortir un seul personnage* n'est
+pas perdu pour autant : c'est devenu un réglage de celle qui reste — on nomme le sujet, et il
+part en entier, ses images et ses animations. Le prix est un clic de plus, l'aperçu, avant
+l'écriture ; c'est le bon prix, parce que le geste qu'on ne peut pas défaire est celui d'écrire
+par-dessus le jeu de quelqu'un.
+
+**Ce qui est refusé avec elle** : l'outil qui posait une liste d'identifiants dans un dossier
+sans rien montrer (`export_assets`). Aucun écran ne faisait ce geste-là — la galerie, elle, rend
+une archive —, et c'est ce déséquilibre que la tranche referme : ce que l'agent peut faire est
+exactement ce que l'écran peut faire. L'agent garde ce dont il a besoin au moment où il code :
+l'image qu'il vient de fabriquer se pose où il travaille, une à la fois, par l'outil qui vient
+de la fabriquer.
+
+**Les archives restent, et c'est une décision.** Une sélection de la galerie, les animations d'un
+sujet, une bande : les trois rendent un fichier compressé au navigateur. Elles n'écrivent rien
+dans le dossier du jeu, donc elles ne sont pas une seconde porte — et retirer le seul moyen
+d'emporter une sélection sans nommer de dossier aurait coûté à l'auteur quelque chose que rien
+ne remplace.

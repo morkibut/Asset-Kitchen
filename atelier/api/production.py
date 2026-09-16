@@ -1506,41 +1506,14 @@ async def sujet(requete: Request, corps: CorpsSujet) -> dict[str, Any]:
 # ── La sortie ────────────────────────────────────────────────────────────────
 
 
-class CorpsSortie(BaseModel):
-    """Où poser le personnage. **Rien d'autre à dire** : ce qui part, c'est ce
-    que la matrice retient, et le choisir ici en ferait une seconde règle."""
-
-    projet: str | None = None
-    # Le dossier du jeu, quand on veut celui d'aujourd'hui plutôt que celui des
-    # Réglages. Absent, c'est celui que l'auteur a posé une fois pour toutes —
-    # le même défaut que pour l'agent depuis T7, et le même service qui le tient.
-    dossier: str | None = None
-
-
-@routeur.post("/characters/{identifiant}/export")
-async def sortir(
-    requete: Request, identifiant: str, corps: CorpsSortie
-) -> dict[str, Any]:
-    """Un personnage complet part dans le dossier du jeu (US-154, US-155).
-
-    **`POST` et non `GET`** : le geste écrit — dehors, dans un dossier que
-    l'atelier ne connaît pas — et la réponse n'est pas une ressource qu'on
-    pourrait aller rechercher, c'est le compte rendu de ce qui vient d'être
-    posé.
-
-    **Aucun octet ne traverse cette route.** L'archive de T6 revenait au
-    navigateur ; ici les fichiers sont écrits sur la machine, et ce qui revient
-    est la liste de leurs chemins. C'est ce qui fait que l'écran et l'agent
-    reçoivent exactement la même chose de la même sortie.
-
-    Deux refus, chacun avec sa phrase : un personnage sans aucune pose remplie
-    (l'écran grise déjà, ceci est le filet), et un dossier du jeu absent ou non
-    inscriptible — celui-là vient de T7 et nomme le chemin fautif.
-    """
-    sortie = _atelier(requete).export.exporter_personnage(
-        _projet(requete, corps.projet), identifiant, corps.dossier
-    )
-    return sortie.en_json()
+# ⚠️ **`POST /characters/{identifiant}/export` est retirée** (`RP17`, 16
+# septembre 2026). C5 l'avait écrite pour poser un personnage complet dans le
+# dossier du jeu ; B21 a construit à côté d'elle une sortie qui montre ses
+# fichiers avant de les écrire et les compare à la fois d'avant, sans jamais
+# retirer la première. Deux portes vers le même dossier, dont une sans filet.
+#
+# Ce qu'elle savait faire est un réglage de l'autre : `POST /api/output` avec
+# `sujet`, précédé de `POST /api/output/preview` qui ne touche rien.
 
 
 class CorpsAnimations(BaseModel):

@@ -2559,33 +2559,6 @@ export type Production = DirectionsDuJeu & {
   pieces: Piece[]
 }
 
-/** Une fiche du descriptif d'une sortie (C5) — ce qu'un fichier posé dans le
- *  dossier du jeu **est**. L'écran n'en lit qu'une poignée de champs ; le
- *  descriptif écrit à côté des images, lui, les porte tous, parce que c'est lui
- *  qu'on rouvrira dans six mois sans l'atelier sous la main. */
-export type FichierSorti = {
-  /** Le chemin **absolu** du fichier posé. C'est ce qu'on colle dans un moteur
-   *  de jeu, et c'est le dépôt qui le rend — jamais l'écran qui le recompose. */
-  chemin: string
-  fichier: string
-  /** **Trois rôles, et le troisième est celui qu'on oublie** : `corps` est un
-   *  corps, `calque` s'empile sur celui de sa pose, et `corps_habille` est un
-   *  corps entier portant déjà la pièce — il **remplace** le corps au lieu de
-   *  s'empiler (US-148). C'est la recette qui tranche, jamais un drapeau. */
-  role: "corps" | "calque" | "corps_habille"
-  pose: { identifiant: string; nom: string }
-  piece: { identifiant: string; nom: string } | null
-}
-
-/** Ce qu'une sortie vient de poser dans le dossier du jeu (US-154). */
-export type Sortie = {
-  dossier: string
-  fichiers: FichierSorti[]
-  /** Le descriptif, posé **dans le dossier** à côté des images. */
-  descriptif: string
-  compte: number
-}
-
 /** Ce que les six gestes du vestiaire rendent : l'objet touché, **et le
  *  vestiaire entier avec**. Même forme que l'annonce du flux, pour que l'écran
  *  fonde ce qui lui arrive par les deux chemins avec le même code. */
@@ -6322,17 +6295,10 @@ export const api = {
       body: JSON.stringify(corps),
     }),
 
-  /** Un personnage complet part dans le dossier du jeu (US-154, US-155).
-   *
-   *  **Aucun octet ne revient** : les fichiers sont écrits sur la machine, et ce
-   *  qu'on reçoit est la liste de leurs chemins — la même que l'agent reçoit,
-   *  de la même sortie. Sans `dossier`, c'est celui des Réglages ; absent lui
-   *  aussi, le refus dit où le poser. */
-  sortirPersonnage: (personnage: string, dossier?: string) =>
-    appeler<Sortie>(`/characters/${personnage}/export`, {
-      method: "POST",
-      body: JSON.stringify(dossier ? { dossier } : {}),
-    }),
+  // ⚠️ **`sortirPersonnage` est retirée** (`RP17`, 16 septembre 2026). Elle
+  // posait un personnage dans le dossier du jeu depuis sa fiche, sans montrer
+  // les fichiers ni les comparer à la fois d'avant. *Livrer au jeu* le fait, et
+  // le montre : `prevoirLaSortie` puis `sortir`, avec `sujet`.
 
   /** Le personnage part, **ses images restent** — chacune marquée « personnage
    *  supprimé ». La réponse dit combien. */
@@ -7041,6 +7007,9 @@ export type Archive = { nom: string; octets: Blob }
  *  nommeraient la même archive finiraient par ne plus dire la même date. */
 async function archive(url: string, corps: unknown): Promise<Archive> {
   let reponse: Response
+  /** Un seul sujet, et il gagne sur le lot (`RP17`). Vide, c'est le lot qui
+   *  décide ; posé, ce sujet-là sort en entier — ses images et ses animations. */
+  sujet: string
   try {
     reponse = await fetch(url, {
       method: "POST",
@@ -7048,6 +7017,9 @@ async function archive(url: string, corps: unknown): Promise<Archive> {
       body: JSON.stringify(corps),
     })
   } catch {
+  /** Les sujets du jeu, servis par le serveur comme les quatre listes : l'écran
+   *  ne peut pas en proposer un que la sortie refuserait (`RP17`). */
+  sujets: { identifiant: string; nom: string }[]
     throw new Refus("l'atelier ne répond pas", "atelier_arrete")
   }
   if (!reponse.ok) {

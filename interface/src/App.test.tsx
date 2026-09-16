@@ -3584,49 +3584,6 @@ function serveurDouble(options: {
           : (qui?.description.trim() ?? "")
         return rendre({ sujet })
       }
-      // **La sortie d'un personnage** (C5) : aucun octet ne revient, seulement
-      // les chemins de ce qui vient d'être posé. Le double n'écrit rien — il
-      // n'a pas de disque —, mais il rend la forme entière, parce que c'est
-      // elle que l'écran affiche.
-      if (init?.method === "POST" && url.endsWith("/export")) {
-        const identifiant = url.slice(
-          "/api/characters/".length,
-          -"/export".length,
-        )
-        const qui = etat.personnages.find((p) => p.identifiant === identifiant)
-        const remplies = (qui?.cases ?? []).filter((c) => c.corps)
-        // Les deux refus du serveur, dans l'ordre où il les oppose : rien à
-        // sortir d'abord, pas de dossier ensuite. L'écran grise avant d'en
-        // arriver là — c'est justement ce qu'on vérifie —, mais un double qui
-        // ne saurait pas refuser laisserait passer un écran qui n'a pas grisé.
-        const dossier = etat.agent.garde_fous.dossier_jeu
-        if (remplies.length === 0 || !dossier)
-          return {
-            ok: false,
-            status: 409,
-            json: async () => ({
-              code: remplies.length === 0 ? "export_refuse" : "depot_refuse",
-              raison:
-                remplies.length === 0
-                  ? `« ${qui?.nom} » n'a aucune pose remplie — il n'y a rien à sortir`
-                  : "aucun dossier de jeu — nomme-le dans l'appel, ou pose-le une fois pour toutes dans l'atelier, écran Réglages, bloc « L'agent ».",
-              ou_aller: remplies.length === 0 ? null : "reglages",
-            }),
-          } as unknown as Response
-        const fichiers = remplies.map((c) => ({
-          chemin: `${dossier}/${identifiant}-${c.pose}.png`,
-          fichier: `${identifiant}-${c.pose}.png`,
-          role: "corps" as const,
-          pose: { identifiant: c.pose, nom: c.pose },
-          piece: null,
-        }))
-        return rendre({
-          dossier,
-          fichiers,
-          descriptif: `${dossier}/${identifiant}-descriptif.json`,
-          compte: fichiers.length,
-        })
-      }
       if (url === "/api/characters/poses" && init?.method === "POST") {
         const neuve: Pose = pose(
           String(corps.nom).toLowerCase().replace(/\s+/g, "-"),
@@ -8922,88 +8879,14 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     expect(ecran.getByRole("button", { name: "par le pire" })).toBeTruthy()
   })
 
-  // ── La sortie vers le jeu (C5) ──────────────────────────────────────────
-
-  /** Le cadre de l'agent avec un dossier de jeu posé — c'est là que le produit
-   *  le range depuis T7, et l'écran des personnages ne fait que le lire. */
-  const AVEC_DOSSIER: Etat["agent"] = {
-    ...ETAT.agent,
-    garde_fous: { ...ETAT.agent.garde_fous, dossier_jeu: "C:/jeux/mon-jeu/assets" },
-  }
-
-  test("sans attitude remplie, sortir est grisé et dit pourquoi", async () => {
-    const { ecran, flux } = await ouvrir({
-      agent: AVEC_DOSSIER,
-      personnages: [personnage("Le nain")],
-    })
-    // Le dossier est posé : ce qui manque ici est ce qu'il y a à sortir, et
-    // c'est cette raison-là qui doit s'afficher — celle qu'on peut corriger
-    // sans quitter l'écran passe devant celle qui renvoie ailleurs.
-    act(() => flux.emettre("agent", AVEC_DOSSIER))
-
-    const bouton = ecran.getByRole("button", {
-      name: "Poser dans le dossier du jeu",
-    }) as HTMLButtonElement
-    // **Grisé, jamais caché** : la chose existe — c'est un personnage —, et ce
-    // qui manque est nommé (`docs/design-motifs.md` § Le grisé porte sa raison).
-    expect(bouton.disabled).toBe(true)
-    expect(
-      ecran.getAllByText(/aucune attitude remplie/).length,
-    ).toBeGreaterThan(0)
-  })
-
-  test("sans dossier de jeu, sortir est grisé et renvoie aux Réglages", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran } = await ouvrir({ personnages: [avecCorps(corps)] })
-
-    const bouton = ecran.getByRole("button", {
-      name: "Poser dans le dossier du jeu",
-    }) as HTMLButtonElement
-    expect(bouton.disabled).toBe(true)
-    // Le réglage manquant n'est pas une panne : c'est un dossier que personne
-    // n'a encore posé, et la raison dit où on le pose.
-    expect(ecran.getAllByText(/aucun dossier de jeu/).length).toBeGreaterThan(0)
-    expect(ecran.getAllByText(/Réglages/).length).toBeGreaterThan(0)
-  })
-
-  test("le personnage part, et l'écran dit combien de fichiers et où", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran, appels, flux } = await ouvrir({
-      agent: AVEC_DOSSIER,
-      personnages: [avecCorps(corps)],
-    })
-
-    const bouton = ecran.getByRole("button", {
-      name: "Poser dans le dossier du jeu",
-    }) as HTMLButtonElement
-    // **Posé dans l'autre écran, il s'allume ici à l'instant** : le cadre de
-    // l'agent arrive par le flux, et c'est la leçon de R1 — un réglage qui ne
-    // se voit qu'en rechargeant la page n'est pas un réglage.
-    expect(bouton.disabled).toBe(true)
-    act(() => flux.emettre("agent", AVEC_DOSSIER))
-    expect(bouton.disabled).toBe(false)
-
-    fireEvent.click(bouton)
-
-    // **Le dossier n'est pas envoyé** : il vit dans les Réglages, et le serveur
-    // en est le seul dépositaire. L'écran le lit pour griser, jamais pour le
-    // redire.
-    await waitFor(() =>
-      expect(
-        appels.some((a) => a.url === "/api/characters/le-nain/export"),
-      ).toBe(true),
-    )
-    expect(
-      appels.find((a) => a.url === "/api/characters/le-nain/export")?.corps,
-    ).toEqual({})
-
-    // Ce que l'auteur veut savoir après coup : combien, et où — c'est le chemin
-    // qu'il collera dans son moteur.
-    await waitFor(() =>
-      expect(ecran.getAllByText(/1 fichiers posés dans/).length).toBeGreaterThan(0),
-    )
-    expect(ecran.getAllByText("C:/jeux/mon-jeu/assets").length).toBeGreaterThan(0)
-  })
+  // ── La sortie vers le jeu ───────────────────────────────────────────────
+  //
+  // ⚠️ **Elle n'est plus sur la fiche du sujet** (`RP17`, 16 septembre 2026).
+  // Le bouton *Poser dans le dossier du jeu* écrivait tout de suite, sans dire
+  // quels fichiers partaient ni lesquels il écrasait, à côté d'un écran qui,
+  // lui, le montre. Les trois essais qui le tenaient sont partis avec lui : ce
+  // que la fiche porte maintenant est *Livrer…*, qui ouvre la sortie, et c'est
+  // `Sortie.test.tsx` qui l'éprouve — le choix du sujet compris.
 
   test("armer demande le sujet au serveur au lieu de l'écrire", async () => {
     const { ecran, appels } = await ouvrir({

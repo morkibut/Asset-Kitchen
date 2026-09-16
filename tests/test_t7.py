@@ -14,11 +14,9 @@ promet — un agent hors ligne garde onze outils sur douze.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
-from PIL import Image
 
 from atelier.api.app import creer_application
 from atelier.mcp.serveur import creer_serveur
@@ -187,15 +185,24 @@ async def test_les_cinq_gestes_de_l_agent(atelier, mcp, double, tmp_path):
     assert retouche["processed"] is True
     assert retouche["width"] == 32
 
-    # Exporter : les PNG posés dans un dossier, plus le descriptif.
+    # Sortir : l'image posée là où l'agent code.
+    #
+    # ⚠️ **`export_assets` est retiré** (`RP17`) : il posait une sélection dans
+    # un dossier sans rien montrer d'abord, et aucun écran ne faisait ce
+    # geste-là. Ce que T7 promet — *l'image arrive où je code* — est porté par
+    # `folder`, sur l'outil qui vient de la fabriquer ou de la retoucher ; ce
+    # qui *sort du jeu* passe par `preview_output` puis `write_output`, qui
+    # annoncent leurs fichiers avant de les écrire.
     dossier = tmp_path / "jeu" / "assets"
-    sortie = await appeler(
-        mcp, "export_assets", asset_ids=[importe["id"]], folder=str(dossier)
+    pose = await appeler(
+        mcp,
+        "edit_asset",
+        asset_id=importe["id"],
+        steps={"grille": {"cible": 32, "occupation": 100, "ancrage": "bas"}},
+        folder=str(dossier),
     )
-    poses = {Path(f["path"]).name for f in sortie["files"]}
-    assert "descriptif.json" in poses
-    assert any(n.endswith(".png") for n in poses)
-    assert sortie["manifest"]
+    assert Path(pose["written_to"]).is_file()
+    assert Path(pose["written_to"]).parent == dossier
 
     # **Aucun de ces cinq gestes n'a appelé le fournisseur.** C'est la promesse
     # de la tranche, et elle se prouve en comptant, pas en la relisant.
@@ -572,7 +579,7 @@ async def test_un_client_mcp_se_branche_et_voit_les_outils(atelier):
         )
     assert liste.status_code == 200, liste.text
     # Les outils de la tranche, nommés en anglais, tels qu'un agent les verra.
-    for outil in ("generate_asset", "list_assets", "edit_asset", "export_assets"):
+    for outil in ("generate_asset", "list_assets", "edit_asset", "write_output"):
         assert outil in liste.text
 
 
@@ -619,39 +626,3 @@ async def test_un_import_survit_a_un_index_efface(atelier, tmp_path):
     compte = atelier.bibliotheque.reconstruire()
     assert compte["assets"] >= 1
     assert atelier.assets.lire(entre["asset"]["identifiant"]) is not None
-
-
-async def test_l_export_de_l_agent_est_relisible(atelier, mcp, tmp_path):
-    """Le descriptif fait foi sur le lien entre un nom lisible et un identifiant.
-
-    Comme en T6 : on **ouvre** ce qui est posé plutôt que de le mesurer. Un nom
-    de fichier numéroté sans descriptif serait illisible une semaine plus tard.
-    """
-    source = tmp_path / "fiole.png"
-    source.write_bytes(image_sujet())
-    entre = atelier.generations.importer(source.read_bytes(), source.name)
-
-    dossier = tmp_path / "jeu"
-    sortie = await appeler(
-        mcp,
-        "export_assets",
-        asset_ids=[entre["asset"]["identifiant"]],
-        folder=str(dossier),
-    )
-
-    descriptif = json.loads(
-        (dossier / "descriptif.json").read_text(encoding="utf-8")
-    )
-    fiches = descriptif["assets"]
-    assert len(fiches) == 1
-    fiche = fiches[0]
-    assert fiche["identifiant"] == entre["asset"]["identifiant"]
-
-    png = dossier / fiche["fichier"]
-    assert png.is_file()
-    with Image.open(png) as ouvert:
-        assert (ouvert.width, ouvert.height) == (
-            fiche["dimensions"]["largeur"],
-            fiche["dimensions"]["hauteur"],
-        )
-    assert {Path(f["path"]).name for f in sortie["files"]} >= {"descriptif.json"}

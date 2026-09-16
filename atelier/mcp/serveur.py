@@ -47,6 +47,7 @@ from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import AGENT, Generation
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.recette import PLACES, Recette, places_inconnues
+from atelier.domaine.sortie import Reglage as ReglageDeSortie
 from atelier.services import Atelier
 from atelier.services.bibliotheque import ProjetInconnu
 
@@ -745,63 +746,106 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             ],
         }
 
+    # ── La sortie vers le dossier du jeu (B21, `RP17`) ───────────────────────
+    #
+    # ⚠️ **`export_assets` est retiré** (`RP17`, 16 septembre 2026). Il posait
+    # une liste d'identifiants dans un dossier sans rien montrer d'abord, et
+    # aucun écran ne faisait ce geste-là — la galerie, elle, rend une archive.
+    # Les deux outils qui suivent sont **exactement** les deux routes de la
+    # sortie, `POST /api/output/preview` et `POST /api/output` : ce que l'agent
+    # peut faire est ce que l'écran fait, au même réglage et au même refus.
+
     @serveur.tool(
-        name="export_assets",
+        name="preview_output",
         meta=_barre(
-            verbe="sortir",
-            titre="Sortir des images vers le dossier du jeu",
-            phrase="Écrit une planche PNG et son fichier de description dans le dossier du jeu.",
-            ou="galerie",
+            verbe="aller",
+            titre="Voir ce qui sortirait dans le jeu",
+            phrase="La liste des fichiers, ce qui change depuis la dernière fois. Rien n'est écrit.",
+            ou="sortie",
             besoins=("images",),
         ),
-        title="Export assets to a folder",
+        title="Preview what would be written into the game folder",
         description=(
-            "Write the rendered PNG of each named asset into a folder — "
-            "typically the game's asset folder — plus a descriptif.json "
-            "describing every file. A missing folder is created and an "
-            "existing file is never overwritten."
+            "List the files a write would put in the game folder, each marked "
+            "`nouveau`, `remplace` or `inchange` against what is already "
+            "there, plus what the previous write left behind and no longer "
+            "sends (`restes`). Nothing is written and nothing is created — "
+            "call it as often as you like. `subject` narrows the whole write "
+            "to one character, its images and its animations, and then `lot` "
+            "is ignored. Free and offline."
         ),
     )
     @_refus_lisible
-    async def export_assets(
-        asset_ids: list[str],
+    async def preview_output(
+        project: str | None = None,
+        subject: str = "",
+        lot: str = "tout",
         folder: str | None = None,
+        layout: str = "a_plat",
+        on_collision: str = "remplacer",
+        engine: str = "aucun",
     ) -> dict[str, Any]:
-        """L'archive de T6, **ouverte dans le dossier du jeu**.
+        """L'aperçu de B21, traduit et rien de plus.
 
-        Cette fonction rouvrait le zip pour en ressortir les fichiers un par un
-        — c'était la seule du fichier qui *faisait* quelque chose, donc la seule
-        entorse à « le MCP n'a pas de logique propre ». **Le geste vit dans le
-        service depuis C5** (`export.deposer`), et l'outil est redevenu ce qu'il
-        aurait toujours dû être : une traduction.
+        **Le sujet se nomme comme partout ailleurs** — son repère ou son nom —,
+        parce que l'agent a lu « Héroïne » dans `list_characters`, pas un repère.
         """
-        sortie = atelier.export.deposer(asset_ids, folder)
-        return {
-            "folder": sortie.dossier,
-            # **Le descriptif est dans la liste, et il y était déjà** : T7 rend
-            # les chemins de *tous* les fichiers posés, celui-là compris. Un
-            # invariant instauré ne se renégocie pas parce qu'on a déménagé le
-            # geste — c'est la même réponse, écrite ailleurs.
-            "files": [
-                {"name": fiche["fichier"], "path": fiche["chemin"]}
-                for fiche in sortie.fichiers
-            ]
-            + [
-                {
-                    "name": Path(sortie.descriptif).name,
-                    "path": sortie.descriptif,
-                }
-            ],
-            "manifest": list(sortie.fichiers),
-            "descriptor": sortie.descriptif,
-        }
+        return atelier.sortie.prevoir(
+            *_reglage_de_sortie(
+                atelier, project, subject, lot, folder, layout, on_collision, engine
+            )
+        ).en_json()
+
+    @serveur.tool(
+        name="write_output",
+        meta=_barre(
+            verbe="sortir",
+            titre="Écrire les fichiers dans le dossier du jeu",
+            phrase="Ce que l'aperçu annonçait, posé sur le disque.",
+            ou="sortie",
+            besoins=("images",),
+        ),
+        title="Write the game folder",
+        description=(
+            "Write into the game folder what `preview_output` listed for the "
+            "same settings, and return the paths written, what was left "
+            "unchanged, and what was erased. Always call `preview_output` "
+            "first: `on_collision` decides what happens to a file already "
+            "there — `remplacer` overwrites it, `numeroter` keeps both, "
+            "`arreter` refuses the whole write, `effacer` also removes what "
+            "the previous write put there and no longer sends. `subject` "
+            "writes one character whole. Free and offline."
+        ),
+    )
+    @_refus_lisible
+    async def write_output(
+        project: str | None = None,
+        subject: str = "",
+        lot: str = "tout",
+        folder: str | None = None,
+        layout: str = "a_plat",
+        on_collision: str = "remplacer",
+        engine: str = "aucun",
+    ) -> dict[str, Any]:
+        """L'écriture de B21, traduite et rien de plus.
+
+        **Le plan est refait ici, jamais reçu de l'appelant** : un aperçu vieux
+        de deux minutes décrirait un jeu qu'on vient de modifier. C'est la règle
+        du service, et le MCP ne l'affaiblit pas en portant un jeton.
+        """
+        return atelier.sortie.ecrire(
+            *_reglage_de_sortie(
+                atelier, project, subject, lot, folder, layout, on_collision, engine
+            )
+        ).en_json()
 
     # ── Le personnage, ses attitudes, et ce qu'il porte (C5) ────────────────
     #
-    # **Cinq outils, et ils ne font rien que l'écran ne fasse** (US-156). Lire ce
-    # qui manque, ajouter une attitude au plan, remplir une case, habiller, et
-    # sortir le personnage dans le jeu : c'est la boucle entière de la V2, au
-    # grain épais de T7 — l'agent dit ce qu'il veut, pas comment l'obtenir.
+    # **Quatre outils, et ils ne font rien que l'écran ne fasse** (US-156). Lire
+    # ce qui manque, ajouter une attitude au plan, remplir une case, habiller :
+    # c'est la boucle de la V2 jusqu'à la sortie, qui vit maintenant au-dessus,
+    # dans la porte unique de `RP17`. Au grain épais de T7 — l'agent dit ce
+    # qu'il veut, pas comment l'obtenir.
     #
     # **Les gestes de finesse de C4 restent à l'écran**, et c'est délibéré :
     # borner une zone, affiner un masque, retoucher au pixel demandent un œil
@@ -1168,61 +1212,11 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         finie = await atelier.generations.attendre(generation.identifiant, attente)
         return _generation_en_json(atelier, finie or generation, folder)
 
-    @serveur.tool(
-        name="export_character",
-        meta=_barre(
-            verbe="sortir",
-            titre="Sortir la planche d'un personnage",
-            phrase="Une planche PNG, ses cases décrites, dans le dossier du jeu.",
-            ou="codex",
-            besoins=("personnages",),
-        ),
-        title="Export a character into the game folder",
-        description=(
-            "Write a whole character into the game folder: one PNG per pose "
-            "and one per piece worn on it, plus a descriptor naming every "
-            "file, its pose and its piece. Each file carries a `role`: "
-            "`corps` is a body, `calque` is a layer to stack on the body of "
-            "the same pose, and `corps_habille` is a whole body already "
-            "wearing the piece — it replaces the body, it does not stack. "
-            "What is written is the rendered image, never the raw one. A "
-            "missing folder is created and an existing file is never "
-            "overwritten. Read the descriptor to write your own catalogue "
-            "lines — the workshop does not write game code, and it invents no "
-            "folder structure. Free and offline."
-        ),
-    )
-    @_refus_lisible
-    async def export_character(
-        character: str,
-        project: str | None = None,
-        folder: str | None = None,
-    ) -> dict[str, Any]:
-        """La sortie de C5 (US-154, US-155, US-157).
-
-        **Le descriptif part deux fois, et ce n'est pas un doublon** : il est
-        écrit dans le dossier, pour qui rouvrira le jeu dans six mois, et rendu
-        ici, pour que l'agent n'ait pas à relire un fichier qu'il vient de faire
-        écrire.
-        """
-        projet = _projet_ouvert(atelier, project)
-        vise = _personnage(atelier, projet, character)
-        sortie = atelier.export.exporter_personnage(projet, vise.identifiant, folder)
-        return {
-            "folder": sortie.dossier,
-            "files": [
-                {
-                    "name": fiche["fichier"],
-                    "path": fiche["chemin"],
-                    "role": fiche["role"],
-                    "pose": fiche["pose"],
-                    "piece": fiche["piece"],
-                }
-                for fiche in sortie.fichiers
-            ],
-            "manifest": list(sortie.fichiers),
-            "descriptor": sortie.descriptif,
-        }
+    # ⚠️ **`export_character` est retiré** (`RP17`, 16 septembre 2026). Il
+    # posait un personnage nommé dans le dossier du jeu sans rien montrer
+    # d'abord, à côté d'une sortie qui, elle, annonce ses fichiers et les
+    # compare à la fois d'avant. Ce qu'il savait faire se demande maintenant à
+    # `preview_output` puis `write_output`, avec `subject`.
 
     # ── Le cadre, pour que l'agent sache ce qu'il lui reste ──────────────────
 
@@ -1450,6 +1444,39 @@ def _projet_ouvert(atelier: Atelier, nomme: str | None) -> str:
     pour l'écran, et c'est la même phrase des deux côtés.
     """
     return _projet(atelier, nomme) or atelier.bibliotheque.courant or ""
+
+
+def _reglage_de_sortie(
+    atelier: Atelier,
+    projet: str | None,
+    sujet: str,
+    lot: str,
+    dossier: str | None,
+    rangement: str,
+    collision: str,
+    moteur: str,
+) -> tuple[str, ReglageDeSortie]:
+    """Les mots de l'agent, traduits en réglage de la sortie (`RP17`).
+
+    **Rien n'est validé ici** : les cinq listes fermées sont éprouvées par le
+    service, qui refuse en français avec la liste des valeurs possibles. Une
+    validation de plus dans la façade dirait la même chose d'une autre manière,
+    et c'est très exactement ce que « le MCP n'a pas de logique propre » interdit.
+
+    Le sujet, lui, est **résolu** avant de partir — par son repère ou par son
+    nom, comme partout ailleurs pour un personnage.
+    """
+    vise = _projet_ouvert(atelier, projet)
+    return vise, ReglageDeSortie(
+        lot=lot,
+        dossier=dossier,
+        rangement=rangement,
+        collision=collision,
+        moteur=moteur,
+        sujet=(
+            _personnage(atelier, vise, sujet).identifiant if sujet.strip() else ""
+        ),
+    )
 
 
 def _personnage(atelier: Atelier, projet: str, nomme: str) -> Personnage:

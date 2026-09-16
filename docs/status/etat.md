@@ -11,6 +11,35 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## RP17 · Une seule porte pour faire sortir un personnage — 16 septembre 2026
+
+**Le doublon ne tenait pas à deux codes, mais à deux granularités.** L'ancienne porte savait
+sortir *un personnage nommé* ; la nouvelle savait sortir *un lot*. Personne n'avait retiré la
+première parce que la seconde ne faisait pas son travail — et c'est ce qui a décidé de la forme
+du correctif : un réglage `sujet` sur la porte qui montre, plutôt qu'un pont entre les deux.
+Posé, il gagne sur le lot, et le lot n'est plus lu du tout. Deux réglages qui répondent à la même
+question finissent par se contredire, et *lot = les décors, sujet = un personnage* n'a aucune
+réponse juste ; l'écrire une fois, dans `Reglage.sujet`, coûtait moins que de trancher le cas
+partout.
+
+**Ce que le retrait a révélé, et qui vaut pour toute tranche de dédoublonnage : une règle éprouvée
+sur un seul de deux chemins n'est tenue que sur celui-là.** La sortie de B21 laissait partir les
+calques d'équipement d'une pose dont le corps avait disparu — un calque seul dans un dossier de
+jeu ne se pose sur rien. La règle date de C5, le docstring de B21 la réclamait mot pour mot, et
+elle n'était pas écrite : l'essai qui la tenait visait l'autre porte. Elle est apparue à la
+seconde où cet essai a été rebranché. Le reste des essais de C5 s'est reporté tel quel, ce qui est
+la meilleure preuve que la porte retenue fait bien le travail de celle qui part — mêmes fichiers,
+même descriptif, mêmes refus.
+
+**Et la parité s'est réparée en retirant, pas en ajoutant.** `export_assets` déposait une
+sélection d'identifiants sur le disque sans rien montrer, et aucun écran ne faisait ce geste : le
+garder aurait demandé de construire l'écran manquant, le retirer a suffi. Ce que T7 promettait
+vraiment — *l'image arrive où je code* — n'était pas lui mais l'argument `folder` des outils de
+génération, qui pose une image à la fois au moment où elle revient ; il reste, nommé dans le
+relevé, et un essai lit les appelants de `ServiceAgent.deposer` dans tout `atelier/` pour qu'un
+troisième ne réapparaisse pas en silence. Les trois variantes archive, elles, restent : elles
+rendent un fichier au navigateur et n'écrivent rien dans le jeu — ce n'est pas la même question.
+
 ## RP16 · Savoir ce qu'on a laissé en plan — 16 septembre 2026
 
 **Le tiroir n'avait pas besoin d'un index nouveau : il avait besoin que la porte existante en
