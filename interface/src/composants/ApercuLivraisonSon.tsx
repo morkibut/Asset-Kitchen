@@ -15,11 +15,19 @@ const erreurDe = (e: unknown) => (e instanceof Error ? e.message : "L’aperçu 
  *  même route que le reste de l'atelier (`api.livrerGodot`) ; `onLivraisons`
  *  prévient l'appelant qu'une livraison a été faite, pour qu'il rafraîchisse
  *  sa liste ou rouvre l'écran « Livrer au jeu ». */
-export function ApercuLivraisonSon({ projet, son, jeu, onLivraisons }: { projet: string; son?: Son; jeu?: JeuVariantesSon; onLivraisons?: () => void }) {
+export function ApercuLivraisonSon({ projet, son, jeu, onLivraisons, onTrancherConflit }: {
+  projet: string; son?: Son; jeu?: JeuVariantesSon; onLivraisons?: () => void
+  /** Un conflit de fichier ouvert ne se tranche pas ici : ce lien renvoie vers
+   *  « Livrer au jeu », où la décision se prend (branché côté `JeuDeVariantes`
+   *  si besoin). Absent : le conflit reste affiché sans action possible. */
+  onTrancherConflit?: () => void
+}) {
   const [livraison, setLivraison] = useState<(ApercuLivraison & { etat?: string }) | null>(null)
   const [occupe, setOccupe] = useState(false)
   const [erreur, setErreur] = useState("")
-  const cle = son ? `son-${son.identifiant}-${son.revision}` : jeu ? `jeu-${jeu.identifiant}` : ""
+  // La révision d'un jeu de variantes fait partie de la clé : sans elle, un
+  // renommage ou un membre ajouté/retiré ne relirait pas l'aperçu.
+  const cle = son ? `son-${son.identifiant}-${son.revision}` : jeu ? `jeu-${jeu.identifiant}-${jeu.revision ?? 0}` : ""
 
   useEffect(() => {
     let actif = true
@@ -34,6 +42,8 @@ export function ApercuLivraisonSon({ projet, son, jeu, onLivraisons }: { projet:
   }, [cle, projet])
 
   if (!son && !jeu) return null
+  // Un signalement (« ce son sature… ») informe, il ne bloque rien : couleur
+  // neutre, jamais celle d'une erreur.
   const signalements = jeu?.signalements ?? []
   const publier = async () => {
     if (!livraison) return
@@ -58,7 +68,7 @@ export function ApercuLivraisonSon({ projet, son, jeu, onLivraisons }: { projet:
     <h2 className="font-serif text-[25px]">Ce qui sera livré</h2>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
     {!livraison && !erreur && <p className="text-[13px] text-encre-3">Lecture de l’aperçu…</p>}
-    {signalements.length > 0 && <ul className="space-y-[4px] text-[13px] text-echec">{signalements.map(s => <li key={s.son}>{s.signal}</li>)}</ul>}
+    {signalements.length > 0 && <ul className="space-y-[4px] text-[13px] text-encre-attention">{signalements.map(s => <li key={s.son}>{s.signal}</li>)}</ul>}
     {livraison && <>
       <p className="text-[13px] text-encre-3">Dossier du jeu : <span className="font-mono break-all">{dossierRes}</span></p>
       <p className="text-[13px]">{detail}</p>
@@ -69,7 +79,7 @@ export function ApercuLivraisonSon({ projet, son, jeu, onLivraisons }: { projet:
         <p className="mt-[8px] text-[12px] text-encre-3">Chaque <span className="font-mono">.import</span> dit à Godot si le son boucle, et pour une musique son tempo et ses mesures.</p>
       </details>
       <p className="text-[12px] text-encre-3">Rien n’est écrit dans le jeu tant que vous n’avez pas livré.</p>
-      {conflitsOuverts.map(c => <p key={c.chemin} className="text-[13px] text-echec">{c.chemin} : {c.raison}</p>)}
+      {conflitsOuverts.map(c => <p key={c.chemin} className="text-[13px] text-echec">{c.chemin} : {c.raison}{onTrancherConflit && <> · <button type="button" className="underline" onClick={onTrancherConflit}>Trancher dans Livrer au jeu</button></>}</p>)}
       <button className={`${BOUTON} border-signal bg-signal text-encre-sur-signal`}
         disabled={occupe || !livraison.pret || livraison.etat === "terminee"}
         onClick={() => void publier().then(() => onLivraisons?.())}>

@@ -5,7 +5,7 @@ import asyncio
 import time
 
 from atelier.domaine.travail import TravailRefuse
-from atelier.audio.graphes import FAMILLES
+from atelier.audio.graphes import CONSTRUCTEURS, FAMILLES
 from atelier.audio.texte import SFXR, composer_texte, langue
 from atelier.domaine.projet import FAMILLES_SON
 from atelier.domaine.son import RecetteSon
@@ -106,7 +106,11 @@ class ServiceTravauxAudio(ServiceTravaux):
             raise TravailRefuse(str(e)) from e
         compo.update(source_moteur=source_moteur, modele=profil["modele"] if profil else None, relu=False)
         if profil is None and compo["compose"]:
-            compo["raison"] = "Le moteur « " + str(moteur) + " » n'est pas installé : installez les méthodes sonores."
+            # Le nom en clair du moteur (celui de son profil de workflow),
+            # jamais son identifiant brut (« sa3-small-sfx ») — imprononçable
+            # pour qui ne connaît pas ComfyUI.
+            nom_moteur = CONSTRUCTEURS[moteur]()["nom"] if moteur in CONSTRUCTEURS else str(moteur)
+            compo["raison"] = "Le moteur « " + nom_moteur + " » n'est pas installé : installez les méthodes sonores."
         if compo["compose"] and profil is not None:
             # Seuls partent les réglages que le graphe relie ; ceux qu'il
             # porte déjà et que personne n'a dits se montrent « profil ».
@@ -119,7 +123,7 @@ class ServiceTravauxAudio(ServiceTravaux):
             dans_le_texte = {m.get("champ") for m in compo["morceaux"]}
             for k in MUSIQUE:
                 if brut.get(k) is not None and k not in compo["parametres"] and k not in dans_le_texte:
-                    raise TravailRefuse(f"Le moteur « {moteur} » ne reçoit pas de réglage « {k} » pour cette famille.")
+                    raise TravailRefuse(f"Le moteur « {profil['nom']} » ne reçoit pas de réglage « {k} » pour cette famille.")
             # Ce qui sera refusé ne doit pas être proposé : la relecture vérifie
             # déjà la durée contre l'intervalle du profil, et la signale dans un
             # champ lisible, au lieu de laisser `composer` refuser à l'envoi.

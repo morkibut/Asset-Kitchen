@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { api, Refus } from "../api"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
-import { workflows, type DemandeImageLocale, type ProfilWorkflow, type ResultatMoteurSon, type TravailImageLocale, type DiagnosticWorkflow } from "../api-workflows"
+import { workflows, type DemandeImageLocale, type FichierSonManquant, type ProfilWorkflow, type ResultatMoteurSon, type TravailImageLocale, type DiagnosticWorkflow } from "../api-workflows"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { Libelle } from "./pieces"
@@ -12,7 +12,20 @@ const SURFACE = "rounded-8 border border-trait bg-carte p-[22px]"
 const ETATS: Record<TravailImageLocale["etat"], string> = { prepare: "Prête à lancer", en_cours: "En cours", a_reprendre: "À reprendre", a_verifier: "À vérifier", externe_inconnu: "Acceptation à vérifier", termine: "Terminée", annule: "Annulée" }
 const message = (e: unknown) => e instanceof Refus || e instanceof Error ? e.message : "L’opération n’a pas abouti. Réessayez."
 
-export function ProfilsWorkflow({ onImage, onVideo, onAudio }: { onImage?: (modele: string) => void; onVideo?: (modele: string) => void; onAudio?: (modele: string) => void }) {
+/** Ce qui manque pour un profil sonore (SN1) : chaque fichier en clair, son
+ *  dossier et sa page — jamais le texte brut du diagnostic (« Nœud absent :
+ *  YuE2GenerateABC (2). »), imprononçable pour qui ne connaît pas ComfyUI. */
+function ListeManque({ manque }: { manque: FichierSonManquant[] }) {
+  return <ul className="space-y-[4px] text-[13px] text-encre-3">{manque.map(f => <li key={f.fichier}><span className="text-echec">{f.nom}</span> — fichier <span className="font-mono text-[12px]">{f.fichier}</span>, à poser dans <span className="font-mono text-[12px]">{f.dossier}</span>{f.source && <> · <a className="underline" href={f.source} target="_blank" rel="noreferrer">sa page</a></>}</li>)}</ul>
+}
+
+export function ProfilsWorkflow({ onImage, onVideo, onAudio, actualiserSur }: {
+  onImage?: (modele: string) => void; onVideo?: (modele: string) => void; onAudio?: (modele: string) => void
+  /** Change de valeur : relit les profils (utilisé après une installation de
+   *  méthodes sonores, pour que « Les workflows locaux » se rafraîchisse
+   *  aussi sans que l'auteur ait à cliquer « Actualiser les profils »). */
+  actualiserSur?: number
+}) {
   const [profils, setProfils] = useState<ProfilWorkflow[]>([])
   const [erreur, setErreur] = useState("")
   const [chargement, setChargement] = useState(true)
@@ -23,6 +36,15 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio }: { onImage?: (mode
   const [confirmation, setConfirmation] = useState("")
   async function relire() { setChargement(true); try { setProfils((await workflows.lister()).profils) } catch (e) { setErreur(message(e)) } finally { setChargement(false) } }
   useEffect(() => { void relire() }, [])
+  // Ne relit qu'à un changement réel de `actualiserSur` (une installation de
+  // méthodes sonores faite ailleurs) : la première lecture est déjà celle
+  // du montage, ci-dessus.
+  const premiereActualisation = useRef(true)
+  useEffect(() => {
+    if (premiereActualisation.current) { premiereActualisation.current = false; return }
+    void relire()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actualiserSur])
   async function garder(brut: unknown) {
     setOccupe(true); setErreur(""); setConfirmation("")
     try {
@@ -50,7 +72,14 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio }: { onImage?: (mode
       const d = diagnostics[p.modele] || p.diagnostic
       return <article key={p.modele} className={`${SURFACE} space-y-[14px]`}><div><h3 className="font-serif text-[25px]">{p.nom}</h3><p className="text-[12px] text-encre-3">{p.nature === "image" ? "Image" : p.nature === "audio" ? "Son" : "Vidéo"} · {p.references_min} référence{p.references_min > 1 ? "s" : ""} obligatoire{p.references_min > 1 ? "s" : ""} · version du {new Date(p.cree_le * 1000).toLocaleString("fr-FR")}</p></div>
         {p.description && <p className="text-[13px]">{p.description}</p>}<p className="text-[12px] text-encre-3">{p.formats.map(f => `${f.largeur} × ${f.hauteur}`).join(" · ")}{p.nature === "video" ? ` · ${p.durees.join(" / ")} s · ${p.cadence} images/s` : p.nature === "audio" ? `${p.durees.join(" / ")} s de son` : ""}</p>
-        {d ? <div className="text-[13px]"><p className={d.disponible ? "text-ok" : "text-echec"}>{d.disponible ? "Prérequis présents" : "Prérequis à compléter"}</p>{d.problemes.map(r => <p key={r} className="mt-[4px] text-encre-3">{r}</p>)}<p className="mt-[4px] text-[12px] text-encre-3">{d.limite}</p></div> : <p className="text-[13px] text-encre-3">Installation à vérifier.</p>}
+        {d ? <div className="text-[13px]"><p className={d.disponible ? "text-ok" : "text-echec"}>{d.disponible ? "Prérequis présents" : "Prérequis à compléter"}</p>
+          {p.nature === "audio" && d.manque && d.manque.length > 0
+            // Un profil sonore cite le fichier qui manque, en clair — jamais le
+            // problème brut du diagnostic (« Nœud absent : … »), imprononçable
+            // pour qui ne connaît pas ComfyUI.
+            ? <ListeManque manque={d.manque} />
+            : d.problemes.map(r => <p key={r} className="mt-[4px] text-encre-3">{r}</p>)}
+          <p className="mt-[4px] text-[12px] text-encre-3">{d.limite}</p></div> : <p className="text-[13px] text-encre-3">Installation à vérifier.</p>}
         <div className="flex flex-wrap gap-[8px]"><button className={BOUTON} disabled={occuppe} onClick={() => void verifier(p)}>Vérifier les prérequis</button>{(p.nature === "image" ? onImage : p.nature === "audio" ? onAudio : onVideo) && <button className={BOUTON} disabled={!d?.disponible} onClick={() => p.nature === "image" ? onImage?.(p.modele) : p.nature === "audio" ? onAudio?.(p.modele) : onVideo?.(p.modele)}>Utiliser ce workflow</button>}<button className={BOUTON} onClick={() => { setContenu(JSON.stringify(p, null, 2)); setEditeur(true) }}>Préparer une nouvelle version</button></div>
       </article>
     })}</div>}
@@ -63,39 +92,50 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio }: { onImage?: (mode
 // modèles de workflow officiels de ComfyUI (`atelier/audio/graphes.py`), pas
 // collés à la main. « Installer » ne fait qu'aller relire ce que ComfyUI sait
 // déjà : rien n'est jamais téléchargé par l'atelier.
-const MOTEURS_SONORES: readonly { identifiant: string; nom: string; quoi: string }[] = [
+export const MOTEURS_SONORES: readonly { identifiant: string; nom: string; quoi: string }[] = [
   { identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", quoi: "Bruitages et ambiances." },
   { identifiant: "ace-step-15-turbo", nom: "ACE-Step 1.5", quoi: "Musique et jingles." },
   { identifiant: "yue2-int8", nom: "YuE2", quoi: "Chansons chantées." },
   { identifiant: "sa3-medium", nom: "Stable Audio 3 Medium", quoi: "Secours pour les ambiances longues et la musique." },
   { identifiant: "sa-open-1", nom: "Stable Audio Open 1.0", quoi: "Secours pour les bruitages." },
 ]
+/** Le nom en clair d'un moteur sonore par son identifiant, pour les endroits
+ *  qui ne connaissent que l'identifiant (un moteur `possible` mais pas
+ *  installé, une provenance) — jamais l'identifiant brut affiché seul. */
+export const nomMoteurSonore = (identifiant: string) => MOTEURS_SONORES.find(m => m.identifiant === identifiant)?.nom ?? identifiant
 
-export function MethodesSonores() {
+/** « Installer les méthodes sonores » (SN1) n'installe rien sans le clic de
+ *  l'auteur : au montage, l'écran ne fait que lister les cinq moteurs
+ *  possibles, sans état — aller relire ce que ComfyUI sait déjà reste une
+ *  action, pas un effet de bord de l'ouverture de l'écran. */
+export function MethodesSonores({ onInstalle }: {
+  /** Prévient l'appelant qu'une installation a eu lieu, pour qu'il relise à
+   *  son tour « Les workflows locaux » juste au-dessus (SN1). */
+  onInstalle?: () => void
+} = {}) {
   const [resultat, setResultat] = useState<Record<string, ResultatMoteurSon> | null>(null)
-  const [chargement, setChargement] = useState(true)
+  const [occupe, setOccupe] = useState(false)
   const [erreur, setErreur] = useState("")
   async function installer() {
-    setChargement(true); setErreur("")
-    try { setResultat((await workflows.installerSon()).moteurs) }
-    catch (e) { setErreur(message(e)) } finally { setChargement(false) }
+    setOccupe(true); setErreur("")
+    try { setResultat((await workflows.installerSon()).moteurs); onInstalle?.() }
+    catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
   }
-  useEffect(() => { void installer() }, [])
   return <section aria-label="Les méthodes sonores" className="space-y-[22px] text-encre">
     <header><h2 className="font-serif text-[38px]">Les méthodes sonores</h2><p className="mt-[8px] text-[13px] text-encre-3">Cinq moteurs fabriquent les sons du jeu. Rien n’est jamais téléchargé par l’atelier : c’est vous qui posez les fichiers, l’atelier ne fait que les retrouver.</p></header>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
-    <button className={BOUTON} disabled={chargement} onClick={() => void installer()}>Installer les méthodes sonores</button>
-    {chargement && !resultat ? <p role="status">Recherche des fichiers…</p> : <div className="grid grid-cols-2 gap-[14px]">{MOTEURS_SONORES.map(m => {
+    <button className={BOUTON} disabled={occupe} onClick={() => void installer()}>Installer les méthodes sonores</button>
+    <div className="grid grid-cols-2 gap-[14px]">{MOTEURS_SONORES.map(m => {
       const r = resultat?.[m.identifiant]
       return <article key={m.identifiant} className={`${SURFACE} space-y-[8px]`}>
         <div><h3 className="font-serif text-[25px]">{m.nom}</h3><p className="text-[12px] text-encre-3">{m.quoi}</p></div>
         {r?.installe
           ? <p className="text-[13px] text-ok">Installé{r.profil ? ` · version du ${new Date(r.profil.cree_le * 1000).toLocaleString("fr-FR")}` : ""}</p>
           : r
-            ? <ul className="space-y-[4px] text-[13px] text-encre-3">{(r.manque || []).map(f => <li key={f.fichier}><span className="text-echec">{f.nom}</span> — fichier <span className="font-mono text-[12px]">{f.fichier}</span>, à poser dans <span className="font-mono text-[12px]">{f.dossier}</span>{f.source && <> · <a className="underline" href={f.source} target="_blank" rel="noreferrer">sa page</a></>}</li>)}</ul>
-            : <p className="text-[13px] text-encre-3">Installation à vérifier.</p>}
+            ? <ListeManque manque={r.manque || []} />
+            : <p className="text-[13px] text-encre-3">{occupe ? "Recherche des fichiers…" : "Non vérifié — « Installer les méthodes sonores » relit ce que ComfyUI sait déjà."}</p>}
       </article>
-    })}</div>}
+    })}</div>
     <p className="text-[12px] text-encre-3">Réinstaller sans rien changer ne crée pas de nouvelle version. Coller un workflow reste possible, comme pour l’image.</p>
   </section>
 }

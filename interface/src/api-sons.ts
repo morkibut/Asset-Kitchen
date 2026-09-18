@@ -28,8 +28,10 @@ export type JugementSon = "a-juger" | "retenue" | "ecartee"
  *  qui se livre encore à l'ancienne (AU14, PCM dans le `.tres`). */
 export type FamilleSon = "bruitage" | "interface" | "ambiance" | "musique" | "chanson" | "jingle" | "voix"
 /** Le niveau perçu (LUFS) n'a de sens que sur ces familles-là : trop court
- *  pour un bruitage ou un son d'interface, qui se règlent sur leur crête. */
-export const FAMILLES_AVEC_LUFS: readonly FamilleSon[] = ["ambiance", "musique", "voix"]
+ *  pour un bruitage ou un son d'interface, qui se règlent sur leur crête.
+ *  Doit rester aligné sur les familles dont `cible_lufs` n'est pas `None`
+ *  côté serveur (`atelier/domaine/son.py`, `FAMILLES`). */
+export const FAMILLES_AVEC_LUFS: readonly FamilleSon[] = ["ambiance", "musique", "chanson", "jingle", "voix"]
 export const NOMS_FAMILLES_SON: Record<FamilleSon, string> = {
   bruitage: "Bruitage", interface: "Interface et rétro", ambiance: "Ambiance",
   musique: "Musique", chanson: "Chanson", jingle: "Jingle", voix: "Voix",

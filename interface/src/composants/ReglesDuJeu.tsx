@@ -125,6 +125,7 @@ import {
 import { workflows, type MoteurParFamille, type ProfilWorkflow } from "../api-workflows"
 import { Bouton, Curseur, Libelle, Raison, libelleModele } from "./pieces"
 import { nomDuModele } from "./Fiche"
+import { nomMoteurSonore } from "./WorkflowsLocaux"
 import { BlocDirectionsAnimees, BlocMouvements, BlocStyles } from "./Mouvements"
 
 // ── Les quatre étapes ────────────────────────────────────────────────────────
@@ -966,6 +967,18 @@ const NOTES_TONALITE = [
 const TONALITES: readonly string[] = (["major", "minor"] as const).flatMap((mode) =>
   NOTES_TONALITE.map((note) => `${note} ${mode}`),
 )
+/** Le nom français de chaque note, pour l'écran seulement : la valeur envoyée
+ *  au serveur reste l'anglais de `TONALITES`, au caractère près. */
+const NOM_NOTE_FR: Record<(typeof NOTES_TONALITE)[number], string> = {
+  C: "do", "C#": "do♯", Db: "ré♭", D: "ré", "D#": "ré♯", Eb: "mi♭", E: "mi", F: "fa", "F#": "fa♯",
+  Gb: "sol♭", G: "sol", "G#": "sol♯", Ab: "la♭", A: "la", "A#": "la♯", Bb: "si♭", B: "si",
+}
+function tonaliteEnFrancais(tonalite: string): string {
+  const [note, mode] = tonalite.split(" ")
+  const nom = NOM_NOTE_FR[note as (typeof NOTES_TONALITE)[number]]
+  if (!nom || (mode !== "major" && mode !== "minor")) return tonalite
+  return `${nom} ${mode === "minor" ? "mineur" : "majeur"}`
+}
 
 /** Les sept familles de sons (`atelier.domaine.son.FAMILLES_SON`), et leur nom
  *  français — la seule liste vit côté serveur, recopiée ici pour l'ordre de
@@ -1004,6 +1017,14 @@ function LeSon({
     setBrouillon(Object.fromEntries(son.champs.map((c) => [c.nom, c.texte])))
   }, [son.champs])
 
+  // Le tempo ne part qu'à la sortie du champ (ou Entrée) : envoyer une
+  // modification d'univers à chaque frappe (« 1 » refusé, puis « 12 », puis
+  // « 120 ») ferait trois appels, dont un refus, pour un seul geste voulu.
+  const [tempoBrouillon, setTempoBrouillon] = useState(son.tempo != null ? String(son.tempo) : "")
+  useEffect(() => {
+    setTempoBrouillon(son.tempo != null ? String(son.tempo) : "")
+  }, [son.tempo])
+
   const relireLesMoteurs = useCallback(() => {
     if (!projet) return
     void workflows
@@ -1022,7 +1043,16 @@ function LeSon({
     Promise.all([workflows.lister(), workflows.moteursParFamille(projet)])
       .then(([liste, def]) => {
         if (!vivant) return
-        setProfils(liste.profils.filter((p) => p.nature === "audio"))
+        // Un profil garde chacune de ses versions ; cet écran ne montre que
+        // la plus récente par identifiant, sinon un même moteur offrirait
+        // deux options (et deux clés React) dans le choix de sa famille.
+        const parIdentifiant = new Map<string, ProfilWorkflow>()
+        for (const p of liste.profils) {
+          if (p.nature !== "audio") continue
+          const actuel = parIdentifiant.get(p.identifiant)
+          if (!actuel || p.cree_le > actuel.cree_le) parIdentifiant.set(p.identifiant, p)
+        }
+        setProfils([...parIdentifiant.values()])
         setDefauts(def.familles)
       })
       .catch(
@@ -1048,6 +1078,13 @@ function LeSon({
         })),
       },
     })
+  }
+
+  const poserTempo = async () => {
+    const valeur = tempoBrouillon.trim() === "" ? null : Number(tempoBrouillon)
+    if (valeur !== null && !Number.isFinite(valeur)) return
+    if (valeur === (son.tempo ?? null)) return
+    await onRegler({ son: { tempo: valeur } })
   }
 
   const poserMoteur = async (famille: string, identifiant: string) => {
@@ -1134,7 +1171,7 @@ function LeSon({
               <option value="">aucune</option>
               {TONALITES.map((t) => (
                 <option key={t} value={t}>
-                  {t}
+                  {tonaliteEnFrancais(t)}
                 </option>
               ))}
             </select>
@@ -1146,13 +1183,13 @@ function LeSon({
               min={10}
               max={300}
               aria-label="Tempo de référence"
-              value={son.tempo ?? ""}
+              value={tempoBrouillon}
               placeholder="aucun"
-              onChange={(e) =>
-                void onRegler({
-                  son: { tempo: e.target.value === "" ? null : Number(e.target.value) },
-                })
-              }
+              onChange={(e) => setTempoBrouillon(e.target.value)}
+              onBlur={() => void poserTempo()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur()
+              }}
               className="h-[34px] w-[70px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre"
             />
           </label>
@@ -1176,6 +1213,11 @@ function LeSon({
               const proposes = profils.filter(
                 (p) => (defaut?.possibles ?? []).includes(p.identifiant) || p.identifiant === pose,
               )
+              // Un moteur possible pour cette famille (`sound-defaults`) mais
+              // qu'aucun profil installé ne porte : montré quand même, grisé
+              // avec sa raison — jamais caché en silence.
+              const installes = new Set(proposes.map((p) => p.identifiant))
+              const nonInstalles = (defaut?.possibles ?? []).filter((id) => !installes.has(id))
               const nomDuMoteur =
                 defaut?.moteur === "sfxr"
                   ? "sfxr, calculé sans IA"
@@ -1198,6 +1240,11 @@ function LeSon({
                       {proposes.map((p) => (
                         <option key={p.identifiant} value={p.identifiant}>
                           {p.nom}
+                        </option>
+                      ))}
+                      {nonInstalles.map((id) => (
+                        <option key={id} value={id} disabled>
+                          {nomMoteurSonore(id)} — pas installé
                         </option>
                       ))}
                     </select>

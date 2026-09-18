@@ -58,6 +58,22 @@ test("un retour illisible reste visible avec sa source, sans livraison disponibl
   expect(screen.getByRole("link", { name: "Télécharger la source intacte" }).getAttribute("href")).toContain("/sounds/son1/source")
 })
 
+test("la provenance se lit en clair (moteur, graine, texte, série), le document brut reste replié", async () => {
+  monter({ ...son, provenance: {
+    modele: "ComfyUI:sa3-small-sfx@46c1", envoi: { prompt: "Un pas dans la boue", graine: 42 },
+    composition: { texte: "Un pas dans la boue" }, serie: { identifiant: "serie-1", rang: 3 },
+  } })
+  await screen.findByLabelText("Fondu d’entrée (ms)")
+  fireEvent.click(screen.getByText("Source et provenance"))
+  expect(screen.getByText("Stable Audio 3 Small-SFX")).toBeTruthy()
+  expect(screen.getByText("42")).toBeTruthy()
+  expect(screen.getByText("Un pas dans la boue")).toBeTruthy()
+  expect(screen.getByText("série serie-1, tirage 3")).toBeTruthy()
+  expect(screen.getByText(/"modele":/)).not.toBeVisible()
+  fireEvent.click(screen.getByText("Document brut"))
+  expect(screen.getByText(/"modele":/)).toBeVisible()
+})
+
 test("les avertissements s’affichent sans bloquer, et un son saturé se livre quand même", async () => {
   monter({ ...son, avertissements: ["Le rendu sature. Baissez le gain ou le niveau cible pour l'éviter."] })
   expect(await screen.findByText(/Le rendu sature/)).toBeTruthy()

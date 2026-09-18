@@ -1,12 +1,37 @@
 import { useEffect, useRef, useState } from "react"
 import { ApercuLivraisonSon } from "./ApercuLivraisonSon"
 import { ReglagesSon } from "./ReglagesSon"
+import { nomMoteurSonore } from "./WorkflowsLocaux"
 import { FAMILLES_AVEC_LUFS, NOMS_FAMILLES_SON, sons, type FamilleSon, type JugementSon, type OndeSon, type RecetteSon, type Son } from "../api-sons"
 
 const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] disabled:opacity-50"
 const CHAMP = "h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]"
 const FAMILLES: FamilleSon[] = ["bruitage", "interface", "ambiance", "musique", "chanson", "jingle", "voix"]
 const erreurDe = (e: unknown) => e instanceof Error ? e.message : "Le son n’a pas pu être conservé."
+
+type ProvenanceLisible = { moteur: string | null; graine: string | null; texte: string | null; serie: string | null }
+
+/** Ce que la provenance brute d'un son dit à un auteur, en clair : le moteur
+ *  qui l'a fabriqué, sa graine, le texte parti, la série dont il vient — pas
+ *  une clé hachée (`sfxr:<sha256>:graine`) ni un identifiant de série. Le
+ *  document complet reste replié à côté, pour qui en a vraiment besoin. */
+function provenanceLisible(brut: Record<string, unknown>): ProvenanceLisible {
+  const envoi = brut.envoi && typeof brut.envoi === "object" ? brut.envoi as Record<string, unknown> : {}
+  const composition = brut.composition && typeof brut.composition === "object" ? brut.composition as Record<string, unknown> : {}
+  const serie = brut.serie && typeof brut.serie === "object" ? brut.serie as Record<string, unknown> : null
+  let moteur: string | null = null
+  if (brut.nature === "sfxr") moteur = "sfxr, calculé sans IA"
+  else if (brut.nature === "import") moteur = "Son importé"
+  else if (typeof brut.modele === "string" && brut.modele.includes("@")) moteur = nomMoteurSonore(brut.modele.replace(/^ComfyUI:/, "").split("@")[0])
+  const graineBrute = envoi.graine ?? brut.graine
+  const texteBrut = envoi.prompt ?? composition.texte
+  return {
+    moteur,
+    graine: graineBrute != null ? String(graineBrute) : null,
+    texte: typeof texteBrut === "string" && texteBrut ? texteBrut : null,
+    serie: serie ? `série ${String(serie.identifiant ?? "")}${serie.rang != null ? `, tirage ${serie.rang}` : ""}` : null,
+  }
+}
 
 /** Le lecteur joue le WAV de la version conservée, celui qui sera livré. */
 export function AtelierSon({ projet, identifiantInitial, onFermer, onLivraisons }: { projet: string; identifiantInitial?: string; onFermer?: () => void; onLivraisons?: () => void }) {
@@ -56,7 +81,16 @@ export function AtelierSon({ projet, identifiantInitial, onFermer, onLivraisons 
           {son.mesures && <p className="text-[13px] text-encre-3">{son.mesures.duree.toFixed(3)} s · {son.mesures.taux.toLocaleString("fr")} Hz · {son.mesures.canaux === 2 ? "stéréo" : "mono"} · crête {son.mesures.crete_db?.toFixed(1) ?? "−∞"} dBFS{son.famille && FAMILLES_AVEC_LUFS.includes(son.famille) && son.mesures.lufs != null ? ` · ${son.mesures.lufs.toFixed(1)} LUFS` : ""}</p>}
           <p className="text-[12px] text-encre-3">{modifie ? "Réglages modifiés : conservez une version pour entendre le nouveau rendu." : "Vous écoutez la version conservée. Le WAV livré contient exactement ce signal."}</p>
           <label className="flex flex-col gap-[8px] text-[13px]">Nom<input className={CHAMP} value={nom} onChange={e => setNom(e.target.value)} /></label>
-          <details className="text-[13px]"><summary className="cursor-pointer">Source et provenance</summary><p className="mt-[8px]">{son.source.nom} · {(son.source.octets / 1024).toFixed(1)} Ko</p><pre className="mt-[8px] overflow-auto whitespace-pre-wrap text-[12px]">{JSON.stringify(son.provenance, null, 2)}</pre><a className="underline" href={sons.source(son)} download>Télécharger la source intacte</a></details>
+          <details className="text-[13px]"><summary className="cursor-pointer">Source et provenance</summary><p className="mt-[8px]">{son.source.nom} · {(son.source.octets / 1024).toFixed(1)} Ko</p>
+            {(() => { const p = provenanceLisible(son.provenance); const rien = !p.moteur && !p.graine && !p.texte && !p.serie
+              return rien ? null : <dl className="mt-[8px] grid grid-cols-[max-content_1fr] gap-x-[8px] gap-y-[4px] text-[12px] text-encre-3">
+                {p.moteur && <><dt>Moteur</dt><dd>{p.moteur}</dd></>}
+                {p.graine && <><dt>Graine</dt><dd>{p.graine}</dd></>}
+                {p.texte && <><dt>Texte parti</dt><dd className="whitespace-pre-wrap">{p.texte}</dd></>}
+                {p.serie && <><dt>Série</dt><dd>{p.serie}</dd></>}
+              </dl> })()}
+            <details className="mt-[8px]"><summary className="cursor-pointer text-[12px] text-encre-3">Document brut</summary><pre className="mt-[8px] overflow-auto whitespace-pre-wrap text-[12px]">{JSON.stringify(son.provenance, null, 2)}</pre></details>
+            <a className="mt-[8px] block underline" href={sons.source(son)} download>Télécharger la source intacte</a></details>
         </div>
         <aside className="space-y-[14px] rounded-8 border border-trait bg-carte p-[22px]">
           <h2 className="font-serif text-[25px]">Régler</h2>

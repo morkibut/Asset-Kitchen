@@ -561,7 +561,10 @@ describe("l'étape du son", () => {
     fireEvent.change(await screen.findByLabelText("Tonalité de référence"), {
       target: { value: "D minor" },
     })
-    fireEvent.change(screen.getByLabelText("Tempo de référence"), { target: { value: "90" } })
+    const champTempo = screen.getByLabelText("Tempo de référence")
+    fireEvent.change(champTempo, { target: { value: "90" } })
+    // Le tempo ne part qu'à la sortie du champ, jamais à chaque frappe.
+    fireEvent.blur(champTempo)
 
     await waitFor(() =>
       expect(
@@ -588,11 +591,15 @@ describe("l'étape du son", () => {
     const choix = await screen.findByLabelText("Moteur pour Bruitage")
     // Une seule option installée qui sache faire un bruitage, plus
     // « automatique » : YuE2, installé mais fait pour chanter, n'est pas
-    // proposé — ni un moteur qu'on ne pourrait pas vraiment lancer.
+    // proposé. Stable Audio Open 1.0, possible pour un bruitage mais
+    // qu'aucun profil installé ne porte, se montre quand même — grisé, avec
+    // sa raison, jamais caché en silence.
     expect(within(choix).getAllByRole("option").map((o) => o.textContent)).toEqual([
       "automatique",
       "Stable Audio 3 Small-SFX",
+      "Stable Audio Open 1.0 — pas installé",
     ])
+    expect(within(choix).getByText("Stable Audio Open 1.0 — pas installé")).toHaveProperty("disabled", true)
     expect(screen.getByText("en ce moment : Stable Audio 3 Small-SFX")).toBeTruthy()
 
     fireEvent.change(choix, { target: { value: "sa3-small-sfx" } })

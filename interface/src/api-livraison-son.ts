@@ -9,6 +9,9 @@ import { type Son, sons } from "./api-sons"
  *  sous-ensemble de ce que `GET …/sound-variants/{jeu}` renvoie. */
 export type JeuVariantesSon = {
   identifiant: string; projet: string; nom: string; famille: string | null
+  /** Change à chaque modification du jeu (membre ajouté/retiré, renommage…) ;
+   *  sans elle, l'aperçu de livraison ne se relit pas après un renommage. */
+  revision?: number
   membres: { son: string }[]
   signalements: { son: string; statut: string; signal: string }[]
 }

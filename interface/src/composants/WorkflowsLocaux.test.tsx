@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, expect, test, vi } from "vitest"
 import { FabricationImageLocale, MethodesSonores, ProfilsWorkflow } from "./WorkflowsLocaux"
 import { workflows, type ProfilWorkflow, type ResultatMoteurSon, type TravailImageLocale } from "../api-workflows"
@@ -80,16 +80,25 @@ test("importer un profil n’exécute pas son graphe et vérifie ses prérequis 
 
 // ── Les méthodes sonores (SN1) ──────────────────────────────────────────────
 
-test("les méthodes sonores s’installent d’elles-mêmes à l’ouverture, et le bouton relance le même geste", async () => {
+test("les méthodes sonores ne s’installent que sur le clic, jamais à l’ouverture de l’écran", async () => {
+  cleanup()
   const resultat: Record<string, ResultatMoteurSon> = {
     "sa3-small-sfx": { identifiant: "sa3-small-sfx", installe: true, profil: { ...profil, identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", cree_le: 2000 } },
     "ace-step-15-turbo": { identifiant: "ace-step-15-turbo", installe: false, manque: [{ nom: "le modèle ACE-Step 1.5 turbo (musique)", fichier: "acestep_v1.5_turbo.safetensors", dossier: "diffusion_models", source: "https://exemple/ace" }] },
   }
   vi.mocked(workflows.installerSon).mockResolvedValue({ moteurs: resultat })
-  render(<MethodesSonores />)
+  const onInstalle = vi.fn()
+  render(<MethodesSonores onInstalle={onInstalle} />)
 
-  expect(await screen.findByText(/Installé · version du/)).toBeTruthy()
+  // Les cinq moteurs se montrent sans état, sans que rien n'ait été demandé
+  // à ComfyUI — l'atelier n'installe que sur le geste de l'auteur.
+  await screen.findByRole("heading", { name: "Stable Audio 3 Small-SFX" })
+  expect(workflows.installerSon).not.toHaveBeenCalled()
+
+  fireEvent.click(screen.getByRole("button", { name: "Installer les méthodes sonores" }))
+  await screen.findByText(/Installé · version du/)
   expect(workflows.installerSon).toHaveBeenCalledTimes(1)
+  expect(onInstalle).toHaveBeenCalledTimes(1)
 
   // Le moteur absent est grisé avec ce qui manque : son nom en clair, le
   // fichier, le dossier où le poser et un lien vers sa page — jamais proposé
@@ -101,4 +110,19 @@ test("les méthodes sonores s’installent d’elles-mêmes à l’ouverture, et
 
   fireEvent.click(screen.getByRole("button", { name: "Installer les méthodes sonores" }))
   await waitFor(() => expect(workflows.installerSon).toHaveBeenCalledTimes(2))
+})
+
+test("un profil sonore aux prérequis absents dit ce qui manque en clair, pas le problème brut de ComfyUI", async () => {
+  cleanup()
+  vi.mocked(workflows.lister).mockResolvedValue({ profils: [{ ...profil, identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", nature: "audio" }] })
+  vi.mocked(workflows.diagnostiquer).mockResolvedValue({
+    disponible: false, problemes: ["Nœud absent : YuE2GenerateABC (2)."], noeuds: [], observe_le: 1000, adresse: "http://local",
+    manque: [{ nom: "le modèle Stable Audio 3 Small-SFX (bruitages et ambiances)", fichier: "sa3_small_sfx.safetensors", dossier: "diffusion_models", source: "https://exemple/sa3" }],
+  })
+  render(<ProfilsWorkflow />)
+  fireEvent.click(await screen.findByRole("button", { name: "Vérifier les prérequis" }))
+  await screen.findByText("le modèle Stable Audio 3 Small-SFX (bruitages et ambiances)")
+  expect(screen.getByText("sa3_small_sfx.safetensors")).toBeTruthy()
+  expect(screen.getByText("diffusion_models")).toBeTruthy()
+  expect(screen.queryByText("Nœud absent : YuE2GenerateABC (2).")).toBeNull()
 })
