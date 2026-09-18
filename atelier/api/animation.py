@@ -297,6 +297,81 @@ async def montrer_style(
     return atelier.styles.en_json(projet)
 
 
+# ── Le style d'un personnage, et celui d'une pièce (SC2) ─────────────────────
+#
+# **`combat-style` et pas `style`** : `GET /characters/{id}/style` existe déjà
+# et dit tout autre chose — les sept textes qui *habillent* une chose (son
+# style visuel). Deux mots identiques pour deux sens aurait fait lire l'un
+# pour l'autre. Les pièces vivent sous `/characters/pieces/…` comme toutes les
+# routes du vestiaire. Sans `projet`, c'est le jeu ouvert — même règle que
+# `/movements/for-pose`.
+
+
+class CorpsChoixStyle(BaseModel):
+    """`style` : l'identifiant d'un style du jeu, ou `null` pour retirer le choix."""
+
+    style: str | None = None
+
+
+def _resolution_en_json(atelier: Atelier, projet: str, personnage: str) -> dict[str, Any]:
+    style, origine, piece = atelier.styles.style_du_personnage(projet, personnage)
+    return {
+        "personnage": personnage,
+        "style": style.en_json() if style else None,
+        "origine": origine,
+        "piece": piece,
+    }
+
+
+@routeur.get("/styles/for-character/{personnage}")
+async def style_du_personnage(
+    requete: Request, personnage: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Le style de ce personnage **et d'où il vient** — `choisi`, `piece` ou `aucun`.
+
+    La résolution vit dans `ServiceStyles.style_du_personnage` et nulle part
+    ailleurs : l'écran écrit l'origine à côté du nom, il ne la recalcule pas.
+    Le personnage est cherché d'abord, pour qu'un identifiant inconnu rende un
+    404 plutôt qu'un « aucun » trompeur.
+    """
+    atelier = _atelier(requete)
+    ouvert = projet or atelier.bibliotheque.courant
+    atelier.production.personnage(ouvert, personnage)
+    return _resolution_en_json(atelier, ouvert, personnage)
+
+
+@routeur.put("/characters/{personnage}/combat-style")
+async def choisir_style_du_personnage(
+    requete: Request,
+    personnage: str,
+    corps: CorpsChoixStyle,
+    projet: str | None = Query(None),
+) -> dict[str, Any]:
+    """Poser ou retirer le style choisi d'un personnage — **il passe devant
+    celui de ses pièces**. Rend la résolution neuve, pas seulement le choix :
+    retirer un choix peut laisser paraître le style hérité d'une pièce."""
+    atelier = _atelier(requete)
+    ouvert = projet or atelier.bibliotheque.courant
+    atelier.production.personnage(ouvert, personnage)
+    atelier.styles.choisir_pour_le_personnage(ouvert, personnage, corps.style)
+    return _resolution_en_json(atelier, ouvert, personnage)
+
+
+@routeur.put("/characters/pieces/{piece}/combat-style")
+async def choisir_style_de_la_piece(
+    requete: Request,
+    piece: str,
+    corps: CorpsChoixStyle,
+    projet: str | None = Query(None),
+) -> dict[str, Any]:
+    """Poser ou retirer le style qu'une pièce déclare — **hérité par qui la
+    porte en calque**, sauf s'il a choisi le sien."""
+    atelier = _atelier(requete)
+    ouvert = projet or atelier.bibliotheque.courant
+    style = atelier.styles.choisir_pour_la_piece(ouvert, piece, corps.style)
+    return {"piece": piece, "style": style.en_json() if style else None}
+
+
 def _demande_de_jauge(
     secondes: float, resolution: str, proportions: str
 ) -> DemandeClip:

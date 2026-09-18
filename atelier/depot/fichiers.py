@@ -405,6 +405,48 @@ class Fichiers:
         lu = self._lire_json(self.styles)
         return lu if isinstance(lu, list) else []
 
+    def styles_choisis_du_jeu(self, projet: str) -> Path:
+        """Qui se bat dans quel style, dans ce jeu (`SC2`) — à côté de `styles.json`.
+
+        **Un fichier à part, et pas un champ sur le personnage ni sur la
+        pièce.** Le choix d'un style est du vocabulaire de l'animation, tenu
+        par le service des styles ; l'écrire sur `Personnage` ou `Piece` aurait
+        fait passer chaque choix par l'écrivain de la production. Même
+        validation d'identifiant que `styles_du_jeu`, pour la même raison.
+        """
+        return self.styles_du_jeu(projet).with_name("styles-choisis.json")
+
+    def lire_styles_choisis(self, projet: str) -> dict[str, dict[str, str]]:
+        """`{"personnages": {id: style}, "pieces": {id: style}}` — **toujours les deux clés**.
+
+        Un fichier absent ou abîmé rend deux dictionnaires vides : aucun choix
+        n'est un état normal (rien n'est deviné), pas une erreur. Une entrée
+        dont la clé ou la valeur n'est pas une chaîne non vide est sautée.
+        """
+        lu = self._lire_json(self.styles_choisis_du_jeu(projet))
+        rendu: dict[str, dict[str, str]] = {"personnages": {}, "pieces": {}}
+        if not isinstance(lu, dict):
+            return rendu
+        for cle in rendu:
+            brut = lu.get(cle)
+            if isinstance(brut, dict):
+                rendu[cle] = {
+                    k: v
+                    for k, v in brut.items()
+                    if isinstance(k, str) and k and isinstance(v, str) and v
+                }
+        return rendu
+
+    def ecrire_styles_choisis(
+        self, projet: str, contenu: dict[str, dict[str, str]]
+    ) -> None:
+        """Refusé si le jeu n'a pas de `projet.json` — **même garde que `ecrire_styles`** :
+        un identifiant qui ne désigne aucun jeu ne crée pas de dossier fantôme."""
+        chemin = self.styles_choisis_du_jeu(projet)
+        if not (chemin.parent / "projet.json").is_file():
+            raise ValueError(f"aucun jeu « {projet} »")
+        self._ecrire_json(chemin, contenu)
+
     # `prereglages.json` — les jeux de réglages nommés (US-134) — est retiré le
     # 16 septembre 2026 avec ses trois routes (`RP18`) : rien ne l'écrivait
     # depuis un écran. Un fichier déjà posé sur le disque d'un auteur n'est plus

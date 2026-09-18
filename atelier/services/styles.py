@@ -11,12 +11,18 @@ rien changé, et son premier changement l'y copie (`Fichiers.lire_styles`).
 **Ce service ne connaît ni projet, ni fournisseur, ni catalogue.** Il lit
 un fichier à la racine des données (ou celui du jeu) et il en rend une
 liste ; ça marche réseau coupé et ça ne coûte rien.
+
+**Depuis `SC2`, il dit aussi qui se bat dans quel style** : le style choisi
+d'un personnage, celui qu'une pièce déclare, et la résolution *choisi →
+pièce portée en calque → aucun*. Ce qu'il lui faut savoir des pièces portées
+lui est passé en fonctions par `Atelier` — il n'importe toujours ni la
+production ni l'équipement.
 """
 
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Any
+from typing import Any, Callable, Iterable, Literal, Sequence
 
 from atelier.depot import Fichiers
 from atelier.domaine.erreurs import ErreurAtelier
@@ -29,9 +35,31 @@ class StyleRefuse(ErreurAtelier):
     code = "style_refuse"
 
 
+# **D'où vient le style d'un personnage** (`SC2`) : l'écran l'écrit à côté du
+# nom — « choisi », « hérité du bâton », « aucun » — et ne le recalcule pas.
+Origine = Literal["choisi", "piece", "aucun"]
+
+
 class ServiceStyles:
-    def __init__(self, fichiers: Fichiers) -> None:
+    def __init__(
+        self,
+        fichiers: Fichiers,
+        *,
+        garde_robe: Callable[[str], Sequence[str]] | None = None,
+        pieces_portees: Callable[[str, str], Iterable[str]] | None = None,
+    ) -> None:
+        """`garde_robe` et `pieces_portees` arrivent en `SC2`, **en fonctions et non en services**.
+
+        Le service des styles ne connaît toujours ni la production ni
+        l'équipement : `Atelier` lui passe deux questions déjà posées ailleurs
+        — *dans quel ordre ce jeu range-t-il ses pièces* et *quelles pièces ce
+        personnage porte-t-il en calque sur ses poses* —, et c'est ce qui évite
+        tout cycle d'import. Sans elles (un essai qui monte le service seul),
+        un personnage ne porte rien : seul son choix compte.
+        """
         self._fichiers = fichiers
+        self._garde_robe = garde_robe
+        self._pieces_portees = pieces_portees
 
     # ── Lire ─────────────────────────────────────────────────────────────────
 
@@ -180,6 +208,140 @@ class ServiceStyles:
         ]
         self._ecrire(rendus, projet)
         return tuple(s for s in rendus if not s.masque)
+
+    # ── Le style d'un personnage, et celui d'une pièce (SC2) ─────────────────
+    #
+    # **Rangés dans `styles-choisis.json` du jeu, pas sur le personnage ni sur
+    # la pièce** : c'est la décision de la tranche, prise pour que le choix
+    # d'un style ne passe jamais par l'écrivain de la production. Un
+    # identifiant de personnage ou de pièce n'est unique que par jeu — le
+    # fichier l'est aussi.
+
+    def choisir_pour_le_personnage(
+        self, projet: str, personnage: str, style: str | None
+    ) -> Style | None:
+        """Poser (ou retirer, avec `None` ou `""`) le style choisi d'un personnage.
+
+        **Le personnage n'est pas cherché ici** : ce service ne connaît pas la
+        production. Un identifiant vide est refusé — il ne désigne personne et
+        ferait une clé fantôme dans le fichier.
+        """
+        return self._choisir(projet, "personnages", personnage, style)
+
+    def choisir_pour_la_piece(
+        self, projet: str, piece: str, style: str | None
+    ) -> Style | None:
+        """Poser (ou retirer) le style qu'une pièce d'équipement déclare.
+
+        **La pièce doit exister dans la garde-robe du jeu** quand l'atelier a
+        dit comment la lire : un style accroché à une pièce qui n'existe pas
+        ne serait jamais hérité par personne, et l'erreur ne se verrait pas.
+        """
+        self._jeu(projet)
+        propre = (piece or "").strip()
+        if propre and self._garde_robe is not None and style:
+            if propre not in self._garde_robe(projet):
+                raise StyleRefuse(f"aucune pièce « {propre} » dans ce jeu")
+        return self._choisir(projet, "pieces", propre, style)
+
+    def style_du_personnage(
+        self, projet: str, personnage: str
+    ) -> tuple[Style | None, Origine, str | None]:
+        """Le style de ce personnage, **et d'où il vient** : `(style, origine, pièce)`.
+
+        La résolution, dans cet ordre et nulle part ailleurs — l'écran et le
+        texte qui part (`SC3`) la lisent ici, ils ne la rejouent pas :
+
+        1. **choisi** — un style posé sur le personnage passe devant tout ;
+        2. **pièce** — sinon, le style déclaré par une pièce qu'il porte *en
+           calque sur ses poses*. Si plusieurs en déclarent un, la première
+           dans l'ordre de la garde-robe du jeu : emplacements par rang, puis
+           pièces dans l'ordre où elles ont été nommées ; une pièce portée mais
+           absente de la garde-robe vient après, par identifiant. Un ordre
+           stable, parce qu'un style qui changerait d'un appel à l'autre ferait
+           partir deux textes différents pour la même case ;
+        3. **aucun** — sinon rien. **Rien n'est deviné d'après un nom** : une
+           pièce appelée « bâton » qui ne déclare pas de style ne donne pas le
+           style bâton.
+
+        Un style choisi ou déclaré qui a été masqué depuis ne compte plus : il
+        est sauté comme s'il n'était pas posé, et la résolution continue.
+        """
+        choix = self._fichiers.lire_styles_choisis(self._jeu(projet))
+        visibles = {s.identifiant: s for s in self.tous(projet)}
+
+        choisi = visibles.get(choix["personnages"].get(personnage, ""))
+        if choisi is not None:
+            return choisi, "choisi", None
+
+        declares = choix["pieces"]
+        if declares and self._pieces_portees is not None:
+            portees = set(self._pieces_portees(projet, personnage))
+            for piece in self._dans_l_ordre(projet, portees):
+                style = visibles.get(declares.get(piece, ""))
+                if style is not None:
+                    return style, "piece", piece
+        return None, "aucun", None
+
+    def choix_en_json(self, projet: str) -> dict[str, dict[str, str]]:
+        """Les choix bruts du jeu, tels que le fichier les tient."""
+        return self._fichiers.lire_styles_choisis(self._jeu(projet))
+
+    def _choisir(
+        self, projet: str, cle: str, identifiant: str, style: str | None
+    ) -> Style | None:
+        jeu = self._jeu(projet)
+        propre = (identifiant or "").strip()
+        if not propre:
+            raise StyleRefuse(
+                "un style se pose sur un personnage ou une pièce nommés — "
+                "l'identifiant est vide"
+            )
+        voulu = (style or "").strip()
+        retenu: Style | None = None
+        if voulu:
+            retenu = self.lire(voulu, jeu)
+            if retenu is None:
+                raise StyleRefuse(f"aucun style « {voulu} » dans ce jeu")
+            if retenu.masque:
+                raise StyleRefuse(
+                    f"« {retenu.nom} » est masqué dans ce jeu — le remontrer d'abord"
+                )
+        choix = self._fichiers.lire_styles_choisis(jeu)
+        if retenu is None:
+            choix[cle].pop(propre, None)
+        else:
+            choix[cle][propre] = retenu.identifiant
+        try:
+            self._fichiers.ecrire_styles_choisis(jeu, choix)
+        except ValueError as erreur:
+            raise StyleRefuse(str(erreur)) from erreur
+        return retenu
+
+    def _dans_l_ordre(self, projet: str, portees: set[str]) -> list[str]:
+        rang = {
+            piece: i
+            for i, piece in enumerate(
+                self._garde_robe(projet) if self._garde_robe is not None else ()
+            )
+        }
+        return sorted(portees, key=lambda p: (p not in rang, rang.get(p, 0), p))
+
+    def _jeu(self, projet: str | None) -> str:
+        """Un choix appartient toujours à un jeu — **pas de bibliothèque de départ ici**.
+
+        Les styles eux-mêmes ont une bibliothèque racine qui sert de départ ;
+        un choix, non : « Champy se bat au bâton » n'a de sens que dans le jeu
+        où Champy existe. L'identifiant passe la même garde que le fichier des
+        styles, traduite en refus lisible plutôt qu'en erreur de disque.
+        """
+        if not projet:
+            raise StyleRefuse("un style se choisit dans un jeu — aucun jeu nommé")
+        try:
+            self._fichiers.styles_choisis_du_jeu(projet)
+        except ValueError as erreur:
+            raise StyleRefuse(str(erreur)) from erreur
+        return projet
 
     # ── Servir ───────────────────────────────────────────────────────────────
 

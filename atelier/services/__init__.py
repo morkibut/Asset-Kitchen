@@ -341,7 +341,17 @@ class Atelier:
         # même raison** (`SC1`) : elle lit un fichier à la racine (ou celui
         # du jeu) et n'appartient à aucun autre service. Ni catalogue, ni
         # fournisseur — un style est du vocabulaire, comme un mouvement.
-        self.styles = ServiceStyles(self.fichiers)
+        #
+        # **Depuis `SC2`, deux questions de plus, passées en fonctions** : dans
+        # quel ordre le jeu range ses pièces, et lesquelles un personnage porte
+        # en calque. Les deux services qui y répondent sont montés plus bas ;
+        # les lambdas ne les lisent qu'à l'appel, donc l'ordre de montage ne
+        # change pas et aucun import ne boucle.
+        self.styles = ServiceStyles(
+            self.fichiers,
+            garde_robe=lambda projet: self._garde_robe(projet),
+            pieces_portees=lambda projet, qui: self._pieces_portees(projet, qui),
+        )
         # **L'installation de la machine (B15), au même rang et pour la raison
         # inverse** : les trois au-dessus n'appartiennent à aucun jeu ; celui-ci
         # n'appartient même pas à l'atelier — il décrit la machine. Il lit la
@@ -647,6 +657,44 @@ class Atelier:
         # **Rien n'est récupéré ici non plus** : un clip en souffrance attend un
         # geste de l'auteur, exactement comme une génération coupée depuis T1 —
         # sauf que le geste, lui, ne repaie rien.
+
+    def _garde_robe(self, projet: str) -> list[str]:
+        """Les pièces du jeu **dans l'ordre de la garde-robe** (`SC2`).
+
+        Emplacements par rang — l'ordre des colonnes de la matrice, de
+        l'arrière vers l'avant —, puis, dans un même emplacement, l'ordre où les
+        pièces ont été nommées ; une pièce sans emplacement vient en dernier.
+        C'est l'ordre qui départage deux pièces portées qui déclarent chacune
+        un style : lu d'ici, il ne dépend d'aucun écran.
+        """
+        rangs = {e.identifiant: e.rang for e in self.equipement.emplacements(projet)}
+        pieces = list(self.equipement.pieces(projet))
+        ordonnees = sorted(
+            enumerate(pieces),
+            key=lambda paire: (
+                paire[1].emplacement not in rangs,
+                rangs.get(paire[1].emplacement, 0),
+                paire[0],
+            ),
+        )
+        return [piece.identifiant for _, piece in ordonnees]
+
+    def _pieces_portees(self, projet: str, personnage: str) -> set[str]:
+        """Les pièces que ce personnage porte **en calque sur ses poses** (`SC2`).
+
+        Lu dans `ServiceProduction.cases`, en lecture seule — la même matrice
+        que la fiche du sujet et que le champ `layers` de `list_characters`.
+        Une pièce compte dès qu'une de ses cases porte au moins une image : un
+        seul calque suffit à dire « il tient le bâton ». Un personnage inconnu
+        lève `PersonnageInconnu`, et la route le rend en 404.
+        """
+        sujet = self.production.personnage(projet, personnage)
+        return {
+            piece
+            for case in self.production.cases(projet, sujet)
+            for piece, liste in case["calques"].items()
+            if liste
+        }
 
     def _monter_a_l_arrivee(self, generation) -> None:
         """Le clip arrivé devient une animation à juger, à la cadence de son mouvement."""
