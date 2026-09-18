@@ -113,3 +113,23 @@ async def test_lenvoi_porte_le_temps_sous_local_temps(tmp_path, double):
         assert rendu_distant["local"] is None
     finally:
         await atelier.file_locale.fermer()
+
+
+async def test_l_agent_installe_les_styles_et_lit_ce_qu_ils_font_d_une_image(tmp_path, double):
+    """ML7 : par MCP, l'agent installe les styles prêts et lit dans `list_models`
+    ce que l'écran montre — garder le sujet ou repeindre, et le négatif lu."""
+    from atelier.mcp.serveur import creer_serveur
+    from tests.test_t7 import appeler
+    atelier = await _atelier(tmp_path, double)
+    try:
+        mcp = creer_serveur(atelier)
+        installes = await appeler(mcp, "install_local_styles")
+        assert len(installes["installes"]) >= 5
+        modeles = {m["id"].split("@")[0]: m for m in (await appeler(mcp, "list_models"))["models"]}
+        assert modeles["ComfyUI:flux2-pixel"]["reference_use"] == "keeps the subject"
+        assert modeles["ComfyUI:flux2-pixel"]["negative_read"] is False
+        assert modeles["ComfyUI:sdxl-pixelart"]["reference_use"] == "repaints the start image"
+        assert modeles["ComfyUI:sdxl-pixelart"]["negative_read"] is True
+        assert "local" not in modeles["essai:rend-du-png"]
+    finally:
+        await atelier.file_locale.fermer()

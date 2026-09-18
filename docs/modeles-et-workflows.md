@@ -185,6 +185,38 @@ Deux règles de méthode payées cher :
 
 ---
 
+## Images fixes — les styles de sc-clone dans l'atelier
+
+> Relevé le 18 septembre 2026, chantier `docs/PLAN-moteurs-locaux.md` (ML7), sur la machine de
+> l'auteur, depuis un atelier jetable. Un seul tirage par cas : ce sont des constats, pas des
+> mesures de qualité.
+
+| Style | Ce qu'on a demandé | Temps | Ce qu'on a vu |
+|---|---|---|---|
+| Z-Image · pixel art net et rapide | un petit mage champignon, sans image jointe | **34 s** (premier tirage, modèle chargé compris) | sujet net et lisible, fond clair — **après** correction du texte (ci-dessous) |
+| SDXL · pixel art, *partir de cette image* | le même mage, chapeau **bleu**, force 0,55, le résultat Z-Image joint | **24 s** | la silhouette et la pose sont gardées ; **la couleur demandée ne passe pas** à 0,55 |
+
+**Ce que ces tirages ont appris :**
+
+1. **« on a 64x64 grid » se dessine.** Le premier tirage Z-Image est sorti avec un fond
+   quadrillé : le texte du jeu, écrit pour GPT Image, nommait une grille et un « tile snap ».
+   Un modèle de diffusion peint ce qu'on lui nomme. Ces mots ne partent plus vers un style local
+   (ils sont montrés comme retirés dans *Relire avant l'envoi*) ; la taille du jeu est tenue au
+   retour, sur la machine.
+2. **À force 0,55, l'image jointe l'emporte sur le texte.** Pour changer une couleur, il faut
+   monter la force ; pour garder un personnage en changeant sa pose, ce mode ne convient pas du
+   tout — c'est le rôle de Klein (*garder ce sujet*).
+3. **L'image jointe est l'asset recadré par l'atelier**, pas l'image brute : en *partir de cette
+   image*, le sujet remplit donc tout le cadre du résultat.
+4. Le graphe envoyé a été relu dans l'historique de ComfyUI : image jointe → `ImageScale` →
+   `VAEEncode` → latent de départ, force sur `denoise`, graine tirée et enregistrée.
+
+**Pas encore essayé** : Klein avec une puis deux images de Champy (*garder ce sujet*), et les
+familles FLUX.1-dev et Klein en général. Le jour du relevé, le ComfyUI de la machine ne voyait
+plus aucun fichier rangé sous `D-disk\` : dans `D:\IA\ComfyUI\models\<dossier>\`, `D-disk` était
+redevenu un dossier vide au lieu d'une jonction vers `D:\SpriteForge-Models\<dossier>`. L'atelier
+l'a affiché correctement (« il manque le LoRA de style… ») ; il ne répare pas une installation.
+
 ## Objets et tuiles
 
 À écrire. Même structure : ce qu'il faut lancer, les prompts exacts, ce qui a été écarté et

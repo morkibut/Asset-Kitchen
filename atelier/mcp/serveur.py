@@ -457,6 +457,21 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     "unit": reserves[m.fournisseur].unite
                     if m.fournisseur in reserves
                     else "usd",
+                    # **Ce que l'écran dit d'un style local, l'agent le lit
+                    # aussi** (ML7) : ce qu'il fait d'une image jointe — garder
+                    # le sujet, ou repeindre par-dessus —, s'il lit le négatif,
+                    # et ce qui lui manque dans ComfyUI.
+                    **(
+                        {
+                            "local": True,
+                            "references_min": m.references_min,
+                            "reference_use": {"sujet": "keeps the subject", "depart": "repaints the start image"}.get(m.reference or ""),
+                            "negative_read": m.negatif_lu,
+                            "missing": m.indisponible,
+                        }
+                        if m.locale
+                        else {}
+                    ),
                 }
                 for m in etat.modeles
             ],

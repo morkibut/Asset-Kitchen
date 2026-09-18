@@ -2,7 +2,8 @@
 
 > Chantier proposé le 18 septembre 2026, à la demande de l'auteur : *pouvoir générer une image
 > sur la carte graphique, avec les moteurs et workflows de `sc-clone`, et une image de référence.*
-> Plan seulement : rien n'est codé.
+> Codé le 18 septembre 2026 (ML1 à ML6) ; ML7 à moitié, en attente d'une installation
+> ComfyUI réparée.
 > Quel modèle sur quelle tranche : [PLAN-moteurs-locaux-affectation.md](PLAN-moteurs-locaux-affectation.md).
 
 ## En une phrase
@@ -189,7 +190,10 @@ remise à plat de ces écrans** — elle passe devant.
       un réglage inerte disparaît)
 - [x] une ligne dans `interface/src/aide.ts` (règle 7) — `reglages.styles-locaux`
 - [x] essais d'écran (`PanneauReglages.test.tsx`, `WorkflowsLocaux.test.tsx`, `Envoi.test.tsx`)
-- [ ] vérification au navigateur sur un atelier jetable (port 8421)
+- [x] vérification au navigateur sur un atelier jetable (port 8508, 18 septembre 2026) —
+      trois défauts vus et corrigés : la liste des méthodes ne se relisait pas après une
+      installation ; *Préparer une fabrication* montrait *force* sans image, le négatif pour
+      Z-Image et « jamais généré » ; *Relire* disait « Payer et lancer » et « Coût inconnu »
 
 ### ML6 · La texture raccordable
 
@@ -212,12 +216,19 @@ remise à plat de ces écrans** — elle passe devant.
 
 Gratuit, mais ça prend du temps : on annonce la durée avant de lancer.
 
-- [ ] un tirage par famille, sans référence, depuis l'écran — temps réel relevé
-- [ ] Klein avec une référence de sujet (Champy), puis deux : le sujet est-il gardé ?
-- [ ] un style *partir de cette image* sur un croquis
-- [ ] l'agent fait la même chose par MCP (`list_models`, `prepare_workflow_image`)
-- [ ] ce qui a été appris va dans `docs/modeles-et-workflows.md` (qui ne couvre encore que la
-      vidéo)
+- [ ] un tirage par famille, sans référence, depuis l'écran — temps réel relevé : **Z-Image
+      fait (34 s)** ; SDXL fait en *partir de cette image* (24 s) ; Klein et FLUX.1-dev
+      bloqués — le ComfyUI de la machine ne voit plus les fichiers `D-disk\` (voir
+      `docs/modeles-et-workflows.md`)
+- [ ] Klein avec une référence de sujet (Champy), puis deux : le sujet est-il gardé ? —
+      **bloqué** par la même installation
+- [x] un style *partir de cette image* sur un croquis — SDXL, le résultat Z-Image joint :
+      silhouette gardée, couleur demandée ignorée à 0,55
+- [x] l'agent fait la même chose par MCP — `install_local_styles` installe les mêmes versions
+      que l'écran ; `list_models` dit maintenant ce qu'un style fait d'une image jointe et s'il
+      lit le négatif (`tests/test_ml5.py`)
+- [x] ce qui a été appris va dans `docs/modeles-et-workflows.md` — § *Images fixes* ; le
+      premier tirage a trouvé la grille dessinée (ML4 corrigé)
 
 ## Hors de ce chantier
 
