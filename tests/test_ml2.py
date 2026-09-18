@@ -56,10 +56,12 @@ async def atelier_styles(tmp_path, double):
 
 
 def test_les_22_styles_sont_prets_contre_le_releve_reel():
+    # 22 recopiés de sc-clone + 1 (ML6, `klein9b-tiles-raccordable`) : un style ajouté
+    # par construction, sans toucher aux 22 valeurs recopiées.
     inv = inventaire(OBJECT_INFO)
     resolus = {e["identifiant"]: resoudre(e, inv) for e in STYLES}
     non_prets = {i: r["manque"] for i, r in resolus.items() if not r["pret"]}
-    assert non_prets == {} and len(resolus) == 22
+    assert non_prets == {} and len(resolus) == 23
     # Chaque style prêt construit un profil que `normaliser` accepte.
     for e in STYLES:
         normaliser(construire_profil(e, resolus[e["identifiant"]]["fichiers"]))
@@ -140,7 +142,7 @@ async def test_style_non_pret_est_refuse_avant_tout_ecrit(atelier_styles):
 async def test_installer_les_styles_prets_en_une_fois_et_le_catalogue_les_relit(atelier_styles):
     atelier, comfy = atelier_styles
     installes = await atelier.styles_locaux.installer_prets()
-    assert len(installes) == 22
+    assert len(installes) == 23
     await atelier.catalogue.rafraichir()
     modele = atelier.catalogue.modele(installes[0]["modele"])
     assert modele is not None and not atelier.catalogue.grise(modele)
@@ -151,7 +153,7 @@ async def test_installer_les_styles_prets_en_une_fois_et_le_catalogue_les_relit(
 async def test_lister_les_styles_dit_pret_famille_genre_vitesse_et_modele(atelier_styles):
     atelier, comfy = atelier_styles
     avant = await atelier.styles_locaux.lister()
-    assert len(avant) == 22
+    assert len(avant) == 23
     ligne = next(s for s in avant if s["identifiant"] == "zimage-pixel")
     assert ligne["pret"] and ligne["modele"] is None
     assert ligne["famille"] == "zimage" and ligne["genre"] == "sprite" and ligne["vitesse"] == FAMILLES["zimage"]["vitesse"]
@@ -168,11 +170,11 @@ async def test_route_lister_et_installer_les_styles(atelier_styles):
     atelier, comfy = atelier_styles
     client = TestClient(creer_application(atelier))
     styles = client.get("/api/workflow-profiles/styles").json()["styles"]
-    assert len(styles) == 22 and all(s["pret"] for s in styles)
+    assert len(styles) == 23 and all(s["pret"] for s in styles)
     installe = client.post("/api/workflow-profiles/styles/zimage-pixel/install").json()
     assert installe["modele"].startswith("ComfyUI:zimage-pixel@")
     tous = client.post("/api/workflow-profiles/styles/install").json()["installes"]
-    assert len(tous) == 22
+    assert len(tous) == 23
 
 
 def test_style_inconnu_est_refuse():

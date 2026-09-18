@@ -145,13 +145,15 @@ Le format des profils, seul. Rien de visible encore, mais tout le reste en dépe
 
 ### ML3 · Les références (serveur)
 
-- [ ] **Klein — garder ce sujet** : graphe à 1, 2, 3 références par `ReferenceLatent`
+- [x] **Klein — garder ce sujet** : graphe à 1, 2, 3 références par `ReferenceLatent`
       (relevé d'abord sur le gabarit d'édition officiel de ComfyUI, pas deviné) ; les références
-      du sujet partent selon leur usage (chantier RS)
+      du sujet partent selon leur usage (chantier RS) — la sélection RS se fait en amont du
+      modèle et n'a pas changé ; Klein en reçoit jusqu'à trois
 - [x] **Z-Image, FLUX.1, SDXL — partir de cette image** : graphe à une référence, option *force*
       (0 à 1, défaut 0,55 comme sc-clone)
-- [ ] le catalogue dit, pour chaque style, *quel genre* de référence il prend ; *Relire avant
-      l'envoi* le nomme sur chaque image jointe
+- [x] le catalogue dit, pour chaque style, *quel genre* de référence il prend ; *Relire avant
+      l'envoi* le nomme sur chaque image jointe — côté serveur (`modele.reference_nom`) ;
+      l'affichage vient avec ML5
 - [x] essais sans ComfyUI
 
 ### ML4 · Le texte qui part vers un modèle local (serveur)
@@ -177,21 +179,34 @@ ComfyUI découpe le texte en morceaux et chacun pèse moins — le déclencheur 
 Touche *Préparer une fabrication* et *Les workflows locaux* : **vérifier d'abord où en est la
 remise à plat de ces écrans** — elle passe devant.
 
-- [ ] dans le choix du modèle, les styles locaux groupés par famille, avec leur état (*prêt*,
+- [x] dans le choix du modèle, les styles locaux groupés par famille, avec leur état (*prêt*,
       *il manque…*), leur temps et le genre de référence qu'ils prennent
-- [ ] un bouton *Vérifier* qui relit ComfyUI et met les états à jour ; *Installer les styles
-      prêts* depuis *Les workflows locaux*
-- [ ] l'option *force* n'apparaît que quand une image *de départ* est jointe (règle 8nonies :
+      (`interface/src/composants/PanneauReglages.tsx`, `StylesLocauxAccordion`)
+- [x] un bouton *Vérifier* qui relit ComfyUI et met les états à jour ; *Installer les styles
+      prêts* depuis *Les workflows locaux* (`interface/src/composants/WorkflowsLocaux.tsx`,
+      section « Les styles de sc-clone »)
+- [x] l'option *force* n'apparaît que quand une image *de départ* est jointe (règle 8nonies :
       un réglage inerte disparaît)
-- [ ] une ligne dans `interface/src/aide.ts` (règle 7)
-- [ ] essais d'écran ; vérification au navigateur sur un atelier jetable (port 8421)
+- [x] une ligne dans `interface/src/aide.ts` (règle 7) — `reglages.styles-locaux`
+- [x] essais d'écran (`PanneauReglages.test.tsx`, `WorkflowsLocaux.test.tsx`, `Envoi.test.tsx`)
+- [ ] vérification au navigateur sur un atelier jetable (port 8421)
 
 ### ML6 · La texture raccordable
 
-- [ ] l'option *raccordable* sur les styles de genre `tuile` : les deux nœuds de
-      `seamless.mjs`, toujours ensemble
-- [ ] grisée avec la raison si les nœuds manquent (nœud personnalisé à installer à la main)
-- [ ] essai : le graphe contient les deux nœuds ou aucun
+- [x] l'option *raccordable* sur les styles de genre `tuile` : les deux nœuds de
+      `seamless.mjs`, toujours ensemble — un style séparé par genre `tuile` (comme
+      `sdxl-tileable` chez sc-clone), pas un paramètre de profil : `sdxl-tileable` porte
+      déjà `raccordable`/`noeuds` depuis ML1-3, et `klein9b-tiles-raccordable` s'ajoute par
+      construction (22 styles recopiés inchangés + 1), le raccord étant générique aux
+      quatre familles d'après `seamless.mjs`. Port de `applySeamless` dans
+      `atelier/fournisseur/styles_locaux.py`, appliqué au graphe principal et à chaque
+      variante de références, nœud `90` partout (sc-clone n'utilise `14` que pour son SDXL)
+- [x] grisée avec la raison si les nœuds manquent (nœud personnalisé à installer à la main) —
+      `resoudre()` (`catalogue_styles.py`) joint la consigne d'installation de sc-clone
+      (`ComfyUI-seamless-tiling`, `custom_nodes`, redémarrer) à côté du nom du nœud manquant
+- [x] essai : le graphe contient les deux nœuds ou aucun — `tests/test_ml6.py`, avec
+      comparaison structurelle à sc-clone pour `sdxl-tileable`
+      (`tests/fixtures/ml6_graphe_reference_scclone.json`)
 
 ### ML7 · S'en servir (sur la vraie carte graphique)
 

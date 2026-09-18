@@ -244,9 +244,57 @@ def construire_sdxl(entree, fichiers):
 CONSTRUCTEURS = {"zimage": construire_zimage, "klein": construire_klein, "flux1dev": construire_flux1, "sdxl": construire_sdxl}
 
 
+# ML6 : le raccord sans couture, port de `applySeamless` (`sc-clone/lib/seamless.mjs`).
+# Où le modèle entre dans l'échantillonneur (le KSampler, ou le CFGGuider pour Klein) et
+# où l'image se décode — même numérotation de nœuds que nos quatre constructeurs (relevé
+# le 18/09/2026 contre `lib/zimage.mjs`, `lib/flux1.mjs`, `lib/flux2.mjs`,
+# `lib/providers.mjs` § makeWorkflow). Un seul identifiant, `90`, comme le défaut de
+# `applySeamless` — sc-clone en choisit un autre (`14`) rien que pour son propre SDXL,
+# un numéro déjà libre chez lui ; le nôtre l'est aussi partout, `90` sert donc aux
+# quatre familles sans distinction.
+_ENTREES_MODELE_RACCORD = {
+    "zimage": (("9", "model"),),
+    "flux1dev": (("9", "model"),),
+    "klein": (("8", "model"),),
+    "sdxl": (("5", "model"),),
+}
+_DECODE_RACCORD = {"zimage": "10", "flux1dev": "10", "klein": "14", "sdxl": "6"}
+_ID_RACCORD = "90"
+
+
+def _appliquer_raccord(graphe, *, entrees_modele, decode):
+    """Les deux nœuds vont toujours ensemble, jamais l'un sans l'autre : sur FLUX.2,
+    `SeamlessTile` seul ne change rien (ce n'est pas une pile de convolutions) et
+    `CircularVAEDecode` seul plante CUDA (`seamless.mjs`, mesuré le 13/09/2026)."""
+    graphe = copy.deepcopy(graphe)
+    premier_noeud, premier_champ = entrees_modele[0]
+    source = graphe[premier_noeud]["inputs"][premier_champ]
+    graphe[_ID_RACCORD] = _noeud("SeamlessTile", model=source, tiling="enable", copy_model="Make a copy")
+    for noeud, champ in entrees_modele:
+        graphe[noeud]["inputs"][champ] = [_ID_RACCORD, 0]
+    decodeur = graphe[decode]
+    graphe[decode] = _noeud("CircularVAEDecode", samples=decodeur["inputs"]["samples"],
+        vae=decodeur["inputs"]["vae"], tiling="enable")
+    return graphe
+
+
+def _rendre_raccordable(profil, famille):
+    entrees_modele = _ENTREES_MODELE_RACCORD[famille]
+    decode = _DECODE_RACCORD[famille]
+    profil = dict(profil)
+    profil["graphe"] = _appliquer_raccord(profil["graphe"], entrees_modele=entrees_modele, decode=decode)
+    if profil.get("variantes"):
+        profil["variantes"] = {n: {"graphe": _appliquer_raccord(v["graphe"], entrees_modele=entrees_modele, decode=decode),
+            "liaisons": v["liaisons"]} for n, v in profil["variantes"].items()}
+    return profil
+
+
 def construire_profil(entree, fichiers):
     """Le profil gag2 (non normalisé) d'un style, à partir de ses fichiers résolus."""
     constructeur = CONSTRUCTEURS.get(entree["famille"])
     if constructeur is None:
         raise WorkflowRefuse(f"Famille inconnue : {entree['famille']}.")
-    return constructeur(entree, fichiers)
+    profil = constructeur(entree, fichiers)
+    if entree.get("raccordable"):
+        profil = _rendre_raccordable(profil, entree["famille"])
+    return profil

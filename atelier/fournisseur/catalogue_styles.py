@@ -345,8 +345,41 @@ STYLES: tuple[dict, ...] = (
         'description': 'Fabrique une matière qui se répète sans couture : le bord gauche continue exactement sur le bord droit, le haut sur le bas. Ne dessine pas des tuiles mais la texture de base dans laquelle le pipeline tileset découpe ensuite les 47 tuiles, raccord garanti.',
         'etiquette': 'Sans couture',
         'source': 'nerijs/pixel-art-xl'
+    },
+    # ML6 : sc-clone n'a que sdxl-tileable comme style « raccordable » à part entière —
+    # les tuiles de Klein (klein9b-tiles) n'ont pas d'équivalent chez lui. Le raccord
+    # sans couture (`lib/seamless.mjs`) est générique aux quatre familles (mesuré sur
+    # FLUX.2 dans son commentaire), donc on ajoute la même variante par construction ici,
+    # sans toucher à klein9b-tiles ni aux 21 autres styles recopiés : mêmes champs que
+    # klein9b-tiles, identifiant distinct, et les deux nœuds du raccord en plus.
+    {
+        'identifiant': 'klein9b-tiles-raccordable',
+        'famille': 'klein',
+        'unet': re.compile(r'flux.?2.?klein.?base.?9b', re.I),
+        'clip': re.compile(r'qwen.?3.?8b', re.I),
+        'lora': re.compile(r'game_asset_tiles_klein_base9b', re.I),
+        'declencheur': 'Game asset tile,',
+        'force': 1,
+        'etapes': 20,
+        'cfg': 5,
+        'genre': 'tile',
+        'raccordable': True,
+        'noeuds': ('SeamlessTile', 'CircularVAEDecode'),
+        'nom': 'Tuiles et décors raccordables',
+        'description': 'La même matière que « Tuiles et décors », avec le raccord sans couture appliqué : le bord gauche continue exactement sur le bord droit, le haut sur le bas.',
+        'etiquette': 'Sans couture',
+        'source': 'crafiq/flux-2-klein-9b-game-asset-tiles-lora'
     }
 )
+
+
+# ML6 : les deux nœuds du raccord sans couture (`lib/seamless.mjs`) ne viennent pas de
+# ComfyUI lui-même — la même consigne que sc-clone (`lib/workflows.mjs`) quand l'un des
+# deux manque.
+_NOEUDS_RACCORD = ('SeamlessTile', 'CircularVAEDecode')
+_CONSIGNE_RACCORD = ('installer le nœud personnalisé ComfyUI-seamless-tiling : dans le '
+    'dossier custom_nodes de ComfyUI, git clone https://github.com/spinagon/ComfyUI-seamless-tiling '
+    'puis redémarrer ComfyUI')
 
 
 def style(identifiant):
@@ -433,5 +466,8 @@ def resoudre(entree, inventaire_):
     if noeuds is not None:
         for n in (*famille['noeuds'], *entree.get('noeuds', ())):
             if n not in noeuds:
-                manque.append('le nœud ' + n)
+                if n in _NOEUDS_RACCORD:
+                    manque.append(f'le nœud {n} ({_CONSIGNE_RACCORD})')
+                else:
+                    manque.append('le nœud ' + n)
     return {'pret': not manque, 'manque': manque, 'fichiers': fichiers}
