@@ -42,6 +42,7 @@ import {
   type Role,
   type Univers,
 } from "../api"
+import { type EmplacementAvecGraine } from "../api-workflows"
 import { sujetAsset, useVisee } from "./Apercu"
 import { Bloc, Bouton, EnTetePanneau, Libelle, Raison, Segments } from "./pieces"
 import { PANNEAU } from "./Infobulle"
@@ -289,6 +290,8 @@ export function Fiche({
         <p className="mesure truncate text-[10.5px] text-encre-4" title={asset.modele}>
           {nomDuModele(asset.modele)}
         </p>
+
+        <SaGraineLocale asset={asset} generation={generation} />
 
         <PrisDeLAmbiance generation={generation} />
         <SansLeStyleDuJeu generation={generation} />
@@ -771,6 +774,39 @@ function SansLeStyleDuJeu({ generation }: { generation: Generation | null }) {
       partie sans le style du jeu — {laissees.length}{" "}
       {laissees.length === 1 ? "image n'a" : "images n'ont"} pas suivi, ce modèle
       n'en accepte pas
+    </p>
+  )
+}
+
+/** **La graine d'une image locale, enfin visible** (défaut 6 de la relecture
+ *  du 18/09/2026). Elle est enregistrée depuis toujours sur l'emplacement qui
+ *  a produit l'image (`GET /api/generations/{id}` → `emplacements[].graine`),
+ *  et aucun écran ne la montrait — la règle 8nonies s'applique telle quelle :
+ *  une route qui sert quelque chose que nul écran n'affiche n'existe pas.
+ *
+ *  **`asset.rang` retrouve son emplacement** : c'est la même paire
+ *  `<génération>-<rang>` que la grille emploie pour poser une image sur
+ *  l'attente qu'elle remplace (voir `Tuile.tsx`). Rien ne paraît pour un
+ *  modèle distant, qui ne tire pas sa graine de la même façon — le champ y
+ *  est simplement absent.
+ *
+ *  **Rejouer avec la même graine n'est pas branché ici** : ce geste dépend
+ *  d'un correctif serveur en cours ailleurs (`composer(graine=…)` n'est
+ *  encore alimenté par aucune route). Le jour où il l'est, le bouton irait
+ *  ici, à côté du nombre qu'il reprendrait. */
+function SaGraineLocale({
+  asset,
+  generation,
+}: {
+  asset: Asset
+  generation: Generation | null
+}) {
+  const emplacement = generation?.emplacements.find((e) => e.rang === asset.rang)
+  const graine = (emplacement as unknown as EmplacementAvecGraine | undefined)?.graine
+  if (graine === null || graine === undefined) return null
+  return (
+    <p className="mesure truncate text-[10.5px] text-encre-4">
+      graine {graine}
     </p>
   )
 }

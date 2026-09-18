@@ -82,14 +82,22 @@ test("le texte d’un style local part d’un bloc, avec ce qui a été retiré 
   expect(screen.getByText(/au-delà des 77 jetons/)).toBeInTheDocument()
 })
 
-test("le champ « Ce qu’il faut éviter » n’est pas proposé quand le style local ne lit pas le négatif", () => {
+test("seul le négatif se cache quand le style local ne le lit pas — le fond reste (défaut 3)", () => {
   const local: NonNullable<TexteLocal> = {
     famille: "zimage", texte: "Pixel art style. un pèlerin", segments: [], retires: [],
     jetons: 10, limite: null, tranche: null, comptage: "", negatif_lu: false,
     temps: { secondes: null, mesures: 0, vitesse: "environ 30 secondes par image" },
   }
-  render(<EcranEnvoi {...props(envoiLocal(local, { negatifLu: false }))} />)
+  const envoi = envoiLocal(local, { negatifLu: false })
+  envoi.fond = { ...envoi.fond, couleur: "#336699", interdiction: "pas de flou" }
+  render(<EcranEnvoi {...props(envoi)} />)
+  // Le titre ne promet plus un négatif qu'il ne montre pas.
   expect(screen.queryByText("Fond et prompt négatif")).not.toBeInTheDocument()
+  expect(screen.getByText("Fond")).toBeInTheDocument()
+  // Le fond part dans le texte et sert au retour : il reste lisible.
+  expect(screen.getByText(/Fond : #336699/)).toBeInTheDocument()
+  // Seule la consigne négative, elle, disparaît.
+  expect(screen.queryByText("pas de flou")).not.toBeInTheDocument()
 })
 
 test("le fond reste montré quand le style local lit bien le négatif", () => {

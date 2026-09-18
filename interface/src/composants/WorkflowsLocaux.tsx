@@ -94,6 +94,12 @@ function StylesDeScClone({ onChoisir, onInstalle }: { onChoisir?: (modele: strin
 
   const parMoteur = new Map<string, StyleLocal[]>()
   for (const s of styles ?? []) { const l = parMoteur.get(s.famille) ?? []; l.push(s); parMoteur.set(s.famille, l) }
+  // **« Installer les styles prêts » doit aussi pouvoir tout relire** (défaut
+  // 4 de la relecture du 18/09/2026) : un style installé peut avoir vu ses
+  // fichiers déplacés, et la route réinstalle qu'il soit déjà installé ou
+  // non. `pretsTotal` décide si le bouton a quelque chose à faire ;
+  // `pretsNonInstalles` décide seulement de son mot.
+  const pretsTotal = (styles ?? []).filter(s => s.pret).length
   const pretsNonInstalles = (styles ?? []).filter(s => s.pret && !s.modele).length
 
   return <section className={`${SURFACE} space-y-[14px]`}>
@@ -101,7 +107,7 @@ function StylesDeScClone({ onChoisir, onInstalle }: { onChoisir?: (modele: strin
       <div><h3 className="font-serif text-[25px]">Les styles de sc-clone</h3><p className="mt-[4px] text-[12px] text-encre-3">Vingt-deux styles d’image, tout prêts, tirés du dépôt sc-clone. Rien n’est téléchargé depuis l’atelier — un style grisé manque un fichier que ComfyUI ne voit pas encore.</p></div>
       <div className="flex flex-wrap gap-[8px]">
         <button className={BOUTON} onClick={() => void relire()} disabled={chargement}>{chargement ? "Vérification…" : "Vérifier"}</button>
-        <button className={BOUTON} onClick={() => void installerLesPrets()} disabled={chargement || installation !== null || pretsNonInstalles === 0}>{installation === "*" ? "Installation…" : `Installer les styles prêts${pretsNonInstalles ? ` (${pretsNonInstalles})` : ""}`}</button>
+        <button className={BOUTON} onClick={() => void installerLesPrets()} disabled={chargement || installation !== null || pretsTotal === 0}>{installation === "*" ? "Installation…" : pretsNonInstalles > 0 ? `Installer les styles prêts (${pretsNonInstalles})` : "Relire les fichiers des styles"}</button>
       </div>
     </div>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
@@ -116,6 +122,10 @@ function StylesDeScClone({ onChoisir, onInstalle }: { onChoisir?: (modele: strin
             <p className="text-[12px] text-encre-3">{style.pret ? (style.modele ? "prêt · installé" : "prêt") : `il manque ${style.manque.join(", ")}`} · {style.vitesse}{style.reference && ` · ${NOM_REFERENCE[style.reference]}`}</p>
           </div>
           {style.pret && !style.modele && <button className={BOUTON} disabled={installation !== null} onClick={() => void installerUn(style.identifiant)}>{installation === style.identifiant ? "Installation…" : "Installer"}</button>}
+          {/* **Réinstaller un style déjà prêt** (défaut 4) : les fichiers ont
+              pu être déplacés depuis — même route, `POST …/install`, qui
+              relit ce que ComfyUI expose maintenant. */}
+          {style.pret && style.modele && <button className={BOUTON} disabled={installation !== null} onClick={() => void installerUn(style.identifiant)}>{installation === style.identifiant ? "Installation…" : "Réinstaller"}</button>}
           {!style.pret && <p className="text-[12px] text-encre-3">dans <code>C:\STOCKAGE\PROJET\_DEV\sc-clone</code> : <code>node scripts/install-models.mjs</code></p>}
           {style.modele && onChoisir && <button className={BOUTON} onClick={() => onChoisir(style.modele!)}>Utiliser ce style</button>}
         </li>)}</ul>

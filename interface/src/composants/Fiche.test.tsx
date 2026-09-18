@@ -16,7 +16,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-import { UNIVERS_VIDE, type Asset, type Recette } from "../api"
+import { api, UNIVERS_VIDE, type Asset, type Generation, type Recette } from "../api"
 import { Fiche } from "./Fiche"
 
 const RECETTE_VIDE: Recette = {
@@ -124,5 +124,53 @@ describe("la fiche — « Poser sur la toile » (US-540)", () => {
     // qu'un bouton grisé sans explication.
     monterLaFiche(undefined)
     expect(screen.queryByRole("button", { name: "Poser sur la toile" })).toBeNull()
+  })
+})
+
+describe("la fiche — la graine d'une image locale (défaut 6 de la relecture du 18/09/2026)", () => {
+  afterEach(() => {
+    cleanup()
+    vi.restoreAllMocks()
+  })
+
+  test("la graine de son emplacement se lit sur la fiche, quand le serveur la rend", async () => {
+    // `GET /api/generations/{id}` rend déjà `emplacements[].graine` — c'est
+    // `api.ts` qui ne le déclare pas encore (occupé). Lue par l'extension de
+    // type `EmplacementAvecGraine`, comme les autres champs de style local.
+    const generation = {
+      identifiant: "aaaa1111",
+      modele: "ComfyUI:zimage-pixel@v1",
+      demande: { prompt: "un tonneau", prompt_negatif: "", proportions: "1:1", resolution: null, variations: 1, references: 0, options: {} },
+      parametres_resolus: {},
+      ecartees: [],
+      emplacements: [
+        { rang: 0, statut: "reussie", consomme: 0, unite: "jeton", cout_usd: 0, duree_s: 24, resultat: null, raison: null, demarre_le: null, duree_attendue_s: 24, graine: 918273645 },
+      ],
+      cree_le: 1_787_800_100,
+      projet: "bac-a-sable",
+      references: [],
+      hors_plafond: [],
+      parent: null,
+      statut: "reussie",
+      cout_usd: 0,
+      consomme: 0,
+      unite: "jeton",
+      reussies: 1,
+    } as unknown as Generation
+    vi.spyOn(api, "generation").mockResolvedValue(generation)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+
+    monterLaFiche()
+
+    expect(await screen.findByText("graine 918273645")).toBeInTheDocument()
+  })
+
+  test("rien ne paraît quand le serveur ne rend pas de graine — un modèle distant, par exemple", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("essai : aucun serveur"))))
+    monterLaFiche()
+    // Laisse l'effet qui lit la génération se résoudre (en échec, ici).
+    await new Promise((r) => setTimeout(r, 0))
+    expect(screen.queryByText(/^graine /)).not.toBeInTheDocument()
+    vi.unstubAllGlobals()
   })
 })

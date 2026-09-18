@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { FabricationImageLocale, ProfilsWorkflow } from "./WorkflowsLocaux"
 import { workflows, stylesLocaux, type ProfilWorkflow, type StyleLocal, type TravailImageLocale } from "../api-workflows"
@@ -65,6 +65,28 @@ test("un style prêt s’installe d’un clic, un style manquant montre ce qu’
   fireEvent.click(screen.getByText("SDXL", { exact: false, selector: "summary" }))
   await screen.findByText(/il manque le checkpoint SDXL de base/)
   expect(screen.getByText("node scripts/install-models.mjs")).toBeInTheDocument()
+})
+
+test("un style déjà installé peut être réinstallé — défaut 4, aucune route neuve", async () => {
+  vi.mocked(stylesLocaux.installer).mockResolvedValue({ ...profil, modele: styleInstalle.modele! })
+  render(<ProfilsWorkflow />)
+  await screen.findByRole("heading", { name: "Les styles de sc-clone" })
+  fireEvent.click(screen.getByText("FLUX.2 Klein", { exact: false, selector: "summary" }))
+  const ligne = (await screen.findByText("Portrait Klein")).closest("li")!
+  expect(ligne).toHaveTextContent("prêt · installé")
+  fireEvent.click(within(ligne).getByRole("button", { name: "Réinstaller" }))
+  await waitFor(() => expect(stylesLocaux.installer).toHaveBeenCalledWith("klein-portrait"))
+  expect(api.rafraichirCatalogue).toHaveBeenCalled()
+})
+
+test("« Installer les styles prêts » devient « Relire les fichiers des styles » une fois tout installé", async () => {
+  vi.mocked(stylesLocaux.lister).mockResolvedValue({ styles: [styleInstalle] })
+  vi.mocked(stylesLocaux.installerPrets).mockResolvedValue({ installes: [] })
+  render(<ProfilsWorkflow />)
+  const bouton = await screen.findByRole("button", { name: "Relire les fichiers des styles" })
+  expect(bouton).not.toBeDisabled()
+  fireEvent.click(bouton)
+  await waitFor(() => expect(stylesLocaux.installerPrets).toHaveBeenCalled())
 })
 
 test("« Installer les styles prêts » relance le relevé de ComfyUI", async () => {

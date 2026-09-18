@@ -153,6 +153,16 @@ export type EnvoiAvecLocal = {
   fond: { negatif_lu: boolean }
 }
 
+/** Ce qu'un `Emplacement` (`api.ts`) garde en plus pour une image tirée d'un
+ *  style local (défaut 6 de la relecture du 18/09/2026) : la graine tirée
+ *  pour cet appel-là, sur `GET /api/generations/{id}` →
+ *  `emplacements[].graine`. `api.ts` ne porte pas encore ce champ — lu par une
+ *  extension de type, comme les autres ci-dessus. Absent pour un modèle
+ *  distant, qui ne la choisit pas de la même façon. Le geste « refaire avec la
+ *  même graine » dépend d'un correctif serveur en cours ailleurs : rien ne le
+ *  branche ici, on ne fait que la montrer. */
+export type EmplacementAvecGraine = { graine?: number | null }
+
 /** Ce que `Modele` (`api.ts`) porte pour un style local (ML3, ML5) : le genre
  *  de référence qu'il prend, le moteur sous lequel le grouper, si le négatif
  *  est lu, et le temps annoncé (règle 8ter). Absent — donc `undefined` — pour

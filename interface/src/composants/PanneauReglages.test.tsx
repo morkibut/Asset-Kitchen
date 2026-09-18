@@ -33,6 +33,8 @@ const modeleDistant: Modele = {
 
 const stylePret: StyleLocal = { identifiant: "zimage-pixel", nom: "Pixel art net et rapide", famille: "zimage", genre: "sprite", vitesse: "environ 30 secondes par image", reference: "depart", pret: true, manque: [], modele: null }
 const styleManquant: StyleLocal = { identifiant: "sdxl-toon", nom: "Toon SDXL", famille: "sdxl", genre: "sprite", vitesse: "environ 40 secondes par image", reference: "depart", pret: false, manque: ["le checkpoint SDXL de base"], modele: null }
+// Déjà installé — le bouton qui l'installait doit devenir celui qui le réinstalle (défaut 4).
+const styleInstalle: StyleLocal = { identifiant: "zimage-pixel", nom: "Pixel art net et rapide", famille: "zimage", genre: "sprite", vitesse: "environ 30 secondes par image", reference: "depart", pret: true, manque: [], modele: "ComfyUI:zimage-pixel@v1" }
 
 const props = {
   modeles: [modeleDistant], choisi: modeleDistant, onChoisir: vi.fn(),
@@ -89,4 +91,22 @@ test("la force n’apparaît que pour un style « part de l’image » avec une 
   expect(screen.getByText("force")).toBeInTheDocument()
   rerender(<PanneauReglages {...props} choisi={modeleDistant} references={1} />)
   expect(screen.queryByText("force")).not.toBeInTheDocument()
+})
+
+test("masquerForce cache la force propre au panneau, imbriqué dans la barre qui paie (doublon du défaut 9)", () => {
+  render(<PanneauReglages {...props} choisi={modeleLocalDepart} references={1} masquerForce />)
+  expect(screen.queryByText("force")).not.toBeInTheDocument()
+})
+
+test("un style déjà installé peut être réinstallé — même route, aucune route neuve", async () => {
+  vi.mocked(stylesLocaux.lister).mockResolvedValue({ styles: [styleInstalle] })
+  vi.mocked(stylesLocaux.installer).mockResolvedValue({ modele: "ComfyUI:zimage-pixel@v1" } as ProfilWorkflow)
+  render(<PanneauReglages {...props} />)
+  fireEvent.click(screen.getByRole("button", { name: /Modèle/ }))
+  fireEvent.click(await screen.findByText("Z-Image Turbo", { exact: false, selector: "summary" }))
+  const ligne = (await screen.findByText("Pixel art net et rapide")).closest("li")!
+  expect(ligne).toHaveTextContent("prêt · installé")
+  expect(ligne).toHaveTextContent("réinstaller")
+  fireEvent.click(screen.getByText("réinstaller"))
+  await waitFor(() => expect(stylesLocaux.installer).toHaveBeenCalledWith("zimage-pixel"))
 })

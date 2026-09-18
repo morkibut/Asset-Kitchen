@@ -6,7 +6,7 @@
 // « jamais généré » qui ne bougeait plus jamais pour un style local — un appel
 // local vaut toujours `cout_usd = 0`, que le compteur de coût écarte.
 
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 import { UNIVERS_VIDE, type Modele } from "../api"
 import { BarreQuiPaie } from "./BarreQuiPaie"
@@ -89,6 +89,43 @@ test("la force n’apparaît que pour un style « part de l’image » avec une 
   expect(screen.getByText("Force de la transformation")).toBeInTheDocument()
   rerender(<BarreQuiPaie {...props} modele={modeleLocalSujet} reinjections={[{ asset: "a1", role: "reference" }]} />)
   expect(screen.queryByText("Force de la transformation")).not.toBeInTheDocument()
+})
+
+test("le curseur de force envoie un nombre, et disparaît des options sans image jointe", () => {
+  // Défaut 2 de la relecture du 18/09/2026 : le curseur envoyait
+  // `e.target.value`, une chaîne, que le serveur refusait (« La valeur de
+  // force n'est pas acceptée ») — et `force` restait dans les options même
+  // sans référence, où `composer` la valide quand même et échoue.
+  const onOptions = vi.fn()
+  const { rerender } = render(
+    <BarreQuiPaie
+      {...props}
+      modele={modeleLocalDepart}
+      reinjections={[{ asset: "a1", role: "reference" }]}
+      options={{ force: "0.55" }}
+      onOptions={onOptions}
+    />,
+  )
+  // `exact: false` : le `<label>` porte aussi la phrase d'aide sous le
+  // curseur, donc son texte entier ne vaut plus exactement son titre.
+  const curseur = screen.getByLabelText("Force de la transformation", { exact: false })
+  fireEvent.change(curseur, { target: { value: "0.8" } })
+  expect(onOptions).toHaveBeenCalledWith({ force: 0.8 })
+  expect(typeof onOptions.mock.calls[0][0].force).toBe("number")
+
+  onOptions.mockClear()
+  // L'image jointe est retirée : la force redevient inerte, et l'effet qui
+  // la garde justement ne doit pas la laisser dans les options.
+  rerender(
+    <BarreQuiPaie
+      {...props}
+      modele={modeleLocalDepart}
+      reinjections={[]}
+      options={{ force: "0.55" }}
+      onOptions={onOptions}
+    />,
+  )
+  expect(onOptions).toHaveBeenCalledWith({})
 })
 
 test("le prompt négatif n’est proposé que si le modèle le lit", () => {

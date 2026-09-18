@@ -11,6 +11,7 @@
 // de tout écran incapable de dépenser**. C'est ce qui donne à la galerie son
 // métier propre : on y juge, on n'y paie jamais.
 
+import { useEffect } from "react"
 import { api } from "../api"
 import type {
   Asset,
@@ -164,6 +165,31 @@ export function BarreQuiPaie({
   // global, déjà remis à zéro par les essais, déjà abonné.
   const [reglagesOuverts, basculerReglages] = usePli("barre.reglages")
 
+  // **`force` n'existe que quand elle agit** (règle 8nonies) : un style qui
+  // *garde le sujet* (Klein) ne la lit pas, et un style *partir de cette
+  // image* ne l'applique qu'à l'image jointe qu'on lui donne — sans elle, il
+  // n'y a rien pour le KSampler à doser. Calculé ici, avant tout retour
+  // conditionnel : c'est aussi ce qui décide si `options.force` doit rester.
+  const infosModele = modele ? (modele as unknown as ModeleAvecReference) : null
+  const forceUtile = !!(
+    modele?.locale &&
+    infosModele?.reference === "depart" &&
+    reinjections.length > 0 &&
+    modele?.options.force
+  )
+  // **Un réglage qui redevient inerte ne doit pas traîner dans la demande**
+  // (défaut 2 de la relecture du 18/09/2026) : `force` reste un des réglages
+  // déclarés du modèle, donc `composer` le valide même sans image jointe, et
+  // une génération sans référence échouait à cause d'une valeur qui n'avait
+  // plus lieu d'être. Dès que l'image qui la justifiait part, on l'efface.
+  useEffect(() => {
+    if (!forceUtile && "force" in options) {
+      const { force: _force, ...reste } = options
+      onOptions(reste)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceUtile, options])
+
   // La préparation reprend les mêmes états et le même chemin d’envoi. Elle
   // s’ouvre sur demande ; aucun formulaire ne prend la place de l’asset.
   if (presentation === "preparation") {
@@ -186,17 +212,6 @@ export function BarreQuiPaie({
       const cle = (m as unknown as ModeleAvecReference).famille ?? "autre"
       modelesLocaux.set(cle, [...(modelesLocaux.get(cle) ?? []), m])
     }
-    const infosModele = modele ? (modele as unknown as ModeleAvecReference) : null
-    // **`force` n'existe que quand elle agit** (règle 8nonies) : un style qui
-    // *garde le sujet* (Klein) ne la lit pas, et un style *partir de cette
-    // image* ne l'applique qu'à l'image jointe qu'on lui donne — sans elle, il
-    // n'y a rien pour le KSampler à doser. Le reste des réglages du modèle
-    // passe tel quel.
-    const forceUtile = !!(
-      modele?.locale &&
-      infosModele?.reference === "depart" &&
-      reinjections.length > 0
-    )
     return <div className="flex min-h-0 flex-1 flex-col text-[13px]">
       <div className="defile min-h-0 flex-1 space-y-[22px] overflow-y-auto px-[30px] py-[22px]">
       {/* **Ce qui part, et de quoi le corriger** — la bande « Pour » de la
@@ -273,7 +288,15 @@ export function BarreQuiPaie({
               max={modele.options.force.maximum ?? 1}
               step={0.05}
               value={Number(options.force ?? 0.55)}
-              onChange={(e) => reglerOption("force", e.target.value)}
+              // **Un curseur envoie un nombre** (défaut 2) : `e.target.value`
+              // est un texte, et le serveur refuse « La valeur de force n'est
+              // pas acceptée » quand il le reçoit tel quel. `options` reste
+              // déclaré `Record<string, string>` — le reste du produit ne lit
+              // jamais `force` autrement qu'en JSON —, donc la conversion se
+              // fait ici, au bord, sans se répandre dans tout l'écran.
+              onChange={(e) =>
+                onOptions({ ...options, force: Number(e.target.value) } as unknown as Record<string, string>)
+              }
               className="w-full"
             />
             <span className="block text-encre-3">
@@ -286,7 +309,12 @@ export function BarreQuiPaie({
       {(!modele?.locale || infosModele?.negatif_lu !== false) && (
         <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Prompt négatif{promptNegatif ? " · renseigné" : " · facultatif"}</summary><textarea aria-label="Prompt négatif" rows={2} className={`${champ} mt-[14px]`} value={promptNegatif} onChange={(e) => onPromptNegatif(e.target.value)} placeholder="Ce qui doit être évité…" /></details>
       )}
-      <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Réglages de l’univers et références héritées</summary><div className="mt-[14px]"><PanneauReglages modeles={modeles} choisi={modele} onChoisir={onChoisirModele} proportions={proportions} onProportions={onProportions} variations={variations} onVariations={onVariations} options={options} onOptions={onOptions} references={reinjections.length} projet={projetNom} univers={univers} echelle={echelle} onEchelle={onEchelle} compte={compteReferences} cout={cout} reserve={reserve} cases={cases} cible={personnageCible} ecarteesGeneration={ecarteesGeneration} onEcarterGeneration={onEcarterGeneration} onErreur={onErreur} /></div></details>
+      {/* **Une seule « Force de la transformation » sur cet écran** (doublon
+          signalé à la relecture du 18/09/2026) : la sienne, juste au-dessus,
+          est déjà celle qui agit ici. Le panneau hérité garde son propre
+          réglage pour le mode barre de la galerie, où lui seul la sert —
+          `masquerForce` ne fait taire que l'affichage, jamais la valeur. */}
+      <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Réglages de l’univers et références héritées</summary><div className="mt-[14px]"><PanneauReglages modeles={modeles} choisi={modele} onChoisir={onChoisirModele} proportions={proportions} onProportions={onProportions} variations={variations} onVariations={onVariations} options={options} onOptions={onOptions} references={reinjections.length} projet={projetNom} univers={univers} echelle={echelle} onEchelle={onEchelle} compte={compteReferences} cout={cout} reserve={reserve} cases={cases} cible={personnageCible} ecarteesGeneration={ecarteesGeneration} onEcarterGeneration={onEcarterGeneration} onErreur={onErreur} masquerForce /></div></details>
       </div>
       <footer className="shrink-0 space-y-[14px] border-t border-trait bg-carte px-[30px] py-[14px]">
         <dl className="grid grid-cols-[auto_1fr] gap-x-[22px] gap-y-[8px]"><CoutAttendu cout={cout} cases={cases} variations={variations} unite={modele?.unite} reserve={reserve} modele={modele} /></dl>

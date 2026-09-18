@@ -61,6 +61,7 @@ export function PanneauReglages({
   ecarteesGeneration,
   onEcarterGeneration,
   onErreur,
+  masquerForce = false,
 }: {
   modeles: Modele[]
   choisi: Modele | null
@@ -109,9 +110,36 @@ export function PanneauReglages({
   ecarteesGeneration: string[] | null
   onEcarterGeneration: (ecartees: string[] | null) => void
   onErreur: (raison: string) => void
+  /** **Ce panneau imbriqué dans la barre qui paie n'affiche pas sa propre
+   *  « Force de la transformation »** (doublon signalé à la relecture du
+   *  18/09/2026) : `BarreQuiPaie` en montre déjà une, en mode préparation.
+   *  Elle reste affichée ici en mode barre (galerie), où c'est la seule. La
+   *  valeur, elle, n'a qu'un seul propriétaire quel que soit l'écran — c'est
+   *  `options.force`, et le repli n'y touche pas. */
+  masquerForce?: boolean
 }) {
   const [filtre, setFiltre] = useState("")
   const echelleLue = univers.bareme.find((e) => e.nom === echelle) ?? null
+
+  // **`force` ne doit pas survivre à ce qui la rend inerte** (défaut 2) : sans
+  // image jointe ou pour un style qui *garde le sujet* (Klein), il n'y a rien
+  // pour le KSampler à doser — et `composer` valide tous les réglages déclarés
+  // du modèle, y compris sans référence. Une valeur oubliée dans `options`
+  // faisait alors échouer une génération sans image.
+  useEffect(() => {
+    const infosChoisi = choisi ? (choisi as unknown as ModeleAvecReference) : null
+    const forceUtile = !!(
+      choisi?.locale &&
+      infosChoisi?.reference === "depart" &&
+      references > 0 &&
+      choisi.options.force
+    )
+    if (!forceUtile && "force" in options) {
+      const { force: _force, ...reste } = options
+      onOptions(reste)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choisi, references, options])
 
   const terme = filtre.trim().toLowerCase()
 
@@ -333,7 +361,8 @@ export function PanneauReglages({
             repeint pas par-dessus. La condition est donc triple : un style
             local, qui prend une référence en partant de l'image, et une
             référence effectivement jointe. */}
-        {choisi?.locale &&
+        {!masquerForce &&
+          choisi?.locale &&
           (choisi as unknown as ModeleAvecReference).reference === "depart" &&
           references > 0 &&
           choisi.options.force && (
@@ -345,7 +374,12 @@ export function PanneauReglages({
                 max={choisi.options.force.maximum ?? 1}
                 step={0.05}
                 value={Number(options.force ?? 0.55)}
-                onChange={(e) => onOptions({ ...options, force: e.target.value })}
+                // **Un curseur envoie un nombre** (défaut 2), jamais
+                // `e.target.value` tel quel — voir la même conversion et la
+                // même note dans `BarreQuiPaie.tsx`.
+                onChange={(e) =>
+                  onOptions({ ...options, force: Number(e.target.value) } as unknown as Record<string, string>)
+                }
                 className="h-[26px]"
               />
               <span className="mesure text-[9.5px] text-encre-4">
@@ -567,6 +601,21 @@ function StylesLocauxAccordion({ onChoisir }: { onChoisir: (identifiant: string)
                         onClick={() => void installer(style.identifiant)}
                       >
                         {installation === style.identifiant ? "installation…" : "installer"}
+                      </button>
+                    )}
+                    {/* **Réinstaller un style déjà prêt** (défaut 4 de la
+                        relecture du 18/09/2026) : ses fichiers ont pu bouger
+                        depuis — la route relit toujours ce que ComfyUI expose
+                        maintenant, `POST …/styles/{id}/install` réinstalle
+                        qu'il soit déjà installé ou non. Aucune route neuve. */}
+                    {style.pret && style.modele && (
+                      <button
+                        type="button"
+                        className="mesure shrink-0 text-[9.5px] text-encre-4 hover:text-signal disabled:opacity-50"
+                        disabled={installation === style.identifiant}
+                        onClick={() => void installer(style.identifiant)}
+                      >
+                        {installation === style.identifiant ? "réinstallation…" : "réinstaller"}
                       </button>
                     )}
                   </li>
