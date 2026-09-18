@@ -683,6 +683,11 @@ class CorpsPromotion(BaseModel):
     asset: str = Field(min_length=1)
     promue: bool = True
     projet: str | None = None
+    # **Ce qu'elle montre, et donc quand elle part** (RS1) : `libre`,
+    # `planche` ou `direction:<id>`. Absent, l'usage en place est gardé — une
+    # promotion d'avant la tranche ne change pas de sens parce qu'on la répète.
+    # Une direction que le sujet ne tient pas est refusée.
+    usage: str | None = None
 
 
 class CorpsImageDeReference(BaseModel):
@@ -736,11 +741,16 @@ async def promouvoir_reference(
     **Elle repart avec chaque appel suivant**, et c'est ce qui fait qu'un
     personnage se ressemble d'une pose à l'autre. Dix-sept appels payés sur
     vingt-huit étaient partis sans une seule image de référence.
+
+    **Son usage se règle par la même route** (RS1) — `usage` dans le corps.
+    Ranger une image en planche ou dans une direction, c'est encore la
+    promouvoir, avec une précision de plus ; une seconde route aurait fait deux
+    gestes pour une même liste.
     """
     atelier = _atelier(requete)
     vise = _projet(requete, corps.projet)
     personnage = atelier.production.promouvoir_reference(
-        vise, identifiant, corps.asset, corps.promue
+        vise, identifiant, corps.asset, corps.promue, corps.usage
     )
     return {
         "personnage": atelier.production.en_charge(vise, personnage),

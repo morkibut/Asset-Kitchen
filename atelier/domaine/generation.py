@@ -93,6 +93,19 @@ PLANCHE_JOINTE = "planche"
 PALETTE = "palette"
 ROLES_JOINTS = (STYLE, REFERENCE, EDITION, GABARIT, PLANCHE_JOINTE, PALETTE)
 
+# **Deux façons de nommer une référence promue, selon ce qu'elle montre** (RS1).
+# Ce ne sont pas des rôles de `Reinjection` — sur le fil, une planche du sujet
+# et une vue dans une direction restent des `reference`, qui inspirent sans
+# engendrer — mais des rôles **à nommer** : `_roles_qui_partent` les écrit à
+# partir de l'usage, et le texte les décrit autrement qu'une référence libre.
+# Une planche décrite comme « le même personnage » a rendu un seul Champy
+# isométrique le 18 septembre 2026 ; c'est ce que ces deux mots réparent.
+#
+# La vue d'une direction porte son identifiant après les deux-points —
+# `reference-direction:sud` —, parce que le texte la nomme.
+REFERENCE_PLANCHE = "reference-planche"
+REFERENCE_DIRECTION = "reference-direction"
+
 # **D'où viennent les octets** — la deuxième famille d'images du produit est
 # arrivée en T4. Un asset vient de la bibliothèque et se relit par son
 # emplacement ; une carte vient du tableau d'inspiration de son projet et se
@@ -131,9 +144,20 @@ class Reinjection:
     asset: str
     role: str = REFERENCE
     origine: str = ASSET
+    # **L'usage d'une référence promue, quand elle en a un** (RS1) — `planche`
+    # ou `direction:<id>`. Vide pour tout le reste, y compris une promue
+    # `libre` : c'est ce qui laisse identique, octet pour octet, tout ce qui
+    # partait avant la tranche. Il dit au texte comment nommer l'image, et au
+    # journal pourquoi elle est partie.
+    usage: str = ""
 
     def en_json(self) -> dict[str, Any]:
-        return {"asset": self.asset, "role": self.role, "origine": self.origine}
+        brut = {"asset": self.asset, "role": self.role, "origine": self.origine}
+        # Écrit seulement quand il existe : un `generation.json` d'aujourd'hui
+        # reste celui d'hier tant que rien n'est rangé.
+        if self.usage:
+            brut["usage"] = self.usage
+        return brut
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "Reinjection":
@@ -143,6 +167,7 @@ class Reinjection:
             # Une génération écrite avant T4 ne porte que des assets, et c'est
             # vrai sans rien aller vérifier : les cartes n'existaient pas.
             origine=d.get("origine", ASSET),
+            usage=str(d.get("usage") or ""),
         )
 
 

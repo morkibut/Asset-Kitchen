@@ -57,8 +57,13 @@ from atelier.domaine.generation import (
     PALETTE,
     PLANCHE_JOINTE,
     REFERENCE,
+    REFERENCE_DIRECTION,
+    REFERENCE_PLANCHE,
     STYLE,
 )
+from atelier.domaine.personnage import LIBRE
+from atelier.domaine.personnage import PLANCHE as USAGE_PLANCHE
+from atelier.domaine.personnage import direction_de_lusage
 from atelier.domaine.direction import composer
 from atelier.domaine.ambiance import COULEURS, REFERENCES, TEXTES, prises_du_mode
 from atelier.domaine.envoi import (
@@ -722,6 +727,10 @@ class ServiceGenerations:
             references,
             references_ecartees,
             identifiant_modele,
+            # **Le contexte qui choisit les références rangées** (RS1) : la
+            # case visée, ou la planche de ses directions.
+            direction=direction,
+            directions=directions,
         )
         # **Le texte tel qu'il partira, et un seul endroit le compose** (US-158).
         # `_texte` est aussi ce que l'aperçu du champ de prompt montre avant de
@@ -1550,8 +1559,13 @@ class ServiceGenerations:
         couleurs. Le texte numérote les images d'après cette liste et rien
         d'autre ; l'écran de confirmation lit la même, ce qui est ce qui tient
         l'invariant d'E14 sur la numérotation comme il le tient sur le texte.
+
+        **Une référence rangée se nomme par son usage** (RS1) : une planche du
+        sujet devient `reference-planche`, une vue dans une direction
+        `reference-direction:<id>`. L'ordre ne bouge pas d'un rang — c'est
+        toujours la liste des réinjections, lue une fois, ici.
         """
-        roles = [r.role for r in partantes]
+        roles = [_role_a_nommer(r) for r in partantes]
         joint = self._role_joint(pliage, identifiant_modele)
         if joint is not None:
             roles.append(joint)
@@ -1780,7 +1794,7 @@ class ServiceGenerations:
                 }
             )
 
-        dites = self._dire_les_images(roles, pliage)
+        dites = self._dire_les_images(roles, pliage, projet)
         if dites:
             lignes.append(
                 {
@@ -1860,7 +1874,12 @@ class ServiceGenerations:
             )
         return lignes
 
-    def _dire_les_images(self, roles: Sequence[str], pliage: Pliage | None) -> str:
+    def _dire_les_images(
+        self,
+        roles: Sequence[str],
+        pliage: Pliage | None,
+        projet: str | None = None,
+    ) -> str:
         """Ce que les images jointes veulent dire — **une ligne par image** (R7).
 
         **Elles partaient muettes jusqu'au 1ᵉʳ septembre 2026**, puis en bloc
@@ -1897,7 +1916,11 @@ class ServiceGenerations:
         partir sous un faux nom : mieux vaut un appel refusé qu'un modèle à qui
         l'on dit que le gabarit est le personnage.
         """
-        nommees = self._nommer_les_images(roles, self._cases_du_pliage(pliage))
+        nommees = self._nommer_les_images(
+            roles,
+            self._cases_du_pliage(pliage),
+            angles=self._angles_nommes(projet, roles),
+        )
         return "\n".join(texte for _, _, texte in nommees)
 
     @staticmethod
@@ -1905,9 +1928,30 @@ class ServiceGenerations:
         """Combien de cases la grille porte, pour la ligne qui nomme le gabarit."""
         return 0 if pliage is None else pliage.nombre
 
+    def _angles_nommes(
+        self, projet: str | None, roles: Sequence[str]
+    ) -> dict[str, str]:
+        """La consigne anglaise de chaque direction qu'une image jointe montre
+        (RS1) — *facing south, toward the viewer* plutôt que `sud`. Le jeu ne se
+        relit que si une vue de direction part : c'est le cas rare."""
+        if (
+            self._production is None
+            or not projet
+            or not any(r.startswith(f"{REFERENCE_DIRECTION}:") for r in roles)
+        ):
+            return {}
+        try:
+            directions = self._production.directions_du_jeu(projet)
+        except ErreurAtelier:
+            return {}
+        return {d.identifiant: d.consigne for d in directions if d.consigne}
+
     @staticmethod
     def _nommer_les_images(
-        roles: Sequence[str], cases: int
+        roles: Sequence[str],
+        cases: int,
+        *,
+        angles: dict[str, str] | None = None,
     ) -> list[tuple[int, str, str]]:
         """Une ligne par image, numérotée dans l'ordre d'envoi, depuis son rôle.
 
@@ -1943,6 +1987,32 @@ class ServiceGenerations:
                 texte = (
                     f"Image {rang} — THE SAME CHARACTER, already drawn in the game's "
                     f"camera: keep it recognisably the same character in every cell."
+                )
+            elif role == REFERENCE_PLANCHE:
+                # **Une planche se dit planche** (RS1). Décrite comme « le même
+                # personnage », elle a fait rendre un seul Champy isométrique :
+                # le modèle ne savait pas que les quatre silhouettes étaient une
+                # seule chose vue sous quatre angles. La ligne ne dit rien du
+                # cadrage à rendre — la demande plus bas s'en charge, qu'elle
+                # veuille un sprite ou une planche.
+                texte = (
+                    f"Image {rang} — CHARACTER SHEET of the same character: several "
+                    f"views of this one character, one per cell — every view is the "
+                    f"same character seen from another angle. Use it for identity "
+                    f"only (look, outfit, proportions); what to draw and how to frame "
+                    f"it is given below."
+                )
+            elif role.startswith(f"{REFERENCE_DIRECTION}:"):
+                # **Une vue rangée dans une direction se dit vue sous cet angle**
+                # (RS1), avec la consigne du jeu pour cet angle-là — la phrase
+                # même que la case reçoit, écrite une seule fois sur la
+                # direction. Sans consigne, l'identifiant la nomme.
+                angle = role.split(":", 1)[1]
+                vu = (angles or {}).get(angle) or angle
+                texte = (
+                    f"Image {rang} — THE SAME CHARACTER, seen from this angle "
+                    f"({vu}): keep it recognisably the same character, and use this "
+                    f"view for how it looks from that side."
                 )
             elif role == GABARIT:
                 texte = (
@@ -2129,6 +2199,8 @@ class ServiceGenerations:
                 references,
                 references_ecartees,
                 modele,
+                direction=direction,
+                directions=directions,
             )
             # **Exactement la liste de `preparer`, par la même fonction** (R7) :
             # gabarit ou planche, puis bande de couleurs, dans l'ordre où les
@@ -2172,7 +2244,9 @@ class ServiceGenerations:
             "nommage": [
                 {"rang": rang, "role": role, "texte": texte}
                 for rang, role, texte in self._nommer_les_images(
-                    roles, self._cases_du_pliage(pliage)
+                    roles,
+                    self._cases_du_pliage(pliage),
+                    angles=self._angles_nommes(projet, roles),
                 )
             ],
             # ── Le fond, et ce qu'il interdit (D3) ───────────────────────────
@@ -2261,6 +2335,9 @@ class ServiceGenerations:
         references: Sequence[Reinjection],
         references_ecartees: Sequence[str] | None,
         identifiant_modele: str,
+        *,
+        direction: str | None = None,
+        directions: Sequence[str] | None = None,
     ) -> tuple[tuple[Reinjection, ...], tuple[Reinjection, ...]]:
         """Ce qui part en image, et ce que le plafond laisse au sol.
 
@@ -2276,10 +2353,17 @@ class ServiceGenerations:
         son ambiance apporte (E14), et les artworks de la famille du sujet.
         L'ordre décide du rôle gardé en cas de doublon, et le plafond du modèle
         se compte après.
+
+        **Les références promues se choisissent selon le contexte** (RS1) : la
+        direction de la case, ou la planche de ses directions. Voir
+        `_contexte_des_references`, que le compte de l'écran lit aussi.
         """
+        planche, angle = _contexte_des_references(direction, directions)
         reinjectes = _reinjectes(
             tuple(references)
-            + self._concepts(projet, personnage, piece)
+            + self._concepts(
+                projet, personnage, piece, planche=planche, direction=angle
+            )
             + self._de_lambiance(projet, personnage)
             + self._artworks(echelle, projet)
         )
@@ -2327,6 +2411,11 @@ class ServiceGenerations:
         # décoché, et non ce qui partirait si l'on n'avait rien touché.
         ecartees_ici: Sequence[str] | None = None,
         palette: bool = False,
+        # **Le contexte qui choisit les références rangées** (RS1) — le même
+        # que celui de la soumission, lu par la même fonction. Absents, seules
+        # les références libres partent, comme avant la tranche.
+        direction: str | None = None,
+        directions: Sequence[str] | None = None,
     ) -> dict[str, Any]:
         """Ce qui partira, **ligne par ligne, avec sa provenance** (US-52, US-127).
 
@@ -2342,7 +2431,10 @@ class ServiceGenerations:
         ce qui part vraiment — c'est lui qui décide du grisé du modèle.
         """
         artworks = self._artworks(echelle, projet)
-        concepts = self._concepts(projet, personnage, piece)
+        planche, angle = _contexte_des_references(direction, directions)
+        concepts = self._concepts(
+            projet, personnage, piece, planche=planche, direction=angle
+        )
         de_lambiance = self._de_lambiance(projet, personnage)
         ecartees = (
             self._production.ecartees(projet, personnage)
@@ -2380,7 +2472,14 @@ class ServiceGenerations:
         # son mot : « réinjection » dit *l'auteur l'a posée pour cet appel*, ce
         # qu'une image promue n'est pas — elle part avec **tous** les appels de
         # sa chose, et c'est ce qui la rend décochable en connaissance de cause.
-        promues = set(self._promues(projet, personnage))
+        #
+        # **Et depuis RS1 elle nomme son usage** — « image promue · planche »,
+        # « image promue · direction sud » —, lu sur la réinjection même qui
+        # part : celles que le contexte laisse sur la fiche n'ont pas de ligne,
+        # puisqu'elles ne partent pas. Une libre reste « image promue ».
+        promues = {
+            r.asset: r.usage for r in concepts if r.origine == ASSET
+        }
         # **Cinquième provenance depuis E14** : une image que l'ambiance apporte.
         # Elle n'est ni un artwork du jeu — elle ne concerne que ce coin-là — ni
         # un concept art épinglé sur la chose : la corriger là-bas la corrige
@@ -2411,7 +2510,7 @@ class ServiceGenerations:
                     if r.origine == CARTE and r.asset in designes
                     else "artwork officiel"
                     if r.origine == CARTE
-                    else "image promue"
+                    else self._provenance_promue(projet, promues[r.asset])
                     if r.asset in promues
                     else "réinjection"
                 ),
@@ -2661,7 +2760,13 @@ class ServiceGenerations:
         return tuple(dict.fromkeys(designes))
 
     def _concepts(
-        self, projet: str | None, personnage: str | None, piece: str | None = None
+        self,
+        projet: str | None,
+        personnage: str | None,
+        piece: str | None = None,
+        *,
+        planche: bool = False,
+        direction: str | None = None,
     ) -> tuple[Reinjection, ...]:
         """Les concept arts du personnage visé, et de la pièce (US-124).
 
@@ -2674,22 +2779,52 @@ class ServiceGenerations:
         qui fait qu'un personnage se ressemble d'une pose à l'autre, et c'est la
         correction du frottement le plus cher du dépôt — dix-sept appels payés
         sur vingt-huit étaient partis sans une seule image.
+
+        **Pas toutes les promues : celles de ce contexte** (RS1). Les libres
+        partent toujours ; une planche, une vue dans une direction ne partent que
+        là où elles servent. L'usage voyage sur la réinjection — vide pour une
+        libre, pour que ce qui partait avant parte à l'identique.
         """
         return tuple(
             Reinjection(asset=identifiant, role=STYLE, origine=CARTE)
             for identifiant in self._concepts_identifiants(projet, personnage, piece)
         ) + tuple(
-            Reinjection(asset=identifiant, role=REFERENCE, origine=ASSET)
-            for identifiant in self._promues(projet, personnage)
+            Reinjection(
+                asset=identifiant,
+                role=REFERENCE,
+                origine=ASSET,
+                usage="" if usage == LIBRE else usage,
+            )
+            for identifiant, usage in self._promues(
+                projet, personnage, planche=planche, direction=direction
+            )
         )
 
     def _promues(
-        self, projet: str | None, personnage: str | None
-    ) -> tuple[str, ...]:
-        """Les images que cette chose du jeu a promues en référence permanente."""
+        self,
+        projet: str | None,
+        personnage: str | None,
+        *,
+        planche: bool = False,
+        direction: str | None = None,
+    ) -> tuple[tuple[str, str], ...]:
+        """Les images que cette chose du jeu a promues en référence permanente,
+        **et qui partent dans ce contexte**, avec leur usage (RS1). La règle vit
+        sur le domaine, à un seul endroit."""
         if self._production is None or not projet or not personnage:
             return ()
-        return tuple(self._production.references_promues(projet, personnage))
+        return tuple(
+            self._production.references_du_contexte(
+                projet, personnage, planche=planche, direction=direction
+            )
+        )
+
+    def _provenance_promue(self, projet: str | None, usage: str) -> str:
+        """« image promue », suivie de son usage quand elle en a un (RS1)."""
+        if not usage or self._production is None or not projet:
+            return "image promue"
+        nom = self._production.nom_de_lusage(projet, usage)
+        return f"image promue · {nom}" if nom else "image promue"
 
     def _octets_references(self, identifiants, projet: str | None = None) -> tuple[bytes, ...]:
         """Les images réinjectées, relues à la source (US-12).
@@ -2773,6 +2908,50 @@ class ServiceGenerations:
             "options": gardees,
             "prompt_negatif_replie": bool(demande.prompt_negatif.strip()),
         }
+
+
+def _contexte_des_references(
+    direction: str | None, directions: Sequence[str] | None
+) -> tuple[bool, str | None]:
+    """**Ce que l'appel vise, lu pour choisir les références rangées** (RS1) —
+    `(planche, direction)`.
+
+    Écrit une fois pour les deux chemins qui en ont besoin : la soumission
+    (`_reinjections`) et le compte de l'écran (`compter_references`). Deux
+    lectures du contexte auraient fini par montrer une planche jointe que
+    l'appel n'envoie pas.
+
+    - **Deux directions ou plus** : c'est la planche d'une pose (E13), et elle
+      emporte la planche du sujet.
+    - **Une seule** — `direction`, ou une liste d'un seul angle, qui n'est pas
+      une planche (voir `_plier`) : c'est une case dans cette direction.
+    - **Aucune** : ni planche, ni direction, et rien de typé ne part.
+
+    Un lot de plusieurs poses et une planche d'équipement ne passent pas par
+    `directions` : ils restent sans contexte typé, et n'emportent que les
+    libres — la règle du plan ne les nomme pas, et ils partaient ainsi hier.
+    """
+    distinctes = tuple(dict.fromkeys(d for d in (directions or ()) if d))
+    if len(distinctes) >= 2:
+        return True, None
+    return False, direction or (distinctes[0] if distinctes else None)
+
+
+def _role_a_nommer(reinjection: Reinjection) -> str:
+    """Le rôle qu'une image porte **dans le texte** (RS1).
+
+    Une référence rangée reste une `reference` sur le fil et dans le journal ;
+    seul son nom change, pour que le modèle sache qu'une planche est une
+    planche et qu'une vue est une vue.
+    """
+    if reinjection.role != REFERENCE or not reinjection.usage:
+        return reinjection.role
+    if reinjection.usage == USAGE_PLANCHE:
+        return REFERENCE_PLANCHE
+    angle = direction_de_lusage(reinjection.usage)
+    if angle:
+        return f"{REFERENCE_DIRECTION}:{angle}"
+    return reinjection.role
 
 
 def _reinjectes(references: Sequence[Reinjection]) -> tuple[Reinjection, ...]:

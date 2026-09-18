@@ -48,15 +48,15 @@
 Le champ, sa route, la sélection dans `_reinjections`, la phrase qui décrit chaque image, la
 provenance lisible dans *Relire avant l'envoi*.
 
-- [ ] une référence promue porte un usage (`libre` par défaut), écrit dans le fichier du sujet
+- [x] une référence promue porte un usage (`libre` par défaut), écrit dans le fichier du sujet
       et relu sans migration
-- [ ] une route règle l'usage d'une référence ; un usage de direction que le jeu ne tient pas est
+- [x] une route règle l'usage d'une référence ; un usage de direction que le jeu ne tient pas est
       refusé
-- [ ] une case dans une direction n'emporte que les références de cette direction (sinon la
+- [x] une case dans une direction n'emporte que les références de cette direction (sinon la
       planche), plus les libres ; une planche pliée par directions emporte la planche
-- [ ] le texte décrit une planche comme une planche, une direction comme une direction
-- [ ] l'écran de confirmation nomme l'usage de chaque référence ; les décocher marche toujours
-- [ ] essais sans appel payant
+- [x] le texte décrit une planche comme une planche, une direction comme une direction
+- [x] l'écran de confirmation nomme l'usage de chaque référence ; les décocher marche toujours
+- [x] essais sans appel payant
 
 ### RS2 · Refaire une planche
 

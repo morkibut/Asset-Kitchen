@@ -202,6 +202,11 @@ class ServiceEnvoi:
             piece,
             ecartees_ici=references_ecartees,
             palette=palette_cochee,
+            # **Le contexte, comme à la soumission** (RS1) : la case visée ou la
+            # planche de ses directions choisit les références rangées, et
+            # l'écran doit compter celles-là, pas les autres.
+            direction=direction,
+            directions=directions,
         )
         mesure = self._generations.appels_mesures(modele)
         modele_lu = self._modele(modele)

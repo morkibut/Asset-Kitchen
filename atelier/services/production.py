@@ -33,7 +33,12 @@ from atelier.depot import Base, Fichiers, projet_lu_une_fois
 from atelier.domaine.asset import Asset
 from atelier.domaine.bande import Bande
 from atelier.domaine.erreurs import ErreurAtelier
-from atelier.domaine.personnage import Personnage
+from atelier.domaine.personnage import (
+    LIBRE,
+    Personnage,
+    direction_de_lusage,
+    usage_lu,
+)
 from atelier.domaine.ambiance import CE_QU_ON_PREND, TEXTES, prises_du_mode
 from atelier.domaine.carte import PERSONNAGES
 
@@ -1154,6 +1159,52 @@ class ServiceProduction:
         except (PersonnageInconnu, ProjetInconnu):
             return ()
 
+    def references_du_contexte(
+        self,
+        projet: str,
+        personnage: str,
+        *,
+        planche: bool,
+        direction: str | None,
+    ) -> tuple[tuple[str, str], ...]:
+        """Les références promues qui partent **dans ce contexte**, avec leur
+        usage (RS1). La règle vit sur le domaine
+        (`atelier/domaine/personnage.py`, `references_du_contexte`) ; ce service
+        ne fait que lui donner le sujet. Même repli que `references_promues` :
+        une chose disparue rend une liste vide, jamais un refus."""
+        try:
+            vise = self.personnage(projet, personnage)
+        except (PersonnageInconnu, ProjetInconnu):
+            return ()
+        return vise.references_du_contexte(planche=planche, direction=direction)
+
+    def nom_de_lusage(self, projet: str, usage: str) -> str:
+        """L'usage d'une référence, **en français et avec le nom de la
+        direction** — « planche », « direction sud ». Vide pour `libre`, qui
+        n'a rien à ajouter à « image promue ». Une direction disparue se nomme
+        par son identifiant : la ligne reste lisible."""
+        if usage == LIBRE or not usage:
+            return ""
+        angle = direction_de_lusage(usage)
+        if angle is None:
+            return usage
+        trouvee = self.direction(projet, angle)
+        return f"direction {trouvee.nom if trouvee else angle}"
+
+    def directions_du_sujet(
+        self, projet: str, personnage: Personnage
+    ) -> tuple[Direction, ...]:
+        """Les directions du jeu que **ce sujet** tient pour au moins une de ses
+        poses (RS1) — ce qu'une référence peut montrer. Une direction rangée
+        pour toutes ses poses, ou un sujet sans pose, n'en tient aucune : une
+        vue dans cette direction ne partirait jamais."""
+        directions = self.directions_du_jeu(projet)
+        tenues: dict[str, Direction] = {}
+        for pose in personnage.tenues(self.plan_de(projet, personnage)):
+            for angle in personnage.directions_tenues(pose, directions):
+                tenues.setdefault(angle.identifiant, angle)
+        return tuple(d for d in directions if d.identifiant in tenues)
+
     def references_de(self, projet: str, identifiant: str) -> dict[str, Any]:
         """Les images de référence d'une chose, **quatre provenances, une liste**.
 
@@ -1201,6 +1252,7 @@ class ServiceProduction:
                 }
             )
         for asset in personnage.references:
+            usage = personnage.usage_de(asset)
             lignes.append(
                 {
                     "reference": asset,
@@ -1208,6 +1260,11 @@ class ServiceProduction:
                     "provenance": "image promue",
                     "detail": "fabriquée puis retenue comme référence",
                     "ecartee": asset in ecartees,
+                    # **Ce qu'elle montre, et donc quand elle part** (RS1) :
+                    # `libre`, `planche` ou `direction:<id>`. Le nom français
+                    # l'accompagne pour que l'écran n'ait rien à recomposer.
+                    "usage": usage,
+                    "usage_nom": self.nom_de_lusage(projet, usage),
                     "montre": self._montre(projet, asset, carte=False),
                 }
             )
@@ -1278,7 +1335,12 @@ class ServiceProduction:
         return proposees
 
     def promouvoir_reference(
-        self, projet: str, identifiant: str, asset: str, promue: bool = True
+        self,
+        projet: str,
+        identifiant: str,
+        asset: str,
+        promue: bool = True,
+        usage: str | None = None,
     ) -> Personnage:
         """Une image fabriquée devient — ou cesse d'être — une référence permanente.
 
@@ -1286,17 +1348,60 @@ class ServiceProduction:
         l'image reste où elle est. La dépromouvoir ne la supprime pas, et la
         supprimer de la bibliothèque la retire d'ici sans laisser de trou : une
         référence qui ne désigne plus rien ne part pas, elle ne casse rien.
+
+        **Et son usage se règle par le même geste** (RS1) : promouvoir *en
+        planche* est un clic, pas deux. `None` garde l'usage qu'elle a — une
+        image déjà promue qu'on repromeut ne perd pas sa place —, `libre` le
+        retire. Dépromouvoir efface l'usage avec elle : une image repromue plus
+        tard repart libre, comme toute image neuve.
+
+        **Une direction que ce sujet ne tient pas est refusée**, avant d'écrire
+        quoi que ce soit : une vue rangée au nord d'une chose qui n'a pas de
+        nord ne partirait jamais, et personne ne verrait pourquoi.
         """
         personnage = self.personnage(projet, identifiant)
+        lu = None if usage is None else self._usage_admis(projet, personnage, usage)
+        usages = dict(personnage.usages_des_references)
         if promue:
             if asset not in personnage.references:
                 personnage.references = (*personnage.references, asset)
+            if lu is not None:
+                if lu == LIBRE:
+                    usages.pop(asset, None)
+                else:
+                    usages[asset] = lu
         else:
             personnage.references = tuple(
                 r for r in personnage.references if r != asset
             )
+            usages.pop(asset, None)
+        personnage.usages_des_references = usages
         self._sauver(personnage)
         return personnage
+
+    def _usage_admis(self, projet: str, personnage: Personnage, usage: str) -> str:
+        """L'usage demandé, **vérifié** — ou le refus qui dit pourquoi (RS1).
+
+        Un mot hors de la liste close est refusé plutôt que ramené à `libre` :
+        ici c'est une requête, pas un fichier abîmé, et celui qui l'envoie doit
+        apprendre que son rangement n'a pas eu lieu.
+        """
+        propre = usage.strip()
+        lu = usage_lu(propre)
+        if lu != propre:
+            raise ProductionRefusee(
+                f"« {usage} » n'est pas un usage de référence — libre, planche "
+                f"ou direction:<direction>"
+            )
+        angle = direction_de_lusage(lu)
+        if angle is not None and all(
+            d.identifiant != angle for d in self.directions_du_sujet(projet, personnage)
+        ):
+            raise ProductionRefusee(
+                f"« {personnage.nom} » ne tient pas la direction « {angle} » — "
+                f"une vue rangée là ne partirait jamais"
+            )
+        return lu
 
     # ── L'image de référence d'une fiche (RP19) ──────────────────────────────
     #

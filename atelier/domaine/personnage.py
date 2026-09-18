@@ -113,7 +113,22 @@ class Personnage:
     # références depuis T4.
     references: tuple[str, ...] = ()
 
-    # ── L'image de référence de sa fiche (RP19) ─────────────────────────────
+    # ── Ce que chacune de ces références montre (RS1) ────────────────────────
+    #
+    # **Une planche des quatre directions partait comme une vue de face** — le
+    # 18 septembre 2026, Champy est revenu seul, en isométrique, parce que le
+    # texte le décrivait comme « le même personnage » et rien d'autre
+    # (`docs/PLAN-references-du-sujet.md`). Un usage dit donc quand elle part et
+    # comment la nommer : `libre` (toujours, comme avant), `planche` (toutes les
+    # vues sur une image), ou `direction:<id>` (le sujet vu sous cet angle).
+    #
+    # **Absent vaut `libre`, et seul ce qui n'est pas libre s'écrit** : un
+    # fichier d'avant la tranche n'a pas la clé, et ce qui part aujourd'hui ne
+    # change pas tant que l'auteur ne range rien. Aucune migration. Une clé qui
+    # ne désigne plus une référence promue ne gêne pas : elle n'est jamais lue.
+    usages_des_references: dict[str, str] = field(default_factory=dict)
+
+    # ── L'image de référence de sa fiche (RP19)─────────────────────────────
     #
     # **Celle qui dit à quoi le sujet ressemble** (`docs/vocabulaire.html`), et
     # rien d'autre. C'est le portrait montré en grand en haut de sa fiche ; il
@@ -235,6 +250,23 @@ class Personnage:
         rangees = set(pose.ecartees) | set(self.directions_ecartees.get(pose.identifiant, ()))
         return tuple(d for d in directions if d.identifiant not in rangees)
 
+    def usage_de(self, asset: str) -> str:
+        """L'usage d'une référence promue — `libre` tant que rien n'est rangé."""
+        return self.usages_des_references.get(asset) or LIBRE
+
+    def references_du_contexte(
+        self, *, planche: bool, direction: str | None
+    ) -> tuple[tuple[str, str], ...]:
+        """Les références promues qui partent **dans ce contexte-ci**, avec leur
+        usage, dans l'ordre de promotion. Voir `references_du_contexte` plus bas,
+        qui porte la règle."""
+        return references_du_contexte(
+            self.references,
+            self.usages_des_references,
+            planche=planche,
+            direction=direction,
+        )
+
     def en_json(self) -> dict[str, Any]:
         return {
             "identifiant": self.identifiant,
@@ -248,6 +280,7 @@ class Personnage:
             "textes": dict(self.textes),
             "eteints": list(self.eteints),
             "references": list(self.references),
+            "usages_des_references": dict(self.usages_des_references),
             "image_de_reference": self.image_de_reference,
             "hors_calibrage": list(self.hors_calibrage),
             "directions_ecartees": {
@@ -284,6 +317,10 @@ class Personnage:
                 nom for nom in (d.get("eteints") or ()) if nom in CHAMPS_BIBLE
             ),
             references=tuple(_textes(d.get("references"))),
+            # **Absent, tout est libre** (RS1) : un fichier d'avant la tranche
+            # n'a pas la clé. Un usage illisible retombe aussi sur `libre`, qui
+            # est le comportement d'avant — jamais sur une planche inventée.
+            usages_des_references=_usages(d.get("usages_des_references")),
             # **Absente par défaut** (RP19) : un fichier écrit avant la tranche
             # n'a pas la clé, et la chaîne vide dit « rien n'a été choisi ».
             image_de_reference=str(d.get("image_de_reference") or ""),
@@ -307,6 +344,88 @@ class Personnage:
             objectif=(ObjectifProduction.depuis_json(d["objectif"])
                       if d.get("objectif") is not None else None),
         )
+
+
+# ── L'usage d'une référence promue (RS1) ─────────────────────────────────────
+#
+# **Trois usages, et la liste est close** : une référence qui part toujours, la
+# planche de toutes les vues, ou une vue dans une direction du jeu. La direction
+# se nomme par son identifiant, jamais par son nom — renommer « sud » en « vers
+# le joueur » ne doit pas faire perdre sa place à une référence rangée.
+LIBRE = "libre"
+PLANCHE = "planche"
+PREFIXE_DIRECTION = "direction:"
+
+
+def usage_de_direction(direction: str) -> str:
+    """L'usage qui range une référence dans cette direction-là."""
+    return f"{PREFIXE_DIRECTION}{direction}"
+
+
+def direction_de_lusage(usage: str) -> str | None:
+    """La direction qu'un usage désigne, ou rien s'il n'en désigne pas."""
+    if usage.startswith(PREFIXE_DIRECTION):
+        return usage[len(PREFIXE_DIRECTION):] or None
+    return None
+
+
+def usage_lu(brut: Any) -> str:
+    """Un usage relu — d'un fichier ou d'une requête —, **ramené à la liste
+    close**. Ce qui n'en est pas redevient `libre`, qui est ce qui partait
+    avant : un fichier abîmé ne range jamais une image au hasard."""
+    if not isinstance(brut, str):
+        return LIBRE
+    usage = brut.strip()
+    if usage == PLANCHE or direction_de_lusage(usage):
+        return usage
+    return LIBRE
+
+
+def references_du_contexte(
+    references: Iterable[str],
+    usages: dict[str, str],
+    *,
+    planche: bool,
+    direction: str | None,
+) -> tuple[tuple[str, str], ...]:
+    """**Le seul endroit qui décide quelle référence promue part** (RS1).
+
+    La règle de `docs/PLAN-references-du-sujet.md`, décision 2 :
+
+    - les `libre` partent **toujours** — c'est ce qui partait avant la tranche ;
+    - une planche par directions emporte les références `planche` ;
+    - une case dans une direction emporte celles de **cette** direction, et à
+      défaut la `planche` — mieux vaut toutes les vues que pas de vue du tout ;
+    - le reste (sans case, sans direction) n'emporte aucune référence typée.
+
+    **Jamais au hasard, et jamais une image que l'auteur n'a pas rangée là** :
+    la référence de l'ouest ne part pas pour une case au sud, même quand la
+    case au sud n'en a aucune.
+
+    Rend des couples `(asset, usage)`, dans l'ordre de promotion : l'usage
+    voyage avec l'image jusqu'au texte qui la nomme.
+    """
+    liste = tuple(dict.fromkeys(references))
+    lus = {asset: usage_lu(usages.get(asset)) for asset in liste}
+    typees: set[str] = set()
+    if planche:
+        typees = {PLANCHE}
+    elif direction:
+        sienne = usage_de_direction(direction)
+        typees = {sienne} if sienne in lus.values() else {PLANCHE}
+    return tuple(
+        (asset, lus[asset])
+        for asset in liste
+        if lus[asset] == LIBRE or lus[asset] in typees
+    )
+
+
+def _usages(brut: Any) -> dict[str, str]:
+    """Les usages relus du disque — seuls ceux qui ne sont pas libres restent."""
+    if not isinstance(brut, dict):
+        return {}
+    lus = {str(asset): usage_lu(usage) for asset, usage in brut.items() if asset}
+    return {asset: usage for asset, usage in lus.items() if usage != LIBRE}
 
 
 def _textes(brut: Any) -> list[str]:

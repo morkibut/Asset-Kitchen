@@ -243,7 +243,13 @@ class ServicePlanche:
         # par la même décomposition, sans quoi ils annonceraient deux prix pour
         # le même appel, ce que E13 a déjà payé une fois.
         jointes = self._generations.compter_references(
-            projet, vise.type, personnage=vise.identifiant, cases=len(toutes)
+            projet,
+            vise.type,
+            personnage=vise.identifiant,
+            cases=len(toutes),
+            # **Une planche de ses directions emporte la planche du sujet**
+            # (RS1) — elle compte donc dans le prix que cet écran annonce.
+            directions=toutes,
         )
 
         # **Ce qui part par défaut : tout.** Refaire les quatre est le premier
