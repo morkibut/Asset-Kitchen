@@ -2298,6 +2298,7 @@ describe("les six capacités rattrapées par B26", () => {
         note: "il suffit sur un sujet franchement détaché de son fond",
         entree: 320,
         licence: "MIT",
+        secondes_par_image: 0.4,
         defaut: true,
         descendu: true,
         raison: null,
@@ -2310,6 +2311,7 @@ describe("les six capacités rattrapées par B26", () => {
         note: "il tient les cheveux, les brins d'herbe et les franges",
         entree: 1024,
         licence: "MIT",
+        secondes_par_image: 16,
         defaut: false,
         descendu: false,
         raison: null,
@@ -2377,13 +2379,13 @@ describe("les six capacités rattrapées par B26", () => {
     const { appels } = ouvrirLeDetourage({ traitement: AVEC_SILHOUETTES })
     fireEvent.click(within(colonne()).getByRole("button", { name: "modèle" }))
 
-    // Sans rien demander, c'est le défaut du serveur qui est montré — et sa
-    // note avec lui.
+    // Sans rien demander, c'est le défaut du serveur qui est montré — et **son
+    // temps par image, seule chose dite du modèle** : l'auteur a fait retirer
+    // les notes de banc le 16 septembre 2026.
     const rapide = await within(colonne()).findByRole("button", { name: "rapide" })
     expect(rapide.getAttribute("aria-pressed")).toBe("true")
-    expect(
-      within(colonne()).getByText(/il suffit sur un sujet franchement détaché/),
-    ).toBeTruthy()
+    expect(within(colonne()).getByText("≈ 0,4 s par image")).toBeTruthy()
+    expect(within(colonne()).queryByText(/il suffit sur un sujet franchement détaché/)).toBeNull()
 
     fireEvent.click(
       within(colonne()).getByRole("button", {
@@ -2397,10 +2399,7 @@ describe("les six capacités rattrapées par B26", () => {
     expect(
       await within(colonne()).findByText(/l'atelier descendra ce modèle/),
     ).toBeTruthy()
-    // Et le côté auquel il infère, qui décide de ce qu'il peut rendre (D4).
-    expect(
-      within(colonne()).getByText(/il calcule à 1024 px et ne réagrandit pas son masque/),
-    ).toBeTruthy()
+    expect(within(colonne()).getByText("≈ 16 s par image")).toBeTruthy()
   })
 
   test("sans catalogue servi, le moteur reste choisissable et aucun modèle n'est deviné", () => {
@@ -2411,10 +2410,9 @@ describe("les six capacités rattrapées par B26", () => {
     })
     fireEvent.click(within(colonne()).getByRole("button", { name: "modèle" }))
     expect(within(colonne()).queryByRole("button", { name: "rapide" })).toBeNull()
-    // Et le curseur qui s'en va le dit, plutôt que de disparaître sans un mot.
-    expect(
-      within(colonne()).getByText(/il n'y a pas de tolérance à régler/),
-    ).toBeTruthy()
+    // Le curseur de tolérance s'en va sans phrase : l'auteur a fait retirer ces
+    // explications le 16 septembre 2026.
+    expect(within(colonne()).queryByLabelText(/tolérance de la passe 1, en chiffres/)).toBeNull()
   })
 
   // ── 3 · L'échantillon de l'occupation ─────────────────────────────────────

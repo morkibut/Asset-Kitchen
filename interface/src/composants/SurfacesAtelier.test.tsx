@@ -17,7 +17,7 @@ test("Ctrl + molette change la surface et empêche le zoom de toute l’applicat
   const evenement = new WheelEvent("wheel", { ctrlKey: true, deltaY: -120, bubbles: true, cancelable: true })
   fireEvent(screen.getByLabelText("Vue de l’extraction"), evenement)
   expect(evenement.defaultPrevented).toBe(true)
-  expect(screen.getByLabelText("Zoom de l’extraction")).toHaveValue(120)
+  expect(screen.getByLabelText("Zoom de l’extraction")).toHaveValue("120")
 })
 
 test("la pipette d’une frame vise le pixel source malgré la réduction de la bande", async () => {

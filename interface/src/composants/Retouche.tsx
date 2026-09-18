@@ -97,6 +97,7 @@ import { EchantillonDeHauteur, part, rectangleDeLImage, useEcoule } from "./piec
 import { EcranSuperposition } from "./Superposition"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { useEtatDuParcours } from "./MemoireDuParcours"
+import { CommandesDuZoom } from "./CommandesDuZoom"
 import { useMainDuParcours } from "./MainDuParcours"
 import { useRetoucheBrouillon } from "./RetoucheBrouillon"
 import { CadreDialogue } from "./CadreDialogue"
@@ -106,7 +107,6 @@ import { EnregistrerSous, raisonDEnregistrerSous } from "./EnregistrerSous"
 // balisage : ce sont des faits du domaine, et une seconde définition d'un même
 // fait finit toujours par diverger de la première.
 import {
-  ARRETS_ZOOM,
   CIBLES,
   CURSEURS,
   DURCISSEMENT_LIVRE,
@@ -652,6 +652,16 @@ export type Poste = {
    *  recette les aurait fait entrer dans l'empreinte, donc changer de pinceau
    *  aurait recalculé un rendu identique. */
   etatMain?: EtatMain
+  /** Combien d'images ce réglage recalcule — l'animation entière dans l'atelier
+   *  d'une bande. Sert à dire l'attente d'un modèle de détourage. */
+  images?: number
+}
+
+/** Une durée écrite à la française : « 1,2 s », « 16 s », « 2 min ». */
+function secondesLisibles(secondes: number): string {
+  if (secondes >= 90) return `${Math.round(secondes / 60)} min`
+  if (secondes >= 10) return `${Math.round(secondes)} s`
+  return `${secondes.toFixed(1).replace(".", ",")} s`
 }
 
 export function ReglagesDuDetourage({
@@ -666,6 +676,7 @@ export function ReglagesDuDetourage({
   asset,
   onErreur,
   onUnivers,
+  images,
 }: Poste & {
   /** L'image sur laquelle ce détourage se règle, ou rien.
    *
@@ -845,19 +856,16 @@ export function ReglagesDuDetourage({
                     }
                   />
                 </Reglage>
-                <Pourquoi texte={choisi.note} />
-                {/* **Le côté auquel il infère, dit à côté de son poids** (D4).
-                    C'est le nombre qui décide de ce qu'un modèle peut rendre :
-                    un masque calculé en 320 puis étiré à 1024 perd tout ce qui
-                    est plus fin que trois pixels, et le rebond fabrique des
-                    demi-transparences *à l'intérieur* du sujet. */}
-                <Pourquoi
-                  texte={
-                    choisi.entree >= 1024
-                      ? `il calcule à ${choisi.entree} px et ne réagrandit pas son masque · ${choisi.licence}`
-                      : `⚠ il calcule à ${choisi.entree} px puis réagrandit son masque — ce qui est plus fin que trois pixels y disparaît · ${choisi.licence}`
-                  }
-                />
+                {choisi.secondes_par_image ? (
+                  <Pourquoi
+                    texte={
+                      `≈ ${secondesLisibles(choisi.secondes_par_image)} par image` +
+                      (images && images > 1
+                        ? ` · ≈ ${secondesLisibles(choisi.secondes_par_image * images)} pour l'animation (${images} images)`
+                        : "")
+                    }
+                  />
+                ) : null}
                 {/* **Ce que ça pèse, dit avant l'attente** — pas au milieu.
                     Un modèle qui n'est pas encore descendu se rapatrie tout
                     seul au premier rendu ; ce qu'on doit à l'auteur, c'est de
@@ -891,20 +899,6 @@ export function ReglagesDuDetourage({
               />
             </Reglage>
           )}
-          {/* **Un réglage qui s'en va le dit** (rattrapé en `B26`). Deux des
-              cinq moteurs ne lisent aucune tolérance : le faire disparaître
-              sans un mot revient au même qu'un curseur qui ne ferait rien
-              (`AGENTS.md`, 8nonies). */}
-          {(passe.moteur === "modele" || passe.moteur === "palette") && (
-            <Pourquoi
-              texte={
-                passe.moteur === "modele"
-                  ? "le modèle décide seul de la silhouette : il n'y a pas de tolérance à régler"
-                  : "la palette du jeu décide seule : il n'y a pas de tolérance à régler"
-              }
-            />
-          )}
-
           <Reglage nom="bord rongé">
             <Choix
               valeurs={[0, 1, 2, 3, 4] as const}
@@ -3112,6 +3106,8 @@ export function ToileDeLaMain({
   onPassage,
   rendu,
   onDebut,
+  onTrace,
+  sansTrace = false,
 }: {
   asset: Pick<Asset, "identifiant" | "empreinte" | "label" | "largeur" | "hauteur" | "rendu_largeur" | "rendu_hauteur">
   avant: boolean
@@ -3120,6 +3116,11 @@ export function ToileDeLaMain({
   /** Une frame de planche se peint dans la même surface qu'une image. */
   rendu?: React.ReactNode
   onDebut?: () => void
+  /** Le trait en cours, à chaque pixel parcouru — pour qu'un rendu en direct
+   *  le peigne pendant le geste (16 septembre 2026). */
+  onTrace?: (trait: Trait | null) => void
+  /** Le rendu montre déjà le trait : pas de tracé orange par-dessus. */
+  sansTrace?: boolean
 }) {
   const [trace, setTrace] = useState<[number, number][] | null>(null)
   /** Le pixel visé — **et non la place du pointeur** (U11). Le curseur est le
@@ -3135,6 +3136,11 @@ export function ToileDeLaMain({
 
   const surLOpacite = etat.actif === OPACITE
   const teinte = surLOpacite ? "var(--color-signal)" : etat.couleur
+  const suivreLeTrace = useRef(onTrace)
+  suivreLeTrace.current = onTrace
+  useEffect(() => {
+    suivreLeTrace.current?.(trace ? { garde: etat.sens, rayon: rayonDe(etat.diametre), points: trace, couleur: surLOpacite ? "" : etat.couleur } : null)
+  }, [trace, etat.sens, etat.diametre, etat.couleur, surLOpacite])
 
   /** Le point sous le pointeur, en pixels de l'image rendue.
    *
@@ -3213,7 +3219,7 @@ export function ToileDeLaMain({
       {/* Le passage en cours, à sa vraie largeur : elle vaut (2 × rayon + 1)
           pixels d'image, mise à l'échelle du cadre. Zoomer l'épaissit ; c'est
           voulu, puisqu'elle mesure l'image et non le châssis. */}
-      {trace && trace.length > 0 && (
+      {!sansTrace && trace && trace.length > 0 && (
         <svg
           aria-hidden
           viewBox={`0 0 ${largeur} ${hauteur}`}
@@ -4731,103 +4737,6 @@ function SoeurDuCarnet({
         style={{ imageRendering: "pixelated" }}
       />
     </button>
-  )
-}
-
-/** *moins*, le pour cent, *plus*, et le retour à cent — **repris de
- *  `CommandesDeZoom` (`Tables.tsx`, U2/`B24`)**, seul l'habillage passe au
- *  papier du carnet. Le champ suit le zoom effectif, y compris en `ajusté` :
- *  un champ vide pendant qu'on regarde une image à 59 % laisserait deviner le
- *  nombre. */
-function CommandesDuZoom({
-  zoom,
-  onZoom,
-  ajuste,
-  maximum = ZOOM_MAX,
-}: {
-  zoom: ZoomTable
-  onZoom: (zoom: ZoomTable) => void
-  ajuste: number
-  maximum?: number
-}) {
-  const effectif = zoom === "ajuste" ? ajuste : zoom
-  const [ecrit, setEcrit] = useState<string | null>(null)
-  const bornerIci = (v: number) => Math.max(ZOOM_MIN, Math.min(maximum, Math.round(v)))
-  const arrets = [...ARRETS_ZOOM, 400, 600, 800, 1200, 1600].filter((v) => v <= maximum)
-
-  const valider = (texte: string) => {
-    setEcrit(null)
-    const lu = Number.parseInt(texte.replace(/[^\d]/g, ""), 10)
-    // **Hors bornes, on ramène — on ne refuse pas.**
-    if (Number.isFinite(lu)) onZoom(bornerIci(lu))
-  }
-
-  return (
-    <span className="flex items-center gap-[4px]">
-      <button
-        type="button"
-        aria-label="Reculer"
-        title="Reculer"
-        disabled={effectif <= ZOOM_MIN}
-        onClick={() =>
-          onZoom(
-            bornerIci([...arrets].reverse().find((a) => a < effectif) ?? ZOOM_MIN),
-          )
-        }
-        className="flex h-[26px] w-[26px] items-center justify-center rounded-7 text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint"
-      >
-        −
-      </button>
-      <input
-        type="text"
-        inputMode="numeric"
-        aria-label="Pour cent d'agrandissement"
-        value={ecrit ?? `${effectif}`}
-        onChange={(e) => setEcrit(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") valider((e.target as HTMLInputElement).value)
-          // Échap rend la valeur d'avant — comme partout ailleurs.
-          if (e.key === "Escape") setEcrit(null)
-        }}
-        onBlur={(e) => ecrit !== null && valider(e.target.value)}
-        className="mesure h-[26px] w-[34px] rounded-7 border border-trait bg-carte px-[4px] text-right text-[12px] text-encre tabular-nums"
-      />
-      <span className="text-[12px] text-encre-4">%</span>
-      <button
-        type="button"
-        aria-label="Approcher"
-        title="Approcher"
-        disabled={effectif >= maximum}
-        onClick={() => onZoom(bornerIci(arrets.find((a) => a > effectif) ?? maximum))}
-        className="flex h-[26px] w-[26px] items-center justify-center rounded-7 text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint"
-      >
-        +
-      </button>
-      <button
-        type="button"
-        title="Un pixel d'image pour un pixel d'écran"
-        aria-pressed={zoom === 100}
-        onClick={() => onZoom(100)}
-        className={[
-          "h-[26px] shrink-0 whitespace-nowrap rounded-7 px-[8px] text-[12px] transition-colors duration-120",
-          zoom === 100 ? "bg-carte font-medium text-encre" : "text-encre-3 hover:text-encre",
-        ].join(" ")}
-      >
-        100 %
-      </button>
-      <button
-        type="button"
-        title="Toute l'image dans le cadre"
-        aria-pressed={zoom === "ajuste"}
-        onClick={() => onZoom("ajuste")}
-        className={[
-          "h-[26px] shrink-0 whitespace-nowrap rounded-7 px-[8px] text-[12px] transition-colors duration-120",
-          zoom === "ajuste" ? "bg-carte font-medium text-encre" : "text-encre-3 hover:text-encre",
-        ].join(" ")}
-      >
-        Adapter
-      </button>
-    </span>
   )
 }
 

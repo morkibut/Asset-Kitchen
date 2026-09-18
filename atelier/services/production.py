@@ -2781,11 +2781,12 @@ class ServiceProduction:
             if not asset.piece
         ]
 
-        if pose:
-            siennes = [a for a in corps if a.pose == pose]
-            attitude = next(
-                (p for p in self.plan_de(projet, vise) if p.identifiant == pose), None
-            )
+        plan = self.plan_de(projet, vise)
+
+        def image_de_la_case(identifiant: str) -> tuple[Any, Any]:
+            """Le corps retenu d'une case (pose, et direction si on en vise une)."""
+            siennes = [a for a in corps if a.pose == identifiant]
+            attitude = next((p for p in plan if p.identifiant == identifiant), None)
             if direction and attitude is not None:
                 # **Une image sans direction compte pour la première**, comme
                 # dans la matrice : elle a été faite avant que le jeu ne déclare
@@ -2801,16 +2802,37 @@ class ServiceProduction:
                     if a.direction == direction
                     or (a.direction is None and direction == premiere)
                 ]
-            retenu = corps_retenu(siennes)
+            return corps_retenu(siennes), attitude
+
+        ou = f" vers {direction}" if direction else ""
+        if pose:
+            retenu, attitude = image_de_la_case(pose)
             if retenu is not None:
                 nomme = attitude.nom if attitude is not None else pose
-                ou = f" vers {direction}" if direction else ""
                 return {
                     "asset": retenu.en_json(),
                     "origine": "case",
                     "raison": (
                         f"l'image de la case visée — {vise.nom}, {nomme}{ou}. "
                         "Le clip suivra l'attitude et l'angle déjà validés."
+                    ),
+                }
+
+        # **En cascade** (16 septembre 2026) : sans image dans la case, on prend
+        # l'image de référence de la **même direction** — la première pose du
+        # plan, le repos. Une marche vers le nord part du repos vers le nord,
+        # pas du portrait de face.
+        tenues = vise.tenues(plan)
+        if pose and direction and tenues and tenues[0].identifiant != pose:
+            retenu, attitude = image_de_la_case(tenues[0].identifiant)
+            if retenu is not None:
+                return {
+                    "asset": retenu.en_json(),
+                    "origine": "reference",
+                    "raison": (
+                        f"l'image de référence — {vise.nom}, "
+                        f"{attitude.nom if attitude is not None else tenues[0].identifiant}{ou}. "
+                        "Le clip part de la même direction."
                     ),
                 }
 

@@ -37,7 +37,6 @@ export function EcranPlanche({
   plan,
   onPose,
   onFermer,
-  onVitrine,
   onArmer,
   onErreur,
 }: {
@@ -48,11 +47,6 @@ export function EcranPlanche({
   plan: Pose[]
   onPose: (pose: string) => void
   onFermer: () => void
-  /** **La quatrième porte de la vitrine** (E16). Son critère la réservait à E13
-   *  — *la porte s'y posera avec elle, l'écran ne bouge pas* — et c'est le cas :
-   *  la vitrine ne change pas d'une ligne, elle gagne un endroit d'où on
-   *  l'ouvre. On regarde ce qu'on a avant de repayer ce qu'on a. */
-  onVitrine: () => void
   /** **Armer, jamais envoyer.** La barre qui paie reçoit la pose et les
    *  directions ; elle seule appelle le fournisseur. */
   onArmer: (pose: string, directions: string[]) => void
@@ -268,21 +262,6 @@ export function EcranPlanche({
                     lu.deja_pleines.length > 1 ? "s" : ""
                   }`}
               </span>
-              {/* **On regarde ce qu'on a avant de repayer ce qu'on a** (E16).
-                  La porte n'existe que quand il y a quelque chose à regarder :
-                  une planche dont toutes les cases sont vides n'a rien à
-                  montrer, et une porte qui ouvre sur le vide est pire qu'une
-                  porte absente. */}
-              {lu.deja_pleines.length > 0 && (
-                <button
-                  type="button"
-                  onClick={onVitrine}
-                  title="voir en grand ce qui est déjà fait, avant de le refaire"
-                  className="mesure ml-auto px-1 text-[10px] text-signal hover:opacity-70"
-                >
-                  la vitrine ›
-                </button>
-              )}
             </div>
 
             {lu.cases.length < 2 && (

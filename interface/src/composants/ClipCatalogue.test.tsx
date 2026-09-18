@@ -107,7 +107,7 @@ test("un catalogue vide offre de le redemander, et le geste relit la liste", asy
   // résolution —, sans quoi les prix affichés ne seraient ceux d'aucun réglage.
   await waitFor(() => expect(redemande).toHaveBeenCalledTimes(1))
   await waitFor(() => expect(liste).toHaveBeenCalledTimes(2))
-  expect(liste).toHaveBeenLastCalledWith(5, "480p", "1:1")
+  expect(liste).toHaveBeenLastCalledWith(1.5, "480p", "1:1")
 })
 
 test("un catalogue rempli ne montre pas le bouton", async () => {

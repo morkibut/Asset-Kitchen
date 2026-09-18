@@ -254,12 +254,12 @@ const onglet = (nom: string) => screen.getByRole("tab", { name: nom })
 test("la fiche validée ouvre sur six onglets, sans formulaire ni barre permanente", async () => {
   monter()
   expect(document.querySelector("[data-page-du-sujet]")).toBeTruthy()
-  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images fixes", "Sources & clips", "Pas encore rangé", "Équipement", "Objectif & règles"])
+  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images de référence", "Sources & clips", "Pas encore rangé", "Équipement", "Objectif & règles"])
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
   expect(screen.queryByLabelText("Nom du sujet")).toBeNull()
   expect(document.querySelector("[data-ce-qui-lui-manque]")).toBeNull()
   expect(document.querySelector("[data-barre-qui-paie]")).toBeNull()
-  fireEvent.click(onglet("Images fixes"))
+  fireEvent.click(onglet("Images de référence"))
   expect(document.querySelector("[data-onglet-images]")).toBeTruthy()
   expect(document.querySelector("[data-barre-qui-paie]")).toBeNull()
   expect(await screen.findByText("Les héros")).toBeTruthy()
@@ -282,7 +282,7 @@ test("un objectif d’animation n’ajoute aucun manque d’image fixe au résum
 
 test("un asset destiné aux images fixes ouvre directement ses images", () => {
   monter({ objectif: { sorties: [{ nature: "image", pose: "repos", direction: "", quantite: 1 }], largeur: 32, hauteur: 48, cadence: 8, boucle: false, repere: { x: 16, y: 48 } } })
-  expect(onglet("Images fixes").getAttribute("aria-selected")).toBe("true")
+  expect(onglet("Images de référence").getAttribute("aria-selected")).toBe("true")
 })
 
 test("la description se modifie à la demande puis se garde en une seule fois", async () => {
@@ -330,7 +330,7 @@ test("la référence compacte mène à la rangée de ses images", () => {
   const portrait = document.querySelector("[data-portrait-du-sujet]") as HTMLElement
   expect(within(portrait).getByAltText("Référence de Le pèlerin")).toBeTruthy()
   fireEvent.click(portrait)
-  expect(onglet("Images fixes").getAttribute("aria-selected")).toBe("true")
+  expect(onglet("Images de référence").getAttribute("aria-selected")).toBe("true")
 })
 
 test("un asset sans source montre un état vide compact", () => {
@@ -598,11 +598,47 @@ test("chaque onglet retrouve la position où on l'avait laissé", () => {
   const defileur = (document.querySelector("[data-onglet-animations]") as HTMLElement).closest(".overflow-y-auto") as HTMLElement
   defileur.scrollTop = 456
   fireEvent.scroll(defileur)
-  fireEvent.click(onglet("Images fixes"))
+  fireEvent.click(onglet("Images de référence"))
   defileur.scrollTop = 120
   fireEvent.scroll(defileur)
   fireEvent.click(onglet("Animations"))
   expect(defileur.scrollTop).toBe(456)
-  fireEvent.click(onglet("Images fixes"))
+  fireEvent.click(onglet("Images de référence"))
   expect(defileur.scrollTop).toBe(120)
+})
+
+// ── Une pastille sur « Sources & clips » quand un clip arrive (16 sept. 2026) ──
+test("un clip arrivé pour ce sujet allume une pastille sur « Sources & clips », éteinte à la visite", async () => {
+  window.localStorage.clear()
+  const { fetchDouble } = construireDouble()
+  vi.stubGlobal("fetch", fetchDouble)
+  const personnage = sujet()
+  const clip = (identifiant: string) => ({ identifiant, personnage: personnage.identifiant, statut: "reussie", modele: "maison", demande: { prompt: "marche" }, parametres_resolus: {}, clip: { jete: false, nature: "video", images: 0, secondes: 1.5, cadence: 16, resolution: "480p", proportions: "1:1" } }) as unknown as import("../api").Generation
+  const rien = vi.fn()
+  const page = (clips: import("../api").Generation[]) => (
+    <PageDuSujet ouvert={personnage} plan={PLAN} personnages={[personnage]} univers={UNIVERS.univers as unknown as Univers}
+      emplacements={[]} pieces={[]} vestiaire={null} barreQuiPaie={null} clips={clips} clipsLus
+      onPersonnage={rien} onArmer={rien} onAnimer={rien} onFente={rien} onOuvrirCase={rien} onMonterLaBande={rien}
+      onOuvrirLaBande={rien} onSuperposition={rien} onSupprimer={rien} onReinjecter={rien} onReglages={rien}
+      onGrille={rien} onComparer={rien} onPiece={rien} onCreerPiece={rien} onRetirerLEmploi={rien} />
+  )
+  const { rerender } = render(page([clip("ancien")]))
+  await waitFor(() => expect(window.localStorage.getItem(`clips-vus:${personnage.projet}:${personnage.identifiant}`)).toContain("ancien"))
+  expect(document.querySelector("[data-nouveaux-clips]")).toBeNull()
+  rerender(page([clip("ancien"), clip("neuf")]))
+  await waitFor(() => expect(document.querySelector("[data-nouveaux-clips]")).toBeTruthy())
+  const { sources3d } = await import("../api-3d")
+  vi.spyOn(sources3d, "lister").mockResolvedValue({ sources: [] } as never)
+  vi.spyOn(sources3d, "connexion").mockResolvedValue({ adresse: "" } as never)
+  fireEvent.click(onglet("Sources & clips"))
+  await waitFor(() => expect(document.querySelector("[data-nouveaux-clips]")).toBeNull())
+})
+
+test("« Changer » sur le portrait ouvre ses images, et un clic en fait la vignette", async () => {
+  const { appels } = monter()
+  fireEvent.click(document.querySelector("[data-changer-le-portrait]") as HTMLElement)
+  const choix = document.querySelector("[data-choix-du-portrait]") as HTMLElement
+  const boutons = within(choix).getAllByRole("button", { name: /pour vignette/ })
+  fireEvent.click(boutons[boutons.length - 1])
+  await waitFor(() => expect(appels.some((a) => a.url.endsWith("/reference-image") && a.methode === "PUT")).toBe(true))
 })

@@ -87,6 +87,24 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
     } catch (e) { setErreur((e as Error).message) }
   }
 
+  /** **Retirer un mouvement de ce sujet, ou le lui rendre** (16 septembre
+   *  2026), venu de l'ancien écran « Ses cases ». Ses images restent en
+   *  bibliothèque ; le rendre les remet dans leurs cases. */
+  const [ecartees, setEcartees] = useState<string[]>(personnage.ecartees ?? [])
+  useEffect(() => { setEcartees(personnage.ecartees ?? []) }, [personnage.ecartees])
+  async function tenir(pose: string, tenu: boolean) {
+    setErreur("")
+    const plan = (personnage.plan ?? []).map((p) => p.identifiant)
+    const suivantes = plan.filter((id) => (id === pose ? tenu : !ecartees.includes(id)))
+    try {
+      const rendu = await api.reglerPersonnage(personnage.identifiant, { poses: suivantes })
+      setEcartees(rendu.personnage.ecartees ?? [])
+      if (!tenu) setBrouillon((ancien) => ancien ? { ...ancien, sorties: ancien.sorties.filter((s) => s.pose !== pose) } : ancien)
+      setLecture(await api.objectifPersonnage(personnage.identifiant, projet))
+      onChange?.()
+    } catch (e) { setErreur((e as Error).message) }
+  }
+
   /** **Une direction de plus, pour tout le jeu** (RP13, E10). Déclarée depuis
    *  une rangée parce que c'est là qu'elle manque à l'œil, mais
    *  `api.ajouterDirection` vaut pour toutes les poses — une case vide paraît
@@ -149,9 +167,13 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
         <span className="text-[12px] text-encre-4">{demande} sortie{demande > 1 ? "s" : ""} demandée{demande > 1 ? "s" : ""}</span>
       </div>
       <AjoutDeMouvement onAjouter={ajouterMouvement} />
+      {ecartees.length > 0 && <div data-mouvements-retires className="flex flex-wrap items-center gap-[8px] text-[13px] text-encre-3">
+        <span>Retirés de ce sujet :</span>
+        {ecartees.map((id) => <button key={id} type="button" className={bouton} title="Le lui rendre" onClick={() => void tenir(id, true)}>{(personnage.plan ?? []).find((p) => p.identifiant === id)?.nom ?? id} · remettre</button>)}
+      </div>}
       <div className="space-y-[8px]">
         {mouvements.map((m) => <details key={m.id} open={brouillon.sorties.some((s) => s.pose === m.id)} className="rounded-10 border border-contour bg-carte p-[14px]">
-          <summary className="cursor-pointer font-serif text-[25px] text-encre">{m.nom}</summary>
+          <summary className="flex cursor-pointer items-center justify-between gap-[14px] font-serif text-[25px] text-encre"><span>{m.nom}</span><button type="button" className={bouton} aria-label={`Retirer le mouvement ${m.nom}`} onClick={(e) => { e.preventDefault(); void tenir(m.id, false) }}>Retirer ce mouvement</button></summary>
           <div className="mt-[8px] space-y-[8px]">
             {m.directions.map((direction) => {
               const animation = brouillon.sorties.some((s) => s.pose === m.id && s.direction === direction.id && s.nature === "animation")

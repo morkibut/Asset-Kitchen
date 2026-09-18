@@ -118,3 +118,17 @@ test("une direction manquante se déclare depuis une rangée, et vaut pour tout 
   await screen.findByLabelText("Marche · Nord · animation")
   expect(onChange).toHaveBeenCalled()
 })
+
+test("retirer un mouvement le range, et « remettre » le lui rend (venu de l'ancien écran)", async () => {
+  vi.spyOn(api, "objectifPersonnage").mockResolvedValue(structuredClone(lecture))
+  const avecPlan = { ...personnage, plan: [{ identifiant: "repos", nom: "Repos" }, { identifiant: "marche", nom: "Marche" }], ecartees: [] } as unknown as Personnage
+  const regler = vi.spyOn(api, "reglerPersonnage").mockImplementation(async (_id, champs) => ({
+    personnage: { ...avecPlan, ecartees: ["repos", "marche"].filter((p) => !champs.poses?.includes(p)) },
+  }) as never)
+  render(<ObjectifDuSujet personnage={avecPlan} projet="marais" />)
+  fireEvent.click(await screen.findByRole("button", { name: "Modifier l’objectif" }))
+  fireEvent.click(screen.getByRole("button", { name: "Retirer le mouvement Marche" }))
+  await waitFor(() => expect(regler).toHaveBeenCalledWith("pelerin", { poses: ["repos"] }))
+  fireEvent.click(await screen.findByRole("button", { name: "Marche · remettre" }))
+  await waitFor(() => expect(regler).toHaveBeenLastCalledWith("pelerin", { poses: ["repos", "marche"] }))
+})

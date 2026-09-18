@@ -182,7 +182,7 @@ async def montrer_mouvement(requete: Request, identifiant: str) -> dict[str, Any
 
 
 def _demande_de_jauge(
-    secondes: int, resolution: str, proportions: str
+    secondes: float, resolution: str, proportions: str
 ) -> DemandeClip:
     """La demande qui sert à **jauger** un modèle, sans image et sans texte.
 
@@ -204,7 +204,7 @@ def _demande_de_jauge(
 @routeur.get("/clips/models")
 async def modeles_video(
     requete: Request,
-    secondes: int = Query(SECONDES_DEFAUT, ge=1, le=60),
+    secondes: float = Query(SECONDES_DEFAUT, ge=1, le=60),
     resolution: str = Query(RESOLUTION_DEFAUT),
     proportions: str = Query(PROPORTIONS_DEFAUT),
 ) -> dict[str, Any]:
@@ -265,7 +265,7 @@ async def modeles_video(
         "moteurs": etat["moteurs"],
         "decodeur": etat["decodeur"],
         "demande": {
-            "secondes": secondes,
+            "secondes": demande.secondes,
             "resolution": resolution,
             "proportions": proportions,
         },
@@ -355,7 +355,7 @@ class CorpsClip(BaseModel):
     # génération — c'est lui que le montage lit pour nommer ses bandes.
     prompt: str = ""
     mouvement: str | None = None
-    secondes: int = SECONDES_DEFAUT
+    secondes: float = SECONDES_DEFAUT
     resolution: str = RESOLUTION_DEFAUT
     proportions: str = PROPORTIONS_DEFAUT
     # **Combien de clips ce geste lance. Un est le défaut**, et le produit
@@ -367,6 +367,8 @@ class CorpsClip(BaseModel):
     pose: str | None = None
     direction: str | None = None
     options: dict[str, Any] = {}
+    # Monter l'animation dès que le clip arrive (16 septembre 2026).
+    monter_auto: bool = False
 
 
 # Au-delà, ce n'est plus un lot, c'est une fuite. **Ce n'est pas la règle des
@@ -462,6 +464,7 @@ async def commander_clip(requete: Request, corps: CorpsClip) -> dict[str, Any]:
             mouvement=corps.mouvement,
             lot=lot,
             depart=corps.asset,
+            monter_auto=corps.monter_auto,
         )
         clips.append(generation.en_json())
     return {"clips": clips}
@@ -514,6 +517,12 @@ async def rendre_des_clips(requete: Request, corps: CorpsClips) -> dict[str, Any
     """Remontrer ce qu'on avait écarté. L'annulation du geste d'au-dessus."""
     rendus = _atelier(requete).animation.rendre(corps.clips)
     return {"clips": [g.en_json() for g in rendus]}
+
+
+@routeur.post("/clips/{identifiant}/erase")
+async def effacer_un_clip(requete: Request, identifiant: str) -> dict[str, Any]:
+    """Supprimer un clip pour de bon. Refusé s'il porte une animation."""
+    return _atelier(requete).animation.effacer(identifiant).en_json()
 
 
 @routeur.post("/clips/import", status_code=201)

@@ -20,6 +20,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type SetStateAction,
 } from "react"
 import {
   api,
@@ -193,7 +194,14 @@ function AtelierApp() {
    *  restait visible que le temps que le chantier le tienne, c'est-à-dire
    *  jusqu'au premier rechargement. Relue à l'ouverture du jeu — un clip payé
    *  ne change jamais, une relecture régulière n'apprendrait rien de plus. */
-  const [clipsDuJeu, setClipsDuJeu] = useState<Generation[]>([])
+  const [clipsDuJeu, setClipsDuJeuBrut] = useState<Generation[]>([])
+  /** Vrai dès la première lecture : avant, une liste vide ne veut pas dire
+   *  « aucun clip », et la pastille des nouveaux clips s'allumerait à tort. */
+  const [clipsDuJeuLus, setClipsDuJeuLus] = useState(false)
+  const setClipsDuJeu = useCallback((liste: SetStateAction<Generation[]>) => {
+    setClipsDuJeuBrut(liste)
+    setClipsDuJeuLus(true)
+  }, [])
   const [bibliotheque, setBibliotheque] = useState<Bibliotheque>(BIBLIOTHEQUE_VIDE)
   const [panne, setPanne] = useState<string | null>(null)
   /** Ce qu'on montre d'un refus : ce que le serveur a su dire en français,
@@ -1322,6 +1330,17 @@ function AtelierApp() {
     vivant,
   })
 
+  // **Un clip qui aboutit se relit dans la liste des clips du jeu.** Sans ça,
+  // il n'apparaissait sur la fiche du sujet qu'au rechargement de la page —
+  // et la pastille de « Sources & clips » n'avait rien pour s'allumer.
+  const clipsAboutis = useMemo(
+    () => chantier.filter((g) => g.clip && g.statut === "reussie").map((g) => g.identifiant).sort().join(","),
+    [chantier],
+  )
+  useEffect(() => {
+    if (clipsAboutis) void relireClipsDuJeu()
+  }, [clipsAboutis, relireClipsDuJeu])
+
   /** L'univers tel que l'onglet le tient, en une chaîne. Un `ref` et non un
    *  état : il ne rend rien, il ne sert qu'à répondre « est-ce que ce message
    *  change quelque chose ? » au moment où le message arrive. */
@@ -2006,16 +2025,27 @@ function AtelierApp() {
         <EcranClip
           cible={clipOuvert}
           onFermer={() => setClipOuvert(null)}
-          /* **Les clips partis se regardent arriver dans la galerie.** Ils y
-             tiennent leur place comme n'importe quel appel — le flux les y
-             pose, un par un, et chacun se voit dès son arrivée. L'écran se
-             referme : ce qu'on voulait faire est fait. */
+          /* **Les clips partis arrivent dans la galerie, mais on reste où
+             l'on était.** L'écran se referme sur la fiche et l'onglet d'où on
+             l'avait ouvert ; avant, il emmenait à la galerie, et il fallait
+             retrouver la fiche. Signalé le 16 septembre 2026. Une fente dit où
+             les regarder arriver, et y mène d'un clic. */
           onCommande={(clips) => {
             setClipOuvert(null)
-            poserLaRacine("galerie")
             setChantier((liste) =>
               clips.reduce((tenue, clip) => fondre(tenue, clip), liste),
             )
+            setFente({
+              ton: "ok",
+              texte: (
+                <>
+                  {clips.length > 1 ? `${clips.length} clips commandés — ils arrivent` : "clip commandé — il arrive"} dans la galerie ·{" "}
+                  <button type="button" className="underline" onClick={() => { setFente(null); poserLaRacine("galerie") }}>
+                    voir la galerie
+                  </button>
+                </>
+              ),
+            })
           }}
         />
       )}
@@ -2395,6 +2425,8 @@ function AtelierApp() {
           // mensonge silencieux.
           onChangee={() => void relireProduction()}
           onReprendreLeMontage={setMontageDeLaBande}
+          onVersLeSujet={(id) => { memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "animations"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
+          nomDuSujet={(id) => personnages.find((p) => p.identifiant === id)?.nom}
         />
         )
       ) : null}
@@ -2420,7 +2452,12 @@ function AtelierApp() {
           onglet={ongletDuSujet}
           onOnglet={setOngletDuSujet}
           clips={clipsDuJeu}
+          clipsLus={clipsDuJeuLus}
           onClipsChange={() => void relireClipsDuJeu()}
+          onClipsCommandes={(clips) => {
+            setChantier((liste) => clips.reduce((tenue, clip) => fondre(tenue, clip), liste))
+            void relireClipsDuJeu()
+          }}
           onObjectifChange={() => void relireProduction()}
           matrice={matriceDuSujet}
           onMatriceOuverte={setMatriceDuSujet}

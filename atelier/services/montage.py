@@ -99,6 +99,10 @@ CONTACT_COLONNES = 16
 # large.
 IMAGES_MAX = 64
 
+# Combien d'images un montage automatique garde quand le rythme ne propose rien
+# — le même échantillon que l'écran de montage pose à l'ouverture.
+ECHANTILLON_AUTO = 12
+
 # Les places d'une recette **dans l'ordre du traitement, et leur mot français**.
 #
 # ⚠️ **La même liste vit à l'écran**, dans `interface/src/composants/AtelierDeBande.tsx`,
@@ -496,6 +500,47 @@ class ServiceMontage:
         )
         self._sauver(bande)
         return bande
+
+    def monter_a_l_arrivee(
+        self, generation: Generation, cadence: float | None = None, nom: str = ""
+    ) -> Bande | None:
+        """L'animation taillée **comme l'écran de montage la proposerait**, sans lui.
+
+        Demandé le 16 septembre 2026 : un clip commandé depuis la fiche d'un
+        sujet arrive déjà monté, rangé dans sa case et *à juger*. On le retouche
+        ensuite dans l'atelier de l'animation s'il ne va pas.
+
+        Les images sont celles de la première proposition du rythme, sinon un
+        échantillon régulier de douze — exactement ce que l'écran de montage
+        pose à l'ouverture (`Montage.tsx`). **Rien si le clip a déjà une bande** :
+        une reprise d'attente ne doit pas en tailler une seconde.
+        """
+        clip = generation.clip
+        if clip is None or not generation.personnage or not generation.pose:
+            return None
+        if self._base.bandes_du_clip(generation.identifiant):
+            return None
+        images = self._images(generation.identifiant)
+        if not images:
+            return None
+        recette = self.recette_du_jeu(generation)
+        etude = self._etude(generation, recette, images)
+        proposee = next((p.get("images") for p in etude.get("propositions") or [] if p.get("images")), None)
+        if proposee:
+            retenues = [int(n) for n in proposee]
+        else:
+            total = len(images)
+            retenues = sorted({round(i * (total - 1) / max(ECHANTILLON_AUTO - 1, 1)) for i in range(min(total, ECHANTILLON_AUTO))})
+        return self.garder(
+            generation.identifiant,
+            nom.strip() or generation.demande.get("mouvement") or generation.pose,
+            retenues,
+            cadence=cadence or CADENCE_PAR_DEFAUT,
+            recette=recette,
+            pose=generation.pose,
+            direction=generation.direction,
+            personnage=generation.personnage,
+        )
 
     def bandes(self, clip: str) -> list[Bande]:
         return self._base.bandes_du_clip(clip)

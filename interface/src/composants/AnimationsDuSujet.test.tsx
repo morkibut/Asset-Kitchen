@@ -594,3 +594,62 @@ describe("les deux filtres", () => {
     expect(screen.getByText("Rien de ce genre-là dans ses poses.")).toBeTruthy()
   })
 })
+
+// ── Animer en lot, clips non montés, changer de case (16 septembre 2026) ──
+
+function monterAvecServeur(cases: Case[], clips: import("../api").Generation[] = []) {
+  const appels: { url: string; methode: string; corps: unknown }[] = []
+  vi.stubGlobal("fetch", vi.fn(async (chemin: string, init?: RequestInit) => {
+    const url = String(chemin)
+    const corps = typeof init?.body === "string" ? (JSON.parse(init.body) as unknown) : undefined
+    appels.push({ url, methode: init?.method ?? "GET", corps })
+    const rendre = (charge: unknown) => ({ ok: true, status: 200, json: async () => charge }) as Response
+    if (url.startsWith("/api/clips/models")) return rendre({ modeles: [{ identifiant: "maison/wan-2.2-i2v-14b-pixel", nom: "Wan maison", grise: null, de_la_maison: true, prix: { montant: 0 }, attente: { secondes: 600, secondes_suivant: 300 } }], raison: null })
+    if (url.startsWith("/api/clips/start-image")) return rendre({ asset: { identifiant: "sprite-1" }, origine: "case", raison: "" })
+    if (url.startsWith("/api/movements/for-pose/")) return rendre({ pose: "repos", mouvement: { identifiant: "respire" }, texte: "breathing", origine: "mouvement" })
+    if (url === "/api/clips") return rendre({ clips: [{ identifiant: "neuf" }] })
+    return rendre({})
+  }))
+  const rappels = { onAnimer: vi.fn(), onOuvrirLaBande: vi.fn(), onErreur: vi.fn(), onMonterLeClip: vi.fn(), onClipsCommandes: vi.fn() }
+  render(<AnimationsDuSujet personnage={personnage(cases)} plan={PLAN} clips={clips} {...rappels} />)
+  return { ...rappels, appels }
+}
+
+test("« Tout animer » ne relance pas une direction retenue, et monte chaque clip à l'arrivée", async () => {
+  const { appels, onClipsCommandes } = monterAvecServeur([CASE_SUD])
+  fireEvent.click(screen.getByRole("button", { name: "Tout animer" }))
+  const dialogue = document.querySelector("[data-animer-en-lot]") as HTMLElement
+  const sud = within(dialogue).getByText("sud").closest("label")!.querySelector("input")!
+  const nord = within(dialogue).getByText("nord").closest("label")!.querySelector("input")!
+  expect(sud.disabled).toBe(true)
+  expect(nord.checked).toBe(true)
+  const lancer = await within(dialogue).findByRole("button", { name: /Lancer 1 clip/ })
+  await waitFor(() => expect((lancer as HTMLButtonElement).disabled).toBe(false))
+  fireEvent.click(lancer)
+  await within(dialogue).findByText(/1 clip dans la file/)
+  const commandes = appels.filter((a) => a.url === "/api/clips" && a.methode === "POST")
+  expect(commandes).toHaveLength(1)
+  expect(commandes[0].corps).toMatchObject({ pose: "repos", direction: "nord", asset: "sprite-1", mouvement: "respire", secondes: 1.5, monter_auto: true })
+  expect(onClipsCommandes).toHaveBeenCalled()
+})
+
+test("un clip en route se montre dans sa rangée, et bloque sa case dans un lot", () => {
+  const enRoute = { identifiant: "en-route", personnage: "pelerin", pose: "repos", direction: "nord", statut: "en_cours", clip: { jete: false } } as unknown as import("../api").Generation
+  monterAvecServeur([CASE_SUD], [enRoute])
+  expect(rangee("repos/nord").querySelector('[data-clip-non-monte="en-route"]')).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "Animer les directions" }))
+  const dialogue = document.querySelector("[data-animer-en-lot]") as HTMLElement
+  expect(within(dialogue).getByText("nord").closest("label")!.querySelector("input")!.disabled).toBe(true)
+})
+
+test("le volet déplace l'animation choisie vers une autre pose", async () => {
+  const marche = sienne({ pose: "marche", directions: [{ ...DIRECTION, identifiant: "est", nom: "est", bandes: [] }] })
+  const { appels } = monterAvecServeur([CASE_SUD, marche])
+  const vignette = rangee("repos/sud").querySelector('[data-vignette-de-bande="b"]') as HTMLElement
+  fireEvent.click(vignette)
+  const volet = document.querySelector("[data-deplacer-l-animation]") as HTMLElement
+  fireEvent.change(within(volet).getByLabelText("Pose de destination"), { target: { value: "marche" } })
+  fireEvent.click(within(volet).getByRole("button", { name: "Déplacer" }))
+  await waitFor(() => expect(appels.some((a) => a.url === "/api/strips/b/case" && a.methode === "PUT")).toBe(true))
+  expect(appels.find((a) => a.url === "/api/strips/b/case")!.corps).toEqual({ pose: "marche", direction: "est" })
+})

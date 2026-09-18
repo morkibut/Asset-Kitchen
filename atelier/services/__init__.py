@@ -570,6 +570,7 @@ class Atelier:
         self.tuiles = ServiceTuiles(self)
         self.sons = ServiceSons(self)
         self.animation.avant_soumission_locale = self.travaux.autoriser_generation_locale
+        self.animation.apres_les_images = self._monter_a_l_arrivee
         self.fournisseur_workflow_image.avant_soumission = lambda identifiant: self.travaux.autoriser_generation_image_locale(self.base.lire(identifiant))
         self.travaux_workflow = ServiceTravauxWorkflow(self)
         self.calques_cibles = ServiceCalquesCibles(
@@ -638,6 +639,15 @@ class Atelier:
         # **Rien n'est récupéré ici non plus** : un clip en souffrance attend un
         # geste de l'auteur, exactement comme une génération coupée depuis T1 —
         # sauf que le geste, lui, ne repaie rien.
+
+    def _monter_a_l_arrivee(self, generation) -> None:
+        """Le clip arrivé devient une animation à juger, à la cadence de son mouvement."""
+        mouvement = self.mouvements.lire(generation.demande.get("mouvement") or "")
+        self.montage.monter_a_l_arrivee(
+            generation,
+            cadence=getattr(mouvement, "cadence", None),
+            nom=getattr(mouvement, "nom", "") or "",
+        )
 
     def etat(self) -> dict[str, Any]:
         """Tout ce qu'il faut pour dessiner l'atelier à l'ouverture.

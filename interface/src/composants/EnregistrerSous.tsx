@@ -49,6 +49,17 @@ export function EnregistrerSous({
   const [occupe, setOccupe] = useState(false)
   const [erreur, setErreur] = useState("")
   const [range, setRange] = useState("")
+  const [fini, setFini] = useState(false)
+  // **Le temps qui passe, dit à l'écran.** Une animation se recalcule image par
+  // image avant d'être rangée : sans compteur ni message de fin, l'auteur
+  // attendait sans savoir si c'était terminé. Signalé le 16 septembre 2026.
+  const [debut, setDebut] = useState<number | null>(null)
+  const [maintenant, setMaintenant] = useState(() => Date.now())
+  useEffect(() => {
+    if (debut === null) return
+    const minuteur = window.setInterval(() => setMaintenant(Date.now()), 250)
+    return () => window.clearInterval(minuteur)
+  }, [debut])
 
   useEffect(() => {
     let vivant = true
@@ -80,6 +91,8 @@ export function EnregistrerSous({
     if (occupe) return
     setOccupe(true)
     setErreur("")
+    setDebut(Date.now())
+    setMaintenant(Date.now())
     try {
       const corps = { recette, sujet, pose, direction, nom: nom.trim() }
       const fait =
@@ -87,11 +100,13 @@ export function EnregistrerSous({
           ? await api.enregistrerImageSous(identifiant, corps)
           : await api.enregistrerBandeSous(identifiant, { ...corps, prises })
       setRange(fait.range)
+      setFini(true)
       onFait?.(fait)
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "l’enregistrement n’a pas abouti")
     } finally {
       setOccupe(false)
+      setDebut(null)
     }
   }
 
@@ -228,11 +243,6 @@ export function EnregistrerSous({
                 .
               </p>
             )}
-            {range && (
-              <p role="status" className="text-encre">
-                C’est rangé : {range}.
-              </p>
-            )}
             {erreur && (
               <p role="alert" className="text-echec">
                 {erreur}
@@ -241,16 +251,40 @@ export function EnregistrerSous({
           </div>
 
           <footer className="flex shrink-0 items-center justify-between gap-[22px] border-t border-trait bg-carte px-[30px] py-[14px]">
-            <p className="text-[13px] text-encre-3">
-              Aucune génération, rien n’est payé.
-            </p>
-            <button
-              type="submit"
-              disabled={occupe || !propose || !!propose.raison || !!range}
-              className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50"
-            >
-              {occupe ? "Enregistrement…" : "Enregistrer sous"}
-            </button>
+            {fini ? (
+              <p role="status" data-enregistre className="text-[13px] font-medium text-encre">
+                ✓ Enregistré{range ? ` : ${range}` : ""}.
+              </p>
+            ) : occupe ? (
+              <p role="status" className="flex items-center gap-[8px] text-[13px] text-encre">
+                <span aria-hidden className="inline-block h-[14px] w-[14px] shrink-0 animate-spin rounded-full border-[1.5px] border-encre-4 border-t-signal" />
+                Enregistrement de {quelle} en cours…
+                {debut !== null && maintenant - debut >= 1000 && (
+                  <span className="mesure text-encre-3">{Math.floor((maintenant - debut) / 1000)} s</span>
+                )}
+              </p>
+            ) : (
+              <p className="text-[13px] text-encre-3">
+                Aucune génération, rien n’est payé.
+              </p>
+            )}
+            {fini ? (
+              <button
+                type="button"
+                onClick={onFermer}
+                className="h-[34px] rounded-7 border border-contour bg-carte px-[22px] text-[13px] text-encre-controle"
+              >
+                Fermer
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={occupe || !propose || !!propose.raison}
+                className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50"
+              >
+                {occupe ? "Enregistrement…" : "Enregistrer sous"}
+              </button>
+            )}
           </footer>
         </form>
       }

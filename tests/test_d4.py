@@ -607,8 +607,10 @@ def test_l_ecran_dit_a_quel_cote_le_modele_infere():
     maintenant, repris au caractère près — et `BlocPasse` est retiré."""
     ecrit = RETOUCHE.read_text(encoding="utf-8")
 
-    assert "choisi.entree" in ecrit
-    assert "réagrandit son masque" in ecrit
+    # ⚠️ **Retiré de l'écran le 16 septembre 2026, à la demande de l'auteur** :
+    # le panneau ne dit plus que le temps moyen par image et pour l'animation.
+    # Le côté d'inférence reste servi par `etat_des_silhouettes`.
+    assert "choisi.secondes_par_image" in ecrit
 
 
 # ── Critère 11 — aucun invariant ne bouge ───────────────────────────────────

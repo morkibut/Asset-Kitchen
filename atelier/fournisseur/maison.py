@@ -292,7 +292,9 @@ def modele_de_la_maison() -> ModeleVideo:
         nom="Wan 2.2 pixel — la carte de la maison",
         fournisseur=NOM,
         chez_lui=MODELE,
-        durees=(1, 2, 3),
+        # **Une seconde et demie** : 25 images, un cycle court sans aller
+        # jusqu'aux 33 de deux secondes.
+        durees=(1, 1.5, 2, 3),
         resolutions=("480p",),
         proportions=("1:1",),
         accepte_une_image=True,

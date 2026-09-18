@@ -82,7 +82,15 @@ export type CibleDuClip = {
 /** Les durées que l'écran propose. **Elles ne remplacent pas le catalogue** :
  *  un modèle qui ne fait pas cinq secondes le dit lui-même, et se grise avec sa
  *  raison. Ce qui est ici est ce qu'on peut demander, pas ce qui est possible. */
-const DUREES = [1, 2, 3, 4, 5, 6] as const
+const DUREES = [1, 1.5, 2, 3, 4, 5, 6] as const
+
+/** Le modèle choisi d'office quand il peut partir : le moteur de la maison. */
+const MODELE_PAR_DEFAUT = "maison/wan-2.2-i2v-14b-pixel"
+
+/** Une durée écrite à la française : « 1,5 », jamais « 1.5 ». */
+function secondesLisibles(secondes: number): string {
+  return String(secondes).replace(".", ",")
+}
 const PROPORTIONS = [
   { cle: "1:1", nom: "carré" },
   { cle: "16:9", nom: "16:9" },
@@ -142,7 +150,7 @@ export function EcranClip({
   onCommande: (clips: Generation[]) => void
 }) {
   // ── Ce qu'on demande ──────────────────────────────────────────────────────
-  const [secondes, setSecondes] = useState<number>(5)
+  const [secondes, setSecondes] = useState<number>(1.5)
   const [proportions, setProportions] = useState<string>("1:1")
   const [resolution, setResolution] = useState<string>("480p")
   const [nombre, setNombre] = useState<number>(1)
@@ -281,6 +289,8 @@ export function EcranClip({
         setModele((deja) => {
           const possible = recu.modeles.filter((m) => m.grise === null)
           if (deja && possible.some((m) => m.identifiant === deja)) return deja
+          if (possible.some((m) => m.identifiant === MODELE_PAR_DEFAUT))
+            return MODELE_PAR_DEFAUT
           return possible[0]?.identifiant ?? null
         })
       })
@@ -393,6 +403,8 @@ export function EcranClip({
         personnage: personnage.identifiant,
         pose: pose?.identifiant ?? null,
         direction: cible.direction?.identifiant ?? null,
+        // Le clip arrive déjà monté, à juger (16 septembre 2026).
+        monter_auto: Boolean(pose),
       })
       onCommande(clips)
     } catch (erreur) {
@@ -533,7 +545,7 @@ export function EcranClip({
             <tr>
               <td className="w-[130px] py-1 align-top text-encre">Un clip</td>
               <td className="py-1">
-                {secondes} seconde{secondes > 1 ? "s" : ""},{" "}
+                {secondesLisibles(secondes)} seconde{secondes > 1 ? "s" : ""},{" "}
                 {PROPORTIONS.find((p) => p.cle === proportions)?.nom ?? proportions},{" "}
                 {RESOLUTIONS.find((r) => r.cle === resolution)?.nom ?? resolution}.
               </td>
@@ -612,7 +624,7 @@ export function EcranClip({
           <Choix
             valeurs={DUREES.map((d) => ({
               cle: String(d),
-              nom: d === secondes ? `${d} secondes` : `${d} s`,
+              nom: d === secondes ? `${secondesLisibles(d)} seconde${d > 1 ? "s" : ""}` : `${secondesLisibles(d)} s`,
             }))}
             valeur={String(secondes)}
             onChange={(v) => setSecondes(Number(v))}
@@ -918,7 +930,7 @@ function ConfirmationClip({
           <Libelle>le format</Libelle>
           <ul className="mesure flex flex-col gap-1 text-[10px] text-encre-3">
             <li>
-              {secondes} seconde{secondes > 1 ? "s" : ""} · {proportion} ·{" "}
+              {secondesLisibles(secondes)} seconde{secondes > 1 ? "s" : ""} · {proportion} ·{" "}
               {taille}
             </li>
           </ul>

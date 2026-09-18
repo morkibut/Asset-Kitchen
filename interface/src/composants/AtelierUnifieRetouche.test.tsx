@@ -268,8 +268,9 @@ test("RP22 — la section de la frame dit ses trois gestes, chacun avec son aide
   fireEvent.click(await screen.findByRole("button", { name: "arrêter l'animation" }))
 
   // Le titre dit ce que la section fait — plus de « Position, source et
-  // pelure d'oignon », qui ne le disait pas.
-  expect(await screen.findByText("Déplacer, remplacer, voir en transparence")).toBeTruthy()
+  // pelure d'oignon », qui ne le disait pas. Elle vit dans l'onglet « Frame ».
+  fireEvent.click(screen.getByRole("button", { name: "Frame" }))
+  expect(await screen.findByText(/déplacer, remplacer, voir en transparence/)).toBeTruthy()
 
   for (const [libelle, cle] of [
     ["Déplacer", "bande.position"],
@@ -282,4 +283,102 @@ test("RP22 — la section de la frame dit ses trois gestes, chacun avec son aide
     expect(bulle.textContent).toContain(AIDE[cle].quoi)
     fireEvent.click(bouton) // dépingle, pour ne pas gêner le bouton suivant
   }
+})
+
+test("l'onglet Recettes enregistre les réglages sous un nom", async () => {
+  const disque = fixture()
+  vi.spyOn(api, "ouvrirLaBande").mockResolvedValue(disque)
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+  vi.spyOn(api, "apercuDeBande").mockResolvedValue({ planche: disque.planche, ecarts_des_frames: [] } as never)
+  const nommer = vi.spyOn(api, "nommerRecette").mockResolvedValue({ recettes: { "nain propre": RECETTE_VIDE }, laisse: [] })
+  render(<EcranAtelierDeBande identifiant="bande-main" univers={UNIVERS_VIDE} traitement={traitement} onFermer={vi.fn()} onErreur={vi.fn()} />)
+  fireEvent.click(await screen.findByRole("button", { name: "arrêter l'animation" }))
+  fireEvent.click(screen.getByRole("button", { name: "Recettes" }))
+  expect(screen.getByText("Aucune recette enregistrée pour l'instant.")).toBeTruthy()
+  fireEvent.change(screen.getByLabelText("le nom de la recette"), { target: { value: "nain propre" } })
+  fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
+  await waitFor(() => expect(nommer).toHaveBeenCalledOnce())
+  expect(nommer.mock.calls[0][0]).toBe("nain propre")
+  expect(await screen.findByText(/« nain propre » enregistrée/)).toBeTruthy()
+  // Elle paraît aussitôt dans la liste à appliquer.
+  expect(screen.getByLabelText("appliquer une recette enregistrée aux images choisies")).toBeTruthy()
+})
+
+test("après Enregistrer, plus rien n'attend — même si le serveur réécrit la recette", async () => {
+  let disque = fixture()
+  vi.spyOn(api, "ouvrirLaBande").mockImplementation(async () => structuredClone(disque))
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+  vi.spyOn(api, "apercuDeBande").mockResolvedValue({ planche: disque.planche, ecarts_des_frames: [] } as never)
+  vi.spyOn(api, "corrigerLaBande").mockImplementation(async (_id, corps) => {
+    // Le serveur rend la recette dans un autre ordre de clés : même contenu,
+    // autre écriture.
+    const recette = Object.fromEntries(Object.entries(disque.bande.recette as object).reverse()) as Bande["recette"]
+    disque = { ...disque, bande: { ...disque.bande, ...structuredClone(corps), recette } as Bande }
+    return disque.bande
+  })
+  render(<EcranAtelierDeBande identifiant="bande-main" univers={UNIVERS_VIDE} traitement={traitement} onFermer={vi.fn()} onErreur={vi.fn()} />)
+  fireEvent.click(await screen.findByRole("button", { name: "arrêter l'animation" }))
+  ;(document.querySelector("[data-case-en-grand]") as HTMLElement).focus()
+  fireEvent.keyDown(window, { key: "ArrowRight" })
+  expect(await screen.findByText(/des corrections attendent/)).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "Enregistrer ›" }))
+  await waitFor(() => expect(screen.queryByText(/des corrections attendent/)).toBeNull())
+  expect(screen.getByText(/Version enregistrée/)).toBeTruthy()
+})
+
+test("« ‹ Animations » ramène à la page du personnage de l'animation", async () => {
+  const disque = fixture()
+  ;(disque.bande as Bande).personnage = "nain"
+  vi.spyOn(api, "ouvrirLaBande").mockResolvedValue(disque)
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+  vi.spyOn(api, "apercuDeBande").mockResolvedValue({ planche: disque.planche, ecarts_des_frames: [] } as never)
+  const onFermer = vi.fn()
+  const onVersLeSujet = vi.fn()
+  render(<EcranAtelierDeBande identifiant="bande-main" univers={UNIVERS_VIDE} traitement={traitement} onFermer={onFermer} onErreur={vi.fn()} onVersLeSujet={onVersLeSujet} nomDuSujet={() => "Le nain"} />)
+  const retour = await screen.findByRole("button", { name: "‹ Animations" })
+  expect(retour.getAttribute("title")).toBe("Revenir aux animations de Le nain")
+  fireEvent.click(retour)
+  expect(onVersLeSujet).toHaveBeenCalledWith("nain")
+  expect(onFermer).not.toHaveBeenCalled()
+})
+
+test("l'éditeur de pixels : clic gauche peint, clic droit efface, et Valider range tout dans la Main", async () => {
+  let disque = fixture()
+  vi.spyOn(api, "ouvrirLaBande").mockImplementation(async () => structuredClone(disque))
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+  vi.spyOn(api, "apercuDeBande").mockResolvedValue({ planche: disque.planche, ecarts_des_frames: [] } as never)
+  const garder = vi.spyOn(api, "corrigerLaBande").mockImplementation(async (_id, corps) => {
+    disque = { ...disque, bande: { ...disque.bande, ...structuredClone(corps) } as Bande }
+    return disque.bande
+  })
+  vi.stubGlobal("PointerEvent", MouseEvent)
+  HTMLElement.prototype.setPointerCapture = vi.fn()
+  render(<EcranAtelierDeBande identifiant="bande-main" univers={{ ...UNIVERS_VIDE, palette: ["#ff0000", "#00ff00"] }} traitement={traitement} onFermer={vi.fn()} onErreur={vi.fn()} />)
+  fireEvent.click(await screen.findByRole("button", { name: "arrêter l'animation" }))
+  fireEvent.change(screen.getByLabelText("Table de retouche"), { target: { value: "main" } })
+  fireEvent.click(await screen.findByRole("button", { name: /Éditer les pixels de la frame 1/ }))
+
+  const toile = document.querySelector("[data-toile-editeur]") as HTMLCanvasElement
+  vi.spyOn(toile, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 320, height: 320, right: 320, bottom: 320, x: 0, y: 0, toJSON() {} })
+  fireEvent.click(screen.getByRole("button", { name: "couleur #00ff00" }))
+  // Clic gauche : un trait de trois pixels, en vert.
+  fireEvent.pointerDown(toile, { button: 0, clientX: 15, clientY: 15, pointerId: 1 })
+  fireEvent.pointerMove(toile, { clientX: 35, clientY: 15, pointerId: 1 })
+  fireEvent.pointerUp(toile, { pointerId: 1 })
+  // Clic droit : on efface un pixel.
+  fireEvent.pointerDown(toile, { button: 2, clientX: 55, clientY: 55, pointerId: 2 })
+  fireEvent.pointerUp(toile, { pointerId: 2 })
+  expect(screen.getByText(/^2 modifications/)).toBeTruthy()
+
+  fireEvent.click(screen.getByRole("button", { name: "Valider les modifications" }))
+  await waitFor(() => expect(document.querySelector("[data-editeur-de-pixels]")).toBeNull())
+  fireEvent.click(screen.getByRole("button", { name: "Enregistrer ›" }))
+  await waitFor(() => expect(garder).toHaveBeenCalledOnce())
+  const main = garder.mock.calls[0][1].prises?.[0].main_apres_placement
+  expect(main?.calques).toHaveLength(1)
+  expect(main?.calques[0].passages.map((t) => [t.garde, t.couleur, t.points])).toEqual([
+    [true, "#00ff00", [[1, 1], [3, 1]]],
+    [false, "", [[5, 5]]],
+  ])
+  expect(main?.opacite.map((t) => [t.garde, t.points])).toEqual([[false, [[5, 5]]]])
 })

@@ -226,7 +226,7 @@ test("la fenêtre envoie la case choisie et dit où le résultat est rangé", as
     pose: "marche",
     direction: "est",
   })
-  expect(await screen.findByText(/C’est rangé : marche · nord/)).toBeTruthy()
+  expect(await screen.findByText(/✓ Enregistré : marche · nord/)).toBeTruthy()
 })
 
 // ── L'atelier d'une animation ───────────────────────────────────────────────

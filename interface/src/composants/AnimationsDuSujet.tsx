@@ -54,8 +54,9 @@
  */
 
 import { useCallback, useMemo, useState } from "react"
-import { api, type Bande, type Case, type Personnage, type Pose } from "../api"
+import { api, type Bande, type Case, type Generation, type Personnage, type Pose } from "../api"
 import { BandeQuiTourne } from "./Apercu"
+import { AnimerEnLot, clipsNonMontes, etatDeLaCase, type CaseAAnimer } from "./AnimerEnLot"
 import { useEtatDuParcours } from "./MemoireDuParcours"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. */
@@ -284,8 +285,37 @@ function CaseDeGeneration({ onArmer, quoi }: { onArmer: () => void; quoi: string
 
 // ── Les rangées d'une pose ──────────────────────────────────────────────────
 
+/** **Un clip pas encore monté**, dans sa rangée : en route, ou arrivé sans
+ *  animation. Un cadre en pointillés couleur signal le distingue des
+ *  animations ; cliquer un clip arrivé ouvre son montage. */
+function VignetteDeClip({ clip, onMonter }: { clip: Generation; onMonter?: (clip: string) => void }) {
+  const arrive = clip.statut === "reussie"
+  return (
+    <span className="flex w-[54px] shrink-0 flex-col gap-[4px]">
+      <button
+        type="button"
+        data-clip-non-monte={clip.identifiant}
+        disabled={!arrive || !onMonter}
+        onClick={() => onMonter?.(clip.identifiant)}
+        aria-label={arrive ? "Monter ce clip" : "Clip en route"}
+        title={arrive ? "Clip arrivé, pas encore monté — cliquer pour le monter" : "Clip en route"}
+        className="relative flex h-[54px] w-[54px] items-center justify-center overflow-hidden rounded-7 border-2 border-dashed border-signal bg-pourtour"
+      >
+        {arrive ? (
+          <img alt="" src={api.couvertureDuClip(clip.identifiant, 54)} className="h-full w-full object-contain [image-rendering:pixelated]" />
+        ) : (
+          <span aria-hidden className="inline-block h-[14px] w-[14px] animate-spin rounded-full border-[1.5px] border-encre-4 border-t-signal" />
+        )}
+      </button>
+      <span className="text-center text-[10.5px] leading-none text-signal">{arrive ? "à monter" : "en route"}</span>
+    </span>
+  )
+}
+
 function LigneDeRangee({
   rangee,
+  enAttente,
+  onMonter,
   cleMemoire,
   choisie,
   onChoisir,
@@ -296,6 +326,8 @@ function LigneDeRangee({
   onGenerer,
 }: {
   rangee: Rangee
+  enAttente: Generation[]
+  onMonter?: (clip: string) => void
   cleMemoire: string
   choisie: string | null
   onChoisir: (bande: Bande) => void
@@ -344,7 +376,7 @@ function LigneDeRangee({
       </span>
 
       <span className="min-w-0">
-        {rangee.compte === 0 && rangee.ecartees.length === 0 ? (
+        {rangee.compte === 0 && rangee.ecartees.length === 0 && enAttente.length === 0 ? (
           <span className="flex h-[54px] items-center text-[12px] text-eteint">
             {rangee.demandee
               ? "aucun clip encore — à fabriquer"
@@ -352,6 +384,10 @@ function LigneDeRangee({
           </span>
         ) : (
           <span className="defile flex items-start gap-[8px] overflow-x-auto">
+            {enAttente.map((clip) => <VignetteDeClip key={clip.identifiant} clip={clip} onMonter={onMonter} />)}
+            {enAttente.length > 0 && (rangee.compte > 0 || rangee.ecartees.length > 0) && (
+              <span aria-hidden className="w-px self-stretch bg-pointille" />
+            )}
             {rangee.retenue ? (
               vignette(rangee.retenue, "retenue")
             ) : (
@@ -432,6 +468,9 @@ export function AnimationsDuSujet({
   onAnimer,
   onOuvrirLaBande,
   onErreur,
+  clips = [],
+  onMonterLeClip,
+  onClipsCommandes,
 }: {
   personnage: Personnage
   /** Ce que cette chose-là réclame — sa liste, pas celle du jeu. */
@@ -448,7 +487,15 @@ export function AnimationsDuSujet({
    *  vignette, déjà portée par `PageDuSujet`. */
   onOuvrirLaBande: (bande: string) => void
   onErreur: (erreur: unknown, defaut: string) => void
+  /** Les clips du jeu — ceux de ce sujet pas encore montés paraissent dans
+   *  leur rangée, et un lot ne relance pas une case dont un clip est en route. */
+  clips?: readonly Generation[]
+  onMonterLeClip?: (clip: string) => void
+  /** Des clips viennent de partir d'un lot : la liste est à relire. */
+  onClipsCommandes?: (clips: Generation[]) => void
 }) {
+  const nonMontes = useMemo(() => clipsNonMontes(clips, personnage), [clips, personnage])
+  const [lot, setLot] = useState<{ titre: string; cases: CaseAAnimer[] } | null>(null)
   const nomDePose = useMemo(
     () => new Map(plan.map((p) => [p.identifiant, p.nom])),
     [plan],
@@ -486,6 +533,35 @@ export function AnimationsDuSujet({
       }))
       .filter(({ rangees }) => rangees.length > 0)
   }, [personnage.cases, nomDePose, animationsDemandees, objectifExplicite])
+
+  const casesDe = (quelles: typeof parPose): CaseAAnimer[] =>
+    quelles.flatMap(({ sienne, nom, rangees }) =>
+      rangees.map((r) => ({
+        pose: sienne.pose,
+        poseNom: nom,
+        direction: r.direction,
+        directionNom: r.direction ? r.angle ?? r.nom : null,
+        etat: etatDeLaCase(r, nonMontes),
+      })),
+    )
+  const ouvrirLot = (titre: string, cases: CaseAAnimer[]) => setLot({ titre, cases })
+  const enAttenteDe = (r: Rangee) =>
+    nonMontes.filter((g) => g.pose === r.pose && (g.direction ?? null) === r.direction)
+
+  // **Déplacer l'animation choisie vers une autre case** — demandé le
+  // 16 septembre 2026, pour une animation enregistrée sur la mauvaise pose.
+  const [destPose, setDestPose] = useState("")
+  const [destDirection, setDestDirection] = useState("")
+  const deplacer = useCallback(
+    async (cible: Bande, pose: string, direction: string) => {
+      try {
+        await api.affecterLaBande(cible.identifiant, pose, direction || null)
+      } catch (erreur) {
+        onErreur(erreur, "l'animation n'a pas pu changer de case")
+      }
+    },
+    [onErreur],
+  )
 
   const poses = parPose.filter(({ rangees }) => {
     if (filtre === "toutes") return true
@@ -606,6 +682,15 @@ export function AnimationsDuSujet({
               ? "L’objectif montre les animations attendues. Les bandes déjà conservées hors objectif restent accessibles."
               : "Une rangée par direction — la retenue à gauche, les versions à juger ensuite, les écartées à droite. Survolez pour lire."}
           </p>
+          <button
+            type="button"
+            data-tout-animer
+            disabled={parPose.length === 0}
+            onClick={() => ouvrirLot(`Animer ${personnage.nom}`, casesDe(parPose))}
+            className="h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle hover:border-encre-4 disabled:opacity-50"
+          >
+            Tout animer
+          </button>
           <div
             role="tablist"
             aria-label="Ce qu'on regarde"
@@ -654,11 +739,12 @@ export function AnimationsDuSujet({
                 data-pose-de-rangement={sienne.pose}
                 className="flex flex-col rounded-10 border border-trait bg-carte px-[14px]"
               >
+                <div className="flex items-center gap-[8px]">
                 <button
                   type="button"
                   aria-expanded={ouverte}
                   onClick={() => setPoseOuverte(ouverte ? null : sienne.pose)}
-                  className="flex items-baseline gap-[8px] py-[8px] text-left"
+                  className="flex min-w-0 flex-1 items-baseline gap-[8px] py-[8px] text-left"
                 >
                   <span aria-hidden className="text-[12px] text-encre-4">
                     {ouverte ? "▾" : "▸"}
@@ -694,6 +780,15 @@ export function AnimationsDuSujet({
                     </span>
                   )}
                 </button>
+                <button
+                  type="button"
+                  data-animer-la-pose={sienne.pose}
+                  onClick={() => ouvrirLot(`Animer « ${nom} »`, casesDe([{ sienne, nom, rangees }]))}
+                  className="h-[26px] shrink-0 rounded-7 border border-contour bg-carte px-[8px] text-[11.5px] text-encre-controle hover:border-encre-4"
+                >
+                  {rangees.length > 1 ? "Animer les directions" : "Animer"}
+                </button>
+                </div>
                 {ouverte && (
                   <div className="flex flex-col pb-[8px]">
                     {rangees.map((rangee) => (
@@ -701,6 +796,8 @@ export function AnimationsDuSujet({
                         key={rangee.cle}
                         cleMemoire={`${cle}:${rangee.cle}`}
                         rangee={rangee}
+                        enAttente={enAttenteDe(rangee)}
+                        onMonter={onMonterLeClip}
                         choisie={bande?.identifiant ?? null}
                         onChoisir={(cible) => setChoisie(cible.identifiant)}
                         onRetenir={(cible, sa) => void retenir(cible, sa)}
@@ -823,6 +920,40 @@ export function AnimationsDuSujet({
             )}
           </dl>
 
+          {(() => {
+            const pose = destPose || bande.pose || ""
+            const directions = personnage.cases.find((c) => c.pose === pose)?.directions ?? []
+            const direction = directions.some((d) => d.identifiant === destDirection)
+              ? destDirection
+              : pose === bande.pose && directions.some((d) => d.identifiant === bande.direction)
+                ? bande.direction ?? ""
+                : directions[0]?.identifiant ?? ""
+            const inchangee = pose === (bande.pose ?? "") && direction === (bande.direction ?? "")
+            return (
+              <div data-deplacer-l-animation className="flex flex-col gap-[8px] border-t border-trait pt-[8px] text-[12.5px]">
+                <span className="text-encre-3">Changer de pose ou de direction</span>
+                <div className="flex flex-wrap items-center gap-[8px]">
+                  <select aria-label="Pose de destination" value={pose} onChange={(e) => { setDestPose(e.target.value); setDestDirection("") }} className="h-[30px] rounded-7 border border-contour bg-carte px-[8px]">
+                    {personnage.cases.map((c) => <option key={c.pose} value={c.pose}>{nomDePose.get(c.pose) ?? c.pose}</option>)}
+                  </select>
+                  {directions.length > 0 && (
+                    <select aria-label="Direction de destination" value={direction} onChange={(e) => setDestDirection(e.target.value)} className="h-[30px] rounded-7 border border-contour bg-carte px-[8px]">
+                      {directions.map((d) => <option key={d.identifiant} value={d.identifiant}>{d.nom}</option>)}
+                    </select>
+                  )}
+                  <button
+                    type="button"
+                    disabled={inchangee || !pose}
+                    onClick={() => { void deplacer(bande, pose, direction); setDestPose(""); setDestDirection("") }}
+                    className="h-[30px] rounded-7 border border-contour bg-carte px-[14px] text-encre-controle disabled:opacity-50"
+                  >
+                    Déplacer
+                  </button>
+                </div>
+              </div>
+            )
+          })()}
+
           <div className="mt-auto flex flex-col gap-[8px]">
             <button
               type="button"
@@ -865,6 +996,16 @@ export function AnimationsDuSujet({
           </div>
         </aside>
       ) : null}
+      {lot && (
+        <AnimerEnLot
+          personnage={personnage}
+          plan={plan}
+          titre={lot.titre}
+          cases={lot.cases}
+          onFermer={() => setLot(null)}
+          onCommande={(partis) => onClipsCommandes?.(partis)}
+        />
+      )}
     </div>
   )
 }

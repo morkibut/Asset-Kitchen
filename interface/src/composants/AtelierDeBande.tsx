@@ -28,10 +28,11 @@
  *  chaque flèche écrirait vingt planches pour un seul geste.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 
 import {
   api,
+  RECETTE_VIDE,
   type Ancrage,
   type Asset,
   type AtelierDeBande as AtelierRecu,
@@ -40,19 +41,24 @@ import {
   type EtatTraitement,
   type Prise,
   type Recette,
+  type Trait,
   type Univers,
 } from "../api"
 import { rangDeLaBande } from "./Apercu"
-import { Curseur, EnTetePanneau, Libelle } from "./pieces"
+import { Curseur, EnTetePanneau, Libelle, useEcoule } from "./pieces"
 import { PANNEAU } from "./Infobulle"
 import { avecPassage, avecVeille, dort, mainDe, OPACITE, placeDe, videe, type Table } from "../recette"
 import { useHistoriqueDeBande, type EtatDeBande } from "./historiqueDeBande"
 import { EcranDecoupe } from "./Decoupe"
 import { SourceDeFrame } from "./SourceDeFrame"
+import { BarreDuZoom } from "./CommandesDuZoom"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { useEtatDuParcours } from "./MemoireDuParcours"
 import { useMainDuParcours } from "./MainDuParcours"
 import { EnregistrerSous, raisonDEnregistrerSous } from "./EnregistrerSous"
+import { FrameVivante, passagesEnAttente, type Attente } from "./MainVivante"
+import { EditeurDePixels, type Coup } from "./EditeurDePixels"
+import { priseRetournee } from "./RetournerLesRetouches"
 // **Les six postes viennent de la retouche** (`B26`). L'atelier d'une animation
 // montait jusqu'ici les six panneaux de l'ancien châssis ; celui-ci s'en va, et
 // refaire cet écran-là n'était pas dans le périmètre du déménagement. Il gagne
@@ -303,6 +309,8 @@ export function EcranAtelierDeBande({
   onErreur,
   onChangee,
   onReprendreLeMontage,
+  onVersLeSujet,
+  nomDuSujet,
 }: {
   identifiant: string
   /** La palette du jeu et ses couleurs nommées — ce que la quantification et
@@ -326,6 +334,11 @@ export function EcranAtelierDeBande({
    *  tient les deux qui décide lequel est à l'écran. Absent, le bouton ne
    *  paraît pas. */
   onReprendreLeMontage?: (bande: Bande) => void
+  /** **Revenir aux animations du personnage** (16 septembre 2026) — sur sa
+   *  page, onglet Animations, d'où qu'on soit venu. Absent, ou pour une
+   *  animation sans personnage, le bouton ne paraît pas. */
+  onVersLeSujet?: (personnage: string) => void
+  nomDuSujet?: (personnage: string) => string | undefined
 }) {
   const [recu, setRecu] = useState<AtelierRecu | null>(null)
   const [prises, setPrises] = useState<Prise[]>([])
@@ -355,6 +368,13 @@ export function EcranAtelierDeBande({
   const [joue, setJoue] = useEtatDuParcours(`bande:${identifiant}:lecture`, true)
   const [pas, setPas] = useState(0)
   const [planche, setPlanche] = useState<string | null>(null)
+  /** **Les prises avec lesquelles la planche affichée a été calculée.** L'écart
+   *  entre elles et les prises du moment, c'est la poussée que le serveur n'a
+   *  pas encore rendue — l'écran la montre tout de suite en décalant l'image,
+   *  au lieu d'attendre la seconde et demie d'un aperçu. */
+  const [prisesRendues, setPrisesRendues] = useState<Prise[]>([])
+  /** Quels bords de sa case chaque frame touche, lus sur la planche rendue. */
+  const [butees, setButees] = useState<Butee[]>([])
   const [enregistre, setEnregistre] = useState(false)
   const [remesure, setRemesure] = useState(false)
   const [recettes, setRecettes] = useState<Record<string, Recette>>({})
@@ -379,7 +399,7 @@ export function EcranAtelierDeBande({
    *  même geste, la même barre, une échelle qui convient à ce qu'on regarde. */
   const [zoom, setZoom] = useEtatDuParcours<number | null>(`bande:${identifiant}:zoom`, null)
   const [table, setTable] = useEtatDuParcours<Table>(`bande:${identifiant}:table`, "detourage")
-  const [panneau, setPanneau] = useEtatDuParcours<"retouche" | "calques">(`bande:${identifiant}:panneau`, "retouche")
+  const [panneau, setPanneau] = useEtatDuParcours<"retouche" | "calques" | "frame" | "recettes">(`bande:${identifiant}:panneau`, "retouche")
   const [passeArmee, setPasseArmee] = useState<number | null>(null)
   const [rectangleSource, setRectangleSource] = useState(false)
   const [decoupe, setDecoupe] = useState<Asset | null>(null)
@@ -391,6 +411,10 @@ export function EcranAtelierDeBande({
   const [messageDecoupe, setMessageDecoupe] = useState("")
   const etatMain = useMainDuParcours(`bande:${identifiant}:main`, univers)
   const framePeinte = useRef(0)
+  /** Le trait que la Main est en train de tracer, peint en direct. */
+  const [traceEnCours, setTraceEnCours] = useState<Trait | null>(null)
+  /** L'éditeur de pixels, ouvert sur la frame choisie. */
+  const [editeur, setEditeur] = useState(false)
   const toile = useRef<HTMLDivElement | null>(null)
   const espace = useRef<HTMLDivElement | null>(null)
   const facteurVue = useRef(1)
@@ -460,6 +484,7 @@ export function EcranAtelierDeBande({
         setCadence(ouvert.bande.cadence)
         setSens(ouvert.bande.sens)
         setPlanche(ouvert.planche)
+        setPrisesRendues(ouvert.bande.prises)
         setEcarts(ouvert.ecarts ?? [])
       } catch (erreur) {
         if (vivant) direPanne.current((erreur as Error).message)
@@ -507,13 +532,66 @@ export function EcranAtelierDeBande({
 
   // ── L'aperçu, refait à chaque geste et **sans rien écrire** ───────────────
 
+  // **Ce que l'aperçu est en train de faire, dit à l'écran.** Un détourage par
+  // modèle prend plusieurs secondes : sans ce retour, changer de moteur ne
+  // montrait rien, et l'auteur ne savait ni si le geste avait pris, ni si le
+  // résultat changeait quelque chose. Signalé le 16 septembre 2026.
+  const [calcul, setCalcul] = useState<number | null>(null)
+  const [retourApercu, setRetourApercu] = useState<RetourApercu | null>(null)
+  const plancheVue = useRef<string | null>(null)
+  plancheVue.current = planche
+  const debutDuCalcul = useRef<number | null>(null)
+  const recuVu = useRef<AtelierRecu | null>(null)
+  // **Un seul calcul à la fois, et toujours avec la dernière valeur.** Un
+  // aperçu prend plus d'une seconde ; tirer un curseur de tolérance en envoyait
+  // un par cran, que le serveur traitait l'un après l'autre — l'image avait
+  // alors plusieurs secondes de retard sur le curseur. Signalé le 16 septembre
+  // 2026. Pendant qu'un calcul tourne, les gestes suivants se résument en un
+  // seul, parti dès qu'il revient.
+  const apercuEnVol = useRef(false)
+  const apercuARefaire = useRef(false)
+  const [relanceApercu, setRelanceApercu] = useState(0)
+  const monte = useRef(true)
+  useEffect(() => {
+    monte.current = true
+    return () => {
+      monte.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!retourApercu) return
+    const minuteur = window.setTimeout(() => setRetourApercu(null), retourApercu.ton === "neutre" ? 2500 : 5000)
+    return () => window.clearTimeout(minuteur)
+  }, [retourApercu])
+
   useEffect(() => {
     if (!recu || prises.length === 0) return
-    let vivant = true
+    // Le compteur part **dès le geste**, et garde son départ si un second
+    // geste arrive pendant le calcul : c'est l'attente de l'auteur qu'il mesure.
+    // **Pas à l'ouverture** : l'aperçu y redonne la planche du disque, et dire
+    // « l'image n'a pas changé » à quelqu'un qui n'a rien touché serait faux.
+    const geste = recuVu.current === recu
+    recuVu.current = recu
+    if (geste) {
+      debutDuCalcul.current ??= Date.now()
+      setCalcul(debutDuCalcul.current)
+      setRetourApercu(null)
+    }
+    if (apercuEnVol.current) {
+      apercuARefaire.current = true
+      return
+    }
     // Un petit délai, parce que les flèches se tiennent enfoncées : sans lui,
     // une pression continue enverrait une demande par répétition du clavier.
     const minuteur = window.setTimeout(() => {
+      apercuEnVol.current = true
       void (async () => {
+        // Le résultat d'un calcul dépassé **s'affiche quand même** s'il porte
+        // sur la même animation : il est plus près de ce qu'on règle que
+        // l'image d'avant, et le suivant part aussitôt.
+        const lieA = recu
+        const encore = () => monte.current && recuVu.current === lieA
         try {
           const apercu = await api.apercuDeBande({
             clip: recu.bande.clip,
@@ -521,21 +599,50 @@ export function EcranAtelierDeBande({
             recette,
             cadre: recu.bande.cadre,
           })
-          if (!vivant) return
+          if (!encore()) return
+          const pareille = apercu.planche === plancheVue.current
           setPlanche(apercu.planche)
+          setPrisesRendues(prises)
           // Le ruban suit ce qu'on vient de régler, pas ce qui est sur le
           // disque : l'aperçu est le seul appel qui reparte à chaque geste.
           if (apercu.ecarts_des_frames) setEcarts(apercu.ecarts_des_frames)
+          if (apercuARefaire.current) return
+          const debut = debutDuCalcul.current
+          debutDuCalcul.current = null
+          setCalcul(null)
+          if (debut !== null)
+            setRetourApercu({ ton: pareille ? "pareil" : "neutre", secondes: (Date.now() - debut) / 1000 })
         } catch (erreur) {
-          if (vivant) direPanne.current((erreur as Error).message)
+          if (!encore() || apercuARefaire.current) return
+          const debut = debutDuCalcul.current
+          debutDuCalcul.current = null
+          setCalcul(null)
+          if (debut !== null) setRetourApercu({ ton: "echec", secondes: 0 })
+          direPanne.current((erreur as Error).message)
+        } finally {
+          apercuEnVol.current = false
+          if (apercuARefaire.current) {
+            apercuARefaire.current = false
+            if (monte.current) setRelanceApercu((n) => n + 1)
+          }
         }
       })()
     }, 120)
     return () => {
-      vivant = false
       window.clearTimeout(minuteur)
     }
-  }, [recu, prises, recette])
+  }, [recu, prises, recette, relanceApercu])
+
+  useEffect(() => {
+    if (!planche) return
+    let vivant = true
+    void lireLesButees(planche, prisesRendues.length).then((lues) => {
+      if (vivant) setButees(lues)
+    })
+    return () => {
+      vivant = false
+    }
+  }, [planche, prisesRendues.length])
 
   // ── Le lecteur ────────────────────────────────────────────────────────────
 
@@ -718,8 +825,14 @@ export function EcranAtelierDeBande({
   const choisirUne = useCallback((rang: number) => {
     setJoue(false)
     setCourante(rang)
-    setSelection([rang])
-  }, [])
+    // ⚠️ **En mode « toute l'animation », cliquer une vignette montre l'image
+    // sans changer la portée.** Avant, ce clic ramenait les tables à une seule
+    // frame sans rien dire : l'auteur croyait régler l'animation et ne réglait
+    // qu'une image — ou l'inverse. Signalé le 16 septembre 2026. Changer de
+    // portée se fait par le sélecteur du haut de la colonne, et nulle part
+    // ailleurs.
+    setSelection((avant) => (avant.length > 1 && avant.length >= prises.length ? avant : [rang]))
+  }, [prises.length])
 
   /** Étendre depuis l'image des tables jusqu'à celle qu'on clique. L'ancre ne
    *  bouge pas : c'est elle qu'on lit pendant qu'on étend. */
@@ -776,8 +889,14 @@ export function EcranAtelierDeBande({
         setRecette((laBande) =>
           laBande ? reporterLeChange(laBande, avant, apres) : apres,
         )
+      // Retourner une frame retourne aussi ses retouches (16 septembre 2026).
+      const large = recu?.bande.case_largeur || 64
+      const haut = recu?.bande.case_hauteur || 64
+      const bandeApres = toutes && recette ? reporterLeChange(recette, avant, apres) : recette
+      const suivre = (prise: Prise, suite: Prise) =>
+        priseRetournee(suite, prise.recette ?? recette, suite.recette ?? bandeApres, large, haut)
       setPrises((liste) =>
-        liste.map((prise, rang) => {
+        liste.map((prise, rang) => suivre(prise, (() => {
           // ⚠️ **Les recettes individuelles suivent quand même.** Sans cette
           // ligne, un curseur posé sur les douze n'en bougerait que neuf, et les
           // trois qui s'écartaient l'ignoreraient sans un mot — un curseur qui
@@ -796,10 +915,10 @@ export function EcranAtelierDeBande({
           return sienne
             ? { ...prise, recette: reporterLeChange(sienne, avant, apres) }
             : prise
-        }),
+        })())),
       )
     },
-    [reglee, toutes, choisies, recette],
+    [reglee, toutes, choisies, recette, recu],
   )
 
   /** **Poser une recette nommée**, qui remplace tout l'ensemble (`A7` bis ②).
@@ -1058,6 +1177,7 @@ export function EcranAtelierDeBande({
         ouvrir: setTable,
         etatMain,
         armee: passeArmee,
+        images: prises.length,
         onArmer: (passe) => { setJoue(false); setCourante(choisie); setSelection([choisie]); setPasseArmee(passe); setRectangleSource(false) },
       }
     : null
@@ -1094,7 +1214,15 @@ export function EcranAtelierDeBande({
       setRecu(ouvert)
       setPrises(ouvert.bande.prises)
       setChutier(ouvert.bande.chutier ?? [])
+      // **La recette, la cadence et le sens aussi** (16 septembre 2026) : le
+      // serveur les réécrit à sa façon, et sans les reprendre l'écran se
+      // comparait à sa propre version — « des corrections attendent » restait
+      // affiché juste après avoir enregistré.
+      setRecette(ouvert.bande.recette)
+      setCadence(ouvert.bande.cadence)
+      setSens(ouvert.bande.sens)
       setPlanche(ouvert.planche)
+      setPrisesRendues(ouvert.bande.prises)
       setEcarts(ouvert.ecarts ?? [])
       onChangee?.()
       brouillon.effacer()
@@ -1134,7 +1262,15 @@ export function EcranAtelierDeBande({
       setRecu(ouvert)
       setPrises(ouvert.bande.prises)
       setChutier(ouvert.bande.chutier ?? [])
+      // **La recette, la cadence et le sens aussi** (16 septembre 2026) : le
+      // serveur les réécrit à sa façon, et sans les reprendre l'écran se
+      // comparait à sa propre version — « des corrections attendent » restait
+      // affiché juste après avoir enregistré.
+      setRecette(ouvert.bande.recette)
+      setCadence(ouvert.bande.cadence)
+      setSens(ouvert.bande.sens)
       setPlanche(ouvert.planche)
+      setPrisesRendues(ouvert.bande.prises)
       setEcarts(ouvert.ecarts ?? [])
       onChangee?.()
     } catch (erreur) {
@@ -1192,24 +1328,96 @@ export function EcranAtelierDeBande({
     <EcranDecoupe sujet={{ famille: "planche", planche: decoupe, onDecoupe: (nees) => { setMessageDecoupe(`${nees.length} image${nees.length > 1 ? "s" : ""} ajoutée${nees.length > 1 ? "s" : ""} à la bibliothèque.`); setDecoupe(null); onChangee?.() } }} onFermer={() => setDecoupe(null)} onFente={(fente) => { if (fente?.ton === "echec") onErreur(String(fente.texte)) }} />
   </div>
 
+  // **Ce que la Main a posé et que l'aperçu n'a pas encore rendu**, rejoué à
+  // l'écran pour que le trait se voie tout de suite (16 septembre 2026).
+  const attenteDeLaMain: Attente | null = (() => {
+    if (table !== "main") return null
+    const voulue = prises[rang]?.main_apres_placement ?? null
+    const rendue = prisesRendues[rang]?.main_apres_placement ?? null
+    const base = voulue ? passagesEnAttente(rendue, voulue) : rendue ? null : { opacite: [], calques: [] }
+    if (!base || !traceEnCours) return base
+    const main = mainDe({ ...(reglee ?? RECETTE_VIDE), main: voulue })
+    const actif = etatMain.actif === OPACITE || main.calques[etatMain.actif] ? etatMain.actif : OPACITE
+    if (actif === OPACITE) return { ...base, opacite: [...base.opacite, traceEnCours] }
+    const calques = main.calques.map((c, i) => ({ visible: c.visible, passages: [...(base.calques[i]?.passages ?? []), ...(i === actif ? [traceEnCours] : [])] }))
+    return { ...base, calques }
+  })()
+
+  /** **Ranger les coups de l'éditeur dans la Main de la frame.** Peindre pose
+   *  un passage sur le calque de dessin (créé au besoin) ; effacer ôte
+   *  l'opacité *et* ce que chaque calque avait posé à cet endroit — sinon une
+   *  peinture restée dessus réapparaîtrait. Rien n'est écrit avant
+   *  « Enregistrer », comme tout le reste de l'écran. */
+  const rangerLesCoups = (cible: number, coups: Coup[]) => {
+    setJoue(false)
+    setCourante(cible)
+    setPrises((liste) => liste.map((prise, index) => {
+      if (index !== cible) return prise
+      let main = mainDe({ ...(prise.recette ?? recette ?? RECETTE_VIDE), main: prise.main_apres_placement ?? null })
+      let calque = etatMain.actif !== OPACITE && main.calques[etatMain.actif] ? etatMain.actif : main.calques.findIndex((c) => c.visible)
+      for (const coup of coups) {
+        if (coup.sorte === "peindre") {
+          if (calque < 0) {
+            main = { ...main, calques: [...main.calques, { nom: `calque ${main.calques.length + 1}`, visible: true, passages: [] }] }
+            calque = main.calques.length - 1
+          }
+          main = avecPassage(main, calque, coup.trait)
+        } else {
+          const gomme = { ...coup.trait, garde: false, couleur: "" }
+          main = avecPassage(main, OPACITE, gomme)
+          for (let i = 0; i < main.calques.length; i++) main = avecPassage(main, i, gomme)
+        }
+      }
+      return { ...prise, main_apres_placement: main }
+    }))
+    setEditeur(false)
+  }
+
   return (
     <div
       data-atelier-de-bande={bande.identifiant}
-      className="atelier-animation-unifie grid h-full min-h-0 grid-cols-[minmax(0,1fr)_300px] grid-rows-[auto_minmax(0,1fr)_auto] gap-[14px] bg-papier p-[14px]"
+      className="atelier-animation-unifie grid h-full min-h-0 grid-cols-[minmax(0,1fr)_minmax(300px,40%)] grid-rows-[auto_minmax(0,1fr)_auto] gap-[14px] bg-papier p-[14px]"
     >
       <header className="col-span-2 flex min-w-0 items-center justify-between gap-[22px]">
-        <div className="min-w-0"><h1 className="truncate font-serif text-[25px] text-encre">{bande.nom}</h1><p className="mt-[4px] text-[12px] text-encre-3">Animation · {compte} frames · {change ? "Brouillon de retouche" : "Version enregistrée"}</p></div>
-        <div className="flex shrink-0 items-center gap-[8px]"><button type="button" onClick={onFermer} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle">‹ Animations</button><button type="button" onClick={() => void enregistrer()} disabled={!change || enregistre} className="h-[34px] rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">{enregistre ? "on enregistre…" : "Enregistrer ›"}</button><button type="button" title={raisonDEnregistrerSous(recette) ?? "Le résultat devient une autre pose ou direction"} disabled={!!raisonDEnregistrerSous(recette)} onClick={() => { setJoue(false); setEnregistrerSous(true) }} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle disabled:opacity-50">Enregistrer sous…</button></div>
+        <div className="min-w-0"><h1 className="truncate font-serif text-[25px] text-encre">{bande.nom}</h1><p className="mt-[4px] text-[12px] text-encre-3">Animation · {compte} frames · {cadence} par seconde · {(Math.max(1, sens === "aller-retour" && compte > 1 ? compte * 2 - 2 : compte) / cadence).toFixed(2)} s par tour · {change ? "Brouillon de retouche" : "Version enregistrée"}</p></div>
+        <div className="flex shrink-0 items-center gap-[8px]">{bande.personnage && onVersLeSujet ? <button type="button" data-vers-le-sujet title={`Revenir aux animations de ${nomDuSujet?.(bande.personnage) ?? "ce personnage"}`} onClick={() => onVersLeSujet(bande.personnage!)} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle">‹ Animations</button> : <button type="button" onClick={onFermer} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle">‹ Animations</button>}<button type="button" onClick={() => void enregistrer()} disabled={!change || enregistre} className="h-[34px] rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">{enregistre ? "on enregistre…" : "Enregistrer ›"}</button><button type="button" title={raisonDEnregistrerSous(recette) ?? "Le résultat devient une autre pose ou direction"} disabled={!!raisonDEnregistrerSous(recette)} onClick={() => { setJoue(false); setEnregistrerSous(true) }} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle disabled:opacity-50">Enregistrer sous…</button></div>
       </header>
+      {editeur && prises[choisie] && <EditeurDePixels
+        titre={`${bande.nom} · frame ${choisie + 1}`}
+        planche={planche}
+        rang={choisie}
+        large={large}
+        haut={haut}
+        attente={passagesEnAttente(prisesRendues[choisie]?.main_apres_placement ?? null, prises[choisie]?.main_apres_placement ?? null)}
+        palette={univers.palette}
+        couleurDepart={etatMain.couleur}
+        onValider={(coups) => rangerLesCoups(choisie, coups)}
+        onFermer={() => setEditeur(false)}
+      />}
       {/* ── Les tables de la frame choisie ───────────────────────────────── */}
       <aside
         {...PANNEAU}
         className="col-start-2 row-start-2 row-span-2 flex min-h-0 flex-col gap-[14px] rounded-8 border border-trait bg-carte p-[14px]"
       >
         <h2 className="font-serif text-[25px] text-encre">Le résultat</h2>
-        <div className="flex gap-[4px] rounded-7 bg-papier-cote p-[4px]">{(["retouche", "calques"] as const).map((nom) => <button key={nom} type="button" aria-pressed={panneau === nom} onClick={() => { setPanneau(nom); if (nom === "calques") { setTable("main"); setSelection([choisie]) } }} className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${panneau === nom ? "bg-carte text-encre" : "text-encre-3"}`}>{nom === "retouche" ? "Retouche" : "Calques"}</button>)}</div>
+        {/* **Quatre onglets** (16 septembre 2026) : ce qui n'était pas une table —
+            déplacer une frame, les recettes — traînait en bas de la colonne
+            dans des sections repliées. Chacun a maintenant sa page. */}
+        <div className="flex gap-[4px] rounded-7 bg-papier-cote p-[4px]">{(["retouche", "calques", "frame", "recettes"] as const).map((nom) => <button key={nom} type="button" aria-pressed={panneau === nom} onClick={() => { setPanneau(nom); if (nom === "calques") { setTable("main"); setSelection([choisie]) } }} className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${panneau === nom ? "bg-carte text-encre" : "text-encre-3"}`}>{{ retouche: "Retouche", calques: "Calques", frame: "Frame", recettes: "Recettes" }[nom]}</button>)}</div>
 
         <AvisBrouillon brouillon={brouillon} />
+        {((panneau === "retouche" && table !== "main") || panneau === "recettes") && compte > 1 && (
+          <PorteeDesReglages
+            toutes={toutes}
+            choisies={choisies.length}
+            compte={compte}
+            frame={choisie + 1}
+            sienne={laFrameAAuMine(choisie)}
+            siennes={siennes}
+            onToutes={choisirToutes}
+            onUne={() => { nEnChoisirQuUne(); setJoue(false); setCourante(choisie) }}
+          />
+        )}
         {panneau === "retouche" && <SelecteurDeTable table={table} onTable={(suivante) => { setTable(suivante); setPasseArmee(null); setRectangleSource(false); if (suivante === "main") setSelection([choisie]) }} />}
         {/* **La bascule et la remise à zéro de l'établi, posées contre la
             même table** (RP22) : avant, ni l'une ni l'autre n'existaient ici,
@@ -1228,6 +1436,7 @@ export function EcranAtelierDeBande({
           </div>
         )}
         <div className="order-last flex shrink-0 flex-wrap gap-[8px] border-t border-trait pt-[14px] text-[12px]">
+          <div className="w-full min-h-[18px]"><EtatDeLApercu calcul={calcul} retour={retourApercu} /></div>
           <button type="button" disabled={preleve} onClick={async () => {
             setJoue(false); setCourante(rang); setPreleve(true)
             try { const recu = await api.preleverFrameDeBande(bande.identifiant, rang, { prises, recette: recette! }); const image = recu.asset ?? recu.doublon; if (image) setDecoupe(image) }
@@ -1236,20 +1445,9 @@ export function EcranAtelierDeBande({
           {table === "recadrage" && <button type="button" onClick={() => { setJoue(false); setCourante(choisie); setSelection([choisie]); setRectangleSource(true); setPasseArmee(null) }} className="rounded-7 border border-trait px-[8px] py-[4px]">Tracer le recadrage sur la source</button>}
         </div>
         {messageDecoupe && <p role="status" className="text-[12px] text-encre-3">{messageDecoupe}</p>}
-        <label className="flex items-center gap-[8px] text-[12px] text-encre-3">Appliquer à
-          <select aria-label="Portée des réglages" value={table === "main" ? "frame" : toutes ? "bande" : plusieurs ? "selection" : "frame"}
-            disabled={table === "main"} onChange={(event) => event.target.value === "bande" ? choisirToutes() : event.target.value === "frame" ? nEnChoisirQuUne() : undefined}
-            className="h-[30px] min-w-0 flex-1 rounded-7 border border-trait bg-carte px-[8px] text-encre">
-            <option value="frame">Frame {choisie + 1}</option>
-            <option value="selection" disabled={!plusieurs}>Sélection ({choisies.length})</option>
-            <option value="bande">Animation entière ({prises.length})</option>
-          </select>
-        </label>
         <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
 
-        <details className="order-last text-[12px] text-encre-3"><summary className="cursor-pointer">Portée et héritage de la recette</summary><p className="mt-[8px] text-[12px] leading-relaxed text-encre-3">
-          {compte} image{compte > 1 ? "s" : ""}, {cadence} par seconde —{" "}
-          {(Math.max(1, sens === "aller-retour" && compte > 1 ? compte * 2 - 2 : compte) / cadence).toFixed(2)} s par tour.{" "}
+        {panneau === "retouche" && <p data-portee-de-la-recette className="text-[12px] leading-relaxed text-encre-3">
           {/* **Ce que règlent les tables, en une phrase et à chaque fois.** Trois
               portées possibles — une image, un lot, l'animation entière — et
               rien d'autre à l'écran ne les distingue : la même colonne, les
@@ -1279,17 +1477,21 @@ export function EcranAtelierDeBande({
               Toucher un réglage crée une correction pour cette frame seulement.
             </>
           )}
-        </p></details>
+        </p>}
 
-        <details className="order-last border-t border-trait pt-[8px] text-[12px] text-encre-3"><summary className="cursor-pointer">Recettes réutilisables</summary><RecetteEnregistree
+        {reglee && <div hidden={panneau !== "recettes"}><RecettesDeLaBande
           recettes={recettes}
+          reglee={reglee}
+          frame={choisie + 1}
           choisies={choisies.length}
           siennes={siennes}
           toutes={toutes}
+          onRecettes={setRecettes}
           onRecette={poserLaRecetteNommee}
-        /></details>
+          onErreur={onErreur}
+        /></div>}
 
-        <ReglagesDeLaFrame
+        {(panneau === "retouche" || panneau === "calques") && <ReglagesDeLaFrame
           table={table}
           poste={poste}
           sienne={laFrameAAuMine(choisie)}
@@ -1297,28 +1499,30 @@ export function EcranAtelierDeBande({
           choisies={choisies.length}
           siennes={siennes}
           separes={separes}
+          toutes={toutes}
           ecart={ecarts[choisie]}
           onReprendre={reprendreLaRecetteDeLaBande}
-        />
+        />}
 
-        {table === "main" && reglee && <div className="flex flex-col gap-[14px]">
+        {(panneau === "retouche" || panneau === "calques") && table === "main" && reglee && <div className="flex flex-col gap-[14px]">
           <p className="text-[12px] leading-relaxed text-encre-3">{panneau === "calques" ? `Les calques appartiennent à la frame ${choisie + 1}.` : "Peignez directement sur l’image ; la lecture s’arrête au début du trait."}</p>
+          <button type="button" data-ouvrir-l-editeur onClick={() => { setJoue(false); setCourante(choisie); setEditeur(true) }} className="h-[34px] rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal">Éditer les pixels de la frame {choisie + 1}…</button>
           <ReglagesDeLaMain {...poste!} section={panneau === "calques" ? "calques" : "peinture"} etatMain={etatMain} recette={{ ...reglee, main: prises[choisie]?.main_apres_placement ?? null }}
             poser={(suivante) => { setJoue(false); setPrises((liste) => liste.map((prise, index) => index === choisie ? { ...prise, main_apres_placement: suivante.main } : prise)) }}
             regler={(suivante) => { setJoue(false); setPrises((liste) => liste.map((prise, index) => index === choisie ? { ...prise, main_apres_placement: suivante.main } : prise)) }} />
         </div>}
-        {table === "retournement" && poste && <ReglagesDuRetournement {...poste} />}
+        {panneau === "retouche" && table === "retournement" && poste && <ReglagesDuRetournement {...poste} />}
 
         {/* **Le titre dit les trois gestes, plus le mot qui les nommait mal**
             (RP22) : « Position, source et pelure d'oignon » ne disait ni ce
             que la section faisait ni comment s'en servir — trois mots de
             jargon sans un verbe. Les trois verbes du plan, dans l'ordre où ils
             paraissent dessous. */}
-        <details className="border-t border-trait pt-[14px]">
-          <summary className="cursor-pointer text-[13px] text-encre-2">Déplacer, remplacer, voir en transparence</summary>
+        {<div data-onglet-frame hidden={panneau !== "frame"} className={`${panneau === "frame" ? "flex" : "hidden"} flex-col gap-[8px]`}>
+          <p className="text-[13px] text-encre-2">Frame {choisie + 1} : déplacer, remplacer, voir en transparence</p>
           <CorrectionDeLImage prise={prises[choisie]} clipDeLaBande={bande.clip} imagesParClip={recu.images_par_clip}
             voisins={recu.clips_voisins} melangee={bande.melangee} pelure={pelure} onPelure={setPelure} onRemplacer={remplacer} onRemettreDroit={remettreDroit} />
-        </details>
+        </div>}
 
         {change && (
           <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
@@ -1363,14 +1567,16 @@ export function EcranAtelierDeBande({
         <div className="flex shrink-0 items-center gap-[8px]"><button type="button" onClick={historique.defaire} disabled={!historique.peutDefaire} title="Ctrl + Z" className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 disabled:opacity-50">Défaire</button><button type="button" onClick={historique.refaire} disabled={!historique.peutRefaire} title="Ctrl + Maj + Z" className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 disabled:opacity-50">Refaire</button><span className="ml-auto text-[12px] text-encre-3">Frame {rang + 1} / {compte} · {large} × {haut} px</span></div>
         {(passeArmee !== null || rectangleSource) && reglee && prises[choisie] ? <SourceDeFrame
           source={api.imageDuClip(prises[choisie].clip || bande.clip, prises[choisie].numero)} recette={reglee} passe={passeArmee} rectangle={rectangleSource}
-          onRecette={(suite) => corrigerLaChoisie((prise) => ({ ...prise, recette: suite }))} onFermer={() => { setPasseArmee(null); setRectangleSource(false) }} /> : <>
-        <ZoomDeLaFrame
-          facteur={facteur}
-          ajuste={ajuste}
-          surMesure={zoom !== null}
-          onZoom={setZoom}
+          onRecette={poserSurLaSelection} onFermer={() => { setPasseArmee(null); setRectangleSource(false) }} /> : <>
+        <BarreDuZoom
+          zoom={zoom === null ? "ajuste" : Math.round(zoom * 100)}
+          ajuste={ajuste * 100}
+          maximum={3200}
+          onZoom={(suite) => setZoom(suite === "ajuste" ? null : suite / 100)}
         />
 
+        <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+        <EtatDeLApercu calcul={calcul} retour={retourApercu} flottant />
         <div ref={espace} data-vue-de-la-frame className="defile flex min-h-0 min-w-0 flex-1 items-start justify-start overflow-auto rounded-7 border border-trait bg-pourtour"
           onPointerDownCapture={(event) => {
             if (!deplacementVue && event.button !== 1) return
@@ -1379,7 +1585,7 @@ export function EcranAtelierDeBande({
           }}
           onPointerMoveCapture={(event) => { if (!pan.current) return; event.stopPropagation(); event.currentTarget.scrollLeft = pan.current.gauche - event.clientX + pan.current.x; event.currentTarget.scrollTop = pan.current.haut - event.clientY + pan.current.y }}
           onPointerUpCapture={(event) => { if (!pan.current) return; event.stopPropagation(); pan.current = null }}>
-        <div className="m-auto shrink-0">
+        <div className={`m-auto shrink-0 transition-opacity duration-200 ${calcul !== null && table !== "main" ? "opacity-60 delay-500" : "opacity-100 delay-0"}`}>
         <CaseEnGrand
           ref={toile}
           planche={planche}
@@ -1391,10 +1597,12 @@ export function EcranAtelierDeBande({
           facteur={facteur}
           pelure={pelure}
           onPousser={pousser}
+          enAttente={enAttenteDe(prises[rang], prisesRendues[rang])}
           main={table === "main" && reglee ? <ToileDeLaMain
             asset={{ identifiant: bande.identifiant, empreinte: "", label: `${bande.nom} · frame ${rang + 1}`, largeur: large, hauteur: haut, rendu_largeur: large, rendu_hauteur: haut }}
             avant={false} etat={etatMain}
-            rendu={<span aria-hidden className="absolute inset-0" style={{ backgroundImage: `url(${planche})`, backgroundSize: `${large * compte * facteur}px ${haut * facteur}px`, backgroundPosition: `-${rang * large * facteur}px 0`, imageRendering: "pixelated" }} />}
+            rendu={<FrameVivante planche={planche} rang={rang} compte={compte} large={large} haut={haut} facteur={facteur} attente={attenteDeLaMain} />}
+            onTrace={setTraceEnCours} sansTrace
             onDebut={() => { framePeinte.current = rang; setJoue(false); setCourante(rang); setSelection([rang]) }}
             onPassage={(trait) => setPrises((liste) => liste.map((prise, index) => {
               if (index !== framePeinte.current) return prise
@@ -1404,8 +1612,8 @@ export function EcranAtelierDeBande({
             }))}
           /> : undefined}
         />
-        </div></div>
-        <p className="text-[11px] text-encre-3">Ctrl + molette : zoom · Espace + glisser ou bouton central : déplacer la vue</p>
+        </div></div></div>
+        {!joue && <PousseeBloquee prise={prisesRendues[rang] && enAttenteDe(prises[rang], prisesRendues[rang]).dx === 0 && enAttenteDe(prises[rang], prisesRendues[rang]).dy === 0 ? prises[rang] : undefined} butee={butees[rang]} frame={rang + 1} onRemettreDroit={() => { setCourante(rang); setPrises((liste) => liste.map((prise, index) => index === rang ? { ...prise, dx: 0, dy: 0 } : prise)) }} />}
         </>}
       </div>
       )}
@@ -1424,23 +1632,9 @@ export function EcranAtelierDeBande({
               fait au clavier autant qu'à la souris* est un critère de la
               version. Ils ne touchent pas au lecteur — ils changent la portée
               des tables, pas l'image sous les yeux. */}
-          <button
-            type="button"
-            onClick={choisirToutes}
-            disabled={toutes}
-            className="mesure ml-auto text-[10px] text-encre-3 hover:text-signal disabled:text-eteint"
-          >
-            toutes
-          </button>
-          {plusieurs && (
-            <button
-              type="button"
-              onClick={nEnChoisirQuUne}
-              className="mesure text-[10px] text-encre-3 hover:text-signal"
-            >
-              une seule
-            </button>
-          )}
+          <span className="mesure ml-auto text-[10px] text-encre-3">
+            {toutes ? "réglages : toute l'animation" : plusieurs ? `réglages : ${choisies.length} frames` : `réglages : frame ${choisie + 1} seule`}
+          </span>
         </div>
 
         {/* **Le montage du ruban** (V3.03.3) — une bande gardée n'est pas un
@@ -1555,6 +1749,220 @@ export function EcranAtelierDeBande({
   )
 }
 
+/** **Sur quoi portent les réglages** — toute l'animation, ou la frame choisie.
+ *
+ *  > ### ⚠️ La portée se lisait dans une liste, et un clic la changeait en douce
+ *  >
+ *  > Elle vivait dans « Appliquer à », sous les tables, et cliquer une vignette
+ *  > la ramenait à une frame sans rien dire. L'auteur ne savait plus si un
+ *  > réglage partait sur une image ou sur toutes. Signalé le 16 septembre 2026.
+ *
+ *  Deux onglets, en haut de la colonne, et une phrase qui dit ce qui va se
+ *  passer au prochain geste. Le mode « frame » se voit de loin : il prend la
+ *  couleur du signal, parce que c'est l'exception. */
+function PorteeDesReglages({
+  toutes,
+  choisies,
+  compte,
+  frame,
+  sienne,
+  siennes,
+  onToutes,
+  onUne,
+}: {
+  toutes: boolean
+  choisies: number
+  compte: number
+  frame: number
+  sienne: boolean
+  siennes: number
+  onToutes: () => void
+  onUne: () => void
+}) {
+  const lot = !toutes && choisies > 1
+  return (
+    <div data-portee-des-reglages={toutes ? "animation" : lot ? "lot" : "frame"} className="flex shrink-0 flex-col gap-[6px]">
+      <div role="tablist" aria-label="Portée des réglages" className="flex gap-[4px] rounded-7 bg-papier-cote p-[4px]">
+        <button type="button" role="tab" aria-selected={toutes} onClick={onToutes}
+          className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${toutes ? "bg-carte text-encre" : "text-encre-3 hover:text-encre"}`}>
+          Toute l’animation ({compte})
+        </button>
+        <button type="button" role="tab" aria-selected={!toutes} onClick={onUne}
+          className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${!toutes ? "bg-signal text-encre-sur-signal" : "text-encre-3 hover:text-encre"}`}>
+          {lot ? `${choisies} frames choisies` : `Frame ${frame} seule`}
+        </button>
+      </div>
+      <p className="text-[12px] leading-snug text-encre-3">
+        {toutes ? (
+          <>
+            Chaque réglage s’applique <b className="font-normal text-encre">aux {compte} frames</b>.
+            {siennes > 0 && ` ${siennes} frame${siennes > 1 ? "s ont leurs" : " a ses"} propres réglages : ${siennes > 1 ? "elles reçoivent" : "elle reçoit"} aussi le changement.`}
+          </>
+        ) : lot ? (
+          <>Chaque réglage s’applique <b className="font-normal text-encre">à ces {choisies} frames seulement</b>. Les autres ne bougent pas.</>
+        ) : (
+          <>
+            Chaque réglage s’applique <b className="font-normal text-encre">à la frame {frame} seulement</b>.{" "}
+            {sienne
+              ? "Elle a déjà ses propres réglages."
+              : "Elle suit encore l’animation : le premier réglage lui donne ses propres réglages."}
+          </>
+        )}
+      </p>
+    </div>
+  )
+}
+
+/** Comment le dernier aperçu s'est fini : à jour, identique à l'image d'avant,
+ *  ou en panne. */
+type RetourApercu = { ton: "neutre" | "pareil" | "echec"; secondes: number }
+
+/** **Où en est l'aperçu**, en une ligne — posée sur l'image et sous les tables.
+ *
+ *  Pendant le calcul : le temps qui passe, affiché à partir de 240 ms (en
+ *  dessous, un clignotement serait pire que rien). Après : combien de temps ça
+ *  a pris, et **si l'image a changé** — un réglage qui ne change rien au rendu
+ *  ressemble sinon exactement à un réglage qui n'a pas été pris en compte. */
+function EtatDeLApercu({
+  calcul,
+  retour,
+  flottant,
+}: {
+  calcul: number | null
+  retour: RetourApercu | null
+  flottant?: boolean
+}) {
+  const ecoule = useEcoule(calcul)
+  const lisible = (s: number) => `${s.toFixed(1).replace(".", ",")} s`
+  let contenu: ReactNode = null
+  if (calcul !== null) {
+    if (ecoule < 0.24) return null
+    contenu = (
+      <>
+        <span aria-hidden className="inline-block h-[10px] w-[10px] shrink-0 animate-spin rounded-full border-[1.5px] border-encre-4 border-t-signal" />
+        <span>Calcul de l’aperçu… {ecoule >= 1 ? lisible(ecoule) : ""}</span>
+      </>
+    )
+  } else if (retour) {
+    contenu =
+      retour.ton === "echec" ? (
+        <span className="text-signal">L’aperçu n’a pas pu être recalculé.</span>
+      ) : retour.ton === "pareil" ? (
+        <span>Aperçu recalculé ({lisible(retour.secondes)}) — <b className="font-normal text-encre">l’image n’a pas changé</b>.</span>
+      ) : (
+        <span>✓ Aperçu à jour ({lisible(retour.secondes)})</span>
+      )
+  } else return null
+  return (
+    <p
+      role={flottant ? undefined : "status"}
+      aria-hidden={flottant || undefined}
+      data-etat-de-l-apercu={calcul !== null ? "calcul" : retour?.ton}
+      className={
+        flottant
+          ? "pointer-events-none absolute left-[8px] top-[8px] z-10 flex items-center gap-[6px] rounded-7 border border-trait bg-carte/95 px-[8px] py-[4px] text-[12px] text-encre-2 shadow-sm"
+          : "flex items-center gap-[6px] text-[12px] text-encre-3"
+      }
+    >
+      {contenu}
+    </p>
+  )
+}
+
+/** Les bords de sa case qu'une frame rendue touche. */
+type Butee = { haut: boolean; bas: boolean; gauche: boolean; droite: boolean }
+
+/** **Ce que le serveur n'a pas encore rendu** de la poussée d'une frame.
+ *  Rien quand ce n'est plus la même image — une frame remplacée ou déplacée
+ *  n'a pas d'écart à montrer. */
+function enAttenteDe(maintenant: Prise | undefined, rendue: Prise | undefined): { dx: number; dy: number } {
+  if (!maintenant || !rendue || maintenant.numero !== rendue.numero || (maintenant.clip ?? "") !== (rendue.clip ?? ""))
+    return { dx: 0, dy: 0 }
+  return { dx: maintenant.dx - rendue.dx, dy: maintenant.dy - rendue.dy }
+}
+
+/** **Lire sur la planche quels bords chaque frame touche.**
+ *
+ *  Le serveur borne la poussée au lieu de rogner (`pousser`) : une frame qui
+ *  touche déjà le haut et le bas de sa case ne peut pas monter. Sans cette
+ *  lecture, la poussée s'inscrivait sur la vignette et l'image ne bougeait
+ *  pas — signalé le 16 septembre 2026 sur « repos », un champignon de 96 px
+ *  de haut dans une case de 96. Rend une liste vide quand le navigateur ne
+ *  sait pas lire l'image : on se tait plutôt que d'inventer. */
+function lireLesButees(planche: string, compte: number): Promise<Butee[]> {
+  return new Promise((resoudre) => {
+    if (compte <= 0 || typeof Image === "undefined") return resoudre([])
+    const image = new Image()
+    image.onerror = () => resoudre([])
+    image.onload = () => {
+      try {
+        const toile = document.createElement("canvas")
+        toile.width = image.naturalWidth
+        toile.height = image.naturalHeight
+        const contexte = toile.getContext("2d")
+        if (!contexte || !toile.width || !toile.height) return resoudre([])
+        contexte.drawImage(image, 0, 0)
+        const { data } = contexte.getImageData(0, 0, toile.width, toile.height)
+        const large = Math.floor(toile.width / compte)
+        const haut = toile.height
+        const opaque = (x: number, y: number) => data[(y * toile.width + x) * 4 + 3] > 0
+        const butees: Butee[] = []
+        for (let rang = 0; rang < compte; rang++) {
+          const debut = rang * large
+          let h = false, b = false, g = false, d = false
+          for (let x = 0; x < large; x++) {
+            if (opaque(debut + x, 0)) h = true
+            if (opaque(debut + x, haut - 1)) b = true
+          }
+          for (let y = 0; y < haut; y++) {
+            if (opaque(debut, y)) g = true
+            if (opaque(debut + large - 1, y)) d = true
+          }
+          butees.push({ haut: h, bas: b, gauche: g, droite: d })
+        }
+        resoudre(butees)
+      } catch {
+        resoudre([])
+      }
+    }
+    image.src = planche
+  })
+}
+
+/** La phrase qui dit **pourquoi une poussée ne se voit pas** : la frame touche
+ *  déjà le bord de sa case dans ce sens-là. */
+function PousseeBloquee({
+  prise,
+  butee,
+  frame,
+  onRemettreDroit,
+}: {
+  prise: Prise | undefined
+  butee: Butee | undefined
+  frame: number
+  onRemettreDroit: () => void
+}) {
+  if (!prise || !butee) return null
+  const sens = [
+    prise.dy < 0 && butee.haut ? "monter" : null,
+    prise.dy > 0 && butee.bas ? "descendre" : null,
+    prise.dx < 0 && butee.gauche ? "aller plus à gauche" : null,
+    prise.dx > 0 && butee.droite ? "aller plus à droite" : null,
+  ].filter(Boolean)
+  if (sens.length === 0) return null
+  return (
+    <p data-poussee-bloquee role="status" className="flex flex-wrap items-center gap-[8px] text-[12px] text-signal">
+      <span>
+        La frame {frame} touche le bord de sa case : elle ne peut pas {sens.join(" ni ")}. La
+        poussée notée ({prise.dx}, {prise.dy}) ne s’applique qu’en partie.
+      </span>
+      <button type="button" onClick={onRemettreDroit} className="rounded-7 border border-trait bg-carte px-[8px] py-[2px] text-encre-2">
+        Remettre à 0, 0
+      </button>
+    </p>
+  )
+}
+
 /** L'image en grand, **avec la précédente en transparence dessous**.
  *
  *  La pelure d'oignon est le geste que l'animation demande depuis toujours :
@@ -1573,8 +1981,10 @@ const CaseEnGrand = (() => {
       facteur,
       pelure,
       onPousser,
+      enAttente,
       main,
     }: {
+      enAttente?: { dx: number; dy: number }
       planche: string
       rang: number
       precedent: number
@@ -1607,7 +2017,7 @@ const CaseEnGrand = (() => {
         role="application"
         aria-label="l'image à corriger — les flèches la déplacent d'un pixel"
         title="cliquez, puis les flèches — Maj pour cinq pixels à la fois"
-        className="relative cursor-move border border-trait bg-pourtour outline-none focus:border-signal"
+        className="relative cursor-move overflow-hidden border border-trait bg-pourtour outline-none focus:border-signal"
         style={{ width: large * facteur, height: haut * facteur }}
         onPointerDown={(evenement) => {
           if (main) return
@@ -1644,7 +2054,10 @@ const CaseEnGrand = (() => {
             style={{ ...fond(precedent), opacity: pelure / 100 }}
           />
         )}
-        {main ?? <span className="absolute left-0 top-0" style={fond(rang)} />}
+        {/* **La poussée se voit tout de suite**, décalée à l'écran pendant que le
+            serveur la rend : sans ça, chaque flèche attendait une seconde et
+            demie avant que rien ne bouge. */}
+        {main ?? <span data-poussee-en-attente={enAttente && (enAttente.dx || enAttente.dy) ? `${enAttente.dx},${enAttente.dy}` : undefined} className="absolute left-0 top-0" style={{ ...fond(rang), transform: enAttente && (enAttente.dx || enAttente.dy) ? `translate(${enAttente.dx * facteur}px, ${enAttente.dy * facteur}px)` : undefined }} />}
       </div>
     )
   }
@@ -2429,72 +2842,6 @@ function RepriseDuMontage({
   )
 }
 
-/** Les arrêts du zoom de la frame, **en facteurs entiers**. Serrés là où l'on
- *  corrige au pixel, lâches là où l'on regarde la pose : personne ne travaille
- *  à 7× plutôt qu'à 8×, et un pas de un demanderait quinze clics pour traverser
- *  la plage. */
-const ARRETS_DU_ZOOM = [1, 2, 3, 4, 6, 8, 12, 16, 24] as const
-
-/** Le zoom de la frame — reculer, avancer, revenir à l'ajusté.
- *
- *  **`ajusté` n'est pas un arrêt** : c'est le facteur qui fait tenir la pose
- *  entière, et il change avec la taille de la case. C'est l'état d'ouverture, et
- *  le bouton qui y revient le dit plutôt que d'obliger à retrouver le chiffre. */
-function ZoomDeLaFrame({
-  facteur,
-  ajuste,
-  surMesure,
-  onZoom,
-}: {
-  facteur: number
-  ajuste: number
-  /** L'auteur a-t-il posé un facteur, ou regarde-t-il l'ajusté ? */
-  surMesure: boolean
-  onZoom: (facteur: number | null) => void
-}) {
-  const reculer = [...ARRETS_DU_ZOOM].reverse().find((a) => a < facteur)
-  const avancer = ARRETS_DU_ZOOM.find((a) => a > facteur)
-  return (
-    <div
-      data-zoom-de-la-frame={facteur}
-      className="mesure flex w-full shrink-0 items-center justify-end gap-1 text-[10px] text-encre-3"
-    >
-      <button
-        type="button"
-        aria-label="Reculer"
-        title="Reculer"
-        disabled={reculer === undefined}
-        onClick={() => reculer !== undefined && onZoom(reculer)}
-        className="h-[22px] w-[22px] border border-trait text-encre-2 hover:text-signal disabled:cursor-not-allowed disabled:text-encre-3"
-      >
-        −
-      </button>
-      <span aria-live="polite" className="w-[52px] text-center text-encre-2">
-        {facteur}×{surMesure ? "" : " ajusté"}
-      </span>
-      <button
-        type="button"
-        aria-label="Avancer"
-        title="Avancer"
-        disabled={avancer === undefined}
-        onClick={() => avancer !== undefined && onZoom(avancer)}
-        className="h-[22px] w-[22px] border border-trait text-encre-2 hover:text-signal disabled:cursor-not-allowed disabled:text-encre-3"
-      >
-        +
-      </button>
-      <button
-        type="button"
-        onClick={() => onZoom(null)}
-        disabled={!surMesure}
-        title={`revenir au facteur qui fait tenir la pose entière — ${ajuste}×`}
-        className="border border-trait px-1.5 py-0.5 hover:text-encre disabled:opacity-40"
-      >
-        adapter
-      </button>
-    </div>
-  )
-}
-
 /** Le lecteur — **sous les images, pas ailleurs**. C'est là qu'on les regarde,
  *  donc c'est là qu'on les met en marche. */
 function Lecteur({
@@ -2594,8 +2941,10 @@ function ReglagesDeLaFrame({
   siennes,
   separes,
   ecart,
+  toutes,
   onReprendre,
 }: {
+  toutes?: boolean
   table: Table
   /** Ce que les postes attendent, ou rien tant que la recette n'est pas lue. */
   poste: Poste | null
@@ -2624,10 +2973,10 @@ function ReglagesDeLaFrame({
     >
       <Libelle aide="bande.recette">
         {plusieurs
-          ? `la recette de ces ${choisies} images`
-          : sienne
-            ? "la recette de cette image"
-            : "la recette de l'animation"}
+          ? toutes
+            ? "les réglages de toute l'animation"
+            : `les réglages de ces ${choisies} frames`
+          : `les réglages de la frame ${ancre} seule`}
       </Libelle>
 
       {/* **Ce qui parle de la frame entière est au-dessus des tables**, pas
@@ -2885,6 +3234,106 @@ function FenetreDeLaBande({
  *  jugée (`A7` bis ②). C'est ce qui la sépare d'un curseur des tables, qui ne
  *  fait voyager que la valeur touchée — et c'est aussi pourquoi elle est le seul
  *  geste de l'écran qui ait besoin de dire *ce qu'il va écraser*. */
+/** **L'onglet « Recettes » de l'atelier d'une animation** (16 septembre 2026).
+ *  L'auteur ne trouvait pas comment en enregistrer une : l'atelier savait
+ *  seulement en appliquer, et la section n'apparaissait même pas tant
+ *  qu'aucune recette n'existait. On enregistre les réglages de la frame
+ *  choisie — ou ceux de l'animation quand toutes les frames sont choisies. */
+function RecettesDeLaBande({
+  recettes,
+  reglee,
+  frame,
+  choisies,
+  siennes,
+  toutes,
+  onRecettes,
+  onRecette,
+  onErreur,
+}: {
+  recettes: Record<string, Recette>
+  reglee: Recette
+  frame: number
+  choisies: number
+  siennes: number
+  toutes: boolean
+  onRecettes: (recettes: Record<string, Recette>) => void
+  onRecette: (r: Recette) => void
+  onErreur: (message: string) => void
+}) {
+  const [nom, setNom] = useState("")
+  const [aRemplacer, setARemplacer] = useState<string | null>(null)
+  const [enVol, setEnVol] = useState(false)
+  const [fait, setFait] = useState<{ nom: string; laisse: string[] } | null>(null)
+  const propre = nom.trim()
+  const noms = Object.keys(recettes).sort((a, b) => a.localeCompare(b, "fr"))
+
+  const enregistrer = async () => {
+    if (!propre || enVol) return
+    if (recettes[propre] && aRemplacer !== propre) return setARemplacer(propre)
+    setARemplacer(null)
+    setEnVol(true)
+    try {
+      const recu = await api.nommerRecette(propre, reglee)
+      onRecettes(recu.recettes)
+      setFait({ nom: propre, laisse: recu.laisse })
+      setNom("")
+    } catch (e) {
+      onErreur(e instanceof Error ? e.message : "recette non enregistrée")
+    } finally {
+      setEnVol(false)
+    }
+  }
+
+  const oublier = async (cible: string) => {
+    try {
+      const recu = await api.oublierRecette(cible)
+      onRecettes(recu.recettes)
+      setFait(null)
+    } catch (e) {
+      onErreur(e instanceof Error ? e.message : "oubli refusé")
+    }
+  }
+
+  return (
+    <div data-onglet-recettes className="flex flex-col gap-[14px] text-[12px] text-encre-3">
+      <section className="flex flex-col gap-[8px]">
+        <h3 className="text-[13px] text-encre-2">Enregistrer une recette</h3>
+        <p>Garde les réglages {toutes ? "de l'animation" : `de la frame ${frame}`} sous un nom, pour les reposer ailleurs.</p>
+        <div className="flex gap-[8px]">
+          <input
+            value={nom}
+            onChange={(e) => { setNom(e.target.value); setARemplacer(null); setFait(null) }}
+            onKeyDown={(e) => { if (e.key === "Enter") void enregistrer() }}
+            placeholder="un nom"
+            aria-label="le nom de la recette"
+            className="h-[30px] min-w-0 flex-1 rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre"
+          />
+          <button type="button" data-enregistrer-la-recette onClick={() => void enregistrer()} disabled={!propre || enVol} className="h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle disabled:opacity-50">
+            {enVol ? "…" : aRemplacer === propre ? "Remplacer" : "Enregistrer"}
+          </button>
+        </div>
+        {aRemplacer === propre && <p className="text-signal">« {propre} » existe déjà — cliquez « Remplacer » pour l'écraser.</p>}
+        {fait && <p role="status" className="text-encre-2">✓ « {fait.nom} » enregistrée.{fait.laisse.length > 0 && ` Pas gardé : ${fait.laisse.join(", ")}.`}</p>}
+      </section>
+
+      <section className="flex flex-col gap-[8px] border-t border-trait pt-[14px]">
+        <h3 className="text-[13px] text-encre-2">Appliquer une recette</h3>
+        {noms.length === 0 ? <p>Aucune recette enregistrée pour l'instant.</p> : <>
+          <RecetteEnregistree recettes={recettes} choisies={choisies} siennes={siennes} toutes={toutes} onRecette={onRecette} />
+          <ul className="flex flex-col">
+            {noms.map((n) => (
+              <li key={n} className="flex items-center gap-[8px] border-t border-trait py-[4px] first:border-t-0">
+                <span className="min-w-0 flex-1 truncate text-encre-2">{n}</span>
+                <button type="button" onClick={() => void oublier(n)} aria-label={`oublier « ${n} »`} className="shrink-0 text-[11px] text-encre-3 hover:text-echec">oublier</button>
+              </li>
+            ))}
+          </ul>
+        </>}
+      </section>
+    </div>
+  )
+}
+
 function RecetteEnregistree({
   recettes,
   choisies,

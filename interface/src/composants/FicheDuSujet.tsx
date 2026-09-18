@@ -20,7 +20,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   api,
+  CE_QU_ON_PREND,
   NOM_CHAMP,
+  NOM_DE_CE_QU_ON_PREND,
+  type AmbianceDuJeu,
+  type PosesDesTypes,
   type Asset,
   type Case,
   type ChampHabille,
@@ -101,8 +105,15 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   // lisent qu'une fois la fiche ouverte, comme le reste de ce dialogue.
   const [habillage, setHabillage] = useState<Habillage | null>(null)
   const [references, setReferences] = useState<ReferencesDeLaChose | null>(null)
+  // **Type d'objet et ambiance** (16 septembre 2026), venus de l'ancien écran
+  // « Ses cases ». Chacun s'écrit dès qu'on le change, comme là-bas.
+  const [types, setTypes] = useState<PosesDesTypes["types"]>([])
+  const [ambiances, setAmbiances] = useState<AmbianceDuJeu[]>([])
   const [occupe, setOccupe] = useState(false)
   const [survol, setSurvol] = useState(false)
+  // **Changer la vignette en deux clics** (16 septembre 2026) : un bouton sur
+  // le portrait ouvre ses images fixes, et un clic en fait la référence.
+  const [choixDuPortrait, setChoixDuPortrait] = useState(false)
   const [collection, setCollection] = useState("")
   const portrait = useMemo(() => portraitDe(personnage, plan), [personnage, plan])
   const images = [...new Map(personnage.cases.flatMap(c => c.images).filter(a => !a.piece && !a.supprime_le).map(a => [a.identifiant, a])).values()]
@@ -133,6 +144,8 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   useEffect(() => {
     if (!edition) { setHabillage(null); setReferences(null); return }
     relireReglages()
+    void api.posesDesTypes().then((recu) => setTypes(recu?.types ?? [])).catch(() => setTypes([]))
+    void api.coteAmbiances().then((recu) => setAmbiances(recu?.ambiances ?? [])).catch(() => setAmbiances([]))
   }, [edition, relireReglages])
   const poserHabillage = async (champs: Parameters<typeof api.reglerPersonnage>[1]) => {
     try {
@@ -154,6 +167,13 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     catch (e) { onErreur(e, "Le rangement n’a pas pu être conservé.") }
     finally { setOccupe(false) }
   }
+  const choisirLePortrait = async (asset: string | null) => {
+    try {
+      const rendu = await api.poserImageDeReference(personnage.identifiant, asset)
+      onPersonnage(rendu.personnage)
+      setChoixDuPortrait(false)
+    } catch (e) { onErreur(e, "L’image de référence a été refusée.") }
+  }
   const retirer = async () => {
     if (!window.confirm(`Retirer « ${personnage.nom} » du jeu ? Ses fichiers restent conservés dans la bibliothèque.`)) return
     setOccupe(true)
@@ -163,9 +183,22 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   }
   return <>
     <section aria-label="Résumé du sujet" className="flex shrink-0 items-center gap-[22px] rounded-8 border border-trait bg-carte p-[14px]">
+      <div className="group relative shrink-0">
       <button data-portrait-du-sujet className="damier-papier flex h-[128px] w-[128px] shrink-0 items-center justify-center overflow-hidden rounded-7" onClick={onImages} onMouseEnter={() => setSurvol(true)} onMouseLeave={() => setSurvol(false)} title="Voir ses images et références">
         {portrait ? <img src={vignetteAsset(portrait.asset, 256)} alt={`Référence de ${personnage.nom}`} className="h-full w-full object-contain" style={{ imageRendering: "pixelated" }} /> : bande ? <BandeQuiTourne bande={bande} cote={128} joue={survol} titre={`Animation de ${personnage.nom}`} /> : <span className="px-[14px] text-center text-[12px] text-encre-4">Référence à créer</span>}
       </button>
+      {images.length > 0 && <button type="button" data-changer-le-portrait onClick={() => setChoixDuPortrait(true)} className="absolute bottom-[4px] right-[4px] rounded-5 border border-contour bg-carte/90 px-[8px] py-[2px] text-[11px] text-encre-controle opacity-0 transition-opacity duration-120 hover:border-encre-3 focus:opacity-100 group-hover:opacity-100">Changer</button>}
+      </div>
+      {choixDuPortrait && <CadreDialogue titre="Choisir la vignette" format="preparation" onFermer={() => setChoixDuPortrait(false)} enfants={<div data-choix-du-portrait className="flex min-h-0 flex-col">
+        <header className="flex items-center justify-between gap-[22px] border-b border-trait px-[30px] py-[22px]">
+          <div><h1 className="font-serif text-[25px]">Choisir la vignette</h1><p className="mt-[8px] text-[13px] text-encre-3">Cliquez une image : elle devient le portrait de {personnage.nom}. Rien n’est retenu pour le jeu.</p></div>
+          <button type="button" className={BOUTON} onClick={() => setChoixDuPortrait(false)}>Fermer</button>
+        </header>
+        <div className="defile grid min-h-0 grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-[8px] overflow-y-auto p-[30px]">
+          {images.map((image) => { const actuel = portrait?.asset.identifiant === image.identifiant; return <button key={image.identifiant} type="button" aria-pressed={actuel} aria-label={`Prendre ${image.label} pour vignette`} onClick={() => void choisirLePortrait(image.identifiant)} className={`damier-papier flex aspect-square items-center justify-center overflow-hidden rounded-7 border-2 ${actuel ? "border-signal" : "border-transparent hover:border-contour"}`}><img src={vignetteAsset(image, 256)} alt="" className="h-full w-full object-contain" style={{ imageRendering: "pixelated" }} /></button> })}
+        </div>
+        {personnage.image_de_reference && <footer className="flex justify-end border-t border-trait px-[30px] py-[14px]"><button type="button" className={BOUTON} onClick={() => void choisirLePortrait(null)}>Revenir au choix automatique</button></footer>}
+      </div>} />}
       <div className="min-w-0 flex-1 space-y-[8px]">
         <p className="line-clamp-2 whitespace-pre-line text-[13px] leading-relaxed text-encre-2">{personnage.description || "Décrivez sa silhouette, son rôle et les détails à conserver d’une fabrication à l’autre."}</p>
         <div className="flex flex-wrap items-center gap-[8px] text-[12px] text-encre-3"><span className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{images.length + bandes.length} résultat{images.length + bandes.length > 1 ? "s" : ""}</span><span className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{retenus} retenu{retenus > 1 ? "s" : ""} pour le jeu</span>{collections?.map(c => <span key={c.identifiant} className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{c.nom}</span>)}<button className={BOUTON} onClick={ouvrir}>Modifier la fiche</button></div>
@@ -188,6 +221,29 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
             onChange={e => setDescription(e.target.value)}
           />
           {!personnage.description && <p className="text-[12px] text-encre-3">aucun signalement — chaque génération part sans dire de quoi il s’agit</p>}
+        </section>
+
+        <section data-type-et-ambiance className="grid grid-cols-2 gap-[14px]">
+          <label className="flex flex-col gap-[8px] text-[13px]">Type d’objet
+            <select aria-label="Type d'objet" className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.type ?? ""} onChange={(e) => void poserHabillage({ type: e.target.value })}>
+              <option value="">aucun — suit le plan du jeu</option>
+              {types.map((type) => <option key={type.nom} value={type.nom}>{type.nom} — {type.poses.length === 0 ? "aucune pose" : `${type.poses.length} pose${type.poses.length > 1 ? "s" : ""}`}</option>)}
+            </select>
+            <span className="text-[12px] text-encre-3">Il décide des mouvements demandés. Aucune image ne bouge.</span>
+          </label>
+          <div className="flex flex-col gap-[8px] text-[13px]">
+            <label className="flex flex-col gap-[8px]">Ambiance
+              {ambiances.length === 0
+                ? <span className="text-[12px] text-encre-3">Ce jeu n’a pas encore d’ambiance (onglet Univers).</span>
+                : <select aria-label="Son ambiance" className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.ambiance ?? ""} onChange={(e) => void poserHabillage({ ambiance: e.target.value })}>
+                    <option value="">aucune — le style du jeu</option>
+                    {ambiances.map((a) => <option key={a.identifiant} value={a.identifiant}>{a.nom}</option>)}
+                  </select>}
+            </label>
+            {personnage.ambiance && ambiances.length > 0 && <select aria-label="Ce qu'elle prend à son ambiance" className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.prend ?? "tout"} onChange={(e) => void poserHabillage({ prend: e.target.value })}>
+              {CE_QU_ON_PREND.map((quoi) => <option key={quoi} value={quoi}>elle lui prend {NOM_DE_CE_QU_ON_PREND[quoi]}</option>)}
+            </select>}
+          </div>
         </section>
 
         <section className="flex flex-col gap-[8px]">

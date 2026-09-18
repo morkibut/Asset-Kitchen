@@ -848,7 +848,7 @@ export type ImageDeDepart = {
    *  validés. `portrait` : ce que le personnage montre de lui — sa première
    *  référence promue, sinon le corps retenu de sa première attitude.
    *  `aucune` : il n'y a rien, et la raison le dit. */
-  origine: "case" | "portrait" | "aucune"
+  origine: "case" | "reference" | "portrait" | "aucune"
   raison: string
 }
 
@@ -4368,6 +4368,8 @@ export type Silhouette = {
   /** La licence du modèle, pas celle de `rembg`. Écrite parce que la question
    *  s'est posée une fois et se reposera. */
   licence: string
+  /** Le temps moyen d'une image, en secondes, mesuré sur la machine de l'auteur. */
+  secondes_par_image?: number
   defaut: boolean
   descendu: boolean
   raison: string | null
@@ -5446,6 +5448,8 @@ export const api = {
     personnage?: string | null
     pose?: string | null
     direction?: string | null
+    /** Monter l'animation dès que le clip arrive. */
+    monter_auto?: boolean
   }) =>
     appeler<{ clips: Generation[] }>("/clips", {
       method: "POST",
@@ -5583,6 +5587,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ garde, jette }),
     }),
+
+  /** **Supprimer un clip pour de bon** : sa vidéo et ses images quittent le
+   *  disque, sa dépense reste au journal. Refusé s'il porte une animation. */
+  effacerClip: (identifiant: string) =>
+    appeler<Generation>(`/clips/${identifiant}/erase`, { method: "POST" }),
 
   /** L'annulation du geste ci-dessus. Rien n'expire : elle marche toujours. */
   rendreClips: (clips: string[]) =>

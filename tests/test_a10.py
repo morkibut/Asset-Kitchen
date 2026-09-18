@@ -946,3 +946,56 @@ def test_un_montage_demande_sur_une_generation_qui_n_est_pas_un_clip_se_refuse(
     assert reponse.status_code >= 400
     assert "n'est pas un clip" in reponse.json()["raison"]
     assert sprite
+
+
+def test_un_clip_commande_avec_monter_auto_arrive_deja_monte_dans_sa_case(client_video, animateur):
+    """Demandé le 16 septembre 2026 : le clip arrive déjà monté, à juger."""
+    animateur.octets = clip_connu()
+    sprite = un_sprite(client_video)
+    personnage = un_personnage(client_video)
+    client_video.put(f"/api/assets/{sprite}/character", json={"personnage": personnage, "pose": "marche"})
+    lot = client_video.post(
+        "/api/clips",
+        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite,
+              "personnage": personnage, "pose": "marche", "monter_auto": True},
+    ).json()["clips"]
+    identifiant = lot[0]["identifiant"]
+    bandes = []
+    for _ in range(300):
+        arrive = [c for c in client_video.get("/api/clips").json()["clips"] if c["identifiant"] == identifiant]
+        if arrive and arrive[0]["statut"] == "reussie":
+            bandes = client_video.get(f"/api/montage/{identifiant}").json()["bandes"]
+            if bandes:
+                break
+        client_video.get("/api/status")
+    assert len(bandes) == 1, "une seule animation, taillée à l'arrivée"
+    assert bandes[0]["personnage"] == personnage and bandes[0]["pose"] == "marche"
+    assert not bandes[0]["favori"], "elle arrive à juger, jamais retenue d'office"
+
+
+def test_sans_monter_auto_le_clip_arrive_sans_animation(clip, client_video):
+    assert client_video.get(f"/api/montage/{clip}").json()["bandes"] == []
+
+
+def test_supprimer_un_clip_efface_ses_fichiers_mais_pas_sa_depense(client_video, clip, atelier_video):
+    """*Supprimer un clip pour de bon* (16 septembre 2026) : refusé tant qu'une
+    animation est taillée dedans ; ensuite la vidéo part, la dépense reste."""
+    bande = client_video.post(
+        "/api/strips", json={"clip": clip, "nom": "repos", "images": [0, 2, 4]}
+    ).json()
+    refus = client_video.post(f"/api/clips/{clip}/erase")
+    assert refus.status_code >= 400
+    assert "animation" in refus.json()["raison"]
+
+    dossier = atelier_video.fichiers.dossier_generation(clip)
+    (dossier / "bandes" / f"{bande['identifiant']}.json").unlink()
+    for png in (dossier / "bandes").glob("*.png"):
+        png.unlink()
+    recu = client_video.post(f"/api/clips/{clip}/erase")
+    assert recu.status_code == 200, recu.text
+    assert recu.json()["clip"]["efface"] is True
+    assert [p.name for p in dossier.iterdir() if p.is_file()] == ["generation.json"]
+    lu = next(g for g in client_video.get("/api/clips").json()["clips"] if g["identifiant"] == clip)
+    assert lu["clip"]["jete"] is True
+    journal = client_video.get("/api/spending").json()
+    assert clip in {a["identifiant"] for a in journal["appels"]}

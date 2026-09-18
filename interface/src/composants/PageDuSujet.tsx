@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { api, Refus, type Collection, type Echelle, type GroupeDeRangement, type Asset, type Personnage, type Piece, type Pose, type Role, type EmplacementCorps, type Univers, type VestiaireDuJeu, type Generation } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
 import { EcranEtabli } from "./EtabliDuSujet"
+import { EcranCalibrage } from "./Calibrage"
 import { ImagesDuSujet } from "./ImagesDuSujet"
 import { AnimationsDuSujet } from "./AnimationsDuSujet"
 import { EssaiDuSujet } from "./EssaiDuSujet"
@@ -22,7 +23,7 @@ export type Onglet = "fiche" | "images" | "animations" | "sources" | "attente" |
 // encore de case, et sans lui ce qui n'est rangé nulle part n'est nulle part.
 const ONGLETS: readonly { clef: Onglet; nom: string }[] = [
   { clef: "animations", nom: "Animations" },
-  { clef: "images", nom: "Images fixes" },
+  { clef: "images", nom: "Images de référence" },
   { clef: "sources", nom: "Sources & clips" },
   { clef: "attente", nom: "Pas encore rangé" },
   { clef: "equipement", nom: "Équipement" },
@@ -123,8 +124,13 @@ export function PageDuSujet(proprietes: {
   calque?: string | null
   onCalque?: (identifiant: string | null) => void
   clips?: readonly Generation[]
+  /** La liste des clips a été lue au moins une fois — sans quoi une liste vide
+   *  ne dit rien, et tous les anciens clips passeraient pour nouveaux. */
+  clipsLus?: boolean
   /** Une vidéo vient d'entrer : la liste des clips est à relire. */
   onClipsChange?: () => void
+  /** Des clips viennent de partir d'un lot (« Tout animer »). */
+  onClipsCommandes?: (clips: Generation[]) => void
   onObjectifChange?: () => void
   onLivrer?: () => void
   onFabriquer?: () => void
@@ -147,6 +153,36 @@ export function PageDuSujet(proprietes: {
   // **La position du défilement se retient ici**, parce que c'est ici qu'on
   // défile depuis qu'il n'y a plus qu'un bloc. Une position par onglet et par
   // sujet : revenir d'une retouche rend la page où on l'avait laissée.
+  // **Une pastille sur « Sources & clips » quand un clip est arrivé** pour ce
+  // sujet depuis la dernière visite de l'onglet. Demandé le 16 septembre 2026 :
+  // on commande depuis la fiche, on y reste, et rien ne disait que le clip
+  // était là. Ce qui a été vu se retient dans ce navigateur, par sujet ; la
+  // première visite prend tout ce qui existe déjà pour vu.
+  const cleDesVus = `clips-vus:${ouvert.projet}:${ouvert.identifiant}`
+  const siensArrives = useMemo(() => (proprietes.clips ?? [])
+    .filter((g) => g.personnage === ouvert.identifiant && g.clip && !g.clip.jete && g.statut === "reussie")
+    .map((g) => g.identifiant), [proprietes.clips, ouvert.identifiant])
+  const [vus, setVus] = useState<{ cle: string; ids: string[] } | null>(null)
+  useEffect(() => {
+    if (!proprietes.clipsLus) return
+    if (vus?.cle === cleDesVus) return
+    let lus: string[] | null = null
+    try {
+      const brut = window.localStorage.getItem(cleDesVus)
+      lus = brut ? (JSON.parse(brut) as string[]) : null
+    } catch { lus = null }
+    if (!Array.isArray(lus)) {
+      lus = siensArrives
+      try { window.localStorage.setItem(cleDesVus, JSON.stringify(lus)) } catch { /* rien */ }
+    }
+    setVus({ cle: cleDesVus, ids: lus })
+  }, [proprietes.clipsLus, cleDesVus, siensArrives, vus?.cle])
+  const nouveauxClips = vus?.cle === cleDesVus ? siensArrives.filter((id) => !vus.ids.includes(id)).length : 0
+  useEffect(() => {
+    if (onglet !== "sources" || nouveauxClips === 0) return
+    setVus({ cle: cleDesVus, ids: siensArrives })
+    try { window.localStorage.setItem(cleDesVus, JSON.stringify(siensArrives)) } catch { /* rien */ }
+  }, [onglet, nouveauxClips, cleDesVus, siensArrives])
   const defilement = useScrollDuParcours(`${onglet}:${ouvert.projet}:${ouvert.identifiant}`)
   // **B13** — la grille du jeu et comparer n'ont rien à montrer sans une
   // image. Les deux liens se grisent avec leur raison plutôt que de
@@ -159,6 +195,9 @@ export function PageDuSujet(proprietes: {
   // La matrice, profondeur suivante de cette page — voir l'en-tête du fichier.
   const [matriceTenueIci, setMatriceTenueIci] = useState(false)
   const matriceOuverte = proprietes.matrice ?? matriceTenueIci
+  /** **Le calibrage, rangé dans « Autres outils »** (16 septembre 2026). */
+  const [calibrageOuvert, setCalibrageOuvert] = useState(false)
+  useEffect(() => { setCalibrageOuvert(false) }, [ouvert.identifiant])
   const setMatriceOuverte = (ouverte: boolean) => {
     setMatriceTenueIci(ouverte)
     proprietes.onMatriceOuverte?.(ouverte)
@@ -263,6 +302,19 @@ export function PageDuSujet(proprietes: {
   // **La matrice prend toute la page, la barre qui paie comprise** : elle est
   // l'un des deux lieux d'où l'argent part, et la lui retirer aurait obligé à
   // remonter d'un cran pour dépenser.
+  if (calibrageOuvert)
+    return (
+      <div data-etabli data-calibrage-du-sujet className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier">
+        <div className="flex items-center gap-[8px] border-b border-trait bg-papier-cote px-[30px] py-[8px]">
+          <button type="button" onClick={() => setCalibrageOuvert(false)} className="h-[26px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4">
+            ‹ {ouvert.nom}
+          </button>
+          <span className="text-[12.5px] text-encre-3">Calibrage — toutes ses poses à la même taille dans la case.</span>
+        </div>
+        <EcranCalibrage personnage={ouvert} onFermer={() => setCalibrageOuvert(false)} onErreur={echouer} />
+      </div>
+    )
+
   if (matriceOuverte)
     return (
       <div data-etabli className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier">
@@ -275,8 +327,7 @@ export function PageDuSujet(proprietes: {
             ‹ {proprietes.ouvert.nom}
           </button>
           <span className="text-[12.5px] text-encre-3">
-            Ses cases — le vestiaire, les planches, le calibrage et les animations
-            vivent encore ici.
+            Ses cases — le vestiaire et les planches vivent encore ici.
           </span>
         </div>
         <EcranEtabli
@@ -330,13 +381,13 @@ export function PageDuSujet(proprietes: {
           onImages={() => setOnglet("images")} onObjectif={() => setOnglet("objectif")} />
 
         <nav role="tablist" aria-label="Les onglets de sa fiche" className="flex shrink-0 flex-wrap gap-[4px] border-b border-trait pb-[8px]">
-          {ONGLETS.filter(({ clef }) => clef !== "equipement" || ouvert.equipable).map(({ clef, nom }) => <button key={clef} type="button" role="tab" aria-selected={onglet === clef} onClick={() => setOnglet(clef)} className={`h-[34px] rounded-7 px-[14px] text-[13px] transition-colors duration-120 ${onglet === clef ? "bg-encre text-papier" : "text-encre-3 hover:bg-papier-cote hover:text-encre"}`}>{nom}</button>)}
+          {ONGLETS.filter(({ clef }) => clef !== "equipement" || ouvert.equipable).map(({ clef, nom }) => <button key={clef} type="button" role="tab" aria-selected={onglet === clef} onClick={() => setOnglet(clef)} className={`relative h-[34px] rounded-7 px-[14px] text-[13px] transition-colors duration-120 ${onglet === clef ? "bg-encre text-papier" : "text-encre-3 hover:bg-papier-cote hover:text-encre"}`}>{nom}{clef === "sources" && nouveauxClips > 0 && <span data-nouveaux-clips title={nouveauxClips > 1 ? `${nouveauxClips} nouveaux clips` : "Un nouveau clip"} aria-hidden className="absolute right-[4px] top-[4px] h-[8px] w-[8px] rounded-full bg-encre-attention" />}</button>)}
         </nav>
 
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-[14px]">
           <div className="flex items-center gap-[8px]">
-            {proprietes.onDecouper && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images fixes."} onClick={() => imageCible && proprietes.onDecouper?.(imageCible)}>Découper une image</button>}
-            {proprietes.onExtraire && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images fixes."} onClick={() => imageCible && proprietes.onExtraire?.(imageCible)}>Extraire un élément</button>}
+            {proprietes.onDecouper && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images de référence."} onClick={() => imageCible && proprietes.onDecouper?.(imageCible)}>Découper une image</button>}
+            {proprietes.onExtraire && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images de référence."} onClick={() => imageCible && proprietes.onExtraire?.(imageCible)}>Extraire un élément</button>}
             {onglet === "animations" && <button className={BOUTON} onClick={() => setOnglet("essai")}>Tester les animations</button>}
             {onglet === "essai" && <button className={BOUTON} onClick={() => setOnglet("animations")}>‹ Animations</button>}
           </div>
@@ -346,7 +397,8 @@ export function PageDuSujet(proprietes: {
               <button className={BOUTON} onClick={proprietes.onGrille} disabled={!auMoinsUneImage} title={!auMoinsUneImage ? "Aucune image encore à poser sur la grille." : undefined}>Voir la grille du jeu</button>
               <button className={BOUTON} onClick={proprietes.onComparer} disabled={!auMoinsUneImage && !auMoinsUneAnimation} title={!auMoinsUneImage && !auMoinsUneAnimation ? "Ni image ni animation encore à comparer." : undefined}>Comparer</button>
               <button className={BOUTON} disabled={!auMoinsUneImage || !proprietes.onRetoucher} onClick={() => proprietes.onRetoucher?.(regardee)}>Retoucher l’image</button>
-              <button data-porte-de-la-matrice className={BOUTON} onClick={() => setMatriceOuverte(true)}>Cases, planches et calibrage</button>
+              <button data-porte-de-la-matrice className={BOUTON} onClick={() => setMatriceOuverte(true)}>Cases et planches</button>
+              <button data-ouvrir-le-calibrage className={BOUTON} onClick={() => setCalibrageOuvert(true)}>Calibrage</button>
             </div>
           </details>
         </div>
@@ -358,7 +410,8 @@ export function PageDuSujet(proprietes: {
           onEcarter={proprietes.onSupprimer} onReinjecter={proprietes.onReinjecter} onReglages={proprietes.onReglages} onErreur={echouer} />}
 
         {onglet === "animations" && <AnimationsDuSujet personnage={ouvert} plan={sienPlan} onAnimer={proprietes.onAnimer}
-          onOuvrirLaBande={proprietes.onOuvrirLaBande} onErreur={echouer} />}
+          onOuvrirLaBande={proprietes.onOuvrirLaBande} onErreur={echouer}
+          clips={proprietes.clips} onMonterLeClip={proprietes.onMonterLaBande} onClipsCommandes={proprietes.onClipsCommandes} />}
 
         {onglet === "essai" && <EssaiDuSujet personnage={ouvert} personnages={proprietes.personnages} plan={sienPlan} univers={proprietes.univers}
           onAnimer={proprietes.onAnimer} onAnimations={() => setOnglet("animations")} />}

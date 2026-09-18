@@ -949,6 +949,43 @@ def test_sans_image_dans_la_case_c_est_le_portrait_qui_se_propose(client_video):
     assert "montre de lui" in recu["raison"]
 
 
+def test_une_case_vide_part_du_repos_dans_la_meme_direction(client_video):
+    """*En cascade* (16 septembre 2026) : la marche vers le nord part du repos
+    vers le nord, pas du repos vers le sud ni du portrait."""
+    objectif = {"sorties": [
+        {"nature": "animation", "pose": p, "direction": d}
+        for p in ("repos", "marche") for d in ("sud", "nord")
+    ]}
+    assert client_video.put("/api/universe", json={"vue": "vue-dessus-34"}).status_code == 200
+    cree = client_video.post(
+        "/api/characters", json={"nom": "Michel", "description": "un voyageur", "objectif": objectif}
+    )
+    assert cree.status_code == 201, cree.text
+    personnage = cree.json()["personnage"]["identifiant"]
+    images = {}
+    for direction in ("sud", "nord"):
+        sprite = un_sprite(client_video)
+        reponse = client_video.put(
+            f"/api/assets/{sprite}/character",
+            json={"personnage": personnage, "pose": "repos", "direction": direction},
+        )
+        assert reponse.status_code == 200, reponse.text
+        images[direction] = sprite
+    assert images["sud"] != images["nord"]
+    client_video.put(
+        f"/api/characters/{personnage}/references",
+        json={"asset": images["sud"], "promue": True},
+    )
+
+    for direction in ("sud", "nord"):
+        recu = client_video.get(
+            "/api/clips/start-image",
+            params={"personnage": personnage, "pose": "marche", "direction": direction},
+        ).json()
+        assert recu["origine"] == "reference", recu
+        assert recu["asset"]["identifiant"] == images[direction]
+
+
 def test_un_personnage_sans_la_moindre_image_le_dit_au_lieu_de_rendre_un_cadre_vide(
     client_video,
 ):
@@ -1270,3 +1307,24 @@ def test_l_adaptateur_distingue_un_cout_absent_d_un_cout_nul():
     from atelier.fournisseur.port import ClipProduit
 
     assert ClipProduit(octets=b"", consomme=0.0).montant_relu is True
+
+
+def test_l_image_de_depart_d_un_clip_part_sur_le_fond_franc_le_plus_eloigne_du_sujet():
+    """Le gris ressemblait au sujet ; le fond franc est choisi loin de ses couleurs."""
+    import io
+
+    from PIL import Image
+
+    from atelier.image.clip import composer_entree
+
+    def toile_de(couleur):
+        sujet = Image.new("RGBA", (40, 60), (0, 0, 0, 0))
+        sujet.paste(Image.new("RGBA", (20, 40), couleur), (10, 10))
+        tampon = io.BytesIO()
+        sujet.save(tampon, format="PNG")
+        with Image.open(io.BytesIO(composer_entree(tampon.getvalue(), (480, 480)))) as toile:
+            return toile.convert("RGB").getpixel((0, 0))
+
+    assert toile_de((200, 60, 60, 255)) == (0, 255, 0), "un sujet rouge part sur du vert"
+    assert toile_de((30, 220, 40, 255)) == (255, 0, 255), "un sujet vert part sur du magenta"
+    assert toile_de((230, 40, 230, 255)) == (0, 255, 0), "un sujet magenta part sur du vert"

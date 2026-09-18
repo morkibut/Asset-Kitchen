@@ -279,6 +279,11 @@ class Silhouette:
     note: str
     entree: int = 320
     licence: str = ""
+    #: **Le temps moyen d'une image**, mesuré le 16 septembre 2026 sur la
+    #: machine de l'auteur (image de 480 px, modèle déjà chargé, trois essais).
+    #: C'est la seule chose que l'écran dit du modèle : l'auteur a demandé qu'on
+    #: retire les notes de banc et qu'on garde l'attente.
+    secondes_par_image: float = 0.0
 
 
 # **Cinq modèles depuis D4, et les deux neufs répondent à deux manques réels.**
@@ -294,6 +299,7 @@ class Silhouette:
 SILHOUETTES: tuple[Silhouette, ...] = (
     Silhouette(
         nom="isnet-anime",
+        secondes_par_image=1.0,
         titre="dessin",
         fichier="isnet-anime.onnx",
         octets=176_069_933,
@@ -309,6 +315,7 @@ SILHOUETTES: tuple[Silhouette, ...] = (
     ),
     Silhouette(
         nom="birefnet-general-lite",
+        secondes_par_image=7.5,
         titre="léger",
         fichier="birefnet-general-lite.onnx",
         # ⚠️ **214 Mo et non 88,6**, pesé sur le disque le 3 septembre 2026. Le
@@ -329,6 +336,7 @@ SILHOUETTES: tuple[Silhouette, ...] = (
     ),
     Silhouette(
         nom="u2net",
+        secondes_par_image=0.4,
         titre="rapide",
         fichier="u2net.onnx",
         octets=175_997_641,
@@ -344,6 +352,7 @@ SILHOUETTES: tuple[Silhouette, ...] = (
     ),
     Silhouette(
         nom="isnet-general-use",
+        secondes_par_image=1.2,
         titre="intermédiaire",
         fichier="isnet-general-use.onnx",
         octets=178_648_008,
@@ -358,6 +367,7 @@ SILHOUETTES: tuple[Silhouette, ...] = (
     ),
     Silhouette(
         nom="birefnet-general",
+        secondes_par_image=16.0,
         titre="lourd",
         fichier="birefnet-general.onnx",
         octets=972_666_916,
@@ -443,6 +453,7 @@ def etat_des_silhouettes() -> list[dict[str, Any]]:
             # étiré : l'écran le dit, parce qu'aucune autre ligne ne l'explique.
             "entree": s.entree,
             "licence": s.licence,
+            "secondes_par_image": s.secondes_par_image,
             "defaut": s.nom == MODELE_ONNX,
             "descendu": modele_descendu(s.nom),
             "raison": absent,

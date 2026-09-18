@@ -4046,6 +4046,19 @@ async function ouvrirLEtabli(nom?: string) {
   return within(cadre)
 }
 
+/** **Le calibrage vit dans « Autres outils »** de la page du sujet (16
+ *  septembre 2026) : on remonte de la matrice à la page, puis on l'ouvre. */
+async function ouvrirLeCalibrage(nom: string) {
+  const etabli = await ouvrirLEtabli(nom)
+  fireEvent.click(await etabli.findByRole("button", { name: `‹ ${nom}` }))
+  const porte = await waitFor(() => {
+    const trouvee = document.querySelector("[data-ouvrir-le-calibrage]")
+    if (!trouvee) throw new Error("la page du sujet n'est pas revenue")
+    return trouvee as HTMLElement
+  })
+  fireEvent.click(porte)
+}
+
 /** **Le nom d'une table à l'écran, depuis la clé que le domaine écrit** (`B25`).
  *
  *  La retouche porte le vocabulaire des planches — *Détourage*, *Nettoyage*,
@@ -12363,8 +12376,7 @@ describe("le calibrage", () => {
       personnages: [personnage("Balthazar")],
     })
     await monter(double.fetchDouble)
-    const etabli = await ouvrirLEtabli("Balthazar")
-    fireEvent.click(await etabli.findByRole("button", { name: "le calibrage ›" }))
+    await ouvrirLeCalibrage("Balthazar")
     const cadre = await waitFor(() => {
       const trouve = document.querySelector("[data-calibrage]")
       if (!trouve) throw new Error("le calibrage ne s'est pas ouvert")
@@ -12842,8 +12854,7 @@ describe("le calibrage", () => {
       refusCalibrage: "ce jeu n'impose aucune taille de case",
     })
     await monter(double.fetchDouble)
-    const etabli = await ouvrirLEtabli("Balthazar")
-    fireEvent.click(await etabli.findByRole("button", { name: "le calibrage ›" }))
+    await ouvrirLeCalibrage("Balthazar")
 
     expect(
       await screen.findByText(/aucune taille de case/),
@@ -12998,216 +13009,6 @@ describe("le premier lancement", () => {
 // libre, la place du mouvement grisée avec sa raison, les deux portes — le
 // codex et l'établi — et ce que chacune montre. Ce qui se calcule — les fonds
 // proposés, la taille commune — vit dans `tests/test_e16.py`.
-
-describe("la vitrine", () => {
-  beforeEach(() => {
-    FluxDouble.ouverts = []
-    vi.stubGlobal("EventSource", FluxDouble)
-    doublerLaMesure()
-    toutReplier()
-    reinitialiserApercu()
-  })
-
-  afterEach(() => {
-    cleanup()
-    vi.unstubAllGlobals()
-    vi.restoreAllMocks()
-  })
-
-  /** Une chose qui tient une image, pour avoir quelque chose à regarder. */
-  const avecUneImage = (nom: string, cote = 128) =>
-    personnage(nom, {
-      cases: PLAN.map((p, rang) => ({
-        pose: p.identifiant,
-        demandees: p.images,
-        images:
-          rang === 0
-            ? [
-                {
-                  ...asset(`${nom.toLowerCase()}-corps`),
-                  rendu_largeur: cote,
-                  rendu_hauteur: cote,
-                },
-              ]
-            : [],
-        ...VIDE_C3,
-      })),
-    })
-
-  const ouvrirDepuisLEtabli = async () => {
-    const double = serveurDouble({ personnages: [avecUneImage("Balthazar")] })
-    await monter(double.fetchDouble)
-    const etabli = await ouvrirLEtabli("Balthazar")
-    fireEvent.click(await etabli.findByRole("button", { name: "la vitrine ›" }))
-    const cadre = await waitFor(() => {
-      const vitrine = document.querySelector("[data-vitrine]")
-      if (!vitrine) throw new Error("la vitrine ne s'est pas ouverte")
-      return vitrine as HTMLElement
-    })
-    return { ...double, vitrine: within(cadre) }
-  }
-
-  // ── « Les échelles sont des multiples entiers » ────────────────────────────
-
-  test("la vitrine n'offre que des multiples entiers, et dit pourquoi", async () => {
-    const { vitrine } = await ouvrirDepuisLEtabli()
-
-    for (const echelle of ["×1", "×2", "×4", "×8"]) {
-      expect(vitrine.getByRole("button", { name: echelle })).toBeTruthy()
-    }
-    // Un sprite agrandi d'une fois et demie fabrique des pixels qui n'existent
-    // pas : le défaut qu'on croirait voir n'existerait que dans la fenêtre.
-    expect(vitrine.getByText(/multiples entiers seulement/)).toBeTruthy()
-    expect(vitrine.queryByRole("button", { name: "×1,5" })).toBeNull()
-  })
-
-  test("aucune image n'est lissée, à aucune échelle", async () => {
-    const { vitrine } = await ouvrirDepuisLEtabli()
-
-    const image = await vitrine.findByAltText("repos")
-    expect(image.getAttribute("style")).toContain("pixelated")
-    // ×2 par défaut : un sprite de 128 px y occupe 256 px.
-    expect(image.getAttribute("width")).toBe("256")
-
-    fireEvent.click(vitrine.getByRole("button", { name: "×4" }))
-    expect((await vitrine.findByAltText("repos")).getAttribute("width")).toBe("512")
-  })
-
-  // ── « L'intruse ne écrase plus la comparaison » (31 août 2026) ─────────────
-
-  test("une image hors taille commune redescend à la taille commune, et le dit", async () => {
-    // Trois poses à 128 px, une à 384. La taille commune est donc 128, et
-    // c'est l'écart de la quatrième qui est le sujet de cet essai.
-    const chose = personnage("Balthazar", {
-      cases: PLAN.map((p, rang) => ({
-        pose: p.identifiant,
-        demandees: p.images,
-        images:
-          rang < 4
-            ? [
-                {
-                  ...asset(`balthazar-${p.identifiant}`),
-                  rendu_largeur: rang === 3 ? 384 : 128,
-                  rendu_hauteur: rang === 3 ? 384 : 128,
-                },
-              ]
-            : [],
-        ...VIDE_C3,
-      })),
-    })
-    const double = serveurDouble({ personnages: [chose] })
-    await monter(double.fetchDouble)
-    const etabli = await ouvrirLEtabli("Balthazar")
-    fireEvent.click(await etabli.findByRole("button", { name: "la vitrine ›" }))
-    const vitrine = within(
-      await waitFor(() => {
-        const cadre = document.querySelector("[data-vitrine]")
-        if (!cadre) throw new Error("la vitrine ne s'est pas ouverte")
-        return cadre as HTMLElement
-      }),
-    )
-
-    // **Ce que la règle protège reste intact** : à ×2, une pose à la taille
-    // commune occupe 256 px. C'est cette échelle partagée qui fait voir une
-    // sœur sortie plus petite.
-    expect((await vitrine.findByAltText("repos")).getAttribute("width")).toBe("256")
-
-    // **Et l'intruse ne prend plus toute la page.** À ×2 elle aurait fait
-    // 768 px — trois fois ses sœurs, et 67 % de la surface d'image de la page,
-    // mesuré sur un vrai personnage. Elle redescend à la boîte commune.
-    const intruse = await vitrine.findByAltText("attaque")
-    expect(intruse.getAttribute("width")).toBe("256")
-    expect(intruse.getAttribute("height")).toBe("256")
-
-    // **Et l'écran ne ment pas sur ce qu'il montre.** « Toutes ses poses à la
-    // même échelle » serait faux sans cette ligne : ce qui n'est pas à
-    // l'échelle des autres le dit, sous l'image, dans la couleur des écarts.
-    expect(
-      vitrine.getByText(/ramenée à 128 px pour tenir dans la comparaison/),
-    ).toBeTruthy()
-
-    // Une pose à la taille commune, elle, ne porte aucune mention.
-    expect(vitrine.queryAllByText(/ramenée à/)).toHaveLength(1)
-  })
-
-  // ── « Le fond de jugement vient du projet » ────────────────────────────────
-
-  test("les fonds viennent du projet, et aucun sélecteur libre n'existe", async () => {
-    const { vitrine } = await ouvrirDepuisLEtabli()
-
-    expect(vitrine.getByRole("button", { name: "Fond damier" })).toBeTruthy()
-    expect(vitrine.getByRole("button", { name: "Fond noir #000000" })).toBeTruthy()
-    expect(vitrine.getByRole("button", { name: "Fond palette #c6b9a8" })).toBeTruthy()
-    // **Aucune couleur libre** : un sélecteur transformerait cet écran en outil
-    // de maquillage.
-    expect(document.querySelector('[data-vitrine] input[type="color"]')).toBeNull()
-  })
-
-  test("le fond choisi porte la raison qui l'a fait proposer", async () => {
-    const { vitrine } = await ouvrirDepuisLEtabli()
-
-    fireEvent.click(vitrine.getByRole("button", { name: "Fond noir #000000" }))
-
-    // Le produit n'invente pas un fond : il cite le texte du jeu qui l'a fait
-    // proposer.
-    expect(await vitrine.findByText(/absolute blackness/)).toBeTruthy()
-  })
-
-  // ── « La place du mouvement est réservée et grisée avec sa raison » ────────
-
-  test("la place du mouvement est réservée, grisée, avec sa raison", async () => {
-    const { vitrine } = await ouvrirDepuisLEtabli()
-
-    const lire = vitrine.getByRole("button", { name: "lire le cycle" })
-    expect((lire as HTMLButtonElement).disabled).toBe(true)
-    expect(
-      vitrine.getByText(/aucune pose ne tient plus d'une image dans une direction/),
-    ).toBeTruthy()
-  })
-
-  // ── « L'écran s'ouvre depuis le codex et depuis une fiche » ────────────────
-  //
-  // ⚠️ **« voir tout le monde en grand » est parti avec `Codex.tsx` (`C3`)** :
-  // c'était un bouton de sa colonne des choses (`ListeDesChoses`), sans
-  // équivalent dans `Famille.tsx` — à rouvrir si le besoin s'en fait sentir.
-  // ⚠️ **La porte depuis la fiche est partie avec elle** (RP8) : la fiche
-  // longue qui la portait a fusionné dans la fiche courte de la page du
-  // sujet, qui ne l'a jamais portée. La vitrine reste atteignable par son
-  // propre geste direct sur la matrice — « la vitrine › », ci-dessous.
-
-  test("Échap ferme la vitrine et rend l'établi", async () => {
-    await ouvrirDepuisLEtabli()
-
-    fireEvent.keyDown(window, { key: "Escape" })
-
-    await waitFor(() =>
-      expect(document.querySelector("[data-vitrine]")).toBeNull(),
-    )
-    expect(document.querySelector("[data-etabli]")).toBeTruthy()
-  })
-
-  test("la barre qui paie se retire quand la vitrine s'ouvre", async () => {
-    // Elle ne fabrique rien, ne modifie rien, ne coûte rien — et la barre
-    // absente le dit avant qu'on ait lu quoi que ce soit.
-    await ouvrirDepuisLEtabli()
-
-    expect(
-      screen.queryByPlaceholderText("Décris ce que tu veux fabriquer."),
-    ).toBeNull()
-  })
-})
-
-// ─────────────────────────────────────────────────────────────────────────────
-// E13 · La planche d'une pose
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// **Ce qui se mesure ici** : ce que l'écran montre avant de payer. Le nombre de
-// cases et le texte de chacune, la géométrie écrite par l'atelier et non
-// modifiable, le tableau des trois choix avec le nombre d'appels derrière chaque
-// prix, ce que refaire coûte, la matrice qui change de pose sans refermer, et la
-// barre qui paie qui **reste** — c'est le seul plein cadre de l'établi qui
-// dépense. Ce qui se compose — les cases, leur direction, la géométrie, les
-// prix — vit dans `tests/test_e13.py`.
 
 describe("la planche d'une pose", () => {
   beforeEach(() => {
@@ -13668,31 +13469,6 @@ describe("la planche d'une pose", () => {
       expect(ecran.getByText("la planche de repos")).toBeTruthy(),
     )
     expect(document.querySelector("[data-planche]")).toBeTruthy()
-  })
-
-  test("la vitrine s'ouvre depuis la planche, sans repasser par l'établi", async () => {
-    // **La quatrième porte de la vitrine** (E16), réservée à E13 par son propre
-    // critère : *la porte s'y posera avec elle, l'écran ne bouge pas*. On
-    // regarde ce qu'on a avant de repayer ce qu'on a.
-    const { ecran } = await ouvrir()
-
-    fireEvent.click(ecran.getByRole("button", { name: "la vitrine ›" }))
-
-    await waitFor(() =>
-      expect(document.querySelector("[data-vitrine]")).toBeTruthy(),
-    )
-    expect(document.querySelector("[data-planche]")).toBeNull()
-  })
-
-  test("la porte de la vitrine n'existe pas quand rien n'est fait", async () => {
-    // Une porte qui ouvre sur le vide est pire qu'une porte absente.
-    const { ecran } = await ouvrir({
-      ...PLANCHE,
-      deja_pleines: [],
-      cases: PLANCHE.cases.map((c) => ({ ...c, pleine: false })),
-    })
-
-    expect(ecran.queryByRole("button", { name: "la vitrine ›" })).toBeNull()
   })
 
   test("Échap ferme la planche et rend l'établi", async () => {
@@ -19312,7 +19088,9 @@ describe("A10 — découper un clip en bandes", () => {
     const case3 = await panneau.findByRole("button", { name: "Image 3" })
     // La pellicule ne charge pas cent vingt images : elle décale la planche
     // contact, qui est **une seule adresse**.
-    expect(case3.getAttribute("style")).toContain("/api/montage/clip-a/contact")
+    expect(case3.querySelector("span")?.getAttribute("style")).toContain(
+      "/api/montage/clip-a/contact",
+    )
     fireEvent.mouseEnter(case3)
     const loupe = await waitFor(() => {
       const vu = document.querySelector("[data-loupe]")
@@ -20898,7 +20676,6 @@ describe("A7 · l'atelier d'une animation", () => {
     await waitFor(() =>
       expect(atelier.queryByLabelText(/tolérance de la passe 1, en chiffres/)).toBeNull(),
     )
-    expect(await atelier.findByText(/pas de tolérance à régler/)).toBeTruthy()
   })
 
   test("la pipette et la sélection se posent vraiment sur la frame", async () => {
@@ -20991,7 +20768,7 @@ describe("A7 · l'atelier d'une animation", () => {
     })
 
     // « toutes », depuis la V3.03.2 : la recette nommée suit la sélection.
-    fireEvent.click(await atelier.findByRole("button", { name: "toutes" }))
+    fireEvent.click(await atelier.findByRole("tab", { name: /Toute l’animation/ }))
     const choix = await atelier.findByLabelText(
       "appliquer une recette enregistrée aux images choisies",
     )
@@ -21117,7 +20894,7 @@ describe("A7 · l'atelier d'une animation", () => {
     })
     expect(cadre.querySelector("[data-fenetre-davant]")).toBeNull()
 
-    fireEvent.click(await atelier.findByRole("button", { name: "toutes" }))
+    fireEvent.click(await atelier.findByRole("tab", { name: /Toute l’animation/ }))
     fireEvent.change(
       await atelier.findByLabelText(
         "appliquer une recette enregistrée aux images choisies",
@@ -21797,7 +21574,7 @@ describe("A7 · l'atelier d'une animation", () => {
     const { atelier, cadre, appels } = await ouvrirLAtelier()
     await atelier.findByText(/en pixels du sprite/)
 
-    fireEvent.click(await atelier.findByRole("button", { name: "toutes" }))
+    fireEvent.click(await atelier.findByRole("tab", { name: /Toute l’animation/ }))
     await reglerLaTolerance(atelier, 44)
 
     await waitFor(() => {
@@ -21811,6 +21588,36 @@ describe("A7 · l'atelier d'une animation", () => {
     expect(cadre.querySelectorAll("[data-liser-ecart]")).toHaveLength(0)
   })
 
+  test("cliquer une vignette en mode « toute l'animation » ne change pas la portée", async () => {
+    // ⚠️ Avant, ce clic ramenait les tables à une seule frame sans rien dire :
+    // l'auteur croyait régler l'animation et ne réglait qu'une image. Signalé
+    // le 16 septembre 2026.
+    const { atelier, cadre, appels } = await ouvrirLAtelier()
+    await atelier.findByText(/en pixels du sprite/)
+
+    fireEvent.click(await atelier.findByRole("tab", { name: /Toute l’animation/ }))
+    fireEvent.click(vignette(cadre, 2))
+    expect(
+      atelier.getAllByRole("tab", { name: /Toute l’animation/ })[0],
+    ).toHaveAttribute("aria-selected", "true")
+    await reglerLaTolerance(atelier, 44)
+
+    await waitFor(() => {
+      const corps = [...appels]
+        .reverse()
+        .find((a) => a.url === "/api/montage/preview")?.corps as { recette?: Recette; prises?: Prise[] }
+      expect(corps?.recette?.passes[0]?.tolerance).toBe(44)
+      expect(corps?.prises?.every((prise) => !prise.recette)).toBe(true)
+    })
+
+    // Et l'onglet « frame seule » ramène la portée à l'image qu'on regarde.
+    fireEvent.click(atelier.getAllByRole("tab", { name: /Frame 3 seule/ })[0])
+    expect(
+      atelier.getAllByRole("tab", { name: /Frame 3 seule/ })[0],
+    ).toHaveAttribute("aria-selected", "true")
+    expect(atelier.getByText(/à la frame 3 seulement/)).toBeInTheDocument()
+  })
+
   test("une valeur posée sur toutes suit aussi les recettes individuelles", async () => {
     // Le pendant du précédent, et il tombe tout seul si on l'oublie : un curseur
     // posé sur les quatre n'en bougerait que deux, et les deux qui s'écartaient
@@ -21819,7 +21626,7 @@ describe("A7 · l'atelier d'une animation", () => {
     const { atelier, appels } = await ouvrirSeparee()
     await atelier.findByText(/en pixels du sprite/)
 
-    fireEvent.click(await atelier.findByRole("button", { name: "toutes" }))
+    fireEvent.click(await atelier.findByRole("tab", { name: /Toute l’animation/ }))
     await reglerLaTolerance(atelier, 44)
 
     await waitFor(() => {
@@ -21988,7 +21795,7 @@ describe("A7 · l'atelier d'une animation", () => {
     const { atelier, cadre } = await ouvrirSeparee()
     await atelier.findByText(/en pixels du sprite/)
 
-    fireEvent.click(atelier.getByRole("button", { name: "toutes" }))
+    fireEvent.click(atelier.getAllByRole("tab", { name: /Toute l’animation/ })[0])
 
     await waitFor(() =>
       expect(

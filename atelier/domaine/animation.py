@@ -34,6 +34,17 @@ from atelier.domaine.catalogue import Option
 # version à quatre secondes sans transition n'était pas découpable).
 SECONDES_DEFAUT = 5
 
+
+def duree_normalisee(secondes: float) -> float:
+    """Une durée de clip, **entière quand elle l'est** : `2.0` redevient `2`.
+
+    Les demi-secondes existent pour le moteur de la maison (1,5 s), mais une
+    durée entière doit rester écrite `2` — dans les clés `images_par_duree`,
+    dans les enregistrements et dans les phrases de grisé.
+    """
+    valeur = float(secondes)
+    return int(valeur) if valeur.is_integer() else valeur
+
 # **Ce que le carré économise.** Chez un modèle facturé au jeton vidéo, le prix
 # suit la surface : un 480×480 coûte 44 % de moins qu'un 854×480, et cadre mieux
 # un personnage seul. C'est le format par défaut du produit, et la raison est
@@ -268,11 +279,14 @@ class DemandeClip:
 
     texte: str
     image: bytes
-    secondes: int = SECONDES_DEFAUT
+    secondes: float = SECONDES_DEFAUT
     proportions: str = PROPORTIONS_DEFAUT
     resolution: str = RESOLUTION_DEFAUT
     # Ce que l'auteur a réglé et que l'adaptateur transporte sans l'interpréter.
     options: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "secondes", duree_normalisee(self.secondes))
 
     @property
     def a_son_entree(self) -> bool:
@@ -287,7 +301,7 @@ class ModeleVideo:
     nom: str
     fournisseur: str = ""
     chez_lui: str = ""
-    durees: tuple[int, ...] = ()
+    durees: tuple[float, ...] = ()
     resolutions: tuple[str, ...] = ()
     proportions: tuple[str, ...] = ()
     # Faux quand le fournisseur ne déclare pas accepter d'image d'entrée : le
@@ -474,8 +488,8 @@ class ModeleVideo:
         if not demande.a_son_entree:
             return "demande une image de départ, et il n'y en a pas"
         if self.durees and demande.secondes not in self.durees:
-            possibles = ", ".join(f"{d} s" for d in sorted(self.durees)[:6])
-            return f"ne fait pas de clip de {demande.secondes} s — seulement {possibles}"
+            possibles = ", ".join(f"{_lisible(d)} s" for d in sorted(self.durees)[:6])
+            return f"ne fait pas de clip de {_lisible(demande.secondes)} s — seulement {possibles}"
         if self.resolutions and demande.resolution not in self.resolutions:
             return f"ne rend pas du {demande.resolution} — seulement " + ", ".join(
                 self.resolutions
@@ -511,7 +525,7 @@ class Clip:
     # Le numéro que le fournisseur donne à la soumission. Vide seulement entre
     # la création de l'emplacement et la réponse du POST — quelques millisecondes.
     travail: str = ""
-    secondes: int = SECONDES_DEFAUT
+    secondes: float = SECONDES_DEFAUT
     proportions: str = PROPORTIONS_DEFAUT
     resolution: str = RESOLUTION_DEFAUT
 
@@ -579,6 +593,15 @@ class Clip:
     depart: str = ""
     # Une séquence native de rendu 3D garde son alpha ; ce n’est pas un MP4.
     nature: str = "video"
+    # **Monter l'animation dès l'arrivée** (16 septembre 2026). Le clip commandé
+    # depuis la fiche d'un sujet devient aussitôt une animation à juger, taillée
+    # comme l'écran de montage la proposerait : on la retouche ensuite si elle
+    # ne va pas. Faux pour les clips d'avant ce champ, qui attendaient la main.
+    monter_auto: bool = False
+    # **Effacé pour de bon** (16 septembre 2026) : la vidéo et ses images ont
+    # quitté le disque. La génération reste, pour que la dépense reste au
+    # journal ; seul le fichier est parti.
+    efface: bool = False
 
     @property
     def montant_dit(self) -> str:
@@ -633,6 +656,8 @@ class Clip:
             "jete": self.jete,
             "lot": self.lot,
             "depart": self.depart,
+            **({"monter_auto": True} if self.monter_auto else {}),
+            **({"efface": True} if self.efface else {}),
             # Déduit, écrit quand même : c'est la phrase que l'écran affiche à
             # côté du montant, et deux rédactions finiraient par dire deux
             # choses.
@@ -646,7 +671,7 @@ class Clip:
         return Clip(
             nature=d.get("nature", "video"),
             travail=d.get("travail", ""),
-            secondes=int(d.get("secondes", SECONDES_DEFAUT)),
+            secondes=duree_normalisee(d.get("secondes", SECONDES_DEFAUT)),
             proportions=d.get("proportions", PROPORTIONS_DEFAUT),
             resolution=d.get("resolution", RESOLUTION_DEFAUT),
             prix_annonce=d.get("prix_annonce"),
@@ -659,4 +684,6 @@ class Clip:
             jete=bool(d.get("jete", False)),
             lot=d.get("lot", ""),
             depart=d.get("depart", ""),
+            monter_auto=bool(d.get("monter_auto", False)),
+            efface=bool(d.get("efface", False)),
         )

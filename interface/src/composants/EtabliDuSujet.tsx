@@ -64,9 +64,7 @@ import { BandeQuiTourne, sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
 import { Libelle, Segments, ZoneTexte } from "./pieces"
 import { PANNEAU } from "./Infobulle"
-import { EcranCalibrage } from "./Calibrage"
 import { EcranPlanche } from "./Planche"
-import { EcranVitrine } from "./Vitrine"
 
 /** Ce qui remplit vraiment une case — **et ce n'est pas toujours le nombre
  *  d'images qu'elle porte** (E10).
@@ -300,16 +298,6 @@ export function EcranEtabli({
   calque: string | null
   onCalque: (identifiant: string | null) => void
 }) {
-  // **La vitrine, un premier plein cadre du même endroit** (E16). Elle ne
-  // fabrique rien et ne modifie rien : elle retire la barre qui paie, et
-  // Échap rend l'établi.
-  const [vitrineOuverte, setVitrineOuverte] = useState(false)
-  // **Le calibrage, un second plein cadre du même endroit** (E17). Il n'est
-  // pas dans la barre des tables, et c'est une décision : une table décrit
-  // l'image ouverte, celui-ci travaille sur *toutes* les poses à la fois et
-  // écrit dans chacune. Le mettre dans la barre voudrait dire que la barre de
-  // l'image A porte un outil qui modifie les images B, C et D.
-  const [calibrageOuvert, setCalibrageOuvert] = useState(false)
   // **La planche, un troisième plein cadre — et le seul qui garde la barre
   // qui paie** (E13). Les deux autres règlent, jugent ou recalculent : aucun
   // ne dépense. Celui-ci, si, et c'est même tout ce qu'il fait — on y entre
@@ -324,8 +312,6 @@ export function EcranEtabli({
   // qu'on regardait, et les garder ouverts sur la suivante ferait croire
   // qu'on a réglé l'une en réglant l'autre.
   useEffect(() => {
-    setVitrineOuverte(false)
-    setCalibrageOuvert(false)
     setPlanchePose(null)
   }, [ouvert.identifiant])
 
@@ -385,34 +371,12 @@ export function EcranEtabli({
             plan={ouvert.plan ?? plan}
             onPose={setPlanchePose}
             onFermer={() => setPlanchePose(null)}
-            onVitrine={() => {
-              // On passe de la planche à la vitrine sans repasser par
-              // l'établi : c'est la même profondeur, et refermer pour rouvrir
-              // aurait fait perdre l'endroit où l'on était. Même geste que
-              // depuis la fiche.
-              setPlanchePose(null)
-              setVitrineOuverte(true)
-            }}
             onArmer={(pose, directions) => {
               const attitude = (ouvert.plan ?? plan).find(
                 (p) => p.identifiant === pose,
               )
               if (attitude) onArmer(ouvert, [attitude], null, null, directions)
             }}
-            onErreur={echouer}
-          />
-        ) : calibrageOuvert ? (
-          <EcranCalibrage
-            personnage={ouvert}
-            onFermer={() => setCalibrageOuvert(false)}
-            onErreur={echouer}
-          />
-        ) : vitrineOuverte ? (
-          <EcranVitrine
-            personnage={ouvert}
-            personnages={[ouvert]}
-            plan={ouvert.plan ?? plan}
-            onFermer={() => setVitrineOuverte(false)}
             onErreur={echouer}
           />
         ) : (
@@ -434,8 +398,6 @@ export function EcranEtabli({
           onPersonnage={onPersonnage}
           onArmer={onArmer}
           onAnimer={onAnimer}
-          onVitrine={() => setVitrineOuverte(true)}
-          onCalibrage={() => setCalibrageOuvert(true)}
           onPlanche={setPlanchePose}
           onErreur={echouer}
         />
@@ -477,7 +439,7 @@ export function EcranEtabli({
           qu'on achète *avant* de payer, et l'écarter de la barre aurait obligé
           à remonter d'un cran pour dépenser — c'est-à-dire à perdre de vue ce
           qu'on venait de regarder. */}
-      {vitrineOuverte || calibrageOuvert ? null : barreQuiPaie}
+      {barreQuiPaie}
     </div>
   )
 }
@@ -498,8 +460,6 @@ function Fiche({
   onPersonnage,
   onArmer,
   onAnimer,
-  onVitrine,
-  onCalibrage,
   onPlanche,
   onErreur,
 }: {
@@ -528,11 +488,6 @@ function Fiche({
     pose: Pose,
     direction?: { identifiant: string; nom: string } | null,
   ) => void
-  /** La vitrine (E16), qui montre ce qu'on regardait — ici, une chose et
-   *  toutes ses poses à la même échelle. */
-  onVitrine: () => void
-  /** Et le calibrage (E17), qui les empile dans la même case. */
-  onCalibrage: () => void
   /** **Remonter d'une case animée jusqu'à son clip** (A12). Portée par la fiche
    *  pour la même raison que la planche : c'est sa matrice qui la déclenche. */
   onMonterLaBande: (clip: string) => void
@@ -578,8 +533,6 @@ function Fiche({
         <Identite
           personnage={personnage}
           onPersonnage={onPersonnage}
-          onVitrine={onVitrine}
-          onCalibrage={onCalibrage}
           onErreur={onErreur}
         />
         {/* ⚠️ **Plus de bouton de sortie ici** (`RP17`). Il posait le
@@ -714,16 +667,10 @@ function Onglet({
 function Identite({
   personnage,
   onPersonnage,
-  onVitrine,
-  onCalibrage,
   onErreur,
 }: {
   personnage: Personnage
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
-  /** La vitrine (E16). */
-  onVitrine: () => void
-  /** Et le calibrage (E17). */
-  onCalibrage: () => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const [nom, setNom] = useState(personnage.nom)
@@ -803,32 +750,6 @@ function Identite({
         className="w-full min-w-0 rounded-[2px] border border-transparent bg-transparent px-1 text-[15px] leading-none text-encre hover:border-trait focus:border-contour focus:bg-papier-cote"
       />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        {/* **« sa fiche › » est parti d'ici** (RP8) : la fiche longue fusionne
-            désormais dans la fiche courte, ouverte depuis la page du sujet —
-            un cran au-dessus, plus un menu qui parle de calibrage. */}
-        {/* **La vitrine montre ce qu'on regardait** (E16) : ouverte d'ici, ce
-            sont toutes les poses de cette chose, à la même échelle — c'est comme
-            ça qu'une pose sortie d'un quart plus petite se voit. */}
-        <button
-          type="button"
-          onClick={onVitrine}
-          title="voir ce que ça donne, en grand, sur le fond que la bible décrit"
-          className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
-        >
-          la vitrine ›
-        </button>
-        {/* **Le calibrage s'ouvre d'ici** (E17), sur la matrice de ses poses :
-            c'est là qu'on les voit toutes, donc là qu'on remarque qu'elles ne
-            s'accordent pas. Il ne fabrique rien et ne coûte rien — il change le
-            rendu d'images déjà payées. */}
-        <button
-          type="button"
-          onClick={onCalibrage}
-          title="toutes ses poses empilées dans la même case — c'est comme ça qu'on voit qu'il rapetisse en frappant"
-          className="mesure shrink-0 px-1 text-[10px] text-signal hover:opacity-70"
-        >
-          le calibrage ›
-        </button>
         {/* **Et il sort de la rangée des portes.** Les trois au-dessus ouvrent
             un écran ; celui-ci détruit. Les mettre côte à côte, du même
             caractère et de la même taille, faisait du plus dangereux des quatre

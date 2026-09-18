@@ -52,17 +52,53 @@ class MesureClip:
         return round(self.images / self.cadence, 2) if self.cadence else 0.0
 
 
+# **Les fonds francs qu'une image de départ peut recevoir**, dans l'ordre où on
+# les préfère à écart égal. Le gris d'avant ressemblait au sujet — une joue, une
+# armure, une ombre —, et le détourage de chaque image du clip mangeait ce qui lui
+# ressemblait. Le modèle vidéo garde le fond de l'image de départ : c'est donc
+# ici, et nulle part ailleurs, qu'il se choisit.
+FONDS_FRANCS: tuple[tuple[str, tuple[int, int, int]], ...] = (
+    ("vert", (0, 255, 0)),
+    ("magenta", (255, 0, 255)),
+    ("bleu", (0, 0, 255)),
+)
+
+
+def fond_le_plus_eloigne(image: "Image.Image") -> tuple[int, int, int]:
+    """Le fond franc **le plus loin de toutes les couleurs du sujet**.
+
+    La distance est celle du détourage : la plus grande des trois différences
+    de composante. Pour chaque fond, on regarde les pixels du sujet qui en sont
+    le plus près ; le fond retenu est celui dont ces pixels-là sont le plus loin.
+    Le 1 % le plus proche est laissé de côté, pour qu'une poussière verte dans
+    un œil ne chasse pas le vert d'un sujet qui n'en porte pas.
+    """
+    import numpy as np
+
+    pixels = np.asarray(image.convert("RGBA"), dtype=np.int16).reshape(-1, 4)
+    sujet = pixels[pixels[:, 3] >= 128, :3]
+    if not len(sujet):
+        return FONDS_FRANCS[0][1]
+    meilleur, score = FONDS_FRANCS[0][1], -1.0
+    for _, couleur in FONDS_FRANCS:
+        ecarts = np.abs(sujet - np.asarray(couleur, dtype=np.int16)).max(axis=1)
+        proche = float(np.percentile(ecarts, 1))
+        if proche > score:
+            meilleur, score = couleur, proche
+    return meilleur
+
+
 def composer_entree(
     sprite: bytes, canevas: tuple[int, int], part: float = 0.80
 ) -> bytes:
-    """Le sprite agrandi au plus proche voisin, **entier dans** une toile grise.
+    """Le sprite agrandi au plus proche voisin, **entier dans** une toile de fond franc.
 
     **Un sprite ne part pas tel quel.** Un modèle vidéo travaille en 480 px ou
     plus ; lui envoyer un sprite de 64 px, c'est lui demander d'inventer tout ce
     qu'il ne voit pas. Le sujet est donc agrandi jusqu'à occuper les quatre
-    cinquièmes de la toile, sur le gris de fond que le produit utilise déjà pour
-    ses planches — celui que les modèles rendent d'eux-mêmes, et que le
-    détourage sait retirer.
+    cinquièmes de la toile, sur le fond franc le plus éloigné de ses couleurs
+    (`fond_le_plus_eloigne`) — vert, magenta ou bleu vif. Le modèle vidéo garde
+    ce fond sur tout le clip, et le détourage le retire sans toucher au sujet.
 
     **Le facteur est entier**, dans un sens comme dans l'autre. Un facteur
     quelconque rendrait les pixels rectangulaires, et le modèle animerait une
@@ -78,7 +114,6 @@ def composer_entree(
     from PIL import Image
 
     from atelier.domaine.recette import Passe, Recette
-    from atelier.image.pliage import FOND
     from atelier.image.traitement import detourer
 
     with Image.open(io.BytesIO(sprite)) as ouverte:
@@ -117,7 +152,7 @@ def composer_entree(
             f"le sujet mis à l'échelle ({sujet.width}×{sujet.height}) ne tient pas "
             f"dans une toile de {canevas[0]}×{canevas[1]}"
         )
-    toile = Image.new("RGB", canevas, FOND)
+    toile = Image.new("RGB", canevas, fond_le_plus_eloigne(image))
     toile.paste(
         sujet, ((canevas[0] - sujet.width) // 2, (canevas[1] - sujet.height) // 2), sujet
     )

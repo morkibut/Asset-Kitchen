@@ -131,6 +131,10 @@ class ServiceAnimation:
         self._file_locale = file_locale
         self._moteurs_locaux: dict[str, str] = {}
         self.avant_soumission_locale = None
+        # **Ce qui se passe quand les images d'un clip sont tirées** — le
+        # montage automatique, branché par l'atelier. Le service de l'animation
+        # ne connaît pas le montage : l'ordre de construction l'interdit.
+        self.apres_les_images = None
         if file_locale is not None:
             file_locale.inscrire_executeur("video", self._executer_local)
             for fabrique in self._fabriques:
@@ -393,6 +397,7 @@ class ServiceAnimation:
         provenance: str = AUTEUR,
         attendre: bool = True,
         depart: str | None = None,
+        monter_auto: bool = False,
     ) -> Generation:
         """Commande un clip et rend la génération **dès que le travail est écrit**.
 
@@ -443,6 +448,7 @@ class ServiceAnimation:
                 prix_annonce=prix.montant,
                 prix_formule=prix.formule,
                 depart=depart or "",
+                monter_auto=bool(monter_auto and personnage and pose),
             ),
         )
         # **Enregistré avant de partir.** Une coupure entre l'écriture et l'appel
@@ -782,11 +788,40 @@ class ServiceAnimation:
         rendus = []
         for identifiant in identifiants:
             generation = self._clip(identifiant)
-            if generation.clip.jete:
+            if generation.clip.jete and not generation.clip.efface:
                 generation.clip.jete = False
                 self._sauver(generation)
             rendus.append(generation)
         return rendus
+
+    def effacer(self, identifiant: str) -> Generation:
+        """**Supprimer un clip pour de bon** : la vidéo et ses images quittent le
+        disque. Refusé tant qu'une animation est taillée dedans — elle vit dans
+        le dossier du clip et partirait avec lui.
+
+        La génération reste, marquée effacée : l'argent dépensé ne quitte
+        jamais le journal.
+        """
+        generation = self._clip(identifiant)
+        if generation.statut in (Statut.EN_ATTENTE, Statut.EN_COURS):
+            raise DemandeRefusee("ce clip est encore en route : attendez qu'il arrive")
+        dossier = self._fichiers.dossier_generation(identifiant)
+        bandes = dossier / "bandes"
+        if bandes.is_dir() and any(bandes.glob("*.json")):
+            raise DemandeRefusee(
+                "une animation est taillée dans ce clip : supprimez d'abord l'animation"
+            )
+        for chemin in dossier.iterdir():
+            if chemin.name == "generation.json":
+                continue
+            if chemin.is_dir():
+                shutil.rmtree(chemin, ignore_errors=True)
+            else:
+                chemin.unlink(missing_ok=True)
+        generation.clip.jete = True
+        generation.clip.efface = True
+        self._sauver(generation)
+        return generation
 
     def _clip(self, identifiant: str) -> Generation:
         """La génération de ce clip, ou le refus qui dit laquelle manque."""
@@ -911,6 +946,16 @@ class ServiceAnimation:
 
         # 3. Les images, une fois et plus jamais. Un échec ici ne défait rien.
         self._tirer_les_images(generation)
+
+        # 4. L'animation, quand elle a été demandée avec le clip. **Dans un fil à
+        # part** : détourer chaque image prend plusieurs secondes, et le serveur
+        # doit continuer de répondre pendant ce temps. Un échec ne touche pas au
+        # clip — il reste à monter à la main, comme avant.
+        if generation.clip.monter_auto and generation.clip.images and self.apres_les_images:
+            try:
+                await asyncio.to_thread(self.apres_les_images, generation)
+            except Exception as erreur:  # noqa: BLE001 — le clip payé ne doit rien perdre
+                self._diffusion.publier("clip.montage_auto_refuse", {"clip": generation.identifiant, "raison": str(erreur)})
 
     def _tirer_les_images(self, generation: Generation) -> None:
         """Décode le clip et range ses images. **Ne fait jamais échouer le clip.**

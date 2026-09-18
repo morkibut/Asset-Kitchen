@@ -48,17 +48,23 @@ import { remonterLaBande } from "./AtelierDeBande"
 import { Bouton, Curseur, Libelle, Raison, Segments } from "./pieces"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 
-/** La hauteur du ruban, et la largeur d'une tranche. **Sept pixels**, comme la
- *  maquette : c'est ce qui fait tenir cent vingt images sans défilement, et
- *  c'est aussi pourquoi la loupe existe — à sept pixels de large on ne sait pas
- *  ce qu'on clique. */
+/** La hauteur du ruban. Chaque cellule prend sa part de la largeur : sur un long
+ *  clip elle tombe à quelques pixels — c'est pourquoi la loupe existe, à cette
+ *  largeur on ne sait pas ce qu'on clique. */
 const RUBAN = 44
-const TRANCHE = 7
 
 /** Ce qu'on retient au plus quand la fenêtre pose un découpage régulier. Le
  *  chemin fin — prendre et laisser image par image — n'a pas de plafond autre
  *  que celui du serveur : c'est lui qui refuse une bande de cent images. */
 const ECHANTILLON_MAX = 12
+
+/** Les pièces de l'écran, écrites une fois — le vocabulaire des écrans refaits. */
+const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
+const LIEN = "self-start text-[12px] text-encre-controle underline decoration-trait underline-offset-4 hover:text-encre disabled:text-encre-4"
+const NOTE = "text-[12px] leading-[1.45] text-encre-3"
+const CARTE_CHOIX = "flex flex-col gap-[4px] rounded-8 border border-trait bg-carte px-[14px] py-[8px] text-left hover:border-encre-3 disabled:opacity-50"
+const SECTION = "mt-[8px] border-t border-trait pt-[14px]"
+const POIGNEE = "pointer-events-auto absolute inset-y-0 w-2 cursor-ew-resize bg-signal/60"
 
 export function EcranMontage({
   clip,
@@ -523,7 +529,7 @@ export function EcranMontage({
   if (refus && !montage) {
     return (
       <div className="flex min-h-0 flex-1 items-start justify-center bg-papier p-8">
-        <div className="w-[520px]">
+        <div className="w-full max-w-[880px]">
           <Raison texte={refus} ouAller="revenir" onAller={onFermer} />
         </div>
       </div>
@@ -533,7 +539,7 @@ export function EcranMontage({
   if (!montage) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center bg-papier">
-        <p className="mesure text-[11px] text-encre-4">le clip s'ouvre…</p>
+        <p className="text-[13px] text-encre-3">le clip s'ouvre…</p>
       </div>
     )
   }
@@ -553,20 +559,20 @@ export function EcranMontage({
       className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_380px] bg-papier"
     >
       {/* ── Les deux boucles, la pellicule, ce qui est retenu ─────────────── */}
-      <section className="defile flex min-h-0 flex-col gap-4 overflow-y-auto p-5">
-        <div className="flex items-baseline gap-3">
-          <h2 className="text-[13px] text-encre">
+      <section className="defile flex min-h-0 flex-col gap-[14px] overflow-y-auto p-[22px]">
+        <div className="flex flex-wrap items-baseline gap-[14px]">
+          <h2 className="font-serif text-[25px] text-encre">
             {montage.clip.mouvement || "ce clip"}
           </h2>
-          <span className="mesure text-[10px] text-encre-4">
+          <span className="text-[12px] text-encre-3">
             {montage.clip.images} images · {montage.clip.secondes} s ·{" "}
             {montage.clip.montant_dit}
           </span>
           <button
             type="button"
             onClick={onFermer}
-            title="Échap referme — les bandes gardées sont déjà rangées"
-            className="mesure ml-auto px-1 text-[10px] text-encre-4 hover:text-encre"
+            title="Échap referme — les animations gardées sont déjà rangées"
+            className={`${BOUTON} ml-auto`}
           >
             {reprise ? "‹ L'atelier" : "‹ Galerie"}
           </button>
@@ -574,7 +580,7 @@ export function EcranMontage({
 
         {refus && <Raison texte={refus} ouAller="fermer" onAller={() => setRefus(null)} />}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-[14px]">
           <Boucle
             titre="Ce que le modèle a rendu"
             question="le mouvement est-il bon ?"
@@ -592,7 +598,7 @@ export function EcranMontage({
                     ? "revenir aux images retenues, à la vitesse de la bande"
                     : "la vidéo telle qu'elle est arrivée — son rythme, ses fondus"
                 }
-                className="mesure text-[10px] text-signal hover:opacity-70"
+                className={LIEN}
               >
                 {enVideo ? "les images ›" : "la vidéo entière ›"}
               </button>
@@ -620,7 +626,7 @@ export function EcranMontage({
                 <img
                   src={api.imageDuClip(clip, numero)}
                   alt={`Image ${numero} du clip`}
-                  className="max-h-[220px] w-auto"
+                  className="max-h-full w-auto"
                 />
               )
             )}
@@ -634,17 +640,15 @@ export function EcranMontage({
               <img
                 src={api.imageDuClip(clip, numero)}
                 alt={`Image ${numero} du clip`}
-                className="max-h-[220px] w-auto"
+                className="max-h-full w-auto"
               />
             )}
           </Boucle>
         </div>
 
-        <p className="mesure max-w-[70ch] text-[10px] leading-4 text-encre-4">
-          Les deux regardent la <b className="text-encre-3">même chose</b> — les
-          images retenues, telles que le modèle les a rendues, fond compris. On
-          découpe d'abord ; le traitement viendra dans l'atelier d'une animation,
-          où chaque frame se règle avec les tables.
+        <p className={NOTE}>
+          Les images sont brutes, fond compris. Le nettoyage se fait ensuite, dans
+          l'atelier de l'animation.
         </p>
 
         <Pellicule
@@ -665,7 +669,7 @@ export function EcranMontage({
           onEtendue={(debut, fin) => setRetenues(regulier(debut, fin))}
         />
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-[8px]">
           {montage.propositions.map((proposition) => (
             <Indice
               key={proposition.quoi}
@@ -676,20 +680,36 @@ export function EcranMontage({
           <button
             type="button"
             onClick={() => setRetenues([])}
-            className="rounded-[2px] border border-trait bg-carte px-3 py-2 text-left hover:bg-carte"
+            className={CARTE_CHOIX}
           >
-            <span className="mesure block text-[9.5px] uppercase tracking-wide text-encre-4">
+            <span className="text-[12px] text-encre-3">
               repartir de zéro
             </span>
-            <span className="text-[11px] text-encre">
+            <span className="text-[13px] text-encre">
               ne garder aucune image — et les choisir une par une
             </span>
           </button>
+          <button
+            type="button"
+            data-inverser-l-ordre
+            disabled={occurrences.length < 2}
+            onClick={() => {
+              ordreManuel.current = true
+              setOccurrences((avant) => [...avant].reverse())
+            }}
+            className={CARTE_CHOIX}
+          >
+            <span className="text-[12px] text-encre-3">
+              inverser l’ordre
+            </span>
+            <span className="text-[13px] text-encre">
+              jouer les images retenues à l’envers
+            </span>
+          </button>
         </div>
-        <p className="mesure max-w-[74ch] text-[10px] leading-4 text-encre-4">
-          Les deux propositions sont calculées à l'ouverture et ne coûtent rien.{" "}
-          <b className="text-encre-3">Elles ne décident de rien</b> : elles disent
-          où regarder, et ce qu'elles posent se corrige ensuite image par image.
+        <p className={NOTE}>
+          Ces propositions sont gratuites. Elles ne décident de rien : chaque
+          image se corrige ensuite.
         </p>
 
         <Retenues
@@ -703,21 +723,14 @@ export function EcranMontage({
             setOccurrences((avant) => { const apres = [...avant]; const [prise] = apres.splice(depart, 1); apres.splice(arrivee, 0, prise); return apres })
           }}
         />
-        <p className="mesure max-w-[74ch] text-[10px] leading-4 text-encre-4">
-          C'est <b className="text-encre-3">exactement</b> ce qui sera monté, dans
-          cet ordre. Un clic sur une vignette la retire ; un clic sur la pellicule
-          en ajoute une. Glissez une vignette pour changer l’ordre, ou utilisez Alt + flèche gauche / droite sur celle-ci.{" "}
-          <b className="text-encre-3">
-            Rien n'oblige à ce qu'elles soient régulièrement espacées
-          </b>{" "}
-          — un cycle de marche peut demander deux images serrées au moment du
-          contact et une seule pendant la glisse. Au clavier : les flèches
-          déplacent, la barre d'espace prend ou laisse.
+        <p className={NOTE}>
+          Voici ce qui sera monté, dans cet ordre. Clic sur la pellicule : ajouter.
+          Clic sur une vignette : retirer. Glisser, ou Alt + flèche : déplacer.
         </p>
       </section>
 
       {/* ── Ce qu'on garde ────────────────────────────────────────────────── */}
-      <aside className="defile flex min-h-0 flex-col gap-3 overflow-y-auto border-l border-trait p-4">
+      <aside className="defile flex min-h-0 flex-col gap-[14px] overflow-y-auto border-l border-trait bg-papier-cote p-[22px]">
         <AvisBrouillon brouillon={brouillon} />
         {/* **Ce qu'on remonte, dit une fois** (V3.03.3). Le nom n'est pas un
             champ ici : on ne baptise pas une animation qui en porte déjà un, et
@@ -728,14 +741,10 @@ export function EcranMontage({
             <p data-on-remonte className="text-[13px] text-encre">
               {reprise.bande.nom}
             </p>
-            <p className="mesure text-[10px] leading-4 text-encre-4">
-              Elle en portait{" "}
-              <b className="text-encre-3">
-                {reprise.bande.compte} image
-                {reprise.bande.compte > 1 ? "s" : ""}
-              </b>
-              . Ce que vous gardez retrouve ses réglages ; ce que vous laissez
-              tombe au chutier, pas à la corbeille.
+            <p className={NOTE}>
+              Elle avait {reprise.bande.compte} image
+              {reprise.bande.compte > 1 ? "s" : ""}. Les images retirées vont au
+              chutier, pas à la corbeille.
             </p>
           </>
         ) : (
@@ -746,24 +755,24 @@ export function EcranMontage({
               onChange={(e) => setNom(e.target.value)}
               aria-label="Le nom de l'animation"
               placeholder="repos, marche, attaque…"
-              className="h-[30px] rounded-[2px] border border-contour bg-carte px-2 text-[12px] text-encre"
+              className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre"
             />
 
-            <div className="flex items-baseline justify-between">
-              <span className="mesure text-[10px] text-encre-4">
+            <div className="flex items-baseline justify-between gap-[8px]">
+              <span className="text-[12px] text-encre-3">
                 Remplit la case
               </span>
-              <span className="mesure text-[10px] text-signal">
+              <span className="text-[13px] text-encre">
                 {pose
                   ? `${pose}${direction ? ` · ${direction}` : ""}`
                   : "aucune — brouillon"}
               </span>
             </div>
-            <p className="mesure text-[10px] leading-4 text-encre-4">
-              {pose
-                ? "Elle remplira cette case du plan de poses."
-                : "Une bande sans case reste un brouillon, et un brouillon ne bloque rien : on garde d'abord, on range ensuite."}
-            </p>
+            {!pose && (
+              <p className={NOTE}>
+                Sans case, c'est un brouillon — et un brouillon ne bloque rien.
+              </p>
+            )}
             {montage.clip.pose && (
               <button
                 type="button"
@@ -771,7 +780,7 @@ export function EcranMontage({
                   setPose(pose ? null : montage.clip.pose)
                   setDirection(pose ? null : montage.clip.direction)
                 }}
-                className="mesure self-start text-[10px] text-signal hover:opacity-70"
+                className={LIEN}
               >
                 {pose ? "en faire un brouillon" : `viser ${montage.clip.pose} ›`}
               </button>
@@ -811,7 +820,7 @@ export function EcranMontage({
           <p className="text-[11px] text-encre-3">Le nom reste libre. Ce classement indique où retrouver l’animation ; son clip source reste conservé.</p>
         </fieldset>
 
-        <div className="mt-2 border-t border-trait pt-3">
+        <div className={SECTION}>
           <Libelle aide="bande.cadre">le cadre — la fenêtre commune</Libelle>
         </div>
         {/* ⚠️ **Sur une reprise, le cadre se lit et ne se règle pas.** Le
@@ -820,13 +829,11 @@ export function EcranMontage({
             distingue pas d'un choix cassé. La fenêtre se reprend dans l'atelier
             de l'animation, où le bouton dit ce qu'elle coûte. */}
         {reprise ? (
-          <p data-cadre-en-lecture className="mesure text-[10px] leading-4 text-encre-4">
+          <p data-cadre-en-lecture className={NOTE}>
             {/* La phrase vient du serveur, avec le cadre : deux vocabulaires de
                 la même mesure finiraient par ne plus dire la même chose. */}
             {reprise.bande.cadre.mot ? <>{reprise.bande.cadre.mot}. </> : null}
-            Il ne se règle pas ici :{" "}
-            <b className="text-encre-3">la fenêtre se reprend dans l'atelier de
-            l'animation</b>, où l'écran dit les vingt secondes que ça coûte.
+            Il se règle dans l'atelier de l'animation.
           </p>
         ) : (
         <Segments
@@ -851,14 +858,14 @@ export function EcranMontage({
         {!reprise && (
           <>
             {cadre !== "main" && (
-              <p className="mesure text-[10px] leading-4 text-encre-4">
+              <p className={NOTE}>
                 {cadre === "clip"
-                  ? "pris sur le clip entier — toutes ses bandes ont la même assise"
-                  : "pris sur cette bande seule — elle ne s'accorde plus aux autres"}
+                  ? "pris sur le clip entier — toutes ses animations ont le même cadre"
+                  : "pris sur cette animation seule — elle ne s'aligne plus sur les autres"}
               </p>
             )}
             {montage.fenetre && cadre !== "main" && (
-              <p className="mesure text-[10px] text-encre-3">
+              <p className="text-[12px] text-encre">
                 {montage.fenetre.largeur} × {montage.fenetre.hauteur}, pris sur{" "}
                 {montage.fenetre.images}{" "}
                 {montage.fenetre.images > 1 ? "images" : "image"}
@@ -869,10 +876,8 @@ export function EcranMontage({
                 {/* **Ce qui fait foi, dit en clair** (RP15) : le rectangle posé
                     ici est celui que la bande gardera, quoi que la mesure
                     automatique refasse par ailleurs — elle ne l'efface pas. */}
-                <p className="mesure text-[10px] leading-4 text-encre-4">
-                  posé à la main — ni le clip ni la bande n'en décident. C'est ce
-                  rectangle qui sort à l'export ; remesurer le clip ci-dessous ne
-                  le change pas.
+                <p className={NOTE}>
+                  Posé à la main. C'est ce rectangle qui sort à l'export.
                 </p>
                 <div className="grid grid-cols-2 gap-[8px]">
                   <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">
@@ -950,20 +955,19 @@ export function EcranMontage({
               type="button"
               disabled={reprend}
               onClick={reprendreLeCadre}
-              className="mesure self-start text-[10px] text-signal hover:opacity-70 disabled:text-encre-4"
+              className={`${BOUTON} self-start`}
             >
               {reprend
                 ? "il remesure les images du clip…"
                 : "reprendre le cadre sur tout le clip ›"}
             </button>
-            <p className="mesure text-[10px] leading-4 text-encre-4">
-              Il remesure les {montage.clip.images} images une par une : comptez
-              une vingtaine de secondes sur un clip de cinq secondes. C'est pour
-              ça que c'est un bouton et pas un automatisme.
-              {cadre === "main" && " Le rectangle posé à la main ci-dessus n'en bouge pas."}
+            <p className={NOTE}>
+              Remesure les {montage.clip.images} images : une vingtaine de secondes
+              pour un clip de cinq secondes.
+              {cadre === "main" && " Le cadre posé à la main n'en bouge pas."}
             </p>
 
-            <div className="mt-2 border-t border-trait pt-3">
+            <div className={SECTION}>
               <Libelle aide="bande.pivot">le pivot — le point d’ancrage dans le jeu</Libelle>
             </div>
             <div className="flex flex-col gap-[8px]">
@@ -1007,7 +1011,7 @@ export function EcranMontage({
                   />
                 </label>
               </div>
-              <p className="mesure text-[10px] leading-4 text-encre-4">
+              <p className={NOTE}>
                 {pivotMain
                   ? "posé à la main — gardé avec cette animation."
                   : "sans réglage — l'animation garde le repère de son mouvement."}
@@ -1016,7 +1020,7 @@ export function EcranMontage({
           </>
         )}
 
-        <div className="mt-2 border-t border-trait pt-3">
+        <div className={SECTION}>
           <Libelle aide="bande.vitesse">le jeu</Libelle>
         </div>
         <Curseur
@@ -1033,9 +1037,8 @@ export function EcranMontage({
           onChange={setSens}
           libelles={{ boucle: "Boucler", "aller-retour": "aller-retour" }}
         />
-        <p className="mesure text-[10px] leading-4 text-encre-4">
-          Cette vitesse est <b className="text-encre-3">celle qui partira dans le
-          jeu</b>. Un second réglage à l'export finirait par la contredire.
+        <p className={NOTE}>
+          Cette vitesse part telle quelle dans le jeu.
         </p>
 
         {/* **Ce qu'on a déjà tiré de ce clip n'a rien à faire dans une
@@ -1043,73 +1046,95 @@ export function EcranMontage({
             des autres n'offre ici que des gestes — sortir, effacer — qui
             appartiennent à l'écran d'où l'on vient. */}
         {!reprise && bandes.length > 0 && (
-          <>
-            <div className="mt-2 border-t border-trait pt-3">
-              <Libelle aide="bande.gardees">gardées de ce clip</Libelle>
-            </div>
-            <ul className="flex flex-col gap-1">
-              {bandes.map((bande) => (
-                <li
-                  key={bande.identifiant}
-                  className="flex items-baseline gap-2 rounded-[2px] border border-trait bg-carte px-2 py-1.5"
-                >
-                  <span className="text-[11px] text-encre">{bande.nom}</span>
-                  <span className="mesure text-[10px] text-encre-4">
-                    {bande.pose
-                      ? `${bande.pose}${bande.direction ? ` · ${bande.direction}` : ""}`
-                      : "brouillon"}
-                  </span>
-                  <span className="mesure ml-auto text-[10px] text-encre-4">
-                    {bande.compte} images
-                  </span>
-                  <button
-                    type="button"
-                    disabled={sort !== null}
-                    onClick={() => void sortir(bande.identifiant)}
-                    aria-label={`Sortir l'animation ${bande.nom}`}
-                    title="planche d'images, son descriptif, et une image qui tourne"
-                    className="mesure text-[10px] text-encre-4 hover:text-encre disabled:opacity-40"
+          <div className={`${SECTION} flex flex-col gap-[8px]`}>
+            <Libelle aide="bande.gardees">gardées de ce clip</Libelle>
+            <ul className="flex flex-col gap-[8px]">
+              {bandes.map((bande) => {
+                // La première image de l'animation, prise dans son clip : la même
+                // route que les deux boucles, rien de plus à charger.
+                const premiere = bande.prises[0]
+                const vignette = premiere
+                  ? api.imageDuClip(premiere.clip || bande.clip, premiere.numero)
+                  : null
+                return (
+                  <li
+                    key={bande.identifiant}
+                    className="flex flex-col gap-[8px] rounded-8 border border-trait bg-carte p-[14px]"
                   >
-                    {sort === bande.identifiant ? "…" : "Sortir ›"}
-                  </button>
-                  {onBande && <button type="button" aria-label={`Retoucher l’animation ${bande.nom}`} onClick={() => onBande(bande.identifiant)} className="mesure text-[11px] text-encre-2 hover:text-signal">Retoucher ›</button>}
-                  <button
-                    type="button"
-                    onClick={() => void oublier(bande.identifiant)}
-                    aria-label={`Effacer l'animation ${bande.nom}`}
-                    className="mesure text-[10px] text-encre-4 hover:text-signal"
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
+                    <div className="flex items-center gap-[14px]">
+                      {vignette && (
+                        <img
+                          src={vignette}
+                          alt=""
+                          className="h-[54px] w-[54px] shrink-0 rounded-5 border border-trait bg-papier-cote object-contain"
+                        />
+                      )}
+                      <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
+                        <span className="truncate text-[13px] text-encre">{bande.nom}</span>
+                        <span className="text-[12px] text-encre-3">
+                          {bande.pose
+                            ? `${bande.pose}${bande.direction ? ` · ${bande.direction}` : ""}`
+                            : "brouillon"}
+                          {" · "}
+                          {bande.compte} images
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void oublier(bande.identifiant)}
+                        aria-label={`Effacer l'animation ${bande.nom}`}
+                        title="Effacer cette animation"
+                        className="h-[34px] w-[34px] shrink-0 self-start rounded-7 text-[15px] text-encre-3 hover:bg-papier-cote hover:text-echec"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-[8px]">
+                      {onBande && (
+                        <button
+                          type="button"
+                          aria-label={`Retoucher l’animation ${bande.nom}`}
+                          onClick={() => onBande(bande.identifiant)}
+                          className={`${BOUTON} text-encre`}
+                        >
+                          Retoucher ›
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        disabled={sort !== null}
+                        onClick={() => void sortir(bande.identifiant)}
+                        aria-label={`Sortir l'animation ${bande.nom}`}
+                        title="planche d'images, son descriptif, et une image qui tourne"
+                        className={BOUTON}
+                      >
+                        {sort === bande.identifiant ? "…" : "Sortir ›"}
+                      </button>
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
-          </>
+          </div>
         )}
 
         {/* **Le prix par bande compte les bandes qu'on garde**, et remonter
             celle-ci n'en ajoute aucune : l'afficher ici ferait croire qu'on va
-            payer un cran de plus. */}
+            payer un cran de plus. Une ligne discrète, pas une carte. */}
         {!reprise && (
-          <div className="mt-2 rounded-[2px] border border-trait bg-carte p-3">
-            <p className="text-[15px] text-encre">
-              {dollars(montage.prix.par_bande)}
+          <div className="flex flex-col gap-[4px]">
+            <p className="text-[12px] text-encre-3">
+              <span className="text-encre">{dollars(montage.prix.par_bande)}</span>
+              {" "}par animation gardée · le clip a coûté {dollars(montage.prix.clip)}
             </p>
-            <p className="mesure text-[10px] leading-4 text-encre-4">
-              par animation gardée — le clip a coûté {dollars(montage.prix.clip)},
-              et{" "}
-              {montage.prix.bandes === 0
-                ? "aucune bande n'en est encore sortie"
-                : montage.prix.bandes === 1
-                  ? "une bande en est sortie"
-                  : `${montage.prix.bandes} bandes en sont sorties`}
-              . Une de plus ferait tomber ce prix à{" "}
+            <p className="text-[12px] text-encre-4">
+              Une de plus ferait tomber ce prix à{" "}
               {dollars(montage.prix.si_une_de_plus)}.
             </p>
           </div>
         )}
 
-        <div className="mt-2 flex flex-col gap-2">
+        <div className="mt-[8px] flex flex-col gap-[8px]">
           {/* **Le geste dominant dit lequel des deux écrans on tient.** Tailler
               une animation neuve et remonter celle qu'on a : deux gestes, un
               seul bouton, et son libellé nomme l'animation pour qu'aucun doute
@@ -1140,15 +1165,9 @@ export function EcranMontage({
             />
           )}
         </div>
-        <p className="mesure text-[10px] leading-4 text-encre-4">
-          <b className="text-encre-3">Rien sur cet écran ne dépense.</b> {montage.clip.nature && montage.clip.nature !== "video" ? "Les frames originales sont conservées." : "Le clip est payé."} Découpez, recommencez, changez d'avis.
-          {reprise && (
-            <>
-              {" "}
-              <b className="text-encre-3">Revenir sans reprendre</b> laisse
-              l'animation telle qu'elle est.
-            </>
-          )}
+        <p className={NOTE}>
+          <b className="font-normal text-encre">Rien sur cet écran ne dépense.</b> {montage.clip.nature && montage.clip.nature !== "video" ? "Les frames originales sont conservées." : "Le clip est déjà payé."}
+          {reprise && " Revenir sans reprendre laisse l'animation telle quelle."}
         </p>
       </aside>
     </div>
@@ -1201,15 +1220,15 @@ function Boucle({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-baseline gap-2">
-        <span className="mesure text-[10px] text-encre-3">{titre}</span>
-        <b className="mesure text-[10px] font-normal text-encre-4">{question}</b>
+    <div className="flex flex-col gap-[8px]">
+      <div className="flex flex-wrap items-baseline gap-[8px]">
+        <span className="text-[13px] text-encre">{titre}</span>
+        <b className="text-[12px] font-normal text-encre-3">{question}</b>
         {geste && <span className="ml-auto">{geste}</span>}
       </div>
-      <div className="relative flex h-[240px] items-center justify-center overflow-hidden rounded-[2px] border border-trait bg-papier-cote">
+      <div className="relative flex h-[240px] items-center justify-center overflow-hidden rounded-8 border border-trait bg-papier-cote">
         {children}
-        <span className="mesure absolute bottom-1 right-1 rounded-[2px] bg-papier/80 px-1 text-[9px] text-encre-4">
+        <span className="absolute right-[8px] bottom-[8px] rounded-5 bg-carte px-[8px] text-[11px] text-encre-3">
           {badge}
         </span>
       </div>
@@ -1304,7 +1323,7 @@ function Pellicule({
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-[8px]">
       {/* ⚠️ **Le survol ne se relâche pas quand le pointeur sort** (A13), et
           c'est ce qui rend le geste de prélèvement possible : la loupe reste sur
           la dernière image regardée, et le bouton qui la met de côté est
@@ -1314,7 +1333,7 @@ function Pellicule({
       <div
         ref={ruban}
         data-pellicule
-        className="relative flex select-none overflow-hidden rounded-[2px] border border-trait bg-papier-cote"
+        className="relative flex select-none overflow-hidden rounded-7 border border-trait bg-papier-cote"
         style={{ height: RUBAN }}
       >
         {Array.from({ length: images }, (_, numero) => {
@@ -1347,18 +1366,10 @@ function Pellicule({
               tabIndex={numero === curseur ? 0 : -1}
               onMouseEnter={() => onSurvol(numero)}
               onClick={() => onBasculer(numero)}
-              className="shrink-0 border-r border-papier/40 last:border-r-0"
+              className="relative shrink-0 overflow-hidden border-r border-trait last:border-r-0"
               style={{
                 width: `${100 / images}%`,
                 height: RUBAN,
-                backgroundImage: `url(${url})`,
-                backgroundSize: `${contact.colonnes * contact.cote * facteur}px ${
-                  contact.lignes * contact.cote * facteur
-                }px`,
-                backgroundPosition: `-${
-                  colonne * contact.cote * facteur +
-                  (contact.cote * facteur - TRANCHE) / 2
-                }px -${ligne * contact.cote * facteur}px`,
                 // `--color-signal`, et non `--signal` : le nom court n'existe
                 // pas. Mesuré au navigateur, l'encadré des images retenues ne
                 // s'était **jamais** dessiné — une couleur inconnue ne fait pas
@@ -1368,6 +1379,27 @@ function Pellicule({
                 opacity: prise || misee ? 1 : 0.55,
               }}
             >
+              {/* **Une case de la planche, centrée dans sa cellule.** Le décalage
+                  supposait une cellule de sept pixels ; sur un clip court la
+                  cellule est bien plus large, et l'on voyait la moitié d'une
+                  image suivie du début de la voisine. Une tuile exacte, posée au
+                  milieu et rognée par la cellule, reste juste à toute largeur. */}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2"
+                style={{
+                  width: contact.cote * facteur,
+                  height: RUBAN,
+                  backgroundImage: `url(${url})`,
+                  backgroundRepeat: "no-repeat",
+                  backgroundSize: `${contact.colonnes * contact.cote * facteur}px ${
+                    contact.lignes * contact.cote * facteur
+                  }px`,
+                  backgroundPosition: `-${colonne * contact.cote * facteur}px -${
+                    ligne * contact.cote * facteur
+                  }px`,
+                }}
+              />
               {/* **La marque de ce qui est déjà pris** (A13) — un trait en pied,
                   et non un second encadré : l'encadré dit *retenue pour la
                   bande*, et deux encadrés sur la même cellule ne se
@@ -1378,8 +1410,7 @@ function Pellicule({
                 <span
                   aria-hidden
                   data-mise-de-cote={numero}
-                  className="pointer-events-none block h-[2px] w-full bg-ok"
-                  style={{ marginTop: RUBAN - 2 }}
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-[4px] bg-ok"
                 />
               )}
             </button>
@@ -1396,12 +1427,12 @@ function Pellicule({
             <span
               data-poignee="gauche"
               onMouseDown={tirer("gauche")}
-              className="pointer-events-auto absolute inset-y-0 -left-1 w-2 cursor-ew-resize bg-signal/60"
+              className={`${POIGNEE} -left-1`}
             />
             <span
               data-poignee="droite"
               onMouseDown={tirer("droite")}
-              className="pointer-events-auto absolute inset-y-0 -right-1 w-2 cursor-ew-resize bg-signal/60"
+              className={`${POIGNEE} -right-1`}
             />
           </div>
         )}
@@ -1412,11 +1443,11 @@ function Pellicule({
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="mesure text-[10px] text-encre-4">frame 0</span>
-        <span className="mesure text-[10px] text-encre-3">
+        <span className="mesure text-[11px] text-encre-4">frame 0</span>
+        <span className="text-[12px] text-encre-3">
           {retenues.length} {retenues.length > 1 ? "frames retenues" : "frame retenue"}
         </span>
-        <span className="mesure text-[10px] text-encre-4">frame {images - 1}</span>
+        <span className="mesure text-[11px] text-encre-4">frame {images - 1}</span>
       </div>
 
       {/* **La loupe, parce qu'à sept pixels de large on ne sait pas ce qu'on
@@ -1427,10 +1458,10 @@ function Pellicule({
           dernier — et c'est ce qui lui permet de porter un geste. Une loupe qui
           s'efface au moment où l'on va cliquer dessus n'est pas une surface,
           c'est un reflet. */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-[14px]">
         <div
           data-loupe
-          className="shrink-0 rounded-[2px] border border-contour"
+          className="shrink-0 rounded-7 border border-contour"
           style={{
             width: contact.cote,
             height: contact.cote,
@@ -1440,8 +1471,8 @@ function Pellicule({
             }px`,
           }}
         />
-        <div className="flex min-w-0 flex-col gap-1">
-          <span className="mesure text-[10px] text-encre-4">frame {regarde}</span>
+        <div className="flex min-w-0 flex-col gap-[4px]">
+          <span className="mesure text-[11px] text-encre-3">frame {regarde}</span>
 
           {/* **Le second geste de la pellicule** (A13), et il est ici plutôt que
               sur le ruban : à sept pixels de large, une cellule ne porte pas
@@ -1456,7 +1487,7 @@ function Pellicule({
             onClick={() => onPrelever(regarde)}
             aria-label={`Mettre la frame ${regarde} de côté`}
             title="elle entre en bibliothèque — rien n'est dépensé, et les frames retenues ne bougent pas"
-            className="mesure w-fit px-1 text-[10px] text-signal hover:opacity-70"
+            className={LIEN}
           >
             Mettre de côté ›
           </button>
@@ -1466,7 +1497,7 @@ function Pellicule({
               refus — le produit signale ce dont il est certain, les mêmes octets
               deux fois, et l'auteur décide. */}
           {misDeCote && (
-            <span className="mesure text-[9.5px] leading-4 text-encre-4">
+            <span className={NOTE}>
               {misDeCote.doublon
                 ? `l'image ${misDeCote.numero} était déjà en bibliothèque — `
                   + `« ${misDeCote.doublon.label} »`
@@ -1491,12 +1522,12 @@ function Indice({
     <button
       type="button"
       onClick={onPoser}
-      className="rounded-[2px] border border-trait bg-carte px-3 py-2 text-left hover:bg-carte"
+      className={CARTE_CHOIX}
     >
-      <span className="mesure block text-[9.5px] uppercase tracking-wide text-encre-4">
+      <span className="text-[12px] text-encre-3">
         l'atelier a remarqué
       </span>
-      <span className="text-[11px] text-encre">{proposition.mot}</span>
+      <span className="text-[13px] text-encre">{proposition.mot}</span>
     </button>
   )
 }
@@ -1522,7 +1553,7 @@ function Retenues({
   const glissee = useRef<number | null>(null)
   if (retenues.length === 0) {
     return (
-      <p className="mesure rounded-[2px] border border-dashed border-trait p-3 text-[10px] text-encre-4">
+      <p className="rounded-8 border border-dashed border-contour p-[14px] text-[12px] text-encre-3">
         aucune frame retenue — cliquez la pellicule, ou posez une des deux
         propositions
       </p>
@@ -1547,7 +1578,7 @@ function Retenues({
           }}
           title={`Image ${numero} — un clic la retire`}
           aria-label={`Retirer l'image ${numero}`}
-          className="rounded-[2px] border p-0.5"
+          className="rounded-7 border p-[4px]"
           style={{
             borderColor:
               place === rang ? "var(--color-signal)" : "var(--color-trait)",
