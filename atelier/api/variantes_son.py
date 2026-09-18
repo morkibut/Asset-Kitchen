@@ -103,3 +103,10 @@ def retirer_son(requete: Request, projet: str, jeu: str, son: str):
 def supprimer_jeu(requete: Request, projet: str, jeu: str):
     """Le jeu disparaît ; ses sons restent dans la galerie."""
     return _jeux(requete).supprimer(projet, jeu)
+
+
+@routeur.post("/sound-variants/{jeu}/delivery/preview")
+def previsualiser_livraison_jeu(requete: Request, projet: str, jeu: str):
+    """Aperçu de livraison du jeu : ses sons livrables, numérotés, et
+    l'`AudioStreamRandomizer` qui les rassemble. N'écrit rien dans le jeu."""
+    return _jeux(requete).prevoir_livraison(projet, jeu)

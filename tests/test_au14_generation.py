@@ -116,6 +116,23 @@ async def test_retour_invalide_ou_silencieux_reste_acquis_a_verifier(sonore, oct
     assert repris["son"] == fini["son"] and len(comfy.envois) == 1
 
 
+async def test_travail_dont_le_son_sature_passe_termine(sonore, monkeypatch):
+    # Règle du produit (SN3) : la saturation informe, elle ne bloque plus.
+    # Un travail dont le rendu sature acquiert quand même son son et passe
+    # « termine », avec l'avertissement porté par le son lui-même.
+    atelier, comfy, p = sonore
+    importer = atelier.sons.importer_octets
+    def sature(*args, **kw):
+        son = importer(*args, **kw)
+        return atelier.sons.regler(args[0], son["identifiant"], son["revision"], {"gain_db": 24})
+    monkeypatch.setattr(atelier.sons, "importer_octets", sature)
+    t = await preparer(atelier, p)
+    fini = await lancer(atelier, t)
+    assert fini["etat"] == "termine" and fini["son"], fini
+    lu = atelier.sons.lire(t["projet"], fini["son"])
+    assert lu["pret"] and lu["mesures"]["ecretes"] > 0 and lu["avertissements"]
+
+
 async def test_coupure_apres_import_ne_cree_pas_deux_sons_et_garde_les_corrections(sonore, monkeypatch):
     atelier, comfy, p = sonore
     importer = atelier.sons.importer_octets

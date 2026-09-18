@@ -18,6 +18,7 @@ import pytest
 
 from atelier.audio.traitement import decoder, encoder, mesurer, traiter
 from atelier.domaine.son import FAMILLES, RecetteSon, SonRefuse, recette_proposee
+from atelier.domaine.variantes_son import VariantesRefusees
 from atelier.services.sons import (fichier_import, nom_stable, params_ogg, params_wav, ressource_variantes,
     uid_godot)
 from tests.test_au1 import GODOT
@@ -314,6 +315,64 @@ def test_ressource_variantes_sans_repetition():
         ressource_variantes([])
 
 
+# ── La livraison d'un jeu de variantes ──────────────────────────────────
+
+
+def test_livraison_d_un_jeu_de_variantes_numerote_et_credits(audio, tmp_path):
+    atelier, projet = audio
+    jeu_godot = _jeu(tmp_path)
+    atelier.livraison.associer(projet, str(jeu_godot))
+    sons = [_genere(atelier, projet, "bruitage", nom=f"Pas {i}", envoi={"graine": 1000 + i}) for i in range(1, 4)]
+    jeu = atelier.variantes_son.creer(projet, {"nom": "Pas sur la pierre", "sons": [s["identifiant"] for s in sons]})
+    preparation = atelier.variantes_son.prevoir_livraison(projet, jeu["identifiant"])
+    noms = {Path(f["chemin"]).name for f in preparation["fichiers"]}
+    assert {"sfx_pas_sur_la_pierre_01.wav", "sfx_pas_sur_la_pierre_02.wav", "sfx_pas_sur_la_pierre_03.wav",
+        "sfx_pas_sur_la_pierre_01.wav.import", "sfx_pas_sur_la_pierre_02.wav.import", "sfx_pas_sur_la_pierre_03.wav.import",
+        "sfx_pas_sur_la_pierre.tres", "son.tscn", "credits.json", "composition.json"} <= noms
+    assert preparation["ressource"].endswith("/sfx_pas_sur_la_pierre.tres")
+    assert preparation["scene"].endswith("/son.tscn")
+    livraison = atelier.livraison.livrer(projet, preparation["jeton"])
+    tres = jeu_godot / livraison["ressource"].removeprefix("res://")
+    texte = tres.read_text(encoding="utf-8")
+    assert "streams_count = 3" in texte and "playback_mode = 0" in texte
+    credits = json.loads(next(jeu_godot.rglob("credits.json")).read_text(encoding="utf-8"))
+    assert len(credits["sons"]) == 3 and {c["fichier"] for c in credits["sons"]} == {
+        "sfx_pas_sur_la_pierre_01.wav", "sfx_pas_sur_la_pierre_02.wav", "sfx_pas_sur_la_pierre_03.wav"}
+    manifeste = json.loads(next(jeu_godot.rglob("livraison.json")).read_text(encoding="utf-8"))
+    assert manifeste["famille"] == "bruitage" and manifeste["nature"] == "audio"
+
+
+def test_jeu_sans_son_livrable_est_refuse_avec_sa_raison(audio, tmp_path):
+    atelier, projet = audio
+    atelier.livraison.associer(projet, str(_jeu(tmp_path)))
+    son = _genere(atelier, projet, "bruitage")
+    atelier.sons.juger(projet, son["identifiant"], son["revision"], "ecartee")
+    jeu = atelier.variantes_son.creer(projet, {"nom": "Vide", "sons": [son["identifiant"]]})
+    with pytest.raises(VariantesRefusees, match="écartée"):
+        atelier.variantes_son.prevoir_livraison(projet, jeu["identifiant"])
+
+
+def test_jeu_sans_famille_est_refuse(audio, tmp_path):
+    atelier, projet = audio
+    atelier.livraison.associer(projet, str(_jeu(tmp_path)))
+    importe = atelier.sons.importer_octets(projet, encoder(_stereo(1, 16000), 16000), nom="Porte.wav")
+    jeu = atelier.variantes_son.creer(projet, {"nom": "Sans famille", "sons": [importe["identifiant"]]})
+    assert jeu["famille"] is None
+    with pytest.raises(VariantesRefusees, match="famille"):
+        atelier.variantes_son.prevoir_livraison(projet, jeu["identifiant"])
+
+
+def test_un_son_sature_du_jeu_se_livre_et_le_signale(audio, tmp_path):
+    atelier, projet = audio
+    atelier.livraison.associer(projet, str(_jeu(tmp_path)))
+    propre = _genere(atelier, projet, "bruitage", nom="Un")
+    sature = atelier.sons.regler(projet, propre["identifiant"], propre["revision"], {"gain_db": 24})
+    jeu = atelier.variantes_son.creer(projet, {"nom": "Un", "sons": [sature["identifiant"]]})
+    preparation = atelier.variantes_son.prevoir_livraison(projet, jeu["identifiant"])
+    assert preparation["signalements"] and "sature" in preparation["signalements"][0]["signal"]
+    assert len(preparation["sons"]) == 1  # signalé, mais livré quand même
+
+
 # ── Dans le vrai Godot 4.7 ───────────────────────────────────────────────
 
 
@@ -424,4 +483,42 @@ func _initialize():
     (jeu / "preuve.gd").write_text(script, encoding="utf-8")
     preuve = _godot(jeu, "--script", "preuve.gd", delai=30)
     assert preuve.returncode == 0 and "SN4_VARIANTES_OK" in preuve.stdout, preuve.stdout + preuve.stderr
+    assert "SCRIPT ERROR" not in preuve.stderr
+
+
+@pytest.mark.skipif(not GODOT, reason="Moteur Godot non installé")
+def test_godot_livre_importe_et_charge_un_jeu_de_huit_variantes(audio, tmp_path):
+    # Bout en bout, cette fois par l'atelier : créer huit sons, en faire un
+    # jeu, prévoir sa livraison, la livrer, importer dans Godot et jouer.
+    atelier, projet = audio
+    jeu_godot = _jeu(tmp_path, "jeu-livraison-variantes")
+    atelier.livraison.associer(projet, str(jeu_godot))
+    sons = [_genere(atelier, projet, "bruitage", duree=.3, taux=22050, nom=f"Pas {i}", envoi={"graine": 2000 + i})
+        for i in range(1, 9)]
+    jeu = atelier.variantes_son.creer(projet, {"nom": "Pas", "sons": [s["identifiant"] for s in sons]})
+    preparation = atelier.variantes_son.prevoir_livraison(projet, jeu["identifiant"])
+    livraison = atelier.livraison.livrer(projet, preparation["jeton"])
+    importe = _godot(jeu_godot, "--editor", "--import")
+    assert importe.returncode == 0, importe.stdout + importe.stderr
+    script = '''extends SceneTree
+func _initialize():
+    var r = load(RESSOURCE)
+    assert(r is AudioStreamRandomizer)
+    assert(r.playback_mode == AudioStreamRandomizer.PLAYBACK_RANDOM_NO_REPEATS)
+    assert(r.streams_count == 8)
+    for i in 8:
+        assert(r.get_stream(i) is AudioStreamWAV)
+    var scene = load(SCENE).instantiate()
+    root.add_child(scene)
+    await process_frame
+    assert(scene is AudioStreamPlayer and scene.stream is AudioStreamRandomizer)
+    scene.play()
+    await process_frame
+    assert(scene.playing)
+    print("SN4_JEU_LIVRE_OK")
+    quit()
+'''.replace("RESSOURCE", json.dumps(livraison["ressource"])).replace("SCENE", json.dumps(livraison["scene"]))
+    (jeu_godot / "preuve.gd").write_text(script, encoding="utf-8")
+    preuve = _godot(jeu_godot, "--script", "preuve.gd", delai=30)
+    assert preuve.returncode == 0 and "SN4_JEU_LIVRE_OK" in preuve.stdout, preuve.stdout + preuve.stderr
     assert "SCRIPT ERROR" not in preuve.stderr

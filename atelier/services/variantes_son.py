@@ -12,11 +12,13 @@ import json
 import time
 import uuid
 
+from atelier.audio.traitement import encoder_ogg
 from atelier.depot.verrou import VerrouOccupe, verrou
-from atelier.domaine.son import SonRefuse
+from atelier.domaine.son import FAMILLES, SonRefuse
 from atelier.domaine.travail import TravailRefuse
 from atelier.domaine.variantes_son import (
     VariantesRefusees, famille_du_jeu, identifiant_valide, nom_valide, statut_membre)
+from atelier.services.sons import _json_lisible, credit, fichier_import, nom_stable, params_ogg, params_wav, ressource_variantes, scene_son
 from atelier.services.travaux import _hash, _json
 
 
@@ -202,3 +204,57 @@ class ServiceVariantesSon:
             self._chemin(projet, jeu).unlink()
         self.a.diffusion.publier("variantes_son", {"projet": projet, "identifiant": jeu, "supprime": True})
         return {"supprime": jeu, "sons_gardes": [m["son"] for m in objet["membres"]]}
+
+    # ── Livrer (SN4) ─────────────────────────────────────────────────────
+
+    def prevoir_livraison(self, projet, jeu):
+        """(Aperçu de livraison) : chaque son livrable du jeu comme dans le
+        paquet v2 d'un son (fichier + `.import`), sous un nom stable numéroté
+        sur deux chiffres (`sfx_pas_01.wav` …), et l'`AudioStreamRandomizer`
+        de `ressource_variantes` qui les rassemble sous le nom du jeu, sans
+        numéro (`sfx_pas.tres`) ; un `son.tscn` le joue, `credits.json` liste
+        chaque son. La famille du jeu décide le format ; sans elle, rien ne
+        dit s'il faut du WAV ou de l'OGG. N'écrit rien dans le jeu Godot."""
+        objet = self.lire(projet, jeu)
+        famille_cle = objet["famille"]
+        if famille_cle is None:
+            raise VariantesRefusees("Donnez une famille à ce jeu de variantes avant de le livrer : elle décide du format.")
+        membres = objet["a_livrer"]
+        if not membres:
+            raisons = "; ".join(dict.fromkeys(s["signal"] for s in objet["signalements"] if s["signal"]))
+            raise VariantesRefusees("Ce jeu de variantes ne contient aucun son livrable. " + (raisons or "Gardez-y au moins un son prêt."))
+        famille = FAMILLES[famille_cle]
+        base = nom_stable(famille_cle, objet["nom"])
+        contenus, credits_sons, params_par_fichier, fichiers_audio = {}, [], {}, []
+        for rang, identifiant in enumerate(membres, start=1):
+            son = self.a.sons.lire(projet, identifiant)
+            wav = self.a.sons.rendu(projet, identifiant, son["revision"]).read_bytes()
+            boucle, taux = son["mesures"]["boucle"], son["mesures"]["taux"]
+            nom_membre = f"{base}_{rang:02d}"
+            if famille.format == "wav":
+                fichier, audio, params = nom_membre + ".wav", wav, params_wav(boucle)
+            else:
+                fichier = nom_membre + ".ogg"
+                audio = encoder_ogg(wav, famille.qualite_ogg, fin_echantillon=boucle["fin"] if boucle["active"] else None)
+                fin = boucle["fin"] if boucle["active"] else son["mesures"]["echantillons"]
+                params = params_ogg(boucle, taux, fin / taux, son["provenance"])
+            contenus[fichier] = audio
+            params_par_fichier[fichier] = params
+            fichiers_audio.append(fichier)
+            credits_sons.append(credit(son, fichier))
+        ressource = base + ".tres"
+        contenus[ressource] = ressource_variantes(fichiers_audio)
+        contenus["son.tscn"] = scene_son(ressource, famille.bus)
+        credits = {"atelier": "Asset Kitchen", "sons": credits_sons}
+        contenus["credits.json"] = _json_lisible(credits)
+        manifeste = {"nature": "audio", "nom": objet["nom"], "jeu": objet["identifiant"], "version_jeu": objet["revision"],
+            "famille": famille_cle, "format_audio": famille.format, "bus": famille.bus, "ressource": ressource,
+            "sons": membres, "signalements": objet["signalements"], "credits": credits_sons}
+        contenus["composition.json"] = _json(manifeste)
+        # Le `.import` de chaque fichier nomme son propre chemin (uid, path,
+        # deps) : comme pour un son seul (SN4), il se compose une fois le
+        # dossier de la révision connu, pas avant.
+        return self.a.livraison.preparer_paquet(projet, None, "variantes_son/" + objet["identifiant"], manifeste, contenus,
+            scene="son.tscn", ressource=ressource, scene_stable="son.tscn", noeud_stable="Son",
+            completer=lambda dossier: {f + ".import": fichier_import(f, famille.format, params_par_fichier[f], dossier)
+                for f in fichiers_audio})

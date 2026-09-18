@@ -74,3 +74,15 @@ def installer_variantes_son(serveur, atelier, refus):
     @refus
     async def delete_sound_variant_set(project: str, variant_set: str) -> dict[str, Any]:
         return atelier.variantes_son.supprimer(project, variant_set)
+
+    @serveur.tool(name="preview_sound_variant_set_delivery", meta=meta("Relire la livraison d'un jeu de variantes", "livrer", ou="galerie"), description=(
+        "Prepare a variant set's deliverable sounds (sound, ecarte/supprime/silencieux/illisible are excluded, a clipped "
+        "sound is kept) for the linked Godot project. Each sound delivers like a single sound's v2 package (file + "
+        ".import) under the set's stable name, two-digit numbered (sfx_pas_01.wav ...); an AudioStreamRandomizer "
+        "(playback_mode=0, no immediate repeat) named after the set without a number (sfx_pas.tres) plays them through "
+        "son.tscn; credits.json lists every sound. The set's family decides the format (WAV or OGG) and is required. "
+        "Refused with its reason when the set holds no deliverable sound. Does NOT write to the game; publish with "
+        "publish_animation_delivery using the returned token."))
+    @refus
+    async def preview_sound_variant_set_delivery(project: str, variant_set: str) -> dict[str, Any]:
+        return atelier.variantes_son.prevoir_livraison(project, variant_set)

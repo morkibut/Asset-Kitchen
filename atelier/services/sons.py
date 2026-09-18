@@ -73,7 +73,8 @@ class ServiceSons:
             # Proposée, jamais imposée : l'écran ou l'agent la prend par un geste.
             "recette_proposee": recette_proposee(objet["recette"], famille) if famille else None,
             "versions": [{"revision": v["revision"], "cree_le": v["modifie_le"], "nom": v["nom"], "famille": v.get("famille"),
-                "pret": v["pret"], "mesures": v["mesures"], "jugement": jugements.get(str(v["revision"]), "a-juger")}
+                "pret": v["pret"], "mesures": v["mesures"], "jugement": jugements.get(str(v["revision"]), "a-juger"),
+                "avertissements": v.get("avertissements", [])}
                 for v in sorted(versions, key=lambda v: v["revision"], reverse=True)]}
 
     def lister(self, projet):
@@ -95,12 +96,16 @@ class ServiceSons:
     def _enregistrer(self, son, recette, *, tolerant=False):
         dossier = self._dossier(son["projet"], son["identifiant"])
         son = {**son, "recette": recette.en_json(), "pipeline": VERSION, "modifie_le": time.time(),
-            "mesures": None, "pret": False, "etat": "a_verifier", "raison": ""}
+            "mesures": None, "pret": False, "etat": "a_verifier", "raison": "", "avertissements": []}
         try:
             signal, taux, mesures, mesures_source = self._calculer(son, recette)
             son["source"] = {**son["source"], "mesures": mesures_source}
             son["mesures"] = mesures
-            son["raison"] = "Le rendu est silencieux. Vérifiez la source et la coupe." if mesures["silencieux"] else "Le rendu sature. Baissez le gain ou le niveau cible avant de le livrer." if mesures["ecretes"] else ""
+            # Seul ce qui ne s'entend pas bloque la livraison (silence) ; un
+            # rendu saturé s'entend et se livre, mais le dit (règle du produit,
+            # SN3 : « les mesures informent, elles ne refusent jamais »).
+            son["raison"] = "Le rendu est silencieux. Vérifiez la source et la coupe." if mesures["silencieux"] else ""
+            son["avertissements"] = ["Le rendu sature. Baissez le gain ou le niveau cible pour l'éviter."] if mesures["ecretes"] else []
             son["pret"] = not son["raison"]
             son["etat"] = "prete" if son["pret"] else "a_verifier"
             self._cache(son, signal, taux)
@@ -241,7 +246,7 @@ class ServiceSons:
         `.import` prend sa forme courte, que Godot complète à l'import."""
         son = self.lire(projet, identifiant, revision)
         if not son["pret"] or son["jugement"] == "ecartee":
-            raise SonRefuse("Choisissez une version audible, sans saturation et non écartée avant de la livrer. " + son["raison"])
+            raise SonRefuse("Choisissez une version audible et non écartée avant de la livrer. " + son["raison"])
         wav = self.rendu(projet, identifiant, son["revision"]).read_bytes()
         if son["famille"] is not None:
             return self._paquet_v2(son, wav, dossier_res)
