@@ -43,7 +43,7 @@ export function AtelierSon({ projet, identifiantInitial, onFermer, onLivraisons 
       {son.avertissements.length > 0 && <ul className="space-y-[4px] rounded-8 border border-trait bg-carte p-[14px] text-[13px] text-encre-attention">{son.avertissements.map((a, i) => <li key={i}>{a}</li>)}</ul>}
       <div className="flex flex-wrap items-center gap-[8px] text-[13px]">
         <span className="text-encre-3">Famille</span>
-        {son.famille ? <span className="rounded-7 border border-trait bg-carte px-[8px] py-[2px]">{NOMS_FAMILLES_SON[son.famille]}</span> : <span className="text-encre-3">aucune — sans famille, ce son se livre à l’ancienne (PCM dans une scène Godot).</span>}
+        {son.famille ? <span className="rounded-7 border border-trait bg-carte px-[8px] py-[4px]">{NOMS_FAMILLES_SON[son.famille]}</span> : <span className="text-encre-3">aucune — choisissez-en une pour qu’il se livre en fichier prêt pour le jeu.</span>}
         <button className={`${BOUTON} h-[26px] px-[8px]`} disabled={occupe} onClick={() => setChoisirFamille(v => !v)}>{son.famille ? "Changer" : "Poser une famille"}</button>
         {recetteProposeeDiffere && <button className={`${BOUTON} h-[26px] px-[8px]`} disabled={occupe} onClick={appliquerReglagesFamille}>Appliquer les réglages de la famille</button>}
       </div>

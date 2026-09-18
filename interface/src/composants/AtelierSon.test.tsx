@@ -67,7 +67,7 @@ test("les avertissements s’affichent sans bloquer, et un son saturé se livre 
 test("un son sans famille propose de la poser, et le dit clairement", async () => {
   const classer = vi.spyOn(sons, "classer").mockResolvedValue({ ...son, famille: "ambiance" })
   monter({ ...son, famille: null })
-  expect(await screen.findByText(/sans famille, ce son se livre à l’ancienne/)).toBeTruthy()
+  expect(await screen.findByText(/choisissez-en une pour qu’il se livre en fichier prêt pour le jeu/)).toBeTruthy()
   fireEvent.click(screen.getByRole("button", { name: "Poser une famille" }))
   fireEvent.click(screen.getByRole("button", { name: "Ambiance" }))
   await waitFor(() => expect(classer).toHaveBeenCalledWith(expect.objectContaining({ identifiant: "son1" }), "ambiance"))
