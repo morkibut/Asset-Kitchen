@@ -161,7 +161,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     void api.posesDesTypes().then((recu) => setTypes(recu?.types ?? [])).catch(() => setTypes([]))
     void api.coteAmbiances().then((recu) => setAmbiances(recu?.ambiances ?? [])).catch(() => setAmbiances([]))
     if (personnage.famille === "personnages")
-      void api.styles(personnage.projet).then((recu) => setCatalogueStyles(recu.styles)).catch(() => setCatalogueStyles([]))
+      void api.styles(personnage.projet).then((recu) => setCatalogueStyles(recu?.styles ?? [])).catch(() => setCatalogueStyles([]))
   }, [edition, relireReglages, relireStyle, personnage.projet, personnage.famille])
   const poserStyle = async (style: string | null) => {
     try {

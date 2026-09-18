@@ -1953,6 +1953,18 @@ export const AIDE: Record<string, Explication> = {
       "Un corps naît dans l'atelier et nulle part ailleurs : on écrit un sujet, on génère, on obtient une image, et c'est ici qu'on dit ce qu'elle est. Il n'existe pas d'écran de création de personnage avec son propre prompt, et c'est délibéré — tout ce qui s'empilera ensuite repose sur une image dont on connaît déjà la grille et la palette.\n\nLes attitudes proposées sont celles que ce personnage-là tient, jamais toutes celles du jeu : désigner une case qu'il ne réclame pas n'aurait aucun sens. Retirer la désignation ne touche pas à l'image — elle reste dans la bibliothèque, sa case redevient vide.",
   },
 
+  // P1c (V3.5) : le retour en arrière du dépliage.
+  "fiche.depliages": {
+    nom: "Ses découpages",
+    ou: "case",
+    quoi: "Comment cette planche a été coupée en images, et refaire ce découpage quand il est tombé mal.",
+    change:
+      "Un nouveau découpage fait ses propres images ; les précédents restent. Supprimer un découpage ne touche ni la planche ni les autres.",
+    origine: "toi · tu corriges les coupes que l'atelier propose",
+    long:
+      "Le premier découpage se fait tout seul dès que la planche revient — rien à demander. Le refaire est un geste qu'on demande : l'atelier repropose les mêmes coupes, tu les déplaces, en ajoutes, en retires, puis tu valides, autant de fois que tu veux, sans jamais perdre les images déjà sorties d'un découpage précédent.",
+  },
+
   // ── Les réglages — le cadre de l'agent ────────────────────────────────────
   //
   // Trois entrées, et elles répondent toutes à la même question de fond : *que

@@ -1947,6 +1947,15 @@ export type Asset = {
    *  et sans elle le navigateur resservirait celui d'avant. Jamais recalculée
    *  ici — deux empreintes calculées à deux endroits finiraient par diverger. */
   empreinte: string
+  // ── P1c (V3.5) : de quelle planche, et de quel dépliage ────────────────────
+  //
+  // Absents pour l'immense majorité des images — celles qui ne sortent pas
+  // d'une planche pliée. Posés à la naissance, jamais recalculés : ce sont des
+  // faits sur l'image, pas des liens vivants (voir `atelier/domaine/asset.py`).
+  /** L'identifiant de l'asset planche dont cette image est sortie. */
+  planche?: string | null
+  /** L'identifiant du dépliage — `{planche}-d{numero}` — qui l'a coupée. */
+  depliage?: string | null
 }
 
 /** Ce qu'un lot plié a mesuré sur une de ses cases (C2, US-135).
@@ -7199,6 +7208,155 @@ export const api = {
       method: "POST",
       body: JSON.stringify(reglage),
     }),
+
+  // ── P1c (V3.5) : les dépliages d'une planche, sur l'écran ──────────────────
+  //
+  // `{identifiant}` est la planche **ou n'importe quelle image sortie
+  // d'elle** — c'est la route qui remonte de l'une à l'autre. Voir
+  // `atelier/api/depliages.py`.
+
+  /** La liste des dépliages d'une planche, avec leurs images, et si on peut la
+   *  refaire. Marche aussi depuis une image sortie de la planche. */
+  depliagesDe: (identifiant: string) =>
+    appeler<Depliages>(`/assets/${identifiant}/unfoldings`),
+
+  /** Les coupes d'un nouveau dépliage — celles du dernier par défaut, ou du
+   *  n° `depuis`. Rien n'est créé, rien n'est écrit. */
+  depliagePropose: (identifiant: string, depuis?: number) =>
+    appeler<PropositionDepliage>(
+      `/assets/${identifiant}/unfoldings/proposal${depuis ? `?from=${depuis}` : ""}`,
+    ),
+
+  /** Un dépliage de plus, sur les coupes validées — les précédents ne bougent
+   *  pas. */
+  depliageRefaire: (identifiant: string, boites: Boite[]) =>
+    appeler<DepliageRefait>(`/assets/${identifiant}/unfoldings`, {
+      method: "POST",
+      body: JSON.stringify({ boites }),
+    }),
+
+  /** Les images de ce dépliage quittent la bibliothèque — annulable comme
+   *  toute suppression, par `api.restaurer`. */
+  depliageSupprimer: (identifiant: string, numero: number) =>
+    appeler<DepliageSupprime>(`/assets/${identifiant}/unfoldings/${numero}`, {
+      method: "DELETE",
+    }),
+
+  /** La même suppression que `supprimerAssets`, mais qui porte le « oui »
+   *  qu'une planche avec des dépendants demande (P1b/P1c) — et le dit, avec
+   *  le compte, plutôt que d'échouer en silence. `appeler` ne garde pas les
+   *  champs en plus d'un refus (`planche`, `dependants`) : cette route-ci les
+   *  lit elle-même. */
+  supprimerAssetsConfirmable: async (
+    identifiants: string[],
+    confirmer = false,
+  ): Promise<{ supprimes: string[]; annulation_s: number; expire_le: number }> => {
+    let reponse: Response
+    try {
+      reponse = await fetch("/api/assets/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifiants, confirmer }),
+      })
+    } catch {
+      throw new Refus("l'atelier ne répond pas", "atelier_arrete")
+    }
+    if (!reponse.ok) {
+      const charge = await reponse.json().catch(() => null)
+      if (charge?.code === "planche_a_confirmer")
+        throw new PlancheAConfirmer(
+          charge.raison,
+          charge.code,
+          charge.ou_aller ?? null,
+          charge.planche,
+          charge.dependants,
+        )
+      throw new Refus(
+        charge?.raison ?? `l'atelier a répondu ${reponse.status}`,
+        charge?.code ?? "erreur",
+        charge?.ou_aller ?? null,
+      )
+    }
+    return reponse.json()
+  },
+}
+
+// ── P1c (V3.5) : les types du dépliage, et le refus qui porte un compte ────
+
+/** Un découpage d'une planche — le premier automatique, les suivants demandés
+ *  (P1b/P1c). `origine` vaut `"auto"` ou `"main"`. */
+export type Depliage = {
+  numero: number
+  identifiant: string
+  planche: string
+  origine: "auto" | "main"
+  coupes: Boite[]
+  rangs: number[]
+  cases?: (number | null)[]
+  cree_le: number
+  supprime_le?: number
+  /** Ses images encore vivantes. */
+  images: Asset[]
+  /** Supprimées mais encore annulables. */
+  supprimees: number
+  /** Supprimé, et vide — une annulation de ses images le ferait revivre. */
+  supprime: boolean
+}
+
+export type Depliages = {
+  planche: string
+  generation: string
+  largeur: number
+  hauteur: number
+  /** Faux si la planche ne peut plus se redécouper — `raison` dit pourquoi. */
+  refaisable: boolean
+  raison: string | null
+  depliages: Depliage[]
+  dependants: { depliees: number; derivees: number; total: number }
+}
+
+export type PropositionDepliage = {
+  planche: string
+  generation: string
+  largeur: number
+  hauteur: number
+  boites: Boite[]
+  cases: (number | null)[]
+  /** Le dépliage dont ces coupes sont reprises, ou `null` — la toute première
+   *  proposition, sans dépliage écrit encore. */
+  depuis: string | null
+  marge: number
+  cases_de_la_planche: { indice: number; texte: string; pose: string | null; direction: string | null }[]
+  refaisable: boolean
+  raison: string | null
+}
+
+export type DepliageRefait = { planche: string; depliage: Depliage; images: Asset[] }
+
+export type DepliageSupprime = {
+  supprimes: string[]
+  annulation_s: number
+  expire_le: number | null
+  depliage: Depliage
+}
+
+/** Supprimer cette planche demande un « oui » explicite (P1b) : ce refus
+ *  porte le compte de ce qui en dépend, pour que l'écran pose la question
+ *  sans avoir à le redemander. */
+export class PlancheAConfirmer extends Refus {
+  planche: string
+  dependants: { depliees: number; derivees: number; total: number }
+  constructor(
+    raison: string,
+    code: string,
+    ou_aller: string | null,
+    planche: string,
+    dependants: { depliees: number; derivees: number; total: number },
+  ) {
+    super(raison, code, ou_aller)
+    this.planche = planche
+    this.dependants = dependants
+  }
 }
 
 // ── Ce que la sortie échange (B21) ──────────────────────────────────────────

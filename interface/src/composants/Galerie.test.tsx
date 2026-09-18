@@ -11,13 +11,17 @@ import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from "@t
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { Grille, useGalerie } from "./Galerie"
 import type { Entree } from "./Tuile"
-import type { Asset, Bibliotheque } from "../api"
+import { PlancheAConfirmer, type Asset, type Bibliotheque } from "../api"
 
-const { assets } = vi.hoisted(() => ({ assets: vi.fn() }))
+const { assets, supprimerAssetsConfirmable } = vi.hoisted(() => ({
+  assets: vi.fn(),
+  // P1c (V3.5) : la suppression d'une planche, doublée à part — voir plus bas.
+  supprimerAssetsConfirmable: vi.fn(),
+}))
 
 vi.mock("../api", async (vrai) => {
   const api = await vrai<typeof import("../api")>()
-  return { ...api, api: { ...api.api, assets } }
+  return { ...api, api: { ...api.api, assets, supprimerAssetsConfirmable } }
 })
 
 // **La tuile est doublée, et c'est le sujet qui l'exige** : ce qu'on vérifie
@@ -32,6 +36,7 @@ beforeEach(() => {
   localStorage.clear()
   assets.mockReset()
   assets.mockResolvedValue({ assets: [], total: 0 })
+  supprimerAssetsConfirmable.mockReset()
 })
 afterEach(cleanup)
 
@@ -212,4 +217,61 @@ test("les deux filtres de la vue écartent ce qui n'est pas encore arrivé", asy
   expect(vueRestreint({ tri: "recent", role: "tous", jugement: "favori", groupe: false })).toBe(true)
   // Trier et regrouper déplacent ; ils ne retirent rien.
   expect(vueRestreint({ tri: "nom", role: "tous", jugement: "tous", groupe: true })).toBe(false)
+})
+
+// ── P1c (V3.5) : supprimer une planche demande confirmation ────────────────
+
+test("une planche à confirmer pose la question, puis repart avec confirmer: true", async () => {
+  supprimerAssetsConfirmable
+    .mockRejectedValueOnce(
+      new PlancheAConfirmer(
+        "8 images dépendent de cette planche — elles resteront, mais son découpage ne pourra plus se refaire. Confirmez pour la supprimer.",
+        "planche_a_confirmer",
+        null,
+        "planche-1",
+        { depliees: 8, derivees: 0, total: 8 },
+      ),
+    )
+    .mockResolvedValueOnce({ supprimes: ["planche-1"], annulation_s: 8, expire_le: 123 })
+
+  const vue = monterLaGalerie()
+  await waitFor(() => expect(assets).toHaveBeenCalled())
+
+  let resultat: string[] | null = null
+  await act(async () => {
+    resultat = await vue.result.current.supprimer(["planche-1"])
+  })
+  expect(supprimerAssetsConfirmable).toHaveBeenNthCalledWith(1, ["planche-1"], false)
+  expect(resultat).toBeNull()
+  expect(vue.result.current.plancheAConfirmer).toEqual({
+    identifiants: ["planche-1"],
+    planche: "planche-1",
+    dependants: { depliees: 8, derivees: 0, total: 8 },
+  })
+
+  await act(async () => {
+    resultat = await vue.result.current.supprimer(
+      vue.result.current.plancheAConfirmer!.identifiants,
+      true,
+    )
+  })
+  expect(supprimerAssetsConfirmable).toHaveBeenNthCalledWith(2, ["planche-1"], true)
+  expect(resultat).toEqual(["planche-1"])
+  expect(vue.result.current.plancheAConfirmer).toBeNull()
+})
+
+test("une image ordinaire se supprime sans confirmation", async () => {
+  supprimerAssetsConfirmable.mockResolvedValueOnce({
+    supprimes: ["asset-1"], annulation_s: 8, expire_le: 42,
+  })
+  const vue = monterLaGalerie()
+  await waitFor(() => expect(assets).toHaveBeenCalled())
+
+  let resultat: string[] | null = null
+  await act(async () => {
+    resultat = await vue.result.current.supprimer(["asset-1"])
+  })
+  expect(supprimerAssetsConfirmable).toHaveBeenCalledWith(["asset-1"], false)
+  expect(resultat).toEqual(["asset-1"])
+  expect(vue.result.current.plancheAConfirmer).toBeNull()
 })

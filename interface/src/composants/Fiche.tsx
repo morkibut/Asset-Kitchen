@@ -47,6 +47,8 @@ import { Bloc, Bouton, EnTetePanneau, Libelle, Raison, Segments } from "./pieces
 import { PANNEAU } from "./Infobulle"
 import { posesTenues } from "../production"
 import { MOTEUR, RESUME } from "../recette"
+// P1c (V3.5) : refaire, lister et supprimer les découpages d'une planche.
+import { LesDecoupagesDeLaPlanche } from "./Depliages"
 
 /** Le modèle qui a produit une image, tel qu'il se lit (US-123).
  *
@@ -99,6 +101,9 @@ export function Fiche({
   onEcarter,
   onReference,
   estLaReference = false,
+  // P1c (V3.5) : refaire ou supprimer un découpage change ce que la grille
+  // montre — absent, la fiche se contente de se relire elle-même.
+  onDecoupageChange,
 }: {
   asset: Asset
   /** Le plan du jeu et ses personnages, pour désigner cette image comme le
@@ -171,6 +176,9 @@ export function Fiche({
   /** Celle-ci **est** déjà la référence : le geste se grise avec sa raison, et
    *  le geste inverse paraît à côté. */
   estLaReference?: boolean
+  /** Refaire ou supprimer un découpage de planche a changé la bibliothèque —
+   *  la grille qui l'a ouverte se relit. */
+  onDecoupageChange?: () => void
 }) {
   const [montrerBrut, setMontrerBrut] = useState(false)
   /** La génération de cette image, **lue une fois pour la fiche entière** (U8) :
@@ -339,6 +347,16 @@ export function Fiche({
         />
 
         <Descendance asset={asset} onOuvrir={onOuvrir} onErreur={onErreur} />
+
+        {/* **Le retour en arrière du dépliage** (P1c, V3.5) : refaire le
+            découpage d'une planche, voir ses découpages, en supprimer un — ou,
+            sur une image qui en sort, le rappel d'une ligne vers elle. */}
+        <LesDecoupagesDeLaPlanche
+          asset={asset}
+          onErreur={onErreur}
+          onOuvrir={onOuvrir}
+          onChangee={() => onDecoupageChange?.()}
+        />
 
         <ImposeParLeProjet impose={impose} recette={recette} />
 

@@ -110,6 +110,24 @@ export type SujetDecoupe =
        *  planche. */
       onAnimer?: (bandes: Bande[]) => void
     }
+  | {
+      /** **Refaire le découpage d'une planche déjà pliée** (P1c, V3.5) — une
+       *  troisième famille, pas une variante de la première : elle ne
+       *  détecte rien (`mode`, `coteMin`, `colonnes`, `lignes` n'y paraissent
+       *  pas), elle repart des coupes que le serveur propose déjà
+       *  (`api.depliagePropose`), et valider **ajoute** un dépliage au lieu
+       *  d'écrire une première découpe (`api.depliageRefaire`). Les rectangles
+       *  se déplacent, s'ajoutent et se retirent exactement comme pour les
+       *  deux autres familles — c'est tout ce qu'elle leur emprunte. */
+      famille: "depliage"
+      planche: Asset
+      /** Le dépliage dont on repart — absent, le serveur reprend le dernier. */
+      depuis?: number
+      onDecoupe: (images: Asset[]) => void
+      /** Absente : un dépliage refait ne s'anime pas, la même règle que la
+       *  planche et la carte quand ce champ manque. */
+      onAnimer?: (bandes: Bande[]) => void
+    }
 
 export function EcranDecoupe({
   sujet,
@@ -171,14 +189,18 @@ export function EcranDecoupe({
    *  **L'image est la brute, jamais un rendu.** Une carte n'a pas de rendu du
    *  tout : son image *est* ce qu'on découpera. */
   const vu =
-    sujet.famille === "planche"
+    sujet.famille === "planche" || sujet.famille === "depliage"
       ? {
           identifiant: sujet.planche.identifiant,
           largeur: sujet.planche.largeur,
           hauteur: sujet.planche.hauteur,
           alt: sujet.planche.label,
           image: api.rendu(sujet.planche.identifiant, sujet.planche.empreinte, true),
-          quoi: "asset",
+          // **Une clé de brouillon à part** (`BrouillonLocal`) : refaire un
+          // dépliage et découper la même planche en morceaux séparés sont deux
+          // gestes différents, et ils ne doivent pas se marcher sur le pied
+          // d'un brouillon local partagé.
+          quoi: sujet.famille === "planche" ? "asset" : "depliage",
         }
       : {
           identifiant: sujet.carte.identifiant,
@@ -274,7 +296,12 @@ export function EcranDecoupe({
       const propose =
         famille === "planche"
           ? await api.decoupeProposee(vu.identifiant, reglage)
-          : await api.decoupeDeCarteProposee(vu.identifiant, reglage)
+          : famille === "depliage"
+            ? await api.depliagePropose(
+                vu.identifiant,
+                sujet.famille === "depliage" ? sujet.depuis : undefined,
+              )
+            : await api.decoupeDeCarteProposee(vu.identifiant, reglage)
       if (revision !== revisionProposition.current) return
       setDetectee(propose)
       const zonesProposees = zonesDepuis(propose.boites)
@@ -287,7 +314,7 @@ export function EcranDecoupe({
       setRefus(erreur instanceof Refus ? erreur.message : "découpe illisible")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [famille, vu.identifiant, mode, colonnes, lignes, coteMin])
+  }, [famille, vu.identifiant, mode, colonnes, lignes, coteMin, sujet])
 
   useEffect(() => {
     const signature = JSON.stringify([vu.identifiant, mode, colonnes, lignes, coteMin])
@@ -317,6 +344,14 @@ export function EcranDecoupe({
         brouillon.effacer()
         setRelecture(false)
         sujet.onDecoupe(fait.decoupes)
+      } else if (sujet.famille === "depliage") {
+        // **Pas de noms** : `CorpsDepliage` ne connaît que des coupes ; sans
+        // `cases`, le serveur range la n-ième coupe dans la n-ième case, dans
+        // l'ordre où on les a laissées — voir `atelier/api/depliages.py`.
+        const fait = await api.depliageRefaire(vu.identifiant, boitesEnvoyees)
+        brouillon.effacer()
+        setRelecture(false)
+        sujet.onDecoupe(fait.images)
       } else {
         const fait = unNomEcrit
           ? await api.decouperCarte(vu.identifiant, boitesEnvoyees, remplacer, noms)
@@ -425,9 +460,9 @@ export function EcranDecoupe({
     setEnCours(true)
     try {
       const source =
-        sujet.famille === "planche"
-          ? { feuille: vu.identifiant }
-          : { carte: vu.identifiant, projet: sujet.carte.projet }
+        sujet.famille === "carte"
+          ? { carte: vu.identifiant, projet: sujet.carte.projet }
+          : { feuille: vu.identifiant }
       const fait = await api.animerUneFeuille(source, gardees.map((z) => z.boite), {
         nom: vu.alt,
         directions: parLigne ? directionsDuJeu.map((d) => d.identifiant) : null,
@@ -556,38 +591,45 @@ export function EcranDecoupe({
               </div>
             )}
 
-            <div className="flex flex-col gap-[4px]">
-              <p className="text-[11px] text-encre-2">Détection</p>
-              <Choix
-                valeurs={["auto", "grille", "gouttieres"] as const}
-                valeur={mode}
-                onChange={setMode}
-                libelles={LIBELLES}
-              />
-            </div>
-
-            {mode === "auto" && (
-              <Champ libelle="taille minimale">
-                <Glissiere valeur={coteMin} min={0} max={128} unite=" px" onChange={setCoteMin} />
-              </Champ>
-            )}
-
-            {mode === "grille" && (
+            {/* **Aucune détection pour un dépliage refait** (P1c) : on repart
+                des coupes déjà proposées par le serveur, jamais d'un mode à
+                régler — les trois blocs ci-dessous n'ont pas de sens ici. */}
+            {sujet.famille !== "depliage" && (
               <>
-                <Champ libelle="colonnes">
-                  <Glissiere valeur={colonnes} min={1} max={16} onChange={setColonnes} />
-                </Champ>
-                <Champ libelle="lignes">
-                  <Glissiere valeur={lignes} min={1} max={16} onChange={setLignes} />
-                </Champ>
-              </>
-            )}
+                <div className="flex flex-col gap-[4px]">
+                  <p className="text-[11px] text-encre-2">Détection</p>
+                  <Choix
+                    valeurs={["auto", "grille", "gouttieres"] as const}
+                    valeur={mode}
+                    onChange={setMode}
+                    libelles={LIBELLES}
+                  />
+                </div>
 
-            {mode === "gouttieres" && (
-              <p className="text-[11px] leading-snug text-encre-2">
-                Cherche les rangées et les colonnes entièrement d'une seule
-                couleur, et coupe là — rien à régler.
-              </p>
+                {mode === "auto" && (
+                  <Champ libelle="taille minimale">
+                    <Glissiere valeur={coteMin} min={0} max={128} unite=" px" onChange={setCoteMin} />
+                  </Champ>
+                )}
+
+                {mode === "grille" && (
+                  <>
+                    <Champ libelle="colonnes">
+                      <Glissiere valeur={colonnes} min={1} max={16} onChange={setColonnes} />
+                    </Champ>
+                    <Champ libelle="lignes">
+                      <Glissiere valeur={lignes} min={1} max={16} onChange={setLignes} />
+                    </Champ>
+                  </>
+                )}
+
+                {mode === "gouttieres" && (
+                  <p className="text-[11px] leading-snug text-encre-2">
+                    Cherche les rangées et les colonnes entièrement d'une seule
+                    couleur, et coupe là — rien à régler.
+                  </p>
+                )}
+              </>
             )}
 
             <Pourquoi texte={detectee?.raison ?? null} />
@@ -811,7 +853,9 @@ export function EcranDecoupe({
           destination={
             sujet.famille === "carte"
               ? remplacer ? "remplace l'originale" : "la réserve"
-              : "Images du sujet"
+              : sujet.famille === "depliage"
+                ? "un nouveau dépliage de la planche"
+                : "Images du sujet"
           }
           enCours={enCours}
           onFermer={() => setRelecture(false)}

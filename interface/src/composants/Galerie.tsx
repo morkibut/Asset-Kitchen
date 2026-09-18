@@ -43,6 +43,7 @@ import {
   type Pose,
   type Reinjection,
   type Role,
+  PlancheAConfirmer,
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
 import { FenetreAssembler, raisonAssemblage } from "./AssemblerAnimation"
@@ -658,6 +659,14 @@ export function useGalerie({
   const [famille, setFamille] = useState("")
   const [selection, setSelection] = useState<string[]>([])
   const [annulation, setAnnulation] = useState<Annulation | null>(null)
+  // **P1c (V3.5)** : la question qu'une planche avec des dépendants pose
+  // avant de partir — `null` tant qu'aucune suppression n'a été refusée pour
+  // cette raison.
+  const [plancheAConfirmer, setPlancheAConfirmer] = useState<{
+    identifiants: string[]
+    planche: string
+    dependants: { depliees: number; derivees: number; total: number }
+  } | null>(null)
   // **Le seul geste du produit dont le résultat n'arrive pas par le flux** :
   // une archive ne s'annonce pas, elle se télécharge. Ce drapeau ne sert
   // qu'à empêcher un second clic pendant que le premier fabrique le ZIP —
@@ -967,16 +976,33 @@ export function useGalerie({
   }
 
   /** **Ce qui vient d'être jeté**, ou rien — pour que celui qui l'a jeté puisse
-   *  le rendre sans dépendre d'un état lu au prochain rendu. */
-  const supprimer = async (identifiants: string[]): Promise<string[] | null> => {
+   *  le rendre sans dépendre d'un état lu au prochain rendu.
+   *
+   *  **P1c (V3.5)** : une planche dont des images dépendent refuse d'abord
+   *  (409 `planche_a_confirmer`) — la question se pose (`plancheAConfirmer`)
+   *  au lieu d'échouer en silence, et « Supprimer quand même » rappelle ce
+   *  même geste avec `confirmer: true`. */
+  const supprimer = async (
+    identifiants: string[],
+    confirmer = false,
+  ): Promise<string[] | null> => {
     if (identifiants.length === 0) return null
     try {
-      const rendu = await api.supprimerAssets(identifiants)
+      const rendu = await api.supprimerAssetsConfirmable(identifiants, confirmer)
+      setPlancheAConfirmer(null)
       setAnnulation({ identifiants: rendu.supprimes, expireLe: rendu.expire_le })
       setSelection([])
       await relireGrille()
       return rendu.supprimes
     } catch (erreur) {
+      if (erreur instanceof PlancheAConfirmer) {
+        setPlancheAConfirmer({
+          identifiants,
+          planche: erreur.planche,
+          dependants: erreur.dependants,
+        })
+        return null
+      }
       echouer(erreur, "suppression refusée")
       return null
     }
@@ -1197,6 +1223,8 @@ export function useGalerie({
     ouverte,
     ouvrir,
     plancheAChoisir,
+    plancheAConfirmer,
+    setPlancheAConfirmer,
     poserSurLaToile,
     ranger,
     relancer,
@@ -1301,9 +1329,12 @@ export function Galerie({
     ouverte,
     ouvrir,
     plancheAChoisir,
+    plancheAConfirmer,
+    setPlancheAConfirmer,
     poserSurLaToile,
     ranger,
     relancer,
+    relireGrille,
     selection,
     setDepliage,
     setFamille,
@@ -1595,6 +1626,9 @@ export function Galerie({
                   : undefined
               }
               onOuvrir={(identifiant) => setSelection([identifiant])}
+              // P1c (V3.5) : refaire ou supprimer un découpage change ce que
+              // la grille montre.
+              onDecoupageChange={() => void relireGrille()}
             />
           )}
           {clipEnFiche && (
@@ -1642,6 +1676,53 @@ export function Galerie({
                 if (bandes.length > 0) ouvrirLAtelierDeBande(bandes[0].identifiant)
               }}
             />
+          )}
+          {/* **P1c (V3.5)** : la question qu'une planche avec des dépendants
+              pose avant de partir — voir `supprimer`. */}
+          {plancheAConfirmer && (
+            <div
+              className="fixed inset-0 z-50 bg-papier/85"
+              onMouseDown={() => setPlancheAConfirmer(null)}
+              role="presentation"
+            >
+              <div
+                role="dialog"
+                aria-label="Supprimer la planche ?"
+                data-confirmation-planche
+                className="volet mx-auto mt-[9%] flex w-[380px] max-w-full flex-col overflow-hidden rounded-10 border border-contour bg-carte"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <header className="border-b border-trait px-[22px] py-[14px]">
+                  <h1 className="font-serif text-[20px] leading-tight text-encre">
+                    Supprimer la planche ?
+                  </h1>
+                </header>
+                <div className="flex flex-col gap-[8px] p-[22px]">
+                  <p className="text-[12px] leading-snug text-encre-2">
+                    {plancheAConfirmer.dependants.total} image
+                    {plancheAConfirmer.dependants.total > 1 ? "s" : ""} en
+                    {plancheAConfirmer.dependants.total > 1 ? " viennent" : " vient"}.
+                    Elles restent, mais on ne pourra plus refaire le découpage.
+                  </p>
+                </div>
+                <div className="flex items-center gap-[8px] border-t border-trait p-[8px]">
+                  <button
+                    type="button"
+                    onClick={() => setPlancheAConfirmer(null)}
+                    className="h-[34px] rounded-7 border border-trait px-[14px] text-[13px] text-encre transition-colors duration-120 hover:bg-papier"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void supprimer(plancheAConfirmer.identifiants, true)}
+                    className="mesure ml-auto h-[34px] rounded-7 border border-trait-echec px-[14px] text-[13px] text-echec transition-colors duration-120 hover:bg-fond-attention"
+                  >
+                    Supprimer quand même
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </main>

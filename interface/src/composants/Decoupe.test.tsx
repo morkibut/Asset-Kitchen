@@ -163,3 +163,49 @@ test("découper une carte relit avant de créer, avec la réserve pour destinati
   fireEvent.click(screen.getByRole("button", { name: "Créer ces résultats" }))
   await waitFor(() => expect(decouperCarte).toHaveBeenCalledWith("carte", [[0, 0, 19, 19]], false))
 })
+
+// ── P1c (V3.5) : refaire le découpage d'une planche ──────────────────────────
+//
+// La troisième famille de `SujetDecoupe` — mêmes rectangles, même relecture,
+// mais la proposition vient de `depliagePropose` (jamais de `decoupeProposee`,
+// jamais de mode à régler) et valider appelle `depliageRefaire`, pas
+// `decouper`.
+
+test("refaire un découpage : la proposition préremplit, sans détection à régler", async () => {
+  vi.spyOn(api, "depliagePropose").mockResolvedValue({
+    planche: "planche", generation: "g1", largeur: 100, hauteur: 100,
+    boites: [[10, 10, 29, 29], [40, 10, 59, 29]], cases: [0, 1], depuis: "planche-d1",
+    marge: 0, cases_de_la_planche: [], refaisable: true, raison: null,
+  } as never)
+  render(<EcranDecoupe
+    sujet={{ famille: "depliage", planche: planche(), onDecoupe: vi.fn() }}
+    onFermer={vi.fn()} onFente={vi.fn()} />)
+
+  expect(await screen.findByLabelText("Nom de la zone 2")).toBeInTheDocument()
+  // Aucun réglage de détection pour un dépliage refait — on repart des coupes
+  // que le serveur propose déjà, jamais d'un mode.
+  expect(screen.queryByText("Détection")).not.toBeInTheDocument()
+})
+
+test("refaire un découpage : valider envoie les coupes à depliageRefaire", async () => {
+  vi.spyOn(api, "depliagePropose").mockResolvedValue({
+    planche: "planche", generation: "g1", largeur: 100, hauteur: 100,
+    boites: [[10, 10, 29, 29]], cases: [0], depuis: "planche-d1",
+    marge: 0, cases_de_la_planche: [], refaisable: true, raison: null,
+  } as never)
+  const refaire = vi.spyOn(api, "depliageRefaire").mockResolvedValue({
+    planche: "planche", depliage: {} as never, images: [{ identifiant: "planche-2" } as Asset],
+  })
+  const onDecoupe = vi.fn()
+  render(<EcranDecoupe
+    sujet={{ famille: "depliage", planche: planche(), onDecoupe }}
+    onFermer={vi.fn()} onFente={vi.fn()} />)
+
+  await screen.findByLabelText("Nom de la zone 1")
+  fireEvent.click(screen.getByRole("button", { name: "Relire 1 sortie" }))
+  const fenetre = await screen.findByRole("dialog", { name: "Découper une image" })
+  expect(fenetre).toHaveTextContent("un nouveau dépliage de la planche")
+  fireEvent.click(screen.getByRole("button", { name: "Créer ces résultats" }))
+  await waitFor(() => expect(refaire).toHaveBeenCalledWith("planche", [[10, 10, 29, 29]]))
+  expect(onDecoupe).toHaveBeenCalledWith([{ identifiant: "planche-2" }])
+})
