@@ -1472,6 +1472,10 @@ function serveurDouble(options: {
    *  repliée en tête comprise. C'est ce que « reprendre les réglages » doit
    *  faire repartir mot pour mot (US-160). */
   promptParti?: string
+  /** La case « Garder la mise en page de la référence » que portait la
+   *  génération relue (RS4). Absent comme chez le vrai serveur, qui ne
+   *  l'écrit que si elle était vraie (RS2). */
+  garderMiseEnPageParti?: boolean
   /** Ce que le serveur rend sur `/api/spending` — les appels payés, leurs trois
    *  issues, et les rafales. Vide par défaut : l'écran des dépenses n'est
    *  ouvert que par les essais qui le demandent. */
@@ -3810,6 +3814,7 @@ function serveurDouble(options: {
         demande: {
           ...relue.demande,
           prompt: options.promptParti ?? relue.demande.prompt,
+          ...(options.garderMiseEnPageParti ? { garder_mise_en_page: true } : {}),
         },
       })
     }
@@ -23488,5 +23493,61 @@ describe("refaire une planche (RS2)", () => {
       expect(parti?.corps).toBeTruthy()
       expect(parti?.corps).not.toHaveProperty("garder_mise_en_page")
     })
+  })
+})
+
+// ── « Reprendre les réglages » recoche la case, quand la génération l'avait
+//    (RS4) ───────────────────────────────────────────────────────────────────
+
+describe("reprendre les réglages recoche la case (RS4)", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const CASE = "Garder la mise en page de la référence"
+
+  test("la génération reprise portait la case cochée : elle revient cochée", async () => {
+    const images = [asset("eeee5555-0")]
+    const { fetchDouble } = serveurDouble({
+      assets: images,
+      garderMiseEnPageParti: true,
+    })
+    await monter(fetchDouble, { ...ETAT, assets: images })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+    fireEvent.click(screen.getByRole("button", { name: "jeu de réglages" }))
+
+    await waitFor(() =>
+      expect(
+        (screen.getByRole("checkbox", { name: new RegExp(CASE) }) as HTMLInputElement).checked,
+      ).toBe(true),
+    )
+  })
+
+  test("la génération reprise ne la portait pas : elle revient décochée", async () => {
+    const images = [asset("eeee5555-0")]
+    const { fetchDouble } = serveurDouble({ assets: images })
+    await monter(fetchDouble, { ...ETAT, assets: images })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+    fireEvent.click(screen.getByRole("button", { name: "jeu de réglages" }))
+
+    await champDePrompt()
+    expect(
+      (screen.getByRole("checkbox", { name: new RegExp(CASE) }) as HTMLInputElement).checked,
+    ).toBe(false)
   })
 })

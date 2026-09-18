@@ -1486,6 +1486,7 @@ function AtelierApp() {
     setCible,
     setModeleChoisi,
     poserLaRacine,
+    setGarderMiseEnPage,
     setOptions,
     setPrompt,
     setPromptNegatif,

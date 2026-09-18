@@ -173,6 +173,12 @@ export type Generation = {
      *  c'est lui que le montage lit pour nommer ses bandes. Présent
      *  uniquement sur les appels vidéo. */
     mouvement?: string
+    /** **La case « Garder la mise en page de la référence » était cochée**
+     *  (RS2). Absent — et non `false` — quand elle ne l'était pas : `resume()`
+     *  ne l'écrit que si elle est vraie, pour qu'un `generation.json` d'avant
+     *  RS2 reste identique. « Reprendre les réglages » (RS4) la recoche sur ce
+     *  champ. */
+    garder_mise_en_page?: boolean
   }
   parametres_resolus: Record<string, unknown>
   ecartees: string[]

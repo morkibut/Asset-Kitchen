@@ -115,8 +115,8 @@ Tranché en RS3 :
 
 ### RS4 · La case planche passe partout
 
-- [ ] l'outil de génération de l'agent accepte `garder_mise_en_page`, avec les mêmes refus
-- [ ] « Reprendre les réglages » d'une image recoche la case quand sa génération l'avait
-- [ ] essais sans appel payant
+- [x] l'outil de génération de l'agent accepte `garder_mise_en_page`, avec les mêmes refus
+- [x] « Reprendre les réglages » d'une image recoche la case quand sa génération l'avait
+- [x] essais sans appel payant
 
 **Ordre** : RS1, puis RS2 et RS3 — toutes deux dépendent de l'usage posé par RS1.

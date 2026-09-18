@@ -116,6 +116,37 @@ async def test_l_univers_s_applique_sans_que_l_agent_le_repete(atelier, mcp, dou
     assert "a barrel" in partie
 
 
+# ── Garder la mise en page d'une référence (RS4) ─────────────────────────────
+
+
+async def test_generate_asset_accepte_keep_reference_layout_et_le_transmet(
+    atelier, mcp, double
+):
+    """« L'outil de génération de l'agent accepte `garder_mise_en_page`, avec les
+    mêmes refus. » — transmis tel quel, l'appel se comporte comme celui de
+    l'écran (RS2) : sans planche à reproduire ni image jointe, le service
+    refuse avant qu'un centime parte, avec sa propre phrase, jamais une
+    seconde composée ici."""
+    raison = await refuser(
+        mcp, "generate_asset", subject="a barrel", keep_reference_layout=True
+    )
+
+    assert "garder la mise en page demande une planche" in raison
+    # Refusé avant tout appel au fournisseur — aucun centime dépensé.
+    assert double.appels == 0
+
+
+async def test_generate_asset_sans_keep_reference_layout_ne_porte_pas_le_drapeau(
+    atelier, mcp, double
+):
+    """Le défaut ne change rien à un appel ordinaire : la demande reçue par le
+    fournisseur ne porte pas `garder_mise_en_page`."""
+    await appeler(mcp, "generate_asset", subject="a torch")
+    await atelier.generations.attendre_tout()
+
+    assert double.demandes[-1].garder_mise_en_page is False
+
+
 async def test_l_attente_bornee_rend_un_identifiant_interrogeable(
     atelier, mcp, double
 ):

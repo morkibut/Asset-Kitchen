@@ -34,6 +34,9 @@ export type CeQueLesGestesLisent = {
   poserLaRacine: (prochaine: Racine) => void
   /** Ouvre l'écran de préparation après que les réglages ont fini d'être armés. */
   ouvrirPreparation?: () => void
+  /** Recochée par « Reprendre les réglages » (RS4), quand la génération
+   *  reprise portait `garder_mise_en_page: true`. Sinon la case se décoche. */
+  setGarderMiseEnPage: Pose_<boolean>
   setOptions: Pose_<Record<string, string>>
   setPrompt: Pose_<string>
   setPromptNegatif: Pose_<string>
@@ -54,6 +57,7 @@ export function useGestes({
   setModeleChoisi,
   poserLaRacine,
   ouvrirPreparation,
+  setGarderMiseEnPage,
   setOptions,
   setPrompt,
   setPromptNegatif,
@@ -234,6 +238,11 @@ export function useGestes({
       setProportions(generation.demande.proportions)
       setVariations(generation.demande.variations)
       setModeleChoisi(generation.modele)
+      // **RS4** : la case suit la génération reprise — cochée si elle l'avait
+      // été, décochée sinon. `garder_mise_en_page` n'est écrit dans
+      // `generation.json` que s'il est vrai (RS2), donc son absence veut bien
+      // dire « décochée ».
+      setGarderMiseEnPage(Boolean(generation.demande.garder_mise_en_page))
       setOptions(
         Object.fromEntries(
           Object.entries(generation.demande.options).map(([n, v]) => [n, String(v)]),

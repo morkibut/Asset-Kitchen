@@ -177,7 +177,9 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "pixel grid, cutout) is applied automatically — describe the "
             "subject only. Waits up to `wait_seconds` for the image; past that "
             "it returns a generation id to poll with check_generation. Costs "
-            "money."
+            "money. `keep_reference_layout` redraws the same plate as the "
+            "reference image (same views, same order, same framing) instead "
+            "of a single subject."
         ),
     )
     @_refus_lisible
@@ -190,6 +192,7 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         model: str | None = None,
         wait_seconds: float = ATTENTE_PAR_DEFAUT,
         folder: str | None = None,
+        keep_reference_layout: bool = False,
     ) -> dict[str, Any]:
         """`kind` est l'échelle du barème — « personnage », « objet posé »…
 
@@ -218,6 +221,7 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     variations=variations,
                     options=options,
                     echelle=kind,
+                    garder_mise_en_page=keep_reference_layout,
                 ),
                 projet=projet,
                 provenance=AGENT,

@@ -10,7 +10,7 @@ function contexte(ouvrirPreparation: ReturnType<typeof vi.fn>) {
     bibliotheque: { courant: "jeu" }, cible: null,
     echouer: vi.fn(), relireProduction: vi.fn(async () => {}),
     setCible: vi.fn(), setModeleChoisi: vi.fn(),
-    poserLaRacine: vi.fn(), ouvrirPreparation, setOptions: vi.fn(),
+    poserLaRacine: vi.fn(), ouvrirPreparation, setGarderMiseEnPage: vi.fn(), setOptions: vi.fn(),
     setPrompt: vi.fn(), setPromptNegatif: vi.fn(), setProportions: vi.fn(),
     setProvenance: vi.fn(), setReinjections: vi.fn(), setRepris: vi.fn(),
     setTri: vi.fn(), setVariations: vi.fn(),
@@ -46,5 +46,6 @@ it("réinjecte dans le contexte et attend la génération avant d'ouvrir la pré
   expect(c.setVariations).toHaveBeenCalledWith(3)
   expect(c.setOptions).toHaveBeenCalledWith({ seed: "12" })
   expect(c.setModeleChoisi).toHaveBeenCalledWith("Essai:image")
+  expect(c.setGarderMiseEnPage).toHaveBeenCalledWith(false)
   expect(ouvrirPreparation).toHaveBeenCalledTimes(2)
 })
