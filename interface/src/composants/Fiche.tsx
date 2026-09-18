@@ -1048,14 +1048,9 @@ function CaseDeLAsset({
             onChange={(e) => {
               const choisi = e.target.value
               if (!choisi) return void designer(null, null)
-              // Un personnage choisi sans attitude ne désigne rien : la
-              // première qu'il tient est proposée, et se change juste à côté.
-              const suivant =
-                personnages.find((p) => p.identifiant === choisi) ?? null
-              const premiere = suivant ? posesTenues(plan, suivant)[0] : null
-              if (!premiere)
-                return onErreur("ce personnage ne tient aucune attitude")
-              void designer(choisi, premiere.identifiant)
+              // **Rattachée au sujet, sans case encore** (`AU20`) : la pose se
+              // choisit juste à côté, si on le veut.
+              void designer(choisi, null)
             }}
             className="mesure h-[26px] min-w-0 flex-1 rounded-5 border border-contour bg-carte px-1 text-[11px] text-encre-2"
           >
@@ -1076,7 +1071,7 @@ function CaseDeLAsset({
             }
             className="mesure h-[26px] w-[128px] shrink-0 rounded-5 border border-contour bg-carte px-1 text-[11px] text-encre-2 disabled:text-eteint"
           >
-            {!porteur && <option value="">—</option>}
+            <option value="">{porteur ? "sans pose" : "—"}</option>
             {tenues.map((pose) => (
               <option key={pose.identifiant} value={pose.identifiant}>
                 {pose.nom}

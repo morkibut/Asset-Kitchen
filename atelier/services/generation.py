@@ -673,8 +673,15 @@ class ServiceGenerations:
         # **Sauf pour un lot**, dont chaque case vient d'être vérifiée juste
         # au-dessus, une par une : un lot ne vise pas *une* case, il en vise N,
         # et `pose` reste vide.
+        #
+        # **Un sujet sans case est légitime** (comme `designer` depuis `AU20`) :
+        # l'image est à ce personnage, sans être rangée dans une pose. Seul le
+        # personnage se vérifie alors.
         if pliage is None and personnage and self._production is not None and projet:
-            self._production.viser(projet, personnage, pose or "", direction)
+            if pose:
+                self._production.viser(projet, personnage, pose, direction)
+            else:
+                self._production.personnage(projet, personnage)
 
         if pliage is not None and demande.variations > 1:
             raise DemandeRefusee(

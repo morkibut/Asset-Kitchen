@@ -122,22 +122,41 @@ test("un clip se prépare pour le sujet ou sans lui, et cela se choisit ici", ()
 
 // Repris de `ChoisirFabricationDuSujet.test.tsx` — l'animation visée par
 // l'objectif l'emporte, la direction suit, et les deux groupes de poses restent.
-test("la fenêtre privilégie l’animation visée et arme la case en changeant de pose", () => {
+test("la fenêtre range l’animation visée en tête, et choisir l’arme avec sa direction", () => {
   const onViser = vi.fn()
-  ouvrir({ onViser })
-  expect((screen.getByLabelText("Mouvement ou pose") as HTMLSelectElement).value).toBe("marche")
-  expect((screen.getByLabelText("Direction") as HTMLSelectElement).value).toBe("est")
+  const voyageuse = sujet(objectif)
+  ouvrir({ sujet: voyageuse, onViser })
   expect(document.querySelector('optgroup[label="Dans l’objectif"]')).toBeTruthy()
   expect(document.querySelector('optgroup[label="Autres poses du plan"]')).toBeTruthy()
 
+  fireEvent.change(screen.getByLabelText("Mouvement ou pose"), { target: { value: "marche" } })
+  expect((screen.getByLabelText("Direction") as HTMLSelectElement).value).toBe("est")
+  expect(onViser).toHaveBeenLastCalledWith(voyageuse, plan[1], "est")
+
   fireEvent.change(screen.getByLabelText("Mouvement ou pose"), { target: { value: "repos" } })
-  expect(onViser).toHaveBeenCalledWith(plan[0], null)
+  expect(onViser).toHaveBeenLastCalledWith(voyageuse, plan[0], null)
 })
 
-// Repris de `ChoisirFabricationDuSujet.test.tsx`.
-test("sans objectif, la fenêtre reprend la première pose historique", () => {
-  ouvrir({ sujet: sujet() })
-  expect((screen.getByLabelText("Mouvement ou pose") as HTMLSelectElement).value).toBe("repos")
+// **La liste montre ce qui partira** : rien n'est armé, donc aucune case — et
+// l'image est déjà rattachée au sujet ouvert, sans pose.
+test("ouverte depuis une fiche, l’image est au sujet, sans case visée", () => {
+  const onViser = vi.fn()
+  const voyageuse = sujet()
+  ouvrir({ sujet: voyageuse, onViser })
+  expect((screen.getByLabelText("Mouvement ou pose") as HTMLSelectElement).value).toBe("")
+  expect((screen.getByLabelText("Sujet de l’image") as HTMLSelectElement).value).toBe("voyageuse")
+  expect(onViser).toHaveBeenCalledWith(voyageuse, null, null)
+})
+
+test("le sujet de l’image se change, ou se retire pour une image libre", () => {
+  const onViser = vi.fn()
+  const autre = { ...sujet(), identifiant: "champy", nom: "Champy" } as Personnage
+  ouvrir({ personnages: [autre], onViser })
+  fireEvent.change(screen.getByLabelText("Sujet de l’image"), { target: { value: "champy" } })
+  expect(onViser).toHaveBeenLastCalledWith(autre, null, null)
+  fireEvent.change(screen.getByLabelText("Sujet de l’image"), { target: { value: "" } })
+  expect(onViser).toHaveBeenLastCalledWith(null, null, null)
+  expect(screen.queryByLabelText("Mouvement ou pose")).toBeNull()
 })
 
 // Repris de `ChoisirFabricationDuSujet.test.tsx` — `RP13`. Le renvoi mène à

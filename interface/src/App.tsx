@@ -2952,9 +2952,11 @@ function AtelierApp() {
         modeleInitial={preparation.modele}
         avecQuoiInitial={preparation.avecQuoi}
         preparationImage={barreQuiPaie}
-        onViser={(pose, direction) => {
-          const vise = choseOuverte ?? personnageCible
+        onViser={(vise, pose, direction) => {
           if (vise && pose) armer(vise, [pose], null, direction)
+          // **Rattachée au sujet, sans case** : le prompt n'est pas touché,
+          // l'image reviendra sur sa fiche sans être rangée dans une pose.
+          else if (vise) setCible({ personnage: vise.identifiant, poses: [] })
           else setCible(null)
         }}
         onObjectif={() => { setPreparation(null); setOngletDuSujet("objectif") }}

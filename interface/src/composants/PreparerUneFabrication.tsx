@@ -13,7 +13,7 @@
 // encadrement. C'est ce qui garde l'invariant de l'argent intact — le chemin
 // qu'emprunte l'envoi n'a pas bougé d'une ligne.
 
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import type { Personnage, Pose } from "../api"
 import { NOM_DU_TYPE, TYPES_DE_RESULTAT, type TypeDeResultat } from "../fabrication"
 import { CadreDialogue } from "./CadreDialogue"
@@ -83,9 +83,10 @@ export function PreparerUneFabrication({
    *  endroit d'où l'argent part pour une image, et il n'en naît pas un second
    *  (E2). */
   preparationImage: ReactNode
-  /** La case que l'image fixe remplira. La fenêtre la choisit ; l'atelier
-   *  l'arme. */
-  onViser: (pose: Pose | null, direction: string | null) => void
+  /** Le sujet et la case que l'image fixe remplira. La fenêtre les choisit ;
+   *  l'atelier les arme. Un sujet sans pose rattache l'image sans la ranger ;
+   *  aucun sujet, c'est une image libre. */
+  onViser: (personnage: Personnage | null, pose: Pose | null, direction: string | null) => void
   onObjectif?: () => void
   onClip: (id: string) => void
   onBande?: (id: string) => void
@@ -98,34 +99,47 @@ export function PreparerUneFabrication({
   const [type, setType] = useState<TypeDeResultat>(typeInitial)
   const [avecQuoi, setAvecQuoi] = useState(avecQuoiInitial)
   const [pour, setPour] = useState<"sujet" | "libre">(sujet ? "sujet" : "libre")
+  // **Le sujet auquel l'image fixe sera rattachée**, pose ou pas. Venu d'une
+  // fiche, il est déjà choisi : une image fabriquée depuis Champy est à Champy,
+  // même sans case visée — sinon elle retombe dans la galerie, sans maître.
+  const [entite, setEntite] = useState(sujetVise?.identifiant ?? sujet?.identifiant ?? "")
+  // Le sujet ouvert est toujours proposable, même absent de la liste reçue.
+  const sujets = [
+    ...[sujetVise, sujet].filter(
+      (s, i, tous): s is Personnage =>
+        !!s &&
+        !personnages.some((p) => p.identifiant === s.identifiant) &&
+        tous.findIndex((t) => t?.identifiant === s.identifiant) === i,
+    ),
+    ...personnages,
+  ]
+  const porteur = sujets.find((p) => p.identifiant === entite) ?? null
 
   // **Les poses qu'on peut viser**, dans l'ordre que l'aiguillage employait :
   // celles que l'objectif réclame d'abord, les autres ensuite.
-  const objectifs = sujet?.objectif?.sorties.filter((s) => s.quantite > 0) ?? []
+  const objectifs = porteur?.objectif?.sorties.filter((s) => s.quantite > 0) ?? []
   const parIdentifiant = new Map<string, Pose>()
   objectifs.forEach((s) => {
     const pose = plan.find((p) => p.identifiant === s.pose)
     if (pose) parIdentifiant.set(pose.identifiant, pose)
   })
   plan
-    .filter((p) => sujet?.cases.some((c) => c.pose === p.identifiant))
+    .filter((p) => porteur?.cases.some((c) => c.pose === p.identifiant))
     .forEach((p) => parIdentifiant.set(p.identifiant, p))
   const poses = [...parIdentifiant.values()]
   const dansLObjectif = poses.filter((p) => objectifs.some((s) => s.pose === p.identifiant))
   const autresPoses = poses.filter((p) => !objectifs.some((s) => s.pose === p.identifiant))
 
-  const [pose, setPose] = useState(
-    poseInitiale ||
-      objectifs.find((s) => poses.some((p) => p.identifiant === s.pose))?.pose ||
-      poses[0]?.identifiant ||
-      "",
-  )
+  // **La liste montre ce qui partira.** Sans case armée, l'appel ne vise
+  // aucune pose : la liste dit donc « Sans case visée », et non la première
+  // pose de l'objectif, qui ne partirait pas.
+  const [pose, setPose] = useState(poseInitiale)
   const [direction, setDirection] = useState(
     directionInitiale ||
       objectifs.find((s) => s.pose === (poseInitiale || undefined))?.direction ||
-      (poseInitiale ? "" : (objectifs.find((s) => parIdentifiant.has(s.pose))?.direction ?? "")),
+      "",
   )
-  const directions = sujet?.cases.find((c) => c.pose === pose)?.directions ?? []
+  const directions = porteur?.cases.find((c) => c.pose === pose)?.directions ?? []
 
   // **La case visée ne se réarme qu'au geste.** Armer repose le champ avec le
   // signalement du sujet (`gestes.ts`) : le faire à l'ouverture effacerait ce
@@ -136,10 +150,28 @@ export function PreparerUneFabrication({
     setPose(prochainePose)
     setDirection(prochaineDirection)
     onViser(
+      porteur,
       poses.find((p) => p.identifiant === prochainePose) ?? null,
       prochaineDirection || null,
     )
   }
+
+  // **Changer de sujet repart sans case** : les poses de l'un ne sont pas
+  // celles de l'autre.
+  const rattacher = (identifiant: string) => {
+    setEntite(identifiant)
+    setPose("")
+    setDirection("")
+    onViser(sujets.find((p) => p.identifiant === identifiant) ?? null, null, null)
+  }
+
+  // **Venu d'une fiche sans case armée, l'image est déjà à ce sujet.** Une
+  // seule fois, à l'ouverture, et sans toucher au champ : rattacher ne réécrit
+  // pas le prompt, seul viser une case le fait.
+  useEffect(() => {
+    if (!sujetVise && porteur) onViser(porteur, null, null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // **Ce que la fenêtre dit viser**, et c'est le lot entier quand il y en a un :
   // une planche vise N attitudes, et n'en nommer qu'une ferait croire qu'on paie
@@ -163,7 +195,7 @@ export function PreparerUneFabrication({
             autonome={false}
             projet={projet}
             modeleInitial={modeleInitial}
-            personnage={sujet?.identifiant}
+            personnage={porteur?.identifiant}
             onAsset={onAsset}
             onToile={onToile}
           />
@@ -293,7 +325,25 @@ export function PreparerUneFabrication({
                 que l'image fixe, dont le corps sait montrer la case visée sans
                 savoir la choisir : c'est ce que l'écran d'aiguillage servait à
                 faire, et c'est tout ce qu'il faisait. */}
-            {type === "image" && sujet && (
+            {type === "image" && sujets.length > 0 && (
+              <label className="flex flex-col gap-[4px]">
+                Pour
+                <select
+                  aria-label="Sujet de l’image"
+                  className={CHAMP}
+                  value={entite}
+                  onChange={(e) => rattacher(e.target.value)}
+                >
+                  <option value="">Aucun sujet — image libre</option>
+                  {sujets.map((p) => (
+                    <option key={p.identifiant} value={p.identifiant}>
+                      {p.nom}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {type === "image" && porteur && (
               <>
                 <label className="flex flex-col gap-[4px]">
                   Mouvement ou pose

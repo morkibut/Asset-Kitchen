@@ -525,6 +525,26 @@ def test_generer_pour_une_case_qui_n_existe_plus_se_refuse_avant_de_payer(
     assert double.appels == appels
 
 
+def test_generer_pour_un_sujet_sans_pose_rattache_l_image_au_sujet(client):
+    """Fabriquer depuis la fiche sans viser de case : l'image est à ce sujet,
+    rangée dans aucune pose — comme `designer` le permet depuis `AU20`."""
+    _creer(client, "Le nain")
+    generation = _generer(client, "un nain au bâton", personnage="le-nain")
+    asset = _asset(client, f"{generation['identifiant']}-0")
+    assert asset["personnage"] == "le-nain"
+    assert asset["pose"] is None
+
+
+def test_generer_pour_un_sujet_disparu_se_refuse_avant_de_payer(client, double):
+    appels = double.appels
+    refus = client.post(
+        "/api/generations",
+        json={"modele": MODELE, "prompt": "un fantôme", "personnage": "personne"},
+    )
+    assert refus.status_code in (404, 409)
+    assert double.appels == appels
+
+
 # ── « Supprimer un personnage laisse ses images en place, chacune marquée
 #     "personnage supprimé" — jamais de cascade » ──────────────────────────────
 
