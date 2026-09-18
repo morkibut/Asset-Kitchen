@@ -465,6 +465,130 @@ DE_LA_NATURE = "nature"
 DU_PRODUIT = "produit"
 
 
+# ── L'univers sonore, arrivé en SN2 ──────────────────────────────────────────
+#
+# **Le même geste que la bible, pour l'oreille** (docs/archi-son.md §4.2) : on
+# décrit le son, l'univers ajoute le style. Quatre cases de texte, qui sont des
+# `Champ` comme ceux de la bible — un texte et s'il part —, pour qu'on puisse
+# relâcher l'orchestre sans l'effacer. Puis deux réglages de musique (tonalité
+# et tempo de référence : les jingles se calent dessus) et le moteur choisi par
+# famille, qui passe devant les défauts de `atelier.audio.graphes.FAMILLES`.
+#
+# **Vide ne contraint rien**, comme tout l'univers : un univers écrit avant SN2
+# n'a pas la clé `son`, se relit vide, et la description part seule avec la
+# prise de son de sa famille. Aucune migration.
+#
+# Les familles de sons (docs/archi-son.md §3). Ce sont les clés du moteur par
+# famille, et celles que la composition du texte connaît
+# (`atelier.audio.texte`). « interface » est la famille « interface et rétro ».
+FAMILLES_SON = ("bruitage", "interface", "ambiance", "musique", "jingle", "chanson", "voix")
+
+# L'ordre est celui où les cases partent quand plusieurs partent ensemble.
+CHAMPS_SON = ("epoque", "rendu", "orchestre", "humeur")
+
+
+@dataclass(frozen=True, slots=True)
+class UniversSonore:
+    champs: tuple[Champ, ...] = ()
+    tonalite: str = ""
+    tempo: int | None = None
+    moteurs: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def vide(self) -> bool:
+        return not (self.tonalite or self.tempo or self.moteurs or any(c.porte for c in self.champs))
+
+    def champ(self, nom: str) -> Champ:
+        for c in self.champs:
+            if c.nom == nom:
+                return c
+        return Champ(nom)
+
+    def texte(self, nom: str) -> str:
+        """Ce que cette case fait partir : son texte si elle porte, sinon rien."""
+        c = self.champ(nom)
+        return c.texte.strip() if c.porte else ""
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "champs": [self.champ(n).en_json() for n in CHAMPS_SON],
+            "tonalite": self.tonalite,
+            "tempo": self.tempo,
+            "moteurs": dict(self.moteurs),
+        }
+
+    @staticmethod
+    def depuis_json(d: Any) -> "UniversSonore":
+        """Relire sans jamais lever : une valeur illisible revient vide, comme
+        le fond (D3) — faire tomber un projet pour une tonalité serait hors de
+        proportion. Absent, c'est l'univers vide."""
+        from atelier.domaine.workflow import TEMPO_MAX, TEMPO_MIN, TONALITES
+
+        if not isinstance(d, dict):
+            return UniversSonore(champs=tuple(Champ(n) for n in CHAMPS_SON))
+        lus = {}
+        for c in d.get("champs") or ():
+            if isinstance(c, dict) and c.get("nom") in CHAMPS_SON:
+                lus[c["nom"]] = Champ.depuis_json(c)
+        tempo = d.get("tempo")
+        moteurs = d.get("moteurs") or {}
+        return UniversSonore(
+            champs=tuple(lus.get(n, Champ(n)) for n in CHAMPS_SON),
+            tonalite=d.get("tonalite") if d.get("tonalite") in TONALITES else "",
+            tempo=tempo if isinstance(tempo, int) and not isinstance(tempo, bool) and TEMPO_MIN <= tempo <= TEMPO_MAX else None,
+            moteurs={f: m for f, m in moteurs.items() if f in FAMILLES_SON and isinstance(m, str) and m.strip()}
+            if isinstance(moteurs, dict) else {},
+        )
+
+    def regle(self, brut: dict[str, Any]) -> "UniversSonore":
+        """Poser ce que `brut` dit, et seulement ça (la règle du `PUT` de
+        l'univers : ce qu'un message ne dit pas, il ne l'efface pas). Une case
+        se vide avec un texte vide, le tempo avec `null`, un moteur avec une
+        chaîne vide. Lève `ValueError` avec une phrase affichable."""
+        from atelier.domaine.workflow import TEMPO_MAX, TEMPO_MIN, TONALITES
+
+        if not isinstance(brut, dict):
+            raise ValueError("le bloc sonore est un objet")
+        inconnues = set(brut) - {"champs", "tonalite", "tempo", "moteurs"}
+        if inconnues:
+            raise ValueError("réglage sonore inconnu « " + " » « ".join(sorted(inconnues)) + " »")
+        champs = {c.nom: c for c in (self.champs or tuple(Champ(n) for n in CHAMPS_SON))}
+        for c in brut.get("champs") or ():
+            if not isinstance(c, dict) or c.get("nom") not in CHAMPS_SON:
+                raise ValueError("les cases sonores sont « " + " » « ".join(CHAMPS_SON) + " »")
+            if not isinstance(c.get("texte", ""), str):
+                raise ValueError(f"« {c['nom']} » : le texte est une phrase")
+            avant = champs.get(c["nom"], Champ(c["nom"]))
+            champs[c["nom"]] = Champ(c["nom"], c.get("texte", avant.texte), bool(c.get("actif", avant.actif)))
+        tonalite, tempo, moteurs = self.tonalite, self.tempo, dict(self.moteurs)
+        if "tonalite" in brut:
+            t = brut["tonalite"] or ""
+            if t and t not in TONALITES:
+                raise ValueError(f"la tonalité « {t} » n'est pas connue ; écrivez-la comme « D minor » ou « F# major »")
+            tonalite = t
+        if "tempo" in brut:
+            t = brut["tempo"]
+            if t is not None and (isinstance(t, bool) or not isinstance(t, int) or not TEMPO_MIN <= t <= TEMPO_MAX):
+                raise ValueError(f"le tempo de référence est un entier de {TEMPO_MIN} à {TEMPO_MAX} BPM")
+            tempo = t
+        if "moteurs" in brut:
+            if not isinstance(brut["moteurs"], dict):
+                raise ValueError("le moteur par famille est un objet famille → moteur")
+            for f, m in brut["moteurs"].items():
+                if f not in FAMILLES_SON:
+                    raise ValueError(f"famille de sons inconnue « {f} »")
+                if not isinstance(m, str) or len(m) > 200:
+                    raise ValueError(f"« {f} » : le moteur se nomme par son identifiant")
+                if m.strip():
+                    moteurs[f] = m.strip()
+                else:
+                    moteurs.pop(f, None)
+        return UniversSonore(
+            champs=tuple(champs.get(n, Champ(n)) for n in CHAMPS_SON),
+            tonalite=tonalite, tempo=tempo, moteurs=moteurs,
+        )
+
+
 # ── L'univers ────────────────────────────────────────────────────────────────
 
 
@@ -631,6 +755,10 @@ class Univers:
     detourage_image: Passe | None = None
     detourage_planche: Passe | None = None
     detourages: dict[str, Passe] = field(default_factory=dict)
+
+    # **Le bloc sonore** (SN2). Il n'entre pas dans `vide` : ce compte-là dit
+    # ce qui contraint une *image*, et un orchestre ne change rien à un sprite.
+    son: UniversSonore = field(default_factory=lambda: UniversSonore.depuis_json(None))
 
     # ── Ce qui se déduit ─────────────────────────────────────────────────────
 
@@ -1105,6 +1233,7 @@ class Univers:
                 else self.detourage_planche.en_json()
             ),
             "detourages": {f: p.en_json() for f, p in self.detourages.items()},
+            "son": self.son.en_json(),
             # déduits — présents pour l'interface, jamais relus
             "vide": self.vide,
             # **Ce que l'atelier dit de lui-même, case par case.** L'écran des
@@ -1186,6 +1315,9 @@ class Univers:
                 for f, brut in (d.get("detourages") or {}).items()
                 if f in FAMILLES and (passe := passe_par_defaut(brut)) is not None
             },
+            # **Un univers écrit avant SN2 n'a pas cette clé** : il se relit
+            # vide, et un univers vide ne contraint rien.
+            son=UniversSonore.depuis_json(d.get("son")),
         )
 
 

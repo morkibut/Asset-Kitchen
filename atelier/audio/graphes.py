@@ -138,10 +138,15 @@ def stable_audio_3_medium(*, checkpoint="stable_audio_3_medium.safetensors", enc
 
 
 def stable_audio_open_1(*, checkpoint="stable-audio-open-1.0.safetensors", encodeur="t5-base.safetensors"):
-    """Le secours des bruitages : Stable Audio Open 1.0, natif (47 s au plus)."""
+    """Le secours des bruitages : Stable Audio Open 1.0, natif (47 s au plus).
+
+    Guidage 7 (SN2), et non 4,98 comme le modèle officiel : c'est la valeur
+    de la fiche du modèle et du relevé des bruitages (§6.2), celle où le texte
+    négatif `low quality, average quality` que compose `atelier.audio.texte`
+    fait effet."""
     return _stable_audio("sa-open-1", "Stable Audio Open 1.0",
-        "Bruitages de secours, de 1 à 47 secondes. 50 pas, guidage 4,98 : le texte négatif compte.",
-        checkpoint=checkpoint, encodeur=encodeur, type_encodeur="stable_audio", pas=50, guidage=4.98,
+        "Bruitages de secours, de 1 à 47 secondes. 50 pas, guidage 7 : le texte négatif compte.",
+        checkpoint=checkpoint, encodeur=encodeur, type_encodeur="stable_audio", pas=50, guidage=7,
         echantillonneur="dpmpp_3m_sde_gpu", planificateur="exponential", durees=(1, 2, 5, 10, 30),
         duree_libre={"min": 1, "max": 47}, negatif=True)
 
