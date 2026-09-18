@@ -122,22 +122,29 @@ import {
   type Univers,
   type VueDuJeu,
 } from "../api"
+import { workflows, type MoteurParFamille, type ProfilWorkflow } from "../api-workflows"
 import { Bouton, Curseur, Libelle, Raison, libelleModele } from "./pieces"
 import { nomDuModele } from "./Fiche"
 import { BlocDirectionsAnimees, BlocMouvements, BlocStyles } from "./Mouvements"
 
 // ── Les quatre étapes ────────────────────────────────────────────────────────
 
-export type Etape = "nom" | "allure" | "vue" | "monde"
+export type Etape = "nom" | "allure" | "vue" | "monde" | "son"
 
 /** L'ordre est fermé et il ne se négocie pas : c'est celui de la planche, et
  *  c'est aussi celui des dépendances — l'allure décide de ce que « la taille »
- *  veut dire, la vue décide du nombre de directions, et le monde lit les deux. */
+ *  veut dire, la vue décide du nombre de directions, et le monde lit les deux.
+ *
+ *  **« Ses sons » ferme la marche** (SN2, `docs/archi-son.md` §4.2) : le même
+ *  geste que « Son monde », pour l'oreille — on décrit le son, l'univers ajoute
+ *  le style. Elle passe le même critère d'entrée que les quatre autres : ce
+ *  bloc part avec chaque demande de son. */
 const ETAPES: readonly { clef: Etape; titre: string; question: string }[] = [
   { clef: "nom", titre: "Son nom", question: "Comment s'appelle ce jeu ?" },
   { clef: "allure", titre: "Son allure", question: "Quelle allure a ce jeu ?" },
   { clef: "vue", titre: "Sa vue", question: "D'où regarde-t-on ce jeu ?" },
   { clef: "monde", titre: "Son monde", question: "De quoi ce monde est-il fait ?" },
+  { clef: "son", titre: "Ses sons", question: "Comment sonne ce monde ?" },
 ]
 
 /** Quelle étape remplit chacune des deux cases que l'atelier écrit — c'est ce
@@ -919,6 +926,294 @@ function SonMonde({
   )
 }
 
+// ── L'étape « Ses sons » ─────────────────────────────────────────────────────
+//
+// Le bloc sonore de l'univers (SN2) : le même geste que « Son monde », pour
+// l'oreille. Quatre lignes de texte — époque et matière, rendu, orchestre,
+// humeur — puis la tonalité et le tempo de référence, et le moteur choisi par
+// famille de sons. **Un univers sans ce bloc ne contraint rien** : la
+// description d'un son part seule, avec la prise de son de sa famille.
+
+/** Vers quoi chaque case sonore part, en quelques mots (`docs/archi-son.md`
+ *  §4.2) — montré sous chaque ligne pour qu'on sache ce qu'on règle. */
+const PART_VERS_SON: Record<string, string> = {
+  epoque: "bruitages, ambiances",
+  rendu: "bruitages, interface",
+  orchestre: "musique",
+  humeur: "musique, ambiances",
+}
+
+const NOM_CHAMP_SON: Record<string, string> = {
+  epoque: "époque et matière",
+  rendu: "rendu sonore",
+  orchestre: "orchestre",
+  humeur: "humeur",
+}
+
+const QUESTION_DE_LA_CASE_SON: Record<string, string> = {
+  epoque: "quand ça se passe, et de quoi c'est fait — en anglais",
+  rendu: "la prise de son : rétro 8 bits, réaliste et proche…",
+  orchestre: "quels instruments jouent",
+  humeur: "l'humeur générale de la musique",
+}
+
+/** Les 34 tonalités que le serveur reconnaît (`atelier.domaine.workflow.
+ *  TONALITES`), recopiées au caractère près — un choix qui n'y figure pas est
+ *  un refus, jamais un oubli muet. */
+const NOTES_TONALITE = [
+  "C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B",
+] as const
+const TONALITES: readonly string[] = (["major", "minor"] as const).flatMap((mode) =>
+  NOTES_TONALITE.map((note) => `${note} ${mode}`),
+)
+
+/** Les sept familles de sons (`atelier.domaine.son.FAMILLES_SON`), et leur nom
+ *  français — la seule liste vit côté serveur, recopiée ici pour l'ordre de
+ *  l'écran, comme les autres listes fermées de ce fichier. */
+const FAMILLES_SON = ["bruitage", "interface", "ambiance", "musique", "jingle", "chanson", "voix"] as const
+const NOM_FAMILLE_SON: Record<(typeof FAMILLES_SON)[number], string> = {
+  bruitage: "Bruitage",
+  interface: "Interface et rétro",
+  ambiance: "Ambiance",
+  musique: "Musique",
+  jingle: "Jingle",
+  chanson: "Chanson",
+  voix: "Voix",
+}
+
+function LeSon({
+  univers,
+  projet,
+  onRegler,
+}: {
+  univers: Univers
+  /** Le jeu ouvert : les méthodes installées et le défaut de chaque famille en
+   *  dépendent. `null` tant que le jeu n'existe pas encore (création). */
+  projet: string | null
+  onRegler: (reglage: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
+}) {
+  const son = univers.son
+  const [brouillon, setBrouillon] = useState<Record<string, string>>({})
+  const [ouverte, setOuverte] = useState<string | null>(null)
+  const [profils, setProfils] = useState<ProfilWorkflow[]>([])
+  const [defauts, setDefauts] = useState<Record<string, MoteurParFamille>>({})
+  const [chargement, setChargement] = useState(true)
+  const [erreur, setErreur] = useState("")
+
+  useEffect(() => {
+    setBrouillon(Object.fromEntries(son.champs.map((c) => [c.nom, c.texte])))
+  }, [son.champs])
+
+  const relireLesMoteurs = useCallback(() => {
+    if (!projet) return
+    void workflows
+      .moteursParFamille(projet)
+      .then((recu) => setDefauts(recu.familles))
+      .catch(() => undefined)
+  }, [projet])
+
+  useEffect(() => {
+    if (!projet) {
+      setChargement(false)
+      return
+    }
+    let vivant = true
+    setChargement(true)
+    Promise.all([workflows.lister(), workflows.moteursParFamille(projet)])
+      .then(([liste, def]) => {
+        if (!vivant) return
+        setProfils(liste.profils.filter((p) => p.nature === "audio"))
+        setDefauts(def.familles)
+      })
+      .catch(
+        (erreur: unknown) =>
+          vivant &&
+          setErreur(
+            erreur instanceof Error ? erreur.message : "les méthodes sonores n'ont pas pu être lues",
+          ),
+      )
+      .finally(() => vivant && setChargement(false))
+    return () => {
+      vivant = false
+    }
+  }, [projet])
+
+  const poserChamp = async (nom: string, texte: string) => {
+    if (texte === (son.champs.find((c) => c.nom === nom)?.texte ?? "")) return
+    await onRegler({
+      son: {
+        champs: son.champs.map((c) => ({
+          ...c,
+          texte: c.nom === nom ? texte : (brouillon[c.nom] ?? c.texte),
+        })),
+      },
+    })
+  }
+
+  const poserMoteur = async (famille: string, identifiant: string) => {
+    await onRegler({ son: { moteurs: { [famille]: identifiant } } })
+    relireLesMoteurs()
+  }
+
+  return (
+    <div className="flex max-w-[880px] flex-col gap-[22px]">
+      <p className="text-[13px] leading-[1.55] text-encre-2">
+        Le même geste que pour l'image : on décrit le son à fabriquer, et ces
+        quatre lignes ajoutent le style du jeu devant chaque description.
+      </p>
+
+      {erreur && (
+        <p role="alert" className="text-[13px] text-echec">
+          {erreur}
+        </p>
+      )}
+
+      <ul className="flex flex-col gap-[8px]">
+        {son.champs.map((champ) => {
+          const nom = NOM_CHAMP_SON[champ.nom] ?? champ.nom
+          const texte = brouillon[champ.nom] ?? ""
+
+          return (
+            <li
+              key={champ.nom}
+              data-case-du-son={champ.nom}
+              className="flex flex-col gap-[8px] rounded-8 border border-trait bg-carte p-[14px]"
+            >
+              <button
+                type="button"
+                aria-expanded={ouverte === champ.nom}
+                onClick={() => setOuverte(ouverte === champ.nom ? null : champ.nom)}
+                className="flex items-baseline gap-[8px] text-left"
+              >
+                <span className="text-[13px] font-medium text-encre">{nom}</span>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-encre-3">
+                  {texte || QUESTION_DE_LA_CASE_SON[champ.nom] || ""}
+                </span>
+                <span className="mesure shrink-0 text-[11px] text-encre-4">
+                  {texte.trim() ? "écrit" : "vide"}
+                </span>
+              </button>
+
+              {ouverte === champ.nom && (
+                <>
+                  <textarea
+                    value={texte}
+                    onChange={(e) =>
+                      setBrouillon((b) => ({ ...b, [champ.nom]: e.target.value }))
+                    }
+                    onBlur={() => void poserChamp(champ.nom, texte)}
+                    rows={2}
+                    aria-label={`La ligne sonore « ${nom} »`}
+                    placeholder={QUESTION_DE_LA_CASE_SON[champ.nom]}
+                    className="defile resize-y rounded-7 border border-contour bg-papier p-[8px] text-[13px] leading-[1.55] text-encre outline-none placeholder:text-eteint focus:border-encre-4"
+                  />
+                  <span className="text-[11.5px] leading-[1.45] text-encre-4">
+                    Part vers : {PART_VERS_SON[champ.nom]}.
+                  </span>
+                </>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+
+      <section className="flex flex-col gap-[8px]">
+        <Intitule>Tonalité et tempo de référence</Intitule>
+        <p className="text-[11.5px] leading-[1.45] text-encre-4">
+          Part vers la musique ; les jingles s'y calent.
+        </p>
+        <div className="flex flex-wrap items-end gap-[14px]">
+          <label className="flex flex-col gap-[4px] text-[13px]">
+            Tonalité
+            <select
+              aria-label="Tonalité de référence"
+              value={son.tonalite}
+              onChange={(e) => void onRegler({ son: { tonalite: e.target.value } })}
+              className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre"
+            >
+              <option value="">aucune</option>
+              {TONALITES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-[4px] text-[13px]">
+            Tempo
+            <input
+              type="number"
+              min={10}
+              max={300}
+              aria-label="Tempo de référence"
+              value={son.tempo ?? ""}
+              placeholder="aucun"
+              onChange={(e) =>
+                void onRegler({
+                  son: { tempo: e.target.value === "" ? null : Number(e.target.value) },
+                })
+              }
+              className="h-[34px] w-[70px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre"
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-[8px]">
+        <Intitule>Le moteur de chaque famille</Intitule>
+        <p className="text-[11.5px] leading-[1.45] text-encre-4">
+          Le choix n'offre que les méthodes déjà installées. Sans choix,
+          l'atelier prend la première méthode installée de la famille.
+        </p>
+        {chargement ? (
+          <p className="text-[12.5px] text-encre-3">Lecture des méthodes sonores…</p>
+        ) : (
+          <ul className="flex flex-col">
+            {FAMILLES_SON.map((famille) => {
+              const pose = son.moteurs[famille] ?? ""
+              const defaut = defauts[famille]
+              return (
+                <li
+                  key={famille}
+                  data-moteur-de-famille={famille}
+                  className="grid grid-cols-[minmax(0,220px)_minmax(0,1fr)] items-start gap-[14px] border-b border-trait py-[8px] text-[12.5px] last:border-b-0"
+                >
+                  <span className="text-encre-2">{NOM_FAMILLE_SON[famille]}</span>
+                  <div className="flex flex-col gap-[4px]">
+                    <select
+                      aria-label={`Moteur pour ${NOM_FAMILLE_SON[famille]}`}
+                      value={pose}
+                      onChange={(e) => void poserMoteur(famille, e.target.value)}
+                      className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12.5px] text-encre"
+                    >
+                      <option value="">automatique</option>
+                      {profils.map((p) => (
+                        <option key={p.identifiant} value={p.identifiant}>
+                          {p.nom}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-[11px] text-encre-4">
+                      {defaut?.modele
+                        ? `en ce moment : ${defaut.modele}`
+                        : (defaut?.raison ?? "aucune méthode installée")}
+                    </span>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
+
+      <Note>
+        Un univers sans ce bloc ne contraint rien : la description d'un son
+        part seule, avec la prise de son de sa famille.
+      </Note>
+    </div>
+  )
+}
+
 // ── Ce qui s'applique à tout le jeu, mais se règle ailleurs ──────────────────
 
 /** Les lignes que le carnet perd, rassemblées ici en **lecture seule**.
@@ -1656,7 +1951,7 @@ export function ReglesDuJeu({
           </h1>
           <p className="text-[13px] text-encre-2">
             {mode === "creation"
-              ? "Quatre étapes, et rien d'autre : ce qui part avec chaque demande d'image."
+              ? "Cinq étapes, et rien d'autre : ce qui part avec chaque demande d'image ou de son."
               : "Le même parcours, rouvert. On clique l'étape qu'on veut reprendre."}
           </p>
         </div>
@@ -1676,7 +1971,7 @@ export function ReglesDuJeu({
       </header>
 
       <nav
-        aria-label="Les quatre étapes"
+        aria-label="Les cinq étapes"
         className="flex shrink-0 gap-[4px] border-b border-trait px-[30px] py-[8px]"
       >
         {ETAPES.map((etape, i) => {
@@ -1750,6 +2045,10 @@ export function ReglesDuJeu({
           />
         )}
 
+        {ouverte === "son" && univers && (
+          <LeSon univers={univers} projet={dossier} onRegler={regler} />
+        )}
+
         {ouverte !== null && ouverte !== "nom" && !univers && (
           <p className="text-[13px] text-encre-3">Les réglages du jeu se chargent…</p>
         )}
@@ -1803,7 +2102,7 @@ export function ReglesDuJeu({
           <div className="flex items-center gap-[14px]">
             <span className="text-[11.5px] text-encre-4">
               {mode === "creation"
-                ? `Étape ${rang + 1} sur 4 — chacune se saute.`
+                ? `Étape ${rang + 1} sur ${ETAPES.length} — chacune se saute.`
                 : "Ce qui est déjà fabriqué ne bouge pas."}
             </span>
             {/* **Le seul bouton rouille de l'écran** — la règle de `D0` : le
@@ -1854,6 +2153,15 @@ function resumeDeLEtape(
     const choisie = vues.find((v) => v.identifiant === univers.vue)
     if (!choisie) return "aucune — le modèle décide seul"
     return `${choisie.libelle} · ${choisie.images} direction${choisie.images > 1 ? "s" : ""}`
+  }
+  if (etape === "son") {
+    const ecrites = univers.son.champs.filter((c) => c.texte.trim()).length
+    const reglage = [
+      univers.son.tonalite || null,
+      univers.son.tempo ? `${univers.son.tempo} BPM` : null,
+    ].filter(Boolean)
+    const base = `${ecrites} ligne${ecrites > 1 ? "s" : ""} sur 4 écrite${ecrites > 1 ? "s" : ""}`
+    return reglage.length ? `${base} · ${reglage.join(" · ")}` : base
   }
   const ecrites = univers.bible.filter(
     (c) => c.texte.trim() && !["rendu", "vue"].includes(c.nom),

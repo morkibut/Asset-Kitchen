@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { api, Refus } from "../api"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
-import { workflows, type DemandeImageLocale, type ProfilWorkflow, type TravailImageLocale, type DiagnosticWorkflow } from "../api-workflows"
+import { workflows, type DemandeImageLocale, type ProfilWorkflow, type ResultatMoteurSon, type TravailImageLocale, type DiagnosticWorkflow } from "../api-workflows"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { Libelle } from "./pieces"
@@ -54,6 +54,49 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio }: { onImage?: (mode
         <div className="flex flex-wrap gap-[8px]"><button className={BOUTON} disabled={occuppe} onClick={() => void verifier(p)}>Vérifier les prérequis</button>{(p.nature === "image" ? onImage : p.nature === "audio" ? onAudio : onVideo) && <button className={BOUTON} disabled={!d?.disponible} onClick={() => p.nature === "image" ? onImage?.(p.modele) : p.nature === "audio" ? onAudio?.(p.modele) : onVideo?.(p.modele)}>Utiliser ce workflow</button>}<button className={BOUTON} onClick={() => { setContenu(JSON.stringify(p, null, 2)); setEditeur(true) }}>Préparer une nouvelle version</button></div>
       </article>
     })}</div>}
+  </section>
+}
+
+// ── Les méthodes sonores (SN1) ──────────────────────────────────────────────
+//
+// Cinq moteurs fabriquent les sons du jeu ; leurs profils sont dérivés des
+// modèles de workflow officiels de ComfyUI (`atelier/audio/graphes.py`), pas
+// collés à la main. « Installer » ne fait qu'aller relire ce que ComfyUI sait
+// déjà : rien n'est jamais téléchargé par l'atelier.
+const MOTEURS_SONORES: readonly { identifiant: string; nom: string; quoi: string }[] = [
+  { identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", quoi: "Bruitages et ambiances." },
+  { identifiant: "ace-step-15-turbo", nom: "ACE-Step 1.5", quoi: "Musique et jingles." },
+  { identifiant: "yue2-int8", nom: "YuE2", quoi: "Chansons chantées." },
+  { identifiant: "sa3-medium", nom: "Stable Audio 3 Medium", quoi: "Secours pour les ambiances longues et la musique." },
+  { identifiant: "sa-open-1", nom: "Stable Audio Open 1.0", quoi: "Secours pour les bruitages." },
+]
+
+export function MethodesSonores() {
+  const [resultat, setResultat] = useState<Record<string, ResultatMoteurSon> | null>(null)
+  const [chargement, setChargement] = useState(true)
+  const [erreur, setErreur] = useState("")
+  async function installer() {
+    setChargement(true); setErreur("")
+    try { setResultat((await workflows.installerSon()).moteurs) }
+    catch (e) { setErreur(message(e)) } finally { setChargement(false) }
+  }
+  useEffect(() => { void installer() }, [])
+  return <section aria-label="Les méthodes sonores" className="space-y-[22px] text-encre">
+    <header><h2 className="font-serif text-[38px]">Les méthodes sonores</h2><p className="mt-[8px] text-[13px] text-encre-3">Cinq moteurs fabriquent les sons du jeu. Rien n’est jamais téléchargé par l’atelier : c’est vous qui posez les fichiers, l’atelier ne fait que les retrouver.</p></header>
+    {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
+    <button className={BOUTON} disabled={chargement} onClick={() => void installer()}>Installer les méthodes sonores</button>
+    {chargement && !resultat ? <p role="status">Recherche des fichiers…</p> : <div className="grid grid-cols-2 gap-[14px]">{MOTEURS_SONORES.map(m => {
+      const r = resultat?.[m.identifiant]
+      return <article key={m.identifiant} className={`${SURFACE} space-y-[8px]`}>
+        <div><h3 className="font-serif text-[25px]">{m.nom}</h3><p className="text-[12px] text-encre-3">{m.quoi}</p></div>
+        {r?.installe
+          ? <p className="text-[13px] text-ok">Installé{r.profil ? ` · version du ${new Date(r.profil.cree_le * 1000).toLocaleString("fr-FR")}` : ""}</p>
+          : r
+            ? <ul className="space-y-[4px] text-[13px] text-encre-3">{(r.manque || []).map(f => <li key={f.fichier}><span className="text-echec">{f.nom}</span> — fichier <span className="font-mono text-[12px]">{f.fichier}</span>, à poser dans <span className="font-mono text-[12px]">{f.dossier}</span>{f.source && <> · <a className="underline" href={f.source} target="_blank" rel="noreferrer">sa page</a></>}</li>)}</ul>
+            : <p className="text-[13px] text-encre-3">Installation à vérifier.</p>}
+      </article>
+    })}</div>}
+    <p className="text-[12px] text-encre-3">Réinstaller sans rien changer ne crée pas de nouvelle version. Coller un workflow reste possible, comme pour l’image.</p>
   </section>
 }
 

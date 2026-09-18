@@ -291,6 +291,7 @@ const UNIVERS: Univers = {
   vue: "",
   style: "pixel",
   methode_pixels: "proche",
+  son: UNIVERS_VIDE.son,
   // **Aucun fond posé** (D3) — l'état d'avant la tranche, celui d'un projet qui
   // n'a rien choisi : le produit demande *un fond plat* sans dire lequel.
   fond: "",

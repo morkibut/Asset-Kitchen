@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, expect, test, vi } from "vitest"
-import { FabricationImageLocale, ProfilsWorkflow } from "./WorkflowsLocaux"
-import { workflows, type ProfilWorkflow, type TravailImageLocale } from "../api-workflows"
+import { FabricationImageLocale, MethodesSonores, ProfilsWorkflow } from "./WorkflowsLocaux"
+import { workflows, type ProfilWorkflow, type ResultatMoteurSon, type TravailImageLocale } from "../api-workflows"
 import { api } from "../api"
 
 vi.mock("../api-workflows", () => ({ workflows: {
   lister: vi.fn(), importer: vi.fn(), diagnostiquer: vi.fn(), preparerImage: vi.fn(), lireImage: vi.fn(), demarrerImage: vi.fn(), reprendreImage: vi.fn(),
+  installerSon: vi.fn(), moteursParFamille: vi.fn(),
 } }))
 const profil: ProfilWorkflow = { identifiant: "reference", nom: "Référence dessinée", nature: "image", modele: "ComfyUI:reference@version",
   version: "version", cree_le: 1000, references_min: 0, references_max: 0,
@@ -75,4 +76,29 @@ test("importer un profil n’exécute pas son graphe et vérifie ses prérequis 
   fireEvent.click(await screen.findByRole("button", { name: "Vérifier les prérequis" }))
   await screen.findByText("Prérequis présents")
   expect(workflows.diagnostiquer).toHaveBeenCalledWith(profil.identifiant, profil.version)
+})
+
+// ── Les méthodes sonores (SN1) ──────────────────────────────────────────────
+
+test("les méthodes sonores s’installent d’elles-mêmes à l’ouverture, et le bouton relance le même geste", async () => {
+  const resultat: Record<string, ResultatMoteurSon> = {
+    "sa3-small-sfx": { identifiant: "sa3-small-sfx", installe: true, profil: { ...profil, identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", cree_le: 2000 } },
+    "ace-step-15-turbo": { identifiant: "ace-step-15-turbo", installe: false, manque: [{ nom: "le modèle ACE-Step 1.5 turbo (musique)", fichier: "acestep_v1.5_turbo.safetensors", dossier: "diffusion_models", source: "https://exemple/ace" }] },
+  }
+  vi.mocked(workflows.installerSon).mockResolvedValue({ moteurs: resultat })
+  render(<MethodesSonores />)
+
+  expect(await screen.findByText(/Installé · version du/)).toBeTruthy()
+  expect(workflows.installerSon).toHaveBeenCalledTimes(1)
+
+  // Le moteur absent est grisé avec ce qui manque : son nom en clair, le
+  // fichier, le dossier où le poser et un lien vers sa page — jamais proposé
+  // puis refusé.
+  expect(screen.getByText("le modèle ACE-Step 1.5 turbo (musique)")).toBeTruthy()
+  expect(screen.getByText("acestep_v1.5_turbo.safetensors")).toBeTruthy()
+  expect(screen.getByText("diffusion_models")).toBeTruthy()
+  expect(screen.getByRole("link", { name: "sa page" })).toHaveProperty("href", "https://exemple/ace")
+
+  fireEvent.click(screen.getByRole("button", { name: "Installer les méthodes sonores" }))
+  await waitFor(() => expect(workflows.installerSon).toHaveBeenCalledTimes(2))
 })

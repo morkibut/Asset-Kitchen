@@ -3276,6 +3276,27 @@ export type Univers = {
    *  d'entrée — jamais une chaîne vide, qui ferait dessiner un cadre autour de
    *  rien. */
   phrases: Partial<Record<string, string>>
+  /** **Le bloc sonore de l'univers** (SN2, `docs/archi-son.md` §4.2) : l'époque
+   *  et la matière, le rendu, l'orchestre, l'humeur — quatre cases de texte,
+   *  dans cet ordre — puis la tonalité et le tempo de référence (les jingles
+   *  s'y calent), et le moteur choisi par famille de sons.
+   *
+   *  **Vide ne contraint rien**, comme le reste de l'univers : sans ce bloc, la
+   *  description d'un son part seule, avec la prise de son de sa famille. */
+  son: UniversSonore
+}
+
+/** Les quatre cases du bloc sonore, dans l'ordre où elles partent. */
+export type UniversSonore = {
+  champs: Champ[]
+  /** Une des 34 tonalités connues du serveur (`C major` … `B minor`), ou vide. */
+  tonalite: string
+  /** En battements par minute, de 10 à 300 ; `null` si aucun n'est posé. */
+  tempo: number | null
+  /** Le moteur choisi pour chaque famille de sons, par son identifiant. Une
+   *  famille absente laisse l'atelier choisir — le premier moteur installé de
+   *  sa liste. */
+  moteurs: Partial<Record<string, string>>
 }
 
 export const UNIVERS_VIDE: Univers = {
@@ -3308,6 +3329,17 @@ export const UNIVERS_VIDE: Univers = {
   detourages: {},
   vide: true,
   phrases: {},
+  son: {
+    champs: [
+      { nom: "epoque", texte: "", actif: true },
+      { nom: "rendu", texte: "", actif: true },
+      { nom: "orchestre", texte: "", actif: true },
+      { nom: "humeur", texte: "", actif: true },
+    ],
+    tonalite: "",
+    tempo: null,
+    moteurs: {},
+  },
 }
 
 /** Combien d'images partiront, et d'où elles viennent (US-52).
@@ -6985,6 +7017,15 @@ export const api = {
     detourage_image?: DefautDetourage | null
     detourage_planche?: DefautDetourage | null
     detourages?: Partial<Record<Famille, DefautDetourage>> | null
+    /** **Le bloc sonore** (SN2). Suit la convention ordinaire : ce qu'on n'y
+     *  envoie pas ne bouge pas — une case se vide avec un texte vide, le tempo
+     *  avec `null`, un moteur avec une chaîne vide. */
+    son?: {
+      champs?: Champ[]
+      tonalite?: string | null
+      tempo?: number | null
+      moteurs?: Record<string, string>
+    }
   }) =>
     appeler<{
       projet: string

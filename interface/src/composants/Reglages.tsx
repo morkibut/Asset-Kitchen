@@ -39,7 +39,7 @@ import {
   ReglesDuJeu,
   TitreDeLAtelier,
 } from "./ReglesDuJeu"
-import { ProfilsWorkflow } from "./WorkflowsLocaux"
+import { MethodesSonores, ProfilsWorkflow } from "./WorkflowsLocaux"
 
 /** Les quatre onglets, dans l'ordre de la maquette. **La liste est fermée** :
  *  un cinquième onglet serait une porte de plus vers les réglages, et c'est
@@ -234,6 +234,12 @@ function MoteursEtWorkflows({
             au-dessus ferait lire deux sections là où il n'y en a qu'une. */}
         <div className="mt-[34px]">
           <ProfilsWorkflow />
+        </div>
+
+        {/* Les méthodes sonores (SN1) : un geste d'installation à part, parce
+            qu'il ne colle rien — il retrouve ce que ComfyUI sait déjà. */}
+        <div className="mt-[34px]">
+          <MethodesSonores />
         </div>
       </div>
     </main>
