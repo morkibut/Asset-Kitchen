@@ -1,12 +1,13 @@
 // **Interface et rétro** (SN8) : pas de phrase. On part d'un départ (clic,
 // saut, pièce…), sfxr calcule ici, en un instant, sans ComfyUI ; on tire des
-// variantes, on les écoute dans la même grille, on garde.
+// variantes, on les écoute dans la même grille, on garde — « Garder » écrit
+// tout de suite, comme pour une série : le premier gardé forme le jeu.
 import { useEffect, useState } from "react"
 import type { Son } from "../api-sons"
 import type { JeuVariantes } from "../api-series-son"
-import { garderSfxr, graineAuHasard, sfxr } from "../api-sfxr"
-import { GrilleEcoute, tuileDeSon } from "./GrilleEcoute"
-import { JeuDeVariantes } from "./JeuDeVariantes"
+import { formerJeuSfxr, graineAuHasard, sfxr } from "../api-sfxr"
+import { GrilleEcoute, tuileDeSon, type TuileSon } from "./GrilleEcoute"
+import { JeuDeVariantes, useGarde } from "./JeuDeVariantes"
 
 const PUCE = "min-h-[30px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle aria-pressed:border-encre-3 aria-pressed:bg-ligne-ouverte aria-pressed:text-encre disabled:opacity-50"
 const BOUTON = "min-h-[30px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
@@ -25,9 +26,7 @@ export function SonRetro({ projet, onRegler }: { projet: string; onRegler?: (son
   const [depart, setDepart] = useState("clic")
   const [nombre, setNombre] = useState(8)
   const [sons, setSons] = useState<Son[]>([])
-  const [gardes, setGardes] = useState<Set<number>>(new Set())
   const [jeu, setJeu] = useState<JeuVariantes | null>(null)
-  const [nom, setNom] = useState("")
   const [erreur, setErreur] = useState("")
   const [occupe, setOccupe] = useState(false)
 
@@ -42,25 +41,29 @@ export function SonRetro({ projet, onRegler }: { projet: string; onRegler?: (son
     return () => { vivant = false }
   }, [projet])
 
-  const tirer = async (geste: () => Promise<Son[]>) => {
+  const garde = useGarde({ projet, jeu, onJeu: setJeu, former: (son) => formerJeuSfxr(projet, son, nomDuDepart(depart)) })
+  const tirer = async (geste: () => Promise<Son[]>, bouton: HTMLButtonElement) => {
+    // Le bouton rend le focus : Espace écoute ensuite le tirage choisi, il ne retire pas.
+    bouton.blur()
     setOccupe(true); setErreur("")
-    try { setSons(await geste()); setGardes(new Set()); setJeu(null); setNom("") } catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
+    try { const neufs = await geste(); setSons(neufs); setJeu(null) } catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
   }
   // Un son seul se décline à partir de ses propres réglages ; sinon on part du départ.
   const seul = sons.length === 1 ? sons[0] : null
   const reglagesDuSeul = seul?.provenance && typeof seul.provenance === "object" ? (seul.provenance as { parametres?: Record<string, unknown> }).parametres : undefined
-  const unSon = () => tirer(async () => [await sfxr.fabriquer(projet, { depart, graine: graineAuHasard(), nom: nomDuDepart(depart) })])
-  const variantes = () => tirer(() => reglagesDuSeul
+  const unSon = (b: HTMLButtonElement) => tirer(async () => [await sfxr.fabriquer(projet, { depart, graine: graineAuHasard(), nom: nomDuDepart(depart) })], b)
+  const variantes = (b: HTMLButtonElement) => tirer(() => reglagesDuSeul
     ? sfxr.variantes(projet, { parametres: reglagesDuSeul, graine: graineAuHasard(), nombre, nom: seul!.nom })
-    : sfxr.variantes(projet, { depart, graine: graineAuHasard(), nombre, nom: nomDuDepart(depart) }))
-  const choixCourant = [...gardes].map((r) => sons[r - 1]?.identifiant).filter(Boolean)
-  const memeChoix = !!jeu && jeu.sons.length === choixCourant.length && choixCourant.every((s) => jeu.sons.includes(s))
-  const basculer = (rang: number) => setGardes((g) => { const n = new Set(g); if (n.has(rang)) n.delete(rang); else n.add(rang); return n })
-  const garder = async () => {
-    const choisis = [...gardes].sort((a, b) => a - b).map((r) => sons[r - 1].identifiant)
-    setOccupe(true); setErreur("")
-    try { setJeu(await garderSfxr(projet, sons.map((s) => s.identifiant), choisis, nom.trim() || jeu?.nom || nomDuDepart(depart), jeu)) } catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
-  }
+    : sfxr.variantes(projet, { depart, graine: graineAuHasard(), nombre, nom: nomDuDepart(depart) }), b)
+  const gardes = new Set(sons.flatMap((s, i) => garde.garde(s.identifiant) ? [i + 1] : []))
+  const basculer = (rang: number) => { const s = sons[rang - 1]; if (s) garde.basculer(s.identifiant) }
+  // Un son gardé a reçu les réglages de sa famille : la grille montre sa version gardée.
+  const membre = (id: string) => jeu?.membres.find((m) => m.son === id)
+  const tuiles = sons.map((s, i): TuileSon => {
+    const t = tuileDeSon(s, i + 1)
+    const m = membre(s.identifiant)
+    return m?.revision != null && m.mesures && t.son ? { ...t, son: { ...t.son, revision: m.revision, mesures: m.mesures, sature: m.sature, silencieux: m.mesures.silencieux } } : t
+  })
 
   return <>
     <div className="flex flex-wrap items-center gap-[8px]" role="group" aria-label="Départ">
@@ -73,20 +76,15 @@ export function SonRetro({ projet, onRegler }: { projet: string; onRegler?: (son
     </div>
     <p className="text-[12px] text-encre-3">Aucun texte ne part : sfxr part du départ choisi. Le calcul se fait ici, en un instant.</p>
     <div className="flex flex-wrap items-center justify-end gap-[8px] pt-[4px]">
-      <button type="button" className={BOUTON} disabled={occupe || !departs.length} onClick={() => void unSon()}>Un son</button>
-      <button type="button" className={PRINCIPAL} disabled={occupe || !departs.length} onClick={() => void variantes()}>{reglagesDuSeul ? `Tirer ${nombre} variantes de ce son` : `Tirer ${nombre} variantes`}</button>
+      <button type="button" className={BOUTON} disabled={occupe || !departs.length} onClick={(e) => void unSon(e.currentTarget)}>Un son</button>
+      <button type="button" className={PRINCIPAL} disabled={occupe || !departs.length} onClick={(e) => void variantes(e.currentTarget)}>{reglagesDuSeul ? `Tirer ${nombre} variantes de ce son` : `Tirer ${nombre} variantes`}</button>
     </div>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
+    {garde.erreur && <p role="alert" className="text-[13px] text-echec">{garde.erreur}</p>}
     {sons.length > 0 && <section aria-label="Les sons rétro" className="mt-[14px]">
-      <GrilleEcoute projet={projet} tuiles={sons.map((s, i) => tuileDeSon(s, i + 1))} gardes={gardes} onGarder={basculer} onRegler={onRegler} />
-      {gardes.size > 0 && !memeChoix && <div className="sticky bottom-0 z-[2] mt-[14px] flex flex-wrap items-center gap-[14px] border-t border-trait bg-papier py-[14px]">
-        <strong className="text-[13px]">{gardes.size} gardé{gardes.size > 1 ? "s" : ""}</strong>
-        <label className="flex items-center gap-[8px] text-[12px]">Nom du jeu
-          <input aria-label="Nom du jeu de variantes" className="min-h-[30px] w-[240px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" placeholder={nomDuDepart(depart)} value={nom} onChange={(e) => setNom(e.target.value)} />
-        </label>
-        <button type="button" className={`${BOUTON} ml-auto`} disabled={occupe} onClick={() => void garder()}>Ranger en jeu de variantes</button>
-      </div>}
-      {jeu && <div className="mt-[14px]"><JeuDeVariantes projet={projet} jeu={jeu} onJeu={setJeu} onRegler={onRegler} /></div>}
+      <GrilleEcoute projet={projet} tuiles={tuiles} gardes={gardes} onGarder={basculer} onRegler={onRegler} />
+      {gardes.size === 0 && <p className="mt-[14px] text-[12px] text-encre-3">Gardez un ou plusieurs sons. Les autres restent dans la galerie.</p>}
+      {jeu && jeu.membres.length > 0 && <div className="mt-[14px]"><JeuDeVariantes projet={projet} jeu={jeu} onJeu={setJeu} onRegler={onRegler} /></div>}
     </section>}
   </>
 }

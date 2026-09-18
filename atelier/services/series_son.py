@@ -324,11 +324,10 @@ class ServiceSeriesSon:
             if not isinstance(sons, list) or not sons or any(s not in a_moi for s in sons):
                 raise TravailRefuse("Gardez des sons rendus par cette série.")
         famille = brut.get("famille", serie["famille"])
-        if appliquer and famille:
-            for son in sons:
-                fiche = self.a.sons.lire(projet, son)
-                self.a.sons.classer(projet, son, fiche["revision"], famille, appliquer_reglages=True)
-        corps = {"nom": brut.get("nom") or serie["nom"], "sons": sons, "serie": identifiant, "famille": famille}
+        # Le même chemin que l'ajout d'un son à un jeu déjà formé : un son qui
+        # porte déjà les réglages de sa famille ne reçoit pas de version de plus.
+        corps = {"nom": brut.get("nom") or serie["nom"], "sons": sons, "serie": identifiant, "famille": famille,
+                 "appliquer_reglages": appliquer}
         if brut.get("cle") is not None:
             corps["cle"] = brut["cle"]
         return self.a.variantes_son.creer(projet, corps)

@@ -112,20 +112,40 @@ def test_survol_est_un_depart_connu_court_et_doux():
     assert len(signal_survol) < len(signal_clic)
 
 
-def test_variantes_par_defaut_rangent_un_jeu_de_variantes_interface(audio):
-    """8 variantes par défaut (pas 4), et un jeu de variantes (famille
-    interface) qui les liste, en plus des sons eux-mêmes."""
+def test_variantes_par_defaut_ne_rangent_aucun_jeu_tant_que_rien_n_est_garde(audio):
+    """8 variantes par défaut (pas 4). Tirer ne range aucun jeu : c'est
+    « garder » qui en forme un, avec les seuls sons gardés (correction du
+    19 septembre 2026 — chaque tirage laissait un jeu de 8 sons non choisis)."""
     atelier, projet = audio
     variantes = atelier.sfxr.variantes(projet, depart="clic", graine=10, nom="Clic")
     assert len(variantes) == 8
-    jeux = atelier.variantes_son.lister(projet)
-    assert len(jeux) == 1
-    jeu = jeux[0]
-    assert jeu["famille"] == "interface" and jeu["nom"] == "Clic"
-    assert jeu["sons"] == [v["identifiant"] for v in variantes]
-    assert jeu["a_livrer"] == jeu["sons"]
-    # Rejouer les mêmes variantes ne double pas le jeu.
-    atelier.sfxr.variantes(projet, depart="clic", graine=10, nom="Clic")
+    assert atelier.variantes_son.lister(projet) == []
+
+
+def test_garder_des_sons_sfxr_pose_les_reglages_de_la_famille_interface(audio):
+    """Garder un son sfxr suit le chemin d'une série : le jeu se forme avec
+    le premier gardé, les suivants s'y ajoutent, et chacun reçoit les
+    réglages de la famille « interface » dans une nouvelle version — une
+    seule, même gardé, dégardé puis regardé."""
+    atelier, projet = audio
+    a, b = atelier.sfxr.variantes(projet, depart="clic", graine=11, nombre=2, nom="Clic")
+    jeu = atelier.variantes_son.creer(projet, {"nom": "Clic", "sons": [a["identifiant"]], "famille": "interface",
+                                               "appliquer_reglages": True})
+    fiche_a = atelier.sons.lire(projet, a["identifiant"])
+    assert fiche_a["revision"] == a["revision"] + 1 and fiche_a["famille"] == "interface"
+    assert fiche_a["recette"] == fiche_a["recette_proposee"]
+    jeu = atelier.variantes_son.ajouter(projet, jeu["identifiant"], b["identifiant"], appliquer_reglages=True)
+    assert jeu["sons"] == [a["identifiant"], b["identifiant"]]
+    fiche_b = atelier.sons.lire(projet, b["identifiant"])
+    assert fiche_b["revision"] == b["revision"] + 1 and fiche_b["famille"] == "interface"
+    # Dégarder puis regarder : pas de version de plus.
+    atelier.variantes_son.retirer(projet, jeu["identifiant"], b["identifiant"])
+    atelier.variantes_son.ajouter(projet, jeu["identifiant"], b["identifiant"], appliquer_reglages=True)
+    assert atelier.sons.lire(projet, b["identifiant"])["revision"] == fiche_b["revision"]
+    # Sans le drapeau, l'ajout ne touche pas au son (l'outil MCP, la galerie).
+    c = atelier.sfxr.fabriquer(projet, depart="clic", graine=99, nom="Clic seul")
+    atelier.variantes_son.ajouter(projet, jeu["identifiant"], c["identifiant"])
+    assert atelier.sons.lire(projet, c["identifiant"])["revision"] == c["revision"]
     assert len(atelier.variantes_son.lister(projet)) == 1
 
 
@@ -202,6 +222,21 @@ def test_route_fabrication_variantes_et_idempotence(audio):
             json={"depart": "power_up", "graine": 4, "nombre": 2, "nom": "Amélioration"})
         assert variantes.status_code == 201, variantes.text
         assert len(variantes.json()) == 2
+        assert c.get(f"/api/projects/{projet}/sound-variants").json() == []
+
+        # Garder, par les routes de l'écran : le jeu, puis un ajout, réglages de la famille posés.
+        un, deux = (v["identifiant"] for v in variantes.json())
+        jeu = c.post(f"/api/projects/{projet}/sound-variants",
+            json={"nom": "Amélioration", "sons": [un], "famille": "interface", "appliquer_reglages": True})
+        assert jeu.status_code == 201, jeu.text
+        ajout = c.post(f"/api/projects/{projet}/sound-variants/{jeu.json()['identifiant']}/sounds",
+            json={"son": deux, "appliquer_reglages": True})
+        assert ajout.status_code == 200, ajout.text
+        assert ajout.json()["sons"] == [un, deux]
+        assert all(m["famille"] == "interface" for m in ajout.json()["membres"])
+        mauvais = c.post(f"/api/projects/{projet}/sound-variants/{jeu.json()['identifiant']}/sounds",
+            json={"son": deux, "appliquer_reglages": "oui"})
+        assert mauvais.status_code >= 400 and "appliquer_reglages" in mauvais.json()["raison"]
 
         refus = c.post(f"/api/projects/{projet}/sounds/sfxr", json={"graine": 1})
         assert refus.status_code == 400 and "pas les deux, pas aucun" in refus.json()["raison"]

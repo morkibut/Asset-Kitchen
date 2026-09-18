@@ -6,7 +6,17 @@ routeur = APIRouter()
 
 @routeur.get("/workflow-profiles")
 def lister(requete: Request):
-    return {"profils": requete.app.state.atelier.profils_workflow.lister()}
+    """Chaque profil avec son dernier diagnostic ; un profil sonore
+    indisponible y porte aussi `manque`, les fichiers absents nommés en clair
+    (l'écran grise le moteur avec cette raison, pas avec un nom de nœud)."""
+    atelier = requete.app.state.atelier
+    profils = []
+    for profil in atelier.profils_workflow.lister():
+        diagnostic = profil.get("diagnostic")
+        if diagnostic and profil.get("nature") == "audio":
+            profil = {**profil, "diagnostic": {**diagnostic, "manque": atelier.installation_son.diagnostic_sonore(profil, diagnostic)}}
+        profils.append(profil)
+    return {"profils": profils}
 
 
 @routeur.post("/workflow-profiles")

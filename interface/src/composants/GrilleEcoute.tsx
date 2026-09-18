@@ -76,43 +76,48 @@ export function GrilleEcoute({ projet, tuiles, gardes, onGarder, onRegler, longu
   const hauteur = longue ? 72 : 64
 
   const arreter = () => { lecteur.current?.pause(); setJoue(null); setPosition(0) }
-  const ecouter = (rang: number) => {
+  /** Écouter ce tirage depuis le début. `bascule` : un second geste sur le même l'arrête. */
+  const ecouter = (rang: number, bascule = true) => {
     const t = prets.find((t) => t.rang === rang)
     if (!t?.son) return
     setChoisi(rang)
     const audio = lecteur.current
     if (!audio) return
-    if (joue === rang) { arreter(); return }
+    if (bascule && joue === rang) { arreter(); return }
     audio.pause()
     audio.src = ecoute.adresse(projet, t.son.identifiant, t.son.revision)
     setJoue(rang); setPosition(0)
     const lecture = audio.play() as Promise<void> | undefined
     lecture?.catch?.(() => setJoue(null))
   }
-  const choisir = (rang: number) => {
-    setChoisi(rang)
-    racine.current?.querySelector<HTMLElement>(`[data-rang="${rang}"]`)?.scrollIntoView?.({ block: "nearest" })
-  }
+  // Le focus suit le tirage choisi (un seul tirage entre dans l'ordre de
+  // tabulation) : Espace et G agissent toujours sur celui qu'on voit choisi.
+  const focaliser = (rang: number) => racine.current?.querySelector<HTMLElement>(`[data-ecouter="${rang}"]`)?.focus()
 
-  // Le clavier écoute la page entière, sauf quand on écrit, et sauf quand un
-  // autre dialogue est ouvert par-dessus (la fiche d'un son, par exemple).
+  // Le clavier écoute la page entière, sauf quand on écrit, sauf quand un
+  // autre dialogue est ouvert par-dessus (la fiche d'un son, par exemple : le
+  // dernier dialogue ouvert du document doit être le nôtre).
   const clavier = useRef<(e: KeyboardEvent) => void>(() => {})
   clavier.current = (e: KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return
     const cible = e.target instanceof Element ? e.target : null
     if (cible?.closest("input, textarea, select, [contenteditable=true]")) return
     const monDialogue = racine.current?.closest("dialog") ?? null
-    const sonDialogue = cible?.closest("dialog") ?? null
-    if (sonDialogue && sonDialogue !== monDialogue) return
+    const ouverts = document.querySelectorAll("dialog[open]")
+    const dessus = ouverts.length ? ouverts[ouverts.length - 1] : null
+    if (dessus !== monDialogue) return
     if (courant == null) return
+    // Un bouton hors de la grille (« Lancer », « Tirer ») garde son Espace à lui.
+    const dansLaGrille = !cible || cible === document.body || cible === document.documentElement || !!racine.current?.contains(cible)
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
       e.preventDefault()
       const i = prets.findIndex((t) => t.rang === courant)
       const suivant = prets[(i + (e.key === "ArrowRight" ? 1 : -1) + prets.length) % prets.length]
-      choisir(suivant.rang)
-      if (joue != null) ecouter(suivant.rang)
+      // Comme la maquette : passer, c'est écouter le tirage choisi.
+      ecouter(suivant.rang, false)
+      focaliser(suivant.rang)
     } else if (e.key === " " || e.key === "Spacebar") {
-      if (cible?.closest("button")) return
+      if (!dansLaGrille) return
       e.preventDefault()
       ecouter(courant)
     } else if (e.key === "g" || e.key === "G") {
@@ -139,10 +144,10 @@ export function GrilleEcoute({ projet, tuiles, gardes, onGarder, onRegler, longu
             {t.son?.sature && <span className={ATTENTION}>saturé</span>}
             {t.son?.silencieux && <span className={ATTENTION}>silencieux</span>}
             <span className="ml-auto" />
-            {t.etat === "pret" && <button type="button" className={`${PETIT} ${garde ? "border-trait-ok text-encre-ok" : ""}`} aria-pressed={garde} aria-label={`Garder le tirage ${t.rang}`} onClick={() => { setChoisi(t.rang); onGarder(t.rang) }}>{garde ? "✓ Gardé" : "Garder"}</button>}
+            {t.etat === "pret" && <button type="button" tabIndex={estChoisi ? 0 : -1} className={`${PETIT} ${garde ? "border-trait-ok text-encre-ok" : ""}`} aria-pressed={garde} aria-label={`Garder le tirage ${t.rang}`} onClick={() => { setChoisi(t.rang); onGarder(t.rang) }}>{garde ? "✓ Gardé" : "Garder"}</button>}
           </div>
           {t.etat === "pret" && t.son
-            ? <button type="button" className="group block w-full rounded-5 text-left" aria-label={`Écouter le tirage ${t.rang}`} onClick={() => ecouter(t.rang)}><Onde projet={projet} son={t.son} hauteur={hauteur} joue={joue === t.rang} position={position} /></button>
+            ? <button type="button" data-ecouter={t.rang} tabIndex={estChoisi ? 0 : -1} className="group block w-full rounded-5 text-left" aria-label={`Écouter le tirage ${t.rang}`} onClick={() => ecouter(t.rang)}><Onde projet={projet} son={t.son} hauteur={hauteur} joue={joue === t.rang} position={position} /></button>
             : <span className={`flex items-center justify-center rounded-5 bg-papier-cote px-[8px] text-center text-[12px] ${t.etat === "calcul" ? "text-encre-controle" : "text-encre-3"}`} style={{ height: hauteur }}>{t.etat === "calcul" ? "en calcul" : t.etat === "attente" ? "en attente" : t.raison || "arrêté"}</span>}
           <div className="flex min-h-[26px] items-center justify-between gap-[8px]">
             <span className="font-mono text-[11px] text-encre-3">{mesuresTexte(t.son?.mesures)}</span>

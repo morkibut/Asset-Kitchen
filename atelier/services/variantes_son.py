@@ -14,7 +14,7 @@ import uuid
 
 from atelier.audio.traitement import encoder_ogg
 from atelier.depot.verrou import VerrouOccupe, verrou
-from atelier.domaine.son import FAMILLES, SonRefuse
+from atelier.domaine.son import FAMILLES, RecetteSon, SonRefuse, recette_proposee
 from atelier.domaine.travail import TravailRefuse
 from atelier.domaine.variantes_son import (
     VariantesRefusees, famille_du_jeu, identifiant_valide, nom_valide, statut_membre)
@@ -103,9 +103,32 @@ class ServiceVariantesSon:
 
     # ── Créer, modifier, supprimer ───────────────────────────────────────
 
+    def appliquer_reglages(self, projet, son, famille):
+        """Les réglages que la famille propose (mono, niveau visé), posés dans
+        une nouvelle version du son au geste « garder ». Un son qui les porte
+        déjà n'en reçoit pas une de plus : garder, dégarder puis regarder ne
+        fait pas une pile de versions identiques."""
+        if not famille:
+            return
+        fiche = self.a.sons.lire(projet, son)
+        propre = RecetteSon.depuis_json(fiche["recette"]).en_json()
+        if fiche.get("famille") == famille and propre == recette_proposee(fiche["recette"], famille):
+            return
+        self.a.sons.classer(projet, son, fiche["revision"], famille, appliquer_reglages=True)
+
+    @staticmethod
+    def _drapeau(brut):
+        appliquer = brut.get("appliquer_reglages", False)
+        if not isinstance(appliquer, bool):
+            raise VariantesRefusees("appliquer_reglages est activé ou désactivé.")
+        return appliquer
+
     def creer(self, projet, brut):
-        if not isinstance(brut, dict) or set(brut) - {"nom", "sons", "famille", "serie", "cle"}:
+        """`appliquer_reglages` (faux par défaut) pose aussi, sur chaque son,
+        les réglages de la famille du jeu — le geste « garder » de l'écran."""
+        if not isinstance(brut, dict) or set(brut) - {"nom", "sons", "famille", "serie", "cle", "appliquer_reglages"}:
             raise VariantesRefusees("Le jeu de variantes contient un réglage inconnu.")
+        appliquer = self._drapeau(brut)
         nom = nom_valide(brut.get("nom"))
         sons = brut.get("sons")
         if not isinstance(sons, list) or not sons:
@@ -139,8 +162,11 @@ class ServiceVariantesSon:
                 avant = json.loads(chemin.read_text(encoding="utf-8"))
                 if (avant["nom"], avant["famille"], avant["serie"], [m["son"] for m in avant["membres"]]) != (nom, famille, serie, sons):
                     raise VariantesRefusees("Cette clé désigne déjà un autre jeu de variantes.")
-                return self._vue(avant)
-            self._poser(objet)
+            else:
+                self._poser(objet)
+        if appliquer:
+            for son in sons:
+                self.appliquer_reglages(projet, son, famille)
         return self.lire(projet, identifiant)
 
     def _changer(self, projet, jeu, changer):
@@ -152,14 +178,17 @@ class ServiceVariantesSon:
             self._poser(objet)
         return self.lire(projet, jeu)
 
-    def ajouter(self, projet, jeu, son, position=None):
+    def ajouter(self, projet, jeu, son, position=None, *, appliquer_reglages=False):
         """Un son de plus, à la fin ou à `position` (0 = en tête). Aucun
         refus pour une mesure : un son saturé entre comme les autres. Un son
-        déjà dans le jeu n'y est pas mis deux fois."""
+        déjà dans le jeu n'y est pas mis deux fois. `appliquer_reglages` pose
+        sur ce son les réglages de la famille du jeu, comme « garder »."""
         self._son_existe(projet, son)
+        appliquer = self._drapeau({"appliquer_reglages": appliquer_reglages})
         if position is not None and (isinstance(position, bool) or not isinstance(position, int) or position < 0):
             raise VariantesRefusees("La place d'un son est un entier positif.")
-        serie = self._brut(projet, jeu).get("serie")
+        brut = self._brut(projet, jeu)
+        serie = brut.get("serie")
         rang = self.a.series_son.rang_de(projet, serie, son) if serie else None
 
         def changer(objet):
@@ -167,7 +196,11 @@ class ServiceVariantesSon:
                 return False
             membre = {"son": son, "ajoute_le": time.time(), "rang": rang}
             objet["membres"].insert(len(objet["membres"]) if position is None else position, membre)
-        return self._changer(projet, jeu, changer)
+        vue = self._changer(projet, jeu, changer)
+        if appliquer and vue["famille"]:
+            self.appliquer_reglages(projet, son, vue["famille"])
+            vue = self.lire(projet, jeu)
+        return vue
 
     def retirer(self, projet, jeu, son):
         """Retirer un son du jeu. Le son reste dans la galerie. Un son qui

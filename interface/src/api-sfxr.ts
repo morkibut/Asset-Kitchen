@@ -15,23 +15,11 @@ type Depuis = { depart: string; parametres?: undefined } | { parametres: Record<
 export const sfxr = {
   departs: (p: string) => appeler<string[]>(`${base(p)}/starts`),
   fabriquer: (p: string, depuis: Depuis & { graine: number; nom?: string }) => appeler<Son>(base(p), poster(depuis)),
-  /** Le serveur range aussi un jeu de variantes qui les liste toutes (famille interface). */
   variantes: (p: string, depuis: Depuis & { graine: number; nombre: number; nom?: string }) => appeler<Son[]>(`${base(p)}/variants`, poster(depuis)),
 }
 
-/** **Garder** des sons sfxr. Tirer des variantes range déjà, côté serveur, un
- *  jeu qui les contient toutes : on le ramène aux sons gardés (et à son nom)
- *  plutôt que d'en créer un second à côté. Sans ce jeu (un son seul), on en crée un.
- *  `deja` : le jeu formé par un premier « garder » ; on l'ajuste au nouveau choix. */
-export async function garderSfxr(projet: string, tous: string[], gardes: string[], nom: string, deja?: JeuVariantes | null): Promise<JeuVariantes> {
-  let jeu = deja ?? null
-  if (!jeu) {
-    const candidats = tous.length ? await jeuxDeVariantes.lister(projet, tous[0]) : []
-    jeu = candidats.find((j) => (j.cle ?? "").startsWith("sfxr-variantes:") && j.sons.length === tous.length && tous.every((s) => j.sons.includes(s))) ?? null
-  }
-  if (!jeu) return jeuxDeVariantes.creer(projet, { nom, sons: gardes, famille: "interface" })
-  for (const s of gardes.filter((s) => !jeu!.sons.includes(s))) jeu = await jeuxDeVariantes.ajouter(projet, jeu.identifiant, s)
-  for (const s of jeu.sons.filter((s) => !gardes.includes(s))) jeu = await jeuxDeVariantes.retirer(projet, jeu.identifiant, s)
-  if (nom.trim() && nom.trim() !== jeu.nom) jeu = await jeuxDeVariantes.renommer(projet, jeu.identifiant, nom.trim())
-  return jeu
-}
+/** Le premier son rétro gardé forme le jeu de variantes (famille interface),
+ *  avec les réglages de la famille posés en nouvelle version — le même chemin
+ *  qu'une série. Tirer ne range aucun jeu : seul « Garder » en forme un. */
+export const formerJeuSfxr = (projet: string, son: string, nom: string): Promise<JeuVariantes> =>
+  jeuxDeVariantes.creer(projet, { nom, sons: [son], famille: "interface", appliquer_reglages: true })

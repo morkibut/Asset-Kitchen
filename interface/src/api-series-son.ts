@@ -20,7 +20,12 @@ export type Composition = {
   parametres?: Record<string, { valeur: string | number; source: string }>
   langue?: { non_anglais: boolean; indices: string[] }
   source_moteur?: string; modele?: string | null; relu?: boolean
+  /** Parmi paroles, tempo, tonalité et mesure : ceux que ce moteur reçoit pour
+   *  cette famille. L'écran n'envoie que ceux-là (un réglage qui ne part
+   *  nulle part est refusé) et grise les autres. */
+  reglages_recus?: ReglageMusique[]
 }
+export type ReglageMusique = "paroles" | "tempo" | "tonalite" | "mesure"
 
 /** Ce qu'une demande de son dit — le corps commun à compose, estimate et prepare. */
 export type DemandeSon = {
@@ -61,7 +66,9 @@ export type JeuVariantes = {
   signalements: { son: string; statut: string; signal: string }[]; vide: boolean; revision: number; cree_le: number
 }
 
-export type MoteurDeFamille = { famille: FamilleSon; modele: string | null; moteur: string | null; raison?: string }
+/** `possibles` : les moteurs que l'écran propose pour cette famille, dans
+ *  l'ordre du serveur (`atelier/audio/graphes.py`, `POSSIBLES`). */
+export type MoteurDeFamille = { famille: FamilleSon; modele: string | null; moteur: string | null; raison?: string; possibles?: string[] }
 
 const base = (p: string) => `/projects/${encodeURIComponent(p)}`
 const serie = (p: string, id: string) => `${base(p)}/audio-series/${encodeURIComponent(id)}`
@@ -82,15 +89,19 @@ export const seriesSon = {
   lire: (p: string, id: string) => appeler<SerieSon>(serie(p, id)),
   demarrer: (p: string, id: string) => appeler<SerieSon>(`${serie(p, id)}/start`, { method: "POST" }),
   reprendre: (p: string, id: string) => appeler<SerieSon>(`${serie(p, id)}/resume`, { method: "POST" }),
-  garder: (p: string, id: string, corps: { rangs: number[]; nom?: string; cle?: string }) => appeler<JeuVariantes>(`${serie(p, id)}/keep`, poster(corps)),
+  /** Le premier « Garder » d'une série : forme son jeu de variantes et pose
+   *  sur chaque son les réglages de sa famille, en nouvelle version. */
+  garder: (p: string, id: string, corps: ({ rangs: number[] } | { sons: string[] }) & { nom?: string; cle?: string }) => appeler<JeuVariantes>(`${serie(p, id)}/keep`, poster(corps)),
 }
 
 export const jeuxDeVariantes = {
   lire: (p: string, id: string) => appeler<JeuVariantes>(jeu(p, id)),
   lister: (p: string, sonId?: string) => appeler<JeuVariantes[]>(`${base(p)}/sound-variants${sonId ? `?son=${encodeURIComponent(sonId)}` : ""}`),
-  creer: (p: string, corps: { nom: string; sons: string[]; famille?: FamilleSon }) => appeler<JeuVariantes>(`${base(p)}/sound-variants`, poster(corps)),
+  /** `appliquer_reglages` : chaque son reçoit les réglages de la famille du jeu, comme « Garder ». */
+  creer: (p: string, corps: { nom: string; sons: string[]; famille?: FamilleSon; appliquer_reglages?: boolean }) => appeler<JeuVariantes>(`${base(p)}/sound-variants`, poster(corps)),
   renommer: (p: string, id: string, nom: string) => appeler<JeuVariantes>(jeu(p, id), { method: "PATCH", body: JSON.stringify({ nom }) }),
-  ajouter: (p: string, id: string, sonId: string) => appeler<JeuVariantes>(`${jeu(p, id)}/sounds`, poster({ son: sonId })),
+  ajouter: (p: string, id: string, sonId: string, appliquerReglages = false) =>
+    appeler<JeuVariantes>(`${jeu(p, id)}/sounds`, poster(appliquerReglages ? { son: sonId, appliquer_reglages: true } : { son: sonId })),
   retirer: (p: string, id: string, sonId: string) => appeler<JeuVariantes>(`${jeu(p, id)}/sounds/${encodeURIComponent(sonId)}`, { method: "DELETE" }),
 }
 

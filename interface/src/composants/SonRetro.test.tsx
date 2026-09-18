@@ -28,34 +28,51 @@ beforeEach(() => {
 })
 afterEach(() => cleanup())
 
-test("pas de phrase : un départ, huit variantes en un instant, la même grille, et garder range le jeu que sfxr a déjà formé", async () => {
+const membre = (s: string, revision = 2) => ({ ...jeu([1]).membres[0], son: s, rang: null, nom: `Saut — variante ${s.slice(1)}`, revision, famille: "interface" })
+const jeuRetro = (sons: string[], o: Partial<ReturnType<typeof jeu>> = {}) =>
+  ({ ...jeu([]), identifiant: "retro", serie: null, famille: "interface" as const, nom: "Saut", sons, membres: sons.map((s) => membre(s)), ...o })
+
+test("pas de phrase : un départ, huit variantes en un instant, la même grille ; « Garder » forme le jeu puis l’ajuste", async () => {
   const huit = Array.from({ length: 8 }, (_, i) => son(i + 1))
   vi.mocked(sfxr.variantes).mockResolvedValue(huit)
-  const automatique = { ...jeu([]), identifiant: "auto", serie: null, famille: "interface" as const, cle: "sfxr-variantes:jump:12:8", nom: "Saut", sons: huit.map((s) => s.identifiant), membres: [] }
-  vi.mocked(jeuxDeVariantes.lister).mockResolvedValue([automatique])
-  vi.mocked(jeuxDeVariantes.retirer).mockImplementation(async (_p, _j, s) => ({ ...automatique, sons: automatique.sons.filter((x) => x !== s) }))
-  vi.mocked(jeuxDeVariantes.renommer).mockResolvedValue({ ...jeu([]), identifiant: "auto", nom: "ui_saut", sons: ["r2", "r5"],
-    membres: ["r2", "r5"].map((s) => ({ ...jeu([1]).membres[0], son: s, rang: null, nom: `Saut — variante ${s.slice(1)}` })) })
+  vi.mocked(jeuxDeVariantes.creer).mockResolvedValue(jeuRetro(["r2"]))
+  vi.mocked(jeuxDeVariantes.ajouter).mockResolvedValue(jeuRetro(["r2", "r5"], { revision: 2 }))
+  vi.mocked(jeuxDeVariantes.retirer).mockResolvedValue(jeuRetro(["r5"], { revision: 3 }))
+  vi.mocked(jeuxDeVariantes.renommer).mockResolvedValue(jeuRetro(["r5"], { nom: "ui_saut", revision: 4 }))
   const onRegler = vi.fn()
   render(<SonRetro projet="jeu" onRegler={onRegler} />)
 
   expect(screen.queryByRole("textbox", { name: "Ce qu’on doit entendre" })).toBeNull()
   fireEvent.click(await screen.findByRole("button", { name: "Saut" }))
   expect(screen.getByRole("button", { name: "Saut" })).toHaveAttribute("aria-pressed", "true")
-  fireEvent.click(screen.getByRole("button", { name: "Tirer 8 variantes" }))
+  const tirer = screen.getByRole("button", { name: "Tirer 8 variantes" })
+  tirer.focus()
+  fireEvent.click(tirer)
+  // Le bouton rend le focus : Espace écoutera un son, il ne tirera pas huit autres variantes.
+  expect(document.activeElement).not.toBe(tirer)
   await screen.findByRole("listitem", { name: "Tirage 8" })
   expect(sfxr.variantes).toHaveBeenCalledWith("jeu", expect.objectContaining({ depart: "jump", nombre: 8, nom: "Saut", graine: expect.any(Number) }))
+  // Tirer ne forme aucun jeu.
+  expect(jeuxDeVariantes.creer).not.toHaveBeenCalled()
 
   fireEvent.keyDown(document.body, { key: "ArrowRight" })
   fireEvent.keyDown(document.body, { key: "g" })
+  // Le premier gardé forme le jeu, avec les réglages de la famille interface.
+  await waitFor(() => expect(jeuxDeVariantes.creer).toHaveBeenCalledWith("jeu", { nom: "Saut", sons: ["r2"], famille: "interface", appliquer_reglages: true }))
   fireEvent.click(screen.getByRole("button", { name: "Garder le tirage 5" }))
-  fireEvent.change(screen.getByLabelText("Nom du jeu de variantes"), { target: { value: "ui_saut" } })
-  fireEvent.click(screen.getByRole("button", { name: "Ranger en jeu de variantes" }))
+  await waitFor(() => expect(jeuxDeVariantes.ajouter).toHaveBeenCalledWith("jeu", "retro", "r5", true))
+  // La grille joue la version gardée (réglages de la famille posés).
+  fireEvent.click(screen.getByRole("button", { name: "Écouter le tirage 5" }))
+  expect(document.querySelector("audio")!.getAttribute("src")).toContain("/sounds/r5/preview.wav?revision=2")
+  // Dégarder le retire du jeu ; le nom du jeu reste modifiable.
+  fireEvent.click(screen.getByRole("button", { name: "Garder le tirage 2" }))
+  await waitFor(() => expect(jeuxDeVariantes.retirer).toHaveBeenCalledWith("jeu", "retro", "r2"))
+  const nom = await screen.findByLabelText("Nom du jeu")
+  fireEvent.change(nom, { target: { value: "ui_saut" } })
+  fireEvent.blur(nom)
   await screen.findByRole("region", { name: "Jeu de variantes ui_saut" })
-  // Un seul jeu : celui que sfxr a rangé, ramené aux deux gardés — pas un second à côté.
-  expect(jeuxDeVariantes.creer).not.toHaveBeenCalled()
-  expect(vi.mocked(jeuxDeVariantes.retirer).mock.calls.map((c) => c[2])).toEqual(["r1", "r3", "r4", "r6", "r7", "r8"])
-  expect(jeuxDeVariantes.renommer).toHaveBeenCalledWith("jeu", "auto", "ui_saut")
+  expect(jeuxDeVariantes.creer).toHaveBeenCalledTimes(1)
+  expect(screen.queryByRole("button", { name: "Ranger en jeu de variantes" })).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "Régler Saut — variante 5" }))
   expect(onRegler).toHaveBeenCalledWith("r5")
 })
@@ -78,12 +95,11 @@ test("un son en un instant, puis des variantes de ce son-là", async () => {
 
 test("un son seul gardé forme un jeu à lui", async () => {
   vi.mocked(sfxr.fabriquer).mockResolvedValue(son(1, { nom: "Clic" }))
-  vi.mocked(jeuxDeVariantes.lister).mockResolvedValue([])
   vi.mocked(jeuxDeVariantes.creer).mockResolvedValue({ ...jeu([]), nom: "Clic", sons: ["r1"], membres: [{ ...jeu([1]).membres[0], son: "r1", rang: null, nom: "Clic" }] })
   render(<SonRetro projet="jeu" />)
   await screen.findByRole("button", { name: "Clic" })
   fireEvent.click(screen.getByRole("button", { name: "Un son" }))
   fireEvent.click(await screen.findByRole("button", { name: "Garder le tirage 1" }))
-  fireEvent.click(screen.getByRole("button", { name: "Ranger en jeu de variantes" }))
-  await waitFor(() => expect(jeuxDeVariantes.creer).toHaveBeenCalledWith("jeu", { nom: "Clic", sons: ["r1"], famille: "interface" }))
+  await waitFor(() => expect(jeuxDeVariantes.creer).toHaveBeenCalledWith("jeu", { nom: "Clic", sons: ["r1"], famille: "interface", appliquer_reglages: true }))
+  expect(await screen.findByRole("region", { name: "Jeu de variantes Clic" })).toBeInTheDocument()
 })

@@ -46,10 +46,12 @@ beforeEach(() => {
   HTMLMediaElement.prototype.pause = vi.fn()
   vi.mocked(workflows.lister).mockResolvedValue({ profils: [profil] })
   vi.mocked(texteSon.moteurs).mockResolvedValue({ familles: {
-    bruitage: { famille: "bruitage", modele: profil.modele, moteur: "sa3-small-sfx" },
-    musique: { famille: "musique", modele: null, moteur: null, raison: "Aucun moteur installé pour « musique » : ace-step-15-turbo, sa3-medium." },
+    bruitage: { famille: "bruitage", modele: profil.modele, moteur: "sa3-small-sfx", possibles: ["sa3-small-sfx", "sa-open-1", "sa3-medium"] },
+    musique: { famille: "musique", modele: null, moteur: null, raison: "Aucun moteur installé pour « musique » : ace-step-15-turbo, sa3-medium.", possibles: ["ace-step-15-turbo", "sa3-medium"] },
   } as never })
-  vi.mocked(texteSon.composer).mockImplementation(async (_p, d) => compo(d.prompt))
+  // Comme ACE-Step et YuE2 : la relecture dit quels réglages de musique le moteur reçoit.
+  const recus = { musique: ["paroles", "tempo", "tonalite", "mesure"], jingle: ["paroles", "tempo", "tonalite", "mesure"], chanson: ["paroles", "tempo"] } as const
+  vi.mocked(texteSon.composer).mockImplementation(async (_p, d) => compo(d.prompt, { reglages_recus: [...(recus[d.famille as keyof typeof recus] ?? [])] }))
   vi.mocked(seriesSon.annoncer).mockResolvedValue(annonce(42))
   vi.mocked(ecoute.onde).mockResolvedValue({ duree: 1, taux: 44100, canaux: 1, canaux_ondes: [{ minimum: [-0.5], maximum: [0.5] }] })
   vi.mocked(travauxAudio.lire).mockResolvedValue(t)
@@ -91,7 +93,7 @@ test("le texte relu à la main part tel quel ; lancer prépare puis démarre la 
   fireEvent.click(within(screen.getByRole("group", { name: "Tirages" })).getByRole("button", { name: "4" }))
   fireEvent.click(within(screen.getByRole("group", { name: "Durée" })).getByRole("button", { name: "2 s" }))
   expect(screen.getByRole("button", { name: /^Réglages/ })).toHaveTextContent("2 s · 4 tirages")
-  expect(within(screen.getByRole("combobox", { name: "Fournisseur et modèle" })).getByRole("option", { name: /Stable Audio Open 1\.0 — pas installé sur cette machine/ })).toBeDisabled()
+  expect(await within(screen.getByRole("combobox", { name: "Fournisseur et modèle" })).findByRole("option", { name: /Stable Audio Open 1\.0 — pas installé sur cette machine/ })).toBeDisabled()
 
   fireEvent.click(screen.getByRole("button", { name: /^Relire avant l’envoi/ }))
   fireEvent.click(await screen.findByRole("button", { name: "Éditer ce texte ›" }))
@@ -101,7 +103,11 @@ test("le texte relu à la main part tel quel ; lancer prépare puis démarre la 
   expect(screen.getByRole("button", { name: /modifié à la main/ })).toBeInTheDocument()
   await waitFor(() => expect(texteSon.composer).toHaveBeenLastCalledWith("jeu", expect.objectContaining({ texte_relu: "TrackType: SFX. Sword leaves a leather sheath, slow." })))
 
-  fireEvent.click(await lancer("Lancer 4 tirages · environ 20 s"))
+  const bouton = await lancer("Lancer 4 tirages · environ 20 s")
+  bouton.focus()
+  fireEvent.click(bouton)
+  // Le bouton rend le focus : Espace écoutera un tirage, il ne relancera pas une série.
+  expect(document.activeElement).not.toBe(bouton)
   await screen.findByRole("region", { name: "Série 1" })
   expect(seriesSon.preparer).toHaveBeenCalledWith("jeu", expect.objectContaining({ famille: "bruitage", prompt: "Sword leaves a leather sheath", secondes: 2, nombre: 4, texte_relu: "TrackType: SFX. Sword leaves a leather sheath, slow.", cle: expect.any(String) }))
   expect(seriesSon.demarrer).toHaveBeenCalledWith("jeu", "serie1")
@@ -137,6 +143,43 @@ test("la musique se règle en tempo, tonalité, mesure et nombre de mesures ; la
   expect(screen.getByText("12 s")).toBeInTheDocument()
   expect(screen.getByRole("option", { name: "ré mineur" })).toBeInTheDocument()
   await waitFor(() => expect(texteSon.composer).toHaveBeenLastCalledWith("jeu", { famille: "musique", prompt: "Exploration, calm forest path", mesures: 8, mesure: 3, tempo: 120, tonalite: "D minor" }))
+})
+
+test("un moteur qui ne reçoit pas la mesure : elle ne part pas, se grise avec sa raison, et la boucle est celle du serveur", async () => {
+  const medium: ProfilWorkflow = { ...profil, identifiant: "sa3-medium", nom: "Stable Audio 3 Medium", modele: "ComfyUI:sa3-medium@1" }
+  vi.mocked(workflows.lister).mockResolvedValue({ profils: [profil, medium] })
+  vi.mocked(texteSon.moteurs).mockResolvedValue({ familles: {
+    musique: { famille: "musique", modele: medium.modele, moteur: "sa3-medium", possibles: ["ace-step-15-turbo", "sa3-medium"] },
+  } as never })
+  // Stable Audio 3 : tempo et tonalité partent dans le texte ; une mesure envoyée serait refusée.
+  vi.mocked(texteSon.composer).mockImplementation(async (_p, d) => {
+    if (d.mesure != null || d.paroles != null) throw new Error("Le moteur ne reçoit pas de réglage « mesure » pour cette famille.")
+    return compo(d.prompt, { famille: "musique", reglages_recus: ["tempo", "tonalite"], secondes: 18, source_secondes: "mesures", mesures: { demandees: 8, marge: 1, total: 9, source: "demande" } })
+  })
+  render(<FabricationAudio projet="jeu" onFermer={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Musique" }))
+  fireEvent.change(screen.getByLabelText("Ce qu’on doit entendre"), { target: { value: "Exploration, calm forest path" } })
+  fireEvent.change(screen.getByLabelText("Tempo"), { target: { value: "120" } })
+  fireEvent.change(screen.getByLabelText("Nombre de mesures"), { target: { value: "8" } })
+  expect(await screen.findByText("Stable Audio 3 Medium ne reçoit pas de mesure : la boucle se compte en 4/4.")).toBeInTheDocument()
+  expect(screen.getByLabelText("Mesure")).toBeDisabled()
+  await waitFor(() => expect(texteSon.composer).toHaveBeenLastCalledWith("jeu", { famille: "musique", prompt: "Exploration, calm forest path", mesures: 8, tempo: 120 }))
+  expect(await lancer("Lancer 4 tirages · environ 45 s")).toBeEnabled()
+  // 18 s demandées pour 8 mesures et une de marge : la boucle en fait 16.
+  expect(screen.getByText("16 s")).toBeInTheDocument()
+})
+
+test("un moteur installé mais incomplet se grise avec le fichier qui manque, jamais un nom de nœud", async () => {
+  const open: ProfilWorkflow = { ...profil, identifiant: "sa-open-1", nom: "Stable Audio Open 1.0", modele: "ComfyUI:sa-open-1@1",
+    diagnostic: { disponible: false, problemes: ["CheckpointLoaderSimple : stable-audio-open-1.0.safetensors introuvable"], noeuds: [], observe_le: 1, adresse: "",
+      manque: [{ nom: "le modèle Stable Audio Open 1.0 (secours des bruitages)", fichier: "stable-audio-open-1.0.safetensors", dossier: "checkpoints", source: "" }] } }
+  vi.mocked(workflows.lister).mockResolvedValue({ profils: [profil, open] })
+  render(<FabricationAudio projet="jeu" onFermer={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: /^Réglages/ }))
+  const liste = await screen.findByRole("combobox", { name: "Fournisseur et modèle" })
+  await waitFor(() => expect(within(liste).getByRole("option", { name: "Cette machine · Stable Audio Open 1.0 — il manque le modèle Stable Audio Open 1.0 (secours des bruitages)" })).toBeDisabled())
+  expect(within(liste).getByRole("option", { name: "Cette machine · Stable Audio 3 Medium — pas installé sur cette machine — voir Réglages › Moteurs" })).toBeDisabled()
+  expect(liste).not.toHaveTextContent("CheckpointLoaderSimple")
 })
 
 test("chanson et jingle : deux familles derrière une puce ; la voix est à venir", async () => {

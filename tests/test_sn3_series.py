@@ -231,6 +231,53 @@ async def test_garder_applique_les_reglages_de_la_famille_a_chaque_son_garde(son
     assert autre["identifiant"]
 
 
+async def test_garder_forme_le_jeu_puis_l_ajuste_sans_pile_de_versions(son):  # noqa: F811
+    """Le geste de l'écran (correction du 19 septembre 2026) : le premier
+    « Garder » forme le jeu de la série (route keep), les suivants y ajoutent
+    ou en retirent un son. Un son ajouté reçoit lui aussi les réglages de sa
+    famille ; gardé, dégardé puis regardé, il n'en reçoit pas une version de plus."""
+    atelier, comfy = son
+    projet, serie = await serie_rendue(atelier, nombre=3)
+    a, b, c = (t["son"]["identifiant"] for t in serie["tirages"])
+    jeu = atelier.series_son.garder(projet, serie["identifiant"], {"sons": [a]})
+    assert jeu["serie"] == serie["identifiant"] and jeu["sons"] == [a]
+    jeu = atelier.variantes_son.ajouter(projet, jeu["identifiant"], b, appliquer_reglages=True)
+    assert jeu["sons"] == [a, b] and [m["rang"] for m in jeu["membres"]] == [1, 2]
+    fiche = atelier.sons.lire(projet, b)
+    assert fiche["revision"] == 2 and fiche["recette"]["mono"] is True and fiche["famille"] == "bruitage"
+    atelier.variantes_son.retirer(projet, jeu["identifiant"], b)
+    atelier.variantes_son.ajouter(projet, jeu["identifiant"], b, appliquer_reglages=True)
+    assert atelier.sons.lire(projet, b)["revision"] == 2
+    # Garder à nouveau un son qui porte déjà ses réglages : pas de version de plus.
+    atelier.series_son.garder(projet, serie["identifiant"], {"sons": [a]})
+    assert atelier.sons.lire(projet, a)["revision"] == 2
+    assert atelier.sons.lire(projet, c)["revision"] == 1
+    assert atelier.series_son.lire(projet, serie["identifiant"])["jeux"]
+
+
+async def test_la_relecture_dit_quels_reglages_de_musique_le_moteur_recoit(son):  # noqa: F811
+    """Stable Audio 3 Medium n'a ni mesure ni paroles : l'écran ne les envoie
+    pas (sinon la règle d'AU14 refuse toute la musique). Tempo et tonalité y
+    partent dans le texte. ACE-Step reçoit les quatre."""
+    atelier, comfy = son
+    installes = await atelier.installation_son.installer()
+    projet = atelier.bibliotheque.courant
+    from atelier.api.app import creer_application
+    application = creer_application(atelier)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://atelier") as client:
+        route = f"/api/projects/{projet}/audio-jobs/compose"
+        demande = {"famille": "musique", "prompt": "calm forest path at dawn", "mesures": 8}
+        medium = await client.post(route, json={**demande, "modele": installes["sa3-medium"]["profil"]["modele"]})
+        assert medium.status_code == 200, medium.text
+        assert medium.json()["reglages_recus"] == ["tempo", "tonalite"]
+        refuse = await client.post(route, json={**demande, "mesure": 3, "modele": installes["sa3-medium"]["profil"]["modele"]})
+        assert refuse.status_code >= 400
+        ace = await client.post(route, json={**demande, "modele": installes["ace-step-15-turbo"]["profil"]["modele"]})
+        assert ace.json()["reglages_recus"] == ["paroles", "tempo", "tonalite", "mesure"]
+        bruitage = await client.post(route, json=PAS)
+        assert bruitage.json()["reglages_recus"] == []
+
+
 async def test_serie_fige_le_modele_et_le_texte_a_la_preparation(son):  # noqa: F811
     """Le modèle et le texte composé sont figés à la préparation de la série
     et passés tels quels à chaque tirage. `_completer` prépare d'ordinaire

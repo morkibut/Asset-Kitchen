@@ -73,7 +73,7 @@ def lister_jeux(requete: Request, projet: str, son: str | None = None):
 
 @routeur.post("/sound-variants", status_code=201)
 def creer_jeu(requete: Request, projet: str, corps: dict[str, Any]):
-    """`{nom, sons: [...], famille?, serie?, cle?}`."""
+    """`{nom, sons: [...], famille?, serie?, cle?, appliquer_reglages?}`."""
     return _jeux(requete).creer(projet, corps)
 
 
@@ -90,8 +90,11 @@ def modifier_jeu(requete: Request, projet: str, jeu: str, corps: dict[str, Any])
 
 @routeur.post("/sound-variants/{jeu}/sounds")
 def ajouter_son(requete: Request, projet: str, jeu: str, corps: dict[str, Any]):
-    """`{son, position?}` : aucun son n'est refusé pour une mesure."""
-    return _jeux(requete).ajouter(projet, jeu, corps.get("son"), corps.get("position"))
+    """`{son, position?, appliquer_reglages?}` : aucun son n'est refusé pour
+    une mesure. `appliquer_reglages` pose sur le son ajouté les réglages de la
+    famille du jeu, comme le geste « garder » d'une série."""
+    return _jeux(requete).ajouter(projet, jeu, corps.get("son"), corps.get("position"),
+                                  appliquer_reglages=corps.get("appliquer_reglages", False))
 
 
 @routeur.delete("/sound-variants/{jeu}/sounds/{son}")
