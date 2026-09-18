@@ -369,8 +369,15 @@ inventaire.
 > que chaque case contient, dans l'ordre, et le découpage s'y réfère. Sans cette liste, on garde
 > l'ancienne règle.
 
-**Ce qui reste à trancher, et qui se décidera à l'ouverture de la version** — écrit ici pour que
-personne ne croie la question réglée :
+**Tranché par l'auteur le 18 septembre 2026, à l'ouverture de la version :**
+
+- **Une case ratée se refait seule**, en image simple : les sept réussies ne sont pas repayées.
+- **Les sujets se désignent par une liste numérotée**, dans l'ordre de lecture (« case 1 : …,
+  case 2 : … ») ; un tirage payé la mettra à l'épreuve, prix annoncé d'abord.
+- **Objets et équipement seulement** : des choses isolées, chacune dans sa case. Les décors et
+  les tuiles qui se raccordent restent au chantier des tuiles.
+
+Les trois questions telles qu'elles se posaient :
 
 - **Ce que devient une case ratée** dans une planche de huit sujets. Refaire les huit, ou refaire
   la case seule dans une planche de un ?
