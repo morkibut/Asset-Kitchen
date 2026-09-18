@@ -385,7 +385,7 @@ function Reglage({
   return (
     <div className="flex flex-col gap-[4px]">
       <div className="flex items-baseline justify-between gap-[8px]">
-        <span className="text-[12.5px] text-encre-2">{nom}</span>
+        <span className="text-[12px] text-encre-2">{nom}</span>
         {dit && <span className="mesure text-[10.5px] text-encre-4">{dit}</span>}
       </div>
       {children}
@@ -742,7 +742,7 @@ export function ReglagesDuDetourage({
   return (
     <div className="flex flex-col gap-[14px]">
       {passes.length === 0 && (
-        <p className="text-[12.5px] text-encre-3">
+        <p className="text-[12px] text-encre-3">
           Aucune passe. Le fond est encore là.
         </p>
       )}
@@ -1086,7 +1086,7 @@ export function ReglagesDuDetourage({
       <button
         type="button"
         onClick={() => void poser({ ...recette, passes: [...passes, PASSE_PAR_DEFAUT] })}
-        className="h-[30px] rounded-7 border border-trait bg-carte text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+        className="h-[30px] rounded-7 border border-trait bg-carte text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
       >
         Une passe de plus
       </button>
@@ -2024,7 +2024,7 @@ function TableDEchange({
         type="button"
         disabled={brouillon !== null}
         onClick={() => setBrouillon({ ...PAIRE_VIDE, depuis: palette[0] ?? "" })}
-        className="h-[30px] rounded-7 border border-trait bg-carte text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-encre-4 disabled:hover:border-trait"
+        className="h-[30px] rounded-7 border border-trait bg-carte text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-encre-4 disabled:hover:border-trait"
       >
         Échanger une couleur
       </button>
@@ -2538,7 +2538,7 @@ export function ReglagesDuContour({ recette, univers, mesures, regler, poser }: 
 
       {/* ── Les six capacités de B18 ─────────────────────────────────────── */}
       <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
-        <label className="flex items-start gap-[8px] text-[12.5px] text-encre-2">
+        <label className="flex items-start gap-[8px] text-[12px] text-encre-2">
           <input
             type="checkbox"
             checked={contour.derivee}
@@ -2554,7 +2554,7 @@ export function ReglagesDuContour({ recette, univers, mesures, regler, poser }: 
           </span>
         </label>
 
-        <label className="flex items-start gap-[8px] text-[12.5px] text-encre-2">
+        <label className="flex items-start gap-[8px] text-[12px] text-encre-2">
           <input
             type="checkbox"
             checked={contour.reserver}
@@ -2570,7 +2570,7 @@ export function ReglagesDuContour({ recette, univers, mesures, regler, poser }: 
           </span>
         </label>
 
-        <label className="flex items-start gap-[8px] text-[12.5px] text-encre-2">
+        <label className="flex items-start gap-[8px] text-[12px] text-encre-2">
           <input
             type="checkbox"
             checked={contour.inegal}
@@ -2586,7 +2586,7 @@ export function ReglagesDuContour({ recette, univers, mesures, regler, poser }: 
           </span>
         </label>
 
-        <label className="flex items-start gap-[8px] text-[12.5px] text-encre-2">
+        <label className="flex items-start gap-[8px] text-[12px] text-encre-2">
           <input
             type="checkbox"
             checked={contour.sur_calques}
@@ -2602,7 +2602,7 @@ export function ReglagesDuContour({ recette, univers, mesures, regler, poser }: 
           </span>
         </label>
 
-        <label className="flex items-start gap-[8px] text-[12.5px] text-encre-2">
+        <label className="flex items-start gap-[8px] text-[12px] text-encre-2">
           <input
             type="checkbox"
             checked={contour.desactive_plein_cadre}
@@ -2952,7 +2952,7 @@ export function ReglagesDeLaMain({
               ],
             })
           }}
-          className="h-[30px] rounded-7 border border-trait bg-carte text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+          className="h-[30px] rounded-7 border border-trait bg-carte text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
         >
           Un calque de dessin de plus
         </button>
@@ -3032,7 +3032,7 @@ export function ReglagesDeLaMain({
           type="button"
           disabled={passagesActifs === 0}
           onClick={() => pose(sansLeDernier(main, actif))}
-          className="h-[30px] rounded-7 border border-trait bg-carte text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint disabled:hover:border-trait"
+          className="h-[30px] rounded-7 border border-trait bg-carte text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:cursor-not-allowed disabled:text-eteint disabled:hover:border-trait"
         >
           Défaire le dernier · Ctrl + Z
         </button>
@@ -3041,7 +3041,7 @@ export function ReglagesDeLaMain({
       <button
         type="button"
         onClick={() => void poser({ ...recette, main: MAIN_VIDE })}
-        className="h-[30px] rounded-7 border border-trait bg-carte text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+        className="h-[30px] rounded-7 border border-trait bg-carte text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
       >
         Tout effacer
       </button>
@@ -4162,7 +4162,7 @@ export function Retouche({
               // « Recadrage ». La phrase est déjà écrite en clair pour la
               // table ouverte ; la répéter au survol coûtait le nom du bouton.
               className={[
-                "flex h-[30px] items-center gap-[4px] rounded-7 border px-[8px] text-[12.5px] transition-colors duration-120",
+                "flex h-[30px] items-center gap-[4px] rounded-7 border px-[8px] text-[12px] transition-colors duration-120",
                 ouverte === t.cle
                   ? "border-encre-4 bg-carte font-medium text-encre"
                   : "border-trait bg-carte text-encre-3 hover:border-encre-4 hover:text-encre",
@@ -4228,8 +4228,18 @@ export function Retouche({
         <>
           {/* ── L'image, et rien par-dessus ─────────────────────────────── */}
           <div className="col-start-1 row-start-2 flex min-h-0 min-w-0 flex-col gap-[8px]">
-            {!enregistrementImmediat && <div className="flex gap-[8px]"><button type="button" disabled={!session.peutDefaire} onClick={session.defaire} className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] disabled:opacity-50">Annuler</button><button type="button" disabled={!session.peutRefaire} onClick={session.refaire} className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] disabled:opacity-50">Rétablir</button>{!session.valide && !enVol && <button type="button" onClick={() => void poser(recette)} className="text-[12px] text-signal">Recalculer l’aperçu</button>}</div>}
-            <div className="flex flex-wrap items-center justify-between gap-[8px]">
+            {/* **La rangée de l'animation** (`AtelierDeBande.tsx`) : Défaire,
+                Refaire, et la taille à droite. Sans défaire (enregistrement
+                immédiat), la taille reste seule à sa place. */}
+            <div className="flex min-h-[30px] shrink-0 items-center gap-[8px]">
+              {!enregistrementImmediat && <><button type="button" disabled={!session.peutDefaire} onClick={session.defaire} title="Ctrl + Z" className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 disabled:opacity-50">Défaire</button><button type="button" disabled={!session.peutRefaire} onClick={session.refaire} title="Ctrl + Maj + Z" className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 disabled:opacity-50">Refaire</button>{!session.valide && !enVol && <button type="button" onClick={() => void poser(recette)} className="text-[12px] text-signal">Recalculer l’aperçu</button>}</>}
+              <span className="ml-auto text-[12px] text-encre-3">{largeurVue} × {hauteurVue} px</span>
+            </div>
+            {/* **La barre du zoom de l'animation**, les bascules à la place
+                du rappel des gestes. Pas de `BarreDuZoom` : son rappel
+                « Ctrl + molette · Espace + glisser » serait faux ici, la
+                molette seule zoome et l'espace ne déplace pas la vue. */}
+            <div className="flex w-full shrink-0 flex-wrap items-center gap-[8px] py-[4px]">
               <div className="flex flex-wrap items-center gap-[8px]">
                 {/* ⚠️ **Un grossissement affiché est un grossissement
                     appliqué.** Vu au navigateur sur un jeu en dessin : l'écran
@@ -4240,11 +4250,7 @@ export function Retouche({
                     pour cent appliqué. **Et ce qu'il dit arrive aussi pour la
                     surface** (`B23`) : c'est elle que l'ajusté mesure quand
                     elle est posée, donc elle tient dans le cadre comme
-                    l'image. */}
-                <div data-zoom className="flex items-center gap-[4px] rounded-8 bg-papier-cote p-[4px]">
-                  <CommandesDuZoom zoom={zoom} onZoom={setZoom} ajuste={ajuste} maximum={zoomMaximum} />
-                </div>
-
+                    l'image. (Le zoom lui-même est posé à droite, plus bas.) */}
                 {/* **« Sur », et « témoin » — deux questions, deux contrôles**
                     (`Comparateur`, `Tables.tsx`, `B24`). Le premier dit quelle
                     image porte le regard, le second dit ce qu'on met à côté
@@ -4329,13 +4335,16 @@ export function Retouche({
                   </div>
                 )}
               </div>
+              <div data-zoom className="ml-auto flex items-center gap-[4px] rounded-8 bg-papier-cote p-[4px]">
+                <CommandesDuZoom zoom={zoom} onZoom={setZoom} ajuste={ajuste} maximum={zoomMaximum} />
+              </div>
             </div>
 
             <div
               ref={setNoeudCadre}
               data-scene-de-retouche
               style={montreUnFond ? { backgroundColor: FONDS_APERCU[fondApercu] as string } : undefined}
-              className="flex min-h-0 flex-1 overflow-auto rounded-8 border border-trait bg-pourtour p-[14px]"
+              className="defile flex min-h-0 flex-1 overflow-auto rounded-7 border border-trait bg-pourtour"
             >
               {/* **`m-auto` sur la boîte, jamais `justify-center` sur le
                   cadre qui défile** (`B24`) : un contenu centré par
@@ -4570,6 +4579,32 @@ export function Retouche({
             }} className="h-[34px] shrink-0 rounded-7 border border-signal px-[14px] text-[12px]">Appliquer les réglages repris à l’image</button>}
             {panneau === "retouche" && <SelecteurDeTable table={ouverte} onTable={setOuverte} />}
             {panneau === "retouche" && barreDesTables}
+            {/* **Pas de second titre** : le sélecteur dit déjà la table, et un
+                titre de 25 px heurtait les boutons dans la colonne étroite.
+                La remise à zéro et l'interrupteur ont leur propre rangée,
+                comme dans l'animation, puis l'état en petit. */}
+            {panneau !== "recettes" && (
+              <div className="flex shrink-0 flex-col gap-[8px]">
+                {/* **Une place s'éteint sans se vider, et se vide sans
+                    s'éteindre** (RP22) : les deux gestes ne paraissent que là
+                    où il y a une place à éteindre ou à vider — les deux
+                    fabriques n'en ont pas. */}
+                {place !== null && raison === null && (
+                  <div className="flex shrink-0 items-center gap-[8px]">
+                    <RemettreAZero onClick={() => void poser(videe(recette, ouverte))} />
+                    <Interrupteur
+                      endormie={endormie}
+                      onBasculer={() => void poser(avecVeille(recette, ouverte, !endormie))}
+                    />
+                  </div>
+                )}
+                <span className="mesure text-[10.5px] text-encre-4">
+                  {panneau === "calques" ? "Calques de l’image · " : ""}
+                  {CE_QUE_L_ETAT_DIT[etatDe(ouverte, recette, traitement, mesures)]}
+                  {resume ? ` · ${resume}` : ""}
+                </span>
+              </div>
+            )}
             {/* **Les gestes qui écrivent d'autres images, au pied du
                 panneau**, là où l'animation met « Découper cette frame ». */}
             <div className="order-last flex shrink-0 flex-wrap gap-[8px] border-t border-trait pt-[14px] text-[12px]">
@@ -4594,31 +4629,6 @@ export function Retouche({
             </div>
             ) : (
             <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
-            <div className="flex items-start justify-between gap-[8px]">
-              <div className="flex flex-col gap-[4px]">
-                <h2 className="font-serif text-[25px] leading-none text-encre">
-                  {panneau === "calques" ? "Calques de l’image" : NOM_DE_LA_TABLE[ouverte]}
-                </h2>
-                <span className="mesure text-[10.5px] text-encre-4">
-                  {CE_QUE_L_ETAT_DIT[etatDe(ouverte, recette, traitement, mesures)]}
-                  {resume ? ` · ${resume}` : ""}
-                </span>
-              </div>
-              {/* **Une place s'éteint sans se vider, et se vide sans
-                  s'éteindre** (RP22) : les deux gestes ne paraissent que là où
-                  il y a une place à éteindre ou à vider — les deux fabriques
-                  n'en ont pas. */}
-              {place !== null && raison === null && (
-                <div className="flex shrink-0 items-center gap-[8px]">
-                  <RemettreAZero onClick={() => void poser(videe(recette, ouverte))} />
-                  <Interrupteur
-                    endormie={endormie}
-                    onBasculer={() => void poser(avecVeille(recette, ouverte, !endormie))}
-                  />
-                </div>
-              )}
-            </div>
-
             {panneau === "calques" ? <ReglagesDeLaMain {...poste} section="calques" /> : raison !== null ? (
               /* **Une table indisponible s'ouvre quand même**, et son panneau
                  porte la raison à la place de ses réglages. C'est la règle de
@@ -4654,7 +4664,7 @@ export function Retouche({
               <button
                 type="button"
                 onClick={() => void revenirAuBrut()}
-                className="h-[30px] rounded-7 border border-trait bg-carte text-[12.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+                className="h-[30px] rounded-7 border border-trait bg-carte text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
               >
                 Tout remettre à zéro
               </button>
