@@ -11,6 +11,14 @@ class SonRefuse(ErreurAtelier):
     code = "son_refuse"
 
 
+# Les sept familles du jeu — la seule liste : tout le reste (les défauts de
+# moteur de `atelier.audio.graphes.FAMILLES`, `TIRAGES_PAR_DEFAUT`,
+# `ETIQUETTES`, `CASES_PAR_FAMILLE`…) l'importe plutôt que de la redire.
+# « secours » n'est pas une famille du jeu : c'est une liste de moteurs de
+# repli à part (`atelier.audio.graphes.SECOURS`).
+FAMILLES_SON = ("bruitage", "interface", "ambiance", "musique", "jingle", "chanson", "voix")
+
+
 @dataclass(frozen=True, slots=True)
 class RecetteSon:
     debut: float = 0

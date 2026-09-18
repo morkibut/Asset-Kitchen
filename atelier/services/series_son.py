@@ -117,10 +117,15 @@ class ServiceSeriesSon:
                 "composition": compo}
 
     def _nom_de_base(self, nom, demande):
+        """Le nom par défaut d'un tirage : la description seule — ni
+        l'étiquette de sa famille (déjà le préfixe que `nom_stable` pose), ni
+        un rang de tirage (déjà le numéro que la livraison d'un jeu de
+        variantes pose). Sans description, l'étiquette de la famille reste le
+        seul repli lisible."""
         if nom:
             return nom[:120]
         prompt = demande.get("prompt") if isinstance(demande.get("prompt"), str) else ""
-        return ETIQUETTES.get(demande.get("famille"), "Bruitages") + " · " + prompt[:60]
+        return prompt.strip()[:120] or ETIQUETTES.get(demande.get("famille"), "Son")
 
     async def preparer(self, projet, brut, acteur="auteur"):
         if acteur not in ("auteur", "agent"):
@@ -146,8 +151,14 @@ class ServiceSeriesSon:
         serie = {"identifiant": identifiant, "projet": projet, "cle": cle, "acteur": acteur, "empreinte": empreinte,
                  "nom": base, "famille": demande.get("famille"), "modele": profil["modele"], "nombre": nombre,
                  "demande": demande, "cree_le": time.time(),
-                 "tirages": [{"rang": r, "cle": f"serie:{cle}:{r:02d}", "nom": f"{base} · {r:02d}"} for r in range(1, nombre + 1)],
+                 "tirages": [{"rang": r, "cle": f"serie:{cle}:{r:02d}", "nom": base} for r in range(1, nombre + 1)],
                  "annonce": self.temps(profil["modele"], nombre)}
+        if compo is not None and "texte_relu" not in demande:
+            # Le modèle et le texte composé sont figés à la préparation : une
+            # reprise après un changement de l'univers ou une réinstallation
+            # des moteurs ne mélange jamais deux textes entre les tirages
+            # d'une même série (correction du 18 septembre 2026).
+            serie["texte_fige"] = compo["texte"]
         # Le premier tirage valide toute la demande (texte, durée, moteur
         # installé) avant qu'aucune série ne s'écrive : un refus ne laisse rien.
         premier = await self._preparer_tirage(serie, serie["tirages"][0])
@@ -162,8 +173,14 @@ class ServiceSeriesSon:
         return self.lire(projet, identifiant)
 
     async def _preparer_tirage(self, serie, tirage):
+        # Le modèle et le texte composé, figés à la préparation de la série
+        # (quand elle en a un) : chaque tirage envoie le même texte au même
+        # moteur, même si l'univers ou les moteurs installés ont changé
+        # depuis — sans toucher à la demande elle-même (l'empreinte d'un
+        # tirage préparé sans changement reste celle d'avant).
+        figer = {"modele": serie["modele"], "texte": serie["texte_fige"]} if serie.get("texte_fige") is not None else None
         return await self.a.travaux_audio.preparer(serie["projet"], {**serie["demande"], "cle": tirage["cle"], "nom": tirage["nom"]},
-            serie["acteur"], serie={"identifiant": serie["identifiant"], "rang": tirage["rang"]})
+            serie["acteur"], serie={"identifiant": serie["identifiant"], "rang": tirage["rang"]}, figer=figer)
 
     async def _completer(self, serie):
         """Prépare les tirages qui ne le sont pas encore (une préparation
@@ -279,9 +296,18 @@ class ServiceSeriesSon:
 
     def garder(self, projet, identifiant, brut):
         """« Garder ces tirages » : un jeu de variantes, dans l'ordre donné,
-        qui se souvient de sa série. `rangs` (1…N) ou `sons` (identifiants)."""
-        if not isinstance(brut, dict) or set(brut) - {"rangs", "sons", "nom", "cle", "famille"}:
+        qui se souvient de sa série. `rangs` (1…N) ou `sons` (identifiants).
+
+        Les réglages proposés par la famille (mono pour bruitage, interface et
+        voix ; niveau visé) restent proposés à la création d'une version, et
+        s'appliquent ici, au geste « garder » : chaque son gardé reçoit une
+        nouvelle version avec la recette proposée de sa famille, visible dans
+        ses versions. `appliquer_reglages=False` s'en passe."""
+        if not isinstance(brut, dict) or set(brut) - {"rangs", "sons", "nom", "cle", "famille", "appliquer_reglages"}:
             raise TravailRefuse("Dites quels tirages garder : leurs rangs ou leurs sons.")
+        appliquer = brut.get("appliquer_reglages", True)
+        if not isinstance(appliquer, bool):
+            raise TravailRefuse("appliquer_reglages est activé ou désactivé.")
         serie = self.lire(projet, identifiant)
         par_rang = {t["rang"]: t for t in serie["tirages"]}
         a_moi = {t["son"]["identifiant"]: t["rang"] for t in serie["tirages"] if t["son"]}
@@ -297,8 +323,12 @@ class ServiceSeriesSon:
             sons = brut.get("sons")
             if not isinstance(sons, list) or not sons or any(s not in a_moi for s in sons):
                 raise TravailRefuse("Gardez des sons rendus par cette série.")
-        corps = {"nom": brut.get("nom") or serie["nom"], "sons": sons, "serie": identifiant,
-                 "famille": brut.get("famille", serie["famille"])}
+        famille = brut.get("famille", serie["famille"])
+        if appliquer and famille:
+            for son in sons:
+                fiche = self.a.sons.lire(projet, son)
+                self.a.sons.classer(projet, son, fiche["revision"], famille, appliquer_reglages=True)
+        corps = {"nom": brut.get("nom") or serie["nom"], "sons": sons, "serie": identifiant, "famille": famille}
         if brut.get("cle") is not None:
             corps["cle"] = brut["cle"]
         return self.a.variantes_son.creer(projet, corps)

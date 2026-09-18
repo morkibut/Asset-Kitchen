@@ -27,6 +27,7 @@ chacun sa graine (SN3).
 """
 from __future__ import annotations
 
+from atelier.domaine.son import FAMILLES_SON
 
 # Les fichiers de poids que chaque moteur demande, leur dossier sous
 # `models/` et leur source. Relevés dans les notes des modèles officiels
@@ -63,18 +64,25 @@ FICHIERS = {
         "source": "https://huggingface.co/ComfyUI-Wiki/t5-base/resolve/main/t5-base.safetensors"},
 }
 
-# Le moteur par défaut de chaque famille (SN1) ; le premier installé de la
-# liste l'emporte (`installation_son.moteurs_par_famille`). « secours » n'est
-# pas une famille du jeu : c'est la chaîne que SN2 consulte quand le moteur
-# d'une famille manque.
+# Le moteur par défaut de chaque famille (SN1), les sept clés de
+# `atelier.domaine.son.FAMILLES_SON` ; le premier installé de la liste
+# l'emporte (`installation_son.moteurs_par_famille`, `travaux_audio.
+# _moteur_de_famille`). L'interface a pour seul moteur sfxr (pas de calcul
+# ComfyUI) ; la voix n'a encore aucun moteur installé (SN11), dit comme tel
+# par une liste vide. « secours » n'est pas une famille du jeu : c'est
+# `SECOURS`, la liste que SN2 consulte quand le moteur d'une famille manque.
 FAMILLES = {
     "bruitage": ("sa3-small-sfx", "sa-open-1"),
+    "interface": ("sfxr",),
     "ambiance": ("sa3-small-sfx", "sa3-medium"),
     "musique": ("ace-step-15-turbo", "sa3-medium"),
     "jingle": ("ace-step-15-turbo", "sa3-medium"),
     "chanson": ("yue2-int8",),
-    "secours": ("sa3-medium", "sa-open-1"),
+    "voix": (),
 }
+assert set(FAMILLES) == set(FAMILLES_SON)
+
+SECOURS = ("sa3-medium", "sa-open-1")
 
 # Les langues de paroles que TextEncodeAceStepAudio1.5 déclare (object_info).
 LANGUES_ACE = ("ar", "az", "bg", "bn", "ca", "cs", "da", "de", "el", "en", "es", "fa", "fi", "fr", "he", "hi", "hr",
@@ -177,7 +185,11 @@ def ace_step_15_turbo(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen
         "option:langue": [_lien("5", "language")]}
     return {"identifiant": "ace-step-15-turbo", "nom": "ACE-Step 1.5 turbo", "nature": "audio", "graphe": graphe,
         "liaisons": liaisons, "parametres": {"langue": {"genre": "choix", "valeurs": list(LANGUES_ACE), "defaut": "en"}},
-        "formats": [], "durees": [30, 60, 120], "duree_libre": {"min": 10, "max": 600},
+        # 2 s, non 10 : un jingle par défaut (2 mesures + 1 de marge, 90 BPM)
+        # dure 8 s — sous l'ancien minimum, il aurait été proposé puis refusé
+        # à l'envoi (correction du 18 septembre 2026 : « ce qui sera refusé ne
+        # doit pas être proposé »).
+        "formats": [], "durees": [30, 60, 120], "duree_libre": {"min": 2, "max": 600},
         "sortie": {"noeud": "10", "champ": "audio"},
         "description": "Musique de jeu : tempo, tonalité, mesure et durée exacte, de 10 à 600 secondes. Un seul encodeur (0.6b)."}
 

@@ -63,6 +63,7 @@ CASES_PAR_FAMILLE = {
     "chanson": ("orchestre",),
     "voix": (),
 }
+assert set(CASES_PAR_FAMILLE) == set(FAMILLES_SON)
 
 # Les mots du gabarit (relevé des bruitages §6.2). Pas de texte négatif pour
 # Stable Audio 3 : à guidage 1, il n'a aucun effet.

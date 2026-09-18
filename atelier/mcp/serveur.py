@@ -1377,6 +1377,8 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
     installer_sfxr(serveur, atelier, _refus_lisible)
     from atelier.mcp.variantes_son import installer_variantes_son
     installer_variantes_son(serveur, atelier, _refus_lisible)
+    from atelier.mcp.texte_son import installer_texte_son
+    installer_texte_son(serveur, atelier, _refus_lisible)
     from atelier.mcp.sources_3d import installer_sources_3d
     installer_sources_3d(serveur, atelier, _refus_lisible)
     from atelier.mcp.enregistrer_sous import installer_enregistrer_sous

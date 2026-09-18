@@ -29,6 +29,28 @@ def _sha(octets):
     return hashlib.sha256(octets).hexdigest()
 
 
+def _pret_recalcule(objet):
+    """`pret`, `raison` et `avertissements` recalculés depuis les mesures
+    conservées, jamais fiés à ce qu'un pipeline plus ancien a écrit sur le
+    disque — l'ancien blocage par la seule saturation, avant la correction du
+    18 septembre 2026, laissait `pret=False` sur des sons déjà enregistrés.
+    Rien n'est réécrit : seule la lecture les rétablit."""
+    mesures = objet.get("mesures")
+    if not mesures:
+        return objet
+    silencieux = bool(mesures.get("silencieux"))
+    sature = bool(mesures.get("ecretes"))
+    raison = "Le rendu est silencieux. Vérifiez la source et la coupe." if silencieux else ""
+    avertissements = ["Le rendu sature. Baissez le gain ou le niveau cible pour l'éviter."] if sature else []
+    pret = not raison
+    if objet.get("pret") == pret and objet.get("raison", "") == raison and objet.get("avertissements", []) == avertissements:
+        return objet
+    etat = objet.get("etat")
+    if etat in ("prete", "a_verifier"):
+        etat = "prete" if pret else "a_verifier"
+    return {**objet, "pret": pret, "raison": raison, "avertissements": avertissements, "etat": etat}
+
+
 class ServiceSons:
     def __init__(self, atelier):
         self.a = atelier
@@ -59,14 +81,16 @@ class ServiceSons:
 
     def lire(self, projet, identifiant, revision=None):
         dossier = self._dossier(projet, identifiant)
-        courant = self._courant(projet, identifiant)
+        courant = _pret_recalcule(self._courant(projet, identifiant))
         if revision is not None and (isinstance(revision, bool) or not isinstance(revision, int) or revision < 1):
             raise SonRefuse("Choisissez une version conservée du son.")
         objet = courant if revision is None else self._lire(dossier / "revisions" / f"{revision}.json")
         if objet is None:
             raise SonRefuse("Cette version du son n’existe pas.")
+        if revision is not None:
+            objet = _pret_recalcule(objet)
         jugements = self._lire(dossier / "jugements.json", {})
-        versions = [self._lire(p) for p in (dossier / "revisions").glob("*.json")]
+        versions = [_pret_recalcule(self._lire(p)) for p in (dossier / "revisions").glob("*.json")]
         famille = objet.get("famille")
         return {**objet, "famille": famille, "revision_courante": courant["revision"],
             "jugement": jugements.get(str(objet["revision"]), "a-juger"),
@@ -118,9 +142,15 @@ class ServiceSons:
         self.a.diffusion.publier("son", {"projet": son["projet"], "identifiant": son["identifiant"]})
         return self.lire(son["projet"], son["identifiant"])
 
-    def importer_octets(self, projet, octets, *, nom="Son importé", provenance=None, cle=None):
+    def importer_octets(self, projet, octets, *, nom="Son importé", provenance=None, cle=None, recette=None):
+        """`recette`, si donnée, remplace `RecetteSon()` pour la première
+        version : c'est la coupe (`fin`) que la relecture propose quand un
+        bruitage a été demandé sous la durée minimale réelle du moteur — le
+        son se calcule à cette durée, la coupe vers la durée voulue est déjà
+        posée, visible et modifiable dans ses versions."""
         if not isinstance(octets, bytes) or len(octets) > 256 * 1024 * 1024:
             raise SonRefuse("Importez un fichier audio de 256 Mo au plus.")
+        recette = recette if recette is not None else RecetteSon()
         identifiant = _sha((projet + "\0" + cle).encode())[:32] if cle else uuid.uuid4().hex
         dossier = self._dossier(projet, identifiant)
         with verrou(dossier / ".verrou"):
@@ -130,7 +160,7 @@ class ServiceSons:
                     raise SonRefuse("Ce travail a déjà acquis un autre son. Sa source ne peut pas être remplacée.")
                 if precedent["etat"] != "a_analyser":
                     return self.lire(projet, identifiant)
-                return self._enregistrer(precedent, RecetteSon(), tolerant=True)
+                return self._enregistrer(precedent, recette, tolerant=True)
             extension = Path(str(nom)).suffix.lower()
             if extension not in (".wav", ".ogg", ".mp3", ".flac", ".m4a"):
                 extension = ".audio"
@@ -143,12 +173,12 @@ class ServiceSons:
                 "famille": famille if famille in FAMILLES else None,
                 "revision": 1, "cree_le": time.time(), "modifie_le": time.time(), "etat": "a_analyser", "pret": False,
                 "source": {"fichier": "source" + extension, "nom": str(nom), "empreinte": _sha(octets), "octets": len(octets)},
-                "provenance": provenance or {"nature": "import"}, "recette": RecetteSon().en_json(), "mesures": None, "raison": "Analyse audio en attente."}
+                "provenance": provenance or {"nature": "import"}, "recette": recette.en_json(), "mesures": None, "raison": "Analyse audio en attente."}
             # L’acquisition précède tout décodage : même un retour fournisseur
             # illisible reste acquis et ne déclenche jamais un second appel.
             self.a.fichiers._poser(dossier / objet["source"]["fichier"], octets)
             self._poser(dossier / "son.json", objet)
-            return self._enregistrer(objet, RecetteSon(), tolerant=True)
+            return self._enregistrer(objet, recette, tolerant=True)
 
     def regler(self, projet, identifiant, revision, recette, *, nom=None):
         regles = RecetteSon.depuis_json(recette)
@@ -368,13 +398,22 @@ def _nombre_positif(valeur):
 def params_ogg(boucle, taux, duree, provenance):
     """Les options de l'importeur `oggvorbisstr`. Le tempo et la mesure
     viennent de la demande (ACE-Step : `tempo`, `mesure`) ; absents, `bpm`
-    reste à 0 et `bar_beats` au défaut de Godot (4)."""
+    reste à 0 et `bar_beats` au défaut de Godot (4). Quand la composition a
+    gardé un nombre de mesures demandé (SN2, sans sa mesure de marge),
+    `beat_count` se calcule dessus plutôt que sur la durée du fichier — la
+    marge ajoutée pour couper la boucle proprement ne doit pas s'y voir."""
     provenance = provenance or {}
     envoi = provenance.get("envoi") if isinstance(provenance.get("envoi"), dict) else {}
+    composition = provenance.get("composition") if isinstance(provenance.get("composition"), dict) else {}
     bpm = _nombre_positif(envoi.get("tempo", provenance.get("tempo")))
     mesure = _nombre_positif(envoi.get("mesure", provenance.get("mesure")))
     bar_beats = int(mesure) if mesure and 2 <= int(mesure) <= 32 else 4
-    beat_count = round(duree * bpm / 60) if bpm else 0
+    mesures = composition.get("mesures") if isinstance(composition, dict) else None
+    demandees = _nombre_positif((mesures or {}).get("demandees")) if isinstance(mesures, dict) else None
+    if demandees:
+        beat_count = round(demandees) * bar_beats
+    else:
+        beat_count = round(duree * bpm / 60) if bpm else 0
     return [("loop", "true" if boucle["active"] else "false"),
         ("loop_offset", _flottant(boucle["debut"] / taux if boucle["active"] else 0)),
         ("bpm", _flottant(bpm or 0)), ("beat_count", str(beat_count)), ("bar_beats", str(bar_beats))]
@@ -430,7 +469,10 @@ LICENCES = {
         "resume": "Non commercial, sauf pour une personne qui crée en son nom propre : elle peut vendre ce qu'elle "
                   "génère (permission ajoutée le 16 septembre 2026). Une société doit demander une licence.",
         "date_du_texte": "2026-09-16", "adresse": "https://huggingface.co/Comfy-Org/YuE2"},
-    "sfxr": {"nom": "Domaine public", "resume": "Son calculé par sfxr, sans modèle ; la bibliothèque pyfxr est sous BSD."},
+    "sfxr": {"nom": "Portage de jsfxr (chr15m), domaine public (Unlicense)",
+        "resume": "Son calculé par un portage de jsfxr (chr15m), domaine public (Unlicense) ; la bibliothèque "
+                  "pyfxr qui l'exécute est sous licence BSD.",
+        "adresse": "https://github.com/chr15m/jsfxr"},
     None: {"nom": "inconnue", "resume": "Son importé : l'atelier ne connaît pas sa licence."},
 }
 _LICENCE_DU_MOTEUR = {"sa3-small-sfx": "stability", "sa3-medium": "stability", "sa-open-1": "stability",
@@ -468,7 +510,8 @@ def ressource_variantes(chemins_res, *, random_pitch=1.03):
     """Un `AudioStreamRandomizer` (`.tres`) qui liste des sons déjà livrés
     (`res://…`), sans rejouer deux fois de suite la même variante
     (`playback_mode = 0`), avec une légère variation de hauteur (1,03 ≈ un
-    demi-ton). Prêt pour le jeu de variantes de SN3, pas encore branché."""
+    demi-ton). Le jeu de variantes de SN3 le livre (`ServiceVariantesSon.
+    prevoir_livraison`), comme les variantes sfxr de SN8."""
     if not chemins_res:
         raise SonRefuse("Un jeu de variantes contient au moins un son.")
     externes = "".join(f'[ext_resource type="AudioStream" path={json.dumps(c)} id="{i + 1}"]\n'

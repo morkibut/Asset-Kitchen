@@ -23,8 +23,10 @@ def installer_outils_installation_son(serveur: Any, atelier: Any, refus_lisible)
         return await atelier.installation_son.installer(engines)
 
     @serveur.tool(name="get_sound_engine_defaults", meta=meta("Lire les moteurs sonores par défaut"),
-        description="Read the default sound engine for each family (sfx, ambience, music, jingle, song, "
-        "fallback), among the engines currently installed. Used to pick a model before preparing a sound.")
+        description="Read the default sound engine for this project, for each of the seven real family keys "
+        "(bruitage, interface, ambiance, musique, jingle, chanson, voix): the universe's own choice first, then "
+        "the first engine installed for that family, sfxr for interface. Used to pick a model before preparing a "
+        "sound.")
     @refus_lisible
-    def get_sound_engine_defaults() -> dict[str, Any]:
-        return {"familles": atelier.installation_son.moteurs_par_famille()}
+    def get_sound_engine_defaults(project: str) -> dict[str, Any]:
+        return {"familles": atelier.installation_son.moteurs_par_famille(project)}

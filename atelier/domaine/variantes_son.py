@@ -36,6 +36,7 @@ class VariantesRefusees(ErreurAtelier):
 # morceau. Une demande sans famille (un workflow collé, AU14) est un bruitage.
 TIRAGES_PAR_DEFAUT = {"bruitage": 8, "interface": 8, "ambiance": 8,
                       "musique": 4, "chanson": 4, "jingle": 4, "voix": 4}
+assert set(TIRAGES_PAR_DEFAUT) == set(FAMILLES_SON)
 TIRAGES_MIN, TIRAGES_MAX = 1, 16
 NOM_MAX = 120
 
@@ -73,7 +74,12 @@ def identifiant_valide(identifiant, quoi="Ce son"):
 def statut_membre(son, famille_du_jeu_):
     """Ce que le jeu dit d'un de ses sons. `son` est la lecture de
     `atelier.sons.lire`, ou None si le son n'existe plus. Rien ici ne
-    retire un membre : le statut se montre, l'auteur décide."""
+    retire un membre : le statut se montre, l'auteur décide.
+
+    Le statut lit `pret` — recalculé à la lecture (`ServiceSons.lire`) depuis
+    les mesures, jamais une saturation ancienne écrite sur le disque avant la
+    correction du 18 septembre 2026 : un son gardé « à vérifier » pour la
+    seule saturation redevient prêt ici comme partout ailleurs."""
     if son is None:
         return {"statut": "supprime", "a_livrer": False,
                 "signal": "Ce son n'existe plus dans la galerie. Il reste listé tant que vous ne le retirez pas."}
@@ -83,8 +89,8 @@ def statut_membre(son, famille_du_jeu_):
         statut, a_livrer, signal = "ecarte", False, "Cette version a été écartée : elle ne partira pas avec le jeu."
     elif not mesures:
         statut, a_livrer, signal = "illisible", False, son.get("raison") or "Ce son n'a pas pu être lu."
-    elif mesures.get("silencieux"):
-        statut, a_livrer, signal = "silencieux", False, "Ce son est silencieux."
+    elif not son.get("pret"):
+        statut, a_livrer, signal = "silencieux", False, son.get("raison") or "Ce son n'a pas pu être lu."
     else:
         statut, a_livrer, signal = "present", True, "Ce son sature : il reste dans le jeu, à vous de décider." if sature else ""
     retour = {"statut": statut, "a_livrer": a_livrer, "signal": signal, "sature": sature}

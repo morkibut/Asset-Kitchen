@@ -77,8 +77,11 @@ async def test_huit_tirages_d_un_pas_reviennent_dans_une_serie_avec_huit_graines
     assert len(comfy.envois) == 8 and sorted(graines_envoyees(comfy)) == sorted(graines)
     sons = [t["son"] for t in fini["tirages"]]
     assert len({x["identifiant"] for x in sons}) == 8 and all(x["existe"] and x["mesures"] for x in sons)
-    assert [x["nom"] for x in sons][:2] == ["Bruitages · Single footstep of a leather boot on dry grass · 01",
-                                            "Bruitages · Single footstep of a leather boot on dry grass · 02"]
+    # Le nom par défaut ne répète ni l'étiquette de la famille (déjà le
+    # préfixe de `nom_stable`), ni un rang de tirage (déjà le numéro que la
+    # livraison d'un jeu de variantes pose) : juste la description.
+    assert [x["nom"] for x in sons][:2] == ["Single footstep of a leather boot on dry grass",
+                                            "Single footstep of a leather boot on dry grass"]
     provenance = atelier.sons.lire(projet, sons[2]["identifiant"])["provenance"]
     assert provenance["serie"] == {"identifiant": s["identifiant"], "rang": 3} and provenance["famille"] == "bruitage"
     # Le temps de la série suivante vient des mesures de la file locale.
@@ -207,6 +210,60 @@ async def test_garder_quatre_tirages_forme_un_jeu_qui_se_rouvre_dans_l_ordre(son
     await fermer(autre)
 
 
+async def test_garder_applique_les_reglages_de_la_famille_a_chaque_son_garde(son):  # noqa: F811
+    """Correction du 18 septembre 2026 : garder crée pour chaque son gardé une
+    nouvelle version avec la recette proposée de sa famille (mono pour un
+    bruitage), visible dans ses versions. `appliquer_reglages=False` s'en passe."""
+    atelier, comfy = son
+    projet, serie = await serie_rendue(atelier)
+    par_rang = {t["rang"]: t["son"]["identifiant"] for t in serie["tirages"]}
+    avant = atelier.sons.lire(projet, par_rang[1])
+    assert avant["revision"] == 1 and avant["mesures"]["canaux"] == 2
+    atelier.series_son.garder(projet, serie["identifiant"], {"rangs": [1], "nom": "Avec réglages"})
+    apres = atelier.sons.lire(projet, par_rang[1])
+    assert apres["revision"] == 2 and apres["recette"]["mono"] is True and apres["mesures"]["canaux"] == 1
+    assert len(apres["versions"]) == 2
+
+    autre = atelier.series_son.garder(projet, serie["identifiant"], {"rangs": [2], "nom": "Sans réglages",
+        "appliquer_reglages": False})
+    son2 = atelier.sons.lire(projet, par_rang[2])
+    assert son2["revision"] == 1 and son2["mesures"]["canaux"] == 2
+    assert autre["identifiant"]
+
+
+async def test_serie_fige_le_modele_et_le_texte_a_la_preparation(son):  # noqa: F811
+    """Le modèle et le texte composé sont figés à la préparation de la série
+    et passés tels quels à chaque tirage. `_completer` prépare d'ordinaire
+    tous les tirages dans la foulée ; on simule ici une préparation coupée en
+    route (un tirage sans travail encore) pour éprouver la reprise après un
+    changement de l'univers : elle ne doit pas mélanger deux textes."""
+    import json as _json_mod
+    atelier, comfy = son
+    await atelier.installation_son.installer(identifiants=["sa3-small-sfx"])
+    projet = atelier.bibliotheque.courant
+    s = await atelier.series_son.preparer(projet, {"cle": "pas", "nombre": 2, **PAS})
+    premier = atelier.travaux.lire(projet, s["tirages"][0]["travail"])
+    texte_fige = premier["composition"]["texte"]
+    modele_fige = premier["demande"]["modele"]
+
+    # On efface le travail du second tirage : comme une préparation coupée
+    # avant que `_completer` ne l'atteigne.
+    chemin = atelier.series_son._chemin(projet, s["identifiant"])
+    brut = _json_mod.loads(chemin.read_text(encoding="utf-8"))
+    assert brut.get("texte_fige") == texte_fige and brut["modele"] == modele_fige
+    brut["tirages"][1]["travail"] = None
+    chemin.write_text(_json_mod.dumps(brut), encoding="utf-8")
+
+    # Un second moteur, préféré par l'univers pour le bruitage à partir de
+    # maintenant : une reprise ne doit pas s'y mettre pour le tirage manquant.
+    installes = await atelier.installation_son.installer(identifiants=["sa-open-1"])
+    atelier.univers.regler_univers(projet, son={"moteurs": {"bruitage": installes["sa-open-1"]["profil"]["modele"]}})
+    reprise = await atelier.series_son.reprendre(projet, s["identifiant"])
+    second = atelier.travaux.lire(projet, reprise["tirages"][1]["travail"])
+    assert second["demande"]["modele"] == modele_fige
+    assert second["snapshot_audio"]["prompt"] == texte_fige
+
+
 async def test_un_son_sature_entre_dans_un_jeu_un_son_disparu_y_reste_signale(son):  # noqa: F811
     atelier, comfy = son
     projet, serie = await serie_rendue(atelier, nombre=3)
@@ -255,7 +312,10 @@ async def test_les_empreintes_des_demandes_d_avant_ne_changent_pas(son):  # noqa
     # Un tirage de série : la même forme de demande, la série reste à côté.
     s = await atelier.series_son.preparer(projet, {"cle": "pas", "nombre": 2, **PAS})
     tirage = atelier.travaux.lire(projet, s["tirages"][1]["travail"])
-    attendu = {**sn2, "cle": "serie:pas:02", "nom": "Bruitages · " + PAS["prompt"] + " · 02"}
+    # Correction du 18 septembre 2026 : le nom par défaut d'un tirage ne
+    # répète plus l'étiquette de la famille ni son rang (voir la nomination
+    # de `nom_stable`) — juste la description.
+    attendu = {**sn2, "cle": "serie:pas:02", "nom": PAS["prompt"]}
     assert tirage["empreinte"] == _hash(_json({"demande": attendu, "acteur": "auteur"}))
     assert tirage["serie"] == {"identifiant": s["identifiant"], "rang": 2}
 

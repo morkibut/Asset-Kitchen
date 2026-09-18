@@ -478,10 +478,12 @@ DU_PRODUIT = "produit"
 # n'a pas la clé `son`, se relit vide, et la description part seule avec la
 # prise de son de sa famille. Aucune migration.
 #
-# Les familles de sons (docs/archi-son.md §3). Ce sont les clés du moteur par
-# famille, et celles que la composition du texte connaît
-# (`atelier.audio.texte`). « interface » est la famille « interface et rétro ».
-FAMILLES_SON = ("bruitage", "interface", "ambiance", "musique", "jingle", "chanson", "voix")
+# Les familles de sons (docs/archi-son.md §3) : la seule liste vit dans
+# `atelier.domaine.son.FAMILLES_SON`, réexportée ici pour qui l'importait
+# déjà d'ici. Ce sont les clés du moteur par famille, et celles que la
+# composition du texte connaît (`atelier.audio.texte`). « interface » est la
+# famille « interface et rétro ».
+from atelier.domaine.son import FAMILLES_SON  # noqa: E402
 
 # L'ordre est celui où les cases partent quand plusieurs partent ensemble.
 CHAMPS_SON = ("epoque", "rendu", "orchestre", "humeur")

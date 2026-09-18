@@ -30,12 +30,13 @@ l'endroit où il agit :
    peuvent, dans jsfxr aussi, dépasser plusieurs secondes ; on tronque
    plutôt que de laisser partir un fichier hors gabarit.
 
-**Deux départs ne viennent pas de jsfxr** : `validation` et `erreur`. Le
-plan ne demande que « clic, validation, erreur, que tu dérives de
+**Trois départs ne viennent pas de jsfxr** : `validation`, `erreur` et
+`survol`. Le plan ne demande que « clic, validation, erreur, que tu dérives de
 blipSelect/erreur basse » — jsfxr n'a que `blipSelect`. `validation`
 part de zéro (montée carrée, franche) ; `erreur` part de `blip_select`
-et l'assombrit (fréquence basse, glissando descendant). Les deux restent
-déterministes par graine, comme les huit départs jsfxr.
+et l'assombrit (fréquence basse, glissando descendant) ; `survol` part aussi
+de `blip_select`, resserré et adouci pour un clic très court (SN9). Les trois
+restent déterministes par graine, comme les huit départs jsfxr.
 
 La graine ne rejoue jamais `Math.random()` : elle passe par
 `random.Random(graine)`, un générateur Python stable d'une version à
@@ -338,6 +339,17 @@ def depart_erreur(r: _RNG) -> Params:
     return p
 
 
+def depart_survol(r: _RNG) -> Params:
+    # Hors jsfxr (§ tête de module) : un clic très court et plus doux, pour un
+    # survol d'élément (hover) — dérivé de blip_select, enveloppe resserrée et
+    # volume réduit.
+    p = depart_blip_select(r)
+    p.p_env_sustain = 0.02 + r.frnd(0.03)
+    p.p_env_decay = 0.03 + r.frnd(0.04)
+    p.sound_vol = 0.25 + r.frnd(0.1)
+    return p
+
+
 DEPARTS = {
     "pickup_coin": depart_pickup_coin,
     "laser_shoot": depart_laser_shoot,
@@ -349,6 +361,7 @@ DEPARTS = {
     "clic": depart_clic,
     "validation": depart_validation,
     "erreur": depart_erreur,
+    "survol": depart_survol,
 }
 
 

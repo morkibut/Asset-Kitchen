@@ -255,6 +255,47 @@ async def test_interface_par_sfxr_est_refusee_ici(son):  # noqa: F811
         await atelier.travaux_audio.preparer(projet, {"cle": "clic", "famille": "interface", "prompt": "click"})
 
 
+async def test_jingle_par_defaut_ne_refuse_plus(son):  # noqa: F811
+    """Correction du 18 septembre 2026 : un jingle par défaut (2 mesures + 1
+    de marge, 90 BPM) dure 8 s — sous l'ancien minimum d'ACE-Step (10 s), il
+    était proposé par la relecture puis refusé à l'envoi. Le minimum est
+    descendu à 2 s : ce qui sera refusé ne doit plus être proposé."""
+    atelier, comfy = son
+    projet = await installer_et_poser(atelier)
+    vu = atelier.travaux_audio.ce_qui_partira(projet, {"famille": "jingle", "prompt": "victory fanfare"})
+    assert vu["secondes"] == 8.0 and "erreur" not in vu
+    t = await atelier.travaux_audio.preparer(projet, {"cle": "victoire", "famille": "jingle", "prompt": "victory fanfare"})
+    assert t["snapshot_audio"]["secondes"] == 8.0
+
+
+async def test_duree_hors_intervalle_signalee_a_la_relecture_pas_refusee_a_l_envoi(son):  # noqa: F811
+    """Une durée trop longue pour le profil est signalée par la relecture
+    (`erreur`, lisible), et `preparer` refuse avec ce même message avant tout
+    appel à `composer` — jamais une durée proposée puis refusée plus loin."""
+    atelier, comfy = son
+    projet = await installer_et_poser(atelier)
+    vu = atelier.travaux_audio.ce_qui_partira(projet, {"famille": "musique", "prompt": "epic", "secondes": 900})
+    assert "erreur" in vu and "600" in vu["erreur"]
+    with pytest.raises(TravailRefuse, match=vu["erreur"]):
+        await atelier.travaux_audio.preparer(projet, {"cle": "trop-long", "famille": "musique", "prompt": "epic", "secondes": 900})
+
+
+async def test_bruitage_sous_la_duree_minimale_se_genere_au_minimum_avec_une_coupe_proposee(son):  # noqa: F811
+    """Un bruitage demandé à 0,5 s (sous le minimum réel de Stable Audio,
+    1 s) se génère à 1 s, et la composition propose une coupe (`fin` de
+    recette) à la durée voulue — jamais un refus pour une durée trop courte."""
+    atelier, comfy = son
+    projet = await installer_et_poser(atelier)
+    vu = atelier.travaux_audio.ce_qui_partira(projet, {"famille": "bruitage", "prompt": "click", "secondes": 0.5})
+    assert vu["secondes"] == 1 and vu["secondes_demandees"] == 0.5 and "erreur" not in vu
+    assert vu["recette_proposee"] == {"fin": 0.5} and "avertissement" in vu
+    t = await atelier.travaux_audio.preparer(projet, {"cle": "clic-court", "famille": "bruitage", "prompt": "click", "secondes": 0.5})
+    assert t["snapshot_audio"]["secondes"] == 1
+    fini = await lancer(atelier, t)
+    son_rendu = atelier.sons.lire(projet, fini["son"])
+    assert son_rendu["recette"]["fin"] == 0.5
+
+
 async def test_les_demandes_au14_gardent_leur_empreinte(son):  # noqa: F811
     """Une demande sans famille part comme avant : même texte, et la même
     empreinte qu'avant SN2 (calculée ici à la main, clé pour clé)."""
@@ -268,3 +309,45 @@ async def test_les_demandes_au14_gardent_leur_empreinte(son):  # noqa: F811
              "secondes": 3, "options": {}, "nom": "", "livrer_provisoire": False}
     assert t["empreinte"] == _hash(_json({"demande": avant, "acteur": "auteur"}))
     assert "composition" not in t and t["snapshot_audio"]["prompt"] == "Wooden door creaks open"
+
+
+# ── Un outil MCP de relecture (correction du 18 septembre 2026) ──────────
+
+
+class _ServeurMCPDouble:
+    """Un double minimal de `MCPServer` : `tool(...)` et `.tool(...)(fn)`
+    enregistrent la fonction telle quelle, sans réseau."""
+
+    def __init__(self):
+        self.outils = {}
+
+    def tool(self, name, **kw):
+        def decorateur(fn):
+            self.outils[name] = fn
+            return fn
+        return decorateur
+
+
+def _sans_refus(fn):
+    return fn
+
+
+async def test_preview_sound_text_relit_la_meme_composition_que_l_ecran(son):  # noqa: F811
+    from atelier.mcp.texte_son import installer_texte_son
+    atelier, comfy = son
+    projet = await installer_et_poser(atelier)
+    serveur = _ServeurMCPDouble()
+    installer_texte_son(serveur, atelier, _sans_refus)
+    outil = serveur.outils["preview_sound_text"]
+    vu = outil(project=projet, family="jingle", description="victory fanfare")
+    assert vu == atelier.travaux_audio.ce_qui_partira(projet, {"famille": "jingle", "prompt": "victory fanfare"})
+    assert vu["secondes"] == 8.0
+
+
+def test_list_sound_templates_relit_les_memes_gabarits_que_l_ecran():
+    from atelier.audio.texte import gabarits
+    from atelier.mcp.texte_son import installer_texte_son
+    serveur = _ServeurMCPDouble()
+    installer_texte_son(serveur, object(), _sans_refus)
+    outil = serveur.outils["list_sound_templates"]
+    assert outil() == gabarits()

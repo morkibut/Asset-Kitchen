@@ -19,6 +19,8 @@ import copy
 import re
 
 from atelier.audio.graphes import CONSTRUCTEURS, FAMILLES, FICHIERS, postes_fichiers
+from atelier.audio.texte import SFXR
+from atelier.domaine.son import FAMILLES_SON
 
 
 def _motif(nom_fichier):
@@ -92,8 +94,12 @@ def installer_depuis(profils_workflow, object_info, identifiants=None):
 
 
 class ServiceInstallationSon:
-    def __init__(self, profils_workflow):
+    def __init__(self, profils_workflow, atelier=None):
         self.profils_workflow = profils_workflow
+        # `atelier` arrive après coup (construit avant `travaux_audio` dans
+        # `Atelier.__init__`) : on ne s'en sert que dans `moteurs_par_famille`,
+        # appelée bien après que l'atelier soit entièrement monté.
+        self.atelier = atelier
 
     async def installer(self, identifiants=None):
         moteur = self.profils_workflow.fabrique_moteur()
@@ -103,33 +109,51 @@ class ServiceInstallationSon:
     def diagnostic_sonore(self, profil, diagnostic):
         """Pour l'écran : les fichiers absents que le diagnostic a signalés,
         chacun avec son nom en français, son dossier et sa source — ce qui
-        grise le moteur avec sa raison, jamais proposé puis refusé."""
+        grise le moteur avec sa raison, jamais proposé puis refusé.
+
+        Retrouve chaque fiche par le même motif que l'installation (`_motif` :
+        le nom de base, insensible à la casse et au dossier) plutôt qu'une
+        égalité exacte contre le texte du problème — un message qui cite le
+        fichier sous un autre dossier ou une autre casse le retrouve quand
+        même."""
         if profil.get("nature") != "audio" or diagnostic.get("disponible"):
             return []
         requis = {poste["fichier"] for poste in postes_fichiers(profil)}
+        par_motif = {_motif(nom): nom for nom in requis}
         trouve, vus = [], set()
         for probleme in diagnostic.get("problemes", []):
-            for nom in requis:
-                if nom in probleme and nom not in vus:
+            motif_probleme = _motif(probleme)
+            for motif, nom in par_motif.items():
+                if motif in motif_probleme and nom not in vus:
                     vus.add(nom)
                     trouve.append(_manque(nom))
         return trouve
 
-    def moteurs_par_famille(self):
-        """Le moteur sonore par défaut de chaque famille, parmi ceux
-        installés : le premier de sa liste qui a un profil. SN2/l'écran le
-        prend tel quel pour composer une demande."""
+    def moteurs_par_famille(self, projet):
+        """Le moteur sonore par défaut de chaque famille pour ce jeu : **le
+        même choix que SN2** (`ServiceTravauxAudio._moteur_de_famille` —
+        l'univers du jeu d'abord, puis le premier moteur installé de la
+        famille, sfxr pour l'interface), jamais une seconde liste qui pourrait
+        s'en écarter. La route `sound-defaults` et l'outil MCP
+        `get_sound_engine_defaults` en dépendent, avec le projet en paramètre."""
+        ta = self.atelier.travaux_audio
         par_identifiant = {}
         for profil in self.profils_workflow.lister():
             actuel = par_identifiant.get(profil["identifiant"])
             if actuel is None or profil["cree_le"] > actuel["cree_le"]:
                 par_identifiant[profil["identifiant"]] = profil
         resultat = {}
-        for famille, ordre in FAMILLES.items():
-            choisi = next((par_identifiant[i] for i in ordre if i in par_identifiant), None)
-            if choisi:
-                resultat[famille] = {"famille": famille, "modele": choisi["modele"], "moteur": choisi["identifiant"]}
-            else:
-                resultat[famille] = {"famille": famille, "modele": None, "moteur": None,
-                    "raison": "Aucun moteur installé pour « " + famille + " » : " + ", ".join(ordre) + "."}
+        for famille in FAMILLES_SON:
+            moteur, _ = ta._moteur_de_famille(projet, famille)
+            if moteur == SFXR:
+                resultat[famille] = {"famille": famille, "modele": SFXR, "moteur": SFXR}
+                continue
+            profil = par_identifiant.get(moteur) if moteur else None
+            if profil:
+                resultat[famille] = {"famille": famille, "modele": profil["modele"], "moteur": profil["identifiant"]}
+                continue
+            ordre = FAMILLES.get(famille, ())
+            raison = ("Aucun moteur installé pour « " + famille + " » : " + ", ".join(ordre) + ".") if ordre else \
+                "Aucun moteur sonore n'existe encore pour « " + famille + " »."
+            resultat[famille] = {"famille": famille, "modele": None, "moteur": None, "raison": raison}
         return resultat

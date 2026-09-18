@@ -41,8 +41,8 @@ async def installer_sonore(requete: Request):
 
 
 @routeur.get("/workflow-profiles/sound-defaults")
-def moteurs_par_famille(requete: Request):
-    return {"familles": requete.app.state.atelier.installation_son.moteurs_par_famille()}
+def moteurs_par_famille(requete: Request, projet: str):
+    return {"familles": requete.app.state.atelier.installation_son.moteurs_par_famille(projet)}
 
 
 @routeur.post("/projects/{projet}/workflow-image-jobs/prepare")

@@ -8,14 +8,17 @@ from atelier.domaine.travail import TravailRefuse
 from atelier.audio.graphes import FAMILLES
 from atelier.audio.texte import SFXR, composer_texte, langue
 from atelier.domaine.projet import FAMILLES_SON
-from atelier.domaine.workflow import MUSIQUE, composer, musique_du_graphe, tirer_graine
+from atelier.domaine.son import RecetteSon
+from atelier.domaine.workflow import MUSIQUE, composer, duree_acceptee, musique_du_graphe, tirer_graine
 from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu, FINIS
 from atelier.services.travaux import ServiceTravaux, _hash, _json, _verrou
 
 
-# Le nom d'un son fabriqué sans nom donné, par famille.
+# Le nom d'un son fabriqué sans nom donné, par famille — les sept clés de
+# `atelier.domaine.son.FAMILLES_SON` (importée, pas redite).
 ETIQUETTES = {"bruitage": "Bruitages", "interface": "Interface", "ambiance": "Ambiances", "musique": "Musique",
     "jingle": "Jingles", "chanson": "Chansons", "voix": "Voix"}
+assert set(ETIQUETTES) == set(FAMILLES_SON)
 
 
 class ServiceTravauxAudio(ServiceTravaux):
@@ -67,17 +70,16 @@ class ServiceTravauxAudio(ServiceTravaux):
 
     def _moteur_de_famille(self, projet, famille):
         """Le moteur d'une famille : celui que l'univers a posé, sinon le
-        premier installé des défauts (`graphes.FAMILLES`), sinon le premier
-        défaut, non installé — la relecture montre alors le texte et dit ce
-        qui manque, l'envoi refuse."""
+        premier installé des défauts (`graphes.FAMILLES` — sfxr pour
+        l'interface, aucun encore pour la voix), sinon le premier défaut, non
+        installé — la relecture montre alors le texte et dit ce qui manque,
+        l'envoi refuse."""
         pose = self.a.univers.univers(projet).son.moteurs.get(famille)
         if pose:
             return pose, "univers"
-        if famille == "interface":
-            return SFXR, "famille"
         ordre = FAMILLES.get(famille, ())
         for identifiant in ordre:
-            if self._profil_recent(identifiant):
+            if identifiant == SFXR or self._profil_recent(identifiant):
                 return identifiant, "famille"
         return (ordre[0] if ordre else None), "famille"
 
@@ -118,6 +120,25 @@ class ServiceTravauxAudio(ServiceTravaux):
             for k in MUSIQUE:
                 if brut.get(k) is not None and k not in compo["parametres"] and k not in dans_le_texte:
                     raise TravailRefuse(f"Le moteur « {moteur} » ne reçoit pas de réglage « {k} » pour cette famille.")
+            # Ce qui sera refusé ne doit pas être proposé : la relecture vérifie
+            # déjà la durée contre l'intervalle du profil, et la signale dans un
+            # champ lisible, au lieu de laisser `composer` refuser à l'envoi.
+            if profil["nature"] == "audio" and "secondes" in compo and not duree_acceptee(profil, compo["secondes"]):
+                libre = profil.get("duree_libre")
+                demandees = compo["secondes"]
+                if libre and demandees < libre["min"]:
+                    # Sous le minimum réel du moteur : on tire au minimum, et on
+                    # propose une coupe (`fin` de recette) à la durée voulue —
+                    # jamais un refus pour une durée trop courte.
+                    compo.update(secondes=libre["min"], secondes_demandees=demandees, source_secondes="moteur",
+                        recette_proposee={"fin": demandees},
+                        avertissement=f"Ce moteur ne descend pas sous {libre['min']:g} s : le tirage se fera à "
+                            f"{libre['min']:g} s, avec une coupe à {demandees:g} s proposée dans sa recette.")
+                elif libre:
+                    compo["erreur"] = (f"Ce profil accepte une durée de {libre['min']:g} à {libre['max']:g} secondes ; "
+                        f"la durée demandée est {demandees:g} s.")
+                else:
+                    compo["erreur"] = "Cette durée sonore n'est pas déclarée par le profil."
         relu = brut.get("texte_relu")
         if relu is not None:
             if not isinstance(relu, str) or not relu.strip():
@@ -140,10 +161,17 @@ class ServiceTravauxAudio(ServiceTravaux):
         compo, _ = self._composition(projet, brut)
         return compo
 
-    async def preparer(self, projet, brut, acteur="auteur", *, serie=None):
+    async def preparer(self, projet, brut, acteur="auteur", *, serie=None, figer=None):
         """`serie` ({identifiant, rang}) lie ce travail à une série (SN3). Elle
         reste hors de la demande : l'empreinte d'un tirage est celle de la
-        même demande préparée seule, et celle des demandes d'avant ne bouge pas."""
+        même demande préparée seule, et celle des demandes d'avant ne bouge pas.
+
+        `figer` ({"modele", "texte"}, les deux facultatifs) fige le moteur et
+        le texte composé — la série (SN3) s'en sert pour qu'une reprise après
+        un changement de l'univers ou une réinstallation des moteurs ne
+        mélange jamais deux textes entre les tirages. Il agit sur la
+        composition, jamais sur `d` : l'empreinte d'un tirage préparé sans
+        `figer` ni `figer` qui ne change rien reste identique."""
         self._projet(projet)
         permis = {"cle", "modele", "prompt", "prompt_negatif", "secondes", "options", "nom", *MUSIQUE,
                   "famille", "texte_relu", "mesures"}
@@ -154,11 +182,22 @@ class ServiceTravauxAudio(ServiceTravaux):
             raise TravailRefuse("Un texte relu ou une durée en mesures demandent une famille de sons.")
         compo = profil = None
         if famille:
-            compo, profil = self._composition(projet, brut)
+            brut_calcul = brut
+            if figer and (figer.get("modele") or figer.get("texte")):
+                brut_calcul = dict(brut)
+                if figer.get("modele"):
+                    brut_calcul["modele"] = figer["modele"]
+                if figer.get("texte") and "texte_relu" not in brut_calcul:
+                    brut_calcul["texte_relu"] = figer["texte"]
+            compo, profil = self._composition(projet, brut_calcul)
             if not compo["compose"]:
                 raise TravailRefuse(compo["raison"])
             if profil is None:
                 raise TravailRefuse(compo["raison"])
+            if compo.get("erreur"):
+                # Signalé par la relecture, pas laissé à `composer` pour
+                # refuser plus loin : le message vu ici est celui déjà montré.
+                raise TravailRefuse(compo["erreur"])
         d = {"cle": brut.get("cle"), "modele": profil["modele"] if famille else brut.get("modele"), "prompt": brut.get("prompt"),
              "prompt_negatif": brut.get("prompt_negatif", ""), "secondes": brut.get("secondes"),
              "options": brut.get("options", {}), "nom": brut.get("nom", ""), "livrer_provisoire": False,
@@ -272,13 +311,21 @@ class ServiceTravauxAudio(ServiceTravaux):
                 compo = t.get("composition")
                 if compo:
                     # La famille (lue par la livraison, SN4) et le texte parti.
+                    # « mesures » : pour que `beat_count` sache si la durée
+                    # vient d'un nombre de mesures gardé (services/sons.py).
                     provenance.update(famille=compo["famille"], composition={k: compo.get(k) for k in (
-                        "gabarit", "moteur", "texte", "texte_negatif", "morceaux", "relu", "texte_compose", "langue")})
+                        "gabarit", "moteur", "texte", "texte_negatif", "morceaux", "relu", "texte_compose", "langue",
+                        "mesures")})
                 if t.get("serie"):
                     provenance["serie"] = t["serie"]  # SN3 : de quelle série, quel tirage
-                etiquette = ETIQUETTES.get(compo["famille"], "Bruitages") if compo else "Bruitages"
-                son = self.a.sons.importer_octets(projet, octets, nom=t["demande"]["nom"] or etiquette + " · " + t["demande"]["prompt"][:60],
-                    provenance=provenance, cle="travail:" + identifiant)
+                # Le nom par défaut ne répète ni la famille (déjà le préfixe de
+                # `nom_stable`) ni un rang de tirage (déjà le numéro que la
+                # livraison d'un jeu de variantes pose) : juste la description.
+                etiquette = ETIQUETTES.get(compo["famille"], "Son") if compo else "Son"
+                nom = t["demande"]["nom"] or (t["demande"]["prompt"] or "").strip()[:60] or etiquette
+                recette = RecetteSon(fin=compo["recette_proposee"]["fin"]) if compo and compo.get("recette_proposee") else None
+                son = self.a.sons.importer_octets(projet, octets, nom=nom,
+                    provenance=provenance, cle="travail:" + identifiant, recette=recette)
                 t.update(etat="termine" if son["pret"] else "a_verifier", etape="termine", son=son["identifiant"], reserve=None, raison=son.get("raison", ""))
                 self._garder(t)
         except asyncio.CancelledError: raise

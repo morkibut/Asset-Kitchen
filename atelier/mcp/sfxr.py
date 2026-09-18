@@ -41,6 +41,6 @@ def installer_sfxr(serveur, atelier, refus):
     )
     @refus
     async def variantes(project: str, seed: int, start: str | None = None, parameters: dict[str, Any] | None = None,
-            count: int = 4, name: str | None = None) -> list[dict[str, Any]]:
+            count: int = 8, name: str | None = None) -> list[dict[str, Any]]:
         return [vue(project, son) for son in atelier.sfxr.variantes(project, depart=start,
             parametres=parameters, graine=seed, nombre=count, nom=name)]

@@ -7,7 +7,19 @@ from atelier.audio.traitement import encoder
 from atelier.domaine.travail import TravailRefuse
 from atelier.services import Atelier
 from tests.test_au7_au8 import ComfyDouble, profil, raccorder
-from tests.test_au14_sons import signal
+
+
+def signal(taux=16000):
+    # Deux canaux distincts (440 Hz à gauche, 554 Hz à droite), à la
+    # différence du `signal()` de `test_au14_sons` (exactement en phase
+    # inverse, pour son propre essai de mixage stéréo précis) : celui-ci sert
+    # de bruitage générique à toute la suite ComfyUI doublée, y compris au
+    # geste « garder » (SN3/SN9) qui applique un passage en mono — une paire
+    # exactement opposée s'y annulerait et se dirait silencieuse à tort.
+    t = np.arange(taux) / taux
+    gauche = .25 * np.sin(2 * np.pi * 440 * t)
+    droite = .25 * np.sin(2 * np.pi * 554 * t)
+    return encoder(np.column_stack((gauche, droite)), taux)
 
 
 def profil_son():

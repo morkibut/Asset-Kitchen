@@ -6,7 +6,8 @@ import copy
 import httpx
 import pytest
 
-from atelier.audio.graphes import CONSTRUCTEURS
+from atelier.audio.graphes import CONSTRUCTEURS, FAMILLES as MOTEURS_PAR_FAMILLE, SECOURS
+from atelier.domaine.son import FAMILLES_SON
 from atelier.domaine.workflow import normaliser
 from atelier.services import Atelier
 from atelier.services.installation_son import installer_depuis
@@ -127,13 +128,43 @@ async def test_bruitage_se_prepare_depuis_le_profil_installe_sans_import_manuel(
 
 async def test_moteurs_par_famille_lit_ce_qui_est_installe(son):
     atelier, comfy = son
-    familles = atelier.installation_son.moteurs_par_famille()
+    projet = atelier.bibliotheque.courant
+    familles = atelier.installation_son.moteurs_par_famille(projet)
     assert familles["bruitage"]["moteur"] is None and "raison" in familles["bruitage"]
+    # « secours » n'est plus une famille du jeu ; l'interface a sfxr sans
+    # installation, la voix n'a encore aucun moteur, dit comme tel.
+    assert set(familles) == {"bruitage", "interface", "ambiance", "musique", "jingle", "chanson", "voix"}
+    assert familles["interface"]["moteur"] == "sfxr"
+    assert familles["voix"]["moteur"] is None and "raison" in familles["voix"]
     await atelier.installation_son.installer(identifiants=["sa3-small-sfx", "ace-step-15-turbo"])
-    familles = atelier.installation_son.moteurs_par_famille()
+    familles = atelier.installation_son.moteurs_par_famille(projet)
     assert familles["bruitage"]["moteur"] == "sa3-small-sfx" and familles["ambiance"]["moteur"] == "sa3-small-sfx"
     assert familles["musique"]["moteur"] == "ace-step-15-turbo" and familles["jingle"]["moteur"] == "ace-step-15-turbo"
-    assert familles["chanson"]["moteur"] is None and familles["secours"]["moteur"] is None
+    assert familles["chanson"]["moteur"] is None
+
+
+async def test_moteurs_par_famille_suit_le_choix_de_l_univers(son):
+    """Correction du 18 septembre 2026 : la route et l'outil MCP appellent
+    désormais le même choix que SN2 (`ServiceTravauxAudio._moteur_de_famille`
+    — l'univers d'abord), pas une liste à part."""
+    atelier, comfy = son
+    projet = atelier.bibliotheque.courant
+    await atelier.installation_son.installer(identifiants=["sa3-small-sfx", "ace-step-15-turbo"])
+    atelier.univers.regler_univers(projet, son={"moteurs": {"bruitage": "ace-step-15-turbo"}})
+    familles = atelier.installation_son.moteurs_par_famille(projet)
+    assert familles["bruitage"]["moteur"] == "ace-step-15-turbo"
+
+
+def test_une_seule_liste_des_sept_familles():
+    """Correction du 18 septembre 2026 : les sept clés de `FAMILLES_SON`
+    définies en un seul endroit ; « secours » n'en fait plus partie, c'est une
+    liste de moteurs de repli à part. L'interface a sfxr pour seul moteur ; la
+    voix n'en a encore aucun."""
+    assert set(MOTEURS_PAR_FAMILLE) == set(FAMILLES_SON) == {
+        "bruitage", "interface", "ambiance", "musique", "jingle", "chanson", "voix"}
+    assert MOTEURS_PAR_FAMILLE["interface"] == ("sfxr",) and MOTEURS_PAR_FAMILLE["voix"] == ()
+    assert "secours" not in MOTEURS_PAR_FAMILLE
+    assert SECOURS == ("sa3-medium", "sa-open-1")
 
 
 # ── Le diagnostic nomme ce qui manque ────────────────────────────────────
@@ -146,6 +177,21 @@ async def test_diagnostic_sonore_nomme_le_fichier_le_dossier_et_la_source(son):
     comfy.informations = info
     profil = normaliser(CONSTRUCTEURS["sa3-small-sfx"]())
     diagnostic = await atelier.profils_workflow.fabrique_moteur().diagnostiquer_profil(profil)
+    manque = atelier.installation_son.diagnostic_sonore(profil, diagnostic)
+    assert manque == [{"nom": "le modèle Stable Audio 3 Small-SFX (bruitages et ambiances)",
+        "fichier": "stable_audio_3_small_sfx.safetensors", "dossier": "checkpoints",
+        "source": "https://huggingface.co/Comfy-Org/stable-audio-3"}]
+
+
+async def test_diagnostic_sonore_retrouve_le_fichier_sous_un_autre_dossier_et_une_autre_casse(son):
+    """Correction du 18 septembre 2026 : la fiche se retrouve par le même
+    motif que l'installation (nom de base, insensible à la casse, quel que
+    soit le dossier) — pas une égalité exacte contre le texte du problème."""
+    atelier, comfy = son
+    profil = normaliser(CONSTRUCTEURS["sa3-small-sfx"]())
+    diagnostic = {"disponible": False, "problemes": [
+        "CheckpointLoaderSimple / ckpt_name : D:\\modeles\\checkpoints\\STABLE_AUDIO_3_SMALL_SFX.safetensors "
+        "est absent des choix installés."]}
     manque = atelier.installation_son.diagnostic_sonore(profil, diagnostic)
     assert manque == [{"nom": "le modèle Stable Audio 3 Small-SFX (bruitages et ambiances)",
         "fichier": "stable_audio_3_small_sfx.safetensors", "dossier": "checkpoints",

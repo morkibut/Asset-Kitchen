@@ -37,8 +37,10 @@ def installer_variantes_son(serveur, atelier, refus):
         return await atelier.series_son.demarrer(project, series, "agent")
 
     @serveur.tool(name="keep_sound_takes", meta=meta("Garder des tirages", "creer", "galerie"), description=(
-        "Keep takes of a series as a variant set: request {rangs:[1,3,...]} or {sons:[...]}, optional nom, cle. "
-        "The set lists sounds by reference, in order, and remembers its series."))
+        "Keep takes of a series as a variant set: request {rangs:[1,3,...]} or {sons:[...]}, optional nom, cle, "
+        "famille. The set lists sounds by reference, in order, and remembers its series. Each kept sound also gets "
+        "a new version with its family's proposed recipe applied (mono for sfx/interface/voice, target level), "
+        "visible in its versions — pass appliquer_reglages=false to skip this."))
     @refus
     async def keep_sound_takes(project: str, series: str, request: dict[str, Any]) -> dict[str, Any]:
         return atelier.series_son.garder(project, series, request)

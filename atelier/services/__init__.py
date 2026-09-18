@@ -276,7 +276,7 @@ class Atelier:
             self.profils_workflow.fabrique_moteur)
         # Installer les méthodes sonores (SN1) : ne connaît que le service des
         # profils, pour retrouver ses fichiers par motif et les importer.
-        self.installation_son = ServiceInstallationSon(self.profils_workflow)
+        self.installation_son = ServiceInstallationSon(self.profils_workflow, self)
         # **Deux entrées pour une seule liste, et la seconde est celle de F1.**
         # `fabrique_fournisseur` au singulier monte un atelier sur un fournisseur
         # unique : c'est ce que font tous les essais du dépôt, et ça décrit

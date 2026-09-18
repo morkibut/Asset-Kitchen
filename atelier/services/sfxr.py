@@ -82,7 +82,12 @@ class ServiceSfxr:
         return self.a.sons.importer_octets(projet, octets, nom=nom_final,
             provenance=_provenance(params, graine, depart_retenu), cle=_cle(params, graine))
 
-    def variantes(self, projet, *, depart=None, parametres=None, graine, nombre=4, nom=None):
+    def variantes(self, projet, *, depart=None, parametres=None, graine, nombre=8, nom=None):
+        """8 variantes par défaut (SN9), pas 4 : le même compte que les autres
+        sons courts (`TIRAGES_PAR_DEFAUT["interface"]`). En plus des sons, les
+        variantes rangent un jeu (famille interface) qui les liste dans
+        l'ordre : le geste attendu après un tirage sfxr est d'en garder
+        plusieurs, pas un seul."""
         graine = _valider_graine(graine)
         nombre = _valider_nombre(nombre)
         base, depart_retenu = _resoudre(depart, parametres, graine)
@@ -97,4 +102,7 @@ class ServiceSfxr:
                 "mutation_de": {"parametres": base.en_json(), "graine": graine}}
             resultats.append(self.a.sons.importer_octets(projet, octets, nom=f"{nom_base} — variante {i + 1}",
                 provenance=provenance, cle=_cle(variante, graine_variante)))
+        self.a.variantes_son.creer(projet, {
+            "nom": nom_base, "sons": [r["identifiant"] for r in resultats], "famille": "interface",
+            "cle": f"sfxr-variantes:{depart_retenu or 'parametres'}:{graine}:{nombre}"})
         return resultats

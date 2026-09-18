@@ -102,6 +102,33 @@ def test_service_fabriquer_avec_parametres_complets(audio):
     assert son["provenance"]["parametres"] == parametres
 
 
+def test_survol_est_un_depart_connu_court_et_doux():
+    """Correction du 18 septembre 2026 : un départ `survol` (clic très court
+    et plus doux), en plus des huit départs jsfxr et de `clic`/`validation`/
+    `erreur`."""
+    assert "survol" in DEPARTS
+    signal_survol, taux = rendre_sfxr(tirer_depart("survol", 3), 3)
+    signal_clic, _ = rendre_sfxr(tirer_depart("clic", 3), 3)
+    assert len(signal_survol) < len(signal_clic)
+
+
+def test_variantes_par_defaut_rangent_un_jeu_de_variantes_interface(audio):
+    """8 variantes par défaut (pas 4), et un jeu de variantes (famille
+    interface) qui les liste, en plus des sons eux-mêmes."""
+    atelier, projet = audio
+    variantes = atelier.sfxr.variantes(projet, depart="clic", graine=10, nom="Clic")
+    assert len(variantes) == 8
+    jeux = atelier.variantes_son.lister(projet)
+    assert len(jeux) == 1
+    jeu = jeux[0]
+    assert jeu["famille"] == "interface" and jeu["nom"] == "Clic"
+    assert jeu["sons"] == [v["identifiant"] for v in variantes]
+    assert jeu["a_livrer"] == jeu["sons"]
+    # Rejouer les mêmes variantes ne double pas le jeu.
+    atelier.sfxr.variantes(projet, depart="clic", graine=10, nom="Clic")
+    assert len(atelier.variantes_son.lister(projet)) == 1
+
+
 def test_service_refuse_ni_les_deux_ni_aucun(audio):
     atelier, projet = audio
     with pytest.raises(SonRefuse, match="pas les deux, pas aucun"):

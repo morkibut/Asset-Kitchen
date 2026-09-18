@@ -168,10 +168,12 @@ def test_la_duree_libre_accepte_seize_mesures_a_90_bpm():
     assert composer(profil, prompt="x", secondes=60)["7"]["inputs"]["seconds"] == 60
 
 
-@pytest.mark.parametrize("secondes", [9.99, 600.5, float("nan"), True, "42"])
+@pytest.mark.parametrize("secondes", [1.99, 600.5, float("nan"), True, "42"])
 def test_la_duree_libre_refuse_hors_intervalle(secondes):
     profil = normaliser(CONSTRUCTEURS["ace-step-15-turbo"]())
-    with pytest.raises(WorkflowRefuse, match="de 10 s à 600 s"):
+    # 2 s, non 10 : un jingle par défaut (2 mesures + 1 de marge, 90 BPM) dure
+    # 8 s, sous l'ancien minimum (correction du 18 septembre 2026).
+    with pytest.raises(WorkflowRefuse, match="de 2 s à 600 s"):
         composer(profil, prompt="x", secondes=secondes)
 
 
@@ -311,7 +313,7 @@ async def test_preparer_sans_reglages_fige_ceux_du_graphe(musique):
 
 @pytest.mark.parametrize("reglage, raison", [
     ({"tempo": 400}, "tempo"), ({"tonalite": "Do mineur"}, "tonalité"), ({"mesure": 7}, "mesure"),
-    ({"secondes": 5}, "de 10 s à 600 s"), ({"secondes": 601}, "de 10 s à 600 s"),
+    ({"secondes": 1}, "de 2 s à 600 s"), ({"secondes": 601}, "de 2 s à 600 s"),
 ])
 async def test_preparer_refuse_en_clair_avant_tout_appel(musique, reglage, raison):
     atelier, comfy, p = musique

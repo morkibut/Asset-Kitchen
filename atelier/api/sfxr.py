@@ -15,7 +15,7 @@ class Fabrication(BaseModel):
 
 
 class Variantes(Fabrication):
-    nombre: int = Field(ge=1, le=16, strict=True, default=4)
+    nombre: int = Field(ge=1, le=16, strict=True, default=8)
 
 
 @routeur.get("/starts")

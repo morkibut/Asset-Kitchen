@@ -230,6 +230,25 @@ def test_paquet_musique_ogg_coupe_a_la_fin_de_boucle_avec_tempo(audio, tmp_path)
     assert credits["licence"]["nom"] == "MIT" and credits["texte"] == "calm exploration"
 
 
+def test_beat_count_utilise_les_mesures_demandees_sans_la_marge(audio, tmp_path):
+    """Correction du 18 septembre 2026 : quand la composition a gardé un
+    nombre de mesures demandé (SN2), `beat_count` se calcule dessus — sans la
+    mesure de marge ajoutée pour couper la boucle proprement — plutôt que sur
+    la durée réelle du fichier, qui l'inclut."""
+    atelier, projet = audio
+    provenance = {"travail": "t-boucle", "modele": "ComfyUI:ace-step-15-turbo@v2", "workflow": "v1", "sortie": "x.flac",
+        "famille": "musique", "envoi": {"prompt": "exploration", "graine": 1, "tempo": 90, "mesure": "4"},
+        "composition": {"mesures": {"demandees": 16, "marge": 1, "total": 17, "source": "gabarit"}}}
+    # 17 mesures à 90 BPM (16 demandées + 1 de marge) : 45,33 s.
+    son = atelier.sons.importer_octets(projet, encoder(_stereo(45.33, 44100), 44100), nom="Exploration",
+        provenance=provenance, cle="travail:t-boucle")
+    son = atelier.sons.regler(projet, son["identifiant"], 1, {"boucle": True, "boucle_debut": 0, "boucle_fin": 45.33})
+    _, contenus = atelier.sons.paquet(projet, son["identifiant"])
+    params = _lire_import(contenus["mus_exploration.ogg.import"])
+    # 16 mesures × 4 temps = 64, pas round(45.33 × 90 / 60) = 68.
+    assert params["beat_count"] == "64"
+
+
 def test_credits_des_licences_par_moteur(audio):
     atelier, projet = audio
     chanson = _genere(atelier, projet, "chanson", nom="Taverne", modele="ComfyUI:yue2-int8@v1",
@@ -239,7 +258,10 @@ def test_credits_des_licences_par_moteur(audio):
     assert credits["paroles"] == "[verse] ho"
     clic = atelier.sfxr.fabriquer(projet, depart="clic", graine=5)
     credits = json.loads(atelier.sons.paquet(projet, clic["identifiant"])[1]["credits.json"])["sons"][0]
-    assert credits["moteur"] == "sfxr" and credits["licence"]["nom"] == "Domaine public" and credits["graine"] == 5
+    # Correction du 18 septembre 2026 : le crédit nomme le portage (jsfxr,
+    # chr15m) et sa licence réelle (Unlicense), plus pyfxr qui l'exécute.
+    assert credits["moteur"] == "sfxr" and "jsfxr" in credits["licence"]["nom"] and "Unlicense" in credits["licence"]["nom"]
+    assert credits["graine"] == 5
     importe = atelier.sons.importer_octets(projet, encoder(_stereo(1, 16000), 16000), nom="Porte.wav")
     importe = atelier.sons.classer(projet, importe["identifiant"], 1, "bruitage")
     credits = json.loads(atelier.sons.paquet(projet, importe["identifiant"])[1]["credits.json"])["sons"][0]
@@ -371,6 +393,29 @@ def test_un_son_sature_du_jeu_se_livre_et_le_signale(audio, tmp_path):
     preparation = atelier.variantes_son.prevoir_livraison(projet, jeu["identifiant"])
     assert preparation["signalements"] and "sature" in preparation["signalements"][0]["signal"]
     assert len(preparation["sons"]) == 1  # signalé, mais livré quand même
+
+
+def test_l_ancien_blocage_par_la_seule_saturation_redevient_pret_a_la_lecture(audio):
+    """Correction du 18 septembre 2026 : un son enregistré avant, avec
+    `pret=False` écrit sur le disque pour la seule saturation, redevient prêt
+    à la lecture (`pret`/`raison`/`avertissements` recalculés depuis les
+    mesures conservées, sans rien réécrire) ; `statut_membre` d'un jeu de
+    variantes le lit et ne l'écarte plus."""
+    atelier, projet = audio
+    son = _genere(atelier, projet, "bruitage", nom="Vieux")
+    dossier = atelier.sons._dossier(projet, son["identifiant"])
+    brut = json.loads((dossier / "son.json").read_text(encoding="utf-8"))
+    # Comme l'ancien pipeline l'écrivait, avant que SN3 ne lève le blocage :
+    # la saturation seule mettait `pret` à faux.
+    brut.update(pret=False, etat="a_verifier", raison="Le rendu sature.", avertissements=[])
+    for chemin in (dossier / "son.json", dossier / "revisions" / f"{son['revision']}.json"):
+        chemin.write_text(json.dumps(brut), encoding="utf-8")
+    relu = atelier.sons.lire(projet, son["identifiant"])
+    assert relu["pret"] is True and relu["raison"] == "" and relu["versions"][0]["pret"] is True
+    # Rien n'a été réécrit sur le disque.
+    assert json.loads((dossier / "son.json").read_text(encoding="utf-8"))["pret"] is False
+    jeu = atelier.variantes_son.creer(projet, {"nom": "Vieux", "sons": [son["identifiant"]]})
+    assert jeu["a_livrer"] == [son["identifiant"]]
 
 
 # ── Dans le vrai Godot 4.7 ───────────────────────────────────────────────
