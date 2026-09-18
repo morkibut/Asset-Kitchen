@@ -103,6 +103,14 @@ export const stylesLocaux = {
 export type SegmentTexteLocal = { clef: string; nom: string; texte: string; origine: string }
 export type RetireTexteLocal = { clef: string; nom: string; texte: string; raison: string }
 
+/** Ce qu'un style local annonce **avant de lancer** (règle 8ter, ML5) : un
+ *  temps, jamais un prix. `secondes` est la médiane mesurée sur cette
+ *  machine, `null` tant qu'aucun tirage n'a réussi ici ; `vitesse` est alors
+ *  le repli, la phrase du style sc-clone (« environ 30 secondes par image »).
+ *  Les deux peuvent manquer ensemble — un style tout juste installé, jamais
+ *  encore lancé, dont la fiche ne porte pas de vitesse propre. */
+export type TempsLocal = { secondes: number | null; mesures: number; vitesse: string | null }
+
 /** Ce qu'un style local laisse en route (ML4) — `null` pour tout modèle qui
  *  n'est pas un style local, distant compris. */
 export type TexteLocal = {
@@ -116,6 +124,8 @@ export type TexteLocal = {
   tranche: number | null
   comptage: string
   negatif_lu: boolean
+  /** Le temps annoncé pour ce style-ci (ML5) — voir `TempsLocal`. */
+  temps: TempsLocal | null
 } | null
 
 /** Ce que `envoi.py` (`ServiceEnvoi.envoi`) ajoute à `Envoi` (`api.ts`) pour
@@ -126,6 +136,13 @@ export type EnvoiAvecLocal = {
   fond: { negatif_lu: boolean }
 }
 
-/** Ce que `Modele` (`api.ts`) porte pour un style local (ML3) : le genre de
- *  référence qu'il prend. Absent — donc `undefined` — pour un modèle distant. */
-export type ModeleAvecReference = { reference?: GenreReference | null }
+/** Ce que `Modele` (`api.ts`) porte pour un style local (ML3, ML5) : le genre
+ *  de référence qu'il prend, le moteur sous lequel le grouper, si le négatif
+ *  est lu, et le temps annoncé (règle 8ter). Absent — donc `undefined` — pour
+ *  un modèle distant. */
+export type ModeleAvecReference = {
+  reference?: GenreReference | null
+  famille?: string | null
+  negatif_lu?: boolean
+  temps?: TempsLocal | null
+}

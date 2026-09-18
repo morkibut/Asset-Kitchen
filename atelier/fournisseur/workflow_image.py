@@ -46,7 +46,9 @@ class FournisseurWorkflowImage:
                 resolutions=tuple(dict.fromkeys(f["resolution"] for f in p["formats"])), locale=True,
                 options={n: Option(n, o["genre"], tuple(o.get("valeurs", [])), o.get("minimum"), o.get("maximum")) for n, o in p["parametres"].items()},
                 indisponible=" · ".join(diagnostic["problemes"]) or None,
-                reference=(p.get("style") or {}).get("reference")))
+                reference=(p.get("style") or {}).get("reference"),
+                negatif_lu="prompt_negatif" in p["liaisons"],
+                famille=(p.get("style") or {}).get("famille")))
         return modeles
 
     async def generer(self, modele, demande):

@@ -11,7 +11,7 @@
 // de tout écran incapable de dépenser**. C'est ce qui donne à la galerie son
 // métier propre : on y juge, on n'y paie jamais.
 
-import { api } from "../api"
+import { api, quantite } from "../api"
 import type {
   Asset,
   CompteReferences,
@@ -23,6 +23,12 @@ import type {
   Role,
   Univers,
 } from "../api"
+import {
+  NOM_MOTEUR_LOCAL,
+  NOM_REFERENCE,
+  ORDRE_MOTEURS_LOCAUX,
+  type ModeleAvecReference,
+} from "../api-workflows"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { usePli } from "./pieces"
 import { nomDuModele } from "./Fiche"
@@ -81,6 +87,7 @@ export function BarreQuiPaie({
   enPaiement,
   echec,
   enVol,
+  onOuvrirMoteurs,
 }: {
   presentation?: "barre" | "preparation"
   onChoisirReference?: () => void
@@ -145,6 +152,10 @@ export function BarreQuiPaie({
   enPaiement?: boolean
   echec?: string | null
   enVol?: EnVol | null
+  /** Ouvrir *Réglages › Moteurs & workflows* (ML5) — pour installer un style
+   *  local de plus sans quitter la préparation. Absent tant que l'écran
+   *  appelant ne sait pas encore y mener : le lien ne paraît alors pas. */
+  onOuvrirMoteurs?: () => void
 }) {
   // **Le repli des réglages de l'appel vit dans le registre du châssis** (E4,
   // A-25) : c'est le même besoin que le prompt négatif — « fermer le panneau
@@ -162,6 +173,29 @@ export function BarreQuiPaie({
       else prochaines[cle] = valeur
       onOptions(prochaines)
     }
+    // **Les styles locaux, groupés sous leur moteur** (ML5, décision 9) : la
+    // liste les mettait à plat, sous un seul nom déjà pris par leur
+    // fournisseur commun — « ComfyUI · Z-Image Turbo · … » ne dit pas sous
+    // quel moteur ranger la ligne suivante. Les modèles distants gardent leur
+    // place, en tête ; les locaux suivent, un `optgroup` par moteur.
+    const modelesDistants = modeles.filter((m) => !m.locale)
+    const modelesLocaux = new Map<string, Modele[]>()
+    for (const m of modeles) {
+      if (!m.locale) continue
+      const cle = (m as unknown as ModeleAvecReference).famille ?? "autre"
+      modelesLocaux.set(cle, [...(modelesLocaux.get(cle) ?? []), m])
+    }
+    const infosModele = modele ? (modele as unknown as ModeleAvecReference) : null
+    // **`force` n'existe que quand elle agit** (règle 8nonies) : un style qui
+    // *garde le sujet* (Klein) ne la lit pas, et un style *partir de cette
+    // image* ne l'applique qu'à l'image jointe qu'on lui donne — sans elle, il
+    // n'y a rien pour le KSampler à doser. Le reste des réglages du modèle
+    // passe tel quel.
+    const forceUtile = !!(
+      modele?.locale &&
+      infosModele?.reference === "depart" &&
+      reinjections.length > 0
+    )
     return <div className="flex min-h-0 flex-1 flex-col text-[13px]">
       <div className="defile min-h-0 flex-1 space-y-[22px] overflow-y-auto px-[30px] py-[22px]">
       {/* **Ce qui part, et de quoi le corriger** — la bande « Pour » de la
@@ -186,7 +220,35 @@ export function BarreQuiPaie({
         {repris ? <p className="text-signal">Ce texte part mot pour mot. <button type="button" className="underline" onClick={onRendre}>Rétablir les consignes de l’univers</button></p> : <p className="text-encre-3">Le style du jeu et la cible complètent cette description. Tu pourras relire et modifier le texte complet avant l’envoi.</p>}
       </section>
       <section className="grid grid-cols-2 gap-[14px] rounded-7 border border-trait bg-carte p-[22px]">
-        <label className="col-span-2 space-y-[8px]"><span className="block font-medium">{CHAMP_DU_MODELE}</span><select className={champ} value={modele?.identifiant ?? ""} onChange={(e) => onChoisirModele(e.target.value)}><option value="" disabled>Choisir un modèle</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.fournisseur} · {m.nom}{m.refus ? ` — ${m.refus}` : ""}</option>)}</select></label>
+        <label className="col-span-2 space-y-[8px]">
+          <span className="block font-medium">{CHAMP_DU_MODELE}</span>
+          <select className={champ} value={modele?.identifiant ?? ""} onChange={(e) => onChoisirModele(e.target.value)}>
+            <option value="" disabled>Choisir un modèle</option>
+            {modelesDistants.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.fournisseur} · {m.nom}{m.refus ? ` — ${m.refus}` : ""}</option>)}
+            {ORDRE_MOTEURS_LOCAUX.filter((f) => modelesLocaux.has(f)).map((f) => (
+              <optgroup key={f} label={NOM_MOTEUR_LOCAL[f]}>
+                {(modelesLocaux.get(f) ?? []).map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.nom}{m.refus ? ` — ${m.refus}` : ""}</option>)}
+              </optgroup>
+            ))}
+          </select>
+          {/* **Ce qu'un style local prend, et le temps qu'il annonce**
+              (ML5, règles 8ter et 8nonies) : un temps, jamais un prix, et le
+              genre de référence — sous la liste qui vient de le choisir, pas
+              une infobulle qu'il faudrait rouvrir pour relire. */}
+          {modele?.locale && (
+            <p className="text-encre-3">
+              {infosModele?.temps?.secondes != null
+                ? `≈ ${quantite(infosModele.temps.secondes, "seconde")} par image`
+                : (infosModele?.temps?.vitesse ?? "Durée non encore mesurée pour ce workflow.")}
+              {infosModele?.reference && ` · ${NOM_REFERENCE[infosModele.reference]}`}
+            </p>
+          )}
+          {onOuvrirMoteurs && (
+            <button type="button" className="text-signal underline" onClick={onOuvrirMoteurs}>
+              Installer d’autres styles depuis Réglages › Moteurs &amp; workflows
+            </button>
+          )}
+        </label>
         <label className="space-y-[8px]"><span className="block font-medium">Format de l’image</span><select className={champ} value={proportions} disabled={!modele} onChange={(e) => onProportions(e.target.value)}>{!modele?.proportions.includes(proportions) && <option value={proportions} disabled>{proportions} — indisponible</option>}{modele?.proportions.map((p) => <option key={p}>{p}</option>)}</select></label>
         <label className="space-y-[8px]"><span className="block font-medium">Variations</span><input type="number" className={champ} min={1} max={modele?.variations_max ?? 1} step={1} disabled={!!cases || !modele} value={cases ? 1 : variations} onChange={(e) => { const v = e.target.valueAsNumber; if (Number.isFinite(v)) onVariations(Math.max(1, Math.min(modele?.variations_max ?? 1, Math.floor(v)))) }} /></label>
         {cases > 0 && <p className="col-span-2 text-encre-3">{cases} cases réunies sur une planche · une génération pour la planche.</p>}
@@ -194,13 +256,41 @@ export function BarreQuiPaie({
             qui ne vise aucune case : un lot a déjà sa grille, et une planche
             refaite ne se range pas dans une seule case — l'atelier refuserait. */}
         {onGarderMiseEnPage && cases === 0 && posesCible.length === 0 && <label className="col-span-2 flex items-start gap-[8px]"><input type="checkbox" className="mt-[3px]" checked={garderMiseEnPage} onChange={(e) => onGarderMiseEnPage(e.target.checked)} /><span><span className="block font-medium">Garder la mise en page de la référence</span><span className="block text-encre-3">Refait la planche jointe avec ta modification, vue par vue.</span></span></label>}
-        {modele && Object.entries(modele.options).map(([cle, option]) => <label key={cle} className="space-y-[8px]"><span className="block font-medium">{option.nom}</span>{option.genre === "choix" ? <select className={champ} value={options[cle] ?? ""} onChange={(e) => reglerOption(cle, e.target.value)}><option value="">Défaut du modèle</option>{option.valeurs.map((v) => <option key={v}>{v}</option>)}</select> : option.genre === "booleen" ? <select className={champ} value={options[cle] ?? ""} onChange={(e) => reglerOption(cle, e.target.value)}><option value="">Défaut du modèle</option><option value="false">Désactivé</option><option value="true">Activé</option></select> : <input type="number" className={champ} min={option.minimum ?? undefined} max={option.maximum ?? undefined} value={options[cle] ?? ""} placeholder="Réglage du modèle" onChange={(e) => reglerOption(cle, e.target.value)} />}</label>)}
+        {modele && Object.entries(modele.options)
+          // **`force` a sa propre section, plus bas, et seulement quand elle
+          // agit** (règle 8nonies) — cette liste-ci ne la redit pas.
+          .filter(([cle]) => cle !== "force")
+          .map(([cle, option]) => <label key={cle} className="space-y-[8px]"><span className="block font-medium">{option.nom}</span>{option.genre === "choix" ? <select className={champ} value={options[cle] ?? ""} onChange={(e) => reglerOption(cle, e.target.value)}><option value="">Défaut du modèle</option>{option.valeurs.map((v) => <option key={v}>{v}</option>)}</select> : option.genre === "booleen" ? <select className={champ} value={options[cle] ?? ""} onChange={(e) => reglerOption(cle, e.target.value)}><option value="">Défaut du modèle</option><option value="false">Désactivé</option><option value="true">Activé</option></select> : <input type="number" className={champ} min={option.minimum ?? undefined} max={option.maximum ?? undefined} value={options[cle] ?? ""} placeholder="Réglage du modèle" onChange={(e) => reglerOption(cle, e.target.value)} />}</label>)}
+        {/* **La force d'un style « partir de cette image »** (ML3, ML5, règle
+            8nonies) : un réglage inerte disparaît, donc elle ne paraît que
+            pour un style qui repeint par-dessus une image effectivement
+            jointe. Nommée en clair — ce n'est le mot d'aucun modèle distant. */}
+        {forceUtile && modele?.options.force && (
+          <label className="col-span-2 space-y-[8px]">
+            <span className="block font-medium">Force de la transformation</span>
+            <input
+              type="range"
+              min={modele.options.force.minimum ?? 0}
+              max={modele.options.force.maximum ?? 1}
+              step={0.05}
+              value={Number(options.force ?? 0.55)}
+              onChange={(e) => reglerOption("force", e.target.value)}
+              className="w-full"
+            />
+            <span className="block text-encre-3">
+              {Number(options.force ?? 0.55).toFixed(2)} · faible reste proche de
+              l’image jointe, forte s’en éloigne
+            </span>
+          </label>
+        )}
       </section>
-      <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Prompt négatif{promptNegatif ? " · renseigné" : " · facultatif"}</summary><textarea aria-label="Prompt négatif" rows={2} className={`${champ} mt-[14px]`} value={promptNegatif} onChange={(e) => onPromptNegatif(e.target.value)} placeholder="Ce qui doit être évité…" /></details>
+      {(!modele?.locale || infosModele?.negatif_lu !== false) && (
+        <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Prompt négatif{promptNegatif ? " · renseigné" : " · facultatif"}</summary><textarea aria-label="Prompt négatif" rows={2} className={`${champ} mt-[14px]`} value={promptNegatif} onChange={(e) => onPromptNegatif(e.target.value)} placeholder="Ce qui doit être évité…" /></details>
+      )}
       <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Réglages de l’univers et références héritées</summary><div className="mt-[14px]"><PanneauReglages modeles={modeles} choisi={modele} onChoisir={onChoisirModele} proportions={proportions} onProportions={onProportions} variations={variations} onVariations={onVariations} options={options} onOptions={onOptions} references={reinjections.length} projet={projetNom} univers={univers} echelle={echelle} onEchelle={onEchelle} compte={compteReferences} cout={cout} reserve={reserve} cases={cases} cible={personnageCible} ecarteesGeneration={ecarteesGeneration} onEcarterGeneration={onEcarterGeneration} onErreur={onErreur} /></div></details>
       </div>
       <footer className="shrink-0 space-y-[14px] border-t border-trait bg-carte px-[30px] py-[14px]">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-[22px] gap-y-[8px]"><CoutAttendu cout={cout} cases={cases} variations={variations} unite={modele?.unite} reserve={reserve} /></dl>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-[22px] gap-y-[8px]"><CoutAttendu cout={cout} cases={cases} variations={variations} unite={modele?.unite} reserve={reserve} modele={modele} /></dl>
         {echec && <p role="alert" className="text-echec">{echec}</p>}
         {revers && <p className="text-encre-3">{revers.texte} <button type="button" className="text-signal" disabled={revers.enCours} onClick={revers.onReessayer}>Réessayer</button></p>}
         <div className="flex items-center justify-between gap-[22px]">
@@ -324,6 +414,7 @@ export function BarreQuiPaie({
           variations={variations}
           unite={modele?.unite}
           reserve={reserve}
+          modele={modele}
         />
       </dl>
       <ChampPrompt

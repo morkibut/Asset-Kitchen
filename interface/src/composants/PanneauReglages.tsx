@@ -426,6 +426,7 @@ export function PanneauReglages({
               variations={variations}
               unite={choisi?.unite}
               reserve={reserve}
+              modele={choisi}
             />
           </dl>
 
@@ -826,6 +827,7 @@ export function CoutAttendu({
   variations,
   unite,
   reserve = null,
+  modele = null,
 }: {
   cout: number | null
   cases: number
@@ -835,7 +837,39 @@ export function CoutAttendu({
   unite?: string
   /** Ce qui reste chez son fournisseur, ou `null` s'il compte en argent. */
   reserve?: Reserve | null
+  /** Le modèle choisi (ML5, règle 8ter) : un style local a un temps, jamais
+   *  un prix — `couts` ne le mesure pas (un appel local vaut toujours
+   *  `cout_usd = 0`), donc `cout` reste `null` pour lui à jamais, et ce n'est
+   *  pas ce qu'il faut lire. `null` ailleurs, où le prix mesuré suffit. */
+  modele?: (Modele & Partial<ModeleAvecReference>) | null
 }) {
+  if (modele?.locale) {
+    const temps = modele.temps
+    return (
+      <>
+        <dt className="text-encre-4">temps attendu</dt>
+        <dd
+          className="text-right text-encre-3"
+          title="mesuré sur cette machine, ou la vitesse annoncée par le style"
+        >
+          {temps?.secondes != null
+            ? `≈ ${quantite(temps.secondes, "seconde")} par image${cases ? ` · ${cases} cases` : ""}`
+            : (temps?.vitesse ?? "Durée non encore mesurée pour ce workflow.")}
+        </dd>
+        {/* **Le premier tirage charge le modèle ; le temps ne se multiplie
+            pas** (règle 8ter) — contrairement au prix d'un modèle payant, un
+            lot de plusieurs variations ne coûte pas N fois ce temps-là. */}
+        {variations > 1 && !cases && (
+          <>
+            <dt className="text-encre-4">variations</dt>
+            <dd className="text-right text-encre-3">
+              {variations} générations — le premier tirage seul charge le modèle
+            </dd>
+          </>
+        )}
+      </>
+    )
+  }
   const argent = estArgent(unite)
   const combien = (valeur: number) => `≈ ${quantite(valeur, unite)}`
   return (

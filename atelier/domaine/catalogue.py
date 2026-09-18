@@ -96,6 +96,14 @@ class Modele:
     # plusieurs images) ou « depart » (il repeint par-dessus une seule). Vide pour tout
     # modèle qui n'est pas un style de workflow local.
     reference: str | None = None
+    # **Le négatif est-il lu ?** (ML4, ML5). Vrai par défaut — un modèle distant
+    # replie toujours le texte négatif dans sa demande —, et c'est le profil du
+    # style local qui dit s'il relie `prompt_negatif` à un nœud de son graphe.
+    negatif_lu: bool = True
+    # Le moteur du style local (ML5) : « zimage », « klein », « flux1dev » ou
+    # « sdxl ». `None` pour tout modèle qui n'est pas un style de sc-clone —
+    # c'est ce que l'écran groupe sous les quatre optgroups.
+    famille: str | None = None
 
     @property
     def envoi(self) -> str:
@@ -206,7 +214,8 @@ def _option_depuis_json(d: dict[str, Any]) -> Option:
 def modele_en_json(modele: Modele) -> dict[str, Any]:
     return {
         **({"locale": True, "references_min": modele.references_min, "indisponible": modele.indisponible,
-            "reference": modele.reference} if modele.locale else {}),
+            "reference": modele.reference, "negatif_lu": modele.negatif_lu,
+            "famille": modele.famille} if modele.locale else {}),
         "identifiant": modele.identifiant,
         "nom": modele.nom,
         "fournisseur": modele.fournisseur,
@@ -235,4 +244,5 @@ def modele_depuis_json(d: dict[str, Any]) -> Modele:
         options={n: _option_depuis_json(o) for n, o in (d.get("options") or {}).items()},
         references_min=d.get("references_min", 0), locale=d.get("locale", False),
         indisponible=d.get("indisponible"), reference=d.get("reference"),
+        negatif_lu=d.get("negatif_lu", True), famille=d.get("famille"),
     )

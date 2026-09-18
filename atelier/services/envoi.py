@@ -196,6 +196,13 @@ class ServiceEnvoi:
         )
         lignes = apercu["lignes"]
         cases = self._cases(poses, directions, piece)
+        # **Ce qu'un style local ajoute au-dessus de ce que ML4 composait déjà**
+        # (ML5) : un temps, pas un prix — la mesure de cette machine, ou la
+        # vitesse du style à défaut (règle 8ter). `None` reste `None` : un
+        # modèle qui n'est pas un style local ne porte toujours pas de `local`.
+        local = apercu["local"]
+        if local is not None:
+            local = {**local, "temps": self._generations.temps_attendu(modele)}
 
         compte = self._generations.compter_references(
             projet,
@@ -260,7 +267,7 @@ class ServiceEnvoi:
             "parties": apercu["parties"],
             # **Ce qu'un style local laisse en route** (ML4), et si le négatif
             # sera lu : `None` pour tout modèle qui n'est pas un style local.
-            "local": apercu["local"],
+            "local": local,
             "lignes": lignes,
             "groupes": self._groupes(lignes, images, options),
             "images": images,

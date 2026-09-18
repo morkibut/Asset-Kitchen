@@ -210,6 +210,15 @@ export function EcranEnvoi({
   const local = envoi ? (envoi as unknown as EnvoiAvecLocal).local : null
   const referenceNom = envoi ? (envoi.modele as unknown as EnvoiAvecLocal["modele"]).reference_nom : null
   const negatifLu = envoi ? (envoi.fond as unknown as EnvoiAvecLocal["fond"]).negatif_lu : true
+  // **Le temps qu'un style local annonce** (ML5, règle 8ter) : la mesure de
+  // cette machine, ou la vitesse du style à défaut — jamais un prix, qui
+  // resterait « inconnu » pour toujours (un appel local vaut `cout_usd = 0`).
+  const tempsLocal = local?.temps ?? null
+  const tempsEcrit = tempsLocal
+    ? tempsLocal.secondes != null
+      ? `≈ ${quantite(tempsLocal.secondes, "seconde")} par image`
+      : (tempsLocal.vitesse ?? "Durée non encore mesurée pour ce workflow.")
+    : null
 
   if (presentation === "atelier") {
     const bouton = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] disabled:opacity-50"
@@ -220,9 +229,12 @@ export function EcranEnvoi({
     // plus que ce qu'une image fixe a de particulier — ses lignes de texte, ses
     // images jointes, son fond, ses consignes.
     const resume: ResumeDeLEnvoi | null = !envoi ? null : {
-      modele: envoi.modele.identifiant,
+      // **Son nom, pas l'identifiant brut qu'il transporte** (ML5) : un style
+      // local le porte sous une forme illisible — « ComfyUI:zimage-pixel@ca12…
+      // » — que rien ne demande à l'écran de déchiffrer avant de payer.
+      modele: <>{envoi.modele.nom}<span className="mt-[2px] block text-[11px] text-encre-4">{envoi.modele.identifiant}</span></>,
       resultat: <><p>{reglages?.proportions ?? "Format du modèle"} · {envoi.prix.appels} génération{envoi.prix.appels > 1 ? "s" : ""}{envoi.cases > 1 ? ` · ${envoi.cases} cases sur une planche` : ""}</p>{reglages && Object.entries(reglages.options).filter(([,v]) => v !== "").map(([k,v]) => <p key={k} className="mt-[4px] text-encre-3">{k} : {v}</p>)}</>,
-      consommation: prixEcrit,
+      consommation: local ? (tempsEcrit ?? "Durée non encore mesurée pour ce workflow.") : prixEcrit,
       mesure: <>
           {/* **La mesure se lit à côté du prix, jamais fondue dedans** (T1, E13).
               Le chiffre au-dessus est une moyenne relevée sur les générations déjà
@@ -260,9 +272,18 @@ export function EcranEnvoi({
          éteindre l'écran pour toutes les générations libres à venir. */
       avantLeBouton={onSauter ? <div className="shrink-0"><label className="flex cursor-pointer items-center gap-[8px]"><input type="checkbox" className="h-[14px] w-[14px] accent-signal" onChange={(e) => onSauter(e.target.checked)} /><span>ne plus me le montrer pour cette série</span></label><p className="mt-[4px] text-encre-3">il revient dès qu'on change de sujet ou de pose. Il n'y a pas de case « pour toujours ».</p></div> : null}
       paiement={{
-        libelle: enPaiement ? "Envoi en cours…" : envoi && estArgent(envoi.prix.mesure.unite) ? `Payer et lancer${envoi.prix.total != null ? ` ${prixEcrit}` : ""}` : "Lancer la fabrication",
+        // **Un style local se lance, il ne se paie pas** (règle 8ter) : rien
+        // ne se facture sur la machine, et le mot du bouton doit le dire
+        // plutôt que reprendre le mot générique des modèles gratuits.
+        libelle: enPaiement
+          ? "Envoi en cours…"
+          : local
+            ? "Lancer sur ma carte graphique"
+            : envoi && estArgent(envoi.prix.mesure.unite)
+              ? `Payer et lancer${envoi.prix.total != null ? ` ${prixEcrit}` : ""}`
+              : "Lancer la fabrication",
         onPayer,
-        prix: <>{prixEcrit}{envoi?.prix.total !== null && envoi && " · estimation"}</>,
+        prix: local ? <>{tempsEcrit}</> : <>{prixEcrit}{envoi?.prix.total !== null && envoi && " · estimation"}</>,
         empeche: !!refus || !envoi || enPaiement || actualisation,
       }}
       enfants={envoi && <>

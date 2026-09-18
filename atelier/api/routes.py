@@ -563,6 +563,12 @@ async def modeles(
                 grises.get(m.fournisseur),
                 etat.fournisseur(m.fournisseur),
                 reserves.get(m.fournisseur),
+                # **Un temps, pas un prix, pour un style local** (règle 8ter,
+                # ML5) : `couts` ci-dessus reste vide pour eux — un appel local
+                # enregistre toujours `cout_usd = 0.0`, que `couts_mesures`
+                # écarte — et l'écran qui choisit le modèle doit pourtant
+                # savoir ce qu'il prendra avant qu'on le choisisse.
+                atelier.generations.temps_attendu(m.identifiant) if m.locale else None,
             )
             for m in etat.modeles
         ],
@@ -602,6 +608,7 @@ def _modele_en_json(
     indisponible: str | None,
     source: "EtatFournisseur | None" = None,
     reserve: "Reserve | None" = None,
+    temps: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """La fiche d'un modèle, **la phrase qui le grise, et d'où elle vient**.
 
@@ -626,6 +633,10 @@ def _modele_en_json(
     # côté de son nom s'écrirait « $0,0000 » pour un modèle gratuit — et se
     # lirait *sans limite* là où il faut lire *sans prix*.
     fiche["unite"] = reserve.unite if reserve is not None else USD
+    # **Le temps, pas le prix, pour un style local** (règle 8ter). Absent des
+    # modèles distants : ils ont un coût, ce champ ne les concerne pas.
+    if modele.locale:
+        fiche["temps"] = temps
     return fiche
 
 

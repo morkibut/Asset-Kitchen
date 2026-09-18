@@ -73,6 +73,7 @@ test("le texte d’un style local part d’un bloc, avec ce qui a été retiré 
     tranche: 77,
     comptage: "approximation du BPE de CLIP",
     negatif_lu: true,
+    temps: { secondes: 41.2, mesures: 6, vitesse: "environ 40 secondes par image" },
   }
   render(<EcranEnvoi {...props(envoiLocal(local))} />)
   expect(screen.getByText("Pixel art style. un pèlerin, cape rouge")).toBeInTheDocument()
@@ -85,6 +86,7 @@ test("le champ « Ce qu’il faut éviter » n’est pas proposé quand le style
   const local: NonNullable<TexteLocal> = {
     famille: "zimage", texte: "Pixel art style. un pèlerin", segments: [], retires: [],
     jetons: 10, limite: null, tranche: null, comptage: "", negatif_lu: false,
+    temps: { secondes: null, mesures: 0, vitesse: "environ 30 secondes par image" },
   }
   render(<EcranEnvoi {...props(envoiLocal(local, { negatifLu: false }))} />)
   expect(screen.queryByText("Fond et prompt négatif")).not.toBeInTheDocument()
@@ -94,9 +96,46 @@ test("le fond reste montré quand le style local lit bien le négatif", () => {
   const local: NonNullable<TexteLocal> = {
     famille: "sdxl", texte: "Pixel art style. un pèlerin", segments: [], retires: [],
     jetons: 10, limite: 75, tranche: 77, comptage: "", negatif_lu: true,
+    temps: { secondes: null, mesures: 0, vitesse: "3 à 6 minutes par image" },
   }
   render(<EcranEnvoi {...props(envoiLocal(local, { negatifLu: true }))} />)
   expect(screen.getByText("Fond et prompt négatif")).toBeInTheDocument()
+})
+
+test("un style local se lance sur la carte graphique — un temps, jamais un prix, au pied et sur le bouton", () => {
+  const local: NonNullable<TexteLocal> = {
+    famille: "sdxl", texte: "Pixel art style. un pèlerin", segments: [], retires: [],
+    jetons: 10, limite: 75, tranche: 77, comptage: "", negatif_lu: true,
+    temps: { secondes: 41.2, mesures: 6, vitesse: "environ 40 secondes par image" },
+  }
+  render(<EcranEnvoi {...props(envoiLocal(local))} />)
+  expect(screen.getByRole("button", { name: /Lancer sur ma carte graphique/ })).toBeInTheDocument()
+  expect(screen.queryByText(/Payer et lancer/)).not.toBeInTheDocument()
+  expect(screen.getAllByText(/41,2 secondes par image/).length).toBeGreaterThan(0)
+  expect(screen.queryByText("Coût inconnu")).not.toBeInTheDocument()
+})
+
+test("un style local jamais mesuré annonce la vitesse du style plutôt que « Coût inconnu »", () => {
+  const local: NonNullable<TexteLocal> = {
+    famille: "zimage", texte: "Pixel art style. un pèlerin", segments: [], retires: [],
+    jetons: 10, limite: null, tranche: null, comptage: "", negatif_lu: true,
+    temps: { secondes: null, mesures: 0, vitesse: "environ 30 secondes par image" },
+  }
+  render(<EcranEnvoi {...props(envoiLocal(local))} />)
+  expect(screen.getAllByText(/environ 30 secondes par image/).length).toBeGreaterThan(0)
+  expect(screen.queryByText("Coût inconnu")).not.toBeInTheDocument()
+})
+
+test("un modèle distant garde son bouton habituel — « Payer et lancer », jamais la carte graphique", () => {
+  const distant = { ...BASE, local: null, modele: { ...BASE.modele, reference_nom: null }, fond: { ...BASE.fond, negatif_lu: true } } as unknown as Envoi
+  render(<EcranEnvoi {...props(distant)} />)
+  expect(screen.queryByRole("button", { name: /Lancer sur ma carte graphique/ })).not.toBeInTheDocument()
+})
+
+test("le modèle se lit par son nom, l’identifiant brut reste en petit dessous", () => {
+  render(<EcranEnvoi {...props(BASE as unknown as Envoi)} />)
+  expect(screen.getByText("Pixel art net et rapide")).toBeInTheDocument()
+  expect(screen.getByText("ComfyUI:zimage-pixel@v1")).toBeInTheDocument()
 })
 
 test("un modèle distant garde l’écran habituel — aucun bloc de texte local", () => {
