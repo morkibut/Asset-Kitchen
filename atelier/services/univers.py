@@ -54,6 +54,7 @@ from atelier.domaine.carte import (
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import CARTE, STYLE, Reinjection
 from atelier.domaine.plan import Pose
+from atelier.domaine.planche import est_une_planche_refaite
 from atelier.domaine.projet import (
     AUCUNE_CIBLE,
     CHAMPS_BIBLE,
@@ -1590,6 +1591,21 @@ class ServiceUnivers:
             if asset.recette.calque:
                 conserves += 1
                 continue
+            # **La feuille d'une planche refaite non plus** (RS2, 18 septembre
+            # 2026), et pour la raison même qui la fait naître sans grille : la
+            # grille met *un* sujet à l'échelle de sa case, et la feuille en
+            # porte quatre. Le balayage la lui reposait — `replace` ci-dessous
+            # remet une grille neuve à qui n'en a pas —, donc « Tout réaligner »
+            # rendait la panne qu'on venait de réparer. Ses morceaux, eux, se
+            # réalignent comme tout le monde. La génération n'est relue que pour
+            # un asset sans grille : c'est le seul état où la feuille naît.
+            if asset.recette.grille is None:
+                generation = self._base.lire(asset.generation)
+                if generation is not None and est_une_planche_refaite(
+                    generation, asset.rang
+                ):
+                    conserves += 1
+                    continue
 
             suivante = replace(
                 asset.recette,

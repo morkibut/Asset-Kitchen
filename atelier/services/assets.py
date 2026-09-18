@@ -33,7 +33,11 @@ from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Emplacement, Generation
-from atelier.domaine.planche import asset_de_planche
+from atelier.domaine.planche import (
+    asset_de_planche,
+    est_une_planche_refaite,
+    recette_de_planche_refaite,
+)
 from atelier.domaine.projet import IMAGE_SEULE, PLANCHE
 from atelier.domaine.recette import (
     ANCRAGES,
@@ -345,10 +349,23 @@ class ServiceAssets:
         # **La nature se lit sur l'asset, pas sur la génération** (D1) : le lot
         # est ce qui dit qu'une image est sortie d'une planche, et c'est déjà
         # lui que l'écran interroge partout ailleurs.
-        nature = PLANCHE if asset.lot is not None else IMAGE_SEULE
+        #
+        # **Une planche refaite a deux natures dans une génération** (RS2) : la
+        # feuille est une image seule amputée de sa grille, ses morceaux sont
+        # des morceaux de planche — c'est ce que la découpe leur a posé.
+        feuille = est_une_planche_refaite(generation, asset.rang)
+        morceau_refait = (
+            bool(generation.demande.get("garder_mise_en_page")) and not feuille
+        )
+        nature = PLANCHE if asset.lot is not None or morceau_refait else IMAGE_SEULE
         echelle = str(generation.demande.get("echelle", "") or "")
+        impose = (
+            self.recette_de_naissance(generation, asset.rang)
+            if feuille
+            else self.recette_du_projet(generation, nature)
+        )
         return {
-            "impose": self.recette_du_projet(generation, nature).en_json(),
+            "impose": impose.en_json(),
             # **Ce que l'auteur avait dit fabriquer**, parce que c'est elle qui
             # décide de l'occupation : « imposé 40 % » ne s'explique que si la
             # fiche peut ajouter « objet tenu ».
@@ -800,6 +817,22 @@ class ServiceAssets:
         nom = str(generation.demande.get("echelle", "") or "")
         return objet.univers.recette_de(objet.univers.echelle(nom), nature)
 
+    def recette_de_naissance(self, generation: Generation, rang: int) -> Recette:
+        """La recette d'une image **rendue par le modèle**, à son emplacement.
+
+        C'est `recette_du_projet` pour une image seule, **sauf la feuille d'une
+        planche refaite** (RS2), qui n'en garde que le détourage — voir
+        `recette_de_planche_refaite`. Écrite ici, une fois, parce que deux
+        chemins la lisent : la naissance, relance et rattrapage compris (tous
+        passent par `naitre`), et la fiche qui dit ce que le projet impose. Si
+        l'une disait « grille » et l'autre non, la fiche montrerait un écart
+        que l'auteur n'a jamais créé.
+        """
+        du_projet = self.recette_du_projet(generation)
+        if est_une_planche_refaite(generation, rang):
+            return recette_de_planche_refaite(du_projet)
+        return du_projet
+
     def naitre(self, generation: Generation, emplacement: Emplacement) -> Asset | None:
         """Un emplacement qui réussit devient un asset, tout de suite.
 
@@ -829,7 +862,15 @@ class ServiceAssets:
             # « la chaîne complète tient d'un bout à l'autre : un asset se
             # génère, se détoure, se ramène sur la grille et la palette du
             # projet, et se range tout seul » (`docs/archive/plan-versions-tenues.md`, T4).
-            recette=ancien.recette if ancien else self.recette_du_projet(generation),
+            #
+            # **Sauf la feuille d'une planche refaite** (RS2), qui naît sans
+            # grille : c'est `recette_de_naissance` qui le dit, et non cette
+            # ligne, pour que la fiche lise la même chose.
+            recette=(
+                ancien.recette
+                if ancien
+                else self.recette_de_naissance(generation, emplacement.rang)
+            ),
             epingle=ancien.epingle if ancien else False,
             # Ce que l'appel a facturé pour cette image-là. La tuile le porte ;
             # le total du projet, lui, se calcule sur les générations, qui sont

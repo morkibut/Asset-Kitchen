@@ -99,3 +99,55 @@ def asset_de_planche(
         # arrivées ensemble, et le rang les départage.
         cree_le=generation.cree_le,
     )
+
+
+# ── La planche refaite (RS2), corrigée le 18 septembre 2026 ─────────────────
+#
+# **L'autre planche du produit, et elle n'arrive pas par un pliage.** Une image
+# fixe qui « refait une planche » (`garder_mise_en_page`) rend UNE image où
+# vivent plusieurs vues du sujet — quatre Champy en 2 × 2 sur 1024 px. Elle
+# naissait comme une image seule, donc avec la recette complète du projet : la
+# grille du jeu s'appliquait à **la feuille entière**, et l'auteur recevait
+# quatre Champy de vingt pixels, sur-pixellisés, dans un sprite de 96. Signalé
+# par l'auteur le 18 septembre 2026.
+
+
+def est_une_planche_refaite(generation: Generation, rang: int) -> bool:
+    """Cette image-là est-elle la feuille d'un appel « refaire une planche » ?
+
+    **La feuille, pas ses morceaux** : les deux vivent dans la même génération
+    — la découpe range ses morceaux au-dessus des emplacements, dans la
+    génération de leur planche —, et seuls les rangs d'emplacement sont des
+    images rendues par le modèle. Un morceau qu'on redécoupe n'est donc pas une
+    planche refaite, et hérite comme n'importe quelle image.
+
+    Le drapeau se lit sur la génération, où il n'est écrit que vrai : c'est
+    elle qui survit à l'effacement de l'index, et qu'une relance relit.
+    """
+    if not generation.demande.get("garder_mise_en_page"):
+        return False
+    return any(e.rang == rang for e in generation.emplacements)
+
+
+def recette_de_planche_refaite(du_projet: Recette) -> Recette:
+    """Ce que le projet impose à une feuille entière : **son détourage, seul**.
+
+    - **Pas de grille**, et c'est la panne réparée : la grille met *un* sujet à
+      l'échelle de *sa* case ; posée sur une feuille, elle y met quatre sujets
+      à la fois.
+    - **Pas de recadrage** : rogné à la boîte opaque de l'ensemble, le rendu ne
+      serait plus aux coordonnées du brut, où la découpe trace ses rectangles.
+    - **Pas de quantification.** Dans `Univers.recette_de`, elle n'entre
+      qu'avec la grille : un nombre fini de couleurs est ce qui fait un sprite
+      *à sa taille de sprite*. Sur 1024 px non réduits, elle posterise un
+      dessin — l'« affiche sérigraphiée » que le même texte refuse au style
+      dessin. Les morceaux, eux, se quantifient après leur propre grille.
+    - **Le détourage reste**, et c'est ce qui la sépare de la planche d'un lot
+      (recette vide, plus haut) : celle-ci est une ruse d'appel qu'on regarde
+      pour la découper, la planche refaite est l'image que l'auteur a
+      *demandée* — sa feuille de personnage, qui se range comme référence et se
+      montre sur fond transparent comme les autres images du sujet. La passe
+      est celle d'une image seule, décidée par la silhouette de l'échelle : un
+      décor n'en reçoit pas, ici comme ailleurs.
+    """
+    return Recette(passes=du_projet.passes)

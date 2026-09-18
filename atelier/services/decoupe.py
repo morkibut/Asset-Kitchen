@@ -36,6 +36,8 @@ from typing import Any, Iterable
 from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.erreurs import ErreurAtelier
+from atelier.domaine.planche import est_une_planche_refaite
+from atelier.domaine.projet import PLANCHE
 from atelier.domaine.recette import Passe, Recette
 from atelier.image import (
     COTE_MIN,
@@ -247,6 +249,7 @@ class ServiceDecoupe:
         noms_recus = list(noms) if noms is not None else []
 
         morceaux = decouper(self._fichiers.lire(planche.brut), rectangles)
+        recette, epingle = self._recette_des_morceaux(planche)
         rang = self._premier_rang_libre(planche.generation)
         maintenant = time.time()
         total = len(rectangles)
@@ -270,13 +273,13 @@ class ServiceDecoupe:
                         hauteur=mesure.hauteur,
                         type_media=mesure.type_media,
                         label=nom or _label(planche.label, numero, total),
-                        recette=_recette_heritee(planche),
+                        recette=recette,
                         # **L'épingle voyage avec la recette qu'elle protège.**
                         # Hériter d'une recette réglée à la main sans hériter de
                         # l'épingle livrerait huit découpes qu'un balayage de
                         # palette écraserait au premier passage, alors que
                         # l'auteur avait justement décidé le contraire.
-                        epingle=planche.epingle,
+                        epingle=epingle,
                         # **Une découpe n'a rien coûté.** L'argent a été dépensé
                         # une fois, pour la planche, et la filiation y mène. Lui
                         # attribuer une part du prix inventerait un chiffre que
@@ -329,6 +332,34 @@ class ServiceDecoupe:
         if asset is None:
             raise AssetInconnu(identifiant)
         return asset
+
+    def _recette_des_morceaux(self, planche: Asset) -> tuple[Recette, bool]:
+        """La recette des morceaux, et leur épingle.
+
+        **D'ordinaire, celles de la planche** — `_recette_heritee`.
+
+        **Sauf la feuille d'une planche refaite** (RS2, 18 septembre 2026).
+        Elle naît sans grille ni recadrage ni quantification, parce que sa
+        feuille entière ne doit pas se pixelliser d'un seul tenant
+        (`recette_de_planche_refaite`). Ses morceaux hériteraient de ce manque
+        et ne seraient jamais mis sur la grille du jeu — or ce sont eux, les
+        sprites. Ils reçoivent donc ce que le projet impose à **un morceau de
+        planche**, grille comprise : la même recette qu'un morceau de lot plié
+        au dépliage (`ServicePliage`).
+
+        **Et sans épingle** : ce qui s'épinglait sur la feuille protégeait un
+        réglage de feuille, qui ne leur est pas transmis. La recette qu'ils
+        reçoivent est celle du projet, que les balayages ont le droit de suivre.
+
+        La génération se relit ici plutôt que de voyager sur l'asset : le
+        drapeau n'est écrit que sur elle, et c'est elle qui fait foi.
+        """
+        generation = self._base.lire(planche.generation)
+        if generation is not None and est_une_planche_refaite(
+            generation, planche.rang
+        ):
+            return self._assets.recette_du_projet(generation, PLANCHE), False
+        return _recette_heritee(planche), planche.epingle
 
     def _verifier(self, planche: Asset, boites: Iterable[Boite]) -> list[Boite]:
         """Les rectangles de cette planche-là, vérifiés."""
