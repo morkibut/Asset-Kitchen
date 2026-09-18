@@ -576,6 +576,7 @@ export function EcranFamille({
   onTuiles,
   onSons,
   onCreer,
+  onCommanderPlusieurs,
 }: {
   /** La clé de la famille — "personnages", "objets", "decors", "interface",
    *  "equipement" —, ou `null` pour **toutes les familles** : c'est ce que la
@@ -629,6 +630,9 @@ export function EcranFamille({
   /** Le guichet « Créer un sujet », là où nommer sur-le-champ n'a pas de sens :
    *  sans famille choisie, et sur les équipements. */
   onCreer?: (famille: string) => void
+  /** Commander plusieurs objets en une planche (P2, V3.5) — offert sur *Tous*
+   *  et sur les objets, là où on les choisit. */
+  onCommanderPlusieurs?: () => void
 }) {
   const mots = motsDe(famille)
   const cle = `grille-assets:${jeu}:${famille ?? ""}`
@@ -1265,11 +1269,21 @@ export function EcranFamille({
                 <span className="shrink-0 text-[11px] text-encre-4">Entrée le crée</span>
               </>
             ) : (
-              // **Un seul bouton rouille par écran** (`docs/DESIGN.md` § Les onze
-              // pièces) : c'est celui-ci, et son libellé change avec ce qu'on
-              // peut faire ici. Dans une famille, nommer suffit à créer ; sans
-              // famille choisie, il faut d'abord dire laquelle, et c'est le
-              // guichet qui le demande.
+              <>
+              {onCommanderPlusieurs && (!famille || famille === "objets") && (
+                <button
+                  type="button"
+                  onClick={onCommanderPlusieurs}
+                  className="h-[34px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle hover:border-encre-3"
+                >
+                  Commander plusieurs objets
+                </button>
+              )}
+              {/* **Un seul bouton rouille par écran** (`docs/DESIGN.md` § Les onze
+                  pièces) : c'est celui-ci, et son libellé change avec ce qu'on
+                  peut faire ici. Dans une famille, nommer suffit à créer ; sans
+                  famille choisie, il faut d'abord dire laquelle, et c'est le
+                  guichet qui le demande. */}
               <button
                 type="button"
                 onClick={() =>
@@ -1282,6 +1296,7 @@ export function EcranFamille({
               >
                 {nommeSurLeChamp ? `Ajouter un ${mots.singulier}` : "Créer un sujet"}
               </button>
+              </>
             )}
           </div>
         </div>

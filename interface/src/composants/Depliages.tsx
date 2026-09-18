@@ -14,12 +14,26 @@
 // Réutilise l'éditeur de rectangles de `Decoupe.tsx` par sa troisième famille
 // (`famille: "depliage"`) plutôt que d'en recopier un : les mêmes gestes —
 // déplacer, ajouter, retirer une coupe — y marchent à l'identique.
+//
+// **P2 (V3.5) ajoute trois choses** : sur une planche à plusieurs objets,
+// chaque case dit l'objet qu'elle porte ; une case à vérifier se voit avec sa
+// raison et se refait seule, prix annoncé avant l'accord ; et une image sortie
+// d'une telle planche peut dire « ce n'est pas le bon objet ».
 
 import { useEffect, useState } from "react"
-import { api, Refus, type Asset, type Depliages as EtatDepliages } from "../api"
+import {
+  api,
+  estArgent,
+  prix as ecrirePrix,
+  Refus,
+  type Asset,
+  type Depliages as EtatDepliages,
+  type Envoi,
+} from "../api"
 import { Bloc } from "./pieces"
 import { EcranDecoupe } from "./Decoupe"
 import type { Fente } from "./EnTeteDeSurface"
+import { RelireAvantEnvoi, type ResumeDeLEnvoi } from "./Relecture"
 
 /** Le numéro écrit dans l'identifiant d'un dépliage — `{planche}-d{numero}`
  *  (`atelier/domaine/pliage.py`, `identifiant_de_depliage`). Un simple
@@ -45,25 +59,100 @@ export function LesDecoupagesDeLaPlanche({
   // **Une image sortie d'une planche** : un rappel d'une ligne, et rien de
   // plus — la liste complète se lit sur la fiche de la planche, pas ici.
   if (asset.planche) {
-    const numero = numeroDuDepliage(asset.depliage)
     return (
-      <Bloc cle="fiche.depliages" titre="Sa planche" aide="fiche.depliages" etat="une image découpée">
-        <p className="text-[11px] leading-snug text-encre-2">
-          De la planche{" "}
-          <button
-            type="button"
-            onClick={() => onOuvrir(asset.planche!)}
-            className="text-signal underline-offset-2 hover:underline"
-          >
-            {asset.planche}
-          </button>
-          {numero ? ` · découpage n°${numero}` : ""}
-        </p>
-      </Bloc>
+      <RappelDeLaPlanche
+        asset={asset}
+        onErreur={onErreur}
+        onOuvrir={onOuvrir}
+        onChangee={onChangee}
+      />
     )
   }
 
   return <BlocDesDecoupages asset={asset} onErreur={onErreur} onChangee={onChangee} />
+}
+
+/** Le rappel d'une ligne vers la planche, et — sur une planche à plusieurs
+ *  objets (P2) — « ce n'est pas le bon objet ». Une seule requête, la même que
+ *  la fiche de la planche relit déjà : `plusieurs` ne se recalcule pas ici. */
+function RappelDeLaPlanche({
+  asset,
+  onErreur,
+  onOuvrir,
+  onChangee,
+}: {
+  asset: Asset
+  onErreur: (raison: string) => void
+  onOuvrir: (identifiant: string) => void
+  onChangee: () => void
+}) {
+  const numero = numeroDuDepliage(asset.depliage)
+  const [plusieurs, setPlusieurs] = useState(false)
+  const [enCours, setEnCours] = useState(false)
+  const [fait, setFait] = useState(false)
+
+  useEffect(() => {
+    let vivant = true
+    setPlusieurs(false)
+    setFait(false)
+    void api
+      .depliagesDe(asset.planche!)
+      .then((lu) => vivant && setPlusieurs(lu.plusieurs))
+      .catch(() => vivant && setPlusieurs(false))
+    return () => {
+      vivant = false
+    }
+  }, [asset.planche])
+
+  const signaler = async () => {
+    setEnCours(true)
+    try {
+      await api.pasLeBonSujet(asset.identifiant)
+      setFait(true)
+      onChangee()
+    } catch (erreur) {
+      onErreur(
+        erreur instanceof Refus ? erreur.message : "le signalement a été refusé",
+      )
+    } finally {
+      setEnCours(false)
+    }
+  }
+
+  return (
+    <Bloc cle="fiche.depliages" titre="Sa planche" aide="fiche.depliages" etat="une image découpée">
+      <p className="text-[11px] leading-snug text-encre-2">
+        De la planche{" "}
+        <button
+          type="button"
+          onClick={() => onOuvrir(asset.planche!)}
+          className="text-signal underline-offset-2 hover:underline"
+        >
+          {asset.planche}
+        </button>
+        {numero ? ` · découpage n°${numero}` : ""}
+      </p>
+      {plusieurs && (
+        <div className="mt-2">
+          {fait ? (
+            <p className="text-[10.5px] leading-4 text-encre-4">
+              signalé — sa case est passée à vérifier
+            </p>
+          ) : (
+            <button
+              type="button"
+              data-pas-le-bon-objet
+              disabled={enCours}
+              onClick={() => void signaler()}
+              className="mesure text-[10.5px] text-signal hover:opacity-70 disabled:opacity-50"
+            >
+              {enCours ? "signalement en cours…" : "Ce n'est pas le bon objet"}
+            </button>
+          )}
+        </div>
+      )}
+    </Bloc>
+  )
 }
 
 /** Séparé du rappel du dessus pour ne fetcher `unfoldings` que sur une image
@@ -82,6 +171,9 @@ function BlocDesDecoupages({
   // Le dernier découpage supprimé ici, et ses images : de quoi l'annuler
   // tant que le délai de la corbeille court.
   const [dernierSupprime, setDernierSupprime] = useState<{ numero: number; images: string[] } | null>(null)
+  // **La case qu'on refait seule** (P2) : son indice, tant que la fenêtre de
+  // prix n'est pas fermée. `null` = fermée.
+  const [caseARefaire, setCaseARefaire] = useState<number | null>(null)
 
   const relire = () => {
     void api
@@ -144,36 +236,74 @@ function BlocDesDecoupages({
       etat={`${etat.depliages.length}`}
     >
       <div className="flex flex-col gap-[8px]">
+        {/* **Chaque case dit son objet** (P2) — seulement sur une planche à
+            plusieurs objets ; ailleurs, la liste ne dirait rien de plus que
+            le texte déjà lu ligne au-dessus. */}
+        {etat.plusieurs && etat.cases_de_la_planche.length > 0 && (
+          <ul className="flex flex-col gap-[2px] border-b border-trait pb-[8px] text-[10.5px] text-encre-3">
+            {etat.cases_de_la_planche.map((c) => (
+              <li key={c.indice}>
+                case {c.indice + 1} · {c.texte}
+              </li>
+            ))}
+          </ul>
+        )}
+
         <ul className="flex flex-col gap-[6px]">
           {etat.depliages.map((decoupage) => (
-            <li
-              key={decoupage.numero}
-              className="flex items-center justify-between gap-[8px] text-[11px] text-encre-2"
-            >
-              <span>
-                Découpage n°{decoupage.numero} ·{" "}
-                {decoupage.origine === "main" ? "à la main" : "auto"} ·{" "}
-                {decoupage.images.length === 0 && (decoupage.supprime || decoupage.supprime_le)
-                  ? "supprimé"
-                  : `${decoupage.images.length} image${decoupage.images.length > 1 ? "s" : ""}`}
-              </span>
-              {decoupage.images.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => void supprimerDecoupage(decoupage.numero)}
-                  className="mesure shrink-0 text-[10.5px] text-encre-4 hover:text-echec"
-                >
-                  supprimer ce découpage
-                </button>
-              ) : dernierSupprime?.numero === decoupage.numero ? (
-                <button
-                  type="button"
-                  onClick={() => void annulerSuppression()}
-                  className="mesure shrink-0 text-[10.5px] text-signal hover:opacity-70"
-                >
-                  annuler
-                </button>
-              ) : null}
+            <li key={decoupage.numero} className="flex flex-col gap-[4px]">
+              <div className="flex items-center justify-between gap-[8px] text-[11px] text-encre-2">
+                <span>
+                  Découpage n°{decoupage.numero} ·{" "}
+                  {decoupage.origine === "main" ? "à la main" : "auto"} ·{" "}
+                  {decoupage.images.length === 0 && (decoupage.supprime || decoupage.supprime_le)
+                    ? "supprimé"
+                    : `${decoupage.images.length} image${decoupage.images.length > 1 ? "s" : ""}`}
+                </span>
+                {decoupage.images.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => void supprimerDecoupage(decoupage.numero)}
+                    className="mesure shrink-0 text-[10.5px] text-encre-4 hover:text-echec"
+                  >
+                    supprimer ce découpage
+                  </button>
+                ) : dernierSupprime?.numero === decoupage.numero ? (
+                  <button
+                    type="button"
+                    onClick={() => void annulerSuppression()}
+                    className="mesure shrink-0 text-[10.5px] text-signal hover:opacity-70"
+                  >
+                    annuler
+                  </button>
+                ) : null}
+              </div>
+
+              {/* **Les cases à vérifier, avec leur raison en clair** (P2) : le
+                  signalement les y a mises, ou le découpage n'a pas trouvé le
+                  bon compte pour cette case. */}
+              {decoupage.a_verifier && decoupage.a_verifier.length > 0 && (
+                <ul className="flex flex-col gap-[4px] pl-[8px]">
+                  {decoupage.a_verifier.map((v) => (
+                    <li
+                      key={v.case}
+                      data-a-verifier
+                      className="flex items-center justify-between gap-[8px] text-[10.5px] leading-4 text-encre-attention"
+                    >
+                      <span>
+                        case {v.case + 1} à vérifier · {v.raison}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setCaseARefaire(v.case)}
+                        className="mesure shrink-0 text-encre-4 hover:text-signal"
+                      >
+                        refaire cette case seule
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
@@ -210,6 +340,130 @@ function BlocDesDecoupages({
           />
         </div>
       )}
+
+      {caseARefaire !== null && (
+        <ConfirmerRefaireCase
+          identifiant={asset.identifiant}
+          caseIndex={caseARefaire}
+          onFermer={() => setCaseARefaire(null)}
+          onEnvoyee={() => {
+            setCaseARefaire(null)
+            relire()
+            onChangee()
+          }}
+          onErreur={onErreur}
+        />
+      )}
     </Bloc>
+  )
+}
+
+/** « Refaire cette case seule » (P2, décision 1) : prépare une image simple,
+ *  **montre son prix avant tout**, et n'appelle `POST /generations` qu'après
+ *  l'accord explicite du bouton. Réutilise la fenêtre unique de relecture
+ *  (`RelireAvantEnvoi`, RP4) — le même cadre que toute confirmation d'envoi. */
+function ConfirmerRefaireCase({
+  identifiant,
+  caseIndex,
+  onFermer,
+  onEnvoyee,
+  onErreur,
+}: {
+  identifiant: string
+  caseIndex: number
+  onFermer: () => void
+  onEnvoyee: () => void
+  onErreur: (raison: string) => void
+}) {
+  const [prepare, setPrepare] = useState<{
+    demande: {
+      modele: string
+      prompt: string
+      projet: string | null
+      personnage: string | null
+      pose: string | null
+      direction: string | null
+    }
+    envoi: Envoi
+  } | null>(null)
+  const [refus, setRefus] = useState<string | null>(null)
+  const [enPaiement, setEnPaiement] = useState(false)
+
+  useEffect(() => {
+    let vivant = true
+    setPrepare(null)
+    setRefus(null)
+    api
+      .refaireUneCase(identifiant, caseIndex)
+      .then((lu) => vivant && setPrepare(lu))
+      .catch((erreur) => {
+        if (!vivant) return
+        setRefus(erreur instanceof Refus ? erreur.message : "la préparation a été refusée")
+      })
+    return () => {
+      vivant = false
+    }
+  }, [identifiant, caseIndex])
+
+  const envoi = prepare?.envoi ?? null
+  const prixEcrit = ecrirePrix(envoi?.prix.total ?? null, envoi?.prix.mesure.unite)
+  const resume: ResumeDeLEnvoi | null = !envoi
+    ? null
+    : {
+        modele: envoi.modele.nom,
+        resultat: <p>case {caseIndex + 1} · image simple · 1 génération</p>,
+        consommation: prixEcrit,
+      }
+
+  const payer = async () => {
+    if (!prepare) return
+    setEnPaiement(true)
+    try {
+      await api.generer({
+        modele: prepare.demande.modele,
+        prompt: prepare.demande.prompt,
+        prompt_negatif: "",
+        proportions: "",
+        personnage: prepare.demande.personnage,
+        pose: prepare.demande.pose,
+        direction: prepare.demande.direction,
+        variations: 1,
+        options: {},
+        identifiant: crypto.randomUUID(),
+        references: [],
+        echelle: "",
+        repris: false,
+      })
+      onEnvoyee()
+    } catch (erreur) {
+      onErreur(erreur instanceof Refus ? erreur.message : "l'envoi a été refusé")
+    } finally {
+      setEnPaiement(false)
+    }
+  }
+
+  return (
+    <div data-refaire-case className="fixed inset-0 z-50 flex flex-col bg-papier">
+      <RelireAvantEnvoi
+        type="image"
+        sousTitre="Refaire cette case seule, sans repayer les autres."
+        resume={resume}
+        onFermer={onFermer}
+        fermetureBloquee={enPaiement}
+        refus={refus}
+        etat={enPaiement ? "L'envoi est en cours." : "Aucune génération avant de lancer."}
+        paiement={{
+          libelle: enPaiement
+            ? "Envoi en cours…"
+            : envoi && estArgent(envoi.prix.mesure.unite)
+              ? `Payer et lancer${prixEcrit ? ` ${prixEcrit}` : ""}`
+              : "Lancer la fabrication",
+          onPayer: () => void payer(),
+          prix: <>{prixEcrit}</>,
+          empeche: !!refus || !envoi || enPaiement,
+        }}
+        enfants={null}
+      />
+    </div>
   )
 }

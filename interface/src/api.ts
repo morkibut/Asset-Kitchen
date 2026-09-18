@@ -4249,6 +4249,10 @@ export type PrixDeLEnvoi = {
     sur_base: number
     sur_jointes: number
   }
+  /** **Le prix d'un objet, à côté du prix de la planche** (P2) — présent
+   *  seulement sur une planche à plusieurs objets. */
+  sujets?: number
+  par_sujet?: number | null
 }
 
 /** Une des trois parties du texte qui part (R7) — le contexte, les références,
@@ -4991,6 +4995,10 @@ export const api = {
     /** **Et la couper à l'arrivée** (RS7). Refusé par l'atelier sans
      *  `garder_mise_en_page` : l'écran ne l'envoie qu'avec elle. */
     decouper_a_l_arrivee?: boolean
+    /** **Une planche à plusieurs objets** (P2) : les identifiants, dans
+     *  l'ordre de lecture — la n-ième case porte le n-ième objet. Deux ou
+     *  plus, jamais avec `personnage`, `poses` ni `piece`. */
+    sujets?: string[] | null
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",
@@ -5047,6 +5055,9 @@ export const api = {
     prompt_negatif?: string
     /** **Refaire une planche** (RS2), lu avant de payer. */
     garder_mise_en_page?: boolean
+    /** **Une planche à plusieurs objets** (P2) : les identifiants, dans
+     *  l'ordre de lecture — la n-ième case porte le n-ième objet. */
+    sujets?: string[] | null
   }) =>
     appeler<Envoi>("/outgoing", {
       method: "POST",
@@ -7294,6 +7305,38 @@ export const api = {
       method: "DELETE",
     }),
 
+  // ── P2 (V3.5) : la planche à plusieurs objets ───────────────────────────
+
+  /** « Ce n'est pas le bon objet » : l'image — pas la planche — quitte la
+   *  case de son objet et reste en bibliothèque ; sa case passe « à
+   *  vérifier ». `identifiant` est l'image, pas la planche. */
+  pasLeBonSujet: (identifiant: string) =>
+    appeler<{ planche: string; case: number; image: Asset; depliage: Depliage }>(
+      `/assets/${identifiant}/wrong-subject`,
+      { method: "POST" },
+    ),
+
+  /** Ce que « refaire cette case seule » enverrait (P2) — **rien n'est payé
+   *  ici**. `demande` est le corps prêt pour `api.generer`, `envoi` l'annonce
+   *  de prix habituelle : rien ne part au fournisseur avant `api.generer`. */
+  refaireUneCase: (identifiant: string, caseIndex: number, modele?: string) =>
+    appeler<{
+      planche: string
+      case: number
+      demande: {
+        modele: string
+        prompt: string
+        projet: string | null
+        personnage: string | null
+        pose: string | null
+        direction: string | null
+      }
+      envoi: Envoi
+    }>(
+      `/assets/${identifiant}/cells/${caseIndex}/redo` +
+        (modele ? `?model=${encodeURIComponent(modele)}` : ""),
+    ),
+
   /** La même suppression que `supprimerAssets`, mais qui porte le « oui »
    *  qu'une planche avec des dépendants demande (P1b/P1c) — et le dit, avec
    *  le compte, plutôt que d'échouer en silence. `appeler` ne garde pas les
@@ -7353,6 +7396,19 @@ export type Depliage = {
   supprimees: number
   /** Supprimé, et vide — une annulation de ses images le ferait revivre. */
   supprime: boolean
+  /** **Les cases qui attendent un regard** (P2) — absent quand il n'y en a
+   *  aucune. `case` compte à partir de zéro, comme `cases_de_la_planche`. */
+  a_verifier?: { case: number; raison: string }[]
+}
+
+/** Ce qu'une case de la planche demandait — et, depuis P2, pour quel sujet.
+ *  `sujet` est vide sur une planche d'un seul sujet. */
+export type CaseDeLaPlanche = {
+  indice: number
+  texte: string
+  pose: string | null
+  direction: string | null
+  sujet: string | null
 }
 
 export type Depliages = {
@@ -7365,6 +7421,10 @@ export type Depliages = {
   raison: string | null
   depliages: Depliage[]
   dependants: { depliees: number; derivees: number; total: number }
+  /** **Vraie sur une planche à plusieurs objets** (P2) : chaque case dit alors
+   *  l'objet qu'elle porte. */
+  plusieurs: boolean
+  cases_de_la_planche: CaseDeLaPlanche[]
 }
 
 export type PropositionDepliage = {

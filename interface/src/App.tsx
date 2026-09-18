@@ -67,6 +67,8 @@ import {
 } from "./composants/EnTeteDeSurface"
 import { BarreQuiPaie } from "./composants/BarreQuiPaie"
 import { PreparerUneFabrication } from "./composants/PreparerUneFabrication"
+// P2 (V3.5) : commander une planche de plusieurs objets en un seul appel.
+import { PlancheDePlusieursObjets } from "./composants/PlancheDePlusieursObjets"
 import type { TypeDeResultat } from "./fabrication"
 import { EcranClip, type CibleDuClip } from "./composants/Clip"
 import { EcranDecoupe } from "./composants/Decoupe"
@@ -836,6 +838,8 @@ function AtelierApp() {
    *  /api/characters`), comme au repos de l'ancien codex. */
   const [nomDeLaCreationRapide, setNomDeLaCreationRapide] = useState("")
   const [creationAssetOuverte, setCreationAssetOuverte] = useState<string | null>(null)
+  // P2 (V3.5) : la fenêtre de commande d'une planche de plusieurs objets.
+  const [commanderPlusieursOuvert, setCommanderPlusieursOuvert] = useState(false)
   const [source3Douverte, setSource3Douverte] = useState<Source3D | null>(null)
   const [creationRapideEnCours, setCreationRapideEnCours] = useState(false)
   const creerRapidement = async () => {
@@ -2203,7 +2207,7 @@ function AtelierApp() {
           onOuvrir={(id) => { setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
           onCree={fondrePersonnage}
           onPiece={ouvrirLaPiece} onGalerie={() => allerA("galerie")}
-          onCreer={(famille) => setCreationAssetOuverte(famille)} />
+          onCreer={(famille) => setCreationAssetOuverte(famille)} onCommanderPlusieurs={() => setCommanderPlusieursOuvert(true)} />
       )}
 
       {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "fabrications" && (
@@ -2346,6 +2350,7 @@ function AtelierApp() {
           onTuiles={() => setTuilesOuvertes(true)}
           onSons={() => setSonsOuverts({})}
           onCreer={(famille) => setCreationAssetOuverte(famille)}
+          onCommanderPlusieurs={() => setCommanderPlusieursOuvert(true)}
           // Le carnet compte les groupes ; un rangement fait dans la grille
           // doit donc redescendre jusqu'à lui, sans quoi la ligne resterait à
           // son chiffre d'avant.
@@ -2982,6 +2987,17 @@ function AtelierApp() {
         onLivraisons={() => { setPreparation(null); setSortieOuverte(true) }}
         onFermer={() => { setPreparation(null); void relireProduction() }}
       />}
+      {/* P2 (V3.5) : la commande d'une planche de plusieurs objets — indépendante
+          des quatre types fermés de la préparation, elle appelle les deux mêmes
+          routes que toute image (`/outgoing` puis `/generations`). */}
+      {commanderPlusieursOuvert && bibliotheque.courant && (
+        <PlancheDePlusieursObjets
+          projet={bibliotheque.courant}
+          modeles={modeles}
+          onFermer={() => setCommanderPlusieursOuvert(false)}
+          onLancee={() => { setCommanderPlusieursOuvert(false); void relireProduction() }}
+        />
+      )}
       {creationAssetOuverte && <CreerUnAsset familleInitiale={creationAssetOuverte} onFermer={() => setCreationAssetOuverte(null)}
         onPersonnage={(personnage) => {
           fondrePersonnage(personnage)
