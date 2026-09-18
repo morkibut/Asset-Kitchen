@@ -213,6 +213,90 @@ async def montrer_mouvement(
     return atelier.mouvements.en_json(projet)
 
 
+# ── Les styles de combat (SC1) ───────────────────────────────────────────────
+#
+# **Juste après les mouvements, comme dans le plan.** Le mouvement dit
+# *quel cycle* — une attaque, un repos — le style dit *comment ce
+# personnage-là le joue* : à mains nues, au bâton, à l'arc. Même contrat
+# que les routes du mouvement : aucune ne coûte, aucune n'appelle, toutes
+# marchent réseau coupé.
+
+
+class CorpsStyle(BaseModel):
+    """Ce qu'il faut pour fabriquer ou régler un style.
+
+    **`textes` se fusionne dans l'existant sur un réglage**, il ne le
+    remplace pas — c'est `ServiceStyles.regler` qui porte cette règle. Sur
+    une fabrication, il faut être là avec au moins un texte : un style qui
+    ne dit rien pour aucun mouvement n'est pas un style.
+    """
+
+    nom: str | None = None
+    tient: str | None = None
+    textes: dict[str, str] | None = None
+
+
+@routeur.get("/styles")
+async def liste_styles(
+    requete: Request, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Les styles d'un jeu — ou, sans jeu nommé, la bibliothèque de départ
+    de l'atelier. Elle rend aussi les masqués, dans une seconde liste."""
+    return _atelier(requete).styles.en_json(projet)
+
+
+@routeur.post("/styles", status_code=201)
+async def fabriquer_style(
+    requete: Request, corps: CorpsStyle, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Écrire un nom avec au moins un texte crée le style, sur-le-champ,
+    sans rien payer."""
+    atelier = _atelier(requete)
+    atelier.styles.fabriquer(
+        corps.nom or "", corps.tient or "", corps.textes, projet
+    )
+    return atelier.styles.en_json(projet)
+
+
+@routeur.put("/styles/{identifiant}")
+async def regler_style(
+    requete: Request,
+    identifiant: str,
+    corps: CorpsStyle,
+    projet: str | None = Query(None),
+) -> dict[str, Any]:
+    """Renommer, changer ce qu'il tient, ou corriger le texte d'un mouvement."""
+    atelier = _atelier(requete)
+    atelier.styles.regler(
+        identifiant,
+        nom=corps.nom,
+        tient=corps.tient,
+        textes=corps.textes,
+        projet=projet,
+    )
+    return atelier.styles.en_json(projet)
+
+
+@routeur.delete("/styles/{identifiant}")
+async def masquer_style(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Retirer un style de la liste — **un livré laisse une pierre**."""
+    atelier = _atelier(requete)
+    atelier.styles.masquer(identifiant, projet)
+    return atelier.styles.en_json(projet)
+
+
+@routeur.post("/styles/{identifiant}/show")
+async def montrer_style(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Rendre à la liste un livré masqué."""
+    atelier = _atelier(requete)
+    atelier.styles.montrer(identifiant, projet)
+    return atelier.styles.en_json(projet)
+
+
 def _demande_de_jauge(
     secondes: float, resolution: str, proportions: str
 ) -> DemandeClip:

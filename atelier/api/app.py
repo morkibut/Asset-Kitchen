@@ -71,6 +71,7 @@ from atelier.services.envoi import EnvoiRefuse
 from atelier.services.planche import PlancheRefusee
 from atelier.services.etiquettes import EtiquetteRefusee
 from atelier.services.mouvements import MouvementRefuse
+from atelier.services.styles import StyleRefuse
 from atelier.services.superposition import SuperpositionRefusee
 from atelier.services.production import (
     PersonnageInconnu,
@@ -125,6 +126,7 @@ CODES = {
     EnregistrementRefuse: 409,
     EtiquetteRefusee: 409,
     MouvementRefuse: 409,
+    StyleRefuse: 409,
     AmbianceRefusee: 409,
     CalibrageRefuse: 409,
     PlancheRefusee: 409,

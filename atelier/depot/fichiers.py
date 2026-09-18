@@ -76,6 +76,11 @@ class Fichiers:
         # étiquettes et pour la même raison** : un mouvement appartient à
         # l'atelier, pas à un jeu, et il sert tous les jeux suivants.
         self.mouvements = self.racine / "mouvements.json"
+        # La bibliothèque de styles de combat (`SC1`, 18 septembre 2026),
+        # même rangement que les mouvements et pour la même raison : la
+        # bibliothèque de l'atelier sert de départ, la première modification
+        # d'un jeu l'y copie.
+        self.styles = self.racine / "styles.json"
         self.collections = self.racine / "collections.json"
         self.etat = self.racine / "atelier.json"
         # Le cadre de l'agent — plafond, modèle imposé, dossier du jeu. Un
@@ -361,6 +366,43 @@ class Fichiers:
             if isinstance(propre, list):
                 return propre
         lu = self._lire_json(self.mouvements)
+        return lu if isinstance(lu, list) else []
+
+    def styles_du_jeu(self, projet: str) -> Path:
+        """Les styles propres à un jeu (`SC1`), à côté de son `projet.json`.
+
+        Même validation que `mouvements_du_jeu`, et pour la même raison :
+        un identifiant de jeu qui contiendrait un séparateur ou viserait un
+        dossier parent (`..`) écrirait hors de `projets/`.
+        """
+        if not projet or any(c in projet for c in "/\\:") or projet.startswith("."):
+            raise ValueError(f"« {projet} » n'est pas un identifiant de jeu")
+        return self.projets / projet / "styles.json"
+
+    def ecrire_styles(self, contenu: list[Any], projet: str | None = None) -> None:
+        if projet:
+            chemin = self.styles_du_jeu(projet)
+            if not (chemin.parent / "projet.json").is_file():
+                raise ValueError(f"aucun jeu « {projet} »")
+            self._ecrire_json(chemin, contenu)
+            return
+        self._ecrire_json(self.styles, contenu)
+
+    def lire_styles(self, projet: str | None = None) -> list[Any]:
+        """La bibliothèque de styles (`SC1`) — **celle du jeu s'il en a une**.
+
+        Même logique que `lire_mouvements` : celle de la racine est la
+        bibliothèque de départ, un jeu la lit tant qu'il n'a rien changé, et
+        son premier changement l'y copie.
+        """
+        if projet:
+            try:
+                propre = self._lire_json(self.styles_du_jeu(projet))
+            except ValueError:
+                propre = None
+            if isinstance(propre, list):
+                return propre
+        lu = self._lire_json(self.styles)
         return lu if isinstance(lu, list) else []
 
     # `prereglages.json` — les jeux de réglages nommés (US-134) — est retiré le

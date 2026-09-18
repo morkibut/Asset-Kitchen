@@ -53,6 +53,7 @@ from atelier.services.enregistrer_sous import (
 from atelier.services.miroir import MiroirRefuse, ServiceMiroir
 from atelier.services.etiquettes import EtiquetteRefusee, ServiceEtiquettes
 from atelier.services.mouvements import MouvementRefuse, ServiceMouvements
+from atelier.services.styles import ServiceStyles, StyleRefuse
 from atelier.services.superposition import ServiceSuperposition, SuperpositionRefusee
 from atelier.services.envoi import EnvoiRefuse, ServiceEnvoi
 from atelier.services.evenements import Diffusion, Evenement
@@ -110,6 +111,8 @@ __all__ = [
     "DecoupeRefusee",
     "EtiquetteRefusee",
     "MouvementRefuse",
+    "ServiceStyles",
+    "StyleRefuse",
     "SuperpositionRefusee",
     "DepotRefuse",
     "Diffusion",
@@ -334,6 +337,11 @@ class Atelier:
         # c'est la décision durable de la V3, et elle se lit dans cette ligne :
         # ni projet, ni catalogue, ni fournisseur ne lui sont passés.
         self.mouvements = ServiceMouvements(self.fichiers)
+        # **La bibliothèque de styles de combat, au même rang et pour la
+        # même raison** (`SC1`) : elle lit un fichier à la racine (ou celui
+        # du jeu) et n'appartient à aucun autre service. Ni catalogue, ni
+        # fournisseur — un style est du vocabulaire, comme un mouvement.
+        self.styles = ServiceStyles(self.fichiers)
         # **L'installation de la machine (B15), au même rang et pour la raison
         # inverse** : les trois au-dessus n'appartiennent à aucun jeu ; celui-ci
         # n'appartient même pas à l'atelier — il décrit la machine. Il lit la
