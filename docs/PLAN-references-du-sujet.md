@@ -177,13 +177,18 @@ L'auteur n'a plus qu'à regarder et corriger si une vue est mal rangée.
 
 ### RS6 · La recette du sujet
 
-- [ ] un sujet porte une recette nommée par défaut, écrite dans son fichier, relue sans
+- [x] un sujet porte une recette nommée par défaut, écrite dans son fichier, relue sans
       migration ; une route la règle ou l'efface ; une recette inconnue est refusée
-- [ ] une image qui naît pour ce sujet (génération, découpe) reçoit cette recette ; les autres
+- [x] une image qui naît pour ce sujet (génération, découpe) reçoit cette recette ; les autres
       gardent la recette du jeu
-- [ ] une image déjà née ne change pas
-- [ ] la fiche du sujet montre le choix, en une ligne : *Recette de ses images : champy 01*
-- [ ] essais sans appel payant
+- [x] une image déjà née ne change pas
+- [x] la fiche du sujet montre le choix, en une ligne : *Recette de ses images : champy 01*
+- [x] essais sans appel payant (`tests/test_rs6.py`)
+
+Tranché en RS6 : la recette est gardée par son nom (la modifier vaut pour les images à
+naître) ; une recette effacée retombe sur celle du jeu ; un import « tel quel », un lot plié
+et une image sans sujet ne la reçoivent pas ; les morceaux dépliés d'un lot plié non plus
+(fichier `pliage.py`, en cours chez l'auteur).
 
 ### RS7 · Découper à l'arrivée
 
