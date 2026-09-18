@@ -3064,6 +3064,10 @@ export type ReferenceDeLaChose = {
    *  « direction sud ») — l'écran ne le recompose pas, il affiche ce qu'il
    *  reçoit. */
   usage_nom?: string
+  /** **L'ordre des vues de la planche** (RS8) — une direction par vue, de
+   *  gauche à droite puis de haut en bas. Seule la ligne rangée en planche le
+   *  porte ; vide tant que l'auteur ne l'a pas dit. */
+  ordre_des_vues?: string[]
 }
 
 export type ReferencesDeLaChose = {
@@ -6553,6 +6557,16 @@ export const api = {
     appeler<{ personnage: Personnage; references: ReferencesDeLaChose }>(
       `/characters/${personnage}/references`,
       { method: "PUT", body: JSON.stringify({ asset, promue, usage }) },
+    ),
+
+  /** **L'ordre des vues de la planche** (RS8) — une direction par vue, de
+   *  gauche à droite puis de haut en bas ; `null` l'efface. La découpe à
+   *  l'arrivée range la n-ième image dans la n-ième direction. Refusé (409) :
+   *  une image qui n'est pas la planche, une direction non tenue, un doublon. */
+  poserOrdreDesVues: (personnage: string, asset: string, ordre: string[] | null) =>
+    appeler<{ personnage: Personnage; references: ReferencesDeLaChose }>(
+      `/characters/${personnage}/references/view-order`,
+      { method: "PUT", body: JSON.stringify({ asset, ordre }) },
     ),
 
   /** **L'image de référence de sa fiche** (RP19) — celle qui dit à quoi le

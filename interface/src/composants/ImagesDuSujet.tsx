@@ -63,6 +63,7 @@ import {
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
 import { Fiche } from "./Fiche"
+import { OrdreDesVues } from "./OrdreDesVues"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. Le double part au
  *  serveur : un écran à deux pixels par point rend l'image floue sinon. */
@@ -406,6 +407,9 @@ function SesReferencesParUsage({
           erreurs={erreurs}
           onChangerUsage={onChangerUsage}
         />
+        {planche[0] && (
+          <OrdreDesVues personnage={personnage.identifiant} planche={planche[0]} directions={directions} />
+        )}
         {directions.map((direction) => {
           const lignes = promues.filter((l) => l.usage === usageDeDirection(direction.identifiant))
           const proposee = lignes.length === 0 ? imageProposeeDeDirection(personnage, direction.identifiant) : null

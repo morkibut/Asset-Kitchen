@@ -1081,10 +1081,24 @@ function CaseDeLAsset({
 }) {
   const porteur = personnages.find((p) => p.identifiant === asset.personnage) ?? null
   const tenues = porteur ? posesTenues(plan, porteur) : []
+  // **Les directions que ce sujet tient** (RS8) — l'union de celles de ses
+  // cases, chacune une fois. Une image au sujet sans pose (une vue découpée
+  // d'une planche) se corrige ici : son angle est tout ce qui la range.
+  const directions = porteur
+    ? [
+        ...new Map(
+          porteur.cases.flatMap((c) => c.directions).map((d) => [d.identifiant, d] as const),
+        ).values(),
+      ]
+    : []
 
-  const designer = async (personnage: string | null, pose: string | null) => {
+  const designer = async (
+    personnage: string | null,
+    pose: string | null,
+    direction?: string | null,
+  ) => {
     try {
-      await api.designer(asset.identifiant, personnage, pose)
+      await api.designer(asset.identifiant, personnage, pose, direction)
     } catch (erreur) {
       onErreur(erreur instanceof Error ? erreur.message : "désignation refusée")
     }
@@ -1138,6 +1152,22 @@ function CaseDeLAsset({
             ))}
           </select>
         </div>
+      )}
+
+      {porteur && !asset.pose && directions.length > 0 && (
+        <select
+          aria-label="Direction de cette image"
+          value={asset.direction ?? ""}
+          onChange={(e) => void designer(porteur.identifiant, null, e.target.value || null)}
+          className="mesure h-[26px] min-w-0 rounded-5 border border-contour bg-carte px-1 text-[11px] text-encre-2"
+        >
+          <option value="">sans direction</option>
+          {directions.map((d) => (
+            <option key={d.identifiant} value={d.identifiant}>
+              {d.nom}
+            </option>
+          ))}
+        </select>
       )}
 
       {asset.personnage_supprime && (

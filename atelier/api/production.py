@@ -758,6 +758,41 @@ async def promouvoir_reference(
     }
 
 
+class CorpsOrdreDesVues(BaseModel):
+    """L'ordre des vues de la planche — **une seule route, `null` l'efface**
+    (RS8). Une direction par vue, de gauche à droite puis de haut en bas."""
+
+    asset: str = Field(min_length=1)
+    ordre: list[str] | None = None
+    projet: str | None = None
+
+
+@routeur.put("/characters/{identifiant}/references/view-order")
+async def poser_ordre_des_vues(
+    requete: Request, identifiant: str, corps: CorpsOrdreDesVues
+) -> dict[str, Any]:
+    """Dire, une fois pour toutes, quelle direction montre chaque vue de la
+    planche de ce sujet (RS8).
+
+    La découpe à l'arrivée d'une planche refaite range alors la n-ième image
+    dans la n-ième direction — la position décide, aucun modèle ne regarde
+    l'image. Refusé (409) : une image qui n'est pas sa planche, une direction
+    qu'il ne tient pas, une direction nommée deux fois.
+
+    **Trois segments**, sous `references` : l'ordre est une précision de la
+    planche, comme l'usage en est une de la promotion.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    personnage = atelier.production.poser_ordre_des_vues(
+        vise, identifiant, corps.asset, corps.ordre
+    )
+    return {
+        "personnage": atelier.production.en_charge(vise, personnage),
+        "references": atelier.production.references_de(vise, identifiant),
+    }
+
+
 @routeur.put("/characters/{identifiant}/reference-image")
 async def poser_image_de_reference(
     requete: Request, identifiant: str, corps: CorpsImageDeReference

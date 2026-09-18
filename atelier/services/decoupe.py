@@ -273,6 +273,7 @@ class ServiceDecoupe:
         noms: Iterable[str | None] | None = None,
         *,
         personnage: str | None = None,
+        directions: tuple[str, ...] | None = None,
     ) -> list[Asset]:
         """Les morceaux, écrits et annoncés — le geste commun à la découpe à la
         main et à la découpe à l'arrivée (RS7).
@@ -281,8 +282,14 @@ class ServiceDecoupe:
         d'**un** sujet, et chacune de ses vues l'est aussi — rattachée à lui,
         sans pose, c'est ce que l'auteur faisait à la main. La découpe à la main
         reste ce qu'elle était : elle ne range rien que l'auteur n'ait rangé.
+
+        `directions` non plus (RS8) : alignées aux rectangles, une par vue,
+        **seulement quand leur compte tombe juste** — `_directions_des_vues` en
+        décide avant d'arriver ici.
         """
         noms_recus = list(noms) if noms is not None else []
+        if directions is not None and len(directions) != len(rectangles):
+            directions = None  # filet : jamais une direction décalée d'un cran
 
         morceaux = decouper(self._fichiers.lire(planche.brut), rectangles)
         recette, epingle = self._recette_des_morceaux(planche)
@@ -341,6 +348,11 @@ class ServiceDecoupe:
                         modele=planche.modele,
                         projet=planche.projet,
                         personnage=personnage,
+                        # **La direction de sa vue, sans pose** (RS8) — l'état
+                        # que la fiche de l'image corrige d'un choix.
+                        direction=(
+                            directions[numero - 1] if directions is not None else None
+                        ),
                         parent=planche.identifiant,
                         # **Datée de maintenant, pas du lot de la planche.** Ce
                         # qu'on vient de fabriquer se voit en tête de grille :
@@ -568,8 +580,16 @@ class ServiceDecoupe:
             return
         emplacement.decoupe = {"en_cours": True}
         self._sauver(generation)
+        directions, sans_direction = _directions_des_vues(
+            generation, len(vues.boites)
+        )
         try:
-            nees = self._couper(planche, vues.boites, personnage=generation.personnage)
+            nees = self._couper(
+                planche,
+                vues.boites,
+                personnage=generation.personnage,
+                directions=directions,
+            )
         except Exception as erreur:  # noqa: BLE001 — la planche payée ne perd rien
             emplacement.decoupe = {
                 "raison": f"la découpe s'est arrêtée ({erreur}) — vérifiez les "
@@ -578,11 +598,14 @@ class ServiceDecoupe:
             }
             self._sauver(generation)
             return
-        # **Dans l'ordre des vues**, et c'est l'accroche de RS8 : la n-ième
-        # image de cette liste prendra la n-ième direction de la référence.
+        # **Dans l'ordre des vues** : la n-ième image de cette liste a pris la
+        # n-ième direction de l'ordre parti avec l'appel (RS8) — ou aucune, et
+        # la marque dit pourquoi.
         emplacement.decoupe = {
             "morceaux": [a.identifiant for a in nees],
             "attendu": vues.attendu,
+            "directions": list(directions) if directions is not None else None,
+            **({"sans_direction": sans_direction} if sans_direction else {}),
         }
         self._sauver(generation)
 
@@ -670,6 +693,36 @@ class _Vues:
     raison: str | None = None
     attendu: int | None = None
     trouvees: int | None = None
+
+
+def _directions_des_vues(
+    generation: Generation, morceaux: int
+) -> tuple[tuple[str, ...] | None, str | None]:
+    """Les directions des morceaux, dans l'ordre des vues — ou rien, et
+    pourquoi (RS8, décision 8 de `docs/PLAN-references-du-sujet.md`).
+
+    **L'ordre lu est celui parti avec l'appel** (`demande["ordre_des_vues"]`,
+    figé à la soumission), pas celui de la fiche d'aujourd'hui : c'est la
+    planche que le modèle a recopiée qui dit où est chaque vue.
+
+    **Un compte qui ne tombe pas juste ne range rien** — la règle de la
+    découpe elle-même : mieux vaut quatre images sans direction qu'une
+    direction décalée d'un cran sur chacune.
+    """
+    ordre = tuple(
+        d for d in (generation.demande.get("ordre_des_vues") or ()) if isinstance(d, str) and d
+    )
+    if not ordre:
+        return None, (
+            "aucun ordre des vues dit sur la planche du sujet — "
+            "les images arrivent sans direction"
+        )
+    if len(ordre) != morceaux:
+        return None, (
+            f"l'ordre des vues nomme {len(ordre)} directions pour {morceaux} images — "
+            "les images arrivent sans direction"
+        )
+    return ordre, None
 
 
 def _zones_en_mots(nombre: int) -> str:

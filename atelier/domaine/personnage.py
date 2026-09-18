@@ -128,6 +128,21 @@ class Personnage:
     # ne désigne plus une référence promue ne gêne pas : elle n'est jamais lue.
     usages_des_references: dict[str, str] = field(default_factory=dict)
 
+    # ── L'ordre des vues de sa planche (RS8) ─────────────────────────────────
+    #
+    # **Une direction par vue, de gauche à droite puis de haut en bas** — ce que
+    # l'auteur dit une fois pour toutes de sa planche (« sud, est, nord,
+    # ouest »), et que la découpe à l'arrivée lit pour ranger chaque morceau
+    # (`docs/PLAN-references-du-sujet.md`, décision 8). La direction vient de la
+    # position, jamais d'une devinette.
+    #
+    # **Rangé par image, pas sur le sujet** : l'ordre décrit *cette* planche-là.
+    # Ranger une autre image en planche ne lui prête pas l'ordre de la
+    # première, et c'est l'image partie avec l'appel qui dit l'ordre à lire.
+    # Absent vaut « aucun ordre » : aucune migration, et les morceaux arrivent
+    # sans direction, comme avant la tranche.
+    ordres_des_vues: dict[str, tuple[str, ...]] = field(default_factory=dict)
+
     # ── La recette de ses images (RS6) ───────────────────────────────────────
     #
     # **Le nom d'une recette nommée, ou rien.** Le 18 septembre 2026, l'auteur
@@ -268,6 +283,14 @@ class Personnage:
         """L'usage d'une référence promue — `libre` tant que rien n'est rangé."""
         return self.usages_des_references.get(asset) or LIBRE
 
+    def ordre_des_vues(self, asset: str) -> tuple[str, ...]:
+        """L'ordre des vues de cette planche (RS8) — vide tant qu'il n'est pas
+        dit, **ou si l'image n'est plus rangée en planche** : un ordre resté
+        sur une image rangée ailleurs ne décrit plus rien."""
+        if self.usage_de(asset) != PLANCHE:
+            return ()
+        return self.ordres_des_vues.get(asset, ())
+
     def references_du_contexte(
         self, *, planche: bool, direction: str | None
     ) -> tuple[tuple[str, str], ...]:
@@ -295,6 +318,9 @@ class Personnage:
             "eteints": list(self.eteints),
             "references": list(self.references),
             "usages_des_references": dict(self.usages_des_references),
+            "ordres_des_vues": {
+                asset: list(ordre) for asset, ordre in self.ordres_des_vues.items()
+            },
             "recette": self.recette,
             "image_de_reference": self.image_de_reference,
             "hors_calibrage": list(self.hors_calibrage),
@@ -336,6 +362,17 @@ class Personnage:
             # n'a pas la clé. Un usage illisible retombe aussi sur `libre`, qui
             # est le comportement d'avant — jamais sur une planche inventée.
             usages_des_references=_usages(d.get("usages_des_references")),
+            # **Absent, aucun ordre** (RS8) : un fichier d'avant la tranche n'a
+            # pas la clé, et ses planches se découpent sans direction.
+            ordres_des_vues={
+                str(asset): tuple(_textes(ordre))
+                for asset, ordre in (
+                    d.get("ordres_des_vues")
+                    if isinstance(d.get("ordres_des_vues"), dict)
+                    else {}
+                ).items()
+                if asset and _textes(ordre)
+            },
             # **Absente, rien** (RS6) : un fichier d'avant la tranche n'a pas
             # la clé, et ses images gardent la recette du jeu.
             recette=str(d.get("recette") or "").strip(),

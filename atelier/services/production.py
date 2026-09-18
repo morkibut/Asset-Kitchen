@@ -35,6 +35,7 @@ from atelier.domaine.bande import Bande
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.personnage import (
     LIBRE,
+    PLANCHE,
     Personnage,
     direction_de_lusage,
     usage_lu,
@@ -115,6 +116,13 @@ class Reclame:
 
     images: int
     bandes: int
+
+
+# **La borne de la découpe, redite ici** (RS8) : `DECOUPES_MAX` de
+# `atelier/services/decoupe.py`. Un ordre plus long ne tomberait jamais juste
+# — la découpe à l'arrivée ne rend pas plus de morceaux —, et importer le
+# service de découpe ici pour un nombre lierait deux services qui s'ignorent.
+VUES_MAX = 64
 
 
 def reclame(pose: Pose, directions: Sequence[Direction]) -> Reclame:
@@ -1266,6 +1274,14 @@ class ServiceProduction:
                     "usage": usage,
                     "usage_nom": self.nom_de_lusage(projet, usage),
                     "montre": self._montre(projet, asset, carte=False),
+                    # **L'ordre de ses vues, pour la planche seule** (RS8) —
+                    # une liste d'identifiants de direction, vide tant que
+                    # l'auteur ne l'a pas dit.
+                    **(
+                        {"ordre_des_vues": list(personnage.ordre_des_vues(asset))}
+                        if usage == PLANCHE
+                        else {}
+                    ),
                 }
             )
 
@@ -1376,8 +1392,81 @@ class ServiceProduction:
             )
             usages.pop(asset, None)
         personnage.usages_des_references = usages
+        # **L'ordre des vues part avec la planche** (RS8) : dépromue, ou rangée
+        # ailleurs qu'en planche, l'image n'a plus de vues à ordonner. Rangée à
+        # nouveau en planche plus tard, elle repart sans ordre — l'auteur le
+        # redit plutôt que de retrouver un ordre qu'il a oublié.
+        if usages.get(asset) != PLANCHE and asset in personnage.ordres_des_vues:
+            personnage.ordres_des_vues = {
+                a: o for a, o in personnage.ordres_des_vues.items() if a != asset
+            }
         self._sauver(personnage)
         return personnage
+
+    def poser_ordre_des_vues(
+        self,
+        projet: str,
+        identifiant: str,
+        asset: str,
+        ordre: Sequence[str] | None,
+    ) -> Personnage:
+        """L'ordre des vues de la planche de ce sujet — ou plus aucun (RS8).
+
+        Une direction par vue, de gauche à droite puis de haut en bas : la
+        découpe à l'arrivée donne la n-ième direction au n-ième morceau.
+        `None` et la liste vide effacent l'ordre ; les morceaux arrivent alors
+        sans direction.
+
+        **Trois refus, avant d'écrire quoi que ce soit**, dans le style de
+        `_usage_admis` : une image qui n'est pas rangée en planche chez ce
+        sujet, une direction qu'il ne tient pas — un morceau rangé là ne se
+        verrait dans aucune case —, et une direction nommée deux fois, qui
+        rangerait deux vues au même endroit.
+        """
+        personnage = self.personnage(projet, identifiant)
+        if asset not in personnage.references or personnage.usage_de(asset) != PLANCHE:
+            raise ProductionRefusee(
+                f"cette image n'est pas la planche de « {personnage.nom} » — "
+                "rangez-la en planche avant de dire l'ordre de ses vues"
+            )
+        lu = tuple(str(d).strip() for d in (ordre or ()))
+        if len(lu) > VUES_MAX:
+            raise ProductionRefusee(
+                f"une planche se découpe en {VUES_MAX} vues au plus"
+            )
+        tenues = {d.identifiant for d in self.directions_du_sujet(projet, personnage)}
+        for numero, angle in enumerate(lu, start=1):
+            if angle not in tenues:
+                raise ProductionRefusee(
+                    f"vue {numero} : « {personnage.nom} » ne tient pas la direction "
+                    f"« {angle} » — un morceau rangé là ne se verrait nulle part"
+                )
+        doubles = sorted({a for a in lu if lu.count(a) > 1})
+        if doubles:
+            raise ProductionRefusee(
+                f"la direction « {doubles[0]} » est nommée deux fois — "
+                "une vue par direction"
+            )
+        ordres = {a: o for a, o in personnage.ordres_des_vues.items() if a != asset}
+        if lu:
+            ordres[asset] = lu
+        personnage.ordres_des_vues = ordres
+        self._sauver(personnage)
+        return personnage
+
+    def ordre_des_vues(
+        self, projet: str | None, personnage: str | None, asset: str
+    ) -> tuple[str, ...]:
+        """L'ordre des vues de cette planche chez ce sujet, ou rien — même
+        repli que `references_du_contexte` : une chose disparue n'a pas
+        d'ordre, elle ne fait pas échouer l'appel."""
+        if not projet or not personnage:
+            return ()
+        try:
+            vise = self.personnage(projet, personnage)
+        except (PersonnageInconnu, ProjetInconnu):
+            return ()
+        return vise.ordre_des_vues(asset)
 
     def _usage_admis(self, projet: str, personnage: Personnage, usage: str) -> str:
         """L'usage demandé, **vérifié** — ou le refus qui dit pourquoi (RS1).
@@ -3398,9 +3487,17 @@ class ServiceProduction:
             # ouvert pendant qu'on supprimait un sujet enverrait sinon une
             # image chez un disparu — mais aucune pose n'est exigée : c'est
             # exactement l'état que la fiche montre dans « Pas encore rangé ».
-            objet.personnage = self.personnage(projet, personnage).identifiant
+            sujet = self.personnage(projet, personnage)
+            objet.personnage = sujet.identifiant
             objet.pose = None
-            objet.direction = None
+            # **Une direction sans pose se garde quand on la dit** (RS8) : une
+            # vue découpée d'une planche est au sujet, sous un angle connu, sans
+            # case encore — et c'est ici que l'auteur corrige l'angle. Non dite,
+            # elle s'efface, comme avant : sortir une image de sa case ne doit
+            # pas lui laisser un angle que personne n'a regardé.
+            objet.direction = (
+                self._direction_admise(projet, sujet, direction) if direction else None
+            )
             objet.personnage_supprime = False
         else:
             vise, visee = self.viser(projet, personnage, pose, direction)
@@ -3415,6 +3512,21 @@ class ServiceProduction:
 
         self._assets.sauver(objet)
         return objet
+
+    def _direction_admise(
+        self, projet: str, personnage: Personnage, direction: str
+    ) -> str:
+        """Une direction que ce sujet tient, ou le refus de RS1 : un angle qu'il
+        ne tient pas ne rangerait l'image dans aucune case, jamais."""
+        if all(
+            d.identifiant != direction
+            for d in self.directions_du_sujet(projet, personnage)
+        ):
+            raise ProductionRefusee(
+                f"« {personnage.nom} » ne tient pas la direction « {direction} » — "
+                "une image rangée là ne se verrait nulle part"
+            )
+        return direction
 
     # ── Ce qui est à lui sans être rangé ─────────────────────────────────────
 

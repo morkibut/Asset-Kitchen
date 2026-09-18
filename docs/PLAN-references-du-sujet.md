@@ -226,12 +226,35 @@ Tranché en RS7 :
 
 ### RS8 · Chaque vue dans sa direction
 
-- [ ] la référence `planche` du sujet porte l'ordre de ses vues (une direction par vue) ; il se
+- [x] la référence `planche` du sujet porte l'ordre de ses vues (une direction par vue) ; il se
       règle sur la fiche, sous la planche, avec une petite liste par vue
-- [ ] à la découpe à l'arrivée, la n-ième image prend la n-ième direction ; sans ordre, pas de
+- [x] à la découpe à l'arrivée, la n-ième image prend la n-ième direction ; sans ordre, pas de
       direction
-- [ ] la direction se corrige sur la fiche de l'image
-- [ ] essais sans appel payant
+- [x] la direction se corrige sur la fiche de l'image
+- [x] essais sans appel payant (`tests/test_rs8.py`, `OrdreDesVues.test.tsx`)
+
+Tranché en RS8 :
+
+- l'ordre est rangé **par image** dans le fichier du sujet (`ordres_des_vues`, clé = l'asset
+  planche), relu sans migration ; il part avec la planche — dépromue ou rangée ailleurs, elle
+  le perd ; route `PUT /characters/{id}/references/view-order` (`ordre: null` l'efface) ;
+  refusés (409) : une image qui n'est pas la planche, une direction que le sujet ne tient pas,
+  une direction nommée deux fois ; 64 vues au plus ;
+- **figé à la soumission** dans `generation.demande["ordre_des_vues"]`, et seulement avec
+  *Découper à l'arrivée* et une planche rangée partie : la découpe lit l'ordre de l'appel, pas
+  celui de la fiche — même au démarrage qui coupe une feuille plus tard ;
+- la marque de l'emplacement porte `directions` (la liste, ou `null`) et, à `null`,
+  `sans_direction` : « aucun ordre des vues dit » ou « l'ordre nomme 3 directions pour 4
+  images » — un compte faux ne range rien, mais la découpe a lieu ;
+- le morceau porte `direction` **sans pose** ; `designer` (`PUT /assets/{id}/character`) garde
+  maintenant une direction dite sans pose (vérifiée contre les directions du sujet), et l'efface
+  quand elle n'est pas dite, comme avant ; la fiche de l'image (`Fiche.tsx`) montre une liste
+  *Direction de cette image* pour une image au sujet sans pose ;
+- l'écran : `OrdreDesVues.tsx`, sous le bloc planche ; une liste par zone opaque de la planche
+  (la proposition de découpe, mode auto), « + une vue » / « − une vue », un bouton
+  *Enregistrer l'ordre* qui ne part qu'entier — échanger deux vues passe par un doublon ;
+- **pas fait** : la page du sujet ne regroupe pas les images sans pose par direction (*Pas
+  encore rangé* les montre à plat) ; la découpe à la main ne range toujours rien.
 
 ### RS9 · L'écran dit ce qui s'est passé
 

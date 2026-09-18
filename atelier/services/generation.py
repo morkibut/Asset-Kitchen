@@ -974,7 +974,15 @@ class ServiceGenerations:
         generation = Generation(
             identifiant=identifiant,
             modele=modele.identifiant,
-            demande=demande.resume(),
+            demande={
+                **demande.resume(),
+                # **L'ordre des vues en vigueur au départ** (RS8), figé ici :
+                # la découpe à l'arrivée le lit sur l'appel, pas sur la fiche
+                # — un ordre changé pendant que l'appel vole, ou avant un
+                # redémarrage qui coupe la feuille plus tard, ne range pas les
+                # vues d'une planche qui ne l'a jamais eu.
+                **self._ordre_parti(projet, personnage, demande, reinjectes),
+            },
             parametres_resolus=resolus,
             ecartees=ecartees,
             emplacements=[Emplacement(rang=r) for r in range(demande.variations)],
@@ -3271,6 +3279,35 @@ class ServiceGenerations:
                 projet, personnage, planche=planche, direction=direction
             )
         )
+
+    def _ordre_parti(
+        self,
+        projet: str | None,
+        personnage: str | None,
+        demande: Demande,
+        reinjectes: Sequence[Reinjection],
+    ) -> dict[str, list[str]]:
+        """`{"ordre_des_vues": [...]}` quand l'appel sera coupé à l'arrivée et
+        qu'une planche rangée part avec un ordre dit — sinon rien, et le
+        `generation.json` reste celui d'avant la tranche (RS8).
+
+        **L'ordre de la planche partie**, la première comme pour le compte des
+        vues (`ServiceDecoupe._vues_attendues`) : les deux se lisent sur la
+        même image, celle que le modèle a eue sous les yeux."""
+        if not demande.decouper_a_l_arrivee or self._production is None:
+            return {}
+        planche = next(
+            (
+                r
+                for r in reinjectes
+                if r.role == REFERENCE and r.origine == ASSET and r.usage == USAGE_PLANCHE
+            ),
+            None,
+        )
+        if planche is None:
+            return {}
+        ordre = self._production.ordre_des_vues(projet, personnage, planche.asset)
+        return {"ordre_des_vues": list(ordre)} if ordre else {}
 
     def _promues(
         self,
