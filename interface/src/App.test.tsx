@@ -60,6 +60,8 @@ import type {
   Etat,
   Etiquette,
   BaseMouvements,
+  BaseStyles,
+  StyleDuPersonnage,
   BaseModelesVideo,
   EtatDuMoteur,
   EtatInstallation,
@@ -508,6 +510,24 @@ const MOUVEMENTS: BaseMouvements["mouvements"] = [
     texte: "death, collapsing to the ground, then lying still",
     cadence: 10,
     directions: ["sud"],
+    livre: true,
+    masque: false,
+  },
+]
+
+// ── Les styles de combat livrés (SC1, SC4) ──────────────────────────────────
+//
+// **Un seul, et c'est assez** — même raison que `MOUVEMENTS` ci-dessus : ce
+// que l'écran doit montrer est une liste, un texte par mouvement, et la marque
+// de ce qui a été nommé ici.
+const STYLES: BaseStyles["styles"] = [
+  {
+    identifiant: "baton",
+    nom: "bâton à deux mains",
+    tient: "a long wooden staff held in both hands",
+    textes: {
+      marche: "a two-handed staff carried while walking, staying in place",
+    },
     livre: true,
     masque: false,
   },
@@ -1470,6 +1490,12 @@ function serveurDouble(options: {
    *  étiquettes : l'atelier arrive avec sept mouvements livrés, et un écran qui
    *  les montrerait vides mesurerait le contraire du produit. */
   mouvements?: BaseMouvements
+  /** La bibliothèque de styles de combat (SC1, SC4). **Vide par défaut** :
+   *  la bibliothèque livrée est un détail du serveur (`tests/test_sc1_styles.py`),
+   *  ce double-ci ne prouve que ce que l'écran affiche et envoie. */
+  styles?: BaseStyles
+  /** Le style résolu d'un personnage donné, par identifiant (SC2, SC4). */
+  stylesDesPersonnages?: Record<string, StyleDuPersonnage>
   /** Le catalogue vidéo et le prix du jour (A9). **Deux modèles par défaut, et
    *  l'un des deux grisé** : ce que l'écran doit prouver est qu'il propose
    *  l'un, refuse l'autre avec sa raison, et n'en cache aucun. */
@@ -2053,6 +2079,26 @@ function serveurDouble(options: {
     }
     if (url.includes("/movements"))
       return rendre(options.mouvements ?? { mouvements: MOUVEMENTS, masques: [] })
+
+    // La bibliothèque de styles de combat (SC1, SC4). **Les adresses les plus
+    // longues d'abord** — même piège que `/movements/for-pose/` ci-dessus :
+    // `/styles/for-character/...` et `/styles/for-piece/...` seraient sinon
+    // avalées par `url.includes("/styles")`.
+    if (url.includes("/styles/for-character/")) {
+      const personnage = url.split("/styles/for-character/")[1].split("?")[0]
+      return rendre(
+        options.stylesDesPersonnages?.[personnage] ?? {
+          personnage,
+          style: null,
+          origine: "aucun",
+          piece: null,
+        },
+      )
+    }
+    if (url.includes("/styles/for-piece/"))
+      return rendre({ piece: url.split("/styles/for-piece/")[1].split("?")[0], style: null })
+    if (url.includes("/styles"))
+      return rendre(options.styles ?? { styles: [], masques: [] })
 
     // ── Les clips (A9) ───────────────────────────────────────────────────
     //
@@ -5540,6 +5586,69 @@ describe("l'agent, vu de l'atelier", () => {
       )
     await waitFor(() => expect(marque("Ce qui part au modèle")).toBe(true))
     expect(marque("Cadence")).toBe(true)
+  })
+
+  // ── Les styles de combat (SC4) ─────────────────────────────────────────────
+
+  test("l'atelier arrive avec ses styles, et le texte d'un mouvement se lit en dépliant", async () => {
+    await ouvrirLesMouvements({ styles: { styles: STYLES, masques: [] } })
+
+    await screen.findByRole("heading", { name: "Les styles de combat" })
+    expect(screen.getByRole("button", { name: "bâton à deux mains" })).toBeTruthy()
+    // Ce qu'il tient se lit sans déplier.
+    expect(screen.getByText("a long wooden staff held in both hands")).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "bâton à deux mains" }))
+    expect(
+      screen.getByRole("textbox", { name: "bâton à deux mains — marche" }),
+    ).toHaveValue("a two-handed staff carried while walking, staying in place")
+  })
+
+  test("corriger le texte d'un mouvement pour un style l'envoie fusionné aux autres", async () => {
+    const { appels } = await ouvrirLesMouvements({ styles: { styles: STYLES, masques: [] } })
+    await screen.findByRole("heading", { name: "Les styles de combat" })
+
+    fireEvent.click(screen.getByRole("button", { name: "bâton à deux mains" }))
+    fireEvent.change(screen.getByRole("textbox", { name: "bâton à deux mains — marche" }), {
+      target: { value: "a two-handed staff carried while walking, then a low guard" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Poser" }))
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url.startsWith("/api/styles/baton?projet=") &&
+            (a.corps as { textes?: Record<string, string> } | undefined)?.textes?.marche ===
+              "a two-handed staff carried while walking, then a low guard",
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("nommer un style envoie son texte, et rien avant qu'il soit là", async () => {
+    const { appels } = await ouvrirLesMouvements({ styles: { styles: [], masques: [] } })
+    await screen.findByRole("heading", { name: "Les styles de combat" })
+
+    fireEvent.click(screen.getByRole("button", { name: "Nommer un style" }))
+    const nom = screen.getByPlaceholderText("bâton à deux mains")
+    fireEvent.change(nom, { target: { value: "lance" } })
+    const bouton = screen.getByRole("button", { name: "Nommer" })
+    expect(bouton).toBeDisabled()
+
+    fireEvent.change(screen.getByRole("textbox", { name: "marche" }), {
+      target: { value: "a spear carried while walking, staying in place" },
+    })
+    expect(bouton).not.toBeDisabled()
+    fireEvent.click(bouton)
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url.startsWith("/api/styles?projet=") &&
+            (a.corps as { nom?: string } | undefined)?.nom === "lance",
+        ),
+      ).toBe(true),
+    )
   })
 
   test("la phrase d'animation d'une direction se lit en gris et se corrige pour le jeu", async () => {

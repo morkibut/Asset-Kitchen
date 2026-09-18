@@ -722,6 +722,15 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · vide au départ",
   },
 
+  "codex.chose.style_combat": {
+    nom: "Son style de combat",
+    ou: "sujet",
+    quoi: "Comment ce personnage se bat — à mains nues, au bâton, à l'arc. Pour un mouvement que le style décrit (une attaque, un repos), c'est son texte qui part à la place de celui du mouvement.",
+    change:
+      "Choisi ici, il passe devant celui d'une pièce portée. Sans choix ni pièce qui en déclare un, le texte du mouvement part seul.",
+    origine: "toi, ou la pièce qu'il porte en calque, ou aucun",
+  },
+
   "codex.chose.habillage": {
     nom: "Ce qui l'habille",
     ou: "sujet",
@@ -1983,6 +1992,37 @@ export const AIDE: Record<string, Explication> = {
       "Elle règle la vitesse de l'aperçu **et** elle est écrite dans le fichier d'accompagnement à l'export. Un seul réglage pour les deux : séparés, ils finiraient par se contredire, et c'est toi qui paierais l'écart.",
     origine: "toi · 12 images par seconde à défaut",
     long: "Douze est le compromis du pixel art : au-dessous le pas saccade, au-dessus tu paies des images que l'œil ne distingue plus à cette taille. Les livrés s'en écartent quand le mouvement le demande — le repos à huit, la course à quatorze.",
+  },
+
+  // ── Les styles de combat (SC1, SC4, 18 septembre 2026) ──────────────────────
+  //
+  // Trois entrées pour un réglage à trois champs, même découpe que le
+  // mouvement juste au-dessus : un style dit *comment* un personnage joue un
+  // mouvement, là où le mouvement dit *quel cycle*.
+
+  "style.nom": {
+    nom: "Nom du style",
+    ou: "reglages",
+    quoi: "Le nom français du style — ce que tu lis, et jamais ce qui part au modèle.",
+    change:
+      "Rien à la génération : le nom ne quitte pas l'atelier. **Le repère qu'il produit accroche le style au personnage ou à la pièce qui le déclare** ; renommer un style déjà nommé ne défait pas ce lien.",
+    origine: "toi · dix styles arrivent avec l'atelier",
+  },
+  "style.tient": {
+    nom: "Ce qu'il tient en main",
+    ou: "reglages",
+    quoi: "Ce que le style tient en main, en anglais — vide veut dire mains nues.",
+    change:
+      "Rien à la génération : il sert à reconnaître le style dans la liste. Ce sont les textes des mouvements qui nomment l'arme au modèle.",
+    origine: "toi · vide à défaut",
+  },
+  "style.texte": {
+    nom: "Le texte d'un mouvement, pour ce style",
+    ou: "reglages",
+    quoi: "Le texte anglais que ce style dit pour ce mouvement-là. Vide, le style ne dit rien pour ce mouvement et le texte du mouvement seul part à sa place.",
+    change:
+      "Pour un personnage qui a ce style, il part après la phrase de la direction, à la place du texte du mouvement.",
+    origine: "toi · les livrés arrivent écrits pour l'attaque, certains pour le repos",
   },
 
   // ── Commander un clip (A9) ────────────────────────────────────────────────

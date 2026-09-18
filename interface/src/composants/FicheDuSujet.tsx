@@ -36,6 +36,8 @@ import {
   type Pose,
   type ReferenceDeLaChose,
   type ReferencesDeLaChose,
+  type StyleDeCombat,
+  type StyleDuPersonnage,
 } from "../api"
 import { BandeQuiTourne, sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
@@ -105,6 +107,10 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   // lisent qu'une fois la fiche ouverte, comme le reste de ce dialogue.
   const [habillage, setHabillage] = useState<Habillage | null>(null)
   const [references, setReferences] = useState<ReferencesDeLaChose | null>(null)
+  // **Son style de combat** (SC4, 18 septembre 2026) — seuls les personnages
+  // se battent : un décor ou un objet n'a rien à choisir ici.
+  const [styleDuPersonnage, setStyleDuPersonnage] = useState<StyleDuPersonnage | null>(null)
+  const [catalogueStyles, setCatalogueStyles] = useState<StyleDeCombat[]>([])
   // **Type d'objet et ambiance** (16 septembre 2026), venus de l'ancien écran
   // « Ses cases ». Chacun s'écrit dès qu'on le change, comme là-bas.
   const [types, setTypes] = useState<PosesDesTypes["types"]>([])
@@ -141,12 +147,27 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     void api.habillage(personnage.identifiant).then((recu) => setHabillage(recu ?? null)).catch(() => setHabillage(null))
     void api.referencesDeLaChose(personnage.identifiant).then((recu) => setReferences(recu ?? null)).catch(() => setReferences(null))
   }, [personnage.identifiant])
+  // **Son style de combat** (SC4) — seuls les personnages se battent. Relu
+  // après chaque pose, comme les deux réglages ci-dessus : poser un choix
+  // peut faire reparaître celui d'une pièce.
+  const relireStyle = useCallback(() => {
+    if (personnage.famille !== "personnages") { setStyleDuPersonnage(null); return }
+    void api.styleDuPersonnage(personnage.identifiant, personnage.projet).then(setStyleDuPersonnage).catch(() => setStyleDuPersonnage(null))
+  }, [personnage.identifiant, personnage.projet, personnage.famille])
   useEffect(() => {
-    if (!edition) { setHabillage(null); setReferences(null); return }
+    if (!edition) { setHabillage(null); setReferences(null); setStyleDuPersonnage(null); setCatalogueStyles([]); return }
     relireReglages()
+    relireStyle()
     void api.posesDesTypes().then((recu) => setTypes(recu?.types ?? [])).catch(() => setTypes([]))
     void api.coteAmbiances().then((recu) => setAmbiances(recu?.ambiances ?? [])).catch(() => setAmbiances([]))
-  }, [edition, relireReglages])
+    if (personnage.famille === "personnages")
+      void api.styles(personnage.projet).then((recu) => setCatalogueStyles(recu.styles)).catch(() => setCatalogueStyles([]))
+  }, [edition, relireReglages, relireStyle, personnage.projet, personnage.famille])
+  const poserStyle = async (style: string | null) => {
+    try {
+      setStyleDuPersonnage(await api.choisirStyleDuPersonnage(personnage.identifiant, style, personnage.projet))
+    } catch (erreur) { onErreur(erreur, "le style a été refusé") }
+  }
   const poserHabillage = async (champs: Parameters<typeof api.reglerPersonnage>[1]) => {
     try {
       const rendu = await api.reglerPersonnage(personnage.identifiant, champs)
@@ -246,6 +267,19 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
           </div>
         </section>
 
+        {/* **Seuls les personnages se battent** — un décor ou un objet n'a
+            rien à choisir ici (18 septembre 2026, SC4). */}
+        {personnage.famille === "personnages" && (
+          <section data-style-de-combat className="flex flex-col gap-[8px]">
+            <EnTeteDeSection aide="codex.chose.style_combat" />
+            <SonStyleDeCombat
+              resolu={styleDuPersonnage}
+              catalogue={catalogueStyles}
+              onPoser={poserStyle}
+            />
+          </section>
+        )}
+
         <section className="flex flex-col gap-[8px]">
           <EnTeteDeSection aide="codex.chose.habillage" compte={habillage ? `${habillage.champs.length} textes · ${habillage.de_l_ambiance} de son ambiance` : "…"} />
           <CeQuiLHabille habillage={habillage} onPoser={poserHabillage} />
@@ -270,6 +304,54 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
       <footer className="flex justify-end gap-[8px] border-t border-trait p-[14px]"><button className={BOUTON} onClick={fermer}>Annuler</button><button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50" disabled={occupe || !nom.trim() || !modifie} onClick={() => void garder()}>Garder la fiche</button></footer>
     </>} />}
   </>
+}
+
+// ── Son style de combat — un choix, et sa provenance dite en clair (SC4) ────
+
+/** Une ligne : la liste déroulante, et une phrase qui dit d'où vient le
+ *  style — jamais les deux à deviner l'un de l'autre. */
+function SonStyleDeCombat({
+  resolu,
+  catalogue,
+  onPoser,
+}: {
+  resolu: StyleDuPersonnage | null
+  catalogue: StyleDeCombat[]
+  onPoser: (style: string | null) => Promise<void>
+}) {
+  if (!resolu) return null
+
+  const phrase =
+    resolu.origine === "choisi"
+      ? "choisi"
+      : resolu.origine === "piece"
+        ? `celui du ${resolu.piece?.nom ?? "?"}`
+        : "aucun style — le texte du mouvement part seul"
+
+  return (
+    <div className="flex flex-col gap-1">
+      <select
+        aria-label="Son style de combat"
+        className="mesure h-[34px] w-full max-w-[360px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle"
+        value={resolu.style && resolu.origine === "choisi" ? resolu.style.identifiant : ""}
+        onChange={(e) => void onPoser(e.target.value || null)}
+      >
+        {/* Sans choix, la ligne vide dit ce qui s'applique quand même :
+            le style de la pièce portée, ou rien. */}
+        <option value="">
+          {resolu.origine === "piece" && resolu.style
+            ? `pas de choix (${resolu.style.nom}, par la pièce)`
+            : "aucun"}
+        </option>
+        {catalogue.map((style) => (
+          <option key={style.identifiant} value={style.identifiant}>
+            {style.nom}
+          </option>
+        ))}
+      </select>
+      <p className="mesure text-[11px] text-encre-4">{phrase}</p>
+    </div>
+  )
 }
 
 // ── Ce qui l'habille — les sept textes de style (repris de la fiche longue) ─

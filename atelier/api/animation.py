@@ -393,12 +393,26 @@ class CorpsChoixStyle(BaseModel):
 
 
 def _resolution_en_json(atelier: Atelier, projet: str, personnage: str) -> dict[str, Any]:
+    """La résolution du style d'un personnage, **la pièce nommée** (SC4).
+
+    L'identifiant seul ne suffit pas à l'écran, qui doit dire « celui du
+    Bâton de chêne » sans rappeler l'équipement pour traduire un identifiant
+    en nom — même manque, et même remède, que `_style_du_personnage` un peu
+    plus haut dans ce fichier, pour la route qui compose le texte d'un clip.
+    """
     style, origine, piece = atelier.styles.style_du_personnage(projet, personnage)
+    piece_json: dict[str, str] | None = None
+    if origine == "piece" and piece:
+        objet = next(
+            (p for p in atelier.equipement.pieces(projet) if p.identifiant == piece),
+            None,
+        )
+        piece_json = {"identifiant": piece, "nom": objet.nom if objet else piece}
     return {
         "personnage": personnage,
         "style": style.en_json() if style else None,
         "origine": origine,
-        "piece": piece,
+        "piece": piece_json,
     }
 
 
@@ -434,6 +448,27 @@ async def choisir_style_du_personnage(
     atelier.production.personnage(ouvert, personnage)
     atelier.styles.choisir_pour_le_personnage(ouvert, personnage, corps.style)
     return _resolution_en_json(atelier, ouvert, personnage)
+
+
+@routeur.get("/styles/for-piece/{piece}")
+async def style_de_la_piece(
+    requete: Request, piece: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Le style que cette pièce déclare — **son propre choix, sans résolution**.
+
+    Une pièce n'hérite de rien, à la différence d'un personnage : elle
+    déclare un style ou n'en déclare aucun. Cette lecture manquait à côté de
+    son écriture (`PUT .../combat-style`) — l'écran des Réglages d'une pièce
+    (`SC4`) en a besoin pour montrer la valeur actuelle sans la deviner. Un
+    style masqué depuis compte pour absent, comme dans
+    `ServiceStyles.style_du_personnage`.
+    """
+    atelier = _atelier(requete)
+    ouvert = projet or atelier.bibliotheque.courant
+    choix = atelier.styles.choix_en_json(ouvert)
+    visibles = {s.identifiant: s for s in atelier.styles.tous(ouvert)}
+    style = visibles.get(choix["pieces"].get(piece, ""))
+    return {"piece": piece, "style": style.en_json() if style else None}
 
 
 @routeur.put("/characters/pieces/{piece}/combat-style")

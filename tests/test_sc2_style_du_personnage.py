@@ -104,7 +104,10 @@ def test_la_piece_portee_en_calque_donne_son_style_sans_qu_on_le_choisisse(
 
     recu = _style_de(client, projet, champy)
     assert recu["origine"] == "piece"
-    assert recu["piece"] == baton
+    # **La pièce nommée** (SC4) — la fiche du personnage dit « celui du Bâton
+    # de chêne », pas « celui du baton-1 » : l'identifiant seul ne le permet
+    # pas, même remède que `_style_du_personnage` pour la route du clip.
+    assert recu["piece"] == {"identifiant": baton, "nom": "Bâton de chêne"}
     assert recu["style"]["identifiant"] == "baton"
 
 
@@ -221,12 +224,12 @@ def test_deux_pieces_qui_declarent_un_style_l_ordre_de_la_garde_robe_decide(
     _declarer(client, projet, arc, "arc")
 
     # « dos » a été nommé en premier : il a le premier rang.
-    assert _style_de(client, projet, champy)["piece"] == arc
+    assert _style_de(client, projet, champy)["piece"]["identifiant"] == arc
 
     rangs = {e.identifiant: e.rang for e in atelier.equipement.emplacements(projet)}
     mains = next(p.emplacement for p in atelier.equipement.pieces(projet) if p.identifiant == lance)
     atelier.equipement.regler_emplacement(projet, mains, rang=min(rangs.values()) - 1)
-    assert _style_de(client, projet, champy)["piece"] == lance
+    assert _style_de(client, projet, champy)["piece"]["identifiant"] == lance
 
 
 def test_un_jeu_n_influence_pas_un_autre(client, atelier, tmp_path):

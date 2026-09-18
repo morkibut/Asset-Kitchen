@@ -24,9 +24,11 @@ import { useEffect, useState } from "react"
 import {
   api,
   type BaseMouvements,
+  type BaseStyles,
   type Direction,
   type DirectionsDuJeu,
   type Mouvement,
+  type StyleDeCombat,
 } from "../api"
 import { Bouton, Libelle, Raison } from "./pieces"
 
@@ -438,5 +440,328 @@ function PhraseDeDirection({
         </div>
       )}
     </li>
+  )
+}
+
+/** Les styles de combat (SC4, 18 septembre 2026) — **comment** un personnage
+ *  se bat, sur le même modèle que `BlocMouvements` juste au-dessus : une
+ *  liste, ouvrir une ligne montre un texte par mouvement, nommer en fabrique
+ *  un neuf, masquer/remontrer comme pour un mouvement livré.
+ *
+ *  **La liste des mouvements vient d'ici aussi** : un style dit un texte par
+ *  identifiant de mouvement, et il faut la liste du jeu pour proposer les
+ *  bons champs — sans elle, on ne saurait pas quels mouvements un style peut
+ *  dire. */
+export function BlocStyles({ projet }: { projet: string | null }) {
+  const [base, setBase] = useState<BaseStyles | null>(null)
+  const [mouvements, setMouvements] = useState<Mouvement[]>([])
+  const [refus, setRefus] = useState<string | null>(null)
+  const [ouvert, setOuvert] = useState<string | null>(null)
+  const [fabrique, setFabrique] = useState(false)
+
+  useEffect(() => {
+    let vivant = true
+    setOuvert(null)
+    api
+      .styles(projet)
+      .then((recu) => vivant && setBase(recu))
+      .catch(() => vivant && setBase({ styles: [], masques: [] }))
+    api
+      .mouvements(projet)
+      .then((recu) => vivant && setMouvements(recu.mouvements))
+      .catch(() => vivant && setMouvements([]))
+    return () => {
+      vivant = false
+    }
+  }, [projet])
+
+  const poser = async (promesse: Promise<BaseStyles>) => {
+    setRefus(null)
+    try {
+      setBase(await promesse)
+    } catch (erreur) {
+      setRefus(erreur instanceof Error ? erreur.message : "geste refusé")
+    }
+  }
+
+  if (!base) return null
+
+  return (
+    <>
+      <Titre>Les styles de combat</Titre>
+      <p className="text-[12.5px] leading-relaxed text-encre-2">
+        Comment un personnage se bat. Quand il a ce style, le texte écrit ici
+        pour un mouvement remplace celui du mouvement ; les autres mouvements
+        gardent le leur.
+      </p>
+      <p data-styles-du-jeu className="mt-2 text-[12.5px] leading-relaxed text-encre-2">
+        {base.propres_au_jeu
+          ? "Ce jeu a ses propres styles."
+          : "Ce jeu utilise les styles de départ de l'atelier. Votre première modification lui en fait une copie : les autres jeux ne changent pas."}
+      </p>
+
+      <ul className="mt-3 flex flex-col gap-px">
+        {base.styles.map((style) => (
+          <LigneDeStyle
+            key={style.identifiant}
+            style={style}
+            mouvements={mouvements}
+            ouvert={ouvert === style.identifiant}
+            onOuvrir={() =>
+              setOuvert(ouvert === style.identifiant ? null : style.identifiant)
+            }
+            onRegler={(champs) =>
+              poser(api.reglerStyle(style.identifiant, champs, projet))
+            }
+            onMasquer={() => {
+              setOuvert(null)
+              return poser(api.masquerStyle(style.identifiant, projet))
+            }}
+          />
+        ))}
+      </ul>
+
+      {base.masques.length > 0 && (
+        <p className="mesure mt-2 flex flex-wrap items-center gap-2 text-[10px] text-encre-3">
+          <span>masqués</span>
+          {base.masques.map((style) => (
+            <button
+              key={style.identifiant}
+              type="button"
+              onClick={() => poser(api.montrerStyle(style.identifiant, projet))}
+              className="rounded-[2px] border border-trait px-1.5 py-0.5 text-encre-2 hover:text-signal"
+            >
+              {style.nom} · remontrer
+            </button>
+          ))}
+        </p>
+      )}
+
+      <Raison texte={refus} />
+
+      {fabrique ? (
+        <FabriqueStyle
+          mouvements={mouvements}
+          onFermer={() => setFabrique(false)}
+          onPoser={async (nom, tient, textes) => {
+            await poser(api.fabriquerStyle(nom, tient, textes, projet))
+            setFabrique(false)
+          }}
+        />
+      ) : (
+        <div className="mt-3">
+          <Bouton onClick={() => setFabrique(true)} enfants="Nommer un style" />
+        </div>
+      )}
+    </>
+  )
+}
+
+function LigneDeStyle({
+  style,
+  mouvements,
+  ouvert,
+  onOuvrir,
+  onRegler,
+  onMasquer,
+}: {
+  style: StyleDeCombat
+  mouvements: Mouvement[]
+  ouvert: boolean
+  onOuvrir: () => void
+  onRegler: (champs: {
+    nom?: string
+    tient?: string
+    textes?: Record<string, string>
+  }) => Promise<void>
+  onMasquer: () => Promise<void>
+}) {
+  const [nom, setNom] = useState(style.nom)
+  const [tient, setTient] = useState(style.tient)
+  const [textes, setTextes] = useState<Record<string, string>>(style.textes)
+
+  useEffect(() => {
+    if (!ouvert) {
+      setNom(style.nom)
+      setTient(style.tient)
+      setTextes(style.textes)
+    }
+  }, [ouvert, style])
+
+  const change =
+    nom.trim() !== style.nom ||
+    tient.trim() !== style.tient ||
+    mouvements.some((m) => (textes[m.identifiant] ?? "").trim() !== (style.textes[m.identifiant] ?? ""))
+
+  const ceQuIlDit = mouvements.filter((m) => style.textes[m.identifiant]).map((m) => m.nom)
+
+  return (
+    <li className="rounded-[2px] border border-trait bg-carte px-2.5 py-1.5">
+      <div className="flex items-baseline gap-2">
+        <button
+          type="button"
+          onClick={onOuvrir}
+          aria-expanded={ouvert}
+          className="text-[12.5px] text-encre hover:text-signal"
+        >
+          {style.nom}
+        </button>
+        {!style.livre && (
+          <span className="mesure text-[9px] tracking-[.08em] text-epingle uppercase">
+            nommé ici
+          </span>
+        )}
+        <span className="mesure ml-auto text-[10px] text-encre-3">
+          {ceQuIlDit.length > 0 ? ceQuIlDit.join(", ") : "aucun texte"}
+        </span>
+        <button
+          type="button"
+          onClick={onOuvrir}
+          className="mesure rounded-[2px] border border-trait px-1.5 py-0.5 text-[10px] text-encre-2 hover:text-signal"
+        >
+          {ouvert ? "fermer" : "modifier"}
+        </button>
+      </div>
+
+      {/* Ce qu'il tient est visible sans déplier : c'est ce qui distingue un
+          style d'un autre, plus vite que ses textes. */}
+      <p className="mesure mt-0.5 truncate text-[10px] text-encre-3">
+        {style.tient || "mains nues"}
+      </p>
+
+      {ouvert && (
+        <div className="mt-2 flex flex-col gap-2 border-t border-trait pt-2">
+          <label className="flex flex-col gap-1">
+            <Libelle aide="style.nom">Nom</Libelle>
+            <input
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              className={CHAMP}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <Libelle aide="style.tient">Ce qu'il tient en main</Libelle>
+            <input
+              value={tient}
+              placeholder="mains nues"
+              onChange={(e) => setTient(e.target.value)}
+              className={CHAMP}
+            />
+          </label>
+          {mouvements.map((mouvement) => (
+            <label key={mouvement.identifiant} className="flex flex-col gap-1">
+              <Libelle aide="style.texte">{mouvement.nom}</Libelle>
+              <textarea
+                value={textes[mouvement.identifiant] ?? ""}
+                rows={2}
+                aria-label={`${style.nom} — ${mouvement.nom}`}
+                placeholder="vide — ce style ne dit rien pour ce mouvement, il garde son texte"
+                onChange={(e) =>
+                  setTextes((t) => ({ ...t, [mouvement.identifiant]: e.target.value }))
+                }
+                className={`${CHAMP} h-auto py-1.5 leading-relaxed`}
+              />
+            </label>
+          ))}
+          <div className="flex justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => void onMasquer()}
+              className="mesure text-[10px] text-encre-3 hover:text-signal"
+            >
+              {style.livre ? "masquer — il se remontre" : "masquer — il s'en va"}
+            </button>
+            <Bouton
+              inactif={!change}
+              principal
+              onClick={() =>
+                void onRegler({
+                  nom: nom.trim(),
+                  tient: tient.trim(),
+                  textes: Object.fromEntries(
+                    mouvements.map((m) => [m.identifiant, (textes[m.identifiant] ?? "").trim()]),
+                  ),
+                })
+              }
+              enfants="Poser"
+            />
+          </div>
+        </div>
+      )}
+    </li>
+  )
+}
+
+function FabriqueStyle({
+  mouvements,
+  onPoser,
+  onFermer,
+}: {
+  mouvements: Mouvement[]
+  onPoser: (nom: string, tient: string, textes: Record<string, string>) => Promise<void>
+  onFermer: () => void
+}) {
+  const [nom, setNom] = useState("")
+  const [tient, setTient] = useState("")
+  const [textes, setTextes] = useState<Record<string, string>>({})
+  // **Le nom et au moins un texte sont la définition** — même garde que
+  // `ServiceStyles.fabriquer` : un style sans texte ne fait jamais rien
+  // partir de plus que le mouvement seul, donc n'est pas un style.
+  const complet = nom.trim().length > 0 && Object.values(textes).some((t) => t.trim())
+
+  return (
+    <div className="mt-3 flex flex-col gap-2 rounded-[2px] border border-contour bg-carte p-2.5">
+      <label className="flex flex-col gap-1">
+        <Libelle aide="style.nom">Nom</Libelle>
+        <input
+          autoFocus
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
+          placeholder="bâton à deux mains"
+          className={CHAMP}
+        />
+      </label>
+      <label className="flex flex-col gap-1">
+        <Libelle aide="style.tient">Ce qu'il tient en main</Libelle>
+        <input
+          value={tient}
+          onChange={(e) => setTient(e.target.value)}
+          placeholder="a long wooden staff held in both hands"
+          className={CHAMP}
+        />
+      </label>
+      {mouvements.map((mouvement) => (
+        <label key={mouvement.identifiant} className="flex flex-col gap-1">
+          <Libelle aide="style.texte">{mouvement.nom}</Libelle>
+          <textarea
+            value={textes[mouvement.identifiant] ?? ""}
+            rows={2}
+            onChange={(e) =>
+              setTextes((t) => ({ ...t, [mouvement.identifiant]: e.target.value }))
+            }
+            className={`${CHAMP} h-auto py-1.5 leading-relaxed`}
+          />
+        </label>
+      ))}
+      <div className="flex justify-end gap-2">
+        <Bouton onClick={onFermer} enfants="Laisser" />
+        <Bouton
+          principal
+          inactif={!complet}
+          onClick={() =>
+            void onPoser(
+              nom.trim(),
+              tient.trim(),
+              Object.fromEntries(
+                Object.entries(textes)
+                  .map(([m, t]) => [m, t.trim()])
+                  .filter(([, t]) => t),
+              ),
+            )
+          }
+          enfants="Nommer"
+        />
+      </div>
+    </div>
   )
 }

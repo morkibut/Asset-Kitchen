@@ -124,7 +124,7 @@ import {
 } from "../api"
 import { Bouton, Curseur, Libelle, Raison, libelleModele } from "./pieces"
 import { nomDuModele } from "./Fiche"
-import { BlocDirectionsAnimees, BlocMouvements } from "./Mouvements"
+import { BlocDirectionsAnimees, BlocMouvements, BlocStyles } from "./Mouvements"
 
 // ── Les quatre étapes ────────────────────────────────────────────────────────
 
@@ -1783,6 +1783,7 @@ export function ReglesDuJeu({
               <section data-textes-des-animations className="flex flex-col">
                 <BlocDirectionsAnimees />
                 <BlocMouvements projet={dossierDuJeu} />
+                <BlocStyles projet={dossierDuJeu} />
               </section>
             )}
           </div>

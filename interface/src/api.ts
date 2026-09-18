@@ -670,6 +670,41 @@ export type BaseMouvements = {
   propres_au_jeu?: boolean
 }
 
+/** Un style de combat (SC1, 18 septembre 2026) — **comment** ce personnage-là
+ *  se bat, et non plus seulement quel cycle il joue. Même contrat qu'un
+ *  mouvement : un texte par mouvement, une bibliothèque livrée que la
+ *  première modification du jeu copie. */
+export type StyleDeCombat = {
+  identifiant: string
+  nom: string
+  /** Ce que le style tient en main, en anglais — vide veut dire mains nues. */
+  tient: string
+  /** Le texte anglais par mouvement qu'il dit — les autres gardent le texte
+   *  du mouvement seul. */
+  textes: Record<string, string>
+  livre: boolean
+  masque: boolean
+}
+
+/** La bibliothèque de styles telle que le serveur la sert — même forme que
+ *  `BaseMouvements`. */
+export type BaseStyles = {
+  styles: StyleDeCombat[]
+  masques: StyleDeCombat[]
+  propres_au_jeu?: boolean
+}
+
+/** Le style résolu d'un personnage, **et d'où il vient** (SC2/SC4) : choisi
+ *  sur lui, hérité d'une pièce portée en calque qui le déclare, ou aucun —
+ *  rien n'est deviné d'après un nom. `piece` porte son nom, pas seulement son
+ *  identifiant : c'est ce que la fiche affiche à côté du style. */
+export type StyleDuPersonnage = {
+  personnage: string
+  style: StyleDeCombat | null
+  origine: "choisi" | "piece" | "aucun"
+  piece: { identifiant: string; nom: string } | null
+}
+
 /** Ce qui partira pour animer une case du plan, **et d'où le texte vient**.
  *
  *  La règle vit sur le serveur et **nulle part ailleurs** : l'écran ne rejoue
@@ -5422,6 +5457,85 @@ export const api = {
     appeler<BaseMouvements>(`/movements/${identifiant}/show` + duJeu(projet), {
       method: "POST",
     }),
+
+  // ── Les styles de combat (SC1, SC2, SC4) ────────────────────────────────────
+  //
+  // Même contrat que les mouvements : aucune de ces routes ne coûte et
+  // aucune n'appelle personne.
+
+  styles: (projet?: string | null) =>
+    appeler<BaseStyles>("/styles" + duJeu(projet)),
+
+  fabriquerStyle: (
+    nom: string,
+    tient?: string,
+    textes?: Record<string, string>,
+    projet?: string | null,
+  ) =>
+    appeler<BaseStyles>("/styles" + duJeu(projet), {
+      method: "POST",
+      body: JSON.stringify({ nom, tient, textes }),
+    }),
+
+  /** Renommer, changer ce qu'il tient, ou corriger le texte d'un mouvement.
+   *  **`textes` se fusionne dans l'existant** — voir `ServiceStyles.regler`. */
+  reglerStyle: (
+    identifiant: string,
+    champs: { nom?: string; tient?: string; textes?: Record<string, string> },
+    projet?: string | null,
+  ) =>
+    appeler<BaseStyles>(`/styles/${identifiant}` + duJeu(projet), {
+      method: "PUT",
+      body: JSON.stringify(champs),
+    }),
+
+  /** Un livré laisse une pierre, un fabriqué s'en va pour de bon. */
+  masquerStyle: (identifiant: string, projet?: string | null) =>
+    appeler<BaseStyles>(`/styles/${identifiant}` + duJeu(projet), {
+      method: "DELETE",
+    }),
+
+  montrerStyle: (identifiant: string, projet?: string | null) =>
+    appeler<BaseStyles>(`/styles/${identifiant}/show` + duJeu(projet), {
+      method: "POST",
+    }),
+
+  /** Le style résolu de ce personnage, **et d'où il vient**. */
+  styleDuPersonnage: (personnage: string, projet?: string | null) =>
+    appeler<StyleDuPersonnage>(
+      `/styles/for-character/${encodeURIComponent(personnage)}` + duJeu(projet),
+    ),
+
+  /** Le style que cette pièce déclare elle-même, **sans résolution** — une
+   *  pièce n'hérite de rien. */
+  styleDeLaPiece: (piece: string, projet?: string | null) =>
+    appeler<{ piece: string; style: StyleDeCombat | null }>(
+      `/styles/for-piece/${encodeURIComponent(piece)}` + duJeu(projet),
+    ),
+
+  /** Poser ou retirer (`null`) le style choisi d'un personnage — il passe
+   *  devant celui de ses pièces. */
+  choisirStyleDuPersonnage: (
+    personnage: string,
+    style: string | null,
+    projet?: string | null,
+  ) =>
+    appeler<StyleDuPersonnage>(
+      `/characters/${encodeURIComponent(personnage)}/combat-style` + duJeu(projet),
+      { method: "PUT", body: JSON.stringify({ style }) },
+    ),
+
+  /** Poser ou retirer le style qu'une pièce déclare — hérité par qui la porte
+   *  en calque, sauf si un choix passe devant. */
+  choisirStyleDeLaPiece: (
+    piece: string,
+    style: string | null,
+    projet?: string | null,
+  ) =>
+    appeler<{ piece: string; style: StyleDeCombat | null }>(
+      `/characters/pieces/${encodeURIComponent(piece)}/combat-style` + duJeu(projet),
+      { method: "PUT", body: JSON.stringify({ style }) },
+    ),
 
   // ── Les clips (A9) ────────────────────────────────────────────────────────
   //

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { api, RECETTE_VIDE, type Asset, type EmploiResolu, type Piece } from "../api"
+import { api, RECETTE_VIDE, type Asset, type EmploiResolu, type Piece, type StyleDeCombat } from "../api"
 import { apiCalques } from "../api-calques"
 import { equipements, type CouvertureEquipement } from "../api-travaux-equipement"
 import { ReferencePiece } from "./ReferencePiece"
@@ -8,11 +8,14 @@ import { ResumeEmploi } from "./ResumeEmploi"
 
 const piece: Piece = { identifiant: "epee", nom: "Épée divine", description: "Acier bleu", emplacement: "main", concept_arts: [], portee: "contenue", references: ["ref"] }
 const image = { identifiant: "ref", label: "Épée sur fond neutre", type_media: "image/png", largeur: 48, hauteur: 48, rendu_largeur: 48, rendu_hauteur: 48, recette: RECETTE_VIDE, empreinte: "ref" } as Asset
+const KARATE: StyleDeCombat = { identifiant: "karate", nom: "karaté", tient: "", textes: { attaque: "a karate front kick" }, livre: true, masque: false }
 beforeEach(() => {
   vi.spyOn(api, "lireAsset").mockResolvedValue(image)
   vi.spyOn(api, "assets").mockResolvedValue({ assets: [image], total: 1 } as Awaited<ReturnType<typeof api.assets>>)
   vi.spyOn(api, "arbre").mockResolvedValue({ collections: [] } as never)
   vi.spyOn(apiCalques, "reglerPiece").mockImplementation(async (_p, _id, champs) => ({ piece: { ...piece, ...champs } }))
+  vi.spyOn(api, "styles").mockResolvedValue({ styles: [KARATE], masques: [] })
+  vi.spyOn(api, "styleDeLaPiece").mockResolvedValue({ piece: "epee", style: null })
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
@@ -26,6 +29,16 @@ test("une référence commune se voit et le choix n’impose aucun rôle de calq
   fireEvent.click(screen.getByRole("button", { name: "Définir comme référence de la pièce" }))
   await waitFor(() => expect(apiCalques.reglerPiece).toHaveBeenCalledWith("marais", "epee", { references: ["ref"] }))
   expect(changer).toHaveBeenCalledWith(piece)
+})
+
+test("la pièce enregistre son style de combat, hérité par qui la porte en calque", async () => {
+  const choisir = vi.spyOn(api, "choisirStyleDeLaPiece").mockResolvedValue({ piece: "epee", style: KARATE })
+  render(<ReferencePiece projet="marais" piece={piece} onChange={vi.fn()} />)
+
+  const select = await screen.findByRole("combobox", { name: "Style de combat de la pièce" })
+  expect(select).toHaveValue("")
+  fireEvent.change(select, { target: { value: "karate" } })
+  await waitFor(() => expect(choisir).toHaveBeenCalledWith("epee", "karate", "marais"))
 })
 
 test("l’emploi affiche ses frames réelles sans réutiliser le compteur historique de six poses", async () => {
