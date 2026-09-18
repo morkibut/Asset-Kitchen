@@ -1276,8 +1276,6 @@ export function Galerie({
   reinjecter,
   reprendreReglages,
   setChantier,
-  setChoseOuverte,
-  poserLaRacine,
   setPanne,
   univers,
   onSon,
@@ -1609,17 +1607,15 @@ export function Galerie({
                  descente. Avec douze états indépendants l'ordre ne comptait
                  pas ; avec une pile il compte, et c'est le bon sens de
                  lecture — on va quelque part, puis on y descend. */
-              onOuvrirLEtabli={() => {
-                if (!ouverte.personnage) return
-                poserLaRacine("codex")
-                setChoseOuverte(ouverte.personnage)
-                ouvrirLaRetouche(ouverte.identifiant)
-              }}
-              // **La porte de la galerie mène à la retouche** (`B25`), et sans
-              // quitter la galerie : c'est la seule des six qui serve des images
-              // n'appartenant à aucune chose du jeu, et l'écran sait les ouvrir
-              // depuis cette tranche.
+              // **Une seule porte vers la retouche** (18 septembre 2026). *Reprendre
+              // dans l'établi* ouvrait la même retouche après un détour par la
+              // fiche du sujet : deux boutons pour un seul écran, et l'auteur
+              // demandait lequel choisir.
               onRetoucher={() => ouvrirLaRetouche(ouverte.identifiant)}
+              // **Découper d'ici**, sur l'image brute : chaque morceau reçoit
+              // ensuite le traitement du jeu à sa taille — ce qu'une planche
+              // demande, et que son rendu d'un seul tenant ne peut pas donner.
+              onDecouper={() => ouvrirLaRetouche(ouverte.identifiant, "decoupage")}
               onPoserSurLaToile={
                 bibliotheque.courant
                   ? () => void poserSurLaToile(ouverte.identifiant)

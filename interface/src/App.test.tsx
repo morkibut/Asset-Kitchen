@@ -11202,17 +11202,14 @@ describe("la galerie dégraissée", () => {
   // ── « La fiche d'une image porte deux portes : l'établi de sa chose, et les
   //     tables » ─────────────────────────────────────────────────────────────
 
-  test("la fiche porte deux portes, et celle de l'établi est grisée sans chose du jeu", async () => {
+  test("la fiche porte une seule porte vers la retouche, et la découpe à côté", async () => {
     await ouvrirLaFiche(asset("aaaa1111-0"))
 
-    // Une image qui n'appartient à personne n'a que la seconde porte — et le
-    // grisé de la première porte sa raison, comme partout ailleurs.
-    expect(
-      screen.getByRole("button", { name: "Reprendre dans l'établi" }),
-    ).toBeDisabled()
-    expect(
-      screen.getByText(/cette image n'appartient à aucun sujet du jeu/),
-    ).toBeTruthy()
+    // **Plus de « Reprendre dans l'établi »** (18 septembre 2026) : il ouvrait
+    // la même retouche après un détour, et deux boutons pour un écran se
+    // lisaient comme deux écrans.
+    expect(screen.queryByRole("button", { name: "Reprendre dans l'établi" })).toBeNull()
+    expect(screen.getByRole("button", { name: "Découper" })).toBeTruthy()
 
     // La seconde ouvre la retouche, sur n'importe quelle image, sans quitter
     // la galerie.
@@ -11253,31 +11250,11 @@ describe("la galerie dégraissée", () => {
     ).toBeTruthy()
   })
 
-  test("la fiche d'une image rattachée ouvre l'établi de sa chose", async () => {
-    const image = { ...asset("aaaa1111-0"), personnage: "le-nain" }
-    const double = serveurDouble({
-      assets: [image],
-      personnages: [personnage("Le nain")],
-    })
-    await monter(double.fetchDouble, { ...ETAT, assets: [image] })
-    await waitFor(() => expect(tuiles()).toHaveLength(1))
-    fireEvent.click(tuiles()[0])
-
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Reprendre dans l'établi" }),
-    )
-    // L'établi est une profondeur de la bibliothèque : le fil le dit, et la
-    // porte allumée est celle des assets — la galerie s'est éteinte.
-    await waitFor(() =>
-      expect(
-        within(screen.getByRole("navigation", { name: "Atelier" }))
-          .getByRole("button", { name: "Les sujets" })
-          .getAttribute("aria-current"),
-      ).toBe("page"),
-    )
-    expect(ouverture("Galerie")).toBe("false")
-    const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
-    expect(fil.getByText("Le nain")).toBeTruthy()
+  test("« Découper » ouvre la découpe de l'image, sans quitter la galerie", async () => {
+    await ouvrirLaFiche(asset("aaaa1111-0"))
+    fireEvent.click(screen.getByRole("button", { name: "Découper" }))
+    expect(await screen.findByRole("button", { name: /^Détourage/ })).toBeTruthy()
+    expect(ouverture("Galerie")).toBe("true")
   })
 
   // ── « Ouvrir un résultat depuis la galerie, et le reposer sur la toile sans
@@ -22592,7 +22569,7 @@ describe("V3.02 — la fiche d'un clip", () => {
     await waitFor(() => {
       expect(document.querySelector("[data-fiche-clip]")).toBeNull()
       expect(
-        screen.getByRole("button", { name: "Reprendre dans l'établi" }),
+        screen.getByRole("button", { name: "La retoucher" }),
       ).toBeTruthy()
     })
     void flux

@@ -92,6 +92,7 @@ export function Fiche({
   onSupprimer,
   onOuvrirLEtabli,
   onRetoucher,
+  onDecouper,
   onPoserSurLaToile,
   onOuvrir,
   identite,
@@ -135,6 +136,9 @@ export function Fiche({
    *  l'écran où l'on se trouve ne mène nulle part. */
   onOuvrirLEtabli?: () => void
   onRetoucher: () => void
+  /** Ouvrir la découpe sur l'image brute (18 septembre 2026). Absent là où
+   *  l'écran n'en a pas la porte. */
+  onDecouper?: () => void
   /** Poser cette image, telle quelle, sur la toile de l'univers — **sans
    *  nouvelle fabrication** (US-540). Absent sur les écrans qui n'ont pas de
    *  projet ouvert ou pas de toile à côté d'eux : la même règle que les deux
@@ -422,6 +426,7 @@ export function Fiche({
               partout ailleurs — *Ses images*, le comparateur —, et deux noms
               pour un seul écran se lisent comme deux écrans. */}
           <Bouton onClick={onRetoucher} enfants="La retoucher" />
+          {onDecouper && <Bouton onClick={onDecouper} enfants="Découper" />}
           {/* **Réutiliser sans refabriquer** (US-540). La toile range des
               inspirations, pas des sorties de générateur : ce bouton pose donc
               l'image reçue telle quelle, en réserve, sans passer par un moteur.
