@@ -63,7 +63,7 @@ le plan du chantier lui-même pour `AU` et `RP`.
 | **V3** — `A0` à `A13` | L'animation **par la vidéo et le découpage** : un clip payé devient plusieurs bandes et l'écran dit ce que chacune a coûté ; le même clip se refait **gratuitement** sur la carte de la maison ; la matrice d'un personnage se lit sur deux calques ; une bande sort en planche de sprites | **close le 5 septembre 2026** | idem |
 | **V3.02** | Le clip a une fiche, comme une image | **close le 5 septembre 2026** | idem |
 | **V2.5**, **V3.01**, **V3.03**, **V3.1** | Quatre blocs ouverts quand la V4 est entrée. Ce qui y a été livré tient : le relevé `N1`, le tiroir qui relit ce qui part, les trois quarts de l'atelier d'une animation aux tables, `G1` et `G16` | **périmés par le carnet** — les écrans qu'ils réparaient sont redessinés, donc le reste ne se reprend pas tel quel. ⚠️ Les quatorze tranches `G` de la V3.1 nomment des défauts réels, et **se relisent avant de clore la V4** | `archive/plan-perime-par-la-v4.md` |
-| **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **ouverte le 18 septembre 2026** — `P1` en cours ; `P2` attend trois décisions de l'auteur, écrites dans la tranche | ci-dessous ; modèles dans `PLAN-v35-affectation.md` |
+| **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **ouverte le 18 septembre 2026** — `P1` tenue le même jour ; `P2` attend trois décisions de l'auteur, écrites dans la tranche | ci-dessous ; modèles dans `PLAN-v35-affectation.md` |
 | **V4** — le carnet | Refonte déjà largement livrée ; sa conformité et ses parcours restent à corriger | **socle conservé, suite réorientée vers AU** ; les cases historiques ne sont pas décochées. Le 15 septembre 2026, les restes de `C1` et `C8` sont constatés tenus par le bloc `D` ; il ne reste ouverte que la vérification au navigateur de `C9`. L'amendement RF est en archive | `docs/PLAN-carnet.md` ; détail du relevé antérieur dans `docs/archive/etat-carnet-2026-09-10.md` |
 | **V5**, **V6** | Tuiles et son | **en construction dans AU13/AU14** | `docs/PLAN-atelier-unifie.md` |
 | **Atelier unifié** — AU1 à AU20 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **dix-huit tranches sur vingt pleines** — les trois dernières, `AU18` à `AU20`, closes le 13 septembre 2026. Restent **deux critères**, pas deux tranches : `AU11` — le rendu 3D garde cadre, pivot et dimensions d'une direction à l'autre — et `AU13` — produire, juger, corriger et exporter un jeu de tuiles *avec l'agent*. Et une case de préparation : reporter les arbitrages dans le PRD, le design et le plan. ⚠️ Livrée n'est pas éprouvée : la qualité 3D réelle n'est pas vérifiée, et le relevé du 13 septembre mesure 0 écran sur 26 tenu de bout en bout — c'est le travail de la remise à plat | `docs/PLAN-atelier-unifie.md` |
@@ -339,16 +339,16 @@ laissée non dépliée se déplie au démarrage, gratuitement et sans rien deman
 
 **Critères d'acceptation**
 
-- [ ] **Le premier dépliage reste automatique** : une planche qui revient bien ne demande aucun geste, ni avant ni après
-- [ ] **La géométrie s'écrit sur le pliage** au lieu d'être déduite du nombre de cases — sans quoi changer la formule redécouperait les planches anciennes de travers
-- [ ] Refaire un dépliage est un geste que l'auteur demande, et il repart des coupes proposées
-- [ ] Une coupe se déplace, s'ajoute et se retire à la main avant de valider un dépliage refait
-- [ ] Une planche se déplie plusieurs fois ; les dépliages coexistent sans se marcher dessus
-- [ ] Chaque image dit sa planche et son dépliage d'origine, et se remonte jusqu'à eux
-- [ ] Supprimer un dépliage n'emporte ni la planche ni les autres dépliages
-- [ ] Supprimer la planche demande confirmation et dit combien d'images en dépendent
-- [ ] Une planche reçue mais non dépliée à la fermeture se déplie seule au redémarrage, comme depuis `C2`
-- [ ] Aucun appel au fournisseur : déplier une planche déjà là marche réseau coupé
+- [x] **Le premier dépliage reste automatique** : une planche qui revient bien ne demande aucun geste, ni avant ni après
+- [x] **La géométrie s'écrit sur le pliage** au lieu d'être déduite du nombre de cases — sans quoi changer la formule redécouperait les planches anciennes de travers
+- [x] Refaire un dépliage est un geste que l'auteur demande, et il repart des coupes proposées
+- [x] Une coupe se déplace, s'ajoute et se retire à la main avant de valider un dépliage refait
+- [x] Une planche se déplie plusieurs fois ; les dépliages coexistent sans se marcher dessus
+- [x] Chaque image dit sa planche et son dépliage d'origine, et se remonte jusqu'à eux
+- [x] Supprimer un dépliage n'emporte ni la planche ni les autres dépliages
+- [x] Supprimer la planche demande confirmation et dit combien d'images en dépendent
+- [x] Une planche reçue mais non dépliée à la fermeture se déplie seule au redémarrage, comme depuis `C2`
+- [x] Aucun appel au fournisseur : déplier une planche déjà là marche réseau coupé
 
 **Bloquée par** — aucune. *`R6` l'attendait ; elle est close depuis le 3 septembre 2026.*
 
