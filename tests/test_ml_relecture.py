@@ -199,3 +199,22 @@ async def test_list_models_mcp_donne_le_temps_d_un_style_local(atelier_styles):
     # Un modèle distant n'a pas ce champ.
     distant = next(m for m in modeles.values() if "local" not in m)
     assert "expected_time" not in distant
+
+
+async def test_le_diagnostic_lit_aussi_la_forme_combo_des_choix():
+    """Relecture, défaut 7 côté diagnostic : `["COMBO", {"options": […]}]`."""
+    from atelier.fournisseur.workflow import MoteurWorkflow
+    moteur = MoteurWorkflow("http://comfy.test")
+    info = {
+        "LoraLoader": {"input": {"required": {"lora_name": ["COMBO", {"options": ["a.safetensors"]}]}}},
+        "SaveImage": {"input": {"required": {}}, "output_node": True},
+    }
+
+    async def _json(methode, chemin, **_):
+        return info
+    moteur._json = _json
+    profil = lambda lora: {"graphe": {"1": {"class_type": "LoraLoader", "inputs": {"lora_name": lora}},
+        "2": {"class_type": "SaveImage", "inputs": {}}}, "liaisons": {}, "sortie": {"noeud": "2"}}
+    assert (await moteur.diagnostiquer_profil(profil("a.safetensors")))["disponible"] is True
+    manque = await moteur.diagnostiquer_profil(profil("b.safetensors"))
+    assert any("b.safetensors est absent des choix installés" in p for p in manque["problemes"])

@@ -76,7 +76,15 @@ class MoteurWorkflow(MoteurDeLaMaison):
                 if (identifiant, champ) in liees:
                     continue
                 declaration = champs[champ]
-                if isinstance(declaration, list) and declaration and isinstance(declaration[0], list) and valeur not in declaration[0]:
+                # Deux formes de liste de choix : `[[…], {…}]`, et `["COMBO",
+                # {"options": […]}]` que ComfyUI récent emploie déjà.
+                choix = None
+                if isinstance(declaration, list) and declaration:
+                    if isinstance(declaration[0], list):
+                        choix = declaration[0]
+                    elif declaration[0] == "COMBO" and len(declaration) > 1 and isinstance(declaration[1], dict):
+                        choix = declaration[1].get("options")
+                if isinstance(choix, list) and valeur not in choix:
                     problemes.append(f"{classe} / {champ} : {valeur} est absent des choix installés.")
             noeuds.append({"identifiant": identifiant, "classe": classe, "disponible": True})
         sortie = profil["sortie"]["noeud"]

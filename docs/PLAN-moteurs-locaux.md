@@ -74,7 +74,8 @@ l'écran ne doit pas les confondre :
   croquis, pas pour garder un personnage.
 - Pistes écartées pour l'instant, faute de poids installés : **Redux** pour FLUX.1 (le modèle de
   style manque) ; **IP-Adapter** pour SDXL (nœuds présents, poids non vérifiés).
-- Une référence PNG transparente est **posée sur du blanc** avant l'envoi : le chargeur de
+- Une référence PNG transparente est **posée sur le fond du jeu** (gris neutre sans fond
+  réglé ; blanc pour un workflow importé à la main) avant l'envoi : le chargeur de
   ComfyUI jette la transparence (appris dans sc-clone).
 - Règle 4 d'`AGENTS.md` inchangée : ce que l'auteur a joint ne cède jamais. Si l'auteur joint
   deux images à un style qui n'en prend qu'une, l'appel est refusé **avant** de lancer, avec la
@@ -122,7 +123,8 @@ Le format des profils, seul. Rien de visible encore, mais tout le reste en dépe
 - [x] un profil peut déclarer un graphe par nombre de références ; le catalogue annonce
       `references_min` / `references_max` en conséquence ; un profil à un seul graphe est relu
       sans migration et garde sa version
-- [x] une référence PNG transparente est posée sur blanc avant le dépôt chez ComfyUI
+- [x] une référence PNG transparente est posée sur blanc avant le dépôt chez ComfyUI — depuis la
+      relecture, sur le fond du jeu pour un style local (le texte demande ce fond-là)
 - [x] essais : deux appels identiques envoient deux graines différentes ; 0, 1 et 2 références
       choisissent le bon graphe ; trop d'images jointes par l'auteur → refus avant la file
 

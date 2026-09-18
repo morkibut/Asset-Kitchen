@@ -306,10 +306,6 @@ async def test_une_graine_illisible_ou_sans_liaison_est_refusee_avant_la_file(tm
         await _fermer(atelier)
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "attend le changement de `atelier/fournisseur/workflow_image.py` décrit dans le "
-    "compte rendu de la relecture ML (défaut 6) : `generer_suivi` doit retirer "
-    "`options['graine']` et s'en servir quand l'étape n'a pas encore de graine"))
 async def test_deux_generations_avec_la_meme_graine_envoient_la_meme_graine(tmp_path, double):
     comfy = ComfyDouble()
     atelier = await _ouvrir(tmp_path / "donnees", double, comfy)

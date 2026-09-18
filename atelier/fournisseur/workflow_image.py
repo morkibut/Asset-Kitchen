@@ -170,14 +170,19 @@ class FournisseurWorkflowImage:
 
     async def generer_suivi(self, modele, demande, generation, rang):
         p = self.profils.de_modele(modele.identifiant)
-        options = self._options_locales(p, demande.options, len(demande.references))
+        # `graine` est une clé réservée (refaire la même image), pas une option
+        # du profil : elle ne passe pas par `composer` comme un réglage.
+        explicite = demande.options.get("graine")
+        options = self._options_locales(p, {k: v for k, v in demande.options.items() if k != "graine"}, len(demande.references))
         valeurs = {"prompt": demande.prompt, "prompt_negatif": demande.prompt_negatif,
             "resolution": demande.resolution, "proportions": demande.proportions, "options": options}
         if "graine" in p["liaisons"]:
             # Une étape déjà préparée garde sa graine : la retirer changerait
-            # le calcul que sa clé désigne.
+            # le calcul que sa clé désigne. Sinon, celle que l'auteur a demandée.
             avant = self.etape(generation.identifiant, rang)
             graine = avant and avant["parametres"]["valeurs"].get("graine")
+            if graine is None:
+                graine = explicite
             valeurs["graine"] = tirer_graine() if graine is None else graine
         composer(p, references=[f"reference-{i}" for i in range(len(demande.references))], **valeurs)
         archive = io.BytesIO()
