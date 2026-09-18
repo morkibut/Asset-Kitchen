@@ -2,7 +2,7 @@ import { useRef, useState } from "react"
 import { FAMILLES_AVEC_LUFS, sons, type FamilleSon, type MesuresSon, type RecetteSon, type Son } from "../api-sons"
 
 const CHAMP = "h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]"
-const virgule = (n: number, d = 2) => n.toFixed(d)
+const virgule = (n: number, d = 2) => n.toFixed(d).replace(".", ",")
 
 function Curseur({ nom, valeur, min, max, step = 1, disabled, onChange }: { nom: string; valeur: number; min: number; max: number; step?: number; disabled?: boolean; onChange: (n: number) => void }) {
   return <div className="flex flex-col gap-[8px] text-[13px]">
@@ -14,14 +14,18 @@ function Curseur({ nom, valeur, min, max, step = 1, disabled, onChange }: { nom:
   </div>
 }
 
+/** Les fondus de 5 ms que pose l’atelier par défaut ne comptent pas comme un réglage. */
+const FONDU_PAR_DEFAUT = 5
+const fonduRegle = (ms: number) => ms !== FONDU_PAR_DEFAUT
+
 function resumeCoupe(r: RecetteSon, duree: number) {
-  const aucune = r.debut < 0.005 && (r.fin == null || r.fin > duree - 0.005) && !r.fondu_entree_ms && !r.fondu_sortie_ms && !r.rogner_silence
+  const aucune = r.debut < 0.005 && (r.fin == null || r.fin > duree - 0.005) && !fonduRegle(r.fondu_entree_ms) && !fonduRegle(r.fondu_sortie_ms) && !r.rogner_silence
   if (aucune) return "aucune"
   return `${virgule(r.debut, 2)} → ${r.fin != null ? virgule(r.fin, 2) : virgule(duree, 2)} s`
 }
-function resumeBoucle(r: RecetteSon) {
+function resumeBoucle(r: RecetteSon, duree: number) {
   if (!r.boucle) return "non"
-  return `${virgule(r.boucle_debut, 1)} → ${r.boucle_fin != null ? virgule(r.boucle_fin, 1) : "fin"} s`
+  return `${virgule(r.boucle_debut, 1)} → ${virgule(r.boucle_fin ?? duree, 1)} s`
 }
 function resumeNiveau(r: RecetteSon, avecLufs: boolean) {
   const parts = [r.mono ? "mono" : null, avecLufs && r.cible_lufs != null ? `${r.cible_lufs} LUFS` : null, r.gain_db ? `gain ${r.gain_db > 0 ? "+" : ""}${r.gain_db} dB` : null]
@@ -43,7 +47,7 @@ export function ReglagesSon({ son, recette, mesures, famille, occupe, onChange }
   const [raccordJoue, setRaccordJoue] = useState(false)
   const verdict = mesures?.boucle?.active ? mesures.boucle.verdict : null
 
-  const coupeOuverte = recette.debut > 0 || recette.fin != null || !!recette.fondu_entree_ms || !!recette.fondu_sortie_ms || recette.rogner_silence
+  const coupeOuverte = recette.debut > 0 || recette.fin != null || fonduRegle(recette.fondu_entree_ms) || fonduRegle(recette.fondu_sortie_ms) || recette.rogner_silence
   const niveauOuvert = recette.mono || recette.cible_lufs != null || !!recette.hauteur_demi_tons || !!recette.gain_db || recette.normaliser
 
   const basculerRaccord = () => {
@@ -65,7 +69,7 @@ export function ReglagesSon({ son, recette, mesures, famille, occupe, onChange }
     </details>
 
     <details className="rounded-7 border border-trait p-[8px]" open={recette.boucle}>
-      <summary className="flex cursor-pointer justify-between gap-[14px] text-[13.5px]"><span>Boucle</span><span className="text-encre-3">{resumeBoucle(recette)}</span></summary>
+      <summary className="flex cursor-pointer justify-between gap-[14px] text-[13.5px]"><span>Boucle</span><span className="text-encre-3">{resumeBoucle(recette, dureeRendue)}</span></summary>
       <div className="mt-[8px] space-y-[8px] pl-[14px]">
         <label className="block text-[13px]"><input type="checkbox" checked={recette.boucle} disabled={occupe} onChange={e => onChange("boucle", e.target.checked)} /> Jouer en boucle</label>
         {recette.boucle && <>

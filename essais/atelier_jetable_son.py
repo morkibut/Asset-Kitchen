@@ -324,6 +324,18 @@ def peupler(atelier: Atelier) -> None:
         assert jeu.status_code == 201, jeu.text
         print(f"  série terminée, {finie['compte']} — jeu de variantes « Pas sur la vase » ({jeu.json()['identifiant']})")
 
+        # ── 7 · Un dossier de jeu Godot, pour l'aperçu de livraison ─────────
+        godot = Path(atelier.fichiers.racine) / "Jeu Godot"
+        godot.mkdir(exist_ok=True)
+        (godot / "project.godot").write_text(
+            'config_version=5\n[application]\nconfig/name="Les marais d\'ambre"\n'
+            'config/features=PackedStringArray("4.7", "GL Compatibility")\n',
+            encoding="utf-8",
+        )
+        lie = client.put(f"/api/projects/{projet}/godot-link", json={"dossier": str(godot)})
+        assert lie.status_code == 200, lie.text
+        print(f"  dossier du jeu Godot associé ({godot})")
+
 
 def principal() -> int:
     _verifier_port_libre(PORT)
