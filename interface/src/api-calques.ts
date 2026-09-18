@@ -15,13 +15,34 @@ export type PreparationSource = {
   appliquee: string[]; laissee: string[]
   cadre_source: { largeur: number; hauteur: number }
   facteur?: number; x?: number; y?: number; accord?: number; dehors?: number
+  /** Ce qui dépassait du cadre de la pose, en pixels (avant l'agrandissement). */
+  debord?: CotesCadre
+  /** Le cadre agrandi pour que rien ne soit coupé — l'écrin du personnage. */
+  agrandi?: CadreAgrandi
 }
+export type CotesCadre = { gauche: number; haut: number; droite: number; bas: number }
+export type TailleCadre = { largeur: number; hauteur: number }
+export type CadreAgrandi = {
+  avant: TailleCadre; apres: TailleCadre; cotes: CotesCadre; piece: string
+  /** Les autres directions de la même pose, qui suivent. */
+  autres_directions: string[]
+  /** Les images des autres poses du personnage, qui suivent aussi. */
+  autres_images: number
+  suivies: { piece: string; emploi: string; variante: string; pose: string; direction: string }[]
+}
+/** Une variante déjà posée, décalée quand l'écrin a grandi pour une autre image. */
+export type CadreSuivi = { cause: { piece: string; pose: string; direction: string }; cotes: CotesCadre; avant: TailleCadre; apres: TailleCadre }
 export type VarianteCalque = {
   identifiant: string; cible: CibleCalque; role: RoleCalque; source: string; source_fiche: Asset
   revision: number; placement: PlacementCalque; masques: MasquesCalque; extraction: ExtractionCalque | null
-  historique: unknown[]; base: { cadre: { largeur: number; hauteur: number }; repere: { x: number; y: number }; pose: string; direction: string }
+  historique: unknown[]; base: {
+    cadre: { largeur: number; hauteur: number }; repere: { x: number; y: number }; pose: string; direction: string
+    /** Présents quand le personnage a un écrin : la pose telle que sa recette la rend, et le transparent ajouté autour. */
+    cadre_de_la_pose?: TailleCadre; rembourrage?: CotesCadre
+  }
   calque_cadre?: { largeur: number; hauteur: number }
   preparation?: PreparationSource
+  cadre_suivi?: CadreSuivi
   etat: "reference" | "a-extraire" | "a-verifier" | "prete" | "a-revoir"; raison: string; retenue: boolean; utilisable: boolean
 }
 /** Une pose du porteur d'après laquelle une image a été fabriquée — relue sur sa génération. */

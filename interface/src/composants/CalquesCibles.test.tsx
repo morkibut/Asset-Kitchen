@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { api, RECETTE_VIDE, type Asset, type EmploiResolu, type Personnage, type Piece, type VestiaireDuJeu } from "../api"
 import { apiCalques, type CiblesEmploi, type VarianteCalque } from "../api-calques"
 import { CalquesDeLEmploi } from "./CalquesDeLEmploi"
-import { EditeurCalqueCible, placeDuDessus } from "./EditeurCalqueCible"
+import { cotesEnMots, EditeurCalqueCible, placeDuDessus } from "./EditeurCalqueCible"
 import { AssocierImageEquipement } from "./AssocierImageEquipement"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 
@@ -227,6 +227,41 @@ test("l'image équipée dit quelle recette l'a lue, se voit sur sa pose, et la r
   fireEvent.click(screen.getByRole("button", { name: "Sa propre recette" }))
   await waitFor(() => expect(onGarde).toHaveBeenCalled())
   expect(reprendre).toHaveBeenCalledWith(chemin, "source-1", 1, "sienne", true)
+})
+
+// ── Le cadre qui grandit (18 septembre 2026) ─────────────────────────────────
+//
+// Le bâton de Champy sortait du cadre de sa pose, recadrée à marge nulle. Le
+// serveur agrandit maintenant le cadre commun du personnage : l'écran dit de
+// combien et qui suit, au lieu d'avertir que la pièce sera coupée.
+
+test("un cadre agrandi se dit en une phrase, et l'avertissement disparaît", () => {
+  const agrandie: VarianteCalque = { ...preparee, preparation: { ...preparee.preparation!, dehors: 0, debord: { gauche: 0, haut: 0, droite: 38, bas: 0 },
+    agrandi: { avant: { largeur: 221, hauteur: 451 }, apres: { largeur: 298, hauteur: 452 }, cotes: { gauche: 38, haut: 0, droite: 38, bas: 1 }, piece: "Bâton", autres_directions: ["nord", "ouest", "sud"], autres_images: 0, suivies: [] } } }
+  render(<EditeurCalqueCible chemin={chemin} variante={agrandie} nomDeLaPose="Repos" onGarde={vi.fn()} onSale={vi.fn()} />)
+  expect(document.querySelector("[data-cadre-agrandi]")).toHaveTextContent(
+    "Cadre agrandi de 38 px à gauche et à droite et 1 px en bas pour Bâton (221 × 451 → 298 × 452 px) : rien n’est coupé. Même cadre pour les 3 autres directions de Repos (nord, ouest et sud).")
+  expect(screen.queryByText(/tombe hors du cadre/)).not.toBeInTheDocument()
+})
+
+test("une lecture d'avant qui coupait propose de relire en agrandissant", async () => {
+  const reprendre = vi.spyOn(apiCalques, "reprendreSource").mockResolvedValue({ ...preparee, revision: 2 })
+  const onGarde = vi.fn()
+  render(<EditeurCalqueCible chemin={chemin} variante={preparee} nomDeLaPose="Repos" onGarde={onGarde} onSale={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Relire en agrandissant le cadre" }))
+  await waitFor(() => expect(onGarde).toHaveBeenCalled())
+  expect(reprendre).toHaveBeenCalledWith(chemin, "source-1", 1, "pose", true)
+})
+
+test("une variante décalée par l'écrin le dit, avec la pièce qui l'a demandé", () => {
+  const suivie: VarianteCalque = { ...variante, cadre_suivi: { cause: { piece: "Bâton", pose: "repos", direction: "est" }, cotes: { gauche: 6, haut: 0, droite: 6, bas: 0 }, avant: { largeur: 20, hauteur: 48 }, apres: { largeur: 32, hauteur: 48 } } }
+  render(<EditeurCalqueCible chemin={chemin} variante={suivie} onGarde={vi.fn()} onSale={vi.fn()} />)
+  expect(document.querySelector("[data-cadre-suivi]")).toHaveTextContent("Cadre agrandi de 6 px à gauche et à droite pour suivre Bâton de repos · est (20 × 48 → 32 × 48 px).")
+})
+
+test("les côtés qui grandissent se disent, et eux seuls", () => {
+  expect(cotesEnMots({ gauche: 0, haut: 12, droite: 38, bas: 0 })).toBe("38 px à droite et 12 px en haut")
+  expect(cotesEnMots({ gauche: 4, haut: 0, droite: 4, bas: 0 })).toBe("4 px à gauche et à droite")
 })
 
 test("le calage déplace l'image équipée sur la pose sans attendre le serveur", async () => {

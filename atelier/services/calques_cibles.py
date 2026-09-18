@@ -9,6 +9,8 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import math
+import re
 import threading
 import time
 import uuid
@@ -30,7 +32,8 @@ from atelier.domaine.recette import (
 from atelier.domaine.superposition import Superposition
 from atelier.image.calque import avec_alpha, cases_de, proposer, superposer
 from atelier.image.calques_cibles import (
-    aux_couleurs_de, composer, couleur_du_fond, png, ramener_sur, rgba, sans_poches_de_fond,
+    PAS_DE_L_ECRIN, Ecrin, aux_couleurs_de, composer, couleur_du_fond, ecrin_pour, etendue, png,
+    poser_dans, ramener_sur, rembourrage, rembourrer, rgba, sans_poches_de_fond,
 )
 from atelier.image.traitement import queue
 from atelier.services.production import ProductionRefusee
@@ -45,6 +48,28 @@ RECETTE_DE_L_IMAGE = "sienne"
 
 def empreinte(contenu: Any) -> str:
     return hashlib.sha256(json.dumps(contenu, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+# Les familles d'images d'un personnage, chacune son écrin : **une famille, une
+# échelle de pixel**. Une recette sur grille rend une case par pixel, donc tout
+# ce qui passe par la même grille partage son pixel, pose ou frame ; sans
+# grille, l'image garde la résolution de ce que le modèle a rendu, et une pose
+# fixe ne se compare pas à une frame de vidéo.
+IMAGES = "images"
+ANIMATIONS = "animations"
+
+
+def famille_de(nature: str, recette: dict | None) -> str:
+    r = Recette.depuis_json(recette or {})
+    if r.grille is not None and not r.dort(GRILLE):
+        return f"grille-{r.grille.cible}"
+    return IMAGES if nature == "image" else ANIMATIONS
+
+
+def _propre(valeur: float) -> float | int:
+    """Un décalage recalculé, sans bruit de virgule flottante : 3 plutôt que 2,9999999."""
+    arrondi = round(valeur, 4)
+    return int(arrondi) if arrondi == int(arrondi) else arrondi
 
 
 def id_prise(bande, prise, rang: int) -> str:
@@ -92,6 +117,7 @@ class ServiceCalquesCibles:
         return {
             "projet": projet, "piece": piece_objet.en_json(), "emploi": lien.en_json(),
             "personnage": personnage.en_json(), "cibles": cibles,
+            "ecrin": self.ecrin(projet, personnage.identifiant),
             "variantes": variantes,
             "images_disponibles": len(cibles),
             "calques_retenus": sum(v["utilisable"] for v in variantes),
@@ -114,7 +140,44 @@ class ServiceCalquesCibles:
         return self._base_personnage(projet, personnage.identifiant, cible, identifier=identifier)
 
     def _base_personnage(self, projet, personnage, cible: CibleCalque, *, identifier=False):
-        """Le même corps sert un emploi et une tenue sans aucune pièce."""
+        """Le même corps sert un emploi et une tenue sans aucune pièce.
+
+        **Dans l'écrin du personnage, quand il en a un** (18 septembre 2026) :
+        le corps est rembourré de transparent pour que son repère tombe au même
+        point d'un cadre commun à toutes ses images. Sans écrin, rien ne change —
+        ni les pixels, ni la description, ni donc l'empreinte d'une variante
+        d'avant.
+        """
+        image, description = self._corps(projet, personnage, cible, identifier=identifier)
+        brut = self._lire_ecrin(projet, description["personnage"], famille_de(cible.nature, description.get("recette")))
+        del description["personnage"]
+        if brut is not None:
+            ecrin = Ecrin.depuis_json(brut)
+            h, w = image.shape[:2]
+            rx, ry = description["repere"]["x"], description["repere"]["y"]
+            cotes = rembourrage(w, h, rx, ry, ecrin)
+            hors = min(cotes) < 0
+            g, t, d, b = (max(0, c) for c in cotes)
+            image = rembourrer(image, g, t, d, b)
+            description.update(
+                cadre_de_la_pose={"largeur": w, "hauteur": h},
+                rembourrage={"gauche": g, "haut": t, "droite": d, "bas": b},
+                ecrin=ecrin.en_json(),
+                # Le repère de l'écrin, le même pour toutes les images : c'est
+                # le pivot unique de la tenue dans Godot. Une largeur impaire
+                # met le pied au demi-pixel près.
+                repere=({"x": rx + g, "y": ry + t} if hors else {"x": ecrin.cote, "y": ecrin.haut}),
+            )
+            if hors:
+                description["hors_ecrin"] = True
+        octets = png(image)
+        description["cadre"] = {"largeur": image.shape[1], "hauteur": image.shape[0]}
+        description["empreinte_pixels"] = hashlib.sha256(octets).hexdigest()
+        description["empreinte"] = empreinte(description)
+        return octets, description
+
+    def _corps(self, projet, personnage, cible: CibleCalque, *, identifier=False):
+        """Le corps tel que sa recette le rend, et son repère — sans écrin."""
         personnage = self.production.personnage(projet, personnage)
         if cible.nature == "image":
             source = self.assets.lire(cible.resultat)
@@ -145,12 +208,233 @@ class ServiceCalquesCibles:
             description = {"pose": bande.pose, "direction": bande.direction or "", "prise": prise.en_json(),
                            "clip": prise.clip_ou(bande.clip), "cadre_source": bande.cadre.en_json(), "recette": bande.recette.en_json()}
         image = rgba(octets)
-        description["cadre"] = {"largeur": image.shape[1], "hauteur": image.shape[0]}
         objectif = personnage.objectif
         description["repere"] = ({"x": objectif.repere_x, "y": objectif.repere_y} if objectif else {"x": image.shape[1] / 2, "y": image.shape[0]})
-        description["empreinte_pixels"] = hashlib.sha256(octets).hexdigest()
-        description["empreinte"] = empreinte(description)
-        return octets, description
+        description["personnage"] = personnage.identifiant
+        return image, description
+
+    # ── L'écrin du personnage ────────────────────────────────────────────────
+    #
+    # Rangé à côté des calques, dans un dossier qu'aucune pièce ne peut porter
+    # (`repere` ne garde que `[a-z0-9-]`). Il n'existe qu'à partir du premier
+    # débord : un personnage dont aucune pièce ne sort du cadre n'en a pas, et
+    # ses images restent exactement ce qu'elles étaient.
+    #
+    # **Un écrin par famille d'images — par échelle de pixel** (`famille_de`).
+    # Mesuré sur le disque de l'auteur le 18 septembre 2026 : Champy a quatre
+    # poses « repos » de 221 × 451 (grille en veille), quatre autres sur une
+    # grille de 96, et des frames d'animation de 96 × 96. Un seul écrin aurait
+    # posé chaque sprite de 96, minuscule, dans un cadre de 328 × 454.
+
+    def _chemin_ecrin(self, projet: str, personnage: str):
+        if not re.fullmatch(r"[a-z0-9-]+", personnage or ""):
+            raise ProductionRefusee("personnage inconnu pour l'écrin")
+        chemin = (self.depot.projets / projet / "calques-cibles" / "_ecrins" / f"{personnage}.json").resolve()
+        if not chemin.is_relative_to(self.depot.projets):
+            raise ProductionRefusee("l'écrin doit rester dans les données du projet")
+        return chemin
+
+    def _lire_ecrin(self, projet: str, personnage: str, famille: str) -> dict[str, Any] | None:
+        return (self.ecrin(projet, personnage) or {}).get(famille)
+
+    def ecrin(self, projet: str, personnage: str) -> dict[str, Any] | None:
+        """Les écrins d'un personnage par famille, ou `None` s'il n'en a pas encore eu besoin."""
+        chemin = self._chemin_ecrin(projet, personnage)
+        return self.depot.lire(chemin) if chemin.exists() else None
+
+    def _corps_du_personnage(self, projet: str, personnage: str, famille: str) -> list[dict[str, Any]]:
+        """Chaque image du personnage dans cette famille, avec son cadre et son repère.
+
+        Les mêmes que `cibles` : ses poses fixes, ou les frames de ses bandes
+        nues. Une frame a la taille de la case de sa bande, toutes ses sœurs
+        aussi : on la compte une fois par bande.
+        """
+        perso = self.production.personnage(projet, personnage)
+        objectif = perso.objectif
+        corps = []
+
+        def repere(w, h):
+            return (objectif.repere_x, objectif.repere_y) if objectif else (w / 2, h)
+
+        for image in self.base.assets_du_personnage(personnage, projet=projet):
+            if not image.pose or image.piece or famille_de("image", image.recette.en_json()) != famille:
+                continue
+            try:
+                with Image.open(io.BytesIO(self.assets.octets(image)[0])) as rendu:
+                    w, h = rendu.size
+            except Exception:  # une image illisible ne décide pas de l'écrin des autres
+                continue
+            corps.append({"pose": image.pose, "direction": image.direction or "", "cadre": (w, h), "repere": repere(w, h)})
+        for bande in self.base.bandes_du_personnage(personnage, projet=projet):
+            if bande.supprime or bande.piece or not bande.pose or bande.case_largeur <= 0 or bande.case_hauteur <= 0:
+                continue
+            if famille_de("frame", bande.recette.en_json()) != famille:
+                continue
+            w, h = bande.case_largeur, bande.case_hauteur
+            corps.append({"pose": bande.pose, "direction": bande.direction or "", "cadre": (w, h),
+                          "repere": repere(w, h), "bande": bande.identifiant})
+        return corps
+
+    def _variantes_du_personnage(self, projet: str, personnage: str, famille: str):
+        """Les variantes de cette famille, toutes pièces et tous emplois portés par ce personnage."""
+        objet = self.base.lire_projet(projet)
+        for piece in (objet.pieces if objet else ()):
+            for lien in self.equipement.emplois(projet, piece.identifiant):
+                if not lien.porte or lien.porteur != personnage:
+                    continue
+                for v in self.depot.variantes(projet, piece.identifiant, lien.identifiant):
+                    if famille_de(v["cible"]["nature"], v["base"].get("recette")) == famille:
+                        yield piece.identifiant, lien.identifiant, v
+
+    def _agrandir_ecrin(self, projet: str, personnage: str, famille: str, besoins,
+                        cause: dict[str, Any]) -> dict[str, Any] | None:
+        """Agrandir l'écrin pour qu'il contienne `besoins`, et faire suivre ce qui est déjà posé.
+
+        L'écrin couvre **toutes** les images du personnage dans sa famille — sinon
+        une pose plus grande que lui s'y trouverait à l'étroit — et ne rétrécit
+        jamais. Les variantes à jour sur leur base sont décalées d'autant, par
+        translation pure (`_suivre_l_ecrin`) ; une variante déjà « à revoir » ne
+        bouge pas : l'adoption d'une base la remettra dans l'écrin.
+
+        `None` quand l'écrin contenait déjà tout.
+        """
+        with self.verrou:
+            brut = self._lire_ecrin(projet, personnage, famille)
+            ancien = Ecrin.depuis_json(brut) if brut else None
+            corps = self._corps_du_personnage(projet, personnage, famille)
+            etendues = list(besoins) + [etendue(*c["cadre"], *c["repere"]) for c in corps]
+            neuf = ecrin_pour(etendues, PAS_DE_L_ECRIN, ancien)
+            if neuf == ancien:
+                return None
+            a_suivre = []
+            for piece, emploi, v in self._variantes_du_personnage(projet, personnage, famille):
+                try:
+                    _, base = self._base_personnage(projet, personnage, CibleCalque.depuis_json(v["cible"]))
+                except Exception:
+                    continue
+                if base["empreinte"] == v["base"]["empreinte"]:
+                    a_suivre.append((piece, emploi, v["identifiant"]))
+            tous = self.ecrin(projet, personnage) or {}
+            tous[famille] = {**neuf.en_json(), "pas": PAS_DE_L_ECRIN, "agrandi_le": time.time(), "cause": cause,
+                             "avant": ancien.en_json() if ancien else None}
+            self.depot.ecrire(self._chemin_ecrin(projet, personnage), tous)
+            suivies = [self._suivre_l_ecrin(projet, piece, emploi, identifiant, personnage, cause)
+                       for piece, emploi, identifiant in a_suivre]
+            return {"avant": ancien.en_json() if ancien else None, "apres": neuf.en_json(),
+                    "corps": [{"pose": c["pose"], "direction": c["direction"], "bande": c.get("bande")} for c in corps],
+                    "suivies": [s for s in suivies if s]}
+
+    def _suivre_l_ecrin(self, projet, piece, emploi, identifiant, personnage, cause):
+        """Une variante déjà posée, décalée dans le nouvel écrin — sans rien perdre.
+
+        La base est relue (rembourrée d'office par `_base_personnage`). L'image
+        équipée et le calque, quand ils vivent dans le cadre de la base, sont
+        rembourrés des mêmes côtés ; les passages de pinceau glissent d'autant ;
+        le placement est corrigé pour que le centre agrandi ne déplace rien.
+        **Vérifiée reste vérifiée** : aucun pixel n'a changé, seulement sa place.
+        """
+        v = self._brut(projet, piece, emploi, identifiant)
+        octets, base = self._base_personnage(projet, personnage, CibleCalque.depuis_json(v["cible"]), identifier=True)
+        vide = {"gauche": 0, "haut": 0, "droite": 0, "bas": 0}
+        avant, apres = v["base"].get("rembourrage") or vide, base.get("rembourrage") or vide
+        dg, dh, dd, db = (apres[k] - avant[k] for k in ("gauche", "haut", "droite", "bas"))
+        if min(dg, dh, dd, db) < 0:
+            return None  # la pose a changé de taille entre-temps : l'adoption s'en chargera
+        largeur, hauteur = v["base"]["cadre"]["largeur"], v["base"]["cadre"]["hauteur"]
+        chemin = self._chemin(projet, piece, emploi, identifiant)
+        rang = v["revision"] + 1
+        nouvelle = deepcopy(v)
+        nouvelle.update(base=base, base_fichier=f"base-{rang}.png")
+        (chemin / nouvelle["base_fichier"]).write_bytes(octets)
+
+        def meme_cadre(pixels):
+            return pixels.shape[:2] == (hauteur, largeur)
+
+        source = rgba((chemin / self._fichier_source(v)).read_bytes())
+        if meme_cadre(source):
+            source = rembourrer(source, dg, dh, dd, db)
+            nouvelle["source_fichier"] = f"source-{rang}.png"
+            (chemin / nouvelle["source_fichier"]).write_bytes(png(source))
+        local_suit = v["role"] != "calque"  # le calque d'une image équipée naît dans le cadre de la base
+        if (chemin / "calque.png").exists():
+            calque = rgba((chemin / "calque.png").read_bytes())
+            if meme_cadre(calque):
+                calque = rembourrer(calque, dg, dh, dd, db)
+                (chemin / "calque.png").write_bytes(png(calque))
+                local_suit = True
+            if v["role"] == "calque":
+                nouvelle["calque_cadre"] = {"largeur": calque.shape[1], "hauteur": calque.shape[0]}
+        if v["role"] != "calque":
+            nouvelle["calque_cadre"] = {"largeur": source.shape[1], "hauteur": source.shape[0]}
+
+        def glisser(traits):
+            return [{**t, "points": [[p[0] + dg, p[1] + dh] for p in t.get("points", [])]} for t in traits]
+
+        masques = nouvelle["masques"]
+        masques["corps"] = glisser(masques.get("corps", []))
+        if local_suit:
+            masques["calque"] = glisser(masques.get("calque", []))
+            masques["derriere"] = glisser(masques.get("derriere", []))
+        # Le calque est posé autour du centre du cadre : un rembourrage inégal
+        # déplace ce centre, et le placement le rattrape exactement.
+        p = nouvelle["placement"]
+        vx, vy = (dg - dd) / 2, (dh - db) / 2
+        if local_suit:
+            e, a = float(p["echelle"]), math.radians(float(p["rotation"]))
+            vx, vy = vx - e * (math.cos(a) * vx - math.sin(a) * vy), vy - e * (math.sin(a) * vx + math.cos(a) * vy)
+        p["dx"], p["dy"] = _propre(p["dx"] + vx), _propre(p["dy"] + vy)
+        if isinstance(nouvelle.get("extraction"), dict):
+            x = nouvelle["extraction"]
+            e = float(x.get("echelle", 1))
+            x["dx"] = int(x.get("dx", 0)) + round((1 - e) * (dg - dd) / 2)
+            x["dy"] = int(x.get("dy", 0)) + round((1 - e) * (dh - db) / 2)
+            if x.get("rectangle"):
+                x0, y0, x1, y1 = x["rectangle"]
+                x["rectangle"] = [x0 + dg, y0 + dh, x1 + dg, y1 + dh]
+            if x.get("main"):
+                x["main"] = glisser(x["main"])
+        nouvelle["cadre_suivi"] = {"cause": cause, "cotes": {"gauche": dg, "haut": dh, "droite": dd, "bas": db},
+                                   "avant": {"largeur": largeur, "hauteur": hauteur}, "apres": base["cadre"], "le": time.time()}
+        nouvelle["historique"].append({k: val for k, val in v.items() if k != "historique"})
+        nouvelle["revision"] = rang
+        self.depot.ecrire(chemin / "variante.json", nouvelle)
+        self._annoncer(nouvelle)
+        return {"piece": piece, "emploi": emploi, "variante": identifiant,
+                "pose": base.get("pose", ""), "direction": base.get("direction", "")}
+
+    def _faire_de_la_place(self, projet, personnage, visee: CibleCalque, base: dict, source_png: bytes,
+                           preparation: dict, cause: dict) -> tuple[bytes, bytes | None, dict | None]:
+        """Ce qui déborde du cadre de la pose y est gardé : l'écrin grandit, l'image s'y pose.
+
+        `preparation["debord"]` vient de `_preparer_source` : l'image préparée est
+        alors plus grande que le cadre de la base, du débord exactement. Rend
+        l'image équipée dans le nouveau cadre, la base relue, et sa description ;
+        sans débord, l'image telle quelle et deux `None`.
+        """
+        debord = preparation.get("debord")
+        if not debord or not any(debord.values()):
+            return source_png, None, None
+        g, h, d, b = (debord[k] for k in ("gauche", "haut", "droite", "bas"))
+        besoin = etendue(base["cadre"]["largeur"], base["cadre"]["hauteur"],
+                         base["repere"]["x"], base["repere"]["y"], (g, h, d, b))
+        agrandi = self._agrandir_ecrin(projet, personnage, famille_de(visee.nature, base.get("recette")), [besoin], cause)
+        base_png, nouvelle = self._base_personnage(projet, personnage, visee, identifier=True)
+        vide = {"gauche": 0, "haut": 0, "droite": 0, "bas": 0}
+        avant, apres = base.get("rembourrage") or vide, nouvelle.get("rembourrage") or vide
+        cotes = {k: apres[k] - avant[k] for k in vide}
+        pixels = poser_dans(rgba(source_png), nouvelle["cadre"]["largeur"], nouvelle["cadre"]["hauteur"],
+                            cotes["gauche"] - g, cotes["haut"] - h)
+        corps = (agrandi or {}).get("corps") or self._corps_du_personnage(projet, personnage, famille_de(visee.nature, base.get("recette")))
+        pose, direction = base.get("pose", ""), base.get("direction", "")
+        preparation["agrandi"] = {
+            "avant": base["cadre"], "apres": nouvelle["cadre"], "cotes": cotes,
+            "ecrin": nouvelle.get("ecrin"), "piece": cause.get("piece", ""),
+            "autres_directions": sorted({c["direction"] for c in corps if c["pose"] == pose and c["direction"] != direction and c["direction"]}),
+            "autres_images": sum(1 for c in corps if c["pose"] != pose),
+            "suivies": (agrandi or {}).get("suivies", []),
+        }
+        preparation["dehors"] = 0.0
+        return png(pixels), base_png, nouvelle
 
     def _chemin(self, projet, piece, emploi, identifiant):
         try:
@@ -199,7 +483,7 @@ class ServiceCalquesCibles:
         with self.verrou:
             if role not in ("reference", "source-equipee", "calque"):
                 raise ProductionRefusee("choisissez référence, image équipée à extraire ou calque transparent")
-            personnage, _, lien = self._emploi(projet, piece, emploi)
+            personnage, piece_objet, lien = self._emploi(projet, piece, emploi)
             image = self.assets.lire(source)
             if image is None:
                 raise ProductionRefusee("l'image source doit être présente dans la bibliothèque")
@@ -215,13 +499,37 @@ class ServiceCalquesCibles:
             source_png = png(rgba(self.assets.octets(image)[0]))
             if role == "calque" and not np.any(rgba(source_png)[:, :, 3] < 255):
                 raise ProductionRefusee("cette image est opaque : importez-la comme image équipée puis extrayez le calque")
-            base_png, base = self._base_cible(projet, piece, emploi, visee, identifier=True)
+            base_png, base = self._base_dans_l_ecrin(projet, personnage.identifiant, visee, piece_objet.nom)
             preparation = None
             if role == "source-equipee":
                 source_png, preparation = self._preparer_source(
                     image, base_png, base, recette=RECETTE_DE_LA_POSE, echelle=True, resultat=visee.resultat)
+                source_png, nouvelle_png, nouvelle = self._faire_de_la_place(
+                    projet, personnage.identifiant, visee, base, source_png, preparation,
+                    self._cause(piece_objet.nom, base))
+                if nouvelle is not None:
+                    base_png, base = nouvelle_png, nouvelle
             return self.accueillir_source_preparee(projet, piece, emploi, visee.en_json(), source,
                 base_png, base, role=role, source_png=source_png, preparation=preparation)
+
+    @staticmethod
+    def _cause(nom_piece: str, base: dict) -> dict[str, str]:
+        return {"piece": nom_piece, "pose": base.get("pose", ""), "direction": base.get("direction", "")}
+
+    def _base_dans_l_ecrin(self, projet, personnage: str, visee: CibleCalque, nom_piece: str):
+        """La base, rembourrée dans l'écrin — et l'écrin agrandi si cette image-là n'y tient pas.
+
+        Une pose ajoutée après l'écrin peut être plus grande que lui : on
+        l'agrandit plutôt que de la couper, et le reste suit.
+        """
+        base_png, base = self._base_personnage(projet, personnage, visee, identifier=True)
+        if base.get("hors_ecrin"):
+            besoin = etendue(base["cadre_de_la_pose"]["largeur"], base["cadre_de_la_pose"]["hauteur"],
+                             base["repere"]["x"] - base["rembourrage"]["gauche"],
+                             base["repere"]["y"] - base["rembourrage"]["haut"])
+            self._agrandir_ecrin(projet, personnage, famille_de(visee.nature, base.get("recette")), [besoin], self._cause(nom_piece, base))
+            base_png, base = self._base_personnage(projet, personnage, visee, identifier=True)
+        return base_png, base
 
     # ── La pose de référence, relue sur la génération ────────────────────────
 
@@ -377,7 +685,12 @@ class ServiceCalquesCibles:
             if ramene is None:
                 laissee.append("la mise à l'échelle — aucun corps à retrouver sur l'une des deux images")
             else:
-                pixels = ramene.image
+                # **L'image entière, débord compris** : ce qui sort du cadre de la
+                # pose n'est plus coupé ici. L'appelant agrandit l'écrin du
+                # personnage et la pose dans le nouveau cadre (`_faire_de_la_place`).
+                pixels = ramene.etendue if ramene.etendue is not None else ramene.image
+                g, h, d, b = ramene.debord
+                base_etendue = rembourrer(base_px, g, h, d, b)
                 appliquee.append("cadre et échelle de la pose")
                 # Seulement quand l'image est arrivée sur un fond plat : sur une
                 # image déjà transparente, la « couleur du bord » serait le noir
@@ -385,11 +698,13 @@ class ServiceCalquesCibles:
                 arrivee = rgba(brut)
                 poches = 0
                 if couleur_du_fond(arrivee[:, :, 3:])[0] >= 128:
-                    pixels, poches = sans_poches_de_fond(pixels, base_px, couleur_du_fond(arrivee[:, :, :3]), tolerance)
+                    pixels, poches = sans_poches_de_fond(pixels, base_etendue, couleur_du_fond(arrivee[:, :, :3]), tolerance)
                 if poches:
                     appliquee.append(f"fond enfermé hors du corps retiré ({poches} px)")
                 mesure = {"facteur": round(ramene.echelle, 4), "x": ramene.x, "y": ramene.y,
                           "accord": round(ramene.accord, 4), "dehors": round(ramene.dehors, 4)}
+                if any(ramene.debord):
+                    mesure["debord"] = {"gauche": g, "haut": h, "droite": d, "bas": b}
         if queue_ is not None:
             pixels = queue(np.ascontiguousarray(pixels), queue_)
             if couleurs:
@@ -445,6 +760,25 @@ class ServiceCalquesCibles:
             octets, preparation = self._preparer_source(
                 image, (chemin / v["base_fichier"]).read_bytes(), v["base"],
                 recette=recette, echelle=echelle, resultat=v["cible"].get("resultat"))
+            if preparation.get("debord"):
+                personnage, piece_objet, _ = self._emploi(projet, piece, emploi)
+                visee = CibleCalque.depuis_json(v["cible"])
+                try:
+                    a_jour = self._base_personnage(projet, personnage.identifiant, visee)[1]["empreinte"] == v["base"]["empreinte"]
+                except Exception:
+                    a_jour = False
+                if a_jour:
+                    # L'écrin grandit : cette variante-ci est décalée avec les
+                    # autres (`_suivre_l_ecrin`), puis sa lecture s'y pose.
+                    octets, _, _ = self._faire_de_la_place(projet, personnage.identifiant, visee, v["base"],
+                                                           octets, preparation, self._cause(piece_objet.nom, v["base"]))
+                    v = self._brut(projet, piece, emploi, identifiant)
+                else:
+                    # Base à revoir : on ne décale rien sur une base d'avant ; la
+                    # lecture reste dans son cadre, et le débord se signale.
+                    d = preparation["debord"]
+                    octets = png(rgba(octets)[d["haut"]:d["haut"] + v["base"]["cadre"]["hauteur"],
+                                              d["gauche"]:d["gauche"] + v["base"]["cadre"]["largeur"]])
             nom = f"source-{v['revision'] + 1}.png"
             (chemin / nom).write_bytes(octets)
             nouvelle = deepcopy(v)
@@ -614,7 +948,8 @@ class ServiceCalquesCibles:
                 visee = CibleCalque.depuis_json(cible)
             except ValueError as e:
                 raise ProductionRefusee(str(e)) from e
-            octets, base = self._base_cible(projet, piece, emploi, visee, identifier=True)
+            personnage, piece_objet, _ = self._emploi(projet, piece, emploi)
+            octets, base = self._base_dans_l_ecrin(projet, personnage.identifiant, visee, piece_objet.nom)
             nouveau = deepcopy(v)
             nouveau.update(cible=visee.en_json(), base=base, base_fichier=f"base-{revision + 1}.png")
             (self._chemin(projet, piece, emploi, identifiant) / nouveau["base_fichier"]).write_bytes(octets)

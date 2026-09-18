@@ -1909,3 +1909,14 @@ la prochaine réécriture retrouvera.
   **repeint la pièce aux couleurs du corps** : un bâton de bois est ressorti rouge chapeau sur
   l'atelier jetable ; les couleurs de la pose ne ramènent donc que ce qui en est proche
   (`aux_couleurs_de`). Preuve dans `tests/test_au15_recette_de_la_pose.py`.
+- **« Un cadre commun à toutes les images du personnage » mêle deux tailles de pixel.** Pour
+  qu'un bâton qui sort du cadre de sa pose ne soit plus coupé, le cadre grandit, et toutes les
+  images du personnage le suivent (l'écrin, `atelier/services/calques_cibles.py`). Écrit d'abord
+  pour *toutes* ses images, il donnait sur le disque de l'auteur un cadre de 328 × 454 — où
+  Champy a aussi quatre poses sur une grille de 96 et des frames d'animation de 96 × 96 : chaque
+  sprite de 96 se serait retrouvé minuscule au milieu d'un grand vide. ⚠️ Ce qui l'a rendu
+  invisible est que **les essais n'avaient qu'une échelle** : une pose, ses directions, un
+  bâton, tout au même pixel. Un cadre commun ne vaut qu'entre images d'**un même pixel** : un
+  écrin par grille active, et sans grille un pour les poses, un pour les animations
+  (`famille_de`). Trouvé le 18 septembre 2026 en jouant le geste sur une copie de
+  `donnees/`, avant d'écrire la moindre phrase à l'écran.

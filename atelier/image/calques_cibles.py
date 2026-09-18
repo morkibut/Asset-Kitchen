@@ -102,6 +102,14 @@ class Ramene:
     # calque vit dans ce cadre (AU15) : ce qui dépasse sera coupé, et un bâton
     # levé au-dessus de la tête se perd sans un mot si on ne le compte pas.
     dehors: float = 0.0
+    # **Ce qui dépasse, en pixels, et de quel côté** — `(gauche, haut, droite,
+    # bas)`, mesuré sur la partie opaque. C'est ce que l'écrin du personnage doit
+    # gagner pour que rien ne soit coupé (18 septembre 2026).
+    debord: tuple[int, int, int, int] = (0, 0, 0, 0)
+    # L'image entière, sur le cadre de la pose **agrandi du débord** : son coin
+    # haut-gauche est à `(-gauche, -haut)` dans le cadre de la pose. Sans débord,
+    # c'est `image` elle-même.
+    etendue: np.ndarray | None = None
 
 
 def _masque(rgba_: np.ndarray, facteur: float = 1.0) -> np.ndarray:
@@ -264,21 +272,149 @@ def ramener_sur(base: np.ndarray, source: np.ndarray, *, methode: str | None = N
     _, grossiere = chercher(candidates(bas * 0.9, bas * 2.5, 48), COTE_GROSSIER)
     _, fine = chercher(candidates(grossiere * 0.95, grossiere * 1.05, 21), COTE_MOYEN)
     image = _redimensionner(source, fine, methode)
-    accord, y, x = _meilleure_place(corps, _masque(image))
-    cadre = Image.new("RGBA", (base.shape[1], base.shape[0]), (0, 0, 0, 0))
-    cadre.paste(Image.fromarray(image, "RGBA"), (x, y))
-    pixels = np.array(cadre)
-    total = int(_masque(image).sum())
-    dedans = int((pixels[:, :, 3] >= SEUIL_OPAQUE).sum())
+    opaque_image = _masque(image)
+    accord, y, x = _meilleure_place(corps, opaque_image)
+    hb, wb = base.shape[:2]
+    # Le débord se mesure sur ce qui est opaque : un liseré à demi transparent
+    # laissé par la réduction ne demande pas qu'on agrandisse un cadre.
+    boite = _boite(opaque_image)
+    if boite is None:
+        debord = (0, 0, 0, 0)
+    else:
+        debord = (max(0, -(x + boite[0])), max(0, -(y + boite[1])),
+                  max(0, x + boite[2] - wb), max(0, y + boite[3] - hb))
+    g, h, d, b = debord
+    cadre = Image.new("RGBA", (wb + g + d, hb + h + b), (0, 0, 0, 0))
+    cadre.paste(Image.fromarray(image, "RGBA"), (x + g, y + h))
+    etendue = np.array(cadre)
+    total = int(opaque_image.sum())
+    dedans = int((etendue[h:h + hb, g:g + wb, 3] >= SEUIL_OPAQUE).sum())
     dehors = max(0.0, 1.0 - dedans / total) if total else 0.0
     # **Un sprite a une silhouette tranchée, et on la lui rend** : la réduction a
     # moyenné le bord, et un demi-alpha passerait pour « ajouté » à un seuil et
     # pas à l'autre. Une pose au bord doux (une image HD) garde le sien.
     if np.isin(base[:, :, 3], (0, 255)).all():
-        opaque = pixels[:, :, 3] >= SEUIL_OPAQUE
-        pixels[:, :, 3] = np.where(opaque, 255, 0).astype(np.uint8)
-        pixels[~opaque, :3] = 0
-    return Ramene(image=pixels, echelle=float(fine), x=x, y=y, accord=float(accord), dehors=dehors)
+        opaque = etendue[:, :, 3] >= SEUIL_OPAQUE
+        etendue[:, :, 3] = np.where(opaque, 255, 0).astype(np.uint8)
+        etendue[~opaque, :3] = 0
+    pixels = np.ascontiguousarray(etendue[h:h + hb, g:g + wb])
+    return Ramene(image=pixels, echelle=float(fine), x=x, y=y, accord=float(accord), dehors=dehors,
+                  debord=debord, etendue=etendue)
+
+
+# ── L'écrin : le cadre commun d'un personnage qui porte ses pièces ──────────
+#
+# **Le défaut que ceci répare, relevé sur le disque de l'auteur le 18
+# septembre 2026** : la pose « repos · est » de Champy est recadrée à marge
+# nulle, donc son cadre est exactement son corps (221 × 451). Un bâton tenu à
+# côté du corps en sort forcément, et le calque, qui vit dans ce cadre, le
+# coupait.
+#
+# **Le cadre grandit, rien n'est coupé.** L'écrin se mesure *depuis le repère*
+# (le pied) : combien de pixels à gauche, à droite, au-dessus et au-dessous du
+# point où le personnage touche le sol. Chaque image du personnage — toutes ses
+# poses, toutes ses directions, chaque frame de ses animations — est rembourrée
+# de transparent pour que son repère tombe au même point d'un cadre de même
+# taille. Le corps ne bouge donc jamais par rapport au sol, et un seul pivot
+# vaut pour toute la tenue dans Godot.
+#
+# **Symétrique en largeur, autour du repère.** Un personnage vu d'est se
+# retourne en ouest dans le jeu (`flip_h`) : Godot retourne la texture dans son
+# rectangle, et seul un repère au milieu de la largeur garde les pieds au même
+# endroit. Le prix : la place que le bâton demande à droite est aussi prise à
+# gauche, en transparent.
+#
+# **Des nombres pairs.** Le rembourrage ne rééchantillonne rien, donc il ne
+# touche jamais à la grille de pixels d'une pose (une pose sur grille a un pixel
+# par case) ; le pair garde le milieu du cadre sur une frontière de pixel.
+
+PAS_DE_L_ECRIN = 2
+
+
+@dataclass(frozen=True, slots=True)
+class Ecrin:
+    """Le cadre commun, en pixels comptés depuis le repère."""
+
+    cote: int  # de chaque côté du repère, en largeur
+    haut: int  # au-dessus du repère
+    bas: int = 0  # au-dessous — zéro tant que rien ne passe sous les pieds
+
+    @property
+    def largeur(self) -> int:
+        return 2 * self.cote
+
+    @property
+    def hauteur(self) -> int:
+        return self.haut + self.bas
+
+    def en_json(self) -> dict[str, int]:
+        return {"cote": self.cote, "haut": self.haut, "bas": self.bas,
+                "largeur": self.largeur, "hauteur": self.hauteur}
+
+    @staticmethod
+    def depuis_json(d: dict) -> Ecrin:
+        return Ecrin(int(d["cote"]), int(d["haut"]), int(d.get("bas", 0)))
+
+
+def etendue(largeur: int, hauteur: int, repere_x: float, repere_y: float,
+            debord: tuple[int, int, int, int] = (0, 0, 0, 0)) -> tuple[float, float, float, float]:
+    """Ce qu'une image occupe autour de son repère : `(gauche, haut, droite, bas)`.
+
+    Le débord s'ajoute du côté où il sort. Un repère posé hors de l'image ne
+    rend jamais une étendue négative.
+    """
+    g, h, d, b = debord
+    return (max(0.0, repere_x + g), max(0.0, repere_y + h),
+            max(0.0, largeur - repere_x + d), max(0.0, hauteur - repere_y + b))
+
+
+def _au_pas(valeur: float, pas: int) -> int:
+    return int(math.ceil(valeur / pas - 1e-9)) * pas
+
+
+def ecrin_pour(etendues: list[tuple[float, float, float, float]], pas: int = PAS_DE_L_ECRIN,
+               depuis: Ecrin | None = None) -> Ecrin:
+    """Le plus petit écrin qui contient toutes les étendues — et l'ancien.
+
+    **Il ne rétrécit jamais** : un cadre qui rapetisse couperait ce qu'on y a
+    déjà posé, et changerait sous les pieds d'une tenue déjà livrée.
+    """
+    cote = max([max(e[0], e[2]) for e in etendues] + [depuis.cote if depuis else 0])
+    haut = max([e[1] for e in etendues] + [depuis.haut if depuis else 0])
+    bas = max([e[3] for e in etendues] + [depuis.bas if depuis else 0])
+    return Ecrin(_au_pas(cote, pas), _au_pas(haut, pas), _au_pas(bas, pas))
+
+
+def rembourrage(largeur: int, hauteur: int, repere_x: float, repere_y: float,
+                ecrin: Ecrin) -> tuple[int, int, int, int]:
+    """Ce qu'il faut ajouter autour d'une image pour que son repère tombe sur celui de l'écrin.
+
+    `(gauche, haut, droite, bas)`. Un nombre négatif dit que l'image est plus
+    grande que l'écrin de ce côté — l'écrin est alors à agrandir, jamais
+    l'image à couper. Un repère au demi-pixel (une largeur impaire) tombe au
+    demi-pixel près : on arrondit vers la gauche et vers le haut.
+    """
+    gauche = math.floor(ecrin.cote - repere_x)
+    haut = math.floor(ecrin.haut - repere_y)
+    return gauche, haut, ecrin.largeur - largeur - gauche, ecrin.hauteur - hauteur - haut
+
+
+def rembourrer(pixels: np.ndarray, gauche: int, haut: int, droite: int, bas: int) -> np.ndarray:
+    """Du transparent autour — une translation pure, aucun pixel touché."""
+    if not (gauche or haut or droite or bas):
+        return pixels
+    return np.pad(pixels, ((haut, bas), (gauche, droite), (0, 0)), constant_values=0)
+
+
+def poser_dans(pixels: np.ndarray, largeur: int, hauteur: int, x: int, y: int) -> np.ndarray:
+    """L'image posée à `(x, y)` dans un cadre transparent de `largeur × hauteur`."""
+    cadre = np.zeros((hauteur, largeur, 4), dtype=np.uint8)
+    h, w = pixels.shape[:2]
+    x0, y0 = max(0, x), max(0, y)
+    x1, y1 = min(largeur, x + w), min(hauteur, y + h)
+    if x1 > x0 and y1 > y0:
+        cadre[y0:y1, x0:x1] = pixels[y0 - y:y1 - y, x0 - x:x1 - x]
+    return cadre
 
 
 def _boite(masque: np.ndarray) -> tuple[int, int, int, int] | None:

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from "react"
-import { apiCalques, cleCible, ETAT_CALQUE, type BrouillonCalque, type CheminEmploi, type ImageCible, type PreparationSource, type VarianteCalque } from "../api-calques"
+import { apiCalques, cleCible, ETAT_CALQUE, type BrouillonCalque, type CadreAgrandi, type CheminEmploi, type CotesCadre, type ImageCible, type PreparationSource, type VarianteCalque } from "../api-calques"
 import type { ZoomTable } from "../recette"
 import { BarreDuZoom } from "./CommandesDuZoom"
 
@@ -46,17 +46,52 @@ export function placeDuDessus(ls: number, hs: number, l: number, h: number, eche
   return { left: Math.floor((l - l2) / 2) + dx + gauche * rx, top: Math.floor((h - h2) / 2) + dy + sommet * ry, width: largeur * rx, height: hauteur * ry }
 }
 
+const enListe = (mots: string[]) => mots.length < 2 ? mots.join("") : `${mots.slice(0, -1).join(", ")} et ${mots.at(-1)}`
+
+/** « 38 px à gauche et à droite et 12 px en haut » — les côtés qui ont grandi, et eux seuls. */
+export function cotesEnMots(c: CotesCadre) {
+  const mots: string[] = []
+  if (c.gauche && c.gauche === c.droite) mots.push(`${c.gauche} px à gauche et à droite`)
+  else {
+    if (c.gauche) mots.push(`${c.gauche} px à gauche`)
+    if (c.droite) mots.push(`${c.droite} px à droite`)
+  }
+  if (c.haut) mots.push(`${c.haut} px en haut`)
+  if (c.bas) mots.push(`${c.bas} px en bas`)
+  return mots.length ? enListe(mots) : "0 px"
+}
+
+/** Ce qui suit l'agrandissement : les autres directions de la pose, puis le reste du personnage. */
+function quiSuit(agrandi: CadreAgrandi, pose: string) {
+  const directions = agrandi.autres_directions
+  const parts: string[] = []
+  if (directions.length) parts.push(directions.length === 1 ? `la direction ${directions[0]} de ${pose}` : `les ${directions.length} autres directions de ${pose} (${enListe(directions)})`)
+  if (agrandi.autres_images) parts.push(agrandi.autres_images === 1 ? "l’image de l’autre pose" : `les ${agrandi.autres_images} images des autres poses`)
+  return parts.length ? `Même cadre pour ${enListe(parts)}.` : ""
+}
+
 /** Ce que la préparation a fait, en clair — et ce qu'elle a laissé. */
-function LectureDeLaSource({ preparation, nomDeLaPose }: { preparation?: PreparationSource; nomDeLaPose: string }) {
+function LectureDeLaSource({ preparation, nomDeLaPose, pose, attente, onAgrandir }: { preparation?: PreparationSource; nomDeLaPose: string; pose: string; attente: boolean; onAgrandir: () => void }) {
   if (!preparation) return <p className="text-[12px] leading-[1.45] text-encre-3">Lue telle quelle : ni la recette de la pose, ni son échelle. Appliquez la recette de {nomDeLaPose} pour que les deux corps se comparent.</p>
   const dehors = preparation.dehors ?? 0
+  const agrandi = preparation.agrandi
   return <div className="flex flex-col gap-[4px] text-[12px] leading-[1.45] text-encre-3">
     {preparation.recette === "pose"
       ? <p data-recette-appliquee><b className="text-encre-2">Recette de {nomDeLaPose} appliquée</b>{preparation.appliquee.length ? ` : ${preparation.appliquee.join(", ")}.` : "."}</p>
       : <p data-recette-appliquee><b className="text-encre-2">Sa propre recette</b>, telle que retouchée{preparation.echelle ? ", ramenée à l’échelle de la pose." : ", à sa taille d’origine."}</p>}
     {preparation.facteur !== undefined && <p>Arrivée à {preparation.cadre_source.largeur} × {preparation.cadre_source.hauteur} px, mise à l’échelle × {preparation.facteur.toFixed(2)}.</p>}
     {!!preparation.laissee.length && <details><summary className="cursor-pointer">Laissé de côté ({preparation.laissee.length})</summary><ul className="mt-[4px] list-disc pl-[14px]">{preparation.laissee.map((l) => <li key={l}>{l}</li>)}</ul></details>}
-    {dehors > 0.02 && <p role="note" className="rounded-7 border border-trait-attention bg-fond-attention p-[8px] text-encre-attention">{Math.round(dehors * 100)} % de l’image équipée tombe hors du cadre de la pose et sera coupé. Une marge au recadrage de la pose le garde.</p>}
+    {/* **Plus d'avertissement quand c'est fait tout seul** : le cadre a grandi
+        (l'écrin du personnage), et la phrase dit de combien et qui suit. */}
+    {agrandi && <p data-cadre-agrandi className="rounded-7 border border-trait bg-papier-cote p-[8px] text-encre-2">
+      <b className="font-medium text-encre">Cadre agrandi de {cotesEnMots(agrandi.cotes)}</b> pour {agrandi.piece || "la pièce"} ({agrandi.avant.largeur} × {agrandi.avant.hauteur} → {agrandi.apres.largeur} × {agrandi.apres.hauteur} px) : rien n’est coupé. {quiSuit(agrandi, pose)}
+    </p>}
+    {/* Une lecture d'avant le 18 septembre 2026 a pu couper la pièce : relire
+        avec la recette de la pose agrandit le cadre au lieu de couper. */}
+    {!agrandi && dehors > 0.02 && <div role="note" className="flex flex-col gap-[6px] rounded-7 border border-trait-attention bg-fond-attention p-[8px] text-encre-attention">
+      <p>{Math.round(dehors * 100)} % de l’image équipée tombe hors du cadre de la pose et a été coupé à cette lecture.</p>
+      <button type="button" className={`${PETIT} self-start`} disabled={attente} onClick={onAgrandir}>Relire en agrandissant le cadre</button>
+    </div>}
     {preparation.accord !== undefined && preparation.accord < 0.5 && <p role="note" className="rounded-7 border border-trait-attention bg-fond-attention p-[8px] text-encre-attention">Les deux corps se recouvrent mal ({Math.round(preparation.accord * 100)} %) : vérifiez la superposition avant d’extraire.</p>}
   </div>
 }
@@ -247,16 +282,18 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
       {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
       {variante.raison && <div className="rounded-7 border border-trait bg-papier-cote p-[8px] text-[13px] text-encre-2"><p>{variante.raison}. Les anciens pixels et les masques sont conservés.</p><label className="mt-[8px] flex items-center gap-[8px]">Base à adopter<select className={`${CONTROLE} min-w-0 flex-1`} aria-label="Nouvelle base du calque" value={nouvelleBase} onChange={(e) => setNouvelleBase(e.target.value)}>{!cibles.some((c) => cleCible(c.cible) === cleCible(variante.cible)) && <option value={cleCible(variante.cible)} disabled>La base d’origine n’est plus disponible</option>}{cibles.map((c) => <option key={cleCible(c.cible)} value={cleCible(c.cible)}>{c.pose} · {c.direction || "sans direction"} · {c.cible.nature === "frame" ? `${c.nom_bande} frame ${(c.rang ?? 0) + 1}` : c.image?.label || "image fixe"}</option>)}</select></label><button disabled={sale || attente || !cibles.some((c) => cleCible(c.cible) === nouvelleBase)} onClick={() => void action(() => apiCalques.adopter(chemin, variante.identifiant, variante.revision, cibles.find((c) => cleCible(c.cible) === nouvelleBase)!.cible))} className={`${CONTROLE} mt-[8px]`}>Adopter cette base, puis revérifier</button></div>}
 
+      {variante.cadre_suivi && <p data-cadre-suivi className="rounded-7 border border-trait bg-papier-cote p-[8px] text-[12px] leading-[1.45] text-encre-2">Cadre agrandi de {cotesEnMots(variante.cadre_suivi.cotes)} pour suivre {variante.cadre_suivi.cause.piece || "une pièce"} de {variante.cadre_suivi.cause.pose} · {variante.cadre_suivi.cause.direction || "sans direction"} ({variante.cadre_suivi.avant.largeur} × {variante.cadre_suivi.avant.hauteur} → {variante.cadre_suivi.apres.largeur} × {variante.cadre_suivi.apres.hauteur} px). Le calque et les retouches ont glissé d’autant : rien n’est perdu.</p>}
+
       <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
         {variante.role === "reference" && <p className="text-[12px] leading-[1.45] text-encre-3">Une référence d’apparence ne devient pas une couche : elle sert à regarder. Pour en tirer un calque, associez le personnage équipé comme « image à extraire ».</p>}
 
         {extraction && brouillon.extraction && <>
           <Etape numero={1} titre="Pose de référence">
-            <button type="button" onClick={() => setVue("base")} className="flex items-center gap-[8px] rounded-7 border border-trait p-[4px] text-left hover:border-contour"><img src={apiCalques.image(chemin, variante, "base")} alt="" className="damier-papier h-[54px] w-[54px] shrink-0 object-contain" style={{ imageRendering: "pixelated" }} /><span className="text-[12px] text-encre">{pose}<span className="block text-[11px] text-encre-3">{largeur} × {hauteur} px, telle que sa recette la rend</span></span></button>
+            <button type="button" onClick={() => setVue("base")} className="flex items-center gap-[8px] rounded-7 border border-trait p-[4px] text-left hover:border-contour"><img src={apiCalques.image(chemin, variante, "base")} alt="" className="damier-papier h-[54px] w-[54px] shrink-0 object-contain" style={{ imageRendering: "pixelated" }} /><span className="text-[12px] text-encre">{pose}<span className="block text-[11px] text-encre-3">{variante.base.cadre_de_la_pose ? `${variante.base.cadre_de_la_pose.largeur} × ${variante.base.cadre_de_la_pose.hauteur} px, posée au pied d’un cadre commun de ${largeur} × ${hauteur}` : `${largeur} × ${hauteur} px, telle que sa recette la rend`}</span></span></button>
           </Etape>
           <Etape numero={2} titre="Image équipée, lue comme la pose">
             <button type="button" onClick={() => setVue("source")} className="flex items-center gap-[8px] rounded-7 border border-trait p-[4px] text-left hover:border-contour"><img src={apiCalques.image(chemin, variante, "source")} alt="" className="damier-papier h-[54px] w-[54px] shrink-0 object-contain" style={{ imageRendering: "pixelated" }} /><span className="min-w-0 truncate text-[12px] text-encre">{variante.source_fiche.label || "Image équipée"}<span className="block text-[11px] text-encre-3">{cadreSource.largeur} × {cadreSource.hauteur} px</span></span></button>
-            <LectureDeLaSource preparation={preparation} nomDeLaPose={pose} />
+            <LectureDeLaSource preparation={preparation} nomDeLaPose={pose} pose={nomDeLaPose ?? variante.base.pose} attente={attente} onAgrandir={() => relire("pose", true)} />
             <div role="group" aria-label="Recette de l’image équipée" className="flex gap-[4px] rounded-7 bg-papier-cote p-[4px]">
               <button type="button" aria-pressed={preparation?.recette === "pose"} disabled={attente || preparation?.recette === "pose"} onClick={() => relire("pose", preparation?.echelle ?? true)} className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${preparation?.recette === "pose" ? "bg-carte text-encre" : "text-encre-3"}`}>Recette de la pose</button>
               <button type="button" aria-pressed={preparation?.recette === "sienne" || !preparation} disabled={attente || preparation?.recette === "sienne"} onClick={() => relire("sienne", preparation?.echelle ?? true)} className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${preparation?.recette !== "pose" ? "bg-carte text-encre" : "text-encre-3"}`}>Sa propre recette</button>

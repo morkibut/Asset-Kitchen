@@ -398,9 +398,11 @@ def test_a_deux_cases_le_texte_reste_celui_d_aujourd_hui():
     assert texte.startswith("The attached image is a sprite sheet of 2 sprites")
     assert "Return the SAME sheet with the described item added to every sprite." in texte
     assert "Keep the exact same grid:" in texte
-    assert texte.endswith(
-        "no cell borders, no grid lines, no text, no numbers, no frames."
-    )
+    # Les phrases mesurées sont toutes là ; une seule s'y ajoute depuis le
+    # 18 septembre 2026 — la pièce entière, avec de l'air autour
+    # (`ITEM_ENTIER_PLANCHE`, `atelier/services/pliage.py`).
+    assert "no cell borders, no grid lines, no text, no numbers, no frames. Draw the whole item" in texte
+    assert texte.endswith("no part of it may touch or cross the edge of its cell.")
 
 
 def test_la_legende_d_une_seule_case_ne_parle_pas_de_feuille_non_plus(client, double):

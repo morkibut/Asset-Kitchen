@@ -226,8 +226,26 @@ def _habiller(pliage: Pliage) -> str:
         f"{accorde(forme.lignes, 'row')}, "
         f"same cell positions, same cell sizes, same overall image size. Only the item "
         f"is added. Nothing else moves, nothing else is redrawn, nothing is zoomed in "
-        f"or out, no cell borders, no grid lines, no text, no numbers, no frames."
+        f"or out, no cell borders, no grid lines, no text, no numbers, no frames. "
+        f"{ITEM_ENTIER_PLANCHE}"
     )
+
+
+# **La pièce entière, avec de l'air autour** (18 septembre 2026). Relevé sur le
+# disque de l'auteur : le bâton de Champy revenait tenu au ras du corps, et une
+# arme qui touche le bord de sa case est coupée *avant* même que l'atelier ne la
+# lise — aucun écrin ne rend ce que le modèle n'a pas dessiné. Une phrase, pas
+# plus : le reste du texte interdit déjà de bouger ou de rapetisser le
+# personnage, et c'est lui qui garde sa place ; la pièce, elle, prend l'espace
+# vide de la case. Le texte à une case ne dit ni *cell* ni *border* (M4).
+ITEM_ENTIER_PLANCHE = (
+    "Draw the whole item, with empty background all around it: no part of it may "
+    "touch or cross the edge of its cell."
+)
+ITEM_ENTIER_SEUL = (
+    "Draw the whole item, with empty background all around it: no part of it may "
+    "touch or cross the edge of the image."
+)
 
 
 def _habiller_une_seule() -> str:
@@ -262,7 +280,8 @@ def _habiller_une_seule() -> str:
         "style, the same outline weight, the same plain flat light gray background. "
         "Keep the exact same framing: same subject position, same subject size, same "
         "overall image size. Only the item is added. Nothing else moves, nothing else "
-        "is redrawn, nothing is zoomed in or out, no text, no numbers, no frames."
+        "is redrawn, nothing is zoomed in or out, no text, no numbers, no frames. "
+        + ITEM_ENTIER_SEUL
     )
 
 
