@@ -6,11 +6,33 @@ prompt, history et view. Aucun appel d'installation ou de gestion des poids.
 from __future__ import annotations
 
 import hashlib
+import io
 import mimetypes
 
-from atelier.domaine.workflow import WorkflowRefuse, composer
+from PIL import Image, UnidentifiedImageError
+
+from atelier.domaine.workflow import WorkflowRefuse, composer, graphes, octets_json
 from atelier.fournisseur.maison import MoteurDeLaMaison, DELAI_MOYEN
 from atelier.fournisseur.port import ClipProduit
+
+
+def sur_fond_blanc(octets):
+    """Le LoadImage de ComfyUI jette la transparence : ce qui était transparent
+    deviendrait la couleur cachée sous l'alpha, souvent du noir. On pose l'image
+    sur du blanc avant l'envoi ; l'atelier garde ses octets d'origine."""
+    try:
+        with Image.open(io.BytesIO(octets)) as image:
+            if image.mode not in ("RGBA", "LA", "PA") and "transparency" not in image.info:
+                return octets
+            rgba = image.convert("RGBA")
+    except (UnidentifiedImageError, OSError):
+        return octets
+    if rgba.getchannel("A").getextrema()[0] == 255:
+        return octets
+    fond = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+    sortie = io.BytesIO()
+    Image.alpha_composite(fond, rgba).convert("RGB").save(sortie, format="PNG")
+    return sortie.getvalue()
 
 
 class MoteurWorkflow(MoteurDeLaMaison):
@@ -22,8 +44,14 @@ class MoteurWorkflow(MoteurDeLaMaison):
             info = await self._json("GET", "/object_info")
         except Exception as e:
             return {"disponible": False, "problemes": [str(e)], "noeuds": []}
-        liees = {(l["noeud"], l["champ"]) for liens in profil["liaisons"].values() for l in liens}
-        for identifiant, noeud in profil["graphe"].items():
+        # Un profil à variantes n'est prêt que si chacun de ses graphes l'est ;
+        # un nœud identique d'un graphe à l'autre n'est examiné qu'une fois.
+        examines = {}
+        for graphe, liaisons in graphes(profil):
+            liees = {(l["noeud"], l["champ"]) for liens in liaisons.values() for l in liens}
+            for i, n in graphe.items():
+                examines.setdefault((i, octets_json(n)), (i, n, liees))
+        for identifiant, noeud, liees in examines.values():
             classe = noeud["class_type"]
             definition = info.get(classe)
             if not definition:
@@ -47,13 +75,13 @@ class MoteurWorkflow(MoteurDeLaMaison):
                     problemes.append(f"{classe} / {champ} : {valeur} est absent des choix installés.")
             noeuds.append({"identifiant": identifiant, "classe": classe, "disponible": True})
         sortie = profil["sortie"]["noeud"]
-        definition_sortie = info.get(profil["graphe"][sortie]["class_type"], {})
-        if not definition_sortie.get("output_node"):
+        if any(not info.get(g[sortie]["class_type"], {}).get("output_node") for g, _ in graphes(profil)):
             problemes.append("Le nœud de sortie choisi n'est pas déclaré comme une sortie par ComfyUI.")
         return {"disponible": not problemes, "problemes": problemes, "noeuds": noeuds,
             "limite": "Le diagnostic vérifie les nœuds et choix installés. Il ne lance aucun modèle et ne prédit pas sa mémoire nécessaire."}
 
     async def deposer_reference(self, octets):
+        octets = sur_fond_blanc(octets)
         nom = "atelier-" + hashlib.sha256(octets).hexdigest()[:24] + ".png"
         async with self._ouvrir(DELAI_MOYEN) as client:
             reponse = await client.post(self.adresse + "/upload/image",

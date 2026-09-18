@@ -39,6 +39,7 @@ class ImageProduite:
     consomme: float
     type_media: str | None = None  # ce que le fournisseur *dit* avoir rendu
     unite: str = USD
+    graine: int | None = None  # celle qui est partie, quand le moteur en prend une
 
     @property
     def cout_usd(self) -> float:

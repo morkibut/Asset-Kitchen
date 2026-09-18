@@ -8,7 +8,7 @@ import time
 import zipfile
 
 from atelier.domaine.catalogue import Modele, Option
-from atelier.domaine.workflow import WorkflowRefuse, composer, normaliser
+from atelier.domaine.workflow import WorkflowRefuse, composer, normaliser, tirer_graine
 from atelier.fournisseur.port import ImageProduite
 from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu
 
@@ -64,6 +64,12 @@ class FournisseurWorkflowImage:
         p = self.profils.de_modele(modele.identifiant)
         valeurs = {"prompt": demande.prompt, "prompt_negatif": demande.prompt_negatif,
             "resolution": demande.resolution, "proportions": demande.proportions, "options": dict(demande.options)}
+        if "graine" in p["liaisons"]:
+            # Une étape déjà préparée garde sa graine : la retirer changerait
+            # le calcul que sa clé désigne.
+            avant = self.etape(generation.identifiant, rang)
+            graine = avant and avant["parametres"]["valeurs"].get("graine")
+            valeurs["graine"] = tirer_graine() if graine is None else graine
         composer(p, references=[f"reference-{i}" for i in range(len(demande.references))], **valeurs)
         archive = io.BytesIO()
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as z:
@@ -98,7 +104,7 @@ class FournisseurWorkflowImage:
         octets = (self.file_locale._dossier(identifiant) / "resultat").read_bytes()
         if hashlib.sha256(octets).hexdigest() != resultat["empreinte"]:
             raise WorkflowRefuse("Le fichier image conservé a été modifié.")
-        return ImageProduite(octets, 0.0, type_media=resultat["type_media"])
+        return ImageProduite(octets, 0.0, type_media=resultat["type_media"], graine=etape["parametres"]["valeurs"].get("graine"))
 
     async def _executer(self, etape):
         moteur = self.fabrique_moteur()

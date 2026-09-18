@@ -10,6 +10,7 @@ import hashlib
 import json
 import math
 import re
+import secrets
 
 from atelier.domaine.catalogue import Option
 from atelier.domaine.erreurs import ErreurAtelier
@@ -21,6 +22,77 @@ class WorkflowRefuse(ErreurAtelier):
 
 def octets_json(valeur):
     return json.dumps(valeur, ensure_ascii=False, sort_keys=True, allow_nan=False, separators=(",", ":")).encode("utf-8")
+
+
+# Le plus grand entier qu'un écran relit sans l'arrondir ; ComfyUI en accepte
+# jusqu'à 2**64 - 1 sur les graines de KSampler et de RandomNoise.
+GRAINE_MAX = 2**53 - 1
+
+
+def tirer_graine():
+    return secrets.randbelow(GRAINE_MAX + 1)
+
+
+def _verifier_graphe(graphe, liaisons, parametres, quelle=""):
+    """Valide un graphe et ses liaisons ; rend son nombre de références."""
+    if not isinstance(graphe, dict) or not graphe or len(graphe) > 500 or "nodes" in graphe:
+        raise WorkflowRefuse("Importer le format API de ComfyUI : un objet de nœuds avec class_type et inputs." + quelle)
+    for cle, noeud in graphe.items():
+        if not isinstance(noeud, dict) or not isinstance(noeud.get("class_type"), str) or not isinstance(noeud.get("inputs"), dict):
+            raise WorkflowRefuse(f"Le nœud {cle} n'est pas au format API.{quelle}")
+    if not isinstance(liaisons, dict) or "prompt" not in liaisons:
+        raise WorkflowRefuse("Relier le texte demandé à au moins un champ du workflow." + quelle)
+    references = []
+    cibles = set()
+    for nom_champ, liens in liaisons.items():
+        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine")
+        if nom_champ.startswith("reference:"):
+            try:
+                references.append(int(nom_champ.split(":")[1]))
+            except ValueError as e:
+                raise WorkflowRefuse("Les références se nomment reference:0, reference:1, etc.") from e
+            connu = True
+        if nom_champ.startswith("option:"):
+            connu = nom_champ.split(":", 1)[1] in parametres
+        if not connu or not isinstance(liens, list) or not liens:
+            raise WorkflowRefuse(f"La liaison {nom_champ} n'est pas déclarée ou n'a aucune cible.{quelle}")
+        for lien in liens:
+            if not isinstance(lien, dict):
+                raise WorkflowRefuse("Chaque liaison nomme un nœud et un champ.")
+            cible = (str(lien.get("noeud", "")), lien.get("champ"))
+            if cible[0] not in graphe or cible[1] not in graphe[cible[0]]["inputs"] or cible in cibles:
+                raise WorkflowRefuse(f"La cible {cible} manque dans le graphe ou reçoit deux valeurs.{quelle}")
+            lien["noeud"] = cible[0]
+            cibles.add(cible)
+    if sorted(references) != list(range(len(references))) or len(references) > 16:
+        raise WorkflowRefuse("Les références doivent être consécutives, de 0 à 15 au maximum." + quelle)
+    return len(references)
+
+
+def _variantes(d, base, liaisons, parametres, sortie):
+    """Un graphe par nombre de références ; le graphe principal garde le sien."""
+    brutes = d.get("variantes") or {}
+    if not isinstance(brutes, dict) or d.get("nature") != "image":
+        raise WorkflowRefuse("Seul un workflow d'image déclare des variantes, rangées par nombre de références.")
+    variantes = {}
+    communes = {n for n in liaisons if not n.startswith("reference:")}
+    for cle, v in brutes.items():
+        quelle = f" (variante à {cle} référence(s))"
+        if not isinstance(v, dict) or not re.fullmatch(r"[0-9]{1,2}", str(cle)):
+            raise WorkflowRefuse("Chaque variante se range sous son nombre de références et porte un graphe et ses liaisons.")
+        nombre = _verifier_graphe(v.get("graphe"), v.get("liaisons"), parametres, quelle)
+        if nombre != int(cle) or nombre == base or str(nombre) in variantes:
+            raise WorkflowRefuse(f"La variante rangée sous {cle} relie {nombre} référence(s) ; chaque nombre n'a qu'un graphe.")
+        if {n for n in v["liaisons"] if not n.startswith("reference:")} != communes:
+            raise WorkflowRefuse("Chaque variante relie les mêmes champs que le graphe principal, références mises à part." + quelle)
+        noeud = v["graphe"].get(str(sortie.get("noeud")))
+        if not isinstance(noeud, dict):
+            raise WorkflowRefuse("Le nœud de sortie porte le même numéro dans chaque variante." + quelle)
+        variantes[str(nombre)] = {"graphe": v["graphe"], "liaisons": v["liaisons"]}
+    nombres = sorted([base, *map(int, variantes)])
+    if nombres != list(range(nombres[0], nombres[-1] + 1)):
+        raise WorkflowRefuse("Les nombres de références acceptés doivent se suivre, sans trou.")
+    return variantes, nombres[0], nombres[-1]
 
 
 def _normaliser(brut: dict) -> dict:
@@ -39,42 +111,11 @@ def _normaliser(brut: dict) -> dict:
     nature = d.get("nature")
     if nature not in ("image", "video", "audio"):
         raise WorkflowRefuse("Un workflow produit une image, une vidéo ou un son.")
-    graphe = d.get("graphe")
-    if not isinstance(graphe, dict) or not graphe or len(graphe) > 500 or "nodes" in graphe:
-        raise WorkflowRefuse("Importer le format API de ComfyUI : un objet de nœuds avec class_type et inputs.")
-    for cle, noeud in graphe.items():
-        if not isinstance(noeud, dict) or not isinstance(noeud.get("class_type"), str) or not isinstance(noeud.get("inputs"), dict):
-            raise WorkflowRefuse(f"Le nœud {cle} n'est pas au format API.")
-    liaisons = d.get("liaisons", {})
-    if not isinstance(liaisons, dict) or "prompt" not in liaisons:
-        raise WorkflowRefuse("Relier le texte demandé à au moins un champ du workflow.")
     parametres = d.get("parametres", {})
     if not isinstance(parametres, dict):
         raise WorkflowRefuse("Les paramètres doivent être nommés.")
-    references = []
-    cibles = set()
-    for nom_champ, liens in liaisons.items():
-        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence")
-        if nom_champ.startswith("reference:"):
-            try:
-                references.append(int(nom_champ.split(":")[1]))
-            except ValueError as e:
-                raise WorkflowRefuse("Les références se nomment reference:0, reference:1, etc.") from e
-            connu = True
-        if nom_champ.startswith("option:"):
-            connu = nom_champ.split(":", 1)[1] in parametres
-        if not connu or not isinstance(liens, list) or not liens:
-            raise WorkflowRefuse(f"La liaison {nom_champ} n'est pas déclarée ou n'a aucune cible.")
-        for lien in liens:
-            if not isinstance(lien, dict):
-                raise WorkflowRefuse("Chaque liaison nomme un nœud et un champ.")
-            cible = (str(lien.get("noeud", "")), lien.get("champ"))
-            if cible[0] not in graphe or cible[1] not in graphe[cible[0]]["inputs"] or cible in cibles:
-                raise WorkflowRefuse(f"La cible {cible} manque dans le graphe ou reçoit deux valeurs.")
-            lien["noeud"] = cible[0]
-            cibles.add(cible)
-    if sorted(references) != list(range(len(references))) or len(references) > 16:
-        raise WorkflowRefuse("Les références doivent être consécutives, de 0 à 15 au maximum.")
+    graphe, liaisons = d.get("graphe"), d.get("liaisons", {})
+    references = range(_verifier_graphe(graphe, liaisons, parametres))
     if nature == "video" and len(references) != 1:
         raise WorkflowRefuse("Un workflow vidéo reçoit exactement une image de départ obligatoire.")
     if nature == "audio" and (references or {"largeur", "hauteur", "images", "cadence"}.intersection(liaisons)):
@@ -118,11 +159,14 @@ def _normaliser(brut: dict) -> dict:
     if not isinstance(sortie, dict) or str(sortie.get("noeud")) not in graphe or sortie.get("champ") not in (("images",) if nature == "image" else ("audio",) if nature == "audio" else ("gifs", "videos")):
         raise WorkflowRefuse("Choisir le nœud de sortie : images pour une image, gifs ou videos pour un clip, audio pour un son.")
     sortie["noeud"] = str(sortie["noeud"])
+    variantes, minimum, maximum = _variantes(d, len(references), liaisons, parametres, sortie) if d.get("variantes") else ({}, len(references), len(references))
     return {"identifiant": identifiant, "nom": nom, "nature": nature, "graphe": graphe,
         "liaisons": liaisons, "parametres": parametres, "formats": formats,
         "durees": durees if nature in ("video", "audio") else [], "cadence": cadence if nature == "video" else 0,
         "pas_images": pas_images if nature == "video" else 0, "sortie": sortie,
-        "references_min": len(references), "references_max": len(references),
+        "references_min": minimum, "references_max": maximum,
+        # Absente d'un profil à un seul graphe : sa version reste celle d'avant.
+        **({"variantes": variantes} if variantes else {}),
         "description": str(d.get("description", ""))[:2000]}
 
 
@@ -137,9 +181,25 @@ def version_de(profil):
     return hashlib.sha256(octets_json(profil)).hexdigest()
 
 
-def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=None, proportions="1:1", secondes=0, options=None):
-    if len(references) != profil["references_min"]:
-        raise WorkflowRefuse(f"Ce profil exige exactement {profil['references_min']} image(s) de référence ; {len(references)} ont été jointes.")
+def graphe_pour(profil, nombre):
+    """Le graphe et les liaisons que ce profil déclare pour ce nombre de références."""
+    variante = (profil.get("variantes") or {}).get(str(nombre))
+    if variante:
+        return variante["graphe"], variante["liaisons"]
+    if nombre == len([n for n in profil["liaisons"] if n.startswith("reference:")]):
+        return profil["graphe"], profil["liaisons"]
+    if profil["references_min"] == profil["references_max"]:
+        raise WorkflowRefuse(f"Ce profil exige exactement {profil['references_min']} image(s) de référence ; {nombre} ont été jointes.")
+    raise WorkflowRefuse(f"Ce profil accepte de {profil['references_min']} à {profil['references_max']} image(s) de référence ; {nombre} ont été jointes.")
+
+
+def graphes(profil):
+    """Tous les graphes d'un profil, pour les diagnostiquer ensemble."""
+    return [(profil["graphe"], profil["liaisons"]), *((v["graphe"], v["liaisons"]) for v in (profil.get("variantes") or {}).values())]
+
+
+def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=None, proportions="1:1", secondes=0, options=None, graine=None):
+    graphe_choisi, liaisons = graphe_pour(profil, len(references))
     formats = [f for f in profil["formats"] if (resolution is None or f["resolution"] == resolution) and f["proportions"] == proportions]
     if not formats and profil["nature"] != "audio":
         raise WorkflowRefuse("Cette combinaison de résolution et de proportions n'est pas déclarée par le profil.")
@@ -166,8 +226,12 @@ def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=Non
             raise WorkflowRefuse(f"La valeur de {cle} n'est pas acceptée par le profil.")
         valeurs["option:" + cle] = valeur
     valeurs.update({"reference:" + str(i): reference for i, reference in enumerate(references)})
-    graphe = copy.deepcopy(profil["graphe"])
-    for nom, liens in profil["liaisons"].items():
+    if "graine" in liaisons:
+        if graine is not None and (isinstance(graine, bool) or not isinstance(graine, int) or not 0 <= graine <= GRAINE_MAX):
+            raise WorkflowRefuse("La graine est un entier positif.")
+        valeurs["graine"] = tirer_graine() if graine is None else graine
+    graphe = copy.deepcopy(graphe_choisi)
+    for nom, liens in liaisons.items():
         for lien in liens:
             graphe[lien["noeud"]]["inputs"][lien["champ"]] = valeurs[nom]
     return graphe

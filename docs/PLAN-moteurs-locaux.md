@@ -116,13 +116,13 @@ l'écran ne doit pas les confondre :
 
 Le format des profils, seul. Rien de visible encore, mais tout le reste en dépend.
 
-- [ ] une liaison `graine` : tirée à chaque appel, enregistrée sur la génération, relue sur la
+- [x] une liaison `graine` : tirée à chaque appel, enregistrée sur la génération, relue sur la
       fiche de l'image ; un profil sans liaison `graine` marche comme aujourd'hui
-- [ ] un profil peut déclarer un graphe par nombre de références ; le catalogue annonce
+- [x] un profil peut déclarer un graphe par nombre de références ; le catalogue annonce
       `references_min` / `references_max` en conséquence ; un profil à un seul graphe est relu
       sans migration et garde sa version
-- [ ] une référence PNG transparente est posée sur blanc avant le dépôt chez ComfyUI
-- [ ] essais : deux appels identiques envoient deux graines différentes ; 0, 1 et 2 références
+- [x] une référence PNG transparente est posée sur blanc avant le dépôt chez ComfyUI
+- [x] essais : deux appels identiques envoient deux graines différentes ; 0, 1 et 2 références
       choisissent le bon graphe ; trop d'images jointes par l'auteur → refus avant la file
 
 ### ML2 · Le catalogue des 22 styles, installé en un geste (serveur)

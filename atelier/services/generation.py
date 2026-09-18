@@ -1207,6 +1207,7 @@ class ServiceGenerations:
         )
         emplacement.consomme = image.consomme
         emplacement.unite = image.unite
+        emplacement.graine = getattr(image, "graine", None)
         emplacement.duree_s = round(time.monotonic() - depart, 2)
         emplacement.statut = Statut.REUSSIE
         self._sauver(generation)

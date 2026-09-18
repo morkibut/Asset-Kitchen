@@ -253,6 +253,9 @@ class Emplacement:
     # l'interface qui trace, à partir de ces deux-là.
     demarre_le: float | None = None
     duree_attendue_s: float = 0.0
+    # La graine tirée pour cet appel, quand le moteur local en prend une : de
+    # quoi refaire la même image. Absente partout ailleurs.
+    graine: int | None = None
 
     @property
     def cout_usd(self) -> float:
@@ -280,6 +283,7 @@ class Emplacement:
             "demarre_le": self.demarre_le,
             "duree_attendue_s": self.duree_attendue_s,
             **({"acceptation_inconnue": True} if self.acceptation_inconnue else {}),
+            **({"graine": self.graine} if self.graine is not None else {}),
         }
 
     @staticmethod
@@ -300,6 +304,7 @@ class Emplacement:
             demarre_le=d.get("demarre_le"),
             duree_attendue_s=d.get("duree_attendue_s", 0.0),
             acceptation_inconnue=bool(d.get("acceptation_inconnue", False)),
+            graine=d.get("graine"),
         )
 
 
