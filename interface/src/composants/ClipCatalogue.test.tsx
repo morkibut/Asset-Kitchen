@@ -17,7 +17,9 @@ import {
   api,
   type BaseModelesVideo,
   type ModeleVideo,
+  type MouvementDeLaPose,
   type Personnage,
+  type Pose,
 } from "../api"
 
 afterEach(() => {
@@ -116,6 +118,71 @@ test("un catalogue rempli ne montre pas le bouton", async () => {
   render(<EcranClip cible={CIBLE} onFermer={vi.fn()} onCommande={vi.fn()} />)
 
   await waitFor(() => expect(screen.queryByText(/redemander le catalogue/)).toBeNull())
+})
+
+// ── SC3 : l'écran affiche ce que le serveur a composé, jamais un recollage ──
+
+const POSE: Pose = {
+  identifiant: "attaque",
+  nom: "attaque",
+  images: 1,
+  consigne: "",
+  ecartees: [],
+} as unknown as Pose
+
+test("l'écran affiche le texte que le serveur a composé — la phrase, puis le style, pas le mouvement seul", async () => {
+  vi.spyOn(api, "modelesVideo").mockResolvedValue(videAvecSaPanne([UN_MODELE]))
+  const mouvementAttaque = {
+    identifiant: "attaque",
+    nom: "attaque",
+    texte: "attack, winding up",
+    cadence: 14,
+    directions: [],
+    livre: true,
+    masque: false,
+  }
+  vi.spyOn(api, "mouvements").mockResolvedValue({
+    mouvements: [mouvementAttaque],
+    masques: [],
+  } as Awaited<ReturnType<typeof api.mouvements>>)
+
+  // **Le serveur seul compose** : le texte qu'il rend ici n'est ni la phrase
+  // de la direction ni le texte du mouvement pris isolément — c'est le style
+  // du bâton que `ServiceStyles` a résolu pour ce personnage. Si l'écran
+  // recollait lui-même la phrase et le texte du mouvement, il afficherait
+  // autre chose que ceci.
+  const composition: MouvementDeLaPose = {
+    pose: "attaque",
+    mouvement: mouvementAttaque,
+    texte: "Seen from the front. a horizontal swing with the wooden staff",
+    direction: "Seen from the front.",
+    geste: "a horizontal swing with the wooden staff",
+    origine: "mouvement",
+    style: { identifiant: "baton", nom: "bâton" },
+    origine_du_style: "choisi",
+    piece_du_style: null,
+  }
+  vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue(composition)
+
+  render(
+    <EcranClip
+      cible={{ ...CIBLE, pose: POSE }}
+      onFermer={vi.fn()}
+      onCommande={vi.fn()}
+    />,
+  )
+
+  const texte = await waitFor(() => {
+    const trouve = document.querySelector("[data-texte-du-clip]")
+    if (!trouve || !trouve.textContent?.includes("horizontal swing")) {
+      throw new Error("le texte du serveur n'est pas encore affiché")
+    }
+    return trouve
+  })
+  expect(texte.textContent).toBe(composition.texte)
+
+  // Et la ligne d'origine, en clair, sous le texte.
+  expect(screen.getByText("Style : bâton (choisi)")).toBeTruthy()
 })
 
 test("un refus des fournisseurs se dit, et le bouton redevient cliquable", async () => {

@@ -38,6 +38,7 @@ from atelier.domaine.calque_anime import TIENT
 from atelier.domaine.direction import phrase_animee, texte_du_clip
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.domaine.recette import Recette
+from atelier.domaine.style import texte_du_style
 from atelier.api.routes import reponse_archive
 from atelier.image import vignette
 from atelier.services import Atelier
@@ -107,12 +108,71 @@ def _phrase_de_direction(atelier: Atelier, projet: str | None, direction: str | 
     return phrase_animee(next((d for d in directions if d.identifiant == direction), None))
 
 
+def _style_du_personnage(
+    atelier: Atelier, projet: str | None, personnage: str | None
+) -> tuple[Any, str, dict[str, str] | None]:
+    """Le style résolu d'un personnage pour ce jeu, **et d'où il vient** (SC3).
+
+    Un seul endroit lit `ServiceStyles.style_du_personnage` pour composer un
+    texte de clip : la route qui montre ce qui partira et celle qui commande
+    un clip appellent celle-ci, jamais chacune la résolution de son côté —
+    même raison que `_phrase_de_direction` pour l'autre moitié du texte. Sans
+    jeu ou sans personnage connu, la question ne se pose pas : rien n'est
+    deviné, comme le veut `SC2`.
+
+    Rend en plus la pièce **nommée**, pas seulement son identifiant : c'est ce
+    que l'écran affiche à côté du style (« celui du bâton »), et il ne doit
+    pas avoir à rappeler l'équipement pour traduire un identifiant en nom.
+    """
+    if not projet or not personnage:
+        return None, "aucun", None
+    style, origine, piece = atelier.styles.style_du_personnage(projet, personnage)
+    if style is None:
+        return None, "aucun", None
+    piece_json: dict[str, str] | None = None
+    if origine == "piece" and piece:
+        objet = next(
+            (p for p in atelier.equipement.pieces(projet) if p.identifiant == piece),
+            None,
+        )
+        piece_json = {"identifiant": piece, "nom": objet.nom if objet else piece}
+    return style, origine, piece_json
+
+
+def _geste_anime(
+    atelier: Atelier,
+    projet: str | None,
+    personnage: str | None,
+    mouvement: Any,
+    repli: str = "",
+) -> tuple[str, Any, str, dict[str, str] | None]:
+    """Le texte du geste — **celui du style pour ce mouvement, sinon celui du
+    mouvement** — et le style qui l'a éventuellement écrit (SC3).
+
+    C'est ici, et nulle part ailleurs, que se décide *comment* ce
+    personnage-là joue ce mouvement : `mouvement_de_la_pose` et
+    `commander_clip` appellent cette fonction plutôt que de recoller
+    chacune le mouvement et le style de son côté. **Le style ne remplace le
+    texte du mouvement que s'il dit quelque chose pour ce mouvement précis** —
+    sinon le mouvement garde la main, et c'est le deuxième critère du plan.
+    """
+    base = mouvement.texte if mouvement and mouvement.texte else repli
+    style, origine, piece = _style_du_personnage(atelier, projet, personnage)
+    if style is not None and mouvement is not None:
+        texte_style = texte_du_style(style, mouvement.identifiant)
+        if texte_style:
+            return texte_style, style, origine, piece
+    return base, style, origine, piece
+
+
 @routeur.get("/movements/for-pose/{identifiant_pose}")
 async def mouvement_de_la_pose(
     requete: Request,
     identifiant_pose: str,
     projet: str | None = Query(None),
     direction: str | None = Query(None),
+    personnage: str | None = Query(None),
+    mouvement: str | None = Query(None),
 ) -> dict[str, Any]:
     """Ce qui partira pour animer cette case du plan, **et d'où le texte vient**.
 
@@ -125,6 +185,15 @@ async def mouvement_de_la_pose(
     quand la case est animée par un mouvement connu, `pose` quand on retombe sur
     la consigne figée du plan — moins bonne, mais en anglais et juste sur
     l'attitude —, `aucun` quand le produit ne sait rien dire de cette case-là.
+
+    **`personnage`, depuis SC3** : quand il est connu, `geste` devient le
+    texte du style résolu de ce personnage s'il dit ce mouvement, et `style` /
+    `origine_du_style` disent ce style et d'où il vient — même sans personnage
+    connu, rien ne change (`style` reste `null`).
+
+    **`mouvement`, depuis SC3** : composer pour un mouvement *autre* que celui
+    de la pose — l'écran laisse choisir dans une liste, et cette case garde
+    son mouvement propre par défaut tant qu'on n'a rien choisi.
     """
     atelier = _atelier(requete)
     ouvert = projet or atelier.bibliotheque.courant
@@ -133,18 +202,28 @@ async def mouvement_de_la_pose(
         if pose.identifiant == identifiant_pose:
             repli = pose.dit()
             break
-    mouvement = atelier.mouvements.pour_la_pose(identifiant_pose, ouvert)
-    geste = atelier.mouvements.texte_de_la_pose(identifiant_pose, repli, ouvert)
+    if mouvement:
+        objet_mouvement = atelier.mouvements.lire(mouvement, ouvert)
+        origine = "mouvement" if objet_mouvement else "aucun"
+    else:
+        objet_mouvement = atelier.mouvements.pour_la_pose(identifiant_pose, ouvert)
+        origine = "mouvement" if objet_mouvement else ("pose" if repli else "aucun")
+    geste, style, origine_du_style, piece_du_style = _geste_anime(
+        atelier, ouvert, personnage, objet_mouvement, repli
+    )
     # **La phrase de la direction en tête** (18 septembre 2026) — la même que
     # `commander_clip` écrira : ce que l'écran montre est ce qui part.
     phrase = _phrase_de_direction(atelier, ouvert, direction)
     return {
         "pose": identifiant_pose,
-        "mouvement": mouvement.en_json() if mouvement else None,
+        "mouvement": objet_mouvement.en_json() if objet_mouvement else None,
         "texte": texte_du_clip(phrase, geste),
         "direction": phrase,
         "geste": geste,
-        "origine": "mouvement" if mouvement else ("pose" if repli else "aucun"),
+        "origine": origine,
+        "style": style.en_json() if style else None,
+        "origine_du_style": origine_du_style,
+        "piece_du_style": piece_du_style,
     }
 
 
@@ -613,12 +692,19 @@ async def commander_clip(requete: Request, corps: CorpsClip) -> dict[str, Any]:
             raise ErreurAtelier(
                 f"aucun mouvement « {corps.mouvement} » dans la bibliothèque"
             )
-    # **La direction en tête du mouvement** (18 septembre 2026), sauf quand
-    # l'écran porte un texte relu : celui-là part tel quel, il a déjà été lu.
-    texte = corps.prompt.strip() or (
-        texte_du_clip(
-            _phrase_de_direction(atelier, projet, corps.direction), mouvement.texte
+    # **La direction en tête, le style ou le mouvement ensuite** (SC3), sauf
+    # quand l'écran porte un texte relu : celui-là part tel quel, il a déjà
+    # été lu. Le style se résout sur le personnage porté par l'appel, ou à
+    # défaut celui de l'asset de départ — un script qui commande un clip sans
+    # nommer de personnage garde celui que l'image porte déjà.
+    if mouvement:
+        geste, _style, _origine, _piece = _geste_anime(
+            atelier, projet, corps.personnage or asset.personnage, mouvement
         )
+    else:
+        geste = ""
+    texte = corps.prompt.strip() or (
+        texte_du_clip(_phrase_de_direction(atelier, projet, corps.direction), geste)
         if mouvement
         else ""
     )

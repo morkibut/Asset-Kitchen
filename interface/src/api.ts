@@ -690,6 +690,15 @@ export type MouvementDeLaPose = {
    *  case-là, et il le dit plutôt que d'inventer un texte qui partira dans un
    *  appel payé. */
   origine: "mouvement" | "pose" | "aucun"
+  /** Le style résolu du personnage, s'il en a un (SC3) — `null` sans
+   *  personnage connu ou sans style. Il ne dit pas si ce style parle de *ce*
+   *  mouvement précis : c'est `geste` qui en porte la trace. */
+  style?: { identifiant: string; nom: string } | null
+  /** D'où vient ce style — `choisi`, `piece` ou `aucun` (`ServiceStyles`). */
+  origine_du_style?: "choisi" | "piece" | "aucun"
+  /** La pièce qui a déclaré le style, nommée — seulement quand `origine_du_style`
+   *  vaut `piece`. */
+  piece_du_style?: { identifiant: string; nom: string } | null
 }
 
 // ── L'animation par la vidéo (A9) ───────────────────────────────────────────
@@ -5350,13 +5359,27 @@ export const api = {
 
   /** Ce qui partira pour animer cette case du plan. **La règle est au serveur**
    *  et l'écran ne la rejoue jamais : deux endroits qui apparient une pose et
-   *  un mouvement finiraient par ne plus s'accorder. */
-  mouvementDeLaPose: (pose: string, projet?: string | null, direction?: string | null) =>
+   *  un mouvement finiraient par ne plus s'accorder.
+   *
+   *  `personnage` fait résoudre son style de combat (SC3) : `geste` porte
+   *  alors le texte du style s'il dit ce mouvement, sinon celui du mouvement.
+   *  `mouvement` compose pour un mouvement *autre* que celui de la pose —
+   *  l'écran s'en sert quand on choisit dans la liste plutôt que de garder le
+   *  mouvement par défaut de la case. */
+  mouvementDeLaPose: (
+    pose: string,
+    projet?: string | null,
+    direction?: string | null,
+    personnage?: string | null,
+    mouvement?: string | null,
+  ) =>
     appeler<MouvementDeLaPose>(
       `/movements/for-pose/${encodeURIComponent(pose)}?` +
         new URLSearchParams({
           ...(projet ? { projet } : {}),
           ...(direction ? { direction } : {}),
+          ...(personnage ? { personnage } : {}),
+          ...(mouvement ? { mouvement } : {}),
         }).toString(),
     ),
 

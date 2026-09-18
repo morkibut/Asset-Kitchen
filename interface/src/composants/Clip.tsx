@@ -65,6 +65,7 @@ import {
   type ImageDeDepart,
   type ModeleVideo,
   type Mouvement,
+  type MouvementDeLaPose,
   type Personnage,
   type Pose,
 } from "../api"
@@ -258,24 +259,43 @@ export function EcranClip({
     }
   }, [personnage.projet])
 
-  // **La phrase de la direction**, que le serveur place devant le texte du
-  // mouvement : l'écran la lit chez lui pour montrer ce qui partira vraiment.
-  const [phraseDeDirection, setPhraseDeDirection] = useState("")
+  // **Ce que le serveur enverra, et rien recomposé ici** (SC3). L'écran ne
+  // colle jamais lui-même la phrase de la direction et le texte du geste :
+  // deux endroits qui composent ce texte finiraient par ne plus s'accorder,
+  // exactement la même raison que l'appariement pose ↔ mouvement plus haut.
+  // **Sans case visée ni mouvement choisi, il n'y a rien à demander** — un
+  // portrait sans mouvement n'anime rien, et interroger le serveur pour une
+  // case qui n'existe pas ne ferait que masquer ce vide. Dès qu'on choisit un
+  // mouvement à la main (portrait ou case), la composition part de ce
+  // mouvement-là plutôt que de celui de la pose.
+  const [composition, setComposition] = useState<MouvementDeLaPose | null>(null)
   useEffect(() => {
-    if (!pose) return
+    if (!pose && !mouvement) {
+      setComposition(null)
+      return
+    }
     let vivant = true
     api
-      .mouvementDeLaPose(pose.identifiant, personnage.projet, cible.direction?.identifiant)
+      .mouvementDeLaPose(
+        pose?.identifiant ?? "-",
+        personnage.projet,
+        cible.direction?.identifiant,
+        personnage.identifiant,
+        mouvement ?? undefined,
+      )
       .then((recu) => {
         if (!vivant) return
-        if (recu.mouvement) setMouvement(recu.mouvement.identifiant)
-        setPhraseDeDirection(recu.direction ?? "")
+        setComposition(recu)
+        // **Le mouvement par défaut de la case, une seule fois** : dès qu'on
+        // en tient un — choisi à la main ou reçu du serveur — on ne repart
+        // plus jamais de celui de la pose derrière son dos.
+        if (mouvement === null && recu.mouvement) setMouvement(recu.mouvement.identifiant)
       })
-      .catch(() => {})
+      .catch(() => vivant && setComposition(null))
     return () => {
       vivant = false
     }
-  }, [pose?.identifiant, personnage.projet, cible.direction?.identifiant])
+  }, [pose?.identifiant, personnage.projet, personnage.identifiant, cible.direction?.identifiant, mouvement])
 
   // ── Le catalogue et son prix ──────────────────────────────────────────────
   //
@@ -338,11 +358,26 @@ export function EcranClip({
   }
 
   const choisi = catalogue?.modeles.find((m) => m.identifiant === modele) ?? null
-  const geste = mouvements.find((m) => m.identifiant === mouvement)?.texte ?? ""
-  // Le même assemblage que `texte_du_clip` côté serveur : la direction, puis
-  // le geste, séparés d'une espace.
-  const texte = geste ? [phraseDeDirection, geste].filter(Boolean).join(" ") : ""
+  // **Ce qui partira, mot pour mot — celui que le serveur vient de composer,
+  // jamais recollé ici** (SC3). Sans mouvement choisi, il n'y a rien à
+  // envoyer, et c'est `composition` qui le dit déjà par un texte vide.
+  const texte = mouvement ? composition?.texte ?? "" : ""
   const image = choisie ?? depart?.asset ?? null
+
+  // **La ligne qui dit d'où vient le style**, quand il y en a un. Le
+  // personnage peut ne rien avoir choisi ni hériter : `composition.style`
+  // est alors `null`, et cette ligne ne paraît pas.
+  const ligneDuStyle = (() => {
+    if (!composition?.style) return null
+    if (composition.origine_du_style === "choisi") {
+      return `Style : ${composition.style.nom} (choisi)`
+    }
+    if (composition.origine_du_style === "piece") {
+      const piece = composition.piece_du_style?.nom ?? "une pièce"
+      return `Style : ${composition.style.nom} (hérité de ${piece})`
+    }
+    return `Style : ${composition.style.nom}`
+  })()
 
   // **Ce que la colonne montre : la liste triée du serveur, filtrée par le
   // réglage du dessus.** L'écran ne trie rien — l'ordre arrive déjà fait, avec
@@ -529,9 +564,15 @@ export function EcranClip({
           {texte || "choisissez un mouvement pour lire ce qui partira"}
         </p>
         <p className="mesure text-[10px] leading-4 text-encre-4">
-          La phrase de la direction, puis le texte du mouvement. Les deux se
+          La phrase de la direction, puis le style du personnage s'il en a un
+          pour ce mouvement, sinon le texte du mouvement. Les deux se
           corrigent pour tout le jeu dans Réglages › Univers.
         </p>
+        {ligneDuStyle && (
+          <p data-style-du-clip className="mesure text-[10px] leading-4 text-encre-3">
+            {ligneDuStyle}
+          </p>
+        )}
       </aside>
 
       {/* ── Ce qu'on va recevoir, et dans quel format ──────────────────────── */}
