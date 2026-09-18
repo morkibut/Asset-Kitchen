@@ -2,6 +2,7 @@
 
 [Ouvrir l’atelier à essayer](02-atelier.html). La première [proposition de parcours](01-parcours.html)
 reste disponible pour comparer la simplification initiale avec cette version plus large.
+Le son a sa maquette à part : [le son, à essayer](03-son.html).
 
 Cette version sert à **essayer les parcours et faire apparaître les besoins oubliés**.
 Elle ne remplace pas l’application et ne prouve pas ses traitements. L’identité reste celle

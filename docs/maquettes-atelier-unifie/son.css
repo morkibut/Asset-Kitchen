@@ -1,0 +1,176 @@
+/* Maquette du son — s'ajoute à prototype.css. Valeurs prises dans DESIGN.md, rien d'autre. */
+:root {
+  --encre-4:#948c80; --eteint:#b0a89b; --controle:#3d382f; --trait-faible:#ece6db; --pointille:#c9c2b6;
+  --fond-attention:#f4ece2; --trait-attention:#e0cfb8; --encre-attention:#8a5a2c;
+  --fond-ok:#eef1ea; --trait-ok:#cfd9c8; --encre-ok:#4c6644;
+}
+
+/* Barre de la maquette : les sauts vers chaque état. */
+.sauts { display:flex; align-items:center; gap:4px }
+.sauts span { margin-right:8px; opacity:.8 }
+.sauts button { font-size:12px; padding:2px 8px; min-height:26px; border-color:transparent }
+.sauts button:hover { border-color:var(--sur) }
+
+kbd { font-family:'IBM Plex Mono',Consolas,monospace; font-size:11px; border:1px solid var(--contour); border-radius:5px; padding:0 4px; background:var(--carte); color:var(--controle) }
+.attention { color:var(--encre-attention) }
+.petit { min-height:26px; padding:2px 8px; font-size:12px }
+
+/* Le plan : la colonne de travail, et le volet quand on règle. */
+.son-plan { display:grid; grid-template-columns:minmax(0,1fr); gap:22px; align-items:start }
+.son-plan.avec-volet { grid-template-columns:minmax(0,1fr) 380px }
+.son-colonne { min-width:0 }
+
+/* La demande : la barre du geste. */
+.demande { max-width:880px; border:1px solid var(--trait); border-radius:8px; background:var(--carte); padding:14px; display:grid; gap:8px }
+.familles,.ligne-choix { display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+.ligne-choix>.small:first-child { min-width:54px }
+.puce { min-height:30px; padding:2px 14px; font-size:13px; color:var(--controle) }
+.puce[aria-pressed=true],.puce.actif { background:var(--ouvert); border-color:var(--muted); color:var(--encre) }
+span.puce { display:inline-flex; align-items:center; border:1px solid var(--contour); border-radius:7px }
+.texte-son { width:100%; min-height:54px; max-height:220px; field-sizing:content; resize:vertical; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:14px; font-size:15px; line-height:1.55; color:var(--encre) }
+.texte-son.paroles { font-size:13px; min-height:80px }
+.texte-son::placeholder { color:var(--eteint) }
+.note-attention { justify-self:start; margin:0; padding:4px 8px; border:1px solid var(--trait-attention); border-radius:5px; background:var(--fond-attention); color:var(--encre-attention); font-size:12.5px }
+.bandeau-attention { margin:0; padding:8px 14px; border:1px solid var(--trait-attention); border-radius:7px; background:var(--fond-attention); color:var(--encre-attention); font-size:12.5px }
+
+.musique-ligne { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap }
+.musique-ligne label { display:grid; gap:4px; font-size:12px; color:var(--muted) }
+.musique-ligne label>span { display:flex; align-items:center; gap:4px; color:var(--controle) }
+.musique-ligne input[type=number],.musique-ligne select,.ligne-choix select,.gardes-barre select,.gardes-barre input,.calage select,.ajout-emp input,.ajout-emp select { min-height:30px; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:2px 8px; color:var(--controle) }
+.musique-ligne input[type=number] { width:70px }
+.musique-ligne .coche { display:flex; flex-direction:row; align-items:center; gap:8px; min-height:30px; color:var(--controle); font-size:13px }
+.duree-calculee { display:grid; gap:4px; font-size:12px }
+.duree-calculee strong { font-weight:400; font-size:13px; min-height:30px; display:flex; align-items:center; color:var(--encre) }
+
+.demande-pied { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding-top:4px }
+.bascule { min-height:30px; padding:2px 8px; font-size:12.5px; background:transparent; border-color:transparent; color:var(--controle) }
+.bascule::after { content:' ▸'; color:var(--muted) }
+.bascule[aria-expanded=true] { background:var(--ouvert) }
+.bascule[aria-expanded=true]::after { content:' ▾' }
+.cout { margin-left:auto; font-size:12.5px; color:var(--muted) }
+.cout .ok { color:var(--ok) }
+.raison { font-size:12.5px; color:var(--muted) }
+
+.panneau { background:var(--cote); border-radius:7px; padding:14px; display:grid; gap:8px; font-size:13px }
+.compose { display:grid; gap:4px; font:12px/1.6 'IBM Plex Mono',Consolas,monospace; color:var(--encre); white-space:pre-wrap; overflow-wrap:anywhere }
+.compose .cle { color:var(--muted) }
+.compose .ajout,.legende-ajout { color:var(--muted) }
+.compose .vide { color:var(--eteint) }
+.legende-vous { color:var(--encre) }
+.compose-edit { width:100%; min-height:80px; field-sizing:content; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:8px; font:12px/1.6 'IBM Plex Mono',Consolas,monospace }
+.panneau .reglage { max-width:380px }
+
+/* La série : une grille de formes d'onde. */
+.son-vide { margin-top:22px; padding:34px 22px }
+.son-vide p { margin:0; color:var(--muted) }
+.serie { margin-top:22px }
+.serie-tete { display:flex; justify-content:space-between; align-items:flex-end; gap:14px; margin-bottom:8px }
+.serie-tete h2 { margin:0 }
+.serie-tete p { margin:0 }
+.touches { color:var(--muted) }
+.restant { margin:0 0 8px; font-size:12.5px; color:var(--muted); min-height:20px }
+.grille { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px }
+.grille.longue { grid-template-columns:repeat(auto-fill,minmax(380px,1fr)) }
+.tirage { display:grid; gap:8px; padding:8px; border:1px solid var(--trait); border-radius:8px; background:var(--carte); transition:border-color 120ms,background-color 120ms }
+.tirage.choisi { border-color:var(--muted) }
+.tirage.garde { border-color:var(--trait-ok); background:var(--fond-ok) }
+.tirage-tete { display:flex; align-items:center; gap:8px; min-height:26px }
+.tirage-tete .num { font-size:12px; color:var(--muted); min-width:14px }
+.tirage-tete .pousse { margin-left:auto }
+.tirage-tete button[aria-pressed=true] { border-color:var(--trait-ok); color:var(--encre-ok); background:var(--carte) }
+.tag-attention { padding:0 8px; border:1px solid var(--trait-attention); border-radius:5px; background:var(--fond-attention); color:var(--encre-attention); font-size:12px }
+.mesures { font-size:11px; color:var(--muted); min-height:17px }
+.tirage-pied { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:26px }
+
+.onde { display:block; width:100%; padding:0; min-height:0; border:0; border-radius:5px; background:transparent; text-align:left }
+.onde:hover .onde-cadre { background:var(--ouvert) }
+.onde-cadre { position:relative; display:block; width:100%; border-radius:5px; background:var(--cote); overflow:hidden; transition:background-color 120ms }
+.onde-cadre svg { position:absolute; inset:0; width:100%; height:100% }
+.onde-cadre .fond path { fill:var(--encre-4) }
+.onde-cadre .jouee { clip-path:inset(0 100% 0 0) }
+.onde-cadre .jouee path { fill:var(--controle) }
+.onde-cadre .barre { stroke:var(--trait); stroke-width:1 }
+.onde-cadre .hors { fill:var(--papier); opacity:.8 }
+.onde-cadre .boucle,.onde-cadre .joint { stroke:var(--encre); stroke-width:1.5; stroke-dasharray:4 3 }
+.onde-cadre .tete { position:absolute; top:0; bottom:0; left:0; width:2px; margin-left:-1px; background:var(--encre); display:none }
+.onde-cadre.joue .tete { display:block }
+.onde-cadre.vide { display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px }
+.onde-cadre.vide.calcul { color:var(--controle) }
+
+.gardes-aide { margin:14px 0 0 }
+.gardes-barre { position:sticky; bottom:-22px; z-index:2; display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:14px; padding:14px 0; border-top:1px solid var(--trait); background:var(--papier) }
+.gardes-barre .puce { min-height:26px; padding:0 8px; font-size:12px }
+.gardes-puces { gap:4px; flex-wrap:wrap }
+.gardes-droite { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-left:auto }
+.gardes-barre label { display:flex; align-items:center; gap:8px }
+.gardes-barre input { width:220px; font-family:'IBM Plex Mono',Consolas,monospace; font-size:12px }
+.precedentes { margin-top:14px; font-size:13px }
+.precedentes .line { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:8px 0 }
+
+/* Le volet : régler un son gardé. */
+.volet { position:sticky; top:0; display:flex; flex-direction:column; max-height:calc(100vh - 200px); border:1px solid var(--trait); border-radius:8px; background:var(--carte); overflow:hidden }
+.volet-tete { padding:14px; border-bottom:1px solid var(--trait) }
+.volet-tete h2 { margin:0 }
+.volet-tete p { margin:4px 0 0 }
+.volet-corps { padding:14px; overflow:auto; display:grid; gap:14px; min-height:0 }
+.volet-pied { padding:14px; border-top:1px solid var(--trait); display:flex; align-items:center; justify-content:space-between; gap:14px }
+.volet-pied p { margin:0 }
+.volet details { margin:0; border-top:1px solid var(--trait-faible); padding-top:8px }
+.volet summary { display:flex; justify-content:space-between; gap:14px; font-size:13.5px; padding:4px 0; list-style:none }
+.volet summary::-webkit-details-marker { display:none }
+.volet summary::before { content:'▸'; color:var(--muted); width:14px; flex-shrink:0 }
+.volet details[open] summary::before { content:'▾' }
+.volet summary>span:first-of-type { margin-right:auto }
+.volet summary .valeur { color:var(--muted); font-family:'IBM Plex Mono',Consolas,monospace; font-size:11.5px }
+.pli-corps { display:grid; gap:8px; padding:8px 0 4px 14px }
+.reglage { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 8px; font-size:13px; color:var(--controle) }
+.reglage .valeur { font-size:11.5px; color:var(--encre) }
+.reglage input[type=range] { grid-column:1/-1; width:100% }
+.reglage-mesures { display:flex; align-items:center; gap:8px; font-size:13px; flex-wrap:wrap }
+.reglage-mesures input { width:62px; min-height:30px; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:2px 8px }
+.coche-ligne { display:flex; align-items:center; gap:8px; font-size:13px }
+.volet select { min-height:30px; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:2px 8px; color:var(--controle) }
+.raccord { display:grid; gap:8px; padding:8px; border-radius:7px; background:var(--cote) }
+.raccord .onde-cadre { background:var(--carte) }
+.raccord .row { gap:8px }
+
+/* La fiche d'un sujet : l'onglet Sons. */
+.sprite canvas.figure-grande { width:96px; height:96px; image-rendering:pixelated }
+.emplacements-tete { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px }
+.emplacements-tete h2 { margin:0 }
+.emplacements { border-top:1px solid var(--trait) }
+.emp { display:grid; grid-template-columns:150px minmax(0,1fr) auto; gap:14px; align-items:center; padding:14px 0; border-bottom:1px solid var(--trait) }
+.emp-nom { display:grid; gap:0 }
+.emp-nom strong { font-weight:500; color:var(--encre) }
+.emp-vide { display:flex; align-items:center; height:40px; padding:0 14px; border:1px dashed var(--pointille); border-radius:7px; color:var(--muted); font-size:12.5px }
+.emp-son { display:flex; align-items:center; gap:14px; min-width:0 }
+.emp-son .onde { width:260px; flex-shrink:0 }
+.emp-son p { margin:0 }
+.emp-actions { display:flex; gap:8px; justify-content:flex-end }
+.ajout-emp { display:flex; align-items:center; gap:8px; padding:14px 0 }
+
+.calage { grid-column:1/-1; display:grid; gap:8px; padding:14px; border-radius:7px; background:var(--cote) }
+.calage .row { gap:14px }
+.calage label { display:flex; align-items:center; gap:8px }
+.calage p { margin:0 }
+.bande { display:flex; gap:8px; overflow-x:auto; padding:4px }
+.image-anim { display:flex; flex-direction:column; align-items:center; gap:4px; padding:4px; min-height:0; background:var(--carte); transition:border-color 120ms }
+.image-anim canvas { width:64px; height:64px; image-rendering:pixelated; background:var(--pourtour); border-radius:5px }
+.image-anim.courante { outline:2px solid var(--encre) }
+.image-anim[aria-pressed=true] { border-color:var(--muted) }
+.repere-tag { min-height:20px; padding:0 8px; border-radius:5px; font-size:12px; color:var(--texte) }
+.image-anim[aria-pressed=true] .repere-tag { background:var(--trait-faible) }
+.image-anim .repere-tag.eclat { background:var(--fond-ok); color:var(--encre-ok) }
+.autre-onglet { margin-top:14px }
+
+/* Livrer au jeu : les fichiers qui partent. */
+.livrer h2 { margin-bottom:8px }
+.groupe { display:grid; grid-template-columns:22px minmax(0,1fr); gap:14px; padding:14px 0; border-top:1px solid var(--trait) }
+.groupe input { margin-top:5px }
+.groupe p { margin:4px 0 0 }
+.groupe label { cursor:pointer }
+.fichiers { display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:8px !important; font-family:'IBM Plex Mono',Consolas,monospace; font-size:11.5px; color:var(--encre) }
+.groupe.exclu .fichiers,.groupe.exclu strong { color:var(--eteint) }
+.fichiers-tous { columns:2; margin:8px 0; padding-left:22px; font-family:'IBM Plex Mono',Consolas,monospace; font-size:11.5px }
+.credits { padding:14px 0 0; border-top:1px solid var(--trait); font-size:13px }
+.credits code { font-size:11.5px }
