@@ -5,6 +5,8 @@ export type DemandeAudio = { cle: string; modele: string; prompt: string; prompt
 export type TravailAudio = Omit<Travail, "nature" | "demande" | "annonce" | "objectif"> & {
   nature: "audio"; demande: DemandeAudio; son: string | null; snapshot_audio: Omit<DemandeAudio, "cle" | "modele" | "nom">
   annonce: { appels: number; reservation_usd: number; limite: string; mesures: { modele: string; mediane_s: number; temperature: string; mesures: number }[] }
+  /** Un tirage d'une série (SN3) : la série et son rang. */
+  serie?: { identifiant: string; rang: number }
 }
 const base = (p: string) => `/projects/${encodeURIComponent(p)}`
 export const travauxAudio = {

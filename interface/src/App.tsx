@@ -2971,7 +2971,7 @@ function AtelierApp() {
         onClip={(id) => { setPreparation(null); setPile(entrer(poser("galerie"), { genre: "montage", clip: id })) }}
         onBande={(id) => { setPreparation(null); ouvrirLAtelierDeBande(id) }}
         onAsset={(id) => { setPreparation(null); ouvrirLaRetouche(id) }}
-        onSon={(id) => { setPreparation(null); setSonsOuverts({ identifiant: id }) }}
+        onSon={(id) => setSonsOuverts({ identifiant: id })}
         onLivraisons={() => { setPreparation(null); setSortieOuverte(true) }}
         onFermer={() => { setPreparation(null); void relireProduction() }}
       />}
