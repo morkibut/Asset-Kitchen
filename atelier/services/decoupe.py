@@ -9,6 +9,11 @@ bloquer » (US-73). L'écran affiche la proposition, l'auteur ajoute, retire,
 redessine, et ce qui part à la découpe est **sa** liste — jamais le résultat
 d'une détection qu'il aurait fallu convaincre.
 
+**Une exception, demandée par une case** (RS7, 18 septembre 2026) : la planche
+refaite dont l'auteur a coché *Découper à l'arrivée* se coupe toute seule quand
+elle revient — et seulement si le compte des vues tombe juste. Voir
+`a_l_arrivee`.
+
 **Une découpe est un asset entier, pas un morceau d'un autre.** Elle a ses
 propres octets bruts, sa propre recette, son propre rendu et son propre
 rangement. Ça se paie en octets sur le disque, et ça achète le seul critère qui
@@ -29,13 +34,22 @@ découper une planche déjà là ne coûte rien et marche réseau coupé.
 
 from __future__ import annotations
 
+import asyncio
 import time
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from typing import Any, Iterable
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.erreurs import ErreurAtelier
+from atelier.domaine.generation import (
+    ASSET,
+    REFERENCE,
+    Emplacement,
+    Generation,
+    Statut,
+)
+from atelier.domaine.personnage import PLANCHE as USAGE_PLANCHE
 from atelier.domaine.planche import est_une_planche_refaite
 from atelier.domaine.recette import Passe, Recette
 from atelier.image import (
@@ -47,6 +61,7 @@ from atelier.image import (
     mesurer,
     zones_opaques,
 )
+from atelier.image.decoupe import ordre_des_vues
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ServiceBibliotheque
 from atelier.services.evenements import Diffusion
@@ -245,6 +260,28 @@ class ServiceDecoupe:
         """
         planche = self._exiger(identifiant)
         rectangles = self._verifier(planche, boites)
+        nees = self._couper(planche, rectangles, noms)
+        return {
+            "planche": planche.identifiant,
+            "decoupes": [a.en_json() for a in nees],
+        }
+
+    def _couper(
+        self,
+        planche: Asset,
+        rectangles: list[Boite],
+        noms: Iterable[str | None] | None = None,
+        *,
+        personnage: str | None = None,
+    ) -> list[Asset]:
+        """Les morceaux, écrits et annoncés — le geste commun à la découpe à la
+        main et à la découpe à l'arrivée (RS7).
+
+        `personnage` ne sert qu'à l'arrivée : une planche refaite est l'image
+        d'**un** sujet, et chacune de ses vues l'est aussi — rattachée à lui,
+        sans pose, c'est ce que l'auteur faisait à la main. La découpe à la main
+        reste ce qu'elle était : elle ne range rien que l'auteur n'ait rangé.
+        """
         noms_recus = list(noms) if noms is not None else []
 
         morceaux = decouper(self._fichiers.lire(planche.brut), rectangles)
@@ -303,6 +340,7 @@ class ServiceDecoupe:
                         # ne pas savoir dire qui l'a dessinée.
                         modele=planche.modele,
                         projet=planche.projet,
+                        personnage=personnage,
                         parent=planche.identifiant,
                         # **Datée de maintenant, pas du lot de la planche.** Ce
                         # qu'on vient de fabriquer se voit en tête de grille :
@@ -319,10 +357,244 @@ class ServiceDecoupe:
         # L'arbre compte les assets par projet : huit de plus changent ce
         # compte, et personne d'autre ne le recalcule.
         self._diffusion.publier("bibliotheque", self._bibliotheque.arbre())
-        return {
-            "planche": planche.identifiant,
-            "decoupes": [a.en_json() for a in nees],
+        return nees
+
+    # ── Découper à l'arrivée (RS7) ───────────────────────────────────────────
+    #
+    # **La seule découpe que l'atelier fait sans qu'on lui tende des
+    # rectangles**, et elle ne contredit pas l'en-tête de ce fichier : c'est
+    # l'auteur qui l'a demandée, par une case cochée avant de payer (décision 7
+    # de `docs/PLAN-references-du-sujet.md`). Ce qu'elle garde de la règle,
+    # c'est le refus : **mieux vaut une planche entière qu'une découpe fausse**.
+    # Un compte qui ne tombe pas juste ne coupe rien, et la planche arrive seule
+    # avec une phrase qui dit pourquoi — la découpe à la main reste là.
+
+    async def a_l_arrivee(self, generation: Generation, emplacement: Emplacement) -> None:
+        """Coupe la feuille qui vient d'arriver, si l'appel l'a demandé.
+
+        **La détection part dans un fil à part** : elle détoure la feuille *et*
+        la référence planche, et un détourage par modèle prend plusieurs
+        secondes — le serveur doit continuer de répondre pendant ce temps (même
+        choix que le montage automatique d'un clip, `animation.py`). Les
+        écritures, elles, reviennent sur la boucle, comme celles du dépliage
+        d'un lot : ce sont les mêmes gestes que la découpe à la main.
+
+        **Ne lève jamais** : la planche est payée et entrée, et rien de ce qui
+        se passe ici ne doit la faire paraître ratée.
+        """
+        if not self.a_couper(generation, emplacement):
+            return
+        try:
+            vues = await asyncio.to_thread(self._vues, generation, emplacement.rang)
+        except Exception as erreur:  # noqa: BLE001 — la planche payée ne perd rien
+            vues = _Vues(raison=f"la détection a échoué ({erreur}) — découpez à la main")
+        self._poser(generation, emplacement, vues)
+
+    def couper_a_l_arrivee(self, generation: Generation, emplacement: Emplacement) -> bool:
+        """La même chose, d'un seul tenant — pour le démarrage, où rien d'autre
+        ne tourne encore. Vrai quand l'emplacement a reçu sa marque."""
+        if not self.a_couper(generation, emplacement):
+            return False
+        try:
+            vues = self._vues(generation, emplacement.rang)
+        except Exception as erreur:  # noqa: BLE001 — même raison qu'à l'arrivée
+            vues = _Vues(raison=f"la détection a échoué ({erreur}) — découpez à la main")
+        self._poser(generation, emplacement, vues)
+        return True
+
+    def reprendre(self, generations: Iterable[Generation]) -> int:
+        """Les feuilles arrivées que l'arrêt de l'atelier a empêché de couper.
+
+        **Une feuille marquée n'est jamais recoupée**, quelle que soit la
+        marque : coupée, refusée, ou coupée *en plein milieu*. Ce dernier cas
+        devient un refus lisible plutôt qu'une seconde découpe — des morceaux
+        sont peut-être déjà là, et en refaire donnerait deux fois chaque vue.
+
+        Appelée **après le rattrapage des assets** (`Atelier.ouvrir`) : une
+        feuille reçue juste avant la coupure n'a peut-être son asset que depuis
+        ce rattrapage-là.
+        """
+        reprises = 0
+        for generation in generations:
+            if not generation.demande.get("decouper_a_l_arrivee"):
+                continue
+            for emplacement in generation.emplacements:
+                marque = emplacement.decoupe
+                if marque is not None and marque.get("en_cours"):
+                    emplacement.decoupe = {
+                        "raison": "la découpe a été interrompue par l'arrêt de "
+                        "l'atelier — vérifiez les morceaux, ou découpez à la main",
+                    }
+                    self._sauver(generation)
+                    reprises += 1
+                elif self.couper_a_l_arrivee(generation, emplacement):
+                    reprises += 1
+        return reprises
+
+    def a_couper(self, generation: Generation, emplacement: Emplacement) -> bool:
+        """Cet emplacement attend-il encore sa découpe à l'arrivée ?
+
+        La feuille d'une planche refaite, réussie, qui l'a demandée et **qui ne
+        porte encore aucune marque** — la marque est ce qui rend le geste
+        idempotent, au redémarrage comme à une seconde arrivée."""
+        return (
+            bool(generation.demande.get("decouper_a_l_arrivee"))
+            and emplacement.decoupe is None
+            and emplacement.statut == Statut.REUSSIE
+            and emplacement.resultat is not None
+            and generation.pliage is None
+            and generation.clip is None
+            and est_une_planche_refaite(generation, emplacement.rang)
+        )
+
+    def etat_a_l_arrivee(self, asset: Asset) -> dict[str, Any] | None:
+        """Ce que la découpe à l'arrivée a fait de cette feuille, ou rien — ce
+        que la fiche de la planche montrera (RS9)."""
+        generation = self._base.lire(asset.generation)
+        if generation is None:
+            return None
+        for emplacement in generation.emplacements:
+            if emplacement.rang == asset.rang and emplacement.decoupe is not None:
+                return dict(emplacement.decoupe)
+        return None
+
+    def _vues(self, generation: Generation, rang: int) -> "_Vues":
+        """Où couper, et combien de vues on attendait — **sans rien écrire**.
+
+        La détection est celle du mode « zones opaques » de `proposer` : même
+        détourage (celui de la recette, sinon le moteur du geste courant), même
+        taille minimale. La même image donne donc les mêmes rectangles à
+        l'arrivée et sous les yeux de l'auteur, quand il rouvre la découpe.
+        """
+        planche = self._assets.lire(identifiant_de(generation.identifiant, rang))
+        if planche is None:
+            return _Vues(raison="la planche n'est pas entrée en bibliothèque — rien à couper")
+        attendu, refus = self._vues_attendues(generation)
+        if refus is not None:
+            return _Vues(raison=refus, attendu=attendu)
+        boites = ordre_des_vues(self._zones(planche))
+        trouvees = len(boites)
+        if attendu is not None and trouvees != attendu:
+            return _Vues(
+                raison=(
+                    f"{_zones_en_mots(trouvees)} sur la planche, {attendu} attendues "
+                    "d'après la référence planche — rien n'est coupé, découpez à la main"
+                ),
+                attendu=attendu,
+                trouvees=trouvees,
+            )
+        if attendu is None and trouvees < 2:
+            # **Sans compte à tenir, deux vues au moins** : une seule zone est
+            # le plus souvent une feuille dont les vues se touchent, et la
+            # « couper » rendrait la feuille entière sous un autre nom.
+            return _Vues(
+                raison=(
+                    f"{_zones_en_mots(trouvees)} sur la planche — rien n'est coupé, "
+                    "découpez à la main"
+                ),
+                trouvees=trouvees,
+            )
+        if trouvees > DECOUPES_MAX:
+            return _Vues(
+                raison=(
+                    f"{trouvees} zones sur la planche, au-delà des {DECOUPES_MAX} "
+                    "qu'une découpe rend — rien n'est coupé"
+                ),
+                attendu=attendu,
+                trouvees=trouvees,
+            )
+        return _Vues(boites=boites, attendu=attendu, trouvees=trouvees)
+
+    def _vues_attendues(self, generation: Generation) -> tuple[int | None, str | None]:
+        """Le nombre de vues de **la référence planche partie avec l'appel** —
+        ou rien, s'il n'en est parti aucune.
+
+        Lue sur `generation.references`, pas sur la fiche du sujet : c'est la
+        planche que le modèle a eue sous les yeux, et elle ne change pas si
+        l'auteur en range une autre depuis. Une mise en page venue d'une image
+        jointe à la main n'est pas une planche rangée : aucun contrôle, comme le
+        dit la décision 7.
+
+        **Une référence qu'on ne sait plus compter est un refus**, pas un
+        « aucun contrôle » : l'appel en avait une, on promettait de s'y tenir.
+        """
+        planches = [
+            r
+            for r in generation.references
+            if r.role == REFERENCE and r.origine == ASSET and r.usage == USAGE_PLANCHE
+        ]
+        if not planches:
+            return None, None
+        reference = self._assets.lire(planches[0].asset)
+        if reference is None:
+            return None, (
+                "la référence planche de l'appel n'existe plus, le nombre de vues "
+                "ne se vérifie pas — rien n'est coupé, découpez à la main"
+            )
+        zones = len(self._zones(reference))
+        if zones == 0:
+            return None, (
+                "la référence planche n'a aucune zone opaque une fois détourée, le "
+                "nombre de vues ne se vérifie pas — rien n'est coupé, découpez à la main"
+            )
+        return zones, None
+
+    def _zones(self, asset: Asset) -> list[Boite]:
+        """Les zones opaques d'une image — le mode « auto » de `proposer`."""
+        passes = asset.recette.passes_vives() or (Passe(),)
+        alpha = self._assets.detourage(asset, passes)[:, :, 3]
+        return zones_opaques(alpha, cote_min=COTE_MIN)
+
+    def _poser(
+        self, generation: Generation, emplacement: Emplacement, vues: "_Vues"
+    ) -> None:
+        """Écrit la marque, et les morceaux quand il y en a.
+
+        **La marque « en cours » part avant le premier morceau** : une coupure
+        au milieu laisse une feuille marquée, que le démarrage ne recoupera
+        pas. Mieux vaut trois morceaux et une phrase que sept.
+        """
+        if vues.boites is None:
+            marque: dict[str, Any] = {"raison": vues.raison, "attendu": vues.attendu}
+            if vues.trouvees is not None:
+                marque["trouvees"] = vues.trouvees
+            emplacement.decoupe = marque
+            self._sauver(generation)
+            return
+        planche = self._assets.lire(identifiant_de(generation.identifiant, emplacement.rang))
+        if planche is None:  # pragma: no cover — lue un instant plus tôt
+            emplacement.decoupe = {"raison": "la planche a disparu avant la découpe"}
+            self._sauver(generation)
+            return
+        emplacement.decoupe = {"en_cours": True}
+        self._sauver(generation)
+        try:
+            nees = self._couper(planche, vues.boites, personnage=generation.personnage)
+        except Exception as erreur:  # noqa: BLE001 — la planche payée ne perd rien
+            emplacement.decoupe = {
+                "raison": f"la découpe s'est arrêtée ({erreur}) — vérifiez les "
+                "morceaux, ou découpez à la main",
+                "attendu": vues.attendu,
+            }
+            self._sauver(generation)
+            return
+        # **Dans l'ordre des vues**, et c'est l'accroche de RS8 : la n-ième
+        # image de cette liste prendra la n-ième direction de la référence.
+        emplacement.decoupe = {
+            "morceaux": [a.identifiant for a in nees],
+            "attendu": vues.attendu,
         }
+        self._sauver(generation)
+
+    def _sauver(self, generation: Generation) -> None:
+        """Le disque, l'index, puis l'annonce — les trois lignes de
+        `ServiceGenerations._sauver`, et pour la raison de `ServicePliage` :
+        la génération tient ce service, lui demander de sauver ferait un
+        cercle."""
+        contenu = generation.en_json()
+        self._fichiers.ecrire_enregistrement(generation.identifiant, contenu)
+        self._base.enregistrer(generation)
+        self._diffusion.publier("generation", contenu)
 
     # ── Le dedans ────────────────────────────────────────────────────────────
 
@@ -387,6 +659,24 @@ class ServiceDecoupe:
         même quand les images de ce dépliage ont été purgées.
         """
         return rang_libre(self._base, generation, plancher=RANG_DECOUPE)
+
+
+@dataclass(frozen=True, slots=True)
+class _Vues:
+    """Ce que la détection à l'arrivée a trouvé : des boîtes dans l'ordre des
+    vues, ou une raison de ne rien couper — jamais les deux."""
+
+    boites: list[Boite] | None = None
+    raison: str | None = None
+    attendu: int | None = None
+    trouvees: int | None = None
+
+
+def _zones_en_mots(nombre: int) -> str:
+    """« aucune zone », « 1 zone », « 3 zones » — la phrase se lit à voix haute."""
+    if nombre == 0:
+        return "aucune zone"
+    return f"{nombre} zone" if nombre == 1 else f"{nombre} zones"
 
 
 def _label(planche: str, numero: int, total: int) -> str:

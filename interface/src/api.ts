@@ -121,7 +121,18 @@ export type Emplacement = {
   demarre_le: number | null
   /** Ce que ce modèle a mis, en médiane, à ses derniers appels réussis. */
   duree_attendue_s: number
+  /** **Ce que la découpe à l'arrivée a fait de cette image** (RS7). Absent
+   *  tant qu'elle n'est pas passée. `morceaux` est dans l'ordre des vues —
+   *  de gauche à droite, puis de haut en bas ; `raison` dit pourquoi rien
+   *  n'est coupé. */
+  decoupe?: DecoupeALArrivee
 }
+
+/** La marque de la découpe à l'arrivée (RS7) — l'une des trois formes. */
+export type DecoupeALArrivee =
+  | { morceaux: string[]; attendu: number | null }
+  | { raison: string; attendu?: number | null; trouvees?: number }
+  | { en_cours: true }
 
 // ── La réinjection ──────────────────────────────────────────────────────────
 //
@@ -179,6 +190,9 @@ export type Generation = {
      *  RS2 reste identique. « Reprendre les réglages » (RS4) la recoche sur ce
      *  champ. */
     garder_mise_en_page?: boolean
+    /** **La case « Découper à l'arrivée » était cochée** (RS7) — absent sinon,
+     *  pour la même raison. Jamais sans `garder_mise_en_page`. */
+    decouper_a_l_arrivee?: boolean
   }
   parametres_resolus: Record<string, unknown>
   ecartees: string[]
@@ -4962,6 +4976,9 @@ export const api = {
     /** **Refaire une planche** (RS2) : garder la mise en page de la planche du
      *  sujet, sinon de la première image jointe. */
     garder_mise_en_page?: boolean
+    /** **Et la couper à l'arrivée** (RS7). Refusé par l'atelier sans
+     *  `garder_mise_en_page` : l'écran ne l'envoie qu'avec elle. */
+    decouper_a_l_arrivee?: boolean
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",

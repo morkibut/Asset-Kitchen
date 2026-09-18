@@ -256,6 +256,21 @@ class Emplacement:
     # La graine tirée pour cet appel, quand le moteur local en prend une : de
     # quoi refaire la même image. Absente partout ailleurs.
     graine: int | None = None
+    # **Ce que la découpe à l'arrivée a fait de cette image** (RS7, 18
+    # septembre 2026) — `None` tant qu'elle n'est pas passée, et pour toute
+    # image qui ne l'a pas demandée. Sinon l'un des trois :
+    #
+    # - `{"morceaux": [...], "attendu": n | None}` : coupée, et la liste est
+    #   **dans l'ordre des vues** (`ordre_des_vues`) — c'est elle que RS8 lira
+    #   pour donner à la n-ième image la n-ième direction ;
+    # - `{"raison": "...", "attendu": n | None, "trouvees": m}` : rien n'est
+    #   coupé, et la phrase dit pourquoi ;
+    # - `{"en_cours": true}` : posé **avant** la première écriture d'un morceau.
+    #
+    # **Présente, elle interdit de recouper** : ni le démarrage, ni une seconde
+    # arrivée ne repassent sur une image qui la porte. Écrite ici plutôt que sur
+    # l'asset, parce que la génération survit à l'effacement de l'index.
+    decoupe: dict[str, Any] | None = None
 
     @property
     def cout_usd(self) -> float:
@@ -284,6 +299,7 @@ class Emplacement:
             "duree_attendue_s": self.duree_attendue_s,
             **({"acceptation_inconnue": True} if self.acceptation_inconnue else {}),
             **({"graine": self.graine} if self.graine is not None else {}),
+            **({"decoupe": dict(self.decoupe)} if self.decoupe is not None else {}),
         }
 
     @staticmethod
@@ -305,6 +321,7 @@ class Emplacement:
             duree_attendue_s=d.get("duree_attendue_s", 0.0),
             acceptation_inconnue=bool(d.get("acceptation_inconnue", False)),
             graine=d.get("graine"),
+            decoupe=d.get("decoupe") if isinstance(d.get("decoupe"), dict) else None,
         )
 
 

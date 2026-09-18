@@ -736,6 +736,9 @@ class CorpsGeneration(BaseModel):
     # sujet, sinon de la première image jointe — refusé avant de payer sans
     # l'une ni l'autre.
     garder_mise_en_page: bool = False
+    # **Couper cette planche dès qu'elle revient** (RS7). Refusé sans
+    # `garder_mise_en_page`, par `Demande` elle-même.
+    decouper_a_l_arrivee: bool = False
 
 
 @routeur.post("/generations", status_code=202)
@@ -756,6 +759,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         repris=corps.repris,
         palette=corps.palette,
         garder_mise_en_page=corps.garder_mise_en_page,
+        decouper_a_l_arrivee=corps.decouper_a_l_arrivee,
     )
     atelier = _atelier(requete)
     generation = await atelier.generations.soumettre(
@@ -1508,7 +1512,16 @@ async def liste_assets(
 
 @routeur.get("/assets/{identifiant}")
 async def lire_asset(requete: Request, identifiant: str) -> dict[str, Any]:
-    return _asset(requete, identifiant).en_json()
+    asset = _asset(requete, identifiant)
+    charge = asset.en_json()
+    # **Ce que la découpe à l'arrivée a fait de cette feuille** (RS7) : ses
+    # morceaux dans l'ordre des vues, ou la phrase qui dit pourquoi rien n'est
+    # coupé. Sur cette route-ci seulement — celle d'une fiche ouverte —, et pas
+    # sur la charge d'un asset que la grille relit deux cents fois.
+    etat = _atelier(requete).decoupe.etat_a_l_arrivee(asset)
+    if etat is not None:
+        charge["decoupe_a_l_arrivee"] = etat
+    return charge
 
 
 @routeur.get("/assets/{identifiant}/imposed")

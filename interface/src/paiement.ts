@@ -67,6 +67,8 @@ export type CeQueLePaiementLit = {
   /** **Refaire une planche** (RS2) — une intention de cet appel-ci. */
   garderMiseEnPage: boolean
   setGarderMiseEnPage: Pose_<boolean>
+  /** **La couper à l'arrivée** (RS7) — ne part qu'avec la mise en page. */
+  decouperALArrivee: boolean
   setEnvoi: Pose_<Envoi | null>
   envoiOuvert: boolean
   setEnvoiOuvert: (ouvert: boolean) => void
@@ -110,6 +112,7 @@ export function usePaiement({
   enPlanche,
   garderMiseEnPage,
   setGarderMiseEnPage,
+  decouperALArrivee,
   setEnvoi,
   envoiOuvert,
   setEnvoiOuvert,
@@ -144,6 +147,10 @@ export function usePaiement({
    *  que de faire refuser l'appel par l'atelier. */
   const refaitUnePlanche =
     garderMiseEnPage && !cases && posesCible.length === 0 && !cible?.piece
+  /** **La découpe à l'arrivée, telle qu'elle part** (RS7) : seulement avec une
+   *  planche refaite qui part. Restée cochée sous une case décochée, elle ne
+   *  part pas — l'atelier la refuserait, et l'appel avec elle. */
+  const coupeALArrivee = refaitUnePlanche && decouperALArrivee
   // **Ce qui fait qu'un appel est le même, et rien de plus** (M5).
   //
   // Ce que l'auteur **vise et écrit** : le texte, ce qu'il interdit, le modèle,
@@ -177,6 +184,8 @@ export function usePaiement({
     // **Refaire une planche est une autre demande** (RS2) : le cadre et la
     // caméra changent, et les corrections d'un sprite seul n'y valent plus.
     String(refaitUnePlanche),
+    // Couper ou non ce qui revient est une autre demande, elle aussi (RS7).
+    String(coupeALArrivee),
   ].join("␟")
 
 
@@ -316,6 +325,7 @@ export function usePaiement({
       repris,
       tri,
       refaitUnePlanche,
+      coupeALArrivee,
     ])
 
   /** L'identifiant de l'intention courante — le même tant que rien de ce qui
@@ -448,6 +458,9 @@ export function usePaiement({
         // sans l'une ni l'autre. Absent quand la case est vide : le corps d'un
         // appel ordinaire reste celui d'avant.
         ...(refaitUnePlanche ? { garder_mise_en_page: true } : {}),
+        // **Et la découpe à l'arrivée** (RS7), absente elle aussi quand elle
+        // ne part pas.
+        ...(coupeALArrivee ? { decouper_a_l_arrivee: true } : {}),
       })
       // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
       setChantier((liste) => fondre(liste, generation))

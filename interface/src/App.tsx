@@ -1068,6 +1068,9 @@ function AtelierApp() {
    *  planche du sujet, sinon de la première image jointe. Une intention de cet
    *  appel-ci, comme la cible : elle retombe dès qu'il est parti. */
   const [garderMiseEnPage, setGarderMiseEnPage] = useState(false)
+  /** **La couper à l'arrivée** (RS7). Recochée chaque fois que la mise en page
+   *  l'est (`BarreQuiPaie`) ; ne part qu'avec elle (`paiement.ts`). */
+  const [decouperALArrivee, setDecouperALArrivee] = useState(true)
   const [proportions, setProportions] = useState("1:1")
   const [variations, setVariations] = useState(1)
   const [options, setOptions] = useState<Record<string, string>>({})
@@ -1421,6 +1424,7 @@ function AtelierApp() {
     enPlanche,
     garderMiseEnPage,
     setGarderMiseEnPage,
+    decouperALArrivee,
     setEnvoi,
     envoiOuvert,
     setEnvoiOuvert,
@@ -1626,6 +1630,8 @@ function AtelierApp() {
       onVariations={setVariations}
       garderMiseEnPage={garderMiseEnPage}
       onGarderMiseEnPage={setGarderMiseEnPage}
+      decouperALArrivee={decouperALArrivee}
+      onDecouperALArrivee={setDecouperALArrivee}
       options={options}
       onOptions={setOptions}
       reinjections={reinjections}

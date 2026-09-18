@@ -192,15 +192,37 @@ et une image sans sujet ne la reçoivent pas ; les morceaux dépliés d'un lot p
 
 ### RS7 · Découper à l'arrivée
 
-- [ ] la case *Découper à l'arrivée* existe, visible et cochée d'office avec *Garder la mise en
+- [x] la case *Découper à l'arrivée* existe, visible et cochée d'office avec *Garder la mise en
       page* ; elle part avec la demande et la relance la relit
-- [ ] à l'arrivée, la planche est découpée par zones opaques ; le nombre de vues attendu est
+- [x] à l'arrivée, la planche est découpée par zones opaques ; le nombre de vues attendu est
       celui de la référence planche (ses zones opaques), sinon aucun contrôle
-- [ ] chaque image découpée est rattachée au sujet, sans pose, porte la recette du sujet (RS6)
+- [x] chaque image découpée est rattachée au sujet, sans pose, porte la recette du sujet (RS6)
       et a la planche pour parent
-- [ ] si le compte ne tombe pas juste, rien n'est coupé et la raison est lisible sur la planche
-- [ ] la découpe manuelle reste possible sur la même planche
-- [ ] aucun appel payant ; essais avec le faux fournisseur
+- [x] si le compte ne tombe pas juste, rien n'est coupé et la raison est lisible sur la planche
+- [x] la découpe manuelle reste possible sur la même planche
+- [x] aucun appel payant ; essais avec le faux fournisseur (`tests/test_rs7.py`,
+      `BarreQuiPaie.rs7.test.tsx`)
+
+Tranché en RS7 :
+
+- le drapeau s'appelle `decouper_a_l_arrivee` ; `generation.json` ne le porte que vrai ;
+  **refusé** sans `garder_mise_en_page`, par `Demande` elle-même (route et agent reçoivent la
+  même phrase) ; l'écran ne l'envoie qu'avec une planche refaite qui part ;
+- l'agent : `cut_on_arrival`, qui suit `keep_reference_layout` quand il n'est pas dit ;
+- le compte attendu vient de la référence `planche` **partie avec l'appel**
+  (`generation.references`), pas de la fiche d'aujourd'hui ; une mise en page venue d'une image
+  jointe à la main : aucun contrôle, mais deux vues au moins ; une référence planche disparue ou
+  sans zone opaque : refus, pas « aucun contrôle » ;
+- la marque vit sur l'emplacement (`decoupe`) : `morceaux` (dans l'ordre des vues —
+  `ordre_des_vues`, l'accroche de RS8), ou `raison`, ou `en_cours` posé avant le premier
+  morceau. Une feuille marquée ne se recoupe jamais ; `en_cours` retrouvé au démarrage devient
+  une raison ;
+- le démarrage coupe une feuille reçue mais pas coupée (`ServiceDecoupe.reprendre`, après le
+  rattrapage des assets) ;
+- la détection part dans un fil (`asyncio.to_thread`) — deux détourages, dont celui de la
+  référence ; les écritures restent sur la boucle, comme le dépliage d'un lot ;
+- la raison se lit sur `GET /api/assets/{feuille}` (`decoupe_a_l_arrivee`) et sur la
+  génération ; l'écran qui la montre est RS9.
 
 ### RS8 · Chaque vue dans sa direction
 

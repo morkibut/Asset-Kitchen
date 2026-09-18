@@ -49,6 +49,7 @@ __all__ = [
     "en_ordre_de_lecture",
     "gouttieres",
     "grille_fixe",
+    "ordre_des_vues",
     "zones_opaques",
 ]
 
@@ -258,6 +259,40 @@ def en_ordre_de_lecture(boites: list[Boite]) -> list[Boite]:
         haut, bas = boite[1], boite[3]
     ordonnees.extend(sorted(bande, key=lambda b: b[0]))
     return ordonnees
+
+
+def ordre_des_vues(boites: list[Boite]) -> list[Boite]:
+    """**L'ordre des vues d'une planche refaite** — de gauche à droite, puis de
+    haut en bas, par rangées (RS7, 18 septembre 2026).
+
+    C'est un contrat, pas une commodité : RS8 donnera à la n-ième image la
+    n-ième direction que la référence `planche` déclare (« sud, est, nord,
+    ouest »). Un ordre qui dépendrait d'un pixel de décalage rangerait un
+    Champy de dos dans la direction sud.
+
+    **Une rangée se forme autour de sa première vue, jamais de proche en
+    proche.** Deux boîtes sont dans la même rangée quand le centre vertical de
+    l'une tombe dans la hauteur de l'autre. On compare chaque boîte à celle qui
+    ouvre la rangée — la plus haute par son centre —, pas à la rangée entière
+    élargie à chaque ajout : dans `en_ordre_de_lecture`, une vue plus haute que
+    la première élargit la bande, et une vue qui ne touche même pas la première
+    y tombe à son tour — la rangée s'allonge de proche en proche.
+
+    Pure : des boîtes en entrée, les mêmes boîtes en sortie, réordonnées.
+    """
+    def centre(b: Boite) -> float:
+        return (b[1] + b[3]) / 2
+
+    def meme_rangee(a: Boite, b: Boite) -> bool:
+        return a[1] <= centre(b) <= a[3] or b[1] <= centre(a) <= b[3]
+
+    rangees: list[list[Boite]] = []
+    for boite in sorted(boites, key=lambda b: (centre(b), b[0])):
+        if rangees and meme_rangee(rangees[-1][0], boite):
+            rangees[-1].append(boite)
+        else:
+            rangees.append([boite])
+    return [b for rangee in rangees for b in sorted(rangee, key=lambda b: (b[0], b[1]))]
 
 
 # ── La découpe elle-même ─────────────────────────────────────────────────────

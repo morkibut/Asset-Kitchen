@@ -462,6 +462,10 @@ class Atelier:
             self.equipement,
             # Et les profils de workflow (ML4) : un style local reçoit son texte.
             profils=self.profils_workflow,
+            # Et la découpe (RS7) : une planche refaite se coupe à l'arrivée
+            # quand l'auteur l'a demandé. Montée bien plus haut, elle ne
+            # connaît pas les générations — l'ordre tient.
+            decoupe=self.decoupe,
         )
         # **La planche, montée après la génération** (E13) : elle montre ce
         # qu'on achète avant de payer, et ce qu'elle montre est *composé par le
@@ -652,6 +656,11 @@ class Atelier:
         # rattrapage**, pour la raison qui met la bibliothèque avant lui : ce
         # que le disque dit se repose d'abord, ce qui manque se comble ensuite.
         self.pliage.reprendre(recentes)
+        # **Une planche refaite reçue mais pas encore coupée se coupe ici**
+        # (RS7), pour la raison du dépliage juste au-dessus : gratuit, local,
+        # et après le rattrapage qui a pu lui donner son asset. Une planche
+        # déjà marquée — coupée, refusée — ne se recoupe jamais.
+        self.decoupe.reprendre(recentes)
         await self.catalogue.rafraichir()
         # **Le catalogue vidéo n'est pas relu ici, et c'est délibéré** (A9). Il
         # ne sert qu'à l'écran qui commande un clip, et il se relit quand cet

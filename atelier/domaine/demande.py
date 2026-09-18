@@ -6,6 +6,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from atelier.domaine.erreurs import DemandeRefusee
+
 
 @dataclass(frozen=True, slots=True)
 class Demande:
@@ -90,11 +92,28 @@ class Demande:
     # fournisseur ne la déclare, c'est une décision du produit sur ce qui part.
     garder_mise_en_page: bool = False
 
+    # **Découper la planche refaite dès qu'elle revient** (RS7, 18 septembre
+    # 2026). L'auteur coupait chaque planche de Champy à la main, en quatre,
+    # puis posait sa recette sur chaque morceau. Cochée, l'atelier coupe par
+    # zones opaques à l'arrivée — et ne coupe rien si le compte tombe faux.
+    #
+    # **Elle n'a de sens qu'avec `garder_mise_en_page`** : sans elle, l'appel
+    # rend un sprite seul, et le couper ferait des éclats. Refusée ici, à la
+    # construction, pour que la route et l'agent reçoivent la même phrase.
+    decouper_a_l_arrivee: bool = False
+
     def __post_init__(self) -> None:
         if not self.prompt.strip():
             raise ValueError("prompt vide")
         if self.variations < 1:
             raise ValueError("au moins une variation")
+        if self.decouper_a_l_arrivee and not self.garder_mise_en_page:
+            # Refusée plutôt qu'ignorée, comme la case de RS2 : une case cochée
+            # qui ne ferait rien laisserait croire que la planche sera coupée.
+            raise DemandeRefusee(
+                "découper à l'arrivée coupe une planche refaite — cochez aussi "
+                "« garder la mise en page de la référence », ou décochez la découpe"
+            )
 
     def resume(self) -> dict[str, Any]:
         """Les paramètres, sans les octets des références — pour l'enregistrement."""
@@ -123,4 +142,8 @@ class Demande:
         # n'est pas cochée. La relance le relit — voir `_demande_de`.
         if self.garder_mise_en_page:
             resume["garder_mise_en_page"] = True
+        # Même règle (RS7) : absent tant que la case n'est pas cochée. C'est ce
+        # que l'arrivée lit pour décider de couper, et la relance le relit.
+        if self.decouper_a_l_arrivee:
+            resume["decouper_a_l_arrivee"] = True
         return resume

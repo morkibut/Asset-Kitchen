@@ -110,6 +110,7 @@ from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.catalogue import ServiceCatalogue
 from atelier.services.fournisseurs import Fournisseurs
 from atelier.services.evenements import Diffusion
+from atelier.services.decoupe import ServiceDecoupe
 from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import (
     ChoixAttendu,
@@ -239,7 +240,11 @@ class ServiceGenerations:
         # **Les profils de workflow, pour une seule question** (ML4) : ce modèle
         # est-il un style local, et lit-il un texte négatif ?
         profils: Any = None,
+        # **La découpe, pour un seul geste** (RS7) : couper à l'arrivée la
+        # planche refaite dont l'auteur a coché la case.
+        decoupe: "ServiceDecoupe | None" = None,
     ) -> None:
+        self._decoupe = decoupe
         self._base = base
         self._profils = profils
         self._fichiers = fichiers
@@ -1424,6 +1429,11 @@ class ServiceGenerations:
         # à une génération qui doivent déjà être sur le disque quand il paraît.
         if self._assets is not None:
             self._assets.naitre(generation, emplacement)
+            # **Et coupée, si l'auteur l'a demandé** (RS7) — après la
+            # naissance, jamais avant : la découpe coupe un asset, et ses
+            # morceaux ont la feuille pour parent. Ne lève jamais.
+            if self._decoupe is not None:
+                await self._decoupe.a_l_arrivee(generation, emplacement)
 
     def _echouer(
         self,
@@ -1473,6 +1483,13 @@ class ServiceGenerations:
             # parti ; le drapeau suit pour que la demande relancée dise ce
             # qu'elle est, et qu'un appel refait depuis elle la refasse aussi.
             garder_mise_en_page=bool(demande.get("garder_mise_en_page")),
+            # Et la découpe à l'arrivée (RS7), pour la même raison. Jamais sans
+            # la mise en page : `Demande` le refuserait, et le fichier ne peut
+            # porter l'une sans l'autre que retouché à la main.
+            decouper_a_l_arrivee=bool(
+                demande.get("decouper_a_l_arrivee")
+                and demande.get("garder_mise_en_page")
+            ),
             references=self._octets_references(
                 generation.references,
                 generation.projet,

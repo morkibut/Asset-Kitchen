@@ -51,6 +51,8 @@ export function BarreQuiPaie({
   onVariations,
   garderMiseEnPage = false,
   onGarderMiseEnPage,
+  decouperALArrivee = true,
+  onDecouperALArrivee,
   options,
   onOptions,
   reinjections,
@@ -104,6 +106,11 @@ export function BarreQuiPaie({
    *  fixe. Sans `onGarderMiseEnPage`, elle n'est pas montrée. */
   garderMiseEnPage?: boolean
   onGarderMiseEnPage?: (v: boolean) => void
+  /** **Découper à l'arrivée** (RS7) : montrée seulement sous la mise en page
+   *  cochée, et recochée chaque fois qu'on la coche. Sans
+   *  `onDecouperALArrivee`, elle n'est pas montrée. */
+  decouperALArrivee?: boolean
+  onDecouperALArrivee?: (v: boolean) => void
   options: Record<string, string>
   onOptions: (o: Record<string, string>) => void
   reinjections: Reinjection[]
@@ -269,7 +276,11 @@ export function BarreQuiPaie({
         {/* **Refaire une planche** (RS2). Montrée seulement pour une image fixe
             qui ne vise aucune case : un lot a déjà sa grille, et une planche
             refaite ne se range pas dans une seule case — l'atelier refuserait. */}
-        {onGarderMiseEnPage && cases === 0 && posesCible.length === 0 && <label className="col-span-2 flex items-start gap-[8px]"><input type="checkbox" className="mt-[3px]" checked={garderMiseEnPage} onChange={(e) => onGarderMiseEnPage(e.target.checked)} /><span><span className="block font-medium">Garder la mise en page de la référence</span><span className="block text-encre-3">Refait la planche jointe avec ta modification, vue par vue.</span></span></label>}
+        {onGarderMiseEnPage && cases === 0 && posesCible.length === 0 && <label className="col-span-2 flex items-start gap-[8px]"><input type="checkbox" className="mt-[3px]" checked={garderMiseEnPage} onChange={(e) => { onGarderMiseEnPage(e.target.checked); if (e.target.checked) onDecouperALArrivee?.(true) }} /><span><span className="block font-medium">Garder la mise en page de la référence</span><span className="block text-encre-3">Refait la planche jointe avec ta modification, vue par vue.</span></span></label>}
+        {/* **Découper à l'arrivée** (RS7). Sous la mise en page, et seulement
+            quand elle est cochée : elle coupe une planche refaite, rien d'autre.
+            Cochée d'office à chaque fois qu'on coche la mise en page. */}
+        {onGarderMiseEnPage && onDecouperALArrivee && garderMiseEnPage && cases === 0 && posesCible.length === 0 && <label className="col-span-2 flex items-start gap-[8px] pl-[22px]"><input type="checkbox" className="mt-[3px]" checked={decouperALArrivee} onChange={(e) => onDecouperALArrivee(e.target.checked)} /><span><span className="block font-medium">Découper à l'arrivée</span><span className="block text-encre-3">Une image par vue, rangée sous le sujet. Si le nombre de vues ne tombe pas juste, rien n'est coupé.</span></span></label>}
         {modele && Object.entries(modele.options)
           // **`force` a sa propre section, plus bas, et seulement quand elle
           // agit** (règle 8nonies) — cette liste-ci ne la redit pas.
