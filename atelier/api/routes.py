@@ -739,6 +739,12 @@ class CorpsGeneration(BaseModel):
     # **Couper cette planche dès qu'elle revient** (RS7). Refusé sans
     # `garder_mise_en_page`, par `Demande` elle-même.
     decouper_a_l_arrivee: bool = False
+    # **Une chose du jeu par case** (P2, V3.5) : des identifiants de sujets,
+    # dans l'ordre de lecture de la planche — la case n porte le sujet n. Deux
+    # ou plus, et l'appel part en une planche dont chaque morceau se range chez
+    # le sujet de sa case. Ni `personnage`, ni `poses`, ni `piece` à côté ; un
+    # décor, une tuile ou un sujet inconnu sont refusés avant de payer.
+    sujets: list[str] | None = None
 
 
 @routeur.post("/generations", status_code=202)
@@ -781,6 +787,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         piece=corps.piece,
         references_ecartees=corps.references_ecartees,
         tri=Tri.depuis_json(corps.tri),
+        sujets=corps.sujets,
     )
     return generation.en_json()
 
@@ -823,6 +830,8 @@ class CorpsApercu(BaseModel):
     # **Refaire une planche** (RS2) : le cadre « un seul sprite » cède sa place
     # à la consigne de mise en page, et l'aperçu doit le montrer.
     garder_mise_en_page: bool = False
+    # La planche à plusieurs sujets (P2) — même liste que `CorpsGeneration`.
+    sujets: list[str] | None = None
 
 
 @routeur.post("/prompt/preview")
@@ -860,6 +869,7 @@ async def apercu_prompt(requete: Request, corps: CorpsApercu) -> dict[str, Any]:
         tri=Tri.depuis_json(corps.tri),
         prompt_negatif=corps.prompt_negatif,
         garder_mise_en_page=corps.garder_mise_en_page,
+        sujets=corps.sujets,
     )
 
 
@@ -912,6 +922,7 @@ async def envoi(requete: Request, corps: CorpsEnvoi) -> dict[str, Any]:
         tri=Tri.depuis_json(corps.tri),
         prompt_negatif=corps.prompt_negatif,
         garder_mise_en_page=corps.garder_mise_en_page,
+        sujets=corps.sujets,
     )
 
 
@@ -925,6 +936,7 @@ async def image_jointe(
     piece: str | None = Query(None),
     poses: list[str] = Query(default_factory=list),
     directions: list[str] = Query(default_factory=list),
+    sujets: list[str] = Query(default_factory=list),
 ) -> Response:
     """L'image que la planche joint, **telle qu'elle partira** (M4).
 
@@ -950,6 +962,7 @@ async def image_jointe(
         piece=piece or None,
         poses=poses or None,
         directions=directions or None,
+        sujets=sujets or None,
     )
     if jointe is None:
         # Un 404 nu, et pas un refus du domaine : il n'y a rien de fautif à

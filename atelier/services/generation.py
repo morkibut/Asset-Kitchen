@@ -100,6 +100,7 @@ from atelier.domaine.envoi import (
     resoudre,
 )
 from atelier.domaine.pliage import CasePliee, Pliage
+from atelier.domaine.carte import DECORS
 from atelier.domaine import texte_local
 from atelier.domaine.workflow import GRAINE_MAX, WorkflowRefuse
 from atelier.fournisseur import PortFournisseur
@@ -755,6 +756,9 @@ class ServiceGenerations:
         # remonte : le tri habille *cet appel* et disparaît ensuite. Absent,
         # c'est un agent ou une relance, et les réglages durables décident seuls.
         tri: "Tri | None" = None,
+        # **Une chose du jeu par case** (P2) : la planche à plusieurs sujets.
+        # Présente, ni `personnage` ni `poses` ne l'accompagnent.
+        sujets: Sequence[str] | None = None,
     ) -> tuple[Generation, Modele | None, bool]:
         """Vérifie, enregistre, et dit si c'est neuf. N'appelle pas le fournisseur.
 
@@ -798,7 +802,9 @@ class ServiceGenerations:
         # pliage, lui, ne connaît ni personnage ni pose, et c'est ce qui laissera
         # C3 le réemployer tel quel. Chaque case est vérifiée avant qu'un centime
         # parte, exactement comme la case unique de C1.
-        pliage = self._plier(projet, personnage, poses, piece, pose, directions)
+        pliage = self._plier(
+            projet, personnage, poses, piece, pose, directions, sujets=sujets
+        )
         # **La case visée est vérifiée avant qu'un centime parte** (US-120). Un
         # personnage disparu ou une pose qu'il ne tient plus doivent se dire
         # ici : l'écran n'arme que des cases visibles, mais un onglet resté
@@ -1039,6 +1045,7 @@ class ServiceGenerations:
         piece: str | None = None,
         references_ecartees: Sequence[str] | None = None,
         tri: "Tri | None" = None,
+        sujets: Sequence[str] | None = None,
     ) -> Generation:
         """Prépare puis lance, sans attendre. L'appelant reçoit l'identifiant."""
         generation, modele, deja = self.preparer(
@@ -1056,6 +1063,7 @@ class ServiceGenerations:
             piece=piece,
             references_ecartees=references_ecartees,
             tri=tri,
+            sujets=sujets,
         )
         if deja or modele is None:
             return generation
@@ -1538,6 +1546,7 @@ class ServiceGenerations:
         directions: Sequence[str] | None = None,
         poses: Sequence[str] | None = None,
         piece: str | None = None,
+        sujets: Sequence[str] | None = None,
     ) -> Pliage | None:
         """Les cases que cette planche enverrait — **par le chemin de l'envoi**.
 
@@ -1552,7 +1561,9 @@ class ServiceGenerations:
         direction qu'elle ne tient pas pour cette pose. Un écran qui montrerait
         des cases qui ne partiraient pas serait pire qu'un écran vide.
         """
-        return self._plier(projet, personnage, poses, piece, pose, directions)
+        return self._plier(
+            projet, personnage, poses, piece, pose, directions, sujets=sujets
+        )
 
     def image_jointe(
         self,
@@ -1564,6 +1575,7 @@ class ServiceGenerations:
         directions: Sequence[str] | None = None,
         poses: Sequence[str] | None = None,
         piece: str | None = None,
+        sujets: Sequence[str] | None = None,
     ) -> tuple[str, bytes] | None:
         """L'image que la planche joint, **telle qu'elle partira** — et son rôle.
 
@@ -1584,7 +1596,9 @@ class ServiceGenerations:
         # route : le défaut vit dans les services depuis T7.
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
-        pliage = self._plier(projet, personnage, poses, piece, pose, directions)
+        pliage = self._plier(
+            projet, personnage, poses, piece, pose, directions, sujets=sujets
+        )
         role = self._role_joint(pliage, modele)
         if role is None:
             return None
@@ -1601,8 +1615,14 @@ class ServiceGenerations:
         piece: str | None = None,
         pose: str | None = None,
         directions: Sequence[str] | None = None,
+        sujets: Sequence[str] | None = None,
     ) -> Pliage | None:
         """Les cases d'un lot, **vérifiées avant qu'un centime parte** (US-128).
+
+        **Une quatrième sorte depuis P2 (V3.5) : `sujets`**, une chose du jeu par
+        case, dans l'ordre de lecture. C'est la seule qui porte plusieurs choses
+        du jeu, et elle le peut parce que la demande dit d'avance ce que chaque
+        case contient — voir `_plier_sujets`.
 
         **Trois sortes de planches depuis E13**, et c'est ce qu'on lui donne qui
         les sépare : une pose dans plusieurs directions, plusieurs poses, ou une
@@ -1636,6 +1656,14 @@ class ServiceGenerations:
         et un mot français au milieu d'une phrase anglaise se contredisait avec
         elle.
         """
+        if sujets:
+            if personnage or poses or piece or pose or directions:
+                raise DemandeRefusee(
+                    "une planche à plusieurs sujets désigne ses sujets case par "
+                    "case — ni personnage, ni pose, ni pièce à côté de sa liste"
+                )
+            return self._plier_sujets(projet, sujets)
+
         if piece:
             if not personnage or self._equipement is None or not projet:
                 raise DemandeRefusee(
@@ -1705,6 +1733,81 @@ class ServiceGenerations:
                     texte=self._texte_de_case(projet, visee, seule),
                     pose=visee.identifiant,
                     direction=seule,
+                )
+            )
+        return Pliage(cases=tuple(cases))
+
+    def _plier_sujets(self, projet: str | None, sujets: Sequence[str]) -> Pliage:
+        """La planche à plusieurs sujets (P2) : **la liste est la réponse**.
+
+        L'invariant d'E13 — *une planche ne porte qu'une seule chose du jeu* —
+        avait une raison : une planche qui mêle les sujets rend le rangement
+        ambigu. Il ne se lève qu'ici, et seulement parce que chaque case dit
+        d'avance à quel sujet elle appartient. Les trois décisions de l'auteur
+        du 18 septembre 2026 s'y lisent :
+
+        - **une liste numérotée dans l'ordre de lecture** — la n-ième case porte
+          le n-ième sujet, et `consignes` l'écrit « cell n: … » ;
+        - **des choses isolées seulement** : un décor ou une tuile se raccorde
+          à ses voisins, il ne tient pas seul dans une case — refusé ici, avant
+          qu'un centime parte ;
+        - **une case ratée se refait seule** : chaque case garde son
+          signalement pour qu'une génération simple le renvoie mot pour mot.
+
+        **La pose d'une case est la première que le sujet tient**, dans l'ordre
+        de son plan — *posé* pour un objet posé, *tenu* pour un objet tenu,
+        *fermé* pour un meuble, la première attitude pour un personnage. C'est
+        la case qu'une image simple de sa fiche remplirait d'abord ; un type
+        sans poses laisse l'image au sujet, sans case, comme depuis AU20. La
+        direction suit la règle du lot de poses : déduite quand la pose n'en
+        tient qu'une, absente sinon.
+
+        Un même sujet peut revenir dans deux cases — deux essais d'une même
+        potion ; rien ne l'interdit, et chacune se range chez lui.
+        """
+        if self._production is None or not projet:
+            raise DemandeRefusee(
+                "une planche à plusieurs sujets se lance dans un jeu — il n'y a "
+                "pas de sujets à ranger sans lui"
+            )
+        if len(sujets) < 2:
+            raise DemandeRefusee(
+                "une planche à plusieurs sujets en demande au moins deux — un "
+                "seul, c'est une image simple depuis sa fiche"
+            )
+        cases = []
+        for rang, identifiant in enumerate(sujets, start=1):
+            try:
+                vise = self._production.personnage(projet, identifiant)
+            except ErreurAtelier:
+                raise DemandeRefusee(
+                    f"case {rang} : aucun sujet « {identifiant} » dans ce jeu"
+                ) from None
+            if self._production.famille_de(projet, vise) == DECORS:
+                raise DemandeRefusee(
+                    f"case {rang} : « {vise.nom} » est un décor ou une tuile — il "
+                    f"se raccorde à ses voisins et ne tient pas seul dans une case. "
+                    f"Une planche à plusieurs sujets ne porte que des choses isolées."
+                )
+            tenues = vise.tenues(self._production.plan_de(projet, vise))
+            visee = tenues[0] if tenues else None
+            seule = None
+            if visee is not None:
+                angles = vise.directions_tenues(
+                    visee, self._production.directions_du_jeu(projet)
+                )
+                seule = angles[0].identifiant if len(angles) == 1 else None
+            signalement = vise.description.strip() or vise.nom
+            consigne = (
+                self._texte_de_case(projet, visee, seule) if visee is not None else ""
+            )
+            cases.append(
+                CasePliee(
+                    texte=f"{signalement}, {consigne}" if consigne else signalement,
+                    pose=visee.identifiant if visee is not None else None,
+                    direction=seule,
+                    sujet=vise.identifiant,
+                    signalement=signalement,
                 )
             )
         return Pliage(cases=tuple(cases))
@@ -2201,6 +2304,7 @@ class ServiceGenerations:
             roles,
             self._cases_du_pliage(pliage),
             angles=self._angles_nommes(projet, roles),
+            plusieurs=pliage is not None and pliage.plusieurs,
         )
         return "\n".join(texte for _, _, texte in nommees)
 
@@ -2233,6 +2337,9 @@ class ServiceGenerations:
         cases: int,
         *,
         angles: dict[str, str] | None = None,
+        # **Une planche à plusieurs sujets** (P2) : le gabarit n'y découpe pas
+        # un mouvement en instants, il reçoit une chose différente par case.
+        plusieurs: bool = False,
     ) -> list[tuple[int, str, str]]:
         """Une ligne par image, numérotée dans l'ordre d'envoi, depuis son rôle.
 
@@ -2305,6 +2412,12 @@ class ServiceGenerations:
                     f"Image {rang} — THE SAME CHARACTER, seen from this angle "
                     f"({vu}): keep it recognisably the same character, and use this "
                     f"view for how it looks from that side."
+                )
+            elif role == GABARIT and plusieurs:
+                texte = (
+                    f"Image {rang} — EMPTY LAYOUT GRID: {accorde(cases, 'cell')}. Draw "
+                    f"exactly one sprite per cell — in each cell, the subject listed "
+                    f"for it, in reading order. Do NOT draw the grid lines."
                 )
             elif role == GABARIT:
                 texte = (
@@ -2501,6 +2614,8 @@ class ServiceGenerations:
         # **Refaire une planche** (RS2) — même refus et même texte qu'à la
         # soumission : l'écran ne montre jamais un texte qui ne partirait pas.
         garder_mise_en_page: bool = False,
+        # La planche à plusieurs sujets (P2), composée par le même `_plier`.
+        sujets: Sequence[str] | None = None,
     ) -> dict[str, Any]:
         """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
 
@@ -2524,7 +2639,9 @@ class ServiceGenerations:
         """
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
-        pliage = self._plier(projet, personnage, poses, piece, pose, directions)
+        pliage = self._plier(
+            projet, personnage, poses, piece, pose, directions, sujets=sujets
+        )
         if garder_mise_en_page:
             _mise_en_page_permise(pliage, piece, pose, direction)
         roles: tuple[str, ...] = ()
@@ -2606,6 +2723,7 @@ class ServiceGenerations:
                     roles,
                     self._cases_du_pliage(pliage),
                     angles=self._angles_nommes(projet, roles),
+                    plusieurs=pliage is not None and pliage.plusieurs,
                 )
             ],
             # ── Le fond, et ce qu'il interdit (D3) ───────────────────────────

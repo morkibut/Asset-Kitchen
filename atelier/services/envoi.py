@@ -153,6 +153,9 @@ class ServiceEnvoi:
         # **Refaire une planche** (RS2) : la consigne de mise en page se lit
         # ici avant de payer, et la planche du sujet se compte dans le prix.
         garder_mise_en_page: bool = False,
+        # **Une chose du jeu par case** (P2) : la planche à plusieurs sujets. Le
+        # prix se dit alors deux fois — la planche, et ce que coûte un sujet.
+        sujets: Sequence[str] | None = None,
     ) -> dict[str, Any]:
         """Tout ce que l'écran montre, en un aller-retour.
 
@@ -194,9 +197,10 @@ class ServiceEnvoi:
             # la moitié qui vient de l'auteur.
             prompt_negatif=prompt_negatif,
             garder_mise_en_page=garder_mise_en_page,
+            sujets=sujets,
         )
         lignes = apercu["lignes"]
-        cases = self._cases(poses, directions, piece)
+        cases = self._cases(poses, directions, piece, sujets)
         # **Ce qu'un style local ajoute au-dessus de ce que ML4 composait déjà**
         # (ML5) : un temps, pas un prix — la mesure de cette machine, ou la
         # vitesse du style à défaut (règle 8ter). `None` reste `None` : un
@@ -304,6 +308,23 @@ class ServiceEnvoi:
                 # d'appels payés le prix repose, et il ne se confond pas avec le
                 # nombre d'appels que celui-ci demandera.
                 "mesure": mesure,
+                # **Le prix d'un sujet, à côté du prix de la planche** (P2) :
+                # la planche divisée par ses cases, et rien d'autre. Ce n'est pas
+                # un tarif par case — une planche coûte le prix d'un appel, quel
+                # que soit ce qu'elle porte (`AGENTS.md`, point 8) —, c'est ce que
+                # chaque objet revient à payer quand tout va bien. Présent
+                # seulement sur une planche à plusieurs sujets : ailleurs, les
+                # cases sont un même sujet, et le chiffre ne dirait rien.
+                **(
+                    {
+                        "sujets": cases,
+                        "par_sujet": (
+                            round(total / cases, 4) if total is not None else None
+                        ),
+                    }
+                    if sujets and cases
+                    else {}
+                ),
             },
             # **Ce qui reste chez ce fournisseur-là, avant de partir** (F2).
             # `None` quand il compte en argent : l'argent a la barre de tête et
@@ -857,13 +878,19 @@ class ServiceEnvoi:
         poses: Sequence[str] | None,
         directions: Sequence[str] | None,
         piece: str | None,
+        sujets: Sequence[str] | None = None,
     ) -> int:
         """Combien de cases cet appel remplit — **le compte, pas l'écran**.
 
         Une planche de pose en a autant que de directions, un lot autant que de
         poses, une planche d'équipement autant que de corps. Une case seule n'en
         a aucune : elle n'est pas un lot, et le gabarit ne part pas.
+
+        **Une planche à plusieurs sujets en a une par entrée de sa liste** (P2),
+        doublons compris : deux essais d'une même potion sont deux cases.
         """
+        if sujets and len(sujets) >= 2:
+            return len(sujets)
         angles = len(dict.fromkeys(directions or ()))
         if angles >= 2:
             return angles
