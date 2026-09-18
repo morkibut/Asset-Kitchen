@@ -1363,6 +1363,8 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
     installer_outils_file_locale(serveur, atelier, _refus_lisible)
     from atelier.mcp.workflows import installer_outils_workflow
     installer_outils_workflow(serveur, atelier, _refus_lisible)
+    from atelier.mcp.installation_son import installer_outils_installation_son
+    installer_outils_installation_son(serveur, atelier, _refus_lisible)
     from atelier.mcp.calques_cibles import installer_calques_cibles
     installer_calques_cibles(serveur, atelier, _refus_lisible)
     from atelier.mcp.travaux_equipement import installer_travaux_equipement

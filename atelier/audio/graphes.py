@@ -34,24 +34,46 @@ from __future__ import annotations
 # le nomme, sa page est celle de docs/PLAN-son.md et des relevés.
 FICHIERS = {
     "stable_audio_3_small_sfx.safetensors": {"dossier": "checkpoints", "taille": "2,3 Go",
+        "nom": "le modèle Stable Audio 3 Small-SFX (bruitages et ambiances)",
         "source": "https://huggingface.co/Comfy-Org/stable-audio-3",
         "licence": "https://huggingface.co/stabilityai/stable-audio-3-small-sfx"},
     "stable_audio_3_medium.safetensors": {"dossier": "checkpoints", "taille": "9,2 Go",
+        "nom": "le modèle Stable Audio 3 Medium (secours)",
         "source": "https://huggingface.co/Comfy-Org/stable-audio-3/resolve/main/checkpoints/stable_audio_3_medium.safetensors"},
     "t5gemma_b_b_ul2.safetensors": {"dossier": "text_encoders", "taille": "1,2 Go",
+        "nom": "l'encodeur de texte de Stable Audio 3",
         "source": "https://huggingface.co/Comfy-Org/stable-audio-3/resolve/main/text_encoders/t5gemma_b_b_ul2.safetensors"},
     "acestep_v1.5_turbo.safetensors": {"dossier": "diffusion_models", "taille": "4,8 Go",
+        "nom": "le modèle ACE-Step 1.5 turbo (musique)",
         "source": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/diffusion_models/acestep_v1.5_turbo.safetensors"},
     "qwen_0.6b_ace15.safetensors": {"dossier": "text_encoders", "taille": "1,2 Go",
+        "nom": "l'encodeur de texte d'ACE-Step 1.5",
         "source": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/text_encoders/qwen_0.6b_ace15.safetensors"},
     "ace_1.5_vae.safetensors": {"dossier": "vae", "taille": "0,3 Go",
+        "nom": "le décodeur (VAE) d'ACE-Step 1.5",
         "source": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/vae/ace_1.5_vae.safetensors"},
     "yue2_3b_int8_convrot.safetensors": {"dossier": "checkpoints", "taille": "4,0 Go",
+        "nom": "le modèle YuE2 (chansons)",
         "source": "https://huggingface.co/Comfy-Org/YuE2/resolve/main/checkpoints/yue2_3b_int8_convrot.safetensors"},
     "stable-audio-open-1.0.safetensors": {"dossier": "checkpoints", "taille": "non mesurée",
+        "nom": "le modèle Stable Audio Open 1.0 (secours des bruitages)",
         "source": "https://huggingface.co/Comfy-Org/stable-audio-open-1.0_repackaged/resolve/main/stable-audio-open-1.0.safetensors"},
     "t5-base.safetensors": {"dossier": "text_encoders", "taille": "non mesurée",
+        "nom": "l'encodeur de texte de Stable Audio Open",
         "source": "https://huggingface.co/ComfyUI-Wiki/t5-base/resolve/main/t5-base.safetensors"},
+}
+
+# Le moteur par défaut de chaque famille (SN1) ; le premier installé de la
+# liste l'emporte (`installation_son.moteurs_par_famille`). « secours » n'est
+# pas une famille du jeu : c'est la chaîne que SN2 consulte quand le moteur
+# d'une famille manque.
+FAMILLES = {
+    "bruitage": ("sa3-small-sfx", "sa-open-1"),
+    "ambiance": ("sa3-small-sfx", "sa3-medium"),
+    "musique": ("ace-step-15-turbo", "sa3-medium"),
+    "jingle": ("ace-step-15-turbo", "sa3-medium"),
+    "chanson": ("yue2-int8",),
+    "secours": ("sa3-medium", "sa-open-1"),
 }
 
 # Les langues de paroles que TextEncodeAceStepAudio1.5 déclare (object_info).
@@ -192,12 +214,28 @@ CONSTRUCTEURS = {
 }
 
 
+# Les champs de graphe qui nomment un fichier de poids ComfyUI.
+CHAMPS_FICHIER = ("ckpt_name", "clip_name", "clip_name1", "clip_name2", "unet_name", "vae_name")
+
+
+def postes_fichiers(profil):
+    """Chaque poste où le profil nomme un fichier de poids : son nom, la
+    classe du nœud qui le charge et le champ. C'est ce qu'il faut pour le
+    retrouver par motif contre /object_info (installation, SN1) — une classe
+    et un champ donnent le bon chargeur, donc les bons choix installés."""
+    postes = []
+    for noeud in profil["graphe"].values():
+        for champ, valeur in noeud["inputs"].items():
+            if champ in CHAMPS_FICHIER:
+                postes.append({"fichier": valeur, "classe": noeud["class_type"], "champ": champ})
+    return postes
+
+
 def fichiers_requis(profil):
     """Les fichiers de poids qu'un profil nomme, avec leur dossier et leur
     source quand l'atelier les connaît : ce que le diagnostic dira manquer."""
     noms = []
-    for noeud in profil["graphe"].values():
-        for champ, valeur in noeud["inputs"].items():
-            if champ in ("ckpt_name", "clip_name", "clip_name1", "clip_name2", "unet_name", "vae_name") and valeur not in noms:
-                noms.append(valeur)
+    for poste in postes_fichiers(profil):
+        if poste["fichier"] not in noms:
+            noms.append(poste["fichier"])
     return [{"fichier": n, **FICHIERS.get(n, {})} for n in noms]
