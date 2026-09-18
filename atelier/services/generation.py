@@ -26,10 +26,13 @@ ou non.
 from __future__ import annotations
 
 import asyncio
+import io
 import time
 import uuid
 from dataclasses import replace
 from typing import Any, Sequence
+
+from PIL import Image, ImageColor
 
 from atelier.depot import Base, Fichiers, projet_lu_une_fois
 from atelier.domaine import (
@@ -71,6 +74,7 @@ from atelier.domaine.personnage import LIBRE
 from atelier.domaine.personnage import PLANCHE as USAGE_PLANCHE
 from atelier.domaine.personnage import direction_de_lusage
 from atelier.domaine.direction import composer
+from atelier.domaine.fond import fond_valide
 from atelier.domaine.ambiance import COULEURS, REFERENCES, TEXTES, prises_du_mode
 from atelier.domaine.envoi import (
     AMBIANCE,
@@ -433,6 +437,31 @@ class ServiceGenerations:
         return mesures_de_prix(
             self._base, identifiant_modele, self._catalogue.unite_de(identifiant_modele)
         )
+
+    def temps_attendu(self, modele: str) -> dict[str, Any] | None:
+        """Ce qu'un style local annonce, **un temps plutôt qu'un prix** (règle
+        8ter) : la médiane mesurée sur cette machine, ou, faute de mesure, la
+        vitesse déclarée par le style sc-clone. `None` pour un modèle qui n'est
+        pas local — celui-là a un prix, et c'est `cout_attendu` qui le dit.
+
+        **Pourquoi pas `cout_attendu`, qui existe déjà.** Il lit
+        `couts_mesures`, qui ne garde que les montants non nuls — et un appel
+        local enregistre toujours `cout_usd = 0.0` (`annonce_locale`) : le
+        filtre `if quantite` de `couts_mesures` l'écarte donc systématiquement,
+        et l'écran annonçait « jamais généré » même après des dizaines de
+        tirages. `durees_mesurees` n'a pas ce défaut : elle garde tout appel
+        réussi, quelle que soit sa consommation en argent.
+        """
+        if not self.methode_locale(modele):
+            return None
+        durees = self._base.durees_mesurees(modele)
+        profil = self._profil_local(modele)
+        vitesse = ((profil or {}).get("style") or {}).get("vitesse")
+        return {
+            "secondes": self.attente_estimee(modele) if durees else None,
+            "mesures": len(durees),
+            "vitesse": vitesse,
+        }
 
     def octets(self, generation: Generation, rang: int) -> tuple[bytes, str]:
         """Les octets bruts d'un emplacement réussi, et leur type de média."""
@@ -815,7 +844,9 @@ class ServiceGenerations:
         )
         demande = replace(
             demande,
-            references=self._octets_references(reinjectes, projet)
+            references=self._octets_references(
+                reinjectes, projet, fond=self._fond_des_references(identifiant_modele, projet, tri)
+            )
             # **Le gabarit part comme une référence de plus, et il en est une.**
             # Il occupe donc une place dans le plafond du modèle et il coûte chez
             # ceux qui facturent au token (`docs/PIEGES.md`) : le compter à part
@@ -1329,7 +1360,11 @@ class ServiceGenerations:
             # parti ; le drapeau suit pour que la demande relancée dise ce
             # qu'elle est, et qu'un appel refait depuis elle la refasse aussi.
             garder_mise_en_page=bool(demande.get("garder_mise_en_page")),
-            references=self._octets_references(generation.references, generation.projet)
+            references=self._octets_references(
+                generation.references,
+                generation.projet,
+                fond=self._fond_des_references(generation.modele, generation.projet, None),
+            )
             # **Le gabarit se redessine, il ne se relit pas.** Il n'est ni un
             # asset ni une carte : il n'a pas d'identifiant, il n'est nulle part
             # sur le disque, et il se refabrique à l'identique depuis la
@@ -2552,7 +2587,12 @@ class ServiceGenerations:
         reinjectes = _reinjectes(
             tuple(references)
             + self._concepts(
-                projet, personnage, piece, planche=planche, direction=angle
+                projet,
+                personnage,
+                piece,
+                planche=planche,
+                direction=angle,
+                sans_concept_arts=mise_en_page,
             )
             + self._de_lambiance(projet, personnage)
             + self._artworks(echelle, projet)
@@ -2628,7 +2668,12 @@ class ServiceGenerations:
             direction, directions, mise_en_page=mise_en_page
         )
         concepts = self._concepts(
-            projet, personnage, piece, planche=planche, direction=angle
+            projet,
+            personnage,
+            piece,
+            planche=planche,
+            direction=angle,
+            sans_concept_arts=mise_en_page,
         )
         de_lambiance = self._de_lambiance(projet, personnage)
         ecartees = (
@@ -2962,8 +3007,14 @@ class ServiceGenerations:
         *,
         planche: bool = False,
         direction: str | None = None,
+        sans_concept_arts: bool = False,
     ) -> tuple[Reinjection, ...]:
         """Les concept arts du personnage visé, et de la pièce (US-124).
+
+        **Pas quand on refait une planche** (18 septembre 2026, à la demande de
+        l'auteur). La planche à reproduire porte déjà l'allure du sujet ; un
+        concept art en plus ne dit rien de neuf, coûte une image, et tire vers
+        une autre pose que celle qu'on recopie.
 
         En rôle `style`, comme les artworks : ils **inspirent**, ils
         n'engendrent pas — une carte en source d'édition donnerait une filiation
@@ -2982,7 +3033,10 @@ class ServiceGenerations:
         """
         return tuple(
             Reinjection(asset=identifiant, role=STYLE, origine=CARTE)
-            for identifiant in self._concepts_identifiants(projet, personnage, piece)
+            for identifiant in (
+                () if sans_concept_arts
+                else self._concepts_identifiants(projet, personnage, piece)
+            )
         ) + tuple(
             Reinjection(
                 asset=identifiant,
@@ -3021,8 +3075,18 @@ class ServiceGenerations:
         nom = self._production.nom_de_lusage(projet, usage)
         return f"image promue · {nom}" if nom else "image promue"
 
-    def _octets_references(self, identifiants, projet: str | None = None) -> tuple[bytes, ...]:
+    def _octets_references(
+        self, identifiants, projet: str | None = None, *, fond: str | None = None
+    ) -> tuple[bytes, ...]:
         """Les images réinjectées, relues à la source (US-12).
+
+        **Et posées sur le fond de l'appel quand elles sont transparentes** (18
+        septembre 2026). Un rendu détouré garde du noir sous ses pixels
+        transparents, et un modèle d'image ne lit pas l'alpha : il voyait donc
+        la planche de Champy **sur fond noir**, et, prié d'en reproduire la mise
+        en page, il a rendu du noir alors que le texte demandait #FF70B5. Posée
+        sur le fond demandé, l'image dit la même chose que le texte ; sans fond
+        réglé, un gris neutre plutôt que ce noir que personne n'a choisi.
 
         Deux sources depuis T4, et `origine` aiguille : un asset se relit dans la
         bibliothèque, une carte dans le tableau de son projet.
@@ -3063,7 +3127,22 @@ class ServiceGenerations:
                     "une image réinjectée n'est plus dans la bibliothèque — "
                     "la rechoisir avant de relancer"
                 ) from None
-        return tuple(octets)
+        if fond is None:
+            return tuple(octets)
+        return tuple(sur_le_fond(image, fond) for image in octets)
+
+    def _fond_des_references(
+        self, modele: str, projet: str | None, tri: "Tri | None"
+    ) -> str | None:
+        """Le fond sur lequel poser une référence transparente, ou rien.
+
+        **Rien pour un workflow local** : ComfyUI reçoit l'image avec sa
+        transparence, la file locale la garde telle quelle, et c'est le moteur
+        qui la pose sur blanc au dépôt (ML1).
+        """
+        if modele.startswith("ComfyUI:"):
+            return None
+        return self._interdit_fond(projet, tri)
 
     # ── Enregistrement ───────────────────────────────────────────────────────
 
@@ -3253,3 +3332,35 @@ def _reinjectes(references: Sequence[Reinjection]) -> tuple[Reinjection, ...]:
             vus.add(cle)
             propres.append(reinjection)
     return tuple(propres)
+
+
+# ── Le fond sous une référence transparente ──────────────────────────────────
+
+#: Le fond d'une référence quand l'appel n'en demande aucun : un gris neutre,
+#: jamais le noir que le détourage laisse sous ses pixels transparents.
+FOND_NEUTRE = "#808080"
+
+
+def sur_le_fond(octets: bytes, fond: str = "") -> bytes:
+    """Une référence **posée sur le fond de l'appel** quand elle est transparente.
+
+    Un modèle d'image ne lit pas l'alpha : ce qu'il voit sous un pixel
+    transparent, c'est la couleur qui y dort — du noir, après un détourage. Une
+    image opaque, ou illisible, repart telle qu'elle est venue.
+    """
+    try:
+        with Image.open(io.BytesIO(octets)) as image:
+            image.load()
+            if "A" not in image.getbands() and image.info.get("transparency") is None:
+                return octets
+            rgba = image.convert("RGBA")
+    except (OSError, ValueError):
+        return octets
+    if rgba.getchannel("A").getextrema()[0] == 255:
+        return octets
+    couleur = ImageColor.getrgb(fond_valide(fond) or FOND_NEUTRE)
+    pose = Image.new("RGBA", rgba.size, (*couleur, 255))
+    pose.alpha_composite(rgba)
+    tampon = io.BytesIO()
+    pose.convert("RGB").save(tampon, format="PNG")
+    return tampon.getvalue()

@@ -18,13 +18,17 @@ relance garde le drapeau.
 
 from __future__ import annotations
 
+import io
 import itertools
 import time
+
+from PIL import Image
 
 from atelier.domaine.demande import Demande
 from atelier.domaine.vue import calage_de_planche, phrase_de_calage
 
-from tests.conftest import image_sujet
+from atelier.services.generation import sur_le_fond
+from tests.conftest import image, image_sujet
 
 MODELE = "essai:rend-du-png"
 
@@ -328,3 +332,93 @@ def test_sans_la_case_la_generation_ne_porte_pas_la_cle(client, tmp_path, double
     assert "garder_mise_en_page" not in generation["demande"]
     assert UN_SEUL in generation["demande"]["prompt"]
     _attendre(client, generation["identifiant"])
+
+
+
+# ── Le fond sous une référence, et le concept art qui ne part plus ───────────
+#
+# Relevé le 18 septembre 2026 : la planche détourée de Champy partait avec du
+# noir sous ses pixels transparents, le modèle la voyait sur fond noir, et il a
+# rendu du noir alors que le texte demandait #FF70B5.
+
+
+def _transparente(taille=(16, 16)) -> bytes:
+    """Un carré rouge au centre, le reste transparent — **et noir dessous**,
+    comme ce qu'un détourage laisse."""
+    image_ = Image.new("RGBA", taille, (0, 0, 0, 0))
+    for x in range(4, 12):
+        for y in range(4, 12):
+            image_.putpixel((x, y), (200, 40, 40, 255))
+    tampon = io.BytesIO()
+    image_.save(tampon, format="PNG")
+    return tampon.getvalue()
+
+
+def _pixel(octets: bytes, xy=(0, 0)):
+    with Image.open(io.BytesIO(octets)) as lue:
+        return lue.mode, lue.convert("RGB").getpixel(xy)
+
+
+def test_une_reference_transparente_part_sur_le_fond_demande():
+    mode, coin = _pixel(sur_le_fond(_transparente(), "#FF70B5"))
+    assert mode == "RGB"
+    assert coin == (255, 112, 181)
+    # Le sujet, lui, ne bouge pas.
+    assert _pixel(sur_le_fond(_transparente(), "#FF70B5"), (8, 8))[1] == (200, 40, 40)
+
+
+def test_sans_fond_regle_un_gris_neutre_jamais_le_noir():
+    assert _pixel(sur_le_fond(_transparente(), ""))[1] == (128, 128, 128)
+
+
+def test_une_image_opaque_repart_telle_quelle():
+    opaque = image("PNG")
+    assert sur_le_fond(opaque, "#FF70B5") == opaque
+    assert sur_le_fond(b"pas une image", "#FF70B5") == b"pas une image"
+
+
+def test_le_fournisseur_recoit_la_planche_sur_le_fond_du_jeu(client, tmp_path, double):
+    chose = _creer(client)
+    _jeu(client)
+    fichier = tmp_path / "planche-transparente.png"
+    fichier.write_bytes(_transparente((48, 24)))
+    reponse = client.post("/api/assets/import", json={"chemin": str(fichier)})
+    assert reponse.status_code in (200, 201), reponse.text
+    planche = reponse.json()["asset"]["identifiant"]
+    _ranger(client, chose["identifiant"], planche, "planche")
+
+    reponse = _generer(
+        client, personnage=chose["identifiant"], garder_mise_en_page=True
+    )
+    assert reponse.status_code == 202, reponse.text
+    _attendre(client, reponse.json()["identifiant"])
+
+    (partie,) = double.demandes[-1].references
+    mode, coin = _pixel(partie)
+    assert mode == "RGB"
+    assert coin == (255, 112, 181)
+
+
+def test_refaire_une_planche_n_envoie_pas_le_concept_art(client, tmp_path):
+    chose = _creer(client)
+    _jeu(client)
+    concept = client.post(
+        "/api/board/paste",
+        params={"nom": "champy-de-face.png", "forcer": True},
+        content=image("PNG"),
+    )
+    assert concept.status_code == 201, concept.text
+    concept = concept.json()["carte"]["identifiant"]
+    client.put(f"/api/characters/{chose['identifiant']}", json={"concept_arts": [concept]})
+    planche = _image(client, tmp_path)
+    _ranger(client, chose["identifiant"], planche, "planche")
+
+    # Sans la case, le concept art part comme avant.
+    ordinaire = _envoi(client, personnage=chose["identifiant"])
+    assert ordinaire.status_code == 200, ordinaire.text
+    assert concept in {l["asset"] for l in ordinaire.json()["images"]["lignes"]}
+
+    # Avec elle, seule la planche part.
+    refaite = _envoi(client, personnage=chose["identifiant"], garder_mise_en_page=True)
+    assert refaite.status_code == 200, refaite.text
+    assert {l["asset"] for l in refaite.json()["images"]["lignes"]} == {planche}
