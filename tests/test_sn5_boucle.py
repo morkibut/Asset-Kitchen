@@ -137,3 +137,20 @@ def test_ecouter_le_raccord_rend_deux_secondes_fin_vers_debut(audio):
         duree = wav.getnframes() / taux
     assert 0 < duree <= 2.01
     assert regle["mesures"]["boucle"]["verdict"] in ("raccord net", "le raccord claque")
+
+
+def test_un_sommet_aplati_dans_un_fichier_16_bits_se_dit_sature():
+    # Un fichier reçu décodé ne dépasse jamais 1 : la saturation s'y voit aux
+    # paliers collés au plafond, pas à des valeurs impossibles. Un sommet
+    # isolé à pleine échelle, lui, n'est pas une saturation.
+    from atelier.audio.traitement import decoder
+    taux = 16000
+    t = np.arange(taux) / taux
+    ecrete = np.clip(1.6 * np.sin(2 * np.pi * 220 * t), -1, 1)[:, None]
+    net = np.sin(2 * np.pi * 220 * t)[:, None] * 0.5
+    net[100, 0] = 1.0
+    for signal, attendu in ((ecrete, True), (net, False)):
+        chemin = __import__("pathlib").Path(__import__("tempfile").mkdtemp()) / "s.wav"
+        chemin.write_bytes(encoder(signal, taux))
+        relu, _ = decoder(chemin)
+        assert (mesurer(relu, taux)["ecretes"] > 0) is attendu

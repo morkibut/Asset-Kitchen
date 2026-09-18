@@ -314,6 +314,25 @@ def encoder_ogg(wav: bytes, qualite: int, *, fin_echantillon: int | None = None)
         "-fflags", "+bitexact", "-flags:a", "+bitexact", "-f", "ogg", "pipe:1"], wav)
 
 
+def _ecretes(signal, seuil=0.999, suite=3):
+    """Les échantillons saturés : au-delà de la pleine échelle (un rendu en
+    flottants avant encodage), **ou** collés au plafond au moins `suite` fois de
+    suite. Un fichier 16 bits décodé ne dépasse jamais 1 : ne compter que
+    `> 1` ne voyait aucune saturation dans un son reçu — un sommet aplati,
+    lui, se voit à ces paliers. Un sommet isolé à pleine échelle n'en est pas un."""
+    if not len(signal):
+        return 0
+    amplitude = np.abs(signal)
+    sature = amplitude > 1
+    for canal in range(signal.shape[1]):
+        haut = amplitude[:, canal] >= seuil
+        bords = np.diff(np.concatenate(([0], haut.astype(np.int8), [0])))
+        for debut, fin in zip(np.flatnonzero(bords == 1), np.flatnonzero(bords == -1)):
+            if fin - debut >= suite:
+                sature[debut:fin, canal] = True
+    return int(np.count_nonzero(sature))
+
+
 def mesurer(signal, taux):
     pic = float(np.max(np.abs(signal))) if len(signal) else 0
     rms = float(np.sqrt(np.mean(signal ** 2))) if len(signal) else 0
@@ -321,7 +340,7 @@ def mesurer(signal, taux):
     return {"duree": len(signal) / taux, "taux": taux, "canaux": signal.shape[1], "echantillons": len(signal),
         "crete": pic, "crete_db": 20 * math.log10(pic) if pic > 0 else None,
         "rms_db": 20 * math.log10(rms) if rms > 0 else None, "silencieux": pic <= 1e-8,
-        "ecretes": int(np.count_nonzero(np.abs(signal) > 1)),
+        "ecretes": _ecretes(signal),
         "lufs": lufs, "crete_vraie_db": crete_vraie_db}
 
 
