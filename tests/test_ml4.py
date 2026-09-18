@@ -237,9 +237,17 @@ def test_le_comptage_approche_clip_sur_des_cas_connus():
 async def test_la_grille_du_jeu_ne_part_pas_elle_se_dessinerait(jeu, famille):
     """Premier tirage réel (ML7, Z-Image) : « on a 64x64 grid » et « tile snap »
     donnaient un fond quadrillé. Ils ne partent plus vers un style local, et
-    l'écran les montre retirés."""
+    l'écran les montre retirés — sur les cinq familles, SDXL compris : la
+    grille est retirée pour elle-même avant que le rognage aux jetons de SDXL
+    n'entre en jeu, elle n'a donc pas besoin d'un traitement à part."""
     atelier, projet, nain, modeles = jeu
     vu = apercu(atelier, projet, modeles[famille], personnage=nain, pose="marche", direction="sud")
     assert "grid" not in vu["texte"] and "tile snap" not in vu["texte"]
-    retires = " ".join(r["texte"] for r in vu["local"]["retires"])
-    assert "64x64 grid" in retires or famille == "sdxl"
+    retires = vu["local"]["retires"]
+    grille = [r for r in retires if "64x64 grid" in r["texte"]]
+    snap = [r for r in retires if "tile snap" in r["texte"]]
+    # Jamais absente en silence : soit retirée pour elle-même (la taille reste
+    # tenue au retour), soit noyée dans un dépassement de jetons — jamais dans
+    # le texte envoyé, vérifié juste au-dessus.
+    assert grille and all(r["raison"] in (texte_local.RAISON_GRILLE, texte_local.RAISON_JETONS) for r in grille)
+    assert snap and all(r["raison"] in (texte_local.RAISON_GRILLE, texte_local.RAISON_JETONS) for r in snap)

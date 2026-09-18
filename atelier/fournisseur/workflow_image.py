@@ -6,11 +6,42 @@ import hashlib
 import io
 import time
 import zipfile
+from typing import Any
 
 from atelier.domaine.catalogue import Modele, Option
 from atelier.domaine.workflow import WorkflowRefuse, composer, normaliser, tirer_graine
 from atelier.fournisseur.port import ImageProduite
 from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu
+
+
+class _ObjectInfoPartage:
+    """Fait tenir un seul `GET /object_info` le temps d'un rafraîchissement du
+    catalogue (défaut 9b, relecture du 18/09/2026) : `diagnostiquer_profil`
+    (`atelier/fournisseur/workflow.py`, à l'autre agent) le redemande à chaque
+    profil sans le mettre en cache lui-même — vingt-trois styles locaux en
+    faisaient donc vingt-trois appels identiques à chaque ouverture d'écran.
+    On ne touche pas à ce fichier-là ; on partage l'appel depuis l'appelant,
+    en substituant temporairement `_json` sur l'instance du moteur."""
+
+    def __init__(self, moteur):
+        self._moteur = moteur
+
+    async def __aenter__(self):
+        original = self._moteur._json
+        cache: dict[str, Any] = {}
+
+        async def _json_partage(methode, chemin, *args, **kwargs):
+            if methode == "GET" and chemin == "/object_info" and not args and not kwargs:
+                if "reponse" not in cache:
+                    cache["reponse"] = await original(methode, chemin, *args, **kwargs)
+                return cache["reponse"]
+            return await original(methode, chemin, *args, **kwargs)
+
+        self._original, self._moteur._json = original, _json_partage
+        return self
+
+    async def __aexit__(self, *exc):
+        self._moteur._json = self._original
 
 
 class FournisseurWorkflowImage:
@@ -36,26 +67,100 @@ class FournisseurWorkflowImage:
     async def catalogue(self):
         moteur = self.fabrique_moteur()
         modeles = []
-        for p in self.profils.lister():
-            if p["nature"] != "image":
-                continue
-            diagnostic = await moteur.diagnostiquer_profil(p)
-            modeles.append(Modele(p["modele"], p["nom"], fournisseur=self.nom,
-                chez_lui=p["modele"].split(":", 1)[1], references_min=p["references_min"], references_max=p["references_max"],
-                proportions=tuple(dict.fromkeys(f["proportions"] for f in p["formats"])),
-                resolutions=tuple(dict.fromkeys(f["resolution"] for f in p["formats"])), locale=True,
-                options={n: Option(n, o["genre"], tuple(o.get("valeurs", [])), o.get("minimum"), o.get("maximum")) for n, o in p["parametres"].items()},
-                indisponible=" · ".join(diagnostic["problemes"]) or None,
-                reference=(p.get("style") or {}).get("reference"),
-                negatif_lu="prompt_negatif" in p["liaisons"],
-                famille=(p.get("style") or {}).get("famille")))
+        # Défaut 4a (relecture du 18/09/2026) : **une seule version par style**
+        # publiée dans le catalogue — celle « en service » (voir `_versions_a_publier`)
+        # —, pas chacune de ses générations passées. Les anciennes restent lisibles
+        # par `profils.de_modele` (les générations passées les nomment), elles
+        # disparaissent seulement d'ici.
+        #
+        # **Décision pour un profil importé à la main** : comportement inchangé,
+        # chaque version reste une entrée du catalogue. Seul un style passé par
+        # `styles_locaux.installer` porte un marqueur « en service »
+        # (`ServiceProfilsWorkflow.marquer_service`) ; un profil qu'on n'a jamais
+        # installé par ce geste-là n'en a aucun, et ce n'est pas trivialement le
+        # même cas : `tests/test_au7_au8.py` réimporte le même identifiant à la
+        # main avec un contenu différent et s'attend à retrouver l'ancienne
+        # version dans le catalogue, une version durable qu'une génération
+        # passée continue de nommer — les replier aurait changé ce contrat-là
+        # sans qu'on le lui ait demandé.
+        profils_images = [p for p in self.profils.lister() if p["nature"] == "image"]
+        par_identifiant: dict[str, list] = {}
+        for p in profils_images:
+            par_identifiant.setdefault(p["identifiant"], []).append(p)
+        a_publier = []
+        for identifiant, versions in par_identifiant.items():
+            a_publier.extend(self._versions_a_publier(identifiant, versions))
+        # Défaut 9b : un seul GET /object_info pour tout le rafraîchissement,
+        # partagé entre les appels à `diagnostiquer_profil` — vingt-trois styles
+        # locaux en refaisaient sinon vingt-trois, un par profil.
+        async with _ObjectInfoPartage(moteur):
+            for p in a_publier:
+                diagnostic = await moteur.diagnostiquer_profil(p)
+                modeles.append(Modele(p["modele"], p["nom"], fournisseur=self.nom,
+                    chez_lui=p["modele"].split(":", 1)[1], references_min=p["references_min"], references_max=p["references_max"],
+                    proportions=tuple(dict.fromkeys(f["proportions"] for f in p["formats"])),
+                    resolutions=tuple(dict.fromkeys(f["resolution"] for f in p["formats"])), locale=True,
+                    options={n: Option(n, o["genre"], tuple(o.get("valeurs", [])), o.get("minimum"), o.get("maximum")) for n, o in p["parametres"].items()},
+                    indisponible=" · ".join(diagnostic["problemes"]) or None,
+                    reference=(p.get("style") or {}).get("reference"),
+                    negatif_lu="prompt_negatif" in p["liaisons"],
+                    famille=(p.get("style") or {}).get("famille")))
         return modeles
+
+    def _versions_a_publier(self, identifiant, versions):
+        """Les versions de ce style à montrer dans le catalogue.
+
+        Avec un marqueur « en service » (un style installé par
+        `styles_locaux`) : une seule, celle que la dernière installation a
+        produite ou retrouvée — pas la plus récente par `cree_le`, sans quoi
+        un cycle A→B→A réinstallant A montrerait encore B. Sans marqueur (un
+        profil importé à la main) : toutes, comme avant cette règle."""
+        service = self.profils.version_en_service(identifiant)
+        if service is None:
+            return versions
+        trouvee = next((v for v in versions if v["version"] == service), None)
+        return [trouvee if trouvee else max(versions, key=lambda v: v["cree_le"])]
 
     async def generer(self, modele, demande):
         raise WorkflowRefuse("Un workflow local doit être lancé par une génération suivie de l'atelier.")
 
     def etape(self, generation, rang=0):
         return self.file_locale.trouver(f"image:{generation}:{rang}")
+
+    def _options_locales(self, profil, options, nombre_references):
+        """Ce que l'écran envoie pour un réglage de style local, mis en forme
+        avant `composer` (défaut 2, relecture du 18/09/2026).
+
+        **Un curseur HTML envoie une chaîne** (`e.target.value`) : une valeur
+        numérique reçue en texte (`"0.3"`) est convertie ici, pas rejetée —
+        `Option.accepte` n'accepte qu'un `int`/`float` sur un réglage
+        « intervalle ». Une chaîne qui ne se lit pas comme un nombre reste
+        refusée, avec une phrase qui le dit.
+
+        **Un réglage « propre aux références » (`reference_seule`, comme
+        `force`) reçu sans qu'aucune référence ne soit jointe est ignoré, pas
+        validé.** Le graphe à 0 référence ne le relie nulle part
+        (`_variantes` dans `atelier.domaine.workflow` : cette option n'existe
+        même pas dans ses liaisons) ; le garder dans les options aurait fait
+        échouer une génération sans image à cause d'un réglage inerte qui
+        traînait — par exemple un curseur `force` resté à sa valeur par défaut
+        pendant qu'aucune image n'est jointe.
+        """
+        resultat = {}
+        for nom, valeur in options.items():
+            parametre = profil["parametres"].get(nom)
+            if parametre is None:
+                resultat[nom] = valeur
+                continue
+            if parametre.get("reference_seule") and nombre_references == 0:
+                continue
+            if parametre.get("genre") == "intervalle" and isinstance(valeur, str):
+                try:
+                    valeur = float(valeur)
+                except ValueError as e:
+                    raise WorkflowRefuse(f"La valeur de {nom} doit être un nombre.") from e
+            resultat[nom] = valeur
+        return resultat
 
     def _inscrire_moteur(self):
         moteur = self.fabrique_moteur()
@@ -65,8 +170,9 @@ class FournisseurWorkflowImage:
 
     async def generer_suivi(self, modele, demande, generation, rang):
         p = self.profils.de_modele(modele.identifiant)
+        options = self._options_locales(p, demande.options, len(demande.references))
         valeurs = {"prompt": demande.prompt, "prompt_negatif": demande.prompt_negatif,
-            "resolution": demande.resolution, "proportions": demande.proportions, "options": dict(demande.options)}
+            "resolution": demande.resolution, "proportions": demande.proportions, "options": options}
         if "graine" in p["liaisons"]:
             # Une étape déjà préparée garde sa graine : la retirer changerait
             # le calcul que sa clé désigne.

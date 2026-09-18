@@ -26,9 +26,22 @@ class ServiceStylesLocaux:
 
     def _installe(self, identifiant):
         # Un style s'installe sous son propre identifiant : une version par
-        # jeu de fichiers résolus, les anciennes gardées.
+        # jeu de fichiers résolus, les anciennes gardées. **La version « en
+        # service » est celle que la dernière installation a produite ou
+        # retrouvée** (défaut 4b) — pas la plus récente par `cree_le` : sur un
+        # cycle A→B→A, réinstaller A ne réécrit rien (même version déjà connue)
+        # mais doit tout de même redevenir la version montrée, alors que B est
+        # plus jeune sur le disque. Sans marqueur (style jamais installé par
+        # cette règle), on replie sur la plus récente, comme avant.
         versions = [p for p in self.profils.lister() if p["identifiant"] == identifiant]
-        return max(versions, key=lambda p: p["cree_le"]) if versions else None
+        if not versions:
+            return None
+        service = self.profils.version_en_service(identifiant)
+        if service:
+            trouve = next((p for p in versions if p["version"] == service), None)
+            if trouve:
+                return trouve
+        return max(versions, key=lambda p: p["cree_le"])
 
     async def lister(self):
         inventaire_ = await self._inventaire()
@@ -50,7 +63,9 @@ class ServiceStylesLocaux:
         resolu = resoudre(entree, await self._inventaire())
         if not resolu["pret"]:
             raise WorkflowRefuse(f"Il manque : {', '.join(resolu['manque'])}.")
-        return self.profils.importer(construire_profil(entree, resolu["fichiers"]))
+        installe = self.profils.importer(construire_profil(entree, resolu["fichiers"]))
+        self.profils.marquer_service(identifiant, installe["version"])
+        return installe
 
     async def installer_prets(self):
         inventaire_ = await self._inventaire()
@@ -58,5 +73,7 @@ class ServiceStylesLocaux:
         for entree in STYLES:
             resolu = resoudre(entree, inventaire_)
             if resolu["pret"]:
-                resultats.append(self.profils.importer(construire_profil(entree, resolu["fichiers"])))
+                installe = self.profils.importer(construire_profil(entree, resolu["fichiers"]))
+                self.profils.marquer_service(entree["identifiant"], installe["version"])
+                resultats.append(installe)
         return resultats

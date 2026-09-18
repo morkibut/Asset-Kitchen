@@ -20,6 +20,31 @@ class ServiceProfilsWorkflow:
             raise WorkflowRefuse("Cette version de profil n'existe pas.")
         return self.racine / identifiant / (version + ".json")
 
+    def _chemin_service(self, identifiant):
+        # Rangé hors de `racine` (donc hors de `lister()`, qui glane
+        # `racine/*/*.json` en version de profil) : un petit fichier par style,
+        # à part des versions elles-mêmes (défaut 4b, relecture du 18/09/2026).
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", identifiant):
+            raise WorkflowRefuse("Cette version de profil n'existe pas.")
+        return self.fichiers.racine / "styles-locaux-service" / (identifiant + ".json")
+
+    def marquer_service(self, identifiant, version):
+        """La version qu'une installation vient de produire ou de retrouver pour
+        ce style — **pas** la plus récente par `cree_le`. Fichiers A→B→A :
+        réinstaller après ce cycle doit remettre A en service, alors que B est
+        plus jeune sur le disque."""
+        self.fichiers._poser(self._chemin_service(identifiant), octets_json({"version": version}))
+
+    def version_en_service(self, identifiant):
+        """La version en service, ou `None` si aucune installation n'est jamais
+        passée (jeu de données d'avant cette règle, ou style jamais installé) :
+        relue sans migration, sans lever — l'appelant replie alors sur la plus
+        récente par `cree_le`."""
+        try:
+            return json.loads(self._chemin_service(identifiant).read_text(encoding="utf-8"))["version"]
+        except (OSError, ValueError, KeyError):
+            return None
+
     def importer(self, brut):
         profil = normaliser(brut)
         version = version_de(profil)

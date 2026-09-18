@@ -14,7 +14,11 @@ FAMILLES: dict[str, dict] = {
     },
     'klein': {
         'nom': 'FLUX.2 Klein',
-        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'LoraLoader', 'EmptyFlux2LatentImage', 'Flux2Scheduler', 'KSamplerSelect', 'RandomNoise', 'CFGGuider', 'SamplerCustomAdvanced', 'ConditioningZeroOut', 'SplitSigmasDenoise', 'VAEDecode', 'ReferenceLatent', 'ImageScaleToTotalPixels', 'VAEEncode', 'LoadImage'),
+        # ⚠️ Défaut 9a (relecture du 18/09/2026) : `SplitSigmasDenoise` était exigé
+        # ici alors qu'aucun de nos quatre constructeurs (`construire_klein`,
+        # `styles_locaux.py`) n'en pose un dans le graphe — un ComfyUI qui n'a
+        # pas ce nœud personnalisé grisait donc Klein pour rien.
+        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'LoraLoader', 'EmptyFlux2LatentImage', 'Flux2Scheduler', 'KSamplerSelect', 'RandomNoise', 'CFGGuider', 'SamplerCustomAdvanced', 'ConditioningZeroOut', 'VAEDecode', 'ReferenceLatent', 'ImageScaleToTotalPixels', 'VAEEncode', 'LoadImage'),
         'clip': re.compile(r'qwen.?3.?4b', re.I),
         'vae': re.compile(r'flux2.?vae', re.I),
         'vitesse': '1 à 3 minutes par image',
@@ -418,8 +422,16 @@ def inventaire(informations):
     aux listes que les familles interrogent."""
     def options(noeud, champ):
         entree = (informations.get(noeud) or {}).get('input', {}).get('required', {}).get(champ)
-        if isinstance(entree, list) and entree and isinstance(entree[0], list):
+        if not isinstance(entree, list) or not entree:
+            return []
+        if isinstance(entree[0], list):
             return entree[0]
+        # Défaut 7 (relecture du 18/09/2026) : certains ComfyUI publient une entrée
+        # COMBO sous la forme `["COMBO", {"options": [...]}]` plutôt que
+        # `[[...], {...}]` — port de `inventory` (sc-clone `lib/providers.mjs` ~305) :
+        # `Array.isArray(spec?.[0]) ? spec[0] : spec?.[1]?.options || []`.
+        if len(entree) > 1 and isinstance(entree[1], dict):
+            return entree[1].get('options') or []
         return []
     unets = []
     for noeud in ('UNETLoader', 'UnetLoaderGGUF', 'UnetLoaderGGUFAdvanced'):
