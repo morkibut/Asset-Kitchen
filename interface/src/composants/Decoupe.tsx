@@ -314,7 +314,10 @@ export function EcranDecoupe({
       setRefus(erreur instanceof Refus ? erreur.message : "découpe illisible")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [famille, vu.identifiant, mode, colonnes, lignes, coteMin, sujet])
+    // `sujet` lui-même n'y est pas : le parent le recrée à chaque rendu, et la
+    // proposition repartirait sans fin en écrasant les rectangles corrigés.
+    // Seul le dépliage dont on repart compte.
+  }, [famille, vu.identifiant, mode, colonnes, lignes, coteMin, sujet.famille === "depliage" ? sujet.depuis : undefined])
 
   useEffect(() => {
     const signature = JSON.stringify([vu.identifiant, mode, colonnes, lignes, coteMin])
