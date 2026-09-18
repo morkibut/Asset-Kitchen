@@ -460,6 +460,8 @@ class Atelier:
             # cases d'une planche qui habille, la planche elle-même, et les
             # calques qui en reviennent.
             self.equipement,
+            # Et les profils de workflow (ML4) : un style local reçoit son texte.
+            profils=self.profils_workflow,
         )
         # **La planche, montée après la génération** (E13) : elle montre ce
         # qu'on achète avant de payer, et ce qu'elle montre est *composé par le

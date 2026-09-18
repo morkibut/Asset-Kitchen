@@ -79,6 +79,7 @@ from atelier.domaine.envoi import (
     DE_LA_POSE,
     DE_LA_VUE,
     DE_SA_FICHE,
+    DEMANDE,
     DU_PRODUIT,
     DES_IMAGES,
     DU_JEU,
@@ -95,6 +96,8 @@ from atelier.domaine.envoi import (
     resoudre,
 )
 from atelier.domaine.pliage import CasePliee, Pliage
+from atelier.domaine import texte_local
+from atelier.domaine.workflow import WorkflowRefuse
 from atelier.fournisseur import PortFournisseur
 from atelier.image import bande_de_palette, empreinte_de, mesurer
 from atelier.image.mesures import extension
@@ -197,8 +200,12 @@ class ServiceGenerations:
         production: "ServiceProduction | None" = None,
         pliage: "ServicePliage | None" = None,
         equipement: "ServiceEquipement | None" = None,
+        # **Les profils de workflow, pour une seule question** (ML4) : ce modèle
+        # est-il un style local, et lit-il un texte négatif ?
+        profils: Any = None,
     ) -> None:
         self._base = base
+        self._profils = profils
         self._fichiers = fichiers
         self._catalogue = catalogue
         # **Ils sont plusieurs depuis F1**, et ce service ne choisit jamais : il
@@ -771,12 +778,20 @@ class ServiceGenerations:
             # texte à la main est une prise de main sur *le prompt* ; le champ
             # d'interdiction est un autre champ, l'auteur y écrit ce qu'il veut,
             # et son texte passe en tête sans jamais céder.
-            prompt_negatif=self._interdit(projet, demande.prompt_negatif, tri),
+            #
+            # **Un workflow local qui ne relie pas le négatif ne le lit pas**
+            # (ML4) : la génération ne dit donc pas qu'il est parti.
+            prompt_negatif=(
+                self._interdit(projet, demande.prompt_negatif, tri)
+                if self._negatif_lu(identifiant_modele)
+                else ""
+            ),
             prompt=self._texte(
                 demande.prompt,
                 demande.repris,
                 projet,
                 pliage,
+                modele=identifiant_modele,
                 personnage=personnage,
                 pose=pose,
                 direction=direction,
@@ -2208,6 +2223,7 @@ class ServiceGenerations:
         projet: str | None,
         pliage: Pliage | None,
         *,
+        modele: str = "",
         personnage: str | None = None,
         pose: str | None = None,
         direction: str | None = None,
@@ -2225,19 +2241,57 @@ class ServiceGenerations:
         `generation.json` porte le prompt tel qu'il est parti : une génération se
         relit des mois après sans avoir à reconstituer l'univers du jour.
         """
-        return joindre(
-            self.lignes(
-                sujet,
-                repris=repris,
-                projet=projet,
-                personnage=personnage,
-                pose=pose,
-                direction=direction,
-                pliage=pliage,
-                tri=tri,
-                roles=roles,
-                mise_en_page=mise_en_page,
+        lignes = self.lignes(
+            sujet,
+            repris=repris,
+            projet=projet,
+            personnage=personnage,
+            pose=pose,
+            direction=direction,
+            pliage=pliage,
+            tri=tri,
+            roles=roles,
+            mise_en_page=mise_en_page,
+        )
+        local = self._texte_local(lignes, modele, pliage)
+        return joindre(lignes) if local is None else local["texte"]
+
+    # ── Un style local (ML4) ─────────────────────────────────────────────────
+
+    def _profil_local(self, modele: str) -> dict[str, Any] | None:
+        """Le profil de workflow que ce modèle désigne, ou rien."""
+        if self._profils is None or not modele.startswith("ComfyUI:"):
+            return None
+        try:
+            return self._profils.de_modele(modele)
+        except WorkflowRefuse:
+            return None
+
+    def _negatif_lu(self, modele: str) -> bool:
+        """Le texte négatif atteindra-t-il le modèle ? Un fournisseur distant le
+        replie dans sa demande ; un workflow local ne le lit que relié."""
+        profil = self._profil_local(modele)
+        return profil is None or "prompt_negatif" in profil["liaisons"]
+
+    def _texte_local(
+        self, lignes: list[dict[str, Any]], modele: str, pliage: Pliage | None
+    ) -> dict[str, Any] | None:
+        """Le texte d'un style local, composé des lignes mêmes que `joindre` lit
+        — ou rien, et c'est `joindre` qui compose : **un modèle payant reçoit
+        exactement le texte d'avant ML4**."""
+        profil = self._profil_local(modele)
+        if profil is None or not profil.get("style"):
+            return None
+        planche = ""
+        if pliage is not None and not pliage.geometrie_connue:
+            planche = texte_local.planche_courte(
+                pliage.colonnes, pliage.lignes, (c.texte for c in pliage.cases)
             )
+        return texte_local.composer(
+            lignes,
+            profil["style"],
+            negatif_lu="prompt_negatif" in profil["liaisons"],
+            planche=planche,
         )
 
     # **Le projet ne se lit qu'une fois pour composer** (M3). Composer un aperçu
@@ -2337,12 +2391,28 @@ class ServiceGenerations:
             roles=roles,
             mise_en_page=garder_mise_en_page,
         )
+        # **Un style local lit les mêmes lignes, jointes autrement** (ML4) : une
+        # seule partie sans titre, et ce qui n'y entre pas est dans `local`.
+        local = self._texte_local(lignes, modele, pliage) if modele else None
         return {
-            "texte": joindre(lignes),
+            "texte": joindre(lignes) if local is None else local["texte"],
             # **Les trois parties, telles qu'elles partent** (R7). L'écran de
             # confirmation les montre séparément et n'en recompose aucune : le
             # texte entier est leur jonction, et il est rendu juste au-dessus.
-            "parties": parties(lignes),
+            "parties": parties(lignes) if local is None else [
+                {
+                    "clef": DEMANDE,
+                    "titre": "",
+                    "nom": "le texte du style",
+                    "propos": "déclencheur, sujet et jeu en raccourci — ce qu'un modèle local lit",
+                    "texte": local["texte"],
+                    "repris": any(l.get("origine") == REPRIS for l in lignes),
+                }
+            ],
+            # `None` pour tout modèle qui n'est pas un style local. Sinon : les
+            # segments dans l'ordre, ce qui est retiré et pourquoi, les jetons
+            # comptés et la limite (SDXL seul), et si le négatif sera lu.
+            "local": local,
             # **Une ligne par chose qui part** (E14). Le même appel sert le
             # dépliant d'hier et l'écran de confirmation : deux routes auraient
             # rouvert la question de savoir laquelle dit vrai.
@@ -2373,7 +2443,13 @@ class ServiceGenerations:
             # contient pas ; sans cette ligne, l'écran qui promet de tout montrer
             # aurait un angle mort — et ce serait celui que la tranche vient
             # d'ouvrir.
-            "interdiction": self._interdit(projet, prompt_negatif, tri),
+            "interdiction": (
+                self._interdit(projet, prompt_negatif, tri)
+                if self._negatif_lu(modele)
+                else ""
+            ),
+            # **Le négatif sera-t-il lu ?** Faux, l'écran ne le propose pas.
+            "negatif_lu": self._negatif_lu(modele),
         }
 
     def _interdit_fond(self, projet: str | None, tri: "Tri | None") -> str:

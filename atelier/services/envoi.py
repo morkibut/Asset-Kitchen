@@ -258,6 +258,9 @@ class ServiceEnvoi:
             # ce qui part, et la première divergence se serait vue chez le
             # modèle et pas chez nous.
             "parties": apercu["parties"],
+            # **Ce qu'un style local laisse en route** (ML4), et si le négatif
+            # sera lu : `None` pour tout modèle qui n'est pas un style local.
+            "local": apercu["local"],
             "lignes": lignes,
             "groupes": self._groupes(lignes, images, options),
             "images": images,
@@ -322,6 +325,8 @@ class ServiceEnvoi:
         return {
             "couleur": apercu["fond"],
             "interdiction": apercu["interdiction"],
+            # Faux quand le modèle choisi ne lit aucun négatif (ML4).
+            "negatif_lu": apercu["negatif_lu"],
             "du_jeu": self._univers.univers(projet).fond,
             "corrige": tri.fond is not None,
             "propose": propose,
