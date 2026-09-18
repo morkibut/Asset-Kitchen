@@ -516,6 +516,21 @@ export function EcranDecoupe({
 
   const corrigee = detectee !== null && !memesBoites(zones.map((z) => z.boite), detectee.boites)
 
+  // ── Les deux gestes finaux d'une découpe ────────────────────────────────────
+  //
+  // **Ce qu'on fait d'une découpe, ce sont deux choses** — les extraire en
+  // images séparées, ou en faire une animation — et l'auteur les veut côte à
+  // côte, au pied de la colonne (demande du 18 septembre 2026). Chacune tient
+  // sa phrase, dite avant de cliquer plutôt que devinée après.
+  const phraseExtraire =
+    sujet.famille === "carte"
+      ? remplacer
+        ? "Extraire : le morceau remplace l'originale."
+        : `Extraire : ${gardees.length} morceau${gardees.length > 1 ? "x" : ""} dans la réserve.`
+      : sujet.famille === "depliage"
+        ? `Extraire : ${gardees.length} image${gardees.length > 1 ? "s" : ""} dans un nouveau dépliage de la planche.`
+        : `Extraire : ${gardees.length} image${gardees.length > 1 ? "s" : ""} séparées dans la galerie, rangées comme la planche.`
+
   return (
     <div data-decoupe className="flex min-h-0 flex-1 flex-col bg-papier">
       <AvisBrouillon brouillon={brouillon} />
@@ -680,6 +695,23 @@ export function EcranDecoupe({
               onBasculerGarder={basculerGarder}
             />
 
+            {/* **Un geste sur les zones, pas sur une sortie** — il reste donc
+                près de leur liste, et non au pied de la colonne avec les deux
+                gestes finaux (demande de l'auteur, 18 septembre 2026). */}
+            {zones.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  memoriser()
+                  setZones([])
+                  setChoisie(null)
+                }}
+                className="mesure self-start text-[10.5px] text-encre-3 hover:text-encre-2"
+              >
+                Tout retirer
+              </button>
+            )}
+
             {choisie !== null && zones[choisie] && (
               <div className="flex flex-col gap-[8px] border-t border-trait pt-[8px]">
                 <p className="text-[11px] text-encre-2">Zone sélectionnée</p>
@@ -737,38 +769,12 @@ export function EcranDecoupe({
                 </span>
               </button>
             )}
-            <div className="flex items-center gap-[8px]">
-              <button
-                type="button"
-                disabled={gardees.length === 0 || enCours}
-                onClick={() => setRelecture(true)}
-                className="h-[34px] rounded-7 border border-trait px-[14px] text-[13px] text-encre transition-colors duration-120 hover:bg-carte disabled:text-eteint"
-              >
-                {`Relire ${gardees.length} sortie${gardees.length > 1 ? "s" : ""}`}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (zones.length > 0) memoriser()
-                  setZones([])
-                  setChoisie(null)
-                }}
-                className="mesure ml-auto text-[10.5px] text-encre-3 hover:text-encre-2"
-              >
-                Tout retirer
-              </button>
-            </div>
-            {zones.length === 0 && <Pourquoi texte="aucun rectangle — il n'y a rien à découper" />}
-            {zones.length > 0 && gardees.length === 0 && (
-              <Pourquoi texte="aucune zone gardée — coche « garder » sur au moins une" />
-            )}
-            {/* **La seconde sortie** (`AU19`, ouverte à une carte en `RP21`) :
-                les mêmes rectangles, joués au lieu d'être rangés. Sous le
-                bouton principal et non à côté — on découpe le plus souvent en
-                images, et l'animation est le geste du jour où l'image en est
-                une. */}
+            {/* **Les réglages propres à l'animation, groupés et titrés** — au-
+                dessus des deux gestes finaux, jamais mélangés avec eux
+                (demande de l'auteur, 18 septembre 2026). */}
             {animable && (
-              <div className="mt-[8px] flex flex-col gap-[4px] border-t border-trait pt-[8px]">
+              <div className="flex flex-col gap-[4px] border-b border-trait pb-[8px]">
+                <p className="text-[11px] text-encre-2">Animation</p>
                 {/* **À quoi elle se rattache, demandé avant de cliquer**
                     (`AU20`). Deux lignes, déjà remplies : ce n'est pas un
                     formulaire, c'est ce qui va se passer, écrit là où on le
@@ -822,26 +828,46 @@ export function EcranDecoupe({
                     </span>
                   </button>
                 )}
+              </div>
+            )}
+
+            {/* **Ce que chacun des deux gestes produit, dit avant de
+                cliquer.** */}
+            {gardees.length > 0 && <Pourquoi texte={phraseExtraire} />}
+            {animable && gardees.length > 0 && (
+              <Pourquoi texte="Animation : les cases deviennent les images d'une animation, dans l'ordre des numéros — son atelier s'ouvre ensuite pour la régler." />
+            )}
+
+            {/* **Les deux gestes finaux d'une découpe, côte à côte** — les
+                deux choses qu'on en fait (demande de l'auteur, 18 septembre
+                2026). */}
+            <div className="flex items-center gap-[8px]">
+              <button
+                type="button"
+                disabled={gardees.length === 0 || enCours}
+                onClick={() => setRelecture(true)}
+                className="h-[34px] flex-1 rounded-7 border border-trait px-[14px] text-[13px] text-encre transition-colors duration-120 hover:bg-carte disabled:text-eteint"
+              >
+                {`Extraire ${gardees.length} image${gardees.length > 1 ? "s" : ""}`}
+              </button>
+              {animable && (
                 <button
                   type="button"
                   disabled={gardees.length === 0 || enCours}
                   onClick={() => void animer()}
-                  className="h-[34px] rounded-7 border border-trait px-[14px] text-[13px] text-encre transition-colors duration-120 hover:bg-carte disabled:text-eteint"
+                  className="h-[34px] flex-1 rounded-7 border border-trait px-[14px] text-[13px] text-encre transition-colors duration-120 hover:bg-carte disabled:text-eteint"
                 >
                   {enCours
                     ? "…"
                     : parLigne
                       ? `En faire ${lignes} animations`
-                      : `En faire une animation de ${gardees.length} images`}
+                      : "En faire une animation"}
                 </button>
-                {gardees.length > 0 && (
-                  <Pourquoi texte="les cases deviennent les images de l'animation, dans l'ordre où elles sont numérotées — son atelier s'ouvre ensuite pour la régler" />
-                )}
-              </div>
-            )}
-            {/* Ce que les morceaux deviennent, dit avant de cliquer. */}
-            {sujet.famille === "carte" && gardees.length > 0 && !remplacer && (
-              <Pourquoi texte="les morceaux arrivent dans la réserve, non promus — l'originale reste où elle est" />
+              )}
+            </div>
+            {zones.length === 0 && <Pourquoi texte="aucun rectangle — il n'y a rien à découper" />}
+            {zones.length > 0 && gardees.length === 0 && (
+              <Pourquoi texte="aucune zone gardée — coche « garder » sur au moins une" />
             )}
           </div>
         </aside>

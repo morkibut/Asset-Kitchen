@@ -45,7 +45,7 @@ function poserCarte(onAnimer?: (bandes: Bande[]) => void) {
 test("les rectangles dessinés partent en animation, et mènent à son atelier", async () => {
   const ouvrir = vi.fn()
   const animer = poser(ouvrir)
-  fireEvent.click(await screen.findByRole("button", { name: "En faire une animation de 4 images" }))
+  fireEvent.click(await screen.findByRole("button", { name: "En faire une animation" }))
   await waitFor(() => expect(animer).toHaveBeenCalledOnce())
   // **Les rectangles de l'écran, dans leur ordre** : c'est celui que l'auteur a
   // sous les yeux, numéroté au pied de chaque rectangle.
@@ -56,7 +56,7 @@ test("les rectangles dessinés partent en animation, et mènent à son atelier",
 
 test("sans seconde sortie, l'écran ne propose que de découper en images", async () => {
   poser(undefined)
-  await screen.findByRole("button", { name: "Relire 4 sorties" })
+  await screen.findByRole("button", { name: "Extraire 4 images" })
   expect(screen.queryByRole("button", { name: /En faire une animation/ })).toBeNull()
 })
 
@@ -81,7 +81,7 @@ test("une ligne par direction n'est proposée que quand la grille en a autant qu
 test("une carte offre aussi Animer, aux mêmes conditions qu'une planche", async () => {
   const ouvrir = vi.fn()
   const animer = poserCarte(ouvrir)
-  fireEvent.click(await screen.findByRole("button", { name: "En faire une animation de 4 images" }))
+  fireEvent.click(await screen.findByRole("button", { name: "En faire une animation" }))
   await waitFor(() => expect(animer).toHaveBeenCalledOnce())
   // **La source dit d'où vient l'image** : une carte, pas une feuille — et
   // c'est elle qui décide de la route et du service que le serveur emploie.
@@ -92,6 +92,24 @@ test("une carte offre aussi Animer, aux mêmes conditions qu'une planche", async
 
 test("sans onAnimer, une carte ne propose pas non plus le geste", async () => {
   poserCarte(undefined)
-  await screen.findByRole("button", { name: "Relire 4 sorties" })
+  await screen.findByRole("button", { name: "Extraire 4 images" })
   expect(screen.queryByRole("button", { name: /En faire une animation/ })).toBeNull()
+})
+
+// ── Les deux gestes finaux, côte à côte (demande de l'auteur, 18 sept. 2026) ─
+
+test("les deux gestes finaux sont côte à côte, et chacun déclenche son geste existant", async () => {
+  const ouvrir = vi.fn()
+  const decouper = vi.spyOn(api, "decouper").mockResolvedValue({ decoupes: [] } as never)
+  poser(ouvrir)
+  const extraire = await screen.findByRole("button", { name: "Extraire 4 images" })
+  const animer = screen.getByRole("button", { name: "En faire une animation" })
+  // **Côte à côte** : les deux boutons partagent le même parent — la rangée
+  // au pied de la colonne, et non deux blocs séparés.
+  expect(extraire.parentElement).toBe(animer.parentElement)
+
+  // « Extraire » passe toujours par la relecture, comme avant son renommage.
+  fireEvent.click(extraire)
+  fireEvent.click(await screen.findByRole("button", { name: "Créer ces résultats" }))
+  await waitFor(() => expect(decouper).toHaveBeenCalledOnce())
 })

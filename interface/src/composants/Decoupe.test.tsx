@@ -45,12 +45,12 @@ test("une zone se nomme, se garde ou s'écarte", async () => {
   fireEvent.change(nom, { target: { value: "tête du gobelin" } })
   expect(nom).toHaveValue("tête du gobelin")
 
-  expect(await screen.findByRole("button", { name: "Relire 1 sortie" })).toBeInTheDocument()
+  expect(await screen.findByRole("button", { name: "Extraire 1 image" })).toBeInTheDocument()
   fireEvent.click(screen.getByLabelText("Garder la zone 1"))
   expect(screen.getByLabelText("Garder la zone 1")).toHaveAttribute("aria-pressed", "false")
   // Écartée, elle ne compte plus dans ce qui sortira.
   expect(await screen.findByText("aucune zone gardée — coche « garder » sur au moins une")).toBeInTheDocument()
-  expect(screen.getByRole("button", { name: "Relire 0 sortie" })).toBeDisabled()
+  expect(screen.getByRole("button", { name: "Extraire 0 image" })).toBeDisabled()
 })
 
 test("les coordonnées d'une zone se règlent au clavier", async () => {
@@ -75,7 +75,7 @@ test("une zone s'ajoute avec + Zone", async () => {
   await screen.findByLabelText("Nom de la zone 1")
   fireEvent.click(screen.getByRole("button", { name: "+ Zone" }))
   expect(await screen.findByLabelText("Nom de la zone 2")).toBeInTheDocument()
-  expect(screen.getByRole("button", { name: "Relire 2 sorties" })).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Extraire 2 images" })).toBeInTheDocument()
 })
 
 test("une zone se déplace en la glissant par son corps", async () => {
@@ -128,7 +128,7 @@ test("les sorties se relisent avant d'être créées, et une zone écartée n'en
   fireEvent.change(screen.getByLabelText("Nom de la zone 1"), { target: { value: "tête" } })
   fireEvent.click(screen.getByLabelText("Garder la zone 2"))
 
-  fireEvent.click(screen.getByRole("button", { name: "Relire 1 sortie" }))
+  fireEvent.click(screen.getByRole("button", { name: "Extraire 1 image" }))
   const fenetre = await screen.findByRole("dialog", { name: "Découper une image" })
   expect(fenetre).toHaveTextContent("tête")
   expect(fenetre).toHaveTextContent("20 × 20 px")
@@ -141,7 +141,7 @@ test("les sorties se relisent avant d'être créées, et une zone écartée n'en
 test("la relecture propose « ‹ Les zones » sans rien créer", async () => {
   const decouper = poser()
   await screen.findByLabelText("Nom de la zone 1")
-  fireEvent.click(screen.getByRole("button", { name: "Relire 1 sortie" }))
+  fireEvent.click(screen.getByRole("button", { name: "Extraire 1 image" }))
   await screen.findByRole("dialog", { name: "Découper une image" })
   fireEvent.click(screen.getByRole("button", { name: "‹ Les zones" }))
   expect(screen.queryByRole("dialog")).toBeNull()
@@ -157,7 +157,7 @@ test("découper une carte relit avant de créer, avec la réserve pour destinati
     sujet={{ famille: "carte", carte: carte(), onDecoupe: vi.fn() }}
     onFermer={vi.fn()} onFente={vi.fn()} />)
   await screen.findByLabelText("Nom de la zone 1")
-  fireEvent.click(screen.getByRole("button", { name: "Relire 1 sortie" }))
+  fireEvent.click(screen.getByRole("button", { name: "Extraire 1 image" }))
   const fenetre = await screen.findByRole("dialog", { name: "Découper une image" })
   expect(fenetre).toHaveTextContent("la réserve")
   fireEvent.click(screen.getByRole("button", { name: "Créer ces résultats" }))
@@ -202,7 +202,7 @@ test("refaire un découpage : valider envoie les coupes à depliageRefaire", asy
     onFermer={vi.fn()} onFente={vi.fn()} />)
 
   await screen.findByLabelText("Nom de la zone 1")
-  fireEvent.click(screen.getByRole("button", { name: "Relire 1 sortie" }))
+  fireEvent.click(screen.getByRole("button", { name: "Extraire 1 image" }))
   const fenetre = await screen.findByRole("dialog", { name: "Découper une image" })
   expect(fenetre).toHaveTextContent("un nouveau dépliage de la planche")
   fireEvent.click(screen.getByRole("button", { name: "Créer ces résultats" }))
