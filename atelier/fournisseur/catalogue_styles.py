@@ -5,33 +5,37 @@ import re
 FAMILLES: dict[str, dict] = {
     'zimage': {
         'nom': 'Z-Image Turbo',
-        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'LoraLoader', 'ModelSamplingAuraFlow', 'EmptySD3LatentImage', 'KSampler', 'VAEDecode'),
+        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'LoraLoader', 'ModelSamplingAuraFlow', 'EmptySD3LatentImage', 'KSampler', 'VAEDecode', 'LoadImage', 'ImageScale', 'VAEEncode'),
         'unet': re.compile(r'z.?image.*turbo', re.I),
         'clip': re.compile(r'qwen.?3.?4b', re.I),
         'vae': re.compile(r'(^|[\\/])ae\.safetensors$', re.I),
-        'vitesse': 'environ 30 secondes par image'
+        'vitesse': 'environ 30 secondes par image',
+        'reference': 'depart'
     },
     'klein': {
         'nom': 'FLUX.2 Klein',
-        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'LoraLoader', 'EmptyFlux2LatentImage', 'Flux2Scheduler', 'KSamplerSelect', 'RandomNoise', 'CFGGuider', 'SamplerCustomAdvanced', 'ConditioningZeroOut', 'SplitSigmasDenoise', 'VAEDecode'),
+        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'LoraLoader', 'EmptyFlux2LatentImage', 'Flux2Scheduler', 'KSamplerSelect', 'RandomNoise', 'CFGGuider', 'SamplerCustomAdvanced', 'ConditioningZeroOut', 'SplitSigmasDenoise', 'VAEDecode', 'ReferenceLatent', 'ImageScaleToTotalPixels', 'VAEEncode', 'LoadImage'),
         'clip': re.compile(r'qwen.?3.?4b', re.I),
         'vae': re.compile(r'flux2.?vae', re.I),
-        'vitesse': '1 à 3 minutes par image'
+        'vitesse': '1 à 3 minutes par image',
+        'reference': 'sujet'
     },
     'flux1dev': {
         'nom': 'FLUX.1-dev',
-        'noeuds': ('UnetLoaderGGUF', 'DualCLIPLoader', 'VAELoader', 'LoraLoader', 'FluxGuidance', 'EmptySD3LatentImage', 'KSampler', 'VAEDecode'),
+        'noeuds': ('UnetLoaderGGUF', 'DualCLIPLoader', 'VAELoader', 'LoraLoader', 'FluxGuidance', 'EmptySD3LatentImage', 'KSampler', 'VAEDecode', 'LoadImage', 'ImageScale', 'VAEEncode'),
         'unet': re.compile(r'flux1.?dev.*\.gguf$', re.I),
         'clip1': re.compile(r't5xxl', re.I),
         'clip2': re.compile(r'clip_l', re.I),
         'vae': re.compile(r'(^|[\\/])ae\.safetensors$', re.I),
-        'vitesse': '3 à 6 minutes par image'
+        'vitesse': '3 à 6 minutes par image',
+        'reference': 'depart'
     },
     'sdxl': {
         'nom': 'SDXL',
-        'noeuds': ('CheckpointLoaderSimple', 'LoraLoader', 'EmptyLatentImage', 'KSampler', 'VAEDecodeTiled'),
+        'noeuds': ('CheckpointLoaderSimple', 'LoraLoader', 'EmptyLatentImage', 'KSampler', 'VAEDecodeTiled', 'LoadImage', 'ImageScale', 'VAEEncode'),
         'checkpoint': re.compile(r'sd_xl_base', re.I),
-        'vitesse': 'environ 40 secondes par image'
+        'vitesse': 'environ 40 secondes par image',
+        'reference': 'depart'
     }
 }
 

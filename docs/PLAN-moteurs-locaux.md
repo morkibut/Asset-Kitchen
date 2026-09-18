@@ -148,11 +148,11 @@ Le format des profils, seul. Rien de visible encore, mais tout le reste en dépe
 - [ ] **Klein — garder ce sujet** : graphe à 1, 2, 3 références par `ReferenceLatent`
       (relevé d'abord sur le gabarit d'édition officiel de ComfyUI, pas deviné) ; les références
       du sujet partent selon leur usage (chantier RS)
-- [ ] **Z-Image, FLUX.1, SDXL — partir de cette image** : graphe à une référence, option *force*
+- [x] **Z-Image, FLUX.1, SDXL — partir de cette image** : graphe à une référence, option *force*
       (0 à 1, défaut 0,55 comme sc-clone)
 - [ ] le catalogue dit, pour chaque style, *quel genre* de référence il prend ; *Relire avant
       l'envoi* le nomme sur chaque image jointe
-- [ ] essais sans ComfyUI
+- [x] essais sans ComfyUI
 
 ### ML4 · Le texte qui part vers un modèle local (serveur)
 
@@ -160,12 +160,17 @@ Le texte que l'atelier compose est écrit pour GPT Image : long, en paragraphes 
 `CAMERA`…). Un modèle local le lit mal, et **SDXL lit par tranches de 77 mots-jetons** : au-delà,
 ComfyUI découpe le texte en morceaux et chacun pèse moins — le déclencheur se noie.
 
-- [ ] le mot déclencheur en tête ; le signalement du sujet ensuite ; l'univers raccourci
-- [ ] pour SDXL, le texte tient dans une tranche de 77, et *Relire avant l'envoi* montre ce qui
-      a été retiré plutôt que de le retirer en silence
-- [ ] le texte négatif part quand le moteur le lit (SDXL, Klein base) et n'est **pas** proposé
-      quand il est ignoré (Z-Image, Klein distillé : guidage à 1)
-- [ ] essais : le texte envoyé pour une case, une planche et une image libre, par famille
+- [x] le mot déclencheur en tête ; le signalement du sujet ensuite ; l'univers raccourci
+      (`atelier/domaine/texte_local.py`, lu par `ServiceGenerations._texte` et `apercu` sur les
+      mêmes lignes que `joindre` ; la caméra longue, le nommage des images et les titres ne partent
+      pas, et sont rendus dans `local.retires`)
+- [x] pour SDXL, le texte tient dans une tranche de 77, et la résolution rend ce qui a été retiré
+      (`local.retires`, raison « au-delà des 77 jetons ») plutôt que de le retirer en silence —
+      comptage approché du BPE de CLIP, calé pour compter large ; l'écran le montrera en ML5
+- [x] le texte négatif part quand le profil le relie (SDXL, Klein base) ; sinon il n'est ni
+      envoyé ni enregistré, et `negatif_lu` dit à l'écran (ML5) de ne pas le proposer
+- [x] essais : le texte envoyé pour une case, une planche et une image libre, par famille
+      (`tests/test_ml4.py`, dont un texte OpenRouter figé au caractère près)
 
 ### ML5 · Les écrans
 

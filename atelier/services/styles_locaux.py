@@ -38,6 +38,7 @@ class ServiceStylesLocaux:
             installe = self._installe(entree["identifiant"])
             sortie.append({"identifiant": entree["identifiant"], "nom": entree["nom"], "famille": entree["famille"],
                 "genre": entree.get("genre", "sprite"), "vitesse": FAMILLES[entree["famille"]]["vitesse"],
+                "reference": FAMILLES[entree["famille"]]["reference"],
                 "pret": resolu["pret"], "manque": resolu["manque"],
                 "modele": installe["modele"] if installe else None})
         return sortie

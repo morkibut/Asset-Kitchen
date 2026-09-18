@@ -845,6 +845,12 @@ class ServiceEnvoi:
             # réserve de son fournisseur, et un modèle relu d'une photo d'avant
             # la V2.2 rend une chaîne vide plutôt que rien.
             "fournisseur": lu.fournisseur,
+            # **Ce qu'un style local fait d'une image jointe** (ML3) : la garder
+            # comme sujet (Klein) ou repeindre par-dessus. `None` ailleurs — un
+            # modèle distant ne dit pas ce qu'il en fait.
+            "reference": getattr(lu, "reference", None),
+            "reference_nom": {"sujet": "garder ce sujet", "depart": "partir de cette image"}.get(
+                getattr(lu, "reference", None) or ""),
         }
 
     def _cible(self, projet: str | None) -> int:

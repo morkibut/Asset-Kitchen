@@ -92,6 +92,10 @@ class Modele:
     references_min: int = 0
     locale: bool = False
     indisponible: str | None = None
+    # Le genre de référence qu'un style local prend (ML3) : « sujet » (il garde le sujet,
+    # plusieurs images) ou « depart » (il repeint par-dessus une seule). Vide pour tout
+    # modèle qui n'est pas un style de workflow local.
+    reference: str | None = None
 
     @property
     def envoi(self) -> str:
@@ -201,7 +205,8 @@ def _option_depuis_json(d: dict[str, Any]) -> Option:
 
 def modele_en_json(modele: Modele) -> dict[str, Any]:
     return {
-        **({"locale": True, "references_min": modele.references_min, "indisponible": modele.indisponible} if modele.locale else {}),
+        **({"locale": True, "references_min": modele.references_min, "indisponible": modele.indisponible,
+            "reference": modele.reference} if modele.locale else {}),
         "identifiant": modele.identifiant,
         "nom": modele.nom,
         "fournisseur": modele.fournisseur,
@@ -229,5 +234,5 @@ def modele_depuis_json(d: dict[str, Any]) -> Modele:
         variations_max=d.get("variations_max", 1),
         options={n: _option_depuis_json(o) for n, o in (d.get("options") or {}).items()},
         references_min=d.get("references_min", 0), locale=d.get("locale", False),
-        indisponible=d.get("indisponible"),
+        indisponible=d.get("indisponible"), reference=d.get("reference"),
     )

@@ -45,7 +45,8 @@ class FournisseurWorkflowImage:
                 proportions=tuple(dict.fromkeys(f["proportions"] for f in p["formats"])),
                 resolutions=tuple(dict.fromkeys(f["resolution"] for f in p["formats"])), locale=True,
                 options={n: Option(n, o["genre"], tuple(o.get("valeurs", [])), o.get("minimum"), o.get("maximum")) for n, o in p["parametres"].items()},
-                indisponible=" · ".join(diagnostic["problemes"]) or None))
+                indisponible=" · ".join(diagnostic["problemes"]) or None,
+                reference=(p.get("style") or {}).get("reference")))
         return modeles
 
     async def generer(self, modele, demande):

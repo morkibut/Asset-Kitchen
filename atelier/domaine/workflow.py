@@ -76,6 +76,10 @@ def _variantes(d, base, liaisons, parametres, sortie):
         raise WorkflowRefuse("Seul un workflow d'image déclare des variantes, rangées par nombre de références.")
     variantes = {}
     communes = {n for n in liaisons if not n.startswith("reference:")}
+    # Une option « propre aux références » (ML3) ne se relie que dans les variantes qui
+    # en prennent au moins une ; elle est donc absente du graphe principal, et une variante
+    # peut l'ajouter sans que ça casse l'égalité des champs communs.
+    propres = {"option:" + cle for cle, p in parametres.items() if isinstance(p, dict) and p.get("reference_seule")}
     for cle, v in brutes.items():
         quelle = f" (variante à {cle} référence(s))"
         if not isinstance(v, dict) or not re.fullmatch(r"[0-9]{1,2}", str(cle)):
@@ -83,8 +87,9 @@ def _variantes(d, base, liaisons, parametres, sortie):
         nombre = _verifier_graphe(v.get("graphe"), v.get("liaisons"), parametres, quelle)
         if nombre != int(cle) or nombre == base or str(nombre) in variantes:
             raise WorkflowRefuse(f"La variante rangée sous {cle} relie {nombre} référence(s) ; chaque nombre n'a qu'un graphe.")
-        if {n for n in v["liaisons"] if not n.startswith("reference:")} != communes:
-            raise WorkflowRefuse("Chaque variante relie les mêmes champs que le graphe principal, références mises à part." + quelle)
+        liees = {n for n in v["liaisons"] if not n.startswith("reference:")}
+        if not (communes <= liees <= communes | propres):
+            raise WorkflowRefuse("Chaque variante relie les mêmes champs que le graphe principal — plus, le cas échéant, ses options propres aux références —, références mises à part." + quelle)
         noeud = v["graphe"].get(str(sortie.get("noeud")))
         if not isinstance(noeud, dict):
             raise WorkflowRefuse("Le nœud de sortie porte le même numéro dans chaque variante." + quelle)
@@ -92,6 +97,9 @@ def _variantes(d, base, liaisons, parametres, sortie):
     nombres = sorted([base, *map(int, variantes)])
     if nombres != list(range(nombres[0], nombres[-1] + 1)):
         raise WorkflowRefuse("Les nombres de références acceptés doivent se suivre, sans trou.")
+    for nom in propres:
+        if not any(nom in v["liaisons"] for v in variantes.values()):
+            raise WorkflowRefuse(f"L'option {nom.split(':', 1)[1]}, propre aux références, doit être reliée dans au moins une variante.")
     return variantes, nombres[0], nombres[-1]
 
 
@@ -101,9 +109,11 @@ def _valider_style(info):
     `variantes`."""
     if not isinstance(info, dict):
         raise WorkflowRefuse("Les métadonnées de style doivent être un objet.")
-    obligatoires = ("famille", "declencheur", "genre", "vitesse", "source")
+    obligatoires = ("famille", "declencheur", "genre", "vitesse", "source", "reference")
     if any(not isinstance(info.get(c), str) or not info[c] for c in obligatoires):
-        raise WorkflowRefuse("Les métadonnées de style déclarent famille, déclencheur, genre, vitesse et source.")
+        raise WorkflowRefuse("Les métadonnées de style déclarent famille, déclencheur, genre, vitesse, source et le genre de référence.")
+    if info["reference"] not in ("sujet", "depart"):
+        raise WorkflowRefuse("Le genre de référence d'un style est « sujet » (garder ce sujet) ou « depart » (partir de cette image).")
     if "suffixe" in info and (not isinstance(info["suffixe"], str) or not info["suffixe"]):
         raise WorkflowRefuse("Le suffixe de style doit être un texte non vide.")
     return {**{c: info[c] for c in obligatoires}, **({"suffixe": info["suffixe"]} if "suffixe" in info else {})}
@@ -135,8 +145,13 @@ def _normaliser(brut: dict) -> dict:
     if nature == "audio" and (references or {"largeur", "hauteur", "images", "cadence"}.intersection(liaisons)):
         raise WorkflowRefuse("Un profil sonore relie le texte, les secondes et ses options ; il n’utilise pas de références ou de dimensions d’image.")
     for cle, p in parametres.items():
-        if not isinstance(p, dict) or "option:" + cle not in liaisons:
+        if not isinstance(p, dict):
             raise WorkflowRefuse(f"Le paramètre {cle} doit être relié au workflow.")
+        # Une option « propre aux références » (ML3) ne se relie jamais au graphe
+        # principal — seulement à ses variantes, vérifié plus bas une fois les
+        # variantes lues. Une option ordinaire, elle, doit l'être ici.
+        if ("option:" + cle in liaisons) == bool(p.get("reference_seule")):
+            raise WorkflowRefuse(f"Le paramètre {cle} doit être relié au graphe principal, ou, s'il est propre aux références, à ses variantes seulement.")
         option = Option(cle, p.get("genre", ""), tuple(p.get("valeurs", [])), p.get("minimum"), p.get("maximum"))
         if "defaut" not in p or not option.accepte(p["defaut"]) or (option.genre == "booleen" and not isinstance(p["defaut"], bool)):
             raise WorkflowRefuse(f"Le paramètre {cle} doit déclarer un type et un défaut valides.")
@@ -174,6 +189,9 @@ def _normaliser(brut: dict) -> dict:
         raise WorkflowRefuse("Choisir le nœud de sortie : images pour une image, gifs ou videos pour un clip, audio pour un son.")
     sortie["noeud"] = str(sortie["noeud"])
     variantes, minimum, maximum = _variantes(d, len(references), liaisons, parametres, sortie) if d.get("variantes") else ({}, len(references), len(references))
+    for cle, p in parametres.items():
+        if p.get("reference_seule") and not any("option:" + cle in v["liaisons"] for v in variantes.values()):
+            raise WorkflowRefuse(f"Le paramètre {cle}, propre aux références, doit être relié dans au moins une variante.")
     return {"identifiant": identifiant, "nom": nom, "nature": nature, "graphe": graphe,
         "liaisons": liaisons, "parametres": parametres, "formats": formats,
         "durees": durees if nature in ("video", "audio") else [], "cadence": cadence if nature == "video" else 0,

@@ -1,17 +1,23 @@
-"""Les 22 styles de sc-clone, portés en profils gag2 ordinaires (ML2).
+"""Les 22 styles de sc-clone, portés en profils gag2 ordinaires (ML2, ML3).
 
 Un constructeur par famille (`lib/zimage.mjs`, `lib/flux2.mjs`, `lib/flux1.mjs`,
 `providers.mjs` § `makeWorkflow`/`styleWorkflow`) : même numérotation de nœuds que
-la source, pour comparer les graphes structurellement dans les essais. Seule la
-branche à **0 référence** est portée ici ; `reference`/`tileable` viendront avec
-ML3 et ML6 — mais un graphe est produit par une fonction dédiée par famille,
-prête à recevoir ces branches sans toucher aux autres.
+la source, pour comparer les graphes structurellement dans les essais.
+
+ML3 ajoute la branche référence de chaque famille, en variantes (`atelier.domaine.workflow`
+§ `_variantes`) : **FLUX.2 Klein** garde le sujet (`ReferenceLatent`, 1 à 3 références,
+relevé sur le gabarit d'édition officiel de ComfyUI — `docs/PLAN-moteurs-locaux.md` §
+« L'image de référence ») ; **Z-Image, FLUX.1-dev, SDXL** partent de l'image (une seule
+référence, `VAEEncode` en latent de départ, force réglable par l'option `force`, propre à
+cette variante — `tileable` reste pour ML6, sans toucher aux autres.
 
 Le texte reste un simple nœud à relier (`liaisons["prompt"]`) : composer le
 texte final (déclencheur en tête, suffixe, troncature SDXL…) est le travail
 de ML4, pas de celui-ci.
 """
 from __future__ import annotations
+
+import copy
 
 from atelier.domaine.workflow import WorkflowRefuse
 from atelier.fournisseur.catalogue_styles import FAMILLES, style as style_de
@@ -28,28 +34,92 @@ def _noeud(class_type, **inputs):
     return {"class_type": class_type, "inputs": inputs}
 
 
+def _copier(graphe, liaisons):
+    return copy.deepcopy(graphe), {n: [dict(lien) for lien in liens] for n, liens in liaisons.items()}
+
+
+# Force de transformation par défaut d'un style « partir de cette image » — comme sc-clone
+# (`input.denoise ?? .55`). L'option est propre à la variante à une référence : elle n'existe
+# pas sur le graphe à 0 référence, qui n'a pas de latent de départ à doser.
+PARAMETRE_FORCE = {"force": {"genre": "intervalle", "minimum": 0, "maximum": 1, "defaut": 0.55, "reference_seule": True}}
+
+
+def _variante_partir_de(graphe, liaisons, *, sampler_noeud, id_charge, id_echelle, id_encode, vae):
+    """`lib/zimage.mjs`, `lib/flux1.mjs`, `providers.mjs` § branche `uploadedReference` :
+    l'image remplace le bruit de départ, la force du KSampler devient réglable."""
+    graphe, liaisons = _copier(graphe, liaisons)
+    graphe[id_charge] = _noeud("LoadImage", image="")
+    graphe[id_echelle] = _noeud("ImageScale", image=[id_charge, 0], upscale_method="nearest-exact",
+        width=512, height=512, crop="disabled")
+    graphe[id_encode] = _noeud("VAEEncode", pixels=[id_echelle, 0], vae=list(vae))
+    graphe[sampler_noeud]["inputs"]["latent_image"] = [id_encode, 0]
+    liaisons["reference:0"] = [{"noeud": id_charge, "champ": "image"}]
+    liaisons["option:force"] = [{"noeud": sampler_noeud, "champ": "denoise"}]
+    liaisons["largeur"] = [*liaisons["largeur"], {"noeud": id_echelle, "champ": "width"}]
+    liaisons["hauteur"] = [*liaisons["hauteur"], {"noeud": id_echelle, "champ": "height"}]
+    return graphe, liaisons
+
+
+def _variante_klein(graphe, liaisons, *, distille, nombre):
+    """Gabarit d'édition officiel FLUX.2 Klein (relevé le 18/09/2026) : par référence,
+    `LoadImage` → `ImageScaleToTotalPixels` → `VAEEncode`, un seul `VAEEncode` par image ;
+    puis `ReferenceLatent` posé sur le positif ET le négatif, en chaîne — N images donnent
+    2N `ReferenceLatent`. Le latent de départ (`EmptyFlux2LatentImage`) ne change pas :
+    ce n'est pas de l'img2img, c'est une édition qui garde le sujet."""
+    graphe, liaisons = _copier(graphe, liaisons)
+    prochain = 16
+    derniers = []
+    for i in range(nombre):
+        charge, echelle, encode = str(prochain), str(prochain + 1), str(prochain + 2)
+        prochain += 3
+        graphe[charge] = _noeud("LoadImage", image="")
+        graphe[echelle] = _noeud("ImageScaleToTotalPixels", image=[charge, 0], upscale_method="nearest-exact",
+            megapixels=1, resolution_steps=1)
+        graphe[encode] = _noeud("VAEEncode", pixels=[echelle, 0], vae=["3", 0])
+        liaisons[f"reference:{i}"] = [{"noeud": charge, "champ": "image"}]
+        derniers.append(encode)
+    positif = "5"
+    for latent in derniers:
+        noeud = str(prochain)
+        prochain += 1
+        graphe[noeud] = _noeud("ReferenceLatent", conditioning=[positif, 0], latent=[latent, 0])
+        positif = noeud
+    negatif = "7" if distille else "6"
+    for latent in derniers:
+        noeud = str(prochain)
+        prochain += 1
+        graphe[noeud] = _noeud("ReferenceLatent", conditioning=[negatif, 0], latent=[latent, 0])
+        negatif = noeud
+    graphe["8"]["inputs"]["positive"] = [positif, 0]
+    graphe["8"]["inputs"]["negative"] = [negatif, 0]
+    return graphe, liaisons
+
+
 def _metadonnees_style(entree):
     famille = FAMILLES[entree["famille"]]
     d = {"famille": entree["famille"], "declencheur": entree["declencheur"], "genre": entree.get("genre", "sprite"),
-        "vitesse": famille["vitesse"], "source": entree["source"]}
+        "vitesse": famille["vitesse"], "source": entree["source"], "reference": famille["reference"]}
     if entree.get("suffixe"):
         d["suffixe"] = entree["suffixe"]
     return d
 
 
-def _profil(entree, *, graphe, liaisons, sortie_noeud, etapes):
-    return {
+def _profil(entree, *, graphe, liaisons, sortie_noeud, etapes, parametres=None, variantes=None):
+    profil = {
         "identifiant": entree["identifiant"],
         "nom": FAMILLES[entree["famille"]]["nom"] + " · " + entree["nom"],
         "nature": "image",
         "graphe": graphe,
         "liaisons": liaisons,
-        "parametres": {},
+        "parametres": parametres or {},
         "formats": _formats(),
         "sortie": {"noeud": sortie_noeud, "champ": "images"},
         "description": entree["description"],
         "style": _metadonnees_style(entree),
     }
+    if variantes:
+        profil["variantes"] = variantes
+    return profil
 
 
 def construire_zimage(entree, fichiers):
@@ -74,7 +144,10 @@ def construire_zimage(entree, fichiers):
         "graine": [{"noeud": "9", "champ": "seed"}]}
     # cfg 1 : le négatif ne pèse rien dans le calcul, comme sur Klein distillé —
     # écart volontaire documenté dans tests/test_ml2.py.
-    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="11", etapes=entree["etapes"])
+    variante_graphe, variante_liaisons = _variante_partir_de(graphe, liaisons, sampler_noeud="9",
+        id_charge="12", id_echelle="13", id_encode="14", vae=("3", 0))
+    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="11", etapes=entree["etapes"],
+        parametres=PARAMETRE_FORCE, variantes={"1": {"graphe": variante_graphe, "liaisons": variante_liaisons}})
 
 
 def construire_klein(entree, fichiers):
@@ -107,7 +180,11 @@ def construire_klein(entree, fichiers):
     if not distille:
         # Guidage réel (cfg 5) : le négatif compte, on le relie.
         liaisons["prompt_negatif"] = [{"noeud": "6", "champ": "text"}]
-    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="15", etapes=entree["etapes"])
+    variantes = {}
+    for nombre in (1, 2, 3):
+        variante_graphe, variante_liaisons = _variante_klein(graphe, liaisons, distille=distille, nombre=nombre)
+        variantes[str(nombre)] = {"graphe": variante_graphe, "liaisons": variante_liaisons}
+    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="15", etapes=entree["etapes"], variantes=variantes)
 
 
 def construire_flux1(entree, fichiers):
@@ -133,7 +210,10 @@ def construire_flux1(entree, fichiers):
     # cfg 1 côté KSampler : comme Z-Image, le négatif ne pèse rien mathématiquement
     # (le guidage réel passe par FluxGuidance, sur le positif seul). Pas de liaison
     # prompt_negatif — écart documenté dans tests/test_ml2.py.
-    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="11", etapes=entree["etapes"])
+    variante_graphe, variante_liaisons = _variante_partir_de(graphe, liaisons, sampler_noeud="9",
+        id_charge="12", id_echelle="13", id_encode="14", vae=("3", 0))
+    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="11", etapes=entree["etapes"],
+        parametres=PARAMETRE_FORCE, variantes={"1": {"graphe": variante_graphe, "liaisons": variante_liaisons}})
 
 
 def construire_sdxl(entree, fichiers):
@@ -153,7 +233,12 @@ def construire_sdxl(entree, fichiers):
     liaisons = {"prompt": [{"noeud": "2", "champ": "text"}], "prompt_negatif": [{"noeud": "3", "champ": "text"}],
         "largeur": [{"noeud": "4", "champ": "width"}], "hauteur": [{"noeud": "4", "champ": "height"}],
         "graine": [{"noeud": "5", "champ": "seed"}]}
-    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="7", etapes=entree["etapes"])
+    # Le VAE part du checkpoint (sortie n° 2), pas d'un VAELoader séparé — comme
+    # `providers.mjs` § makeWorkflow, branche `uploadedReference`.
+    variante_graphe, variante_liaisons = _variante_partir_de(graphe, liaisons, sampler_noeud="5",
+        id_charge="8", id_echelle="10", id_encode="9", vae=("1", 2))
+    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="7", etapes=entree["etapes"],
+        parametres=PARAMETRE_FORCE, variantes={"1": {"graphe": variante_graphe, "liaisons": variante_liaisons}})
 
 
 CONSTRUCTEURS = {"zimage": construire_zimage, "klein": construire_klein, "flux1dev": construire_flux1, "sdxl": construire_sdxl}

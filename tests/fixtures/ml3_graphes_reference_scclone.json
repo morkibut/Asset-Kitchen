@@ -1,0 +1,458 @@
+{
+ "zimage-pixel": {
+  "1": {
+   "class_type": "UNETLoader",
+   "inputs": {
+    "unet_name": "z_image_turbo_bf16.safetensors",
+    "weight_dtype": "default"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen_3_4b.safetensors",
+    "type": "lumina2",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "ae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "LoraLoader",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "clip": [
+     "2",
+     0
+    ],
+    "lora_name": "pixel_art_style_z_image_turbo.safetensors",
+    "strength_model": 1,
+    "strength_clip": 1
+   }
+  },
+  "5": {
+   "class_type": "ModelSamplingAuraFlow",
+   "inputs": {
+    "model": [
+     "4",
+     0
+    ],
+    "shift": 3
+   }
+  },
+  "6": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "4",
+     1
+    ],
+    "text": "Un pèlerin"
+   }
+  },
+  "7": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "4",
+     1
+    ],
+    "text": ""
+   }
+  },
+  "8": {
+   "class_type": "EmptySD3LatentImage",
+   "inputs": {
+    "width": 512,
+    "height": 512,
+    "batch_size": 1
+   }
+  },
+  "9": {
+   "class_type": "KSampler",
+   "inputs": {
+    "seed": 42,
+    "steps": 9,
+    "cfg": 1,
+    "sampler_name": "euler",
+    "scheduler": "simple",
+    "denoise": 0.55,
+    "model": [
+     "5",
+     0
+    ],
+    "positive": [
+     "6",
+     0
+    ],
+    "negative": [
+     "7",
+     0
+    ],
+    "latent_image": [
+     "14",
+     0
+    ]
+   }
+  },
+  "10": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "9",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "11": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "10",
+     0
+    ],
+    "filename_prefix": "SpriteForge_ZImage"
+   }
+  },
+  "12": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "ref-0.png"
+   }
+  },
+  "13": {
+   "class_type": "ImageScale",
+   "inputs": {
+    "image": [
+     "12",
+     0
+    ],
+    "upscale_method": "nearest-exact",
+    "width": 512,
+    "height": 512,
+    "crop": "disabled"
+   }
+  },
+  "14": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "13",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  }
+ },
+ "flux1-modern": {
+  "1": {
+   "class_type": "UnetLoaderGGUF",
+   "inputs": {
+    "unet_name": "D-disk\\flux1-dev-Q8_0.gguf"
+   }
+  },
+  "2": {
+   "class_type": "DualCLIPLoader",
+   "inputs": {
+    "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
+    "clip_name2": "clip_l.safetensors",
+    "type": "flux",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "ae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "LoraLoader",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "clip": [
+     "2",
+     0
+    ],
+    "lora_name": "D-disk\\flux1dev_modern_pixelart.safetensors",
+    "strength_model": 1,
+    "strength_clip": 1
+   }
+  },
+  "5": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "4",
+     1
+    ],
+    "text": "Un pèlerin"
+   }
+  },
+  "6": {
+   "class_type": "FluxGuidance",
+   "inputs": {
+    "conditioning": [
+     "5",
+     0
+    ],
+    "guidance": 3.5
+   }
+  },
+  "7": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "4",
+     1
+    ],
+    "text": ""
+   }
+  },
+  "8": {
+   "class_type": "EmptySD3LatentImage",
+   "inputs": {
+    "width": 512,
+    "height": 512,
+    "batch_size": 1
+   }
+  },
+  "9": {
+   "class_type": "KSampler",
+   "inputs": {
+    "seed": 42,
+    "steps": 20,
+    "cfg": 1,
+    "sampler_name": "euler",
+    "scheduler": "simple",
+    "denoise": 0.55,
+    "model": [
+     "4",
+     0
+    ],
+    "positive": [
+     "6",
+     0
+    ],
+    "negative": [
+     "7",
+     0
+    ],
+    "latent_image": [
+     "14",
+     0
+    ]
+   }
+  },
+  "10": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "9",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "11": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "10",
+     0
+    ],
+    "filename_prefix": "SpriteForge_Flux1"
+   }
+  },
+  "12": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "ref-0.png"
+   }
+  },
+  "13": {
+   "class_type": "ImageScale",
+   "inputs": {
+    "image": [
+     "12",
+     0
+    ],
+    "upscale_method": "nearest-exact",
+    "width": 512,
+    "height": 512,
+    "crop": "disabled"
+   }
+  },
+  "14": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "13",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  }
+ },
+ "sdxl-pixelart": {
+  "1": {
+   "class_type": "CheckpointLoaderSimple",
+   "inputs": {
+    "ckpt_name": "sd_xl_base_1.0.safetensors"
+   }
+  },
+  "2": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "text": "Un pèlerin",
+    "clip": [
+     "13",
+     1
+    ]
+   }
+  },
+  "3": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "text": "mauvaise qualité",
+    "clip": [
+     "13",
+     1
+    ]
+   }
+  },
+  "4": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 512,
+    "height": 512,
+    "batch_size": 1
+   }
+  },
+  "5": {
+   "class_type": "KSampler",
+   "inputs": {
+    "seed": 42,
+    "steps": 28,
+    "cfg": 6,
+    "sampler_name": "dpmpp_2m",
+    "scheduler": "karras",
+    "denoise": 0.55,
+    "model": [
+     "13",
+     0
+    ],
+    "positive": [
+     "2",
+     0
+    ],
+    "negative": [
+     "3",
+     0
+    ],
+    "latent_image": [
+     "9",
+     0
+    ]
+   }
+  },
+  "6": {
+   "class_type": "VAEDecodeTiled",
+   "inputs": {
+    "samples": [
+     "5",
+     0
+    ],
+    "vae": [
+     "1",
+     2
+    ],
+    "tile_size": 256,
+    "overlap": 64,
+    "temporal_size": 64,
+    "temporal_overlap": 8
+   }
+  },
+  "7": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "6",
+     0
+    ],
+    "filename_prefix": "SpriteForge"
+   }
+  },
+  "8": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "ref-0.png"
+   }
+  },
+  "9": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "10",
+     0
+    ],
+    "vae": [
+     "1",
+     2
+    ]
+   }
+  },
+  "10": {
+   "class_type": "ImageScale",
+   "inputs": {
+    "image": [
+     "8",
+     0
+    ],
+    "upscale_method": "nearest-exact",
+    "width": 512,
+    "height": 512,
+    "crop": "disabled"
+   }
+  },
+  "13": {
+   "class_type": "LoraLoader",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "clip": [
+     "1",
+     1
+    ],
+    "lora_name": "pixel-art-xl.safetensors",
+    "strength_model": 0.35,
+    "strength_clip": 0.35
+   }
+  }
+ }
+}
