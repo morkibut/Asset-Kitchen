@@ -7,6 +7,13 @@
 > `docs/releves/2026-09-18-son-*.md`.
 >
 > Quel modèle sur quelle tranche : [PLAN-son-affectation.md](PLAN-son-affectation.md).
+>
+> **Où en est le chantier (18 septembre 2026, branche `feat/son`, worktree
+> `.claude/worktrees/son`).** La partie **serveur** de SN0, SN1, SN2, SN3, SN4, SN5 et SN8 est
+> écrite et tenue par ses essais (suite complète : 3 060 passés ; les trois échecs relevés
+> existaient avant la branche). La maquette SNM attend l'avis de l'auteur ; **aucun écran** n'est
+> encore construit. Une case cochée ci-dessous est tenue ; une case qui dit « côté serveur, fait »
+> attend son écran. Rien n'a encore tourné sur un vrai modèle : les poids ne sont pas téléchargés.
 
 ## Décisions d'architecture
 
@@ -18,9 +25,10 @@
 - **L'atelier fournit ses méthodes sonores.** Plus besoin de coller un export ComfyUI pour faire
   un bruitage : les profils des moteurs retenus sont livrés, dérivés des modèles de workflow
   officiels. Coller son propre workflow reste possible.
-- **Six familles** — bruitage, interface et rétro, ambiance, musique, chanson et jingle, voix —
-  qui fixent le moteur par défaut, la durée, le niveau visé et le format de livraison
-  ([archi-son.md §3](archi-son.md)).
+- **Sept familles**, sous ces clés exactes : `bruitage`, `interface`, `ambiance`, `musique`,
+  `jingle`, `chanson`, `voix`. Elles fixent le moteur par défaut, la durée, le nombre de tirages,
+  le niveau visé et le format de livraison ([archi-son.md §3](archi-son.md)). La maquette les
+  montre en six boutons (« chanson et jingle » partagent le leur, avec un choix dedans).
 - **Moteurs** : Stable Audio 3 Small-SFX pour bruitages et ambiances ; sfxr pour l'interface et
   le 8-bit ; **ACE-Step 1.5 pour la musique** (tempo, tonalité, mesure, instrumental) ;
   **YuE2 pour les chansons** ; ACE-Step aussi pour les jingles (lui seul reçoit une tonalité) ;
@@ -55,11 +63,18 @@ puis télécharger environ **14 Go** (23 Go avec le secours facultatif) dans
 | | `ace_1.5_vae.safetensors` | `vae` | 0,3 Go |
 | Chansons | `yue2_3b_int8_convrot.safetensors` | `checkpoints` | 4,0 Go |
 | *Secours, facultatif* | `stable_audio_3_medium.safetensors` | `checkpoints` | 9,2 Go |
+| *Second secours, facultatif* | `stable-audio-open-1.0.safetensors` + `t5-base.safetensors` | `checkpoints`, `text_encoders` | à relever |
 
-Deux fichiers que les modèles de workflow officiels réclament **ne sont pas nécessaires** : le
-second encodeur d'ACE-Step (`qwen_1.7b_ace15`, 3,7 Go — trop lourd à côté du reste sur 8 Go)
-et le modèle de réécriture de Stable Audio 3 Medium (`qwen3.5_2b_bf16`, 4,6 Go — coupé, voir
-les décisions). Le banc SN0 le confirme.
+Stable Audio Open 1.0 passe par les nœuds **natifs** de ComfyUI : la copie au format diffusers
+déjà présente (utilisée par MySpriteAi par un nœud tiers) ne lui sert pas.
+
+Le modèle de réécriture de Stable Audio 3 Medium (`qwen3.5_2b_bf16`, 4,6 Go) n'est pas
+nécessaire : il est coupé (voir les décisions). **Le second encodeur d'ACE-Step
+(`qwen_1.7b_ace15`, 3,7 Go) reste une question pour le banc** : ComfyUI ne reconnaît
+l'encodeur d'ACE-Step 1.5 que par son chargeur à deux fichiers ; le profil livré y met le
+petit encodeur deux fois et coupe les « codes audio » que le grand écrit — le nœud les décrit
+comme ce qui améliore la qualité. Si le banc l'entend, il faudra le télécharger ; le banc
+essaie les deux quand le fichier est là.
 
 Les liens sont dans les notes des modèles de workflow officiels (dans ComfyUI : Modèles →
 Audio) et dans les relevés. La licence de Stable Audio 3 est à accepter sur la page
@@ -111,8 +126,10 @@ son tempo et sa boucle ; un repère sonore sur une image d'animation.
 **Bloquée par** : SN0.
 
 L'atelier livre ses profils sonores (Small-SFX, Medium, ACE-Step 1.5, YuE2, Stable Audio Open
-1.0 par le nœud déjà installé). Le format de profil apprend les liaisons qui manquent : graine,
-nombre de tirages, paroles, tempo, tonalité, mesure, et **une durée libre dans un intervalle**
+1.0 par les nœuds natifs). Le format de profil apprend les liaisons qui manquent : paroles,
+tempo, tonalité, mesure, et **une durée libre dans un intervalle** (la graine existait déjà,
+posée par le chantier des moteurs locaux ; le nombre de tirages n'est pas une liaison — une série,
+ce sont N travaux, voir SN3)
 (aujourd'hui, une durée doit figurer dans une liste déclarée ; une musique de 16 mesures à
 90 BPM dure 42,67 s). Le profil de Stable Audio 3 Medium coupe la réécriture du texte. Le
 diagnostic nomme chaque fichier absent, son dossier et sa source.
@@ -120,8 +137,9 @@ diagnostic nomme chaque fichier absent, son dossier et sa source.
 - [ ] Sur un ComfyUI qui a les poids, un bruitage se lance depuis une phrase et revient
       écoutable, sans rien importer.
 - [ ] Sur un ComfyUI à qui manque un fichier, le moteur est grisé avec le nom du fichier, son
-      dossier et sa page de téléchargement — jamais proposé puis refusé.
-- [ ] Un workflow collé par l'auteur marche comme avant.
+      dossier et sa page de téléchargement — jamais proposé puis refusé. *(Côté serveur, fait :
+      l'installation et le diagnostic nomment chaque fichier absent, son dossier et sa source.)*
+- [x] Un workflow collé par l'auteur marche comme avant.
 
 ### SN2 · L'univers sonore, et le texte qui part
 
@@ -132,12 +150,13 @@ référence, moteur par famille), les gabarits par moteur et leurs exemples livr
 composition du texte montrée avant le lancement.
 
 - [ ] Un pas d'un jeu « fantasy médiévale, rendu 16-bit » part avec `TrackType: SFX`, la
-      description, le rendu et la prise de son — et l'écran le montre avant.
-- [ ] Un univers vide ne contraint rien : la description part seule, avec la prise de son de la
+      description, le rendu et la prise de son — et l'écran le montre avant. *(Côté serveur,
+      fait : la route de relecture le montre.)*
+- [x] Un univers vide ne contraint rien : la description part seule, avec la prise de son de la
       famille.
-- [ ] Un texte relu à la main part tel quel.
+- [x] Un texte relu à la main part tel quel.
 - [ ] Une description en français part telle quelle, et l'écran signale que le moteur comprend
-      l'anglais — rien n'est traduit.
+      l'anglais — rien n'est traduit. *(Côté serveur, fait : l'indicateur existe.)*
 
 ### SN3 · Une série de tirages, et les variantes
 
@@ -147,10 +166,15 @@ Un geste lance N graines (8 par défaut) ; la série s'écoute en grille, avec s
 le niveau perçu en LUFS, nouveau) ; garder plusieurs tirages forme un jeu de variantes.
 
 - [ ] Huit tirages d'un pas reviennent dans une même série, écoutables à la suite au clavier.
-- [ ] Garder quatre tirages forme un jeu de variantes qui se rouvre avec ses quatre sons.
-- [ ] Une série coupée en route reprend sans relancer les tirages déjà rendus.
-- [ ] Aucune mesure n'écarte un tirage d'elle-même : un tirage saturé est signalé, mais se
-      garde et se livre si l'auteur le décide (aujourd'hui il est bloqué).
+      *(Côté serveur, fait : huit graines, une série.)*
+- [x] Garder quatre tirages forme un jeu de variantes qui se rouvre avec ses quatre sons.
+- [x] Une série coupée en route reprend sans relancer les tirages déjà rendus.
+- [x] Aucune mesure n'écarte un tirage d'elle-même : un tirage saturé est signalé, mais se
+      garde et se livre si l'auteur le décide.
+
+Garder des tirages applique aussi les réglages de leur famille (mono, niveau visé) en une
+nouvelle version de chaque son, visible dans ses versions — c'est le geste de l'auteur qui les
+pose, jamais un traitement qui se poserait seul.
 
 ### SN4 · Livrer des fichiers que Godot lit tels quels
 
@@ -160,14 +184,17 @@ WAV ou OGG selon la famille (l'OGG passe par le ffmpeg déjà présent), le `.im
 `AudioStreamRandomizer` d'un jeu de variantes, la scène stable nommée `son.tscn` (elle
 s'appelle aujourd'hui `personnage.tscn`, même pour un son), les noms stables
 (`sfx_`, `amb_`, `mus_`, `vo_`, `ui_`), le niveau visé par famille, le passage en mono, et
-`credits.json`. Le paquet actuel (PCM dans le `.tres`) reste lisible pour ce qui a déjà été livré.
+`credits.json`. **Un son sans famille** — importé, ou fabriqué par un workflow collé — garde le
+paquet d'AU14 (PCM dans le `.tres`) : l'auteur ou l'agent lui pose une famille (route
+`PUT …/family`, outil `set_sound_family`) pour qu'il se livre en fichiers.
 
-- [ ] Dans un vrai Godot 4.7 (`--headless --import`), le `.import` écrit par l'atelier survit et
-      le son joue en boucle quand il le doit.
-- [ ] Un jeu de huit variantes se livre en `AudioStreamRandomizer` réglé pour ne jamais rejouer
+- [x] Dans un vrai Godot 4.7 (`--headless --import`), le `.import` écrit par l'atelier survit et
+      le son joue en boucle quand il le doit. *(Godot le réécrit s'il est incomplet : l'atelier
+      écrit donc la forme complète, gardée octet pour octet — voir `docs/PIEGES.md`.)*
+- [x] Un jeu de huit variantes se livre en `AudioStreamRandomizer` réglé pour ne jamais rejouer
       la même variante deux fois de suite (`playback_mode = 0`).
-- [ ] `credits.json` nomme le moteur, sa licence, la graine et le texte de chaque son.
-- [ ] Une livraison de son ne crée plus de `personnage.tscn`.
+- [x] `credits.json` nomme le moteur, sa licence, la graine et le texte de chaque son.
+- [x] Une livraison de son ne crée plus de `personnage.tscn`.
 
 ### SN5 · Les ambiances qui bouclent sans couture
 
@@ -178,8 +205,9 @@ du raccord qui dit s'il claque ; et si le banc l'a montré possible en natif, **
 la jointure** par Stable Audio 3 (on refait les deux secondes autour du raccord).
 
 - [ ] Une pluie de 30 s tourne dix fois de suite sans clic audible, et la mesure du raccord le
-      confirme.
-- [ ] L'écran fait entendre le raccord seul (les deux secondes autour), en boucle.
+      confirme. *(Prouvé sur une pluie synthétique ; reste une vraie pluie du banc.)*
+- [ ] L'écran fait entendre le raccord seul (les deux secondes autour), en boucle. *(Côté
+      serveur, fait : la route existe.)*
 
 ### SN6 · Les sons d'un sujet
 
@@ -209,12 +237,13 @@ salle d'essai des animations le joue ; la livraison ajoute une piste audio à l'
 
 **Bloquée par** : SN3.
 
-sfxr par `pyfxr` (BSD) : des départs types (clic, validation, erreur, saut, pièce, explosion),
-des curseurs, une mutation pour tirer des variantes, un son en un instant, sans carte graphique.
+sfxr **porté en Python** depuis jsfxr (domaine public), sans paquet ajouté : des départs types
+(clic, survol, validation, erreur, saut, pièce, explosion…), des curseurs, une mutation pour
+tirer des variantes, un son en un instant, sans carte graphique.
 
 - [ ] Un clic et sa famille (survol, validation, erreur) se fabriquent en moins d'une seconde
-      chacun et se livrent comme les autres sons.
-- [ ] Un son sfxr se refait à l'identique depuis ses réglages conservés.
+      chacun et se livrent comme les autres sons. *(Côté serveur, fait.)*
+- [x] Un son sfxr se refait à l'identique depuis ses réglages conservés.
 
 ### SN9 · La musique
 

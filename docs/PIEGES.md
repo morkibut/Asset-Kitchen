@@ -1931,3 +1931,18 @@ la prochaine réécriture retrouvera.
   tous rendus « à revoir » et coupés. Le test est donc *le même corps au rembourrage près*
   (`_meme_corps`). Ce qui était déjà coupé se relit depuis `0-brut.png`, sans appel
   (`relire_depuis_la_planche`). Preuve dans `tests/test_au16_depliage_entier.py`.
+- **Un `.import` écrit à la main pour Godot survit, mais Godot le réécrit — et la relivraison
+  suivante y voit un fichier modifié dans le jeu.** Réduit à `[params]`, il est complété par
+  `godot --headless --import` (ajout de `uid`, `path`, `[deps]`). L'atelier écrit donc la forme
+  complète, que Godot garde octet pour octet. Trois détails la rendent exacte : l'`uid` s'écrit
+  en **base 34** (`a` à `y`, puis `0` à `8`, l'alphabet réel de Godot, pas de la base 36) ;
+  `path` porte un **md5 du chemin `res://`** ; les flottants sont **arrondis à la
+  microseconde**, parce que Godot les réécrit sur 16 chiffres significatifs. Trouvé en SN4 le
+  18 septembre 2026 dans Godot 4.7.2. Preuve dans `tests/test_sn4_livraison.py`.
+- **Le filtre `rubberband` de ffmpeg ne vide pas sa file** : un changement de hauteur qui garde
+  la durée perd environ 80 ms en fin de son. On ajoute du silence avant, puis on recoupe
+  (`atelier/audio/traitement.py`). SN4, 18 septembre 2026.
+- **`ebur128` sous 0,4 s répond −70 LUFS au lieu de dire qu'il ne sait pas** : c'est une valeur
+  de repli, pas une mesure. L'atelier la refuse et rend `None` (`mesurer`). Et ce filtre écrit son
+  résumé sur la sortie d'erreur : l'appeler avec `-loglevel error` le fait taire. SN5,
+  18 septembre 2026.

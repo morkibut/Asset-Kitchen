@@ -52,7 +52,7 @@
       moteurs: [['Stable Audio 3 Small-SFX', ''], ['Stable Audio Open 1.0', ''], ['Stable Audio 3 Medium', ABSENT_MEDIUM]],
       exemple: 'Ex. : sword slides out of a leather sheath', niveaux: NIVEAU_COURT, mono: true, boucle: false },
     interface: { nom: 'Interface et rétro', prefixe: 'ui', tirages: [4, 8, 12], defTirages: 8, calcul: () => 0.1,
-      moteurs: [['sfxr, sans IA', '']], departs: ['Clic', 'Validation', 'Erreur', 'Saut', 'Pièce', 'Explosion'], niveaux: NIVEAU_COURT, mono: true, boucle: false },
+      moteurs: [['sfxr, sans IA', '']], departs: ['Clic', 'Survol', 'Validation', 'Erreur', 'Saut', 'Pièce', 'Explosion'], niveaux: NIVEAU_COURT, mono: true, boucle: false },
     ambiance: { nom: 'Ambiance', prefixe: 'amb', tirages: [4, 8, 12], defTirages: 8, durees: [20, 30, 45, 60], defDuree: 30, calcul: d => dureeDe(d) * 0.8,
       moteurs: [['Stable Audio 3 Small-SFX', ''], ['Stable Audio 3 Medium', ABSENT_MEDIUM]],
       exemple: 'Ex. : rain in a stone cave, slow drips, distant wind', niveaux: ['−26 LUFS', '−24 LUFS', '−28 LUFS'], mono: false, boucle: true },

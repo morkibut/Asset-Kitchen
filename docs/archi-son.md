@@ -49,18 +49,20 @@ Medium fait **réécrire le texte** par un modèle de langage avant de l'envoyer
 produit exclut (le texte montré est le texte qui part) ; celui d'ACE-Step charge un second
 encodeur de 3,7 Go dont une carte de 8 Go se passe. Les profils livrés coupent les deux.
 
-## 3 · Les six familles de sons, et leur moteur
+## 3 · Les sept familles de sons, et leur moteur
 
-Une famille décide du moteur par défaut, de la durée, du format de livraison et de la façon
-d'écrire le texte qui part.
+Une famille décide du moteur par défaut, de la durée, du nombre de tirages, du format de
+livraison et de la façon d'écrire le texte qui part. Dans le code, ses clés sont exactement
+`bruitage`, `interface`, `ambiance`, `musique`, `jingle`, `chanson`, `voix` ; le tableau
+regroupe chanson et jingle, comme la maquette.
 
 | Famille | Exemples | Moteur par défaut | Secours | Durée | Livré en |
 |---|---|---|---|---|---|
-| **Bruitage** | coup d'épée, pas, pièce ramassée, sort, porte | Stable Audio 3 Small-SFX | Stable Audio Open 1.0 | 0,5 à 4 s | WAV mono |
-| **Interface et rétro** | clic, validation, erreur, saut 8-bit | sfxr (calcul, sans IA, instantané) | Stable Audio 3 Small-SFX | 0,05 à 1 s | WAV mono |
+| **Bruitage** | coup d'épée, pas, pièce ramassée, sort, porte | Stable Audio 3 Small-SFX | Stable Audio Open 1.0 | 1 à 4 s (plus court : généré à 1 s, puis coupé) | WAV mono |
+| **Interface et rétro** | clic, validation, erreur, saut 8-bit | sfxr (calcul, sans IA, instantané) | — (Stable Audio ne descend pas sous 1 s) | 0,05 à 1 s | WAV mono |
 | **Ambiance** | forêt, grotte, pluie, ville | Stable Audio 3 Small-SFX (jusqu'à 120 s) | Stable Audio 3 Medium | 20 à 60 s, en boucle | OGG stéréo |
 | **Musique** | village, exploration, combat, boss, menu | ACE-Step 1.5 turbo | Stable Audio 3 Medium | 30 à 180 s, en boucle | OGG stéréo + tempo |
-| **Chanson et jingle** | chanson de taverne, générique · victoire, défaite | YuE2 (chanté) · ACE-Step (jingle, seul à recevoir une tonalité) | Stable Audio 3 Medium pour un jingle, sans garantie de tonalité | 60 à 240 s · 2 à 8 s | OGG stéréo |
+| **Chanson et jingle** | chanson de taverne, générique · victoire, défaite | YuE2 (chanté) · ACE-Step (jingle, seul à recevoir une tonalité) | Stable Audio 3 Medium pour un jingle, sans garantie de tonalité | 60 à 240 s · 2 à 8 s (ACE-Step : 2 s au moins) | OGG stéréo |
 | **Voix** | réplique d'un PNJ, cri de douleur, cri de gobelin | Qwen3-TTS VoiceDesign puis Chatterbox Multilingual | transformation du son (hauteur, timbre) | 0,3 à 10 s | OGG mono |
 
 **Pourquoi ACE-Step et pas YuE2 pour le fond de la bande-son.** L'auteur a demandé YuE2.
@@ -84,7 +86,7 @@ crédits.*
 | ACE-Step 1.5 | Libre (MIT), usage commercial des sorties écrit en toutes lettres. |
 | YuE2 | Le modèle est non commercial, **sauf** pour une personne qui crée **en son nom propre** : elle peut vendre ce qu'elle génère (permission ajoutée le 16 septembre 2026). **Une société doit demander une licence.** Le texte de la licence part avec chaque morceau, daté. |
 | Qwen3-TTS, Chatterbox | Libres (Apache, MIT). Chatterbox marque ses sons d'un filigrane inaudible. |
-| sfxr (pyfxr) | Libre (BSD). |
+| sfxr | Portage Python de jsfxr, domaine public (Unlicense) : aucun paquet ajouté. |
 
 Écartés pour licence non commerciale : AudioLDM 2, MMAudio, ThinkSound, Woosh, AudioX,
 TangoFlux, MusicGen, IndexTTS, Voxtral, OmniVoice, Higgs 3. Écarté pour l'Europe :
@@ -136,12 +138,14 @@ voulu.)
 
 **Les gabarits par moteur** — ce que l'atelier compose, en gras ce que dit la demande :
 
-- **Stable Audio 3, bruitage** : `TrackType: SFX.` **source et action** `, ` *rendu de l'univers*
-  `, one-shot, close-mic'd, dry, no reverb, isolated.` — durée fixée par la famille (1 s pour
+- **Stable Audio 3, bruitage** : `TrackType: SFX.` **source et action** `, ` *époque et matière*
+  `, ` *rendu de l'univers* `, one-shot, close-mic'd, dry, no reverb, isolated.` — durée fixée par la famille (1 s pour
   un pas, 2 à 3 s pour un sort). Pas de texte négatif : à guidage 1, il n'a aucun effet.
   Réglages : 8 pas, guidage 1.
 - **Stable Audio 3, ambiance** : `TrackType: SFX.` **lieu et éléments** `, continuous, steady,
-  field recording, no music, stereo,` *matière de l'univers*. 30 s par défaut.
+  field recording, no music, stereo,` *matière et humeur de l'univers*. 30 s par défaut.
+- **Stable Audio Open 1.0 (secours)** : le même texte sans `TrackType`, avec le texte négatif
+  `low quality, average quality` — utile ici, puisque ce modèle se règle à guidage 7.
 - **ACE-Step 1.5, musique** : *tags* = **usage** (`exploration`, `battle`…) + *orchestre* +
   *humeur* ; *paroles* = une structure (`[Intro] [Instrumental] [Outro]`, ou `[Build] [Drop]`
   pour un combat) ; *tempo*, *tonalité*, *mesure* = ceux de l'univers ou de la demande ;
@@ -159,8 +163,10 @@ six musiques, six voix). Ils deviennent **les exemples livrés** des gabarits.
 
 ### 4.3 Les tirages
 
-Un geste lance **une série** : 8 graines par défaut pour un bruitage, 4 pour une musique
-(chaque morceau prend une à trois minutes). Tout est local : **aucun coût en argent**,
+Un geste lance **une série** : 8 graines par défaut pour un bruitage, une ambiance ou un son
+d'interface, 4 pour une musique, un jingle, une chanson ou une voix (chaque morceau prend une à
+trois minutes) ; de 1 à 16. Une série fige sa méthode et son texte à sa préparation : la
+reprendre après un changement de l'univers ne mélange pas deux textes. Tout est local : **aucun coût en argent**,
 seulement du temps, que l'écran annonce à partir des mesures du banc. Les tirages passent par
 la file locale existante, un moteur à la fois ; entre deux moteurs, ComfyUI décharge le
 précédent (à vérifier au banc : sinon l'atelier le lui demande).
@@ -176,7 +182,9 @@ livré) : SN3 le ramène à la règle — signalé, mais gardé et livré si l'a
 
 On **garde** un ou plusieurs tirages. Plusieurs tirages gardés d'une même demande forment **un
 jeu de variantes** (les huit pas sur l'herbe, les quatre cris du gobelin) : il se livre comme un
-seul son que Godot joue au hasard.
+seul son que Godot joue au hasard. **Garder applique les réglages de la famille** (mono, niveau
+visé) en une nouvelle version de chaque son, visible dans ses versions : c'est le geste de
+l'auteur qui les pose, jamais un traitement qui se poserait seul.
 
 Le score automatique « le son ressemble-t-il au texte » (CLAP) **reste au banc** : il
 demanderait d'installer PyTorch dans l'atelier. On le réévalue si le banc montre qu'il trie
