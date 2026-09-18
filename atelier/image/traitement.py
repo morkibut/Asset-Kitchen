@@ -2814,6 +2814,41 @@ def loger_dans(rgba: np.ndarray, taille: tuple[int, int], *, masse: bool = False
     return canevas
 
 
+# **La taille d'une poussière, au recadrage.** Un îlot de quatre pixels au plus,
+# et cent fois plus petit que la plus grande tache, n'est pas le sujet. Mesuré le
+# 18 septembre 2026 sur la course nord de Champy : la première image d'un clip
+# vidéo gardait deux pixels bleus isolés dans les coins, le recadrage prenait
+# l'image entière, et toute l'animation sortait deux fois trop petite.
+POUSSIERE_AU_RECADRAGE = 4
+
+
+def boite_du_sujet(alpha: np.ndarray) -> tuple[int, int, int, int] | None:
+    """La boîte opaque **sans les poussières isolées** — celle que le recadrage garde.
+
+    Une image qui n'a que des poussières les garde toutes : un sujet d'un pixel
+    reste un sujet, et le dire absent serait pire que de garder la poussière.
+    """
+    masque = alpha > 0
+    boite = boite_opaque(masque)
+    if boite is None:
+        return None
+    taches = composantes(masque)
+    if len(taches) < 2:
+        return boite
+    plus_grande = max(aire for _, aire in taches)
+    gardees = [
+        boite_opaque(tache)
+        for tache, aire in taches
+        if aire > POUSSIERE_AU_RECADRAGE or aire * 100 >= plus_grande
+    ]
+    return (
+        min(b[0] for b in gardees),
+        min(b[1] for b in gardees),
+        max(b[2] for b in gardees),
+        max(b[3] for b in gardees),
+    )
+
+
 def _recadrer(rgba: np.ndarray, recadrage: Recadrage) -> np.ndarray:
     hauteur, largeur = rgba.shape[:2]
     if recadrage.boite is not None:
@@ -2824,7 +2859,7 @@ def _recadrer(rgba: np.ndarray, recadrage: Recadrage) -> np.ndarray:
             return rgba  # une seule couleur, d'un bout à l'autre : rien à recadrer
         x0, y0, x1, y1 = boite
     else:
-        boite = boite_opaque(rgba[:, :, 3])
+        boite = boite_du_sujet(rgba[:, :, 3])
         if boite is None:
             return rgba  # plus rien à recadrer : on ne fabrique pas une image vide
         x0, y0, x1, y1 = boite
