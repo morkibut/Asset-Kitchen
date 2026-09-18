@@ -50,7 +50,7 @@ import {
   type PlancheQuiPart,
   type Tri,
 } from "../api"
-import type { EnvoiAvecLocal } from "../api-workflows"
+import { origineDuTemps, tempsParImage, type EnvoiAvecLocal } from "../api-workflows"
 import { Bouton, Libelle, LigneReserve, Raison } from "./pieces"
 import { sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 import { RelireAvantEnvoi, type ResumeDeLEnvoi } from "./Relecture"
@@ -214,11 +214,7 @@ export function EcranEnvoi({
   // cette machine, ou la vitesse du style à défaut — jamais un prix, qui
   // resterait « inconnu » pour toujours (un appel local vaut `cout_usd = 0`).
   const tempsLocal = local?.temps ?? null
-  const tempsEcrit = tempsLocal
-    ? tempsLocal.secondes != null
-      ? `≈ ${quantite(tempsLocal.secondes, "seconde")} par image`
-      : (tempsLocal.vitesse ?? "Durée non encore mesurée pour ce workflow.")
-    : null
+  const tempsEcrit = tempsLocal ? (tempsParImage(tempsLocal) ?? "Durée non encore mesurée pour ce workflow.") : null
 
   if (presentation === "atelier") {
     const bouton = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] disabled:opacity-50"
@@ -241,7 +237,9 @@ export function EcranEnvoi({
               payées à ce modèle-ci — pas un tarif annoncé par le fournisseur —,
               et le pas d'une image jointe est mesuré sur ses propres générations.
               Sans la phrase qui suit, la moyenne se lirait comme une facture. */}
-          {envoi.prix.mesure.prix === null
+          {local
+            ? <p className="mt-[4px] text-encre-3">{origineDuTemps(tempsLocal)}</p>
+            : envoi.prix.mesure.prix === null
             ? <p className="mt-[4px] text-encre-3">{envoi.prix.mesure.appels ? `Mesurée sur ${envoi.prix.mesure.appels} générations précédentes.` : "Aucune mesure disponible pour ce modèle."}</p>
             : <p className="mt-[4px] leading-relaxed text-encre-3">mesuré sur {envoi.prix.mesure.appels} génération{envoi.prix.mesure.appels > 1 ? "s" : ""} {estArgent(envoi.prix.mesure.unite) ? "payée" : "passée"}{envoi.prix.mesure.appels > 1 ? "s" : ""} à <span className="text-encre-2">{envoi.modele.nom}</span>.{envoi.prix.mesure.par_image !== null && envoi.prix.mesure.base !== null && <> Une génération sans image jointe a {estArgent(envoi.prix.mesure.unite) ? "coûté" : "pris"} {quantite(envoi.prix.mesure.base, envoi.prix.mesure.unite)} sur {envoi.prix.mesure.sur_base} générations ; chaque image jointe en ajoute <span className="text-encre-attention">{quantite(envoi.prix.mesure.par_image, envoi.prix.mesure.unite)}</span>, mesuré sur {envoi.prix.mesure.sur_jointes}. Une moyenne n'est le prix de personne : elle ne tombera juste sur aucune génération donnée.</>}{envoi.prix.mesure.par_image === null && <> Le pas d'une image jointe n'est pas mesurable ici — il y faudrait des générations à plusieurs comptes d'images. Le chiffre affiché est la médiane, images comprises.</>}</p>}
         </>,

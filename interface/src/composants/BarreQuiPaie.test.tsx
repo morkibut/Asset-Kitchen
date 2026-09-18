@@ -71,7 +71,7 @@ test("un style local choisi montre son temps et le genre de référence, jamais 
   // paie (« temps attendu », le même calcul que `cout_attendu` pour un
   // modèle payant) — les deux doivent dire le même temps, jamais deux prix
   // pour le même appel (E13).
-  expect(screen.getAllByText(/24,3 secondes par image/).length).toBeGreaterThan(0)
+  expect(screen.getAllByText(/≈ 24 secondes par image/).length).toBeGreaterThan(0)
   expect(screen.getByText(/part de l’image/)).toBeInTheDocument()
   expect(screen.queryByText("jamais généré")).not.toBeInTheDocument()
 })

@@ -111,7 +111,7 @@ test("un style local se lance sur la carte graphique — un temps, jamais un pri
   render(<EcranEnvoi {...props(envoiLocal(local))} />)
   expect(screen.getByRole("button", { name: /Lancer sur ma carte graphique/ })).toBeInTheDocument()
   expect(screen.queryByText(/Payer et lancer/)).not.toBeInTheDocument()
-  expect(screen.getAllByText(/41,2 secondes par image/).length).toBeGreaterThan(0)
+  expect(screen.getAllByText(/≈ 41 secondes par image/).length).toBeGreaterThan(0); expect(screen.queryByText("Aucune mesure disponible pour ce modèle.")).toBeNull(); expect(screen.getByText(/Mesuré sur 6 tirages sur cette machine/)).toBeInTheDocument()
   expect(screen.queryByText("Coût inconnu")).not.toBeInTheDocument()
 })
 

@@ -111,6 +111,23 @@ export type RetireTexteLocal = { clef: string; nom: string; texte: string; raiso
  *  encore lancé, dont la fiche ne porte pas de vitesse propre. */
 export type TempsLocal = { secondes: number | null; mesures: number; vitesse: string | null }
 
+/** Le temps d'un style local, **arrondi comme on le dirait** : « ≈ 34 secondes
+ *  par image », « ≈ 3 minutes par image ». Une médiane au centième se lisait
+ *  comme une promesse. */
+export function tempsParImage(t: TempsLocal | null | undefined): string | null {
+  if (!t) return null
+  if (t.secondes == null) return t.vitesse
+  const s = Math.max(1, Math.round(t.secondes))
+  return s < 90 ? `≈ ${s} secondes par image` : `≈ ${Math.round(s / 60)} minutes par image`
+}
+
+/** D'où vient ce temps, en une phrase — la mesure de cette machine, ou la
+ *  vitesse relevée dans sc-clone tant qu'aucun tirage n'a eu lieu ici. */
+export function origineDuTemps(t: TempsLocal | null | undefined): string {
+  if (!t || t.secondes == null) return "Pas encore mesuré sur cette machine : c'est la vitesse relevée dans sc-clone."
+  return `Mesuré sur ${t.mesures} tirage${t.mesures > 1 ? "s" : ""} sur cette machine. Le premier tirage d'une série est plus long : il charge le modèle.`
+}
+
 /** Ce qu'un style local laisse en route (ML4) — `null` pour tout modèle qui
  *  n'est pas un style local, distant compris. */
 export type TexteLocal = {

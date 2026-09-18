@@ -29,6 +29,7 @@ import {
   stylesLocaux,
   type ModeleAvecReference,
   type StyleLocal,
+  tempsParImage,
 } from "../api-workflows"
 import { Bloc, Libelle, LigneReserve, Raison, Segments } from "./pieces"
 import { PANNEAU } from "./Infobulle"
@@ -852,9 +853,7 @@ export function CoutAttendu({
           className="text-right text-encre-3"
           title="mesuré sur cette machine, ou la vitesse annoncée par le style"
         >
-          {temps?.secondes != null
-            ? `≈ ${quantite(temps.secondes, "seconde")} par image${cases ? ` · ${cases} cases` : ""}`
-            : (temps?.vitesse ?? "Durée non encore mesurée pour ce workflow.")}
+          {(tempsParImage(temps) ?? "Durée non encore mesurée pour ce workflow.") + (temps?.secondes != null && cases ? ` · ${cases} cases` : "")}
         </dd>
         {/* **Le premier tirage charge le modèle ; le temps ne se multiplie
             pas** (règle 8ter) — contrairement au prix d'un modèle payant, un

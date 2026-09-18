@@ -11,7 +11,7 @@
 // de tout écran incapable de dépenser**. C'est ce qui donne à la galerie son
 // métier propre : on y juge, on n'y paie jamais.
 
-import { api, quantite } from "../api"
+import { api } from "../api"
 import type {
   Asset,
   CompteReferences,
@@ -28,6 +28,7 @@ import {
   NOM_REFERENCE,
   ORDRE_MOTEURS_LOCAUX,
   type ModeleAvecReference,
+  tempsParImage,
 } from "../api-workflows"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { usePli } from "./pieces"
@@ -237,9 +238,7 @@ export function BarreQuiPaie({
               une infobulle qu'il faudrait rouvrir pour relire. */}
           {modele?.locale && (
             <p className="text-encre-3">
-              {infosModele?.temps?.secondes != null
-                ? `≈ ${quantite(infosModele.temps.secondes, "seconde")} par image`
-                : (infosModele?.temps?.vitesse ?? "Durée non encore mesurée pour ce workflow.")}
+              {tempsParImage(infosModele?.temps) ?? "Durée non encore mesurée pour ce workflow."}
               {infosModele?.reference && ` · ${NOM_REFERENCE[infosModele.reference]}`}
             </p>
           )}
