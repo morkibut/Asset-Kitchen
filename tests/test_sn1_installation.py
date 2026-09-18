@@ -141,6 +141,10 @@ async def test_moteurs_par_famille_lit_ce_qui_est_installe(son):
     assert familles["bruitage"]["moteur"] == "sa3-small-sfx" and familles["ambiance"]["moteur"] == "sa3-small-sfx"
     assert familles["musique"]["moteur"] == "ace-step-15-turbo" and familles["jingle"]["moteur"] == "ace-step-15-turbo"
     assert familles["chanson"]["moteur"] is None
+    # Ce que l'écran propose : les moteurs qui savent faire ce genre de son.
+    assert familles["bruitage"]["possibles"] == ["sa3-small-sfx", "sa-open-1", "sa3-medium"]
+    assert "yue2-int8" not in familles["ambiance"]["possibles"]
+    assert familles["interface"]["possibles"] == [] and familles["voix"]["possibles"] == []
 
 
 async def test_moteurs_par_famille_suit_le_choix_de_l_univers(son):

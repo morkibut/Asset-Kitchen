@@ -577,17 +577,18 @@ describe("l'étape du son", () => {
 
   test("le moteur d'une famille n'offre que les méthodes installées", async () => {
     const { fetchDouble, appels } = construireDouble({
-      profilsAudio: [profilAudio("sa3-small-sfx", "Stable Audio 3 Small-SFX")],
+      profilsAudio: [profilAudio("sa3-small-sfx", "Stable Audio 3 Small-SFX"), profilAudio("yue2-int8", "YuE2 (int8)")],
       moteursParFamille: {
-        bruitage: { famille: "bruitage", modele: "Stable Audio 3 Small-SFX", moteur: "sa3-small-sfx" },
+        bruitage: { famille: "bruitage", modele: "ComfyUI:sa3-small-sfx@46c1", moteur: "sa3-small-sfx", possibles: ["sa3-small-sfx", "sa-open-1"] },
       },
     })
     monter(fetchDouble)
 
     ouvrir("Ses sons")
     const choix = await screen.findByLabelText("Moteur pour Bruitage")
-    // Une seule option installée, plus « automatique » : rien d'autre n'est
-    // proposé — jamais un moteur qu'on ne pourrait pas vraiment lancer.
+    // Une seule option installée qui sache faire un bruitage, plus
+    // « automatique » : YuE2, installé mais fait pour chanter, n'est pas
+    // proposé — ni un moteur qu'on ne pourrait pas vraiment lancer.
     expect(within(choix).getAllByRole("option").map((o) => o.textContent)).toEqual([
       "automatique",
       "Stable Audio 3 Small-SFX",

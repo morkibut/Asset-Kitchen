@@ -18,7 +18,7 @@ from __future__ import annotations
 import copy
 import re
 
-from atelier.audio.graphes import CONSTRUCTEURS, FAMILLES, FICHIERS, postes_fichiers
+from atelier.audio.graphes import CONSTRUCTEURS, FAMILLES, FICHIERS, POSSIBLES, postes_fichiers
 from atelier.audio.texte import SFXR
 from atelier.domaine.son import FAMILLES_SON
 
@@ -146,14 +146,17 @@ class ServiceInstallationSon:
         for famille in FAMILLES_SON:
             moteur, _ = ta._moteur_de_famille(projet, famille)
             if moteur == SFXR:
-                resultat[famille] = {"famille": famille, "modele": SFXR, "moteur": SFXR}
+                resultat[famille] = {"famille": famille, "modele": SFXR, "moteur": SFXR, "possibles": list(POSSIBLES[famille])}
                 continue
             profil = par_identifiant.get(moteur) if moteur else None
             if profil:
-                resultat[famille] = {"famille": famille, "modele": profil["modele"], "moteur": profil["identifiant"]}
+                resultat[famille] = {"famille": famille, "modele": profil["modele"], "moteur": profil["identifiant"],
+                                     "possibles": list(POSSIBLES[famille])}
                 continue
             ordre = FAMILLES.get(famille, ())
-            raison = ("Aucun moteur installé pour « " + famille + " » : " + ", ".join(ordre) + ".") if ordre else \
+            noms = [CONSTRUCTEURS[i]()["nom"] if i in CONSTRUCTEURS else i for i in ordre]
+            raison = ("Aucun moteur installé pour « " + famille + " » : il faut " + " ou ".join(noms) + ".") if ordre else \
                 "Aucun moteur sonore n'existe encore pour « " + famille + " »."
-            resultat[famille] = {"famille": famille, "modele": None, "moteur": None, "raison": raison}
+            resultat[famille] = {"famille": famille, "modele": None, "moteur": None, "raison": raison,
+                                 "possibles": list(POSSIBLES[famille])}
         return resultat

@@ -52,7 +52,9 @@ export type ResultatMoteurSon = {
  *  que celui qui décide vraiment à l'envoi, jamais une seconde règle côté
  *  écran. `modele` est vide et `raison` porte le texte quand rien n'est
  *  installé. */
-export type MoteurParFamille = { famille: string; modele: string | null; moteur: string | null; raison?: string }
+/** `possibles` : les moteurs que l'écran propose pour cette famille — une
+ *  proposition, pas une barrière (l'univers accepte tout moteur installé). */
+export type MoteurParFamille = { famille: string; modele: string | null; moteur: string | null; raison?: string; possibles?: string[] }
 
 const profil = (p: string, v: string) => `/workflow-profiles/${encodeURIComponent(p)}/versions/${encodeURIComponent(v)}`
 const travail = (p: string, id: string) => `/projects/${encodeURIComponent(p)}/production-jobs/${encodeURIComponent(id)}`

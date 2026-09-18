@@ -1172,6 +1172,14 @@ function LeSon({
             {FAMILLES_SON.map((famille) => {
               const pose = son.moteurs[famille] ?? ""
               const defaut = defauts[famille]
+              // Les moteurs de la famille, et celui déjà posé s'il n'en est pas.
+              const proposes = profils.filter(
+                (p) => (defaut?.possibles ?? []).includes(p.identifiant) || p.identifiant === pose,
+              )
+              const nomDuMoteur =
+                defaut?.moteur === "sfxr"
+                  ? "sfxr, calculé sans IA"
+                  : (profils.find((p) => p.identifiant === defaut?.moteur)?.nom ?? defaut?.moteur)
               return (
                 <li
                   key={famille}
@@ -1187,15 +1195,15 @@ function LeSon({
                       className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12.5px] text-encre"
                     >
                       <option value="">automatique</option>
-                      {profils.map((p) => (
+                      {proposes.map((p) => (
                         <option key={p.identifiant} value={p.identifiant}>
                           {p.nom}
                         </option>
                       ))}
                     </select>
                     <span className="text-[11px] text-encre-4">
-                      {defaut?.modele
-                        ? `en ce moment : ${defaut.modele}`
+                      {defaut?.moteur
+                        ? `en ce moment : ${nomDuMoteur}`
                         : (defaut?.raison ?? "aucune méthode installée")}
                     </span>
                   </div>

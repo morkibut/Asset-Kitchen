@@ -84,6 +84,18 @@ assert set(FAMILLES) == set(FAMILLES_SON)
 
 SECOURS = ("sa3-medium", "sa-open-1")
 
+# Ce que l'écran propose pour une famille (étape « Ses sons ») : ses moteurs,
+# puis les secours qui savent faire ce genre de son. L'interface n'a que sfxr
+# (Stable Audio ne descend pas sous 1 s), une chanson demande des paroles,
+# la voix n'a encore rien. Une proposition, pas une barrière : l'univers
+# accepte n'importe quel moteur installé.
+POSSIBLES = {
+    famille: (() if famille in ("interface", "voix")
+              else ("yue2-int8", "ace-step-15-turbo") if famille == "chanson"
+              else tuple(dict.fromkeys(ordre + SECOURS)))
+    for famille, ordre in FAMILLES.items()
+}
+
 # Les langues de paroles que TextEncodeAceStepAudio1.5 déclare (object_info).
 LANGUES_ACE = ("ar", "az", "bg", "bn", "ca", "cs", "da", "de", "el", "en", "es", "fa", "fi", "fr", "he", "hi", "hr",
     "ht", "hu", "id", "is", "it", "ja", "ko", "la", "lt", "ms", "ne", "nl", "no", "pa", "pl", "pt", "ro", "ru", "sa",
@@ -132,7 +144,7 @@ def stable_audio_3_small_sfx(*, checkpoint="stable_audio_3_small_sfx.safetensors
     Medium avec le checkpoint Small-SFX, 8 pas et guidage 1 (ceux du KSampler
     du modèle Medium, et ceux de la fiche du modèle)."""
     return _stable_audio("sa3-small-sfx", "Stable Audio 3 Small-SFX",
-        "Bruitages et ambiances, de 1 à 120 secondes. Stable Audio 3 Small-SFX, 8 pas, guidage 1.",
+        "Bruitages et ambiances, de 1 à 120 secondes.",
         checkpoint=checkpoint, encodeur=encodeur, type_encodeur="stable_audio", pas=8, guidage=1,
         echantillonneur="lcm", planificateur="simple", durees=(1, 2, 3, 5, 10, 30, 60), duree_libre={"min": 1, "max": 120})
 
@@ -153,7 +165,7 @@ def stable_audio_open_1(*, checkpoint="stable-audio-open-1.0.safetensors", encod
     négatif `low quality, average quality` que compose `atelier.audio.texte`
     fait effet."""
     return _stable_audio("sa-open-1", "Stable Audio Open 1.0",
-        "Bruitages de secours, de 1 à 47 secondes. 50 pas, guidage 7 : le texte négatif compte.",
+        "Bruitages de secours, de 1 à 47 secondes, plus lents à calculer.",
         checkpoint=checkpoint, encodeur=encodeur, type_encodeur="stable_audio", pas=50, guidage=7,
         echantillonneur="dpmpp_3m_sde_gpu", planificateur="exponential", durees=(1, 2, 5, 10, 30),
         duree_libre={"min": 1, "max": 47}, negatif=True)
@@ -191,7 +203,7 @@ def ace_step_15_turbo(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen
         # doit pas être proposé »).
         "formats": [], "durees": [30, 60, 120], "duree_libre": {"min": 2, "max": 600},
         "sortie": {"noeud": "10", "champ": "audio"},
-        "description": "Musique de jeu : tempo, tonalité, mesure et durée exacte, de 10 à 600 secondes. Un seul encodeur (0.6b)."}
+        "description": "Musique et jingles : tempo, tonalité, mesure et durée exacte, de 2 à 600 secondes."}
 
 
 def yue2_int8(*, checkpoint="yue2_3b_int8_convrot.safetensors"):
