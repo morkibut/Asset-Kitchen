@@ -68,6 +68,7 @@ from atelier.services.livraison import ServiceLivraison
 from atelier.services.livraison_images import ServiceLivraisonImages
 from atelier.services.tuiles import ServiceTuiles
 from atelier.services.sons import ServiceSons
+from atelier.services.sfxr import ServiceSfxr
 from atelier.services.travaux import ServiceTravaux
 from atelier.services.file_locale import ServiceFileLocale
 from atelier.services.installation_son import ServiceInstallationSon
@@ -591,6 +592,10 @@ class Atelier:
         self.livraison_images = ServiceLivraisonImages(self)
         self.tuiles = ServiceTuiles(self)
         self.sons = ServiceSons(self)
+        # sfxr (SN8) : synthèse locale, sans ComfyUI — n'apporte ni
+        # fournisseur ni catalogue, seulement le calcul et la bibliothèque
+        # de `self.sons` qu'elle appelle sans la modifier.
+        self.sfxr = ServiceSfxr(self)
         self.animation.avant_soumission_locale = self.travaux.autoriser_generation_locale
         self.animation.apres_les_images = self._monter_a_l_arrivee
         self.fournisseur_workflow_image.avant_soumission = lambda identifiant: self.travaux.autoriser_generation_image_locale(self.base.lire(identifiant))
