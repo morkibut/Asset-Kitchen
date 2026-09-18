@@ -160,7 +160,7 @@ blanc, et la révision figure ici à la place de l'ancienne règle.
 | Rien n'est ajouté à l'image envoyée pour aider le recalage — ni ancre, ni mire, ni silhouette | C3 |
 | Le corps d'origine n'est jamais modifié : le calque est rangé à côté de l'image payée | C3 |
 | **Un calque est solidaire de sa pose** — il en faut un par pose, et c'est le pliage qui en divise le prix | C3 |
-| Une planche ne porte qu'une seule chose du jeu | E13 |
+| Une planche ne porte qu'une seule chose du jeu — **sauf quand la demande dit d'avance, case par case, quelle chose du jeu chaque case contient** : alors chaque morceau se range chez le sujet de sa case, ou se signale | E13, **révisé en `P2`** : la liste est la réponse ; sans elle, l'ancienne règle, inchangée |
 
 ### Les fournisseurs
 

@@ -75,6 +75,44 @@ async def supprimer_depliage(
     return _service(requete).supprimer(identifiant, numero)
 
 
+@routeur.post("/assets/{identifiant}/wrong-subject")
+async def pas_le_bon_sujet(requete: Request, identifiant: str) -> dict[str, Any]:
+    """« Ce n'est pas le bon sujet » (P2) : l'image — pas la planche — quitte la
+    case de son sujet et reste en bibliothèque ; sa case passe « à vérifier »."""
+    return _service(requete).pas_le_bon_sujet(identifiant)
+
+
+@routeur.get("/assets/{identifiant}/cells/{case}/redo")
+async def refaire_une_case(
+    requete: Request,
+    identifiant: str,
+    case: int,
+    modele: str | None = Query(None, alias="model"),
+) -> dict[str, Any]:
+    """Refaire **cette case seule**, en image simple (P2, décision 1) — préparé,
+    jamais payé.
+
+    Rend `demande`, le corps prêt pour `POST /generations` (le sujet de la case,
+    son signalement, sa pose), et `envoi`, l'annonce de ce qui partirait et de
+    son prix — **le même objet que `POST /outgoing`**, par le même service :
+    l'écran montre le prix habituel, et c'est la barre qui paie qui appelle.
+    `{identifiant}` est la planche ou une image qui en est sortie ; `case`
+    compte à partir de zéro. Rien n'est écrit, aucun fournisseur n'est appelé.
+    """
+    service = _service(requete)
+    rendu = service.demande_de_case(identifiant, case, modele)
+    demande = rendu["demande"]
+    envoi = requete.app.state.atelier.envoi.envoi(
+        projet=demande["projet"],
+        sujet=demande["prompt"],
+        modele=demande["modele"],
+        personnage=demande["personnage"],
+        pose=demande["pose"],
+        direction=demande["direction"],
+    )
+    return {**rendu, "envoi": envoi}
+
+
 @routeur.get("/assets/{identifiant}/dependents")
 async def dependants(requete: Request, identifiant: str) -> dict[str, Any]:
     """Combien d'images vivantes dépendent de cette planche — le chiffre que la

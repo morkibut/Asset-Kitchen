@@ -75,6 +75,21 @@ class PlancheAConfirmer(ErreurAtelier):
         self.dependants = dependants
 
 
+def _cases_de_la_planche(pliage: Any) -> list[dict[str, Any]]:
+    """Ce que chaque case de la planche demandait — et, depuis P2, pour quel
+    sujet. `sujet` est vide sur une planche d'un seul sujet."""
+    return [
+        {
+            "indice": i,
+            "texte": c.texte,
+            "pose": c.pose,
+            "direction": c.direction,
+            "sujet": c.sujet,
+        }
+        for i, c in enumerate(pliage.cases)
+    ]
+
+
 def depliages_de(atelier: Any) -> "ServiceDepliages":
     """Le service, construit sur les pièces de l'atelier.
 
@@ -211,6 +226,11 @@ class ServiceDepliages:
             "raison": raison,
             "depliages": depliages,
             "dependants": self.dependants(planche),
+            # **La liste annoncée** (P2) : vraie quand chaque case dit sa chose
+            # du jeu. L'écran y lit le sujet de chaque case et, dépliage par
+            # dépliage, celles qui attendent un regard (`a_verifier`).
+            "plusieurs": pliage.plusieurs,
+            "cases_de_la_planche": _cases_de_la_planche(pliage),
         }
 
     # ── Proposer ─────────────────────────────────────────────────────────────
@@ -270,15 +290,7 @@ class ServiceDepliages:
             "marge": self._pliage.marge(generation),
             # Ce que chaque case demandait : l'écran les propose pour qu'on
             # dise laquelle une coupe remplit.
-            "cases_de_la_planche": [
-                {
-                    "indice": i,
-                    "texte": c.texte,
-                    "pose": c.pose,
-                    "direction": c.direction,
-                }
-                for i, c in enumerate(pliage.cases)
-            ],
+            "cases_de_la_planche": _cases_de_la_planche(pliage),
             "refaisable": raison is None,
             "raison": raison,
         }
@@ -338,6 +350,100 @@ class ServiceDepliages:
             "planche": planche,
             "depliage": depliage.en_json(),
             "images": [a.en_json() for a in nees],
+        }
+
+    # ── Une planche à plusieurs sujets (P2) ──────────────────────────────────
+
+    def pas_le_bon_sujet(self, identifiant: str) -> dict[str, Any]:
+        """« Ce n'est pas le bon sujet » : l'image quitte la case de son sujet.
+
+        **Le signal que l'atelier ne sait pas lever seul.** Sans appel payant,
+        il ne voit pas ce qu'une image représente : une potion bleue dessinée à
+        la place de la rouge est une tache unique, bien centrée dans sa case, et
+        elle se range. Ce geste la reprend — l'image reste en bibliothèque, avec
+        sa planche et son dépliage, mais n'est plus rangée chez personne ; la
+        case passe « à vérifier » sur ce dépliage, et se refait seule si l'on
+        veut.
+
+        `identifiant` est **l'image**, pas la planche : c'est elle qu'on a sous
+        les yeux quand on voit qu'elle n'est pas la bonne.
+        """
+        image = self._base.lire_asset(identifiant)
+        if image is None:
+            raise AssetInconnu(identifiant)
+        if not image.planche or not image.depliage:
+            raise DepliageRefuse(
+                "cette image n'est pas sortie d'une planche — elle n'a pas de case "
+                "à quitter"
+            )
+        generation, _, planche = self._resoudre(identifiant)
+        pliage = generation.pliage
+        assert pliage is not None
+        if not pliage.plusieurs:
+            raise DepliageRefuse(
+                "cette planche ne porte qu'un sujet — ses images ne sont rangées "
+                "d'après aucune liste"
+            )
+        depliage = next(
+            (d for d in pliage.depliages_de(planche) if d.identifiant == image.depliage),
+            None,
+        )
+        if depliage is None or image.rang not in depliage.rangs:
+            raise DepliageRefuse("le dépliage de cette image n'est plus écrit")
+        case = depliage.case_de(depliage.rangs.index(image.rang))
+        if case is None:
+            raise DepliageRefuse(
+                "cette image ne remplit aucune case — une coupe ajoutée à la main "
+                "n'est rangée chez personne"
+            )
+        retiree = self._pliage.retirer_du_rangement(generation, depliage, case, image)
+        return {
+            "planche": planche,
+            "case": case,
+            "image": retiree.en_json(),
+            "depliage": depliage.en_json(),
+        }
+
+    def demande_de_case(
+        self, identifiant: str, indice: int, modele: str | None = None
+    ) -> dict[str, Any]:
+        """Ce que « refaire cette case seule » enverrait — **rien n'est payé ici**.
+
+        **Décision 1 de l'auteur, 18 septembre 2026** : une case ratée se refait
+        seule, en image simple, et les autres ne sont pas repayées. Ce qui est
+        rendu est le corps d'une génération ordinaire d'un seul sujet — le même
+        que la fiche du sujet enverrait pour cette case : son signalement tel
+        que la liste l'a écrit, sa pose, sa direction. L'argent ne part que par
+        `POST /generations`, le seul endroit d'où il part ; la route qui sert
+        ceci y ajoute l'annonce de prix habituelle (`ServiceEnvoi.envoi`).
+
+        `indice` compte à partir de zéro, comme `cases` d'un dépliage refait.
+        """
+        generation, _, planche = self._resoudre(identifiant)
+        pliage = generation.pliage
+        assert pliage is not None
+        if not pliage.plusieurs:
+            raise DepliageRefuse(
+                "cette planche ne porte qu'un sujet — une case ratée s'y refait "
+                "avec la planche, ou depuis la fiche du sujet"
+            )
+        if not 0 <= indice < pliage.nombre:
+            raise DepliageRefuse(
+                f"la planche a {pliage.nombre} cases — il n'y a pas de case "
+                f"n° {indice + 1}"
+            )
+        case = pliage.cases[indice]
+        return {
+            "planche": planche,
+            "case": indice,
+            "demande": {
+                "modele": modele or generation.modele,
+                "prompt": case.signalement or case.texte,
+                "projet": generation.projet,
+                "personnage": case.sujet,
+                "pose": case.pose,
+                "direction": case.direction,
+            },
         }
 
     # ── Supprimer ────────────────────────────────────────────────────────────

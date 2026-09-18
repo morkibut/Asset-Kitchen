@@ -141,11 +141,54 @@ def consignes(pliage: Pliage) -> str:
     **Et depuis M4, la planche d'une seule case a son propre texte** — parce
     qu'elle n'est pas une planche. Voir `_habiller_une_seule`.
     """
+    if pliage.plusieurs:
+        return _creer_plusieurs(pliage)
     if pliage.geometrie_connue:
         return (
             _habiller_une_seule() if pliage.nombre <= 1 else _habiller(pliage)
         )
     return _creer(pliage)
+
+
+def _creer_plusieurs(pliage: Pliage) -> str:
+    """La planche de P2 : N choses **différentes**, une par case, dans l'ordre.
+
+    **La liste numérotée, dans l'ordre de lecture** — tranché par l'auteur le
+    18 septembre 2026 : « cell 1: …; cell 2: … ». C'est ce qui rend le rangement
+    possible : le modèle lit ce qu'il doit poser dans la case n, et l'atelier
+    range le morceau de la case n chez le sujet n. Le point-virgule sépare les
+    cases parce qu'un signalement porte souvent ses propres virgules.
+
+    **Elle ne dit pas « the same subject »**, et c'est toute sa différence avec
+    `_creer` : cette phrase-là, recopiée, demanderait huit fois la même potion.
+    Elle garde tout le reste — la grille, le fond plat, l'interdiction de
+    redessiner les bords du gabarit —, parce que c'est ce qui rend la planche
+    découpable, et que le découpage n'a pas changé de règle.
+
+    **Des choses isolées, jamais un décor** (décision 3 de l'auteur) : « nothing
+    else in the cell, no ground, no scenery » tient chaque sujet dans sa case ;
+    une case qui déborde sur sa voisine ne se range plus.
+    """
+    forme = pliage.geometrie
+    liste = "; ".join(
+        f"cell {rang}: {case.texte}" for rang, case in enumerate(pliage.cases, start=1)
+    )
+    return (
+        f"Render this as a sprite sheet of {accorde(forme.cases, 'sprite')}, each "
+        f"one a DIFFERENT subject. Exactly {accorde(forme.colonnes, 'column')} and "
+        f"{accorde(forme.lignes, 'row')}, {accorde(forme.cases, 'cell')} total, one "
+        f"single isolated sprite per cell, evenly spaced on a regular grid, each one "
+        f"centered in its cell and entirely inside it. The cells, in reading order "
+        f"(left to right, then top to bottom), show: {liste}. Each cell shows only "
+        f"the subject listed for it and nothing else: no second subject, no ground, "
+        f"no scenery. Every sprite is drawn in the same style, with the same outline "
+        f"weight and the same lighting. Plain flat light gray background, no cell "
+        f"borders, no grid lines, no text, no numbers, no frames, no ground shadow. "
+        f"The attached layout image shows {accorde(forme.cases, 'empty cell')}. Draw "
+        f"one sprite inside each cell, keeping the cells at their positions and sizes. "
+        f"Do NOT draw the cell outlines in your image — the background must stay one "
+        f"plain flat light gray, with no visible cell borders and no separating lines."
+    )
 
 
 def _creer(pliage: Pliage) -> str:
@@ -431,6 +474,8 @@ class ServicePliage:
         pliage = generation.pliage
         if pliage is None or emplacement.resultat is None:  # pragma: no cover
             return []
+        if pliage.plusieurs:
+            return self._deplier_plusieurs(generation, emplacement)
 
         morceaux, mesures = self.decouper_retour(generation, emplacement)
         # **Le dépliage n° 1, automatique** (P1) : ses coupes sont les boîtes
@@ -463,6 +508,127 @@ class ServicePliage:
         # et personne d'autre ne les recalcule. Une fois, à la fin.
         self._diffusion.publier("bibliotheque", self._bibliotheque.arbre())
         return nees
+
+    def _deplier_plusieurs(
+        self, generation: Generation, emplacement: Emplacement
+    ) -> list[Asset]:
+        """Une planche à plusieurs sujets : chaque morceau chez le sujet de sa
+        case, **ou signalé** — jamais rangé de travers (P2).
+
+        **La règle, écrite une fois.** Les taches opaques sont trouvées comme
+        en C2 (détourage par le bord, puis zones connexes). Chacune tombe dans
+        **la case de la grille enregistrée qui contient son centre** — jamais
+        dans « la n-ième tache trouvée » : c'est ce qui empêche une case vide de
+        faire glisser tous les suivants d'un cran. Puis, case par case :
+
+        - **une tache, et une seule**, qui ne remplit pas sa boîte → rangée chez
+          le sujet de la case, dans la pose que la liste lui a donnée ;
+        - **aucune tache** → « case vide », à vérifier, rien n'est rangé ;
+        - **plusieurs taches** → à vérifier : deux sujets, ou un sujet en
+          morceaux, l'atelier ne sait pas lequel sans regarder ;
+        - **une tache qui remplit sa boîte** (`SEUIL_PLEINE`, R6) → à vérifier :
+          c'est un morceau de quadrillage redessiné, pas un sujet.
+
+        Une tache dont le centre tombe hors des N cases (la fin d'une dernière
+        rangée incomplète) n'est rangée nulle part ; elle reste comptée dans
+        `trouvees` et mesurée avec les autres.
+
+        **Aucun refus, aucune attente de choix** : c'est la différence avec
+        `deplier` (C2). Un compte court n'arrête pas la planche, parce qu'ici
+        un choix *fabrique* ce qui manque — la case se refait seule, en image
+        simple, sans repayer les autres (décision 1 de l'auteur).
+
+        **Ce que la règle ne voit pas** : que la case n porte bien le sujet n.
+        Une potion bleue dessinée à la place de la rouge est une tache unique,
+        bien centrée, et elle se range. C'est le geste « ce n'est pas le bon
+        sujet » (`retirer_du_rangement`) qui la reprend.
+        """
+        pliage = generation.pliage
+        assert pliage is not None and emplacement.resultat is not None
+        octets = self._fichiers.lire(emplacement.resultat.fichier)
+        rgba = detourer(Recette(passes=(Passe(moteur=BORD),)), octets)
+        toutes = zones_opaques(rgba[:, :, 3])
+        pliage.trouvees = len(toutes)
+        pliage.mesures = tuple(mesurer_lot(rgba, toutes))
+
+        hauteur, largeur = rgba.shape[:2]
+        forme = pliage.geometrie
+        grille = grille_fixe(largeur, hauteur, forme.colonnes, forme.lignes)[
+            : forme.cases
+        ]
+        par_case: dict[int, list[int]] = {i: [] for i in range(len(grille))}
+        for index, (x0, y0, x1, y1) in enumerate(toutes):
+            cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+            for case, (gx0, gy0, gx1, gy1) in enumerate(grille):
+                if gx0 <= cx <= gx1 and gy0 <= cy <= gy1:
+                    par_case[case].append(index)
+                    break
+
+        coupes: list[tuple[int, int, int, int]] = []
+        indices: list[int] = []
+        taches: list[int] = []
+        a_verifier: dict[int, str] = {}
+        for case in range(pliage.nombre):
+            siennes = par_case.get(case, [])
+            if not siennes:
+                a_verifier[case] = "case vide — rien n'a été trouvé dans cette case"
+            elif len(siennes) > 1:
+                a_verifier[case] = (
+                    f"{len(siennes)} morceaux dans cette case — deux sujets, ou un "
+                    f"sujet coupé : à regarder avant de ranger"
+                )
+            elif pliage.mesures[siennes[0]].pleine:
+                a_verifier[case] = (
+                    "le morceau remplit presque toute sa boîte — c'est le "
+                    "quadrillage que le modèle a redessiné, pas un sujet"
+                )
+            else:
+                coupes.append(tuple(toutes[siennes[0]]))  # type: ignore[arg-type]
+                indices.append(case)
+                taches.append(siennes[0])
+
+        depliage = self.reserver(generation, emplacement, coupes, cases=indices)
+        depliage.a_verifier = a_verifier
+        self._sauver(generation)
+
+        morceaux = decouper(octets, coupes, marge=self.marge(generation))  # type: ignore[arg-type]
+        nees = [
+            self._accueillir(
+                generation,
+                pliage.cases[case],
+                image,
+                depliage.rangs[rang],
+                pliage.mesures[tache],
+                depliage,
+            )
+            for rang, (case, tache, image) in enumerate(zip(indices, taches, morceaux))
+        ]
+        self.accueillir_planche(generation, emplacement)
+        self._diffusion.publier("bibliotheque", self._bibliotheque.arbre())
+        return nees
+
+    def retirer_du_rangement(
+        self, generation: Generation, depliage: Depliage, case: int, image: Asset
+    ) -> Asset:
+        """« Ce n'est pas le bon sujet » : l'image quitte la case, la case est
+        signalée (P2).
+
+        **L'image reste**, en bibliothèque, avec sa planche et son dépliage —
+        elle a été payée, et elle peut servir ailleurs. Ce qui part est son
+        rangement : ni sujet, ni pose, ni direction. La case de la planche passe
+        « à vérifier » sur ce dépliage, avec la raison de l'auteur, et se
+        refait seule si on veut.
+        """
+        depliage.a_verifier = {
+            **depliage.a_verifier,
+            case: "l'auteur l'a désignée : ce n'est pas le bon sujet",
+        }
+        self._sauver(generation)
+        image.personnage = None
+        image.pose = None
+        image.direction = None
+        self._assets.sauver(image)
+        return image
 
     def accueillir_planche(
         self, generation: Generation, emplacement: Emplacement
@@ -588,6 +754,19 @@ class ServicePliage:
         depliage = self.reserver(
             generation, emplacement, boites, origine=MAIN, cases=indices  # type: ignore[arg-type]
         )
+        # **Une case qu'aucune coupe ne remplit se signale** (P2) — la « coupe
+        # manquante » d'une planche à plusieurs sujets. Sur une planche d'un
+        # seul sujet, l'auteur a sous les yeux ce qu'il coupe, et c'est sa liste
+        # qui fait foi, comme depuis P1b : rien ne s'y ajoute.
+        if pliage.plusieurs:
+            remplies = {i for i in indices if i is not None}
+            depliage.a_verifier = {
+                case: "aucune coupe ne remplit cette case"
+                for case in range(pliage.nombre)
+                if case not in remplies
+            }
+            if depliage.a_verifier:
+                self._sauver(generation)
         maintenant = time.time()
         total = len(morceaux)
         sujet = str(
@@ -734,7 +913,8 @@ class ServicePliage:
         self._diffusion.publier("generation", contenu)
 
     def _boites(self, pliage: Pliage, rgba: np.ndarray) -> list[Boite]:
-        """Où couper le retour, et les deux façons de le savoir.
+        """Où couper le retour, et les deux façons de le savoir — une planche à
+        plusieurs sujets en a une troisième, `_deplier_plusieurs`.
 
         **Grille inconnue** — le lot de poses de C2. La planche est partie vide,
         l'atelier ne sait pas ce qui va revenir : il cherche les taches opaques,
@@ -811,7 +991,13 @@ class ServicePliage:
                 # une case. Un corps entre donc dans sa ligne de matrice sans
                 # que personne ait à l'y ranger, exactement comme une image de
                 # C1 tombait dans la sienne.
-                personnage=generation.personnage,
+                #
+                # **Et le sujet de sa case, quand la planche en porte plusieurs**
+                # (P2) : la liste de la demande dit à qui va chaque case. Sans
+                # elle, le sujet de la génération, comme depuis C2. Une coupe
+                # ajoutée à la main, qui ne remplit aucune case, n'est à
+                # personne sur une planche à plusieurs sujets.
+                personnage=_sujet_de(generation, case),
                 pose=case.pose if case is not None else None,
                 # **Et sa direction, écrite à la naissance** (E13). C'est ce qui
                 # répare la mesure du 30 août 2026 : le rangement cesse d'être un
@@ -916,6 +1102,15 @@ def _choix(pliage: Pliage) -> str:
     )
 
 
+def _sujet_de(generation: Generation, case: CasePliee | None) -> str | None:
+    """La chose du jeu qui reçoit l'image de cette case (voir `_accueillir`)."""
+    if case is not None and case.sujet:
+        return case.sujet
+    if generation.pliage is not None and generation.pliage.plusieurs:
+        return None
+    return generation.personnage
+
+
 def _label(case: CasePliee) -> str:
     """Le texte de la case, et rien d'autre.
 
@@ -925,5 +1120,8 @@ def _label(case: CasePliee) -> str:
     neuf vignettes indiscernables dans la grille. Le texte de la case est
     exactement ce qui les distingue, et c'est le mot que l'auteur cherchera.
     """
-    propre = case.texte.strip()
+    # Sur une planche à plusieurs sujets (P2), le signalement seul : la
+    # consigne de pose qui le suit est la même pour tous les objets posés, et
+    # ce qui distingue les vignettes est la chose, pas son attitude.
+    propre = (case.signalement or case.texte).strip()
     return propre[:60] if propre else "sans titre"

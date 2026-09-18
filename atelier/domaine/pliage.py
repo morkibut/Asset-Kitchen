@@ -25,7 +25,7 @@ d'où `Depliage`, plus bas, et la géométrie qui s'écrit au lieu de se déduir
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 __all__ = [
@@ -138,13 +138,36 @@ class CasePliee:
     # chose et rien de neuf n'est écrit sur le disque.
     base: str | None = None
 
+    # ── La chose du jeu que cette case porte (P2, V3.5) ──────────────────────
+    #
+    # **C'est la réponse qui lève l'invariant d'E13** — *une planche ne porte
+    # qu'une seule chose du jeu*. Il avait une raison : une planche qui mêle les
+    # sujets rend le rangement ambigu. La réponse est que **la demande dit
+    # d'avance ce que chaque case contient** : la n-ième case porte ce sujet-là,
+    # et le découpage range le morceau de la n-ième case chez lui. Vide, la case
+    # appartient au sujet de la génération, comme depuis C2 — l'ancienne règle,
+    # inchangée.
+    #
+    # `signalement` est ce que la liste a écrit pour ce sujet, avant la consigne
+    # de la pose : c'est le texte que « refaire cette case seule » renvoie, mot
+    # pour mot, dans une génération simple. Recomposé depuis la fiche, il aurait
+    # pu changer entre la planche et la reprise.
+    sujet: str | None = None
+    signalement: str | None = None
+
     def en_json(self) -> dict[str, Any]:
-        return {
+        contenu: dict[str, Any] = {
             "texte": self.texte,
             "pose": self.pose,
             "direction": self.direction,
             "base": self.base,
         }
+        # Écrits seulement quand la case en porte : une planche d'un seul sujet
+        # garde exactement la forme de fichier qu'elle avait avant P2.
+        if self.sujet:
+            contenu["sujet"] = self.sujet
+            contenu["signalement"] = self.signalement or ""
+        return contenu
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "CasePliee":
@@ -153,6 +176,8 @@ class CasePliee:
             pose=d.get("pose") or None,
             direction=d.get("direction") or None,
             base=d.get("base") or None,
+            sujet=d.get("sujet") or None,
+            signalement=d.get("signalement") or None,
         )
 
 
@@ -305,6 +330,15 @@ class Depliage:
     # repartirait de ses coupes sans savoir laquelle va dans quelle case.
     cases: tuple[int | None, ...] = ()
 
+    # **Les cases de la planche que ce dépliage n'a pas rangées, et pourquoi**
+    # (P2) — indice de case → raison en clair. Seule une planche à plusieurs
+    # sujets en porte : une case vide, une case à plusieurs morceaux, une case
+    # qu'aucune coupe ne remplit, ou une image que l'auteur a désignée « pas le
+    # bon sujet ». **Signaler plutôt que ranger de travers** : sans ça, sept
+    # morceaux pour huit cases glisseraient d'un cran, et chaque sujet recevrait
+    # l'image de son voisin sans que rien ne le dise.
+    a_verifier: dict[int, str] = field(default_factory=dict)
+
     def case_de(self, index: int) -> int | None:
         """La case que la coupe n° `index` remplit — écrite, ou par position."""
         if self.cases:
@@ -330,6 +364,11 @@ class Depliage:
             contenu["supprime_le"] = self.supprime_le
         if self.cases:
             contenu["cases"] = list(self.cases)
+        if self.a_verifier:
+            contenu["a_verifier"] = [
+                {"case": case, "raison": raison}
+                for case, raison in sorted(self.a_verifier.items())
+            ]
         return contenu
 
     @staticmethod
@@ -355,6 +394,11 @@ class Depliage:
             cases=tuple(
                 int(c) if c is not None else None for c in (d.get("cases") or ())
             ),
+            a_verifier={
+                int(v["case"]): str(v.get("raison") or "")
+                for v in (d.get("a_verifier") or ())
+                if isinstance(v, dict) and v.get("case") is not None
+            },
         )
 
 
@@ -440,6 +484,19 @@ class Pliage:
     @property
     def nombre(self) -> int:
         return len(self.cases)
+
+    @property
+    def plusieurs(self) -> bool:
+        """**Une planche à plusieurs sujets** (P2) : ses cases disent chacune
+        leur chose du jeu. Lu sur les cases, jamais sur un drapeau — la liste
+        *est* ce qui lève l'invariant d'E13, et sans elle l'ancienne règle
+        s'applique inchangée."""
+        return any(c.sujet for c in self.cases)
+
+    @property
+    def sujets(self) -> tuple[str | None, ...]:
+        """La liste annoncée, dans l'ordre de lecture — un sujet par case."""
+        return tuple(c.sujet for c in self.cases)
 
     @property
     def geometrie(self) -> Geometrie:
@@ -562,6 +619,13 @@ class Pliage:
         d'être `None`, et un lot ne redemande jamais deux fois la même décision.
         """
         if self.trouvees <= 0 or self.ecartees is not None:
+            return False
+        # **Une planche à plusieurs sujets n'arrête jamais tout le lot** (P2).
+        # Ses défauts se disent case par case (`Depliage.a_verifier`) : ce qui
+        # est bon se range, ce qui cloche attend, et une case ratée se refait
+        # seule — tranché par l'auteur le 18 septembre 2026. Arrêter la planche
+        # entière pour une case ferait attendre sept images payées et justes.
+        if self.plusieurs:
             return False
         return bool(self.surplus or self.pleines)
 
