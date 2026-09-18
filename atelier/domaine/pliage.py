@@ -18,6 +18,8 @@ planche lui-même (C3) ; c'est elle qui rend l'avant relisable à la relance,
 **Le pliage est une ruse d'appel, jamais un format de livraison.** Rien ici ne
 décrit une feuille assemblée qu'on garderait : la planche est le brut de sa
 génération, et ce qui entre en bibliothèque, ce sont les images séparées.
+*G16 a fait entrer la planche en bibliothèque ; P1 (V3.5) la fait redécouper —
+d'où `Depliage`, plus bas, et la géométrie qui s'écrit au lieu de se déduire.*
 """
 
 from __future__ import annotations
@@ -27,13 +29,23 @@ from dataclasses import dataclass
 from typing import Any
 
 __all__ = [
+    "AUTO",
+    "MAIN",
     "SEUIL_PLEINE",
     "CasePliee",
+    "Depliage",
     "Geometrie",
     "MesuresLot",
     "Pliage",
     "geometrie",
+    "identifiant_de_depliage",
 ]
+
+# Les deux origines d'un dépliage (P1). **Le premier est toujours automatique**
+# — tranché par l'auteur le 2 septembre 2026 : une planche qui revient bien ne
+# demande aucun geste —, les suivants sont des gestes qu'on demande.
+AUTO = "auto"
+MAIN = "main"
 
 
 # **Au-dessus, ce n'est plus une silhouette, c'est un rectangle** (R6, US-368).
@@ -61,9 +73,14 @@ SEUIL_PLEINE = 0.90
 class Geometrie:
     """Combien de colonnes et de lignes pour tenir N cases.
 
-    **Déduite du nombre de cases, jamais enregistrée** : deux planches du même
-    compte ont la même géométrie, et la garder dans le fichier en ferait une
-    seconde vérité que la première relecture pourrait contredire.
+    **Proposée par la formule, puis écrite sur le pliage** (P1, V3.5). Elle a
+    été déduite du seul nombre de cases de C2 au 18 septembre 2026, et c'était
+    tenable tant que la formule ne bougeait pas. Le banc des planches a mesuré
+    qu'un 4 × 2 bat le 3 × 3 à case vide : le jour où la formule change, une
+    planche ancienne relue par déduction se redécouperait sur une grille sur
+    laquelle elle n'a pas été dessinée. La grille est donc un **fait de
+    l'appel**, pris au départ comme le prompt, et `geometrie()` n'est plus que
+    la proposition faite aux planches qui ne sont pas encore parties.
     """
 
     cases: int
@@ -224,6 +241,88 @@ class MesuresLot:
         )
 
 
+def identifiant_de_depliage(planche: str, numero: int) -> str:
+    """« `<planche>-d2` » — la planche, et lequel de ses dépliages.
+
+    **Déduit, jamais tiré au sort**, pour la raison de `identifiant_de` : le
+    dépliage automatique d'une planche reprise au démarrage doit retomber sur
+    le même nom, sinon ses images désigneraient un dépliage que le pliage ne
+    connaît pas. Le `d` empêche de le lire comme un identifiant d'asset
+    (`<génération>-<rang>`) : ce n'en est pas un, et aucune image n'y répond.
+    """
+    return f"{planche}-d{int(numero)}"
+
+
+@dataclass(slots=True)
+class Depliage:
+    """Un découpage d'une planche : où l'on a coupé, et quels rangs ça a pris.
+
+    **Il vit sur le pliage, dans `generation.json`**, parce que les images qu'il
+    fait naître vivent dans le dossier de cette génération et que c'est ce
+    fichier-là que tout ce qui attribue un rang relit déjà — un fichier à part
+    serait une seconde vérité sur les rangs, à tenir d'accord avec la première.
+    La planche, ses mesures d'arrivée et le choix de l'auteur y sont déjà.
+
+    **La règle des rangs, dont hérite tout dépliage à venir (P1b) :** un
+    dépliage prend ses rangs **d'un seul tenant, au-dessus de tout rang que la
+    génération a jamais connu** — ses emplacements, les assets de son dossier,
+    et les rangs déjà réservés par ses dépliages, supprimés compris —, et il les
+    garde à vie : **un rang ne se réattribue jamais, un numéro non plus**. Deux
+    dépliages d'une même planche n'ont donc aucun rang en commun, et supprimer
+    les images de l'un ne libère rien que l'autre pourrait écraser.
+    L'appartenance d'une image à un dépliage se lit **sur l'image**
+    (`Asset.depliage`), jamais sur son rang : un miroir ou une superposition
+    tombe aussi au-dessus de cent, dans le même dossier.
+
+    `coupes` et `rangs` sont alignés, dans l'ordre de lecture : la n-ième coupe a
+    fait naître l'image du n-ième rang. Les coupes sont en pixels du brut de la
+    planche, **avant** la marge que `decouper` ajoute — la même convention que
+    les rectangles du découpeur de T5, qui les repropose tels quels.
+    """
+
+    numero: int
+    planche: str
+    coupes: tuple[tuple[int, int, int, int], ...] = ()
+    rangs: tuple[int, ...] = ()
+    cree_le: float = 0.0
+    origine: str = AUTO
+
+    @property
+    def identifiant(self) -> str:
+        return identifiant_de_depliage(self.planche, self.numero)
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "numero": self.numero,
+            "planche": self.planche,
+            "coupes": [list(c) for c in self.coupes],
+            "rangs": list(self.rangs),
+            "cree_le": self.cree_le,
+            "origine": self.origine,
+            # déduit — présent pour l'interface, jamais relu
+            "identifiant": self.identifiant,
+        }
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any] | None) -> "Depliage | None":
+        """Rien plutôt qu'un dépliage sans planche — même règle que `Pliage`."""
+        if not d or not d.get("planche"):
+            return None
+        coupes = tuple(
+            tuple(int(v) for v in c[:4])
+            for c in (d.get("coupes") or ())
+            if len(c) >= 4
+        )
+        return Depliage(
+            numero=int(d.get("numero", 1) or 1),
+            planche=str(d["planche"]),
+            coupes=coupes,  # type: ignore[arg-type]
+            rangs=tuple(int(r) for r in (d.get("rangs") or ())),
+            cree_le=float(d.get("cree_le", 0.0) or 0.0),
+            origine=MAIN if d.get("origine") == MAIN else AUTO,
+        )
+
+
 @dataclass(slots=True)
 class Pliage:
     """Ce qu'un appel plié a demandé, et ce que son dépliage a décidé.
@@ -278,13 +377,118 @@ class Pliage:
     mesures: tuple[MesuresLot, ...] = ()
     ecartees: tuple[int, ...] | None = None
 
+    # ── La grille sur laquelle la planche a été demandée (P1) ────────────────
+    #
+    # **Écrite à la naissance du pliage**, c'est-à-dire quand la demande pliée
+    # se compose, avant de partir — `__post_init__` la prend à la formule du
+    # jour si l'appelant ne l'a pas donnée. Relue ensuite telle quelle : c'est
+    # elle, et plus la formule, qui dit où couper. Zéro n'existe qu'en transit.
+    #
+    # Les générations d'avant la portent déjà dans leur fichier — `en_json` les
+    # écrivait « déduits, jamais relus » depuis C2, avec la seule formule que le
+    # dépôt ait connue : les relire rend donc exactement la grille sur laquelle
+    # elles ont été dessinées. Un fichier qui ne les a pas, ou qui les a
+    # incohérentes, retombe sur la déduction — le seul cas où elle sert encore.
+    colonnes: int = 0
+    lignes: int = 0
+
+    # Les découpages de la planche, dans l'ordre où ils ont été faits (P1).
+    # Vide pour tout ce qui a été déplié avant P1 : ces images-là ne disent pas
+    # leur dépliage, et rien ne l'invente pour elles.
+    depliages: tuple[Depliage, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not _tient(self.colonnes, self.lignes, self.nombre):
+            forme = geometrie(self.nombre)
+            self.colonnes, self.lignes = forme.colonnes, forme.lignes
+
     @property
     def nombre(self) -> int:
         return len(self.cases)
 
     @property
     def geometrie(self) -> Geometrie:
-        return geometrie(self.nombre)
+        """La grille **enregistrée** — jamais recalculée depuis le compte.
+
+        Les sept lecteurs de la grille passent tous par ici, et c'est ce qui
+        leur évite de changer : la valeur a changé de source, pas de forme.
+        """
+        if not _tient(self.colonnes, self.lignes, self.nombre):
+            return geometrie(self.nombre)
+        return Geometrie(max(1, self.nombre), self.colonnes, self.lignes)
+
+    # ── Les dépliages ────────────────────────────────────────────────────────
+
+    def depliages_de(self, planche: str) -> tuple[Depliage, ...]:
+        return tuple(d for d in self.depliages if d.planche == planche)
+
+    def depliage_auto(self, planche: str) -> Depliage | None:
+        """Le dépliage automatique de cette planche, s'il a déjà été réservé.
+
+        **Il n'y en a qu'un par planche**, et c'est ce qui rend la reprise au
+        démarrage idempotente : une planche dont le dépliage a été réservé puis
+        coupé par une fermeture retombe sur le même numéro et les mêmes rangs.
+        """
+        return next(
+            (d for d in self.depliages if d.planche == planche and d.origine == AUTO),
+            None,
+        )
+
+    @property
+    def rangs_reserves(self) -> frozenset[int]:
+        """Tous les rangs qu'un dépliage a jamais pris — la moitié « enregistrée »
+        de la règle des rangs (voir `Depliage`)."""
+        return frozenset(r for d in self.depliages for r in d.rangs)
+
+    def reserver(
+        self,
+        planche: str,
+        coupes: tuple[tuple[int, int, int, int], ...],
+        premier_rang: int,
+        *,
+        origine: str = AUTO,
+        cree_le: float = 0.0,
+    ) -> Depliage:
+        """Un dépliage de plus, sur des rangs neufs — ou l'automatique, repris.
+
+        `premier_rang` est donné par qui connaît le disque (le service) : ce
+        module ne voit pas les assets du dossier. Il doit déjà être au-dessus
+        de `rangs_reserves` ; on le remonte quand même s'il ne l'est pas, parce
+        qu'un rang partagé entre deux dépliages écraserait une image sans bruit.
+
+        **Le numéro suit le plus grand jamais donné**, par planche : le n° 2
+        supprimé ne rend pas son numéro au suivant, sinon l'historique d'une
+        planche nommerait deux découpages différents du même nom.
+        """
+        coupes = tuple(tuple(int(v) for v in c) for c in coupes)  # type: ignore[misc]
+        if origine == AUTO:
+            deja = self.depliage_auto(planche)
+            if deja is not None:
+                # Reprise : mêmes rangs si le compte n'a pas bougé. Les coupes,
+                # elles, sont celles du découpage qu'on s'apprête à écrire.
+                if len(deja.rangs) != len(coupes):
+                    autres = frozenset(
+                        r for d in self.depliages if d is not deja for r in d.rangs
+                    )
+                    debut = max([premier_rang - 1, *autres, *deja.rangs]) + 1
+                    deja.rangs = tuple(range(debut, debut + len(coupes)))
+                deja.coupes = coupes  # type: ignore[assignment]
+                return deja
+
+        debut = max([premier_rang - 1, *self.rangs_reserves]) + 1
+        numero = 1 + max(
+            (d.numero for d in self.depliages if d.planche == planche), default=0
+        )
+        depliage = Depliage(
+            numero=numero,
+            planche=planche,
+            coupes=coupes,  # type: ignore[arg-type]
+            rangs=tuple(range(debut, debut + len(coupes))),
+            cree_le=cree_le,
+            origine=MAIN if origine == MAIN else AUTO,
+        )
+        self.depliages = (*self.depliages, depliage)
+        return depliage
 
     @property
     def gardees(self) -> tuple[int, ...]:
@@ -326,7 +530,7 @@ class Pliage:
 
     def en_json(self) -> dict[str, Any]:
         forme = self.geometrie
-        return {
+        contenu = {
             "cases": [c.en_json() for c in self.cases],
             "geometrie_connue": self.geometrie_connue,
             "occupation": self.occupation,
@@ -334,14 +538,21 @@ class Pliage:
             "trouvees": self.trouvees,
             "mesures": [m.en_json() for m in self.mesures],
             "ecartees": list(self.ecartees) if self.ecartees is not None else None,
-            # déduits — présents pour l'interface, jamais relus
-            "nombre": self.nombre,
+            # **Enregistrés et relus depuis P1** — mêmes clés qu'avant, pour
+            # qu'un fichier d'avant se relise sans rien réécrire.
             "colonnes": forme.colonnes,
             "lignes": forme.lignes,
+            # déduits — présents pour l'interface, jamais relus
+            "nombre": self.nombre,
             "surplus": self.surplus,
             "pleines": list(self.pleines),
             "attend_un_choix": self.attend_un_choix,
         }
+        # Écrits seulement quand il y en a : un pliage d'avant P1, ou pas encore
+        # déplié, garde exactement la forme de fichier qu'il avait.
+        if self.depliages:
+            contenu["depliages"] = [dep.en_json() for dep in self.depliages]
+        return contenu
 
     @staticmethod
     def depuis_json(d: dict[str, Any] | None) -> "Pliage | None":
@@ -372,4 +583,27 @@ class Pliage:
             # l'autre. Un `or None` ici rouvrirait la question à chaque
             # relecture d'une planche déjà tranchée.
             ecartees=tuple(int(i) for i in ecartees) if ecartees is not None else None,
+            colonnes=int(d.get("colonnes", 0) or 0),
+            lignes=int(d.get("lignes", 0) or 0),
+            depliages=tuple(
+                dep
+                for dep in (Depliage.depuis_json(x) for x in d.get("depliages") or ())
+                if dep is not None
+            ),
         )
+
+
+def _tient(colonnes: int, lignes: int, cases: int) -> bool:
+    """Une grille enregistrée qui tient ses cases — sinon elle ne se relit pas.
+
+    **Pas de rangée entièrement vide non plus** : une grille qui en aurait une
+    découperait une bande de fond comme une case. Ce n'est pas une grille que
+    l'atelier a pu poser, c'est un fichier abîmé, et la déduction vaut mieux.
+    """
+    nombre = max(1, cases)
+    return (
+        colonnes >= 1
+        and lignes >= 1
+        and colonnes * lignes >= nombre
+        and colonnes * (lignes - 1) < nombre
+    )

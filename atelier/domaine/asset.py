@@ -187,6 +187,24 @@ class Asset:
     # l'auteur décider (`docs/archive/plan-versions-tenues.md`, C2).
     lot: MesuresLot | None = None
 
+    # ── De quelle planche, et de quel découpage de cette planche (P1) ────────
+    #
+    # **Pas `parent`, et c'est voulu.** `parent` veut dire « dérivée d'une autre
+    # image » : la galerie range l'enfant sous lui, et le rejeu du recalage
+    # (`_rangs_du_depliage`, C3) écarte justement ce qui a un parent pour ne
+    # compter que les cases. Une image dépliée n'est pas une retouche de sa
+    # planche, c'est une case de l'appel — lui donner un parent aurait changé
+    # ces deux comportements sans que personne l'ait demandé.
+    #
+    # `planche` est l'identifiant de l'asset planche, `depliage` celui du
+    # découpage qui l'a fait naître (`Depliage.identifiant`). Vides pour tout ce
+    # qui n'est pas sorti d'un dépliage, **et pour ce qui a été déplié avant
+    # P1** : rien ne les invente après coup. Écrits dans le fichier seulement
+    # quand ils existent, pour que les enregistrements d'avant gardent leur
+    # forme au caractère près.
+    planche: str | None = None
+    depliage: str | None = None
+
     # ── Ce que la différence a mesuré sur ce calque-là ───────────────────────
     #
     # Arrivées en C3 (US-147). Cinq nombres — silhouette retrouvée, corps
@@ -287,7 +305,7 @@ class Asset:
         return self.rendu is not None and self.empreinte == self.recette.empreinte()
 
     def en_json(self) -> dict[str, Any]:
-        return {
+        contenu: dict[str, Any] = {
             "identifiant": self.identifiant,
             "generation": self.generation,
             "rang": self.rang,
@@ -337,6 +355,12 @@ class Asset:
             # endroits finiraient par diverger sur un détail de sérialisation.
             "empreinte": self.recette.empreinte(),
         }
+        # Seulement quand ils existent (P1) — voir la déclaration des champs.
+        if self.planche:
+            contenu["planche"] = self.planche
+        if self.depliage:
+            contenu["depliage"] = self.depliage
+        return contenu
 
     def en_disque(self) -> dict[str, Any]:
         """Ce qui s'écrit à côté de l'image. Porte en plus le chemin du cache,
@@ -377,6 +401,8 @@ class Asset:
             direction=d.get("direction"),
             piece=d.get("piece"),
             lot=MesuresLot.depuis_json(d.get("lot")),
+            planche=d.get("planche") or None,
+            depliage=d.get("depliage") or None,
             calque=MesuresCalque.depuis_json(d.get("calque")),
             superposition=(
                 Superposition.depuis_json(d["superposition"])

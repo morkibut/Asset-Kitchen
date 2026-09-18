@@ -866,7 +866,16 @@ class ServiceEquipement:
             return []  # pragma: no cover — l'atelier ne déplie que ce qui est arrivé
 
         retours, mesures_lot, empile = self._lire_planche(generation, rang)
-        premier = self._pliage.premier_rang_libre(generation)
+        # **Le dépliage n° 1, comme en C2** (P1) — même réservation, mêmes
+        # rangs d'un seul tenant ; les coupes sont les cases de la grille posée.
+        depliage = self._pliage.reserver(
+            generation,
+            emplacement,
+            [
+                mesures_lot[index].boite if index < len(mesures_lot) else (0, 0, 0, 0)
+                for index in range(len(retours))
+            ],
+        )
         nes: list[Asset] = []
         for index, (case, base, retour, octets) in enumerate(retours):
             nes.append(
@@ -876,9 +885,11 @@ class ServiceEquipement:
                     base,
                     retour,
                     octets,
-                    premier + index,
+                    depliage.rangs[index],
                     mesures_lot[index] if index < len(mesures_lot) else None,
                     empile,
+                    planche=depliage.planche,
+                    depliage=depliage.identifiant,
                 )
             )
 
@@ -1352,6 +1363,9 @@ class ServiceEquipement:
         rang: int,
         lot: MesuresLot | None,
         empile: bool,
+        *,
+        planche: str | None = None,
+        depliage: str | None = None,
     ) -> Asset:
         """Une case revenue devient un asset — calque, ou corps habillé.
 
@@ -1402,6 +1416,9 @@ class ServiceEquipement:
                 # pièce, et c'est la recette qui dit ce qu'ils sont.
                 piece=generation.piece,
                 lot=lot,
+                # Sa planche et son dépliage (P1), comme un corps de C2.
+                planche=planche,
+                depliage=depliage,
                 calque=(
                     mesurer_calque(
                         avec_alpha(self._assets.octets(base)[0]),

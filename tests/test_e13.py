@@ -30,6 +30,7 @@ les essais du § Le prix vérifient.
 from __future__ import annotations
 
 import itertools
+import json
 
 from atelier.domaine.pliage import geometrie
 from atelier.image.pliage import COTE, cote_de_case
@@ -212,11 +213,20 @@ def test_le_sujet_dune_planche_est_le_signalement_seul(client):
 # ── La géométrie, écrite par l'atelier ───────────────────────────────────────
 
 
-def test_la_geometrie_est_ecrite_par_latelier_et_se_deduit_du_nombre_de_cases(client):
+def test_la_geometrie_est_proposee_par_latelier_et_secrit_sur_la_planche_qui_part(
+    client, double
+):
     """**Montrée, et non modifiable** : c'est elle qui rend le découpage du
-    retour possible sans deviner, et rien dans la requête ne la propose."""
+    retour possible sans deviner, et rien dans la requête ne la propose.
+
+    **Réécrit en P1 (V3.5).** Il disait *« se déduit du nombre de cases »* ; la
+    formule ne fait plus que **proposer** la grille d'une planche qui n'est pas
+    encore partie, et la grille montrée est celle qui s'écrit sur la génération
+    au départ — c'est l'enregistrée qui découpe ensuite, jamais la formule
+    (`tests/test_p1a_depliage.py`)."""
     chose = _creer(client)
     _vue(client)
+    double.rendre = lambda: planche_sujets(4)
 
     lue = _planche(client, chose["identifiant"], "marche")
 
@@ -232,6 +242,33 @@ def test_la_geometrie_est_ecrite_par_latelier_et_se_deduit_du_nombre_de_cases(cl
         (1, 0),
         (1, 1),
     ]
+
+    partie = client.post(
+        "/api/generations",
+        json={
+            "modele": MODELE,
+            "prompt": "a dwarf",
+            "personnage": chose["identifiant"],
+            "pose": "marche",
+            "directions": ["nord", "sud", "est", "ouest"],
+        },
+    )
+    assert partie.status_code == 202, partie.text
+    identifiant = partie.json()["identifiant"]
+    _attendre(client, identifiant)
+
+    # **Ce qui a été montré est ce qui s'est écrit**, dans le fichier même de
+    # la génération — relu sur le disque, pas dans la réponse du `POST`.
+    fichiers = client.app.state.atelier.fichiers
+    ecrit = json.loads(
+        (fichiers.dossier_generation(identifiant) / "generation.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert (ecrit["pliage"]["colonnes"], ecrit["pliage"]["lignes"]) == (
+        lue["geometrie"]["colonnes"],
+        lue["geometrie"]["lignes"],
+    )
 
 
 def test_un_sujet_revient_plus_grand_que_la_cible_du_jeu(client):

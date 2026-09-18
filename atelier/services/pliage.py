@@ -40,6 +40,7 @@ planche de la même façon — **jamais un refus, toujours un regard**.
 
 from __future__ import annotations
 
+import time
 from typing import Sequence
 
 import numpy as np
@@ -49,7 +50,14 @@ from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Emplacement, Generation, Statut
 from atelier.domaine.planche import asset_de_planche
-from atelier.domaine.pliage import CasePliee, Geometrie, MesuresLot, Pliage
+from atelier.domaine.pliage import (
+    AUTO,
+    CasePliee,
+    Depliage,
+    Geometrie,
+    MesuresLot,
+    Pliage,
+)
 from atelier.domaine.projet import PLANCHE
 from atelier.domaine.recette import BORD, Passe, Recette
 from atelier.image import Boite, decouper, detourer, grille_fixe, mesurer, zones_opaques
@@ -423,11 +431,23 @@ class ServicePliage:
             return []
 
         morceaux, mesures = self.decouper_retour(generation, emplacement)
-        rang = self.premier_rang_libre(generation)
+        # **Le dépliage n° 1, automatique** (P1) : ses coupes sont les boîtes
+        # que le lot vient de mesurer, et ses rangs sont réservés — et écrits —
+        # avant la première image.
+        depliage = self.reserver(
+            generation, emplacement, [m.boite for m in mesures[: len(morceaux)]]
+        )
         nees: list[Asset] = []
         for index, (case, image) in enumerate(zip(pliage.cases, morceaux)):
             nees.append(
-                self._accueillir(generation, case, image, rang + index, mesures[index])
+                self._accueillir(
+                    generation,
+                    case,
+                    image,
+                    depliage.rangs[index],
+                    mesures[index],
+                    depliage,
+                )
             )
 
         # **Et la planche elle-même, en dernier** (G16). Après ses morceaux,
@@ -495,6 +515,39 @@ class ServicePliage:
                 generation.identifiant
             )
         )
+
+    def reserver(
+        self,
+        generation: Generation,
+        emplacement: Emplacement,
+        coupes: Sequence[tuple[int, int, int, int]],
+        *,
+        origine: str = AUTO,
+    ) -> Depliage:
+        """Un dépliage de la planche de cet emplacement, ses rangs pris (P1).
+
+        **La réservation s'écrit avant la première image**, pour la raison qui
+        fait écrire l'arrivée avant le dépliage : une fermeture entre les deux
+        laisse sur le disque une réservation sans images, que la reprise au
+        démarrage retrouve et remplit — mêmes rangs, même numéro —, jamais des
+        images qui désigneraient un dépliage que le fichier ignore.
+
+        Publique parce que les deux dépliages automatiques la partagent — les
+        corps de C2 et les calques de C3 —, et que P1b y passera pour le
+        dépliage refait à la main.
+        """
+        pliage = generation.pliage
+        if pliage is None:  # pragma: no cover — on ne déplie que ce qui est plié
+            raise ErreurAtelier("cette génération n'est pas une planche")
+        depliage = pliage.reserver(
+            identifiant_de(generation.identifiant, emplacement.rang),
+            tuple(tuple(int(v) for v in c) for c in coupes),  # type: ignore[misc]
+            self.premier_rang_libre(generation),
+            origine=origine,
+            cree_le=time.time(),
+        )
+        self._sauver(generation)
+        return depliage
 
     def reprendre(self, generations: Sequence[Generation]) -> int:
         """Les lots dont la planche est arrivée mais qui n'ont pas été dépliés.
@@ -594,6 +647,7 @@ class ServicePliage:
         octets: bytes,
         rang: int,
         mesures: MesuresLot,
+        depliage: Depliage,
     ) -> Asset:
         mesure = mesurer(octets)
         chemin = self._fichiers.ecrire_brut(generation.identifiant, rang, octets, ".png")
@@ -637,6 +691,10 @@ class ServicePliage:
                 # déclaré de directions — l'état ordinaire, et rien ne change.
                 direction=case.direction,
                 lot=mesures,
+                # **Sa planche et son découpage** (P1) — de quoi remonter de
+                # l'image à la feuille payée, et au geste qui l'en a tirée.
+                planche=depliage.planche,
+                depliage=depliage.identifiant,
                 # **Datée du lot**, comme les variations d'un même appel : les N
                 # images sont arrivées ensemble, et le rang les départage dans
                 # l'ordre de lecture de la planche.
@@ -655,9 +713,15 @@ class ServicePliage:
         emplacements comme ses dépliages précédents : deux assets d'un même rang
         partageraient leurs fichiers `<rang>-brut` et `<rang>-asset.json`, et le
         second effacerait le premier sans rien dire.
+
+        **Et au-dessus des rangs réservés par un dépliage enregistré** (P1),
+        même quand leurs images ont été supprimées et purgées : c'est la moitié
+        de la règle des rangs que le disque seul ne voit plus (voir `Depliage`).
         """
         pris = self._base.rangs_de_generation(generation.identifiant)
         pris += [e.rang for e in generation.emplacements]
+        if generation.pliage is not None:
+            pris += list(generation.pliage.rangs_reserves)
         return max([RANG_PLIAGE - 1, *pris]) + 1
 
 

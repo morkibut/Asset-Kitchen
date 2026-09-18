@@ -342,11 +342,17 @@ class ServiceDecoupe:
         emplacements comme ses découpes précédentes : deux assets d'un même rang
         partageraient leurs fichiers `<rang>-brut` et `<rang>-asset.json`, et le
         second effacerait le premier sans rien dire.
+
+        **Et au-dessus des rangs qu'un dépliage de la planche a réservés** (P1)
+        — la règle des rangs de `Depliage` : un rang pris ne se rend jamais,
+        même quand les images de ce dépliage ont été purgées.
         """
         pris = self._base.rangs_de_generation(generation)
         objet = self._base.lire(generation)
         if objet is not None:
             pris += [e.rang for e in objet.emplacements]
+            if objet.pliage is not None:
+                pris += list(objet.pliage.rangs_reserves)
         return max([RANG_DECOUPE - 1, *pris]) + 1
 
 
