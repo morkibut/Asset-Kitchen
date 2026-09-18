@@ -113,4 +113,10 @@ Tranché en RS3 :
 - l'erreur du serveur (409 sur une direction non tenue, par exemple) s'affiche en clair sous la
   ligne concernée, en plus du bandeau `onErreur` déjà en place pour le reste de l'onglet.
 
+### RS4 · La case planche passe partout
+
+- [ ] l'outil de génération de l'agent accepte `garder_mise_en_page`, avec les mêmes refus
+- [ ] « Reprendre les réglages » d'une image recoche la case quand sa génération l'avait
+- [ ] essais sans appel payant
+
 **Ordre** : RS1, puis RS2 et RS3 — toutes deux dépendent de l'usage posé par RS1.
