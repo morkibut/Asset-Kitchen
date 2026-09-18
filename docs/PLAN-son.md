@@ -8,12 +8,13 @@
 >
 > Quel modèle sur quelle tranche : [PLAN-son-affectation.md](PLAN-son-affectation.md).
 >
-> **Où en est le chantier (18 septembre 2026, branche `feat/son`, worktree
-> `.claude/worktrees/son`).** La partie **serveur** de SN0, SN1, SN2, SN3, SN4, SN5 et SN8 est
-> écrite et tenue par ses essais (suite complète : 3 060 passés ; les trois échecs relevés
-> existaient avant la branche). La maquette SNM attend l'avis de l'auteur ; **aucun écran** n'est
-> encore construit. Une case cochée ci-dessous est tenue ; une case qui dit « côté serveur, fait »
-> attend son écran. Rien n'a encore tourné sur un vrai modèle : les poids ne sont pas téléchargés.
+> **Où en est le chantier (19 septembre 2026, branche `feat/son`, worktree
+> `.claude/worktrees/son`).** SN0, SN1, SN2, SN3, SN4, SN5 et SN8 sont écrits, **serveur et
+> écrans**, vérifiés au navigateur sur l'atelier jetable (`essais/atelier_jetable_son.py`, ComfyUI
+> doublé) et relus en croisé. Une case cochée ci-dessous est tenue. Ce qui reste ouvert attend un
+> vrai ComfyUI avec ses poids (le banc SN0), ou une tranche suivante. Deux écarts connus avec la
+> maquette : l'écran ne rouvre pas une série ni un jeu de variantes après un rechargement (ils
+> vivent côté serveur), et la page « Livrer au jeu » ne regroupe pas encore les sons par famille.
 
 ## Décisions d'architecture
 
@@ -119,7 +120,7 @@ la liste des réglages : décrire un son → relire le texte → écouter huit t
 garder → régler → livrer ; la fiche d'un sujet et ses emplacements sonores ; une musique avec
 son tempo et sa boucle ; un repère sonore sur une image d'animation.
 
-- [ ] L'auteur l'a parcourue et validée ; les écrans des tranches suivantes la suivent.
+- [x] L'auteur l'a parcourue et validée ; les écrans des tranches suivantes la suivent.
 
 ### SN1 · Un bruitage depuis une phrase, sans coller de workflow
 
@@ -136,9 +137,8 @@ diagnostic nomme chaque fichier absent, son dossier et sa source.
 
 - [ ] Sur un ComfyUI qui a les poids, un bruitage se lance depuis une phrase et revient
       écoutable, sans rien importer.
-- [ ] Sur un ComfyUI à qui manque un fichier, le moteur est grisé avec le nom du fichier, son
-      dossier et sa page de téléchargement — jamais proposé puis refusé. *(Côté serveur, fait :
-      l'installation et le diagnostic nomment chaque fichier absent, son dossier et sa source.)*
+- [x] Sur un ComfyUI à qui manque un fichier, le moteur est grisé avec le nom du fichier, son
+      dossier et sa page de téléchargement — jamais proposé puis refusé.
 - [x] Un workflow collé par l'auteur marche comme avant.
 
 ### SN2 · L'univers sonore, et le texte qui part
@@ -149,14 +149,14 @@ Le bloc sonore de l'univers (époque et matière, rendu, orchestre, humeur, tona
 référence, moteur par famille), les gabarits par moteur et leurs exemples livrés, et la
 composition du texte montrée avant le lancement.
 
-- [ ] Un pas d'un jeu « fantasy médiévale, rendu 16-bit » part avec `TrackType: SFX`, la
-      description, le rendu et la prise de son — et l'écran le montre avant. *(Côté serveur,
-      fait : la route de relecture le montre.)*
+- [x] Un pas d'un jeu « fantasy médiévale, rendu 16-bit » part avec `TrackType: SFX`, la
+      description, le rendu et la prise de son — et l'écran le montre avant (« Relire avant
+      l'envoi »).
 - [x] Un univers vide ne contraint rien : la description part seule, avec la prise de son de la
       famille.
 - [x] Un texte relu à la main part tel quel.
-- [ ] Une description en français part telle quelle, et l'écran signale que le moteur comprend
-      l'anglais — rien n'est traduit. *(Côté serveur, fait : l'indicateur existe.)*
+- [x] Une description en français part telle quelle, et l'écran signale que le moteur comprend
+      l'anglais — rien n'est traduit.
 
 ### SN3 · Une série de tirages, et les variantes
 
@@ -165,8 +165,8 @@ composition du texte montrée avant le lancement.
 Un geste lance N graines (8 par défaut) ; la série s'écoute en grille, avec ses mesures (dont
 le niveau perçu en LUFS, nouveau) ; garder plusieurs tirages forme un jeu de variantes.
 
-- [ ] Huit tirages d'un pas reviennent dans une même série, écoutables à la suite au clavier.
-      *(Côté serveur, fait : huit graines, une série.)*
+- [x] Huit tirages d'un pas reviennent dans une même série, écoutables à la suite au clavier
+      (← → passent et font écouter, Espace réécoute, G garde).
 - [x] Garder quatre tirages forme un jeu de variantes qui se rouvre avec ses quatre sons.
 - [x] Une série coupée en route reprend sans relancer les tirages déjà rendus.
 - [x] Aucune mesure n'écarte un tirage d'elle-même : un tirage saturé est signalé, mais se
@@ -206,8 +206,7 @@ la jointure** par Stable Audio 3 (on refait les deux secondes autour du raccord)
 
 - [ ] Une pluie de 30 s tourne dix fois de suite sans clic audible, et la mesure du raccord le
       confirme. *(Prouvé sur une pluie synthétique ; reste une vraie pluie du banc.)*
-- [ ] L'écran fait entendre le raccord seul (les deux secondes autour), en boucle. *(Côté
-      serveur, fait : la route existe.)*
+- [x] L'écran fait entendre le raccord seul (les deux secondes autour), en boucle.
 
 ### SN6 · Les sons d'un sujet
 
@@ -241,8 +240,9 @@ sfxr **porté en Python** depuis jsfxr (domaine public), sans paquet ajouté : d
 (clic, survol, validation, erreur, saut, pièce, explosion…), des curseurs, une mutation pour
 tirer des variantes, un son en un instant, sans carte graphique.
 
-- [ ] Un clic et sa famille (survol, validation, erreur) se fabriquent en moins d'une seconde
-      chacun et se livrent comme les autres sons. *(Côté serveur, fait.)*
+- [x] Un clic et sa famille (survol, validation, erreur) se fabriquent en moins d'une seconde
+      chacun et se livrent comme les autres sons. *(Pas de curseurs à l'écran : la maquette n'en
+      montre pas ; les réglages restent conservés pour refaire un son à l'identique.)*
 - [x] Un son sfxr se refait à l'identique depuis ses réglages conservés.
 
 ### SN9 · La musique
