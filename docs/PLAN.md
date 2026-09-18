@@ -63,7 +63,7 @@ le plan du chantier lui-même pour `AU` et `RP`.
 | **V3** — `A0` à `A13` | L'animation **par la vidéo et le découpage** : un clip payé devient plusieurs bandes et l'écran dit ce que chacune a coûté ; le même clip se refait **gratuitement** sur la carte de la maison ; la matrice d'un personnage se lit sur deux calques ; une bande sort en planche de sprites | **close le 5 septembre 2026** | idem |
 | **V3.02** | Le clip a une fiche, comme une image | **close le 5 septembre 2026** | idem |
 | **V2.5**, **V3.01**, **V3.03**, **V3.1** | Quatre blocs ouverts quand la V4 est entrée. Ce qui y a été livré tient : le relevé `N1`, le tiroir qui relit ce qui part, les trois quarts de l'atelier d'une animation aux tables, `G1` et `G16` | **périmés par le carnet** — les écrans qu'ils réparaient sont redessinés, donc le reste ne se reprend pas tel quel. ⚠️ Les quatorze tranches `G` de la V3.1 nomment des défauts réels, et **se relisent avant de clore la V4** | `archive/plan-perime-par-la-v4.md` |
-| **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **ouverte le 18 septembre 2026** — `P1` tenue le même jour ; `P2` attend trois décisions de l'auteur, écrites dans la tranche | ci-dessous ; modèles dans `PLAN-v35-affectation.md` |
+| **V3.5** — `P1`, `P2` | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **close le 19 septembre 2026, deux sur deux** — `P1` le 18, `P2` le 19 après les trois décisions de l'auteur | ci-dessous ; modèles dans `PLAN-v35-affectation.md` |
 | **V4** — le carnet | Refonte déjà largement livrée ; sa conformité et ses parcours restent à corriger | **socle conservé, suite réorientée vers AU** ; les cases historiques ne sont pas décochées. Le 15 septembre 2026, les restes de `C1` et `C8` sont constatés tenus par le bloc `D` ; il ne reste ouverte que la vérification au navigateur de `C9`. L'amendement RF est en archive | `docs/PLAN-carnet.md` ; détail du relevé antérieur dans `docs/archive/etat-carnet-2026-09-10.md` |
 | **V5**, **V6** | Tuiles et son | **en construction dans AU13/AU14** | `docs/PLAN-atelier-unifie.md` |
 | **Atelier unifié** — AU1 à AU20 | Production des assets et équipements combinables par l'auteur et l'agent Godot, sources locales et 3D | **dix-huit tranches sur vingt pleines** — les trois dernières, `AU18` à `AU20`, closes le 13 septembre 2026. Restent **deux critères**, pas deux tranches : `AU11` — le rendu 3D garde cadre, pivot et dimensions d'une direction à l'autre — et `AU13` — produire, juger, corriger et exporter un jeu de tuiles *avec l'agent*. Et une case de préparation : reporter les arbitrages dans le PRD, le design et le plan. ⚠️ Livrée n'est pas éprouvée : la qualité 3D réelle n'est pas vérifiée, et le relevé du 13 septembre mesure 0 écran sur 26 tenu de bout en bout — c'est le travail de la remise à plat | `docs/PLAN-atelier-unifie.md` |
@@ -390,12 +390,12 @@ Les trois questions telles qu'elles se posaient :
 
 **Critères d'acceptation**
 
-- [ ] Une planche peut porter **plusieurs choses différentes du jeu**, et la demande dit d'avance ce que chaque case contient
-- [ ] Le découpage range chaque morceau à la place que la demande annonçait
-- [ ] Une case dont le sujet n'est pas celui annoncé **se signale** au lieu de se ranger de travers
-- [ ] Le prix par sujet s'affiche avant l'envoi, à côté du prix de la planche
-- [ ] L'ancienne règle continue de s'appliquer aux planches qui ne portent pas cette liste
-- [ ] Refaire le découpage d'une telle planche marche comme en `P1`
+- [x] Une planche peut porter **plusieurs choses différentes du jeu**, et la demande dit d'avance ce que chaque case contient
+- [x] Le découpage range chaque morceau à la place que la demande annonçait
+- [x] Une case dont le sujet n'est pas celui annoncé **se signale** au lieu de se ranger de travers — *une case vide, en morceaux ou redessinée en quadrillage se signale seule ; un mauvais objet dans la bonne case, l'atelier ne le voit pas : c'est le geste « ce n'est pas le bon objet »*
+- [x] Le prix par sujet s'affiche avant l'envoi, à côté du prix de la planche
+- [x] L'ancienne règle continue de s'appliquer aux planches qui ne portent pas cette liste
+- [x] Refaire le découpage d'une telle planche marche comme en `P1`
 
 **Bloquée par** — `P1`.
 
