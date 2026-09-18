@@ -19,7 +19,12 @@ from atelier.fournisseur.port import ClipProduit
 def sur_fond_blanc(octets):
     """Le LoadImage de ComfyUI jette la transparence : ce qui était transparent
     deviendrait la couleur cachée sous l'alpha, souvent du noir. On pose l'image
-    sur du blanc avant l'envoi ; l'atelier garde ses octets d'origine."""
+    sur du blanc avant l'envoi ; l'atelier garde ses octets d'origine.
+
+    **Un filet, depuis la relecture ML (défaut 8)** : l'image d'un style de
+    sc-clone arrive déjà posée sur le fond du jeu (`_fond_des_references`) et
+    repart telle quelle d'ici. Seul un workflow importé à la main l'envoie
+    encore transparente, et c'est lui qui passe sur blanc."""
     try:
         with Image.open(io.BytesIO(octets)) as image:
             if image.mode not in ("RGBA", "LA", "PA") and "transparency" not in image.info:

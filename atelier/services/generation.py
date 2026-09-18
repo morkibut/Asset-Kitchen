@@ -101,7 +101,7 @@ from atelier.domaine.envoi import (
 )
 from atelier.domaine.pliage import CasePliee, Pliage
 from atelier.domaine import texte_local
-from atelier.domaine.workflow import WorkflowRefuse
+from atelier.domaine.workflow import GRAINE_MAX, WorkflowRefuse
 from atelier.fournisseur import PortFournisseur
 from atelier.image import bande_de_palette, empreinte_de, mesurer
 from atelier.image.mesures import extension
@@ -149,6 +149,17 @@ IMPORT = "import"
 # sait exactement de quel clip et de quelle image elle sort.
 PRELEVEMENT = "clip"
 
+# **Les deux genres de référence d'un style local** (ML3), tels que le catalogue
+# des styles les écrit. `DEPART` repeint par-dessus **une** image ; `SUJET`
+# garde le sujet des images reçues (Klein, `ReferenceLatent`).
+DEPART = "depart"
+SUJET_A_GARDER = "sujet"
+
+# **La graine d'un style local, fournie par l'appelant** (relecture ML, défaut
+# 6). Une clé réservée des options, comme pour le clip de la maison : c'est le
+# seul endroit de la demande qui voyage jusqu'au fournisseur.
+GRAINE = "graine"
+
 
 def role_de_planche(*, cases: int, piece: bool) -> str | None:
     """Laquelle des deux images une planche joint — ou aucune.
@@ -176,6 +187,27 @@ def role_de_planche(*, cases: int, piece: bool) -> str | None:
     if piece:
         return PLANCHE_JOINTE if cases >= 1 else None
     return GABARIT if cases >= 2 else None
+
+
+def _sans_graine(modele: Modele, demande: Demande) -> Demande:
+    """La demande telle que le catalogue la juge : **la graine d'un workflow
+    local n'est pas une option du modèle**, elle ne se refuse ni ne s'écarte
+    comme telle. Elle reste dans `demande.options`, par où elle voyage jusqu'au
+    fournisseur. Un modèle distant n'est pas touché."""
+    if not modele.locale or GRAINE not in demande.options:
+        return demande
+    return replace(
+        demande, options={k: v for k, v in demande.options.items() if k != GRAINE}
+    )
+
+
+def _mediane(durees: Sequence[float]) -> float:
+    """La médiane arrondie au centième — celle de `attente_estimee`."""
+    triees = sorted(durees)
+    milieu = len(triees) // 2
+    if len(triees) % 2:
+        return round(triees[milieu], 2)
+    return round((triees[milieu - 1] + triees[milieu]) / 2, 2)
 
 
 class ImportRefuse(ErreurAtelier):
@@ -451,17 +483,69 @@ class ServiceGenerations:
         et l'écran annonçait « jamais généré » même après des dizaines de
         tirages. `durees_mesurees` n'a pas ce défaut : elle garde tout appel
         réussi, quelle que soit sa consommation en argent.
+
+        **La durée propre du calcul, pas l'attente dans la file** (relecture
+        ML, défaut 5). `durees_mesurees` est mesurée autour de tout l'appel :
+        une image restée dix minutes derrière une vidéo annonçait dix minutes
+        aux suivantes. La file locale, elle, mesure l'étape depuis qu'elle a la
+        carte ; c'est elle qu'on lit d'abord, et `durees_mesurees` n'est plus
+        qu'un repli pour une machine dont la file n'a rien gardé.
+
+        **Et le premier tirage ne gonfle pas les suivants** (règle 8ter) : il
+        charge le modèle en mémoire. Annoncé à part (`premier_secondes`, rendu
+        seulement quand il est mesuré), il laisse `secondes` dire la durée à
+        chaud — celle de chaque image d'un lot après la première.
         """
         if not self.methode_locale(modele):
             return None
-        durees = self._base.durees_mesurees(modele)
         profil = self._profil_local(modele)
         vitesse = ((profil or {}).get("style") or {}).get("vitesse")
+        chaud, froid = self._durees_locales(modele)
+        if chaud or froid:
+            temps: dict[str, Any] = {
+                "secondes": _mediane(chaud or froid),
+                "mesures": len(chaud) + len(froid),
+                "vitesse": vitesse,
+            }
+            if froid:
+                temps["premier_secondes"] = _mediane(froid)
+            return temps
+        durees = self._base.durees_mesurees(modele)
         return {
             "secondes": self.attente_estimee(modele) if durees else None,
             "mesures": len(durees),
             "vitesse": vitesse,
         }
+
+    def _durees_locales(self, modele: str) -> tuple[list[float], list[float]]:
+        """Les durées propres des étapes de ce modèle — **(à chaud, à froid)**,
+        les plus récentes, sur la fenêtre de `attente_estimee`.
+
+        Une étape est à froid quand la file le sait (`temperature`), sinon
+        quand l'étape lancée juste avant elle sur le même moteur était celle
+        d'un autre modèle, ou qu'il n'y en avait aucune : le modèle était alors
+        à charger. ComfyUI ne dit pas ce qui est en mémoire (`maison.py`,
+        `observer_ressource`), d'où cette lecture de l'ordre des étapes.
+        """
+        try:
+            fournisseur = self._fournisseurs.de(self._catalogue.modele(modele).fournisseur)
+            file = fournisseur.file_locale
+        except (ErreurAtelier, AttributeError):
+            return [], []
+        etapes = [e for e in file.lister()["etapes"] if e.get("demarre_le") is not None]
+        etapes.sort(key=lambda e: (e["demarre_le"], e["identifiant"]))
+        chaud: list[float] = []
+        froid: list[float] = []
+        dernier: dict[str, str] = {}
+        for etape in etapes:
+            avant = dernier.get(etape["moteur"])
+            dernier[etape["moteur"]] = etape["modele"]
+            if etape["modele"] != modele or etape["etat"] != "termine" or etape.get("duree_s") is None:
+                continue
+            temperature = etape.get("temperature")
+            a_froid = temperature == "froid" or (temperature != "chaud" and avant != modele)
+            (froid if a_froid else chaud).append(float(etape["duree_s"]))
+        return chaud[-FENETRE_MESURES:], froid[-FENETRE_MESURES:]
 
     def octets(self, generation: Generation, rang: int) -> tuple[bytes, str]:
         """Les octets bruts d'un emplacement réussi, et leur type de média."""
@@ -861,8 +945,9 @@ class ServiceGenerations:
         )
 
         modele = self._catalogue.modele(identifiant_modele)
+        graine = self._graine_demandee(modele, demande)
 
-        refus = modele.refus(demande)
+        refus = modele.refus(_sans_graine(modele, demande))
         if refus is not None:
             raise DemandeRefusee(f"{modele.nom} {refus}")
 
@@ -875,12 +960,17 @@ class ServiceGenerations:
         if manque is not None:
             raise SansCle(manque)
 
-        gardees, ecartees = modele.retenir(demande.options)
+        gardees, ecartees = modele.retenir(_sans_graine(modele, demande).options)
+        resolus = self._resolus(modele, demande, gardees)
+        if graine is not None:
+            # **Demandée, donc dite** : la génération relue dit qu'elle a été
+            # tirée sur cette graine-là, et pas au hasard.
+            resolus[GRAINE] = graine
         generation = Generation(
             identifiant=identifiant,
             modele=modele.identifiant,
             demande=demande.resume(),
-            parametres_resolus=self._resolus(modele, demande, gardees),
+            parametres_resolus=resolus,
             ecartees=ecartees,
             emplacements=[Emplacement(rang=r) for r in range(demande.variations)],
             cree_le=time.time(),
@@ -973,6 +1063,29 @@ class ServiceGenerations:
     def methode_locale(self, modele: str) -> bool:
         return self._catalogue.modele(modele).locale
 
+    def _graine_demandee(self, modele: Modele, demande: Demande) -> int | None:
+        """La graine que l'appelant fournit pour refaire la même image, ou
+        `None` — et le refus, avant la file, quand elle ne peut pas servir.
+
+        **Seulement pour un workflow local** : un modèle distant ne reçoit pas
+        de graine, et la clé suit chez lui le chemin de toute option inconnue
+        (écartée, comme avant). Un profil local sans liaison `graine` rend
+        toujours la même image : une graine demandée n'y changerait rien, et
+        l'accepter laisserait croire le contraire.
+        """
+        if not modele.locale or GRAINE not in demande.options:
+            return None
+        graine = demande.options[GRAINE]
+        if isinstance(graine, bool) or not isinstance(graine, int) or not 0 <= graine <= GRAINE_MAX:
+            raise DemandeRefusee("la graine est un entier positif")
+        profil = self._profil_local(modele.identifiant)
+        if profil is not None and GRAINE not in profil["liaisons"]:
+            raise DemandeRefusee(
+                f"{modele.nom} n'a pas de graine reliée — il rend la même image à "
+                "chaque appel, sans qu'on la lui donne"
+            )
+        return graine
+
     def etape_locale(self, identifiant: str, rang: int = 0):
         generation = self._base.lire(identifiant)
         if not generation:
@@ -1023,7 +1136,7 @@ class ServiceGenerations:
         manque = self._catalogue.grise(modele)
         if manque:
             raise SansCle(manque)
-        refus = modele.refus(demande)
+        refus = modele.refus(_sans_graine(modele, demande))
         if refus:
             raise DemandeRefusee(refus)
         for emplacement in generation.emplacements:
@@ -1616,9 +1729,14 @@ class ServiceGenerations:
         # ailleurs** (M4) : le compte des images le refaisait pour son compte,
         # et l'écran annonçait un gabarit là où le texte demandait de modifier
         # une planche.
-        return role_de_planche(
-            cases=pliage.nombre, piece=pliage.geometrie_connue
-        )
+        role = role_de_planche(cases=pliage.nombre, piece=pliage.geometrie_connue)
+        # **Un style local ne reçoit pas le gabarit** (relecture ML, défaut 1) :
+        # « partir de cette image » repeindrait la grille vide, « garder ce
+        # sujet » garderait une grille comme sujet. Le texte décrit la planche
+        # (`texte_local.planche_courte`) ; l'écran dit que le gabarit reste.
+        if role == GABARIT and self._genre_local(identifiant_modele):
+            return None
+        return role
 
     def _roles_qui_partent(
         self,
@@ -2498,6 +2616,7 @@ class ServiceGenerations:
         reinjectes: tuple[Reinjection, ...],
         nommees: set[str],
         identifiant_modele: str,
+        du_sujet: set[str] | frozenset[str] = frozenset(),
     ) -> tuple[tuple[Reinjection, ...], tuple[Reinjection, ...]]:
         """Ce qui part, et ce que le plafond du modèle laisse au sol (F6).
 
@@ -2523,6 +2642,16 @@ class ServiceGenerations:
         **Rien ne se perd en silence** : ce qui cède est enregistré sur la
         génération, l'écran de confirmation le montre avant de lancer, et la
         fiche de l'image le dit des mois plus tard.
+
+        **Un style local ne lit pas tout ce que le produit ajoute** (relecture
+        ML, défaut 1 — la même règle 4, appliquée au *sens* des places et plus
+        seulement à leur nombre). « Partir de cette image » repeint **une**
+        image : seule celle que l'auteur a jointe peut l'être — un artwork du
+        jeu repeint n'est pas une image du sujet demandé. « Garder ce sujet »
+        garde le sujet de chaque image : celles du sujet visé (`du_sujet` :
+        concept arts, références promues) en ont un ; un artwork du jeu ou une
+        image d'ambiance n'est pas ce sujet-là. Ce qui ne peut pas servir cède
+        comme ce qui dépasse, dans `hors_plafond`, montré et relu pareil.
         """
         if self._catalogue is None:
             return reinjectes, ()
@@ -2533,6 +2662,24 @@ class ServiceGenerations:
             # phrase à lui. Ici, on ne décide rien.
             return reinjectes, ()
 
+        genre = self._genre_local(identifiant_modele)
+        if genre is not None:
+            lisibles = set(nommees) if genre == DEPART else set(nommees) | set(du_sujet)
+            lues = tuple(r for r in reinjectes if r.asset in lisibles)
+            partent, _ = self._plafond_ordinaire(lues, nommees, places)
+            gardees = {(r.origine, r.asset) for r in partent}
+            # Dans l'ordre d'assemblage, comme ce que le plafond laisse au sol.
+            return partent, tuple(
+                r for r in reinjectes if (r.origine, r.asset) not in gardees
+            )
+        return self._plafond_ordinaire(reinjectes, nommees, places)
+
+    @staticmethod
+    def _plafond_ordinaire(
+        reinjectes: tuple[Reinjection, ...], nommees: set[str], places: int
+    ) -> tuple[tuple[Reinjection, ...], tuple[Reinjection, ...]]:
+        """Le plafond de F6, tel quel : ce qui dépasse cède par la fin, ce que
+        l'appelant a nommé ne cède jamais."""
         if len(reinjectes) <= places:
             return reinjectes, ()
 
@@ -2584,16 +2731,17 @@ class ServiceGenerations:
         planche, angle = _contexte_des_references(
             direction, directions, mise_en_page=mise_en_page
         )
+        concepts = self._concepts(
+            projet,
+            personnage,
+            piece,
+            planche=planche,
+            direction=angle,
+            sans_concept_arts=mise_en_page,
+        )
         reinjectes = _reinjectes(
             tuple(references)
-            + self._concepts(
-                projet,
-                personnage,
-                piece,
-                planche=planche,
-                direction=angle,
-                sans_concept_arts=mise_en_page,
-            )
+            + concepts
             + self._de_lambiance(projet, personnage)
             + self._artworks(echelle, projet)
         )
@@ -2610,7 +2758,10 @@ class ServiceGenerations:
         # **Puis le plafond du modèle** (F6). Ce que le produit ajoute de
         # lui-même cède ; ce que l'auteur a joint ne cède jamais.
         return self._sous_le_plafond(
-            reinjectes, {r.asset for r in references}, identifiant_modele
+            reinjectes,
+            {r.asset for r in references},
+            identifiant_modele,
+            du_sujet={r.asset for r in concepts},
         )
 
     def _artworks(self, echelle: str, projet: str | None) -> tuple[Reinjection, ...]:
@@ -2649,6 +2800,10 @@ class ServiceGenerations:
         # Refaire une planche emporte la planche du sujet (RS2), ici comme à la
         # soumission.
         mise_en_page: bool = False,
+        # **Le modèle, pour un style local seulement** (relecture ML, défaut
+        # 1) : ce qu'il ne sait pas lire ne part pas, et le compte le dit. Pour
+        # tout autre modèle — ou absent —, le compte est celui d'avant.
+        modele: str | None = None,
     ) -> dict[str, Any]:
         """Ce qui partira, **ligne par ligne, avec sa provenance** (US-52, US-127).
 
@@ -2796,6 +2951,37 @@ class ServiceGenerations:
         # images, où l'auteur ne saurait pas quelle image il décoche.
         bande = 1 if (palette and self._couleurs(projet, personnage)) else 0
 
+        # **Un style local, lu par les mêmes fonctions que l'envoi** (relecture
+        # ML, défaut 1). `_sous_le_plafond` dit ce qui part ; ce qui part est
+        # toujours le début de la liste (l'auteur, puis le sujet, puis le
+        # reste), donc un nombre de places suffit à l'écran pour griser pareil.
+        # Le gabarit et la bande ne partent pas, et ils sont nommés.
+        style_local: dict[str, Any] | None = None
+        genre = self._genre_local(modele) if modele else None
+        if genre is not None:
+            retenues_r = tuple(r for r in toutes if not ecartees.get(r.asset))
+            partent, _ = self._sous_le_plafond(
+                retenues_r,
+                {r.asset for r in manuelles},
+                modele,
+                du_sujet={r.asset for r in concepts},
+            )
+            ne_partent_pas: list[dict[str, str]] = []
+            if role_joint == GABARIT:
+                ne_partent_pas.append({"role": GABARIT, "nom": "le gabarit de la grille"})
+                role_joint, gabarit = None, 0
+            if bande:
+                ne_partent_pas.append({"role": PALETTE, "nom": "la bande de couleurs"})
+                bande = 0
+            maximum = self._catalogue.modele(modele).references_max
+            style_local = {
+                "reference": genre,
+                "references_max": maximum,
+                "places": min(len(partent), maximum),
+                "ajoutees_ecartees": len(retenues_r) - len(partent),
+                "ne_partent_pas": ne_partent_pas,
+            }
+
         return {
             # Ce qui part vraiment — donc ce qui décide du grisé.
             "total": len(retenues) + gabarit + bande,
@@ -2832,6 +3018,8 @@ class ServiceGenerations:
             # Les écartées y sont **aussi**, et elles le disent : une ligne qui
             # disparaîtrait ne laisserait aucun moyen de la remettre.
             "lignes": lignes,
+            # Absente hors d'un style local : le compte d'avant, clé pour clé.
+            **({"style_local": style_local} if style_local else {}),
         }
 
     # ── L'ambiance, et ce que cet appel-là lui prend (E14) ───────────────────
@@ -2908,7 +3096,25 @@ class ServiceGenerations:
             return False
         if not self._couleurs(projet, personnage):
             return False
+        # Une bande de pastilles n'est ni une image de départ ni un sujet à
+        # garder : elle ne part vers aucun style local (relecture ML, défaut 1).
+        if self._genre_local(identifiant_modele):
+            return False
         return self._catalogue.modele(identifiant_modele).references_max > 0
+
+    def _genre_local(self, identifiant_modele: str) -> str | None:
+        """Le genre de référence d'un style local — `DEPART` ou
+        `SUJET_A_GARDER` —, ou `None` pour tout autre modèle, distant ou
+        workflow importé à la main, dont rien ne change."""
+        if self._catalogue is None:
+            return None
+        try:
+            modele = self._catalogue.modele(identifiant_modele)
+        except ErreurAtelier:
+            return None
+        if not modele.locale or modele.reference not in (DEPART, SUJET_A_GARDER):
+            return None
+        return modele.reference
 
     def _couleurs(
         self, projet: str | None, personnage: str | None
@@ -3136,10 +3342,20 @@ class ServiceGenerations:
     ) -> str | None:
         """Le fond sur lequel poser une référence transparente, ou rien.
 
-        **Rien pour un workflow local** : ComfyUI reçoit l'image avec sa
-        transparence, la file locale la garde telle quelle, et c'est le moteur
-        qui la pose sur blanc au dépôt (ML1).
+        **Rien pour un workflow importé à la main** : ComfyUI reçoit l'image
+        avec sa transparence, la file locale la garde telle quelle, et c'est le
+        moteur qui la pose sur blanc au dépôt (ML1).
+
+        **Le fond du jeu pour un style local** (relecture ML, défaut 8), comme
+        pour un modèle distant depuis 99b88c5 : « partir de cette image »
+        repeint aussi le fond, et une image de départ sur blanc sous un texte qui
+        demande #FF00FF rendait du blanc que le détourage du retour ne connaît
+        pas. « Garder ce sujet » suit la même règle : Klein recopie ce qu'il
+        voit autour du sujet, et le fond qu'il voit doit être celui que le texte
+        demande. Sans fond réglé, le gris neutre de `sur_le_fond`.
         """
+        if self._genre_local(modele):
+            return self._interdit_fond(projet, tri)
         if modele.startswith("ComfyUI:"):
             return None
         return self._interdit_fond(projet, tri)

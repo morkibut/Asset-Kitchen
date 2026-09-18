@@ -55,6 +55,7 @@ from atelier.domaine.envoi import (
 )
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import CARTE, PLANCHE_JOINTE
+from atelier.domaine.generation import GABARIT as ROLE_GABARIT
 from atelier.domaine.projet import (
     AUCUNE_CIBLE,
     DE_LA_FAMILLE,
@@ -219,10 +220,20 @@ class ServiceEnvoi:
             direction=direction,
             directions=directions,
             mise_en_page=garder_mise_en_page,
+            # **Un style local ne lit pas tout ce que le produit ajoute**
+            # (relecture ML, défaut 1) : le compte le sait par le modèle, avec
+            # les fonctions mêmes de l'envoi.
+            modele=modele,
         )
         mesure = self._generations.appels_mesures(modele)
         modele_lu = self._modele(modele)
-        places = modele_lu["references_max"]
+        # Les places **que ce qui est coché peut prendre** : celles du modèle,
+        # ou, pour un style local, celles que l'envoi donne vraiment — ce
+        # qu'il ne sait pas lire est grisé comme ce qui dépasse.
+        style_local = compte.get("style_local")
+        places = (
+            style_local["places"] if style_local else modele_lu["references_max"]
+        )
         cible = self._cible(projet)
 
         # **L'avertissement s'écrit sur la ligne fautive** (US-279). Une bannière
@@ -476,7 +487,8 @@ class ServiceEnvoi:
                 }
             )
         avertissements: list[dict[str, str]] = []
-        if compte["total"] == 0:
+        style_local = compte.get("style_local")
+        if compte["total"] == 0 and not (style_local and style_local["ne_partent_pas"]):
             # Un avertissement du produit **donne toujours des chiffres**, jamais
             # un conseil : c'est la mesure du dépôt, pas un jugement sur ce qu'on
             # est en train de faire.
@@ -487,7 +499,22 @@ class ServiceEnvoi:
                     "du dépôt, 10 sont parties sans texte de style ni image",
                 }
             )
-        if places <= 0 and compte["total"] > 0:
+        if style_local:
+            # **Un style local dit pourquoi, pas combien** (relecture ML,
+            # défaut 1) : « 0 places » serait faux — il en a une, pour l'image
+            # que l'auteur joint —, et c'est le sens de l'image qui décide.
+            avertissements.extend(_ce_que_le_style_ne_lit_pas(style_local))
+            # Ce que l'auteur a joint ne cède jamais : en trop, l'appel sera
+            # refusé avant la file, et l'écran le dit en chiffres.
+            if compte["manuelles"] > style_local["references_max"]:
+                avertissements.append(
+                    {
+                        "clef": clef(IMAGES, "plafond"),
+                        "texte": f"{style_local['references_max']} places sur ce "
+                        f"modèle · {compte['manuelles']} cochées",
+                    }
+                )
+        elif places <= 0 and compte["total"] > 0:
             # **Le cas du brouillon gratuit** (F6), et il mérite sa phrase : un
             # « 0 places · 3 cochées » dirait la même chose en laissant deviner
             # ce qui va se passer. Ce qui se passe est que l'appel part quand
@@ -628,6 +655,9 @@ class ServiceEnvoi:
         refus = ""
         if not couleurs:
             refus = "aucune palette dans ce jeu — elle se calcule des images officielles"
+        elif compte.get("style_local"):
+            # Relecture ML, défaut 1 : la bande ne part vers aucun style local.
+            refus = f"{modele['nom']} ne lit pas une bande de couleurs — ni image de départ, ni sujet"
         elif places <= 0:
             refus = f"{modele['nom']} n'accepte aucune image de référence"
         return [
@@ -884,6 +914,50 @@ class ServiceEnvoi:
             f"ce texte dit {dites} · le jeu est réglé sur {cible} · "
             "corriger ici ne corrige que cet appel"
         )
+
+
+def _ce_que_le_style_ne_lit_pas(style: dict[str, Any]) -> list[dict[str, str]]:
+    """Ce qu'un style local laisse en route, **et pourquoi** (relecture ML,
+    défaut 1) — les phrases de l'écran de confirmation, lues sur le compte que
+    l'envoi applique (`compter_references`, `style_local`).
+
+    Rien de ceci ne se perd en silence : les images ajoutées par l'atelier sont
+    grisées sur leur ligne (hors plafond), le gabarit et la bande ont leur
+    phrase ici, parce qu'ils n'ont pas de ligne à griser.
+    """
+    depart = style["reference"] == "depart"
+    phrases: list[dict[str, str]] = []
+    n = style["ajoutees_ecartees"]
+    if n:
+        images = "image ajoutée par l'atelier ne part" if n == 1 else "images ajoutées par l'atelier ne partent"
+        phrases.append(
+            {
+                "clef": clef(IMAGES, "style_local"),
+                "texte": (
+                    f"« partir de cette image » ne repeint que l'image que vous "
+                    f"joignez · {n} {images} pas"
+                    if depart
+                    else f"« garder ce sujet » ne garde que les images du sujet, "
+                    f"{style['references_max']} au plus · {n} {images} pas"
+                ),
+            }
+        )
+    for chose in style["ne_partent_pas"]:
+        if chose["role"] == ROLE_GABARIT:
+            raison = (
+                "il deviendrait l'image repeinte ; le texte décrit la planche"
+                if depart
+                else "une grille vide n'est pas un sujet ; le texte décrit la planche"
+            )
+        else:
+            raison = "une bande de pastilles n'est ni une image de départ ni un sujet"
+        phrases.append(
+            {
+                "clef": clef(IMAGES, f"style_local_{chose['role']}"),
+                "texte": f"{chose['nom']} ne part pas vers ce style · {raison}",
+            }
+        )
+    return phrases
 
 
 def _detail_du_detourage(
