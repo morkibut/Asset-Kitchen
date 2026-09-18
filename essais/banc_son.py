@@ -113,7 +113,7 @@ _BRUITAGES = [
      "continuous ambience, no music, stereo field recording"),
 ]
 
-# docs/releves/2026-09-18-son-musique.md §3 (tableau ACE-Step 1.5) : tags,
+# docs/releves/2026-09-18-son-musique.md, partie « ACE-Step 1.5 dans ComfyUI » (tableau) : tags,
 # paroles, tempo, tonalité, mesure. Durée = mesures × mesure × 60 / tempo.
 _MUSIQUE_ACE = [
     ("exploration", "ambient exploration, soft pads, celesta, harp arpeggios, sparse percussion, calm, mysterious, loopable",
@@ -122,7 +122,7 @@ _MUSIQUE_ACE = [
      "[Intro - short]\n[Instrumental]\n[Build]\n[Instrumental]", 150, "E minor", 4, 64),
 ]
 
-# docs/releves/2026-09-18-son-musique.md §2 (tableau YuE2) : la tentative
+# docs/releves/2026-09-18-son-musique.md, partie « Écrire un prompt pour YuE2 » (tableau) : la tentative
 # instrumentale du combat est prise telle quelle (tonalité D minor, y compris
 # l'écart avec la version ACE-Step ci-dessus — le relevé les a écrites ainsi,
 # à deux tables différentes ; le banc les envoie sans les réconcilier).
