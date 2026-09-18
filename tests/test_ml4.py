@@ -231,3 +231,15 @@ def test_le_comptage_approche_clip_sur_des_cas_connus():
     assert texte_local.compter_jetons("pixel art, a dwarf") >= 5
     assert texte_local.compter_jetons("strict 64x64 px tile snap, #FF00FF") >= 15
     assert texte_local.compter_jetons("one isolated subject, centered, full view") >= 8
+
+
+@pytest.mark.parametrize("famille", STYLES)
+async def test_la_grille_du_jeu_ne_part_pas_elle_se_dessinerait(jeu, famille):
+    """Premier tirage réel (ML7, Z-Image) : « on a 64x64 grid » et « tile snap »
+    donnaient un fond quadrillé. Ils ne partent plus vers un style local, et
+    l'écran les montre retirés."""
+    atelier, projet, nain, modeles = jeu
+    vu = apercu(atelier, projet, modeles[famille], personnage=nain, pose="marche", direction="sud")
+    assert "grid" not in vu["texte"] and "tile snap" not in vu["texte"]
+    retires = " ".join(r["texte"] for r in vu["local"]["retires"])
+    assert "64x64 grid" in retires or famille == "sdxl"

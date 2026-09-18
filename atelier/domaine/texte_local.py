@@ -61,6 +61,13 @@ RAISON_CAMERA = "la vue courte du jeu la dit déjà"
 RAISON_JOINTES = "la référence entre dans le graphe par un nœud, pas par le texte"
 RAISON_JETONS = f"au-delà des {TRANCHE_CLIP} jetons que SDXL lit d'un coup"
 RAISON_PHRASE = "le modèle local ne garde que la première phrase"
+RAISON_GRILLE = "un modèle local dessine la grille qu'on lui nomme ; la taille est tenue au retour"
+
+# **« on a 64x64 grid » se dessine.** Vu au premier tirage réel (ML7, Z-Image) :
+# le fond sortait quadrillé. GPT Image lit la grille comme une consigne de
+# taille ; un modèle de diffusion la peint. La réduction à la taille du jeu se
+# fait de toute façon au retour, sur la machine.
+_GRILLE = re.compile(r"\s*(?:,\s*)?(?:strict\s+)?\d+\s*x\s*\d+\s*px\s+tile\s+snap|\s+on\s+an?\s+\d+\s*x\s*\d+\s+grid", re.I)
 
 # **L'ordre dans lequel SDXL renonce**, du moins utile au plus utile. Le style
 # (rendu, trait) vient d'abord : le LoRA le porte déjà. Le fond et la vue
@@ -245,9 +252,14 @@ def composer(
     )
     for l in style_du_jeu:
         premiere, reste = _premiere_phrase(str(l["texte"]))
+        grilles = [m.group(0).strip(" ,") for m in _GRILLE.finditer(premiere)]
+        premiere = _GRILLE.sub("", premiere).strip(" ,")
         # La clef reste celle de la bible, que la ligne vienne du jeu ou de
         # l'ambiance : c'est le champ qui décide de l'ordre de retrait.
-        corps.append(_segment(f"{JEU}.{l['nom']}", l["nom"], premiere, l.get("origine", "")))
+        if premiere:
+            corps.append(_segment(f"{JEU}.{l['nom']}", l["nom"], premiere, l.get("origine", "")))
+        if grilles:
+            retirer(l, RAISON_GRILLE, ", ".join(grilles))
         if reste:
             retirer(l, RAISON_PHRASE, reste)
 
