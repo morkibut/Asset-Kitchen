@@ -183,11 +183,7 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "to poll with check_generation. Costs money. `keep_reference_layout` "
             "redraws the same plate (same views, same order, same framing) "
             "instead of a single subject — the layout comes from the subject's "
-            "plate reference, or the first reference image when there is none. "
-            "`cut_on_arrival` (only with keep_reference_layout; defaults to it) "
-            "cuts the returned plate into one asset per view, attached to the "
-            "character — and cuts nothing if the view count differs from the "
-            "plate reference's."
+            "plate reference, or the first reference image when there is none."
         ),
     )
     @_refus_lisible
@@ -203,7 +199,6 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         keep_reference_layout: bool = False,
         character: str | None = None,
         reference_assets: list[str] | None = None,
-        cut_on_arrival: bool | None = None,
     ) -> dict[str, Any]:
         """`kind` est l'échelle du barème — « personnage », « objet posé »…
 
@@ -233,15 +228,6 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     options=options,
                     echelle=kind,
                     garder_mise_en_page=keep_reference_layout,
-                    # **Cochée d'office avec la mise en page** (RS7), comme à
-                    # l'écran : non dite, elle suit `keep_reference_layout`.
-                    # Demandée sans elle, `Demande` la refuse — même phrase
-                    # que la route.
-                    decouper_a_l_arrivee=(
-                        keep_reference_layout
-                        if cut_on_arrival is None
-                        else bool(cut_on_arrival)
-                    ),
                 ),
                 projet=projet,
                 provenance=AGENT,
