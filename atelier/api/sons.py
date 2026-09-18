@@ -24,6 +24,11 @@ class Jugement(Revision):
     jugement: str
 
 
+class Classement(Revision):
+    famille: str | None
+    appliquer_reglages: bool = False
+
+
 @routeur.get("")
 def lister(requete: Request, projet: str):
     return requete.app.state.atelier.sons.lister(projet)
@@ -60,6 +65,12 @@ def restaurer(requete: Request, projet: str, identifiant: str, corps: Restaurati
 @routeur.post("/{identifiant}/judgment")
 def juger(requete: Request, projet: str, identifiant: str, corps: Jugement):
     return requete.app.state.atelier.sons.juger(projet, identifiant, corps.revision, corps.jugement)
+
+
+@routeur.put("/{identifiant}/family")
+def classer(requete: Request, projet: str, identifiant: str, corps: Classement):
+    return requete.app.state.atelier.sons.classer(projet, identifiant, corps.revision, corps.famille,
+        appliquer_reglages=corps.appliquer_reglages)
 
 
 @routeur.get("/{identifiant}/source")

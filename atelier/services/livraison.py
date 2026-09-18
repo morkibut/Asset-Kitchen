@@ -354,11 +354,16 @@ class ServiceLivraison:
     def preparer_paquet(self, projet: str, personnage: str | None, cible: str,
                         manifeste: dict[str, Any], contenus: dict[str, bytes], *,
                         scene: str, sprite_frames: str | None = None,
-                        ressource: str | None = None) -> dict[str, Any]:
+                        ressource: str | None = None, scene_stable: str = "personnage.tscn",
+                        noeud_stable: str = "Personnage",
+                        completer: Any = None) -> dict[str, Any]:
         """Paquet CPU interne déjà composé, publié avec les garanties d'AU1.
 
         La cible sépare tenue/couches/assemblé de la livraison du corps. Ce
         geste ne reçoit ni chemin absolu ni octets depuis une route HTTP.
+        `completer(dossier_res)` rend les fichiers qui nomment leur propre
+        chemin final (le `.import` d'un son, SN4) : ils ne dépendent que du
+        paquet, et la révision se calcule sans eux.
         """
         dossier = self._dossier(projet)
         if personnage is not None:
@@ -378,10 +383,16 @@ class ServiceLivraison:
             revision = _empreinte(_json({"manifeste": manifeste, "octets": empreintes}))[:24]
             racine = f"{association['sous_dossier']}/{_cle(projet)}/{cible_livraison}"
             version = f"{racine}/revisions/{revision}"
-            fichiers = [{"chemin": f"{version}/{nom}", "role": "composition" if nom == 'composition.json' else "Aseprite" if nom.endswith('.json') and manifeste.get("nature") not in {"image", "tuiles", "son", "audio"} else "ressource Godot" if nom.endswith(('.tres', '.tscn', '.gd', '.gdshader')) else "image" if nom.endswith('.png') else "provenance",
+            if completer is not None:
+                ajouts = completer("res://" + version)
+                if any(nom in contenus or _relatif(nom) != nom or not isinstance(o, bytes) for nom, o in ajouts.items()):
+                    raise LivraisonRefusee("Un fichier du paquet est invalide.")
+                contenus = {**contenus, **ajouts}
+                empreintes |= {nom: self._blob(octets) for nom, octets in ajouts.items()}
+            fichiers = [{"chemin": f"{version}/{nom}", "role": "composition" if nom == 'composition.json' else "Aseprite" if nom.endswith('.json') and manifeste.get("nature") not in {"image", "tuiles", "son", "audio"} else "ressource Godot" if nom.endswith(('.tres', '.tscn', '.gd', '.gdshader')) else "image" if nom.endswith('.png') else "son" if nom.endswith(('.wav', '.ogg')) else "import Godot" if nom.endswith('.import') else "provenance",
                          "empreinte": empreintes[nom], "octets": len(octets)} for nom, octets in contenus.items()]
-            scene_stable = f"{racine}/personnage.tscn"
-            scene_octets = _scene_stable(f"{version}/{scene}").encode("utf-8")
+            scene_stable = f"{racine}/{_relatif(scene_stable)}"
+            scene_octets = _scene_stable(f"{version}/{scene}", noeud_stable).encode("utf-8")
             fichiers.append({"chemin": scene_stable, "role": "scène stable", "empreinte": self._blob(scene_octets), "octets": len(scene_octets)})
             fiche = {**manifeste, "atelier": "Asset Kitchen", "format": 1,
                      "projet": projet, "personnage": personnage, "cible_livraison": cible_livraison,
@@ -635,7 +646,7 @@ def _scene(sprite_frames: str, animation: str, pivot: dict[str, float]) -> str:
             f'centered = false\noffset = Vector2({-pivot["x"]}, {-pivot["y"]})\n')
 
 
-def _scene_stable(scene: str) -> str:
+def _scene_stable(scene: str, noeud: str = "Personnage") -> str:
     return ('[gd_scene load_steps=2 format=3]\n\n'
             f'[ext_resource type="PackedScene" path={_chaine("res://" + scene)} id="1"]\n\n'
-            '[node name="Personnage" instance=ExtResource("1")]\n')
+            f'[node name={_chaine(noeud)} instance=ExtResource("1")]\n')

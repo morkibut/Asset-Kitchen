@@ -219,6 +219,10 @@ def traiter(signal, taux, recette: RecetteSon):
         premier, dernier = max(0, int(utiles[0]) - marge), min(len(rendu), int(utiles[-1]) + 1 + marge)
         coupe_silence = {"debut": (debut + premier) / taux, "fin": (debut + dernier) / taux}
         rendu = rendu[premier:dernier].copy()
+    if recette.mono and rendu.shape[1] > 1:
+        rendu = rendu.mean(axis=1, keepdims=True)
+    if recette.hauteur_demi_tons:
+        rendu = changer_hauteur(rendu, taux, recette.hauteur_demi_tons, garder_duree=recette.hauteur_garde_duree)
     taux_sortie = recette.taux or taux
     rendu = reechantillonner(rendu, taux, taux_sortie)
     if not len(rendu):
@@ -235,6 +239,7 @@ def traiter(signal, taux, recette: RecetteSon):
     pic = float(np.max(np.abs(rendu)))
     if recette.normaliser and pic > 1e-8:
         rendu *= 10 ** (recette.cible_db / 20) / pic
+    niveau = _viser_lufs(rendu, taux_sortie, recette.cible_lufs) if recette.cible_lufs is not None else None
     rendu *= 10 ** (recette.gain_db / 20)
     boucle_debut = round(recette.boucle_debut * taux_sortie)
     boucle_fin = round(recette.boucle_fin * taux_sortie) if recette.boucle_fin is not None else len(rendu)
@@ -254,7 +259,59 @@ def traiter(signal, taux, recette: RecetteSon):
     mesure["boucle"] = {"active": recette.boucle, "debut": boucle_debut, "fin": boucle_fin,
         "recale_zero": recette.boucle_zero, "fondu_ms": recette.boucle_fondu_ms,
         "ecart_raccord": raccord["saut"], "ecart_rms_db": raccord["ecart_rms_db"], "verdict": raccord["verdict"]}
+    if niveau is not None:
+        mesure["niveau"] = niveau
     return rendu, taux_sortie, mesure
+
+
+CRETE_VRAIE_MAX_DB = -1.0
+
+
+def _viser_lufs(rendu, taux, cible):
+    # Un gain, pas un compresseur : le niveau perçu est amené à la cible,
+    # sauf si la crête vraie dépassait alors −1 dBTP — le gain s'arrête là
+    # et la mesure le dit. Un extrait sans LUFS défini (moins de 0,4 s, ou
+    # silence) n'est pas touché : l'information manque, c'est tout.
+    lufs, crete = _lufs_et_crete_vraie(rendu, taux)
+    if lufs is None:
+        return {"cible_lufs": cible, "applique": False, "gain_db": 0.0, "plafonne": False,
+            "raison": "Niveau perçu indéfini (moins de 0,4 s ou silence) : aucun gain appliqué."}
+    gain = cible - lufs
+    if crete is None:
+        pic = float(np.max(np.abs(rendu)))
+        crete = 20 * math.log10(pic) if pic > 0 else None
+    plafonne = crete is not None and crete + gain > CRETE_VRAIE_MAX_DB
+    if plafonne:
+        gain = CRETE_VRAIE_MAX_DB - crete
+    rendu *= 10 ** (gain / 20)
+    return {"cible_lufs": cible, "applique": True, "gain_db": gain, "plafonne": plafonne, "lufs_avant": lufs,
+        "raison": "Crête vraie plafonnée à −1 dBTP : la cible n'est pas atteinte." if plafonne else ""}
+
+
+def changer_hauteur(signal, taux, demi_tons, *, garder_duree):
+    # Sans garder la durée : on relit le son à une autre fréquence, comme une
+    # bande accélérée (plus aigu et plus court). En gardant la durée : le
+    # filtre rubberband de ffmpeg (présent dans imageio_ffmpeg 7.1).
+    # rubberband ne vide pas sa file à la fin du flux (constaté : +12 demi-tons
+    # perdaient 80 ms sur 2 s) : on ajoute une demi-seconde de silence, puis
+    # on recoupe à la longueur d'origine.
+    rapport = 2 ** (demi_tons / 12)
+    entree = np.concatenate([signal, np.zeros((taux // 2, signal.shape[1]))]) if garder_duree else signal
+    filtre = f"rubberband=pitch={rapport:.10f}" if garder_duree else f"asetrate={round(taux * rapport)},aresample={taux}"
+    rendu = _ffmpeg(["-f", "f64le", "-ar", str(taux), "-ac", str(signal.shape[1]), "-i", "pipe:0",
+        "-af", filtre, "-ar", str(taux), "-acodec", "pcm_f64le", "-f", "f64le", "pipe:1"], entree.astype("<f8").tobytes())
+    rendu = np.frombuffer(rendu, dtype="<f8").reshape((-1, signal.shape[1])).copy()
+    if garder_duree:
+        rendu = np.concatenate([rendu, np.zeros((max(0, len(signal) - len(rendu)), signal.shape[1]))])[:len(signal)]
+    return rendu
+
+
+def encoder_ogg(wav: bytes, qualite: int, *, fin_echantillon: int | None = None):
+    """OGG Vorbis depuis un WAV 16 bits ; `fin_echantillon` coupe à la fin de
+    boucle (un OGG boucle dans Godot de `loop_offset` jusqu'à sa fin)."""
+    filtre = ["-af", f"atrim=end_sample={int(fin_echantillon)}"] if fin_echantillon is not None else []
+    return _ffmpeg(["-f", "wav", "-i", "pipe:0", *filtre, "-c:a", "libvorbis", "-q:a", str(qualite),
+        "-fflags", "+bitexact", "-flags:a", "+bitexact", "-f", "ogg", "pipe:1"], wav)
 
 
 def mesurer(signal, taux):

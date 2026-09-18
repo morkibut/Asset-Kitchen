@@ -44,7 +44,7 @@ def installer_sons(serveur, atelier, refus):
         return vue(project, atelier.sons.importer_octets(project, octets, nom=name or chemin.name,
             cle=key, provenance={"nature": "import", "acteur": "agent"}))
 
-    @serveur.tool(name="edit_sound", meta=meta("Retoucher un son"), description="Save a NEW sound revision using the same CPU recipe as the audio editor. Supply current revision to reject concurrent edits. recipe fields: debut/fin (seconds), rogner_silence, seuil_silence_db, marge_silence_ms, fondu_entree_ms/fondu_sortie_ms, normaliser, cible_db, gain_db, taux (Hz or null), boucle, boucle_debut/boucle_fin (seconds in edited sound). Omitted fields use recipe defaults: send the complete desired recipe when preserving other edits. Channels are preserved; no generation or implicit approval.")
+    @serveur.tool(name="edit_sound", meta=meta("Retoucher un son"), description="Save a NEW sound revision using the same CPU recipe as the audio editor. Supply current revision to reject concurrent edits. recipe fields: debut/fin (seconds), rogner_silence, seuil_silence_db, marge_silence_ms, fondu_entree_ms/fondu_sortie_ms, normaliser, cible_db, gain_db, taux (Hz or null), boucle, boucle_debut/boucle_fin (seconds in edited sound), boucle_zero, boucle_fondu_ms, mono (mix down to one channel), cible_lufs (perceived loudness target applied as a gain, true peak capped at -1 dBTP; null = off), hauteur_demi_tons (-24..24) with hauteur_garde_duree (false = tape-style, duration changes). A sound with a family exposes recette_proposee. Omitted fields use recipe defaults: send the complete desired recipe when preserving other edits. Channels are preserved; no generation or implicit approval.")
     @refus
     async def regler(project: str, sound: str, revision: int, recipe: dict[str, Any], name: str | None = None) -> dict[str, Any]:
         return vue(project, atelier.sons.regler(project, sound, revision, recipe, nom=name))
@@ -59,7 +59,12 @@ def installer_sons(serveur, atelier, refus):
     async def juger(project: str, sound: str, revision: int, judgment: str) -> dict[str, Any]:
         return vue(project, atelier.sons.juger(project, sound, revision, judgment))
 
-    @serveur.tool(name="preview_sound_delivery", meta=meta("Relire la livraison d'un son", "livrer"), description="Prepare a ready sound revision for the linked Godot project: WAV plus AudioStreamWAV resource, exact sample loop points, AudioStreamPlayer scene and provenance. Does NOT write to the game. Review file changes and use publish_animation_delivery with the returned token, which shares the existing ownership/conflict/recovery rules. Invalid signals are rejected.")
+    @serveur.tool(name="set_sound_family", meta=meta("Classer un son"), description="Set a sound's family as a NEW revision: bruitage, interface, ambiance, musique, chanson, jingle or voix (null clears it). The family decides delivery: WAV 16-bit for bruitage/interface, OGG Vorbis otherwise, the Godot bus (SFX, UI, Music, Voice) and the stable file prefix (sfx_, ui_, amb_, mus_, vo_). Generated sounds already carry their family. apply_defaults=true also takes the family's proposed recipe (mono, peak or LUFS target); otherwise the recipe is unchanged. Supply current revision for concurrency protection.")
+    @refus
+    async def classer(project: str, sound: str, revision: int, family: str | None, apply_defaults: bool = False) -> dict[str, Any]:
+        return vue(project, atelier.sons.classer(project, sound, revision, family, appliquer_reglages=apply_defaults))
+
+    @serveur.tool(name="preview_sound_delivery", meta=meta("Relire la livraison d'un son", "livrer"), description="Prepare a ready sound revision for the linked Godot project. A sound with a family delivers the file itself (WAV for bruitage/interface, OGG otherwise) under a stable name, its .import (loop points, and bpm/beat_count/bar_beats for music), an AudioStreamPlayer scene son.tscn on the family bus, and credits.json (engine, licence, seed, prompt, date). A sound without family keeps the older package (PCM inside an AudioStreamWAV .tres). Does NOT write to the game. Review file changes and use publish_animation_delivery with the returned token, which shares the existing ownership/conflict/recovery rules. Invalid signals are rejected.")
     @refus
     async def prevoir(project: str, sound: str, revision: int) -> dict[str, Any]:
         return atelier.sons.prevoir_livraison(project, sound, revision)

@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import base64
+import datetime
 import hashlib
 import io
 import json
+import re
 import time
+import unicodedata
 import uuid
 import wave
 import zipfile
@@ -13,9 +16,9 @@ from pathlib import Path
 
 import numpy as np
 
-from atelier.audio.traitement import VERSION, decoder, encoder, mesurer, onde, traiter
+from atelier.audio.traitement import VERSION, decoder, encoder, encoder_ogg, mesurer, onde, traiter
 from atelier.depot.verrou import verrou
-from atelier.domaine.son import RecetteSon, SonRefuse
+from atelier.domaine.son import FAMILLES, RecetteSon, SonRefuse, famille_valide, recette_proposee
 
 
 def _json(objet):
@@ -64,9 +67,12 @@ class ServiceSons:
             raise SonRefuse("Cette version du son n’existe pas.")
         jugements = self._lire(dossier / "jugements.json", {})
         versions = [self._lire(p) for p in (dossier / "revisions").glob("*.json")]
-        return {**objet, "revision_courante": courant["revision"],
+        famille = objet.get("famille")
+        return {**objet, "famille": famille, "revision_courante": courant["revision"],
             "jugement": jugements.get(str(objet["revision"]), "a-juger"),
-            "versions": [{"revision": v["revision"], "cree_le": v["modifie_le"], "nom": v["nom"],
+            # Proposée, jamais imposée : l'écran ou l'agent la prend par un geste.
+            "recette_proposee": recette_proposee(objet["recette"], famille) if famille else None,
+            "versions": [{"revision": v["revision"], "cree_le": v["modifie_le"], "nom": v["nom"], "famille": v.get("famille"),
                 "pret": v["pret"], "mesures": v["mesures"], "jugement": jugements.get(str(v["revision"]), "a-juger")}
                 for v in sorted(versions, key=lambda v: v["revision"], reverse=True)]}
 
@@ -123,7 +129,13 @@ class ServiceSons:
             extension = Path(str(nom)).suffix.lower()
             if extension not in (".wav", ".ogg", ".mp3", ".flac", ".m4a"):
                 extension = ".audio"
+            # La famille d'un son généré vient de sa demande (SN2). Une famille
+            # inconnue n'empêche pas d'acquérir un calcul déjà fait : le son
+            # reste sans famille, et l'auteur la pose ensuite.
+            # Un son sfxr (SN8) est un son d'interface et rétro s'il ne dit rien.
+            famille = (provenance or {}).get("famille") or ("interface" if (provenance or {}).get("nature") == "sfxr" else None)
             objet = {"identifiant": identifiant, "projet": projet, "nom": str(nom).strip()[:200] or "Son importé",
+                "famille": famille if famille in FAMILLES else None,
                 "revision": 1, "cree_le": time.time(), "modifie_le": time.time(), "etat": "a_analyser", "pret": False,
                 "source": {"fichier": "source" + extension, "nom": str(nom), "empreinte": _sha(octets), "octets": len(octets)},
                 "provenance": provenance or {"nature": "import"}, "recette": RecetteSon().en_json(), "mesures": None, "raison": "Analyse audio en attente."}
@@ -144,6 +156,20 @@ class ServiceSons:
                 raise SonRefuse("Donnez un nom au son.")
             son = {**son, "revision": son["revision"] + 1, "nom": nom.strip()[:200] if nom else son["nom"]}
             return self._enregistrer(son, regles)
+
+    def classer(self, projet, identifiant, revision, famille, *, appliquer_reglages=False):
+        """Pose la famille dans une nouvelle version (elle décide de la
+        livraison). `appliquer_reglages` prend aussi les réglages proposés
+        par la famille ; sinon la recette ne bouge pas."""
+        famille_valide(famille)
+        dossier = self._dossier(projet, identifiant)
+        with verrou(dossier / ".verrou"):
+            son = self._courant(projet, identifiant)
+            if isinstance(revision, bool) or revision != son["revision"]:
+                raise SonRefuse("Le son a changé dans une autre fenêtre. Rouvrez sa dernière version avant de conserver.")
+            recette = recette_proposee(son["recette"], famille) if appliquer_reglages and famille else son["recette"]
+            son = {**son, "revision": son["revision"] + 1, "famille": famille}
+            return self._enregistrer(son, RecetteSon.depuis_json(recette))
 
     def restaurer(self, projet, identifiant, revision, depuis):
         ancienne = self.lire(projet, identifiant, depuis)
@@ -207,11 +233,18 @@ class ServiceSons:
         extrait = np.concatenate([rendu[fin - n:fin], rendu[debut:debut + n]])
         return encoder(extrait, taux_sortie)
 
-    def paquet(self, projet, identifiant, revision=None):
+    def paquet(self, projet, identifiant, revision=None, *, dossier_res=None):
+        """(manifeste, contenus) d'une version. Un son sans famille garde le
+        paquet d'AU14 (PCM dans le `.tres`) ; un son qui a une famille livre
+        le fichier lui-même, son `.import`, sa scène et ses crédits (SN4).
+        `dossier_res` nomme le dossier final (`res://…`) : sans lui, le
+        `.import` prend sa forme courte, que Godot complète à l'import."""
         son = self.lire(projet, identifiant, revision)
         if not son["pret"] or son["jugement"] == "ecartee":
             raise SonRefuse("Choisissez une version audible, sans saturation et non écartée avant de la livrer. " + son["raison"])
         wav = self.rendu(projet, identifiant, son["revision"]).read_bytes()
+        if son["famille"] is not None:
+            return self._paquet_v2(son, wav, dossier_res)
         with wave.open(io.BytesIO(wav), "rb") as audio:
             pcm = audio.readframes(audio.getnframes())
         boucle = son["mesures"]["boucle"]
@@ -226,6 +259,30 @@ class ServiceSons:
             "animations": [], "source": son["source"], "provenance": son["provenance"], "recette": son["recette"], "mesures": son["mesures"]}
         return manifeste, {"son.wav": wav, "son.tres": ressource, "son.tscn": scene, "composition.json": _json(manifeste)}
 
+    def _paquet_v2(self, son, wav, dossier_res):
+        famille = FAMILLES[son["famille"]]
+        base = nom_stable(son["famille"], son["nom"])
+        boucle = son["mesures"]["boucle"]
+        taux = son["mesures"]["taux"]
+        if famille.format == "wav":
+            fichier, audio = base + ".wav", wav
+            params = params_wav(boucle)
+        else:
+            # Un OGG boucle de `loop_offset` jusqu'à sa fin : la fin de boucle
+            # devient la fin du fichier ; ce qui suit ne s'entendait jamais.
+            fichier = base + ".ogg"
+            audio = encoder_ogg(wav, famille.qualite_ogg, fin_echantillon=boucle["fin"] if boucle["active"] else None)
+            fin = boucle["fin"] if boucle["active"] else son["mesures"]["echantillons"]
+            params = params_ogg(boucle, taux, fin / taux, son["provenance"])
+        credits = {"atelier": "Asset Kitchen", "sons": [credit(son, fichier)]}
+        scene = scene_son(fichier, famille.bus)
+        manifeste = {"nature": "son", "nom": son["nom"], "son": son["identifiant"], "version_son": son["revision"],
+            "animations": [], "source": son["source"], "provenance": son["provenance"], "recette": son["recette"],
+            "mesures": son["mesures"], "format_paquet": 2, "famille": son["famille"], "fichier": fichier,
+            "format_audio": famille.format, "bus": famille.bus, "import": dict(params), "credits": credits["sons"]}
+        return manifeste, {fichier: audio, fichier + ".import": fichier_import(fichier, famille.format, params, dossier_res),
+            "son.tscn": scene, "credits.json": _json_lisible(credits), "composition.json": _json(manifeste)}
+
     def archive(self, projet, identifiant, revision=None):
         _, contenus = self.paquet(projet, identifiant, revision)
         tampon = io.BytesIO()
@@ -236,5 +293,182 @@ class ServiceSons:
 
     def prevoir_livraison(self, projet, identifiant, revision=None):
         manifeste, contenus = self.paquet(projet, identifiant, revision)
-        return self.a.livraison.preparer_paquet(projet, None, "son/" + identifiant, manifeste, contenus,
-            scene="son.tscn", ressource="son.tres")
+        if manifeste.get("format_paquet") != 2:
+            return self.a.livraison.preparer_paquet(projet, None, "son/" + identifiant, manifeste, contenus,
+                scene="son.tscn", ressource="son.tres", scene_stable="son.tscn", noeud_stable="Son")
+        # Le `.import` nomme son propre chemin (uid, path, deps) pour que Godot
+        # le réécrive à l'identique : il se compose une fois le dossier connu.
+        nom_import = manifeste["fichier"] + ".import"
+        params = manifeste["import"]
+        sans_import = {n: o for n, o in contenus.items() if n != nom_import}
+        return self.a.livraison.preparer_paquet(projet, None, "son/" + identifiant, manifeste, sans_import,
+            scene="son.tscn", ressource=manifeste["fichier"], scene_stable="son.tscn", noeud_stable="Son",
+            completer=lambda dossier: {nom_import: fichier_import(manifeste["fichier"], manifeste["format_audio"], params, dossier)})
+
+
+# ── Ce que Godot 4.7 lit (SN4) ──────────────────────────────────────────
+
+_PREFIXES = tuple(f.prefixe for f in FAMILLES.values())
+_EXTENSIONS_AUDIO = (".wav", ".ogg", ".mp3", ".flac", ".m4a", ".audio")
+
+
+def _json_lisible(objet):
+    return json.dumps(objet, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False).encode()
+
+
+def nom_stable(famille, nom):
+    """`sfx_` + le nom du son en snake_case ASCII : « Épée qui frappe.wav »
+    devient `sfx_epee_qui_frappe`. Un préfixe déjà écrit n'est pas doublé."""
+    texte = str(nom)
+    if texte.lower().endswith(_EXTENSIONS_AUDIO):
+        texte = texte.rsplit(".", 1)[0]
+    ascii_ = unicodedata.normalize("NFKD", texte).encode("ascii", "ignore").decode().lower()
+    corps = re.sub(r"[^a-z0-9]+", "_", ascii_).strip("_")
+    for prefixe in _PREFIXES:
+        if corps.startswith(prefixe):
+            corps = corps[len(prefixe):]
+            break
+    return FAMILLES[famille].prefixe + (corps[:60].strip("_") or "son")
+
+
+def _flottant(valeur):
+    # Godot réécrit un flottant sur 16 chiffres significatifs (constaté en
+    # 4.7.2 : 0.049977324263038545 → 0.04997732426303854). À la microseconde
+    # près, la forme la plus courte est la même des deux côtés.
+    return repr(float(round(valeur, 6)))
+
+
+def params_wav(boucle):
+    """Les options de l'importeur `wav`, dans l'ordre où Godot 4.7 les écrit.
+    `edit/normalize` reste décoché (il pousserait la crête à 0 dB) ;
+    `compress/mode=0` (PCM) : le jeu joue ce que l'auteur a écouté."""
+    active = boucle["active"]
+    return [("force/8_bit", "false"), ("force/mono", "false"), ("force/max_rate", "false"),
+        ("force/max_rate_hz", "44100"), ("edit/trim", "false"), ("edit/normalize", "false"),
+        ("edit/loop_mode", "2" if active else "1"),
+        ("edit/loop_begin", str(int(boucle["debut"]) if active else 0)),
+        ("edit/loop_end", str(int(boucle["fin"]) if active else -1)), ("compress/mode", "0")]
+
+
+def _nombre_positif(valeur):
+    if isinstance(valeur, bool):
+        return None
+    try:
+        nombre = float(str(valeur).split("/")[0])
+    except (TypeError, ValueError):
+        return None
+    return nombre if nombre > 0 and nombre == nombre and nombre != float("inf") else None
+
+
+def params_ogg(boucle, taux, duree, provenance):
+    """Les options de l'importeur `oggvorbisstr`. Le tempo et la mesure
+    viennent de la demande (ACE-Step : `tempo`, `mesure`) ; absents, `bpm`
+    reste à 0 et `bar_beats` au défaut de Godot (4)."""
+    provenance = provenance or {}
+    envoi = provenance.get("envoi") if isinstance(provenance.get("envoi"), dict) else {}
+    bpm = _nombre_positif(envoi.get("tempo", provenance.get("tempo")))
+    mesure = _nombre_positif(envoi.get("mesure", provenance.get("mesure")))
+    bar_beats = int(mesure) if mesure and 2 <= int(mesure) <= 32 else 4
+    beat_count = round(duree * bpm / 60) if bpm else 0
+    return [("loop", "true" if boucle["active"] else "false"),
+        ("loop_offset", _flottant(boucle["debut"] / taux if boucle["active"] else 0)),
+        ("bpm", _flottant(bpm or 0)), ("beat_count", str(beat_count)), ("bar_beats", str(bar_beats))]
+
+
+# Base 34 de Godot (ResourceUID::id_to_text : 'z' - 'a' lettres, puis
+# '9' - '0' chiffres) : a à y, puis 0 à 8. Constaté en 4.7.2 : un « z » ou un
+# « 9 » écrits par l'atelier ressortaient autrement après l'import.
+_UID = "abcdefghijklmnopqrstuvwxy012345678"
+
+
+def uid_godot(chemin_res):
+    """Un uid stable tiré du chemin, écrit comme Godot l'écrit : il le garde."""
+    n = int(hashlib.sha256(chemin_res.encode()).hexdigest(), 16) % ((1 << 62) - 1) + 1
+    texte = ""
+    while n:
+        n, reste = divmod(n, len(_UID))
+        texte = _UID[reste] + texte
+    return "uid://" + texte
+
+
+def fichier_import(fichier, format_, params, dossier_res=None):
+    """Le `.import` à côté du son. Avec `dossier_res`, la forme exacte que
+    `godot --headless --import` réécrit (4.7.2 : octet pour octet), pour que
+    le fichier du jeu reste celui que l'atelier possède. Sans, la forme
+    courte (importeur, type, options), que Godot complète."""
+    importer, type_, extension = ("wav", "AudioStreamWAV", "sample") if format_ == "wav" \
+        else ("oggvorbisstr", "AudioStreamOggVorbis", "oggvorbisstr")
+    lignes = "".join(f"{cle}={valeur}\n" for cle, valeur in (params.items() if isinstance(params, dict) else params))
+    if dossier_res is None:
+        return f'[remap]\n\nimporter="{importer}"\ntype="{type_}"\n\n[params]\n\n{lignes}'.encode()
+    source = f"{dossier_res}/{fichier}"
+    importe = f"res://.godot/imported/{fichier}-{hashlib.md5(source.encode()).hexdigest()}.{extension}"
+    return (f'[remap]\n\nimporter="{importer}"\ntype="{type_}"\nuid="{uid_godot(source)}"\npath="{importe}"\n\n'
+        f'[deps]\n\nsource_file="{source}"\ndest_files=["{importe}"]\n\n[params]\n\n{lignes}').encode()
+
+
+def scene_son(fichier, bus):
+    return ('[gd_scene load_steps=2 format=3]\n\n'
+        f'[ext_resource type="AudioStream" path={json.dumps(fichier)} id="Son"]\n\n'
+        '[node name="Son" type="AudioStreamPlayer"]\nstream = ExtResource("Son")\n'
+        f'bus = &{json.dumps(bus)}\n').encode()
+
+
+LICENCES = {
+    "stability": {"nom": "Stability AI Community License",
+        "resume": "Gratuit tant que le vendeur fait moins d'un million de dollars de chiffre d'affaires par an ; "
+                  "les sons appartiennent à celui qui les fabrique.",
+        "adresse": "https://stability.ai/community-license-agreement"},
+    "ace-step": {"nom": "MIT", "resume": "Libre ; usage commercial des sorties permis.",
+        "adresse": "https://github.com/ace-step/ACE-Step-1.5"},
+    "yue2": {"nom": "YuE2 — CC BY-NC 4.0, avec la permission du 16 septembre 2026",
+        "resume": "Non commercial, sauf pour une personne qui crée en son nom propre : elle peut vendre ce qu'elle "
+                  "génère (permission ajoutée le 16 septembre 2026). Une société doit demander une licence.",
+        "date_du_texte": "2026-09-16", "adresse": "https://huggingface.co/Comfy-Org/YuE2"},
+    "sfxr": {"nom": "Domaine public", "resume": "Son calculé par sfxr, sans modèle ; la bibliothèque pyfxr est sous BSD."},
+    None: {"nom": "inconnue", "resume": "Son importé : l'atelier ne connaît pas sa licence."},
+}
+_LICENCE_DU_MOTEUR = {"sa3-small-sfx": "stability", "sa3-medium": "stability", "sa-open-1": "stability",
+    "ace-step-15-turbo": "ace-step", "yue2-int8": "yue2", "sfxr": "sfxr"}
+
+
+def moteur_du_son(provenance):
+    provenance = provenance or {}
+    if provenance.get("nature") == "sfxr":
+        return "sfxr"
+    modele = provenance.get("modele")
+    if isinstance(modele, str) and "@" in modele:
+        return modele.removeprefix("ComfyUI:").split("@")[0]
+    return None
+
+
+def credit(son, fichier):
+    provenance = son.get("provenance") or {}
+    envoi = provenance.get("envoi") if isinstance(provenance.get("envoi"), dict) else {}
+    composition = provenance.get("composition") if isinstance(provenance.get("composition"), dict) else {}
+    moteur = moteur_du_son(provenance)
+    licence = LICENCES[_LICENCE_DU_MOTEUR.get(moteur)] if moteur in _LICENCE_DU_MOTEUR else \
+        {"nom": "à préciser", "resume": f"Moteur « {moteur} » : sa licence n'est pas connue de l'atelier."} if moteur else LICENCES[None]
+    return {"fichier": fichier, "son": son["identifiant"], "version": son["revision"], "nom": son["nom"],
+        "famille": son.get("famille"), "moteur": moteur, "modele": provenance.get("modele"),
+        "workflow": provenance.get("workflow"), "licence": licence,
+        # Le texte qui est parti : celui de l'envoi, sinon celui composé (SN2).
+        "graine": envoi.get("graine", provenance.get("graine")), "texte": envoi.get("prompt") or composition.get("texte"),
+        "texte_negatif": envoi.get("prompt_negatif") or composition.get("texte_negatif") or None,
+        "paroles": envoi.get("paroles"),
+        "date": datetime.datetime.fromtimestamp(son["cree_le"], datetime.timezone.utc).isoformat(timespec="seconds")}
+
+
+def ressource_variantes(chemins_res, *, random_pitch=1.03):
+    """Un `AudioStreamRandomizer` (`.tres`) qui liste des sons déjà livrés
+    (`res://…`), sans rejouer deux fois de suite la même variante
+    (`playback_mode = 0`), avec une légère variation de hauteur (1,03 ≈ un
+    demi-ton). Prêt pour le jeu de variantes de SN3, pas encore branché."""
+    if not chemins_res:
+        raise SonRefuse("Un jeu de variantes contient au moins un son.")
+    externes = "".join(f'[ext_resource type="AudioStream" path={json.dumps(c)} id="{i + 1}"]\n'
+        for i, c in enumerate(chemins_res))
+    flux = "".join(f'stream_{i}/stream = ExtResource("{i + 1}")\nstream_{i}/weight = 1.0\n'
+        for i in range(len(chemins_res)))
+    return (f'[gd_resource type="AudioStreamRandomizer" load_steps={len(chemins_res) + 1} format=3]\n\n{externes}\n'
+        f'[resource]\nplayback_mode = 0\nrandom_pitch = {random_pitch!r}\nstreams_count = {len(chemins_res)}\n{flux}').encode()
