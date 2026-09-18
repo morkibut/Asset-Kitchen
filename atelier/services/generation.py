@@ -58,8 +58,14 @@ from atelier.domaine.generation import (
     PLANCHE_JOINTE,
     REFERENCE,
     REFERENCE_DIRECTION,
+    REFERENCE_MISE_EN_PAGE,
     REFERENCE_PLANCHE,
     STYLE,
+)
+from atelier.domaine.vue import (
+    calage_de_planche,
+    camera_sous_la_planche,
+    consigne_de_mise_en_page,
 )
 from atelier.domaine.personnage import LIBRE
 from atelier.domaine.personnage import PLANCHE as USAGE_PLANCHE
@@ -694,6 +700,11 @@ class ServiceGenerations:
                 "et les variations ne s'y appliquent pas"
             )
 
+        # **Refaire une planche est un appel d'une image fixe** (RS2) : ni lot
+        # plié, ni pièce, ni case visée. Refusé ici, avant qu'un centime parte.
+        if demande.garder_mise_en_page:
+            _mise_en_page_permise(pliage, piece, pose, direction)
+
         # **Un appel qui ne dit pas quoi dessiner ne part pas** (1ᵉʳ septembre
         # 2026). Relevé sur « Le Marais du Vieux Moulin » : deux des trois
         # personnages du projet n'avaient aucun signalement, et leur prompt se
@@ -731,6 +742,13 @@ class ServiceGenerations:
             # case visée, ou la planche de ses directions.
             direction=direction,
             directions=directions,
+            # Refaire une planche emporte la planche du sujet (RS2).
+            mise_en_page=demande.garder_mise_en_page,
+        )
+        # **L'image dont on garde la mise en page** (RS2), choisie sur ce qui
+        # part vraiment — ou le refus, avant tout paiement.
+        source = _source_de_mise_en_page(
+            demande.garder_mise_en_page, reinjectes, references
         )
         # **Le texte tel qu'il partira, et un seul endroit le compose** (US-158).
         # `_texte` est aussi ce que l'aperçu du champ de prompt montre avant de
@@ -775,7 +793,9 @@ class ServiceGenerations:
                     self._bande_jointe(
                         demande.palette, projet, personnage, identifiant_modele
                     ),
+                    mise_en_page=source,
                 ),
+                mise_en_page=demande.garder_mise_en_page,
             ),
         )
         demande = replace(
@@ -1289,6 +1309,10 @@ class ServiceGenerations:
             # n'est nulle part sur le disque. Une relance qui l'aurait perdue
             # aurait envoyé un appel différent de celui qu'on relance.
             palette=bool(demande.get("palette")),
+            # **Et la planche à refaire** (RS2). Le texte est déjà celui qui est
+            # parti ; le drapeau suit pour que la demande relancée dise ce
+            # qu'elle est, et qu'un appel refait depuis elle la refasse aussi.
+            garder_mise_en_page=bool(demande.get("garder_mise_en_page")),
             references=self._octets_references(generation.references, generation.projet)
             # **Le gabarit se redessine, il ne se relit pas.** Il n'est ni un
             # asset ni une carte : il n'a pas d'identifiant, il n'est nulle part
@@ -1551,6 +1575,8 @@ class ServiceGenerations:
         pliage: Pliage | None,
         identifiant_modele: str,
         palette_jointe: bool,
+        *,
+        mise_en_page: str | None = None,
     ) -> tuple[str, ...]:
         """Les rôles des images, **dans l'ordre exact où les octets partent** (R7).
 
@@ -1564,8 +1590,17 @@ class ServiceGenerations:
         sujet devient `reference-planche`, une vue dans une direction
         `reference-direction:<id>`. L'ordre ne bouge pas d'un rang — c'est
         toujours la liste des réinjections, lue une fois, ici.
+
+        **Et l'image dont on garde la mise en page se nomme planche à
+        reproduire** (RS2) — `mise_en_page` porte son identifiant, choisi par
+        `_source_de_mise_en_page` sur cette même liste.
         """
-        roles = [_role_a_nommer(r) for r in partantes]
+        roles = [
+            REFERENCE_MISE_EN_PAGE
+            if mise_en_page and r.asset == mise_en_page
+            else _role_a_nommer(r)
+            for r in partantes
+        ]
         joint = self._role_joint(pliage, identifiant_modele)
         if joint is not None:
             roles.append(joint)
@@ -1636,6 +1671,9 @@ class ServiceGenerations:
         pliage: Pliage | None = None,
         tri: Tri | None = None,
         roles: Sequence[str] = (),
+        # **Refaire une planche** (RS2) : le calage passe au pluriel, le cadre
+        # cède sa place à la consigne de mise en page, la caméra cesse de primer.
+        mise_en_page: bool = False,
     ) -> list[dict[str, Any]]:
         """Ce qui part, **une ligne par chose**, dans l'ordre de l'assemblage (E14).
 
@@ -1704,6 +1742,14 @@ class ServiceGenerations:
                     tri,
                 )
             )
+            # **« single isolated sprite » ne part pas avec une planche à
+            # refaire** (RS2) : la phrase de calage passe au pluriel, le fond et
+            # la grille restent. Une ligne corrigée à la main est celle de
+            # l'auteur, et elle part telle qu'il l'a écrite.
+            if mise_en_page:
+                for ligne in lignes:
+                    if ligne["groupe"] == JEU and not ligne.get("corrigee"):
+                        ligne["texte"] = calage_de_planche(str(ligne["texte"]))
         elif self._univers is not None and projet is not None:  # pragma: no cover
             # L'atelier monte toujours les deux services ensemble ; ce repli
             # existe pour les essais qui n'en montent qu'un.
@@ -1819,8 +1865,45 @@ class ServiceGenerations:
         # mot. Mesuré : l'aire du sujet passe de 14,7 % à 20,1 % de l'image,
         # soit 37 % de pixels en plus avant le rééchantillonnage.
         cadre = ""
-        if pliage is None and self._production is not None:
+        if pliage is None and self._production is not None and not mise_en_page:
             cadre = self._production.cadre(projet)
+        # **Ni lui avec une planche à refaire** (RS2) : « one single sprite and
+        # nothing else » est exactement ce qui a fait rendre un seul Champy. La
+        # consigne de mise en page prend sa place, juste avant la caméra — la
+        # fin du texte, celle que le modèle pondère. Elle ne s'éteint pas : la
+        # case cochée est son interrupteur, et l'éteindre ici laisserait partir
+        # une planche que rien ne dit de reproduire.
+        if mise_en_page:
+            rang = next(
+                (
+                    i
+                    for i, role in enumerate(roles, start=1)
+                    if role == REFERENCE_MISE_EN_PAGE
+                ),
+                None,
+            )
+            lignes.append(
+                {
+                    "clef": clef(CADRAGE, "mise-en-page"),
+                    "groupe": CADRAGE,
+                    "nom": "la planche à refaire",
+                    "texte": tri.texte(
+                        clef(CADRAGE, "mise-en-page"),
+                        consigne_de_mise_en_page(rang),
+                    ),
+                    "origine": DES_IMAGES,
+                    "allumee": True,
+                    "eteignable": False,
+                    "raison": (
+                        "la case « Garder la mise en page de la référence » est "
+                        "cochée — décochez-la pour un sprite seul"
+                    ),
+                    "remplace": "",
+                    "remplacee_par": "",
+                    "corrigee": clef(CADRAGE, "mise-en-page") in tri.textes,
+                    "gardable": False,
+                }
+            )
         if cadre:
             lignes.append(
                 {
@@ -1849,6 +1932,10 @@ class ServiceGenerations:
             pliage is not None and pliage.geometrie_connue
         ):
             cadrage = self._production.cadrage(projet, personnage)
+        # Avec une planche à refaire, elle vaut pour chaque vue sans primer sur
+        # la planche (RS2) — voir `camera_sous_la_planche`.
+        if cadrage and mise_en_page:
+            cadrage = camera_sous_la_planche(cadrage)
         if cadrage:
             lignes.append(
                 {
@@ -2002,6 +2089,17 @@ class ServiceGenerations:
                     f"only (look, outfit, proportions); what to draw and how to frame "
                     f"it is given below."
                 )
+            elif role == REFERENCE_MISE_EN_PAGE:
+                # **La planche à reproduire** (RS2). Pas seulement l'identité :
+                # la mise en page même — combien de vues, dans quel ordre, avec
+                # quel cadrage. La consigne de la demande la reprend en fin de
+                # texte, sous son rang.
+                texte = (
+                    f"Image {rang} — THE CHARACTER SHEET TO REPRODUCE: redraw this "
+                    f"same sheet — the same number of views, in the same order, with "
+                    f"the same layout, framing and scale — changing only what the "
+                    f"request below asks for. Every view is the same character."
+                )
             elif role.startswith(f"{REFERENCE_DIRECTION}:"):
                 # **Une vue rangée dans une direction se dit vue sous cet angle**
                 # (RS1), avec la consigne du jeu pour cet angle-là — la phrase
@@ -2114,6 +2212,7 @@ class ServiceGenerations:
         direction: str | None = None,
         tri: Tri | None = None,
         roles: Sequence[str] = (),
+        mise_en_page: bool = False,
     ) -> str:
         """Les lignes allumées, jointes — **le seul endroit qui écrive le prompt**.
 
@@ -2136,6 +2235,7 @@ class ServiceGenerations:
                 pliage=pliage,
                 tri=tri,
                 roles=roles,
+                mise_en_page=mise_en_page,
             )
         )
 
@@ -2165,6 +2265,9 @@ class ServiceGenerations:
         references_ecartees: Sequence[str] | None = None,
         palette: bool = False,
         prompt_negatif: str = "",
+        # **Refaire une planche** (RS2) — même refus et même texte qu'à la
+        # soumission : l'écran ne montre jamais un texte qui ne partirait pas.
+        garder_mise_en_page: bool = False,
     ) -> dict[str, Any]:
         """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
 
@@ -2189,6 +2292,8 @@ class ServiceGenerations:
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
         pliage = self._plier(projet, personnage, poses, piece, pose, directions)
+        if garder_mise_en_page:
+            _mise_en_page_permise(pliage, piece, pose, direction)
         roles: tuple[str, ...] = ()
         if modele:
             partantes, _ = self._reinjections(
@@ -2201,6 +2306,7 @@ class ServiceGenerations:
                 modele,
                 direction=direction,
                 directions=directions,
+                mise_en_page=garder_mise_en_page,
             )
             # **Exactement la liste de `preparer`, par la même fonction** (R7) :
             # gabarit ou planche, puis bande de couleurs, dans l'ordre où les
@@ -2212,6 +2318,9 @@ class ServiceGenerations:
                 pliage,
                 modele,
                 self._bande_jointe(palette, projet, personnage, modele),
+                mise_en_page=_source_de_mise_en_page(
+                    garder_mise_en_page, partantes, references
+                ),
             )
         lignes = self.lignes(
             sujet,
@@ -2225,6 +2334,7 @@ class ServiceGenerations:
             pliage=pliage,
             tri=tri,
             roles=roles,
+            mise_en_page=garder_mise_en_page,
         )
         return {
             "texte": joindre(lignes),
@@ -2338,6 +2448,7 @@ class ServiceGenerations:
         *,
         direction: str | None = None,
         directions: Sequence[str] | None = None,
+        mise_en_page: bool = False,
     ) -> tuple[tuple[Reinjection, ...], tuple[Reinjection, ...]]:
         """Ce qui part en image, et ce que le plafond laisse au sol.
 
@@ -2358,7 +2469,9 @@ class ServiceGenerations:
         direction de la case, ou la planche de ses directions. Voir
         `_contexte_des_references`, que le compte de l'écran lit aussi.
         """
-        planche, angle = _contexte_des_references(direction, directions)
+        planche, angle = _contexte_des_references(
+            direction, directions, mise_en_page=mise_en_page
+        )
         reinjectes = _reinjectes(
             tuple(references)
             + self._concepts(
@@ -2416,6 +2529,9 @@ class ServiceGenerations:
         # les références libres partent, comme avant la tranche.
         direction: str | None = None,
         directions: Sequence[str] | None = None,
+        # Refaire une planche emporte la planche du sujet (RS2), ici comme à la
+        # soumission.
+        mise_en_page: bool = False,
     ) -> dict[str, Any]:
         """Ce qui partira, **ligne par ligne, avec sa provenance** (US-52, US-127).
 
@@ -2431,7 +2547,9 @@ class ServiceGenerations:
         ce qui part vraiment — c'est lui qui décide du grisé du modèle.
         """
         artworks = self._artworks(echelle, projet)
-        planche, angle = _contexte_des_references(direction, directions)
+        planche, angle = _contexte_des_references(
+            direction, directions, mise_en_page=mise_en_page
+        )
         concepts = self._concepts(
             projet, personnage, piece, planche=planche, direction=angle
         )
@@ -2911,7 +3029,10 @@ class ServiceGenerations:
 
 
 def _contexte_des_references(
-    direction: str | None, directions: Sequence[str] | None
+    direction: str | None,
+    directions: Sequence[str] | None,
+    *,
+    mise_en_page: bool = False,
 ) -> tuple[bool, str | None]:
     """**Ce que l'appel vise, lu pour choisir les références rangées** (RS1) —
     `(planche, direction)`.
@@ -2930,11 +3051,81 @@ def _contexte_des_references(
     Un lot de plusieurs poses et une planche d'équipement ne passent pas par
     `directions` : ils restent sans contexte typé, et n'emportent que les
     libres — la règle du plan ne les nomme pas, et ils partaient ainsi hier.
+
+    - **Refaire une planche** (RS2, `mise_en_page`) : c'est une planche, et elle
+      emporte la planche du sujet — la décision 2 du plan, qui la nommait déjà.
     """
+    if mise_en_page:
+        return True, None
     distinctes = tuple(dict.fromkeys(d for d in (directions or ()) if d))
     if len(distinctes) >= 2:
         return True, None
     return False, direction or (distinctes[0] if distinctes else None)
+
+
+def _mise_en_page_permise(
+    pliage: Pliage | None,
+    piece: str | None,
+    pose: str | None,
+    direction: str | None,
+) -> None:
+    """**Refaire une planche est un appel d'une image fixe** (RS2) — refusé
+    ailleurs, avant tout paiement.
+
+    - **Un lot plié** a déjà sa grille, son gabarit et ses consignes de case :
+      deux mises en page dans le même appel se contrediraient.
+    - **Une pièce** habille une planche que l'atelier compose lui-même.
+    - **Une case visée** attend une image, une seule : la planche refaite s'y
+      rangerait entière, dans une seule direction.
+
+    Refuser plutôt qu'ignorer : une case cochée qui ne ferait rien laisserait
+    partir « one single sprite » alors que l'auteur a demandé le contraire.
+    """
+    if pliage is not None or piece:
+        raise DemandeRefusee(
+            "garder la mise en page refait une planche en un seul appel — elle ne "
+            "se combine ni avec un lot de cases ni avec une pièce d'équipement"
+        )
+    if pose or direction:
+        raise DemandeRefusee(
+            "garder la mise en page rend une planche entière, qui ne se range pas "
+            "dans une seule case — ne visez aucune pose pour cet appel"
+        )
+
+
+def _source_de_mise_en_page(
+    garder: bool,
+    partantes: Sequence[Reinjection],
+    manuelles: Sequence[Reinjection],
+) -> str | None:
+    """**L'image dont l'appel garde la mise en page** (RS2) — ou le refus.
+
+    Choisie sur ce qui **part vraiment** (après le plafond et les décochées),
+    jamais sur ce qui est rangé : nommer au modèle une planche qui ne part pas
+    serait le mensonge que `_roles_qui_partent` existe pour empêcher.
+
+    1. **La référence `planche` du sujet** — le contexte « planche » vient de la
+       faire partir (`_contexte_des_references`).
+    2. **Sinon la première image jointe à la main**, en référence ou en édition.
+       Une carte de style n'en est pas une : sa ligne dit justement de ne pas en
+       copier la mise en page.
+    3. **Sinon rien ne peut servir de modèle**, et l'appel est refusé avant de
+       payer — la génération 26f07741 avait une planche jointe à la main, c'est
+       le cas que le repli couvre.
+    """
+    if not garder:
+        return None
+    for r in partantes:
+        if r.role == REFERENCE and r.usage == USAGE_PLANCHE:
+            return r.asset
+    envoyees = {r.asset for r in partantes}
+    for r in manuelles:
+        if r.role in (REFERENCE, EDITION) and r.asset in envoyees:
+            return r.asset
+    raise DemandeRefusee(
+        "garder la mise en page demande une planche : rangez une référence en "
+        "planche sur la fiche du sujet, ou joignez l'image à reproduire"
+    )
 
 
 def _role_a_nommer(reinjection: Reinjection) -> str:

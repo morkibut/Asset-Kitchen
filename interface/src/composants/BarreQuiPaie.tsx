@@ -41,6 +41,8 @@ export function BarreQuiPaie({
   onProportions,
   variations,
   onVariations,
+  garderMiseEnPage = false,
+  onGarderMiseEnPage,
   options,
   onOptions,
   reinjections,
@@ -89,6 +91,10 @@ export function BarreQuiPaie({
   onProportions: (v: string) => void
   variations: number
   onVariations: (v: number) => void
+  /** **Refaire une planche** (RS2) : la case de la préparation d'une image
+   *  fixe. Sans `onGarderMiseEnPage`, elle n'est pas montrée. */
+  garderMiseEnPage?: boolean
+  onGarderMiseEnPage?: (v: boolean) => void
   options: Record<string, string>
   onOptions: (o: Record<string, string>) => void
   reinjections: Reinjection[]
@@ -184,6 +190,10 @@ export function BarreQuiPaie({
         <label className="space-y-[8px]"><span className="block font-medium">Format de l’image</span><select className={champ} value={proportions} disabled={!modele} onChange={(e) => onProportions(e.target.value)}>{!modele?.proportions.includes(proportions) && <option value={proportions} disabled>{proportions} — indisponible</option>}{modele?.proportions.map((p) => <option key={p}>{p}</option>)}</select></label>
         <label className="space-y-[8px]"><span className="block font-medium">Variations</span><input type="number" className={champ} min={1} max={modele?.variations_max ?? 1} step={1} disabled={!!cases || !modele} value={cases ? 1 : variations} onChange={(e) => { const v = e.target.valueAsNumber; if (Number.isFinite(v)) onVariations(Math.max(1, Math.min(modele?.variations_max ?? 1, Math.floor(v)))) }} /></label>
         {cases > 0 && <p className="col-span-2 text-encre-3">{cases} cases réunies sur une planche · une génération pour la planche.</p>}
+        {/* **Refaire une planche** (RS2). Montrée seulement pour une image fixe
+            qui ne vise aucune case : un lot a déjà sa grille, et une planche
+            refaite ne se range pas dans une seule case — l'atelier refuserait. */}
+        {onGarderMiseEnPage && cases === 0 && posesCible.length === 0 && <label className="col-span-2 flex items-start gap-[8px]"><input type="checkbox" className="mt-[3px]" checked={garderMiseEnPage} onChange={(e) => onGarderMiseEnPage(e.target.checked)} /><span><span className="block font-medium">Garder la mise en page de la référence</span><span className="block text-encre-3">Refait la planche jointe avec ta modification, vue par vue.</span></span></label>}
         {modele && Object.entries(modele.options).map(([cle, option]) => <label key={cle} className="space-y-[8px]"><span className="block font-medium">{option.nom}</span>{option.genre === "choix" ? <select className={champ} value={options[cle] ?? ""} onChange={(e) => reglerOption(cle, e.target.value)}><option value="">Défaut du modèle</option>{option.valeurs.map((v) => <option key={v}>{v}</option>)}</select> : option.genre === "booleen" ? <select className={champ} value={options[cle] ?? ""} onChange={(e) => reglerOption(cle, e.target.value)}><option value="">Défaut du modèle</option><option value="false">Désactivé</option><option value="true">Activé</option></select> : <input type="number" className={champ} min={option.minimum ?? undefined} max={option.maximum ?? undefined} value={options[cle] ?? ""} placeholder="Réglage du modèle" onChange={(e) => reglerOption(cle, e.target.value)} />}</label>)}
       </section>
       <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Prompt négatif{promptNegatif ? " · renseigné" : " · facultatif"}</summary><textarea aria-label="Prompt négatif" rows={2} className={`${champ} mt-[14px]`} value={promptNegatif} onChange={(e) => onPromptNegatif(e.target.value)} placeholder="Ce qui doit être évité…" /></details>

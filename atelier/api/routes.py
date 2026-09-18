@@ -721,6 +721,10 @@ class CorpsGeneration(BaseModel):
     # **La palette en image** (E14) : une bande de pastilles qui occupe une des
     # places de référence du modèle. Redessinée à chaque appel, jamais relue.
     palette: bool = False
+    # **Refaire une planche** (RS2) : garder la mise en page de la planche du
+    # sujet, sinon de la première image jointe — refusé avant de payer sans
+    # l'une ni l'autre.
+    garder_mise_en_page: bool = False
 
 
 @routeur.post("/generations", status_code=202)
@@ -740,6 +744,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         echelle=corps.echelle,
         repris=corps.repris,
         palette=corps.palette,
+        garder_mise_en_page=corps.garder_mise_en_page,
     )
     atelier = _atelier(requete)
     generation = await atelier.generations.soumettre(
@@ -800,6 +805,9 @@ class CorpsApercu(BaseModel):
     # du produit seule et l'appel en enverrait deux. C'est le seul champ de ce
     # corps qui ne compose pas le prompt — il compose l'*autre* texte qui part.
     prompt_negatif: str = ""
+    # **Refaire une planche** (RS2) : le cadre « un seul sprite » cède sa place
+    # à la consigne de mise en page, et l'aperçu doit le montrer.
+    garder_mise_en_page: bool = False
 
 
 @routeur.post("/prompt/preview")
@@ -836,6 +844,7 @@ async def apercu_prompt(requete: Request, corps: CorpsApercu) -> dict[str, Any]:
         directions=corps.directions,
         tri=Tri.depuis_json(corps.tri),
         prompt_negatif=corps.prompt_negatif,
+        garder_mise_en_page=corps.garder_mise_en_page,
     )
 
 
@@ -887,6 +896,7 @@ async def envoi(requete: Request, corps: CorpsEnvoi) -> dict[str, Any]:
         variations=corps.variations,
         tri=Tri.depuis_json(corps.tri),
         prompt_negatif=corps.prompt_negatif,
+        garder_mise_en_page=corps.garder_mise_en_page,
     )
 
 

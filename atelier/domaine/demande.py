@@ -78,6 +78,18 @@ class Demande:
     # comportement d'avant y est exactement le bon.
     sujet: str = ""
 
+    # **Refaire une planche plutôt qu'un sprite** (RS2, 18 septembre 2026). La
+    # planche des quatre directions de Champy est partie jointe avec « one
+    # single sprite » dans le cadre et une caméra qui « l'emporte sur tout ce qui
+    # précède » : le modèle a obéi au texte et rendu un seul Champy. Cochée, la
+    # case retire ces deux phrases et demande de reproduire la planche jointe —
+    # même nombre de vues, même ordre, même cadrage — en n'y changeant que ce
+    # que le sujet décrit.
+    #
+    # **Ici et pas dans les options**, pour la raison de `palette` : aucun
+    # fournisseur ne la déclare, c'est une décision du produit sur ce qui part.
+    garder_mise_en_page: bool = False
+
     def __post_init__(self) -> None:
         if not self.prompt.strip():
             raise ValueError("prompt vide")
@@ -86,7 +98,7 @@ class Demande:
 
     def resume(self) -> dict[str, Any]:
         """Les paramètres, sans les octets des références — pour l'enregistrement."""
-        return {
+        resume: dict[str, Any] = {
             "prompt": self.prompt,
             "prompt_negatif": self.prompt_negatif,
             "proportions": self.proportions,
@@ -106,3 +118,9 @@ class Demande:
             # génération relue doit pouvoir se renommer comme elle s'est nommée.
             "sujet": self.sujet,
         }
+        # **Écrit seulement quand il est vrai** (RS2) : un `generation.json`
+        # d'aujourd'hui reste celui d'hier, octet pour octet, tant que la case
+        # n'est pas cochée. La relance le relit — voir `_demande_de`.
+        if self.garder_mise_en_page:
+            resume["garder_mise_en_page"] = True
+        return resume

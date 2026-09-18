@@ -64,6 +64,9 @@ export type CeQueLePaiementLit = {
   echelle: string
   echouer: (erreur: unknown, defaut: string) => void
   enPlanche: boolean
+  /** **Refaire une planche** (RS2) — une intention de cet appel-ci. */
+  garderMiseEnPage: boolean
+  setGarderMiseEnPage: Pose_<boolean>
   setEnvoi: Pose_<Envoi | null>
   envoiOuvert: boolean
   setEnvoiOuvert: (ouvert: boolean) => void
@@ -105,6 +108,8 @@ export function usePaiement({
   echelle,
   echouer,
   enPlanche,
+  garderMiseEnPage,
+  setGarderMiseEnPage,
   setEnvoi,
   envoiOuvert,
   setEnvoiOuvert,
@@ -133,6 +138,12 @@ export function usePaiement({
   variations,
 }: CeQueLePaiementLit) {
   const [actualisationEnvoi, setActualisationEnvoi] = useState(false)
+  /** **La case, telle qu'elle part** (RS2). Elle ne vaut que pour une image
+   *  fixe sans case visée — c'est là seulement que la préparation la montre :
+   *  une case restée cochée sous un lot ou une pose armés ne part pas, plutôt
+   *  que de faire refuser l'appel par l'atelier. */
+  const refaitUnePlanche =
+    garderMiseEnPage && !cases && posesCible.length === 0 && !cible?.piece
   // **Ce qui fait qu'un appel est le même, et rien de plus** (M5).
   //
   // Ce que l'auteur **vise et écrit** : le texte, ce qu'il interdit, le modèle,
@@ -163,6 +174,9 @@ export function usePaiement({
     cible?.direction ?? "",
     posesCible.map((p) => p.identifiant).join("·"),
     directionsCible.join("·"),
+    // **Refaire une planche est une autre demande** (RS2) : le cadre et la
+    // caméra changent, et les corrections d'un sprite seul n'y valent plus.
+    String(refaitUnePlanche),
   ].join("␟")
 
 
@@ -301,6 +315,7 @@ export function usePaiement({
       echelle,
       repris,
       tri,
+      refaitUnePlanche,
     ])
 
   /** L'identifiant de l'intention courante — le même tant que rien de ce qui
@@ -428,6 +443,11 @@ export function usePaiement({
         // **La palette en image**, quand la case est cochée : une bande de
         // pastilles qui occupe une des places de référence du modèle.
         palette: tri.allumes.includes("options.palette"),
+        // **Refaire une planche** (RS2) : la mise en page de la planche du
+        // sujet, sinon de la première image jointe — refusé avant de payer
+        // sans l'une ni l'autre. Absent quand la case est vide : le corps d'un
+        // appel ordinaire reste celui d'avant.
+        ...(refaitUnePlanche ? { garder_mise_en_page: true } : {}),
       })
       // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
       setChantier((liste) => fondre(liste, generation))
@@ -446,6 +466,9 @@ export function usePaiement({
       // — un tonneau, un décor — dans la case d'un personnage, sans que rien
       // ne l'ait demandé. On réarme d'un clic depuis la matrice.
       setCible(null)
+      // Et la planche à refaire avec elle (RS2) : c'était l'intention de cet
+      // appel-là, pas un réglage de la séance.
+      setGarderMiseEnPage(false)
       // **L'intention est consommée** (U1). Le même identifiant réemployé après
       // un appel parti ferait rendre *déjà soumise* par le serveur : deux images
       // volontairement identiques, demandées deux fois de suite, n'en feraient
@@ -510,6 +533,8 @@ export function usePaiement({
           // ajoute, et sans lui l'écran montrerait l'interdiction du produit
           // seule là où l'appel en enverra deux.
           prompt_negatif: promptNegatif.trim(),
+          // **La consigne de planche se relit avant de payer** (RS2).
+          ...(refaitUnePlanche ? { garder_mise_en_page: true } : {}),
         })
         .then((recu) => {
           if (!vivant) return
@@ -551,6 +576,7 @@ export function usePaiement({
     tri,
     promptNegatif,
     univers,
+    refaitUnePlanche,
   ])
 
   return {

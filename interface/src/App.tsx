@@ -1064,6 +1064,10 @@ function AtelierApp() {
    *  continuer à écrire là où on écrivait — un second éditeur à côté aurait
    *  demandé de choisir lequel des deux part. */
   const [repris, setRepris] = useState(false)
+  /** **Refaire une planche** (RS2) : l'appel garde la mise en page de la
+   *  planche du sujet, sinon de la première image jointe. Une intention de cet
+   *  appel-ci, comme la cible : elle retombe dès qu'il est parti. */
+  const [garderMiseEnPage, setGarderMiseEnPage] = useState(false)
   const [proportions, setProportions] = useState("1:1")
   const [variations, setVariations] = useState(1)
   const [options, setOptions] = useState<Record<string, string>>({})
@@ -1415,6 +1419,8 @@ function AtelierApp() {
     echelle,
     echouer,
     enPlanche,
+    garderMiseEnPage,
+    setGarderMiseEnPage,
     setEnvoi,
     envoiOuvert,
     setEnvoiOuvert,
@@ -1617,6 +1623,8 @@ function AtelierApp() {
       onProportions={setProportions}
       variations={variations}
       onVariations={setVariations}
+      garderMiseEnPage={garderMiseEnPage}
+      onGarderMiseEnPage={setGarderMiseEnPage}
       options={options}
       onOptions={setOptions}
       reinjections={reinjections}

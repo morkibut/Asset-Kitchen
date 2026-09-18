@@ -533,6 +533,71 @@ CADRE = (
 )
 
 
+# ── Refaire une planche (RS2) ────────────────────────────────────────────────
+#
+# **Trois phrases de ce fichier demandent un sprite seul, et une planche à
+# refaire les contredit toutes les trois** : le calage (« single isolated
+# sprite »), le cadre (« one single sprite and nothing else ») et la caméra
+# (« this overrides everything above »). La génération 26f07741 du 18 septembre
+# 2026 les portait avec la planche des quatre directions de Champy jointe, et le
+# modèle a rendu un seul Champy. Quand l'appel garde la mise en page, le cadre
+# ne part pas et la consigne ci-dessous prend sa place ; les deux autres sont
+# réécrites ici, à un seul endroit.
+
+# Le début de la phrase de calage, tel que `phrase_de_calage` l'écrit — avec ou
+# sans couleur de fond nommée. `tests/test_rs2.py` vérifie qu'il y est toujours.
+_POSE_SEULE = "single isolated sprite on a flat "
+_POSE_DE_PLANCHE = "isolated sprites on a flat "
+
+# L'ouverture commune aux huit caméras de `VUES`.
+_CAMERA_QUI_PRIME = "CAMERA — this overrides everything above. "
+_CAMERA_SOUS_LA_PLANCHE = (
+    "CAMERA — for every view of the sheet, without changing its layout: the "
+    "number of views, their order and the way each one faces stay those of the "
+    "sheet. "
+)
+
+
+def calage_de_planche(texte: str) -> str:
+    """La case `technique` pour une planche : des sprites isolés, au pluriel.
+
+    Seule la phrase du produit change ; le fond et le calage de grille restent,
+    et un texte d'auteur qui ne la contient pas ressort mot pour mot.
+    """
+    return texte.replace(_POSE_SEULE, _POSE_DE_PLANCHE)
+
+
+def camera_sous_la_planche(texte: str) -> str:
+    """La caméra du jeu, qui vaut pour chaque vue **sans primer sur la planche**.
+
+    Elle reste la dernière ligne du texte — c'est ce qui décide de la vue, et le
+    banc du 1ᵉʳ septembre 2026 l'a payé —, mais elle ne dit plus qu'elle
+    l'emporte sur tout ce qui précède : ce qui précède est la planche à refaire.
+    """
+    if texte.startswith(_CAMERA_QUI_PRIME):
+        return _CAMERA_SOUS_LA_PLANCHE + texte[len(_CAMERA_QUI_PRIME):]
+    return texte
+
+
+def consigne_de_mise_en_page(rang: int | None) -> str:
+    """La consigne qui remplace le cadre quand l'appel refait une planche.
+
+    `rang` est celui de l'image à reproduire dans l'ordre d'envoi ; sans lui —
+    un aperçu qui ne connaît pas encore le modèle —, elle nomme « la planche
+    jointe ». Elle garde du cadre ce qui ne contredit pas une planche : ni décor,
+    ni sol, ni texte. « No frame, no border » n'y est pas : une planche peut
+    avoir ses cases tracées, et on demande de la refaire telle quelle.
+    """
+    source = f"Image {rang}" if rang else "the character sheet joined above"
+    return (
+        f"LAYOUT — reproduce the layout of {source}: redraw the same character "
+        f"sheet, with the same number of views, in the same order, with the same "
+        f"arrangement, framing and scale. Every view is the same character. "
+        f"Apply the change described above to every view, and change nothing "
+        f"else. No scenery, no ground, no text, no letters, no numbers, no logo."
+    )
+
+
 def phrases_du_produit() -> frozenset[str]:
     """Tout ce que le produit a pu écrire lui-même dans une case de la bible.
 

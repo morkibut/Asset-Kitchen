@@ -4896,6 +4896,9 @@ export const api = {
     /** **La palette en image** (E14) : une bande de pastilles qui occupe une
      *  des places de référence du modèle. */
     palette?: boolean
+    /** **Refaire une planche** (RS2) : garder la mise en page de la planche du
+     *  sujet, sinon de la première image jointe. */
+    garder_mise_en_page?: boolean
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",
@@ -4950,6 +4953,8 @@ export const api = {
      *  fond du jeu s'y ajoute : sans lui, l'écran montrerait l'interdiction du
      *  produit seule et l'appel en enverrait deux. */
     prompt_negatif?: string
+    /** **Refaire une planche** (RS2), lu avant de payer. */
+    garder_mise_en_page?: boolean
   }) =>
     appeler<Envoi>("/outgoing", {
       method: "POST",

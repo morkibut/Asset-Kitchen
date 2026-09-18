@@ -106,6 +106,13 @@ ROLES_JOINTS = (STYLE, REFERENCE, EDITION, GABARIT, PLANCHE_JOINTE, PALETTE)
 REFERENCE_PLANCHE = "reference-planche"
 REFERENCE_DIRECTION = "reference-direction"
 
+# **La planche à reproduire** (RS2) — troisième rôle à nommer, et le seul qui
+# ne décrive pas seulement l'identité : quand l'appel garde la mise en page,
+# une image jointe (la planche du sujet, sinon la première jointe à la main)
+# donne aussi le nombre de vues, leur ordre et leur cadrage. Sur le fil elle
+# garde son rôle — `reference`, ou `edition` si l'auteur l'a jointe ainsi.
+REFERENCE_MISE_EN_PAGE = "reference-mise-en-page"
+
 # **D'où viennent les octets** — la deuxième famille d'images du produit est
 # arrivée en T4. Un asset vient de la bibliothèque et se relit par son
 # emplacement ; une carte vient du tableau d'inspiration de son projet et se

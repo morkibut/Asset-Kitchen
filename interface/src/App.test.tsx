@@ -23310,3 +23310,74 @@ describe("B4 — l'ouverture", () => {
     )
   })
 })
+
+// ── RS2 · Refaire une planche ────────────────────────────────────────────────
+//
+// La case *Garder la mise en page de la référence* vit dans la préparation
+// d'une image fixe. Elle part dans le corps de la relecture et dans celui qui
+// paie, et retombe dès que l'appel est parti — comme la cible.
+describe("refaire une planche (RS2)", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const CASE = "Garder la mise en page de la référence"
+
+  test("la case part avec la relecture et avec l'appel, puis retombe", async () => {
+    const { fetchDouble, appels } = serveurDouble()
+    await monter(fetchDouble)
+
+    const champ = await champDePrompt()
+    fireEvent.change(champ, { target: { value: "le personnage tient un bâton" } })
+    const coche = screen.getByRole("checkbox", { name: new RegExp(CASE) }) as HTMLInputElement
+    expect(coche.checked).toBe(false)
+    expect(screen.getByText("Refait la planche jointe avec ta modification, vue par vue.")).toBeTruthy()
+    fireEvent.click(coche)
+    expect(coche.checked).toBe(true)
+
+    await payer()
+
+    await waitFor(() => {
+      const relue = appels.find((a) => a.url === "/api/outgoing" && a.corps)
+      expect(relue?.corps).toMatchObject({ garder_mise_en_page: true })
+      const parti = appels.find((a) => a.url === "/api/generations" && a.corps)
+      expect(parti?.corps).toMatchObject({
+        prompt: "le personnage tient un bâton",
+        garder_mise_en_page: true,
+      })
+    })
+
+    // **L'intention est consommée** : l'appel suivant repart d'un sprite seul.
+    const rouverte = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(rouverte, { target: { value: "un tonneau" } })
+    await waitFor(() =>
+      expect(
+        (screen.getByRole("checkbox", { name: new RegExp(CASE) }) as HTMLInputElement).checked,
+      ).toBe(false),
+    )
+  })
+
+  test("sans la case, le corps d'un appel ordinaire ne change pas", async () => {
+    const { fetchDouble, appels } = serveurDouble()
+    await monter(fetchDouble)
+
+    const champ = await champDePrompt()
+    fireEvent.change(champ, { target: { value: "un tonneau" } })
+    await payer()
+
+    await waitFor(() => {
+      const parti = appels.find((a) => a.url === "/api/generations" && a.corps)
+      expect(parti?.corps).toBeTruthy()
+      expect(parti?.corps).not.toHaveProperty("garder_mise_en_page")
+    })
+  })
+})

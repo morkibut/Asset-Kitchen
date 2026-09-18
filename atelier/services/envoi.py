@@ -149,6 +149,9 @@ class ServiceEnvoi:
         variations: int = 1,
         tri: Tri | None = None,
         prompt_negatif: str = "",
+        # **Refaire une planche** (RS2) : la consigne de mise en page se lit
+        # ici avant de payer, et la planche du sujet se compte dans le prix.
+        garder_mise_en_page: bool = False,
     ) -> dict[str, Any]:
         """Tout ce que l'écran montre, en un aller-retour.
 
@@ -189,6 +192,7 @@ class ServiceEnvoi:
             # fond ensuite. Sans lui, l'écran qui promet de tout montrer tairait
             # la moitié qui vient de l'auteur.
             prompt_negatif=prompt_negatif,
+            garder_mise_en_page=garder_mise_en_page,
         )
         lignes = apercu["lignes"]
         cases = self._cases(poses, directions, piece)
@@ -207,6 +211,7 @@ class ServiceEnvoi:
             # l'écran doit compter celles-là, pas les autres.
             direction=direction,
             directions=directions,
+            mise_en_page=garder_mise_en_page,
         )
         mesure = self._generations.appels_mesures(modele)
         modele_lu = self._modele(modele)
