@@ -244,33 +244,38 @@ export function EcranClip({
 
   // ── Le mouvement ──────────────────────────────────────────────────────────
   //
-  // La liste vient d'`A6` et n'appartient à aucun jeu. **Le mouvement de départ
+  // La liste est celle du jeu (18 septembre 2026). **Le mouvement de départ
   // est celui qui porte le nom de la pose visée**, et c'est le serveur qui
   // apparie : l'écran ne recolle jamais une pose à un mouvement de son côté.
   useEffect(() => {
     let vivant = true
     api
-      .mouvements()
+      .mouvements(personnage.projet)
       .then((base) => vivant && setMouvements(base.mouvements))
       .catch(() => vivant && setMouvements([]))
     return () => {
       vivant = false
     }
-  }, [])
+  }, [personnage.projet])
 
+  // **La phrase de la direction**, que le serveur place devant le texte du
+  // mouvement : l'écran la lit chez lui pour montrer ce qui partira vraiment.
+  const [phraseDeDirection, setPhraseDeDirection] = useState("")
   useEffect(() => {
     if (!pose) return
     let vivant = true
     api
-      .mouvementDeLaPose(pose.identifiant)
+      .mouvementDeLaPose(pose.identifiant, personnage.projet, cible.direction?.identifiant)
       .then((recu) => {
-        if (vivant && recu.mouvement) setMouvement(recu.mouvement.identifiant)
+        if (!vivant) return
+        if (recu.mouvement) setMouvement(recu.mouvement.identifiant)
+        setPhraseDeDirection(recu.direction ?? "")
       })
       .catch(() => {})
     return () => {
       vivant = false
     }
-  }, [pose?.identifiant])
+  }, [pose?.identifiant, personnage.projet, cible.direction?.identifiant])
 
   // ── Le catalogue et son prix ──────────────────────────────────────────────
   //
@@ -333,7 +338,10 @@ export function EcranClip({
   }
 
   const choisi = catalogue?.modeles.find((m) => m.identifiant === modele) ?? null
-  const texte = mouvements.find((m) => m.identifiant === mouvement)?.texte ?? ""
+  const geste = mouvements.find((m) => m.identifiant === mouvement)?.texte ?? ""
+  // Le même assemblage que `texte_du_clip` côté serveur : la direction, puis
+  // le geste, séparés d'une espace.
+  const texte = geste ? [phraseDeDirection, geste].filter(Boolean).join(" ") : ""
   const image = choisie ?? depart?.asset ?? null
 
   // **Ce que la colonne montre : la liste triée du serveur, filtrée par le
@@ -521,9 +529,8 @@ export function EcranClip({
           {texte || "choisissez un mouvement pour lire ce qui partira"}
         </p>
         <p className="mesure text-[10px] leading-4 text-encre-4">
-          C'est le texte anglais du mouvement, écrit une fois dans les Réglages
-          et jamais retapé ici. Le corriger pour tous les clips suivants se fait
-          là-bas.
+          La phrase de la direction, puis le texte du mouvement. Les deux se
+          corrigent pour tout le jeu dans Réglages › Univers.
         </p>
       </aside>
 

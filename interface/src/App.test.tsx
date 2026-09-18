@@ -4117,7 +4117,7 @@ async function ouvrirLesReglagesDeLAppel() {
  *  machine, et ni les quatre règles du jeu ni le cadre de délégation n'avaient
  *  de chemin. */
 async function ouvrirLePanneauDeLAtelier(
-  onglet: "Moteurs & workflows" | "Agent MCP" = "Agent MCP",
+  onglet: "Univers" | "Moteurs & workflows" | "Agent MCP" = "Agent MCP",
 ) {
   fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
   fireEvent.click(await screen.findByRole("button", { name: onglet }))
@@ -5390,17 +5390,16 @@ describe("l'agent, vu de l'atelier", () => {
 
   // ── Les mouvements (A6) ───────────────────────────────────────────────────
   //
-  // **Le quatrième bloc de l'écran, et il est ici pour la raison des trois
-  // autres** : ce qui ne dépend d'aucun jeu. Un mouvement appartient à
-  // l'atelier — décision durable de la V3 —, il s'écrit une fois et sert tous
-  // les projets suivants. On l'écrit ici, on le **choisit** ailleurs.
+  // **Dans l'onglet Univers depuis le 18 septembre 2026**, et propres au jeu
+  // ouvert : chaque appel porte `?projet=…`. On l'écrit ici, on le **choisit**
+  // ailleurs.
 
   const ouvrirLesMouvements = async (
     options: Parameters<typeof serveurDouble>[0] = {},
   ) => {
     const double = serveurDouble(options)
     await monter(double.fetchDouble)
-    await ouvrirLePanneauDeLAtelier()
+    await ouvrirLePanneauDeLAtelier("Univers")
     await screen.findByRole("heading", { name: "Les mouvements" })
     return double
   }
@@ -5469,7 +5468,7 @@ describe("l'agent, vu de l'atelier", () => {
       expect(
         appels.some(
           (a) =>
-            a.url === "/api/movements" &&
+            a.url.startsWith("/api/movements?projet=") &&
             JSON.stringify(a.corps) ===
               JSON.stringify({ nom: "nage", texte: "swimming cycle" }),
         ),
@@ -5518,7 +5517,9 @@ describe("l'agent, vu de l'atelier", () => {
     // sur du vocabulaire livré n'a aucune raison d'être.
     fireEvent.click(screen.getByRole("button", { name: "marche · remontrer" }))
     await waitFor(() =>
-      expect(appels.some((a) => a.url === "/api/movements/marche/show")).toBe(true),
+      expect(
+        appels.some((a) => a.url.startsWith("/api/movements/marche/show?projet=")),
+      ).toBe(true),
     )
   })
 
@@ -5539,6 +5540,35 @@ describe("l'agent, vu de l'atelier", () => {
       )
     await waitFor(() => expect(marque("Ce qui part au modèle")).toBe(true))
     expect(marque("Cadence")).toBe(true)
+  })
+
+  test("la phrase d'animation d'une direction se lit en gris et se corrige pour le jeu", async () => {
+    // **Demandé le 18 septembre 2026** : l'auteur tapait « shown from behind »
+    // à la main pour chaque course vers le nord.
+    const livree = "The character is seen from behind, its back to the viewer."
+    const { appels } = await ouvrirLesMouvements({
+      directions: {
+        ...SANS_DIRECTIONS,
+        directions: [{ identifiant: "nord", nom: "nord", consigne: "facing north" }],
+        phrases_livrees: { nord: livree },
+      },
+    })
+
+    await screen.findByRole("heading", { name: "Les directions en animation" })
+    const champ = screen.getByRole("textbox", { name: "Phrase d'animation — nord" })
+    expect(champ.getAttribute("placeholder")).toBe(livree)
+
+    fireEvent.change(champ, { target: { value: "Back view, running away." } })
+    fireEvent.click(screen.getByRole("button", { name: "Poser" }))
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/characters/directions/nord" &&
+            JSON.stringify(a.corps) === JSON.stringify({ animation: "Back view, running away." }),
+        ),
+      ).toBe(true),
+    )
   })
 
   test("les trois réglages de l'agent portent leur explication", async () => {

@@ -126,6 +126,9 @@ class CorpsReglageDirection(BaseModel):
 
     nom: str | None = None
     consigne: str | None = None
+    # La phrase en tête d'une animation (18 septembre 2026). Vide la remet à
+    # celle que le produit livre pour cette direction.
+    animation: str | None = None
     projet: str | None = None
 
 
@@ -523,7 +526,11 @@ async def regler_direction(
     atelier = _atelier(requete)
     projet = _projet(requete, corps.projet)
     atelier.production.regler_direction(
-        projet, direction, nom=corps.nom, consigne=corps.consigne
+        projet,
+        direction,
+        nom=corps.nom,
+        consigne=corps.consigne,
+        animation=corps.animation,
     )
     return atelier.production.directions(projet)
 

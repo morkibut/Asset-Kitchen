@@ -35,6 +35,7 @@ from atelier.domaine.bande import BOUCLE
 from atelier.domaine.bande import CADENCE_PAR_DEFAUT as CADENCE_DE_BANDE
 from atelier.domaine.bande import Cadre, Prise
 from atelier.domaine.calque_anime import TIENT
+from atelier.domaine.direction import phrase_animee, texte_du_clip
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.domaine.recette import Recette
 from atelier.api.routes import reponse_archive
@@ -82,19 +83,36 @@ class CorpsMouvement(BaseModel):
 
 
 @routeur.get("/movements")
-async def liste_mouvements(requete: Request) -> dict[str, Any]:
-    """La bibliothèque de mouvements — **la même pour tous les jeux**.
+async def liste_mouvements(
+    requete: Request, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Les mouvements d'un jeu — ou, sans jeu nommé, la bibliothèque de départ
+    de l'atelier (18 septembre 2026 : chaque jeu a désormais les siens).
 
     Elle rend aussi les masqués, dans une seconde liste : c'est ce qui rend le
     masquage réversible, et un geste irréversible sur du vocabulaire livré n'a
     aucune raison d'être.
     """
-    return _atelier(requete).mouvements.en_json()
+    return _atelier(requete).mouvements.en_json(projet)
+
+
+def _phrase_de_direction(atelier: Atelier, projet: str | None, direction: str | None) -> str:
+    """La phrase qui part en tête d'un clip pour cette direction du jeu, ou rien."""
+    if not projet or not direction:
+        return ""
+    try:
+        directions = atelier.production.directions_du_jeu(projet)
+    except ErreurAtelier:
+        return ""
+    return phrase_animee(next((d for d in directions if d.identifiant == direction), None))
 
 
 @routeur.get("/movements/for-pose/{identifiant_pose}")
 async def mouvement_de_la_pose(
-    requete: Request, identifiant_pose: str, projet: str | None = Query(None)
+    requete: Request,
+    identifiant_pose: str,
+    projet: str | None = Query(None),
+    direction: str | None = Query(None),
 ) -> dict[str, Any]:
     """Ce qui partira pour animer cette case du plan, **et d'où le texte vient**.
 
@@ -115,19 +133,24 @@ async def mouvement_de_la_pose(
         if pose.identifiant == identifiant_pose:
             repli = pose.dit()
             break
-    mouvement = atelier.mouvements.pour_la_pose(identifiant_pose)
-    texte = atelier.mouvements.texte_de_la_pose(identifiant_pose, repli)
+    mouvement = atelier.mouvements.pour_la_pose(identifiant_pose, ouvert)
+    geste = atelier.mouvements.texte_de_la_pose(identifiant_pose, repli, ouvert)
+    # **La phrase de la direction en tête** (18 septembre 2026) — la même que
+    # `commander_clip` écrira : ce que l'écran montre est ce qui part.
+    phrase = _phrase_de_direction(atelier, ouvert, direction)
     return {
         "pose": identifiant_pose,
         "mouvement": mouvement.en_json() if mouvement else None,
-        "texte": texte,
+        "texte": texte_du_clip(phrase, geste),
+        "direction": phrase,
+        "geste": geste,
         "origine": "mouvement" if mouvement else ("pose" if repli else "aucun"),
     }
 
 
 @routeur.post("/movements", status_code=201)
 async def fabriquer_mouvement(
-    requete: Request, corps: CorpsMouvement
+    requete: Request, corps: CorpsMouvement, projet: str | None = Query(None)
 ) -> dict[str, Any]:
     """Écrire un nom crée le mouvement, sur-le-champ, sans formulaire et sans
     rien payer — l'invariant de `C1`, généralisé en `E2`."""
@@ -137,13 +160,17 @@ async def fabriquer_mouvement(
         corps.texte or "",
         corps.cadence,
         tuple(corps.directions or ()),
+        projet,
     )
-    return atelier.mouvements.en_json()
+    return atelier.mouvements.en_json(projet)
 
 
 @routeur.put("/movements/{identifiant}")
 async def regler_mouvement(
-    requete: Request, identifiant: str, corps: CorpsMouvement
+    requete: Request,
+    identifiant: str,
+    corps: CorpsMouvement,
+    projet: str | None = Query(None),
 ) -> dict[str, Any]:
     """Renommer, retoucher le texte, changer la cadence ou les directions.
 
@@ -157,28 +184,33 @@ async def regler_mouvement(
         texte=corps.texte,
         cadence=corps.cadence,
         directions=tuple(corps.directions) if corps.directions is not None else None,
+        projet=projet,
     )
-    return atelier.mouvements.en_json()
+    return atelier.mouvements.en_json(projet)
 
 
 @routeur.delete("/movements/{identifiant}")
-async def masquer_mouvement(requete: Request, identifiant: str) -> dict[str, Any]:
+async def masquer_mouvement(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
     """Retirer un mouvement de la liste — **un livré laisse une pierre**.
 
     Le catalogue des livrés se relit à chaque lecture : effacer un livré le
     ferait revenir à la ligne suivante. Un fabriqué, lui, s'en va pour de bon.
     """
     atelier = _atelier(requete)
-    atelier.mouvements.masquer(identifiant)
-    return atelier.mouvements.en_json()
+    atelier.mouvements.masquer(identifiant, projet)
+    return atelier.mouvements.en_json(projet)
 
 
 @routeur.post("/movements/{identifiant}/show")
-async def montrer_mouvement(requete: Request, identifiant: str) -> dict[str, Any]:
+async def montrer_mouvement(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
     """Rendre à la liste un livré masqué."""
     atelier = _atelier(requete)
-    atelier.mouvements.montrer(identifiant)
-    return atelier.mouvements.en_json()
+    atelier.mouvements.montrer(identifiant, projet)
+    return atelier.mouvements.en_json(projet)
 
 
 def _demande_de_jauge(
@@ -414,14 +446,23 @@ async def commander_clip(requete: Request, corps: CorpsClip) -> dict[str, Any]:
     # montage d'`A10` lit. Un mouvement inconnu se refuse dans les deux cas :
     # la filiation ne peut pas mentir, elle porterait une chose qu'il n'y a
     # pas.
+    projet = corps.projet or asset.projet
     mouvement = None
     if corps.mouvement:
-        mouvement = atelier.mouvements.lire(corps.mouvement)
+        mouvement = atelier.mouvements.lire(corps.mouvement, projet)
         if mouvement is None:
             raise ErreurAtelier(
                 f"aucun mouvement « {corps.mouvement} » dans la bibliothèque"
             )
-    texte = corps.prompt.strip() or (mouvement.texte if mouvement else "")
+    # **La direction en tête du mouvement** (18 septembre 2026), sauf quand
+    # l'écran porte un texte relu : celui-là part tel quel, il a déjà été lu.
+    texte = corps.prompt.strip() or (
+        texte_du_clip(
+            _phrase_de_direction(atelier, projet, corps.direction), mouvement.texte
+        )
+        if mouvement
+        else ""
+    )
     if not texte.strip():
         raise ErreurAtelier(
             "un clip part d'un texte — choisissez un mouvement, ou écrivez-en un"
@@ -457,7 +498,7 @@ async def commander_clip(requete: Request, corps: CorpsClip) -> dict[str, Any]:
             # rejouer un appel connu ; les suivants d'un lot sont des clips
             # neufs, et leur en donner le même écraserait le premier.
             identifiant=corps.identifiant if rang == 0 else None,
-            projet=corps.projet or asset.projet,
+            projet=projet,
             personnage=corps.personnage or asset.personnage,
             pose=corps.pose,
             direction=corps.direction,

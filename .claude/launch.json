@@ -14,6 +14,18 @@
       "port": 8420
     },
     {
+      "name": "atelier-second",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "atelier",
+        "--sans-navigateur",
+        "--port",
+        "8421"
+      ],
+      "port": 8421
+    },
+    {
       "name": "interface",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
@@ -504,6 +516,14 @@
         "essais/atelier_jetable_equipement.py"
       ],
       "port": 8506
+    },
+    {
+      "name": "atelier-jetable-textes-animes",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_textes_animes.py"
+      ],
+      "port": 8424
     }
   ]
 }

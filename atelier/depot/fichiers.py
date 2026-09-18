@@ -325,20 +325,41 @@ class Fichiers:
         lu = self._lire_json(self.etiquettes)
         return lu if isinstance(lu, list) else []
 
-    def ecrire_mouvements(self, contenu: list[Any]) -> None:
+    def mouvements_du_jeu(self, projet: str) -> Path:
+        """Les mouvements propres à un jeu (18 septembre 2026), à côté de son
+        `projet.json`. Un jeu qui n'en a pas lit la bibliothèque de l'atelier."""
+        if not projet or any(c in projet for c in "/\\:") or projet.startswith("."):
+            raise ValueError(f"« {projet} » n'est pas un identifiant de jeu")
+        return self.projets / projet / "mouvements.json"
+
+    def ecrire_mouvements(self, contenu: list[Any], projet: str | None = None) -> None:
+        if projet:
+            chemin = self.mouvements_du_jeu(projet)
+            if not (chemin.parent / "projet.json").is_file():
+                raise ValueError(f"aucun jeu « {projet} »")
+            self._ecrire_json(chemin, contenu)
+            return
         self._ecrire_json(self.mouvements, contenu)
 
-    def lire_mouvements(self) -> list[Any]:
-        """La bibliothèque de mouvements (A6).
+    def lire_mouvements(self, projet: str | None = None) -> list[Any]:
+        """La bibliothèque de mouvements (A6) — **celle du jeu s'il en a une**.
 
-        **À la racine, pas dans un projet** : c'est la décision durable de la
-        V3 — un mouvement appartient à l'atelier. Le plan de poses dit *quelles*
-        cases un jeu veut ; l'atelier sait *comment* chacune se dit quand on
-        l'anime, et ce savoir-là sert tous les jeux suivants.
+        La V3 les voulait à l'atelier seul : une bibliothèque se réfléchit une
+        fois et sert tous les jeux. L'usage a nuancé le 18 septembre 2026 — un
+        style d'attaque « kung-fu » n'a pas sa place dans tous les jeux. Celle de
+        la racine reste donc **la bibliothèque de départ** : un jeu la lit tant
+        qu'il n'a rien changé, et son premier changement l'y copie.
 
         **Une liste, pas un dictionnaire**, comme les étiquettes : l'ordre de
         fabrication est celui dans lequel l'auteur les a nommés.
         """
+        if projet:
+            try:
+                propre = self._lire_json(self.mouvements_du_jeu(projet))
+            except ValueError:
+                propre = None
+            if isinstance(propre, list):
+                return propre
         lu = self._lire_json(self.mouvements)
         return lu if isinstance(lu, list) else []
 

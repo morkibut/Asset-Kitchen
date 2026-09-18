@@ -21,13 +21,19 @@
 // il s'écrit sur le disque, et tout y marche réseau coupé.
 
 import { useEffect, useState } from "react"
-import { api, type BaseMouvements, type Mouvement } from "../api"
+import {
+  api,
+  type BaseMouvements,
+  type Direction,
+  type DirectionsDuJeu,
+  type Mouvement,
+} from "../api"
 import { Bouton, Libelle, Raison } from "./pieces"
 
 const CHAMP =
   "mesure h-[30px] min-w-0 rounded-[2px] border border-contour bg-carte px-2 text-[11px] text-encre placeholder:text-eteint"
 
-export function BlocMouvements() {
+export function BlocMouvements({ projet }: { projet: string | null }) {
   const [base, setBase] = useState<BaseMouvements | null>(null)
   const [refus, setRefus] = useState<string | null>(null)
   // Lequel est ouvert en édition. **Un seul à la fois** : deux lignes dépliées
@@ -37,11 +43,16 @@ export function BlocMouvements() {
   const [fabrique, setFabrique] = useState(false)
 
   useEffect(() => {
+    let vivant = true
+    setOuvert(null)
     api
-      .mouvements()
-      .then(setBase)
-      .catch(() => setBase({ mouvements: [], masques: [] }))
-  }, [])
+      .mouvements(projet)
+      .then((recu) => vivant && setBase(recu))
+      .catch(() => vivant && setBase({ mouvements: [], masques: [] }))
+    return () => {
+      vivant = false
+    }
+  }, [projet])
 
   const poser = async (promesse: Promise<BaseMouvements>) => {
     setRefus(null)
@@ -58,17 +69,13 @@ export function BlocMouvements() {
     <>
       <Titre>Les mouvements</Titre>
       <p className="text-[12.5px] leading-relaxed text-encre-2">
-        Un mouvement dit <strong className="text-encre">ce qu'une pose devient
-        quand on l'anime</strong> : un cycle qui boucle au lieu d'une attitude
-        figée, une cadence, et les directions où il a un sens. Une case du plan
-        de poses hérite du mouvement qui porte son nom, sans rien relier à la
-        main — et deux clips du même mouvement partent avec exactement le même
-        texte.
+        Le texte anglais envoyé au modèle vidéo quand on anime une pose du même
+        nom. La phrase de la direction (bloc du dessus) se place devant.
       </p>
-      <p className="mt-2 text-[12.5px] leading-relaxed text-encre-2">
-        Cette liste-ci <strong className="text-encre">appartient à l'atelier</strong>,
-        pas à un jeu : elle suit tous les jeux suivants. Rien ici ne part
-        chez un fournisseur et rien ici ne coûte.
+      <p data-mouvements-du-jeu className="mt-2 text-[12.5px] leading-relaxed text-encre-2">
+        {base.propres_au_jeu
+          ? "Ce jeu a ses propres textes."
+          : "Ce jeu utilise les textes de départ de l'atelier. Votre première modification lui en fait une copie : les autres jeux ne changent pas."}
       </p>
 
       <ul className="mt-3 flex flex-col gap-px">
@@ -81,11 +88,11 @@ export function BlocMouvements() {
               setOuvert(ouvert === mouvement.identifiant ? null : mouvement.identifiant)
             }
             onRegler={(champs) =>
-              poser(api.reglerMouvement(mouvement.identifiant, champs))
+              poser(api.reglerMouvement(mouvement.identifiant, champs, projet))
             }
             onMasquer={() => {
               setOuvert(null)
-              return poser(api.masquerMouvement(mouvement.identifiant))
+              return poser(api.masquerMouvement(mouvement.identifiant, projet))
             }}
           />
         ))}
@@ -101,7 +108,7 @@ export function BlocMouvements() {
             <button
               key={mouvement.identifiant}
               type="button"
-              onClick={() => poser(api.montrerMouvement(mouvement.identifiant))}
+              onClick={() => poser(api.montrerMouvement(mouvement.identifiant, projet))}
               className="rounded-[2px] border border-trait px-1.5 py-0.5 text-encre-2 hover:text-signal"
             >
               {mouvement.nom} · remontrer
@@ -116,7 +123,7 @@ export function BlocMouvements() {
         <Fabrique
           onFermer={() => setFabrique(false)}
           onPoser={async (nom, texte, cadence) => {
-            await poser(api.fabriquerMouvement(nom, texte, cadence))
+            await poser(api.fabriquerMouvement(nom, texte, cadence, undefined, projet))
             setFabrique(false)
           }}
         />
@@ -203,6 +210,13 @@ function Ligne({
           {mouvement.directions.length > 0 &&
             ` · ${mouvement.directions.join(", ")}`}
         </span>
+        <button
+          type="button"
+          onClick={onOuvrir}
+          className="mesure rounded-[2px] border border-trait px-1.5 py-0.5 text-[10px] text-encre-2 hover:text-signal"
+        >
+          {ouvert ? "fermer" : "modifier"}
+        </button>
       </div>
 
       {/* Le texte anglais est visible sans déplier : **c'est lui qui part**, et
@@ -327,5 +341,102 @@ function Fabrique({
         />
       </div>
     </div>
+  )
+}
+
+/** Les directions en animation (18 septembre 2026) — **la phrase qui part en
+ *  tête de chaque clip**, écrite une fois pour tout le jeu.
+ *
+ *  L'auteur tapait à la main *The character is shown from behind* pour qu'une
+ *  course vers le nord garde le dos du personnage. Le champ montre en grisé la
+ *  phrase livrée : c'est elle qui part tant qu'on n'a rien écrit, et vider le
+ *  champ la remet. */
+export function BlocDirectionsAnimees() {
+  const [lu, setLu] = useState<DirectionsDuJeu | null>(null)
+  const [refus, setRefus] = useState<string | null>(null)
+
+  useEffect(() => {
+    let vivant = true
+    api
+      .directions()
+      .then((recu) => vivant && setLu(recu))
+      .catch(() => vivant && setLu(null))
+    return () => {
+      vivant = false
+    }
+  }, [])
+
+  if (!lu) return null
+
+  const poser = async (direction: Direction, animation: string) => {
+    setRefus(null)
+    try {
+      setLu(await api.reglerDirection(direction.identifiant, { animation }))
+    } catch (erreur) {
+      setRefus(erreur instanceof Error ? erreur.message : "geste refusé")
+    }
+  }
+
+  return (
+    <>
+      <Titre>Les directions en animation</Titre>
+      <p className="text-[12.5px] leading-relaxed text-encre-2">
+        La phrase placée devant le texte du mouvement, pour chaque direction du
+        jeu : d'où l'on voit le personnage, et vers où va son geste. Laissez
+        vide pour garder la phrase proposée (en gris).
+      </p>
+      {lu.directions.length === 0 ? (
+        <p className="mt-2 text-[12.5px] text-encre-3">Ce jeu n'a pas encore de direction.</p>
+      ) : (
+        <ul className="mt-3 flex flex-col gap-2">
+          {lu.directions.map((direction) => (
+            <PhraseDeDirection
+              key={direction.identifiant}
+              direction={direction}
+              livree={lu.phrases_livrees?.[direction.identifiant] ?? ""}
+              onPoser={(animation) => poser(direction, animation)}
+            />
+          ))}
+        </ul>
+      )}
+      <Raison texte={refus} />
+    </>
+  )
+}
+
+function PhraseDeDirection({
+  direction,
+  livree,
+  onPoser,
+}: {
+  direction: Direction
+  livree: string
+  onPoser: (animation: string) => Promise<void>
+}) {
+  const ecrite = direction.animation ?? ""
+  const [texte, setTexte] = useState(ecrite)
+  useEffect(() => setTexte(ecrite), [ecrite])
+  const change = texte.trim() !== ecrite
+
+  return (
+    <li className="rounded-[2px] border border-trait bg-carte px-2.5 py-1.5">
+      <label className="flex flex-col gap-1">
+        <span className="text-[12.5px] text-encre">{direction.nom}</span>
+        <textarea
+          value={texte}
+          rows={2}
+          aria-label={`Phrase d'animation — ${direction.nom}`}
+          placeholder={livree || "aucune phrase proposée pour cette direction — écrivez-en une"}
+          onChange={(e) => setTexte(e.target.value)}
+          className={`${CHAMP} h-auto py-1.5 leading-relaxed`}
+        />
+      </label>
+      {change && (
+        <div className="mt-1.5 flex justify-end gap-2">
+          <Bouton onClick={() => setTexte(ecrite)} enfants="Annuler" />
+          <Bouton principal onClick={() => void onPoser(texte.trim())} enfants="Poser" />
+        </div>
+      )}
+    </li>
   )
 }

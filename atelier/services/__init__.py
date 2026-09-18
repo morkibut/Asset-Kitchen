@@ -642,7 +642,9 @@ class Atelier:
 
     def _monter_a_l_arrivee(self, generation) -> None:
         """Le clip arrivé devient une animation à juger, à la cadence de son mouvement."""
-        mouvement = self.mouvements.lire(generation.demande.get("mouvement") or "")
+        mouvement = self.mouvements.lire(
+            generation.demande.get("mouvement") or "", generation.projet
+        )
         self.montage.monter_a_l_arrivee(
             generation,
             cadence=getattr(mouvement, "cadence", None),

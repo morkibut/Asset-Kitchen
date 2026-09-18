@@ -57,7 +57,7 @@ from atelier.domaine.plan import (
     plan_du_type,
     suit_le_plan_du_jeu,
 )
-from atelier.domaine.direction import Direction, composer
+from atelier.domaine.direction import PHRASES_ANIMEES, Direction, composer
 from atelier.domaine.projet import Projet, repere
 from atelier.domaine.vue import CADRE, sans_phrase_du_produit, vue as vue_connue
 from atelier.services.assets import AssetInconnu, ServiceAssets
@@ -388,6 +388,13 @@ class ServiceProduction:
             "vue": univers.vue,
             "vue_libelle": connue.libelle if connue else "",
             "proposees": [d.en_json() for d in (connue.directions if connue else ())],
+            # **Ce qui part en tête d'une animation quand l'auteur n'a rien
+            # écrit** (18 septembre 2026) : l'écran le montre en grisé dans le
+            # champ, pour qu'on corrige un texte qu'on voit.
+            "phrases_livrees": {
+                d.identifiant: PHRASES_ANIMEES.get(d.identifiant, "")
+                for d in univers.directions_du_jeu()
+            },
         }
 
     def directions_du_jeu(self, projet: str) -> tuple[Direction, ...]:
@@ -466,6 +473,7 @@ class ServiceProduction:
         *,
         nom: str | None = None,
         consigne: str | None = None,
+        animation: str | None = None,
     ) -> Direction:
         """Renommer une direction, ou corriger ce qu'elle dit au modèle.
 
@@ -497,6 +505,9 @@ class ServiceProduction:
             courante,
             nom=propre,
             consigne=courante.consigne if consigne is None else consigne.strip(),
+            animation=(
+                courante.animation if animation is None else " ".join(animation.split())
+            ),
         )
         objet.univers.directions = tuple(
             reglee if d.identifiant == courante.identifiant else d for d in posees

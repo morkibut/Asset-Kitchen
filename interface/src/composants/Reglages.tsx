@@ -31,7 +31,6 @@ import type { EtatAgent, Modele, Tiroir } from "../api"
 import { DelegationDuJeu } from "./DelegationDuJeu"
 import { EcranDepenses } from "./Depenses"
 import { PANNEAU } from "./Infobulle"
-import { BlocMouvements } from "./Mouvements"
 import { Bouton } from "./pieces"
 import {
   BlocAgent,
@@ -255,11 +254,8 @@ function MoteursEtWorkflows({
  * - « L'agent » et « Les dossiers » bornent **la séance** — le plafond
  *   d'images, le modèle d'exploration imposé, le dossier où l'agent dépose.
  *
- * ⚠️ **« Les mouvements » n'est pas un réglage d'agent**, et il est pourtant
- * ici : c'était le quatrième bloc de la fenêtre que `RP2` dissout, la maquette
- * ne lui donne aucune place, et une capacité ne se perd pas au motif qu'un
- * dessin ne la montre pas. Il rejoindra l'onglet qui dit ce qu'il faut
- * produire avec `RP13`, qui ouvre ce vocabulaire là où on le regarde.
+ * « Les mouvements » était rangé ici faute de place ; il est passé le
+ * 18 septembre 2026 dans l'onglet Univers, avec les phrases des directions.
  */
 function AgentMcp({
   dossierDuJeu,
@@ -301,7 +297,6 @@ function AgentMcp({
           <section {...PANNEAU} className="flex flex-col">
             <BlocAgent agent={agent} modeles={modeles} onAgent={onAgent} />
             <BlocDossiers agent={agent} onAgent={onAgent} />
-            <BlocMouvements />
           </section>
         )}
       </div>

@@ -124,6 +124,7 @@ import {
 } from "../api"
 import { Bouton, Curseur, Libelle, Raison, libelleModele } from "./pieces"
 import { nomDuModele } from "./Fiche"
+import { BlocDirectionsAnimees, BlocMouvements } from "./Mouvements"
 
 // ── Les quatre étapes ────────────────────────────────────────────────────────
 
@@ -1775,6 +1776,15 @@ export function ReglesDuJeu({
               ))}
             </ul>
             {univers && <ReglesDAilleurs univers={univers} />}
+            {/* **Ce qui part avec chaque animation** (18 septembre 2026) : la
+                phrase de chaque direction, puis le texte de chaque mouvement.
+                Ils étaient rangés, faute de place, dans l'onglet de l'agent. */}
+            {mode === "reglages" && dossierDuJeu && (
+              <section data-textes-des-animations className="flex flex-col">
+                <BlocDirectionsAnimees />
+                <BlocMouvements projet={dossierDuJeu} />
+              </section>
+            )}
           </div>
         )}
       </div>

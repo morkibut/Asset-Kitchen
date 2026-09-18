@@ -554,6 +554,9 @@ export type Direction = {
   /** Ce qui part au modèle, en anglais. Vide pour une direction qu'on vient
    *  d'ajouter : le produit ne traduit pas à la place de l'auteur. */
   consigne: string
+  /** La phrase en tête d'une animation (18 septembre 2026). Absente, c'est
+   *  celle que le produit livre pour cette direction qui part. */
+  animation?: string
 }
 
 /** Les directions d'un jeu, **et d'où la liste lui vient**.
@@ -569,6 +572,9 @@ export type DirectionsDuJeu = {
   vue_libelle: string
   /** Ce qu'un « revenir à ce que la vue propose » remettrait. */
   proposees: Direction[]
+  /** La phrase d'animation livrée pour chaque direction du jeu — celle qui
+   *  part tant que l'auteur n'en a pas écrit. Vide pour une direction inventée. */
+  phrases_livrees?: Record<string, string>
 }
 
 /** Ce que déclarer des directions coûterait, et ce que le produit propose
@@ -659,6 +665,9 @@ export type Mouvement = {
 export type BaseMouvements = {
   mouvements: Mouvement[]
   masques: Mouvement[]
+  /** Le jeu a ses propres mouvements, ou lit encore la bibliothèque de
+   *  départ de l'atelier (18 septembre 2026). */
+  propres_au_jeu?: boolean
 }
 
 /** Ce qui partira pour animer une case du plan, **et d'où le texte vient**.
@@ -669,7 +678,12 @@ export type BaseMouvements = {
 export type MouvementDeLaPose = {
   pose: string
   mouvement: Mouvement | null
+  /** Ce qui partira, entier : la phrase de la direction puis le geste. */
   texte: string
+  /** La phrase de la direction seule — vide sans direction demandée. */
+  direction?: string
+  /** Le geste seul : le texte du mouvement, ou le repli de la pose. */
+  geste?: string
   /** `mouvement` : la case est animée par un mouvement connu. `pose` : on
    *  retombe sur la consigne figée du plan — moins bonne, mais en anglais et
    *  juste sur l'attitude. `aucun` : le produit ne sait rien dire de cette
@@ -4685,6 +4699,11 @@ export async function appeler<T>(chemin: string, init?: RequestInit): Promise<T>
   return reponse.json() as Promise<T>
 }
 
+/** `?projet=…` quand un jeu est nommé — sans lui, la bibliothèque de départ
+ *  de l'atelier (les mouvements, 18 septembre 2026). */
+const duJeu = (projet?: string | null) =>
+  projet ? `?projet=${encodeURIComponent(projet)}` : ""
+
 export const api = {
   objectifPersonnage: (identifiant: string, projet: string) => appeler<ObjectifDuPersonnage>(`/characters/${encodeURIComponent(identifiant)}/objective?projet=${encodeURIComponent(projet)}`),
   definirObjectifPersonnage: (identifiant: string, objectif: ObjectifProduction, projet: string) => appeler<ObjectifDuPersonnage>(`/characters/${encodeURIComponent(identifiant)}/objective`, { method: "PUT", body: JSON.stringify({ objectif, projet }) }),
@@ -5326,15 +5345,19 @@ export const api = {
   // **Aucune de ces routes ne coûte et aucune n'appelle personne** : c'est du
   // vocabulaire, il s'écrit sur le disque, et tout y marche réseau coupé.
 
-  mouvements: () => appeler<BaseMouvements>("/movements"),
+  mouvements: (projet?: string | null) =>
+    appeler<BaseMouvements>("/movements" + duJeu(projet)),
 
   /** Ce qui partira pour animer cette case du plan. **La règle est au serveur**
    *  et l'écran ne la rejoue jamais : deux endroits qui apparient une pose et
    *  un mouvement finiraient par ne plus s'accorder. */
-  mouvementDeLaPose: (pose: string, projet?: string) =>
+  mouvementDeLaPose: (pose: string, projet?: string | null, direction?: string | null) =>
     appeler<MouvementDeLaPose>(
-      `/movements/for-pose/${encodeURIComponent(pose)}` +
-        (projet ? `?projet=${encodeURIComponent(projet)}` : ""),
+      `/movements/for-pose/${encodeURIComponent(pose)}?` +
+        new URLSearchParams({
+          ...(projet ? { projet } : {}),
+          ...(direction ? { direction } : {}),
+        }).toString(),
     ),
 
   fabriquerMouvement: (
@@ -5342,8 +5365,9 @@ export const api = {
     texte: string,
     cadence?: number,
     directions?: string[],
+    projet?: string | null,
   ) =>
-    appeler<BaseMouvements>("/movements", {
+    appeler<BaseMouvements>("/movements" + duJeu(projet), {
       method: "POST",
       body: JSON.stringify({ nom, texte, cadence, directions }),
     }),
@@ -5353,18 +5377,23 @@ export const api = {
   reglerMouvement: (
     identifiant: string,
     champs: { nom?: string; texte?: string; cadence?: number; directions?: string[] },
+    projet?: string | null,
   ) =>
-    appeler<BaseMouvements>(`/movements/${identifiant}`, {
+    appeler<BaseMouvements>(`/movements/${identifiant}` + duJeu(projet), {
       method: "PUT",
       body: JSON.stringify(champs),
     }),
 
   /** Un livré laisse une pierre, un fabriqué s'en va pour de bon. */
-  masquerMouvement: (identifiant: string) =>
-    appeler<BaseMouvements>(`/movements/${identifiant}`, { method: "DELETE" }),
+  masquerMouvement: (identifiant: string, projet?: string | null) =>
+    appeler<BaseMouvements>(`/movements/${identifiant}` + duJeu(projet), {
+      method: "DELETE",
+    }),
 
-  montrerMouvement: (identifiant: string) =>
-    appeler<BaseMouvements>(`/movements/${identifiant}/show`, { method: "POST" }),
+  montrerMouvement: (identifiant: string, projet?: string | null) =>
+    appeler<BaseMouvements>(`/movements/${identifiant}/show` + duJeu(projet), {
+      method: "POST",
+    }),
 
   // ── Les clips (A9) ────────────────────────────────────────────────────────
   //
@@ -6690,7 +6719,7 @@ export const api = {
    *  pour toutes les poses du jeu. */
   reglerDirection: (
     direction: string,
-    champs: { nom?: string; consigne?: string },
+    champs: { nom?: string; consigne?: string; animation?: string },
   ) =>
     appeler<DirectionsDuJeu>(`/characters/directions/${direction}`, {
       method: "PUT",

@@ -52,11 +52,22 @@ class Direction:
     # pas à sa place — il n'invente pas un texte qui partira dans un appel payé.
     consigne: str = ""
 
+    # **Ce qui part en tête d'une animation**, en anglais (18 septembre 2026).
+    # Pas la consigne : celle-là décrit une image fixe (*facing north, toward the
+    # top of the image*), et les mots n'y imposent pas l'orientation. Dans un
+    # clip, l'image de départ montre déjà le personnage dans le bon sens ; la
+    # phrase dit alors **d'où on le voit et vers où va le geste**. Vide, c'est
+    # la phrase livrée pour cet identifiant qui part (`phrase_animee`).
+    animation: str = ""
+
     def en_json(self) -> dict[str, Any]:
         return {
             "identifiant": self.identifiant,
             "nom": self.nom,
             "consigne": self.consigne,
+            # Écrite seulement remplie : un projet sans phrase garde son fichier
+            # caractère pour caractère.
+            **({"animation": self.animation} if self.animation else {}),
         }
 
     @staticmethod
@@ -66,6 +77,7 @@ class Direction:
             identifiant=identifiant,
             nom=str(d.get("nom") or identifiant),
             consigne=str(d.get("consigne") or ""),
+            animation=str(d.get("animation") or ""),
         )
 
 
@@ -150,6 +162,56 @@ def direction_au_miroir(identifiant: str | None) -> str | None:
     dans les règles du jeu — appartient à `B14`, pas ici.
     """
     return _AU_MIROIR.get(identifiant or "")
+
+
+# ── Ce qu'une direction dit en tête d'une animation (18 septembre 2026) ──────
+#
+# **Relevé sur l'usage** : l'auteur écrivait à la main *The character is shown
+# from behind, running north* pour que la course vers le nord garde le dos du
+# personnage. Chaque phrase dit deux choses — d'où on le voit, vers où va le
+# geste — et se repère au **cadre**, pas aux points cardinaux : « nord » ne dit
+# rien à un modèle vidéo, « le haut de l'image » si. Seuls les identifiants que
+# le produit livre (`atelier/domaine/vue.py`) ont une phrase ; une direction
+# inventée n'en a pas, et rien n'est deviné pour elle.
+PHRASES_ANIMEES: dict[str, str] = {
+    "sud": "The character is seen from the front, facing the viewer; "
+    "the motion is directed toward the bottom of the image.",
+    "nord": "The character is seen from behind, its back to the viewer; "
+    "the motion is directed toward the top of the image.",
+    "est": "The character is seen from the side, facing right; "
+    "the motion is directed toward the right of the image.",
+    "ouest": "The character is seen from the side, facing left; "
+    "the motion is directed toward the left of the image.",
+    "droite": "The character is seen from the side, facing right; "
+    "the motion is directed toward the right of the image.",
+    "gauche": "The character is seen from the side, facing left; "
+    "the motion is directed toward the left of the image.",
+    "sud-est": "The character is seen three-quarters from the front, facing "
+    "the lower right; the motion is directed toward the lower right of the image.",
+    "sud-ouest": "The character is seen three-quarters from the front, facing "
+    "the lower left; the motion is directed toward the lower left of the image.",
+    "nord-est": "The character is seen three-quarters from behind, facing "
+    "the upper right; the motion is directed toward the upper right of the image.",
+    "nord-ouest": "The character is seen three-quarters from behind, facing "
+    "the upper left; the motion is directed toward the upper left of the image.",
+}
+
+
+def phrase_animee(direction: Direction | None) -> str:
+    """Ce que cette direction dit en tête d'un clip : la sienne, sinon la livrée."""
+    if direction is None:
+        return ""
+    return direction.animation.strip() or PHRASES_ANIMEES.get(direction.identifiant, "")
+
+
+def texte_du_clip(phrase: str, mouvement: str) -> str:
+    """La direction d'abord, le mouvement ensuite — **deux phrases, pas une liste**.
+
+    Le mouvement dit le geste (*running cycle, full body…*), la direction dit
+    d'où on le regarde ; les coller par une virgule en ferait une seule phrase
+    où le modèle ne saurait plus lequel des deux commande.
+    """
+    return " ".join(t for t in (phrase.strip(), mouvement.strip()) if t)
 
 
 def composer(attitude: str, direction: str) -> str:
