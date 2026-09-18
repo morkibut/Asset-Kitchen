@@ -33,6 +33,7 @@ from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Emplacement, Generation
+from atelier.domaine.personnage import Personnage
 from atelier.domaine.planche import (
     asset_de_planche,
     est_une_planche_refaite,
@@ -359,11 +360,17 @@ class ServiceAssets:
         )
         nature = PLANCHE if asset.lot is not None or morceau_refait else IMAGE_SEULE
         echelle = str(generation.demande.get("echelle", "") or "")
-        impose = (
-            self.recette_de_naissance(generation, asset.rang)
-            if feuille
-            else self.recette_du_projet(generation, nature)
-        )
+        # **Ce que la naissance a posé, par le même chemin** (RS6) : la recette
+        # du sujet passe devant celle du jeu pour une image seule et pour un
+        # morceau de planche refaite — pas pour un morceau de lot plié, que le
+        # dépliage habille toujours de la recette du jeu. Sinon la fiche
+        # montrerait un écart que personne n'a créé.
+        if feuille or nature == IMAGE_SEULE:
+            impose = self.recette_de_naissance(generation, asset.rang)
+        elif morceau_refait and asset.lot is None:
+            impose = self.recette_d_un_morceau_refait(generation)
+        else:
+            impose = self.recette_du_projet(generation, nature)
         return {
             "impose": impose.en_json(),
             # **Ce que l'auteur avait dit fabriquer**, parce que c'est elle qui
@@ -831,7 +838,71 @@ class ServiceAssets:
         du_projet = self.recette_du_projet(generation)
         if est_une_planche_refaite(generation, rang):
             return recette_de_planche_refaite(du_projet)
-        return du_projet
+        # **La recette du sujet passe devant celle du jeu** (RS6) — mais jamais
+        # sur la feuille d'une planche refaite, juste au-dessus : elle y
+        # remettrait la grille que RS2 a retirée. Ses morceaux, eux, la
+        # reçoivent (`recette_d_un_morceau_refait`).
+        du_sujet = self.recette_du_sujet(generation)
+        return du_sujet if du_sujet is not None else du_projet
+
+    def recette_d_un_morceau_refait(self, generation: Generation) -> Recette:
+        """La recette d'un morceau coupé dans la feuille d'une planche refaite.
+
+        Ce que le projet impose à **un morceau de planche**, grille comprise
+        (RS2) — ou la recette du sujet s'il en a une (RS6), puisque ce sont
+        eux, les images du sujet. Écrite ici pour que la découpe et la fiche
+        (`impose`) lisent la même chose.
+        """
+        du_sujet = self.recette_du_sujet(generation)
+        if du_sujet is not None:
+            return du_sujet
+        return self.recette_du_projet(generation, PLANCHE)
+
+    def recette_du_sujet(self, generation: Generation) -> Recette | None:
+        """La recette nommée du sujet de cet appel, prête à poser — ou `None`.
+
+        **Un sujet peut porter une recette par défaut** (RS6, 18 septembre
+        2026) : « champy 01 », que l'auteur posait jusqu'ici à la main sur
+        chaque image de Champy. Elle remplace la recette du jeu, et seulement
+        elle : `None` veut dire « la recette du jeu s'applique », jamais
+        « aucune recette ».
+
+        Quatre cas rendent `None`, et chacun garde ce qui se faisait avant :
+
+        - **une image entrée telle quelle** — elle n'a pas de recette du jeu
+          non plus, et l'import ne doit pas se mettre à la retoucher ;
+        - **un lot plié** — sa planche garde sa recette vide, ses morceaux
+          naissent au dépliage, qui ne passe pas par ici ;
+        - **un appel sans sujet**, ou un sujet disparu depuis ;
+        - **une recette nommée effacée depuis le choix** : le nom reste sur le
+          sujet, et l'image retombe sur la recette du jeu plutôt que de lever
+          au milieu d'une arrivée payée.
+
+        **Le voyage est refait**, comme au rappel d'une recette nommée
+        (`appliquer_nommee`) : une recette écrite avant la règle peut encore
+        porter un cadre tracé sur une autre image, qui tomberait ici à côté.
+        Le sujet est relu **dans son fichier**, qui fait foi, et c'est aussi ce
+        qui fait qu'un choix posé à l'instant vaut pour l'image suivante.
+        """
+        if generation.demande.get("traiter") is False:
+            return None
+        if generation.pliage is not None:
+            return None
+        if not generation.personnage or generation.projet is None:
+            return None
+        contenu = self._fichiers.lire_personnage(
+            generation.projet, generation.personnage
+        )
+        if contenu is None:
+            return None
+        nom = Personnage.depuis_json(contenu).recette
+        if not nom:
+            return None
+        enregistree = self._fichiers.lire_recettes().get(nom)
+        if not isinstance(enregistree, dict):
+            return None
+        voyageable, _laisse = voyage(Recette.depuis_json(enregistree))
+        return replace(voyageable, nom=nom)
 
     def naitre(self, generation: Generation, emplacement: Emplacement) -> Asset | None:
         """Un emplacement qui réussit devient un asset, tout de suite.

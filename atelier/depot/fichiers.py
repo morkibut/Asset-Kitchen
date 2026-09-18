@@ -637,6 +637,19 @@ class Fichiers:
             if isinstance(contenu, dict) and contenu.get("identifiant"):
                 yield contenu
 
+    def lire_personnage(self, projet: str, identifiant: str) -> dict[str, Any] | None:
+        """Un seul personnage, lu dans son fichier — ou `None`.
+
+        **Pour la naissance d'une image** (RS6) : elle a besoin de la recette
+        de son sujet, et relire tous les sujets du projet à chaque image rendue
+        aurait coûté un dossier entier par emplacement. Un identifiant qui
+        sortirait du dossier n'est pas lu.
+        """
+        if not identifiant or "/" in identifiant or "\\" in identifiant or ".." in identifiant:
+            return None
+        contenu = self._lire_json(self.projets / projet / "personnages" / f"{identifiant}.json")
+        return contenu if isinstance(contenu, dict) and contenu.get("identifiant") else None
+
     def effacer_personnage(self, projet: str, identifiant: str) -> None:
         """Le personnage part pour de bon — **et ses images restent**. Jamais de
         cascade : elles vivent avec leur génération, à l'autre bout de

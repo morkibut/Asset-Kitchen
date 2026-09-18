@@ -115,6 +115,9 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   // « Ses cases ». Chacun s'écrit dès qu'on le change, comme là-bas.
   const [types, setTypes] = useState<PosesDesTypes["types"]>([])
   const [ambiances, setAmbiances] = useState<AmbianceDuJeu[]>([])
+  // **La recette de ses images** (RS6, 18 septembre 2026) : les recettes
+  // nommées se lisent à l'ouverture de la fiche, comme les types.
+  const [nommees, setNommees] = useState<string[]>([])
   const [occupe, setOccupe] = useState(false)
   const [survol, setSurvol] = useState(false)
   // **Changer la vignette en deux clics** (16 septembre 2026) : un bouton sur
@@ -160,6 +163,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     relireStyle()
     void api.posesDesTypes().then((recu) => setTypes(recu?.types ?? [])).catch(() => setTypes([]))
     void api.coteAmbiances().then((recu) => setAmbiances(recu?.ambiances ?? [])).catch(() => setAmbiances([]))
+    void api.recettesNommees().then((recu) => setNommees(Object.keys(recu?.recettes ?? {}).sort())).catch(() => setNommees([]))
     if (personnage.famille === "personnages")
       void api.styles(personnage.projet).then((recu) => setCatalogueStyles(recu?.styles ?? [])).catch(() => setCatalogueStyles([]))
   }, [edition, relireReglages, relireStyle, personnage.projet, personnage.famille])
@@ -174,6 +178,13 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
       onPersonnage(rendu.personnage)
       relireReglages()
     } catch (erreur) { onErreur(erreur, "réglage refusé") }
+  }
+
+  const poserRecette = async (recette: string | null) => {
+    try {
+      const rendu = await api.poserRecetteDuSujet(personnage.identifiant, recette, personnage.projet)
+      onPersonnage(rendu.personnage)
+    } catch (erreur) { onErreur(erreur, "la recette a été refusée") }
   }
 
   const garder = async () => {
@@ -265,6 +276,20 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
               {CE_QU_ON_PREND.map((quoi) => <option key={quoi} value={quoi}>elle lui prend {NOM_DE_CE_QU_ON_PREND[quoi]}</option>)}
             </select>}
           </div>
+        </section>
+
+        {/* **La recette de ses images** (RS6) — en une ligne. Seules les
+            images à naître la reçoivent ; un nom effacé depuis le choix reste
+            affiché, et c'est alors la recette du jeu qui s'applique. */}
+        <section data-recette-du-sujet className="flex flex-col gap-[4px]">
+          <label className="flex items-center gap-[8px] text-[13px]">Recette de ses images :
+            <select aria-label="Recette de ses images" className="h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.recette ?? ""} onChange={(e) => void poserRecette(e.target.value || null)}>
+              <option value="">aucune (celle du jeu)</option>
+              {personnage.recette && !nommees.includes(personnage.recette) && <option value={personnage.recette}>{personnage.recette} (effacée)</option>}
+              {nommees.map((nom) => <option key={nom} value={nom}>{nom}</option>)}
+            </select>
+          </label>
+          <span className="text-[12px] text-encre-3">Les images déjà faites ne changent pas.</span>
         </section>
 
         {/* **Seuls les personnages se battent** — un décor ou un objet n'a

@@ -1411,6 +1411,39 @@ class ServiceProduction:
     # jeu. Celle-ci est un **portrait** : la choisir ne promeut rien, ne retient
     # rien, n'appelle personne, et ne change pas d'un iota ce qui est livré.
 
+    def poser_recette_du_sujet(
+        self, projet: str, identifiant: str, nom: str | None
+    ) -> Personnage:
+        """La recette nommée que reçoivent ses images à naître — ou plus aucune.
+
+        `None` et la chaîne vide retirent le choix : ses images retombent alors
+        sur la recette du jeu. Poser et retirer sont le même geste, comme pour
+        l'image de référence juste en dessous.
+
+        **Un nom que les recettes nommées ne connaissent pas est refusé**, avec
+        la liste de celles qui existent : accepté, il ne s'appliquerait à
+        aucune image, et personne ne verrait pourquoi (RS6).
+
+        **Rien n'est rejoué** : une image déjà née garde sa recette. Changer la
+        recette du sujet ne vaut que pour les images qui naîtront ensuite.
+        """
+        personnage = self.personnage(projet, identifiant)
+        propre = (nom or "").strip()
+        if propre:
+            connues = sorted(self._assets.recettes())
+            if propre not in connues:
+                raise ProductionRefusee(
+                    f"aucune recette nommée « {propre} » — "
+                    + (
+                        f"les recettes sont : {', '.join(connues)}"
+                        if connues
+                        else "il n'y en a encore aucune"
+                    )
+                )
+        personnage.recette = propre
+        self._sauver(personnage)
+        return personnage
+
     def poser_image_de_reference(
         self, projet: str, identifiant: str, asset: str | None
     ) -> Personnage:

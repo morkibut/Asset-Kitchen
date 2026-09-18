@@ -2409,6 +2409,10 @@ export type Personnage = {
    *  quand elle ne désigne plus rien — supprimée, écartée, rattachée ailleurs.
    *  Facultative : un serveur d'avant la tranche ne l'envoie pas. */
   image_de_reference?: string
+  /** **La recette de ses images** (RS6) — le nom d'une recette nommée, que
+   *  reçoit chaque image qui naît pour ce sujet à la place de la recette du
+   *  jeu. Vide ou absente : la recette du jeu. */
+  recette?: string
   /** Ce qu'elle s'est ajouté pour elle seule. Elles viennent après celles du
    *  type, jamais mêlées. */
   ajoutees: Pose[]
@@ -6547,6 +6551,15 @@ export const api = {
       `/characters/${personnage}/reference-image`,
       { method: "PUT", body: JSON.stringify({ asset }) },
     ),
+
+  /** **La recette de ses images** (RS6) — `null` la retire, et ses images
+   *  retombent sur la recette du jeu. Seules les images à naître la
+   *  reçoivent ; un nom inconnu est refusé. */
+  poserRecetteDuSujet: (personnage: string, recette: string | null, projet?: string) =>
+    appeler<{ personnage: Personnage }>(`/characters/${personnage}/recipe`, {
+      method: "PUT",
+      body: JSON.stringify({ recette, ...(projet ? { projet } : {}) }),
+    }),
 
   /** De quoi regarder une chose finie : les fonds du projet, et la taille
    *  commune de ses images (E16). Rien n'est fabriqué, rien n'est modifié. */

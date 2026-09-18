@@ -128,6 +128,20 @@ class Personnage:
     # ne désigne plus une référence promue ne gêne pas : elle n'est jamais lue.
     usages_des_references: dict[str, str] = field(default_factory=dict)
 
+    # ── La recette de ses images (RS6) ───────────────────────────────────────
+    #
+    # **Le nom d'une recette nommée, ou rien.** Le 18 septembre 2026, l'auteur
+    # appliquait « champy 01 » à la main sur chaque image de Champy, une par
+    # une, après chaque découpe (`docs/PLAN-references-du-sujet.md`, décision
+    # 6). Nommée ici, elle remplace la recette du jeu **à la naissance** de
+    # toute image faite pour ce sujet ; une image déjà née ne change pas.
+    #
+    # **Un nom, jamais une copie** : la recette nommée corrigée plus tard vaut
+    # pour les images qui naîtront ensuite. Une recette effacée depuis laisse
+    # un nom qui ne désigne plus rien — ce n'est pas une panne, c'est le repli
+    # sur la recette du jeu. Absent vaut rien : aucune migration.
+    recette: str = ""
+
     # ── L'image de référence de sa fiche (RP19)─────────────────────────────
     #
     # **Celle qui dit à quoi le sujet ressemble** (`docs/vocabulaire.html`), et
@@ -281,6 +295,7 @@ class Personnage:
             "eteints": list(self.eteints),
             "references": list(self.references),
             "usages_des_references": dict(self.usages_des_references),
+            "recette": self.recette,
             "image_de_reference": self.image_de_reference,
             "hors_calibrage": list(self.hors_calibrage),
             "directions_ecartees": {
@@ -321,6 +336,9 @@ class Personnage:
             # n'a pas la clé. Un usage illisible retombe aussi sur `libre`, qui
             # est le comportement d'avant — jamais sur une planche inventée.
             usages_des_references=_usages(d.get("usages_des_references")),
+            # **Absente, rien** (RS6) : un fichier d'avant la tranche n'a pas
+            # la clé, et ses images gardent la recette du jeu.
+            recette=str(d.get("recette") or "").strip(),
             # **Absente par défaut** (RP19) : un fichier écrit avant la tranche
             # n'a pas la clé, et la chaîne vide dit « rien n'a été choisi ».
             image_de_reference=str(d.get("image_de_reference") or ""),

@@ -37,7 +37,6 @@ from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.planche import est_une_planche_refaite
-from atelier.domaine.projet import PLANCHE
 from atelier.domaine.recette import Passe, Recette
 from atelier.image import (
     COTE_MIN,
@@ -353,12 +352,20 @@ class ServiceDecoupe:
 
         La génération se relit ici plutôt que de voyager sur l'asset : le
         drapeau n'est écrit que sur elle, et c'est elle qui fait foi.
+
+        **Et si le sujet de l'appel a sa recette, c'est elle qu'ils reçoivent**
+        (RS6, 18 septembre 2026) — « champy 01 » plutôt que la recette du jeu,
+        ce que l'auteur posait à la main sur chaque morceau.
+
+        Une planche ordinaire, elle, continue de transmettre la sienne : née
+        pour ce sujet, elle porte déjà sa recette, et si l'auteur l'a retouchée
+        à la main, c'est ce réglage-là qu'il veut voir sur ses morceaux.
         """
         generation = self._base.lire(planche.generation)
         if generation is not None and est_une_planche_refaite(
             generation, planche.rang
         ):
-            return self._assets.recette_du_projet(generation, PLANCHE), False
+            return self._assets.recette_d_un_morceau_refait(generation), False
         return _recette_heritee(planche), planche.epingle
 
     def _verifier(self, planche: Asset, boites: Iterable[Boite]) -> list[Boite]:

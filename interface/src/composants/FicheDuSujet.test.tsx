@@ -85,3 +85,38 @@ test("un décor n'a rien à choisir : aucun style de combat sur sa fiche", async
   expect(screen.queryByLabelText("Son style de combat")).not.toBeInTheDocument()
   expect(styles).not.toHaveBeenCalled()
 })
+
+// ── La recette de ses images (RS6, 18 septembre 2026) ───────────────────────
+
+test("la recette de ses images se choisit parmi les recettes nommées, et se retire", async () => {
+  const champy = { identifiant: "champy", nom: "Champy", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type: "", ambiance: "", famille: "decors", recette: "" } as unknown as Personnage
+  vi.spyOn(api, "objectifPersonnage").mockRejectedValue(new Error("hors sujet"))
+  vi.spyOn(api, "habillage").mockResolvedValue(null as never)
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(null as never)
+  vi.spyOn(api, "posesDesTypes").mockResolvedValue({ types: [] } as never)
+  vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [] } as never)
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: { "champy 01": {}, "arbres": {} } } as never)
+  const poser = vi.spyOn(api, "poserRecetteDuSujet").mockImplementation(async (_id, recette) => ({ personnage: { ...champy, recette: recette ?? "" } }) as never)
+  const onPersonnage = vi.fn()
+
+  const { rerender } = render(<FicheDuSujet personnage={champy} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+
+  const select = screen.getByRole("combobox", { name: "Recette de ses images" })
+  expect(screen.getByText(/Recette de ses images :/)).toBeTruthy()
+  expect((select as HTMLSelectElement).value).toBe("")
+  expect(screen.getByRole("option", { name: "aucune (celle du jeu)" })).toBeTruthy()
+  await screen.findByRole("option", { name: "champy 01" })
+
+  fireEvent.change(select, { target: { value: "champy 01" } })
+  await waitFor(() => expect(poser).toHaveBeenCalledWith("champy", "champy 01", "marais"))
+  expect(onPersonnage).toHaveBeenCalledWith(expect.objectContaining({ recette: "champy 01" }))
+
+  // Le parent rend le sujet tel que le serveur l'a écrit : le choix se lit.
+  rerender(<FicheDuSujet personnage={{ ...champy, recette: "champy 01" }} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  expect((screen.getByRole("combobox", { name: "Recette de ses images" }) as HTMLSelectElement).value).toBe("champy 01")
+
+  // « aucune » retire le choix : `null`, pas une chaîne vide.
+  fireEvent.change(screen.getByRole("combobox", { name: "Recette de ses images" }), { target: { value: "" } })
+  await waitFor(() => expect(poser).toHaveBeenLastCalledWith("champy", null, "marais"))
+})

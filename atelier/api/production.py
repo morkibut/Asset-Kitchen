@@ -783,6 +783,31 @@ async def poser_image_de_reference(
     }
 
 
+class CorpsRecetteDuSujet(BaseModel):
+    """La recette de ses images — **une seule route, `null` la retire** (RS6)."""
+
+    recette: str | None = None
+    projet: str | None = None
+
+
+@routeur.put("/characters/{identifiant}/recipe")
+async def poser_recette_du_sujet(
+    requete: Request, identifiant: str, corps: CorpsRecetteDuSujet
+) -> dict[str, Any]:
+    """Choisir la recette nommée que reçoivent ses images à naître.
+
+    Elle remplace la recette du jeu pour chaque image faite pour ce sujet —
+    génération comme découpe. Une image déjà née ne change pas. Un nom
+    inconnu est refusé (409), avec la liste des recettes nommées.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    personnage = atelier.production.poser_recette_du_sujet(
+        vise, identifiant, corps.recette
+    )
+    return {"personnage": atelier.production.en_charge(vise, personnage)}
+
+
 @routeur.get("/characters/showcase")
 async def vitrine_du_monde(
     requete: Request, projet: str | None = Query(None)
