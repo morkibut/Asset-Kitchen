@@ -11,7 +11,13 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
-import { ImagesDuSujet, rangerLaLigne, rangeesDeLaCase } from "./ImagesDuSujet"
+import {
+  ImagesDuSujet,
+  rangerLaLigne,
+  rangeesDeLaCase,
+  directionsDuSujet,
+  imageProposeeDeDirection,
+} from "./ImagesDuSujet"
 import {
   RECETTE_VIDE,
   UNIVERS_VIDE,
@@ -19,6 +25,8 @@ import {
   type Case,
   type Personnage,
   type Pose,
+  type ReferenceDeLaChose,
+  type ReferencesDeLaChose,
 } from "../api"
 
 afterEach(() => {
@@ -140,8 +148,22 @@ const CASE_SUD = sienne({
   ],
 })
 
-function construireDouble() {
+/** Les références du sujet, telles que la route les rendrait — vide par
+ *  défaut. Les essais de RS3 la remplacent par leurs propres lignes. */
+const REFERENCES_VIDES: ReferencesDeLaChose = {
+  personnage: "pelerin",
+  lignes: [],
+  propositions: [],
+  disponibles: 0,
+}
+
+function construireDouble(referencesInitiales: ReferencesDeLaChose = REFERENCES_VIDES) {
   const appels: { url: string; methode: string; corps: unknown }[] = []
+  // **L'état des références vit dans la fermeture**, comme le ferait le
+  // serveur : un `PUT` qui change un usage doit se voir au `GET` suivant,
+  // exactement ce que `relireReglages` (`FicheDuSujet.tsx`) attend déjà de
+  // la vraie route.
+  let etatReferences = referencesInitiales
   const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
     // **Seules les écritures se comptent** (`C4`). Le volet de cet onglet est
     // désormais la fiche du produit, et une fiche *lit* : sa génération, ce que
@@ -163,6 +185,42 @@ function construireDouble() {
     // objet vide n'est pas ce que le serveur renvoie, et l'écran n'a pas à s'en
     // défendre.
     const url = String(chemin)
+    // **RS3** — la liste des références promues, et leur usage. Un `PUT`
+    // range l'usage demandé dans l'état gardé par la fermeture, et le `GET`
+    // suivant le relit : c'est exactement ce que `promouvoirReference` +
+    // `referencesDeLaChose` font ensemble côté vrai serveur.
+    if (url.endsWith("/references") && (init?.method ?? "GET") === "GET")
+      return { ok: true, status: 200, json: async () => etatReferences } as Response
+    if (url.endsWith("/references") && init?.method === "PUT") {
+      const corps = JSON.parse(String(init?.body ?? "{}")) as {
+        asset: string
+        promue: boolean
+        usage?: string
+      }
+      // **Le refus du serveur (409)** — une direction que le sujet ne tient
+      // pas, ou tout autre motif : un asset dont l'identifiant vaut
+      // `"refusee"` sert de déclencheur pour l'essai, sans complexifier le
+      // double pour le reste des essais du fichier.
+      if (corps.asset === "refusee")
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({ raison: "cette direction n'est pas tenue par ce sujet" }),
+        } as Response
+      etatReferences = {
+        ...etatReferences,
+        lignes: etatReferences.lignes.map((ligne) =>
+          ligne.reference === corps.asset && corps.usage
+            ? { ...ligne, usage: corps.usage, usage_nom: corps.usage }
+            : ligne,
+        ),
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ personnage: personnage([CASE_SUD]), references: etatReferences }),
+      } as Response
+    }
     const charge = url.includes("/generations/")
       ? { demande: { prompt: "" }, hors_plafond: [], pris: [], emplacements: [] }
       : url.endsWith("/lineage")
@@ -191,8 +249,9 @@ function monter(
   cases: Case[] = [CASE_SUD],
   sansImport = false,
   surplusSujet: Partial<Personnage> = {},
+  referencesInitiales: ReferencesDeLaChose = REFERENCES_VIDES,
 ) {
-  const { fetchDouble, appels } = construireDouble()
+  const { fetchDouble, appels } = construireDouble(referencesInitiales)
   vi.stubGlobal("fetch", fetchDouble)
   const rappels = {
     onArmer: vi.fn(),
@@ -699,5 +758,175 @@ describe("l'image de référence de la fiche", () => {
     expect(appels.some((a) => a.url.includes("/favorite"))).toBe(false)
     expect(appels.some((a) => a.url.endsWith("/references"))).toBe(false)
     expect(onEcarter).not.toHaveBeenCalled()
+  })
+})
+
+// ── Ses références, rangées par usage (RS3) ─────────────────────────────────
+//
+// **Une référence promue porte un usage** (RS1) : `libre`, `planche` ou
+// `direction:<id>`. La fiche les range dans un bloc par usage — la planche,
+// une place par direction que `CASE_SUD` tient (sud, nord), puis les libres —
+// laisse changer l'usage d'un geste, et propose la retenue d'une direction
+// vide sans jamais la promouvoir toute seule.
+
+function ligneReference(
+  surplus: Partial<ReferenceDeLaChose> & { reference: string; usage: string },
+): ReferenceDeLaChose {
+  return {
+    genre: "asset",
+    provenance: "image promue",
+    detail: "fabriquée puis retenue comme référence",
+    ecartee: false,
+    usage_nom: surplus.usage,
+    montre: { sorte: "asset", asset: image({ identifiant: surplus.reference, cree_le: 1 }) },
+    ...surplus,
+  }
+}
+
+const blocUsage = (cle: string) =>
+  document.querySelector(`[data-bloc-usage="${CSS.escape(cle)}"]`) as HTMLElement
+
+describe("ses références, rangées par usage", () => {
+  test("chaque référence promue tombe dans le bloc de son usage", async () => {
+    const refs: ReferencesDeLaChose = {
+      personnage: "pelerin",
+      lignes: [
+        ligneReference({ reference: "p", usage: "planche" }),
+        ligneReference({ reference: "d", usage: "direction:sud" }),
+        ligneReference({ reference: "l", usage: "libre" }),
+      ],
+      propositions: [],
+      disponibles: 3,
+    }
+    monter([CASE_SUD], false, {}, refs)
+    await waitFor(() => expect(document.querySelector("[data-references-par-usage]")).toBeTruthy())
+
+    expect(within(blocUsage("planche")).getByLabelText("Usage de p")).toBeTruthy()
+    expect(within(blocUsage("direction:sud")).getByLabelText("Usage de d")).toBeTruthy()
+    expect(within(blocUsage("libre")).getByLabelText("Usage de l")).toBeTruthy()
+    // Chaque sélecteur porte son propre usage, pas celui d'une autre ligne.
+    expect(
+      (within(blocUsage("planche")).getByLabelText("Usage de p") as HTMLSelectElement).value,
+    ).toBe("planche")
+    expect(
+      (within(blocUsage("direction:sud")).getByLabelText("Usage de d") as HTMLSelectElement)
+        .value,
+    ).toBe("direction:sud")
+  })
+
+  test("une place existe pour chaque direction que le sujet tient, même vide", async () => {
+    monter([CASE_SUD])
+    await waitFor(() => expect(document.querySelector("[data-references-par-usage]")).toBeTruthy())
+    expect(blocUsage("planche")).toBeTruthy()
+    expect(blocUsage("direction:sud")).toBeTruthy()
+    expect(blocUsage("direction:nord")).toBeTruthy()
+    expect(blocUsage("libre")).toBeTruthy()
+  })
+
+  test("changer l'usage appelle la route avec le bon corps, et le sélecteur suit", async () => {
+    const refs: ReferencesDeLaChose = {
+      personnage: "pelerin",
+      lignes: [ligneReference({ reference: "l", usage: "libre" })],
+      propositions: [],
+      disponibles: 1,
+    }
+    const { appels } = monter([CASE_SUD], false, {}, refs)
+    await waitFor(() => expect(screen.getByLabelText("Usage de l")).toBeTruthy())
+    fireEvent.change(screen.getByLabelText("Usage de l"), { target: { value: "planche" } })
+    await waitFor(() =>
+      expect(appels.some((a) => a.url.endsWith("/references") && a.methode === "PUT")).toBe(true),
+    )
+    const appel = appels.find((a) => a.url.endsWith("/references"))!
+    expect(appel.corps).toEqual({ asset: "l", promue: true, usage: "planche" })
+    // La liste est relue après l'écriture : le sélecteur reflète l'usage
+    // rendu par le serveur, pas seulement celui qu'on vient de choisir.
+    await waitFor(() =>
+      expect((screen.getByLabelText("Usage de l") as HTMLSelectElement).value).toBe("planche"),
+    )
+  })
+
+  test("une erreur du serveur s'affiche en clair, à côté de la ligne concernée", async () => {
+    const refs: ReferencesDeLaChose = {
+      personnage: "pelerin",
+      lignes: [ligneReference({ reference: "refusee", usage: "libre" })],
+      propositions: [],
+      disponibles: 1,
+    }
+    const { onErreur } = monter([CASE_SUD], false, {}, refs)
+    await waitFor(() => expect(screen.getByLabelText("Usage de refusee")).toBeTruthy())
+    fireEvent.change(screen.getByLabelText("Usage de refusee"), { target: { value: "planche" } })
+    await waitFor(() =>
+      expect(screen.getByText("cette direction n'est pas tenue par ce sujet")).toBeTruthy(),
+    )
+    expect(onErreur).toHaveBeenCalled()
+  })
+
+  test("une direction sans référence propose la retenue de cette direction, en un clic", async () => {
+    const retenueNord = image({ identifiant: "n1", cree_le: 400, favori: true, direction: "nord" })
+    const caseAvecNord = sienne({
+      pose: "repos",
+      images: [VIEILLE, RETENUE, RECENTE, retenueNord],
+      directions: [
+        { ...DIRECTION, identifiant: "sud", nom: "sud", images: [VIEILLE, RETENUE, RECENTE] },
+        { ...DIRECTION, identifiant: "nord", nom: "nord", images: [retenueNord] },
+      ],
+    })
+    const { appels } = monter([caseAvecNord])
+    await waitFor(() => expect(document.querySelector("[data-references-par-usage]")).toBeTruthy())
+    // Rien n'est promu tant qu'on n'a pas cliqué.
+    expect(appels.some((a) => a.url.endsWith("/references"))).toBe(false)
+    fireEvent.click(screen.getByLabelText("Utiliser l'image de nord"))
+    await waitFor(() =>
+      expect(appels.some((a) => a.url.endsWith("/references") && a.methode === "PUT")).toBe(true),
+    )
+    const appel = appels.find((a) => a.url.endsWith("/references"))!
+    expect(appel.corps).toEqual({ asset: "n1", promue: true, usage: "direction:nord" })
+  })
+
+  test("une direction sans la moindre image ne propose rien à promouvoir", async () => {
+    monter([CASE_SUD])
+    await waitFor(() => expect(document.querySelector("[data-references-par-usage]")).toBeTruthy())
+    expect(within(blocUsage("direction:nord")).queryByLabelText(/Utiliser/)).toBeNull()
+    expect(
+      within(blocUsage("direction:nord")).getByText("Aucune image de cette direction encore."),
+    ).toBeTruthy()
+  })
+})
+
+// ── Les fonctions pures de RS3, sans écran ──────────────────────────────────
+
+describe("les directions tenues et la retenue proposée", () => {
+  test("l'union des directions des cases, chacune une seule fois", () => {
+    const deuxCases = personnage([
+      CASE_SUD,
+      sienne({
+        pose: "marche",
+        images: [],
+        directions: [{ ...DIRECTION, identifiant: "sud", nom: "sud", images: [] }],
+      }),
+    ])
+    const directions = directionsDuSujet(deuxCases)
+    expect(directions.map((d) => d.identifiant)).toEqual(["sud", "nord"])
+  })
+
+  test("la retenue d'une direction est celle que la rangée retient, au même départage", () => {
+    const sujet = personnage([CASE_SUD])
+    const proposee = imageProposeeDeDirection(sujet, "sud")
+    expect(proposee?.identifiant).toBe("b")
+  })
+
+  test("sans retenue, la première image chronologique de la direction se propose", () => {
+    const sansRetenue = sienne({
+      pose: "repos",
+      images: [RECENTE, VIEILLE],
+      directions: [{ ...DIRECTION, identifiant: "sud", nom: "sud", images: [RECENTE, VIEILLE] }],
+    })
+    const proposee = imageProposeeDeDirection(personnage([sansRetenue]), "sud")
+    expect(proposee?.identifiant).toBe("a")
+  })
+
+  test("une direction sans la moindre image ne propose rien", () => {
+    const proposee = imageProposeeDeDirection(personnage([CASE_SUD]), "nord")
+    expect(proposee).toBeNull()
   })
 })

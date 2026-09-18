@@ -44,16 +44,20 @@
  * critère tenu par construction plutôt que par une position calculée.
  */
 
-import { useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { useEtatDuParcours } from "./MemoireDuParcours"
 import {
   api,
+  Refus,
   type Asset,
   type Case,
   type CaseDirection,
+  type Direction,
   type Personnage,
   type Piece,
   type Pose,
+  type ReferenceDeLaChose,
+  type ReferencesDeLaChose,
   type Role,
   type Univers,
 } from "../api"
@@ -179,6 +183,264 @@ function ceQuiCloche(rangees: readonly Rangee[]): string | null {
   const vides = rangees.filter((r) => r.compte === 0 && r.direction !== null).length
   if (vides > 0) return vides === 1 ? "1 direction vide" : `${vides} directions vides`
   return null
+}
+
+// ── Ses références, rangées par usage (RS3) ─────────────────────────────────
+//
+// **Une référence promue porte un usage** (RS1) : `libre` (toujours jointe),
+// `planche` (la mise en page à quatre vues) ou `direction:<id>` (le sujet vu
+// sous cet angle). La fabrication choisit déjà selon son contexte ; ce que la
+// fiche doit encore faire, c'est montrer ce rangement et le laisser changer.
+
+/** Les directions que **ce sujet-là** tient, dans l'ordre où ses poses les
+ *  déclarent — l'union de `Case.directions`, chacune une seule fois.
+ *
+ *  **Ce n'est pas la liste des directions du jeu** : un jeu qui en déclare huit
+ *  mais dont ce sujet ne tient que quatre poses n'en montre que celles-là — une
+ *  place pour une direction qu'aucune pose ne remplirait jamais serait une
+ *  case qui ne peut rien recevoir. */
+export function directionsDuSujet(personnage: Personnage): Direction[] {
+  const vues = new Map<string, Direction>()
+  for (const sienne of personnage.cases)
+    for (const direction of sienne.directions) vues.set(direction.identifiant, direction)
+  return [...vues.values()]
+}
+
+/** L'image que ce sujet propose pour une direction sans référence encore.
+ *
+ *  **La retenue d'abord**, cherchée pose par pose dans l'ordre du plan — la
+ *  même retenue que celle que la rangée montre en tête, au même départage
+ *  (`rangerLaLigne`). **Sinon la première image fixe** que ce sujet a rangée
+ *  dans cette direction, faute d'une retenue pour désigner laquelle proposer :
+ *  proposer n'est pas décider, mais il faut bien montrer quelque chose. */
+export function imageProposeeDeDirection(
+  personnage: Personnage,
+  directionId: string,
+): Asset | null {
+  let repli: Asset | null = null
+  for (const sienne of personnage.cases) {
+    const d = sienne.directions.find((dd) => dd.identifiant === directionId)
+    if (!d || d.images.length === 0) continue
+    const { retenue } = rangerLaLigne(d.images)
+    if (retenue) return retenue
+    if (!repli)
+      repli = [...d.images].sort((a, b) => a.cree_le - b.cree_le || a.rang - b.rang)[0] ?? null
+  }
+  return repli
+}
+
+const USAGE_LIBRE = "libre"
+const USAGE_PLANCHE = "planche"
+const usageDeDirection = (id: string) => `direction:${id}`
+
+/** Le sélecteur d'usage d'une référence promue — Toujours, Planche, ou une
+ *  direction du sujet. Un seul geste : choisir change l'usage et relit la
+ *  liste, la route s'en charge (RS1, RS3). */
+function SelecteurDUsage({
+  ligne,
+  directions,
+  erreur,
+  onChanger,
+}: {
+  ligne: ReferenceDeLaChose
+  directions: readonly Direction[]
+  erreur?: string
+  onChanger: (usage: string) => void
+}) {
+  const vignette = ligne.montre?.sorte === "asset" ? ligne.montre.asset : null
+  return (
+    <li className="flex flex-col gap-[4px] border-b border-trait-faible py-[8px] last:border-b-0">
+      <div className="flex items-center gap-[8px]">
+        <span className="h-[34px] w-[34px] shrink-0 overflow-hidden rounded-5 bg-pourtour">
+          {vignette && (
+            <img
+              src={vignetteAsset(vignette, 68)}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-contain"
+            />
+          )}
+        </span>
+        <select
+          aria-label={`Usage de ${ligne.reference}`}
+          className="h-[30px] min-w-0 flex-1 rounded-7 border border-contour bg-carte px-[8px] text-[12.5px]"
+          value={ligne.usage ?? USAGE_LIBRE}
+          onChange={(e) => onChanger(e.target.value)}
+        >
+          <option value={USAGE_LIBRE}>Toujours</option>
+          <option value={USAGE_PLANCHE}>Planche</option>
+          {directions.map((direction) => (
+            <option key={direction.identifiant} value={usageDeDirection(direction.identifiant)}>
+              Direction : {direction.nom}
+            </option>
+          ))}
+        </select>
+      </div>
+      {erreur && <p className="text-[11.5px] text-echec">{erreur}</p>}
+    </li>
+  )
+}
+
+/** Un bloc d'usage — la planche, une direction, ou les libres. Une phrase
+ *  simple dit toujours quand ce qu'il contient part. */
+function BlocDUsage({
+  cle,
+  titre,
+  phrase,
+  lignes,
+  directions,
+  erreurs,
+  onChangerUsage,
+  vide,
+}: {
+  cle: string
+  titre: string
+  phrase: string
+  lignes: ReferenceDeLaChose[]
+  directions: readonly Direction[]
+  erreurs: Record<string, string>
+  onChangerUsage: (asset: string, usage: string) => void
+  /** Ce que le bloc montre à la place d'une liste, quand elle est vide — la
+   *  proposition d'une direction, par exemple. Sinon, une phrase neutre. */
+  vide?: ReactNode
+}) {
+  return (
+    <div
+      data-bloc-usage={cle}
+      className="flex flex-col gap-[8px] rounded-10 border border-trait bg-carte px-[14px] py-[8px]"
+    >
+      <div className="flex flex-col gap-[2px] pt-[4px]">
+        <span className="text-[12.5px] font-medium text-encre">{titre}</span>
+        <span className="text-[11px] text-encre-4">{phrase}</span>
+      </div>
+      {lignes.length === 0 ? (
+        vide ?? <p className="text-[12px] text-encre-3">rien encore</p>
+      ) : (
+        <ul className="flex flex-col">
+          {lignes.map((ligne) => (
+            <SelecteurDUsage
+              key={ligne.reference}
+              ligne={ligne}
+              directions={directions}
+              erreur={erreurs[ligne.reference]}
+              onChanger={(usage) => onChangerUsage(ligne.reference, usage)}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+/** Une direction sans référence propose l'image que ce sujet retient pour
+ *  elle — un clic la promeut, et aucune ne part sans ce clic (décision 5). */
+function PropositionDeDirection({
+  direction,
+  image,
+  onUtiliser,
+}: {
+  direction: Direction
+  image: Asset | null
+  onUtiliser: () => void
+}) {
+  if (!image)
+    return <p className="text-[12px] text-encre-3">Aucune image de cette direction encore.</p>
+  return (
+    <button
+      type="button"
+      onClick={onUtiliser}
+      aria-label={`Utiliser l'image de ${direction.nom}`}
+      className="flex items-center gap-[8px] self-start rounded-7 border border-contour bg-papier-cote px-[8px] py-[4px] text-[12.5px] text-encre-controle hover:border-encre-3"
+    >
+      <span className="h-[34px] w-[34px] shrink-0 overflow-hidden rounded-5 bg-pourtour">
+        <img
+          src={vignetteAsset(image, 68)}
+          alt=""
+          loading="lazy"
+          className="h-full w-full object-contain"
+        />
+      </span>
+      Utiliser
+    </button>
+  )
+}
+
+/** Les références promues, rangées par usage — la planche, une place par
+ *  direction du sujet, puis les libres (RS3). */
+function SesReferencesParUsage({
+  personnage,
+  references,
+  erreurs,
+  onChangerUsage,
+  onUtiliserPourDirection,
+}: {
+  personnage: Personnage
+  references: ReferencesDeLaChose | null
+  erreurs: Record<string, string>
+  onChangerUsage: (asset: string, usage: string) => void
+  onUtiliserPourDirection: (image: Asset, direction: Direction) => void
+}) {
+  const directions = useMemo(() => directionsDuSujet(personnage), [personnage])
+  // **Seules les lignes d'images promues portent un usage** (RS1) : une carte
+  // du tableau ou une image d'ambiance n'en a pas — elles ne se rangent pas
+  // ici.
+  const promues = useMemo(
+    () => (references?.lignes ?? []).filter((l) => l.usage !== undefined),
+    [references],
+  )
+  if (!references) return null
+
+  const planche = promues.filter((l) => l.usage === USAGE_PLANCHE)
+  const libres = promues.filter((l) => l.usage === USAGE_LIBRE)
+
+  return (
+    <section data-references-par-usage className="flex flex-col gap-[8px] border-t border-trait pt-[14px]">
+      <p className="text-[10.5px] uppercase tracking-[0.14em] text-encre-4">Ses références</p>
+      <div className="flex flex-col gap-[8px]">
+        <BlocDUsage
+          cle={USAGE_PLANCHE}
+          titre="Planche — toutes les vues sur une image"
+          phrase="Part quand on fabrique une planche ou qu'on refait la planche."
+          lignes={planche}
+          directions={directions}
+          erreurs={erreurs}
+          onChangerUsage={onChangerUsage}
+        />
+        {directions.map((direction) => {
+          const lignes = promues.filter((l) => l.usage === usageDeDirection(direction.identifiant))
+          const proposee = lignes.length === 0 ? imageProposeeDeDirection(personnage, direction.identifiant) : null
+          return (
+            <BlocDUsage
+              key={direction.identifiant}
+              cle={usageDeDirection(direction.identifiant)}
+              titre={`Direction — ${direction.nom}`}
+              phrase="Part quand on fabrique une image dans cette direction."
+              lignes={lignes}
+              directions={directions}
+              erreurs={erreurs}
+              onChangerUsage={onChangerUsage}
+              vide={
+                <PropositionDeDirection
+                  direction={direction}
+                  image={proposee}
+                  onUtiliser={() => proposee && onUtiliserPourDirection(proposee, direction)}
+                />
+              }
+            />
+          )
+        })}
+        <BlocDUsage
+          cle={USAGE_LIBRE}
+          titre="Toujours jointes"
+          phrase="Partent avec chaque fabrication de ce sujet."
+          lignes={libres}
+          directions={directions}
+          erreurs={erreurs}
+          onChangerUsage={onChangerUsage}
+        />
+      </div>
+    </section>
+  )
 }
 
 // ── Les pièces ──────────────────────────────────────────────────────────────
@@ -668,6 +930,62 @@ export function ImagesDuSujet({
   const directionsDe = (pose: string) =>
     personnage.cases.find((c) => c.pose === pose)?.directions ?? []
 
+  // ── Ses références, rangées par usage (RS3) ───────────────────────────────
+  //
+  // **Une liste de plus à relire, comme le reste de cet onglet** : ce que
+  // porte la fiche du sujet n'est pas rechargé pour autant — ce bloc lit sa
+  // propre route et la relit après chaque changement d'usage, exactement
+  // comme la fiche longue le fait déjà pour son propre volet.
+  const [references, setReferences] = useState<ReferencesDeLaChose | null>(null)
+  const [erreursUsage, setErreursUsage] = useState<Record<string, string>>({})
+  useEffect(() => {
+    let vivant = true
+    void api
+      .referencesDeLaChose(personnage.identifiant)
+      .then((recu) => { if (vivant) setReferences(recu ?? null) })
+      .catch(() => { if (vivant) setReferences(null) })
+    return () => { vivant = false }
+    // **`references.join` et non le tableau** : promouvoir depuis un autre
+    // volet de la même fiche (la fiche longue, RP8) change la liste sans
+    // changer l'identité du sujet — il faut relire quand même.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personnage.identifiant, personnage.references.join(",")])
+
+  const changerUsage = useCallback(
+    async (asset: string, usage: string) => {
+      setErreursUsage((e) => { const { [asset]: _ignore, ...reste } = e; return reste })
+      try {
+        const rendu = await api.promouvoirReference(personnage.identifiant, asset, true, usage)
+        onPersonnage?.(rendu.personnage)
+        setReferences(rendu.references)
+      } catch (erreur) {
+        const message = erreur instanceof Refus ? erreur.message : "l'usage a été refusé"
+        setErreursUsage((e) => ({ ...e, [asset]: message }))
+        onErreur(erreur, "l'usage a été refusé")
+      }
+    },
+    [personnage.identifiant, onPersonnage, onErreur],
+  )
+
+  /** Une direction sans référence propose ; **un clic la promeut**, et aucune
+   *  image n'est promue sans ce clic (décision 5, RS3). */
+  const utiliserPourDirection = useCallback(
+    async (cible: Asset, direction: string) => {
+      const usage = usageDeDirection(direction)
+      setErreursUsage((e) => { const { [cible.identifiant]: _ignore, ...reste } = e; return reste })
+      try {
+        const rendu = await api.promouvoirReference(personnage.identifiant, cible.identifiant, true, usage)
+        onPersonnage?.(rendu.personnage)
+        setReferences(rendu.references)
+      } catch (erreur) {
+        const message = erreur instanceof Refus ? erreur.message : "la promotion a été refusée"
+        setErreursUsage((e) => ({ ...e, [cible.identifiant]: message }))
+        onErreur(erreur, "la promotion a été refusée")
+      }
+    },
+    [personnage.identifiant, onPersonnage, onErreur],
+  )
+
   return (
     <div data-onglet-images className="flex items-start" onDoubleClick={(e) => {
       const cible = (e.target as HTMLElement).closest<HTMLElement>("[data-vignette-de-rangee]")?.dataset.vignetteDeRangee
@@ -789,6 +1107,16 @@ export function ImagesDuSujet({
             )
           })}
         </div>
+
+        <SesReferencesParUsage
+          personnage={personnage}
+          references={references}
+          erreurs={erreursUsage}
+          onChangerUsage={(asset, usage) => void changerUsage(asset, usage)}
+          onUtiliserPourDirection={(image, direction) =>
+            void utiliserPourDirection(image, direction.identifiant)
+          }
+        />
 
         {/* ── Ses calques ────────────────────────────────────────────────── */}
         {image && calques.length > 0 && (

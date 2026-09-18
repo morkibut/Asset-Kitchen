@@ -87,10 +87,30 @@ Tranché en RS2 :
 
 ### RS3 · La fiche range ses références
 
-- [ ] l'onglet *Images de référence* montre les références par usage : la planche, une place
+- [x] l'onglet *Images de référence* montre les références par usage : la planche, une place
       par direction du jeu, les libres
-- [ ] l'usage d'une référence se change sur la fiche
-- [ ] une direction sans référence propose l'image retenue de cette direction, en un clic
-- [ ] essais d'écran
+- [x] l'usage d'une référence se change sur la fiche
+- [x] une direction sans référence propose l'image retenue de cette direction, en un clic
+- [x] essais d'écran
+
+Tranché en RS3 :
+
+- rangée dans `ImagesDuSujet.tsx` (nouvelle section `SesReferencesParUsage`, sous les rangées de
+  poses), pas dans la fiche longue de `FicheDuSujet.tsx` : c'est bien l'onglet *Images de
+  référence* que RS3 vise, et `ImagesDuSujet.tsx` en est le composant réel — la section
+  `SesReferences` de la fiche longue (réglages) reste ce qu'elle était, un tableau plat sans
+  usage ;
+- « une place par direction du jeu » lit en fait **les directions que ce sujet tient**, l'union de
+  `Case.directions` sur ses poses — une place pour une direction qu'aucune pose ne remplirait
+  jamais n'aurait rien pu recevoir ;
+- la retenue d'une direction reprend le départage déjà écrit pour les rangées de la matrice
+  (`rangerLaLigne`, même favori/date/rang) sur les images de `CaseDirection.images`, cherchée pose
+  par pose dans l'ordre du plan ; à défaut de retenue, la première image chronologique de la
+  direction, jamais une proposition vide ;
+- le bloc lit sa propre route (`api.referencesDeLaChose`) et la relit après chaque écriture,
+  comme le fait déjà `FicheDuSujet.tsx` pour son propre volet — deux lectures indépendantes de la
+  même route, pas un état partagé entre les deux écrans ;
+- l'erreur du serveur (409 sur une direction non tenue, par exemple) s'affiche en clair sous la
+  ligne concernée, en plus du bandeau `onErreur` déjà en place pour le reste de l'onglet.
 
 **Ordre** : RS1, puis RS2 et RS3 — toutes deux dépendent de l'usage posé par RS1.

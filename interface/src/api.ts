@@ -3022,6 +3022,15 @@ export type ReferenceDeLaChose = {
     | { sorte: "asset"; asset: Asset }
     | { sorte: "carte"; carte: Carte }
     | null
+  /** **Ce qu'elle montre, et donc quand elle part** (RS1) : `libre`, `planche`
+   *  ou `direction:<id>`. Seules les lignes d'images promues (`genre: "asset"`,
+   *  `provenance: "image promue"`) le portent — une carte du tableau ou une
+   *  image d'ambiance n'a pas d'usage à ranger. */
+  usage?: string
+  /** Le nom de cet usage, **en français et avec le nom de la direction** (ex.
+   *  « direction sud ») — l'écran ne le recompose pas, il affiche ce qu'il
+   *  reçoit. */
+  usage_nom?: string
 }
 
 export type ReferencesDeLaChose = {
@@ -6499,11 +6508,15 @@ export const api = {
 
   /** Une image fabriquée devient — ou cesse d'être — une référence permanente.
    *  Elle repart alors avec chaque appel suivant, et c'est ce qui fait qu'une
-   *  chose se ressemble d'une pose à l'autre. */
-  promouvoirReference: (personnage: string, asset: string, promue = true) =>
+   *  chose se ressemble d'une pose à l'autre.
+   *
+   *  **Son usage se règle par le même geste** (RS1, RS3) — `libre`, `planche`
+   *  ou `direction:<id>`. Absent, l'usage en place est gardé. Une direction que
+   *  le sujet ne tient pas est refusée par le serveur (409). */
+  promouvoirReference: (personnage: string, asset: string, promue = true, usage?: string) =>
     appeler<{ personnage: Personnage; references: ReferencesDeLaChose }>(
       `/characters/${personnage}/references`,
-      { method: "PUT", body: JSON.stringify({ asset, promue }) },
+      { method: "PUT", body: JSON.stringify({ asset, promue, usage }) },
     ),
 
   /** **L'image de référence de sa fiche** (RP19) — celle qui dit à quoi le
