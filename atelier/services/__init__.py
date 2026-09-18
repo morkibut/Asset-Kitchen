@@ -82,6 +82,8 @@ from atelier.services.tenues import ServiceTenues
 from atelier.services.sources_3d import ServiceSources3D
 from atelier.services.travaux_3d import ServiceTravaux3D
 from atelier.services.travaux_audio import ServiceTravauxAudio
+from atelier.services.series_son import ServiceSeriesSon
+from atelier.services.variantes_son import ServiceVariantesSon
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.planche_animee import ServicePlancheAnimee
 from atelier.services.equipement import ServiceEquipement
@@ -609,6 +611,9 @@ class Atelier:
         self.sources_3d = ServiceSources3D(self)
         self.travaux_3d = ServiceTravaux3D(self)
         self.travaux_audio = ServiceTravauxAudio(self)
+        # SN3 : une série = N travaux audio ; un jeu de variantes = des sons par référence.
+        self.series_son = ServiceSeriesSon(self)
+        self.variantes_son = ServiceVariantesSon(self)
         self.sortie = ServiceSortie(
             self.base,
             self.fichiers,

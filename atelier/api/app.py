@@ -31,6 +31,8 @@ from atelier.api.travaux import routeur as routeur_travaux
 from atelier.api.file_locale import routeur as routeur_file_locale
 from atelier.api.workflows import routeur as routeur_workflows
 from atelier.api.texte_son import routeur as routeur_texte_son
+from atelier.api.variantes_son import routeur as routeur_variantes_son
+from atelier.domaine.variantes_son import VariantesRefusees
 from atelier.domaine.workflow import WorkflowRefuse
 from atelier.services.file_locale import FileLocaleRefusee
 from atelier.api.calques_cibles import routeur as routeur_calques_cibles
@@ -141,6 +143,7 @@ CODES = {
     SortieRefusee: 409,
     LivraisonRefusee: 409,
     TravailRefuse: 409,
+    VariantesRefusees: 409,
     Source3DRefusee: 409,
     FileLocaleRefusee: 409,
     PersonnageInconnu: 404,
@@ -259,6 +262,7 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     application.include_router(routeur_file_locale, prefix="/api")
     application.include_router(routeur_workflows, prefix="/api")
     application.include_router(routeur_texte_son, prefix="/api")
+    application.include_router(routeur_variantes_son, prefix="/api")
     application.include_router(routeur_calques_cibles, prefix="/api")
     application.include_router(routeur_travaux_equipement, prefix="/api")
     application.include_router(routeur_tenues, prefix="/api")

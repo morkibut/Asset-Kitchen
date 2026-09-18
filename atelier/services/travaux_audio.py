@@ -140,7 +140,10 @@ class ServiceTravauxAudio(ServiceTravaux):
         compo, _ = self._composition(projet, brut)
         return compo
 
-    async def preparer(self, projet, brut, acteur="auteur"):
+    async def preparer(self, projet, brut, acteur="auteur", *, serie=None):
+        """`serie` ({identifiant, rang}) lie ce travail à une série (SN3). Elle
+        reste hors de la demande : l'empreinte d'un tirage est celle de la
+        même demande préparée seule, et celle des demandes d'avant ne bouge pas."""
         self._projet(projet)
         permis = {"cle", "modele", "prompt", "prompt_negatif", "secondes", "options", "nom", *MUSIQUE,
                   "famille", "texte_relu", "mesures"}
@@ -212,6 +215,8 @@ class ServiceTravauxAudio(ServiceTravaux):
                 # Figé avec l'envoi : le texte composé, la famille, et d'où
                 # vient chaque morceau — ce que « Relire avant envoi » montre.
                 t["composition"] = compo
+            if serie is not None:
+                t["serie"] = serie
             self._garder(t)
         return self.lire(projet, identifiant)
 
@@ -269,6 +274,8 @@ class ServiceTravauxAudio(ServiceTravaux):
                     # La famille (lue par la livraison, SN4) et le texte parti.
                     provenance.update(famille=compo["famille"], composition={k: compo.get(k) for k in (
                         "gabarit", "moteur", "texte", "texte_negatif", "morceaux", "relu", "texte_compose", "langue")})
+                if t.get("serie"):
+                    provenance["serie"] = t["serie"]  # SN3 : de quelle série, quel tirage
                 etiquette = ETIQUETTES.get(compo["famille"], "Bruitages") if compo else "Bruitages"
                 son = self.a.sons.importer_octets(projet, octets, nom=t["demande"]["nom"] or etiquette + " · " + t["demande"]["prompt"][:60],
                     provenance=provenance, cle="travail:" + identifiant)
