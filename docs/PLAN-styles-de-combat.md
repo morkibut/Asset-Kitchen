@@ -34,11 +34,11 @@ livré d'au moins dix styles aux textes d'attaque soignés — mains nues simple
 arme tranchante à une main, arme lourde à deux mains, bâton à deux mains, lance, dagues, arc,
 magie, bouclier et arme —, le rangement par jeu et ses routes (lire, modifier, nommer, masquer).
 
-- [ ] Un jeu lit les styles livrés tant qu'il n'a rien changé ; sa première modification les
+- [x] Un jeu lit les styles livrés tant qu'il n'a rien changé ; sa première modification les
       copie, et les autres jeux ne bougent pas.
-- [ ] Chaque texte livré dit une seule action, nomme la main ou la partie du corps, nomme l'objet
+- [x] Chaque texte livré dit une seule action, nomme la main ou la partie du corps, nomme l'objet
       tenu, et finit dans la position de départ (*returns to the starting stance, staying in place*).
-- [ ] Nommer, modifier, masquer et remontrer un style passent par les routes, sans rien payer.
+- [x] Nommer, modifier, masquer et remontrer un style passent par les routes, sans rien payer.
 
 ### SC2 · Le style d'un personnage, et celui d'une pièce
 
@@ -47,10 +47,10 @@ magie, bouclier et arme —, le rangement par jeu et ses routes (lire, modifier,
 Un champ `style` sur le personnage et sur la pièce d'équipement ; la résolution *choisi →
 pièce portée en calque → aucun* ; les routes pour poser et retirer.
 
-- [ ] Un personnage qui porte le bâton en calque, et dont le bâton déclare « bâton à deux
+- [x] Un personnage qui porte le bâton en calque, et dont le bâton déclare « bâton à deux
       mains », a ce style sans qu'on le choisisse.
-- [ ] Un style choisi sur le personnage passe devant celui de la pièce.
-- [ ] Un personnage sans style ni pièce qui en déclare un n'a aucun style — rien n'est deviné.
+- [x] Un style choisi sur le personnage passe devant celui de la pièce.
+- [x] Un personnage sans style ni pièce qui en déclare un n'a aucun style — rien n'est deviné.
 
 ### SC3 · Le texte qui part
 
@@ -59,10 +59,10 @@ pièce portée en calque → aucun* ; les routes pour poser et retirer.
 La composition *direction + style ou mouvement* dans `texte_du_clip`, la route qui montre ce qui
 partira et celle qui commande un clip, pour un personnage donné.
 
-- [ ] Une attaque vers le nord de Champy part avec la phrase du nord puis le texte d'attaque du
+- [x] Une attaque vers le nord de Champy part avec la phrase du nord puis le texte d'attaque du
       bâton à deux mains.
-- [ ] Un mouvement que le style ne dit pas part avec le texte du mouvement.
-- [ ] L'écran d'un clip montre exactement ce texte avant l'envoi ; un texte relu part tel quel.
+- [x] Un mouvement que le style ne dit pas part avec le texte du mouvement.
+- [x] L'écran d'un clip montre exactement ce texte avant l'envoi ; un texte relu part tel quel.
 
 ### SC4 · Les écrans
 
@@ -72,6 +72,6 @@ Le bloc « Les styles de combat » dans Réglages › Univers (lire, modifier un
 nommer un style), le choix du style sur la fiche d'un personnage (avec ce qu'il hérite de sa
 pièce, dit en clair), et le choix du style sur une pièce d'équipement.
 
-- [ ] Les trois gestes se font sans rien payer, et se vérifient au navigateur sur un atelier
+- [x] Les trois gestes se font sans rien payer, et se vérifient au navigateur sur un atelier
       jetable.
-- [ ] La fiche dit d'où vient le style : « choisi » ou « celui du bâton ».
+- [x] La fiche dit d'où vient le style : « choisi » ou « celui du bâton ».
