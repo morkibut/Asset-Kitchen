@@ -121,9 +121,9 @@ Tranché en RS3 :
 
 ### RS5 · L'agent peut refaire une planche
 
-- [ ] l'outil de génération de l'agent vise un sujet (sans pose) et joint des images en référence
-- [ ] avec `keep_reference_layout`, la planche du sujet ou l'image jointe sert de mise en page ;
+- [x] l'outil de génération de l'agent vise un sujet (sans pose) et joint des images en référence
+- [x] avec `keep_reference_layout`, la planche du sujet ou l'image jointe sert de mise en page ;
       les refus restent ceux du service
-- [ ] essais sans appel payant
+- [x] essais sans appel payant
 
 **Ordre** : RS1, puis RS2 et RS3 — toutes deux dépendent de l'usage posé par RS1.

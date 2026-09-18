@@ -147,6 +147,125 @@ async def test_generate_asset_sans_keep_reference_layout_ne_porte_pas_le_drapeau
     assert double.demandes[-1].garder_mise_en_page is False
 
 
+# ── L'agent vise un sujet et joint des références (RS5) ──────────────────────
+
+
+async def test_generate_asset_vise_un_sujet_sans_pose(atelier, mcp, double):
+    """« L'outil de génération de l'agent vise un sujet (sans pose) et joint
+    des images en référence. » — `character` désigne le personnage, l'image
+    lui revient rattachée, et aucune case n'est visée."""
+    projet = atelier.bibliotheque.courant
+    personnage = atelier.production.creer_personnage(projet, "Champy")
+
+    reponse = await appeler(
+        mcp, "generate_asset", subject="a stone golem", character=personnage.identifiant
+    )
+    await atelier.generations.attendre_tout()
+
+    image = reponse["images"][0]
+    asset = atelier.assets.lire(image["id"])
+    assert asset.personnage == personnage.identifiant
+    assert asset.pose is None
+
+
+async def test_reference_assets_part_dans_la_demande_recue_par_le_double(
+    atelier, mcp, double
+):
+    """« `reference_assets` part dans la demande reçue par le double. »
+
+    Deux images jointes à la main : la demande que le fournisseur reçoit porte
+    bien deux références de plus que sans elles."""
+    premiere = atelier.generations.importer(
+        image_sujet(logique_l=3), "un.png"
+    )["asset"]["identifiant"]
+    seconde = atelier.generations.importer(
+        image_sujet(logique_l=5), "deux.png"
+    )["asset"]["identifiant"]
+
+    await appeler(
+        mcp,
+        "generate_asset",
+        subject="a stone golem",
+        reference_assets=[premiere, seconde],
+    )
+    await atelier.generations.attendre_tout()
+
+    generation = atelier.generations.recentes(1)[0]
+    assert [r.asset for r in generation.references] == [premiere, seconde]
+    assert len(double.demandes[-1].references) == 2
+
+
+async def test_keep_reference_layout_et_character_reprend_la_planche_du_sujet(
+    atelier, mcp, double
+):
+    """« Avec `keep_reference_layout`, la planche du sujet … sert de mise en
+    page. » — une référence rangée en `planche` part nommée comme la planche à
+    reproduire, et l'appel est accepté."""
+    projet = atelier.bibliotheque.courant
+    atelier.univers.regler_univers(projet, vue="vue-dessus-34", fond="#FF70B5")
+    personnage = atelier.production.creer_personnage(projet, "Champy")
+    planche = atelier.generations.importer(
+        image_sujet(toile=24, bloc=1, logique_l=4, logique_h=12), "planche.png"
+    )["asset"]["identifiant"]
+    atelier.production.promouvoir_reference(
+        projet, personnage.identifiant, planche, True, "planche"
+    )
+
+    reponse = await appeler(
+        mcp,
+        "generate_asset",
+        subject="the character holds a staff",
+        character=personnage.identifiant,
+        keep_reference_layout=True,
+    )
+    await atelier.generations.attendre_tout()
+
+    assert reponse["images"]
+    generation = atelier.generations.recentes(1)[0]
+    assert generation.demande["garder_mise_en_page"] is True
+    assert [(r.asset, r.usage) for r in generation.references] == [
+        (planche, "planche")
+    ]
+    assert "THE CHARACTER SHEET TO REPRODUCE" in generation.demande["prompt"]
+    assert double.appels == 1
+
+
+async def test_keep_reference_layout_et_reference_assets_sans_planche(
+    atelier, mcp, double
+):
+    """« … sinon l'image jointe … sert de mise en page. » — sans planche
+    rangée sur le sujet, l'image jointe à la main suffit."""
+    jointe = atelier.generations.importer(
+        image_sujet(toile=24, bloc=1, logique_l=6, logique_h=12), "jointe.png"
+    )["asset"]["identifiant"]
+
+    reponse = await appeler(
+        mcp,
+        "generate_asset",
+        subject="the character holds a staff",
+        reference_assets=[jointe],
+        keep_reference_layout=True,
+    )
+    await atelier.generations.attendre_tout()
+
+    assert reponse["images"]
+    generation = atelier.generations.recentes(1)[0]
+    assert generation.demande["garder_mise_en_page"] is True
+    assert "THE CHARACTER SHEET TO REPRODUCE" in generation.demande["prompt"]
+    assert double.appels == 1
+
+
+async def test_un_sujet_inconnu_est_refuse_sans_appel_au_double(atelier, mcp, double):
+    """Un `character` qui ne désigne personne se refuse avant qu'un centime
+    parte — la même règle que la case du personnage à l'écran."""
+    raison = await refuser(
+        mcp, "generate_asset", subject="a stone golem", character="introuvable"
+    )
+
+    assert "introuvable" in raison
+    assert double.appels == 0
+
+
 async def test_l_attente_bornee_rend_un_identifiant_interrogeable(
     atelier, mcp, double
 ):

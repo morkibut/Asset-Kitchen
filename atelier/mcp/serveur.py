@@ -44,7 +44,7 @@ from atelier.domaine.bande import BOUCLE, CADENCE_PAR_DEFAUT as CADENCE_DE_BANDE
 from atelier.domaine.consommation import ICI, Reserve
 from atelier.domaine.demande import Demande
 from atelier.domaine.erreurs import ErreurAtelier
-from atelier.domaine.generation import AGENT, Generation
+from atelier.domaine.generation import AGENT, REFERENCE, Generation, Reinjection
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.recette import PLACES, Recette, places_inconnues
 from atelier.domaine.sortie import Reglage as ReglageDeSortie
@@ -175,11 +175,15 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "Generate a game asset from a short subject description and return "
             "its file path. The open project's universe (art bible, palette, "
             "pixel grid, cutout) is applied automatically — describe the "
-            "subject only. Waits up to `wait_seconds` for the image; past that "
-            "it returns a generation id to poll with check_generation. Costs "
-            "money. `keep_reference_layout` redraws the same plate as the "
-            "reference image (same views, same order, same framing) instead "
-            "of a single subject."
+            "subject only. `character` attaches the generated image to that "
+            "subject, without placing it in a pose. `reference_assets` sends "
+            "existing asset ids to the model as reference images, alongside "
+            "whatever the subject's own references already send. Waits up to "
+            "`wait_seconds` for the image; past that it returns a generation id "
+            "to poll with check_generation. Costs money. `keep_reference_layout` "
+            "redraws the same plate (same views, same order, same framing) "
+            "instead of a single subject — the layout comes from the subject's "
+            "plate reference, or the first reference image when there is none."
         ),
     )
     @_refus_lisible
@@ -193,6 +197,8 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         wait_seconds: float = ATTENTE_PAR_DEFAUT,
         folder: str | None = None,
         keep_reference_layout: bool = False,
+        character: str | None = None,
+        reference_assets: list[str] | None = None,
     ) -> dict[str, Any]:
         """`kind` est l'échelle du barème — « personnage », « objet posé »…
 
@@ -225,6 +231,17 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                 ),
                 projet=projet,
                 provenance=AGENT,
+                # `character` désigne un sujet, sans pose (RS5) : c'est le même
+                # champ que la route HTTP, et les mêmes refus — sujet disparu,
+                # rangé par `preparer()` avant qu'un centime parte.
+                personnage=character,
+                # Les images jointes à la main, comme `CorpsGeneration.references`
+                # côté route : un identifiant et son rôle, jamais des octets.
+                # C'est `preparer()` qui refuse un asset inconnu, ici comme là.
+                references=[
+                    Reinjection(asset=asset, role=REFERENCE)
+                    for asset in reference_assets or ()
+                ],
             )
         finally:
             atelier.agent.liberer(variations)
