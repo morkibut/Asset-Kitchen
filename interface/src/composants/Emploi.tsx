@@ -259,7 +259,7 @@ export function Emploi({
   if (projet && porte && porteur !== null && !historique) return <CalquesDeLEmploi
     key={`${projet}:${piece.identifiant}:${emploi.identifiant}`} projet={projet} emploi={emploi} piece={piece}
     porteur={porteur} emplacements={emplacements} onRegler={onRegler}
-    cibleInitiale={cibleInitiale} varianteInitiale={varianteInitiale} onPorteur={onPorteur}
+    cibleInitiale={cibleInitiale} varianteInitiale={varianteInitiale} onPorteur={onPorteur} onRetoucher={onCalque}
     onHistorique={() => setHistorique(true)} onLesAutresEmplois={onLesAutresEmplois} />
 
   return (

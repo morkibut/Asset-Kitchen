@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { api, RECETTE_VIDE, type Asset, type EmploiResolu, type Personnage, type Piece, type VestiaireDuJeu } from "../api"
 import { apiCalques, type CiblesEmploi, type VarianteCalque } from "../api-calques"
 import { CalquesDeLEmploi } from "./CalquesDeLEmploi"
-import { EditeurCalqueCible } from "./EditeurCalqueCible"
+import { EditeurCalqueCible, placeDuDessus } from "./EditeurCalqueCible"
 import { AssocierImageEquipement } from "./AssocierImageEquipement"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 
@@ -191,6 +191,109 @@ test("un passage peint sur cette frame se compte, et l'ordre par défaut reste l
   await screen.findByAltText("Aperçu du calque sur sa base")
   expect(screen.getByText("1 passage peint ici : une partie de la pièce ne suit pas l’ordre par défaut.")).toBeInTheDocument()
   expect(screen.getByLabelText("Ordre du calque")).toHaveValue("true")
+})
+
+// ── L'image équipée lue comme sa pose (18 septembre 2026) ────────────────────
+//
+// La pose « repos · est » de Champy sortait à 221 × 451 de sa recette, l'image
+// équipée arrivait brute à 1024 × 1024. Le serveur la lit désormais avec la
+// recette de la pose et la ramène à son échelle ; l'écran doit le **dire**,
+// laisser le retirer, et montrer les deux corps ensemble d'emblée.
+
+const preparee: VarianteCalque = {
+  ...variante, identifiant: "source-1", role: "source-equipee", etat: "a-extraire", revision: 1,
+  cible: { nature: "image", resultat: "pose-est", prise: "" },
+  base: { cadre: { largeur: 64, hauteur: 64 }, repere: { x: 32, y: 64 }, pose: "repos", direction: "est" },
+  calque_cadre: { largeur: 64, hauteur: 64 },
+  preparation: { recette: "pose", echelle: true, depuis: { pose: "repos", direction: "est" }, appliquee: ["détourage", "cadre et échelle de la pose", "couleurs de la pose"], laissee: ["le contour — l’image envoyée au modèle le portait déjà"], cadre_source: { largeur: 256, hauteur: 256 }, facteur: 0.25, x: 0, y: 0, accord: 0.94, dehors: 0.12 },
+}
+
+test("l'image équipée dit quelle recette l'a lue, se voit sur sa pose, et la recette se retire", async () => {
+  const reprendre = vi.spyOn(apiCalques, "reprendreSource").mockResolvedValue({ ...preparee, revision: 2, preparation: { ...preparee.preparation!, recette: "sienne" } })
+  const onRetoucher = vi.fn(), onGarde = vi.fn()
+  render(<EditeurCalqueCible chemin={chemin} variante={preparee} nomDeLaPose="Repos" onGarde={onGarde} onSale={vi.fn()} onRetoucher={onRetoucher} />)
+  // Les deux corps ensemble, d'emblée : la pose dessous, l'image équipée dessus.
+  expect(screen.getByRole("button", { name: "Les deux superposés" })).toHaveAttribute("aria-pressed", "true")
+  expect(screen.getByAltText("Pose de référence sous l’image équipée")).toHaveAttribute("src", expect.stringContaining("vue=base"))
+  expect(screen.getByAltText("Image équipée posée sur la pose")).toHaveAttribute("src", expect.stringContaining("vue=source"))
+  expect(apiCalques.apercu).not.toHaveBeenCalled()
+  expect(document.querySelector("[data-recette-appliquee]")).toHaveTextContent("Recette de Repos · est appliquée : détourage, cadre et échelle de la pose, couleurs de la pose.")
+  expect(screen.getByText(/12 % de l’image équipée tombe hors du cadre/)).toBeInTheDocument()
+  // La chaîne se lit dans l'ordre.
+  const titres = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
+  expect(titres).toEqual(["1 · Pose de référence", "2 · Image équipée, lue comme la pose", "3 · Caler les deux corps", "4 · Isoler ce qui s’ajoute", "5 · Retoucher à la main"])
+  fireEvent.click(screen.getByRole("button", { name: "Retoucher l’image équipée…" }))
+  expect(onRetoucher).toHaveBeenCalledWith("source")
+  fireEvent.click(screen.getByRole("button", { name: "Sa propre recette" }))
+  await waitFor(() => expect(onGarde).toHaveBeenCalled())
+  expect(reprendre).toHaveBeenCalledWith(chemin, "source-1", 1, "sienne", true)
+})
+
+test("le calage déplace l'image équipée sur la pose sans attendre le serveur", async () => {
+  render(<EditeurCalqueCible chemin={chemin} variante={preparee} onGarde={vi.fn()} onSale={vi.fn()} />)
+  const dessus = screen.getByAltText("Image équipée posée sur la pose")
+  fireEvent.change(screen.getByLabelText("Déplacement horizontal — valeur"), { target: { value: "5" } })
+  // Zoom « Adapter » sans place mesurée : 400 %, donc 5 pixels d'image font 20 pixels d'écran.
+  expect(dessus.style.left).toBe("20px")
+  expect(apiCalques.apercu).not.toHaveBeenCalled()
+})
+
+test("placeDuDessus suit la règle d'`aligner` : même cadre, image trop grande, échelle", () => {
+  expect(placeDuDessus(64, 64, 64, 64, 1, 0, 0)).toEqual({ left: 0, top: 0, width: 64, height: 64 })
+  expect(placeDuDessus(64, 64, 64, 64, 1, 3, -2)).toEqual({ left: 3, top: -2, width: 64, height: 64 })
+  // Trop grande : ramenée pour tenir, centrée.
+  expect(placeDuDessus(256, 128, 64, 64, 1, 0, 0)).toEqual({ left: 0, top: 16, width: 64, height: 32 })
+  // Plus petite : au coin, à sa taille.
+  expect(placeDuDessus(32, 32, 64, 64, 1, 0, 0)).toEqual({ left: 0, top: 0, width: 32, height: 32 })
+  expect(placeDuDessus(64, 64, 64, 64, 0.5, 0, 0)).toEqual({ left: 16, top: 16, width: 32, height: 32 })
+})
+
+test("sur une pose, l'image fabriquée d'après elle s'associe d'un clic, à la pose que sa génération nomme", async () => {
+  const poseEst = { cible: { nature: "image" as const, resultat: "pose-est", prise: "" }, pose: "marche", direction: "est", image: { ...image, identifiant: "pose-est", label: "Marche est" } }
+  const poseOuest = { cible: { nature: "image" as const, resultat: "pose-ouest", prise: "" }, pose: "marche", direction: "ouest", image: { ...image, identifiant: "pose-ouest", label: "Marche ouest" } }
+  vi.spyOn(apiCalques, "cibles").mockResolvedValue({ ...structuredClone(donnees), cibles: [poseEst, poseOuest], variantes: [] })
+  vi.spyOn(apiCalques, "fabriqueesDApres").mockResolvedValue({ images: [{ image: { ...image, identifiant: "baton-1", label: "Avec un bâton" }, deja: false }] })
+  const references = vi.spyOn(apiCalques, "posesDeReference").mockResolvedValue({ poses: [{ ...poseEst, raison: "l'image à modifier de sa génération" }] })
+  const creer = vi.spyOn(apiCalques, "creer").mockResolvedValue({ ...preparee, source: "baton-1", cible: poseEst.cible })
+  render(<CalquesDeLEmploi projet="marais" emploi={emploi} piece={piece} porteur={personnage} emplacements={[]} onRegler={vi.fn()} onHistorique={vi.fn()} onLesAutresEmplois={vi.fn()} />)
+  const proposees = await screen.findByRole("region", { name: "Fabriquées d’après cette pose" })
+  expect(apiCalques.fabriqueesDApres).toHaveBeenCalledWith({ projet: "marais", piece: "epee", emploi: "porte-pelerin" }, "pose-est")
+  fireEvent.click(within(proposees).getByRole("button", { name: /Avec un bâton/ }))
+  await waitFor(() => expect(creer).toHaveBeenCalledWith(chemin, poseEst.cible, "baton-1", "source-equipee"))
+  expect(references).toHaveBeenCalledWith(chemin, "baton-1")
+  expect(await screen.findByLabelText("Éditeur du calque ciblé")).toBeInTheDocument()
+})
+
+test("choisie depuis une autre pose, l'image équipée va d'office à celle que sa génération nomme", async () => {
+  const poseEst = { cible: { nature: "image" as const, resultat: "pose-est", prise: "" }, pose: "marche", direction: "est", image: { ...image, identifiant: "pose-est", label: "Marche est" } }
+  const poseOuest = { cible: { nature: "image" as const, resultat: "pose-ouest", prise: "" }, pose: "marche", direction: "ouest", image: { ...image, identifiant: "pose-ouest", label: "Marche ouest" } }
+  vi.spyOn(apiCalques, "cibles").mockResolvedValue({ ...structuredClone(donnees), cibles: [poseOuest, poseEst], variantes: [] })
+  vi.spyOn(apiCalques, "fabriqueesDApres").mockResolvedValue({ images: [] })
+  vi.spyOn(apiCalques, "posesDeReference").mockResolvedValue({ poses: [{ ...poseEst, raison: "sa planche partait de cette pose" }] })
+  vi.spyOn(api, "arbre").mockResolvedValue({ collections: [] } as never)
+  vi.spyOn(api, "assets").mockResolvedValue({ assets: [image], total: 1 })
+  const creer = vi.spyOn(apiCalques, "creer").mockResolvedValue({ ...preparee, cible: poseEst.cible })
+  render(<CalquesDeLEmploi projet="marais" emploi={emploi} piece={piece} porteur={personnage} emplacements={[]} onRegler={vi.fn()} onHistorique={vi.fn()} onLesAutresEmplois={vi.fn()} />)
+  fireEvent.click(await screen.findByRole("button", { name: "Choisir une image dans la bibliothèque" }))
+  fireEvent.click(await screen.findByRole("button", { name: "Choisir Épée sur le pèlerin" }))
+  fireEvent.click(screen.getByRole("button", { name: "Associer cette image" }))
+  await waitFor(() => expect(creer).toHaveBeenCalledWith(chemin, poseEst.cible, "source", "source-equipee"))
+  expect(await screen.findByText(/Associée à Marche · est : sa planche partait de cette pose/)).toBeInTheDocument()
+})
+
+test("depuis la retouche, la pose de référence de la génération est présélectionnée", async () => {
+  vi.spyOn(api, "emploisDuJeu").mockResolvedValue({ pieces: [{ piece, emplois: [emploi], declare: true, fait: 0, attendu: 0 }], porteurs: [{ identifiant: "pelerin", nom: "Le pèlerin" }] } as unknown as VestiaireDuJeu)
+  vi.spyOn(apiCalques, "posesDeReference").mockResolvedValue({ poses: [{ cible: donnees.cibles[1].cible, pose: "marche", direction: "ouest", raison: "une image de référence de sa génération", image }] })
+  const creer = vi.spyOn(apiCalques, "creer").mockResolvedValue(preparee)
+  render(<AssocierImageEquipement image={image} projet="marais" onFermer={vi.fn()} />)
+  await screen.findByRole("option", { name: "Épée divine" })
+  fireEvent.change(screen.getByLabelText("Pièce de cette image"), { target: { value: "epee" } })
+  fireEvent.change(screen.getByLabelText("Emploi de cette image"), { target: { value: "porte-pelerin" } })
+  await waitFor(() => expect(screen.getByRole("button", { name: /Marche lente · frame 2/ })).toHaveAttribute("aria-pressed", "true"))
+  expect(screen.getByLabelText("Rôle de l’image associée")).toHaveValue("source-equipee")
+  expect(document.querySelector("[data-pose-de-reference]")).toHaveTextContent("Fabriquée d’après marche · ouest")
+  fireEvent.click(screen.getByRole("button", { name: "Associer à cette cible" }))
+  await waitFor(() => expect(creer).toHaveBeenCalledWith(chemin, donnees.cibles[1].cible, "source", "source-equipee"))
 })
 
 test("sans rappel de retour, l'écran n'invente aucun bouton vers le personnage", async () => {

@@ -13,6 +13,7 @@ import threading
 import time
 import uuid
 from copy import deepcopy
+from dataclasses import replace
 from typing import Any
 
 import numpy as np
@@ -21,11 +22,25 @@ from PIL import Image
 from atelier.depot.calques_cibles import DepotCalquesCibles
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.calques_cibles import CibleCalque, PlacementCalque, masques_valides
-from atelier.domaine.recette import Recette
+from atelier.domaine.generation import ASSET, EDITION, REFERENCE, STYLE
+from atelier.domaine.recette import (
+    BORDS, CONTOURS, DETOURAGE, GRILLE, QUANTIFICATION, RECADRAGE, RETOURNEMENT,
+    Recette, voyage,
+)
 from atelier.domaine.superposition import Superposition
-from atelier.image.calque import proposer, superposer
-from atelier.image.calques_cibles import composer, png, rgba
+from atelier.image.calque import avec_alpha, cases_de, proposer, superposer
+from atelier.image.calques_cibles import (
+    aux_couleurs_de, composer, couleur_du_fond, png, ramener_sur, rgba, sans_poches_de_fond,
+)
+from atelier.image.traitement import queue
 from atelier.services.production import ProductionRefusee
+
+# Les deux façons de lire l'image équipée avant de la comparer à sa pose.
+# `pose` : la recette de la pose, rejouée sur l'image telle que le modèle l'a
+# rendue. `sienne` : l'image telle qu'elle est rangée, avec sa recette à elle —
+# celle qu'on retouche dans la retouche ordinaire.
+RECETTE_DE_LA_POSE = "pose"
+RECETTE_DE_L_IMAGE = "sienne"
 
 
 def empreinte(contenu: Any) -> str:
@@ -172,27 +187,281 @@ class ServiceCalquesCibles:
         return {**variante, "etat": etat, "raison": raison, "retenue": retenue,
                 "utilisable": etat == "prete" and retenue}
 
-    def creer(self, projet, piece, emploi, cible: dict, source: str, role: str):
+    def creer(self, projet, piece, emploi, cible: dict | None, source: str, role: str):
+        """Associer une image à une cible.
+
+        **Sans cible, la pose de référence de sa génération décide** — c'est le
+        geste « l'associer d'office ». Une image équipée fabriquée d'après
+        « repos · est » a sa place sur « repos · est », et la génération l'a
+        noté : on le relit au lieu de le redemander. Sans référence connue, le
+        refus nomme ce qui manque, et l'association reste manuelle.
+        """
         with self.verrou:
             if role not in ("reference", "source-equipee", "calque"):
                 raise ProductionRefusee("choisissez référence, image équipée à extraire ou calque transparent")
+            personnage, _, lien = self._emploi(projet, piece, emploi)
+            image = self.assets.lire(source)
+            if image is None:
+                raise ProductionRefusee("l'image source doit être présente dans la bibliothèque")
+            if cible is None:
+                trouvees = self._references_de(projet, personnage.identifiant, image)
+                if not trouvees:
+                    raise ProductionRefusee("sa génération ne dit d'après quelle pose elle a été fabriquée : choisissez la cible à la main")
+                cible = trouvees[0]["cible"]
             try:
                 visee = CibleCalque.depuis_json(cible)
             except ValueError as e:
                 raise ProductionRefusee(str(e)) from e
-            _, _, lien = self._emploi(projet, piece, emploi)
-            image = self.assets.lire(source)
-            if image is None:
-                raise ProductionRefusee("l'image source doit être présente dans la bibliothèque")
             source_png = png(rgba(self.assets.octets(image)[0]))
             if role == "calque" and not np.any(rgba(source_png)[:, :, 3] < 255):
                 raise ProductionRefusee("cette image est opaque : importez-la comme image équipée puis extrayez le calque")
             base_png, base = self._base_cible(projet, piece, emploi, visee, identifier=True)
+            preparation = None
+            if role == "source-equipee":
+                source_png, preparation = self._preparer_source(
+                    image, base_png, base, recette=RECETTE_DE_LA_POSE, echelle=True, resultat=visee.resultat)
             return self.accueillir_source_preparee(projet, piece, emploi, visee.en_json(), source,
-                base_png, base, role=role, source_png=source_png)
+                base_png, base, role=role, source_png=source_png, preparation=preparation)
+
+    # ── La pose de référence, relue sur la génération ────────────────────────
+
+    def poses_de_reference(self, projet, piece, emploi, source: str) -> list[dict[str, Any]]:
+        """Les poses du porteur d'après lesquelles cette image a été fabriquée, la plus sûre d'abord."""
+        personnage, _, _ = self._emploi(projet, piece, emploi)
+        image = self.assets.lire(source)
+        return [] if image is None else self._references_de(projet, personnage.identifiant, image)
+
+    def _references_de(self, projet: str, porteur: str, image: Asset) -> list[dict[str, Any]]:
+        """**Relu, jamais deviné** : la génération garde ce qui est parti avec elle.
+
+        Deux endroits le disent. Une planche d'équipement (C3) nomme dans chaque
+        case le corps qu'elle portait — c'est le cas de Champy et de son bâton,
+        où l'image jointe n'est pas une réinjection mais la planche redessinée.
+        Une génération ordinaire garde ses réinjections avec leur rôle : l'image
+        à modifier passe devant une simple référence, qui passe devant un style.
+        Le parent de l'image vient en dernier. Seule compte une **pose du
+        porteur**, dans ce jeu : un artwork officiel n'est pas une cible.
+        """
+        ordre: list[tuple[str, str]] = []
+        generation = self.base.lire(image.generation) if image.generation else None
+        if generation is not None:
+            if generation.pliage is not None:
+                ordre += [(c.base, "sa planche partait de cette pose") for c in generation.pliage.cases if c.base]
+            for role, raison in ((EDITION, "l'image à modifier de sa génération"),
+                                 (REFERENCE, "une image de référence de sa génération"),
+                                 (STYLE, "une image de style de sa génération")):
+                ordre += [(r.asset, raison) for r in generation.references if r.role == role and r.origine == ASSET]
+        if image.parent:
+            ordre.append((image.parent, "l'image dont elle descend"))
+        vues: set[str] = set()
+        trouvees = []
+        for identifiant, raison in ordre:
+            if identifiant in vues:
+                continue
+            vues.add(identifiant)
+            pose = self.assets.lire(identifiant)
+            if (pose is None or pose.projet != projet or pose.personnage != porteur
+                    or not pose.pose or pose.piece or pose.identifiant == image.identifiant):
+                continue
+            trouvees.append({"cible": CibleCalque("image", pose.identifiant).en_json(), "pose": pose.pose,
+                             "direction": pose.direction or "", "raison": raison, "image": pose.en_json()})
+        return trouvees
+
+    def fabriquees_d_apres(self, projet, piece, emploi, resultat: str) -> list[dict[str, Any]]:
+        """Les images de la bibliothèque fabriquées d'après cette pose — l'inverse du relevé ci-dessus.
+
+        C'est la proposition « en un clic » : sur la pose « repos · est », les
+        images dont la génération partait de « repos · est ». Un calque de pose
+        historique (il porte une pièce) n'en fait pas partie : son rendu est déjà
+        un calque, pas un personnage équipé.
+        """
+        personnage, _, _ = self._emploi(projet, piece, emploi)
+        pose = self.assets.lire(resultat)
+        if pose is None or pose.personnage != personnage.identifiant or not pose.pose or pose.piece:
+            return []
+        deja = {v["source"] for v in self.depot.variantes(projet, piece, emploi)
+                if v.get("cible", {}).get("resultat") == resultat}
+        sortie = []
+        for generation in self.base.generations_du_projet(projet, limite=5000):
+            bases = {c.base for c in generation.pliage.cases if c.base} if generation.pliage else set()
+            refs = {r.asset for r in generation.references if r.origine == ASSET}
+            # Une planche de création (pliée, sans pièce) fabrique d'autres poses
+            # du même corps, pas un corps équipé.
+            if (resultat not in bases and resultat not in refs) or (generation.pliage is not None and not generation.piece):
+                continue
+            for rang in sorted(self.base.rangs_de_generation(generation.identifiant)):
+                image = self.assets.lire(identifiant_de(generation.identifiant, rang))
+                # Une planche de quatre directions part de quatre poses : elle est
+                # proposée sur chacune, et la préparation n'en garde que la case
+                # qui partait de celle-ci (`_case_de_planche`).
+                if image is None or image.piece or image.identifiant == resultat or not image.type_media.startswith("image/"):
+                    continue
+                # Une image déjà rangée comme pose du porteur est une cible, pas
+                # une image équipée : la proposer ici la ferait comparer à elle-même.
+                if image.personnage == personnage.identifiant and image.pose:
+                    continue
+                sortie.append({"image": image.en_json(), "deja": image.identifiant in deja})
+        return sortie
+
+    # ── Préparer l'image équipée comme sa pose ───────────────────────────────
+
+    def _preparer_source(self, image: Asset, base_png: bytes, base: dict, *, recette: str,
+                         echelle: bool, resultat: str | None = None) -> tuple[bytes, dict[str, Any]]:
+        """L'image équipée, lue pour être comparée à sa pose — et ce qui a été fait pour ça.
+
+        **Pourquoi ce n'est pas la recette entière, et ce qui reste dehors** :
+
+        - le recadrage et la grille rendent une image *à la résolution de ce
+          qu'on leur donne* — 934 × 567 pour la planche de Champy, 451 × 221
+          pour sa pose. Quand `echelle` est demandée, ils cèdent la place à
+          `ramener_sur`, qui met le corps à l'échelle du corps de la pose et
+          l'image dans son cadre : c'est ce que les deux étapes voulaient dire ;
+        - le contour et le miroir ne se rejouent pas : ce qui est parti au modèle
+          est le **rendu** de la pose (`ServiceAssets.reference`), contour tracé
+          et miroir déjà fait. Les rejouer doublerait le trait et retournerait
+          l'image à l'envers de sa pose ;
+        - ce qui ne voyage pas d'une image à l'autre (`voyage`) reste dehors,
+          comme pour un collage de recette.
+
+        Ce qui est laissé se dit, ligne par ligne, dans `laissee`.
+        """
+        base_px = rgba(base_png)
+        appliquee: list[str] = []
+        laissee: list[str] = []
+        brut = self.assets.octets(image, brut=True)[0]
+        tolerance = 28
+        if recette == RECETTE_DE_LA_POSE:
+            r, laisse = voyage(Recette.depuis_json(base.get("recette") or {}).sans_nom())
+            laissee += list(laisse)
+            tolerance = next((p.tolerance for p in r.passes_vives()), tolerance)
+            passes = () if r.dort(DETOURAGE) else r.passes
+            try:
+                pixels = np.array(self.assets.detourage(image, passes=passes))
+                if passes and r.passes_vives():
+                    appliquee.append("détourage")
+            except Exception as erreur:  # un moteur absent ne doit pas empêcher l'association
+                pixels = rgba(brut)
+                laissee.append(f"le détourage de la pose n'a pas pu tourner ici ({erreur})")
+            if bool((pixels[:, :, 3] >= 128).all()):
+                pixels = np.array(avec_alpha(png(pixels)))
+                appliquee.append("détourage par le bord — l'image arrivait sans transparence")
+            pixels = self._case_de_planche(image, resultat, pixels)
+            # Les couleurs se ramènent après, par `aux_couleurs_de` : la
+            # quantification ordinaire repeindrait aussi la pièce aux couleurs du
+            # corps.
+            couleurs = r.quantification is not None and not r.dort(QUANTIFICATION)
+            methode = r.grille.methode if r.grille is not None and not r.dort(GRILLE) else None
+            queue_ = replace(r, contours=None, retournement=None, main=None, difference=None, quantification=None)
+            if r.contours is not None and not r.dort(CONTOURS):
+                laissee.append("le contour — l'image envoyée au modèle le portait déjà")
+            if r.retournement is not None and not r.dort(RETOURNEMENT):
+                laissee.append("le miroir — l'image envoyée au modèle était déjà retournée")
+            if echelle:
+                queue_ = replace(queue_, recadrage=None, grille=None)
+            else:
+                if r.recadrage is not None and not r.dort(RECADRAGE):
+                    appliquee.append("recadrage")
+                if r.grille is not None and not r.dort(GRILLE):
+                    appliquee.append("grille")
+        else:
+            pixels = rgba(self.assets.octets(image)[0])
+            appliquee.append("sa propre recette, telle que retouchée")
+            if bool((pixels[:, :, 3] >= 128).all()):
+                pixels = np.array(avec_alpha(png(pixels)))
+                appliquee.append("détourage par le bord — l'image arrivait sans transparence")
+            queue_, couleurs, methode = None, False, None
+        source_largeur, source_hauteur = pixels.shape[1], pixels.shape[0]
+        mesure: dict[str, Any] = {}
+        if echelle:
+            ramene = ramener_sur(base_px, pixels, methode=methode)
+            if ramene is None:
+                laissee.append("la mise à l'échelle — aucun corps à retrouver sur l'une des deux images")
+            else:
+                pixels = ramene.image
+                appliquee.append("cadre et échelle de la pose")
+                # Seulement quand l'image est arrivée sur un fond plat : sur une
+                # image déjà transparente, la « couleur du bord » serait le noir
+                # des pixels vides, et une épée noire partirait avec.
+                arrivee = rgba(brut)
+                poches = 0
+                if couleur_du_fond(arrivee[:, :, 3:])[0] >= 128:
+                    pixels, poches = sans_poches_de_fond(pixels, base_px, couleur_du_fond(arrivee[:, :, :3]), tolerance)
+                if poches:
+                    appliquee.append(f"fond enfermé hors du corps retiré ({poches} px)")
+                mesure = {"facteur": round(ramene.echelle, 4), "x": ramene.x, "y": ramene.y,
+                          "accord": round(ramene.accord, 4), "dehors": round(ramene.dehors, 4)}
+        if queue_ is not None:
+            pixels = queue(np.ascontiguousarray(pixels), queue_)
+            if couleurs:
+                ramenees = aux_couleurs_de(pixels, base_px)
+                if ramenees is None:
+                    laissee.append("les couleurs — la pose en porte trop pour en faire une palette")
+                else:
+                    pixels = ramenees
+                    appliquee.append("couleurs de la pose (celles qu’elle n’a pas restent : ce sont celles de la pièce)")
+            if queue_.bords is not None and not queue_.dort(BORDS):
+                appliquee.append("nettoyage des bords")
+        description = {
+            "recette": recette, "echelle": echelle,
+            "depuis": {"pose": base.get("pose", ""), "direction": base.get("direction", "")},
+            "appliquee": appliquee, "laissee": laissee,
+            "cadre_source": {"largeur": source_largeur, "hauteur": source_hauteur}, **mesure,
+        }
+        return png(pixels), description
+
+    def _case_de_planche(self, image: Asset, resultat: str | None, pixels: np.ndarray) -> np.ndarray:
+        """Sur une planche de plusieurs corps, la seule case qui partait de cette pose."""
+        generation = self.base.lire(image.generation) if image.generation else None
+        if resultat is None or generation is None or generation.pliage is None or len(generation.pliage.cases) < 2:
+            return pixels
+        rangs = [i for i, c in enumerate(generation.pliage.cases) if c.base == resultat]
+        boites = cases_de(pixels.shape[1], pixels.shape[0], generation.pliage.geometrie)
+        if not rangs or rangs[0] >= len(boites):
+            return pixels
+        x0, y0, x1, y1 = boites[rangs[0]]
+        return pixels[y0:y1 + 1, x0:x1 + 1]
+
+    def reprendre_source(self, projet, piece, emploi, identifiant, revision: int, *,
+                         recette: str = RECETTE_DE_LA_POSE, echelle: bool = True):
+        """Relire l'image équipée — avec la recette de sa pose, ou avec la sienne.
+
+        C'est le geste qui rend la préparation **réglable** : retirer la recette
+        de la pose, la remettre, ou relire l'image après l'avoir retouchée dans la
+        retouche ordinaire. L'ancienne lecture reste dans l'historique et son
+        fichier sur le disque ; le calage repart de zéro, puisqu'il visait
+        l'image d'avant.
+        """
+        if recette not in (RECETTE_DE_LA_POSE, RECETTE_DE_L_IMAGE):
+            raise ProductionRefusee("la recette est celle de la pose ou celle de l'image")
+        with self.verrou:
+            v = self._brut(projet, piece, emploi, identifiant)
+            self._revision(v, revision)
+            if v["role"] != "source-equipee":
+                raise ProductionRefusee("seule une image équipée à extraire se relit ainsi")
+            image = self.assets.lire(v["source"])
+            if image is None:
+                raise ProductionRefusee("l'image équipée n'est plus dans la bibliothèque ; sa dernière lecture est conservée")
+            chemin = self._chemin(projet, piece, emploi, identifiant)
+            octets, preparation = self._preparer_source(
+                image, (chemin / v["base_fichier"]).read_bytes(), v["base"],
+                recette=recette, echelle=echelle, resultat=v["cible"].get("resultat"))
+            nom = f"source-{v['revision'] + 1}.png"
+            (chemin / nom).write_bytes(octets)
+            nouvelle = deepcopy(v)
+            pixels = rgba(octets)
+            nouvelle.update(source_fichier=nom, preparation=preparation, extraction=None,
+                            source_fiche=image.en_json(),
+                            calque_cadre={"largeur": pixels.shape[1], "hauteur": pixels.shape[0]})
+            self._enregistrer_revision(nouvelle, v)
+            return self.lire(projet, piece, emploi, identifiant)
+
+    @staticmethod
+    def _fichier_source(variante) -> str:
+        return variante.get("source_fichier") or "source.png"
 
     def accueillir_source_preparee(self, projet, piece, emploi, cible, source, base_png, base,
-                                  *, identifiant=None, role="source-equipee", source_png=None):
+                                  *, identifiant=None, role="source-equipee", source_png=None,
+                                  preparation=None):
         """Le retour d'une fabrication reste lié à la base envoyée, même devenue périmée.
 
         Appel interne : la route de création ne reçoit jamais une empreinte fournie
@@ -220,6 +489,9 @@ class ServiceCalquesCibles:
                 "cible": visee.en_json(), "base": base, "base_fichier": "base-1.png",
                 "source": image.identifiant, "source_fiche": image.en_json(), "role": role,
                 "calque_cadre": {"largeur": source_pixels.shape[1], "hauteur": source_pixels.shape[0]},
+                # Comment l'image équipée a été lue — absent sur une variante
+                # d'avant, ce qui se lit « telle quelle ».
+                **({"preparation": preparation} if preparation is not None else {}),
                 "placement": PlacementCalque(devant=lien.devant).en_json(),
                 "masques": masques_valides({}), "extraction": None,
                 "revision": 1, "historique": [], "validee": False, "cree_le": time.time(),
@@ -250,7 +522,7 @@ class ServiceCalquesCibles:
                 raise ProductionRefusee("l'extraction part d'une image équipée, conservée séparément du calque")
             chemin = self._chemin(projet, piece, emploi, identifiant)
             bas = rgba((chemin / v["base_fichier"]).read_bytes())
-            haut = rgba((chemin / "source.png").read_bytes())
+            haut = rgba((chemin / self._fichier_source(v)).read_bytes())
             pose = self._reglage_extraction(reglage)
             if automatique:
                 from dataclasses import replace
@@ -276,7 +548,7 @@ class ServiceCalquesCibles:
                            historique=[], validee=False, cree_le=time.time())
             destination = self._chemin(projet, piece, emploi, nouveau["identifiant"])
             destination.mkdir(parents=True, exist_ok=False)
-            for nom in (v["base_fichier"], "source.png"):
+            for nom in (v["base_fichier"], self._fichier_source(v)):
                 (destination / nom).write_bytes((chemin / nom).read_bytes())
             (destination / "calque.png").write_bytes(octets)
             self.depot.ecrire(destination / "variante.json", nouveau)
@@ -354,7 +626,7 @@ class ServiceCalquesCibles:
         if v["role"] != "source-equipee":
             raise ProductionRefusee("le recalage compare l’image équipée à sa base")
         chemin = self._chemin(projet, piece, emploi, identifiant)
-        echelle, dy, dx, couverture = proposer(rgba((chemin / v["base_fichier"]).read_bytes()), rgba((chemin / "source.png").read_bytes()))
+        echelle, dy, dx, couverture = proposer(rgba((chemin / v["base_fichier"]).read_bytes()), rgba((chemin / self._fichier_source(v)).read_bytes()))
         return {"echelle": echelle, "dx": dx, "dy": dy, "couverture": couverture}
 
     def apercu(self, projet, piece, emploi, identifiant, vue="composition", *, placement=None, masques=None, extraction=None) -> bytes:
@@ -363,10 +635,10 @@ class ServiceCalquesCibles:
         if vue == "base":
             return (chemin / v["base_fichier"]).read_bytes()
         if vue == "source" or (v["role"] != "calque" and extraction is None):
-            return (chemin / "source.png").read_bytes()
+            return (chemin / self._fichier_source(v)).read_bytes()
         if extraction is not None and v["role"] == "source-equipee":
             pixels, _ = superposer(rgba((chemin / v["base_fichier"]).read_bytes()),
-                                  rgba((chemin / "source.png").read_bytes()), self._reglage_extraction(extraction))
+                                  rgba((chemin / self._fichier_source(v)).read_bytes()), self._reglage_extraction(extraction))
             calque = png(pixels)
         else:
             calque = (chemin / "calque.png").read_bytes()

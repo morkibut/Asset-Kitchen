@@ -6,13 +6,27 @@ export type PlacementCalque = { dx: number; dy: number; echelle: number; rotatio
 export type MasquesCalque = Record<"calque" | "corps" | "derriere", Trait[]>
 export type ExtractionCalque = { dx: number; dy: number; echelle: number; seuil: number }
 export type RoleCalque = "reference" | "source-equipee" | "calque"
+/** Comment l'image équipée a été lue avant d'être comparée à sa pose
+ *  (`atelier/services/calques_cibles.py`, `_preparer_source`). Absente sur une
+ *  variante d'avant le 18 septembre 2026 : elle a été lue telle quelle. */
+export type PreparationSource = {
+  recette: "pose" | "sienne"; echelle: boolean
+  depuis: { pose: string; direction: string }
+  appliquee: string[]; laissee: string[]
+  cadre_source: { largeur: number; hauteur: number }
+  facteur?: number; x?: number; y?: number; accord?: number; dehors?: number
+}
 export type VarianteCalque = {
   identifiant: string; cible: CibleCalque; role: RoleCalque; source: string; source_fiche: Asset
   revision: number; placement: PlacementCalque; masques: MasquesCalque; extraction: ExtractionCalque | null
   historique: unknown[]; base: { cadre: { largeur: number; hauteur: number }; repere: { x: number; y: number }; pose: string; direction: string }
   calque_cadre?: { largeur: number; hauteur: number }
+  preparation?: PreparationSource
   etat: "reference" | "a-extraire" | "a-verifier" | "prete" | "a-revoir"; raison: string; retenue: boolean; utilisable: boolean
 }
+/** Une pose du porteur d'après laquelle une image a été fabriquée — relue sur sa génération. */
+export type PoseDeReference = { cible: CibleCalque; pose: string; direction: string; raison: string; image: Asset }
+export type ImageFabriquee = { image: Asset; deja: boolean }
 export type ImageCible = { cible: CibleCalque; pose: string; direction: string; rang?: number; image?: Asset; nom_bande?: string }
 export type CiblesEmploi = { piece: Piece; emploi: EmploiResolu; personnage: Personnage; cibles: ImageCible[]; variantes: VarianteCalque[]; images_disponibles: number; calques_retenus: number }
 export type BrouillonCalque = { placement: PlacementCalque; masques: MasquesCalque; extraction?: ExtractionCalque; vue?: "composition" | "calque" | "base" | "source" }
@@ -27,7 +41,12 @@ export const apiCalques = {
   reglerPiece: (projet: string, piece: string, champs: { nom?: string; description?: string; references?: string[] }) => appeler<{ piece: Piece }>(`/characters/pieces/${encodeURIComponent(piece)}`, json("PUT", { ...champs, projet })),
   cibles: (c: CheminEmploi) => appeler<CiblesEmploi>(`${prefixe(c)}/targets`),
   imageCible: (c: CheminEmploi, cible: CibleCalque) => `/api${prefixe(c)}/targets/preview.png?${new URLSearchParams(cible)}`,
-  creer: (c: CheminEmploi, cible: CibleCalque, source: string, role: RoleCalque) => appeler<VarianteCalque>(`${prefixe(c)}/layers`, json("POST", { cible, source, role })),
+  /** `cible` à `null` : la pose de référence de la génération de l'image décide. */
+  creer: (c: CheminEmploi, cible: CibleCalque | null, source: string, role: RoleCalque) => appeler<VarianteCalque>(`${prefixe(c)}/layers`, json("POST", { cible, source, role })),
+  posesDeReference: (c: CheminEmploi, source: string) => appeler<{ poses: PoseDeReference[] }>(`${prefixe(c)}/targets/references?${new URLSearchParams({ source })}`),
+  fabriqueesDApres: (c: CheminEmploi, resultat: string) => appeler<{ images: ImageFabriquee[] }>(`${prefixe(c)}/targets/made-from?${new URLSearchParams({ resultat })}`),
+  /** Relire l'image équipée : avec la recette de sa pose ou la sienne, ramenée ou non à l'échelle du corps. */
+  reprendreSource: (c: CheminEmploi, id: string, revision: number, recette: PreparationSource["recette"], echelle: boolean) => appeler<VarianteCalque>(`${couche(c, id)}/source`, json("POST", { revision, recette, echelle })),
   lire: (c: CheminEmploi, id: string) => appeler<VarianteCalque>(couche(c, id)),
   regler: (c: CheminEmploi, id: string, revision: number, brouillon: BrouillonCalque) => appeler<VarianteCalque>(couche(c, id), json("PUT", { revision, placement: brouillon.placement, masques: brouillon.masques })),
   extraire: (c: CheminEmploi, id: string, reglage: ExtractionCalque) => appeler<VarianteCalque>(`${couche(c, id)}/extract`, json("POST", { reglage })),

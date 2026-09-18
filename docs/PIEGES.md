@@ -1897,3 +1897,15 @@ la prochaine réécriture retrouvera.
   ou `null`) doivent rester deux variables distinctes dans le composant. Trouvé le 16 septembre
   2026 sur `RP22` ; preuve dans `interface/src/composants/Retouche.test.tsx` § « le retournement
   se déclique, et la table s'endort et se vide comme les autres ».
+- **« Appliquer la même recette » ne met pas deux images à la même taille.** L'image équipée
+  d'un calque était comparée à sa pose telle qu'elle était rangée — la brute du modèle,
+  1024 × 1024, contre une pose de 221 × 451 : relevé sur le disque de l'auteur, Champy et son
+  bâton, le 18 septembre 2026. Le réflexe est de lui rejouer la recette de la pose ; mesuré, ça
+  rend **934 × 567**, parce qu'un recadrage à marge nulle rend une image à la résolution de ce
+  qu'on lui donne, et qu'une grille endormie ne ramène rien. ⚠️ **Une recette décrit un
+  traitement, pas un cadre** : ce qui manquait était l'échelle du corps, et elle se *mesure*
+  (`ramener_sur`, `atelier/image/calques_cibles.py`) — le recadrage et la grille cèdent la
+  place, le reste de la recette passe. Et la quantification ordinaire, rejouée telle quelle,
+  **repeint la pièce aux couleurs du corps** : un bâton de bois est ressorti rouge chapeau sur
+  l'atelier jetable ; les couleurs de la pose ne ramènent donc que ce qui en est proche
+  (`aux_couleurs_de`). Preuve dans `tests/test_au15_recette_de_la_pose.py`.

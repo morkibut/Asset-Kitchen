@@ -1,22 +1,80 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react"
-import { apiCalques, cleCible, ETAT_CALQUE, type BrouillonCalque, type CheminEmploi, type ImageCible, type VarianteCalque } from "../api-calques"
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from "react"
+import { apiCalques, cleCible, ETAT_CALQUE, type BrouillonCalque, type CheminEmploi, type ImageCible, type PreparationSource, type VarianteCalque } from "../api-calques"
+import type { ZoomTable } from "../recette"
+import { BarreDuZoom } from "./CommandesDuZoom"
 
-const CONTROLE = "h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle disabled:text-eteint"
+const CONTROLE = "h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:text-eteint"
+const PRINCIPAL = "h-[34px] rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50"
+const PETIT = "h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 disabled:opacity-50"
 const copie = <T,>(valeur: T): T => structuredClone(valeur)
 const outils = { deplacer: "Déplacer le calque", vue: "Déplacer la vue", effacer: "Effacer le calque", restaurer: "Restaurer le calque", masquer: "Masquer le corps", corps: "Restaurer le corps", dessous: "Passer cette partie dessous", dessus: "Ramener cette partie dessus" }
 type Outil = keyof typeof outils
+/** `superposes` se dessine dans le navigateur — la pose, et l'image équipée
+ *  posée dessus en transparence : le calage se voit pendant qu'on le fait,
+ *  sans aller-retour au serveur. Les autres vues sont rendues par le même
+ *  compositeur CPU que le résultat gardé. */
+type Vue = "superposes" | "composition" | "calque" | "base" | "source"
 
 function Mesure({ nom, valeur, min, max, pas = 1, onChange }: { nom: string; valeur: number; min: number; max: number; pas?: number; onChange: (v: number) => void }) {
   const poser = (v: number) => { if (Number.isFinite(v)) onChange(Math.max(min, Math.min(max, v))) }
   return <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">{nom}<span className="flex items-center gap-[8px]"><input aria-label={nom} type="range" min={min} max={max} step={pas} value={valeur} onChange={(e) => poser(Number(e.target.value))} className="min-w-0 flex-1 accent-signal" /><input aria-label={`${nom} — valeur`} type="number" min={min} max={max} step={pas} value={valeur} onChange={(e) => poser(Number(e.target.value))} className={`${CONTROLE} w-[70px]`} /></span></label>
 }
 
+/** Une étape de la chaîne, numérotée : la colonne se lit de haut en bas dans
+ *  l'ordre où l'on travaille. */
+function Etape({ numero, titre, children }: { numero?: number; titre: string; children: ReactNode }) {
+  return <section className="flex flex-col gap-[8px] border-t border-trait pt-[14px] first:border-t-0 first:pt-0">
+    <h3 className="text-[13px] font-medium text-encre">{numero ? `${numero} · ` : ""}{titre}</h3>
+    {children}
+  </section>
+}
+
+/** Où l'image équipée se pose dans le cadre de la pose — **la même règle que
+ *  `aligner`** (`atelier/image/calque.py`) : ramenée pour tenir si elle dépasse,
+ *  puis mise à l'échelle autour du centre du cadre et décalée. Une seconde
+ *  règle ici ferait voir un calage que l'extraction ne ferait pas. */
+export function placeDuDessus(ls: number, hs: number, l: number, h: number, echelle: number, dx: number, dy: number) {
+  let largeur = ls, hauteur = hs, gauche = 0, sommet = 0
+  if (ls !== l || hs !== h) {
+    const tient = ls <= l && hs <= h
+    const facteur = tient ? 1 : Math.min(l / Math.max(1, ls), h / Math.max(1, hs))
+    largeur = Math.max(1, Math.round(ls * facteur)); hauteur = Math.max(1, Math.round(hs * facteur))
+    gauche = tient ? 0 : Math.floor((l - largeur) / 2); sommet = tient ? 0 : Math.floor((h - hauteur) / 2)
+  }
+  const l2 = Math.max(1, Math.round(l * echelle)), h2 = Math.max(1, Math.round(h * echelle))
+  const rx = l2 / l, ry = h2 / h
+  return { left: Math.floor((l - l2) / 2) + dx + gauche * rx, top: Math.floor((h - h2) / 2) + dy + sommet * ry, width: largeur * rx, height: hauteur * ry }
+}
+
+/** Ce que la préparation a fait, en clair — et ce qu'elle a laissé. */
+function LectureDeLaSource({ preparation, nomDeLaPose }: { preparation?: PreparationSource; nomDeLaPose: string }) {
+  if (!preparation) return <p className="text-[12px] leading-[1.45] text-encre-3">Lue telle quelle : ni la recette de la pose, ni son échelle. Appliquez la recette de {nomDeLaPose} pour que les deux corps se comparent.</p>
+  const dehors = preparation.dehors ?? 0
+  return <div className="flex flex-col gap-[4px] text-[12px] leading-[1.45] text-encre-3">
+    {preparation.recette === "pose"
+      ? <p data-recette-appliquee><b className="text-encre-2">Recette de {nomDeLaPose} appliquée</b>{preparation.appliquee.length ? ` : ${preparation.appliquee.join(", ")}.` : "."}</p>
+      : <p data-recette-appliquee><b className="text-encre-2">Sa propre recette</b>, telle que retouchée{preparation.echelle ? ", ramenée à l’échelle de la pose." : ", à sa taille d’origine."}</p>}
+    {preparation.facteur !== undefined && <p>Arrivée à {preparation.cadre_source.largeur} × {preparation.cadre_source.hauteur} px, mise à l’échelle × {preparation.facteur.toFixed(2)}.</p>}
+    {!!preparation.laissee.length && <details><summary className="cursor-pointer">Laissé de côté ({preparation.laissee.length})</summary><ul className="mt-[4px] list-disc pl-[14px]">{preparation.laissee.map((l) => <li key={l}>{l}</li>)}</ul></details>}
+    {dehors > 0.02 && <p role="note" className="rounded-7 border border-trait-attention bg-fond-attention p-[8px] text-encre-attention">{Math.round(dehors * 100)} % de l’image équipée tombe hors du cadre de la pose et sera coupé. Une marge au recadrage de la pose le garde.</p>}
+    {preparation.accord !== undefined && preparation.accord < 0.5 && <p role="note" className="rounded-7 border border-trait-attention bg-fond-attention p-[8px] text-encre-attention">Les deux corps se recouvrent mal ({Math.round(preparation.accord * 100)} %) : vérifiez la superposition avant d’extraire.</p>}
+  </div>
+}
+
 /** L’aperçu vient du même compositeur CPU que le rendu gardé. Les coordonnées
  * des masques locaux sont inversées avant stockage : zoom et placement ne
- * déplacent jamais une peinture déjà posée. */
-export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onSale }: {
+ * déplacent jamais une peinture déjà posée.
+ *
+ * **La mise en page est celle de l'atelier d'animation** (`AtelierDeBande`) :
+ * la scène à gauche, les réglages à droite dans l'ordre où l'on travaille —
+ * pose de référence, image équipée, calage, extraction, retouche. */
+export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onSale, nomDeLaPose, onRetoucher }: {
   chemin: CheminEmploi; variante: VarianteCalque; cibles?: ImageCible[]
   onGarde: (v: VarianteCalque) => void; onSale: (sale: boolean) => void
+  /** Le nom lisible de la pose de base, « repos » plutôt que son identifiant. */
+  nomDeLaPose?: string
+  /** Ouvrir l'image équipée dans la retouche ordinaire. */
+  onRetoucher?: (asset: string) => void
 }) {
   const initial: BrouillonCalque = { placement: copie(variante.placement), masques: copie(variante.masques), ...(variante.role === "source-equipee" ? { extraction: variante.extraction ?? { dx: 0, dy: 0, echelle: 1, seuil: 30 } } : {}) }
   const cleBrouillon = `atelier-calque:${chemin.projet}:${variante.identifiant}:${variante.revision}`
@@ -29,8 +87,11 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
   const [retablissements, setRetablissements] = useState<BrouillonCalque[]>([])
   const [outil, setOutil] = useState<Outil>("deplacer")
   const [rayon, setRayon] = useState(2)
-  const [zoom, setZoom] = useState(400)
-  const [vue, setVue] = useState<"composition" | "calque" | "base" | "source">("composition")
+  const [zoom, setZoom] = useState<ZoomTable>("ajuste")
+  const [ajuste, setAjuste] = useState(400)
+  const extraction = variante.role === "source-equipee"
+  const [vue, setVue] = useState<Vue>(variante.role === "reference" ? "source" : extraction ? "superposes" : "composition")
+  const [transparence, setTransparence] = useState(55)
   const [url, setUrl] = useState("")
   const [curseur, setCurseur] = useState<{ x: number; y: number } | null>(null)
   const [erreur, setErreur] = useState("")
@@ -45,6 +106,8 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
   const modifiable = variante.role !== "reference"
   const extrait = variante.role === "calque"
   const largeur = variante.base.cadre.largeur, hauteur = variante.base.cadre.hauteur
+  const pose = `${nomDeLaPose ?? variante.base.pose} · ${variante.base.direction || "sans direction"}`
+  const facteur = (zoom === "ajuste" ? ajuste : zoom) / 100
 
   useEffect(() => { onSale(sale); return () => onSale(false) }, [sale, onSale])
   // Changer de rubrique dans le même atelier ne perd pas le brouillon. Il
@@ -58,8 +121,20 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
     window.addEventListener("beforeunload", prevenir)
     return () => window.removeEventListener("beforeunload", prevenir)
   }, [sale])
+  // « Adapter » suit la place de la scène, comme dans l'atelier d'animation.
+  useLayoutEffect(() => {
+    const cadre = viewport.current
+    if (!cadre) return
+    const mesurer = () => { const r = cadre.getBoundingClientRect(); if (r.width > 0 && r.height > 0) setAjuste(Math.max(1, Math.floor(Math.min((r.width - 44) / largeur, (r.height - 44) / hauteur) * 100))) }
+    mesurer()
+    if (typeof ResizeObserver === "undefined") return
+    const observateur = new ResizeObserver(mesurer)
+    observateur.observe(cadre)
+    return () => observateur.disconnect()
+  }, [largeur, hauteur])
   useEffect(() => {
-    if (variante.role === "reference") { setUrl(apiCalques.image(chemin, variante, "source")); return }
+    if (vue === "superposes") return
+    if (vue === "base" || vue === "source" || variante.role === "reference") { setUrl(apiCalques.image(chemin, variante, vue === "base" ? "base" : "source")); return }
     const controle = new AbortController()
     let objetUrl = ""
     setCalcul(true)
@@ -86,6 +161,7 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
     catch (e) { setErreur(e instanceof Error ? e.message : "Le calque n’a pas pu être enregistré.") }
     finally { setAttente(false) }
   }
+  const relire = (recette: PreparationSource["recette"], echelle: boolean) => void action(() => apiCalques.reprendreSource(chemin, variante.identifiant, variante.revision, recette, echelle))
   const point = (e: PointerEvent) => {
     const r = image.current!.getBoundingClientRect()
     return { x: (e.clientX - r.left) * largeur / r.width, y: (e.clientY - r.top) * hauteur / r.height }
@@ -116,7 +192,7 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
     if (!image.current || !viewport.current || (e.button !== 0 && e.button !== 1)) return
     e.preventDefault(); e.currentTarget.focus(); e.currentTarget.setPointerCapture(e.pointerId)
     const p = point(e), placement = brouillon.extraction ?? brouillon.placement
-    const pan = espace.current || e.button === 1 || outil === "vue" || !modifiable || vue !== "composition"
+    const pan = espace.current || e.button === 1 || outil === "vue" || !modifiable || !(vue === "composition" || vue === "superposes")
     geste.current = { ...p, clientX: e.clientX, clientY: e.clientY, dx: placement.dx, dy: placement.dy, gauche: viewport.current.scrollLeft, haut: viewport.current.scrollTop, pan }
     if (!pan) { memoriser(); peindre(e, true) }
   }
@@ -132,60 +208,120 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
     } else peindre(e, false)
   }
   const reglage = brouillon.extraction ?? brouillon.placement
+  const vues: [Vue, string][] = variante.role === "reference" ? [["source", "Image de référence"]]
+    : extraction ? [["superposes", "Les deux superposés"], ["composition", "Ce qui sera extrait"], ["calque", "Calque seul"], ["base", "Pose de référence"], ["source", "Image équipée"]]
+      : [["composition", "Personnage équipé"], ["calque", "Calque seul"], ["base", "Base conservée"], ["source", "Image source"]]
+  const cadreSource = variante.calque_cadre ?? variante.base.cadre
+  const dessus = brouillon.extraction ? placeDuDessus(cadreSource.largeur, cadreSource.hauteur, largeur, hauteur, brouillon.extraction.echelle, brouillon.extraction.dx, brouillon.extraction.dy) : null
+  const preparation = variante.preparation
 
-  return <section aria-label="Éditeur du calque ciblé" className="flex min-h-0 flex-1 flex-col">
-    <div className="flex flex-wrap items-center gap-[8px] border-b border-trait p-[14px]">
-      <strong className="text-[13px] text-encre">{ETAT_CALQUE[variante.etat]}{variante.retenue ? " · retenue" : ""}</strong>
-      <span className="text-[12px] text-encre-3">{largeur} × {hauteur} px · repère {variante.base.repere.x}, {variante.base.repere.y}</span>
-      <span role="status" className="ml-auto text-[12px] text-encre-3">{calcul ? "Calcul de l’aperçu…" : sale ? "Modifications non enregistrées" : "Réglages enregistrés"}</span>
-    </div>
-    {erreur && <p role="alert" className="px-[14px] py-[8px] text-[13px] text-echec">{erreur}</p>}
-    {variante.raison && <div className="border-b border-trait bg-carte p-[14px] text-[13px] text-encre-2"><p>{variante.raison}. Les anciens pixels et les masques sont conservés.</p><label className="mt-[8px] flex items-center gap-[8px]">Base à adopter<select className={`${CONTROLE} min-w-0 flex-1`} aria-label="Nouvelle base du calque" value={nouvelleBase} onChange={(e) => setNouvelleBase(e.target.value)}>{!cibles.some((c) => cleCible(c.cible) === cleCible(variante.cible)) && <option value={cleCible(variante.cible)} disabled>La base d’origine n’est plus disponible</option>}{cibles.map((c) => <option key={cleCible(c.cible)} value={cleCible(c.cible)}>{c.pose} · {c.direction || "sans direction"} · {c.cible.nature === "frame" ? `${c.nom_bande} frame ${(c.rang ?? 0) + 1}` : c.image?.label || "image fixe"}</option>)}</select></label><button disabled={sale || attente || !cibles.some((c) => cleCible(c.cible) === nouvelleBase)} onClick={() => void action(() => apiCalques.adopter(chemin, variante.identifiant, variante.revision, cibles.find((c) => cleCible(c.cible) === nouvelleBase)!.cible))} className={`${CONTROLE} mt-[8px]`}>Adopter cette base, puis revérifier</button></div>}
-    <div className="flex min-h-0 flex-1">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="flex flex-wrap items-center gap-[8px] p-[14px]">
-          <select aria-label="Vue du calque" value={vue} onChange={(e) => setVue(e.target.value as typeof vue)} className={CONTROLE}><option value="composition">Personnage équipé</option>{modifiable && <option value="calque">Calque seul</option>}<option value="base">Base conservée</option><option value="source">Image source</option></select>
-          <button className={CONTROLE} aria-label="Dézoomer le calque" onClick={() => setZoom((z) => Math.max(25, z / 2))}>−</button><label className="flex items-center gap-[4px] text-[12px] text-encre-3"><input aria-label="Zoom du calque en pourcentage" type="number" min="25" max="3200" value={zoom} onChange={(e) => setZoom(Math.max(25, Math.min(3200, Number(e.target.value) || 25)))} className={`${CONTROLE} w-[70px]`} />%</label><button className={CONTROLE} aria-label="Zoomer le calque" onClick={() => setZoom((z) => Math.min(3200, z * 2))}>+</button><button className={CONTROLE} onClick={() => setZoom(100)}>1:1</button>
-        </div>
-        <div ref={viewport} className="defile min-h-0 flex-1 overflow-auto bg-pourtour p-[22px]" onWheel={(e) => { if (e.ctrlKey || e.altKey) { e.preventDefault(); setZoom((z) => Math.max(25, Math.min(3200, Math.round(z * (e.deltaY < 0 ? 1.2 : 1 / 1.2))))) } }}>
-          <div role="application" aria-label="Image équipée — glisser pour déplacer, espace pour déplacer la vue" tabIndex={0} className="relative w-fit touch-none outline-none" onPointerDown={commencer} onPointerMove={bouger} onPointerUp={() => { geste.current = null }} onPointerCancel={() => { geste.current = null }} onPointerLeave={() => setCurseur(null)} onKeyDown={(e) => { if (e.code === "Space") { espace.current = true; e.preventDefault() }; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.stopPropagation(); if (e.shiftKey) retablir(); else annuler() } }} onKeyUp={(e) => { if (e.code === "Space") espace.current = false }} onBlur={() => { espace.current = false; geste.current = null }}>
-            {url ? <img ref={image} src={url} draggable={false} alt="Aperçu du calque sur sa base" width={largeur} height={hauteur} className="damier-papier block max-w-none" style={{ width: largeur * zoom / 100, height: hauteur * zoom / 100, imageRendering: "pixelated" }} /> : <p className="text-[13px] text-encre-3">Préparation de l’image…</p>}
-            {curseur && extrait && !["deplacer", "vue"].includes(outil) && vue === "composition" && <span aria-hidden className="pointer-events-none absolute border border-encre bg-carte/20" style={{ left: (curseur.x - rayon - .5) * zoom / 100, top: (curseur.y - rayon - .5) * zoom / 100, width: (2 * rayon + 1) * zoom / 100, height: (2 * rayon + 1) * zoom / 100 }} />}
-          </div>
-        </div>
-        <p className="px-[14px] py-[8px] text-[11px] text-encre-4">Espace + glisser ou bouton du milieu : déplacer la vue. Ctrl/Alt + molette : zoomer. Les coordonnées restent celles de l’image.</p>
+  return <section aria-label="Éditeur du calque ciblé" className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(300px,40%)] grid-rows-[auto_minmax(0,1fr)] gap-[14px] bg-papier p-[14px]">
+    {/* ── La barre de la scène ─────────────────────────────────────────── */}
+    <div className="col-start-1 row-start-1 flex min-w-0 flex-col gap-[8px]">
+      <div className="flex flex-wrap items-center gap-[8px]">
+        <div role="group" aria-label="Vue du calque" className="flex flex-wrap gap-[4px] rounded-7 bg-papier-cote p-[4px]">{vues.map(([cle, nom]) => <button key={cle} type="button" aria-pressed={vue === cle} onClick={() => setVue(cle)} className={`h-[30px] rounded-7 px-[8px] text-[12px] ${vue === cle ? "bg-carte text-encre" : "text-encre-3"}`}>{nom}</button>)}</div>
+        {modifiable && <><button type="button" title="Ctrl + Z" disabled={!annulations.length || attente} className={PETIT} onClick={annuler}>Défaire</button><button type="button" title="Ctrl + Maj + Z" disabled={!retablissements.length || attente} className={PETIT} onClick={retablir}>Refaire</button></>}
+        <span className="ml-auto text-[12px] text-encre-3"><strong className="font-medium text-encre">{ETAT_CALQUE[variante.etat]}{variante.retenue ? " · retenue" : ""}</strong> · {largeur} × {hauteur} px · repère {variante.base.repere.x}, {variante.base.repere.y}</span>
       </div>
-      {modifiable && <aside aria-label="Outils du calque" className="defile flex w-[300px] shrink-0 flex-col gap-[14px] overflow-y-auto border-l border-trait bg-papier-cote p-[14px]">
-        <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Outil<select aria-label="Outil du calque" value={outil} onChange={(e) => setOutil(e.target.value as Outil)} className={CONTROLE}>{Object.entries(outils).filter(([cle]) => extrait || cle === "deplacer" || cle === "vue").map(([cle, nom]) => <option key={cle} value={cle}>{nom}</option>)}</select></label>
-        {extrait && !["deplacer", "vue"].includes(outil) && <Mesure nom="Rayon du pinceau" valeur={rayon} min={0} max={32} onChange={setRayon} />}
-        <Mesure nom="Échelle" valeur={reglage.echelle} min={brouillon.extraction ? .25 : .01} max={brouillon.extraction ? 4 : 16} pas={.01} onChange={(v) => nombre("echelle", v)} />
-        <Mesure nom="Déplacement horizontal" valeur={reglage.dx} min={-largeur} max={largeur} onChange={(v) => nombre("dx", v)} />
-        <Mesure nom="Déplacement vertical" valeur={reglage.dy} min={-hauteur} max={hauteur} onChange={(v) => nombre("dy", v)} />
-        {brouillon.extraction ? <>
-          <Mesure nom="Seuil de différence" valeur={brouillon.extraction.seuil} min={0} max={255} onChange={(v) => changer({ ...brouillon, extraction: { ...brouillon.extraction!, seuil: v } })} />
-          <button className={CONTROLE} disabled={attente} onClick={async () => { setAttente(true); try { const proposition = await apiCalques.aligner(chemin, variante.identifiant); changer({ ...brouillon, extraction: { ...brouillon.extraction!, dx: proposition.dx, dy: proposition.dy, echelle: proposition.echelle } }) } catch (e) { setErreur(e instanceof Error ? e.message : "Le recalage n’a pas abouti.") } finally { setAttente(false) } }}>Caler automatiquement les deux corps</button>
-          <p className="text-[12px] text-encre-3">La différence isole ce qui s’ajoute. Un casque qui remplace les cheveux demandera ensuite une retouche du calque et du masque du corps.</p>
-          <button disabled={attente || calcul} className={CONTROLE} onClick={() => void action(() => apiCalques.extraire(chemin, variante.identifiant, brouillon.extraction!))}>Extraire une nouvelle variante</button>
-        </> : <>
-          <Mesure nom="Rotation" valeur={brouillon.placement.rotation} min={-180} max={180} onChange={(v) => nombre("rotation", v)} />
-          <Mesure nom="Opacité" valeur={brouillon.placement.opacite} min={0} max={1} pas={.01} onChange={(v) => nombre("opacite", v)} />
-          <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Ordre par défaut<select aria-label="Ordre du calque" value={String(brouillon.placement.devant)} onChange={(e) => changer({ ...brouillon, placement: { ...brouillon.placement, devant: e.target.value === "true" } })} className={CONTROLE}><option value="true">Au-dessus du corps</option><option value="false">Sous le corps</option></select></label>
-          {/* **L'ordre est celui des images, pas celui du regard.** La
-              composition ne lit jamais la direction de la base
-              (`atelier/image/calques_cibles.py`) : seuls `devant` et le masque
-              `derriere` décident, et ils appartiennent à cette variante — donc
-              à cette frame. Deux frames de la même bande peuvent ranger la même
-              pièce à l'envers l'une de l'autre. */}
-          <p className="text-[12px] leading-[1.45] text-encre-3">C’est l’ordre des images, pas la direction du regard : la direction de cette base ({variante.base.direction || "sans direction"}) ne change rien. Avec « Passer cette partie dessous » et « Ramener cette partie dessus », une partie de la pièce passe sous le personnage et le reste au-dessus — {variante.cible.nature === "frame" ? "sur cette frame seule" : "sur cette image seule"}.</p>
-          <p className="text-[11px] leading-[1.45] text-encre-4">{brouillon.masques.derriere.length ? `${brouillon.masques.derriere.length} passage${brouillon.masques.derriere.length > 1 ? "s" : ""} peint${brouillon.masques.derriere.length > 1 ? "s" : ""} ici : une partie de la pièce ne suit pas l’ordre par défaut.` : "Aucun passage peint ici : toute la pièce suit l’ordre par défaut."}</p>
-          <Mesure nom="Ordre entre équipements" valeur={brouillon.placement.ordre} min={-1000} max={1000} onChange={(v) => nombre("ordre", v)} />
-          <button disabled={attente || !sale} className={CONTROLE} onClick={() => void action(() => apiCalques.regler(chemin, variante.identifiant, variante.revision, brouillon))}>Enregistrer les corrections</button>
-          <button disabled={attente || sale || calcul || variante.etat === "a-revoir"} className={`${CONTROLE} font-medium`} onClick={() => void action(() => apiCalques.valider(chemin, variante.identifiant, variante.revision))}>Vérifier et retenir cette variante</button>
-        </>}
-        <div className="flex gap-[8px]"><button disabled={!annulations.length || attente} className={`${CONTROLE} flex-1`} onClick={annuler}>Annuler</button><button disabled={!retablissements.length || attente} className={`${CONTROLE} flex-1`} onClick={retablir}>Rétablir</button></div>
-        {sale && <button className={CONTROLE} disabled={attente} onClick={() => { setBrouillon(copie(garde)); setAnnulations([]); setRetablissements([]) }}>Abandonner les corrections</button>}
-        <p className="text-[11px] text-encre-4">{variante.historique.length} révision(s) conservée(s). Cette variante ne modifie ni le corps original, ni les autres personnages.</p>
-      </aside>}
+      <BarreDuZoom zoom={zoom} ajuste={ajuste} maximum={3200} libelle="Zoom du calque en pourcentage" onZoom={setZoom} />
     </div>
+
+    {/* ── La scène ─────────────────────────────────────────────────────── */}
+    <div ref={viewport} className="defile col-start-1 row-start-2 flex min-h-0 min-w-0 overflow-auto rounded-7 border border-trait bg-pourtour p-[22px]" onWheel={(e) => { if (e.ctrlKey || e.altKey) { e.preventDefault(); setZoom(Math.max(1, Math.min(3200, Math.round(facteur * 100 * (e.deltaY < 0 ? 1.2 : 1 / 1.2))))) } }}>
+      <div role="application" aria-label="Image équipée — glisser pour déplacer, espace pour déplacer la vue" tabIndex={0} className="relative m-auto w-fit shrink-0 touch-none outline-none" onPointerDown={commencer} onPointerMove={bouger} onPointerUp={() => { geste.current = null }} onPointerCancel={() => { geste.current = null }} onPointerLeave={() => setCurseur(null)} onKeyDown={(e) => { if (e.code === "Space") { espace.current = true; e.preventDefault() }; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.stopPropagation(); if (e.shiftKey) retablir(); else annuler() } }} onKeyUp={(e) => { if (e.code === "Space") espace.current = false }} onBlur={() => { espace.current = false; geste.current = null }}>
+        {vue === "superposes" && dessus ? <div data-superposes className="relative outline outline-1 outline-pointille" style={{ width: largeur * facteur, height: hauteur * facteur }}>
+          <img ref={image} src={apiCalques.image(chemin, variante, "base")} draggable={false} alt="Pose de référence sous l’image équipée" width={largeur} height={hauteur} className="damier-papier block max-w-none" style={{ width: largeur * facteur, height: hauteur * facteur, imageRendering: "pixelated" }} />
+          <img src={apiCalques.image(chemin, variante, "source")} draggable={false} alt="Image équipée posée sur la pose" className="pointer-events-none absolute block max-w-none" style={{ left: dessus.left * facteur, top: dessus.top * facteur, width: dessus.width * facteur, height: dessus.height * facteur, opacity: transparence / 100, imageRendering: "pixelated" }} />
+        </div>
+          : url ? <img ref={image} src={url} draggable={false} alt="Aperçu du calque sur sa base" width={largeur} height={hauteur} className="damier-papier block max-w-none" style={{ width: largeur * facteur, height: hauteur * facteur, imageRendering: "pixelated" }} /> : <p className="text-[13px] text-carte">Préparation de l’image…</p>}
+        {curseur && extrait && !["deplacer", "vue"].includes(outil) && vue === "composition" && <span aria-hidden className="pointer-events-none absolute border border-encre bg-carte/20" style={{ left: (curseur.x - rayon - .5) * facteur, top: (curseur.y - rayon - .5) * facteur, width: (2 * rayon + 1) * facteur, height: (2 * rayon + 1) * facteur }} />}
+      </div>
+    </div>
+
+    {/* ── Les réglages, dans l'ordre où l'on travaille ─────────────────── */}
+    <aside aria-label="Outils du calque" className="col-start-2 row-start-1 row-span-2 flex min-h-0 flex-col gap-[14px] rounded-8 border border-trait bg-carte p-[14px]">
+      <div className="flex items-baseline justify-between gap-[8px]">
+        <h2 className="font-serif text-[25px] text-encre">{extraction ? "Isoler la pièce" : extrait ? "Le calque" : "La référence"}</h2>
+        <span role="status" className="text-[12px] text-encre-3">{calcul ? "Calcul de l’aperçu…" : sale ? "Modifications non enregistrées" : "Réglages enregistrés"}</span>
+      </div>
+      {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
+      {variante.raison && <div className="rounded-7 border border-trait bg-papier-cote p-[8px] text-[13px] text-encre-2"><p>{variante.raison}. Les anciens pixels et les masques sont conservés.</p><label className="mt-[8px] flex items-center gap-[8px]">Base à adopter<select className={`${CONTROLE} min-w-0 flex-1`} aria-label="Nouvelle base du calque" value={nouvelleBase} onChange={(e) => setNouvelleBase(e.target.value)}>{!cibles.some((c) => cleCible(c.cible) === cleCible(variante.cible)) && <option value={cleCible(variante.cible)} disabled>La base d’origine n’est plus disponible</option>}{cibles.map((c) => <option key={cleCible(c.cible)} value={cleCible(c.cible)}>{c.pose} · {c.direction || "sans direction"} · {c.cible.nature === "frame" ? `${c.nom_bande} frame ${(c.rang ?? 0) + 1}` : c.image?.label || "image fixe"}</option>)}</select></label><button disabled={sale || attente || !cibles.some((c) => cleCible(c.cible) === nouvelleBase)} onClick={() => void action(() => apiCalques.adopter(chemin, variante.identifiant, variante.revision, cibles.find((c) => cleCible(c.cible) === nouvelleBase)!.cible))} className={`${CONTROLE} mt-[8px]`}>Adopter cette base, puis revérifier</button></div>}
+
+      <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
+        {variante.role === "reference" && <p className="text-[12px] leading-[1.45] text-encre-3">Une référence d’apparence ne devient pas une couche : elle sert à regarder. Pour en tirer un calque, associez le personnage équipé comme « image à extraire ».</p>}
+
+        {extraction && brouillon.extraction && <>
+          <Etape numero={1} titre="Pose de référence">
+            <button type="button" onClick={() => setVue("base")} className="flex items-center gap-[8px] rounded-7 border border-trait p-[4px] text-left hover:border-contour"><img src={apiCalques.image(chemin, variante, "base")} alt="" className="damier-papier h-[54px] w-[54px] shrink-0 object-contain" style={{ imageRendering: "pixelated" }} /><span className="text-[12px] text-encre">{pose}<span className="block text-[11px] text-encre-3">{largeur} × {hauteur} px, telle que sa recette la rend</span></span></button>
+          </Etape>
+          <Etape numero={2} titre="Image équipée, lue comme la pose">
+            <button type="button" onClick={() => setVue("source")} className="flex items-center gap-[8px] rounded-7 border border-trait p-[4px] text-left hover:border-contour"><img src={apiCalques.image(chemin, variante, "source")} alt="" className="damier-papier h-[54px] w-[54px] shrink-0 object-contain" style={{ imageRendering: "pixelated" }} /><span className="min-w-0 truncate text-[12px] text-encre">{variante.source_fiche.label || "Image équipée"}<span className="block text-[11px] text-encre-3">{cadreSource.largeur} × {cadreSource.hauteur} px</span></span></button>
+            <LectureDeLaSource preparation={preparation} nomDeLaPose={pose} />
+            <div role="group" aria-label="Recette de l’image équipée" className="flex gap-[4px] rounded-7 bg-papier-cote p-[4px]">
+              <button type="button" aria-pressed={preparation?.recette === "pose"} disabled={attente || preparation?.recette === "pose"} onClick={() => relire("pose", preparation?.echelle ?? true)} className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${preparation?.recette === "pose" ? "bg-carte text-encre" : "text-encre-3"}`}>Recette de la pose</button>
+              <button type="button" aria-pressed={preparation?.recette === "sienne" || !preparation} disabled={attente || preparation?.recette === "sienne"} onClick={() => relire("sienne", preparation?.echelle ?? true)} className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${preparation?.recette !== "pose" ? "bg-carte text-encre" : "text-encre-3"}`}>Sa propre recette</button>
+            </div>
+            <label className="flex items-center gap-[8px] text-[12px] text-encre-2"><input type="checkbox" className="accent-signal" checked={preparation?.echelle ?? false} disabled={attente} onChange={(e) => relire(preparation?.recette ?? "sienne", e.target.checked)} />Ramener le corps à l’échelle de la pose</label>
+            <div className="flex flex-wrap gap-[8px]">
+              {onRetoucher && <button type="button" className={CONTROLE} disabled={attente || sale} title={sale ? "Enregistrez ou abandonnez d’abord le calage" : undefined} onClick={() => onRetoucher(variante.source)}>Retoucher l’image équipée…</button>}
+              {preparation?.recette !== "pose" && <button type="button" className={CONTROLE} disabled={attente} onClick={() => relire("sienne", preparation?.echelle ?? false)}>Relire après retouche</button>}
+            </div>
+            {onRetoucher && <p className="text-[11px] leading-[1.45] text-encre-4">La retouche ordinaire change l’image dans la bibliothèque. Revenez ici et choisissez « Sa propre recette » pour la relire.</p>}
+          </Etape>
+          <Etape numero={3} titre="Caler les deux corps">
+            <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Outil<select aria-label="Outil du calque" value={outil} onChange={(e) => setOutil(e.target.value as Outil)} className={CONTROLE}><option value="deplacer">{outils.deplacer}</option><option value="vue">{outils.vue}</option></select></label>
+            <Mesure nom="Échelle" valeur={reglage.echelle} min={.25} max={4} pas={.01} onChange={(v) => nombre("echelle", v)} />
+            <Mesure nom="Déplacement horizontal" valeur={reglage.dx} min={-largeur} max={largeur} onChange={(v) => nombre("dx", v)} />
+            <Mesure nom="Déplacement vertical" valeur={reglage.dy} min={-hauteur} max={hauteur} onChange={(v) => nombre("dy", v)} />
+            <Mesure nom="Visibilité de l’image équipée" valeur={transparence} min={0} max={100} onChange={(v) => { setTransparence(v); setVue("superposes") }} />
+            <button className={CONTROLE} disabled={attente} onClick={async () => { setAttente(true); try { const proposition = await apiCalques.aligner(chemin, variante.identifiant); changer({ ...brouillon, extraction: { ...brouillon.extraction!, dx: proposition.dx, dy: proposition.dy, echelle: proposition.echelle } }) } catch (e) { setErreur(e instanceof Error ? e.message : "Le recalage n’a pas abouti.") } finally { setAttente(false) } }}>Caler automatiquement les deux corps</button>
+            {preparation?.echelle && <p className="text-[11px] leading-[1.45] text-encre-4">L’image équipée arrive déjà à l’échelle de la pose : le calage part d’une échelle de 1 et d’un décalage nul.</p>}
+          </Etape>
+          <Etape numero={4} titre="Isoler ce qui s’ajoute">
+            <Mesure nom="Seuil de différence" valeur={brouillon.extraction.seuil} min={0} max={255} onChange={(v) => changer({ ...brouillon, extraction: { ...brouillon.extraction!, seuil: v } })} />
+            <p className="text-[12px] leading-[1.45] text-encre-3">La différence garde ce que l’image équipée ajoute à la pose. « Ce qui sera extrait » le montre avant d’extraire.</p>
+            <button disabled={attente || calcul} className={PRINCIPAL} onClick={() => void action(() => apiCalques.extraire(chemin, variante.identifiant, brouillon.extraction!))}>Extraire une nouvelle variante</button>
+          </Etape>
+          <Etape numero={5} titre="Retoucher à la main">
+            <p className="text-[12px] leading-[1.45] text-encre-3">L’extraction ouvre une variante « À vérifier » : effacez ce qui a été pris en trop, restaurez ce qui manque, masquez le corps sous la pièce, puis retenez-la.</p>
+          </Etape>
+        </>}
+
+        {extrait && <>
+          <Etape titre="Retoucher à la main">
+            <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Outil<select aria-label="Outil du calque" value={outil} onChange={(e) => setOutil(e.target.value as Outil)} className={CONTROLE}>{Object.entries(outils).map(([cle, nom]) => <option key={cle} value={cle}>{nom}</option>)}</select></label>
+            {!["deplacer", "vue"].includes(outil) && <Mesure nom="Rayon du pinceau" valeur={rayon} min={0} max={32} onChange={setRayon} />}
+          </Etape>
+          <Etape titre="Placer le calque">
+            <Mesure nom="Échelle" valeur={reglage.echelle} min={.01} max={16} pas={.01} onChange={(v) => nombre("echelle", v)} />
+            <Mesure nom="Déplacement horizontal" valeur={reglage.dx} min={-largeur} max={largeur} onChange={(v) => nombre("dx", v)} />
+            <Mesure nom="Déplacement vertical" valeur={reglage.dy} min={-hauteur} max={hauteur} onChange={(v) => nombre("dy", v)} />
+            <Mesure nom="Rotation" valeur={brouillon.placement.rotation} min={-180} max={180} onChange={(v) => nombre("rotation", v)} />
+            <Mesure nom="Opacité" valeur={brouillon.placement.opacite} min={0} max={1} pas={.01} onChange={(v) => nombre("opacite", v)} />
+          </Etape>
+          <Etape titre="Dessus ou dessous">
+            <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Ordre par défaut<select aria-label="Ordre du calque" value={String(brouillon.placement.devant)} onChange={(e) => changer({ ...brouillon, placement: { ...brouillon.placement, devant: e.target.value === "true" } })} className={CONTROLE}><option value="true">Au-dessus du corps</option><option value="false">Sous le corps</option></select></label>
+            {/* **L'ordre est celui des images, pas celui du regard.** La
+                composition ne lit jamais la direction de la base
+                (`atelier/image/calques_cibles.py`) : seuls `devant` et le masque
+                `derriere` décident, et ils appartiennent à cette variante — donc
+                à cette frame. Deux frames de la même bande peuvent ranger la même
+                pièce à l'envers l'une de l'autre. */}
+            <p className="text-[12px] leading-[1.45] text-encre-3">C’est l’ordre des images, pas la direction du regard : la direction de cette base ({variante.base.direction || "sans direction"}) ne change rien. Avec « Passer cette partie dessous » et « Ramener cette partie dessus », une partie de la pièce passe sous le personnage et le reste au-dessus — {variante.cible.nature === "frame" ? "sur cette frame seule" : "sur cette image seule"}.</p>
+            <p className="text-[11px] leading-[1.45] text-encre-4">{brouillon.masques.derriere.length ? `${brouillon.masques.derriere.length} passage${brouillon.masques.derriere.length > 1 ? "s" : ""} peint${brouillon.masques.derriere.length > 1 ? "s" : ""} ici : une partie de la pièce ne suit pas l’ordre par défaut.` : "Aucun passage peint ici : toute la pièce suit l’ordre par défaut."}</p>
+            <Mesure nom="Ordre entre équipements" valeur={brouillon.placement.ordre} min={-1000} max={1000} onChange={(v) => nombre("ordre", v)} />
+          </Etape>
+        </>}
+      </div>
+
+      <div className="flex shrink-0 flex-col gap-[8px] border-t border-trait pt-[14px]">
+        {extrait && <div className="flex flex-wrap gap-[8px]">
+          <button disabled={attente || !sale} className={CONTROLE} onClick={() => void action(() => apiCalques.regler(chemin, variante.identifiant, variante.revision, brouillon))}>Enregistrer les corrections</button>
+          <button disabled={attente || sale || calcul || variante.etat === "a-revoir"} className={PRINCIPAL} onClick={() => void action(() => apiCalques.valider(chemin, variante.identifiant, variante.revision))}>Vérifier et retenir cette variante</button>
+        </div>}
+        {sale && <button className={`${CONTROLE} self-start`} disabled={attente} onClick={() => { setBrouillon(copie(garde)); setAnnulations([]); setRetablissements([]) }}>Abandonner les corrections</button>}
+        <p className="text-[11px] text-encre-4">{variante.historique.length} révision(s) conservée(s). Cette variante ne modifie ni le corps original, ni les autres personnages. Ctrl + molette : zoom · Espace + glisser : déplacer la vue.</p>
+      </div>
+    </aside>
   </section>
 }

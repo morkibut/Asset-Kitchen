@@ -8,7 +8,8 @@ routeur = APIRouter(prefix="/projects/{projet}/equipment/{piece}/uses/{emploi}")
 
 
 class CorpsVariante(BaseModel):
-    cible: dict[str, Any]
+    # Absente : la pose de référence de la génération de l'image décide.
+    cible: dict[str, Any] | None = None
     source: str
     role: Literal["reference", "source-equipee", "calque"]
 
@@ -37,6 +38,11 @@ class CorpsReemploi(BaseModel):
     copier_masques: bool = False
 
 
+class CorpsSource(CorpsRevision):
+    recette: Literal["pose", "sienne"] = "pose"
+    echelle: bool = True
+
+
 class CorpsApercu(BaseModel):
     vue: Literal["composition", "base", "source", "calque"] = "composition"
     placement: dict[str, Any] | None = None
@@ -60,6 +66,18 @@ async def image_cible(requete: Request, projet: str, piece: str, emploi: str,
                     media_type="image/png", headers={"Cache-Control": "no-store"})
 
 
+@routeur.get("/targets/references")
+async def poses_de_reference(requete: Request, projet: str, piece: str, emploi: str, source: str):
+    """Les poses du porteur d'après lesquelles `source` a été fabriquée, la plus sûre d'abord."""
+    return {"poses": service(requete).poses_de_reference(projet, piece, emploi, source)}
+
+
+@routeur.get("/targets/made-from")
+async def fabriquees_d_apres(requete: Request, projet: str, piece: str, emploi: str, resultat: str):
+    """Les images de la bibliothèque fabriquées d'après cette pose."""
+    return {"images": service(requete).fabriquees_d_apres(projet, piece, emploi, resultat)}
+
+
 @routeur.post("/layers", status_code=201)
 async def creer(requete: Request, projet: str, piece: str, emploi: str, corps: CorpsVariante):
     return service(requete).creer(projet, piece, emploi, corps.cible, corps.source, corps.role)
@@ -79,6 +97,12 @@ async def regler(requete: Request, projet: str, piece: str, emploi: str, identif
 @routeur.post("/layers/{identifiant}/extract", status_code=201)
 async def extraire(requete: Request, projet: str, piece: str, emploi: str, identifiant: str, corps: CorpsExtraction):
     return service(requete).extraire(projet, piece, emploi, identifiant, reglage=corps.reglage, automatique=corps.automatique)
+
+
+@routeur.post("/layers/{identifiant}/source")
+async def reprendre_source(requete: Request, projet: str, piece: str, emploi: str, identifiant: str, corps: CorpsSource):
+    return service(requete).reprendre_source(projet, piece, emploi, identifiant, corps.revision,
+                                             recette=corps.recette, echelle=corps.echelle)
 
 
 @routeur.post("/layers/{identifiant}/validate")
