@@ -253,6 +253,20 @@ test("une lecture d'avant qui coupait propose de relire en agrandissant", async 
   expect(reprendre).toHaveBeenCalledWith(chemin, "source-1", 1, "pose", true)
 })
 
+test("une image sortie d'une fabrication se relit depuis l'image reçue, et elle seule le propose", async () => {
+  // Une variante dépliée avant le 18 septembre 2026 : lue telle quelle, coupée au cadre du corps.
+  const coupee: VarianteCalque = { ...preparee, preparation: undefined, planche_d_origine: true }
+  const relire = vi.spyOn(apiCalques, "relireDepuisLaPlanche").mockResolvedValue({ ...preparee, revision: 2, planche_d_origine: true })
+  const onGarde = vi.fn()
+  render(<EditeurCalqueCible chemin={chemin} variante={coupee} nomDeLaPose="Repos" onGarde={onGarde} onSale={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Relire depuis l’image reçue" }))
+  await waitFor(() => expect(onGarde).toHaveBeenCalled())
+  expect(relire).toHaveBeenCalledWith(chemin, "source-1", 1)
+  cleanup()
+  render(<EditeurCalqueCible chemin={chemin} variante={{ ...preparee, planche_d_origine: false }} nomDeLaPose="Repos" onGarde={vi.fn()} onSale={vi.fn()} />)
+  expect(screen.queryByRole("button", { name: "Relire depuis l’image reçue" })).not.toBeInTheDocument()
+})
+
 test("une variante décalée par l'écrin le dit, avec la pièce qui l'a demandé", () => {
   const suivie: VarianteCalque = { ...variante, cadre_suivi: { cause: { piece: "Bâton", pose: "repos", direction: "est" }, cotes: { gauche: 6, haut: 0, droite: 6, bas: 0 }, avant: { largeur: 20, hauteur: 48 }, apres: { largeur: 32, hauteur: 48 } } }
   render(<EditeurCalqueCible chemin={chemin} variante={suivie} onGarde={vi.fn()} onSale={vi.fn()} />)

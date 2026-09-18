@@ -43,6 +43,8 @@ export type VarianteCalque = {
   calque_cadre?: { largeur: number; hauteur: number }
   preparation?: PreparationSource
   cadre_suivi?: CadreSuivi
+  /** L'image équipée sort d'une fabrication : sa planche revenue peut être relue, sans nouvel appel. */
+  planche_d_origine?: boolean
   etat: "reference" | "a-extraire" | "a-verifier" | "prete" | "a-revoir"; raison: string; retenue: boolean; utilisable: boolean
 }
 /** Une pose du porteur d'après laquelle une image a été fabriquée — relue sur sa génération. */
@@ -68,6 +70,8 @@ export const apiCalques = {
   fabriqueesDApres: (c: CheminEmploi, resultat: string) => appeler<{ images: ImageFabriquee[] }>(`${prefixe(c)}/targets/made-from?${new URLSearchParams({ resultat })}`),
   /** Relire l'image équipée : avec la recette de sa pose ou la sienne, ramenée ou non à l'échelle du corps. */
   reprendreSource: (c: CheminEmploi, id: string, revision: number, recette: PreparationSource["recette"], echelle: boolean) => appeler<VarianteCalque>(`${couche(c, id)}/source`, json("POST", { revision, recette, echelle })),
+  /** Relire l'image équipée depuis la case entière de la planche revenue — gratuit, aucun appel au modèle. */
+  relireDepuisLaPlanche: (c: CheminEmploi, id: string, revision: number) => appeler<VarianteCalque>(`${couche(c, id)}/source-from-sheet`, json("POST", { revision })),
   lire: (c: CheminEmploi, id: string) => appeler<VarianteCalque>(couche(c, id)),
   regler: (c: CheminEmploi, id: string, revision: number, brouillon: BrouillonCalque) => appeler<VarianteCalque>(couche(c, id), json("PUT", { revision, placement: brouillon.placement, masques: brouillon.masques })),
   extraire: (c: CheminEmploi, id: string, reglage: ExtractionCalque) => appeler<VarianteCalque>(`${couche(c, id)}/extract`, json("POST", { reglage })),

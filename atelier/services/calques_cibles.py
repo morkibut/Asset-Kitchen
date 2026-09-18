@@ -30,6 +30,7 @@ from atelier.domaine.recette import (
     Recette, voyage,
 )
 from atelier.domaine.superposition import Superposition
+from atelier.domaine.travail_equipement import travail_de_generation
 from atelier.image.calque import avec_alpha, cases_de, proposer, superposer
 from atelier.image.calques_cibles import (
     PAS_DE_L_ECRIN, Ecrin, aux_couleurs_de, composer, couleur_du_fond, ecrin_pour, etendue, png,
@@ -468,8 +469,12 @@ class ServiceCalquesCibles:
         etat = ("a-revoir" if raison else "reference" if variante["role"] == "reference"
                 else "a-extraire" if variante["role"] == "source-equipee"
                 else "prete" if variante.get("validee") else "a-verifier")
+        # Une image équipée sortie d'une fabrication se relit depuis sa planche
+        # d'origine (`ServiceTravauxEquipement.relire_depuis_la_planche`).
+        planche = (variante["role"] == "source-equipee"
+                   and travail_de_generation((variante.get("source_fiche") or {}).get("generation", "")) is not None)
         return {**variante, "etat": etat, "raison": raison, "retenue": retenue,
-                "utilisable": etat == "prete" and retenue}
+                "utilisable": etat == "prete" and retenue, "planche_d_origine": planche}
 
     def creer(self, projet, piece, emploi, cible: dict | None, source: str, role: str):
         """Associer une image à une cible.
@@ -737,7 +742,7 @@ class ServiceCalquesCibles:
         return pixels[y0:y1 + 1, x0:x1 + 1]
 
     def reprendre_source(self, projet, piece, emploi, identifiant, revision: int, *,
-                         recette: str = RECETTE_DE_LA_POSE, echelle: bool = True):
+                         recette: str = RECETTE_DE_LA_POSE, echelle: bool = True, source: str | None = None):
         """Relire l'image équipée — avec la recette de sa pose, ou avec la sienne.
 
         C'est le geste qui rend la préparation **réglable** : retirer la recette
@@ -745,6 +750,10 @@ class ServiceCalquesCibles:
         retouche ordinaire. L'ancienne lecture reste dans l'historique et son
         fichier sur le disque ; le calage repart de zéro, puisqu'il visait
         l'image d'avant.
+
+        `source` change d'image équipée en chemin : c'est ce que fait la relecture
+        depuis la planche d'origine, qui remplace une case coupée au cadre du
+        corps par la case entière (`ServiceTravauxEquipement.relire_depuis_la_planche`).
         """
         if recette not in (RECETTE_DE_LA_POSE, RECETTE_DE_L_IMAGE):
             raise ProductionRefusee("la recette est celle de la pose ou celle de l'image")
@@ -753,7 +762,9 @@ class ServiceCalquesCibles:
             self._revision(v, revision)
             if v["role"] != "source-equipee":
                 raise ProductionRefusee("seule une image équipée à extraire se relit ainsi")
-            image = self.assets.lire(v["source"])
+            image = self.assets.lire(source or v["source"])
+            if source is not None and (image is None or image.projet != projet):
+                raise ProductionRefusee("la nouvelle image équipée doit appartenir à ce jeu")
             if image is None:
                 raise ProductionRefusee("l'image équipée n'est plus dans la bibliothèque ; sa dernière lecture est conservée")
             chemin = self._chemin(projet, piece, emploi, identifiant)
@@ -784,7 +795,7 @@ class ServiceCalquesCibles:
             nouvelle = deepcopy(v)
             pixels = rgba(octets)
             nouvelle.update(source_fichier=nom, preparation=preparation, extraction=None,
-                            source_fiche=image.en_json(),
+                            source=image.identifiant, source_fiche=image.en_json(),
                             calque_cadre={"largeur": pixels.shape[1], "hauteur": pixels.shape[0]})
             self._enregistrer_revision(nouvelle, v)
             return self.lire(projet, piece, emploi, identifiant)
@@ -792,6 +803,78 @@ class ServiceCalquesCibles:
     @staticmethod
     def _fichier_source(variante) -> str:
         return variante.get("source_fichier") or "source.png"
+
+    def accueillir_retour(self, projet, piece, emploi, cible, source, base_png, base, *, identifiant):
+        """Le retour d'une fabrication d'équipement, lu **comme une association à la main**.
+
+        `source` est la case entière de la planche revenue, fond compris — pas le
+        rectangle où le corps avait été posé : un bâton tenu à côté du corps sort
+        de ce rectangle, et le couper là le coupait pour de bon (relevé le 18
+        septembre 2026 sur cinq tirages de Champy). La case passe donc par le même
+        chemin que `creer` : recette de la pose, `ramener_sur`, et l'écrin qui
+        grandit si la pièce déborde.
+
+        La base envoyée garde le dernier mot, comme avant, **sauf si le corps est
+        le même au rembourrage près** : l'écrin a pu grandir entre l'envoi et le
+        retour (le premier retour d'un lot l'agrandit), et ce n'est pas un
+        changement de base. On lit alors la base d'aujourd'hui. Une base vraiment
+        changée reste celle de l'envoi — la variante sera « à revoir » — et ce
+        qui déborde n'agrandit rien : on ne décale pas un cadre sur une base
+        d'avant.
+        """
+        with self.verrou:
+            chemin = self._chemin(projet, piece, emploi, identifiant)
+            if (chemin / "variante.json").exists():
+                return self.lire(projet, piece, emploi, identifiant)
+            personnage, piece_objet, _ = self._emploi(projet, piece, emploi)
+            visee = CibleCalque.depuis_json(cible)
+            image = self.assets.lire(source)
+            if image is None or image.projet != projet:
+                raise ProductionRefusee("la source préparée doit appartenir à ce jeu")
+            try:
+                a_jour = self._meme_corps(base_png, base, *self._base_personnage(
+                    projet, personnage.identifiant, visee, identifier=True))
+            except Exception:  # la base a disparu ou ne se lit plus : la variante le dira, « à revoir »
+                a_jour = False
+            if a_jour:
+                base_png, base = self._base_dans_l_ecrin(projet, personnage.identifiant, visee, piece_objet.nom)
+            octets, preparation = self._preparer_source(
+                image, base_png, base, recette=RECETTE_DE_LA_POSE, echelle=True, resultat=visee.resultat)
+            debord = preparation.get("debord")
+            if debord and a_jour:
+                octets, nouvelle_png, nouvelle = self._faire_de_la_place(
+                    projet, personnage.identifiant, visee, base, octets, preparation,
+                    self._cause(piece_objet.nom, base))
+                if nouvelle is not None:
+                    base_png, base = nouvelle_png, nouvelle
+            elif debord:
+                octets = png(rgba(octets)[debord["haut"]:debord["haut"] + base["cadre"]["hauteur"],
+                                          debord["gauche"]:debord["gauche"] + base["cadre"]["largeur"]])
+            return self.accueillir_source_preparee(projet, piece, emploi, visee.en_json(), source,
+                base_png, base, identifiant=identifiant, source_png=octets, preparation=preparation)
+
+    @staticmethod
+    def _meme_corps(png_a: bytes, a: dict, png_b: bytes, b: dict) -> bool:
+        """Deux bases du même corps, au rembourrage de l'écrin près.
+
+        Même image, même recette, et **les mêmes pixels une fois le transparent
+        de l'écrin retiré**. Le repère n'est pas comparé : dans un écrin, il
+        tombe au demi-pixel près, et le corps, lui, n'a pas bougé.
+        """
+        if a.get("empreinte") == b.get("empreinte"):
+            return True
+        propre = {"cadre", "cadre_de_la_pose", "rembourrage", "ecrin", "repere", "hors_ecrin",
+                  "empreinte", "empreinte_pixels"}
+        if {k: v for k, v in a.items() if k not in propre} != {k: v for k, v in b.items() if k not in propre}:
+            return False
+
+        def nu(octets: bytes, d: dict) -> np.ndarray:
+            pixels = rgba(octets)
+            r = d.get("rembourrage") or {}
+            h, w = pixels.shape[:2]
+            return pixels[r.get("haut", 0):h - r.get("bas", 0), r.get("gauche", 0):w - r.get("droite", 0)]
+
+        return np.array_equal(nu(png_a, a), nu(png_b, b))
 
     def accueillir_source_preparee(self, projet, piece, emploi, cible, source, base_png, base,
                                   *, identifiant=None, role="source-equipee", source_png=None,

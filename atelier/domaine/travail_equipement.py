@@ -1,9 +1,25 @@
 """Demande d'images équipées : une seule pièce, des cibles exactes, aucun produit cartésien."""
 import json
 import math
+import re
 
 from atelier.domaine.calques_cibles import CibleCalque
 from atelier.domaine.travail import TravailRefuse
+
+# Le nom qu'une fabrication d'équipement donne à la génération de chaque appel
+# (`ServiceTravauxEquipement.preparer`) : le travail, le rang de l'appel, et le
+# début de l'empreinte de la demande.
+_GENERATION_D_UN_APPEL = re.compile(r"([0-9a-f]{32})-image-(\d+)-[0-9a-f]{8}")
+
+
+def generation_d_appel(numero_travail: str, numero: int, empreinte: str) -> str:
+    return f"{numero_travail}-image-{numero}-{empreinte[:8]}"
+
+
+def travail_de_generation(generation: str) -> str | None:
+    """Le travail d'équipement dont cette génération est un appel — `None` si elle n'en vient pas."""
+    trouve = _GENERATION_D_UN_APPEL.fullmatch(generation or "")
+    return trouve.group(1) if trouve else None
 
 
 def normaliser(brut):

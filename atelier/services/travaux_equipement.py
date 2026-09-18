@@ -6,8 +6,11 @@ nouvelle variante à extraire, jamais un calque élu à la place d'une correctio
 from __future__ import annotations
 
 import asyncio
+import io
 import time
 from dataclasses import replace
+
+from PIL import Image
 
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.calques_cibles import CibleCalque
@@ -18,10 +21,10 @@ from atelier.domaine.generation import AGENT, AUTEUR, CARTE, EDITION, STYLE, Rei
 from atelier.domaine.pliage import CasePliee, Pliage
 from atelier.domaine.recette import Recette
 from atelier.domaine.travail import TravailRefuse
-from atelier.domaine.travail_equipement import normaliser
-from atelier.image.calque import avec_alpha, cases_de, composer, place_de, recadrer_sur
+from atelier.domaine.travail_equipement import generation_d_appel, normaliser, travail_de_generation
+from atelier.image.calque import cases_de, composer
 from atelier.image.calques_cibles import png, rgba
-from atelier.image.pliage import COTE
+from atelier.image.decoupe import decouper
 from atelier.services.couverture_equipement import ServiceCouvertureEquipement, cle_cible
 from atelier.services.pliage import consignes, plier
 from atelier.services.travaux import ServiceTravaux, _hash, _json, _verrou
@@ -112,7 +115,7 @@ class ServiceTravauxEquipement(ServiceTravaux):
                 generation, _, deja = self.a.generations.preparer(d["modele"], Demande(prompt=texte,
                     prompt_negatif=d["prompt_negatif"], proportions=d["proportions"], resolution=d["resolution"],
                     options=d["options"], echelle=personnage.type, repris=d["repris"] or texte_corrige is not None),
-                    identifiant=f"{identifiant}-image-{numero}-{empreinte[:8]}", projet=projet,
+                    identifiant=generation_d_appel(identifiant, numero, empreinte), projet=projet,
                     provenance=acteur, references=refs, references_ecartees=d["references_ecartees"],
                     tri=Tri.depuis_json(d["tri"]))
                 if deja and any(e.demarre_le is not None for e in generation.emplacements):
@@ -296,38 +299,113 @@ class ServiceTravauxEquipement(ServiceTravaux):
             morceaux, mesures = self.a.pliage.decouper_retour(copie, generation.emplacements[0])
         finally:
             appel["pliage"] = pliage.en_json()
-        envoyees = cases_de(COTE, COTE, pliage.geometrie)
         for numero, index in enumerate(appel["cibles"]):
             fiche = t["cibles"][index]
             if fiche["variante"]:
                 continue
             base = self.fichier(t["projet"], t["piece"], t["emploi"], t["identifiant"], "bases", index)
-            corps = rgba(base)
-            retour = recadrer_sur(avec_alpha(morceaux[numero]),
-                place_de(corps.shape[1], corps.shape[0], envoyees[numero], pliage.occupation), envoyees[numero], corps)
-            octets = png(retour.image)
-            # Un rang s'écrit avant l'asset. La reprise reconnaît sa provenance
-            # et ne remplace pas un dérivé créé entre-temps par la main.
-            label = f"{t['piece_fiche']['nom']} · {fiche['base']['pose']} · {fiche['base']['direction'] or 'toutes'} · {index + 1}"
+            # **La case entière, fond compris, bornée à la case** — et non le
+            # rectangle où le corps avait été posé (`place_de`) : ce qui sort du
+            # corps, un bâton tenu à côté, en sortait aussi et y était coupé net
+            # (cinq tirages de Champy sur cinq, le 18 septembre 2026). Sur une
+            # grille connue, `decouper_retour` rend déjà chaque case entière, sans
+            # marge : la voisine n'y entre pas. Le cadrage se fait ensuite comme
+            # pour une image associée à la main (`accueillir_retour`).
+            label = self._label(t, fiche, index)
             existante = self.a.assets.lire(fiche["source"] or "")
             if existante is not None and existante.label != label:
                 fiche["source"] = None
                 existante = None
             if existante is None:
-                rang = max([99, *self.a.base.rangs_de_generation(generation.identifiant)]) + 1
-                fiche["source"] = identifiant_de(generation.identifiant, rang)
-                self._garder(t)
-                chemin = self.a.fichiers.ecrire_brut(generation.identifiant, rang, octets, ".png")
-                self.a.assets.accueillir(Asset(identifiant=fiche["source"], generation=generation.identifiant,
-                    rang=rang, brut=chemin, largeur=corps.shape[1], hauteur=corps.shape[0], type_media="image/png",
-                    label=label, recette=Recette(), projet=t["projet"], parent=identifiant_de(generation.identifiant, 0),
-                    modele=generation.modele, provenance=t["acteur"], lot=mesures[numero]))
-            v = self.a.calques_cibles.accueillir_source_preparee(t["projet"], t["piece"], t["emploi"],
+                # Un rang s'écrit avant l'asset. La reprise reconnaît sa provenance
+                # et ne remplace pas un dérivé créé entre-temps par la main.
+                fiche["source"] = self._ranger_case(t, generation, morceaux[numero], label, mesures[numero])
+            fiche["case"] = fiche["source"]
+            v = self.a.calques_cibles.accueillir_retour(t["projet"], t["piece"], t["emploi"],
                 fiche["cible"], fiche["source"], base, fiche["base"],
-                identifiant=_hash(f"{t['identifiant']}:{index}:source-equipee".encode())[:32], source_png=octets)
+                identifiant=_hash(f"{t['identifiant']}:{index}:source-equipee".encode())[:32])
             fiche["variante"] = v["identifiant"]
-            fiche["recalage"] = {"echelle": retour.echelle, "silhouette": retour.silhouette}
+            fiche["recalage"] = self._recalage(v)
             if v["identifiant"] not in t["variantes"]:
                 t["variantes"].append(v["identifiant"])
             self._garder(t)
         self.a.diffusion.publier("bibliotheque", self.a.bibliotheque.arbre())
+
+    @staticmethod
+    def _label(t, fiche, index) -> str:
+        return f"{t['piece_fiche']['nom']} · {fiche['base']['pose']} · {fiche['base']['direction'] or 'toutes'} · {index + 1}"
+
+    @staticmethod
+    def _recalage(variante) -> dict:
+        p = variante.get("preparation") or {}
+        return {"echelle": p.get("facteur"), "accord": p.get("accord"), "debord": p.get("debord"),
+                "cadre": variante.get("calque_cadre")}
+
+    def _ranger_case(self, t, generation, octets: bytes, label: str, lot) -> str:
+        """La case revenue entre en bibliothèque, telle que le modèle l'a rendue."""
+        rang = max([99, *self.a.base.rangs_de_generation(generation.identifiant)]) + 1
+        identifiant = identifiant_de(generation.identifiant, rang)
+        pixels = rgba(octets)
+        chemin = self.a.fichiers.ecrire_brut(generation.identifiant, rang, png(pixels), ".png")
+        self.a.assets.accueillir(Asset(identifiant=identifiant, generation=generation.identifiant,
+            rang=rang, brut=chemin, largeur=pixels.shape[1], hauteur=pixels.shape[0], type_media="image/png",
+            label=label, recette=Recette(), projet=t["projet"], parent=identifiant_de(generation.identifiant, 0),
+            modele=generation.modele, provenance=t["acteur"], lot=lot))
+        return identifiant
+
+    def relire_depuis_la_planche(self, projet, piece, emploi, variante, revision: int):
+        """Relire l'image équipée d'une variante **depuis la planche revenue**, gratuitement.
+
+        Le rattrapage des retours dépliés avant le 18 septembre 2026, coupés au
+        cadre du corps : la planche d'origine (`0-brut.png` de la génération de
+        l'appel) est toujours sur le disque. On en reprend la case entière — la
+        même que le dépliage d'aujourd'hui —, elle entre en bibliothèque à côté
+        de l'ancienne (qui reste), et la variante la relit avec la recette de sa
+        pose (`ServiceCalquesCibles.reprendre_source`) : l'écrin grandit si la
+        pièce déborde. **Aucun fournisseur n'est appelé** ; relancé, le geste
+        reprend la même case au lieu d'en ranger une seconde.
+        """
+        cc = self.a.calques_cibles
+        v = cc._brut(projet, piece, emploi, variante)
+        if v["role"] != "source-equipee":
+            raise TravailRefuse("Seule une image équipée à extraire se relit depuis sa planche.")
+        origine = self.a.assets.lire(v["source"])
+        generation_source = (origine.generation if origine else None) or (v.get("source_fiche") or {}).get("generation", "")
+        numero_travail = travail_de_generation(generation_source)
+        if numero_travail is None:
+            raise TravailRefuse("Cette image équipée ne vient pas d'une fabrication d'équipement : il n'y a pas de planche à relire.")
+        dossier = self._dossier(projet, numero_travail)
+        with _verrou(dossier / ".travail"):
+            t = self._brut_emploi(projet, piece, emploi, numero_travail)
+            index = next((i for i, f in enumerate(t["cibles"]) if f.get("variante") == variante), None)
+            appel = next((a for a in t["appels"] if index in a["cibles"]), None)
+            if index is None or appel is None:
+                raise TravailRefuse("Cette variante n'est plus rattachée à une case de sa fabrication.")
+            generation = self.a.base.lire(appel["generation"])
+            resultat = generation.emplacements[0].resultat if generation and generation.emplacements else None
+            if resultat is None:
+                raise TravailRefuse("La planche revenue n'est plus sur le disque ; la lecture actuelle est conservée.")
+            fiche = t["cibles"][index]
+            case = fiche.get("case")
+            if not case or self.a.assets.lire(case) is None:
+                octets = self.a.fichiers.lire(resultat.fichier)
+                with Image.open(io.BytesIO(octets)) as ouverte:
+                    largeur, hauteur = ouverte.size
+                pliage = Pliage.depuis_json(appel["pliage"])
+                boites = cases_de(largeur, hauteur, pliage.geometrie)
+                numero = appel["cibles"].index(index)
+                if numero >= len(boites):
+                    raise TravailRefuse("La grille de la planche ne porte pas cette case.")
+                morceau = decouper(octets, [boites[numero]], marge=0)[0]
+                case = self._ranger_case(t, generation, morceau, self._label(t, fiche, index) + " · case entière",
+                                         origine.lot if origine else None)
+                fiche["case"] = case
+                self._garder(t)
+        relue = cc.reprendre_source(projet, piece, emploi, variante, revision, recette="pose", echelle=True, source=case)
+        with _verrou(dossier / ".travail"):
+            t = self._brut_emploi(projet, piece, emploi, numero_travail)
+            t["cibles"][index]["source"] = case
+            t["cibles"][index]["recalage"] = self._recalage(relue)
+            self._garder(t)
+        self.a.diffusion.publier("bibliotheque", self.a.bibliotheque.arbre())
+        return relue

@@ -105,6 +105,13 @@ async def reprendre_source(requete: Request, projet: str, piece: str, emploi: st
                                              recette=corps.recette, echelle=corps.echelle)
 
 
+@routeur.post("/layers/{identifiant}/source-from-sheet")
+async def relire_depuis_la_planche(requete: Request, projet: str, piece: str, emploi: str, identifiant: str, corps: CorpsRevision):
+    """Relire l'image équipée depuis la planche revenue de sa fabrication — aucun appel au fournisseur."""
+    return requete.app.state.atelier.travaux_equipement.relire_depuis_la_planche(
+        projet, piece, emploi, identifiant, corps.revision)
+
+
 @routeur.post("/layers/{identifiant}/validate")
 async def valider(requete: Request, projet: str, piece: str, emploi: str, identifiant: str, corps: CorpsRevision):
     return service(requete).valider(projet, piece, emploi, identifiant, corps.revision)

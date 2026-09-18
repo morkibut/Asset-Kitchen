@@ -1920,3 +1920,14 @@ la prochaine réécriture retrouvera.
   écrin par grille active, et sans grille un pour les poses, un pour les animations
   (`famille_de`). Trouvé le 18 septembre 2026 en jouant le geste sur une copie de
   `donnees/`, avant d'écrire la moindre phrase à l'écran.
+- **Un retour recadré sur la place du corps a déjà perdu ce qui déborde, et le premier retour
+  d'un lot change la base des suivants.** Le dépliage d'une fabrication d'équipement
+  (`travaux_equipement._deplier`) recadrait chaque case sur le rectangle où le corps avait été
+  posé, *puis* la lisait : cinq tirages réels de Champy sur cinq avaient le bâton entier dans
+  la planche et coupé net dans la variante. La case entière passe maintenant par le chemin de
+  l'association à la main (`accueillir_retour`). ⚠️ Second piège, trouvé en rejouant les cinq
+  retours sur une copie : le premier agrandit l'écrin, et les quatre suivants arrivent avec une
+  base envoyée plus étroite — même corps, autre rembourrage. Comparer les empreintes les aurait
+  tous rendus « à revoir » et coupés. Le test est donc *le même corps au rembourrage près*
+  (`_meme_corps`). Ce qui était déjà coupé se relit depuis `0-brut.png`, sans appel
+  (`relire_depuis_la_planche`). Preuve dans `tests/test_au16_depliage_entier.py`.

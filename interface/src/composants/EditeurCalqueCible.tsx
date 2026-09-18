@@ -302,6 +302,7 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
             <div className="flex flex-wrap gap-[8px]">
               {onRetoucher && <button type="button" className={CONTROLE} disabled={attente || sale} title={sale ? "Enregistrez ou abandonnez d’abord le calage" : undefined} onClick={() => onRetoucher(variante.source)}>Retoucher l’image équipée…</button>}
               {preparation?.recette !== "pose" && <button type="button" className={CONTROLE} disabled={attente} onClick={() => relire("sienne", preparation?.echelle ?? false)}>Relire après retouche</button>}
+              {variante.planche_d_origine && <button type="button" className={CONTROLE} disabled={attente || sale} title="Reprend la case entière de l’image reçue, sans nouvel appel au modèle" onClick={() => void action(() => apiCalques.relireDepuisLaPlanche(chemin, variante.identifiant, variante.revision))}>Relire depuis l’image reçue</button>}
             </div>
             {onRetoucher && <p className="text-[11px] leading-[1.45] text-encre-4">La retouche ordinaire change l’image dans la bibliothèque. Revenez ici et choisissez « Sa propre recette » pour la relire.</p>}
           </Etape>
