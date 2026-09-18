@@ -67,7 +67,9 @@ provenance lisible dans *Relire avant l'envoi*.
 - [x] la référence `planche` du sujet part, décrite comme la mise en page à reproduire ; sinon la
       première image jointe à la main ; sinon refus avant de payer
 - [x] essais sans appel payant (`tests/test_rs2.py`, `App.test.tsx` « refaire une planche »)
-- [ ] **un essai payé** proposé à l'auteur, prix annoncé d'abord
+- [x] **un essai payé**, fait par l'auteur le 18 septembre : la mise en page est gardée ;
+      il a révélé le fond noir de la référence transparente (corrigé : elle part sur le fond
+      du jeu) et le concept art joint à tort (retiré en mode refaire une planche)
 
 Tranché en RS2 :
 
@@ -127,3 +129,91 @@ Tranché en RS3 :
 - [x] essais sans appel payant
 
 **Ordre** : RS1, puis RS2 et RS3 — toutes deux dépendent de l'usage posé par RS1.
+
+---
+
+## La suite : une planche refaite arrive rangée
+
+> Ouvert le 18 septembre 2026, à la demande de l'auteur, après l'essai payé de RS2.
+
+### Ce que l'auteur fait aujourd'hui, à la main
+
+1. Il fabrique une planche de quatre vues de Champy.
+2. Il ouvre la découpe, coupe en quatre, enregistre les quatre images.
+3. Il ouvre chaque image, lui applique la recette « champy 01 », enregistre.
+4. Il range chaque image dans sa direction.
+
+Soit une douzaine de gestes pour une seule planche, tous prévisibles.
+
+### Ce que l'atelier fera
+
+Il fabrique la planche. Quand elle revient :
+
+- elle est **découpée toute seule** en autant d'images que la référence a de vues ;
+- chaque image est **rattachée au sujet**, sans pose ;
+- chaque image reçoit **la recette du sujet** (« champy 01 ») ;
+- chaque image est **rangée dans sa direction** (sud, nord, est, ouest), d'après la position
+  de la vue sur la planche ;
+- la planche reste là, comme parent des quatre images. Refaire la découpe reste possible.
+
+L'auteur n'a plus qu'à regarder et corriger si une vue est mal rangée.
+
+### Les décisions
+
+6. **Un sujet porte une recette par défaut**, facultative, choisie parmi les recettes nommées.
+   Toute image qui naît pour ce sujet la reçoit à la place de la recette du jeu. Une image
+   née avant le choix ne change pas. Sans recette choisie, rien ne change.
+7. **La découpe à l'arrivée est une case** de la préparation, *Découper à l'arrivée*. Elle
+   n'apparaît qu'avec *Garder la mise en page*, et elle est cochée d'office avec elle. La
+   découpe passe par les zones opaques de la brute détourée ; si elle ne trouve pas le
+   nombre de vues attendu, **elle ne coupe rien** et la planche arrive seule, avec une phrase
+   qui dit pourquoi. Mieux vaut une planche entière qu'une découpe fausse.
+8. **La direction vient de la position, pas d'une devinette.** La référence `planche` du sujet
+   dit une fois pour toutes l'ordre de ses vues, de gauche à droite puis de haut en bas
+   (« sud, est, nord, ouest »). Une planche refaite garde cette mise en page, donc la
+   première vue est sud, la deuxième est est, etc. Aucun appel payant, aucun modèle qui
+   regarde l'image. Sans ordre renseigné, les images arrivent sans direction.
+9. **Tout se corrige** : la direction d'une image se change sur sa fiche, comme aujourd'hui.
+
+### RS6 · La recette du sujet
+
+- [ ] un sujet porte une recette nommée par défaut, écrite dans son fichier, relue sans
+      migration ; une route la règle ou l'efface ; une recette inconnue est refusée
+- [ ] une image qui naît pour ce sujet (génération, découpe) reçoit cette recette ; les autres
+      gardent la recette du jeu
+- [ ] une image déjà née ne change pas
+- [ ] la fiche du sujet montre le choix, en une ligne : *Recette de ses images : champy 01*
+- [ ] essais sans appel payant
+
+### RS7 · Découper à l'arrivée
+
+- [ ] la case *Découper à l'arrivée* existe, visible et cochée d'office avec *Garder la mise en
+      page* ; elle part avec la demande et la relance la relit
+- [ ] à l'arrivée, la planche est découpée par zones opaques ; le nombre de vues attendu est
+      celui de la référence planche (ses zones opaques), sinon aucun contrôle
+- [ ] chaque image découpée est rattachée au sujet, sans pose, porte la recette du sujet (RS6)
+      et a la planche pour parent
+- [ ] si le compte ne tombe pas juste, rien n'est coupé et la raison est lisible sur la planche
+- [ ] la découpe manuelle reste possible sur la même planche
+- [ ] aucun appel payant ; essais avec le faux fournisseur
+
+### RS8 · Chaque vue dans sa direction
+
+- [ ] la référence `planche` du sujet porte l'ordre de ses vues (une direction par vue) ; il se
+      règle sur la fiche, sous la planche, avec une petite liste par vue
+- [ ] à la découpe à l'arrivée, la n-ième image prend la n-ième direction ; sans ordre, pas de
+      direction
+- [ ] la direction se corrige sur la fiche de l'image
+- [ ] essais sans appel payant
+
+### RS9 · L'écran dit ce qui s'est passé
+
+- [ ] sur la fiche de la planche : *Découpée en 4 : sud, est, nord, ouest · recette champy 01*,
+      avec les quatre vignettes
+- [ ] sur la préparation, sous la case : une phrase simple qui annonce ce qui se passera
+      (*Elle sera coupée en 4, chaque image rangée dans sa direction, avec la recette champy
+      01*)
+- [ ] essais d'écran
+
+**Ordre** : RS6, puis RS7 (qui s'appuie aussi sur la recette de planche refaite), puis RS8,
+puis RS9.

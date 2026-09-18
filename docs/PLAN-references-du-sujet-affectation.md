@@ -10,3 +10,7 @@
 | RS3 · La fiche range ses références | `[MEDIUM]` | Sonnet | élevée | un écran sur des routes posées par RS1, avec une règle d'affichage (une place par direction) |
 | RS5 · L'agent peut refaire une planche | `[MEDIUM]` | Sonnet | élevée | deux paramètres neufs sur un outil de l'agent, qui touchent à ce qui part dans un appel payé ; règles déjà écrites dans le service |
 | RS4 · La case planche passe partout | `[EASY]` | Sonnet | faible | fait passer un champ existant par deux chemins existants ; ni schéma ni règle neuve |
+| RS6 · La recette du sujet | `[HARD]` | Opus | moyenne | change la forme d'un sujet et la naissance de toutes ses images |
+| RS7 · Découper à l'arrivée | `[HARD]` | Opus | élevée | un traitement qui crée des images tout seul, à l'arrivée d'un appel payé ; doit refuser plutôt que mal couper |
+| RS8 · Chaque vue dans sa direction | `[HARD]` | Opus | moyenne | nouvelle donnée sur une référence, et un rangement automatique qui doit rester corrigible |
+| RS9 · L'écran dit ce qui s'est passé | `[MEDIUM]` | Sonnet | élevée | deux phrases d'écran sur des données déjà posées |
