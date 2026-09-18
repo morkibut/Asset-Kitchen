@@ -11,7 +11,7 @@
 // de tout écran incapable de dépenser**. C'est ce qui donne à la galerie son
 // métier propre : on y juge, on n'y paie jamais.
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { api } from "../api"
 import type {
   Asset,
@@ -38,6 +38,29 @@ import { Cible, Reinjections } from "./Galerie"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
 import { ChampPrompt, EnRoute, type EnVol } from "./ChampPrompt"
 import { CoutAttendu, PanneauReglages } from "./PanneauReglages"
+
+/**
+ * **Ce qui va se passer, dit avant que ça se passe** (RS9) — la phrase sous la
+ * case *Découper à l'arrivée*. RS7 et RS8 ont écrit le geste ; personne ne
+ * l'annonçait avant de cocher.
+ *
+ * **Elle se dégrade sans jamais mentir.** Sans ordre des vues réglé sur la
+ * fiche du sujet, le nombre de morceaux n'est pas connu ici — il vient des
+ * zones opaques de la référence planche, un calcul que cet écran ne porte pas
+ * — et la phrase dit « ses vues » plutôt qu'un chiffre inventé. Sans recette
+ * de sujet, la troisième clause disparaît plutôt que d'annoncer « avec la
+ * recette du jeu », qui n'est le choix de personne ici.
+ */
+function phraseDecoupeALArrivee(personnage: Personnage, ordreDesVues: string[]): string {
+  const rangee = ordreDesVues.length > 0
+  const compte = rangee ? String(ordreDesVues.length) : "ses vues"
+  const direction = rangee
+    ? "chaque image rangée dans sa direction"
+    : "sans direction (ordre des vues non réglé sur la fiche du sujet)"
+  const clauses = [`Elle sera coupée en ${compte}`, direction]
+  if (personnage.recette) clauses.push(`avec la recette ${personnage.recette}`)
+  return clauses.join(", ") + "."
+}
 
 export function BarreQuiPaie({
   presentation = "barre",
@@ -197,6 +220,31 @@ export function BarreQuiPaie({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceUtile, options])
 
+  // **L'ordre des vues du sujet visé** (RS8, RS9) — juste de quoi annoncer ce
+  // que « Découper à l'arrivée » va faire, sous la case elle-même. `null` tant
+  // que la réponse n'est pas là ; `[]` sans planche rangée ou sans ordre dit.
+  // Le compte de vues attendu n'est **pas** demandé ici : il vient des zones
+  // opaques de la référence planche, un calcul de serveur que cet écran ne
+  // porte pas déjà — la phrase se contente alors de « ses vues ».
+  const [ordreDesVues, setOrdreDesVues] = useState<string[] | null>(null)
+  useEffect(() => {
+    let vivant = true
+    setOrdreDesVues(null)
+    if (!personnageCible) return
+    api
+      .referencesDeLaChose(personnageCible.identifiant)
+      .then((recu) => {
+        if (!vivant) return
+        const planche = recu?.lignes.find((l) => l.usage === "planche")
+        setOrdreDesVues(planche?.ordre_des_vues ?? [])
+      })
+      .catch(() => vivant && setOrdreDesVues([]))
+    return () => {
+      vivant = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personnageCible?.identifiant])
+
   // La préparation reprend les mêmes états et le même chemin d’envoi. Elle
   // s’ouvre sur demande ; aucun formulaire ne prend la place de l’asset.
   if (presentation === "preparation") {
@@ -281,6 +329,11 @@ export function BarreQuiPaie({
             quand elle est cochée : elle coupe une planche refaite, rien d'autre.
             Cochée d'office à chaque fois qu'on coche la mise en page. */}
         {onGarderMiseEnPage && onDecouperALArrivee && garderMiseEnPage && cases === 0 && posesCible.length === 0 && <label className="col-span-2 flex items-start gap-[8px] pl-[22px]"><input type="checkbox" className="mt-[3px]" checked={decouperALArrivee} onChange={(e) => onDecouperALArrivee(e.target.checked)} /><span><span className="block font-medium">Découper à l'arrivée</span><span className="block text-encre-3">Une image par vue, rangée sous le sujet. Si le nombre de vues ne tombe pas juste, rien n'est coupé.</span></span></label>}
+        {/* **Ce qui va se passer, dit d'avance** (RS9). Seulement une fois
+            l'ordre des vues connu (`ordreDesVues !== null`) : un chiffre
+            affiché puis remplacé une seconde plus tard apprendrait moins que
+            rien du tout. */}
+        {onGarderMiseEnPage && onDecouperALArrivee && garderMiseEnPage && decouperALArrivee && cases === 0 && posesCible.length === 0 && personnageCible && ordreDesVues !== null && <p className="col-span-2 pl-[22px] text-encre-3">{phraseDecoupeALArrivee(personnageCible, ordreDesVues)}</p>}
         {modele && Object.entries(modele.options)
           // **`force` a sa propre section, plus bas, et seulement quand elle
           // agit** (règle 8nonies) — cette liste-ci ne la redit pas.

@@ -128,9 +128,17 @@ export type Emplacement = {
   decoupe?: DecoupeALArrivee
 }
 
-/** La marque de la découpe à l'arrivée (RS7) — l'une des trois formes. */
+/** La marque de la découpe à l'arrivée (RS7, RS8) — l'une des trois formes.
+ *  `directions` (RS8) est la liste des directions prises, dans l'ordre des
+ *  vues, alignée à `morceaux` — ou `null` sans ordre des vues réglé ou sans
+ *  compte qui tombe juste, et `sans_direction` dit alors pourquoi. */
 export type DecoupeALArrivee =
-  | { morceaux: string[]; attendu: number | null }
+  | {
+      morceaux: string[]
+      attendu: number | null
+      directions: string[] | null
+      sans_direction?: string
+    }
   | { raison: string; attendu?: number | null; trouvees?: number }
   | { en_cours: true }
 

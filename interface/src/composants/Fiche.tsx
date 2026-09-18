@@ -295,6 +295,12 @@ export function Fiche({
 
         <PrisDeLAmbiance generation={generation} />
         <SansLeStyleDuJeu generation={generation} />
+        <DecoupeALArriveeDeLaPlanche
+          asset={asset}
+          generation={generation}
+          personnages={personnages}
+          onOuvrir={onOuvrir}
+        />
 
         <Jugement
           asset={asset}
@@ -775,6 +781,95 @@ function SansLeStyleDuJeu({ generation }: { generation: Generation | null }) {
       {laissees.length === 1 ? "image n'a" : "images n'ont"} pas suivi, ce modèle
       n'en accepte pas
     </p>
+  )
+}
+
+/**
+ * **Ce que la découpe à l'arrivée a fait de cette planche** (RS9). RS7 et RS8
+ * écrivent la marque sur l'emplacement de la génération dès que la planche
+ * revient ; jusqu'ici, rien ne la montrait — l'auteur ne le savait qu'en
+ * comptant les images sous le sujet.
+ *
+ * **Lue sur la génération que la fiche a déjà chargée** (`useGeneration`,
+ * juste au-dessus), pas sur une route à part : `GET /generations/{id}` porte
+ * déjà `emplacements[].decoupe` (RS7), et une planche ne revient qu'une fois
+ * par fiche ouverte.
+ *
+ * **Une seule des quatre formes à la fois** — coupée avec directions, coupée
+ * sans direction, refusée, ou en cours — jamais deux à l'écran : c'est
+ * exactement ce que le serveur a tranché pour cette planche-là.
+ *
+ * Absente sur une vue découpée (`asset.parent` posé) : son propre emplacement
+ * ne porte pas de marque, seule la planche d'où elle sort en porte une.
+ */
+function DecoupeALArriveeDeLaPlanche({
+  asset,
+  generation,
+  personnages,
+  onOuvrir,
+}: {
+  asset: Asset
+  generation: Generation | null
+  personnages: Personnage[]
+  onOuvrir: (identifiant: string) => void
+}) {
+  const decoupe = generation?.emplacements.find((e) => e.rang === asset.rang)?.decoupe
+  if (!decoupe) return null
+
+  if ("en_cours" in decoupe)
+    return <p className="mesure text-[10.5px] leading-4 text-encre-4">Découpe en cours…</p>
+
+  if ("raison" in decoupe)
+    return (
+      <p className="mesure text-[10.5px] leading-4 text-encre-4">
+        Pas découpée : {decoupe.raison}
+      </p>
+    )
+
+  // **Le sujet visé par cet appel** (RS6, RS7) — celui dont les morceaux
+  // reçoivent la recette et la direction. C'est la source la plus simple : la
+  // génération le porte déjà, il n'y a pas à le redéduire d'un morceau.
+  const sujet = personnages.find((p) => p.identifiant === generation?.personnage) ?? null
+  const nomsDeDirection = new Map(
+    (sujet?.cases.flatMap((c) => c.directions) ?? []).map(
+      (d) => [d.identifiant, d.nom] as const,
+    ),
+  )
+  const compte = decoupe.morceaux.length
+
+  const phrase = decoupe.directions
+    ? `Découpée en ${compte} : ${decoupe.directions
+        .map((d) => nomsDeDirection.get(d) ?? d)
+        .join(", ")}`
+    : `Découpée en ${compte}, sans direction — ${
+        decoupe.sans_direction ?? "l'ordre des vues ne convient pas"
+      }`
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="mesure text-[10.5px] leading-4 text-encre-2">
+        {phrase}
+        {sujet?.recette && ` · recette ${sujet.recette}`}
+      </p>
+      <div className="flex flex-wrap gap-1">
+        {decoupe.morceaux.map((identifiant) => (
+          <button
+            key={identifiant}
+            type="button"
+            onClick={() => onOuvrir(identifiant)}
+            aria-label="Ouvrir cette vue"
+            className="h-[26px] w-[26px] shrink-0 overflow-hidden rounded-5 border border-contour bg-carte"
+          >
+            <img
+              src={api.vignette(identifiant, "", 64)}
+              alt="Vue découpée"
+              className="h-full w-full object-contain"
+              style={{ imageRendering: "pixelated" }}
+            />
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 

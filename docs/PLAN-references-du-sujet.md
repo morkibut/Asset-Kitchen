@@ -258,12 +258,38 @@ Tranché en RS8 :
 
 ### RS9 · L'écran dit ce qui s'est passé
 
-- [ ] sur la fiche de la planche : *Découpée en 4 : sud, est, nord, ouest · recette champy 01*,
+- [x] sur la fiche de la planche : *Découpée en 4 : sud, est, nord, ouest · recette champy 01*,
       avec les quatre vignettes
-- [ ] sur la préparation, sous la case : une phrase simple qui annonce ce qui se passera
+- [x] sur la préparation, sous la case : une phrase simple qui annonce ce qui se passera
       (*Elle sera coupée en 4, chaque image rangée dans sa direction, avec la recette champy
       01*)
-- [ ] essais d'écran
+- [x] essais d'écran
+
+Tranché en RS9 :
+
+- rien de neuf côté serveur : `GET /generations/{id}` porte déjà
+  `emplacements[].decoupe` (RS7) — la fiche le lisait déjà pour la graine, elle le lit
+  maintenant aussi pour la découpe ; `DecoupeALArrivee` (`api.ts`) apprend `directions` et
+  `sans_direction` (RS8), qu'il ne portait pas encore ;
+- sur la fiche (`Fiche.tsx`, `DecoupeALArriveeDeLaPlanche`) : une seule des quatre phrases à la
+  fois — coupée avec directions, coupée sans direction (la raison de RS8, mot pour mot), une
+  planche refusée (*Pas découpée : …*, la phrase de RS7 telle quelle — le bouton *Découper* du
+  pied de fiche suffit à couper à la main, rien ajouté), ou *Découpe en cours…* ; absente sur une
+  vue qui sort d'une planche, son propre emplacement ne portant pas de marque ;
+- la recette montrée est celle du **sujet visé par l'appel** (`generation.personnage`), pas
+  celle d'un morceau relu : c'est la source la plus simple, déjà chargée par la fiche pour
+  d'autres rubriques ;
+- sur la préparation (`BarreQuiPaie.tsx`), sous la case cochée : une phrase bâtie sur ce que
+  l'écran sait déjà sans appel dédié — l'ordre des vues du sujet visé
+  (`api.referencesDeLaChose`, ligne `usage: "planche"`) et sa recette (`Personnage.recette`).
+  **Le compte de vues n'est pas demandé** : il vient normalement des zones opaques de la
+  référence planche, un calcul de serveur que cet écran n'a pas sous la main, et la phrase dit
+  alors « ses vues » plutôt qu'un chiffre inventé — la même dégradation que « sans direction
+  (ordre des vues non réglé sur la fiche du sujet) » quand rien n'est réglé ; la clause recette
+  disparaît sans recette de sujet ;
+- essais : `Fiche.rs9.test.tsx` (les quatre formes, la fiche sans marque du tout),
+  `BarreQuiPaie.rs9.test.tsx` (ordre réglé, sans ordre, sans recette, décochée, sans sujet visé —
+  et qu'aucun appel ne part alors).
 
 **Ordre** : RS6, puis RS7 (qui s'appuie aussi sur la recette de planche refaite), puis RS8,
 puis RS9.
