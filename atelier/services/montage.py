@@ -30,6 +30,7 @@ toutes les bandes, comme il refait toutes les images — règle 5 de
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import math
 import time
@@ -84,6 +85,44 @@ from atelier.services.superposition import en_rgba
 # étude, pas un réglage** : elle ne porte rien que l'auteur ait décidé, tout s'y
 # recalcule, et l'effacer ne coûte qu'une attente.
 ETUDE = "montage.json"
+
+
+def empreinte_de_la_mesure(recette: Recette) -> str:
+    """Ce qui nomme **la fenêtre commune**, et rien d'autre.
+
+    La fenêtre se prend sur l'image détourée puis recadrée, et la tache
+    minimale décide de ce qu'elle écarte ; la case et son occupation fixent le
+    seuil. Les couleurs, les contours, la main n'y touchent pas : une étude
+    nommée par l'empreinte entière se périmait au moindre cran de palette, et
+    remesurer coûte une quarantaine de secondes sur un clip de cent images.
+    """
+    entiere = recette.en_json()
+    canonique = json.dumps(
+        {
+            "passes": entiere.get("passes"),
+            "difference": entiere.get("difference"),
+            "recadrage": entiere.get("recadrage"),
+            "aire_min": recette.bords.aire_min if recette.bords else 0,
+            "grille": (
+                [recette.grille.cible, recette.grille.occupation]
+                if recette.grille
+                else None
+            ),
+            "veille": sorted(recette.veille),
+        },
+        sort_keys=True,
+    )
+    return hashlib.sha256(canonique.encode("utf-8")).hexdigest()[:16]
+
+
+def etude_valable(etude: dict[str, Any] | None, recette: Recette) -> bool:
+    """L'étude d'un clip vaut-elle pour cette recette ? Une étude d'avant le
+    18 septembre 2026 ne porte que l'empreinte entière, et se juge sur elle."""
+    if not etude:
+        return False
+    if "mesure" in etude:
+        return etude["mesure"] == empreinte_de_la_mesure(recette)
+    return etude.get("empreinte") == recette.empreinte()
 
 # Le côté d'une case de la planche contact — l'image unique où toutes les images
 # du clip tiennent, et dont l'écran tire à la fois sa pellicule et sa loupe.
@@ -1118,7 +1157,6 @@ class ServiceMontage:
         """
         if bande.cadre.choix == A_LA_MAIN:
             return {"choix": bande.cadre.choix, "a_jour": True, "mesuree_le": None}
-        empreinte = bande.recette.empreinte()
         etudes = [self._lire_etude(venue) or {} for venue in bande.clips]
         dates = [e.get("mesuree_le") for e in etudes if e.get("mesuree_le")]
         return {
@@ -1126,7 +1164,7 @@ class ServiceMontage:
             # Sans étude, on ne sait pas : on ne réclame pas vingt secondes pour
             # une fenêtre peut-être juste. C'est le même arbitrage que `_fenetre`.
             "a_jour": all(
-                e.get("empreinte", empreinte) == empreinte for e in etudes
+                not e or etude_valable(e, bande.recette) for e in etudes
             ),
             "mesuree_le": max(dates) if dates else None,
         }
@@ -1152,29 +1190,59 @@ class ServiceMontage:
             raise ErreurAtelier(
                 "ce cadre a été posé à la main — le remesurer l'effacerait"
             )
+        return self.corriger(
+            identifiant, cadre=self._cadre_remesure(bande, forcer=True)
+        )
 
+    def _cadre_a_jour(
+        self, bande: Bande, *, mesure_changee: bool, prises_changees: bool
+    ) -> Cadre:
+        """Le cadre d'une bande corrigée, **remesuré seulement s'il le faut**.
+
+        À la main, jamais : ce sont les quatre nombres de l'auteur. Du clip,
+        quand ce qui se mesure a changé dans la recette, ou quand l'étude d'un
+        de ses clips est « d'avant ». Hors de ces cas le rectangle ne bouge pas,
+        et c'est la règle de `_cadre_pose` : remesurer un clip ne change pas en
+        silence une bande déjà livrée. De l'animation, dès que ses images ou ce
+        qui se mesure changent — elle ne mesure que les siennes.
+        """
+        if bande.cadre.choix == A_LA_MAIN:
+            return bande.cadre
+        if bande.cadre.choix == DU_CLIP:
+            etudes = [self._lire_etude(venue) for venue in bande.clips]
+            davant = any(
+                e is not None and "mesure" in e and not etude_valable(e, bande.recette)
+                for e in etudes
+            )
+            if not (mesure_changee or davant):
+                return bande.cadre
+        elif not (mesure_changee or prises_changees):
+            return bande.cadre
+        return self._cadre_remesure(bande, forcer=False)
+
+    def _cadre_remesure(self, bande: Bande, *, forcer: bool) -> Cadre:
         fenetre: Fenetre | None = None
         if bande.cadre.choix == DU_CLIP:
             # « Du clip » veut dire *toutes les bandes de ce clip ont la même
             # assise* : on remesure donc l'étude, pour que les autres bandes en
             # profitent, et on réunit les clips que celle-ci emprunte.
             for venue in bande.clips:
-                etude = self._mesurer(
-                    self._clip(venue), bande.recette, self._images(venue)
-                )
-                self._ecrire_etude(venue, etude)
-                du_clip = Fenetre.depuis_json(etude.get("fenetre"))
-                fenetre = du_clip if fenetre is None else fenetre.avec(du_clip)
+                etude = self._lire_etude(venue)
+                if forcer or not etude_valable(etude, bande.recette):
+                    etude = self._mesurer(
+                        self._clip(venue), bande.recette, self._images(venue)
+                    )
+                    self._ecrire_etude(venue, etude)
+                du_clip = Fenetre.depuis_json((etude or {}).get("fenetre"))
+                if du_clip is not None:
+                    fenetre = du_clip if fenetre is None else fenetre.avec(du_clip)
         else:
             fichiers = self._fichiers_des_prises(bande.clip, bande.prises)
             preparees = [
                 preparer(fichier.read_bytes(), bande.recette) for fichier in fichiers
             ]
             fenetre = fenetre_commune(preparees, bande.recette)
-
-        return self.corriger(
-            identifiant, cadre=self._cadre_pose(bande.cadre, fenetre)
-        )
+        return self._cadre_pose(bande.cadre, fenetre)
 
     def identifier_prises(self, identifiant: str) -> Bande:
         """Attribuer les identités avant de viser une occurrence avec un calque.
@@ -1259,6 +1327,8 @@ class ServiceMontage:
                 prises = [p if p.identifiant else replace(p, identifiant=uuid.uuid4().hex) for p in prises]
             if chutier is not None:
                 chutier = [p if p.identifiant else replace(p, identifiant=uuid.uuid4().hex) for p in chutier]
+        mesure_avant = empreinte_de_la_mesure(bande.recette)
+        prises_avant = tuple(bande.prises)
         nouvelles = (*(prises if prises is not None else bande.prises),
                      *(chutier if chutier is not None else bande.chutier))
         ids = [p.identifiant for p in nouvelles if p.identifiant]
@@ -1288,6 +1358,18 @@ class ServiceMontage:
             bande.sens = sens
         if cadre is not None:
             bande.cadre = cadre
+        elif recette is not None or prises is not None:
+            # **La fenêtre suit la recette, sans bouton** (18 septembre 2026).
+            # Régler le nettoyage puis enregistrer laissait la fenêtre « d'avant »
+            # jusqu'à ce que l'auteur trouve « Reprendre la fenêtre » au fond
+            # d'un volet replié. Elle se remesure donc ici quand elle n'est plus
+            # à jour — et seulement alors : sur un clip de cent images, c'est
+            # une quarantaine de secondes.
+            bande.cadre = self._cadre_a_jour(
+                bande,
+                mesure_changee=empreinte_de_la_mesure(bande.recette) != mesure_avant,
+                prises_changees=prises is not None and tuple(prises) != prises_avant,
+            )
 
         planche = self._planche_de(bande)
         bande.planche = self._fichiers.ecrire_planche_de_bande(
@@ -1336,7 +1418,7 @@ class ServiceMontage:
         """
         garde = self._lire_etude(generation.identifiant)
         if garde is not None:
-            garde["a_jour"] = garde.get("empreinte") == recette.empreinte()
+            garde["a_jour"] = etude_valable(garde, recette)
             return garde
         etude = self._mesurer(generation, recette, images)
         self._ecrire_etude(generation.identifiant, etude)
@@ -1361,6 +1443,7 @@ class ServiceMontage:
         propositions = lire_le_rythme(detourees, cadence)
         return {
             "empreinte": recette.empreinte(),
+            "mesure": empreinte_de_la_mesure(recette),
             "a_jour": True,
             "mesuree_le": time.time(),
             "fenetre": fenetre.en_json() if fenetre else None,
@@ -1375,7 +1458,28 @@ class ServiceMontage:
             contenu = json.loads(chemin.read_text(encoding="utf-8"))
         except (OSError, ValueError):  # pragma: no cover — fichier abîmé
             return None
-        return contenu if isinstance(contenu, dict) else None
+        if not isinstance(contenu, dict):
+            return None
+        if "mesure" not in contenu and contenu.get("empreinte"):
+            self._completer_l_etude(clip, contenu)
+        return contenu
+
+    def _completer_l_etude(self, clip: str, etude: dict[str, Any]) -> None:
+        """Une étude d'avant le 18 septembre 2026 ne dit que l'empreinte
+        **entière** de sa recette — elle se périmait au moindre cran de couleur.
+        On retrouve la recette qui porte cette empreinte parmi celles qu'on
+        connaît (celle du jeu, celles des bandes du clip) et on écrit ce qui se
+        mesure. Introuvable, l'étude reste telle quelle : on ne devine pas."""
+        try:
+            candidates = [self.recette_du_jeu(self._clip(clip))]
+        except ErreurAtelier:
+            candidates = []
+        candidates += [b.recette for b in self._base.bandes_du_clip(clip)]
+        for recette in candidates:
+            if recette.empreinte() == etude["empreinte"]:
+                etude["mesure"] = empreinte_de_la_mesure(recette)
+                self._ecrire_etude(clip, etude)
+                return
 
     def _ecrire_etude(self, clip: str, etude: dict[str, Any]) -> None:
         chemin = self._dossier(clip) / ETUDE
@@ -1406,11 +1510,18 @@ class ServiceMontage:
             return fenetre_commune(preparees, recette)
         etude = self._lire_etude(generation.identifiant)
         gardee = Fenetre.depuis_json((etude or {}).get("fenetre"))
-        if gardee is not None:
+        # Une étude qui ne sait pas avec quoi elle a été mesurée garde l'ancienne
+        # conduite : elle sert telle quelle, et l'écran la dit « d'avant ».
+        if gardee is not None and (
+            "mesure" not in (etude or {}) or etude_valable(etude, recette)
+        ):
             return gardee
-        # Le clip n'a pas encore été étudié — on ne fait pas attendre vingt
-        # secondes pour un aperçu : la bande cale ses propres images, et l'écran
-        # le dira à l'ouverture suivante, qui aura l'étude.
+        # Le clip n'a pas encore été étudié, **ou l'étude est d'avant ce
+        # réglage** (18 septembre 2026) — on ne fait pas attendre quarante
+        # secondes pour un aperçu : la bande cale ses propres images, déjà
+        # préparées, et l'enregistrement remesure le clip s'il le faut. Garder
+        # l'étude d'avant faisait qu'un nettoyage réglé ne changeait rien à
+        # l'écran.
         return fenetre_commune(preparees, recette)
 
     @staticmethod

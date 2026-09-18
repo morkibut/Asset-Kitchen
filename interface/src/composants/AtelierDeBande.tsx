@@ -3198,8 +3198,8 @@ function FenetreDeLaBande({
 
       {!etat.a_jour && (
         <p data-fenetre-davant className="mesure text-[10px] leading-4 text-signal">
-          Elle a été mesurée avec un autre détourage. Elle n'est pas fausse, elle
-          est d'avant : le sujet peut dépasser d'un côté.
+          Elle a été mesurée avec d'autres réglages. L'aperçu se cale sur les
+          images de l'animation, et la fenêtre se remesure en enregistrant.
         </p>
       )}
 

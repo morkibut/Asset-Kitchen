@@ -557,16 +557,11 @@ def test_la_fenetre_reunit_les_deux_clips_au_lieu_d_en_choisir_un():
     assert ici.avec(None) == ici, "rien à réunir laisse la fenêtre telle quelle"
 
 
-def test_une_fenetre_mesuree_avec_un_autre_detourage_se_dit_d_avant(
+def test_enregistrer_un_autre_detourage_remesure_la_fenetre_sans_bouton(
     client_video, clip, animateur
 ):
-    """Elle n'est pas fausse, elle est **d'avant** — et la nuance décide de qui
-    paie les vingt secondes de la remesure.
-
-    Sans ce drapeau, l'écran aurait deux mauvaises réponses et pas de bonne :
-    remesurer d'office à chaque réglage, ou donner pour à jour une fenêtre qui
-    laisse dépasser un bras.
-    """
+    """Régler puis enregistrer suffit (18 septembre 2026) : la fenêtre ne reste
+    plus « d'avant » en attendant qu'on trouve « Reprendre la fenêtre »."""
     # Ouvrir le montage est ce qui écrit l'étude du clip — c'est le geste par
     # lequel on passe pour découper, et sans lui il n'y a rien à comparer.
     client_video.get(f"/api/montage/{clip}")
@@ -580,8 +575,47 @@ def test_une_fenetre_mesuree_avec_un_autre_detourage_se_dit_d_avant(
     )
 
     etat = client_video.get(f"/api/strips/{identifiant}").json()["cadre"]
-    assert etat["a_jour"] is False, "le détourage a changé depuis la mesure"
+    assert etat["a_jour"] is True, "la fenêtre a été remesurée à l'enregistrement"
     assert etat["choix"] == "clip"
+
+
+def test_une_couleur_changee_ne_remesure_pas_la_fenetre(client_video, clip, animateur):
+    """Seul ce qui se mesure périme la fenêtre : la palette n'y touche pas, et
+    remesurer coûte une quarantaine de secondes sur un clip de cent images."""
+    client_video.get(f"/api/montage/{clip}")
+    identifiant = _garder(client_video, clip)["identifiant"]
+    avant = client_video.get(f"/api/strips/{identifiant}").json()
+    recette = dict(avant["bande"]["recette"])
+    recette["quantification"] = {"couleurs": 8}
+
+    client_video.put(f"/api/strips/{identifiant}", json={"recette": recette})
+
+    apres = client_video.get(f"/api/strips/{identifiant}").json()
+    assert apres["cadre"]["a_jour"] is True
+    assert apres["cadre"]["mesuree_le"] == avant["cadre"]["mesuree_le"], "pas remesurée"
+
+
+def test_l_apercu_suit_un_detourage_que_l_etude_du_clip_n_a_pas_vu(
+    client_video, clip, animateur
+):
+    """Pendant le réglage, l'aperçu cale la bande sur ses propres images plutôt
+    que de garder la fenêtre d'avant — sans quoi un nettoyage réglé ne
+    changeait rien à l'écran."""
+    client_video.get(f"/api/montage/{clip}")
+    identifiant = _garder(client_video, clip)["identifiant"]
+    bande = client_video.get(f"/api/strips/{identifiant}").json()["bande"]
+    recette = dict(bande["recette"])
+    recette["passes"] = [{"moteur": "bord", "tolerance": 42}]
+
+    apercu = client_video.post(
+        "/api/montage/preview",
+        json={"clip": clip, "prises": bande["prises"], "recette": recette, "cadre": bande["cadre"]},
+    )
+
+    assert apercu.status_code == 200, apercu.text
+    assert apercu.json()["fenetre"]["images"] == len(bande["prises"]), (
+        "mesurée sur les images de la bande, pas reprise de l'étude du clip"
+    )
 
 
 def test_reprendre_la_fenetre_la_remet_a_jour_et_refait_la_planche(
