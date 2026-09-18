@@ -27,6 +27,7 @@ from atelier.image.calques_cibles import png, rgba
 from atelier.image.decoupe import decouper
 from atelier.services.couverture_equipement import ServiceCouvertureEquipement, cle_cible
 from atelier.services.pliage import consignes, plier
+from atelier.services.rangs import rang_libre
 from atelier.services.travaux import ServiceTravaux, _hash, _json, _verrou
 
 
@@ -343,7 +344,9 @@ class ServiceTravauxEquipement(ServiceTravaux):
 
     def _ranger_case(self, t, generation, octets: bytes, label: str, lot) -> str:
         """La case revenue entre en bibliothèque, telle que le modèle l'a rendue."""
-        rang = max([99, *self.a.base.rangs_de_generation(generation.identifiant)]) + 1
+        # La règle des rangs commune (P1b) : cette génération est une planche,
+        # et un rang qu'un dépliage a réservé ne se reprend jamais.
+        rang = rang_libre(self.a.base, generation.identifiant, objet=generation)
         identifiant = identifiant_de(generation.identifiant, rang)
         pixels = rgba(octets)
         chemin = self.a.fichiers.ecrire_brut(generation.identifiant, rang, png(pixels), ".png")

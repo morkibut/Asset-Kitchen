@@ -49,6 +49,7 @@ from atelier.image import (
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ServiceBibliotheque
 from atelier.services.evenements import Diffusion
+from atelier.services.rangs import rang_libre
 
 # Les trois modes de proposition. **Aucun n'est un repli d'un autre** : une
 # planche régulière dont les sprites se touchent, ou dont certaines cases sont
@@ -347,13 +348,7 @@ class ServiceDecoupe:
         — la règle des rangs de `Depliage` : un rang pris ne se rend jamais,
         même quand les images de ce dépliage ont été purgées.
         """
-        pris = self._base.rangs_de_generation(generation)
-        objet = self._base.lire(generation)
-        if objet is not None:
-            pris += [e.rang for e in objet.emplacements]
-            if objet.pliage is not None:
-                pris += list(objet.pliage.rangs_reserves)
-        return max([RANG_DECOUPE - 1, *pris]) + 1
+        return rang_libre(self._base, generation, plancher=RANG_DECOUPE)
 
 
 def _label(planche: str, numero: int, total: int) -> str:

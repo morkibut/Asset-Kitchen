@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 from atelier.api.animation import routeur as routeur_animation
 from atelier.api.bibliotheque import routeur as routeur_bibliotheque
+from atelier.api.depliages import routeur as routeur_depliages
 from atelier.api.enregistrer_sous import routeur as routeur_enregistrer_sous
 from atelier.api.gestes import routeur as routeur_gestes
 from atelier.api.production import routeur as routeur_production
@@ -61,6 +62,7 @@ from atelier.services.bibliotheque import (
 )
 from atelier.services.agent import DepotRefuse, PlafondAtteint
 from atelier.services.decoupe import DecoupeRefusee
+from atelier.services.depliages import DepliageRefuse, PlancheAConfirmer
 from atelier.services.planche_animee import PlancheAnimeeRefusee
 from atelier.services.equipement import EmploiInconnu
 from atelier.services.miroir import MiroirRefuse
@@ -116,6 +118,12 @@ CODES = {
     LienRefuse: 409,
     UniversRefuse: 409,
     DecoupeRefusee: 409,
+    # P1b : la planche supprimée ne se redécoupe plus, une planche d'équipement
+    # se recale — l'état de la planche s'y oppose, la demande est bien formée.
+    DepliageRefuse: 409,
+    # Pas une faute : une question. 409, et le compte part avec (voir le
+    # gestionnaire plus bas).
+    PlancheAConfirmer: 409,
     PlancheAnimeeRefusee: 409,
     # Il n'y a pas de case où ranger le miroir. 409 et non 400 : la demande est
     # bien formée, c'est l'état de l'image qui s'y oppose.
@@ -261,6 +269,25 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     # — les images et les animations — et qu'il n'appartient donc ni à la
     # bibliothèque ni à l'animation.
     application.include_router(routeur_enregistrer_sous, prefix="/api")
+    # **Les dépliages d'une planche** (P1b, V3.5) : refaire un découpage,
+    # lister, supprimer, et compter ce qui dépend d'une planche.
+    application.include_router(routeur_depliages, prefix="/api")
+
+    @application.exception_handler(PlancheAConfirmer)
+    async def _confirmer(_: Request, erreur: PlancheAConfirmer) -> JSONResponse:
+        # **Le seul refus qui porte un chiffre en plus de sa raison** : l'écran
+        # pose la question « supprimer quand même ? » avec le compte exact, sans
+        # avoir à le redemander par une seconde route.
+        return JSONResponse(
+            status_code=CODES[PlancheAConfirmer],
+            content={
+                "code": erreur.code,
+                "raison": erreur.raison,
+                "ou_aller": erreur.ou_aller,
+                "planche": erreur.planche,
+                "dependants": erreur.dependants,
+            },
+        )
 
     @application.exception_handler(ErreurAtelier)
     async def _refus(_: Request, erreur: ErreurAtelier) -> JSONResponse:

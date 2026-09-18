@@ -51,6 +51,7 @@ from atelier.services.assets import AssetInconnu
 # recopié : trois fabriques qui numérotent dans la même génération doivent
 # partir du même nombre, sinon la troisième écrase les fichiers de la première.
 from atelier.services.decoupe import RANG_DECOUPE
+from atelier.services.rangs import rang_libre
 
 # Le modèle sous lequel se range le clip d'une animation enregistrée sous. **Un
 # nom, pas un fournisseur**, comme `feuille-decoupee` : il sert à les retrouver
@@ -290,12 +291,11 @@ class ServiceEnregistrerSous:
         Le calcul du slicer et du miroir : deux assets d'un même rang
         partageraient leurs fichiers `<rang>-brut` et `<rang>-asset.json`, et le
         second effacerait le premier sans rien dire.
+
+        **Et au-dessus des rangs qu'un dépliage a réservés** (P1b) : le calcul
+        commun vit dans `atelier/services/rangs.py`.
         """
-        pris = self.atelier.base.rangs_de_generation(generation)
-        objet = self.atelier.base.lire(generation)
-        if objet is not None:
-            pris += [e.rang for e in objet.emplacements]
-        return max([RANG_DECOUPE - 1, *pris]) + 1
+        return rang_libre(self.atelier.base, generation, plancher=RANG_DECOUPE)
 
     # ── Une animation ────────────────────────────────────────────────────────
 

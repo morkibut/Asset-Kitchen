@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 
 from atelier.api.routes import reponse_archive
 from atelier.services import Atelier
+from atelier.services.depliages import depliages_de
 
 routeur = APIRouter()
 
@@ -54,6 +55,17 @@ class CorpsSelection(BaseModel):
     fois et vaut pour un nombre quelconque."""
 
     identifiants: list[str] = Field(min_length=1)
+
+
+class CorpsSuppression(CorpsSelection):
+    """Une sélection à supprimer — **et le « oui » qu'une planche demande** (P1b).
+
+    `confirmer` n'est lu que si la sélection porte une planche dont des images
+    dépendent : sans lui, la suppression est refusée avec le compte. Toute
+    autre image part comme avant, sans question.
+    """
+
+    confirmer: bool = False
 
 
 class CorpsRangement(CorpsSelection):
@@ -295,14 +307,22 @@ async def marquer_favori(requete: Request, corps: CorpsFavori) -> dict[str, Any]
 
 
 @routeur.post("/assets/delete")
-async def supprimer_assets(requete: Request, corps: CorpsSelection) -> dict[str, Any]:
+async def supprimer_assets(requete: Request, corps: CorpsSuppression) -> dict[str, Any]:
     """Sort de la bibliothèque tout de suite, s'efface après le délai (US-27).
 
     **Jamais de cascade** : les enfants restent, chacun marqué « parent
     supprimé » (US-28, US-29). La réponse porte l'échéance — c'est elle que le
     bandeau d'annulation décompte.
+
+    **Une planche avec des images qui en dépendent demande confirmation** (P1b) :
+    sa purge efface le fichier que tout dépliage refait recoupe. Ses images
+    restent, mais le geste de refaire se perd — d'où le 409
+    `planche_a_confirmer` avec le compte, tant que `confirmer` n'est pas vrai.
+    Vérifié **avant** toute suppression : une sélection refusée n'a rien retiré.
     """
-    return _atelier(requete).bibliotheque.supprimer(corps.identifiants)
+    atelier = _atelier(requete)
+    depliages_de(atelier).verifier_suppression(corps.identifiants, corps.confirmer)
+    return atelier.bibliotheque.supprimer(corps.identifiants)
 
 
 @routeur.post("/assets/restore")

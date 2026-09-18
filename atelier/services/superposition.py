@@ -54,6 +54,7 @@ from atelier.image.calque import (
     superposer,
 )
 from atelier.services.evenements import Diffusion
+from atelier.services.rangs import rang_libre
 
 
 class SuperpositionRefusee(ErreurAtelier):
@@ -477,9 +478,13 @@ class ServiceSuperposition:
         Réutiliser le rang d'un supprimé rendrait deux images de même
         identifiant, et la seconde effacerait la première sur le disque — c'est
         la règle du découpage, mot pour mot.
+
+        **Et au-dessus des emplacements et des rangs qu'un dépliage a
+        réservés** (P1b) : superposer une pièce sur une image dépliée range le
+        résultat dans le dossier de sa planche. Le plancher reste zéro — la
+        convention de ce geste depuis sa naissance.
         """
-        rangs = self._base.rangs_de_generation(generation)
-        return (max(rangs) + 1) if rangs else 0
+        return rang_libre(self._base, generation, plancher=0)
 
 
 def _label(haut: Asset, bas: Asset, sortie: str) -> str:

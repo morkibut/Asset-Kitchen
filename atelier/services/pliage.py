@@ -52,6 +52,7 @@ from atelier.domaine.generation import Emplacement, Generation, Statut
 from atelier.domaine.planche import asset_de_planche
 from atelier.domaine.pliage import (
     AUTO,
+    MAIN,
     CasePliee,
     Depliage,
     Geometrie,
@@ -66,6 +67,7 @@ from atelier.image.pliage import gabarit, mesurer_lot
 from atelier.services.assets import ServiceAssets
 from atelier.services.bibliotheque import ServiceBibliotheque
 from atelier.services.evenements import Diffusion
+from atelier.services.rangs import rang_libre
 
 # Le rang à partir duquel vivent les images dépliées, dans la génération de leur
 # planche. **Le même que les découpes de T5, et pour les mêmes deux raisons** :
@@ -509,12 +511,112 @@ class ServicePliage:
         drapeau serait une seconde vérité, et c'est le disque qui fait foi. Un
         lot refusé sur le compte n'a écrit aucun rang, donc il répond non — et
         c'est exact, il attend une relance.
+
+        **Et un dépliage que l'auteur a supprimé compte comme déplié** (P1b).
+        Ses images purgées, l'index a oublié leurs rangs : sans cette ligne, la
+        reprise au démarrage prendrait la planche pour une planche jamais
+        dépliée, et ferait revenir ce que l'auteur a jeté.
         """
+        pliage = generation.pliage
+        if pliage is not None and any(
+            d.supprime_le is not None for d in pliage.depliages
+        ):
+            return True
         return any(
             rang >= RANG_PLIAGE for rang in self._base.rangs_de_generation(
                 generation.identifiant
             )
         )
+
+    def marge(self, generation: Generation) -> int:
+        """La marge que le dépliage ajoute autour de chaque coupe.
+
+        **Une seule règle pour les deux dépliages**, l'automatique et celui
+        qu'on refait (P1b) : les coupes s'enregistrent avant marge, et c'est ce
+        qui fait qu'un dépliage refait sur les coupes proposées, sans rien y
+        toucher, rend exactement les mêmes images que le premier. Voir
+        `decouper_retour` pour pourquoi une grille connue n'en prend pas.
+        """
+        pliage = generation.pliage
+        return 0 if pliage is not None and pliage.geometrie_connue else MARGE
+
+    def redeplier(
+        self,
+        generation: Generation,
+        emplacement: Emplacement,
+        coupes: Sequence[Boite],
+        cases: Sequence[int | None],
+    ) -> tuple[Depliage, list[Asset]]:
+        """Un dépliage de plus, sur les coupes que l'auteur a validées (P1b).
+
+        **Le geste qu'on demande**, jamais une étape qu'on traverse : le premier
+        dépliage reste automatique (`deplier`), celui-ci ne part que d'un clic.
+        Il ne refuse donc rien sur le compte — l'auteur a sous les yeux ce qu'il
+        coupe, et c'est sa liste qui part, comme au découpeur de T5.
+
+        **Il n'efface rien.** Les images des dépliages précédents restent où
+        elles sont, à leurs rangs : un calque désigne son corps par
+        identifiant, et c'est ce qui interdisait de redéplier en C3. Celui-ci
+        prend des rangs neufs, d'un seul tenant (`Pliage.reserver`), et l'on
+        supprime ensuite, si l'on veut, le dépliage qu'on ne garde pas.
+
+        `cases` est aligné aux coupes : l'indice de la case de la planche que
+        chaque coupe remplit, ou `None` pour une coupe ajoutée qui n'en remplit
+        aucune — elle entre sans pose ni direction, sous un nom numéroté.
+
+        **Rien n'est écrit avant que tout soit coupé et mesuré**, ici comme au
+        premier dépliage : une coupe illisible lève avant la réservation.
+        """
+        pliage = generation.pliage
+        if pliage is None or emplacement.resultat is None:  # pragma: no cover
+            raise ErreurAtelier("cette génération n'est pas une planche arrivée")
+
+        octets = self._fichiers.lire(emplacement.resultat.fichier)
+        boites = [tuple(int(v) for v in c) for c in coupes]
+        # Les mêmes mesures que l'arrivée, sur la même image détourée de la
+        # même façon : l'écran les montre pareil pour les deux dépliages.
+        rgba = detourer(Recette(passes=(Passe(moteur=BORD),)), octets)
+        mesures = mesurer_lot(rgba, boites)  # type: ignore[arg-type]
+        morceaux = decouper(octets, boites, marge=self.marge(generation))  # type: ignore[arg-type]
+
+        indices = [
+            cases[i]
+            if i < len(cases) and cases[i] is not None and 0 <= cases[i] < pliage.nombre  # type: ignore[operator]
+            else None
+            for i in range(len(morceaux))
+        ]
+        depliage = self.reserver(
+            generation, emplacement, boites, origine=MAIN, cases=indices  # type: ignore[arg-type]
+        )
+        maintenant = time.time()
+        total = len(morceaux)
+        sujet = str(
+            generation.demande.get("sujet") or generation.demande.get("prompt") or ""
+        ).strip()
+        nees: list[Asset] = []
+        for index, image in enumerate(morceaux):
+            indice = indices[index]
+            case = pliage.cases[indice] if indice is not None else None
+            nees.append(
+                self._accueillir(
+                    generation,
+                    case,
+                    image,
+                    depliage.rangs[index],
+                    mesures[index],
+                    depliage,
+                    # **Daté de maintenant**, comme une découpe de T5 : ce qu'on
+                    # vient de refaire doit se voir en tête de grille, pas au
+                    # fond avec le lot d'origine.
+                    cree_le=maintenant,
+                    label=None
+                    if case is not None
+                    else f"{sujet[:44] or 'planche'} · {index + 1}/{total}",
+                )
+            )
+
+        self._diffusion.publier("bibliotheque", self._bibliotheque.arbre())
+        return depliage, nees
 
     def reserver(
         self,
@@ -523,6 +625,7 @@ class ServicePliage:
         coupes: Sequence[tuple[int, int, int, int]],
         *,
         origine: str = AUTO,
+        cases: Sequence[int | None] = (),
     ) -> Depliage:
         """Un dépliage de la planche de cet emplacement, ses rangs pris (P1).
 
@@ -545,9 +648,23 @@ class ServicePliage:
             self.premier_rang_libre(generation),
             origine=origine,
             cree_le=time.time(),
+            cases=tuple(cases),
         )
         self._sauver(generation)
         return depliage
+
+    def oublier_depliage(self, generation: Generation, depliage: Depliage) -> None:
+        """Le dépliage est marqué supprimé — **et reste écrit** (P1b).
+
+        Ses rangs restent réservés, son numéro n'est pas redonné ; seule la date
+        s'ajoute, pour que la reprise au démarrage ne le prenne pas pour une
+        planche jamais dépliée (voir `deplie`). Ses images, elles, passent par
+        la suppression ordinaire de la bibliothèque — c'est l'appelant qui la
+        demande, avec son délai d'annulation.
+        """
+        if depliage.supprime_le is None:
+            depliage.supprime_le = time.time()
+            self._sauver(generation)
 
     def reprendre(self, generations: Sequence[Generation]) -> int:
         """Les lots dont la planche est arrivée mais qui n'ont pas été dépliés.
@@ -643,12 +760,24 @@ class ServicePliage:
     def _accueillir(
         self,
         generation: Generation,
-        case: CasePliee,
+        case: CasePliee | None,
         octets: bytes,
         rang: int,
         mesures: MesuresLot,
         depliage: Depliage,
+        *,
+        cree_le: float | None = None,
+        label: str | None = None,
     ) -> Asset:
+        """Une coupe devient une image de la bibliothèque.
+
+        **Le même accueil pour les deux dépliages** (P1b) : ce qui distingue le
+        dépliage refait tient dans trois paramètres — une coupe ajoutée n'a pas
+        de case (`case` vide, donc ni pose ni direction), elle a un nom
+        numéroté (`label`), et tout ce qu'on refait est daté du geste
+        (`cree_le`). Le reste — recette de planche, coût nul, provenance,
+        planche et dépliage — ne dépend pas de qui a coupé.
+        """
         mesure = mesurer(octets)
         chemin = self._fichiers.ecrire_brut(generation.identifiant, rang, octets, ".png")
         return self._assets.accueillir(
@@ -660,7 +789,7 @@ class ServicePliage:
                 largeur=mesure.largeur,
                 hauteur=mesure.hauteur,
                 type_media=mesure.type_media,
-                label=_label(case),
+                label=label or (_label(case) if case is not None else "sans titre"),
                 # **Un morceau de planche, et il le dit** (D1) : le défaut
                 # de détourage se règle par nature d'image, et celle-ci en
                 # est une. La génération ne suffirait pas à le deviner —
@@ -683,13 +812,13 @@ class ServicePliage:
                 # que personne ait à l'y ranger, exactement comme une image de
                 # C1 tombait dans la sienne.
                 personnage=generation.personnage,
-                pose=case.pose,
+                pose=case.pose if case is not None else None,
                 # **Et sa direction, écrite à la naissance** (E13). C'est ce qui
                 # répare la mesure du 30 août 2026 : le rangement cesse d'être un
                 # geste séparé qu'on peut oublier, puisqu'une case ne peut pas
                 # partir sans dire où son image ira. Vide quand le jeu n'a pas
                 # déclaré de directions — l'état ordinaire, et rien ne change.
-                direction=case.direction,
+                direction=case.direction if case is not None else None,
                 lot=mesures,
                 # **Sa planche et son découpage** (P1) — de quoi remonter de
                 # l'image à la feuille payée, et au geste qui l'en a tirée.
@@ -698,7 +827,7 @@ class ServicePliage:
                 # **Datée du lot**, comme les variations d'un même appel : les N
                 # images sont arrivées ensemble, et le rang les départage dans
                 # l'ordre de lecture de la planche.
-                cree_le=generation.cree_le,
+                cree_le=generation.cree_le if cree_le is None else cree_le,
             )
         )
 
@@ -718,11 +847,9 @@ class ServicePliage:
         même quand leurs images ont été supprimées et purgées : c'est la moitié
         de la règle des rangs que le disque seul ne voit plus (voir `Depliage`).
         """
-        pris = self._base.rangs_de_generation(generation.identifiant)
-        pris += [e.rang for e in generation.emplacements]
-        if generation.pliage is not None:
-            pris += list(generation.pliage.rangs_reserves)
-        return max([RANG_PLIAGE - 1, *pris]) + 1
+        return rang_libre(
+            self._base, generation.identifiant, plancher=RANG_PLIAGE, objet=generation
+        )
 
 
 def _compte(trouvees: int, demandees: int) -> str:

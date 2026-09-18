@@ -287,12 +287,36 @@ class Depliage:
     cree_le: float = 0.0
     origine: str = AUTO
 
+    # **Quand l'auteur a supprimé ce dépliage** (P1b) — ses images, par le geste
+    # « supprimer ce découpage ». Le dépliage, lui, **reste écrit** : ses rangs
+    # restent réservés, son numéro n'est pas redonné. La date sert à une seule
+    # chose, et elle est vitale : une fois ses images purgées, le disque ne
+    # distingue plus « déplié puis vidé par l'auteur » de « réservé puis coupé
+    # par une fermeture », et la reprise au démarrage redéplierait — les images
+    # que l'auteur a jetées reviendraient aux mêmes rangs. Écrite seulement
+    # quand elle existe, pour garder la forme de fichier de P1a.
+    supprime_le: float | None = None
+
+    # **La case de la planche que chaque coupe remplit** (P1b), alignée aux
+    # coupes ; `None` pour une coupe ajoutée qui n'en remplit aucune. Vide pour
+    # le dépliage automatique, où la n-ième coupe remplit la n-ième case par
+    # construction — l'écrire serait recopier l'ordre. Un dépliage refait à la
+    # main, lui, a pu en retirer ou en ajouter : sans cette liste, le suivant
+    # repartirait de ses coupes sans savoir laquelle va dans quelle case.
+    cases: tuple[int | None, ...] = ()
+
+    def case_de(self, index: int) -> int | None:
+        """La case que la coupe n° `index` remplit — écrite, ou par position."""
+        if self.cases:
+            return self.cases[index] if index < len(self.cases) else None
+        return index
+
     @property
     def identifiant(self) -> str:
         return identifiant_de_depliage(self.planche, self.numero)
 
     def en_json(self) -> dict[str, Any]:
-        return {
+        contenu: dict[str, Any] = {
             "numero": self.numero,
             "planche": self.planche,
             "coupes": [list(c) for c in self.coupes],
@@ -302,6 +326,11 @@ class Depliage:
             # déduit — présent pour l'interface, jamais relu
             "identifiant": self.identifiant,
         }
+        if self.supprime_le is not None:
+            contenu["supprime_le"] = self.supprime_le
+        if self.cases:
+            contenu["cases"] = list(self.cases)
+        return contenu
 
     @staticmethod
     def depuis_json(d: dict[str, Any] | None) -> "Depliage | None":
@@ -320,6 +349,12 @@ class Depliage:
             rangs=tuple(int(r) for r in (d.get("rangs") or ())),
             cree_le=float(d.get("cree_le", 0.0) or 0.0),
             origine=MAIN if d.get("origine") == MAIN else AUTO,
+            supprime_le=(
+                float(d["supprime_le"]) if d.get("supprime_le") is not None else None
+            ),
+            cases=tuple(
+                int(c) if c is not None else None for c in (d.get("cases") or ())
+            ),
         )
 
 
@@ -448,6 +483,7 @@ class Pliage:
         *,
         origine: str = AUTO,
         cree_le: float = 0.0,
+        cases: tuple[int | None, ...] = (),
     ) -> Depliage:
         """Un dépliage de plus, sur des rangs neufs — ou l'automatique, repris.
 
@@ -486,6 +522,7 @@ class Pliage:
             rangs=tuple(range(debut, debut + len(coupes))),
             cree_le=cree_le,
             origine=MAIN if origine == MAIN else AUTO,
+            cases=tuple(cases),
         )
         self.depliages = (*self.depliages, depliage)
         return depliage

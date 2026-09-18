@@ -45,6 +45,7 @@ from atelier.services.bibliotheque import ServiceBibliotheque
 # nombre : un miroir posé sur une planche déjà découpée qui repartirait de zéro
 # tomberait sur le rang d'un emplacement et effacerait ses fichiers.
 from atelier.services.decoupe import RANG_DECOUPE
+from atelier.services.rangs import rang_libre
 from atelier.services.evenements import Diffusion
 
 
@@ -264,12 +265,12 @@ class ServiceMiroir:
         Le calcul est celui du slicer, et il compte les mêmes choses : deux
         assets d'un même rang partageraient leurs fichiers `<rang>-brut` et
         `<rang>-asset.json`, et le second effacerait le premier sans rien dire.
+
+        **Et au-dessus des rangs qu'un dépliage a réservés** (P1b) — le miroir
+        d'une image dépliée tombe dans le dossier de sa planche : le calcul
+        commun vit dans `atelier/services/rangs.py`.
         """
-        pris = self._base.rangs_de_generation(generation)
-        objet = self._base.lire(generation)
-        if objet is not None:
-            pris += [e.rang for e in objet.emplacements]
-        return max([RANG_DECOUPE - 1, *pris]) + 1
+        return rang_libre(self._base, generation, plancher=RANG_DECOUPE)
 
 
 def _raison(depart: str | None, arrivee: str | None) -> str | None:

@@ -38,6 +38,7 @@ from atelier.image.calques_cibles import (
 )
 from atelier.image.traitement import queue
 from atelier.services.production import ProductionRefusee
+from atelier.services.rangs import rang_libre
 
 # Les deux façons de lire l'image équipée avant de la comparer à sa pose.
 # `pose` : la recette de la pose, rejouée sur l'image telle que le modèle l'a
@@ -949,7 +950,9 @@ class ServiceCalquesCibles:
             # L'extraction réelle entre immédiatement en bibliothèque, avec
             # sa provenance et sans fabriquer une génération payante fictive.
             source = v["source_fiche"]
-            rang = max([99, *self.base.rangs_de_generation(source["generation"])]) + 1
+            # Au-dessus des rangs réservés par un dépliage aussi (P1b) : la
+            # source peut être une image dépliée, dans le dossier de sa planche.
+            rang = rang_libre(self.base, source["generation"])
             octets = png(pixels)
             brut = self.fichiers.ecrire_brut(source["generation"], rang, octets, ".png")
             image = self.assets.accueillir(Asset(
