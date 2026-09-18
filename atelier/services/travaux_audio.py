@@ -5,7 +5,7 @@ import asyncio
 import time
 
 from atelier.domaine.travail import TravailRefuse
-from atelier.domaine.workflow import composer
+from atelier.domaine.workflow import MUSIQUE, composer, musique_du_graphe, tirer_graine
 from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu, FINIS
 from atelier.services.travaux import ServiceTravaux, _hash, _json, _verrou
 
@@ -47,12 +47,14 @@ class ServiceTravauxAudio(ServiceTravaux):
 
     async def preparer(self, projet, brut, acteur="auteur"):
         self._projet(projet)
-        permis = {"cle", "modele", "prompt", "prompt_negatif", "secondes", "options", "nom"}
+        permis = {"cle", "modele", "prompt", "prompt_negatif", "secondes", "options", "nom", *MUSIQUE}
         if acteur not in ("auteur", "agent") or not isinstance(brut, dict) or set(brut) - permis:
             raise TravailRefuse("La demande sonore contient un réglage inconnu.")
         d = {"cle": brut.get("cle"), "modele": brut.get("modele"), "prompt": brut.get("prompt"),
              "prompt_negatif": brut.get("prompt_negatif", ""), "secondes": brut.get("secondes"),
-             "options": brut.get("options", {}), "nom": brut.get("nom", ""), "livrer_provisoire": False}
+             "options": brut.get("options", {}), "nom": brut.get("nom", ""), "livrer_provisoire": False,
+             # Seulement s'ils sont demandés : l'empreinte d'une demande d'avant ne bouge pas.
+             **{k: brut[k] for k in MUSIQUE if k in brut}}
         if any(not isinstance(d[k], str) or not d[k].strip() for k in ("cle", "modele", "prompt")) or len(d["cle"]) > 200:
             raise TravailRefuse("Donnez une clé, un workflow sonore et la description du bruitage.")
         if not isinstance(d["options"], dict) or not isinstance(d["nom"], str) or not isinstance(d["prompt_negatif"], str):
@@ -60,6 +62,9 @@ class ServiceTravauxAudio(ServiceTravaux):
         profil = self.a.profils_workflow.de_modele(d["modele"])
         if profil["nature"] != "audio": raise TravailRefuse("Choisissez un workflow sonore.")
         valeurs = {k: d[k] for k in ("prompt", "prompt_negatif", "secondes", "options")}
+        # Paroles, tempo, tonalité, mesure : ceux du graphe quand la demande
+        # n'en dit rien, figés dans l'envoi pour être relus et repris tels quels.
+        valeurs.update({**musique_du_graphe(profil), **{k: d[k] for k in MUSIQUE if k in d}})
         composer(profil, **valeurs)
         try: empreinte = _hash(_json({"demande": d, "acteur": acteur}))
         except (ValueError, TypeError) as e: raise TravailRefuse("Les options doivent contenir des valeurs JSON finies.") from e
@@ -73,6 +78,10 @@ class ServiceTravauxAudio(ServiceTravaux):
         if not diagnostic["disponible"]: raise TravailRefuse(" · ".join(diagnostic["problemes"]))
         # Les options omises deviennent leurs valeurs effectives avant la relecture.
         valeurs["options"] = {k: d["options"].get(k, p["defaut"]) for k, p in profil["parametres"].items()}
+        # La graine (liaison de ML1) se tire une fois, ici : une reprise renvoie
+        # la même, et la provenance du son la garde pour refaire ce tirage.
+        if "graine" in profil["liaisons"]:
+            valeurs["graine"] = tirer_graine()
         with _verrou(dossier / ".travail"):
             avant = self._lire(dossier / "travail.json")
             if avant:
