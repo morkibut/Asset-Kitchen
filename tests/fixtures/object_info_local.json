@@ -1,0 +1,2111 @@
+{
+ "CFGGuider": {
+  "api_node": false,
+  "category": "model/sampling/guiders",
+  "deprecated": false,
+  "description": "",
+  "dev_only": false,
+  "display_name": "CFG Guider",
+  "essentials_category": null,
+  "experimental": false,
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "cfg": [
+     "FLOAT",
+     {
+      "default": 8.0,
+      "max": 100.0,
+      "min": 0.0,
+      "round": 0.01,
+      "step": 0.1
+     }
+    ],
+    "model": [
+     "MODEL",
+     {}
+    ],
+    "negative": [
+     "CONDITIONING",
+     {}
+    ],
+    "positive": [
+     "CONDITIONING",
+     {}
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "model",
+    "positive",
+    "negative",
+    "cfg"
+   ]
+  },
+  "is_input_list": false,
+  "name": "CFGGuider",
+  "output": [
+   "GUIDER"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_matchtypes": null,
+  "output_name": [
+   "GUIDER"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   null
+  ],
+  "price_badge": null,
+  "python_module": "comfy_extras.nodes_custom_sampler",
+  "search_aliases": null
+ },
+ "CLIPLoader": {
+  "category": "model/loaders",
+  "description": "Recipes:\nsd: clip-l\nstable cascade: clip-g\nsd3: t5 xxl / clip-g / clip-l\nstable audio: t5 base\nmochi: t5 xxl\ncogvideox: t5 xxl (226-token padding)\ncosmos: old t5 xxl\nlumina2: gemma 2 2B\nwan: umt5 xxl\nhidream: llama-3.1 (Recommend) or t5\nomnigen2: qwen vl 2.5 3B\njoyimage: qwen3-vl 8B\nlens: gpt-oss-20b\npixeldit: gemma 2 2B elm\nminimax: MiniMax H3 Qwen3-VL or Music3 Qwen/RVQ",
+  "display_name": "Load CLIP",
+  "has_intermediate_output": false,
+  "input": {
+   "optional": {
+    "device": [
+     [
+      "default",
+      "cpu"
+     ],
+     {
+      "advanced": true
+     }
+    ]
+   },
+   "required": {
+    "clip_name": [
+     [
+      "D-disk\\byt5_small_glyphxl_fp16.safetensors",
+      "D-disk\\qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "D-disk\\qwen_3_8b_fp8mixed.safetensors",
+      "clip_l.safetensors",
+      "qwen_3_4b.safetensors",
+      "t5xxl_fp8_e4m3fn.safetensors",
+      "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+     ]
+    ],
+    "type": [
+     [
+      "stable_diffusion",
+      "stable_cascade",
+      "sd3",
+      "stable_audio",
+      "mochi",
+      "ltxv",
+      "pixart",
+      "cosmos",
+      "lumina2",
+      "wan",
+      "hidream",
+      "chroma",
+      "ace",
+      "omnigen2",
+      "qwen_image",
+      "hunyuan_image",
+      "flux2",
+      "ovis",
+      "longcat_image",
+      "cogvideox",
+      "lens",
+      "pixeldit",
+      "ideogram4",
+      "boogu",
+      "krea2",
+      "joyimage",
+      "mage",
+      "minimax",
+      "yue2"
+     ]
+    ]
+   }
+  },
+  "input_order": {
+   "optional": [
+    "device"
+   ],
+   "required": [
+    "clip_name",
+    "type"
+   ]
+  },
+  "is_input_list": false,
+  "name": "CLIPLoader",
+  "output": [
+   "CLIP"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "CLIP"
+  ],
+  "output_node": false,
+  "python_module": "nodes",
+  "search_aliases": []
+ },
+ "CLIPTextEncode": {
+  "category": "model/conditioning",
+  "description": "Encodes a text prompt using a CLIP model into an embedding that can be used to guide the diffusion model towards generating specific images.",
+  "display_name": "CLIP Text Encode (Prompt)",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "clip": [
+     "CLIP",
+     {
+      "tooltip": "The CLIP model used for encoding the text."
+     }
+    ],
+    "text": [
+     "STRING",
+     {
+      "dynamicPrompts": true,
+      "multiline": true,
+      "tooltip": "The text to be encoded."
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "text",
+    "clip"
+   ]
+  },
+  "is_input_list": false,
+  "name": "CLIPTextEncode",
+  "output": [
+   "CONDITIONING"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "CONDITIONING"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   "A conditioning containing the embedded text used to guide the diffusion model."
+  ],
+  "python_module": "nodes",
+  "search_aliases": [
+   "text",
+   "prompt",
+   "text prompt",
+   "positive prompt",
+   "negative prompt",
+   "encode text",
+   "text encoder",
+   "encode prompt"
+  ]
+ },
+ "CheckpointLoaderSimple": {
+  "category": "model/loaders",
+  "description": "Loads a diffusion model checkpoint, diffusion models are used to denoise latents.",
+  "display_name": "Load Checkpoint",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "ckpt_name": [
+     [
+      "D-disk\\ltxv-2b-0.9.8-distilled.safetensors",
+      "sd_xl_base_1.0.safetensors",
+      "v1-5-pruned-emaonly.safetensors"
+     ],
+     {
+      "tooltip": "The name of the checkpoint (model) to load."
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "ckpt_name"
+   ]
+  },
+  "is_input_list": false,
+  "name": "CheckpointLoaderSimple",
+  "output": [
+   "MODEL",
+   "CLIP",
+   "VAE"
+  ],
+  "output_is_list": [
+   false,
+   false,
+   false
+  ],
+  "output_name": [
+   "MODEL",
+   "CLIP",
+   "VAE"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   "The model used for denoising latents.",
+   "The CLIP model used for encoding text prompts.",
+   "The VAE model used for encoding and decoding images to and from latent space."
+  ],
+  "python_module": "nodes",
+  "search_aliases": [
+   "load model",
+   "checkpoint",
+   "model loader",
+   "load checkpoint",
+   "ckpt",
+   "model"
+  ]
+ },
+ "CircularVAEDecode": {
+  "category": "latent",
+  "description": "",
+  "display_name": "Circular VAE Decode (tile)",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "samples": [
+     "LATENT"
+    ],
+    "tiling": [
+     [
+      "enable",
+      "x_only",
+      "y_only",
+      "disable"
+     ]
+    ],
+    "vae": [
+     "VAE"
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "samples",
+    "vae",
+    "tiling"
+   ]
+  },
+  "is_input_list": false,
+  "name": "CircularVAEDecode",
+  "output": [
+   "IMAGE"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "IMAGE"
+  ],
+  "output_node": false,
+  "python_module": "custom_nodes.ComfyUI-seamless-tiling",
+  "search_aliases": []
+ },
+ "ConditioningZeroOut": {
+  "category": "model/conditioning/transform",
+  "description": "",
+  "display_name": "Conditioning Zero Out",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "conditioning": [
+     "CONDITIONING"
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "conditioning"
+   ]
+  },
+  "is_input_list": false,
+  "name": "ConditioningZeroOut",
+  "output": [
+   "CONDITIONING"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "CONDITIONING"
+  ],
+  "output_node": false,
+  "python_module": "nodes",
+  "search_aliases": [
+   "null conditioning",
+   "clear conditioning"
+  ]
+ },
+ "DualCLIPLoader": {
+  "category": "model/loaders",
+  "description": "Recipes:\nsdxl: clip-l, clip-g\nsd3: clip-l, clip-g / clip-l, t5 / clip-g, t5\nflux: clip-l, t5\nhidream: at least one of t5 or llama, recommended t5 and llama\nhunyuan_image: qwen2.5vl 7b and byt5 small\nnewbie: gemma-3-4b-it, jina clip v2",
+  "display_name": "Load CLIP (Dual)",
+  "has_intermediate_output": false,
+  "input": {
+   "optional": {
+    "device": [
+     [
+      "default",
+      "cpu"
+     ],
+     {
+      "advanced": true
+     }
+    ]
+   },
+   "required": {
+    "clip_name1": [
+     [
+      "D-disk\\byt5_small_glyphxl_fp16.safetensors",
+      "D-disk\\qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "D-disk\\qwen_3_8b_fp8mixed.safetensors",
+      "clip_l.safetensors",
+      "qwen_3_4b.safetensors",
+      "t5xxl_fp8_e4m3fn.safetensors",
+      "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+     ]
+    ],
+    "clip_name2": [
+     [
+      "D-disk\\byt5_small_glyphxl_fp16.safetensors",
+      "D-disk\\qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "D-disk\\qwen_3_8b_fp8mixed.safetensors",
+      "clip_l.safetensors",
+      "qwen_3_4b.safetensors",
+      "t5xxl_fp8_e4m3fn.safetensors",
+      "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+     ]
+    ],
+    "type": [
+     [
+      "sdxl",
+      "sd3",
+      "flux",
+      "hunyuan_video",
+      "hidream",
+      "hunyuan_image",
+      "hunyuan_video_15",
+      "kandinsky5",
+      "kandinsky5_image",
+      "ltxv",
+      "newbie",
+      "ace"
+     ]
+    ]
+   }
+  },
+  "input_order": {
+   "optional": [
+    "device"
+   ],
+   "required": [
+    "clip_name1",
+    "clip_name2",
+    "type"
+   ]
+  },
+  "is_input_list": false,
+  "name": "DualCLIPLoader",
+  "output": [
+   "CLIP"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "CLIP"
+  ],
+  "output_node": false,
+  "python_module": "nodes",
+  "search_aliases": []
+ },
+ "EmptyFlux2LatentImage": {
+  "api_node": false,
+  "category": "model/latent/flux",
+  "deprecated": false,
+  "description": "",
+  "dev_only": false,
+  "display_name": "Empty Flux 2 Latent",
+  "essentials_category": null,
+  "experimental": false,
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "batch_size": [
+     "INT",
+     {
+      "default": 1,
+      "max": 4096,
+      "min": 1
+     }
+    ],
+    "height": [
+     "INT",
+     {
+      "default": 1024,
+      "max": 16384,
+      "min": 16,
+      "step": 16
+     }
+    ],
+    "width": [
+     "INT",
+     {
+      "default": 1024,
+      "max": 16384,
+      "min": 16,
+      "step": 16
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "width",
+    "height",
+    "batch_size"
+   ]
+  },
+  "is_input_list": false,
+  "name": "EmptyFlux2LatentImage",
+  "output": [
+   "LATENT"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_matchtypes": null,
+  "output_name": [
+   "LATENT"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   null
+  ],
+  "price_badge": null,
+  "python_module": "comfy_extras.nodes_flux",
+  "search_aliases": null
+ },
+ "EmptyLatentImage": {
+  "category": "model/latent",
+  "description": "Create a new batch of empty latent images to be denoised via sampling.",
+  "display_name": "Empty Latent Image",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "batch_size": [
+     "INT",
+     {
+      "default": 1,
+      "max": 4096,
+      "min": 1,
+      "tooltip": "The number of latent images in the batch."
+     }
+    ],
+    "height": [
+     "INT",
+     {
+      "default": 512,
+      "max": 16384,
+      "min": 16,
+      "step": 8,
+      "tooltip": "The height of the latent images in pixels."
+     }
+    ],
+    "width": [
+     "INT",
+     {
+      "default": 512,
+      "max": 16384,
+      "min": 16,
+      "step": 8,
+      "tooltip": "The width of the latent images in pixels."
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "width",
+    "height",
+    "batch_size"
+   ]
+  },
+  "is_input_list": false,
+  "name": "EmptyLatentImage",
+  "output": [
+   "LATENT"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "LATENT"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   "The empty latent image batch."
+  ],
+  "python_module": "nodes",
+  "search_aliases": [
+   "empty",
+   "empty latent",
+   "new latent",
+   "create latent",
+   "blank latent",
+   "blank"
+  ]
+ },
+ "EmptySD3LatentImage": {
+  "api_node": false,
+  "category": "model/latent/stable diffusion",
+  "deprecated": false,
+  "description": "",
+  "dev_only": false,
+  "display_name": null,
+  "essentials_category": null,
+  "experimental": false,
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "batch_size": [
+     "INT",
+     {
+      "default": 1,
+      "max": 4096,
+      "min": 1
+     }
+    ],
+    "height": [
+     "INT",
+     {
+      "default": 1024,
+      "max": 16384,
+      "min": 16,
+      "step": 16
+     }
+    ],
+    "width": [
+     "INT",
+     {
+      "default": 1024,
+      "max": 16384,
+      "min": 16,
+      "step": 16
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "width",
+    "height",
+    "batch_size"
+   ]
+  },
+  "is_input_list": false,
+  "name": "EmptySD3LatentImage",
+  "output": [
+   "LATENT"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_matchtypes": null,
+  "output_name": [
+   "LATENT"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   null
+  ],
+  "price_badge": null,
+  "python_module": "comfy_extras.nodes_sd3",
+  "search_aliases": null
+ },
+ "Flux2Scheduler": {
+  "api_node": false,
+  "category": "model/sampling/schedulers",
+  "deprecated": false,
+  "description": "",
+  "dev_only": false,
+  "display_name": null,
+  "essentials_category": null,
+  "experimental": false,
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "height": [
+     "INT",
+     {
+      "default": 1024,
+      "max": 16384,
+      "min": 16,
+      "step": 1
+     }
+    ],
+    "steps": [
+     "INT",
+     {
+      "default": 20,
+      "max": 4096,
+      "min": 1
+     }
+    ],
+    "width": [
+     "INT",
+     {
+      "default": 1024,
+      "max": 16384,
+      "min": 16,
+      "step": 1
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "steps",
+    "width",
+    "height"
+   ]
+  },
+  "is_input_list": false,
+  "name": "Flux2Scheduler",
+  "output": [
+   "SIGMAS"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_matchtypes": null,
+  "output_name": [
+   "SIGMAS"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   null
+  ],
+  "price_badge": null,
+  "python_module": "comfy_extras.nodes_flux",
+  "search_aliases": null
+ },
+ "FluxGuidance": {
+  "api_node": false,
+  "category": "model/conditioning/flux",
+  "deprecated": false,
+  "description": "",
+  "dev_only": false,
+  "display_name": null,
+  "essentials_category": null,
+  "experimental": false,
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "conditioning": [
+     "CONDITIONING",
+     {}
+    ],
+    "guidance": [
+     "FLOAT",
+     {
+      "default": 3.5,
+      "max": 100.0,
+      "min": 0.0,
+      "step": 0.1
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "conditioning",
+    "guidance"
+   ]
+  },
+  "is_input_list": false,
+  "name": "FluxGuidance",
+  "output": [
+   "CONDITIONING"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_matchtypes": null,
+  "output_name": [
+   "CONDITIONING"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   null
+  ],
+  "price_badge": null,
+  "python_module": "comfy_extras.nodes_flux",
+  "search_aliases": null
+ },
+ "ImageScale": {
+  "category": "image/upscaling",
+  "description": "",
+  "display_name": "Upscale Image",
+  "essentials_category": "Image Tools",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "crop": [
+     [
+      "disabled",
+      "center"
+     ]
+    ],
+    "height": [
+     "INT",
+     {
+      "default": 512,
+      "max": 16384,
+      "min": 0,
+      "step": 1
+     }
+    ],
+    "image": [
+     "IMAGE"
+    ],
+    "upscale_method": [
+     [
+      "nearest-exact",
+      "bilinear",
+      "area",
+      "bicubic",
+      "lanczos"
+     ]
+    ],
+    "width": [
+     "INT",
+     {
+      "default": 512,
+      "max": 16384,
+      "min": 0,
+      "step": 1
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "image",
+    "upscale_method",
+    "width",
+    "height",
+    "crop"
+   ]
+  },
+  "is_input_list": false,
+  "name": "ImageScale",
+  "output": [
+   "IMAGE"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "IMAGE"
+  ],
+  "output_node": false,
+  "python_module": "nodes",
+  "search_aliases": [
+   "resize",
+   "resize image",
+   "scale image",
+   "image resize",
+   "zoom",
+   "zoom in",
+   "change size"
+  ]
+ },
+ "KSampler": {
+  "category": "model/sampling",
+  "description": "Uses the provided model, positive and negative conditioning to denoise the latent image.",
+  "display_name": "KSampler",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "cfg": [
+     "FLOAT",
+     {
+      "default": 8.0,
+      "max": 100.0,
+      "min": 0.0,
+      "round": 0.01,
+      "step": 0.1,
+      "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+     }
+    ],
+    "denoise": [
+     "FLOAT",
+     {
+      "default": 1.0,
+      "max": 1.0,
+      "min": 0.0,
+      "step": 0.01,
+      "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+     }
+    ],
+    "latent_image": [
+     "LATENT",
+     {
+      "tooltip": "The latent image to denoise."
+     }
+    ],
+    "model": [
+     "MODEL",
+     {
+      "tooltip": "The model used for denoising the input latent."
+     }
+    ],
+    "negative": [
+     "CONDITIONING",
+     {
+      "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+     }
+    ],
+    "positive": [
+     "CONDITIONING",
+     {
+      "tooltip": "The conditioning describing the attributes you want to include in the image."
+     }
+    ],
+    "sampler_name": [
+     [
+      "euler",
+      "euler_cfg_pp",
+      "euler_ancestral",
+      "euler_ancestral_cfg_pp",
+      "heun",
+      "heunpp2",
+      "exp_heun_2_x0",
+      "exp_heun_2_x0_sde",
+      "dpm_2",
+      "dpm_2_ancestral",
+      "lms",
+      "dpm_fast",
+      "dpm_adaptive",
+      "dpmpp_2s_ancestral",
+      "dpmpp_2s_ancestral_cfg_pp",
+      "dpmpp_sde",
+      "dpmpp_sde_gpu",
+      "dpmpp_2m",
+      "dpmpp_2m_cfg_pp",
+      "dpmpp_2m_sde",
+      "dpmpp_2m_sde_gpu",
+      "dpmpp_2m_sde_heun",
+      "dpmpp_2m_sde_heun_gpu",
+      "dpmpp_3m_sde",
+      "dpmpp_3m_sde_gpu",
+      "ddpm",
+      "lcm",
+      "ipndm",
+      "ipndm_v",
+      "deis",
+      "cfgpp_ud10_ab",
+      "res_multistep",
+      "res_multistep_cfg_pp",
+      "res_multistep_ancestral",
+      "res_multistep_ancestral_cfg_pp",
+      "gradient_estimation",
+      "gradient_estimation_cfg_pp",
+      "er_sde",
+      "seeds_2",
+      "seeds_3",
+      "sa_solver",
+      "sa_solver_pece",
+      "ddim",
+      "uni_pc",
+      "uni_pc_bh2"
+     ],
+     {
+      "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+     }
+    ],
+    "scheduler": [
+     [
+      "simple",
+      "sgm_uniform",
+      "karras",
+      "exponential",
+      "ddim_uniform",
+      "beta",
+      "normal",
+      "linear_quadratic",
+      "kl_optimal"
+     ],
+     {
+      "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+     }
+    ],
+    "seed": [
+     "INT",
+     {
+      "control_after_generate": true,
+      "default": 0,
+      "max": 18446744073709551615,
+      "min": 0,
+      "tooltip": "The random seed used for creating the noise."
+     }
+    ],
+    "steps": [
+     "INT",
+     {
+      "default": 20,
+      "max": 10000,
+      "min": 1,
+      "tooltip": "The number of steps used in the denoising process."
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "model",
+    "seed",
+    "steps",
+    "cfg",
+    "sampler_name",
+    "scheduler",
+    "positive",
+    "negative",
+    "latent_image",
+    "denoise"
+   ]
+  },
+  "is_input_list": false,
+  "name": "KSampler",
+  "output": [
+   "LATENT"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "LATENT"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   "The denoised latent."
+  ],
+  "python_module": "nodes",
+  "search_aliases": [
+   "sampler",
+   "sample",
+   "generate",
+   "denoise",
+   "diffuse",
+   "txt2img",
+   "img2img"
+  ]
+ },
+ "KSamplerSelect": {
+  "api_node": false,
+  "category": "model/sampling/samplers",
+  "deprecated": false,
+  "description": "",
+  "dev_only": false,
+  "display_name": null,
+  "essentials_category": null,
+  "experimental": false,
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "sampler_name": [
+     "COMBO",
+     {
+      "multiselect": false,
+      "options": [
+       "euler",
+       "euler_cfg_pp",
+       "euler_ancestral",
+       "euler_ancestral_cfg_pp",
+       "heun",
+       "heunpp2",
+       "exp_heun_2_x0",
+       "exp_heun_2_x0_sde",
+       "dpm_2",
+       "dpm_2_ancestral",
+       "lms",
+       "dpm_fast",
+       "dpm_adaptive",
+       "dpmpp_2s_ancestral",
+       "dpmpp_2s_ancestral_cfg_pp",
+       "dpmpp_sde",
+       "dpmpp_sde_gpu",
+       "dpmpp_2m",
+       "dpmpp_2m_cfg_pp",
+       "dpmpp_2m_sde",
+       "dpmpp_2m_sde_gpu",
+       "dpmpp_2m_sde_heun",
+       "dpmpp_2m_sde_heun_gpu",
+       "dpmpp_3m_sde",
+       "dpmpp_3m_sde_gpu",
+       "ddpm",
+       "lcm",
+       "ipndm",
+       "ipndm_v",
+       "deis",
+       "cfgpp_ud10_ab",
+       "res_multistep",
+       "res_multistep_cfg_pp",
+       "res_multistep_ancestral",
+       "res_multistep_ancestral_cfg_pp",
+       "gradient_estimation",
+       "gradient_estimation_cfg_pp",
+       "er_sde",
+       "seeds_2",
+       "seeds_3",
+       "sa_solver",
+       "sa_solver_pece",
+       "ddim",
+       "uni_pc",
+       "uni_pc_bh2"
+      ]
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "sampler_name"
+   ]
+  },
+  "is_input_list": false,
+  "name": "KSamplerSelect",
+  "output": [
+   "SAMPLER"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_matchtypes": null,
+  "output_name": [
+   "SAMPLER"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   null
+  ],
+  "price_badge": null,
+  "python_module": "comfy_extras.nodes_custom_sampler",
+  "search_aliases": null
+ },
+ "LoadImage": {
+  "category": "image",
+  "description": "",
+  "display_name": "Load Image",
+  "essentials_category": "Basics",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "image": [
+     [
+      "ChatGPT Image 23 août 2026, 00_54_09.png.jpg",
+      "asset3d_essai_20260906_193647_988e48.jpg",
+      "asset3d_essai_20260912_213053_9f4ac5.jpg",
+      "atelier-entree.png",
+      "banc-video-entree.png",
+      "character_front_walk.png",
+      "image-gen-3(7) (1).png",
+      "myspriteai-a-detourer.png",
+      "pelerin-t-pose.png",
+      "soldat.jpg",
+      "spriteforge-01841cf8-44ca-4bfe-b085-85b3c9fb7533.png",
+      "spriteforge-05013d33-fcb9-47cc-afbe-85e1fa4903b8.png",
+      "spriteforge-0cbed34d-ee94-433b-bb0b-cf4406cf8375.png",
+      "spriteforge-13320d88-3f46-4bef-9004-b701c6f727bc.png",
+      "spriteforge-1415368a-bd35-40b1-8445-d755d07b9387.png",
+      "spriteforge-14a6fbec-d9a1-4ac0-bd71-6649d26508c6.png",
+      "spriteforge-1724df0e-3e17-459b-bdea-b39c72e4bb63.png",
+      "spriteforge-1d9d9e89-3804-4f83-b2a1-07eab8b42b58.png",
+      "spriteforge-2ca4d7c1-812a-4afb-86a2-a717dfe0b7aa.png",
+      "spriteforge-3173d4dc-e331-4a67-a234-102cd476e0ea.png",
+      "spriteforge-3c36e04b-0728-489e-a5c9-cb511e7c311c.png",
+      "spriteforge-3fc7e663-eac2-4e97-a447-539227553419.png",
+      "spriteforge-4279bf9c-c7ee-4213-90a1-5e0cca38856c.png",
+      "spriteforge-487c86a8-185b-442f-b795-8a763b81750c.png",
+      "spriteforge-4896cff6-7960-4479-a71b-8e86ec5c6db4.png",
+      "spriteforge-5663fbe7-3ca9-483d-a557-65de29a31680.png",
+      "spriteforge-5b5f3634-d6f2-4a4d-a225-7ed26086e8f9.png",
+      "spriteforge-5d25be2b-5a37-4470-bc77-555c70745e48.png",
+      "spriteforge-5d787392-ca03-4940-b6b1-5539d2e9a823.png",
+      "spriteforge-5d84533f-634e-4799-a640-dc4d0e803c42.png",
+      "spriteforge-5f6eee23-3ee8-406a-9bf2-4594679d87aa.png",
+      "spriteforge-64e98e8f-dfd6-426b-82ab-355089f390ff.png",
+      "spriteforge-656b5162-6103-4d8e-8d05-4a26e1316168.png",
+      "spriteforge-667ca153-3c58-4b22-84ba-84c74d76b739.png",
+      "spriteforge-689a0da3-f44b-45ed-b861-d86a869a3dd4.png",
+      "spriteforge-6c67da78-77d3-465c-af72-f00e7f5ae538.png",
+      "spriteforge-6d1f1496-3aa2-41ba-992b-f992156c13f9.png",
+      "spriteforge-6d5cb6f8-8511-4ba3-b372-634ff165fbae.png",
+      "spriteforge-74678eb9-d755-4c92-bc61-c05a0293a6af.png",
+      "spriteforge-7548793c-9119-4352-8efe-7628c7381418.png",
+      "spriteforge-75b29dd2-445d-47d8-8a21-6b466ede5f01.png",
+      "spriteforge-772dfe35-c958-48ac-81cd-fb115639dfa9.png",
+      "spriteforge-7cdd0de5-107b-4b06-810c-9ced600e9559.png",
+      "spriteforge-7da3d6fc-b63e-4bcc-9753-207d23fb1f4f.png",
+      "spriteforge-8378c36c-1e58-4b81-8907-57c5364de711.png",
+      "spriteforge-83d2017f-6015-4d21-97d9-60786dada9c6.png",
+      "spriteforge-8478b68d-cfc6-43d1-8d6f-3d21c3c864eb.png",
+      "spriteforge-8b39d915-72df-4414-b89a-fb64ac04b4c6.png",
+      "spriteforge-8c19b3e3-51c3-410b-9150-20e91d95b01c.png",
+      "spriteforge-8d26037b-770c-4d69-a6bb-d80c8149111d.png",
+      "spriteforge-8fb6ba99-0da9-4b05-a22a-b763d3572c24.png",
+      "spriteforge-92967076-498e-4945-ab78-80468bf6ef3e.png",
+      "spriteforge-98cefec4-9a21-4415-bae6-1fb2e9f09d6d.png",
+      "spriteforge-a111e3d3-da3e-4565-af4b-826942cf00d7.png",
+      "spriteforge-a6cd088e-a523-45b8-8918-34d6d9279cb6.png",
+      "spriteforge-b1ca2ffa-d69e-4221-8332-287a4a7ebd62.png",
+      "spriteforge-be2a4684-c51a-4e81-bade-ed4f59304f48.png",
+      "spriteforge-c12e060e-8320-4e1b-b3c1-6201e79d65fc.png",
+      "spriteforge-c2adce54-d906-4fd9-ad6c-9ce1e63c41e5.png",
+      "spriteforge-ca695934-3247-4afc-bc6a-5e7ae1042f60.png",
+      "spriteforge-db101eb0-5311-42bf-88b2-27e3143b37cd.png",
+      "spriteforge-de1c0596-6041-4c0b-9494-10a59855b7a0.png",
+      "spriteforge-e439b7b0-145b-4788-892f-f27a410fc4fe.png",
+      "spriteforge-e8c9b469-11c5-4a77-8926-dad1fc01aa20.png",
+      "spriteforge-ea2c5bdc-6964-4b29-8d66-96fa3d903643.png",
+      "spriteforge-ee6082f9-5e53-42b9-ade5-225d44a400f6.png",
+      "spriteforge-eef6c766-d8fd-433b-88dd-553cc5eeaeb3.png",
+      "spriteforge-f1315383-6dc7-420f-9b02-70d0f8ce321a.png",
+      "spriteforge-f1932773-8529-4f99-83cf-d92e48369454.png",
+      "spriteforge-ff96365c-4cb9-4446-afcb-c9d3cf0707d2.png",
+      "spriteforge-pilote-014dead1-e07a-439a-aae0-33acf6cd9cd3.png",
+      "spriteforge-pilote-070cc37c-2809-443a-aab5-3e9410a3d229.png",
+      "spriteforge-pilote-0b9124c2-dd31-4cbe-bc47-3fd21d90c6e3.png",
+      "spriteforge-pilote-0d321383-24be-4992-ba5f-2612cf1885c6.png",
+      "spriteforge-pilote-0fa53382-74fe-4a06-a4ff-22ef4fadf10b.png",
+      "spriteforge-pilote-110a2393-59a9-46fa-832f-3a7396669083.png",
+      "spriteforge-pilote-1127b48c-b17d-4bf1-b69b-500a326883ef.png",
+      "spriteforge-pilote-139ff91f-bcee-4f8d-b36e-600009991bc2.png",
+      "spriteforge-pilote-1467f293-78d0-4bfa-8743-822ff2ee9372.png",
+      "spriteforge-pilote-14ffa534-887f-4f74-8070-ee38520ea504.png",
+      "spriteforge-pilote-1696fb42-0fd0-4bf2-9c01-12290425d6fb.png",
+      "spriteforge-pilote-1a423382-e9d3-4e3b-950c-010320e009f4.png",
+      "spriteforge-pilote-1b19db3d-1536-44d8-b26f-e32199615074.png",
+      "spriteforge-pilote-1f44ff20-4827-49ba-aa43-9a2a4fdbf52a.png",
+      "spriteforge-pilote-22b86568-9565-49ba-9a4a-4d46fc10c801.png",
+      "spriteforge-pilote-287784af-24a5-4cf2-85db-3d49a69fccce.png",
+      "spriteforge-pilote-2c567c97-38b7-47e0-9fb4-cc35b60f0abf.png",
+      "spriteforge-pilote-3229371a-e75f-4fee-8a8d-563097fd1e07.png",
+      "spriteforge-pilote-34eaf344-7dc6-429e-8929-a4c9f86daa30.png",
+      "spriteforge-pilote-393703a3-fe13-4950-ad22-01c9505f1c36.png",
+      "spriteforge-pilote-3d208de2-ce5d-41f8-bc43-8974e1b9fec1.png",
+      "spriteforge-pilote-3eaac16d-b0b7-4c78-9519-c568b8af7901.png",
+      "spriteforge-pilote-415ecca9-19aa-4cd9-9098-1512761fde91.png",
+      "spriteforge-pilote-423bf0a2-0b40-40be-8329-a0c97e6643d9.png",
+      "spriteforge-pilote-428cd3b3-27b7-4a5b-b01d-e58105689fd2.png",
+      "spriteforge-pilote-4298e424-1f56-41ae-a2e4-d1e51ba5945c.png",
+      "spriteforge-pilote-4b599e5a-33ea-4b23-934a-9c02520529c6.png",
+      "spriteforge-pilote-4bd11b6d-9356-4760-ac72-de6e38834f10.png",
+      "spriteforge-pilote-4eef1834-f070-4f35-a3a1-5b55bc9246ef.png",
+      "spriteforge-pilote-51e9213b-0cce-4872-8875-07d78c9dbe8b.png",
+      "spriteforge-pilote-52548766-4dba-4c36-a889-4bd45f12e14e.png",
+      "spriteforge-pilote-53f3415f-398b-436a-8864-a1bc0e411cbd.png",
+      "spriteforge-pilote-553c19aa-dd82-4726-aa6b-9d5b0a75243e.png",
+      "spriteforge-pilote-564b4b43-e1ee-42d8-9cdf-1c97ff836cf3.png",
+      "spriteforge-pilote-57e7422e-464b-48d6-9658-c68870aa19fd.png",
+      "spriteforge-pilote-5bef7936-6390-43be-be01-e976f9532197.png",
+      "spriteforge-pilote-5c637cee-36f8-498d-bfae-530a138474f7.png",
+      "spriteforge-pilote-5db88f75-5070-45d5-912f-89919271790e.png",
+      "spriteforge-pilote-5dd3a123-fffe-4c99-8b14-173cbf815804.png",
+      "spriteforge-pilote-5de16c82-5c39-4b3f-98cd-c96a9a31cd39.png",
+      "spriteforge-pilote-5e6efc96-418f-429e-8654-36135fb263f0.png",
+      "spriteforge-pilote-6501c179-80a3-4511-9410-1a447f9a6c83.png",
+      "spriteforge-pilote-69e0a8b8-d06f-409a-979b-a1a71727f882.png",
+      "spriteforge-pilote-71adc5d9-261a-4bd9-a9e8-f0fcd1212b50.png",
+      "spriteforge-pilote-78256be5-9c23-475b-92ae-a62dd9f286ae.png",
+      "spriteforge-pilote-7a75c4bf-44f3-4665-a194-adf9580cae14.png",
+      "spriteforge-pilote-7afde074-fd19-450c-872f-3d627f1f3dc4.png",
+      "spriteforge-pilote-7de887c0-3795-499b-a139-afa142bd7bfd.png",
+      "spriteforge-pilote-7e58a1dd-4f71-434f-a9f7-4753af34b245.png",
+      "spriteforge-pilote-8206a3ad-04f9-4cf5-b91c-97718ecb39fc.png",
+      "spriteforge-pilote-84e7dac5-e9e2-44d5-b999-0e7bb9cf07fa.png",
+      "spriteforge-pilote-88491c45-35d1-41dd-b884-2f85dfb2b4ee.png",
+      "spriteforge-pilote-8b58e35d-835d-41aa-bb03-8086e85ebefd.png",
+      "spriteforge-pilote-8b6bdf00-328b-4d30-8397-4152bb60360a.png",
+      "spriteforge-pilote-8d5ad75a-d5fd-4e9c-bb67-5543dfde403a.png",
+      "spriteforge-pilote-8ed67949-edce-4735-960d-20889e662cf1.png",
+      "spriteforge-pilote-8fb70d83-d4b9-4e79-ac19-b2a8e5b78946.png",
+      "spriteforge-pilote-92183417-f401-4250-9f88-2016240e16f3.png",
+      "spriteforge-pilote-93911c28-4e94-4544-b052-b03132dec0ba.png",
+      "spriteforge-pilote-955196c3-e2c9-48a3-b534-48d3bd3efaa5.png",
+      "spriteforge-pilote-97cbe103-ecf7-4ee6-8b46-2b5635154828.png",
+      "spriteforge-pilote-97fdddf0-d478-481f-ac93-91af65e925bb.png",
+      "spriteforge-pilote-9d505c1a-c650-41fc-b8c1-379d818cf966.png",
+      "spriteforge-pilote-a04dff0f-04c7-467f-a967-2c3d955bc6fe.png",
+      "spriteforge-pilote-a0856761-55d9-4a4e-b962-52479827439a.png",
+      "spriteforge-pilote-a487537a-b0b7-4fa5-ac75-cc4759546b46.png",
+      "spriteforge-pilote-a6ca5b54-8ea8-40ca-8941-72a3b5f08721.png",
+      "spriteforge-pilote-a7906b69-1201-4570-a9ed-fbb77bc1ceb5.png",
+      "spriteforge-pilote-aa4320ad-7c00-4f2a-8d3e-02f4c38b03c5.png",
+      "spriteforge-pilote-ab2e9655-803c-49e4-bf3b-ecb769e31758.png",
+      "spriteforge-pilote-ac3edb67-1261-4b5a-b181-57b6310c862e.png",
+      "spriteforge-pilote-b4fbf2b0-68f7-4395-b96e-8728775117b3.png",
+      "spriteforge-pilote-b7023d49-3847-4f77-8a00-687d4f6e65af.png",
+      "spriteforge-pilote-b95d1daa-c538-49f1-a0b6-7b72a168e180.png",
+      "spriteforge-pilote-bae4d28b-f742-4af8-924f-6cc6bf7caeaf.png",
+      "spriteforge-pilote-c2b4276f-81cc-42d1-b4b2-554f3ceaf4cf.png",
+      "spriteforge-pilote-c5ea57d1-6c83-4f50-80fe-988d6fc23b18.png",
+      "spriteforge-pilote-c94b436a-e8bf-4dfb-b091-9823ad73f2df.png",
+      "spriteforge-pilote-cb59e7f3-bd31-4866-ae37-8fb047fe94e1.png",
+      "spriteforge-pilote-cd367675-35c0-4359-b685-b4eeb679bd67.png",
+      "spriteforge-pilote-cde19152-694f-4320-976e-da01d7aba7ad.png",
+      "spriteforge-pilote-d1a1f2de-3347-4339-bf20-615db4417f52.png",
+      "spriteforge-pilote-d1bff19f-8904-4b01-818f-2ef9a0fdff13.png",
+      "spriteforge-pilote-d27f8617-2701-4a1f-aa49-31371ae9e54d.png",
+      "spriteforge-pilote-d6ab8f73-024c-488b-bc73-2cd321300d9b.png",
+      "spriteforge-pilote-d7316eb2-064e-4fc0-bcd2-da65ddb8b6fe.png",
+      "spriteforge-pilote-d7b4492d-e4b2-476a-8a24-bc52914f05de.png",
+      "spriteforge-pilote-daf024d8-124f-484c-9104-aa51df977710.png",
+      "spriteforge-pilote-dee79c2a-9acf-4532-9a91-3ace4219a36f.png",
+      "spriteforge-pilote-e25e3c6f-9c61-4886-870d-12fb3a82f1f2.png",
+      "spriteforge-pilote-e42c0788-d751-4493-b3ab-f154c93c8f6a.png",
+      "spriteforge-pilote-e4871a38-835b-4a8f-a7bb-296a321f0303.png",
+      "spriteforge-pilote-ea943c22-9be3-4600-8219-5b642cbd176e.png",
+      "spriteforge-pilote-eaa36aa4-c0f3-4dac-b9fc-c4107f409840.png",
+      "spriteforge-pilote-ee6ede51-d0f7-48fd-9363-fd246152d346.png",
+      "spriteforge-pilote-f22c1ea3-5c3e-4412-a906-48046a932395.png",
+      "spriteforge-pilote-f326d935-9e3a-48bd-804d-212020841cc7.png",
+      "spriteforge-pilote-f35ce7bf-2b3f-44e7-bb6f-91eb8f27ce9a.png",
+      "spriteforge-pilote-f5ee587f-3b07-436a-b634-9f247752b05b.png",
+      "spriteforge-pilote-f730f4a5-2ebe-4fc4-882d-1a30ade0db67.png",
+      "spriteforge-pilote-ff2b0e8e-f8a9-4aab-a866-925061941613.png",
+      "spriteforge-pilote-ffc1f396-0986-49b4-bef2-ec4b102ededb.png",
+      "spriteforge-video-0461f8b0-7b5b-4dbc-8b46-90a675c6cc45.png",
+      "spriteforge-video-0a3a31ae-ce0c-483b-aae5-82026a56bcde.png",
+      "spriteforge-video-114dbc97-8d98-4b02-a677-2c322b2df3ff.png",
+      "spriteforge-video-12463b86-4306-464b-8231-50bd916dbf25.png",
+      "spriteforge-video-27b9a69a-a6c5-43b8-a352-c62b322fe468.png",
+      "spriteforge-video-2b91e337-9e21-4bf0-892c-e05b96625e7c.png",
+      "spriteforge-video-33191bcc-9ca1-4e67-93f8-8bea55209a61.png",
+      "spriteforge-video-386221c6-a2f7-4e2d-8adb-e0529b007f6b.png",
+      "spriteforge-video-45593065-bcf7-421c-9ebc-21b205da5ad9.png",
+      "spriteforge-video-4b4a4b57-f98c-400f-9814-43bfc6f21fb1.png",
+      "spriteforge-video-5fdfabe6-cf92-4574-97ee-535689422e09.png",
+      "spriteforge-video-68aa26b9-3cc0-4518-8573-e56a08b5a062.png",
+      "spriteforge-video-6a101ac9-4381-4a38-814e-07fd72bea1c0.png",
+      "spriteforge-video-7fda95c3-3bc4-4b24-a4c4-19697eb23642.png",
+      "spriteforge-video-86586f4c-1d09-47c7-b6a4-94c945f6c322.png",
+      "spriteforge-video-90c1ee25-fb4d-4fc0-aa3a-f744c7a80eb0.png",
+      "spriteforge-video-a3fb586f-02d6-4f0c-9a9b-382e7cfb03d5.png",
+      "spriteforge-video-c304918f-7157-4bf4-a7ec-fb8f38e50174.png",
+      "spriteforge-video-c82775f0-d7ad-4b0f-a7b7-0e82cae229fe.png",
+      "spriteforge-video-d846d21a-69ca-4d37-b19f-320e47cea715.png",
+      "spriteforge-video-dd760b4a-ed70-40cc-9cd3-b0da236dac72.png",
+      "spriteforge-video-e8f6a78f-b62f-4335-9e21-cdb56f0c4869.png",
+      "spriteforge-video-e955f613-188e-4001-acfb-930c9d75fbf3.png",
+      "t26-1f0d3305-9b06-48de-ae9b-db540b1f0cda.png",
+      "t26-9792abc9-9826-4046-8478-81da7a5a8524.png",
+      "t26-e1def878-05f1-4599-a7c8-9fe7b8739e87.png",
+      "t26-fabed150-2206-40bd-a827-41d2583e67cf.png"
+     ],
+     {
+      "image_upload": true
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "image"
+   ]
+  },
+  "is_input_list": false,
+  "name": "LoadImage",
+  "output": [
+   "IMAGE",
+   "MASK"
+  ],
+  "output_is_list": [
+   false,
+   false
+  ],
+  "output_name": [
+   "IMAGE",
+   "MASK"
+  ],
+  "output_node": false,
+  "python_module": "nodes",
+  "search_aliases": [
+   "load image",
+   "open image",
+   "import image",
+   "image input",
+   "upload image",
+   "read image",
+   "image loader"
+  ]
+ },
+ "LoraLoader": {
+  "category": "model/loaders",
+  "description": "This LoRA loader is used to modify both diffusion and CLIP models, altering the way in which latents are denoised such as applying styles. Multiple LoRA nodes can be linked together.",
+  "display_name": "Load LoRA (Model and CLIP)",
+  "essentials_category": "Image Generation",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "clip": [
+     "CLIP",
+     {
+      "tooltip": "The CLIP model the LoRA will be applied to."
+     }
+    ],
+    "lora_name": [
+     [
+      "D-disk\\flux1dev_2d_game_assets.safetensors",
+      "D-disk\\flux1dev_2dhd_pixelart.safetensors",
+      "D-disk\\flux1dev_game_assets_v2.safetensors",
+      "D-disk\\flux1dev_modern_pixelart.safetensors",
+      "D-disk\\flux1dev_retro_pixel.safetensors",
+      "D-disk\\flux1dev_sprite_trainer.safetensors",
+      "D-disk\\game_asset_tiles_klein_base9b.safetensors",
+      "D-disk\\pixel_artist_z_zimage.safetensors",
+      "D-disk\\pixelart_pxart4_klein_base4b.safetensors",
+      "D-disk\\pixelart_redmond_klein9b.safetensors",
+      "D-disk\\pixelart_redmond_sdxl.safetensors",
+      "D-disk\\pixelart_redmond_zimage.safetensors",
+      "D-disk\\pixelicon_yotoicon_sdxl.safetensors",
+      "D-disk\\pixelportraits_sdxl.safetensors",
+      "D-disk\\sprite_trainer_sdxl.safetensors",
+      "D-disk\\spritesheet_2x2_klein_4b.safetensors",
+      "D-disk\\spritesheet_2x2_klein_4b_alt.safetensors",
+      "D-disk\\spritesheet_4walk_klein_base4b.safetensors",
+      "D-disk\\spritesheet_gms_klein_base9b.safetensors",
+      "D-disk\\wan_attack_sprite_high.safetensors",
+      "D-disk\\wan_attack_sprite_low.safetensors",
+      "D-disk\\wan_pixel_animation_birdman.safetensors",
+      "pixel-art-xl-v1.1.safetensors",
+      "pixel-art-xl.safetensors",
+      "pixel_art_sprite_flux2_klein.safetensors",
+      "pixel_art_style_z_image_turbo.safetensors",
+      "smol-animals-sdxl.safetensors",
+      "wan2.2_animate_adapter_model.safetensors",
+      "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+      "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors"
+     ],
+     {
+      "tooltip": "The name of the LoRA."
+     }
+    ],
+    "model": [
+     "MODEL",
+     {
+      "tooltip": "The diffusion model the LoRA will be applied to."
+     }
+    ],
+    "strength_clip": [
+     "FLOAT",
+     {
+      "default": 1.0,
+      "max": 100.0,
+      "min": -100.0,
+      "step": 0.01,
+      "tooltip": "How strongly to modify the CLIP model. This value can be negative."
+     }
+    ],
+    "strength_model": [
+     "FLOAT",
+     {
+      "default": 1.0,
+      "max": 100.0,
+      "min": -100.0,
+      "step": 0.01,
+      "tooltip": "How strongly to modify the diffusion model. This value can be negative."
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "model",
+    "clip",
+    "lora_name",
+    "strength_model",
+    "strength_clip"
+   ]
+  },
+  "is_input_list": false,
+  "name": "LoraLoader",
+  "output": [
+   "MODEL",
+   "CLIP"
+  ],
+  "output_is_list": [
+   false,
+   false
+  ],
+  "output_name": [
+   "MODEL",
+   "CLIP"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   "The modified diffusion model.",
+   "The modified CLIP model."
+  ],
+  "python_module": "nodes",
+  "search_aliases": [
+   "lora",
+   "load lora",
+   "apply lora",
+   "lora loader",
+   "lora model"
+  ]
+ },
+ "ModelSamplingAuraFlow": {
+  "category": "model/patch",
+  "description": "",
+  "display_name": "ModelSamplingAuraFlow",
+  "has_intermediate_output": false,
+  "input": {
+   "optional": {
+    "sampling": [
+     [
+      "flow",
+      "img_to_img_velocity"
+     ],
+     {
+      "advanced": true,
+      "default": "flow"
+     }
+    ]
+   },
+   "required": {
+    "model": [
+     "MODEL"
+    ],
+    "shift": [
+     "FLOAT",
+     {
+      "default": 1.73,
+      "max": 100.0,
+      "min": 0.0,
+      "step": 0.01
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "optional": [
+    "sampling"
+   ],
+   "required": [
+    "model",
+    "shift"
+   ]
+  },
+  "is_input_list": false,
+  "name": "ModelSamplingAuraFlow",
+  "output": [
+   "MODEL"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "MODEL"
+  ],
+  "output_node": false,
+  "python_module": "comfy_extras.nodes_model_advanced",
+  "search_aliases": []
+ },
+ "RandomNoise": {
+  "api_node": false,
+  "category": "model/sampling/noise",
+  "deprecated": false,
+  "description": "",
+  "dev_only": false,
+  "display_name": null,
+  "essentials_category": null,
+  "experimental": false,
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "noise_seed": [
+     "INT",
+     {
+      "control_after_generate": true,
+      "default": 0,
+      "max": 18446744073709551615,
+      "min": 0
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "noise_seed"
+   ]
+  },
+  "is_input_list": false,
+  "name": "RandomNoise",
+  "output": [
+   "NOISE"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_matchtypes": null,
+  "output_name": [
+   "NOISE"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   null
+  ],
+  "price_badge": null,
+  "python_module": "comfy_extras.nodes_custom_sampler",
+  "search_aliases": null
+ },
+ "SamplerCustomAdvanced": {
+  "api_node": false,
+  "category": "model/sampling/custom",
+  "deprecated": false,
+  "description": "",
+  "dev_only": false,
+  "display_name": null,
+  "essentials_category": null,
+  "experimental": false,
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "guider": [
+     "GUIDER",
+     {}
+    ],
+    "latent_image": [
+     "LATENT",
+     {}
+    ],
+    "noise": [
+     "NOISE",
+     {}
+    ],
+    "sampler": [
+     "SAMPLER",
+     {}
+    ],
+    "sigmas": [
+     "SIGMAS",
+     {}
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "noise",
+    "guider",
+    "sampler",
+    "sigmas",
+    "latent_image"
+   ]
+  },
+  "is_input_list": false,
+  "name": "SamplerCustomAdvanced",
+  "output": [
+   "LATENT",
+   "LATENT"
+  ],
+  "output_is_list": [
+   false,
+   false
+  ],
+  "output_matchtypes": null,
+  "output_name": [
+   "output",
+   "denoised_output"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   null,
+   null
+  ],
+  "price_badge": null,
+  "python_module": "comfy_extras.nodes_custom_sampler",
+  "search_aliases": null
+ },
+ "SaveImage": {
+  "category": "image",
+  "description": "Saves the input images to your ComfyUI output directory.",
+  "display_name": "Save Image",
+  "essentials_category": "Basics",
+  "has_intermediate_output": false,
+  "input": {
+   "hidden": {
+    "extra_pnginfo": "EXTRA_PNGINFO",
+    "prompt": "PROMPT"
+   },
+   "required": {
+    "filename_prefix": [
+     "STRING",
+     {
+      "default": "ComfyUI",
+      "tooltip": "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes."
+     }
+    ],
+    "images": [
+     "IMAGE",
+     {
+      "tooltip": "The images to save."
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "hidden": [
+    "prompt",
+    "extra_pnginfo"
+   ],
+   "required": [
+    "images",
+    "filename_prefix"
+   ]
+  },
+  "is_input_list": false,
+  "name": "SaveImage",
+  "output": [
+   "IMAGE"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "images"
+  ],
+  "output_node": true,
+  "python_module": "nodes",
+  "search_aliases": [
+   "save",
+   "save image",
+   "export image",
+   "output image",
+   "write image",
+   "download"
+  ]
+ },
+ "SeamlessTile": {
+  "category": "conditioning",
+  "description": "",
+  "display_name": "Seamless Tile",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "copy_model": [
+     [
+      "Make a copy",
+      "Modify in place"
+     ]
+    ],
+    "model": [
+     "MODEL"
+    ],
+    "tiling": [
+     [
+      "enable",
+      "x_only",
+      "y_only",
+      "disable"
+     ]
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "model",
+    "tiling",
+    "copy_model"
+   ]
+  },
+  "is_input_list": false,
+  "name": "SeamlessTile",
+  "output": [
+   "MODEL"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "MODEL"
+  ],
+  "output_node": false,
+  "python_module": "custom_nodes.ComfyUI-seamless-tiling",
+  "search_aliases": []
+ },
+ "SplitSigmasDenoise": {
+  "api_node": false,
+  "category": "model/sampling/sigmas",
+  "deprecated": false,
+  "description": "",
+  "dev_only": false,
+  "display_name": null,
+  "essentials_category": null,
+  "experimental": false,
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "denoise": [
+     "FLOAT",
+     {
+      "default": 1.0,
+      "max": 1.0,
+      "min": 0.0,
+      "step": 0.01
+     }
+    ],
+    "sigmas": [
+     "SIGMAS",
+     {}
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "sigmas",
+    "denoise"
+   ]
+  },
+  "is_input_list": false,
+  "name": "SplitSigmasDenoise",
+  "output": [
+   "SIGMAS",
+   "SIGMAS"
+  ],
+  "output_is_list": [
+   false,
+   false
+  ],
+  "output_matchtypes": null,
+  "output_name": [
+   "high_sigmas",
+   "low_sigmas"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   null,
+   null
+  ],
+  "price_badge": null,
+  "python_module": "comfy_extras.nodes_custom_sampler",
+  "search_aliases": null
+ },
+ "UNETLoader": {
+  "category": "model/loaders",
+  "description": "",
+  "display_name": "Load Diffusion Model",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "unet_name": [
+     [
+      "D-disk\\flux-2-klein-4b.safetensors",
+      "D-disk\\hunyuanvideo1.5_480p_i2v_step_distilled_fp8_scaled.safetensors",
+      "flux-2-klein-base-4b.safetensors",
+      "pixal3d_int8_convrot.safetensors",
+      "trellis_2_int8_convrot.safetensors",
+      "z_image_turbo_bf16.safetensors"
+     ]
+    ],
+    "weight_dtype": [
+     [
+      "default",
+      "fp8_e4m3fn",
+      "fp8_e4m3fn_fast",
+      "fp8_e5m2"
+     ],
+     {
+      "advanced": true
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "unet_name",
+    "weight_dtype"
+   ]
+  },
+  "is_input_list": false,
+  "name": "UNETLoader",
+  "output": [
+   "MODEL"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "MODEL"
+  ],
+  "output_node": false,
+  "python_module": "nodes",
+  "search_aliases": []
+ },
+ "UnetLoaderGGUF": {
+  "category": "bootleg",
+  "description": "",
+  "display_name": "Unet Loader (GGUF)",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "unet_name": [
+     [
+      "D-disk\\Wan-Animate-2-14B-TURBO-Q2_K.gguf",
+      "D-disk\\Wan2.2-Animate-14B-Q3_K_S.gguf",
+      "D-disk\\Wan2.2-TI2V-5B-Q4_K_M.gguf",
+      "D-disk\\flux-2-klein-9b-Q6_K.gguf",
+      "D-disk\\flux-2-klein-base-9b-Q6_K.gguf",
+      "D-disk\\flux1-dev-Q8_0.gguf",
+      "D-disk\\hunyuanvideo1.5_480p_i2v_cfg_distilled-Q4_K_M.gguf",
+      "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf",
+      "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf",
+      "flux1-dev-Q4_K_S.gguf"
+     ]
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "unet_name"
+   ]
+  },
+  "is_input_list": false,
+  "name": "UnetLoaderGGUF",
+  "output": [
+   "MODEL"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "MODEL"
+  ],
+  "output_node": false,
+  "python_module": "custom_nodes.ComfyUI-GGUF",
+  "search_aliases": []
+ },
+ "VAEDecode": {
+  "category": "model/latent",
+  "description": "Decodes latent images back into pixel space images.",
+  "display_name": "VAE Decode",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "samples": [
+     "LATENT",
+     {
+      "tooltip": "The latent to be decoded."
+     }
+    ],
+    "vae": [
+     "VAE",
+     {
+      "tooltip": "The VAE model used for decoding the latent."
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "samples",
+    "vae"
+   ]
+  },
+  "is_input_list": false,
+  "name": "VAEDecode",
+  "output": [
+   "IMAGE"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "IMAGE"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   "The decoded image."
+  ],
+  "python_module": "nodes",
+  "search_aliases": [
+   "decode",
+   "decode latent",
+   "latent to image",
+   "render latent"
+  ]
+ },
+ "VAEDecodeTiled": {
+  "category": "model/latent",
+  "description": "",
+  "display_name": "VAE Decode (Tiled)",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "overlap": [
+     "INT",
+     {
+      "advanced": true,
+      "default": 64,
+      "max": 4096,
+      "min": 0,
+      "step": 32
+     }
+    ],
+    "samples": [
+     "LATENT"
+    ],
+    "temporal_overlap": [
+     "INT",
+     {
+      "advanced": true,
+      "default": 8,
+      "max": 4096,
+      "min": 4,
+      "step": 4,
+      "tooltip": "Only used for video VAEs: Amount of frames to overlap."
+     }
+    ],
+    "temporal_size": [
+     "INT",
+     {
+      "advanced": true,
+      "default": 64,
+      "max": 4096,
+      "min": 8,
+      "step": 4,
+      "tooltip": "Only used for video VAEs: Amount of frames to decode at a time."
+     }
+    ],
+    "tile_size": [
+     "INT",
+     {
+      "advanced": true,
+      "default": 512,
+      "max": 4096,
+      "min": 64,
+      "step": 32
+     }
+    ],
+    "vae": [
+     "VAE"
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "samples",
+    "vae",
+    "tile_size",
+    "overlap",
+    "temporal_size",
+    "temporal_overlap"
+   ]
+  },
+  "is_input_list": false,
+  "name": "VAEDecodeTiled",
+  "output": [
+   "IMAGE"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "IMAGE"
+  ],
+  "output_node": false,
+  "python_module": "nodes",
+  "search_aliases": []
+ },
+ "VAEEncode": {
+  "category": "model/latent",
+  "description": "",
+  "display_name": "VAE Encode",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "pixels": [
+     "IMAGE"
+    ],
+    "vae": [
+     "VAE"
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "pixels",
+    "vae"
+   ]
+  },
+  "is_input_list": false,
+  "name": "VAEEncode",
+  "output": [
+   "LATENT"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "LATENT"
+  ],
+  "output_node": false,
+  "python_module": "nodes",
+  "search_aliases": [
+   "encode",
+   "encode image",
+   "image to latent"
+  ]
+ },
+ "VAELoader": {
+  "category": "model/loaders",
+  "description": "",
+  "display_name": "Load VAE",
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "vae_name": [
+     [
+      "D-disk\\hunyuanvideo15_vae_fp16.safetensors",
+      "D-disk\\wan2.2_vae.safetensors",
+      "ae.safetensors",
+      "flux2-vae.safetensors",
+      "trellis_2_shape_vae_bf16.safetensors",
+      "trellis_2_texture_vae_bf16.safetensors",
+      "wan_2.1_vae.safetensors",
+      "pixel_space"
+     ]
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "vae_name"
+   ]
+  },
+  "is_input_list": false,
+  "name": "VAELoader",
+  "output": [
+   "VAE"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "VAE"
+  ],
+  "output_node": false,
+  "python_module": "nodes",
+  "search_aliases": []
+ }
+}

@@ -26,6 +26,14 @@ def installer_outils_workflow(serveur, atelier, refus_lisible):
     async def prepare_free_video(project: str, request: dict[str, Any]) -> dict[str, Any]:
         return await atelier.travaux.preparer(project, request, "agent", source_libre=True)
 
+    @serveur.tool(name="install_local_styles", meta=meta("Installer les styles locaux"), description="List the 22 built-in local sc-clone styles (family, kind, speed, readiness) and install every style whose required ComfyUI files and nodes are already present. Never downloads model weights; a style missing files stays uninstalled and is reported with what's missing.")
+    @refus_lisible
+    async def install_local_styles() -> dict[str, Any]:
+        styles = await atelier.styles_locaux.lister()
+        installes = await atelier.styles_locaux.installer_prets()
+        await atelier.catalogue.rafraichir()
+        return {"styles": styles, "installes": installes}
+
     @serveur.tool(name="prepare_audio", meta=meta("Préparer un bruitage"), description="Prepare a durable local sound job without starting it. request:{cle,modele,prompt,secondes,nom?,prompt_negatif?,options?}. Use an imported audio workflow and its declared duration/options. Read the exact snapshot then use shared production start/resume tools. Result is stored in the audio library, never automatically approved or delivered.")
     @refus_lisible
     async def prepare_audio(project: str, request: dict[str, Any]) -> dict[str, Any]:

@@ -95,6 +95,20 @@ def _variantes(d, base, liaisons, parametres, sortie):
     return variantes, nombres[0], nombres[-1]
 
 
+def _valider_style(info):
+    """Les métadonnées d'un style de sc-clone (ML2) : absente du profil, elle
+    ne change rien à sa forme normalisée ni à son empreinte — même règle que
+    `variantes`."""
+    if not isinstance(info, dict):
+        raise WorkflowRefuse("Les métadonnées de style doivent être un objet.")
+    obligatoires = ("famille", "declencheur", "genre", "vitesse", "source")
+    if any(not isinstance(info.get(c), str) or not info[c] for c in obligatoires):
+        raise WorkflowRefuse("Les métadonnées de style déclarent famille, déclencheur, genre, vitesse et source.")
+    if "suffixe" in info and (not isinstance(info["suffixe"], str) or not info["suffixe"]):
+        raise WorkflowRefuse("Le suffixe de style doit être un texte non vide.")
+    return {**{c: info[c] for c in obligatoires}, **({"suffixe": info["suffixe"]} if "suffixe" in info else {})}
+
+
 def _normaliser(brut: dict) -> dict:
     if not isinstance(brut, dict):
         raise WorkflowRefuse("Le profil doit être un document JSON.")
@@ -167,6 +181,7 @@ def _normaliser(brut: dict) -> dict:
         "references_min": minimum, "references_max": maximum,
         # Absente d'un profil à un seul graphe : sa version reste celle d'avant.
         **({"variantes": variantes} if variantes else {}),
+        **({"style": _valider_style(d["style"])} if d.get("style") else {}),
         "description": str(d.get("description", ""))[:2000]}
 
 

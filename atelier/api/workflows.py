@@ -18,6 +18,27 @@ async def importer(requete: Request):
     return profil
 
 
+@routeur.get("/workflow-profiles/styles")
+async def lister_styles(requete: Request):
+    return {"styles": await requete.app.state.atelier.styles_locaux.lister()}
+
+
+@routeur.post("/workflow-profiles/styles/install")
+async def installer_styles_prets(requete: Request):
+    atelier = requete.app.state.atelier
+    installes = await atelier.styles_locaux.installer_prets()
+    await atelier.catalogue.rafraichir()
+    return {"installes": installes}
+
+
+@routeur.post("/workflow-profiles/styles/{identifiant}/install")
+async def installer_style(requete: Request, identifiant: str):
+    atelier = requete.app.state.atelier
+    profil = await atelier.styles_locaux.installer(identifiant)
+    await atelier.catalogue.rafraichir()
+    return profil
+
+
 @routeur.get("/workflow-profiles/{identifiant}/versions/{version}")
 def lire(requete: Request, identifiant: str, version: str):
     return requete.app.state.atelier.profils_workflow.lire(identifiant, version)

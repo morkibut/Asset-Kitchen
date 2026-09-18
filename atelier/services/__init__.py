@@ -71,6 +71,7 @@ from atelier.services.sons import ServiceSons
 from atelier.services.travaux import ServiceTravaux
 from atelier.services.file_locale import ServiceFileLocale
 from atelier.services.profils_workflow import ServiceProfilsWorkflow
+from atelier.services.styles_locaux import ServiceStylesLocaux
 from atelier.services.travaux_workflow import ServiceTravauxWorkflow
 from atelier.fournisseur.workflow import MoteurWorkflow, AnimateurWorkflow
 from atelier.fournisseur.workflow_image import FournisseurWorkflowImage
@@ -270,6 +271,7 @@ class Atelier:
             lambda: MoteurWorkflow(adresse_comfy(BASE_PAR_DEFAUT)))
         self.fournisseur_workflow_image = FournisseurWorkflowImage(self.profils_workflow, self.file_locale,
             self.profils_workflow.fabrique_moteur)
+        self.styles_locaux = ServiceStylesLocaux(self.profils_workflow)
         # **Deux entrées pour une seule liste, et la seconde est celle de F1.**
         # `fabrique_fournisseur` au singulier monte un atelier sur un fournisseur
         # unique : c'est ce que font tous les essais du dépôt, et ça décrit

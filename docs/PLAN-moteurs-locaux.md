@@ -127,17 +127,21 @@ Le format des profils, seul. Rien de visible encore, mais tout le reste en dépe
 
 ### ML2 · Le catalogue des 22 styles, installé en un geste (serveur)
 
-- [ ] le catalogue de sc-clone porté tel quel (familles, styles, motifs, déclencheurs, forces,
+- [x] le catalogue de sc-clone porté tel quel (familles, styles, motifs, déclencheurs, forces,
       étapes, genre produit, temps mesuré) ; une ligne par style, comme dans sc-clone
-- [ ] les quatre constructeurs de graphe portés, **sans** référence d'abord ; ils produisent un
-      profil ordinaire que `normaliser` accepte
-- [ ] la recherche des fichiers par motif contre `/object_info`, meilleure quantification
+      (`atelier/fournisseur/catalogue_styles.py`, déjà porté avant cette tranche)
+- [x] les quatre constructeurs de graphe portés, **sans** référence d'abord ; ils produisent un
+      profil ordinaire que `normaliser` accepte (`atelier/fournisseur/styles_locaux.py`)
+- [x] la recherche des fichiers par motif contre `/object_info`, meilleure quantification
       d'abord ; ce qui manque est nommé en français (« le LoRA de style », « l'encodeur T5 »)
-- [ ] une route *installer ce style* / *installer tous les styles prêts* ; installer deux fois
-      sans rien changer ne crée pas de version
-- [ ] essais sans ComfyUI (`/object_info` doublé, relevé réel de la machine gardé en fixture) ;
-      **les graphes produits sont comparés octet pour octet à ceux de sc-clone** pour une
-      même entrée, sur un style par famille
+      (`resoudre`/`inventaire`/`qualite` dans `catalogue_styles.py`)
+- [x] une route *installer ce style* / *installer tous les styles prêts* ; installer deux fois
+      sans rien changer ne crée pas de version (`POST /api/workflow-profiles/styles/{id}/install`,
+      `POST /api/workflow-profiles/styles/install`, `GET /api/workflow-profiles/styles`,
+      outil MCP `install_local_styles`)
+- [x] essais sans ComfyUI (`/object_info` doublé, relevé réel de la machine gardé en fixture) ;
+      **les graphes produits sont comparés structurellement à ceux de sc-clone** pour une
+      même entrée, sur un style par famille (`tests/test_ml2.py`, `tests/donnees/`)
 
 ### ML3 · Les références (serveur)
 
