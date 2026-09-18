@@ -3734,7 +3734,7 @@ export function Retouche({
   const [enregistrerSous, setEnregistrerSous] = useState(false)
   const sortir = (action: () => void) => { if (!enregistrementImmediat && session.modifie) setSortie(() => action); else action() }
   const [ouverte, setOuverte] = useEtatDuParcours<Table>(`retouche:${asset.projet ?? ""}:table`, tableDeLaPorte ?? "detourage")
-  const [panneau, setPanneau] = useEtatDuParcours<"retouche" | "calques">(`retouche:${asset.projet ?? ""}:panneau`, "retouche")
+  const [panneau, setPanneau] = useEtatDuParcours<"retouche" | "calques" | "recettes">(`retouche:${asset.projet ?? ""}:panneau`, "retouche")
   useEffect(() => { if (tableDeLaPorte) { setOuverte(tableDeLaPorte); setPanneau("retouche") } }, [tableDeLaPorte, setOuverte, setPanneau])
   const [aAppliquer, setAAppliquer] = useState(false)
   useEffect(() => setAAppliquer(false), [asset.identifiant])
@@ -4055,8 +4055,6 @@ export function Retouche({
   const [nommees, setNommees] = useState<string[]>([])
   const [annonceRecette, setAnnonceRecette] = useState<string[] | null>(null)
   const [aCopier, setACopier] = useState(lireLePressePapier() !== null)
-  const [recettesOuvertes, setRecettesOuvertes] = useState(false)
-
   useEffect(() => setAnnonceRecette(null), [asset.identifiant])
 
   /** Ce que le serveur a posé revient dans l'écran, recette comprise — coller
@@ -4125,136 +4123,100 @@ export function Retouche({
     },
   }
 
+  // ── La barre : huit tables, un trait, deux fabriques ───────────────────────
+  // **L'ordre vient de `TABLES`, et il n'est écrit qu'une fois.** C'est celui
+  // du domaine ; le lire autrement mentirait sur ce que l'image a subi. Aucune
+  // table n'est cachée — même indisponible, elle s'ouvre et porte sa raison à
+  // la place de ses réglages. Elle vit dans le panneau (onglet Retouche) ; et
+  // dans l'en-tête tant qu'une fabrique occupe le cadre, panneau compris, pour
+  // qu'on passe d'une fabrique ou d'une table à l'autre sans détour.
+  const fabriqueOuverte = ouverte === "decoupage" || ouverte === "superposition"
+  const barreDesTables = (
+    <details className="shrink-0 text-[12px] text-encre-3"><summary className="cursor-pointer">Toutes les tables et leur état</summary>
+    <div data-barre-des-tables className="flex flex-wrap items-center gap-[4px] pt-[8px]">
+      {TABLES.map((t, rang) => {
+        const etat = etatDe(t.cle, recette, traitement, mesures)
+        const premiereFabrique = t.fabrique && !TABLES[rang - 1]?.fabrique
+        return (
+          <div key={t.cle} className="flex items-center gap-[4px]">
+            {premiereFabrique && (
+              <span
+                aria-hidden
+                data-trait-des-fabriques
+                className="mx-[8px] inline-block h-[22px] w-px bg-contour"
+              />
+            )}
+            <button
+              type="button"
+              data-table={t.cle}
+              data-etat={etat}
+              aria-pressed={ouverte === t.cle}
+              onClick={() => {
+                const ouvrir = () => { setPanneau("retouche"); setOuverte(t.cle) }
+                if (t.fabrique) sortir(ouvrir)
+                else ouvrir()
+              }}
+              // ⚠️ **Pas d'infobulle ici.** Vu au navigateur : un `title` sur
+              // un bouton devient son nom dans l'arbre d'accessibilité — la
+              // barre s'annonçait « Les bords vides sautent. » au lieu de
+              // « Recadrage ». La phrase est déjà écrite en clair pour la
+              // table ouverte ; la répéter au survol coûtait le nom du bouton.
+              className={[
+                "flex h-[30px] items-center gap-[4px] rounded-7 border px-[8px] text-[12.5px] transition-colors duration-120",
+                ouverte === t.cle
+                  ? "border-encre-4 bg-carte font-medium text-encre"
+                  : "border-trait bg-carte text-encre-3 hover:border-encre-4 hover:text-encre",
+              ].join(" ")}
+            >
+              {!t.fabrique && <Pastille etat={etat} />}
+              {NOM_DE_LA_TABLE[t.cle]}
+            </button>
+          </div>
+        )
+      })}
+    </div></details>
+  )
+
   return (
     <main
       data-retouche
       aria-label={`La retouche de ${asset.label}`}
       className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier"
     >
-      <div className="atelier-image-unifie flex min-h-0 flex-1 flex-col gap-[14px] overflow-hidden p-[14px]">
-        <div className="flex items-center gap-[8px]">
-          <button
-            type="button"
-            onClick={() => sortir(onFermer)}
-            className="h-[26px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
-          >
-            ‹ {retour}
-          </button>
-          <div className="min-w-0"><h1 className="truncate font-serif text-[25px] text-encre">{asset.label}</h1><p className="text-[12px] text-encre-3">La retouche · {enregistrementImmediat ? "réglages enregistrés au fil des gestes" : session.modifie ? "Brouillon · version enregistrée intacte" : "Version enregistrée"}</p></div>
-          {!enregistrementImmediat && <button type="button" disabled={!session.modifie || !session.valide || !!enVol || session.enregistre} onClick={() => void session.enregistrer()} className="ml-auto h-[34px] shrink-0 rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">{session.enregistre ? "Enregistrement…" : "Enregistrer les retouches"}</button>}
-          {/* **Enregistrer sous…, à côté d’Enregistrer** (`RP20`). Grisé
-              avec sa raison tant qu’aucune retouche n’est appliquée : sans
-              recette, le geste rangerait la même image dans une seconde
-              case. */}
-          <button type="button" title={raisonDEnregistrerSous(recette) ?? "Le résultat devient une autre pose ou direction"} disabled={!!raisonDEnregistrerSous(recette)} onClick={() => setEnregistrerSous(true)} className="h-[34px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle disabled:opacity-50">Enregistrer sous…</button>
-
-          {/* **Les recettes vivent au bout du bandeau**, comme dans
-              `Tables.tsx` : elles ont la portée de la recette entière, pas
-              d'une table, et un geste de portée générale ne se cherche pas au
-              milieu d'une colonne. */}
-          <div className="relative ml-auto shrink-0">
-            <button
-              type="button"
-              aria-expanded={recettesOuvertes}
-              onClick={() => setRecettesOuvertes((deja) => !deja)}
-              className={[
-                "h-[26px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
-                recettesOuvertes
-                  ? "border-encre-4 bg-carte text-encre"
-                  : "border-trait bg-carte text-encre-2 hover:border-encre-4 hover:text-encre",
-              ].join(" ")}
-            >
-              Recettes ›
-            </button>
-            {recettesOuvertes && (
-              <PanneauDesRecettes
-                recette={recette}
-                nommees={recettes.nommees}
-                annonce={enregistrementImmediat ? recettes.annonce : session.annonce}
-                aCopier={recettes.aCopier}
-                onFermer={() => setRecettesOuvertes(false)}
-                onLister={recettes.onLister}
-                onCopier={recettes.onCopier}
-                onColler={recettes.onColler}
-                onEnregistrer={recettes.onEnregistrer}
-                onAppliquer={recettes.onAppliquer}
-                onOublier={recettes.onOublier}
-              />
-            )}
+      {/* **La charpente de l'atelier d'animation** (`AtelierDeBande.tsx`) :
+          une grille, l'en-tête en travers, la scène à gauche, le panneau à
+          droite sur deux rangs, et les sœurs sous la scène à la place du
+          ruban des frames. La colonne de droite suit la largeur de l'écran
+          (40 %, jamais moins de 300 px) au lieu d'un 300 px fixe qui
+          faisait heurter les titres de table contre leurs boutons. */}
+      <div className="atelier-image-unifie grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(300px,40%)] grid-rows-[auto_minmax(0,1fr)_auto] gap-[14px] overflow-hidden bg-papier p-[14px]">
+        <header className="col-span-2 flex min-w-0 items-center justify-between gap-[22px]">
+          <div className="min-w-0"><h1 className="truncate font-serif text-[25px] text-encre">{asset.label}</h1><p className="mt-[4px] text-[12px] text-encre-3">Image · {asset.largeur}×{asset.hauteur} px · {enregistrementImmediat ? "réglages enregistrés au fil des gestes" : session.modifie ? "Brouillon de retouche" : "Version enregistrée"}</p>{fabriqueOuverte && barreDesTables}</div>
+          <div className="flex shrink-0 items-center gap-[8px]">
+            {/* Une fabrique ouverte prend le cadre entier, panneau compris :
+                le retour à la Main (et la barre, à gauche) restent donc dans
+                l'en-tête tant qu'elle est là. */}
+            {fabriqueOuverte && <button type="button" onClick={() => setOuverte("main")} className="h-[34px] px-[8px] text-[12px] text-signal">‹ Main</button>}
+            <button type="button" onClick={() => sortir(onFermer)} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle">‹ {retour}</button>
+            {!enregistrementImmediat && <button type="button" disabled={!session.modifie || !session.valide || !!enVol || session.enregistre} onClick={() => void session.enregistrer()} className="h-[34px] rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal disabled:opacity-50">{session.enregistre ? "on enregistre…" : "Enregistrer ›"}</button>}
+            {/* **Enregistrer sous…, à côté d’Enregistrer** (`RP20`). Grisé
+                avec sa raison tant qu’aucune retouche n’est appliquée : sans
+                recette, le geste rangerait la même image dans une seconde
+                case. */}
+            <button type="button" title={raisonDEnregistrerSous(recette) ?? "Le résultat devient une autre pose ou direction"} disabled={!!raisonDEnregistrerSous(recette)} onClick={() => setEnregistrerSous(true)} className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[12px] text-encre-controle disabled:opacity-50">Enregistrer sous…</button>
           </div>
-        </div>
-
-        {/* ── La barre : huit tables, un trait, deux fabriques ─────────────
-            **L'ordre vient de `TABLES`, et il n'est écrit qu'une fois.** C'est
-            celui du domaine ; le lire autrement mentirait sur ce que l'image a
-            subi. Aucune table n'est cachée — même indisponible, elle s'ouvre et
-            porte sa raison à la place de ses réglages. */}
-        <AvisBrouillon brouillon={brouillon} />
-        {aAppliquer && <button type="button" onClick={async () => {
-          try { await api.poserRecette(asset.identifiant, recette); brouillon.effacer(); setAAppliquer(false) }
-          catch (e) { onErreur((e as Error).message) }
-        }} className="h-[34px] rounded-7 border border-signal px-[14px] text-[12px]">Appliquer les réglages repris à l’image</button>}
-        <div className="flex flex-wrap items-center gap-[8px]">
-          <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("decoupage") })} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Découper une image</button>
-          <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("superposition") })} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Extraire un élément</button>
-          {onAssocierEquipement && <button type="button" onClick={() => sortir(onAssocierEquipement)} className="h-[30px] rounded-7 border border-trait bg-carte px-[14px] text-[12.5px] text-encre-2">Utiliser comme équipement…</button>}
-          {(ouverte === "decoupage" || ouverte === "superposition") && <button type="button" onClick={() => setOuverte("main")} className="h-[30px] px-[8px] text-[12.5px] text-signal">‹ Main</button>}
-        </div>
-        <details className="shrink-0 text-[12px] text-encre-3"><summary className="cursor-pointer">Toutes les tables et leur état</summary>
-        <div data-barre-des-tables className="flex flex-wrap items-center gap-[4px] pt-[8px]">
-          {TABLES.map((t, rang) => {
-            const etat = etatDe(t.cle, recette, traitement, mesures)
-            const premiereFabrique = t.fabrique && !TABLES[rang - 1]?.fabrique
-            return (
-              <div key={t.cle} className="flex items-center gap-[4px]">
-                {premiereFabrique && (
-                  <span
-                    aria-hidden
-                    data-trait-des-fabriques
-                    className="mx-[8px] inline-block h-[22px] w-px bg-contour"
-                  />
-                )}
-                <button
-                  type="button"
-                  data-table={t.cle}
-                  data-etat={etat}
-                  aria-pressed={ouverte === t.cle}
-                  onClick={() => {
-                    const ouvrir = () => { setPanneau("retouche"); setOuverte(t.cle) }
-                    if (t.fabrique) sortir(ouvrir)
-                    else ouvrir()
-                  }}
-                  // ⚠️ **Pas d'infobulle ici.** Vu au navigateur : un `title`
-                  // sur un bouton devient son nom dans l'arbre
-                  // d'accessibilité — la barre s'annonçait « Les bords vides
-                  // sautent. » au lieu de « Recadrage ». La phrase est déjà
-                  // écrite en clair sous la barre pour la table ouverte ; la
-                  // répéter au survol coûtait le nom du bouton.
-                  className={[
-                    "flex h-[30px] items-center gap-[4px] rounded-7 border px-[8px] text-[12.5px] transition-colors duration-120",
-                    ouverte === t.cle
-                      ? "border-encre-4 bg-carte font-medium text-encre"
-                      : "border-trait bg-carte text-encre-3 hover:border-encre-4 hover:text-encre",
-                  ].join(" ")}
-                >
-                  {!t.fabrique && <Pastille etat={etat} />}
-                  {NOM_DE_LA_TABLE[t.cle]}
-                </button>
-              </div>
-            )
-          })}
-        </div></details>
+        </header>
 
         {/* **La fabrique prend le cadre entier.** Elle ne pose rien sur
             l'image ouverte : elle en écrit d'autres, et le montrer entre une
             colonne de réglages et une colonne de sœurs mentirait sur ce
             qu'elle fait — la règle de `Tables.tsx` (`B24`). */}
         {ouverte === "decoupage" ? (
-          <div className="flex min-h-0 flex-1 overflow-hidden pb-[22px]">
+          <div className="col-span-2 row-start-2 row-span-2 flex min-h-0 overflow-hidden pb-[22px]">
             {decoupe(() => setOuverte("detourage"))}
           </div>
         ) : ouverte === "superposition" ? (
-          <div className="flex min-h-0 flex-1 overflow-hidden pb-[22px]">
+          <div className="col-span-2 row-start-2 row-span-2 flex min-h-0 overflow-hidden pb-[22px]">
             <EcranSuperposition
               asset={asset}
               soeurs={soeurs}
@@ -4263,9 +4225,9 @@ export function Retouche({
             />
           </div>
         ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] grid-rows-[minmax(0,1fr)_auto] gap-[14px] overflow-hidden">
+        <>
           {/* ── L'image, et rien par-dessus ─────────────────────────────── */}
-          <div className="col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col gap-[8px]">
+          <div className="col-start-1 row-start-2 flex min-h-0 min-w-0 flex-col gap-[8px]">
             {!enregistrementImmediat && <div className="flex gap-[8px]"><button type="button" disabled={!session.peutDefaire} onClick={session.defaire} className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] disabled:opacity-50">Annuler</button><button type="button" disabled={!session.peutRefaire} onClick={session.refaire} className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] disabled:opacity-50">Rétablir</button>{!session.valide && !enVol && <button type="button" onClick={() => void poser(recette)} className="text-[12px] text-signal">Recalculer l’aperçu</button>}</div>}
             <div className="flex flex-wrap items-center justify-between gap-[8px]">
               <div className="flex flex-wrap items-center gap-[8px]">
@@ -4593,11 +4555,44 @@ export function Retouche({
           <aside
             data-reglages-de-la-table
             aria-label={`Les réglages de ${NOM_DE_LA_TABLE[ouverte]}`}
-            className="col-start-2 row-start-1 row-span-2 flex min-h-0 flex-col gap-[14px] overflow-hidden rounded-8 border border-trait bg-carte p-[14px]"
+            className="col-start-2 row-start-2 row-span-2 flex min-h-0 flex-col gap-[14px] overflow-hidden rounded-8 border border-trait bg-carte p-[14px]"
           >
             <h2 className="font-serif text-[25px] text-encre">Le résultat</h2>
-            <div className="flex gap-[4px] rounded-7 bg-papier-cote p-[4px]">{(["retouche", "calques"] as const).map((nom) => <button key={nom} type="button" aria-pressed={panneau === nom} onClick={() => { setPanneau(nom); if (nom === "calques") setOuverte("main") }} className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${panneau === nom ? "bg-carte text-encre" : "text-encre-3"}`}>{nom === "retouche" ? "Retouche" : "Calques"}</button>)}</div>
+            {/* **Trois onglets, comme l'animation** (Retouche · Calques ·
+                Recettes) : les recettes ont la portée de la recette entière,
+                pas d'une table — elles ont leur page plutôt qu'un menu posé
+                au bout du bandeau. */}
+            <div className="flex gap-[4px] rounded-7 bg-papier-cote p-[4px]">{(["retouche", "calques", "recettes"] as const).map((nom) => <button key={nom} type="button" aria-pressed={panneau === nom} onClick={() => { setPanneau(nom); if (nom === "calques") setOuverte("main") }} className={`h-[30px] flex-1 rounded-7 px-[8px] text-[12px] ${panneau === nom ? "bg-carte text-encre" : "text-encre-3"}`}>{{ retouche: "Retouche", calques: "Calques", recettes: "Recettes" }[nom]}</button>)}</div>
+            <AvisBrouillon brouillon={brouillon} />
+            {aAppliquer && <button type="button" onClick={async () => {
+              try { await api.poserRecette(asset.identifiant, recette); brouillon.effacer(); setAAppliquer(false) }
+              catch (e) { onErreur((e as Error).message) }
+            }} className="h-[34px] shrink-0 rounded-7 border border-signal px-[14px] text-[12px]">Appliquer les réglages repris à l’image</button>}
             {panneau === "retouche" && <SelecteurDeTable table={ouverte} onTable={setOuverte} />}
+            {panneau === "retouche" && barreDesTables}
+            {/* **Les gestes qui écrivent d'autres images, au pied du
+                panneau**, là où l'animation met « Découper cette frame ». */}
+            <div className="order-last flex shrink-0 flex-wrap gap-[8px] border-t border-trait pt-[14px] text-[12px]">
+              <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("decoupage") })} className="rounded-7 border border-trait px-[8px] py-[4px]">Découper une image</button>
+              <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("superposition") })} className="rounded-7 border border-trait px-[8px] py-[4px]">Extraire un élément</button>
+              {onAssocierEquipement && <button type="button" onClick={() => sortir(onAssocierEquipement)} className="rounded-7 border border-trait px-[8px] py-[4px]">Utiliser comme équipement…</button>}
+            </div>
+            {panneau === "recettes" ? (
+            <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
+              <PanneauDesRecettes
+                recette={recette}
+                nommees={recettes.nommees}
+                annonce={enregistrementImmediat ? recettes.annonce : session.annonce}
+                aCopier={recettes.aCopier}
+                onLister={recettes.onLister}
+                onCopier={recettes.onCopier}
+                onColler={recettes.onColler}
+                onEnregistrer={recettes.onEnregistrer}
+                onAppliquer={recettes.onAppliquer}
+                onOublier={recettes.onOublier}
+              />
+            </div>
+            ) : (
             <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
             <div className="flex items-start justify-between gap-[8px]">
               <div className="flex flex-col gap-[4px]">
@@ -4671,6 +4666,7 @@ export function Retouche({
               <details className="text-[12px] text-encre-3"><summary className="cursor-pointer">Ce que fait cette table</summary><p className="pt-[8px]">{CE_QUE_LA_TABLE_FAIT[ouverte]} Chaque étape reste réversible, sans nouvelle génération. Un calcul ne s’interrompt pas : ce qui se défait, c’est le réglage.</p></details>
             </div>
             </div>
+            )}
           </aside>
 
           {/* ── Ses sœurs (`B24`, déménagé de `Tables.tsx`) ────────────────
@@ -4680,7 +4676,7 @@ export function Retouche({
           <aside
             data-ses-soeurs
             aria-label="Ses sœurs"
-            className="col-start-1 row-start-2 flex min-w-0 flex-col gap-[8px] rounded-8 border-t border-trait pt-[8px]"
+            className="col-start-1 row-start-3 flex min-w-0 flex-col gap-[8px] rounded-8 border-t border-trait pt-[8px]"
           >
             <Etiquette>ses sœurs</Etiquette>
             <div className="defile flex gap-[8px] overflow-x-auto">
@@ -4697,7 +4693,7 @@ export function Retouche({
               )}
             </div>
           </aside>
-        </div>
+        </>
         )}
       </div>
       {enregistrerSous && <EnregistrerSous quoi="image" identifiant={originale.identifiant} recette={recette} onFermer={() => setEnregistrerSous(false)} />}
@@ -4748,7 +4744,6 @@ function SoeurDuCarnet({
 function PanneauDesRecettes({
   recette,
   nommees,
-  onFermer,
   onLister,
   onCopier,
   onColler,
@@ -4760,7 +4755,6 @@ function PanneauDesRecettes({
 }: {
   recette: Recette
   nommees: string[]
-  onFermer: () => void
   onLister: () => void
   onCopier: () => void
   onColler: () => void
@@ -4779,13 +4773,8 @@ function PanneauDesRecettes({
   const propre = nom.trim()
   const dejaPris = nommees.includes(propre)
 
-  useEffect(() => {
-    const ecouter = (evenement: KeyboardEvent) => {
-      if (evenement.key === "Escape") onFermer()
-    }
-    window.addEventListener("keydown", ecouter)
-    return () => window.removeEventListener("keydown", ecouter)
-  }, [onFermer])
+  // **Un onglet ne se ferme pas à l'Échap** : depuis que les recettes vivent
+  // dans le panneau, il n'y a plus de menu flottant à refermer.
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => onLister(), [])
@@ -4802,7 +4791,7 @@ function PanneauDesRecettes({
   return (
     <div
       data-recettes
-      className="absolute right-0 top-full z-30 mt-[4px] w-[300px] rounded-8 border border-trait bg-carte p-[14px] text-left shadow-[0_4px_18px_rgba(0,0,0,.12)]"
+      className="text-left"
     >
       {/* ── La séance ──────────────────────────────────────────────────── */}
       <p className="mb-[8px] text-[11px] text-encre-4">

@@ -71,7 +71,7 @@ test("la vraie retouche peint un aperçu, demande comment quitter et conserve so
   vi.spyOn(toile, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 320, height: 320, right: 320, bottom: 320, x: 0, y: 0, toJSON() {} })
   fireEvent.pointerDown(toile, { button: 0, clientX: 125, clientY: 65, pointerId: 1 })
   fireEvent.pointerUp(toile, { pointerId: 1 })
-  await waitFor(() => expect((screen.getByRole("button", { name: "Enregistrer les retouches" }) as HTMLButtonElement).disabled).toBe(false))
+  await waitFor(() => expect((screen.getByRole("button", { name: "Enregistrer ›" }) as HTMLButtonElement).disabled).toBe(false))
   expect(sauver).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole("button", { name: "‹ Ses images" }))
   expect(screen.getByRole("dialog", { name: "Quitter les retouches" })).toBeTruthy()

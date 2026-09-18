@@ -476,10 +476,13 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
     expect(
       within(colonne()).getByText(/la case avale la marge/i),
     ).toBeTruthy()
-    // Et le geste qui la remplace est un vrai bouton, pas une phrase.
+    // Et le geste qui la remplace est un vrai bouton, pas une phrase — hors
+    // de la barre des tables, qui vit aussi dans le panneau.
     expect(
-      within(colonne()).getByRole("button", { name: /Pixelisation/ }),
-    ).toBeTruthy()
+      within(colonne())
+        .getAllByRole("button", { name: /Pixelisation/ })
+        .filter((bouton) => !barre().contains(bouton)),
+    ).toHaveLength(1)
   })
 
   test("sans case, la marge se règle normalement et ne porte aucune raison", async () => {
@@ -1339,10 +1342,13 @@ describe("les deux fabriques s'ouvrent dans le cadre, sans repasser par l'ancien
 
   test("les deux fabriques restent sélectionnées dans la barre pendant qu'elles sont ouvertes", async () => {
     monter()
-    const decouper = within(barre()).getByRole("button", { name: "Découper" })
-    fireEvent.click(decouper)
+    fireEvent.click(within(barre()).getByRole("button", { name: "Découper" }))
     await screen.findByText("la fabrique de découpe")
-    expect(decouper.getAttribute("aria-pressed")).toBe("true")
+    // La barre quitte le panneau (qui disparaît avec la fabrique) pour
+    // l'en-tête : on la relit là où elle est maintenant.
+    expect(
+      within(barre()).getByRole("button", { name: "Découper" }).getAttribute("aria-pressed"),
+    ).toBe("true")
   })
 })
 
@@ -1825,8 +1831,8 @@ describe("le presse-papiers et les recettes nommées (B24, U5 déménagé de Tab
     )
 
     // On change d'image — la sœur d'à côté — et le presse-papiers survit,
-    // parce qu'il vit hors de React (`recette.ts`).
-    fireEvent.click(screen.getByRole("button", { name: "Recettes ›" }))
+    // parce qu'il vit hors de React (`recette.ts`). L'onglet « Recettes »
+    // reste ouvert au passage : `ouvrirLePanneau` le reclique sans dommage.
     reouvrir({ asset: soeurs[1], soeurs })
 
     panneau = ouvrirLePanneau()
@@ -1851,7 +1857,6 @@ describe("le presse-papiers et les recettes nommées (B24, U5 déménagé de Tab
     })
     let panneau = ouvrirLePanneau()
     fireEvent.click(panneau.getByRole("button", { name: "Copier les réglages" }))
-    fireEvent.click(screen.getByRole("button", { name: "Recettes ›" }))
 
     panneau = ouvrirLePanneau()
     fireEvent.click(panneau.getByRole("button", { name: "Coller" }))

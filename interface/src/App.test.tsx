@@ -11426,7 +11426,9 @@ describe("le contour et la main", () => {
     await waitFor(() => expect(cadre.getByLabelText(/Masquer calque 1/)).toBeTruthy())
 
     // **La pastille se remplit quand la place change l'image, pas quand elle
-    // figure dans la recette** : trois calques vides ne changent rien.
+    // figure dans la recette** : trois calques vides ne changent rien. La barre
+    // des tables vit dans l'onglet « Retouche » du panneau : on y revient.
+    fireEvent.click(cadre.getByRole("button", { name: "Retouche" }))
     expect(puce(cadre, "la main").getAttribute("data-etat")).toBe("vide")
   })
 
@@ -16438,7 +16440,9 @@ describe("les réglages voyagent d'une image à l'autre", () => {
     // Et ce qui a voyagé est arrivé dans la barre : la table du pixel s'allume.
     // **Son résumé se lit sous son nom, et non plus sur la puce** (`B25`) : la
     // retouche écrit la valeur de la table ouverte, une fois, à l'endroit où on
-    // la règle.
+    // la règle. La barre vit dans l'onglet « Retouche » du panneau, à côté de
+    // l'onglet « Recettes » : on y passe pour la lire.
+    fireEvent.click(cadre.getByRole("button", { name: "Retouche" }))
     await waitFor(() =>
       expect(
         cadre.getByRole("button", { name: /^Pixelisation/ }).getAttribute("data-etat"),
