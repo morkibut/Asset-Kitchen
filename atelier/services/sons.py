@@ -11,6 +11,8 @@ import wave
 import zipfile
 from pathlib import Path
 
+import numpy as np
+
 from atelier.audio.traitement import VERSION, decoder, encoder, mesurer, onde, traiter
 from atelier.depot.verrou import verrou
 from atelier.domaine.son import RecetteSon, SonRefuse
@@ -189,6 +191,21 @@ class ServiceSons:
 
     def forme_onde(self, projet, identifiant, revision=None, *, brut=False):
         return self._lire(self._assurer_cache(projet, identifiant, revision, brut).with_suffix(".json"))
+
+    def raccord(self, projet, identifiant, revision=None):
+        # Les deux secondes autour du point de boucle (fin -> début), pour
+        # l'écouter en boucle côté client : ce que Godot fait entendre juste
+        # avant et juste après le saut, dans l'ordre où il le joue.
+        son = self.lire(projet, identifiant, revision)
+        boucle = son["mesures"]["boucle"] if son["mesures"] else None
+        if not boucle or not boucle["active"]:
+            raise SonRefuse("Ce son n’a pas de boucle active à écouter.")
+        signal, taux = decoder(self.source(projet, identifiant))
+        rendu, taux_sortie, _ = traiter(signal, taux, RecetteSon.depuis_json(son["recette"]))
+        debut, fin = boucle["debut"], boucle["fin"]
+        n = min(fin - debut, round(1 * taux_sortie))
+        extrait = np.concatenate([rendu[fin - n:fin], rendu[debut:debut + n]])
+        return encoder(extrait, taux_sortie)
 
     def paquet(self, projet, identifiant, revision=None):
         son = self.lire(projet, identifiant, revision)

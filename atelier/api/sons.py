@@ -77,6 +77,12 @@ def forme_onde(requete: Request, projet: str, identifiant: str, revision: int | 
     return requete.app.state.atelier.sons.forme_onde(projet, identifiant, revision, brut=brut)
 
 
+@routeur.get("/{identifiant}/loop-splice.wav")
+def raccord(requete: Request, projet: str, identifiant: str, revision: int | None = None):
+    octets = requete.app.state.atelier.sons.raccord(projet, identifiant, revision)
+    return Response(octets, media_type="audio/wav", headers={"Cache-Control": "no-store"})
+
+
 @routeur.get("/{identifiant}/export.zip")
 def archive(requete: Request, projet: str, identifiant: str, revision: int | None = None):
     return Response(requete.app.state.atelier.sons.archive(projet, identifiant, revision), media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="son-{identifiant}.zip"'})

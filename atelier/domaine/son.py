@@ -27,6 +27,8 @@ class RecetteSon:
     boucle: bool = False
     boucle_debut: float = 0
     boucle_fin: float | None = None
+    boucle_zero: bool = False
+    boucle_fondu_ms: float = 0
 
     def en_json(self):
         return asdict(self)
@@ -40,9 +42,10 @@ class RecetteSon:
             raise SonRefuse("Cette recette comporte un réglage audio inconnu.")
         limites = {"debut": (0, 600), "fin": (0, 600), "seuil_silence_db": (-100, 0),
             "marge_silence_ms": (0, 10000), "fondu_entree_ms": (0, 600000), "fondu_sortie_ms": (0, 600000),
-            "cible_db": (-60, 0), "gain_db": (-60, 24), "boucle_debut": (0, 600), "boucle_fin": (0, 600)}
+            "cible_db": (-60, 0), "gain_db": (-60, 24), "boucle_debut": (0, 600), "boucle_fin": (0, 600),
+            "boucle_fondu_ms": (0, 2000)}
         for nom, valeur in brut.items():
-            if nom in ("rogner_silence", "normaliser", "boucle"):
+            if nom in ("rogner_silence", "normaliser", "boucle", "boucle_zero"):
                 if not isinstance(valeur, bool):
                     raise SonRefuse(f"Le réglage {nom} doit être activé ou désactivé.")
             elif nom == "taux":

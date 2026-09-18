@@ -15,7 +15,8 @@ def installer_sons(serveur, atelier, refus):
         base = f"/api/projects/{quote(project, safe='')}/sounds/{son['identifiant']}"
         return {**son, "apercu": base + "/preview.wav?revision=" + str(son["revision"]),
             "forme_onde": base + "/waveform?revision=" + str(son["revision"]),
-            "archive": base + "/export.zip?revision=" + str(son["revision"]), "source_url": base + "/source"}
+            "archive": base + "/export.zip?revision=" + str(son["revision"]), "source_url": base + "/source",
+            "raccord": base + "/loop-splice.wav?revision=" + str(son["revision"]) if son["mesures"] and son["mesures"]["boucle"]["active"] else None}
 
     @serveur.tool(name="list_sounds", meta=meta("Retrouver les sons"), description="List sounds in an explicit game project, including generated/imported sources, current revisions, judgments and quality flags. Invalid or silent sources remain listed and are not ready for delivery. No generation.")
     @refus

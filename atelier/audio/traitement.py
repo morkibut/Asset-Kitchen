@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import io
 import math
+import re
 import subprocess
 import wave
 from pathlib import Path
@@ -16,6 +17,13 @@ import numpy as np
 from atelier.domaine.son import RecetteSon, SonRefuse
 
 VERSION = 1
+
+_RE_INTEGRE = re.compile(r"Integrated loudness:\s*\n\s*I:\s*(-?\d+\.?\d*|-inf|nan)\s*LUFS")
+_RE_CRETE_VRAIE = re.compile(r"True peak:\s*\n\s*Peak:\s*(-?\d+\.?\d*|-inf|nan)\s*dBFS")
+_DUREE_MINIMALE_LUFS = 0.4  # ebur128 exige un premier bloc de 400 ms ; en
+# dessous il répond -70 LUFS, une valeur de repli du filtre et non une
+# mesure — vérifié à la main (voir PLAN-son.md, SN3/SN5) avant d'écrire ce
+# seuil : 0,39 s rend -70 LUFS, 0,40 s rend une vraie mesure.
 
 
 def _ffmpeg(arguments, entree=None):
@@ -90,6 +98,101 @@ def decoder(source: Path):
     return signal, taux
 
 
+def _lufs_et_crete_vraie(signal, taux):
+    # Niveau perçu intégré (LUFS, EBU R128) et crête vraie (dBTP), par le
+    # filtre ebur128 de ffmpeg, en sous-processus comme le décodage. On lui
+    # passe le signal brut (float64, non ré-échantillonné) et on relit le
+    # résumé qu'il écrit sur sa sortie d'erreur — cette mesure-ci a besoin
+    # du texte que `-loglevel error` supprimerait, donc elle n'utilise pas
+    # `_ffmpeg()`. Un extrait plus court que 0,4 s n'a pas de LUFS défini :
+    # ni erreur, ni « non prêt » ; l'information manque, c'est tout.
+    if len(signal) == 0 or len(signal) / taux < _DUREE_MINIMALE_LUFS:
+        return None, None
+    try:
+        from imageio_ffmpeg import get_ffmpeg_exe
+        execution = subprocess.run([get_ffmpeg_exe(), "-nostdin", "-hide_banner",
+            "-f", "f64le", "-ar", str(taux), "-ac", str(signal.shape[1]), "-i", "pipe:0",
+            "-af", "ebur128=peak=true", "-f", "null", "-"],
+            input=signal.astype("<f8").tobytes(), capture_output=True, timeout=90)
+    except (ImportError, OSError, subprocess.TimeoutExpired):
+        return None, None
+    if execution.returncode:
+        return None, None
+    sortie = execution.stderr.decode("utf-8", errors="replace")
+    resume = sortie[sortie.rfind("Summary:"):]
+
+    def _nombre(motif):
+        trouve = motif.search(resume)
+        if not trouve or trouve.group(1) in ("-inf", "nan"):
+            return None
+        return float(trouve.group(1))
+
+    return _nombre(_RE_INTEGRE), _nombre(_RE_CRETE_VRAIE)
+
+
+def _passage_zero_proche(rendu, index, rayon):
+    # Cherche, dans une fenêtre de `rayon` échantillons autour de `index`,
+    # le changement de signe le plus proche sur le mélange des canaux (une
+    # approximation : un passage par zéro exact et simultané sur tous les
+    # canaux n'existe pas toujours). Aucun changement trouvé : l'index de
+    # départ est gardé tel quel plutôt que d'inventer un repère.
+    mono = rendu.mean(axis=1)
+    bas, haut = max(0, index - rayon), min(len(mono) - 1, index + rayon)
+    fenetre = mono[bas:haut + 1]
+    if len(fenetre) < 2:
+        return index
+    signes = np.sign(fenetre)
+    signes[signes == 0] = 1
+    changements = np.flatnonzero(np.diff(signes) != 0)
+    if not len(changements):
+        return index
+    candidats = bas + changements
+    return int(candidats[np.argmin(np.abs(candidats - index))])
+
+
+def _fondre_boucle(rendu, debut, fin, taux, fondu_ms):
+    # Fondu enchaîné de la boucle : on mélange la fin dans le début, pas la
+    # queue au-delà de la fin dans la tête, parce que rien ne garantit
+    # qu'il existe du son après `fin` (une recette peut caler `boucle_fin`
+    # sur la toute fin du rendu). Godot rejoue en boucle de `loop_begin` à
+    # `loop_end` : au moment du saut, l'échantillon juste avant (`fin - 1`)
+    # est immédiatement suivi de l'échantillon `debut`. On prend donc les
+    # `n` derniers échantillons avant `fin`, **retournés dans le temps**
+    # (le tout dernier, celui qui touche le saut, en premier), et on les
+    # fait décroître (fondu croisé à puissance constante) dans les `n`
+    # premiers échantillons après `debut`, qui montent en proportion
+    # inverse : le tout premier échantillon après le saut colle exactement
+    # sur celui qui le précédait (continuité parfaite au point de saut), et
+    # le mélange revient au contenu d'origine du début de boucle au bout de
+    # `fondu_ms`. Retourner la queue dans le temps n'a pas d'effet audible
+    # pour un bruit stationnaire (pluie, vent) : seule l'énergie locale
+    # compte pour l'oreille, pas le sens de lecture sur une fenêtre de
+    # quelques dizaines de millisecondes.
+    n = min(round(fondu_ms * taux / 1000), (fin - debut) // 2)
+    if n < 2:
+        return
+    t = np.linspace(0, np.pi / 2, n)[:, None]
+    fondu_sortie, fondu_entree = np.cos(t), np.sin(t)
+    queue = rendu[fin - n:fin][::-1].copy()
+    tete = rendu[debut:debut + n].copy()
+    rendu[debut:debut + n] = queue * fondu_sortie + tete * fondu_entree
+
+
+def _mesurer_raccord(rendu, taux, debut, fin):
+    saut = float(np.max(np.abs(rendu[fin - 1] - rendu[debut])))
+    n = min(fin - debut, max(1, round(0.02 * taux)))  # ~20 ms de part et d'autre
+    queue, tete = rendu[fin - n:fin], rendu[debut:debut + n]
+    rms_queue = float(np.sqrt(np.mean(queue ** 2))) if len(queue) else 0.0
+    rms_tete = float(np.sqrt(np.mean(tete ** 2))) if len(tete) else 0.0
+    ecart_rms_db = abs(20 * math.log10(max(rms_queue, 1e-9)) - 20 * math.log10(max(rms_tete, 1e-9)))
+    # Seuils empiriques (à l'oreille, pas une norme) : un saut d'échantillon
+    # au-delà de 5 % de la pleine échelle s'entend comme un clic ; un écart
+    # d'énergie de plus de 3 dB entre les deux bords s'entend comme un choc
+    # de niveau. L'un ou l'autre suffit à faire claquer le raccord.
+    net = saut < 0.05 and ecart_rms_db < 3
+    return {"saut": saut, "ecart_rms_db": ecart_rms_db, "verdict": "raccord net" if net else "le raccord claque"}
+
+
 def reechantillonner(signal, depart, arrivee):
     if depart == arrivee:
         return signal.copy()
@@ -133,25 +236,36 @@ def traiter(signal, taux, recette: RecetteSon):
     if recette.normaliser and pic > 1e-8:
         rendu *= 10 ** (recette.cible_db / 20) / pic
     rendu *= 10 ** (recette.gain_db / 20)
+    boucle_debut = round(recette.boucle_debut * taux_sortie)
+    boucle_fin = round(recette.boucle_fin * taux_sortie) if recette.boucle_fin is not None else len(rendu)
+    if recette.boucle and recette.boucle_zero:
+        rayon = max(1, round(0.05 * taux_sortie))  # 50 ms, empirique
+        boucle_debut = _passage_zero_proche(rendu, boucle_debut, rayon)
+        boucle_fin = _passage_zero_proche(rendu, boucle_fin, rayon)
+    if recette.boucle and not 0 <= boucle_debut < boucle_fin <= len(rendu):
+        raise SonRefuse("La boucle doit rester dans la durée du son après la coupe et les fondus.")
+    if recette.boucle and recette.boucle_fondu_ms:
+        _fondre_boucle(rendu, boucle_debut, boucle_fin, taux_sortie, recette.boucle_fondu_ms)
     mesure = mesurer(rendu, taux_sortie)
     mesure["silencieux"] = mesure["silencieux"] or not source_audible
     mesure["coupe_source"] = coupe_silence
-    boucle_debut = round(recette.boucle_debut * taux_sortie)
-    boucle_fin = round(recette.boucle_fin * taux_sortie) if recette.boucle_fin is not None else len(rendu)
-    if recette.boucle and not 0 <= boucle_debut < boucle_fin <= len(rendu):
-        raise SonRefuse("La boucle doit rester dans la durée du son après la coupe et les fondus.")
+    raccord = _mesurer_raccord(rendu, taux_sortie, boucle_debut, boucle_fin) if recette.boucle \
+        else {"saut": None, "ecart_rms_db": None, "verdict": None}
     mesure["boucle"] = {"active": recette.boucle, "debut": boucle_debut, "fin": boucle_fin,
-        "ecart_raccord": float(np.max(np.abs(rendu[boucle_fin-1] - rendu[boucle_debut]))) if recette.boucle else None}
+        "recale_zero": recette.boucle_zero, "fondu_ms": recette.boucle_fondu_ms,
+        "ecart_raccord": raccord["saut"], "ecart_rms_db": raccord["ecart_rms_db"], "verdict": raccord["verdict"]}
     return rendu, taux_sortie, mesure
 
 
 def mesurer(signal, taux):
     pic = float(np.max(np.abs(signal))) if len(signal) else 0
     rms = float(np.sqrt(np.mean(signal ** 2))) if len(signal) else 0
+    lufs, crete_vraie_db = _lufs_et_crete_vraie(signal, taux) if len(signal) else (None, None)
     return {"duree": len(signal) / taux, "taux": taux, "canaux": signal.shape[1], "echantillons": len(signal),
         "crete": pic, "crete_db": 20 * math.log10(pic) if pic > 0 else None,
         "rms_db": 20 * math.log10(rms) if rms > 0 else None, "silencieux": pic <= 1e-8,
-        "ecretes": int(np.count_nonzero(np.abs(signal) > 1))}
+        "ecretes": int(np.count_nonzero(np.abs(signal) > 1)),
+        "lufs": lufs, "crete_vraie_db": crete_vraie_db}
 
 
 def encoder(signal, taux):
