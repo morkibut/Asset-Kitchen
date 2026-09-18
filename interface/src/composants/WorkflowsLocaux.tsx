@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react"
 import { api, Refus } from "../api"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
-import { workflows, type DemandeImageLocale, type ProfilWorkflow, type TravailImageLocale, type DiagnosticWorkflow } from "../api-workflows"
+import {
+  workflows, stylesLocaux, NOM_MOTEUR_LOCAL, NOM_REFERENCE, ORDRE_MOTEURS_LOCAUX,
+  type DemandeImageLocale, type ProfilWorkflow, type TravailImageLocale, type DiagnosticWorkflow, type StyleLocal,
+} from "../api-workflows"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { Libelle } from "./pieces"
@@ -38,6 +41,7 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio }: { onImage?: (mode
   }
   return <section aria-label="Workflows locaux" className="space-y-[22px] text-encre">
     <header><h2 className="font-serif text-[38px]">Les workflows locaux</h2><p className="mt-[8px] text-[13px] text-encre-3">Nommez une méthode une fois, puis utilisez ses réglages dans vos fabrications. ComfyUI reste installé et lancé séparément.</p></header>
+    <StylesDeScClone onChoisir={onImage} onInstalle={relire} />
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}{confirmation && <p role="status" className="text-[13px] text-ok">{confirmation}</p>}
     <div className="flex flex-wrap gap-[8px]"><button className={BOUTON} onClick={() => setEditeur(v => !v)}>Ajouter un workflow</button><button className={BOUTON} onClick={() => void relire()} disabled={chargement}>Actualiser les profils</button></div>
     {editeur && <div className={`${SURFACE} space-y-[14px]`}><h3 className="font-serif text-[25px]">Importer et nommer une méthode</h3><p className="text-[13px] text-encre-3">Un profil existant contient déjà ses réglages. Pour un graphe ComfyUI seul, exportez son format API et reliez ses entrées ci-dessous.</p>
@@ -53,6 +57,69 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio }: { onImage?: (mode
         {d ? <div className="text-[13px]"><p className={d.disponible ? "text-ok" : "text-echec"}>{d.disponible ? "Prérequis présents" : "Prérequis à compléter"}</p>{d.problemes.map(r => <p key={r} className="mt-[4px] text-encre-3">{r}</p>)}<p className="mt-[4px] text-[12px] text-encre-3">{d.limite}</p></div> : <p className="text-[13px] text-encre-3">Installation à vérifier.</p>}
         <div className="flex flex-wrap gap-[8px]"><button className={BOUTON} disabled={occuppe} onClick={() => void verifier(p)}>Vérifier les prérequis</button>{(p.nature === "image" ? onImage : p.nature === "audio" ? onAudio : onVideo) && <button className={BOUTON} disabled={!d?.disponible} onClick={() => p.nature === "image" ? onImage?.(p.modele) : p.nature === "audio" ? onAudio?.(p.modele) : onVideo?.(p.modele)}>Utiliser ce workflow</button>}<button className={BOUTON} onClick={() => { setContenu(JSON.stringify(p, null, 2)); setEditeur(true) }}>Préparer une nouvelle version</button></div>
       </article>
+    })}</div>}
+  </section>
+}
+
+/**
+ * « Les styles de sc-clone » (ML5) : les vingt-deux styles, groupés sous
+ * leurs quatre moteurs et repliés par défaut (décision 9 du plan). Vérifier
+ * relit ComfyUI et remet les états à jour ; installer se fait style par style
+ * ou tous les prêts d’un coup — aucun poids n’est téléchargé par l’atelier,
+ * seulement retrouvé par motif contre ce que ComfyUI expose déjà (ML2).
+ */
+function StylesDeScClone({ onChoisir, onInstalle }: { onChoisir?: (modele: string) => void; onInstalle?: () => void }) {
+  const [styles, setStyles] = useState<StyleLocal[] | null>(null)
+  const [chargement, setChargement] = useState(false)
+  const [installation, setInstallation] = useState<string | null>(null)
+  const [erreur, setErreur] = useState("")
+
+  async function relire() {
+    setChargement(true); setErreur("")
+    try { setStyles((await stylesLocaux.lister()).styles) }
+    catch (e) { setErreur(message(e)) } finally { setChargement(false) }
+  }
+  useEffect(() => { void relire() }, [])
+
+  async function installerUn(identifiant: string) {
+    setInstallation(identifiant); setErreur("")
+    try { const p = await stylesLocaux.installer(identifiant); await api.rafraichirCatalogue(); await relire(); onInstalle?.(); onChoisir?.(p.modele) }
+    catch (e) { setErreur(message(e)) } finally { setInstallation(null) }
+  }
+  async function installerLesPrets() {
+    setInstallation("*"); setErreur("")
+    try { await stylesLocaux.installerPrets(); await api.rafraichirCatalogue(); await relire(); onInstalle?.() }
+    catch (e) { setErreur(message(e)) } finally { setInstallation(null) }
+  }
+
+  const parMoteur = new Map<string, StyleLocal[]>()
+  for (const s of styles ?? []) { const l = parMoteur.get(s.famille) ?? []; l.push(s); parMoteur.set(s.famille, l) }
+  const pretsNonInstalles = (styles ?? []).filter(s => s.pret && !s.modele).length
+
+  return <section className={`${SURFACE} space-y-[14px]`}>
+    <div className="flex flex-wrap items-start justify-between gap-[8px]">
+      <div><h3 className="font-serif text-[25px]">Les styles de sc-clone</h3><p className="mt-[4px] text-[12px] text-encre-3">Vingt-deux styles d’image, tout prêts, tirés du dépôt sc-clone. Rien n’est téléchargé depuis l’atelier — un style grisé manque un fichier que ComfyUI ne voit pas encore.</p></div>
+      <div className="flex flex-wrap gap-[8px]">
+        <button className={BOUTON} onClick={() => void relire()} disabled={chargement}>{chargement ? "Vérification…" : "Vérifier"}</button>
+        <button className={BOUTON} onClick={() => void installerLesPrets()} disabled={chargement || installation !== null || pretsNonInstalles === 0}>{installation === "*" ? "Installation…" : `Installer les styles prêts${pretsNonInstalles ? ` (${pretsNonInstalles})` : ""}`}</button>
+      </div>
+    </div>
+    {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
+    {!styles && chargement && <p role="status" className="text-[13px] text-encre-3">Lecture des styles…</p>}
+    {styles && <div className="space-y-[8px]">{ORDRE_MOTEURS_LOCAUX.filter(m => parMoteur.has(m)).map(moteur => {
+      const lignes = parMoteur.get(moteur) || []
+      return <details key={moteur} className="rounded-7 border border-trait">
+        <summary className="cursor-pointer px-[14px] py-[8px] text-[13px]">{NOM_MOTEUR_LOCAL[moteur] || moteur} <span className="text-[12px] text-encre-3">· {lignes.length} style{lignes.length > 1 ? "s" : ""}</span></summary>
+        <ul className="space-y-[8px] border-t border-trait p-[14px] pt-[8px]">{lignes.map(style => <li key={style.identifiant} className={`flex flex-wrap items-center justify-between gap-[8px] ${style.pret ? "" : "opacity-50"}`}>
+          <div>
+            <p className="text-[13px]">{style.nom}</p>
+            <p className="text-[12px] text-encre-3">{style.pret ? (style.modele ? "prêt · installé" : "prêt") : `il manque ${style.manque.join(", ")}`} · {style.vitesse}{style.reference && ` · ${NOM_REFERENCE[style.reference]}`}</p>
+          </div>
+          {style.pret && !style.modele && <button className={BOUTON} disabled={installation !== null} onClick={() => void installerUn(style.identifiant)}>{installation === style.identifiant ? "Installation…" : "Installer"}</button>}
+          {!style.pret && <p className="text-[12px] text-encre-3">dans <code>C:\STOCKAGE\PROJET\_DEV\sc-clone</code> : <code>node scripts/install-models.mjs</code></p>}
+          {style.modele && onChoisir && <button className={BOUTON} onClick={() => onChoisir(style.modele!)}>Utiliser ce style</button>}
+        </li>)}</ul>
+      </details>
     })}</div>}
   </section>
 }

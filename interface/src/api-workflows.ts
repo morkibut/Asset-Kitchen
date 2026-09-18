@@ -38,3 +38,94 @@ export const workflows = {
   demarrerImage: (p: string, id: string) => appeler<TravailImageLocale>(`${travail(p, id)}/start`, { method: "POST" }),
   reprendreImage: (p: string, id: string) => appeler<TravailImageLocale>(`${travail(p, id)}/resume`, { method: "POST" }),
 }
+
+// ── ML5 · Les styles de sc-clone, groupés par moteur ────────────────────────
+//
+// « Les 22 styles sont tous proposés, rangés sous leurs quatre moteurs et
+// repliés par défaut » (`docs/PLAN-moteurs-locaux.md`, décision 9). Le serveur
+// (`GET /workflow-profiles/styles`, `atelier/services/styles_locaux.py`) ne
+// rend que la **clé** du moteur (`zimage`, `klein`, `flux1dev`, `sdxl`) : le
+// nom à afficher n'a rien à faire côté domaine, et cette liste est fermée —
+// elle ne bougera pas au gré d'un style de plus dans le même moteur.
+
+export const NOM_MOTEUR_LOCAL: Record<string, string> = {
+  zimage: "Z-Image Turbo",
+  klein: "FLUX.2 Klein",
+  flux1dev: "FLUX.1-dev",
+  sdxl: "SDXL",
+}
+
+/** L'ordre d'affichage des quatre moteurs — celui du plan et de `docs/PLAN-moteurs-locaux.md`. */
+export const ORDRE_MOTEURS_LOCAUX = ["zimage", "klein", "flux1dev", "sdxl"] as const
+
+/** Ce qu'un style local fait d'une image jointe (ML3) : il *garde le sujet*
+ *  (Klein, plusieurs images possibles) ou il *part de l'image* (les trois
+ *  autres moteurs, une seule image, force réglable). */
+export type GenreReference = "sujet" | "depart"
+
+export const NOM_REFERENCE: Record<GenreReference, string> = {
+  sujet: "garde le sujet",
+  depart: "part de l’image",
+}
+
+/** Un des vingt-deux styles de sc-clone, tel que le catalogue le rend
+ *  (`GET /workflow-profiles/styles`). `modele` est l'identifiant qu'il porte
+ *  une fois installé (`ComfyUI:<id>@<version>`), `null` tant qu'il ne l'est
+ *  pas — même prêt. */
+export type StyleLocal = {
+  identifiant: string
+  nom: string
+  famille: string
+  genre: string
+  vitesse: string
+  reference: GenreReference | null
+  pret: boolean
+  manque: string[]
+  modele: string | null
+}
+
+export const stylesLocaux = {
+  lister: () => appeler<{ styles: StyleLocal[] }>("/workflow-profiles/styles"),
+  installer: (identifiant: string) =>
+    appeler<ProfilWorkflow>(`/workflow-profiles/styles/${encodeURIComponent(identifiant)}/install`, { method: "POST" }),
+  installerPrets: () => appeler<{ installes: ProfilWorkflow[] }>("/workflow-profiles/styles/install", { method: "POST" }),
+}
+
+// ── ML3/ML4 · Ce que « Relire avant l’envoi » ajoute pour un style local ────
+//
+// `api.ts` ne porte pas encore ces champs : ils sont nouveaux (ML3, ML4) et le
+// fichier est occupé par un autre travail en cours au moment d'écrire ML5. Les
+// types vivent donc ici, et les écrans qui en ont besoin lisent l'objet reçu
+// du serveur au travers d'eux plutôt que d'attendre. Rien n'est recalculé :
+// ce sont exactement les clés que `atelier/services/envoi.py` et
+// `atelier/domaine/texte_local.py` écrivent déjà.
+
+export type SegmentTexteLocal = { clef: string; nom: string; texte: string; origine: string }
+export type RetireTexteLocal = { clef: string; nom: string; texte: string; raison: string }
+
+/** Ce qu'un style local laisse en route (ML4) — `null` pour tout modèle qui
+ *  n'est pas un style local, distant compris. */
+export type TexteLocal = {
+  famille: string
+  texte: string
+  segments: SegmentTexteLocal[]
+  retires: RetireTexteLocal[]
+  jetons: number
+  /** La limite de jetons de SDXL (75), `null` pour les moteurs qui n'en ont pas. */
+  limite: number | null
+  tranche: number | null
+  comptage: string
+  negatif_lu: boolean
+} | null
+
+/** Ce que `envoi.py` (`ServiceEnvoi.envoi`) ajoute à `Envoi` (`api.ts`) pour
+ *  ML3/ML4/ML5 — lu par une extension de type, voir plus haut. */
+export type EnvoiAvecLocal = {
+  local: TexteLocal
+  modele: { reference_nom: string | null }
+  fond: { negatif_lu: boolean }
+}
+
+/** Ce que `Modele` (`api.ts`) porte pour un style local (ML3) : le genre de
+ *  référence qu'il prend. Absent — donc `undefined` — pour un modèle distant. */
+export type ModeleAvecReference = { reference?: GenreReference | null }

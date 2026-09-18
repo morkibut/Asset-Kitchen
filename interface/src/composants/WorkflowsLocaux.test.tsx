@@ -1,12 +1,23 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { beforeEach, expect, test, vi } from "vitest"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { FabricationImageLocale, ProfilsWorkflow } from "./WorkflowsLocaux"
-import { workflows, type ProfilWorkflow, type TravailImageLocale } from "../api-workflows"
+import { workflows, stylesLocaux, type ProfilWorkflow, type StyleLocal, type TravailImageLocale } from "../api-workflows"
 import { api } from "../api"
 
-vi.mock("../api-workflows", () => ({ workflows: {
-  lister: vi.fn(), importer: vi.fn(), diagnostiquer: vi.fn(), preparerImage: vi.fn(), lireImage: vi.fn(), demarrerImage: vi.fn(), reprendreImage: vi.fn(),
-} }))
+vi.mock("../api-workflows", async () => {
+  const reel = await vi.importActual<typeof import("../api-workflows")>("../api-workflows")
+  return {
+    ...reel,
+    workflows: {
+      lister: vi.fn(), importer: vi.fn(), diagnostiquer: vi.fn(), preparerImage: vi.fn(), lireImage: vi.fn(), demarrerImage: vi.fn(), reprendreImage: vi.fn(),
+    },
+    stylesLocaux: { lister: vi.fn(), installer: vi.fn(), installerPrets: vi.fn() },
+  }
+})
+
+const stylePret: StyleLocal = { identifiant: "zimage-pixel", nom: "Pixel art net et rapide", famille: "zimage", genre: "sprite", vitesse: "environ 30 secondes par image", reference: "depart", pret: true, manque: [], modele: null }
+const styleInstalle: StyleLocal = { identifiant: "klein-portrait", nom: "Portrait Klein", famille: "klein", genre: "sprite", vitesse: "1 à 3 minutes par image", reference: "sujet", pret: true, manque: [], modele: "ComfyUI:klein-portrait@v1" }
+const styleManquant: StyleLocal = { identifiant: "sdxl-toon", nom: "Toon SDXL", famille: "sdxl", genre: "sprite", vitesse: "environ 40 secondes par image", reference: "depart", pret: false, manque: ["le checkpoint SDXL de base"], modele: null }
 const profil: ProfilWorkflow = { identifiant: "reference", nom: "Référence dessinée", nature: "image", modele: "ComfyUI:reference@version",
   version: "version", cree_le: 1000, references_min: 0, references_max: 0,
   graphe: { "1": { class_type: "Texte", inputs: { text: "" } }, "2": { class_type: "SaveImage", inputs: {} } },
@@ -23,6 +34,57 @@ beforeEach(() => {
   vi.mocked(workflows.diagnostiquer).mockResolvedValue({ disponible: true, problemes: [], noeuds: [], observe_le: 1000, adresse: "http://local" })
   vi.mocked(workflows.preparerImage).mockResolvedValue(travail)
   vi.mocked(workflows.demarrerImage).mockResolvedValue({ ...travail, etat: "termine", reference_asset: "asset-produit", assets: ["asset-produit"] })
+  vi.mocked(stylesLocaux.lister).mockResolvedValue({ styles: [stylePret, styleInstalle, styleManquant] })
+  vi.spyOn(api, "rafraichirCatalogue").mockResolvedValue({} as never)
+})
+afterEach(cleanup)
+
+test("les styles de sc-clone sont groupés par moteur et repliés par défaut", async () => {
+  render(<ProfilsWorkflow />)
+  await screen.findByRole("heading", { name: "Les styles de sc-clone" })
+  // Les quatre groupes sont des `<details>` sans l'attribut `open` — repliés
+  // d'origine, tel que le navigateur les montre, même si jsdom ne masque pas
+  // leur contenu pour une requête de texte.
+  const resume = screen.getByText("Z-Image Turbo", { exact: false, selector: "summary" })
+  expect(resume.closest("details")).not.toHaveAttribute("open")
+  fireEvent.click(resume)
+  const nom = await screen.findByText("Pixel art net et rapide")
+  const ligne = nom.closest("li")!
+  expect(ligne).toHaveTextContent("environ 30 secondes par image")
+  expect(ligne).toHaveTextContent("part de l’image")
+})
+
+test("un style prêt s’installe d’un clic, un style manquant montre ce qu’il faut poser", async () => {
+  vi.mocked(stylesLocaux.installer).mockResolvedValue({ ...profil, modele: "ComfyUI:zimage-pixel@v1" })
+  render(<ProfilsWorkflow />)
+  await screen.findByRole("heading", { name: "Les styles de sc-clone" })
+  fireEvent.click(screen.getByText("Z-Image Turbo", { exact: false, selector: "summary" }))
+  fireEvent.click(await screen.findByRole("button", { name: "Installer" }))
+  await waitFor(() => expect(stylesLocaux.installer).toHaveBeenCalledWith("zimage-pixel"))
+  expect(api.rafraichirCatalogue).toHaveBeenCalled()
+  fireEvent.click(screen.getByText("SDXL", { exact: false, selector: "summary" }))
+  await screen.findByText(/il manque le checkpoint SDXL de base/)
+  expect(screen.getByText("node scripts/install-models.mjs")).toBeInTheDocument()
+})
+
+test("« Installer les styles prêts » relance le relevé de ComfyUI", async () => {
+  vi.mocked(stylesLocaux.installerPrets).mockResolvedValue({ installes: [profil] })
+  render(<ProfilsWorkflow />)
+  const bouton = await screen.findByRole("button", { name: /Installer les styles prêts/ })
+  fireEvent.click(bouton)
+  await waitFor(() => expect(stylesLocaux.installerPrets).toHaveBeenCalled())
+  expect(stylesLocaux.lister).toHaveBeenCalledTimes(2)
+})
+
+test("un style installé apparaît aussitôt dans la liste des méthodes", async () => {
+  const installe: ProfilWorkflow = { ...profil, identifiant: "zimage-pixel", nom: "Z-Image Turbo · Pixel art net et rapide", modele: "ComfyUI:zimage-pixel@v1" }
+  vi.mocked(workflows.lister).mockResolvedValueOnce({ profils: [] }).mockResolvedValue({ profils: [installe] })
+  vi.mocked(stylesLocaux.installerPrets).mockResolvedValue({ installes: [installe] })
+  render(<ProfilsWorkflow />)
+  await screen.findByText(/Aucun workflow importé/)
+  fireEvent.click(await screen.findByRole("button", { name: /Installer les styles prêts/ }))
+  await screen.findByRole("heading", { name: "Z-Image Turbo · Pixel art net et rapide" })
+  expect(screen.queryByText(/Aucun workflow importé/)).toBeNull()
 })
 
 test("relire conserve le texte composé et ne soumet qu’après le bouton de lancement", async () => {

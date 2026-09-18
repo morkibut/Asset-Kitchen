@@ -800,6 +800,17 @@ export const AIDE: Record<string, Explication> = {
       "Un modèle se nomme par deux choses ensemble : qui le propose, et son nom chez lui. C'est nécessaire depuis qu'il y en a plusieurs — deux fournisseurs peuvent offrir un modèle du même nom, et le nom seul ne dirait plus lequel a fait l'image. Tu le retrouves partout : sur la ligne du choix, sur la fiche d'une image, et dans la liste des dépenses.\n\nTous ne demandent pas la même chose. L'un veut une clé, un autre ne demande rien du tout — et c'est celui-là qui fait qu'une image peut arriver sur une machine où rien n'a été déposé. Ce qui manque à un fournisseur grise ses modèles à lui, et eux seuls ; les autres restent choisissables.\n\nLe catalogue est une photo, pas un flux : il est relu au démarrage et par le bouton Catalogue, et chaque ligne dit si sa fiche vient d'être relue chez le fournisseur ou si elle a été relevée à telle date. Hors ligne, le produit sert la dernière photo reçue — générer reste actif, et c'est le seul endroit du produit où l'on propose puis refuse, assumé, avec la conséquence écrite sous le bouton.\n\nLes réglages propres à un modèle ne sont écrits nulle part dans le code de l'interface : ils sont dessinés depuis ce que le catalogue déclare. Un modèle qui gagne un réglage demain l'affiche demain.",
   },
 
+  "reglages.styles-locaux": {
+    nom: "styles locaux",
+    ou: "sujet",
+    quoi: "Les vingt-deux styles de sc-clone, sous la liste des modèles, rangés sous leurs quatre moteurs (Z-Image, FLUX.2 Klein, FLUX.1-dev, SDXL) et repliés par défaut.",
+    change:
+      "Le choisir revient à choisir un modèle : le prix devient nul, le temps remplace le prix, et le genre de référence qu'il accepte — garder le même sujet, ou repeindre par-dessus une image — s'écrit sous son nom.",
+    origine: "ComfyUI, relu par le bouton « vérifier » · rien ne se télécharge depuis l'atelier",
+    long:
+      "Un style grisé manque un fichier : la ligne dit lequel, et un bouton « installer » suffit quand ComfyUI l'a déjà — sinon la commande de sc-clone qui le pose est écrite à côté, dans « Les workflows locaux ».\n\nLa carte graphique de cette machine tourne gratuitement : le bouton porte un temps mesuré par famille, jamais un prix. Le premier tirage d'une série charge le modèle en mémoire ; le temps ne se multiplie pas pour les suivants.",
+  },
+
   "reglages.proportions": {
     nom: "proportions",
     ou: "sujet",

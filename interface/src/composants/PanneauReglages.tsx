@@ -8,7 +8,7 @@
 // **dessinés depuis ce que le catalogue déclare**. Un modèle qui gagne un
 // réglage demain l'affiche demain, sans une ligne de code.
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   api,
   estArgent,
@@ -22,6 +22,14 @@ import {
   type Reserve,
   type Univers,
 } from "../api"
+import {
+  NOM_MOTEUR_LOCAL,
+  NOM_REFERENCE,
+  ORDRE_MOTEURS_LOCAUX,
+  stylesLocaux,
+  type ModeleAvecReference,
+  type StyleLocal,
+} from "../api-workflows"
 import { Bloc, Libelle, LigneReserve, Raison, Segments } from "./pieces"
 import { PANNEAU } from "./Infobulle"
 
@@ -211,6 +219,8 @@ export function PanneauReglages({
                 </li>
               )}
             </ul>
+
+            <StylesLocauxAccordion onChoisir={onChoisir} />
           </div>
         </Bloc>
 
@@ -315,6 +325,35 @@ export function PanneauReglages({
               </section>
             ))}
 
+        {/* ── La force d'un style « partir de cette image » (ML3, ML5) ─────
+            **Un réglage inerte disparaît** (règle 8nonies) : sans image
+            jointe, il n'y a rien pour le KSampler à doser depuis, et le
+            style *Klein* ne le connaît même pas — il garde le sujet, il ne
+            repeint pas par-dessus. La condition est donc triple : un style
+            local, qui prend une référence en partant de l'image, et une
+            référence effectivement jointe. */}
+        {choisi?.locale &&
+          (choisi as unknown as ModeleAvecReference).reference === "depart" &&
+          references > 0 &&
+          choisi.options.force && (
+            <section className="flex flex-col gap-1.5">
+              <Libelle>force</Libelle>
+              <input
+                type="range"
+                min={choisi.options.force.minimum ?? 0}
+                max={choisi.options.force.maximum ?? 1}
+                step={0.05}
+                value={Number(options.force ?? 0.55)}
+                onChange={(e) => onOptions({ ...options, force: e.target.value })}
+                className="h-[26px]"
+              />
+              <span className="mesure text-[9.5px] text-encre-4">
+                {Number(options.force ?? 0.55).toFixed(2)} · à quel point l’image de départ
+                se transforme — 0 la garde telle quelle, 1 n’en garde rien
+              </span>
+            </section>
+          )}
+
         {/* ── Qu'est-ce qui part avec ? ─────────────────────────────────── */}
         <section className="rounded-[2px] border border-trait bg-papier-cote p-2">
           <div className="mesure mb-1.5 text-[9.5px] tracking-[.11em] text-encre-4 uppercase">
@@ -399,6 +438,141 @@ export function PanneauReglages({
           />
         </section>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Les styles locaux (sc-clone), groupés sous leurs quatre moteurs et repliés
+ * par défaut (ML5, décision 9 du plan). Chargés à part de `modeles` : un
+ * style prêt mais pas encore installé n'est pas un modèle du catalogue, et
+ * c'est justement celui-là qu'on doit pouvoir montrer et installer d'ici.
+ *
+ * **Choisir le plus simple** (ML5) : installer se fait d'un clic, ici même,
+ * plutôt que de renvoyer vers *Les workflows locaux*. Le catalogue est
+ * rafraîchi ensuite, mais cet écran ne connaît pas la fonction qui répète
+ * l'appel `GET /models` du parent (`App.tsx`) : tant que ce fil n'est pas
+ * tiré jusqu'ici, le style installé se choisit tout de suite mais son nom
+ * complet n'apparaît dans la liste qu'au prochain rafraîchissement du
+ * catalogue — bouton *Catalogue*, ou le prochain démarrage.
+ */
+function StylesLocauxAccordion({ onChoisir }: { onChoisir: (identifiant: string) => void }) {
+  const [styles, setStyles] = useState<StyleLocal[] | null>(null)
+  const [chargement, setChargement] = useState(false)
+  const [erreur, setErreur] = useState<string | null>(null)
+  const [installation, setInstallation] = useState<string | null>(null)
+
+  const relire = async () => {
+    setChargement(true)
+    setErreur(null)
+    try {
+      setStyles((await stylesLocaux.lister()).styles)
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "ComfyUI ne répond pas")
+    } finally {
+      setChargement(false)
+    }
+  }
+
+  useEffect(() => {
+    void relire()
+    // Une seule lecture à l'ouverture du panneau : le bouton « vérifier »
+    // fait le reste, sans relire ComfyUI à chaque frappe dans le filtre.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const installer = async (identifiant: string) => {
+    setInstallation(identifiant)
+    setErreur(null)
+    try {
+      const profil = await stylesLocaux.installer(identifiant)
+      await api.rafraichirCatalogue()
+      await relire()
+      onChoisir(profil.modele)
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "l’installation a échoué")
+    } finally {
+      setInstallation(null)
+    }
+  }
+
+  const parMoteur = new Map<string, StyleLocal[]>()
+  for (const style of styles ?? []) {
+    const liste = parMoteur.get(style.famille) ?? []
+    liste.push(style)
+    parMoteur.set(style.famille, liste)
+  }
+
+  return (
+    <div className="mt-1.5 flex flex-col gap-1 border-t border-trait pt-1.5">
+      <div className="flex items-center justify-between">
+        <span className="mesure text-[9.5px] tracking-[.08em] text-encre-4 uppercase">
+          styles locaux (sc-clone)
+        </span>
+        <button
+          type="button"
+          className="mesure text-[9.5px] text-signal hover:opacity-70 disabled:opacity-50"
+          onClick={() => void relire()}
+          disabled={chargement}
+        >
+          {chargement ? "vérification…" : "vérifier"}
+        </button>
+      </div>
+      {erreur && <Raison texte={erreur} />}
+      {styles &&
+        ORDRE_MOTEURS_LOCAUX.filter((moteur) => parMoteur.has(moteur)).map((moteur) => {
+          const lignes = parMoteur.get(moteur) ?? []
+          return (
+            <details key={moteur} className="rounded-[2px] border border-trait">
+              <summary className="mesure cursor-pointer px-2 py-1 text-[10.5px] text-encre-3">
+                {NOM_MOTEUR_LOCAL[moteur] ?? moteur}
+                <span className="text-encre-4"> · {lignes.length}</span>
+              </summary>
+              <ul>
+                {lignes.map((style) => (
+                  <li
+                    key={style.identifiant}
+                    className="flex items-center justify-between gap-1.5 border-t border-trait px-2 py-1"
+                  >
+                    <div className="flex min-w-0 flex-col">
+                      <button
+                        type="button"
+                        disabled={!style.modele}
+                        onClick={() => style.modele && onChoisir(style.modele)}
+                        className={[
+                          "truncate text-left text-[11px]",
+                          style.modele ? "text-encre hover:underline" : "text-encre-4",
+                        ].join(" ")}
+                      >
+                        {style.nom}
+                      </button>
+                      <span className="mesure text-[9.5px] text-encre-4">
+                        {style.pret
+                          ? style.modele
+                            ? "prêt · installé"
+                            : "prêt"
+                          : `il manque ${style.manque.join(", ")}`}
+                        {" · "}
+                        {style.vitesse}
+                        {style.reference && ` · ${NOM_REFERENCE[style.reference]}`}
+                      </span>
+                    </div>
+                    {style.pret && !style.modele && (
+                      <button
+                        type="button"
+                        className="mesure shrink-0 text-[9.5px] text-signal hover:opacity-70 disabled:opacity-50"
+                        disabled={installation === style.identifiant}
+                        onClick={() => void installer(style.identifiant)}
+                      >
+                        {installation === style.identifiant ? "installation…" : "installer"}
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )
+        })}
     </div>
   )
 }
