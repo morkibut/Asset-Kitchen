@@ -292,7 +292,11 @@ const JEUX = JEUX_ICI
 
 func _initialize():
     for j in JEUX:
-        var carte: TileMapLayer = load(j[1]).instantiate()
+        # TU8 : un décor pose une seconde couche, et la racine devient alors un Node2D
+        # « Carte » avec « Terrain » et « Décor » — la même scène qu'avant quand il n'y
+        # en a pas (une seule TileMapLayer racine, inchangée).
+        var racine: Node = load(j[1]).instantiate()
+        var carte: TileMapLayer = racine if racine is TileMapLayer else racine.get_node("Terrain")
         var t: TileSet = carte.tile_set
         var atlas := t.get_source(0) as TileSetAtlasSource
         var mode := t.get_terrain_set_mode(0) if t.get_terrain_sets_count() > 0 else -1
@@ -305,7 +309,7 @@ func _initialize():
             else:
                 print("TU4_ANIM_ECART %s %s: %d images au lieu de %d" % [j[0], str(c), atlas.get_tile_animation_frames_count(c), anim[2]])
         print("TU4_CHARGE %s tuiles=%d/%d mode=%d/%d terrains=%d/%d animees=%d/%d" % [j[0], atlas.get_tiles_count(), j[2], mode, j[3], terrains, j[4], animees_ok, j[5].size()])
-        carte.free()
+        racine.free()
     print("TU4_CHARGE_FIN")
     quit()
 '''

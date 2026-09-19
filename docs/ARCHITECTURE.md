@@ -436,6 +436,21 @@ relu sans migration.
 de sa base, et Godot trie alors comme le peintre. Une couche invisible, « Emprise », bloque
 les cases dont la base est cachée. Le paquet porte un `LISEZMOI.txt` des règles de pose.
 
+**Le décor autour des bords (TU8).** Le réglage `decor` (`aucun`, `leger`, `dense`, sur `sol`,
+`chemin`, `coins-15` et `mur`) pose des gravats sur les cases vides qui touchent la matière —
+toujours par paires, une moitié extérieure et sa moitié intérieure (`atelier/domaine/
+pose_decor.py`, port de `emplacementsDecor` et `hachage01`, comparé pose pour pose au moteur
+par `essais/tu8_reference_decor.mjs` et `tests/test_tu8_decor.py`). Pour un mur, l'occupation
+est celle de `pose_mur.occupation_mur` (la colonne visuellement couverte), les cases de pente
+de T44 exclues comme dans `dessinerScene` (`pose_mur.decor`). Le décor sort en tuiles sans
+terrain, sur une couche à part de la carte livrée : pour un mur, une dernière `TileMapLayer`
+« Décor » dans le `Node2D` de TU7 (`z_index 1`, toujours devant, sans tri) ; pour un sol ou un
+chemin, la carte cesse d'être une seule `TileMapLayer` et devient un `Node2D` « Carte » avec
+« Terrain » puis « Décor » — mais seulement quand la recette pose au moins un gravat, sinon le
+paquet reste identique au bit près à avant TU8 (« aucun », ou une carte trop petite pour que le
+tirage y pose quoi que ce soit). Un vrai Godot 4.7 charge chaque couche « Décor » et y retrouve
+la pose calculée, 0 désaccord.
+
 ### Les matières générées sur la machine (TU5, `docs/PLAN-tuiles.md`)
 
 Le texte d'une matière se compose en deux couches pures, jamais recopiées

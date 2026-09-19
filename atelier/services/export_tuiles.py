@@ -9,7 +9,7 @@ Les coordonnées d’atlas restent stables, même quand une tuile est écartée.
 """
 import json
 import struct
-from atelier.domaine import masques_tuiles, pose_mur
+from atelier.domaine import masques_tuiles, pose_decor, pose_mur
 from atelier.services.livraison import _json
 
 VOISINS = {"est": "right_side", "sud-est": "bottom_right_corner", "sud": "bottom_side",
@@ -79,6 +79,42 @@ def images_animees(objet):
     pas = spec["separation"] + 1
     animees = [(p["x"], p["y"]) for p in objet["pieces"] if p["role"] in ("masque", "dessous", "variante")] if atlas else [plein["piece"]]
     return {xy: [(xy[0], xy[1] + k * pas) for k in range(spec["images"])] for xy in animees}
+
+
+# ── Le décor autour des bords (TU8) : les gravats, posés par paires ──────────────────
+# Portage de la moitié « décor » de `dessinerScene` : `atelier/domaine/pose_decor.py`
+# porte `emplacementsDecor`, prouvé pose pour pose contre le moteur par
+# `essais/tu8_reference_decor.mjs` (tests/test_tu8_decor.py). Cette moitié-ci ne fait que
+# poser l'occupation de chaque sorte et relire la case d'atlas de la disposition — rien
+# n'est recalculé que `masques_tuiles.disposition` ne dise déjà.
+
+def _decor_sol(objet):
+    """Le décor d'un sol, d'un chemin ou d'un 15 pièces (TU8) : occupation = case peinte
+    de la carte d'essai. Rend `{(x, y): (col, row)}`, vide si le réglage est « aucun »."""
+    r = objet["recette"]
+    densite = r["reglages"].get("decor", "aucun")
+    if densite == "aucun":
+        return {}
+    m = objet["carte"]
+    occupees = {(c["x"], c["y"]) for c in m["cases"]}
+    forme = masques_tuiles.disposition(r["sorte"], r["reglages"].get("variantes", 0), r["reglages"].get("animation", 0),
+                                       r["reglages"].get("animationAtlas", 0), densite)
+    pieces = pose_decor.emplacements(lambda x, y: (x, y) in occupees, m["largeur"], m["hauteur"], densite, r["graine"])
+    return {(p["x"], p["y"]): masques_tuiles.case_decor(forme, p["orientation"], p["variante"]) for p in pieces}
+
+
+def _decor_mur(objet):
+    """Le décor d'un mur (TU8) : occupation = `pose_mur.occupation_mur`, pentes
+    exclues (T44). Rend `{(x, y): (col, row)}`, vide si le réglage est « aucun »."""
+    r = objet["recette"]
+    densite = r["reglages"].get("decor", "aucun")
+    if densite == "aucun":
+        return {}
+    m = objet["carte"]
+    emprise = {(c["x"], c["y"]) for c in m["cases"]}
+    pieces = pose_mur.decor(emprise, r["reglages"]["hauteurMur"], m["largeur"], m["hauteur"], densite, r["graine"])
+    forme = masques_tuiles.disposition("mur", decor=densite)
+    return {(p["x"], p["y"]): masques_tuiles.case_decor(forme, p["orientation"], p["variante"]) for p in pieces}
 
 
 def _entete(objet):
@@ -259,6 +295,13 @@ def couches_du_mur(objet):
         for i, cases in enumerate(groupes[(nom, decalage)]):
             couches.append({"nom": nom if i == 0 else f"{nom}_{i + 1}", "tri": decalage is not None,
                             "origine": decalage or 0, "z": -1 if decalage is None else 0, "visible": True, "cases": cases})
+    # Le décor (TU8) : une dernière couche, sans tri. `z = 1` la met toujours devant les
+    # autres (z = 0) et devant l'ombre (z = -1) sans lui faire rejouer le tri en
+    # profondeur du mur — c'est un gravat posé sur une jonction, pas un objet de plus
+    # dans la scène, et rien ne demande qu'il passe derrière le personnage.
+    cases_decor = _decor_mur(objet)
+    if cases_decor:
+        couches.append({"nom": "Décor", "tri": False, "origine": 0, "z": 1, "visible": True, "cases": cases_decor})
     return couches
 
 
@@ -339,7 +382,7 @@ Seule la base bloque. La base coupée d'une marche en biais bloque en triangle. 
         texte += """
 
 Le décor (gravats)
-Les dernières lignes de l'atlas sont des gravats. Ce ne sont pas des tuiles de terrain : ils se posent sur une couche à part, au-dessus du mur. Ils se posent toujours par paires : une moitié sur la case vide qui touche le mur, l'autre sur la case de mur d'en face. Une moitié seule laisse une fente droite. La carte fournie ne les pose pas encore."""
+Les dernières lignes de l'atlas sont des gravats. Ce ne sont pas des tuiles de terrain : ils sont posés sur la couche « Décor », à part, toujours devant le mur (z_index 1). Ils sont posés par paires : une moitié sur la case vide qui touche le mur, l'autre sur la case de mur d'en face. Une moitié seule laisse une fente droite ; la carte fournie pose toujours les deux."""
     return texte + "\n"
 
 
@@ -379,13 +422,24 @@ def paquet(objet, atlas):
         # La carte d'un mur est son emprise : la scène y pose ombre, base, faces et dessus.
         scene = _scene_mur(objet)
     else:
-        # TileMapLayer FORMAT_1 : un uint16 de version, puis six int16 par case.
-        # Le test charge les coordonnées et les IDs dans le moteur, pas seulement le texte.
-        donnees = struct.pack('<H', 0) + b''.join(struct.pack('<hhhhhh', c["x"], c["y"], 0, c["tuile_x"], c["tuile_y"], 0)
-            for c in sorted(objet["carte"]["cases"], key=lambda c: (c["y"], c["x"])))
-        scene = '\n'.join(['[gd_scene load_steps=2 format=3]', '[ext_resource type="TileSet" path="tuiles.tres" id="1"]',
-            '[node name="Carte" type="TileMapLayer"]', 'texture_filter = 1', 'tile_set = ExtResource("1")',
-            'tile_map_data = PackedByteArray(' + ', '.join(str(n) for n in donnees) + ')', ''])
+        cases_decor = _decor_sol(objet) if objet.get("recette") else {}
+        if cases_decor:
+            # Le décor (TU8) : une seconde couche, posée APRÈS le terrain (donc devant :
+            # l'ordre des nœuds suffit ici, la carte est plate, sans tri en profondeur).
+            scene = '\n'.join(['[gd_scene load_steps=2 format=3]', '', '[ext_resource type="TileSet" path="tuiles.tres" id="1"]', '',
+                '[node name="Carte" type="Node2D"]', '', '[node name="Terrain" type="TileMapLayer" parent="."]',
+                'texture_filter = 1', 'tile_set = ExtResource("1")',
+                f'tile_map_data = {_octets(_donnees({(c["x"], c["y"]): (c["tuile_x"], c["tuile_y"]) for c in objet["carte"]["cases"]}))}',
+                '', '[node name="Décor" type="TileMapLayer" parent="."]', 'texture_filter = 1', 'tile_set = ExtResource("1")',
+                f'tile_map_data = {_octets(_donnees(cases_decor))}', ''])
+        else:
+            # TileMapLayer FORMAT_1 : un uint16 de version, puis six int16 par case.
+            # Le test charge les coordonnées et les IDs dans le moteur, pas seulement le texte.
+            donnees = struct.pack('<H', 0) + b''.join(struct.pack('<hhhhhh', c["x"], c["y"], 0, c["tuile_x"], c["tuile_y"], 0)
+                for c in sorted(objet["carte"]["cases"], key=lambda c: (c["y"], c["x"])))
+            scene = '\n'.join(['[gd_scene load_steps=2 format=3]', '[ext_resource type="TileSet" path="tuiles.tres" id="1"]',
+                '[node name="Carte" type="TileMapLayer"]', 'texture_filter = 1', 'tile_set = ExtResource("1")',
+                'tile_map_data = PackedByteArray(' + ', '.join(str(n) for n in donnees) + ')', ''])
     manifeste = {"nature": "tuiles", "nom": objet["nom"], "projet": objet["projet"], "personnage": objet["personnage"],
         "ensemble": objet["identifiant"], "revision_tuiles": objet["revision"], "godot_minimum": "4.3", "animations": [],
         "source": objet["source"], "corrections": objet["corrections"], "grille": g, "terrains": objet["terrains"],

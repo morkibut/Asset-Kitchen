@@ -31,6 +31,7 @@ from __future__ import annotations
 from typing import Callable, Iterable
 
 from atelier.domaine import masques_tuiles as M
+from atelier.domaine import pose_decor
 
 B = M.VOISINS
 LIGNE_FACE, LIGNE_BASE, LIGNE_OMBRE = 6, 7, 8
@@ -234,3 +235,33 @@ def poses(emprise: Iterable[tuple[int, int]], hauteur: int) -> list[dict]:
         dx = j["x_haut"] + 1 if j["sens"] == "droite" else j["x_haut"] - 1
         sortie.append(_pose(dx, j["y_haut"] - hauteur, *case_biais(j["sens"], "pente"), j["y_haut"]))
     return sortie
+
+
+# ── Le décor autour des bords (TU8) : `occupationMur` + `jonctionsDiagonales` ──────────
+
+def occupation_mur(emprise: frozenset, hauteur: int) -> Callable[[int, int], bool]:
+    """`occupationMur` : une case est occupée si l'emprise porte un mur à cette colonne,
+    de cette rangée jusqu'à `hauteur` rangées plus bas (le mur monte depuis sa base).
+    L'ombre portée n'en fait pas partie : un gravat a le droit de se poser dessus."""
+    r = _remplisseur(emprise)
+    return lambda x, y: any(r(x, y + k) for k in range(hauteur + 1))
+
+
+def cellules_pente(emprise: frozenset, hauteur: int) -> set[tuple[int, int]]:
+    """Les cases que la pente du bord arrière occupe déjà (T44) : ni un gravat n'y naît,
+    ni il n'en reçoit un — la pente EST déjà le comblement de la rentrée."""
+    return {(j["x_haut"] + 1 if j["sens"] == "droite" else j["x_haut"] - 1, j["y_haut"] - hauteur)
+            for j in jonctions_diagonales(emprise)}
+
+
+def decor(emprise: Iterable[tuple[int, int]], hauteur: int, colonnes: int, lignes: int,
+          densite: str, graine: int = 0) -> list[dict]:
+    """Le décor d'un mur : `pose_decor.emplacements` sur `occupationMur`, les cases de
+    pente comptées occupées pour ne pas y faire naître un gravat (T44), puis retirées de
+    la sortie — une pente n'a pas de rentrée à couvrir, elle EST déjà le comblement."""
+    emprise = frozenset(emprise)
+    pentes = cellules_pente(emprise, hauteur)
+    occupation = occupation_mur(emprise, hauteur)
+    occupe = lambda x, y: occupation(x, y) or (x, y) in pentes
+    pieces = pose_decor.emplacements(occupe, colonnes, lignes, densite, graine)
+    return [p for p in pieces if (p["x"], p["y"]) not in pentes]

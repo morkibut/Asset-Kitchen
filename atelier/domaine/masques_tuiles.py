@@ -193,6 +193,12 @@ def disposition(sorte: str, variantes: int = 0, animation: int = 0, animation_at
     }
 
 
+def case_decor(forme: dict[str, Any], orientation: str, variante: int) -> tuple[int, int] | None:
+    """`caseDecor` : la case d'atlas d'une pièce de décor — jamais réinventée, lue telle
+    quelle sur la disposition (TU8)."""
+    return next(((d["x"], d["y"]) for d in forme["decor"] if d["orientation"] == orientation and d["variante"] == variante), None)
+
+
 def cases_du_mur(decor: str = "aucun") -> list[dict[str, Any]]:
     """Les cases de l'atlas mur, dans l'ordre de wallAtlasDescriptor."""
     cases = []

@@ -343,12 +343,35 @@ Les gravats qui débordent d'un bord (T27). Il y a quatre côtés d'appui et tro
 les pose par paires, sur un second `TileMapLayer`. Le réglage vaut « Aucun », « Léger » ou
 « Dense ».
 
-- [ ] Le décor se pose toujours en paires, avec sa moitié extérieure et sa moitié intérieure.
-- [ ] Il sort en tuiles sans terrain, sur une seconde couche de la carte livrée.
-- [ ] « Aucun » donne un atlas identique au bit près à TU7.
+- [x] Le décor se pose toujours en paires, avec sa moitié extérieure et sa moitié intérieure.
+      *(`atelier/domaine/pose_decor.py`, port de `emplacementsDecor` ; `pose_mur.decor`
+      pour le mur, occupation = `occupation_mur`, cases de pente de T44 exclues. Prouvé
+      pose pour pose contre le moteur sur 164 scènes — `essais/tu8_reference_decor.mjs`
+      → `tests/fixtures/tu8_reference_decor.json`, `tests/test_tu8_decor.py` — et par un
+      essai explicite de l'appariement sur 60 cartes au hasard.)*
+- [x] Il sort en tuiles sans terrain, sur une seconde couche de la carte livrée.
+      *(Sol/chemin/15-pièces : la carte devient un `Node2D` « Carte » avec « Terrain »
+      et « Décor » dès qu'il y a au moins un gravat à poser. Mur : une dernière
+      `TileMapLayer` « Décor » dans le `Node2D` de TU7, `z_index 1`, toujours devant.
+      Un vrai Godot 4.7 charge les trois cas (sol, chemin, mur) et retrouve la pose
+      calculée sur la couche « Décor », 0 désaccord.)*
+- [x] « Aucun » donne un atlas identique au bit près à TU7.
+      *(Et une carte dont aucun tirage ne pose de gravat, même avec un réglage « léger »
+      ou « dense », reste une seule `TileMapLayer` — décision tranchée en TU8 : la
+      structure de la carte suit ce qu'il y a à poser, pas le réglage lu tel quel.)*
 
 *Le décor de coin fusionné (T39) n'est pas repris : il a été annulé dans sc-clone après usage
 (T42).*
+
+**Décor et Godot : décisions tranchées en TU8.** La couche « Décor » d'un mur porte
+`z_index = 1` sans tri en profondeur (ni y_sort) : elle passe toujours devant la matière et
+devant l'ombre (`z_index -1`) — le critère demandé (« pose attendue, 0 désaccord ») ne porte
+que sur les cases de la couche, pas sur son entrelacement avec le personnage, qu'aucun gravat
+ne bloque ni ne trie. Pour un sol ou un chemin, l'ordre des nœuds seul suffit (une carte
+plate, non triée) : « Terrain » puis « Décor ». Un jeu TU4 existant qui chargeait la scène
+comme une `TileMapLayer` typée doit maintenant accepter un `Node2D` quand un décor s'y pose :
+`tests/test_tu4_livraison.py` (script `CHARGE`) a été ajusté en ce sens, sans toucher à ses
+assertions.
 
 ### TU9 · Vérifier avant de livrer
 
