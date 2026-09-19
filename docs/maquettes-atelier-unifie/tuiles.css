@@ -1,0 +1,199 @@
+/* Maquette des jeux de tuiles — s'ajoute à prototype.css. Valeurs prises dans DESIGN.md, rien d'autre. */
+:root {
+  --encre-4:#948c80; --eteint:#b0a89b; --controle:#3d382f; --trait-faible:#ece6db; --pointille:#c9c2b6;
+  --fond-attention:#f4ece2; --trait-attention:#e0cfb8; --encre-attention:#8a5a2c;
+  --fond-ok:#eef1ea; --trait-ok:#cfd9c8; --encre-ok:#4c6644;
+  --fond-echec:#f8ece9; --trait-echec:#dcbcb2;
+  --damier:repeating-conic-gradient(var(--damier1) 0% 25%,var(--damier2) 0% 50%) 0 0 / 28px 28px;
+}
+
+/* Barre de la maquette : les sauts vers chaque état. */
+.sauts { display:flex; align-items:center; gap:4px; flex-wrap:wrap }
+.sauts span { margin-right:8px; opacity:.8 }
+.sauts button { font-size:12px; padding:2px 8px; min-height:26px; border-color:transparent }
+.sauts button:hover,.sauts button[aria-current=true] { border-color:var(--sur) }
+
+.petit { min-height:26px; padding:2px 8px; font-size:12px }
+.principal { border-color:var(--controle); color:var(--controle); font-weight:500 }
+.principal:hover { background:var(--ouvert) }
+.lien { background:transparent; border:0; padding:0; min-height:0; color:var(--texte); text-decoration:underline; text-underline-offset:3px; font-size:13px }
+.lien:hover { color:var(--encre) }
+.puce { min-height:30px; padding:2px 14px; font-size:13px; color:var(--controle) }
+.puce[aria-pressed=true] { background:var(--ouvert); border-color:var(--muted); color:var(--encre) }
+.puces { display:flex; gap:4px; flex-wrap:wrap; align-items:center }
+.gratuit { color:var(--ok) }
+.image-fond { background:var(--pourtour) }
+canvas { image-rendering:pixelated }
+
+.bandeau { margin:0 0 14px; padding:8px 14px; border:1px solid; border-radius:7px; font-size:13px }
+.bandeau p { margin:0 }
+.bandeau-attention { border-color:var(--trait-attention); background:var(--fond-attention); color:var(--encre-attention) }
+.bandeau-ok { border-color:var(--trait-ok); background:var(--fond-ok); color:var(--encre-ok) }
+.bandeau-echec { border-color:var(--trait-echec); background:var(--fond-echec); color:var(--echec) }
+
+/* ——— A · Les tuiles du jeu ——— */
+.tu-tete { display:flex; justify-content:space-between; align-items:flex-end; gap:22px; margin-bottom:22px }
+.tu-tete h1 { margin:0 0 4px; font-size:38px; line-height:1.05 }
+.tu-tete p { margin:0; color:var(--muted) }
+.tu-tete .row { gap:14px }
+.cartes-jeux { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:22px }
+.carte-jeu { display:flex; flex-direction:column; gap:8px; padding:14px; min-height:0; text-align:left; background:var(--carte); border:1px solid var(--trait); border-radius:8px; transition:border-color 120ms }
+.carte-jeu:hover { border-color:var(--muted) }
+.carte-jeu .apercu { display:grid; place-items:center; width:100%; height:176px; border-radius:7px; background:var(--pourtour); overflow:hidden }
+.carte-jeu .apercu canvas { display:block; width:288px; height:160px }
+.carte-jeu strong { font-weight:500; font-size:15px; color:var(--encre) }
+.carte-jeu small { font-size:12px; color:var(--muted) }
+.carte-jeu .mono { color:var(--encre-4) }
+.carte-demande { border:1px dashed var(--trait-attention); background:var(--fond-attention) }
+.carte-demande .apercu { background:transparent; border:1px dashed var(--trait-attention); color:var(--encre-attention); font-size:13px; text-align:center; padding:22px }
+.carte-demande .label { color:var(--encre-attention) }
+.tu-pied-liste { margin-top:22px; font-size:13px; color:var(--muted) }
+
+/* ——— B · Quelle sorte de tuiles ? ——— */
+.sortes { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; max-width:1100px }
+.sorte { display:flex; flex-direction:column; gap:8px; padding:14px; min-height:0; text-align:left; background:var(--carte); border:1px solid var(--trait); border-radius:10px; transition:border-color 120ms,background-color 120ms }
+.sorte:hover { border-color:var(--muted) }
+.sorte[aria-pressed=true] { border-color:var(--controle); background:var(--papier) }
+.sorte .apercu { display:grid; place-items:center; height:176px; border-radius:7px; background:var(--pourtour); overflow:hidden }
+.sorte .apercu canvas { width:288px; height:160px }
+.sorte h2 { margin:8px 0 0; font-size:25px }
+.sorte p { margin:0; color:var(--texte); font-size:13.5px }
+.sorte .mono { color:var(--encre-4) }
+.autres-formats { max-width:1100px; margin:14px 0 0 }
+.autres-formats summary { font-size:13px; color:var(--controle); padding:8px 0 }
+.autres { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; max-width:730px; margin-top:8px }
+.autre { display:flex; gap:14px; align-items:center; text-align:left; padding:8px 14px; min-height:0; background:var(--carte); border-radius:8px }
+.autre[aria-pressed=true] { border-color:var(--controle); background:var(--papier) }
+.autre canvas { width:81px; height:81px; flex-shrink:0; background:var(--damier); border-radius:5px }
+.autre strong { display:block; font-weight:500 }
+.autre small { font-size:12px; color:var(--muted) }
+.creer { display:flex; align-items:flex-end; gap:22px; flex-wrap:wrap; margin-top:22px; padding-top:22px; border-top:1px solid var(--trait); max-width:1100px }
+.creer label { display:grid; gap:4px; font-size:12px; color:var(--muted) }
+.creer input[type=text] { min-height:34px; width:260px; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:4px 8px; color:var(--controle); font-size:13px }
+.creer .aide-taille { font-size:12px; color:var(--muted); min-height:18px }
+.creer button.principal { margin-left:auto }
+
+/* ——— C · L'atelier du jeu de tuiles ——— */
+body.plein main { display:flex; flex-direction:column; overflow:hidden; padding:14px 22px }
+.at-tete { display:flex; justify-content:space-between; align-items:flex-end; gap:22px; flex-shrink:0; margin-bottom:14px }
+.at-tete .crumb { margin:0 0 4px }
+.fil { display:flex; gap:8px; align-items:center; font-size:12px; color:var(--muted) }
+.fil button { min-height:0; padding:0; border:0; background:transparent; color:var(--muted); font-size:12px; text-decoration:underline; text-underline-offset:3px }
+.nom-jeu { font:38px/1.05 'Instrument Serif',Georgia,serif; color:var(--encre); background:transparent; border:1px solid transparent; border-radius:7px; padding:0 4px; margin-left:-5px; width:min(560px,100%) }
+.nom-jeu:hover { border-color:var(--trait) }
+.nom-jeu:focus { border-color:var(--contour); background:var(--carte) }
+.meta { display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); margin-top:4px }
+.meta select { min-height:26px; border:1px solid var(--contour); border-radius:5px; background:var(--carte); padding:0 4px; color:var(--controle); font-size:12px }
+.at-actions { display:flex; gap:8px; align-items:center; flex-shrink:0 }
+
+.atelier { flex:1; min-height:0; display:grid; grid-template-columns:240px minmax(0,1fr) 240px; gap:14px; position:relative }
+.colonne { min-height:0; min-width:0; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; gap:8px }
+.colonne>.label { padding:4px 0 }
+
+/* Les matières */
+.matiere { display:grid; grid-template-columns:81px minmax(0,1fr); gap:8px; align-items:center; width:100%; min-height:0; padding:4px; text-align:left; background:transparent; border:1px solid transparent; border-radius:8px; transition:background-color 120ms,border-color 120ms }
+.matiere:hover { background:var(--carte); border-color:var(--trait) }
+.matiere[aria-pressed=true] { background:var(--carte); border-color:var(--muted) }
+.matiere canvas,.matiere .vide { width:81px; height:81px; border-radius:5px; display:block }
+.matiere .vide { border:1px dashed var(--pointille); display:grid; place-items:center; font-size:11px; color:var(--muted) }
+.matiere strong { display:block; font-weight:500; color:var(--encre); font-size:13.5px }
+.matiere .nom-matiere { display:block; font-size:12.5px; color:var(--texte) }
+.matiere .origine { display:block; font-size:12px; color:var(--muted) }
+.bordure-ligne { display:flex; align-items:center; gap:8px; padding:0 4px 8px; font-size:12px; color:var(--muted) }
+.bordure-ligne>span { margin-right:auto }
+.bordure-ligne canvas { width:22px; height:22px; border-radius:5px; flex-shrink:0 }
+.bordure-ligne button { min-height:22px; padding:0 8px; font-size:12px; border-radius:5px }
+.bordure-ligne .suit { border-style:dashed }
+.groupe-matiere { border-bottom:1px solid var(--trait-faible); padding-bottom:4px }
+.coche { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--controle) }
+.note-col { font-size:12px; color:var(--muted); margin:0 }
+
+/* La scène */
+.centre { min-height:0; min-width:0; display:flex; flex-direction:column; gap:8px }
+.onglets { display:flex; align-items:center; gap:4px; flex-shrink:0 }
+.onglets button { min-height:30px; padding:2px 14px; font-size:13px; border-color:transparent; background:transparent; color:var(--controle) }
+.onglets button[aria-selected=true] { background:var(--carte); border-color:var(--contour); color:var(--encre) }
+.onglets .aide { margin-left:auto; font-size:12px; color:var(--muted) }
+.vue { flex:1; min-height:0; overflow:auto; border-radius:8px; background:var(--pourtour); position:relative }
+.vue.damier { background:var(--damier) }
+.vue-dedans { display:flex; align-items:center; justify-content:center; min-width:100%; min-height:100%; width:max-content; padding:14px }
+.vue canvas { display:block; touch-action:none }
+#scene { cursor:crosshair }
+.barre-scene { display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex-shrink:0; font-size:13px }
+.barre-scene label { display:flex; align-items:center; gap:4px; color:var(--controle) }
+.barre-scene select { max-width:130px; min-height:30px; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:0 4px; color:var(--controle); font-size:13px }
+.barre-scene .pousse { margin-left:auto }
+.barre-scene .mono { color:var(--encre-4); font-size:11.5px }
+.lecture { flex-shrink:0; min-height:22px; font-size:13px; color:var(--controle) }
+.lecture .mono { color:var(--encre-4) }
+.verifier { flex:1; min-height:0; overflow:auto; padding:22px; background:var(--carte); border:1px solid var(--trait); border-radius:8px }
+.verifier h2 { margin:0 0 8px }
+.verifier ul { margin:8px 0; padding-left:22px }
+.verifier li { margin-bottom:4px }
+.verifier .detail { font-family:'IBM Plex Mono',Consolas,monospace; font-size:11px; color:var(--muted) }
+.vide-carte { display:grid; place-items:center; height:100%; color:var(--sur); font-size:13px; padding:22px; text-align:center }
+
+/* Les réglages */
+.reglage { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 8px; font-size:13px; color:var(--controle); padding:4px 0 }
+.reglage .valeur { font-family:'IBM Plex Mono',Consolas,monospace; font-size:11.5px; color:var(--encre) }
+.reglage input[type=range] { grid-column:1/-1; width:100%; margin:0 }
+.reglage select,.reglage input[type=number] { grid-column:2; min-height:26px; border:1px solid var(--contour); border-radius:5px; background:var(--carte); padding:0 4px; color:var(--controle); font-size:12.5px }
+.reglage input[type=number] { width:81px }
+.reglage small { grid-column:1/-1; font-size:12px; color:var(--muted) }
+.fins { margin:8px 0 0; border-top:1px solid var(--trait); padding-top:8px }
+.fins summary { font-size:13px; color:var(--controle); padding:4px 0 }
+.fins .corps { display:grid; gap:4px; padding-top:4px }
+.cout-ecran { margin-top:auto; padding-top:14px; font-size:12px; color:var(--muted) }
+
+/* ——— D · Le tiroir « Choisir la matière » ——— */
+.atelier.avec-tiroir { grid-template-columns:240px minmax(0,1fr) 380px }
+.atelier.avec-tiroir #col-reglages { display:none }
+#tiroir-place { display:contents }
+.tiroir { grid-column:3; grid-row:1; min-height:0; display:flex; flex-direction:column; background:var(--papier); border:1px solid var(--contour); border-radius:10px; animation:entre 220ms ease-out }
+@keyframes entre { from { transform:translateX(24px); opacity:0 } to { transform:none; opacity:1 } }
+@media (prefers-reduced-motion:reduce) { .tiroir { animation:none } }
+.tiroir-tete { padding:14px; border-bottom:1px solid var(--trait); display:flex; justify-content:space-between; align-items:flex-start; gap:8px }
+.tiroir-tete h2 { margin:0; font-size:25px }
+.tiroir-tete p { margin:0; font-size:12.5px; color:var(--muted) }
+.tiroir-tete button { min-height:26px; padding:0 8px }
+.tiroir .onglets { padding:8px 14px 0 }
+.tiroir-corps { flex:1; min-height:0; overflow:auto; padding:14px }
+.grille-matieres { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px }
+.choix { display:flex; flex-direction:column; align-items:center; gap:4px; padding:4px; min-height:0; background:transparent; border:1px solid transparent; border-radius:8px; font-size:12px; color:var(--controle); text-align:center; transition:border-color 120ms,background-color 120ms }
+.choix:hover { background:var(--carte); border-color:var(--trait) }
+.choix[aria-pressed=true] { background:var(--carte); border-color:var(--controle) }
+.choix canvas { width:81px; height:81px; border-radius:5px; display:block }
+.choix small { color:var(--muted); font-size:11px }
+.gen { display:grid; gap:14px }
+.gen label.champ { display:grid; gap:4px; font-size:13px; color:var(--controle) }
+.gen label.champ small { color:var(--muted); font-size:12px }
+.gen input[type=text],.gen textarea { width:100%; min-height:34px; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:8px; color:var(--encre); font-size:13.5px }
+.gen textarea { min-height:54px; resize:vertical }
+.gen input::placeholder,.gen textarea::placeholder { color:var(--eteint) }
+.texte-envoye { margin:4px 0 0; padding:8px; border-radius:7px; background:var(--cote); font:12px/1.6 'IBM Plex Mono',Consolas,monospace; color:var(--encre); white-space:pre-wrap; overflow-wrap:anywhere }
+.texte-envoye .ajout { color:var(--muted) }
+.gen-bas { display:grid; gap:8px; padding-top:14px; border-top:1px solid var(--trait) }
+.gen-bas .row { gap:8px }
+.gen-bas input[type=number] { width:54px; min-height:30px; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:0 8px; color:var(--controle) }
+.gen-bas .raison { font-size:12px; color:var(--muted); margin:0 }
+.attente { display:grid; gap:4px; font-size:13px; color:var(--controle) }
+.attente .bar { height:4px }
+.attente .bar span { transition:width 250ms linear }
+.tirages { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px }
+.tirages .choix { padding:2px }
+.tirages canvas { border:1px solid var(--contour) }
+.simule { font-size:12px; color:var(--muted); margin:0 }
+
+/* ——— E · Livrer à Godot ——— */
+.livrer { display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:22px; align-items:start; max-width:1240px }
+.livrer section { min-width:0 }
+.fichier { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 14px; padding:14px 0; border-top:1px solid var(--trait) }
+.fichier:last-child { border-bottom:1px solid var(--trait) }
+.fichier .mono { font-size:12px; color:var(--encre) }
+.fichier .poids { font-family:'IBM Plex Mono',Consolas,monospace; font-size:11.5px; color:var(--encre-4); text-align:right }
+.fichier p { grid-column:1/-1; margin:0; font-size:13px; color:var(--texte) }
+.planche-livree { display:grid; place-items:center; padding:14px; border-radius:8px; background:var(--damier); overflow:auto; max-height:360px }
+.destination { padding:14px; border:1px solid var(--trait); border-radius:8px; background:var(--carte); display:grid; gap:4px; font-size:13px }
+.destination .mono { font-size:12px }
+.deposer { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:22px; padding-top:14px; border-top:1px solid var(--trait) }
+.deposer p { margin:0; font-size:12.5px; color:var(--muted) }

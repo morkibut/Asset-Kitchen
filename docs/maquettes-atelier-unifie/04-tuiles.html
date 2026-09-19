@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Asset Kitchen — les tuiles, à essayer</title>
+  <link rel="stylesheet" href="prototype.css?v=tuiles-20260919">
+  <link rel="stylesheet" href="tuiles.css?v=tuiles-20260919">
+  <script type="module" src="tuiles.js?v=tuiles-20260919"></script>
+</head>
+<body>
+  <div class="prototype">
+    <span>MAQUETTE À ESSAYER · les tuiles · vrai moteur de tuiles, générations simulées : rien n’est écrit dans le jeu</span>
+    <div class="sauts"><span>Aller à</span><button data-action="saut" data-id="liste">Les tuiles du jeu</button><button data-action="saut" data-id="sorte">Quelle sorte ?</button><button data-action="saut" data-id="atelier">L’atelier</button><button data-action="saut" data-id="tiroir">Choisir une matière</button><button data-action="saut" data-id="livrer">Livrer à Godot</button><button data-action="saut" data-id="agent">Demande de l’agent</button></div>
+  </div>
+  <div class="layout">
+    <aside id="sidebar" aria-label="Navigation du jeu"></aside>
+    <main id="main" tabindex="-1"></main>
+  </div>
+  <div id="message" role="status" aria-live="polite"></div>
+  <noscript>Cette maquette interactive demande JavaScript.</noscript>
+</body>
+</html>
