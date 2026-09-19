@@ -380,6 +380,14 @@ les pose par paires, sur un second `TileMapLayer`. Le réglage vaut « Aucun »,
 *Le décor de coin fusionné (T39) n'est pas repris : il a été annulé dans sc-clone après usage
 (T42).*
 
+**Le réglage à l'écran (ajouté après coup, aucune case ci-dessus ne le nommait).** Le moteur
+et la recette serveur connaissaient déjà `decor` (`atelier/domaine/recette_tuiles.py`, clé
+`decor`, sortes `sol`/`chemin`/`coins-15`/`mur`) ; seul l'écran ne le proposait pas encore.
+`interface/src/tuiles/atelier.ts` (`REGLAGES_DE_L_ECRAN`) et `AtelierTuiles.tsx`
+(« Cailloux au bord », dans Réglages fins, mêmes sortes, mêmes valeurs Aucun/Léger/Dense que
+la maquette validée) le règlent désormais ; « aucun » reste le défaut, identique au bit près
+à avant cette retouche (essai `atelier.test.ts` § TU8 (écran)).
+
 **Décor et Godot : décisions tranchées en TU8.** La couche « Décor » d'un mur porte
 `z_index = 1` sans tri en profondeur (ni y_sort) : elle passe toujours devant la matière et
 devant l'ombre (`z_index -1`) — le critère demandé (« pose attendue, 0 désaccord ») ne porte
@@ -457,9 +465,12 @@ Le cadre de l'agent borne les générations de matières, comme pour l'image.
       *(`ATELIER_NODE` vide : `create_tile_set`/`update_tile_set` par recette refusent en
       disant quoi installer ; `read_tile_set` rend tout, avec `verification.disponible` faux ;
       lister, livrer et créer à partir d'une image fonctionnent.)*
-- [ ] Un jeu demandé par l'agent apparaît dans la liste de l'écran, marqué comme tel.
+- [x] Un jeu demandé par l'agent apparaît dans la liste de l'écran, marqué comme tel.
       *(Côté serveur fait : `origine: "agent"` sur l'ensemble, `"auteur"` relu pour les
-      anciens. Reste l'affichage dans la liste de l'écran.)*
+      anciens. Écran (TU10, ajouté après coup) : `EnsembleTuiles.origine` (`api-tuiles.ts`)
+      et `ListeDesJeux` (`AtelierTuiles.tsx`) affichent « Demandé par l’agent » sous la
+      carte quand `origine === "agent"` — rien pour un jeu de l'auteur. Essai d'écran dans
+      `AtelierTuiles.test.tsx`.)*
 
 **Tranché en TU10.** Le cadre qui borne les matières de l'agent est celui de ses images
 locales (RP2, travail durable relu au lancement et au tour de la carte graphique), pas le

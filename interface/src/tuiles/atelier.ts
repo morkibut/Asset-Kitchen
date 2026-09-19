@@ -67,9 +67,10 @@ export function nombrePieces(sorte: Sorte): number {
 export type Reglages = Record<string, string | number | boolean>
 
 const A_MASQUES: readonly Sorte[] = ["sol", "chemin", "coins-15"]
+const A_MASQUES_ET_MUR: readonly Sorte[] = [...A_MASQUES, "mur"]
 /** Ce que l'écran règle, et les sortes qui le connaissent. Le serveur en connaît
- *  davantage (les couleurs de repli, le fond blanc, l'animation de tout l'atlas, le
- *  décor) : ceux-là voyagent tels qu'il les rend, et prennent son défaut sinon. */
+ *  davantage (les couleurs de repli, le fond blanc, l'animation de tout l'atlas) :
+ *  ceux-là voyagent tels qu'il les rend, et prennent son défaut sinon. */
 const REGLAGES_DE_L_ECRAN: Record<string, { defaut: string | number | boolean; sortes?: readonly Sorte[] }> = {
   bordures: { defaut: "organiques" },
   arrondi: { defaut: 2 },
@@ -83,6 +84,10 @@ const REGLAGES_DE_L_ECRAN: Record<string, { defaut: string | number | boolean; s
   hauteurMur: { defaut: 2, sortes: ["mur"] },
   ombreMur: { defaut: "discrete", sortes: ["mur"] },
   penombre: { defaut: "discrete", sortes: ["mur"] },
+  // TU8 (écran) — les sortes où la recette serveur l'accepte (`atelier/domaine/recette_tuiles.py`,
+  // `_DECOR = _A_MASQUES | {"mur"}`) ; « aucun » reste le défaut, identique au bit près à
+  // avant cette tranche.
+  decor: { defaut: "aucun", sortes: A_MASQUES_ET_MUR },
   // TU6 — la palette commune (T26 bis) est cochée par défaut ; la palette du jeu (T31)
   // ne l'est pas, et n'a d'effet que si l'univers en a une (voir `reglagesMoteur`).
   memesCouleurs: { defaut: true },

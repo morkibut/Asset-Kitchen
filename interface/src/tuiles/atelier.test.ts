@@ -5,7 +5,7 @@ import { inflateSync } from "node:zlib"
 import { describe, expect, test, vi } from "vitest"
 import { installerBouchonCanvas } from "./moteur/__tests__/canvas-shim"
 import {
-  atlasDe, changerSecondTerrain, delier, depuisCarteServeur, dessinerCarte, enClair, imageDuFond, jeuDepuisRecette, nombrePieces, nouveauJeu,
+  atlasDe, changerSecondTerrain, delier, depuisCarteServeur, dessinerCarte, enClair, imageDuFond, jeuDepuisRecette, nombrePieces, nomPiece, nouveauJeu,
   oublierLesRendus, pieceDeDefaut, poserAsset, poserIntegree, recetteDe, reglagesMoteur, versCarteServeur, verifier,
   type Atlas, type JeuEdite, type Recette, type Sorte,
 } from "./atelier"
@@ -323,5 +323,50 @@ describe("TU6 — les mêmes couleurs pour toutes les matières", () => {
     const j2 = rouvrir(j)
     j2.paletteUnivers = j.paletteUnivers
     expect(Buffer.from(atlasDe(j2).pixels.data)).toEqual(Buffer.from(avant.data))
+  })
+})
+
+describe("TU8 (écran) — le réglage « décor »", () => {
+  test("les sortes que la recette serveur accepte le connaissent, avec « aucun » par défaut ; les 17 pièces l'ignorent", () => {
+    for (const sorte of ["sol", "chemin", "coins-15", "mur"] as const) {
+      const j = nouveauJeu({ nom: "Essai", sorte, taille: 32, graine: 1 })
+      expect(j.reglages.decor).toBe("aucun")
+      expect(recetteDe(j).reglages.decor).toBe("aucun")
+    }
+    const dixSept = nouveauJeu({ nom: "Essai", sorte: "pieces-17", taille: 32, graine: 1 })
+    expect(dixSept.reglages.decor).toBeUndefined()
+    expect(recetteDe(dixSept).reglages.decor).toBeUndefined()
+  })
+
+  test("« aucun » rend un atlas identique au bit près à un jeu qui ignore encore ce réglage", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 7 })
+    const avecLeReglage = Buffer.from(atlasDe(j).pixels.data)
+    const j2 = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 7 })
+    delete (j2.reglages as Record<string, unknown>).decor // la recette d'avant TU8 (écran) : la clé manque tout simplement.
+    oublierLesRendus()
+    const sansLaCle = Buffer.from(atlasDe(j2).pixels.data)
+    expect(sansLaCle).toEqual(avecLeReglage)
+  })
+
+  test("choisi « léger » ou « dense », le décor part dans la recette et se voit sur la carte peinte", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 7 })
+    const propre = Buffer.from(atlasDe(j).pixels.data)
+    j.reglages.decor = "dense"
+    expect(recetteDe(j).reglages.decor).toBe("dense")
+    const atlas = atlasDe(j)
+    const avecDecor = Buffer.from(atlas.pixels.data)
+    expect(avecDecor).not.toEqual(propre)
+    // La planche gagne des pièces de gravats, que `nomPiece` sait nommer (TU8, moteur).
+    const cols = atlas.pixels.width / j.taille, rows = atlas.pixels.height / j.taille
+    let gravats = 0
+    for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) if (nomPiece(j, col, row).startsWith("Gravats")) gravats++
+    expect(gravats).toBeGreaterThan(0)
+  })
+
+  test("le mur connaît aussi le réglage, et « aucun » reste son défaut", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "mur", taille: 32, graine: 3 })
+    expect(reglagesMoteur(j).decor).toBe("aucun")
+    j.reglages.decor = "leger"
+    expect(reglagesMoteur(j).decor).toBe("leger")
   })
 })

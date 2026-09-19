@@ -15,6 +15,9 @@ export type EnsembleTuiles = ReglesTuiles & {
   diagnostic: { pret: boolean; problemes: string[]; raccords: { x: number; y: number; vers: string; raison: string }[]; limite: string }
   /** Un jeu **fabriqué** (TU2) garde sa recette ; un jeu fait à partir d'une image n'en a pas. */
   recette?: Recette | null
+  /** Qui l'a demandé (TU10) : « agent » pour un jeu créé par les outils MCP, « auteur »
+   *  sinon — le serveur le complète toujours, y compris pour un ensemble d'avant TU10. */
+  origine?: "agent" | "auteur"
 }
 /** Ce qui part quand on enregistre un jeu fabriqué : la recette, l'atlas qu'elle a
  *  rendu (PNG en base64) et la carte peinte. */

@@ -67,6 +67,16 @@ describe("Les tuiles du jeu", () => {
     expect(await screen.findByRole("button", { name: "Garder les changements" })).toBeInTheDocument()
   })
 
+  it("un jeu demandé par l'agent (TU10) porte une marque discrète dans la liste, un jeu de l'auteur n'en porte pas", async () => {
+    const parLAgent = { ...ensembleDepuis({ nom: "De l’agent", recette: { sorte: "sol", taille: 32, graine: 1, emplacements: { surface: { source: "integree", nom: "herbe" }, bordure: { lie: true } }, reglages: {} }, atlas: "", carte: { largeur: 18, hauteur: 12, cases: [] } }, "agent-1"), origine: "agent" as const }
+    vi.spyOn(tuiles, "lister").mockResolvedValue([parLAgent, ensembleAU13()])
+    render(<Tuiles projet="jeu" />)
+    const parAgent = await screen.findByRole("button", { name: "Ouvrir De l’agent" })
+    expect(within(parAgent).getByText("Demandé par l’agent")).toBeInTheDocument()
+    const foret = screen.getByRole("button", { name: "Ouvrir Forêt" })
+    expect(within(foret).queryByText("Demandé par l’agent")).toBeNull()
+  })
+
   it("choisit la sorte, avec la taille du jeu déjà posée, puis ouvre l'atelier", async () => {
     vi.spyOn(tuiles, "lister").mockResolvedValue([])
     render(<Tuiles projet="jeu" tailleDuJeu={64} />)

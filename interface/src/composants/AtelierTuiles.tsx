@@ -127,6 +127,7 @@ export function ListeDesJeux({ liste, charge, onOuvrir, onNouveau, onDepuisUneIm
         <small className="text-[12px] text-encre-3">{e.recette
           ? `${SORTES[e.recette.sorte].court} · ${nombrePieces(e.recette.sorte)} pièces · ${e.recette.taille} px`
           : `À partir d’une image · ${e.retenues} pièces retenues · ${e.grille.taille} px`}</small>
+        {e.origine === "agent" && <small className="text-[12px] text-encre-4">Demandé par l’agent</small>}
       </button>)}
     </div>
   </>
@@ -199,6 +200,7 @@ const OPTIONS: Record<string, [string | number, string][]> = {
   nuances: [[2, "2"], [4, "4"], [8, "8"]],
   ombreMur: [["aucune", "Aucune"], ["discrete", "Discrète"], ["marquee", "Marquée"]],
   penombre: [["aucune", "Aucune"], ["discrete", "Discrète"], ["marquee", "Marquée"]],
+  decor: [["aucun", "Aucun"], ["leger", "Léger"], ["dense", "Dense"]],
   reduction: [["contraste", "Garder le trait"], ["moyenne", "Moyenne"], ["compensee", "Moyenne compensée"]],
   variantes: [[0, "Aucune"], [1, "1"], [2, "2"], [3, "3"]],
   animation: [[0, "Aucune"], [2, "2 images"], [4, "4 images"], [6, "6 images"], [8, "8 images"]],
@@ -406,6 +408,7 @@ export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, messa
               <Choix nom="Bords" cle="bordures" jeu={j} onChange={reglage} />
               <Choix nom="Nuances par matière" cle="nuances" jeu={j} onChange={reglage} />
               {S.mur && <><Choix nom="Ombre du mur" cle="ombreMur" jeu={j} onChange={reglage} /><Choix nom="Pénombre dans les angles" cle="penombre" jeu={j} onChange={reglage} /></>}
+              {(S.set || S.mur) && <Choix nom="Cailloux au bord" cle="decor" jeu={j} onChange={reglage} aide="Ils débordent sur la case voisine : le bord ne suit plus la grille." />}
               <Choix nom="Réduire une image" cle="reduction" jeu={j} onChange={reglage} aide="Pour une image plus grande qu’une pièce." />
               <label className="flex items-center gap-[8px] py-[4px] text-[13px] text-encre-controle">
                 <input type="checkbox" checked={j.reglages.paletteJeu === true} disabled={!j.paletteUnivers.length}
