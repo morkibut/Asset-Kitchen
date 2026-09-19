@@ -14,6 +14,7 @@ import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { CadreDialogue } from "./CadreDialogue"
 import { SerieSon } from "./SerieSon"
 import { SonRetro } from "./SonRetro"
+import { MusiqueAdaptative } from "./MusiqueAdaptative"
 
 const CHAMP = "min-w-0 rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[13px] text-encre-controle disabled:opacity-50"
 const PUCE = "min-h-[30px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle aria-pressed:border-encre-3 aria-pressed:bg-ligne-ouverte aria-pressed:text-encre disabled:cursor-not-allowed disabled:opacity-50"
@@ -277,6 +278,7 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
   // récentes du jeu, se retrouvent après un rechargement (écart connu jusqu'à SN6).
   const [series, setSeries] = useState<{ identifiant: string; initiale?: Serie; nom?: string }[]>(() => (emplacement?.series ?? []).map((identifiant) => ({ identifiant })))
   const [courante, setCourante] = useState<string | null>(() => emplacement?.series.at(-1) ?? null)
+  const [adaptativeOuverte, setAdaptativeOuverte] = useState(false)
   const [erreur, setErreur] = useState("")
   const [occupe, setOccupe] = useState(false)
   const brouillon = useBrouillonLocal({ cle: emplacement ? `son:${projet}:${emplacement.cle}` : `son:${projet}`, pret: true, reference: depart, etat: d, appliquer: setD, ecran: emplacement ? emplacement.nom : "Un son", quoi: texteDe(d) || FAMILLES[d.famille].nom })
@@ -454,6 +456,11 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
     {sonore && precedentes.length > 0 && <details className="mt-[14px] text-[13px]"><summary>Séries précédentes · {precedentes.length}</summary>
       {series.map((s, k) => s.identifiant === courante ? null : <div key={s.identifiant} className="flex items-center justify-between gap-[14px] py-[8px]"><span>Série {k + 1}{s.nom ? <span className="text-encre-3"> · {s.nom}</span> : null}</span>
         <button type="button" className={PETIT} onClick={() => { setSeries((x) => x.map(({ identifiant }) => ({ identifiant }))); setCourante(s.identifiant) }}>Rouvrir</button></div>)}
+    </details>}
+    {/* SN10 : des musiques déjà faites, assemblées en couches ou en morceaux qui s'enchaînent. */}
+    {/* Monté seulement ouvert : il relit alors les musiques gardées depuis. */}
+    {d.famille === "musique" && <details className="mt-[14px] text-[13px]" onToggle={(e) => setAdaptativeOuverte(e.currentTarget.open)}><summary>Une musique qui s'adapte</summary>
+      {adaptativeOuverte && <div className="mt-[8px]"><MusiqueAdaptative projet={projet} /></div>}
     </details>}
   </div>
 }

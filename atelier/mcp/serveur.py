@@ -1385,6 +1385,8 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
     installer_texte_son(serveur, atelier, _refus_lisible)
     from atelier.mcp.partition_son import installer_outils_partition_son
     installer_outils_partition_son(serveur, atelier, _refus_lisible)
+    from atelier.mcp.musique_adaptative import installer_musique_adaptative
+    installer_musique_adaptative(serveur, atelier, _refus_lisible)
     from atelier.mcp.sources_3d import installer_sources_3d
     installer_sources_3d(serveur, atelier, _refus_lisible)
     from atelier.mcp.enregistrer_sous import installer_enregistrer_sous

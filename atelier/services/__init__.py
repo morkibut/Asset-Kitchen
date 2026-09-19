@@ -622,6 +622,9 @@ class Atelier:
         # SN6 : les emplacements sonores d'un sujet. Sa livraison emporte ses
         # sons : la livraison du sujet, montée avant, les lui demande.
         self.sons_du_sujet = ServiceSonsDuSujet(self)
+        # SN10 : des musiques déjà faites, livrées en couches ou en morceaux qui s'enchaînent.
+        from atelier.services.musique_adaptative import ServiceMusiqueAdaptative
+        self.musique_adaptative = ServiceMusiqueAdaptative(self)
         self.livraison.sons_du_sujet = self.sons_du_sujet.paquet_pour_livraison
         # SN7 : les repères sonores des bandes ; la livraison du sujet en fait
         # une piste audio par animation dans son `AnimationPlayer`.

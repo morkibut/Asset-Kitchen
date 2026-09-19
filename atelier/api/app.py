@@ -37,6 +37,7 @@ from atelier.api.sons_du_sujet import routeur as routeur_sons_du_sujet
 from atelier.domaine.sons_du_sujet import SonsDuSujetRefuses
 from atelier.api.reperes_sonores import routeur as routeur_reperes_sonores
 from atelier.api.partition_son import routeur as routeur_partition_son
+from atelier.api.musique_adaptative import routeur as routeur_musique_adaptative
 from atelier.domaine.reperes_sonores import RepereRefuse
 from atelier.domaine.workflow import WorkflowRefuse
 from atelier.services.file_locale import FileLocaleRefusee
@@ -273,6 +274,7 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     application.include_router(routeur_sons_du_sujet, prefix="/api")
     application.include_router(routeur_reperes_sonores, prefix="/api")
     application.include_router(routeur_partition_son, prefix="/api")
+    application.include_router(routeur_musique_adaptative, prefix="/api")
     application.include_router(routeur_calques_cibles, prefix="/api")
     application.include_router(routeur_travaux_equipement, prefix="/api")
     application.include_router(routeur_tenues, prefix="/api")
