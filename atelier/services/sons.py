@@ -296,19 +296,7 @@ class ServiceSons:
 
     def _paquet_v2(self, son, wav, dossier_res):
         famille = FAMILLES[son["famille"]]
-        base = nom_stable(son["famille"], son["nom"])
-        boucle = son["mesures"]["boucle"]
-        taux = son["mesures"]["taux"]
-        if famille.format == "wav":
-            fichier, audio = base + ".wav", wav
-            params = params_wav(boucle)
-        else:
-            # Un OGG boucle de `loop_offset` jusqu'à sa fin : la fin de boucle
-            # devient la fin du fichier ; ce qui suit ne s'entendait jamais.
-            fichier = base + ".ogg"
-            audio = encoder_ogg(wav, famille.qualite_ogg, fin_echantillon=boucle["fin"] if boucle["active"] else None)
-            fin = boucle["fin"] if boucle["active"] else son["mesures"]["echantillons"]
-            params = params_ogg(boucle, taux, fin / taux, son["provenance"])
+        fichier, audio, params = fichier_de_famille(son, wav, son["famille"], nom_stable(son["famille"], son["nom"]))
         credits = {"atelier": "Asset Kitchen", "sons": [credit(son, fichier)]}
         scene = scene_son(fichier, famille.bus)
         manifeste = {"nature": "son", "nom": son["nom"], "son": son["identifiant"], "version_son": son["revision"],
@@ -383,6 +371,23 @@ def params_wav(boucle):
         ("edit/loop_mode", "2" if active else "1"),
         ("edit/loop_begin", str(int(boucle["debut"]) if active else 0)),
         ("edit/loop_end", str(int(boucle["fin"]) if active else -1)), ("compress/mode", "0")]
+
+
+def fichier_de_famille(son, wav, famille_cle, base):
+    """(nom du fichier, octets, options de l'importeur) d'un son livré par sa
+    famille sous le nom `base` : WAV tel quel, ou OGG coupé à la fin de sa
+    boucle. Le chemin commun d'un son seul, d'un jeu de variantes (SN4) et
+    des sons d'un sujet (SN6)."""
+    famille = FAMILLES[famille_cle]
+    boucle = son["mesures"]["boucle"]
+    taux = son["mesures"]["taux"]
+    if famille.format == "wav":
+        return base + ".wav", wav, params_wav(boucle)
+    # Un OGG boucle de `loop_offset` jusqu'à sa fin : la fin de boucle
+    # devient la fin du fichier ; ce qui suit ne s'entendait jamais.
+    audio = encoder_ogg(wav, famille.qualite_ogg, fin_echantillon=boucle["fin"] if boucle["active"] else None)
+    fin = boucle["fin"] if boucle["active"] else son["mesures"]["echantillons"]
+    return base + ".ogg", audio, params_ogg(boucle, taux, fin / taux, son["provenance"])
 
 
 def _nombre_positif(valeur):

@@ -324,7 +324,15 @@ def peupler(atelier: Atelier) -> None:
         assert jeu.status_code == 201, jeu.text
         print(f"  série terminée, {finie['compte']} — jeu de variantes « Pas sur la vase » ({jeu.json()['identifiant']})")
 
-        # ── 7 · Un dossier de jeu Godot, pour l'aperçu de livraison ─────────
+        # ── 7 · Un personnage, pour l'onglet « Sons » de sa fiche (SN6) ─────
+        pelerin = client.post("/api/characters", json={
+            "nom": "Le pèlerin",
+            "description": "a hooded pilgrim with a wooden staff and worn leather boots",
+        })
+        assert pelerin.status_code in (200, 201), pelerin.text
+        print(f"  personnage « Le pèlerin » ({pelerin.json()['personnage']['identifiant']}) — ses emplacements sont vides")
+
+        # ── 8 · Un dossier de jeu Godot, pour l'aperçu de livraison ─────────
         godot = Path(atelier.fichiers.racine) / "Jeu Godot"
         godot.mkdir(exist_ok=True)
         (godot / "project.godot").write_text(

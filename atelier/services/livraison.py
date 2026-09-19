@@ -169,6 +169,10 @@ class ServiceLivraison:
         self._base, self._fichiers, self._export = base, fichiers, export
         self._production, self._diffusion = production, diffusion
         self._racine = fichiers.racine / "livraisons"
+        # SN6 : `(projet, sujet) -> paquet | None`, les sons qui partent avec
+        # le sujet (`ServiceSonsDuSujet.paquet_pour_livraison`). Posé par
+        # l'atelier après montage ; absent, un sujet se livre sans ses sons.
+        self.sons_du_sujet = None
 
     def _dossier(self, projet: str) -> Path:
         if not self._base.lire_projet(projet):
@@ -317,7 +321,13 @@ class ServiceLivraison:
                      "y": pivot["y"] if pivot_y is None else pivot_y}
             if any(not isinstance(v, (int, float)) or not math.isfinite(v) or abs(v) > 8192 for v in pivot.values()):
                 raise LivraisonRefusee("Le pivot doit contenir des coordonnées finies en pixels, entre −8192 et 8192.")
-            revision = _empreinte(_json({"animations": liste, "pivot": pivot}))[:24]
+            # SN6 : les sons du sujet partent avec lui, sous leurs noms stables.
+            # Sans son, rien ne change : ni la révision, ni un octet du paquet.
+            sons = self.sons_du_sujet(projet, personnage) if self.sons_du_sujet else None
+            signe: dict[str, Any] = {"animations": liste, "pivot": pivot}
+            if sons:
+                signe["sons"] = {nom: _empreinte(octets) for nom, octets in sons["fichiers"].items()}
+            revision = _empreinte(_json(signe))[:24]
             racine = f"{association['sous_dossier']}/{_cle(projet)}/{cible}"
             version = f"{racine}/revisions/{revision}"
             fichiers: list[dict[str, Any]] = []
@@ -330,10 +340,21 @@ class ServiceLivraison:
                 for nom, empreinte in animation["octets"].items():
                     role = "aperçu animé" if nom.endswith("-anime.png") else "planche" if nom.endswith(".png") else "Aseprite"
                     ajouter(f"{version}/{nom}", role, self._octets(empreinte))
+            noeuds_sonores: list[dict[str, str]] = []
+            if sons:
+                from atelier.services.sons import fichier_import
+                dossier_sons = f"{version}/sons"
+                for nom, octets in sons["fichiers"].items():
+                    ajouter(f"{dossier_sons}/{nom}", "son" if nom.endswith((".wav", ".ogg")) else "ressource Godot"
+                            if nom.endswith(".tres") else "crédits", octets)
+                for nom, format_audio, params in sons["imports"]:
+                    ajouter(f"{dossier_sons}/{nom}.import", "import Godot",
+                            fichier_import(nom, format_audio, params, "res://" + dossier_sons))
+                noeuds_sonores = [{**n, "ressource": f"{dossier_sons}/{n['ressource']}"} for n in sons["noeuds"]]
             sprite_frames = f"{version}/animations.tres"
             ajouter(sprite_frames, "SpriteFrames", _sprite_frames(liste, version).encode("utf-8"))
             scene_revision = f"{version}/personnage.tscn"
-            ajouter(scene_revision, "scène de la révision", _scene(sprite_frames, liste[0]["nom"], pivot).encode("utf-8"))
+            ajouter(scene_revision, "scène de la révision", _scene(sprite_frames, liste[0]["nom"], pivot, noeuds_sonores).encode("utf-8"))
             scene = f"{racine}/personnage.tscn"
             ajouter(scene, "scène stable", _scene_stable(scene_revision).encode("utf-8"))
             manifeste = {"atelier": "Asset Kitchen", "format": 1, "projet": projet,
@@ -341,6 +362,10 @@ class ServiceLivraison:
                          "association": association, "pivot": pivot,
                          "animations": liste, "scene": scene,
                          "sprite_frames": sprite_frames, "fichiers": list(fichiers)}
+            if sons:
+                manifeste["sons"] = [{**e, "ressource": f"{version}/sons/{e['ressource']}"} for e in sons["entrees"]]
+                if sons["non_livres"]:
+                    manifeste["sons_non_livres"] = sons["non_livres"]
             ajouter(f"{racine}/livraison.json", "manifeste", _json(manifeste))
             jeton = uuid.uuid4().hex
             preparation = {**manifeste, "jeton": jeton, "fichiers": fichiers,
@@ -637,13 +662,22 @@ def _sprite_frames(animations: Sequence[dict[str, Any]], dossier: str) -> str:
             "\n\n".join(externes + atlas) + '\n\n[resource]\nanimations = [' + ",\n".join(bandes) + ']\n')
 
 
-def _scene(sprite_frames: str, animation: str, pivot: dict[str, float]) -> str:
-    return ('[gd_scene load_steps=2 format=3]\n\n'
-            f'[ext_resource type="SpriteFrames" path={_chaine("res://" + sprite_frames)} id="1"]\n\n'
+def _scene(sprite_frames: str, animation: str, pivot: dict[str, float],
+           sons: Sequence[dict[str, str]] = ()) -> str:
+    """La scène d'une révision. `sons` (SN6) : un `AudioStreamPlayer2D` par
+    emplacement sonore du sujet, nommé par son nom stable, sur le bus de sa
+    famille — le jeu les joue, SN7 y branchera la piste de l'animation.
+    Sans son, la scène est celle d'avant, octet pour octet."""
+    externes = "".join(f'[ext_resource type="AudioStream" path={_chaine("res://" + s["ressource"])} id="son_{i + 1}"]\n'
+                       for i, s in enumerate(sons))
+    noeuds = "".join(f'\n[node name={_chaine(s["nom"])} type="AudioStreamPlayer2D" parent="."]\n'
+                     f'stream = ExtResource("son_{i + 1}")\nbus = &{_chaine(s["bus"])}\n' for i, s in enumerate(sons))
+    return (f'[gd_scene load_steps={2 + len(sons)} format=3]\n\n'
+            f'[ext_resource type="SpriteFrames" path={_chaine("res://" + sprite_frames)} id="1"]\n{externes}\n'
             '[node name="Personnage" type="AnimatedSprite2D"]\n'
             'texture_filter = 1\nsprite_frames = ExtResource("1")\n'
             f'animation = &{_chaine(animation)}\nautoplay = {_chaine(animation)}\n'
-            f'centered = false\noffset = Vector2({-pivot["x"]}, {-pivot["y"]})\n')
+            f'centered = false\noffset = Vector2({-pivot["x"]}, {-pivot["y"]})\n{noeuds}')
 
 
 def _scene_stable(scene: str, noeud: str = "Personnage") -> str:

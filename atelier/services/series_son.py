@@ -127,13 +127,20 @@ class ServiceSeriesSon:
         prompt = demande.get("prompt") if isinstance(demande.get("prompt"), str) else ""
         return prompt.strip()[:120] or ETIQUETTES.get(demande.get("famille"), "Son")
 
-    async def preparer(self, projet, brut, acteur="auteur"):
+    async def preparer(self, projet, brut, acteur="auteur", *, emplacement=None):
+        """`emplacement` (SN6) : `{sujet, cle}` quand la série part d'un
+        emplacement d'un sujet — « Garder » range alors dans le jeu de cet
+        emplacement (`ServiceSonsDuSujet.garder_depuis_serie`). Il passe par
+        `ServiceSonsDuSujet.preparer_serie`, jamais par le corps d'une route."""
         if acteur not in ("auteur", "agent"):
             raise TravailRefuse("La demande de série contient un réglage inconnu.")
         cle, nombre, nom, demande = self._lire_demande(brut)
         identifiant = _hash(("serie\0" + projet + "\0" + cle).encode())[:32]
         try:
-            empreinte = _hash(_json({"demande": demande, "nombre": nombre, "nom": nom, "acteur": acteur}))
+            signe = {"demande": demande, "nombre": nombre, "nom": nom, "acteur": acteur}
+            if emplacement is not None:  # absent, l'empreinte d'avant SN6 ne bouge pas
+                signe["emplacement"] = emplacement
+            empreinte = _hash(_json(signe))
         except (TypeError, ValueError) as e:
             raise TravailRefuse("Les options doivent contenir des valeurs JSON finies.") from e
         chemin = self._chemin(projet, identifiant)
@@ -153,6 +160,8 @@ class ServiceSeriesSon:
                  "demande": demande, "cree_le": time.time(),
                  "tirages": [{"rang": r, "cle": f"serie:{cle}:{r:02d}", "nom": base} for r in range(1, nombre + 1)],
                  "annonce": self.temps(profil["modele"], nombre)}
+        if emplacement is not None:
+            serie["emplacement"] = {"sujet": emplacement["sujet"], "cle": emplacement["cle"]}
         if compo is not None and "texte_relu" not in demande:
             # Le modèle et le texte composé sont figés à la préparation : une
             # reprise après un changement de l'univers ou une réinstallation
@@ -244,9 +253,17 @@ class ServiceSeriesSon:
         else:
             etat, action = "externe_inconnu", "verifier_chez_le_fournisseur"
         jeux = [j["identifiant"] for j in self.a.variantes_son.bruts(projet) if j.get("serie") == identifiant]
+        extra = {}
+        if serie.get("emplacement"):
+            # Le jeu de l'emplacement se rouvre avec la série, même formé par
+            # une série précédente du même emplacement (SN6).
+            du_lieu = self.a.sons_du_sujet.jeu_de(projet, serie["emplacement"]["sujet"], serie["emplacement"]["cle"])
+            if du_lieu and du_lieu not in jeux:
+                jeux.append(du_lieu)
+            extra["emplacement"] = self.a.sons_du_sujet.decrire(projet, serie["emplacement"])
         return {k: v for k, v in serie.items() if k not in ("empreinte",)} | {
             "tirages": tirages, "compte": compte, "etat": etat, "prochaine_action": action,
-            "reste": self.temps(serie["modele"], restants), "jeux": jeux}
+            "reste": self.temps(serie["modele"], restants), "jeux": jeux} | extra
 
     def lister(self, projet):
         dossier = self._dossier(projet)
@@ -323,6 +340,9 @@ class ServiceSeriesSon:
             sons = brut.get("sons")
             if not isinstance(sons, list) or not sons or any(s not in a_moi for s in sons):
                 raise TravailRefuse("Gardez des sons rendus par cette série.")
+        if serie.get("emplacement"):
+            # SN6 : une série lancée depuis un emplacement range dans son jeu.
+            return self.a.sons_du_sujet.garder_depuis_serie(projet, serie, sons, appliquer)
         famille = brut.get("famille", serie["famille"])
         # Le même chemin que l'ajout d'un son à un jeu déjà formé : un son qui
         # porte déjà les réglages de sa famille ne reçoit pas de version de plus.

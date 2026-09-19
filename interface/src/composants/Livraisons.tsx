@@ -3,6 +3,7 @@ import { api, Refus, type ApercuLivraison, type Bande, type DecisionSurConflit, 
 import { BandeQuiTourne } from "./Apercu"
 import { Sortie } from "./Sortie"
 import { ImagesALivrer } from "./ImagesALivrer"
+import { SonsALivrer, SonsDuSujetALivrer } from "./SonsALivrer"
 
 const champ = "rounded-7 border border-contour bg-carte px-[8px] py-[8px] text-[13px] text-encre"
 const bouton = "rounded-7 border border-contour px-[14px] py-[8px] text-[13px] text-encre-controle disabled:opacity-50"
@@ -42,7 +43,7 @@ function LivraisonDuJeu({ projet, onFerme }: { projet: string; onFerme: () => vo
   const [sujets, setSujets] = useState<Personnage[]>([])
   const [sujetId, setSujetId] = useState("")
   const [choisies, setChoisies] = useState<string[]>([])
-  const [nature, setNature] = useState<"animation" | "image">("animation")
+  const [nature, setNature] = useState<"animation" | "image" | "son">("animation")
   const [boucles, setBoucles] = useState<Record<string, boolean>>({})
   const [dossier, setDossier] = useState("")
   const [sousDossier, setSousDossier] = useState("assets/asset-kitchen")
@@ -129,8 +130,9 @@ function LivraisonDuJeu({ projet, onFerme }: { projet: string; onFerme: () => vo
         {!sujets.length && <option value="">Aucun sujet créé</option>}
         {sujets.map(s => <option key={s.identifiant} value={s.identifiant}>{s.nom}</option>)}
       </select></label>
-      <div className="flex gap-[8px]" aria-label="Nature des versions"><button className={bouton} aria-pressed={nature === "animation"} onClick={() => { invalider(); setNature("animation") }}>Animations</button><button className={bouton} aria-pressed={nature === "image"} onClick={() => { invalider(); setNature("image") }}>Images fixes</button></div>
-      {nature === "image" ? sujetId && <ImagesALivrer key={sujetId} projet={projet} personnage={sujetId} associe={associe} onApercu={setApercu} onInvalider={invalider} onOccupation={setOccupe} /> : <>
+      <div className="flex gap-[8px]" aria-label="Nature des versions"><button className={bouton} aria-pressed={nature === "animation"} onClick={() => { invalider(); setNature("animation") }}>Animations</button><button className={bouton} aria-pressed={nature === "image"} onClick={() => { invalider(); setNature("image") }}>Images fixes</button><button className={bouton} aria-pressed={nature === "son"} onClick={() => { invalider(); setNature("son") }}>Sons</button></div>
+      {nature === "son" ? <SonsALivrer projet={projet} /> : nature === "image" ? sujetId && <ImagesALivrer key={sujetId} projet={projet} personnage={sujetId} associe={associe} onApercu={setApercu} onInvalider={invalider} onOccupation={setOccupe} /> : <>
+      {sujetId && <SonsDuSujetALivrer projet={projet} sujet={sujetId} />}
       {!bandes.length && <p className="text-[13px] text-encre-3">Ce sujet n’a pas encore d’animation. Crée ou importe un clip, puis garde une bande dans le montage.</p>}
       {!!brouillons.length && <p role="status" className="rounded-7 border border-trait bg-papier-cote p-[8px] text-[11.5px] text-encre-3">
         {brouillons.length} brouillon{brouillons.length > 1 ? "s" : ""} mis de côté : {brouillons.map(b => b.nom).join(", ")}. Donne-leur leur mouvement et leur direction pour pouvoir les livrer — sans case visée, leur nom dans le jeu changerait le jour où on les range.

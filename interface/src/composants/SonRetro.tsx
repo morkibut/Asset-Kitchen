@@ -21,9 +21,14 @@ const DEPARTS: [string, string][] = [["clic", "Clic"], ["survol", "Survol"], ["v
 const nomDuDepart = (id: string) => DEPARTS.find(([i]) => i === id)?.[1] ?? id
 const NOMBRES = [4, 8, 12]
 
-export function SonRetro({ projet, onRegler }: { projet: string; onRegler?: (son: string) => void }) {
+export function SonRetro({ projet, onRegler, departInitial = "clic", nomDuJeu, onJeu }: {
+  projet: string; onRegler?: (son: string) => void
+  /** SN6 : depuis l'emplacement d'un sujet — son départ (clic, survol…),
+   *  le nom stable du jeu formé, et `onJeu` pour le poser sur l'emplacement. */
+  departInitial?: string; nomDuJeu?: string; onJeu?: (jeu: JeuVariantes) => void
+}) {
   const [departs, setDeparts] = useState<string[]>([])
-  const [depart, setDepart] = useState("clic")
+  const [depart, setDepart] = useState(departInitial)
   const [nombre, setNombre] = useState(8)
   const [sons, setSons] = useState<Son[]>([])
   const [jeu, setJeu] = useState<JeuVariantes | null>(null)
@@ -41,7 +46,8 @@ export function SonRetro({ projet, onRegler }: { projet: string; onRegler?: (son
     return () => { vivant = false }
   }, [projet])
 
-  const garde = useGarde({ projet, jeu, onJeu: setJeu, former: (son) => formerJeuSfxr(projet, son, nomDuDepart(depart)) })
+  const ranger = (j: JeuVariantes) => { setJeu(j); onJeu?.(j) }
+  const garde = useGarde({ projet, jeu, onJeu: ranger, former: (son) => formerJeuSfxr(projet, son, nomDuJeu ?? nomDuDepart(depart)) })
   const tirer = async (geste: () => Promise<Son[]>, bouton: HTMLButtonElement) => {
     // Le bouton rend le focus : Espace écoute ensuite le tirage choisi, il ne retire pas.
     bouton.blur()
@@ -84,7 +90,7 @@ export function SonRetro({ projet, onRegler }: { projet: string; onRegler?: (son
     {sons.length > 0 && <section aria-label="Les sons rétro" className="mt-[14px]">
       <GrilleEcoute projet={projet} tuiles={tuiles} gardes={gardes} onGarder={basculer} onRegler={onRegler} />
       {gardes.size === 0 && <p className="mt-[14px] text-[12px] text-encre-3">Gardez un ou plusieurs sons. Les autres restent dans la galerie.</p>}
-      {jeu && jeu.membres.length > 0 && <div className="mt-[14px]"><JeuDeVariantes projet={projet} jeu={jeu} onJeu={setJeu} onRegler={onRegler} /></div>}
+      {jeu && jeu.membres.length > 0 && <div className="mt-[14px]"><JeuDeVariantes projet={projet} jeu={jeu} onJeu={ranger} onRegler={onRegler} /></div>}
     </section>}
   </>
 }

@@ -2453,6 +2453,7 @@ function AtelierApp() {
           onDecouper={(id) => ouvrirLaRetouche(id, "decoupage")}
           onExtraire={(id) => ouvrirLaRetouche(id, "superposition")}
           onLivrer={() => setSortieOuverte(true)}
+          onSon={(identifiant) => setSonsOuverts({ identifiant })}
           ouvert={choseOuverte}
           plan={plan}
           // **L'onglet survit au montage de la retouche** (`B25`) : elle prend

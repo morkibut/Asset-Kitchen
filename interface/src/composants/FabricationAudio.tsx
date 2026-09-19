@@ -82,6 +82,24 @@ type Demande = {
 }
 const nouvelle = (modele?: string): Demande => ({ famille: "bruitage", mode: "jingle", textes: {}, durees: {}, tirages: {}, moteurs: modele ? { bruitage: modele } : {},
   musique: { tempo: null, tonalite: "", mesure: 4, mesures: 16 }, paroles: PAROLES, manuel: null })
+/** La famille du serveur, en puce de l'écran (« Chanson et jingle » en porte deux). */
+const familleEcran = (f: FamilleSon): FamilleEcran => f === "jingle" ? "chanson" : f
+/** La demande d'un emplacement (SN6) : sa famille, et le texte proposé tel qu'il est. */
+const depuisEmplacement = (e: PourEmplacement): Demande => {
+  const fe = familleEcran(e.famille)
+  return { ...nouvelle(), famille: fe, mode: e.famille === "chanson" ? "chanson" : "jingle", textes: { [fe]: e.texte } }
+}
+
+/** **Une série depuis l'emplacement d'un sujet** (SN6) : la famille est celle
+ *  de l'emplacement, le texte proposé part de l'emplacement et de la
+ *  description du sujet — il se lit et se corrige dans la case, rien n'est
+ *  réécrit. La série se prépare par la route de l'emplacement : « Garder »
+ *  range alors dans son jeu. `series` : celles déjà lancées d'ici, la
+ *  dernière rouverte. */
+export type PourEmplacement = {
+  cle: string; famille: FamilleSon; texte: string; nom: string; series: string[]
+  preparer: (corps: DemandeSon & { cle: string; nombre: number; nom?: string }) => Promise<Serie>
+}
 
 const familleServeur = (d: Demande): FamilleSon => d.famille === "chanson" ? d.mode : d.famille
 const texteDe = (d: Demande) => d.textes[d.famille] ?? ""
@@ -178,8 +196,8 @@ export function FabricationAudio({ projet, modeleInitial = "", identifiantInitia
   return autonome ? <CadreDialogue titre="Un son" onFermer={onFermer} enfants={tout} /> : tout
 }
 
-function UnSon({ projet, modeleInitial, onSon }: { projet: string; modeleInitial?: string; onSon?: (id: string) => void }) {
-  const [depart] = useState<Demande>(() => nouvelle(modeleInitial || undefined))
+export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: string; modeleInitial?: string; onSon?: (id: string) => void; emplacement?: PourEmplacement }) {
+  const [depart] = useState<Demande>(() => emplacement ? depuisEmplacement(emplacement) : nouvelle(modeleInitial || undefined))
   const [d, setD] = useState(depart)
   const [panneau, setPanneau] = useState<"relire" | "reglages" | null>(null)
   const [defauts, setDefauts] = useState<Partial<Record<FamilleSon, MoteurDeFamille>>>({})
@@ -188,17 +206,26 @@ function UnSon({ projet, modeleInitial, onSon }: { projet: string; modeleInitial
   const [annonce, setAnnonce] = useState<Annonce | null>(null)
   const [refus, setRefus] = useState("")
   const [relecture, setRelecture] = useState(false)
-  const [series, setSeries] = useState<{ identifiant: string; initiale?: Serie }[]>([])
-  const [courante, setCourante] = useState<string | null>(null)
+  // Les séries vivent côté serveur : celles de l'emplacement, ou les plus
+  // récentes du jeu, se retrouvent après un rechargement (écart connu jusqu'à SN6).
+  const [series, setSeries] = useState<{ identifiant: string; initiale?: Serie; nom?: string }[]>(() => (emplacement?.series ?? []).map((identifiant) => ({ identifiant })))
+  const [courante, setCourante] = useState<string | null>(() => emplacement?.series.at(-1) ?? null)
   const [erreur, setErreur] = useState("")
   const [occupe, setOccupe] = useState(false)
-  const brouillon = useBrouillonLocal({ cle: `son:${projet}`, pret: true, reference: depart, etat: d, appliquer: setD, ecran: "Un son", quoi: texteDe(d) || FAMILLES[d.famille].nom })
+  const brouillon = useBrouillonLocal({ cle: emplacement ? `son:${projet}:${emplacement.cle}` : `son:${projet}`, pret: true, reference: depart, etat: d, appliquer: setD, ecran: emplacement ? emplacement.nom : "Un son", quoi: texteDe(d) || FAMILLES[d.famille].nom })
 
   useEffect(() => {
     let vivant = true
     texteSon.moteurs(projet).then((r) => { if (vivant) setDefauts(r.familles) }).catch(() => {})
     workflows.lister().then((r) => { if (vivant) setProfils(r.profils.filter((p) => p.nature === "audio")) }).catch(() => {})
+    // « Un son » retrouve ses séries récentes (celles d'un emplacement restent sur la fiche du sujet).
+    if (!emplacement) Promise.resolve().then(() => seriesSon.lister(projet)).then((liste) => {
+      if (!vivant || !Array.isArray(liste)) return
+      const recentes = liste.filter((s) => !s.emplacement).slice(0, 8).reverse()
+      setSeries((x) => [...recentes.filter((r) => !x.some((e) => e.identifiant === r.identifiant)).map((r) => ({ identifiant: r.identifiant, nom: r.nom })), ...x])
+    }).catch(() => {})
     return () => { vivant = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projet])
 
   const fs = familleServeur(d)
@@ -249,7 +276,9 @@ function UnSon({ projet, modeleInitial, onSon }: { projet: string; modeleInitial
     bouton.blur()
     setOccupe(true); setErreur("")
     try {
-      const s = await seriesSon.preparer(projet, { ...corps, cle: crypto.randomUUID(), nombre: n })
+      const s = emplacement
+        ? await emplacement.preparer({ ...corps, cle: crypto.randomUUID(), nombre: n, nom: emplacement.nom })
+        : await seriesSon.preparer(projet, { ...corps, cle: crypto.randomUUID(), nombre: n })
       setSeries((x) => [...x.map(({ identifiant }) => ({ identifiant })), { identifiant: s.identifiant, initiale: s }]); setCourante(s.identifiant)
       brouillon.effacer()
       try {
@@ -290,12 +319,14 @@ function UnSon({ projet, modeleInitial, onSon }: { projet: string; modeleInitial
   const precedentes = series.filter((s) => s.identifiant !== courante)
   const temps = annonce?.annonce.temps_s
 
-  return <div className="defile min-h-0 flex-1 space-y-[14px] overflow-y-auto p-[30px]">
+  // Depuis un emplacement, la famille est la sienne : une seule puce, allumée.
+  const puces = emplacement ? [familleEcran(emplacement.famille)] : Object.keys(FAMILLES) as FamilleEcran[]
+  return <div className={emplacement ? "space-y-[14px]" : "defile min-h-0 flex-1 space-y-[14px] overflow-y-auto p-[30px]"}>
     <AvisBrouillon brouillon={brouillon} />
     <section aria-label="La demande" className="grid max-w-[880px] gap-[8px] rounded-8 border border-trait bg-carte p-[14px]">
       <div className="flex flex-wrap items-center gap-[8px]" role="group" aria-label="Famille">
-        {(Object.keys(FAMILLES) as FamilleEcran[]).map((id) => <button key={id} type="button" className={PUCE} aria-pressed={d.famille === id} disabled={FAMILLES[id].aVenir}
-          onClick={() => { changer({ famille: id, manuel: null }); setPanneau(null) }}>{FAMILLES[id].nom}{FAMILLES[id].aVenir ? " · à venir" : ""}</button>)}
+        {puces.map((id) => <button key={id} type="button" className={PUCE} aria-pressed={d.famille === id} disabled={FAMILLES[id].aVenir}
+          onClick={() => { if (emplacement) return; changer({ famille: id, manuel: null }); setPanneau(null) }}>{FAMILLES[id].nom}{FAMILLES[id].aVenir ? " · à venir" : ""}</button>)}
       </div>
 
       {d.famille === "interface" ? <SonRetro projet={projet} onRegler={onSon} /> : <>
@@ -353,7 +384,7 @@ function UnSon({ projet, modeleInitial, onSon }: { projet: string; modeleInitial
       ? <SerieSon key={serieCourante.identifiant} projet={projet} identifiant={serieCourante.identifiant} initiale={serieCourante.initiale} titre={`Série ${series.indexOf(serieCourante) + 1}`} onRegler={onSon} />
       : <div className="mt-[22px] rounded-8 border border-dashed border-pointille px-[22px] py-[34px] text-[13px] text-encre-3">Les tirages arrivent ici, à écouter et à garder.</div>)}
     {sonore && precedentes.length > 0 && <details className="mt-[14px] text-[13px]"><summary>Séries précédentes · {precedentes.length}</summary>
-      {series.map((s, k) => s.identifiant === courante ? null : <div key={s.identifiant} className="flex items-center justify-between gap-[14px] py-[8px]"><span>Série {k + 1}</span>
+      {series.map((s, k) => s.identifiant === courante ? null : <div key={s.identifiant} className="flex items-center justify-between gap-[14px] py-[8px]"><span>Série {k + 1}{s.nom ? <span className="text-encre-3"> · {s.nom}</span> : null}</span>
         <button type="button" className={PETIT} onClick={() => { setSeries((x) => x.map(({ identifiant }) => ({ identifiant }))); setCourante(s.identifiant) }}>Rouvrir</button></div>)}
     </details>}
   </div>

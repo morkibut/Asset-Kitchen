@@ -84,6 +84,7 @@ from atelier.services.travaux_3d import ServiceTravaux3D
 from atelier.services.travaux_audio import ServiceTravauxAudio
 from atelier.services.series_son import ServiceSeriesSon
 from atelier.services.variantes_son import ServiceVariantesSon
+from atelier.services.sons_du_sujet import ServiceSonsDuSujet
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.planche_animee import ServicePlancheAnimee
 from atelier.services.equipement import ServiceEquipement
@@ -614,6 +615,10 @@ class Atelier:
         # SN3 : une série = N travaux audio ; un jeu de variantes = des sons par référence.
         self.series_son = ServiceSeriesSon(self)
         self.variantes_son = ServiceVariantesSon(self)
+        # SN6 : les emplacements sonores d'un sujet. Sa livraison emporte ses
+        # sons : la livraison du sujet, montée avant, les lui demande.
+        self.sons_du_sujet = ServiceSonsDuSujet(self)
+        self.livraison.sons_du_sujet = self.sons_du_sujet.paquet_pour_livraison
         self.sortie = ServiceSortie(
             self.base,
             self.fichiers,

@@ -52,6 +52,8 @@ export type SerieSon = {
   prochaine_action: string; reste: AnnonceTemps; jeux: string[]
   refus?: { rang: number; raison: string }[]
   relances?: number[]; laisses?: { rang: number; etat: string; raison: string }[]
+  /** SN6 : la série part de l'emplacement d'un sujet ; « Garder » range dans son jeu. */
+  emplacement?: { sujet: string; cle: string; nom_sujet: string | null; nom: string | null; famille: FamilleSon | null }
 }
 
 export type MembreJeu = {
@@ -87,6 +89,8 @@ export const seriesSon = {
   annoncer: (p: string, d: DemandeSon & { nombre: number }) => appeler<Annonce>(`${base(p)}/audio-series/estimate`, poster(d)),
   preparer: (p: string, d: DemandeSon & { cle: string; nombre: number; nom?: string }) => appeler<SerieSon>(`${base(p)}/audio-series/prepare`, poster(d)),
   lire: (p: string, id: string) => appeler<SerieSon>(serie(p, id)),
+  /** Toutes les séries du jeu, la plus récente d'abord. */
+  lister: (p: string) => appeler<SerieSon[]>(`${base(p)}/audio-series`),
   demarrer: (p: string, id: string) => appeler<SerieSon>(`${serie(p, id)}/start`, { method: "POST" }),
   reprendre: (p: string, id: string) => appeler<SerieSon>(`${serie(p, id)}/resume`, { method: "POST" }),
   /** Le premier « Garder » d'une série : forme son jeu de variantes et pose

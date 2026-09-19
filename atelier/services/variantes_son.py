@@ -12,13 +12,12 @@ import json
 import time
 import uuid
 
-from atelier.audio.traitement import encoder_ogg
 from atelier.depot.verrou import VerrouOccupe, verrou
 from atelier.domaine.son import FAMILLES, RecetteSon, SonRefuse, recette_proposee
 from atelier.domaine.travail import TravailRefuse
 from atelier.domaine.variantes_son import (
     VariantesRefusees, famille_du_jeu, identifiant_valide, nom_valide, statut_membre)
-from atelier.services.sons import _json_lisible, credit, fichier_import, nom_stable, params_ogg, params_wav, ressource_variantes, scene_son
+from atelier.services.sons import _json_lisible, credit, fichier_de_famille, fichier_import, nom_stable, ressource_variantes, scene_son
 from atelier.services.travaux import _hash, _json
 
 
@@ -240,6 +239,22 @@ class ServiceVariantesSon:
 
     # ── Livrer (SN4) ─────────────────────────────────────────────────────
 
+    def fichiers_des_membres(self, projet, membres, famille_cle, base):
+        """Les fichiers audio des sons livrables d'un jeu, numérotés sur deux
+        chiffres sous `base` : (contenus, options d'import par fichier, noms
+        dans l'ordre, crédits). Le jeu seul (SN4) et les sons d'un sujet (SN6)
+        passent par ici."""
+        contenus, params_par_fichier, fichiers_audio, credits_sons = {}, {}, [], []
+        for rang, identifiant in enumerate(membres, start=1):
+            son = self.a.sons.lire(projet, identifiant)
+            wav = self.a.sons.rendu(projet, identifiant, son["revision"]).read_bytes()
+            fichier, audio, params = fichier_de_famille(son, wav, famille_cle, f"{base}_{rang:02d}")
+            contenus[fichier] = audio
+            params_par_fichier[fichier] = params
+            fichiers_audio.append(fichier)
+            credits_sons.append(credit(son, fichier))
+        return contenus, params_par_fichier, fichiers_audio, credits_sons
+
     def prevoir_livraison(self, projet, jeu):
         """(Aperçu de livraison) : chaque son livrable du jeu comme dans le
         paquet v2 d'un son (fichier + `.import`), sous un nom stable numéroté
@@ -258,23 +273,7 @@ class ServiceVariantesSon:
             raise VariantesRefusees("Ce jeu de variantes ne contient aucun son livrable. " + (raisons or "Gardez-y au moins un son prêt."))
         famille = FAMILLES[famille_cle]
         base = nom_stable(famille_cle, objet["nom"])
-        contenus, credits_sons, params_par_fichier, fichiers_audio = {}, [], {}, []
-        for rang, identifiant in enumerate(membres, start=1):
-            son = self.a.sons.lire(projet, identifiant)
-            wav = self.a.sons.rendu(projet, identifiant, son["revision"]).read_bytes()
-            boucle, taux = son["mesures"]["boucle"], son["mesures"]["taux"]
-            nom_membre = f"{base}_{rang:02d}"
-            if famille.format == "wav":
-                fichier, audio, params = nom_membre + ".wav", wav, params_wav(boucle)
-            else:
-                fichier = nom_membre + ".ogg"
-                audio = encoder_ogg(wav, famille.qualite_ogg, fin_echantillon=boucle["fin"] if boucle["active"] else None)
-                fin = boucle["fin"] if boucle["active"] else son["mesures"]["echantillons"]
-                params = params_ogg(boucle, taux, fin / taux, son["provenance"])
-            contenus[fichier] = audio
-            params_par_fichier[fichier] = params
-            fichiers_audio.append(fichier)
-            credits_sons.append(credit(son, fichier))
+        contenus, params_par_fichier, fichiers_audio, credits_sons = self.fichiers_des_membres(projet, membres, famille_cle, base)
         ressource = base + ".tres"
         contenus[ressource] = ressource_variantes(fichiers_audio)
         contenus["son.tscn"] = scene_son(ressource, famille.bus)

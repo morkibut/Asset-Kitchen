@@ -13,7 +13,7 @@ vi.mock("../api-travaux-audio", () => ({ travauxAudio: { preparer: vi.fn(), lire
 vi.mock("../api-workflows", () => ({ workflows: { lister: vi.fn() } }))
 vi.mock("../api-series-son", () => ({
   texteSon: { composer: vi.fn(), moteurs: vi.fn() },
-  seriesSon: { annoncer: vi.fn(), preparer: vi.fn(), demarrer: vi.fn(), lire: vi.fn(), reprendre: vi.fn(), garder: vi.fn() },
+  seriesSon: { annoncer: vi.fn(), preparer: vi.fn(), demarrer: vi.fn(), lire: vi.fn(), reprendre: vi.fn(), garder: vi.fn(), lister: vi.fn() },
   jeuxDeVariantes: { lire: vi.fn(), renommer: vi.fn(), lister: vi.fn(), creer: vi.fn(), ajouter: vi.fn(), retirer: vi.fn() },
   ecoute: { onde: vi.fn(), adresse: (p: string, id: string, r: number) => `/api/projects/${p}/sounds/${id}/preview.wav?revision=${r}&brut=false` },
 }))
@@ -53,6 +53,7 @@ beforeEach(() => {
   const recus = { musique: ["paroles", "tempo", "tonalite", "mesure"], jingle: ["paroles", "tempo", "tonalite", "mesure"], chanson: ["paroles", "tempo"] } as const
   vi.mocked(texteSon.composer).mockImplementation(async (_p, d) => compo(d.prompt, { reglages_recus: [...(recus[d.famille as keyof typeof recus] ?? [])] }))
   vi.mocked(seriesSon.annoncer).mockResolvedValue(annonce(42))
+  vi.mocked(seriesSon.lister).mockResolvedValue([])
   vi.mocked(ecoute.onde).mockResolvedValue({ duree: 1, taux: 44100, canaux: 1, canaux_ondes: [{ minimum: [-0.5], maximum: [0.5] }] })
   vi.mocked(travauxAudio.lire).mockResolvedValue(t)
   vi.mocked(travauxAudio.lancer).mockResolvedValue({ ...t, etat: "termine", son: "son-recu" })
@@ -242,4 +243,19 @@ test("le journal ouvre un travail audio sans lui demander de personnage ou de pa
   fireEvent.click(await screen.findByRole("button", { name: "Écouter et retoucher le son reçu" }))
   expect(onSon).toHaveBeenCalledWith("son-recu")
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+})
+
+test("après un rechargement, « Un son » retrouve ses séries récentes et les rouvre (SN6)", async () => {
+  const ancienne = serie([tirageRendu(1)], { identifiant: "ancienne", nom: "Rain on a tin roof" })
+  const duSujet = serie([tirageRendu(1)], { identifiant: "du-sujet", emplacement: { sujet: "heros", cle: "pas", nom_sujet: "Le héros", nom: "Pas", famille: "bruitage" } })
+  vi.mocked(seriesSon.lister).mockResolvedValue([duSujet, ancienne])
+  vi.mocked(seriesSon.lire).mockResolvedValue(ancienne)
+  render(<FabricationAudio projet="jeu" onFermer={vi.fn()} />)
+  // Celles d'un emplacement restent sur la fiche du sujet.
+  const precedentes = await screen.findByText("Séries précédentes · 1")
+  fireEvent.click(precedentes)
+  expect(screen.getByText("· Rain on a tin roof", { exact: false })).toBeInTheDocument()
+  fireEvent.click(screen.getByRole("button", { name: "Rouvrir" }))
+  await waitFor(() => expect(seriesSon.lire).toHaveBeenCalledWith("jeu", "ancienne"))
+  expect(await screen.findByRole("region", { name: "Série 1" })).toBeInTheDocument()
 })

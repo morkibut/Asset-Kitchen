@@ -12,10 +12,11 @@ import { TenuesDuSujet } from "./TenuesDuSujet"
 import { ObjectifDuSujet } from "./ObjectifDuSujet"
 import { SourcesDuSujet } from "./SourcesDuSujet"
 import { EnAttenteDuSujet } from "./EnAttenteDuSujet"
+import { SonsDuSujet } from "./SonsDuSujet"
 import { FicheDuSujet, portraitDe } from "./FicheDuSujet"
 import { useScrollDuParcours } from "./MemoireDuParcours"
 
-export type Onglet = "fiche" | "images" | "animations" | "sources" | "attente" | "equipement" | "objectif" | "essai"
+export type Onglet = "fiche" | "images" | "animations" | "sources" | "attente" | "equipement" | "sons" | "objectif" | "essai"
 // **« Pas encore rangé » est entre les sources et l'équipement, et sa place dit
 // ce qu'il est** (`AU20`) : le dernier des trois onglets qui montrent *ce qui
 // existe pour ce sujet*, avant ceux qui décrivent ce qu'il doit devenir. Les
@@ -27,6 +28,9 @@ const ONGLETS: readonly { clef: Onglet; nom: string }[] = [
   { clef: "sources", nom: "Sources & clips" },
   { clef: "attente", nom: "Pas encore rangé" },
   { clef: "equipement", nom: "Équipement" },
+  // **Sons** (SN6) : les emplacements sonores du sujet — sixième de la liste
+  // fermée de `docs/vocabulaire.html`, avant ce qu'il doit devenir.
+  { clef: "sons", nom: "Sons" },
   { clef: "objectif", nom: "Objectif & règles" },
 ]
 type CeQueLaFicheLit = { bareme: Echelle[]; siennes: Collection[] | null; groupes: GroupeDeRangement[] }
@@ -140,6 +144,8 @@ export function PageDuSujet(proprietes: {
   onImporter?: (cible?: { pose: string; direction?: string }) => void
   onDecouper?: (asset: string) => void
   onExtraire?: (asset: string) => void
+  /** Ouvrir la fiche d'un son (SN6, onglet *Sons*) : l'écouter et le régler. */
+  onSon?: (son: string) => void
 }) {
   const { ouvert, plan, onFente } = proprietes
   const [ongletTenuIci, setOngletTenuIci] = useState<Onglet>(() => ongletInitial(ouvert))
@@ -425,7 +431,8 @@ export function PageDuSujet(proprietes: {
         {onglet === "equipement" && <div><VestiaireDuSujet personnage={ouvert}
           vestiaire={proprietes.vestiaire} onPiece={proprietes.onPiece} onEmploi={proprietes.onEmploiEquipement} onCreerPiece={proprietes.onCreerPiece}
           onRetirerLEmploi={proprietes.onRetirerLEmploi} /><TenuesDuSujet personnage={ouvert} vestiaire={proprietes.vestiaire} onEmploi={proprietes.onEmploiEquipement} onLivraisons={proprietes.onLivrer} /></div>}
-        {onglet === "objectif" && <div><ObjectifDuSujet personnage={ouvert} projet={ouvert.projet} onChange={proprietes.onObjectifChange} /></div>}
+        {onglet === "sons" && <SonsDuSujet projet={ouvert.projet} sujet={ouvert.identifiant} nomSujet={ouvert.nom} onRegler={proprietes.onSon} />}
+        {onglet === "objectif" &&<div><ObjectifDuSujet personnage={ouvert} projet={ouvert.projet} onChange={proprietes.onObjectifChange} /></div>}
       </div>
     </main>
   )
