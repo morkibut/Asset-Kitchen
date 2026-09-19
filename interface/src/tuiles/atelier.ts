@@ -741,6 +741,39 @@ export function enClair(p: string): string {
   return "Un autre défaut : voir le détail."
 }
 
+const RANGEE_DESSUS_MUR = WALL_TOP_ROWS as number
+const ETATS_BANDE_MUR = WALL_BAND_STATES as { id: string }[]
+const NOM_BANDE_LIGNE: Record<string, number> = { face: RANGEE_DESSUS_MUR, base: RANGEE_DESSUS_MUR + 1, shadow: RANGEE_DESSUS_MUR + 2 }
+
+/** La case de la planche que désigne un défaut de `verifier`, pour la surligner
+ *  (TU9). Les messages viennent de `tile-check.js` (NE PAS MODIFIER) : on les relit
+ *  sans en changer la forme. `null` quand le défaut ne désigne aucune case précise
+ *  (un biais ou une pente du mur, par exemple) — le clic reste alors sans effet. */
+export function pieceDeDefaut(j: JeuEdite, defaut: string): { col: number; row: number } | null {
+  const S = SORTES[j.sorte]
+  const c = /case\s*(?:libre\s*)?\((\d+),\s*(\d+)\)/.exec(defaut)
+  if (c) return { col: Number(c[1]), row: Number(c[2]) }
+  const bande = /^Bande (\w+)/.exec(defaut)
+  if (bande) {
+    const row = NOM_BANDE_LIGNE[bande[1]]
+    if (row === undefined) return null
+    const colonne = /colonne (\d+)/.exec(defaut)
+    if (colonne) return { col: Number(colonne[1]), row }
+    const etat = /«\s*([\w-]+)\s*»/.exec(defaut)
+    if (etat) {
+      const col = ETATS_BANDE_MUR.findIndex((e) => e.id === etat[1])
+      if (col >= 0) return { col, row }
+    }
+    return null
+  }
+  const masque = /masque (\d+)/.exec(defaut)
+  if (masque) {
+    const set = jeuDeMasques(S.mur ? "B47" : S.set!)
+    return atlasPosition(set, Number(masque[1]))
+  }
+  return null
+}
+
 // ── Le nom d'une pièce de la planche ─────────────────────────────────────────
 
 const liste = (mots: string[]) => (mots.length < 2 ? mots.join("") : mots.slice(0, -1).join(", ") + " et " + mots[mots.length - 1])

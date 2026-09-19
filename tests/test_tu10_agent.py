@@ -251,6 +251,19 @@ async def test_read_tile_set_dit_un_defaut_en_clair_sans_bloquer_la_livraison(ag
     assert (await appeler("preview_tile_delivery", project=projet, tileset=e["identifiant"], revision=1))["jeton"]
 
 
+@sans_node
+async def test_read_tile_set_sur_deux_sols_ne_signale_plus_la_case_tout_dessous(agent):
+    """TU9 : le contrôle de sc-clone ne connaît pas le second terrain, et signalait à
+    tort la case que le moteur réserve au sol dessous. Corrigé dans `verifier`
+    (`interface/src/tuiles/atelier.ts`) — la même fonction que joue ce rendu Node,
+    donc l'agent en bénéficie directement, sans rien dupliquer côté serveur."""
+    atelier, projet, _, _, appeler = agent
+    recette = {**HERBE, "reglages": {"secondTerrain": True}}
+    e = await appeler("create_tile_set", project=projet, name="Sur un autre sol", recipe=recette)
+    v = e["verification"]
+    assert v["propre"] and not v["defauts"] and v["phrase"] == "Aucun défaut : 47 pièces se raccordent."
+
+
 async def test_create_refuse_un_melange_image_et_recette(agent):
     _, projet, _, _, appeler = agent
     with pytest.raises(ToolError, match="soit une recette"):

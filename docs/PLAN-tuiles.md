@@ -398,13 +398,33 @@ L'onglet « Vérifier » lance le contrôle de sc-clone : les bords au pixel pr�
 effacées, les coutures décalées, les coins vidés. La relecture de livraison reprend le
 résultat.
 
-- [ ] Un atlas propre donne une seule phrase : « Aucun défaut : 47 pièces se raccordent ».
-- [ ] Chaque défaut se dit en clair et montre la pièce sur la planche.
-- [ ] Un défaut **avertit** et ne bloque pas la livraison : la livraison décide, elle ne
+- [x] Un atlas propre donne une seule phrase : « Aucun défaut : 47 pièces se raccordent ».
+      *(`interface/src/tuiles/atelier.ts`, `verifier` — déjà en place depuis TU3/TU6 ; le
+      texte écran est « Aucun défaut : les 47 pièces se raccordent. », celui de la
+      maquette validée. Vu au navigateur sur l'atelier jetable TU3.)*
+- [x] Chaque défaut se dit en clair et montre la pièce sur la planche.
+      *(Nouveau en TU9 : `pieceDeDefaut` (`atelier.ts`) relit le message brut de
+      `tile-check.js` — jamais modifié — et en tire la case (masque, case libre,
+      colonne de bande de mur) ; `AtelierTuiles.tsx`, `Verifie`, change chaque ligne de
+      défaut en bouton qui bascule sur l'onglet Planche et surligne la pièce. Testé sur
+      un atlas saboté — case effacée, couture décalée — en vitest
+      (`atelier.test.ts` § Vérifier (TU9)) et en test d'écran
+      (`AtelierTuiles.test.tsx`).)*
+- [x] Un défaut **avertit** et ne bloque pas la livraison : la livraison décide, elle ne
       bloque pas (RP10).
-- [ ] La case « tout dessous » d'un jeu sur deux sols n'est plus signalée comme un défaut.
+      *(Déjà le cas : `LivraisonDuJeu` relit `verifier` pour l'afficher, mais le bouton
+      Déposer ne dépend que de `occupe`/`apercu?.pret`, jamais des défauts — vérifié au
+      navigateur, un « Vérifié : … » qui n'empêche pas le dépôt.)*
+- [x] La case « tout dessous » d'un jeu sur deux sols n'est plus signalée comme un défaut.
       *(Relevé en faisant la maquette : le contrôle de sc-clone ne connaît pas le second
-      terrain, et la maquette ignore ce cas à la main.)*
+      terrain, et la maquette ignore ce cas à la main. Le filtre était déjà porté dans
+      `verifier` (`atelier.ts`) au moment de TU9 ; ajouté en TU9 : la couverture d'essai
+      qui le prouve (sol et 15 pièces, `atelier.test.ts`), et une assertion côté agent
+      (`tests/test_tu10_agent.py`,
+      `test_read_tile_set_sur_deux_sols_ne_signale_plus_la_case_tout_dessous`) — le
+      rendu Node (`atelier/tuiles_node/rendre.mjs`) appelle la même fonction, donc
+      l'agent en profite sans rien dupliquer côté serveur. Vu au navigateur : la case
+      « Sur un autre sol » cochée, Vérifier reste à « Aucun défaut ».)*
 
 ### TU10 · L'agent fabrique des tuiles
 

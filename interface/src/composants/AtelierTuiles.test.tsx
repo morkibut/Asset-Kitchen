@@ -4,13 +4,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { Tuiles } from "./Tuiles"
-import { doublerLaLecture } from "./AtelierTuiles"
+import { AtelierDuJeu, doublerLaLecture, type Edition } from "./AtelierTuiles"
 import { tuiles, matieres as apiMatieres, type EnsembleTuiles, type EnvoiFabrique } from "../api-tuiles"
 import { fileLocale } from "../api-file-locale"
 import { api, type ApercuLivraison, type Asset } from "../api"
 import { installerBouchonCanvas } from "../tuiles/moteur/__tests__/canvas-shim"
-import { atlasDe, jeuDepuisRecette, oublierLesRendus, type Recette } from "../tuiles/atelier"
+import { atlasDe, jeuDepuisRecette, nouveauJeu, oublierLesRendus, type Recette } from "../tuiles/atelier"
 import { encoderPng, enBase64 } from "../tuiles/png"
+import { atlasPosition, TILE_MASK_SETS, type MaskSet } from "../tuiles/moteur/tile-masks"
 import type { RGBAImage } from "../tuiles/moteur/types"
 
 installerBouchonCanvas()
@@ -311,6 +312,23 @@ describe("Les tuiles du jeu", () => {
     expect(await screen.findByText(/Dans Godot, ouvre/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "‹ Nouveau sol" }))
     expect(await screen.findByLabelText("Nom du jeu de tuiles")).toHaveValue("Nouveau sol")
+  })
+
+  it("un défaut cliqué dans Vérifier surligne sa pièce sur la planche (TU9)", async () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 31415 })
+    const atlas = atlasDe(j)
+    const B47 = TILE_MASK_SETS.B47 as MaskSet
+    const p = atlasPosition(B47, 255)
+    const { data, width } = atlas.pixels
+    for (let y = 0; y < j.taille; y++) for (let x = 0; x < j.taille; x++) data[(((p.row * j.taille + y) * width) + p.col * j.taille + x) * 4 + 3] = 0
+    const edition: Edition = { jeu: j, signature: "", carte: "", nom: j.nom }
+    render(<AtelierDuJeu projet="jeu" edition={edition} matieres={[]} modifie={() => false} occupe={false} message={null}
+      onEnregistrer={() => undefined} onLivrer={() => undefined} onNom={() => undefined} />)
+    fireEvent.click(screen.getByRole("tab", { name: "Vérifier" }))
+    const bouton = await screen.findByRole("button", { name: "Une pièce est vide : rien n’y est dessiné." })
+    fireEvent.click(bouton)
+    expect(screen.getByRole("tab", { name: "Planche" })).toHaveAttribute("aria-selected", "true")
+    expect(await screen.findByText(new RegExp(`Case ${p.col + 1}, ${p.row + 1}`))).toBeInTheDocument()
   })
 
   it("le mur se peint et se livre à Godot, comme les autres sortes", async () => {

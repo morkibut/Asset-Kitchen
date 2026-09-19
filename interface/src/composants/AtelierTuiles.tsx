@@ -6,7 +6,7 @@ import { tuiles, matieres as apiMatieres, assetDeGeneration, type EnsembleTuiles
 import {
   LISTE_MATIERES, LISTE_CADRAGES, PAR_ID, SORTES, atlasDe, cadrageParDefaut, carteApercu, casesPosees, changerSecondTerrain, dessinerAtlas, dessinerCarte, dessinerPlanche,
   dessinerVignette, delier, dureeImageAnimation, emplacementsDe, enClair, ileAuHasard, imageDuFond, jeuDepuisRecette,
-  nombrePieces, nomCible, nomDeMatiere, nomPiece, nouveauJeu, peutRelier, poserAsset, poserIntegree, recetteDe,
+  nombrePieces, nomCible, nomDeMatiere, nomPiece, nouveauJeu, peutRelier, pieceDeDefaut, poserAsset, poserIntegree, recetteDe,
   relierBordure, toutEffacer, verifier, aSecondTerrain,
   type Atlas, type JeuEdite, type Sorte, type Survol,
 } from "../tuiles/atelier"
@@ -217,6 +217,11 @@ export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, messa
   const [, maj] = useReducer((n: number) => n + 1, 0)
   const [onglet, setOnglet] = useState<"carte" | "planche" | "verifier">(j.carte ? "carte" : "planche")
   const [tiroir, setTiroir] = useState<{ cible: string; onglet: "integrees" | "miennes" | "generer" } | null>(null)
+  // La pièce qu'un défaut de « Vérifier » a désignée (TU9) : cliquer dessus l'amène
+  // ici, surlignée sur la planche. `n` force le surlignage même en recliquant la
+  // même pièce deux fois de suite.
+  const [enEvidence, setEnEvidence] = useState<{ col: number; row: number; n: number } | null>(null)
+  const surligner = (p: { col: number; row: number } | null) => { if (!p) return; setEnEvidence({ ...p, n: Date.now() }); setOnglet("planche") }
   const [zoom, setZoom] = useState(0)
   const [heros, setHeros] = useState(true)
   const [image, setImage] = useState(0)
@@ -380,9 +385,9 @@ export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, messa
             <span className="mesure text-[11.5px] text-encre-4">{casesPosees(j.carte)} cases</span>
           </div>
         </> : <div className="grid min-h-0 flex-1 place-items-center rounded-8 bg-pourtour p-[22px] text-center text-[13px] text-carte">Ces 17 pièces se posent à la main dans Godot : il n’y a pas de carte à peindre ici. Elles sont toutes dans l’onglet Planche.</div>)}
-        {onglet === "planche" && atlas && <PlancheDuJeu jeu={j} atlas={atlas} />}
+        {onglet === "planche" && atlas && <PlancheDuJeu jeu={j} atlas={atlas} enEvidence={enEvidence} />}
         {onglet === "verifier" && <div className="min-h-0 flex-1 overflow-auto rounded-8 border border-trait bg-carte p-[22px] text-[13px]">
-          {verification ? <Verifie v={verification} /> : <p className="text-encre-3">Vérification…</p>}</div>}
+          {verification ? <Verifie v={verification} jeu={j} onSurligner={surligner} /> : <p className="text-encre-3">Vérification…</p>}</div>}
       </div>
 
       {/* Les réglages, ou le tiroir des matières */}
@@ -447,7 +452,7 @@ function Choix({ nom, cle, jeu, onChange, aide }: { nom: string; cle: string; je
   </label>
 }
 
-function PlancheDuJeu({ jeu: j, atlas }: { jeu: JeuEdite; atlas: Atlas }) {
+function PlancheDuJeu({ jeu: j, atlas, enEvidence }: { jeu: JeuEdite; atlas: Atlas; enEvidence?: { col: number; row: number; n: number } | null }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const vue = useRef<HTMLDivElement>(null)
   const [sur, setSur] = useState<{ col: number; row: number } | null>(null)
@@ -457,6 +462,8 @@ function PlancheDuJeu({ jeu: j, atlas }: { jeu: JeuEdite; atlas: Atlas }) {
     const v = vue.current
     setK(v ? Math.max(1, Math.min(8, Math.floor(Math.min((v.clientWidth - 28) / atlas.pixels.width, (v.clientHeight - 28) / atlas.pixels.height)))) : 1)
   }, [atlas])
+  // Un défaut cliqué dans « Vérifier » (TU9) amène ici et surligne sa pièce.
+  useEffect(() => { if (enEvidence) setSur({ col: enEvidence.col, row: enEvidence.row }) }, [enEvidence])
   useEffect(() => { if (ref.current) dessinerPlanche(ref.current, j, atlas, k, sur) })
   return <>
     <div ref={vue} className="damier-papier min-h-0 flex-1 overflow-auto rounded-8">
@@ -474,17 +481,29 @@ function PlancheDuJeu({ jeu: j, atlas }: { jeu: JeuEdite; atlas: Atlas }) {
   </>
 }
 
-function Verifie({ v }: { v: ReturnType<typeof verifier> }) {
+function Verifie({ v, jeu, onSurligner }: { v: ReturnType<typeof verifier>; jeu: JeuEdite; onSurligner: (p: { col: number; row: number } | null) => void }) {
   if (v.rien) return <><h2 className="mb-[8px] font-serif text-[25px]">Rien à vérifier</h2><p>Ces 17 pièces n’ont pas de raccord automatique : c’est toi qui les poses une à une dans Godot.</p></>
   if (!v.defauts.length) return <>
     <div className="mb-[14px] rounded-7 border border-trait-ok bg-fond-ok px-[14px] py-[8px] text-encre-ok">Aucun défaut : les {v.pieces} pièces se raccordent.</div>
     <p>Chaque pièce est à sa place sur la planche, porte bien de la matière, et son bord tombe exactement sur celui de ses voisines. Dans Godot, les bords se poseront tout seuls quand tu peindras.</p>
   </>
-  const groupes = new Map<string, number>()
-  for (const p of v.defauts) groupes.set(enClair(p), (groupes.get(enClair(p)) ?? 0) + 1)
+  // Un texte en clair par groupe, avec un défaut brut représentatif : c'est lui qui
+  // donne la pièce à surligner sur la planche (TU9).
+  const groupes = new Map<string, { brut: string; n: number }>()
+  for (const p of v.defauts) {
+    const t = enClair(p)
+    const g = groupes.get(t)
+    g ? g.n++ : groupes.set(t, { brut: p, n: 1 })
+  }
   return <>
     <div className="mb-[14px] rounded-7 border border-trait-echec bg-fond-echec px-[14px] py-[8px] text-echec">{v.defauts.length} défaut{v.defauts.length > 1 ? "s" : ""} sur {v.pieces} pièces : ils se verront dans le jeu.</div>
-    <ul className="my-[8px] list-disc pl-[22px]">{[...groupes].map(([t, n]) => <li key={t} className="mb-[4px]">{t}{n > 1 && <span className="mesure text-[12px]"> × {n}</span>}</li>)}</ul>
+    <ul className="my-[8px] list-disc pl-[22px]">{[...groupes].map(([t, { brut, n }]) => {
+      const piece = pieceDeDefaut(jeu, brut)
+      return <li key={t} className="mb-[4px]">
+        {piece ? <button type="button" className="text-left underline decoration-dotted underline-offset-2" onClick={() => onSurligner(piece)}>{t}</button> : t}
+        {n > 1 && <span className="mesure text-[12px]"> × {n}</span>}
+      </li>
+    })}</ul>
     <p>Essaie un arrondi plus petit ou des bords moins irréguliers, puis reviens ici.</p>
     <details className="mt-[8px]"><summary className="cursor-pointer text-[12px]">Le détail, pour l’agent</summary>{v.defauts.map((p, i) => <div key={i} className="mesure text-[11px] text-encre-3">{p}</div>)}</details>
   </>

@@ -5,12 +5,12 @@ import { inflateSync } from "node:zlib"
 import { describe, expect, test, vi } from "vitest"
 import { installerBouchonCanvas } from "./moteur/__tests__/canvas-shim"
 import {
-  atlasDe, changerSecondTerrain, delier, depuisCarteServeur, dessinerCarte, imageDuFond, jeuDepuisRecette, nouveauJeu,
-  oublierLesRendus, poserAsset, poserIntegree, recetteDe, reglagesMoteur, versCarteServeur, verifier,
-  type JeuEdite, type Recette, type Sorte,
+  atlasDe, changerSecondTerrain, delier, depuisCarteServeur, dessinerCarte, enClair, imageDuFond, jeuDepuisRecette, nombrePieces, nouveauJeu,
+  oublierLesRendus, pieceDeDefaut, poserAsset, poserIntegree, recetteDe, reglagesMoteur, versCarteServeur, verifier,
+  type Atlas, type JeuEdite, type Recette, type Sorte,
 } from "./atelier"
 import { encoderPng } from "./png"
-import { maskAtPosition, NEIGHBOUR_BITS, TILE_MASK_SETS, type MaskSet } from "./moteur/tile-masks"
+import { atlasPosition, maskAtPosition, NEIGHBOUR_BITS, TILE_MASK_SETS, type MaskSet } from "./moteur/tile-masks"
 import type { RGBAImage } from "./moteur/types"
 
 installerBouchonCanvas()
@@ -197,11 +197,71 @@ describe("Le temps d'un changement", () => {
   })
 })
 
-describe("Vérifier", () => {
+describe("Vérifier (TU9)", () => {
   test("un sol par défaut se raccorde partout", () => {
     const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 31415 })
     const v = verifier(j, atlasDe(j))
     expect(v).toEqual({ defauts: [], pieces: 47 })
+  })
+
+  test("un jeu sur deux sols : la case « tout dessous » n'est plus signalée à tort (sol)", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 31415 })
+    changerSecondTerrain(j, true)
+    expect(verifier(j, atlasDe(j))).toEqual({ defauts: [], pieces: 47 })
+  })
+
+  test("un jeu sur deux sols : même chose en 15 pièces", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "coins-15", taille: 32, graine: 31415 })
+    changerSecondTerrain(j, true)
+    expect(verifier(j, atlasDe(j))).toEqual({ defauts: [], pieces: 15 })
+  })
+
+  test("un mur propre se raccorde, et compte ses pièces posables", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "mur", taille: 32, graine: 31415 })
+    const v = verifier(j, atlasDe(j))
+    if (v.rien) throw new Error("un mur se vérifie")
+    expect(v.defauts).toEqual([])
+    expect(v.pieces).toBe(nombrePieces("mur"))
+  })
+
+  // Sabotages du même genre que interface/src/tuiles/moteur/__tests__/tile-check.test.ts
+  // (erase/shiftSeam) : on efface ou on décale un pixel de l'atlas déjà rendu, sans
+  // toucher tile-check.js lui-même.
+  function efface(atlas: Atlas, set: MaskSet, mask: number, tuile: number) {
+    const p = atlasPosition(set, mask), { data, width } = atlas.pixels
+    for (let y = 0; y < tuile; y++) for (let x = 0; x < tuile; x++) data[(((p.row * tuile + y) * width) + p.col * tuile + x) * 4 + 3] = 0
+  }
+  function decale(atlas: Atlas, set: MaskSet, mask: number, tuile: number) {
+    const p = atlasPosition(set, mask), { data, width } = atlas.pixels, mid = Math.floor(tuile / 2)
+    for (let y = mid - 2; y < mid + 2; y++) data[(((p.row * tuile + y) * width) + p.col * tuile + (tuile - 1)) * 4 + 3] = 0
+  }
+
+  test("une case effacée par erreur donne un défaut en clair, et la pièce se retrouve sur la planche", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 31415 })
+    const atlas = atlasDe(j)
+    const B47 = TILE_MASK_SETS.B47 as MaskSet
+    efface(atlas, B47, 255, j.taille)
+    const v = verifier(j, atlas)
+    if (v.rien) throw new Error("un sol se vérifie")
+    expect(v.defauts.length).toBeGreaterThan(0)
+    const d = v.defauts.find((p) => p.includes("masque 255"))!
+    expect(d).toBeDefined()
+    expect(enClair(d)).toBe("Une pièce est vide : rien n’y est dessiné.")
+    expect(pieceDeDefaut(j, d)).toEqual(atlasPosition(B47, 255))
+  })
+
+  test("une couture décalée donne un défaut en clair, avec sa pièce", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 31415 })
+    const atlas = atlasDe(j)
+    const B47 = TILE_MASK_SETS.B47 as MaskSet
+    decale(atlas, B47, 255, j.taille)
+    const v = verifier(j, atlas)
+    if (v.rien) throw new Error("un sol se vérifie")
+    expect(v.defauts.length).toBeGreaterThan(0)
+    const d = v.defauts.find((p) => /couture/.test(p))!
+    expect(d).toBeDefined()
+    expect(enClair(d)).toBe("Deux pièces voisines ne se raccordent pas : leur bord commun ne tombe pas au même endroit.")
+    expect(pieceDeDefaut(j, d)).not.toBeNull()
   })
 })
 
