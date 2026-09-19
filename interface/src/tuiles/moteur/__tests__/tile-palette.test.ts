@@ -20,7 +20,7 @@ import { installerBouchonCanvas } from './canvas-shim';
 installerBouchonCanvas();
 const { renderLogical } = await import('../vendor/tileset-engine.js');
 
-// T26 bis (docs/PLAN-tilesets.md) : trois matières générées sans lien se rapprochent d'une
+// T26 bis (le PLAN-tilesets de sc-clone) : trois matières générées sans lien se rapprochent d'une
 // seule pierre en se quantifiant sur la palette de 24 couleurs de la RÉFÉRENCE (le sol,
 // premier élément du lot) — jamais sur l'union des matières, qui ne rapproche rien. Ces
 // essais sont sur des images synthétiques `{width,height,data}`, sans DOM ni GPU.

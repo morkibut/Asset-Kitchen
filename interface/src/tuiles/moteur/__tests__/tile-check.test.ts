@@ -148,7 +148,7 @@ test('toutes les paires W16 réellement voisines se raccordent, bordures nettes 
   // Le défaut d'origine — bruit de bord à graine par masque — se voyait précisément ici :
   // 13 des 64 paires compatibles s'écartaient jusqu'à 2 px, à la graine par défaut.
   // Borné à une irrégularité de 5, la limite connue de seamlessFbm (voir
-  // docs/PLAN-tilesets.md) ; c'est la même borne que l'essai de propriété de
+  // le PLAN-tilesets de sc-clone) ; c'est la même borne que l'essai de propriété de
   // tests/tileset.test.mjs, et elle est tenue par le moteur, pas par le validateur.
   for (const seed of [31415, 7, 42, 2718]) for (const edgeStyle of ['clean', 'rough']) {
     const img = shot({ tilesetType: 'topdown-15', edgeStyle, seed, edgeRoughness: 5 });

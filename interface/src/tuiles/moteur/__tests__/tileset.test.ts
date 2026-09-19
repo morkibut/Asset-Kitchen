@@ -688,7 +688,7 @@ test('T23 · le réglage absent reproduit EXACTEMENT le comportement d’avant c
 // ===========================================================================
 // Trois propriétés MESURÉES sur le rendu (renderLogical, lecture de pixels), jamais
 // décrites : continuité en haut de bande, pénombre progressive en bas, grain
-// conservé. Voir docs/PLAN-tilesets.md, « Tranches 25 à 27 » et « T25 », pour ce
+// conservé. Voir le PLAN-tilesets de sc-clone, « Tranches 25 à 27 » et « T25 », pour ce
 // que les sources ont établi et ce que ces trois propriétés reprennent.
 
 test('T25 · la base est un calque EXACT de la face jusqu’au début de la pénombre — même matière, même relief, aucune couture', () => {

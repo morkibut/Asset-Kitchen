@@ -12,7 +12,7 @@ import { CADRAGES, matieresAttendues, composerPrompt, corpsGeneration, taillePar
 
 // T26 — une seule pierre pour trois emplacements. Ce qui lie sol, dessus de mur et face
 // est mesuré être le TEXTE (un tronc partagé), jamais une référence en latent ni une
-// graine commune — voir docs/PLAN-tilesets.md, « ### T26 ». Ces essais câblent cette
+// graine commune — voir le PLAN-tilesets de sc-clone, « ### T26 ». Ces essais câblent cette
 // décision : le tronc voyage mot pour mot, l'aperçu montre exactement ce qui part, et les
 // graines des matières d'une même génération restent indépendantes.
 
