@@ -2,8 +2,7 @@
 
 > Chantier proposé le 18 septembre 2026, à la demande de l'auteur : *pouvoir générer une image
 > sur la carte graphique, avec les moteurs et workflows de `sc-clone`, et une image de référence.*
-> Codé le 18 septembre 2026 (ML1 à ML6) ; ML7 à moitié, en attente d'une installation
-> ComfyUI réparée.
+> Codé le 18 septembre 2026 (ML1 à ML6) ; ML7 fini le 19 septembre 2026.
 > Quel modèle sur quelle tranche : [PLAN-moteurs-locaux-affectation.md](PLAN-moteurs-locaux-affectation.md).
 
 ## En une phrase
@@ -218,12 +217,11 @@ remise à plat de ces écrans** — elle passe devant.
 
 Gratuit, mais ça prend du temps : on annonce la durée avant de lancer.
 
-- [ ] un tirage par famille, sans référence, depuis l'écran — temps réel relevé : **Z-Image
-      fait (34 s)** ; SDXL fait en *partir de cette image* (24 s) ; Klein et FLUX.1-dev
-      bloqués — le ComfyUI de la machine ne voit plus les fichiers `D-disk\` (voir
-      `docs/modeles-et-workflows.md`)
-- [ ] Klein avec une référence de sujet (Champy), puis deux : le sujet est-il gardé ? —
-      **bloqué** par la même installation
+- [x] un tirage par famille, sans référence — temps réel relevé : Z-Image 34 s ; SDXL en
+      *partir de cette image* 24 s ; Klein distillé 13 s ; Klein base 23 s ; FLUX.1-dev 90 s
+      (premier tirage)
+- [x] Klein avec une référence de sujet (Champy), puis deux : **le sujet est gardé, trop** —
+      la pose demandée ne passe pas ; `ReferenceLatent` relus sur le positif et le négatif
 - [x] un style *partir de cette image* sur un croquis — SDXL, le résultat Z-Image joint :
       silhouette gardée, couleur demandée ignorée à 0,55
 - [x] l'agent fait la même chose par MCP — `install_local_styles` installe les mêmes versions

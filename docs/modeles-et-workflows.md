@@ -195,6 +195,14 @@ Deux règles de méthode payées cher :
 |---|---|---|---|
 | Z-Image · pixel art net et rapide | un petit mage champignon, sans image jointe | **34 s** (premier tirage, modèle chargé compris) | sujet net et lisible, fond clair — **après** correction du texte (ci-dessous) |
 | SDXL · pixel art, *partir de cette image* | le même mage, chapeau **bleu**, force 0,55, le résultat Z-Image joint | **24 s** | la silhouette et la pose sont gardées ; **la couleur demandée ne passe pas** à 0,55 |
+| Klein distillé · `flux2-pixel` | un petit mage champignon, sans image jointe | **13 s** | personnage lisible, massue, fond blanc |
+| Klein base · `klein-pxart4` | le même, sans image jointe | **23 s** | un champignon et un bâton posé à côté : **pas un personnage** |
+| FLUX.1-dev · `flux1-modern` | le même, sans image jointe | **90 s** (premier tirage, modèle chargé compris) | personnage net, ombre au sol, fond crème |
+| Klein distillé, *garder ce sujet* | Champy **qui salue**, une image de Champy jointe | **19 s** | Champy est gardé — chapeau, taches, visage, bâton ; **la pose demandée ne passe pas** |
+| Klein distillé, *garder ce sujet* | la même demande, deux images de Champy jointes | **15 s** | même constat, et un **damier de fausse transparence peint** dans le fond |
+
+Les temps sont ceux du calcul seul (19 septembre 2026) ; attente dans la file comprise, FLUX.1-dev
+a mis 126 s.
 
 **Ce que ces tirages ont appris :**
 
@@ -211,11 +219,21 @@ Deux règles de méthode payées cher :
 4. Le graphe envoyé a été relu dans l'historique de ComfyUI : image jointe → `ImageScale` →
    `VAEEncode` → latent de départ, force sur `denoise`, graine tirée et enregistrée.
 
-**Pas encore essayé** : Klein avec une puis deux images de Champy (*garder ce sujet*), et les
-familles FLUX.1-dev et Klein en général. Le jour du relevé, le ComfyUI de la machine ne voyait
-plus aucun fichier rangé sous `D-disk\` : dans `D:\IA\ComfyUI\models\<dossier>\`, `D-disk` était
-redevenu un dossier vide au lieu d'une jonction vers `D:\SpriteForge-Models\<dossier>`. L'atelier
-l'a affiché correctement (« il manque le LoRA de style… ») ; il ne répare pas une installation.
+5. **Klein garde le sujet, et le garde trop.** Avec une ou deux images de Champy, le résultat
+   est Champy presque à l'identique : la pose demandée (« qui salue ») est ignorée. Pour
+   *changer la pose* d'un personnage gardé, Klein seul ne suffit pas encore.
+6. **« transparent background » se dessine aussi.** Le texte envoyé finit par ces mots ; avec
+   deux images jointes, Klein a peint un damier gris et blanc. Même cause que la grille (point
+   1), pas encore corrigé.
+7. Le graphe Klein a été relu dans l'historique de ComfyUI : une image jointe donne un
+   `ReferenceLatent` sur le positif **et** sur le négatif ; deux images, deux `ReferenceLatent`
+   chaînés de chaque côté.
+
+**Une panne de la machine, réparée le 19 septembre** : le ComfyUI ne voyait plus aucun fichier
+rangé sous `D-disk\`. Dans `D:\IA\ComfyUI\models\<dossier>\`, `D-disk` était redevenu un dossier
+vide au lieu d'une jonction vers `D:\SpriteForge-Models\<dossier>`. Les jonctions recréées,
+ComfyUI les a vues sans redémarrer, et les 23 styles sont passés prêts. L'atelier avait affiché
+la panne correctement (« il manque le LoRA de style… ») ; il ne répare pas une installation.
 
 ## Objets et tuiles
 
