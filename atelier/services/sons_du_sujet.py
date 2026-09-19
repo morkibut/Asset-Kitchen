@@ -208,6 +208,9 @@ class ServiceSonsDuSujet:
 
         def changer(objet):
             objet["emplacements"].pop(cle, None)
+            # SN7 : ses repères sonores partent avec lui (ils ne désigneraient plus rien).
+            if "reperes" in objet:
+                objet["reperes"] = [r for r in objet["reperes"] if r["cle"] != cle]
         self._changer(projet, sujet, changer)
         return self.lire(projet, sujet)
 

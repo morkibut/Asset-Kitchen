@@ -13,6 +13,7 @@ import { ObjectifDuSujet } from "./ObjectifDuSujet"
 import { SourcesDuSujet } from "./SourcesDuSujet"
 import { EnAttenteDuSujet } from "./EnAttenteDuSujet"
 import { SonsDuSujet } from "./SonsDuSujet"
+import { useSonsCales } from "../api-reperes-sonores"
 import { FicheDuSujet, portraitDe } from "./FicheDuSujet"
 import { useScrollDuParcours } from "./MemoireDuParcours"
 
@@ -190,6 +191,8 @@ export function PageDuSujet(proprietes: {
     try { window.localStorage.setItem(cleDesVus, JSON.stringify(siensArrives)) } catch { /* rien */ }
   }, [onglet, nouveauxClips, cleDesVus, siensArrives])
   const defilement = useScrollDuParcours(`${onglet}:${ouvert.projet}:${ouvert.identifiant}`)
+  // SN7 : la salle d'essai joue les sons calés ; elle ne lit rien elle-même.
+  const sonsCales = useSonsCales(ouvert.projet, ouvert.identifiant, onglet === "essai")
   // **B13** — la grille du jeu et comparer n'ont rien à montrer sans une
   // image. Les deux liens se grisent avec leur raison plutôt que de
   // disparaître, comme partout ailleurs dans ce fichier.
@@ -420,7 +423,8 @@ export function PageDuSujet(proprietes: {
           clips={proprietes.clips} onMonterLeClip={proprietes.onMonterLaBande} onClipsCommandes={proprietes.onClipsCommandes} />}
 
         {onglet === "essai" && <EssaiDuSujet personnage={ouvert} personnages={proprietes.personnages} plan={sienPlan} univers={proprietes.univers}
-          onAnimer={proprietes.onAnimer} onAnimations={() => setOnglet("animations")} />}
+          onAnimer={proprietes.onAnimer} onAnimations={() => setOnglet("animations")}
+          reperes={sonsCales.vue?.reperes.filter((r) => !r.signal)} onRepere={sonsCales.jouer} />}
 
         {onglet === "sources" && <SourcesDuSujet onBande={proprietes.onOuvrirLaBande} personnage={ouvert} clips={proprietes.clips ?? []}
           onClipsChange={proprietes.onClipsChange} onErreur={echouer}
@@ -431,7 +435,8 @@ export function PageDuSujet(proprietes: {
         {onglet === "equipement" && <div><VestiaireDuSujet personnage={ouvert}
           vestiaire={proprietes.vestiaire} onPiece={proprietes.onPiece} onEmploi={proprietes.onEmploiEquipement} onCreerPiece={proprietes.onCreerPiece}
           onRetirerLEmploi={proprietes.onRetirerLEmploi} /><TenuesDuSujet personnage={ouvert} vestiaire={proprietes.vestiaire} onEmploi={proprietes.onEmploiEquipement} onLivraisons={proprietes.onLivrer} /></div>}
-        {onglet === "sons" && <SonsDuSujet projet={ouvert.projet} sujet={ouvert.identifiant} nomSujet={ouvert.nom} onRegler={proprietes.onSon} />}
+        {onglet === "sons" && <SonsDuSujet projet={ouvert.projet} sujet={ouvert.identifiant} nomSujet={ouvert.nom} onRegler={proprietes.onSon}
+          personnage={ouvert} plan={sienPlan} />}
         {onglet === "objectif" &&<div><ObjectifDuSujet personnage={ouvert} projet={ouvert.projet} onChange={proprietes.onObjectifChange} /></div>}
       </div>
     </main>

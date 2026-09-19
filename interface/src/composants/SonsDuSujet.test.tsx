@@ -124,3 +124,24 @@ test("un emplacement d'interface passe par sfxr, et le jeu gardé s'y pose", asy
   expect(sonsDuSujet.proposer).not.toHaveBeenCalled()
   expect(jeuxDeVariantes.lire).not.toHaveBeenCalled()
 })
+
+test("SN7 : un son gardé se cale sur une animation, et la carte le dit", async () => {
+  const marche = { identifiant: "marche-sud", pose: "marche", direction: "sud", compte: 4, cadence: 8, sens: "boucle", case_largeur: 16, case_hauteur: 16, favori: true, cree_le: 1, rang: 0 }
+  const personnage = { identifiant: "heros", cases: [{ pose: "marche", bandes: [marche], directions: [{ identifiant: "sud", nom: "Sud", bandes: [marche] }] }] } as never
+  vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response(JSON.stringify({ projet: "jeu", sujet: "heros", revision: 2, sons: { pas: ["s1"] },
+    reperes: [{ bande: "marche-sud", image: 3, cle: "pas", nom: "Pas", nom_bande: "marche-sud", pose: "marche", direction: "sud", compte: 4, cadence: 8, signal: null }] }),
+    { status: 200, headers: { "Content-Type": "application/json" } }))))
+  vi.mocked(sonsDuSujet.lire).mockResolvedValue(vue([
+    place("pas", "Pas", "bruitage", { rempli: true, contenu: { nature: "son", identifiant: "s1", existe: true, nom: "Pas", famille: "bruitage", sons: ["s1"], a_livrer: ["s1"], signalements: [] } }),
+    place("replique", "Réplique", "voix", { rempli: true, contenu: { nature: "son", identifiant: "s2", existe: true, nom: "Bonjour", famille: "voix", sons: ["s2"], a_livrer: ["s2"], signalements: [] } }),
+  ]))
+  render(<SonsDuSujet projet="jeu" sujet="heros" nomSujet="Le héros" personnage={personnage} plan={[{ identifiant: "marche", nom: "Marche" } as never]} />)
+  const pas = await screen.findByRole("listitem", { name: "Pas" })
+  expect(await within(pas).findByText("Calé sur marche · sud, image 3")).toBeInTheDocument()
+  // Une voix ne se cale pas sur un pas.
+  expect(within(screen.getByRole("listitem", { name: "Réplique" })).queryByRole("button", { name: /calage|Caler/ })).toBeNull()
+  fireEvent.click(within(pas).getByRole("button", { name: "Modifier le calage" }))
+  expect(within(pas).getByRole("button", { name: "Image 3" })).toHaveAttribute("aria-pressed", "true")
+  expect(within(pas).getByRole("combobox", { name: "Animation" })).toHaveValue("marche-sud")
+  vi.unstubAllGlobals()
+})

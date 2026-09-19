@@ -68,6 +68,7 @@ import {
 } from "../api"
 import { imageAsset, rangDeLaBande } from "./Apercu"
 import { rangerLaLigne } from "./AnimationsDuSujet"
+import { imagesTraversees } from "../api-reperes-sonores"
 
 /** Les crans de la planche, dans son ordre. **Trois, et le premier est celui
  *  où l'on joue** : à ×1 un sprite de 48 px ne dit rien d'un mouvement, et à
@@ -376,6 +377,8 @@ export function EssaiDuSujet({
   univers,
   onAnimer,
   onAnimations,
+  reperes = [],
+  onRepere,
 }: {
   personnage: Personnage
   /** Les autres sujets du jeu, pour en poser un à côté. Leurs images et leurs
@@ -394,6 +397,12 @@ export function EssaiDuSujet({
   ) => void
   /** Passer à *Ses animations* — c'est là qu'on en change une. Ici on regarde. */
   onAnimations: () => void
+  /** **Les repères sonores** (SN7) : « cette bande joue ce son à l'image N ».
+   *  Ils arrivent en props, comme le reste — l'écran ne lit rien lui-même. */
+  reperes?: readonly { bande: string; image: number; cle: string; nom?: string | null }[]
+  /** Faire entendre l'emplacement `cle` : appelé à chaque passage sur une
+   *  image repérée, à chaque boucle. Le choix de la variante est au parent. */
+  onRepere?: (cle: string) => void
 }) {
   const [zoom, setZoom] = useState<Zoom>(3)
   const [volet, setVolet] = useState<Volet>("fait")
@@ -491,6 +500,28 @@ export function EssaiDuSujet({
   const pasMs = jouee ? dureeImageMs(jouee.cadence) : 0
   const pas = useMetronome(pasMs, jouee !== null && jouee.compte > 1)
   const rang = jouee ? rangDeLaBande(pas, jouee.compte, jouee.sens) : 0
+
+  // ── Les sons calés (SN7) ──────────────────────────────────────────────────
+  // À chaque pas du métronome, les images traversées depuis le précédent : un
+  // repère sonne à chaque passage sur son image, à chaque boucle — deux fois
+  // par tour en aller-retour, comme dans le jeu livré.
+  const [sonsCales, setSonsCales] = useState(true)
+  const reperesDeLaBande = useMemo(
+    () => (jouee ? reperes.filter((r) => r.bande === jouee.identifiant) : []),
+    [reperes, jouee],
+  )
+  const dernierPas = useRef<{ bande: string | null; pas: number }>({ bande: null, pas: 0 })
+  useEffect(() => {
+    const avant = dernierPas.current
+    dernierPas.current = { bande: jouee?.identifiant ?? null, pas }
+    if (!jouee || !onRepere || !sonsCales || reperesDeLaBande.length === 0) return
+    const images =
+      avant.bande === jouee.identifiant
+        ? imagesTraversees(avant.pas, pas, (p) => rangDeLaBande(p, jouee.compte, jouee.sens))
+        : [rangDeLaBande(pas, jouee.compte, jouee.sens) + 1]
+    for (const image of images)
+      for (const r of reperesDeLaBande) if (r.image === image) onRepere(r.cle)
+  }, [pas, jouee, reperesDeLaBande, onRepere, sonsCales])
 
   const sonVoisin =
     personnages.find(
@@ -872,6 +903,12 @@ export function EssaiDuSujet({
                 {rang + 1} / {jouee.compte}
               </Marque>
             )}
+            {reperesDeLaBande.length > 0 && (
+              <Marque>
+                {sonsCales ? "son" : "son coupé"} ·{" "}
+                {reperesDeLaBande.map((r) => `image ${r.image} : ${(r.nom ?? r.cle).toLowerCase()}`).join(", ")}
+              </Marque>
+            )}
           </div>
           <div className="pointer-events-none absolute right-[14px] top-[14px]">
             {jouee && (
@@ -1172,6 +1209,7 @@ export function EssaiDuSujet({
               [
                 ["la grille du jeu", grille, setGrille, "visible", "cachée"],
                 ["le cadre de la case", cadre, setCadre, "visible", "caché"],
+                ...(onRepere ? ([["les sons calés", sonsCales, setSonsCales, "joués", "coupés"]] as const) : []),
               ] as const
             ).map(([mot, valeur, poser, oui, non]) => (
               <div key={mot} className="flex items-center justify-between gap-[8px]">

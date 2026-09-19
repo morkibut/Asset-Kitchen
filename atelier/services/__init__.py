@@ -85,6 +85,7 @@ from atelier.services.travaux_audio import ServiceTravauxAudio
 from atelier.services.series_son import ServiceSeriesSon
 from atelier.services.variantes_son import ServiceVariantesSon
 from atelier.services.sons_du_sujet import ServiceSonsDuSujet
+from atelier.services.reperes_sonores import ServiceReperesSonores
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.planche_animee import ServicePlancheAnimee
 from atelier.services.equipement import ServiceEquipement
@@ -619,6 +620,10 @@ class Atelier:
         # sons : la livraison du sujet, montée avant, les lui demande.
         self.sons_du_sujet = ServiceSonsDuSujet(self)
         self.livraison.sons_du_sujet = self.sons_du_sujet.paquet_pour_livraison
+        # SN7 : les repères sonores des bandes ; la livraison du sujet en fait
+        # une piste audio par animation dans son `AnimationPlayer`.
+        self.reperes_sonores = ServiceReperesSonores(self)
+        self.livraison.reperes_sonores = self.reperes_sonores.pour_livraison
         self.sortie = ServiceSortie(
             self.base,
             self.fichiers,

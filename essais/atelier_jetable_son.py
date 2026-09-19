@@ -34,7 +34,11 @@ Ce que l'atelier peuple, par les vraies routes HTTP :
 4. une ambiance de 20 s déjà rendue, dont la boucle **claque** (pour « écouter
    le raccord ») ;
 5. un son rétro sfxr ;
-6. une série de bruitage déjà terminée, et un jeu de quatre variantes gardées.
+6. une série de bruitage déjà terminée, et un jeu de quatre variantes gardées ;
+7. « Le pèlerin », avec une marche vers le sud en bande (quatre images, 8 i/s,
+   vue de dessus) et un jeu de trois pas sur son emplacement « pas », lancé
+   depuis l'emplacement — prêt à caler (SN7) ;
+8. un dossier de jeu Godot associé, pour l'aperçu de livraison.
 
     py essais/atelier_jetable_son.py
 
@@ -44,6 +48,7 @@ Ctrl-C pour l'arrêter. Le dossier temporaire part avec lui.
 from __future__ import annotations
 
 import copy
+import io
 import json
 import socket
 import sys
@@ -235,6 +240,28 @@ def raccorder(atelier: Atelier, comfy: ComfySonDouble) -> None:
 # ── Le peuplement, par les vraies routes HTTP ───────────────────────────────
 
 
+CASE = 32  # une case de la planche de marche du pèlerin, en pixels
+
+
+def _planche_de_marche() -> bytes:
+    """Quatre pas d'une petite silhouette encapuchonnée, sur fond transparent :
+    le bâton avance d'une case à l'autre, pour qu'on voie l'image changer."""
+    from PIL import Image, ImageDraw
+
+    image = Image.new("RGBA", (CASE * 4, CASE), (0, 0, 0, 0))
+    dessin = ImageDraw.Draw(image)
+    for c in range(4):
+        x, pas = c * CASE, (0, 3, 0, -3)[c]
+        dessin.polygon([(x + 16, 4), (x + 8, 26), (x + 24, 26)], fill=(92, 74, 58, 255))  # la cape
+        dessin.ellipse([x + 12, 6, x + 20, 14], fill=(226, 196, 160, 255))                 # le visage
+        dessin.rectangle([x + 12 + pas, 26, x + 14 + pas, 30], fill=(60, 44, 34, 255))       # un pied
+        dessin.rectangle([x + 18 - pas, 26, x + 20 - pas, 30], fill=(60, 44, 34, 255))       # l'autre
+        dessin.line([(x + 25 + pas, 6), (x + 25 + pas, 30)], fill=(140, 104, 62, 255), width=2)  # le bâton
+    tampon = io.BytesIO()
+    image.save(tampon, format="PNG")
+    return tampon.getvalue()
+
+
 def _attendre(client: TestClient, chemin: str, *, jusqua: str, secondes: float = 60.0) -> dict:
     """Interroge `chemin` jusqu'à ce que sa réponse porte `etat == jusqua` —
     ce que l'écran ferait en sondant l'avancement d'une série."""
@@ -330,7 +357,48 @@ def peupler(atelier: Atelier) -> None:
             "description": "a hooded pilgrim with a wooden staff and worn leather boots",
         })
         assert pelerin.status_code in (200, 201), pelerin.text
-        print(f"  personnage « Le pèlerin » ({pelerin.json()['personnage']['identifiant']}) — ses emplacements sont vides")
+        heros = pelerin.json()["personnage"]["identifiant"]
+        print(f"  personnage « Le pèlerin » ({heros})")
+
+        # ── 7b · Sa marche vers le sud, en bande (SN7) ──────────────────────
+        # Une planche de quatre pas, découpée en clip, rangée dans « marche ·
+        # sud » : la bande où l'on cale « image 3 : pas ».
+        vue = client.put("/api/universe", params={"projet": projet}, json={"vue": "vue-dessus-34"})
+        assert vue.status_code == 200, vue.text
+        planche = client.post("/api/assets/upload", content=_planche_de_marche(),
+            params={"nom": "marche-du-pelerin.png", "traiter": "false"})
+        assert planche.status_code == 201, planche.text
+        planche = planche.json()["asset"]["identifiant"]
+        client.put(f"/api/assets/{planche}/character", json={"personnage": heros, "pose": None})
+        boites = [[c * CASE, 0, c * CASE + CASE - 1, CASE - 1] for c in range(4)]
+        fait = client.post("/api/clips/sheet", json={"feuille": planche, "boites": boites})
+        assert fait.status_code == 201, fait.text
+        bandes = fait.json().get("bandes") or []
+        if not bandes:
+            bandes = [client.post("/api/strips", json={"clip": fait.json()["clip"]["identifiant"], "nom": "marche",
+                "images": [0, 1, 2, 3], "cadence": 8, "sens": "boucle"}).json()]
+        marche = bandes[0]["identifiant"]
+        rangee = client.put(f"/api/strips/{marche}/case", json={"personnage": heros, "pose": "marche", "direction": "sud"})
+        assert rangee.status_code == 200, rangee.text
+        print(f"  sa marche vers le sud : une bande de {rangee.json()['compte']} images à "
+              f"{rangee.json()['cadence']:g} i/s ({marche})")
+
+        # ── 7c · Un jeu de pas sur son emplacement « pas » (SN6) ────────────
+        # La série se lance depuis l'emplacement, comme l'écran le fait ; garder
+        # range les tirages dans le jeu de l'emplacement (sfx_pelerin_pas).
+        sons = f"/api/projects/{projet}/subjects/{heros}/sounds"
+        propose = client.post(f"{sons}/pas/series/propose").json()
+        serie_pas = client.post(f"{sons}/pas/series", json={"famille": propose["famille"], "prompt": propose["prompt"],
+            "nom": propose["nom"], "nombre": 3})
+        assert serie_pas.status_code == 200, serie_pas.text
+        serie_pas = serie_pas.json()["identifiant"]
+        assert client.post(f"/api/projects/{projet}/audio-series/{serie_pas}/start").status_code == 200
+        _attendre(client, f"/api/projects/{projet}/audio-series/{serie_pas}", jusqua="terminee")
+        garde = client.post(f"/api/projects/{projet}/audio-series/{serie_pas}/keep", json={"rangs": [1, 2, 3]})
+        assert garde.status_code == 201, garde.text
+        pas = next(e for e in client.get(sons).json()["emplacements"] if e["cle"] == "pas")
+        assert pas["rempli"], pas
+        print(f"  son emplacement « pas » : un jeu de {len(pas['contenu']['sons'])} variantes ({pas['nom_stable']}) — prêt à caler")
 
         # ── 8 · Un dossier de jeu Godot, pour l'aperçu de livraison ─────────
         godot = Path(atelier.fichiers.racine) / "Jeu Godot"
@@ -377,6 +445,10 @@ def principal() -> int:
     print("    clavier), et le jeu de variantes qui les garde tous les quatre.")
     print("  → Relancer une série neuve depuis l'écran : les tirages arrivent un par un, 1 à 2 s")
     print("    chacun, et une graine sur huit affiche l'avertissement de saturation.")
+    print("  → « Le pèlerin », onglet Sons : « Pas » est rempli. « Caler sur une animation »,")
+    print("    marche · sud, cliquer l'image 3, puis « ▶ Jouer » : le pas s'entend à chaque boucle.")
+    print("    Changer la cadence : le repère reste sur l'image 3.")
+    print("  → Son onglet Essai : tenir S (vers le sud), le pas part à chaque passage sur l'image 3.")
     uvicorn.run(creer_application(atelier), host="127.0.0.1", port=PORT, log_level="warning")
     return 0
 

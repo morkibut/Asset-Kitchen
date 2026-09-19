@@ -595,3 +595,36 @@ describe("le déplacement", () => {
     }
   })
 })
+
+// ── Les sons calés (SN7) ────────────────────────────────────────────────────
+
+describe("les sons calés", () => {
+  test("le repère « image 3 : pas » sonne à chaque boucle, et se coupe", () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "performance"] })
+    try {
+      const onRepere = vi.fn()
+      const lui = sujet()
+      render(
+        <EssaiDuSujet personnage={lui} personnages={[lui]} plan={PLAN} univers={univers()}
+          onAnimer={vi.fn()} onAnimations={vi.fn()}
+          reperes={[{ bande: "repos-sud", image: 3, cle: "pas", nom: "Pas" }, { bande: "marche-sud", image: 1, cle: "pas" }]}
+          onRepere={onRepere} />,
+      )
+      expect(jouee()).toBe("repos-sud")
+      expect(laScene().textContent).toContain("son · image 3 : pas")
+      // Huit images par seconde, quatre images en boucle : l'image 3 passe à
+      // 250 ms, puis toutes les 500 ms.
+      act(() => vi.advanceTimersByTime(250))
+      expect(onRepere).toHaveBeenCalledTimes(1)
+      expect(onRepere).toHaveBeenCalledWith("pas")
+      act(() => vi.advanceTimersByTime(1000))
+      expect(onRepere).toHaveBeenCalledTimes(3)
+      fireEvent.click(screen.getByRole("tab", { name: "La scène" }))
+      fireEvent.click(screen.getByRole("button", { name: "coupés" }))
+      act(() => vi.advanceTimersByTime(1000))
+      expect(onRepere).toHaveBeenCalledTimes(3)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})

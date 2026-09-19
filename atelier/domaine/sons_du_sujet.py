@@ -16,7 +16,8 @@ famille « voix ») et SN12 (l'agent demande une série sur un emplacement) :
      "emplacements": {"<cle>": {"cle", "nom", "famille", "libre": bool,
                                 "contenu": {"nature": "jeu" | "son", "identifiant"} | None,
                                 "series": [identifiants, du plus ancien au plus récent],
-                                "pose_le": float | None}}}
+                                "pose_le": float | None}},
+     "reperes": [{"bande", "image", "cle", "pose_le"}]}   (SN7, `reperes_sonores`)
 
 - **Les emplacements proposés ne s'écrivent pas** tant qu'ils sont vides :
   ils viennent de la famille du sujet (lue dans son type, comme partout).

@@ -4,12 +4,15 @@
 // nomme à la main. Un emplacement vide lance une série déjà décrite par le
 // sujet ; garder un tirage le range dans le jeu de l'emplacement. La demande,
 // la série et le jeu sont ceux de « Un son », sans rien de réécrit.
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { jeuxDeVariantes, type FamilleSon, type JeuVariantes } from "../api-series-son"
 import { sonsDuSujet, type Emplacement, type Proposition, type SonsDuSujet as Vue } from "../api-sons-du-sujet"
 import { UnSon } from "./FabricationAudio"
 import { JeuDeVariantes } from "./JeuDeVariantes"
 import { SonRetro } from "./SonRetro"
+import { useSonsCales } from "../api-reperes-sonores"
+import type { Personnage, Pose } from "../api"
+import { CalageSonore, animationsDuSujet, texteDuCalage } from "./CalageSonore"
 
 const BOUTON = "min-h-[30px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
 const PETIT = "min-h-[26px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
@@ -27,9 +30,14 @@ function etat(e: Emplacement) {
   return c.nature === "jeu" ? (c.sons.length > 1 ? `${c.sons.length} variantes` : "1 son") : "1 son"
 }
 
-export function SonsDuSujet({ projet, sujet, nomSujet, onRegler }: {
+export function SonsDuSujet({ projet, sujet, nomSujet, onRegler, personnage, plan }: {
   projet: string; sujet: string; nomSujet: string; onRegler?: (son: string) => void
+  /** Le sujet et son plan (SN7) : ses animations, où caler un son. */
+  personnage?: Personnage; plan?: readonly Pose[]
 }) {
+  const cales = useSonsCales(projet, sujet)
+  const animations = useMemo(() => (personnage ? animationsDuSujet(personnage, plan) : []), [personnage, plan])
+  const [calage, setCalage] = useState<string | null>(null)
   const [vue, setVue] = useState<Vue | null>(null)
   const [ouvert, setOuvert] = useState<string | null>(null)
   const [erreur, setErreur] = useState("")
@@ -47,7 +55,7 @@ export function SonsDuSujet({ projet, sujet, nomSujet, onRegler }: {
   }
   const emplacement = vue?.emplacements.find((e) => e.cle === ouvert) ?? null
   if (emplacement) return <EmplacementOuvert key={emplacement.cle} projet={projet} sujet={sujet} nomSujet={nomSujet} emplacement={emplacement}
-    onRetour={() => { setOuvert(null); void relire() }} onChange={() => void relire()} onRegler={onRegler} />
+    onRetour={() => { setOuvert(null); void relire(); void cales.relire() }} onChange={() => void relire()} onRegler={onRegler} />
 
   return <section aria-label="Sons" className="grid gap-[14px]">
     <div className="flex items-baseline justify-between gap-[14px]">
@@ -60,10 +68,14 @@ export function SonsDuSujet({ projet, sujet, nomSujet, onRegler }: {
     {vue && <ul className="grid gap-[8px]">
       {vue.emplacements.map((e) => {
         const aVenir = A_VENIR.includes(e.famille)
+        // SN7 : un son gardé se cale sur une animation (pas une voix : ses répliques ne suivent pas un pas).
+        const calable = e.rempli && e.famille !== "voix" && !!personnage
+        const cale = texteDuCalage(cales.vue, e.cle, animations)
         return <li key={e.cle} aria-label={e.nom} className="flex flex-wrap items-center gap-[14px] rounded-8 border border-trait bg-carte p-[14px]">
           <div className="grid min-w-[128px]"><strong className="text-[13px]">{e.nom}</strong><span className="text-[12px] text-encre-3">{NOMS_FAMILLES[e.famille]}</span></div>
           <div className="grid min-w-0 flex-1 gap-[4px]">
             <span className={`text-[13px] ${e.rempli ? "text-encre" : "text-encre-3"}`}>{etat(e)}</span>
+            {cale && <span className="text-[12px] text-encre-3">Calé sur {cale}</span>}
             {e.rempli && <span className="font-mono text-[12px] text-encre-3">{e.nom_stable}</span>}
             {e.contenu?.signalements.map((s, i) => <span key={i} className={ATTENTION}>{s.signal}</span>)}
           </div>
@@ -71,9 +83,13 @@ export function SonsDuSujet({ projet, sujet, nomSujet, onRegler }: {
             {aVenir && !e.rempli
               ? <button type="button" className={BOUTON} disabled>Fabriquer · à venir</button>
               : <button type="button" className={BOUTON} onClick={() => setOuvert(e.cle)}>{e.rempli ? "Ouvrir" : e.series.length ? "Reprendre la série" : "Fabriquer"}</button>}
+            {calable && <button type="button" className={BOUTON} aria-expanded={calage === e.cle}
+              onClick={() => setCalage(calage === e.cle ? null : e.cle)}>{cale ? "Modifier le calage" : "Caler sur une animation"}</button>}
             {e.libre && !e.rempli && <button type="button" className={PETIT} disabled={occupe} aria-label={`Retirer l’emplacement ${e.nom}`}
               onClick={() => void faire(async () => setVue(await sonsDuSujet.retirer(projet, sujet, e.cle)))}>Retirer</button>}
           </div>
+          {calable && calage === e.cle && <CalageSonore projet={projet} sujet={sujet} cle={e.cle} nom={e.nom}
+            animations={animations} vue={cales.vue} onVue={cales.setVue} onJouer={cales.jouer} />}
         </li>
       })}
     </ul>}

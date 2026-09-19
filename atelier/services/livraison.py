@@ -173,6 +173,10 @@ class ServiceLivraison:
         # le sujet (`ServiceSonsDuSujet.paquet_pour_livraison`). Posé par
         # l'atelier après montage ; absent, un sujet se livre sans ses sons.
         self.sons_du_sujet = None
+        # SN7 : `(projet, sujet) -> [{bande, image, cle}]`, les repères sonores
+        # du sujet (`ServiceReperesSonores.pour_livraison`). Absent ou vide, la
+        # scène n'a pas d'`AnimationPlayer` : le paquet est celui d'avant.
+        self.reperes_sonores = None
 
     def _dossier(self, projet: str) -> Path:
         if not self._base.lire_projet(projet):
@@ -327,6 +331,12 @@ class ServiceLivraison:
             signe: dict[str, Any] = {"animations": liste, "pivot": pivot}
             if sons:
                 signe["sons"] = {nom: _empreinte(octets) for nom, octets in sons["fichiers"].items()}
+            # SN7 : les repères sonores deviennent une piste audio par animation.
+            # Sans repère livrable, ni la révision ni un octet ne changent.
+            pistes, reperes_livres, reperes_non_livres = _pistes_sonores(
+                liste, sons, self.reperes_sonores(projet, personnage) if sons and self.reperes_sonores else [])
+            if reperes_livres:
+                signe["reperes"] = reperes_livres
             revision = _empreinte(_json(signe))[:24]
             racine = f"{association['sous_dossier']}/{_cle(projet)}/{cible}"
             version = f"{racine}/revisions/{revision}"
@@ -354,7 +364,7 @@ class ServiceLivraison:
             sprite_frames = f"{version}/animations.tres"
             ajouter(sprite_frames, "SpriteFrames", _sprite_frames(liste, version).encode("utf-8"))
             scene_revision = f"{version}/personnage.tscn"
-            ajouter(scene_revision, "scène de la révision", _scene(sprite_frames, liste[0]["nom"], pivot, noeuds_sonores).encode("utf-8"))
+            ajouter(scene_revision, "scène de la révision", _scene(sprite_frames, liste[0]["nom"], pivot, noeuds_sonores, pistes).encode("utf-8"))
             scene = f"{racine}/personnage.tscn"
             ajouter(scene, "scène stable", _scene_stable(scene_revision).encode("utf-8"))
             manifeste = {"atelier": "Asset Kitchen", "format": 1, "projet": projet,
@@ -366,6 +376,10 @@ class ServiceLivraison:
                 manifeste["sons"] = [{**e, "ressource": f"{version}/sons/{e['ressource']}"} for e in sons["entrees"]]
                 if sons["non_livres"]:
                     manifeste["sons_non_livres"] = sons["non_livres"]
+            if reperes_livres:
+                manifeste["reperes_sonores"] = reperes_livres
+            if reperes_non_livres:
+                manifeste["reperes_non_livres"] = reperes_non_livres
             ajouter(f"{racine}/livraison.json", "manifeste", _json(manifeste))
             jeton = uuid.uuid4().hex
             preparation = {**manifeste, "jeton": jeton, "fichiers": fichiers,
@@ -662,22 +676,143 @@ def _sprite_frames(animations: Sequence[dict[str, Any]], dossier: str) -> str:
             "\n\n".join(externes + atlas) + '\n\n[resource]\nanimations = [' + ",\n".join(bandes) + ']\n')
 
 
+def _pistes_sonores(animations: Sequence[dict[str, Any]], sons: dict[str, Any] | None,
+                    reperes: Sequence[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """SN7 : les repères sonores rapportés aux animations livrées.
+
+    Un repère `{bande, image, cle}` vise l'animation livrée depuis cette bande
+    et le lecteur de calage de l'emplacement `cle` (`<nom stable>/Calage`,
+    enfant du lecteur posé par SN6, même son : `son_<rang + 1>`). Son temps est calculé **ici**,
+    depuis l'ordre et la durée d'image de l'animation livrée : c'est la cadence
+    au moment de la livraison qui compte, et l'image reste la même.
+
+    Rend `(pistes, livrés, non livrés)` : une piste par animation qui a au
+    moins une clé ; un repère dont l'emplacement ne part pas (vide, rien de
+    livrable) ou dont l'image dépasse la bande est dit, jamais posé en silence.
+    Un repère d'une bande qui n'est pas dans cette livraison n'y figure pas."""
+    from atelier.domaine.reperes_sonores import temps_de_l_image
+    if not sons or not reperes:
+        return [], [], []
+    rang_de = {e["emplacement"]: rang for rang, e in enumerate(sons["entrees"])}
+    pistes, livres, non_livres = [], [], []
+    for animation in animations:
+        cles: dict[int, list[float]] = {}
+        for r in (r for r in reperes if r["bande"] == animation["bande"]):
+            dit = {"animation": animation["nom"], "image": r["image"], "emplacement": r["cle"]}
+            if r["cle"] not in rang_de:
+                non_livres.append({**dit, "raison": "Cet emplacement ne part pas avec le sujet : il n'a aucun son livrable."})
+                continue
+            temps = temps_de_l_image(r["image"], animation["ordre"], animation["duree_image_ms"])
+            if not temps:
+                non_livres.append({**dit, "raison": f"L'animation n'a que {animation['compte']} images."})
+                continue
+            rang = rang_de[r["cle"]]
+            cles.setdefault(rang, []).extend(temps)
+            nom_stable = sons["entrees"][rang]["nom_stable"]
+            livres.append({**dit, "noeud": f"{nom_stable}/{CALAGE}", "lecteur_du_jeu": nom_stable, "temps": temps})
+        if cles:
+            pistes.append({"nom": animation["nom"], "compte": len(animation["ordre"]),
+                           "duree_image_ms": animation["duree_image_ms"], "boucle": animation["boucle"],
+                           "sons": {rang: sorted(set(t)) for rang, t in sorted(cles.items())}})
+    return pistes, livres, non_livres
+
+
+#: Le nom du lecteur que la piste audio vise, enfant du lecteur de
+#: l'emplacement (`sfx_heros_pas/Calage`). Une piste audio d'`AnimationPlayer`
+#: s'empare du lecteur qu'elle vise (`docs/PIEGES.md`) : le lecteur de SN6
+#: reste ainsi libre pour un `$sfx_heros_pas.play()` du jeu.
+CALAGE = "Calage"
+
+
+def _nom_dans_le_lecteur(nom: str) -> tuple[str, str]:
+    """`marche/sud` → la bibliothèque `marche` et l'animation `sud` : Godot
+    refuse `/` dans un nom d'animation, et `AnimationPlayer.play("marche/sud")`
+    lit justement « bibliothèque/animation ». Le nom joué est donc celui des
+    SpriteFrames. Au-delà de deux morceaux (`marche/sud/tete`), la suite est
+    liée par `_`."""
+    propre = re.sub(r"[:,\[]", "_", nom)
+    tete, _, reste = propre.partition("/")
+    return (tete, reste.replace("/", "_")) if reste else ("", tete)
+
+
+def _nombre(valeur: float) -> str:
+    return f"{valeur:.12g}"
+
+
+def _lecteur_d_animation(pistes: Sequence[dict[str, Any]], sons: Sequence[dict[str, str]],
+                         autoplay: str) -> tuple[list[str], str]:
+    """L'`AnimationPlayer` de SN7 : une animation par animation qui a des
+    repères, sous le nom de ses SpriteFrames. Chacune **mène le sprite**
+    (l'animation et l'image, en pas discrets, au temps exact de chaque image)
+    et porte **une piste audio par emplacement**, qui vise son lecteur de
+    calage (`<nom stable>/Calage`) avec une clé au temps de chaque image
+    repérée ; le lecteur de SN6 reste au jeu. Jouer
+    `$AnimationPlayer.play("marche/sud")` joue donc l'image et le son ensemble,
+    à chaque boucle."""
+    ressources, bibliotheques = [], {}
+    for rang, piste in enumerate(pistes, 1):
+        pas = piste["duree_image_ms"] / 1000
+        temps = [p * pas for p in range(piste["compte"])]
+        lignes = [f'[sub_resource type="Animation" id="Animation_{rang}"]',
+                  f'resource_name = {_chaine(_nom_dans_le_lecteur(piste["nom"])[1])}',
+                  f'length = {_nombre(piste["compte"] * pas)}',
+                  f'loop_mode = {1 if piste["boucle"] else 0}',
+                  f'step = {_nombre(pas)}']
+        valeurs = [(".:animation", [0.0], [f'&{_chaine(piste["nom"])}']),
+                   (".:frame", temps, [str(p) for p in range(piste["compte"])])]
+        for n, (chemin, instants, vals) in enumerate(valeurs):
+            lignes += [f'tracks/{n}/type = "value"', f'tracks/{n}/imported = false', f'tracks/{n}/enabled = true',
+                       f'tracks/{n}/path = NodePath({_chaine(chemin)})', f'tracks/{n}/interp = 1',
+                       f'tracks/{n}/loop_wrap = true', f'tracks/{n}/keys = {{',
+                       f'"times": PackedFloat32Array({", ".join(_nombre(t) for t in instants)}),',
+                       f'"transitions": PackedFloat32Array({", ".join("1" for _ in instants)}),',
+                       '"update": 1,', f'"values": [{", ".join(vals)}]', '}']
+        for n, (rang_son, instants) in enumerate(piste["sons"].items(), len(valeurs)):
+            clip = f'{{\n"end_offset": 0.0,\n"start_offset": 0.0,\n"stream": ExtResource("son_{rang_son + 1}")\n}}'
+            lignes += [f'tracks/{n}/type = "audio"', f'tracks/{n}/imported = false', f'tracks/{n}/enabled = true',
+                       f'tracks/{n}/path = NodePath({_chaine(sons[rang_son]["nom"] + "/" + CALAGE)})', f'tracks/{n}/keys = {{',
+                       f'"clips": [{", ".join(clip for _ in instants)}],',
+                       f'"times": PackedFloat32Array({", ".join(_nombre(t) for t in instants)})', '}',
+                       f'tracks/{n}/use_blend = true']
+        ressources.append("\n".join(lignes) + "\n")
+        bibliotheque, nom = _nom_dans_le_lecteur(piste["nom"])
+        bibliotheques.setdefault(bibliotheque, []).append((nom, rang))
+    entrees = []
+    for rang, (bibliotheque, animations) in enumerate(sorted(bibliotheques.items()), 1):
+        ressources.append(f'[sub_resource type="AnimationLibrary" id="AnimationLibrary_{rang}"]\n_data = {{\n' +
+                          ",\n".join(f'&{_chaine(nom)}: SubResource("Animation_{r}")' for nom, r in animations) + "\n}\n")
+        entrees.append(f'&{_chaine(bibliotheque)}: SubResource("AnimationLibrary_{rang}")')
+    joue = any(p["nom"] == autoplay for p in pistes)
+    # Un lecteur de calage par emplacement visé, sous son lecteur SN6 : même
+    # son, même bus, et c'est lui que l'`AnimationPlayer` prend pour lui.
+    vises = sorted({rang_son for p in pistes for rang_son in p["sons"]})
+    calages = "".join(f'\n[node name="{CALAGE}" type="AudioStreamPlayer2D" parent={_chaine(sons[i]["nom"])}]\n'
+                      f'stream = ExtResource("son_{i + 1}")\nbus = &{_chaine(sons[i]["bus"])}\n' for i in vises)
+    noeud = calages + ('\n[node name="AnimationPlayer" type="AnimationPlayer" parent="."]\n'
+             'libraries = {\n' + ",\n".join(entrees) + '\n}\n' +
+             (f'autoplay = &{_chaine(autoplay)}\n' if joue else ''))
+    return ressources, noeud
+
+
 def _scene(sprite_frames: str, animation: str, pivot: dict[str, float],
-           sons: Sequence[dict[str, str]] = ()) -> str:
+           sons: Sequence[dict[str, str]] = (), pistes: Sequence[dict[str, Any]] = ()) -> str:
     """La scène d'une révision. `sons` (SN6) : un `AudioStreamPlayer2D` par
     emplacement sonore du sujet, nommé par son nom stable, sur le bus de sa
-    famille — le jeu les joue, SN7 y branchera la piste de l'animation.
-    Sans son, la scène est celle d'avant, octet pour octet."""
+    famille. `pistes` (SN7) : un `AnimationPlayer` qui mène le sprite et joue
+    ces lecteurs aux images repérées. Sans son, la scène est celle d'avant
+    SN6, octet pour octet ; sans repère, celle d'avant SN7."""
     externes = "".join(f'[ext_resource type="AudioStream" path={_chaine("res://" + s["ressource"])} id="son_{i + 1}"]\n'
                        for i, s in enumerate(sons))
     noeuds = "".join(f'\n[node name={_chaine(s["nom"])} type="AudioStreamPlayer2D" parent="."]\n'
                      f'stream = ExtResource("son_{i + 1}")\nbus = &{_chaine(s["bus"])}\n' for i, s in enumerate(sons))
-    return (f'[gd_scene load_steps={2 + len(sons)} format=3]\n\n'
-            f'[ext_resource type="SpriteFrames" path={_chaine("res://" + sprite_frames)} id="1"]\n{externes}\n'
+    ressources, lecteur = _lecteur_d_animation(pistes, sons, animation) if pistes else ([], "")
+    internes = "".join("\n" + r for r in ressources)
+    return (f'[gd_scene load_steps={2 + len(sons) + len(ressources)} format=3]\n\n'
+            f'[ext_resource type="SpriteFrames" path={_chaine("res://" + sprite_frames)} id="1"]\n{externes}{internes}\n'
             '[node name="Personnage" type="AnimatedSprite2D"]\n'
             'texture_filter = 1\nsprite_frames = ExtResource("1")\n'
             f'animation = &{_chaine(animation)}\nautoplay = {_chaine(animation)}\n'
-            f'centered = false\noffset = Vector2({-pivot["x"]}, {-pivot["y"]})\n{noeuds}')
+            f'centered = false\noffset = Vector2({-pivot["x"]}, {-pivot["y"]})\n{noeuds}{lecteur}')
 
 
 def _scene_stable(scene: str, noeud: str = "Personnage") -> str:

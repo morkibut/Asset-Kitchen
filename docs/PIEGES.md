@@ -1946,3 +1946,16 @@ la prochaine réécriture retrouvera.
   de repli, pas une mesure. L'atelier la refuse et rend `None` (`mesurer`). Et ce filtre écrit son
   résumé sur la sortie d'erreur : l'appeler avec `-loglevel error` le fait taire. SN5,
   18 septembre 2026.
+- **Une piste audio d'`AnimationPlayer` s'empare du lecteur qu'elle vise.** Au premier son joué,
+  Godot 4.7 remplace le `stream` de l'`AudioStreamPlayer2D` par un `AudioStreamPolyphonic`, et le
+  laisse à `null` quand l'animation s'arrête : le jeu de variantes qu'on y avait posé n'y est
+  plus, et un `play()` direct sur ce lecteur ne joue plus rien. Le bus et le volume du lecteur,
+  eux, s'appliquent toujours. **La parade retenue (SN7)** : la piste vise un lecteur à elle,
+  `Calage`, enfant du lecteur de l'emplacement (`sfx_heros_pas/Calage`, même son, même bus) ;
+  le lecteur posé par SN6 reste libre pour un `$sfx_heros_pas.play()` du jeu, et l'essai Godot
+  le vérifie après l'animation. Et `playing` reste vrai d'un son à l'autre : pour
+  compter les départs, envelopper le son dans un `AudioStream` qui compte ses
+  `_instantiate_playback`. SN7, 19 septembre 2026. Preuve dans `tests/test_sn7_reperes_sonores.py`.
+- **Godot refuse `/` dans un nom d'animation d'`AnimationPlayer`**, et `play("marche/sud")` lit
+  justement « bibliothèque/animation » : la bibliothèque porte le mouvement, l'animation la
+  direction, et le nom joué est celui des SpriteFrames (`_nom_dans_le_lecteur`). SN7.
