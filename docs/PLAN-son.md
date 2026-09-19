@@ -13,7 +13,7 @@
 > écrans**, vérifiés au navigateur sur l'atelier jetable (`essais/atelier_jetable_son.py`, ComfyUI
 > doublé) et relus en croisé. Une case cochée ci-dessous est tenue. Ce qui reste ouvert attend un
 > vrai ComfyUI avec ses poids (le banc SN0), ou une tranche suivante. SN6 (les sons d'un sujet)
-> est écrit à son tour, serveur et écrans, tenu par les essais, pas encore revu au navigateur ;
+> est écrit à son tour, serveur et écrans, vu au navigateur sur l'atelier jetable ;
 > il a fermé les deux écarts connus avec la maquette : une série et ses jeux se retrouvent après
 > un rechargement (depuis l'emplacement d'un sujet, et dans « Un son » sous « Séries
 > précédentes »), et « Livrer au jeu › Sons » range les sons par famille.
@@ -228,8 +228,8 @@ emplacement vide. La livraison d'un sujet emporte ses sons.
 - [x] Livrer le héros livre ses sons avec lui, sous leurs noms stables.
 
 *(19 septembre 2026 : tenus par `tests/test_sn6_sujet_sons.py` et
-`SonsDuSujet.test.tsx`, `SonsALivrer.test.tsx` ; pas encore revus au navigateur sur l'atelier
-jetable.)* La forme posée, dont SN7, SN11 et SN12 héritent, est écrite en tête de
+`SonsDuSujet.test.tsx`, `SonsALivrer.test.tsx`, et vus au navigateur, sauf la livraison du
+personnage : le pèlerin de l'atelier jetable n'a pas d'animation à livrer.)* La forme posée, dont SN7, SN11 et SN12 héritent, est écrite en tête de
 `atelier/domaine/sons_du_sujet.py` : un fichier par sujet, des emplacements `{cle, nom,
 famille, contenu: {nature: jeu | son, identifiant}, series}` ; un emplacement se désigne par
 `{sujet, cle}` ; son nom stable est `<préfixe>_<sujet sans article>_<clé>` (`sfx_pelerin_pas`).
