@@ -265,6 +265,8 @@ PLANS_PAR_TYPE: dict[str, tuple[Pose, ...]] = {
     # elle ne bouge pas, elle se raccorde. Lui montrer une rangée grisée
     # reviendrait à lui promettre qu'elle en aura un jour.
     "tuile": (),
+    # Une matière non plus : elle se répète, elle ne bouge pas (TU2).
+    "matière": (),
     # **`repos` ne dit pas ici ce qu'il dit pour un personnage**, et c'est
     # pourquoi la consigne est écrite sur la pose plutôt que déduite de son
     # identifiant : un bouton au repos est dans son état par défaut, il n'est
@@ -282,7 +284,7 @@ PLANS_PAR_TYPE: dict[str, tuple[Pose, ...]] = {
 # affirmation, pas un défaut qu'on n'aurait pas rempli : un décor et une tuile ne
 # bougent pas, ils se raccordent. La distinction compte, parce qu'elle décide de
 # ce qui retombe sur le plan du projet et de ce qui reste vide.
-SANS_POSES = frozenset({"décor", "tuile"})
+SANS_POSES = frozenset({"décor", "tuile", "matière"})
 
 # **Les deux types qui suivent le plan du jeu**, tant qu'ils n'écrivent pas le
 # leur. C'est la reprise, et elle est nommée plutôt que devinée : une pose

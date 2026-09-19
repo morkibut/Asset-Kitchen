@@ -1,0 +1,502 @@
+{
+  "casReussis": {
+    "sol — pierre du donjon, essai de sc-clone": {
+      "entree": {
+        "nom": "sol — pierre du donjon, essai de sc-clone",
+        "pierre": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints",
+        "motif": "floor of exactly four huge square flagstones, two by two, filling the whole frame",
+        "cadrage": "surface"
+      },
+      "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, floor of exactly four huge square flagstones, two by two, filling the whole frame, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, floor of exactly four huge square flagstones, two by two, filling the whole frame, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+        "perspective": "top-down view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "dessus de mur — même pierre, motif du dessus": {
+      "entree": {
+        "nom": "dessus de mur — même pierre, motif du dessus",
+        "pierre": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints",
+        "motif": "raw rough rock seen from above, exactly four huge rounded boulders, two by two",
+        "cadrage": "surface"
+      },
+      "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, raw rough rock seen from above, exactly four huge rounded boulders, two by two, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, raw rough rock seen from above, exactly four huge rounded boulders, two by two, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+        "perspective": "top-down view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "face de mur — même pierre, cadrage face": {
+      "entree": {
+        "nom": "face de mur — même pierre, cadrage face",
+        "pierre": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints",
+        "motif": "masonry wall of exactly four huge rectangular ashlar blocks, two by two",
+        "cadrage": "face"
+      },
+      "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, masonry wall of exactly four huge rectangular ashlar blocks, two by two, a vertical surface seen straight on from the front, one continuous material filling the entire frame, flat even frontal lighting, no cast shadows, no floor, no ground, no sky, no horizon, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, masonry wall of exactly four huge rectangular ashlar blocks, two by two, a vertical surface seen straight on from the front, one continuous material filling the entire frame, flat even frontal lighting, no cast shadows, no floor, no ground, no sky, no horizon, no border",
+        "perspective": "front view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "accents — herbe et terre battue": {
+      "entree": {
+        "nom": "accents — herbe et terre battue",
+        "pierre": "terre battue brun-roux, herbe rase piquetée de mousse, grain fin",
+        "motif": "prairie ordinaire, sans motif répété, texture continue",
+        "cadrage": "surface"
+      },
+      "prompt": "terre battue brun-roux, herbe rase piquetée de mousse, grain fin, prairie ordinaire, sans motif répété, texture continue, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "terre battue brun-roux, herbe rase piquetée de mousse, grain fin, prairie ordinaire, sans motif répété, texture continue, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+        "perspective": "top-down view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "accents et apostrophe": {
+      "entree": {
+        "nom": "accents et apostrophe",
+        "pierre": "pavé d’ardoise grise, joints étroits, reflets d’humidité",
+        "motif": "quatre dalles rectangulaires, deux par deux, remplissant le cadre",
+        "cadrage": "surface"
+      },
+      "prompt": "pavé d’ardoise grise, joints étroits, reflets d’humidité, quatre dalles rectangulaires, deux par deux, remplissant le cadre, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "pavé d’ardoise grise, joints étroits, reflets d’humidité, quatre dalles rectangulaires, deux par deux, remplissant le cadre, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+        "perspective": "top-down view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "cadrage plat — matière à plat, délavée": {
+      "entree": {
+        "nom": "cadrage plat — matière à plat, délavée",
+        "pierre": "planches de bois clair, grain vertical marqué",
+        "motif": "lattes régulières, alignées, sans relief lumineux",
+        "cadrage": "plat"
+      },
+      "prompt": "planches de bois clair, grain vertical marqué, lattes régulières, alignées, sans relief lumineux, flat lay albedo material, evenly distributed detail across the whole frame, neutral diffuse lighting, no highlights, no cast shadows, no vignette, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "planches de bois clair, grain vertical marqué, lattes régulières, alignées, sans relief lumineux, flat lay albedo material, evenly distributed detail across the whole frame, neutral diffuse lighting, no highlights, no cast shadows, no vignette, no border",
+        "perspective": "top-down view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "cadrage motif — dalles régulières": {
+      "entree": {
+        "nom": "cadrage motif — dalles régulières",
+        "pierre": "granit gris clair, surface polie",
+        "motif": "exactly nine square tiles, three by three, evenly spaced",
+        "cadrage": "motif"
+      },
+      "prompt": "granit gris clair, surface polie, exactly nine square tiles, three by three, evenly spaced, a regular repeating pattern, aligned rows, even spacing, consistent unit size, seen from directly above, neutral diffuse lighting, no cast shadows, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "granit gris clair, surface polie, exactly nine square tiles, three by three, evenly spaced, a regular repeating pattern, aligned rows, even spacing, consistent unit size, seen from directly above, neutral diffuse lighting, no cast shadows, no border",
+        "perspective": "top-down view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "texte long — motif détaillé": {
+      "entree": {
+        "nom": "texte long — motif détaillé",
+        "pierre": "sable fin doré, ridules de vent, grain uniforme sur toute la surface visible",
+        "motif": "exactly six large dunes crests, two by three, filling the whole frame, no gaps",
+        "cadrage": "surface"
+      },
+      "prompt": "sable fin doré, ridules de vent, grain uniforme sur toute la surface visible, exactly six large dunes crests, two by three, filling the whole frame, no gaps, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "sable fin doré, ridules de vent, grain uniforme sur toute la surface visible, exactly six large dunes crests, two by three, filling the whole frame, no gaps, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+        "perspective": "top-down view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "majuscules et ponctuation": {
+      "entree": {
+        "nom": "majuscules et ponctuation",
+        "pierre": "Lave noire craquelée, veines orangées incandescentes.",
+        "motif": "Exactly four cooling cracks, two by two, radiating outward.",
+        "cadrage": "surface"
+      },
+      "prompt": "Lave noire craquelée, veines orangées incandescentes., Exactly four cooling cracks, two by two, radiating outward., seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "Lave noire craquelée, veines orangées incandescentes., Exactly four cooling cracks, two by two, radiating outward., seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+        "perspective": "top-down view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "avec référence — taille 512": {
+      "entree": {
+        "nom": "avec référence — taille 512",
+        "pierre": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints",
+        "motif": "floor of exactly four huge square flagstones, two by two, filling the whole frame",
+        "cadrage": "surface",
+        "reference": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+        "denoise": 0.55
+      },
+      "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, floor of exactly four huge square flagstones, two by two, filling the whole frame, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, floor of exactly four huge square flagstones, two by two, filling the whole frame, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+        "perspective": "top-down view",
+        "reference": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+        "denoise": 0.55,
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 512,
+        "height": 512,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "taille explicite — 128": {
+      "entree": {
+        "nom": "taille explicite — 128",
+        "pierre": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints",
+        "motif": "floor of exactly four huge square flagstones, two by two, filling the whole frame",
+        "cadrage": "surface",
+        "taille": 128
+      },
+      "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, floor of exactly four huge square flagstones, two by two, filling the whole frame, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, floor of exactly four huge square flagstones, two by two, filling the whole frame, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+        "perspective": "top-down view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 128,
+        "height": 128,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "graine fixée": {
+      "entree": {
+        "nom": "graine fixée",
+        "pierre": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints",
+        "motif": "floor of exactly four huge square flagstones, two by two, filling the whole frame",
+        "cadrage": "surface",
+        "seed": 42
+      },
+      "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, floor of exactly four huge square flagstones, two by two, filling the whole frame, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints, floor of exactly four huge square flagstones, two by two, filling the whole frame, seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border",
+        "perspective": "top-down view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": 42,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    },
+    "motif face avec compte explicite": {
+      "entree": {
+        "nom": "motif face avec compte explicite",
+        "pierre": "pierre de taille grise, joints fins au fer",
+        "motif": "masonry wall of exactly two huge rectangular blocks, side by side",
+        "cadrage": "face"
+      },
+      "prompt": "pierre de taille grise, joints fins au fer, masonry wall of exactly two huge rectangular blocks, side by side, a vertical surface seen straight on from the front, one continuous material filling the entire frame, flat even frontal lighting, no cast shadows, no floor, no ground, no sky, no horizon, no border",
+      "corps": {
+        "provider": "comfyui",
+        "comfyUrl": "http://127.0.0.1:8188",
+        "workflowPreset": "klein9b-tiles-raccordable",
+        "checkpoint": null,
+        "kind": "texture",
+        "prompt": "pierre de taille grise, joints fins au fer, masonry wall of exactly two huge rectangular blocks, side by side, a vertical surface seen straight on from the front, one continuous material filling the entire frame, flat even frontal lighting, no cast shadows, no floor, no ground, no sky, no horizon, no border",
+        "perspective": "front view",
+        "style": "16-bit pixel art",
+        "theme": "",
+        "tileable": true,
+        "width": 256,
+        "height": 256,
+        "seed": -1,
+        "count": 1,
+        "pixel": false,
+        "pixelSize": 0,
+        "colors": 24,
+        "negative": "blurry, text, watermark, frame, border, vignette, grid, tile lines, seams, gutters, single object, centered composition, drop shadow, directional lighting, gradient, perspective",
+        "removeBackground": false,
+        "project": "Donjon"
+      }
+    }
+  },
+  "casRefuses": [
+    {
+      "nom": "pierre vide",
+      "entree": {
+        "pierre": "",
+        "motif": "floor of exactly four huge square flagstones, two by two, filling the whole frame",
+        "cadrage": "surface"
+      },
+      "leve": true,
+      "message": "Décris la pierre avant de lancer la génération."
+    },
+    {
+      "nom": "motif vide",
+      "entree": {
+        "pierre": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints",
+        "motif": "",
+        "cadrage": "surface"
+      },
+      "leve": true,
+      "message": "Décris le motif de cet emplacement avant de lancer la génération."
+    },
+    {
+      "nom": "pierre faite uniquement d’espaces",
+      "entree": {
+        "pierre": "   ",
+        "motif": "floor of exactly four huge square flagstones, two by two, filling the whole frame",
+        "cadrage": "surface"
+      },
+      "leve": true,
+      "message": "Décris la pierre avant de lancer la génération."
+    },
+    {
+      "nom": "cadrage inconnu",
+      "entree": {
+        "pierre": "warm grey-brown dungeon granite, cool grey stone with ochre torchlit tint, fine speckled grain, dark recessed mortar joints",
+        "motif": "floor of exactly four huge square flagstones, two by two, filling the whole frame",
+        "cadrage": "pas-un-cadrage"
+      },
+      "leve": true,
+      "message": "Cadrage inconnu : pas-un-cadrage"
+    }
+  ],
+  "graines": {
+    "cinqTirages": [
+      100,
+      103,
+      106,
+      109,
+      112
+    ],
+    "sansPas": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "unTirageMinimum": 1,
+    "vingtTiragesMaximum": 20
+  },
+  "tailles": {
+    "sansReference": 256,
+    "avecReference": 512
+  },
+  "cadrages": {
+    "surface": {
+      "nom": "Sol vu du dessus",
+      "aide": "Le défaut d’une surface de terrain.",
+      "perspective": "top-down view",
+      "consigne": "seen from directly above, one continuous material filling the entire frame, flat even overhead lighting, no cast shadows, no single light direction, no objects, no border"
+    },
+    "face": {
+      "nom": "Face de mur, de face",
+      "aide": "Interdit le sol, le ciel et l’horizon.",
+      "perspective": "front view",
+      "consigne": "a vertical surface seen straight on from the front, one continuous material filling the entire frame, flat even frontal lighting, no cast shadows, no floor, no ground, no sky, no horizon, no border"
+    },
+    "plat": {
+      "nom": "Matière à plat, délavée",
+      "aide": "Albedo : aucune lumière cuite dedans.",
+      "perspective": "top-down view",
+      "consigne": "flat lay albedo material, evenly distributed detail across the whole frame, neutral diffuse lighting, no highlights, no cast shadows, no vignette, no border"
+    },
+    "motif": {
+      "nom": "Motif régulier",
+      "aide": "Dalles, briques, planches, carrelage.",
+      "perspective": "top-down view",
+      "consigne": "a regular repeating pattern, aligned rows, even spacing, consistent unit size, seen from directly above, neutral diffuse lighting, no cast shadows, no border"
+    }
+  }
+}

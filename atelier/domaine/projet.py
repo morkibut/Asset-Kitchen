@@ -304,6 +304,10 @@ BAREME_PAR_DEFAUT = (
     # E8, avec la même silhouette absente qu'un décor : une tuile remplit son
     # cadre, elle n'a pas de contour à détourer.
     Echelle("tuile", DECORS, 100, silhouette=False),
+    # **Une matière** (TU2, `docs/PLAN-tuiles.md` décision 7) : une texture qui se répète
+    # sans couture — de l'herbe, de la pierre —, dans laquelle un jeu de tuiles découpe
+    # ses pièces. Elle remplit son cadre comme une tuile : rien à détourer.
+    Echelle("matière", DECORS, 100, silhouette=False),
     Echelle("élément d'interface", INTERFACE, 100),
 )
 

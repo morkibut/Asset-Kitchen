@@ -409,6 +409,106 @@ fixé** — le dessin à la main, décidé le 2 septembre 2026 et non découpé.
 On l'ouvre quand on travaille *dans* une version. Ce qui tient l'ensemble — les cinq
 règles, le squelette, le modèle d'objets, les risques — reste ici.
 
+### Les jeux de tuiles fabriqués (TU2, `docs/PLAN-tuiles.md`)
+
+Un jeu de tuiles a deux formes, sur les mêmes routes `/api/projects/{projet}/tilesets`.
+**À partir d'une image** (AU13) : `POST` avec `image` et `grille`, raccords saisis à la main.
+**Fabriqué** : `POST` avec `nom`, `recette` et `atlas` (le PNG rendu, en base64). La recette
+est une liste fermée (`atelier/domaine/recette_tuiles.py`) : `sorte` (`sol`, `chemin`, `mur`,
+`coins-15`, `pieces-17`), `taille` (16, 32, 64), `graine`, `emplacements` (surface, bordure,
+face, bas, bordureBas → matière `integree`, `asset` du jeu, ou `vide` ; une bordure `lie`
+suit sa surface) et `reglages` (noms et bornes du panneau de sc-clone). L'atlas doit mesurer
+exactement ce que la recette donne ; il entre en bibliothèque avec la filiation
+`{tuiles, revision, atlas}`. Ses pièces et leurs raccords viennent du masque de chaque case
+(`atelier/domaine/masques_tuiles.py`, table de sc-clone prouvée par
+`tests/test_tu2_recette.py`), jamais de la saisie : un `PUT` peut changer le nom et la carte,
+et refuse (409) tout raccord, terrain ou pièce retenue différents de la recette. Changer de
+recette, c'est `PUT` avec `recette` **et** `atlas` : une révision de plus, l'ancien atlas
+reste lisible par `?revision=`. Un ensemble sans `recette` sur le disque est un jeu AU13,
+relu sans migration. Les 17 pièces n'ont pas de carte à peindre : sans carte peinte, la carte
+livrée les range comme sur la planche (`ServiceTuiles._carte_des_pieces`, TU11).
+
+**La livraison d'un mur (TU7).** La carte d'un mur est son emprise. À la livraison,
+`atelier/domaine/pose_mur.py` (portage pur de la scène du moteur, comparé pose pour pose à
+`dessinerScene` par `tests/test_tu7_mur.py`) en déduit ombre, base, faces et dessus. Le
+`.tres` est celui de `godotWallTileset` de sc-clone, au caractère près. `carte.tscn` est un
+`Node2D` trié en profondeur, avec une `TileMapLayer` par étage : « Ombre » (z −1), « Base »,
+« Face_k », « Dessus ». Le `y_sort_origin` de chaque couche ramène tout le mur sur la ligne
+de sa base, et Godot trie alors comme le peintre. Une couche invisible, « Emprise », bloque
+les cases dont la base est cachée. Le paquet porte un `LISEZMOI.txt` des règles de pose.
+
+**Le décor autour des bords (TU8).** Le réglage `decor` (`aucun`, `leger`, `dense`, sur `sol`,
+`chemin`, `coins-15` et `mur`) pose des gravats sur les cases vides qui touchent la matière —
+toujours par paires, une moitié extérieure et sa moitié intérieure (`atelier/domaine/
+pose_decor.py`, port de `emplacementsDecor` et `hachage01`, comparé pose pour pose au moteur
+par `essais/tu8_reference_decor.mjs` et `tests/test_tu8_decor.py`). Pour un mur, l'occupation
+est celle de `pose_mur.occupation_mur` (la colonne visuellement couverte), les cases de pente
+de T44 exclues comme dans `dessinerScene` (`pose_mur.decor`). Le décor sort en tuiles sans
+terrain, sur une couche à part de la carte livrée : pour un mur, une dernière `TileMapLayer`
+« Décor » dans le `Node2D` de TU7 (`z_index 1`, toujours devant, sans tri) ; pour un sol ou un
+chemin, la carte cesse d'être une seule `TileMapLayer` et devient un `Node2D` « Carte » avec
+« Terrain » puis « Décor » — mais seulement quand la recette pose au moins un gravat, sinon le
+paquet reste identique au bit près à avant TU8 (« aucun », ou une carte trop petite pour que le
+tirage y pose quoi que ce soit). Un vrai Godot 4.7 charge chaque couche « Décor » et y retrouve
+la pose calculée, 0 désaccord.
+
+### Les matières générées sur la machine (TU5, `docs/PLAN-tuiles.md`)
+
+Le texte d'une matière se compose en deux couches pures, jamais recopiées
+(`atelier/domaine/texte_matiere.py`, port de `tile-ia-prompt.js` et de la branche
+`comfyui`/`texture` de `promptParts`, `lib/providers.mjs`) : `composer_prompt(pierre, motif,
+cadrage)` — le tronc, la clause de motif, le cadrage (`surface`, `face`, `plat`, `motif`) —,
+puis `texte_envoi(...)`, qui y ajoute l'habillage fixe d'une texture raccordable et le
+déclencheur/suffixe du style. Le négatif est fixe (`NEGATIF`), la taille 256 sans référence
+et 512 avec (`taille_par_defaut`), et les graines d'un tirage viennent de
+`graines_pour_tirages`, une par emplacement, jamais partagées. `essais/tu5_textes_scclone.mjs`
+fige les sorties réelles de sc-clone en fixture ; `tests/test_tu5_matieres.py` compare le
+portage au caractère près.
+
+`atelier/services/matieres.py` (`ServiceMatieres`) n'appelle jamais un fournisseur payant :
+un seul style, `klein9b-tiles-raccordable` (ML6), en dur. `disponibilite()` réutilise le
+diagnostic des styles locaux et installe au besoin ; `apercu(...)` compose le texte sans
+toucher ComfyUI (la route de prévisualisation) ; `generer(projet, pierre=, motif=, cadrage=,
+tirages=1..8, graine=None)` soumet `tirages` appels indépendants à
+`ServiceGenerations.soumettre_matiere` — la contrepartie de `soumettre()` sans `_texte` ni
+`_reinjections` : le texte part déjà entièrement composé, pour que « voir le texte envoyé »
+reste exactement ce qui part, sans bible d'univers ni artwork ajouté. Chacun passe par la
+file locale existante (suivi et annulation : `GET /api/local-queue`) et revient comme un
+asset de nature « matière » (`Demande.echelle="matière"`, TU2), avec sa provenance dans
+`generation.demande["filiation"]["matiere"]` (texte, style, graine).
+
+Trois routes, `/api/projects/{projet}/materials` : `GET /availability`, `POST /preview`,
+`POST /generate` (`{pierre, motif, cadrage, tirages, graine}` → les générations soumises,
+`generation.en_json()`).
+
+### L'agent fabrique des tuiles (TU10, `docs/PLAN-tuiles.md`)
+
+**Le serveur rend avec le code de l'écran, jamais un portage.** `atelier/tuiles_node/rendre.mjs`
+importe `interface/src/tuiles/atelier.ts` et `png.ts` tels quels (Node ≥ 22.18, ou ≥ 23.6 dans la
+série 23, efface les types ;
+un crochet `registerHooks` ajoute l'extension que Vite résout seul ; le canevas est le bouchon de
+TU1, seul `putImageData` sert). Entrée JSON sur stdin : la recette **vérifiée** par le serveur,
+les matières « asset » déjà décodées en RGBA par Pillow (les octets de `assets.octets`, ceux
+qu'affiche `api.fichier`), la palette de l'univers (TU6, `paletteJeu`) ; sortie : le PNG
+d'`encoderPng`, l'empreinte des pixels, le contrôle `verifier` (tile-check) et la carte en pièces
+posées (`versCarteServeur`). `atelier/services/rendu_tuiles.py` (`atelier.rendu_tuiles`) le lance
+en sous-processus et cherche Node à chaque appel (`ATELIER_NODE`, sinon le `PATH`) : absent ou
+trop vieux, `NodeAbsent` (409) dit quoi installer, et seuls les gestes de l'agent qui fabriquent
+un atlas en dépendent — l'écran rend lui-même. `tests/test_tu10_agent.py` compare ce rendu à
+celui d'un vrai navigateur sans écran (`essais/tu10_reference_navigateur.mjs` : Vite + Edge,
+gestes de l'écran, matières décodées par le navigateur) : 19 cas, les cinq sortes, au pixel près.
+
+**Les outils MCP.** `create_tile_set` accepte `recipe` (+ `map`, lignes de `#`/`.`) en plus
+d'`image`+`grid` ; `update_tile_set` accepte `recipe` et `map` (`regles` devient facultatif pour
+un jeu fabriqué) ; `read_tile_set` ajoute `verification` (`propre`, `phrase`, `defauts[].en_clair`)
+sur l'atlas gardé — un défaut avertit, il ne bloque rien ; `generate_tile_material` génère des
+matières par `ServiceMatieres`. **Le cadre de l'agent borne ces matières comme ses images
+locales (RP2)** : `preparer_pour_agent` écrit un travail durable de nature `matieres`
+(identifiants des générations écrits avant tout départ), `ServiceTravaux.demarrer` relit le
+cadre (calcul local, méthodes permises, plafond d'appels) et le crochet `avant_soumission` du
+fournisseur ComfyUI le relit au tour de la carte graphique. Un ensemble créé par l'agent porte
+`origine: "agent"` ; un ensemble sans ce champ se relit `"auteur"`, sans migration.
+
 ## 11 · Risques, et quand les lever → `docs/archi-risques.md`
 
 **Les risques de l'architecture, et le moment où chacun se lève**, vivent dans

@@ -203,6 +203,20 @@ export type Lieu =
   // tête de ce fichier) : c'est un état de l'écran, qu'on choisit sans avoir
   // descendu un étage.
   | { genre: "retouche"; asset: string }
+  // Les jeux de tuiles (`TU3`) — **un lieu, plus un dialogue**. On y entre par le
+  // bouton *Les tuiles* de la navigation des familles, et il se pose sur la racine
+  // d'où l'on vient, comme la sortie.
+  //
+  // Trois genres et non un, parce que le fil doit pouvoir remonter à chacun :
+  // *Les tuiles › Herbe et terre › Livrer à Godot*. Un seul lieu qui donnerait les
+  // trois noms ferait ramener *Les tuiles* à l'étage du dessous.
+  //
+  // `jeu` est l'identifiant d'un jeu gardé ; `null` est le jeu neuf pas encore
+  // enregistré. `ecran` désigne les deux écrans d'avant l'atelier : le choix de la
+  // sorte, et le jeu fait **à partir d'une image déjà faite** (l'éditeur d'AU13).
+  | { genre: "tuiles" }
+  | { genre: "jeu-de-tuiles"; jeu: string | null; ecran?: "sorte" | "image" }
+  | { genre: "livraison-de-tuiles" }
   | { genre: "clip"; cible: CibleDuClip }
   | { genre: "montage"; clip: string }
   | { genre: "bande"; bande: string }

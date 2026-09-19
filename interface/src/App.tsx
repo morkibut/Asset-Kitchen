@@ -84,7 +84,8 @@ import { NavigationAtelier } from "./composants/NavigationAtelier"
 import { TiroirDesBrouillons, useBrouillonsEnPlan } from "./composants/Brouillons"
 import { noterOuLonEst } from "./brouillons"
 import { ImporterPourUnSujet } from "./composants/ImporterPourUnSujet"
-import { Tuiles } from "./composants/Tuiles"
+import { Tuiles, type VueTuiles } from "./composants/Tuiles"
+import { tailleDeLUnivers } from "./tuiles/atelier"
 import { AtelierSon } from "./composants/AtelierSon"
 import { EcranFamille } from "./composants/Famille"
 import { ReglagesDeFamille } from "./composants/ReglagesDeFamille"
@@ -342,6 +343,26 @@ function AtelierApp() {
   const travailOuvert = lieu(pile, "travail")?.travail
   const setSortieOuverte = (ouvert: boolean) =>
     setPile((p) => (ouvert ? entrer(p, { genre: "sortie" }) : sortir(p, "sortie")))
+
+  /** Les jeux de tuiles (`TU3`) — **un lieu, plus un dialogue**. On y entre par le
+   *  bouton *Les tuiles* des familles ; la liste, un jeu ouvert et sa livraison sont
+   *  trois étages de la pile, et le fil les nomme. Les noms des jeux remontent de
+   *  l'écran, qui seul les tient — celui qu'on est en train de taper compris. */
+  const tuilesOuvertes = dans(pile, "tuiles")
+  const jeuDeTuiles = lieu(pile, "jeu-de-tuiles")
+  const vueDesTuiles: VueTuiles = jeuDeTuiles
+    ? { jeu: jeuDeTuiles.jeu, ...(jeuDeTuiles.ecran ? { ecran: jeuDeTuiles.ecran } : {}), livraison: dans(pile, "livraison-de-tuiles") }
+    : null
+  const [nomsDesTuiles, setNomsDesTuiles] = useState<Record<string, string>>({})
+  const ouvrirLesTuiles = () =>
+    setPile((p) => entrer(sortir(sortir(p, "sortie"), "regles"), { genre: "tuiles" }))
+  const allerDansLesTuiles = (v: VueTuiles) =>
+    setPile((p) => {
+      const base = sortir(p, "jeu-de-tuiles")
+      if (!v) return base
+      const ouvert = entrer(base, { genre: "jeu-de-tuiles", jeu: v.jeu, ...(v.ecran ? { ecran: v.ecran } : {}) })
+      return v.livraison ? entrer(ouvert, { genre: "livraison-de-tuiles" }) : ouvert
+    })
 
   /** Le tour du propriétaire doit-il se dérouler tout seul ? (`B15`)
    *
@@ -672,7 +693,7 @@ function AtelierApp() {
   const envoiOuvert = dans(pile, "envoi")
   // Une profondeur de réglages ou de livraison occupe la surface centrale.
   // Sa racine reste dans le fil, elle ne monte pas un second écran dessous.
-  const surfaceDisponible = !reglesOuvertes && !installationOuverte && !sortieOuverte && !travailOuvert
+  const surfaceDisponible = !reglesOuvertes && !installationOuverte && !sortieOuverte && !travailOuvert && !tuilesOuvertes
   const setEnvoiOuvert = (ouvert: boolean) =>
     setPile((p) => (ouvert ? entrer(p, { genre: "envoi" }) : sortir(p, "envoi")))
   const [envoi, setEnvoi] = useState<Envoi | null>(null)
@@ -1073,7 +1094,6 @@ function AtelierApp() {
   // haut il ne sait rien ; ouvert depuis une rangée vide d'*Images fixes* ou
   // depuis « Fabriquer… », il arrive déjà pointé sur la pose qu'on regardait.
   const [importDuSujet, setImportDuSujet] = useState<{ pose?: string; direction?: string } | null>(null)
-  const [tuilesOuvertes, setTuilesOuvertes] = useState(false)
   const [sonsOuverts, setSonsOuverts] = useState<{ identifiant?: string } | null>(null)
   const [referenceDePreparation, setReferenceDePreparation] = useState(false)
   const [promptNegatif, setPromptNegatif] = useState("")
@@ -1611,6 +1631,7 @@ function AtelierApp() {
       personnages,
       pieces,
       vestiaireDuJeu,
+      nomsDesTuiles,
     }),
   ).map((etage) => ({
     libelle: etage.libelle,
@@ -1866,7 +1887,7 @@ function AtelierApp() {
       <NavigationAtelier
         jeu={projetCourant?.nom ?? "Sans jeu"}
         descriptionJeu={`${projetCourant?.assets ?? 0} images dans ce jeu`}
-        actif={installationOuverte || reglesOuvertes ? "reglages" : sortieOuverte ? "livraison" : surface === "fabrications" ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
+        actif={installationOuverte || reglesOuvertes ? "reglages" : sortieOuverte ? "livraison" : tuilesOuvertes ? "assets" : surface === "fabrications" ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
         // **Toutes les familles, pas une seule** (`RP16`) : les emplacements
         // d'images encore en route, et les travaux du serveur qui ne sont ni
         // finis ni annulés — animations, équipements, images locales, vidéos
@@ -2046,6 +2067,39 @@ function AtelierApp() {
           />
         )}
 
+      {/* ── Les jeux de tuiles (`TU3`) ──────────────────────────────────────
+          **Un lieu, plus un dialogue** : la même ligne de grille et la même chaîne
+          de gardes que la sortie. Il se pose sur la racine d'où l'on vient — les
+          familles, le plus souvent —, et le fil dit *Les tuiles › son nom*. */}
+      {tuilesOuvertes &&
+        bibliotheque.courant &&
+        !reglesOuvertes &&
+        !installationOuverte &&
+        !sortieOuverte &&
+        !travailOuvert &&
+        !depensesOuvertes &&
+        !envoiOuvert &&
+        !clipOuvert && (
+          <Tuiles
+            key={bibliotheque.courant}
+            projet={bibliotheque.courant}
+            vue={vueDesTuiles}
+            onVue={allerDansLesTuiles}
+            onNoms={setNomsDesTuiles}
+            // « Mes matières » : les images des sujets de nature « matière » (TU2).
+            matieres={personnages
+              .filter((p) => p.type === "matière")
+              .flatMap((p) => p.cases.flatMap((c) => c.images).map((a) => ({ identifiant: a.identifiant, nom: a.label || p.nom })))}
+            // … et celles qui n'ont pas de case : une matière n'a pas de pose.
+            sujetsMatieres={personnages.filter((p) => p.type === "matière").map((p) => ({ identifiant: p.identifiant, nom: p.nom }))}
+            tailleDuJeu={tailleDeLUnivers(univers)}
+            paletteUnivers={univers.palette}
+            onAsset={(a) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: a.identifiant }))}
+            onLivraisons={() => setPile((p) => entrer(sortir(p, "tuiles"), { genre: "sortie" }))}
+            onUnivers={() => allerA("univers")}
+          />
+        )}
+
       {/* ── Commander un clip, entre la case et la dépense (A9) ────────────
           **La troisième surface d'où l'argent part**, et la V3 l'assume : on ne
           commande pas une animation depuis une barre de saisie faite pour des
@@ -2219,7 +2273,7 @@ function AtelierApp() {
           surFamille={ouvrirLaFamille} surToutesLesFamilles={() => allerA("bibliotheque")}
           surRange={() => void api.arbre().then(setBibliotheque).catch(() => {})}
           surReglages={() => setReglagesDeFamille(true)} surErreur={setPanne}
-          onTuiles={() => setTuilesOuvertes(true)} onSons={() => setSonsOuverts({})}
+          onTuiles={ouvrirLesTuiles} onSons={() => setSonsOuverts({})}
           onOuvrir={(id) => { setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
           onCree={fondrePersonnage}
           onPiece={ouvrirLaPiece} onGalerie={() => allerA("galerie")}
@@ -2376,7 +2430,7 @@ function AtelierApp() {
           surToutesLesFamilles={() => allerA("bibliotheque")}
           onPiece={ouvrirLaPiece}
           onGalerie={() => allerA("galerie")}
-          onTuiles={() => setTuilesOuvertes(true)}
+          onTuiles={ouvrirLesTuiles}
           onSons={() => setSonsOuverts({})}
           onCreer={(famille) => setCreationAssetOuverte(famille)}
           onCommanderPlusieurs={() => setCommanderPlusieursOuvert(true)}
@@ -3065,7 +3119,6 @@ function AtelierApp() {
            donnait déjà à l'autre import, aux mêmes signatures. */
         onDecouper={(id) => { setImportDuSujet(null); ouvrirLaRetouche(id, "decoupage") }}
         onMonter={(clip) => { setImportDuSujet(null); poserLaRacine("galerie"); setMontageOuvert(clip) }} />}
-      {tuilesOuvertes && bibliotheque.courant && <CadreDialogue titre="Les tuiles du jeu" onFermer={() => setTuilesOuvertes(false)} enfants={<><div className="flex justify-end border-b border-trait px-[22px] py-[8px]"><button className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px]" onClick={() => setTuilesOuvertes(false)}>‹ Les sujets</button></div><Tuiles projet={bibliotheque.courant} onAsset={a => { setTuilesOuvertes(false); setPile(entrer(poser("galerie"), { genre: "retouche", asset: a.identifiant })) }} onLivraisons={() => { setTuilesOuvertes(false); setSortieOuverte(true) }} /></>} />}
       {sonsOuverts && bibliotheque.courant && <CadreDialogue titre="Les sons du jeu" onFermer={() => setSonsOuverts(null)} enfants={<AtelierSon projet={bibliotheque.courant} identifiantInitial={sonsOuverts.identifiant} onFermer={() => setSonsOuverts(null)} onLivraisons={() => { setSonsOuverts(null); setSortieOuverte(true) }} />} />}
       {apercu && <Apercu sujet={apercu} onFermer={fermerApercu} />}
       </div>

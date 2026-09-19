@@ -1081,6 +1081,94 @@ class ServiceGenerations:
         """Snapshot d'envoi pour un travail durable : texte et octets résolus ensemble."""
         return self._demande_de(generation)
 
+    async def soumettre_matiere(
+        self,
+        identifiant_modele: str,
+        texte: str,
+        *,
+        prompt_negatif: str = "",
+        resolution: str | None = None,
+        proportions: str = "1:1",
+        projet: str | None = None,
+        provenance: str = AUTEUR,
+        graine: int | None = None,
+        filiation: dict[str, Any] | None = None,
+        identifiant: str | None = None,
+    ) -> Generation:
+        """Un appel dont le texte part **déjà entièrement composé** par
+        l'appelant (TU5, une matière de jeu de tuiles) : ni bible d'univers, ni
+        pliage, ni réinjection d'artworks — l'appelant a déjà décidé de tout
+        ce qui part, et « voir le texte envoyé » doit rester exactement ce
+        texte-ci, rien de plus.
+
+        **La contrepartie exacte de `soumettre`, moins `_texte` et
+        `_reinjections`.** Les deux composent ce qui part à partir de la bible
+        du jeu et du sujet visé ; une matière n'a ni bible à replier ni sujet à
+        viser, elle a un texte déjà fini. Passer par `preparer` aurait donc
+        soit fait mentir « Voir le texte envoyé » (la bible s'ajoute en
+        silence), soit demandé de déjouer `_texte` par un texte « repris »
+        — un détour plus fragile qu'une méthode qui dit ce qu'elle fait.
+
+        La suite est identique à `soumettre` : même file locale, même coût nul
+        en local, même naissance d'asset à l'arrivée. `echelle="matière"` sur
+        la demande est ce qui fait de l'image qui revient une matière, au sens
+        où ce dépôt l'entend (TU2, `atelier.domaine.projet.BAREME_PAR_DEFAUT`)
+        — sans réinjection, ce mot ne fait ici que choisir la recette de grille
+        posée à la naissance de l'asset.
+        """
+        identifiant = identifiant or uuid.uuid4().hex
+        existante = self._base.lire(identifiant)
+        if existante is not None:
+            return existante
+        if projet is None and self._bibliotheque is not None:
+            projet = self._bibliotheque.courant
+        demande = Demande(
+            prompt=texte,
+            prompt_negatif=prompt_negatif,
+            resolution=resolution,
+            proportions=proportions,
+            variations=1,
+            echelle="matière",
+            options=({"graine": graine} if graine is not None else {}),
+        )
+        modele = self._catalogue.modele(identifiant_modele)
+        # Une matière se génère sur la machine, jamais chez un fournisseur payant
+        # (décision 6 du plan des tuiles) : refusé ici, quel que soit l'appelant.
+        if not modele.locale:
+            raise DemandeRefusee(f"{modele.nom} n’est pas un modèle local : une matière se génère sur la machine.")
+        graine_resolue = self._graine_demandee(modele, demande)
+        refus = modele.refus(_sans_graine(modele, demande))
+        if refus is not None:
+            raise DemandeRefusee(f"{modele.nom} {refus}")
+        manque = self._catalogue.grise(modele)
+        if manque is not None:
+            raise SansCle(manque)
+        gardees, ecartees = modele.retenir(_sans_graine(modele, demande).options)
+        resolus = self._resolus(modele, demande, gardees)
+        if graine_resolue is not None:
+            resolus[GRAINE] = graine_resolue
+        generation = Generation(
+            identifiant=identifiant,
+            modele=modele.identifiant,
+            demande={
+                **demande.resume(),
+                **({"filiation": filiation} if filiation else {}),
+            },
+            parametres_resolus=resolus,
+            ecartees=ecartees,
+            emplacements=[Emplacement(rang=0)],
+            cree_le=time.time(),
+            projet=projet,
+            provenance=provenance,
+        )
+        self._sauver(generation)
+        tache = asyncio.create_task(
+            self._executer(generation, modele, self._demande_de(generation))
+        )
+        self._en_vol.add(tache)
+        tache.add_done_callback(self._en_vol.discard)
+        return generation
+
     def methode_locale(self, modele: str) -> bool:
         return self._catalogue.modele(modele).locale
 

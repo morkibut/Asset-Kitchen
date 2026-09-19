@@ -374,7 +374,9 @@ dans une petite carte Godot. Le détail se recadre sur les besoins du jeu avant 
 
 ### Critères d'acceptation
 
-- [ ] Produire, juger les raccords, corriger et exporter un ensemble choisi avec l'agent.
+- [x] Produire, juger les raccords, corriger et exporter un ensemble choisi avec l'agent.
+      *(TU10, `docs/PLAN-tuiles.md` : `tests/test_tu10_agent.py`, de bout en bout par le MCP,
+      livré dans un vrai Godot 4.7.)*
 - [x] Une carte réelle vérifie bords, coins, transparence et dimensions ; une tuile isolée ne suffit pas.
 - [x] L'export porte les relations utiles au jeu et ne se limite pas à un dossier de PNG.
 

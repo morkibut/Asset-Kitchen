@@ -237,5 +237,55 @@ la panne correctement (« il manque le LoRA de style… ») ; il ne répare pas 
 
 ## Objets et tuiles
 
-À écrire. Même structure : ce qu'il faut lancer, les prompts exacts, ce qui a été écarté et
-pourquoi.
+**Les objets** n'ont pas encore de style à eux : ils passent par les styles d'image ordinaires,
+décrits plus haut.
+
+**Les jeux de tuiles** (`docs/PLAN-tuiles.md`). L'IA ne dessine jamais une pièce. Elle fabrique
+une **matière** : une texture carrée qui se répète sans couture (de l'herbe, des dalles, du
+sable). L'atelier découpe ensuite les 47, 16 ou 15 pièces du jeu dans cette matière, sur la
+machine. Le raccord des pièces vient donc du découpage, pas du modèle.
+
+**Ce qu'il faut installer**, dans le ComfyUI de la machine :
+
+| Quoi | Où |
+|---|---|
+| FLUX.2 Klein base 9B | `models/diffusion_models` |
+| Qwen3 8B (l'encodeur de texte) | `models/text_encoders` |
+| Le LoRA `game_asset_tiles_klein_base9b` (crafiq/flux-2-klein-9b-game-asset-tiles-lora) | `models/loras` |
+| Le nœud `ComfyUI-seamless-tiling` (il apporte `SeamlessTile` et `CircularVAEDecode`) | `custom_nodes`, par `git clone https://github.com/spinagon/ComfyUI-seamless-tiling` |
+
+S'il manque une de ces pièces, le bouton « Générer » de l'onglet du même nom est grisé, et la
+ligne en dessous dit laquelle manque. L'atelier ne modifie jamais ComfyUI.
+
+**Ce qui part.** Toujours le même style, `klein9b-tiles-raccordable` : le LoRA de tuiles, plus
+les deux nœuds de raccord. `SeamlessTile` fait boucler le modèle sur lui-même ;
+`CircularVAEDecode` fait boucler le décodage. Il faut les deux : le premier seul ne change rien,
+le second seul fait planter la carte graphique. L'image fait **256 px** : à 512, la carte de
+8 Go sature. Chaque tirage a sa propre graine.
+
+Le texte envoyé, pour « du sable fin » et « des rides de sable, trois par pièce », vu du dessus :
+
+```
+Game asset tile, pixel art, du sable fin, des rides de sable, trois par pièce, seen from
+directly above, one continuous material filling the entire frame, flat even overhead
+lighting, no cast shadows, … seamless tileable material, matching opposite edges, …
+```
+
+Le texte à éviter est fixe : `blurry, text, watermark, frame, border, vignette, grid, tile
+lines, seams, gutters, single object, centered composition, drop shadow, directional
+lighting, gradient, perspective`. « Voir le texte envoyé » montre le texte entier, mot pour mot.
+
+**Ce qui a été écarté, et pourquoi.**
+- **Faire dessiner un atlas entier par un modèle.** Les mesures de sc-clone montrent qu'aucun
+  modèle ne tient une grille de 4 × 4 pièces qui se raccordent.
+- **Une graine commune à tous les tirages** : elle rapproche mal les teintes, et les tirages se
+  ressemblent trop.
+- **La face de mur reste fragile** : elle sort souvent avec des barres verticales. Elle est
+  gardée telle quelle en attendant des tirages mesurés.
+
+Le coût : rien en argent. Environ 2 minutes par image sur la machine de l'auteur ; l'écran
+affiche le temps mesuré dès qu'il en a un.
+
+**Node.js** (22.18 ou plus ; dans la série 23, 23.6 ou plus) n'est nécessaire que pour
+l'agent : sans écran, le serveur rend les planches en lançant sous Node le code même de
+l'écran. Sans Node, l'écran des tuiles fonctionne quand même.

@@ -66,6 +66,12 @@ RACINE = Path(__file__).resolve().parent.parent
 SRC = RACINE / "interface" / "src"
 CSS = SRC / "index.css"
 
+# Le moteur de tuiles recopié de sc-clone (TU1, `docs/PLAN-tuiles.md`) : un module de
+# calcul pur, sans écran, dont les tailles internes (32 px de tuile, 24 couleurs de
+# palette…) ne sont pas des valeurs de design — les lire ici ferait du banc un faux
+# positif sur un fichier qu'il n'a pas vocation à couvrir. `sources()` l'exclut ci-dessous.
+MOTEUR_TUILES = SRC / "tuiles" / "moteur"
+
 # ── Ce que le garde-fou tient ───────────────────────────────────────────────
 
 # **La géométrie d'avant — ce que le banc ne mesure pas encore aux listes
@@ -295,6 +301,8 @@ def sources() -> list[Path]:
         if chemin.suffix not in {".ts", ".tsx", ".css"}:
             continue
         if chemin.name.endswith((".test.tsx", ".test.ts")) or chemin.name == "index.css":
+            continue
+        if MOTEUR_TUILES in chemin.parents:
             continue
         trouves.append(chemin)
     return trouves

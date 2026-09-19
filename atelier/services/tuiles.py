@@ -1,5 +1,7 @@
 """Sources de tuiles immuables, retouche réutilisée et carte d’essai durable."""
 from __future__ import annotations
+import base64
+import binascii
 import copy
 import hashlib
 import io
@@ -12,8 +14,15 @@ from typing import Any
 
 from PIL import Image
 
-from atelier.domaine.tuiles import TuilesRefusees, choix, entier, grille
+from atelier.domaine import masques_tuiles
+from atelier.domaine.generation import AGENT, AUTEUR
+from atelier.domaine.recette_tuiles import MATIERES_INTEGREES, recette as verifier_recette
+from atelier.domaine.tuiles import RACCORDS, TuilesRefusees, choix, entier, grille
 from atelier.services.livraison import _json, _lire, _poser, _verrou
+
+# Un jeu fabriqué (TU2) : ses raccords viennent du masque de chaque pièce.
+RACCORDS_FIGES = ("Les raccords d’un jeu de tuiles fabriqué se déduisent de sa recette : "
+                  "ils ne se modifient pas à la main. Changez la recette, ou créez un jeu à partir d’une image.")
 
 def png(image: Image.Image) -> bytes:
     sortie = io.BytesIO(); image.save(sortie, format="PNG"); return sortie.getvalue()
@@ -76,7 +85,169 @@ class ServiceTuiles:
     def lister(self, projet):
         return [self.lire(projet, p.parent.name) for p in sorted(self._racine(projet).glob("*/ensemble.json"), key=lambda p: p.stat().st_mtime, reverse=True)]
 
-    def creer(self, projet, brut):
+    # ── Les jeux fabriqués (TU2) : une recette, et l'atlas qu'elle a rendu ──────
+
+    def _asset_valide(self, projet):
+        def valide(identifiant):
+            asset = self.a.assets.lire(identifiant)
+            return bool(asset and asset.projet == projet and asset.supprime_le is None and asset.type_media.startswith("image/"))
+        return valide
+
+    @staticmethod
+    def _octets_atlas(atlas):
+        """L'atlas rendu : des octets PNG, ou leur base64 quand il arrive en JSON."""
+        if isinstance(atlas, (bytes, bytearray)):
+            octets = bytes(atlas)
+        elif isinstance(atlas, str) and atlas:
+            texte = atlas.split(",", 1)[1] if atlas.startswith("data:") else atlas
+            try: octets = base64.b64decode(texte, validate=True)
+            except (binascii.Error, ValueError): raise TuilesRefusees("L’atlas se transmet en PNG, encodé en base64.") from None
+        else:
+            raise TuilesRefusees("Envoyez l’atlas rendu avec sa recette.")
+        try:
+            with Image.open(io.BytesIO(octets)) as lu:
+                format_, (largeur, hauteur) = lu.format, lu.size
+        except Exception:
+            raise TuilesRefusees("L’atlas envoyé n’est pas une image lisible.") from None
+        if format_ != "PNG": raise TuilesRefusees("L’atlas d’un jeu fabriqué est un PNG.")
+        return octets, largeur, hauteur
+
+    @staticmethod
+    def _fabrication(r):
+        """Ce que la recette donne : la forme de l'atlas, ses pièces, ses terrains, ses cellules."""
+        reg = r["reglages"]
+        forme, pieces = masques_tuiles.pieces(
+            r["sorte"], variantes=reg.get("variantes", 0), animation=reg.get("animation", 0),
+            animation_atlas=reg.get("animationAtlas", 0), decor=reg.get("decor", "aucun"),
+            second_terrain=reg.get("secondTerrain", False))
+        nom_de = lambda e, defaut: MATIERES_INTEGREES[e["nom"]] if e["source"] == "integree" else defaut
+        terrains, surface, dessous = [], None, None
+        # Le terrain du dessous d'abord : c'est l'ordre de sc-clone (terrainLayers), où
+        # le dessous porte l'indice 0 et la surface l'indice 1.
+        if reg.get("secondTerrain"):
+            dessous = "dessous"
+            terrains.append({"identifiant": dessous, "nom": nom_de(r["emplacements"]["bas"], "Sol dessous"), "couleur": reg["couleurDessous"]})
+        if r["sorte"] != "pieces-17":
+            surface = "surface"
+            terrains.append({"identifiant": surface, "nom": nom_de(r["emplacements"]["surface"], "Surface"), "couleur": reg["couleurSurface"]})
+        jeu = masques_tuiles.jeu_de(r["sorte"])
+        return forme, pieces, terrains, [masques_tuiles.cellule(p, jeu, surface, dessous) for p in pieces]
+
+    @staticmethod
+    def _verifier_atlas(r, forme, largeur, hauteur):
+        t = r["taille"]
+        attendu = (forme["colonnes"] * t, forme["lignes"] * t)
+        if (largeur, hauteur) != attendu:
+            raise TuilesRefusees(f"L’atlas de cette recette mesure {attendu[0]} × {attendu[1]} pixels "
+                                 f"({forme['colonnes']} × {forme['lignes']} pièces de {t} px) ; celui envoyé mesure {largeur} × {hauteur}.")
+
+    def _figer_atlas(self, projet, identifiant, revision, nom, octets, dossier):
+        """L'atlas entre en bibliothèque, avec sa filiation vers le jeu de tuiles."""
+        entre = self.a.generations.importer(octets, f"{nom} · atlas", projet=projet, forcer=True,
+                                            filiation={"tuiles": identifiant, "revision": revision, "atlas": True})
+        asset = self.a.assets.lire(entre["asset"]["identifiant"])
+        with Image.open(io.BytesIO(octets)) as lu:
+            dimensions = {"largeur": lu.width, "hauteur": lu.height}
+        return {"asset": asset.identifiant, "dimensions": dimensions,
+                "provenance": self.a.export.fiche_de_l_asset(asset, "atlas.png", octets), "empreinte": self._blob(dossier, octets)}
+
+    @staticmethod
+    def _carte_des_pieces(r, cellules, carte):
+        """Les 17 pièces n'ont pas de carte à peindre : elles se posent à la main. Sans
+        carte peinte, la carte livrée les range comme sur la planche — sinon le jeu ne
+        pourrait jamais être livré (il faut une carte d'essai pour livrer)."""
+        if r["sorte"] != "pieces-17" or (isinstance(carte, dict) and carte.get("cases")):
+            return carte
+        if carte is not None and not isinstance(carte, dict):
+            return carte  # refusée plus loin, avec le message de `choix`
+        return {"largeur": max(c["x"] for c in cellules) + 1, "hauteur": max(c["y"] for c in cellules) + 1,
+                "cases": [{"x": c["x"], "y": c["y"], "tuile_x": c["x"], "tuile_y": c["y"]} for c in cellules]}
+
+    def _preparer_fabrique(self, projet, recette_brute, atlas):
+        r = verifier_recette(recette_brute, self._asset_valide(projet))
+        forme, pieces, terrains, cellules = self._fabrication(r)
+        octets, largeur, hauteur = self._octets_atlas(atlas)
+        self._verifier_atlas(r, forme, largeur, hauteur)
+        return r, pieces, terrains, cellules, octets, grille({"taille": r["taille"]}, largeur, hauteur)
+
+    def _creer_fabrique(self, projet, brut, origine=AUTEUR):
+        if set(brut) - {"nom", "recette", "atlas", "personnage", "carte"}:
+            raise TuilesRefusees("Un jeu de tuiles fabriqué se crée avec un nom, sa recette, l’atlas qu’elle a rendu et, au besoin, une carte d’essai.")
+        self._racine(projet)
+        r, pieces, terrains, cellules, octets, g = self._preparer_fabrique(projet, brut["recette"], brut.get("atlas"))
+        carte = self._carte_des_pieces(r, cellules, brut.get("carte"))
+        regles = choix({"nom": brut.get("nom"), "terrains": terrains, "cellules": cellules,
+                        **({"carte": carte} if carte is not None else {})}, g)
+        identifiant = uuid.uuid4().hex
+        with _verrou(self._racine(projet) / ".verrou"):
+            personnage = brut.get("personnage")
+            if personnage:
+                self.a.production.personnage(projet, personnage)
+            dossier = self._dossier(projet, identifiant)
+            source = self._figer_atlas(projet, identifiant, 1, regles["nom"], octets, dossier)
+            objet = {"identifiant": identifiant, "projet": projet, "personnage": personnage, "revision": 1,
+                     "cree_le": time.time(), "source": source, "grille": g, "corrections": {},
+                     "recette": r, "pieces": pieces, "origine": origine, **regles}
+            self._garder(objet)
+        return self.lire(projet, identifiant)
+
+    def _regler_fabrique(self, projet, identifiant, ancienne, brut, actualiser_source, recette_brute, atlas):
+        """Une révision d'un jeu fabriqué : nom et carte libres, raccords jamais saisis."""
+        if actualiser_source:
+            raise TuilesRefusees("L’atlas d’un jeu fabriqué vient de sa recette : envoyez une nouvelle recette avec son atlas.")
+        if not isinstance(brut, dict) or set(brut) - {"nom", "terrains", "cellules", "carte"}:
+            raise TuilesRefusees("Les réglages de tuiles contiennent nom, terrains, cellules et carte.")
+        if recette_brute is None and atlas is not None:
+            raise TuilesRefusees("Un nouvel atlas s’envoie avec la recette qui l’a rendu.")
+        if recette_brute is not None:
+            if atlas is None:
+                raise TuilesRefusees("Changer la recette demande l’atlas qu’elle rend : envoyez-le avec elle.")
+            r, pieces, terrains, cellules, octets, g = self._preparer_fabrique(projet, recette_brute, atlas)
+        else:
+            r, pieces, terrains, cellules, octets, g = ancienne["recette"], ancienne["pieces"], ancienne["terrains"], ancienne["cellules"], None, ancienne["grille"]
+        # Refusé plutôt qu'ignoré : un raccord saisi puis perdu en silence ferait croire
+        # à l'agent comme à l'écran qu'il a été gardé.
+        if "terrains" in brut and brut["terrains"] != terrains:
+            raise TuilesRefusees(RACCORDS_FIGES)
+        if "cellules" in brut:
+            cellules = self._memes_cellules(brut["cellules"], cellules)
+        carte = brut.get("carte")
+        if carte is None:
+            carte = ancienne["carte"]
+            if recette_brute is not None:
+                # La nouvelle recette peut avoir retiré des pièces : la carte garde les autres.
+                gardees = {(c["x"], c["y"]) for c in cellules}
+                carte = {**carte, "cases": [c for c in carte["cases"] if (c["tuile_x"], c["tuile_y"]) in gardees]}
+        carte = self._carte_des_pieces(r, cellules, carte)
+        regles = choix({"nom": brut.get("nom", ancienne["nom"]), "terrains": terrains, "cellules": cellules, "carte": carte}, g)
+        objet = {**ancienne, **regles, "revision": ancienne["revision"] + 1, "recette": r, "pieces": pieces, "grille": g, "corrections": {}}
+        if octets is not None:
+            objet["source"] = self._figer_atlas(projet, identifiant, objet["revision"], regles["nom"], octets, self._dossier(projet, identifiant))
+        return objet
+
+    @staticmethod
+    def _memes_cellules(donnees, deduites):
+        """Les cellules reçues doivent être celles que la recette donne ; seul leur nom change."""
+        if not isinstance(donnees, list) or len(donnees) != len(deduites):
+            raise TuilesRefusees(RACCORDS_FIGES)
+        par_xy = {(c["x"], c["y"]): c for c in deduites}
+        noms = {}
+        for c in donnees:
+            attendue = par_xy.get((c.get("x"), c.get("y"))) if isinstance(c, dict) else None
+            raccords = c.get("raccords", attendue["raccords"]) if attendue else None
+            if (attendue is None or not isinstance(raccords, dict) or {**dict.fromkeys(RACCORDS), **raccords} != attendue["raccords"]
+                    or any(c.get(k, attendue[k]) != attendue[k] for k in ("terrain", "retenue", "correction"))):
+                raise TuilesRefusees(RACCORDS_FIGES)
+            if "nom" in c:
+                noms[(c["x"], c["y"])] = c["nom"]
+        return [{**c, "nom": noms.get((c["x"], c["y"]), c["nom"])} for c in deduites]
+
+    def creer(self, projet, brut, *, origine=AUTEUR):
+        """`origine` (TU10) : `"agent"` pour un jeu demandé par l'agent (MCP), `"auteur"`
+        sinon. Jamais lu dans le corps d'une requête : l'écran ne peut pas se dire agent."""
+        if origine not in (AUTEUR, AGENT): raise TuilesRefusees("Un jeu de tuiles vient de l’auteur ou de l’agent.")
+        if isinstance(brut, dict) and "recette" in brut:
+            return self._creer_fabrique(projet, brut, origine)
         if not isinstance(brut, dict) or set(brut) - {"nom", "image", "grille", "personnage"}:
             raise TuilesRefusees("Déclarez un nom, une image d’atlas et sa grille.")
         octets, source = self._source(projet, brut.get("image"))
@@ -91,16 +262,21 @@ class ServiceTuiles:
             dossier = self._dossier(projet, identifiant)
             source["empreinte"] = self._blob(dossier, octets)
             objet = {"identifiant": identifiant, "projet": projet, "personnage": personnage, "revision": 1,
-                     "cree_le": time.time(), "source": source, "grille": g, "corrections": {}, **regles}
+                     "cree_le": time.time(), "source": source, "grille": g, "corrections": {}, "origine": origine, **regles}
             self._garder(objet)
         return self.lire(projet, identifiant)
 
-    def regler(self, projet, identifiant, revision, brut, *, actualiser_source=False):
+    def regler(self, projet, identifiant, revision, brut, *, actualiser_source=False, recette=None, atlas=None):
         entier(revision, "La révision attendue", 1, 1_000_000)
         if not isinstance(actualiser_source, bool): raise TuilesRefusees("L’actualisation de source doit être explicite.")
         with _verrou(self._racine(projet) / ".verrou"):
             ancienne = self._brut(projet, identifiant)
             if ancienne["revision"] != revision: raise TuilesRefusees("Cet ensemble a changé dans une autre fenêtre. Relisez-le avant de garder.")
+            if ancienne.get("recette") is not None:
+                self._garder(self._regler_fabrique(projet, identifiant, ancienne, brut, actualiser_source, recette, atlas))
+                return self.lire(projet, identifiant)
+            if recette is not None or atlas is not None:
+                raise TuilesRefusees("Un jeu fait à partir d’une image n’a pas de recette. Créez un jeu de tuiles fabriqué pour en donner une.")
             regles = choix(brut, ancienne["grille"])
             objet = {**ancienne, **regles, "revision": revision+1}
             dossier = self._dossier(projet, identifiant)
@@ -189,7 +365,8 @@ class ServiceTuiles:
                     raccords.append({"x": x, "y": y, "vers": a, "raison": "Les terrains déclarés sur ce raccord diffèrent."})
         if raccords: problemes.append(f"{len(raccords)} raccord(s) de terrain sont incompatibles dans la carte d’essai.")
         historique = sorted(int(p.stem) for p in (self._dossier(projet, identifiant)/"revisions").glob("*.json"))
-        return {**objet, "historique": historique, "retenues": len(retenues), "diagnostic": {"pret": not problemes, "problemes": problemes, "raccords": raccords,
+        # `origine` (TU10) : un ensemble d'avant TU10 n'en porte pas ; il vient de l'auteur.
+        return {**objet, "origine": objet.get("origine", AUTEUR), "historique": historique, "retenues": len(retenues), "diagnostic": {"pret": not problemes, "problemes": problemes, "raccords": raccords,
             "limite": "La cohérence des terrains est vérifiée. Jugez les bords, coins et la transparence sur la carte ; leur qualité graphique n’est pas validée automatiquement."},
             "atlas_url": f"/api/projects/{projet}/tilesets/{identifiant}/preview.png?revision={objet['revision']}",
             "carte_url": f"/api/projects/{projet}/tilesets/{identifiant}/preview.png?carte=true&revision={objet['revision']}"}

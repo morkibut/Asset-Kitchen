@@ -87,7 +87,7 @@ def test_le_decor_et_la_tuile_ne_reclament_aucune_attitude(client):
     """
     assert plan_du_type("tuile") == ()
     assert plan_du_type("décor") == ()
-    assert SANS_POSES == {"décor", "tuile"}
+    assert SANS_POSES == {"décor", "tuile", "matière"}  # la matière depuis TU2
 
     tuile = _creer(client, "Herbe", "tuile")
 

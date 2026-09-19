@@ -100,7 +100,8 @@ def test_la_tuile_est_entree_au_bareme(client):
     noms = [e["nom"] for e in _univers(client)["bareme"]]
 
     assert "tuile" in noms
-    assert len(noms) == len(BAREME_PAR_DEFAUT) == 8
+    # 9 depuis TU2 : la matière d'un jeu de tuiles est entrée à côté de la tuile.
+    assert len(noms) == len(BAREME_PAR_DEFAUT) == 9
     tuile = next(e for e in _univers(client)["bareme"] if e["nom"] == "tuile")
     # Une tuile remplit son cadre : elle n'a pas de contour à détourer.
     assert tuile["silhouette"] is False

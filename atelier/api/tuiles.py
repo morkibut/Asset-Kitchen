@@ -10,8 +10,11 @@ class Revision(BaseModel):
     revision: int = Field(ge=1, strict=True)
 
 class Reglage(Revision):
-    regles: dict[str, Any]
+    regles: dict[str, Any] = Field(default_factory=dict)
     actualiser_source: bool = False
+    # Un jeu fabriqué (TU2) change de recette avec l'atlas qu'elle rend, en base64.
+    recette: dict[str, Any] | None = None
+    atlas: str | None = None
 
 class Restauration(Revision):
     depuis: int = Field(ge=1, strict=True)
@@ -30,7 +33,8 @@ def lire(requete: Request, projet: str, identifiant: str, revision: int | None =
 
 @routeur.put("/{identifiant}")
 def regler(requete: Request, projet: str, identifiant: str, corps: Reglage):
-    return requete.app.state.atelier.tuiles.regler(projet, identifiant, corps.revision, corps.regles, actualiser_source=corps.actualiser_source)
+    return requete.app.state.atelier.tuiles.regler(projet, identifiant, corps.revision, corps.regles, actualiser_source=corps.actualiser_source,
+                                                   recette=corps.recette, atlas=corps.atlas)
 
 @routeur.post("/{identifiant}/restore")
 def restaurer(requete: Request, projet: str, identifiant: str, corps: Restauration):

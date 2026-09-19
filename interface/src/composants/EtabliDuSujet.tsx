@@ -132,7 +132,9 @@ export const animeesDemandees = (case_: Case | undefined): number =>
  *  d'une tuile. Le serveur, lui, ne lui envoie simplement aucune pose : l'écran
  *  n'a pas à rejouer la règle, seulement à dire pourquoi il n'y a rien plutôt
  *  que de laisser un vide passer pour un oubli. */
-const SANS_ATTITUDES = ["décor", "tuile"]
+// Le serveur en tient la même liste (`atelier/domaine/plan.py`, `SANS_POSES`) ; la
+// matière y est entrée avec TU2 — elle se répète, elle ne bouge pas.
+const SANS_ATTITUDES = ["décor", "tuile", "matière"]
 
 import { posesTenues } from "../production"
 export { posesTenues } from "../production"
