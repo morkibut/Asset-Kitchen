@@ -23,7 +23,7 @@ import {
   wallAtlasDescriptor, biaisAtlasDescriptor, decorAtlasDescriptor, variantAtlasDescriptor, animationAtlasDescriptor,
 } from "./moteur/vendor/tileset-engine"
 import { MATIERES, LISTE_MATIERES, rendreMatiere, couleurMoyenne, tolerePhase } from "./moteur/tile-materials"
-import { NOMBRE_COULEURS, paletteDeReferenceLab } from "./moteur/tile-palette"
+import { NOMBRE_COULEURS, paletteDeReferenceLab, harmoniserPalette } from "./moteur/tile-palette"
 import { creerEtat, poserMatiere, poserImage, relier, vider, rafraichirMatieres, texturesDe, PAR_ID, type EtatEmplacements } from "./moteur/tile-emplacements"
 import { dessinerScene, peintreCanvas, peintrePixels, descripteurScene } from "./moteur/tile-scene"
 import { cellMaskAt, checkMaskSetAtlas, checkWallAtlas, mulberry32 } from "./moteur/tile-check"
@@ -468,13 +468,17 @@ const idImage = (im: object | null | undefined) => {
 
 // ── La palette commune, et la palette du jeu (TU6) ───────────────────────────
 //
-// Les deux passent par le même mécanisme que la « palette de référence désignée » de
-// sc-clone (T31, `resolvePalette`/`appliquerPalette` dans `vendor/tileset-engine.js`) :
-// un descripteur Lab posé APRÈS la réduction, sur les cinq textures d'un coup — c'est
-// le moteur qui tient cet ordre (§ « T31 — la palette de référence » du fichier), pas
-// ce module. Aucune des deux ne touche au chemin `palette: null` d'avant cette tranche
-// quand elle ne s'applique pas : c'est ce qui garde le rendu identique au bit près à
-// celui de TU3 quand les deux réglages sont éteints.
+// Corrigé après la relecture TU11 (voir `docs/PLAN-tuiles.md` § TU6) : les deux ne
+// passent plus par le même mécanisme. `memesCouleurs` (« Mêmes couleurs pour toutes
+// les matières ») ne touche qu'aux emplacements dont la source est un ASSET (matière
+// générée ou importée, jamais une matière intégrée) : leurs textures sont ramenées,
+// AVANT de passer au moteur, sur la palette de la première matière-asset (ordre
+// surface → bordure → face → bas → bordureBas), avec `harmoniserPalette` — la même
+// fonction que T26 bis, sur `tile-palette.js` (le moteur n'est pas touché). `paletteJeu`
+// (T31, opt-in) reste, elle, un descripteur Lab posé par le moteur APRÈS la réduction,
+// sur les cinq textures d'un coup, exactement comme avant. Aucune des deux ne touche au
+// chemin `palette: null` d'avant TU6 quand elle ne s'applique pas : c'est ce qui garde
+// le rendu d'un jeu tout intégré identique au bit près à celui de TU3.
 
 /** Une image 1×N, une couleur par pixel : le seul moyen de faire passer une palette
  *  déjà connue (celle de l'univers, en `#rrggbb`) par le même relevé Lab pondéré que la
@@ -487,27 +491,51 @@ function imageDePalette(hex: readonly string[]): RGBAImage {
 }
 
 /** Le descripteur de palette à passer au moteur (`settings.palette`), ou `null` — rien
- *  ne bouge. `paletteJeu` gagne dès que l'univers a une palette : « une référence
- *  désignée remplace la palette commune » (T31). Sinon, `memesCouleurs` (coché par
- *  défaut) ramène toutes les matières sur les ≤24 couleurs de la première — la surface,
- *  le sol — et rien tant qu'elle n'a pas de texture à lire (couleur provisoire seule). */
-function paletteDuRendu(j: Pick<JeuEdite, "reglages" | "paletteUnivers">, surfaceTexture: RGBAImage | null): unknown {
+ *  ne bouge. Uniquement `paletteJeu` (T31) désormais : `memesCouleurs` ne passe plus par
+ *  ce chemin, voir `texturesHarmonisees`. */
+function paletteJeuDuRendu(j: Pick<JeuEdite, "reglages" | "paletteUnivers">): unknown {
   if (j.reglages.paletteJeu === true && j.paletteUnivers.length) return paletteDeReferenceLab([imageDePalette(j.paletteUnivers)], j.paletteUnivers.length)
-  if (j.reglages.memesCouleurs === false || !surfaceTexture) return null
-  return paletteDeReferenceLab([surfaceTexture], NOMBRE_COULEURS)
+  return null
+}
+
+/** L'ordre où `memesCouleurs` cherche sa référence : la surface d'abord, comme la
+ *  maquette validée (`docs/maquettes-atelier-unifie/tuiles.js`) et sc-clone
+ *  (`tile-palette.js` § `harmoniserPalette`, T26 bis). */
+const ORDRE_PALETTE_ASSETS = ["surface", "bordure", "face", "bas", "bordureBas"] as const
+const TEXTURE_DE_L_EMPLACEMENT: Record<(typeof ORDRE_PALETTE_ASSETS)[number], keyof ReturnType<typeof texturesDe>> = {
+  surface: "surfaceTexture", bordure: "edgeTexture", face: "faceTexture", bas: "lowerSurfaceTexture", bordureBas: "lowerEdgeTexture",
+}
+
+/** Les textures à passer au moteur, avec `memesCouleurs` appliqué : seuls les
+ *  emplacements dont la source est un asset (`import` ou `ia`) sont quantifiés, sur la
+ *  palette de ≤24 couleurs du premier d'entre eux dans `ORDRE_PALETTE_ASSETS` — jamais
+ *  sur l'union, jamais une matière intégrée. Déterministe : une fonction des octets des
+ *  assets posés, rien d'autre. */
+function texturesHarmonisees(j: Pick<JeuEdite, "reglages" | "etat">, tex: ReturnType<typeof texturesDe>): ReturnType<typeof texturesDe> {
+  if (j.reglages.memesCouleurs !== true) return tex
+  const ids = ORDRE_PALETTE_ASSETS.filter((id) => {
+    const source = j.etat[id].source
+    return (source === "import" || source === "ia") && !!tex[TEXTURE_DE_L_EMPLACEMENT[id]]
+  })
+  if (!ids.length) return tex
+  const images = ids.map((id) => tex[TEXTURE_DE_L_EMPLACEMENT[id]] as RGBAImage)
+  const harmonisees = harmoniserPalette(images, NOMBRE_COULEURS)
+  const out = { ...tex }
+  ids.forEach((id, i) => { out[TEXTURE_DE_L_EMPLACEMENT[id]] = harmonisees[i] })
+  return out
 }
 
 export function reglagesMoteur(j: JeuEdite): Record<string, unknown> & { tilesetType: string; tileSize: number; seed: number } {
   const s = j.taille, r = j.reglages, S = SORTES[j.sorte], masques = !!S.set && S.type !== "topdown-17"
   rafraichirMatieres(j.etat, s, j.graine)
-  const tex = texturesDe(j.etat)
+  const tex = texturesHarmonisees(j, texturesDe(j.etat))
   const n = (cle: string, defaut: number) => (typeof r[cle] === "number" ? (r[cle] as number) : defaut)
   return {
     tilesetType: S.type, tileSize: s, cornerRadius: n("arrondi", 2) * s / 32, edgeStyle: r.bordures === "nettes" ? "clean" : "rough",
     edgeRoughness: n("irregularite", 3) * s / 32, edgeFrequency: 5, edgePadding: 2 * s / 16,
     baseColor: couleur(r, "couleurSurface"), edgeColor: couleur(r, "couleurContour"), edgeFade: 3 * s / 32,
     shades: n("nuances", 4), textureNoise: 12, fleckAmount: 6, seed: j.graine, relief: n("relief", 4) / 10,
-    reductionMode: (r.reduction as string) || "contraste", palette: paletteDuRendu(j, tex.surfaceTexture),
+    reductionMode: (r.reduction as string) || "contraste", palette: paletteJeuDuRendu(j),
     wallShadowAlpha: NIVEAUX_OMBRE[String(r.ombreMur ?? "discrete")] ?? 110, wallCornerOcclusion: NIVEAUX_PENOMBRE[String(r.penombre ?? "discrete")] ?? 50,
     whiteBackground: r.fondBlanc === true, showGrid: false, pixelFlecks: true,
     variants: masques ? n("variantes", 0) : 0, texturePhase: j.etat.surface.source === "matiere" && tolerePhase(j.etat.surface.matiere),

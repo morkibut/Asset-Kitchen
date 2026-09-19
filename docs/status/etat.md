@@ -48,9 +48,11 @@ Node 23.0 à 23.5 ne sait pas faire ça sans option : l'atelier les refuse en le
 **Ce que la relecture croisée a trouvé (TU11).** Les 17 pièces ne pouvaient pas être livrées
 depuis l'écran (bouton « Livrer » grisé, et carte vide refusée par le serveur) ; c'est
 corrigé. Un modèle payant passé par erreur à la génération d'une matière est maintenant refusé
-à l'endroit même où elle part. Reste à trancher : la palette commune, cochée par défaut,
-s'applique aux matières intégrées aussi — le sable sous l'herbe devient vert, les briques d'un
-mur deviennent grises (voir `docs/PLAN-tuiles.md` § TU11).
+à l'endroit même où elle part. **Corrigé aussi** : la palette commune, cochée par défaut,
+s'appliquait aux matières intégrées aussi — le sable sous l'herbe devenait vert, les briques
+d'un mur devenaient grises. Elle ne touche plus qu'aux matières-assets (générées ou importées),
+ramenées sur la palette de la première d'entre elles ; les matières intégrées ne sont jamais
+recolorées (voir `docs/PLAN-tuiles.md` § TU6).
 
 ## RP23 · Tester les animations comme dans le jeu — 16 septembre 2026
 

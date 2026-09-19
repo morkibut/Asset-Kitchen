@@ -273,24 +273,42 @@ Les tirages reviennent comme des assets de nature « matière ».
 
 **Bloquée par** : TU5.
 
-La palette commune de sc-clone (T26 bis) : toutes les matières d'un jeu sont ramenées sur les
-24 couleurs de la première, le sol. Elle est cochée par défaut. Deux ajouts :
-- **la palette du jeu** : si l'univers a une palette, on peut la désigner à la place ;
+**Corrigé après la relecture TU11 (19 septembre 2026) :** la version livrée par cette tranche
+appliquait la palette commune au RENDU, via `settings.palette` du moteur, donc à toutes les
+matières — y compris les 13 matières intégrées (§ « Relevé, à trancher par l'auteur » sous
+TU11). Un sol « herbe sur sable » rendait le sable vert, un mur « pierre et briques » rendait
+les briques grises. Dans la maquette validée et dans sc-clone (T26 bis), la palette commune ne
+s'appliquait qu'aux matières GÉNÉRÉES : quantifiées sur la palette de la première, jamais les
+matières intégrées. Depuis la correction, `memesCouleurs` ne touche qu'aux emplacements dont la
+source est un asset (matière générée ou importée) — leurs textures sont ramenées, avant même
+d'atteindre le moteur, sur la palette de la première matière-asset dans l'ordre
+surface → bordure → face → bas → bordureBas, avec `harmoniserPalette`
+(`moteur/tile-palette.js`, la fonction de T26 bis, moteur non retouché). Les matières intégrées
+ne passent plus par aucun chemin de palette. Le texte ci-dessous décrit le comportement
+corrigé ; `paletteDuRendu` (posait la palette de `memesCouleurs` dans `settings.palette`) a
+disparu, remplacé par `texturesHarmonisees` (avant le moteur) et `paletteJeuDuRendu` (dans
+`settings.palette`, T31 seule désormais).
+
+La palette commune de sc-clone (T26 bis) : toutes les matières-ASSETS d'un jeu (générées ou
+importées) sont ramenées sur les 24 couleurs de la première d'entre elles. Elle est cochée par
+défaut. Deux ajouts :
+- **la palette du jeu** : si l'univers a une palette, on peut la désigner à la place — celle-ci
+  continue, elle, à s'appliquer au rendu entier via `settings.palette` (T31, inchangé) ;
 - la réduction de texture « Contraste » (portage PixelOE), par défaut.
 
-La réduction passe toujours **avant** la palette. C'est un invariant mesuré dans sc-clone :
-54 couleurs au lieu de 6 dans l'autre ordre.
+La réduction passe toujours **avant** la palette du jeu (T31, dans le moteur). C'est un
+invariant mesuré dans sc-clone : 54 couleurs au lieu de 6 dans l'autre ordre. La palette
+commune (`memesCouleurs`), elle, se pose avant même la réduction du moteur : elle quantifie les
+textures encore à 512 px, comme `harmoniserPalette` l'a toujours fait pour les tirages générés.
 
-- [x] Palette commune : 24 couleurs au plus, toutes tirées de la référence, alpha intact.
-      *(`interface/src/tuiles/atelier.ts`, `paletteDuRendu` : la référence est la texture de
-      « surface » — la première matière, le sol —, relevée par le même relevé Lab pondéré
-      que la « palette de référence désignée » de sc-clone (`paletteDeReferenceLab`,
-      `moteur/tile-palette.js`), à `NOMBRE_COULEURS` = 24. Posée dans `settings.palette`, le
-      moteur l'applique après la réduction, sur les cinq textures d'un coup — invariant du
-      moteur, vérifié en lisant `vendor/tileset-engine.js` (`resolvePalette`/
-      `appliquerPalette`, appelés dans `reduire()` juste après `resampleTexture`), pas
-      retouché. `interface/src/tuiles/atelier.test.ts` § TU6 vérifie le compte et l'alpha
-      intact sur un atlas réellement rendu.)*
+- [x] Palette commune : 24 couleurs au plus, toutes tirées de la référence, alpha intact —
+      et seules les matières-assets y passent, jamais une matière intégrée.
+      *(`interface/src/tuiles/atelier.ts`, `texturesHarmonisees` : la référence est la première
+      texture-asset dans l'ordre surface → bordure → face → bas → bordureBas, quantifiée par
+      `harmoniserPalette` (`moteur/tile-palette.js`, T26 bis) — la même fonction que sc-clone,
+      posée AVANT `reglagesMoteur` construit les champs `surfaceTexture`/`edgeTexture`/…, donc
+      avant que le moteur ne les voie. `interface/src/tuiles/atelier.test.ts` § TU6 vérifie le
+      compte, l'alpha intact, et qu'une matière intégrée n'est jamais recolorée.)*
 - [x] La palette de l'univers, quand elle existe, remplace la palette commune. Quand elle
       manque, l'écran dit « indisponible — ce jeu n'a pas encore de palette », avec le lien
       vers l'univers.
@@ -301,8 +319,10 @@ La réduction passe toujours **avant** la palette. C'est un invariant mesuré da
       « Voir l’univers » (`onUnivers`, câblé depuis `App.tsx` jusqu'à `Tuiles.tsx`) quand
       `paletteUnivers` est vide.)*
 - [x] Sans palette, le rendu est identique au bit près à celui de TU3.
-      *(`memesCouleurs` à faux et `paletteJeu` à faux → `reglagesMoteur(j).palette === null`,
-      exactement la valeur d'avant cette tranche ; testé directement.)*
+      *(`paletteJeu` à faux → `reglagesMoteur(j).palette === null`, exactement la valeur
+      d'avant cette tranche. Depuis la correction, c'est aussi vrai d'un jeu 100 % intégré
+      avec `memesCouleurs` coché — son défaut — puisque `texturesHarmonisees` n'a alors
+      aucun emplacement-asset à toucher ; testé directement.)*
 
 ### TU7 · Le mur
 
@@ -519,10 +539,11 @@ est tenue par les essais (`tests/test_tu4_livraison.py`, `test_tu7_mur.py`,
 - « 1 cases » sous « Hauteur du mur ».
 
 **Relevé, à trancher par l'auteur.**
-- **La palette commune recolore les matières intégrées.** TU6 l'applique au rendu, sur toutes
-  les matières, et la coche par défaut. Dans la maquette validée et dans sc-clone, elle ne
-  s'appliquait qu'aux tirages générés, au moment de la génération. Effet visible : un sol
-  « herbe sur sable » rend le sable vert, un mur « pierre et briques » rend les briques grises.
+- ~~**La palette commune recolore les matières intégrées.**~~ **Corrigé.** TU6 l'appliquait au
+  rendu, sur toutes les matières, et la coche par défaut. Dans la maquette validée et dans
+  sc-clone, elle ne s'appliquait qu'aux tirages générés, au moment de la génération. Effet
+  visible : un sol « herbe sur sable » rendait le sable vert, un mur « pierre et briques »
+  rendait les briques grises. Voir « Corrigé après la relecture TU11 » sous § TU6.
   Et la case qui la décoche n'est que dans l'onglet « Générer » du tiroir.
 - **La livraison dit « ouvre personnage.tscn pour voir la carte ».** La scène stable d'un jeu
   de tuiles garde le nom par défaut de la livraison commune (déjà vrai pour AU13).

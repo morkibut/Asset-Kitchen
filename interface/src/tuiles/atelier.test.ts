@@ -154,9 +154,12 @@ describe("Le dessus du mur (TU7)", () => {
     test(`${surface} en ${taille} px`, () => {
       const sol = nouveauJeu({ nom: "Sol", sorte: "sol", taille, graine: 4242 })
       const mur = nouveauJeu({ nom: "Mur", sorte: "mur", taille, graine: 4242 })
-      // La palette commune (TU6, cochée par défaut) est hors sujet ici : ce test mesure la
-      // pénombre du mur, un effet de nuance bien plus fin que ce qu'un partage à 24
-      // couleurs laisse passer — elle absorberait la différence qu'on cherche à voir.
+      // La palette commune (TU6) ne touche plus que les matières-assets depuis la
+      // correction de la relecture TU11 : sur des matières intégrées comme ici, elle n'a
+      // de toute façon aucun effet. `memesCouleurs = false` reste posé par prudence, pour
+      // ne pas dépendre de ce détail dans un test qui mesure autre chose — la pénombre du
+      // mur, un effet de nuance bien plus fin que ce qu'un partage à 24 couleurs laisse
+      // passer.
       for (const j of [sol, mur]) { poserIntegree(j, "surface", surface); regler(j); j.reglages.memesCouleurs = false }
       mur.reglages.hauteurMur = 5
       mur.reglages.ombreMur = "marquee"
@@ -266,17 +269,27 @@ describe("Vérifier (TU9)", () => {
 })
 
 describe("TU6 — les mêmes couleurs pour toutes les matières", () => {
+  // Corrigé après la relecture TU11 (voir `docs/PLAN-tuiles.md` § TU6) : `memesCouleurs`
+  // ne recolore plus le rendu entier via `settings.palette` du moteur — seuls les
+  // emplacements dont la source est un ASSET (matière générée ou importée) sont
+  // ramenés sur la palette du premier d'entre eux, avant même d'atteindre le moteur.
+  // Les tests d'avant (palette posée sur un jeu 100 % intégré) testaient le défaut
+  // trouvé par la relecture ; ils sont remplacés ici par ceux qui vérifient la
+  // décision : rien ne bouge sans asset, et seuls les assets se ramènent les uns sur
+  // les autres.
   type Descripteur = { palette: { rgb: [number, number, number] }[] } | null
 
-  test("cochée par défaut, et le rendu se raccorde toujours", () => {
+  test("cochée par défaut ; un jeu 100 % intégré rend identique au bit près, memesCouleurs vrai ou faux, comme avant TU6", () => {
     const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 4242 })
     expect(j.reglages.memesCouleurs).toBe(true)
     expect(j.reglages.paletteJeu).toBe(false)
-    const d = reglagesMoteur(j).palette as Descripteur
-    expect(d).not.toBeNull()
-    expect(d!.palette.length).toBeLessThanOrEqual(24)
-    // Aucune couture nouvelle : la quantification est la même fonction pour tous les
-    // pixels, donc deux pixels qui se raccordaient avant se raccordent encore.
+    expect(reglagesMoteur(j).palette).toBeNull()
+    const avec = Buffer.from(atlasDe(j).pixels.data)
+    oublierLesRendus()
+    j.reglages.memesCouleurs = false
+    expect(reglagesMoteur(j).palette).toBeNull()
+    const sans = Buffer.from(atlasDe(j).pixels.data)
+    expect(avec).toEqual(sans)
     expect(verifier(j, atlasDe(j))).toEqual({ defauts: [], pieces: 47 })
   })
 
@@ -286,32 +299,62 @@ describe("TU6 — les mêmes couleurs pour toutes les matières", () => {
     expect(reglagesMoteur(j).palette).toBeNull()
   })
 
-  test("toutes les matières se ramènent sur les couleurs de la surface, l'alpha ne bouge pas", () => {
-    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 4242 })
-    poserIntegree(j, "surface", "pierre")
-    changerSecondTerrain(j, true)
-    j.reglages.arrondi = 6
-    const avecAlpha = atlasDe(j).pixels
-    oublierLesRendus()
+  test("herbe (intégrée) sur sable (intégré), avec un second terrain : le sable n'est pas recoloré", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 4242 }) // surface : herbe, intégrée
+    changerSecondTerrain(j, true) // bas : sable, intégrée aussi
+    const avecMemesCouleurs = reglagesMoteur(j)
+    expect(avecMemesCouleurs.palette).toBeNull()
     j.reglages.memesCouleurs = false
-    const sansPalette = atlasDe(j).pixels
-    expect(avecAlpha.data.length).toBe(sansPalette.data.length)
-    for (let i = 0; i < avecAlpha.data.length; i += 4) expect(avecAlpha.data[i + 3]).toBe(sansPalette.data[i + 3])
+    const sansMemesCouleurs = reglagesMoteur(j)
+    const octets = (im: unknown) => Buffer.from((im as RGBAImage).data)
+    type AvecDessous = { lowerTerrain: { surfaceTexture: unknown; edgeTexture: unknown } | null }
+    expect(octets(avecMemesCouleurs.surfaceTexture)).toEqual(octets(sansMemesCouleurs.surfaceTexture))
+    expect(octets(avecMemesCouleurs.edgeTexture)).toEqual(octets(sansMemesCouleurs.edgeTexture))
+    const avecDessous = (avecMemesCouleurs as unknown as AvecDessous).lowerTerrain!, sansDessous = (sansMemesCouleurs as unknown as AvecDessous).lowerTerrain!
+    expect(octets(avecDessous.surfaceTexture)).toEqual(octets(sansDessous.surfaceTexture))
+    expect(octets(avecDessous.edgeTexture)).toEqual(octets(sansDessous.edgeTexture))
   })
 
-  test("la palette du jeu, quand elle existe, remplace la palette commune", () => {
+  test("deux matières-assets : la seconde n'utilise que des couleurs de la première, au plus 24, l'alpha ne bouge pas", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 4242 })
+    changerSecondTerrain(j, true)
+    const image1 = texture(32, 11), image2 = texture(32, 53)
+    poserAsset(j, "surface", "a1", "Premier asset", image1) // référence, dans l'ordre surface → bas
+    poserAsset(j, "bas", "a2", "Second asset", image2)
+    const r = reglagesMoteur(j) as unknown as { surfaceTexture: RGBAImage; lowerTerrain: { surfaceTexture: RGBAImage } }
+    const surface = r.surfaceTexture, bas = r.lowerTerrain.surfaceTexture
+    const couleursDe = (im: RGBAImage) => {
+      const s = new Set<string>()
+      for (let i = 0; i < im.data.length; i += 4) if (im.data[i + 3] >= 8) s.add(`${im.data[i]},${im.data[i + 1]},${im.data[i + 2]}`)
+      return s
+    }
+    const paletteSurface = couleursDe(surface)
+    expect(paletteSurface.size).toBeLessThanOrEqual(24)
+    for (const c of couleursDe(bas)) expect(paletteSurface.has(c)).toBe(true)
+    // L'alpha traverse tel quel : `appliquerPalette` ne réécrit que R/V/B (tile-palette.js).
+    expect(bas.data.length).toBe(image2.data.length)
+    for (let i = 0; i < bas.data.length; i += 4) expect(bas.data[i + 3]).toBe(image2.data[i + 3])
+    for (let i = 0; i < surface.data.length; i += 4) expect(surface.data[i + 3]).toBe(image1.data[i + 3])
+  })
+
+  test("la palette du jeu (T31) reste posée par le moteur, indépendamment de memesCouleurs", () => {
     const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 4242 })
     j.reglages.paletteJeu = true
-    // Sans palette d'univers, le réglage n'a aucun effet : la palette commune reprend la main.
+    // Sans palette d'univers, le réglage n'a aucun effet — et depuis la correction de la
+    // relecture TU11, plus aucun repli sur la palette commune : `memesCouleurs` ne parle
+    // plus à `settings.palette` du tout.
     expect(j.paletteUnivers).toEqual([])
-    const commune = reglagesMoteur(j).palette as Descripteur
-    expect(commune).not.toBeNull()
+    expect(reglagesMoteur(j).palette).toBeNull()
     j.paletteUnivers = ["#204080", "#a0c060", "#ffffff", "#101010"]
     const duJeu = reglagesMoteur(j).palette as Descripteur
     expect(duJeu).not.toBeNull()
     expect(duJeu!.palette.length).toBe(4)
     const rgb = new Set(duJeu!.palette.map((c) => c.rgb.map(Math.round).join(",")))
     expect(rgb).toEqual(new Set(["32,64,128", "160,192,96", "255,255,255", "16,16,16"]))
+    // memesCouleurs, coché par défaut, ne redevient pas un second chemin vers settings.palette.
+    j.reglages.memesCouleurs = false
+    const duJeuSansMemesCouleurs = reglagesMoteur(j).palette as Descripteur
+    expect(duJeuSansMemesCouleurs!.palette.length).toBe(4)
   })
 
   test("enregistrer puis rouvrir redonne le même atlas, palette du jeu comprise", () => {
