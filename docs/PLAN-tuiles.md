@@ -145,18 +145,18 @@ Les modules purs de sc-clone sont recopiés dans `interface/src/tuiles/moteur/`,
 licences et un `LISEZMOI` de provenance. Leurs essais sont recopiés et passent sous vitest.
 Aucun écran.
 
-- [ ] Les modules sont identiques à ceux de sc-clone, aux chemins d'import près. Un essai
+- [x] Les modules sont identiques à ceux de sc-clone, aux chemins d'import près. Un essai
       compare leur empreinte au commit relevé.
-- [ ] Les essais recopiés passent :
+- [x] Les essais recopiés passent :
   - 47 masques exactement ;
   - aller-retour masque → bits Godot → masque ;
   - coutures sans faute sur toutes les paires ;
   - empreintes d'atlas par sorte ;
   - mur de 88 cases ;
   - palette commune de 24 couleurs au plus.
-- [ ] `npm run build` et `tsc` passent. Les modules en JavaScript sont déclarés pour
+- [x] `npm run build` et `tsc` passent. Les modules en JavaScript sont déclarés pour
       TypeScript, sans `any` qui fuie dans le reste de l'interface.
-- [ ] La garde de design (`tests/test_b0.py`) ne lit pas le moteur recopié. Ses tailles
+- [x] La garde de design (`tests/test_b0.py`) ne lit pas le moteur recopié. Ses tailles
       internes ne sont pas des valeurs d'écran.
 
 ### TU2 · Un jeu de tuiles est une recette
