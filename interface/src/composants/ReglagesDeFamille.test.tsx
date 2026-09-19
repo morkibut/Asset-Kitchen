@@ -52,12 +52,14 @@ function modele(identifiant: string, nomDuModele: string): Modele {
 
 // Quatre familles, deux natures de personnages — la forme exacte du barème
 // que la maquette montre (« Les huit natures du jeu... ici on ne voit que
-// les deux des personnages »), réduite à quatre pour rester lisible ici.
+// les deux des personnages »), réduite à cinq pour rester lisible ici.
 const BAREME_INITIAL: Echelle[] = [
   echelle("personnage", "personnages", 100, true),
   echelle("créature", "personnages", 90, true),
   echelle("meuble", "objets", 60, false),
   echelle("tuile", "decors", 100, false),
+  // TU2 : la nature « matière », comme le serveur (`BAREME_PAR_DEFAUT`).
+  echelle("matière", "decors", 100, false),
 ]
 
 const MODELES_INITIAUX: Record<string, string> = {
@@ -288,8 +290,8 @@ describe("le piège du PATCH partiel", () => {
     const envoi = appels.find((a) => a.url === "/api/universe" && a.methode === "PUT")!
     const bareme = (envoi.corps as { bareme: Echelle[] }).bareme
 
-    // Les quatre échelles voyagent, pas seulement celles des personnages.
-    expect(bareme).toHaveLength(4)
+    // Toutes les échelles voyagent, pas seulement celles des personnages.
+    expect(bareme).toHaveLength(BAREME_INITIAL.length)
     expect(bareme.find((e) => e.nom === "personnage")?.occupation).toBe(80)
     // Les deux autres familles sont là, et inchangées.
     expect(bareme.find((e) => e.nom === "meuble")).toEqual(

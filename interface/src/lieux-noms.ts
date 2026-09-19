@@ -29,6 +29,9 @@ export type CeQuOnNomme = {
   personnages: Personnage[]
   pieces: Piece[]
   vestiaireDuJeu: VestiaireDuJeu | null
+  /** Le nom des jeux de tuiles, par identifiant — `""` pour le jeu neuf pas encore
+   *  enregistré. C'est l'écran des tuiles qui les tient et les fait remonter. */
+  nomsDesTuiles?: Record<string, string>
 }
 
 export function nommerLeLieu({
@@ -40,6 +43,7 @@ export function nommerLeLieu({
   personnages,
   pieces,
   vestiaireDuJeu,
+  nomsDesTuiles = {},
 }: CeQuOnNomme): Annuaire {
 
 /**
@@ -240,6 +244,16 @@ return (ou, _profondeur, dedans) => {
       return "L'animation"
     case "montage-de-bande":
       return "Le montage"
+
+    // Les jeux de tuiles (`TU3`) : *Les tuiles › Herbe et terre › Livrer à Godot*.
+    case "tuiles":
+      return "Les tuiles"
+    case "jeu-de-tuiles":
+      if (ou.ecran === "sorte") return "Nouveau jeu de tuiles"
+      if (ou.ecran === "image") return "À partir d’une image"
+      return nomsDesTuiles[ou.jeu ?? ""] || "Jeu de tuiles"
+    case "livraison-de-tuiles":
+      return "Livrer à Godot"
   }
 }
 }

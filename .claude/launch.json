@@ -561,6 +561,14 @@
         "C:/STOCKAGE/PROJET/_DEV/gag2/essais/atelier_jetable_son.py"
       ],
       "port": 8510
+    },
+    {
+      "name": "atelier-jetable-tu3",
+      "runtimeExecutable": "C:/STOCKAGE/PROJET/_DEV/gag2/.venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "C:/STOCKAGE/PROJET/_DEV/gag2/essais/atelier_jetable_tu3.py"
+      ],
+      "port": 8511
     }
   ]
 }

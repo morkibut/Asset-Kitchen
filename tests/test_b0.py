@@ -125,6 +125,10 @@ ANCIENS_ETATS = (
     # même famille n'atterrissaient pas au même endroit et que le fil d'Ariane
     # devinait ce que la pile ne savait pas.
     "familleOuverte",
+    # **Les tuiles rejoignent la liste le jour où elles deviennent un lieu** (TU3).
+    # C'était un dialogue ouvert par ce `useState` : il ne disait pas quel jeu on
+    # regardait, et le fil d'Ariane ne le nommait pas.
+    "tuilesOuvertes",
 )
 
 

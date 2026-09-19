@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useReducer, useRef, useState, type ReactNode } from "react"
 import { api, type Asset, type ApercuLivraison } from "../api"
 import { RACCORDS, reglesTuiles, tuiles, type CelluleTuile, type EnsembleTuiles, type ReglesTuiles } from "../api-tuiles"
+import { assetsDeLaRecette, atlasDe, jeuDepuisRecette, nouveauJeu, recetteDe, versCarteServeur } from "../tuiles/atelier"
+import { encoderPng, enBase64 } from "../tuiles/png"
+import { AtelierDuJeu, ChoixDeSorte, chargerImages, imagesChargees, ListeDesJeux, LivraisonDuJeu, type Edition, type MatiereDuJeu } from "./AtelierTuiles"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { FabricationImageLocale } from "./WorkflowsLocaux"
@@ -16,27 +19,132 @@ function VignetteTuile({ ensemble, cellule, cote = 54 }: { ensemble: EnsembleTui
     backgroundSize: `${d.largeur*facteur}px ${d.hauteur*facteur}px`, backgroundPosition: `${-(g.marge+cellule.x*(g.taille+g.espacement))*facteur}px ${-(g.marge+cellule.y*(g.taille+g.espacement))*facteur}px` }} />
 }
 
-/** Atlas du jeu et carte révisée. La fabrication, la retouche et la livraison
- * restent les gestes ordinaires de l’atelier, avec leurs sources conservées. */
-export function Tuiles({ projet, onAsset, onLivraisons }: { projet: string; onAsset?: (a: Asset) => void; onLivraisons?: () => void }) {
+/** Où l'on est dans les tuiles : la liste (`null`), le choix de la sorte, le jeu fait
+ *  à partir d'une image, un jeu ouvert — `jeu: null` est le jeu neuf pas encore
+ *  enregistré —, et sa livraison. La pile de `lieux.ts` le porte ; sans elle (un essai,
+ *  un écran monté seul), l'écran le garde lui-même. */
+export type VueTuiles = { jeu: string | null; ecran?: "sorte" | "image"; livraison?: boolean } | null
+
+const signatures = (ed: Edition) => ({ signature: JSON.stringify(recetteDe(ed.jeu)), carte: JSON.stringify(versCarteServeur(ed.jeu)), nom: ed.jeu.nom })
+const estModifie = (ed: Edition) => { const s = signatures(ed); return s.signature !== ed.signature || s.carte !== ed.carte || s.nom !== ed.nom }
+
+/** Le lieu *Les tuiles* (`TU3`) : la liste des jeux, le choix de la sorte, l'atelier
+ *  d'un jeu fabriqué et sa livraison. Un jeu fait **à partir d'une image déjà faite**
+ *  s'ouvre toujours dans l'éditeur d'AU13, plus bas, inchangé. */
+export function Tuiles({ projet, vue, onVue, onNoms, matieres: donnees = [], sujetsMatieres = [], tailleDuJeu = 32, onAsset, onLivraisons }: {
+  projet: string; vue?: VueTuiles; onVue?: (v: VueTuiles) => void
+  /** Les noms des jeux, pour le fil d'Ariane — `""` pour le jeu neuf. */
+  onNoms?: (noms: Record<string, string>) => void
+  matieres?: MatiereDuJeu[]
+  /** Les sujets de nature « matière » : leurs images de la bibliothèque — rangées
+   *  dans une case ou non — remplissent « Mes matières ». */
+  sujetsMatieres?: { identifiant: string; nom: string }[]
+  tailleDuJeu?: number
+  onAsset?: (a: Asset) => void; onLivraisons?: () => void
+}) {
+  const [trouvees, setTrouvees] = useState<MatiereDuJeu[]>([])
+  const cleSujets = sujetsMatieres.map(s => `${s.identifiant}|${s.nom}`).join("/")
+  useEffect(() => {
+    if (!sujetsMatieres.length) { setTrouvees([]); return }
+    let vivant = true
+    const noms = new Map(sujetsMatieres.map(s => [s.identifiant, s.nom]))
+    api.assets({ limite: 1000 }).then(r => {
+      if (vivant) setTrouvees(r.assets.filter(a => a.personnage && noms.has(a.personnage)).map(a => ({ identifiant: a.identifiant, nom: noms.get(a.personnage!)! })))
+    }).catch(() => undefined)
+    return () => { vivant = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleSujets])
+  const matieres = [...donnees, ...trouvees.filter(t => !donnees.some(d => d.identifiant === t.identifiant))]
   const [liste, setListe] = useState<EnsembleTuiles[]>([])
-  const [ouverte, setOuverte] = useState<EnsembleTuiles | null>(null)
-  const [nouveau, setNouveau] = useState(false)
   const [charge, setCharge] = useState(false)
   const [erreur, setErreur] = useState("")
-  useEffect(() => { let vivant = true; setCharge(false); setOuverte(null); setNouveau(false)
+  const [occupe, setOccupe] = useState(false)
+  const [statut, setStatut] = useState("")
+  const [interne, setInterne] = useState<VueTuiles>(null)
+  const [, maj] = useReducer((n: number) => n + 1, 0)
+  const editions = useRef(new Map<string, Edition>())
+  const courante = onVue ? (vue ?? null) : interne
+  const aller = (v: VueTuiles) => { setErreur(""); setStatut(""); if (onVue) onVue(v); else setInterne(v) }
+
+  useEffect(() => { let vivant = true; setCharge(false); editions.current.clear()
     tuiles.lister(projet).then(l => { if (vivant) { setListe(l); setCharge(true) } }).catch(e => vivant && setErreur(message(e)))
     return () => { vivant = false }
   }, [projet])
-  const garder = (e: EnsembleTuiles) => { setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)]); setOuverte(e); setNouveau(false) }
-  return <section className="flex h-full min-h-0 flex-col overflow-auto bg-papier p-[22px] text-encre">
-    <div className="flex flex-wrap items-start justify-between gap-[14px]"><div><h1 className="font-serif text-[38px]">Les tuiles</h1><p className="text-[13px] text-encre-3">Un atlas, des terrains et une carte d’essai pour les assembler dans Godot.</p></div><button className={BOUTON} onClick={() => { setNouveau(true); setOuverte(null) }}>Nouvel ensemble</button></div>
-    {erreur && <p role="alert" className="mt-[14px] text-echec">{erreur}</p>}
-    <div className="my-[14px] flex flex-wrap gap-[8px]">{liste.map(e => <button key={e.identifiant} className={`${BOUTON} ${ouverte?.identifiant === e.identifiant ? "border-encre" : ""}`} onClick={() => { setOuverte(e); setNouveau(false) }}>{e.nom} · {e.retenues} tuiles · r{e.revision}</button>)}</div>
-    {!charge && !erreur && <p role="status">Lecture des ensembles…</p>}
-    {charge && !liste.length && !nouveau && <p className="text-[13px]">Commencez par importer ou fabriquer une image d’atlas. Choisissez ensuite les tuiles utiles et peignez une carte pour vérifier leurs raccords.</p>}
-    {nouveau && <NouvelEnsemble projet={projet} onGarder={garder} onFermer={() => setNouveau(false)} />}
-    {ouverte && <EditeurTuiles key={ouverte.identifiant} ensemble={ouverte} onGarder={garder} onAsset={onAsset} onLivraisons={onLivraisons} />}
+
+  const cle = courante?.jeu ?? ""
+  const ensemble = courante?.jeu ? liste.find(e => e.identifiant === courante.jeu) ?? null : null
+  const edition = courante && !courante.ecran ? editions.current.get(cle) ?? null : null
+  const nomsAssets = Object.fromEntries(matieres.map(m => [m.identifiant, m.nom]))
+
+  // Un jeu fabriqué s'ouvre depuis sa recette, une fois les images qu'elle nomme lues.
+  useEffect(() => {
+    if (!ensemble?.recette || editions.current.has(ensemble.identifiant)) return
+    let vivant = true
+    const e = ensemble
+    chargerImages(assetsDeLaRecette(e.recette!)).catch(() => undefined).then(() => {
+      if (!vivant) return
+      const jeu = jeuDepuisRecette({ identifiant: e.identifiant, revision: e.revision, nom: e.nom, recette: e.recette!, carte: e.carte }, imagesChargees(), nomsAssets)
+      const ed: Edition = { jeu, signature: "", carte: "", nom: "" }
+      editions.current.set(e.identifiant, { ...ed, ...signatures(ed) })
+      maj()
+    })
+    return () => { vivant = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ensemble])
+
+  // Un jeu neuf que plus rien ne porte (la page a été rechargée) : retour à la liste.
+  useEffect(() => { if (courante && courante.jeu === null && !courante.ecran && !editions.current.has("")) aller(null) })
+
+  // Les noms remontent au fil d'Ariane — celui qu'on tape compris.
+  const noms: Record<string, string> = Object.fromEntries(liste.map(e => [e.identifiant, e.nom]))
+  for (const [k, ed] of editions.current) noms[k] = ed.jeu.nom
+  const nomsTexte = JSON.stringify(noms)
+  useEffect(() => { onNoms?.(JSON.parse(nomsTexte)) }, [nomsTexte, onNoms])
+
+  async function enregistrer(ed: Edition): Promise<boolean> {
+    setOccupe(true); setErreur(""); setStatut("")
+    try {
+      const j = ed.jeu
+      if (!j.nom.trim()) throw new Error("Donne un nom à ce jeu de tuiles.")
+      const recette = recetteDe(j), carte = versCarteServeur(j), neuf = !j.identifiant
+      const recetteChangee = neuf || JSON.stringify(recette) !== ed.signature
+      const atlas = recetteChangee ? enBase64(await encoderPng(atlasDe(j).pixels)) : undefined
+      const e = neuf
+        ? await tuiles.creerFabrique(projet, { nom: j.nom.trim(), recette, atlas: atlas!, carte })
+        : await tuiles.garderFabrique(projet, j.identifiant!, j.revision!, { nom: j.nom.trim(), carte, ...(recetteChangee ? { recette, atlas } : {}) })
+      j.identifiant = e.identifiant; j.revision = e.revision; j.nom = e.nom
+      if (e.recette) j.reglages = { ...e.recette.reglages }
+      Object.assign(ed, signatures(ed))
+      setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)])
+      if (neuf) { editions.current.delete(""); editions.current.set(e.identifiant, ed); aller({ jeu: e.identifiant }) }
+      setStatut("Enregistré.")
+      return true
+    } catch (er) { setErreur(message(er)); return false }
+    finally { setOccupe(false) }
+  }
+
+  let corps: ReactNode
+  if (!courante) corps = <ListeDesJeux liste={liste} charge={charge} onOuvrir={id => aller({ jeu: id })} onNouveau={() => aller({ jeu: null, ecran: "sorte" })} onDepuisUneImage={() => aller({ jeu: null, ecran: "image" })} />
+  else if (courante.ecran === "sorte") corps = <ChoixDeSorte tailleDuJeu={tailleDuJeu} onAnnuler={() => aller(null)} onCreer={({ sorte, taille, nom }) => {
+    const jeu = nouveauJeu({ nom, sorte, taille, graine: (Math.random() * 90000 + 10000) | 0 })
+    editions.current.set("", { jeu, signature: "", carte: "", nom: "" })
+    aller({ jeu: null })
+    setStatut("Peins la carte, change les matières : tout se refait sur ta machine.")
+  }} />
+  else if (courante.ecran === "image") corps = <NouvelEnsemble projet={projet} onGarder={e => { setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)]); aller({ jeu: e.identifiant }) }} onFermer={() => aller(null)} />
+  else if (ensemble && !ensemble.recette) corps = <EditeurTuiles key={ensemble.identifiant} ensemble={ensemble} onGarder={e => setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)])} onAsset={onAsset} onLivraisons={onLivraisons} />
+  else if (!edition) corps = <p role="status" className="text-[13px] text-encre-3">{charge ? "Lecture du jeu de tuiles…" : "Lecture des jeux de tuiles…"}</p>
+  else if (courante.livraison) corps = <LivraisonDuJeu projet={projet} edition={edition} onRetour={() => aller({ jeu: courante.jeu })} onLivraisons={onLivraisons} />
+  else corps = <AtelierDuJeu key={cle} edition={edition} matieres={matieres} modifie={() => estModifie(edition)} occupe={occupe}
+    message={estModifie(edition) ? (edition.jeu.identifiant ? "Modifications non enregistrées" : "Pas encore enregistré") : statut}
+    onNom={nom => { edition.jeu.nom = nom; maj() }}
+    onEnregistrer={() => void enregistrer(edition)}
+    onLivrer={() => void (async () => { if (estModifie(edition) || !edition.jeu.identifiant) { if (!(await enregistrer(edition))) return } aller({ jeu: edition.jeu.identifiant, livraison: true }) })()} />
+
+  const atelier = !!edition && !courante?.livraison
+  return <section className={`flex h-full min-h-0 flex-col bg-papier p-[22px] text-encre ${atelier ? "overflow-hidden" : "overflow-auto"}`}>
+    {erreur && <p role="alert" className="mb-[14px] text-[13px] text-echec">{erreur}</p>}
+    {corps}
   </section>
 }
 

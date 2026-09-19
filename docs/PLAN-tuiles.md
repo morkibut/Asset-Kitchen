@@ -195,14 +195,14 @@ L'écran de la maquette, sur des matières intégrées. On y trouve :
 - quatre réglages, le reste dans « Réglages fins » ;
 - « Enregistrer ».
 
-- [ ] Le dialogue « Les tuiles du jeu » devient un lieu de la pile. Il est ajouté aux anciens
+- [x] Le dialogue « Les tuiles du jeu » devient un lieu de la pile. Il est ajouté aux anciens
       états interdits de `test_b0.py`, et le fil d'Ariane le nomme.
-- [ ] Changer une matière ou un réglage redessine la carte en moins d'une demi-seconde à 32 px.
+- [x] Changer une matière ou un réglage redessine la carte en moins d'une demi-seconde à 32 px.
       Le rendu est mis en cache par recette.
-- [ ] Enregistrer puis rouvrir redonne la même carte et le même atlas, au pixel près.
-- [ ] Un jeu « à partir d'une image » s'ouvre toujours dans l'éditeur actuel. Rien de ce que
+- [x] Enregistrer puis rouvrir redonne la même carte et le même atlas, au pixel près.
+- [x] Un jeu « à partir d'une image » s'ouvre toujours dans l'éditeur actuel. Rien de ce que
       fait AU13 ne se perd.
-- [ ] Vu au navigateur sur un atelier jetable, et comparé à la maquette.
+- [x] Vu au navigateur sur un atelier jetable, et comparé à la maquette.
 
 ### TU4 · Livrer à Godot les trois sortes
 
