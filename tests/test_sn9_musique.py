@@ -117,6 +117,20 @@ def test_chanson_yue2_sort_avec_le_texte_date_de_sa_licence(audio):
     assert credits["paroles"] == "[Verse]\nHo, ho, le tavernier"
 
 
+def test_chanson_jouee_depuis_sa_partition_porte_la_meme_licence_yue2(audio):
+    """Défaut confirmé le 19 septembre 2026 : `yue2-partition-jouee` (le
+    second étage de YuE2, qui joue depuis la partition écrite) manquait dans
+    `_LICENCE_DU_MOTEUR` : une chanson ainsi jouée sortait avec une licence
+    « à préciser » alors que c'est le même moteur, la même licence."""
+    atelier, projet = audio
+    chanson = _genere(atelier, projet, "chanson", nom="Chanson jouée", modele="ComfyUI:yue2-partition-jouee@v1",
+        envoi={"paroles": "[Verse]\nHo, ho, le tavernier"})
+    _, contenus = atelier.sons.paquet(projet, chanson["identifiant"])
+    credits = json.loads(contenus["credits.json"])["sons"][0]
+    assert credits["moteur"] == "yue2-partition-jouee"
+    assert credits["licence"]["nom"] != "à préciser" and credits["licence"]["date_du_texte"] == "2026-09-16"
+
+
 # ── Dans le vrai Godot 4.7 ────────────────────────────────────────────────
 
 
@@ -165,14 +179,23 @@ func _initialize():
     assert(m.bar_beats == 4)
     assert(abs(m.get_length() - 64.0) < 0.05)
     musique.play()
-    # On avance au-delà de la fin de boucle : Godot rejoue depuis loop_offset
-    # (0 ici) sans lever et sans que la lecture s'arrête — pas de saut de temps.
-    await create_timer(0.3).timeout
+    # On se cale juste avant la fin de la boucle (64 s) puis on franchit le
+    # point de boucle : Godot doit rejouer depuis loop_offset (0 ici) sans
+    # lever et sans que la lecture s'arrête — pas de saut de temps. Attendre
+    # les 64 s en temps réel serait trop lent pour un essai : on y saute.
+    musique.seek(63.7)
+    await process_frame
     assert(musique.playing)
     var position_avant = musique.get_playback_position()
-    await create_timer(0.3).timeout
+    await create_timer(0.6).timeout
     assert(musique.playing)
-    print("SN9_GODOT_OK")
+    var position_apres = musique.get_playback_position()
+    # Franchi la frontière de boucle : la position est repartie de
+    # loop_offset (0), donc elle a diminué malgré le temps qui avance — sans
+    # ça, `position_avant` ne servirait à rien (défaut confirmé : l'essai
+    # d'origine ne franchissait jamais la boucle et ne s'en servait pas).
+    assert(position_apres < position_avant)
+    print("SN9_GODOT_OK position_avant=", position_avant, "position_apres=", position_apres)
     quit()
 '''.replace("MUSIQUE", json.dumps(scene))
     (jeu / "preuve_sn9.gd").write_text(script, encoding="utf-8")

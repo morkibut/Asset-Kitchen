@@ -524,7 +524,10 @@ LICENCES = {
     None: {"nom": "inconnue", "resume": "Son importé : l'atelier ne connaît pas sa licence."},
 }
 _LICENCE_DU_MOTEUR = {"sa3-small-sfx": "stability", "sa3-medium": "stability", "sa-open-1": "stability",
-    "ace-step-15-turbo": "ace-step", "yue2-int8": "yue2", "sfxr": "sfxr"}
+    "ace-step-15-turbo": "ace-step", "yue2-int8": "yue2",
+    # Une chanson jouée depuis sa partition (SN9, `yue2-partition-jouee`) reste du YuE2 :
+    # même licence que le tirage direct (`yue2-int8`), sinon « à préciser » dans credits.json.
+    "yue2-partition-jouee": "yue2", "sfxr": "sfxr"}
 
 
 def moteur_du_son(provenance):

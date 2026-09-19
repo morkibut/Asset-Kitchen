@@ -133,6 +133,38 @@ def test_un_son_ecarte_ou_disparu_est_signale_et_exclu_de_ce_qui_part(audio):
     assert relu["livrable"] is False
 
 
+def test_transition_sur_le_temps_signale_un_morceau_sans_tempo_connu(audio):
+    """Défaut plausible du 19 septembre 2026 : un morceau sans tempo connu
+    (bpm=0 — une chanson YuE2, une musique importée) reçoit la transition
+    « mesure suivante » sans qu'aucun signal ne le dise. Une information,
+    jamais un blocage."""
+    atelier, projet = audio
+    connu = _musique(atelier, projet, "Exploration", tempo=90)
+    # Un morceau « sans tempo » : provenance sans composition/parametres,
+    # comme une chanson YuE2 ou une musique importée (SN9, `attributs_
+    # musicaux` rend `tempo: None` faute de le trouver dans la provenance).
+    inconnu = atelier.sons.importer_octets(projet, _encoder(6), nom="Chanson de taverne",
+        provenance={"famille": "chanson", "envoi": {"paroles": "..."}}, cle="travail:t-sans-tempo")
+    atelier.sons.classer(projet, inconnu["identifiant"], inconnu["revision"], "chanson")
+    objet = atelier.musique_adaptative.creer(projet, {"nom": "M",
+        "morceaux": [{"cle": "exploration", "son": connu["identifiant"]}, {"cle": "taverne", "son": inconnu["identifiant"]}],
+        "transitions": [{"de": "taverne", "vers": "exploration"}]})  # défaut : depart = mesure_suivante
+    taverne = next(m for m in objet["morceaux"] if m["cle"] == "taverne")
+    assert "tempo" in taverne["signal"].lower() and "mesure" in taverne["signal"].lower()
+    # Rien n'est bloqué : le morceau reste livrable.
+    assert "taverne" in objet["morceaux_a_livrer"]
+    # Le morceau qui a un tempo connu, et n'est jamais un départ « sur le
+    # temps », n'a rien à signaler pour cette raison.
+    exploration = next(m for m in objet["morceaux"] if m["cle"] == "exploration")
+    assert "tempo" not in (exploration["signal"] or "").lower()
+    # Une transition générique (« * » : n'importe quel morceau de départ)
+    # concerne aussi un morceau sans tempo.
+    generique = atelier.musique_adaptative.modifier(projet, objet["identifiant"],
+        {"transitions": [{"de": "*", "vers": "exploration"}]})
+    taverne = next(m for m in generique["morceaux"] if m["cle"] == "taverne")
+    assert "tempo" in taverne["signal"].lower()
+
+
 def test_modifier_remplace_en_bloc_et_garde_ce_qui_manque(audio):
     atelier, projet = audio
     a = _musique(atelier, projet, "Exploration")
@@ -312,6 +344,12 @@ func _initialize():
     await process_frame
     var couches: AudioStreamSynchronized = racine.get_node("Couches").stream
     assert(couches.stream_count == 2)
+    # « Même longueur » (SN10, critère 2) est mesurable en headless, même si
+    # la position de lecture ne l'est pas (voir plus bas) : les deux flux du
+    # AudioStreamSynchronized durent pareil, donc aucun ne peut décaler l'autre.
+    var longueur_calme = couches.get_sync_stream(0).get_length()
+    var longueur_tension = couches.get_sync_stream(1).get_length()
+    assert(abs(longueur_calme - longueur_tension) < 0.01)
     var joueur: AudioStreamPlayer = racine.get_node("Couches")
     joueur.play()
     await create_timer(0.2).timeout

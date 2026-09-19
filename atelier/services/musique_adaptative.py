@@ -111,6 +111,17 @@ class ServiceMusiqueAdaptative:
             morceaux.append({**m, **vue})
             if son is not None:
                 entrees.append((f"le morceau « {m['cle']} »", vue["attributs"]))
+        # Un morceau sans tempo connu (bpm=0 dans le fichier livré : une
+        # chanson YuE2, une musique importée) ne donne à Godot rien pour caler
+        # une transition sur le temps ou la mesure suivante — un signal en
+        # clair, jamais un refus (défaut confirmé le 19 septembre 2026).
+        departs_sur_tempo = [t for t in objet["transitions"] if t["depart"] in ("temps_suivant", "mesure_suivante")]
+        depart_generique = any(t["de"] == "*" for t in departs_sur_tempo)
+        departs_nommes = {t["de"] for t in departs_sur_tempo if t["de"] != "*"}
+        for m in morceaux:
+            if (depart_generique or m["cle"] in departs_nommes) and m["existe"] and m["attributs"].get("tempo") is None:
+                avis = "Ce morceau n'a pas de tempo connu : la transition ne peut pas se caler sur le temps ou la mesure — elle partira au temps prévu, sans repère musical."
+                m["signal"] = (m["signal"] + " " if m.get("signal") else "") + avis
         a_livrer_couches = [c for c in couches if c["existe"] and c["pret"]]
         a_livrer_morceaux = [m for m in morceaux if m["existe"] and m["pret"]]
         return {**objet, "couches": couches, "morceaux": morceaux,
@@ -223,15 +234,7 @@ class ServiceMusiqueAdaptative:
         objet = self.lire(projet, identifiant)
         base = nom_stable("musique", objet["nom"])[len(FAMILLES["musique"].prefixe):] or "musique_adaptative"
         contenus, params_par_fichier, credits_sons = {}, {}, []
-        noeuds, ext_ids = [], {}
-        next_id = [1]
-
-        def ext(fichier):
-            if fichier not in ext_ids:
-                ext_ids[fichier] = next_id[0]
-                next_id[0] += 1
-            return ext_ids[fichier]
-
+        noeuds = []
         ressource_principale = None
         if objet["couches_a_livrer"]:
             couches_res, streams = [], []

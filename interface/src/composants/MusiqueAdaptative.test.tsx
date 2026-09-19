@@ -53,7 +53,7 @@ test("compose une musique adaptative, ajoute un second morceau et une transition
   fireEvent.change(screen.getByLabelText("Nom de la nouvelle musique adaptative"), { target: { value: "Boucle du marais" } })
   fireEvent.click(screen.getByRole("button", { name: "Composer une musique adaptative" }))
   await waitFor(() => expect(musiqueAdaptative.creer).toHaveBeenCalledWith("jeu", { nom: "Boucle du marais", morceaux: [{ cle: "exploration_1", son: "m1" }] }))
-  await screen.findByText("exploration_1")
+  await waitFor(() => expect(within(screen.getByRole("region", { name: "Morceaux" })).getByRole("listitem")).toHaveTextContent("Exploration 1"))
 
   // Un second morceau, avec un tempo différent : l'écart se signale, sans bloquer l'ajout.
   const avecEcart = objet({
@@ -75,7 +75,7 @@ test("compose une musique adaptative, ajoute un second morceau et une transition
   vi.mocked(musiqueAdaptative.modifier).mockResolvedValueOnce(avecTransition)
   fireEvent.click(await screen.findByRole("button", { name: "Ajouter une transition" }))
   await waitFor(() => expect(musiqueAdaptative.modifier).toHaveBeenCalledWith("jeu", "ma1", { transitions: [{ de: "exploration_1", vers: "combat" }] }))
-  expect(await screen.findByLabelText("Départ de la transition exploration_1 vers combat")).toHaveValue("mesure_suivante")
+  expect(await screen.findByLabelText("Départ de la transition Exploration 1 vers Combat")).toHaveValue("mesure_suivante")
 })
 
 test("livrer une musique adaptative montre l'aperçu puis publie", async () => {

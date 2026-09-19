@@ -146,6 +146,13 @@ function EditeurMusiqueAdaptative({ projet, objet, sonsMusicaux, onChange, onSup
   const retirerTransition = (i: number) => void appliquer({ transitions: objet.transitions.filter((_, j) => j !== i) })
   const changerTransition = (i: number, champ: "depart" | "arrivee" | "fondu", valeur: string) =>
     void appliquer({ transitions: objet.transitions.map((t, j) => j === i ? { ...t, [champ]: valeur } : t) })
+  /** Le nom lisible d'un morceau visé par une transition — jamais sa clé
+   *  machine, et « n'importe quel morceau » pour le « * » que pose un agent. */
+  const nomDuMorceau = (cle: string): string => {
+    if (cle === "*") return "n’importe quel morceau"
+    const m = objet.morceaux.find(x => x.cle === cle)
+    return m ? (m.nom ?? nomSon(sonsMusicaux, m.son)) : cle
+  }
 
   return <div className="space-y-[14px] rounded-8 border border-trait bg-carte p-[14px]">
     <div className="flex items-center justify-between gap-[8px]">
@@ -158,7 +165,6 @@ function EditeurMusiqueAdaptative({ projet, objet, sonsMusicaux, onChange, onSup
     <section aria-label="Couches" className="space-y-[8px]">
       <h3 className="text-[13px] font-medium">Couches (jouées ensemble, montées ou baissées)</h3>
       <ul className="space-y-[8px]">{objet.couches.map(c => <li key={c.cle} className="flex flex-wrap items-center gap-[8px] text-[13px]">
-        <span className="font-mono">{c.cle}</span>
         <span>{c.nom ?? "son supprimé"}</span>
         <label className="flex items-center gap-[4px] text-[12px] text-encre-3">Volume
           <input aria-label={`Volume de la couche ${c.cle}`} type="number" min={-80} max={6} step={1} value={c.volume_db}
@@ -176,7 +182,6 @@ function EditeurMusiqueAdaptative({ projet, objet, sonsMusicaux, onChange, onSup
     <section aria-label="Morceaux" className="space-y-[8px]">
       <h3 className="text-[13px] font-medium">Morceaux (s’enchaînent d’un état à l’autre)</h3>
       <ul className="space-y-[8px]">{objet.morceaux.map(m => <li key={m.cle} className="flex flex-wrap items-center gap-[8px] text-[13px]">
-        <span className="font-mono">{m.cle}</span>
         <span>{m.nom ?? nomSon(sonsMusicaux, m.son)}</span>
         {m.signal && <span className="text-[12px] text-encre-attention">{m.signal}</span>}
         <button type="button" className={`${PETIT} ml-auto`} onClick={() => retirerMorceau(m.cle)}>Retirer</button>
@@ -190,14 +195,14 @@ function EditeurMusiqueAdaptative({ projet, objet, sonsMusicaux, onChange, onSup
     {objet.morceaux.length >= 2 && <section aria-label="Transitions" className="space-y-[8px]">
       <h3 className="text-[13px] font-medium">Transitions</h3>
       <ul className="space-y-[8px]">{objet.transitions.map((t, i) => <li key={`${t.de}-${t.vers}-${i}`} className="flex flex-wrap items-center gap-[8px] text-[13px]">
-        <span className="font-mono">{t.de} → {t.vers}</span>
-        <select aria-label={`Départ de la transition ${t.de} vers ${t.vers}`} className={CHAMP} value={t.depart} onChange={e => changerTransition(i, "depart", e.target.value)}>
+        <span>{nomDuMorceau(t.de)} → {nomDuMorceau(t.vers)}</span>
+        <select aria-label={`Départ de la transition ${nomDuMorceau(t.de)} vers ${nomDuMorceau(t.vers)}`} className={CHAMP} value={t.depart} onChange={e => changerTransition(i, "depart", e.target.value)}>
           {DEPARTS.map(d => <option key={d.valeur} value={d.valeur}>{d.texte}</option>)}
         </select>
-        <select aria-label={`Arrivée de la transition ${t.de} vers ${t.vers}`} className={CHAMP} value={t.arrivee} onChange={e => changerTransition(i, "arrivee", e.target.value)}>
+        <select aria-label={`Arrivée de la transition ${nomDuMorceau(t.de)} vers ${nomDuMorceau(t.vers)}`} className={CHAMP} value={t.arrivee} onChange={e => changerTransition(i, "arrivee", e.target.value)}>
           {ARRIVEES.map(a => <option key={a.valeur} value={a.valeur}>{a.texte}</option>)}
         </select>
-        <select aria-label={`Fondu de la transition ${t.de} vers ${t.vers}`} className={CHAMP} value={t.fondu} onChange={e => changerTransition(i, "fondu", e.target.value)}>
+        <select aria-label={`Fondu de la transition ${nomDuMorceau(t.de)} vers ${nomDuMorceau(t.vers)}`} className={CHAMP} value={t.fondu} onChange={e => changerTransition(i, "fondu", e.target.value)}>
           {FONDUS.map(f => <option key={f.valeur} value={f.valeur}>{f.texte}</option>)}
         </select>
         <button type="button" className={`${PETIT} ml-auto`} onClick={() => retirerTransition(i)}>Retirer</button>
