@@ -12,9 +12,11 @@
 > `.claude/worktrees/son`).** SN0, SN1, SN2, SN3, SN4, SN5 et SN8 sont écrits, **serveur et
 > écrans**, vérifiés au navigateur sur l'atelier jetable (`essais/atelier_jetable_son.py`, ComfyUI
 > doublé) et relus en croisé. Une case cochée ci-dessous est tenue. Ce qui reste ouvert attend un
-> vrai ComfyUI avec ses poids (le banc SN0), ou une tranche suivante. Deux écarts connus avec la
-> maquette : l'écran ne rouvre pas une série ni un jeu de variantes après un rechargement (ils
-> vivent côté serveur), et la page « Livrer au jeu » ne regroupe pas encore les sons par famille.
+> vrai ComfyUI avec ses poids (le banc SN0), ou une tranche suivante. SN6 (les sons d'un sujet)
+> est écrit à son tour, serveur et écrans, tenu par les essais, pas encore revu au navigateur ;
+> il a fermé les deux écarts connus avec la maquette : une série et ses jeux se retrouvent après
+> un rechargement (depuis l'emplacement d'un sujet, et dans « Un son » sous « Séries
+> précédentes »), et « Livrer au jeu › Sons » range les sons par famille.
 
 ## Décisions d'architecture
 
@@ -85,6 +87,9 @@ Audio) et dans les relevés. La licence de Stable Audio 3 est à accepter sur la
 
 ### SN0 · Le banc des moteurs, sur la machine
 
+> Lancé le 19 septembre 2026 : [le relevé](releves/2026-09-19-son-banc.md). 152 tirages
+> audibles, YuE2 int8 sans bruit pur ; reste l'écoute de l'auteur.
+
 **Bloquée par** : les téléchargements de l'auteur.
 
 Un banc hors produit (`essais/banc_son.py`) qui envoie à ComfyUI les modèles de workflow
@@ -99,11 +104,12 @@ cobblestone, continuous ambience, no music, stereo field recording`) ; la boucle
 (24 mesures à 90 BPM, soit 64 s) et le thème de combat sur ACE-Step, puis sur YuE2 en tentative
 instrumentale ; une chanson de taverne sur YuE2.
 
-- [ ] Chaque moteur retenu produit un son audible sur la 3080 Laptop, ou le banc dit pourquoi
+- [x] Chaque moteur retenu produit un son audible sur la 3080 Laptop, ou le banc dit pourquoi
       (fichier manquant, mémoire, **bruit pur de YuE2 int8** — un défaut signalé ailleurs).
-- [ ] Le temps de calcul et le pic de mémoire sont relevés par moteur et par durée : c'est ce
+- [x] Le temps de calcul et le pic de mémoire sont relevés par moteur et par durée : c'est ce
       que l'écran annoncera.
-- [ ] Le banc dit si ComfyUI décharge seul un moteur quand le suivant arrive.
+- [ ] Le banc dit si ComfyUI décharge seul un moteur quand le suivant arrive. *(Pas mesuré : le
+      banc libère la carte lui-même entre deux moteurs ; les pics restent sous 7,1 Go sur 8.)*
 - [ ] L'auteur a écouté, et tranché **ACE-Step ou YuE2 pour la musique de fond** ; le relevé
       l'écrit dans `docs/releves/`.
 - [ ] Le relevé dit si les mots `dry`, `close-mic'd`, `one-shot` changent le son, et si le CLAP
@@ -216,10 +222,21 @@ Un son peut appartenir à un sujet, à un emplacement nommé ; l'onglet « Sons 
 montre les emplacements de sa famille, remplis ou vides, et on lance une série depuis un
 emplacement vide. La livraison d'un sujet emporte ses sons.
 
-- [ ] Depuis la fiche d'un héros, l'emplacement « pas » vide lance une série déjà décrite par
+- [x] Depuis la fiche d'un héros, l'emplacement « pas » vide lance une série déjà décrite par
       le sujet ; le son gardé y apparaît.
-- [ ] Un son sans sujet reste un son du jeu, visible dans la galerie.
-- [ ] Livrer le héros livre ses sons avec lui, sous leurs noms stables.
+- [x] Un son sans sujet reste un son du jeu, visible dans la galerie.
+- [x] Livrer le héros livre ses sons avec lui, sous leurs noms stables.
+
+*(19 septembre 2026 : tenus par `tests/test_sn6_sujet_sons.py` et
+`SonsDuSujet.test.tsx`, `SonsALivrer.test.tsx` ; pas encore revus au navigateur sur l'atelier
+jetable.)* La forme posée, dont SN7, SN11 et SN12 héritent, est écrite en tête de
+`atelier/domaine/sons_du_sujet.py` : un fichier par sujet, des emplacements `{cle, nom,
+famille, contenu: {nature: jeu | son, identifiant}, series}` ; un emplacement se désigne par
+`{sujet, cle}` ; son nom stable est `<préfixe>_<sujet sans article>_<clé>` (`sfx_pelerin_pas`).
+Une série préparée depuis un emplacement porte `emplacement: {sujet, cle}`, et « Garder » y
+range dans le jeu de l'emplacement. La livraison du sujet pose ses sons dans `sons/` de la
+révision, avec un `AudioStreamPlayer2D` par emplacement dans la scène (celui que la piste
+audio de SN7 visera).
 
 ### SN7 · Le son calé sur l'animation
 
