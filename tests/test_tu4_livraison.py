@@ -25,7 +25,6 @@ from PIL import Image
 
 from atelier.domaine import masques_tuiles as M
 from atelier.domaine.recette_tuiles import REGLAGES
-from atelier.domaine.tuiles import TuilesRefusees
 from atelier.services import export_tuiles
 from atelier.services.tuiles import png
 from tests.test_au1 import GODOT
@@ -133,15 +132,7 @@ async def test_un_jeu_d_une_image_sort_comme_avant(fixe):
     assert tres(a, p, e) == AU13_TRES
 
 
-async def test_le_mur_est_refuse_en_clair(fixe):
-    a, p, _ = fixe
-    carte = {"largeur": 2, "hauteur": 1, "cases": [{"x": 0, "y": 0, "tuile_x": 0, "tuile_y": 0}]}
-    mur = fabriquer(a, p, "Rempart", "mur", reglages={"hauteurMur": 3},
-                    emplacements={"surface": HERBE, "face": {"source": "integree", "nom": "brique"}}, carte=carte)
-    with pytest.raises(TuilesRefusees, match="livraison d’un mur arrive bientôt"):
-        a.tuiles.prevoir_livraison(p, mur["identifiant"])
-    with pytest.raises(TuilesRefusees, match="arrive bientôt"):
-        a.tuiles.archive(p, mur["identifiant"])
+# Le mur, refusé ici jusqu'à TU7, se livre désormais : tests/test_tu7_mur.py.
 
 
 async def test_la_carte_livree_est_la_carte_peinte(fixe):

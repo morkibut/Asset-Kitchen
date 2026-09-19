@@ -290,14 +290,37 @@ des règles de pose :
 - les courses ;
 - le décor se pose par paires.
 
-- [ ] La scène reproduit les essais de sc-clone : fente fermée (288 px → 0), escalier ramené
+- [x] La scène reproduit les essais de sc-clone : fente fermée (288 px → 0), escalier ramené
       (3 661 → 569 px), biais périodique au bit près.
-- [ ] Dans un vrai Godot 4.7, la carte livrée pose le dessus du mur par `set_cell` et les
+      *(Tenus par les essais recopiés en TU1, `interface/src/tuiles/moteur/__tests__/` :
+      « T22 : le dessus d’un mur ne laisse plus voir le fond » (0 px ; remesuré le
+      19 septembre avec le masque brut : 288 px), « T24 : la jonction en diagonale referme la
+      fente » (exige plus de 2 000 px débranché et quatre fois moins branché ; remesuré :
+      3 227 → 21 px, la scène ayant encore gagné depuis T24 avec le biais de T43 à T45),
+      et « T43 · la face cisaillée EST la face droite, lue (y − x) lignes plus haut — au bit
+      près » dans `tileset.test.ts`. La livraison pose exactement cette scène :
+      `atelier/domaine/pose_mur.py` est comparé, pose pour pose, à `dessinerScene` sur 38
+      scènes, `tests/test_tu7_mur.py`.)*
+- [x] Dans un vrai Godot 4.7, la carte livrée pose le dessus du mur par `set_cell` et les
       bandes en tuiles simples. Un mur de hauteur 1 **et** un mur de hauteur 3 se chargent
       sans erreur (sc-clone ne testait que 3).
-- [ ] Le personnage passe derrière le mur et devant sa base : le tri en profondeur est vérifié
+      *(Quatre cartes, dont un escalier en hauteur 1 et 3 et deux pentes sur une même case :
+      0 désaccord avec la scène, case par case et dans l'ordre de dessin. L'outil Terrains de
+      Godot rend bien le masque brut, jamais le bit sud forcé : d'où le `set_cell`.)*
+- [x] Le personnage passe derrière le mur et devant sa base : le tri en profondeur est vérifié
       dans Godot.
-- [ ] Le dessus du mur est identique, au pixel près, au sol de même matière.
+      *(La carte range chaque étage sur sa couche, avec un `y_sort_origin` qui ramène tout le
+      mur sur la ligne de sa base. Dans l'essai, Godot sans écran calcule l'ordre depuis ses
+      propres valeurs. Vérifié une fois en rendu réel (fenêtre, OpenGL) sur un atlas témoin :
+      410 cases conformes au peintre, personnage caché derrière, visible devant ; à
+      l'envers, sans les origines de couche, 30 cases fausses et le personnage traverse.)*
+- [x] Le dessus du mur est identique, au pixel près, au sol de même matière, **hors la
+      pénombre des angles**.
+      *(La pénombre du moteur (T38 de sc-clone, validée) assombrit exprès les coins rentrants
+      du dessus, que le sol n'a pas. L'essai (`interface/src/tuiles/atelier.test.ts`) vérifie
+      les deux : identique sans pénombre, et avec, seules les pièces à coin rentrant
+      diffèrent. Tranché en TU7 : la pénombre « discrète » reste le défaut, parce que
+      l'auteur l'a validée dans sc-clone ; le critère était mal écrit, pas le mur.)*
 
 ### TU8 · Le décor autour des bords
 

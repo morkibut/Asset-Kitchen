@@ -1,11 +1,11 @@
 {
- "releve_le": 1789837144.7892258,
+ "releve_le": 1789842781.1583588,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 160790,
+  "octets": 163648,
   "documents": {
    "AGENTS.md": {
     "octets": 35208,
@@ -158,14 +158,14 @@
     ]
    },
    "docs/ARCHITECTURE.md": {
-    "octets": 42971,
-    "titres": 13,
+    "octets": 45829,
+    "titres": 14,
     "sections": [
      {
       "titre": "Asset Kitchen — Architecture",
       "niveau": 1,
       "ligne": 1,
-      "octets": 42501
+      "octets": 45321
      },
      {
       "titre": "1 · Ce que c'est",
@@ -213,30 +213,36 @@
       "titre": "6 à 10 · Les versions → `docs/archi-versions.md`",
       "niveau": 2,
       "ligne": 395,
-      "octets": 2476
+      "octets": 5296
      },
      {
       "titre": "Les jeux de tuiles fabriqués (TU2, `docs/PLAN-tuiles.md`)",
       "niveau": 3,
       "ligne": 412,
-      "octets": 1351
+      "octets": 2097
+     },
+     {
+      "titre": "Les matières générées sur la machine (TU5, `docs/PLAN-tuiles.md`)",
+      "niveau": 3,
+      "ligne": 439,
+      "octets": 2074
      },
      {
       "titre": "11 · Risques, et quand les lever → `docs/archi-risques.md`",
       "niveau": 2,
-      "ligne": 430,
+      "ligne": 468,
       "octets": 327
      },
      {
       "titre": "12 · Ce qu'on récupère",
       "niveau": 2,
-      "ligne": 439,
+      "ligne": 477,
       "octets": 2483
      },
      {
       "titre": "13 · Hors périmètre, et pourquoi",
       "niveau": 2,
-      "ligne": 454,
+      "ligne": 492,
       "octets": 3199
      }
     ]
@@ -569,11 +575,11 @@
  },
  "renvois": {
   "code": {
-   "total": 788,
+   "total": 796,
    "casses": []
   },
   "docs": {
-   "total": 1328,
+   "total": 1329,
    "casses": []
   }
  }

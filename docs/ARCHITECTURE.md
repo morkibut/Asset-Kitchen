@@ -427,6 +427,44 @@ recette, c'est `PUT` avec `recette` **et** `atlas` : une révision de plus, l'an
 reste lisible par `?revision=`. Un ensemble sans `recette` sur le disque est un jeu AU13,
 relu sans migration.
 
+**La livraison d'un mur (TU7).** La carte d'un mur est son emprise. À la livraison,
+`atelier/domaine/pose_mur.py` (portage pur de la scène du moteur, comparé pose pour pose à
+`dessinerScene` par `tests/test_tu7_mur.py`) en déduit ombre, base, faces et dessus. Le
+`.tres` est celui de `godotWallTileset` de sc-clone, au caractère près. `carte.tscn` est un
+`Node2D` trié en profondeur, avec une `TileMapLayer` par étage : « Ombre » (z −1), « Base »,
+« Face_k », « Dessus ». Le `y_sort_origin` de chaque couche ramène tout le mur sur la ligne
+de sa base, et Godot trie alors comme le peintre. Une couche invisible, « Emprise », bloque
+les cases dont la base est cachée. Le paquet porte un `LISEZMOI.txt` des règles de pose.
+
+### Les matières générées sur la machine (TU5, `docs/PLAN-tuiles.md`)
+
+Le texte d'une matière se compose en deux couches pures, jamais recopiées
+(`atelier/domaine/texte_matiere.py`, port de `tile-ia-prompt.js` et de la branche
+`comfyui`/`texture` de `promptParts`, `lib/providers.mjs`) : `composer_prompt(pierre, motif,
+cadrage)` — le tronc, la clause de motif, le cadrage (`surface`, `face`, `plat`, `motif`) —,
+puis `texte_envoi(...)`, qui y ajoute l'habillage fixe d'une texture raccordable et le
+déclencheur/suffixe du style. Le négatif est fixe (`NEGATIF`), la taille 256 sans référence
+et 512 avec (`taille_par_defaut`), et les graines d'un tirage viennent de
+`graines_pour_tirages`, une par emplacement, jamais partagées. `essais/tu5_textes_scclone.mjs`
+fige les sorties réelles de sc-clone en fixture ; `tests/test_tu5_matieres.py` compare le
+portage au caractère près.
+
+`atelier/services/matieres.py` (`ServiceMatieres`) n'appelle jamais un fournisseur payant :
+un seul style, `klein9b-tiles-raccordable` (ML6), en dur. `disponibilite()` réutilise le
+diagnostic des styles locaux et installe au besoin ; `apercu(...)` compose le texte sans
+toucher ComfyUI (la route de prévisualisation) ; `generer(projet, pierre=, motif=, cadrage=,
+tirages=1..8, graine=None)` soumet `tirages` appels indépendants à
+`ServiceGenerations.soumettre_matiere` — la contrepartie de `soumettre()` sans `_texte` ni
+`_reinjections` : le texte part déjà entièrement composé, pour que « voir le texte envoyé »
+reste exactement ce qui part, sans bible d'univers ni artwork ajouté. Chacun passe par la
+file locale existante (suivi et annulation : `GET /api/local-queue`) et revient comme un
+asset de nature « matière » (`Demande.echelle="matière"`, TU2), avec sa provenance dans
+`generation.demande["filiation"]["matiere"]` (texte, style, graine).
+
+Trois routes, `/api/projects/{projet}/materials` : `GET /availability`, `POST /preview`,
+`POST /generate` (`{pierre, motif, cadrage, tirages, graine}` → les générations soumises,
+`generation.en_json()`).
+
 ## 11 · Risques, et quand les lever → `docs/archi-risques.md`
 
 **Les risques de l'architecture, et le moment où chacun se lève**, vivent dans

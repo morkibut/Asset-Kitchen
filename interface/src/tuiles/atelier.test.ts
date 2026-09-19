@@ -10,6 +10,7 @@ import {
   type JeuEdite, type Recette, type Sorte,
 } from "./atelier"
 import { encoderPng } from "./png"
+import { maskAtPosition, NEIGHBOUR_BITS, TILE_MASK_SETS, type MaskSet } from "./moteur/tile-masks"
 import type { RGBAImage } from "./moteur/types"
 
 installerBouchonCanvas()
@@ -119,6 +120,55 @@ describe("Le PNG de l'atlas", () => {
     const deux = await png(nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 12 }))
     expect(Buffer.from(deux)).toEqual(Buffer.from(un))
   })
+})
+
+describe("Le dessus du mur (TU7)", () => {
+  // Le critère : le dessus d'un mur est identique, au pixel près, au sol de même matière.
+  // Mêmes matières, même graine, mêmes réglages communs : les six premières lignes de la
+  // planche du mur (le blob 47) sont celles de la planche du sol, case par case. C'est ce
+  // qui permet de poser un mur au milieu d'un sol de la même pierre sans couture.
+  //
+  // Une exception, voulue par le moteur et mesurée ici : la « pénombre dans les angles »
+  // du mur (T38 de sc-clone) assombrit les coins rentrants de son dessus, que le sol n'a
+  // pas. Pénombre à « aucune », le dessus est le sol ; sinon, seules les pièces qui ont un
+  // coin rentrant diffèrent, et rien d'autre.
+  const coinRentrant = (m: number) => ([["N", "E", "NE"], ["S", "E", "SE"], ["S", "W", "SW"], ["N", "W", "NW"]] as const)
+    .some(([a, b, d]) => (m & NEIGHBOUR_BITS[a]) && (m & NEIGHBOUR_BITS[b]) && !(m & NEIGHBOUR_BITS[d]))
+  const casesDifferentes = (sol: JeuEdite, mur: JeuEdite) => {
+    const a = atlasDe(sol).pixels, b = atlasDe(mur).pixels, t = sol.taille
+    const cases = new Set<string>()
+    let opaques = 0
+    for (let y = 0; y < 6 * t; y++) for (let x = 0; x < 8 * t; x++) {
+      const ia = (y * a.width + x) * 4, ib = (y * b.width + x) * 4
+      if (a.data[ia + 3]) opaques++
+      for (let k = 0; k < 4; k++) if (a.data[ia + k] !== b.data[ib + k]) { cases.add(`${Math.floor(x / t)},${Math.floor(y / t)}`); break }
+    }
+    expect(opaques).toBeGreaterThan(20 * t * t)
+    return cases
+  }
+  for (const [taille, surface, regler] of [
+    [16, "pierre", () => undefined],
+    [32, "herbe", (j: JeuEdite) => { j.reglages.arrondi = 5; j.reglages.bordures = "nettes"; j.reglages.nuances = 8 }],
+    [64, "carrelage", (j: JeuEdite) => { j.reglages.relief = 9; j.reglages.reduction = "moyenne" }],
+  ] as const) {
+    test(`${surface} en ${taille} px`, () => {
+      const sol = nouveauJeu({ nom: "Sol", sorte: "sol", taille, graine: 4242 })
+      const mur = nouveauJeu({ nom: "Mur", sorte: "mur", taille, graine: 4242 })
+      for (const j of [sol, mur]) { poserIntegree(j, "surface", surface); regler(j) }
+      mur.reglages.hauteurMur = 5
+      mur.reglages.ombreMur = "marquee"
+      mur.reglages.penombre = "aucune"
+      expect([...casesDifferentes(sol, mur)]).toEqual([])
+      // La pénombre par défaut ne touche que les coins rentrants.
+      mur.reglages.penombre = "discrete"
+      const touchees = casesDifferentes(sol, mur)
+      expect(touchees.size).toBeGreaterThan(20)
+      for (const c of touchees) {
+        const [x, y] = c.split(",").map(Number)
+        expect(coinRentrant(maskAtPosition(TILE_MASK_SETS.B47 as MaskSet, x, y) ?? 0), c).toBe(true)
+      }
+    })
+  }
 })
 
 describe("Le temps d'un changement", () => {

@@ -311,8 +311,6 @@ export function AtelierDuJeu({ edition, matieres, modifie, occupe, message, onEn
 
   const texteHasard = j.sorte === "mur" ? "Pièces au hasard" : j.sorte === "chemin" ? "Chemins au hasard" : "Île au hasard"
   const fonds = [...LISTE_MATIERES].sort((a, b) => Number(b.role === "sol") - Number(a.role === "sol"))
-  const livrable = !S.mur
-
   return <div className="flex h-full min-h-0 flex-col">
     <div className="mb-[14px] flex shrink-0 flex-wrap items-end justify-between gap-[22px]">
       <div className="min-w-0 flex-1">
@@ -327,8 +325,7 @@ export function AtelierDuJeu({ edition, matieres, modifie, occupe, message, onEn
       </div>
       <div className="flex shrink-0 items-center gap-[8px]">
         <button type="button" className={BOUTON} disabled={occupe || (!modifie() && j.identifiant !== null)} onClick={onEnregistrer}>Enregistrer</button>
-        {livrable ? <button type="button" className={PRINCIPAL} disabled={occupe || !j.carte} onClick={onLivrer}>Livrer à Godot</button>
-          : <span className="text-[12px] text-encre-3">Le mur se livre à Godot dans une prochaine version.</span>}
+        <button type="button" className={PRINCIPAL} disabled={occupe || !j.carte} onClick={onLivrer}>Livrer à Godot</button>
       </div>
     </div>
     {erreur && <p role="alert" className="mb-[8px] text-[13px] text-echec">{erreur}</p>}

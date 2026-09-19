@@ -233,7 +233,7 @@ describe("Les tuiles du jeu", () => {
     expect(await screen.findByLabelText("Nom du jeu de tuiles")).toHaveValue("Nouveau sol")
   })
 
-  it("le mur se peint déjà, et dit que sa livraison viendra", async () => {
+  it("le mur se peint et se livre à Godot, comme les autres sortes", async () => {
     vi.spyOn(tuiles, "lister").mockResolvedValue([])
     render(<Tuiles projet="jeu" />)
     fireEvent.click(await screen.findByRole("button", { name: "Nouveau jeu de tuiles" }))
@@ -241,7 +241,7 @@ describe("Les tuiles du jeu", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ouvrir l’atelier" }))
     expect(screen.getByLabelText("Hauteur du mur")).toHaveValue("2")
     expect(screen.getByRole("button", { name: "Pièces au hasard" })).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Livrer à Godot" })).toBeNull()
-    expect(screen.getByText("Le mur se livre à Godot dans une prochaine version.")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Livrer à Godot" })).toBeEnabled()
+    expect(screen.queryByText(/prochaine version/)).toBeNull()
   })
 })

@@ -11,7 +11,7 @@
  *    c'est ici, et nulle part ailleurs, qu'ils deviennent ceux du moteur.
  * 2. **Le rendu, mis en cache par recette.** Il tourne sur le fil principal : le moteur
  *    crée son canevas par `document.createElement`, qu'un worker n'a pas, et une
- *    planche de 32 px se rend en 15 à 50 ms. Voir `docs/status/etat.md` § TU3.
+ *    planche de 32 px se rend en 15 à 50 ms. Voir `docs/PLAN-tuiles.md` § TU3 · L'atelier du jeu de tuiles.
  * 3. **La carte peinte, et sa forme serveur.** L'écran peint des cases (ou des
  *    sommets, pour les 15 pièces) ; le serveur garde des pièces posées. Le passage se
  *    fait dans les deux sens sans rien perdre, parce que chaque pièce connaît son
@@ -377,8 +377,9 @@ function masqueDe(j: Pick<JeuEdite, "sorte" | "reglages">, carte: Carte, x: numb
   return S.set === "B47" && dessous ? CASE_DESSOUS : null
 }
 
-/** La carte peinte, en pièces posées. Le mur y pose son dessus : c'est la couche que
- *  Godot peint comme un terrain (les bandes arrivent avec TU7). */
+/** La carte peinte, en pièces posées. Pour un mur, c'est son emprise, chaque case avec
+ *  son dessus brut : le serveur en déduit la pose complète à la livraison
+ *  (atelier/domaine/pose_mur.py, portage de la scène du moteur, TU7). */
 export function versCarteServeur(j: JeuEdite): CarteServeur {
   const carte = copieCarte(j.carte)
   if (!carte) return { largeur: COLONNES, hauteur: LIGNES, cases: [] }
