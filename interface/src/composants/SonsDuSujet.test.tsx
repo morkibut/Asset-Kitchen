@@ -7,7 +7,8 @@ import { SonsDuSujet } from "./SonsDuSujet"
 import { sonsDuSujet, type Emplacement, type SonsDuSujet as Vue } from "../api-sons-du-sujet"
 import { ecoute, jeuxDeVariantes, seriesSon, texteSon } from "../api-series-son"
 import { workflows } from "../api-workflows"
-import { jeu, serie, tirageRendu } from "../son-essais"
+import { jeu, mesures, serie, tirageRendu } from "../son-essais"
+import { sfxr } from "../api-sfxr"
 
 vi.mock("../api-sons-du-sujet", () => ({ sonsDuSujet: { lire: vi.fn(), index: vi.fn(), ajouter: vi.fn(), retirer: vi.fn(), poser: vi.fn(), vider: vi.fn(), proposer: vi.fn(), preparer: vi.fn() } }))
 vi.mock("../api-workflows", () => ({ workflows: { lister: vi.fn() } }))
@@ -123,6 +124,28 @@ test("un emplacement d'interface passe par sfxr, et le jeu gardé s'y pose", asy
   expect(await screen.findByText(/Aucun texte ne part/)).toBeInTheDocument()
   expect(sonsDuSujet.proposer).not.toHaveBeenCalled()
   expect(jeuxDeVariantes.lire).not.toHaveBeenCalled()
+})
+
+test("garder un son rétro dans un emplacement d'interface déjà rempli l'ajoute au jeu, sans en former un nouveau", async () => {
+  // Défaut confirmé le 19 septembre 2026 : SonRetro ne recevait pas le jeu
+  // déjà posé sur l'emplacement, donc chaque « Garder » en formait un
+  // nouveau (`jeuxDeVariantes.creer`) qui remplaçait l'ancien à la pose.
+  const deja = jeu([1, 2], { identifiant: "j-clic", nom: "sfx_heros_clic", famille: "interface" })
+  vi.mocked(sonsDuSujet.lire).mockResolvedValue(vue([place("clic", "Clic", "interface", { rempli: true,
+    contenu: { nature: "jeu", identifiant: "j-clic", existe: true, nom: deja.nom, famille: "interface", sons: deja.sons, a_livrer: deja.a_livrer, signalements: [] } })]))
+  vi.mocked(jeuxDeVariantes.lire).mockResolvedValue(deja)
+  vi.mocked(sfxr.fabriquer).mockResolvedValue({ identifiant: "r3", projet: "jeu", nom: "Clic — variante 3", revision: 1, revision_courante: 1,
+    pret: true, etat: "prete", raison: "", jugement: "a-juger", source: { nom: "sfxr.wav", empreinte: "e", octets: 10 },
+    provenance: { nature: "sfxr", parametres: {}, graine: 3, depart: "clic" }, recette: {} as never, mesures: mesures({ duree: 0.2 }),
+    famille: "interface", avertissements: [], recette_proposee: null, versions: [] })
+  vi.mocked(jeuxDeVariantes.ajouter).mockResolvedValue(jeu([1, 2, 3], { identifiant: "j-clic", nom: "sfx_heros_clic", famille: "interface", revision: 2 }))
+  render(<SonsDuSujet projet="jeu" sujet="heros" nomSujet="Le héros" />)
+  fireEvent.click(await screen.findByRole("button", { name: "Ouvrir" }))
+  await waitFor(() => expect(jeuxDeVariantes.lire).toHaveBeenCalledWith("jeu", "j-clic"))
+  fireEvent.click(await screen.findByRole("button", { name: "Un son" }))
+  fireEvent.click(await screen.findByRole("button", { name: "Garder le tirage 1" }))
+  await waitFor(() => expect(jeuxDeVariantes.ajouter).toHaveBeenCalledWith("jeu", "j-clic", "r3", true))
+  expect(jeuxDeVariantes.creer).not.toHaveBeenCalled()
 })
 
 test("SN7 : un son gardé se cale sur une animation, et la carte le dit", async () => {

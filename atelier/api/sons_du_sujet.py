@@ -1,7 +1,8 @@
 """SN6 : les sons d'un sujet — ses emplacements, et une série depuis l'un d'eux.
 
 `subjects/{sujet}/sounds` : les emplacements, remplis ou vides ;
-`…/{emplacement}` : poser (PUT `{jeu}` ou `{son}`), vider (DELETE `…/content`) ;
+`…/{emplacement}` : poser (PUT `{jeu}` ou `{son}`, et sur demande `revision`),
+vider (DELETE `…/content`, sur demande `?revision=`) ;
 `…/{emplacement}/series/propose` : la demande proposée (n'écrit rien) ;
 `…/{emplacement}/series` : préparer une série liée à l'emplacement — « Garder »
 dans cette série range dans le jeu de l'emplacement. `subject-sounds` : tous
@@ -47,9 +48,10 @@ def poser(requete: Request, projet: str, sujet: str, emplacement: str, corps: di
 
 
 @routeur.delete("/subjects/{sujet}/sounds/{emplacement}/content")
-def vider(requete: Request, projet: str, sujet: str, emplacement: str):
-    """L'emplacement redevient vide ; rien ne quitte la galerie."""
-    return _service(requete).vider(projet, sujet, emplacement)
+def vider(requete: Request, projet: str, sujet: str, emplacement: str, revision: int | None = None):
+    """L'emplacement redevient vide ; rien ne quitte la galerie. `revision`
+    (facultative) : refuse si les sons du sujet ont changé depuis qu'on les a lus."""
+    return _service(requete).vider(projet, sujet, emplacement, revision=revision)
 
 
 @routeur.post("/subjects/{sujet}/sounds/{emplacement}/series/propose")

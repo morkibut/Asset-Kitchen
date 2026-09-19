@@ -65,6 +65,9 @@ export function SonsDuSujet({ projet, sujet, nomSujet, onRegler, personnage, pla
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
     {!vue && !erreur && <p className="text-[13px] text-encre-3">Lecture des sons…</p>}
     {vue && vue.total === 0 && <p className="text-[13px] text-encre-3">Cette famille de sujets n’a pas d’emplacement proposé. Nommez-en un.</p>}
+    {vue && vue.remplis > 0 && <p className="text-[12px] text-encre-3">
+      Renommer {nomSujet} changerait le nom de ses sons dans le jeu (comme {vue.emplacements.find((e) => e.rempli)?.nom_stable}).
+    </p>}
     {vue && <ul className="grid gap-[8px]">
       {vue.emplacements.map((e) => {
         const aVenir = A_VENIR.includes(e.famille)
@@ -157,7 +160,9 @@ function EmplacementOuvert({ projet, sujet, nomSujet, emplacement: e, onRetour, 
     {jeu && !e.series.length && <JeuDeVariantes projet={projet} jeu={jeu} onJeu={setJeu} onRegler={onRegler} />}
     {e.par_sfxr
       ? <div className="grid gap-[8px] rounded-8 border border-trait bg-carte p-[14px]">
-          <SonRetro projet={projet} departInitial={e.cle} nomDuJeu={e.nom_stable} onJeu={poserJeu} onRegler={onRegler} />
+          <SonRetro projet={projet} departInitial={e.cle} nomDuJeu={e.nom_stable}
+            jeuInitial={jeu} sonExistant={c?.nature === "son" && c.existe ? c.identifiant : null}
+            onJeu={poserJeu} onRegler={onRegler} />
         </div>
       : proposition
         ? <UnSon projet={projet} onSon={onRegler} emplacement={{

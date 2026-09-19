@@ -20,6 +20,12 @@ export const sfxr = {
 
 /** Le premier son rétro gardé forme le jeu de variantes (famille interface),
  *  avec les réglages de la famille posés en nouvelle version — le même chemin
- *  qu'une série. Tirer ne range aucun jeu : seul « Garder » en forme un. */
-export const formerJeuSfxr = (projet: string, son: string, nom: string): Promise<JeuVariantes> =>
-  jeuxDeVariantes.creer(projet, { nom, sons: [son], famille: "interface", appliquer_reglages: true })
+ *  qu'une série. Tirer ne range aucun jeu : seul « Garder » en forme un.
+ *  `avecSonExistant` : un son seul déjà posé sur l'emplacement (pas encore un
+ *  jeu) devient le premier du jeu, comme `garder_depuis_serie` le fait pour
+ *  une série ordinaire — sinon il resterait orphelin, remplacé en silence. */
+export const formerJeuSfxr = (projet: string, son: string, nom: string, avecSonExistant?: string): Promise<JeuVariantes> =>
+  jeuxDeVariantes.creer(projet, {
+    nom, famille: "interface", appliquer_reglages: true,
+    sons: avecSonExistant && avecSonExistant !== son ? [avecSonExistant, son] : [son],
+  })

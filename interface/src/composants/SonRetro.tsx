@@ -21,19 +21,30 @@ const DEPARTS: [string, string][] = [["clic", "Clic"], ["survol", "Survol"], ["v
 const nomDuDepart = (id: string) => DEPARTS.find(([i]) => i === id)?.[1] ?? id
 const NOMBRES = [4, 8, 12]
 
-export function SonRetro({ projet, onRegler, departInitial = "clic", nomDuJeu, onJeu }: {
+export function SonRetro({ projet, onRegler, departInitial = "clic", nomDuJeu, jeuInitial, sonExistant, onJeu }: {
   projet: string; onRegler?: (son: string) => void
   /** SN6 : depuis l'emplacement d'un sujet — son départ (clic, survol…),
-   *  le nom stable du jeu formé, et `onJeu` pour le poser sur l'emplacement. */
-  departInitial?: string; nomDuJeu?: string; onJeu?: (jeu: JeuVariantes) => void
+   *  le nom stable du jeu formé, et `onJeu` pour le poser sur l'emplacement.
+   *  `jeuInitial` : le jeu déjà posé sur l'emplacement, s'il y en a un —
+   *  « Garder » y ajoute au lieu d'en former un nouveau qui le remplacerait
+   *  (défaut confirmé le 19 septembre 2026). `sonExistant` : un son seul déjà
+   *  posé (pas encore un jeu) : le premier « Garder » le rejoint dans le jeu
+   *  formé, comme une série ordinaire (`garder_depuis_serie`). */
+  departInitial?: string; nomDuJeu?: string; jeuInitial?: JeuVariantes | null; sonExistant?: string | null
+  onJeu?: (jeu: JeuVariantes) => void
 }) {
   const [departs, setDeparts] = useState<string[]>([])
   const [depart, setDepart] = useState(departInitial)
   const [nombre, setNombre] = useState(8)
   const [sons, setSons] = useState<Son[]>([])
-  const [jeu, setJeu] = useState<JeuVariantes | null>(null)
+  const [jeu, setJeu] = useState<JeuVariantes | null>(jeuInitial ?? null)
   const [erreur, setErreur] = useState("")
   const [occupe, setOccupe] = useState(false)
+
+  // Le jeu de l'emplacement arrive parfois après le premier rendu (lu à côté,
+  // de façon asynchrone) : on le prend dès qu'il paraît, sans écraser un état
+  // déjà local (un « Garder » en cours, par exemple).
+  useEffect(() => { if (jeuInitial) setJeu((j) => j ?? jeuInitial) }, [jeuInitial])
 
   useEffect(() => {
     let vivant = true
@@ -47,12 +58,20 @@ export function SonRetro({ projet, onRegler, departInitial = "clic", nomDuJeu, o
   }, [projet])
 
   const ranger = (j: JeuVariantes) => { setJeu(j); onJeu?.(j) }
-  const garde = useGarde({ projet, jeu, onJeu: ranger, former: (son) => formerJeuSfxr(projet, son, nomDuJeu ?? nomDuDepart(depart)) })
+  const garde = useGarde({
+    projet, jeu, onJeu: ranger,
+    // Aucun jeu encore posé sur l'emplacement : un son seul déjà là (pas un
+    // jeu) rejoint le jeu qui se forme, sinon on part juste du son gardé.
+    former: (son) => formerJeuSfxr(projet, son, nomDuJeu ?? nomDuDepart(depart), sonExistant ?? undefined),
+  })
   const tirer = async (geste: () => Promise<Son[]>, bouton: HTMLButtonElement) => {
     // Le bouton rend le focus : Espace écoute ensuite le tirage choisi, il ne retire pas.
     bouton.blur()
     setOccupe(true); setErreur("")
-    try { const neufs = await geste(); setSons(neufs); setJeu(null) } catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
+    // Le jeu déjà posé (ou en train de se former) reste en place d'un tirage
+    // à l'autre : « Garder » un nouveau tirage l'y ajoute, il n'en refait pas
+    // un (défaut confirmé le 19 septembre 2026).
+    try { const neufs = await geste(); setSons(neufs) } catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
   }
   // Un son seul se décline à partir de ses propres réglages ; sinon on part du départ.
   const seul = sons.length === 1 ? sons[0] : null

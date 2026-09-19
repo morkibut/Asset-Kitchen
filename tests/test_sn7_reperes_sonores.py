@@ -51,6 +51,15 @@ def _pas_en_jeu(atelier, projet, heros, n=3):
     return jeu
 
 
+def _mort_en_son(atelier, projet, heros):
+    """L'emplacement « mort » : un son seul en WAV, pas un jeu — ce que le
+    défaut 13 demande de vérifier aussi dans un vrai Godot."""
+    s = atelier.sons.importer_octets(projet, encoder(_stereo(duree=.2, frequence=180), 22050), nom="Chute.wav")
+    atelier.sons.classer(projet, s["identifiant"], s["revision"], "bruitage")
+    atelier.sons_du_sujet.poser(projet, heros, "mort", {"son": s["identifiant"]})
+    return s["identifiant"]
+
+
 def _changer_la_cadence(atelier, bande, cadence):
     """Ce que fait `PUT /strips/{id}` avec `{cadence}` (`montage.corriger`) :
     la même bande, le même identifiant, une autre cadence. Sans rebâtir la
@@ -214,6 +223,12 @@ def test_la_livraison_ajoute_la_piste_audio_au_temps_de_l_image(atelier, heros, 
     _, texte = _scene_de_revision(livre, godot)
     assert '[node name="AnimationPlayer" type="AnimationPlayer" parent="."]' in texte
     assert 'autoplay = &"marche/sud"' in texte and '&"marche": SubResource("AnimationLibrary_1")' in texte
+    # Un seul lecteur démarre seul : l'AnimatedSprite2D ne pose plus son propre
+    # autoplay quand l'AnimationPlayer autoplaye déjà cette même animation — les
+    # deux se disputaient `frame`/`animation` dès la première image (défaut
+    # plausible du 19 septembre 2026, voir docs/PIEGES.md).
+    assert 'animation = &"marche/sud"\ncentered' in texte
+    assert 'autoplay = "marche/sud"' not in texte
     assert 'resource_name = "sud"' in texte and "length = 0.75" in texte and "loop_mode = 1" in texte
     assert 'tracks/2/type = "audio"' in texte and 'tracks/2/path = NodePath("sfx_heros_pas/Calage")' in texte
     assert '"times": PackedFloat32Array(0.25, 0.5)' in texte
@@ -245,7 +260,12 @@ def test_godot_charge_la_piste_audio_et_la_joue_a_chaque_boucle(atelier, heros, 
     jeu = _godot(tmp_path, "jeu-reperes")
     atelier.livraison.associer(projet, str(jeu))
     _pas_en_jeu(atelier, projet, sujet)
+    # Deux emplacements calés sur la même animation : un jeu de variantes
+    # (« pas ») et un son seul en WAV (« mort ») — défaut 13, l'essai Godot ne
+    # couvrait qu'un jeu de variantes.
+    _mort_en_son(atelier, projet, sujet)
     atelier.reperes_sonores.poser(projet, sujet, {"bande": marche.identifiant, "image": 3, "cle": "pas"})
+    atelier.reperes_sonores.poser(projet, sujet, {"bande": marche.identifiant, "image": 1, "cle": "mort"})
     livre = atelier.livraison.livrer(projet, atelier.livraison.prevoir(projet, sujet, [marche.identifiant])["jeton"])
     assert livre["etat"] == "terminee"
     importe = _lancer(jeu, "--editor", "--import")
@@ -259,6 +279,11 @@ class Compteur extends AudioStream:
         return dedans.instantiate_playback()
     func _get_length() -> float:
         return dedans.get_length()
+func _piste_pour_chemin(a: Animation, chemin: NodePath) -> int:
+    for i in a.get_track_count():
+        if a.track_get_type(i) == Animation.TYPE_AUDIO and a.track_get_path(i) == chemin:
+            return i
+    return -1
 func _initialize():
     var scene = load(SCENE).instantiate()
     root.add_child(scene)
@@ -266,21 +291,39 @@ func _initialize():
     var lecteur: AnimationPlayer = scene.get_node("AnimationPlayer")
     var joueur: AudioStreamPlayer2D = scene.get_node("sfx_heros_pas")
     assert(joueur.stream is AudioStreamRandomizer)
+    # Le second emplacement, un son seul, est livré en AudioStreamWAV (pas un
+    # AudioStreamRandomizer) et porte lui aussi son propre lecteur de calage.
+    var joueur_mort: AudioStreamPlayer2D = scene.get_node("sfx_heros_mort")
+    assert(joueur_mort.stream is AudioStreamWAV)
     assert(lecteur.has_animation(&"marche/sud"))
     var a: Animation = lecteur.get_animation(&"marche/sud")
     assert(a.loop_mode == Animation.LOOP_LINEAR and abs(a.length - 0.75) < 0.0001)
-    var piste = -1
+    var pistes_audio := []
     for i in a.get_track_count():
         if a.track_get_type(i) == Animation.TYPE_AUDIO:
-            piste = i
-    assert(piste >= 0)
-    assert(a.track_get_path(piste) == NodePath("sfx_heros_pas/Calage"))
+            pistes_audio.append(i)
+    assert(pistes_audio.size() == 2)
+    var piste = _piste_pour_chemin(a, NodePath("sfx_heros_pas/Calage"))
+    var piste_mort = _piste_pour_chemin(a, NodePath("sfx_heros_mort/Calage"))
+    assert(piste >= 0 and piste_mort >= 0)
     assert(a.track_get_key_count(piste) == 2)
     assert(abs(a.track_get_key_time(piste, 0) - 0.25) < 0.0001 and abs(a.track_get_key_time(piste, 1) - 0.5) < 0.0001)
     assert(a.audio_track_get_key_stream(piste, 0) == joueur.stream)
+    # Le repère « mort » à l'image 1 : temps 0, une seule fois par tour (l'image 1 ne repasse pas dans l'aller-retour).
+    assert(a.track_get_key_count(piste_mort) == 1 and abs(a.track_get_key_time(piste_mort, 0) - 0.0) < 0.0001)
+    assert(a.audio_track_get_key_stream(piste_mort, 0) == joueur_mort.stream)
     var calage: AudioStreamPlayer2D = scene.get_node("sfx_heros_pas/Calage")
+    var calage_mort: AudioStreamPlayer2D = scene.get_node("sfx_heros_mort/Calage")
     assert(lecteur.get_node(lecteur.root_node).get_node(a.track_get_path(piste)) == calage)
+    assert(lecteur.get_node(lecteur.root_node).get_node(a.track_get_path(piste_mort)) == calage_mort)
     assert(calage != joueur and calage.stream == joueur.stream)
+    # Pas la même comparaison pour « mort » : sa clé est au temps 0, donc son
+    # AnimationPlayer (déjà en lecture depuis l'`await process_frame` ci-dessus)
+    # a pu la jouer immédiatement et son lecteur de calage a déjà pris son
+    # AudioStreamPolyphonic (voir docs/PIEGES.md) — seule la distinction des
+    # deux lecteurs est stable à cet instant ; l'égalité des flux se vérifie
+    # sur la clé elle-même (ligne du dessus), pas sur l'état déjà joué.
+    assert(calage_mort != joueur_mort)
     # L'animation se joue toute seule et mène le sprite : image 3 (frame 2) à 0,25 s.
     assert(lecteur.current_animation == "marche/sud")
     lecteur.seek(0.0, true)

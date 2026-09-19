@@ -326,15 +326,20 @@ class ServiceLivraison:
             if any(not isinstance(v, (int, float)) or not math.isfinite(v) or abs(v) > 8192 for v in pivot.values()):
                 raise LivraisonRefusee("Le pivot doit contenir des coordonnées finies en pixels, entre −8192 et 8192.")
             # SN6 : les sons du sujet partent avec lui, sous leurs noms stables.
-            # Sans son, rien ne change : ni la révision, ni un octet du paquet.
+            # Sans son ni repère à signaler, rien ne change : ni la révision, ni
+            # un octet du paquet (un sujet qui n'a ni son ni repère reste identique
+            # octet pour octet — défaut confirmé le 19 septembre 2026 : un sujet
+            # dont aucun emplacement n'était livrable perdait ses `sons_non_livres`
+            # et ses `reperes_non_livres`, faute de lire les repères du tout).
             sons = self.sons_du_sujet(projet, personnage) if self.sons_du_sujet else None
             signe: dict[str, Any] = {"animations": liste, "pivot": pivot}
             if sons:
                 signe["sons"] = {nom: _empreinte(octets) for nom, octets in sons["fichiers"].items()}
             # SN7 : les repères sonores deviennent une piste audio par animation.
-            # Sans repère livrable, ni la révision ni un octet ne changent.
-            pistes, reperes_livres, reperes_non_livres = _pistes_sonores(
-                liste, sons, self.reperes_sonores(projet, personnage) if sons and self.reperes_sonores else [])
+            # Lus dès que le sujet a un repère, même sans aucun son livrable : un
+            # repère sur un emplacement vide ou écarté doit rester signalé.
+            reperes = self.reperes_sonores(projet, personnage) if self.reperes_sonores else []
+            pistes, reperes_livres, reperes_non_livres = _pistes_sonores(liste, sons, reperes)
             if reperes_livres:
                 signe["reperes"] = reperes_livres
             revision = _empreinte(_json(signe))[:24]
@@ -373,9 +378,12 @@ class ServiceLivraison:
                          "animations": liste, "scene": scene,
                          "sprite_frames": sprite_frames, "fichiers": list(fichiers)}
             if sons:
-                manifeste["sons"] = [{**e, "ressource": f"{version}/sons/{e['ressource']}"} for e in sons["entrees"]]
+                if sons["entrees"]:
+                    manifeste["sons"] = [{**e, "ressource": f"{version}/sons/{e['ressource']}"} for e in sons["entrees"]]
                 if sons["non_livres"]:
                     manifeste["sons_non_livres"] = sons["non_livres"]
+                if sons.get("avertissement_renommage"):
+                    manifeste["sons_avertissement"] = sons["avertissement_renommage"]
             if reperes_livres:
                 manifeste["reperes_sonores"] = reperes_livres
             if reperes_non_livres:
@@ -691,9 +699,11 @@ def _pistes_sonores(animations: Sequence[dict[str, Any]], sons: dict[str, Any] |
     livrable) ou dont l'image dépasse la bande est dit, jamais posé en silence.
     Un repère d'une bande qui n'est pas dans cette livraison n'y figure pas."""
     from atelier.domaine.reperes_sonores import temps_de_l_image
-    if not sons or not reperes:
+    if not reperes:
         return [], [], []
-    rang_de = {e["emplacement"]: rang for rang, e in enumerate(sons["entrees"])}
+    # Sans paquet livrable (aucun son du sujet, ou rien de livrable), aucun
+    # emplacement ne part : chaque repère est dit non livrable, jamais tu.
+    rang_de = {e["emplacement"]: rang for rang, e in enumerate(sons["entrees"])} if sons else {}
     pistes, livres, non_livres = [], [], []
     for animation in animations:
         cles: dict[int, list[float]] = {}
@@ -740,7 +750,7 @@ def _nombre(valeur: float) -> str:
 
 
 def _lecteur_d_animation(pistes: Sequence[dict[str, Any]], sons: Sequence[dict[str, str]],
-                         autoplay: str) -> tuple[list[str], str]:
+                         autoplay: str) -> tuple[list[str], str, bool]:
     """L'`AnimationPlayer` de SN7 : une animation par animation qui a des
     repères, sous le nom de ses SpriteFrames. Chacune **mène le sprite**
     (l'animation et l'image, en pas discrets, au temps exact de chaque image)
@@ -791,7 +801,7 @@ def _lecteur_d_animation(pistes: Sequence[dict[str, Any]], sons: Sequence[dict[s
     noeud = calages + ('\n[node name="AnimationPlayer" type="AnimationPlayer" parent="."]\n'
              'libraries = {\n' + ",\n".join(entrees) + '\n}\n' +
              (f'autoplay = &{_chaine(autoplay)}\n' if joue else ''))
-    return ressources, noeud
+    return ressources, noeud, joue
 
 
 def _scene(sprite_frames: str, animation: str, pivot: dict[str, float],
@@ -800,18 +810,25 @@ def _scene(sprite_frames: str, animation: str, pivot: dict[str, float],
     emplacement sonore du sujet, nommé par son nom stable, sur le bus de sa
     famille. `pistes` (SN7) : un `AnimationPlayer` qui mène le sprite et joue
     ces lecteurs aux images repérées. Sans son, la scène est celle d'avant
-    SN6, octet pour octet ; sans repère, celle d'avant SN7."""
+    SN6, octet pour octet ; sans repère, celle d'avant SN7.
+
+    Quand l'`AnimationPlayer` autoplaye déjà l'animation par défaut (`joue`),
+    l'`AnimatedSprite2D` ne pose plus le sien : les deux démarrant seuls sur
+    la même animation se disputaient `frame`/`animation` (défaut plausible du
+    19 septembre 2026, voir `docs/PIEGES.md`) — un seul démarre désormais tout
+    seul, l'`AnimationPlayer`, qui mène le sprite comme avant."""
     externes = "".join(f'[ext_resource type="AudioStream" path={_chaine("res://" + s["ressource"])} id="son_{i + 1}"]\n'
                        for i, s in enumerate(sons))
     noeuds = "".join(f'\n[node name={_chaine(s["nom"])} type="AudioStreamPlayer2D" parent="."]\n'
                      f'stream = ExtResource("son_{i + 1}")\nbus = &{_chaine(s["bus"])}\n' for i, s in enumerate(sons))
-    ressources, lecteur = _lecteur_d_animation(pistes, sons, animation) if pistes else ([], "")
+    ressources, lecteur, joue = _lecteur_d_animation(pistes, sons, animation) if pistes else ([], "", False)
     internes = "".join("\n" + r for r in ressources)
+    autoplay_sprite = "" if joue else f'\nautoplay = {_chaine(animation)}'
     return (f'[gd_scene load_steps={2 + len(sons) + len(ressources)} format=3]\n\n'
             f'[ext_resource type="SpriteFrames" path={_chaine("res://" + sprite_frames)} id="1"]\n{externes}{internes}\n'
             '[node name="Personnage" type="AnimatedSprite2D"]\n'
             'texture_filter = 1\nsprite_frames = ExtResource("1")\n'
-            f'animation = &{_chaine(animation)}\nautoplay = {_chaine(animation)}\n'
+            f'animation = &{_chaine(animation)}{autoplay_sprite}\n'
             f'centered = false\noffset = Vector2({-pivot["x"]}, {-pivot["y"]})\n{noeuds}{lecteur}')
 
 

@@ -4,6 +4,10 @@ livraison du sujet avec ses sons.
 ComfyUI est doublé (le double de SN1) ; la file locale, les séries, les jeux
 de variantes, la bibliothèque des sons et la livraison Godot sont réels. Rien
 n'est payé."""
+import threading
+import time
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 
@@ -165,6 +169,87 @@ def test_emplacement_nomme_a_la_main_et_ses_refus(atelier):
     assert son_["identifiant"] in {s["identifiant"] for s in atelier.sons.lister(projet)}
 
 
+def test_poser_et_vider_refusent_une_revision_perimee(atelier):
+    """Défaut plausible du 19 septembre 2026 : rien ne vérifiait qu'on posait
+    sur la révision lue. `revision` (facultative) refuse un geste écrit après
+    coup sur une lecture périmée, plutôt que d'écraser en silence."""
+    projet = _jeu_ouvert(atelier)
+    heros = atelier.production.creer_personnage(projet, "Le héros", DESCRIPTION).identifiant
+    lue = atelier.sons_du_sujet.lire(projet, heros)
+    un = _importe(atelier, projet, "Pas 1.wav")
+    deux = _importe(atelier, projet, "Pas 2.wav")
+    # Sans revision (comme avant) : le geste part toujours.
+    atelier.sons_du_sujet.poser(projet, heros, "pas", {"son": un["identifiant"]})
+    # Avec la révision déjà lue plus haut (désormais périmée, puisque le
+    # geste ci-dessus a incrémenté la révision) : refusé, rien n'est écrasé.
+    with pytest.raises(SonsDuSujetRefuses, match="changé"):
+        atelier.sons_du_sujet.poser(projet, heros, "pas", {"son": deux["identifiant"], "revision": lue["revision"]})
+    assert atelier.sons_du_sujet.emplacement(projet, heros, "pas")["contenu"]["identifiant"] == un["identifiant"]
+    # Avec la bonne révision : le geste part.
+    courante = atelier.sons_du_sujet.lire(projet, heros)["revision"]
+    atelier.sons_du_sujet.poser(projet, heros, "pas", {"son": deux["identifiant"], "revision": courante})
+    assert atelier.sons_du_sujet.emplacement(projet, heros, "pas")["contenu"]["identifiant"] == deux["identifiant"]
+    # Vider suit la même règle.
+    perimee = courante  # cette révision-là a déjà été dépassée par la pose ci-dessus
+    with pytest.raises(SonsDuSujetRefuses, match="changé"):
+        atelier.sons_du_sujet.vider(projet, heros, "pas", revision=perimee)
+    courante = atelier.sons_du_sujet.lire(projet, heros)["revision"]
+    atelier.sons_du_sujet.vider(projet, heros, "pas", revision=courante)
+    assert atelier.sons_du_sujet.emplacement(projet, heros, "pas")["contenu"] is None
+
+
+async def test_garder_depuis_serie_concurrents_ne_perdent_aucun_son(son):  # noqa: F811
+    """Défaut plausible du 19 septembre 2026 : `garder_depuis_serie` lisait
+    l'emplacement hors verrou puis créait et posait le jeu ; deux « Garder »
+    simultanés sur le même emplacement (l'écran et un agent, par exemple)
+    pouvaient chacun créer leur propre jeu, le second remplaçant le premier.
+    Corrigé : lecture, décision, création et pose sous un seul verrou — deux
+    gestes réellement concurrents s'ajoutent désormais au même jeu."""
+    atelier, _ = son
+    await atelier.installation_son.installer()
+    projet = _jeu_ouvert(atelier)
+    heros = atelier.production.creer_personnage(projet, "Le héros", DESCRIPTION).identifiant
+    # Deux séries réelles sur le même emplacement (comme l'écran et un agent
+    # qui lanceraient chacun la leur), chacune avec un tirage à garder.
+    serie_a = await _serie_du_pas(atelier, projet, heros, nombre=2)
+    serie_b = await _serie_du_pas(atelier, projet, heros, nombre=2)
+    son_a = serie_a["tirages"][0]["son"]["identifiant"]
+    son_b = serie_b["tirages"][0]["son"]["identifiant"]
+    original = atelier.variantes_son.creer
+
+    def creer_lentement(*args, **kwargs):
+        # Élargit la fenêtre où un geste concurrent pourrait lire l'ancien
+        # contenu de l'emplacement — la sortie n'est plus dans la même
+        # section critique dans le code corrigé, donc l'autre thread attend
+        # ici, bloqué sur le verrou du sujet, plutôt que de courir en même
+        # temps.
+        time.sleep(0.3)
+        return original(*args, **kwargs)
+
+    resultats = {}
+    barriere = threading.Barrier(2)
+
+    def lancer(nom, serie, sons):
+        barriere.wait(timeout=5)
+        resultats[nom] = atelier.sons_du_sujet.garder_depuis_serie(projet, serie, sons, True)
+
+    with patch.object(atelier.variantes_son, "creer", side_effect=creer_lentement):
+        fils = [threading.Thread(target=lancer, args=(nom, serie, [s]))
+                for nom, serie, s in (("a", serie_a, son_a), ("b", serie_b, son_b))]
+        for f in fils:
+            f.start()
+        for f in fils:
+            f.join(timeout=10)
+    assert "a" in resultats and "b" in resultats
+    emplacement = atelier.sons_du_sujet.emplacement(projet, heros, "pas")
+    assert emplacement["contenu"]["nature"] == "jeu"
+    jeu = atelier.variantes_son.lire(projet, emplacement["contenu"]["identifiant"])
+    # Aucun son perdu : les deux sons gardés « en même temps » sont dans le
+    # même jeu — pas dans deux jeux dont un aurait remplacé l'autre.
+    assert {son_a, son_b} <= set(jeu["sons"])
+    assert len(jeu["sons"]) == 2
+
+
 def test_routes_des_sons_d_un_sujet(atelier, client):
     projet = _jeu_ouvert(atelier)
     heros = atelier.production.creer_personnage(projet, "Le héros", DESCRIPTION).identifiant
@@ -178,8 +263,13 @@ def test_routes_des_sons_d_un_sujet(atelier, client):
     assert client.get(f"/api/projects/{projet}/subject-sounds").json()[0]["cle"] == "pas"
     refus = client.put(f"{base}/pas", json={"son": son_["identifiant"], "jeu": "x"})
     assert refus.status_code == 409 and refus.json()["code"] == "sons_du_sujet_refuses"
+    # `revision` (facultative) sur les routes d'écriture : refusée si périmée.
+    perime = client.put(f"{base}/pas", json={"son": son_["identifiant"], "revision": 0})
+    assert perime.status_code == 409 and perime.json()["code"] == "sons_du_sujet_refuses"
     assert client.post(base, json={"nom": "Saut", "famille": "bruitage"}).status_code == 201
-    assert client.delete(f"{base}/pas/content").json()["contenu"] is None
+    vue = client.get(base).json()
+    assert client.delete(f"{base}/pas/content", params={"revision": 0}).status_code == 409
+    assert client.delete(f"{base}/pas/content", params={"revision": vue["revision"]}).json()["contenu"] is None
     assert client.delete(f"{base}/saut").status_code == 200
 
 
@@ -247,3 +337,65 @@ async def test_livrer_le_heros_livre_ses_sons_sous_leurs_noms_stables(son, tmp_p
     encore = atelier.livraison.prevoir(projet, heros, [bande.identifiant])
     assert [s["emplacement"] for s in encore["sons"]] == ["pas"]
     assert [n["cle"] for n in encore["sons_non_livres"]] == ["mort"]
+
+
+def test_renommer_le_jeu_de_variantes_ne_change_pas_le_nom_stable_livre(son, tmp_path):  # noqa: F811
+    """Défaut confirmé le 19 septembre 2026 : le nom livré d'un emplacement
+    suivait le nom du jeu de variantes, alors que l'écran affiche toujours
+    `e.nom_stable` — un jeu renommé « Pas sur herbe » cassait le
+    `$sfx_heros_pas` du jeu. Il suit désormais toujours le sujet et la clé."""
+    atelier, _ = son
+    projet = _jeu_ouvert(atelier)
+    heros = atelier.production.creer_personnage(projet, "Le héros", DESCRIPTION).identifiant
+    godot = _godot(tmp_path)
+    atelier.livraison.associer(projet, str(godot))
+    pas = _importe(atelier, projet, "Pas.wav")
+    atelier.sons.classer(projet, pas["identifiant"], pas["revision"], "bruitage")
+    jeu = atelier.variantes_son.creer(projet, {"nom": "sfx_heros_pas", "sons": [pas["identifiant"]], "famille": "bruitage"})
+    atelier.sons_du_sujet.poser(projet, heros, "pas", {"jeu": jeu["identifiant"]})
+    atelier.variantes_son.renommer(projet, jeu["identifiant"], "Pas sur herbe")
+    paquet = atelier.sons_du_sujet.paquet_pour_livraison(projet, heros)
+    assert paquet["entrees"][0]["nom_stable"] == "sfx_heros_pas"
+    assert "sfx_heros_pas.tres" in paquet["fichiers"] and "sfx_pas_sur_herbe.tres" not in paquet["fichiers"]
+    # L'écran (e.nom_stable) et le paquet livré restent le même nom, quel que
+    # soit le nom du jeu de variantes.
+    vue = atelier.sons_du_sujet.emplacement(projet, heros, "pas")
+    assert vue["nom_stable"] == "sfx_heros_pas" == paquet["entrees"][0]["nom_stable"]
+    # Signalé, pour que l'auteur sache qu'un renommage du SUJET (pas du jeu)
+    # changerait bien ces noms stables.
+    assert paquet["avertissement_renommage"] and "sfx_heros_pas" in paquet["avertissement_renommage"]
+
+
+def test_sons_non_livres_et_reperes_non_livres_meme_sans_rien_de_livrable(son, tmp_path):  # noqa: F811
+    """Défaut confirmé le 19 septembre 2026 : quand aucun emplacement n'est
+    livrable, le paquet valait `None` et les repères n'étaient pas lus — le
+    manifeste perdait `sons_non_livres` et `reperes_non_livres`. Un sujet qui
+    n'a vraiment ni son ni repère reste, lui, identique octet pour octet."""
+    atelier, _ = son
+    projet = _jeu_ouvert(atelier)
+    heros = atelier.production.creer_personnage(projet, "Le héros", DESCRIPTION).identifiant
+    bande = _bande(atelier, projet, heros)
+    godot = _godot(tmp_path)
+    atelier.livraison.associer(projet, str(godot))
+    # Rien du tout : le paquet reste None, la livraison identique à avant SN6.
+    assert atelier.sons_du_sujet.paquet_pour_livraison(projet, heros) is None
+    sans_hook = ServiceLivraison(atelier.base, atelier.fichiers, atelier.export, atelier.production, atelier.diffusion)
+    avant = atelier.livraison.prevoir(projet, heros, [bande.identifiant])
+    temoin = sans_hook.prevoir(projet, heros, [bande.identifiant])
+    assert avant["revision"] == temoin["revision"] and "sons" not in avant and "sons_non_livres" not in avant
+    # Un son posé puis écarté : rien à livrer, mais un emplacement à signaler.
+    mort = _importe(atelier, projet, "Chute.wav")
+    atelier.sons.classer(projet, mort["identifiant"], mort["revision"], "bruitage")
+    atelier.sons_du_sujet.poser(projet, heros, "mort", {"son": mort["identifiant"]})
+    atelier.sons.juger(projet, mort["identifiant"], atelier.sons.lire(projet, mort["identifiant"])["revision"], "ecartee")
+    paquet = atelier.sons_du_sujet.paquet_pour_livraison(projet, heros)
+    assert paquet is not None and paquet["entrees"] == [] and [n["cle"] for n in paquet["non_livres"]] == ["mort"]
+    apercu = atelier.livraison.prevoir(projet, heros, [bande.identifiant])
+    assert [n["cle"] for n in apercu["sons_non_livres"]] == ["mort"]
+    assert "sons" not in apercu  # aucune entrée livrable : pas de liste vide qui traîne
+    # Un repère posé sur ce même emplacement, non livrable, est signalé lui aussi.
+    atelier.reperes_sonores.poser(projet, heros, {"bande": bande.identifiant, "image": 1, "cle": "mort"})
+    encore = atelier.livraison.prevoir(projet, heros, [bande.identifiant])
+    assert [(r["emplacement"], r["raison"]) for r in encore["reperes_non_livres"]] == \
+        [("mort", "Cet emplacement ne part pas avec le sujet : il n'a aucun son livrable.")]
+    assert "reperes_sonores" not in encore

@@ -64,13 +64,22 @@ class ServiceSonsDuSujet:
         except VerrouOccupe as e:  # pragma: no cover - le verrou attend
             raise SonsDuSujetRefuses("Les sons de ce sujet sont modifiés ailleurs. Relisez-les.") from e
 
+    def _appliquer(self, projet, sujet, changer):
+        """Le corps de `_changer`, sans prendre le verrou ni publier : pour un
+        geste qui tient déjà le verrou du sujet (`garder_depuis_serie`, qui lit
+        et pose dans le même verrou pour ne jamais laisser deux « Garder »
+        simultanés créer chacun leur jeu — défaut confirmé le 19 septembre
+        2026). L'appelant publie une fois le verrou relâché."""
+        objet = self._brut(projet, sujet)
+        if changer(objet) is not False:
+            objet["revision"] += 1
+            objet["modifie_le"] = time.time()
+            self.a.fichiers._poser(self._chemin(projet, sujet), _json(objet))
+        return objet
+
     def _changer(self, projet, sujet, changer):
         with self._verrou(projet):
-            objet = self._brut(projet, sujet)
-            if changer(objet) is not False:
-                objet["revision"] += 1
-                objet["modifie_le"] = time.time()
-                self.a.fichiers._poser(self._chemin(projet, sujet), _json(objet))
+            objet = self._appliquer(projet, sujet, changer)
         self.a.diffusion.publier("sons_du_sujet", {"projet": projet, "sujet": sujet})
         return objet
 
@@ -215,11 +224,21 @@ class ServiceSonsDuSujet:
         return self.lire(projet, sujet)
 
     def poser(self, projet, sujet, cle, brut):
-        """`{jeu}` ou `{son}` : ce que l'emplacement désigne désormais. Aucun
-        son n'est refusé pour une mesure ; le précédent contenu reste dans la
-        galerie."""
-        if not isinstance(brut, dict) or len(set(brut) & {"jeu", "son"}) != 1 or set(brut) - {"jeu", "son"}:
+        """`{jeu}` ou `{son}`, et sur demande `revision` : ce que l'emplacement
+        désigne désormais. Aucun son n'est refusé pour une mesure ; le
+        précédent contenu reste dans la galerie. `revision`, si donnée, doit
+        être celle lue par l'appelant : sinon les sons de ce sujet ont changé
+        entre-temps, et le geste est refusé plutôt que d'écraser un autre pose
+        en silence (vérification optionnelle, défaut « plausible » du 19
+        septembre 2026 — la course entre deux gestes concurrents reste réelle
+        sans elle, mais rare hors `garder_depuis_serie`, déjà protégé par son
+        propre verrou)."""
+        attendus = {"jeu", "son"}
+        if not isinstance(brut, dict) or len(set(brut) & attendus) != 1 or set(brut) - attendus - {"revision"}:
             raise SonsDuSujetRefuses("Posez un jeu de variantes ou un son, l'un ou l'autre.")
+        revision_attendue = brut.get("revision")
+        if revision_attendue is not None and (isinstance(revision_attendue, bool) or not isinstance(revision_attendue, int)):
+            raise SonsDuSujetRefuses("La révision attendue est un entier.")
         nature = "jeu" if "jeu" in brut else "son"
         identifiant = brut[nature]
         try:
@@ -230,6 +249,8 @@ class ServiceSonsDuSujet:
         _, d = self._definition(projet, sujet, cle)
 
         def changer(objet):
+            if revision_attendue is not None and objet["revision"] != revision_attendue:
+                raise SonsDuSujetRefuses("Les sons de ce sujet ont changé dans une autre fenêtre. Relisez-les avant de poser.")
             entree = self._stocke(objet, d)
             if entree["contenu"] == {"nature": nature, "identifiant": identifiant}:
                 return False
@@ -238,10 +259,14 @@ class ServiceSonsDuSujet:
         self._changer(projet, sujet, changer)
         return self.emplacement(projet, sujet, cle)
 
-    def vider(self, projet, sujet, cle):
+    def vider(self, projet, sujet, cle, *, revision=None):
+        if revision is not None and (isinstance(revision, bool) or not isinstance(revision, int)):
+            raise SonsDuSujetRefuses("La révision attendue est un entier.")
         _, d = self._definition(projet, sujet, cle)
 
         def changer(objet):
+            if revision is not None and objet["revision"] != revision:
+                raise SonsDuSujetRefuses("Les sons de ce sujet ont changé dans une autre fenêtre. Relisez-les avant de vider.")
             entree = objet["emplacements"].get(cle)
             if not entree or not entree.get("contenu"):
                 return False
@@ -313,31 +338,48 @@ class ServiceSonsDuSujet:
         """« Garder » dans une série lancée depuis un emplacement : les sons
         rejoignent le jeu de l'emplacement (formé au premier geste, sous le
         nom stable de l'emplacement), un son déjà dedans n'y est pas mis deux
-        fois. Un son seul déjà posé devient le premier du jeu."""
+        fois. Un son seul déjà posé devient le premier du jeu.
+
+        Lit l'emplacement, décide, forme ou complète le jeu et le pose sous UN
+        SEUL verrou du sujet : deux « Garder » simultanés sur le même
+        emplacement (l'écran et un agent, par exemple) ne peuvent plus lire
+        chacun l'ancien contenu et créer chacun leur jeu, le second remplaçant
+        le premier en silence (défaut confirmé le 19 septembre 2026)."""
         lien = serie["emplacement"]
         personnage, d = self._definition(projet, lien["sujet"], lien["cle"])
         famille = serie.get("famille") or d["famille"]
-        existant = self._brut(projet, lien["sujet"])["emplacements"].get(d["cle"], {}).get("contenu")
-        jeu = None
-        if existant and existant["nature"] == "jeu":
-            try:
-                jeu = self.a.variantes_son.lire(projet, existant["identifiant"])
-            except VariantesRefusees:
-                jeu = None
-        if jeu is None:
-            depart = [existant["identifiant"]] if existant and existant["nature"] == "son" else []
-            try:
-                if depart:
-                    self.a.sons.lire(projet, depart[0])
-            except SonRefuse:
-                depart = []
-            corps = {"nom": nom_stable(famille, base_stable(personnage.nom, d["cle"])), "sons": [*depart, *[s for s in sons if s not in depart]],
-                     "serie": serie["identifiant"], "famille": famille, "appliquer_reglages": appliquer}
-            jeu = self.a.variantes_son.creer(projet, corps)
-            self.poser(projet, lien["sujet"], d["cle"], {"jeu": jeu["identifiant"]})
-            return jeu
-        for son in sons:
-            jeu = self.a.variantes_son.ajouter(projet, jeu["identifiant"], son, appliquer_reglages=appliquer)
+        with self._verrou(projet):
+            existant = self._brut(projet, lien["sujet"])["emplacements"].get(d["cle"], {}).get("contenu")
+            jeu = None
+            if existant and existant["nature"] == "jeu":
+                try:
+                    jeu = self.a.variantes_son.lire(projet, existant["identifiant"])
+                except VariantesRefusees:
+                    jeu = None
+            forme = jeu is None
+            if forme:
+                depart = [existant["identifiant"]] if existant and existant["nature"] == "son" else []
+                try:
+                    if depart:
+                        self.a.sons.lire(projet, depart[0])
+                except SonRefuse:
+                    depart = []
+                corps = {"nom": nom_stable(famille, base_stable(personnage.nom, d["cle"])),
+                         "sons": [*depart, *[s for s in sons if s not in depart]],
+                         "serie": serie["identifiant"], "famille": famille, "appliquer_reglages": appliquer}
+                jeu = self.a.variantes_son.creer(projet, corps)
+                jeu_pose = jeu
+
+                def poser_le_jeu(objet):
+                    entree = self._stocke(objet, d)
+                    entree["contenu"] = {"nature": "jeu", "identifiant": jeu_pose["identifiant"]}
+                    entree["pose_le"] = time.time()
+                self._appliquer(projet, lien["sujet"], poser_le_jeu)
+            else:
+                for son in sons:
+                    jeu = self.a.variantes_son.ajouter(projet, jeu["identifiant"], son, appliquer_reglages=appliquer)
+        if forme:
+            self.a.diffusion.publier("sons_du_sujet", {"projet": projet, "sujet": lien["sujet"]})
         return jeu
 
     # ── Livrer avec le sujet ─────────────────────────────────────────────
@@ -362,7 +404,11 @@ class ServiceSonsDuSujet:
                 continue
             famille_cle = contenu.get("famille") if contenu.get("famille") in FAMILLES else e["famille"]
             famille = FAMILLES[famille_cle]
-            base = nom_stable(famille_cle, contenu["nom"]) if contenu["nature"] == "jeu" and contenu["nom"] else e["nom_stable"]
+            # Toujours le nom stable de l'emplacement (sujet + clé), jamais celui
+            # du jeu de variantes : renommer un jeu ne doit pas casser le
+            # `$sfx_heros_pas` que le jeu appelle depuis l'écran (défaut confirmé
+            # le 19 septembre 2026 — voir `atelier.domaine.sons_du_sujet`).
+            base = e["nom_stable"]
             if base in pris:  # deux emplacements au même nom : le second prend un rang
                 rang = 2
                 while f"{base}_{rang}" in pris:
@@ -386,8 +432,19 @@ class ServiceSonsDuSujet:
             entrees.append({"emplacement": e["cle"], "nom": e["nom"], "famille": famille_cle, "nom_stable": base,
                             "nature": contenu["nature"], "identifiant": contenu["identifiant"], "ressource": ressource,
                             "fichiers": audio, "sons": contenu["a_livrer"], "signalements": contenu["signalements"]})
-        if not entrees:
+        if not entrees and not non_livres:
+            # Rien à livrer et rien à signaler : le paquet reste `None`, comme
+            # avant — la livraison du sujet n'en est pas changée d'un octet.
             return None
-        fichiers["credits.json"] = _json_lisible({"atelier": "Asset Kitchen", "sons": credits})
-        return {"fichiers": fichiers, "imports": imports, "noeuds": noeuds, "entrees": entrees, "non_livres": non_livres}
+        avertissement = None
+        if entrees:
+            fichiers["credits.json"] = _json_lisible({"atelier": "Asset Kitchen", "sons": credits})
+            # Le nom stable suit le sujet, pas le jeu de variantes (voir plus
+            # haut) : le renommer change donc tous les noms de ses sons — un
+            # avertissement simple, jamais bloquant (règle du produit).
+            exemple = entrees[0]["nom_stable"]
+            avertissement = (f"Renommer « {vue['sujet']['nom']} » changerait les noms stables de ses sons "
+                f"(par exemple {exemple}) : un ${exemple} déjà posé dans le jeu ne le retrouverait plus.")
+        return {"fichiers": fichiers, "imports": imports, "noeuds": noeuds, "entrees": entrees,
+                "non_livres": non_livres, "avertissement_renommage": avertissement}
 

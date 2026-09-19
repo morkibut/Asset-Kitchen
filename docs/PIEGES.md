@@ -1959,3 +1959,19 @@ la prochaine réécriture retrouvera.
 - **Godot refuse `/` dans un nom d'animation d'`AnimationPlayer`**, et `play("marche/sud")` lit
   justement « bibliothèque/animation » : la bibliothèque porte le mouvement, l'animation la
   direction, et le nom joué est celui des SpriteFrames (`_nom_dans_le_lecteur`). SN7.
+- **L'`AnimationPlayer` de SN7 réimpose l'animation par défaut à chaque boucle.** Sa piste
+  `.:animation` (une seule clé, au temps 0, dans une animation qui boucle) se rejoue à chaque
+  tour : `AnimatedSprite2D.animation` repart donc sur la même valeur toutes les quelques
+  secondes. Si en plus l'`AnimatedSprite2D` avait son propre `autoplay` sur cette même
+  animation, les deux démarraient seuls et se disputaient `frame`/`animation` dès la première
+  image — corrigé (19 septembre 2026) : quand l'`AnimationPlayer` autoplaye déjà l'animation par
+  défaut, la scène ne pose plus l'`autoplay` de l'`AnimatedSprite2D` (`_scene`, `joue`) ; un seul
+  lecteur démarre seul. **Ce que ça ne corrige pas** : tant que l'`AnimationPlayer` tourne, il
+  reste seul maître de `animation`/`frame` — un `$Personnage.play("course/sud")` posé
+  directement sur l'`AnimatedSprite2D` sera écrasé à la boucle suivante par la piste `.:animation`
+  du clip encore actif. **Pour changer d'animation dans le jeu, appeler
+  `$AnimationPlayer.play("course/sud")`** (le nom joué est celui des SpriteFrames, voir
+  ci-dessus), jamais `$Personnage.play()` directement, tant qu'un `AnimationPlayer` de SN7 est
+  posé sur le sujet. Repéré en relecture croisée le 19 septembre 2026 (plausible, non rejoué en
+  conditions réelles de jeu — seul le démarrage simultané est vérifié par
+  `tests/test_sn7_reperes_sonores.py`).
