@@ -295,6 +295,8 @@ sauf décision de l'auteur.
 **Bloquée par** : SN6, et la décision de l'auteur sur la façon de faire tourner les modèles de
 voix ([archi-son.md §4.5](archi-son.md)).
 
+**Reportée le 19 septembre 2026** : l'auteur ne fait pas les voix maintenant ; la branche du son se fusionne sans elles.
+
 La voix d'un personnage se dessine une fois et se garde sur sa fiche ; chaque réplique la clone ;
 cris et souffles par onomatopées ; créatures par hauteur et timbre. Répliques en `fr/` et `en/`
 parallèles.
