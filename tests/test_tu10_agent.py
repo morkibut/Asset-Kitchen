@@ -191,6 +191,28 @@ async def test_le_cadre_de_l_agent_borne_les_matieres_comme_ses_images_locales(a
 
 
 @sans_node
+async def test_dix_sept_pieces_sans_carte_a_peindre_mais_livrables(agent):
+    """TU11 : une carte peinte pour les 17 pièces est refusée en clair (le moteur n'en a
+    pas) ; sans elle, la carte livrée range les 17 pièces et le jeu est prêt à livrer."""
+    atelier, projet, _, _, appeler = agent
+    dix_sept = {"sorte": "pieces-17", "taille": 16, "graine": 3, "emplacements": {"surface": {"source": "integree", "nom": "herbe"}}}
+    with pytest.raises(ToolError, match="17 pièces se posent à la main"):
+        await appeler("create_tile_set", project=projet, name="Pièces", recipe=dix_sept, map=["##", "##"])
+    cree = await appeler("create_tile_set", project=projet, name="Pièces", recipe=dix_sept)
+    assert len(cree["carte"]["cases"]) == 17 and cree["diagnostic"]["pret"]
+    assert (await appeler("preview_tile_delivery", project=projet, tileset=cree["identifiant"], revision=1))["jeton"]
+
+
+def test_les_versions_de_node_admises():
+    """TU11 : la série 23 avant 23.6 n'efface pas les types sans option — refusée, avec
+    une phrase qui le dit, plutôt qu'un rendu qui échoue sans explication."""
+    from atelier.services.rendu_tuiles import _assez_recent
+    assert not _assez_recent((22, 17)) and _assez_recent((22, 18)) and _assez_recent((22, 20))
+    assert not _assez_recent((23, 0)) and not _assez_recent((23, 5)) and _assez_recent((23, 6))
+    assert _assez_recent((24, 19)) and _assez_recent((25, 0))
+
+
+@sans_node
 async def test_sans_node_les_outils_le_disent_et_le_reste_fonctionne(agent, monkeypatch):
     atelier, projet, _, _, appeler = agent
     fabrique = await appeler("create_tile_set", project=projet, name="Avant", recipe=HERBE)

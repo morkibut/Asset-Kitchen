@@ -425,7 +425,8 @@ exactement ce que la recette donne ; il entre en bibliothèque avec la filiation
 et refuse (409) tout raccord, terrain ou pièce retenue différents de la recette. Changer de
 recette, c'est `PUT` avec `recette` **et** `atlas` : une révision de plus, l'ancien atlas
 reste lisible par `?revision=`. Un ensemble sans `recette` sur le disque est un jeu AU13,
-relu sans migration.
+relu sans migration. Les 17 pièces n'ont pas de carte à peindre : sans carte peinte, la carte
+livrée les range comme sur la planche (`ServiceTuiles._carte_des_pieces`, TU11).
 
 **La livraison d'un mur (TU7).** La carte d'un mur est son emprise. À la livraison,
 `atelier/domaine/pose_mur.py` (portage pur de la scène du moteur, comparé pose pour pose à
@@ -483,7 +484,8 @@ Trois routes, `/api/projects/{projet}/materials` : `GET /availability`, `POST /p
 ### L'agent fabrique des tuiles (TU10, `docs/PLAN-tuiles.md`)
 
 **Le serveur rend avec le code de l'écran, jamais un portage.** `atelier/tuiles_node/rendre.mjs`
-importe `interface/src/tuiles/atelier.ts` et `png.ts` tels quels (Node ≥ 22.18 efface les types ;
+importe `interface/src/tuiles/atelier.ts` et `png.ts` tels quels (Node ≥ 22.18, ou ≥ 23.6 dans la
+série 23, efface les types ;
 un crochet `registerHooks` ajoute l'extension que Vite résout seul ; le canevas est le bouchon de
 TU1, seul `putImageData` sert). Entrée JSON sur stdin : la recette **vérifiée** par le serveur,
 les matières « asset » déjà décodées en RGBA par Pillow (les octets de `assets.octets`, ceux

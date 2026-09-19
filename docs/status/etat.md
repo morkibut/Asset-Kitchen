@@ -11,6 +11,47 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## Les jeux de tuiles, TUM à TU11 — 19 septembre 2026
+
+Le chantier a repris le moteur de tuiles de sc-clone, que l'auteur avait validé, et l'a
+branché dans l'atelier : un écran, une recette gardée par le serveur, une livraison à Godot,
+des matières générées sur la machine, et les mêmes gestes pour l'agent. Le plan est
+`docs/PLAN-tuiles.md`.
+
+**Quatre écarts avec sc-clone, trouvés en le recopiant.** Le moteur validé n'avait jamais été
+chargé dans un vrai Godot pour certains cas.
+- **La séparation d'animation.** sc-clone la calculait sans la ligne des variantes. Les images
+  tombaient alors sur les variantes, et Godot refusait l'animation. Ici, elle suit le rendu.
+- **Les 17 pièces.** sc-clone déclarait aussi les 8 cases vides de la grille 5 × 5 ; elles ne
+  sont plus déclarées. Et comme il n'y a rien à peindre pour ces pièces, la carte livrée les
+  range comme sur la planche : sans elle, le jeu ne pouvait pas être livré (corrigé en TU11).
+- **Le tri du mur.** Le LISEZMOI de sc-clone ne disait rien du tri en profondeur. Ici, chaque
+  étage du mur est sur sa couche, et chaque couche ramène son point de tri sur la ligne de la
+  base : le personnage passe derrière le mur et devant son pied. L'outil Terrains de Godot
+  laisse le bord sud du dessus ouvert ; la carte pose donc le dessus case par case, et le
+  LISEZMOI le dit.
+- **Le faux défaut du second terrain.** Le contrôle des bords de sc-clone ne connaît pas le
+  sol du dessous : il signalait la case « tout dessous » comme un défaut. Elle est retirée de la
+  liste, à l'écran comme pour l'agent.
+
+**La pénombre des angles.** Le critère de TU7 demandait un dessus de mur identique au sol de
+même matière. Il ne l'est pas : la pénombre, validée dans sc-clone, assombrit exprès les coins
+rentrants. Le critère était mal écrit ; l'essai vérifie maintenant les deux cas, avec et sans
+pénombre.
+
+**Node exécute le TypeScript de l'écran.** Pour que l'agent fabrique sans écran, le serveur
+lance sous Node le fichier même de l'écran (`interface/src/tuiles/atelier.ts`), sans
+compilation : Node 22.18 efface les types tout seul. Aucun portage en Python, donc aucun
+écart possible entre les deux rendus ; un essai compare les pixels à ceux d'un vrai navigateur.
+Node 23.0 à 23.5 ne sait pas faire ça sans option : l'atelier les refuse en le disant.
+
+**Ce que la relecture croisée a trouvé (TU11).** Les 17 pièces ne pouvaient pas être livrées
+depuis l'écran (bouton « Livrer » grisé, et carte vide refusée par le serveur) ; c'est
+corrigé. Un modèle payant passé par erreur à la génération d'une matière est maintenant refusé
+à l'endroit même où elle part. Reste à trancher : la palette commune, cochée par défaut,
+s'applique aux matières intégrées aussi — le sable sous l'herbe devient vert, les briques d'un
+mur deviennent grises (voir `docs/PLAN-tuiles.md` § TU11).
+
 ## RP23 · Tester les animations comme dans le jeu — 16 septembre 2026
 
 L'auteur avait deux courses, est et ouest, et l'onglet disait « Aucune animation ». L'écran

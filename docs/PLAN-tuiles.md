@@ -9,10 +9,11 @@
 > La maquette : `docs/maquettes-atelier-unifie/04-tuiles.html` (servie par la config
 > « maquettes-son », port 8934).
 >
-> **Où en est le chantier (19 septembre 2026).** Le plan et la maquette sont écrits. Aucune
-> tranche de code n'est commencée. La maquette embarque déjà une copie du moteur
-> (`tuiles-moteur/`, commit `f27f054` de sc-clone) : il tourne tel quel dans un navigateur, et
-> rend une planche en 15 à 50 ms.
+> **Où en est le chantier (19 septembre 2026).** Les douze tranches sont faites, TUM à TU11,
+> sur la branche `feat/tuiles`. L'écran « Les tuiles » fabrique les cinq sortes, génère des
+> matières sur la machine, vérifie les bords et livre à Godot ; l'agent fait de même sans écran.
+> Le moteur est celui de sc-clone (commit `f27f054`), recopié dans `interface/src/tuiles/moteur/`.
+> Une décision reste ouverte, relevée par la relecture : voir § TU11.
 
 ## Ce qui existe déjà
 
@@ -490,9 +491,41 @@ entre eux. Quinze gestes sont faits au navigateur sur un atelier jetable :
 - une matière générée (ComfyUI doublé) ;
 - une livraison dans un vrai Godot.
 
-- [ ] Les comptes, les noms et les critères cochés sont d'accord entre les fichiers.
-- [ ] `docs/PLAN.md` § Où en est le dépôt porte la ligne du chantier.
-- [ ] La section « Objets et tuiles » de `docs/modeles-et-workflows.md` est écrite.
+- [x] Les comptes, les noms et les critères cochés sont d'accord entre les fichiers.
+      *(Relu le 19 septembre 2026 : chaque case cochée de TU1 à TU10 a son essai. Corrigés :
+      ce bandeau, la ligne de `docs/PLAN.md`, la ligne « Tuiles / son » de
+      `couverture.md`, la version de Node dans `ARCHITECTURE.md`.)*
+- [x] `docs/PLAN.md` § Où en est le dépôt porte la ligne du chantier.
+- [x] La section « Objets et tuiles » de `docs/modeles-et-workflows.md` est écrite.
+
+**Les quinze gestes** (atelier jetable, port 8511, ComfyUI doublé, 1440 × 900) : un sol peint,
+un chemin, un mur de hauteur 1 et un de hauteur 3, un 15 pièces, un 17 pièces, un sol sur un
+autre sol, des cailloux « Dense », la palette commune cochée puis décochée, une matière générée
+puis posée, « Vérifier » (« Aucun défaut » partout), enregistrer puis rouvrir après
+rechargement (carte et planche identiques), livrer et déposer, le lien « À partir d'une image
+déjà faite » et le jeu « Forêt » qui s'ouvrent dans l'éditeur d'AU13, le fil d'Ariane
+« Les tuiles › Nouveau sol ». Aucune erreur dans la console. La livraison dans un vrai Godot
+est tenue par les essais (`tests/test_tu4_livraison.py`, `test_tu7_mur.py`,
+`test_tu8_decor.py`, `test_tu10_agent.py`).
+
+**Trouvé et corrigé par la relecture.**
+- **Les 17 pièces ne se livraient pas.** L'écran grisait « Livrer à Godot » (il n'y a pas de
+  carte à peindre), et le serveur refuse de livrer sans carte d'essai. La carte livrée range
+  maintenant les 17 pièces comme sur la planche (`ServiceTuiles._carte_des_pieces`) ; l'agent
+  qui envoie une `map` pour elles reçoit un refus en clair au lieu d'une erreur du moteur.
+- **Node 23.0 à 23.5** passaient le contrôle de version sans savoir exécuter le TypeScript :
+  ils sont refusés, avec la raison.
+- **Un modèle payant** passé par erreur à `soumettre_matiere` est refusé avant tout envoi.
+- « 1 cases » sous « Hauteur du mur ».
+
+**Relevé, à trancher par l'auteur.**
+- **La palette commune recolore les matières intégrées.** TU6 l'applique au rendu, sur toutes
+  les matières, et la coche par défaut. Dans la maquette validée et dans sc-clone, elle ne
+  s'appliquait qu'aux tirages générés, au moment de la génération. Effet visible : un sol
+  « herbe sur sable » rend le sable vert, un mur « pierre et briques » rend les briques grises.
+  Et la case qui la décoche n'est que dans l'onglet « Générer » du tiroir.
+- **La livraison dit « ouvre personnage.tscn pour voir la carte ».** La scène stable d'un jeu
+  de tuiles garde le nom par défaut de la livraison commune (déjà vrai pour AU13).
 
 ## Ce que ce plan ne couvre pas
 

@@ -215,6 +215,12 @@ async def test_mur_chemin_et_extras(fixe):
     # Le 17 pièces : sans terrain.
     dix_sept = a.tuiles.creer(p, {"nom": "Pièces", "atlas": atlas(5, 5, 16), "recette": recette(sorte="pieces-17", taille=16)})
     assert dix_sept["terrains"] == [] and len(dix_sept["cellules"]) == 17
+    # Sans carte à peindre (l'écran n'en a pas pour elles), la carte livrée range les
+    # 17 pièces comme sur la planche : sinon le jeu ne serait jamais livrable (TU11).
+    assert {(c["x"], c["y"]) for c in dix_sept["carte"]["cases"]} == {(c["x"], c["y"]) for c in dix_sept["cellules"]}
+    assert dix_sept["diagnostic"]["pret"]
+    vide = a.tuiles.regler(p, dix_sept["identifiant"], 1, {"carte": {"largeur": 18, "hauteur": 12, "cases": []}})
+    assert len(vide["carte"]["cases"]) == 17 and vide["diagnostic"]["pret"]
 
 
 @pytest.mark.parametrize("modif, message", [

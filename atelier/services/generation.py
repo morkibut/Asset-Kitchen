@@ -1132,6 +1132,10 @@ class ServiceGenerations:
             options=({"graine": graine} if graine is not None else {}),
         )
         modele = self._catalogue.modele(identifiant_modele)
+        # Une matière se génère sur la machine, jamais chez un fournisseur payant
+        # (décision 6 du plan des tuiles) : refusé ici, quel que soit l'appelant.
+        if not modele.locale:
+            raise DemandeRefusee(f"{modele.nom} n’est pas un modèle local : une matière se génère sur la machine.")
         graine_resolue = self._graine_demandee(modele, demande)
         refus = modele.refus(_sans_graine(modele, demande))
         if refus is not None:

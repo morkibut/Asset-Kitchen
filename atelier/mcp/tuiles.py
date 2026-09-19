@@ -24,7 +24,8 @@ RECETTE = ("recipe = {sorte: sol|chemin|mur|coins-15|pieces-17, taille: 16|32|64
            "secondTerrain, decor (aucun|leger|dense), hauteurMur, ombreMur, penombre, … — omitted ones take their default}}. "
            "read_tile_set returns the complete recipe with every default filled in.")
 CARTE = ("map = optional list of rows of '#' (painted) and '.' (empty) — one character per cell, or per cell corner "
-         "for coins-15 (rows+1 lines of columns+1); omitted, the screen's default test map is painted.")
+         "for coins-15 (rows+1 lines of columns+1); omitted, the screen's default test map is painted. pieces-17 takes "
+         "no map: its delivered map lays the 17 pieces out as on the atlas.")
 
 
 def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable):
@@ -38,6 +39,13 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
 
     def _verifiee(projet, brute):
         return verifier_recette(brute, atelier.tuiles._asset_valide(projet))
+
+    def _sans_carte_pour_17(r, carte):
+        # Les 17 pièces n'ont pas de carte à peindre : la carte livrée les range comme
+        # sur la planche (ServiceTuiles._carte_des_pieces).
+        if r["sorte"] == "pieces-17" and carte is not None:
+            raise TuilesRefusees("Les 17 pièces se posent à la main : elles n’ont pas de carte à peindre (map). "
+                                 "La carte livrée les range comme sur la planche.")
 
     async def _verification(projet, tileset, revision):
         """La vérification des bords, ou pourquoi elle n'a pas pu se faire — jamais un refus
@@ -77,6 +85,7 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
             raise TuilesRefusees("Un jeu fabriqué se crée par sa recette seule : l’atlas vient d’elle, pas d’une image.")
         projet = _projet(project)
         r = _verifiee(projet, recipe)
+        _sans_carte_pour_17(r, map)
         rendu = await asyncio.to_thread(atelier.rendu_tuiles.rendre, projet, r, map)
         brut = {"nom": name, "recette": r, "atlas": rendu["png"]}
         if rendu["carte"] is not None:
@@ -107,9 +116,11 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
         if recipe is None and map is None:
             return atelier.tuiles.regler(project, tileset, revision, brut, actualiser_source=refresh_sources)
         if recipe is None:
+            _sans_carte_pour_17(actuel["recette"], map)
             brut["carte"] = await asyncio.to_thread(atelier.rendu_tuiles.carte, projet, actuel["recette"], map)
             return atelier.tuiles.regler(project, tileset, revision, brut, actualiser_source=refresh_sources)
         r = _verifiee(projet, recipe)
+        _sans_carte_pour_17(r, map)
         rendu = await asyncio.to_thread(atelier.rendu_tuiles.rendre, projet, r, map if map is not None else False)
         if map is not None:
             brut["carte"] = rendu["carte"]

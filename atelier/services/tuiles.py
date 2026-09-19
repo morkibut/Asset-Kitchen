@@ -151,6 +151,18 @@ class ServiceTuiles:
         return {"asset": asset.identifiant, "dimensions": dimensions,
                 "provenance": self.a.export.fiche_de_l_asset(asset, "atlas.png", octets), "empreinte": self._blob(dossier, octets)}
 
+    @staticmethod
+    def _carte_des_pieces(r, cellules, carte):
+        """Les 17 pièces n'ont pas de carte à peindre : elles se posent à la main. Sans
+        carte peinte, la carte livrée les range comme sur la planche — sinon le jeu ne
+        pourrait jamais être livré (il faut une carte d'essai pour livrer)."""
+        if r["sorte"] != "pieces-17" or (isinstance(carte, dict) and carte.get("cases")):
+            return carte
+        if carte is not None and not isinstance(carte, dict):
+            return carte  # refusée plus loin, avec le message de `choix`
+        return {"largeur": max(c["x"] for c in cellules) + 1, "hauteur": max(c["y"] for c in cellules) + 1,
+                "cases": [{"x": c["x"], "y": c["y"], "tuile_x": c["x"], "tuile_y": c["y"]} for c in cellules]}
+
     def _preparer_fabrique(self, projet, recette_brute, atlas):
         r = verifier_recette(recette_brute, self._asset_valide(projet))
         forme, pieces, terrains, cellules = self._fabrication(r)
@@ -163,8 +175,9 @@ class ServiceTuiles:
             raise TuilesRefusees("Un jeu de tuiles fabriqué se crée avec un nom, sa recette, l’atlas qu’elle a rendu et, au besoin, une carte d’essai.")
         self._racine(projet)
         r, pieces, terrains, cellules, octets, g = self._preparer_fabrique(projet, brut["recette"], brut.get("atlas"))
+        carte = self._carte_des_pieces(r, cellules, brut.get("carte"))
         regles = choix({"nom": brut.get("nom"), "terrains": terrains, "cellules": cellules,
-                        **({"carte": brut["carte"]} if "carte" in brut else {})}, g)
+                        **({"carte": carte} if carte is not None else {})}, g)
         identifiant = uuid.uuid4().hex
         with _verrou(self._racine(projet) / ".verrou"):
             personnage = brut.get("personnage")
@@ -205,6 +218,7 @@ class ServiceTuiles:
                 # La nouvelle recette peut avoir retiré des pièces : la carte garde les autres.
                 gardees = {(c["x"], c["y"]) for c in cellules}
                 carte = {**carte, "cases": [c for c in carte["cases"] if (c["tuile_x"], c["tuile_y"]) in gardees]}
+        carte = self._carte_des_pieces(r, cellules, carte)
         regles = choix({"nom": brut.get("nom", ancienne["nom"]), "terrains": terrains, "cellules": cellules, "carte": carte}, g)
         objet = {**ancienne, **regles, "revision": ancienne["revision"] + 1, "recette": r, "pieces": pieces, "grille": g, "corrections": {}}
         if octets is not None:

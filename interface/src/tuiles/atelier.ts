@@ -730,7 +730,7 @@ export function verifier(j: JeuEdite, atlas: Atlas): Verification {
     ? checkWallAtlas(img, { WALL_TOP_ROWS, WALL_BAND_STATES, biais: (biaisAtlasDescriptor as (t: string) => unknown)("wall") })
     : checkMaskSetAtlas(img, jeuDeMasques(S.set!))) as unknown as string[]
   // Le contrôle ne connaît pas le sol dessous : la case que le moteur lui réserve (la
-  // 48ᵉ du blob, le masque 0 des 15 pièces) est peinte exprès (TU9 le corrigera).
+  // 48ᵉ du blob, le masque 0 des 15 pièces) est peinte exprès : on retire ce faux défaut.
   if (aSecondTerrain(j)) {
     const libre = `case libre (${CASE_DESSOUS.col}, ${CASE_DESSOUS.row})`
     defauts = defauts.filter((p) => !(S.set === "B47" && p.includes(libre)) && !(S.set === "W16" && /masque 0\b.*aucun coin/.test(p)))

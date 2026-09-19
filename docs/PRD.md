@@ -97,8 +97,9 @@ L'export termine le parcours : aperçu animé à la taille du jeu, sélection ex
 dimensions, cadence, pivot et noms vérifiables, puis fichiers accompagnés de leur
 description. Les animations exportées doivent être celles qui ont été prévisualisées.
 
-Les tuiles et le son prolongeront le même univers et la même bibliothèque. Leur fabrication
-aura ses outils propres ; ils ne seront pas forcés dans un formulaire de personnage.
+Les tuiles et le son prolongent le même univers et la même bibliothèque. Leur fabrication a
+ses outils propres (`docs/PLAN-tuiles.md`, `docs/PLAN-son.md`) ; ils ne sont pas forcés dans
+un formulaire de personnage.
 
 ## Utilisateur cible
 
@@ -169,7 +170,7 @@ modélisation 3D ni un éditeur universel de procédés graphiques.
 
 L'ancienne exclusion de la génération locale est levée par la demande du 11 septembre.
 La 3D sert d'abord à fabriquer des sprites ; éditer un monde 3D complet reste hors de ce
-parcours. Tuiles et son sont prévus ensuite, sans faux boutons de production avant livraison.
+parcours. Tuiles et son ont chacun leur chantier, sans faux boutons de production avant livraison.
 
 [L'annexe](prd-hors-perimetre.md) conserve les exclusions détaillées et leurs raisons.
 

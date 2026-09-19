@@ -19,6 +19,7 @@ source de sc-clone par l'essai de TU1.
 from __future__ import annotations
 
 import copy
+import dataclasses
 import json
 from pathlib import Path
 from typing import Any
@@ -302,6 +303,22 @@ async def test_aucun_appel_payant_nest_possible_par_ce_chemin(atelier_matieres):
     await atelier.matieres.generer(projet, pierre="pierre grise", motif="quatre dalles", cadrage="surface", tirages=2)
     await atelier.generations.attendre_tout()
     # Rien n'a levé jusqu'ici : le double payant n'a jamais été appelé pour générer.
+
+
+async def test_soumettre_matiere_refuse_un_modele_qui_n_est_pas_local(atelier_matieres, monkeypatch):
+    """TU11 : la garde est dans `soumettre_matiere` même, pas seulement dans le choix du
+    style — un modèle payant passé par erreur est refusé avant tout envoi."""
+    from atelier.domaine.erreurs import DemandeRefusee
+    atelier, comfy = atelier_matieres
+    local = atelier.catalogue.modele(await atelier.matieres._resoudre_modele())
+    assert local.locale
+    payant = dataclasses.replace(local, locale=False) if dataclasses.is_dataclass(local) else None
+    if payant is None:
+        pytest.skip("Modele n'est pas une dataclass : garde non simulable ici.")
+    monkeypatch.setattr(atelier.catalogue, "modele", lambda identifiant: payant)
+    with pytest.raises(DemandeRefusee, match="pas un modèle local"):
+        await atelier.generations.soumettre_matiere(payant.identifiant, "texte", projet=atelier.bibliotheque.courant)
+    assert comfy.envois == []
 
 
 async def test_tirages_hors_bornes_refuses():

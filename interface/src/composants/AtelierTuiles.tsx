@@ -340,7 +340,7 @@ export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, messa
       </div>
       <div className="flex shrink-0 items-center gap-[8px]">
         <button type="button" className={BOUTON} disabled={occupe || (!modifie() && j.identifiant !== null)} onClick={onEnregistrer}>Enregistrer</button>
-        <button type="button" className={PRINCIPAL} disabled={occupe || !j.carte} onClick={onLivrer}>Livrer à Godot</button>
+        <button type="button" className={PRINCIPAL} disabled={occupe} onClick={onLivrer}>Livrer à Godot</button>
       </div>
     </div>
     {erreur && <p role="alert" className="mb-[8px] text-[13px] text-echec">{erreur}</p>}
@@ -401,7 +401,7 @@ export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, messa
           <Curseur nom="Arrondi des coins" valeur={Number(j.reglages.arrondi)} min={0} max={8} onChange={(v) => reglage("arrondi", v)} />
           <Curseur nom="Irrégularité des bords" valeur={Number(j.reglages.irregularite)} min={0} max={10} onChange={(v) => reglage("irregularite", v)} />
           <Curseur nom="Relief" valeur={Number(j.reglages.relief)} min={0} max={10} onChange={(v) => reglage("relief", v)} />
-          {S.mur && <Curseur nom="Hauteur du mur" unite=" cases" valeur={Number(j.reglages.hauteurMur)} min={1} max={8} onChange={(v) => reglage("hauteurMur", v)} />}
+          {S.mur && <Curseur nom="Hauteur du mur" unite={Number(j.reglages.hauteurMur) > 1 ? " cases" : " case"} valeur={Number(j.reglages.hauteurMur)} min={1} max={8} onChange={(v) => reglage("hauteurMur", v)} />}
           <details className="mt-[8px] border-t border-trait pt-[8px]">
             <summary className="cursor-pointer py-[4px] text-[13px] text-encre-controle">Réglages fins</summary>
             <div className="grid gap-[4px] pt-[4px]">
@@ -764,7 +764,7 @@ export function LivraisonDuJeu({ projet, edition, onRetour, onLivraisons }: {
           <p className="col-span-2 text-[13px] text-encre-2">{f.role}</p></li>)}</ul>}
         <h2 className="mt-[22px] font-serif text-[25px] text-encre">La planche</h2>
         <div className="damier-papier mt-[8px] grid place-items-center overflow-auto rounded-8 p-[14px]"><canvas ref={planche} aria-label="La planche livrée" className="block" style={PIXELS} /></div>
-        <p className="mt-[8px] mesure text-[11.5px] text-encre-4">{atlas.pixels.width / j.taille} × {atlas.pixels.height / j.taille} cases de {j.taille} px · carte de {casesPosees(j.carte)} cases posées</p>
+        <p className="mt-[8px] mesure text-[11.5px] text-encre-4">{atlas.pixels.width / j.taille} × {atlas.pixels.height / j.taille} cases de {j.taille} px · {j.carte ? `carte de ${casesPosees(j.carte)} cases posées` : "carte : les pièces rangées comme sur la planche"}</p>
       </section>
       <section className="min-w-0">
         <h2 className="font-serif text-[25px] text-encre">La vérification</h2>

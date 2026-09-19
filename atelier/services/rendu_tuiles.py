@@ -36,8 +36,14 @@ from atelier.domaine.tuiles import TuilesRefusees
 SCRIPT = Path(__file__).resolve().parent.parent / "tuiles_node" / "rendre.mjs"
 RACINE = SCRIPT.parent.parent.parent
 # Le TypeScript de l'écran s'exécute en effaçant ses types : sans option depuis
-# Node 22.18 (et 23.6), et `module.registerHooks` existe depuis 22.15.
+# Node 22.18 (et 23.6), et `module.registerHooks` existe depuis 22.15 (et 23.5).
+# La série 23 avant 23.6 n'a ni l'un ni l'autre sans option : elle est refusée.
 VERSION_MIN = (22, 18)
+VERSION_MIN_23 = (23, 6)
+
+
+def _assez_recent(version: tuple[int, ...]) -> bool:
+    return version >= VERSION_MIN and not (23, 0) <= version < VERSION_MIN_23
 DELAI = 120  # secondes ; un mur de 64 px avec animation se rend en moins d'une seconde
 
 PHRASE_NODE = ("Le rendu des jeux de tuiles côté serveur demande Node.js {min} ou plus, {etat}. "
@@ -81,8 +87,9 @@ class ServiceRenduTuiles:
         version = self._versions[chemin]
         if version is None:
             raise NodeAbsent(PHRASE_NODE.format(min=minimum, etat=f"« {chemin} » ne répond pas"))
-        if version < VERSION_MIN:
-            raise NodeAbsent(PHRASE_NODE.format(min=minimum, etat=f"la machine a la {'.'.join(map(str, version))}"))
+        if not _assez_recent(version):
+            serie_23 = " (dans la série 23, il faut la 23.6 ou plus)" if version[0] == 23 else ""
+            raise NodeAbsent(PHRASE_NODE.format(min=minimum, etat=f"la machine a la {'.'.join(map(str, version))}{serie_23}"))
         if not (RACINE / "interface" / "src" / "tuiles" / "atelier.ts").is_file():
             raise NodeAbsent("Le rendu serveur des jeux de tuiles lit le code de l’écran "
                              "(interface/src/tuiles/atelier.ts), absent de cette installation.")
