@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react"
-import { api, type ApercuLivraison } from "../api"
-import { tuiles, type EnsembleTuiles } from "../api-tuiles"
+import { api, Refus } from "../api"
+import type { ApercuLivraison } from "../api"
+import { fileLocale } from "../api-file-locale"
+import { tuiles, matieres as apiMatieres, assetDeGeneration, type EnsembleTuiles, type Cadrage } from "../api-tuiles"
 import {
-  LISTE_MATIERES, PAR_ID, SORTES, atlasDe, carteApercu, casesPosees, changerSecondTerrain, dessinerAtlas, dessinerCarte, dessinerPlanche,
+  LISTE_MATIERES, LISTE_CADRAGES, PAR_ID, SORTES, atlasDe, cadrageParDefaut, carteApercu, casesPosees, changerSecondTerrain, dessinerAtlas, dessinerCarte, dessinerPlanche,
   dessinerVignette, delier, dureeImageAnimation, emplacementsDe, enClair, ileAuHasard, imageDuFond, jeuDepuisRecette,
   nombrePieces, nomCible, nomDeMatiere, nomPiece, nouveauJeu, peutRelier, poserAsset, poserIntegree, recetteDe,
   relierBordure, toutEffacer, verifier, aSecondTerrain,
@@ -204,14 +206,15 @@ const OPTIONS: Record<string, [string | number, string][]> = {
 
 export type Edition = { jeu: JeuEdite; signature: string; carte: string; nom: string }
 
-export function AtelierDuJeu({ edition, matieres, modifie, occupe, message, onEnregistrer, onLivrer, onNom }: {
+export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, message, onEnregistrer, onLivrer, onNom }: {
+  projet: string
   edition: Edition; matieres: MatiereDuJeu[]; modifie: () => boolean; occupe: boolean; message: ReactNode
   onEnregistrer: () => void; onLivrer: () => void; onNom: (nom: string) => void
 }) {
   const j = edition.jeu, S = SORTES[j.sorte]
   const [, maj] = useReducer((n: number) => n + 1, 0)
   const [onglet, setOnglet] = useState<"carte" | "planche" | "verifier">(j.carte ? "carte" : "planche")
-  const [tiroir, setTiroir] = useState<{ cible: string; onglet: "integrees" | "miennes" } | null>(null)
+  const [tiroir, setTiroir] = useState<{ cible: string; onglet: "integrees" | "miennes" | "generer" } | null>(null)
   const [zoom, setZoom] = useState(0)
   const [heros, setHeros] = useState(true)
   const [image, setImage] = useState(0)
@@ -378,7 +381,7 @@ export function AtelierDuJeu({ edition, matieres, modifie, occupe, message, onEn
       </div>
 
       {/* Les réglages, ou le tiroir des matières */}
-      {tiroir ? <TiroirDesMatieres jeu={j} cible={tiroir.cible} onglet={tiroir.onglet} matieres={matieres}
+      {tiroir ? <TiroirDesMatieres projet={projet} jeu={j} cible={tiroir.cible} onglet={tiroir.onglet} matieres={matieres}
         onOnglet={(o) => setTiroir({ ...tiroir, onglet: o })} onFermer={() => setTiroir(null)} onErreur={setErreur}
         onPose={maj} />
         : <div className="flex min-h-0 min-w-0 flex-col gap-[8px] overflow-y-auto">
@@ -476,22 +479,23 @@ function Verifie({ v }: { v: ReturnType<typeof verifier> }) {
 
 // ── D · Le tiroir des matières ───────────────────────────────────────────────
 
-function TiroirDesMatieres({ jeu: j, cible, onglet, matieres, onOnglet, onFermer, onErreur, onPose }: {
-  jeu: JeuEdite; cible: string; onglet: "integrees" | "miennes"; matieres: MatiereDuJeu[]
-  onOnglet: (o: "integrees" | "miennes") => void; onFermer: () => void; onErreur: (m: string) => void; onPose: () => void
+function TiroirDesMatieres({ projet, jeu: j, cible, onglet, matieres, onOnglet, onFermer, onErreur, onPose }: {
+  projet: string
+  jeu: JeuEdite; cible: string; onglet: "integrees" | "miennes" | "generer"; matieres: MatiereDuJeu[]
+  onOnglet: (o: "integrees" | "miennes" | "generer") => void; onFermer: () => void; onErreur: (m: string) => void; onPose: () => void
 }) {
   const [lecture, setLecture] = useState<string | null>(null)
   const prefere = cible === "face" ? "mur" : "sol"
   const actuelle = cible === "fond" ? ("matiere" in j.fond ? j.fond.matiere : "") : j.etat[cible]?.source === "matiere" ? j.etat[cible].matiere : ""
   const actuelAsset = cible === "fond" ? ("asset" in j.fond ? j.fond.asset : "") : j.assets[cible] ?? ""
   const integrees = [...LISTE_MATIERES].sort((a, b) => Number(b.role === prefere) - Number(a.role === prefere))
-  async function poserMienne(m: MatiereDuJeu) {
-    setLecture(m.identifiant)
+  async function poserMienne(identifiant: string, nom: string) {
+    setLecture(identifiant)
     try {
-      const images = await chargerImages([m.identifiant])
-      poserAsset(j, cible, m.identifiant, m.nom, images.get(m.identifiant)!)
+      const images = await chargerImages([identifiant])
+      poserAsset(j, cible, identifiant, nom, images.get(identifiant)!)
       onPose()
-    } catch { onErreur(`L’image « ${m.nom} » n’a pas pu être lue.`) }
+    } catch { onErreur(`L’image « ${nom} » n’a pas pu être lue.`) }
     finally { setLecture(null) }
   }
   return <aside aria-label="Choisir la matière" className="flex min-h-0 flex-col rounded-10 border border-contour bg-papier">
@@ -500,7 +504,7 @@ function TiroirDesMatieres({ jeu: j, cible, onglet, matieres, onOnglet, onFermer
       <button type="button" className={PETIT} onClick={onFermer}>Fermer</button>
     </div>
     <div role="tablist" className="flex gap-[4px] px-[14px] pt-[8px]">
-      {([["integrees", "Intégrées"], ["miennes", "Mes matières"]] as const).map(([id, nom]) => <button key={id} type="button" role="tab" aria-selected={onglet === id} onClick={() => onOnglet(id)}
+      {([["integrees", "Intégrées"], ["miennes", "Mes matières"], ["generer", "Générer"]] as const).map(([id, nom]) => <button key={id} type="button" role="tab" aria-selected={onglet === id} onClick={() => onOnglet(id)}
         className={`min-h-[30px] rounded-7 border px-[14px] text-[13px] ${onglet === id ? "border-contour bg-carte text-encre" : "border-transparent text-encre-controle"}`}>{nom}</button>)}
     </div>
     <div className="min-h-0 flex-1 overflow-auto p-[14px]">
@@ -508,13 +512,151 @@ function TiroirDesMatieres({ jeu: j, cible, onglet, matieres, onOnglet, onFermer
         {integrees.map((m) => <button key={m.id} type="button" aria-pressed={m.id === actuelle} onClick={() => { poserIntegree(j, cible, m.id); onPose() }}
           className={`flex flex-col items-center gap-[4px] rounded-8 border p-[4px] text-center text-[12px] text-encre-controle transition-colors duration-120 hover:bg-carte ${m.id === actuelle ? "border-encre-controle bg-carte" : "border-transparent"}`}>
           <VignetteIntegree id={m.id} jeu={j} />{m.nom}</button>)}
-      </div> : matieres.length ? <div className="grid grid-cols-3 gap-[8px]">
-        {matieres.map((m) => <button key={m.identifiant} type="button" aria-pressed={m.identifiant === actuelAsset} disabled={lecture !== null} onClick={() => void poserMienne(m)}
+      </div> : onglet === "miennes" ? matieres.length ? <div className="grid grid-cols-3 gap-[8px]">
+        {matieres.map((m) => <button key={m.identifiant} type="button" aria-pressed={m.identifiant === actuelAsset} disabled={lecture !== null} onClick={() => void poserMienne(m.identifiant, m.nom)}
           className={`flex flex-col items-center gap-[4px] rounded-8 border p-[4px] text-center text-[12px] text-encre-controle hover:bg-carte ${m.identifiant === actuelAsset ? "border-encre-controle bg-carte" : "border-transparent"}`}>
           <img src={api.fichier(m.identifiant)} alt="" className="block h-[81px] w-[81px] rounded-5 object-cover" style={PIXELS} />{m.nom}{lecture === m.identifiant && <small className="text-[11px] text-encre-3">Lecture…</small>}</button>)}
-      </div> : <p className="text-[13px] text-encre-3">Pas encore de matière dans ce jeu. Les images des sujets de nature « matière » apparaîtront ici.</p>}
+      </div> : <p className="text-[13px] text-encre-3">Pas encore de matière dans ce jeu. Les images des sujets de nature « matière » apparaîtront ici.</p>
+        : <OngletGenerer projet={projet} jeu={j} cible={cible} lecture={lecture} onPoser={poserMienne} onErreur={onErreur} onPose={onPose} />}
     </div>
   </aside>
+}
+
+// ── D bis · Générer une matière sur la machine (TU5) ─────────────────────────
+
+const FINIES = new Set(["termine", "echoue", "annule"])
+const ATTENTE_PAR_DEFAUT = "environ 2 min par image"
+
+function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPose }: {
+  projet: string; jeu: JeuEdite; cible: string; lecture: string | null
+  onPoser: (identifiant: string, nom: string) => Promise<void>; onErreur: (m: string) => void; onPose: () => void
+}) {
+  const [dispo, setDispo] = useState<{ disponible: boolean; manque: string[]; modele: string | null } | null>(null)
+  const [apercu, setApercu] = useState<{ texte: string; negatif: string; cadrages: Cadrage[] } | null>(null)
+  const [texteOuvert, setTexteOuvert] = useState(false)
+  const [nTirages, setNTirages] = useState(4)
+  const [commune, setCommune] = useState(true)
+  const [occupe, setOccupe] = useState(false)
+  const [attente, setAttente] = useState(ATTENTE_PAR_DEFAUT)
+
+  const cadrage = j.texte.cadrages[cible] || cadrageParDefaut(cible)
+  const pierre = j.texte.pierre
+  const motif = j.texte.motifs[cible] || ""
+  const remplis = !!pierre.trim() && !!motif.trim()
+
+  useEffect(() => { let vivant = true
+    apiMatieres.disponibilite(projet).then((d) => { if (vivant) setDispo(d) }).catch(() => { if (vivant) setDispo({ disponible: false, manque: ["La disponibilité n’a pas pu être vérifiée."], modele: null }) })
+    return () => { vivant = false }
+  }, [projet])
+
+  // Le texte affiché est **exactement** celui que `/preview` renvoie — c'est le
+  // serveur qui compose (`atelier/domaine/texte_matiere.py`), jamais l'écran.
+  useEffect(() => {
+    if (!remplis || !dispo?.disponible) { setApercu(null); return }
+    let vivant = true
+    const t = window.setTimeout(() => {
+      apiMatieres.apercu(projet, { pierre, motif, cadrage }).then((a) => { if (vivant) setApercu(a) }).catch(() => { if (vivant) setApercu(null) })
+    }, 200)
+    return () => { vivant = false; window.clearTimeout(t) }
+  }, [projet, pierre, motif, cadrage, remplis, dispo?.disponible])
+
+  // L'attente annoncée : la médiane mesurée sur cette machine pour le modèle
+  // déjà installé, si elle existe — sinon le repli fixe (`ATTENTE_PAR_DEFAUT`).
+  useEffect(() => { let vivant = true
+    if (!dispo?.modele) return
+    fileLocale.lire().then((f) => {
+      if (!vivant) return
+      const m = f.mesures.find((m) => m.modele === dispo.modele)
+      if (m) setAttente(`environ ${Math.round(m.mediane_s)} s par image, mesuré sur cette machine`)
+    }).catch(() => undefined)
+    return () => { vivant = false }
+  }, [dispo])
+
+  // La progression des tirages en cours : suivie dans la file locale
+  // existante, comme tout calcul local (`GET /api/local-queue`).
+  useEffect(() => {
+    const enAttente = j.tirages.some((t) => !FINIES.has(t.statut))
+    if (!enAttente) return
+    let vivant = true
+    const lire = () => fileLocale.lire().then((f) => {
+      if (!vivant) return
+      let change = false
+      for (const t of j.tirages) {
+        if (FINIES.has(t.statut)) continue
+        const e = f.etapes.find((e) => e.cle === `image:${t.identifiant}:${t.rang}`)
+        if (e && e.etat !== t.statut) { t.statut = e.etat; change = true }
+        // Une estimation mesurée met à jour l'attente affichée pour les prochains tirages.
+        if (f.mesures.length) { const m = f.mesures.find((m) => m.modele === e?.modele); if (m) setAttente(`environ ${Math.round(m.mediane_s)} s par image, mesuré sur cette machine`) }
+      }
+      if (change) onPose()
+    }).catch(() => undefined)
+    void lire()
+    const minuteur = window.setInterval(lire, 1500)
+    return () => { vivant = false; window.clearInterval(minuteur) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [j.tirages.map((t) => t.statut).join("|")])
+
+  function changerCadrage(id: string) { j.texte.cadrages = { ...j.texte.cadrages, [cible]: id }; onPose() }
+  function changerPierre(v: string) { j.texte.pierre = v; onPose() }
+  function changerMotif(v: string) { j.texte.motifs = { ...j.texte.motifs, [cible]: v }; onPose() }
+
+  async function generer() {
+    setOccupe(true); onErreur("")
+    try {
+      const r = await apiMatieres.generer(projet, { pierre, motif, cadrage, tirages: nTirages })
+      j.tirages = [...j.tirages, ...r.generations.map((g) => ({ identifiant: g.identifiant, rang: g.emplacements[0]?.rang ?? 0, statut: "en_attente", pourNom: nomCible(j, cible) }))]
+      onPose()
+    } catch (e) { onErreur(e instanceof Refus || e instanceof Error ? e.message : "La génération n’a pas pu partir.") }
+    finally { setOccupe(false) }
+  }
+
+  const bloque = !dispo ? "Vérification de la disponibilité…" : !dispo.disponible ? dispo.manque.join(" · ") : !remplis ? "Écris de quoi c’est fait et le motif pour pouvoir générer." : ""
+
+  return <div className="space-y-[14px]">
+    <div>
+      <label className="flex flex-col gap-[4px] text-[13px] text-encre-controle">C’est fait de quoi ?
+        <input type="text" value={pierre} onChange={(e) => changerPierre(e.target.value)} placeholder="de la pierre grise usée"
+          className="min-h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle" /></label>
+      <small className="mt-[4px] block text-[12px] text-encre-3">Le même pour toutes les matières de ce jeu de tuiles.</small>
+    </div>
+    <div>
+      <label className="flex flex-col gap-[4px] text-[13px] text-encre-controle">Le motif
+        <input type="text" value={motif} onChange={(e) => changerMotif(e.target.value)} placeholder="de grandes dalles carrées, deux par deux"
+          className="min-h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle" /></label>
+      <small className="mt-[4px] block text-[12px] text-encre-3">Seulement pour : {nomCible(j, cible)}.</small>
+    </div>
+    <div>
+      <div className="mb-[4px] text-[12px] text-encre-3">Vu comment</div>
+      <div className="flex flex-wrap gap-[4px]">{(apercu?.cadrages ?? LISTE_CADRAGES).map((c) => <button key={c.id} type="button" title={c.aide} aria-pressed={c.id === cadrage} onClick={() => changerCadrage(c.id)}
+        className={`${PETIT} ${c.id === cadrage ? "border-encre-3 bg-ligne-ouverte text-encre" : ""}`}>{c.nom}</button>)}</div>
+    </div>
+    <div>
+      <button type="button" className={LIEN} aria-expanded={texteOuvert} onClick={() => setTexteOuvert((v) => !v)}>{texteOuvert ? "Cacher le texte envoyé" : "Voir le texte envoyé"}</button>
+      {texteOuvert && <p className="mesure mt-[8px] whitespace-pre-wrap rounded-7 border border-trait bg-papier p-[8px] text-[12px] text-encre-2">{apercu?.texte || "Écris de quoi c’est fait et le motif : le texte envoyé s’affichera ici."}</p>}
+    </div>
+    <label className="flex items-center gap-[8px] text-[13px] text-encre-controle"><input type="checkbox" checked={commune} onChange={(e) => setCommune(e.target.checked)} />Mêmes couleurs pour toutes les matières</label>
+    <div className="flex flex-wrap items-center gap-[8px]">
+      <label className="flex items-center gap-[8px] text-[13px] text-encre-controle">Tirages
+        <input type="number" min={1} max={8} value={nTirages} onChange={(e) => setNTirages(Math.max(1, Math.min(8, Number(e.target.value) || 1)))}
+          className="min-h-[30px] w-[54px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle" /></label>
+      <button type="button" className={PRINCIPAL} disabled={occupe || !!bloque} onClick={() => void generer()}>{occupe ? "Envoi…" : `Générer ${nTirages} tirage${nTirages > 1 ? "s" : ""}`}</button>
+    </div>
+    <p role={dispo && !dispo.disponible ? "alert" : undefined} className={`text-[12px] ${dispo && !dispo.disponible ? "text-echec" : "text-encre-3"}`}>{bloque || `Gratuit, sur ta machine · ${attente}`}</p>
+    {!!j.tirages.length && <div>
+      <div className="mb-[8px] text-[12px] text-encre-3">Les tirages · clique celui qui te plaît</div>
+      <div className="grid grid-cols-3 gap-[8px]">{j.tirages.map((t) => {
+        const asset = assetDeGeneration(t)
+        const fini = t.statut === "termine"
+        const rate = t.statut === "echoue" || t.statut === "annule"
+        return <button key={`${t.identifiant}-${t.rang}`} type="button" disabled={!fini || lecture !== null} onClick={() => void onPoser(asset, t.pourNom)}
+          aria-label={`Tirage pour ${t.pourNom} · ${fini ? "prêt" : rate ? "échec" : "en cours"}`}
+          className="flex flex-col items-center gap-[4px] rounded-8 border border-transparent p-[4px] text-center text-[12px] text-encre-controle hover:bg-carte disabled:hover:bg-transparent">
+          {fini ? <img src={api.fichier(asset)} alt="" className="block h-[81px] w-[81px] rounded-5 object-cover" style={PIXELS} />
+            : <span className="grid h-[81px] w-[81px] place-items-center rounded-5 border border-dashed border-pointille text-[11px] text-encre-3">{rate ? "Échec" : "En cours…"}</span>}
+          {t.pourNom}{lecture === asset && <small className="text-[11px] text-encre-3">Lecture…</small>}</button>
+      })}</div>
+    </div>}
+  </div>
 }
 
 const vignettesIntegrees = new Map<string, RGBAImage>()

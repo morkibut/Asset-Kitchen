@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { Tuiles } from "./Tuiles"
 import { doublerLaLecture } from "./AtelierTuiles"
-import { tuiles, type EnsembleTuiles, type EnvoiFabrique } from "../api-tuiles"
+import { tuiles, matieres as apiMatieres, type EnsembleTuiles, type EnvoiFabrique } from "../api-tuiles"
+import { fileLocale } from "../api-file-locale"
 import { api, type ApercuLivraison, type Asset } from "../api"
 import { installerBouchonCanvas } from "../tuiles/moteur/__tests__/canvas-shim"
 import { atlasDe, jeuDepuisRecette, oublierLesRendus, type Recette } from "../tuiles/atelier"
@@ -80,10 +81,11 @@ describe("Les tuiles du jeu", () => {
     expect(screen.getByLabelText("Taille d’une pièce")).toHaveValue("64")
     expect(screen.getByText("Chemin · 16 pièces")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Chemins au hasard" })).toBeInTheDocument()
-    // Pas d'onglet « Générer » dans cette tranche : il arrive avec TU5.
+    // L'onglet « Générer » (TU5) est présent, sans être ouvert : ouvrir le
+    // tiroir ne doit déclencher aucun appel vers les routes de matières.
     fireEvent.click(screen.getByRole("button", { name: /^Le chemin ·/ }))
     expect(screen.getByRole("tab", { name: "Intégrées" })).toBeInTheDocument()
-    expect(screen.queryByRole("tab", { name: "Générer" })).toBeNull()
+    expect(screen.getByRole("tab", { name: "Générer" })).toBeInTheDocument()
   })
 
   it("pose au clic, efface au clic droit, et délie puis relie la bordure", async () => {
@@ -204,6 +206,84 @@ describe("Les tuiles du jeu", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
     await waitFor(() => expect(creer).toHaveBeenCalled())
     expect(creer.mock.calls[0][1].recette.emplacements).toMatchObject({ surface: { source: "asset", asset: "vase-1" }, bordure: { source: "integree", nom: "herbe", lie: false } })
+  })
+
+  describe("Générer une matière (TU5)", () => {
+    async function ouvrirGenerer() {
+      vi.spyOn(tuiles, "lister").mockResolvedValue([])
+      render(<Tuiles projet="jeu" />)
+      fireEvent.click(await screen.findByRole("button", { name: "Nouveau jeu de tuiles" }))
+      fireEvent.click(screen.getByRole("button", { name: "Ouvrir l’atelier" }))
+      fireEvent.click(screen.getByRole("button", { name: /^Surface ·/ }))
+      fireEvent.click(screen.getByRole("tab", { name: "Générer" }))
+    }
+
+    it("affiche exactement le texte que /preview renvoie", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: "OpenRouter:klein9b-tiles-raccordable" })
+      const apercu = vi.spyOn(apiMatieres, "apercu").mockResolvedValue({
+        texte: "de l’herbe grasse, des touffes courtes, seen from directly above, texte exact du serveur",
+        negatif: "", taille: 256, cadrages: [{ id: "surface", nom: "Sol vu du dessus", aide: "" }, { id: "face", nom: "Face de mur, de face", aide: "" }],
+      })
+      await ouvrirGenerer()
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "de l’herbe grasse" } })
+      fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des touffes courtes" } })
+      await waitFor(() => expect(apercu).toHaveBeenCalledWith("jeu", { pierre: "de l’herbe grasse", motif: "des touffes courtes", cadrage: "surface" }))
+      fireEvent.click(screen.getByRole("button", { name: "Voir le texte envoyé" }))
+      expect(await screen.findByText("de l’herbe grasse, des touffes courtes, seen from directly above, texte exact du serveur")).toBeInTheDocument()
+    })
+
+    it("generer() reçoit exactement {pierre, motif, cadrage, tirages}", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, cadrages: [] })
+      const generer = vi.spyOn(apiMatieres, "generer").mockResolvedValue({ generations: [] })
+      vi.spyOn(fileLocale, "lire").mockResolvedValue({ etapes: [], regle: "", mesures: [] })
+      await ouvrirGenerer()
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "de la pierre" } })
+      fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des dalles" } })
+      fireEvent.change(screen.getByLabelText("Tirages"), { target: { value: "3" } })
+      fireEvent.click(await screen.findByRole("button", { name: "Générer 3 tirages" }))
+      await waitFor(() => expect(generer).toHaveBeenCalledWith("jeu", { pierre: "de la pierre", motif: "des dalles", cadrage: "surface", tirages: 3 }))
+    })
+
+    it("indisponible : le bouton est désactivé et dit ce qui manque, sans rien lancer", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: false, manque: ["ComfyUI n’est pas joignable.", "Le style klein9b-tiles-raccordable n’est pas installé."], modele: null })
+      const apercu = vi.spyOn(apiMatieres, "apercu")
+      const generer = vi.spyOn(apiMatieres, "generer")
+      await ouvrirGenerer()
+      expect(await screen.findByText("ComfyUI n’est pas joignable. · Le style klein9b-tiles-raccordable n’est pas installé.")).toBeInTheDocument()
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "de la pierre" } })
+      fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des dalles" } })
+      expect(screen.getByRole("button", { name: /^Générer \d tirages?$/ })).toBeDisabled()
+      expect(apercu).not.toHaveBeenCalled()
+      expect(generer).not.toHaveBeenCalled()
+    })
+
+    it("un tirage terminé, cliqué, devient l'emplacement de la recette (source asset)", async () => {
+      const im: RGBAImage = { width: 8, height: 8, data: new Uint8ClampedArray(8 * 8 * 4).fill(180) }
+      doublerLaLecture(async () => im)
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, cadrages: [] })
+      vi.spyOn(apiMatieres, "generer").mockResolvedValue({ generations: [{ identifiant: "gen1", statut: "en_attente", emplacements: [{ rang: 0, statut: "en_attente", resultat: null, raison: null }] }] })
+      const creer = vi.spyOn(tuiles, "creerFabrique").mockImplementation(async (_p, e) => ensembleDepuis(e))
+      let appels = 0
+      vi.spyOn(fileLocale, "lire").mockImplementation(async () => {
+        appels++
+        return { etapes: [{ identifiant: "et1", cle: "image:gen1:0", projet: "jeu", acteur: "auteur", nature: "image", moteur: "m", modele: "mod",
+          etat: appels < 2 ? "en_cours" : "termine", travail_externe: null, raison: "", soumission_engagee: true,
+          cree_le: 0, demarre_le: 0, termine_le: appels < 2 ? null : 1, duree_s: appels < 2 ? null : 4, temperature: "chaud" }], regle: "", mesures: [] }
+      })
+      await ouvrirGenerer()
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "de la pierre" } })
+      fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des dalles" } })
+      fireEvent.click(screen.getByRole("button", { name: "Générer 4 tirages" }))
+      await screen.findByRole("button", { name: "Tirage pour Surface · en cours" })
+      const tirage = await waitFor(() => screen.getByRole("button", { name: "Tirage pour Surface · prêt" }))
+      fireEvent.click(tirage)
+      expect(await screen.findByRole("button", { name: "Surface · Surface" })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
+      await waitFor(() => expect(creer).toHaveBeenCalled())
+      expect(creer.mock.calls[0][1].recette.emplacements.surface).toMatchObject({ source: "asset", asset: "gen1-0" })
+    })
   })
 
   it("vérifie la planche pour de vrai, puis relit et dépose la livraison", async () => {

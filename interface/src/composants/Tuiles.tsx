@@ -135,7 +135,7 @@ export function Tuiles({ projet, vue, onVue, onNoms, matieres: donnees = [], suj
   else if (ensemble && !ensemble.recette) corps = <EditeurTuiles key={ensemble.identifiant} ensemble={ensemble} onGarder={e => setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)])} onAsset={onAsset} onLivraisons={onLivraisons} />
   else if (!edition) corps = <p role="status" className="text-[13px] text-encre-3">{charge ? "Lecture du jeu de tuiles…" : "Lecture des jeux de tuiles…"}</p>
   else if (courante.livraison) corps = <LivraisonDuJeu projet={projet} edition={edition} onRetour={() => aller({ jeu: courante.jeu })} onLivraisons={onLivraisons} />
-  else corps = <AtelierDuJeu key={cle} edition={edition} matieres={matieres} modifie={() => estModifie(edition)} occupe={occupe}
+  else corps = <AtelierDuJeu key={cle} projet={projet} edition={edition} matieres={matieres} modifie={() => estModifie(edition)} occupe={occupe}
     message={estModifie(edition) ? (edition.jeu.identifiant ? "Modifications non enregistrées" : "Pas encore enregistré") : statut}
     onNom={nom => { edition.jeu.nom = nom; maj() }}
     onEnregistrer={() => void enregistrer(edition)}

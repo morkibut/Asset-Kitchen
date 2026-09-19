@@ -244,16 +244,29 @@ part vers ComfyUI avec le style `klein9b-tiles-raccordable` :
 
 Les tirages reviennent comme des assets de nature « matière ».
 
-- [ ] Le texte affiché est exactement celui qui part. Un essai compare le portage Python aux
+- [x] Le texte affiché est exactement celui qui part. Un essai compare le portage Python aux
       sorties de `composerPrompt` sur les cas des essais de sc-clone.
-- [ ] Le motif demandé tient dans **une seule pièce**. Le texte nomme le compte et la taille
+      *(`tests/test_tu5_matieres.py`, déjà commité. Vérifié aussi à l'écran : « Voir le texte
+      envoyé » affiche mot pour mot ce que `POST …/preview` renvoie, jamais un texte composé
+      côté client.)*
+- [x] Le motif demandé tient dans **une seule pièce**. Le texte nomme le compte et la taille
       (« exactly four huge square flagstones, two by two »), comme la règle D2/T26 de
       sc-clone.
-- [ ] L'écran annonce une attente (environ 2 min par image, mesurée sur la machine) et jamais
+      *(Le produit ne réécrit jamais le texte de l'auteur — `test_motif_qui_ne_dit_pas_le_compte_nest_pas_reecrit`
+      — donc c'est à l'auteur de nommer le compte ; le champ « Le motif » en montre l'exemple par
+      son repère : « de grandes dalles carrées, deux par deux ».)*
+- [x] L'écran annonce une attente (environ 2 min par image, mesurée sur la machine) et jamais
       un prix. Une génération se suit et s'annule dans la file locale existante.
-- [ ] Si ComfyUI, le poids du style ou le nœud de raccord manque, le bouton est grisé et dit ce
+      *(« Gratuit, sur ta machine · environ 2 min par image » par défaut, remplacé par la
+      médiane mesurée dès qu'elle existe. La progression est lue sur `GET /api/local-queue`,
+      comme tout calcul local.)*
+- [x] Si ComfyUI, le poids du style ou le nœud de raccord manque, le bouton est grisé et dit ce
       qui manque et où le poser. L'atelier ne modifie jamais ComfyUI.
-- [ ] Choisir un tirage le pose dans l'emplacement, et la carte se redessine.
+      *(`GET …/materials/availability` lu à l'ouverture de l'onglet ; indisponible, le bouton
+      « Générer » est désactivé et la ligne sous lui dit ce qui manque — rien n'est envoyé.)*
+- [x] Choisir un tirage le pose dans l'emplacement, et la carte se redessine.
+      *(`interface/src/composants/AtelierTuiles.tsx`, `OngletGenerer` ; vu au navigateur sur
+      l'atelier jetable TU3 avec ComfyUI doublé : la carte change de matière au clic.)*
 
 ### TU6 · Les mêmes couleurs pour toutes les matières
 

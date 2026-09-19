@@ -13,6 +13,13 @@ lancement — sans ce `build`, on regarde l'ancienne interface.
 temporaire, sur le port **8511**, avec le fournisseur double des essais : rien
 n'est payé, rien n'est écrit dans `donnees/`. Modèle : `essais/atelier_jetable_son.py`.
 
+**ComfyUI est doublé** (TU5, `docs/PLAN-tuiles.md` § TU5) — le double
+`ComfyMatiereDouble` de `tests/test_tu5_matieres.py`, raccordé comme
+`tests/test_au7_au8.raccorder` le fait : `/object_info` porte le relevé réel
+du style `klein9b-tiles-raccordable` (`tests/test_ml2.OBJECT_INFO`), et
+`/prompt`, `/history`, `/view` rendent chaque tirage sans lancer aucun calcul
+réel. L'onglet « Générer » du tiroir des matières est donc disponible d'office.
+
 Ce que l'atelier peuple, par les vraies routes HTTP :
 
 1. le jeu « Les marais d'ambre », en pixel art de 32 carrés — la taille que le
@@ -52,6 +59,8 @@ from fastapi.testclient import TestClient  # noqa: E402
 from atelier.api.app import creer_application  # noqa: E402
 from atelier.services import Atelier  # noqa: E402
 from conftest import AnimateurMuet, FournisseurDouble  # noqa: E402
+from tests.test_au7_au8 import raccorder  # noqa: E402
+from tests.test_tu5_matieres import ComfyMatiereDouble  # noqa: E402
 
 PORT = 8511
 
@@ -135,9 +144,12 @@ def principal() -> int:
     _verifier_port_libre(PORT)
     dossier = Path(tempfile.mkdtemp(prefix="atelier-tu3-"))
     print(f"Dossier jetable : {dossier}")
+    comfy = ComfyMatiereDouble()
     atelier = Atelier(racine=dossier, fabrique_fournisseur=lambda: FournisseurDouble(), fabrique_animateur=lambda: AnimateurMuet())
+    raccorder(atelier, comfy)
     peupler(atelier)
     relu = Atelier(racine=dossier, fabrique_fournisseur=lambda: FournisseurDouble(), fabrique_animateur=lambda: AnimateurMuet())
+    raccorder(relu, comfy)
     print(f"\nAtelier jetable sur http://127.0.0.1:{PORT} — Ctrl-C pour arrêter")
     print("(celui de l'auteur, sur 8420, n'a pas été touché ; rien n'a été payé)")
     print()
@@ -146,6 +158,9 @@ def principal() -> int:
     print("  → Nouveau jeu de tuiles : Sol, Chemin, Mur, et « Autres formats » ; 32 px d'office.")
     print("  → L'atelier : peindre, effacer au clic droit, Île au hasard, délier la bordure,")
     print("    « Mes matières » → Vase du marais ; Enregistrer ; revenir à la liste ; rouvrir.")
+    print("  → Le tiroir des matières, onglet « Générer » (TU5) : le texte envoyé (le même que")
+    print("    /preview), générer 2 ou 3 tirages, les voir arriver dans la file des calculs")
+    print("    locaux, puis cliquer un tirage pour le poser dans l'emplacement.")
     print("  → Livrer à Godot : la relecture, puis Déposer.")
     uvicorn.run(creer_application(relu), host="127.0.0.1", port=PORT, log_level="warning")
     return 0

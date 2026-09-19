@@ -27,9 +27,10 @@ import { creerEtat, poserMatiere, poserImage, relier, vider, rafraichirMatieres,
 import { dessinerScene, peintreCanvas, peintrePixels, descripteurScene } from "./moteur/tile-scene"
 import { cellMaskAt, checkMaskSetAtlas, checkWallAtlas, mulberry32 } from "./moteur/tile-check"
 import { maskAtPosition, atlasPosition, TILE_MASK_SETS, NEIGHBOUR_BITS, SIDE_BITS, CORNER_BITS, type MaskSet } from "./moteur/tile-masks"
+import { cadrageParDefaut, LISTE_CADRAGES } from "./moteur/tile-ia-prompt"
 import type { CanvasContext2DLike, CanvasLike, RGBAImage } from "./moteur/types"
 
-export { LISTE_MATIERES, MATIERES, PAR_ID }
+export { LISTE_MATIERES, MATIERES, PAR_ID, cadrageParDefaut, LISTE_CADRAGES }
 
 // ── Les sortes ───────────────────────────────────────────────────────────────
 
@@ -109,6 +110,22 @@ export type Carte =
 
 export type Fond = { matiere: string } | { asset: string; nom: string }
 
+/** Le texte de génération d'une matière (TU5) : gardé dans **l'état du jeu en
+ *  cours d'édition**, jamais dans la recette — la recette (`atelier/domaine/
+ *  recette_tuiles.py`) ne connaît que la sorte, la taille, la graine, les
+ *  emplacements et les réglages du moteur ; ce que l'auteur tape dans l'onglet
+ *  « Générer » ne survit qu'à la session d'édition, comme le zoom ou le
+ *  personnage affiché. `pierre` est commune à toutes les matières du jeu ;
+ *  `motifs` et `cadrages` sont par emplacement, comme dans la maquette
+ *  validée (`docs/maquettes-atelier-unifie/tuiles.js`). */
+export type TexteMatieres = { pierre: string; motifs: Record<string, string>; cadrages: Record<string, string> }
+
+/** Une matière en cours de fabrication, ou déjà arrivée — tenue sur le jeu
+ *  pour survivre à un changement d'emplacement sans perdre les tirages en
+ *  cours (la maquette les garde tous, quel que soit l'emplacement visé au
+ *  moment de cliquer « Générer »). */
+export type TirageMatiere = { identifiant: string; rang: number; statut: string; pourNom: string }
+
 export type JeuEdite = {
   identifiant: string | null
   revision: number | null
@@ -122,6 +139,8 @@ export type JeuEdite = {
   assets: Record<string, string>
   fond: Fond
   carte: Carte | null
+  texte: TexteMatieres
+  tirages: TirageMatiere[]
 }
 
 export const COLONNES = 18
@@ -134,7 +153,8 @@ export function nouveauJeu({ nom, sorte, taille, graine }: { nom: string; sorte:
   const etat = creerEtat()
   poserMatiere(etat, "surface", d.surface, taille, graine)
   if (d.face) poserMatiere(etat, "face", d.face, taille, graine)
-  return { identifiant: null, revision: null, nom, sorte, taille, graine, reglages: reglagesParDefaut(sorte), etat, assets: {}, fond: { matiere: d.fond }, carte: carteDefaut(sorte) }
+  return { identifiant: null, revision: null, nom, sorte, taille, graine, reglages: reglagesParDefaut(sorte), etat, assets: {}, fond: { matiere: d.fond }, carte: carteDefaut(sorte),
+    texte: { pierre: "", motifs: {}, cadrages: {} }, tirages: [] }
 }
 
 /** Les emplacements que l'écran montre, dans l'ordre de la maquette. */
@@ -255,7 +275,8 @@ export function jeuDepuisRecette(
     poser(id, e)
   }
   const d = DEFAUTS_SORTE[r.sorte]
-  const j: JeuEdite = { identifiant, revision, nom, sorte: r.sorte, taille: r.taille, graine: r.graine, reglages: { ...r.reglages }, etat, assets, fond: { matiere: d.fond }, carte: null }
+  const j: JeuEdite = { identifiant, revision, nom, sorte: r.sorte, taille: r.taille, graine: r.graine, reglages: { ...r.reglages }, etat, assets, fond: { matiere: d.fond }, carte: null,
+    texte: { pierre: "", motifs: {}, cadrages: {} }, tirages: [] }
   j.carte = carte ? depuisCarteServeur(j, carte) : carteDefaut(r.sorte)
   return j
 }

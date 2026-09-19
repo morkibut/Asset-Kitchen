@@ -21,6 +21,35 @@ export type EnsembleTuiles = ReglesTuiles & {
 export type EnvoiFabrique = { nom: string; recette: Recette; atlas: string; carte: CarteServeur }
 const racine = (p: string) => `/projects/${encodeURIComponent(p)}/tilesets`
 const chemin = (p: string, id: string) => `${racine(p)}/${encodeURIComponent(id)}`
+
+// ── TU5 : les matières générées sur la machine ───────────────────────────────
+
+/** Un cadrage possible pour une matière, tel que le serveur les rend
+ *  (`atelier/domaine/texte_matiere.py`, `LISTE_CADRAGES`). */
+export type Cadrage = { id: string; nom: string; aide: string }
+export type ApercuMatiere = { texte: string; negatif: string; taille: number; cadrages: Cadrage[] }
+export type DisponibiliteMatieres = { disponible: boolean; manque: string[]; modele: string | null }
+export type ResultatEmplacement = { fichier: string; largeur: number; hauteur: number; type_media: string; octets: number }
+export type EmplacementMatiere = { rang: number; statut: string; resultat: ResultatEmplacement | null; raison: string | null }
+/** Une matière en cours de fabrication : la forme renvoyée par `POST …/generate`
+ *  (`Generation.en_json()`, TU2), réduite à ce que cet onglet lit. Chaque
+ *  génération n'a qu'un seul emplacement (`rang=0`, `soumettre_matiere`) : son
+ *  asset, une fois arrivé, porte l'identifiant `${identifiant}-0`
+ *  (`atelier.domaine.asset.identifiant_de`). */
+export type GenerationMatiere = { identifiant: string; statut: string; emplacements: EmplacementMatiere[] }
+
+const racineMatieres = (p: string) => `/projects/${encodeURIComponent(p)}/materials`
+/** L'identifiant de l'asset qu'une génération de matière rendra — avant même
+ *  qu'elle soit terminée, pour pouvoir le retrouver dans la bibliothèque dès
+ *  que son emplacement passe à « reussie ». */
+export const assetDeGeneration = (g: Pick<GenerationMatiere, "identifiant">, rang = 0) => `${g.identifiant}-${rang}`
+export const matieres = {
+  disponibilite: (p: string) => appeler<DisponibiliteMatieres>(`${racineMatieres(p)}/availability`),
+  apercu: (p: string, r: { pierre: string; motif: string; cadrage: string }) =>
+    appeler<ApercuMatiere>(`${racineMatieres(p)}/preview`, { method: "POST", body: JSON.stringify(r) }),
+  generer: (p: string, r: { pierre: string; motif: string; cadrage: string; tirages: number; graine?: number }) =>
+    appeler<{ generations: GenerationMatiere[] }>(`${racineMatieres(p)}/generate`, { method: "POST", body: JSON.stringify(r) }),
+}
 export const reglesTuiles = (e: EnsembleTuiles): ReglesTuiles => ({ nom: e.nom, terrains: e.terrains, cellules: e.cellules, carte: e.carte })
 export const tuiles = {
   lister: (p: string) => appeler<EnsembleTuiles[]>(racine(p)),
