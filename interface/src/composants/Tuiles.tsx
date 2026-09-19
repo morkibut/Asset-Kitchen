@@ -31,7 +31,7 @@ const estModifie = (ed: Edition) => { const s = signatures(ed); return s.signatu
 /** Le lieu *Les tuiles* (`TU3`) : la liste des jeux, le choix de la sorte, l'atelier
  *  d'un jeu fabriqué et sa livraison. Un jeu fait **à partir d'une image déjà faite**
  *  s'ouvre toujours dans l'éditeur d'AU13, plus bas, inchangé. */
-export function Tuiles({ projet, vue, onVue, onNoms, matieres: donnees = [], sujetsMatieres = [], tailleDuJeu = 32, onAsset, onLivraisons }: {
+export function Tuiles({ projet, vue, onVue, onNoms, matieres: donnees = [], sujetsMatieres = [], tailleDuJeu = 32, paletteUnivers = [], onAsset, onLivraisons, onUnivers }: {
   projet: string; vue?: VueTuiles; onVue?: (v: VueTuiles) => void
   /** Les noms des jeux, pour le fil d'Ariane — `""` pour le jeu neuf. */
   onNoms?: (noms: Record<string, string>) => void
@@ -40,7 +40,11 @@ export function Tuiles({ projet, vue, onVue, onNoms, matieres: donnees = [], suj
    *  dans une case ou non — remplissent « Mes matières ». */
   sujetsMatieres?: { identifiant: string; nom: string }[]
   tailleDuJeu?: number
+  /** La palette de l'univers du projet (TU6) : `[]` sans palette. */
+  paletteUnivers?: readonly string[]
   onAsset?: (a: Asset) => void; onLivraisons?: () => void
+  /** Le lien « Voir l’univers » quand la palette du jeu manque (TU6). */
+  onUnivers?: () => void
 }) {
   const [trouvees, setTrouvees] = useState<MatiereDuJeu[]>([])
   const cleSujets = sujetsMatieres.map(s => `${s.identifiant}|${s.nom}`).join("/")
@@ -74,6 +78,9 @@ export function Tuiles({ projet, vue, onVue, onNoms, matieres: donnees = [], suj
   const cle = courante?.jeu ?? ""
   const ensemble = courante?.jeu ? liste.find(e => e.identifiant === courante.jeu) ?? null : null
   const edition = courante && !courante.ecran ? editions.current.get(cle) ?? null : null
+  // La palette de l'univers change avec le projet, pas avec la recette (TU6) : elle se
+  // tient à jour sur le jeu ouvert à chaque rendu, sans passer par `enregistrer`.
+  if (edition) edition.jeu.paletteUnivers = paletteUnivers
   const nomsAssets = Object.fromEntries(matieres.map(m => [m.identifiant, m.nom]))
 
   // Un jeu fabriqué s'ouvre depuis sa recette, une fois les images qu'elle nomme lues.
@@ -139,7 +146,8 @@ export function Tuiles({ projet, vue, onVue, onNoms, matieres: donnees = [], suj
     message={estModifie(edition) ? (edition.jeu.identifiant ? "Modifications non enregistrées" : "Pas encore enregistré") : statut}
     onNom={nom => { edition.jeu.nom = nom; maj() }}
     onEnregistrer={() => void enregistrer(edition)}
-    onLivrer={() => void (async () => { if (estModifie(edition) || !edition.jeu.identifiant) { if (!(await enregistrer(edition))) return } aller({ jeu: edition.jeu.identifiant, livraison: true }) })()} />
+    onLivrer={() => void (async () => { if (estModifie(edition) || !edition.jeu.identifiant) { if (!(await enregistrer(edition))) return } aller({ jeu: edition.jeu.identifiant, livraison: true }) })()}
+    onUnivers={onUnivers} />
 
   const atelier = !!edition && !courante?.livraison
   return <section className={`flex h-full min-h-0 flex-col bg-papier p-[22px] text-encre ${atelier ? "overflow-hidden" : "overflow-auto"}`}>

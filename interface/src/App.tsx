@@ -2093,8 +2093,10 @@ function AtelierApp() {
             // … et celles qui n'ont pas de case : une matière n'a pas de pose.
             sujetsMatieres={personnages.filter((p) => p.type === "matière").map((p) => ({ identifiant: p.identifiant, nom: p.nom }))}
             tailleDuJeu={tailleDeLUnivers(univers)}
+            paletteUnivers={univers.palette}
             onAsset={(a) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: a.identifiant }))}
             onLivraisons={() => setPile((p) => entrer(sortir(p, "tuiles"), { genre: "sortie" }))}
+            onUnivers={() => allerA("univers")}
           />
         )}
 

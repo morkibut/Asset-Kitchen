@@ -62,6 +62,14 @@ REGLAGES: dict[str, tuple[str, Any, Any, frozenset, str]] = {
     "hauteurMur": ("entier", (1, 8), 2, frozenset({"mur"}), "La hauteur du mur"),
     "ombreMur": ("parmi", _NIVEAUX, "discrete", frozenset({"mur"}), "L’ombre portée du mur"),
     "penombre": ("parmi", _NIVEAUX, "discrete", frozenset({"mur"}), "La pénombre d’angle du mur"),
+    # TU6 — la palette commune (T26 bis de sc-clone) : toutes les matières du jeu
+    # ramenées sur les couleurs de la première (la surface). Cochée par défaut.
+    "memesCouleurs": ("booleen", None, True, _TOUTES, "Les mêmes couleurs pour toutes les matières"),
+    # TU6 — la palette du jeu (T31) : quand l'univers en a une, elle REMPLACE la
+    # palette commune ci-dessus plutôt que de s'y ajouter (l'écran refuse les deux
+    # à la fois côté rendu, pas ici : le serveur ne connaît pas la palette de
+    # l'univers, seulement ce que le jeu de tuiles a demandé).
+    "paletteJeu": ("booleen", None, False, _TOUTES, "La palette du jeu"),
 }
 
 _SORTES_EN_CLAIR = {"sol": "un sol", "chemin": "un chemin", "mur": "un mur", "coins-15": "un jeu 15 pièces",

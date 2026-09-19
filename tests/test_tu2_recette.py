@@ -176,6 +176,19 @@ async def test_second_terrain_la_case_tout_dessous_et_l_ordre_des_terrains(fixe)
     assert set(par_xy[(0, 0)]["raccords"].values()) == {"dessous"} and par_xy[(0, 0)]["terrain"] == "surface"
 
 
+async def test_palette_commune_par_defaut_et_palette_du_jeu_reglable(fixe):
+    """TU6 — deux réglages nouveaux : « mêmes couleurs » cochée par défaut, « palette du
+    jeu » décochée par défaut. Le serveur ne connaît que le booléen ; c'est l'écran qui
+    sait si l'univers a une palette à désigner."""
+    a, p, _ = fixe
+    e = sol(a, p)
+    assert e["recette"]["reglages"]["memesCouleurs"] is True
+    assert e["recette"]["reglages"]["paletteJeu"] is False
+    e2 = a.tuiles.creer(p, {"nom": "Sans palette", "recette": recette(reglages={"memesCouleurs": False, "paletteJeu": True}), "atlas": atlas(8, 6, 32)})
+    assert e2["recette"]["reglages"]["memesCouleurs"] is False
+    assert e2["recette"]["reglages"]["paletteJeu"] is True
+
+
 async def test_mur_chemin_et_extras(fixe):
     a, p, _ = fixe
     mur = a.tuiles.creer(p, {"nom": "Rempart", "atlas": atlas(8, 11, 16),
@@ -214,6 +227,8 @@ async def test_mur_chemin_et_extras(fixe):
     ({"reglages": {"nuances": 3}}, "nuances"),
     ({"reglages": {"hauteurMur": 2}}, "ne s’applique pas"),
     ({"reglages": {"animation": 2, "animationAtlas": 2}}, "pas les deux"),
+    ({"reglages": {"memesCouleurs": "oui"}}, "coche ou se décoche"),
+    ({"reglages": {"paletteJeu": 1}}, "coche ou se décoche"),
     ({"emplacements": {"surface": {"source": "integree", "nom": "marbre"}}}, "marbre"),
     ({"emplacements": {"surface": {"source": "asset", "asset": "introuvable"}}}, "introuvable"),
     ({"emplacements": {"face": {"source": "vide"}}}, "face du mur"),

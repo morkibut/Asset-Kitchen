@@ -23,6 +23,7 @@ import {
   wallAtlasDescriptor, biaisAtlasDescriptor, decorAtlasDescriptor, variantAtlasDescriptor, animationAtlasDescriptor,
 } from "./moteur/vendor/tileset-engine"
 import { MATIERES, LISTE_MATIERES, rendreMatiere, couleurMoyenne, tolerePhase } from "./moteur/tile-materials"
+import { NOMBRE_COULEURS, paletteDeReferenceLab } from "./moteur/tile-palette"
 import { creerEtat, poserMatiere, poserImage, relier, vider, rafraichirMatieres, texturesDe, PAR_ID, type EtatEmplacements } from "./moteur/tile-emplacements"
 import { dessinerScene, peintreCanvas, peintrePixels, descripteurScene } from "./moteur/tile-scene"
 import { cellMaskAt, checkMaskSetAtlas, checkWallAtlas, mulberry32 } from "./moteur/tile-check"
@@ -82,6 +83,10 @@ const REGLAGES_DE_L_ECRAN: Record<string, { defaut: string | number | boolean; s
   hauteurMur: { defaut: 2, sortes: ["mur"] },
   ombreMur: { defaut: "discrete", sortes: ["mur"] },
   penombre: { defaut: "discrete", sortes: ["mur"] },
+  // TU6 — la palette commune (T26 bis) est cochée par défaut ; la palette du jeu (T31)
+  // ne l'est pas, et n'a d'effet que si l'univers en a une (voir `reglagesMoteur`).
+  memesCouleurs: { defaut: true },
+  paletteJeu: { defaut: false },
 }
 
 export function reglagesParDefaut(sorte: Sorte): Reglages {
@@ -141,6 +146,11 @@ export type JeuEdite = {
   carte: Carte | null
   texte: TexteMatieres
   tirages: TirageMatiere[]
+  /** La palette de l'univers du projet (`Univers.palette`, des `#rrggbb`), pour la
+   *  « palette du jeu » (TU6). **Tenue à jour par l'appelant** (`Tuiles.tsx`), qui seul
+   *  connaît l'univers ouvert — ni `nouveauJeu` ni `jeuDepuisRecette` n'appellent le
+   *  serveur. Vide, `reglages.paletteJeu` n'a aucun effet, et l'écran le dit. */
+  paletteUnivers: readonly string[]
 }
 
 export const COLONNES = 18
@@ -154,7 +164,7 @@ export function nouveauJeu({ nom, sorte, taille, graine }: { nom: string; sorte:
   poserMatiere(etat, "surface", d.surface, taille, graine)
   if (d.face) poserMatiere(etat, "face", d.face, taille, graine)
   return { identifiant: null, revision: null, nom, sorte, taille, graine, reglages: reglagesParDefaut(sorte), etat, assets: {}, fond: { matiere: d.fond }, carte: carteDefaut(sorte),
-    texte: { pierre: "", motifs: {}, cadrages: {} }, tirages: [] }
+    texte: { pierre: "", motifs: {}, cadrages: {} }, tirages: [], paletteUnivers: [] }
 }
 
 /** Les emplacements que l'écran montre, dans l'ordre de la maquette. */
@@ -276,7 +286,7 @@ export function jeuDepuisRecette(
   }
   const d = DEFAUTS_SORTE[r.sorte]
   const j: JeuEdite = { identifiant, revision, nom, sorte: r.sorte, taille: r.taille, graine: r.graine, reglages: { ...r.reglages }, etat, assets, fond: { matiere: d.fond }, carte: null,
-    texte: { pierre: "", motifs: {}, cadrages: {} }, tirages: [] }
+    texte: { pierre: "", motifs: {}, cadrages: {} }, tirages: [], paletteUnivers: [] }
   j.carte = carte ? depuisCarteServeur(j, carte) : carteDefaut(r.sorte)
   return j
 }
@@ -451,6 +461,37 @@ const idImage = (im: object | null | undefined) => {
   return idsImages.get(im)!
 }
 
+// ── La palette commune, et la palette du jeu (TU6) ───────────────────────────
+//
+// Les deux passent par le même mécanisme que la « palette de référence désignée » de
+// sc-clone (T31, `resolvePalette`/`appliquerPalette` dans `vendor/tileset-engine.js`) :
+// un descripteur Lab posé APRÈS la réduction, sur les cinq textures d'un coup — c'est
+// le moteur qui tient cet ordre (§ « T31 — la palette de référence » du fichier), pas
+// ce module. Aucune des deux ne touche au chemin `palette: null` d'avant cette tranche
+// quand elle ne s'applique pas : c'est ce qui garde le rendu identique au bit près à
+// celui de TU3 quand les deux réglages sont éteints.
+
+/** Une image 1×N, une couleur par pixel : le seul moyen de faire passer une palette
+ *  déjà connue (celle de l'univers, en `#rrggbb`) par le même relevé Lab pondéré que la
+ *  référence désignée — plutôt qu'un second chemin de quantification à côté de celui du
+ *  moteur. Poids égaux, alpha plein : chaque couleur de l'univers compte pour elle-même. */
+function imageDePalette(hex: readonly string[]): RGBAImage {
+  const data = new Uint8ClampedArray(Math.max(1, hex.length) * 4)
+  hex.forEach((h, i) => { const c = hexToRgb(h); data[i * 4] = c.r; data[i * 4 + 1] = c.g; data[i * 4 + 2] = c.b; data[i * 4 + 3] = 255 })
+  return { width: Math.max(1, hex.length), height: 1, data }
+}
+
+/** Le descripteur de palette à passer au moteur (`settings.palette`), ou `null` — rien
+ *  ne bouge. `paletteJeu` gagne dès que l'univers a une palette : « une référence
+ *  désignée remplace la palette commune » (T31). Sinon, `memesCouleurs` (coché par
+ *  défaut) ramène toutes les matières sur les ≤24 couleurs de la première — la surface,
+ *  le sol — et rien tant qu'elle n'a pas de texture à lire (couleur provisoire seule). */
+function paletteDuRendu(j: Pick<JeuEdite, "reglages" | "paletteUnivers">, surfaceTexture: RGBAImage | null): unknown {
+  if (j.reglages.paletteJeu === true && j.paletteUnivers.length) return paletteDeReferenceLab([imageDePalette(j.paletteUnivers)], j.paletteUnivers.length)
+  if (j.reglages.memesCouleurs === false || !surfaceTexture) return null
+  return paletteDeReferenceLab([surfaceTexture], NOMBRE_COULEURS)
+}
+
 export function reglagesMoteur(j: JeuEdite): Record<string, unknown> & { tilesetType: string; tileSize: number; seed: number } {
   const s = j.taille, r = j.reglages, S = SORTES[j.sorte], masques = !!S.set && S.type !== "topdown-17"
   rafraichirMatieres(j.etat, s, j.graine)
@@ -461,7 +502,7 @@ export function reglagesMoteur(j: JeuEdite): Record<string, unknown> & { tileset
     edgeRoughness: n("irregularite", 3) * s / 32, edgeFrequency: 5, edgePadding: 2 * s / 16,
     baseColor: couleur(r, "couleurSurface"), edgeColor: couleur(r, "couleurContour"), edgeFade: 3 * s / 32,
     shades: n("nuances", 4), textureNoise: 12, fleckAmount: 6, seed: j.graine, relief: n("relief", 4) / 10,
-    reductionMode: (r.reduction as string) || "contraste", palette: null,
+    reductionMode: (r.reduction as string) || "contraste", palette: paletteDuRendu(j, tex.surfaceTexture),
     wallShadowAlpha: NIVEAUX_OMBRE[String(r.ombreMur ?? "discrete")] ?? 110, wallCornerOcclusion: NIVEAUX_PENOMBRE[String(r.penombre ?? "discrete")] ?? 50,
     whiteBackground: r.fondBlanc === true, showGrid: false, pixelFlecks: true,
     variants: masques ? n("variantes", 0) : 0, texturePhase: j.etat.surface.source === "matiere" && tolerePhase(j.etat.surface.matiere),

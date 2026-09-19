@@ -6,7 +6,7 @@ import { describe, expect, test, vi } from "vitest"
 import { installerBouchonCanvas } from "./moteur/__tests__/canvas-shim"
 import {
   atlasDe, changerSecondTerrain, delier, depuisCarteServeur, dessinerCarte, imageDuFond, jeuDepuisRecette, nouveauJeu,
-  oublierLesRendus, poserAsset, poserIntegree, recetteDe, versCarteServeur, verifier,
+  oublierLesRendus, poserAsset, poserIntegree, recetteDe, reglagesMoteur, versCarteServeur, verifier,
   type JeuEdite, type Recette, type Sorte,
 } from "./atelier"
 import { encoderPng } from "./png"
@@ -154,7 +154,10 @@ describe("Le dessus du mur (TU7)", () => {
     test(`${surface} en ${taille} px`, () => {
       const sol = nouveauJeu({ nom: "Sol", sorte: "sol", taille, graine: 4242 })
       const mur = nouveauJeu({ nom: "Mur", sorte: "mur", taille, graine: 4242 })
-      for (const j of [sol, mur]) { poserIntegree(j, "surface", surface); regler(j) }
+      // La palette commune (TU6, cochée par défaut) est hors sujet ici : ce test mesure la
+      // pénombre du mur, un effet de nuance bien plus fin que ce qu'un partage à 24
+      // couleurs laisse passer — elle absorberait la différence qu'on cherche à voir.
+      for (const j of [sol, mur]) { poserIntegree(j, "surface", surface); regler(j); j.reglages.memesCouleurs = false }
       mur.reglages.hauteurMur = 5
       mur.reglages.ombreMur = "marquee"
       mur.reglages.penombre = "aucune"
@@ -199,5 +202,66 @@ describe("Vérifier", () => {
     const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 31415 })
     const v = verifier(j, atlasDe(j))
     expect(v).toEqual({ defauts: [], pieces: 47 })
+  })
+})
+
+describe("TU6 — les mêmes couleurs pour toutes les matières", () => {
+  type Descripteur = { palette: { rgb: [number, number, number] }[] } | null
+
+  test("cochée par défaut, et le rendu se raccorde toujours", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 4242 })
+    expect(j.reglages.memesCouleurs).toBe(true)
+    expect(j.reglages.paletteJeu).toBe(false)
+    const d = reglagesMoteur(j).palette as Descripteur
+    expect(d).not.toBeNull()
+    expect(d!.palette.length).toBeLessThanOrEqual(24)
+    // Aucune couture nouvelle : la quantification est la même fonction pour tous les
+    // pixels, donc deux pixels qui se raccordaient avant se raccordent encore.
+    expect(verifier(j, atlasDe(j))).toEqual({ defauts: [], pieces: 47 })
+  })
+
+  test("décochée, le réglage envoyé au moteur redevient « rien » — le chemin de TU3, au bit près", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 4242 })
+    j.reglages.memesCouleurs = false
+    expect(reglagesMoteur(j).palette).toBeNull()
+  })
+
+  test("toutes les matières se ramènent sur les couleurs de la surface, l'alpha ne bouge pas", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 4242 })
+    poserIntegree(j, "surface", "pierre")
+    changerSecondTerrain(j, true)
+    j.reglages.arrondi = 6
+    const avecAlpha = atlasDe(j).pixels
+    oublierLesRendus()
+    j.reglages.memesCouleurs = false
+    const sansPalette = atlasDe(j).pixels
+    expect(avecAlpha.data.length).toBe(sansPalette.data.length)
+    for (let i = 0; i < avecAlpha.data.length; i += 4) expect(avecAlpha.data[i + 3]).toBe(sansPalette.data[i + 3])
+  })
+
+  test("la palette du jeu, quand elle existe, remplace la palette commune", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 32, graine: 4242 })
+    j.reglages.paletteJeu = true
+    // Sans palette d'univers, le réglage n'a aucun effet : la palette commune reprend la main.
+    expect(j.paletteUnivers).toEqual([])
+    const commune = reglagesMoteur(j).palette as Descripteur
+    expect(commune).not.toBeNull()
+    j.paletteUnivers = ["#204080", "#a0c060", "#ffffff", "#101010"]
+    const duJeu = reglagesMoteur(j).palette as Descripteur
+    expect(duJeu).not.toBeNull()
+    expect(duJeu!.palette.length).toBe(4)
+    const rgb = new Set(duJeu!.palette.map((c) => c.rgb.map(Math.round).join(",")))
+    expect(rgb).toEqual(new Set(["32,64,128", "160,192,96", "255,255,255", "16,16,16"]))
+  })
+
+  test("enregistrer puis rouvrir redonne le même atlas, palette du jeu comprise", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "chemin", taille: 32, graine: 99 })
+    j.reglages.paletteJeu = true
+    j.paletteUnivers = ["#336699", "#99cc33"]
+    const avant = atlasDe(j).pixels
+    oublierLesRendus()
+    const j2 = rouvrir(j)
+    j2.paletteUnivers = j.paletteUnivers
+    expect(Buffer.from(atlasDe(j2).pixels.data)).toEqual(Buffer.from(avant.data))
   })
 })

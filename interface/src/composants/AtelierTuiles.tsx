@@ -206,10 +206,12 @@ const OPTIONS: Record<string, [string | number, string][]> = {
 
 export type Edition = { jeu: JeuEdite; signature: string; carte: string; nom: string }
 
-export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, message, onEnregistrer, onLivrer, onNom }: {
+export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, message, onEnregistrer, onLivrer, onNom, onUnivers }: {
   projet: string
   edition: Edition; matieres: MatiereDuJeu[]; modifie: () => boolean; occupe: boolean; message: ReactNode
   onEnregistrer: () => void; onLivrer: () => void; onNom: (nom: string) => void
+  /** Le lien « Voir l’univers » quand la palette du jeu manque (TU6). */
+  onUnivers?: () => void
 }) {
   const j = edition.jeu, S = SORTES[j.sorte]
   const [, maj] = useReducer((n: number) => n + 1, 0)
@@ -226,7 +228,10 @@ export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, messa
   const peint = useRef<boolean | null>(null)
 
   // La recette qui décide de l'atlas : quand elle change, la planche se refait.
-  const cle = JSON.stringify(recetteDe(j)) + "|" + j.taille
+  // La palette de l'univers n'est pas dans la recette (TU6) : elle vient du projet, pas
+  // du jeu de tuiles — mais elle décide du rendu dès que « Palette du jeu » est cochée,
+  // donc elle entre dans la clé qui commande le nouveau rendu.
+  const cle = JSON.stringify(recetteDe(j)) + "|" + j.taille + "|" + j.paletteUnivers.join(",")
   useEffect(() => {
     const t = setTimeout(() => {
       try { setAtlas(atlasDe(j)) } catch (e) { setErreur(e instanceof Error ? e.message : String(e)) }
@@ -397,6 +402,14 @@ export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, messa
               <Choix nom="Nuances par matière" cle="nuances" jeu={j} onChange={reglage} />
               {S.mur && <><Choix nom="Ombre du mur" cle="ombreMur" jeu={j} onChange={reglage} /><Choix nom="Pénombre dans les angles" cle="penombre" jeu={j} onChange={reglage} /></>}
               <Choix nom="Réduire une image" cle="reduction" jeu={j} onChange={reglage} aide="Pour une image plus grande qu’une pièce." />
+              <label className="flex items-center gap-[8px] py-[4px] text-[13px] text-encre-controle">
+                <input type="checkbox" checked={j.reglages.paletteJeu === true} disabled={!j.paletteUnivers.length}
+                  onChange={(e) => reglage("paletteJeu", e.target.checked)} />
+                Palette du jeu
+              </label>
+              <p className="mb-[4px] text-[12px] text-encre-3">{j.paletteUnivers.length
+                ? `Remplace « Mêmes couleurs » par les ${j.paletteUnivers.length} couleurs de l’univers.`
+                : <>Indisponible — ce jeu n’a pas encore de palette.{onUnivers && <> <button type="button" className="underline" onClick={onUnivers}>Voir l’univers</button></>}</>}</p>
               {S.set && S.type !== "topdown-17" && <><Choix nom="Variantes de la pièce pleine" cle="variantes" jeu={j} onChange={reglage} /><Choix nom="Animation de la pièce pleine" cle="animation" jeu={j} onChange={reglage} /></>}
               <label className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-[8px] gap-y-[4px] py-[4px] text-[13px] text-encre-controle"><span>Graine</span>
                 <input type="number" min={0} value={j.graine} onChange={(e) => changer(() => { j.graine = Math.max(0, Number(e.target.value) || 0) })}
@@ -535,7 +548,6 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
   const [apercu, setApercu] = useState<{ texte: string; negatif: string; cadrages: Cadrage[] } | null>(null)
   const [texteOuvert, setTexteOuvert] = useState(false)
   const [nTirages, setNTirages] = useState(4)
-  const [commune, setCommune] = useState(true)
   const [occupe, setOccupe] = useState(false)
   const [attente, setAttente] = useState(ATTENTE_PAR_DEFAUT)
 
@@ -634,7 +646,12 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
       <button type="button" className={LIEN} aria-expanded={texteOuvert} onClick={() => setTexteOuvert((v) => !v)}>{texteOuvert ? "Cacher le texte envoyé" : "Voir le texte envoyé"}</button>
       {texteOuvert && <p className="mesure mt-[8px] whitespace-pre-wrap rounded-7 border border-trait bg-papier p-[8px] text-[12px] text-encre-2">{apercu?.texte || "Écris de quoi c’est fait et le motif : le texte envoyé s’affichera ici."}</p>}
     </div>
-    <label className="flex items-center gap-[8px] text-[13px] text-encre-controle"><input type="checkbox" checked={commune} onChange={(e) => setCommune(e.target.checked)} />Mêmes couleurs pour toutes les matières</label>
+    <label className="flex items-center gap-[8px] text-[13px] text-encre-controle">
+      <input type="checkbox" checked={j.reglages.memesCouleurs !== false} disabled={j.reglages.paletteJeu === true && !!j.paletteUnivers.length}
+        onChange={(e) => { j.reglages.memesCouleurs = e.target.checked; onPose() }} />
+      Mêmes couleurs pour toutes les matières
+      {j.reglages.paletteJeu === true && !!j.paletteUnivers.length && <small className="text-[12px] text-encre-3"> — remplacée par la palette du jeu</small>}
+    </label>
     <div className="flex flex-wrap items-center gap-[8px]">
       <label className="flex items-center gap-[8px] text-[13px] text-encre-controle">Tirages
         <input type="number" min={1} max={8} value={nTirages} onChange={(e) => setNTirages(Math.max(1, Math.min(8, Number(e.target.value) || 1)))}

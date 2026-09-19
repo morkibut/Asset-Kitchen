@@ -280,11 +280,28 @@ La palette commune de sc-clone (T26 bis) : toutes les matières d'un jeu sont ra
 La réduction passe toujours **avant** la palette. C'est un invariant mesuré dans sc-clone :
 54 couleurs au lieu de 6 dans l'autre ordre.
 
-- [ ] Palette commune : 24 couleurs au plus, toutes tirées de la référence, alpha intact.
-- [ ] La palette de l'univers, quand elle existe, remplace la palette commune. Quand elle
+- [x] Palette commune : 24 couleurs au plus, toutes tirées de la référence, alpha intact.
+      *(`interface/src/tuiles/atelier.ts`, `paletteDuRendu` : la référence est la texture de
+      « surface » — la première matière, le sol —, relevée par le même relevé Lab pondéré
+      que la « palette de référence désignée » de sc-clone (`paletteDeReferenceLab`,
+      `moteur/tile-palette.js`), à `NOMBRE_COULEURS` = 24. Posée dans `settings.palette`, le
+      moteur l'applique après la réduction, sur les cinq textures d'un coup — invariant du
+      moteur, vérifié en lisant `vendor/tileset-engine.js` (`resolvePalette`/
+      `appliquerPalette`, appelés dans `reduire()` juste après `resampleTexture`), pas
+      retouché. `interface/src/tuiles/atelier.test.ts` § TU6 vérifie le compte et l'alpha
+      intact sur un atlas réellement rendu.)*
+- [x] La palette de l'univers, quand elle existe, remplace la palette commune. Quand elle
       manque, l'écran dit « indisponible — ce jeu n'a pas encore de palette », avec le lien
       vers l'univers.
-- [ ] Sans palette, le rendu est identique au bit près à celui de TU3.
+      *(Nouveau réglage `paletteJeu` (`recette_tuiles.py`, `atelier.ts`) : coché et une
+      palette d'univers présente (`JeuEdite.paletteUnivers`, tenue à jour par `Tuiles.tsx`
+      depuis `Univers.palette`) l'emporte sur `memesCouleurs`. Écran : case « Palette du
+      jeu » dans Réglages fins, `AtelierTuiles.tsx` ; grisée avec le message et le lien
+      « Voir l’univers » (`onUnivers`, câblé depuis `App.tsx` jusqu'à `Tuiles.tsx`) quand
+      `paletteUnivers` est vide.)*
+- [x] Sans palette, le rendu est identique au bit près à celui de TU3.
+      *(`memesCouleurs` à faux et `paletteJeu` à faux → `reglagesMoteur(j).palette === null`,
+      exactement la valeur d'avant cette tranche ; testé directement.)*
 
 ### TU7 · Le mur
 
