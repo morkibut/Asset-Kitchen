@@ -128,7 +128,37 @@ export type Fond = { matiere: string } | { asset: string; nom: string }
  *  personnage affiché. `pierre` est commune à toutes les matières du jeu ;
  *  `motifs` et `cadrages` sont par emplacement, comme dans la maquette
  *  validée (`docs/maquettes-atelier-unifie/tuiles.js`). */
-export type TexteMatieres = { pierre: string; motifs: Record<string, string>; cadrages: Record<string, string> }
+export type TexteMatieres = {
+  pierre: string
+  motifs: Record<string, string>
+  cadrages: Record<string, string>
+  /** L'image de référence jointe à cet emplacement (TU13) : l'identifiant d'un
+   *  asset et son nom, pour la vignette. Elle vit **exactement aussi longtemps
+   *  que le motif** — sur le jeu en cours d'édition, jamais dans la recette
+   *  enregistrée. La faire survivre à la réouverture demanderait d'y descendre
+   *  tout le bloc « texte », motif compris ; ce n'est pas la question que TU13
+   *  pose. */
+  references: Record<string, { asset: string; nom: string }>
+}
+
+/** Une paire d'exemples par cadrage (TU12) : la matière d'un côté, son motif de
+ *  l'autre. **Les deux se posent ensemble**, parce que c'est leur partage du
+ *  travail qui ne se devine pas — écrire l'un sans l'autre montrerait deux
+ *  champs à remplir sans montrer ce qui les sépare.
+ *
+ *  Chaque motif **nomme son compte et sa taille** (« quatre grandes dalles, deux
+ *  par deux ») : c'est la règle D2/T26 de sc-clone, et le produit ne la devine
+ *  jamais à la place de l'auteur (TU5). L'exemple est le seul endroit où elle
+ *  s'apprend sans être expliquée.
+ *
+ *  Rien de ceci ne vient de sc-clone : son écran n'avait pas d'exemples, et le
+ *  moteur recopié (`moteur/tile-ia-prompt.js`) reste intouché. */
+export const EXEMPLES_MATIERE: Record<string, { pierre: string; motif: string }> = {
+  surface: { pierre: "de la vieille pierre grise, veinée de sombre", motif: "quatre grandes dalles carrées, deux par deux" },
+  face: { pierre: "de la brique rouge cuite, au mortier clair", motif: "six rangées de briques décalées d’une demi-brique" },
+  plat: { pierre: "du bois clair poncé", motif: "quatre planches droites, côte à côte" },
+  motif: { pierre: "du carrelage émaillé bleu", motif: "un damier de quatre carreaux sur quatre" },
+}
 
 /** Une matière en cours de fabrication, ou déjà arrivée — tenue sur le jeu
  *  pour survivre à un changement d'emplacement sans perdre les tirages en
@@ -169,7 +199,7 @@ export function nouveauJeu({ nom, sorte, taille, graine }: { nom: string; sorte:
   poserMatiere(etat, "surface", d.surface, taille, graine)
   if (d.face) poserMatiere(etat, "face", d.face, taille, graine)
   return { identifiant: null, revision: null, nom, sorte, taille, graine, reglages: reglagesParDefaut(sorte), etat, assets: {}, fond: { matiere: d.fond }, carte: carteDefaut(sorte),
-    texte: { pierre: "", motifs: {}, cadrages: {} }, tirages: [], paletteUnivers: [] }
+    texte: { pierre: "", motifs: {}, cadrages: {}, references: {} }, tirages: [], paletteUnivers: [] }
 }
 
 /** Les emplacements que l'écran montre, dans l'ordre de la maquette. */
@@ -291,7 +321,7 @@ export function jeuDepuisRecette(
   }
   const d = DEFAUTS_SORTE[r.sorte]
   const j: JeuEdite = { identifiant, revision, nom, sorte: r.sorte, taille: r.taille, graine: r.graine, reglages: { ...r.reglages }, etat, assets, fond: { matiere: d.fond }, carte: null,
-    texte: { pierre: "", motifs: {}, cadrages: {} }, tirages: [], paletteUnivers: [] }
+    texte: { pierre: "", motifs: {}, cadrages: {}, references: {} }, tirages: [], paletteUnivers: [] }
   j.carte = carte ? depuisCarteServeur(j, carte) : carteDefaut(r.sorte)
   return j
 }
@@ -870,9 +900,19 @@ export function nomPiece(j: JeuEdite, col: number, row: number): string {
 
 export const nomDeMatiere = (id: string) => MATIERES[id]?.nom ?? id
 
+/** Les tailles de pièce permises, dans l'ordre — la même liste que côté serveur
+ *  (`atelier/domaine/recette_tuiles.py`, `TAILLES`) et que les cases du jeu (`CIBLES`,
+ *  `interface/src/recette.ts`), moins 256 et 512 : au-delà, la planche devient trop
+ *  lourde à dessiner (mesuré le 19 septembre 2026). Une seule source : l'écran s'en sert
+ *  pour ses boutons comme pour sa liste déroulante. */
+export const TAILLES_TUILE = [8, 16, 24, 32, 48, 64, 96, 128] as const
+
 /** La taille par défaut d'un jeu neuf : celle de l'univers quand il est en pixel art
- *  et qu'elle est une taille de pièce, sinon 32. */
+ *  et qu'elle est une taille de pièce, sinon 32 — le repli de toujours, y compris pour
+ *  un univers en 256, 512 ou sans cible (« aucune »). Tranché le 19 septembre 2026 :
+ *  avant, la liste s'arrêtait à 16/32/64 recopiés de sc-clone, donc un jeu réglé sur 96
+ *  (comme celui de l'auteur) ne retombait jamais sur sa propre case. */
 export function tailleDeLUnivers(univers: { style?: string; cible_px?: number } | null | undefined): number {
   const c = univers?.cible_px
-  return univers?.style === "pixel" && (c === 16 || c === 32 || c === 64) ? c : 32
+  return univers?.style === "pixel" && TAILLES_TUILE.includes(c as (typeof TAILLES_TUILE)[number]) ? (c as number) : 32
 }

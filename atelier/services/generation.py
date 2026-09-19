@@ -1092,6 +1092,7 @@ class ServiceGenerations:
         projet: str | None = None,
         provenance: str = AUTEUR,
         graine: int | None = None,
+        references: Sequence[Reinjection] = (),
         filiation: dict[str, Any] | None = None,
         identifiant: str | None = None,
     ) -> Generation:
@@ -1109,6 +1110,12 @@ class ServiceGenerations:
         silence), soit demandé de déjouer `_texte` par un texte « repris »
         — un détour plus fragile qu'une méthode qui dit ce qu'elle fait.
 
+        **`references` porte des identifiants d'assets, jamais des octets**
+        (TU13) — comme partout ailleurs (`Reinjection`). Les octets se relisent
+        au moment de l'appel *et* de la reprise, par le même chemin
+        (`_demande_de`) : une génération interrompue rejoue donc l'image jointe
+        au lieu de la redemander à l'auteur.
+
         La suite est identique à `soumettre` : même file locale, même coût nul
         en local, même naissance d'asset à l'arrivée. `echelle="matière"` sur
         la demande est ce qui fait de l'image qui revient une matière, au sens
@@ -1122,6 +1129,7 @@ class ServiceGenerations:
             return existante
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
+        reinjectes = tuple(references)
         demande = Demande(
             prompt=texte,
             prompt_negatif=prompt_negatif,
@@ -1129,6 +1137,11 @@ class ServiceGenerations:
             proportions=proportions,
             variations=1,
             echelle="matière",
+            # Les octets, pour que le refus du modèle compte de vraies références
+            # (`Modele.refus`) au lieu d'une liste vide qui mentirait.
+            references=self._octets_references(
+                reinjectes, projet, fond=self._fond_des_references(identifiant_modele, projet, None)
+            ),
             options=({"graine": graine} if graine is not None else {}),
         )
         modele = self._catalogue.modele(identifiant_modele)
@@ -1160,6 +1173,7 @@ class ServiceGenerations:
             cree_le=time.time(),
             projet=projet,
             provenance=provenance,
+            references=reinjectes,
         )
         self._sauver(generation)
         tache = asyncio.create_task(

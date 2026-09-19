@@ -17,7 +17,15 @@ from typing import Any, Callable
 from atelier.domaine.masques_tuiles import SORTES
 from atelier.domaine.tuiles import TuilesRefusees
 
-TAILLES = (16, 32, 64)
+# La taille d'une pièce suit la liste des cases du jeu (`CIBLES`, `interface/src/recette.ts`,
+# `atelier/domaine/vue.py`), sans 256 ni 512 : au-delà, la planche devient trop lourde à
+# dessiner (mesuré le 19 septembre 2026 : 328 ms à 128 px pour une planche 1024×768 ; au double,
+# le temps de rendu suit la surface). Décidé le 19 septembre 2026 — voir « Questions laissées
+# ouvertes » de `docs/PLAN-tuiles.md` : reprendre exactement la liste des cases du jeu, et non
+# les 16/32/64 recopiés de sc-clone, pour que la case du jeu de l'auteur (96 px) tombe dessus.
+TAILLES = (8, 16, 24, 32, 48, 64, 96, 128)
+_TAILLES_TROP_LOURDES = (256, 512)
+_TAILLES_EN_CLAIR = ", ".join(str(t) for t in TAILLES[:-1]) + f" ou {TAILLES[-1]}"
 GRAINE_MAX = 2**31 - 1
 
 # Les 13 matières dessinées par le code (sc-clone, public/tile-materials.js) : identifiant
@@ -151,7 +159,10 @@ def recette(brut: Any, asset_valide: Callable[[str], bool]) -> dict[str, Any]:
         raise TuilesRefusees(f"« {sorte} » n’est pas une sorte de jeu de tuiles. Sortes connues : {', '.join(SORTES)}.")
     taille = brut.get("taille")
     if not _entier(taille) or taille not in TAILLES:
-        raise TuilesRefusees("Une pièce mesure 16, 32 ou 64 pixels.")
+        if _entier(taille) and taille in _TAILLES_TROP_LOURDES:
+            raise TuilesRefusees(f"Une pièce de {taille} px rendrait la planche trop lourde à dessiner. "
+                                 f"Une pièce mesure {_TAILLES_EN_CLAIR} pixels.")
+        raise TuilesRefusees(f"Une pièce mesure {_TAILLES_EN_CLAIR} pixels.")
     graine = brut.get("graine")
     if not _entier(graine) or not 0 <= graine <= GRAINE_MAX:
         raise TuilesRefusees(f"La graine est un entier de 0 à {GRAINE_MAX}.")

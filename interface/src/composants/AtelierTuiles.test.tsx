@@ -9,7 +9,7 @@ import { tuiles, matieres as apiMatieres, type EnsembleTuiles, type EnvoiFabriqu
 import { fileLocale } from "../api-file-locale"
 import { api, type ApercuLivraison, type Asset } from "../api"
 import { installerBouchonCanvas } from "../tuiles/moteur/__tests__/canvas-shim"
-import { atlasDe, jeuDepuisRecette, nouveauJeu, oublierLesRendus, type Recette } from "../tuiles/atelier"
+import { EXEMPLES_MATIERE, atlasDe, jeuDepuisRecette, nouveauJeu, oublierLesRendus, type Recette } from "../tuiles/atelier"
 import { encoderPng, enBase64 } from "../tuiles/png"
 import { atlasPosition, TILE_MASK_SETS, type MaskSet } from "../tuiles/moteur/tile-masks"
 import type { RGBAImage } from "../tuiles/moteur/types"
@@ -19,7 +19,12 @@ installerBouchonCanvas()
 vi.setConfig({ testTimeout: 30_000 })
 
 vi.mock("./WorkflowsLocaux", () => ({ FabricationImageLocale: () => null }))
-vi.mock("./BibliothequePourImage", () => ({ BibliothequePourImage: () => null }))
+// La grille de choix d'image est doublée par un bouton : les essais de cet écran ne
+// rejouent pas RP6, ils vérifient ce que l'atelier fait de l'image choisie (TU13).
+vi.mock("./BibliothequePourImage", () => ({
+  BibliothequePourImage: ({ onChoisir }: { onChoisir: (a: { identifiant: string; label: string }) => void }) =>
+    <button type="button" onClick={() => onChoisir({ identifiant: "img-1", label: "Vieux pavés" })}>Choisir une image (double)</button>,
+}))
 
 /** Ce que le serveur fait d'un envoi : il garde la recette complétée et la carte. */
 function ensembleDepuis(envoi: EnvoiFabrique, identifiant = "sol-1", revision = 1): EnsembleTuiles {
@@ -97,6 +102,22 @@ describe("Les tuiles du jeu", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Le chemin ·/ }))
     expect(screen.getByRole("tab", { name: "Intégrées" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Générer" })).toBeInTheDocument()
+  })
+
+  it("une taille de jeu hors des tailles courantes (96 px) a son bouton, et le reste va dans la liste déroulante", async () => {
+    vi.spyOn(tuiles, "lister").mockResolvedValue([])
+    render(<Tuiles projet="jeu" tailleDuJeu={96} />)
+    fireEvent.click(await screen.findByRole("button", { name: "Nouveau jeu de tuiles" }))
+    // Les boutons : 16, 32, 64 (courantes) et 96 (la taille du jeu) — pas huit boutons.
+    for (const px of ["16 px", "32 px", "64 px", "96 px"]) expect(screen.getByRole("button", { name: px })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "96 px" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByText("96 px, la taille de ce jeu.", { exact: false })).toBeInTheDocument()
+    // Le reste (8, 24, 48, 128) vit dans la liste déroulante, pas dans des boutons.
+    for (const px of ["8", "24", "48", "128"]) expect(screen.queryByRole("button", { name: `${px} px` })).toBeNull()
+    const autre = screen.getByLabelText("Une autre taille de pièce")
+    fireEvent.change(autre, { target: { value: "128" } })
+    expect(screen.queryByRole("button", { name: "128 px" })).toBeNull() // choisi par la liste, pas par un bouton
+    expect(screen.getByText(/deux à quatre fois plus de temps/)).toBeInTheDocument()
   })
 
   it("pose au clic, efface au clic droit, et délie puis relie la bordure", async () => {
@@ -233,19 +254,81 @@ describe("Les tuiles du jeu", () => {
       vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: "OpenRouter:klein9b-tiles-raccordable" })
       const apercu = vi.spyOn(apiMatieres, "apercu").mockResolvedValue({
         texte: "de l’herbe grasse, des touffes courtes, seen from directly above, texte exact du serveur",
-        negatif: "", taille: 256, cadrages: [{ id: "surface", nom: "Sol vu du dessus", aide: "" }, { id: "face", nom: "Face de mur, de face", aide: "" }],
+        negatif: "", taille: 256, reference: false, cadrages: [{ id: "surface", nom: "Sol vu du dessus", aide: "" }, { id: "face", nom: "Face de mur, de face", aide: "" }],
       })
       await ouvrirGenerer()
       fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "de l’herbe grasse" } })
       fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des touffes courtes" } })
-      await waitFor(() => expect(apercu).toHaveBeenCalledWith("jeu", { pierre: "de l’herbe grasse", motif: "des touffes courtes", cadrage: "surface" }))
+      await waitFor(() => expect(apercu).toHaveBeenCalledWith("jeu", { pierre: "de l’herbe grasse", motif: "des touffes courtes", cadrage: "surface", reference: false }))
       fireEvent.click(screen.getByRole("button", { name: "Voir le texte envoyé" }))
-      expect(await screen.findByText("de l’herbe grasse, des touffes courtes, seen from directly above, texte exact du serveur")).toBeInTheDocument()
+      // Le texte est affiché **au caractère près**, mais en plusieurs nœuds depuis TU12 :
+      // les deux parts de l'auteur y sont repérées. On lit donc le texte rendu entier,
+      // ce qui vérifie la même chose en plus fort — aucun caractère ajouté ni perdu.
+      const rendu = await screen.findByText(/texte exact du serveur/)
+      expect(rendu.textContent).toBe("de l’herbe grasse, des touffes courtes, seen from directly above, texte exact du serveur")
+      // Les deux parts sont repérées, et elles seules.
+      expect(rendu.querySelectorAll("span")).toHaveLength(2)
+      expect([...rendu.querySelectorAll("span")].map((s) => s.textContent)).toEqual(["de l’herbe grasse", "des touffes courtes"])
+    })
+
+    it("un texte où l’on ne retrouve pas les deux parts s’affiche tel quel, sans repère faux (TU12)", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: "OpenRouter:klein9b-tiles-raccordable" })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({
+        texte: "un texte qui ne contient ni l’un ni l’autre", negatif: "", taille: 256, reference: false, cadrages: [],
+      })
+      await ouvrirGenerer()
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "de la pierre" } })
+      fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des dalles" } })
+      fireEvent.click(screen.getByRole("button", { name: "Voir le texte envoyé" }))
+      const rendu = await screen.findByText("un texte qui ne contient ni l’un ni l’autre")
+      expect(rendu.querySelectorAll("span")).toHaveLength(0)
+    })
+
+    it("l’exemple remplit les deux champs, selon le cadrage, et le bouton dit qu’il remplace (TU12)", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
+      await ouvrirGenerer()
+      const pierre = () => screen.getByLabelText("C’est fait de quoi ?") as HTMLInputElement
+      const motif = () => screen.getByLabelText("Le motif") as HTMLInputElement
+      expect(pierre().value).toBe("")
+      fireEvent.click(screen.getByRole("button", { name: "Remplir avec un exemple" }))
+      expect(pierre().value).toBe(EXEMPLES_MATIERE.surface.pierre)
+      expect(motif().value).toBe(EXEMPLES_MATIERE.surface.motif)
+      // Un champ rempli : le bouton annonce qu'il remplacera, il n'écrase pas en silence.
+      expect(screen.getByRole("button", { name: "Remplacer par un exemple" })).toBeInTheDocument()
+      // Et l'exemple suit le cadrage choisi.
+      fireEvent.click(screen.getByRole("button", { name: "Motif régulier" }))
+      fireEvent.click(screen.getByRole("button", { name: "Remplacer par un exemple" }))
+      expect(pierre().value).toBe(EXEMPLES_MATIERE.motif.pierre)
+      expect(motif().value).toBe(EXEMPLES_MATIERE.motif.motif)
+    })
+
+    it("ce qui bloque nomme le champ manquant et l’emplacement (TU12)", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
+      await ouvrirGenerer()
+      expect(await screen.findByText("Écris de quoi c’est fait, puis le motif de cet emplacement.")).toBeInTheDocument()
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "de la pierre" } })
+      expect(await screen.findByText("Il manque : le motif pour Surface.")).toBeInTheDocument()
+      expect(screen.getByLabelText("Le motif")).toHaveAttribute("aria-invalid", "true")
+      expect(screen.getByLabelText("C’est fait de quoi ?")).not.toHaveAttribute("aria-invalid")
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "" } })
+      fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des dalles" } })
+      expect(await screen.findByText("Il manque : de quoi c’est fait.")).toBeInTheDocument()
+    })
+
+    it("l’aide du cadrage choisi est lisible, sans survol (TU12)", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
+      await ouvrirGenerer()
+      expect(await screen.findByText("Le défaut d’une surface de terrain.")).toBeInTheDocument()
+      fireEvent.click(screen.getByRole("button", { name: "Face de mur, de face" }))
+      expect(screen.getByText("Interdit le sol, le ciel et l’horizon.")).toBeInTheDocument()
     })
 
     it("generer() reçoit exactement {pierre, motif, cadrage, tirages}", async () => {
       vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
-      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, cadrages: [] })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
       const generer = vi.spyOn(apiMatieres, "generer").mockResolvedValue({ generations: [] })
       vi.spyOn(fileLocale, "lire").mockResolvedValue({ etapes: [], regle: "", mesures: [] })
       await ouvrirGenerer()
@@ -273,7 +356,7 @@ describe("Les tuiles du jeu", () => {
       const im: RGBAImage = { width: 8, height: 8, data: new Uint8ClampedArray(8 * 8 * 4).fill(180) }
       doublerLaLecture(async () => im)
       vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
-      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, cadrages: [] })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
       vi.spyOn(apiMatieres, "generer").mockResolvedValue({ generations: [{ identifiant: "gen1", statut: "en_attente", emplacements: [{ rang: 0, statut: "en_attente", resultat: null, raison: null }] }] })
       const creer = vi.spyOn(tuiles, "creerFabrique").mockImplementation(async (_p, e) => ensembleDepuis(e))
       let appels = 0
@@ -294,6 +377,69 @@ describe("Les tuiles du jeu", () => {
       fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
       await waitFor(() => expect(creer).toHaveBeenCalled())
       expect(creer.mock.calls[0][1].recette.emplacements.surface).toMatchObject({ source: "asset", asset: "gen1-0" })
+    })
+
+    it("joint une image de référence, la montre, et l’envoie avec la génération (TU13)", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: "m", reference_possible: true })
+      const apercu = vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "le texte du serveur", negatif: "", taille: 256, reference: false, cadrages: [] })
+      const generer = vi.spyOn(apiMatieres, "generer").mockResolvedValue({ generations: [] })
+      vi.spyOn(fileLocale, "lire").mockResolvedValue({ etapes: [], regle: "", mesures: [] })
+      await ouvrirGenerer()
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "de la pierre" } })
+      fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des dalles" } })
+
+      fireEvent.click(screen.getByRole("button", { name: "Joindre une image" }))
+      fireEvent.click(await screen.findByRole("button", { name: "Choisir une image (double)" }))
+      // Elle se voit, et l'écran dit ce qu'elle change.
+      expect(await screen.findByText("Vieux pavés")).toBeInTheDocument()
+      expect(screen.getByText(/512 px au lieu de 256/)).toBeInTheDocument()
+      // L'aperçu est redemandé en disant qu'une image part — le texte, lui, ne change pas.
+      await waitFor(() => expect(apercu).toHaveBeenLastCalledWith("jeu", { pierre: "de la pierre", motif: "des dalles", cadrage: "surface", reference: true }))
+      // Et « voir le texte envoyé » ne laisse pas croire que le texte est tout ce qui part.
+      fireEvent.click(screen.getByRole("button", { name: "Voir le texte envoyé" }))
+      expect(await screen.findByText(/Et l’image jointe part avec/)).toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole("button", { name: "Générer 4 tirages" }))
+      await waitFor(() => expect(generer).toHaveBeenCalledWith("jeu",
+        { pierre: "de la pierre", motif: "des dalles", cadrage: "surface", tirages: 4, reference_asset: "img-1" }))
+
+      // Retirée, on repart comme avant : aucune image dans l'envoi.
+      fireEvent.click(screen.getByRole("button", { name: "Retirer" }))
+      expect(screen.getByRole("button", { name: "Joindre une image" })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole("button", { name: "Générer 4 tirages" }))
+      await waitFor(() => expect(generer).toHaveBeenLastCalledWith("jeu",
+        { pierre: "de la pierre", motif: "des dalles", cadrage: "surface", tirages: 4 }))
+    })
+
+    it("un style qui ne sait pas porter d’image grise le bouton et dit pourquoi (TU13)", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: "m", reference_possible: false })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
+      vi.spyOn(fileLocale, "lire").mockResolvedValue({ etapes: [], regle: "", mesures: [] })
+      await ouvrirGenerer()
+      expect(await screen.findByRole("button", { name: "Joindre une image" })).toBeDisabled()
+      expect(screen.getByText("Le style installé ne sait pas porter d’image de référence.")).toBeInTheDocument()
+    })
+
+    it("l’image jointe est par emplacement : la surface et la face n’ont pas la même (TU13)", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: "m", reference_possible: true })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
+      vi.spyOn(fileLocale, "lire").mockResolvedValue({ etapes: [], regle: "", mesures: [] })
+      vi.spyOn(tuiles, "lister").mockResolvedValue([])
+      render(<Tuiles projet="jeu" />)
+      fireEvent.click(await screen.findByRole("button", { name: "Nouveau jeu de tuiles" }))
+      fireEvent.click(screen.getByRole("button", { name: /^Un mur/ }))
+      fireEvent.click(screen.getByRole("button", { name: "Ouvrir l’atelier" }))
+      fireEvent.click(screen.getByRole("button", { name: /^Dessus ·/ }))
+      fireEvent.click(screen.getByRole("tab", { name: "Générer" }))
+      fireEvent.click(screen.getByRole("button", { name: "Joindre une image" }))
+      fireEvent.click(await screen.findByRole("button", { name: "Choisir une image (double)" }))
+      expect(await screen.findByText("Vieux pavés")).toBeInTheDocument()
+      // L'autre emplacement du même jeu n'hérite de rien.
+      fireEvent.click(screen.getByRole("button", { name: "Fermer" }))
+      fireEvent.click(screen.getByRole("button", { name: /^Face ·/ }))
+      fireEvent.click(screen.getByRole("tab", { name: "Générer" }))
+      expect(await screen.findByRole("button", { name: "Joindre une image" })).toBeInTheDocument()
+      expect(screen.queryByText("Vieux pavés")).toBeNull()
     })
   })
 

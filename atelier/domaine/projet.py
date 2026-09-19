@@ -311,6 +311,39 @@ BAREME_PAR_DEFAUT = (
     Echelle("élément d'interface", INTERFACE, 100),
 )
 
+
+def bareme_complete(lu: tuple[Echelle, ...]) -> tuple[Echelle, ...]:
+    """Le barème relu, **plus les natures du barème par défaut qui y manquent**.
+
+    **Le barème est recopié dans le fichier du projet à sa création**, et rien ne le
+    complétait ensuite : une nature ajoutée au produit n'atteignait donc que les projets
+    créés après elle. Mesuré le 19 septembre 2026 sur `la-foret-magique` — « matière »
+    absente, donc `echelle("matière")` introuvable, donc `recette_de` retombait sur
+    `silhouette=True` : **chaque matière générée arrivait détourée et recadrée comme un
+    personnage**. Le même trou avait laissé « tuile » hors de `coeur-de-pierre` et de
+    `bac-a-sable`.
+
+    Ce n'était pas un réglage mal posé : c'était une nature que l'auteur ne pouvait ni
+    choisir ni voir manquer — sans elle, l'écran des tuiles n'offre aucun type « matière »
+    à créer, et « Mes matières » reste vide par construction.
+
+    **Ce qu'elle ne fait pas : trancher à la place de l'auteur.** Ce qui est écrit au
+    fichier passe devant et n'est jamais retouché — ni l'occupation, ni la silhouette, ni
+    les poses d'une nature déjà là. Seuls les noms absents s'ajoutent, à la fin, dans
+    l'ordre du barème par défaut.
+
+    **La contrepartie, assumée le 19 septembre 2026** : une nature du barème par défaut que
+    l'auteur a supprimée exprès réapparaît à la relecture. C'est le prix d'un complètement
+    par les noms, et il a été préféré à une migration jouée une fois — qui aurait laissé le
+    même piège posé pour la nature suivante. Comme les autres migrations, celle-ci n'a lieu
+    qu'en mémoire : le disque ne change qu'au prochain enregistrement.
+    """
+    if not lu:
+        return BAREME_PAR_DEFAUT
+    connus = {e.nom for e in lu}
+    return lu + tuple(e for e in BAREME_PAR_DEFAUT if e.nom not in connus)
+
+
 # La taille de pixel d'un projet neuf. **Imposée à tout ce qui rentre, jamais
 # déduite de l'image reçue** (US-60, US-61) : c'est elle qui met un tonneau
 # rendu sur une grille de 16 px et un personnage rendu sur 8 px à la même
@@ -1278,7 +1311,11 @@ class Univers:
             bible=bible_complete(
                 replace(c, texte=sans_phrase_du_produit(c.texte)) for c in relus
             ),
-            bareme=bareme or BAREME_PAR_DEFAUT,
+            # **Complété, pas seulement remplacé quand il est vide** : voir
+            # `bareme_complete` — une nature ajoutée au produit doit atteindre les
+            # projets écrits avant elle, sinon le sujet qu'elle décrit se traite
+            # comme un personnage sans que rien ne le dise.
+            bareme=bareme_complete(bareme),
             # **Déduit quand la clé manque**, jamais mis au défaut : un univers
             # écrit avant D2 a bel et bien répondu à la question, par sa taille
             # de pixel. Voir `style_deduit`.

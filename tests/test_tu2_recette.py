@@ -19,7 +19,7 @@ from PIL import Image
 from atelier.api.app import creer_application
 from atelier.domaine import masques_tuiles as M
 from atelier.domaine.plan import SANS_POSES, plan_du_type
-from atelier.domaine.projet import BAREME_PAR_DEFAUT, DECORS
+from atelier.domaine.projet import BAREME_PAR_DEFAUT, DECORS, Univers
 from atelier.domaine.recette_tuiles import MATIERES_INTEGREES
 from atelier.domaine.tuiles import RACCORDS, TuilesRefusees
 from atelier.services import Atelier
@@ -114,6 +114,34 @@ def test_la_matiere_est_un_decor_sans_detourage_ni_poses():
     assert plan_du_type("matière") == () and "matière" in SANS_POSES
 
 
+def test_un_projet_ecrit_avant_la_matiere_la_recoit_a_la_relecture():
+    """Le trou trouvé le 19 septembre 2026 sur `la-foret-magique` : son barème, écrit
+    avant TU2, n'avait pas « matière ». L'échelle restant introuvable, `recette_de`
+    retombait sur `silhouette=True` et chaque matière générée arrivait **détourée et
+    recadrée** comme un personnage. Le barème relu se complète désormais."""
+    avant = [e.en_json() for e in BAREME_PAR_DEFAUT if e.nom != "matière"]
+    univers = Univers.depuis_json({"bareme": avant, "cible_px": 96})
+
+    matiere = univers.echelle("matière")
+    assert matiere is not None and matiere.silhouette is False
+    recette = univers.recette_de(matiere)
+    assert recette.passes == () and recette.recadrage is None
+    # Ce qui reste, et que l'auteur veut : la pixelisation et les couleurs.
+    assert recette.grille is not None and recette.quantification is not None
+
+
+def test_le_completement_ne_retouche_jamais_une_nature_deja_ecrite():
+    """Ce qui est au fichier passe devant : seuls les noms absents s'ajoutent."""
+    a_la_main = [{"nom": "matière", "famille": DECORS, "occupation": 50, "silhouette": True}]
+    univers = Univers.depuis_json({"bareme": a_la_main})
+
+    matiere = univers.echelle("matière")
+    assert matiere is not None and matiere.occupation == 50 and matiere.silhouette is True
+    # …et le reste du barème par défaut est venu compléter, sans doublon.
+    noms = [e.nom for e in univers.bareme]
+    assert noms[0] == "matière" and len(noms) == len(set(noms)) == len(BAREME_PAR_DEFAUT)
+
+
 # ── Un jeu fabriqué vit comme un jeu d'AU13 ──────────────────────────────────
 
 def atlas(colonnes, lignes, taille, couleur=(90, 140, 60, 255)):
@@ -160,6 +188,20 @@ async def test_un_sol_se_cree_se_relit_et_ses_raccords_viennent_du_masque(fixe, 
     with Image.open(io.BytesIO(autre.tuiles.apercu(p, e["identifiant"]))) as image:
         assert image.size == (256, 192) and image.getpixel((0, 0))[3] == 0 and image.getpixel((1, 0)) == (90, 140, 60, 255)
     assert double.appels == 0
+
+
+async def test_une_recette_en_96_px_est_acceptee_et_l_atlas_garde_sa_taille_exacte(fixe):
+    """TU-défaut (19 septembre 2026) : la case du jeu de l'auteur est à 96 px — hors de
+    l'ancienne liste 16/32/64, recopiée de sc-clone. La recette l'accepte, et l'atlas figé
+    en asset garde la taille exacte attendue (8 × 6 cases de 96 px), pas une valeur voisine."""
+    a, p, _ = fixe
+    e = a.tuiles.creer(p, {"nom": "Dalles", "recette": recette(taille=96), "atlas": atlas(8, 6, 96)})
+    assert e["recette"]["taille"] == 96
+    assert e["grille"] == {"taille": 96, "marge": 0, "espacement": 0, "colonnes": 8, "lignes": 6}
+    asset = a.assets.lire(e["source"]["asset"])
+    assert (asset.largeur, asset.hauteur) == (8 * 96, 6 * 96)
+    with pytest.raises(TuilesRefusees, match="768 × 576"):
+        a.tuiles.creer(p, {"nom": "X", "recette": recette(taille=96), "atlas": atlas(8, 6, 32)})
 
 
 async def test_second_terrain_la_case_tout_dessous_et_l_ordre_des_terrains(fixe):
@@ -225,8 +267,10 @@ async def test_mur_chemin_et_extras(fixe):
 
 @pytest.mark.parametrize("modif, message", [
     ({"sorte": "iso"}, "sorte"),
-    ({"taille": 48}, "16, 32 ou 64"),
-    ({"taille": True}, "16, 32 ou 64"),
+    ({"taille": 20}, "8, 16, 24, 32, 48, 64, 96 ou 128"),
+    ({"taille": True}, "8, 16, 24, 32, 48, 64, 96 ou 128"),
+    ({"taille": 256}, "trop lourde"),
+    ({"taille": 512}, "trop lourde"),
     ({"graine": "1"}, "graine"),
     ({"reglages": {"flou": 1}}, "flou"),
     ({"reglages": {"arrondi": 9}}, "0 à 8"),
@@ -328,7 +372,9 @@ async def test_http_creer_regler_et_refus_409(fixe):
         assert cree.status_code == 201, cree.text
         ident = cree.json()["identifiant"]
         refus = await client.post(base, json={"nom": "Sol", "recette": recette(taille=20), "atlas": b64(atlas(8, 6, 32))})
-        assert refus.status_code == 409 and "16, 32 ou 64" in refus.text
+        assert refus.status_code == 409 and "8, 16, 24, 32, 48, 64, 96 ou 128" in refus.text
+        refus_lourd = await client.post(base, json={"nom": "Sol", "recette": recette(taille=256), "atlas": b64(atlas(8, 6, 256))})
+        assert refus_lourd.status_code == 409 and "trop lourde" in refus_lourd.text
         change = await client.put(f"{base}/{ident}", json={"revision": 1, "recette": recette(graine=2), "atlas": b64(atlas(8, 6, 32))})
         assert change.status_code == 200, change.text
         assert change.json()["revision"] == 2 and change.json()["recette"]["graine"] == 2

@@ -2,15 +2,17 @@ import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from
 import { api, Refus } from "../api"
 import type { ApercuLivraison } from "../api"
 import { fileLocale } from "../api-file-locale"
-import { tuiles, matieres as apiMatieres, assetDeGeneration, type EnsembleTuiles, type Cadrage } from "../api-tuiles"
+import { tuiles, matieres as apiMatieres, assetDeGeneration, type DisponibiliteMatieres, type EnsembleTuiles, type Cadrage } from "../api-tuiles"
 import {
-  LISTE_MATIERES, LISTE_CADRAGES, PAR_ID, SORTES, atlasDe, cadrageParDefaut, carteApercu, casesPosees, changerSecondTerrain, dessinerAtlas, dessinerCarte, dessinerPlanche,
+  EXEMPLES_MATIERE, LISTE_MATIERES, LISTE_CADRAGES, PAR_ID, SORTES, TAILLES_TUILE, atlasDe, cadrageParDefaut, carteApercu, casesPosees, changerSecondTerrain, dessinerAtlas, dessinerCarte, dessinerPlanche,
   dessinerVignette, delier, dureeImageAnimation, emplacementsDe, enClair, ileAuHasard, imageDuFond, jeuDepuisRecette,
   nombrePieces, nomCible, nomDeMatiere, nomPiece, nouveauJeu, peutRelier, pieceDeDefaut, poserAsset, poserIntegree, recetteDe,
   relierBordure, toutEffacer, verifier, aSecondTerrain,
   type Atlas, type JeuEdite, type Sorte, type Survol,
 } from "../tuiles/atelier"
 import type { RGBAImage } from "../tuiles/moteur/types"
+import { BibliothequePourImage } from "./BibliothequePourImage"
+import { CadreDialogue } from "./CadreDialogue"
 
 /** Une matière du jeu : l'image d'un sujet de nature « matière » (`TU2`). */
 export type MatiereDuJeu = { identifiant: string; nom: string }
@@ -147,11 +149,26 @@ function ApercuDeRecette({ ensemble: e }: { ensemble: EnsembleTuiles }) {
 
 // ── B · Quelle sorte de tuiles ? ─────────────────────────────────────────────
 
+// Les boutons ne montrent que les tailles courantes, plus celle du jeu si elle en
+// diffère : le reste (`TAILLES_TUILE`, une seule liste avec le serveur) va dans la
+// liste déroulante, pour ne pas aligner huit boutons sur l'écran.
+const TAILLES_COURANTES: readonly number[] = [16, 32, 64]
+// Mesuré le 19 septembre 2026 (planche 768×576 pour 96, 1024×768 pour 128, sorte sol) :
+// 64 px se redessine en 85 ms, 96 px en 188 ms (≈2×), 128 px en 328 ms (≈4×). Zéro défaut
+// aux deux tailles — l'avertissement porte sur le temps de redessin, pas sur le résultat.
+const TAILLES_LOURDES: readonly number[] = [96, 128]
+const AVERTISSEMENT_TAILLE_LOURDE = "La planche met deux à quatre fois plus de temps à se redessiner à cette taille."
+
 export function ChoixDeSorte({ tailleDuJeu, onAnnuler, onCreer }: {
   tailleDuJeu: number; onAnnuler: () => void; onCreer: (choix: { sorte: Sorte; taille: number; nom: string }) => void
 }) {
   const [sorte, setSorte] = useState<Sorte>("sol")
   const [taille, setTaille] = useState(tailleDuJeu)
+  const tailleBoutons = useMemo(
+    () => Array.from(new Set<number>([...TAILLES_COURANTES, tailleDuJeu])).sort((a, b) => a - b),
+    [tailleDuJeu],
+  )
+  const tailleAutres = useMemo(() => (TAILLES_TUILE as readonly number[]).filter((t) => !tailleBoutons.includes(t)), [tailleBoutons])
   const [nom, setNom] = useState("Nouveau sol")
   const [nomTouche, setNomTouche] = useState(false)
   const modeles = useMemo(() => new Map<Sorte, JeuEdite>(), [])
@@ -184,9 +201,20 @@ export function ChoixDeSorte({ tailleDuJeu, onAnnuler, onCreer }: {
       <label className="grid gap-[4px] text-[12px] text-encre-3">Nom
         <input type="text" value={nom} onChange={(e) => { setNom(e.target.value); setNomTouche(true) }} className="min-h-[34px] w-[240px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle" /></label>
       <div><div className="text-[12px] text-encre-3">Taille d’une pièce</div>
-        <div className="mt-[4px] flex gap-[4px]">{[16, 32, 64].map((t) => <button key={t} type="button" aria-pressed={taille === t} onClick={() => setTaille(t)}
-          className={`min-h-[30px] rounded-7 border px-[14px] text-[13px] ${taille === t ? "border-encre-3 bg-ligne-ouverte text-encre" : "border-contour bg-carte text-encre-controle"}`}>{t} px</button>)}</div>
-        <div className="mt-[4px] min-h-[22px] text-[12px] text-encre-3">{taille === tailleDuJeu ? `${tailleDuJeu} px, la taille de ce jeu.` : `Le reste du jeu est en ${tailleDuJeu} px : ces pièces n’auront pas la même taille que tes personnages.`}</div></div>
+        <div className="mt-[4px] flex flex-wrap items-center gap-[4px]">
+          {tailleBoutons.map((t) => <button key={t} type="button" aria-pressed={taille === t} onClick={() => setTaille(t)}
+            className={`min-h-[30px] rounded-7 border px-[14px] text-[13px] ${taille === t ? "border-encre-3 bg-ligne-ouverte text-encre" : "border-contour bg-carte text-encre-controle"}`}>{t} px</button>)}
+          {tailleAutres.length > 0 && <select aria-label="Une autre taille de pièce" value={tailleAutres.includes(taille) ? taille : ""}
+            onChange={(e) => setTaille(Number(e.target.value))}
+            className="min-h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle">
+            <option value="" disabled>Autre taille…</option>
+            {tailleAutres.map((t) => <option key={t} value={t}>{t} px</option>)}
+          </select>}
+        </div>
+        <div className="mt-[4px] min-h-[22px] w-[240px] text-[12px] text-encre-3">
+          {taille === tailleDuJeu ? `${tailleDuJeu} px, la taille de ce jeu.` : `Le reste du jeu est en ${tailleDuJeu} px : ces pièces n’auront pas la même taille que tes personnages.`}
+          {TAILLES_LOURDES.includes(taille) && ` ${AVERTISSEMENT_TAILLE_LOURDE}`}
+        </div></div>
       <button type="button" className={`${BOUTON} border-transparent bg-transparent`} onClick={onAnnuler}>Annuler</button>
       <button type="button" className={`${PRINCIPAL} ml-auto`} onClick={() => onCreer({ sorte, taille, nom: nom.trim() || "Nouveau jeu de tuiles" })}>Ouvrir l’atelier</button>
     </div>
@@ -334,7 +362,9 @@ export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, messa
         <div className="mt-[4px] flex items-center gap-[8px] text-[12.5px] text-encre-3">
           <span>{S.court} · {nombrePieces(j.sorte)} pièces</span><span>·</span>
           <label>pièces de <select aria-label="Taille d’une pièce" value={j.taille} onChange={(e) => changer(() => { j.taille = Number(e.target.value); setZoom(0) })}
-            className="min-h-[26px] rounded-5 border border-contour bg-carte px-[4px] text-[12px] text-encre-controle">{[16, 32, 64].map((t) => <option key={t} value={t}>{t}</option>)}</select> px</label>
+            title={TAILLES_LOURDES.includes(j.taille) ? AVERTISSEMENT_TAILLE_LOURDE : undefined}
+            className="min-h-[26px] rounded-5 border border-contour bg-carte px-[4px] text-[12px] text-encre-controle">{TAILLES_TUILE.map((t) => <option key={t} value={t}>{t}</option>)}</select> px</label>
+          {TAILLES_LOURDES.includes(j.taille) && <span className="text-[11px] text-encre-4" title={AVERTISSEMENT_TAILLE_LOURDE}>redessin plus lent</span>}
           <span role="status" className="ml-[8px]">{message}</span>
         </div>
       </div>
@@ -559,6 +589,28 @@ function TiroirDesMatieres({ projet, jeu: j, cible, onglet, matieres, onOnglet, 
 
 // ── D bis · Générer une matière sur la machine (TU5) ─────────────────────────
 
+/**
+ * Le texte envoyé, avec ses deux parts d'auteur repérées (TU12).
+ *
+ * **Le texte reste celui du serveur, au caractère près** — c'est l'invariant de TU5, et
+ * il ne bouge pas : on ne recompose rien ici, on souligne seulement les deux morceaux
+ * qu'on retrouve dedans. Introuvables (un espace de trop, un accent normalisé
+ * autrement), le texte s'affiche tel quel, sans marque : mieux vaut aucun repère qu'un
+ * repère faux.
+ */
+function TexteEnParts({ texte, pierre, motif }: { texte: string; pierre: string; motif: string }) {
+  const a = pierre.trim(), b = motif.trim()
+  const i = a ? texte.indexOf(a) : -1
+  const jj = b ? texte.indexOf(b, i >= 0 ? i + a.length : 0) : -1
+  if (i < 0 || jj < 0) return <>{texte}</>
+  const marque = "rounded-5 bg-ligne-ouverte px-[4px] text-encre"
+  return <>
+    {texte.slice(0, i)}<span className={marque}>{a}</span>
+    {texte.slice(i + a.length, jj)}<span className={marque}>{b}</span>
+    {texte.slice(jj + b.length)}
+  </>
+}
+
 const FINIES = new Set(["termine", "echoue", "annule"])
 const ATTENTE_PAR_DEFAUT = "environ 2 min par image"
 
@@ -566,17 +618,32 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
   projet: string; jeu: JeuEdite; cible: string; lecture: string | null
   onPoser: (identifiant: string, nom: string) => Promise<void>; onErreur: (m: string) => void; onPose: () => void
 }) {
-  const [dispo, setDispo] = useState<{ disponible: boolean; manque: string[]; modele: string | null } | null>(null)
+  const [dispo, setDispo] = useState<DisponibiliteMatieres | null>(null)
   const [apercu, setApercu] = useState<{ texte: string; negatif: string; cadrages: Cadrage[] } | null>(null)
   const [texteOuvert, setTexteOuvert] = useState(false)
   const [nTirages, setNTirages] = useState(4)
   const [occupe, setOccupe] = useState(false)
+  const [choisirReference, setChoisirReference] = useState(false)
   const [attente, setAttente] = useState(ATTENTE_PAR_DEFAUT)
 
   const cadrage = j.texte.cadrages[cible] || cadrageParDefaut(cible)
   const pierre = j.texte.pierre
   const motif = j.texte.motifs[cible] || ""
   const remplis = !!pierre.trim() && !!motif.trim()
+  // Un champ vide ne se signale que si l'autre est rempli : les deux vides, rien n'est
+  // commencé, et marquer en rouge un panneau qu'on vient d'ouvrir n'apprend rien.
+  const manquePierre = !pierre.trim() && !!motif.trim()
+  const manqueMotif = !motif.trim() && !!pierre.trim()
+  // Les cadrages viennent du serveur dès que l'aperçu est chargé (mêmes textes, une seule
+  // source) ; la liste du moteur sert de repli tant qu'il n'a pas répondu.
+  const cadrages = apercu?.cadrages ?? LISTE_CADRAGES
+  // L'image jointe de cet emplacement (TU13). `?? {}` : un jeu rouvert d'avant TU13
+  // n'a pas la clé, et une matière sans image est le cas ordinaire.
+  const reference = (j.texte.references ?? {})[cible]
+  const referencePossible = dispo?.reference_possible !== false
+  // L'aide du cadrage choisi, **lisible** : elle n'était que dans un `title=`, que ni le
+  // doigt ni le clavier n'ouvrent.
+  const aideDuCadrage = cadrages.find((c) => c.id === cadrage)?.aide ?? ""
 
   useEffect(() => { let vivant = true
     apiMatieres.disponibilite(projet).then((d) => { if (vivant) setDispo(d) }).catch(() => { if (vivant) setDispo({ disponible: false, manque: ["La disponibilité n’a pas pu être vérifiée."], modele: null }) })
@@ -589,10 +656,10 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
     if (!remplis || !dispo?.disponible) { setApercu(null); return }
     let vivant = true
     const t = window.setTimeout(() => {
-      apiMatieres.apercu(projet, { pierre, motif, cadrage }).then((a) => { if (vivant) setApercu(a) }).catch(() => { if (vivant) setApercu(null) })
+      apiMatieres.apercu(projet, { pierre, motif, cadrage, reference: !!reference }).then((a) => { if (vivant) setApercu(a) }).catch(() => { if (vivant) setApercu(null) })
     }, 200)
     return () => { vivant = false; window.clearTimeout(t) }
-  }, [projet, pierre, motif, cadrage, remplis, dispo?.disponible])
+  }, [projet, pierre, motif, cadrage, remplis, dispo?.disponible, reference?.asset])
 
   // L'attente annoncée : la médiane mesurée sur cette machine pour le modèle
   // déjà installé, si elle existe — sinon le repli fixe (`ATTENTE_PAR_DEFAUT`).
@@ -631,42 +698,104 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
   }, [j.tirages.map((t) => t.statut).join("|")])
 
   function changerCadrage(id: string) { j.texte.cadrages = { ...j.texte.cadrages, [cible]: id }; onPose() }
+  /** L'exemple du cadrage choisi, **dans les deux champs à la fois** : c'est leur partage
+   *  du travail qu'il montre, et remplir un seul des deux ne montrerait rien. Le bouton
+   *  dit « Remplacer » dès qu'un champ porte quelque chose, pour ne rien écraser en
+   *  silence. Il replie sur la surface si un cadrage n'a pas d'exemple. */
+  /** Joindre, remplacer ou retirer l'image de référence de cet emplacement (TU13). */
+  function changerReference(v: { asset: string; nom: string } | null) {
+    const suite = { ...(j.texte.references ?? {}) }
+    if (v) suite[cible] = v
+    else delete suite[cible]
+    j.texte.references = suite
+    onPose()
+  }
+  function poserExemple() {
+    const e = EXEMPLES_MATIERE[cadrage] ?? EXEMPLES_MATIERE.surface
+    j.texte.pierre = e.pierre
+    j.texte.motifs = { ...j.texte.motifs, [cible]: e.motif }
+    onPose()
+  }
   function changerPierre(v: string) { j.texte.pierre = v; onPose() }
   function changerMotif(v: string) { j.texte.motifs = { ...j.texte.motifs, [cible]: v }; onPose() }
 
   async function generer() {
     setOccupe(true); onErreur("")
     try {
-      const r = await apiMatieres.generer(projet, { pierre, motif, cadrage, tirages: nTirages })
+      const r = await apiMatieres.generer(projet, { pierre, motif, cadrage, tirages: nTirages,
+        ...(reference ? { reference_asset: reference.asset } : {}) })
       j.tirages = [...j.tirages, ...r.generations.map((g) => ({ identifiant: g.identifiant, rang: g.emplacements[0]?.rang ?? 0, statut: "en_attente", pourNom: nomCible(j, cible) }))]
       onPose()
     } catch (e) { onErreur(e instanceof Refus || e instanceof Error ? e.message : "La génération n’a pas pu partir.") }
     finally { setOccupe(false) }
   }
 
-  const bloque = !dispo ? "Vérification de la disponibilité…" : !dispo.disponible ? dispo.manque.join(" · ") : !remplis ? "Écris de quoi c’est fait et le motif pour pouvoir générer." : ""
+  // Ce qui bloque **nomme le champ en défaut et l'emplacement visé**. La phrase d'avant
+  // redisait la consigne entière, les deux champs à la fois, sans dire lequel manquait.
+  const manquant = manquePierre ? "Il manque : de quoi c’est fait."
+    : manqueMotif ? `Il manque : le motif pour ${nomCible(j, cible)}.`
+    : "Écris de quoi c’est fait, puis le motif de cet emplacement."
+  const bloque = !dispo ? "Vérification de la disponibilité…" : !dispo.disponible ? dispo.manque.join(" · ") : !remplis ? manquant : ""
 
   return <div className="space-y-[14px]">
     <div>
       <label className="flex flex-col gap-[4px] text-[13px] text-encre-controle">C’est fait de quoi ?
         <input type="text" value={pierre} onChange={(e) => changerPierre(e.target.value)} placeholder="de la pierre grise usée"
-          className="min-h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle" /></label>
-      <small className="mt-[4px] block text-[12px] text-encre-3">Le même pour toutes les matières de ce jeu de tuiles.</small>
+          aria-invalid={manquePierre || undefined} aria-describedby="aide-pierre"
+          className={`min-h-[30px] rounded-7 border bg-carte px-[8px] text-[13px] text-encre-controle ${manquePierre ? "border-echec" : "border-contour"}`} /></label>
+      <small id="aide-pierre" className="mt-[4px] block text-[12px] text-encre-3">
+        La matière seule : pierre, bois, terre, sable. Le même texte pour tout le jeu — c’est lui qui fait que le sol et le mur vont ensemble.
+      </small>
     </div>
     <div>
       <label className="flex flex-col gap-[4px] text-[13px] text-encre-controle">Le motif
         <input type="text" value={motif} onChange={(e) => changerMotif(e.target.value)} placeholder="de grandes dalles carrées, deux par deux"
-          className="min-h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle" /></label>
-      <small className="mt-[4px] block text-[12px] text-encre-3">Seulement pour : {nomCible(j, cible)}.</small>
+          aria-invalid={manqueMotif || undefined} aria-describedby="aide-motif"
+          className={`min-h-[30px] rounded-7 border bg-carte px-[8px] text-[13px] text-encre-controle ${manqueMotif ? "border-echec" : "border-contour"}`} /></label>
+      <small id="aide-motif" className="mt-[4px] block text-[12px] text-encre-3">
+        Comment cette matière est posée sur {nomCible(j, cible)} : dis le compte et la taille, « quatre grandes dalles, deux par deux ». Ce qui n’est pas écrit n’est pas deviné.
+      </small>
+    </div>
+    <div>
+      <button type="button" className={LIEN} onClick={poserExemple}>{remplis || pierre.trim() || motif.trim() ? "Remplacer par un exemple" : "Remplir avec un exemple"}</button>
+      <small className="ml-[8px] text-[12px] text-encre-3">Les deux champs à la fois, accordés au cadrage choisi.</small>
     </div>
     <div>
       <div className="mb-[4px] text-[12px] text-encre-3">Vu comment</div>
-      <div className="flex flex-wrap gap-[4px]">{(apercu?.cadrages ?? LISTE_CADRAGES).map((c) => <button key={c.id} type="button" title={c.aide} aria-pressed={c.id === cadrage} onClick={() => changerCadrage(c.id)}
+      <div className="flex flex-wrap gap-[4px]">{cadrages.map((c) => <button key={c.id} type="button" aria-pressed={c.id === cadrage} onClick={() => changerCadrage(c.id)}
         className={`${PETIT} ${c.id === cadrage ? "border-encre-3 bg-ligne-ouverte text-encre" : ""}`}>{c.nom}</button>)}</div>
+      {!!aideDuCadrage && <small className="mt-[4px] block text-[12px] text-encre-3">{aideDuCadrage}</small>}
+    </div>
+    <div>
+      <div className="mb-[4px] text-[12px] text-encre-3">L’image de référence</div>
+      {reference
+        ? <div className="flex items-center gap-[8px]">
+            <img src={api.fichier(reference.asset)} alt="" className="damier-papier h-[54px] w-[54px] rounded-5 object-contain" style={PIXELS} />
+            <span className="min-w-0 flex-1 truncate text-[13px] text-encre-controle">{reference.nom}</span>
+            <button type="button" className={PETIT} onClick={() => setChoisirReference(true)}>Remplacer</button>
+            <button type="button" className={PETIT} onClick={() => changerReference(null)}>Retirer</button>
+          </div>
+        : <button type="button" className={PETIT} disabled={!referencePossible} onClick={() => setChoisirReference(true)}>Joindre une image</button>}
+      <small className="mt-[4px] block text-[12px] text-encre-3">
+        {!referencePossible ? "Le style installé ne sait pas porter d’image de référence."
+          : reference ? "Elle oriente la matière ; c’est le texte qui commande."
+          : "Facultatif. Une image pour donner le ton — la matière est refabriquée, jamais découpée dans celle-ci."}
+      </small>
     </div>
     <div>
       <button type="button" className={LIEN} aria-expanded={texteOuvert} onClick={() => setTexteOuvert((v) => !v)}>{texteOuvert ? "Cacher le texte envoyé" : "Voir le texte envoyé"}</button>
-      {texteOuvert && <p className="mesure mt-[8px] whitespace-pre-wrap rounded-7 border border-trait bg-papier p-[8px] text-[12px] text-encre-2">{apercu?.texte || "Écris de quoi c’est fait et le motif : le texte envoyé s’affichera ici."}</p>}
+      {texteOuvert && <>
+        <p className="mesure mt-[8px] whitespace-pre-wrap rounded-7 border border-trait bg-papier p-[8px] text-[12px] text-encre-2">
+          {apercu?.texte ? <TexteEnParts texte={apercu.texte} pierre={pierre} motif={motif} /> : "Écris de quoi c’est fait et le motif : le texte envoyé s’affichera ici."}</p>
+        {!!apercu?.texte && <small className="mt-[4px] block text-[12px] text-encre-3">
+          <span className="rounded-5 bg-ligne-ouverte px-[4px]">ce dont c’est fait</span>
+          {" · "}<span className="rounded-5 bg-ligne-ouverte px-[4px]">le motif</span>
+          {" · le reste vient du cadrage et du style, et ne se règle pas ici."}</small>}
+        {/* Sans cette ligne, « voir le texte envoyé » laisserait croire que le texte
+            est tout ce qui part, au moment précis où ce n'est plus vrai (TU13). */}
+        {!!apercu?.texte && !!reference && <small className="mt-[4px] block text-[12px] text-encre-3">
+          Et l’image jointe part avec : « {reference.nom} ».</small>}
+      </>}
     </div>
     <label className="flex items-center gap-[8px] text-[13px] text-encre-controle">
       <input type="checkbox" checked={j.reglages.memesCouleurs !== false} disabled={j.reglages.paletteJeu === true && !!j.paletteUnivers.length}
@@ -680,7 +809,8 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
           className="min-h-[30px] w-[54px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle" /></label>
       <button type="button" className={PRINCIPAL} disabled={occupe || !!bloque} onClick={() => void generer()}>{occupe ? "Envoi…" : `Générer ${nTirages} tirage${nTirages > 1 ? "s" : ""}`}</button>
     </div>
-    <p role={dispo && !dispo.disponible ? "alert" : undefined} className={`text-[12px] ${dispo && !dispo.disponible ? "text-echec" : "text-encre-3"}`}>{bloque || `Gratuit, sur ta machine · ${attente}`}</p>
+    <p role={dispo && !dispo.disponible ? "alert" : undefined} className={`text-[12px] ${dispo && !dispo.disponible ? "text-echec" : "text-encre-3"}`}>
+      {bloque || `Gratuit, sur ta machine · ${attente}${reference ? " · plus long avec une image jointe : 512 px au lieu de 256" : ""}`}</p>
     {!!j.tirages.length && <div>
       <div className="mb-[8px] text-[12px] text-encre-3">Les tirages · clique celui qui te plaît</div>
       <div className="grid grid-cols-3 gap-[8px]">{j.tirages.map((t) => {
@@ -695,6 +825,11 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
           {t.pourNom}{lecture === asset && <small className="text-[11px] text-encre-3">Lecture…</small>}</button>
       })}</div>
     </div>}
+    {/* **La seule grille de choix d'image du produit** (RP6) : ni second sélecteur,
+        ni import propre aux tuiles — elle sait déjà chercher, filtrer et importer. */}
+    {choisirReference && <CadreDialogue titre="Joindre une image de référence" onFermer={() => setChoisirReference(false)}
+      enfants={<BibliothequePourImage retour="Générer une matière" onFermer={() => setChoisirReference(false)}
+        onChoisir={(a) => { changerReference({ asset: a.identifiant, nom: a.label }); setChoisirReference(false) }} />} />}
   </div>
 }
 

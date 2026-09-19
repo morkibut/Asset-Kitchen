@@ -11,6 +11,40 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## TU12 et TU13, les deux champs et l'image de référence — 20 septembre 2026
+
+Nées d'un usage, le 19 au soir : l'auteur a écrit toute sa description dans « C'est fait de
+quoi ? », laissé « Le motif » vide, et le bouton est resté gris sans dire lequel manquait.
+
+**Ce que la mesure a changé au classement.** TU13 avait l'air d'une tranche de fond — un
+nouveau chemin de génération. En allant voir, les trois quarts existaient déjà : la famille
+`klein` construit ses variantes à une, deux et trois références, et `_rendre_raccordable`
+applique les deux nœuds du raccord **aux variantes comme au graphe principal**. Il restait du
+passage de paramètre. Classée `[MEDIUM]` au lieu de `[HARD]`, avec le seul vrai point dur
+sorti à part : prouver que le raccord tient *avec* une image, et que la reprise rejoue
+l'image au lieu de la redemander.
+
+**Ce qui était déjà écrit et jamais appelé.** `taille_par_defaut(reference)` rendait 512
+depuis TU5 — écrit avec le portage, jamais atteint faute d'appelant. La tranche n'a eu qu'à
+lui donner son premier appelant.
+
+**Le mécanisme des références n'a pas été réinventé.** Une référence est un identifiant
+d'asset dans l'enregistrement, jamais des octets ; `_demande_de` relit l'image à l'appel
+comme à la reprise. En branchant `soumettre_matiere` dessus, la reprise d'une génération
+interrompue a marché sans une ligne de plus — c'est le genre de chose qu'on n'obtient que si
+l'on passe par le chemin existant au lieu d'en ouvrir un second.
+
+**Une redite attrapée par un essai.** L'écran disait « 512 px » deux fois : sous l'image et
+sur la ligne d'attente. C'est un essai qui a buté dessus (« Found multiple elements ») avant
+qu'un œil ne le voie. La taille est restée là où l'attente est annoncée.
+
+**Ce qu'on n'a pas promis.** Pas de curseur « force » : chez FLUX.2 Klein, la référence est
+une édition qui garde le sujet, pas un img2img — le curseur existe, mais pour une autre
+famille, et l'exposer ici aurait été un réglage inerte. Et la mesure T26 de sc-clone est
+recopiée dans le plan pour qu'on ne la reperde pas : pour **lier trois emplacements entre
+eux**, la référence en latent nuit — ce qui les lie est le texte. TU13 sert à autre chose :
+orienter **une** matière vers une image qu'on a sous les yeux.
+
 ## Les jeux de tuiles, TUM à TU11 — 19 septembre 2026
 
 Le chantier a repris le moteur de tuiles de sc-clone, que l'auteur avait validé, et l'a
@@ -53,6 +87,14 @@ s'appliquait aux matières intégrées aussi — le sable sous l'herbe devenait 
 d'un mur devenaient grises. Elle ne touche plus qu'aux matières-assets (générées ou importées),
 ramenées sur la palette de la première d'entre elles ; les matières intégrées ne sont jamais
 recolorées (voir `docs/PLAN-tuiles.md` § TU6).
+
+**La taille de pièce par défaut, tranchée le 19 septembre 2026.** Recopiée de sc-clone, la
+liste s'arrêtait à 16/32/64 — pas une limite du moteur, une limite de l'écran de sc-clone. La
+case du jeu de l'auteur est à 96 px, hors de cette liste. Mesuré avant de trancher : le moteur
+rend 8 à 128 px sans défaut (16 px 25 ms, 32 px 41 ms, 48 px 60 ms, 64 px 85 ms, 96 px 188 ms,
+128 px 328 ms). La liste des tailles de pièce suit désormais celle des cases du jeu (`CIBLES`),
+moins 256 et 512 — refusés en clair, la planche y devenant trop lourde à dessiner. Voir
+`docs/PLAN-tuiles.md`, « Questions laissées ouvertes ».
 
 ## RP23 · Tester les animations comme dans le jeu — 16 septembre 2026
 

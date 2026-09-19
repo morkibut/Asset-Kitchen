@@ -30,8 +30,11 @@ const chemin = (p: string, id: string) => `${racine(p)}/${encodeURIComponent(id)
 /** Un cadrage possible pour une matière, tel que le serveur les rend
  *  (`atelier/domaine/texte_matiere.py`, `LISTE_CADRAGES`). */
 export type Cadrage = { id: string; nom: string; aide: string }
-export type ApercuMatiere = { texte: string; negatif: string; taille: number; cadrages: Cadrage[] }
-export type DisponibiliteMatieres = { disponible: boolean; manque: string[]; modele: string | null }
+export type ApercuMatiere = { texte: string; negatif: string; taille: number; reference: boolean; cadrages: Cadrage[] }
+/** `reference_possible` : le style installé sait-il porter une image jointe (TU13) ?
+ *  Faux, le bouton qui en joint une est grisé et dit pourquoi — jamais absent sans
+ *  raison, comme le reste de la disponibilité de TU5. */
+export type DisponibiliteMatieres = { disponible: boolean; manque: string[]; modele: string | null; reference_possible?: boolean }
 export type ResultatEmplacement = { fichier: string; largeur: number; hauteur: number; type_media: string; octets: number }
 export type EmplacementMatiere = { rang: number; statut: string; resultat: ResultatEmplacement | null; raison: string | null }
 /** Une matière en cours de fabrication : la forme renvoyée par `POST …/generate`
@@ -48,9 +51,9 @@ const racineMatieres = (p: string) => `/projects/${encodeURIComponent(p)}/materi
 export const assetDeGeneration = (g: Pick<GenerationMatiere, "identifiant">, rang = 0) => `${g.identifiant}-${rang}`
 export const matieres = {
   disponibilite: (p: string) => appeler<DisponibiliteMatieres>(`${racineMatieres(p)}/availability`),
-  apercu: (p: string, r: { pierre: string; motif: string; cadrage: string }) =>
+  apercu: (p: string, r: { pierre: string; motif: string; cadrage: string; reference?: boolean }) =>
     appeler<ApercuMatiere>(`${racineMatieres(p)}/preview`, { method: "POST", body: JSON.stringify(r) }),
-  generer: (p: string, r: { pierre: string; motif: string; cadrage: string; tirages: number; graine?: number }) =>
+  generer: (p: string, r: { pierre: string; motif: string; cadrage: string; tirages: number; graine?: number; reference_asset?: string }) =>
     appeler<{ generations: GenerationMatiere[] }>(`${racineMatieres(p)}/generate`, { method: "POST", body: JSON.stringify(r) }),
 }
 export const reglesTuiles = (e: EnsembleTuiles): ReglesTuiles => ({ nom: e.nom, terrains: e.terrains, cellules: e.cellules, carte: e.carte })

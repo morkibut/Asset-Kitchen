@@ -20,7 +20,7 @@
 
 ---
 
-## Les 12 tranches
+## Les 14 tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -37,7 +37,15 @@
 | **TU10** · L'agent fabrique des tuiles | `[HARD]` | Un rendu côté serveur par Node, un sous-système neuf ; il ferme AU13. |
 | **TU11** · La relecture croisée | `[HARD]` | Confronter des fichiers entre eux, c'est le travail du plus gros modèle. |
 
-**Compte** : 2 `[VERY-HARD]`, 5 `[HARD]`, 4 `[MEDIUM]`, 1 `[EASY]`, 0 `[VERY-EASY]`.
+| **TU12** · Les deux champs se comprennent | `[EASY]` | Des repères, un exemple et une ligne de blocage plus précise, sur un écran et des routes qui existent ; rien ne part vers le serveur. |
+| **TU13** · Une image de référence | `[MEDIUM]` | Le graphe à une référence et son raccord existent déjà : ce qui reste est du passage de paramètre, de l'écran à ComfyUI, plus la parité de l'agent. |
+
+**Compte, les 14 tranches** : 2 `[VERY-HARD]`, 5 `[HARD]`, 5 `[MEDIUM]`, 2 `[EASY]`,
+0 `[VERY-EASY]`.
+
+*Ajout du 19 septembre 2026.* Les douze premières lignes ne sont pas reclassées : elles sont
+closes, et leur étiquette est un jugement porté à l'écriture.
+
 
 **Ordre et parallélisme.** TUM et TU1 partent ensemble, puis TU2. TU3 et TU4 partent ensuite
 en parallèle : ils touchent des fichiers différents, l'écran d'un côté et l'export de l'autre.
@@ -53,6 +61,7 @@ TU5, puis TU6. TU7, puis TU8. TU9 peut partir dès TU3. Ensuite TU10, puis TU11.
 | TU3 | Le rendu en direct : où il tourne (fil principal ou worker), comment il se met en cache, et ce qui se passe à 64 px | `[HARD]` |
 | TU5 | Le portage Python du texte composé, qui doit égaler `composerPrompt` au caractère près | `[HARD]` |
 | TU10 | Lancer le moteur par Node depuis le serveur Python (shim de `document`, `peintrePixels`), et prouver l'égalité au pixel près | `[VERY-HARD]` |
+| TU13 | Prouver que le raccord tient **avec** une référence, et qu'une génération interrompue rejoue l'image jointe au lieu de la redemander | `[HARD]` |
 
 ---
 
@@ -65,6 +74,8 @@ TU5, puis TU6. TU7, puis TU8. TU9 peut partir dès TU3. Ensuite TU10, puis TU11.
 | TU3 | Le tiroir des matières intégrées, sur des vignettes que le moteur rend | `[MEDIUM]` |
 | TU4 | Les écrivains de texte `.tres`, recopiés d'`exports.js` en Python une fois la forme posée | `[MEDIUM]` |
 | TU7 | Le `LISEZMOI` des règles de pose | `[EASY]` |
+| TU12 | Les repères des deux champs et l'exemple qui les remplit, une fois la paire d'exemples choisie | `[VERY-EASY]` |
+| TU13 | La pose du choix d'image : la grille de choix du produit se réemploie telle quelle | `[EASY]` |
 
 ---
 

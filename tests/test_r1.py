@@ -63,8 +63,17 @@ REGLAGES: list[tuple[str, dict, callable]] = [
                 }
             ]
         },
-        lambda u: [(e["occupation"], e["silhouette"]) for e in u["bareme"]]
-        == [(80, False)],
+        # **La nature écrite est rendue telle quelle** — c'est le critère de R1, et il
+        # se lit sur elle, pas sur la longueur de la liste : depuis le 19 septembre 2026,
+        # un barème relu reçoit les natures du barème par défaut qui lui manquent
+        # (`bareme_complete`, `atelier/domaine/projet.py`). Compter les lignes ferait
+        # échouer ce test pour une raison qui n'est pas la sienne.
+        lambda u: next(
+            (e["occupation"], e["silhouette"])
+            for e in u["bareme"]
+            if e["nom"] == "personnage"
+        )
+        == (80, False),
     ),
     (
         "modeles",

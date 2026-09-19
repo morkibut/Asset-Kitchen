@@ -14,7 +14,7 @@ from atelier.domaine.recette_tuiles import recette as verifier_recette
 from atelier.domaine.tuiles import TuilesRefusees
 from atelier.services.rendu_tuiles import NodeAbsent
 
-RECETTE = ("recipe = {sorte: sol|chemin|mur|coins-15|pieces-17, taille: 16|32|64, graine: int, "
+RECETTE = ("recipe = {sorte: sol|chemin|mur|coins-15|pieces-17, taille: 8|16|24|32|48|64|96|128, graine: int, "
            "emplacements: {surface, bordure, face (mur), bas and bordureBas (only with reglages.secondTerrain) → "
            "{source: 'integree', nom: herbe|prairie|pierre|brique|roche|terre|sable|eau|bois|neige|feuillage|lave|carrelage} "
            "or {source: 'asset', asset: <library image id, e.g. a material from generate_tile_material>} or {source: 'vide'}; "
@@ -135,13 +135,17 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
         "exactly like a local image (local compute allowed, permitted methods, call cap — set by the author in Settings); "
         "each draw is one call, and a refusal says what blocks it. `key` makes the request idempotent. `material` is what every material of the set is made of (shared stem), `pattern` the "
         "motif — name the count and size when it has one ('exactly four huge square flagstones, two by two'); `framing` is "
-        "surface (floor seen from above), face (wall face), plat (flat material) or motif (regular pattern). Returns one "
+        "surface (floor seen from above), face (wall face), plat (flat material) or motif (regular pattern). "
+        "`reference_image` optionally joins ONE library image id to steer the look: it is an edit reference, not img2img "
+        "— the text still commands, the image orients, and the result stays seamless. With it the draw runs at 512px "
+        "instead of 256, so it takes longer. Returns one "
         "generation per draw, each with its own seed; poll them with check_generation (or wait here with wait_seconds). "
         "Each finished draw is a library image of kind 'matière': put its id in a recipe slot as {source: 'asset', asset: id}. "
         "When ComfyUI, the style weights or the seamless nodes are missing, it refuses and says what to install."))
     @refus_lisible
     async def generer_matiere(material: str, pattern: str, framing: str = "surface", draws: int = 1,
-                              seed: int | None = None, project: str | None = None, wait_seconds: float = 0.0,
+                              seed: int | None = None, reference_image: str | None = None,
+                              project: str | None = None, wait_seconds: float = 0.0,
                               key: str | None = None) -> dict[str, Any]:
         from atelier.mcp.serveur import ATTENTE_MAX, _generation_en_json
         projet = _projet(project)
@@ -150,7 +154,8 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
         # méthode permise, plafond d'appels) — et que le fournisseur ComfyUI relit
         # encore quand la carte graphique prend son tour.
         travail = await atelier.matieres.preparer_pour_agent(projet, pierre=material, motif=pattern, cadrage=framing,
-                                                            tirages=draws, graine=seed, cle=key)
+                                                            tirages=draws, graine=seed, reference=reference_image,
+                                                            cle=key)
         await atelier.travaux.demarrer(projet, travail["identifiant"], AGENT)
         attente = max(0.0, min(float(wait_seconds), ATTENTE_MAX))
         if attente:

@@ -327,10 +327,15 @@ async def test_godot_charge_les_jeux_animes_et_les_autres_formats(fixe):
         ("coins-15-anime", "coins-15", {"variantes": 3, "animation": 3}, None),
         ("coins-15-atlas-anime", "coins-15", {"animationAtlas": 8, "decor": "dense"}, None),
         ("pieces-17", "pieces-17", {}, None),
+        # La case du jeu de l'auteur (`docs/PLAN-tuiles.md`, « La taille de pièce par
+        # défaut », 19 septembre 2026) : un sol en 96 px se livre et se charge, comme les
+        # autres tailles — rien dans l'export ne suppose 16, 32 ou 64.
+        ("sol-96px", "sol", {}, None),
     ]
     jeux = []
     for nom, sorte, reg, emplacements in cas:
-        e = fabriquer(a, p, nom, sorte, 16, reg, emplacements, carte=petite)
+        taille = 96 if nom == "sol-96px" else 16
+        e = fabriquer(a, p, nom, sorte, taille, reg, emplacements, carte=petite)
         objet = a.tuiles.lire(p, e["identifiant"])
         animees = [[x, y, len(cases)] for (x, y), cases in export_tuiles.images_animees(objet).items()]
         mode = M.mode_godot(M.jeu_de(sorte)) if M.jeu_de(sorte) else -1

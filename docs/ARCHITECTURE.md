@@ -415,7 +415,8 @@ Un jeu de tuiles a deux formes, sur les mêmes routes `/api/projects/{projet}/ti
 **À partir d'une image** (AU13) : `POST` avec `image` et `grille`, raccords saisis à la main.
 **Fabriqué** : `POST` avec `nom`, `recette` et `atlas` (le PNG rendu, en base64). La recette
 est une liste fermée (`atelier/domaine/recette_tuiles.py`) : `sorte` (`sol`, `chemin`, `mur`,
-`coins-15`, `pieces-17`), `taille` (16, 32, 64), `graine`, `emplacements` (surface, bordure,
+`coins-15`, `pieces-17`), `taille` (8, 16, 24, 32, 48, 64, 96, 128 — la liste des cases du
+jeu, moins 256 et 512, trop lourds pour la planche ; tranché le 19 septembre 2026), `graine`, `emplacements` (surface, bordure,
 face, bas, bordureBas → matière `integree`, `asset` du jeu, ou `vide` ; une bordure `lie`
 suit sa surface) et `reglages` (noms et bornes du panneau de sc-clone). L'atlas doit mesurer
 exactement ce que la recette donne ; il entre en bibliothèque avec la filiation

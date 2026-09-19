@@ -17,9 +17,9 @@ from typing import Any
 
 from atelier.domaine import texte_matiere
 from atelier.domaine.erreurs import ModeleInconnu
-from atelier.domaine.generation import AGENT, AUTEUR, Generation
+from atelier.domaine.generation import AGENT, AUTEUR, Generation, Reinjection
 from atelier.domaine.tuiles import TuilesRefusees
-from atelier.fournisseur.catalogue_styles import style as style_de
+from atelier.fournisseur.catalogue_styles import FAMILLES, style as style_de
 
 # **Le seul style que ce chemin peut appeler** (décision 6 du plan : tout est
 # gratuit en argent, et le raccord garanti par ML6 est ce qui fait qu'une
@@ -46,10 +46,15 @@ class ServiceMatieres:
 
     # ── L'aperçu — gratuit, sans appel (route de prévisualisation séparée) ──
 
-    def apercu(self, pierre: str, motif: str, cadrage: str) -> dict[str, Any]:
+    def apercu(self, pierre: str, motif: str, cadrage: str, *, reference: bool = False) -> dict[str, Any]:
         """Le texte exact qui partirait, sans toucher à ComfyUI ni à la file
         locale : c'est la même composition que `generer`, juste sans
-        soumission — l'invariant qui rend « Voir le texte envoyé » vrai."""
+        soumission — l'invariant qui rend « Voir le texte envoyé » vrai.
+
+        `reference` ne change **pas** le texte : une image jointe n'ajoute pas
+        un mot (TU13). Elle change la taille — 512 au lieu de 256 —, et l'écran
+        doit pouvoir dire qu'une image part en plus du texte, sinon « voir le
+        texte envoyé » laisserait croire que le texte est tout ce qui part."""
         entree = style_de(STYLE)
         texte = texte_matiere.texte_envoi(
             pierre, motif, cadrage,
@@ -58,7 +63,8 @@ class ServiceMatieres:
         return {
             "texte": texte,
             "negatif": texte_matiere.NEGATIF,
-            "taille": texte_matiere.taille_par_defaut(None),
+            "taille": texte_matiere.taille_par_defaut(reference or None),
+            "reference": bool(reference),
             "cadrages": list(texte_matiere.LISTE_CADRAGES),
         }
 
@@ -72,8 +78,30 @@ class ServiceMatieres:
         styles = await self.a.styles_locaux.lister()
         ligne = next((s for s in styles if s["identifiant"] == STYLE), None)
         if ligne is None:  # pragma: no cover — le style est déclaré en dur au catalogue
-            return {"disponible": False, "manque": [f"Style inconnu : {STYLE}."], "modele": None}
-        return {"disponible": ligne["pret"], "manque": list(ligne["manque"]), "modele": ligne["modele"]}
+            return {"disponible": False, "manque": [f"Style inconnu : {STYLE}."], "modele": None,
+                    "reference_possible": False}
+        return {"disponible": ligne["pret"], "manque": list(ligne["manque"]), "modele": ligne["modele"],
+                "reference_possible": self._accepte_une_reference(ligne["modele"], ligne)}
+
+    def _accepte_une_reference(self, modele: str | None, ligne: dict[str, Any] | None = None) -> bool:
+        """Le style peut-il porter **une** image de référence (TU13) ?
+
+        Deux sources, dans cet ordre, et jamais une supposition :
+        1. le profil réellement construit, quand le modèle est au catalogue
+           (`references_max`, déduit de ses variantes) — c'est la réponse sûre ;
+        2. la famille du style sinon (`reference` : « sujet » pour FLUX.2
+           Klein), parce qu'un style pas encore installé, ou un catalogue pas
+           encore rafraîchi, n'a pas de profil à interroger — et répondre
+           « non » ferait disparaître le bouton pour une raison fausse.
+        """
+        if modele is not None:
+            try:
+                return self.a.catalogue.modele(modele).references_max >= 1
+            except ModeleInconnu:
+                pass
+        if ligne is None:
+            ligne = {"reference": FAMILLES[style_de(STYLE)["famille"]].get("reference")}
+        return bool(ligne.get("reference"))
 
     async def _resoudre_modele(self) -> str:
         """L'identifiant de catalogue du style installé — installe et
@@ -94,6 +122,26 @@ class ServiceMatieres:
             await self.a.catalogue.rafraichir()
         return dispo["modele"]
 
+    def _reference_jointe(self, modele: str, reference: str | None) -> tuple[Reinjection, ...]:
+        """L'image jointe, en identifiant d'asset — jamais en octets (TU13).
+
+        **Une seule, jamais trois.** Le graphe en accepte trois (les variantes
+        de la famille `klein`) ; une matière n'a qu'une intention, et trois
+        images dans une matière ne donnent rien à juger. La limite est donc
+        posée ici, au service, et non au graphe — celui-ci reste celui de
+        sc-clone, intouché.
+        """
+        if not reference:
+            return ()
+        if not isinstance(reference, str):
+            raise TuilesRefusees("L'image de référence est l'identifiant d'une image de la bibliothèque.")
+        if not self._accepte_une_reference(modele):
+            raise TuilesRefusees(
+                "Le style installé ne sait pas porter d'image de référence. "
+                "Génère sans image, ou réinstalle le style des matières raccordables."
+            )
+        return (Reinjection(asset=reference),)
+
     # ── Générer — N tirages, N travaux dans la file locale ──────────────────
 
     async def generer(
@@ -105,6 +153,7 @@ class ServiceMatieres:
         cadrage: str,
         tirages: int = 1,
         graine: int | None = None,
+        reference: str | None = None,
         provenance: str = AUTEUR,
     ) -> list[Generation]:
         """`tirages` générations indépendantes, une graine libre chacune —
@@ -116,12 +165,15 @@ class ServiceMatieres:
         `tests/test_tu5_matieres.py`)."""
         _entier(tirages, "Le nombre de tirages", TIRAGES_MIN, TIRAGES_MAX)
         modele = await self._resoudre_modele()
+        reinjectes = self._reference_jointe(modele, reference)
         entree = style_de(STYLE)
         texte = texte_matiere.texte_envoi(
             pierre, motif, cadrage,
             declencheur=entree["declencheur"], suffixe=entree.get("suffixe", ""),
         )
-        taille = str(texte_matiere.taille_par_defaut(None))
+        # 512 px avec une image jointe, 256 sans : le latent part alors de la taille
+        # de travail de la variante, et non d'une vignette agrandie (T29).
+        taille = str(texte_matiere.taille_par_defaut(reference))
         depart = graine if graine is not None else secrets.randbelow(texte_matiere.GRAINE_MAX + 1)
         graines = texte_matiere.graines_pour_tirages(depart, tirages, 1)
         generations = []
@@ -134,10 +186,12 @@ class ServiceMatieres:
                 projet=projet,
                 provenance=provenance,
                 graine=g,
+                references=reinjectes,
                 filiation={
                     "matiere": {
                         "pierre": pierre, "motif": motif, "cadrage": cadrage,
                         "style": STYLE, "graine": g,
+                        **({"reference": reference} if reference else {}),
                     }
                 },
             )
@@ -148,7 +202,7 @@ class ServiceMatieres:
 
     async def preparer_pour_agent(
         self, projet: str, *, pierre: str, motif: str, cadrage: str, tirages: int = 1,
-        graine: int | None = None, cle: str | None = None,
+        graine: int | None = None, reference: str | None = None, cle: str | None = None,
     ) -> dict[str, Any]:
         """Un travail de nature « matieres », au nom de l'agent, **pas encore lancé**.
 
@@ -167,9 +221,12 @@ class ServiceMatieres:
         entree = style_de(STYLE)
         texte = texte_matiere.texte_envoi(pierre, motif, cadrage, declencheur=entree["declencheur"], suffixe=entree.get("suffixe", ""))
         modele = await self._resoudre_modele()
+        # L'image jointe est validée **avant** d'écrire le travail : un travail préparé
+        # qui refuserait au démarrage aurait déjà consommé une clé d'idempotence.
+        self._reference_jointe(modele, reference)
         cle = cle if isinstance(cle, str) and cle.strip() else secrets.token_hex(16)
         d = {"cle": cle, "pierre": pierre, "motif": motif, "cadrage": cadrage, "tirages": tirages, "graine": graine,
-             "livrer_provisoire": False}
+             "reference": reference, "livrer_provisoire": False}
         empreinte = _hash(_json({"demande": d, "acteur": AGENT}))
         identifiant = _hash((projet + "\0" + "matieres\0" + cle).encode())[:32]
         travaux = self.a.travaux
@@ -205,15 +262,19 @@ class ServiceMatieres:
         try:
             with _verrou(travaux._dossier(projet, identifiant) / ".travail"):
                 t = travaux._brut(projet, identifiant)
-                taille = str(texte_matiere.taille_par_defaut(None))
                 d = t["demande"]
+                # Un travail préparé avant TU13 n'a pas la clé : `get`, jamais `[]`.
+                reference = d.get("reference")
+                taille = str(texte_matiere.taille_par_defaut(reference))
+                reinjectes = self._reference_jointe(t["modele"], reference)
                 for gid, g in zip(t["generations_images"], t["graines"]):
                     if self.a.generations.lire(gid) is None:
                         await self.a.generations.soumettre_matiere(
                             t["modele"], t["texte"], prompt_negatif=t["negatif"], resolution=taille, proportions="1:1",
-                            projet=projet, provenance=AGENT, graine=g, identifiant=gid,
+                            projet=projet, provenance=AGENT, graine=g, identifiant=gid, references=reinjectes,
                             filiation={"matiere": {"pierre": d["pierre"], "motif": d["motif"], "cadrage": d["cadrage"],
-                                                   "style": STYLE, "graine": g}})
+                                                   "style": STYLE, "graine": g,
+                                                   **({"reference": reference} if reference else {})}})
                 t = travaux._brut(projet, identifiant)
                 t.update(appels_engages=len(t["generations_images"]), etape="image")
                 travaux._garder(t)

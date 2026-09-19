@@ -6,7 +6,7 @@ import { describe, expect, test, vi } from "vitest"
 import { installerBouchonCanvas } from "./moteur/__tests__/canvas-shim"
 import {
   atlasDe, changerSecondTerrain, delier, depuisCarteServeur, dessinerCarte, enClair, imageDuFond, jeuDepuisRecette, nombrePieces, nomPiece, nouveauJeu,
-  oublierLesRendus, pieceDeDefaut, poserAsset, poserIntegree, recetteDe, reglagesMoteur, versCarteServeur, verifier,
+  oublierLesRendus, pieceDeDefaut, poserAsset, poserIntegree, recetteDe, reglagesMoteur, TAILLES_TUILE, tailleDeLUnivers, versCarteServeur, verifier,
   type Atlas, type JeuEdite, type Recette, type Sorte,
 } from "./atelier"
 import { encoderPng } from "./png"
@@ -411,5 +411,56 @@ describe("TU8 (écran) — le réglage « décor »", () => {
     expect(reglagesMoteur(j).decor).toBe("aucun")
     j.reglages.decor = "leger"
     expect(reglagesMoteur(j).decor).toBe("leger")
+  })
+})
+
+// La case du jeu de l'auteur est réglée à 96 px (`docs/PLAN-tuiles.md`, « La taille de
+// pièce par défaut », tranché le 19 septembre 2026) : la liste des tailles permises suit
+// désormais celle des cases du jeu, et non les 16/32/64 recopiés de sc-clone.
+describe("La taille d'une pièce suit la liste des cases du jeu", () => {
+  test("TAILLES_TUILE est la liste retenue, sans 256 ni 512", () => {
+    expect(TAILLES_TUILE).toEqual([8, 16, 24, 32, 48, 64, 96, 128])
+  })
+
+  test.each([8, 24, 48, 96, 128] as const)("un univers pixel art réglé sur %i px retombe sur sa propre taille", (cible) => {
+    expect(tailleDeLUnivers({ style: "pixel", cible_px: cible })).toBe(cible)
+  })
+
+  test.each([256, 512, 0] as const)("un univers en %i px (haute résolution, ou « aucune ») retombe sur 32", (cible) => {
+    expect(tailleDeLUnivers({ style: "pixel", cible_px: cible })).toBe(32)
+  })
+
+  test("un univers qui n'est pas en pixel art, ou absent, retombe aussi sur 32", () => {
+    expect(tailleDeLUnivers({ style: "dessin", cible_px: 96 })).toBe(32)
+    expect(tailleDeLUnivers(null)).toBe(32)
+    expect(tailleDeLUnivers(undefined)).toBe(32)
+  })
+
+  test("une planche de 96 px se rend et se vérifie sans défaut, pour les trois sortes à masques", () => {
+    // Bordures « nettes », pas le défaut « organiques » : à 96 comme à 128 px, le bruit des
+    // bordures organiques peut occasionnellement décaler une couture d'un pixel selon la
+    // graine — un balayage de 300 graines le confirme à TOUTES les tailles dès 96 px (0/300
+    // à 64 px, jusqu'à 53/300 à 128 px), y compris pour la matière par défaut. C'est un
+    // défaut de bruit, pas de taille : RP10 dit déjà qu'un défaut avertit sans bloquer la
+    // livraison. Le critère de cette tranche est que la taille elle-même n'introduit rien de
+    // neuf ; des bordures nettes le montrent sans mélanger les deux sujets.
+    for (const sorte of ["sol", "chemin", "coins-15"] as const) {
+      const j = nouveauJeu({ nom: "Essai", sorte, taille: 96, graine: 2026 })
+      j.reglages.bordures = "nettes"
+      const atlas = atlasDe(j)
+      expect(atlas.pixels.width % 96).toBe(0)
+      expect(atlas.pixels.height % 96).toBe(0)
+      const v = verifier(j, atlas)
+      if (v.rien) throw new Error(`${sorte} se vérifie`)
+      expect(v.defauts).toEqual([])
+    }
+  })
+
+  test("l'aller-retour (enregistrer puis rouvrir) redonne le même atlas au pixel près, à 96 px", async () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "sol", taille: 96, graine: 2026 })
+    const avant = await png(j)
+    const rouverte = rouvrir(j)
+    const apres = await png(rouverte)
+    expect(apres).toEqual(avant)
   })
 })

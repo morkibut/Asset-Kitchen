@@ -175,8 +175,10 @@ Un jeu sans recette reste un jeu « à partir d'une image », exactement comme a
 
 - [x] Un jeu avec recette se crée, se relit, se règle et se restaure par révision, comme un jeu
       d'AU13. Les ensembles déjà sur disque se relisent sans migration.
-- [x] Une recette refusée (sorte inconnue, taille hors de 16/32/64, réglage hors liste,
+- [x] Une recette refusée (sorte inconnue, taille hors liste, réglage hors liste,
       matière introuvable) répond 409 avec un message en clair.
+      *(La liste des tailles était 16/32/64 en TU2 ; elle est passée à 8, 16, 24, 32, 48,
+      64, 96, 128 le 19 septembre 2026 — voir « Questions laissées ouvertes ».)*
 - [x] L'atlas envoyé avec la recette est figé en asset, avec sa filiation vers le jeu. Ses
       cellules sont toutes retenues. Leurs raccords sont **remplis depuis le masque de chaque
       pièce**, jamais depuis la saisie.
@@ -548,6 +550,136 @@ est tenue par les essais (`tests/test_tu4_livraison.py`, `test_tu7_mur.py`,
 - **La livraison dit « ouvre personnage.tscn pour voir la carte ».** La scène stable d'un jeu
   de tuiles garde le nom par défaut de la livraison commune (déjà vrai pour AU13).
 
+### TU12 · Les deux champs se comprennent sans mode d'emploi
+
+**Bloquée par** : TU5. **Née d'un usage**, le 19 septembre 2026 : l'auteur a écrit
+« pavé de pierre ancien halo de mine naine tolkien » dans « C'est fait de quoi ? », laissé
+« Le motif » vide, et le bouton est resté gris. Les deux champs sont les deux moitiés d'une
+même phrase, et rien à l'écran ne le dit.
+
+Ce qui change dans l'onglet « Générer » du tiroir des matières — **rien de plus, et surtout pas
+un pavé d'explications** (`docs/DESIGN.md` : soit c'est utile et très clair, soit on ne
+l'écrit pas) :
+
+- **Les deux repères sous les champs disent le partage du travail**, pas la portée technique.
+  Sous le premier : la matière seule — pierre, bois, terre —, la même pour tout le jeu, et
+  c'est elle qui fait que le sol et le mur vont ensemble. Sous le second : comment cette
+  matière est posée *ici*, avec le compte et la taille, parce que le produit ne les devine
+  jamais (règle D2/T26 de TU5 : le texte de l'auteur n'est pas réécrit).
+- **Un exemple qui se pose en un clic**, et qui remplit **les deux champs à la fois** avec une
+  paire cohérente. C'est le seul endroit où la découpe s'apprend sans être expliquée. L'exemple
+  suit le cadrage choisi : un sol vu du dessus et une face de mur n'appellent pas le même motif.
+- **Le cadrage choisi montre son aide en clair**, au lieu de la cacher dans une infobulle que
+  ni le doigt ni le clavier n'ouvrent (`title=` aujourd'hui).
+- **La ligne qui bloque nomme ce qui manque et pour quel emplacement** — « Il manque le motif
+  pour Surface » —, et le champ vide se repère à l'œil. Aujourd'hui elle redit la consigne
+  entière, les deux champs à la fois, sans dire lequel est en défaut.
+- **« Voir le texte envoyé » montre d'où vient chaque morceau** : la part qui vient du premier
+  champ, celle qui vient du second, celle que le cadrage ajoute. Le texte reste **exactement**
+  celui que le serveur renvoie — l'invariant de TU5 ne bouge pas, c'est le repérage des trois
+  parts qui s'ajoute, jamais une composition côté écran.
+
+- [x] Sans avoir rien lu d'autre que l'écran, on comprend que le premier champ est la matière
+      et le second son arrangement.
+      *(Les deux repères disent le partage du travail ; « Voir le texte envoyé » souligne les
+      deux parts de l'auteur et nomme le reste — « le reste vient du cadrage et du style, et ne
+      se règle pas ici ».)*
+- [x] L'exemple remplit les deux champs, dépend du cadrage, et n'écrase jamais un champ déjà
+      rempli sans le dire.
+      *(`EXEMPLES_MATIERE`, une paire par cadrage, côté gag2 — le moteur recopié de sc-clone
+      n'est pas touché. Le bouton dit « Remplir » puis « Remplacer ».)*
+- [x] La ligne qui bloque nomme le champ manquant et l'emplacement visé.
+      *(« Il manque : le motif pour Surface. » Le champ vide porte `aria-invalid` et un contour
+      rouge — mais seulement si l'autre est rempli : les deux vides, rien n'est commencé.)*
+- [x] L'aide du cadrage sélectionné est lisible sans survol ni clic.
+      *(Elle n'était que dans un `title=`, que ni le doigt ni le clavier n'ouvrent.)*
+- [x] Le texte envoyé reste au caractère près celui de `POST …/materials/preview`.
+      *(Rien n'est composé côté écran : les deux parts sont **retrouvées** dans le texte du
+      serveur, et un texte où on ne les retrouve pas s'affiche tel quel, sans repère faux.
+      L'essai d'écran compare le texte rendu entier, ce qui est plus fort que l'assertion
+      d'avant.)*
+- [x] Rien n'est ajouté à l'écran qui ne serve à remplir les champs.
+      *(Une redite repérée en la construisant — « 512 px » sous l'image **et** sur la ligne
+      d'attente — a été retirée : la taille appartient à la ligne qui annonce l'attente.)*
+
+### TU13 · Une image de référence pour la matière
+
+**Bloquée par** : TU5. **Demandée par l'auteur** le 19 septembre 2026.
+
+Joindre **une** image à la génération d'une matière : « fais-moi une matière dans cet
+esprit-là ». Le chemin existe déjà presque entièrement, et cette tranche est surtout de la
+plomberie.
+
+**Ce qui est déjà construit, et qu'on ne refait pas.**
+- Le style des tuiles est de la famille `klein` ; `construire_klein` fabrique déjà les variantes
+  à 1, 2 et 3 références (`_variante_klein`, `atelier/fournisseur/styles_locaux.py`).
+- Le raccord sans couture est appliqué **aux variantes comme au graphe principal**
+  (`_rendre_raccordable`) : une matière faite à partir d'une image reste raccordable. C'est la
+  condition sans laquelle cette tranche n'aurait pas lieu d'être.
+- Le port image local sait transporter des références jusqu'à ComfyUI, les archiver avec
+  l'étape et les rejouer à la reprise (`atelier/fournisseur/workflow_image.py`).
+- Le domaine sait déjà qu'une génération **avec** référence part en 512 px et non en 256
+  (`texte_matiere.taille_par_defaut`) — écrit en TU5, jamais appelé avec une référence.
+
+**Ce qui manque.** `ServiceMatieres.generer` et `soumettre_matiere` n'ont aucun paramètre
+d'image ; l'écran n'a pas de bouton ; la recette du jeu ne garde pas la référence.
+
+**Une seule image, pas trois.** Le graphe en accepte trois ; une matière n'en demande qu'une.
+Trois références sur une matière, c'est trois intentions dans une image, et il n'y a rien à
+en juger.
+
+**Ce que cette tranche ne promet pas.** Chez FLUX.2 Klein, une référence n'est **pas** un
+img2img : `_variante_klein` pose des `ReferenceLatent` sur le positif et le négatif, et le
+latent de départ reste vide. L'image oriente, le texte commande. Il n'existe donc **pas** de
+curseur « force » pour cette famille — celui qui existe (`PARAMETRE_FORCE`) appartient à la
+famille `zimage`, et l'exposer ici promettrait un réglage inerte. L'écran dit ce que la
+référence fait, en une ligne, et ne montre aucun curseur.
+
+**Et ce qu'une mesure de sc-clone dit déjà.** T26 (`moteur/tile-ia-prompt.js`, en tête) a
+mesuré que pour **lier trois emplacements entre eux** — sol, dessus de mur, face de mur —, ni
+la référence en latent ni la graine commune n'aident : *les deux nuisent*, et ce qui les lie
+est le **texte**, d'où le tronc commun « c'est fait de quoi ». TU13 ne revient pas là-dessus :
+elle ne sert pas à lier des emplacements entre eux, mais à orienter **une** matière vers une
+image que l'auteur a sous les yeux. La distinction est écrite ici pour qu'on ne la reperde
+pas : joindre la même image aux trois emplacements pour les accorder irait contre une mesure
+déjà faite.
+
+- [x] On joint une image par **la seule grille de choix du produit** (RP6,
+      `BibliothequePourImage`) : la bibliothèque, une collection, les favoris, ou un fichier
+      importé depuis le disque. Pas un second sélecteur d'images.
+- [x] La référence est **par emplacement**, et vit exactement aussi longtemps que le motif :
+      sur le jeu en cours d'édition, pas dans la recette enregistrée — le bloc « texte » n'y est
+      pas non plus aujourd'hui (`TexteMatieres`, `interface/src/tuiles/atelier.ts`). La surface
+      et la face du mur peuvent en avoir chacune une, ou aucune. **Si l'usage réclame qu'elle
+      survive à la réouverture du jeu, c'est une tranche de plus** : la recette entière du texte
+      y passerait, motif compris, et ce n'est pas la question posée ici.
+- [x] Elle se voit en vignette, se remplace et se retire en un geste.
+- [x] Avec une référence, la génération part en 512 px, et l'attente annoncée en tient compte.
+      *(« Gratuit, sur ta machine · environ 2 min par image · plus long avec une image jointe :
+      512 px au lieu de 256 ». Aucun nombre inventé : la médiane mesurée reste celle de la
+      machine, et la phrase dit seulement que ce tirage-ci est plus long.)*
+- [x] Le raccord tient.
+      *(`tests/test_tu13_reference_matiere.py` lit le graphe réellement envoyé à ComfyUI :
+      un `LoadImage`, deux `ReferenceLatent` (positif et négatif), et `SeamlessTile` +
+      `CircularVAEDecode` toujours là. Plus une garde de non-régression : sans image, le graphe
+      reste celui de TU5, au nœud près.)*
+- [x] Si le style installé n'offre pas la variante à une référence, le bouton qui joint une
+      image est grisé et dit pourquoi.
+      *(`reference_possible` vient du profil réellement construit ; à défaut — style pas encore
+      installé, catalogue pas rafraîchi — de la famille du style, qui déclare son genre de
+      référence. Répondre « non » dans ce cas aurait fait disparaître le bouton pour une raison
+      fausse.)*
+- [x] « Voir le texte envoyé » dit qu'une image est jointe — et le texte, lui, ne change pas
+      d'un mot (essai serveur : `apercu(reference=True)` rend le même texte, une autre taille).
+- [x] **L'agent fait de même** : `generate_tile_material` accepte `reference_image`, par un
+      asset de la bibliothèque, et reste borné par le cadre de l'agent (TU10, RP2).
+      *(L'image est validée **avant** d'écrire le travail durable : un travail préparé qui
+      refuserait au démarrage aurait déjà consommé sa clé d'idempotence.)*
+- [x] Une génération avec référence se suit, s'annule et **se reprend** comme les autres.
+      *(Des identifiants dans l'enregistrement, jamais des octets : `_demande_de` relit l'image
+      depuis l'asset à l'appel comme à la reprise — le mécanisme existait déjà pour toutes les
+      références du produit, il n'a pas été réinventé ici.)*
+
 ## Ce que ce plan ne couvre pas
 
 - **L'isométrique et la vue de plateforme.** SpriteCook les propose ; sc-clone n'a fait
@@ -561,9 +693,34 @@ est tenue par les essais (`tests/test_tu4_livraison.py`, `test_tu7_mur.py`,
 
 ## Questions laissées ouvertes
 
-- **La taille de pièce par défaut.** L'écran reprend celle de l'univers du jeu. Les essais de
-  sc-clone sur « Cœur de Pierre » visaient 64 px pour un jeu en 800×450. Si c'est le même jeu,
-  64 px devient le défaut.
+- ~~**La taille de pièce par défaut.**~~ **Tranchée le 19 septembre 2026.** Les tailles de
+  pièce recopiées de sc-clone (16, 32, 64 — `TAILLES`, `atelier/domaine/recette_tuiles.py`)
+  n'étaient pas une limite du moteur, mais une recopie de l'écran de sc-clone. La case du jeu
+  de l'auteur, elle, est réglée à **96 px** (`univers.cible_px`, écran Réglages › Univers) :
+  ses tuiles ne seraient jamais tombées sur sa propre grille. Vérifié par le code même de
+  l'écran (`nouveauJeu` → `atlasDe` → `verifier`, sorte « sol ») : 16 px 25 ms, 32 px 41 ms,
+  48 px 60 ms, 64 px 85 ms, 96 px 188 ms (768×576), 128 px 328 ms (1024×768) — 0 défaut à
+  toutes les tailles. **Décision : les tailles de pièce suivent désormais la liste des cases
+  du jeu (`CIBLES`, `interface/src/recette.ts` ; `atelier/domaine/vue.py`, `TAILLES`), moins
+  256 et 512** — au-delà, la planche devient trop lourde à dessiner, et c'est refusé en clair
+  (`atelier/domaine/recette_tuiles.py`, message qui nomme la liste permise et la raison). La
+  liste retenue, `TAILLES` côté serveur et `TAILLES_TUILE` côté écran
+  (`interface/src/tuiles/atelier.ts`, une seule source pour les deux) : **8, 16, 24, 32, 48,
+  64, 96, 128**. `tailleDeLUnivers` reprend la taille de l'univers quand elle y figure, et
+  replie sur 32 sinon (univers en 256, 512, ou sans cible). **L'écart assumé avec sc-clone** :
+  sc-clone ne proposait que 16/32/64 parce que son propre jeu n'avait jamais eu besoin
+  d'autre chose ; gag2 sert plusieurs jeux, dont les cases ne sont pas toutes du même ordre de
+  grandeur, et la liste des tailles doit donc suivre celle des cases plutôt que la recopier
+  à trois valeurs.
+  **Trouvé en écrivant les essais de cette tranche, à signaler et non à corriger ici** : le
+  bruit des bordures « organiques » (le réglage par défaut) peut, selon la graine, décaler une
+  couture d'un pixel — pas un défaut de taille, un défaut de graine. Balayage de 150 à 300
+  graines par taille, sorte « sol » et « chemin » : 0/300 en dessous de 64 px, 3/150 à 3,3 %
+  à 64 et 96 px, jusqu'à 53/300 à 128 px. Plus une planche est grande, plus le bruit a de
+  place pour dériver — RP10 couvre déjà ce cas (un défaut avertit, il ne bloque jamais la
+  livraison), et le moteur n'est pas réécrit (décision 1). Les essais de cette tranche
+  vérifient donc la taille avec des bordures « nettes » (déterministes), pour ne pas mélanger
+  les deux sujets.
 - **La face de mur reste fragile** dans sc-clone : elle génère des barres verticales. TU5 la
   garde telle quelle. Si l'usage le confirme, ce sera une tranche de plus, avec un tirage
   mesuré, pas une supposition.
