@@ -25,7 +25,7 @@
  * workflow » ne paraît pas ici : un réglage ne lance pas une fabrication.
  */
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 import type { EtatAgent, Modele, Tiroir } from "../api"
 import { DelegationDuJeu } from "./DelegationDuJeu"
@@ -39,7 +39,7 @@ import {
   ReglesDuJeu,
   TitreDeLAtelier,
 } from "./ReglesDuJeu"
-import { ProfilsWorkflow } from "./WorkflowsLocaux"
+import { MethodesSonores, ProfilsWorkflow } from "./WorkflowsLocaux"
 
 /** Les quatre onglets, dans l'ordre de la maquette. **La liste est fermée** :
  *  un cinquième onglet serait une porte de plus vers les réglages, et c'est
@@ -205,6 +205,9 @@ function MoteursEtWorkflows({
   onDeposee: () => void
   onInstallation: () => void
 }) {
+  // Change à chaque installation de méthodes sonores, pour que « Les
+  // workflows locaux » juste au-dessus relise ses profils à son tour (SN1).
+  const [actualisationSon, setActualisationSon] = useState(0)
   return (
     <main
       aria-label="Moteurs & workflows"
@@ -233,7 +236,13 @@ function MoteursEtWorkflows({
         {/* Les workflows locaux portent déjà leur titre : en poser un second
             au-dessus ferait lire deux sections là où il n'y en a qu'une. */}
         <div className="mt-[34px]">
-          <ProfilsWorkflow />
+          <ProfilsWorkflow actualiserSur={actualisationSon} />
+        </div>
+
+        {/* Les méthodes sonores (SN1) : un geste d'installation à part, parce
+            qu'il ne colle rien — il retrouve ce que ComfyUI sait déjà. */}
+        <div className="mt-[34px]">
+          <MethodesSonores onInstalle={() => setActualisationSon(n => n + 1)} />
         </div>
       </div>
     </main>

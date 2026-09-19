@@ -848,6 +848,10 @@ Générer directement à la taille cible ne marche pas.
 
 ## 10 · V5 — Audio
 
+> Repris et élargi le 18 septembre 2026 : [archi-son.md](archi-son.md) et
+> [PLAN-son.md](PLAN-son.md). Stable Audio Open y cède la place par défaut à Stable Audio 3,
+> et reste en secours ; ce qui suit est l'intention d'origine.
+
 - **Bruitages** — description → son court. Le module existe déjà dans MySpriteAi
   (Stable Audio Open en local) ; une API reste possible en second fournisseur.
 - **Boucles d'ambiance** — le vrai travail est le **bouclage sans couture** :

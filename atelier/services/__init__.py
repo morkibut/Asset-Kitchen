@@ -68,8 +68,10 @@ from atelier.services.livraison import ServiceLivraison
 from atelier.services.livraison_images import ServiceLivraisonImages
 from atelier.services.tuiles import ServiceTuiles
 from atelier.services.sons import ServiceSons
+from atelier.services.sfxr import ServiceSfxr
 from atelier.services.travaux import ServiceTravaux
 from atelier.services.file_locale import ServiceFileLocale
+from atelier.services.installation_son import ServiceInstallationSon
 from atelier.services.profils_workflow import ServiceProfilsWorkflow
 from atelier.services.styles_locaux import ServiceStylesLocaux
 from atelier.services.travaux_workflow import ServiceTravauxWorkflow
@@ -81,6 +83,10 @@ from atelier.services.tenues import ServiceTenues
 from atelier.services.sources_3d import ServiceSources3D
 from atelier.services.travaux_3d import ServiceTravaux3D
 from atelier.services.travaux_audio import ServiceTravauxAudio
+from atelier.services.series_son import ServiceSeriesSon
+from atelier.services.variantes_son import ServiceVariantesSon
+from atelier.services.sons_du_sujet import ServiceSonsDuSujet
+from atelier.services.reperes_sonores import ServiceReperesSonores
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.planche_animee import ServicePlancheAnimee
 from atelier.services.equipement import ServiceEquipement
@@ -272,6 +278,9 @@ class Atelier:
         self.fournisseur_workflow_image = FournisseurWorkflowImage(self.profils_workflow, self.file_locale,
             self.profils_workflow.fabrique_moteur)
         self.styles_locaux = ServiceStylesLocaux(self.profils_workflow)
+        # Installer les méthodes sonores (SN1) : ne connaît que le service des
+        # profils, pour retrouver ses fichiers par motif et les importer.
+        self.installation_son = ServiceInstallationSon(self.profils_workflow, self)
         # **Deux entrées pour une seule liste, et la seconde est celle de F1.**
         # `fabrique_fournisseur` au singulier monte un atelier sur un fournisseur
         # unique : c'est ce que font tous les essais du dépôt, et ça décrit
@@ -595,6 +604,10 @@ class Atelier:
         self.livraison_images = ServiceLivraisonImages(self)
         self.tuiles = ServiceTuiles(self)
         self.sons = ServiceSons(self)
+        # sfxr (SN8) : synthèse locale, sans ComfyUI — n'apporte ni
+        # fournisseur ni catalogue, seulement le calcul et la bibliothèque
+        # de `self.sons` qu'elle appelle sans la modifier.
+        self.sfxr = ServiceSfxr(self)
         self.animation.avant_soumission_locale = self.travaux.autoriser_generation_locale
         self.animation.apres_les_images = self._monter_a_l_arrivee
         self.fournisseur_workflow_image.avant_soumission = lambda identifiant: self.travaux.autoriser_generation_image_locale(self.base.lire(identifiant))
@@ -608,6 +621,23 @@ class Atelier:
         self.sources_3d = ServiceSources3D(self)
         self.travaux_3d = ServiceTravaux3D(self)
         self.travaux_audio = ServiceTravauxAudio(self)
+        # SN9 : la partition de YuE2, écrite d'abord, relue, puis jouée.
+        from atelier.services.partition_son import ServicePartitionSon
+        self.partition_son = ServicePartitionSon(self)
+        # SN3 : une série = N travaux audio ; un jeu de variantes = des sons par référence.
+        self.series_son = ServiceSeriesSon(self)
+        self.variantes_son = ServiceVariantesSon(self)
+        # SN6 : les emplacements sonores d'un sujet. Sa livraison emporte ses
+        # sons : la livraison du sujet, montée avant, les lui demande.
+        self.sons_du_sujet = ServiceSonsDuSujet(self)
+        # SN10 : des musiques déjà faites, livrées en couches ou en morceaux qui s'enchaînent.
+        from atelier.services.musique_adaptative import ServiceMusiqueAdaptative
+        self.musique_adaptative = ServiceMusiqueAdaptative(self)
+        self.livraison.sons_du_sujet = self.sons_du_sujet.paquet_pour_livraison
+        # SN7 : les repères sonores des bandes ; la livraison du sujet en fait
+        # une piste audio par animation dans son `AnimationPlayer`.
+        self.reperes_sonores = ServiceReperesSonores(self)
+        self.livraison.reperes_sonores = self.reperes_sonores.pour_livraison
         self.sortie = ServiceSortie(
             self.base,
             self.fichiers,

@@ -7,7 +7,19 @@ from atelier.audio.traitement import encoder
 from atelier.domaine.travail import TravailRefuse
 from atelier.services import Atelier
 from tests.test_au7_au8 import ComfyDouble, profil, raccorder
-from tests.test_au14_sons import signal
+
+
+def signal(taux=16000):
+    # Deux canaux distincts (440 Hz à gauche, 554 Hz à droite), à la
+    # différence du `signal()` de `test_au14_sons` (exactement en phase
+    # inverse, pour son propre essai de mixage stéréo précis) : celui-ci sert
+    # de bruitage générique à toute la suite ComfyUI doublée, y compris au
+    # geste « garder » (SN3/SN9) qui applique un passage en mono — une paire
+    # exactement opposée s'y annulerait et se dirait silencieuse à tort.
+    t = np.arange(taux) / taux
+    gauche = .25 * np.sin(2 * np.pi * 440 * t)
+    droite = .25 * np.sin(2 * np.pi * 554 * t)
+    return encoder(np.column_stack((gauche, droite)), taux)
 
 
 def profil_son():
@@ -114,6 +126,23 @@ async def test_retour_invalide_ou_silencieux_reste_acquis_a_verifier(sonore, oct
     assert fini["consommations"] and fini["consommations"][0]["unite"] == "secondes"
     repris = await lancer(atelier, fini, True)
     assert repris["son"] == fini["son"] and len(comfy.envois) == 1
+
+
+async def test_travail_dont_le_son_sature_passe_termine(sonore, monkeypatch):
+    # Règle du produit (SN3) : la saturation informe, elle ne bloque plus.
+    # Un travail dont le rendu sature acquiert quand même son son et passe
+    # « termine », avec l'avertissement porté par le son lui-même.
+    atelier, comfy, p = sonore
+    importer = atelier.sons.importer_octets
+    def sature(*args, **kw):
+        son = importer(*args, **kw)
+        return atelier.sons.regler(args[0], son["identifiant"], son["revision"], {"gain_db": 24})
+    monkeypatch.setattr(atelier.sons, "importer_octets", sature)
+    t = await preparer(atelier, p)
+    fini = await lancer(atelier, t)
+    assert fini["etat"] == "termine" and fini["son"], fini
+    lu = atelier.sons.lire(t["projet"], fini["son"])
+    assert lu["pret"] and lu["mesures"]["ecretes"] > 0 and lu["avertissements"]
 
 
 async def test_coupure_apres_import_ne_cree_pas_deux_sons_et_garde_les_corrections(sonore, monkeypatch):

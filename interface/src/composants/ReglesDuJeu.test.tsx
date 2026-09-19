@@ -19,6 +19,7 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { ReglesDuJeu, dossierPrevu } from "./ReglesDuJeu"
 import { UNIVERS_VIDE, type Champ, type Univers, type VueDuJeu } from "../api"
+import type { MoteurParFamille, ProfilWorkflow } from "../api-workflows"
 
 afterEach(() => {
   cleanup()
@@ -112,6 +113,12 @@ function construireDouble(
     /** Les jeux déjà nommés — le double y cherche un homonyme, comme le
      *  service, pour que l'avertissement soit joué et pas seulement affiché. */
     jeux?: string[]
+    /** Les méthodes sonores installées (SN1) — nature « audio » seulement,
+     *  comme `workflows.lister()` filtré par l'écran. */
+    profilsAudio?: ProfilWorkflow[]
+    /** Le moteur par défaut de chaque famille de sons (SN2), tel que
+     *  `GET /workflow-profiles/sound-defaults` le rend. */
+    moteursParFamille?: Record<string, MoteurParFamille>
   } = {},
 ) {
   let univers: Univers = {
@@ -211,6 +218,20 @@ function construireDouble(
       ] as const) {
         if (body[cle] !== undefined) univers = { ...univers, [cle]: body[cle] }
       }
+      // **Le bloc sonore (SN2)** — comme le service : ce qui n'est pas envoyé
+      // ne bouge pas, un moteur se pose famille par famille.
+      const corpsSon = (body as { son?: Partial<Univers["son"]> }).son
+      if (corpsSon) {
+        univers = {
+          ...univers,
+          son: {
+            champs: corpsSon.champs ?? univers.son.champs,
+            tonalite: corpsSon.tonalite !== undefined ? (corpsSon.tonalite ?? "") : univers.son.tonalite,
+            tempo: corpsSon.tempo !== undefined ? corpsSon.tempo : univers.son.tempo,
+            moteurs: corpsSon.moteurs ? { ...univers.son.moteurs, ...corpsSon.moteurs } : univers.son.moteurs,
+          },
+        }
+      }
       // Les deux phrases de l'atelier se recalculent, comme au serveur.
       const laVue = VUES.find((v) => v.identifiant === univers.vue)
       univers = {
@@ -252,6 +273,14 @@ function construireDouble(
       return rendre(
         options.realignement ?? { realignes: 12, conserves: 3, sur_grille: true },
       )
+    }
+
+    if (url === "/api/workflow-profiles" && methode === "GET") {
+      return rendre({ profils: options.profilsAudio ?? [] })
+    }
+
+    if (url.startsWith("/api/workflow-profiles/sound-defaults") && methode === "GET") {
+      return rendre({ familles: options.moteursParFamille ?? {} })
     }
 
     throw new Error(`route non doublée dans cet essai : ${methode} ${url}`)
@@ -471,6 +500,146 @@ describe("l'étape de l'allure", () => {
     expect(await screen.findByText(/La taille — le côté de l'image/)).toBeTruthy()
     expect(screen.getByText(/La pixelisation/)).toBeTruthy()
     expect(screen.getByRole("button", { name: "au plus proche" })).toBeTruthy()
+  })
+})
+
+// ── L'étape « Ses sons » (SN2) ──────────────────────────────────────────────
+
+/** Un moteur sonore installé, minimal mais valide — juste ce que l'écran lit :
+ *  son identifiant, son nom, sa nature. */
+function profilAudio(identifiant: string, nom: string): ProfilWorkflow {
+  return {
+    identifiant,
+    nom,
+    nature: "audio",
+    modele: `${identifiant}@version`,
+    graphe: {},
+    liaisons: {},
+    parametres: {},
+    formats: [],
+    durees: [],
+    cadence: 0,
+    sortie: { noeud: "1", champ: "audio" },
+    version: "version",
+    cree_le: 1000,
+    references_min: 0,
+    references_max: 0,
+  }
+}
+
+describe("l'étape du son", () => {
+  test("écrire une ligne sonore n'envoie que le bloc sonore, jamais la bible", async () => {
+    const { fetchDouble, appels } = construireDouble()
+    monter(fetchDouble)
+
+    ouvrir("Ses sons")
+    fireEvent.click(await screen.findByRole("button", { name: /^époque et matière/ }))
+    const champ = await screen.findByRole("textbox", {
+      name: "La ligne sonore « époque et matière »",
+    })
+    fireEvent.change(champ, { target: { value: "medieval fantasy, wood, leather, iron" } })
+    fireEvent.blur(champ)
+
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/universe" && a.methode === "PUT")).toBe(true),
+    )
+    const envoi = appels.find((a) => a.url === "/api/universe" && a.methode === "PUT")!
+    const corps = envoi.corps as { son: { champs: Champ[] }; bible?: unknown }
+    expect(corps.bible).toBeUndefined()
+    expect(corps.son.champs.find((c) => c.nom === "epoque")?.texte).toBe(
+      "medieval fantasy, wood, leather, iron",
+    )
+    // Les trois autres cases voyagent avec leur texte du moment — vide ici.
+    expect(corps.son.champs).toHaveLength(4)
+  })
+
+  test("la tonalité et le tempo de référence se posent chacun par leur propre appel", async () => {
+    const { fetchDouble, appels } = construireDouble()
+    monter(fetchDouble)
+
+    ouvrir("Ses sons")
+    fireEvent.change(await screen.findByLabelText("Tonalité de référence"), {
+      target: { value: "D minor" },
+    })
+    const champTempo = screen.getByLabelText("Tempo de référence")
+    fireEvent.change(champTempo, { target: { value: "90" } })
+    // Le tempo ne part qu'à la sortie du champ, jamais à chaque frappe.
+    fireEvent.blur(champTempo)
+
+    await waitFor(() =>
+      expect(
+        appels.filter((a) => a.url === "/api/universe" && a.methode === "PUT"),
+      ).toHaveLength(2),
+    )
+    const [tonalite, tempo] = appels.filter(
+      (a) => a.url === "/api/universe" && a.methode === "PUT",
+    )
+    expect((tonalite.corps as { son: { tonalite: string } }).son.tonalite).toBe("D minor")
+    expect((tempo.corps as { son: { tempo: number } }).son.tempo).toBe(90)
+  })
+
+  test("le moteur d'une famille n'offre que les méthodes installées", async () => {
+    const { fetchDouble, appels } = construireDouble({
+      profilsAudio: [profilAudio("sa3-small-sfx", "Stable Audio 3 Small-SFX"), profilAudio("yue2-int8", "YuE2 (int8)")],
+      moteursParFamille: {
+        bruitage: { famille: "bruitage", modele: "ComfyUI:sa3-small-sfx@46c1", moteur: "sa3-small-sfx", possibles: ["sa3-small-sfx", "sa-open-1"] },
+      },
+    })
+    monter(fetchDouble)
+
+    ouvrir("Ses sons")
+    const choix = await screen.findByLabelText("Moteur pour Bruitage")
+    // Une seule option installée qui sache faire un bruitage, plus
+    // « automatique » : YuE2, installé mais fait pour chanter, n'est pas
+    // proposé. Stable Audio Open 1.0, possible pour un bruitage mais
+    // qu'aucun profil installé ne porte, se montre quand même — grisé, avec
+    // sa raison, jamais caché en silence.
+    expect(within(choix).getAllByRole("option").map((o) => o.textContent)).toEqual([
+      "automatique",
+      "Stable Audio 3 Small-SFX",
+      "Stable Audio Open 1.0 — pas installé",
+    ])
+    expect(within(choix).getByText("Stable Audio Open 1.0 — pas installé")).toHaveProperty("disabled", true)
+    expect(screen.getByText("en ce moment : Stable Audio 3 Small-SFX")).toBeTruthy()
+
+    fireEvent.change(choix, { target: { value: "sa3-small-sfx" } })
+
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/universe" && a.methode === "PUT")).toBe(true),
+    )
+    const envoi = appels.find((a) => a.url === "/api/universe" && a.methode === "PUT")!
+    expect((envoi.corps as { son: { moteurs: Record<string, string> } }).son.moteurs).toEqual({
+      bruitage: "sa3-small-sfx",
+    })
+  })
+
+  test("sans rien d'installé pour une famille, la raison du serveur s'affiche", async () => {
+    const { fetchDouble } = construireDouble({
+      moteursParFamille: {
+        voix: {
+          famille: "voix",
+          modele: null,
+          moteur: null,
+          raison: "Aucun moteur sonore n'existe encore pour « voix ».",
+        },
+      },
+    })
+    monter(fetchDouble)
+
+    ouvrir("Ses sons")
+    await screen.findByLabelText("Moteur pour Voix")
+    expect(
+      screen.getByText("Aucun moteur sonore n'existe encore pour « voix ».", { exact: false }),
+    ).toBeTruthy()
+  })
+
+  test("un univers sans bloc sonore s'affiche vide, sans erreur", async () => {
+    const { fetchDouble } = construireDouble()
+    monter(fetchDouble)
+
+    ouvrir("Ses sons")
+    expect(await screen.findByText("Comment sonne ce monde ?")).toBeTruthy()
+    expect(screen.queryByRole("alert")).toBeNull()
   })
 })
 
@@ -742,7 +911,7 @@ describe("un seul parcours, deux entrées", () => {
     expect(parLesReglages.corps).toEqual(parLaCreation.corps)
   })
 
-  test("chacune des quatre étapes se saute, et le jeu se crée sans en régler une", async () => {
+  test("chacune des cinq étapes se saute, et le jeu se crée sans en régler une", async () => {
     const { fetchDouble, appels } = construireDouble()
     const { onCree, onFerme } = monter(fetchDouble, {
       mode: "creation",
@@ -756,9 +925,10 @@ describe("un seul parcours, deux entrées", () => {
     fireEvent.click(screen.getByRole("button", { name: "Créer et choisir son allure" }))
     await waitFor(() => expect(onCree).toHaveBeenCalled())
 
-    // Les trois pas suivants, sautés l'un après l'autre.
+    // Les quatre pas suivants, sautés l'un après l'autre.
     fireEvent.click(await screen.findByRole("button", { name: "Passer à sa vue" }))
     fireEvent.click(await screen.findByRole("button", { name: "Passer à son monde" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Passer à ses sons" }))
     fireEvent.click(await screen.findByRole("button", { name: "Ouvrir le jeu" }))
 
     expect(onFerme).toHaveBeenCalled()

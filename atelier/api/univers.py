@@ -288,6 +288,10 @@ class CorpsUnivers(BaseModel):
     detourage_image: CorpsDetourage | None = None
     detourage_planche: CorpsDetourage | None = None
     detourages: dict[str, CorpsDetourage] | None = None
+    # **Le bloc sonore** (SN2) : `champs`, `tonalite`, `tempo`, `moteurs`, et
+    # seulement ce que le message en dit. Validé par le domaine
+    # (`UniversSonore.regle`), qui rend une phrase affichable.
+    son: dict[str, Any] | None = None
 
     def detourages_poses(self) -> dict[str, Any]:
         """Les seuls champs de détourage que ce message-ci prétend régler.
@@ -802,6 +806,7 @@ async def regler_univers(
         modeles=corps.modeles,
         modele_planche=corps.modele_planche,
         modele_edition=corps.modele_edition,
+        son=corps.son,
         # **Seulement ce que ce message-ci prétend régler** (D1). Les trois
         # champs de détourage emploient `null` pour dire « remets au produit » ;
         # « ne touche pas » y est donc *ne pas envoyer le champ*, et c'est le

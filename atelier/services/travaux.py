@@ -25,7 +25,7 @@ from atelier.domaine.consommation import USD
 from atelier.domaine.demande import Demande
 from atelier.domaine.generation import AUTEUR, AGENT, Generation, Reinjection, Statut
 from atelier.domaine.recette import Grille, Recette
-from atelier.domaine.travail import TravailRefuse, cadre_valide, demande_normalisee
+from atelier.domaine.travail import TravailRefuse, cadre_valide, demande_normalisee, moteur_sonore_permis
 
 
 def _json(objet: Any) -> bytes:
@@ -269,8 +269,47 @@ class ServiceTravaux:
         return DemandeClip(texte=d["prompt_video"], image=image, secondes=d["secondes"],
                            resolution=d["resolution"], proportions=d["proportions"], options=d["options_video"])
 
+    def _estimation_sonore(self, methode: dict[str, Any]) -> float:
+        """Le temps d'un tirage, relu au moment du lancement sur les mesures
+        de ce moteur : une mesure faite depuis la préparation compte."""
+        series = getattr(self.a, "series_son", None)
+        if series is None:
+            return methode.get("secondes") or 0
+        return series.temps(methode["modele"], 1)["temps_s"] or 0
+
+    def temps_sonore_de_l_agent(self, projet: str, *, sauf: str | None = None) -> float:
+        """Les secondes de calcul sonore déjà consommées ou réservées par
+        l'agent dans ce jeu : ses sons (jamais sa 3D ni ses vidéos, dont le
+        temps se compte aussi en secondes) et ses partitions de YuE2."""
+        total = 0.0
+        for p in self._projet(projet).glob("*/travail.json"):
+            autre = self._lire(p)
+            if autre["acteur"] != AGENT or autre.get("nature") != "audio" or autre["identifiant"] == sauf:
+                continue
+            reel = sum(c["consomme"] for c in self._consommations(autre) if c.get("unite") == "secondes")
+            total += max(reel, (autre.get("reserve") or {}).get("secondes", 0))
+        # La partition de YuE2 (SN9) ne passe pas par un travail durable : son
+        # temps est tenu à part, par le service qui l'écrit.
+        partitions = getattr(self.a, "partition_son", None)
+        return total + (partitions.temps_de_l_agent(projet) if partitions is not None else 0.0)
+
+    def verifier_temps_sonore(self, projet: str, cadre: dict[str, Any], consomme: float, voulu: float,
+                              *, deja_calcule: bool = False) -> None:
+        """Plafond atteint : refus, même quand le temps du prochain calcul est
+        encore inconnu (moteur jamais mesuré sur cette machine)."""
+        plafond = cadre["plafond_secondes_audio"]
+        if (not deja_calcule and consomme >= plafond) or consomme + voulu > plafond + 1e-6:
+            raise TravailRefuse("Le plafond de temps de calcul sonore de l'agent est déjà consommé ou réservé — "
+                                "relevez-le dans le cadre de délégation de ce jeu (Réglages › Agent MCP).")
+
     def _autoriser(self, travail: dict[str, Any], *, reserver=False) -> None:
         if travail["acteur"] != AGENT:
+            return
+        # Un son de l'agent que l'auteur lance ou reprend à l'écran : c'est
+        # l'auteur qui agit, et le cadre de l'agent ne le bride jamais.
+        # (`lance_par` est posé par `demarrer`, et relu ici jusque dans le
+        # calcul qui suit, `ServiceTravauxAudio._calcul`.)
+        if travail.get("nature") == "audio" and travail.get("lance_par") == AUTEUR:
             return
         cadre = self.cadre(travail["projet"])
         d, annonce = travail["demande"], travail["annonce"]
@@ -284,7 +323,12 @@ class ServiceTravaux:
                 if methode["payante"] and not cadre["autoriser_payant"]:
                     raise TravailRefuse("Le cadre de l'agent n'autorise pas cette méthode payante.")
                 permises = cadre.get("modeles_" + methode["nature"], [])
-                if permises and methode["modele"] not in permises:
+                if methode["nature"] == "audio":
+                    # Par son nom, sans version : une réinstallation ne coupe pas l'agent.
+                    if not moteur_sonore_permis(methode["modele"], permises):
+                        raise TravailRefuse(f"« {methode['modele']} » n'est pas une méthode sonore autorisée à l'agent — "
+                                            "l'ajouter aux méthodes permises, écran Réglages › Agent MCP.")
+                elif permises and methode["modele"] not in permises:
                     raise TravailRefuse(f"« {methode['modele']} » n'est pas une méthode autorisée à l'agent.")
         elif annonce["video_locale"] and not cadre["autoriser_local"]:
             raise TravailRefuse("Le cadre de l'agent n'autorise pas la vidéo locale.")
@@ -321,8 +365,21 @@ class ServiceTravaux:
             raise TravailRefuse("Le budget de l'agent est déjà consommé ou réservé par d'autres demandes.")
         if appels + annonce["appels"] > cadre["plafond_appels"]:
             raise TravailRefuse("Le plafond d'appels de l'agent est déjà consommé ou réservé.")
+        # SN12 : le plafond de temps de calcul sonore — pour un son seulement
+        # (la 3D et la vidéo comptent aussi leur temps en secondes, mais ce
+        # n'est pas du son). Estimé au lancement sur les mesures de ce moteur
+        # (`ServiceSeriesSon.temps`), compté ensuite sur ce qui a réellement
+        # tourné. Plafond atteint : refus, même sans estimation encore.
+        voulu_secondes = 0.0
+        if travail.get("nature") == "audio":
+            reel_secondes = sum(c["consomme"] for c in self._consommations(travail) if c.get("unite") == "secondes")
+            estimee = sum(self._estimation_sonore(m) for m in (methodes or []) if m.get("nature") == "audio")
+            voulu_secondes = max(reel_secondes, estimee)
+            self.verifier_temps_sonore(travail["projet"], cadre,
+                self.temps_sonore_de_l_agent(travail["projet"], sauf=travail["identifiant"]), voulu_secondes,
+                deja_calcule=reel_secondes > 0)
         if reserver or travail.get("reserve") is not None:
-            travail["reserve"] = {"usd": voulu, "appels": annonce["appels"]}
+            travail["reserve"] = {"usd": voulu, "appels": annonce["appels"], "secondes": voulu_secondes}
 
     async def demarrer(self, projet: str, identifiant: str, acteur: str = AUTEUR,
                        *, reprise=False) -> dict[str, Any]:
@@ -342,6 +399,9 @@ class ServiceTravaux:
             raise TravailRefuse("Le moteur de cette fabrication n'est pas disponible dans cette version.")
         with _verrou(self._projet(projet) / ".budget"):
             travail = self._brut(projet, identifiant)
+            # Qui lance, cette fois : l'auteur qui reprend à l'écran une
+            # demande de l'agent n'est pas bridé par le cadre de l'agent.
+            travail["lance_par"] = acteur
             self._autoriser(travail, reserver=True)
             if travail["demande"]["livrer_provisoire"] and not self.a.livraison.association(projet):
                 raise TravailRefuse("Associer le projet Godot avant d'autoriser cette livraison provisoire.")

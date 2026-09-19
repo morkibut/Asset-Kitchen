@@ -541,7 +541,7 @@
         "http.server",
         "8934",
         "--directory",
-        "C:/STOCKAGE/PROJET/_DEV/gag2/.claude/worktrees/son/docs/maquettes-atelier-unifie"
+        "C:/STOCKAGE/PROJET/_DEV/gag2/docs/maquettes-atelier-unifie"
       ],
       "port": 8934
     },
@@ -558,7 +558,7 @@
       "name": "atelier-jetable-son",
       "runtimeExecutable": "C:/STOCKAGE/PROJET/_DEV/gag2/.venv/Scripts/python.exe",
       "runtimeArgs": [
-        "C:/STOCKAGE/PROJET/_DEV/gag2/.claude/worktrees/son/essais/atelier_jetable_son.py"
+        "C:/STOCKAGE/PROJET/_DEV/gag2/essais/atelier_jetable_son.py"
       ],
       "port": 8510
     }

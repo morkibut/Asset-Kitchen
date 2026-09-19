@@ -33,6 +33,82 @@ def tirer_graine():
     return secrets.randbelow(GRAINE_MAX + 1)
 
 
+# Les réglages d'une musique (SN1). Leurs bornes sont celles que ComfyUI 0.36
+# déclare pour TextEncodeAceStepAudio1.5, le seul nœud natif qui les reçoit :
+# relevées dans /object_info, pas devinées. Un profil qui ne relie pas l'une de
+# ces liaisons ne la reçoit jamais — la donner est un refus, pas un oubli muet.
+MUSIQUE = ("paroles", "tempo", "tonalite", "mesure")
+TEMPO_MIN, TEMPO_MAX = 10, 300
+MESURES = (2, 3, 4, 6)
+PAROLES_MAX = 10_000
+TONALITES = tuple(f"{note} {mode}" for mode in ("major", "minor") for note in
+    ("C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"))
+# Liaisons propres au son : une image ou une vidéo n'en a pas l'usage.
+_LIAISONS_SONORES = set(MUSIQUE)
+
+
+def valeur_musicale(nom, valeur):
+    """La valeur telle qu'elle part dans le graphe, ou un refus en clair.
+
+    La mesure se garde en entier (2, 3, 4, 6) mais part en texte : ComfyUI la
+    déclare comme un choix parmi "2", "3", "4", "6"."""
+    if nom == "paroles":
+        if not isinstance(valeur, str) or len(valeur) > PAROLES_MAX:
+            raise WorkflowRefuse("Les paroles sont un texte de 10 000 caractères au plus.")
+        return valeur
+    if nom == "tempo":
+        if isinstance(valeur, bool) or not isinstance(valeur, int) or not TEMPO_MIN <= valeur <= TEMPO_MAX:
+            raise WorkflowRefuse(f"Le tempo est un nombre entier de battements par minute, de {TEMPO_MIN} à {TEMPO_MAX}.")
+        return valeur
+    if nom == "tonalite":
+        if valeur not in TONALITES:
+            raise WorkflowRefuse(f"La tonalité « {valeur} » n'est pas connue ; écrivez-la comme « D minor » ou « F# major ».")
+        return valeur
+    if nom == "mesure":
+        if isinstance(valeur, bool) or valeur not in MESURES:
+            raise WorkflowRefuse("La mesure compte 2, 3, 4 ou 6 temps.")
+        return str(valeur)
+    raise WorkflowRefuse(f"{nom} n'est pas un réglage de musique.")
+
+
+def musique_du_graphe(profil):
+    """Les réglages de musique que le graphe porte déjà, pour les liaisons que
+    le profil déclare : ce qui part quand la demande n'en dit rien. Une valeur
+    qui n'est pas écrite en toutes lettres dans le graphe n'est pas rendue."""
+    graphe, liaisons = profil["graphe"], profil["liaisons"]
+    trouvees = {}
+    for nom in MUSIQUE:
+        if nom not in liaisons:
+            continue
+        lien = liaisons[nom][0]
+        valeur = graphe[lien["noeud"]]["inputs"].get(lien["champ"])
+        if nom == "mesure" and isinstance(valeur, str) and valeur.isdigit():
+            valeur = int(valeur)
+        if isinstance(valeur, list):
+            continue
+        trouvees[nom] = valeur
+    return trouvees
+
+
+def _nombre(valeur):
+    return not isinstance(valeur, bool) and isinstance(valeur, (float, int)) and math.isfinite(valeur)
+
+
+def _secondes(s):
+    """Une durée lisible en français : 42,67 s, 120 s."""
+    return (f"{s:g}" if isinstance(s, int) or float(s).is_integer() else f"{s:.2f}".rstrip("0")).replace(".", ",") + " s"
+
+
+def duree_acceptee(profil, secondes):
+    """Une durée de la liste déclarée, ou — si le profil en déclare un — toute
+    durée de son intervalle libre (une musique de 16 mesures à 90 BPM dure
+    42,67 s, qu'aucune liste ne prévoit)."""
+    if secondes in profil["durees"]:
+        return True
+    libre = profil.get("duree_libre")
+    return bool(libre) and _nombre(secondes) and libre["min"] <= secondes <= libre["max"]
+
+
 def _verifier_graphe(graphe, liaisons, parametres, quelle=""):
     """Valide un graphe et ses liaisons ; rend son nombre de références."""
     if not isinstance(graphe, dict) or not graphe or len(graphe) > 500 or "nodes" in graphe:
@@ -45,7 +121,9 @@ def _verifier_graphe(graphe, liaisons, parametres, quelle=""):
     references = []
     cibles = set()
     for nom_champ, liens in liaisons.items():
-        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine")
+        # Le nombre de tirages n'est pas une liaison : un graphe rend un son.
+        # Une série de N tirages sera N travaux, chacun sa graine (SN3).
+        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine", "partition", *MUSIQUE)
         if nom_champ.startswith("reference:"):
             try:
                 references.append(int(nom_champ.split(":")[1]))
@@ -119,6 +197,25 @@ def _valider_style(info):
     return {**{c: info[c] for c in obligatoires}, **({"suffixe": info["suffixe"]} if "suffixe" in info else {})}
 
 
+def _duree_libre(brut, nature, durees, liaisons):
+    """`duree_libre: {"min": 1, "max": 120}`, à côté de la liste `durees`.
+
+    La liste reste celle que l'écran propose ; l'intervalle dit ce que le
+    profil accepte en plus. Chaque durée de la liste doit y tenir."""
+    if brut is None:
+        return None
+    if nature != "audio":
+        raise WorkflowRefuse("Seul un profil sonore déclare une durée libre.")
+    if not isinstance(brut, dict) or set(brut) != {"min", "max"} or not all(_nombre(brut[k]) for k in ("min", "max")) \
+            or not 0.1 <= brut["min"] < brut["max"] <= 600:
+        raise WorkflowRefuse("La durée libre se déclare {\"min\": …, \"max\": …}, de 0,1 à 600 secondes, le minimum sous le maximum.")
+    if "secondes" not in liaisons:
+        raise WorkflowRefuse("Une durée libre exige une liaison des secondes dans le workflow sonore.")
+    if any(not brut["min"] <= s <= brut["max"] for s in durees):
+        raise WorkflowRefuse("Chaque durée proposée doit tenir dans la durée libre déclarée.")
+    return {"min": brut["min"], "max": brut["max"]}
+
+
 def _normaliser(brut: dict) -> dict:
     if not isinstance(brut, dict):
         raise WorkflowRefuse("Le profil doit être un document JSON.")
@@ -144,6 +241,8 @@ def _normaliser(brut: dict) -> dict:
         raise WorkflowRefuse("Un workflow vidéo reçoit exactement une image de départ obligatoire.")
     if nature == "audio" and (references or {"largeur", "hauteur", "images", "cadence"}.intersection(liaisons)):
         raise WorkflowRefuse("Un profil sonore relie le texte, les secondes et ses options ; il n’utilise pas de références ou de dimensions d’image.")
+    if nature != "audio" and _LIAISONS_SONORES.intersection(liaisons):
+        raise WorkflowRefuse("Les paroles, le tempo, la tonalité et la mesure ne se relient que dans un profil sonore.")
     for cle, p in parametres.items():
         if not isinstance(p, dict):
             raise WorkflowRefuse(f"Le paramètre {cle} doit être relié au workflow.")
@@ -175,6 +274,7 @@ def _normaliser(brut: dict) -> dict:
             raise WorkflowRefuse("Déclarer les durées sonores de 0,1 à 600 secondes.")
         if len(durees) > 1 and "secondes" not in liaisons:
             raise WorkflowRefuse("Plusieurs durées exigent une liaison des secondes dans le workflow sonore.")
+    duree_libre = _duree_libre(d.get("duree_libre"), nature, durees, liaisons)
     if nature == "video":
         if not isinstance(durees, list) or not durees or any(not isinstance(s, int) or isinstance(s, bool) or not 1 <= s <= 120 for s in durees):
             raise WorkflowRefuse("Déclarer les durées vidéo acceptées, de 1 à 120 secondes.")
@@ -200,6 +300,8 @@ def _normaliser(brut: dict) -> dict:
         # Absente d'un profil à un seul graphe : sa version reste celle d'avant.
         **({"variantes": variantes} if variantes else {}),
         **({"style": _valider_style(d["style"])} if d.get("style") else {}),
+        # Même règle pour la durée libre : un profil sans intervalle garde sa forme.
+        **({"duree_libre": duree_libre} if duree_libre else {}),
         "description": str(d.get("description", ""))[:2000]}
 
 
@@ -231,16 +333,39 @@ def graphes(profil):
     return [(profil["graphe"], profil["liaisons"]), *((v["graphe"], v["liaisons"]) for v in (profil.get("variantes") or {}).values())]
 
 
-def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=None, proportions="1:1", secondes=0, options=None, graine=None):
+_NOMS_MUSIQUE = {"paroles": "de paroles", "tempo": "de tempo", "tonalite": "de tonalité", "mesure": "de mesure"}
+
+
+def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=None, proportions="1:1", secondes=0, options=None, graine=None,
+             paroles=None, tempo=None, tonalite=None, mesure=None, partition=None):
     graphe_choisi, liaisons = graphe_pour(profil, len(references))
     formats = [f for f in profil["formats"] if (resolution is None or f["resolution"] == resolution) and f["proportions"] == proportions]
     if not formats and profil["nature"] != "audio":
         raise WorkflowRefuse("Cette combinaison de résolution et de proportions n'est pas déclarée par le profil.")
     valeurs = {"prompt": prompt, "prompt_negatif": prompt_negatif, **({k: formats[0][k] for k in ("largeur", "hauteur")} if formats else {})}
     if profil["nature"] == "audio":
-        if secondes not in profil["durees"]:
+        if not duree_acceptee(profil, secondes):
+            libre = profil.get("duree_libre")
+            if libre:
+                raise WorkflowRefuse(f"Ce profil accepte une durée de {_secondes(libre['min'])} à {_secondes(libre['max'])}.")
             raise WorkflowRefuse("Cette durée sonore n’est pas déclarée par le profil.")
         valeurs["secondes"] = secondes
+    # Une valeur omise laisse celle du graphe (musique_du_graphe la nomme) ;
+    # une valeur donnée à un profil qui ne la relie pas est refusée.
+    for nom, valeur in (("paroles", paroles), ("tempo", tempo), ("tonalite", tonalite), ("mesure", mesure)):
+        if valeur is None:
+            continue
+        if nom not in liaisons:
+            raise WorkflowRefuse(f"Ce profil ne reçoit pas {_NOMS_MUSIQUE[nom]}.")
+        valeurs[nom] = valeur_musicale(nom, valeur)
+    # La partition ABC de YuE2 (SN9) : un texte donné tel quel, jamais recomposé
+    # ni retraduit — ce qui a été relu et corrigé est ce qui part.
+    if partition is not None:
+        if "partition" not in liaisons:
+            raise WorkflowRefuse("Ce profil ne reçoit pas de partition.")
+        if not isinstance(partition, str) or not partition.strip() or len(partition) > 50_000:
+            raise WorkflowRefuse("La partition est un texte non vide, de 50 000 caractères au plus.")
+        valeurs["partition"] = partition
     if profil["nature"] == "video":
         if secondes not in profil["durees"]:
             raise WorkflowRefuse("Cette durée n'est pas déclarée par le profil.")
@@ -265,6 +390,8 @@ def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=Non
         valeurs["graine"] = tirer_graine() if graine is None else graine
     graphe = copy.deepcopy(graphe_choisi)
     for nom, liens in liaisons.items():
+        if nom in _LIAISONS_SONORES | {"partition"} and nom not in valeurs:
+            continue
         for lien in liens:
             graphe[lien["noeud"]]["inputs"][lien["champ"]] = valeurs[nom]
     return graphe

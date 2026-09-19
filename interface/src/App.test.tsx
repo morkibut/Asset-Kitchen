@@ -291,6 +291,7 @@ const UNIVERS: Univers = {
   vue: "",
   style: "pixel",
   methode_pixels: "proche",
+  son: UNIVERS_VIDE.son,
   // **Aucun fond posé** (D3) — l'état d'avant la tranche, celui d'un projet qui
   // n'a rien choisi : le produit demande *un fond plat* sans dire lequel.
   fond: "",
@@ -2466,8 +2467,10 @@ function serveurDouble(options: {
         autoriser_payant: false,
         modeles_image: [] as string[],
         modeles_video: [] as string[],
+        modeles_audio: [] as string[],
         plafond_appels: 0,
         plafond_usd: 0,
+        plafond_secondes_audio: 1800,
         livraison_provisoire: false,
       }
       if (init?.method === "PUT")

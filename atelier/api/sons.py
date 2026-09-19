@@ -24,6 +24,11 @@ class Jugement(Revision):
     jugement: str
 
 
+class Classement(Revision):
+    famille: str | None
+    appliquer_reglages: bool = False
+
+
 @routeur.get("")
 def lister(requete: Request, projet: str):
     return requete.app.state.atelier.sons.lister(projet)
@@ -62,6 +67,12 @@ def juger(requete: Request, projet: str, identifiant: str, corps: Jugement):
     return requete.app.state.atelier.sons.juger(projet, identifiant, corps.revision, corps.jugement)
 
 
+@routeur.put("/{identifiant}/family")
+def classer(requete: Request, projet: str, identifiant: str, corps: Classement):
+    return requete.app.state.atelier.sons.classer(projet, identifiant, corps.revision, corps.famille,
+        appliquer_reglages=corps.appliquer_reglages)
+
+
 @routeur.get("/{identifiant}/source")
 def source(requete: Request, projet: str, identifiant: str):
     return FileResponse(requete.app.state.atelier.sons.source(projet, identifiant), media_type="application/octet-stream", filename="source-" + identifiant)
@@ -75,6 +86,12 @@ def rendu(requete: Request, projet: str, identifiant: str, revision: int | None 
 @routeur.get("/{identifiant}/waveform")
 def forme_onde(requete: Request, projet: str, identifiant: str, revision: int | None = None, brut: bool = False):
     return requete.app.state.atelier.sons.forme_onde(projet, identifiant, revision, brut=brut)
+
+
+@routeur.get("/{identifiant}/loop-splice.wav")
+def raccord(requete: Request, projet: str, identifiant: str, revision: int | None = None):
+    octets = requete.app.state.atelier.sons.raccord(projet, identifiant, revision)
+    return Response(octets, media_type="audio/wav", headers={"Cache-Control": "no-store"})
 
 
 @routeur.get("/{identifiant}/export.zip")

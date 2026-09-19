@@ -250,11 +250,12 @@ const onglet = (nom: string) => screen.getByRole("tab", { name: nom })
 // **Six onglets depuis `AU20`** : « Pas encore rangé » s'est intercalé après
 // les sources. Les trois premiers montrent des cases pleines ; celui-là montre
 // ce qui appartient au sujet **sans** case — et sans lui, ce qui n'est rangé
-// nulle part n'était nulle part.
-test("la fiche validée ouvre sur six onglets, sans formulaire ni barre permanente", async () => {
+// nulle part n'était nulle part. **Sept depuis `SN6`** : « Sons » avant
+// « Objectif & règles », comme la liste fermée de `docs/vocabulaire.html`.
+test("la fiche validée ouvre sur sept onglets, sans formulaire ni barre permanente", async () => {
   monter()
   expect(document.querySelector("[data-page-du-sujet]")).toBeTruthy()
-  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images de référence", "Galerie", "Pas encore rangé", "Équipement", "Objectif & règles"])
+  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images de référence", "Galerie", "Pas encore rangé", "Équipement", "Sons", "Objectif & règles"])
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
   expect(screen.queryByLabelText("Nom du sujet")).toBeNull()
   expect(document.querySelector("[data-ce-qui-lui-manque]")).toBeNull()

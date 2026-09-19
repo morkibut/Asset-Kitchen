@@ -169,6 +169,14 @@ class ServiceLivraison:
         self._base, self._fichiers, self._export = base, fichiers, export
         self._production, self._diffusion = production, diffusion
         self._racine = fichiers.racine / "livraisons"
+        # SN6 : `(projet, sujet) -> paquet | None`, les sons qui partent avec
+        # le sujet (`ServiceSonsDuSujet.paquet_pour_livraison`). Posé par
+        # l'atelier après montage ; absent, un sujet se livre sans ses sons.
+        self.sons_du_sujet = None
+        # SN7 : `(projet, sujet) -> [{bande, image, cle}]`, les repères sonores
+        # du sujet (`ServiceReperesSonores.pour_livraison`). Absent ou vide, la
+        # scène n'a pas d'`AnimationPlayer` : le paquet est celui d'avant.
+        self.reperes_sonores = None
 
     def _dossier(self, projet: str) -> Path:
         if not self._base.lire_projet(projet):
@@ -317,7 +325,24 @@ class ServiceLivraison:
                      "y": pivot["y"] if pivot_y is None else pivot_y}
             if any(not isinstance(v, (int, float)) or not math.isfinite(v) or abs(v) > 8192 for v in pivot.values()):
                 raise LivraisonRefusee("Le pivot doit contenir des coordonnées finies en pixels, entre −8192 et 8192.")
-            revision = _empreinte(_json({"animations": liste, "pivot": pivot}))[:24]
+            # SN6 : les sons du sujet partent avec lui, sous leurs noms stables.
+            # Sans son ni repère à signaler, rien ne change : ni la révision, ni
+            # un octet du paquet (un sujet qui n'a ni son ni repère reste identique
+            # octet pour octet — défaut confirmé le 19 septembre 2026 : un sujet
+            # dont aucun emplacement n'était livrable perdait ses `sons_non_livres`
+            # et ses `reperes_non_livres`, faute de lire les repères du tout).
+            sons = self.sons_du_sujet(projet, personnage) if self.sons_du_sujet else None
+            signe: dict[str, Any] = {"animations": liste, "pivot": pivot}
+            if sons:
+                signe["sons"] = {nom: _empreinte(octets) for nom, octets in sons["fichiers"].items()}
+            # SN7 : les repères sonores deviennent une piste audio par animation.
+            # Lus dès que le sujet a un repère, même sans aucun son livrable : un
+            # repère sur un emplacement vide ou écarté doit rester signalé.
+            reperes = self.reperes_sonores(projet, personnage) if self.reperes_sonores else []
+            pistes, reperes_livres, reperes_non_livres = _pistes_sonores(liste, sons, reperes)
+            if reperes_livres:
+                signe["reperes"] = reperes_livres
+            revision = _empreinte(_json(signe))[:24]
             racine = f"{association['sous_dossier']}/{_cle(projet)}/{cible}"
             version = f"{racine}/revisions/{revision}"
             fichiers: list[dict[str, Any]] = []
@@ -330,10 +355,21 @@ class ServiceLivraison:
                 for nom, empreinte in animation["octets"].items():
                     role = "aperçu animé" if nom.endswith("-anime.png") else "planche" if nom.endswith(".png") else "Aseprite"
                     ajouter(f"{version}/{nom}", role, self._octets(empreinte))
+            noeuds_sonores: list[dict[str, str]] = []
+            if sons:
+                from atelier.services.sons import fichier_import
+                dossier_sons = f"{version}/sons"
+                for nom, octets in sons["fichiers"].items():
+                    ajouter(f"{dossier_sons}/{nom}", "son" if nom.endswith((".wav", ".ogg")) else "ressource Godot"
+                            if nom.endswith(".tres") else "crédits", octets)
+                for nom, format_audio, params in sons["imports"]:
+                    ajouter(f"{dossier_sons}/{nom}.import", "import Godot",
+                            fichier_import(nom, format_audio, params, "res://" + dossier_sons))
+                noeuds_sonores = [{**n, "ressource": f"{dossier_sons}/{n['ressource']}"} for n in sons["noeuds"]]
             sprite_frames = f"{version}/animations.tres"
             ajouter(sprite_frames, "SpriteFrames", _sprite_frames(liste, version).encode("utf-8"))
             scene_revision = f"{version}/personnage.tscn"
-            ajouter(scene_revision, "scène de la révision", _scene(sprite_frames, liste[0]["nom"], pivot).encode("utf-8"))
+            ajouter(scene_revision, "scène de la révision", _scene(sprite_frames, liste[0]["nom"], pivot, noeuds_sonores, pistes).encode("utf-8"))
             scene = f"{racine}/personnage.tscn"
             ajouter(scene, "scène stable", _scene_stable(scene_revision).encode("utf-8"))
             manifeste = {"atelier": "Asset Kitchen", "format": 1, "projet": projet,
@@ -341,6 +377,17 @@ class ServiceLivraison:
                          "association": association, "pivot": pivot,
                          "animations": liste, "scene": scene,
                          "sprite_frames": sprite_frames, "fichiers": list(fichiers)}
+            if sons:
+                if sons["entrees"]:
+                    manifeste["sons"] = [{**e, "ressource": f"{version}/sons/{e['ressource']}"} for e in sons["entrees"]]
+                if sons["non_livres"]:
+                    manifeste["sons_non_livres"] = sons["non_livres"]
+                if sons.get("avertissement_renommage"):
+                    manifeste["sons_avertissement"] = sons["avertissement_renommage"]
+            if reperes_livres:
+                manifeste["reperes_sonores"] = reperes_livres
+            if reperes_non_livres:
+                manifeste["reperes_non_livres"] = reperes_non_livres
             ajouter(f"{racine}/livraison.json", "manifeste", _json(manifeste))
             jeton = uuid.uuid4().hex
             preparation = {**manifeste, "jeton": jeton, "fichiers": fichiers,
@@ -354,11 +401,16 @@ class ServiceLivraison:
     def preparer_paquet(self, projet: str, personnage: str | None, cible: str,
                         manifeste: dict[str, Any], contenus: dict[str, bytes], *,
                         scene: str, sprite_frames: str | None = None,
-                        ressource: str | None = None) -> dict[str, Any]:
+                        ressource: str | None = None, scene_stable: str = "personnage.tscn",
+                        noeud_stable: str = "Personnage",
+                        completer: Any = None) -> dict[str, Any]:
         """Paquet CPU interne déjà composé, publié avec les garanties d'AU1.
 
         La cible sépare tenue/couches/assemblé de la livraison du corps. Ce
         geste ne reçoit ni chemin absolu ni octets depuis une route HTTP.
+        `completer(dossier_res)` rend les fichiers qui nomment leur propre
+        chemin final (le `.import` d'un son, SN4) : ils ne dépendent que du
+        paquet, et la révision se calcule sans eux.
         """
         dossier = self._dossier(projet)
         if personnage is not None:
@@ -378,10 +430,16 @@ class ServiceLivraison:
             revision = _empreinte(_json({"manifeste": manifeste, "octets": empreintes}))[:24]
             racine = f"{association['sous_dossier']}/{_cle(projet)}/{cible_livraison}"
             version = f"{racine}/revisions/{revision}"
-            fichiers = [{"chemin": f"{version}/{nom}", "role": "composition" if nom == 'composition.json' else "Aseprite" if nom.endswith('.json') and manifeste.get("nature") not in {"image", "tuiles", "son", "audio"} else "ressource Godot" if nom.endswith(('.tres', '.tscn', '.gd', '.gdshader')) else "image" if nom.endswith('.png') else "provenance",
+            if completer is not None:
+                ajouts = completer("res://" + version)
+                if any(nom in contenus or _relatif(nom) != nom or not isinstance(o, bytes) for nom, o in ajouts.items()):
+                    raise LivraisonRefusee("Un fichier du paquet est invalide.")
+                contenus = {**contenus, **ajouts}
+                empreintes |= {nom: self._blob(octets) for nom, octets in ajouts.items()}
+            fichiers = [{"chemin": f"{version}/{nom}", "role": "composition" if nom == 'composition.json' else "Aseprite" if nom.endswith('.json') and manifeste.get("nature") not in {"image", "tuiles", "son", "audio"} else "ressource Godot" if nom.endswith(('.tres', '.tscn', '.gd', '.gdshader')) else "image" if nom.endswith('.png') else "son" if nom.endswith(('.wav', '.ogg')) else "import Godot" if nom.endswith('.import') else "provenance",
                          "empreinte": empreintes[nom], "octets": len(octets)} for nom, octets in contenus.items()]
-            scene_stable = f"{racine}/personnage.tscn"
-            scene_octets = _scene_stable(f"{version}/{scene}").encode("utf-8")
+            scene_stable = f"{racine}/{_relatif(scene_stable)}"
+            scene_octets = _scene_stable(f"{version}/{scene}", noeud_stable).encode("utf-8")
             fichiers.append({"chemin": scene_stable, "role": "scène stable", "empreinte": self._blob(scene_octets), "octets": len(scene_octets)})
             fiche = {**manifeste, "atelier": "Asset Kitchen", "format": 1,
                      "projet": projet, "personnage": personnage, "cible_livraison": cible_livraison,
@@ -626,16 +684,155 @@ def _sprite_frames(animations: Sequence[dict[str, Any]], dossier: str) -> str:
             "\n\n".join(externes + atlas) + '\n\n[resource]\nanimations = [' + ",\n".join(bandes) + ']\n')
 
 
-def _scene(sprite_frames: str, animation: str, pivot: dict[str, float]) -> str:
-    return ('[gd_scene load_steps=2 format=3]\n\n'
-            f'[ext_resource type="SpriteFrames" path={_chaine("res://" + sprite_frames)} id="1"]\n\n'
+def _pistes_sonores(animations: Sequence[dict[str, Any]], sons: dict[str, Any] | None,
+                    reperes: Sequence[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """SN7 : les repères sonores rapportés aux animations livrées.
+
+    Un repère `{bande, image, cle}` vise l'animation livrée depuis cette bande
+    et le lecteur de calage de l'emplacement `cle` (`<nom stable>/Calage`,
+    enfant du lecteur posé par SN6, même son : `son_<rang + 1>`). Son temps est calculé **ici**,
+    depuis l'ordre et la durée d'image de l'animation livrée : c'est la cadence
+    au moment de la livraison qui compte, et l'image reste la même.
+
+    Rend `(pistes, livrés, non livrés)` : une piste par animation qui a au
+    moins une clé ; un repère dont l'emplacement ne part pas (vide, rien de
+    livrable) ou dont l'image dépasse la bande est dit, jamais posé en silence.
+    Un repère d'une bande qui n'est pas dans cette livraison n'y figure pas."""
+    from atelier.domaine.reperes_sonores import temps_de_l_image
+    if not reperes:
+        return [], [], []
+    # Sans paquet livrable (aucun son du sujet, ou rien de livrable), aucun
+    # emplacement ne part : chaque repère est dit non livrable, jamais tu.
+    rang_de = {e["emplacement"]: rang for rang, e in enumerate(sons["entrees"])} if sons else {}
+    pistes, livres, non_livres = [], [], []
+    for animation in animations:
+        cles: dict[int, list[float]] = {}
+        for r in (r for r in reperes if r["bande"] == animation["bande"]):
+            dit = {"animation": animation["nom"], "image": r["image"], "emplacement": r["cle"]}
+            if r["cle"] not in rang_de:
+                non_livres.append({**dit, "raison": "Cet emplacement ne part pas avec le sujet : il n'a aucun son livrable."})
+                continue
+            temps = temps_de_l_image(r["image"], animation["ordre"], animation["duree_image_ms"])
+            if not temps:
+                non_livres.append({**dit, "raison": f"L'animation n'a que {animation['compte']} images."})
+                continue
+            rang = rang_de[r["cle"]]
+            cles.setdefault(rang, []).extend(temps)
+            nom_stable = sons["entrees"][rang]["nom_stable"]
+            livres.append({**dit, "noeud": f"{nom_stable}/{CALAGE}", "lecteur_du_jeu": nom_stable, "temps": temps})
+        if cles:
+            pistes.append({"nom": animation["nom"], "compte": len(animation["ordre"]),
+                           "duree_image_ms": animation["duree_image_ms"], "boucle": animation["boucle"],
+                           "sons": {rang: sorted(set(t)) for rang, t in sorted(cles.items())}})
+    return pistes, livres, non_livres
+
+
+#: Le nom du lecteur que la piste audio vise, enfant du lecteur de
+#: l'emplacement (`sfx_heros_pas/Calage`). Une piste audio d'`AnimationPlayer`
+#: s'empare du lecteur qu'elle vise (`docs/PIEGES.md`) : le lecteur de SN6
+#: reste ainsi libre pour un `$sfx_heros_pas.play()` du jeu.
+CALAGE = "Calage"
+
+
+def _nom_dans_le_lecteur(nom: str) -> tuple[str, str]:
+    """`marche/sud` → la bibliothèque `marche` et l'animation `sud` : Godot
+    refuse `/` dans un nom d'animation, et `AnimationPlayer.play("marche/sud")`
+    lit justement « bibliothèque/animation ». Le nom joué est donc celui des
+    SpriteFrames. Au-delà de deux morceaux (`marche/sud/tete`), la suite est
+    liée par `_`."""
+    propre = re.sub(r"[:,\[]", "_", nom)
+    tete, _, reste = propre.partition("/")
+    return (tete, reste.replace("/", "_")) if reste else ("", tete)
+
+
+def _nombre(valeur: float) -> str:
+    return f"{valeur:.12g}"
+
+
+def _lecteur_d_animation(pistes: Sequence[dict[str, Any]], sons: Sequence[dict[str, str]],
+                         autoplay: str) -> tuple[list[str], str, bool]:
+    """L'`AnimationPlayer` de SN7 : une animation par animation qui a des
+    repères, sous le nom de ses SpriteFrames. Chacune **mène le sprite**
+    (l'animation et l'image, en pas discrets, au temps exact de chaque image)
+    et porte **une piste audio par emplacement**, qui vise son lecteur de
+    calage (`<nom stable>/Calage`) avec une clé au temps de chaque image
+    repérée ; le lecteur de SN6 reste au jeu. Jouer
+    `$AnimationPlayer.play("marche/sud")` joue donc l'image et le son ensemble,
+    à chaque boucle."""
+    ressources, bibliotheques = [], {}
+    for rang, piste in enumerate(pistes, 1):
+        pas = piste["duree_image_ms"] / 1000
+        temps = [p * pas for p in range(piste["compte"])]
+        lignes = [f'[sub_resource type="Animation" id="Animation_{rang}"]',
+                  f'resource_name = {_chaine(_nom_dans_le_lecteur(piste["nom"])[1])}',
+                  f'length = {_nombre(piste["compte"] * pas)}',
+                  f'loop_mode = {1 if piste["boucle"] else 0}',
+                  f'step = {_nombre(pas)}']
+        valeurs = [(".:animation", [0.0], [f'&{_chaine(piste["nom"])}']),
+                   (".:frame", temps, [str(p) for p in range(piste["compte"])])]
+        for n, (chemin, instants, vals) in enumerate(valeurs):
+            lignes += [f'tracks/{n}/type = "value"', f'tracks/{n}/imported = false', f'tracks/{n}/enabled = true',
+                       f'tracks/{n}/path = NodePath({_chaine(chemin)})', f'tracks/{n}/interp = 1',
+                       f'tracks/{n}/loop_wrap = true', f'tracks/{n}/keys = {{',
+                       f'"times": PackedFloat32Array({", ".join(_nombre(t) for t in instants)}),',
+                       f'"transitions": PackedFloat32Array({", ".join("1" for _ in instants)}),',
+                       '"update": 1,', f'"values": [{", ".join(vals)}]', '}']
+        for n, (rang_son, instants) in enumerate(piste["sons"].items(), len(valeurs)):
+            clip = f'{{\n"end_offset": 0.0,\n"start_offset": 0.0,\n"stream": ExtResource("son_{rang_son + 1}")\n}}'
+            lignes += [f'tracks/{n}/type = "audio"', f'tracks/{n}/imported = false', f'tracks/{n}/enabled = true',
+                       f'tracks/{n}/path = NodePath({_chaine(sons[rang_son]["nom"] + "/" + CALAGE)})', f'tracks/{n}/keys = {{',
+                       f'"clips": [{", ".join(clip for _ in instants)}],',
+                       f'"times": PackedFloat32Array({", ".join(_nombre(t) for t in instants)})', '}',
+                       f'tracks/{n}/use_blend = true']
+        ressources.append("\n".join(lignes) + "\n")
+        bibliotheque, nom = _nom_dans_le_lecteur(piste["nom"])
+        bibliotheques.setdefault(bibliotheque, []).append((nom, rang))
+    entrees = []
+    for rang, (bibliotheque, animations) in enumerate(sorted(bibliotheques.items()), 1):
+        ressources.append(f'[sub_resource type="AnimationLibrary" id="AnimationLibrary_{rang}"]\n_data = {{\n' +
+                          ",\n".join(f'&{_chaine(nom)}: SubResource("Animation_{r}")' for nom, r in animations) + "\n}\n")
+        entrees.append(f'&{_chaine(bibliotheque)}: SubResource("AnimationLibrary_{rang}")')
+    joue = any(p["nom"] == autoplay for p in pistes)
+    # Un lecteur de calage par emplacement visé, sous son lecteur SN6 : même
+    # son, même bus, et c'est lui que l'`AnimationPlayer` prend pour lui.
+    vises = sorted({rang_son for p in pistes for rang_son in p["sons"]})
+    calages = "".join(f'\n[node name="{CALAGE}" type="AudioStreamPlayer2D" parent={_chaine(sons[i]["nom"])}]\n'
+                      f'stream = ExtResource("son_{i + 1}")\nbus = &{_chaine(sons[i]["bus"])}\n' for i in vises)
+    noeud = calages + ('\n[node name="AnimationPlayer" type="AnimationPlayer" parent="."]\n'
+             'libraries = {\n' + ",\n".join(entrees) + '\n}\n' +
+             (f'autoplay = &{_chaine(autoplay)}\n' if joue else ''))
+    return ressources, noeud, joue
+
+
+def _scene(sprite_frames: str, animation: str, pivot: dict[str, float],
+           sons: Sequence[dict[str, str]] = (), pistes: Sequence[dict[str, Any]] = ()) -> str:
+    """La scène d'une révision. `sons` (SN6) : un `AudioStreamPlayer2D` par
+    emplacement sonore du sujet, nommé par son nom stable, sur le bus de sa
+    famille. `pistes` (SN7) : un `AnimationPlayer` qui mène le sprite et joue
+    ces lecteurs aux images repérées. Sans son, la scène est celle d'avant
+    SN6, octet pour octet ; sans repère, celle d'avant SN7.
+
+    Quand l'`AnimationPlayer` autoplaye déjà l'animation par défaut (`joue`),
+    l'`AnimatedSprite2D` ne pose plus le sien : les deux démarrant seuls sur
+    la même animation se disputaient `frame`/`animation` (défaut plausible du
+    19 septembre 2026, voir `docs/PIEGES.md`) — un seul démarre désormais tout
+    seul, l'`AnimationPlayer`, qui mène le sprite comme avant."""
+    externes = "".join(f'[ext_resource type="AudioStream" path={_chaine("res://" + s["ressource"])} id="son_{i + 1}"]\n'
+                       for i, s in enumerate(sons))
+    noeuds = "".join(f'\n[node name={_chaine(s["nom"])} type="AudioStreamPlayer2D" parent="."]\n'
+                     f'stream = ExtResource("son_{i + 1}")\nbus = &{_chaine(s["bus"])}\n' for i, s in enumerate(sons))
+    ressources, lecteur, joue = _lecteur_d_animation(pistes, sons, animation) if pistes else ([], "", False)
+    internes = "".join("\n" + r for r in ressources)
+    autoplay_sprite = "" if joue else f'\nautoplay = {_chaine(animation)}'
+    return (f'[gd_scene load_steps={2 + len(sons) + len(ressources)} format=3]\n\n'
+            f'[ext_resource type="SpriteFrames" path={_chaine("res://" + sprite_frames)} id="1"]\n{externes}{internes}\n'
             '[node name="Personnage" type="AnimatedSprite2D"]\n'
             'texture_filter = 1\nsprite_frames = ExtResource("1")\n'
-            f'animation = &{_chaine(animation)}\nautoplay = {_chaine(animation)}\n'
-            f'centered = false\noffset = Vector2({-pivot["x"]}, {-pivot["y"]})\n')
+            f'animation = &{_chaine(animation)}{autoplay_sprite}\n'
+            f'centered = false\noffset = Vector2({-pivot["x"]}, {-pivot["y"]})\n{noeuds}{lecteur}')
 
 
-def _scene_stable(scene: str) -> str:
+def _scene_stable(scene: str, noeud: str = "Personnage") -> str:
     return ('[gd_scene load_steps=2 format=3]\n\n'
             f'[ext_resource type="PackedScene" path={_chaine("res://" + scene)} id="1"]\n\n'
-            '[node name="Personnage" instance=ExtResource("1")]\n')
+            f'[node name={_chaine(noeud)} instance=ExtResource("1")]\n')

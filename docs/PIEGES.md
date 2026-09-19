@@ -1931,3 +1931,47 @@ la prochaine réécriture retrouvera.
   tous rendus « à revoir » et coupés. Le test est donc *le même corps au rembourrage près*
   (`_meme_corps`). Ce qui était déjà coupé se relit depuis `0-brut.png`, sans appel
   (`relire_depuis_la_planche`). Preuve dans `tests/test_au16_depliage_entier.py`.
+- **Un `.import` écrit à la main pour Godot survit, mais Godot le réécrit — et la relivraison
+  suivante y voit un fichier modifié dans le jeu.** Réduit à `[params]`, il est complété par
+  `godot --headless --import` (ajout de `uid`, `path`, `[deps]`). L'atelier écrit donc la forme
+  complète, que Godot garde octet pour octet. Trois détails la rendent exacte : l'`uid` s'écrit
+  en **base 34** (`a` à `y`, puis `0` à `8`, l'alphabet réel de Godot, pas de la base 36) ;
+  `path` porte un **md5 du chemin `res://`** ; les flottants sont **arrondis à la
+  microseconde**, parce que Godot les réécrit sur 16 chiffres significatifs. Trouvé en SN4 le
+  18 septembre 2026 dans Godot 4.7.2. Preuve dans `tests/test_sn4_livraison.py`.
+- **Le filtre `rubberband` de ffmpeg ne vide pas sa file** : un changement de hauteur qui garde
+  la durée perd environ 80 ms en fin de son. On ajoute du silence avant, puis on recoupe
+  (`atelier/audio/traitement.py`). SN4, 18 septembre 2026.
+- **`ebur128` sous 0,4 s répond −70 LUFS au lieu de dire qu'il ne sait pas** : c'est une valeur
+  de repli, pas une mesure. L'atelier la refuse et rend `None` (`mesurer`). Et ce filtre écrit son
+  résumé sur la sortie d'erreur : l'appeler avec `-loglevel error` le fait taire. SN5,
+  18 septembre 2026.
+- **Une piste audio d'`AnimationPlayer` s'empare du lecteur qu'elle vise.** Au premier son joué,
+  Godot 4.7 remplace le `stream` de l'`AudioStreamPlayer2D` par un `AudioStreamPolyphonic`, et le
+  laisse à `null` quand l'animation s'arrête : le jeu de variantes qu'on y avait posé n'y est
+  plus, et un `play()` direct sur ce lecteur ne joue plus rien. Le bus et le volume du lecteur,
+  eux, s'appliquent toujours. **La parade retenue (SN7)** : la piste vise un lecteur à elle,
+  `Calage`, enfant du lecteur de l'emplacement (`sfx_heros_pas/Calage`, même son, même bus) ;
+  le lecteur posé par SN6 reste libre pour un `$sfx_heros_pas.play()` du jeu, et l'essai Godot
+  le vérifie après l'animation. Et `playing` reste vrai d'un son à l'autre : pour
+  compter les départs, envelopper le son dans un `AudioStream` qui compte ses
+  `_instantiate_playback`. SN7, 19 septembre 2026. Preuve dans `tests/test_sn7_reperes_sonores.py`.
+- **Godot refuse `/` dans un nom d'animation d'`AnimationPlayer`**, et `play("marche/sud")` lit
+  justement « bibliothèque/animation » : la bibliothèque porte le mouvement, l'animation la
+  direction, et le nom joué est celui des SpriteFrames (`_nom_dans_le_lecteur`). SN7.
+- **L'`AnimationPlayer` de SN7 réimpose l'animation par défaut à chaque boucle.** Sa piste
+  `.:animation` (une seule clé, au temps 0, dans une animation qui boucle) se rejoue à chaque
+  tour : `AnimatedSprite2D.animation` repart donc sur la même valeur toutes les quelques
+  secondes. Si en plus l'`AnimatedSprite2D` avait son propre `autoplay` sur cette même
+  animation, les deux démarraient seuls et se disputaient `frame`/`animation` dès la première
+  image — corrigé (19 septembre 2026) : quand l'`AnimationPlayer` autoplaye déjà l'animation par
+  défaut, la scène ne pose plus l'`autoplay` de l'`AnimatedSprite2D` (`_scene`, `joue`) ; un seul
+  lecteur démarre seul. **Ce que ça ne corrige pas** : tant que l'`AnimationPlayer` tourne, il
+  reste seul maître de `animation`/`frame` — un `$Personnage.play("course/sud")` posé
+  directement sur l'`AnimatedSprite2D` sera écrasé à la boucle suivante par la piste `.:animation`
+  du clip encore actif. **Pour changer d'animation dans le jeu, appeler
+  `$AnimationPlayer.play("course/sud")`** (le nom joué est celui des SpriteFrames, voir
+  ci-dessus), jamais `$Personnage.play()` directement, tant qu'un `AnimationPlayer` de SN7 est
+  posé sur le sujet. Repéré en relecture croisée le 19 septembre 2026 (plausible, non rejoué en
+  conditions réelles de jeu — seul le démarrage simultané est vérifié par
+  `tests/test_sn7_reperes_sonores.py`).

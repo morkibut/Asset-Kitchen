@@ -1,11 +1,11 @@
 {
- "releve_le": 1789809519.410501,
+ "releve_le": 1789821709.9047854,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 157317,
+  "octets": 158300,
   "documents": {
    "AGENTS.md": {
     "octets": 35208,
@@ -236,140 +236,140 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 38385,
+    "octets": 39134,
     "titres": 20,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 38385
+      "octets": 39134
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 44,
-      "octets": 9587
+      "octets": 10336
      },
      {
       "titre": "Ce que la remise à plat a mesuré, le 13 septembre 2026",
       "niveau": 3,
-      "ligne": 77,
+      "ligne": 78,
       "octets": 1110
      },
      {
       "titre": "Les invariants du produit",
       "niveau": 2,
-      "ligne": 96,
+      "ligne": 97,
       "octets": 8448
      },
      {
       "titre": "L'argent et l'appel",
       "niveau": 3,
-      "ligne": 102,
+      "ligne": 103,
       "octets": 1137
      },
      {
       "titre": "Ce qui décide, et ce qui refuse",
       "niveau": 3,
-      "ligne": 117,
+      "ligne": 118,
       "octets": 975
      },
      {
       "titre": "Le traitement des images",
       "niveau": 3,
-      "ligne": 127,
+      "ligne": 128,
       "octets": 962
      },
      {
       "titre": "Le rangement",
       "niveau": 3,
-      "ligne": 139,
+      "ligne": 140,
       "octets": 1116
      },
      {
       "titre": "Le personnage, la planche et le calque",
       "niveau": 3,
-      "ligne": 152,
+      "ligne": 153,
       "octets": 1277
      },
      {
       "titre": "Les fournisseurs",
       "niveau": 3,
-      "ligne": 165,
+      "ligne": 166,
       "octets": 723
      },
      {
       "titre": "L'écran",
       "niveau": 3,
-      "ligne": 176,
+      "ligne": 177,
       "octets": 1966
      },
      {
       "titre": "Couverture des user stories",
       "niveau": 2,
-      "ligne": 194,
+      "ligne": 195,
       "octets": 4427
      },
      {
       "titre": "L'ordre historique → `docs/archive/ordre-historique-jusqu-au-10-septembre.md`",
       "niveau": 2,
-      "ligne": 254,
+      "ligne": 255,
       "octets": 437
      },
      {
       "titre": "Le détail des versions closes → `docs/archive/plan-r6-a-v3.02.md`",
       "niveau": 2,
-      "ligne": 263,
+      "ligne": 264,
       "octets": 366
      },
      {
       "titre": "Les tranches périmées par la V4 → `docs/archive/plan-perime-par-la-v4.md`",
       "niveau": 2,
-      "ligne": 271,
+      "ligne": 272,
       "octets": 529
      },
      {
       "titre": "V3.5 — Le dépliage généralisé",
       "niveau": 2,
-      "ligne": 281,
+      "ligne": 282,
       "octets": 8317
      },
      {
       "titre": "P1 · La planche se garde, et son découpage se refait",
       "niveau": 3,
-      "ligne": 308,
+      "ligne": 309,
       "octets": 3419
      },
      {
       "titre": "P2 · Une planche pour plusieurs choses",
       "niveau": 3,
-      "ligne": 357,
+      "ligne": 358,
       "octets": 3408
      },
      {
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
-      "ligne": 410,
+      "ligne": 411,
       "octets": 3172
      },
      {
       "titre": "Les trois risques encore ouverts",
       "niveau": 3,
-      "ligne": 430,
+      "ligne": 431,
       "octets": 1772
      }
     ]
    },
    "docs/DESIGN.md": {
-    "octets": 28777,
-    "titres": 31,
+    "octets": 29011,
+    "titres": 32,
     "sections": [
      {
       "titre": "Asset Kitchen — Design System",
       "niveau": 1,
       "ligne": 1,
-      "octets": 28261
+      "octets": 28490
      },
      {
       "titre": "Comment ce document a été obtenu",
@@ -465,7 +465,7 @@
       "titre": "Spacing",
       "niveau": 2,
       "ligne": 298,
-      "octets": 2793
+      "octets": 3022
      },
      {
       "titre": "Hauteurs de contrôle — liste fermée",
@@ -483,72 +483,78 @@
       "titre": "Largeurs de petit contrôle — liste fermée",
       "niveau": 3,
       "ligne": 341,
-      "octets": 390
+      "octets": 385
+     },
+     {
+      "titre": "Vignettes — liste fermée",
+      "niveau": 3,
+      "ligne": 348,
+      "octets": 234
      },
      {
       "titre": "Layout",
       "niveau": 2,
-      "ligne": 350,
+      "ligne": 355,
       "octets": 1539
      },
      {
       "titre": "Les quatre présentations, et la cinquième est interdite",
       "niveau": 3,
-      "ligne": 362,
+      "ligne": 367,
       "octets": 589
      },
      {
       "titre": "Arrondis — liste fermée",
       "niveau": 3,
-      "ligne": 376,
+      "ligne": 381,
       "octets": 312
      },
      {
       "titre": "Les onze pièces",
       "niveau": 2,
-      "ligne": 386,
+      "ligne": 391,
       "octets": 864
      },
      {
       "titre": "Les six règles",
       "niveau": 2,
-      "ligne": 406,
+      "ligne": 411,
       "octets": 961
      },
      {
       "titre": "Motion",
       "niveau": 2,
-      "ligne": 425,
+      "ligne": 430,
       "octets": 565
      },
      {
       "titre": "L'écriture",
       "niveau": 2,
-      "ligne": 441,
+      "ligne": 446,
       "octets": 937
      },
      {
       "titre": "Ce que ce document ne tranche pas",
       "niveau": 2,
-      "ligne": 460,
+      "ligne": 465,
       "octets": 1880
      },
      {
       "titre": "Un défaut d'avant, fermé par construction",
       "niveau": 2,
-      "ligne": 488,
+      "ligne": 493,
       "octets": 1596
      },
      {
       "titre": "Motifs → `docs/design-motifs.md`",
       "niveau": 2,
-      "ligne": 514,
+      "ligne": 519,
       "octets": 39
      },
      {
       "titre": "Journal des décisions → `docs/design-decisions.md`",
       "niveau": 2,
-      "ligne": 516,
+      "ligne": 521,
       "octets": 57
      }
     ]
@@ -557,11 +563,11 @@
  },
  "renvois": {
   "code": {
-   "total": 751,
+   "total": 785,
    "casses": []
   },
   "docs": {
-   "total": 1313,
+   "total": 1317,
    "casses": []
   }
  }

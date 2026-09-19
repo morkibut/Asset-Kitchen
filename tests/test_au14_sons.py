@@ -53,7 +53,7 @@ def test_son_reouvre_recette_non_defaut_stereo_et_cache_reconstruit(audio, doubl
     assert double.appels == 0
 
 
-def test_silence_fichier_invalide_et_saturation_ne_sont_pas_prets(audio):
+def test_silence_et_fichier_invalide_ne_sont_pas_prets_la_saturation_informe(audio):
     atelier, projet = audio
     silencieux = atelier.sons.importer_octets(projet, encoder(np.zeros((8000, 2)), 8000), nom="Silence.wav")
     invalide = atelier.sons.importer_octets(projet, b"source payee illisible", nom="Retour.mp3", cle="job-invalide")
@@ -64,7 +64,9 @@ def test_silence_fichier_invalide_et_saturation_ne_sont_pas_prets(audio):
             atelier.sons.paquet(projet, son["identifiant"])
     propre = atelier.sons.importer_octets(projet, signal())
     sature = atelier.sons.regler(projet, propre["identifiant"], 1, {"gain_db": 24})
-    assert not sature["pret"] and sature["mesures"]["ecretes"] > 0
+    # Règle du produit (SN3) : les mesures informent, elles ne refusent jamais.
+    # Un rendu saturé s'entend et se livre ; il le dit dans ses avertissements.
+    assert sature["pret"] and sature["mesures"]["ecretes"] > 0 and sature["avertissements"]
     assert atelier.sons.lire(projet, propre["identifiant"], 1)["pret"]
 
 

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
-import { FabricationImageLocale, ProfilsWorkflow } from "./WorkflowsLocaux"
-import { workflows, stylesLocaux, type ProfilWorkflow, type StyleLocal, type TravailImageLocale } from "../api-workflows"
+import { FabricationImageLocale, MethodesSonores, ProfilsWorkflow } from "./WorkflowsLocaux"
+import { workflows, stylesLocaux, type ProfilWorkflow, type ResultatMoteurSon, type StyleLocal, type TravailImageLocale } from "../api-workflows"
 import { api } from "../api"
 
 vi.mock("../api-workflows", async () => {
@@ -10,6 +10,7 @@ vi.mock("../api-workflows", async () => {
     ...reel,
     workflows: {
       lister: vi.fn(), importer: vi.fn(), diagnostiquer: vi.fn(), preparerImage: vi.fn(), lireImage: vi.fn(), demarrerImage: vi.fn(), reprendreImage: vi.fn(),
+      installerSon: vi.fn(), moteursParFamille: vi.fn(),
     },
     stylesLocaux: { lister: vi.fn(), installer: vi.fn(), installerPrets: vi.fn() },
   }
@@ -159,4 +160,53 @@ test("importer un profil n’exécute pas son graphe et vérifie ses prérequis 
   fireEvent.click(await screen.findByRole("button", { name: "Vérifier les prérequis" }))
   await screen.findByText("Prérequis présents")
   expect(workflows.diagnostiquer).toHaveBeenCalledWith(profil.identifiant, profil.version)
+})
+
+// ── Les méthodes sonores (SN1) ──────────────────────────────────────────────
+
+test("les méthodes sonores ne s’installent que sur le clic, jamais à l’ouverture de l’écran", async () => {
+  cleanup()
+  const resultat: Record<string, ResultatMoteurSon> = {
+    "sa3-small-sfx": { identifiant: "sa3-small-sfx", installe: true, profil: { ...profil, identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", cree_le: 2000 } },
+    "ace-step-15-turbo": { identifiant: "ace-step-15-turbo", installe: false, manque: [{ nom: "le modèle ACE-Step 1.5 turbo (musique)", fichier: "acestep_v1.5_turbo.safetensors", dossier: "diffusion_models", source: "https://exemple/ace" }] },
+  }
+  vi.mocked(workflows.installerSon).mockResolvedValue({ moteurs: resultat })
+  const onInstalle = vi.fn()
+  render(<MethodesSonores onInstalle={onInstalle} />)
+
+  // Les cinq moteurs se montrent sans état, sans que rien n'ait été demandé
+  // à ComfyUI — l'atelier n'installe que sur le geste de l'auteur.
+  await screen.findByRole("heading", { name: "Stable Audio 3 Small-SFX" })
+  expect(workflows.installerSon).not.toHaveBeenCalled()
+
+  fireEvent.click(screen.getByRole("button", { name: "Installer les méthodes sonores" }))
+  await screen.findByText(/Installé · version du/)
+  expect(workflows.installerSon).toHaveBeenCalledTimes(1)
+  expect(onInstalle).toHaveBeenCalledTimes(1)
+
+  // Le moteur absent est grisé avec ce qui manque : son nom en clair, le
+  // fichier, le dossier où le poser et un lien vers sa page — jamais proposé
+  // puis refusé.
+  expect(screen.getByText("le modèle ACE-Step 1.5 turbo (musique)")).toBeTruthy()
+  expect(screen.getByText("acestep_v1.5_turbo.safetensors")).toBeTruthy()
+  expect(screen.getByText("diffusion_models")).toBeTruthy()
+  expect(screen.getByRole("link", { name: "sa page" })).toHaveProperty("href", "https://exemple/ace")
+
+  fireEvent.click(screen.getByRole("button", { name: "Installer les méthodes sonores" }))
+  await waitFor(() => expect(workflows.installerSon).toHaveBeenCalledTimes(2))
+})
+
+test("un profil sonore aux prérequis absents dit ce qui manque en clair, pas le problème brut de ComfyUI", async () => {
+  cleanup()
+  vi.mocked(workflows.lister).mockResolvedValue({ profils: [{ ...profil, identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", nature: "audio" }] })
+  vi.mocked(workflows.diagnostiquer).mockResolvedValue({
+    disponible: false, problemes: ["Nœud absent : YuE2GenerateABC (2)."], noeuds: [], observe_le: 1000, adresse: "http://local",
+    manque: [{ nom: "le modèle Stable Audio 3 Small-SFX (bruitages et ambiances)", fichier: "sa3_small_sfx.safetensors", dossier: "diffusion_models", source: "https://exemple/sa3" }],
+  })
+  render(<ProfilsWorkflow />)
+  fireEvent.click(await screen.findByRole("button", { name: "Vérifier les prérequis" }))
+  await screen.findByText("le modèle Stable Audio 3 Small-SFX (bruitages et ambiances)")
+  expect(screen.getByText("sa3_small_sfx.safetensors")).toBeTruthy()
+  expect(screen.getByText("diffusion_models")).toBeTruthy()
+  expect(screen.queryByText("Nœud absent : YuE2GenerateABC (2).")).toBeNull()
 })

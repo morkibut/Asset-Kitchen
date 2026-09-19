@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import io
 import math
+import re
 import subprocess
 import wave
 from pathlib import Path
@@ -16,6 +17,13 @@ import numpy as np
 from atelier.domaine.son import RecetteSon, SonRefuse
 
 VERSION = 1
+
+_RE_INTEGRE = re.compile(r"Integrated loudness:\s*\n\s*I:\s*(-?\d+\.?\d*|-inf|nan)\s*LUFS")
+_RE_CRETE_VRAIE = re.compile(r"True peak:\s*\n\s*Peak:\s*(-?\d+\.?\d*|-inf|nan)\s*dBFS")
+_DUREE_MINIMALE_LUFS = 0.4  # ebur128 exige un premier bloc de 400 ms ; en
+# dessous il répond -70 LUFS, une valeur de repli du filtre et non une
+# mesure — vérifié à la main (voir PLAN-son.md, SN3/SN5) avant d'écrire ce
+# seuil : 0,39 s rend -70 LUFS, 0,40 s rend une vraie mesure.
 
 
 def _ffmpeg(arguments, entree=None):
@@ -90,6 +98,101 @@ def decoder(source: Path):
     return signal, taux
 
 
+def _lufs_et_crete_vraie(signal, taux):
+    # Niveau perçu intégré (LUFS, EBU R128) et crête vraie (dBTP), par le
+    # filtre ebur128 de ffmpeg, en sous-processus comme le décodage. On lui
+    # passe le signal brut (float64, non ré-échantillonné) et on relit le
+    # résumé qu'il écrit sur sa sortie d'erreur — cette mesure-ci a besoin
+    # du texte que `-loglevel error` supprimerait, donc elle n'utilise pas
+    # `_ffmpeg()`. Un extrait plus court que 0,4 s n'a pas de LUFS défini :
+    # ni erreur, ni « non prêt » ; l'information manque, c'est tout.
+    if len(signal) == 0 or len(signal) / taux < _DUREE_MINIMALE_LUFS:
+        return None, None
+    try:
+        from imageio_ffmpeg import get_ffmpeg_exe
+        execution = subprocess.run([get_ffmpeg_exe(), "-nostdin", "-hide_banner",
+            "-f", "f64le", "-ar", str(taux), "-ac", str(signal.shape[1]), "-i", "pipe:0",
+            "-af", "ebur128=peak=true", "-f", "null", "-"],
+            input=signal.astype("<f8").tobytes(), capture_output=True, timeout=90)
+    except (ImportError, OSError, subprocess.TimeoutExpired):
+        return None, None
+    if execution.returncode:
+        return None, None
+    sortie = execution.stderr.decode("utf-8", errors="replace")
+    resume = sortie[sortie.rfind("Summary:"):]
+
+    def _nombre(motif):
+        trouve = motif.search(resume)
+        if not trouve or trouve.group(1) in ("-inf", "nan"):
+            return None
+        return float(trouve.group(1))
+
+    return _nombre(_RE_INTEGRE), _nombre(_RE_CRETE_VRAIE)
+
+
+def _passage_zero_proche(rendu, index, rayon):
+    # Cherche, dans une fenêtre de `rayon` échantillons autour de `index`,
+    # le changement de signe le plus proche sur le mélange des canaux (une
+    # approximation : un passage par zéro exact et simultané sur tous les
+    # canaux n'existe pas toujours). Aucun changement trouvé : l'index de
+    # départ est gardé tel quel plutôt que d'inventer un repère.
+    mono = rendu.mean(axis=1)
+    bas, haut = max(0, index - rayon), min(len(mono) - 1, index + rayon)
+    fenetre = mono[bas:haut + 1]
+    if len(fenetre) < 2:
+        return index
+    signes = np.sign(fenetre)
+    signes[signes == 0] = 1
+    changements = np.flatnonzero(np.diff(signes) != 0)
+    if not len(changements):
+        return index
+    candidats = bas + changements
+    return int(candidats[np.argmin(np.abs(candidats - index))])
+
+
+def _fondre_boucle(rendu, debut, fin, taux, fondu_ms):
+    # Fondu enchaîné de la boucle : on mélange la fin dans le début, pas la
+    # queue au-delà de la fin dans la tête, parce que rien ne garantit
+    # qu'il existe du son après `fin` (une recette peut caler `boucle_fin`
+    # sur la toute fin du rendu). Godot rejoue en boucle de `loop_begin` à
+    # `loop_end` : au moment du saut, l'échantillon juste avant (`fin - 1`)
+    # est immédiatement suivi de l'échantillon `debut`. On prend donc les
+    # `n` derniers échantillons avant `fin`, **retournés dans le temps**
+    # (le tout dernier, celui qui touche le saut, en premier), et on les
+    # fait décroître (fondu croisé à puissance constante) dans les `n`
+    # premiers échantillons après `debut`, qui montent en proportion
+    # inverse : le tout premier échantillon après le saut colle exactement
+    # sur celui qui le précédait (continuité parfaite au point de saut), et
+    # le mélange revient au contenu d'origine du début de boucle au bout de
+    # `fondu_ms`. Retourner la queue dans le temps n'a pas d'effet audible
+    # pour un bruit stationnaire (pluie, vent) : seule l'énergie locale
+    # compte pour l'oreille, pas le sens de lecture sur une fenêtre de
+    # quelques dizaines de millisecondes.
+    n = min(round(fondu_ms * taux / 1000), (fin - debut) // 2)
+    if n < 2:
+        return
+    t = np.linspace(0, np.pi / 2, n)[:, None]
+    fondu_sortie, fondu_entree = np.cos(t), np.sin(t)
+    queue = rendu[fin - n:fin][::-1].copy()
+    tete = rendu[debut:debut + n].copy()
+    rendu[debut:debut + n] = queue * fondu_sortie + tete * fondu_entree
+
+
+def _mesurer_raccord(rendu, taux, debut, fin):
+    saut = float(np.max(np.abs(rendu[fin - 1] - rendu[debut])))
+    n = min(fin - debut, max(1, round(0.02 * taux)))  # ~20 ms de part et d'autre
+    queue, tete = rendu[fin - n:fin], rendu[debut:debut + n]
+    rms_queue = float(np.sqrt(np.mean(queue ** 2))) if len(queue) else 0.0
+    rms_tete = float(np.sqrt(np.mean(tete ** 2))) if len(tete) else 0.0
+    ecart_rms_db = abs(20 * math.log10(max(rms_queue, 1e-9)) - 20 * math.log10(max(rms_tete, 1e-9)))
+    # Seuils empiriques (à l'oreille, pas une norme) : un saut d'échantillon
+    # au-delà de 5 % de la pleine échelle s'entend comme un clic ; un écart
+    # d'énergie de plus de 3 dB entre les deux bords s'entend comme un choc
+    # de niveau. L'un ou l'autre suffit à faire claquer le raccord.
+    net = saut < 0.05 and ecart_rms_db < 3
+    return {"saut": saut, "ecart_rms_db": ecart_rms_db, "verdict": "raccord net" if net else "le raccord claque"}
+
+
 def reechantillonner(signal, depart, arrivee):
     if depart == arrivee:
         return signal.copy()
@@ -116,6 +219,10 @@ def traiter(signal, taux, recette: RecetteSon):
         premier, dernier = max(0, int(utiles[0]) - marge), min(len(rendu), int(utiles[-1]) + 1 + marge)
         coupe_silence = {"debut": (debut + premier) / taux, "fin": (debut + dernier) / taux}
         rendu = rendu[premier:dernier].copy()
+    if recette.mono and rendu.shape[1] > 1:
+        rendu = rendu.mean(axis=1, keepdims=True)
+    if recette.hauteur_demi_tons:
+        rendu = changer_hauteur(rendu, taux, recette.hauteur_demi_tons, garder_duree=recette.hauteur_garde_duree)
     taux_sortie = recette.taux or taux
     rendu = reechantillonner(rendu, taux, taux_sortie)
     if not len(rendu):
@@ -132,26 +239,109 @@ def traiter(signal, taux, recette: RecetteSon):
     pic = float(np.max(np.abs(rendu)))
     if recette.normaliser and pic > 1e-8:
         rendu *= 10 ** (recette.cible_db / 20) / pic
+    niveau = _viser_lufs(rendu, taux_sortie, recette.cible_lufs) if recette.cible_lufs is not None else None
     rendu *= 10 ** (recette.gain_db / 20)
+    boucle_debut = round(recette.boucle_debut * taux_sortie)
+    boucle_fin = round(recette.boucle_fin * taux_sortie) if recette.boucle_fin is not None else len(rendu)
+    if recette.boucle and recette.boucle_zero:
+        rayon = max(1, round(0.05 * taux_sortie))  # 50 ms, empirique
+        boucle_debut = _passage_zero_proche(rendu, boucle_debut, rayon)
+        boucle_fin = _passage_zero_proche(rendu, boucle_fin, rayon)
+    if recette.boucle and not 0 <= boucle_debut < boucle_fin <= len(rendu):
+        raise SonRefuse("La boucle doit rester dans la durée du son après la coupe et les fondus.")
+    if recette.boucle and recette.boucle_fondu_ms:
+        _fondre_boucle(rendu, boucle_debut, boucle_fin, taux_sortie, recette.boucle_fondu_ms)
     mesure = mesurer(rendu, taux_sortie)
     mesure["silencieux"] = mesure["silencieux"] or not source_audible
     mesure["coupe_source"] = coupe_silence
-    boucle_debut = round(recette.boucle_debut * taux_sortie)
-    boucle_fin = round(recette.boucle_fin * taux_sortie) if recette.boucle_fin is not None else len(rendu)
-    if recette.boucle and not 0 <= boucle_debut < boucle_fin <= len(rendu):
-        raise SonRefuse("La boucle doit rester dans la durée du son après la coupe et les fondus.")
+    raccord = _mesurer_raccord(rendu, taux_sortie, boucle_debut, boucle_fin) if recette.boucle \
+        else {"saut": None, "ecart_rms_db": None, "verdict": None}
     mesure["boucle"] = {"active": recette.boucle, "debut": boucle_debut, "fin": boucle_fin,
-        "ecart_raccord": float(np.max(np.abs(rendu[boucle_fin-1] - rendu[boucle_debut]))) if recette.boucle else None}
+        "recale_zero": recette.boucle_zero, "fondu_ms": recette.boucle_fondu_ms,
+        "ecart_raccord": raccord["saut"], "ecart_rms_db": raccord["ecart_rms_db"], "verdict": raccord["verdict"]}
+    if niveau is not None:
+        mesure["niveau"] = niveau
     return rendu, taux_sortie, mesure
+
+
+CRETE_VRAIE_MAX_DB = -1.0
+
+
+def _viser_lufs(rendu, taux, cible):
+    # Un gain, pas un compresseur : le niveau perçu est amené à la cible,
+    # sauf si la crête vraie dépassait alors −1 dBTP — le gain s'arrête là
+    # et la mesure le dit. Un extrait sans LUFS défini (moins de 0,4 s, ou
+    # silence) n'est pas touché : l'information manque, c'est tout.
+    lufs, crete = _lufs_et_crete_vraie(rendu, taux)
+    if lufs is None:
+        return {"cible_lufs": cible, "applique": False, "gain_db": 0.0, "plafonne": False,
+            "raison": "Niveau perçu indéfini (moins de 0,4 s ou silence) : aucun gain appliqué."}
+    gain = cible - lufs
+    if crete is None:
+        pic = float(np.max(np.abs(rendu)))
+        crete = 20 * math.log10(pic) if pic > 0 else None
+    plafonne = crete is not None and crete + gain > CRETE_VRAIE_MAX_DB
+    if plafonne:
+        gain = CRETE_VRAIE_MAX_DB - crete
+    rendu *= 10 ** (gain / 20)
+    return {"cible_lufs": cible, "applique": True, "gain_db": gain, "plafonne": plafonne, "lufs_avant": lufs,
+        "raison": "Crête vraie plafonnée à −1 dBTP : la cible n'est pas atteinte." if plafonne else ""}
+
+
+def changer_hauteur(signal, taux, demi_tons, *, garder_duree):
+    # Sans garder la durée : on relit le son à une autre fréquence, comme une
+    # bande accélérée (plus aigu et plus court). En gardant la durée : le
+    # filtre rubberband de ffmpeg (présent dans imageio_ffmpeg 7.1).
+    # rubberband ne vide pas sa file à la fin du flux (constaté : +12 demi-tons
+    # perdaient 80 ms sur 2 s) : on ajoute une demi-seconde de silence, puis
+    # on recoupe à la longueur d'origine.
+    rapport = 2 ** (demi_tons / 12)
+    entree = np.concatenate([signal, np.zeros((taux // 2, signal.shape[1]))]) if garder_duree else signal
+    filtre = f"rubberband=pitch={rapport:.10f}" if garder_duree else f"asetrate={round(taux * rapport)},aresample={taux}"
+    rendu = _ffmpeg(["-f", "f64le", "-ar", str(taux), "-ac", str(signal.shape[1]), "-i", "pipe:0",
+        "-af", filtre, "-ar", str(taux), "-acodec", "pcm_f64le", "-f", "f64le", "pipe:1"], entree.astype("<f8").tobytes())
+    rendu = np.frombuffer(rendu, dtype="<f8").reshape((-1, signal.shape[1])).copy()
+    if garder_duree:
+        rendu = np.concatenate([rendu, np.zeros((max(0, len(signal) - len(rendu)), signal.shape[1]))])[:len(signal)]
+    return rendu
+
+
+def encoder_ogg(wav: bytes, qualite: int, *, fin_echantillon: int | None = None):
+    """OGG Vorbis depuis un WAV 16 bits ; `fin_echantillon` coupe à la fin de
+    boucle (un OGG boucle dans Godot de `loop_offset` jusqu'à sa fin)."""
+    filtre = ["-af", f"atrim=end_sample={int(fin_echantillon)}"] if fin_echantillon is not None else []
+    return _ffmpeg(["-f", "wav", "-i", "pipe:0", *filtre, "-c:a", "libvorbis", "-q:a", str(qualite),
+        "-fflags", "+bitexact", "-flags:a", "+bitexact", "-f", "ogg", "pipe:1"], wav)
+
+
+def _ecretes(signal, seuil=0.999, suite=3):
+    """Les échantillons saturés : au-delà de la pleine échelle (un rendu en
+    flottants avant encodage), **ou** collés au plafond au moins `suite` fois de
+    suite. Un fichier 16 bits décodé ne dépasse jamais 1 : ne compter que
+    `> 1` ne voyait aucune saturation dans un son reçu — un sommet aplati,
+    lui, se voit à ces paliers. Un sommet isolé à pleine échelle n'en est pas un."""
+    if not len(signal):
+        return 0
+    amplitude = np.abs(signal)
+    sature = amplitude > 1
+    for canal in range(signal.shape[1]):
+        haut = amplitude[:, canal] >= seuil
+        bords = np.diff(np.concatenate(([0], haut.astype(np.int8), [0])))
+        for debut, fin in zip(np.flatnonzero(bords == 1), np.flatnonzero(bords == -1)):
+            if fin - debut >= suite:
+                sature[debut:fin, canal] = True
+    return int(np.count_nonzero(sature))
 
 
 def mesurer(signal, taux):
     pic = float(np.max(np.abs(signal))) if len(signal) else 0
     rms = float(np.sqrt(np.mean(signal ** 2))) if len(signal) else 0
+    lufs, crete_vraie_db = _lufs_et_crete_vraie(signal, taux) if len(signal) else (None, None)
     return {"duree": len(signal) / taux, "taux": taux, "canaux": signal.shape[1], "echantillons": len(signal),
         "crete": pic, "crete_db": 20 * math.log10(pic) if pic > 0 else None,
         "rms_db": 20 * math.log10(rms) if rms > 0 else None, "silencieux": pic <= 1e-8,
-        "ecretes": int(np.count_nonzero(np.abs(signal) > 1))}
+        "ecretes": _ecretes(signal),
+        "lufs": lufs, "crete_vraie_db": crete_vraie_db}
 
 
 def encoder(signal, taux):

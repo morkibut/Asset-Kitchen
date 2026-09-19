@@ -2494,6 +2494,7 @@ function AtelierApp() {
           onDecouper={(id) => ouvrirLaRetouche(id, "decoupage")}
           onExtraire={(id) => ouvrirLaRetouche(id, "superposition")}
           onLivrer={() => setSortieOuverte(true)}
+          onSon={(identifiant) => setSonsOuverts({ identifiant })}
           ouvert={choseOuverte}
           plan={plan}
           // **L'onglet survit au montage de la retouche** (`B25`) : elle prend
@@ -3012,7 +3013,7 @@ function AtelierApp() {
         onClip={(id) => { setPreparation(null); ouvrirLeMontage(id) }}
         onBande={(id) => { setPreparation(null); ouvrirLAtelierDeBande(id) }}
         onAsset={(id) => { setPreparation(null); ouvrirLaRetouche(id) }}
-        onSon={(id) => { setPreparation(null); setSonsOuverts({ identifiant: id }) }}
+        onSon={(id) => setSonsOuverts({ identifiant: id })}
         onLivraisons={() => { setPreparation(null); setSortieOuverte(true) }}
         onFermer={() => { setPreparation(null); void relireProduction() }}
       />}

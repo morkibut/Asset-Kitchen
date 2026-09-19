@@ -31,7 +31,14 @@ def installer_outils_livraison(serveur: Any, atelier: Any, refus_lisible: Callab
                   "Prepare existing animation strips for the linked Godot project. Returns immutable preview token, "
                   "files, conflicts, stable scene path, SpriteFrames path and playback settings. "
                   "Preserves previously delivered movements and directions not replaced by this selection. "
-                  "Pivot is in output frame pixels. No provider calls or writes into the game.")
+                  "Pivot is in output frame pixels. The character's filled sound slots (list_subject_sounds) go with it "
+                  "under their stable names in sons/ (sfx_pelerin_pas_01.wav ... + sfx_pelerin_pas.tres, .import files, "
+                  "credits.json), each as an AudioStreamPlayer2D child of the scene on its family's bus. "
+                  "Sound cues (list_sound_cues) add an AnimationPlayer: one animation per cued strip, named like the "
+                  "SpriteFrames animation (marche/sud), driving the sprite, with an audio track per slot keyed at each "
+                  "cued image's time; the track plays a dedicated child player (sfx_pelerin_pas/Calage), so the slot's "
+                  "own player stays free for the game's code. "
+                  "No provider calls or writes into the game.")
     @refus_lisible
     async def preview_animation_delivery(project: str, character: str, strips: list[str],
                                          pivot_x: float | None = None, pivot_y: float | None = None,

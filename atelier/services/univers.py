@@ -1183,6 +1183,7 @@ class ServiceUnivers:
         detourage_image: Any = NON_DIT,
         detourage_planche: Any = NON_DIT,
         detourages: Any = NON_DIT,
+        son: dict[str, Any] | None = None,
     ) -> Projet:
         """Poser les réglages de l'univers. Tout est facultatif, rien ne lève à vide.
 
@@ -1393,6 +1394,13 @@ class ServiceUnivers:
                 for famille, brut in lues.items()
                 if (passe := passe_par_defaut(brut)) is not None
             }
+
+        # **Le bloc sonore** (SN2) : ce que le message en dit, et seulement ça.
+        if son is not None:
+            try:
+                univers.son = univers.son.regle(son)
+            except ValueError as e:
+                raise UniversRefuse(str(e)) from e
 
         self._bibliotheque.sauver_projet(objet.avec(univers))
         # Le compte de couleurs fait partie de ce que la palette lit : le

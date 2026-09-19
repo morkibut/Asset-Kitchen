@@ -242,7 +242,7 @@ function Carte3D({ source, onOuvrir }: { source: Source3D; onOuvrir?: (source: S
 function CarteSon({ son, onOuvrir }: { son: Son; onOuvrir?: (identifiant: string) => void }) {
   return <article className="flex min-w-0 flex-col gap-[8px] rounded-8 border border-trait bg-carte p-[14px]">
     <ApercuOnde son={son} />
-    <div className="min-w-0"><h2 className="truncate text-[14px] font-medium text-encre" title={son.nom}>{son.nom}</h2><p className="mt-[4px] text-[12px] text-encre-3">{son.mesures ? `${son.mesures.duree.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} s · ${son.mesures.canaux} canal${son.mesures.canaux > 1 ? "x" : ""}` : son.raison}</p></div>
+    <div className="min-w-0"><h2 className="truncate text-[14px] font-medium text-encre" title={son.nom}>{son.nom}</h2><p className="mt-[4px] text-[12px] text-encre-3">{son.mesures ? `${son.mesures.duree.toLocaleString("fr-FR", { maximumFractionDigits: son.mesures.duree < 1 ? 2 : 1 })} s · ${son.mesures.canaux > 1 ? `${son.mesures.canaux} canaux` : "1 canal"}` : son.raison}</p></div>
     <button type="button" disabled={!onOuvrir} onClick={() => onOuvrir?.(son.identifiant)} className="self-start text-[12px] text-signal disabled:text-eteint">Ouvrir le son ›</button>
   </article>
 }
