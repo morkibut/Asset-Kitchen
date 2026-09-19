@@ -61,7 +61,7 @@ TU5, puis TU6. TU7, puis TU8. TU9 peut partir dès TU3. Ensuite TU10, puis TU11.
 | Dans | Le morceau | Traité en |
 |---|---|---|
 | TU1 | La copie des fichiers et le `LISEZMOI` de provenance | `[VERY-EASY]` |
-| TU2 | La nature `matiere` dans la famille `decors` | `[EASY]` |
+| TU2 | La nature « matière » dans la famille `decors` | `[EASY]` |
 | TU3 | Le tiroir des matières intégrées, sur des vignettes que le moteur rend | `[MEDIUM]` |
 | TU4 | Les écrivains de texte `.tres`, recopiés d'`exports.js` en Python une fois la forme posée | `[MEDIUM]` |
 | TU7 | Le `LISEZMOI` des règles de pose | `[EASY]` |

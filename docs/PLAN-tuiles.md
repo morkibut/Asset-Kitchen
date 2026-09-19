@@ -108,7 +108,7 @@ deux nœuds de raccord, et l'écran.
    annonce une attente et non un prix. Le bouton de génération n'est donc jamais rouille.
    Aucune tranche de ce plan n'appelle un fournisseur payant.
 
-7. **Une matière est un asset de la bibliothèque**, de nature `matiere` dans la famille
+7. **Une matière est un asset de la bibliothèque**, de nature « matière » dans la famille
    `decors`. Elle se retrouve, se réutilise d'un jeu de tuiles à l'autre, et garde sa
    provenance : le texte envoyé, le style et la graine.
 
@@ -172,14 +172,14 @@ Le domaine `tuiles` gagne une **recette** facultative :
 
 Un jeu sans recette reste un jeu « à partir d'une image », exactement comme aujourd'hui.
 
-- [ ] Un jeu avec recette se crée, se relit, se règle et se restaure par révision, comme un jeu
+- [x] Un jeu avec recette se crée, se relit, se règle et se restaure par révision, comme un jeu
       d'AU13. Les ensembles déjà sur disque se relisent sans migration.
-- [ ] Une recette refusée (sorte inconnue, taille hors de 16/32/64, réglage hors liste,
+- [x] Une recette refusée (sorte inconnue, taille hors de 16/32/64, réglage hors liste,
       matière introuvable) répond 409 avec un message en clair.
-- [ ] L'atlas envoyé avec la recette est figé en asset, avec sa filiation vers le jeu. Ses
+- [x] L'atlas envoyé avec la recette est figé en asset, avec sa filiation vers le jeu. Ses
       cellules sont toutes retenues. Leurs raccords sont **remplis depuis le masque de chaque
       pièce**, jamais depuis la saisie.
-- [ ] La nature `matiere` existe dans la famille `decors`, sans détourage ni poses.
+- [x] La nature « matière » existe dans la famille `decors`, sans détourage ni poses.
 
 ### TU3 · L'atelier du jeu de tuiles
 
@@ -242,7 +242,7 @@ part vers ComfyUI avec le style `klein9b-tiles-raccordable` :
 - avec le négatif fixe de sc-clone ;
 - avec une graine libre pour chaque matière.
 
-Les tirages reviennent comme des assets `matiere`.
+Les tirages reviennent comme des assets de nature « matière ».
 
 - [ ] Le texte affiché est exactement celui qui part. Un essai compare le portage Python aux
       sorties de `composerPrompt` sur les cas des essais de sc-clone.

@@ -409,6 +409,24 @@ fixé** — le dessin à la main, décidé le 2 septembre 2026 et non découpé.
 On l'ouvre quand on travaille *dans* une version. Ce qui tient l'ensemble — les cinq
 règles, le squelette, le modèle d'objets, les risques — reste ici.
 
+### Les jeux de tuiles fabriqués (TU2, `docs/PLAN-tuiles.md`)
+
+Un jeu de tuiles a deux formes, sur les mêmes routes `/api/projects/{projet}/tilesets`.
+**À partir d'une image** (AU13) : `POST` avec `image` et `grille`, raccords saisis à la main.
+**Fabriqué** : `POST` avec `nom`, `recette` et `atlas` (le PNG rendu, en base64). La recette
+est une liste fermée (`atelier/domaine/recette_tuiles.py`) : `sorte` (`sol`, `chemin`, `mur`,
+`coins-15`, `pieces-17`), `taille` (16, 32, 64), `graine`, `emplacements` (surface, bordure,
+face, bas, bordureBas → matière `integree`, `asset` du jeu, ou `vide` ; une bordure `lie`
+suit sa surface) et `reglages` (noms et bornes du panneau de sc-clone). L'atlas doit mesurer
+exactement ce que la recette donne ; il entre en bibliothèque avec la filiation
+`{tuiles, revision, atlas}`. Ses pièces et leurs raccords viennent du masque de chaque case
+(`atelier/domaine/masques_tuiles.py`, table de sc-clone prouvée par
+`tests/test_tu2_recette.py`), jamais de la saisie : un `PUT` peut changer le nom et la carte,
+et refuse (409) tout raccord, terrain ou pièce retenue différents de la recette. Changer de
+recette, c'est `PUT` avec `recette` **et** `atlas` : une révision de plus, l'ancien atlas
+reste lisible par `?revision=`. Un ensemble sans `recette` sur le disque est un jeu AU13,
+relu sans migration.
+
 ## 11 · Risques, et quand les lever → `docs/archi-risques.md`
 
 **Les risques de l'architecture, et le moment où chacun se lève**, vivent dans
