@@ -151,6 +151,12 @@ def _plein(type_moteur: str) -> tuple[int, int, int] | None:
     return (*position_du_masque(jeu, _PLEIN[jeu]), _PLEIN[jeu])
 
 
+def position_pleine(sorte: str) -> tuple[int, int] | None:
+    """(x, y) de la pièce pleine de la sorte — celle que variantes et animation reprennent."""
+    plein = _plein(SORTES[sorte][0])
+    return plein[:2] if plein else None
+
+
 def _borne(n: int, maximum: int, minimum: int = 1) -> int:
     return 0 if n < minimum else min(maximum, n)
 

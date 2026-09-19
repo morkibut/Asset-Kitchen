@@ -353,8 +353,11 @@ class ServiceTuiles:
             "carte_url": f"/api/projects/{projet}/tilesets/{identifiant}/preview.png?carte=true&revision={objet['revision']}"}
 
     def paquet(self, projet, identifiant, revision=None):
-        from atelier.services.export_tuiles import paquet
+        from atelier.services.export_tuiles import MUR_A_VENIR, paquet
         objet = self.lire(projet, identifiant, revision)
+        # Le mur (TU7) : refusé en clair plutôt que livré à moitié — un dessus sans ses
+        # bandes ni ses collisions se poserait dans Godot sans rien dire de ce qui manque.
+        if (objet.get("recette") or {}).get("sorte") == "mur": raise TuilesRefusees(MUR_A_VENIR)
         if not objet["diagnostic"]["pret"]: raise TuilesRefusees(" ".join(objet["diagnostic"]["problemes"]))
         return paquet(objet, png(self._atlas(objet)))
 

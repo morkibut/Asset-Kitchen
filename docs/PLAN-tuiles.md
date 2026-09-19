@@ -216,13 +216,13 @@ L'export Python d'AU13 apprend ce que sc-clone écrit :
 
 La carte d'exemple livrée est la carte peinte dans l'atelier.
 
-- [ ] Dans un vrai Godot 4.7, pour le sol et pour le chemin, `set_cells_terrain_connect` sur
+- [x] Dans un vrai Godot 4.7, pour le sol et pour le chemin, `set_cells_terrain_connect` sur
       la carte livrée pose les mêmes pièces que l'atelier : 0 désaccord. Le script de preuve
       `preuve-map-godot` de sc-clone est porté en essai.
-- [ ] Un jeu sur deux sols déclare deux terrains. La case entièrement « dessous » est posable.
-- [ ] Les images d'animation ne se recouvrent pas : c'est la condition pour que Godot les
+- [x] Un jeu sur deux sols déclare deux terrains. La case entièrement « dessous » est posable.
+- [x] Les images d'animation ne se recouvrent pas : c'est la condition pour que Godot les
       accepte.
-- [ ] Les paquets d'AU13 déjà livrés, sans recette, sortent à l'identique : les essais
+- [x] Les paquets d'AU13 déjà livrés, sans recette, sortent à l'identique : les essais
       existants ne bougent pas.
 
 ### TU5 · Les matières générées sur la machine
