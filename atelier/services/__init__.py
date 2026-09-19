@@ -613,6 +613,9 @@ class Atelier:
         self.sources_3d = ServiceSources3D(self)
         self.travaux_3d = ServiceTravaux3D(self)
         self.travaux_audio = ServiceTravauxAudio(self)
+        # SN9 : la partition de YuE2, écrite d'abord, relue, puis jouée.
+        from atelier.services.partition_son import ServicePartitionSon
+        self.partition_son = ServicePartitionSon(self)
         # SN3 : une série = N travaux audio ; un jeu de variantes = des sons par référence.
         self.series_son = ServiceSeriesSon(self)
         self.variantes_son = ServiceVariantesSon(self)

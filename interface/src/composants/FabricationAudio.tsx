@@ -5,6 +5,7 @@
 // un son préparé seul (avant les séries) garde sa fenêtre d'avant.
 import { useEffect, useRef, useState } from "react"
 import { travauxAudio, type TravailAudio } from "../api-travaux-audio"
+import { partitionSon, type PartitionSon } from "../api-partition-son"
 import { seriesSon, texteSon, type Annonce, type Composition, type DemandeSon, type FamilleSon, type MoteurDeFamille, type ReglageMusique, type SerieSon as Serie } from "../api-series-son"
 import { workflows, type ProfilWorkflow } from "../api-workflows"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
@@ -160,6 +161,72 @@ function Relecture({ compo, manuel, onManuel }: { compo: Composition; manuel: st
       <p className="text-[12px]"><span className="text-encre">en noir : votre texte</span> · <span className="text-encre-4">en gris : ajouté par l’univers et le moteur</span></p>
       {compo.texte && <button type="button" className={PETIT} onClick={() => onManuel(compo.texte ?? "")}>Éditer ce texte ›</button>}
     </div>
+  </div>
+}
+
+// ── La partition de YuE2, en deux temps (SN9) ────────────────────────────────
+//
+// « Écrire la partition » envoie le seul premier étage de YuE2 et rend un
+// texte ABC, modifiable ; « Jouer cette partition » envoie le second étage
+// avec ce texte relu, tel quel — rien n'est recomposé. Le geste en un seul
+// envoi (« Lancer N tirages », au-dessus) reste la voie pour une série.
+
+const ETATS_JEU: Record<string, string> = { prepare: "Envoi…", en_cours: "YuE2 joue la partition…", termine: "Son reçu", a_verifier: "À vérifier", a_reprendre: "À reprendre", externe_inconnu: "Acceptation à retrouver", annule: "Annulée" }
+
+function PartitionYue2({ projet, texte, paroles, profils, onSon }: {
+  projet: string; texte: string; paroles: string; profils: ProfilWorkflow[]; onSon?: (id: string) => void
+}) {
+  const profil = profils.find((p) => p.identifiant === "yue2-partition-jouee")
+  const raisonAbsent = !profil ? "YuE2 n’est pas installé — voir Réglages › Moteurs" : raisonIndisponible(profil)
+  const [doc, setDoc] = useState<PartitionSon | null>(null)
+  const [texteEdite, setTexteEdite] = useState("")
+  const [ecriture, setEcriture] = useState(false)
+  const [erreurEcriture, setErreurEcriture] = useState("")
+  const [jeu, setJeu] = useState<TravailAudio | null>(null)
+  const [erreurJeu, setErreurJeu] = useState("")
+  const [occupeJeu, setOccupeJeu] = useState(false)
+
+  useEffect(() => {
+    if (!jeu || jeu.etat !== "en_cours") return
+    const minuterie = window.setInterval(() => void travauxAudio.lire(projet, jeu.identifiant).then(setJeu).catch((e) => setErreurJeu(message(e))), 2000)
+    return () => window.clearInterval(minuterie)
+  }, [jeu, projet])
+
+  const ecrire = async () => {
+    setEcriture(true); setErreurEcriture(""); setDoc(null); setJeu(null)
+    try {
+      const d = await partitionSon.ecrire(projet, { prompt: texte, ...(paroles.trim() ? { paroles } : {}) })
+      setDoc(d); setTexteEdite(d.partition)
+    } catch (e) { setErreurEcriture(message(e)) } finally { setEcriture(false) }
+  }
+  const jouer = async () => {
+    if (!profil) return
+    setOccupeJeu(true); setErreurJeu("")
+    try {
+      const t = await travauxAudio.preparer(projet, { cle: crypto.randomUUID(), modele: profil.modele, famille: "chanson",
+        prompt: texte, paroles, partition: texteEdite, secondes: 120, options: {} })
+      setJeu(await travauxAudio.lancer(t))
+    } catch (e) { setErreurJeu(message(e)) } finally { setOccupeJeu(false) }
+  }
+
+  return <div className="grid gap-[8px] rounded-7 border border-dashed border-pointille p-[14px]">
+    <p className="text-[12px] text-encre-3">YuE2 écrit d’abord sa partition (mélodie et accords) : relisez-la, corrigez-la si besoin, puis jouez-la. « Lancer N tirages » ci-dessous fait les deux étapes en un envoi, pour une série.</p>
+    <div className="flex flex-wrap items-center gap-[8px]">
+      <button type="button" className={PETIT} disabled={!texte || ecriture || !!raisonAbsent} onClick={() => void ecrire()}>{ecriture ? "Écriture…" : "Écrire la partition"}</button>
+      {raisonAbsent && <span className="text-[12px] text-encre-3">{raisonAbsent}</span>}
+    </div>
+    {erreurEcriture && <p role="alert" className="text-[13px] text-echec">{erreurEcriture}</p>}
+    {doc && <div className="grid gap-[8px]">
+      <label className="grid gap-[4px] text-[12px] text-encre-3">Partition (ABC), à corriger avant de la jouer
+        <textarea aria-label="Partition" className="min-h-[128px] w-full rounded-7 border border-contour bg-carte p-[14px] font-mono text-[12px] leading-[1.6] text-encre-controle" value={texteEdite} onChange={(e) => setTexteEdite(e.target.value)} />
+      </label>
+      <div className="flex flex-wrap items-center gap-[8px]">
+        <button type="button" className={PRINCIPAL} disabled={!texteEdite.trim() || occupeJeu || jeu?.etat === "en_cours"} onClick={() => void jouer()}>Jouer cette partition</button>
+        {jeu && <span className="text-[12.5px] text-encre-3">{ETATS_JEU[jeu.etat] ?? jeu.etat}</span>}
+        {jeu?.son && onSon && <button type="button" className={PETIT} onClick={() => onSon(jeu.son!)}>Écouter le son reçu</button>}
+      </div>
+      {erreurJeu && <p role="alert" className="text-[13px] text-echec">{erreurJeu}</p>}
+    </div>}
   </div>
 }
 
@@ -337,6 +404,7 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
           placeholder={d.famille === "chanson" && d.mode === "chanson" ? EXEMPLE_CHANSON : F.exemple} value={texteDe(d)}
           onChange={(e) => changer({ textes: { ...d.textes, [d.famille]: e.target.value } })} />
         {d.famille === "chanson" && d.mode === "chanson" && <textarea aria-label="Paroles" className="min-h-[128px] w-full rounded-7 border border-contour bg-carte p-[14px] text-[13px] leading-[1.55]" value={d.paroles} onChange={(e) => changer({ paroles: e.target.value })} />}
+        {d.famille === "chanson" && d.mode === "chanson" && <PartitionYue2 projet={projet} texte={texte} paroles={d.paroles} profils={profils} onSon={onSon} />}
         {d.manuel === null && compo?.langue?.non_anglais && <p className={ATTENTION}>Le moteur comprend l’anglais. Ce texte part tel quel, sans traduction.</p>}
         {compo?.avertissement && <p className={ATTENTION}>{compo.avertissement}</p>}
         {d.famille === "musique" && <div className="flex flex-wrap items-end gap-[14px] text-[12px] text-encre-3">

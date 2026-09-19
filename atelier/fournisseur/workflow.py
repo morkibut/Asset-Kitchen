@@ -119,6 +119,21 @@ class MoteurWorkflow(MoteurDeLaMaison):
         type_media = mimetypes.guess_type(str(reference["filename"]))[0]
         return octets, type_media, reference
 
+    async def texte_de(self, travail, profil):
+        """Le texte d'un nœud d'aperçu (`PreviewAny` : la partition ABC de
+        YuE2, SN9), lu dans `/history` comme `sortie_de` lit un fichier, mais
+        sans rien télécharger — ce nœud ne rend qu'une chaîne, jamais un
+        fichier nommé."""
+        histoire = await self._json("GET", "/history/" + travail)
+        entree = histoire.get(travail)
+        if not entree:
+            raise WorkflowRefuse("ComfyUI ne conserve plus l'historique de ce calcul. Aucun nouvel envoi automatique.")
+        sortie = profil["sortie"]
+        valeurs = entree.get("outputs", {}).get(sortie["noeud"], {}).get(sortie["champ"], [])
+        if not isinstance(valeurs, list) or len(valeurs) != 1 or not isinstance(valeurs[0], str) or not valeurs[0].strip():
+            raise WorkflowRefuse("Le workflow n'a pas rendu le texte unique déclaré dans son profil.")
+        return valeurs[0]
+
 
 class AnimateurWorkflow(MoteurWorkflow):
     def __init__(self, profils, fichiers, base=None, transport=None):

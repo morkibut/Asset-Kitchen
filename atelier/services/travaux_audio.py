@@ -175,15 +175,22 @@ class ServiceTravauxAudio(ServiceTravaux):
         un changement de l'univers ou une réinstallation des moteurs ne
         mélange jamais deux textes entre les tirages. Il agit sur la
         composition, jamais sur `d` : l'empreinte d'un tirage préparé sans
-        `figer` ni `figer` qui ne change rien reste identique."""
+        `figer` ni `figer` qui ne change rien reste identique.
+
+        `partition` (SN9) : la partition ABC déjà écrite et relue, pour
+        « Jouer cette partition » (moteur `yue2-partition-jouee`). Elle part
+        telle qu'elle est donnée, jamais recomposée : seul son moteur en
+        décide, comme un texte relu à la main."""
         self._projet(projet)
         permis = {"cle", "modele", "prompt", "prompt_negatif", "secondes", "options", "nom", *MUSIQUE,
-                  "famille", "texte_relu", "mesures"}
+                  "famille", "texte_relu", "mesures", "partition"}
         if acteur not in ("auteur", "agent") or not isinstance(brut, dict) or set(brut) - permis:
             raise TravailRefuse("La demande sonore contient un réglage inconnu.")
         famille = "famille" in brut
-        if not famille and ("texte_relu" in brut or "mesures" in brut):
-            raise TravailRefuse("Un texte relu ou une durée en mesures demandent une famille de sons.")
+        if not famille and ("texte_relu" in brut or "mesures" in brut or "partition" in brut):
+            raise TravailRefuse("Un texte relu, une durée en mesures ou une partition demandent une famille de sons.")
+        if "partition" in brut and (not isinstance(brut["partition"], str) or not brut["partition"].strip()):
+            raise TravailRefuse("La partition est un texte non vide.")
         compo = profil = None
         if famille:
             brut_calcul = brut
@@ -207,7 +214,7 @@ class ServiceTravauxAudio(ServiceTravaux):
              "options": brut.get("options", {}), "nom": brut.get("nom", ""), "livrer_provisoire": False,
              # Seulement s'ils sont demandés : l'empreinte d'une demande d'avant ne bouge pas.
              **{k: brut[k] for k in MUSIQUE if k in brut},
-             **{k: brut[k] for k in ("famille", "texte_relu", "mesures") if k in brut}}
+             **{k: brut[k] for k in ("famille", "texte_relu", "mesures", "partition") if k in brut}}
         if any(not isinstance(d[k], str) or not d[k].strip() for k in ("cle", "modele", "prompt")) or len(d["cle"]) > 200:
             raise TravailRefuse("Donnez une clé, un workflow sonore et la description du bruitage.")
         if not isinstance(d["options"], dict) or not isinstance(d["nom"], str) or not isinstance(d["prompt_negatif"], str):
@@ -217,6 +224,10 @@ class ServiceTravauxAudio(ServiceTravaux):
             valeurs = {"prompt": compo["texte"], "prompt_negatif": compo["texte_negatif"],
                        "secondes": compo["secondes"], "options": d["options"],
                        **{k: v["valeur"] for k, v in compo["parametres"].items()}}
+            if "partition" in d:
+                if "partition" not in profil["liaisons"]:
+                    raise TravailRefuse(f"Le moteur « {profil['nom']} » ne reçoit pas de partition pour cette famille.")
+                valeurs["partition"] = d["partition"]
         else:
             profil = self.a.profils_workflow.de_modele(d["modele"])
             if profil["nature"] != "audio": raise TravailRefuse("Choisissez un workflow sonore.")

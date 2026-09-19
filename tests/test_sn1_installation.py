@@ -102,8 +102,11 @@ async def test_un_moteur_manquant_ne_bloque_pas_les_autres(son):
     info = copy.deepcopy(comfy.informations)
     info["CheckpointLoaderSimple"]["input"]["required"]["ckpt_name"][0].remove("yue2_3b_int8_convrot.safetensors")
     resultats = installer_depuis(atelier.profils_workflow, info)
-    assert resultats["yue2-int8"]["installe"] is False
-    assert all(resultats[i]["installe"] for i in CONSTRUCTEURS if i != "yue2-int8")
+    # « yue2-partition-jouee » (SN9) partage le même fichier de poids que
+    # « yue2-int8 » : son absence le rend indisponible aussi.
+    sans_le_fichier = {"yue2-int8", "yue2-partition-jouee"}
+    assert all(resultats[i]["installe"] is False for i in sans_le_fichier)
+    assert all(resultats[i]["installe"] for i in CONSTRUCTEURS if i not in sans_le_fichier)
 
 
 # ── Un bruitage depuis une phrase, sur le profil installé ───────────────

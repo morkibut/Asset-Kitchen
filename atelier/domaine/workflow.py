@@ -123,7 +123,7 @@ def _verifier_graphe(graphe, liaisons, parametres, quelle=""):
     for nom_champ, liens in liaisons.items():
         # Le nombre de tirages n'est pas une liaison : un graphe rend un son.
         # Une série de N tirages sera N travaux, chacun sa graine (SN3).
-        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine", *MUSIQUE)
+        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine", "partition", *MUSIQUE)
         if nom_champ.startswith("reference:"):
             try:
                 references.append(int(nom_champ.split(":")[1]))
@@ -304,7 +304,7 @@ _NOMS_MUSIQUE = {"paroles": "de paroles", "tempo": "de tempo", "tonalite": "de t
 
 
 def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=None, proportions="1:1", secondes=0, options=None, graine=None,
-             paroles=None, tempo=None, tonalite=None, mesure=None):
+             paroles=None, tempo=None, tonalite=None, mesure=None, partition=None):
     graphe_choisi, liaisons = graphe_pour(profil, len(references))
     formats = [f for f in profil["formats"] if (resolution is None or f["resolution"] == resolution) and f["proportions"] == proportions]
     if not formats and profil["nature"] != "audio":
@@ -325,6 +325,14 @@ def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=Non
         if nom not in liaisons:
             raise WorkflowRefuse(f"Ce profil ne reçoit pas {_NOMS_MUSIQUE[nom]}.")
         valeurs[nom] = valeur_musicale(nom, valeur)
+    # La partition ABC de YuE2 (SN9) : un texte donné tel quel, jamais recomposé
+    # ni retraduit — ce qui a été relu et corrigé est ce qui part.
+    if partition is not None:
+        if "partition" not in liaisons:
+            raise WorkflowRefuse("Ce profil ne reçoit pas de partition.")
+        if not isinstance(partition, str) or not partition.strip() or len(partition) > 50_000:
+            raise WorkflowRefuse("La partition est un texte non vide, de 50 000 caractères au plus.")
+        valeurs["partition"] = partition
     if profil["nature"] == "video":
         if secondes not in profil["durees"]:
             raise WorkflowRefuse("Cette durée n'est pas déclarée par le profil.")
@@ -349,7 +357,7 @@ def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=Non
         valeurs["graine"] = tirer_graine() if graine is None else graine
     graphe = copy.deepcopy(graphe_choisi)
     for nom, liens in liaisons.items():
-        if nom in _LIAISONS_SONORES and nom not in valeurs:
+        if nom in _LIAISONS_SONORES | {"partition"} and nom not in valeurs:
             continue
         for lien in liens:
             graphe[lien["noeud"]]["inputs"][lien["champ"]] = valeurs[nom]

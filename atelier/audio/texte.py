@@ -96,6 +96,13 @@ MOTEURS_SA3 = ("sa3-small-sfx", "sa3-medium")
 MOTEUR_SAO = "sa-open-1"
 MOTEUR_ACE = "ace-step-15-turbo"
 MOTEUR_YUE = "yue2-int8"
+# Le geste en deux temps (SN9) : « Écrire la partition » (le premier étage
+# seul) et « Jouer cette partition » (le second, reçoit `partition`). Même
+# style et mêmes paroles que l'envoi en un temps : composer_texte ne connaît
+# pas la différence, elle ne compte qu'à l'envoi du graphe.
+MOTEUR_YUE_PARTITION = "yue2-partition"
+MOTEUR_YUE_JOUEE = "yue2-partition-jouee"
+MOTEURS_YUE = (MOTEUR_YUE, MOTEUR_YUE_PARTITION, MOTEUR_YUE_JOUEE)
 
 
 # ── La langue de la description ─────────────────────────────────────────────
@@ -164,7 +171,7 @@ def gabarit_de(famille: str, moteur: str | None) -> str:
         return prefixe + ("-ambiance" if famille == "ambiance" else "-bruitage")
     if moteur == MOTEUR_ACE:
         return "ace-musique"
-    if moteur == MOTEUR_YUE:
+    if moteur in MOTEURS_YUE:
         return "yue-chanson"
     return "libre"
 

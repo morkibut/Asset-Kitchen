@@ -34,12 +34,15 @@ def _choix(declaration):
 
 def installe(info, profil):
     """L'object_info d'une machine qui a les poids : chaque fichier du profil
-    rejoint les choix de son chargeur."""
+    rejoint les choix de son chargeur (une fois : deux profils peuvent nommer
+    le même fichier, comme `yue2-int8` et `yue2-partition-jouee`, SN9)."""
     info = copy.deepcopy(info)
     for noeud in profil["graphe"].values():
         for champ, valeur in noeud["inputs"].items():
             if champ in CHAMPS_FICHIER:
-                info[noeud["class_type"]]["input"]["required"][champ][0].append(valeur)
+                choix = info[noeud["class_type"]]["input"]["required"][champ][0]
+                if valeur not in choix:
+                    choix.append(valeur)
     return info
 
 

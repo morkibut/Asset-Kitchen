@@ -234,12 +234,72 @@ def yue2_int8(*, checkpoint="yue2_3b_int8_convrot.safetensors"):
         "description": "Chansons chantées : un style et des paroles, une partition ABC écrite d'abord. La durée est un maximum."}
 
 
+def yue2_partition(*, checkpoint="yue2_3b_int8_convrot.safetensors"):
+    """Le premier étage seul de YuE2 (SN9) : « Écrire la partition » —
+    YuE2GenerateABC puis PreviewAny, sans passer par YuE2GenerateMusic ni le
+    KSampler. La sortie est un texte, jamais un fichier son.
+
+    Un profil **interne**, jamais importé ni normalisé : `normaliser`
+    (`atelier.domaine.workflow`) ne connaît que les natures image, vidéo et
+    son, et ce graphe n'en rend aucune. `ServicePartitionSon` l'envoie
+    directement au moteur ComfyUI (`diagnostiquer_profil`, `soumettre_graphe`,
+    `texte_de`), qui ne lisent qu'un graphe, ses liaisons et sa sortie —
+    jamais le registre des profils installés. `nature` et `durees` portent
+    donc une valeur d'emprunt (« audio », une seconde) pour que `composer`,
+    qui ne branche que sur cette nature-là, l'accepte : aucune durée sonore
+    n'est réellement en jeu ici."""
+    graphe = {
+        "1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": checkpoint}},
+        "2": {"class_type": "YuE2GenerateABC", "inputs": {"clip": ["1", 1], "style": "", "lyrics": "", "seed": 0, "mode": "full",
+            "max_abc_tokens": 8192, "temperature": 0.7, "top_p": 0.9, "top_k": 30, "repetition_penalty": 1.005, "penalty_window": 100}},
+        "3": {"class_type": "PreviewAny", "inputs": {"source": ["2", 0]}},
+    }
+    liaisons = {"prompt": [_lien("2", "style")], "paroles": [_lien("2", "lyrics")], "graine": [_lien("2", "seed")]}
+    return {"identifiant": "yue2-partition", "nom": "YuE2 — écrire la partition", "nature": "audio", "graphe": graphe,
+        "liaisons": liaisons, "parametres": {}, "formats": [], "durees": [1], "duree_libre": None,
+        "sortie": {"noeud": "3", "champ": "text"}, "version": "interne",  # jamais versionné : voir la docstring
+        "description": "Le premier étage de YuE2 seul : la partition ABC d'une chanson, à relire avant de la jouer."}
+
+
+def yue2_depuis_partition(*, checkpoint="yue2_3b_int8_convrot.safetensors"):
+    """Le second étage seul de YuE2 (SN9) : « Jouer cette partition » — reçoit
+    une partition ABC déjà écrite et relue (liaison `partition`, le champ
+    `abc` de YuE2GenerateMusic) au lieu de la faire écrire par
+    YuE2GenerateABC. Ce qui a été montré à l'écran est ce qui part : rien
+    n'est réécrit avant le rendu. Un profil ordinaire de nature « audio »,
+    installé comme `yue2-int8` (même fichier de poids)."""
+    graphe = {
+        "1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": checkpoint}},
+        "4": {"class_type": "YuE2GenerateMusic", "inputs": {"clip": ["1", 1], "style": "", "lyrics": "", "abc": "", "seed": 0,
+            "mode": "full", "max_duration": 120, "temperature": 1.0, "top_p": 0.95, "top_k": 100, "repetition_penalty": 1.2}},
+        "5": {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["4", 0]}},
+        "6": {"class_type": "EmptyYuE2LatentAudio", "inputs": {"seconds": ["4", 1], "batch_size": 1}},
+        "7": {"class_type": "KSampler", "inputs": {"seed": 0, "steps": 32, "cfg": 1, "sampler_name": "dpm_2", "scheduler": "sgm_uniform",
+            "denoise": 1, "model": ["1", 0], "positive": ["4", 0], "negative": ["5", 0], "latent_image": ["6", 0]}},
+        "8": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["7", 0], "vae": ["1", 2]}},
+        "9": _sortie("yue2-partition-jouee", ["8", 0]),
+    }
+    liaisons = {"prompt": [_lien("4", "style")], "paroles": [_lien("4", "lyrics")], "partition": [_lien("4", "abc")],
+        "secondes": [_lien("4", "max_duration")], "graine": [_lien("4", "seed"), _lien("7", "seed")]}
+    return {"identifiant": "yue2-partition-jouee", "nom": "YuE2 — jouer la partition", "nature": "audio", "graphe": graphe,
+        "liaisons": liaisons, "parametres": {}, "formats": [], "durees": [60, 120, 180, 240], "duree_libre": {"min": 10, "max": 360},
+        "sortie": {"noeud": "9", "champ": "audio"},
+        "description": "Joue une partition ABC déjà relue et corrigée à la main : rien n'est réécrit avant l'envoi."}
+
+
 CONSTRUCTEURS = {
     "sa3-small-sfx": stable_audio_3_small_sfx,
     "sa3-medium": stable_audio_3_medium,
     "ace-step-15-turbo": ace_step_15_turbo,
     "yue2-int8": yue2_int8,
     "sa-open-1": stable_audio_open_1,
+    # « yue2-partition-jouee » (SN9) : le second étage de YuE2 seul, installé
+    # comme les autres pour être diagnostiqué (fichier manquant, grisé avec
+    # sa raison). « yue2-partition » (le premier étage) n'y figure pas : sa
+    # sortie est un texte, que le registre des profils ne sait pas nommer
+    # (voir sa docstring) ; `ServicePartitionSon` le construit à la volée en
+    # reprenant le fichier de poids déjà résolu pour `yue2-partition-jouee`.
+    "yue2-partition-jouee": yue2_depuis_partition,
 }
 
 
