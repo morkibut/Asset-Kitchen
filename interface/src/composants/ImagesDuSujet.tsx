@@ -67,7 +67,7 @@ import { OrdreDesVues } from "./OrdreDesVues"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. Le double part au
  *  serveur : un écran à deux pixels par point rend l'image floue sinon. */
-const COTE = 54
+const COTE = 81
 
 /** Ce qu'une rangée montre — **une direction, ou l'absence de direction**.
  *
@@ -476,7 +476,7 @@ function Vignette({
       aria-label={`${image.label}${etat === "retenue" ? ", la retenue" : ""}`}
       data-vignette-de-rangee={image.identifiant}
       className={[
-        "relative block h-[54px] w-[54px] shrink-0 overflow-hidden rounded-7 bg-pourtour",
+        "relative block h-[81px] w-[81px] shrink-0 overflow-hidden rounded-7 bg-pourtour",
         etat === "retenue" ? "border border-ok ring-2 ring-ok" : "border border-trait",
         choisie && etat !== "retenue" ? "ring-1 ring-encre-4" : "",
       ].join(" ")}
@@ -626,7 +626,7 @@ function LigneDeRangee({
   onImporter?: (rangee: Rangee) => void
 }) {
   const vignette = (image: Asset, etat: "retenue" | "gardee") => (
-    <span key={image.identifiant} className="flex w-[54px] shrink-0 flex-col gap-[4px]">
+    <span key={image.identifiant} className="flex w-[81px] shrink-0 flex-col gap-[4px]">
       <Vignette
         image={image}
         etat={etat}
@@ -669,11 +669,11 @@ function LigneDeRangee({
 
       <span className="min-w-0">
         {rangee.compte === 0 ? (
-          <span className="flex h-[54px] items-center text-[12px] text-eteint">
+          <span className="flex h-[81px] items-center text-[12px] text-eteint">
             rien encore
           </span>
         ) : (
-          <span className="defile flex items-start gap-[8px] overflow-x-auto">
+          <span className="defile flex items-start gap-[8px] overflow-x-auto overflow-y-hidden py-[4px]">
             {rangee.retenue ? (
               vignette(rangee.retenue, "retenue")
             ) : (
@@ -681,7 +681,7 @@ function LigneDeRangee({
               // ne sort dans le jeu. Une case à une seule image ne le dit pas
               // — il n'y a rien à départager.
               rangee.compte > 1 && (
-                <span className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-7 border border-dashed border-trait-echec bg-fond-echec px-[4px] text-center text-[10.5px] leading-[1.2] text-echec">
+                <span className="flex h-[81px] w-[81px] shrink-0 items-center justify-center rounded-7 border border-dashed border-trait-echec bg-fond-echec px-[4px] text-center text-[10.5px] leading-[1.2] text-echec">
                   aucune retenue
                 </span>
               )

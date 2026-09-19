@@ -9171,10 +9171,9 @@ describe("les trois onglets", () => {
     const { fetchDouble } = serveurDouble({ assets: [planche] })
     await monter(fetchDouble, { ...ETAT, assets: [planche] })
 
-    // Au repos, dans la galerie, pas de fil : on n'est descendu nulle part.
-    // Le codex, lui, en porte un dès qu'il s'ouvre — son premier étage est le
-    // jeu, son second la famille.
-    expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
+    // **Au repos, le fil dit déjà où l'on est** (18 septembre 2026) : le jeu,
+    // puis la galerie, qui est l'étage courant et ne ramène nulle part.
+    expect(dernierEtageDuFil()).toBe("Galerie")
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir le résultat" }))[0])
     fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
@@ -9197,11 +9196,11 @@ describe("les trois onglets", () => {
     expect(fil.queryByRole("button", { name: "La retouche" })).toBeNull()
     expect(fil.getByText("La retouche").getAttribute("aria-current")).toBe("page")
 
-    // Les autres ramènent. Celui de l'onglet remonte d'un étage — et la
-    // galerie n'a pas de fil, parce qu'on n'y est descendu nulle part.
+    // Les autres ramènent. Celui de la galerie remonte d'un étage, et le fil
+    // redevient celui du repos.
     fireEvent.click(fil.getByRole("button", { name: "Galerie" }))
     expect(await screen.findByLabelText(CHAMP_DE_RECHERCHE)).toBeTruthy()
-    expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
+    expect(dernierEtageDuFil()).toBe("Galerie")
   })
 
   test("changer d'onglet remonte de toute profondeur", async () => {
@@ -9218,7 +9217,7 @@ describe("les trois onglets", () => {
     // écran par-dessus un autre, ce que la tranche supprime.
     fireEvent.click(onglet("Univers"))
     await screen.findByText("Le tableau est vide.")
-    expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
+    expect(dernierEtageDuFil()).toBe("Univers & toile")
 
     fireEvent.click(onglet("Galerie"))
     expect(await screen.findByLabelText(CHAMP_DE_RECHERCHE)).toBeTruthy()
@@ -23065,7 +23064,7 @@ describe("B0 — la navigation de l'atelier", () => {
     // Revenir par l'étage parent enlève cette profondeur au lieu de changer
     // d'onglet ou de laisser l'écran des dépenses caché sous la galerie.
     fireEvent.click(fil.getByRole("button", { name: "Bac à sable" }))
-    await waitFor(() => expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull())
+    await waitFor(() => expect(dernierEtageDuFil()).toBe("Galerie"))
     expect(await screen.findByRole("region", { name: "Grille des images" })).toBeTruthy()
     expect(ouverture("Galerie")).toBe("true")
   })
@@ -23528,3 +23527,9 @@ describe("reprendre les réglages recoche la case (RS4)", () => {
     ).toBe(false)
   })
 })
+
+/** Le nom de l'étage où l'on est — le dernier du fil d'Ariane. */
+function dernierEtageDuFil(): string | null {
+  const fil = screen.queryByRole("navigation", { name: "Où l'on est" })
+  return fil?.querySelector("[aria-current='page']")?.textContent ?? null
+}

@@ -55,12 +55,12 @@
 
 import { useCallback, useMemo, useState } from "react"
 import { api, type Bande, type Case, type Generation, type Personnage, type Pose } from "../api"
-import { BandeQuiTourne } from "./Apercu"
+import { BandeQuiTourne, sujetVideo, useVisee } from "./Apercu"
 import { AnimerEnLot, clipsNonMontes, etatDeLaCase, type CaseAAnimer } from "./AnimerEnLot"
 import { useEtatDuParcours } from "./MemoireDuParcours"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. */
-const COTE = 54
+const COTE = 81
 
 /** Ce qu'une rangée montre — **une direction, ou l'absence de direction**. */
 export type Rangee = {
@@ -287,22 +287,40 @@ function CaseDeGeneration({ onArmer, quoi }: { onArmer: () => void; quoi: string
 
 /** **Un clip pas encore monté**, dans sa rangée : en route, ou arrivé sans
  *  animation. Un cadre en pointillés couleur signal le distingue des
- *  animations ; cliquer un clip arrivé ouvre son montage. */
+ *  animations ; cliquer un clip arrivé ouvre son montage.
+ *
+ *  **Au survol, la vidéo entière se lit** — pas une sélection d'images : rien
+ *  n'est encore taillé dedans, et c'est justement ce qu'on vient regarder. Au
+ *  repos, la couverture seule, pour ne télécharger aucune vidéo. */
 function VignetteDeClip({ clip, onMonter }: { clip: Generation; onMonter?: (clip: string) => void }) {
   const arrive = clip.statut === "reussie"
+  const [survol, setSurvol] = useState(false)
+  const visee = useVisee(arrive ? sujetVideo(clip.identifiant, clip.demande.prompt || "clip") : null)
   return (
-    <span className="flex w-[54px] shrink-0 flex-col gap-[4px]">
+    <span className="flex w-[81px] shrink-0 flex-col gap-[4px]">
       <button
         type="button"
         data-clip-non-monte={clip.identifiant}
         disabled={!arrive || !onMonter}
         onClick={() => onMonter?.(clip.identifiant)}
+        onPointerEnter={() => { setSurvol(true); visee.entrer() }}
+        onPointerLeave={() => { setSurvol(false); visee.sortir() }}
         aria-label={arrive ? "Monter ce clip" : "Clip en route"}
         title={arrive ? "Clip arrivé, pas encore monté — cliquer pour le monter" : "Clip en route"}
-        className="relative flex h-[54px] w-[54px] items-center justify-center overflow-hidden rounded-7 border-2 border-dashed border-signal bg-pourtour"
+        className="relative flex h-[81px] w-[81px] items-center justify-center overflow-hidden rounded-7 border-2 border-dashed border-signal bg-pourtour"
       >
-        {arrive ? (
-          <img alt="" src={api.couvertureDuClip(clip.identifiant, 54)} className="h-full w-full object-contain [image-rendering:pixelated]" />
+        {arrive && survol ? (
+          <video
+            src={api.videoDuClip(clip.identifiant)}
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster={api.couvertureDuClip(clip.identifiant, COTE * 2)}
+            className="h-full w-full object-contain [image-rendering:pixelated]"
+          />
+        ) : arrive ? (
+          <img alt="" src={api.couvertureDuClip(clip.identifiant, COTE * 2)} className="h-full w-full object-contain [image-rendering:pixelated]" />
         ) : (
           <span aria-hidden className="inline-block h-[14px] w-[14px] animate-spin rounded-full border-[1.5px] border-encre-4 border-t-signal" />
         )}
@@ -340,7 +358,7 @@ function LigneDeRangee({
   const [ecarteesOuvertes, setEcarteesOuvertes] = useEtatDuParcours(`${cleMemoire}:ecartees`, true)
 
   const vignette = (bande: Bande, etat: "retenue" | "gardee") => (
-    <span key={bande.identifiant} className="flex w-[54px] shrink-0 flex-col gap-[4px]">
+    <span key={bande.identifiant} className="flex w-[81px] shrink-0 flex-col gap-[4px]">
       <VignetteDeBande
         bande={bande}
         etat={etat}
@@ -366,7 +384,7 @@ function LigneDeRangee({
   return (
     <div
       data-rangee={rangee.cle}
-      className="grid grid-cols-[54px_minmax(0,1fr)_54px] items-start gap-[8px] border-t border-trait-faible py-[8px]"
+      className="grid grid-cols-[54px_minmax(0,1fr)_auto] items-start gap-[8px] border-t border-trait-faible py-[8px]"
     >
       <span className="flex flex-col gap-[4px] pt-[14px]">
         <span className="text-[12.5px] leading-[1.2] text-encre">{rangee.nom}</span>
@@ -377,24 +395,20 @@ function LigneDeRangee({
 
       <span className="min-w-0">
         {rangee.compte === 0 && rangee.ecartees.length === 0 && enAttente.length === 0 ? (
-          <span className="flex h-[54px] items-center text-[12px] text-eteint">
+          <span className="flex h-[81px] items-center text-[12px] text-eteint">
             {rangee.demandee
               ? "aucun clip encore — à fabriquer"
               : "rien encore — aucun clip pour cette direction"}
           </span>
         ) : (
-          <span className="defile flex items-start gap-[8px] overflow-x-auto">
-            {enAttente.map((clip) => <VignetteDeClip key={clip.identifiant} clip={clip} onMonter={onMonter} />)}
-            {enAttente.length > 0 && (rangee.compte > 0 || rangee.ecartees.length > 0) && (
-              <span aria-hidden className="w-px self-stretch bg-pointille" />
-            )}
+          <span className="defile flex items-start gap-[8px] overflow-x-auto overflow-y-hidden py-[4px]">
             {rangee.retenue ? (
               vignette(rangee.retenue, "retenue")
             ) : (
               // **Le seul rouge de la rangée** : plusieurs bandes, et aucune
               // ne sort dans le jeu.
               rangee.compte > 0 && (
-                <span className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-7 border border-dashed border-trait-echec bg-fond-echec px-[4px] text-center text-[10.5px] leading-[1.2] text-echec">
+                <span className="flex h-[81px] w-[81px] shrink-0 items-center justify-center rounded-7 border border-dashed border-trait-echec bg-fond-echec px-[4px] text-center text-[10.5px] leading-[1.2] text-echec">
                   aucune retenue
                 </span>
               )
@@ -423,7 +437,7 @@ function LigneDeRangee({
                       {rangee.ecartees.map((bande) => (
                         <span
                           key={bande.identifiant}
-                          className="flex w-[54px] shrink-0 flex-col gap-[4px]"
+                          className="flex w-[81px] shrink-0 flex-col gap-[4px]"
                         >
                           <VignetteDeBande
                             bande={bande}
@@ -450,10 +464,16 @@ function LigneDeRangee({
         )}
       </span>
 
-      <CaseDeGeneration
-        onArmer={() => onGenerer(rangee)}
-        quoi={rangee.angle ?? "cette pose"}
-      />
+      {/* **Les clips pas encore montés, tout à droite, juste avant « générer »**
+          (demandé le 18 septembre 2026) : hors de la piste qui défile, ils
+          restent en vue quelle que soit la longueur de la rangée. */}
+      <span className="flex shrink-0 items-start gap-[8px]">
+        {enAttente.map((clip) => <VignetteDeClip key={clip.identifiant} clip={clip} onMonter={onMonter} />)}
+        <CaseDeGeneration
+          onArmer={() => onGenerer(rangee)}
+          quoi={rangee.angle ?? "cette pose"}
+        />
+      </span>
     </div>
   )
 }
@@ -680,7 +700,7 @@ export function AnimationsDuSujet({
           <p className="text-[13px] text-encre-2">
             {objectifExplicite
               ? "L’objectif montre les animations attendues. Les bandes déjà conservées hors objectif restent accessibles."
-              : "Une rangée par direction — la retenue à gauche, les versions à juger ensuite, les écartées à droite. Survolez pour lire."}
+              : "Une rangée par direction — la retenue à gauche, les versions à juger ensuite, les clips pas encore montés tout à droite. Survolez pour lire, Espace pour voir en grand."}
           </p>
           <button
             type="button"
@@ -830,7 +850,7 @@ export function AnimationsDuSujet({
             <p role="status" className="text-[12px] text-encre-3">{galerieFiltree.length} animation{galerieFiltree.length > 1 ? "s" : ""}</p>
             <div className="grid grid-cols-2 gap-[14px]">
               {galerieFiltree.map(({ bande: cible, statut, rangee, nom }) => <article key={cible.identifiant} data-carte-animation={cible.identifiant} className="flex min-w-0 flex-col gap-[8px] rounded-10 border border-trait bg-carte p-[14px]">
-                <div className="flex justify-center"><VignetteDeBande bande={cible} galerie cote={128} etat={statut} choisie={choisie === cible.identifiant} onChoisir={() => { setChoisie(null); onOuvrirLaBande(cible.identifiant) }} /></div>
+                <div className="flex justify-center"><VignetteDeBande bande={cible} galerie cote={192} etat={statut} choisie={choisie === cible.identifiant} onChoisir={() => { setChoisie(null); onOuvrirLaBande(cible.identifiant) }} /></div>
                 <p className="truncate text-[13px]">{nom} · {rangee.angle ?? "sans direction"}</p>
                 <p className="text-[11px] text-encre-3">{statut === "gardee" ? "Non jugé" : statut === "retenue" ? "Retenu" : "Écarté"} · {cible.compte} frames · {cible.cadence} i/s</p>
                 {statut === "ecartee" ? <button type="button" onClick={() => void restaurer(cible)}>Remettre à juger</button> : <Marques contexte={` dans la galerie : ${cible.nom}`} retenue={statut === "retenue"} onRetenir={() => void retenir(cible, rangee)} onGarder={() => void garder(cible)} onEcarter={() => void ecarter(cible, rangee)} />}

@@ -524,6 +524,43 @@
         "essais/atelier_jetable_textes_animes.py"
       ],
       "port": 8424
+    },
+    {
+      "name": "atelier-jetable-rs",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_rs.py"
+      ],
+      "port": 8507
+    },
+    {
+      "name": "maquettes-son",
+      "runtimeExecutable": "C:/STOCKAGE/PROJET/_DEV/gag2/.venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8934",
+        "--directory",
+        "C:/STOCKAGE/PROJET/_DEV/gag2/.claude/worktrees/son/docs/maquettes-atelier-unifie"
+      ],
+      "port": 8934
+    },
+    {
+      "name": "atelier-jetable-ml",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "C:/Users/damie/AppData/Local/Temp/claude/C--STOCKAGE-PROJET--DEV-gag2/f587a7cc-c125-4291-8a92-f6cc4db83f15/scratchpad/atelier_jetable_ml.py",
+        "C:\\Users\\damie\\AppData\\Local\\Temp\\atelier-ml-rl81y3io"
+      ],
+      "port": 8508
+    },
+    {
+      "name": "atelier-jetable-son",
+      "runtimeExecutable": "C:/STOCKAGE/PROJET/_DEV/gag2/.venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "C:/STOCKAGE/PROJET/_DEV/gag2/.claude/worktrees/son/essais/atelier_jetable_son.py"
+      ],
+      "port": 8510
     }
   ]
 }

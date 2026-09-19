@@ -24,7 +24,7 @@ export type Onglet = "fiche" | "images" | "animations" | "sources" | "attente" |
 const ONGLETS: readonly { clef: Onglet; nom: string }[] = [
   { clef: "animations", nom: "Animations" },
   { clef: "images", nom: "Images de référence" },
-  { clef: "sources", nom: "Sources & clips" },
+  { clef: "sources", nom: "Galerie" },
   { clef: "attente", nom: "Pas encore rangé" },
   { clef: "equipement", nom: "Équipement" },
   { clef: "objectif", nom: "Objectif & règles" },
@@ -153,7 +153,7 @@ export function PageDuSujet(proprietes: {
   // **La position du défilement se retient ici**, parce que c'est ici qu'on
   // défile depuis qu'il n'y a plus qu'un bloc. Une position par onglet et par
   // sujet : revenir d'une retouche rend la page où on l'avait laissée.
-  // **Une pastille sur « Sources & clips » quand un clip est arrivé** pour ce
+  // **Une pastille sur « Galerie » quand un clip est arrivé** pour ce
   // sujet depuis la dernière visite de l'onglet. Demandé le 16 septembre 2026 :
   // on commande depuis la fiche, on y reste, et rien ne disait que le clip
   // était là. Ce qui a été vu se retient dans ce navigateur, par sujet ; la
@@ -417,6 +417,7 @@ export function PageDuSujet(proprietes: {
           onAnimer={proprietes.onAnimer} onAnimations={() => setOnglet("animations")} />}
 
         {onglet === "sources" && <SourcesDuSujet onBande={proprietes.onOuvrirLaBande} personnage={ouvert} clips={proprietes.clips ?? []}
+          pieces={proprietes.pieces} onOuvrirImage={proprietes.onOuvrirCase} ongletInitial={nouveauxClips > 0 ? "clips" : "images"}
           onClipsChange={proprietes.onClipsChange} onErreur={echouer}
           onMontage={proprietes.onMonterLaBande} onAnimer={(pose, direction) => proprietes.onAnimer(ouvert, pose, direction)} />}
         {onglet === "attente" && <EnAttenteDuSujet personnage={ouvert} plan={sienPlan}

@@ -69,6 +69,7 @@ const POIGNEE = "pointer-events-auto absolute inset-y-0 w-2 cursor-ew-resize bg-
 export function EcranMontage({
   clip,
   reprise,
+  retour = "Galerie",
   onFermer,
   onErreur,
   personnages,
@@ -94,6 +95,10 @@ export function EcranMontage({
     /** L'animation est à jour : refermer et revenir à son atelier. */
     onRepris: () => void
   }
+  /** **Le nom de l'endroit où « revenir » ramène** — celui d'où l'on a
+   *  ouvert le clip. Le bouton disait toujours *Galerie*, même ouvert depuis
+   *  les fabrications, et ramenait là où l'on n'était pas. */
+  retour?: string
   onFermer: () => void
   onErreur: (raison: string) => void
   personnages?: Personnage[]
@@ -574,7 +579,7 @@ export function EcranMontage({
             title="Échap referme — les animations gardées sont déjà rangées"
             className={`${BOUTON} ml-auto`}
           >
-            {reprise ? "‹ L'atelier" : "‹ Galerie"}
+            {reprise ? "‹ L'atelier" : `‹ ${retour}`}
           </button>
         </div>
 

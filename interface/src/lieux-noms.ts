@@ -8,6 +8,7 @@
 import {
   libelleDEmploi,
   type Asset,
+  type Generation,
   type GroupeDeRangement,
   type Personnage,
   type Piece,
@@ -19,6 +20,9 @@ import { racine, type Annuaire } from "./lieux"
 /** Ce que l'annuaire relit à chaque rendu pour nommer un étage. */
 export type CeQuOnNomme = {
   choseOuverte: Personnage | null | undefined
+  /** Les clips du jeu — pour nommer celui qu'on découpe. Facultatif : sans
+   *  eux, l'étage dit *Le clip*. */
+  clips?: Generation[]
   collectionOuverte: string | null
   groupesDeLaFamille: GroupeDeRangement[]
   grille: Asset[]
@@ -29,6 +33,7 @@ export type CeQuOnNomme = {
 
 export function nommerLeLieu({
   choseOuverte,
+  clips = [],
   collectionOuverte,
   groupesDeLaFamille,
   grille,
@@ -92,10 +97,17 @@ return (ou, _profondeur, dedans) => {
       return groupe ? [nom, groupe.nom] : nom
     }
 
+    // **Chaque racine se nomme, même au repos** (demande de l'auteur, 18
+    // septembre 2026 : « le fil d'Ariane n'est pas partout »). Une racine
+    // muette laissait le fil vide sur la galerie, puis le faisait commencer
+    // au nom du jeu dès qu'on y descendait — sans dire qu'on venait de la
+    // galerie. Les mots sont ceux des lignes du carnet.
     case "galerie":
+      return "Galerie"
     case "univers":
+      return "Univers & toile"
     case "tableau-de-bord":
-      return null
+      return "Le jeu"
     case "bibliotheque":
       return "Les sujets"
     case "fabrications":
@@ -133,8 +145,12 @@ return (ou, _profondeur, dedans) => {
     // nom d'un **côté** de l'onglet et non celui du lieu : le fil d'Ariane
     // nomme des lieux, et le lieu s'appelle *Univers & toile* dans la liste
     // fermée de `docs/vocabulaire.html`.
+    // La racine *Univers & toile* se nomme elle-même désormais : la carte ne
+    // la répète que posée sur une autre racine.
     case "carte":
-      return ["Univers & toile", ou.carte.groupe || ou.carte.identifiant, "Découpage"]
+      return racine(dedans) === "univers"
+        ? [ou.carte.groupe || ou.carte.identifiant, "Découpage"]
+        : ["Univers & toile", ou.carte.groupe || ou.carte.identifiant, "Découpage"]
 
     case "sujet": {
       const chose = personnages.find((p) => p.identifiant === ou.sujet)
@@ -205,19 +221,25 @@ return (ou, _profondeur, dedans) => {
           .find((a) => a.identifiant === ou.asset) ??
         grille.find((a) => a.identifiant === ou.asset)
       const nom = image ? image.label || image.identifiant : ou.asset
-      return racine(dedans) === "galerie"
-        ? ["Galerie", nom, "La retouche"]
-        : [nom, "La retouche"]
+      // La galerie se nomme elle-même désormais : plus besoin de l'écrire ici.
+      return [nom, "La retouche"]
     }
 
-    // Les trois écrans qui recouvrent le produit n'ont pas de fil : ils ne
-    // sont pas un endroit où l'on est descendu, ils sont ce qui se passe.
+    // **Ces écrans ont un fil aussi** (18 septembre 2026). Ils n'en avaient
+    // pas, au motif qu'ils « recouvrent » le produit — et l'auteur s'y
+    // retrouvait sans aucun moyen de voir d'où il venait ni d'y revenir.
     case "clip":
+      return [ou.cible.personnage.nom, "Faire une vidéo"]
     case "envoi":
-    case "montage":
+      return "L'envoi"
+    case "montage": {
+      const clip = clips.find((g) => g.identifiant === ou.clip)
+      return clip?.demande?.mouvement || clip?.pose || "Le clip"
+    }
     case "bande":
+      return "L'animation"
     case "montage-de-bande":
-      return null
+      return "Le montage"
   }
 }
 }

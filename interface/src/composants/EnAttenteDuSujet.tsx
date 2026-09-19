@@ -17,6 +17,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { api, type Asset, type Bande, type Generation, type Personnage, type Pose } from "../api"
+import { useVisee, sujetVideo } from "./Apercu"
 
 const BOUTON = "h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50"
 
@@ -27,6 +28,22 @@ type EnAttente = {
 }
 
 const VIDE: EnAttente = { images: [], clips: [], animations: [] }
+
+/** Une vidéo qui s'ouvre en grand à la barre d'espace, comme une image. */
+function VideoDuClip({ clip, titre }: { clip: string; titre: string }) {
+  const visee = useVisee(sujetVideo(clip, titre))
+  return (
+    <video
+      controls
+      preload="metadata"
+      src={api.videoDuClip(clip)}
+      aria-label={titre}
+      onPointerEnter={visee.entrer}
+      onPointerLeave={visee.sortir}
+      className="h-[128px] w-full bg-pourtour object-contain"
+    />
+  )
+}
 
 export function EnAttenteDuSujet({
   personnage,
@@ -223,7 +240,7 @@ export function EnAttenteDuSujet({
               est bloqué. */}
           <p className="mt-[4px] text-[12px] text-encre-3">
             Rien n’a encore été tiré de ceux-ci. Ouvrez leur montage depuis
-            « Sources &amp; clips » pour en tailler une animation.
+            « Galerie › Clips vidéo » pour en tailler une animation.
           </p>
           <div className="mt-[14px] grid grid-cols-2 gap-[14px]">
             {lu.clips.map((g) => (
@@ -231,13 +248,7 @@ export function EnAttenteDuSujet({
                 key={g.identifiant}
                 className="overflow-hidden rounded-8 border border-trait bg-carte"
               >
-                <video
-                  controls
-                  preload="metadata"
-                  src={api.videoDuClip(g.identifiant)}
-                  aria-label={`Clip de ${personnage.nom} · ${g.identifiant}`}
-                  className="h-[128px] w-full bg-pourtour object-contain"
-                />
+                <VideoDuClip clip={g.identifiant} titre={`Clip de ${personnage.nom} · ${g.identifiant}`} />
                 <div className="p-[8px]">
                   <p className="truncate text-[12px] text-encre">{g.demande.prompt}</p>
                   <p className="mesure mt-[4px] text-[11px] text-encre-3">

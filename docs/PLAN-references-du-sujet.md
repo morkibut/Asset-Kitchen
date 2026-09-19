@@ -293,3 +293,10 @@ Tranché en RS9 :
 
 **Ordre** : RS6, puis RS7 (qui s'appuie aussi sur la recette de planche refaite), puis RS8,
 puis RS9.
+
+**Essai payé, 19 septembre 2026** (GPT Image 2 par OpenRouter, 1 tirage `low`, 0,0142 $ facturé
+pour 0,0171 $ annoncé) : Champy refait « tient son bâton » depuis sa planche rangée (ordre sud,
+nord, ouest, est ; recette champy 01). La planche est revenue avec ses quatre vues dans l'ordre,
+bâton sur chacune ; coupée en 4 à l'arrivée, chaque image rattachée à Champy sans pose, dans la
+bonne direction, recette champy 01, planche pour parent. La fiche de la planche dit *Découpée en
+4 : sud, nord, ouest, est · recette champy 01*. Rien à corriger.

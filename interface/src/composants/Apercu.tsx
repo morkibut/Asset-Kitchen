@@ -53,6 +53,15 @@ export type Sujet = {
   /** Le texte à lire en entier, quand le sujet n'est pas une image. L'aperçu se
    *  pose alors en colonne de prose bornée et défile, au lieu de zoomer. */
   prose?: string
+  /** Une animation à faire tourner en grand, au lieu d'une image fixe. `src`
+   *  porte alors sa planche. */
+  bande?: Bande
+  /** `src` est une vidéo, lue en entier et en boucle. */
+  video?: boolean
+  /** **S'ouvrir en taille réelle**, et non ajusté à l'écran — demandé le
+   *  18 septembre 2026 pour les animations et les vidéos. La molette zoome et
+   *  dézoome à partir de là. */
+  reel?: boolean
 }
 
 /**
@@ -106,6 +115,34 @@ export const sujetAsset = (asset: Asset, brut = false): Sujet => ({
   pixelise: true,
 })
 
+/** Une animation, pour Espace. Sans planche calculée, rien à ouvrir. */
+export const sujetBande = (bande: Bande): Sujet | null =>
+  bande.case_largeur && bande.case_hauteur && bande.compte > 0
+    ? {
+        cle: `bande:${bande.identifiant}`,
+        src: api.plancheDeLaBande(bande.identifiant),
+        titre: bande.nom || "animation",
+        largeur: bande.case_largeur,
+        hauteur: bande.case_hauteur,
+        pixelise: true,
+        bande,
+        reel: true,
+      }
+    : null
+
+/** Une vidéo de clip, pour Espace. Ses dimensions ne sont pas connues d'avance :
+ *  l'aperçu les lit sur le fichier dès qu'il est chargé. */
+export const sujetVideo = (clip: string, titre = "clip"): Sujet => ({
+  cle: `clip:${clip}`,
+  src: api.videoDuClip(clip),
+  titre,
+  largeur: 0,
+  hauteur: 0,
+  pixelise: true,
+  video: true,
+  reel: true,
+})
+
 /** Une animation qui tourne, à la taille qu'on lui donne (A12).
  *
  *  **La planche entière est chargée une fois et décalée**, jamais une image par
@@ -138,6 +175,9 @@ export function BandeQuiTourne({
   const [pas, setPas] = useState(0)
   const compte = bande.compte
   const cadence = bande.cadence
+  // Toute animation qui tourne s'ouvre en grand à la barre d'espace, comme une
+  // image — le geste vit ici pour valoir partout où elle paraît.
+  const visee = useVisee(sujetBande(bande))
 
   useEffect(() => {
     if (!joue || compte < 2 || cadence <= 0) return
@@ -168,6 +208,8 @@ export function BandeQuiTourne({
     <span
       data-bande-qui-tourne={bande.identifiant}
       title={titre}
+      onPointerEnter={visee.entrer}
+      onPointerLeave={visee.sortir}
       className="inline-flex shrink-0 items-center justify-center overflow-hidden border border-trait bg-papier-cote"
       style={{ width: cote, height: cote }}
     >
@@ -426,12 +468,48 @@ const PAS_PAGE = 400
  *  image qui tient tout entière n'aurait rien à décaler. */
 const AJUSTE = { zoom: 1, x: 0, y: 0 }
 
-const borner = (zoom: number) => Math.min(ZOOM_MAX, Math.max(1, zoom))
+/** En taille réelle, le zoom part de 1 = un pixel pour un pixel, et descend
+ *  jusqu'au dixième : une vidéo de 1 080 lignes doit pouvoir tenir à l'écran. */
+const ZOOM_MIN_REEL = 0.1
+
+const borner = (zoom: number, reel = false) =>
+  Math.min(ZOOM_MAX, Math.max(reel ? ZOOM_MIN_REEL : 1, zoom))
+
+/** Une animation à une échelle quelconque — le même décalage de planche que
+ *  `BandeQuiTourne`, sans le cadre carré ni l'arrondi à l'entier. */
+function BandeALEchelle({ bande, facteur }: { bande: Bande; facteur: number }) {
+  const [pas, setPas] = useState(0)
+  useEffect(() => {
+    if (bande.compte < 2 || bande.cadence <= 0) return
+    const minuteur = window.setInterval(() => setPas((p) => p + 1), 1000 / bande.cadence)
+    return () => window.clearInterval(minuteur)
+  }, [bande.compte, bande.cadence])
+  const rang = rangDeLaBande(pas, bande.compte, bande.sens)
+  return (
+    <span
+      role="img"
+      aria-label={bande.nom}
+      className="block h-full w-full"
+      style={{
+        backgroundImage: `url(${api.plancheDeLaBande(bande.identifiant)})`,
+        backgroundSize: `${bande.case_largeur * bande.compte * facteur}px ${bande.case_hauteur * facteur}px`,
+        backgroundPosition: `-${rang * bande.case_largeur * facteur}px 0`,
+        backgroundRepeat: "no-repeat",
+        imageRendering: "pixelated",
+      }}
+    />
+  )
+}
 
 export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void }) {
   const scene = useRef<HTMLDivElement>(null)
   const [place, setPlace] = useState({ l: 0, h: 0 })
   const [vue, setVue] = useState(AJUSTE)
+  const reel = sujet.reel === true
+  const reelCourant = useRef(reel)
+  reelCourant.current = reel
+  /** Les dimensions lues sur la vidéo elle-même, quand le sujet n'en portait pas. */
+  const [lue, setLue] = useState({ l: 0, h: 0 })
   const prise = useRef<{ x: number; y: number; de: typeof AJUSTE; ecart: number } | null>(
     null,
   )
@@ -476,9 +554,9 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
         evenement.deltaY *
         (evenement.deltaMode === 1 ? PAS_LIGNE : evenement.deltaMode === 2 ? PAS_PAGE : 1)
       setVue((avant) => {
-        const zoom = borner(avant.zoom * Math.exp(-delta * SENSIBILITE))
+        const zoom = borner(avant.zoom * Math.exp(-delta * SENSIBILITE), reelCourant.current)
         if (zoom === avant.zoom) return avant
-        if (zoom === 1) return AJUSTE
+        if (zoom === 1 && !reelCourant.current) return AJUSTE
         const k = zoom / avant.zoom
         return { zoom, x: cx - k * (cx - avant.x), y: cy - k * (cy - avant.y) }
       })
@@ -487,13 +565,43 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
     return () => noeud.removeEventListener("wheel", surMolette)
   }, [])
 
-  const mesure = sujet.largeur > 0 && sujet.hauteur > 0
+  const largeur = sujet.largeur || lue.l
+  const hauteur = sujet.hauteur || lue.h
+  const mesure = largeur > 0 && hauteur > 0
   const ajuste =
     mesure && place.l > 0 && place.h > 0
-      ? Math.min(place.l / sujet.largeur, place.h / sujet.hauteur)
+      ? Math.min(place.l / largeur, place.h / hauteur)
       : 0
-  const facteur = ajuste * vue.zoom
+  // En taille réelle, le point de départ est le pixel, pas l'écran.
+  const facteur = reel ? (mesure ? vue.zoom : 0) : ajuste * vue.zoom
   const rendu = { imageRendering: sujet.pixelise ? "pixelated" : "auto" } as const
+  const media = (className: string) =>
+    sujet.bande ? (
+      <BandeALEchelle bande={sujet.bande} facteur={facteur} />
+    ) : sujet.video ? (
+      <video
+        src={sujet.src}
+        aria-label={sujet.titre}
+        autoPlay
+        loop
+        muted
+        playsInline
+        draggable={false}
+        onLoadedMetadata={(evenement) =>
+          setLue({ l: evenement.currentTarget.videoWidth, h: evenement.currentTarget.videoHeight })
+        }
+        className={`${className} select-none`}
+        style={rendu}
+      />
+    ) : (
+      <img
+        src={sujet.src}
+        alt={sujet.titre}
+        draggable={false}
+        className={`${className} select-none`}
+        style={rendu}
+      />
+    )
 
   if (sujet.prose)
     return (
@@ -570,7 +678,7 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
           en_cours.ecart = Math.max(en_cours.ecart, Math.hypot(dx, dy))
           if (en_cours.ecart < SEUIL_PRISE) return
           setVue((avant) =>
-            avant.zoom === 1
+            avant.zoom === 1 && !reel
               ? avant
               : { ...avant, x: en_cours.de.x + dx, y: en_cours.de.y + dy },
           )
@@ -585,7 +693,7 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
         }}
         className={[
           "relative min-h-0 flex-1 overflow-hidden",
-          vue.zoom > 1 ? "cursor-grab active:cursor-grabbing" : "",
+          vue.zoom > 1 || reel ? "cursor-grab active:cursor-grabbing" : "",
         ].join(" ")}
       >
         {facteur > 0 ? (
@@ -593,34 +701,29 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
           // déléguée à `object-contain`. C'est la leçon du cadre de la Découpe —
           // une boîte qui ment décale ce qu'on pose dessus, et ici c'est le
           // damier qui dirait une transparence au mauvais endroit.
+          // **Un carreau du damier = un pixel de l'image** (demandé le
+          // 18 septembre 2026) : une image de 96×96 porte 96 carreaux de côté,
+          // et le damier suit le zoom. On compte ainsi les pixels jusque dans
+          // le transparent.
           <div
-            className="damier-papier damier-apercu absolute top-1/2 left-1/2"
+            data-damier-au-pixel
+            className="absolute top-1/2 left-1/2"
             style={{
-              width: sujet.largeur * facteur,
-              height: sujet.hauteur * facteur,
+              background: `repeating-conic-gradient(var(--color-damier-sombre) 0% 25%, var(--color-damier-clair) 0% 50%) 0 0 / ${2 * facteur}px ${2 * facteur}px`,
+              width: largeur * facteur,
+              height: hauteur * facteur,
               transform: `translate(-50%, -50%) translate(${vue.x}px, ${vue.y}px)`,
             }}
           >
-            <img
-              src={sujet.src}
-              alt={sujet.titre}
-              draggable={false}
-              className="h-full w-full select-none"
-              style={rendu}
-            />
+            {media("h-full w-full")}
           </div>
         ) : (
           // **Sans mesure, on laisse le navigateur contenir.** Zéro n'est pas une
           // dimension, c'est l'absence de mesure : l'aperçu montre quand même
-          // l'image, il se tait seulement sur le facteur.
+          // l'image, il se tait seulement sur le facteur. Une vidéo passe par
+          // ici le temps de lire ses dimensions.
           <div className="absolute inset-0 flex items-center justify-center p-6">
-            <img
-              src={sujet.src}
-              alt={sujet.titre}
-              draggable={false}
-              className="damier-papier damier-apercu max-h-full max-w-full object-contain select-none"
-              style={rendu}
-            />
+            {media("damier-papier damier-apercu max-h-full max-w-full object-contain")}
           </div>
         )}
       </div>
@@ -635,8 +738,8 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
         <div className="mesure ml-auto flex shrink-0 items-center gap-3 text-[10px] text-encre-4">
           {mesure && (
             <span>
-              {sujet.largeur}×{sujet.hauteur}
-              {ajuste > 0 && ` · ${Math.round(facteur * 100)} %`}
+              {largeur}×{hauteur}
+              {facteur > 0 && ` · ${Math.round(facteur * 100)} %`}
             </span>
           )}
           <span>molette · zoom</span>

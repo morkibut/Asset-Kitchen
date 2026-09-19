@@ -22,7 +22,7 @@ function resultatsDu(personnage: Personnage): Resultat[] {
 
 function Vignette({ resultat }: { resultat: Resultat }) {
   const [survol, setSurvol] = useState(false)
-  return <span className="inline-flex shrink-0" onMouseEnter={() => setSurvol(true)} onMouseLeave={() => setSurvol(false)}>{resultat.bande ? <BandeQuiTourne bande={resultat.bande} cote={54} joue={survol} titre={resultat.nom} /> : resultat.image && <img className="h-[54px] w-[54px] object-contain" style={{ imageRendering: "pixelated" }} src={vignetteAsset(resultat.image, 54)} alt={resultat.nom} />}</span>
+  return <span className="inline-flex shrink-0" onMouseEnter={() => setSurvol(true)} onMouseLeave={() => setSurvol(false)}>{resultat.bande ? <BandeQuiTourne bande={resultat.bande} cote={81} joue={survol} titre={resultat.nom} /> : resultat.image && <img className="h-[81px] w-[81px] object-contain" style={{ imageRendering: "pixelated" }} src={vignetteAsset(resultat.image, 162)} alt={resultat.nom} />}</span>
 }
 
 /** La bibliothèque est conservée ; seules les combinaisons changent ici. */

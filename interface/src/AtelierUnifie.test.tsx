@@ -95,7 +95,7 @@ describe("L’atelier unifié · bibliothèque et fabrications réelles", () => 
     const personnage = { identifiant: "hero", nom: "Le héros", ecartees: [], plan: [{ identifiant: "repos", nom: "Repos" }, { identifiant: "marche", nom: "Marche" }], cases: [{ pose: "repos", directions: [] }, { pose: "marche", directions: [{ identifiant: "sud", nom: "Sud" }, { identifiant: "ouest", nom: "Ouest" }] }] } as unknown as Personnage
     const clip = { identifiant: "video-conservee", personnage: "hero", modele: "Local:video", pose: "marche", direction: "ouest", statut: "reussie", demande: { prompt: "Le héros marche en place" }, parametres_resolus: { seed: 42 }, clip: { jete: false, secondes: 3, cadence: 12, images: 36, extraction_refus: null, resolution: "720p", proportions: "1:1" } } as unknown as Generation
     const animer = vi.fn(), montage = vi.fn()
-    render(<SourcesDuSujet personnage={personnage} clips={[clip]} onAnimer={animer} onMontage={montage} />)
+    render(<SourcesDuSujet ongletInitial="clips" personnage={personnage} clips={[clip]} onAnimer={animer} onMontage={montage} />)
     fireEvent.change(screen.getByRole("combobox", { name: "Mouvement" }), { target: { value: "marche" } })
     fireEvent.change(screen.getByRole("combobox", { name: "Direction" }), { target: { value: "ouest" } })
     fireEvent.click(screen.getByRole("button", { name: "Préparer un clip vidéo" }))
@@ -108,7 +108,7 @@ describe("L’atelier unifié · bibliothèque et fabrications réelles", () => 
     const personnage = { identifiant: "hero", nom: "Le héros", ecartees: [], plan: [{ identifiant: "repos", nom: "Repos" }, { identifiant: "marche", nom: "Marche" }], cases: [{ pose: "repos", directions: [] }, { pose: "marche", directions: [{ identifiant: "sud", nom: "Sud" }] }] } as unknown as Personnage
     const entre = vi.spyOn(api, "importerClip").mockResolvedValue({ clip: { identifiant: "importe-1", clip: { images: 36, cadence: 12 } } as unknown as Generation, doublon: null })
     const relire = vi.fn()
-    render(<SourcesDuSujet personnage={personnage} clips={[]} onAnimer={vi.fn()} onMontage={vi.fn()} onClipsChange={relire} />)
+    render(<SourcesDuSujet ongletInitial="clips" personnage={personnage} clips={[]} onAnimer={vi.fn()} onMontage={vi.fn()} onClipsChange={relire} />)
     fireEvent.change(screen.getByRole("combobox", { name: "Mouvement" }), { target: { value: "marche" } })
     const fichier = new File([new Uint8Array([0, 1, 2])], "marche.mp4", { type: "video/mp4" })
     fireEvent.change(screen.getByLabelText("Vidéo à importer"), { target: { files: [fichier] } })
@@ -120,7 +120,7 @@ describe("L’atelier unifié · bibliothèque et fabrications réelles", () => 
   it("dit qu'une vidéo importée n'a rien coûté, et ne lui invente pas de paramètres", () => {
     const personnage = { identifiant: "hero", nom: "Le héros", ecartees: [], plan: [{ identifiant: "marche", nom: "Marche" }], cases: [{ pose: "marche", directions: [] }] } as unknown as Personnage
     const clip = { identifiant: "importe-1", personnage: "hero", modele: "video-importee", pose: "marche", statut: "reussie", demande: { prompt: "marche.mp4" }, parametres_resolus: {}, clip: { nature: "importe", jete: false, secondes: 3, cadence: 12, images: 36, extraction_refus: null } } as unknown as Generation
-    render(<SourcesDuSujet personnage={personnage} clips={[clip]} onAnimer={vi.fn()} onMontage={vi.fn()} />)
+    render(<SourcesDuSujet ongletInitial="clips" personnage={personnage} clips={[clip]} onAnimer={vi.fn()} onMontage={vi.fn()} />)
     expect(screen.getByText("vidéo importée · aucune génération")).toBeVisible()
     expect(screen.queryByText("Demande et paramètres conservés")).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Monter une animation" })).toBeEnabled()

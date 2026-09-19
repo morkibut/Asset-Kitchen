@@ -3099,6 +3099,896 @@
         "order": 190
       },
       {
+        "id": "ML1",
+        "type": "epic",
+        "parent": null,
+        "title": "La graine, et un profil qui prend 0 à N références (serveur)",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 4,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 191,
+        "blocked_by": null
+      },
+      {
+        "id": "ML1.1",
+        "type": "check",
+        "parent": "ML1",
+        "title": "une liaison `graine` : tirée à chaque appel, enregistrée sur la génération, relue sur la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 192
+      },
+      {
+        "id": "ML1.2",
+        "type": "check",
+        "parent": "ML1",
+        "title": "un profil peut déclarer un graphe par nombre de références ; le catalogue annonce",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 193
+      },
+      {
+        "id": "ML1.3",
+        "type": "check",
+        "parent": "ML1",
+        "title": "une référence PNG transparente est posée sur blanc avant le dépôt chez ComfyUI",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 194
+      },
+      {
+        "id": "ML1.4",
+        "type": "check",
+        "parent": "ML1",
+        "title": "essais : deux appels identiques envoient deux graines différentes ; 0, 1 et 2 références",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 195
+      },
+      {
+        "id": "ML2",
+        "type": "epic",
+        "parent": null,
+        "title": "Le catalogue des 22 styles, installé en un geste (serveur)",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 196,
+        "blocked_by": null
+      },
+      {
+        "id": "ML2.1",
+        "type": "check",
+        "parent": "ML2",
+        "title": "le catalogue de sc-clone porté tel quel (familles, styles, motifs, déclencheurs, forces,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 197
+      },
+      {
+        "id": "ML2.2",
+        "type": "check",
+        "parent": "ML2",
+        "title": "les quatre constructeurs de graphe portés, **sans** référence d'abord ; ils produisent un",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 198
+      },
+      {
+        "id": "ML2.3",
+        "type": "check",
+        "parent": "ML2",
+        "title": "la recherche des fichiers par motif contre `/object_info`, meilleure quantification",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 199
+      },
+      {
+        "id": "ML2.4",
+        "type": "check",
+        "parent": "ML2",
+        "title": "une route *installer ce style* / *installer tous les styles prêts* ; installer deux fois",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 200
+      },
+      {
+        "id": "ML2.5",
+        "type": "check",
+        "parent": "ML2",
+        "title": "essais sans ComfyUI (`/object_info` doublé, relevé réel de la machine gardé en fixture) ;",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 201
+      },
+      {
+        "id": "ML3",
+        "type": "epic",
+        "parent": null,
+        "title": "Les références (serveur)",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 202,
+        "blocked_by": null
+      },
+      {
+        "id": "ML3.1",
+        "type": "check",
+        "parent": "ML3",
+        "title": "**Klein — garder ce sujet** : graphe à 1, 2, 3 références par `ReferenceLatent`",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 203
+      },
+      {
+        "id": "ML3.2",
+        "type": "check",
+        "parent": "ML3",
+        "title": "**Z-Image, FLUX.1, SDXL — partir de cette image** : graphe à une référence, option *force*",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 204
+      },
+      {
+        "id": "ML3.3",
+        "type": "check",
+        "parent": "ML3",
+        "title": "le catalogue dit, pour chaque style, *quel genre* de référence il prend ; *Relire avant",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 205
+      },
+      {
+        "id": "ML3.4",
+        "type": "check",
+        "parent": "ML3",
+        "title": "essais sans ComfyUI",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 206
+      },
+      {
+        "id": "ML4",
+        "type": "epic",
+        "parent": null,
+        "title": "Le texte qui part vers un modèle local (serveur)",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 207,
+        "blocked_by": null
+      },
+      {
+        "id": "ML4.1",
+        "type": "check",
+        "parent": "ML4",
+        "title": "le mot déclencheur en tête ; le signalement du sujet ensuite ; l'univers raccourci",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 208
+      },
+      {
+        "id": "ML4.2",
+        "type": "check",
+        "parent": "ML4",
+        "title": "pour SDXL, le texte tient dans une tranche de 77, et *Relire avant l'envoi* montre ce qui",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 209
+      },
+      {
+        "id": "ML4.3",
+        "type": "check",
+        "parent": "ML4",
+        "title": "le texte négatif part quand le moteur le lit (SDXL, Klein base) et n'est **pas** proposé",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 210
+      },
+      {
+        "id": "ML4.4",
+        "type": "check",
+        "parent": "ML4",
+        "title": "essais : le texte envoyé pour une case, une planche et une image libre, par famille",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 211
+      },
+      {
+        "id": "ML5",
+        "type": "epic",
+        "parent": null,
+        "title": "Les écrans",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 212,
+        "blocked_by": null
+      },
+      {
+        "id": "ML5.1",
+        "type": "check",
+        "parent": "ML5",
+        "title": "dans le choix du modèle, les styles locaux groupés par famille, avec leur état (*prêt*,",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 213
+      },
+      {
+        "id": "ML5.2",
+        "type": "check",
+        "parent": "ML5",
+        "title": "un bouton *Vérifier* qui relit ComfyUI et met les états à jour ; *Installer les styles",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 214
+      },
+      {
+        "id": "ML5.3",
+        "type": "check",
+        "parent": "ML5",
+        "title": "l'option *force* n'apparaît que quand une image *de départ* est jointe (règle 8nonies :",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 215
+      },
+      {
+        "id": "ML5.4",
+        "type": "check",
+        "parent": "ML5",
+        "title": "une ligne dans `interface/src/aide.ts` (règle 7)",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 216
+      },
+      {
+        "id": "ML5.5",
+        "type": "check",
+        "parent": "ML5",
+        "title": "essais d'écran ; vérification au navigateur sur un atelier jetable (port 8421)",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 217
+      },
+      {
+        "id": "ML6",
+        "type": "epic",
+        "parent": null,
+        "title": "La texture raccordable",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 218,
+        "blocked_by": null
+      },
+      {
+        "id": "ML6.1",
+        "type": "check",
+        "parent": "ML6",
+        "title": "l'option *raccordable* sur les styles de genre `tuile` : les deux nœuds de",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 219
+      },
+      {
+        "id": "ML6.2",
+        "type": "check",
+        "parent": "ML6",
+        "title": "grisée avec la raison si les nœuds manquent (nœud personnalisé à installer à la main)",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 220
+      },
+      {
+        "id": "ML6.3",
+        "type": "check",
+        "parent": "ML6",
+        "title": "essai : le graphe contient les deux nœuds ou aucun",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 221
+      },
+      {
+        "id": "ML7",
+        "type": "epic",
+        "parent": null,
+        "title": "S'en servir (sur la vraie carte graphique)",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 222,
+        "blocked_by": null
+      },
+      {
+        "id": "ML7.1",
+        "type": "check",
+        "parent": "ML7",
+        "title": "un tirage par famille, sans référence, depuis l'écran — temps réel relevé",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 223
+      },
+      {
+        "id": "ML7.2",
+        "type": "check",
+        "parent": "ML7",
+        "title": "Klein avec une référence de sujet (Champy), puis deux : le sujet est-il gardé ?",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 224
+      },
+      {
+        "id": "ML7.3",
+        "type": "check",
+        "parent": "ML7",
+        "title": "un style *partir de cette image* sur un croquis",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 225
+      },
+      {
+        "id": "ML7.4",
+        "type": "check",
+        "parent": "ML7",
+        "title": "l'agent fait la même chose par MCP (`list_models`, `prepare_workflow_image`)",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 226
+      },
+      {
+        "id": "ML7.5",
+        "type": "check",
+        "parent": "ML7",
+        "title": "ce qui a été appris va dans `docs/modeles-et-workflows.md` (qui ne couvre encore que la",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-moteurs-locaux.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 227
+      },
+      {
+        "id": "RS1",
+        "type": "epic",
+        "parent": null,
+        "title": "L'usage d'une référence, et le choix selon le contexte (serveur)",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 6,
+          "total": 6
+        },
+        "source": "plan",
+        "order": 228,
+        "blocked_by": null
+      },
+      {
+        "id": "RS1.1",
+        "type": "check",
+        "parent": "RS1",
+        "title": "une référence promue porte un usage (`libre` par défaut), écrit dans le fichier du sujet",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 229
+      },
+      {
+        "id": "RS1.2",
+        "type": "check",
+        "parent": "RS1",
+        "title": "une route règle l'usage d'une référence ; un usage de direction que le jeu ne tient pas est",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 230
+      },
+      {
+        "id": "RS1.3",
+        "type": "check",
+        "parent": "RS1",
+        "title": "une case dans une direction n'emporte que les références de cette direction (sinon la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 231
+      },
+      {
+        "id": "RS1.4",
+        "type": "check",
+        "parent": "RS1",
+        "title": "le texte décrit une planche comme une planche, une direction comme une direction",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 232
+      },
+      {
+        "id": "RS1.5",
+        "type": "check",
+        "parent": "RS1",
+        "title": "l'écran de confirmation nomme l'usage de chaque référence ; les décocher marche toujours",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 233
+      },
+      {
+        "id": "RS1.6",
+        "type": "check",
+        "parent": "RS1",
+        "title": "essais sans appel payant",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 234
+      },
+      {
+        "id": "RS2",
+        "type": "epic",
+        "parent": null,
+        "title": "Refaire une planche",
+        "status": "in_progress",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 4,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 235,
+        "blocked_by": null
+      },
+      {
+        "id": "RS2.1",
+        "type": "check",
+        "parent": "RS2",
+        "title": "la case *Garder la mise en page de la référence* existe sur la préparation d'une image",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 236
+      },
+      {
+        "id": "RS2.2",
+        "type": "check",
+        "parent": "RS2",
+        "title": "cochée : ni « one single sprite », ni la phrase qui fait primer la caméra ; une consigne",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 237
+      },
+      {
+        "id": "RS2.3",
+        "type": "check",
+        "parent": "RS2",
+        "title": "la référence `planche` du sujet part, décrite comme la mise en page à reproduire ; sinon la",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 238
+      },
+      {
+        "id": "RS2.4",
+        "type": "check",
+        "parent": "RS2",
+        "title": "essais sans appel payant (`tests/test_rs2.py`, `App.test.tsx` « refaire une planche »)",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 239
+      },
+      {
+        "id": "RS2.5",
+        "type": "check",
+        "parent": "RS2",
+        "title": "**un essai payé** proposé à l'auteur, prix annoncé d'abord",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 240
+      },
+      {
+        "id": "RS3",
+        "type": "epic",
+        "parent": null,
+        "title": "La fiche range ses références",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 4,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 241,
+        "blocked_by": null
+      },
+      {
+        "id": "RS3.1",
+        "type": "check",
+        "parent": "RS3",
+        "title": "l'onglet *Images de référence* montre les références par usage : la planche, une place",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 242
+      },
+      {
+        "id": "RS3.2",
+        "type": "check",
+        "parent": "RS3",
+        "title": "l'usage d'une référence se change sur la fiche",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 243
+      },
+      {
+        "id": "RS3.3",
+        "type": "check",
+        "parent": "RS3",
+        "title": "une direction sans référence propose l'image retenue de cette direction, en un clic",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 244
+      },
+      {
+        "id": "RS3.4",
+        "type": "check",
+        "parent": "RS3",
+        "title": "essais d'écran",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-references-du-sujet.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 245
+      },
+      {
         "id": "RP1",
         "type": "epic",
         "parent": null,
@@ -3112,7 +4002,7 @@
           "total": 6
         },
         "source": "plan",
-        "order": 191,
+        "order": 246,
         "blocked_by": null
       },
       {
@@ -3129,7 +4019,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 192
+        "order": 247
       },
       {
         "id": "RP1.2",
@@ -3145,7 +4035,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 193
+        "order": 248
       },
       {
         "id": "RP1.3",
@@ -3161,7 +4051,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 194
+        "order": 249
       },
       {
         "id": "RP1.4",
@@ -3177,7 +4067,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 195
+        "order": 250
       },
       {
         "id": "RP1.5",
@@ -3193,7 +4083,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 196
+        "order": 251
       },
       {
         "id": "RP1.6",
@@ -3209,7 +4099,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 197
+        "order": 252
       },
       {
         "id": "RP2",
@@ -3225,7 +4115,7 @@
           "total": 6
         },
         "source": "plan",
-        "order": 198,
+        "order": 253,
         "blocked_by": null
       },
       {
@@ -3242,7 +4132,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 199
+        "order": 254
       },
       {
         "id": "RP2.2",
@@ -3258,7 +4148,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 200
+        "order": 255
       },
       {
         "id": "RP2.3",
@@ -3274,7 +4164,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 201
+        "order": 256
       },
       {
         "id": "RP2.4",
@@ -3290,7 +4180,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 202
+        "order": 257
       },
       {
         "id": "RP2.5",
@@ -3306,7 +4196,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 203
+        "order": 258
       },
       {
         "id": "RP2.6",
@@ -3322,7 +4212,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 204
+        "order": 259
       },
       {
         "id": "RP3",
@@ -3338,7 +4228,7 @@
           "total": 7
         },
         "source": "plan",
-        "order": 205,
+        "order": 260,
         "blocked_by": null
       },
       {
@@ -3355,7 +4245,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 206
+        "order": 261
       },
       {
         "id": "RP3.2",
@@ -3371,7 +4261,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 207
+        "order": 262
       },
       {
         "id": "RP3.3",
@@ -3387,7 +4277,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 208
+        "order": 263
       },
       {
         "id": "RP3.4",
@@ -3403,7 +4293,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 209
+        "order": 264
       },
       {
         "id": "RP3.5",
@@ -3419,7 +4309,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 210
+        "order": 265
       },
       {
         "id": "RP3.6",
@@ -3435,7 +4325,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 211
+        "order": 266
       },
       {
         "id": "RP3.7",
@@ -3451,7 +4341,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 212
+        "order": 267
       },
       {
         "id": "RP4",
@@ -3467,7 +4357,7 @@
           "total": 6
         },
         "source": "plan",
-        "order": 213,
+        "order": 268,
         "blocked_by": null
       },
       {
@@ -3484,7 +4374,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 214
+        "order": 269
       },
       {
         "id": "RP4.2",
@@ -3500,7 +4390,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 215
+        "order": 270
       },
       {
         "id": "RP4.3",
@@ -3516,7 +4406,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 216
+        "order": 271
       },
       {
         "id": "RP4.4",
@@ -3532,7 +4422,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 217
+        "order": 272
       },
       {
         "id": "RP4.5",
@@ -3548,7 +4438,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 218
+        "order": 273
       },
       {
         "id": "RP4.6",
@@ -3564,7 +4454,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 219
+        "order": 274
       },
       {
         "id": "RP5",
@@ -3580,7 +4470,7 @@
           "total": 33
         },
         "source": "plan",
-        "order": 220,
+        "order": 275,
         "blocked_by": "RP3."
       },
       {
@@ -3597,7 +4487,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 221
+        "order": 276
       },
       {
         "id": "RP5.2",
@@ -3613,7 +4503,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 222
+        "order": 277
       },
       {
         "id": "RP5.3",
@@ -3629,7 +4519,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 223
+        "order": 278
       },
       {
         "id": "RP5.4",
@@ -3645,7 +4535,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 224
+        "order": 279
       },
       {
         "id": "RP5.5",
@@ -3661,7 +4551,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 225
+        "order": 280
       },
       {
         "id": "RP5.6",
@@ -3677,7 +4567,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 226
+        "order": 281
       },
       {
         "id": "RP5.7",
@@ -3693,7 +4583,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 227
+        "order": 282
       },
       {
         "id": "RP5.8",
@@ -3709,7 +4599,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 228
+        "order": 283
       },
       {
         "id": "RP5.9",
@@ -3725,7 +4615,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 229
+        "order": 284
       },
       {
         "id": "RP5.10",
@@ -3741,7 +4631,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 230
+        "order": 285
       },
       {
         "id": "RP5.11",
@@ -3757,7 +4647,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 231
+        "order": 286
       },
       {
         "id": "RP5.12",
@@ -3773,7 +4663,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 232
+        "order": 287
       },
       {
         "id": "RP5.13",
@@ -3789,7 +4679,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 233
+        "order": 288
       },
       {
         "id": "RP5.14",
@@ -3805,7 +4695,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 234
+        "order": 289
       },
       {
         "id": "RP5.15",
@@ -3821,7 +4711,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 235
+        "order": 290
       },
       {
         "id": "RP5.16",
@@ -3837,7 +4727,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 236
+        "order": 291
       },
       {
         "id": "RP5.17",
@@ -3853,7 +4743,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 237
+        "order": 292
       },
       {
         "id": "RP5.18",
@@ -3869,7 +4759,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 238
+        "order": 293
       },
       {
         "id": "RP5.19",
@@ -3885,7 +4775,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 239
+        "order": 294
       },
       {
         "id": "RP5.20",
@@ -3901,7 +4791,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 240
+        "order": 295
       },
       {
         "id": "RP5.21",
@@ -3917,7 +4807,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 241
+        "order": 296
       },
       {
         "id": "RP5.22",
@@ -3933,7 +4823,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 242
+        "order": 297
       },
       {
         "id": "RP5.23",
@@ -3949,7 +4839,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 243
+        "order": 298
       },
       {
         "id": "RP5.24",
@@ -3965,7 +4855,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 244
+        "order": 299
       },
       {
         "id": "RP5.25",
@@ -3981,7 +4871,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 245
+        "order": 300
       },
       {
         "id": "RP5.26",
@@ -3997,7 +4887,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 246
+        "order": 301
       },
       {
         "id": "RP5.27",
@@ -4013,7 +4903,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 247
+        "order": 302
       },
       {
         "id": "RP5.28",
@@ -4029,7 +4919,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 248
+        "order": 303
       },
       {
         "id": "RP5.29",
@@ -4045,7 +4935,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 249
+        "order": 304
       },
       {
         "id": "RP5.30",
@@ -4061,7 +4951,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 250
+        "order": 305
       },
       {
         "id": "RP5.31",
@@ -4077,7 +4967,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 251
+        "order": 306
       },
       {
         "id": "RP5.32",
@@ -4093,7 +4983,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 252
+        "order": 307
       },
       {
         "id": "RP5.33",
@@ -4109,7 +4999,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 253
+        "order": 308
       },
       {
         "id": "RP6",
@@ -4125,7 +5015,7 @@
           "total": 16
         },
         "source": "plan",
-        "order": 254,
+        "order": 309,
         "blocked_by": "RP3."
       },
       {
@@ -4142,7 +5032,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 255
+        "order": 310
       },
       {
         "id": "RP6.2",
@@ -4158,7 +5048,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 256
+        "order": 311
       },
       {
         "id": "RP6.3",
@@ -4174,7 +5064,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 257
+        "order": 312
       },
       {
         "id": "RP6.4",
@@ -4190,7 +5080,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 258
+        "order": 313
       },
       {
         "id": "RP6.5",
@@ -4206,7 +5096,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 259
+        "order": 314
       },
       {
         "id": "RP6.6",
@@ -4222,7 +5112,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 260
+        "order": 315
       },
       {
         "id": "RP6.7",
@@ -4238,7 +5128,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 261
+        "order": 316
       },
       {
         "id": "RP6.8",
@@ -4254,7 +5144,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 262
+        "order": 317
       },
       {
         "id": "RP6.9",
@@ -4270,7 +5160,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 263
+        "order": 318
       },
       {
         "id": "RP6.10",
@@ -4286,7 +5176,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 264
+        "order": 319
       },
       {
         "id": "RP6.11",
@@ -4302,7 +5192,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 265
+        "order": 320
       },
       {
         "id": "RP6.12",
@@ -4318,7 +5208,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 266
+        "order": 321
       },
       {
         "id": "RP6.13",
@@ -4334,7 +5224,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 267
+        "order": 322
       },
       {
         "id": "RP6.14",
@@ -4350,7 +5240,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 268
+        "order": 323
       },
       {
         "id": "RP6.15",
@@ -4366,7 +5256,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 269
+        "order": 324
       },
       {
         "id": "RP6.16",
@@ -4382,7 +5272,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 270
+        "order": 325
       },
       {
         "id": "RP7",
@@ -4398,7 +5288,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 271,
+        "order": 326,
         "blocked_by": "RP3, RP6."
       },
       {
@@ -4415,7 +5305,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 272
+        "order": 327
       },
       {
         "id": "RP7.2",
@@ -4431,7 +5321,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 273
+        "order": 328
       },
       {
         "id": "RP7.3",
@@ -4447,7 +5337,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 274
+        "order": 329
       },
       {
         "id": "RP7.4",
@@ -4463,7 +5353,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 275
+        "order": 330
       },
       {
         "id": "RP7.5",
@@ -4479,7 +5369,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 276
+        "order": 331
       },
       {
         "id": "RP8",
@@ -4495,7 +5385,7 @@
           "total": 23
         },
         "source": "plan",
-        "order": 277,
+        "order": 332,
         "blocked_by": "RP3."
       },
       {
@@ -4512,7 +5402,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 278
+        "order": 333
       },
       {
         "id": "RP8.2",
@@ -4528,7 +5418,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 279
+        "order": 334
       },
       {
         "id": "RP8.3",
@@ -4544,7 +5434,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 280
+        "order": 335
       },
       {
         "id": "RP8.4",
@@ -4560,7 +5450,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 281
+        "order": 336
       },
       {
         "id": "RP8.5",
@@ -4576,7 +5466,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 282
+        "order": 337
       },
       {
         "id": "RP8.6",
@@ -4592,7 +5482,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 283
+        "order": 338
       },
       {
         "id": "RP8.7",
@@ -4608,7 +5498,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 284
+        "order": 339
       },
       {
         "id": "RP8.8",
@@ -4624,7 +5514,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 285
+        "order": 340
       },
       {
         "id": "RP8.9",
@@ -4640,7 +5530,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 286
+        "order": 341
       },
       {
         "id": "RP8.10",
@@ -4656,7 +5546,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 287
+        "order": 342
       },
       {
         "id": "RP8.11",
@@ -4672,7 +5562,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 288
+        "order": 343
       },
       {
         "id": "RP8.12",
@@ -4688,7 +5578,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 289
+        "order": 344
       },
       {
         "id": "RP8.13",
@@ -4704,7 +5594,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 290
+        "order": 345
       },
       {
         "id": "RP8.14",
@@ -4720,7 +5610,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 291
+        "order": 346
       },
       {
         "id": "RP8.15",
@@ -4736,7 +5626,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 292
+        "order": 347
       },
       {
         "id": "RP8.16",
@@ -4752,7 +5642,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 293
+        "order": 348
       },
       {
         "id": "RP8.17",
@@ -4768,7 +5658,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 294
+        "order": 349
       },
       {
         "id": "RP8.18",
@@ -4784,7 +5674,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 295
+        "order": 350
       },
       {
         "id": "RP8.19",
@@ -4800,7 +5690,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 296
+        "order": 351
       },
       {
         "id": "RP8.20",
@@ -4816,7 +5706,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 297
+        "order": 352
       },
       {
         "id": "RP8.21",
@@ -4832,7 +5722,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 298
+        "order": 353
       },
       {
         "id": "RP8.22",
@@ -4848,7 +5738,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 299
+        "order": 354
       },
       {
         "id": "RP8.23",
@@ -4864,7 +5754,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 300
+        "order": 355
       },
       {
         "id": "RP9",
@@ -4880,7 +5770,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 301,
+        "order": 356,
         "blocked_by": "RP4 — elle débouche sur la fenêtre de préparation unique."
       },
       {
@@ -4897,7 +5787,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 302
+        "order": 357
       },
       {
         "id": "RP9.2",
@@ -4913,7 +5803,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 303
+        "order": 358
       },
       {
         "id": "RP9.3",
@@ -4929,7 +5819,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 304
+        "order": 359
       },
       {
         "id": "RP9.4",
@@ -4945,7 +5835,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 305
+        "order": 360
       },
       {
         "id": "RP9.5",
@@ -4961,7 +5851,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 306
+        "order": 361
       },
       {
         "id": "RP10",
@@ -4977,7 +5867,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 307,
+        "order": 362,
         "blocked_by": null
       },
       {
@@ -4994,7 +5884,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 308
+        "order": 363
       },
       {
         "id": "RP10.2",
@@ -5010,7 +5900,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 309
+        "order": 364
       },
       {
         "id": "RP10.3",
@@ -5026,7 +5916,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 310
+        "order": 365
       },
       {
         "id": "RP10.4",
@@ -5042,7 +5932,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 311
+        "order": 366
       },
       {
         "id": "RP10.5",
@@ -5058,7 +5948,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 312
+        "order": 367
       },
       {
         "id": "RP11",
@@ -5074,7 +5964,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 313,
+        "order": 368,
         "blocked_by": "RP3."
       },
       {
@@ -5091,7 +5981,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 314
+        "order": 369
       },
       {
         "id": "RP11.2",
@@ -5107,7 +5997,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 315
+        "order": 370
       },
       {
         "id": "RP11.3",
@@ -5123,7 +6013,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 316
+        "order": 371
       },
       {
         "id": "RP11.4",
@@ -5139,7 +6029,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 317
+        "order": 372
       },
       {
         "id": "RP12",
@@ -5155,7 +6045,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 318,
+        "order": 373,
         "blocked_by": null
       },
       {
@@ -5172,7 +6062,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 319
+        "order": 374
       },
       {
         "id": "RP12.2",
@@ -5188,7 +6078,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 320
+        "order": 375
       },
       {
         "id": "RP12.3",
@@ -5204,7 +6094,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 321
+        "order": 376
       },
       {
         "id": "RP12.4",
@@ -5220,7 +6110,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 322
+        "order": 377
       },
       {
         "id": "RP13",
@@ -5236,7 +6126,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 323,
+        "order": 378,
         "blocked_by": "RP3."
       },
       {
@@ -5253,7 +6143,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 324
+        "order": 379
       },
       {
         "id": "RP13.2",
@@ -5269,7 +6159,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 325
+        "order": 380
       },
       {
         "id": "RP13.3",
@@ -5285,7 +6175,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 326
+        "order": 381
       },
       {
         "id": "RP13.4",
@@ -5301,7 +6191,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 327
+        "order": 382
       },
       {
         "id": "RP14",
@@ -5317,7 +6207,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 328,
+        "order": 383,
         "blocked_by": null
       },
       {
@@ -5334,7 +6224,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 329
+        "order": 384
       },
       {
         "id": "RP14.2",
@@ -5350,7 +6240,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 330
+        "order": 385
       },
       {
         "id": "RP14.3",
@@ -5366,7 +6256,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 331
+        "order": 386
       },
       {
         "id": "RP14.4",
@@ -5382,7 +6272,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 332
+        "order": 387
       },
       {
         "id": "RP14.5",
@@ -5398,7 +6288,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 333
+        "order": 388
       },
       {
         "id": "RP15",
@@ -5414,7 +6304,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 334,
+        "order": 389,
         "blocked_by": null
       },
       {
@@ -5431,7 +6321,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 335
+        "order": 390
       },
       {
         "id": "RP15.2",
@@ -5447,7 +6337,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 336
+        "order": 391
       },
       {
         "id": "RP15.3",
@@ -5463,7 +6353,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 337
+        "order": 392
       },
       {
         "id": "RP15.4",
@@ -5479,7 +6369,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 338
+        "order": 393
       },
       {
         "id": "RP16",
@@ -5495,7 +6385,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 339,
+        "order": 394,
         "blocked_by": null
       },
       {
@@ -5512,7 +6402,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 340
+        "order": 395
       },
       {
         "id": "RP16.2",
@@ -5528,7 +6418,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 341
+        "order": 396
       },
       {
         "id": "RP16.3",
@@ -5544,7 +6434,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 342
+        "order": 397
       },
       {
         "id": "RP16.4",
@@ -5560,7 +6450,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 343
+        "order": 398
       },
       {
         "id": "RP17",
@@ -5576,7 +6466,7 @@
           "total": 5
         },
         "source": "plan",
-        "order": 344,
+        "order": 399,
         "blocked_by": null
       },
       {
@@ -5593,7 +6483,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 345
+        "order": 400
       },
       {
         "id": "RP17.2",
@@ -5609,7 +6499,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 346
+        "order": 401
       },
       {
         "id": "RP17.3",
@@ -5625,7 +6515,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 347
+        "order": 402
       },
       {
         "id": "RP17.4",
@@ -5641,7 +6531,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 348
+        "order": 403
       },
       {
         "id": "RP17.5",
@@ -5657,7 +6547,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 349
+        "order": 404
       },
       {
         "id": "RP18",
@@ -5673,7 +6563,7 @@
           "total": 4
         },
         "source": "plan",
-        "order": 350,
+        "order": 405,
         "blocked_by": null
       },
       {
@@ -5690,7 +6580,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 351
+        "order": 406
       },
       {
         "id": "RP18.2",
@@ -5706,7 +6596,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 352
+        "order": 407
       },
       {
         "id": "RP18.3",
@@ -5722,7 +6612,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 353
+        "order": 408
       },
       {
         "id": "RP18.4",
@@ -5738,7 +6628,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 354
+        "order": 409
       },
       {
         "id": "RP19",
@@ -5754,7 +6644,7 @@
           "total": 6
         },
         "source": "plan",
-        "order": 355,
+        "order": 410,
         "blocked_by": null
       },
       {
@@ -5771,7 +6661,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 356
+        "order": 411
       },
       {
         "id": "RP19.2",
@@ -5787,7 +6677,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 357
+        "order": 412
       },
       {
         "id": "RP19.3",
@@ -5803,7 +6693,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 358
+        "order": 413
       },
       {
         "id": "RP19.4",
@@ -5819,7 +6709,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 359
+        "order": 414
       },
       {
         "id": "RP19.5",
@@ -5835,7 +6725,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 360
+        "order": 415
       },
       {
         "id": "RP19.6",
@@ -5851,7 +6741,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 361
+        "order": 416
       },
       {
         "id": "RP20",
@@ -5867,7 +6757,7 @@
           "total": 8
         },
         "source": "plan",
-        "order": 362,
+        "order": 417,
         "blocked_by": null
       },
       {
@@ -5884,7 +6774,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 363
+        "order": 418
       },
       {
         "id": "RP20.2",
@@ -5900,7 +6790,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 364
+        "order": 419
       },
       {
         "id": "RP20.3",
@@ -5916,7 +6806,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 365
+        "order": 420
       },
       {
         "id": "RP20.4",
@@ -5932,7 +6822,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 366
+        "order": 421
       },
       {
         "id": "RP20.5",
@@ -5948,7 +6838,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 367
+        "order": 422
       },
       {
         "id": "RP20.6",
@@ -5964,7 +6854,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 368
+        "order": 423
       },
       {
         "id": "RP20.7",
@@ -5980,7 +6870,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 369
+        "order": 424
       },
       {
         "id": "RP20.8",
@@ -5996,7 +6886,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 370
+        "order": 425
       },
       {
         "id": "RP21",
@@ -6012,7 +6902,7 @@
           "total": 6
         },
         "source": "plan",
-        "order": 371,
+        "order": 426,
         "blocked_by": null
       },
       {
@@ -6029,7 +6919,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 372
+        "order": 427
       },
       {
         "id": "RP21.2",
@@ -6045,7 +6935,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 373
+        "order": 428
       },
       {
         "id": "RP21.3",
@@ -6061,7 +6951,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 374
+        "order": 429
       },
       {
         "id": "RP21.4",
@@ -6077,7 +6967,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 375
+        "order": 430
       },
       {
         "id": "RP21.5",
@@ -6093,7 +6983,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 376
+        "order": 431
       },
       {
         "id": "RP21.6",
@@ -6109,7 +6999,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 377
+        "order": 432
       },
       {
         "id": "RP22",
@@ -6125,7 +7015,7 @@
           "total": 6
         },
         "source": "plan",
-        "order": 378,
+        "order": 433,
         "blocked_by": null
       },
       {
@@ -6142,7 +7032,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 379
+        "order": 434
       },
       {
         "id": "RP22.2",
@@ -6158,7 +7048,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 380
+        "order": 435
       },
       {
         "id": "RP22.3",
@@ -6174,7 +7064,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 381
+        "order": 436
       },
       {
         "id": "RP22.4",
@@ -6190,7 +7080,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 382
+        "order": 437
       },
       {
         "id": "RP22.5",
@@ -6206,7 +7096,7 @@
           "total": 0
         },
         "source": "plan",
-        "order": 383
+        "order": 438
       },
       {
         "id": "RP22.6",
@@ -6222,11 +7112,985 @@
           "total": 0
         },
         "source": "plan",
-        "order": 384
+        "order": 439
+      },
+      {
+        "id": "RP23",
+        "type": "epic",
+        "parent": null,
+        "title": "Tester les animations comme dans le jeu ✅ **close le 16 septembre 2026**",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 5,
+          "total": 5
+        },
+        "source": "plan",
+        "order": 440,
+        "blocked_by": null
+      },
+      {
+        "id": "RP23.1",
+        "type": "check",
+        "parent": "RP23",
+        "title": "Tenir une touche déplace le personnage, le lâcher l'arrête ; *Remettre au début* le",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 441
+      },
+      {
+        "id": "RP23.2",
+        "type": "check",
+        "parent": "RP23",
+        "title": "Un jeu sans direction déclarée se déplace quand même.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 442
+      },
+      {
+        "id": "RP23.3",
+        "type": "check",
+        "parent": "RP23",
+        "title": "De dessus il n'y a ni sol ni réglage de pente ; de côté, le sol est plat ou en pente.",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 443
+      },
+      {
+        "id": "RP23.4",
+        "type": "check",
+        "parent": "RP23",
+        "title": "Une animation qui manque montre un rectangle, et celle d'une autre direction ne joue",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 444
+      },
+      {
+        "id": "RP23.5",
+        "type": "check",
+        "parent": "RP23",
+        "title": "Vérifié au navigateur sur l'atelier jetable : marche jouée en avançant, course en",
+        "status": "done",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-remise-a-plat.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 445
+      },
+      {
+        "id": "SN0",
+        "type": "epic",
+        "parent": null,
+        "title": "Le banc des moteurs, sur la machine",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 7
+        },
+        "source": "plan",
+        "order": 446,
+        "blocked_by": "les téléchargements de l'auteur."
+      },
+      {
+        "id": "SN0.1",
+        "type": "check",
+        "parent": "SN0",
+        "title": "Chaque moteur retenu produit un son audible sur la 3080 Laptop, ou le banc dit pourquoi",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 447
+      },
+      {
+        "id": "SN0.2",
+        "type": "check",
+        "parent": "SN0",
+        "title": "Le temps de calcul et le pic de mémoire sont relevés par moteur et par durée : c'est ce",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 448
+      },
+      {
+        "id": "SN0.3",
+        "type": "check",
+        "parent": "SN0",
+        "title": "Le banc dit si ComfyUI décharge seul un moteur quand le suivant arrive.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 449
+      },
+      {
+        "id": "SN0.4",
+        "type": "check",
+        "parent": "SN0",
+        "title": "L'auteur a écouté, et tranché **ACE-Step ou YuE2 pour la musique de fond** ; le relevé",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 450
+      },
+      {
+        "id": "SN0.5",
+        "type": "check",
+        "parent": "SN0",
+        "title": "Le relevé dit si les mots `dry`, `close-mic'd`, `one-shot` changent le son, et si le CLAP",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 451
+      },
+      {
+        "id": "SN0.6",
+        "type": "check",
+        "parent": "SN0",
+        "title": "Le relevé tranche les niveaux visés, sur lesquels les recherches divergent (une ambiance à",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 452
+      },
+      {
+        "id": "SN0.7",
+        "type": "check",
+        "parent": "SN0",
+        "title": "L'auteur l'a parcourue et validée ; les écrans des tranches suivantes la suivent.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 453
+      },
+      {
+        "id": "SN1",
+        "type": "epic",
+        "parent": null,
+        "title": "Un bruitage depuis une phrase, sans coller de workflow",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 454,
+        "blocked_by": "SN0."
+      },
+      {
+        "id": "SN1.1",
+        "type": "check",
+        "parent": "SN1",
+        "title": "Sur un ComfyUI qui a les poids, un bruitage se lance depuis une phrase et revient",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 455
+      },
+      {
+        "id": "SN1.2",
+        "type": "check",
+        "parent": "SN1",
+        "title": "Sur un ComfyUI à qui manque un fichier, le moteur est grisé avec le nom du fichier, son",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 456
+      },
+      {
+        "id": "SN1.3",
+        "type": "check",
+        "parent": "SN1",
+        "title": "Un workflow collé par l'auteur marche comme avant.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 457
+      },
+      {
+        "id": "SN2",
+        "type": "epic",
+        "parent": null,
+        "title": "L'univers sonore, et le texte qui part",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 458,
+        "blocked_by": "SN1."
+      },
+      {
+        "id": "SN2.1",
+        "type": "check",
+        "parent": "SN2",
+        "title": "Un pas d'un jeu « fantasy médiévale, rendu 16-bit » part avec `TrackType: SFX`, la",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 459
+      },
+      {
+        "id": "SN2.2",
+        "type": "check",
+        "parent": "SN2",
+        "title": "Un univers vide ne contraint rien : la description part seule, avec la prise de son de la",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 460
+      },
+      {
+        "id": "SN2.3",
+        "type": "check",
+        "parent": "SN2",
+        "title": "Un texte relu à la main part tel quel.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 461
+      },
+      {
+        "id": "SN2.4",
+        "type": "check",
+        "parent": "SN2",
+        "title": "Une description en français part telle quelle, et l'écran signale que le moteur comprend",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 462
+      },
+      {
+        "id": "SN3",
+        "type": "epic",
+        "parent": null,
+        "title": "Une série de tirages, et les variantes",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 463,
+        "blocked_by": "SN2."
+      },
+      {
+        "id": "SN3.1",
+        "type": "check",
+        "parent": "SN3",
+        "title": "Huit tirages d'un pas reviennent dans une même série, écoutables à la suite au clavier.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 464
+      },
+      {
+        "id": "SN3.2",
+        "type": "check",
+        "parent": "SN3",
+        "title": "Garder quatre tirages forme un jeu de variantes qui se rouvre avec ses quatre sons.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 465
+      },
+      {
+        "id": "SN3.3",
+        "type": "check",
+        "parent": "SN3",
+        "title": "Une série coupée en route reprend sans relancer les tirages déjà rendus.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 466
+      },
+      {
+        "id": "SN3.4",
+        "type": "check",
+        "parent": "SN3",
+        "title": "Aucune mesure n'écarte un tirage d'elle-même : un tirage saturé est signalé, mais se",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 467
+      },
+      {
+        "id": "SN4",
+        "type": "epic",
+        "parent": null,
+        "title": "Livrer des fichiers que Godot lit tels quels",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 4
+        },
+        "source": "plan",
+        "order": 468,
+        "blocked_by": "SN3."
+      },
+      {
+        "id": "SN4.1",
+        "type": "check",
+        "parent": "SN4",
+        "title": "Dans un vrai Godot 4.7 (`--headless --import`), le `.import` écrit par l'atelier survit et",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 469
+      },
+      {
+        "id": "SN4.2",
+        "type": "check",
+        "parent": "SN4",
+        "title": "Un jeu de huit variantes se livre en `AudioStreamRandomizer` réglé pour ne jamais rejouer",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 470
+      },
+      {
+        "id": "SN4.3",
+        "type": "check",
+        "parent": "SN4",
+        "title": "`credits.json` nomme le moteur, sa licence, la graine et le texte de chaque son.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 471
+      },
+      {
+        "id": "SN4.4",
+        "type": "check",
+        "parent": "SN4",
+        "title": "Une livraison de son ne crée plus de `personnage.tscn`.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 472
+      },
+      {
+        "id": "SN5",
+        "type": "epic",
+        "parent": null,
+        "title": "Les ambiances qui bouclent sans couture",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 2
+        },
+        "source": "plan",
+        "order": 473,
+        "blocked_by": "SN4."
+      },
+      {
+        "id": "SN5.1",
+        "type": "check",
+        "parent": "SN5",
+        "title": "Une pluie de 30 s tourne dix fois de suite sans clic audible, et la mesure du raccord le",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 474
+      },
+      {
+        "id": "SN5.2",
+        "type": "check",
+        "parent": "SN5",
+        "title": "L'écran fait entendre le raccord seul (les deux secondes autour), en boucle.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 475
+      },
+      {
+        "id": "SN6",
+        "type": "epic",
+        "parent": null,
+        "title": "Les sons d'un sujet",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 476,
+        "blocked_by": "SN4 (ses sons se livrent avec le sujet, sous leurs noms stables)."
+      },
+      {
+        "id": "SN6.1",
+        "type": "check",
+        "parent": "SN6",
+        "title": "Depuis la fiche d'un héros, l'emplacement « pas » vide lance une série déjà décrite par",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 477
+      },
+      {
+        "id": "SN6.2",
+        "type": "check",
+        "parent": "SN6",
+        "title": "Un son sans sujet reste un son du jeu, visible dans la galerie.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 478
+      },
+      {
+        "id": "SN6.3",
+        "type": "check",
+        "parent": "SN6",
+        "title": "Livrer le héros livre ses sons avec lui, sous leurs noms stables.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 479
+      },
+      {
+        "id": "SN7",
+        "type": "epic",
+        "parent": null,
+        "title": "Le son calé sur l'animation",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 2
+        },
+        "source": "plan",
+        "order": 480,
+        "blocked_by": "SN6."
+      },
+      {
+        "id": "SN7.1",
+        "type": "check",
+        "parent": "SN7",
+        "title": "Le repère « image 3 : pas » de la marche vers le sud se joue à chaque boucle dans la salle",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 481
+      },
+      {
+        "id": "SN7.2",
+        "type": "check",
+        "parent": "SN7",
+        "title": "Changer la cadence d'une bande garde le repère sur la même image.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 482
+      },
+      {
+        "id": "SN8",
+        "type": "epic",
+        "parent": null,
+        "title": "Les sons d'interface et rétro, sans ComfyUI",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 2
+        },
+        "source": "plan",
+        "order": 483,
+        "blocked_by": "SN3."
+      },
+      {
+        "id": "SN8.1",
+        "type": "check",
+        "parent": "SN8",
+        "title": "Un clic et sa famille (survol, validation, erreur) se fabriquent en moins d'une seconde",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 484
+      },
+      {
+        "id": "SN8.2",
+        "type": "check",
+        "parent": "SN8",
+        "title": "Un son sfxr se refait à l'identique depuis ses réglages conservés.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 485
+      },
+      {
+        "id": "SN9",
+        "type": "epic",
+        "parent": null,
+        "title": "La musique",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 486,
+        "blocked_by": "SN4."
+      },
+      {
+        "id": "SN9.1",
+        "type": "check",
+        "parent": "SN9",
+        "title": "Une boucle d'exploration de 24 mesures à 90 BPM tourne sans saut de temps dans Godot.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 487
+      },
+      {
+        "id": "SN9.2",
+        "type": "check",
+        "parent": "SN9",
+        "title": "Un jingle de victoire part avec la tonalité et le tempo de l'univers (la provenance le",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 488
+      },
+      {
+        "id": "SN9.3",
+        "type": "check",
+        "parent": "SN9",
+        "title": "Une chanson YuE2 sort avec le texte daté de sa licence dans `credits.json`.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 489
+      },
+      {
+        "id": "SN10",
+        "type": "epic",
+        "parent": null,
+        "title": "La musique qui s'adapte",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 2
+        },
+        "source": "plan",
+        "order": 490,
+        "blocked_by": "SN9."
+      },
+      {
+        "id": "SN10.1",
+        "type": "check",
+        "parent": "SN10",
+        "title": "Dans Godot, passer d'« exploration » à « combat » se fait sur la mesure suivante, sans",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 491
+      },
+      {
+        "id": "SN10.2",
+        "type": "check",
+        "parent": "SN10",
+        "title": "Monter la couche « tension » ne décale pas les autres.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 492
+      },
+      {
+        "id": "SN11",
+        "type": "epic",
+        "parent": null,
+        "title": "Les voix",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 3
+        },
+        "source": "plan",
+        "order": 493,
+        "blocked_by": "SN6, et la décision de l'auteur sur la façon de faire tourner les modèles de"
+      },
+      {
+        "id": "SN11.1",
+        "type": "check",
+        "parent": "SN11",
+        "title": "Trois répliques du marchand portent la même voix de référence dans leur provenance, et",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 494
+      },
+      {
+        "id": "SN11.2",
+        "type": "check",
+        "parent": "SN11",
+        "title": "Un cri de gobelin sort d'une voix humaine transformée, et sa recette se rouvre.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 495
+      },
+      {
+        "id": "SN11.3",
+        "type": "check",
+        "parent": "SN11",
+        "title": "Une réplique en français et sa traduction anglaise se livrent sous le même nom.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 496
+      },
+      {
+        "id": "SN12",
+        "type": "epic",
+        "parent": null,
+        "title": "L'agent demande des sons",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 2
+        },
+        "source": "plan",
+        "order": 497,
+        "blocked_by": "SN7 (le repère sonore) et SN9."
+      },
+      {
+        "id": "SN12.1",
+        "type": "check",
+        "parent": "SN12",
+        "title": "L'agent Godot demande « les pas du héros sur l'herbe », suit la série, et récupère un jeu",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 498
+      },
+      {
+        "id": "SN12.2",
+        "type": "check",
+        "parent": "SN12",
+        "title": "Un moteur non permis dans le cadre est refusé avec sa raison.",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN-son.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 499
       }
     ],
     "sources": [
-      "claude-mastery (docs/PLAN.md, docs/PLAN-atelier-unifie-affectation.md, docs/PLAN-atelier-unifie.md, docs/PLAN-carnet.md, docs/PLAN-remise-a-plat-affectation.md, docs/PLAN-remise-a-plat.md)"
+      "claude-mastery (docs/PLAN.md, docs/PLAN-atelier-unifie-affectation.md, docs/PLAN-atelier-unifie.md, docs/PLAN-carnet.md, docs/PLAN-moteurs-locaux-affectation.md, docs/PLAN-moteurs-locaux.md, docs/PLAN-references-du-sujet-affectation.md, docs/PLAN-references-du-sujet.md, docs/PLAN-remise-a-plat-affectation.md, docs/PLAN-remise-a-plat.md, docs/PLAN-son-affectation.md, docs/PLAN-son.md)"
     ],
     "artifacts": [
       {
@@ -6278,7 +8142,7 @@
         "detail": ""
       }
     ],
-    "scanned_at": "2026-09-16"
+    "scanned_at": "2026-09-18"
   },
   "manual": {
     "items": [
@@ -6888,64 +8752,64 @@
   "milestones": [],
   "activity": [
     {
-      "hash": "4f20a81",
-      "date": "2026-09-16",
-      "text": "Relecture croisÃ©e, troisiÃ¨me passage : les mots des Ã©crans ouverts sont fermÃ©s"
+      "hash": "9d23597",
+      "date": "2026-09-18",
+      "text": "ML1 Â· Moteurs locaux : la graine, et un profil qui prend 0 Ã  N rÃ©fÃ©rences"
     },
     {
-      "hash": "77705be",
-      "date": "2026-09-16",
-      "text": "Le tableau d'Ã©tat ferme la remise Ã  plat : vingt-deux sur vingt-deux, et le parcours Ã  cliquer au journal"
+      "hash": "d60e2aa",
+      "date": "2026-09-18",
+      "text": "Moteurs d'image locaux : le plan et son affectation"
     },
     {
-      "hash": "efa27ad",
-      "date": "2026-09-16",
-      "text": "Relecture croisÃ©e, second passage : le plan, le journal et les deux cartes"
+      "hash": "7d04b4b",
+      "date": "2026-09-18",
+      "text": "Tableau d'Ã©tat : le chantier des rÃ©fÃ©rences d'un sujet, trois tranches sur trois"
     },
     {
-      "hash": "173bc82",
-      "date": "2026-09-16",
-      "text": "Relecture croisÃ©e : deux renvois pÃ©rimÃ©s, et l'essai du catalogue vidÃ©o connaÃ®t attente et masques"
+      "hash": "94c851a",
+      "date": "2026-09-18",
+      "text": "RÃ©fÃ©rences d'un sujet (RS3) : la fiche range ses rÃ©fÃ©rences par usage"
     },
     {
-      "hash": "d3679e2",
-      "date": "2026-09-16",
-      "text": "RP4 : une seule prÃ©paration, une seule relecture"
+      "hash": "118f86e",
+      "date": "2026-09-18",
+      "text": "Styles de combat : les quatre tranches cochÃ©es"
     },
     {
-      "hash": "d9b084e",
-      "date": "2026-09-16",
-      "text": "Relecture croisÃ©e, premier passage : les comptes de routes et les renvois vivants"
+      "hash": "ebdcaab",
+      "date": "2026-09-18",
+      "text": "SC4 Â· Styles de combat : les Ã©crans"
     },
     {
-      "hash": "5e4fd31",
-      "date": "2026-09-16",
-      "text": "RP17 : une seule porte pour faire sortir un personnage"
+      "hash": "849db1e",
+      "date": "2026-09-18",
+      "text": "RÃ©fÃ©rences d'un sujet (RS2) : refaire une planche en gardant sa mise en page"
     },
     {
-      "hash": "0027a5b",
-      "date": "2026-09-16",
-      "text": "RP7 : une seule grille d'assets"
+      "hash": "1a9c7c5",
+      "date": "2026-09-18",
+      "text": "SC3 Â· Styles de combat : le texte qui part"
     },
     {
-      "hash": "2342633",
-      "date": "2026-09-16",
-      "text": "RP16 : savoir ce qu'on a laissÃ© en plan"
+      "hash": "7f911c1",
+      "date": "2026-09-18",
+      "text": "RÃ©fÃ©rences d'un sujet (RS1) : chaque rÃ©fÃ©rence porte un usage, et part quand elle sert"
     },
     {
-      "hash": "444b0fc",
-      "date": "2026-09-16",
-      "text": "Vocabulaire : l'aide du tableau dit Â« Ã®lot Â», comme la toile depuis RP3"
+      "hash": "189e638",
+      "date": "2026-09-18",
+      "text": "SC2 Â· Styles de combat : le style d'un personnage, et celui d'une piÃ¨ce"
     },
     {
-      "hash": "e7c2449",
-      "date": "2026-09-16",
-      "text": "Le banc des docs lit les titres HTML, et le renvoi de la barre d'outils y rÃ©pond"
+      "hash": "818fbe7",
+      "date": "2026-09-18",
+      "text": "SC1 Â· Styles de combat : le style, une donnÃ©e du jeu"
     },
     {
-      "hash": "b39e622",
-      "date": "2026-09-16",
-      "text": "RP8 : une seule fiche de sujet"
+      "hash": "81ce15f",
+      "date": "2026-09-18",
+      "text": "RÃ©fÃ©rences d'un sujet : le plan du chantier (RS1 Ã  RS3) et son affectation"
     }
   ]
 }

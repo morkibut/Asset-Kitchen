@@ -11,7 +11,7 @@ import { describe, expect, test } from "vitest"
 
 import { nommerLeLieu } from "./lieux-noms"
 import { filDAriane, type Lieu } from "./lieux"
-import type { Personnage } from "./api"
+import type { Generation, Personnage } from "./api"
 
 const pelerin = { identifiant: "le-pelerin", nom: "Le pèlerin", famille: "personnages" } as unknown as Personnage
 
@@ -64,5 +64,42 @@ describe("le fil d'Ariane ne dit pas deux fois le nom du sujet", () => {
       "Le pèlerin",
       "Sur la grille du jeu",
     ])
+  })
+})
+
+// **Le fil est partout** (18 septembre 2026). Le découpage d'un clip, l'atelier
+// d'une animation et les racines au repos n'en avaient aucun : l'auteur se
+// retrouvait sur le clip *mort* sans voir d'où il venait.
+describe("chaque écran a son fil", () => {
+  const avecClips = nommerLeLieu({
+    choseOuverte: null,
+    clips: [{ identifiant: "clip-1", demande: { mouvement: "mort" } } as unknown as Generation],
+    collectionOuverte: null,
+    groupesDeLaFamille: [],
+    grille: [],
+    personnages: [pelerin],
+    pieces: [],
+    vestiaireDuJeu: null,
+  })
+  const filDe = (pile: readonly Lieu[]) =>
+    filDAriane(pile, "La forêt", avecClips).map((e) => e.libelle)
+
+  test("une racine au repos se nomme", () => {
+    expect(filDe([{ genre: "galerie" }])).toEqual(["La forêt", "Galerie"])
+    expect(filDe([{ genre: "fabrications" }])).toEqual(["La forêt", "Fabrications"])
+  })
+
+  test("un clip ouvert dit d'où il vient, et son nom", () => {
+    expect(filDe([{ genre: "galerie" }, { genre: "montage", clip: "clip-1" }])).toEqual(["La forêt", "Galerie", "mort"])
+    expect(filDe([{ genre: "fabrications" }, { genre: "montage", clip: "clip-1" }])).toEqual(["La forêt", "Fabrications", "mort"])
+    expect(filDe([{ genre: "galerie" }, { genre: "montage", clip: "inconnu" }])).toEqual(["La forêt", "Galerie", "Le clip"])
+  })
+
+  test("l'atelier d'une animation, et son montage", () => {
+    expect(filDe([{ genre: "galerie" }, { genre: "bande", bande: "b" }])).toEqual(["La forêt", "Galerie", "L'animation"])
+  })
+
+  test("la retouche ne dit plus deux fois « Galerie »", () => {
+    expect(filDe([{ genre: "galerie" }, { genre: "retouche", asset: "tonneau" }])).toEqual(["La forêt", "Galerie", "tonneau", "La retouche"])
   })
 })

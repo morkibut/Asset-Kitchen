@@ -476,6 +476,21 @@ function AtelierApp() {
    *
    *  La pile le tient par construction : `montage-de-bande` est plus haut que
    *  `bande`, donc entrer dans une autre bande coupe ce qui est au-dessus. */
+  /** **Ouvrir un clip sans perdre d'où l'on vient** (18 septembre 2026).
+   *  Toutes les portes reposaient la pile sur la galerie : ouvert depuis les
+   *  fabrications, le clip se refermait sur la galerie, et la liste qu'on
+   *  regardait était perdue. Depuis les fabrications, le clip se pose
+   *  maintenant par-dessus elles ; ailleurs, il s'ouvre dans la galerie,
+   *  seul endroit qui sait l'afficher. */
+  const ouvrirLeMontage = useCallback((clip: string) => {
+    setPile((p) => {
+      const ici = racine(p)
+      return ici === "fabrications" || ici === "galerie"
+        ? entrer(p, { genre: "montage", clip })
+        : entrer(poser("galerie"), { genre: "montage", clip })
+    })
+  }, [])
+
   const ouvrirLAtelierDeBande = useCallback((identifiant: string | null) => {
     setPile((p) =>
       identifiant
@@ -1589,6 +1604,7 @@ function AtelierApp() {
     projetCourant?.nom ?? "sans jeu",
     nommerLeLieu({
       choseOuverte,
+      clips: clipsDuJeu,
       collectionOuverte,
       groupesDeLaFamille,
       grille,
@@ -2210,7 +2226,20 @@ function AtelierApp() {
           onCreer={(famille) => setCreationAssetOuverte(famille)} onCommanderPlusieurs={() => setCommanderPlusieursOuvert(true)} />
       )}
 
-      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "fabrications" && (
+      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "fabrications" && montageOuvert && (
+        /* **Le clip ouvert depuis les fabrications** reste chez elles : il en
+           prend la place, et « revenir » y ramène. */
+        <EcranMontage
+          clip={montageOuvert}
+          personnages={personnages}
+          retour="Fabrications"
+          onBande={ouvrirLAtelierDeBande}
+          onFermer={() => setMontageOuvert(null)}
+          onErreur={(raison) => setPanne(raison)}
+        />
+      )}
+
+      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "fabrications" && !montageOuvert && (
         <Fabrications projet={bibliotheque.courant} chantier={chantier} clips={clipsDuJeu} personnages={personnages}
           onSon={(identifiant) => setSonsOuverts({ identifiant })}
           onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))}
@@ -2219,7 +2248,7 @@ function AtelierApp() {
           onBande={ouvrirLAtelierDeBande}
           onCreer={() => { setCible(null); setPreparation({ type: "image" }) }} onGalerie={() => allerA("galerie")}
           onPreparer={(type, modele, avecQuoi) => { setCible(null); setPreparation({ type, modele, avecQuoi }) }}
-          onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))}
+          onClip={ouvrirLeMontage}
           onSujet={(id) => { memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "animations"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
           onDepenses={() => setDepensesOuvertes(true)} />
       )}
@@ -2980,7 +3009,7 @@ function AtelierApp() {
           else setCible(null)
         }}
         onObjectif={() => { setPreparation(null); setOngletDuSujet("objectif") }}
-        onClip={(id) => { setPreparation(null); setPile(entrer(poser("galerie"), { genre: "montage", clip: id })) }}
+        onClip={(id) => { setPreparation(null); ouvrirLeMontage(id) }}
         onBande={(id) => { setPreparation(null); ouvrirLAtelierDeBande(id) }}
         onAsset={(id) => { setPreparation(null); ouvrirLaRetouche(id) }}
         onSon={(id) => { setPreparation(null); setSonsOuverts({ identifiant: id }) }}

@@ -254,7 +254,7 @@ const onglet = (nom: string) => screen.getByRole("tab", { name: nom })
 test("la fiche validée ouvre sur six onglets, sans formulaire ni barre permanente", async () => {
   monter()
   expect(document.querySelector("[data-page-du-sujet]")).toBeTruthy()
-  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images de référence", "Sources & clips", "Pas encore rangé", "Équipement", "Objectif & règles"])
+  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images de référence", "Galerie", "Pas encore rangé", "Équipement", "Objectif & règles"])
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
   expect(screen.queryByLabelText("Nom du sujet")).toBeNull()
   expect(document.querySelector("[data-ce-qui-lui-manque]")).toBeNull()
@@ -607,8 +607,8 @@ test("chaque onglet retrouve la position où on l'avait laissé", () => {
   expect(defileur.scrollTop).toBe(120)
 })
 
-// ── Une pastille sur « Sources & clips » quand un clip arrive (16 sept. 2026) ──
-test("un clip arrivé pour ce sujet allume une pastille sur « Sources & clips », éteinte à la visite", async () => {
+// ── Une pastille sur « Galerie » quand un clip arrive (16 sept. 2026) ──
+test("un clip arrivé pour ce sujet allume une pastille sur « Galerie », éteinte à la visite", async () => {
   window.localStorage.clear()
   const { fetchDouble } = construireDouble()
   vi.stubGlobal("fetch", fetchDouble)
@@ -630,7 +630,7 @@ test("un clip arrivé pour ce sujet allume une pastille sur « Sources & clips �
   const { sources3d } = await import("../api-3d")
   vi.spyOn(sources3d, "lister").mockResolvedValue({ sources: [] } as never)
   vi.spyOn(sources3d, "connexion").mockResolvedValue({ adresse: "" } as never)
-  fireEvent.click(onglet("Sources & clips"))
+  fireEvent.click(onglet("Galerie"))
   await waitFor(() => expect(document.querySelector("[data-nouveaux-clips]")).toBeNull())
 })
 
