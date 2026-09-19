@@ -206,7 +206,7 @@ export function PlancheDePlusieursObjets({
                   type="button"
                   aria-pressed={famille === f.cle}
                   onClick={() => setFamille(f.cle)}
-                  className={`h-[30px] rounded-7 border px-[12px] text-[12px] ${famille === f.cle ? "border-signal text-signal" : "border-contour text-encre-3"}`}
+                  className={`h-[30px] rounded-7 border px-[14px] text-[12px] ${famille === f.cle ? "border-signal text-signal" : "border-contour text-encre-3"}`}
                 >
                   {f.nom}
                 </button>
@@ -262,7 +262,7 @@ export function PlancheDePlusieursObjets({
                 <ol className="mt-[8px] flex flex-col gap-[4px]">
                   {choisis.map((c, rang) => (
                     <li key={c.identifiant} className="flex items-center gap-[6px] text-[12px]">
-                      <span className="w-[16px] shrink-0 text-encre-4">{rang + 1}</span>
+                      <span className="w-[14px] shrink-0 text-encre-4">{rang + 1}</span>
                       <span className="min-w-0 flex-1 truncate">{c.nom}</span>
                       <button
                         type="button"

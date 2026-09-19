@@ -345,6 +345,11 @@ particulière se déclare, sans quoi le prochain écran à vignette unique en in
 se régler sans trembler. Rien dans les listes ci-dessus ne s'en approche sans se voir — 54 s'y
 traîne, 300 dévore la barre d'outils.
 
+### Vignettes — liste fermée
+
+**81**, la vignette d'une animation ou d'une tenue sur la page d'un sujet (19 septembre 2026).
+Elle était à 54 ; agrandie d'une fois et demie pour que le pixel art se lise sans ouvrir l'image.
+
 ---
 
 ## Layout

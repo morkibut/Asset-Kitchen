@@ -1689,7 +1689,7 @@ export function Galerie({
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <header className="border-b border-trait px-[22px] py-[14px]">
-                  <h1 className="font-serif text-[20px] leading-tight text-encre">
+                  <h1 className="font-serif text-[25px] leading-tight text-encre">
                     Supprimer la planche ?
                   </h1>
                 </header>

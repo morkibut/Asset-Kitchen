@@ -51,7 +51,7 @@ export function ReferencePiece({ projet, piece, onChange }: { projet: string; pi
       <label className="text-[13px] text-encre">Son style de combat
         <select
           aria-label="Style de combat de la pièce"
-          className="mt-[4px] block h-[34px] w-full max-w-[280px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle"
+          className="mt-[4px] block h-[34px] w-full max-w-[300px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle"
           value={styleChoisi ?? ""}
           onChange={(e) => void poserStyle(e.target.value || null)}
         >

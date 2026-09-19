@@ -39,3 +39,6 @@ node_modules/
 interface/dist/
 *.pyc
 *.tsbuildinfo
+# Ce qu'on branche une fois sur cette machine (B15) : des chemins de ce disque
+# et le drapeau du tour de présentation. Propre à la machine, jamais au dépôt.
+installation.json
