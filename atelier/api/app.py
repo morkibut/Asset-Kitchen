@@ -25,6 +25,7 @@ from atelier.api.sortie import routeur as routeur_sortie
 from atelier.api.livraison import routeur as routeur_livraison
 from atelier.api.livraison_images import routeur as routeur_livraison_images
 from atelier.api.tuiles import routeur as routeur_tuiles
+from atelier.api.matieres import routeur as routeur_matieres
 from atelier.api.sons import routeur as routeur_sons
 from atelier.api.sfxr import routeur as routeur_sfxr
 from atelier.domaine.tuiles import TuilesRefusees
@@ -269,6 +270,7 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     application.include_router(routeur_livraison, prefix="/api")
     application.include_router(routeur_livraison_images, prefix="/api")
     application.include_router(routeur_tuiles, prefix="/api")
+    application.include_router(routeur_matieres, prefix="/api")
     # Le routeur sfxr est plus spécifique (`/sounds/sfxr`) et s'enregistre
     # avant celui des sons (`/sounds/{identifiant}`) pour ne jamais dépendre
     # de l'ordre où Starlette tenterait les deux sur un même chemin.

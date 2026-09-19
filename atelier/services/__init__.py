@@ -67,6 +67,7 @@ from atelier.services.sortie import ServiceSortie, SortieRefusee
 from atelier.services.livraison import ServiceLivraison
 from atelier.services.livraison_images import ServiceLivraisonImages
 from atelier.services.tuiles import ServiceTuiles
+from atelier.services.matieres import ServiceMatieres
 from atelier.services.sons import ServiceSons
 from atelier.services.sfxr import ServiceSfxr
 from atelier.services.travaux import ServiceTravaux
@@ -603,6 +604,10 @@ class Atelier:
         self.travaux = ServiceTravaux(self)
         self.livraison_images = ServiceLivraisonImages(self)
         self.tuiles = ServiceTuiles(self)
+        # TU5 : les matières générées sur la machine, pour un jeu de tuiles —
+        # montée après `self.tuiles` et `self.generations`, qu'elle appelle
+        # toutes les deux sans que ni l'une ni l'autre n'apprenne qu'elle existe.
+        self.matieres = ServiceMatieres(self)
         self.sons = ServiceSons(self)
         # sfxr (SN8) : synthèse locale, sans ComfyUI — n'apporte ni
         # fournisseur ni catalogue, seulement le calcul et la bibliothèque

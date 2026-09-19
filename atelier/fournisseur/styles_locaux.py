@@ -30,6 +30,20 @@ def _formats():
     ]
 
 
+# TU5 : une matière (`genre: "tile"`) gagne un troisième format, 256 — la
+# taille que sc-clone mesure tenir sans référence (T29, `tailleParDefaut`,
+# `tile-ia-prompt.js`) : sans elle, `EmptyFlux2LatentImage` part de 512 et
+# déroule toutes les sigmas, 8 Go saturés. Ajouté seulement aux styles de
+# tuiles (`sdxl-tileable`, `klein9b-tiles`, `klein9b-tiles-raccordable`) :
+# les autres styles n'ont jamais été mesurés à cette taille, et lui donner
+# une entrée qu'aucun essai ne couvre serait une supposition de plus.
+def _formats_tuile():
+    return [
+        {"resolution": "256", "proportions": "1:1", "largeur": 256, "hauteur": 256},
+        *_formats(),
+    ]
+
+
 def _noeud(class_type, **inputs):
     return {"class_type": class_type, "inputs": inputs}
 
@@ -112,7 +126,7 @@ def _profil(entree, *, graphe, liaisons, sortie_noeud, etapes, parametres=None, 
         "graphe": graphe,
         "liaisons": liaisons,
         "parametres": parametres or {},
-        "formats": _formats(),
+        "formats": _formats_tuile() if entree.get("genre") == "tile" else _formats(),
         "sortie": {"noeud": sortie_noeud, "champ": "images"},
         "description": entree["description"],
         "style": _metadonnees_style(entree),
