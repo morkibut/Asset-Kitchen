@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 
+from atelier.audio.texte import MESURE_GABARIT, duree_en_mesures
 from atelier.audio.traitement import VERSION, decoder, encoder, encoder_ogg, mesurer, onde, traiter
 from atelier.depot.verrou import verrou
 from atelier.domaine.son import FAMILLES, RecetteSon, SonRefuse, famille_valide, recette_proposee
@@ -49,6 +50,48 @@ def _pret_recalcule(objet):
     if etat in ("prete", "a_verifier"):
         etat = "prete" if pret else "a_verifier"
     return {**objet, "pret": pret, "raison": raison, "avertissements": avertissements, "etat": etat}
+
+
+def limite_mesure(son):
+    """SN9 · Où couper la boucle d'une musique ou d'un jingle sur une
+    frontière de mesure : la durée du nombre de mesures **demandées** (sans
+    la marge ajoutée pour que la boucle se coupe proprement — comme
+    `beat_count`, services/sons.py `params_ogg`), au tempo et à la mesure de
+    l'envoi. `None` si l'un des deux manque : la boucle reste alors un geste
+    libre de l'auteur, comme avant SN9 (bruitages, ambiances, chansons)."""
+    if son.get("famille") not in ("musique", "jingle"):
+        return None
+    provenance = son.get("provenance") or {}
+    envoi = provenance.get("envoi") if isinstance(provenance.get("envoi"), dict) else {}
+    composition = provenance.get("composition") if isinstance(provenance.get("composition"), dict) else {}
+    mesures = composition.get("mesures") if isinstance(composition, dict) else None
+    demandees = _nombre_positif((mesures or {}).get("demandees")) if isinstance(mesures, dict) else None
+    tempo = _nombre_positif(envoi.get("tempo"))
+    if not demandees or not tempo:
+        return None
+    temps = _nombre_positif(envoi.get("mesure"))
+    bar_beats = int(temps) if temps and 2 <= int(temps) <= 32 else MESURE_GABARIT
+    return duree_en_mesures(round(demandees), tempo, bar_beats, marge=0)
+
+
+def recette_proposee_son(son, famille):
+    """`atelier.domaine.son.recette_proposee`, complétée (SN9) pour une
+    musique ou un jingle dont le nombre de mesures et le tempo sont connus :
+    la boucle se propose de 0 à la frontière de mesure — jamais imposée,
+    « Garder » ou « Appliquer les réglages de la famille » la prend comme le
+    reste (SN3, SN4)."""
+    if not famille:
+        return None
+    proposee = recette_proposee(son["recette"], famille)
+    # `famille` est celle qu'on propose, pas forcément celle déjà posée sur le
+    # son (le geste « classer » l'appelle avant d'écrire la nouvelle famille).
+    limite = limite_mesure({**son, "famille": famille})
+    if limite:
+        duree = son["mesures"]["duree"] if son.get("mesures") else None
+        fin = min(limite, duree) if duree is not None else limite
+        if fin > 0:
+            proposee = {**proposee, "boucle": True, "boucle_debut": 0, "boucle_fin": round(fin, 3)}
+    return proposee
 
 
 class ServiceSons:
@@ -95,7 +138,7 @@ class ServiceSons:
         return {**objet, "famille": famille, "revision_courante": courant["revision"],
             "jugement": jugements.get(str(objet["revision"]), "a-juger"),
             # Proposée, jamais imposée : l'écran ou l'agent la prend par un geste.
-            "recette_proposee": recette_proposee(objet["recette"], famille) if famille else None,
+            "recette_proposee": recette_proposee_son(objet, famille) if famille else None,
             "versions": [{"revision": v["revision"], "cree_le": v["modifie_le"], "nom": v["nom"], "famille": v.get("famille"),
                 "pret": v["pret"], "mesures": v["mesures"], "jugement": jugements.get(str(v["revision"]), "a-juger"),
                 "avertissements": v.get("avertissements", [])}
@@ -202,7 +245,7 @@ class ServiceSons:
             son = self._courant(projet, identifiant)
             if isinstance(revision, bool) or revision != son["revision"]:
                 raise SonRefuse("Le son a changé dans une autre fenêtre. Rouvrez sa dernière version avant de conserver.")
-            recette = recette_proposee(son["recette"], famille) if appliquer_reglages and famille else son["recette"]
+            recette = recette_proposee_son(son, famille) if appliquer_reglages and famille else son["recette"]
             son = {**son, "revision": son["revision"] + 1, "famille": famille}
             return self._enregistrer(son, RecetteSon.depuis_json(recette))
 
@@ -501,6 +544,10 @@ def credit(son, fichier):
     moteur = moteur_du_son(provenance)
     licence = LICENCES[_LICENCE_DU_MOTEUR.get(moteur)] if moteur in _LICENCE_DU_MOTEUR else \
         {"nom": "à préciser", "resume": f"Moteur « {moteur} » : sa licence n'est pas connue de l'atelier."} if moteur else LICENCES[None]
+    # D'où viennent le tempo, la tonalité et la mesure (demande, univers ou
+    # gabarit) : un jingle calé sur l'univers le montre ici (SN9), pas
+    # seulement la valeur envoyée au moteur.
+    parametres = composition.get("parametres") if isinstance(composition, dict) else None
     return {"fichier": fichier, "son": son["identifiant"], "version": son["revision"], "nom": son["nom"],
         "famille": son.get("famille"), "moteur": moteur, "modele": provenance.get("modele"),
         "workflow": provenance.get("workflow"), "licence": licence,
@@ -508,6 +555,8 @@ def credit(son, fichier):
         "graine": envoi.get("graine", provenance.get("graine")), "texte": envoi.get("prompt") or composition.get("texte"),
         "texte_negatif": envoi.get("prompt_negatif") or composition.get("texte_negatif") or None,
         "paroles": envoi.get("paroles"),
+        "tempo": (parametres or {}).get("tempo"), "tonalite": (parametres or {}).get("tonalite"),
+        "mesure": (parametres or {}).get("mesure"),
         "date": datetime.datetime.fromtimestamp(son["cree_le"], datetime.timezone.utc).isoformat(timespec="seconds")}
 
 

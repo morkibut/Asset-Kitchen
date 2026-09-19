@@ -13,11 +13,12 @@ import time
 import uuid
 
 from atelier.depot.verrou import VerrouOccupe, verrou
-from atelier.domaine.son import FAMILLES, RecetteSon, SonRefuse, recette_proposee
+from atelier.domaine.son import FAMILLES, RecetteSon, SonRefuse
 from atelier.domaine.travail import TravailRefuse
 from atelier.domaine.variantes_son import (
     VariantesRefusees, famille_du_jeu, identifiant_valide, nom_valide, statut_membre)
-from atelier.services.sons import _json_lisible, credit, fichier_de_famille, fichier_import, nom_stable, ressource_variantes, scene_son
+from atelier.services.sons import (_json_lisible, credit, fichier_de_famille, fichier_import, nom_stable,
+    recette_proposee_son, ressource_variantes, scene_son)
 from atelier.services.travaux import _hash, _json
 
 
@@ -111,7 +112,7 @@ class ServiceVariantesSon:
             return
         fiche = self.a.sons.lire(projet, son)
         propre = RecetteSon.depuis_json(fiche["recette"]).en_json()
-        if fiche.get("famille") == famille and propre == recette_proposee(fiche["recette"], famille):
+        if fiche.get("famille") == famille and propre == recette_proposee_son(fiche, famille):
             return
         self.a.sons.classer(projet, son, fiche["revision"], famille, appliquer_reglages=True)
 

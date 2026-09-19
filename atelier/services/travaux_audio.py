@@ -317,9 +317,12 @@ class ServiceTravauxAudio(ServiceTravaux):
                     # La famille (lue par la livraison, SN4) et le texte parti.
                     # « mesures » : pour que `beat_count` sache si la durée
                     # vient d'un nombre de mesures gardé (services/sons.py).
+                    # « parametres » (SN9) : d'où vient le tempo, la tonalité et
+                    # la mesure (demande, univers ou gabarit) — la provenance du
+                    # son le montre, pas seulement sa valeur envoyée.
                     provenance.update(famille=compo["famille"], composition={k: compo.get(k) for k in (
                         "gabarit", "moteur", "texte", "texte_negatif", "morceaux", "relu", "texte_compose", "langue",
-                        "mesures")})
+                        "mesures", "parametres")})
                 if t.get("serie"):
                     provenance["serie"] = t["serie"]  # SN3 : de quelle série, quel tirage
                 # Le nom par défaut ne répète ni la famille (déjà le préfixe de
