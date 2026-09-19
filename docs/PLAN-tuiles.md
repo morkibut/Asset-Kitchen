@@ -134,7 +134,8 @@ tuiles avec le vrai moteur**. Seule la génération par l'IA y est simulée. Ell
 - le tiroir de choix d'une matière : intégrées, les miennes, générer ;
 - la relecture avant de livrer à Godot.
 
-- [ ] L'auteur l'a parcourue et validée. Les écrans des tranches suivantes la suivent.
+- [x] L'auteur l'a parcourue et validée. Les écrans des tranches suivantes la suivent.
+      *(Validée le 19 septembre 2026 : « ça a l'air super ».)*
 
 ### TU1 · Le moteur entre dans l'interface
 
