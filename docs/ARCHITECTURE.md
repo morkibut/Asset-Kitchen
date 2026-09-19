@@ -480,6 +480,33 @@ Trois routes, `/api/projects/{projet}/materials` : `GET /availability`, `POST /p
 `POST /generate` (`{pierre, motif, cadrage, tirages, graine}` → les générations soumises,
 `generation.en_json()`).
 
+### L'agent fabrique des tuiles (TU10, `docs/PLAN-tuiles.md`)
+
+**Le serveur rend avec le code de l'écran, jamais un portage.** `atelier/tuiles_node/rendre.mjs`
+importe `interface/src/tuiles/atelier.ts` et `png.ts` tels quels (Node ≥ 22.18 efface les types ;
+un crochet `registerHooks` ajoute l'extension que Vite résout seul ; le canevas est le bouchon de
+TU1, seul `putImageData` sert). Entrée JSON sur stdin : la recette **vérifiée** par le serveur,
+les matières « asset » déjà décodées en RGBA par Pillow (les octets de `assets.octets`, ceux
+qu'affiche `api.fichier`), la palette de l'univers (TU6, `paletteJeu`) ; sortie : le PNG
+d'`encoderPng`, l'empreinte des pixels, le contrôle `verifier` (tile-check) et la carte en pièces
+posées (`versCarteServeur`). `atelier/services/rendu_tuiles.py` (`atelier.rendu_tuiles`) le lance
+en sous-processus et cherche Node à chaque appel (`ATELIER_NODE`, sinon le `PATH`) : absent ou
+trop vieux, `NodeAbsent` (409) dit quoi installer, et seuls les gestes de l'agent qui fabriquent
+un atlas en dépendent — l'écran rend lui-même. `tests/test_tu10_agent.py` compare ce rendu à
+celui d'un vrai navigateur sans écran (`essais/tu10_reference_navigateur.mjs` : Vite + Edge,
+gestes de l'écran, matières décodées par le navigateur) : 19 cas, les cinq sortes, au pixel près.
+
+**Les outils MCP.** `create_tile_set` accepte `recipe` (+ `map`, lignes de `#`/`.`) en plus
+d'`image`+`grid` ; `update_tile_set` accepte `recipe` et `map` (`regles` devient facultatif pour
+un jeu fabriqué) ; `read_tile_set` ajoute `verification` (`propre`, `phrase`, `defauts[].en_clair`)
+sur l'atlas gardé — un défaut avertit, il ne bloque rien ; `generate_tile_material` génère des
+matières par `ServiceMatieres`. **Le cadre de l'agent borne ces matières comme ses images
+locales (RP2)** : `preparer_pour_agent` écrit un travail durable de nature `matieres`
+(identifiants des générations écrits avant tout départ), `ServiceTravaux.demarrer` relit le
+cadre (calcul local, méthodes permises, plafond d'appels) et le crochet `avant_soumission` du
+fournisseur ComfyUI le relit au tour de la carte graphique. Un ensemble créé par l'agent porte
+`origine: "agent"` ; un ensemble sans ce champ se relit `"auteur"`, sans migration.
+
 ## 11 · Risques, et quand les lever → `docs/archi-risques.md`
 
 **Les risques de l'architecture, et le moment où chacun se lève**, vivent dans

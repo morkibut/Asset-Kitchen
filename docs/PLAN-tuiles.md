@@ -419,12 +419,33 @@ outils MCP apprennent la recette :
 
 Le cadre de l'agent borne les générations de matières, comme pour l'image.
 
-- [ ] L'atlas rendu par le serveur est identique au pixel près à celui du navigateur, pour
+- [x] L'atlas rendu par le serveur est identique au pixel près à celui du navigateur, pour
       chaque sorte.
-- [ ] Un agent produit, vérifie, corrige une matière et livre un jeu de tuiles dans un vrai
+      *(`atelier/tuiles_node/rendre.mjs` importe `interface/src/tuiles/atelier.ts` lui-même.
+      `tests/test_tu10_agent.py` lance `essais/tu10_reference_navigateur.mjs` : Edge sans écran
+      rejoue les gestes de l'écran sur 19 cas — sol, chemin, mur h1 et h3, 15 et 17 pièces,
+      second terrain, variantes, animation, animation d'atlas, décor, matières « asset »
+      décodées par le navigateur, palette commune et palette du jeu (TU6) — ; le serveur
+      refait le chemin inverse. 1 242 112 pixels, 0 écart ; la carte et le contrôle aussi, et
+      les 19 PNG sont même identiques à l'octet. Une mutation (palette de l'univers non
+      transmise) fait tomber l'essai.)*
+- [x] Un agent produit, vérifie, corrige une matière et livre un jeu de tuiles dans un vrai
       Godot, sans écran. C'est le critère d'AU13, coché dans `PLAN-atelier-unifie.md`.
-- [ ] Si Node manque, les outils le disent. Le reste de l'atelier fonctionne.
+      *(`test_un_agent_produit_verifie_corrige_et_livre_dans_godot` : appels MCP successifs,
+      ComfyUI doublé, Godot 4.7 charge la carte et relit un pixel de l'atlas.)*
+- [x] Si Node manque, les outils le disent. Le reste de l'atelier fonctionne.
+      *(`ATELIER_NODE` vide : `create_tile_set`/`update_tile_set` par recette refusent en
+      disant quoi installer ; `read_tile_set` rend tout, avec `verification.disponible` faux ;
+      lister, livrer et créer à partir d'une image fonctionnent.)*
 - [ ] Un jeu demandé par l'agent apparaît dans la liste de l'écran, marqué comme tel.
+      *(Côté serveur fait : `origine: "agent"` sur l'ensemble, `"auteur"` relu pour les
+      anciens. Reste l'affichage dans la liste de l'écran.)*
+
+**Tranché en TU10.** Le cadre qui borne les matières de l'agent est celui de ses images
+locales (RP2, travail durable relu au lancement et au tour de la carte graphique), pas le
+plafond de séance de `generate_asset` : par défaut, les garde-fous imposent le modèle
+d'exploration, donc le style des matières doit être permis par l'auteur (méthodes permises,
+écran Réglages) — comme toute image locale de l'agent.
 
 ### TU11 · La relecture croisée
 

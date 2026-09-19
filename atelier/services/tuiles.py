@@ -15,6 +15,7 @@ from typing import Any
 from PIL import Image
 
 from atelier.domaine import masques_tuiles
+from atelier.domaine.generation import AGENT, AUTEUR
 from atelier.domaine.recette_tuiles import MATIERES_INTEGREES, recette as verifier_recette
 from atelier.domaine.tuiles import RACCORDS, TuilesRefusees, choix, entier, grille
 from atelier.services.livraison import _json, _lire, _poser, _verrou
@@ -157,7 +158,7 @@ class ServiceTuiles:
         self._verifier_atlas(r, forme, largeur, hauteur)
         return r, pieces, terrains, cellules, octets, grille({"taille": r["taille"]}, largeur, hauteur)
 
-    def _creer_fabrique(self, projet, brut):
+    def _creer_fabrique(self, projet, brut, origine=AUTEUR):
         if set(brut) - {"nom", "recette", "atlas", "personnage", "carte"}:
             raise TuilesRefusees("Un jeu de tuiles fabriqué se crée avec un nom, sa recette, l’atlas qu’elle a rendu et, au besoin, une carte d’essai.")
         self._racine(projet)
@@ -173,7 +174,7 @@ class ServiceTuiles:
             source = self._figer_atlas(projet, identifiant, 1, regles["nom"], octets, dossier)
             objet = {"identifiant": identifiant, "projet": projet, "personnage": personnage, "revision": 1,
                      "cree_le": time.time(), "source": source, "grille": g, "corrections": {},
-                     "recette": r, "pieces": pieces, **regles}
+                     "recette": r, "pieces": pieces, "origine": origine, **regles}
             self._garder(objet)
         return self.lire(projet, identifiant)
 
@@ -227,9 +228,12 @@ class ServiceTuiles:
                 noms[(c["x"], c["y"])] = c["nom"]
         return [{**c, "nom": noms.get((c["x"], c["y"]), c["nom"])} for c in deduites]
 
-    def creer(self, projet, brut):
+    def creer(self, projet, brut, *, origine=AUTEUR):
+        """`origine` (TU10) : `"agent"` pour un jeu demandé par l'agent (MCP), `"auteur"`
+        sinon. Jamais lu dans le corps d'une requête : l'écran ne peut pas se dire agent."""
+        if origine not in (AUTEUR, AGENT): raise TuilesRefusees("Un jeu de tuiles vient de l’auteur ou de l’agent.")
         if isinstance(brut, dict) and "recette" in brut:
-            return self._creer_fabrique(projet, brut)
+            return self._creer_fabrique(projet, brut, origine)
         if not isinstance(brut, dict) or set(brut) - {"nom", "image", "grille", "personnage"}:
             raise TuilesRefusees("Déclarez un nom, une image d’atlas et sa grille.")
         octets, source = self._source(projet, brut.get("image"))
@@ -244,7 +248,7 @@ class ServiceTuiles:
             dossier = self._dossier(projet, identifiant)
             source["empreinte"] = self._blob(dossier, octets)
             objet = {"identifiant": identifiant, "projet": projet, "personnage": personnage, "revision": 1,
-                     "cree_le": time.time(), "source": source, "grille": g, "corrections": {}, **regles}
+                     "cree_le": time.time(), "source": source, "grille": g, "corrections": {}, "origine": origine, **regles}
             self._garder(objet)
         return self.lire(projet, identifiant)
 
@@ -347,7 +351,8 @@ class ServiceTuiles:
                     raccords.append({"x": x, "y": y, "vers": a, "raison": "Les terrains déclarés sur ce raccord diffèrent."})
         if raccords: problemes.append(f"{len(raccords)} raccord(s) de terrain sont incompatibles dans la carte d’essai.")
         historique = sorted(int(p.stem) for p in (self._dossier(projet, identifiant)/"revisions").glob("*.json"))
-        return {**objet, "historique": historique, "retenues": len(retenues), "diagnostic": {"pret": not problemes, "problemes": problemes, "raccords": raccords,
+        # `origine` (TU10) : un ensemble d'avant TU10 n'en porte pas ; il vient de l'auteur.
+        return {**objet, "origine": objet.get("origine", AUTEUR), "historique": historique, "retenues": len(retenues), "diagnostic": {"pret": not problemes, "problemes": problemes, "raccords": raccords,
             "limite": "La cohérence des terrains est vérifiée. Jugez les bords, coins et la transparence sur la carte ; leur qualité graphique n’est pas validée automatiquement."},
             "atlas_url": f"/api/projects/{projet}/tilesets/{identifiant}/preview.png?revision={objet['revision']}",
             "carte_url": f"/api/projects/{projet}/tilesets/{identifiant}/preview.png?carte=true&revision={objet['revision']}"}
