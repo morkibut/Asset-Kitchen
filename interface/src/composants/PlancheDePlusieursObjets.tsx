@@ -64,9 +64,31 @@ export function PlancheDePlusieursObjets({
   // n-ième objet (décision de l'auteur, 18 septembre 2026).
   const [choisis, setChoisis] = useState<{ identifiant: string; nom: string }[]>([])
   const [modele, setModele] = useState(modeles.find((m) => !m.locale && !m.refus)?.identifiant ?? modeles[0]?.identifiant ?? "")
+  // **Le défaut du jeu pour une planche**, et ses réglages : le modèle de
+  // planche du jeu, sinon celui du produit, en qualité basse. Sans lui, la
+  // commande partait sans réglage — à la qualité que le fournisseur choisit —
+  // et sur le premier modèle de la liste (banc payé du 19 septembre 2026).
+  const [defaut, setDefaut] = useState<{ modele: string | null; options: Record<string, string> } | null>(null)
+  const [modeleTouche, setModeleTouche] = useState(false)
   const [envoi, setEnvoi] = useState<Awaited<ReturnType<typeof api.envoi>> | null>(null)
   const [refus, setRefus] = useState<string | null>(null)
   const [enPaiement, setEnPaiement] = useState(false)
+
+  useEffect(() => {
+    let vivant = true
+    api
+      .modeles("1:1", 0, "", "", 2)
+      .then((catalogue) => vivant && setDefaut(catalogue.defaut))
+      .catch(() => undefined)
+    return () => {
+      vivant = false
+    }
+  }, [projet])
+
+  useEffect(() => {
+    if (modeleTouche || !defaut?.modele) return
+    if (modeles.some((m) => m.identifiant === defaut.modele)) setModele(defaut.modele)
+  }, [defaut, modeles, modeleTouche])
 
   useEffect(() => {
     let vivant = true
@@ -132,7 +154,8 @@ export function PlancheDePlusieursObjets({
         prompt_negatif: "",
         proportions: "",
         variations: 1,
-        options: {},
+        // Les réglages du défaut ne valent que pour son modèle.
+        options: defaut && modele === defaut.modele ? defaut.options : {},
         identifiant: crypto.randomUUID(),
         references: [],
         echelle: "",
@@ -219,7 +242,7 @@ export function PlancheDePlusieursObjets({
           <section className="flex flex-col gap-[14px]">
             <label className="flex flex-col gap-[4px]">
               <span className="font-medium">Modèle</span>
-              <select className={champ} value={modele} onChange={(e) => setModele(e.target.value)}>
+              <select className={champ} value={modele} onChange={(e) => { setModeleTouche(true); setModele(e.target.value) }}>
                 {modeles.map((m) => (
                   <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>
                     {m.fournisseur} · {m.nom}

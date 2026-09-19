@@ -191,6 +191,47 @@ def _creer_plusieurs(pliage: Pliage) -> str:
     )
 
 
+def _ordre_de_lecture(
+    taches: Sequence[Boite], hauteur: int, forme: Geometrie
+) -> dict[int, list[int]] | None:
+    """Les taches rangées **dans l'ordre de lecture**, ou `None` si le compte
+    ne le permet pas (P2, décision de l'auteur du 19 septembre 2026).
+
+    Le calage par centre suppose que le modèle pose chaque sujet dans sa case.
+    Il ne le fait pas toujours sur une dernière rangée incomplète : il la
+    recentre, et un sujet peut glisser vers une case qui n'existe pas. Quand il
+    revient **autant de taches que de cases, rangée par rangée**, la n-ième
+    tache — de haut en bas, puis de gauche à droite — va à la n-ième case, même
+    si elle déborde de la sienne.
+
+    La rangée d'une tache est celle qui contient son centre vertical : c'est
+    horizontalement que le modèle dérive. Si une rangée n'a pas le compte
+    qu'elle devrait avoir, on rend `None` et le calage par centre décide.
+
+    **Ce que la règle ne voit pas** : dans une même rangée, un sujet coupé en
+    deux à côté d'une case vide fait le bon compte, et se range de travers.
+    C'est le geste « ce n'est pas le bon sujet » qui le reprend.
+    """
+    if len(taches) != forme.cases:
+        return None
+    haut_de_rangee = hauteur / forme.lignes
+    rangees: dict[int, list[int]] = {r: [] for r in range(forme.lignes)}
+    for index, (x0, y0, x1, y1) in enumerate(taches):
+        rangee = min(int(((y0 + y1) / 2) // haut_de_rangee), forme.lignes - 1)
+        rangees[rangee].append(index)
+    par_case: dict[int, list[int]] = {}
+    case = 0
+    for rangee in range(forme.lignes):
+        attendues = min(forme.colonnes, max(forme.cases - rangee * forme.colonnes, 0))
+        siennes = sorted(rangees[rangee], key=lambda i: taches[i][0] + taches[i][2])
+        if len(siennes) != attendues:
+            return None
+        for index in siennes:
+            par_case[case] = [index]
+            case += 1
+    return par_case
+
+
 def _creer(pliage: Pliage) -> str:
     """La planche de C2 : N sujets à faire naître sur une grille vide.
 
@@ -531,7 +572,10 @@ class ServicePliage:
 
         Une tache dont le centre tombe hors des N cases (la fin d'une dernière
         rangée incomplète) n'est rangée nulle part ; elle reste comptée dans
-        `trouvees` et mesurée avec les autres.
+        `trouvees` et mesurée avec les autres — **sauf si l'ordre de lecture
+        la rattrape** (`_ordre_de_lecture`) : le banc payé du 19 septembre 2026
+        a vu le modèle recentrer une dernière rangée incomplète une fois sur
+        deux, et un coffre finir à un pixel de la case 9.
 
         **Aucun refus, aucune attente de choix** : c'est la différence avec
         `deplier` (C2). Un compte court n'arrête pas la planche, parce qu'ici
@@ -563,6 +607,13 @@ class ServicePliage:
                 if gx0 <= cx <= gx1 and gy0 <= cy <= gy1:
                     par_case[case].append(index)
                     break
+        # **Le calage par centre a raté, mais le compte est juste** : on range
+        # alors dans l'ordre de lecture (décision de l'auteur, 19 septembre
+        # 2026). Voir `_ordre_de_lecture`.
+        if any(len(siennes) != 1 for siennes in par_case.values()):
+            en_ordre = _ordre_de_lecture(toutes, hauteur, forme)
+            if en_ordre is not None:
+                par_case = en_ordre
 
         coupes: list[tuple[int, int, int, int]] = []
         indices: list[int] = []

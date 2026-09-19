@@ -243,6 +243,78 @@ def test_une_case_a_deux_morceaux_ou_pleine_se_signale(client, atelier, double):
     assert "morceaux" in raisons[2]
 
 
+def _huit_objets(client) -> list[str]:
+    return _quatre_objets(client) + [
+        _chose(client, "Dague", "an elven dagger"),
+        _chose(client, "Bourse", "a leather coin pouch"),
+        _chose(client, "Lanterne", "a small brass lantern"),
+        _chose(client, "Coffre", "a small wooden chest", type_="meuble"),
+    ]
+
+
+def _planche_derniere_rangee_centree(decalage: int) -> bytes:
+    """Huit sujets sur 3 × 3, et la dernière rangée **recentrée** par le modèle,
+    comme au banc payé du 19 septembre 2026 : les deux derniers sujets glissent
+    de `decalage` pixels vers la droite, et le huitième peut finir dans la case
+    9, qui n'existe pas."""
+    cote = 480
+    image = Image.new("RGB", (cote, cote), FOND)
+    dessin = ImageDraw.Draw(image)
+    for case, (x0, y0, x1, y1) in enumerate(grille_fixe(cote, cote, 3, 3)[:8]):
+        cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+        if case >= 6:
+            cx += decalage
+        dessin.ellipse((cx - 30, cy - 40, cx + 30, cy + 40), fill=(60 + 20 * case, 50, 40))
+    tampon = io.BytesIO()
+    image.save(tampon, format="PNG")
+    return tampon.getvalue()
+
+
+def test_une_derniere_rangee_recentree_se_range_dans_l_ordre_de_lecture(
+    client, atelier, double
+):
+    """**Le coffre qui déborde en case 9 va quand même au coffre** (décision de
+    l'auteur, 19 septembre 2026). Autant de taches que de cases, rangée par
+    rangée : la n-ième dans l'ordre de lecture va au n-ième sujet."""
+    sujets = _huit_objets(client)
+    # Cases de 160 px : le 8e sujet, au centre x = 240, passe à 330 — case 9.
+    double.rendre = lambda: _planche_derniere_rangee_centree(90)
+
+    vue = _envoyer(client, sujets)
+
+    images = _images(atelier, vue["identifiant"])
+    assert [a.personnage for a in images] == sujets
+    (depliage,) = _depliages(client, f"{vue['identifiant']}-0")["depliages"]
+    assert depliage["cases"] == list(range(8))
+    assert "a_verifier" not in depliage
+
+
+def test_l_ordre_de_lecture_ne_joue_pas_si_une_rangee_n_a_pas_son_compte(
+    client, atelier, double
+):
+    """Quatre taches pour quatre cases, mais toutes sur la première rangée : le
+    compte global est juste, celui des rangées non. Le calage par centre
+    décide, et les cases qui clochent se signalent."""
+    sujets = _quatre_objets(client)
+
+    def une_seule_rangee() -> bytes:
+        image = Image.new("RGB", (480, 480), FOND)
+        dessin = ImageDraw.Draw(image)
+        for cx in (60, 180, 300, 420):
+            dessin.ellipse((cx - 30, 80, cx + 30, 160), fill=(90, 50, 40))
+        tampon = io.BytesIO()
+        image.save(tampon, format="PNG")
+        return tampon.getvalue()
+
+    double.rendre = une_seule_rangee
+
+    vue = _envoyer(client, sujets)
+
+    assert _images(atelier, vue["identifiant"]) == []
+    (depliage,) = _depliages(client, f"{vue['identifiant']}-0")["depliages"]
+    assert sorted(v["case"] for v in depliage["a_verifier"]) == [0, 1, 2, 3]
+
+
 def test_ce_n_est_pas_le_bon_sujet_retire_l_image_de_sa_case(client, atelier, double):
     """**Le signal que l'atelier ne sait pas lever seul** : une clé dessinée dans
     la case de la potion est une tache unique, bien centrée, et elle se range.

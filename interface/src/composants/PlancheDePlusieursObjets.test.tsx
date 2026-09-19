@@ -107,3 +107,35 @@ test("choisir plusieurs objets part en `sujets`, et le prix par objet s'affiche"
   )
   expect(onLancee).toHaveBeenCalledWith("g1")
 })
+
+test("la commande part sur le défaut du jeu pour une planche, avec ses réglages", async () => {
+  // Banc payé du 19 septembre 2026 : l'écran prenait le premier modèle de la
+  // liste et partait sans réglage — sans « qualité basse », donc à la qualité
+  // que le fournisseur choisit.
+  const autre = { ...MODELE, identifiant: "m0", nom: "Premier de la liste" }
+  const catalogue = vi
+    .spyOn(api, "modeles")
+    .mockResolvedValue({ defaut: { modele: "m1", options: { quality: "low" } } } as never)
+  vi.spyOn(api, "familleDeSujets").mockResolvedValue(grille(["Potion bleue", "Clé dorée"]))
+  vi.spyOn(api, "envoi").mockResolvedValue(ENVOI)
+  const generer = vi.spyOn(api, "generer").mockResolvedValue({ identifiant: "g1" } as never)
+
+  render(
+    <PlancheDePlusieursObjets projet="jeu-1" modeles={[autre, MODELE]} onFermer={vi.fn()} onLancee={vi.fn()} />,
+  )
+
+  // Une planche : le serveur répond avec le modèle de planche du jeu.
+  await waitFor(() => expect(catalogue).toHaveBeenCalledWith("1:1", 0, "", "", 2))
+  await waitFor(() => expect(screen.getByRole("combobox")).toHaveValue("m1"))
+  const boutons = await screen.findAllByRole("button", { name: "ajouter ›" })
+  fireEvent.click(boutons[0])
+  fireEvent.click(boutons[1])
+  await screen.findByText(/par objet/)
+  fireEvent.click(screen.getByRole("button", { name: /Payer et lancer/ }))
+
+  await waitFor(() =>
+    expect(generer).toHaveBeenCalledWith(
+      expect.objectContaining({ modele: "m1", options: { quality: "low" } }),
+    ),
+  )
+})

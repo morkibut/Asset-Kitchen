@@ -397,6 +397,12 @@ Les trois questions telles qu'elles se posaient :
 - [x] L'ancienne règle continue de s'appliquer aux planches qui ne portent pas cette liste
 - [x] Refaire le découpage d'une telle planche marche comme en `P1`
 
+**Banc payé du 19 septembre 2026** (`docs/releves/2026-09-19-p2-planche-de-huit-objets.md`,
+0,143 $) : huit planches de huit objets, 64 cases justes sur 64. Le modèle recentre une dernière
+rangée incomplète une fois sur deux. **Tranché par l'auteur le même jour** : quand le calage par
+centre rate mais que le compte est juste rangée par rangée, on range dans l'ordre de lecture.
+L'écran de commande part désormais sur le défaut du jeu pour une planche, avec ses réglages.
+
 **Bloquée par** — `P1`.
 
 ---
