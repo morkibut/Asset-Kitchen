@@ -15,7 +15,10 @@ def installer_variantes_son(serveur, atelier, refus):
         "Prepare N local takes of one sound request without starting them (default 8 for sfx/ambience, 4 for "
         "music/song/jingle/voice; 1-16). request: the prepare_audio body {cle, famille or modele, prompt, ...} plus "
         "optional nombre and nom. Each take is an ordinary audio job with its own seed. Idempotent by cle. The "
-        "result carries the announced compute time from this machine's measurements; nothing costs money."))
+        "result carries the announced compute time from this machine's measurements; nothing costs money. Next: "
+        "start_sound_series to run it, then get_sound_series to poll until every take is rendu, then "
+        "keep_sound_takes. A sound engine not allowed by this game's delegation frame, or a series that would cross "
+        "its compute-time cap, is refused with its plain reason before anything is submitted."))
     @refus
     async def prepare_sound_series(project: str, request: dict[str, Any]) -> dict[str, Any]:
         return await atelier.series_son.preparer(project, request, "agent")
@@ -29,7 +32,9 @@ def installer_variantes_son(serveur, atelier, refus):
 
     @serveur.tool(name="start_sound_series", meta=meta("Lancer une série de sons"), description=(
         "Start the prepared takes of a series (never restarts anything). With resume=true: the explicit resume "
-        "gesture — takes that already have their sound are never rerun, a known ComfyUI job is followed, not resent."))
+        "gesture — takes that already have their sound are never rerun, a known ComfyUI job is followed, not resent. "
+        "Next: get_sound_series to poll (each take's etat becomes rendu; the whole series' etat becomes terminee), "
+        "then keep_sound_takes on the rangs or sons you want to keep."))
     @refus
     async def start_sound_series(project: str, series: str, resume: bool = False) -> dict[str, Any]:
         if resume:
@@ -40,7 +45,11 @@ def installer_variantes_son(serveur, atelier, refus):
         "Keep takes of a series as a variant set: request {rangs:[1,3,...]} or {sons:[...]}, optional nom, cle, "
         "famille. The set lists sounds by reference, in order, and remembers its series. Each kept sound also gets "
         "a new version with its family's proposed recipe applied (mono for sfx/interface/voice, target level), "
-        "visible in its versions — pass appliquer_reglages=false to skip this."))
+        "visible in its versions — pass appliquer_reglages=false to skip this. If the series came from a subject's "
+        "slot (prepare_subject_sound_series), the kept sounds file into that slot's variant set under its stable "
+        "name; otherwise this call itself creates the set. Next: preview_sound_variant_set_delivery then "
+        "publish_animation_delivery with its token to deliver the set — or, for a subject's slot, deliver the whole "
+        "subject with preview_animation_delivery/publish_animation_delivery, which carries every filled slot along."))
     @refus
     async def keep_sound_takes(project: str, series: str, request: dict[str, Any]) -> dict[str, Any]:
         return atelier.series_son.garder(project, series, request)

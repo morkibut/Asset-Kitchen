@@ -2463,8 +2463,10 @@ function serveurDouble(options: {
         autoriser_payant: false,
         modeles_image: [] as string[],
         modeles_video: [] as string[],
+        modeles_audio: [] as string[],
         plafond_appels: 0,
         plafond_usd: 0,
+        plafond_secondes_audio: 1800,
         livraison_provisoire: false,
       }
       if (init?.method === "PUT")

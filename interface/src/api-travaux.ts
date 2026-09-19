@@ -7,8 +7,11 @@ import type { TravailAudio } from "./api-travaux-audio"
 
 export type CadreDelegation = {
   autoriser_local: boolean; autoriser_payant: boolean
-  modeles_image: string[]; modeles_video: string[]; modeles_3d?: string[]; modeles_audio?: string[]
-  plafond_appels: number; plafond_usd: number; livraison_provisoire: boolean
+  modeles_image: string[]; modeles_video: string[]; modeles_3d?: string[]; modeles_audio: string[]
+  plafond_appels: number; plafond_usd: number
+  /** SN12 : le temps de calcul sonore local autorisé à l'agent, en secondes, cumulé pour ce jeu. */
+  plafond_secondes_audio: number
+  livraison_provisoire: boolean
   origine?: string
 }
 export type DemandeTravail = {

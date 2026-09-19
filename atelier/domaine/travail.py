@@ -80,6 +80,12 @@ def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> 
 def cadre_valide(brut: dict[str, Any]) -> dict[str, Any]:
     defauts = {"autoriser_local": True, "autoriser_payant": False, "modeles_image": [],
                "modeles_video": [], "modeles_3d": [], "modeles_audio": [], "plafond_appels": 20, "plafond_usd": 0.0,
+               # SN12 : le plafond de temps de calcul sonore de l'agent, en secondes —
+               # estimé avant lancement par `ServiceSeriesSon.temps`, compté sur ce qui a
+               # tourné. Une demi-heure par défaut : de quoi suivre une série de bruitages
+               # ou une musique sans y penser, et assez bas pour qu'un agent parti en boucle
+               # se cogne avant d'avoir tourné la carte graphique toute une soirée.
+               "plafond_secondes_audio": 1800.0,
                "livraison_provisoire": False}
     if set(brut) - set(defauts):
         raise TravailRefuse("Le cadre contient un réglage inconnu.")
@@ -94,4 +100,7 @@ def cadre_valide(brut: dict[str, Any]) -> dict[str, Any]:
         raise TravailRefuse("Le plafond d'appels doit être un entier positif ou nul.")
     if isinstance(cadre["plafond_usd"], bool) or not isinstance(cadre["plafond_usd"], (int, float)) or not math.isfinite(cadre["plafond_usd"]) or cadre["plafond_usd"] < 0:
         raise TravailRefuse("Le budget doit être un montant positif ou nul.")
+    if (isinstance(cadre["plafond_secondes_audio"], bool) or not isinstance(cadre["plafond_secondes_audio"], (int, float))
+            or not math.isfinite(cadre["plafond_secondes_audio"]) or cadre["plafond_secondes_audio"] < 0):
+        raise TravailRefuse("Le plafond de temps de calcul sonore doit être un nombre de secondes positif ou nul.")
     return cadre

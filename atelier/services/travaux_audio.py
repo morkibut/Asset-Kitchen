@@ -262,7 +262,15 @@ class ServiceTravauxAudio(ServiceTravaux):
                  "cree_le": time.time(), "etat": "prepare", "etape": "relecture", "references": [], "bandes": [],
                  "generation_image": None, "clip": None, "reference_asset": None, "son": None,
                  "appels_engages": 0, "reserve": None, "demarrage_recu": False,
-                 "annonce": {"appels": 1, "reservation_usd": 0, "methodes": [{"nature": "audio", "modele": d["modele"], "locale": True, "payante": False}],
+                 "annonce": {"appels": 1, "reservation_usd": 0,
+                     # « secondes » (SN12) : l'estimation du temps de calcul de CE
+                     # tirage, lue sur les mêmes mesures que le bouton de la série
+                     # (`ServiceSeriesSon.temps`, un seul tirage) — c'est elle que le
+                     # plafond de temps de calcul de l'agent compare, avant le calcul.
+                     # `None` sans mesure encore : ni chiffre ni refus tant que rien
+                     # n'a tourné sur cette machine.
+                     "methodes": [{"nature": "audio", "modele": d["modele"], "locale": True, "payante": False,
+                                   "secondes": self.a.series_son.temps(d["modele"], 1)["temps_s"]}],
                      "mesures": [m for m in self.a.file_locale.mesures() if m["modele"] == d["modele"]],
                      "limite": "Un calcul local, aucun coût fournisseur en argent. La durée demandée est celle du son, pas le temps de calcul."}}
             if compo is not None:

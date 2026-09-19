@@ -302,7 +302,7 @@ class ServiceTravaux:
             raise TravailRefuse("Le cadre n'autorise pas la référence payante.")
         if d["livrer_provisoire"] and not cadre["livraison_provisoire"]:
             raise TravailRefuse("Le cadre n'autorise pas la livraison provisoire automatique.")
-        montant, appels = 0.0, 0
+        montant, appels, secondes_audio = 0.0, 0, 0.0
         for p in self._projet(travail["projet"]).glob("*/travail.json"):
             autre = self._lire(p)
             if autre["acteur"] != AGENT or autre["identifiant"] == travail["identifiant"]:
@@ -311,6 +311,8 @@ class ServiceTravaux:
             reserve = autre.get("reserve") or {}
             montant += max(reel, reserve.get("usd", 0))
             appels += max(autre["appels_engages"], reserve.get("appels", 0))
+            reel_secondes = sum(c["consomme"] for c in self._consommations(autre) if c.get("unite") == "secondes")
+            secondes_audio += max(reel_secondes, reserve.get("secondes", 0))
         reel = sum(c["cout_usd"] for c in self._consommations(travail))
         # Dès que la référence a réellement été facturée, sa mesure remplace
         # l'estimation ; la vidéo encore à soumettre reste réservée à côté.
@@ -321,8 +323,21 @@ class ServiceTravaux:
             raise TravailRefuse("Le budget de l'agent est déjà consommé ou réservé par d'autres demandes.")
         if appels + annonce["appels"] > cadre["plafond_appels"]:
             raise TravailRefuse("Le plafond d'appels de l'agent est déjà consommé ou réservé.")
+        # SN12 : le plafond de temps de calcul sonore. Estimé par le temps que
+        # `ServiceTravauxAudio` a mis dans l'annonce (lui-même lu sur
+        # `ServiceSeriesSon.temps`, les mesures déjà faites par ce moteur sur
+        # cette machine) ; compté ensuite sur ce qui a réellement tourné
+        # (`consommations_locales`, unité « secondes »). Sans mesure encore,
+        # l'estimation est nulle et ce premier tirage n'est jamais refusé pour
+        # un temps inconnu — seul ce qui a vraiment tourné compte alors.
+        reel_secondes_travail = sum(c["consomme"] for c in self._consommations(travail) if c.get("unite") == "secondes")
+        estimee_secondes = sum(m.get("secondes") or 0 for m in (methodes or []) if m.get("nature") == "audio")
+        voulu_secondes = max(reel_secondes_travail, estimee_secondes)
+        if voulu_secondes and secondes_audio + voulu_secondes > cadre["plafond_secondes_audio"] + 1e-6:
+            raise TravailRefuse("Le plafond de temps de calcul sonore de l'agent est déjà consommé ou réservé — "
+                                "relevez-le dans le cadre de délégation de ce jeu.")
         if reserver or travail.get("reserve") is not None:
-            travail["reserve"] = {"usd": voulu, "appels": annonce["appels"]}
+            travail["reserve"] = {"usd": voulu, "appels": annonce["appels"], "secondes": voulu_secondes}
 
     async def demarrer(self, projet: str, identifiant: str, acteur: str = AUTEUR,
                        *, reprise=False) -> dict[str, Any]:

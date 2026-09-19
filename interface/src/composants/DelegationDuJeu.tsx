@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
 import { api, dollars, Refus } from "../api"
 import { travaux, type CadreDelegation, type TravailSuivi } from "../api-travaux"
+import { workflows } from "../api-workflows"
+import { nomMoteurSonore } from "./WorkflowsLocaux"
 import { Libelle } from "./pieces"
 
 const CHAMP = "min-w-0 rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[13px] text-encre-controle"
@@ -9,7 +11,8 @@ const ETATS: Record<TravailSuivi["etat"], string> = {
   prepare: "Préparée", en_cours: "En cours", a_reprendre: "À reprendre", a_verifier: "À vérifier",
   externe_inconnu: "Acceptation externe inconnue", termine: "Terminée", annule: "Annulée",
 }
-type Methode = { identifiant: string; detail: string; indisponible?: string | null }
+/** `titre` : ce qu'on lit, quand l'identifiant n'est pas lisible (un moteur sonore et sa version). */
+type Methode = { identifiant: string; titre?: string; detail: string; indisponible?: string | null }
 const message = (erreur: unknown) => erreur instanceof Refus ? erreur.message : "Impossible de relire le cadre de ce jeu. Réessayez."
 
 export function DelegationDuJeu(props: {
@@ -25,8 +28,10 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
   const [sauve, setSauve] = useState("")
   const [images, setImages] = useState<Methode[]>([])
   const [videos, setVideos] = useState<Methode[]>([])
+  const [sons, setSons] = useState<Methode[]>([])
   const [choisirImages, setChoisirImages] = useState(false)
   const [choisirVideos, setChoisirVideos] = useState(false)
+  const [choisirSons, setChoisirSons] = useState(false)
   const [demandes, setDemandes] = useState<TravailSuivi[]>([])
   const [erreur, setErreur] = useState("")
   const [catalogueAbsent, setCatalogueAbsent] = useState("")
@@ -43,13 +48,22 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
       if (!vivant) return
       setCadre(c); setSauve(JSON.stringify(c)); setDemandes(liste.filter(t => t.acteur === "agent"))
       setChoisirImages(c.modeles_image.length > 0); setChoisirVideos(c.modeles_video.length > 0)
+      setChoisirSons((c.modeles_audio ?? []).length > 0)
     }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
-    Promise.allSettled([api.modeles("1:1"), api.modelesVideo(5, "480p", "1:1")]).then(([i, v]) => {
+    Promise.allSettled([api.modeles("1:1"), api.modelesVideo(5, "480p", "1:1"), workflows.lister()]).then(([i, v, s]) => {
       if (!vivant) return
       if (i.status === "fulfilled") setImages(i.value.modeles.map(m => ({ identifiant: m.identifiant,
         detail: `${m.references_max} référence${m.references_max > 1 ? "s" : ""} au maximum · ${m.unite === "usd" ? "facturé en dollars" : "autre unité : " + m.unite}`, indisponible: m.refus })))
       if (v.status === "fulfilled") setVideos(v.value.modeles.map(m => ({ identifiant: m.identifiant,
         detail: m.de_la_maison ? "Sur cette machine" : "Fournisseur distant", indisponible: m.grise })))
+      if (s.status === "fulfilled") setSons([
+        // sfxr n'a pas de profil installé : c'est un algorithme du code, pas
+        // un moteur ComfyUI à retrouver — il se propose toujours.
+        { identifiant: "sfxr", titre: "sfxr", detail: "Sons rétro calculés sur place, en un instant, sans carte graphique." },
+        // Une seule ligne par moteur : sa version la plus récente.
+        ...s.value.profils.filter(p => p.nature === "audio")
+          .filter((p, _, tous) => !tous.some(q => q.identifiant === p.identifiant && q.cree_le > p.cree_le))
+          .map(p => ({ identifiant: p.modele, titre: p.nom || nomMoteurSonore(p.identifiant), detail: "Calcul sur cette machine" }))])
       setCatalogueAbsent(i.status === "rejected" || v.status === "rejected" ? "Une partie du catalogue est indisponible. Les modèles déjà autorisés sont conservés." : "")
     })
     return () => { vivant = false }
@@ -61,12 +75,16 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
   }
   async function enregistrer() {
     if (!cadre) return
-    if ((choisirImages && !cadre.modeles_image.length) || (choisirVideos && !cadre.modeles_video.length)) {
+    if ((choisirImages && !cadre.modeles_image.length) || (choisirVideos && !cadre.modeles_video.length) || (choisirSons && !cadre.modeles_audio.length)) {
       setErreur("Choisissez au moins un modèle dans chaque sélection, ou revenez à « Toutes les méthodes compatibles ».")
       return
     }
     if (!Number.isFinite(cadre.plafond_usd) || cadre.plafond_usd < 0 || !Number.isInteger(cadre.plafond_appels) || cadre.plafond_appels < 0) {
       setErreur("Les limites doivent être positives ou nulles ; le nombre de générations doit être entier.")
+      return
+    }
+    if (!Number.isFinite(cadre.plafond_secondes_audio) || cadre.plafond_secondes_audio < 0) {
+      setErreur("Le plafond de temps de calcul sonore doit être un nombre de secondes positif ou nul.")
       return
     }
     setOccupe(true); setErreur(""); setConfirmation("")
@@ -83,7 +101,7 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
     finally { setSuiviOccupe(false) }
   }
 
-  const change = !!cadre && (JSON.stringify(cadre) !== sauve || (choisirImages && !cadre.modeles_image.length) || (choisirVideos && !cadre.modeles_video.length))
+  const change = !!cadre && (JSON.stringify(cadre) !== sauve || (choisirImages && !cadre.modeles_image.length) || (choisirVideos && !cadre.modeles_video.length) || (choisirSons && !cadre.modeles_audio.length))
   const cout = demandes.reduce((s, t) => s + t.consommations.reduce((total, c) => total + c.cout_usd, 0), 0)
   const enCours = demandes.filter(t => !["termine", "prepare", "annule"].includes(t.etat)).length
   return <section aria-label="Délégation de ce jeu" className="space-y-[22px] text-encre">
@@ -98,12 +116,14 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
       <fieldset disabled={occupe} className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">Les limites du jeu</legend><div className="grid grid-cols-2 gap-[22px]">
         <label className="flex flex-col gap-[8px] text-[13px]">Nombre total de générations autorisées<input type="number" min={0} step={1} className={CHAMP} value={cadre.plafond_appels} onChange={e => changer({ plafond_appels: Number(e.target.value) })} /></label>
         <label className="flex flex-col gap-[8px] text-[13px]">Budget total en dollars<input type="number" min={0} step="0.01" className={CHAMP} value={cadre.plafond_usd} onChange={e => changer({ plafond_usd: Number(e.target.value) })} /></label>
-      </div><div className="mt-[14px] text-[12px] text-encre-3"><Libelle aide="agent.cadre-durable">Le budget est réservé avant les générations</Libelle><p className="mt-[8px]">Une nouvelle référence puis un clip demandent deux générations. Deux demandes simultanées partagent les mêmes limites. Les prix annoncés sont estimés : une facture plus élevée reste comptée et peut bloquer la suite.</p><p className="mt-[8px]">Ce total couvre les demandes complètes de l’agent conservées dans ce jeu, même après fermeture. Modifier la limite n’efface pas leur consommation. Une acceptation inconnue garde sa réservation.</p></div>
+        <label className="flex flex-col gap-[8px] text-[13px]">Temps de calcul sonore autorisé, en secondes<input type="number" min={0} step={30} className={CHAMP} value={cadre.plafond_secondes_audio} onChange={e => changer({ plafond_secondes_audio: Number(e.target.value) })} /></label>
+      </div><div className="mt-[14px] text-[12px] text-encre-3"><Libelle aide="agent.cadre-durable">Le budget est réservé avant les générations</Libelle><p className="mt-[8px]">Une nouvelle référence puis un clip demandent deux générations. Deux demandes simultanées partagent les mêmes limites. Les prix annoncés sont estimés : une facture plus élevée reste comptée et peut bloquer la suite.</p><p className="mt-[8px]">Ce total couvre les demandes complètes de l’agent conservées dans ce jeu, même après fermeture. Modifier la limite n’efface pas leur consommation. Une acceptation inconnue garde sa réservation.</p><p className="mt-[8px]">Le temps de calcul sonore n’est pas de l’argent — c’est la carte graphique de la machine, occupée. Il est estimé avant chaque série d’après les calculs déjà faits sur cette machine, et compté sur ce qui a vraiment tourné.</p></div>
       {!cadre.autoriser_payant && <p className="mt-[8px] text-[12px] text-encre-3">Les générations payantes sont désactivées ; le montant reste mémorisé.</p>}</fieldset>
       <fieldset disabled={occupe} className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">Les méthodes autorisées</legend>
         {catalogueAbsent && <p className="mb-[14px] text-[13px] text-encre-3">{catalogueAbsent}</p>}
         <div className="grid grid-cols-2 gap-[22px]"><ChoixMethodes nom="Image de référence" methodes={images} selection={cadre.modeles_image} restreint={choisirImages} onMode={v => { setChoisirImages(v); if (!v) changer({ modeles_image: [] }); else setConfirmation("") }} onSelection={v => changer({ modeles_image: v })} />
-          <ChoixMethodes nom="Clip vidéo" methodes={videos} selection={cadre.modeles_video} restreint={choisirVideos} onMode={v => { setChoisirVideos(v); if (!v) changer({ modeles_video: [] }); else setConfirmation("") }} onSelection={v => changer({ modeles_video: v })} /></div>
+          <ChoixMethodes nom="Clip vidéo" methodes={videos} selection={cadre.modeles_video} restreint={choisirVideos} onMode={v => { setChoisirVideos(v); if (!v) changer({ modeles_video: [] }); else setConfirmation("") }} onSelection={v => changer({ modeles_video: v })} />
+          <ChoixMethodes nom="Son" methodes={sons} selection={cadre.modeles_audio} restreint={choisirSons} onMode={v => { setChoisirSons(v); if (!v) changer({ modeles_audio: [] }); else setConfirmation("") }} onSelection={v => changer({ modeles_audio: v })} /></div>
         <p className="mt-[14px] text-[12px] text-encre-3">Autoriser un modèle ne suffit pas à le rendre utilisable : ses références, son format, ses réglages et sa disponibilité sont vérifiés pour chaque demande. Aucun autre fournisseur ne le remplace en silence.</p>
       </fieldset>
       <fieldset disabled={occupe} className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">Livrer dans Godot</legend><label className="flex items-start gap-[8px] text-[13px]"><input type="checkbox" className="mt-[4px] accent-ok" checked={cadre.livraison_provisoire} onChange={e => changer({ livraison_provisoire: e.target.checked })} /><span>Permettre une livraison provisoire automatique<span className="mt-[4px] block text-[12px] text-encre-3">L’agent peut la demander pour tester le jeu tout de suite. Le dossier Godot doit être associé dans Livraisons. Une animation livrée reste disponible pour être jugée ou remplacée.</span></span></label></fieldset>
@@ -123,8 +143,8 @@ function ChoixMethodes({ nom, methodes, selection, restreint, onMode, onSelectio
   onMode: (restreint: boolean) => void; onSelection: (selection: string[]) => void
 }) {
   const [recherche, setRecherche] = useState("")
-  const liste = [...methodes, ...selection.filter(id => !methodes.some(m => m.identifiant === id)).map(identifiant => ({ identifiant, detail: "Absent du catalogue actuel — autorisation conservée", indisponible: null }))]
+  const liste: Methode[] = [...methodes, ...selection.filter(id => !methodes.some(m => m.identifiant === id)).map(identifiant => ({ identifiant, detail: "Absent du catalogue actuel — autorisation conservée", indisponible: null }))]
   return <div className="min-w-0 space-y-[8px]"><label className="flex flex-col gap-[8px] text-[13px]">{nom}<select className={CHAMP} value={restreint ? "selection" : "tous"} onChange={e => onMode(e.target.value === "selection")}><option value="tous">Toutes les méthodes compatibles</option><option value="selection">Choisir les méthodes autorisées</option></select></label>
-    {restreint && <><input aria-label={`Rechercher un modèle · ${nom}`} type="search" className={`${CHAMP} w-full`} placeholder="Fournisseur ou modèle…" value={recherche} onChange={e => setRecherche(e.target.value)} /><div className="max-h-[300px] space-y-[14px] overflow-y-auto py-[8px]" role="group" aria-label={`Modèles autorisés · ${nom}`}>{liste.filter(m => m.identifiant.toLocaleLowerCase().includes(recherche.toLocaleLowerCase())).map(m => <label key={m.identifiant} className="flex items-start gap-[8px] text-[12px]"><input type="checkbox" className="mt-[4px] accent-ok" checked={selection.includes(m.identifiant)} onChange={e => onSelection(e.target.checked ? [...selection, m.identifiant] : selection.filter(id => id !== m.identifiant))} /><span className="min-w-0 break-words">{m.identifiant}<span className="mt-[4px] block text-encre-3">{m.detail}</span>{m.indisponible && <span className="mt-[4px] block text-encre-3">Disponibilité selon la demande : {m.indisponible}</span>}</span></label>)}</div><p className="text-[12px] text-encre-3">{selection.length} modèle{selection.length > 1 ? "s" : ""} autorisé{selection.length > 1 ? "s" : ""}{!selection.length ? " · choisissez au moins une méthode" : ""}</p></>}
+    {restreint && <><input aria-label={`Rechercher un modèle · ${nom}`} type="search" className={`${CHAMP} w-full`} placeholder="Fournisseur ou modèle…" value={recherche} onChange={e => setRecherche(e.target.value)} /><div className="max-h-[300px] space-y-[14px] overflow-y-auto py-[8px]" role="group" aria-label={`Modèles autorisés · ${nom}`}>{liste.filter(m => `${m.titre ?? ""} ${m.identifiant}`.toLocaleLowerCase().includes(recherche.toLocaleLowerCase())).map(m => <label key={m.identifiant} className="flex items-start gap-[8px] text-[12px]"><input type="checkbox" className="mt-[4px] accent-ok" checked={selection.includes(m.identifiant)} onChange={e => onSelection(e.target.checked ? [...selection, m.identifiant] : selection.filter(id => id !== m.identifiant))} /><span className="min-w-0 break-words">{m.titre ?? m.identifiant}<span className="mt-[4px] block text-encre-3">{m.detail}</span>{m.indisponible && <span className="mt-[4px] block text-encre-3">Disponibilité selon la demande : {m.indisponible}</span>}</span></label>)}</div><p className="text-[12px] text-encre-3">{selection.length} modèle{selection.length > 1 ? "s" : ""} autorisé{selection.length > 1 ? "s" : ""}{!selection.length ? " · choisissez au moins une méthode" : ""}</p></>}
   </div>
 }

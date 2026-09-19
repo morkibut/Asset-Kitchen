@@ -4,6 +4,24 @@ from typing import Any
 from urllib.parse import quote
 
 from atelier.audio.sfxr import DEPARTS
+from atelier.domaine.travail import TravailRefuse
+
+# L'identifiant qui désigne sfxr dans « les moteurs sonores permis » du cadre
+# de délégation (SN12) — au même titre que les identifiants des moteurs
+# ComfyUI (`sa3-small-sfx`…), mais sans version : sfxr est un algorithme du
+# code, pas un fichier de poids qui se réinstalle.
+MOTEUR = "sfxr"
+
+
+def _autoriser(atelier, projet):
+    """Refuse avec sa raison si le cadre de ce jeu n'autorise pas sfxr à
+    l'agent. **Seul ce chemin (MCP) est borné** : l'écran de l'auteur appelle
+    `atelier.sfxr` directement, jamais par ici — même règle que le reste du
+    cadre de délégation, qui ne s'applique jamais à l'auteur."""
+    permis = atelier.travaux.cadre(projet).get("modeles_audio") or []
+    if permis and MOTEUR not in permis:
+        raise TravailRefuse(f"« {MOTEUR} » n'est pas une méthode sonore autorisée à l'agent dans ce jeu — "
+            "l'ajouter aux méthodes permises du cadre de délégation, écran Réglages › Agent MCP.")
 
 
 def installer_sfxr(serveur, atelier, refus):
@@ -32,6 +50,7 @@ def installer_sfxr(serveur, atelier, refus):
     @refus
     async def fabriquer(project: str, seed: int, start: str | None = None, parameters: dict[str, Any] | None = None,
             name: str | None = None) -> dict[str, Any]:
+        _autoriser(atelier, project)
         return vue(project, atelier.sfxr.fabriquer(project, depart=start, parametres=parameters, graine=seed, nom=name))
 
     @serveur.tool(name="make_retro_sound_variants", meta=meta("Tirer des variantes d'un son rétro"),
@@ -42,5 +61,6 @@ def installer_sfxr(serveur, atelier, refus):
     @refus
     async def variantes(project: str, seed: int, start: str | None = None, parameters: dict[str, Any] | None = None,
             count: int = 8, name: str | None = None) -> list[dict[str, Any]]:
+        _autoriser(atelier, project)
         return [vue(project, son) for son in atelier.sfxr.variantes(project, depart=start,
             parametres=parameters, graine=seed, nombre=count, nom=name)]
