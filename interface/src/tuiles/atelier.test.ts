@@ -413,3 +413,31 @@ describe("TU8 (écran) — le réglage « décor »", () => {
     expect(reglagesMoteur(j).decor).toBe("leger")
   })
 })
+
+describe("Le bord se creuse à l'échelle de la pièce", () => {
+  // Une pièce de 64 px est l'agrandissement d'une pièce de 32 px : toutes les longueurs
+  // passées au moteur doublent ensemble, y compris la longueur d'onde du bruit de bord.
+  // Elle valait 5 px quelle que soit la pièce, pendant que la profondeur du même bruit
+  // suivait la taille : au-delà de 64 px la silhouette devenait trop pentue pour qu'un
+  // bord retombe au même pixel d'une pièce à l'autre, et « Teste les raccords » signalait
+  // des coutures décalées. Voir docs/PLAN-tuiles.md, « Le bruit de bord suit la taille ».
+  const LONGUEURS = ["cornerRadius", "edgeRoughness", "edgeFrequency", "edgeFade"] as const
+
+  test("toutes les longueurs du bord doublent avec la pièce", () => {
+    const de = (taille: number) => reglagesMoteur(nouveauJeu({ nom: "Essai", sorte: "sol", taille, graine: 7 })) as unknown as Record<string, number>
+    const petite = de(16), moyenne = de(32), grande = de(64)
+    for (const cle of LONGUEURS) {
+      expect(moyenne[cle]).toBeCloseTo(petite[cle] * 2, 10)
+      expect(grande[cle]).toBeCloseTo(moyenne[cle] * 2, 10)
+    }
+  })
+
+  test("les pièces se raccordent à chaque taille offerte, pour les trois sortes à masques", () => {
+    for (const taille of [16, 32, 64]) {
+      for (const [sorte, pieces] of [["sol", 47], ["chemin", 16], ["coins-15", 15]] as const) {
+        const j = nouveauJeu({ nom: "Essai", sorte, taille, graine: 31415 })
+        expect({ taille, sorte, ...verifier(j, atlasDe(j)) }).toEqual({ taille, sorte, defauts: [], pieces })
+      }
+    }
+  })
+})

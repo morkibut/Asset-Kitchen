@@ -559,6 +559,49 @@ est tenue par les essais (`tests/test_tu4_livraison.py`, `test_tu7_mur.py`,
   reste non lancé : les mesures de sc-clone (T6) disent qu'un modèle ne tient pas une grille
   4×4 qui se raccorde.
 
+## Le bruit de bord suit la taille de pièce (20 septembre 2026)
+
+Sur une grande pièce, « Teste les raccords » signalait de temps en temps une couture décalée
+d'un pixel — pas toujours, selon la graine. Mesuré sur `sol`, `chemin` et `coins-15` :
+rien à 16 ou 32 px, quelques graines sur 40 à 96 px, un peu plus à 128 px.
+
+La cause n'est pas la taille, c'est un rapport. Le bruit qui creuse les bords a deux
+grandeurs : sa PROFONDEUR (`edgeRoughness`, le réglage « irrégularité ») et sa LONGUEUR
+D'ONDE (`edgeFrequency`, la largeur d'une vague). `interface/src/tuiles/atelier.ts` faisait
+suivre la taille de pièce à toutes ses longueurs en pixels — arrondi, irrégularité, marge,
+fondu — sauf à celle-là, restée à 5 px en dur. Une pièce de 128 px creusait donc quatre fois
+plus profond dans des vagues toujours aussi étroites : la silhouette devenait trop pentue
+pour qu'un bord retombe au même pixel d'une pièce à l'autre.
+
+Mesure, sur `sol`, 20 graines par ligne — le rapport profondeur / longueur d'onde décide, et
+la taille n'y entre que parce qu'elle changeait le rapport :
+
+| taille | irrégularité | longueur d'onde | rapport | planches en défaut |
+|---|---|---|---|---|
+| 32 | 3 (le défaut) | 5,3 px | 0,56 | 0 / 20 |
+| 32 | 8 | 5,3 px | 1,50 | 0 / 20 |
+| 32 | 10 (le maximum du curseur) | 5,3 px | 1,88 | 1 / 20 |
+| 32 | 12 | 5,3 px | 2,25 | 5 / 20 |
+| 128 | 3 (le défaut) | 4,9 px | 2,44 | 4 / 40 |
+| 128 | 3 | 21,3 px (à l'échelle) | 0,56 | 0 / 20 |
+
+**Correction** : `edgeFrequency` suit la taille comme ses voisines, `5 * s / 32`. Le moteur
+recopié n'est pas touché (décision 1) — seule change la ligne d'`atelier.ts` qui traduit les
+réglages de l'écran en réglages du moteur. Une pièce de 96 ou de 128 px est désormais
+exactement l'agrandissement d'une pièce de 32 px, bord compris. Contrôlé : 60 graines × 8
+tailles × 3 sortes, aucune couture décalée.
+
+Deux conséquences à connaître :
+
+- **L'image change partout sauf à 32 px.** C'est la taille de référence des réglages, elle
+  est identique au bit près ; les autres tailles rendent un bord plus fin (petites pièces) ou
+  plus large (grandes). Un jeu de tuiles déjà livré en 16 ou en 64 px ne se re-rendra donc pas
+  à l'identique. L'atlas gardé en asset, lui, ne bouge pas.
+- **Le défaut connu de W16 à forte irrégularité reste**, et c'est la même mécanique : à 32 px,
+  le curseur poussé à 10 remonte le rapport à 1,9. La note de `tile-check.js` l'attribuait à la
+  façon dont `seamlessFbm` reboucle ; la mesure ci-dessus dit que c'est le rapport qui décide.
+  Le validateur continue de le signaler, conformément à RP10.
+
 ## Questions laissées ouvertes
 
 - **La taille de pièce par défaut.** L'écran reprend celle de l'univers du jeu. Les essais de
