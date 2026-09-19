@@ -77,12 +77,25 @@ def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> 
         raise TravailRefuse("Les réglages doivent contenir uniquement des valeurs JSON finies.") from erreur
 
 
+def sans_version(modele: str) -> str:
+    """« ComfyUI:sa3-small-sfx@3f2a… » → « ComfyUI:sa3-small-sfx »."""
+    return modele.split("@", 1)[0]
+
+
+def moteur_sonore_permis(modele: str, permis: list[str]) -> bool:
+    """Un moteur sonore se permet à l'agent par son nom, pas par sa version :
+    une réinstallation (nouvelle version du profil) ne lui retire pas le droit.
+    Une liste vide permet tout, comme pour l'image et la vidéo — qui, elles,
+    gardent la version exacte."""
+    return not permis or sans_version(modele) in {sans_version(p) for p in permis}
+
+
 def cadre_valide(brut: dict[str, Any]) -> dict[str, Any]:
     defauts = {"autoriser_local": True, "autoriser_payant": False, "modeles_image": [],
                "modeles_video": [], "modeles_3d": [], "modeles_audio": [], "plafond_appels": 20, "plafond_usd": 0.0,
                # SN12 : le plafond de temps de calcul sonore de l'agent, en secondes —
-               # estimé avant lancement par `ServiceSeriesSon.temps`, compté sur ce qui a
-               # tourné. Une demi-heure par défaut : de quoi suivre une série de bruitages
+               # estimé au lancement par `ServiceSeriesSon.temps`, compté sur ce qui a
+               # tourné (sons et partitions de YuE2, jamais la 3D). Une demi-heure par défaut : de quoi suivre une série de bruitages
                # ou une musique sans y penser, et assez bas pour qu'un agent parti en boucle
                # se cogne avant d'avoir tourné la carte graphique toute une soirée.
                "plafond_secondes_audio": 1800.0,

@@ -15,7 +15,6 @@ import pytest
 from atelier.audio.graphes import stable_audio_3_small_sfx, yue2_depuis_partition, yue2_partition
 from atelier.domaine.travail import TravailRefuse
 from atelier.services import Atelier
-from atelier.services.partition_son import ServicePartitionSon
 from tests.test_au7_au8 import raccorder
 from tests.test_au14_generation import ComfySon, fermer, lancer
 
@@ -61,7 +60,6 @@ async def yue2(tmp_path, double):
     atelier = Atelier(racine=tmp_path / "yue2-partition", fabrique_fournisseur=lambda: double)
     raccorder(atelier, comfy)
     await atelier.ouvrir()
-    atelier.partition_son = ServicePartitionSon(atelier)  # ligne à poser dans services/__init__.py (SN7)
     p2 = yue2_depuis_partition(checkpoint="yue2_3b_int8_convrot.safetensors")
     _declarer(comfy, p2)
     p1 = yue2_partition(checkpoint="yue2_3b_int8_convrot.safetensors")
@@ -117,7 +115,6 @@ async def test_ecrire_refuse_sans_yue2_installe(tmp_path, double):
     atelier = Atelier(racine=tmp_path / "sans-yue2", fabrique_fournisseur=lambda: double)
     raccorder(atelier, comfy)
     await atelier.ouvrir()
-    atelier.partition_son = ServicePartitionSon(atelier)
     with pytest.raises(TravailRefuse, match="installé"):
         await atelier.partition_son.ecrire(atelier.bibliotheque.courant, {"prompt": "tavern song"})
     await fermer(atelier)
@@ -169,6 +166,80 @@ async def test_partition_refusee_par_un_moteur_qui_ne_la_recoit_pas(yue2):
         await atelier.travaux_audio.preparer(projet, {
             "cle": "mauvais-moteur", "modele": installe_autre["modele"], "famille": "chanson",
             "prompt": "tavern song", "partition": "X:1\nK:C\nC|"}, "auteur")
+
+
+async def test_jouer_reprend_exactement_le_style_et_les_paroles_de_l_ecriture(yue2):
+    # Le second temps repart avec ce qui a servi au premier, conservé avec la
+    # partition (`pour_jouer`) — jamais un style recomposé autrement, ni des
+    # paroles retapées entre-temps.
+    atelier, comfy, _ = yue2
+    projet = atelier.bibliotheque.courant
+    doc = await atelier.partition_son.ecrire(projet, {"prompt": "tavern song", "paroles": "", "tempo": 92})
+    assert doc["tempo"] == 92
+    assert doc["pour_jouer"]["texte_relu"] == doc["texte_compose"]
+    assert doc["pour_jouer"]["paroles"] == doc["paroles"] == ""
+    t = await atelier.travaux_audio.preparer(projet, {**doc["pour_jouer"], "cle": "jouer-pareil",
+        "partition": "X:1\nK:C\nC2D2|", "secondes": 60}, "auteur")
+    fini = await lancer(atelier, t)
+    assert fini["etat"] == "termine", fini.get("raison")
+    musique = next(n for n in comfy.envois[1]["prompt"].values() if n["class_type"] == "YuE2GenerateMusic")
+    ecrit = next(n for n in comfy.envois[0]["prompt"].values() if n["class_type"] == "YuE2GenerateABC")
+    assert musique["inputs"]["style"] == ecrit["inputs"]["style"] == doc["texte_compose"]
+    assert musique["inputs"]["lyrics"] == ecrit["inputs"]["lyrics"] == ""
+
+
+# ── L'agent : « Écrire la partition » passe par le cadre de délégation ──
+
+
+async def _outil_refuse(serveur, projet, motif):
+    from mcp.server.mcpserver.exceptions import ToolError
+    with pytest.raises(ToolError, match=motif):
+        await serveur.call_tool("write_song_score", {"project": projet, "prompt": "tavern song"})
+
+
+async def test_l_agent_ne_passe_pas_un_cadre_qui_ne_permet_pas_yue2(yue2):
+    from atelier.mcp.serveur import creer_serveur
+    atelier, comfy, installe = yue2
+    projet = atelier.bibliotheque.courant
+    serveur = creer_serveur(atelier)
+    atelier.travaux.regler_cadre(projet, {"modeles_audio": ["sfxr"]})
+    await _outil_refuse(serveur, projet, "autorisée")
+    atelier.travaux.regler_cadre(projet, {"autoriser_local": False})
+    await _outil_refuse(serveur, projet, "local")
+    atelier.travaux.regler_cadre(projet, {"plafond_secondes_audio": 0})
+    await _outil_refuse(serveur, projet, "temps de calcul sonore")
+    assert not comfy.envois
+    # L'auteur, lui, écrit sa partition quel que soit le cadre de l'agent.
+    atelier.travaux.regler_cadre(projet, {"modeles_audio": ["sfxr"], "autoriser_local": False, "plafond_secondes_audio": 0})
+    assert (await atelier.partition_son.ecrire(projet, {"prompt": "tavern song"}))["partition"] == ABC_RENDU
+
+
+async def test_le_temps_de_la_partition_s_impute_a_l_agent(yue2, monkeypatch):
+    import itertools
+
+    from atelier.mcp.serveur import creer_serveur
+    from atelier.services import partition_son
+    atelier, comfy, installe = yue2
+    # Une horloge qui avance de cinq secondes à chaque lecture : le double
+    # répond d'un coup, ComfyUI prendrait des dizaines de secondes.
+    tic = itertools.count(0, 5)
+    monkeypatch.setattr(partition_son, "_horloge", lambda: float(next(tic)))
+    projet = atelier.bibliotheque.courant
+    serveur = creer_serveur(atelier)
+    # Permis par le nom du moteur qui la jouera, et un plafond minuscule : la
+    # première partition passe, son temps compte, la seconde est refusée.
+    atelier.travaux.regler_cadre(projet, {"modeles_audio": [installe["modele"]], "plafond_secondes_audio": 1e-9})
+    ecrit = await serveur.call_tool("write_song_score", {"project": projet, "prompt": "tavern song", "tempo": 92})
+    assert not ecrit.is_error, ecrit
+    assert atelier.travaux.temps_sonore_de_l_agent(projet) > 0
+    await _outil_refuse(serveur, projet, "temps de calcul sonore")
+    assert len(comfy.envois) == 1
+    # Ce qu'il faut pour la jouer est rendu tel quel, prêt pour prepare_audio.
+    pour_jouer = ecrit.structured_content["pour_jouer"]
+    atelier.travaux.regler_cadre(projet, {"modeles_audio": [installe["modele"]]})
+    prepare = await serveur.call_tool("prepare_audio", {"project": projet,
+        "request": {**pour_jouer, "cle": "jouer-agent", "secondes": 60}})
+    assert not prepare.is_error, prepare
 
 
 async def test_partition_hors_famille_est_refusee(yue2):

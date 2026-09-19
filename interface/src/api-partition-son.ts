@@ -7,7 +7,10 @@ import { appeler } from "./api"
 
 export type PartitionSon = {
   identifiant: string; projet: string; prompt: string | null; texte_compose: string
-  paroles: string; partition: string; cree_le: number
+  paroles: string; partition: string; cree_le: number; tempo?: number | null
+  /** La demande de « Jouer cette partition » : le style et les paroles qui l'ont
+   *  écrite (absente d'une partition écrite avant le 19 septembre 2026). */
+  pour_jouer?: { famille: "chanson"; modele: string | null; prompt: string | null; texte_relu: string; paroles: string; partition: string }
 }
 const base = (p: string) => `/projects/${encodeURIComponent(p)}`
 export const partitionSon = {

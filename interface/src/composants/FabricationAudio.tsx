@@ -196,16 +196,22 @@ function PartitionYue2({ projet, texte, paroles, profils, onSon }: {
   const ecrire = async () => {
     setEcriture(true); setErreurEcriture(""); setDoc(null); setJeu(null)
     try {
-      const d = await partitionSon.ecrire(projet, { prompt: texte, ...(paroles.trim() ? { paroles } : {}) })
+      // Les paroles partent telles qu'à l'écran, même vides : ce qui est écrit
+      // est ce qui sera joué.
+      const d = await partitionSon.ecrire(projet, { prompt: texte, paroles })
       setDoc(d); setTexteEdite(d.partition)
     } catch (e) { setErreurEcriture(message(e)) } finally { setEcriture(false) }
   }
   const jouer = async () => {
-    if (!profil) return
+    if (!profil || !doc) return
     setOccupeJeu(true); setErreurJeu("")
+    // Le second temps repart avec le style et les paroles qui ont écrit la
+    // partition (conservés avec elle), jamais avec ce qui a été retapé depuis.
+    const p = doc.pour_jouer
     try {
-      const t = await travauxAudio.preparer(projet, { cle: crypto.randomUUID(), modele: profil.modele, famille: "chanson",
-        prompt: texte, paroles, partition: texteEdite, secondes: 120, options: {} })
+      const t = await travauxAudio.preparer(projet, { cle: crypto.randomUUID(), modele: p?.modele ?? profil.modele, famille: "chanson",
+        prompt: p?.prompt ?? doc.prompt ?? texte, texte_relu: p?.texte_relu ?? doc.texte_compose, paroles: p?.paroles ?? doc.paroles,
+        partition: texteEdite, secondes: 120, options: {} })
       setJeu(await travauxAudio.lancer(t))
     } catch (e) { setErreurJeu(message(e)) } finally { setOccupeJeu(false) }
   }
@@ -221,6 +227,11 @@ function PartitionYue2({ projet, texte, paroles, profils, onSon }: {
       <label className="grid gap-[4px] text-[12px] text-encre-3">Partition (ABC), à corriger avant de la jouer
         <textarea aria-label="Partition" className="min-h-[128px] w-full rounded-7 border border-contour bg-carte p-[14px] font-mono text-[12px] leading-[1.6] text-encre-controle" value={texteEdite} onChange={(e) => setTexteEdite(e.target.value)} />
       </label>
+      <div aria-label="Ce qui a écrit la partition" className="grid gap-[4px] text-[12px] text-encre-3">
+        <p>Elle sera jouée avec le style et les paroles qui l’ont écrite :</p>
+        <p className="whitespace-pre-wrap break-words font-mono"><span className="text-encre-4">Style : </span>{doc.texte_compose}</p>
+        <p className="whitespace-pre-wrap break-words font-mono"><span className="text-encre-4">Paroles : </span>{doc.paroles || "aucune"}</p>
+      </div>
       <div className="flex flex-wrap items-center gap-[8px]">
         <button type="button" className={PRINCIPAL} disabled={!texteEdite.trim() || occupeJeu || jeu?.etat === "en_cours"} onClick={() => void jouer()}>Jouer cette partition</button>
         {jeu && <span className="text-[12.5px] text-encre-3">{ETATS_JEU[jeu.etat] ?? jeu.etat}</span>}

@@ -265,10 +265,10 @@ class ServiceTravauxAudio(ServiceTravaux):
                  "annonce": {"appels": 1, "reservation_usd": 0,
                      # « secondes » (SN12) : l'estimation du temps de calcul de CE
                      # tirage, lue sur les mêmes mesures que le bouton de la série
-                     # (`ServiceSeriesSon.temps`, un seul tirage) — c'est elle que le
-                     # plafond de temps de calcul de l'agent compare, avant le calcul.
-                     # `None` sans mesure encore : ni chiffre ni refus tant que rien
-                     # n'a tourné sur cette machine.
+                     # (`ServiceSeriesSon.temps`, un seul tirage), pour être lue.
+                     # Le plafond de l'agent ne s'y fie pas : il relit l'estimation
+                     # au lancement (`ServiceTravaux._estimation_sonore`), et refuse
+                     # dès que le plafond est atteint, mesure ou pas.
                      "methodes": [{"nature": "audio", "modele": d["modele"], "locale": True, "payante": False,
                                    "secondes": self.a.series_son.temps(d["modele"], 1)["temps_s"]}],
                      "mesures": [m for m in self.a.file_locale.mesures() if m["modele"] == d["modele"]],

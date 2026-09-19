@@ -8,6 +8,8 @@ export type DemandeAudio = {
   /** Un son de famille, hors workflow collé (SN2) : `paroles` compose le texte, `partition`
    *  (SN9) part telle quelle, sans repasser par YuE2GenerateABC (« Jouer cette partition »). */
   famille?: FamilleSon; paroles?: string; partition?: string
+  /** Le texte qui part tel quel, sans être recomposé (celui qui a écrit la partition, SN9). */
+  texte_relu?: string
 }
 export type TravailAudio = Omit<Travail, "nature" | "demande" | "annonce" | "objectif"> & {
   nature: "audio"; demande: DemandeAudio; son: string | null; snapshot_audio: Omit<DemandeAudio, "cle" | "modele" | "nom">

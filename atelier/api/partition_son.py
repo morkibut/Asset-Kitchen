@@ -1,24 +1,15 @@
 """SN9 : le premier étage de YuE2 seul — « Écrire la partition ».
 
 « Jouer cette partition » n'a pas de route à elle : c'est un son ordinaire
-(`POST /audio-jobs/prepare`, famille `chanson`, le modèle du profil
-`yue2-partition-jouee` lu dans `GET /workflow-profiles`, et `partition` posé
-à la valeur relue), qui profite de toute la mécanique déjà écrite pour un son
+(`POST /audio-jobs/prepare`) avec la demande `pour_jouer` rendue par
+l'écriture (famille `chanson`, modèle du profil `yue2-partition-jouee`, style
+et paroles qui ont écrit la partition) et `partition` posé à la valeur relue.
+Il profite de toute la mécanique déjà écrite pour un son
 (`atelier/api/workflows.py`).
 
-**Non enregistré** : `atelier/api/app.py` appartient à SN7. Ajouter dans
-`app.py` :
-
-    from atelier.api.partition_son import routeur as routeur_partition_son
-    ...
-    application.include_router(routeur_partition_son, prefix="/api")
-
-et, dans `atelier/services/__init__.py` (aussi SN7), après la ligne qui crée
-`self.travaux_audio` :
-
-    from atelier.services.partition_son import ServicePartitionSon
-    ...
-    self.partition_son = ServicePartitionSon(self)
+Enregistré dans `atelier/api/app.py` ; le service est créé dans
+`atelier/services/__init__.py`. Cette route est celle de l'écran : l'auteur
+n'y est jamais bridé par le cadre de délégation de l'agent.
 """
 from fastapi import APIRouter, Request
 

@@ -7,6 +7,7 @@ import { travaux } from "../api-travaux"
 import { workflows, type ProfilWorkflow } from "../api-workflows"
 import { ecoute, seriesSon, texteSon, type Annonce, type Composition } from "../api-series-son"
 import { sfxr } from "../api-sfxr"
+import { partitionSon } from "../api-partition-son"
 import { serie, tirageRendu } from "../son-essais"
 
 vi.mock("../api-travaux-audio", () => ({ travauxAudio: { preparer: vi.fn(), lire: vi.fn(), lancer: vi.fn() } }))
@@ -17,6 +18,7 @@ vi.mock("../api-series-son", () => ({
   jeuxDeVariantes: { lire: vi.fn(), renommer: vi.fn(), lister: vi.fn(), creer: vi.fn(), ajouter: vi.fn(), retirer: vi.fn() },
   ecoute: { onde: vi.fn(), adresse: (p: string, id: string, r: number) => `/api/projects/${p}/sounds/${id}/preview.wav?revision=${r}&brut=false` },
 }))
+vi.mock("../api-partition-son", () => ({ partitionSon: { ecrire: vi.fn(), lire: vi.fn() } }))
 vi.mock("../api-sfxr", async (original) => ({ ...(await original<typeof import("../api-sfxr")>()), sfxr: { departs: vi.fn(), fabriquer: vi.fn(), variantes: vi.fn() } }))
 
 const profil: ProfilWorkflow = {
@@ -193,6 +195,34 @@ test("chanson et jingle : deux familles derrière une puce ; la voix est à veni
   fireEvent.change(screen.getByLabelText("Ce qu’on doit entendre"), { target: { value: "Tavern song, male voice" } })
   fireEvent.change(screen.getByLabelText("Paroles"), { target: { value: "[Verse]\nPour the ale" } })
   await waitFor(() => expect(texteSon.composer).toHaveBeenLastCalledWith("jeu", { famille: "chanson", prompt: "Tavern song, male voice", paroles: "[Verse]\nPour the ale" }))
+})
+
+test("jouer la partition repart avec le style et les paroles qui l’ont écrite, et l’écran les montre", async () => {
+  const yue2: ProfilWorkflow = { ...profil, identifiant: "yue2-partition-jouee", nom: "YuE2 — jouer la partition", modele: "ComfyUI:yue2-partition-jouee@1" }
+  vi.mocked(workflows.lister).mockResolvedValue({ profils: [profil, yue2] })
+  vi.mocked(partitionSon.ecrire).mockResolvedValue({ identifiant: "p1", projet: "jeu", prompt: "Tavern song", cree_le: 1,
+    texte_compose: "Style écrit, 92 BPM", paroles: "", partition: "X:1\nK:C\nC|",
+    pour_jouer: { famille: "chanson", modele: yue2.modele, prompt: "Tavern song", texte_relu: "Style écrit, 92 BPM", paroles: "", partition: "X:1\nK:C\nC|" } })
+  vi.mocked(travauxAudio.preparer).mockResolvedValue(t)
+  render(<FabricationAudio projet="jeu" onFermer={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Chanson et jingle" }))
+  fireEvent.click(screen.getByRole("button", { name: "Chanson" }))
+  fireEvent.change(screen.getByLabelText("Ce qu’on doit entendre"), { target: { value: "Tavern song" } })
+  fireEvent.change(screen.getByLabelText("Paroles"), { target: { value: "" } })
+  const ecrire =await screen.findByRole("button", { name: "Écrire la partition" })
+  await waitFor(() => expect(ecrire).toBeEnabled())
+  fireEvent.click(ecrire)
+  // Des paroles vides partent quand même : c'est ce que l'écran montre.
+  await waitFor(() => expect(partitionSon.ecrire).toHaveBeenCalledWith("jeu", { prompt: "Tavern song", paroles: "" }))
+  const ecrit = await screen.findByLabelText("Ce qui a écrit la partition")
+  expect(within(ecrit).getByText("Style écrit, 92 BPM")).toBeInTheDocument()
+  expect(within(ecrit).getByText("aucune")).toBeInTheDocument()
+  // Des paroles retapées après coup ne partent pas avec cette partition.
+  fireEvent.change(screen.getByLabelText("Paroles"), { target: { value: "[Verse]\nautre chose" } })
+  fireEvent.click(screen.getByRole("button", { name: "Jouer cette partition" }))
+  await waitFor(() => expect(travauxAudio.preparer).toHaveBeenCalled())
+  expect(vi.mocked(travauxAudio.preparer).mock.calls[0][1]).toMatchObject({ famille: "chanson", modele: yue2.modele,
+    prompt: "Tavern song", texte_relu: "Style écrit, 92 BPM", paroles: "", partition: "X:1\nK:C\nC|" })
 })
 
 test("interface et rétro : pas de phrase, des départs sfxr", async () => {

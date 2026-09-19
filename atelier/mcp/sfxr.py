@@ -4,12 +4,13 @@ from typing import Any
 from urllib.parse import quote
 
 from atelier.audio.sfxr import DEPARTS
-from atelier.domaine.travail import TravailRefuse
+from atelier.domaine.travail import TravailRefuse, moteur_sonore_permis
 
 # L'identifiant qui désigne sfxr dans « les moteurs sonores permis » du cadre
-# de délégation (SN12) — au même titre que les identifiants des moteurs
-# ComfyUI (`sa3-small-sfx`…), mais sans version : sfxr est un algorithme du
-# code, pas un fichier de poids qui se réinstalle.
+# de délégation (SN12), à côté des moteurs ComfyUI (`ComfyUI:sa3-small-sfx@…`).
+# Tous les moteurs sonores se permettent par leur nom, sans version
+# (`atelier.domaine.travail.moteur_sonore_permis`) : réinstaller un moteur ne
+# coupe pas l'agent. sfxr, algorithme du code, n'a de toute façon pas de version.
 MOTEUR = "sfxr"
 
 
@@ -17,9 +18,11 @@ def _autoriser(atelier, projet):
     """Refuse avec sa raison si le cadre de ce jeu n'autorise pas sfxr à
     l'agent. **Seul ce chemin (MCP) est borné** : l'écran de l'auteur appelle
     `atelier.sfxr` directement, jamais par ici — même règle que le reste du
-    cadre de délégation, qui ne s'applique jamais à l'auteur."""
+    cadre de délégation, qui ne s'applique jamais à l'auteur. sfxr ne compte
+    pas dans le plafond de temps sonore : il calcule en un instant, sans carte
+    graphique."""
     permis = atelier.travaux.cadre(projet).get("modeles_audio") or []
-    if permis and MOTEUR not in permis:
+    if not moteur_sonore_permis(MOTEUR, permis):
         raise TravailRefuse(f"« {MOTEUR} » n'est pas une méthode sonore autorisée à l'agent dans ce jeu — "
             "l'ajouter aux méthodes permises du cadre de délégation, écran Réglages › Agent MCP.")
 
