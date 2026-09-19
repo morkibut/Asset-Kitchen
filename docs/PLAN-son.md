@@ -245,9 +245,9 @@ audio de SN7 visera).
 Un repère sonore se pose sur une image d'une bande ; il désigne un emplacement du sujet. La
 salle d'essai des animations le joue ; la livraison ajoute une piste audio à l'`AnimationPlayer`.
 
-- [ ] Le repère « image 3 : pas » de la marche vers le sud se joue à chaque boucle dans la salle
+- [x] Le repère « image 3 : pas » de la marche vers le sud se joue à chaque boucle dans la salle
       d'essai, et dans Godot.
-- [ ] Changer la cadence d'une bande garde le repère sur la même image.
+- [x] Changer la cadence d'une bande garde le repère sur la même image.
 
 ### SN8 · Les sons d'interface et rétro, sans ComfyUI
 
@@ -272,10 +272,10 @@ paroles, partition affichée et corrigeable, et le texte de sa licence daté ave
 (le jeu n'est pas vendu : aucune garde de licence à l'écran).
 Les jingles se calent sur la tonalité et le tempo de l'univers.
 
-- [ ] Une boucle d'exploration de 24 mesures à 90 BPM tourne sans saut de temps dans Godot.
+- [x] Une boucle d'exploration de 24 mesures à 90 BPM tourne sans saut de temps dans Godot.
 - [ ] Un jingle de victoire part avec la tonalité et le tempo de l'univers (la provenance le
       montre), et l'auteur l'a écouté contre la boucle d'exploration.
-- [ ] Une chanson YuE2 sort avec le texte daté de sa licence dans `credits.json`.
+- [x] Une chanson YuE2 sort avec le texte daté de sa licence dans `credits.json`.
 
 ### SN10 · La musique qui s'adapte
 
@@ -286,9 +286,9 @@ Des couches de même tempo, tonalité, graine et durée (calme, tension, combat)
 aux noms de clips stables. La séparation de pistes (Demucs) demanderait un nœud : hors tranche,
 sauf décision de l'auteur.
 
-- [ ] Dans Godot, passer d'« exploration » à « combat » se fait sur la mesure suivante, sans
+- [x] Dans Godot, passer d'« exploration » à « combat » se fait sur la mesure suivante, sans
       coupure.
-- [ ] Monter la couche « tension » ne décale pas les autres.
+- [ ] Monter la couche « tension » ne décale pas les autres. *(Tenu en partie : Godot confirme que les couches ont la même longueur ; leur position ne se lit pas en mode sans écran, l'écoute reste à faire.)*
 
 ### SN11 · Les voix
 
@@ -312,9 +312,9 @@ Les outils MCP pour une série sur un emplacement, une musique avec ses réglage
 sonore, une publication ; les moteurs sonores permis et un plafond de temps de calcul dans le
 cadre de délégation.
 
-- [ ] L'agent Godot demande « les pas du héros sur l'herbe », suit la série, et récupère un jeu
+- [x] L'agent Godot demande « les pas du héros sur l'herbe », suit la série, et récupère un jeu
       de variantes livré, sans que l'auteur ouvre l'atelier.
-- [ ] Un moteur non permis dans le cadre est refusé avec sa raison.
+- [x] Un moteur non permis dans le cadre est refusé avec sa raison.
 
 ## Questions laissées ouvertes
 
