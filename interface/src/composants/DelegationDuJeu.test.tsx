@@ -92,6 +92,15 @@ test("le plafond de temps de calcul sonore se règle, et sfxr se propose parmi l
   }))
 })
 
+test("un moteur sonore autorisé avant sa réinstallation reste coché sur sa nouvelle version", async () => {
+  vi.mocked(travaux.cadre).mockResolvedValue({ ...structuredClone(initial), modeles_audio: ["ComfyUI:sa3-small-sfx@1"] })
+  vi.mocked(workflows.lister).mockResolvedValue({ profils: [{ identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX",
+    nature: "audio", version: "2", modele: "ComfyUI:sa3-small-sfx@2", cree_le: 0, references_min: 0, references_max: 0 } as never] })
+  render(<DelegationDuJeu projet="jeu" onAtelier={() => {}} />)
+  expect(await screen.findByRole("checkbox", { name: /^Stable Audio 3 Small-SFX/ })).toBeChecked()
+  expect(screen.queryByRole("checkbox", { name: /ComfyUI:sa3-small-sfx@1/ })).toBeNull()
+})
+
 test("un échec de lecture ne présente aucun faux cadre enregistrable", async () => {
   vi.mocked(travaux.cadre).mockRejectedValueOnce(new Error("hors ligne"))
   render(<DelegationDuJeu projet="jeu" onAtelier={() => {}} />)

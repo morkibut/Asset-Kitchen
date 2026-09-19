@@ -123,7 +123,7 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
         {catalogueAbsent && <p className="mb-[14px] text-[13px] text-encre-3">{catalogueAbsent}</p>}
         <div className="grid grid-cols-2 gap-[22px]"><ChoixMethodes nom="Image de référence" methodes={images} selection={cadre.modeles_image} restreint={choisirImages} onMode={v => { setChoisirImages(v); if (!v) changer({ modeles_image: [] }); else setConfirmation("") }} onSelection={v => changer({ modeles_image: v })} />
           <ChoixMethodes nom="Clip vidéo" methodes={videos} selection={cadre.modeles_video} restreint={choisirVideos} onMode={v => { setChoisirVideos(v); if (!v) changer({ modeles_video: [] }); else setConfirmation("") }} onSelection={v => changer({ modeles_video: v })} />
-          <ChoixMethodes nom="Son" methodes={sons} selection={cadre.modeles_audio} restreint={choisirSons} onMode={v => { setChoisirSons(v); if (!v) changer({ modeles_audio: [] }); else setConfirmation("") }} onSelection={v => changer({ modeles_audio: v })} /></div>
+          <ChoixMethodes nom="Son" methodes={sonsSansVersion(sons, cadre.modeles_audio)} selection={cadre.modeles_audio} restreint={choisirSons} onMode={v => { setChoisirSons(v); if (!v) changer({ modeles_audio: [] }); else setConfirmation("") }} onSelection={v => changer({ modeles_audio: v })} /></div>
         <p className="mt-[14px] text-[12px] text-encre-3">Autoriser un modèle ne suffit pas à le rendre utilisable : ses références, son format, ses réglages et sa disponibilité sont vérifiés pour chaque demande. Aucun autre fournisseur ne le remplace en silence.</p>
       </fieldset>
       <fieldset disabled={occupe} className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">Livrer dans Godot</legend><label className="flex items-start gap-[8px] text-[13px]"><input type="checkbox" className="mt-[4px] accent-ok" checked={cadre.livraison_provisoire} onChange={e => changer({ livraison_provisoire: e.target.checked })} /><span>Permettre une livraison provisoire automatique<span className="mt-[4px] block text-[12px] text-encre-3">L’agent peut la demander pour tester le jeu tout de suite. Le dossier Godot doit être associé dans Livraisons. Une animation livrée reste disponible pour être jugée ou remplacée.</span></span></label></fieldset>
@@ -136,6 +136,15 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
     </section>
     <footer className="text-[13px] text-encre-3"><p>Les clés de fournisseurs et les anciens garde-fous par séance restent dans les réglages de l’atelier. Ces derniers encadrent les anciens outils MCP d’image ; leur compteur est séparé de celui des demandes complètes ci-dessus.</p><button className={`${BOUTON} mt-[14px]`} onClick={onAtelier}>Clés et anciens garde-fous de séance</button></footer>
   </section>
+}
+
+// Le serveur permet un moteur sonore par son nom, sans la version : une
+// autorisation donnée avant une réinstallation reste cochée sur la ligne
+// du moteur réinstallé, au lieu de paraître perdue.
+function sonsSansVersion(methodes: Methode[], selection: string[]): Methode[] {
+  const nom = (id: string) => id.split("@")[0]
+  return methodes.map(m => selection.includes(m.identifiant) ? m
+    : { ...m, identifiant: selection.find(id => nom(id) === nom(m.identifiant)) ?? m.identifiant })
 }
 
 function ChoixMethodes({ nom, methodes, selection, restreint, onMode, onSelection }: {
