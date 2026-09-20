@@ -142,15 +142,22 @@ voit au lieu de se cacher.
 ### `GU3` — Les garde-fous : un essai refuse ce qui redevient pompeux
 
 **Critères**
-- [ ] `quoi` au-delà de 140 signes : essai rouge, avec la clé fautive dans le message.
-- [ ] Fiche sans `groupe` : essai rouge.
-- [ ] « À savoir » au-delà de 400 signes : essai rouge.
-- [ ] Écran du guide sans résumé : essai rouge.
-- [ ] Genre de lieu sans écran de guide correspondant : essai rouge.
-- [ ] Les essais tournent dans la suite d'écran habituelle et ne coûtent rien.
+- [x] `quoi` au-delà de 140 signes : essai rouge, avec la clé fautive dans le message.
+- [x] Fiche sans `groupe` : essai rouge.
+- [x] « À savoir » au-delà de 400 signes : essai rouge.
+- [x] Écran du guide sans résumé : essai rouge.
+- [x] Genre de lieu sans écran de guide correspondant : essai rouge.
+- [x] Les essais tournent dans la suite d'écran habituelle et ne coûtent rien.
 
 ⚠️ Les essais de `GU3` sont **rouges à leur écriture** — 229 fiches ne tiennent pas encore les
 limites. Ils passent au vert tranche par tranche, et c'est la mesure d'avancement du chantier.
+
+→ `interface/src/aide.test.ts` : **404 essais rouges sur 658**, un par fiche/écran/genre fautif,
+compris ainsi — 47 fiches où `quoi` dépasse 140 signes, 229 fiches sans `groupe` (les 229, au
+complet — `GU2` l'a laissé facultatif au type le temps du chantier), 106 fiches où le « à savoir »
+dépasse 400 signes (sur 156 qui en portent un), 16 écrans du guide sans résumé dans `RESUMES` (les
+16, au complet — vide depuis `GU2`), et 6 genres de lieu sans écran de guide, dédié ou hérité :
+`travail`, `installation`, `envoi`, `tuiles`, `jeu-de-tuiles`, `livraison-de-tuiles`.
 
 ### `GU4` — Les résumés des écrans
 
