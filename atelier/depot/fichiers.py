@@ -447,6 +447,34 @@ class Fichiers:
             raise ValueError(f"aucun jeu « {projet} »")
         self._ecrire_json(chemin, contenu)
 
+    # ── Le journal de la migration des matières (RG8) ────────────────────────
+    #
+    # **À côté de `projet.json`, comme `styles.json` et `mouvements.json`** : c'est
+    # un fichier du jeu, il part avec lui, et `effacer_projet` l'emporte sans qu'un
+    # nettoyage ait à le connaître. Même validation d'identifiant que `styles_du_jeu`
+    # — un identifiant qui viserait un dossier parent écrirait hors de `projets/`.
+    #
+    # **Il ne se relit jamais tout seul** : `parcourir_*` ne le voit pas, et
+    # l'index n'en sait rien. Il n'est lu que par la migration qui l'a écrit.
+
+    def journal_matieres_du_jeu(self, projet: str) -> Path:
+        if not projet or any(c in projet for c in "/\\:") or projet.startswith("."):
+            raise ValueError(f"« {projet} » n'est pas un identifiant de jeu")
+        return self.projets / projet / "migration-matieres.json"
+
+    def lire_journal_matieres(self, projet: str) -> Any | None:
+        """Le contenu brut, ou `None` — **absent ou illisible, sans les distinguer**.
+        Le service qui migre fait la différence lui-même (`journal_matieres_du_jeu`
+        dit si le fichier est là) : un journal illisible ne s'écrase jamais."""
+        return self._lire_json(self.journal_matieres_du_jeu(projet))
+
+    def ecrire_journal_matieres(self, projet: str, contenu: dict[str, Any]) -> None:
+        """Refusé si le jeu n'a pas de `projet.json` — même garde que `ecrire_styles`."""
+        chemin = self.journal_matieres_du_jeu(projet)
+        if not (chemin.parent / "projet.json").is_file():
+            raise ValueError(f"aucun jeu « {projet} »")
+        self._ecrire_json(chemin, contenu)
+
     # `prereglages.json` — les jeux de réglages nommés (US-134) — est retiré le
     # 16 septembre 2026 avec ses trois routes (`RP18`) : rien ne l'écrivait
     # depuis un écran. Un fichier déjà posé sur le disque d'un auteur n'est plus
@@ -726,6 +754,18 @@ class Fichiers:
             contenu = self._lire_json(fiche)
             if isinstance(contenu, dict) and contenu.get("identifiant"):
                 yield contenu
+
+    def lire_asset(self, generation: str, rang: int) -> dict[str, Any] | None:
+        """La fiche d'**un** asset, telle qu'elle est sur le disque — ou `None`.
+
+        **Pour qui veut réécrire une fiche sans la lire d'abord dans l'index** (RG8) :
+        l'index peut être en retard ou en avance, le fichier fait foi. Une fiche
+        absente ou abîmée rend `None`, et l'appelant la laisse où elle est plutôt que
+        de la remplacer par une copie de l'index."""
+        if not generation or "/" in generation or "\\" in generation or ".." in generation:
+            return None
+        contenu = self._lire_json(self.generations / generation / f"{rang}-asset.json")
+        return contenu if isinstance(contenu, dict) and contenu.get("identifiant") else None
 
     # ── Catalogue ────────────────────────────────────────────────────────────
 

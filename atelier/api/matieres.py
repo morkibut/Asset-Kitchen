@@ -75,6 +75,18 @@ def declarer(requete: Request, projet: str, asset: str, corps: Declaration) -> d
     return _matiere_json(atelier, resultat)
 
 
+@routeur.post("/migrate")
+def migrer(requete: Request, projet: str) -> dict[str, Any]:
+    """Faire entrer dans la bibliothèque les matières rangées dans un sujet (RG8).
+
+    **Rejouable, et gratuite** : la même passe que l'ouverture du jeu, qui ne change
+    pas un octet quand il n'y a rien à migrer. Le rapport dit ce qui a été migré,
+    les sujets que la migration a laissés vides — l'écran proposera de les jeter,
+    par `DELETE /api/characters/{sujet}?projet=` — et ce qui n'a pas pu l'être. Rien n'est
+    jamais effacé ; l'ancien état de chaque image est au journal du jeu."""
+    return requete.app.state.atelier.bibliotheque.migrer_matieres(projet)
+
+
 class Texte(BaseModel):
     model_config = ConfigDict(extra="forbid")
     pierre: str

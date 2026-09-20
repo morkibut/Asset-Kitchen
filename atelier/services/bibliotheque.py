@@ -27,8 +27,11 @@ Quatre règles portées ici, et instaurées une fois pour toutes :
 
 from __future__ import annotations
 
+import json
 import time
-from typing import Any, Iterable
+import unicodedata
+from dataclasses import dataclass, field
+from typing import Any, Callable, Iterable
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset
@@ -48,6 +51,7 @@ from atelier.domaine.galerie import (
 from atelier.domaine.generation import Generation, Statut
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.projet import (
+    MATIERE,
     NOM_BAC_A_SABLE,
     SUJET,
     Collection,
@@ -76,6 +80,68 @@ REFUS_MATIERE_D_UN_SUJET = (
     "Cette image est rangée dans un sujet : sors-la de son sujet d'abord, ou "
     "génère la matière depuis l'écran des tuiles."
 )
+
+# RG8 : les mots de la migration. La nature « matière » n'est plus une chose qu'on
+# crée (RG5 §4) ; « décor » est le repli de RG1 (`capacites_de` la rend à toute
+# nature inconnue) — le plus permissif de la table qui ne sert pas de matière.
+NATURE_MATIERE = "matière"
+NATURE_DE_REPLI = "décor"
+
+# Le journal de la migration, à côté de `projet.json` (`Fichiers.journal_matieres_du_jeu`).
+JOURNAL_MATIERES = "migration-matieres.json"
+
+# Ce que le journal retient de l'image **avant** qu'on la réécrive : de quoi la
+# remettre telle qu'elle était, champ par champ.
+CHAMPS_JOURNALISES = (
+    "personnage",
+    "pose",
+    "direction",
+    "label",
+    "matiere",
+    "personnage_supprime",
+)
+
+
+def _nature_est_matiere(nature: str) -> bool:
+    return unicodedata.normalize("NFC", nature or "").casefold() == NATURE_MATIERE
+
+
+def _demande_une_matiere(generation: Generation) -> bool:
+    """**La seule lecture de la règle** (RG5 §1) : la génération a demandé
+    `echelle="matière"`. Jamais le nom du sujet, jamais son type : un sujet nommé
+    « Matières » qui tient de vrais décors ne perd rien.
+
+    Comparée en NFC : la même lettre peut s'écrire d'un ou de deux points de code,
+    et un fichier repassé par un autre éditeur ne doit pas échapper à la règle."""
+    echelle = generation.demande.get("echelle")
+    return isinstance(echelle, str) and unicodedata.normalize("NFC", echelle) == NATURE_MATIERE
+
+
+def _journal_vierge(projet: str) -> dict[str, Any]:
+    return {"version": 1, "projet": projet, "images": {}, "sujets": {}}
+
+
+def _entree_valide(entree: Any) -> bool:
+    return isinstance(entree, dict) and isinstance(entree.get("avant"), dict)
+
+
+def _empreinte(contenu: Any) -> str:
+    return json.dumps(contenu, sort_keys=True, ensure_ascii=False)
+
+
+class _JournalIllisible(Exception):
+    """Un journal qui est là mais qu'on ne sait pas lire : la migration s'arrête."""
+
+
+@dataclass(slots=True)
+class _Migration:
+    """Une image à faire entrer dans la bibliothèque, et ce qu'il en coûte."""
+
+    asset: Asset
+    sujet: str | None
+    nom_du_sujet: str | None
+    cible: dict[str, Any]
+    collections: list[str] = field(default_factory=list)
 
 
 class ProjetInconnu(ErreurAtelier):
@@ -122,6 +188,16 @@ class ServiceBibliotheque:
         self._assets = assets
         self._diffusion = diffusion or Diffusion()
         self._courant: str | None = None
+        # RG8 : les jeux dont la migration des matières a été passée **dans ce
+        # processus**. Elle se rejoue sans danger, mais la rejouer à chaque lecture
+        # de la bibliothèque relirait toutes les images du jeu pour rien.
+        self._matieres_verifiees: set[str] = set()
+        # RG8 : qui change la nature d'un sujet — `(jeu, sujet, nature)`. Branché
+        # par l'`Atelier` sur `ServiceProduction.regler_personnage`, seul écrivain
+        # de sujet du dépôt : cette classe est montée avant lui et ne peut pas le
+        # recevoir à la construction. Non branché, la sixième règle de la migration
+        # ne s'applique pas et le rapport le dit.
+        self.changer_nature: Callable[[str, str, str], Any] | None = None
 
     # ── L'ouverture ──────────────────────────────────────────────────────────
 
@@ -145,6 +221,10 @@ class ServiceBibliotheque:
 
         self._courant = self._projet_valide(self._fichiers.lire_etat().get("courant"))
         self._noter_courant()
+        # **Le jeu qui s'ouvre reçoit sa bibliothèque de matières** (RG8) : la
+        # migration ne lève jamais et n'écrit rien quand il n'y a rien à migrer.
+        if self._courant is not None:
+            self.assurer_matieres(self._courant, annoncer=False)
         purges = self.purger()
         return {"reconstruit": reconstruit, "purges": purges, "adoptes": adoptes}
 
@@ -183,6 +263,9 @@ class ServiceBibliotheque:
         définitive : effacer les fichiers suffit à effacer l'asset, sans qu'une
         pierre tombale ait à être gardée quelque part.
         """
+        # Les fichiers ont peut-être changé à la main : la migration des matières
+        # se repasse au prochain regard sur chaque jeu (RG8).
+        self._matieres_verifiees.clear()
         self._base.vider()
 
         projets = [Projet.depuis_json(p) for p in self._fichiers.lire_projets()]
@@ -295,6 +378,9 @@ class ServiceBibliotheque:
         if projet is not None:
             projet.dernier_travail_le = time.time()
             self.sauver_projet(projet)
+            # **Ouvrir un jeu lui apporte sa bibliothèque de matières** (RG8) —
+            # avant l'annonce ci-dessous, qui dira tout d'un coup.
+            self.assurer_matieres(projet.identifiant, annoncer=False)
         self._noter_courant()
         self._annoncer()
         return self._courant
@@ -743,6 +829,10 @@ class ServiceBibliotheque:
         pas."""
         if self._base.lire_projet(projet) is None:
             raise ProjetInconnu(projet, [p.identifiant for p in self.projets()])
+        # **Jamais lue avant d'être complète** (RG8) : un jeu qu'aucun écran n'a
+        # ouvert — l'agent qui liste ses matières d'abord — passe par la même
+        # migration que celui qu'on ouvre. Une fois par jeu et par processus.
+        self.assurer_matieres(projet)
         return self._base.assets(projet=projet, matiere=True, limite=limite)
 
     def declarer_matiere(
@@ -790,6 +880,414 @@ class ServiceBibliotheque:
         self._assets.sauver(asset)
         self._annoncer()
         return asset
+
+    # ── La migration des matières (RG8) ──────────────────────────────────────
+    #
+    # `docs/RG5-la-bibliotheque-des-matieres.md` §5, six règles. Une matière
+    # rangée dans un sujet — le contournement de l'auteur, avant que la
+    # bibliothèque existe — rejoint la bibliothèque **sans perdre son nom**.
+    #
+    # **Ce qui s'écrit sur le disque de l'auteur, et comment.** Rien d'autre que des
+    # fiches d'images, `collections.json`, la nature d'un sujet et le journal ci-dessous.
+    # Aucun fichier n'est effacé, aucune image n'est touchée. Le journal est écrit
+    # **avant** la première fiche réécrite, et il garde l'ancienne valeur de chaque
+    # champ qu'on change : `personnage`, `pose`, `direction`, `label` — de quoi tout
+    # remettre à la main. La migration ne le fait pas elle-même : le défaire
+    # demanderait de dire quoi faire à la passe suivante, qui remigrerait.
+
+    def assurer_matieres(
+        self, projet: str, *, annoncer: bool = True
+    ) -> dict[str, Any] | None:
+        """La migration, **une fois par jeu et par processus, et sans jamais lever**.
+
+        C'est le point d'entrée des trois endroits qui regardent un jeu — l'ouverture
+        de l'atelier, le choix d'un jeu, la lecture de sa bibliothèque de matières.
+        Ouvrir un projet ne doit jamais échouer à cause d'elle : une erreur qu'on
+        n'attendait pas devient une phrase dans le rapport, pas une exception.
+
+        Rend le rapport de la passe, ou `None` quand ce jeu a déjà été regardé."""
+        if projet in self._matieres_verifiees:
+            return None
+        try:
+            return self.migrer_matieres(projet, annoncer=annoncer)
+        except Exception as erreur:  # noqa: BLE001 — jamais bloquer l'ouverture d'un jeu
+            self._matieres_verifiees.add(projet)
+            return {"projet": projet, "refusee": f"la migration a échoué : {erreur}"}
+
+    def migrer_matieres(self, projet: str, *, annoncer: bool = True) -> dict[str, Any]:
+        """Les six règles de RG5 §5, sur un jeu. **Rejouable : la seconde passe ne
+        change pas un octet.**
+
+        1. Toute image dont la génération a demandé `echelle="matière"` devient
+           matière, quel que soit le sujet où elle est rangée — ou aucun.
+        2. Ses champs `personnage`, `pose`, `direction` sont vidés.
+        3. Son nom : `label` vide, elle prend celui du sujet qu'elle quitte ; sinon
+           elle garde le sien. Aucune matière ne perd son nom, aucune n'en gagne un faux.
+        4. Les collections où était rangé le sujet reçoivent l'image comme membre
+           `genre="matiere"` ; le sujet y reste.
+        5. Le sujet n'est pas supprimé. Il reste, vide — `sujets_vides` le dit.
+        6. Un sujet de nature « matière » qui garde des images non migrées repasse
+           en « décor ».
+
+        **Ce que l'auteur a décidé l'emporte** : une image qui figure au journal comme
+        migrée n'est plus jamais reprise. L'auteur qui lui retire la marque « matière »
+        (`declarer_matiere(..., False)`) ne la voit pas revenir à la passe suivante.
+
+        **Une image qu'on ne sait pas relire est sautée et dite**, pas migrée à
+        moitié : fiche absente ou abîmée sur le disque, image brute disparue,
+        génération introuvable. Le journal illisible arrête tout — on ne réécrit rien
+        sans lui, et on ne l'écrase pas.
+
+        Le rapport : `nombre` et `migrees` (cette passe), `deja_migrees` (les passes
+        d'avant), `sujets_vides`, `natures_corrigees`, `sans_nom`, `ignorees`,
+        `refusee` (une phrase, ou `None`), `journal` (son chemin, ou `None`)."""
+        if self._base.lire_projet(projet) is None:
+            raise ProjetInconnu(projet, [p.identifiant for p in self.projets()])
+        self._matieres_verifiees.add(projet)
+
+        rapport: dict[str, Any] = {
+            "projet": projet,
+            "nombre": 0,
+            "migrees": [],
+            "deja_migrees": 0,
+            "sujets_vides": [],
+            "natures_corrigees": [],
+            "natures_non_corrigees": [],
+            "sans_nom": [],
+            "ignorees": [],
+            "refusee": None,
+            "journal": None,
+        }
+        try:
+            journal = self._lire_journal_matieres(projet)
+        except _JournalIllisible as erreur:
+            rapport["refusee"] = str(erreur)
+            return rapport
+        rapport["deja_migrees"] = sum(
+            1 for e in journal["images"].values() if isinstance(e, dict) and e.get("faite")
+        )
+        ecrit = [_empreinte(journal)]
+
+        def poser() -> bool:
+            """Le journal sur le disque, **seulement s'il a changé**. Faux — et une
+            phrase au rapport — quand il n'a pas pu être écrit : on ne réécrit alors
+            plus rien, le journal passe avant."""
+            maintenant = _empreinte(journal)
+            if maintenant == ecrit[0]:
+                return True
+            try:
+                self._fichiers.ecrire_journal_matieres(projet, journal)
+            except (OSError, ValueError) as erreur:
+                rapport["refusee"] = (
+                    f"le journal n'a pas pu être écrit ({erreur}) : rien n'a été réécrit "
+                    "de ce qui suit."
+                )
+                return False
+            ecrit[0] = maintenant
+            return True
+
+        migrations = self._planifier_matieres(projet, journal, rapport)
+        faites: list[_Migration] = []
+        if migrations:
+            for migration in migrations:
+                self._noter_dans_journal(journal, migration)
+            if not poser():
+                return rapport
+            faites = self._appliquer_matieres(projet, migrations, rapport)
+            for migration in faites:
+                journal["images"][migration.asset.identifiant]["faite"] = True
+
+        a_corriger = self._natures_a_corriger(projet)
+        for sujet in a_corriger:
+            fiche = journal["sujets"].setdefault(sujet.identifiant, {"nom": sujet.nom, "images": []})
+            fiche.setdefault("nature", {"avant": sujet.type, "apres": NATURE_DE_REPLI})
+        if not poser():
+            return rapport
+
+        for sujet in a_corriger:
+            self._corriger_la_nature(projet, sujet, rapport)
+
+        for migration in faites:
+            nom = migration.cible["label"]
+            rapport["migrees"].append(
+                {
+                    "identifiant": migration.asset.identifiant,
+                    "nom": nom,
+                    "sujet": migration.sujet,
+                    "sujet_nom": migration.nom_du_sujet,
+                    "nom_pris_au_sujet": not (migration.asset.label or "").strip() and bool(nom.strip()),
+                    "collections": list(migration.collections),
+                }
+            )
+            if not nom.strip():
+                rapport["sans_nom"].append(migration.asset.identifiant)
+        rapport["nombre"] = len(rapport["migrees"])
+        rapport["sujets_vides"] = self._sujets_vides_de_la_migration(projet, journal)
+        if self._fichiers.journal_matieres_du_jeu(projet).is_file():
+            rapport["journal"] = f"projets/{projet}/{JOURNAL_MATIERES}"
+
+        if annoncer and (faites or rapport["natures_corrigees"]):
+            self._annoncer()
+        return rapport
+
+    def _lire_journal_matieres(self, projet: str) -> dict[str, Any]:
+        """Le journal du jeu — neuf s'il n'existe pas. **Un journal qui existe et qu'on
+        ne comprend pas arrête la migration** : le réécrire à neuf perdrait les
+        anciennes valeurs qu'il est seul à porter."""
+        try:
+            chemin = self._fichiers.journal_matieres_du_jeu(projet)
+        except ValueError as erreur:
+            raise _JournalIllisible(str(erreur)) from erreur
+        if not chemin.is_file():
+            return _journal_vierge(projet)
+        contenu = self._fichiers.lire_journal_matieres(projet)
+        if (
+            not isinstance(contenu, dict)
+            or not isinstance(contenu.setdefault("images", {}), dict)
+            or not isinstance(contenu.setdefault("sujets", {}), dict)
+        ):
+            raise _JournalIllisible(
+                f"Le journal de migration des matières de ce jeu ({JOURNAL_MATIERES}) est "
+                "là mais illisible : je ne le réécris pas et je ne migre rien tant qu'il "
+                "n'est pas réparé ou retiré."
+            )
+        return contenu
+
+    def _planifier_matieres(
+        self, projet: str, journal: dict[str, Any], rapport: dict[str, Any]
+    ) -> list[_Migration]:
+        """Les images à migrer, **sans rien écrire**."""
+        generations: dict[str, Generation | None] = {}
+        noms: dict[str, str | None] = {}
+        collections = self._base.collections()
+        migrations: list[_Migration] = []
+
+        for asset in self._base.assets(projet=projet, limite=100_000):
+            entree = journal["images"].get(asset.identifiant)
+            if entree is not None:
+                if not _entree_valide(entree):
+                    rapport["ignorees"].append(
+                        {
+                            "identifiant": asset.identifiant,
+                            "raison": "le journal a une ligne pour cette image que je ne sais pas lire",
+                        }
+                    )
+                    continue
+                if entree.get("faite"):
+                    continue  # décidé : ce que l'auteur en a fait depuis lui appartient
+            try:
+                migration = self._planifier_une_matiere(
+                    projet, asset, entree, generations, noms, collections, rapport
+                )
+            except Exception as erreur:  # noqa: BLE001 — une image qu'on ne comprend pas ne bloque pas les autres
+                rapport["ignorees"].append(
+                    {"identifiant": asset.identifiant, "raison": f"image illisible : {erreur}"}
+                )
+                continue
+            if migration is not None:
+                migrations.append(migration)
+        return migrations
+
+    def _planifier_une_matiere(
+        self,
+        projet: str,
+        asset: Asset,
+        entree: dict[str, Any] | None,
+        generations: dict[str, Generation | None],
+        noms: dict[str, str | None],
+        collections: list[Collection],
+        rapport: dict[str, Any],
+    ) -> _Migration | None:
+        """Ce qu'il faut faire de **cette** image : une migration, ou `None`."""
+        if asset.generation not in generations:
+            generations[asset.generation] = self._base.lire(asset.generation)
+        generation = generations[asset.generation]
+        if generation is None:
+            rapport["ignorees"].append(
+                {
+                    "identifiant": asset.identifiant,
+                    "raison": "la génération de cette image est introuvable",
+                }
+            )
+            return None
+        if not _demande_une_matiere(generation):
+            return None
+
+        # **Le sujet quitté se lit sur le journal quand il y en a une ligne** : une
+        # passe coupée en route a peut-être déjà vidé l'image, et le journal est
+        # alors seul à savoir de quel sujet elle sortait.
+        avant = (
+            entree["avant"]
+            if entree is not None
+            else {champ: getattr(asset, champ) for champ in CHAMPS_JOURNALISES}
+        )
+        sujet = avant.get("personnage") or None
+        if sujet and sujet not in noms:
+            fiche = self._fichiers.lire_personnage(projet, sujet)
+            noms[sujet] = str((fiche or {}).get("nom") or "").strip() or None
+        nom_du_sujet = noms.get(sujet) if sujet else None
+
+        label = asset.label or ""
+        cible: dict[str, Any] = {
+            "matiere": True,
+            "personnage": None,
+            "pose": None,
+            "direction": None,
+            # « Personnage supprimé » ne veut plus rien dire sans personnage :
+            # la fiche de l'image l'afficherait sur une matière.
+            "personnage_supprime": False,
+            "label": label if label.strip() else (nom_du_sujet or label),
+        }
+        conforme = all(getattr(asset, cle) == valeur for cle, valeur in cible.items())
+        if conforme and entree is None:
+            return None  # née matière depuis RG5, ou déjà migrée : rien à faire
+        if not conforme:
+            probleme = self._probleme_de_fiche(asset)
+            if probleme:
+                rapport["ignorees"].append({"identifiant": asset.identifiant, "raison": probleme})
+                return None
+        ajouts = [
+            c.identifiant
+            for c in collections
+            if sujet
+            and c.contient(projet, sujet, SUJET)
+            and not c.contient(projet, asset.identifiant, MATIERE)
+        ]
+        return _Migration(asset, sujet, nom_du_sujet, cible, ajouts)
+
+    def _probleme_de_fiche(self, asset: Asset) -> str | None:
+        """Pourquoi on ne réécrira pas cette image, ou `None`. **La fiche du disque
+        fait foi** : celle de l'index n'est qu'une copie, et la poser par-dessus une
+        fiche qu'on n'a pas su lire la remplacerait sans que personne l'ait vue."""
+        fiche = self._fichiers.lire_asset(asset.generation, asset.rang)
+        if fiche is None:
+            return "la fiche de cette image est absente ou illisible sur le disque"
+        if fiche.get("identifiant") != asset.identifiant:
+            return "la fiche du disque ne dit pas la même image que l'index"
+        if not self._fichiers.existe(asset.brut):
+            return "l'image brute n'est plus sur le disque"
+        return None
+
+    @staticmethod
+    def _noter_dans_journal(journal: dict[str, Any], migration: _Migration) -> None:
+        """**Ajoute au journal, n'y remplace rien** : la première ligne d'une image
+        garde l'état d'avant la première passe, même si une seconde la reprend."""
+        identifiant = migration.asset.identifiant
+        entree = journal["images"].get(identifiant)
+        if entree is None:
+            entree = {
+                "le": time.time(),
+                "avant": {c: getattr(migration.asset, c) for c in CHAMPS_JOURNALISES},
+                "collections": [],
+                "faite": False,
+            }
+            journal["images"][identifiant] = entree
+        deja = entree.setdefault("collections", [])
+        deja.extend(c for c in migration.collections if c not in deja)
+        if migration.sujet:
+            fiche = journal["sujets"].setdefault(
+                migration.sujet, {"nom": migration.nom_du_sujet, "images": []}
+            )
+            if not fiche.get("nom") and migration.nom_du_sujet:
+                fiche["nom"] = migration.nom_du_sujet
+            images = fiche.setdefault("images", [])
+            if identifiant not in images:
+                images.append(identifiant)
+
+    def _appliquer_matieres(
+        self, projet: str, migrations: list[_Migration], rapport: dict[str, Any]
+    ) -> list[_Migration]:
+        """Réécrit les fiches, puis les collections. Rend les images **menées au bout**
+        — celles que le journal peut marquer faites."""
+        reussies: list[_Migration] = []
+        for migration in migrations:
+            try:
+                # Relue à l'instant : un geste de l'auteur entre le plan et l'écriture
+                # ne doit pas être écrasé par la copie du plan.
+                courant = self._base.lire_asset(migration.asset.identifiant) or migration.asset
+                if any(getattr(courant, c) != v for c, v in migration.cible.items()):
+                    for champ, valeur in migration.cible.items():
+                        setattr(courant, champ, valeur)
+                    self._assets.sauver(courant, annoncer=False)
+                reussies.append(migration)
+            except Exception as erreur:  # noqa: BLE001 — une image ne bloque pas les autres
+                rapport["ignorees"].append(
+                    {
+                        "identifiant": migration.asset.identifiant,
+                        "raison": f"réécriture impossible : {erreur}",
+                    }
+                )
+
+        actuelles = {c.identifiant: c for c in self._base.collections()}
+        changees: dict[str, Collection] = {}
+        for migration in reussies:
+            for collection in migration.collections:
+                base = changees.get(collection) or actuelles.get(collection)
+                if base is not None:
+                    changees[collection] = base.avec(projet, migration.asset.identifiant, MATIERE)
+        if changees:
+            try:
+                for collection in changees.values():
+                    self._base.enregistrer_collection(collection)
+                self._ecrire_collections()
+            except Exception as erreur:  # noqa: BLE001
+                rapport["refusee"] = (
+                    f"les collections n'ont pas pu être mises à jour ({erreur}) : les images "
+                    "restent à finir, la prochaine passe les reprendra."
+                )
+                return []
+        return reussies
+
+    def _natures_a_corriger(self, projet: str) -> list[Any]:
+        """Les sujets de nature « matière » qui gardent des images (règle 6) — lus
+        **après** la réécriture des images, donc sur ce qui reste vraiment."""
+        return [
+            sujet
+            for sujet in self._base.personnages_du_projet(projet, limite=None)
+            if _nature_est_matiere(sujet.type)
+            and self._base.assets_du_personnage(sujet.identifiant, projet=projet)
+        ]
+
+    def _corriger_la_nature(self, projet: str, sujet: Any, rapport: dict[str, Any]) -> None:
+        ligne = {"identifiant": sujet.identifiant, "nom": sujet.nom}
+        if self.changer_nature is None:
+            rapport["natures_non_corrigees"].append(
+                {**ligne, "raison": "aucun écrivain de sujet n'est branché sur la bibliothèque"}
+            )
+            return
+        try:
+            self.changer_nature(projet, sujet.identifiant, NATURE_DE_REPLI)
+        except Exception as erreur:  # noqa: BLE001 — un sujet ne bloque pas les autres
+            rapport["natures_non_corrigees"].append({**ligne, "raison": str(erreur)})
+            return
+        rapport["natures_corrigees"].append(
+            {**ligne, "de": NATURE_MATIERE, "vers": NATURE_DE_REPLI}
+        )
+
+    def _sujets_vides_de_la_migration(
+        self, projet: str, journal: dict[str, Any]
+    ) -> list[dict[str, str]]:
+        """Les sujets que la migration a vidés et qui sont **encore là, encore
+        vides** — la liste que l'écran proposera de jeter. Tirée du journal et non de
+        la seule passe en cours : la passe suivante ne migre plus rien, et l'écran
+        doit pourtant retrouver ces sujets. Un sujet que l'auteur a rempli de
+        nouveau, ou jeté, n'y figure plus."""
+        vides: list[dict[str, str]] = []
+        for identifiant, fiche in journal["sujets"].items():
+            if not isinstance(fiche, dict) or not fiche.get("images"):
+                continue
+            donnees = self._fichiers.lire_personnage(projet, identifiant)
+            if donnees is None:
+                continue
+            if self._base.assets_du_personnage(identifiant, projet=projet):
+                continue
+            vides.append(
+                {
+                    "identifiant": identifiant,
+                    "nom": str(donnees.get("nom") or fiche.get("nom") or identifiant),
+                }
+            )
+        return vides
 
     # ── Jeter ────────────────────────────────────────────────────────────────
 
