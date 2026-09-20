@@ -535,10 +535,10 @@ Les trois écrans du chantier livré le 19 septembre : l'atelier des tuiles, un 
 livraison. **Zéro fiche aujourd'hui.**
 
 **Critères**
-- [ ] Les trois écrans ont leur résumé et leurs fiches.
-- [ ] Les deux champs de texte que `TU12` rend compréhensibles sont expliqués ici aussi, dans
+- [x] Les trois écrans ont leur résumé et leurs fiches.
+- [x] Les deux champs de texte que `TU12` rend compréhensibles sont expliqués ici aussi, dans
       les mêmes mots qu'à l'écran.
-- [ ] Ce que coûte une matière générée sur la machine, et ce que ne coûte pas une matière
+- [x] Ce que coûte une matière générée sur la machine, et ce que ne coûte pas une matière
       intégrée, est dit.
 
 → `GU13` (1/2) — **la structure, avant tout texte.** Aucun des trois lieux n'était testé dans
@@ -553,6 +553,33 @@ l'on vient. Une variable de pile de plus, `livraisonDeTuiles`, sur le modèle de
 `tuilesOuvertes`. Aucun résumé, aucune fiche : c'est `GU13` (2/2) qui les écrit, et les trois
 essais « résumé manquant » d'`aide.test.ts` sont rouges jusque-là — en échange, les trois
 essais « genre sans écran de guide » des tuiles sont passés au vert.
+
+→ `GU13` (2/2) — **les trois résumés et vingt-sept fiches** (`aide.ts`, section *Les tuiles*, à
+la fin du corpus). `ou: "tuiles"` ne couvre que la liste (`ListeDesJeux`) : deux fiches, la
+carte d'un jeu et « À partir d'une image déjà faite ». `ou: "jeu-de-tuiles"` porte le gros du
+travail, sur **huit zones** dans l'ordre où l'on rencontre les écrans : le choix de la sorte
+(la sorte et son nom, la taille d'une pièce — qui reprend l'avertissement des 96 et 128 px
+dans les mêmes mots que l'écran), préparer l'atlas depuis une image (les trois portes et la
+grille ; l'éditeur, ses terrains et raccords, garder/restaurer, la carte d'essai), puis
+l'atelier ouvert (les matières et leurs bordures liées, la carte / la planche / vérifier, les
+réglages fins avec la palette du jeu et la graine, le tiroir de matière). `ou:
+"livraison-de-tuiles"` : quatre fiches, ce qui part, la vérification à trois états, où ça va,
+déposer. **Les deux champs de `TU12`** reprennent les phrases de `OngletGenerer` presque au
+mot (*« C'est fait de quoi ? »*, *« Le motif »*), et **la fiche `cout-matiere` dit le prix
+exact** : une matière générée est gratuite et sur la machine, mais coûte du temps (la file
+locale, minutes par image, multipliées par les tirages) et une disponibilité (le modèle
+installé, sinon la génération est bloquée) ; une matière intégrée ne coûte rien, redessinée à
+la volée depuis la graine. `tuiles.terrains` quitte `ou: "codex"` pour `jeu-de-tuiles` —
+texte inchangé, il était encore exact —, physiquement déplacée à côté de ses voisines pour
+que ses zones se lisent d'un tenant. Les essais de `GU3` sont au vert pour les trois écrans ;
+les quinze qui restent rouges sont `GU15` (`source3d.*`, `fabrications-etat`, `travail`,
+`envoi`) et `fiche.recettes` (« à savoir » de 685 signes, oubliée par `GU11`).
+
+*Incertitudes pour `GU16`.* Les fiches de l'atelier ouvert ne sont accrochées à aucune bulle :
+seul `<Libelle aide="tuiles.terrains">` l'est dans `Tuiles.tsx` ; il faudra décider si
+`AtelierTuiles.tsx` doit brancher ses contrôles, comme les autres écrans. Le comportement
+exact de « Relier » (`relierBordure`) et de la restauration d'une révision n'a pas été relu
+dans `atelier.ts` : les fiches en parlent à hauteur de ce que l'écran dit.
 
 ### `GU14` — Le son
 

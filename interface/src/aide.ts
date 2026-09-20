@@ -329,6 +329,36 @@ export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {
       "On livre les fichiers d'un clic, ou on referme sans avoir rien écrit.",
     ],
   },
+
+  tuiles: {
+    aQuoi:
+      "Les tuiles du jeu — la liste des jeux déjà faits, sols, chemins et murs : on en ouvre un, ou on part d'une image déjà là.",
+    gestes: [
+      "On regarde la sorte, les pièces et la taille de chaque jeu déjà fait.",
+      "On ouvre un jeu pour le reprendre, ou on en commence un nouveau.",
+      "On part d'une image déjà faite quand le jeu existe en dehors d'ici.",
+    ],
+  },
+
+  "jeu-de-tuiles": {
+    aQuoi:
+      "Un jeu de tuiles — choisir sa sorte ou partir d'une image, puis poser ses matières et sa carte jusqu'à ce que les raccords tiennent.",
+    gestes: [
+      "On choisit une sorte ou une image, puis on nomme le jeu.",
+      "On pose une matière par emplacement, intégrée, à soi, ou générée sur la machine.",
+      "On peint la carte, on vérifie les raccords, puis on enregistre ou on livre.",
+    ],
+  },
+
+  "livraison-de-tuiles": {
+    aQuoi:
+      "Livrer à Godot — ce qui part d'un jeu de tuiles, sa planche, sa vérification, et le dossier où tout ira s'écrire.",
+    gestes: [
+      "On relit les fichiers qui partent, et la planche telle qu'elle sera livrée.",
+      "On vérifie que les raccords tiennent avant de continuer plus loin.",
+      "On regarde où ça va, puis on dépose dans le projet Godot lié.",
+    ],
+  },
 }
 
 export const AIDE: Record<string, Explication> = {
@@ -1070,10 +1100,11 @@ export const AIDE: Record<string, Explication> = {
   //
   // **Rangé sur l'écran réel en `GU12`** : `EcranFamille` (`Famille.tsx`),
   // que la porte *Les sujets* et la grille d'une famille montrent toutes
-  // deux. Il reçoit `bibliotheque.collections` — sa colonne de gauche — et
-  // `tuiles.terrains`, qui venaient l'une et l'autre de `ou: "sortie"` : les
-  // écrans des tuiles héritent du codex faute d'un `ou` à eux, et c'est
-  // `GU13` qui leur en donnera un.
+  // deux. Il reçoit `bibliotheque.collections` — sa colonne de gauche —,
+  // venue de `ou: "sortie"`. `tuiles.terrains` était logée ici pour la même
+  // raison — les écrans des tuiles héritaient du codex faute d'un `ou` à
+  // eux — et `GU13` (2/2) lui a donné le sien : elle vit maintenant sous
+  // `ou: "jeu-de-tuiles"`, avec le reste de l'atelier qu'elle décrit.
   //
   // ⚠️ **`codex.vitrine` décrivait un écran supprimé** — `Vitrine.tsx` est
   // parti du dépôt le 16 septembre 2026. Ce qu'il en reste est ailleurs :
@@ -1117,14 +1148,6 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Rien à la génération. C'est de là qu'on ouvre l'établi d'une chose, ou qu'on ouvre le guichet pour en commander plusieurs à la fois.",
     origine: "toi, au fur et à mesure · les cinq familles existent avant toute chose",
-  },
-
-  "tuiles.terrains": {
-    nom: "terrains et raccords des tuiles", ou: "codex",
-    groupe: "L'atelier des tuiles — ouvert depuis Les tuiles",
-    quoi: "Le terrain au centre et sur les huit bords ou coins d’une tuile carrée.",
-    change: "Les cases voisines de la carte doivent annoncer le même terrain sur leur raccord commun. Ces relations sont exportées dans le TileSet de Godot. Elles ne jugent pas la qualité visuelle des pixels : regardez aussi les répétitions et la transparence sur la carte.",
-    origine: "toi · aucun terrain implicite",
   },
 
   // ── La fiche d'une chose du jeu — ses six parties (R8) ────────────────────
@@ -3125,6 +3148,294 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · vide au départ, et c'est un état légitime",
     long:
       "Vide, l'agent nomme son dossier à chaque appel — c'est permis, et c'est même ce qu'il fera s'il range ses sprites et ses tuiles à deux endroits différents.\n\nCe qui est posé là est le rendu, jamais le brut : l'image qu'on voit, celle qui entre dans le jeu. Le brut reste ici, et c'est lui qui permet de refaire le rendu.",
+  },
+
+  // ── Les tuiles — trois écrans, trois `ou` (`GU13`) ────────────────────────
+  //
+  // Le chantier livré le 19 septembre 2026 (`docs/PLAN-tuiles.md`) n'avait
+  // encore aucune fiche : `GU13` (1/2) a d'abord réparé le routage
+  // (`ecranDuGuide`, `App.tsx`) et posé trois valeurs neuves d'`Explication["ou"]`
+  // — `tuiles`, `jeu-de-tuiles`, `livraison-de-tuiles` —, chacune son propre
+  // lieu plutôt qu'un héritage. `GU13` (2/2) écrit ici les fiches des trois.
+  //
+  // `ou: "tuiles"` ne couvre que la liste des jeux (`ListeDesJeux`,
+  // `Tuiles.tsx`) : ouvrir un jeu, en créer un neuf ou partir d'une image
+  // quitte aussitôt ce lieu pour `jeu-de-tuiles`. `ou: "jeu-de-tuiles"`
+  // couvre donc trois écrans du même composant selon `ecran` — le choix de
+  // la sorte, la préparation d'un atlas depuis une image, et l'atelier
+  // ouvert (`AtelierDuJeu`, `AtelierTuiles.tsx`) — et c'est le plus gros
+  // morceau des trois. `tuiles.terrains` la rejoint ici, déplacée depuis
+  // `ou: "codex"` où `GU12` l'avait logée à défaut d'un lieu à elle : elle
+  // décrit l'éditeur d'un atlas (`EditeurTuiles`), pas le codex.
+
+  "tuiles.carte": {
+    nom: "Une carte de la liste",
+    ou: "tuiles",
+    groupe: "La liste des jeux de tuiles",
+    quoi: "Chaque carte dit comment ce jeu a été fait : sa sorte, ses pièces, la taille d'une pièce — ou, depuis une image, les pièces retenues.",
+    change: "Rien à la génération : la carte ouvre le jeu qu'elle montre, elle ne calcule rien de plus.",
+    origine: "toi · calculé depuis la recette ou l'atlas déjà enregistré",
+  },
+
+  "tuiles.depuis-image": {
+    nom: "À partir d'une image déjà faite",
+    ou: "tuiles",
+    groupe: "La liste des jeux de tuiles",
+    quoi: "Ouvre l'atelier qui découpe une image déjà là en tuiles, plutôt que de dessiner un jeu neuf par sorte.",
+    change: "Rien à la génération ici : le lien mène à la préparation de l'atlas, où l'on choisit l'image, la grille, puis chaque tuile.",
+    origine: "toi",
+  },
+
+  "jeu-de-tuiles.sorte": {
+    nom: "La sorte, et son nom",
+    ou: "jeu-de-tuiles",
+    groupe: "Quelle sorte de tuiles ?",
+    quoi: "Sol, chemin, mur, quinze coins ou dix-sept pièces libres : la sorte décide ce que ces tuiles dessinent, et son nom se propose tout seul.",
+    change: "Fixé à la création : chaque sorte a ses propres pièces et ses propres réglages, et n'en change plus une fois l'atelier ouvert.",
+    origine: "toi · sol par défaut",
+  },
+
+  "jeu-de-tuiles.taille-piece": {
+    nom: "La taille d'une pièce",
+    ou: "jeu-de-tuiles",
+    groupe: "Quelle sorte de tuiles ?",
+    quoi: "La taille d'une pièce en pixels — 16, 32 ou 64 le plus souvent, ou une autre valeur dans la liste déroulante.",
+    change:
+      "Si le reste du jeu est dans une autre taille, ces pièces ne s'accorderont pas à tes personnages. À 96 ou 128 px : « la planche met deux à quatre fois plus de temps à se redessiner à cette taille » — sans rien changer au résultat.",
+    origine: "toi · la taille du jeu par défaut",
+  },
+
+  "jeu-de-tuiles.atlas-porte": {
+    nom: "Importer, choisir ou fabriquer l'atlas",
+    ou: "jeu-de-tuiles",
+    groupe: "Préparer l'atlas — l'image et la grille",
+    quoi: "Trois façons d'obtenir l'image de l'atlas : l'importer depuis le disque, la choisir en bibliothèque, ou la fabriquer par IA.",
+    change: "L'image entre en bibliothèque si elle n'y était pas encore, et y reste conservée quoi qu'il arrive ensuite à cet ensemble.",
+    origine: "toi · une image du même projet",
+  },
+
+  "jeu-de-tuiles.grille-atlas": {
+    nom: "Taille de tuile, marge, espacement",
+    ou: "jeu-de-tuiles",
+    groupe: "Préparer l'atlas — l'image et la grille",
+    quoi: "La grille qui découpe l'atlas en tuiles : la taille d'une tuile, la marge extérieure, l'espacement entre les tuiles, en pixels.",
+    change: "Fixe la grille de cet ensemble pour de bon : un atlas de dimensions différentes veut un nouvel ensemble, pas un changement ici.",
+    origine: "toi · 16 px, aucune marge, aucun espacement par défaut",
+  },
+
+  "jeu-de-tuiles.editeur": {
+    nom: "Choisir, nommer, retoucher une tuile",
+    ou: "jeu-de-tuiles",
+    groupe: "Préparer l'atlas — l'éditeur",
+    quoi: "Choisir une tuile de l'atlas pour la nommer, la retenir, l'extraire pour la retoucher, ou la remplacer par une correction.",
+    change: "Une tuile non retenue reste dans l'atlas sans entrer dans aucun terrain. Une correction doit garder la taille de la tuile, en largeur et en hauteur.",
+    origine: "toi · l'atlas importé, choisi ou fabriqué",
+    long:
+      "Extraire pose une copie dans la bibliothèque, prête à retoucher comme n'importe quelle image ; l'utiliser comme correction remplace seulement le rendu de cette tuile-là, jamais les autres. « Retrouver la tuile d'origine » efface la correction sans toucher à la retouche gardée en bibliothèque.",
+  },
+
+  "tuiles.terrains": {
+    nom: "terrains et raccords des tuiles",
+    ou: "jeu-de-tuiles",
+    groupe: "Préparer l'atlas — l'éditeur",
+    quoi: "Le terrain au centre et sur les huit bords ou coins d'une tuile carrée.",
+    change: "Les cases voisines de la carte doivent annoncer le même terrain sur leur raccord commun. Ces relations sont exportées dans le TileSet de Godot. Elles ne jugent pas la qualité visuelle des pixels : regardez aussi les répétitions et la transparence sur la carte.",
+    origine: "toi · aucun terrain implicite",
+  },
+
+  "jeu-de-tuiles.garder-atlas": {
+    nom: "Garder, actualiser, restaurer",
+    ou: "jeu-de-tuiles",
+    groupe: "Préparer l'atlas — l'éditeur",
+    quoi: "Enregistrer les changements de règles, ou repartir d'une révision précédente de cet ensemble.",
+    change: "« Garder les changements » écrit une révision neuve. « Actualiser les images retouchées » en écrit une aussi, pour prendre en compte les tuiles retouchées.",
+    origine: "toi · l'historique des révisions de cet ensemble",
+    long:
+      "« Actualiser les images retouchées » n'est proposé que quand rien d'autre n'a changé : c'est le seul cas où retoucher une tuile en bibliothèque et revenir ici suffit, sans repasser par « Garder ». « Restaurer » reprend la révision choisie dans la liste ; les révisions précédentes restent intactes.",
+  },
+
+  "jeu-de-tuiles.carte-essai": {
+    nom: "La carte d'essai, et le diagnostic",
+    ou: "jeu-de-tuiles",
+    groupe: "Préparer l'atlas — l'éditeur",
+    quoi: "Peindre la tuile choisie sur une petite carte, pour vérifier les répétitions, les coins et la transparence avant de livrer.",
+    change: "Le diagnostic ne se recalcule qu'une fois les changements gardés ; il liste chaque raccord qui ne correspond pas encore à son voisin.",
+    origine: "toi · les tuiles retenues et leurs terrains",
+    long:
+      "Le paquet Godot se télécharge directement une fois le diagnostic prêt ; « Relire la livraison Godot » montre en plus l'arbre des fichiers et les conflits, comme la livraison d'un jeu fabriqué par sorte.",
+  },
+
+  "jeu-de-tuiles.matieres": {
+    nom: "La colonne des matières",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — les matières",
+    quoi: "Un bouton par emplacement du jeu — surface, face, sol au pied… — avec sa matière actuelle et d'où elle vient.",
+    change: "Cliquer ouvre le tiroir pour la changer. Rien ne coûte ici : chaque changement refait les pièces sur ta machine.",
+    origine: "toi · Intégrée, Mes matières, Vide, ou Sur la carte seulement",
+    long:
+      "« Intégrée » vient du fond du moteur, dessinée à la volée depuis la graine. « Mes matières » vient d'une image de la bibliothèque. « Vide » veut dire qu'une couleur provisoire tient la place. « Sur la carte seulement » ne sert que le sol de fond, qui n'entre dans aucune pièce fabriquée.",
+  },
+
+  "jeu-de-tuiles.bordures-liees": {
+    nom: "Bordure liée à sa surface",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — les matières",
+    quoi: "Une bordure suit la matière de la surface qu'elle borde, tant qu'elle n'a pas sa propre matière.",
+    change: "« Relier » lui redonne la matière de la surface et la suit désormais à chaque changement. La délier lui laisse sa propre matière, réglable à part.",
+    origine: "toi · liée par défaut",
+  },
+
+  "jeu-de-tuiles.second-terrain": {
+    nom: "Sur un autre sol",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — les matières",
+    quoi: "Ajoute un second sol sous les bords de celui-ci — le sable sous l'herbe, la berge sous l'eau.",
+    change: "Une matière de plus apparaît dans la colonne pour ce sol dessous, avec sa propre bordure à régler.",
+    origine: "toi · éteint par défaut · seulement pour les sortes qui ont un dessous",
+  },
+
+  "jeu-de-tuiles.carte": {
+    nom: "Peindre la carte",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — carte, planche, vérifier",
+    quoi: "Clic ou glisser pour poser la pièce choisie ; clic droit pour l'effacer, case par case.",
+    change: "Change seulement l'aperçu de test de ce jeu ; rien ne part tant que tu ne livres pas.",
+    origine: "toi · une île au hasard pour commencer, sur simple demande",
+    long:
+      "« Île/chemins/pièces au hasard » et « Tout effacer » repartent d'un coup ; le sol de fond et le personnage ne changent que l'aperçu, pas le paquet livré. Les dix-sept pièces libres n'ont pas de carte : elles se posent à la main dans Godot, et l'onglet Planche seul les montre.",
+  },
+
+  "jeu-de-tuiles.planche": {
+    nom: "La planche",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — carte, planche, vérifier",
+    quoi: "Toutes les pièces fabriquées, rangées comme le TileSet de Godot les recevra ; survoler l'une d'elles dit son nom.",
+    change: "Rien : la planche montre le résultat des réglages, elle ne se règle pas elle-même.",
+    origine: "toi · calculée depuis les matières et les réglages fins",
+  },
+
+  "jeu-de-tuiles.verifier": {
+    nom: "Vérifier",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — carte, planche, vérifier",
+    quoi: "La liste des raccords qui ne correspondent pas encore entre pièces voisines, groupés par défaut semblable.",
+    change: "Rien : cliquer un défaut l'amène sur la planche, surligné, pour le regarder de près.",
+    origine: "toi · calculé depuis la planche fabriquée",
+    long:
+      "Les dix-sept pièces libres n'ont pas de raccord automatique : l'onglet dit qu'il n'y a rien à vérifier, et c'est normal. Sinon, un arrondi plus petit ou des bords moins irréguliers sont les deux premiers réglages à essayer.",
+  },
+
+  "jeu-de-tuiles.reglages-fins": {
+    nom: "Arrondi, irrégularité, relief, et les autres",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — les réglages fins",
+    quoi: "Les curseurs et menus qui redessinent les pièces : arrondi, irrégularité, relief, bords nets ou organiques, nuances, décor.",
+    change: "Chaque changement refait toutes les pièces sur ta machine, gratuitement ; rien ne part tant que tu ne livres pas.",
+    origine: "toi · valeurs par défaut raisonnables à la création",
+    long:
+      "Propres au mur : l'ombre du mur et la pénombre dans les angles. Propres à un sol ou un mur : les cailloux qui débordent sur la case voisine. « Réduire une image » ne sert que pour une image plus grande qu'une pièce. Variantes et animation de la pièce pleine n'existent que pour les sortes à raccords, hors les dix-sept pièces libres.",
+  },
+
+  "jeu-de-tuiles.palette-jeu": {
+    nom: "Palette du jeu, mêmes couleurs",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — les réglages fins",
+    quoi: "Remplace « Mêmes couleurs » par les couleurs de la palette de l'univers (TU6), quand ce jeu en a une.",
+    change: "Toutes les matières intégrées se redessinent avec cette palette au lieu de leurs propres teintes.",
+    origine: "l'univers du projet · indisponible tant qu'il n'a pas de palette",
+    long:
+      "« Mêmes couleurs pour toutes les matières » se règle à part, et se désactive tout seul dès que « Palette du jeu » est cochée : les deux ne peuvent pas décider en même temps de la teinte d'une pièce.",
+  },
+
+  "jeu-de-tuiles.graine": {
+    nom: "La graine",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — les réglages fins",
+    quoi: "Le nombre qui décide du dessin précis des matières intégrées, à taille et réglages égaux.",
+    change: "Tirer une autre graine change seulement l'apparence des matières intégrées, jamais celle des matières venues d'une image.",
+    origine: "toi · tirée au hasard à la création du jeu",
+  },
+
+  "jeu-de-tuiles.tiroir": {
+    nom: "Intégrées, Mes matières",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — le tiroir de matière",
+    quoi: "Choisir la matière d'un emplacement : parmi celles du moteur, ou parmi les images de tes sujets « matière ».",
+    change: "Pose la matière choisie sur cet emplacement, refait ses pièces, et ferme le tiroir.",
+    origine: "le moteur · les sujets de nature « matière » du jeu",
+    long:
+      "« Mes matières » reste vide tant qu'aucun sujet de nature « matière » n'a d'image : c'est ce que l'onglet dit dans ce cas, plutôt que de rester silencieux.",
+  },
+
+  "jeu-de-tuiles.generer-matiere": {
+    nom: "C'est fait de quoi ? Le motif",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — le tiroir de matière",
+    quoi: "Deux champs obligatoires : la matière seule, puis comment elle est posée sur cet emplacement précis.",
+    change: "Composent le texte envoyé au modèle local ; rien ne part tant que les deux ne sont pas remplis.",
+    origine: "toi · un exemple prêt selon le cadrage choisi",
+    long:
+      "« C'est fait de quoi ? » — la matière seule : pierre, bois, terre, sable. Le même texte pour tout le jeu, c'est lui qui fait que le sol et le mur vont ensemble. « Le motif » — comment cette matière est posée sur l'emplacement visé : dis le compte et la taille, « quatre grandes dalles, deux par deux ». Ce qui n'est pas écrit n'est pas deviné.",
+  },
+
+  "jeu-de-tuiles.cout-matiere": {
+    nom: "Une matière générée, une matière intégrée",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — le tiroir de matière",
+    quoi: "Une matière générée est gratuite, sur ta machine — mais elle prend du temps, et réclame le modèle installé.",
+    change: "Rien à payer dans les deux cas ; seule une génération occupe la file locale, minutes par image, multipliées par les tirages.",
+    origine: "ta machine · le modèle local installé",
+    long:
+      "Une matière intégrée ne coûte ni temps ni disque : elle se redessine à la volée depuis la graine, à chaque ouverture. Une génération attend son tour dans la file locale — l'écran annonce une durée mesurée sur ta machine une fois qu'elle existe — et reste bloquée tant que le modèle qu'elle réclame n'est pas installé. Joindre une image de référence l'allonge encore : 512 px au lieu de 256.",
+  },
+
+  "jeu-de-tuiles.entete-atelier": {
+    nom: "Nom, taille, enregistrer, livrer",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — en haut de l'écran",
+    quoi: "Le nom du jeu, la taille d'une pièce, et les deux gestes qui comptent : enregistrer, ou livrer à Godot.",
+    change: "Enregistrer écrit une révision neuve du jeu ; livrer y mène directement s'il reste des changements non enregistrés.",
+    origine: "toi",
+    long:
+      "Changer la taille d'une pièce ici referait toutes les pièces à la nouvelle taille — 96 ou 128 px coûtent deux à quatre fois plus de temps à se redessiner, sans rien changer au résultat, comme au choix de la sorte.",
+  },
+
+  "livraison-de-tuiles.ce-qui-part": {
+    nom: "Ce qui part, et la planche",
+    ou: "livraison-de-tuiles",
+    groupe: "Ce qui part",
+    quoi: "La liste des fichiers du paquet Godot — leur rôle et leur état — et la planche telle qu'elle sera livrée.",
+    change: "Rien : cet écran ne fait que relire ce que l'atelier a déjà préparé, avant le dépôt.",
+    origine: "le jeu de tuiles ouvert · préparé à l'ouverture de cet écran",
+  },
+
+  "livraison-de-tuiles.verification": {
+    nom: "La vérification",
+    ou: "livraison-de-tuiles",
+    groupe: "La vérification",
+    quoi: "Trois états possibles : rien à vérifier, des défauts qui se verront dans le jeu, ou tout se raccorde.",
+    change: "Rien ici : « Voir lesquels » ramène à l'atelier, sur l'onglet Vérifier, pour corriger avant de revenir livrer.",
+    origine: "calculé depuis la planche du jeu",
+  },
+
+  "livraison-de-tuiles.ou-ca-va": {
+    nom: "Où ça va",
+    ou: "livraison-de-tuiles",
+    groupe: "Où ça va",
+    quoi: "Le dossier du projet Godot où le paquet sera écrit, et les conflits qui empêchent encore le dépôt.",
+    change: "Rien : ce qui existe déjà à cet endroit sera remplacé ; l'ancienne version reste dans l'historique des livraisons.",
+    origine: "le projet Godot lié · l'historique des livraisons",
+    long:
+      "« Projet Godot et historique » ouvre l'écran qui règle le dossier lié et retrouve une livraison passée — utile si un conflit vient d'un chemin mal réglé plutôt que d'un vrai fichier à choisir.",
+  },
+
+  "livraison-de-tuiles.deposer": {
+    nom: "Déposer dans Godot",
+    ou: "livraison-de-tuiles",
+    groupe: "Où ça va",
+    quoi: "Écrit le paquet dans le projet Godot lié — seul geste de cet écran qui change quelque chose sur le disque.",
+    change: "Une fois déposé, l'écran dit dans quel dossier et quelle scène ouvrir dans Godot pour voir la carte.",
+    origine: "toi",
   },
 }
 
