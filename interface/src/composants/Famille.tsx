@@ -58,15 +58,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   api,
   Refus,
+  UNIVERS_VIDE,
   type FiltreDeFamille,
   type GroupeDeRangement,
   type Personnage,
   type Piece,
   type SujetDeLaGrille,
+  type Univers,
 } from "../api"
 import { vignetteAsset } from "./Apercu"
 import { FAMILLES } from "./Carnet"
 import { useEtatDuParcours } from "./MemoireDuParcours"
+import { nomsDesNaturesMatiere, type NatureDuJeu } from "../natures"
 
 /** **Le seul type de glisser d'un ou plusieurs sujets du produit.**
  *
@@ -113,6 +116,12 @@ const MOTS_DE_FAMILLE: Record<string, { pluriel: string; singulier: string }> = 
 function motsDe(famille: string | null): { pluriel: string; singulier: string } {
   if (famille === null) return { pluriel: "sujets", singulier: "sujet" }
   return MOTS_DE_FAMILLE[famille] ?? { pluriel: famille, singulier: famille }
+}
+
+/** Une nature du barème s'écrit en minuscules (`docs/PLAN-rangement.md` D1) —
+ *  on ne lui invente pas de pluriel, on lui donne juste sa majuscule. */
+function capitaliser(mot: string): string {
+  return mot.length > 0 ? mot[0]!.toLocaleUpperCase("fr") + mot.slice(1) : mot
 }
 
 /** L'exemple que porte le champ qui nomme, famille par famille (repris de
@@ -561,6 +570,7 @@ export function EcranFamille({
   collectionInitiale = null,
   pieces = [],
   personnages = [],
+  univers = UNIVERS_VIDE,
   rafraichi,
   surGroupes,
   surCollection,
@@ -597,6 +607,13 @@ export function EcranFamille({
   pieces?: readonly Piece[]
   /** Les sujets du jeu, pour retrouver l'aperçu d'une pièce équipée. */
   personnages?: readonly Personnage[]
+  /** Le barème de l'univers (`RG4`) : `bareme` porte les natures de chaque
+   *  famille (champ `famille`), et c'est la colonne de gauche qui les montre
+   *  sous la famille ouverte — sans lui, aucun réglage ne les avait jamais
+   *  affichées, et l'auteur cherchait ses matières sans les trouver. Vide,
+   *  `UNIVERS_VIDE` : les essais qui ne le passent pas ne montrent aucune
+   *  nature, ce qui reste vrai plutôt que faux. */
+  univers?: Univers
   /** Un compteur que le parent incrémente quand il a rangé quelque chose
    *  ailleurs : la grille se relit. */
   rafraichi: number
@@ -685,7 +702,14 @@ export function EcranFamille({
     collectionInitiale,
   )
   const [limite, setLimite] = useState(120)
-  const [rechercheDeCollection, setRechercheDeCollection] = useState("")
+  /** La nature choisie dans la colonne, sous la famille ouverte (RG4). Une
+   *  seule à la fois — cliquer la même l'éteint, comme un onglet qu'on
+   *  referme. */
+  const [natureFiltree, setNatureFiltree] = useState<string | null>(null)
+  /** Les familles vides tiennent sur une seule ligne dépliable (RG4) — fermée
+   *  par défaut, personne ne veut lire trois lignes à zéro avant d'avoir
+   *  demandé à les voir. */
+  const [videsOuvert, setVidesOuvert] = useState(false)
   /** **Le clic ouvre par défaut.** Ranger est un geste choisi, pas la
    *  réponse au premier clic sur une carte : sans ce bouton, un clic pour
    *  regarder un sujet le sélectionnait à la place de l'ouvrir. Couper le
@@ -733,6 +757,9 @@ export function EcranFamille({
   if (cleVue !== cleDeLaGrille) {
     setCleVue(cleDeLaGrille)
     setLimite(120)
+    // La nature choisie appartenait à la famille qu'on quitte : la garder
+    // filtrerait la nouvelle sur un mot qu'elle ne connaît pas forcément.
+    setNatureFiltree(null)
   }
 
   /** Les familles que cette page interroge : les quatre, une seule, ou aucune
@@ -816,7 +843,13 @@ export function EcranFamille({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signatureDesFamilles, collection, recherche, filtre, limite, tri, rafraichi, version])
 
-  const sujets = donnee?.sujets ?? []
+  const sujetsCharges = donnee?.sujets ?? []
+  // **Une nature choisie filtre la page déjà chargée, jamais le serveur**
+  // (RG4) : il n'a pas de route pour ça, et la colonne ne compte de toute
+  // façon que sur ce qui est déjà en mémoire.
+  const sujets = natureFiltree
+    ? sujetsCharges.filter((s) => s.type === natureFiltree)
+    : sujetsCharges
   const groupes = donnee ? donnee.groupes : collectionsConnues
   const total = donnee?.total ?? 0
   const filtres = donnee?.filtres ?? AUCUN_COMPTE
@@ -861,6 +894,23 @@ export function EcranFamille({
       ),
     [pieces, personnages],
   )
+
+  // **Les natures du jeu et ce qu'elles peuvent avoir**, demandées à la route
+  // qui les sert (rangement, D1) : c'est d'elle qu'on apprend qu'une nature est
+  // une matière, donc sans sujets. Vide tant qu'elle n'a pas répondu — on ne
+  // retire alors aucune ligne.
+  const [naturesDuJeu, setNaturesDuJeu] = useState<NatureDuJeu[]>([])
+  useEffect(() => {
+    let vivant = true
+    void Promise.resolve()
+      .then(() => api.posesDesTypes())
+      .then((recu) => vivant && setNaturesDuJeu(recu?.types ?? []))
+      .catch(() => vivant && setNaturesDuJeu([]))
+    return () => {
+      vivant = false
+    }
+  }, [])
+  const naturesMatiere = useMemo(() => nomsDesNaturesMatiere(naturesDuJeu), [naturesDuJeu])
 
   // **Un monde vide n'a qu'un geste à proposer** (repris de l'ancien codex,
   // `C3`) : sur la famille entière, sans filtre ni recherche, le champ qui
@@ -1091,6 +1141,132 @@ export function EcranFamille({
     )
   }
 
+  /** Une famille est vide **sauf si c'est celle qu'on regarde** — sans quoi
+   *  l'ouvrir puis vider son dernier sujet la ferait disparaître sous « Vides »
+   *  pendant qu'on la lit encore. */
+  const familleEstVide = (f: { cle: string }) =>
+    famille !== f.cle && (f.cle === "equipement" ? pieces.length === 0 : comptes[f.cle] === 0)
+
+  // **Un jeu neuf montre toutes ses familles** (corrigé le 20 septembre 2026,
+  // relevé par `App.test.tsx` § « sur une installation neuve »). Replier les
+  // vides suppose qu'il en reste au moins une à lire ; sur un projet sans aucun
+  // sujet, la règle les repliait toutes les cinq et ne laissait rien à cliquer —
+  // juste au moment où l'on découvre ce que le jeu peut contenir.
+  const toutesVides = FAMILLES.every(familleEstVide)
+  const famillesPleines = FAMILLES.filter((f) => toutesVides || !familleEstVide(f))
+  const famillesVides = toutesVides ? [] : FAMILLES.filter(familleEstVide)
+
+  /** « Tous les sujets » (RG4) : la somme de ce que chaque ligne de famille
+   *  affiche déjà, équipement compris — la même règle qui décide de son
+   *  propre chiffre. */
+  const totalTousLesSujets = FAMILLES.reduce(
+    (somme, f) => somme + (f.cle === "equipement" ? pieces.length : (comptes[f.cle] ?? 0)),
+    0,
+  )
+
+  /** Une ligne de famille, dépliable sur ses natures et ses collections.
+   *
+   *  **Les natures ne paraissent que sur la famille ouverte** (RG4) : les
+   *  compter suppose les sujets de cette famille déjà en mémoire, ce qui n'est
+   *  vrai que d'elle — ou de *toutes les familles*, où `sujets.famille` les
+   *  distingue. Une famille dépliée par la seule recherche d'une collection
+   *  n'a donc que sa liste de collections, comme avant. */
+  const ligneDeFamille = (f: (typeof FAMILLES)[number]) => {
+    const ouverte = famille === f.cle
+    const etendue = (ouverte || recherche.trim() !== "") && f.cle !== "equipement"
+    // Une matière n'est plus un sujet : sa ligne vaudrait toujours « — ». On la
+    // garde seulement si des sujets de cette nature sont encore là.
+    const natures = univers.bareme.filter(
+      (e) =>
+        e.famille === f.cle &&
+        (!naturesMatiere.has(e.nom) ||
+          sujetsCharges.some((s) => s.famille === f.cle && s.type === e.nom)),
+    )
+    return (
+      <div className="mb-[8px]" key={f.cle}>
+        <button
+          type="button"
+          aria-expanded={ouverte}
+          onClick={() => {
+            ouvrirLaCollection(null)
+            surFamille?.(f.cle)
+          }}
+          className={[
+            "flex min-h-[34px] w-full items-center gap-[8px] rounded-7 px-[8px] text-left text-[13px]",
+            ouverte ? "bg-ligne-ouverte text-encre" : "text-encre-2 hover:bg-papier-cote",
+          ].join(" ")}
+        >
+          <span aria-hidden>{ouverte ? "▾" : "▸"}</span>
+          <span className="truncate">{f.nom}</span>
+          <span className="mesure ml-auto text-[11px] text-encre-3">
+            {f.cle === "equipement" ? pieces.length : (comptes[f.cle] ?? "")}
+          </span>
+        </button>
+        {etendue && (
+          <div className="ml-[14px] border-l border-trait pl-[8px]">
+            <button
+              type="button"
+              className="min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-encre-2 hover:text-encre"
+              onClick={() => ouvrirLaCollection(null)}
+            >
+              Tout voir
+            </button>
+            {/* **Une nature à zéro se montre quand même** (RG4) : c'est elle
+                qui apprend à l'auteur qu'elle existe — une matière générée
+                pour la première fois n'aurait sinon jamais eu de ligne où
+                apparaître. */}
+            {ouverte &&
+              natures.map((nature) => {
+                const compte = sujetsCharges.filter(
+                  (s) => s.famille === f.cle && s.type === nature.nom,
+                ).length
+                const active = natureFiltree === nature.nom
+                return (
+                  <button
+                    type="button"
+                    key={nature.nom}
+                    aria-pressed={active}
+                    onClick={() => setNatureFiltree((n) => (n === nature.nom ? null : nature.nom))}
+                    className={[
+                      "flex min-h-[26px] w-full items-center justify-between gap-[8px] rounded-5 px-[8px] text-left text-[12.5px]",
+                      active ? "bg-ligne-ouverte text-encre" : "text-encre-2 hover:bg-papier-cote",
+                    ].join(" ")}
+                  >
+                    <span className="truncate">{capitaliser(nature.nom)}</span>
+                    <span className="mesure text-[11px] text-encre-3">
+                      {compte === 0 ? "—" : compte}
+                    </span>
+                  </button>
+                )
+              })}
+            {ouverte && natures.length > 0 && (
+              <p className="mesure mb-[4px] mt-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+                Collections
+              </p>
+            )}
+            {collectionsConnues
+              .filter(
+                // **La collection ouverte reste toujours visible** — un mot
+                // cherché pour un sujet ne la nomme pas forcément, et la faire
+                // disparaître effacerait le seul repère de là où l'on est.
+                (g) =>
+                  g.identifiant === collection ||
+                  g.nom.toLocaleLowerCase("fr").includes(recherche.trim().toLocaleLowerCase("fr")),
+              )
+              .map(ligneDeCollection)}
+            <button
+              type="button"
+              className="min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-signal"
+              onClick={() => setNouvelleOuverte(true)}
+            >
+              ＋ Collection
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     // `bg-papier` sur la racine, comme `TableauDeBord.tsx` : le châssis autour
     // est encore sombre, et un écran de la V4 qui ne pose pas son fond se
@@ -1118,95 +1294,88 @@ export function EcranFamille({
         aria-label="Familles et collections"
         className="defile w-navigation-atelier shrink-0 overflow-y-auto border-r border-trait px-[14px] py-[22px]"
       >
+        {/* **Il cherche ce qu'il annonce** (RG4) : un sujet ou une collection,
+            plus « Trouver une collection », qui ne disait que la moitié de ce
+            que le champ faisait déjà — il dépliait aussi les familles pour
+            montrer une collection dedans. Il partage `recherche` avec la
+            barre d'outils : un seul mot tapé, une seule recherche, jamais
+            deux états qui pourraient se contredire. */}
         <label className="mb-[8px] flex flex-col gap-[4px] text-[12px] text-encre-3">
-          Trouver une collection
+          Chercher
           <input
             type="text"
-            value={rechercheDeCollection}
-            onChange={(e) => setRechercheDeCollection(e.target.value)}
+            value={recherche}
+            onChange={(e) => chercher(e.target.value)}
+            placeholder="un sujet, une collection…"
+            aria-label="Chercher un sujet ou une collection"
             className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12.5px] text-encre outline-none"
           />
         </label>
         <button
           type="button"
-          className={`mb-[8px] w-full text-left ${BOUTON}`}
+          className={`mb-[8px] flex w-full items-center gap-[8px] text-left ${BOUTON}`}
           aria-current={famille === null && !collection ? "page" : undefined}
           onClick={() => {
             ouvrirLaCollection(null)
             surToutesLesFamilles?.()
           }}
         >
-          Toutes les familles
+          <span>Tous les sujets</span>
+          <span className="mesure ml-auto text-encre-3">{totalTousLesSujets}</span>
         </button>
-        {FAMILLES.map((f) => (
-          <div className="mb-[8px]" key={f.cle}>
+        {famillesPleines.map(ligneDeFamille)}
+        {famillesVides.length > 0 && (
+          <div className="mb-[8px]">
             <button
               type="button"
-              aria-expanded={famille === f.cle}
-              onClick={() => {
-                ouvrirLaCollection(null)
-                surFamille?.(f.cle)
-              }}
-              className={[
-                "flex min-h-[34px] w-full items-center gap-[8px] rounded-7 px-[8px] text-left text-[13px]",
-                famille === f.cle ? "bg-ligne-ouverte text-encre" : "text-encre-2 hover:bg-papier-cote",
-              ].join(" ")}
+              aria-expanded={videsOuvert}
+              onClick={() => setVidesOuvert((v) => !v)}
+              className="flex min-h-[34px] w-full items-center gap-[8px] rounded-7 px-[8px] text-left text-[13px] text-encre-2 hover:bg-papier-cote"
             >
-              <span aria-hidden>{famille === f.cle ? "▾" : "▸"}</span>
-              <span className="truncate">{f.nom}</span>
-              <span className="mesure ml-auto text-[11px] text-encre-3">
-                {f.cle === "equipement" ? pieces.length : (comptes[f.cle] ?? "")}
+              <span aria-hidden>{videsOuvert ? "▾" : "▸"}</span>
+              <span className="truncate">
+                Vides : {famillesVides.map((f) => f.nom).join(", ")}
               </span>
             </button>
-            {(famille === f.cle || rechercheDeCollection) && f.cle !== "equipement" && (
-              <div className="ml-[14px] border-l border-trait pl-[8px]">
-                <button
-                  type="button"
-                  className="min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-encre-2 hover:text-encre"
-                  onClick={() => ouvrirLaCollection(null)}
-                >
-                  Tout voir
-                </button>
-                {collectionsConnues
-                  .filter((g) =>
-                    g.nom
-                      .toLocaleLowerCase("fr")
-                      .includes(rechercheDeCollection.toLocaleLowerCase("fr")),
-                  )
-                  .map(ligneDeCollection)}
-                <button
-                  type="button"
-                  className="min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-signal"
-                  onClick={() => setNouvelleOuverte(true)}
-                >
-                  ＋ Collection
-                </button>
-              </div>
-            )}
+            {videsOuvert && famillesVides.map(ligneDeFamille)}
           </div>
-        ))}
-        {(onTuiles || onSons) && (
-          <div className="mt-[14px] space-y-[8px] border-t border-trait pt-[14px]">
+        )}
+        {/* **Ce que le jeu a d'autre, dit comme tel** (RG4) : « Les tuiles » et
+            « Les sons » ressemblaient à des familles alors que ce sont
+            d'autres écrans, sans fiche ni pose ni collection. */}
+        {(onTuiles || onSons || onGalerie) && (
+          <div className="mt-[14px] border-t border-trait pt-[14px]">
+            <p className="mesure mb-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+              Ailleurs dans le jeu
+            </p>
             {onTuiles && (
-              <button type="button" className={`w-full text-left ${BOUTON}`} onClick={onTuiles}>
+              <button
+                type="button"
+                className="block min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-encre-2 hover:text-encre"
+                onClick={onTuiles}
+              >
                 Les tuiles
               </button>
             )}
             {onSons && (
-              <button type="button" className={`w-full text-left ${BOUTON}`} onClick={onSons}>
+              <button
+                type="button"
+                className="block min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-encre-2 hover:text-encre"
+                onClick={onSons}
+              >
                 Les sons
               </button>
             )}
+            {onGalerie && (
+              <button
+                type="button"
+                className="block min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-encre-2 hover:text-encre"
+                onClick={onGalerie}
+              >
+                La galerie — toutes les images
+              </button>
+            )}
           </div>
-        )}
-        {onGalerie && (
-          <button
-            type="button"
-            className="mt-[14px] min-h-[26px] text-left text-[12px] text-encre-3 underline"
-            onClick={onGalerie}
-          >
-            Tous les résultats dans la galerie
-          </button>
         )}
       </nav>
 

@@ -63,6 +63,7 @@ import type { Fente } from "./EnTeteDeSurface"
 import { BandeQuiTourne, sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
 import { Libelle, Segments, ZoneTexte } from "./pieces"
+import { naturesChoisissables } from "../natures"
 import { PANNEAU } from "./Infobulle"
 import { EcranPlanche } from "./Planche"
 
@@ -793,7 +794,7 @@ function Identite({
           className="mesure h-[26px] rounded-[2px] border border-trait bg-papier-cote px-1 text-[11px] text-encre-3"
         >
           <option value="">aucun — suit le plan du jeu</option>
-          {types.map((type) => (
+          {naturesChoisissables(types, personnage.type).map((type) => (
             <option key={type.nom} value={type.nom}>
               {type.nom} — {type.poses.length === 0
                 ? "aucune pose"

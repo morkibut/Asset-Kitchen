@@ -390,6 +390,15 @@ class Atelier:
             self.diffusion,
             self.univers,
         )
+        # **La migration des matières change la nature d'un sujet** (RG8) : elle le
+        # fait par le seul écrivain de sujet du dépôt, monté juste au-dessus de cette
+        # ligne — la bibliothèque, montée bien avant, ne peut pas le recevoir à la
+        # construction. Le lambda ne le lit qu'à l'appel.
+        self.bibliotheque.changer_nature = (
+            lambda projet, sujet, nature: self.production.regler_personnage(
+                projet, sujet, type=nature
+            )
+        )
         # **Le calibrage, monté après la production** (E17) : il lit les poses
         # d'une chose et écrit dans la recette de leurs corps. Ni catalogue, ni
         # fournisseur — il change le rendu d'images déjà payées, et un rendu est

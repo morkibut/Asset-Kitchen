@@ -49,7 +49,47 @@ const racineMatieres = (p: string) => `/projects/${encodeURIComponent(p)}/materi
  *  qu'elle soit terminée, pour pouvoir le retrouver dans la bibliothèque dès
  *  que son emplacement passe à « reussie ». */
 export const assetDeGeneration = (g: Pick<GenerationMatiere, "identifiant">, rang = 0) => `${g.identifiant}-${rang}`
+
+// ── RG5 / RG6 : la bibliothèque des matières du projet ───────────────────────
+
+/** Une matière de la bibliothèque, telle que `GET …/materials` la rend
+ *  (`atelier/api/matieres.py`, `_matiere_json`). **Le nom est celui de l'image**
+ *  (`label`) : il n'y a pas de second nom à tenir d'accord. `cadrage` est vide
+ *  quand l'image est devenue matière par déclaration et non par génération. */
+export type MatiereDeLaBibliotheque = {
+  identifiant: string; nom: string; largeur: number; hauteur: number; apercu: string
+  cadrage: string; cree_le: number; collections: { identifiant: string; nom: string }[]
+  /** RG8 : l'image a été **détourée et recadrée comme un personnage**, ce qu'une matière ne
+   *  reçoit pas — elle est née avant que le barème du jeu connaisse « matière ». */
+  detouree: boolean
+  /** RG8 : `detouree`, **et** son image brute d'origine est encore sur le disque — la bonne
+   *  recette se rejoue dessus sans rien regénérer ni payer. `false` avec `detouree` : seule
+   *  une génération neuve la refera. */
+  refaisable: boolean
+}
+
 export const matieres = {
+  /** Ce que la bibliothèque contient — jamais les sujets : aucun n'est consulté. */
+  lister: (p: string) => appeler<{
+    matieres: MatiereDeLaBibliotheque[]
+    /** Les sujets que la migration a vidés de leurs images (RG5) : le sujet reste, vide, et
+     *  l'écran propose de le jeter. Absent d'un vieux serveur : vide. */
+    sujets_vides?: { identifiant: string; nom: string }[]
+    /** Les images qui n'ont pas pu passer en matières, avec la raison. Absent : vide. */
+    non_migrees?: { identifiant: string; raison: string }[]
+  }>(racineMatieres(p)),
+  /** Poser (`true`) ou retirer (`false`) la marque « matière » sur une image du
+   *  projet. Refusée en 409, avec sa phrase, si l'image porte un sujet. */
+  declarer: (p: string, asset: string, valeur: boolean) =>
+    appeler<MatiereDeLaBibliotheque>(`${racineMatieres(p)}/${encodeURIComponent(asset)}`, { method: "PUT", body: JSON.stringify({ matiere: valeur }) }),
+  /** Une matière du jeu, avec son état (RG8) : la fiche d'une image y lit si elle a été détourée. */
+  lire: (p: string, asset: string) =>
+    appeler<MatiereDeLaBibliotheque>(`${racineMatieres(p)}/${encodeURIComponent(asset)}`),
+  /** Remettre à une matière détourée la recette que le jeu lui donne, **à partir de son image
+   *  brute** (RG8) : rien n'est regénéré, rien ne coûte. Refusée en 409, avec sa phrase, si
+   *  l'image d'origine a disparu. */
+  refaire: (p: string, asset: string) =>
+    appeler<MatiereDeLaBibliotheque>(`${racineMatieres(p)}/${encodeURIComponent(asset)}/redo`, { method: "POST" }),
   disponibilite: (p: string) => appeler<DisponibiliteMatieres>(`${racineMatieres(p)}/availability`),
   apercu: (p: string, r: { pierre: string; motif: string; cadrage: string; reference?: boolean }) =>
     appeler<ApercuMatiere>(`${racineMatieres(p)}/preview`, { method: "POST", body: JSON.stringify(r) }),

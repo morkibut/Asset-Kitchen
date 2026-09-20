@@ -1,6 +1,6 @@
-import { useEffect, useReducer, useRef, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useReducer, useRef, useState, type ReactNode } from "react"
 import { api, type Asset, type ApercuLivraison } from "../api"
-import { RACCORDS, reglesTuiles, tuiles, type CelluleTuile, type EnsembleTuiles, type ReglesTuiles } from "../api-tuiles"
+import { RACCORDS, matieres as apiMatieres, reglesTuiles, tuiles, type CelluleTuile, type EnsembleTuiles, type ReglesTuiles } from "../api-tuiles"
 import { assetsDeLaRecette, atlasDe, jeuDepuisRecette, nouveauJeu, recetteDe, versCarteServeur } from "../tuiles/atelier"
 import { encoderPng, enBase64 } from "../tuiles/png"
 import { AtelierDuJeu, ChoixDeSorte, chargerImages, imagesChargees, ListeDesJeux, LivraisonDuJeu, type Edition, type MatiereDuJeu } from "./AtelierTuiles"
@@ -31,14 +31,10 @@ const estModifie = (ed: Edition) => { const s = signatures(ed); return s.signatu
 /** Le lieu *Les tuiles* (`TU3`) : la liste des jeux, le choix de la sorte, l'atelier
  *  d'un jeu fabriqué et sa livraison. Un jeu fait **à partir d'une image déjà faite**
  *  s'ouvre toujours dans l'éditeur d'AU13, plus bas, inchangé. */
-export function Tuiles({ projet, vue, onVue, onNoms, matieres: donnees = [], sujetsMatieres = [], tailleDuJeu = 32, paletteUnivers = [], onAsset, onLivraisons, onUnivers }: {
+export function Tuiles({ projet, vue, onVue, onNoms, tailleDuJeu = 32, paletteUnivers = [], onAsset, onLivraisons, onUnivers }: {
   projet: string; vue?: VueTuiles; onVue?: (v: VueTuiles) => void
   /** Les noms des jeux, pour le fil d'Ariane — `""` pour le jeu neuf. */
   onNoms?: (noms: Record<string, string>) => void
-  matieres?: MatiereDuJeu[]
-  /** Les sujets de nature « matière » : leurs images de la bibliothèque — rangées
-   *  dans une case ou non — remplissent « Mes matières ». */
-  sujetsMatieres?: { identifiant: string; nom: string }[]
   tailleDuJeu?: number
   /** La palette de l'univers du projet (TU6) : `[]` sans palette. */
   paletteUnivers?: readonly string[]
@@ -46,19 +42,39 @@ export function Tuiles({ projet, vue, onVue, onNoms, matieres: donnees = [], suj
   /** Le lien « Voir l’univers » quand la palette du jeu manque (TU6). */
   onUnivers?: () => void
 }) {
-  const [trouvees, setTrouvees] = useState<MatiereDuJeu[]>([])
-  const cleSujets = sujetsMatieres.map(s => `${s.identifiant}|${s.nom}`).join("/")
+  // **« Mes matières » lit la bibliothèque du projet** (RG6) : les images marquées
+  // matière, et aucun sujet n'est consulté. Le nom est celui que la route rend.
+  // Une lecture est relancée quand le projet change, et par l'atelier quand la
+  // bibliothèque a pu bouger (le tiroir s'ouvre sur « Mes matières », un tirage
+  // vient de finir) : `numeroLecture` ne laisse gagner que la dernière demandée.
+  const [matieres, setMatieres] = useState<MatiereDuJeu[]>([])
+  const [matieresErreur, setMatieresErreur] = useState("")
+  // Ce que la migration a laissé derrière elle (RG5) : les sujets vidés de leurs images, et les
+  // images qui n'ont pas pu passer en matières. Vides tant que le serveur n'en dit rien.
+  const [sujetsVides, setSujetsVides] = useState<{ identifiant: string; nom: string }[]>([])
+  const [nonMigrees, setNonMigrees] = useState<{ identifiant: string; raison: string }[]>([])
+  const numeroLecture = useRef(0)
+  const relireMatieres = useCallback(() => {
+    const n = ++numeroLecture.current
+    return apiMatieres.lister(projet).then(r => {
+      if (n !== numeroLecture.current) return
+      setMatieres(r.matieres.map(m => ({ identifiant: m.identifiant, nom: m.nom, detouree: m.detouree })))
+      setSujetsVides(r.sujets_vides ?? [])
+      setNonMigrees(r.non_migrees ?? [])
+      setMatieresErreur("")
+    }).catch(e => {
+      if (n !== numeroLecture.current) return
+      // L'état vide habituel, et la raison dite à l'endroit où l'on regarde (le tiroir).
+      setMatieres([])
+      setSujetsVides([]); setNonMigrees([])
+      setMatieresErreur(e instanceof Error ? e.message : "La bibliothèque n’a pas répondu.")
+    })
+  }, [projet])
   useEffect(() => {
-    if (!sujetsMatieres.length) { setTrouvees([]); return }
-    let vivant = true
-    const noms = new Map(sujetsMatieres.map(s => [s.identifiant, s.nom]))
-    api.assets({ limite: 1000 }).then(r => {
-      if (vivant) setTrouvees(r.assets.filter(a => a.personnage && noms.has(a.personnage)).map(a => ({ identifiant: a.identifiant, nom: noms.get(a.personnage!)! })))
-    }).catch(() => undefined)
-    return () => { vivant = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cleSujets])
-  const matieres = [...donnees, ...trouvees.filter(t => !donnees.some(d => d.identifiant === t.identifiant))]
+    setMatieres([]); setMatieresErreur(""); setSujetsVides([]); setNonMigrees([])
+    void relireMatieres()
+    return () => { numeroLecture.current++ }
+  }, [relireMatieres])
   const [liste, setListe] = useState<EnsembleTuiles[]>([])
   const [charge, setCharge] = useState(false)
   const [erreur, setErreur] = useState("")
@@ -142,7 +158,7 @@ export function Tuiles({ projet, vue, onVue, onNoms, matieres: donnees = [], suj
   else if (ensemble && !ensemble.recette) corps = <EditeurTuiles key={ensemble.identifiant} ensemble={ensemble} onGarder={e => setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)])} onAsset={onAsset} onLivraisons={onLivraisons} />
   else if (!edition) corps = <p role="status" className="text-[13px] text-encre-3">{charge ? "Lecture du jeu de tuiles…" : "Lecture des jeux de tuiles…"}</p>
   else if (courante.livraison) corps = <LivraisonDuJeu projet={projet} edition={edition} onRetour={() => aller({ jeu: courante.jeu })} onLivraisons={onLivraisons} />
-  else corps = <AtelierDuJeu key={cle} projet={projet} edition={edition} matieres={matieres} modifie={() => estModifie(edition)} occupe={occupe}
+  else corps = <AtelierDuJeu key={cle} projet={projet} edition={edition} matieres={matieres} matieresErreur={matieresErreur} sujetsVides={sujetsVides} nonMigrees={nonMigrees} onRelireMatieres={() => void relireMatieres()} modifie={() => estModifie(edition)} occupe={occupe}
     message={estModifie(edition) ? (edition.jeu.identifiant ? "Modifications non enregistrées" : "Pas encore enregistré") : statut}
     onNom={nom => { edition.jeu.nom = nom; maj() }}
     onEnregistrer={() => void enregistrer(edition)}

@@ -9,8 +9,14 @@
 > La maquette des deux colonnes : <https://claude.ai/artifact/Kq2BmNcULrPdB8HzkQeREo>
 > (avant/après, fiche d'une image et colonne des sujets).
 >
-> **Où en est le chantier (20 septembre 2026).** Rien n'est fait, sauf le correctif qui a
-> révélé le problème : voir « Ce qui a déclenché ce plan ».
+> **Où en est le chantier (20 septembre 2026).** Les huit tranches sont faites, sur la branche
+> `feat/rangement`, pas encore fusionnée dans `main`. Une relecture croisée (RG8) a corrigé
+> les écarts qu'elle a trouvés ; ce qu'elle laisse à décider à l'auteur est écrit en bas, sous
+> « Décisions laissées à l'auteur ».
+>
+> **La maquette est dépassée sur un point.** `Fiche-apres` montre une matière rangée *dans un
+> sujet* (menu « Sujet », option « Matières », lien vers son établi). D4 a décidé l'inverse :
+> l'écran livré (bouton « Ranger dans les matières ») a raison, pas la maquette.
 
 ## Ce qui a déclenché ce plan
 
@@ -130,10 +136,21 @@ Les onglets *Animations*, *Sons*, les filtres *Direction* et *Mouvement / pose*,
 *Découper une image* : chacun paraît si la nature le porte, et disparaît sinon — jamais grisé
 sans raison.
 
-- [ ] La page d'une matière n'a plus d'onglet Animations ni de filtre Direction.
-- [ ] La page d'un personnage est inchangée, au pixel près.
-- [ ] Aucun onglet n'est grisé sans une phrase qui dit pourquoi ; un onglet qui ne s'applique
+- [x] La page d'une matière n'a plus d'onglet Animations ni de filtre Direction.
+      *(Le filtre Direction et le menu Mouvement/pose vivent dans `AnimationsDuSujet.tsx`,
+      monté seulement quand l'onglet existe : le faire disparaître au niveau de l'onglet
+      suffit à faire disparaître les deux.)*
+- [x] La page d'un personnage est inchangée, au pixel près.
+      *(`PageDuSujet.test.tsx` : les 28 essais d'avant la tranche passent tels quels, plus un
+      essai dédié qui mocke `posesDesTypes` et revérifie les sept onglets et le bouton
+      Découper.)*
+- [x] Aucun onglet n'est grisé sans une phrase qui dit pourquoi ; un onglet qui ne s'applique
       pas n'existe pas.
+      *(`atelier/services/production.py`, `poses_des_types` rend `capacites` — D1 au mot
+      près — et `se_decoupe` (`Echelle.silhouette`) ; `PageDuSujet.tsx` filtre les onglets
+      Animations/Sons et le bouton Découper une image dessus. Repli permissif tant que la
+      route n'a pas répondu, pour ne jamais faire disparaître un onglet d'un personnage par
+      erreur.)*
 
 ### RG3 · La fiche d'une image, en trois zones
 
@@ -143,23 +160,32 @@ La colonne de droite passe de dix-sept blocs à la file à trois zones, toujours
 ordre : **où elle est rangée** (le seul endroit où l'on décide), **s'en resservir**, **d'où elle
 vient** (replié).
 
-- [ ] « Corps de » s'appelle « Sujet », et la case Pose dit pourquoi elle est vide (« une
+- [x] « Corps de » s'appelle « Sujet », et la case Pose dit pourquoi elle est vide (« une
       matière n'a pas de pose ») au lieu d'être grisée sans raison.
-- [ ] « Réinjecter » est écrit en français et dit ce que ça fait.
-- [ ] « Imposé par le jeu » et « Sa recette » fusionnent en un seul bloc, qui donne la valeur
+      *(`Fiche.tsx`, `CaseDeLAsset` : `natureAvecArticle(porteur.type)` + « n'a pas de pose ».)*
+- [x] « Réinjecter » est écrit en français et dit ce que ça fait.
+      *(Le bloc s'appelle « S'en resservir ». Ses libellés ne sont pas ceux de
+      `RG3-bloc-fusionne.md` §5 : « elle inspire… » faisait parler l'image, l'écran dit
+      « référence · image à retoucher · guide de style ».)*
+- [x] « Imposé par le jeu » et « Sa recette » fusionnent en un seul bloc, qui donne la valeur
       **et la raison** : « Découpe du contour : non — une matière remplit son cadre ». C'est la
       ligne qui aurait permis à l'auteur de trouver le défaut seul.
-- [ ] Favori et Supprimer sont dans la zone des décisions, pas au milieu du texte descriptif.
+- [x] Favori et Supprimer sont dans la zone des décisions, pas au milieu du texte descriptif.
+      *(`DecisionsDeLaFiche`, appelée depuis la zone 1.)*
 
 ### RG4 · La colonne de gauche des sujets
 
 **Bloquée par** : RG1. Maquette : `Sujets-apres` de l'artifact.
 
-- [ ] Le champ de recherche cherche ce qu'il annonce — les sujets **et** les collections.
-- [ ] Une famille ouverte montre ses natures avec leur compte ; une nature se clique.
-- [ ] Les familles vides tiennent sur une ligne dépliable, au lieu de trois lignes à zéro.
-- [ ] « Les tuiles », « Les sons » et la galerie passent sous un titre qui dit que ce ne sont
+- [x] Le champ de recherche cherche ce qu'il annonce — les sujets **et** les collections.
+- [x] Une famille ouverte montre ses natures avec leur compte ; une nature se clique.
+      *(`Famille.tsx`. La nature « matière » n'y figure plus depuis la relecture croisée : elle
+      ne porte plus de sujets, voir D4 — sauf si un sujet de cette nature existe encore, pour
+      qu'il ne devienne pas invisible.)*
+- [x] Les familles vides tiennent sur une ligne dépliable, au lieu de trois lignes à zéro.
+- [x] « Les tuiles », « Les sons » et la galerie passent sous un titre qui dit que ce ne sont
       pas des familles.
+      *(Titre « Ailleurs dans le jeu ».)*
 
 ### RG5 · Les matières deviennent une bibliothèque
 
@@ -168,39 +194,100 @@ vient** (replié).
 Le rang « ingrédient » côté serveur : une matière est une image du projet marquée comme telle,
 groupable en collections, sans sujet porteur.
 
-- [ ] Une matière existe sans sujet, et se liste par une route dédiée.
-- [ ] Les collections existantes la rangent, sans nouveau mécanisme de groupement.
-- [ ] Une matière n'a ni objectif, ni poses, ni livraison propre — et les routes qui en
+- [x] Une matière existe sans sujet, et se liste par une route dédiée.
+      *(`Asset.matiere`, posé par `ServiceAssets.naitre` quand la génération portait
+      `echelle="matière"` ; `GET /api/projects/{projet}/materials`, servie par
+      `ServiceBibliotheque.matieres`.)*
+- [x] La spécification a montré qu'une collection tient des sujets et jamais des images
+      (`Collection.membres`) : le critère devient donc *les collections la rangent par le
+      mécanisme qui range déjà un sujet, sans qu'un second en naisse*.
+      *(`Membre.genre` — `sujet` ou `matiere` —, `Collection.avec` / `sans` / `matieres_du_jeu`
+      l'étendent ; `ServiceBibliotheque.ranger_sujet` / `retirer_sujet` prennent le genre. Une
+      fiche de collection écrite avant RG5 se relit à l'identique, `genre` ne s'écrivant que
+      pour une matière — `membres_depuis_json`, `tests/test_rg5_bibliotheque_matieres.py`.)*
+- [x] Une matière n'a ni objectif, ni poses, ni livraison propre — et les routes qui en
       proposent la refusent avec une phrase en clair.
+      *(`PUT /assets/{id}/character` et `POST`/`PUT /characters` — `atelier/api/production.py` —,
+      refusées en 409 dès que l'image porte `matiere=True`, ou que `type == "matière"` est
+      demandé pour un sujet. `_asset_valide` ne change pas : le marqueur décide de ce qui est
+      listé, jamais de ce qui est accepté dans une recette —
+      `test_asset_valide_accepte_une_image_quel_que_soit_le_marqueur`.)*
 
 ### RG6 · L'écran des tuiles adopte la bibliothèque
 
 **Bloquée par** : RG5.
 
-- [ ] « Mes matières » lit la bibliothèque, plus les images des sujets de nature « matière ».
-- [ ] L'onglet n'est plus vide par construction : une matière générée y paraît sans qu'on ait
+- [x] « Mes matières » lit la bibliothèque, plus les images des sujets de nature « matière ».
+      *(`matieres.lister` dans `api-tuiles.ts` ; `Tuiles.tsx` la charge au montage et au
+      changement de projet, les props `matieres` / `sujetsMatieres` n'existent plus.)*
+- [x] L'onglet n'est plus vide par construction : une matière générée y paraît sans qu'on ait
       rien rangé.
-- [ ] Une image ordinaire de la galerie peut être déclarée matière depuis sa fiche, en un geste.
+      *(Relue quand le tiroir s'ouvre sur « Mes matières », quand un tirage passe à « termine »,
+      et toutes les 3 s tant que l'auteur regarde ses matières avec des tirages en route.
+      Route en erreur : état vide + la raison, l'écran continue.)*
+- [x] Une image ordinaire de la galerie peut être déclarée matière depuis sa fiche, en un geste.
+      *(Bouton « Ranger dans les matières » / « Retirer des matières », zone « Où elle est
+      rangée » de la fiche. Une image déjà rangée dans un sujet : bouton grisé **avec** sa
+      phrase. Refus serveur en 409, `RangementRefuse`, et la route vérifie désormais que
+      l'image est du projet de l'adresse — `tests/test_rg6_ecran_bibliotheque.py`.)*
 
 ### RG7 · L'agent voit les matières
 
 **Bloquée par** : RG5.
 
-- [ ] Un outil MCP liste les matières du projet, avec ce qu'il faut pour les poser dans une
+- [x] Un outil MCP liste les matières du projet, avec ce qu'il faut pour les poser dans une
       recette.
-- [ ] `generate_tile_material` dépose ses tirages dans la bibliothèque, sans sujet à créer.
-- [ ] Un agent enchaîne « générer une matière » puis « composer un jeu de tuiles » sans passer
+      *(`list_materials`, `atelier/mcp/tuiles.py` ; `edit_asset` gagne `material`, posé seul.)*
+- [x] `generate_tile_material` dépose ses tirages dans la bibliothèque, sans sujet à créer.
+      *(Vrai depuis RG5 — la règle est dans `ServiceAssets.naitre` ; RG7 le prouve par un essai
+      et l'écrit dans la description de l'outil.)*
+- [x] Un agent enchaîne « générer une matière » puis « composer un jeu de tuiles » sans passer
       par l'écran, et l'essai le prouve de bout en bout.
+      *(`tests/test_rg7_agent_matieres.py`, sur le banc de `test_tu10_agent.py` ; aucun sujet
+      n'existe au début ni à la fin.)*
 
 ### RG8 · La migration, et la relecture croisée
 
 **Bloquée par** : RG6, RG7.
 
-- [ ] Les matières déjà rangées dans un sujet rejoignent la bibliothèque sans perdre leur nom.
-- [ ] Les images nées détourées avant le correctif sont retrouvables, et l'écran dit si l'on
+- [x] Les matières déjà rangées dans un sujet rejoignent la bibliothèque sans perdre leur nom.
+      *(`ServiceBibliotheque.migrer_matieres`, les six règles de `RG5` §5, rejouable, avec un
+      journal `migration-matieres.json` dans le dossier du jeu pour tout remettre. Elle tourne
+      une fois par jeu et par processus, à l'ouverture, au choix du jeu, à la première lecture de
+      la bibliothèque, ou par `POST /api/projects/{projet}/materials/migrate`. Mesurée sur une
+      copie de vos données : 6 images migrées dans `la-foret-magique`, les 6 autres jeux
+      inchangés à l'octet. `tests/test_rg8_migration_matieres.py`.)*
+- [x] Les images nées détourées avant le correctif sont retrouvables, et l'écran dit si l'on
       peut leur réappliquer la recette sans les regénérer.
-- [ ] Une relecture croise ce plan, les écrans livrés et la maquette : aucun des trois ne dit
+      *(`detouree` / `refaisable` sur la route et sur `list_materials` ; repère sur la vignette
+      de « Mes matières », encadré et bouton « La refaire comme une matière » sur la fiche ;
+      `POST …/materials/{asset}/redo`, jamais tout seul. **Mesuré : aucune des 6 matières de
+      `la-foret-magique` n'est détourée** — vous les aviez déjà remises d'aplomb à la main —
+      donc rien à réparer aujourd'hui sur ce jeu. `tests/test_rg8_detourees.py`.)*
+- [x] Une relecture croise ce plan, les écrans livrés et la maquette : aucun des trois ne dit
       ce que les deux autres démentent.
+      *(Faite le 20 septembre 2026 par le plus gros modèle : dix-sept écarts. Corrigés : les
+      menus de nature, la colonne des sujets, les directions, la naissance d'une matière, le
+      contrôle de projet de l'agent, les dimensions, le rapport de migration, le geste pour
+      jeter le sujet vidé, les cases du plan et deux commentaires. Restent ceux de « Décisions
+      laissées à l'auteur ».)*
+
+## Décisions laissées à l'auteur
+
+- **Ranger une matière dans une collection : aucun écran, aucun outil ne le fait.** Le domaine
+  le sait (`RG5`, case 2), mais les routes `…/collections/{id}/members` ne passent jamais le
+  genre « matière », donc seule la migration remplit `collections`. Et la phrase du refus 409
+  de `RG5` §4 dit « pour la ranger, mets-la dans une collection » : **c'est faux en usage
+  aujourd'hui.** Soit on construit le geste (quelle surface : « Mes matières » ? la fiche ?),
+  soit on réécrit la phrase.
+- **L'aide du guide dit « par le lien du bas » pour changer les règles du jeu depuis la fiche
+  d'une image, et ce n'est pas un lien** (`aide.ts`, `fiche.recette`). C'est votre chantier
+  du guide : à corriger là, ou à brancher une vraie porte vers Réglages.
+- **La migration réécrit des fichiers à l'ouverture d'un jeu.** Elle ne supprime rien et garde
+  un journal, mais elle change 6 fiches d'images de `la-foret-magique` dès la première
+  ouverture après fusion (leur sujet « Matières » reste, vide, jusqu'à ce que vous le jetiez).
+  À savoir avant de fusionner.
+- **La maquette `Fiche-apres` est à republier ou à marquer dépassée** (voir en tête).
 
 ## Ce que ce plan ne couvre pas
 

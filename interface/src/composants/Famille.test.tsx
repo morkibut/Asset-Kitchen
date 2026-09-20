@@ -13,7 +13,7 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { EcranFamille, GLISSE_DES_SUJETS } from "./Famille"
 import { MemoireDuParcours } from "./MemoireDuParcours"
-import { api } from "../api"
+import { api, UNIVERS_VIDE } from "../api"
 import type {
   GrilleDeFamille,
   GroupeDeRangement,
@@ -902,5 +902,50 @@ describe("ce que l'écran retient d'un aller-retour", () => {
         document.querySelector('[data-collection-de-la-colonne="boss"]')?.getAttribute("aria-current"),
       ).toBe("page"),
     )
+  })
+})
+
+// ── Les natures de la colonne (rangement, D1) ────────────────────────────────
+//
+// Une matière est une image de la bibliothèque, plus un sujet : sa ligne dans la
+// colonne vaudrait toujours « — ». Le serveur dit quelles natures sont des
+// matières (`GET /characters/types`, `capacites.matiere`) ; l'écran ne le devine pas.
+
+describe("les natures de la colonne", () => {
+  const nature = (nom: string) => ({ nom, famille: "personnages", occupation: 1, silhouette: true }) as never
+  const UNIVERS = { ...UNIVERS_VIDE, bareme: [nature("personnage"), nature("créature"), nature("matière")] }
+  const type = (nom: string, matiere: boolean) => ({
+    nom, origine: "connue", poses: [], connues: [], se_decoupe: true,
+    capacites: { directions: false, anime: false, sons: false, matiere },
+  })
+
+  function monterAvecNatures(reponse: unknown) {
+    const { fetchDouble } = construireDouble()
+    const fetchAvecTypes = vi.fn(async (chemin: string, init?: RequestInit) =>
+      String(chemin) === "/api/characters/types"
+        ? ({ ok: true, status: 200, json: async () => reponse }) as Response
+        : fetchDouble(chemin, init))
+    vi.stubGlobal("fetch", fetchAvecTypes)
+    render(
+      <EcranFamille famille="personnages" nom="Les personnages" jeu="le-marais" univers={UNIVERS} rafraichi={0}
+        surGroupes={vi.fn()} surRange={vi.fn()} surReglages={vi.fn()} surErreur={vi.fn()} onOuvrir={vi.fn()} onCree={vi.fn()} />,
+    )
+    return fetchAvecTypes
+  }
+
+  test("une nature qui sert de matière n'a plus de ligne", async () => {
+    const fetchAvecTypes = monterAvecNatures({ plan: [], types: [type("personnage", false), type("créature", false), type("matière", true)] })
+    await screen.findByText("Personnage")
+    await waitFor(() => expect(screen.queryByText("Matière")).toBeNull())
+    expect(screen.getByText("Créature")).toBeTruthy()
+    expect(fetchAvecTypes.mock.calls.some(([u]) => String(u) === "/api/characters/types")).toBe(true)
+  })
+
+  test("tant que la route n'a pas répondu, ou si elle ne dit rien, aucune ligne ne disparaît", async () => {
+    const fetchAvecTypes = monterAvecNatures({})
+    await screen.findByText("Personnage")
+    await waitFor(() => expect(fetchAvecTypes.mock.calls.some(([u]) => String(u) === "/api/characters/types")).toBe(true))
+    expect(screen.getByText("Matière")).toBeTruthy()
+    expect(screen.getByText("Créature")).toBeTruthy()
   })
 })

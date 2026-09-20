@@ -13,10 +13,11 @@
 // présence conditionnée par la porte qu'`App` lui donne, et le geste qu'il
 // déclenche.
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-import { api, UNIVERS_VIDE, type Asset, type Generation, type Recette } from "../api"
+import { api, Refus, UNIVERS_VIDE, type Asset, type Generation, type Recette } from "../api"
+import { matieres } from "../api-tuiles"
 import { Fiche } from "./Fiche"
 
 const RECETTE_VIDE: Recette = {
@@ -58,6 +59,7 @@ const UN_ASSET: Asset = {
   lot: null,
   personnage_supprime: false,
   epingle: false,
+  matiere: false,
   projet: "bac-a-sable",
   collection: null,
   parent: null,
@@ -172,5 +174,247 @@ describe("la fiche — la graine d'une image locale (défaut 6 de la relecture d
     await new Promise((r) => setTimeout(r, 0))
     expect(screen.queryByText(/^graine /)).not.toBeInTheDocument()
     vi.unstubAllGlobals()
+  })
+})
+
+describe("la fiche — ranger l'image dans les matières du jeu (RG6)", () => {
+  const PHRASE = "Cette image est rangée dans un sujet : sors-la de son sujet d'abord."
+  const RANGER = { name: "Ranger dans les matières" }
+  const RETIRER = { name: "Retirer des matières" }
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("essai : aucun serveur"))))
+  })
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const fiche = (asset: Asset, onErreur: (r: string) => void = () => {}) => (
+    <Fiche
+      asset={asset}
+      univers={UNIVERS_VIDE}
+      plan={[]}
+      personnages={[]}
+      onFermer={() => {}}
+      onErreur={onErreur}
+      onReinjecter={() => {}}
+      onReglages={() => {}}
+      onSupprimer={() => {}}
+      onRetoucher={() => {}}
+      onOuvrir={() => {}}
+    />
+  )
+  const reponse = { identifiant: "aaaa1111-0", nom: "un tonneau", largeur: 8, hauteur: 8, apercu: "", cadrage: "", cree_le: 1, collections: [], detouree: false, refaisable: false }
+
+  test("une image ordinaire du jeu se range en un geste, et le geste inverse prend la place du libellé", async () => {
+    const declarer = vi.spyOn(matieres, "declarer").mockResolvedValue(reponse)
+    render(fiche(UN_ASSET))
+    expect(screen.queryByRole("button", RETIRER)).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", RANGER))
+    // Le PUT part avec le projet de l'image, son identifiant, et la valeur voulue.
+    await waitFor(() => expect(declarer).toHaveBeenCalledWith("bac-a-sable", "aaaa1111-0", true))
+    expect(await screen.findByRole("button", RETIRER)).toBeInTheDocument()
+    expect(screen.queryByRole("button", RANGER)).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", RETIRER))
+    await waitFor(() => expect(declarer).toHaveBeenLastCalledWith("bac-a-sable", "aaaa1111-0", false))
+    expect(await screen.findByRole("button", RANGER)).toBeInTheDocument()
+    expect(declarer).toHaveBeenCalledTimes(2)
+  })
+
+  test("le libellé suit l'image quand le flux la change ailleurs", () => {
+    const vue = render(fiche(UN_ASSET))
+    expect(screen.getByRole("button", RANGER)).toBeInTheDocument()
+    vue.rerender(fiche({ ...UN_ASSET, matiere: true }))
+    expect(screen.getByRole("button", RETIRER)).toBeInTheDocument()
+    vue.rerender(fiche({ ...UN_ASSET, matiere: false }))
+    expect(screen.getByRole("button", RANGER)).toBeInTheDocument()
+  })
+
+  test("une image rangée dans un sujet ne propose pas le geste : elle dit pourquoi, et rien ne part", () => {
+    const declarer = vi.spyOn(matieres, "declarer")
+    render(fiche({ ...UN_ASSET, personnage: "pelerin" }))
+    expect(screen.getByText(PHRASE)).toBeInTheDocument()
+    const bouton = screen.getByRole("button", RANGER)
+    expect(bouton).toBeDisabled()
+    fireEvent.click(bouton)
+    expect(declarer).not.toHaveBeenCalled()
+  })
+
+  test("une image déjà marquée peut toujours retirer sa marque, même si elle porte un sujet", async () => {
+    // Née avant RG5, ou marquée par un ancien chemin : la sortie reste ouverte.
+    const declarer = vi.spyOn(matieres, "declarer").mockResolvedValue(reponse)
+    render(fiche({ ...UN_ASSET, personnage: "pelerin", matiere: true }))
+    expect(screen.queryByText(PHRASE)).toBeNull()
+    fireEvent.click(screen.getByRole("button", RETIRER))
+    await waitFor(() => expect(declarer).toHaveBeenCalledWith("bac-a-sable", "aaaa1111-0", false))
+  })
+
+  test("une image hors projet n'a ni le geste ni la phrase", () => {
+    render(fiche({ ...UN_ASSET, projet: null }))
+    expect(screen.queryByRole("button", RANGER)).toBeNull()
+    expect(screen.queryByRole("button", RETIRER)).toBeNull()
+    expect(screen.queryByText(PHRASE)).toBeNull()
+  })
+
+  test("un refus du serveur se lit avec sa phrase, et le libellé ne change pas", async () => {
+    const refus = "Cette image est rangée dans un sujet : sors-la de son sujet d'abord, ou génère la matière depuis l'écran des tuiles."
+    vi.spyOn(matieres, "declarer").mockRejectedValue(new Refus(refus, "rangement_refuse"))
+    const onErreur = vi.fn()
+    render(fiche(UN_ASSET, onErreur))
+    fireEvent.click(screen.getByRole("button", RANGER))
+    await waitFor(() => expect(onErreur).toHaveBeenCalledWith(refus))
+    expect(screen.getByRole("button", RANGER)).toBeInTheDocument()
+    expect(screen.getByRole("button", RANGER)).toBeEnabled()
+  })
+})
+
+describe("la fiche — une matière née détourée (RG8)", () => {
+  const TITRE = "Détourée comme un personnage"
+  const REFAIRE = { name: "La refaire comme une matière" }
+  const UNE_MATIERE: Asset = { ...UN_ASSET, matiere: true }
+  const ligne = (detouree: boolean, refaisable: boolean) => ({
+    identifiant: "aaaa1111-0", nom: "un tonneau", largeur: 8, hauteur: 8, apercu: "", cadrage: "surface", cree_le: 1, collections: [], detouree, refaisable,
+  })
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("essai : aucun serveur"))))
+  })
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const fiche = (asset: Asset, onErreur: (r: string) => void = () => {}) => (
+    <Fiche
+      asset={asset}
+      univers={UNIVERS_VIDE}
+      plan={[]}
+      personnages={[]}
+      onFermer={() => {}}
+      onErreur={onErreur}
+      onReinjecter={() => {}}
+      onReglages={() => {}}
+      onSupprimer={() => {}}
+      onRetoucher={() => {}}
+      onOuvrir={() => {}}
+    />
+  )
+
+  test("détourée avec son image d'origine : elle le dit, dit ce que ça change, et propose un seul bouton", async () => {
+    const lire = vi.spyOn(matieres, "lire").mockResolvedValue(ligne(true, true))
+    render(fiche(UNE_MATIERE))
+
+    expect(await screen.findByText(TITRE)).toBeInTheDocument()
+    expect(lire).toHaveBeenCalledWith("bac-a-sable", "aaaa1111-0")
+    expect(screen.getByText(/celle-ci a été découpée et recadrée/)).toBeInTheDocument()
+    // Ce que ça change, dit avant le clic : rien à regénérer ni à payer, l'image actuelle est remplacée.
+    expect(screen.getByText(/sans rien regénérer, et sans rien payer/)).toBeInTheDocument()
+    expect(screen.getByText(/L'image actuelle est remplacée/)).toBeInTheDocument()
+    expect(screen.getAllByRole("button", REFAIRE)).toHaveLength(1)
+    expect(screen.queryByText(/il faut la regénérer/)).toBeNull()
+  })
+
+  test("le bouton ne part jamais tout seul : ni au montage, ni à la relecture", async () => {
+    const lire = vi.spyOn(matieres, "lire").mockResolvedValue(ligne(true, true))
+    const refaire = vi.spyOn(matieres, "refaire").mockResolvedValue(ligne(false, false))
+    const vue = render(fiche(UNE_MATIERE))
+    await screen.findByRole("button", REFAIRE)
+    // La recette de l'image change (une retouche, le flux) : l'état est relu, rien n'est refait.
+    vue.rerender(fiche({ ...UNE_MATIERE, empreinte: "autre" }))
+    await waitFor(() => expect(lire).toHaveBeenCalledTimes(2))
+    expect(refaire).not.toHaveBeenCalled()
+  })
+
+  test("le clic appelle le bon geste, avec le jeu et l'image, puis la fiche se tait", async () => {
+    vi.spyOn(matieres, "lire").mockResolvedValue(ligne(true, true))
+    const refaire = vi.spyOn(matieres, "refaire").mockResolvedValue(ligne(false, false))
+    render(fiche(UNE_MATIERE))
+
+    fireEvent.click(await screen.findByRole("button", REFAIRE))
+
+    await waitFor(() => expect(refaire).toHaveBeenCalledTimes(1))
+    expect(refaire).toHaveBeenCalledWith("bac-a-sable", "aaaa1111-0")
+    await waitFor(() => expect(screen.queryByText(TITRE)).toBeNull())
+    expect(screen.queryByRole("button", REFAIRE)).toBeNull()
+  })
+
+  test("le bouton se grise pendant le geste : un double clic n'envoie qu'un appel", async () => {
+    vi.spyOn(matieres, "lire").mockResolvedValue(ligne(true, true))
+    let finir: (m: ReturnType<typeof ligne>) => void = () => {}
+    const refaire = vi.spyOn(matieres, "refaire").mockImplementation(() => new Promise((r) => { finir = r }))
+    render(fiche(UNE_MATIERE))
+
+    const bouton = await screen.findByRole("button", REFAIRE)
+    fireEvent.click(bouton)
+    await waitFor(() => expect(bouton).toBeDisabled())
+    fireEvent.click(bouton)
+    expect(refaire).toHaveBeenCalledTimes(1)
+    finir(ligne(false, false))
+    await waitFor(() => expect(screen.queryByText(TITRE)).toBeNull())
+  })
+
+  test("un refus du serveur se lit avec sa phrase, et la proposition reste", async () => {
+    const refus = "l'image d'origine n'est plus sur le disque : la seule façon de refaire cette matière est de la regénérer"
+    vi.spyOn(matieres, "lire").mockResolvedValue(ligne(true, true))
+    vi.spyOn(matieres, "refaire").mockRejectedValue(new Refus(refus, "recette_refusee"))
+    const onErreur = vi.fn()
+    render(fiche(UNE_MATIERE, onErreur))
+
+    fireEvent.click(await screen.findByRole("button", REFAIRE))
+
+    await waitFor(() => expect(onErreur).toHaveBeenCalledWith(refus))
+    expect(screen.getByRole("button", REFAIRE)).toBeEnabled()
+  })
+
+  test("détourée sans son image d'origine : la phrase dit qu'il faut la regénérer, sans bouton", async () => {
+    vi.spyOn(matieres, "lire").mockResolvedValue(ligne(true, false))
+    const refaire = vi.spyOn(matieres, "refaire")
+    render(fiche(UNE_MATIERE))
+
+    expect(await screen.findByText(TITRE)).toBeInTheDocument()
+    expect(screen.getByText(/Son image d'origine n'est plus sur le disque : il faut la regénérer/)).toBeInTheDocument()
+    expect(screen.queryByRole("button", REFAIRE)).toBeNull()
+    expect(screen.queryByText(/sans rien regénérer/)).toBeNull()
+    expect(refaire).not.toHaveBeenCalled()
+  })
+
+  test("une matière saine n'a ni phrase ni bouton", async () => {
+    const lire = vi.spyOn(matieres, "lire").mockResolvedValue(ligne(false, false))
+    render(fiche(UNE_MATIERE))
+    await waitFor(() => expect(lire).toHaveBeenCalled())
+    await new Promise((r) => setTimeout(r, 0))
+    expect(screen.queryByText(TITRE)).toBeNull()
+    expect(screen.queryByRole("button", REFAIRE)).toBeNull()
+  })
+
+  test("une image qui n'est pas une matière, ou hors jeu, n'interroge même pas le serveur", async () => {
+    const lire = vi.spyOn(matieres, "lire").mockResolvedValue(ligne(true, true))
+    const vue = render(fiche(UN_ASSET))
+    vue.rerender(fiche({ ...UNE_MATIERE, projet: null }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(lire).not.toHaveBeenCalled()
+    expect(screen.queryByText(TITRE)).toBeNull()
+  })
+
+  test("un serveur qui ne répond pas ne fait rien dire à la fiche : mieux vaut se taire", async () => {
+    vi.spyOn(matieres, "lire").mockRejectedValue(new Error("l'atelier ne répond pas"))
+    render(fiche(UNE_MATIERE))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(screen.queryByText(TITRE)).toBeNull()
+    expect(screen.queryByRole("button", REFAIRE)).toBeNull()
+  })
+
+  test("en changeant de fiche, l'état de la précédente ne reste pas affiché", async () => {
+    const lire = vi.spyOn(matieres, "lire").mockImplementation(async (_p, id) => ligne(id === "aaaa1111-0", true))
+    const vue = render(fiche(UNE_MATIERE))
+    await screen.findByText(TITRE)
+    vue.rerender(fiche({ ...UNE_MATIERE, identifiant: "bbbb2222-0" }))
+    await waitFor(() => expect(lire).toHaveBeenCalledWith("bac-a-sable", "bbbb2222-0"))
+    await waitFor(() => expect(screen.queryByText(TITRE)).toBeNull())
   })
 })

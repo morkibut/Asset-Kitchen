@@ -36,6 +36,36 @@ test("le type d'objet et l'ambiance se règlent dans la fiche du sujet", async (
 
 // ── Son style de combat (SC4, 18 septembre 2026) ────────────────────────────
 
+// ── Une matière n'est plus un sujet (rangement, D4) ─────────────────────────
+
+const NATURES_AVEC_MATIERE = [
+  { nom: "coffre", poses: ["ferme", "ouvert"], capacites: { directions: false, anime: true, sons: true, matiere: false } },
+  { nom: "matière", poses: [], capacites: { directions: false, anime: false, sons: false, matiere: true } },
+]
+
+async function ouvrirLaFicheDeType(type: string) {
+  const chose = { identifiant: "pavage", nom: "Pavage", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type, ambiance: "" } as unknown as Personnage
+  vi.spyOn(api, "objectifPersonnage").mockRejectedValue(new Error("hors sujet"))
+  vi.spyOn(api, "habillage").mockResolvedValue(null as never)
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(null as never)
+  vi.spyOn(api, "posesDesTypes").mockResolvedValue({ types: NATURES_AVEC_MATIERE } as never)
+  vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [] } as never)
+  render(<FicheDuSujet personnage={chose} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  await screen.findByRole("option", { name: "coffre — 2 poses" })
+}
+
+test("le choix du type ne propose plus « matière » pour un sujet", async () => {
+  await ouvrirLaFicheDeType("")
+  expect(screen.queryByRole("option", { name: /^matière/ })).toBeNull()
+})
+
+test("un ancien sujet de nature « matière » la garde affichée", async () => {
+  await ouvrirLaFicheDeType("matière")
+  expect(screen.getByRole("option", { name: /^matière/ })).toBeInTheDocument()
+  expect((screen.getByLabelText("Type d'objet") as HTMLSelectElement).value).toBe("matière")
+})
+
 test("la fiche dit d'où vient le style de combat, et un choix l'écrit", async () => {
   const champy = { identifiant: "champy", nom: "Champy", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type: "", ambiance: "", famille: "personnages" } as unknown as Personnage
   vi.spyOn(api, "objectifPersonnage").mockRejectedValue(new Error("hors sujet"))

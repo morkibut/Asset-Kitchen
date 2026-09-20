@@ -1947,6 +1947,13 @@ export type Asset = {
   /** Toucher une recette à la main épingle l'asset. Relu en T4, quand un
    *  changement de palette de projet devra sauter ce qui a été réglé ici. */
   epingle: boolean
+  /** **Une matière du jeu** (RG5) : une image marquée comme ingrédient d'un jeu
+   *  de tuiles. La marque se pose à la naissance quand la génération l'a
+   *  demandé, ou depuis la fiche (`matieres.declarer`, RG6). Une image qui
+   *  porte un sujet ne peut pas la porter. ⚠️ Rien à voir avec `source:
+   *  "matiere"` du moteur des tuiles, qui désigne une matière *intégrée* au
+   *  code (herbe, pierre…) : celle-ci est une image de l'auteur. */
+  matiere: boolean
   projet: string | null
   collection: string | null
   parent: string | null
@@ -2263,6 +2270,19 @@ export type PosesDesTypes = {
     /** Ce qu'un « revenir à la liste proposée » remettrait. Envoyé à côté pour
      *  que l'écran n'ait pas à le deviner. */
     connues: Pose[]
+    /** **Ce que cette nature peut avoir, en dehors de ses poses** (D1,
+     *  `docs/PLAN-rangement.md` ; `Capacites`, `atelier/domaine/plan.py`).
+     *  Rendu par le serveur, jamais recalculé ici — deux tables qui disent la
+     *  même chose finiraient par en dire deux différentes (RG2). */
+    capacites: {
+      directions: boolean
+      anime: boolean
+      sons: boolean
+      matiere: boolean
+    }
+    /** Reprend `Echelle.silhouette` — une matière, un décor, une tuile
+     *  remplissent leur cadre et n'ont pas de contour à découper (RG2). */
+    se_decoupe: boolean
   }[]
   /** Le plan du jeu — ce que suivent les types qui n'ont rien écrit. */
   plan: Pose[]
@@ -6694,10 +6714,11 @@ export const api = {
   // le montre : `prevoirLaSortie` puis `sortir`, avec `sujet`.
 
   /** Le personnage part, **ses images restent** — chacune marquée « personnage
-   *  supprimé ». La réponse dit combien. */
-  supprimerPersonnage: (personnage: string) =>
+   *  supprimé ». La réponse dit combien. `projet` : le jeu du sujet, quand
+   *  l'écran qui l'appelle ne l'ouvre pas forcément (sinon celui du serveur). */
+  supprimerPersonnage: (personnage: string, projet?: string) =>
     appeler<{ personnage: Personnage; images: number }>(
-      `/characters/${personnage}`,
+      `/characters/${personnage}${duJeu(projet)}`,
       { method: "DELETE" },
     ),
 

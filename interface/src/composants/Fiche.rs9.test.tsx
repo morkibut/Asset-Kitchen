@@ -51,6 +51,7 @@ const LA_PLANCHE: Asset = {
   lot: null,
   personnage_supprime: false,
   epingle: false,
+  matiere: false,
   projet: "bac-a-sable",
   collection: null,
   parent: null,

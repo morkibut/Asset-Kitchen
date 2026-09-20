@@ -2958,18 +2958,6 @@ export const AIDE: Record<string, Explication> = {
       "Le premier découpage se fait tout seul dès que la planche revient — rien à demander. Le refaire est un geste qu'on demande : l'atelier repropose les mêmes coupes, tu les déplaces, en ajoutes, en retires, puis tu valides, autant de fois que tu veux, sans jamais perdre les images déjà sorties d'un découpage précédent.",
   },
 
-  "fiche.impose": {
-    nom: "Imposé par le jeu",
-    ou: "case",
-    groupe: "Ce que l'image est — imposé par le jeu, sa recette",
-    quoi: "Ce que l'univers de ton jeu a appliqué à cette image-là — la taille de pixel, la part de case qu'elle occupe, la palette.",
-    change:
-      "Rien : c'est une lecture. Chaque ligne dit si la valeur du jeu est encore appliquée ou si tu l'as réglée à la main depuis, et les huit places en dessous sont l'endroit où l'on change.",
-    origine: "l'univers du jeu, tel qu'il est maintenant · l'échelle demandée à la naissance",
-    long:
-      "Sans cette rubrique, une image ne ressemblerait pas au rendu du modèle, sans savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, en silence.\n\nCalculée à la lecture plutôt que rangée avec l'image — la question est « qu'est-ce que le jeu impose *maintenant* » —, elle dit « on ne sait pas » si la génération n'est plus sur le disque.",
-  },
-
   "fiche.recette": {
     nom: "Sa recette",
     ou: "case",

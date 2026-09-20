@@ -62,6 +62,7 @@ function image(
     lot: null,
     personnage_supprime: false,
     epingle: false,
+    matiere: false,
     projet: "le-marais",
     collection: null,
     parent: null,

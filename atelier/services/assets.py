@@ -157,6 +157,12 @@ POCHES_MONTREES = 8
 # reste en coûte 28 : le garder évite de le refaire à chaque cran de curseur.
 # Quatre suffit — on retouche un asset à la fois, deux au plus en comparant.
 DETOURAGES_GARDES = 4
+
+# Le nom de l'échelle que porte une matière au barème du projet — le même mot que
+# `naitre` lit sur la demande (`echelle="matière"`), et que `bibliotheque.py`
+# appelle `NATURE_MATIERE` (ce module ne peut pas l'importer : la dépendance va
+# dans l'autre sens).
+ECHELLE_MATIERE = "matière"
 _BROUILLON_RECETTE: ContextVar[bool] = ContextVar("brouillon_recette", default=False)
 
 
@@ -918,6 +924,25 @@ class ServiceAssets:
 
         identifiant = identifiant_de(generation.identifiant, emplacement.rang)
         ancien = self._base.lire_asset(identifiant)
+        # **C'est un ingrédient, pas une chose du jeu** (RG5, 20 septembre 2026) :
+        # une image dont la demande portait `echelle="matière"`
+        # (`ServiceGenerations.soumettre_matiere`) naît marquée matière, le même
+        # mot qui lui donne déjà sa recette de naissance plus bas. Comme pour le
+        # rangement et la case visée, une décision de l'auteur l'emporte à la
+        # relance : `ancien.matiere` reste ce que l'auteur en a fait, marque
+        # retirée comprise.
+        matiere = (
+            ancien.matiere
+            if ancien
+            else generation.demande.get("echelle") == "matière"
+        )
+        # **Une matière naît sans sujet, sans pose, sans direction** (RG5 §4) : la
+        # génération peut avoir visé une case de sujet, l'image n'y est pas rangée
+        # pour autant — sans quoi elle naîtrait matière ET rangée, ce que
+        # `declarer_matiere` refuse à l'auteur et que la migration ne nettoie
+        # qu'une fois par jeu. Seule une naissance neuve est concernée : une
+        # relance suit `ancien`, qui dit déjà la décision de l'auteur.
+        sans_sujet = matiere and ancien is None
         asset = Asset(
             identifiant=identifiant,
             generation=generation.identifiant,
@@ -966,14 +991,23 @@ class ServiceAssets:
             # Une image qu'il a désignée ailleurs — ou dont il a retiré la
             # désignation — ne revient pas dans sa case parce qu'on relance
             # l'appel qui l'avait produite.
-            personnage=ancien.personnage if ancien else generation.personnage,
-            pose=ancien.pose if ancien else generation.pose,
+            personnage=(
+                ancien.personnage
+                if ancien
+                else None if sans_sujet else generation.personnage
+            ),
+            pose=ancien.pose if ancien else None if sans_sujet else generation.pose,
             # **Et sous quel angle** (E10), à la même règle exactement : une
             # image que l'auteur a déplacée dans une autre direction n'y revient
             # pas parce qu'on relance l'appel qui l'avait produite.
-            direction=ancien.direction if ancien else generation.direction,
+            direction=(
+                ancien.direction
+                if ancien
+                else None if sans_sujet else generation.direction
+            ),
             personnage_supprime=ancien.personnage_supprime if ancien else False,
             favori=ancien.favori if ancien else False,
+            matiere=matiere,
             # La filiation vient de la source d'édition réinjectée (US-12).
             # Sans réinjection, l'asset n'a pas de parent — et c'est vrai, pas
             # provisoire : rien ne l'a engendré.
@@ -1318,6 +1352,112 @@ class ServiceAssets:
         asset.rendu_hauteur = 0
         asset.epingle = False
         self._oublier_detourage(identifiant)
+        self.sauver(asset)
+        return asset
+
+    # ── Les matières nées détourées (RG8) ────────────────────────────────────
+    #
+    # Avant le 19 septembre 2026, une matière naissait **détourée et recadrée
+    # comme un personnage** : le barème du projet ne portait pas la nature
+    # « matière », `Univers.recette_de` retombait sur `silhouette=True`
+    # (`docs/PLAN-rangement.md` § Ce qui a déclenché ce plan). Le correctif
+    # (`bareme_complete`) empêche que cela recommence ; il ne répare pas ce qui
+    # est déjà né. Ces deux gestes le disent, et le font — jamais tout seuls.
+
+    def recette_d_une_matiere(self, projet: str | None) -> Recette | None:
+        """Ce que le jeu impose à une matière, **aujourd'hui** — ou `None`.
+
+        Le même chemin que la naissance (`recette_du_projet` → `Univers.recette_de`
+        sur l'échelle « matière »), donc ce que la fiche montre sous « Ce que le
+        jeu lui a fait » et ce qu'on repose ici ne peuvent pas diverger.
+
+        **`None` veut dire « je ne sais pas », jamais « rien »** : une image hors
+        jeu, un jeu disparu, ou un barème sans échelle « matière » (`recette_de`
+        retomberait alors sur une silhouette, c'est-à-dire sur le défaut même
+        qu'on cherche à réparer). Dans tous ces cas on ne prétend rien : pas de
+        « détourée », pas de bouton.
+        """
+        if projet is None:
+            return None
+        objet = self._base.lire_projet(projet)
+        if objet is None:
+            return None
+        echelle = objet.univers.echelle(ECHELLE_MATIERE)
+        if echelle is None:
+            return None
+        return objet.univers.recette_de(echelle)
+
+    def etat_de_matiere(self, asset: Asset) -> dict[str, bool]:
+        """`detouree` et `refaisable` : **le calcul unique**, que l'écran, l'API et
+        l'agent lisent tous les trois.
+
+        - `detouree` : l'image porte un détourage ou un recadrage **qui agit**, et
+          la recette qu'une matière reçoit aujourd'hui n'en porte pas. Ce qui se
+          lit est l'état de l'image, pas sa date : rien sur la génération, sur sa
+          demande ni sur l'asset ne distingue une matière née avant le correctif
+          d'une née après — `echelle="matière"` est dans les deux cas —, seule sa
+          recette le fait. Une image que l'auteur a détourée à la main l'est
+          aussi, et c'est juste : on la lui signale, on ne la répare pas seul.
+        - `refaisable` : `detouree`, **et** l'image brute d'origine est encore sur
+          le disque. Le brut ne change jamais (« l'image payée »), donc la bonne
+          recette se rejoue dessus en quelques dizaines de millisecondes, sans
+          fournisseur et sans un centime. Sans le brut, seule une génération neuve
+          rendrait la matière : ce n'est pas refaisable, et on le dit.
+
+        Une matière saine rend `False, False` : il n'y a rien à refaire.
+        """
+        juste = self.recette_d_une_matiere(asset.projet)
+        detouree = juste is not None and asset.recette.decoupe and not juste.decoupe
+        return {
+            "detouree": detouree,
+            "refaisable": detouree and self._fichiers.existe(asset.brut),
+        }
+
+    def refaire_une_matiere(self, identifiant: str) -> Asset:
+        """Remet à une matière détourée **la recette que le jeu lui donne**, à
+        partir de son image brute. Un geste, sans fournisseur, sans coût.
+
+        Ce n'est ni `revenir_au_brut` — qui vide tout, grille et palette
+        comprises : la matière sortirait à la taille du modèle — ni
+        `appliquer_nommee` — qui suppose qu'une recette ait été nommée —, ni le
+        balayage `realigner`, qui **ne touche jamais au détourage** par décision.
+        C'est la recette de naissance d'une matière, posée à la main de l'auteur
+        sur une image qui l'a manquée.
+
+        **Le rendu est remplacé, et l'ancien n'est pas gardé** : le produit ne
+        tient pas d'historique des rendus (un seul fichier par image, réécrit sur
+        place), et la recette d'avant ne se range nulle part. Le brut, lui, n'est
+        pas touché — la découpe peut toujours être reposée depuis la retouche.
+
+        **L'image sort désépinglée**, comme après « Le remettre sur l'univers du
+        jeu » : elle est de nouveau d'accord avec le jeu, et un changement de
+        palette la rattrape.
+
+        Refus, en 409 et avec une phrase : ce n'est pas une matière ; le jeu ne
+        dit pas comment on en fabrique une ; le brut a disparu. Une matière déjà
+        saine est rendue telle quelle, sans rien écrire — un second clic ne coûte
+        rien et n'invente rien.
+        """
+        asset = self._trouver(identifiant)
+        if not asset.matiere:
+            raise RecetteRefusee("cette image n'est pas une matière : il n'y a rien à lui refaire")
+        juste = self.recette_d_une_matiere(asset.projet)
+        if juste is None:
+            raise RecetteRefusee(
+                "le jeu ne dit pas comment fabriquer une matière : ouvre l'écran Univers, "
+                "le barème doit porter « matière »"
+            )
+        if not (asset.recette.decoupe and not juste.decoupe):
+            return asset
+        if not self._fichiers.existe(asset.brut):
+            raise RecetteRefusee(
+                "l'image d'origine n'est plus sur le disque : la seule façon de "
+                "refaire cette matière est de la regénérer"
+            )
+        asset.recette = juste
+        asset.epingle = False
+        self._oublier_detourage(identifiant)
+        self._rendre(asset)
         self.sauver(asset)
         return asset
 

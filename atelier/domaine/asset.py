@@ -245,6 +245,24 @@ class Asset:
     parent: str | None = None
     favori: bool = False
 
+    # ── C'est un ingrédient, pas une chose du jeu (RG5, 20 septembre 2026) ───
+    #
+    # **Posé par la génération, jamais déclaré à part.** Une image dont la
+    # demande portait `echelle="matière"` (`ServiceGenerations.soumettre_matiere`)
+    # naît ainsi marquée — le même mot qui lui donnait déjà sa recette de
+    # naissance (`docs/RG5-la-bibliotheque-des-matieres.md` §3), rien n'est
+    # inventé. L'auteur peut aussi le poser à la main sur une image ordinaire,
+    # ou le retirer : `edit_asset` et la fiche de l'image en RG6 passent tous
+    # deux par ici, jamais par un second champ.
+    #
+    # **Ce que ça ne fait pas.** Le marqueur décide de ce qu'une matière est —
+    # une entrée de la bibliothèque, groupable en collections — jamais de ce
+    # qu'un jeu de tuiles accepte dans un emplacement : `_asset_valide`
+    # (`atelier/services/tuiles.py`) reste ouvert à toute image du projet, sinon
+    # un jeu déjà composé sur une image non marquée casserait à la première
+    # relecture.
+    matiere: bool = False
+
     # ── D'où elle vient quand elle a été *enregistrée sous* (RP20) ───────────
     #
     # **Le parent ne suffisait plus ici.** Une découpe et un miroir gardent la
@@ -345,6 +363,7 @@ class Asset:
             "origine": self.origine.en_json() if self.origine else None,
             "parent_supprime": self.parent_supprime,
             "favori": self.favori,
+            "matiere": self.matiere,
             "supprime_le": self.supprime_le,
             # déduits — présents pour l'interface, jamais relus
             "traite": self.traite,
@@ -420,6 +439,7 @@ class Asset:
             origine=Origine.depuis_json(d.get("origine")),
             parent_supprime=d.get("parent_supprime", False),
             favori=d.get("favori", False),
+            matiere=d.get("matiere", False),
             supprime_le=d.get("supprime_le"),
         )
 

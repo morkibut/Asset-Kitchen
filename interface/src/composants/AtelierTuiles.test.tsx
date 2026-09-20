@@ -6,8 +6,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { Tuiles } from "./Tuiles"
 import { AtelierDuJeu, doublerLaLecture, type Edition } from "./AtelierTuiles"
 import { tuiles, matieres as apiMatieres, type EnsembleTuiles, type EnvoiFabrique } from "../api-tuiles"
-import { fileLocale } from "../api-file-locale"
-import { api, type ApercuLivraison, type Asset } from "../api"
+import { fileLocale, type FileLocale } from "../api-file-locale"
+import { api, type ApercuLivraison } from "../api"
 import { installerBouchonCanvas } from "../tuiles/moteur/__tests__/canvas-shim"
 import { EXEMPLES_MATIERE, atlasDe, jeuDepuisRecette, nouveauJeu, oublierLesRendus, type Recette } from "../tuiles/atelier"
 import { encoderPng, enBase64 } from "../tuiles/png"
@@ -221,17 +221,20 @@ describe("Les tuiles du jeu", () => {
     doublerLaLecture(async () => im)
     vi.spyOn(tuiles, "lister").mockResolvedValue([])
     const creer = vi.spyOn(tuiles, "creerFabrique").mockImplementation(async (_p, e) => ensembleDepuis(e))
-    // Une matière n'a pas de pose : son image n'est dans aucune case, la bibliothèque
-    // la retrouve par son sujet. Les images d'autres sujets n'y entrent pas.
-    vi.spyOn(api, "assets").mockResolvedValue({ total: 2, assets: [
-      { identifiant: "vase-1", personnage: "vase", label: "vase-01.png" }, { identifiant: "heros-1", personnage: "heros", label: "" },
-    ] as unknown as Asset[] })
-    render(<Tuiles projet="jeu" sujetsMatieres={[{ identifiant: "vase", nom: "Vase du marais" }]} />)
+    // RG6 : « Mes matières » lit la bibliothèque du projet (`GET …/materials`) — plus les
+    // images des sujets de nature « matière ». Aucun sujet ni `api.assets` n'est consulté.
+    const lister = vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [
+      { identifiant: "vase-1", nom: "Vase du marais", largeur: 8, hauteur: 8, apercu: "/api/assets/vase-1/image", cadrage: "surface", cree_le: 1, collections: [], detouree: false, refaisable: false },
+    ] })
+    const assets = vi.spyOn(api, "assets")
+    render(<Tuiles projet="jeu" />)
     fireEvent.click(await screen.findByRole("button", { name: "Nouveau jeu de tuiles" }))
     fireEvent.click(screen.getByRole("button", { name: "Ouvrir l’atelier" }))
     fireEvent.click(screen.getByRole("button", { name: /^Surface ·/ }))
     fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
     fireEvent.click(await screen.findByRole("button", { name: /Vase du marais/ }))
+    expect(lister).toHaveBeenCalledWith("jeu")
+    expect(assets).not.toHaveBeenCalled()
     expect(await screen.findByRole("button", { name: "Surface · Vase du marais" })).toBeInTheDocument()
     expect(screen.getByText("Bordure : Herbe")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Relier" })).toBeNull()
@@ -440,6 +443,238 @@ describe("Les tuiles du jeu", () => {
       fireEvent.click(screen.getByRole("tab", { name: "Générer" }))
       expect(await screen.findByRole("button", { name: "Joindre une image" })).toBeInTheDocument()
       expect(screen.queryByText("Vieux pavés")).toBeNull()
+    })
+  })
+
+  describe("« Mes matières » lit la bibliothèque du projet (RG6)", () => {
+    const UNE_MATIERE = { largeur: 8, hauteur: 8, apercu: "", cadrage: "surface", cree_le: 1, collections: [], detouree: false, refaisable: false }
+    const etape = (etat: "en_cours" | "termine"): FileLocale => ({ etapes: [{ identifiant: "et1", cle: "image:gen1:0", projet: "jeu", acteur: "auteur", nature: "image", moteur: "m", modele: "mod",
+      etat, travail_externe: null, raison: "", soumission_engagee: true, cree_le: 0, demarre_le: 0, termine_le: etat === "termine" ? 1 : null, duree_s: etat === "termine" ? 4 : null, temperature: "chaud" }], regle: "", mesures: [] })
+    /** Le bouton « Générer » n'est actif qu'une fois la disponibilité lue. */
+    async function boutonPret() {
+      const b = await screen.findByRole("button", { name: "Générer 4 tirages" })
+      await waitFor(() => expect(b).toBeEnabled())
+      return b
+    }
+    async function ouvrirLAtelier(projet = "jeu") {
+      vi.spyOn(tuiles, "lister").mockResolvedValue([])
+      const vue = render(<Tuiles projet={projet} />)
+      fireEvent.click(await screen.findByRole("button", { name: "Nouveau jeu de tuiles" }))
+      fireEvent.click(screen.getByRole("button", { name: "Ouvrir l’atelier" }))
+      fireEvent.click(screen.getByRole("button", { name: /^Surface ·/ }))
+      return vue
+    }
+
+    it("liste ce que la route rend, sous le nom que la route donne — et ne consulte aucun sujet", async () => {
+      const lister = vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [
+        { ...UNE_MATIERE, identifiant: "m-1", nom: "Dalles grises" }, { ...UNE_MATIERE, identifiant: "m-2", nom: "Mousse" },
+      ] })
+      const assets = vi.spyOn(api, "assets")
+      await ouvrirLAtelier()
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+      expect(await screen.findByRole("button", { name: /Dalles grises/ })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /Mousse/ })).toBeInTheDocument()
+      expect(lister).toHaveBeenCalledWith("jeu")
+      expect(assets).not.toHaveBeenCalled()
+    })
+
+    it("une bibliothèque vide dit comment la remplir, sans parler de sujets", async () => {
+      vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [] })
+      await ouvrirLAtelier()
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+      expect(await screen.findByText(/Pas encore de matière dans ce jeu/)).toBeInTheDocument()
+      expect(screen.queryByText(/sujets? de nature/)).toBeNull()
+      expect(screen.queryByRole("alert")).toBeNull()
+    })
+
+    // RG5, règle 5 : la migration vide le sujet sans le supprimer ; l'écran propose de le jeter.
+    describe("le sujet vidé par la migration", () => {
+      const VIDE = { identifiant: "matieres", nom: "Matières" }
+      const supprime = () => ({ personnage: {} as never, images: 0 })
+
+      it("ne montre rien quand le serveur ne dit rien — ou dit des listes vides", async () => {
+        const lister = vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [{ ...UNE_MATIERE, identifiant: "m-1", nom: "Dalles grises" }] })
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        expect(await screen.findByRole("button", { name: /Dalles grises/ })).toBeInTheDocument()
+        expect(screen.queryByRole("button", { name: "Le jeter" })).toBeNull()
+        expect(screen.queryByText(/est vide/)).toBeNull()
+        expect(screen.queryByText(/pas pu être déplacée/)).toBeNull()
+        lister.mockResolvedValue({ matieres: [], sujets_vides: [], non_migrees: [] })
+        fireEvent.click(screen.getByRole("tab", { name: "Intégrées" }))
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        await screen.findByText(/Pas encore de matière dans ce jeu/)
+        expect(document.querySelector("[data-reliquats-des-matieres]")).toBeNull()
+      })
+
+      it("propose de le jeter, et ne supprime rien avant le clic", async () => {
+        vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [], sujets_vides: [VIDE] })
+        const jeter = vi.spyOn(api, "supprimerPersonnage").mockResolvedValue(supprime())
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        expect(await screen.findByText("Le sujet « Matières » est vide : ses images sont maintenant des matières.")).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: "Le jeter" })).toBeInTheDocument()
+        expect(jeter).not.toHaveBeenCalled()
+      })
+
+      it("le clic supprime le sujet du jeu par la route existante, et la ligne disparaît", async () => {
+        vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [], sujets_vides: [VIDE] })
+        const jeter = vi.spyOn(api, "supprimerPersonnage").mockResolvedValue(supprime())
+        const confirmer = vi.spyOn(window, "confirm").mockReturnValue(true)
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        fireEvent.click(await screen.findByRole("button", { name: "Le jeter" }))
+        await waitFor(() => expect(jeter).toHaveBeenCalledWith("matieres", "jeu"))
+        expect(confirmer).toHaveBeenCalledTimes(1)
+        await waitFor(() => expect(screen.queryByText(/est vide/)).toBeNull())
+        expect(screen.queryByRole("button", { name: "Le jeter" })).toBeNull()
+      })
+
+      it("annuler la confirmation ne supprime rien et garde la ligne", async () => {
+        vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [], sujets_vides: [VIDE] })
+        const jeter = vi.spyOn(api, "supprimerPersonnage").mockResolvedValue(supprime())
+        vi.spyOn(window, "confirm").mockReturnValue(false)
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        fireEvent.click(await screen.findByRole("button", { name: "Le jeter" }))
+        expect(jeter).not.toHaveBeenCalled()
+        expect(screen.getByText(/est vide/)).toBeInTheDocument()
+      })
+
+      it("dit combien d'images n'ont pas pu être déplacées, avec la raison de chacune", async () => {
+        vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [], non_migrees: [
+          { identifiant: "a", raison: "Elle porte déjà un sujet." }, { identifiant: "b", raison: "Le fichier a disparu." },
+        ] })
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        expect(await screen.findByText("2 images n’ont pas pu être déplacées vers les matières.")).toBeInTheDocument()
+        expect(screen.getByText("Elle porte déjà un sujet.")).toBeInTheDocument()
+        expect(screen.getByText("Le fichier a disparu.")).toBeInTheDocument()
+        expect(screen.queryByRole("button", { name: "Le jeter" })).toBeNull()
+      })
+
+      it("une seule image : la phrase est au singulier", async () => {
+        vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [], non_migrees: [{ identifiant: "a", raison: "Le fichier a disparu." }] })
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        expect(await screen.findByText("1 image n’a pas pu être déplacée vers les matières.")).toBeInTheDocument()
+      })
+    })
+
+    it("la route en erreur : l'état vide habituel, la raison dite dans l'onglet, et l'écran tient", async () => {
+      vi.spyOn(apiMatieres, "lister").mockRejectedValue(new Error("l'atelier ne répond pas"))
+      await ouvrirLAtelier()
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+      const alerte = await screen.findByRole("alert")
+      expect(alerte).toHaveTextContent("Tes matières n’ont pas pu être lues : l'atelier ne répond pas")
+      expect(screen.queryByRole("button", { name: /Vase|Dalles/ })).toBeNull()
+      // L'atelier n'est pas cassé : les autres onglets du tiroir répondent toujours.
+      fireEvent.click(screen.getByRole("tab", { name: "Intégrées" }))
+      expect(screen.getByRole("button", { name: "Sable" })).toBeInTheDocument()
+    })
+
+    it("ouvrir l'onglet relit la bibliothèque : une image rangée entre-temps y paraît", async () => {
+      const lister = vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [] })
+      await ouvrirLAtelier()
+      await waitFor(() => expect(lister).toHaveBeenCalledTimes(1)) // au montage
+      lister.mockResolvedValue({ matieres: [{ ...UNE_MATIERE, identifiant: "m-9", nom: "Rangée depuis sa fiche" }] })
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+      expect(await screen.findByRole("button", { name: /Rangée depuis sa fiche/ })).toBeInTheDocument()
+      expect(lister).toHaveBeenCalledTimes(2)
+    })
+
+    it("changer de projet relit la bibliothèque de l'autre, sans garder celle du premier", async () => {
+      const lister = vi.spyOn(apiMatieres, "lister").mockImplementation(async (p) =>
+        ({ matieres: p === "jeu" ? [{ ...UNE_MATIERE, identifiant: "m-1", nom: "Du premier jeu" }] : [] }))
+      vi.spyOn(tuiles, "lister").mockResolvedValue([])
+      const vue = render(<Tuiles projet="jeu" />)
+      await waitFor(() => expect(lister).toHaveBeenCalledWith("jeu"))
+      vue.rerender(<Tuiles projet="autre" />)
+      await waitFor(() => expect(lister).toHaveBeenCalledWith("autre"))
+      fireEvent.click(await screen.findByRole("button", { name: "Nouveau jeu de tuiles" }))
+      fireEvent.click(screen.getByRole("button", { name: "Ouvrir l’atelier" }))
+      fireEvent.click(screen.getByRole("button", { name: /^Surface ·/ }))
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+      expect(await screen.findByText(/Pas encore de matière/)).toBeInTheDocument()
+      expect(screen.queryByText("Du premier jeu")).toBeNull()
+    })
+
+    it("une matière générée paraît dans « Mes matières » dès que son tirage est fini, sans rien ranger", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
+      vi.spyOn(apiMatieres, "generer").mockResolvedValue({ generations: [{ identifiant: "gen1", statut: "en_attente", emplacements: [{ rang: 0, statut: "en_attente", resultat: null, raison: null }] }] })
+      // La bibliothèque est vide tant que le serveur n'a pas fait naître l'image ; elle naît
+      // matière (RG5), donc elle y est dès que la file locale dit « terminé ».
+      let nee = false
+      const lister = vi.spyOn(apiMatieres, "lister").mockImplementation(async () =>
+        ({ matieres: nee ? [{ ...UNE_MATIERE, identifiant: "gen1-0", nom: "des dalles" }] : [] }))
+      vi.spyOn(fileLocale, "lire").mockImplementation(async () => etape(nee ? "termine" : "en_cours"))
+      await ouvrirLAtelier()
+      fireEvent.click(screen.getByRole("tab", { name: "Générer" }))
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "de la pierre" } })
+      fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des dalles" } })
+      fireEvent.click(await boutonPret())
+      await screen.findByRole("button", { name: "Tirage pour Surface · en cours" })
+      const avant = lister.mock.calls.length
+      nee = true
+      // Le tirage finit : la bibliothèque est relue **avant** qu'on ouvre l'onglet.
+      await screen.findByRole("button", { name: "Tirage pour Surface · prêt" }, { timeout: 4000 })
+      await waitFor(() => expect(lister.mock.calls.length).toBeGreaterThan(avant))
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+      expect(await screen.findByRole("button", { name: /des dalles/ })).toBeInTheDocument()
+    })
+
+    it("pendant que des tirages tournent, l'onglet « Mes matières » se relit tout seul", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
+      vi.spyOn(apiMatieres, "generer").mockResolvedValue({ generations: [{ identifiant: "gen1", statut: "en_attente", emplacements: [{ rang: 0, statut: "en_attente", resultat: null, raison: null }] }] })
+      vi.spyOn(fileLocale, "lire").mockResolvedValue(etape("en_cours"))
+      let arrivee = false
+      vi.spyOn(apiMatieres, "lister").mockImplementation(async () =>
+        ({ matieres: arrivee ? [{ ...UNE_MATIERE, identifiant: "gen1-0", nom: "des dalles" }] : [] }))
+      await ouvrirLAtelier()
+      fireEvent.click(screen.getByRole("tab", { name: "Générer" }))
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "de la pierre" } })
+      fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des dalles" } })
+      fireEvent.click(await boutonPret())
+      await screen.findByRole("button", { name: "Tirage pour Surface · en cours" })
+      // L'auteur attend sur « Mes matières » : la file locale n'est plus suivie d'ici.
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+      expect(await screen.findByText(/Pas encore de matière/)).toBeInTheDocument()
+      arrivee = true
+      expect(await screen.findByRole("button", { name: /des dalles/ }, { timeout: 5000 })).toBeInTheDocument()
+    })
+
+    it("signale d'un petit repère les matières détourées, et elles seules (RG8)", async () => {
+      vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [
+        { ...UNE_MATIERE, identifiant: "m-1", nom: "Dalles grises" },
+        { ...UNE_MATIERE, identifiant: "m-2", nom: "Mousse détourée", detouree: true, refaisable: true },
+        { ...UNE_MATIERE, identifiant: "m-3", nom: "Pavé sans brut", detouree: true, refaisable: false },
+      ] })
+      await ouvrirLAtelier()
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+
+      const saine = await screen.findByRole("button", { name: /Dalles grises/ })
+      // Rien n'est ajouté à une matière qui va bien : ni repère, ni phrase.
+      expect(saine.querySelector("[data-detouree]")).toBeNull()
+      expect(saine).toHaveTextContent(/^Dalles grises$/)
+      // Les deux détourées portent le repère — qu'on puisse les refaire ou non : on les retrouve.
+      for (const nom of [/Mousse détourée/, /Pavé sans brut/]) {
+        const repere = screen.getByRole("button", { name: nom }).querySelector("[data-detouree]")
+        expect(repere).not.toBeNull()
+        expect(repere).toHaveTextContent("détourée")
+        expect(repere).toHaveAttribute("title", expect.stringContaining("Ouvre sa fiche"))
+      }
+      expect(document.querySelectorAll("[data-detouree]")).toHaveLength(2)
+    })
+
+    it("le repère n'empêche pas de poser la matière : c'est un signal, pas un refus (RG8)", async () => {
+      vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [
+        { ...UNE_MATIERE, identifiant: "m-2", nom: "Mousse détourée", detouree: true, refaisable: true },
+      ] })
+      await ouvrirLAtelier()
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+      expect(await screen.findByRole("button", { name: /Mousse détourée/ })).toBeEnabled()
     })
   })
 

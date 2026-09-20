@@ -56,6 +56,7 @@ function image(surplus: Partial<Asset> & { identifiant: string }): Asset {
     lot: null,
     personnage_supprime: false,
     epingle: false,
+    matiere: false,
     projet: "le-marais",
     collection: null,
     parent: null,
@@ -642,4 +643,61 @@ test("« Changer » sur le portrait ouvre ses images, et un clic en fait la vign
   const boutons = within(choix).getAllByRole("button", { name: /pour vignette/ })
   fireEvent.click(boutons[boutons.length - 1])
   await waitFor(() => expect(appels.some((a) => a.url.endsWith("/reference-image") && a.methode === "PUT")).toBe(true))
+})
+
+// ── RG2 (`docs/PLAN-rangement.md`) — la page ne montre que ce qui s'applique ─
+//
+// Une matière ne se découpe pas, ne s'anime pas, ne porte pas de son : le
+// serveur le dit par `GET /characters/types` (`capacites`, `se_decoupe`), et
+// c'est la seule table que l'écran lit — il n'en recalcule pas une seconde.
+
+const CAPACITES_DE_LA_MATIERE = { directions: false, anime: false, sons: false, matiere: true }
+const CAPACITES_PLEINES = { directions: true, anime: true, sons: true, matiere: false }
+
+test("la page d'une matière n'a ni onglet Animations, ni onglet Sons, ni bouton Découper", async () => {
+  vi.spyOn(api, "posesDesTypes").mockResolvedValue({
+    plan: [],
+    types: [
+      { nom: "matière", origine: "connue", poses: [], connues: [], capacites: CAPACITES_DE_LA_MATIERE, se_decoupe: false },
+    ],
+  })
+  monter({ type: "matière", famille: "decors", plan: [], ecartees: [] })
+  await waitFor(() => expect(onglet("Images de référence").getAttribute("aria-selected")).toBe("true"))
+  expect(screen.queryByRole("tab", { name: "Animations" })).toBeNull()
+  expect(screen.queryByRole("tab", { name: "Sons" })).toBeNull()
+  expect(screen.queryByRole("button", { name: "Découper une image" })).toBeNull()
+  // Les autres onglets, eux, portent toujours — une matière se range et se
+  // livre comme le reste.
+  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Images de référence", "Galerie", "Pas encore rangé", "Équipement", "Objectif & règles"])
+})
+
+test("la page d'un personnage reste inchangée quand les capacités répondent", async () => {
+  vi.spyOn(api, "posesDesTypes").mockResolvedValue({
+    plan: PLAN,
+    types: [
+      { nom: "personnage", origine: "projet", poses: PLAN, connues: PLAN, capacites: CAPACITES_PLEINES, se_decoupe: true },
+    ],
+  })
+  monter()
+  await waitFor(() => expect(vi.mocked(api.posesDesTypes)).toHaveBeenCalled())
+  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images de référence", "Galerie", "Pas encore rangé", "Équipement", "Sons", "Objectif & règles"])
+  expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
+  expect(screen.getByRole("button", { name: "Découper une image" })).toBeTruthy()
+  // Un personnage a des directions : son filtre est là.
+  expect(screen.getByLabelText("Direction de la galerie")).toBeTruthy()
+})
+
+test("un meuble s'anime, mais n'a pas de directions : pas de filtre Direction dans ses animations", async () => {
+  vi.spyOn(api, "posesDesTypes").mockResolvedValue({
+    plan: PLAN,
+    types: [
+      { nom: "meuble", origine: "connue", poses: PLAN, connues: PLAN, capacites: { directions: false, anime: true, sons: true, matiere: false }, se_decoupe: true },
+    ],
+  })
+  monter({ type: "meuble", famille: "objets" })
+  await waitFor(() => expect(vi.mocked(api.posesDesTypes)).toHaveBeenCalled())
+  fireEvent.click(await screen.findByRole("tab", { name: "Animations" }))
+  expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
+  expect(screen.getByLabelText("Mouvement de la galerie")).toBeTruthy()
+  expect(screen.queryByLabelText("Direction de la galerie")).toBeNull()
 })

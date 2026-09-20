@@ -23,7 +23,7 @@
 // *Ses images* (`PageDuSujet`) et personne d'autre — la galerie n'en passe
 // aucun. `data-identite-de-l-image` reste posé au même endroit.
 
-import { Fragment, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import {
   api,
   NOM_DE_LA_METHODE,
@@ -43,6 +43,7 @@ import {
   type Univers,
 } from "../api"
 import { type EmplacementAvecGraine } from "../api-workflows"
+import { matieres } from "../api-tuiles"
 import { sujetAsset, useVisee } from "./Apercu"
 import { Bloc, Bouton, EnTetePanneau, Libelle, Raison, Segments } from "./pieces"
 import { PANNEAU } from "./Infobulle"
@@ -68,6 +69,28 @@ import { LesDecoupagesDeLaPlanche } from "./Depliages"
  *  sur la seule question qui compte ici : *à qui redemander*. Le deux-points de
  *  l'identifiant devient un point médian, parce qu'on le lit et qu'on ne le
  *  tape pas. Un nom sans deux-points date d'avant la V2.2 et se rend tel quel. */
+/** Le mot français d'une nature de sujet, avec son article (RG3, 20 septembre
+ *  2026). Sert deux fois : dire pourquoi le jeu ne détoure pas une matière, et
+ *  dire pourquoi une case Pose reste vide.
+ *
+ *  **Couvre les neuf natures livrées avec le produit**
+ *  (`atelier/domaine/projet.py`, `BAREME_PAR_DEFAUT`). Une nature ajoutée par
+ *  l'auteur retombe sur son nom entre guillemets — deviner le genre d'un mot
+ *  qu'on ne connaît pas vaudrait pire que ne pas le deviner
+ *  (`docs/PIEGES.md`). */
+const NATURE_AVEC_ARTICLE: Record<string, string> = {
+  personnage: "un personnage",
+  créature: "une créature",
+  meuble: "un meuble",
+  "objet posé": "un objet posé",
+  "objet tenu": "un objet tenu",
+  décor: "un décor",
+  tuile: "une tuile",
+  matière: "une matière",
+  "élément d'interface": "un élément d'interface",
+}
+const natureAvecArticle = (nom: string): string => NATURE_AVEC_ARTICLE[nom] ?? `« ${nom} »`
+
 export const nomDuModele = (modele: string): string => {
   if (modele === "import") return "importé"
   // **Un mot à elle** (A13). Les deux n'ont appelé personne et ne se relancent
@@ -282,165 +305,153 @@ export function Fiche({
           </p>
         )}
 
-        {/* **Qui a dessiné cette image** (US-123). Une ligne de provenance, au
-            même titre que le coût : elle se lit, elle ne se règle pas — donc
-            aucun libellé, aucun pointillé, rien à survoler. L'identifiant
-            exact plutôt que le nom du catalogue : c'est lui qu'on redemande, et
-            il reste vrai quand le catalogue est hors ligne. */}
-        <p className="mesure truncate text-[10.5px] text-encre-4" title={asset.modele}>
-          {nomDuModele(asset.modele)}
-        </p>
+        {/* ══ Zone 1 · Où elle est rangée — la seule zone où l'on décide (RG3) ══
+            « Corps de » devient « Sujet », et Favori / Supprimer y viennent
+            plutôt que de couper le texte descriptif en deux. */}
+        <div className="flex flex-col gap-2 border-t border-trait pt-2">
+          <CaseDeLAsset
+            asset={asset}
+            plan={plan}
+            personnages={personnages}
+            onErreur={onErreur}
+          />
 
-        <SaGraineLocale asset={asset} generation={generation} />
+          {/* **La direction, quand l'image ne la dit pas** (`C4`, relogé du
+              volet d'`ImagesDuSujet`). Le seul endroit d'où l'on confirme,
+              parce que c'est le seul où l'on sait de quelle case on parle. Un
+              clic la range. */}
+          {asset.direction === null &&
+            asset.pose &&
+            directionsAConfirmer &&
+            directionsAConfirmer.length > 0 && (
+              <div className="flex flex-col gap-1.5 rounded-5 border border-trait-attention bg-fond-attention p-2">
+                <p className="mesure text-[10.5px] text-encre-attention">
+                  Sa direction est à confirmer
+                </p>
+                <p className="text-[11px] leading-4 text-encre-3">
+                  Elle a été faite avant que le jeu ne déclare ses angles.
+                  L'atelier ne la devine pas.
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {directionsAConfirmer.map((d) => (
+                    <button
+                      key={d.identifiant}
+                      type="button"
+                      onClick={() => onDirection?.(d.identifiant)}
+                      className="mesure rounded-5 border border-contour bg-carte px-2 py-0.5 text-[10.5px] text-encre-controle hover:border-encre-3"
+                    >
+                      {d.nom}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        <PrisDeLAmbiance generation={generation} />
-        <SansLeStyleDuJeu generation={generation} />
-        <DecoupeALArriveeDeLaPlanche
+          <DecisionsDeLaFiche asset={asset} onErreur={onErreur} onSupprimer={onSupprimer} />
+
+          {/* **Une matière détourée à tort, et ce qu'on peut y faire** (RG8). Ici et
+              non en zone 3, comme « Sa direction est à confirmer » juste au-dessus :
+              c'est une décision, et elle doit se voir sans ouvrir le bloc replié
+              « Ce que le jeu lui a fait ». Absente de toute image saine. */}
+          <MatiereDetouree asset={asset} onErreur={onErreur} />
+        </div>
+
+        {/* ══ Zone 2 · S'en resservir — l'actuel « Réinjecter », et les deux
+            portes (RG3) ══ */}
+        <SEnResservir
           asset={asset}
-          generation={generation}
-          personnages={personnages}
-          onOuvrir={onOuvrir}
-        />
-
-        <Jugement
-          asset={asset}
-          onErreur={onErreur}
           onReinjecter={onReinjecter}
           onReglages={onReglages}
-          onSupprimer={onSupprimer}
+          onOuvrirLEtabli={onOuvrirLEtabli}
+          onRetoucher={onRetoucher}
+          onDecouper={onDecouper}
         />
 
-        <CaseDeLAsset
-          asset={asset}
-          plan={plan}
-          personnages={personnages}
-          onErreur={onErreur}
-        />
+        {/* ══ Zone 3 · D'où elle vient — tout ce qui se lit, replié (RG3) ══ */}
+        <div className="flex flex-col gap-3 border-t border-trait pt-2">
+          <PrisDeLAmbiance generation={generation} />
+          <SansLeStyleDuJeu generation={generation} />
+          <DecoupeALArriveeDeLaPlanche
+            asset={asset}
+            generation={generation}
+            personnages={personnages}
+            onOuvrir={onOuvrir}
+          />
 
-        {/* **La direction, quand l'image ne la dit pas** (`C4`, relogé du volet
-            d'`ImagesDuSujet`). Le seul endroit d'où l'on confirme, parce que
-            c'est le seul où l'on sait de quelle case on parle. Un clic la
-            range. */}
-        {asset.direction === null &&
-          asset.pose &&
-          directionsAConfirmer &&
-          directionsAConfirmer.length > 0 && (
-            <div className="flex flex-col gap-1.5 rounded-5 border border-trait-attention bg-fond-attention p-2">
-              <p className="mesure text-[10.5px] text-encre-attention">
-                Sa direction est à confirmer
+          {/* **Le texte avant la filiation.** On lit son texte quand on se
+              demande d'où elle vient — c'est la même question que la
+              filiation, en amont d'un cran, et les deux se répondent l'une à
+              l'autre sur les images nées d'une planche. */}
+          <LeTexteQuiLAFaite
+            asset={asset}
+            generation={generation}
+            onOuvrir={onOuvrir}
+          />
+
+          <Descendance asset={asset} onOuvrir={onOuvrir} onErreur={onErreur} />
+
+          {/* **Le retour en arrière du dépliage** (P1c, V3.5) : refaire le
+              découpage d'une planche, voir ses découpages, en supprimer un —
+              ou, sur une image qui en sort, le rappel d'une ligne vers elle. */}
+          <LesDecoupagesDeLaPlanche
+            asset={asset}
+            onErreur={onErreur}
+            onOuvrir={onOuvrir}
+            onChangee={() => onDecoupageChange?.()}
+          />
+
+          <CeQueLeJeuLuiAFait impose={impose} recette={recette} univers={univers} />
+
+          {/* ── Faire rentrer un épinglé dans le rang ──────────────────────
+              « Je veux réaligner d'un geste, depuis sa fiche, un asset que
+              j'avais réglé à la main » (US-69). La proposition ne paraît que
+              sur un épinglé : sur les autres, elle dirait de faire ce qui est
+              déjà fait. Elle ne coûte rien — aucun appel payant, aucun rendu
+              recalculé avant qu'on le regarde. */}
+          {asset.epingle && !univers.vide && (
+            <div className="flex flex-col gap-1">
+              <p className="mesure flex items-center gap-1.5 text-[10.5px] leading-4 text-encre-attention">
+                <span aria-hidden className="inline-block h-px w-2 bg-encre-attention" />
+                réglé à la main — un changement de palette le saute
               </p>
-              <p className="text-[11px] leading-4 text-encre-3">
-                Elle a été faite avant que le jeu ne déclare ses angles.
-                L'atelier ne la devine pas.
-              </p>
-              <div className="flex flex-wrap gap-1">
-                {directionsAConfirmer.map((d) => (
-                  <button
-                    key={d.identifiant}
-                    type="button"
-                    onClick={() => onDirection?.(d.identifiant)}
-                    className="mesure rounded-5 border border-contour bg-carte px-2 py-0.5 text-[10.5px] text-encre-controle hover:border-encre-3"
-                  >
-                    {d.nom}
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await api.realigner([asset.identifiant])
+                  } catch (erreur) {
+                    onErreur(
+                      erreur instanceof Error ? erreur.message : "réalignement refusé",
+                    )
+                  }
+                }}
+                className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
+              >
+                Le remettre sur l'univers du jeu ›
+              </button>
             </div>
           )}
 
-        {/* **Le texte avant la filiation, et après le jugement.** On juge une
-            image en la regardant ; on lit son texte quand on se demande d'où
-            elle vient — c'est la même question que la filiation, en amont d'un
-            cran, et les deux se répondent l'une à l'autre sur les images nées
-            d'une planche. */}
-        <LeTexteQuiLAFaite
-          asset={asset}
-          generation={generation}
-          onOuvrir={onOuvrir}
-        />
+          {/* **Le modèle et la graine, en pied de cette zone** (RG3) : ce sont
+              les deux derniers faits de provenance, une fois tout le reste
+              lu. **Qui a dessiné cette image** (US-123) — une ligne de
+              provenance, au même titre que le coût : elle se lit, elle ne se
+              règle pas — donc aucun libellé, aucun pointillé, rien à
+              survoler. L'identifiant exact plutôt que le nom du catalogue :
+              c'est lui qu'on redemande, et il reste vrai quand le catalogue
+              est hors ligne. */}
+          <p className="mesure truncate text-[10.5px] text-encre-4" title={asset.modele}>
+            {nomDuModele(asset.modele)}
+          </p>
+          <SaGraineLocale asset={asset} generation={generation} />
+        </div>
 
-        <Descendance asset={asset} onOuvrir={onOuvrir} onErreur={onErreur} />
-
-        {/* **Le retour en arrière du dépliage** (P1c, V3.5) : refaire le
-            découpage d'une planche, voir ses découpages, en supprimer un — ou,
-            sur une image qui en sort, le rappel d'une ligne vers elle. */}
-        <LesDecoupagesDeLaPlanche
-          asset={asset}
-          onErreur={onErreur}
-          onOuvrir={onOuvrir}
-          onChangee={() => onDecoupageChange?.()}
-        />
-
-        <ImposeParLeProjet impose={impose} recette={recette} />
-
-        {/* **La recette se lit ici, elle ne se règle plus ici** (E4). Les cinq
-            places tenaient cette colonne de 380 px, à côté d'une image de
-            380 px : on y réglait un détourage en regardant une vignette. Elles
-            ont un écran à leur taille depuis E3 — une table, plein cadre, avec
-            l'image en grand entre la table et ses sœurs. La fiche garde ce
-            qu'elle a toujours été : ce que l'image **est**. */}
-        <RecetteEnLecture recette={recette} />
-
-        {/* ── Faire rentrer un épinglé dans le rang ──────────────────────
-            « Je veux réaligner d'un geste, depuis sa fiche, un asset que
-            j'avais réglé à la main » (US-69). La proposition ne paraît que sur
-            un épinglé : sur les autres, elle dirait de faire ce qui est déjà
-            fait. Elle ne coûte rien — aucun appel payant, aucun rendu recalculé
-            avant qu'on le regarde. */}
-        {asset.epingle && !univers.vide && (
-          <div className="mt-4 flex flex-col gap-1 border-t border-trait pt-2">
-            <p className="mesure flex items-center gap-1.5 text-[10.5px] leading-4 text-encre-attention">
-              <span aria-hidden className="inline-block h-px w-2 bg-encre-attention" />
-              réglé à la main — un changement de palette le saute
-            </p>
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await api.realigner([asset.identifiant])
-                } catch (erreur) {
-                  onErreur(
-                    erreur instanceof Error ? erreur.message : "réalignement refusé",
-                  )
-                }
-              }}
-              className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
-            >
-              Le remettre sur l'univers du jeu ›
-            </button>
-          </div>
-        )}
-
-        {/* ── Les deux portes ────────────────────────────────────────────
-            « La fiche d'une image dit ce que l'image est et porte deux portes :
-            l'établi de la chose à qui elle appartient, et les tables. » Une
-            image qui n'appartient à personne n'a que la seconde — et le grisé
-            de la première porte sa raison, comme partout ailleurs. */}
-        <div className="mt-auto flex flex-col gap-1 border-t border-trait pt-2">
-          {onOuvrirLEtabli && (
-            <Bouton
-              inactif={!asset.personnage}
-              onClick={onOuvrirLEtabli}
-              enfants="Reprendre dans l'établi"
-            />
-          )}
-          {onOuvrirLEtabli && !asset.personnage && (
-            <Raison
-              texte="cette image n'appartient à aucun sujet du jeu — la rattacher plus haut lui ouvre son établi"
-            />
-          )}
-          {/* **Le bouton nomme ce qu'il ouvre** (`B25`) : il disait *Ouvrir les
-              tables* et ouvre la retouche depuis que les six portes n'en font
-              qu'une. *La retoucher* est le mot que le produit emploie déjà
-              partout ailleurs — *Ses images*, le comparateur —, et deux noms
-              pour un seul écran se lisent comme deux écrans. */}
-          <Bouton onClick={onRetoucher} enfants="La retoucher" />
-          {onDecouper && <Bouton onClick={onDecouper} enfants="Découper" />}
+        {/* ── Le reste du pied — hors des trois zones ─────────────────────── */}
+        <div className="flex flex-col gap-1 border-t border-trait pt-2">
           {/* **Réutiliser sans refabriquer** (US-540). La toile range des
               inspirations, pas des sorties de générateur : ce bouton pose donc
               l'image reçue telle quelle, en réserve, sans passer par un moteur.
-              Absent quand aucun projet n'est ouvert — la même règle que les
-              deux portes au-dessus. */}
+              Absent quand aucun projet n'est ouvert. */}
           {onPoserSurLaToile && (
             <Bouton onClick={onPoserSurLaToile} enfants="Poser sur la toile" />
           )}
@@ -504,24 +515,21 @@ export function Fiche({
   )
 }
 
-// ── Ce que le projet a imposé ───────────────────────────────────────────────
+// ── Ce que le jeu lui a fait — le bloc fusionné (RG3, 20 septembre 2026) ────
+//
+// **« Imposé par le jeu » et « Sa recette » ne font plus qu'un**, sur la
+// spécification de `docs/RG3-bloc-fusionne.md`. Les deux blocs d'avant se
+// disputaient la même question — pourquoi cette image ne ressemble-t-elle
+// pas à ce que le modèle a rendu ? — sans jamais dire *pourquoi* une étape
+// existe ou n'existe pas : la nature du sujet, pas un réglage qu'on aurait
+// oublié de poser.
+//
+// **Règle centrale, à ne jamais trahir** : la valeur affichée est celle que
+// l'image **porte** (`recette`) ; `impose` ne sert qu'à dire la provenance et
+// à détecter l'écart. Une place vide des deux côtés n'est jamais « réglée à
+// la main » — c'est le défaut que cette fusion corrige : une matière n'a
+// jamais eu de détourage, et l'ancien bloc l'accusait d'en avoir défait un.
 
-/** Le traitement que le projet a posé sur cette image, et ce que l'auteur a
- *  changé depuis (US-164).
- *
- *  **Le défaut que cette rubrique répare est un défaut de composition**, pas de
- *  code : « la dérive de grille est le cas normal » et « le style vient de la
- *  bible et d'un seul endroit » sont justes séparément, et leur composition
- *  produisait un atelier qui imposait une apparence que l'auteur n'avait jamais
- *  posée — sans jamais lui montrer laquelle. Trois lignes suffisent à le dire,
- *  et elles se lisent avant la recette, pas dedans : c'est le *pourquoi* de ce
- *  qui suit.
- *
- *  Elle ne se règle pas — elle se lit. Un bloc quand même, et repliable comme
- *  les places de la recette : « un bloc replié ne se tait pas, il porte sa valeur »
- *  (`docs/DESIGN.md`), et une ligne d'état suffit alors à dire ce que le projet
- *  a fait. Aucun pointillé sur les valeurs : ce qui se règle est juste en
- *  dessous. */
 /** D'où vient le détourage qui s'est appliqué, dit à l'auteur (D1).
  *
  *  Trois phrases pour trois niveaux, et **la dernière ne s'excuse pas** : « le
@@ -534,15 +542,22 @@ const VENU_DE: Record<Origine, string> = {
   produit: "le réglage livré",
 }
 
-function ImposeParLeProjet({
+type LigneDuBloc = { quoi: string; valeurEtRaison: string; marque: "main" | "toi" | null }
+
+function CeQueLeJeuLuiAFait({
   impose,
   recette,
+  univers,
 }: {
   impose: Impose | null
   /** La recette **à l'écran**, pas celle de l'asset : un curseur qu'on vient de
    *  lâcher doit faire basculer la ligne sur « réglé à la main » tout de suite,
    *  sans attendre le retour du flux. */
   recette: Recette
+  /** Le barème du projet — la seule façon de savoir si le nom d'une échelle
+   *  est **connu** du jeu, ou si l'image a été fabriquée pour une nature que
+   *  personne n'a ajoutée au barème (US-164, défaut mesuré le 19/09/2026). */
+  univers: Univers
 }) {
   // Tant que le serveur n'a pas répondu, la rubrique n'existe pas. Une rubrique
   // vide qui se remplit une demi-seconde plus tard fait sauter tout ce qui est
@@ -554,126 +569,220 @@ function ImposeParLeProjet({
   if (pose === null)
     return (
       <Bloc
-        cle="fiche.impose"
-        aide="fiche.impose"
-        titre="Imposé par le jeu"
+        cle="fiche.recette"
+        aide="fiche.recette"
+        titre="Ce que le jeu lui a fait"
         etat="on ne sait pas"
         mesure="la génération n'est plus sur le disque"
       >
         <p className="mesure text-[10.5px] leading-4 text-encre-4">
           Sa génération n'est plus sur le disque, et le produit ne devine pas :
-          « rien d'imposé » serait une réponse différente, et fausse.
+          « rien n'est posé » serait une réponse différente, et fausse.
         </p>
       </Bloc>
     )
 
-  const lignes: { quoi: string; valeur: string; main: boolean }[] = []
+  // **Image entrée telle quelle** (`traiter=False` ou sans projet) : le jeu
+  // n'impose rien du tout, et aucune des dix lignes n'a de cause à montrer.
+  // C'est la phrase que « Sa recette » portait seule avant la fusion — elle
+  // ne part pas, elle se déplace.
+  if (impose.detourage === null && estVide(pose)) {
+    return (
+      <Bloc cle="fiche.recette" aide="fiche.recette" titre="Ce que le jeu lui a fait" etat="rien — elle est entrée telle quelle">
+        <p className="mesure text-[10.5px] leading-4 text-encre-4">
+          Rien n'est posé : cette image est celle qui est arrivée du
+          fournisseur.
+        </p>
+      </Bloc>
+    )
+  }
 
-  // **Le détourage de départ, et d'où il vient** (D1, US-410). Il ouvre la
-  // liste parce qu'il est la première étape du traitement, et parce que c'est
-  // celui que l'auteur reprenait le plus souvent à la main : compté sur ce
-  // dépôt, plus d'une recette sur deux déplaçait son bord rongé.
-  //
-  // La provenance compte autant que la valeur. Sans elle, on lit un réglage
-  // qu'on n'a pas posé sans savoir lequel des trois niveaux l'a décidé — la
-  // famille du sujet, la nature de l'image, ou le produit — donc sans savoir où
-  // aller le changer.
+  // **L'échelle nommée à la naissance n'est plus au barème du jeu** (défaut
+  // mesuré le 19/09/2026, `docs/RG3-bloc-fusionne.md` § 1) : le jeu retombe
+  // alors sur `silhouette=True` par défaut, et traite l'image comme un
+  // personnage sans le dire nulle part. C'est la cause à corriger en premier,
+  // et elle prend le pas sur tout le reste de la lecture fermée.
+  const echelleNommee = impose.echelle !== ""
+  const echelleConnue = echelleNommee
+    ? (univers.bareme.find((e) => e.nom === impose.echelle) ?? null)
+    : null
+  const echelleIntrouvable = echelleNommee && echelleConnue === null
+  // **Plein cadre, dit par le barème et non par le compte de passes.** Une
+  // matière déclarée au barème dit `silhouette: false` ; c'est ce fait-là qui
+  // décide, pas le nombre de passes imposées — qui peut être vide pour
+  // d'autres raisons (aucune provenance connue, par exemple).
+  const plainCadre = !echelleIntrouvable && echelleConnue !== null && !echelleConnue.silhouette
+
+  const lignes: LigneDuBloc[] = []
+
+  // **1 · Découpe du contour** — toujours présente, sauf quand le jeu n'impose
+  // rien (branche « entrée telle quelle » ci-dessus, déjà sortie).
   if (impose.detourage) {
     const { passe, origine } = impose.detourage
-    const premiere = recette.passes[0] ?? null
-    lignes.push({
-      quoi: "détourage",
-      valeur:
+    const passesImposees = pose.passes
+    let valeurEtRaison: string
+    if (echelleIntrouvable) {
+      valeurEtRaison = `oui — « ${impose.echelle} » n'est pas au barème du jeu, il la découpe comme un personnage`
+    } else if (plainCadre) {
+      valeurEtRaison = `non — ${natureAvecArticle(impose.echelle)} remplit son cadre`
+    } else if (passesImposees.length > 1) {
+      valeurEtRaison = `${passesImposees.length} passes`
+    } else {
+      const durc = passe.durcissement
+      valeurEtRaison =
         `${MOTEUR[passe.moteur]}` +
-        (passe.durcissement
-          ? ` · ${passe.durcissement} px rongé${passe.durcissement > 1 ? "s" : ""}`
-          : "") +
-        ` · ${VENU_DE[origine]}`,
-      main:
-        premiere === null ||
-        premiere.moteur !== passe.moteur ||
-        premiere.durcissement !== passe.durcissement,
+        (durc ? `, ${durc} px rongé${durc > 1 ? "s" : ""}` : "") +
+        ` — ${VENU_DE[origine]}`
+    }
+    // **La règle qui corrige le défaut** : comparer les passes posées, pas
+    // deviner sur une seule. Vide des deux côtés compare égal — jamais
+    // « réglé à la main » sur une matière qui n'a jamais eu de détourage.
+    const main = JSON.stringify(recette.passes) !== JSON.stringify(passesImposees)
+    lignes.push({ quoi: "Découpe du contour", valeurEtRaison, marque: main ? "main" : null })
+  }
+
+  // **2 · Cadre resserré** — seulement quand elle dit quelque chose. Le
+  // recadrage automatique n'a pas de ligne à lui : sa cause est celle de la
+  // découpe, juste au-dessus.
+  if (recette.recadrage && (recette.recadrage.marge > 0 || recette.recadrage.boite !== null)) {
+    lignes.push({
+      quoi: "Cadre resserré",
+      valeurEtRaison: RESUME.recadrage(recette.recadrage),
+      marque: null,
     })
   }
 
-  lignes.push(
-    pose.grille === null
-      ? {
-          quoi: "taille de pixel",
-          valeur: "aucune",
-          main: recette.grille !== null,
-        }
-      : {
-          quoi: "taille de pixel",
-          valeur: `${pose.grille.cible} px`,
-          main: recette.grille?.cible !== pose.grille.cible,
-        },
-  )
-
-  // **L'occupation ne se lit qu'avec sa nature de sujet à côté.** « 40 % » seul
-  // n'explique rien ; « 40 % · objet tenu » dit d'où vient le chiffre et où le
-  // changer — dans le barème du projet, pas ici.
-  if (pose.grille !== null)
+  // **3 · Taille des pixels** — toujours présente.
+  if (pose.grille === null) {
     lignes.push({
-      quoi: "occupation",
-      valeur:
-        `${pose.grille.occupation} %` +
-        (impose.echelle ? ` · ${impose.echelle}` : ""),
-      main: recette.grille?.occupation !== pose.grille.occupation,
+      quoi: "Taille des pixels",
+      valeurEtRaison: "aucune — ce jeu n'impose pas de taille de pixel",
+      marque: recette.grille !== null ? "main" : null,
+    })
+  } else {
+    lignes.push({
+      quoi: "Taille des pixels",
+      valeurEtRaison: `${pose.grille.cible} px`,
+      marque: recette.grille?.cible !== pose.grille.cible ? "main" : null,
+    })
+  }
+
+  // **4 · Part de la case remplie** — présente quand la grille existe.
+  if (pose.grille !== null) {
+    const valeurEtRaison = echelleIntrouvable
+      ? `100 % — « ${impose.echelle} » n'est pas au barème du jeu, il la met plein cadre`
+      : plainCadre
+        ? `100 % — c'est ce que le jeu donne à ${natureAvecArticle(impose.echelle)}`
+        : `${pose.grille.occupation} % — c'est ce que le jeu donne à ${natureAvecArticle(impose.echelle || "ce sujet")}`
+    lignes.push({
+      quoi: "Part de la case remplie",
+      valeurEtRaison,
+      marque: recette.grille?.occupation !== pose.grille.occupation ? "main" : null,
+    })
+  }
+
+  // **5 · Façon de réduire** — présente quand la grille existe. Pas de
+  // raison : c'est un réglage du jeu, pas une conséquence de la nature.
+  if (pose.grille !== null) {
+    lignes.push({
+      quoi: "Façon de réduire",
+      valeurEtRaison: NOM_DE_LA_METHODE[pose.grille.methode],
+      marque: recette.grille?.methode !== pose.grille.methode ? "main" : null,
+    })
+  }
+
+  // **6 · Couleurs** — toujours présente.
+  {
+    let valeurEtRaison: string
+    let main: boolean
+    if (pose.quantification === null) {
+      valeurEtRaison =
+        univers.style === "dessin"
+          ? "toutes — ce jeu est en dessin, on ne réduit pas les couleurs"
+          : pose.grille === null
+            ? "toutes — sans taille de pixel, le jeu ne réduit pas les couleurs"
+            : "toutes"
+      main = recette.quantification !== null
+    } else if (pose.quantification.palette.length === 0) {
+      valeurEtRaison = `${pose.quantification.couleurs} — lues sur l'image, ce jeu n'a pas de palette`
+      main =
+        recette.quantification === null ||
+        recette.quantification.couleurs !== pose.quantification.couleurs
+    } else {
+      valeurEtRaison = `${pose.quantification.palette.length} — sur la palette du jeu`
+      main =
+        recette.quantification === null ||
+        recette.quantification.palette.join() !== pose.quantification.palette.join()
+    }
+    lignes.push({ quoi: "Couleurs", valeurEtRaison, marque: main ? "main" : null })
+  }
+
+  // **7 à 10 · Ce que le jeu n'impose jamais** — chacune présente uniquement
+  // si elle est posée, et marquée « posé par toi » : écrire « réglé à la
+  // main » sur un nettoyage de bords laisserait croire qu'il existait un
+  // réglage du jeu à déranger. Valeurs reprises telles quelles de `RESUME`.
+  if (recette.bords)
+    lignes.push({
+      quoi: "Nettoyage des bords",
+      valeurEtRaison: RESUME.bords(recette.bords),
+      marque: "toi",
+    })
+  if (recette.contours)
+    lignes.push({
+      quoi: "Contour ajouté",
+      valeurEtRaison: RESUME.contours(recette.contours),
+      marque: "toi",
+    })
+  if (recette.retournement)
+    lignes.push({
+      quoi: "Retourné",
+      valeurEtRaison: RESUME.retournement(recette.retournement),
+      marque: "toi",
+    })
+  if (recette.main)
+    lignes.push({
+      quoi: "Retouches au pixel",
+      valeurEtRaison: RESUME.main(recette.main),
+      marque: "toi",
     })
 
-  // **La façon de réduire fait partie de ce que le projet impose** (D2) : elle
-  // décide autant du rendu que la taille, et la lire ici est le seul endroit où
-  // l'on voit d'un coup ce que cette image a reçu sans l'avoir demandé.
-  if (pose.grille !== null)
-    lignes.push({
-      quoi: "réduction",
-      valeur: NOM_DE_LA_METHODE[pose.grille.methode],
-      main: recette.grille?.methode !== pose.grille.methode,
-    })
+  const nombreAMain = lignes.filter((l) => l.marque === "main").length
 
-  lignes.push(
-    pose.quantification === null
-      ? {
-          quoi: "palette",
-          valeur: "aucune",
-          main: recette.quantification !== null,
-        }
-      : pose.quantification.palette.length === 0
-        ? // **Zéro couleur n'était pas une lecture possible avant D2**, et le
-          // devenir l'a rendue trompeuse : « 0 couleurs » se lit *aucune
-          // réduction*, quand c'est l'inverse — l'image est bien ramenée à ce
-          // nombre-là, simplement lu sur elle et non sur la palette du jeu.
-          {
-            quoi: "couleurs",
-            valeur: `${pose.quantification.couleurs} · lues sur l'image`,
-            main:
-              recette.quantification === null ||
-              recette.quantification.couleurs !== pose.quantification.couleurs,
-          }
-        : {
-            quoi: "palette",
-            valeur: `${pose.quantification.palette.length} couleurs du jeu`,
-            main:
-              recette.quantification === null ||
-              recette.quantification.palette.join() !==
-                pose.quantification.palette.join(),
-          },
-  )
+  // **L'état fermé** — au plus trois segments. La taille et les couleurs sont
+  // les deux valeurs qui font qu'une image ne ressemble pas à ce qui est
+  // revenu du modèle ; la découpe ne s'y lit que quand elle dit *non*, parce
+  // que c'est l'état surprenant ; le compte des reprises à la main passe
+  // devant les couleurs si les trois segments ne tiennent pas.
+  const decoupeNon = plainCadre ? "sans découpe" : null
+  const tailleFermee = pose.grille ? `${pose.grille.cible} px` : null
+  const couleursFermees = pose.quantification
+    ? pose.quantification.palette.length > 0
+      ? `${pose.quantification.palette.length} couleurs`
+      : `${pose.quantification.couleurs} couleurs`
+    : "toutes les couleurs"
+  const aMainFerme = nombreAMain > 0 ? `${nombreAMain} à la main` : null
+
+  let etatFerme: string
+  if (echelleIntrouvable) {
+    etatFerme = `« ${impose.echelle} » n'est pas au barème`
+  } else {
+    const base = [decoupeNon, tailleFermee].filter((s): s is string => s !== null)
+    const reste = [couleursFermees, aMainFerme].filter((s): s is string => s !== null)
+    etatFerme =
+      base.length + reste.length <= 3
+        ? [...base, ...reste].join(" · ")
+        : [...base, aMainFerme ?? couleursFermees].join(" · ")
+  }
 
   return (
     <Bloc
-      cle="fiche.impose"
-      aide="fiche.impose"
-      titre="Imposé par le jeu"
-      /* Replié, le bloc porte les trois valeurs du projet — c'est ce qui permet
-         de lire la fiche entière sans rien ouvrir. Ouvert, il garde sous les
-         yeux ce que la lecture décide : combien de lignes ont été reprises à la
-         main. */
-      etat={lignes.map((l) => l.valeur.split(" · ")[0]).join(" · ")}
+      cle="fiche.recette"
+      aide="fiche.recette"
+      titre="Ce que le jeu lui a fait"
+      etat={etatFerme}
       mesure={
-        lignes.some((l) => l.main)
-          ? `${lignes.filter((l) => l.main).length} repris à la main`
+        nombreAMain > 0
+          ? `${nombreAMain} réglé${nombreAMain > 1 ? "s" : ""} à la main`
           : "tout est appliqué"
       }
     >
@@ -681,23 +790,35 @@ function ImposeParLeProjet({
         {lignes.map((ligne) => (
           <li key={ligne.quoi} className="flex items-baseline gap-2">
             <span className="text-[11px] text-encre-2">{ligne.quoi}</span>
-            <span className="mesure ml-auto text-[10.5px] text-encre">{ligne.valeur}</span>
-            {/* **Le distinguo est la moitié de la rubrique** : sans lui, une
-                valeur affichée ne dit pas si elle vient du projet ou de la main
-                de l'auteur, et c'est exactement la question posée. L'encre
-                d'attention est celle qui porte déjà « réglé à la main » plus
-                bas dans cette même fiche. */}
+            <span className="mesure ml-auto text-right text-[10.5px] text-encre">
+              {ligne.valeurEtRaison}
+            </span>
             <span
               className={[
-                "mesure w-[70px] shrink-0 text-right text-[10.5px]",
-                ligne.main ? "text-encre-attention" : "text-encre-4",
+                "mesure w-24 shrink-0 text-right text-[10.5px]",
+                ligne.marque === "main" ? "text-encre-attention" : "text-encre-4",
               ].join(" ")}
             >
-              {ligne.main ? "réglé à la main" : "appliqué"}
+              {ligne.marque === "main"
+                ? "réglé à la main"
+                : ligne.marque === "toi"
+                  ? "posé par toi"
+                  : ""}
             </span>
           </li>
         ))}
       </ul>
+      {/* **Le pied du bloc.** La spécification prévoit un lien vers les
+          règles du jeu, et un second vers le barème quand une nature manque.
+          Ni l'un ni l'autre n'a de porte de navigation depuis la fiche —
+          `App.tsx` la porterait, et il est hors de cette tranche. Le texte
+          reste donc en lecture, sans lien cliquable ; à brancher le jour où
+          la fiche reçoit un `onNaviguer`. */}
+      <p className="mesure text-[10.5px] text-encre-controle">
+        {echelleIntrouvable
+          ? `Ajouter « ${impose.echelle} » au barème de l'écran Univers`
+          : "Ces règles se changent dans Réglages"}
+      </p>
     </Bloc>
   )
 }
@@ -1045,26 +1166,24 @@ function LeTexteQuiLAFaite({
   )
 }
 
-// ── Le jugement, et la réinjection ──────────────────────────────────────────
+// ── Le jugement — favori, supprimer (RG3, zone « Où elle est rangée ») ──────
 
 /**
- * Ce qu'on fait de cette image, une fois qu'on l'a regardée.
+ * Ce qu'on décide de cette image, une fois qu'on l'a regardée.
  *
  * « Juger, c'est marquer favori ou supprimer » — jamais accepter (US-25, US-26,
- * US-27). Et réinjecter, qui n'est pas un jugement mais son prolongement
- * naturel : ce qui marche repart (US-12).
+ * US-27). **Déplacé dans la zone des décisions par RG3** : favori et supprimer
+ * vivaient au milieu du texte descriptif de la fiche, entre la provenance et
+ * la case du personnage — deux endroits pour décider, coupés par tout ce qui
+ * ne fait que se lire.
  */
-function Jugement({
+function DecisionsDeLaFiche({
   asset,
   onErreur,
-  onReinjecter,
-  onReglages,
   onSupprimer,
 }: {
   asset: Asset
   onErreur: (raison: string) => void
-  onReinjecter: (role: Role) => void
-  onReglages: () => void
   onSupprimer: () => void
 }) {
   const basculerFavori = async () => {
@@ -1076,73 +1195,316 @@ function Jugement({
   }
 
   return (
-    <div className="flex flex-col gap-2 border-t border-trait pt-2">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-1.5">
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={basculerFavori}
+        className={[
+          "mesure h-[26px] rounded-7 border px-2 text-[11px] transition-colors duration-120",
+          asset.favori
+            ? "border-signal bg-ligne-ouverte text-signal"
+            : "border-contour bg-carte text-encre-3 hover:bg-papier-cote",
+        ].join(" ")}
+      >
+        Favori
+      </button>
+      {/* **Le prix, ou le mot « gratuit »** — et ce qu'il a consommé
+          derrière, avec son unité (F2). La fiche est le seul des deux
+          endroits qui ait la place des deux : la tuile ne porte que le
+          premier. */}
+      <span className="mesure text-[10.5px] text-encre-4">
+        {depense(asset.consomme, asset.unite)}
+        {!estArgent(asset.unite) && asset.consomme > 0 && (
+          <span className="text-encre-4">
+            {" "}
+            · {quantite(asset.consomme, asset.unite)}
+          </span>
+        )}
+      </span>
+      {/* **`Découper` a quitté cette rangée** (E3). Le geste était là parce
+          qu'une planche est une image comme une autre et que rien ne permet
+          de deviner qu'elle en contient huit — l'argument tient toujours, et
+          c'est pourquoi le découpage est devenu une **fabrique de la barre
+          des tables** : il y est pour toute image, toujours, sans qu'on ait à
+          le chercher. Une porte de moins ici, pas un geste de moins. */}
+      <button
+        type="button"
+        onClick={onSupprimer}
+        className="mesure ml-auto h-[26px] px-1 text-[10.5px] text-encre-4 hover:text-echec"
+      >
+        Supprimer
+      </button>
+    </div>
+    <RangerEnMatiere asset={asset} onErreur={onErreur} />
+    </div>
+  )
+}
+
+/**
+ * **Une image ordinaire devient une matière en un geste** (RG6) : la marque se
+ * pose — ou se retire — sur l'image elle-même, sans qu'un sujet n'entre ni ne
+ * sorte de rien. Une matière paraît ensuite dans « Mes matières », à l'écran
+ * des tuiles, et se pose dans un jeu.
+ *
+ * - *Hors projet* (`projet` nul) : le geste n'est pas proposé — une image qui
+ *   n'est dans aucun jeu n'a pas de bibliothèque où entrer.
+ * - *Déjà marquée* : « Retirer des matières », toujours ouvert (le serveur ne
+ *   refuse jamais ce sens-là).
+ * - *Rangée dans un sujet* : le geste se grise et **dit pourquoi**, comme
+ *   partout ailleurs (`Raison`). Le serveur refuse pareil, avec une phrase plus
+ *   longue qui dit aussi l'autre chemin ; ici on n'attend pas le refus.
+ *
+ * Le libellé suit la marque tout de suite (`pose`), sans attendre le flux : il
+ * rend la main à l'asset dès que celui-ci a changé.
+ */
+function RangerEnMatiere({
+  asset,
+  onErreur,
+}: {
+  asset: Asset
+  onErreur: (raison: string) => void
+}) {
+  const [pose, setPose] = useState<boolean | null>(null)
+  const [occupe, setOccupe] = useState(false)
+  useEffect(() => {
+    setPose(null)
+  }, [asset.identifiant, asset.matiere])
+
+  if (!asset.projet) return null
+  const projet = asset.projet
+  const matiere = pose ?? asset.matiere
+  const dansUnSujet = !matiere && !!asset.personnage
+
+  const changer = async () => {
+    const valeur = !matiere
+    setOccupe(true)
+    try {
+      await matieres.declarer(projet, asset.identifiant, valeur)
+      setPose(valeur)
+    } catch (erreur) {
+      onErreur(erreur instanceof Error ? erreur.message : "matière refusée")
+    } finally {
+      setOccupe(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col">
+      <button
+        type="button"
+        onClick={changer}
+        disabled={occupe || dansUnSujet}
+        title={
+          matiere
+            ? "Elle n'apparaîtra plus dans « Mes matières », à l'écran des tuiles."
+            : "Elle apparaîtra dans « Mes matières », à l'écran des tuiles."
+        }
+        className="mesure h-[26px] self-start rounded-7 border border-contour bg-carte px-2 text-[11px] text-encre-3 transition-colors duration-120 hover:bg-papier-cote disabled:text-eteint disabled:hover:bg-carte"
+      >
+        {matiere ? "Retirer des matières" : "Ranger dans les matières"}
+      </button>
+      {dansUnSujet && (
+        <Raison texte="Cette image est rangée dans un sujet : sors-la de son sujet d'abord." />
+      )}
+    </div>
+  )
+}
+
+/**
+ * **Une matière née détourée** (RG8) : avant le 19 septembre 2026, le barème d'un jeu
+ * ne connaissait pas « matière », et chaque matière naissait découpée et recadrée comme
+ * un personnage. Le correctif empêche que cela recommence ; il ne répare pas ce qui est
+ * déjà né. Cette fiche le dit — seulement quand c'est vrai — et propose de le réparer.
+ *
+ * - *Son image d'origine est là* (`refaisable`) : un seul bouton remet la recette que
+ *   le jeu donne à une matière, à partir de cette image. Rien n'est regénéré, rien ne
+ *   coûte. **L'image actuelle est remplacée** : le produit ne garde pas d'historique des
+ *   rendus, et la phrase le dit au lieu de le laisser croire.
+ * - *Elle n'y est plus* : la phrase dit qu'il faut regénérer, et il n'y a pas de bouton.
+ *
+ * **Le bouton ne part jamais tout seul** : ni à l'ouverture de la fiche, ni à celle du
+ * jeu. C'est l'image de l'auteur ; il clique, ou il ne clique pas.
+ *
+ * L'état se lit à part de l'asset (`matieres.lire`) — c'est le même calcul que la
+ * bibliothèque et que l'agent —, et se relit quand la recette de l'image change : après
+ * le geste, la fiche se tait d'elle-même.
+ */
+function MatiereDetouree({
+  asset,
+  onErreur,
+}: {
+  asset: Asset
+  onErreur: (raison: string) => void
+}) {
+  // L'état porte l'identifiant de l'image qu'il décrit : en changeant de fiche, celui de
+  // la précédente ne s'affiche pas une demi-seconde sur la suivante.
+  const [etat, setEtat] = useState<{ pour: string; detouree: boolean; refaisable: boolean } | null>(null)
+  const [occupe, setOccupe] = useState(false)
+  const projet = asset.projet
+  const estMatiere = asset.matiere && !!projet
+
+  useEffect(() => {
+    if (!estMatiere || !projet) {
+      setEtat(null)
+      return
+    }
+    let vivant = true
+    matieres
+      .lire(projet, asset.identifiant)
+      .then((m) => vivant && setEtat({ pour: asset.identifiant, detouree: m.detouree, refaisable: m.refaisable }))
+      // Une matière qu'on ne sait pas relire ne se dit pas détourée : mieux vaut se taire.
+      .catch(() => vivant && setEtat(null))
+    return () => {
+      vivant = false
+    }
+  }, [asset.identifiant, asset.matiere, asset.projet, asset.empreinte, estMatiere, projet])
+
+  if (!estMatiere || !projet || !etat?.detouree || etat.pour !== asset.identifiant) return null
+
+  const refaire = async () => {
+    setOccupe(true)
+    try {
+      const refaite = await matieres.refaire(projet, asset.identifiant)
+      setEtat({ pour: asset.identifiant, detouree: refaite.detouree, refaisable: refaite.refaisable })
+    } catch (erreur) {
+      onErreur(erreur instanceof Error ? erreur.message : "refaire la matière a été refusé")
+    } finally {
+      setOccupe(false)
+    }
+  }
+
+  return (
+    <div
+      data-matiere-detouree
+      className="flex flex-col gap-1.5 rounded-5 border border-trait-attention bg-fond-attention p-2"
+    >
+      <p className="mesure text-[10.5px] text-encre-attention">Détourée comme un personnage</p>
+      <p className="text-[11px] leading-4 text-encre-3">
+        Une matière doit remplir tout son cadre, et celle-ci a été découpée et recadrée.
+      </p>
+      {etat.refaisable ? (
+        <>
+          <p className="text-[11px] leading-4 text-encre-3">
+            Son image d'origine est là : on la refait sans rien regénérer, et sans
+            rien payer. L'image actuelle est remplacée ; l'image d'origine n'est pas
+            touchée.
+          </p>
+          <button
+            type="button"
+            onClick={refaire}
+            disabled={occupe}
+            className="mesure h-[26px] self-start rounded-7 border border-contour bg-carte px-2 text-[11px] text-encre-controle transition-colors duration-120 hover:bg-papier-cote disabled:text-eteint disabled:hover:bg-carte"
+          >
+            La refaire comme une matière
+          </button>
+        </>
+      ) : (
+        <p className="text-[11px] leading-4 text-encre-3">
+          Son image d'origine n'est plus sur le disque : il faut la regénérer.
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ── S'en resservir — l'actuel « Réinjecter », et les deux portes ───────────
+
+/**
+ * Repartir de cette image, de quatre façons (US-12), et les deux portes qui
+ * ouvrent sur ce qu'on lui fait ensuite.
+ *
+ * **Renommé par RG3** : « Réinjecter » ne disait pas ce que ça fait. Les
+ * quatre boutons portent maintenant leur propre geste — *référence*, *image
+ * à retoucher*, *guide de style*, *reprendre ses réglages* (les trois
+ * premiers mots viennent de la maquette : voir `LIBELLE_DU_ROLE` plus bas) —
+ * et les deux portes de la fiche (l'établi de la chose à qui
+ * l'image appartient, la retouche) descendent dans cette même zone : ce sont
+ * les deux gestes qui font quelque chose *avec* l'image, l'un en fabriquant
+ * une nouvelle, l'autre en reprenant celle-ci.
+ */
+// **Un bouton dit ce qu'il fait, il ne fait pas parler l'image** (corrigé le
+// 20 septembre 2026). La spécification de RG3 proposait « elle inspire », « elle
+// est le point de départ », « elle donne la manière » : trois phrases qui prêtent
+// une intention à une texture, là où la consigne d'écriture du dépôt demande le
+// mot concret. Ce sont ceux de la maquette validée, et « référence » est déjà le
+// nom que l'atelier emploie dans le bloc « Ce qui part ».
+const LIBELLE_DU_ROLE: Record<Role, string> = {
+  reference: "référence",
+  edition: "image à retoucher",
+  style: "guide de style",
+}
+
+function SEnResservir({
+  asset,
+  onReinjecter,
+  onReglages,
+  onOuvrirLEtabli,
+  onRetoucher,
+  onDecouper,
+}: {
+  asset: Asset
+  onReinjecter: (role: Role) => void
+  onReglages: () => void
+  onOuvrirLEtabli?: () => void
+  onRetoucher: () => void
+  onDecouper?: () => void
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
+      <Libelle aide="fiche.reinjecter">S'en resservir</Libelle>
+      <p className="text-[11px] leading-4 text-encre-3">
+        Repartir de cette image pour en fabriquer une autre, de quatre façons.
+      </p>
+      <div className="flex flex-wrap gap-1">
+        {ROLES.map(({ role, libelle }) => (
+          <button
+            key={role}
+            type="button"
+            onClick={() => onReinjecter(role)}
+            title={libelle}
+            className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-[11px] text-encre-3 hover:bg-papier-cote"
+          >
+            {LIBELLE_DU_ROLE[role]}
+          </button>
+        ))}
+        {/* Le quatrième rôle n'envoie aucune image : il reprend les réglages
+            de la génération qui a produit cet asset. */}
         <button
           type="button"
-          onClick={basculerFavori}
-          className={[
-            "mesure h-[26px] rounded-7 border px-2 text-[11px] transition-colors duration-120",
-            asset.favori
-              ? "border-signal bg-ligne-ouverte text-signal"
-              : "border-contour bg-carte text-encre-3 hover:bg-papier-cote",
-          ].join(" ")}
+          onClick={onReglages}
+          title="reprendre prompt, modèle et réglages"
+          className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-[11px] text-encre-3 hover:bg-papier-cote"
         >
-          Favori
-        </button>
-        {/* **Le prix, ou le mot « gratuit »** — et ce qu'il a consommé
-            derrière, avec son unité (F2). La fiche est le seul des deux
-            endroits qui ait la place des deux : la tuile ne porte que le
-            premier. */}
-        <span className="mesure text-[10.5px] text-encre-4">
-          {depense(asset.consomme, asset.unite)}
-          {!estArgent(asset.unite) && asset.consomme > 0 && (
-            <span className="text-encre-4">
-              {" "}
-              · {quantite(asset.consomme, asset.unite)}
-            </span>
-          )}
-        </span>
-        {/* **`Découper` a quitté cette rangée** (E3). Le geste était là parce
-            qu'une planche est une image comme une autre et que rien ne permet
-            de deviner qu'elle en contient huit — l'argument tient toujours, et
-            c'est pourquoi le découpage est devenu une **fabrique de la barre
-            des tables** : il y est pour toute image, toujours, sans qu'on ait à
-            le chercher. Une porte de moins ici, pas un geste de moins. */}
-        <button
-          type="button"
-          onClick={onSupprimer}
-          className="mesure ml-auto h-[26px] px-1 text-[10.5px] text-encre-4 hover:text-echec"
-        >
-          Supprimer
+          reprendre ses réglages
         </button>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <Libelle aide="fiche.reinjecter">Réinjecter</Libelle>
-        <div className="flex flex-wrap gap-1">
-          {ROLES.map(({ role, libelle, explique }) => (
-            <button
-              key={role}
-              type="button"
-              onClick={() => onReinjecter(role)}
-              title={explique}
-              className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-[11px] text-encre-3 hover:bg-papier-cote"
-            >
-              {libelle}
-            </button>
-          ))}
-          {/* Le quatrième rôle n'envoie aucune image : il reprend les réglages
-              de la génération qui a produit cet asset. */}
-          <button
-            type="button"
-            onClick={onReglages}
-            title="reprendre prompt, modèle et réglages"
-            className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-[11px] text-encre-3 hover:bg-papier-cote"
-          >
-            jeu de réglages
-          </button>
-        </div>
+      {/* ── Les deux portes ────────────────────────────────────────────
+          « La fiche d'une image dit ce que l'image est et porte deux portes :
+          l'établi de la chose à qui elle appartient, et les tables. » Une
+          image qui n'appartient à personne n'a que la seconde — et le grisé
+          de la première porte sa raison, comme partout ailleurs. */}
+      <div className="mt-1.5 flex flex-col gap-1">
+        {onOuvrirLEtabli && (
+          <Bouton
+            inactif={!asset.personnage}
+            onClick={onOuvrirLEtabli}
+            enfants="Reprendre dans l'établi"
+          />
+        )}
+        {onOuvrirLEtabli && !asset.personnage && (
+          <Raison
+            texte="cette image n'appartient à aucun sujet du jeu — la rattacher plus haut lui ouvre son établi"
+          />
+        )}
+        {/* **Le bouton nomme ce qu'il ouvre** (`B25`) : il disait *Ouvrir les
+            tables* et ouvre la retouche depuis que les six portes n'en font
+            qu'une. *La retoucher* est le mot que le produit emploie déjà
+            partout ailleurs — *Ses images*, le comparateur —, et deux noms
+            pour un seul écran se lisent comme deux écrans. */}
+        <Bouton onClick={onRetoucher} enfants="La retoucher" />
+        {onDecouper && <Bouton onClick={onDecouper} enfants="Découper" />}
       </div>
     </div>
   )
@@ -1200,8 +1562,8 @@ function CaseDeLAsset({
   }
 
   return (
-    <div className="flex flex-col gap-1 border-t border-trait pt-2">
-      <Libelle aide="fiche.personnage">Corps de</Libelle>
+    <div className="flex flex-col gap-1">
+      <Libelle aide="fiche.personnage">Sujet</Libelle>
 
       {personnages.length === 0 ? (
         <p className="mesure text-[10.5px] leading-4 text-encre-4">
@@ -1233,7 +1595,7 @@ function CaseDeLAsset({
           <select
             aria-label="Attitude de cette image"
             value={asset.pose ?? ""}
-            disabled={!porteur}
+            disabled={!porteur || tenues.length === 0}
             onChange={(e) =>
               void designer(asset.personnage ?? null, e.target.value || null)
             }
@@ -1247,6 +1609,20 @@ function CaseDeLAsset({
             ))}
           </select>
         </div>
+      )}
+
+      {/* **La case Pose dit pourquoi elle est vide** (RG3) — plutôt que de se
+          griser sans un mot. Une matière, une tuile : ce ne sont pas des
+          attitudes qu'on a oublié de fabriquer, c'est une sorte de sujet qui
+          n'en réclame aucune. */}
+      {porteur && tenues.length === 0 && (
+        <Raison
+          texte={
+            porteur.type
+              ? `${natureAvecArticle(porteur.type)} n'a pas de pose`
+              : "ce sujet n'a pas de pose"
+          }
+        />
       )}
 
       {porteur && !asset.pose && directions.length > 0 && (
@@ -1459,73 +1835,7 @@ const estVide = (recette: Recette) =>
   !recette.quantification &&
   !recette.bords
 
-// ── La recette, en lecture ──────────────────────────────────────────────────
-
-/**
- * Ce que l'image a subi, et rien de plus.
- *
- * **Elle se lit ici, elle se règle ailleurs** — c'est le partage de E4 : la
- * fiche dit ce que l'image *est*, les tables disent ce qu'on lui *fait*. Les
- * deux ne se disputent plus la même colonne de 380 px, et la seule qui montre
- * l'image en grand est celle où l'on règle.
- *
- * Le résumé est celui des puces de la barre des tables, écrit au même endroit —
- * `interface/src/recette.ts`, `RESUME`. Deux façons de résumer la même recette
- * auraient fini par en dire deux choses.
- */
-function RecetteEnLecture({ recette }: { recette: Recette }) {
-  const places: [string, string | null][] = [
-    ["détourage", recette.passes.length ? RESUME.detourage(recette) : null],
-    ["recadrage", recette.recadrage ? RESUME.recadrage(recette.recadrage) : null],
-    ["grille", recette.grille ? RESUME.grille(recette.grille) : null],
-    [
-      "quantification",
-      recette.quantification ? RESUME.quantification(recette.quantification) : null,
-    ],
-    ["bords", recette.bords ? RESUME.bords(recette.bords) : null],
-    // **Les trois dernières places, ajoutées en B1** — et le trou qu'elles
-    // bouchent était plus vieux qu'elles. Le contour et la main sont arrivés en
-    // E5 sans jamais entrer ici ; la fiche d'une image qui ne porte *que* l'une
-    // d'elles tombait donc sur « rien n'est posé », c'est-à-dire sur le
-    // contraire de ce qu'elle montrait. Un miroir a rendu la phrase franchement
-    // fausse : sa recette ne porte que le retournement, et la fiche annonçait
-    // une image arrivée du fournisseur — qui n'est arrivée de nulle part.
-    ["contours", recette.contours ? RESUME.contours(recette.contours) : null],
-    [
-      "retournement",
-      recette.retournement ? RESUME.retournement(recette.retournement) : null,
-    ],
-    ["la main", recette.main ? RESUME.main(recette.main) : null],
-  ]
-  const posees = places.filter(([, valeur]) => valeur !== null)
-
-  return (
-    <div className="flex flex-col gap-1 border-t border-trait pt-2">
-      <Libelle aide="fiche.recette">Sa recette</Libelle>
-      {posees.length === 0 ? (
-        <p className="mesure text-[10.5px] leading-4 text-encre-4">
-          Rien n'est posé : cette image est celle qui est arrivée du fournisseur.
-        </p>
-      ) : (
-        <dl className="mesure grid grid-cols-[auto_1fr] gap-x-3 text-[10.5px]">
-          {posees.map(([nom, valeur]) => (
-            <Fragment key={nom}>
-              <dt className="text-encre-4">{nom}</dt>
-              <dd className="text-right text-encre-2">{valeur}</dd>
-            </Fragment>
-          ))}
-        </dl>
-      )}
-      {/* **Aucune porte ici** — retiré le 31 août 2026. Cette rubrique portait
-          un lien « La régler dans les tables › » qui appelait exactement la
-          même fonction que le bouton « La retoucher » du pied — « Ouvrir les
-          tables » à l'époque —, douze lignes plus bas dans le même panneau :
-          deux noms, une seule destination, dans une colonne qu'on lit d'un coup
-          d'œil. Or le pied de cette fiche écrit lui-même la règle — « la fiche
-          porte **deux portes** : l'établi de la chose à qui elle appartient, et
-          la retouche ». Un troisième chemin qui double l'une des deux ne
-          s'annonce pas comme un doublon : il se lit comme une nuance qu'on
-          aurait ratée. */}
-    </div>
-  )
-}
+// **« Sa recette » ne se lit plus seule** (RG3, 20 septembre 2026) : ses huit
+// places ont rejoint le bloc fusionné `CeQueLeJeuLuiAFait`, chacune devenue
+// une ligne présente seulement quand elle est posée. Voir
+// `docs/RG3-bloc-fusionne.md`.

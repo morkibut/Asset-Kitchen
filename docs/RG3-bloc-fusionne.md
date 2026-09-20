@@ -235,6 +235,12 @@ Le bloc s'appelle désormais **« S'en resservir »**, et ses quatre boutons por
 font : *elle inspire* · *elle est le point de départ* · *elle donne la manière* ·
 *reprendre ses réglages*.
 
+> **Renversé à l'application (relecture croisée du 20 septembre 2026).** Les trois premiers
+> libellés ont été refusés : ils faisaient parler l'image, ce que la consigne d'écriture de
+> l'auteur interdit. L'écran porte **référence · image à retoucher · guide de style ·
+> reprendre ses réglages** (`Fiche.tsx`, bloc « S'en resservir »). Le texte d'aide ci-dessous
+> reste celui d'origine : à lire comme une intention, pas comme le libellé livré.
+
 ```ts
 "fiche.reinjecter": {
   nom: "S'en resservir",

@@ -106,8 +106,12 @@ export function rangerLaLigne(bandes: readonly Bande[]): {
 }
 
 /** Les rangées d'une pose — une par direction tenue, ou une seule sans
- *  direction déclarée. */
-export function rangeesDeLaCase(sienne: Case): Rangee[] {
+ *  direction déclarée.
+ *
+ *  `avecDirections` faux (une nature qui n'a pas de directions, D1) : une seule
+ *  rangée, qui garde toutes les animations de la pose, même rangées d'ancienne
+ *  date sous une direction — elles restent visibles au lieu de disparaître. */
+export function rangeesDeLaCase(sienne: Case, avecDirections = true): Rangee[] {
   const composer = (
     direction: string | null,
     nom: string,
@@ -127,7 +131,10 @@ export function rangeesDeLaCase(sienne: Case): Rangee[] {
     ...rangerLaLigne(bandes),
   })
 
-  if (sienne.directions.length === 0)
+  // `Case.bandes` et `Case.bandes_ecartees` sont déjà **toutes** les bandes de la
+  // pose, directions confondues (le serveur les répartit ensuite dans
+  // `directions`) : rien à additionner.
+  if (!avecDirections || sienne.directions.length === 0)
     return [composer(null, "toutes", sienne.bandes, sienne.bandes_ecartees)]
 
   return sienne.directions.map((d) =>
@@ -491,10 +498,16 @@ export function AnimationsDuSujet({
   clips = [],
   onMonterLeClip,
   onClipsCommandes,
+  avecDirections = true,
 }: {
   personnage: Personnage
   /** Ce que cette chose-là réclame — sa liste, pas celle du jeu. */
   plan: Pose[]
+  /** Sa nature a-t-elle des directions ? (`capacites.directions`, D1.) Faux :
+   *  pas de filtre « Direction », pas de rangée par direction. **Vrai par
+   *  défaut** : tant que la nature n'est pas connue, un personnage ne perd
+   *  rien. */
+  avecDirections?: boolean
   /** **Animer cette attitude** (A9) — l'écran qui commande un clip, déjà
    *  porté par `PageDuSujet`. Il ne dépense rien ici : c'est le bouton de cet
    *  écran-là qui paie. */
@@ -544,7 +557,7 @@ export function AnimationsDuSujet({
       .map((sienne) => ({
         sienne,
         nom: nomDePose.get(sienne.pose) ?? sienne.pose,
-        rangees: rangeesDeLaCase(sienne)
+        rangees: rangeesDeLaCase(sienne, avecDirections)
           .map((rangee) => ({ ...rangee, demandee: estDemandee(rangee) }))
           // Une ligne sans sortie demandée reste utile uniquement si elle porte
           // une bande ancienne, active ou écartée. La matrice historique ne se
@@ -552,7 +565,7 @@ export function AnimationsDuSujet({
           .filter((rangee) => !objectifExplicite || rangee.demandee || rangee.compte > 0 || rangee.ecartees.length > 0),
       }))
       .filter(({ rangees }) => rangees.length > 0)
-  }, [personnage.cases, nomDePose, animationsDemandees, objectifExplicite])
+  }, [personnage.cases, nomDePose, animationsDemandees, objectifExplicite, avecDirections])
 
   const casesDe = (quelles: typeof parPose): CaseAAnimer[] =>
     quelles.flatMap(({ sienne, nom, rangees }) =>
@@ -775,8 +788,12 @@ export function AnimationsDuSujet({
                       "aucune animation"
                     ) : (
                       <>
-                        <span className="mesure">{rangees.length}</span>{" "}
-                        {rangees.length > 1 ? "directions" : "direction"} ·{" "}
+                        {avecDirections && (
+                          <>
+                            <span className="mesure">{rangees.length}</span>{" "}
+                            {rangees.length > 1 ? "directions" : "direction"} ·{" "}
+                          </>
+                        )}
                         <span className="mesure">{animations}</span>{" "}
                         {animations > 1 ? "animations" : "animation"}
                       </>
@@ -844,7 +861,7 @@ export function AnimationsDuSujet({
             <h2 className="font-serif text-[25px]">Galerie des animations</h2>
             <div className="flex flex-wrap gap-[8px] text-[12px]">
               <label>Mouvement / pose <select aria-label="Mouvement de la galerie" value={galeriePose} onChange={(e) => setGaleriePose(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option>{parPose.map((p) => <option key={p.sienne.pose} value={p.sienne.pose}>{p.nom}</option>)}</select></label>
-              <label>Direction <select aria-label="Direction de la galerie" value={galerieDirection} onChange={(e) => setGalerieDirection(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Toutes</option>{directionsGalerie.map(([id, nom]) => <option key={id} value={id}>{nom}</option>)}</select></label>
+              {avecDirections && <label>Direction <select aria-label="Direction de la galerie" value={galerieDirection} onChange={(e) => setGalerieDirection(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Toutes</option>{directionsGalerie.map(([id, nom]) => <option key={id} value={id}>{nom}</option>)}</select></label>}
               <label>Jugement <select aria-label="Jugement de la galerie" value={galerieStatut} onChange={(e) => setGalerieStatut(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option><option value="retenue">Retenu</option><option value="gardee">Non jugé</option><option value="ecartee">Écarté</option></select></label>
             </div>
             <p role="status" className="text-[12px] text-encre-3">{galerieFiltree.length} animation{galerieFiltree.length > 1 ? "s" : ""}</p>
@@ -942,7 +959,7 @@ export function AnimationsDuSujet({
 
           {(() => {
             const pose = destPose || bande.pose || ""
-            const directions = personnage.cases.find((c) => c.pose === pose)?.directions ?? []
+            const directions = avecDirections ? personnage.cases.find((c) => c.pose === pose)?.directions ?? [] : []
             const direction = directions.some((d) => d.identifiant === destDirection)
               ? destDirection
               : pose === bande.pose && directions.some((d) => d.identifiant === bande.direction)

@@ -621,7 +621,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "untouched. get_asset reports the same list. A named `recipe` only "
             "carries settings, never coordinates — a traced crop box, an "
             "eyedropper point, hand strokes stay on the image they were made "
-            "on; `not_applied` lists what it left behind."
+            "on; `not_applied` lists what it left behind. `material` is a "
+            "different gesture and is passed alone: true declares the image a "
+            "material of the game's library (what list_materials lists, ready "
+            "for a tile recipe slot), false takes it out; the pixels are not "
+            "touched, and the result says `material`. It is checked against a "
+            "game, `project` (the open project by default): an image filed in "
+            "another game, or in none, is refused, as on the screen."
         ),
     )
     @_refus_lisible
@@ -631,8 +637,19 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         revert: bool = False,
         steps: dict[str, Any] | None = None,
         folder: str | None = None,
+        material: bool | None = None,
+        project: str | None = None,
     ) -> dict[str, Any]:
-        """Trois chemins, dans l'ordre où l'agent les voudra.
+        """Trois chemins de retouche, dans l'ordre où l'agent les voudra — et
+        un quatrième geste, qui ne retouche rien : `material`.
+
+        **`material` se pose seul** (RG7). Il marque l'image comme matière de la
+        bibliothèque du jeu, ou l'en retire, sans toucher un pixel ; le mêler à une
+        retouche ferait deux gestes en un appel, et un refus du second (l'image
+        est déjà retouchée, la marque n'est pas posée) laisserait l'agent avec un
+        message d'erreur et une image à moitié changée. Le mélange est donc
+        **refusé en clair** plutôt que fait à demi — deux appels, deux réponses.
+        La marque passe par `bibliotheque.declarer_matiere`, le geste de l'écran.
 
         `revert` d'abord parce que c'est le geste qui annule les deux autres ;
         `recipe` ensuite, une recette nommée, qui est le geste épais ; `steps`
@@ -652,7 +669,22 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     f"les places sont {', '.join(PLACES)}"
                 )
         laisse: tuple[str, ...] = ()
-        if revert:
+        if material is not None:
+            if revert or recipe or steps is not None:
+                raise ErreurAtelier(
+                    "« material » se pose seul : la marque de matière et la "
+                    "retouche font deux appels, pour que l'un ne laisse pas "
+                    "l'image à moitié changée si l'autre est refusé"
+                )
+            _asset(atelier, asset_id)
+            # **Le même contrôle que l'écran** : la route HTTP passe le jeu de son
+            # adresse, et c'est lui qui refuse une image d'un autre jeu ou hors de
+            # tout jeu. Ici, le jeu nommé (`project`) ou, à défaut, celui qui est
+            # ouvert — sans jeu du tout, rien à comparer.
+            asset = atelier.bibliotheque.declarer_matiere(
+                asset_id, material, projet=_projet_ouvert(atelier, project) or None
+            )
+        elif revert:
             asset = atelier.assets.revenir_au_brut(asset_id)
         elif recipe:
             asset, laisse = atelier.assets.appliquer_nommee(asset_id, recipe)
@@ -662,13 +694,18 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             )
         else:
             raise ErreurAtelier(
-                "dis ce qu'il faut faire : « recipe », « steps », ou « revert »"
+                "dis ce qu'il faut faire : « recipe », « steps », « revert », "
+                "ou « material »"
             )
         # **Ce qu'une recette nommée n'a pas emporté est dit à l'agent aussi**
         # (U5). Il pose la recette et lit ensuite l'image : sans cette ligne, il
         # conclurait que la recette est fautive là où c'est la règle du voyage
         # qui a joué.
-        return {**_asset_en_json(atelier, asset, folder), "not_applied": list(laisse)}
+        return {
+            **_asset_en_json(atelier, asset, folder),
+            "not_applied": list(laisse),
+            "material": asset.matiere,
+        }
 
     @serveur.tool(
         name="slice_asset",

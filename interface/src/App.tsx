@@ -2258,12 +2258,8 @@ function AtelierApp() {
             vue={vueDesTuiles}
             onVue={allerDansLesTuiles}
             onNoms={setNomsDesTuiles}
-            // « Mes matières » : les images des sujets de nature « matière » (TU2).
-            matieres={personnages
-              .filter((p) => p.type === "matière")
-              .flatMap((p) => p.cases.flatMap((c) => c.images).map((a) => ({ identifiant: a.identifiant, nom: a.label || p.nom })))}
-            // … et celles qui n'ont pas de case : une matière n'a pas de pose.
-            sujetsMatieres={personnages.filter((p) => p.type === "matière").map((p) => ({ identifiant: p.identifiant, nom: p.nom }))}
+            // « Mes matières » n'est plus calculé ici (RG6) : l'écran des tuiles lit la
+            // bibliothèque du projet, et aucun sujet n'est consulté.
             tailleDuJeu={tailleDeLUnivers(univers)}
             paletteUnivers={univers.palette}
             onAsset={(a) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: a.identifiant }))}
@@ -2440,7 +2436,7 @@ function AtelierApp() {
         <EcranFamille key={`${bibliotheque.courant}:${lieu(pile, "bibliotheque")?.famille ?? ""}`}
           famille={lieu(pile, "bibliotheque")?.famille ?? null}
           nom={NOM_DANS_LE_CARNET[lieu(pile, "bibliotheque")?.famille ?? ""]}
-          jeu={bibliotheque.courant ?? ""} pieces={pieces} personnages={personnages} rafraichi={grilleARelire}
+          jeu={bibliotheque.courant ?? ""} pieces={pieces} personnages={personnages} univers={univers} rafraichi={grilleARelire}
           surGroupes={setGroupesDeLaFamille} surCollection={setCollectionOuverte}
           surFamille={ouvrirLaFamille} surToutesLesFamilles={() => allerA("bibliotheque")}
           surRange={() => void api.arbre().then(setBibliotheque).catch(() => {})}
@@ -2593,6 +2589,7 @@ function AtelierApp() {
           collectionInitiale={collectionOuverte}
           pieces={pieces}
           personnages={personnages}
+          univers={univers}
           rafraichi={grilleARelire}
           surGroupes={setGroupesDeLaFamille}
           // La collection ouverte n'est pas un lieu, mais le fil la nomme : la

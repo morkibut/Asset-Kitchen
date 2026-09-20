@@ -61,7 +61,7 @@ _ORDRES = {
 }
 from atelier.domaine.generation import Generation
 from atelier.domaine.personnage import Personnage
-from atelier.domaine.projet import Collection, Projet
+from atelier.domaine.projet import SUJET, Collection, Projet
 
 # Change à chaque évolution du schéma. L'index est alors jeté et refait depuis
 # les fichiers : c'est le geste normal, pas un incident.
@@ -120,12 +120,18 @@ CREATE TABLE IF NOT EXISTS assets (
     role        TEXT NOT NULL DEFAULT 'seule',
     favori      INTEGER NOT NULL DEFAULT 0,
     epingle     INTEGER NOT NULL DEFAULT 0,
+    -- **C'est un ingrédient, pas une chose du jeu** (RG5, 20 septembre 2026).
+    -- Doublée depuis l'objet, comme `favori` et `epingle` : la bibliothèque des
+    -- matières d'un projet se lit par `WHERE projet = ? AND matiere = 1`, sans
+    -- relire le JSON de chaque image du jeu.
+    matiere     INTEGER NOT NULL DEFAULT 0,
     supprime_le REAL,
     contenu     TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS assets_par_date ON assets (cree_le DESC);
 CREATE INDEX IF NOT EXISTS assets_par_projet ON assets (projet);
 CREATE INDEX IF NOT EXISTS assets_par_parent ON assets (parent);
+CREATE INDEX IF NOT EXISTS assets_matieres ON assets (projet, matiere);
 -- La matrice de production demande « les images de ce personnage » à chaque
 -- rendu, et une suppression de personnage les redemande toutes : c'est très
 -- exactement la question qu'un index existe pour répondre. Le schéma n'a
@@ -166,7 +172,12 @@ CREATE TABLE IF NOT EXISTS collections_membres (
     collection  TEXT NOT NULL REFERENCES collections (identifiant) ON DELETE CASCADE,
     jeu         TEXT NOT NULL,
     sujet       TEXT NOT NULL,
-    PRIMARY KEY (collection, jeu, sujet)
+    -- **Sujet ou matière** (RG5, 20 septembre 2026) : `sujet` porte alors
+    -- l'identifiant d'une image, pas d'un sujet. Dans la clé, sinon un sujet
+    -- et une matière qui partageraient par hasard le même identifiant dans le
+    -- même jeu s'écraseraient l'un l'autre.
+    genre       TEXT NOT NULL DEFAULT 'sujet',
+    PRIMARY KEY (collection, jeu, sujet, genre)
 );
 CREATE INDEX IF NOT EXISTS collections_membres_par_sujet ON collections_membres (jeu, sujet);
 
@@ -608,8 +619,8 @@ class Base:
                 INSERT INTO assets
                     (identifiant, generation, rang, label, recherche, cree_le,
                      projet, parent, personnage, pose, piece, role, favori,
-                     epingle, supprime_le, contenu)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     epingle, matiere, supprime_le, contenu)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(identifiant) DO UPDATE SET
                     label = excluded.label,
                     recherche = excluded.recherche,
@@ -628,6 +639,7 @@ class Base:
                     role = excluded.role,
                     favori = excluded.favori,
                     epingle = excluded.epingle,
+                    matiere = excluded.matiere,
                     supprime_le = excluded.supprime_le,
                     contenu = excluded.contenu
                 """,
@@ -650,6 +662,7 @@ class Base:
                     role_de(asset),
                     int(asset.favori),
                     int(asset.epingle),
+                    int(asset.matiere),
                     asset.supprime_le,
                     json.dumps(asset.en_disque(), ensure_ascii=False),
                 ),
@@ -675,6 +688,7 @@ class Base:
         supprimes: bool,
         role: str = ROLE_PAR_DEFAUT,
         jugement: str = JUGEMENT_PAR_DEFAUT,
+        matiere: bool | None = None,
     ) -> tuple[list[str], list[Any]]:
         """Le filtre de la grille, bâti une seule fois.
 
@@ -705,6 +719,10 @@ class Base:
         replié dessus dès la première ligne — un des deux serait sinon la
         seconde vérité sur la même question. Il reste accepté pour les
         appelants d'avant la tranche.
+
+        **`matiere` est le filtre de RG5** : `True` ne rend que la bibliothèque
+        des matières d'un projet, `False` l'exclut, `None` — le défaut — ne
+        filtre pas, pour que toute grille d'avant RG5 continue de tout montrer.
         """
         if favoris:
             jugement = "favori"
@@ -719,7 +737,7 @@ class Base:
             conditions.append(
                 "EXISTS (SELECT 1 FROM collections_membres cm "
                 "WHERE cm.collection = ? AND cm.jeu = assets.projet "
-                "AND cm.sujet = assets.personnage)"
+                "AND cm.sujet = assets.personnage AND cm.genre = 'sujet')"
             )
             arguments.append(collection)
         if jugement == "favori":
@@ -738,6 +756,9 @@ class Base:
         elif role in ROLES_ECRITS:
             conditions.append("role = ?")
             arguments.append(role)
+        if matiere is not None:
+            conditions.append("matiere = ?")
+            arguments.append(int(matiere))
         if recherche.strip():
             terme = "%" + normaliser(recherche.strip()) + "%"
             conditions.append(
@@ -763,6 +784,7 @@ class Base:
         role: str = ROLE_PAR_DEFAUT,
         jugement: str = JUGEMENT_PAR_DEFAUT,
         tri: str = TRI_PAR_DEFAUT,
+        matiere: bool | None = None,
     ) -> list[Asset]:
         """La bibliothèque, filtrée et triée. **Une seule requête pour tout le
         produit.**
@@ -789,6 +811,7 @@ class Base:
             supprimes=supprimes,
             role=role,
             jugement=jugement,
+            matiere=matiere,
         )
 
         with self._connexion() as connexion:
@@ -813,6 +836,7 @@ class Base:
         supprimes: bool = False,
         role: str = ROLE_PAR_DEFAUT,
         jugement: str = JUGEMENT_PAR_DEFAUT,
+        matiere: bool | None = None,
     ) -> int:
         """Combien la grille tiendrait sans son plafond (B3).
 
@@ -829,6 +853,7 @@ class Base:
             supprimes=supprimes,
             role=role,
             jugement=jugement,
+            matiere=matiere,
         )
         with self._connexion() as connexion:
             ligne = connexion.execute(
@@ -1124,9 +1149,10 @@ class Base:
         return {l["collection"]: l["combien"] for l in lignes}
 
     def collections_par_sujet(
-        self, jeu: str, sujets: Sequence[str]
+        self, jeu: str, sujets: Sequence[str], genre: str = SUJET
     ) -> dict[str, list[dict[str, str]]]:
-        """Les collections de chaque sujet, pour toute une page (B9.3).
+        """Les collections de chaque sujet — ou de chaque matière (RG5) —, pour
+        toute une page (B9.3).
 
         **Une jointure, posée à côté du compte de B9.1** dans la même requête
         de la route — c'est le patron déjà écrit en `B8.4` pour *compter* un
@@ -1152,9 +1178,9 @@ class Base:
                     "SELECT cm.sujet AS sujet, c.identifiant AS identifiant, "
                     "c.nom AS nom FROM collections_membres cm "
                     "JOIN collections c ON c.identifiant = cm.collection "
-                    f"WHERE cm.jeu = ? AND cm.sujet IN ({trous}) "
+                    f"WHERE cm.jeu = ? AND cm.genre = ? AND cm.sujet IN ({trous}) "
                     "ORDER BY c.cree_le",
-                    (jeu, *paquet),
+                    (jeu, genre, *paquet),
                 ).fetchall()
                 for ligne in lignes:
                     resultat[ligne["sujet"]].append(
@@ -1359,10 +1385,10 @@ class Base:
                 (collection.identifiant,),
             )
             connexion.executemany(
-                "INSERT INTO collections_membres (collection, jeu, sujet) "
-                "VALUES (?, ?, ?)",
+                "INSERT INTO collections_membres (collection, jeu, sujet, genre) "
+                "VALUES (?, ?, ?, ?)",
                 [
-                    (collection.identifiant, membre.jeu, membre.sujet)
+                    (collection.identifiant, membre.jeu, membre.sujet, membre.genre)
                     for membre in collection.membres
                 ],
             )
