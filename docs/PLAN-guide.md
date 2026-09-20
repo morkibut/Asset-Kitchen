@@ -213,9 +213,16 @@ Chaque tranche ci-dessous porte les **mêmes six critères**, et ils ne sont pas
   propres à cet écran, réécrites sous ses deux seules vraies zones. Vérifié aussi pour
   `GU9` — l'univers : quinze fiches d'Inspiration sous six zones, deux des quatre fiches
   d'Ambiances déplacées vers `ou: "jeu"` (`univers.couleurs`, `univers.fond`, relogées à
-  l'étape « Son allure » depuis `C2`), laissant deux fiches propres à ce côté-ci. Les trois
-  tranches restantes du tableau ci-dessous n'ont pas encore été reprises, et remettront
-  cette liste à décocher le temps de leur propre passe.)*
+  l'étape « Son allure » depuis `C2`), laissant deux fiches propres à ce côté-ci. Vérifié
+  aussi pour `GU10` — l'installation et les réglages : sur les treize fiches nées sous
+  `ou: "reglages"`, six (`mouvement.*`, `style.*`) décrivaient des blocs déménagés le
+  18 septembre dans l'onglet Univers et sont parties vers `ou: "jeu"`, une (`reglages.consommation`)
+  décrivait la barre qui paie de l'établi et est partie vers `ou: "sujet"` — laissant six
+  fiches propres à cet écran, réparties sur quatre zones (les fournisseurs, les
+  consommations, le cadre de délégation de l'agent, la séance de l'agent). Les deux
+  tranches restantes du tableau
+  ci-dessous n'ont pas encore été reprises, et remettront cette liste à décocher le temps
+  de leur propre passe.)*
 
 | Tranche | Écran | Fiches aujourd'hui |
 |---|---|---|
@@ -372,6 +379,30 @@ défaut se lit après détourage, le fond du jeu a longtemps coûté un découpa
 faute d'exister, et la famille d'un artwork filtre ses références depuis qu'un goblin a
 contaminé un squelette au banc d'essai. Les dix-neuf fiches d'origine restent **dix-neuf**,
 aucune n'était morte, et les six critères ci-dessus tiennent sur l'écran.
+
+→ `GU10` a commencé par lire `Installation.tsx` et les quatre onglets de `Reglages.tsx`,
+pas la liste des treize fiches : les quatre étapes de l'installation (ce qui va être
+demandé, les images, les animations, où tout se range) et les trois onglets qui partagent
+`"reglages"` avec elle (Moteurs & workflows, Agent MCP, Consommations — l'onglet Univers est
+`GU7`). Aucune des treize fiches ne portait de `groupe`, et c'était la vraie panne de cet
+écran plutôt qu'un texte trop long. Sept d'entre elles étaient aussi mal rangées, trouvées en
+lisant le code plutôt qu'en le supposant : `mouvement.nom`, `mouvement.texte`,
+`mouvement.cadence`, `style.nom`, `style.tient` et `style.texte` décrivaient
+`BlocDirectionsAnimees`/`BlocMouvements`/`BlocStyles` (`Mouvements.tsx`), montés depuis le
+18 septembre 2026 dans l'onglet Univers de `Reglages.tsx` et non plus dans l'onglet Agent
+MCP — déplacées vers `ou: "jeu"`, groupe neuf « Ce qui part avec chaque animation », à la
+suite du groupe que `GU7` y avait déjà posé ; `reglages.consommation` décrivait
+`PanneauReglages.tsx` (monté par `BarreQuiPaie.tsx`, l'établi d'un sujet) et `Envoi.tsx`,
+jamais un onglet des réglages — déplacée vers `ou: "sujet"`, dans le groupe « La barre qui
+paie » que `GU6` y avait déjà posé. Un essai de `App.test.tsx` vérifiait encore
+`ou: "reglages"` sur les trois premières et a été corrigé avec elles. Les six fiches
+restantes sont réécrites sous quatre zones réelles : les fournisseurs (partagée avec
+`Installation.tsx`), les consommations, le cadre de délégation de l'agent, la séance de
+l'agent — et quatre d'entre elles dépassaient une limite de `GU3` (`quoi` ou « à savoir » sur
+`assistant.fournisseurs`, `reglages.depenses`, `reglages.consommation`, `agent.modele`, plus
+`agent.plafond` sur son seul « à savoir »), retaillées, ce qu'elles perdaient en détail
+mesuré rejoignant cinq lignes neuves de `docs/design-decisions.md`. Treize fiches d'origine,
+six propres à cet écran, et les six critères ci-dessus tiennent sur l'ensemble.
 
 ---
 

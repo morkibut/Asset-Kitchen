@@ -778,6 +778,74 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · vide au départ",
   },
 
+  // ── Ce qui part avec chaque animation (GU10) ──────────────────────────────
+  //
+  // Six fiches déplacées depuis `ou: "reglages"` : `BlocDirectionsAnimees`,
+  // `BlocMouvements` et `BlocStyles` (`Mouvements.tsx`) sont passées le
+  // 18 septembre 2026 dans l'onglet Univers de `Reglages.tsx`
+  // (`ReglesDuJeu.tsx`, sous la liste des quatre étapes) — elles étaient
+  // rangées dans l'onglet Agent MCP faute de place, et le commentaire de
+  // `Reglages.tsx` le dit lui-même. Textes inchangés, sauf `style.texte`
+  // (`quoi` dépassait 140 signes).
+
+  "mouvement.nom": {
+    nom: "Nom du mouvement",
+    ou: "jeu",
+    groupe: "Ce qui part avec chaque animation",
+    quoi: "Le nom français du mouvement — ce que tu lis, et jamais ce qui part au modèle.",
+    change:
+      "Rien à la génération : le nom ne quitte pas l'atelier. Mais **le repère qu'il produit accroche le mouvement à la case du plan** : un mouvement nommé « marche » anime la pose « marche » sans que tu relies quoi que ce soit. Renommer un mouvement déjà nommé ne défait pas ce lien — le repère, lui, ne bouge plus.",
+    origine: "toi · sept mouvements arrivent avec l'atelier",
+    long: "Le repère se dérive du nom au moment où tu le nommes, et pas après : « vol plané » donne `vol-plane`. C'est ce repère-là qui doit correspondre à l'identifiant d'une pose pour que la case en hérite.\n\nUn mouvement livré renommé reste livré : c'est son origine, pas son état. Le fichier l'emporte alors sur le catalogue, et ton nom survit à la mise à jour suivante.",
+  },
+  "mouvement.texte": {
+    nom: "Ce qui part au modèle",
+    ou: "jeu",
+    groupe: "Ce qui part avec chaque animation",
+    quoi: "Le texte anglais envoyé pour obtenir le clip. C'est la moitié qui agit.",
+    change:
+      "Tout. C'est ce texte-là qui décide de ce que le modèle anime, et **deux clips du même mouvement partent avec exactement le même** : ce qui varie d'un tirage à l'autre redevient le tirage, et non la frappe.",
+    origine: "toi · les livrés arrivent écrits",
+    long: "Un texte de mouvement dit un **cycle**, pas une posture : `walking posture, full body` est juste pour une image et faux pour un clip, où il faut dire que ça boucle et que le personnage n'avance pas dans le cadre, sans quoi il sort du champ. Changer ce texte ne touche à rien de ce qui est déjà parti.",
+  },
+  "mouvement.cadence": {
+    nom: "Cadence",
+    ou: "jeu",
+    groupe: "Ce qui part avec chaque animation",
+    quoi: "Les images par seconde de la bande qu'on tirera du clip.",
+    change:
+      "Elle règle la vitesse de l'aperçu **et** elle est écrite dans le fichier d'accompagnement à l'export. Un seul réglage pour les deux : séparés, ils finiraient par se contredire, et c'est toi qui paierais l'écart.",
+    origine: "toi · 12 images par seconde à défaut",
+    long: "Douze est le compromis du pixel art : au-dessous le pas saccade, au-dessus tu paies des images que l'œil ne distingue plus à cette taille. Les livrés s'en écartent quand le mouvement le demande — le repos à huit, la course à quatorze.",
+  },
+  "style.nom": {
+    nom: "Nom du style",
+    ou: "jeu",
+    groupe: "Ce qui part avec chaque animation",
+    quoi: "Le nom français du style — ce que tu lis, et jamais ce qui part au modèle.",
+    change:
+      "Rien à la génération : le nom ne quitte pas l'atelier. **Le repère qu'il produit accroche le style au personnage ou à la pièce qui le déclare** ; renommer un style déjà nommé ne défait pas ce lien.",
+    origine: "toi · dix styles arrivent avec l'atelier",
+  },
+  "style.tient": {
+    nom: "Ce qu'il tient en main",
+    ou: "jeu",
+    groupe: "Ce qui part avec chaque animation",
+    quoi: "Ce que le style tient en main, en anglais — vide veut dire mains nues.",
+    change:
+      "Rien à la génération : il sert à reconnaître le style dans la liste. Ce sont les textes des mouvements qui nomment l'arme au modèle.",
+    origine: "toi · vide à défaut",
+  },
+  "style.texte": {
+    nom: "Le texte d'un mouvement, pour ce style",
+    ou: "jeu",
+    groupe: "Ce qui part avec chaque animation",
+    quoi: "Le texte anglais que ce style dit pour ce mouvement-là. Vide, c'est le texte du mouvement seul qui part à sa place.",
+    change:
+      "Pour un personnage qui a ce style, il part après la phrase de la direction, à la place du texte du mouvement.",
+    origine: "toi · les livrés arrivent écrits pour l'attaque, certains pour le repos",
+  },
+
   // ── L'univers, côté Inspiration — la toile, ses cartes, ses liens ─────────
   //
   // **Deux côtés réels, pas trois** (`Univers.tsx`, `export type Cote =
@@ -1186,6 +1254,21 @@ export const AIDE: Record<string, Explication> = {
     origine: "les catalogues · chaque ligne dit d'où vient sa fiche",
     long:
       "Un modèle se nomme par deux choses ensemble, qui le propose et son nom chez lui — deux fournisseurs peuvent proposer un modèle du même nom. Ce qui manque à un fournisseur (souvent une clé) grise ses modèles à lui seuls ; les autres restent choisissables. Le catalogue est relu au démarrage ou par le bouton Catalogue ; hors ligne, générer reste possible avec la dernière photo reçue.",
+  },
+
+  // **Déplacée depuis `ou: "reglages"` en `GU10`** : elle décrit
+  // `PanneauReglages.tsx` (monté par `BarreQuiPaie.tsx`, ici) et le rappel de
+  // `Envoi.tsx` à la confirmation — jamais un onglet des réglages.
+  "reglages.consommation": {
+    nom: "Ce qu'un appel consomme",
+    ou: "sujet",
+    groupe: "La barre qui paie",
+    quoi: "Ce qu'un appel prend chez son fournisseur, dans son unité — dollars pour l'un, jetons pour l'autre. Aucun appel ne consomme « rien ».",
+    change:
+      "Rien à la génération : c'est ce qui s'enregistre après, et ce que l'écran annonce avant. Le chiffre affiché sur un modèle est la **médiane de ses derniers appels sur cette machine**, jamais un tarif lu quelque part.",
+    origine: "la réponse du fournisseur, à chaque appel · rien à remplir",
+    long:
+      "Le mot **gratuit** veut dire *sans prix*, pas *sans limite* : un modèle gratuit prend quand même quelque chose chez qui le sert, écrit à côté — *gratuit · 1 jeton*. Ce qui reste chez un fournisseur se dit aux deux endroits où ça sert — le choix du modèle, la confirmation de l'appel —, avec d'où le chiffre vient : compté ici, ou relevé chez le fournisseur.",
   },
 
   "reglages.styles-locaux": {
@@ -2446,45 +2529,41 @@ export const AIDE: Record<string, Explication> = {
     origine: "l'image elle-même",
   },
 
-  // ── Les fournisseurs — l'onglet *Moteurs & workflows* ────────────────────
+  // ── Les fournisseurs — l'onglet *Moteurs & workflows*, et l'installation ──
   //
   // Les huit autres fiches `assistant.*` sont parties en `GU7` : elles
   // décrivent les règles d'un jeu, pas l'atelier, et elles sont remontées
   // au bloc « Les règles du jeu » plus haut — sauf deux, retirées du corpus
   // parce que le réglage lui-même est mort (`assistant.ecran`,
   // `assistant.texte`).
+  //
+  // `reglages.consommation` a déménagé sous `ou: "sujet"` en `GU10` : elle
+  // décrit `PanneauReglages.tsx` (monté par `BarreQuiPaie.tsx`) et
+  // `Envoi.tsx`, jamais un onglet des réglages — elle rejoint `reglages.modele`
+  // dans le groupe « La barre qui paie ».
 
   "assistant.fournisseurs": {
     nom: "Les fournisseurs, et ce qu'ils demandent",
     ou: "reglages",
-    quoi: "Un tiroir par fournisseur. Chacun dit ce qu'il lui faut pour travailler — une clé, un compte et un jeton, ou rien du tout — et ce que tu y déposes n'est jamais redemandé.",
+    groupe: "Les fournisseurs — clés et comptes",
+    quoi: "Un tiroir par fournisseur — une clé, un compte, un jeton, ou rien du tout — et ce qu'on y dépose n'est jamais redemandé.",
     change:
       "Un fournisseur à qui il manque quelque chose a ses modèles **grisés, avec leur raison** — mais l'atelier n'est pas éteint pour autant : l'un d'eux ne demande ni compte ni clé, et le bouton qui paie reste actif sur ses modèles à lui. Tu peux donc fabriquer une première image sur une machine où rien n'a été déposé. Ce que tu n'auras pas sans le fournisseur payant, c'est ce qui a besoin d'images de référence : le gratuit n'en accepte aucune, donc pas d'univers, pas de casting dans un style commun. Ce que tu déposes vaut pour tous tes jeux, pas seulement celui-ci.",
     origine: "toi · vide au départ · trois portes, une seule pièce",
     long:
-      "Chaque place se dépose à la dernière étape de l'assistant de démarrage, dans la fenêtre des réglages, ou par une variable d'environnement — **c'est la même valeur au même endroit**, et l'atelier la relit à chaque appel. En changer une ne demande aucun redémarrage, et n'efface aucune autre.\n\nUn fournisseur peut en demander plusieurs : un compte *et* un jeton, par exemple. Il te dit alors lequel manque, pas seulement qu'il manque quelque chose. Un autre n'en demande aucune, et son tiroir le dit plutôt que de rester vide sans explication.\n\nUne clé n'apparaît jamais en entier, nulle part : tu en vois les six derniers caractères, de quoi la reconnaître sans la lire. Celle qui vient de l'environnement de ta machine ne se retire pas depuis cet écran — l'atelier n'écrit pas là-dedans, et un bouton qui semblerait le faire mentirait.\n\nEn retirer une grise les modèles de son fournisseur, et **rien d'autre** : ni une image, ni une ligne de dépense. Ce qui est parti est parti, et le compte le dit toujours.",
+      "Une clé n'apparaît jamais en entier : tu vois ses six derniers caractères. Celle qui vient de l'environnement de la machine ne se retire pas d'ici — l'atelier n'écrit pas là-dedans. La retirer grise les modèles de son fournisseur, et rien d'autre : ni une image, ni une ligne de dépense ne disparaît.",
   },
 
   "reglages.depenses": {
     nom: "Les dépenses",
     ou: "reglages",
-    quoi: "La liste de tous les appels, du plus récent au plus ancien, chacun avec sa date, son sujet, son modèle et ce qu'il a réellement consommé — les réussis, les ratés et les interrompus.",
+    groupe: "Consommations",
+    quoi: "Tous les appels, du plus récent au plus ancien : date, sujet, modèle, et ce qu'il a réellement consommé — réussi, raté ou interrompu.",
     change:
       "Rien du tout : on ne règle rien ici, on lit. Une image supprimée fait changer l'état de son appel, jamais disparaître sa ligne — **une dépense ne s'efface jamais**.",
     origine: "l'atelier, à chaque appel · rien à remplir",
     long:
-      "Les deux totaux du produit ne comptent pas la même chose, et il vaut mieux le savoir avant de les comparer : celui de la barre du haut compte **le jeu ouvert**, celui d'ici compte **l'atelier depuis le premier jour**. C'est ce que les étiquettes *ce jeu, en argent* et *dépensé par l'agent* ont été ajoutées pour lever.\n\nDepuis qu'un fournisseur ne facture rien, un appel peut ne rien coûter et consommer quand même. Ces appels-là sont dans la liste comme les autres, et ils y disent **gratuit** — jamais *0,00 $*, qui se lirait *sans limite* là où il faut lire *sans prix*. Ce qu'ils ont pris est écrit à côté, avec son mot, et il n'est jamais ajouté au total : un total en argent ne compte que de l'argent.\n\nL'argent n'appartient à aucun jeu en particulier, et c'est pour ça que cet écran se range avec les réglages de l'atelier plutôt qu'avec la galerie.",
-  },
-
-  "reglages.consommation": {
-    nom: "Ce qu'un appel consomme",
-    ou: "reglages",
-    quoi: "Ce qu'un appel prend chez son fournisseur, dans l'unité de celui-ci : des dollars chez l'un, des jetons chez l'autre — et « rien du tout » n'existe pas, un appel consomme toujours quelque chose.",
-    change:
-      "Rien à la génération : c'est ce qui s'enregistre après, et ce que l'écran annonce avant. Le chiffre affiché sur un modèle est la **médiane de ses derniers appels sur cette machine**, jamais un tarif lu quelque part.",
-    origine: "la réponse du fournisseur, à chaque appel · rien à remplir",
-    long:
-      "Le mot **gratuit** veut dire *sans prix*, pas *sans limite*. Un modèle qui ne coûte rien prend quand même quelque chose chez celui qui le sert, et ce quelque chose est écrit à côté du mot : *gratuit · 1 jeton*.\n\nCe qu'il reste chez un fournisseur est dit aux deux endroits où ça sert — l'écran où l'on choisit un modèle, et celui qui confirme un appel —, avec **d'où le chiffre vient**. *Compté ici* veut dire compté sur les appels partis de cette machine : c'est un minimum, pas un relevé, parce qu'un appel lancé ailleurs entame la même réserve sans que ce compteur-là le voie. *Relevé chez le fournisseur* veut dire que c'est lui qui l'a dit, et c'est alors un fait.\n\nAucun des deux fournisseurs du produit n'annonce de réserve aujourd'hui. Celui qui ne demande rien limite une **cadence** — un appel toutes les quinze secondes — et non un nombre d'images : l'écran dit donc ce qui est parti depuis minuit, et à quel rythme on peut relancer, plutôt qu'un « il vous reste » que personne n'a mesuré.",
+      "Deux totaux ne comptent pas la même chose : celui de la barre du haut compte le jeu ouvert, celui d'ici compte l'atelier depuis le premier jour. Un appel gratuit qui consomme quand même dit **gratuit** dans la liste — jamais *0,00 $*, qui se lirait *sans limite* là où il faut lire *sans prix* — et ce qu'il a pris n'est jamais ajouté au total en argent.",
   },
 
   // ── La retouche — ce que la fiche fait d'un asset ─────────────────────────
@@ -2543,78 +2622,6 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · tu corriges les coupes que l'atelier propose",
     long:
       "Le premier découpage se fait tout seul dès que la planche revient — rien à demander. Le refaire est un geste qu'on demande : l'atelier repropose les mêmes coupes, tu les déplaces, en ajoutes, en retires, puis tu valides, autant de fois que tu veux, sans jamais perdre les images déjà sorties d'un découpage précédent.",
-  },
-
-  // ── Les réglages — le cadre de l'agent ────────────────────────────────────
-  //
-  // Trois entrées, et elles répondent toutes à la même question de fond : *que
-  // se passe-t-il quand je ne regarde pas l'écran ?* L'agent n'attend jamais une
-  // autorisation — c'est ce qui l'empêche de se figer, et c'est exactement ce
-  // qui rend ces trois réglages nécessaires.
-
-  // ── Les mouvements (A6) ────────────────────────────────────────────────────
-  //
-  // Trois entrées pour un réglage à trois champs. **Une entrée décrit un
-  // réglage, pas un écran** — la règle qui a fait vieillir six phrases seulement
-  // sur cent en vingt étapes.
-
-  "mouvement.nom": {
-    nom: "Nom du mouvement",
-    ou: "reglages",
-    quoi: "Le nom français du mouvement — ce que tu lis, et jamais ce qui part au modèle.",
-    change:
-      "Rien à la génération : le nom ne quitte pas l'atelier. Mais **le repère qu'il produit accroche le mouvement à la case du plan** : un mouvement nommé « marche » anime la pose « marche » sans que tu relies quoi que ce soit. Renommer un mouvement déjà nommé ne défait pas ce lien — le repère, lui, ne bouge plus.",
-    origine: "toi · sept mouvements arrivent avec l'atelier",
-    long: "Le repère se dérive du nom au moment où tu le nommes, et pas après : « vol plané » donne `vol-plane`. C'est ce repère-là qui doit correspondre à l'identifiant d'une pose pour que la case en hérite.\n\nUn mouvement livré renommé reste livré : c'est son origine, pas son état. Le fichier l'emporte alors sur le catalogue, et ton nom survit à la mise à jour suivante.",
-  },
-  "mouvement.texte": {
-    nom: "Ce qui part au modèle",
-    ou: "reglages",
-    quoi: "Le texte anglais envoyé pour obtenir le clip. C'est la moitié qui agit.",
-    change:
-      "Tout. C'est ce texte-là qui décide de ce que le modèle anime, et **deux clips du même mouvement partent avec exactement le même** : ce qui varie d'un tirage à l'autre redevient le tirage, et non la frappe.",
-    origine: "toi · les livrés arrivent écrits",
-    long: "Un texte de mouvement dit un **cycle**, pas une posture. C'est toute la différence avec la consigne d'une pose : `walking posture, full body` est juste pour une image et faux pour un clip, où il faut dire que ça boucle et que le personnage n'avance pas dans le cadre — sans quoi il sort du champ, et la fenêtre de découpage devient énorme pour rien.\n\nLes textes livrés portent deux précautions qui valent d'être gardées quand tu en écris un : *in place, without moving across the frame* pour les déplacements, et *returning to the neutral stance* pour ce qui n'est pas un cycle. La seconde est ce qui permet de découper **deux animations dans un seul clip**, en repérant le retour au repos entre deux actions.\n\nChanger ce texte ne touche à rien de ce qui est déjà parti : il était parti au moment du clic.",
-  },
-  "mouvement.cadence": {
-    nom: "Cadence",
-    ou: "reglages",
-    quoi: "Les images par seconde de la bande qu'on tirera du clip.",
-    change:
-      "Elle règle la vitesse de l'aperçu **et** elle est écrite dans le fichier d'accompagnement à l'export. Un seul réglage pour les deux : séparés, ils finiraient par se contredire, et c'est toi qui paierais l'écart.",
-    origine: "toi · 12 images par seconde à défaut",
-    long: "Douze est le compromis du pixel art : au-dessous le pas saccade, au-dessus tu paies des images que l'œil ne distingue plus à cette taille. Les livrés s'en écartent quand le mouvement le demande — le repos à huit, la course à quatorze.",
-  },
-
-  // ── Les styles de combat (SC1, SC4, 18 septembre 2026) ──────────────────────
-  //
-  // Trois entrées pour un réglage à trois champs, même découpe que le
-  // mouvement juste au-dessus : un style dit *comment* un personnage joue un
-  // mouvement, là où le mouvement dit *quel cycle*.
-
-  "style.nom": {
-    nom: "Nom du style",
-    ou: "reglages",
-    quoi: "Le nom français du style — ce que tu lis, et jamais ce qui part au modèle.",
-    change:
-      "Rien à la génération : le nom ne quitte pas l'atelier. **Le repère qu'il produit accroche le style au personnage ou à la pièce qui le déclare** ; renommer un style déjà nommé ne défait pas ce lien.",
-    origine: "toi · dix styles arrivent avec l'atelier",
-  },
-  "style.tient": {
-    nom: "Ce qu'il tient en main",
-    ou: "reglages",
-    quoi: "Ce que le style tient en main, en anglais — vide veut dire mains nues.",
-    change:
-      "Rien à la génération : il sert à reconnaître le style dans la liste. Ce sont les textes des mouvements qui nomment l'arme au modèle.",
-    origine: "toi · vide à défaut",
-  },
-  "style.texte": {
-    nom: "Le texte d'un mouvement, pour ce style",
-    ou: "reglages",
-    quoi: "Le texte anglais que ce style dit pour ce mouvement-là. Vide, le style ne dit rien pour ce mouvement et le texte du mouvement seul part à sa place.",
-    change:
-      "Pour un personnage qui a ce style, il part après la phrase de la direction, à la place du texte du mouvement.",
-    origine: "toi · les livrés arrivent écrits pour l'attaque, certains pour le repos",
   },
 
   // ── Commander un clip (A9) ────────────────────────────────────────────────
@@ -2908,26 +2915,29 @@ export const AIDE: Record<string, Explication> = {
   "agent.plafond": {
     nom: "Plafond de la séance",
     ou: "reglages",
+    groupe: "Agent MCP — la séance",
     quoi: "Le nombre d'images que l'agent peut faire produire depuis l'ouverture de l'atelier.",
     change:
       "Atteint, l'agent reçoit un refus qui nomme le plafond et te renvoie ici — aucune fenêtre ne s'ouvre, rien ne t'interrompt. Il compte des images, pas des appels : quatre variations d'un seul prompt en consomment quatre, parce que c'est ce qui est facturé.",
     origine: "toi · défaut 20, actif · repart à zéro à chaque ouverture",
     long:
-      "Il compte depuis l'ouverture de l'atelier et pas plus loin : le remettre à zéro est un geste que tu connais déjà, fermer la fenêtre. Un total gardé sur le disque poserait la question de quand le purger, qui n'a pas de bonne réponse.\n\nLe désactiver ne perd pas le chiffre que tu y avais posé : l'interrupteur et la valeur sont deux réglages, et rallumer te rend le tien.\n\nLe changer prend effet à l'appel suivant. Rien à redémarrer — l'atelier relit ce réglage à chaque question que l'agent lui pose.",
+      "Il compte depuis l'ouverture de l'atelier, pas plus loin : fermer la fenêtre le remet à zéro. Le désactiver ne perd pas le chiffre posé — rallumer le rend tel quel. Le changer prend effet à l'appel suivant, sans redémarrer.",
   },
   "agent.modele": {
     nom: "Modèle d'exploration",
     ou: "reglages",
-    quoi: "Le modèle imposé à l'agent, quel que soit celui qu'il demande. Il se choisit parmi ceux qui ne coûtent pas d'argent, et il n'y a que ceux-là dans la liste.",
+    groupe: "Agent MCP — la séance",
+    quoi: "Le modèle imposé à l'agent, quel que soit celui qu'il demande — choisi parmi ceux qui ne coûtent rien, les seuls que la liste propose.",
     change:
       "Toutes ses générations partent sur ce modèle. Éteint, l'agent choisit — et s'il ne choisit pas, c'est encore celui-ci qui sert : personne ne doit tomber sur le modèle le plus cher du catalogue par accident. **C'est aussi le seul moyen de lui laisser un modèle payant**, et c'est voulu : un « modèle d'exploration » qui pourrait être le plus cher ne protégerait de rien.",
     origine: "toi · défaut : le modèle gratuit, actif",
     long:
-      "Un agent qui code a besoin d'un visuel correct tout de suite, pas d'un asset final. C'était déjà l'idée avant : un modèle payant en qualité basse, rapport de six sur le coût du travail agentique. Depuis qu'un fournisseur ne facture rien, c'est la totalité — **une séance de code entière ne fait plus bouger ton total en argent**.\n\nCe qu'un modèle gratuit ne sait pas faire : prendre des images d'entrée. Le style de ton jeu — tes artworks officiels, les concept arts de la chose, les images de son ambiance — **ne part donc pas avec ces images-là**. L'appel part quand même, sur le texte seul, et la fiche de l'image le dit ensuite : *partie sans le style du jeu*. Sans cette phrase tu retrouverais des semaines plus tard des images qui ne ressemblent pas aux autres sans savoir pourquoi.\n\nLa version de production se regénère depuis l'atelier : *reprendre les réglages* repose le texte tel qu'il est parti, tu choisis un modèle payant, et le style du jeu repart tout seul — rien à recocher.\n\nSi le catalogue ne déclare pas ce modèle — il a disparu, ou l'atelier tourne sur son catalogue de repli —, l'atelier en cherche un autre gratuit avant de prendre le défaut du catalogue. Un garde-fou posé pour ne rien dépenser qui se replierait sur un payant coûterait de l'argent en silence, ce qui est pire que pas de garde-fou.",
+      "Un modèle gratuit ne prend pas d'images d'entrée : le style de ton jeu — artworks, concept arts, ambiances — ne part pas avec lui, et la fiche de l'image le dit ensuite : *partie sans le style du jeu*. Si ce modèle a disparu du catalogue, l'atelier en cherche un autre gratuit avant de prendre le défaut payant du catalogue.",
   },
   "agent.dossier": {
     nom: "Dossier du jeu",
     ou: "reglages",
+    groupe: "Agent MCP — la séance",
     quoi: "Où l'agent pose les fichiers quand il ne dit pas où.",
     change:
       "Un dossier manquant est créé, et un fichier de même nom n'est jamais écrasé — il est numéroté. Un dossier qui refuse l'écriture est refusé à l'agent avec le chemin fautif, pour qu'il sache lequel des trois qu'il vient de nommer a posé problème.",

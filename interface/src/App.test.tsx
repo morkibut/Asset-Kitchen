@@ -5582,7 +5582,10 @@ describe("l'agent, vu de l'atelier", () => {
 
     for (const cle of ["mouvement.nom", "mouvement.texte", "mouvement.cadence"]) {
       expect(AIDE[cle], `${cle} — absent du corpus`).toBeTruthy()
-      expect(AIDE[cle].ou).toBe("reglages")
+      // Passées sous `ou: "jeu"` en `GU10` : ces trois réglages sont montés
+      // dans l'onglet Univers de `Reglages.tsx` depuis le 18 septembre 2026,
+      // pas dans l'onglet Agent MCP.
+      expect(AIDE[cle].ou).toBe("jeu")
     }
 
     // Et elles sont **atteignables depuis le réglage** : le pointillé ne paraît
