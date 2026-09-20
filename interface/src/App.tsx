@@ -1185,6 +1185,13 @@ function AtelierApp() {
   // **L'ordre suit les gardes du rendu, plus bas**, et pas l'inverse :
   // `depensesOuvertes` couvre les deux autres, `installationOuverte` couvre
   // les réglages (`reglesOuvertes && !installationOuverte`).
+  //
+  // ⚠️ **`sortieOuverte` n'était testé nulle part** (`GU12`, § *Ce qui reste
+  // ouvert pour la suite* de `docs/releves/guide-2026-09-20.md`) : ouvrir
+  // *Livrer au jeu* montrait le guide de la racine du dessous — la panne de
+  // `ou: "jeu"` que `GU7` (1/2) a réparée, ici sur la sortie. Elle se pose au
+  // même rang que les dépenses, les réglages et l'installation : les quatre
+  // s'ouvrent d'où qu'on vienne, par-dessus n'importe quelle racine.
   const ecranDuGuide: Explication["ou"] | null = depensesOuvertes
     ? "depenses"
     : installationOuverte
@@ -1193,7 +1200,9 @@ function AtelierApp() {
         ? ongletDesReglages === "univers"
           ? "jeu"
           : "reglages"
-        : tableauDeBord
+        : sortieOuverte
+          ? "sortie"
+          : tableauDeBord
           ? "tableau-de-bord"
           : surface === "univers"
             ? coteUnivers

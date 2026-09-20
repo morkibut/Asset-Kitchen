@@ -5146,6 +5146,36 @@ describe("l'infobulle et le guide", () => {
     expect(await screen.findByRole("heading", { name: "Guide", level: 1 })).toBeTruthy()
   })
 
+  test("« Livrer au jeu » ouvre le guide sur l'écran de sortie, pas sur la racine du dessous", async () => {
+    // `sortieOuverte` n'était testé nulle part dans `ecranDuGuide` (`App.tsx`) :
+    // la panne que `GU7` (1/2) avait réparée pour `ou: "jeu"`, restée entière
+    // ici jusqu'à `GU12` (2/2). Ouvrir *Livrer au jeu* montrait le guide de la
+    // galerie, la racine du dessous.
+    const { fetchDouble } = serveurDouble()
+    // `LivraisonDuJeu` (`Livraisons.tsx`) lit deux routes que le double
+    // commun ne sert pas — l'association Godot et l'historique des
+    // livraisons — pour l'écran qui s'ouvre derrière le volet. Sans elles il
+    // ne s'agit que de laisser l'écran se monter ; le guide, lui, ne regarde
+    // aucune de ces deux réponses.
+    const fetchAvecGodot = vi.fn((url: string, init?: RequestInit) => {
+      if (typeof url === "string" && url.endsWith("/godot-link"))
+        return Promise.resolve({ ok: true, status: 200, json: async () => null } as Response)
+      if (typeof url === "string" && url.endsWith("/deliveries"))
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({ livraisons: [] }) } as Response)
+      return fetchDouble(url, init)
+    })
+    await monter(fetchAvecGodot)
+
+    const navigation = screen.getByRole("complementary", { name: "Navigation du jeu" })
+    fireEvent.click(within(navigation).getByRole("button", { name: "Livrer au jeu" }))
+    fireEvent.click(within(navigation).getByRole("button", { name: "Guide" }))
+
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    const volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.textContent).toContain("Livrer au jeu — ce qui en sort vers Godot")
+    expect(volet.textContent).not.toContain("La galerie — chaque résultat conservé dans le jeu")
+  })
+
   test("? ouvre le volet depuis n'importe où, et Échap le referme", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)

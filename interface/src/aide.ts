@@ -327,7 +327,7 @@ export const AIDE: Record<string, Explication> = {
   "livraison.image-fixe": {
     nom: "L’image fixe dans Godot",
     groupe: "Livrer dans Godot — 2 · Les versions à livrer",
-    quoi: "Choisissez une version existante pour un objet, un décor, un portrait ou une interface. La scène garde son adresse quand une nouvelle version remplace la même pose et direction.",
+    quoi: "Choisir une image déjà faite — objet, décor, portrait ou interface. Remplacer la même pose et direction garde l'adresse de la scène.",
     change: "Le mode monde crée un Sprite2D ; le mode interface un TextureRect. Le repère utilise les pixels du rendu exporté. La préparation fige les pixels, la recette et la provenance avant publication.",
     origine: "toi · version relue ; atelier · fichiers et révisions conservés",
     ou: "sortie",
@@ -337,7 +337,7 @@ export const AIDE: Record<string, Explication> = {
     nom: "Les versions livrées dans Godot",
     groupe: "Livrer dans Godot — l'historique des livraisons",
     quoi: "Une livraison conserve les animations choisies et les fichiers relus avant l’écriture.",
-    change: "Un nouveau favori ne remplace pas le jeu ; une nouvelle livraison remplace seulement les animations choisies, et signale un fichier modifié à la main.",
+    change: "Un nouveau favori ne remplace pas le jeu ; une nouvelle livraison remplace seulement les animations choisies, et signale en conflit un fichier que l'atelier n'a pas écrit lui-même.",
     origine: "Ta sélection et le dossier Godot explicitement associé au jeu.",
     ou: "sortie",
   },
@@ -1056,11 +1056,12 @@ export const AIDE: Record<string, Explication> = {
   // écrans des tuiles héritent du codex faute d'un `ou` à eux, et c'est
   // `GU13` qui leur en donnera un.
   //
-  // ⚠️ **`codex.vitrine` décrit un écran supprimé** — `Vitrine.tsx` est
+  // ⚠️ **`codex.vitrine` décrivait un écran supprimé** — `Vitrine.tsx` est
   // parti du dépôt le 16 septembre 2026. Ce qu'il en reste est ailleurs :
   // l'aperçu à la barre d'espace, partout, et `Comparer.tsx`, qui attend
-  // son écran de guide en `GU15`. Laissée sans `groupe` : c'est `GU12`
-  // (2/2) qui la retire.
+  // son écran de guide en `GU15`. `GU12` (2/2) l'a retirée
+  // (`docs/releves/guide-2026-09-20.md` § *Les fiches qui mentent, une par
+  // une*).
 
   "bibliotheque.collections": {
     nom: "collections de sujets", ou: "codex",
@@ -1074,10 +1075,10 @@ export const AIDE: Record<string, Explication> = {
     nom: "Écrire un nom",
     ou: "codex",
     groupe: "En haut de l'écran — nommer un sujet",
-    quoi: "La dernière rangée de la liste. On y tape le nom d'une chose, et la chose entre dans le codex sur-le-champ, dans la famille allumée à gauche.",
+    quoi: "Le bouton « Ajouter un… », en haut de l'écran, ouvre un champ : Entrée crée le sujet dans la famille ouverte à gauche.",
     change:
-      "Rien à la génération : on nomme, on ne paie pas. Mais c'est ce qui permet de fabriquer une image qui n'appartient encore à rien, sans ouvrir un troisième endroit où l'argent part.",
-    origine: "toi · vide, et seul au milieu de l'écran quand le monde l'est aussi",
+      "Rien à la génération : on nomme, on ne paie pas. Cela suffit à faire exister le sujet, prêt à recevoir sa première image sans détour par un autre écran.",
+    origine: "toi · vide tant qu'on n'a pas cliqué « Ajouter un… »",
   },
 
   "assets-recherche": {
@@ -1093,9 +1094,9 @@ export const AIDE: Record<string, Explication> = {
     nom: "Le codex",
     ou: "codex",
     groupe: "La grille des sujets — ce que chacun a, ce qui lui manque",
-    quoi: "L'index de ce que ton monde contient, rangé par famille : personnages, décors, objets, interface, équipement. Chaque chose y porte ce qui lui manque encore.",
+    quoi: "L'index de ce que ton monde contient, par famille — personnages, décors, objets, interface, équipement — et ce qui manque à chacun.",
     change:
-      "Rien à la génération. C'est de là qu'on ouvre l'établi d'une chose, et c'est le second des deux seuls endroits d'où l'argent part.",
+      "Rien à la génération. C'est de là qu'on ouvre l'établi d'une chose, ou qu'on ouvre le guichet pour en commander plusieurs à la fois.",
     origine: "toi, au fur et à mesure · les cinq familles existent avant toute chose",
   },
 
@@ -1105,18 +1106,6 @@ export const AIDE: Record<string, Explication> = {
     quoi: "Le terrain au centre et sur les huit bords ou coins d’une tuile carrée.",
     change: "Les cases voisines de la carte doivent annoncer le même terrain sur leur raccord commun. Ces relations sont exportées dans le TileSet de Godot. Elles ne jugent pas la qualité visuelle des pixels : regardez aussi les répétitions et la transparence sur la carte.",
     origine: "toi · aucun terrain implicite",
-  },
-
-  "codex.vitrine": {
-    nom: "La vitrine",
-    ou: "codex",
-    quoi: "L'image en grand, seule, pour la juger : sur le fond qu'on choisit, à la taille qu'elle fait vraiment, et à côté de ce à quoi on veut la comparer.",
-    change:
-      "Rien du tout, et c'est le point. Elle ne modifie aucune image et ne coûte pas un centime — la barre qui paie s'y retire, et son absence le dit avant qu'on ait lu quoi que ce soit.",
-    origine:
-      "trois portes · le codex, la fiche d'une chose, la planche d'une pose",
-    long:
-      "Ce qu'elle montre change avec la porte : tout le monde, toutes les poses d'une chose, ou les quatre vues d'une pose.\n\nElle se range ici et non dans la galerie parce que c'est le cinquième verbe du codex — il *montre*. Dans la galerie on n'ouvre qu'une image à la fois, et par un autre geste : pose le pointeur sur une vignette et appuie sur la barre d'espace, elle emplit l'écran. Ce raccourci vaut partout dans l'atelier, sans exception.",
   },
 
   // ── La fiche d'une chose du jeu — ses six parties (R8) ────────────────────
@@ -2527,7 +2516,7 @@ export const AIDE: Record<string, Explication> = {
       "Elle devient un asset entier : elle se retouche, se découpe, se réinjecte, s'exporte et se supprime comme celles que tu as payées. Sa fiche dit « importé » et un coût nul, et son nom est celui du fichier.",
     origine: "ton disque · le même geste que l'agent a depuis le serveur MCP",
     long:
-      "Un appel par fichier, et chacun répond pour lui-même : douze fichiers déposés ensemble font entrer les onze images et nomment le douzième s'il n'en est pas une. Les onze premières paraissent sans attendre que la douzième soit lue.\n\nSi les mêmes octets sont déjà dans ce projet, rien n'entre : le doublon est signalé avec un lien vers l'image existante, et « Importer quand même » reste offert. C'est exactement la règle du tableau d'inspiration, et la portée est la même — ce projet-ci, pas toute la bibliothèque : la même référence a de bonnes raisons de servir dans deux jeux.\n\nRien de tout cela ne demande le réseau, et rien ne coûte un centime.",
+      "Un appel part par fichier, sans attendre les autres : douze fichiers déposés font entrer onze images et nomment le douzième s'il n'en est pas une.\n\nSi les mêmes octets sont déjà dans ce projet, rien n'entre : un lien vers l'image existante paraît, avec « Importer quand même » toujours possible — projet par projet, la même référence pouvant servir ailleurs. Rien de tout cela ne coûte un centime.",
   },
 
   "atelier.import.traitement": {
@@ -2539,15 +2528,22 @@ export const AIDE: Record<string, Explication> = {
       "Sur « brute », l'image entre aux dimensions du fichier et sa recette reste vide — c'est le même mot que la visionneuse de la fiche, et il veut dire la même chose. Sur « traitée », elle arrive habillée comme une image générée ici.",
     origine: "toi · défaut « brute »",
     long:
-      "Le défaut a changé, et c'est une correction : l'import héritait de la recette du projet en silence, donc une référence de 2048 pixels revenait à 64 sans que personne l'ait demandé.\n\nLe choix vaut pour la séance et pour les deux gestes — le bouton et le dépôt —, plutôt que d'ouvrir une question à chaque fichier : douze fichiers déposés ensemble poseraient douze fois la même.\n\nUne image entrée telle quelle le reste : « Tout réaligner » ne la touche pas, parce qu'une recette vide est une décision, pas un oubli. C'est la même règle qui protège un asset ramené au brut.",
+      "Le choix vaut pour toute la séance, bouton et dépôt confondus, plutôt que de reposer la question à chaque fichier : douze fichiers déposés ensemble la poseraient douze fois.\n\nUne image entrée telle quelle le reste : « Tout réaligner » ne la touche pas, une recette vide étant un choix, pas un oubli — la même règle que pour un asset ramené au brut.",
   },
+
+  // ⚠️ **`son.fabrication` ne décrit pas l'atelier du son** : la durée et le
+  // moteur qu'elle porte sont ceux de `FabricationAudio.tsx`, ouvert depuis
+  // *Fabrications*, jamais depuis l'onglet *Sons* de la galerie — vérifié le
+  // 20 septembre 2026. Elle reste sous `ou: "galerie"` avec les trois
+  // suivantes, en attendant l'écran du son de `GU14` ; seul son `groupe` est
+  // corrigé pour ne pas prétendre le contraire.
 
   "son.fabrication": {
     nom: "durée et méthode sonore", ou: "galerie",
-    groupe: "L'atelier du son — ouvert depuis l'onglet Sons",
-    quoi: "La durée choisie est celle du son demandé. Le temps de calcul de la méthode locale se lit séparément, d’après les calculs déjà mesurés sur cette machine.",
-    change: "La relecture conserve le texte exact, la version du workflow et ses paramètres. Un son reçu se retrouve dans l’atelier son, même s’il est silencieux ou illisible et demande une vérification.",
-    origine: "toi · workflow sonore importé et paramètres déclarés",
+    groupe: "Demander un son — depuis Fabrications",
+    quoi: "La durée vient des puces de la famille choisie ; le temps de calcul du moteur local se mesure à part, sur cette machine.",
+    change: "La relecture conserve le texte exact, la version du workflow et ses paramètres. Un son reçu rejoint l’atelier son, même silencieux ou illisible, avec une vérification à faire.",
+    origine: "toi · famille, durée et moteur choisis",
   },
 
   "son.coupe": {
@@ -2632,7 +2628,7 @@ export const AIDE: Record<string, Explication> = {
       "Trois rôles envoient l'image — référence (elle inspire), source d'édition (elle engendre), guide de style (elle donne la manière). Le quatrième n'envoie rien : il reprend le prompt, le modèle et les réglages de la génération qui a produit cet asset.",
     origine: "toi · le contrat de génération nomme les rôles",
     long:
-      "Réinjecter ne coûte rien tant que tu n'as pas cliqué Générer : le rôle se pose dans le panneau de l'atelier, et le bloc « Ce qui part » se met à jour pour le dire. Le compte de références y grimpe d'un cran, et il est plafonné par le modèle choisi.\n\nLe quatrième rôle est le seul qui touche au prompt. Il est là pour la reprise : refaire une image dont on a perdu les réglages est le geste qu'on fait le plus souvent après un tri.",
+      "Réinjecter ne coûte rien tant qu'on n'a pas cliqué Générer : le rôle se pose dans le panneau, et « Ce qui part » se met à jour. Le compte de références grimpe d'un cran, plafonné par le modèle choisi.\n\nLe quatrième rôle est le seul à toucher au prompt : il refait une image dont on a perdu les réglages, le geste le plus courant après un tri.",
   },
 
   "fiche.personnage": {
@@ -2644,7 +2640,7 @@ export const AIDE: Record<string, Explication> = {
       "Rien à la génération. La case correspondante cesse d'être vide dans l'écran Personnages, et l'image y paraît en vignette — elle ne bouge pas de la bibliothèque pour autant.",
     origine: "toi · le plan d'attitudes vient du projet",
     long:
-      "Un corps naît dans l'atelier et nulle part ailleurs : on écrit un sujet, on génère, on obtient une image, et c'est ici qu'on dit ce qu'elle est. Il n'existe pas d'écran de création de personnage avec son propre prompt, et c'est délibéré — tout ce qui s'empilera ensuite repose sur une image dont on connaît déjà la grille et la palette.\n\nLes attitudes proposées sont celles que ce personnage-là tient, jamais toutes celles du jeu : désigner une case qu'il ne réclame pas n'aurait aucun sens. Retirer la désignation ne touche pas à l'image — elle reste dans la bibliothèque, sa case redevient vide.",
+      "Un corps naît dans l'atelier, nulle part ailleurs : on écrit un sujet, on génère, et c'est ici qu'on dit ce qu'elle est. Aucun écran de création n'a son propre prompt — ce qui suit repose sur une image dont la grille et la palette sont connues.\n\nLes attitudes proposées sont celles de ce personnage, jamais du jeu entier. Retirer la désignation laisse l'image intacte : sa case redevient vide.",
   },
 
   // P1c (V3.5) : le retour en arrière du dépliage.
@@ -2669,7 +2665,7 @@ export const AIDE: Record<string, Explication> = {
       "Rien : c'est une lecture. Chaque ligne dit si la valeur du jeu est encore appliquée ou si tu l'as réglée à la main depuis, et les huit places en dessous sont l'endroit où l'on change.",
     origine: "l'univers du jeu, tel qu'il est maintenant · l'échelle demandée à la naissance",
     long:
-      "Sans cette rubrique, tu vois une image qui ne ressemble pas à ce que le modèle a rendu, sans jamais savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, sans rien demander et sans rien dire.\n\nElle est calculée à la lecture, jamais rangée avec l'image : la question posée est « qu'est-ce que le jeu impose *maintenant* », et une valeur enregistrée aurait vieilli au premier réglage d'univers.\n\nElle dit « on ne sait pas » quand la génération de l'image n'est plus sur le disque. Une image importée n'en a jamais eu : le produit préfère l'avouer que de répondre « rien d'imposé », qui est une réponse différente et fausse.",
+      "Sans cette rubrique, une image ne ressemblerait pas au rendu du modèle, sans savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, en silence.\n\nCalculée à la lecture plutôt que rangée avec l'image — la question est « qu'est-ce que le jeu impose *maintenant* » —, elle dit « on ne sait pas » si la génération n'est plus sur le disque.",
   },
 
   "fiche.recette": {

@@ -231,9 +231,14 @@ Chaque tranche ci-dessous porte les **mêmes six critères**, et ils ne sont pas
   l'onglet « Ses animations » de la fiche d'un sujet, oubliée par `GU6` — déplacée vers
   `ou: "sujet"`. Neuf fiches nées sous `ou: "clip"` restent hors sujet pour cette tranche :
   elles décrivent l'écran « Fabrications » et les rendus 3D, qui héritent de `"clip"` faute
-  d'`ou` à eux — c'est `GU15` qui leur en donnera un. La tranche restante du tableau
-  ci-dessous n'a pas encore été reprise, et remettra cette liste à décocher le temps de sa
-  propre passe.)*
+  d'`ou` à eux — c'est `GU15` qui leur en donnera un. Vérifié aussi pour `GU12` — la galerie,
+  la fiche d'une image, le codex et la livraison, en deux temps : `GU12` (1/2) a d'abord
+  rangé les vingt-six fiches des quatre écrans sur leurs quatorze zones réelles et repéré une
+  fiche morte (`codex.vitrine`) ; `GU12` (2/2) a réparé le routage de `ou: "sortie"`
+  (`ecranDuGuide`, `App.tsx`), retiré `codex.vitrine`, réécrit `codex.nommer` contre l'écran
+  réel et réécrit les vingt-quatre fiches restantes — cinq `long` et quatre `quoi` ramenés
+  sous leur limite, une décision datée descendue dans `docs/design-decisions.md`. Toutes les
+  tranches du tableau ci-dessous ont maintenant été reprises.)*
 
 | Tranche | Écran | Fiches aujourd'hui |
 |---|---|---|
@@ -505,6 +510,20 @@ partout — posée sur l'écran d'ouverture, faute d'un `ou` pour ce qui se voit
 pour ne pas mêler du code à une tranche de décisions. Enfin, `codex.nommer` dit « la
 dernière rangée de la liste » ; nommer un sujet se fait aujourd'hui en haut de l'écran,
 par *Ajouter un…* — c'est `GU12` (2/2) qui corrige le texte.
+
+→ `GU12` (2/2) — **le routage réparé, la fiche retirée, les vingt-quatre fiches
+restantes réécrites.** Une ligne ajoutée en tête d'`ecranDuGuide` (`App.tsx`) : `sortieOuverte`
+y est enfin testée, au même rang que `depensesOuvertes`/`installationOuverte`/`reglesOuvertes`,
+et presser `?` sur *Livrer au jeu* montre désormais le guide de la sortie, plus celui de la
+racine du dessous — un essai le couvre. `codex.vitrine` est retirée, notée au relevé.
+`codex.nommer` est réécrite contre `Famille.tsx` (le bouton *Ajouter un…*, pas « la dernière
+rangée »). Les vingt-quatre fiches restantes des quatre écrans sont relues contre le code :
+cinq `long` raccourcis sous 400 signes (une décision datée — le défaut « brute » de l'import,
+`US-170`/`D4` — descend dans `docs/design-decisions.md`), quatre `quoi` raccourcis sous
+140 signes, `son.fabrication` corrigée (elle décrit `FabricationAudio.tsx`, pas l'atelier du
+son, mais reste sous `ou: "galerie"` avec ses trois voisines — `GU14` leur donnera un écran),
+et deux fiches de `codex.index`/`livraison-godot` corrigées contre une affirmation devenue
+fausse. Rien d'autre ne bouge d'écran : les quatorze zones posées par `GU12` (1/2) tiennent.
 
 ---
 
