@@ -68,6 +68,11 @@ TESTS = RACINE / "tests"
 #     8 processus   8 min 45   le même échec, et rien de plus
 #    12 processus   9 min 16   le même, **plus deux faux échecs**
 #
+# ⚠️ La durée varie du simple au double sans qu'on change rien : la même passe à
+# quatre a été relevée à 6 min 41, 7 min 36 et 12 min 07 le même jour. Compter
+# une dizaine de minutes, et ne jamais lire un écart de durée comme une
+# régression.
+#
 # Deux choses, et les deux vont contre l'intuition. **Monter ne fait pas gagner
 # de temps** : au-delà de quatre, les essais se disputent la machine — ils
 # travaillent presque tous des images, et Pillow comme numpy occupent déjà

@@ -96,9 +96,13 @@ seize cœurs :
 | 8 | 8 min 45 | le même, et rien de plus |
 | 12 | 9 min 16 | le même, **plus deux faux échecs** |
 
-⚠️ **Ces durées varient d'un tiers d'un passage à l'autre.** La même passe à quatre processus a
-mis 7 min 36 une fois et 12 min 07 une autre, sans rien changer. **Compter une dizaine de
-minutes**, et ne pas lire un écart de deux minutes comme une régression.
+⚠️ **Ces durées varient du simple au double d'un passage à l'autre.** La même passe à quatre
+processus a été mesurée trois fois le même jour : **6 min 41, 7 min 36 et 12 min 07**, sans rien
+changer. **Compter une dizaine de minutes**, et ne jamais lire un écart de durée comme une
+régression.
+
+Le contrôle complet de bout en bout — la grande passe, les lents sans concurrence, les deux
+bancs — a mis **14 min 37** puis **9 min 12**.
 
 Deux enseignements, et les deux vont contre l'intuition.
 
@@ -239,7 +243,7 @@ Ils étaient là avant ce chantier et ne viennent pas de lui. Les nommer évite 
 
 | Où | Quoi |
 |---|---|
-| `tests/test_b0.py` | `Guide.tsx` lignes 331 et 333 — deux tailles hors des listes fermées (`GU7`) |
+| `tests/test_b0.py` | `Guide.tsx` — deux tailles hors des listes fermées, 28 px et 10 px (`GU7`). ⚠️ **Toujours là après la clôture du chantier du guide** le 20 septembre 2026 ; les lignes se déplacent à chaque retouche du fichier, le défaut non |
 | `essais/essai_vocabulaire.py` | quatre mots d'ossature : deux onglets de `PageDuSujet.tsx`, deux libellés de retour dans `FabricationAudio.tsx` et `FicheDuSujet.tsx` |
 | `interface/src/aide.test.ts` | **15 échecs** dans `main` — le travail en cours sur le guide (`GU12`) ; l'arbre de travail de l'auteur en porte davantage |
 
@@ -248,8 +252,8 @@ Ils étaient là avant ce chantier et ne viennent pas de lui. Les nommer évite 
 rend `3221225477` — `0xC0000005`, une violation d'accès : le moteur **plante**, il ne dépasse
 pas un délai. Ce n'est donc pas un effet de la concurrence.
 
-Huit tirages ce jour-là : **deux échecs, tous deux immédiatement après une passe parallèle
-lourde ; six passages de suite** une fois la machine au repos. Il n'a pas été réparé — il
+Neuf tirages ce jour-là : **deux échecs, tous deux immédiatement après une passe parallèle
+lourde ; sept passages**, dont celui du second contrôle complet. Il n'a pas été réparé — il
 n'appartient pas à ce chantier, et on ne répare pas un essai qu'on n'a pas su reproduire à
 volonté. ⚠️ **Conséquence pratique** : un contrôle complet peut finir rouge sur ce seul essai.
 Le rejouer seul avant de conclure à une régression.
