@@ -33,7 +33,8 @@
  * jour redevenir un vrai parcours d'accueil.
  */
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react"
+import { createPortal } from "react-dom"
 import { AIDE, RESUMES, SANS_ENTREE, type Explication } from "../aide"
 
 // ── Ouvrir le guide depuis n'importe où ─────────────────────────────────────
@@ -86,6 +87,102 @@ export function reinitialiserGuide() {
   prevenir()
 }
 
+// ── Sous un dialogue modal, le volet entre dans le dialogue ───────────────
+//
+// **`GU16` (1/2), vérifié au navigateur.** `CadreDialogue` ouvre son
+// `<dialog>` par `showModal()` : le navigateur le pose dans sa *couche
+// supérieure*, qui passe au-dessus de tout élément ordinaire quel que soit son
+// `z-index`, et rend inerte tout ce qui n'est pas dans le dialogue. Sur les
+// écrans posés en dialogue (les sons, la préparation d'une fabrication,
+// l'éditeur de pixels…), presser `?` ouvrait bien l'état du guide — et le volet
+// restait **derrière**, invisible, et n'aurait pas répondu au clic s'il avait
+// été visible. Un `popover` aurait réglé la vue et laissé l'inertie.
+//
+// Le volet se pose donc **dans** le dialogue modal le plus haut, quand il y
+// en a un : il est alors dans la couche supérieure avec lui, et il reste
+// cliquable. Sans dialogue, il reste où `App.tsx` le rend, comme avant.
+
+/** Le dialogue ouvert le plus récent — celui qui est au-dessus des autres : les
+ *  dialogues du produit se posent à la fin du `body` dans l'ordre où ils
+ *  s'ouvrent, et leur `showModal()` suit ce même ordre. */
+function dialogueLePlusHaut(): HTMLElement | null {
+  const ouverts = document.querySelectorAll<HTMLElement>("dialog[open]")
+  return ouverts.length > 0 ? ouverts[ouverts.length - 1] : null
+}
+
+/** Suit les dialogues qui s'ouvrent et se ferment pendant que le volet est là :
+ *  on peut presser `?` puis ouvrir une fenêtre, ou l'inverse. Deux observateurs
+ *  et non un seul sur tout le sous-arbre : les dialogues se posent directement
+ *  dans `body`, et l'attribut `open` est le seul qui compte dedans — écouter
+ *  chaque mutation de l'atelier pour ça serait payer beaucoup pour rien. */
+function useDialogueLePlusHaut(): HTMLElement | null {
+  const [hote, setHote] = useState<HTMLElement | null>(dialogueLePlusHaut)
+  useEffect(() => {
+    const relire = () => setHote(dialogueLePlusHaut())
+    const posees = new MutationObserver(relire)
+    posees.observe(document.body, { childList: true })
+    const ouvertes = new MutationObserver(relire)
+    ouvertes.observe(document.body, { attributes: true, attributeFilter: ["open"], subtree: true })
+    relire()
+    return () => {
+      posees.disconnect()
+      ouvertes.disconnect()
+    }
+  }, [])
+  return hote
+}
+
+// ── Il ne recouvre pas ce qu'il documente ─────────────────────────────────
+//
+// **`GU16` (1/2), vu au navigateur** : le volet est `fixed`, donc il *passait
+// sur* la colonne de droite des écrans qui en ont une — la fiche d'une image
+// ou d'un clip dans la galerie, « Le résultat » de l'atelier d'une animation —,
+// c'est-à-dire sur ce qu'il explique. Il faut donc qu'il **prenne sa place**
+// au lieu de la couvrir : tant qu'il est ouvert, l'écran dessous se rétrécit
+// de sa largeur, du côté droit.
+//
+// L'écran, c'est `#atelier` — ou le dialogue modal qui porte le volet, dont
+// la couche supérieure passe par-dessus `#atelier` et ne le rétrécirait pas.
+// On mesure jusqu'où l'hôte s'étend à droite : plein écran, il cède les 380 px
+// entiers ; un dialogue centré de 880 px n'en cède que ce qui déborde sous le
+// volet. **Sous 1100 px de large, on ne rétrécit rien** : il ne resterait plus
+// assez d'écran pour ce qu'il documente, et le volet recouvre alors, comme
+// avant.
+const LARGEUR_DU_VOLET = 380
+const LARGEUR_MINIMALE_POUR_RETRECIR = 1100
+
+function useLaPlaceDuVolet(hote: HTMLElement | null) {
+  useLayoutEffect(() => {
+    const cible = hote ?? document.getElementById("atelier")
+    if (!cible) return
+    const poser = () => {
+      if (window.innerWidth < LARGEUR_MINIMALE_POUR_RETRECIR) {
+        cible.style.paddingRight = ""
+        return
+      }
+      const debord = cible.getBoundingClientRect().right - (window.innerWidth - LARGEUR_DU_VOLET)
+      cible.style.paddingRight = debord > 0 ? `${Math.round(debord)}px` : ""
+    }
+    poser()
+    window.addEventListener("resize", poser)
+    return () => {
+      window.removeEventListener("resize", poser)
+      cible.style.paddingRight = ""
+    }
+  }, [hote])
+}
+
+// Échap referme le volet, et lui seul. Sans cette marque, la même touche
+// fermerait aussi le dialogue dessous : l'écouteur du volet passe avant
+// l'événement `cancel` du dialogue, qui ne voit plus de guide ouvert.
+let echapDuGuide = Number.NEGATIVE_INFINITY
+
+/** Vrai si une touche Échap vient de fermer le volet — `CadreDialogue` s'en sert
+ *  pour ne pas se fermer avec lui. */
+export function echapVientDeFermerLeGuide(): boolean {
+  return performance.now() - echapDuGuide < 150
+}
+
 // ── L'écran, en toutes lettres ───────────────────────────────────────────────
 
 /** Comment un écran se nomme dans l'en-tête du volet. Fermée : ajouter un
@@ -131,6 +228,15 @@ const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   "livraison-de-tuiles": "Livrer à Godot",
   son: "Les sons",
   "un-son": "Un son",
+  // `GU15` (1/2). Les quatre noms sont recopiés du `<h1>` de leur écran :
+  // *Fabrications* (`Fabrications.tsx`), *Relire avant l'envoi*
+  // (`Relecture.tsx`, le cadre commun aux quatre types), *Sur la grille du
+  // jeu* (`GrilleDuJeu.tsx`) et *Deux côte à côte* (`Comparer.tsx` — son titre
+  // change avec ce qu'on compare ; celui-ci est le cas général).
+  fabrications: "Fabrications",
+  envoi: "Relire avant l’envoi",
+  grille: "Sur la grille du jeu",
+  comparer: "Deux côte à côte",
 }
 
 // ── Le panneau des touches ────────────────────────────────────────────────
@@ -224,10 +330,16 @@ export function VoletGuide({
   ecran: Explication["ou"] | null
 }) {
   const corps = useRef<HTMLDivElement | null>(null)
+  const hote = useDialogueLePlusHaut()
+  useLaPlaceDuVolet(hote)
 
   useEffect(() => {
     const surTouche = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onFermer()
+      if (e.key !== "Escape") return
+      echapDuGuide = performance.now()
+      // Un dialogue dessous ne doit pas se fermer avec le volet (voir plus haut).
+      e.preventDefault()
+      onFermer()
     }
     window.addEventListener("keydown", surTouche)
     return () => window.removeEventListener("keydown", surTouche)
@@ -254,7 +366,7 @@ export function VoletGuide({
   const touches = scope ? TOUCHES[scope] : undefined
   const rien = entrees.length === 0 && !touches && !resume
 
-  return (
+  const volet = (
     <div
       data-volet-du-guide
       aria-label="Le guide"
@@ -355,6 +467,9 @@ export function VoletGuide({
       </div>
     </div>
   )
+
+  // Sous un dialogue modal, le volet entre dans le dialogue (voir plus haut).
+  return hote ? createPortal(volet, hote) : volet
 }
 
 /**

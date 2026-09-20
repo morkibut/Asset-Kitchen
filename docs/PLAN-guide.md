@@ -3,9 +3,18 @@
 > **Demandé par l'auteur** le 20 septembre 2026 : *« le guide actuel n'est pas toujours cohérent
 > ni complet, il est très souvent pompeux, compliqué à lire, et n'aide pas vraiment. »*
 >
-> **Chantier à part.** Il ne bloque rien et rien ne le bloque. Il touche un fichier de texte
-> (`interface/src/aide.ts`) et un composant (`interface/src/composants/Guide.tsx`) ; aucune
-> route serveur, aucune dépense.
+> **Chantier à part.** Il ne bloque rien et rien ne le bloque. Aucune route serveur, aucune
+> dépense.
+>
+> ⚠️ **« Un fichier de texte et un composant » était faux, et c'est la ligne d'ouverture qui
+> l'annonçait** — corrigé à la clôture, le 20 septembre 2026. Le corpus
+> (`interface/src/aide.ts`) et le volet (`interface/src/composants/Guide.tsx`) sont bien le
+> gros du travail, mais **six tranches ont dû toucher le routage** : `App.tsx` (`ecranDuGuide`,
+> réparé en `GU7`, `GU12`, `GU13`, `GU14`, `GU15`, `GU16`), `CadreDialogue.tsx` (le volet passe
+> dans le dialogue modal, `GU16`), `PreparerUneFabrication.tsx` (une prop de plus pour que le
+> guide sache le type préparé, `GU14`), plus les essais d'écran `App.test.tsx`,
+> `Guide.test.tsx` et `aide.test.ts`. La panne la plus lourde du relevé n'était pas un texte
+> pompeux : c'était **cinq écrans dont `?` montrait le guide du voisin**.
 >
 > Quel modèle sur quelle tranche : [PLAN-guide-affectation.md](PLAN-guide-affectation.md).
 >
@@ -644,9 +653,96 @@ deux versions, la fiche d'un travail, les calques animés, le montage d'un clip 
 par l'auteur, aucun servi par le guide.
 
 **Critères**
-- [ ] Plus aucun genre de `lieux.ts` ne retombe sur « les explications du voisin le plus proche ».
-- [ ] Le commentaire d'`App.tsx` qui l'annonçait est retiré, parce qu'il est devenu faux.
-- [ ] L'essai de `GU3` sur les genres sans écran passe au vert.
+- [x] Plus aucun genre de `lieux.ts` ne retombe sur « les explications du voisin le plus proche ».
+- [x] Le commentaire d'`App.tsx` qui l'annonçait est retiré, parce qu'il est devenu faux.
+- [x] L'essai de `GU3` sur les genres sans écran passe au vert.
+
+→ `GU15` (1/2) — **écran ou état, tranché genre par genre.** Quatre valeurs neuves
+d'`Explication["ou"]`, nommées d'après le `<h1>` de leur écran : `fabrications` (*Fabrications*,
+la racine du même nom), `envoi` (*Relire avant l'envoi*, le seul écran d'où l'argent part, testé
+nulle part dans `ecranDuGuide` jusqu'ici), `grille` (*Sur la grille du jeu*) et `comparer` (*Deux
+côte à côte*) — ces deux-là **prennent la place** de la page d'un sujet au lieu de s'y poser, et
+le résumé de `sujet` n'y était vrai d'aucune de ses trois lignes. Les **neuf fiches orphelines**
+qui empruntaient `ou: "clip"` rejoignent `fabrications`, groupées sur six zones dans l'ordre de
+`Fabrications.tsx` ; trois `quoi` sont ramenés sous 140 signes par retrait de la phrase de trop
+(un fait perdu, noté dans le code sur `source3d.camera`). Sept genres gardent un héritage, mais
+**décidé et écrit** — la branche d'`ecranDuGuide` nomme chacun : `bibliotheque` et `famille` →
+`codex` (même composant, `EcranFamille`, `<h1>` *Les sujets*), `travail` → `fabrications` (même
+`FenetreDuTravail` que la liste des fabrications rend en place), `emploi` et `calques-animes` →
+`equipement`, `carte` → `inspiration`. Un routage corrigé : `montage-de-bande` suit `montage` et
+non plus `bande` — il monte `EcranMontage` en mode reprise, pas l'atelier d'une bande. Quatre
+essais de routage dans `App.test.tsx`, `TOUS_LES_OU`/`GENRE_VERS_OU`/`LIEUX_FERMES` à jour. Les
+quinze rouges de `GU3` tombent à cinq : les quatre « résumé manquant » des écrans neufs, que
+`GU15` (2/2) écrira, et `fiche.recettes` (`ou: "bande"`, hors périmètre de cette moitié).
+`tableau-de-bord` et `depenses` restent sans fiche, et c'est une décision : le premier n'est que
+des boutons de navigation et des comptes, le second un écran de lecture dont le résumé de `GU4`
+dit déjà les trois gestes — s'il faut des fiches, ce sont ses trois filtres et la reprise d'un
+clip en attente, et `GU15` (2/2) tranche.
+
+→ `GU15` (2/2) — **les quatre écrans neufs ont leur résumé et leurs fiches.** Les quatre
+résumés de `RESUMES` (`fabrications`, `envoi`, `grille`, `comparer`) suivent le gabarit de `GU4` ;
+quarante-six fiches en tout sous les quatre valeurs, dont trente-six écrites ici. Les trois
+critères sont tenus, vérifiés un par un : le commentaire « le voisin le plus proche » n'est plus
+dans `App.tsx` (`grep` vide), chaque genre de `lieux.ts` a une ligne non vide dans
+`GENRE_VERS_OU`, et les 856 essais d'`aide.test.ts` passent — `tsc -b` propre, la suite complète
+au vert (2742 essais).
+
+*`envoi`, seize fiches.* **Le relevé de la première moitié disait « zéro fiche » et c'était faux :**
+`envoi.ecran` existait, rangée sous `sujet` faute d'écran. Elle est passée sous `envoi`, et son
+texte mis d'accord avec l'écran tel qu'il est (elle parlait d'interrupteurs et d'un gris « au
+retour » que la seule présentation montée, `atelier`, ne dessine plus). Les autres suivent
+l'écran de haut en bas : le cadre, les trois cases, les textes (lire, interrupteur, corriger, texte
+à la main), le fond, le retour, les images, les consignes, le pied. **Ce qui coûte de l'argent est
+dit là où il le faut** : *Consommation estimée* est une estimation mesurée, jamais une facture, et
+« Coût inconnu » n'est pas zéro ; le bouton a trois formes — *Payer et lancer*, *Lancer sur ma
+carte graphique* (un style local se lance, il ne se paie pas) et *Lancer la fabrication* (un
+modèle qui ne facture pas en dollars) —, et **sans montant écrit l'argent part quand même** ; la
+case *ne plus me le montrer pour cette série* fait payer le bouton de la barre directement, sans
+dernière relecture. Tout ce qui se lit ou se corrige ne coûte rien : rien n'est appelé avant le
+bouton.
+
+*`fabrications`, neuf fiches de plus*, sur trois zones neuves : les portes (*Nouvelle fabrication*
+et *Préparer une image* — deux boutons, une fenêtre —, *Animer un sujet*, *Préparer un son*), la
+liste des travaux suivis (*Nouvelle animation*, et ce que la liste écrit), et le journal (la
+recherche, *Actualiser* et *Consommation*, une ligne, ses quatre boutons). Le journal est passé
+avant le rendu 3D rouvert, pour suivre l'écran. **Aucun de ces boutons ne paie** : les portes
+ouvrent la préparation, *Reprendre depuis la galerie* n'ouvre que la galerie.
+
+*`grille`, quatre fiches* — le zoom entier, *À côté de lui*, le volet *Ce qu'il occupe*, et le
+plafond réel avec le barème, que l'inventaire de la première moitié avait oublié. Les clés portent
+`grille-du-jeu.` : `grille.*` est déjà le préfixe des réglages de la table Pixelisation.
+`grille.ancrage` **est restée sous `tables`** — elle décrit ce qu'on *règle* dans la retouche ;
+l'écran de la grille ne fait que le lire, et le dit dans `grille-du-jeu.occupation`.
+
+*`comparer`, huit fiches* sur quatre zones : ce qu'on compare (*Comparer avec* et le choix de la
+pose ou du mouvement — le `<h1>` change avec le mode, et la fiche le dit), comment on le regarde
+(fond, zoom, superposés ; lecture commune des animations), ce que les chiffres disent (les
+écarts, *Ce qui ne va pas ensemble*, *Ce qui les sépare*), et le verdict sur une animation. Le
+seul geste qui écrit sur tout l'écran, *Choisir pour le jeu*, est dit tel quel.
+
+*Trois corrections.* `source3d.camera` reprend le fait tombé en première moitié — la vue 3D
+transmet son angle au prochain rendu, par « Utiliser cet angle pour le rendu » — dans `change`.
+`fiche.recettes` (`ou: "bande"`) **n'est pas dans le périmètre de `RG`** : `RG3` réécrit
+`fiche.recette`, `fiche.reinjecter` et `fiche.personnage`, `RG5` ne cite aucune fiche `fiche.*` ;
+son `long` passe de 685 à 375 signes, et ce qui racontait l'empreinte d'une recette est écrit dans
+`docs/design-decisions.md`. `tableau-de-bord` et `depenses` **restent sans fiche, décision
+confirmée** : des boutons de navigation, et un écran de lecture dont le résumé dit déjà les gestes.
+
+*Incertitudes pour `GU16`.* **(1)** *Nouvelle animation*, dans la liste des travaux, et *Préparer
+une vidéo* appellent exactement la même chose (`onPreparer("clip")`, sans sujet) : le premier ne
+mène donc pas à l'animation d'un sujet donné, comme son nom le laisse croire — la fiche le dit, mais
+c'est peut-être un défaut d'écran. **(2)** Seule l'image fixe monte encore `RelireAvantEnvoi` (avec
+*Refaire cette case seule*, `Depliages.tsx`) : le commentaire de `Relecture.tsx` qui parle de
+quatre types est périmé, et les relectures d'un clip, d'un son et d'un rendu 3D ont chacune leur
+corps — la fiche `envoi.*` ne décrit que l'image. *Refaire cette case seule* est une fenêtre posée
+par-dessus n'importe quelle racine : `ecranDuGuide` n'y connaît pas l'écran `envoi`. **(3)** Aucune
+fiche des quatre écrans n'est accrochée à une bulle (`aide=`). **(4)** Rien n'a été ouvert au
+navigateur : les essais jsdom ne peignent pas, et l'ordre de lecture des zones de `Envoi.tsx` (colonne
+de gauche, puis colonne de droite) reste à confronter à l'écran. **(5)** *Lancer la fabrication* est
+dit « un modèle dont la consommation se compte dans une autre unité » : c'est ce que `estArgent`
+et le serveur MCP autorisent à écrire, mais la liste exacte des modèles concernés n'a pas été
+relevée. **(6)** `fabrications-etat` et `fabrication.boutons-de-la-ligne` disent chacune, en
+d'autres mots, ce que fait *Terminé* — c'est redondant, pas contradictoire.
 
 ---
 
@@ -655,12 +751,113 @@ par l'auteur, aucun servi par le guide.
 ### `GU16` — La relecture croisée et l'essai au navigateur
 
 **Critères**
-- [ ] Les 229 fiches (moins les retirées) sont relues d'affilée : deux fiches voisines ne se
+- [x] Les 229 fiches (moins les retirées) sont relues d'affilée : deux fiches voisines ne se
       contredisent pas, et le même réglage porte le même nom partout.
-- [ ] Les écrans sont ouverts un par un dans un atelier jetable, `?` pressé sur chacun, et ce
+- [x] Les écrans sont ouverts un par un dans un atelier jetable, `?` pressé sur chacun, et ce
       que le volet montre correspond à ce que l'écran porte.
-- [ ] Les renvois de `docs/` vers le guide sont vérifiés par `py essais/essai_docs.py`.
-- [ ] `docs/status/etat.md` et `docs/PLAN.md` portent le sort du chantier.
+- [x] Les renvois de `docs/` vers le guide sont vérifiés par `py essais/essai_docs.py`.
+- [x] `docs/status/etat.md` et `docs/PLAN.md` portent le sort du chantier.
+
+→ `GU16` (1/2) — **l'essai au navigateur**, commit `f50550e`. Un atelier jetable sur le port
+8421, monté avec un jeu riche ; les vingt-cinq écrans du guide ouverts un par un par le chemin
+normal du produit, `?` pressé sur chacun. **Quatre défauts de rendu corrigés** — le volet
+invisible et inerte sous tout dialogue modal (`showModal()` met le dialogue dans la couche
+supérieure, un `fixed z-10` passe dessous ; le volet s'y pose maintenant par `createPortal`),
+Échap qui fermait le volet *et* le dialogue dessous, le volet qui couvrait la colonne qu'il
+documente, et un titre faux (*Un clip* sur *Fabrications*). Le détail, écran par écran, est
+dans `docs/releves/guide-2026-09-20.md` § *L'essai au navigateur*.
+
+→ `GU16` (2/2) — **la relecture croisée, et la clôture.** Les 311 fiches relues d'affilée, dans
+l'ordre du fichier qui est l'ordre du volet. **Vingt-trois désaccords trouvés et réglés**, chacun
+noté au relevé avec sa correction (§ *La relecture croisée*) : une table qui s'annonçait « la
+cinquième **et dernière** place » à côté de trois autres numérotées six, sept et huit ; un
+personnage qui remplissait 90 % de sa case dans une fiche et 100 % dans deux autres ; quatre
+paires de fiches voisines dont les `change` se recopiaient mot pour mot ; trois fiches qui
+renvoyaient à des réglages retirés en `GU5` ; `atelier.apercu` qui décrivait encore le dépliant
+remplacé par un écran en `E14`, et disait donc la même chose qu'`envoi.textes` ; et la phrase que
+la **décision d'architecture n°6 donne elle-même en contre-exemple** — « l'atelier relit le cadre
+et réserve le budget partagé » — toujours au corpus, sur `agent.cadre-durable`.
+
+**Les noms mis d'accord avec `docs/vocabulaire.html`** : les cinq tables qui portaient encore
+leur clé de recette (*Grille*, *Quantification*, *Nettoyage des bords*, *Les contours*, *La
+main*) portent leur nom d'écran (**Pixelisation, Couleurs, Nettoyage, Contour, Main**) — la table
+*Couleurs* s'appelle *Couleurs, la table*, parce que le réglage qu'elle contient s'appelle
+*couleurs* lui aussi, et que l'essai « deux entrées du même écran ne portent pas le même nom »
+(`GU2`) l'a refusé ; les deux
+fabriques gardent leur verbe (*Superposer*, *Découper*, dix-huit fiches) ; douze fiches
+disaient **« une chose »** pour un sujet et sept **« un asset »**, deux mots de la liste noire.
+
+**Cinq fiches écrites, aucune retirée** : trois pour l'étape *Ses sons* des règles du jeu, qui
+existe dans `ETAPES` et que `RESUMES.jeu` nommait depuis `GU4` sans qu'aucune fiche la décrive ;
+`detourage.comparaison`, le réglage *par canal / par teinte* de `B18`, voisin de la tolérance et
+jamais documenté ; `equipement.nouvel-emploi`, le seul réglage réel de la page d'une pièce. Le
+corpus passe de **311 à 316 fiches**.
+
+**Deux questions laissées ouvertes par les tranches précédentes, tranchées** : `bande.cadre`
+reste sous `ou: "bande"`, là où le cadre *se règle* (le montage ne fait que le lire, et sa fiche
+le dit) ; `atelier.navigation` reste sous `ou: "galerie"` — il n'y aura pas de valeur « le
+châssis », parce qu'un écran de guide décrit l'écran qu'on a sous les yeux et qu'une telle valeur
+ne serait jamais calculée par `ecranDuGuide`. Et la découpe **reste sous `ou: "tables"`** :
+`Decoupe.tsx` a quatre portes dont une seule est un lieu de la pile, donc un `ou: "decoupe"` n'en
+servirait qu'une et laisserait les trois autres sur le guide de leur racine ; `decoupe.mode` les
+nomme maintenant toutes les quatre en une phrase.
+
+**Un défaut d'ordre, réparé sans toucher un mot.** Deux fiches de `ou: "bande"` vivaient
+physiquement ailleurs dans `aide.ts` — `bande.source` au milieu des tables, `codex.bande.image`
+au milieu de la fiche d'un sujet. Comme le volet suit l'ordre du fichier, l'atelier d'une bande
+s'ouvrait sur *La frame choisie* et montrait *En haut de l'écran* en quatrième. Les treize
+fiches de cet écran suivent maintenant l'ordre d'`AtelierDeBande.tsx`.
+
+**Les mesures de fin** : `npx tsc -b` propre, `aide.test.ts` **868 essais verts sur 868**, la
+suite d'écran entière verte, et `py essais/essai_docs.py` vert — **2 218 renvois, tous justes**,
+corpus de démarrage à 167,8 Ko.
+
+---
+
+## La clôture du chantier — 20 septembre 2026
+
+**Seize tranches, ouvertes et closes le même jour.** Le relevé de départ comptait 229 fiches à
+plat, dont soixante-treize sur un seul écran, 156 textes longs de 521 signes de médiane, aucun
+résumé, seize valeurs de `ou` pour une trentaine de genres de lieu, et zéro fiche pour les tuiles
+comme pour le son. Le corpus porte aujourd'hui **316 fiches sur 25 écrans du guide**, toutes
+dans un groupe qui nomme leur zone d'écran, et **chacun des 25 écrans a son résumé**.
+
+**Ce que le chantier a appris.**
+
+1. **La panne n'était pas celle qu'on croyait.** L'auteur a demandé un guide moins pompeux ; la
+   mesure a trouvé que **cinq écrans montraient le guide d'un autre écran**. Vingt-cinq fiches
+   des règles du jeu étaient écrites depuis des semaines et **jamais atteignables** — la valeur
+   `ou: "jeu"` ne pouvait être produite par aucune branche du code. Réécrire le texte d'abord
+   n'aurait rien changé à l'écran. *Lire le composant, pas la liste des fiches*, a été la règle
+   de chaque tranche, et c'est elle qui a rendu les déplacements : **plus de soixante fiches**
+   ont changé d'écran parce qu'elles n'avaient jamais décrit celui où elles étaient rangées —
+   dix-neuf d'un coup en `GU8`, quatorze en `GU11`.
+2. **Un essai par fiche, jamais un essai qui additionne.** Les garde-fous de `GU3` étaient
+   **404 rouges sur 658** le jour de leur écriture, et ce compte a servi de jauge d'avancement.
+   Un essai unique aurait dit « une fiche est trop longue » sans dire laquelle ; `test.each` dit
+   la clé, et un écran corrigé voit ses essais verdir sans toucher aux autres. Ces mêmes
+   garde-fous ont trouvé le vingt-troisième désaccord de la relecture — un désaccord qu'elle
+   venait de créer, en rendant à une table un nom que le réglage voisin portait déjà.
+3. **L'ordre du fichier est l'ordre de l'écran, et rien ne le rappelle.** Deux fiches déplacées
+   par leur `ou` mais pas par leur place ont suffi à désordonner un écran entier. C'est le genre
+   de défaut qu'aucun essai ne voit et qu'une relecture croisée trouve en une lecture.
+4. **Douze tranches écrivent douze fois la même chose autrement.** La relecture finale a rendu
+   vingt-trois désaccords — des nombres, des noms, des phrases recopiées d'une fiche à sa
+   voisine. Aucun n'était visible depuis l'intérieur d'une tranche.
+5. **Les essais jsdom ne peignent rien.** Le volet était invisible sur tout dialogue modal, et
+   aucun essai d'écran ne pouvait le dire : il fallait un navigateur. À l'inverse, le navigateur
+   n'a pas pu éprouver les vraies touches. Les deux se complètent, aucun ne remplace l'autre.
+6. **« Aucun mot n'est perdu » a tenu.** Ce qui sortait d'un « à savoir » trop long est descendu
+   dans `docs/design-decisions.md` — une trentaine de lignes datées —, et les onze fiches
+   retirées sont nommées une par une dans le relevé, avec la raison de leur retrait.
+
+**Ce qui reste.** Sept limites connues, écrites au relevé (§ *Ce qui reste*). Aucune n'est un
+défaut de texte : un travail sonore rouvert depuis le suivi porte le guide du journal ; la
+fenêtre *Préparer une fabrication* n'a pas d'écran de guide à elle, alors que c'est là qu'on
+prépare l'argent ; `workflow.version` ne peut servir qu'un des deux écrans qui la montrent ;
+l'installation de la machine n'a pas de fiche propre ; aucune fiche des tuiles, du son ni des
+quatre écrans de `GU15` n'est accrochée à une bulle ; deux noms de champ restent en désaccord
+avec `RP4` dans le code ; et les vraies touches `?` et Échap n'ont pas été éprouvées à la main.
 
 ---
 

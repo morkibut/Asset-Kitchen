@@ -5227,6 +5227,123 @@ describe("l'infobulle et le guide", () => {
     expect(volet.textContent).not.toContain("La galerie — chaque résultat conservé")
   })
 
+  // ── `GU15` (1/2) — les quatre écrans neufs, et le routage qu'ils réparent ──
+  //
+  // Les quatre n'ont pas encore de résumé : c'est `GU15` (2/2) qui les écrit.
+  // Ce qu'on mesure ici est donc le nom de l'écran dans l'en-tête du volet —
+  // `NOM_DE_LECRAN`, `Guide.tsx` — et **l'absence** du résumé de l'écran dont
+  // chacun héritait à tort. La seconde moitié ajoutera la phrase attendue.
+
+  test("une fiche de clip laissée ouverte dans la galerie ne suit pas dans les autres écrans", async () => {
+    // `GU16`, vu au navigateur : `ficheClip` est l'état de la colonne de droite
+    // de la galerie, et il survit quand on la quitte. Avant la garde
+    // `surface === "galerie"`, *Les sujets* et *Fabrications* — tout ce qui
+    // vient après lui dans `ecranDuGuide` — montraient « Un clip ».
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble, { ...ETAT, generations: [clipRendu("clip-a", false)] })
+    await allerAuxVideos()
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir le résultat" }))
+    await waitFor(() => expect(document.querySelector("[data-fiche-clip]")).toBeTruthy())
+
+    fireEvent.keyDown(window, { key: "?" })
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    let volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.textContent).toContain("Un clip") // sur la galerie, c'est bien lui
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Guide", level: 1 })).toBeNull(),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Fabrications" }))
+    await screen.findByRole("main", { name: "Fabrications" })
+    fireEvent.keyDown(window, { key: "?" })
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.querySelector("header p")?.textContent).toBe("Fabrications")
+    expect(volet.textContent).not.toContain("Le clip — l'image de départ choisie")
+  })
+
+  test("les fabrications : le guide sert l'écran du même nom, plus celui d'un clip", async () => {
+    // Les neuf fiches de cet écran logeaient sous `ou: "clip"`, faute d'une
+    // valeur à lui : ouvrir *Fabrications* montrait le guide d'un clip.
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Fabrications" }))
+    await screen.findByRole("main", { name: "Fabrications" })
+
+    fireEvent.keyDown(window, { key: "?" })
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    const volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.textContent).toContain("Fabrications")
+    // Les neuf fiches sont bien ici…
+    expect(volet.textContent).toContain("État des fabrications")
+    expect(volet.textContent).toContain("Le suivi des calculs locaux")
+    // …et le résumé du clip ne s'y invite plus.
+    expect(volet.textContent).not.toContain("Le clip — l'image de départ choisie")
+  })
+
+  test("relire avant l'envoi : le guide suit l'écran qui paie, pas la racine du dessous", async () => {
+    // Le seul écran d'où l'argent part, et `ecranDuGuide` ne le testait nulle
+    // part : on y voyait le guide de la galerie.
+    const double = serveurDouble({ personnages: [] })
+    await monter(double.fetchDouble)
+
+    const champ = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(champ, { target: { value: "un petit voyageur, de face" } })
+    await waitFor(() => expect(champ.value).toBe("un petit voyageur, de face"))
+    fireEvent.click(screen.getByRole("button", { name: BOUTON_DE_RELECTURE }))
+    await screen.findByRole("button", { name: /^Payer et lancer/ })
+
+    fireEvent.keyDown(window, { key: "?" })
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    const volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.textContent).toContain("Relire avant l’envoi")
+    expect(volet.textContent).not.toContain("La galerie — chaque résultat conservé")
+    // Rien n'est parti : ouvrir le guide ne paie pas.
+    expect(double.appels.filter((a) => a.url === "/api/generations")).toHaveLength(0)
+  })
+
+  test("la grille du jeu et comparer ont leur écran, et plus celui de la page d'un sujet", async () => {
+    // Les deux **prennent la place** de la page d'un sujet : ni établi, ni
+    // onglets, ni fabrication. Le résumé de `sujet` n'y était vrai d'aucune de
+    // ses trois lignes.
+    // Les deux portes sont grisées tant que le sujet n'a pas une image : le
+    // double en pose une sur sa case *repos*.
+    const nain = personnage("Le nain")
+    const avecImage = {
+      ...nain,
+      cases: nain.cases.map((c) =>
+        c.pose === "repos" ? { ...c, images: [asset("bbbb2222-0", "le nain, au repos")] } : c,
+      ),
+    }
+    const { fetchDouble } = serveurDouble({ personnages: [avecImage] })
+    await monter(fetchDouble)
+
+    const etabli = await ouvrirLEtabli("Le nain")
+    fireEvent.click(await etabli.findByRole("button", { name: "‹ Le nain" }))
+    // Les deux portes vivent dans le repli « Autres outils » de la page, comme
+    // le calibrage : on les atteint par leur libellé, sans déplier.
+    fireEvent.click(await screen.findByText("Voir la grille du jeu"))
+    await screen.findByRole("heading", { name: "Sur la grille du jeu", level: 1 })
+
+    fireEvent.keyDown(window, { key: "?" })
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    let volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.textContent).toContain("Sur la grille du jeu")
+    expect(volet.textContent).not.toContain("La page d'un sujet du jeu")
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    fireEvent.click(screen.getByRole("button", { name: "Comparer ›" }))
+    await screen.findByRole("heading", { name: /^(Deux côte à côte|Le même, deux fois)$/, level: 1 })
+
+    fireEvent.keyDown(window, { key: "?" })
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.textContent).toContain("Deux côte à côte")
+    expect(volet.textContent).not.toContain("La page d'un sujet du jeu")
+  })
+
   test("? ouvre le volet depuis n'importe où, et Échap le referme", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
@@ -5335,6 +5452,14 @@ describe("l'infobulle et le guide", () => {
       // dialogues, pas deux lieux de la pile — `ecranDuGuide` les produit avant tout.
       "son",
       "un-son",
+      // Les quatre écrans de `GU15` (1/2). `fabrications` porte déjà ses neuf
+      // fiches, venues de `ou: "clip"` où aucune n'était à sa place ; les trois
+      // autres sont vides jusqu'à `GU15` (2/2), et la liste les porte quand même
+      // pour la raison dite plus haut sur les tuiles.
+      "fabrications",
+      "envoi",
+      "grille",
+      "comparer",
     ])
     // Le corpus a grandi avec les écrans unifiés. Son volume n'est pas un
     // contrat : l'adresse de chaque entrée et l'unicité testée ci-dessus le

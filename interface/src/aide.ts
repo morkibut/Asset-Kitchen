@@ -130,7 +130,30 @@ export type Explication = {
    *  corps de la fenêtre de préparation quand son type est *Son*. Deux valeurs
    *  parce qu'on ne fait pas la même chose dans les deux : on y *demande* un
    *  son, on y *règle* un son déjà reçu. Les quatre fiches `son.*` rangées sous
-   *  `galerie` par `GU12` — faute d'un écran — sont revenues ici. */
+   *  `galerie` par `GU12` — faute d'un écran — sont revenues ici.
+   *
+   *  ⚠️ **Quatre valeurs de plus depuis `GU15`** (1/2), et chacune répare un
+   *  écran qui empruntait le guide d'un autre :
+   *
+   *  - `fabrications` est la racine du même nom (`Fabrications.tsx`) : le
+   *    journal des appels, la file des calculs locaux, les méthodes locales,
+   *    et la liste des demandes qu'on rouvre. Ses neuf fiches empruntaient
+   *    `ou: "clip"` — l'écran d'un clip —, où aucune n'était à sa place.
+   *  - `envoi` est *Relire avant l'envoi* (`Relecture.tsx`), le dernier écran
+   *    avant que l'argent parte. Il n'était testé nulle part dans
+   *    `ecranDuGuide` : on y voyait le guide de la racine du dessous, sur le
+   *    seul écran du produit où l'on paie.
+   *  - `grille` est *Sur la grille du jeu* (`GrilleDuJeu.tsx`) et `comparer`
+   *    *Deux côte à côte* (`Comparer.tsx`). Les deux **prennent la place** de
+   *    la page d'un sujet, ils ne s'y posent pas : le résumé de `sujet` — on y
+   *    écrit qui il est, on y fabrique ce qui manque — n'y est vrai d'aucune
+   *    de ses trois lignes.
+   *
+   *  Les quatre ont leur résumé et leurs fiches depuis `GU15` (2/2) : seize
+   *  pour `envoi` (dont `envoi.ecran`, venue de `sujet`), dix-huit pour
+   *  `fabrications` (neuf déjà là, neuf neuves), quatre pour `grille` — clés
+   *  `grille-du-jeu.*`, parce que `grille.*` est déjà le préfixe des réglages
+   *  de la retouche — et huit pour `comparer`. */
   ou:
     | "tableau-de-bord"
     | "codex"
@@ -153,6 +176,10 @@ export type Explication = {
     | "livraison-de-tuiles"
     | "son"
     | "un-son"
+    | "fabrications"
+    | "envoi"
+    | "grille"
+    | "comparer"
 }
 
 /**
@@ -301,13 +328,17 @@ export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {
     ],
   },
 
+  // **Le 2ᵉ geste était faux, corrigé en `GU16` (2/2)** : il parlait du fond et
+  // des couleurs demandées, qui ne sont pas sur cet écran — ils se règlent à
+  // l'étape *Son allure* des règles du jeu, et ont leurs fiches sous `ou:
+  // "jeu"` depuis `GU9`. L'essai au navigateur de `GU16` (1/2) l'a vu.
   ambiances: {
     aQuoi:
-      "Ambiances et couleurs — les palettes de couleurs de ce jeu, le fond qu'on pose, et les lots de style qu'on assemble.",
+      "Ambiances et couleurs — les palettes de ce jeu, tirées d'images, et les lots de style qu'on désigne ensuite sur un sujet.",
     gestes: [
-      "On regarde la palette du jeu et celles qu'on a composées depuis des images.",
-      "On choisit le fond et le nombre de couleurs demandées pour juger le résultat.",
-      "On range des sources et des textes dans une ambiance, prête à resservir.",
+      "On écrit un nom dans la colonne de gauche, et la palette ou l'ambiance existe.",
+      "On compose une palette à partir d'images, on dose la fusion, on la retouche.",
+      "On donne à une ambiance sa palette, ses références et ses trois cases de texte.",
     ],
   },
 
@@ -391,6 +422,46 @@ export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {
       "On écoute les tirages au clavier, et on garde ceux qui iront dans le jeu.",
     ],
   },
+
+  fabrications: {
+    aQuoi:
+      "Fabrications — le journal de tout ce qui a été demandé, ce qui tourne en ce moment, et les portes pour préparer une demande neuve.",
+    gestes: [
+      "On repère d'un coup d'œil ce qui tourne, ce qui est terminé et ce qui a échoué.",
+      "On cherche une demande par son texte ou son modèle, et on filtre par état.",
+      "On rouvre un résultat, ou on prépare une fabrication neuve à relire avant l'envoi.",
+    ],
+  },
+
+  envoi: {
+    aQuoi:
+      "Relire avant l'envoi — le dernier écran avant la dépense : ce qui part au modèle, mot pour mot, et ce que l'appel devrait coûter.",
+    gestes: [
+      "On lit le texte exact, les images jointes et le prix estimé avant de décider.",
+      "On appuie sur Modifier l'envoi pour éteindre ou corriger, pour cet appel seulement.",
+      "On lance l'appel — payant chez un fournisseur — ou on ferme sans rien dépenser.",
+    ],
+  },
+
+  grille: {
+    aQuoi:
+      "Sur la grille du jeu — le sujet posé à sa vraie taille sur les cases du moteur, à côté des autres types, sans rien fabriquer.",
+    gestes: [
+      "On choisit un zoom entier et on voit le sujet à sa vraie taille sur les cases.",
+      "On allume d'autres types de sujet à côté de lui pour juger l'échelle.",
+      "On lit ce qu'il occupe de sa case, puis on revient à sa page ou on compare.",
+    ],
+  },
+
+  comparer: {
+    aQuoi:
+      "Deux côte à côte — deux images, deux animations ou deux sujets sur la même scène, avec l'écart chiffré et la porte pour le corriger.",
+    gestes: [
+      "On choisit ce qu'on compare, la pose ou le mouvement, puis l'image de chaque côté.",
+      "On lit les écarts chiffrés, et ce qui dépasse en rouge ou ce qui sépare les deux.",
+      "On retouche ce qui dépasse, ou on choisit pour le jeu l'animation qui reste.",
+    ],
+  },
 }
 
 export const AIDE: Record<string, Explication> = {
@@ -423,33 +494,190 @@ export const AIDE: Record<string, Explication> = {
     ou: "sortie",
   },
 
-  "fabrication.video-libre": {
-    nom: "Une vidéo avant de choisir son asset",
-    quoi: "Une image de départ est toujours envoyée au modèle vidéo. Vous pouvez l’importer, la choisir dans la bibliothèque ou la fabriquer avec un modèle d’image.",
-    change: "Le clip rejoint la galerie. Le montage permet ensuite de choisir un personnage, son mouvement et sa direction, puis de garder les frames en animation. Reprendre conserve le travail envoyé et ses références.",
-    origine: "toi · image, mouvement et méthode de fabrication",
-    ou: "clip",
+  // ── Fabrications — la racine du même nom (`Fabrications.tsx`) ─────────────
+  //
+  // **Ces neuf fiches empruntaient `ou: "clip"`, et aucune ne parle d'un
+  // clip** (`GU15`, 1/2). Elles décrivent l'écran *Fabrications* : le journal
+  // des appels, la file des calculs locaux, les méthodes locales, la vidéo
+  // libre, et les demandes qu'on rouvre depuis *Créer et suivre les
+  // fabrications*. L'écran n'avait pas de valeur à lui ; il en a une, et les
+  // neuf y sont rangées sur six zones, dans l'ordre où `Fabrications.tsx` les
+  // montre. Textes inchangés, sauf trois `quoi` ramenés sous les 140 signes de
+  // `GU3` — la phrase de trop est retirée, aucun mot n'est réécrit.
+  //
+  // ⚠️ **Six des neuf décrivent la fenêtre d'une demande**, celle que
+  // `SuiviDesTravaux` ouvre ici même (`FenetreDuTravail`) et que le lieu
+  // `travail` rouvre par sa seconde porte, l'onglet *Agent MCP* des réglages.
+  // C'est ce qui fait que `travail` hérite de cet écran-ci plutôt que du sien
+  // (`ecranDuGuide`, `App.tsx`).
+  //
+  // **Neuf fiches de plus depuis `GU15` (2/2)**, pour ce que l'écran montre
+  // sans que rien ne l'explique : les portes qui ouvrent la préparation, la
+  // liste des travaux suivis, et le journal — sa recherche, ses boutons
+  // *Actualiser* et *Consommation*, ses lignes et leurs quatre boutons.
+  // L'ordre du fichier est
+  // celui de l'écran, de haut en bas ; le journal, qui est en bas, passe donc
+  // avant le rendu 3D rouvert, qui n'est dans aucune page mais dans la fenêtre
+  // d'un travail.
+  //
+  // **Rien de ce qui se lit ici ne paie.** Les portes ouvrent la fenêtre de
+  // préparation, qui n'envoie rien ; l'argent ne part que du bouton de
+  // *Relire avant l'envoi* (`ou: "envoi"`). *Consommation* mène aux dépenses,
+  // un écran de lecture. Chaque fiche qui ouvre quelque chose le dit.
+
+  "fabrication.commencer": {
+    nom: "Nouvelle fabrication, Préparer une image",
+    groupe: "Commencer une fabrication — une image, un sujet, un son",
+    quoi: "Les deux boutons ouvrent la même fenêtre, sur une image libre : le modèle, la demande et les références se choisissent dedans.",
+    change: "Rien ne part à l'ouverture. La fenêtre change de type — image, clip, son — sans qu'on la referme ; le prix se lit ensuite sur Relire avant l'envoi, et c'est ce bouton-là qui paie.",
+    origine: "toi · une demande neuve, sans sujet visé",
+    ou: "fabrications",
   },
-  "workflow.version": {
-    nom: "Une version de workflow local",
-    quoi: "Un profil nomme un graphe ComfyUI, ses entrées, ses références et les réglages utilisables au quotidien.",
-    change: "Modifier crée une nouvelle version. Une fabrication conserve le graphe et les images de sa propre version ; reprendre suit le numéro déjà envoyé sans recommander. Vérifier lit les prérequis, sans installer ni lancer de modèle.",
-    origine: "toi · profil importé ; ComfyUI · prérequis observés",
-    ou: "clip",
+  "fabrication.animer-un-sujet": {
+    nom: "Animer un sujet",
+    groupe: "Commencer une fabrication — une image, un sujet, un son",
+    quoi: "On choisit un sujet dans la liste : sa page s'ouvre sur l'onglet Animations, où se règlent le mouvement, la direction et l'image de départ.",
+    change: "Rien à la génération ici : choisir un sujet ne prépare ni n'envoie rien. La liste est celle des sujets du jeu ouvert.",
+    origine: "les sujets du jeu",
+    ou: "fabrications",
+  },
+  "fabrication.un-son": {
+    nom: "Préparer un son",
+    groupe: "Commencer une fabrication — une image, un sujet, un son",
+    quoi: "Ouvre la fenêtre de préparation sur le type Son : on décrit un effet, une ambiance ou une musique.",
+    change: "Rien à payer : les moteurs de son tournent sur cette machine, et le résultat rejoint l'atelier des sons. L'écran Un son détaille chaque geste.",
+    origine: "toi · une demande de son neuve",
+    ou: "fabrications",
+  },
+  "fabrication.nouvelle-animation": {
+    nom: "Nouvelle animation",
+    groupe: "Créer et suivre les fabrications",
+    quoi: "Le bouton du haut de la liste ouvre la fenêtre de préparation sur le type Clip, comme Préparer une vidéo plus bas.",
+    change: "Rien ne part à l'ouverture : la demande se prépare, puis se relit avant l'envoi. Le bouton ne mène pas à un sujet précis — pour animer un sujet donné, on passe par sa page.",
+    origine: "toi · une demande de clip neuve",
+    ou: "fabrications",
+  },
+  "fabrication.liste-des-travaux": {
+    nom: "La liste des travaux suivis",
+    groupe: "Créer et suivre les fabrications",
+    quoi: "Chaque ligne est un travail conservé : son nom, qui l'a demandé — l'agent ou toi —, la date, et où il en est.",
+    change: "Cliquer une ligne la rouvre pour la relire et la suivre ; rien ne part tant qu'on n'a pas pressé le bouton de sa relecture. La liste se relit d'elle-même toutes les cinq secondes.",
+    origine: "l'atelier · les travaux conservés pour ce jeu",
+    long: "Les états sont ceux du travail, pas ceux du journal plus bas : Prête à lancer, En cours, À reprendre, À vérifier, État à vérifier chez le fournisseur, Terminée, Annulée. « Agent » dit qu'un agent MCP a demandé le travail ; « Création manuelle », que c'est toi.",
+    ou: "fabrications",
   },
   "fabrication.relecture": {
     nom: "La demande relue avant l’envoi",
+    groupe: "Créer et suivre les fabrications",
     quoi: "Le texte composé, les références, le fournisseur, le modèle et ses réglages se relisent ensemble avant de lancer une fabrication.",
     change: "Modifier prépare une nouvelle version de la demande. Reprendre garde l’envoi précédent et son identifiant : un travail déjà accepté ne se paie pas une seconde fois.",
     origine: "toi · demande conservée avec ses résultats",
-    ou: "clip",
+    ou: "fabrications",
   },
   "fabrication.file-locale": {
     nom: "Le suivi des calculs locaux",
+    groupe: "Les calculs locaux",
     quoi: "La file ordonne les calculs de l’atelier et distingue un moteur disponible, occupé ou non vérifiable.",
     change: "Annuler retire une attente avant son envoi. Reprendre retrouve le travail conservé. Les durées sont mesurées ; un chargement inconnu n’est pas annoncé comme un modèle déjà prêt.",
     origine: "atelier · observation des moteurs et historique conservé sur cette machine",
-    ou: "clip",
+    ou: "fabrications",
+  },
+  "fabrication.video-libre": {
+    nom: "Image de départ → clip → montage et classement",
+    groupe: "Une vidéo libre",
+    // Raccourcie de 158 à 128 signes (`GU3`) : « Vous pouvez l'importer, la
+    // choisir… » disait en deux phrases ce que la liste dit en une.
+    quoi: "Une image de départ part toujours au modèle vidéo : importée, choisie dans la bibliothèque, ou fabriquée avec un modèle d’image.",
+    change: "Le clip rejoint la galerie. Le montage permet ensuite de choisir un personnage, son mouvement et sa direction, puis de garder les frames en animation. Reprendre conserve le travail envoyé et ses références.",
+    origine: "toi · image, mouvement et méthode de fabrication",
+    ou: "fabrications",
+  },
+  "workflow.version": {
+    nom: "Une version de workflow local",
+    groupe: "Mes méthodes locales — importer, vérifier, choisir un workflow",
+    quoi: "Un profil nomme un graphe ComfyUI, ses entrées, ses références et les réglages utilisables au quotidien.",
+    change: "Modifier crée une nouvelle version. Une fabrication conserve le graphe et les images de sa propre version ; reprendre suit le numéro déjà envoyé sans recommander. Vérifier lit les prérequis, sans installer ni lancer de modèle.",
+    origine: "toi · profil importé ; ComfyUI · prérequis observés",
+    ou: "fabrications",
+  },
+  "fabrication.recherche": {
+    nom: "Rechercher une fabrication",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "Un mot cherché dans le texte de la demande et dans le nom du modèle, sans tenir compte des majuscules.",
+    change: "Se combine avec le filtre État : les deux s'appliquent ensemble. Ne change que ce qui s'affiche, rien n'est effacé du journal.",
+    origine: "toi · vide au départ",
+    ou: "fabrications",
+  },
+  "fabrications-etat": {
+    nom: "État des fabrications",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "Le journal réunit les demandes conservées et les appels encore en cours.",
+    change: "Le filtre À reprendre montre les échecs et les interruptions. Une demande terminée ouvre ses résultats ; un clip ouvre son montage sans commander une nouvelle vidéo.",
+    origine: "atelier · journal des appels",
+    ou: "fabrications",
+  },
+  "fabrication.actualiser": {
+    nom: "Actualiser, Consommation",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "Actualiser relit le journal sur le disque ; Consommation quitte cet écran pour celui des dépenses.",
+    change: "Rien à payer ni à envoyer. Le journal se relit aussi tout seul quand une fabrication change d'état. Les dépenses sont un écran de lecture : on y voit ce que chaque appel a coûté.",
+    origine: "l'atelier · le journal des appels de ce jeu",
+    ou: "fabrications",
+  },
+  "fabrication.ligne": {
+    nom: "Une ligne du journal",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "La date, Vidéo ou Images, l'état, la demande, le modèle — et, en rouge, la raison de chaque image ratée.",
+    change: "États : En attente, En cours, Terminé, Échec, Interrompu ; les deux derniers sont en rouge. Une demande sans texte s'écrit « Demande sans texte ». Rien à la génération : on lit.",
+    origine: "l'atelier · journal des appels, complété par les fabrications en cours",
+    ou: "fabrications",
+  },
+  "fabrication.boutons-de-la-ligne": {
+    nom: "Les boutons d'une ligne",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "Selon la ligne : ouvrir le montage du clip, voir les résultats dans la galerie, ouvrir le sujet, ou reprendre depuis la galerie.",
+    change: "Aucun ne lance ni ne paie. Reprendre depuis la galerie ne fait qu'ouvrir la galerie, sur une demande échouée ou interrompue : un nouvel appel se prépare et se relit à part. Ouvrir le sujet paraît quand la demande en vise un.",
+    origine: "l'état de la ligne · le sujet visé par la demande",
+    ou: "fabrications",
+  },
+  "source3d.import": {
+    nom: "Importer un rendu 3D",
+    groupe: "Un rendu 3D rouvert — importer, inspecter, corriger, cadrer",
+    quoi: "Le rendu rejoint le personnage sous forme de frames transparentes, avec ses réglages, son modèle et les fichiers disponibles.",
+    change: "On choisit le mouvement, la direction et la cadence. L’import ne relance aucun calcul ; la copie reste retouchable après arrêt d’asset3d. Le modèle animé fourni par une ancienne version d’asset3d reflète ses corrections au moment de l’import, pas nécessairement celles du rendu historique.",
+    origine: "rendu choisi dans le moteur externe · copie conservée dans ce jeu",
+    ou: "fabrications",
+  },
+  "source3d.inspection": {
+    nom: "Inspecter le modèle animé",
+    groupe: "Un rendu 3D rouvert — importer, inspecter, corriger, cadrer",
+    quoi: "La vue 3D permet de tourner la caméra, de zoomer, de voir le squelette et de lire les animations intégrées au fichier.",
+    change: "Les réglages de cette inspection changent seulement la vue. Le cadre englobe les poses de l’animation pour garder la silhouette entière pendant la lecture ; les frames déjà importées ne sont pas recalculées.",
+    origine: "copie GLB locale · caméra de consultation",
+    ou: "fabrications",
+  },
+  "source3d.corrections": {
+    nom: "Corrections du squelette",
+    groupe: "Un rendu 3D rouvert — importer, inspecter, corriger, cadrer",
+    // Raccourcie de 170 à 123 signes (`GU3`) : « avec le curseur ou la valeur
+    // en degrés » devient « en degrés » — les deux entrées restent dites par
+    // l'écran, qui les montre côte à côte.
+    quoi: "Un os proposé par le moteur, puis sa vrille, sa flexion et son écart en degrés. Gauche et droite sont celles du personnage.",
+    change: "Enregistrer actualise le GLB de contrôle avec Blender, sans génération IA. Les corrections s’appliquent aux prochains rendus ; les travaux conservés gardent leur copie. Le rendu refuse des corrections changées depuis sa relecture. Les réglages non enregistrés restent disponibles comme brouillon.",
+    origine: "source 3D externe · os et bornes déclarés par le moteur",
+    ou: "fabrications",
+  },
+  "source3d.camera": {
+    nom: "Caméra et portion du rendu 3D",
+    groupe: "Un rendu 3D rouvert — importer, inspecter, corriger, cadrer",
+    // Raccourcie de 204 à 136 signes (`GU3`). La phrase retirée disait un fait
+    // qu'aucun autre champ ne portait — *la vue 3D peut transmettre son angle
+    // au prochain rendu* : remise dans `change` par `GU15` (2/2), vérifiée sur
+    // le bouton « Utiliser cet angle pour le rendu » d'`ApercuModele3D.tsx`.
+    quoi: "Un angle du catalogue, ou l’azimut et la hauteur en degrés. Une portion limite le mouvement à extraire ; une pose garde une seule frame.",
+    change: "L’angle, la portion et les corrections sont conservés avec le travail. Le bouton « Utiliser cet angle pour le rendu » de la vue 3D transmet son angle au prochain rendu. Le zoom de consultation ne change pas le cadre exporté : toutes les frames gardent la même taille et un cadre commun, mesuré sur le mouvement entier.",
+    origine: "toi · paramètres acceptés et relus par le moteur externe",
+    ou: "fabrications",
   },
   // ── Cibles de cet emploi — associer une image, lancer une fabrication ──────
   //
@@ -463,6 +691,19 @@ export const AIDE: Record<string, Explication> = {
   // moitiés de « Cibles de cet emploi » (`CalquesDeLEmploi.tsx`) — la liste
   // qui associe une image à une cible, et le bouton qui bascule sur
   // « Couverture & fabrication ».
+
+  // **Écrite en `GU16` (2/2)** : l'essai au navigateur de la première moitié a
+  // trouvé la page d'une pièce servie par le seul résumé, alors qu'elle porte
+  // un réglage qu'on touche — le genre d'un emploi neuf, et son porteur.
+  "equipement.nouvel-emploi": {
+    nom: "Ajouter un emploi",
+    ou: "equipement",
+    groupe: "La page d'une pièce — ses emplois",
+    quoi: "Trois genres : portée par quelqu'un, une image à part, une mise en scène. Le premier demande un porteur, les deux autres un nom libre.",
+    change:
+      "Rien à la génération : on crée la case, on ne fabrique rien. Un emploi porté réclame ensuite un calque par pose et par direction du porteur ; les deux autres genres ne réclament qu'une image. La liste des porteurs ne montre que ceux qui ne la portent pas déjà.",
+    origine: "toi · les personnages du jeu qui peuvent porter cette pièce",
+  },
 
   "equipement.association-image": {
     nom: "Le rôle d'une image associée à une cible",
@@ -482,41 +723,6 @@ export const AIDE: Record<string, Explication> = {
     change:
       "La relecture distingue les images attendues des appels nécessaires : plusieurs cibles peuvent partager une planche. Les références et les paramètres restent modifiables avant l'envoi. Un résultat équipé doit ensuite être extrait, ajusté et vérifié sur sa cible.",
     origine: "objectif du personnage · versions choisies et variantes déjà vérifiées",
-  },
-  "source3d.import": {
-    nom: "Importer un rendu 3D",
-    quoi: "Le rendu rejoint le personnage sous forme de frames transparentes, avec ses réglages, son modèle et les fichiers disponibles.",
-    change: "Choisissez le mouvement, la direction et la cadence. L’import ne relance aucun calcul ; la copie reste retouchable après arrêt d’asset3d. Le modèle animé fourni par une ancienne version d’asset3d reflète ses corrections au moment de l’import, pas nécessairement celles du rendu historique.",
-    origine: "rendu choisi dans le moteur externe · copie conservée dans ce jeu",
-    ou: "clip",
-  },
-  "source3d.inspection": {
-    nom: "Inspecter le modèle animé",
-    quoi: "La vue 3D permet de tourner la caméra, de zoomer, de voir le squelette et de lire les animations intégrées au fichier.",
-    change: "Les réglages de cette inspection changent seulement la vue. Le cadre englobe les poses de l’animation pour garder la silhouette entière pendant la lecture ; les frames déjà importées ne sont pas recalculées.",
-    origine: "copie GLB locale · caméra de consultation",
-    ou: "clip",
-  },
-  "source3d.corrections": {
-    nom: "Corrections du squelette",
-    quoi: "Choisissez un os proposé par le moteur, puis réglez sa vrille, sa flexion et son écart avec le curseur ou la valeur en degrés. Gauche et droite sont celles du personnage.",
-    change: "Enregistrer actualise le GLB de contrôle avec Blender, sans génération IA. Les corrections s’appliquent aux prochains rendus ; les travaux conservés gardent leur copie. Le rendu refuse des corrections changées depuis sa relecture. Les réglages non enregistrés restent disponibles comme brouillon.",
-    origine: "source 3D externe · os et bornes déclarés par le moteur",
-    ou: "clip",
-  },
-  "source3d.camera": {
-    nom: "Caméra et portion du rendu 3D",
-    quoi: "Choisissez un angle du catalogue ou réglez l’azimut et la hauteur en degrés. La vue 3D peut transmettre son angle au prochain rendu. Une portion limite le mouvement à extraire ; une pose en garde une seule frame.",
-    change: "L’angle, la portion et les corrections sont conservés avec le travail. Le zoom de consultation ne change pas le cadre exporté : toutes les frames gardent la même taille et un cadre commun, mesuré sur le mouvement entier.",
-    origine: "toi · paramètres acceptés et relus par le moteur externe",
-    ou: "clip",
-  },
-  "fabrications-etat": {
-    nom: "État des fabrications",
-    quoi: "Le journal réunit les demandes conservées et les appels encore en cours.",
-    change: "Le filtre À reprendre montre les échecs et les interruptions. Une demande terminée ouvre ses résultats ; un clip ouvre son montage sans commander une nouvelle vidéo.",
-    origine: "atelier · journal des appels",
-    ou: "clip",
   },
   // ── Les règles du jeu — l'écran « Réglages », onglet Univers ──────────────
   //
@@ -576,10 +782,10 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Son allure — le style, la taille, les couleurs",
     quoi: "Le côté de case, en pixels, imposé à tout ce qui entre dans ce projet — ou aucune, et le rendu du modèle entre tel quel.",
     change:
-      "Toute image née ici arrive déjà remise sur cette grille. Sur « aucune », il n'y a pas de remise sur grille du tout : le détourage, le recadrage et la palette continuent, l'occupation du barème cesse d'agir. Les assets déjà là ne bougent pas tout seuls — « Tout réaligner » est un geste, jamais un effet de bord.",
+      "Toute image née ici arrive déjà remise sur cette grille. Sur « aucune », il n'y a pas de remise sur grille du tout : le détourage, le recadrage et la palette continuent, l'occupation du barème cesse d'agir. Les images déjà là ne bougent pas toutes seules — « Tout réaligner » est un geste, jamais un effet de bord.",
     origine: "toi, une fois par projet · défaut 64",
     long:
-      "« Aucune » dit que ton jeu n'est pas en pixel art — le rendu du modèle entre tel quel, sans grille imposée. Avec une cible, elle est toujours imposée, jamais déduite : dix modèles sur douze font dériver la taille du pixel d'une génération à l'autre, de 7 à 20 px dans un même lot. Réaligner ne coûte rien — aucun appel payant — et saute les assets déjà ramenés au brut.",
+      "« Aucune » dit que ton jeu n'est pas en pixel art — le rendu du modèle entre tel quel, sans grille imposée. Avec une cible, elle est toujours imposée, jamais déduite : dix modèles sur douze font dériver la taille du pixel d'une génération à l'autre, de 7 à 20 px dans un même lot. Réaligner ne coûte rien — aucun appel payant — et saute les images déjà ramenées au brut.",
   },
 
   // **Deux entrées relogées ici par `GU9`** (`docs/releves/guide-2026-09-20.md`) :
@@ -627,15 +833,15 @@ export const AIDE: Record<string, Explication> = {
       "Ce choix remplit deux endroits d'un coup : la liste des directions du codex, et la phrase de caméra qui part au modèle — les deux viennent du même geste, et ne peuvent plus se contredire. La liste est une proposition, jamais une contrainte : on la modifie depuis le codex, et un clic la rend à ce que la vue propose tant qu'on n'y a pas touché.",
   },
 
-  // Son monde — les sept lignes de la bible
+  // Son monde — les cinq lignes qu'on tape
 
   "univers.bible": {
     nom: "Bible",
     ou: "jeu",
-    groupe: "Son monde — les sept lignes de la bible",
-    quoi: "Sept champs nommés qui disent ce qu'est ton jeu : monde, époque, rendu, trait, éclairage, vue, contraintes techniques.",
+    groupe: "Son monde — les cinq lignes qu'on tape",
+    quoi: "Sept lignes nommées disent ce qu'est ton jeu. Cinq se tapent ici ; rendu et vue s'écrivent seules, depuis les étapes d'avant.",
     change:
-      "Chaque champ actif et non vide part en tête du prompt, à chaque génération, sans que tu le retapes. Un champ éteint ne part pas : l'interrupteur est le doseur. L'écran de confirmation, qui s'ouvre entre le bouton et la dépense, montre le résultat exact — une ligne par champ, avec son interrupteur.",
+      "Chaque ligne active et non vide part en tête du prompt, à chaque génération, sans que tu la retapes. Une ligne éteinte ne part pas : l'interrupteur est le doseur. Le compte de l'étape — « 0 ligne sur 5 » — ne compte que les cinq qu'on tape ; les deux autres n'ont rien à écrire.",
     origine: "toi, une fois par projet · sept champs vides au départ",
     long:
       "Des champs nommés plutôt qu'un texte libre : un texte libre est ce qu'on retape, un champ nommé est ce qu'on dose — on relâche le trait sans relâcher le monde, sans rien réécrire. La liste est close et dans l'ordre de l'écran comme du prompt. Les intitulés partent en anglais parce que les modèles du catalogue sont entraînés dessus ; ton texte, lui, part tel quel.",
@@ -644,7 +850,7 @@ export const AIDE: Record<string, Explication> = {
   "bible.monde": {
     nom: "monde",
     ou: "jeu",
-    groupe: "Son monde — les sept lignes de la bible",
+    groupe: "Son monde — les cinq lignes qu'on tape",
     quoi: "Où ça se passe et de quoi c'est fait — le lieu, la matière, l'ambiance.",
     change:
       "Part sous « World: » en tête du prompt, à chaque génération. C'est le champ qui tient la cohérence entre deux images faites à trois semaines d'écart.",
@@ -654,7 +860,7 @@ export const AIDE: Record<string, Explication> = {
   "bible.epoque": {
     nom: "époque",
     ou: "jeu",
-    groupe: "Son monde — les sept lignes de la bible",
+    groupe: "Son monde — les cinq lignes qu'on tape",
     quoi: "Le moment technologique du jeu — ce qui existe déjà, et ce qui n'existe pas encore.",
     change:
       "Part sous « Era: ». C'est ce qui empêche une arbalète de ressortir avec une lunette de visée — elle ne choisit rien à ta place : ce sont tes descriptions qui décident des armes, des vêtements et des outils. **Ce que cette case-là change dans l'image n'a pas été mesuré** — aucun banc ne l'a isolée, et il n'y en aura pas : deux mots dans un prompt ne valent pas huit tirages payés par branche.",
@@ -664,7 +870,7 @@ export const AIDE: Record<string, Explication> = {
   "bible.trait": {
     nom: "trait",
     ou: "jeu",
-    groupe: "Son monde — les sept lignes de la bible",
+    groupe: "Son monde — les cinq lignes qu'on tape",
     quoi: "Comment c'est dessiné : le contour, les aplats, les ombres.",
     change:
       "Part sous « Line and shading: ». C'est le champ le plus proche du rendu, donc le premier à relâcher quand tout se ressemble trop.",
@@ -674,7 +880,7 @@ export const AIDE: Record<string, Explication> = {
   "bible.eclairage": {
     nom: "éclairage",
     ou: "jeu",
-    groupe: "Son monde — les sept lignes de la bible",
+    groupe: "Son monde — les cinq lignes qu'on tape",
     quoi: "D'où vient la lumière, et ce qu'elle laisse comme ombres.",
     change:
       "Part sous « Lighting: ». Deux sprites éclairés de deux côtés différents ne se montent pas dans la même scène.",
@@ -684,7 +890,7 @@ export const AIDE: Record<string, Explication> = {
   "bible.technique": {
     nom: "contraintes techniques",
     ou: "jeu",
-    groupe: "Son monde — les sept lignes de la bible",
+    groupe: "Son monde — les cinq lignes qu'on tape",
     quoi: "Ce que l'image doit être, indépendamment de ce qu'elle montre — fond uni, une seule pose, aucun cadre.",
     change:
       "Part sous « Technical constraints: ». C'est le champ qui évite les pièges mesurés des modèles, et il agit en amont de tout le post-traitement.",
@@ -733,6 +939,46 @@ export const AIDE: Record<string, Explication> = {
       "La base n'est pas vide : soixante-dix étiquettes sont livrées avec l'atelier, réparties sur les cinq cases qu'on tape (monde, époque, trait, éclairage, contraintes techniques), et elles sont les mêmes pour tous tes jeux. Une case n'affiche que les siennes — une étiquette d'éclairage n'a rien à faire dans la case du trait.",
   },
 
+  // Ses sons — la cinquième étape, et la seule que `GU7` n'avait pas couverte
+  //
+  // **Écrite en `GU16` (2/2)** : le résumé de l'écran nommait « ses sons »
+  // depuis `GU4`, et l'étape existe bel et bien dans `ETAPES`
+  // (`ReglesDuJeu.tsx`) avec ses quatre cases de texte, sa tonalité, son tempo
+  // et son moteur par famille — aucune fiche ne la décrivait. Le même geste que
+  // « Son monde », pour l'oreille.
+
+  "univers.son.cases": {
+    nom: "Les quatre lignes du son",
+    ou: "jeu",
+    groupe: "Ses sons — le style sonore du jeu",
+    quoi: "Époque et matière, rendu sonore, orchestre, humeur : quatre lignes en anglais qui disent comment ce monde sonne.",
+    change:
+      "Elles se posent devant chaque description de son, comme la bible se pose devant chaque description d'image. Chacune ne part qu'avec les familles qu'elle concerne : l'époque avec les bruitages et les ambiances, l'orchestre avec la musique. Une ligne vide ne part pas.",
+    origine: "toi · quatre lignes vides au départ",
+    long:
+      "Un jeu sans ce bloc ne contraint rien : la description d'un son part seule, avec la prise de son de sa famille. Le compte en tête de l'étape — « 0 ligne sur 4 écrite » — dit où en est le bloc sans qu'on l'ouvre.",
+  },
+
+  "univers.son.reference": {
+    nom: "Tonalité et tempo de référence",
+    ou: "jeu",
+    groupe: "Ses sons — le style sonore du jeu",
+    quoi: "La gamme et la vitesse que les musiques de ce jeu suivront par défaut, quand on n'en demande pas d'autres.",
+    change:
+      "Elles remplissent d'avance les deux mêmes réglages quand on demande une musique. Laissées vides, chaque demande repart du défaut du moteur — 90 battements par minute.",
+    origine: "toi · vides au départ",
+  },
+
+  "univers.son.moteurs": {
+    nom: "Le moteur de chaque famille",
+    ou: "jeu",
+    groupe: "Ses sons — le style sonore du jeu",
+    quoi: "Avec quoi chaque famille de sons se calcule : bruitage, interface, ambiance, musique, jingle, chanson, voix.",
+    change:
+      "Le moteur proposé quand on demande un son de cette famille — on le change encore au moment de lancer. Sans choix posé, l'atelier prend la première méthode installée de la famille. Rien à payer : tous tournent sur cette machine.",
+    origine: "toi · les méthodes sonores installées sur cette machine",
+  },
+
   // S'applique à tout le jeu, mais se règle ailleurs
 
   "univers.bareme": {
@@ -765,10 +1011,10 @@ export const AIDE: Record<string, Explication> = {
     groupe: "S'applique à tout le jeu, mais se règle ailleurs",
     quoi: "La part du côté de la case qu'un sujet de cette nature remplit une fois sur grille, en pourcentage.",
     change:
-      "C'est la valeur que la recette reprendra à la naissance de l'asset — 100 % pour un personnage, 40 % pour un objet tenu en main. Cette ligne se lit ici ; elle se règle dans les réglages de la famille, avec les deux autres traits de la même échelle.",
+      "C'est la valeur que la recette reprendra à la naissance de l'image — 100 % pour un personnage, 40 % pour un objet tenu en main. Cette ligne se lit ici ; elle se règle dans les réglages de la famille, avec les deux autres traits de la même échelle.",
     origine: "toi · mesuré le 27/08 sur sept sujets réels",
     long:
-      "Deux images arrivent du fournisseur au même format ; sans occupation, un tonneau remis sur grille deviendrait aussi grand qu'un personnage. Elle se pose une fois pour le projet, pas génération par génération. La fiche d'un asset la porte aussi, pour les cas particuliers — mais y toucher l'épingle, qui cesse alors de suivre l'univers.",
+      "Deux images arrivent du fournisseur au même format ; sans occupation, un tonneau remis sur grille deviendrait aussi grand qu'un personnage. Elle se pose une fois pour le projet, pas génération par génération. La fiche d'une image la porte aussi, pour les cas particuliers — mais y toucher l'épingle, qui cesse alors de suivre l'univers.",
   },
 
   "bareme.silhouette": {
@@ -802,14 +1048,14 @@ export const AIDE: Record<string, Explication> = {
       "Rien ne part au modèle et rien ne coûte : c'est un traitement fait sur ta machine, au retour. Une ligne laissée vide n'est pas un trou — le produit décide à ta place. Cette ligne se lit ici, en résumé (« par nature et par famille ») ; il n'y a pas de formulaire pour la poser directement — elle se règle en marchant, depuis la table Détourage d'une image, avec le bouton « enregistrer ce réglage comme défaut du jeu ». Et changer un réglage ainsi ne retouche aucune image déjà faite.",
     origine: "toi · aucun, donc le produit décide",
     long:
-      "Trois niveaux décident, dans cet ordre : la famille du sujet, puis la façon dont l'image est venue, puis le produit. Une famille réglée l'emporte sur sa nature. La fiche de chaque image dit ensuite lequel des trois a décidé. La tolérance et le seuil de transparence ne sont pas ici : ils se règlent sur une image, dans sa table de détourage.",
+      "Trois niveaux décident, dans cet ordre : la famille du sujet, puis la façon dont l'image est venue, puis le produit. Une famille réglée l'emporte sur sa nature. La fiche de chaque image dit ensuite lequel des trois a décidé. La tolérance et le bord rongé ne sont pas ici : ils se règlent image par image, dans la table Détourage.",
   },
 
   "assistant.poses": {
     nom: "Les poses et les états",
     ou: "jeu",
     groupe: "S'applique à tout le jeu, mais se règle ailleurs",
-    quoi: "Ce que chaque chose du jeu peut faire — au repos, en marche, ouverte, vidée.",
+    quoi: "Ce que chaque sujet du jeu peut faire — au repos, en marche, ouvert, vidé.",
     change:
       "Chaque pose du plan devient une case à remplir sur la fiche du sujet. **Le plan lui-même — quelles poses existent pour cette nature — se règle dans les réglages de la famille** : un personnage a ses six attitudes, un meuble ses trois états, une tuile aucune. Cette ligne n'en montre qu'un résumé. **Le nombre d'images d'une pose vient du choix de vue**, pas d'une saisie : il ne se retape plus.",
     origine: "toi, ou l'atelier · une liste proposée par type",
@@ -945,7 +1191,7 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Le menu d'une carte",
     quoi: "La place qu'une carte occupe dans le tableau : 1×, 2× ou 4×.",
     change:
-      "Rien à la génération. Ce sont les crans du zoom de la grille d'assets, réemployés — un seul vocabulaire de taille dans tout le produit.",
+      "Rien à la génération. Ce sont les crans du zoom de la galerie, réemployés — un seul vocabulaire de taille dans tout le produit.",
     origine: "toi · défaut 1×",
     long:
       "C'est un cran, et il vaut des deux côtés du tableau : dans la grille il décide du nombre de colonnes que la carte occupe, sur la toile il donne sa largeur de départ. Élargir une carte sur la toile ne le change pas, et c'est voulu : la largeur libre est une place sur le plan, la taille un cran que lit la grille.",
@@ -1103,7 +1349,7 @@ export const AIDE: Record<string, Explication> = {
     nom: "Une ambiance",
     ou: "ambiances",
     groupe: "Les ambiances",
-    quoi: "Un lot de style réutilisable : une palette, des images de référence, et trois textes. On la désigne sur une chose du jeu.",
+    quoi: "Un lot de style réutilisable : une palette, des images de référence, et trois textes. On la désigne sur un sujet du jeu.",
     change:
       "Rien tant qu'on ne s'en sert pas. Au moment de fabriquer, on choisit ce qu'on lui prend — tout, les couleurs seules, ou tout sauf les images —, et ce choix ne vaut que pour cet appel-là.",
     origine: "toi · aucune ambiance au départ",
@@ -1146,10 +1392,11 @@ export const AIDE: Record<string, Explication> = {
   // une*).
 
   "bibliotheque.collections": {
-    nom: "collections de sujets", ou: "codex",
+    nom: "collections de sujets",
+    ou: "codex",
     groupe: "La colonne des familles et des collections",
     quoi: "Des groupes nommés pour retrouver les personnages, objets, décors et interfaces du jeu.",
-    change: "Choisissez une famille puis une collection dans les assets. La sélection se range dans une collection ou se glisse sur son nom ; retirer un sujet d’un groupe conserve ses images. La recherche et le tri interrogent toute la famille avant de charger les résultats.",
+    change: "On choisit une famille à gauche, puis une collection. Une sélection se range dans une collection, ou se glisse sur son nom ; retirer un sujet d’un groupe garde toutes ses images. La recherche et le tri portent sur la famille entière, pas sur les sujets déjà affichés.",
     origine: "toi · rangement conservé dans la bibliothèque",
   },
 
@@ -1157,14 +1404,14 @@ export const AIDE: Record<string, Explication> = {
     nom: "Écrire un nom",
     ou: "codex",
     groupe: "En haut de l'écran — nommer un sujet",
-    quoi: "Le bouton « Ajouter un… », en haut de l'écran, ouvre un champ : Entrée crée le sujet dans la famille ouverte à gauche.",
+    quoi: "Le bouton en haut à droite : dans une famille ouverte il dit « Ajouter un… » et ouvre un champ ; ailleurs il dit « Créer un sujet ».",
     change:
-      "Rien à la génération : on nomme, on ne paie pas. Cela suffit à faire exister le sujet, prêt à recevoir sa première image sans détour par un autre écran.",
-    origine: "toi · vide tant qu'on n'a pas cliqué « Ajouter un… »",
+      "Rien à la génération : on nomme, on ne paie pas. Dans une famille, Entrée suffit à faire exister le sujet, prêt à recevoir sa première image. Sans famille choisie — et sur Les équipements —, le guichet demande d'abord laquelle.",
+    origine: "toi · vide tant qu'on n'a pas cliqué le bouton",
   },
 
   "assets-recherche": {
-    nom: "Rechercher dans les assets",
+    nom: "Rechercher un sujet",
     groupe: "La barre d'outils — chercher, la vue, le filtre, le tri",
     quoi: "La recherche porte sur les noms et descriptions de toutes les familles du jeu.",
     change: "Le filtre est envoyé au serveur : les sujets non encore affichés sont recherchés eux aussi. La colonne de gauche retrouve les collections et leur rangement.",
@@ -1178,8 +1425,8 @@ export const AIDE: Record<string, Explication> = {
     groupe: "La grille des sujets — ce que chacun a, ce qui lui manque",
     quoi: "L'index de ce que ton monde contient, par famille — personnages, décors, objets, interface, équipement — et ce qui manque à chacun.",
     change:
-      "Rien à la génération. C'est de là qu'on ouvre l'établi d'une chose, ou qu'on ouvre le guichet pour en commander plusieurs à la fois.",
-    origine: "toi, au fur et à mesure · les cinq familles existent avant toute chose",
+      "Rien à la génération. C'est de là qu'on ouvre l'établi d'un sujet, ou qu'on ouvre le guichet pour en commander plusieurs à la fois.",
+    origine: "toi, au fur et à mesure · les familles existent avant le premier sujet",
   },
 
   // ── La fiche d'une chose du jeu — ses six parties (R8) ────────────────────
@@ -1206,9 +1453,9 @@ export const AIDE: Record<string, Explication> = {
     nom: "Ce qu'il est",
     ou: "sujet",
     groupe: "La fiche du sujet",
-    quoi: "Le texte qui redit à la machine de qui il s'agit, et qui repart avec chaque image qu'on demande de cette chose.",
+    quoi: "Le texte qui redit à la machine de qui il s'agit, et qui repart avec chaque image qu'on demande de ce sujet.",
     change:
-      "Il part dans le texte de chaque génération de cette chose, avant le reste. Sans lui, l'appel ne dit pas de quoi il s'agit et la machine invente.",
+      "Il part dans le texte de chaque génération de ce sujet, avant le reste. Sans lui, l'appel ne dit pas de quoi il s'agit et la machine invente.",
     origine: "toi · vide au départ",
   },
 
@@ -1228,7 +1475,7 @@ export const AIDE: Record<string, Explication> = {
     groupe: "La fiche du sujet",
     quoi: "Les sept textes de style qui décrivent le monde autour du sujet — monde, époque, rendu, vue, trait, lumière, technique.",
     change:
-      "Ils partent avec chaque image. Par défaut ils viennent du jeu ; en réécrire un ici ne vaut que pour cette chose, et le texte remplacé reste lisible en dessous, barré.",
+      "Ils partent avec chaque image. Par défaut ils viennent du jeu ; en réécrire un ici ne vaut que pour ce sujet, et le texte remplacé reste lisible en dessous, barré.",
     origine: "le jeu, ou l'ambiance choisie, ou toi",
   },
 
@@ -1236,7 +1483,7 @@ export const AIDE: Record<string, Explication> = {
     nom: "Ses images d'exemple",
     ou: "sujet",
     groupe: "La fiche du sujet",
-    quoi: "Les images qu'on joint à la demande pour montrer le style visé, et qui sont disponibles pour chaque image de cette chose.",
+    quoi: "Les images qu'on joint à la demande pour montrer le style visé, et qui sont disponibles pour chaque image de ce sujet.",
     change:
       "Rien tout seul. Ce qui part vraiment se coche juste avant de payer — mais une image qui n'est pas retenue ici n'y sera pas proposée.",
     origine: "le tableau d'inspiration, les images déjà faites, toi",
@@ -1246,17 +1493,17 @@ export const AIDE: Record<string, Explication> = {
     nom: "Ce que le jeu réclame",
     ou: "sujet",
     groupe: "Cases et planches — sa matrice",
-    quoi: "Les attitudes que cette chose doit avoir : repos, marche, course pour un personnage ; fermé, ouvert, vidé pour un coffre.",
+    quoi: "Les attitudes que ce sujet doit avoir : repos, marche, course pour un personnage ; fermé, ouvert, vidé pour un coffre.",
     change:
       "Rien à la génération. C'est cette liste qui décide du nombre de cases à remplir, donc de ce que le tableau de droite compte.",
-    origine: "le type d'objet · plus ce que cette chose s'est ajouté",
+    origine: "la nature du sujet · plus ce qu'il s'est ajouté lui-même",
   },
 
   "codex.chose.faites": {
     nom: "Ce qui est fait",
     ou: "sujet",
     groupe: "Cases et planches — sa matrice",
-    quoi: "Les images qui existent déjà pour cette chose, une par attitude remplie.",
+    quoi: "Les images qui existent déjà pour ce sujet, une par attitude remplie.",
     change:
       "Rien du tout, et c'est le point : on regarde, on ne modifie rien et on ne paie rien.",
     origine: "les images faites · le manque n'a pas de couleur, il est en cours",
@@ -1266,7 +1513,7 @@ export const AIDE: Record<string, Explication> = {
     nom: "Sa matrice",
     ou: "sujet",
     groupe: "Cases et planches — sa matrice",
-    quoi: "Le tableau des attitudes de cette chose, avec ce qui les remplit, et il change pendant qu'on règle à gauche.",
+    quoi: "Le tableau des attitudes de ce sujet, avec ce qui les remplit, et il change pendant qu'on règle à gauche.",
     change:
       "Rien à la génération. Ranger une attitude retire sa ligne et son coût — le compte des rangées reste écrit à côté, pour qu'un tableau plein obtenu en rangeant ne passe pas pour un travail fini.",
     origine: "les images faites, comptées par le serveur",
@@ -1290,34 +1537,27 @@ export const AIDE: Record<string, Explication> = {
       "Le risque se dit avec : c'est **un jet unique**, que le modèle ne rend pas deux fois. Une planche ratée se repaie entière, et un compte de cases faux ne fait rien entrer du tout — la planche entière se relance au prix plein.\n\nLa feuille elle-même n'entre jamais en bibliothèque ; ses morceaux, oui, chacun filié vers elle.",
   },
 
-  // **Déplacée sous `ou: "bande"` en GU6**, réécrite en GU11 : elle décrit
-  // une image du ruban dans l'atelier d'une bande (`AtelierDeBande.tsx`), au
-  // même titre que `bande.position`, `bande.remplacer` et `bande.pelure` —
-  // les quatre forment la zone « la frame choisie » (`CorrectionDeLImage`).
-  "codex.bande.image": {
-    nom: "L'image choisie",
-    ou: "bande",
-    groupe: "La frame choisie — position, remplacer, pelure d'oignon",
-    quoi: "Une image de l'animation, et ce qu'on lui a fait à elle seule : de combien elle a été poussée, et de quel clip elle vient.",
-    change:
-      "Cette image-là, et aucune autre. C'est toute la différence avec les réglages de gauche : ceux-là valent pour l'animation entière, celui-ci ne corrige qu'une pose qui tombe à côté.",
-    origine: "prise dans le clip · poussée à la main",
-    long:
-      "Les flèches la déplacent d'un pixel du sprite, cinq avec Maj, ou on la glisse à la souris. Aux bords, elles cessent d'agir plutôt que de rogner l'image. La remplacer par une autre image du clip ne coûte rien : il porte déjà toutes ses images. L'image d'avant, en transparence dessous, permet de juger un déplacement au lieu de le deviner.",
-  },
-
   // ── La barre qui paie — ce qu'on touche à chaque génération (GU6) ─────────
   //
   // **Pas « l'établi »** : ce mot-là est déjà pris par le tableau des cases
   // d'un sujet (`codex.chose.matrice`, `EtabliDuSujet.tsx`), un cran plus
-  // haut à l'écran. Ce qui suit est la barre commune aux deux lieux d'où
-  // l'argent part (`BarreQuiPaie.tsx`) — l'établi d'une chose, et le repos de
-  // l'onglet Créer de l'univers.
+  // haut à l'écran. Ce qui suit est la barre commune aux lieux d'où l'argent
+  // part (`BarreQuiPaie.tsx`).
+  //
+  // ⚠️ **Ces sept fiches ne sont pas sur la page d'un sujet, et les groupes le
+  // disent depuis `GU16` (2/2)** : `BarreQuiPaie` n'est plus montée qu'avec sa
+  // présentation `"preparation"` (`App.tsx`), c'est-à-dire **dans la fenêtre
+  // *Préparer une fabrication*** — le modèle et le coût dans son corps, les
+  // quatre autres sous le repli *Réglages de l'univers et références
+  // héritées*. L'essai au navigateur de `GU16` (1/2) l'avait relevé : on
+  // cherchait « la barre qui paie » sur la page du sujet, où il n'y a rien.
+  // La fenêtre n'a pas d'écran de guide à elle ; elle hérite de la racine d'où
+  // on l'ouvre, et c'est une limite connue, écrite au relevé.
 
   "reglages.modele": {
     nom: "modèle",
     ou: "sujet",
-    groupe: "La barre qui paie",
+    groupe: "Préparer une fabrication — le modèle, et ce qu'il consomme",
     quoi: "Le moteur d'image qui fabriquera la génération, choisi dans une liste où plusieurs fournisseurs se mélangent.",
     change:
       "Le prix, le rendu, et deux plafonds : le nombre de références acceptées et le nombre de variations possibles. Un modèle qui ne peut pas honorer ta demande reste visible et grisé, avec sa raison — jamais remplacé en silence.",
@@ -1332,8 +1572,8 @@ export const AIDE: Record<string, Explication> = {
   "reglages.consommation": {
     nom: "Ce qu'un appel consomme",
     ou: "sujet",
-    groupe: "La barre qui paie",
-    quoi: "Ce qu'un appel prend chez son fournisseur, dans son unité — dollars pour l'un, jetons pour l'autre. Aucun appel ne consomme « rien ».",
+    groupe: "Préparer une fabrication — le modèle, et ce qu'il consomme",
+    quoi: "Ce qu'un appel prend chez son fournisseur, dans son unité — dollars pour l'un, jetons pour l'autre. Aucun n'y consomme « rien ».",
     change:
       "Rien à la génération : c'est ce qui s'enregistre après, et ce que l'écran annonce avant. Le chiffre affiché sur un modèle est la **médiane de ses derniers appels sur cette machine**, jamais un tarif lu quelque part.",
     origine: "la réponse du fournisseur, à chaque appel · rien à remplir",
@@ -1344,7 +1584,7 @@ export const AIDE: Record<string, Explication> = {
   "reglages.styles-locaux": {
     nom: "styles locaux",
     ou: "sujet",
-    groupe: "La barre qui paie",
+    groupe: "Préparer une fabrication — le modèle, et ce qu'il consomme",
     quoi: "Les vingt-deux styles de sc-clone, sous la liste des modèles, rangés par moteur et repliés par défaut.",
     change:
       "Le choisir revient à choisir un modèle : le prix devient nul, le temps remplace le prix, et le genre de référence qu'il accepte — garder le même sujet, ou repeindre par-dessus une image — s'écrit sous son nom.",
@@ -1356,7 +1596,7 @@ export const AIDE: Record<string, Explication> = {
   "reglages.proportions": {
     nom: "proportions",
     ou: "sujet",
-    groupe: "La barre qui paie",
+    groupe: "Préparer une fabrication — Réglages de l'univers et références héritées",
     quoi: "Le rapport largeur / hauteur de l'image demandée au fournisseur.",
     change:
       "La forme de ce qui revient, avant tout post-traitement. Les valeurs que le modèle choisi n'accepte pas sont grisées, jamais cachées.",
@@ -1368,7 +1608,7 @@ export const AIDE: Record<string, Explication> = {
   "reglages.variations": {
     nom: "variations",
     ou: "sujet",
-    groupe: "La barre qui paie",
+    groupe: "Préparer une fabrication — Réglages de l'univers et références héritées",
     quoi: "Combien d'images partent d'un seul clic — 1, 2 ou 4.",
     change:
       "Multiplie le prix à l'identique : 4 variations, ce sont 4 appels et 4 fois le coût. Ce ne sont pas 4 images différentes demandées, ce sont 4 tirages de la même demande.",
@@ -1380,37 +1620,52 @@ export const AIDE: Record<string, Explication> = {
   "reglages.sujet": {
     nom: "sujet",
     ou: "sujet",
-    groupe: "La barre qui paie",
+    groupe: "Préparer une fabrication — Réglages de l'univers et références héritées",
     quoi: "La nature de ce que tu fabriques — un personnage, un objet tenu en main, un décor — choisie dans le barème de ton univers.",
     change:
       "Trois choses d'un seul geste : quels artworks partent en référence, quel modèle est proposé par défaut, et quelle part de la case le sujet occupera une fois sur grille.",
     origine: "le barème de l'univers · aucun sujet par défaut",
     long:
-      "Sans sujet choisi, seules les planches marquées « tous » partent en référence — c'est écrit sous le contrôle, en clair, plutôt que laissé à deviner. Le barème se pose dans l'univers, côté Réglages du jeu, une fois pour le projet : c'est lui qui dit qu'un personnage remplit 90 % de sa case et une fiole 40 %, et c'est ce qui met un tonneau et un personnage à la même échelle de pixel.",
+      "Sans sujet choisi, seules les planches marquées « tous » partent en référence — c'est écrit sous le contrôle, en clair, plutôt que laissé à deviner. Le barème se pose dans l'univers, côté Réglages du jeu, une fois pour le projet : c'est lui qui dit qu'un personnage remplit 100 % de sa case et une fiole 40 %, et c'est ce qui met un tonneau et un personnage à la même échelle de pixel.",
   },
 
+  // **Réécrite en `GU16` (2/2), contre le bloc qui existe.** Elle décrivait
+  // encore le dépliant « Ce qui partira » — le texte assemblé en trois parties
+  // —, remplacé en `E14` par l'écran *Relire avant l'envoi*, où `envoi.textes`
+  // et `envoi.texte-a-la-main` le disent déjà. Deux fiches disaient donc la
+  // même chose de deux écrans différents. Ce qui porte ce nom aujourd'hui est
+  // le petit récapitulatif de `PanneauReglages.tsx`, qui n'avait aucune fiche.
   "atelier.apercu": {
-    nom: "Ce qui partira",
+    nom: "Ce qui part",
     ou: "sujet",
-    groupe: "La barre qui paie",
-    quoi: "Le texte exact envoyé au modèle, rangé en trois parties : le contexte, les références, et la demande.",
+    groupe: "Préparer une fabrication — Réglages de l'univers et références héritées",
+    quoi: "Le récapitulatif de l'appel : le modèle choisi, le compte de références sur ce que ce modèle accepte, et d'où elles viennent.",
     change:
-      "Rien à la génération tant que tu le lis. Le contexte dit ce qu'est ton jeu, les références ce que chaque image jointe est, la demande porte ton sujet, les consignes de planche et la caméra. « Reprendre le texte » en fait le contenu du champ : ce que tu écris part alors mot pour mot.",
-    origine: "composé par l'atelier · l'ordre est celui de l'envoi",
+      "Rien : c'est une lecture. Le compte passe en rouge quand il dépasse les places du modèle. Le gabarit d'une planche y a sa ligne parce qu'il part vraiment, et qu'il se paie chez qui facture à l'image.",
+    origine: "composé par l'atelier · compté pour l'appel en préparation",
     long:
-      "Reprendre le texte ne touche pas à ton univers : les textes du jeu restent ce qu'ils étaient, et la reprise ne vaut que pour cette génération-là. Le sujet choisi décide toujours des artworks envoyés, du modèle proposé et de la part de case ; le gabarit d'un lot part toujours. Ce texte se relit en entier sur l'écran de confirmation, juste avant de payer.",
+      "Il dit combien d'images partent ; la liste juste dessous dit lesquelles, d'où elles viennent, et laquelle on peut couper. Le texte exact, lui, ne se lit pas ici : il se lit en entier sur *Relire avant l'envoi*, juste avant de payer.",
   },
 
+  // **`envoi.ecran` a changé d'écran en `GU15` (2/2)** : elle décrit *Relire
+  // avant l'envoi*, pas la page d'un sujet, et elle logeait sous `sujet` parce
+  // que l'envoi n'avait pas d'écran de guide. Elle est passée sous `ou:
+  // "envoi"`, et son texte a été mis d'accord avec l'écran tel qu'il est : elle
+  // parlait de « chaque chose, ligne par ligne, avec un interrupteur » comme si
+  // c'était le premier regard, alors que la lecture d'abord est en blocs et que
+  // les interrupteurs n'existent qu'après *Modifier l'envoi* ; et d'un gris
+  // « au retour » que l'ancienne présentation dessinait. Les fiches de cet
+  // écran sont en bas du fichier.
   "envoi.ecran": {
     nom: "L'écran de confirmation",
-    ou: "sujet",
-    groupe: "L'écran de confirmation, avant l'envoi",
-    quoi: "Ce qui s'ouvre entre le bouton et la dépense — chaque chose qui va partir, ligne par ligne, avec un interrupteur et son prix.",
+    ou: "envoi",
+    groupe: "Le cadre — ce qui s'ouvre avant la dépense",
+    quoi: "Ce qui s'ouvre entre le bouton et la dépense : le texte exact, les images jointes, le prix, puis le bouton qui lance.",
     change:
-      "Rien tout seul : c'est une relecture. Ce qu'on y éteint ou corrige ne vaut que pour cette génération-là, et rien ne remonte dans les réglages du jeu ni dans l'ambiance.",
-    origine: "composé par l'atelier · l'ordre est celui de l'envoi",
+      "Rien ne part tant qu'on n'a pas pressé le bouton du bas. À l'ouverture tout se lit sans rien changer ; ce qu'on corrige ensuite ne vaut que pour cet appel et ne remonte dans aucun réglage du jeu ni de l'ambiance.",
+    origine: "composé par l'atelier · le même chemin que l'envoi",
     long:
-      "« Garder sur le sujet » inscrit la correction sur sa fiche ; sans sujet visé, elle part quand même, mais n'a nulle part où se garder. Le sujet et la pose ne s'éteignent pas. Une case peut sauter la relecture pour la série en cours ; elle revient au changement de sujet ou de pose — pas de case « pour toujours ». Ce qui n'agit qu'au retour (découpage, grille, détourage) est en gris.",
+      "« Garder sur le sujet » inscrit la correction sur sa fiche ; sans sujet visé, elle part quand même, mais n'a nulle part où se garder. Le texte montré est demandé par le chemin même que l'envoi emprunte : ce qu'on lit est ce qui part.",
   },
 
   // ── Le calibrage ──────────────────────────────────────────────────────────
@@ -1430,7 +1685,7 @@ export const AIDE: Record<string, Explication> = {
     nom: "Le calibrage",
     ou: "sujet",
     groupe: "Le calibrage",
-    quoi: "Les poses d'une même chose ne sortent pas toutes à la même hauteur ; cet outil les remet à la même, sans rien redessiner ni payer.",
+    quoi: "Les poses d'un même sujet ne sortent pas toutes à la même hauteur ; cet outil les remet à la même, sans rien redessiner ni payer.",
     change:
       "Il réécrit la taille rendue des poses qu'on lui désigne. Le défaut qu'il corrige est mesuré : six poses du même personnage, même recette, sont sorties à 64, 60, 64, 53, 64 et 43 pixels de haut — un bras tendu élargit la boîte du sujet, et la mise sur grille rétrécit tout le reste.",
     origine:
@@ -1443,7 +1698,7 @@ export const AIDE: Record<string, Explication> = {
     nom: "occupation",
     ou: "sujet",
     groupe: "Le calibrage",
-    quoi: "La part de la case que la chose occupe en hauteur — à cent pour cent elle touche le haut et le bas, à quatre-vingts elle flotte.",
+    quoi: "La part de la case que le sujet occupe en hauteur — à cent pour cent il touche le haut et le bas, à quatre-vingts il flotte.",
     change:
       "La taille à laquelle elle apparaîtra dans le jeu, et rien d'autre. Comme c'est une part et non un nombre de pixels, changer la taille de la case plus tard ne défait aucun calage.",
     origine: "la recette de l'image · l'outil la réécrit, la main aussi",
@@ -1457,7 +1712,7 @@ export const AIDE: Record<string, Explication> = {
     nom: "décalage",
     ou: "sujet",
     groupe: "Le calibrage",
-    quoi: "De combien la chose est poussée à gauche ou à droite dans sa case.",
+    quoi: "De combien le sujet est poussé à gauche ou à droite dans sa case.",
     change:
       "Où elle se trouve dans la case, pas sa taille. Il sert à recentrer une pose dont le geste déporte la silhouette — un bras tendu, une arme levée.",
     origine: "cet outil seul · il ne part jamais dans une recette qu'on nomme",
@@ -1494,7 +1749,7 @@ export const AIDE: Record<string, Explication> = {
     nom: "Enregistrer les retouches d’une image",
     quoi: "Le brouillon garde tes réglages sur cet ordinateur, aperçu réel — l’image de la bibliothèque ne bouge qu’à Enregistrer les retouches.",
     change: "Défaire et Refaire parcourent les gestes. Quitter permet d’enregistrer, de conserver le brouillon ou de l’abandonner ; la reprise est proposée à la réouverture. Copier une recette ou revenir au brut prépare aussi un brouillon. La découpe, l’extraction et l’équipement utilisent la version enregistrée.",
-    origine: "toi · recette non destructive et aperçu CPU local",
+    origine: "toi · les réglages restent sur cette machine, l'image d'origine ne bouge pas",
     groupe: "En haut de l'écran — enregistrer",
     ou: "tables",
   },
@@ -1529,16 +1784,6 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · ajusté à l'ouverture",
     long:
       "Ailleurs dans le produit — la galerie, la vitrine — l'agrandissement ne prend que des multiples entiers : un sprite montré à une échelle qui n'est pas entière fabrique des pixels qui n'existent pas. Cette règle sert à montrer une image ; ici on la travaille, et il faut pouvoir approcher et reculer librement.",
-  },
-
-  "bande.source": {
-    nom: "viser ou découper une frame",
-    ou: "bande",
-    groupe: "Viser ou découper une frame",
-    quoi: "La pipette, le tracé du sujet et le rectangle visent l’image source ; la découpe prélève la frame retouchée.",
-    change: "Une visée corrige uniquement la frame choisie. Découper crée une image en bibliothèque, sans modifier ni enregistrer l’animation.",
-    origine: "toi · depuis l’atelier d’animation",
-    long: "La vue source possède son zoom et son déplacement : ses coordonnées restent celles du fichier original, avant réduction. La découpe part au contraire de la case finale, placement et Main compris. Après la découpe, Revenir à l’animation retrouve les réglages en cours. Les morceaux entrent dans la bibliothèque sans nouvel appel de génération.",
   },
 
   "etape.detourage": {
@@ -1590,13 +1835,23 @@ export const AIDE: Record<string, Explication> = {
   },
 
   "detourage.durcissement": {
-    nom: "durcissement",
+    nom: "bord rongé",
     groupe: "La table Détourage",
     ou: "tables",
-    quoi: "Combien de pixels sont rongés au bord de la silhouette après le seuil, de 0 à 4.",
+    quoi: "Combien de pixels sont rongés au bord de la silhouette une fois le fond retiré, de 0 à 4.",
     change:
-      "Retire un liseré résiduel quand le seuil seul n'a pas suffi. Trop haut, il grignote les détails fins — une lame, une antenne, un doigt.",
+      "Retire un liseré de fond que la tolérance seule n'a pas emporté. Trop haut, il grignote les détails fins — une lame, une antenne, un doigt.",
     origine: "toi · défaut 0",
+  },
+
+  "detourage.comparaison": {
+    nom: "comparaison",
+    groupe: "La table Détourage",
+    ou: "tables",
+    quoi: "Comment deux couleurs sont dites proches : par canal — rouge, vert, bleu — ou par teinte, qui ignore l'ombre et le dégradé.",
+    change:
+      "Ce que la tolérance mesure. Par canal, un fond assombri par une ombre s'éloigne vite et reste en place ; par teinte, il part avec le reste du fond sans qu'on monte la tolérance au point de manger une peau. Ne paraît que sur les moteurs « bord » et « pipette ».",
+    origine: "toi · défaut « par canal »",
   },
 
   "detourage.couleur": {
@@ -1680,7 +1935,7 @@ export const AIDE: Record<string, Explication> = {
   },
 
   "etape.grille": {
-    nom: "Grille",
+    nom: "Pixelisation",
     groupe: "La table Pixelisation",
     ou: "tables",
     quoi: "La troisième place : remettre le sujet sur la grille de pixel du projet.",
@@ -1690,15 +1945,15 @@ export const AIDE: Record<string, Explication> = {
   },
 
   "grille.cible": {
-    nom: "taille de pixel",
+    nom: "taille de case",
     groupe: "La table Pixelisation",
     ou: "tables",
     quoi: "Le côté de la case, en pixels logiques — la taille finale de ton sprite avant export.",
     change:
-      "C'est l'étape qui rend le produit possible : elle remet toutes tes images sur le même pixel. Elle est demandée, jamais déduite de l'image reçue.",
+      "La taille à laquelle le sprite sort d'ici. Monter la case abaisse le plafond de la hauteur, et l'écran ramène la valeur sous le nouveau plutôt que de refuser.",
     origine: "l'univers du projet, sinon toi · défaut 64",
     long:
-      "Dix modèles sur douze font dériver la taille du pixel d'une étape à l'autre : sans cette remise à niveau, les frames d'un même personnage ne partagent plus le même pixel. La déduire de l'image reçue laisserait le fournisseur décider de l'échelle du jeu : elle se demande, jamais ne se devine. La ligne au-dessus dit la taille des carrés que le modèle a peints, s'il en a peint.",
+      "Dix modèles sur douze font dériver la taille du pixel d'une étape à l'autre : sans cette remise à niveau, les frames d'un même personnage ne partagent plus le même pixel. La déduire de l'image reçue laisserait le fournisseur décider de l'échelle du jeu : elle se demande, jamais ne se devine. En dessin, le même cran s'appelle « finesse » et compte du détail, pas des carrés.",
   },
 
   "grille.occupation": {
@@ -1726,7 +1981,7 @@ export const AIDE: Record<string, Explication> = {
   },
 
   "grille.methode": {
-    nom: "réduction",
+    nom: "façon de réduire",
     groupe: "La table Pixelisation",
     ou: "tables",
     quoi: "Comment l'image passe de ses milliers de pixels aux carrés de la case, en quatre façons qui rendent quatre sprites différents.",
@@ -1737,8 +1992,15 @@ export const AIDE: Record<string, Explication> = {
       "Réduire mille pixels à soixante-quatre carrés, c'est en jeter quatre-vingt-dix-neuf sur cent : ce qu'on garde et comment décide de tout le style du sprite. Le projet donne un défaut, mais cette image garde le dernier mot, et changer de méthode ne coûte rien — aucun appel payant ne part d'ici.",
   },
 
+  // ⚠️ **« Couleurs, la table » et non « Couleurs » tout court** : la table
+  // porte ce nom à l'écran (`NOM_DE_LA_TABLE`, `Retouche.tsx`) **et** son
+  // premier réglage aussi (`<Reglage nom="couleurs">`). Deux lignes du même
+  // volet se seraient appelées pareil — c'est l'essai « deux entrées du même
+  // écran ne portent pas le même nom » (`App.test.tsx`) qui l'a dit, à la
+  // relecture croisée de `GU16`. Le mot de l'écran est gardé, avec ce qui
+  // distingue la table du réglage qu'elle contient.
   "etape.quantification": {
-    nom: "Quantification",
+    nom: "Couleurs, la table",
     groupe: "La table Couleurs",
     ou: "tables",
     quoi: "La quatrième place : ramener l'image à un nombre fini de couleurs, celles de la palette du projet.",
@@ -1765,7 +2027,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "tables",
     quoi: "Sur combien de couleurs l'image est ramenée.",
     change:
-      "Donne au rendu sa cohérence de palette. Cette étape s'applique après la réduction sur grille, jamais avant — quantifier 1024 px pour les jeter ensuite coûte cent fois plus pour le même résultat.",
+      "Combien de teintes le sprite garde à la fin. En demander plus que l'image n'en porte n'en fabrique aucune ; le choix proposé suit la taille de case, parce qu'une petite image ne porte pas assez de teintes distinctes.",
     origine: "toi · défaut 32",
   },
 
@@ -1872,14 +2134,14 @@ export const AIDE: Record<string, Explication> = {
       "À 0, seule la couleur exacte part. Monter attrape les nuances voisines — les deux ou trois bleus qu'une réduction a laissés là où l'œil n'en voit qu'un.",
     origine: "toi · défaut 0",
     long:
-      "L'écart se mesure comme partout dans le dépôt : le plus grand des trois écarts, sur le rouge, le vert et le bleu — la même règle que la détection du fond et le détourage par les bords. Monter trop haut fait déborder la paire sur un voisin qu'on voulait garder ; le rendu se refait à chaque cran, donc le débordement se voit tout de suite.",
+      "L'écart se mesure comme dans le détourage réglé « par canal » : le plus grand des trois écarts, sur le rouge, le vert et le bleu. Monter trop haut fait déborder la paire sur un voisin qu'on voulait garder ; le rendu se refait à chaque cran, donc le débordement se voit tout de suite.",
   },
 
   "etape.bords": {
-    nom: "Nettoyage des bords",
+    nom: "Nettoyage",
     groupe: "La table Nettoyage",
     ou: "tables",
-    quoi: "La cinquième et dernière place : effacer les taches trop petites pour être le sujet.",
+    quoi: "La cinquième place : effacer les taches trop petites pour être le sujet.",
     change:
       "Ne se pose jamais tout seul, et c'est délibéré : c'est le seul geste du post-traitement qui puisse enlever quelque chose au sujet. Il reste à la fiche, là où on le voit agir.",
     origine: "toi seul · jamais posé par l'univers",
@@ -1928,7 +2190,7 @@ export const AIDE: Record<string, Explication> = {
     quoi: "Une poche de fond enfermée dans le sujet, plus petite que ce seuil, devient transparente.",
     change:
       "Efface le résidu de fond resté enfermé dans le sujet après le détourage, celui qu'un remplissage parti des bords de l'image n'a jamais pu atteindre.",
-    origine: "toi · défaut 0, et 0 ne reboucher rien",
+    origine: "toi · défaut 0, et 0 ne rebouche rien",
     long:
       "Une poche est opaque, couleur du fond, entourée de sujet, et jamais atteinte par le remplissage qui part des bords de l'image vers l'intérieur — l'inverse exact du trou, qui est transparent. La comparaison de couleur tolère un petit écart, pour la compression ou l'anticrénelage.",
   },
@@ -2013,12 +2275,12 @@ export const AIDE: Record<string, Explication> = {
   // serait franc, mais un contour *troué*, qui se voit et ne se rattrape pas.
 
   "etape.contours": {
-    nom: "Les contours",
+    nom: "Contour",
     groupe: "La table Contour",
     ou: "tables",
     quoi: "La sixième place de la recette. Elle trace un trait sur le bord du sujet, d'une couleur choisie, et le pose dedans, dehors, ou à cheval.",
     change:
-      "Posé dehors, le trait agrandit l'image rendue : c'est le seul réglage du produit qui change les dimensions du sprite sans qu'on le lui ait demandé, et la table le dit en ligne sœur au moment où l'on choisit la position.",
+      "Elle rattrape ce que la mise sur grille a mangé : un contour fin n'y survit pas entier, et ce qui reste est un trait troué, qui se voit. Le trait se retrace ici d'un seul tenant, après la réduction et après les couleurs.",
     origine:
       "toi · éteinte au départ · la couleur proposée est la plus sombre de ta palette",
   },
@@ -2147,7 +2409,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "tables",
     quoi: "La septième place : produire les autres directions du sujet par un miroir ou une rotation, sans repayer un modèle.",
     change:
-      "Rien à la génération sur huit des dix sens : c'est un calcul sur l'image déjà rendue, jamais un nouvel appel au modèle. Ranger le résultat sous une direction du jeu se fait ensuite dans la fenêtre Enregistrer sous…, pas ici.",
+      "Rien à la génération, sur aucun des dix sens : c'est un calcul sur l'image déjà rendue, jamais un nouvel appel au modèle. Ranger le résultat sous une direction du jeu se fait ensuite dans la fenêtre Enregistrer sous…, pas ici.",
     origine: "toi · vide au départ · rien n'est posé tant qu'aucun sens n'est choisi",
   },
 
@@ -2206,7 +2468,7 @@ export const AIDE: Record<string, Explication> = {
   // où elle n'est pas.
 
   "etape.main": {
-    nom: "La main",
+    nom: "Main",
     groupe: "La table Main",
     ou: "tables",
     quoi: "La huitième et dernière place : le crayon et la gomme, au pixel, là où les sept autres tables appliquent une règle à toute l'image.",
@@ -2277,7 +2539,7 @@ export const AIDE: Record<string, Explication> = {
       "**Il n'y a pas de liste de passages** : un geste à main levée en produit des dizaines, illisibles en rangées. Le calque est l'unité de lecture — on le nomme, le masque, le supprime — et le passage n'existe que comme un compte et un Ctrl + Z.\n\nUn passage est un **tracé, jamais des pixels** : il se rejoue sur une image dont les dimensions ont changé, sans perdre le dessin.",
   },
 
-  // ── La fabrique Superposition — poser une pièce sur une pose ──────────────
+  // ── La fabrique Superposer — poser une pièce sur une pose ────────────────
   //
   // **Née sous `ou: "equipement"`, jamais atteignable là** (`GU8`,
   // `docs/PLAN-guide.md`) : une des deux fabriques de `TABLES`
@@ -2287,8 +2549,8 @@ export const AIDE: Record<string, Explication> = {
   // les treize de `GU5` plutôt que de s'y mêler. Groupée et vérifiée ici.
 
   "fabrique.superposition": {
-    nom: "La superposition",
-    groupe: "La fabrique Superposition",
+    nom: "Superposer",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "Il prend deux images — un corps nu et le même habillé — et en tire le calque de ce qu'une pièce a ajouté.",
     change:
@@ -2298,7 +2560,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.images": {
     nom: "les deux images",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "Le dessus, qui se déplace, et le dessous, qui est le sol et ne bouge jamais.",
     change:
@@ -2310,7 +2572,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.detourage": {
     nom: "avant de caler",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "L'état du détourage des deux images — c'est lui qui décide si un calque est seulement possible.",
     change:
@@ -2322,7 +2584,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.voir": {
     nom: "voir les deux images",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "L'opacité et le mode de couleur du dessous, l'opacité du dessus.",
     change:
@@ -2334,7 +2596,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.calage": {
     nom: "le calage",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "Où le dessus se pose sur le dessous — une proposition, puis ce que tu ajustes.",
     change:
@@ -2346,7 +2608,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.echelle": {
     nom: "échelle du dessus",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "La taille du dessus par rapport au dessous. Détente à 1,000.",
     change:
@@ -2358,7 +2620,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.decalage": {
     nom: "décalage du dessus",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "De combien le dessus se déplace, en pixels de l'image rendue.",
     change:
@@ -2369,18 +2631,19 @@ export const AIDE: Record<string, Explication> = {
   },
 
   "superposition.main": {
-    nom: "retoucher le masque d’extraction",
-    groupe: "La fabrique Superposition",
+    nom: "Garder, Retirer",
+    groupe: "La fabrique Superposer",
     ou: "tables",
-    quoi: "Garder récupère les pixels du dessus que la différence a manqués ; Retirer efface ceux qui restent en trop sur le calque.",
-    change: "Les traits corrigent le masque après la différence. Les deux images sources restent intactes.",
-    origine: "toi · taille du pinceau réglable en pixels",
-    long: "Déplacer ajuste le placement du dessus par glissement. Rectangle borne la comparaison. Garder et Retirer montrent le masque en cours, avec l’empreinte du pinceau. Ctrl + molette zoome ; Espace + glisser déplace la vue. Rouvrir un résultat retrouve ses deux sources, ses réglages et ses traits enregistrés.",
+    quoi: "Les deux pinceaux du calque : Garder récupère un pixel que la comparaison a manqué, Retirer efface un pixel resté en trop.",
+    change:
+      "Le calque qui sortira, et rien d'autre : les deux images de départ ne sont jamais repeintes. C'est le rattrapage du seuil, là où aucune valeur ne distinguait la pièce du corps.",
+    origine: "toi · le pinceau se règle en pixels",
+    long: "Les deux pinceaux montrent le calque en cours sous l'empreinte du pinceau, pour qu'on voie ce qu'on prend. Ctrl + molette approche, Espace + glisser déplace la vue. Rouvrir un résultat retrouve ses deux images, ses réglages et les traits déjà posés.",
   },
 
   "superposition.seuil": {
     nom: "ce qu'on garde du dessus",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "De combien une couleur doit changer pour compter comme changée, et le rectangle hors duquel le dessus est masqué.",
     change:
@@ -2392,7 +2655,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.sorties": {
     nom: "ce qu'on en sort",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "Le calque — ce que le dessus ajoute, sur fond transparent — et l'aplat — les deux fondues en une.",
     change:
@@ -2404,7 +2667,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.fond": {
     nom: "le fond du calque",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "Sur quoi on regarde le calque seul — le damier, ou l'un des cinq aplats vifs.",
     change:
@@ -2416,7 +2679,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.resultat": {
     nom: "le résultat",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "Le dessous à 100 %, le calque par-dessus — tel que ce sera dans le jeu.",
     change:
@@ -2428,7 +2691,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.mesures": {
     nom: "ce que la comparaison a mesuré",
-    groupe: "La fabrique Superposition",
+    groupe: "La fabrique Superposer",
     ou: "tables",
     quoi: "Cinq nombres : silhouette, corps repeint, ajout, échelle, compacité.",
     change:
@@ -2438,7 +2701,7 @@ export const AIDE: Record<string, Explication> = {
       "**Silhouette** : ce qui reste du corps de départ, proche de 1 si la forme est gardée.\n\n**Corps repeint** : la part du corps changée hors de l'ajout — beaucoup veut dire un redessin plutôt qu'un habillage.\n\n**Ajout** : ce qui est apparu, en part du corps.\n\n**Échelle** : la taille du dessus au retour, 0,62 pour un dézoom.\n\n**Compacité** : proche de 1, un objet ; proche de 0, une poussière semée.",
   },
 
-  // ── La fabrique Découpage — une planche multi-sprites, en rectangles ──────
+  // ── La fabrique Découper — une planche multi-sprites, en rectangles ───────
   //
   // L'autre fabrique de `TABLES` (`interface/src/recette.ts`), rendue par
   // `Decoupe.tsx` et montée par `Retouche.tsx` — même origine que la
@@ -2452,11 +2715,11 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.mode": {
     nom: "Détection",
-    groupe: "La fabrique Découpage",
+    groupe: "La fabrique Découper",
     ou: "tables",
     quoi: "Comment les rectangles sont proposés : « auto » cherche les zones opaques, « grille » des cases égales, « gouttières » les bandes de fond.",
     change:
-      "Ne découpe rien — propose. Ce qui part à la découpe est la liste que tu vois à droite, corrections à la main comprises. Changer ce réglage relance la détection et remplace ce que tu as dessiné.",
+      "Ne découpe rien — propose. Ce qui part à la découpe est la liste que tu vois à droite, corrections à la main comprises. Changer ce réglage relance la détection et remplace ce que tu as dessiné. Le même écran s'ouvre par quatre portes — la table Découper d'une retouche, une carte de la toile, « Refaire le découpage » sur la fiche d'une image, et « viser ou découper une frame » dans l'atelier d'une bande — et ces cinq réglages sont les mêmes partout.",
     origine: "toi · défaut auto",
     long:
       "Auto détoure d'abord : une planche fraîche est opaque de bord à bord, sa seule zone connexe serait l'image entière.\n\nGrille répond à une autre nature de planche — sprites qui se touchent, cases vides à conserver.\n\nGouttières lisent la brute telle quelle : bandes d'une seule couleur, coupées là.\n\nUne détection à une boîte, ou aucune, est un résultat, pas une panne.",
@@ -2464,7 +2727,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.taille_min": {
     nom: "taille minimale",
-    groupe: "La fabrique Découpage",
+    groupe: "La fabrique Découper",
     ou: "tables",
     quoi: "En dessous de ce côté, en pixels, une zone opaque n'est pas un sprite.",
     change:
@@ -2476,7 +2739,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.colonnes": {
     nom: "colonnes",
-    groupe: "La fabrique Découpage",
+    groupe: "La fabrique Découper",
     ou: "tables",
     quoi: "Le nombre de colonnes égales dans lesquelles la planche est coupée.",
     change:
@@ -2488,7 +2751,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.lignes": {
     nom: "lignes",
-    groupe: "La fabrique Découpage",
+    groupe: "La fabrique Découper",
     ou: "tables",
     quoi: "Le nombre de rangées égales dans lesquelles la planche est coupée.",
     change:
@@ -2498,7 +2761,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.animation": {
     nom: "en faire une animation",
-    groupe: "La fabrique Découpage",
+    groupe: "La fabrique Découper",
     ou: "tables",
     quoi: "Les mêmes rectangles, mais les cases deviennent les images d'une animation au lieu d'images séparées.",
     change:
@@ -2527,12 +2790,20 @@ export const AIDE: Record<string, Explication> = {
   // (Les quatre `son.*` qui logeaient ici ont quitté la galerie en
   // `GU14` : elles ont leur écran, plus bas, avec les autres fiches du son.)
 
+  // **Tranchée en `GU16` (2/2)** : `GU12` laissait ouverte la question d'un
+  // `ou` pour ce qui se voit partout. Il n'y en aura pas — un écran de guide
+  // décrit l'écran qu'on a sous les yeux, et une valeur « le châssis » ne
+  // serait jamais calculée par `ecranDuGuide`. La fiche reste sur l'écran
+  // d'ouverture du produit, et son groupe dit en toutes lettres que la colonne
+  // est la même partout.
   "atelier.navigation": {
-    nom: "navigation repliée", ou: "galerie",
+    nom: "Replier la navigation",
+    ou: "galerie",
     groupe: "La colonne de gauche — la même sur tous les écrans",
-    quoi: "Une colonne compacte pour passer du jeu à sa toile, ses assets, sa galerie, ses fabrications et sa livraison.",
-    change: "Le bouton en haut replie la colonne sans retirer les destinations. Les familles et collections se rangent dans les assets ; les outils conservent leur place dans leurs ateliers.",
-    origine: "toi · navigation dépliée au départ",
+    quoi: "La colonne de gauche, la même sur tous les écrans — le jeu, sa toile, ses sujets, sa galerie, ses fabrications, sa livraison.",
+    change:
+      "Le bouton du haut la replie sans retirer une seule destination : il ne reste que les noms courts. Les familles et les collections se rangent sous Les sujets ; les outils gardent leur place dans leurs ateliers.",
+    origine: "toi · dépliée au départ",
   },
 
   "galerie.role": {
@@ -2583,7 +2854,7 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Faire entrer une image — le bouton, ou un dépôt sur la grille",
     quoi: "Faire entrer une image de ton disque dans la bibliothèque — par le bouton, ou en la déposant sur la grille.",
     change:
-      "Elle devient un asset entier : elle se retouche, se découpe, se réinjecte, s'exporte et se supprime comme celles que tu as payées. Sa fiche dit « importé » et un coût nul, et son nom est celui du fichier.",
+      "Elle devient une image entière du jeu : elle se retouche, se découpe, se réinjecte, s'exporte et se supprime comme celles que tu as payées. Sa fiche dit « importé » et un coût nul, et son nom est celui du fichier.",
     origine: "ton disque · le même geste que l'agent a depuis le serveur MCP",
     long:
       "Un appel part par fichier, sans attendre les autres : douze fichiers déposés font entrer onze images et nomment le douzième s'il n'en est pas une.\n\nSi les mêmes octets sont déjà dans ce projet, rien n'entre : un lien vers l'image existante paraît, avec « Importer quand même » toujours possible — projet par projet, la même référence pouvant servir ailleurs. Rien de tout cela ne coûte un centime.",
@@ -2598,7 +2869,7 @@ export const AIDE: Record<string, Explication> = {
       "Sur « brute », l'image entre aux dimensions du fichier et sa recette reste vide — c'est le même mot que la visionneuse de la fiche, et il veut dire la même chose. Sur « traitée », elle arrive habillée comme une image générée ici.",
     origine: "toi · défaut « brute »",
     long:
-      "Le choix vaut pour toute la séance, bouton et dépôt confondus, plutôt que de reposer la question à chaque fichier : douze fichiers déposés ensemble la poseraient douze fois.\n\nUne image entrée telle quelle le reste : « Tout réaligner » ne la touche pas, une recette vide étant un choix, pas un oubli — la même règle que pour un asset ramené au brut.",
+      "Le choix vaut pour toute la séance, bouton et dépôt confondus, plutôt que de reposer la question à chaque fichier : douze fichiers déposés ensemble la poseraient douze fois.\n\nUne image entrée telle quelle le reste : « Tout réaligner » ne la touche pas, une recette vide étant un choix, pas un oubli — la même règle que pour une image ramenée au brut.",
   },
 
   // ── Les fournisseurs — l'onglet *Moteurs & workflows*, et l'installation ──
@@ -2656,7 +2927,7 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Juger l'image — favori, réinjecter, supprimer",
     quoi: "Renvoyer cette image dans le générateur, dans l'un de ses quatre rôles.",
     change:
-      "Trois rôles envoient l'image — référence (elle inspire), source d'édition (elle engendre), guide de style (elle donne la manière). Le quatrième n'envoie rien : il reprend le prompt, le modèle et les réglages de la génération qui a produit cet asset.",
+      "Trois rôles envoient l'image — référence (elle inspire), source d'édition (elle engendre), guide de style (elle donne la manière). Le quatrième n'envoie rien : il reprend le prompt, le modèle et les réglages de la génération qui a produit cette image.",
     origine: "toi · le contrat de génération nomme les rôles",
     long:
       "Réinjecter ne coûte rien tant qu'on n'a pas cliqué Générer : le rôle se pose dans le panneau, et « Ce qui part » se met à jour. Le compte de références grimpe d'un cran, plafonné par le modèle choisi.\n\nLe quatrième rôle est le seul à toucher au prompt : il refait une image dont on a perdu les réglages, le geste le plus courant après un tri.",
@@ -2883,6 +3154,31 @@ export const AIDE: Record<string, Explication> = {
     long: "Une bande se garde sous un nom, toujours : c'est la seule chose que l'écran exige.\n\nLa case qu'elle remplit, elle, est facultative. **Une bande sans case est un brouillon, et un brouillon ne bloque rien** — tu gardes d'abord, tu ranges ensuite, comme partout ailleurs dans l'atelier.",
   },
 
+  "bande.historique": {
+    nom: "Défaire et refaire une correction",
+    ou: "bande",
+    groupe: "En haut de l'écran — défaire, refaire, le brouillon",
+    quoi: "Revenir sur les corrections de la session, puis les rétablir.",
+    change: "Le montage, les recettes, la Main, la cadence et la boucle. La lecture et le zoom ne créent pas d’étape dans cet historique.",
+    origine: "Défaire / Refaire · Ctrl + Z / Ctrl + Maj + Z · Ctrl + S pour enregistrer",
+    long: "Les changements restent des essais jusqu’à Enregistrer. L’historique permet de parcourir les quatre-vingts derniers états de cette session. Annuler revient au dernier état enregistré. À la réouverture, la bande reprend ses corrections enregistrées ; un brouillon non enregistré peut être repris explicitement. L’historique de gestes démarre une nouvelle session.",
+  },
+
+  // **Rétrécie en GU11** : le texte listait cinq écrans (retouche,
+  // extraction, découpe, montage, fabrication vidéo) — le même mécanisme
+  // que `retouche.brouillon` couvre déjà pour les trois premiers. Cette
+  // fiche-ci vit sous `ou: "bande"` ; elle ne parle donc que de ce que
+  // l'atelier d'une bande et le montage en font.
+  "atelier.brouillon": {
+    nom: "Reprendre des réglages non enregistrés",
+    ou: "bande",
+    groupe: "En haut de l'écran — défaire, refaire, le brouillon",
+    quoi: "Conserver un brouillon sur cet ordinateur quand on quitte l'atelier d'une bande ou le montage sans enregistrer.",
+    change: "Reprendre restaure les réglages dans l'écran. Cela n'enregistre pas l'animation et ne lance aucun appel à un modèle.",
+    origine: "Brouillon conservé · Reprendre le brouillon / Abandonner le brouillon",
+    long: "Le brouillon est séparé de la version enregistrée. Au retour, on le reprend ou on l'abandonne ; si la version enregistrée a changé entretemps, un message le dit avant la reprise. Enregistrer la bande, ou garder une animation depuis le montage, termine ce brouillon.",
+  },
+
   // **`bande.main` et `bande.historique` déplacées sous `ou: "bande"` en
   // GU6**, réécrites et zonées en GU11 : la Table de retouche → Main et
   // l'historique de gestes vivent dans le même atelier d'une bande que
@@ -2896,15 +3192,66 @@ export const AIDE: Record<string, Explication> = {
     origine: "atelier de l’animation · Table de retouche → Main",
     long: "Les traits se posent après le placement de la frame : le pixel sous le pinceau est celui qui sera modifié, même si l’image a bougé. Le masque contrôle la transparence ; les calques ajoutent des couleurs, les masquent ou les renomment. Remplacer la source de cette frame efface ses retouches — les coordonnées ne désignent plus la même image. Enregistrer les conserve après fermeture.",
   },
-  "bande.historique": {
-    nom: "Défaire et refaire une correction",
+
+  // **Le codex, plus la galerie** : depuis la V3.03, le montage ne règle
+  // aucun traitement — il taille le mouvement —, et la recette d'une
+  // animation se règle dans son atelier, qui s'ouvre depuis la matrice d'un
+  // personnage.
+  // **Déplacée sous `ou: "bande"` en GU6**, retaillée en GU11 : le « à
+  // savoir » dépassait 2 750 signes. Les deux règles datées qu'il racontait
+  // (3 et 5 septembre 2026) et le détail du comportement à l'échange d'une
+  // frame rejoignent `docs/design-decisions.md` ; ce qui reste ici est ce
+  // qu'on fait aujourd'hui, pas pourquoi.
+  "bande.recette": {
+    nom: "La recette du découpage",
     ou: "bande",
-    groupe: "En haut de l'écran — défaire, refaire, le brouillon",
-    quoi: "Revenir sur les corrections de la session, puis les rétablir.",
-    change: "Le montage, les recettes, la Main, la cadence et la boucle. La lecture et le zoom ne créent pas d’étape dans cet historique.",
-    origine: "Défaire / Refaire · Ctrl + Z / Ctrl + Maj + Z · Ctrl + S pour enregistrer",
-    long: "Les changements restent des essais jusqu’à Enregistrer. L’historique permet de parcourir les quatre-vingts derniers états de cette session. Annuler revient au dernier état enregistré. À la réouverture, la bande reprend ses corrections enregistrées ; un brouillon non enregistré peut être repris explicitement. L’historique de gestes démarre une nouvelle session.",
+    groupe: "La recette — détourer, réduire, limiter les couleurs",
+    quoi: "Ce qu'on fait aux images du clip pour en tirer des sprites : détourer, réduire, limiter les couleurs.",
+    change:
+      "L'aspect de la bande, et rien d'autre. **Trois échelles possibles** — le jeu, la bande, une image ou plusieurs — et elle ne remplace jamais celle du dessus : ce que tu changes ici s'écrit sur cette bande-là, ton jeu ne bouge pas, et la bande suivante repart du jeu. Une retouche à la main ne se remplace jamais par une recette enregistrée.",
+    origine:
+      "celle du jeu · celle de la bande · celle d'une image ou de plusieurs",
+    long: "On règle une image, plusieurs choisies (clic, maj-clic, ctrl-clic, « toutes »), ou l'animation entière — jamais le jeu, qui reste un point de départ. Un curseur ne déplace que sa valeur ; une recette enregistrée remplace tout l'ensemble, et l'écran dit avant combien d'images vont perdre la leur. La Main, elle, ne se remplace jamais.",
   },
+
+  "fiche.recettes": {
+    nom: "Recettes",
+    ou: "bande",
+    groupe: "La recette — détourer, réduire, limiter les couleurs",
+    quoi: "Les recettes que tu as nommées, à reposer sur cette image d'un clic.",
+    change:
+      "Applique les huit places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
+    origine: "toi, en nommant · aucune au départ",
+    long:
+      "Une recette est un ensemble : dans l'atelier d'une animation, elle remplace tous les réglages à la fois — en prendre la moitié rendrait une image que personne n'a jugée. Une recette vide ne s'enregistre pas, et rien ne s'écrit tant que tu n'as pas enregistré. Deux recettes égales sont interchangeables : en reposer une déjà appliquée ne recalcule rien.",
+  },
+
+  "bande.source": {
+    nom: "viser ou découper une frame",
+    ou: "bande",
+    groupe: "Viser ou découper une frame",
+    quoi: "La pipette, le tracé du sujet et le rectangle visent l’image source ; la découpe prélève la frame retouchée.",
+    change: "Une visée corrige uniquement la frame choisie. Découper crée une image en bibliothèque, sans modifier ni enregistrer l’animation.",
+    origine: "toi · depuis l’atelier d’animation",
+    long: "La vue source possède son zoom et son déplacement : ses coordonnées restent celles du fichier original, avant réduction. La découpe part au contraire de la case finale, placement et Main compris. Après la découpe, Revenir à l’animation retrouve les réglages en cours. Les morceaux entrent dans la bibliothèque sans nouvel appel de génération.",
+  },
+
+  // **Déplacée sous `ou: "bande"` en GU6**, réécrite en GU11 : elle décrit
+  // une image du ruban dans l'atelier d'une bande (`AtelierDeBande.tsx`), au
+  // même titre que `bande.position`, `bande.remplacer` et `bande.pelure` —
+  // les quatre forment la zone « la frame choisie » (`CorrectionDeLImage`).
+  "codex.bande.image": {
+    nom: "L'image choisie",
+    ou: "bande",
+    groupe: "La frame choisie — position, remplacer, pelure d'oignon",
+    quoi: "Une image de l'animation, et ce qu'on lui a fait à elle seule : de combien elle a été poussée, et de quel clip elle vient.",
+    change:
+      "Cette image-là, et aucune autre. C'est toute la différence avec les réglages de gauche : ceux-là valent pour l'animation entière, celui-ci ne corrige qu'une pose qui tombe à côté.",
+    origine: "prise dans le clip · poussée à la main",
+    long:
+      "Une image de la bande vient toujours d'un clip, et se souvient duquel : c'est ce qui permet d'aller en rechercher une autre au même endroit. La poussée, elle, n'appartient qu'à cette image-là, et ne suit pas si on remplace sa source. Les trois lignes du dessous sont les trois gestes qu'on lui fait.",
+  },
+
   // ── Les trois gestes de la frame — RP22, la section « Position, source et
   //    pelure d'oignon » ne disait ni ce qu'elle faisait ni comment s'en
   //    servir. Trois entrées plutôt qu'une : chaque geste a la sienne, comme
@@ -2942,20 +3289,48 @@ export const AIDE: Record<string, Explication> = {
     long: "C'est ce qui permet de juger un déplacement au lieu de le deviner : à zéro pour cent, rien ne se voit ; monté, l'image d'avant apparaît en fondu derrière celle qu'on corrige.",
   },
 
-  // **Rétrécie en GU11** : le texte listait cinq écrans (retouche,
-  // extraction, découpe, montage, fabrication vidéo) — le même mécanisme
-  // que `retouche.brouillon` couvre déjà pour les trois premiers. Cette
-  // fiche-ci vit sous `ou: "bande"` ; elle ne parle donc que de ce que
-  // l'atelier d'une bande et le montage en font.
-  "atelier.brouillon": {
-    nom: "Reprendre des réglages non enregistrés",
+  // **`bande.chutier` et `bande.montage` déplacées sous `ou: "bande"` en
+  // GU6**, retaillées et zonées en GU11 : toutes deux accrochées dans
+  // `AtelierDeBande.tsx`, au même titre que `bande.gardees` avant son
+  // départ vers `ou: "montage"` — pas la fiche d'un sujet.
+  "bande.chutier": {
+    nom: "Le chutier",
     ou: "bande",
-    groupe: "En haut de l'écran — défaire, refaire, le brouillon",
-    quoi: "Conserver un brouillon sur cet ordinateur quand on quitte l'atelier d'une bande ou le montage sans enregistrer.",
-    change: "Reprendre restaure les réglages dans l'écran. Cela n'enregistre pas l'animation et ne lance aucun appel à un modèle.",
-    origine: "Brouillon conservé · Reprendre le brouillon / Abandonner le brouillon",
-    long: "Le brouillon est séparé de la version enregistrée. Au retour, on le reprend ou on l'abandonne ; si la version enregistrée a changé entretemps, un message le dit avant la reprise. Enregistrer la bande, ou garder une animation depuis le montage, termine ce brouillon.",
+    groupe: "Le chutier, et reprendre le montage",
+    quoi: "La réserve d'une animation : les images mises de côté, pas encore posées dans le ruban.",
+    change:
+      "Ce que tu retires du ruban y va **avec sa recette**, au lieu de disparaître. Retirer cesse d'être un geste qu'on hésite à faire : l'image est à côté, elle se repose où tu veux, et rien n'est perdu.",
+    origine:
+      "les images que tu retires du ruban · celles que tu vas chercher dans le clip",
+    long: "Deux chemins le remplissent : retirer une image du ruban, ou « prendre des images dans le clip » pour aller chercher ce qui manque dans toute la pellicule. Les boutons avant/après la reposent à côté de l'image que les tables règlent, pas de celle qui joue. Une image est dans la bande ou au chutier, jamais les deux, et il se garde avec l'animation d'une visite à l'autre.",
   },
+
+  "bande.montage": {
+    nom: "Reprendre le montage",
+    ou: "bande",
+    groupe: "Le chutier, et reprendre le montage",
+    quoi: "Rouvrir la pellicule du clip sur une animation déjà gardée, pour en changer les images retenues.",
+    change:
+      "Ce que l'animation contient. Ce que tu gardes **retrouve ses réglages** — sa poussée au pixel, sa recette à elle — et ce que tu laisses tombe au chutier. Rien n'est perdu, et tu n'as rien à reposer de mémoire.",
+    origine: "l'animation telle qu'elle est gardée",
+    long: "Le bouton du bas dit ce qu'il fait — *Reprendre « marche »* — et revenir sans le presser laisse l'animation telle quelle. Deux cas où il est fermé : des corrections de l'atelier attendent (enregistre d'abord), ou l'animation prend ses images dans plusieurs clips. Le cadre s'y lit et ne s'y règle pas : il se reprend dans l'atelier de l'animation.",
+  },
+
+  // **Tranchée en `GU16` (2/2)** : `GU11` laissait ouverte la question d'une
+  // fiche partagée entre l'atelier d'une bande et le montage. Elle reste ici,
+  // là où le cadre **se règle** ; le montage ne fait que le lire, et
+  // `bande.montage` le dit déjà de son côté.
+  "bande.cadre": {
+    nom: "Le cadre de la bande",
+    ou: "bande",
+    groupe: "Le cadre — la fenêtre commune",
+    quoi: "Le rectangle sur lequel toutes les images de la bande sont recadrées.",
+    change:
+      "La taille à laquelle ton personnage sort, et **si elle reste la même d'une animation à l'autre**. Pris sur le clip entier, toutes les bandes de ce clip ont la même assise ; pris sur la bande seule, elles ne s'accordent plus entre elles. L'écran du montage le montre aussi, en lecture : il ne s'y règle pas.",
+    origine: "mesuré par l'atelier · repris à la main si besoin",
+    long: "Sans cadre commun, chaque image se recadre sur sa propre silhouette — un bras tendu l'agrandit, donc réduit le personnage. Une fenêtre par bande cale les images entre elles ; il en faut une par clip pour caler les bandes entre elles, d'où « du clip » par défaut. Les deux autres existent : un cadrage automatique se trompe parfois, et une bande où le personnage quitte le champ a besoin du sien.",
+  },
+
   // **Déplacée sous `ou: "sujet"` en GU11** : son propre `origine` le disait
   // déjà — « Ses animations » — l'onglet de `PageDuSujet.tsx` qui rend
   // `AnimationsDuSujet.tsx`, pas l'atelier d'une bande. `GU6` avait réécrit
@@ -2979,18 +3354,7 @@ export const AIDE: Record<string, Explication> = {
     quoi: "Choisir le personnage, son mouvement et sa direction indépendamment du nom libre de l’animation.",
     change: "La case où l’animation se retrouve. Son clip source, son montage et ses retouches restent conservés.",
     origine: "montage vidéo · Classement de l’animation",
-    long: "Aucun personnage laisse un brouillon libre. Un personnage sans mouvement laisse un brouillon dans sa fiche. Les choix viennent du jeu et du personnage : une direction rangée n’est pas reproposée. Reclasser une animation ne régénère aucune image. Les équipements liés à l’ancien porteur ou à l’ancienne case demandent une nouvelle vérification.",
-  },
-
-  "bande.cadre": {
-    nom: "Le cadre de la bande",
-    ou: "bande",
-    groupe: "Le cadre — la fenêtre commune",
-    quoi: "Le rectangle sur lequel toutes les images de la bande sont recadrées.",
-    change:
-      "La taille à laquelle ton personnage sort, et **si elle reste la même d'une animation à l'autre**. Pris sur le clip entier, toutes les bandes de ce clip ont la même assise ; pris sur la bande seule, elles ne s'accordent plus entre elles.",
-    origine: "mesuré par l'atelier · repris à la main si besoin",
-    long: "Sans cadre commun, chaque image se recadre sur sa propre silhouette — un bras tendu l'agrandit, donc réduit le personnage. Une fenêtre par bande cale les images entre elles ; il en faut une par clip pour caler les bandes entre elles, d'où « du clip » par défaut. Les deux autres existent : un cadrage automatique se trompe parfois, et une bande où le personnage quitte le champ a besoin du sien.",
+    long: "Sans personnage, l'animation reste un brouillon libre ; avec un personnage mais sans mouvement, un brouillon sur sa fiche. Les choix viennent du jeu et du personnage, et une direction déjà rangée n'est pas reproposée. Reclasser ne refabrique rien. Les équipements liés à l'ancien porteur ou à l'ancienne case redemandent une vérification.",
   },
 
   // **Déplacée sous `ou: "montage"` en GU11** : wirée uniquement dans
@@ -3006,39 +3370,6 @@ export const AIDE: Record<string, Explication> = {
       "L'endroit où ton personnage touche le sol dans le moteur — décalé, il flotte ou s'enfonce. Sans réglage, l'animation garde le repère déjà déclaré pour ce mouvement.",
     origine: "le repère du mouvement · posé à la main si besoin",
     long: "Deux champs, et ils se règlent ensemble : vider l'un efface aussi l'autre, parce qu'un point n'a pas qu'une coordonnée. Le laisser vide n'est pas un oubli — c'est l'animation qui suit son mouvement, comme toutes celles qui n'ont jamais touché ce champ.",
-  },
-
-  // **Le codex, plus la galerie** : depuis la V3.03, le montage ne règle
-  // aucun traitement — il taille le mouvement —, et la recette d'une
-  // animation se règle dans son atelier, qui s'ouvre depuis la matrice d'un
-  // personnage.
-  // **Déplacée sous `ou: "bande"` en GU6**, retaillée en GU11 : le « à
-  // savoir » dépassait 2 750 signes. Les deux règles datées qu'il racontait
-  // (3 et 5 septembre 2026) et le détail du comportement à l'échange d'une
-  // frame rejoignent `docs/design-decisions.md` ; ce qui reste ici est ce
-  // qu'on fait aujourd'hui, pas pourquoi.
-  "bande.recette": {
-    nom: "La recette du découpage",
-    ou: "bande",
-    groupe: "La recette — détourer, réduire, limiter les couleurs",
-    quoi: "Ce qu'on fait aux images du clip pour en tirer des sprites : détourer, réduire, limiter les couleurs.",
-    change:
-      "L'aspect de la bande, et rien d'autre. **Trois échelles possibles** — le jeu, la bande, une image ou plusieurs — et elle ne remplace jamais celle du dessus : ce que tu changes ici s'écrit sur cette bande-là, ton jeu ne bouge pas, et la bande suivante repart du jeu. Une retouche à la main ne se remplace jamais par une recette enregistrée.",
-    origine:
-      "celle du jeu · celle de la bande · celle d'une image ou de plusieurs",
-    long: "On règle une image, plusieurs choisies (clic, maj-clic, ctrl-clic, « toutes »), ou l'animation entière — jamais le jeu, qui reste un point de départ. Un curseur ne déplace que sa valeur ; une recette enregistrée remplace tout l'ensemble, et l'écran dit avant combien d'images vont perdre la leur. La Main, elle, ne se remplace jamais.",
-  },
-
-  "fiche.recettes": {
-    nom: "Recettes",
-    ou: "bande",
-    groupe: "La recette — détourer, réduire, limiter les couleurs",
-    quoi: "Les recettes que tu as nommées, à reposer sur cette image d'un clic.",
-    change:
-      "Applique les huit places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
-    origine: "toi, en nommant · aucune au départ",
-    long:
-      "Une recette est nommée par son empreinte autant que par toi : deux recettes égales sont interchangeables. L'empreinte est rangée à côté de l'image, avec son rendu ; un rendu dont l'empreinte ne correspond plus est traité exactement comme un fichier absent, et se refait à la première lecture. Reposer une recette déjà appliquée ne recalcule donc rien.\n\nUne recette vide ne s'enregistre pas — elle n'aurait rien à rejouer.\n\nDans l'atelier d'une animation, elle **remplace tous les réglages à la fois** : une recette est un ensemble, et en prendre la moitié rendrait une image que personne n'a jamais jugée. Comme le reste de cet écran, elle n'écrit rien tant que tu n'as pas enregistré.",
   },
 
   // **Déplacée sous `ou: "montage"` en GU11** : wirée uniquement dans
@@ -3069,40 +3400,16 @@ export const AIDE: Record<string, Explication> = {
     long: "Effacer une bande n'efface ni le clip ni ses images : un découpage raté ne coûte rien. C'est toute la différence avec l'autre moitié de l'atelier, où jeter une image est jeter de l'argent.\n\nLe prix par bande est le seul chiffre que la version ne connaissait pas d'avance : combien de clips faut-il pour une animation utilisable. Il se remplit à l'usage, ici.",
   },
 
-  // **`bande.chutier` et `bande.montage` déplacées sous `ou: "bande"` en
-  // GU6**, retaillées et zonées en GU11 : toutes deux accrochées dans
-  // `AtelierDeBande.tsx`, au même titre que `bande.gardees` avant son
-  // départ vers `ou: "montage"` — pas la fiche d'un sujet.
-  "bande.chutier": {
-    nom: "Le chutier",
-    ou: "bande",
-    groupe: "Le chutier, et reprendre le montage",
-    quoi: "La réserve d'une animation : les images mises de côté, pas encore posées dans le ruban.",
-    change:
-      "Ce que tu retires du ruban y va **avec sa recette**, au lieu de disparaître. Retirer cesse d'être un geste qu'on hésite à faire : l'image est à côté, elle se repose où tu veux, et rien n'est perdu.",
-    origine:
-      "les images que tu retires du ruban · celles que tu vas chercher dans le clip",
-    long: "Deux chemins le remplissent : retirer une image du ruban, ou « prendre des images dans le clip » pour aller chercher ce qui manque dans toute la pellicule. Les boutons avant/après la reposent à côté de l'image que les tables règlent, pas de celle qui joue. Une image est dans la bande ou au chutier, jamais les deux, et il se garde avec l'animation d'une visite à l'autre.",
-  },
-
-  "bande.montage": {
-    nom: "Reprendre le montage",
-    ou: "bande",
-    groupe: "Le chutier, et reprendre le montage",
-    quoi: "Rouvrir la pellicule du clip sur une animation déjà gardée, pour en changer les images retenues.",
-    change:
-      "Ce que l'animation contient. Ce que tu gardes **retrouve ses réglages** — sa poussée au pixel, sa recette à elle — et ce que tu laisses tombe au chutier. Rien n'est perdu, et tu n'as rien à reposer de mémoire.",
-    origine: "l'animation telle qu'elle est gardée",
-    long: "Le bouton du bas dit ce qu'il fait — *Reprendre « marche »* — et revenir sans le presser laisse l'animation telle quelle. Deux cas où il est fermé : des corrections de l'atelier attendent (enregistre d'abord), ou l'animation prend ses images dans plusieurs clips. Le cadre s'y lit et ne s'y règle pas : il se reprend dans l'atelier de l'animation.",
-  },
-
   "agent.cadre-durable": {
-    nom: "Le cadre de délégation du jeu",
-    quoi: "Le jeu conserve les méthodes et les limites autorisées pour les demandes complètes de l’agent.",
-    change: "Avant chaque appel, l’atelier relit le cadre et réserve le budget partagé. Une fermeture ne remet pas ce total à zéro ; une acceptation externe inconnue conserve sa réservation.",
-    origine: "toi · cadre propre au jeu, distinct des anciens garde-fous de séance",
+    nom: "Le budget est réservé avant les générations",
+    quoi: "Ce que l'agent a le droit de fabriquer seul dans ce jeu : le local, le payant, un nombre d'appels, un budget, un temps de calcul.",
+    change:
+      "Avant qu'une demande parte, l'atelier vérifie qu'il reste de l'argent et retient le montant estimé. Fermer l'atelier ne remet pas le compteur à zéro : ce cadre appartient au jeu, pas à la séance.",
+    origine: "toi · un cadre par jeu, gardé avec lui",
     ou: "reglages",
     groupe: "Agent MCP — le cadre de délégation du jeu",
+    long:
+      "Une demande complète peut demander plusieurs générations — une référence neuve, puis un clip : le compte descend de deux. Deux demandes lancées ensemble puisent dans les mêmes limites. Le prix retenu est une estimation : une facture plus élevée est comptée quand même, et peut bloquer la suite. Le temps de calcul sonore se compte à part — c'est la carte graphique, pas de l'argent.",
   },
 
   "agent.plafond": {
@@ -3228,7 +3535,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "jeu-de-tuiles",
     groupe: "Préparer l'atlas — l'éditeur",
     quoi: "Le terrain au centre et sur les huit bords ou coins d'une tuile carrée.",
-    change: "Les cases voisines de la carte doivent annoncer le même terrain sur leur raccord commun. Ces relations sont exportées dans le TileSet de Godot. Elles ne jugent pas la qualité visuelle des pixels : regardez aussi les répétitions et la transparence sur la carte.",
+    change: "Les cases voisines de la carte doivent annoncer le même terrain sur leur raccord commun. Ces relations sont exportées dans le TileSet de Godot. Elles ne jugent pas les pixels eux-mêmes : les répétitions et la transparence se regardent sur la carte d'essai.",
     origine: "toi · aucun terrain implicite",
   },
 
@@ -3802,6 +4109,329 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Voir ce qui part au jeu relit les fichiers de la ligne ; rien n'est écrit tant qu'on n'a pas livré. Les sons d'un sujet partent aussi avec lui, sous leurs noms stables.",
     origine: "les sons gardés du jeu",
+  },
+
+  // ── Relire avant l'envoi — le seul écran d'où l'argent part (`GU15`) ───────
+  //
+  // `Envoi.tsx` monte, dans le cadre commun de `Relecture.tsx`, ce qu'une
+  // **image fixe** a de particulier. Les autres relectures — un clip, un son,
+  // un rendu 3D — ont leur propre corps et leur propre fenêtre.
+  //
+  // **Ce qui coûte de l'argent, et ce qui n'en coûte pas, est dit à chaque
+  // fiche qui le touche** — et c'est vérifié dans le code, pas supposé. Tout ce
+  // qui se lit ou se corrige ici ne coûte rien : rien n'est appelé avant le
+  // bouton du bas. Le bouton a trois formes : *Payer et lancer* (un fournisseur
+  // qui facture en dollars), *Lancer sur ma carte graphique* (un style local :
+  // un temps, jamais un prix) et *Lancer la fabrication* (un modèle dont la
+  // consommation se compte dans une autre unité). **Sans montant écrit, le
+  // coût est inconnu et l'argent part quand même** : c'est la seule phrase de
+  // l'écran qu'on ne peut pas se permettre de ne pas lire.
+  //
+  // **Les fiches suivent l'écran de haut en bas, colonne de gauche puis colonne
+  // de droite**, comme le fait `Envoi.tsx` : le cadre, le résumé en trois
+  // cases, les textes, le fond, le retour, les images, les consignes, le pied.
+  // `envoi.ecran`, plus haut, ouvre la liste : elle a été déplacée sous ce
+  // `ou` depuis `sujet`.
+
+  "envoi.cadre": {
+    nom: "Modifier l'envoi, Fermer",
+    ou: "envoi",
+    groupe: "Le cadre — ce qui s'ouvre avant la dépense",
+    quoi: "À l'ouverture l'écran se lit sans rien pouvoir changer ; Modifier l'envoi ouvre les interrupteurs, les corrections et les images.",
+    change:
+      "Terminer les modifications les referme. Les modifications ne valent que pour cette génération : l'univers reste inchangé. Fermer, ou Échap, revient sans rien dépenser ; le bouton est retenu tant que l'envoi est en cours.",
+    origine: "toi · verrouillé à l'ouverture",
+  },
+
+  "envoi.modele-et-resultat": {
+    nom: "Fournisseur et modèle, Résultat demandé",
+    ou: "envoi",
+    groupe: "Le résumé en trois cases",
+    quoi: "Le modèle qui recevra la demande, son identifiant dessous, puis ce qu'on lui demande : format, générations, options réglées.",
+    change:
+      "Rien à régler ici : ces deux cases lisent ce qui a été choisi à la préparation. Le nombre de générations est celui des appels que le prix compte.",
+    origine: "la préparation · le modèle et le format choisis",
+  },
+
+  "envoi.consommation": {
+    nom: "Consommation estimée",
+    ou: "envoi",
+    groupe: "Le résumé en trois cases",
+    quoi: "Ce que l'appel devrait coûter : des dollars chez un fournisseur payant, un temps sur un style local — et, dessous, d'où vient le chiffre.",
+    change:
+      "C'est une estimation, jamais une facture : la ligne du dessous dit sur combien de générations passées elle est mesurée. Sans mesure, l'écran écrit « Coût inconnu » et non $0,0000, qui se lirait gratuit ; le montant réellement payé se lit ensuite dans les dépenses.",
+    origine: "mesure · générations déjà passées à ce modèle, sinon durée mesurée sur cette machine",
+    long:
+      "Une moyenne n'est le prix de personne : elle ne tombera juste sur aucune génération donnée. Chaque image jointe ajoute son propre pas, mesuré sur ses propres générations ; quand il n'est pas mesurable, le chiffre est la médiane, images comprises. Sur un style local, la ligne dit d'où vient la durée : mesurée sur cette machine, ou la vitesse du style à défaut.",
+  },
+
+  "envoi.textes": {
+    nom: "Textes envoyés",
+    ou: "envoi",
+    groupe: "Les textes envoyés — lire, éteindre, corriger",
+    quoi: "Le texte exact que le modèle reçoit, mot pour mot, rangé en parties : le contexte, les références, la demande.",
+    change:
+      "Rien n'est résumé ni réécrit : ce qu'on lit est ce qui part. Un style local reçoit son texte d'un bloc, avec ce qui n'est pas parti et pourquoi. On lit d'abord ; on change avec Modifier l'envoi.",
+    origine: "l'atelier · composé par le serveur, dans l'ordre de l'envoi",
+  },
+
+  "envoi.interrupteur": {
+    nom: "L'interrupteur d'une ligne",
+    ou: "envoi",
+    groupe: "Les textes envoyés — lire, éteindre, corriger",
+    quoi: "Le carré à gauche d'une ligne : plein, elle part ; creux, elle ne part pas ; gris, elle part et ne se décoche pas.",
+    change:
+      "Ce qui est éteint n'est pas envoyé, et les textes et le coût se recalculent. Cela ne vaut que pour cet appel : le sujet, l'ambiance et les règles du jeu ne bougent pas. Les lignes sont rangées en groupes : textes du jeu, ambiance, sujet, planche, ce que les images disent, caméra.",
+    origine: "toi · pour cet appel seulement",
+    long:
+      "Éteindre les trois lignes d'une ambiance rallume d'elles-mêmes les textes du jeu qu'elle remplaçait : on ne garde que des écarts, jamais un état complet. Une ligne marquée « remplacé ↓ » est masquée par celle du dessous.",
+  },
+
+  "envoi.corriger": {
+    nom: "Corriger, remettre, garder",
+    ou: "envoi",
+    groupe: "Les textes envoyés — lire, éteindre, corriger",
+    quoi: "Corriger réécrit le texte d'une ligne ; remettre rend l'original ; « garder sur le sujet › » l'inscrit sur la fiche du sujet.",
+    change:
+      "Une correction ne vaut que pour cet appel et ne remonte nulle part : garder est un second geste, écrit, proposé seulement quand une fiche peut la recevoir. Le texte corrigé part mot pour mot.",
+    origine: "toi · pour cet appel seulement",
+  },
+
+  "envoi.texte-a-la-main": {
+    nom: "Modifier le texte complet à la main",
+    ou: "envoi",
+    groupe: "Les textes envoyés — lire, éteindre, corriger",
+    quoi: "Le champ de la demande reçoit tout le texte assemblé, et c'est ce texte-là qui part, mot pour mot.",
+    change:
+      "L'écran se referme sur la préparation, sans rien envoyer : on écrit dans le champ, puis on lance comme d'habitude. Ce n'est plus la somme des lignes qui part, c'est ce champ.",
+    origine: "toi · le texte assemblé au moment du clic",
+  },
+
+  "envoi.fond": {
+    nom: "Fond et prompt négatif",
+    ou: "envoi",
+    groupe: "Le fond et le prompt négatif",
+    quoi: "La couleur de fond demandée et, dessous, la consigne négative : ce qu'on interdit au modèle.",
+    change:
+      "Avec Modifier l'envoi, on prend une autre couleur, « Sans fond » ou « Remettre celui du jeu » ; cela ne vaut que pour cet appel. Le titre se réduit à « Fond » quand un style local ne lit pas le négatif : le fond part quand même, et le détourage au retour en dépend.",
+    origine: "le jeu · la couleur du fond, et l'interdiction qui en découle",
+  },
+
+  "envoi.retour": {
+    nom: "Traitements appliqués au retour",
+    ou: "envoi",
+    groupe: "Au retour, sur la machine",
+    quoi: "Ce que l'atelier fait à l'image une fois reçue : la liste s'ouvre d'un clic et se lit sans rien changer.",
+    change:
+      "Rien de tout cela ne part au modèle ni ne coûte un centime : ça se passe sur cette machine, et les originaux sont conservés. Ces traitements se modifient dans la retouche, à un seul endroit.",
+    origine: "les règles du jeu et la retouche · appliqués après l'arrivée",
+  },
+
+  "envoi.images": {
+    nom: "Images envoyées",
+    ou: "envoi",
+    groupe: "Les images envoyées et les consignes",
+    quoi: "Chaque image jointe, avec sa vignette, sa provenance et son prix ; « n images · m places » dit combien le modèle en accepte.",
+    change:
+      "Avec Modifier l'envoi, on décoche une image : elle ne part plus, pour cet appel seulement, et le coût se recalcule. La barre d'espace l'ouvre en grand ; « Ajouter une référence » en joint une de plus sans quitter l'écran. Une image au-delà des places du modèle est marquée.",
+    origine: "les références du jeu, du sujet et de l'appel · les places du modèle",
+    long:
+      "Chaque image cochée ajoute son prix, écrit sur sa ligne — sauf chez un fournisseur qui ne facture pas. Une planche jointe n'a pas de case : il n'y a rien à décider. Un style local dit ce qu'il fait d'une image jointe : la garder comme sujet, ou repeindre par-dessus.",
+  },
+
+  "envoi.consignes": {
+    nom: "Consignes facultatives",
+    ou: "envoi",
+    groupe: "Les images envoyées et les consignes",
+    quoi: "Des consignes en plus, chacune avec son texte et son interrupteur, que le modèle sait suivre ou non.",
+    change:
+      "Éteinte, une consigne ne part pas ; cela ne vaut que pour cet appel. Une consigne que le modèle ne sait pas suivre reste visible, grisée, avec ce qui l'empêche, plutôt que de disparaître.",
+    origine: "le modèle · ses options, avec leur texte",
+  },
+
+  "envoi.prix": {
+    nom: "Le prix au pied de l'écran",
+    ou: "envoi",
+    groupe: "Le pied — le prix, et le bouton qui lance",
+    quoi: "Le même chiffre que la case du haut, répété là où l'on décide : « estimation » quand il est chiffré, un temps pour un style local.",
+    change:
+      "Dessous, « Aucune génération avant de lancer » dit que rien n'est parti. Un refus s'écrit en rouge et retient le bouton ; un appel parti revenu sans image s'écrit en rouge aussi, et le bouton reste vivant. Il attend aussi la fin de l'actualisation des textes, des images et du coût.",
+    origine: "la case Consommation estimée · répétée au pied",
+  },
+
+  "envoi.avertissements": {
+    nom: "Le compte des avertissements",
+    ou: "envoi",
+    groupe: "Le pied — le prix, et le bouton qui lance",
+    quoi: "« N avertissements — non bloquants » : chacun est écrit là où il porte, sur sa ligne de texte ou dans le bloc des images.",
+    change:
+      "Aucun ne retient le bouton : on peut lancer avec. Le compte dit qu'il y en a, sans qu'on ait à descendre les chercher.",
+    origine: "l'atelier · la liste entière, lignes et images mêlées",
+  },
+
+  "envoi.sauter": {
+    nom: "Ne plus me le montrer pour cette série",
+    ou: "envoi",
+    groupe: "Le pied — le prix, et le bouton qui lance",
+    quoi: "Une case pour sauter cet écran tant qu'on reste sur le même sujet et la même pose. Elle ne paraît que si une case du jeu est visée.",
+    change:
+      "Cochée, le bouton de la barre lance directement — et paie, si le modèle est payant : c'est la seule façon de lancer sans dernière relecture. L'écran revient dès qu'on change de sujet ou de pose. Sur une image libre, sans sujet ni pose, il n'y a pas de suivante qui lui ressemble : la case est absente, et il n'y a pas de case « pour toujours ».",
+    origine: "toi · décochée au départ",
+  },
+
+  "envoi.bouton": {
+    nom: "Payer et lancer, Lancer sur ma carte graphique, Lancer la fabrication",
+    ou: "envoi",
+    groupe: "Le pied — le prix, et le bouton qui lance",
+    quoi: "Le seul bouton d'où l'argent part : son mot dit s'il paie, s'il lance sur ta machine, ou si le modèle ne facture pas en dollars.",
+    change:
+      "« Payer et lancer $0,0245 » : l'appel part chez le fournisseur et se facture ; le montant est l'estimation. Sans montant — « Payer et lancer » seul —, le coût est inconnu et l'argent part quand même. « Lancer sur ma carte graphique » : un style local se lance, il ne se paie pas. « Lancer la fabrication » : le modèle compte sa consommation dans une autre unité que les dollars.",
+    origine: "le modèle · le fournisseur, ou le style local, qui reçoit la demande",
+    long:
+      "Le bouton devient « Envoi en cours… » dès le premier clic et ne repart pas : un second clic ne repaie pas. Un appel parti qui revient sans image s'écrit en rouge au pied de l'écran, et le bouton reste vivant — mais en refaire un se paie de nouveau.",
+  },
+
+  // ── Sur la grille du jeu — la page d'un sujet, posée sur les cases (`GU15`) ─
+  //
+  // `GrilleDuJeu.tsx` **ne fabrique rien, ne modifie rien, ne coûte rien** : ni
+  // barre qui paie, ni bouton qui écrit. Deux contrôles (le zoom, les
+  // voisins), un volet de lecture. Les clés portent `grille-du-jeu.` et non
+  // `grille.`, qui est déjà le préfixe des réglages de la table Pixelisation
+  // (`ou: "tables"`) : `grille.occupation` et `grille.ancrage` y décrivent ce
+  // qu'on *règle*, ici on ne fait que *lire* les mêmes valeurs.
+
+  "grille-du-jeu.zoom": {
+    nom: "Le zoom ×1, ×2, ×4, ×8",
+    ou: "grille",
+    groupe: "Le zoom",
+    quoi: "Un facteur entier, jamais un zoom continu : à ×1,5 un pixel du jeu n'est plus un carré.",
+    change:
+      "Grossit ensemble le sujet, ses voisins et les cases, sans toucher à l'image. Rien à la génération, rien d'écrit.",
+    origine: "toi · ×2 au départ",
+    long:
+      "Un facteur non entier fabrique des pixels qui n'existent pas : certains carrés du jeu deviendraient plus larges que d'autres, et l'on jugerait une image que le jeu n'affichera jamais. C'est la même règle que la vitrine du sujet.",
+  },
+
+  "grille-du-jeu.voisins": {
+    nom: "À côté de lui",
+    ou: "grille",
+    groupe: "À côté de lui — juger l'échelle",
+    quoi: "Allume un autre type de sujet à côté du sien : une silhouette grise à la hauteur que le barème du jeu lui donne, avec son %.",
+    change:
+      "C'est un type, pas un vrai sujet du jeu : rien n'est cherché ni fabriqué, et rien ne s'écrit. Ça sert à juger l'échelle du sujet par rapport à ce qui l'entoure.",
+    origine: "le barème du jeu · un exemplaire de chaque autre type",
+  },
+
+  "grille-du-jeu.occupation": {
+    nom: "Ce qu'il occupe",
+    ou: "grille",
+    groupe: "Ce qu'il occupe — le volet",
+    quoi: "Son type de sujet, sa part de la case, la case du jeu, puis son ancrage, son décalage, sa réduction et s'il se détoure.",
+    change:
+      "Rien à régler ici : c'est une lecture. La part de la case et « Se détoure » viennent du barème du jeu, que règle la famille du type ; l'ancrage, le décalage et la réduction viennent de la recette de son portrait, et se règlent dans la retouche.",
+    origine: "le barème du jeu · la recette de l'image qui sert de portrait",
+    long:
+      "Sans image pour le portrait, les trois dernières lignes disent les valeurs par défaut — en bas, 0 px, au plus proche — et non celles d'une image réelle. Sans taille de case imposée, la ligne « La case du jeu » écrit « aucune imposée ».",
+  },
+
+  "grille-du-jeu.plafond": {
+    nom: "Le plafond réel de sa case, le barème du jeu",
+    ou: "grille",
+    groupe: "Ce qu'il occupe — le volet",
+    quoi: "Le pourcentage maximal qu'un sujet peut occuper sur cette case, puis la liste des types du jeu avec leur part de case.",
+    change:
+      "Rien à régler ici. Le plafond est de 800 % — huit personnages de haut — au plus ; il descend quand la toile de 2 048 px de côté ne suffit plus pour la case du jeu. Le type du sujet est surligné dans la liste.",
+    origine: "le calcul de la retouche · le barème du jeu",
+  },
+
+  // ── Deux côte à côte — comparer, sans rien fabriquer (`GU15`) ──────────────
+  //
+  // `Comparer.tsx` porte **trois écrans sous un seul composant**, et son `<h1>`
+  // change avec le mode : *Le même, deux fois* (deux images d'un sujet),
+  // *Deux animations, même temps* et *Deux côte à côte* (deux sujets). Les
+  // fiches disent le cas général et, quand un contrôle n'existe que dans un
+  // mode, le mode. **Un seul geste écrit** dans tout l'écran : *Choisir pour le
+  // jeu*, sur des animations — il retient l'une et éteint ses sœurs. Le reste
+  // ne fabrique rien, ne modifie rien, ne coûte rien.
+
+  "comparer.avec": {
+    nom: "Comparer avec",
+    ou: "comparer",
+    groupe: "Ce qu'on compare",
+    quoi: "Ses images, ses animations, ou un autre sujet du jeu : ce choix décide de ce que l'écran compare, et de son titre.",
+    change:
+      "Le titre le dit : « Le même, deux fois » pour deux de ses images, « Deux animations, même temps » pour deux animations, « Deux côte à côte » pour deux sujets. Comparer ne coûte rien et n'écrit rien — sauf « Choisir pour le jeu » sur des animations.",
+    origine: "toi · un autre sujet du jeu, quand il y en a un",
+  },
+
+  "comparer.pose": {
+    nom: "La pose, le mouvement, les versions comparées",
+    ou: "comparer",
+    groupe: "Ce qu'on compare",
+    quoi: "Quelle pose ou quel mouvement on regarde, puis quelle version de chaque côté, repérée par sa date.",
+    change:
+      "Pour des images : une pose qui en porte au moins deux. Pour des animations : un mouvement qui en porte deux, dans la même direction, repérées par leur date et leur cadence. Changer de mode remet la pose à la première disponible.",
+    origine: "les images et les animations du sujet",
+  },
+
+  "comparer.affichage": {
+    nom: "Fond, zoom, alignés ou superposés",
+    ou: "comparer",
+    groupe: "Comment on le regarde",
+    quoi: "Le fond derrière les deux côtés, le zoom en crans entiers ×1 à ×8, et — pour des images — alignés au sol ou superposés.",
+    change:
+      "Ne change que l'écran, jamais l'image ni ce qui sort à l'export. « Fond du jeu » prend la couleur du fond du jeu, quand il en a un. Superposés pose la seconde image à moitié transparente sur la première, au même sol. Le zoom est plafonné pour que la scène reste lisible, même à ×8.",
+    origine: "toi · fond neutre, ×4, alignés au sol au départ",
+  },
+
+  "comparer.lecture": {
+    nom: "Lire ensemble, Remettre au début, image d'avant et d'après, vitesse",
+    ou: "comparer",
+    groupe: "Comment on le regarde",
+    quoi: "Une seule horloge pour les deux animations : pause, remise au début, un cran à la fois, et une vitesse ×0.5, ×1 ou ×2.",
+    change:
+      "Chaque côté joue à sa propre cadence, celle qui sortira à l'export : la vitesse ne vaut que pour l'écran. Un cran avance du plus court des deux temps d'image et arrête la lecture ; « Remettre au début » est le seul geste qui remet les deux en phase.",
+    origine: "toi · en lecture, ×1 au départ",
+  },
+
+  "comparer.ecarts": {
+    nom: "Les écarts, chiffrés",
+    ou: "comparer",
+    groupe: "Ce que les chiffres disent",
+    quoi: "Un tableau : ce que mesure chaque côté, l'écart entre les deux, et sur fond rouge ce qui sort de la norme du jeu.",
+    change:
+      "Quatre lignes pour des images — hauteur, largeur, contour, couleurs —, cinq pour des animations — frames, cadence, temps d'image, sens, tour. Rien n'y est mesuré de neuf : ce sont des nombres que le produit calculait déjà, et l'ombre n'est pas mesurée.",
+    origine: "les images et les animations, telles que le jeu les exporte",
+  },
+
+  "comparer.pas-ensemble": {
+    nom: "Ce qui ne va pas ensemble",
+    ou: "comparer",
+    groupe: "Ce que les chiffres disent",
+    quoi: "Pour des images : un défaut par carte — une image qui dépasse sa case, un contour différent, des couleurs au-delà de la palette.",
+    change:
+      "Rien ne se paie ici. « La retoucher » ouvre la retouche sur cette image ; « sa dernière génération a coûté » n'est qu'un repère avant de décider d'en refaire une, depuis la page du sujet.",
+    origine: "la case du jeu, le contour et la palette de l'univers",
+  },
+
+  "comparer.ce-qui-les-separe": {
+    nom: "Ce qui les sépare",
+    ou: "comparer",
+    groupe: "Ce que les chiffres disent",
+    quoi: "Pour des animations : ce qui les distingue, en phrases — la cadence, le sens, le nombre de frames. Des écarts, pas des fautes.",
+    change:
+      "Rien en rouge : deux cadences différentes sont souvent ce qu'on vient départager. Si rien ne diffère, le volet dit qu'elles jouent pareil, et que la différence est ce qui est dessiné dedans.",
+    origine: "les deux animations choisies",
+  },
+
+  "comparer.retenu": {
+    nom: "Retenu, Non jugé, Écarté",
+    ou: "comparer",
+    groupe: "Le verdict sur une animation",
+    quoi: "Sous chaque animation, son verdict — non jugé, retenu, écarté — et « Choisir pour le jeu » retient celle-ci.",
+    change:
+      "C'est le seul geste qui écrit sur cet écran : il retient cette animation et éteint ses sœurs. Il change laquelle sort dans le jeu, jamais comment elle joue. « La retoucher » ouvre son atelier. Rien à payer.",
+    origine: "toi · non jugé au départ",
   },
 }
 

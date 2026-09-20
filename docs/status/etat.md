@@ -11,6 +11,60 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## Le guide, GU1 à GU16 — 20 septembre 2026
+
+Ouvert et clos le même jour, sur une phrase de l'auteur : *« le guide actuel n'est pas toujours
+cohérent ni complet, il est très souvent pompeux, compliqué à lire, et n'aide pas vraiment. »*
+Le plan est `docs/PLAN-guide.md`, le relevé `docs/releves/guide-2026-09-20.md`.
+
+**Ce que la page `?` est devenue.** Elle s'ouvre sur un résumé de l'écran — à quoi sert la page,
+les trois gestes qu'on y fait — puis montre les réglages **groupés par zone de l'écran**, une
+ligne chacun, repliés ; un clic déplie ce que ça change, d'où ça sort, et un « à savoir » quand
+il évite une vraie erreur. Les 229 fiches à plat du relevé de départ sont **316 fiches sur 25
+écrans du guide**, toutes dans un groupe, tous les écrans avec leur résumé.
+
+**Le code d'abord, le texte ensuite, et c'est ce qui a fait tenir le chantier.** Réécrire 229
+fiches dans un volet incapable de les grouper, c'était les réécrire deux fois. `GU2` a fait le
+volet, `GU3` les garde-fous, et seulement après les douze tranches de texte.
+
+**La vraie découverte n'était pas le style, c'était le routage.** Cinq écrans du produit
+montraient le guide d'un autre écran quand on pressait `?` — les règles du jeu (vingt-cinq
+fiches écrites, zéro atteignable), l'installation, la livraison, les trois écrans des tuiles, le
+son, l'envoi. Six tranches ont réparé `ecranDuGuide` (`App.tsx`) avant d'écrire une ligne de
+texte. La décision d'architecture n°5 ferme la porte : **un genre de `lieux.ts` sans écran de
+guide est une erreur d'essai, pas un oubli**, et `aide.test.ts` la tient.
+
+**Un essai par fiche, jamais un essai qui additionne.** `aide.test.ts` refuse un `quoi` de plus
+de 140 signes, un « à savoir » de plus de 400, une fiche sans groupe, un écran sans résumé, un
+genre de lieu sans écran de guide — **868 essais, un par fiche, écran ou genre**, pour que le
+rapport nomme la clé fautive au lieu de dire « une fiche est trop longue ». Ils étaient 404
+rouges sur 658 à leur écriture, et c'est ce compte qui a mesuré l'avancement du chantier.
+
+**L'essai au navigateur a trouvé ce qu'aucun essai jsdom ne pouvait voir** : le volet était
+invisible **et inerte** sur tout écran posé en dialogue modal — `showModal()` met le dialogue
+dans la couche supérieure du navigateur, et un `fixed z-10` passe dessous. Le volet se pose
+maintenant *dans* le dialogue ouvert le plus haut. Trois autres défauts de rendu corrigés au
+passage, dont le volet qui couvrait la colonne qu'il documentait.
+
+**La relecture croisée a rendu vingt-trois désaccords que douze tranches n'avaient pas vus** —
+c'est le prix d'un corpus écrit écran par écran. Les plus parlants : une table s'annonçait « la
+cinquième **et dernière** place » à côté de trois autres numérotées six, sept et huit ; un même
+personnage remplissait « 90 % » de sa case dans une fiche et 100 % dans deux autres ; une fiche
+décrivait encore un dépliant remplacé par un écran en `E14`, et disait donc la même chose qu'une
+autre, sur un autre écran ; trois fiches renvoyaient à des réglages retirés en `GU5`. Et la
+phrase que le plan donne lui-même en exemple de ce qu'il ne faut pas écrire — « l'atelier relit
+le cadre et réserve le budget partagé » — était toujours dans le corpus, sur le cadre de l'agent.
+
+**Ce qui reste, et qui n'est pas du texte.** Sept limites, écrites au relevé : un travail sonore
+rouvert depuis le suivi porte le guide du journal, la fenêtre *Préparer une fabrication* n'a pas
+d'écran à elle alors que c'est là qu'on prépare l'argent, `workflow.version` ne peut servir qu'un
+des deux écrans qui la montrent, l'installation de la machine n'a pas de fiche propre, et rien à
+l'écran n'accroche encore les fiches des tuiles, du son et des quatre écrans de `GU15`. Ce sont
+des manques de routage et de câblage, pas des fiches à réécrire.
+
+**Le chantier n'a appelé aucun modèle et n'a rien dépensé.** C'est ce qui le distingue du coup de
+main (`docs/PLAN-assistant.md`) : le guide est écrit à la main, donc gratuit et vérifiable.
+
 ## TU12 et TU13, les deux champs et l'image de référence — 20 septembre 2026
 
 Nées d'un usage, le 19 au soir : l'auteur a écrit toute sa description dans « C'est fait de

@@ -8,10 +8,10 @@
 // l'essai — un texte recopié ici divergerait du corpus sans que rien ne le
 // dise.
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
-import { VoletGuide, ouvrirGuide, reinitialiserGuide } from "./Guide"
+import { VoletGuide, echapVientDeFermerLeGuide, ouvrirGuide, reinitialiserGuide } from "./Guide"
 import { AIDE, SANS_ENTREE, type Explication } from "../aide"
 
 // Quatre choses que `GU2` apporte — l'encadré de tête, les groupes, le repli,
@@ -319,6 +319,137 @@ describe("le repli — on parcourt, on ne lit pas", () => {
     fireEvent.click(ligne)
 
     expect(screen.queryByText("toi · bord net au départ")).toBeNull()
+  })
+})
+
+// `GU16` (1/2). `CadreDialogue` ouvre son `<dialog>` par `showModal()` : le
+// navigateur le pose dans sa couche supérieure, au-dessus de tout élément
+// ordinaire, et rend inerte tout ce qui n'y est pas. **jsdom ne modélise ni
+// l'un ni l'autre** — il ne peint rien et ne connaît pas la couche supérieure.
+// Ces essais ne prouvent donc pas que le volet se voit : ils prouvent qu'il est
+// **dans** le dialogue ouvert (c'est ce qui le met dans la couche supérieure,
+// et hors de l'inertie), et c'est au navigateur qu'on a vu qu'il paraît.
+describe("sous un dialogue modal, le volet entre dans le dialogue", () => {
+  const dialogue = (nom: string) => {
+    const d = document.createElement("dialog")
+    d.setAttribute("aria-label", nom)
+    document.body.appendChild(d)
+    d.setAttribute("open", "")
+    return d
+  }
+  afterEach(() => {
+    document.querySelectorAll("dialog").forEach((d) => d.remove())
+  })
+
+  test("sans dialogue ouvert, il reste où on le rend", () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="galerie" />)
+
+    expect(document.querySelector("[data-volet-du-guide]")!.closest("dialog")).toBeNull()
+  })
+
+  test("un dialogue déjà ouvert le porte", () => {
+    const d = dialogue("Les sons du jeu")
+
+    render(<VoletGuide onFermer={vi.fn()} ecran="son" />)
+
+    expect(d.querySelector("[data-volet-du-guide]")).toBeTruthy()
+  })
+
+  test("un dialogue qui s'ouvre après lui l'emporte, et le volet lui revient à sa fermeture", async () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="galerie" />)
+    expect(document.querySelector("[data-volet-du-guide]")!.closest("dialog")).toBeNull()
+
+    let d!: HTMLElement
+    await act(async () => {
+      d = dialogue("Créer un sujet")
+      await Promise.resolve()
+    })
+    expect(d.querySelector("[data-volet-du-guide]")).toBeTruthy()
+
+    await act(async () => {
+      d.remove()
+      await Promise.resolve()
+    })
+    expect(document.querySelector("[data-volet-du-guide]")).toBeTruthy()
+    expect(document.querySelector("[data-volet-du-guide]")!.closest("dialog")).toBeNull()
+  })
+
+  test("de deux dialogues empilés, il entre dans le plus haut", () => {
+    dialogue("La fenêtre du dessous")
+    const haut = dialogue("La fenêtre du dessus")
+
+    render(<VoletGuide onFermer={vi.fn()} ecran="galerie" />)
+
+    expect(haut.querySelector("[data-volet-du-guide]")).toBeTruthy()
+  })
+
+  test("Échap ferme le volet et le dit, pour que le dialogue dessous reste ouvert", () => {
+    const onFermer = vi.fn()
+    render(<VoletGuide onFermer={onFermer} ecran="galerie" />)
+    expect(echapVientDeFermerLeGuide()).toBe(false)
+
+    const laisseFaire = fireEvent.keyDown(window, { key: "Escape" })
+
+    expect(onFermer).toHaveBeenCalledTimes(1)
+    expect(laisseFaire).toBe(false) // `preventDefault` : le navigateur ne ferme pas le dialogue
+    expect(echapVientDeFermerLeGuide()).toBe(true)
+  })
+})
+
+// `GU16` (1/2). Le volet est `fixed` : sans place réservée il passait sur la
+// colonne de droite des écrans qui en ont une (la fiche d'une image, « Le
+// résultat » d'une animation) — c'est-à-dire sur ce qu'il explique. jsdom ne
+// fait aucune mise en page : on lui fait dire la largeur de l'écran et le bord
+// droit de l'hôte, et on lit la marge que le volet pose.
+describe("il prend sa place au lieu de couvrir l'écran", () => {
+  const largeurDeLaFenetre = window.innerWidth
+  const poserLaFenetre = (largeur: number) =>
+    Object.defineProperty(window, "innerWidth", { value: largeur, configurable: true })
+  const hote = (droite: number, parent: HTMLElement = document.body) => {
+    const el = document.createElement("div")
+    el.id = "atelier"
+    el.getBoundingClientRect = () => ({ right: droite }) as DOMRect
+    parent.appendChild(el)
+    return el
+  }
+  afterEach(() => {
+    poserLaFenetre(largeurDeLaFenetre)
+    document.getElementById("atelier")?.remove()
+    document.querySelectorAll("dialog").forEach((d) => d.remove())
+  })
+
+  test("l'atelier se rétrécit de la largeur du volet, et la reprend à la fermeture", () => {
+    poserLaFenetre(1440)
+    const atelier = hote(1440)
+
+    const { unmount } = render(<VoletGuide onFermer={vi.fn()} ecran="galerie" />)
+    expect(atelier.style.paddingRight).toBe("380px")
+
+    unmount()
+    expect(atelier.style.paddingRight).toBe("")
+  })
+
+  test("sous 1100 px de large il ne rétrécit rien : il recouvre, comme avant", () => {
+    poserLaFenetre(1000)
+    const atelier = hote(1000)
+
+    render(<VoletGuide onFermer={vi.fn()} ecran="galerie" />)
+
+    expect(atelier.style.paddingRight).toBe("")
+  })
+
+  test("un dialogue centré ne cède que ce qui déborde sous le volet", () => {
+    poserLaFenetre(1440)
+    const atelier = hote(1440)
+    const d = document.createElement("dialog")
+    d.setAttribute("open", "")
+    d.getBoundingClientRect = () => ({ right: 1160 }) as DOMRect // 880 px de large, centré
+    document.body.appendChild(d)
+
+    render(<VoletGuide onFermer={vi.fn()} ecran="galerie" />)
+
+    expect(d.style.paddingRight).toBe("100px") // 1160 - (1440 - 380)
+    expect(atelier.style.paddingRight).toBe("") // le dialogue est au-dessus : c'est lui qui cède
   })
 })
 
