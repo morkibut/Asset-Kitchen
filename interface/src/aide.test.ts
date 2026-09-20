@@ -111,16 +111,29 @@ describe("GU3 — chaque écran du guide a son résumé", () => {
 // qui le sert aujourd'hui — le sien, ou celui d'un genre parent quand c'est
 // un choix documenté dans le code : `bibliotheque` → `codex`, `fabrications`
 // → `clip`, `famille` → `codex` (la grille d'une famille se pose sur le
-// codex), `regles` → `reglages` (`ecranDuGuide`, `App.tsx:1167`, malgré le
-// titre « L'installation » affiché par `Guide.tsx`), `piece`/`emploi`/
+// codex), `piece`/`emploi`/
 // `calques-animes` → `equipement`, `sujet`/`grille`/`comparer` → `sujet`,
 // `retouche` → `tables`, `montage-de-bande` → `bande`. `univers` et `carte`
 // héritent du côté par défaut de l'univers (`coteUnivers`, `App.tsx:829`,
 // vaut `"inspiration"` au départ ; l'autre côté possible est `"ambiances"`,
 // jamais `"jeu"` — § *Le grand constat* du relevé).
 //
+// **Deux lignes ont changé en `GU7`**, et c'est la correction de routage que
+// le relevé réclamait :
+//
+// - `regles` sert `"jeu"`, plus `"reglages"`. Le lieu porte quatre onglets ;
+//   le premier — *Univers*, celui sur lequel il s'ouvre — monte
+//   `ReglesDuJeu` en mode reprise, l'écran qui affiche vraiment le titre
+//   *Réglages*. Les trois autres servent toujours `"reglages"` : cette table
+//   range un genre, pas un état d'écran, et elle note celui qu'on voit en
+//   arrivant.
+// - `installation` n'était testée nulle part dans `ecranDuGuide` : l'ouvrir
+//   montrait le guide de la racine du dessous. Elle sert maintenant
+//   `"reglages"`, qu'elle partage avec l'onglet *Moteurs & workflows* — les
+//   deux écrans montent les mêmes blocs.
+//
 // Une chaîne vide dit que le genre n'a **aujourd'hui aucun écran de guide**,
-// ni le sien ni hérité : c'est le cas de `travail`, `installation`, `envoi`
+// ni le sien ni hérité : c'est le cas de `travail`, `envoi`
 // et des trois genres de tuiles (`tuiles`, `jeu-de-tuiles`,
 // `livraison-de-tuiles`), et c'est exactement ce que cet essai doit refuser.
 //
@@ -136,9 +149,9 @@ const GENRE_VERS_OU: Record<Genre, string> = {
   depenses: "depenses",
   carte: "inspiration",
   famille: "codex",
-  regles: "reglages",
+  regles: "jeu",
   travail: "",
-  installation: "",
+  installation: "reglages",
   sortie: "sortie",
   piece: "equipement",
   emploi: "equipement",

@@ -90,7 +90,17 @@ export function reinitialiserGuide() {
 
 /** Comment un écran se nomme dans l'en-tête du volet. Fermée : ajouter un
  *  membre à `Explication["ou"]` sans l'ajouter ici est une erreur de type,
- *  pas un oubli silencieux. */
+ *  pas un oubli silencieux.
+ *
+ *  ⚠️ **`jeu` et `reglages` ne nomment pas ce qu'on croit, et `GU7` l'a
+ *  réparé.** `jeu` est le titre que `ReglesDuJeu.tsx` affiche en mode reprise
+ *  — littéralement *Réglages* —, c'est-à-dire l'onglet *Univers* de
+ *  `Reglages.tsx` : le nom du jeu, son allure, sa vue, son monde. `reglages`,
+ *  lui, ne porte plus « L'installation » : il sert **deux écrans à la fois**
+ *  depuis `GU7` — l'installation de la machine (`Installation.tsx`) et les
+ *  trois autres onglets des réglages, *Moteurs & workflows*, *Agent MCP*,
+ *  *Consommations*. Aucun des deux ne parle d'un jeu, et les deux partagent
+ *  des blocs (`BlocSecrets`), d'où un seul écran de guide pour les deux. */
 const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   "tableau-de-bord": "Le jeu",
   codex: "Les sujets",
@@ -105,7 +115,7 @@ const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   inspiration: "Univers & toile",
   jeu: "Réglages",
   ambiances: "Ambiances et couleurs",
-  reglages: "L'installation",
+  reglages: "L'atelier et sa machine",
   equipement: "Les équipements",
   sortie: "Livrer au jeu",
 }

@@ -248,6 +248,36 @@ au même titre que leurs voisines déjà rangées sous `ou: "bande"` — déplac
 texte inchangé, ce sera le travail de `GU11`. Les trente-cinq fiches d'origine sont
 aujourd'hui **vingt-sept**, et les six critères ci-dessus tiennent sur l'écran restant.
 
+→ `GU7` (1/2) — **la correction de routage, avant tout texte.** `GU1` avait trouvé la panne
+la plus lourde du relevé : les vingt-cinq fiches de cet écran étaient **injoignables**. Leur
+valeur `ou: "jeu"` ne pouvait être produite que par `coteUnivers`, typé
+`"inspiration" | "ambiances"` — jamais `"jeu"`. Les réécrire d'abord n'aurait donc rien
+changé à l'écran. Trois corrections, toutes dans le routage :
+
+- `ecranDuGuide` (`App.tsx`) distingue enfin les quatre onglets des réglages : l'onglet
+  *Univers*, qui monte `ReglesDuJeu` en mode reprise — l'écran qui affiche vraiment le titre
+  *Réglages* —, produit `"jeu"` ; les trois autres gardent `"reglages"`.
+- L'installation de la machine n'était testée nulle part dans cette chaîne : l'ouvrir montrait
+  le guide de la racine du dessous. Elle produit maintenant `"reglages"`, qu'elle partage avec
+  l'onglet *Moteurs & workflows* — les deux écrans montent les mêmes blocs (`BlocSecrets`).
+  Au passage, l'ordre des conditions suit désormais les gardes du rendu : les dépenses
+  couvrent tout, l'installation couvre les réglages.
+- `NOM_DE_LECRAN.reglages` (`Guide.tsx`) ne dit plus « L'installation » — un nom qui ne
+  couvrait ni les moteurs, ni l'agent, ni les dépenses — mais **« L'atelier et sa machine »**,
+  qui couvre les deux écrans qu'il sert. `NOM_DE_LECRAN.jeu` reste « Réglages » : c'est le
+  `<h1>` de `ReglesDuJeu.tsx` en mode reprise, au mot près.
+
+Les vingt-cinq fiches sont ensuite découpées en **sept zones**, dans l'ordre de l'écran :
+Son nom — le jeu et son dossier · Son allure — le style, la taille, les couleurs · Sa vue —
+d'où l'on regarde le jeu · Son monde — les sept lignes de la bible · Son monde — les deux
+lignes que l'atelier écrit (`rendu` et `vue`, en lecture seule depuis `B14`) · Son monde —
+les étiquettes d'une ligne · S'applique à tout le jeu, mais se règle ailleurs (la liste que
+`ReglesDAilleurs` rend sous les cinq étapes). Deux fiches mortes retirées et notées dans le
+relevé (`assistant.ecran`, `assistant.texte`) ; une déplacée vers son bon écran
+(`agent.cadre-durable` → `ou: "reglages"` : elle décrit `DelegationDuJeu`, monté par l'onglet
+*Agent MCP*). Les vingt-cinq fiches d'origine sont aujourd'hui **vingt-deux**, toutes rangées
+et toutes joignables — **mais aucune n'est encore réécrite** : c'est `GU7` (2/2).
+
 ---
 
 ## Les écrans qui n'ont rien

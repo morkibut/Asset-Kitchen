@@ -78,22 +78,33 @@ export type Explication = {
    *  mêmes de `Lieu` (`interface/src/lieux.ts`) : `codex`, `sujet`, `galerie`,
    *  `case`, `clip`, `bande`, `tables`, `depenses`, `tableau-de-bord`. Trois
    *  valeurs de plus, sans équivalent dans la pile parce qu'un **côté** de
-   *  l'univers n'est pas un lieu où l'on empile — `inspiration`, `jeu`,
-   *  `ambiances` : les trois côtés de l'écran univers, au même nom que
-   *  `Univers.tsx` exporte déjà (`type Cote`). Et deux qui ne sont ni l'un ni
-   *  l'autre : `reglages`, l'installation de l'atelier — un écran par
-   *  booléen, hors de la pile — et `equipement`, **qui a enfin le sien depuis
-   *  `B19`** : la page d'une pièce (`Emplois.tsx`) et celle d'un emploi
-   *  (`Emploi.tsx`) rendent cette valeur, et les **dix-sept** entrées des
-   *  fabriques s'y ouvrent. Avant, aucun écran ne la rendait jamais : dix-sept
-   *  explications écrites et joignables par rien. Le plan de la V4 en annonce
-   *  dix-neuf ; le dépôt en porte dix-sept, et c'est le compte relevé.
+   *  l'univers n'est pas un lieu où l'on empile — `inspiration` et
+   *  `ambiances` : les deux côtés de l'écran univers, au même nom que
+   *  `Univers.tsx` exporte déjà (`type Cote`). Et `equipement`, **qui a enfin
+   *  le sien depuis `B19`** : la page d'une pièce (`Emplois.tsx`) et celle
+   *  d'un emploi (`Emploi.tsx`) rendent cette valeur, et les **dix-sept**
+   *  entrées des fabriques s'y ouvrent. Avant, aucun écran ne la rendait
+   *  jamais : dix-sept explications écrites et joignables par rien. Le plan de
+   *  la V4 en annonce dix-neuf ; le dépôt en porte dix-sept, et c'est le
+   *  compte relevé.
    *
-   *  ⚠️ **`jeu` et `reglages` ne sont pas la même chose**, et le nom de l'un
-   *  n'a pas été aligné sur l'autre : `jeu` est le côté « Réglages » de
-   *  l'univers — ce qu'on pose une fois par projet — quand `reglages` est
-   *  l'installation de la machine — clés, cache, dossier de l'agent. Les
-   *  confondre ferait grossir le mauvais groupe de neuf entrées. */
+   *  ⚠️ **`jeu` et `reglages` ne sont pas la même chose**, et `GU7` a corrigé
+   *  les deux d'un coup — elles nommaient l'une et l'autre autre chose que ce
+   *  qu'elles servaient (`docs/releves/guide-2026-09-20.md` § *Le grand
+   *  constat*) :
+   *
+   *  - `jeu` est l'onglet *Univers* des réglages (`Reglages.tsx`), c'est-à-dire
+   *    `ReglesDuJeu.tsx` en mode reprise : le nom du jeu, son allure, sa vue,
+   *    son monde, ses sons — ce qu'on pose une fois par projet et qui repart
+   *    avec chaque demande. Ce n'était **jamais** un côté de l'univers : la
+   *    valeur était injoignable jusqu'à `GU7`, parce que `coteUnivers` ne peut
+   *    valoir que `"inspiration"` ou `"ambiances"`.
+   *  - `reglages` est tout ce qui ne parle d'aucun jeu : l'installation de la
+   *    machine (`Installation.tsx`) **et** les trois autres onglets des
+   *    réglages — moteurs, agent, consommations. Les deux écrans montent les
+   *    mêmes blocs, d'où une seule valeur pour les deux.
+   *
+   *  Les confondre ferait grossir le mauvais groupe de vingt-deux entrées. */
   ou:
     | "tableau-de-bord"
     | "codex"
@@ -271,9 +282,10 @@ export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {
 
   reglages: {
     aQuoi:
-      "Réglages — trois onglets pour l'atelier entier : les moteurs et méthodes, le cadre de l'agent, et l'argent dépensé.",
+      "Ce qui ne parle d'aucun jeu et vaut pour toute la machine : les moteurs et les méthodes, le cadre de l'agent, l'argent dépensé, l'installation.",
     gestes: [
       "On dépose une clé chez un fournisseur, ou on installe une méthode locale.",
+      "On branche ComfyUI et le dossier où tout se range, une fois pour tous les jeux.",
       "On règle le cadre de délégation : ce que l'agent a le droit de faire et de payer.",
       "On ouvre les consommations pour juger ce que ce jeu a coûté.",
     ],
@@ -420,13 +432,6 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · paramètres acceptés et relus par le moteur externe",
     ou: "clip",
   },
-  "agent.cadre-durable": {
-    nom: "Le cadre de délégation du jeu",
-    quoi: "Le jeu conserve les méthodes et les limites autorisées pour les demandes complètes de l’agent.",
-    change: "Avant chaque appel, l’atelier relit le cadre et réserve le budget partagé. Une fermeture ne remet pas ce total à zéro ; une acceptation externe inconnue conserve sa réservation.",
-    origine: "toi · cadre propre au jeu, distinct des anciens garde-fous de séance",
-    ou: "jeu",
-  },
   "livraison-godot": {
     nom: "Les versions livrées dans Godot",
     quoi: "Une livraison conserve les animations choisies et les fichiers relus avant l’écriture.",
@@ -448,15 +453,99 @@ export const AIDE: Record<string, Explication> = {
     origine: "atelier · journal des appels",
     ou: "clip",
   },
-  // ── L'univers — la bible ──────────────────────────────────────────────────
+  // ── Les règles du jeu — l'écran « Réglages », onglet Univers ──────────────
   //
-  // Sept champs voisins dans le même bloc, tous du texte libre, et rien à
-  // l'écran ne dit lequel porte quoi. C'est la forme exacte du défaut qui a
-  // lancé ce chantier — `groupe` contre `famille` —, à sept exemplaires.
+  // **Ces fiches n'étaient joignables par rien jusqu'à `GU7`.** La valeur
+  // `ou: "jeu"` ne pouvait être produite que par `coteUnivers` (`App.tsx`),
+  // typé `Cote` — `"inspiration" | "ambiances"`, jamais `"jeu"`. Vingt-cinq
+  // fiches écrites, zéro atteignable (`docs/releves/guide-2026-09-20.md`
+  // § *Le grand constat*). `ecranDuGuide` route maintenant l'onglet *Univers*
+  // des réglages ici, et les trois autres onglets vers `reglages`.
+  //
+  // **L'ordre est celui de l'écran** : les cinq étapes de `ReglesDuJeu.tsx`
+  // — Son nom, Son allure, Sa vue, Son monde —, puis la liste en lecture seule
+  // que le même écran rend sous elles (`ReglesDAilleurs`). L'étape « Ses sons »
+  // n'a pas encore de fiche ; elle en recevra avec la réécriture de contenu.
+  //
+  // ⚠️ **Les textes, eux, n'ont pas été touchés par `GU7` (1/2).** Huit fiches
+  // portent encore la clé `assistant.*` et racontent l'assistant en dix étapes
+  // retiré en `C2` ; deux d'entre elles décrivaient un réglage mort et sont
+  // parties (`assistant.ecran`, `assistant.texte`). Les autres décrivent un
+  // réglage qui existe toujours, à l'endroit où ce découpage les range — c'est
+  // la seconde moitié de la tranche qui les réécrit.
+
+  // Son nom — le jeu et son dossier
+
+  "assistant.nom": {
+    nom: "Le nom du jeu",
+    ou: "jeu",
+    groupe: "Son nom — le jeu et son dossier",
+    quoi: "Comment le jeu s'appelle, dans l'atelier.",
+    change:
+      "Rien à la génération : c'est le seul réglage qui ne part jamais au modèle. Le dossier, lui, ne se renomme pas — un dossier qui change de nom sous ses fichiers est un déménagement.",
+    origine: "toi · « Bac à sable » au premier lancement",
+    long:
+      "L'assistant **ne crée pas le jeu, il le renomme** : sur une machine neuve le « Bac à sable » existe déjà, et rien n'est exigé pour commencer. C'est ce qui permet de sortir de l'assistant à n'importe quelle étape et de fabriquer tout de suite.",
+  },
+
+  // Son allure — le style, la taille, les couleurs
+
+  "univers.style": {
+    nom: "style graphique",
+    ou: "jeu",
+    groupe: "Son allure — le style, la taille, les couleurs",
+    quoi: "Comment ton jeu est dessiné : en pixel art, avec des carrés de couleur visibles, ou en dessin, sans carrés apparents.",
+    change:
+      "C'est la question qui commande toutes les autres. Elle décide de ce que « la taille » veut dire, de ce qui part au modèle, et de ce que l'atelier fait de l'image au retour.",
+    origine: "défaut du produit · en pixel art",
+    long:
+      "**En pixel art, la taille est le dessin.** Si tu dis 64, ton personnage *est fait* de 64 carrés. Un personnage de 32 et un de 128 ne sont pas la même image en deux tailles : ce sont deux dessins différents. Et passer de l'image du modèle à 64 carrés, c'est redessiner — c'est là qu'on perd des choses, et c'est tout le sujet du réglage « réduction ».\n\n**En dessin, la taille n'est qu'une finesse.** Ton personnage n'est pas « fait de 512 carrés », il est dessiné. 512 dit seulement combien de détail le fichier garde, et réduire de 1024 à 512 marche tout seul, sans bouillie — il n'y a rien à écraser.\n\n**Ce que le style change, concrètement :**\n\n· la question suivante — « combien de carrés ? » de 8 à 512, ou « quelle finesse ? » de 256 à 2048 ;\n· ce qui part au modèle — la phrase « 2D pixel art on a NxN grid » n'est envoyée qu'en pixel art ;\n· les couleurs — réduites à une palette finie en pixel art, gardées telles quelles en dessin, parce que réduire les couleurs d'un dessin en ferait une affiche sérigraphiée.\n\n**Changer de style ne rejoue aucune image déjà rendue.** Ce que le style décide entre dans les prochaines recettes, comme la taille de case. Si la taille posée n'a plus de sens dans le nouveau style — 64 carrés qui deviendraient une finesse de 64, c'est-à-dire une vignette —, elle passe au défaut du nouveau style et l'écran le montre tout de suite.\n\n**Godot ne demande rien de tout ça**, mais il a besoin d'une chose qui en dépend : le filtre de texture. « Nearest » en pixel art, sans quoi tes carrés deviennent flous ; « Linear » en dessin, sans quoi tes contours deviennent crénelés.",
+  },
+
+  "univers.cible_px": {
+    nom: "Taille de pixel",
+    ou: "jeu",
+    groupe: "Son allure — le style, la taille, les couleurs",
+    quoi: "Le côté de case, en pixels, imposé à tout ce qui entre dans ce projet — ou aucune, et le rendu du modèle entre tel quel.",
+    change:
+      "Toute image née ici arrive déjà remise sur cette grille. Sur « aucune », il n'y a pas de remise sur grille du tout : le détourage, le recadrage et la palette continuent, l'occupation du barème cesse d'agir. Les assets déjà là ne bougent pas tout seuls — « Tout réaligner » est un geste, jamais un effet de bord.",
+    origine: "toi, une fois par projet · défaut 64",
+    long:
+      "« Aucune » est une valeur, pas un réglage éteint : elle dit que ton jeu n'est pas en pixel art, et c'est la seule échappatoire à la seule étape que le projet imposait sans en avoir. Elle existe parce que le contraire produisait un atelier qui imposait une apparence que personne n'avait posée — toute image revenait sur 64 pixels, et rien à l'écran ne le disait.\n\nSur « aucune », « Tout réaligner » ne rééchantillonne rien et le dit avec son compte : il retire la grille des assets qu'il touche au lieu de leur en poser une.\n\nAvec une cible, elle est imposée et jamais déduite de l'image reçue. Dix modèles sur douze font dériver la taille du pixel d'une génération à l'autre : la grille rendue va de 7 à 20 px, facteur 2 à l'intérieur d'un même lot. Déduire la cible de ce qui revient reviendrait à laisser le fournisseur décider de l'échelle de ton jeu.\n\nRéaligner ne coûte rien — aucun appel payant, aucune image regénérée : les octets bruts sont là, et la recette se rejoue en millisecondes. Le balayage saute les assets ramenés au brut, parce que le vide est une décision : revenir à l'image d'origine est un seul geste, et lui reposer une grille le déferait.",
+  },
+
+  "assistant.taille": {
+    nom: "La taille des images",
+    ou: "jeu",
+    groupe: "Son allure — le style, la taille, les couleurs",
+    quoi: "Le côté de la case où tout ce qui rentre est ramené.",
+    change:
+      "**C'est le plus coûteux des dix réglages.** Tout ce qui a été fabriqué a été découpé à l'ancienne taille : les images ne se recoupent pas, il faut les refabriquer, et chacune se paie. La ligne le dit avec le compte et le coût — puis laisse passer.",
+    origine: "toi · 64 px au départ, ou « aucune »",
+    long:
+      "Le choix remplit aussi **la phrase de grille et celle de calage** dans la description, ce qui répare la contradiction mesurée du dépôt : le réglage disait 128 pendant que le texte envoyé disait 64, trois fois.\n\n**Le réglage n'est jamais grisé.** Le produit n'a qu'un seul refus automatique — le compte d'images — et en ajouter un deuxième reviendrait à bloquer un auteur sur son propre jeu. Un chiffre exact aide mieux qu'une case grise.\n\n« Aucune » est une valeur et non un trou : elle dit *ce jeu n'est pas en pixel art*, et l'image entre telle que le modèle l'a rendue.",
+  },
+
+  // Sa vue — d'où l'on regarde le jeu
+
+  "assistant.vue": {
+    nom: "La vue du jeu",
+    ou: "jeu",
+    groupe: "Sa vue — d'où l'on regarde le jeu",
+    quoi: "D'où l'on regarde le monde — de face, de côté, de dessus, en isométrie.",
+    change:
+      "**La liste des directions de ton jeu**, et la phrase de style qui part au modèle. C'est cette liste qui multiplie toute la production, donc tout ce qu'on paiera : un personnage qui marche vu de côté se dessine deux fois ; le même vu de dessus, quatre.",
+    origine: "toi · aucune au départ",
+    long:
+      "Ce choix ne décide pas de l'apparence du jeu. Il remplit **deux endroits d'un coup** : la liste des directions, que le codex affiche et qu'on peut y renommer, et la phrase de la case *vue* qui part au modèle. Ces deux-là ne peuvent plus se contredire, parce qu'ils viennent du même geste.\n\nAvant, le nombre de directions était retapé **sept fois** — une dans la description, puis à la main sur chaque pose — et rien ne reliait ces sept endroits.\n\n**La liste est une proposition, jamais une contrainte.** On renomme, on retire, on ajoute depuis le codex, et un clic la rend à ce que la vue propose. Tant qu'on n'y touche pas elle suit la vue ; dès qu'on y touche elle ne la suit plus — et le codex écrit lequel des deux, parce que ce ne sont pas la même promesse.\n\n**Le nombre de directions ne part plus dans le texte**, depuis le 31 août 2026 : il contredisait la consigne des planches d'équipement, et chaque image dit désormais elle-même la direction qu'elle montre.",
+  },
+
+  // Son monde — les sept lignes de la bible
 
   "univers.bible": {
     nom: "Bible",
     ou: "jeu",
+    groupe: "Son monde — les sept lignes de la bible",
     quoi: "Sept champs nommés qui disent ce qu'est ton jeu — monde, époque, technique de rendu, trait, éclairage, vue et cadrage, contraintes techniques.",
     change:
       "Chaque champ actif et non vide part en tête du prompt, à chaque génération, sans que tu le retapes. Un champ éteint ne part pas : l'interrupteur est le doseur. L'écran de confirmation, qui s'ouvre entre le bouton et la dépense, montre le résultat exact — une ligne par champ, avec son interrupteur.",
@@ -468,6 +557,7 @@ export const AIDE: Record<string, Explication> = {
   "bible.monde": {
     nom: "monde",
     ou: "jeu",
+    groupe: "Son monde — les sept lignes de la bible",
     quoi: "Où ça se passe et de quoi c'est fait — le lieu, la matière, l'ambiance.",
     change:
       "Part sous « World: » en tête du prompt, à chaque génération. C'est le champ qui tient la cohérence entre deux images faites à trois semaines d'écart.",
@@ -477,15 +567,51 @@ export const AIDE: Record<string, Explication> = {
   "bible.epoque": {
     nom: "époque",
     ou: "jeu",
+    groupe: "Son monde — les sept lignes de la bible",
     quoi: "Le moment technologique du jeu — ce qui existe déjà, et ce qui n'existe pas encore. Elle ne choisit rien à ta place : ce sont tes descriptions qui décident des armes, des vêtements et des outils.",
     change:
       "Part sous « Era: ». C'est ce qui empêche une arbalète de ressortir avec une lunette de visée. **Ce que cette case-là change dans l'image n'a pas été mesuré** — aucun banc ne l'a isolée, et il n'y en aura pas : deux mots dans un prompt ne valent pas huit tirages payés par branche.",
     origine: "toi · vide, donc ne part pas",
   },
 
+  "bible.trait": {
+    nom: "trait",
+    ou: "jeu",
+    groupe: "Son monde — les sept lignes de la bible",
+    quoi: "Comment c'est dessiné : le contour, les aplats, les ombres.",
+    change:
+      "Part sous « Line and shading: ». C'est le champ le plus proche du rendu, donc le premier à relâcher quand tout se ressemble trop.",
+    origine: "toi · vide, donc ne part pas",
+  },
+
+  "bible.eclairage": {
+    nom: "éclairage",
+    ou: "jeu",
+    groupe: "Son monde — les sept lignes de la bible",
+    quoi: "D'où vient la lumière, et ce qu'elle laisse comme ombres.",
+    change:
+      "Part sous « Lighting: ». Deux sprites éclairés de deux côtés différents ne se montent pas dans la même scène.",
+    origine: "toi · vide, donc ne part pas",
+  },
+
+  "bible.technique": {
+    nom: "contraintes techniques",
+    ou: "jeu",
+    groupe: "Son monde — les sept lignes de la bible",
+    quoi: "Ce que l'image doit être, indépendamment de ce qu'elle montre — fond uni, une seule pose, aucun cadre.",
+    change:
+      "Part sous « Technical constraints: ». C'est le champ qui évite les pièges mesurés des modèles, et il agit en amont de tout le post-traitement.",
+    origine: "toi · vide, donc ne part pas",
+    long:
+      "Deux phrases y valent leur place, et elles ont été payées au banc d'essai.\n\n« One single sprite, one pose only » — sans elle, Gemini rend spontanément une planche de trois poses : il calque la mise en page de son image de référence. Le piège est mesuré, pas supposé.\n\nUne consigne de fond uni, ensuite. Le détourage par défaut remplit depuis le bord et rend une silhouette propre sur un fond plat sans demander aucun réseau ; sur un fond chargé, mesuré, il garde 100 % de l'image — il échoue entièrement. Ce champ-là est donc ce qui garde le geste courant gratuit.",
+  },
+
+  // Son monde — les deux lignes que l'atelier écrit
+
   "bible.rendu": {
     nom: "technique de rendu",
     ou: "jeu",
+    groupe: "Son monde — les deux lignes que l'atelier écrit",
     quoi: "Avec quoi l'image est censée être faite — pixel art, peinture numérique, trait encré, rendu 3D.",
     change:
       "Part sous « Rendering technique: ». C'est le champ qui décide de l'apparence là où elle se décide vraiment : dans ce que le modèle dessine, pas dans ce que le post-traitement lui fait ensuite.",
@@ -497,6 +623,7 @@ export const AIDE: Record<string, Explication> = {
   "bible.vue": {
     nom: "vue et cadrage",
     ou: "jeu",
+    groupe: "Son monde — les deux lignes que l'atelier écrit",
     quoi: "D'où on regarde le sujet et jusqu'où on le voit — trois quarts, de face, de profil, plan large, corps entier.",
     change:
       "Part sous « View and framing: ». C'est ce qui évite qu'un personnage sorte de face et le suivant de trois quarts, alors que les deux doivent tenir dans la même scène.",
@@ -505,33 +632,110 @@ export const AIDE: Record<string, Explication> = {
       "Il entre pour une raison mesurée : c'est, avec la technique de rendu, la consigne qui se retapait dans chaque prompt lors de la séance du 28 août 2026. Une consigne qu'on retape à chaque fois est une décision d'univers qui n'a pas de place où se poser.\n\nÀ ne pas confondre avec le barème d'échelles : celui-ci décide de la part de case qu'un sujet occupe *après* coup, par le rééchantillonnage. Ce champ-ci agit avant, sur ce que le modèle cadre. Les deux se complètent ; aucun ne remplace l'autre.",
   },
 
-  "bible.trait": {
-    nom: "trait",
-    ou: "jeu",
-    quoi: "Comment c'est dessiné : le contour, les aplats, les ombres.",
-    change:
-      "Part sous « Line and shading: ». C'est le champ le plus proche du rendu, donc le premier à relâcher quand tout se ressemble trop.",
-    origine: "toi · vide, donc ne part pas",
-  },
+  // Son monde — les étiquettes d'une ligne
 
-  "bible.eclairage": {
-    nom: "éclairage",
+  "assistant.etiquettes": {
+    nom: "Les étiquettes",
     ou: "jeu",
-    quoi: "D'où vient la lumière, et ce qu'elle laisse comme ombres.",
+    groupe: "Son monde — les étiquettes d'une ligne",
+    quoi: "Une paire : un libellé qu'on clique, et le texte anglais qui part vraiment au modèle.",
     change:
-      "Part sous « Lighting: ». Deux sprites éclairés de deux côtés différents ne se montent pas dans la même scène.",
-    origine: "toi · vide, donc ne part pas",
-  },
-
-  "bible.technique": {
-    nom: "contraintes techniques",
-    ou: "jeu",
-    quoi: "Ce que l'image doit être, indépendamment de ce qu'elle montre — fond uni, une seule pose, aucun cadre.",
-    change:
-      "Part sous « Technical constraints: ». C'est le champ qui évite les pièges mesurés des modèles, et il agit en amont de tout le post-traitement.",
-    origine: "toi · vide, donc ne part pas",
+      "Cliquer une étiquette écrit son texte anglais dans la case ouverte. Rien d'autre : ce qui est écrit reste du texte libre, que tu corriges à la main.",
+    origine: "toi · la base est vide au départ, et partagée par tous tes jeux",
     long:
-      "Deux phrases y valent leur place, et elles ont été payées au banc d'essai.\n\n« One single sprite, one pose only » — sans elle, Gemini rend spontanément une planche de trois poses : il calque la mise en page de son image de référence. Le piège est mesuré, pas supposé.\n\nUne consigne de fond uni, ensuite. Le détourage par défaut remplit depuis le bord et rend une silhouette propre sur un fond plat sans demander aucun réseau ; sur un fond chargé, mesuré, il garde 100 % de l'image — il échoue entièrement. Ce champ-là est donc ce qui garde le geste courant gratuit.",
+      "C'est ce qui rend la description **mécanique** au lieu d'être rédigée : on ne cherche plus comment dire « il y a de la brume » à une intelligence artificielle, on l'a trouvé une fois, on l'a nommé, on le reclique.\n\n**La base appartient à l'atelier, pas à un jeu** — comme la clé du fournisseur, elle ne dépend d'aucun. Elle naît vide, personne ne l'écrit à ta place, et elle grandit de chaque étiquette fabriquée dans n'importe quel projet. Au premier jeu, l'étape est donc sept champs de texte libre, et elle le dit franchement.\n\nLa recherche ne montre que les étiquettes **de la case ouverte** : une étiquette d'éclairage n'a rien à faire dans la case du trait.",
+  },
+
+  // S'applique à tout le jeu, mais se règle ailleurs
+
+  "univers.bareme": {
+    nom: "Barème d'échelles",
+    ou: "jeu",
+    groupe: "S'applique à tout le jeu, mais se règle ailleurs",
+    quoi: "La liste des natures de sujet de ton jeu — personnage, meuble, objet tenu, décor — et ce que chacune vaut.",
+    change:
+      "C'est lui qui remplit le contrôle Sujet de l'atelier. Une échelle porte trois choses à la fois : sa famille, sa hauteur, et si le sujet se détoure.",
+    origine: "sept échelles au départ · mesurées le 27/08 sur sept sujets réels",
+    long:
+      "Sans barème, tout ce qui sort du produit fait la même hauteur. Ce n'est pas une coïncidence, c'est ce que donne mécaniquement une hauteur à 100 % : la case est remplie, donc tout la remplit — et un coffre ressort aussi haut qu'une prêtresse.\n\nLa hauteur se compte en personnages, et elle peut les dépasser : 300 % fait un bâtiment de trois personnages, et l'image revient d'autant plus grande. Jusqu'au 3 septembre 2026 elle était bornée au personnage, et c'est une famille entière d'assets que le produit ne savait pas commander — bâtiments, arbres, tours, portes de ville.\n\nTrois choses dans un seul objet parce que deux taxonomies — une pour l'échelle, une pour la famille — se paieraient deux fois à chaque génération. Dire « c'est un objet tenu en main », c'est du même coup dire quelle hauteur il fait et quels artworks partent avec lui. C'est ce qui garde un seul contrôle au moment de générer.\n\nLes sept échelles de départ sont des valeurs de départ, pas une table de vérité : un jeu où les personnages sont des insectes n'a rien à en faire.",
+  },
+
+  "bareme.famille": {
+    nom: "famille d'une échelle",
+    ou: "jeu",
+    groupe: "S'applique à tout le jeu, mais se règle ailleurs",
+    quoi: "La catégorie d'artworks qu'un sujet de cette nature ira chercher en référence.",
+    change:
+      "Choisir « objet tenu » à la génération envoie les artworks de la famille objets, plus ceux marqués « tous ». Le nombre de références change le coût.",
+    origine: "toi · la famille d'origine de l'échelle",
+    long:
+      "C'est le même mécanisme que la famille d'une carte, pris par l'autre bout : la carte dit à quelle famille un artwork appartient, l'échelle dit quelle famille un sujet va chercher. Les deux se rencontrent au moment de générer, et rien d'autre ne décide de ce qui part.",
+  },
+
+  "bareme.occupation": {
+    nom: "occupation d'une échelle",
+    ou: "jeu",
+    groupe: "S'applique à tout le jeu, mais se règle ailleurs",
+    quoi: "La part du côté de la case qu'un sujet de cette nature remplit une fois sur grille, en pourcentage.",
+    change:
+      "C'est la valeur que la recette reprendra à la naissance de l'asset — 100 % pour un personnage, 40 % pour un objet tenu en main.",
+    origine: "toi · mesuré le 27/08 sur sept sujets réels",
+    long:
+      "Deux images arrivent du fournisseur au même format. Si tu les remets simplement sur une grille de 64 px, le tonneau devient aussi grand que le personnage. L'occupation dit « ce tonneau remplit 45 % de sa case », et l'échelle redevient juste.\n\nElle se pose ici, une fois pour le projet, et pas génération par génération : tu ne veux pas rejouer ce calcul à chaque image. La fiche la porte quand même, pour les cas particuliers — mais y toucher épingle l'asset, qui cesse alors de suivre l'univers.",
+  },
+
+  "bareme.silhouette": {
+    nom: "se détoure / plein cadre",
+    ou: "jeu",
+    groupe: "S'applique à tout le jeu, mais se règle ailleurs",
+    quoi: "Si un sujet de cette nature a un contour, ou s'il occupe tout le cadre.",
+    change:
+      "« Plein cadre » retire le détourage et le recadrage de la recette posée à la naissance. C'est le réglage du décor : l'enfermer dans une case carrée lui ajouterait des bandes transparentes que personne n'a demandées.",
+    origine: "toi · se détoure, sauf « décor »",
+    long:
+      "Le détourage suit la nature du sujet, pas un réglage de plus. Ne pas poser de passe suffit à dire « décor » : la remise sur grille lit déjà cette distinction — avoir demandé un détourage, c'est avoir dit que ce qu'on traite a une silhouette.\n\nLa remise sur grille, elle, reste de la partie dans les deux cas. Un décor aussi doit tomber sur le pixel du projet.",
+  },
+
+  "univers.modeles": {
+    nom: "Modèle par famille",
+    ou: "jeu",
+    groupe: "S'applique à tout le jeu, mais se règle ailleurs",
+    quoi: "Le moteur d'image proposé par défaut selon la famille du sujet — pas un réglage global.",
+    change:
+      "Choisir un sujet à l'atelier propose le modèle de sa famille. Une famille sans modèle retombe sur le défaut du catalogue ; ce n'est pas un trou, c'est un réglage qu'on n'a pas posé.",
+    origine: "toi · aucun, donc le catalogue décide",
+  },
+
+  "univers.detourage": {
+    nom: "Le détourage de départ",
+    ou: "jeu",
+    groupe: "S'applique à tout le jeu, mais se règle ailleurs",
+    quoi: "Comment l'atelier retire le fond d'une image qui revient, avant que tu y touches.",
+    change:
+      "Rien ne part au modèle et rien ne coûte : c'est un traitement fait sur ta machine, au retour. Une ligne laissée vide n'est pas un trou — le produit décide à ta place. Et changer un réglage ici ne retouche aucune image déjà faite.",
+    origine: "toi · aucun, donc le produit décide",
+    long:
+      "Trois niveaux décident, dans cet ordre : la famille du sujet, puis la façon dont l'image est venue — toute seule, ou dans une planche découpée —, puis le produit. Une famille réglée l'emporte entièrement sur sa nature. La fiche de chaque image te dit ensuite lequel des trois a décidé, pour que tu saches où aller le changer.\n\nCe qui est livré vient d'un comptage fait sur tes propres recettes, le 3 septembre 2026 : sur les 123 détourages que tu as réglés à la main, le bord rongé suit le moteur employé et presque rien d'autre. Le moteur du bord le laisse à zéro quatre fois sur cinq — il découpe net et ne laisse pas de frange. Le moteur par modèle, lui, en laisse toujours une, et tu l'as rongée de deux pixels quatre fois sur cinq. Depuis cette tranche, changer de moteur amène son bord rongé avec lui, et une valeur que tu as déplacée toi-même n'est jamais réécrite.\n\nLa tolérance et le seuil de transparence ne sont pas ici, et c'est un choix : tu les as laissés à leur valeur livrée 96 fois sur 100. Ils se règlent sur une image, dans sa table de détourage, là où tu vois ce qu'ils font.",
+  },
+
+  "assistant.poses": {
+    nom: "Les poses et les états",
+    ou: "jeu",
+    groupe: "S'applique à tout le jeu, mais se règle ailleurs",
+    quoi: "Ce que chaque chose du jeu peut faire — au repos, en marche, ouverte, vidée.",
+    change:
+      "Chaque pose est une case à remplir dans le codex. **La liste appartient au type d'objet** : un personnage a ses six attitudes, un meuble ses trois états, une tuile aucune — et changer l'une ne touche pas les autres. **Le nombre d'images d'une pose vient du choix de vue**, pas d'une saisie : il ne se retape plus.",
+    origine: "toi, ou l'atelier · une liste proposée par type",
+  },
+
+  "assistant.emplacements": {
+    nom: "Les emplacements d'équipement",
+    ou: "jeu",
+    groupe: "S'applique à tout le jeu, mais se règle ailleurs",
+    quoi: "Les endroits d'un corps où l'on peut accrocher une pièce — la tête, le dos, la main.",
+    change:
+      "**L'ordre compte** : il décide de quelle pièce se dessine par-dessus l'autre. L'étape ne sert que si un type de ce jeu a une silhouette — un jeu de tuiles et de décors n'équipe personne.",
+    origine: "toi · vide au départ",
   },
 
   // ── Les ambiances et les couleurs — le troisième côté de l'univers ────────
@@ -583,94 +787,6 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · aucune ambiance au départ",
     long:
       "Les palettes sont les ingrédients, les ambiances les recettes — c'est pour ça que les deux listes vivent au même endroit.\n\nSes trois textes remplacent ceux du jeu, champ par champ : le monde, l'éclairage, le trait. Ils ne s'ajoutent pas, ils prennent la place — et l'écran de confirmation le montre, ligne par ligne, la perdante barrée sous la gagnante. Éteindre les lignes d'une ambiance rallume donc les textes du jeu **d'elles-mêmes** : ils redeviennent la couche la plus haute qui reste candidate.\n\nCe qu'un appel lui a réellement pris est enregistré avec la génération. Sans ça, relire une vieille image ne dirait plus d'où venait ce qu'elle montre : le réglage aura changé, l'ambiance aura été retouchée, et le texte enregistré porte les mots sans dire lequel venait du jeu.",
-  },
-
-  // ── L'univers — ce qu'il impose ───────────────────────────────────────────
-
-  "univers.cible_px": {
-    nom: "Taille de pixel",
-    ou: "jeu",
-    quoi: "Le côté de case, en pixels, imposé à tout ce qui entre dans ce projet — ou aucune, et le rendu du modèle entre tel quel.",
-    change:
-      "Toute image née ici arrive déjà remise sur cette grille. Sur « aucune », il n'y a pas de remise sur grille du tout : le détourage, le recadrage et la palette continuent, l'occupation du barème cesse d'agir. Les assets déjà là ne bougent pas tout seuls — « Tout réaligner » est un geste, jamais un effet de bord.",
-    origine: "toi, une fois par projet · défaut 64",
-    long:
-      "« Aucune » est une valeur, pas un réglage éteint : elle dit que ton jeu n'est pas en pixel art, et c'est la seule échappatoire à la seule étape que le projet imposait sans en avoir. Elle existe parce que le contraire produisait un atelier qui imposait une apparence que personne n'avait posée — toute image revenait sur 64 pixels, et rien à l'écran ne le disait.\n\nSur « aucune », « Tout réaligner » ne rééchantillonne rien et le dit avec son compte : il retire la grille des assets qu'il touche au lieu de leur en poser une.\n\nAvec une cible, elle est imposée et jamais déduite de l'image reçue. Dix modèles sur douze font dériver la taille du pixel d'une génération à l'autre : la grille rendue va de 7 à 20 px, facteur 2 à l'intérieur d'un même lot. Déduire la cible de ce qui revient reviendrait à laisser le fournisseur décider de l'échelle de ton jeu.\n\nRéaligner ne coûte rien — aucun appel payant, aucune image regénérée : les octets bruts sont là, et la recette se rejoue en millisecondes. Le balayage saute les assets ramenés au brut, parce que le vide est une décision : revenir à l'image d'origine est un seul geste, et lui reposer une grille le déferait.",
-  },
-
-  "univers.bareme": {
-    nom: "Barème d'échelles",
-    ou: "jeu",
-    quoi: "La liste des natures de sujet de ton jeu — personnage, meuble, objet tenu, décor — et ce que chacune vaut.",
-    change:
-      "C'est lui qui remplit le contrôle Sujet de l'atelier. Une échelle porte trois choses à la fois : sa famille, sa hauteur, et si le sujet se détoure.",
-    origine: "sept échelles au départ · mesurées le 27/08 sur sept sujets réels",
-    long:
-      "Sans barème, tout ce qui sort du produit fait la même hauteur. Ce n'est pas une coïncidence, c'est ce que donne mécaniquement une hauteur à 100 % : la case est remplie, donc tout la remplit — et un coffre ressort aussi haut qu'une prêtresse.\n\nLa hauteur se compte en personnages, et elle peut les dépasser : 300 % fait un bâtiment de trois personnages, et l'image revient d'autant plus grande. Jusqu'au 3 septembre 2026 elle était bornée au personnage, et c'est une famille entière d'assets que le produit ne savait pas commander — bâtiments, arbres, tours, portes de ville.\n\nTrois choses dans un seul objet parce que deux taxonomies — une pour l'échelle, une pour la famille — se paieraient deux fois à chaque génération. Dire « c'est un objet tenu en main », c'est du même coup dire quelle hauteur il fait et quels artworks partent avec lui. C'est ce qui garde un seul contrôle au moment de générer.\n\nLes sept échelles de départ sont des valeurs de départ, pas une table de vérité : un jeu où les personnages sont des insectes n'a rien à en faire.",
-  },
-
-  "bareme.famille": {
-    nom: "famille d'une échelle",
-    ou: "jeu",
-    quoi: "La catégorie d'artworks qu'un sujet de cette nature ira chercher en référence.",
-    change:
-      "Choisir « objet tenu » à la génération envoie les artworks de la famille objets, plus ceux marqués « tous ». Le nombre de références change le coût.",
-    origine: "toi · la famille d'origine de l'échelle",
-    long:
-      "C'est le même mécanisme que la famille d'une carte, pris par l'autre bout : la carte dit à quelle famille un artwork appartient, l'échelle dit quelle famille un sujet va chercher. Les deux se rencontrent au moment de générer, et rien d'autre ne décide de ce qui part.",
-  },
-
-  "bareme.occupation": {
-    nom: "occupation d'une échelle",
-    ou: "jeu",
-    quoi: "La part du côté de la case qu'un sujet de cette nature remplit une fois sur grille, en pourcentage.",
-    change:
-      "C'est la valeur que la recette reprendra à la naissance de l'asset — 100 % pour un personnage, 40 % pour un objet tenu en main.",
-    origine: "toi · mesuré le 27/08 sur sept sujets réels",
-    long:
-      "Deux images arrivent du fournisseur au même format. Si tu les remets simplement sur une grille de 64 px, le tonneau devient aussi grand que le personnage. L'occupation dit « ce tonneau remplit 45 % de sa case », et l'échelle redevient juste.\n\nElle se pose ici, une fois pour le projet, et pas génération par génération : tu ne veux pas rejouer ce calcul à chaque image. La fiche la porte quand même, pour les cas particuliers — mais y toucher épingle l'asset, qui cesse alors de suivre l'univers.",
-  },
-
-  "bareme.silhouette": {
-    nom: "se détoure / plein cadre",
-    ou: "jeu",
-    quoi: "Si un sujet de cette nature a un contour, ou s'il occupe tout le cadre.",
-    change:
-      "« Plein cadre » retire le détourage et le recadrage de la recette posée à la naissance. C'est le réglage du décor : l'enfermer dans une case carrée lui ajouterait des bandes transparentes que personne n'a demandées.",
-    origine: "toi · se détoure, sauf « décor »",
-    long:
-      "Le détourage suit la nature du sujet, pas un réglage de plus. Ne pas poser de passe suffit à dire « décor » : la remise sur grille lit déjà cette distinction — avoir demandé un détourage, c'est avoir dit que ce qu'on traite a une silhouette.\n\nLa remise sur grille, elle, reste de la partie dans les deux cas. Un décor aussi doit tomber sur le pixel du projet.",
-  },
-
-  "univers.modeles": {
-    nom: "Modèle par famille",
-    ou: "jeu",
-    quoi: "Le moteur d'image proposé par défaut selon la famille du sujet — pas un réglage global.",
-    change:
-      "Choisir un sujet à l'atelier propose le modèle de sa famille. Une famille sans modèle retombe sur le défaut du catalogue ; ce n'est pas un trou, c'est un réglage qu'on n'a pas posé.",
-    origine: "toi · aucun, donc le catalogue décide",
-  },
-
-  "univers.style": {
-    nom: "style graphique",
-    ou: "jeu",
-    quoi: "Comment ton jeu est dessiné : en pixel art, avec des carrés de couleur visibles, ou en dessin, sans carrés apparents.",
-    change:
-      "C'est la question qui commande toutes les autres. Elle décide de ce que « la taille » veut dire, de ce qui part au modèle, et de ce que l'atelier fait de l'image au retour.",
-    origine: "défaut du produit · en pixel art",
-    long:
-      "**En pixel art, la taille est le dessin.** Si tu dis 64, ton personnage *est fait* de 64 carrés. Un personnage de 32 et un de 128 ne sont pas la même image en deux tailles : ce sont deux dessins différents. Et passer de l'image du modèle à 64 carrés, c'est redessiner — c'est là qu'on perd des choses, et c'est tout le sujet du réglage « réduction ».\n\n**En dessin, la taille n'est qu'une finesse.** Ton personnage n'est pas « fait de 512 carrés », il est dessiné. 512 dit seulement combien de détail le fichier garde, et réduire de 1024 à 512 marche tout seul, sans bouillie — il n'y a rien à écraser.\n\n**Ce que le style change, concrètement :**\n\n· la question suivante — « combien de carrés ? » de 8 à 512, ou « quelle finesse ? » de 256 à 2048 ;\n· ce qui part au modèle — la phrase « 2D pixel art on a NxN grid » n'est envoyée qu'en pixel art ;\n· les couleurs — réduites à une palette finie en pixel art, gardées telles quelles en dessin, parce que réduire les couleurs d'un dessin en ferait une affiche sérigraphiée.\n\n**Changer de style ne rejoue aucune image déjà rendue.** Ce que le style décide entre dans les prochaines recettes, comme la taille de case. Si la taille posée n'a plus de sens dans le nouveau style — 64 carrés qui deviendraient une finesse de 64, c'est-à-dire une vignette —, elle passe au défaut du nouveau style et l'écran le montre tout de suite.\n\n**Godot ne demande rien de tout ça**, mais il a besoin d'une chose qui en dépend : le filtre de texture. « Nearest » en pixel art, sans quoi tes carrés deviennent flous ; « Linear » en dessin, sans quoi tes contours deviennent crénelés.",
-  },
-
-  "univers.detourage": {
-    nom: "Le détourage de départ",
-    ou: "jeu",
-    quoi: "Comment l'atelier retire le fond d'une image qui revient, avant que tu y touches.",
-    change:
-      "Rien ne part au modèle et rien ne coûte : c'est un traitement fait sur ta machine, au retour. Une ligne laissée vide n'est pas un trou — le produit décide à ta place. Et changer un réglage ici ne retouche aucune image déjà faite.",
-    origine: "toi · aucun, donc le produit décide",
-    long:
-      "Trois niveaux décident, dans cet ordre : la famille du sujet, puis la façon dont l'image est venue — toute seule, ou dans une planche découpée —, puis le produit. Une famille réglée l'emporte entièrement sur sa nature. La fiche de chaque image te dit ensuite lequel des trois a décidé, pour que tu saches où aller le changer.\n\nCe qui est livré vient d'un comptage fait sur tes propres recettes, le 3 septembre 2026 : sur les 123 détourages que tu as réglés à la main, le bord rongé suit le moteur employé et presque rien d'autre. Le moteur du bord le laisse à zéro quatre fois sur cinq — il découpe net et ne laisse pas de frange. Le moteur par modèle, lui, en laisse toujours une, et tu l'as rongée de deux pixels quatre fois sur cinq. Depuis cette tranche, changer de moteur amène son bord rongé avec lui, et une valeur que tu as déplacée toi-même n'est jamais réécrite.\n\nLa tolérance et le seuil de transparence ne sont pas ici, et c'est un choix : tu les as laissés à leur valeur livrée 96 fois sur 100. Ils se règlent sur une image, dans sa table de détourage, là où tu vois ce qu'ils font.",
   },
 
   // ── L'univers — le tableau d'inspiration ──────────────────────────────────
@@ -2037,96 +2153,13 @@ export const AIDE: Record<string, Explication> = {
     origine: "l'image elle-même",
   },
 
-  // ── L'assistant de démarrage — le seul écran qui règle un jeu ─────────────
+  // ── Les fournisseurs — l'onglet *Moteurs & workflows* ────────────────────
   //
-  // **Il n'y a pas d'autre panneau de réglages à côté**, et c'est la décision :
-  // deux endroits qui règlent la même chose finissent toujours par se
-  // contredire. Ces entrées disent ce que chaque étape décide, et surtout **ce
-  // qu'un seul choix remplit ailleurs** — c'est cette liaison-là qu'on ne
-  // devine pas en regardant un contrôle.
-
-  "assistant.ecran": {
-    nom: "L'assistant de démarrage",
-    ou: "jeu",
-    quoi: "Les dix étapes qui s'ouvrent à la toute première ouverture et à la création d'un jeu. Elles posent ce qui s'applique à tout : le nom, la vue, la taille d'image, la clé, les types d'objets, les poses.",
-    change:
-      "Rien n'est exigé. **On en sort à n'importe quelle étape**, une étape passée reste passée sans rien bloquer ni se redemander, et un réglage vide ne contraint rien — les défauts du produit prennent le relais.",
-    origine:
-      "toi · dix étapes vides, et un jeu « Bac à sable » qui existait déjà",
-  },
-
-  "assistant.nom": {
-    nom: "Le nom du jeu",
-    ou: "jeu",
-    quoi: "Comment le jeu s'appelle, dans l'atelier.",
-    change:
-      "Rien à la génération : c'est le seul réglage qui ne part jamais au modèle. Le dossier, lui, ne se renomme pas — un dossier qui change de nom sous ses fichiers est un déménagement.",
-    origine: "toi · « Bac à sable » au premier lancement",
-    long:
-      "L'assistant **ne crée pas le jeu, il le renomme** : sur une machine neuve le « Bac à sable » existe déjà, et rien n'est exigé pour commencer. C'est ce qui permet de sortir de l'assistant à n'importe quelle étape et de fabriquer tout de suite.",
-  },
-
-  "assistant.vue": {
-    nom: "La vue du jeu",
-    ou: "jeu",
-    quoi: "D'où l'on regarde le monde — de face, de côté, de dessus, en isométrie.",
-    change:
-      "**La liste des directions de ton jeu**, et la phrase de style qui part au modèle. C'est cette liste qui multiplie toute la production, donc tout ce qu'on paiera : un personnage qui marche vu de côté se dessine deux fois ; le même vu de dessus, quatre.",
-    origine: "toi · aucune au départ",
-    long:
-      "Ce choix ne décide pas de l'apparence du jeu. Il remplit **deux endroits d'un coup** : la liste des directions, que le codex affiche et qu'on peut y renommer, et la phrase de la case *vue* qui part au modèle. Ces deux-là ne peuvent plus se contredire, parce qu'ils viennent du même geste.\n\nAvant, le nombre de directions était retapé **sept fois** — une dans la description, puis à la main sur chaque pose — et rien ne reliait ces sept endroits.\n\n**La liste est une proposition, jamais une contrainte.** On renomme, on retire, on ajoute depuis le codex, et un clic la rend à ce que la vue propose. Tant qu'on n'y touche pas elle suit la vue ; dès qu'on y touche elle ne la suit plus — et le codex écrit lequel des deux, parce que ce ne sont pas la même promesse.\n\n**Le nombre de directions ne part plus dans le texte**, depuis le 31 août 2026 : il contredisait la consigne des planches d'équipement, et chaque image dit désormais elle-même la direction qu'elle montre.",
-  },
-
-  "assistant.taille": {
-    nom: "La taille des images",
-    ou: "jeu",
-    quoi: "Le côté de la case où tout ce qui rentre est ramené.",
-    change:
-      "**C'est le plus coûteux des dix réglages.** Tout ce qui a été fabriqué a été découpé à l'ancienne taille : les images ne se recoupent pas, il faut les refabriquer, et chacune se paie. La ligne le dit avec le compte et le coût — puis laisse passer.",
-    origine: "toi · 64 px au départ, ou « aucune »",
-    long:
-      "Le choix remplit aussi **la phrase de grille et celle de calage** dans la description, ce qui répare la contradiction mesurée du dépôt : le réglage disait 128 pendant que le texte envoyé disait 64, trois fois.\n\n**Le réglage n'est jamais grisé.** Le produit n'a qu'un seul refus automatique — le compte d'images — et en ajouter un deuxième reviendrait à bloquer un auteur sur son propre jeu. Un chiffre exact aide mieux qu'une case grise.\n\n« Aucune » est une valeur et non un trou : elle dit *ce jeu n'est pas en pixel art*, et l'image entre telle que le modèle l'a rendue.",
-  },
-
-  "assistant.etiquettes": {
-    nom: "Les étiquettes",
-    ou: "jeu",
-    quoi: "Une paire : un libellé qu'on clique, et le texte anglais qui part vraiment au modèle.",
-    change:
-      "Cliquer une étiquette écrit son texte anglais dans la case ouverte. Rien d'autre : ce qui est écrit reste du texte libre, que tu corriges à la main.",
-    origine: "toi · la base est vide au départ, et partagée par tous tes jeux",
-    long:
-      "C'est ce qui rend la description **mécanique** au lieu d'être rédigée : on ne cherche plus comment dire « il y a de la brume » à une intelligence artificielle, on l'a trouvé une fois, on l'a nommé, on le reclique.\n\n**La base appartient à l'atelier, pas à un jeu** — comme la clé du fournisseur, elle ne dépend d'aucun. Elle naît vide, personne ne l'écrit à ta place, et elle grandit de chaque étiquette fabriquée dans n'importe quel projet. Au premier jeu, l'étape est donc sept champs de texte libre, et elle le dit franchement.\n\nLa recherche ne montre que les étiquettes **de la case ouverte** : une étiquette d'éclairage n'a rien à faire dans la case du trait.",
-  },
-
-  "assistant.texte": {
-    nom: "Le texte à copier",
-    ou: "jeu",
-    quoi: "Ta description assemblée, prête à coller dans un outil d'images grand public.",
-    change:
-      "**Rien, et pas un centime** : ce texte ne part nulle part depuis l'atelier. Tu le colles où tu veux, tu récupères des images, tu les déposes sur le tableau.",
-    origine: "les étapes précédentes, reprises mot pour mot",
-    long:
-      "Il répond à un vrai problème : **on n'a pas toujours d'images à déposer**, et un jeu qui démarre n'a que des mots. L'atelier a bien de quoi générer lui-même, mais chaque image se paierait avant même que le jeu existe, et sur un modèle choisi à un moment où rien n'est réglé.\n\nEt il a une seconde vertu : **c'est la première fois qu'on voit sa description assemblée**. Beaucoup de contradictions se remarquent là, en lisant les lignes à la suite.",
-  },
-
-  "assistant.poses": {
-    nom: "Les poses et les états",
-    ou: "jeu",
-    quoi: "Ce que chaque chose du jeu peut faire — au repos, en marche, ouverte, vidée.",
-    change:
-      "Chaque pose est une case à remplir dans le codex. **La liste appartient au type d'objet** : un personnage a ses six attitudes, un meuble ses trois états, une tuile aucune — et changer l'une ne touche pas les autres. **Le nombre d'images d'une pose vient du choix de vue**, pas d'une saisie : il ne se retape plus.",
-    origine: "toi, ou l'atelier · une liste proposée par type",
-  },
-
-  "assistant.emplacements": {
-    nom: "Les emplacements d'équipement",
-    ou: "jeu",
-    quoi: "Les endroits d'un corps où l'on peut accrocher une pièce — la tête, le dos, la main.",
-    change:
-      "**L'ordre compte** : il décide de quelle pièce se dessine par-dessus l'autre. L'étape ne sert que si un type de ce jeu a une silhouette — un jeu de tuiles et de décors n'équipe personne.",
-    origine: "toi · vide au départ",
-  },
+  // Les huit autres fiches `assistant.*` sont parties en `GU7` : elles
+  // décrivent les règles d'un jeu, pas l'atelier, et elles sont remontées
+  // au bloc « Les règles du jeu » plus haut — sauf deux, retirées du corpus
+  // parce que le réglage lui-même est mort (`assistant.ecran`,
+  // `assistant.texte`).
 
   "assistant.fournisseurs": {
     nom: "Les fournisseurs, et ce qu'ils demandent",
@@ -2568,6 +2601,15 @@ export const AIDE: Record<string, Explication> = {
       "Ce que l'animation contient. Ce que tu gardes **retrouve ses réglages** — sa poussée au pixel, sa recette à elle — et ce que tu laisses tombe au chutier. Rien n'est perdu, et tu n'as rien à reposer de mémoire.",
     origine: "l'animation telle qu'elle est gardée",
     long: "Avant, le montage repartait toujours des réglages du jeu : ajouter une image à une animation demandait de la refaire entière. Il s'ouvre désormais sur **ton découpage** et **ta vitesse**.\n\nLe bouton du bas dit ce qu'il fait — *Reprendre « marche »* — et revenir sans le presser laisse l'animation telle qu'elle était.\n\nDeux cas où il est fermé, chacun avec sa raison. **Des corrections attendent** : le montage écrit sur l'animation, et le faire par-dessus des réglages en cours les perdrait — enregistre d'abord. **L'animation prend ses images dans plusieurs clips** : le montage n'en montre qu'un, et y reprendre le découpage laisserait tomber celles de l'autre.\n\nLe cadre s'y lit et ne s'y règle pas : la fenêtre commune se reprend dans l'atelier de l'animation, où l'écran dit les vingt secondes que ça coûte.",
+  },
+
+  "agent.cadre-durable": {
+    nom: "Le cadre de délégation du jeu",
+    quoi: "Le jeu conserve les méthodes et les limites autorisées pour les demandes complètes de l’agent.",
+    change: "Avant chaque appel, l’atelier relit le cadre et réserve le budget partagé. Une fermeture ne remet pas ce total à zéro ; une acceptation externe inconnue conserve sa réservation.",
+    origine: "toi · cadre propre au jeu, distinct des anciens garde-fous de séance",
+    ou: "reglages",
+    groupe: "Agent MCP — le cadre de délégation du jeu",
   },
 
   "agent.plafond": {

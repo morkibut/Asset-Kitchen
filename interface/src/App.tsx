@@ -1164,44 +1164,69 @@ function AtelierApp() {
   // champs de `Fiche.tsx`. Ces quatre-là sont **enfin joints à leur écran** :
   // ils étaient adressés à l'image ouverte dans la page d'un sujet, où aucun
   // des quatre ne paraît, alors qu'ils vivent dans le panneau de la galerie.
-  const ecranDuGuide: Explication["ou"] | null = reglesOuvertes
-    ? "reglages"
-    : depensesOuvertes
-      ? "depenses"
-      : tableauDeBord
-        ? "tableau-de-bord"
-        : surface === "univers"
-          ? coteUnivers
-          : retoucheOuverte
-            ? "tables"
-            : surface === "galerie" && selection.length === 1
-              ? "case"
-              : montageOuvert
-                ? "montage"
-                : bandeOuverte
-                  ? "bande"
-                  : ficheClip
-                    ? "clip"
-                    : // **Les entrées des fabriques trouvent enfin leur
-                      // écran** (`B19`). Elles étaient rangées sous
-                      // `equipement` depuis `B7`, et **aucun écran ne
-                      // rendait jamais cette valeur** : dix-sept
-                      // explications écrites, joignables par rien. La page
-                      // d'une pièce et celle d'un emploi les servent.
-                      pieceOuverte
-                      ? "equipement"
-                      : clipOuvert || choseOuverteId
-                      ? "sujet"
-                      : // ⚠️ **La grille d'une famille se documente encore
-                        // comme le codex** : le guide (B7) n'a pas d'entrées à
-                        // elle, et lui en écrire est le travail de sa tranche,
-                        // pas de B9. Mieux vaut les explications du voisin le
-                        // plus proche qu'un volet vide.
-                        surface === "codex" || surface === "bibliotheque"
-                        ? "codex"
-                        : surface === "fabrications"
-                        ? "clip"
-                        : "galerie"
+  //
+  // ⚠️ **Deux écrans s'appelaient « Réglages » et un seul était servi — pas le
+  // bon** (`GU7`, § *Le grand constat* de
+  // `docs/releves/guide-2026-09-20.md`). La valeur `jeu` du corpus — que
+  // `Guide.tsx` nomme *Réglages* — ne pouvait être produite que par
+  // `coteUnivers`, typé `Cote` (`"inspiration" | "ambiances"`) : vingt-cinq
+  // fiches écrites, **zéro atteignable**. Pendant ce temps l'écran qui porte
+  // vraiment ce titre — le lieu `regles` — tombait tout entier sur `reglages`,
+  // quel que soit l'onglet. L'onglet *Univers* monte `ReglesDuJeu` en mode
+  // reprise : c'est lui, `jeu`. Les trois autres — moteurs, agent,
+  // consommations — restent `reglages`.
+  //
+  // ⚠️ **L'installation n'était testée nulle part** : l'ouvrir montrait le
+  // guide de la racine du dessous. Elle rejoint `reglages`, qui documente déjà
+  // ce qui vaut pour toute la machine — et `Reglages.tsx` monte ses blocs
+  // (`BlocSecrets`) dans l'onglet *Moteurs & workflows*, donc les deux écrans
+  // partagent vraiment des réglages.
+  //
+  // **L'ordre suit les gardes du rendu, plus bas**, et pas l'inverse :
+  // `depensesOuvertes` couvre les deux autres, `installationOuverte` couvre
+  // les réglages (`reglesOuvertes && !installationOuverte`).
+  const ecranDuGuide: Explication["ou"] | null = depensesOuvertes
+    ? "depenses"
+    : installationOuverte
+      ? "reglages"
+      : reglesOuvertes
+        ? ongletDesReglages === "univers"
+          ? "jeu"
+          : "reglages"
+        : tableauDeBord
+          ? "tableau-de-bord"
+          : surface === "univers"
+            ? coteUnivers
+            : retoucheOuverte
+              ? "tables"
+              : surface === "galerie" && selection.length === 1
+                ? "case"
+                : montageOuvert
+                  ? "montage"
+                  : bandeOuverte
+                    ? "bande"
+                    : ficheClip
+                      ? "clip"
+                      : // **Les entrées des fabriques trouvent enfin leur
+                        // écran** (`B19`). Elles étaient rangées sous
+                        // `equipement` depuis `B7`, et **aucun écran ne
+                        // rendait jamais cette valeur** : dix-sept
+                        // explications écrites, joignables par rien. La page
+                        // d'une pièce et celle d'un emploi les servent.
+                        pieceOuverte
+                        ? "equipement"
+                        : clipOuvert || choseOuverteId
+                        ? "sujet"
+                        : // ⚠️ **La grille d'une famille se documente encore
+                          // comme le codex** : le guide (B7) n'a pas d'entrées à
+                          // elle, et lui en écrire est le travail de sa tranche,
+                          // pas de B9. Mieux vaut les explications du voisin le
+                          // plus proche qu'un volet vide.
+                          surface === "codex" || surface === "bibliotheque"
+                          ? "codex"
+                          : surface === "fabrications"
+                          ? "clip"
+                          : "galerie"
 
   // ── B6 · La barre ─────────────────────────────────────────────────────────
   //
