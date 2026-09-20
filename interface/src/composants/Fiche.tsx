@@ -788,7 +788,7 @@ function CeQueLeJeuLuiAFait({
             </span>
             <span
               className={[
-                "mesure w-[90px] shrink-0 text-right text-[10.5px]",
+                "mesure w-24 shrink-0 text-right text-[10.5px]",
                 ligne.marque === "main" ? "text-encre-attention" : "text-encre-4",
               ].join(" ")}
             >
