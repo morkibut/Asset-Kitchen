@@ -203,9 +203,16 @@ Chaque tranche ci-dessous porte les **mêmes six critères**, et ils ne sont pas
   injoignable, `GU7` (2/2) a réécrit les vingt-deux fiches restantes sous sept zones réelles,
   retiré un doublon (`assistant.taille`, le même champ qu'`univers.cible_px` sous un autre
   nom) et corrigé deux fiches qui présentaient un champ en lecture seule comme un champ à
-  taper (`bible.rendu`, `bible.vue`) — laissant vingt et une fiches propres à cet écran. Les
-  cinq autres tranches du tableau ci-dessous n'ont pas encore été reprises, et remettront
-  cette liste à décocher le temps de leur propre passe.)*
+  taper (`bible.rendu`, `bible.vue`) — laissant vingt et une fiches propres à cet écran.
+  Vérifié aussi pour `GU8` — les équipements : sur les vingt et une fiches nées sous
+  `ou: "equipement"`, dix-neuf ne décrivaient pas cet écran et n'y ont jamais été
+  atteignables — dix-huit sont les deux fabriques de la retouche (superposition,
+  découpage), montées par `Retouche.tsx` et jamais par `Emplois.tsx` / `Emploi.tsx` /
+  `CalquesDeLEmploi.tsx`, la dernière décrit la planche de poses de l'établi d'un sujet.
+  Déplacées vers `ou: "tables"` et `ou: "sujet"`, textes inchangés — laissant deux fiches
+  propres à cet écran, réécrites sous ses deux seules vraies zones. Les quatre autres
+  tranches du tableau ci-dessous n'ont pas encore été reprises, et remettront cette liste
+  à décocher le temps de leur propre passe.)*
 
 | Tranche | Écran | Fiches aujourd'hui |
 |---|---|---|
@@ -303,6 +310,32 @@ que l'écran affiche d'une pièce. Les neuf fiches qui dépassaient encore une l
 (`quoi` ou « à savoir ») sont retaillées ; ce qu'elles perdaient en détail mesuré part dans
 sept lignes neuves de `docs/design-decisions.md`. Vingt et une fiches, réparties sur sept
 zones, et les essais de `GU3` passent au vert pour cet écran.
+
+→ `GU8` a commencé par lire le vrai écran plutôt que la liste des vingt et une fiches :
+`Emplois.tsx` (la liste des emplois d'une pièce), `Emploi.tsx` (un emploi, sa matrice de
+poses), `CalquesDeLEmploi.tsx` (les cibles d'un emploi et leurs calques) et
+`CouvertureDeLEmploi.tsx`/`RelectureEquipement.tsx` (la fabrication des calques manquants).
+Aucun des deux n'importe ni `Superposition.tsx` ni `Decoupe.tsx` — et `Emploi.tsx` le dit
+lui-même dans son propre commentaire : « caler à la main… existe déjà ailleurs dans le
+produit… le glisser [ici] l'aurait dupliqué au lieu de l'ouvrir ». En croisant `recette.ts`
+(`TABLES`, où « decoupage » et « superposition » sont les deux seules entrées `fabrique:
+true`, toutes deux montées par `Retouche.tsx`) avec `App.tsx` (`onSuperposition` ouvre le
+lieu `retouche`, jamais `piece`/`emploi`/`calques-animes`), la conclusion s'est imposée :
+**dix-huit des vingt et une fiches ne décrivaient jamais l'écran d'un emploi.** `fabrique.superposition`
+et les douze `superposition.*` ainsi que les cinq `decoupe.*` sont les deux fabriques de la
+retouche — déplacées vers `ou: "tables"`, textes inchangés, à leur emplacement d'origine
+dans `aide.ts` (même traitement que `atelier.import` vers `"galerie"` en `GU6`) ; ce sera le
+travail d'une reprise de la retouche que de les grouper sous des zones. Une dix-neuvième,
+`fabrique.planche`, décrit la planche de poses de l'établi d'un sujet (`EtabliDuSujet.tsx`,
+« les angles d'une planche de pose », E13) — déplacée vers `ou: "sujet"`, où elle rejoint la
+zone `Cases et planches — sa matrice` déjà posée par `GU6`. Aucune fiche n'est morte : les
+vingt et un réglages existent tous encore, seulement pas là où le corpus les rangeait.
+Restaient deux fiches vraiment posées sur cet écran, les deux moitiés de « Cibles de cet
+emploi » (`CalquesDeLEmploi.tsx`) : `equipement.association-image` (associer une image à une
+cible — référence, personnage à extraire, ou calque déjà transparent) a perdu son ouverture
+fausse, « Depuis la retouche », qui ne décrivait pas son vrai écran ; `equipement.couverture-fabrication`
+était déjà exacte. Les vingt et une fiches d'origine sont aujourd'hui **deux**, réparties sur
+deux zones, et les essais de `GU3` passent au vert pour cet écran.
 
 ---
 

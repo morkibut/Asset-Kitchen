@@ -390,19 +390,37 @@ export const AIDE: Record<string, Explication> = {
     origine: "atelier · observation des moteurs et historique conservé sur cette machine",
     ou: "clip",
   },
+  // ── Cibles de cet emploi — associer une image, lancer une fabrication ──────
+  //
+  // **Les dix-neuf autres fiches nées sous `ou: "equipement"` ne décrivent pas
+  // cet écran** (`GU8`, `docs/PLAN-guide.md`) : dix-huit sont les deux
+  // fabriques de la retouche — superposition, découpage — jamais montées par
+  // `Emplois.tsx` / `Emploi.tsx` / `CalquesDeLEmploi.tsx`, et une décrit la
+  // planche de poses de l'établi d'un sujet. Elles ont rejoint `ou: "tables"`
+  // et `ou: "sujet"` plus bas dans ce fichier, à leur place d'origine. Il ne
+  // reste donc que ces deux-là, vraiment posées sur cet écran : les deux
+  // moitiés de « Cibles de cet emploi » (`CalquesDeLEmploi.tsx`) — la liste
+  // qui associe une image à une cible, et le bouton qui bascule sur
+  // « Couverture & fabrication ».
+
   "equipement.association-image": {
-    nom: "Le rôle d’une image d’équipement",
-    quoi: "Depuis la retouche, une image peut servir de référence, de personnage équipé à extraire ou de calque déjà transparent pour une cible précise.",
-    change: "L’association conserve l’image en bibliothèque. Seul un calque vérifié sur son personnage et sa frame peut remplir la cible ; une référence ne la remplit pas.",
+    nom: "Le rôle d'une image associée à une cible",
+    ou: "equipement",
+    groupe: "Cibles de cet emploi — associer une image",
+    quoi: "Une image associée à une cible sert de référence, de personnage complet à extraire, ou de calque déjà transparent à vérifier.",
+    change:
+      "L'association conserve l'image en bibliothèque. Seul un calque vérifié sur son personnage et sa frame peut remplir la cible ; une référence ne la remplit pas.",
     origine: "toi · pièce commune, emploi du personnage et cible choisie",
-    ou: "equipement",
   },
+
   "equipement.couverture-fabrication": {
-    nom: "Les calques manquants d’un emploi",
-    quoi: "Chaque cible désigne une image fixe ou une frame précise du personnage qui porte cet équipement.",
-    change: "La relecture distingue les images attendues des appels nécessaires : plusieurs cibles peuvent partager une planche. Les références et les paramètres restent modifiables avant l’envoi. Un résultat équipé doit ensuite être extrait, ajusté et vérifié sur sa cible.",
-    origine: "objectif du personnage · versions choisies et variantes déjà vérifiées",
+    nom: "Les calques manquants d'un emploi",
     ou: "equipement",
+    groupe: "Couverture & fabrication — les calques manquants",
+    quoi: "Chaque cible désigne une image fixe ou une frame précise du personnage qui porte cet équipement.",
+    change:
+      "La relecture distingue les images attendues des appels nécessaires : plusieurs cibles peuvent partager une planche. Les références et les paramètres restent modifiables avant l'envoi. Un résultat équipé doit ensuite être extrait, ajusté et vérifié sur sa cible.",
+    origine: "objectif du personnage · versions choisies et variantes déjà vérifiées",
   },
   "source3d.import": {
     nom: "Importer un rendu 3D",
@@ -2640,10 +2658,23 @@ export const AIDE: Record<string, Explication> = {
   // pour ça que ce groupe existe — le guide ne disait nulle part qu'il y a des
   // outils qui ne sont pas des tables, et c'est pourtant la distinction qui
   // décide où on va les chercher.
+  //
+  // **Aucune des dix-neuf fiches ci-dessous ne décrit l'écran d'un emploi**
+  // (`GU8`, `docs/PLAN-guide.md`) — elles sont nées sous `ou: "equipement"`
+  // mais n'y ont jamais été atteignables, et la relecture le confirme fiche
+  // par fiche plutôt que de le supposer. Textes inchangés, exacts pour leur
+  // vrai écran ; laissées à leur place dans ce fichier, comme `atelier.import`
+  // l'a été vers `"galerie"` en `GU6`.
 
   "fabrique.planche": {
     nom: "La planche de poses",
-    ou: "equipement",
+    // **Déplacée sous `ou: "sujet"` en `GU8`** : son propre texte le disait
+    // déjà — « les cases que tu coches dans l'établi ou dans le codex » — et
+    // `EtabliDuSujet.tsx` confirme : « les angles d'une planche de pose »
+    // (E13) ferment un appel sur plusieurs directions d'une même pose d'*un
+    // personnage*, jamais sur une pièce d'équipement. Elle rejoint la zone
+    // « Cases et planches — sa matrice » que `GU6` a déjà posée pour le sujet.
+    ou: "sujet",
     quoi: "Une feuille où le modèle dessine plusieurs attitudes du même personnage en un seul appel, et que l'atelier redécoupe ensuite en images séparées.",
     change:
       "Elle divise le prix : une planche coûte le prix d'un appel quel que soit le nombre de cases qu'elle porte. Et elle achète quelque chose qu'aucun appel séparé ne garantit — les cases sortent à la même échelle et dans le même style, puisqu'elles ont été peintes ensemble.",
@@ -2652,23 +2683,28 @@ export const AIDE: Record<string, Explication> = {
       "Le risque se dit avec : c'est **un jet unique**, que le modèle ne rend pas deux fois. Une planche ratée se repaie entière, et un compte de cases faux ne fait rien entrer du tout — la planche entière se relance au prix plein.\n\nLa feuille elle-même n'entre jamais en bibliothèque ; ses morceaux, oui, chacun filié vers elle.",
   },
 
-  // ── La première fabrique : le découpage ───────────────────────────────────
+  // ── La superposition ───────────────────────────────────────────────────────
   //
-  // **Deux gestes séparés exprès** : proposer ne crée rien, découper coupe ce
-  // qu'on lui donne. C'est cette séparation, et rien d'autre, qui tient la
-  // promesse « sans jamais bloquer » — et c'est ce que ces entrées doivent dire
-  // avant de décrire un curseur.
-
-  // ── La seconde fabrique : la superposition ───────────────────────────────
-  //
+  // **Déplacées sous `ou: "tables"` en `GU8`**, les treize fiches qui suivent
+  // (`fabrique.superposition` et les douze `superposition.*`). `Superposition`
+  // est une des deux fabriques de `TABLES` (`interface/src/recette.ts`), montée
+  // uniquement par `Retouche.tsx` (`import { EcranSuperposition } from
+  // "./Superposition"`) — jamais par `Emplois.tsx`, `Emploi.tsx` ni
+  // `CalquesDeLEmploi.tsx`. `Emploi.tsx` l'exclut lui-même en toutes lettres :
+  // « caler à la main… existe déjà ailleurs dans le produit… c'est un atelier
+  // à lui, et le glisser dans un volet de 380 px l'aurait dupliqué au lieu de
+  // l'ouvrir. » Le geste qui l'ouvre confirme : `onSuperposition` appelle
+  // `ouvrirLaRetouche(identifiant, "superposition")` (`App.tsx`) — un aller
+  // dans le lieu `retouche`, jamais dans `piece`/`emploi`/`calques-animes`.
   // **Le guide ne disait nulle part qu'il existe des outils qui ne sont pas des
   // tables**, et c'est pourtant la distinction qui décide où on les cherche :
   // une table règle une image et rend la même ; celui-ci en prend deux et en
-  // fabrique une troisième.
+  // fabrique une troisième. Textes inchangés, exacts pour leur vrai écran ;
+  // ce sera le travail d'une reprise de la retouche que de les grouper.
 
   "fabrique.superposition": {
     nom: "La superposition",
-    ou: "equipement",
+    ou: "tables",
     quoi: "L'outil qui pose une pièce d'équipement sur un personnage : il prend le corps nu et le corps habillé, et il en tire le calque de ce qui a été ajouté.",
     change:
       "Rien sur les deux images de départ, qui ne sont jamais repeintes. Elle en produit une troisième — un calque —, et un calque est solidaire de la pose sur laquelle la pièce est apparue : il en faut un par pose.",
@@ -2677,7 +2713,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.images": {
     nom: "les deux images",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Le dessus, qui se déplace, et le dessous, qui est le sol et ne bouge jamais.",
     change:
       "Rien sur les deux images de départ, qui ne sont jamais repeintes. Intervertir les deux change le résultat, puisque le calque est fait de ce que le **dessus** ajoute.",
@@ -2688,7 +2724,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.detourage": {
     nom: "avant de caler",
-    ou: "equipement",
+    ou: "tables",
     quoi: "L'état du détourage des deux images — c'est lui qui décide si un calque est seulement possible.",
     change:
       "Rien tant que tu ne reprends pas les passes. Une image qui revient du modèle est opaque de bord à bord : sans alpha sur le dessus, le calque emporte tout le fond de l'image.",
@@ -2699,7 +2735,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.voir": {
     nom: "voir les deux images",
-    ou: "equipement",
+    ou: "tables",
     quoi: "L'opacité et le mode de couleur du dessous, l'opacité du dessus.",
     change:
       "Rien du tout à ce qui sort — c'est de l'affichage, et rien d'autre. Ils existent pour une seule raison : caler à l'œil deux images qui se ressemblent.",
@@ -2710,7 +2746,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.calage": {
     nom: "le calage",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Où le dessus se pose sur le dessous — une proposition, puis ce que tu ajustes.",
     change:
       "Rien à la génération, et pas un centime : les deux images sont déjà payées. Avant, un recalage raté n'avait aucun recours — le calque était perdu et il fallait relancer une génération.",
@@ -2721,7 +2757,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.echelle": {
     nom: "échelle du dessus",
-    ou: "equipement",
+    ou: "tables",
     quoi: "La taille du dessus par rapport au dessous. Détente à 1,000.",
     change:
       "C'est **le seul réglage de l'outil qui abîme l'image** : rééchantillonner du pixel art à un facteur qui n'est pas simple détruit la grille. Le champ le marque ; il ne le refuse pas.",
@@ -2732,7 +2768,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.decalage": {
     nom: "décalage du dessus",
-    ou: "equipement",
+    ou: "tables",
     quoi: "De combien le dessus se déplace, en pixels de l'image rendue.",
     change:
       "Rien à la génération. Le signe suit l'écran : la touche qui monte fait monter l'image.",
@@ -2743,7 +2779,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.main": {
     nom: "retoucher le masque d’extraction",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Garder récupère les pixels du dessus aligné ; Retirer efface ceux que la comparaison a retenus à tort.",
     change: "Les traits corrigent le masque après la différence. Les deux images sources restent intactes.",
     origine: "toi · taille du pinceau réglable en pixels",
@@ -2752,7 +2788,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.seuil": {
     nom: "ce qu'on garde du dessus",
-    ou: "equipement",
+    ou: "tables",
     quoi: "De combien une couleur doit changer pour compter comme changée, et le rectangle hors duquel le dessus est masqué.",
     change:
       "Rien à la génération. **Le rectangle sert deux fois** : il isole la pièce pour qu'on voie le corps dessous pendant qu'on cale, et ce qu'il masque à l'écran, il le masque aussi à la sortie.",
@@ -2763,7 +2799,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.sorties": {
     nom: "ce qu'on en sort",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Le calque — ce que le dessus ajoute, sur fond transparent — et l'aplat — les deux fondues en une.",
     change:
       "Les deux **se cochent au lieu de s'exclure** : on veut souvent le calque pour le réutiliser et l'aplat pour l'avoir tout de suite. Ce qui est fabriqué n'a rien coûté — l'argent a été dépensé deux fois, pour les deux images, et les deux filiations y mènent.",
@@ -2774,7 +2810,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.fond": {
     nom: "le fond du calque",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Sur quoi on regarde le calque seul — le damier, ou l'un des cinq aplats vifs.",
     change:
       "Rien : c'est de l'affichage. Il sert à repérer les **pixels oubliés**, ceux qui auraient dû partir avec le corps et sont restés accrochés au calque.",
@@ -2785,7 +2821,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.resultat": {
     nom: "le résultat",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Le dessous à 100 %, le calque par-dessus — tel que ce sera dans le jeu.",
     change:
       "Rien : c'est une lecture. Maintenir « masquer le calque » le retire le temps de l'appui, et c'est ce qui dit si la pièce tient sur le corps.",
@@ -2796,7 +2832,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.mesures": {
     nom: "ce que la comparaison a mesuré",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Cinq nombres : silhouette, corps repeint, ajout, échelle, compacité.",
     change:
       "Rien. **Aucune ne refuse quoi que ce soit** — elles disent si la superposition a réussi, et servent à ranger les calques d'un vestiaire dans l'ordre où il faut les regarder. Le seul refus automatique du produit reste le compte d'images.",
@@ -2805,9 +2841,23 @@ export const AIDE: Record<string, Explication> = {
       "**Silhouette** : ce qui reste du corps de départ. Proche de 1, le modèle a gardé la forme.\n\n**Corps repeint** : la part du corps dont la couleur a changé, hors de l'endroit où la pièce est tombée. C'est la mesure qui décide — beaucoup de repeint veut dire que le modèle a redessiné le personnage au lieu de l'habiller.\n\n**Ajout** : ce qui est apparu, en part du corps. Elle s'affiche mais ne classe rien : une pièce contenue en ajoute peu, une cape beaucoup, et les deux vont bien.\n\n**Échelle** : la taille du dessus au retour. 0,62 veut dire que le modèle a dézoomé pour faire de la place.\n\n**Compacité** : la part de la différence qui tient dans sa plus grosse tache. Proche de 1, un objet ; proche de 0, une poussière semée partout, donc un repeint déguisé.",
   },
 
+  // ── Le découpage ─────────────────────────────────────────────────────────
+  //
+  // **Déplacées sous `ou: "tables"` en `GU8`**, les cinq fiches qui suivent.
+  // « Découpage » est l'autre fabrique de `TABLES`
+  // (`interface/src/recette.ts`, `{ cle: "decoupage", fabrique: true }`),
+  // rendue par `Decoupe.tsx` et montée par `Retouche.tsx` — jamais par
+  // `Emplois.tsx`, `Emploi.tsx` ni `CalquesDeLEmploi.tsx`. Même origine que la
+  // superposition juste au-dessus : nées sous `ou: "equipement"` sans jamais y
+  // être atteignables. **Deux gestes séparés exprès** : proposer ne crée
+  // rien, découper coupe ce qu'on lui donne. C'est cette séparation, et rien
+  // d'autre, qui tient la promesse « sans jamais bloquer » — et c'est ce que
+  // ces entrées doivent dire avant de décrire un curseur. Textes inchangés,
+  // exacts pour leur vrai écran.
+
   "decoupe.mode": {
     nom: "Détection",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Comment les rectangles sont proposés : « auto » cherche les zones opaques, « grille » découpe en cases égales, « les gouttières » cherche les bandes de fond entre les cases.",
     change:
       "Ne découpe rien — propose. Ce qui part à la découpe est la liste que tu vois à droite, corrections à la main comprises. Changer ce réglage relance la détection et remplace ce que tu as dessiné.",
@@ -2818,7 +2868,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.taille_min": {
     nom: "taille minimale",
-    ou: "equipement",
+    ou: "tables",
     quoi: "En dessous de ce côté, en pixels, une zone opaque n'est pas un sprite.",
     change:
       "Monte-la pour ignorer les éclats de fond qui ont survécu au seuil ; descends-la pour rattraper un petit sprite oublié. Chaque cran relance la détection et remplace ce que tu avais dessiné.",
@@ -2829,7 +2879,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.colonnes": {
     nom: "colonnes",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Le nombre de colonnes égales dans lesquelles la planche est coupée.",
     change:
       "Avec les lignes, décide du nombre de découpes proposées : colonnes × lignes, cases vides comprises. Le reste de la division se répartit — rien n'est jeté au bord droit.",
@@ -2840,7 +2890,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.lignes": {
     nom: "lignes",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Le nombre de rangées égales dans lesquelles la planche est coupée.",
     change:
       "Avec les colonnes, décide du nombre de découpes proposées. Une case vide donne quand même un rectangle : la grille fixe ne saute rien, et c'est ce qui la rend prévisible. Retire-le à la main si tu n'en veux pas.",
@@ -2849,7 +2899,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.animation": {
     nom: "en faire une animation",
-    ou: "equipement",
+    ou: "tables",
     quoi: "Les mêmes rectangles, mais les cases deviennent les images d'une animation au lieu d'images séparées.",
     change:
       "Elles sont jouées dans l'ordre où elles sont numérotées, à 8 images par seconde, et l'atelier de l'animation s'ouvre juste après pour la régler. Rien n'est dépensé : l'image a été payée une fois, à son entrée.",
