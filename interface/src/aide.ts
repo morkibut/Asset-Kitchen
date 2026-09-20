@@ -168,6 +168,136 @@ export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {
       "On déplie une ligne du monde et on la tape ; une ligne vide ne part pas.",
     ],
   },
+
+  "tableau-de-bord": {
+    aQuoi:
+      "Le tableau de bord — l'écran d'accueil du jeu ouvert : ce qu'il contient par famille, ce qui manque, et ce qu'il a coûté.",
+    gestes: [
+      "On regarde ce que le jeu contient déjà, famille par famille, en un coup d'œil.",
+      "On repère ce qui manque le plus, et on ouvre un sujet pour juger ce qui reste.",
+      "On part demander une image, ou on va découper une feuille déjà arrivée.",
+    ],
+  },
+
+  codex: {
+    aQuoi:
+      "Le codex — l'inventaire de tout ce que le jeu contient déjà, rangé par famille et par collection, prêt à s'y ouvrir.",
+    gestes: [
+      "On ouvre une famille ou une collection pour voir les sujets qu'elle range.",
+      "On filtre les sujets incomplets ou sans description pour savoir où revenir.",
+      "On ouvre un sujet pour le compléter, ou on en crée un nouveau sur-le-champ.",
+    ],
+  },
+
+  galerie: {
+    aQuoi:
+      "La galerie — chaque résultat conservé dans le jeu, quel que soit son média : images, animations, vidéos, modèles 3D et sons.",
+    gestes: [
+      "On choisit un type de média, puis on cherche un résultat par son nom.",
+      "On parcourt les vignettes, page après page, pour juger ce qui est arrivé.",
+      "On ouvre un résultat pour l'écouter, le lire, ou préparer ce qui vient après.",
+    ],
+  },
+
+  case: {
+    aQuoi:
+      "La fiche d'une image dans la galerie — son grand format, sa recette, sa provenance, et ce qu'on choisit d'en faire.",
+    gestes: [
+      "On regarde l'image en grand, sa recette et d'où elle vient avant de trancher.",
+      "On lit le prompt entier et ce qu'elle a coûté pour juger si elle est bonne.",
+      "On la marque favori, on la réinjecte dans un rôle, ou on la désigne sur sa pose.",
+    ],
+  },
+
+  clip: {
+    aQuoi:
+      "Le clip — l'image de départ choisie, le mouvement demandé, le prix des modèles, puis ce que la fabrication a rendu.",
+    gestes: [
+      "On choisit l'image de départ et le mouvement que le clip doit suivre.",
+      "On compare les modèles et leur prix, puis on commande ce clip.",
+      "On retrouve le clip payé, ce qu'il porte, ce qu'il a coûté, et ses bandes.",
+    ],
+  },
+
+  bande: {
+    aQuoi:
+      "L'atelier d'une animation — une bande déjà gardée dans le jeu, reprise et corrigée image par image, table après table.",
+    gestes: [
+      "On ouvre une image de la bande et on choisit la table à lui appliquer.",
+      "On compare avec l'image précédente en transparence pour juger le déplacement.",
+      "On enregistre la bande, ou on range le brouillon pour le reprendre plus tard.",
+    ],
+  },
+
+  montage: {
+    aQuoi:
+      "Le montage — un clip déjà payé, taillé en plusieurs bandes d'animation choisies image par image, sans jamais dépenser.",
+    gestes: [
+      "On regarde ce que le modèle a rendu et la chaîne du jeu tourner à la même vitesse.",
+      "On choisit les images à retenir, dans l'ordre où elles doivent se jouer.",
+      "On nomme l'animation, on règle sa cadence et son sens, puis on la garde.",
+    ],
+  },
+
+  depenses: {
+    aQuoi:
+      "Les dépenses — chaque appel payé au jeu, quel qu'il soit : ce qu'il a rendu, gardé, perdu ou refusé, sans jamais payer ici.",
+    gestes: [
+      "On filtre par jeu, par période, ou par ce qu'un appel a donné en retour.",
+      "On ouvre un appel pour lire ce qui est parti et ce qui en est revenu.",
+      "On repère ce qui a été payé pour rien, et on récupère un clip resté en attente.",
+    ],
+  },
+
+  inspiration: {
+    aQuoi:
+      "Inspiration — la toile de ce jeu, où l'on classe, note et compose des images de référence pour bâtir tout son monde.",
+    gestes: [
+      "On colle ou on range des images sur la toile, en îlots qu'on nomme soi-même.",
+      "On regarde ce qui sert déjà un personnage et ce qui dort sans emploi.",
+      "On choisit un lot de cartes et on part le fabriquer, avec ou sans les notes.",
+    ],
+  },
+
+  ambiances: {
+    aQuoi:
+      "Ambiances et couleurs — les palettes de couleurs de ce jeu, le fond qu'on pose, et les lots de style qu'on assemble.",
+    gestes: [
+      "On regarde la palette du jeu et celles qu'on a composées depuis des images.",
+      "On choisit le fond et le nombre de couleurs demandées pour juger le résultat.",
+      "On range des sources et des textes dans une ambiance, prête à resservir.",
+    ],
+  },
+
+  reglages: {
+    aQuoi:
+      "Réglages — trois onglets pour l'atelier entier : les moteurs et méthodes, le cadre de l'agent, et l'argent dépensé.",
+    gestes: [
+      "On dépose une clé chez un fournisseur, ou on installe une méthode locale.",
+      "On règle le cadre de délégation : ce que l'agent a le droit de faire et de payer.",
+      "On ouvre les consommations pour juger ce que ce jeu a coûté.",
+    ],
+  },
+
+  equipement: {
+    aQuoi:
+      "Une pièce d'équipement — chacun de ses emplois possibles sur un personnage, et les calques que chacun réclame encore.",
+    gestes: [
+      "On ouvre un emploi de la pièce : porté par quelqu'un, à part, ou en scène.",
+      "On parcourt une rangée par pose pour juger quel calque manque encore.",
+      "On règle l'emplacement, et si le calque se pose devant ou derrière le corps.",
+    ],
+  },
+
+  sortie: {
+    aQuoi:
+      "Livrer au jeu — ce qui en sort vers Godot, où cela va, comment ça se range, et ce qui a changé depuis la dernière fois.",
+    gestes: [
+      "On choisit ce qui sort, où ça va, et comment ça se range sur le disque.",
+      "On regarde l'arbre des fichiers pour juger ce qui est nouveau, remplacé ou inchangé.",
+      "On livre les fichiers d'un clic, ou on referme sans avoir rien écrit.",
+    ],
+  },
 }
 
 export const AIDE: Record<string, Explication> = {

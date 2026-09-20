@@ -165,10 +165,16 @@ Trois lignes par écran, pour tous les écrans du relevé : à quoi ça sert, le
 y fait. Écrits d'un coup, par la même main, pour qu'ils se ressemblent.
 
 **Critères**
-- [ ] Chaque écran du relevé a son résumé.
-- [ ] Un résumé tient en trois phrases et se lit à voix haute sans buter.
-- [ ] Un résumé nomme les gestes, pas les concepts : « on y peint », pas « on y applique une
+- [x] Chaque écran du relevé a son résumé.
+- [x] Un résumé tient en trois phrases et se lit à voix haute sans buter.
+- [x] Un résumé nomme les gestes, pas les concepts : « on y peint », pas « on y applique une
       recette non destructive ».
+
+→ Écrits en deux passes, par la même main : `GU4` (1/2), commit `fb244e9`, pour les tables, la
+fiche d'un sujet et les règles du jeu ; `GU4` (2/2) pour les treize écrans restants. Les seize
+résumés de `RESUMES` (`interface/src/aide.ts`) couvrent maintenant toutes les valeurs de
+`Explication["ou"]`, et l'essai « chaque écran du guide a un résumé » (`aide.test.ts`) passe au
+vert sur les seize.
 
 ---
 

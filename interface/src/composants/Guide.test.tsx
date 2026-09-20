@@ -20,8 +20,14 @@ import { AIDE, SANS_ENTREE, type Explication } from "../aide"
 // encore son résumé. Les deux s'écrivent écran par écran, de `GU4` à `GU15`.
 //
 // On ajoute donc quelques fiches d'essai sur « tableau-de-bord » — un écran
-// que le corpus laisse vide — et un résumé pour lui. Le reste du corpus passe
-// tel quel : les essais qui vérifient qui paraît où lisent toujours le vrai.
+// que le corpus laissait vide — et un résumé pour lui, qui prend le pas sur
+// celui que `GU4` lui a depuis donné : c'est lui que les essais lisent.
+//
+// **`GU4` a rempli les seize résumés du corpus** : il n'existe donc plus
+// d'écran réel sans rien à montrer. L'essai qui vérifie ce cas-là neutralise
+// « depenses » — vidé de son résumé pour l'occasion, ci-dessous — plutôt que
+// de compter sur un écran resté vide par hasard. Le reste du corpus passe tel
+// quel : les essais qui vérifient qui paraît où lisent toujours le vrai.
 const essai = vi.hoisted(() => ({
   fiches: {
     "essai.pinceau.taille": {
@@ -70,7 +76,9 @@ vi.mock("../aide", async (reel) => {
   return {
     ...vrai,
     AIDE: { ...vrai.AIDE, ...essai.fiches },
-    RESUMES: { ...vrai.RESUMES, ...essai.resumes },
+    // `depenses` : vidé de son résumé pour l'essai qui a besoin d'un écran
+    // sans rien — voir le commentaire ci-dessus.
+    RESUMES: { ...vrai.RESUMES, ...essai.resumes, depenses: undefined },
   }
 })
 
@@ -81,8 +89,8 @@ afterEach(() => {
 
 describe("il montre ce qui concerne l'écran ouvert, pas un sommaire", () => {
   test("un écran sans aucune entrée ne montre rien à expliquer", () => {
-    // "depenses" existe comme lieu, mais aucune entrée du corpus n'y est
-    // encore adressée aujourd'hui.
+    // "depenses" existe comme lieu ; ni fiche ni résumé n'y sont adressés
+    // dans cet essai — le mock ci-dessus vide son résumé pour l'occasion.
     render(<VoletGuide onFermer={vi.fn()} ecran="depenses" />)
 
     expect(screen.getByText("Rien à expliquer ici pour l'instant.")).toBeTruthy()
