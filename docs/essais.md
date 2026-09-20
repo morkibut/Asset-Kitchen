@@ -212,9 +212,9 @@ six cents essais) sont importés partout.
 
 ⚠️ **`App.test.tsx` a échoué une fois sous charge, puis est repassé.** Le 20 septembre 2026, le
 processus de travail de vitest s'est arrêté tout seul (*Worker exited unexpectedly*) pendant que
-quatre processus pytest occupaient la machine ; au repos, les 95 fichiers passent sauf
-`aide.test.ts`. Ne pas « réparer » un échec de ce fichier sans l'avoir reproduit à vide — et ne
-pas lancer les deux suites en même temps.
+quatre processus pytest occupaient la machine ; au repos, les 95 fichiers passent. Ne pas
+« réparer » un échec de ce fichier sans l'avoir reproduit à vide — et **ne pas lancer les deux
+suites en même temps**.
 
 ## Deux pièges de terrain
 
@@ -226,6 +226,14 @@ pas lancer les deux suites en même temps.
 - **`essais/essai_docs.py` écrit son relevé** dans `essais/mesures_docs.json` à chaque passage —
   c'est ainsi qu'il mesure la dérive du corpus d'une fois sur l'autre. Le fichier apparaît donc
   modifié après un contrôle ; ce n'est pas une faute.
+- **Après un changement de schéma, effacer `donnees/atelier.sqlite3` à la main.** Payé le
+  20 septembre 2026 en fusionnant le chantier du rangement, qui fait entrer les matières dans
+  l'index : `tests/test_lanceur.py` s'est mis à échouer sur
+  `sqlite3.OperationalError: no such column: matiere`, trois fois de suite, et l'erreur accuse
+  le code alors que la faute est dans un fichier hors Git. L'index **est** jetable — effacé, les
+  huit essais repassent — mais **la reconstruction automatique n'a pas rattrapé ce cas-là**.
+  Le geste : `rm donnees/atelier.sqlite3`, puis relancer. Rien n'est perdu, l'index se refait en
+  relisant `donnees/`.
 
 ## Une fois, après la fusion d'un chantier qui arrive avec ses essais
 
@@ -245,7 +253,7 @@ Ils étaient là avant ce chantier et ne viennent pas de lui. Les nommer évite 
 |---|---|
 | `tests/test_b0.py` | `Guide.tsx` — deux tailles hors des listes fermées, 28 px et 10 px (`GU7`). ⚠️ **Toujours là après la clôture du chantier du guide** le 20 septembre 2026 ; les lignes se déplacent à chaque retouche du fichier, le défaut non |
 | `essais/essai_vocabulaire.py` | quatre mots d'ossature : deux onglets de `PageDuSujet.tsx`, deux libellés de retour dans `FabricationAudio.tsx` et `FicheDuSujet.tsx` |
-| `interface/src/aide.test.ts` | **15 échecs** dans `main` — le travail en cours sur le guide (`GU12`) ; l'arbre de travail de l'auteur en porte davantage |
+| ~~`interface/src/aide.test.ts`~~ | **réglé.** Il portait 15 échecs le matin du 20 septembre ; `GU16` les a fermés en relisant les 316 fiches d'affilée. Gardé ici barré pour que personne ne le recherche |
 
 **Et un essai instable, trouvé par le contrôle complet du 20 septembre 2026** :
 `tests/test_sn10_musique_adaptative.py::test_godot_passe_d_exploration_a_combat_…`. Godot y
