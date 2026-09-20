@@ -560,9 +560,23 @@ export function reglagesMoteur(j: JeuEdite): Record<string, unknown> & { tileset
   rafraichirMatieres(j.etat, s, j.graine)
   const tex = texturesHarmonisees(j, texturesDe(j.etat))
   const n = (cle: string, defaut: number) => (typeof r[cle] === "number" ? (r[cle] as number) : defaut)
+  // Toutes les longueurs passées au moteur sont en pixels et suivent donc la taille de
+  // pièce — `* s / 32`, la taille de référence des réglages de l'écran. `edgeFrequency`
+  // en est une aussi : c'est la longueur d'onde du bruit qui creuse les bords.
+  //
+  // Elle a longtemps valu 5 quelle que soit la pièce, pendant que `edgeRoughness` — la
+  // PROFONDEUR de ce même bruit — suivait la taille. Sur une grande pièce, le bruit
+  // gardait donc ses vagues de 5 px de large mais les creusait trois fois plus : la
+  // silhouette devenait trop pentue pour qu'un bord retombe au même pixel d'une pièce à
+  // l'autre, et « Teste les raccords » signalait des coutures décalées d'un pixel.
+  // Mesuré : c'est le rapport profondeur/longueur d'onde qui décide, pas la taille.
+  // Jusqu'à 1,5 aucun défaut ; au-delà de 1,9 ils apparaissent. À 32 px et irrégularité 3
+  // il vaut 0,56 ; en gardant 5 en dur il montait à 2,4 sur une pièce de 128.
+  // En suivant la taille, il reste 0,56 partout : une pièce de 96 ou de 128 est
+  // exactement l'agrandissement d'une pièce de 32, bord compris.
   return {
     tilesetType: S.type, tileSize: s, cornerRadius: n("arrondi", 2) * s / 32, edgeStyle: r.bordures === "nettes" ? "clean" : "rough",
-    edgeRoughness: n("irregularite", 3) * s / 32, edgeFrequency: 5, edgePadding: 2 * s / 16,
+    edgeRoughness: n("irregularite", 3) * s / 32, edgeFrequency: 5 * s / 32, edgePadding: 2 * s / 16,
     baseColor: couleur(r, "couleurSurface"), edgeColor: couleur(r, "couleurContour"), edgeFade: 3 * s / 32,
     shades: n("nuances", 4), textureNoise: 12, fleckAmount: 6, seed: j.graine, relief: n("relief", 4) / 10,
     reductionMode: (r.reduction as string) || "contraste", palette: paletteJeuDuRendu(j),
