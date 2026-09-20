@@ -5234,6 +5234,35 @@ describe("l'infobulle et le guide", () => {
   // `NOM_DE_LECRAN`, `Guide.tsx` — et **l'absence** du résumé de l'écran dont
   // chacun héritait à tort. La seconde moitié ajoutera la phrase attendue.
 
+  test("une fiche de clip laissée ouverte dans la galerie ne suit pas dans les autres écrans", async () => {
+    // `GU16`, vu au navigateur : `ficheClip` est l'état de la colonne de droite
+    // de la galerie, et il survit quand on la quitte. Avant la garde
+    // `surface === "galerie"`, *Les sujets* et *Fabrications* — tout ce qui
+    // vient après lui dans `ecranDuGuide` — montraient « Un clip ».
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble, { ...ETAT, generations: [clipRendu("clip-a", false)] })
+    await allerAuxVideos()
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir le résultat" }))
+    await waitFor(() => expect(document.querySelector("[data-fiche-clip]")).toBeTruthy())
+
+    fireEvent.keyDown(window, { key: "?" })
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    let volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.textContent).toContain("Un clip") // sur la galerie, c'est bien lui
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Guide", level: 1 })).toBeNull(),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Fabrications" }))
+    await screen.findByRole("main", { name: "Fabrications" })
+    fireEvent.keyDown(window, { key: "?" })
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.querySelector("header p")?.textContent).toBe("Fabrications")
+    expect(volet.textContent).not.toContain("Le clip — l'image de départ choisie")
+  })
+
   test("les fabrications : le guide sert l'écran du même nom, plus celui d'un clip", async () => {
     // Les neuf fiches de cet écran logeaient sous `ou: "clip"`, faute d'une
     // valeur à lui : ouvrir *Fabrications* montrait le guide d'un clip.

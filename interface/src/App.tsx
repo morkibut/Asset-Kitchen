@@ -1332,7 +1332,13 @@ function AtelierApp() {
                   ? "montage"
                   : bandeOuverte
                     ? "bande"
-                    : ficheClip
+                    : // **`ficheClip` est l'état de la colonne de droite de la
+                      // galerie, et il survit quand on la quitte** : une fiche
+                      // de clip laissée ouverte donnait « Un clip » sur *Les
+                      // sujets*, *Fabrications* et tout ce qui suit dans cette
+                      // chaîne (`GU16`, vu au navigateur). Il ne compte que
+                      // sur la galerie, comme `selection` juste au-dessus.
+                      surface === "galerie" && ficheClip
                       ? "clip"
                       : // **Les entrées des fabriques trouvent enfin leur
                         // écran** (`B19`). Elles étaient rangées sous
