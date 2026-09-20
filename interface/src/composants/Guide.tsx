@@ -208,7 +208,7 @@ export function echapVientDeFermerLeGuide(): boolean {
  *  tuiles ?* nommerait l'écran qu'on quitte au premier clic. */
 const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   "tableau-de-bord": "Le jeu",
-  codex: "Les sujets",
+  codex: "Codex",
   sujet: "La fiche d'un sujet",
   galerie: "Galerie",
   case: "La fiche d'une image",

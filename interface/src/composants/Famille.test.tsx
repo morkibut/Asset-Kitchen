@@ -757,19 +757,19 @@ describe("toutes les familles dans la même grille", () => {
   test("sans famille, elle lit les quatre et n'écrit qu'un titre", async () => {
     const { appels } = monter({ famille: null })
 
-    expect(await screen.findByRole("heading", { name: "Les sujets" })).toBeTruthy()
+    expect(await screen.findByRole("heading", { name: "Codex" })).toBeTruthy()
     await waitFor(() => expect(appelsDeFamille(appels)).toHaveLength(4))
     const familles = appelsDeFamille(appels).map((a) => a.url.split("?")[0]!.split("/").at(-1))
     expect(new Set(familles)).toEqual(new Set(["personnages", "decors", "objets", "interface"]))
 
     // Un seul écran, un seul cadre : l'ancienne porte en montait un second.
     expect(document.querySelectorAll("[data-grille-dassets]")).toHaveLength(1)
-    expect(screen.getByRole("main", { name: "Les sujets du jeu" })).toBeTruthy()
+    expect(screen.getByRole("main", { name: "Codex" })).toBeTruthy()
   })
 
   test("le tri recoud les quatre listes, il ne trie pas une famille seule", async () => {
     monter({ famille: null })
-    await screen.findByRole("heading", { name: "Les sujets" })
+    await screen.findByRole("heading", { name: "Codex" })
 
     // Quatre fois [A, B, C] : sans recouture, on lirait A A A A B B B B…
     await waitFor(() =>
@@ -784,7 +784,7 @@ describe("toutes les familles dans la même grille", () => {
   test("cliquer une famille dans la colonne est un lieu : le parent y va", async () => {
     const surFamille = vi.fn()
     monter({ famille: null, surFamille })
-    await screen.findByRole("heading", { name: "Les sujets" })
+    await screen.findByRole("heading", { name: "Codex" })
 
     const colonne = within(screen.getByRole("navigation", { name: "Familles et collections" }))
     fireEvent.click(colonne.getByRole("button", { name: /^Personnages/ }))

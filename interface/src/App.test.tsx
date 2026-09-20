@@ -4063,8 +4063,8 @@ async function ouvrirLEtabli(nom?: string) {
   // toutes les familles, et cliquer une famille dans sa colonne la restreint —
   // **c'est le même écran depuis `RP7`**, plus un détour par « Ouvrir et
   // organiser ». Ce parcours reste celui de l'auteur avant la fiche.
-  fireEvent.click(screen.getByRole("button", { name: "Les sujets" }))
-  const bibliotheque = await screen.findByRole("main", { name: "Les sujets du jeu" })
+  fireEvent.click(screen.getByRole("button", { name: "Codex" }))
+  const bibliotheque = await screen.findByRole("main", { name: "Codex" })
   // Le nom accessible du bouton porte aussi le compte de la famille dès que la
   // grille a répondu (« Personnages 1 ») : une chaîne exacte gagne la course
   // tant que le compte n'est pas encore arrivé, et la perd sous charge.
@@ -5203,8 +5203,8 @@ describe("l'infobulle et le guide", () => {
     )
     await monter(fetchAvecSons)
 
-    fireEvent.click(screen.getByRole("button", { name: "Les sujets" }))
-    const bibliotheque = await screen.findByRole("main", { name: "Les sujets du jeu" })
+    fireEvent.click(screen.getByRole("button", { name: "Codex" }))
+    const bibliotheque = await screen.findByRole("main", { name: "Codex" })
     fireEvent.click(within(bibliotheque).getByRole("button", { name: "Les sons" }))
     await screen.findByLabelText("Atelier sonore")
 
@@ -11162,7 +11162,7 @@ describe("le châssis des tables", () => {
     expect(ouverture("Créer")).toBe("false")
     expect(
       within(screen.getByRole("navigation", { name: "Atelier" }))
-        .getByRole("button", { name: "Les sujets" })
+        .getByRole("button", { name: "Codex" })
         .getAttribute("aria-current"),
     ).toBe("page")
   })
@@ -13363,9 +13363,9 @@ describe("le premier lancement", () => {
     // **Nommer une chose se fait dans sa famille**, où la bibliothèque mène en
     // deux clics — aucune question posée, aucun formulaire, et le champ est
     // vide et actif au bout.
-    fireEvent.click(screen.getByRole("button", { name: "Les sujets" }))
+    fireEvent.click(screen.getByRole("button", { name: "Codex" }))
     const bibliotheque = await screen.findByRole("main", {
-      name: "Les sujets du jeu",
+      name: "Codex",
     })
     // Le nom accessible du bouton porte aussi le compte de la famille dès que
     // la grille a répondu (« Personnages 0 ») : une chaîne exacte gagne la
@@ -23317,7 +23317,7 @@ describe("B0 — la navigation de l'atelier", () => {
     await monter(fetchDouble)
     const atelier = within(navigation()).getByRole("navigation", { name: "Atelier" })
     expect(within(atelier).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
-      "Le jeu", "Univers & toile", "Les sujets", "Galerie", "Fabrications", "Livrer au jeu",
+      "Le jeu", "Univers & toile", "Codex", "Galerie", "Fabrications", "Livrer au jeu",
     ])
   })
 

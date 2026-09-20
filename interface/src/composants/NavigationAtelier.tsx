@@ -7,7 +7,7 @@ export type DestinationAtelier = "jeu" | "univers" | "assets" | "galerie" | "fab
 const PORTES: { cle: DestinationAtelier; nom: string; court: string }[] = [
   { cle: "jeu", nom: "Le jeu", court: "Jeu" },
   { cle: "univers", nom: "Univers & toile", court: "Toile" },
-  { cle: "assets", nom: "Les sujets", court: "Les sujets" },
+  { cle: "assets", nom: "Codex", court: "Codex" },
   { cle: "galerie", nom: "Galerie", court: "Galerie" },
   { cle: "fabrications", nom: "Fabrications", court: "File" },
   { cle: "livraison", nom: "Livrer au jeu", court: "Livrer" },

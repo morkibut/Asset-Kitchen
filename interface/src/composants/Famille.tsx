@@ -1076,7 +1076,7 @@ export function EcranFamille({
 
   // « Les 1 personnages » ne se dit pas, et une collection d'un seul sujet est
   // le cas ordinaire le jour où on la crée.
-  const nomDeLEcran = famille === null ? "Les sujets" : (nom ?? famille)
+  const nomDeLEcran = famille === null ? "Codex" : (nom ?? famille)
   const titre =
     total === 0 ? (
       nomDeLEcran
@@ -1274,7 +1274,7 @@ export function EcranFamille({
     <main
       data-ecran-famille
       data-grille-dassets
-      aria-label={famille === null ? "Les sujets du jeu" : `La famille ${nomDeLEcran}`}
+      aria-label={famille === null ? "Codex" : `La famille ${nomDeLEcran}`}
       className="flex min-h-0 flex-1 overflow-hidden bg-papier"
     >
       {/* Le fantôme du glisser — hors écran, son contenu est écrit à la main au
@@ -1395,13 +1395,13 @@ export function EcranFamille({
         <div className="flex items-end justify-between gap-[22px]">
           <div className="flex flex-col gap-[4px]">
             {famille === null ? (
-              <h1 className="font-serif text-[38px] leading-[1.05] text-encre">Les sujets</h1>
+              <h1 className="font-serif text-[38px] leading-[1.05] text-encre">Codex</h1>
             ) : (
               <h1 className="font-serif text-[38px] leading-[1.05] text-encre">{titre}</h1>
             )}
             <p className="text-[13px] text-encre-2">
               {famille === null
-                ? "Les sujets du jeu, rangés par famille et par collection."
+                ? "Le Codex, rangé par famille et par collection."
                 : collectionsConnues.length > 0
                   ? `Rangés dans ${collectionsConnues.length} collections. Un même ${mots.singulier} peut être dans plusieurs.`
                   : "Aucune collection encore. Une collection range sans contraindre."}

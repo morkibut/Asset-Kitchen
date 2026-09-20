@@ -113,7 +113,7 @@ return (ou, _profondeur, dedans) => {
     case "tableau-de-bord":
       return "Le jeu"
     case "bibliotheque":
-      return "Les sujets"
+      return "Codex"
     case "fabrications":
       return "Fabrications"
 

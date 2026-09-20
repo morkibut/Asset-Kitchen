@@ -2802,7 +2802,7 @@ export const AIDE: Record<string, Explication> = {
     groupe: "La colonne de gauche — la même sur tous les écrans",
     quoi: "La colonne de gauche, la même sur tous les écrans — le jeu, sa toile, ses sujets, sa galerie, ses fabrications, sa livraison.",
     change:
-      "Le bouton du haut la replie sans retirer une seule destination : il ne reste que les noms courts. Les familles et les collections se rangent sous Les sujets ; les outils gardent leur place dans leurs ateliers.",
+      "Le bouton du haut la replie sans retirer une seule destination : il ne reste que les noms courts. Les familles et les collections se rangent sous Codex ; les outils gardent leur place dans leurs ateliers.",
     origine: "toi · dépliée au départ",
   },
 

@@ -2428,7 +2428,7 @@ function AtelierApp() {
         />
       )}
 
-      {/* ── La porte « Les sujets » — **la même grille qu'une famille** (`RP7`)
+      {/* ── La porte « Codex » — **la même grille qu'une famille** (`RP7`)
           Elle montre toutes les familles ; ouvrir une famille montre la même
           grille restreinte. Un seul composant, un seul appel, un seul type de
           glisser : `BibliothequeDesAssets.tsx` est parti le 16 septembre 2026. */}
