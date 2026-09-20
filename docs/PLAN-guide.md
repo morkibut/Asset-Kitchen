@@ -101,10 +101,18 @@ nom à l'écran, le `ou` qui le sert aujourd'hui (ou rien), le nombre de fiches,
 parlent d'un réglage disparu. Aucun code.
 
 **Critères**
-- [ ] Chaque genre de `lieux.ts`, chaque côté de l'univers et chaque onglet des règles figure
+- [x] Chaque genre de `lieux.ts`, chaque côté de l'univers et chaque onglet des règles figure
       dans le tableau, avec son compte de fiches.
-- [ ] Les fiches qui décrivent un réglage introuvable à l'écran sont nommées une par une.
-- [ ] Le relevé vit dans `docs/releves/guide-2026-09-20.md` et ce plan y renvoie.
+- [x] Les fiches qui décrivent un réglage introuvable à l'écran sont nommées une par une.
+- [x] Le relevé vit dans `docs/releves/guide-2026-09-20.md` et ce plan y renvoie.
+
+→ [docs/releves/guide-2026-09-20.md](releves/guide-2026-09-20.md). Le plus lourd
+qu'il montre : `ou: "jeu"` (25 fiches, « Les règles du jeu ») n'est **jamais
+atteignable** — `coteUnivers` ne peut valoir que `"inspiration"` ou `"ambiances"` —
+pendant que l'écran qui porte vraiment le nom « Réglages » à l'écran affiche un
+volet titré « L'installation ». Et la retouche (73 fiches, le plus gros groupe)
+n'a que 2 fiches accrochées à une bulle : `Retouche.tsx` et `Superposition.tsx`
+ne branchent le corpus nulle part.
 
 ### `GU2` — La forme du volet : résumé en tête, groupes, replis
 
