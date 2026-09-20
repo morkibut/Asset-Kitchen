@@ -420,13 +420,6 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · paramètres acceptés et relus par le moteur externe",
     ou: "clip",
   },
-  "retouche.brouillon": {
-    nom: "Enregistrer les retouches d’une image",
-    quoi: "Les outils calculent un aperçu réel et gardent les réglages en brouillon sur cet ordinateur. La version de la bibliothèque reste intacte jusqu’à Enregistrer les retouches.",
-    change: "Défaire et Refaire parcourent les gestes. Quitter permet d’enregistrer, de conserver le brouillon ou de l’abandonner ; la reprise est proposée à la réouverture. Copier une recette ou revenir au brut prépare aussi un brouillon. La découpe, l’extraction et l’équipement utilisent la version enregistrée.",
-    origine: "toi · recette non destructive et aperçu CPU local",
-    ou: "tables",
-  },
   "agent.cadre-durable": {
     nom: "Le cadre de délégation du jeu",
     quoi: "Le jeu conserve les méthodes et les limites autorisées pour les demandes complètes de l’agent.",
@@ -1159,8 +1152,70 @@ export const AIDE: Record<string, Explication> = {
   // tout le reste : trois places n'ont aucun sens avant celle qui les précède.
   // Rien ne peut se recadrer avant qu'un alpha dise où est le sujet.
 
+  "retouche.brouillon": {
+    nom: "Enregistrer les retouches d’une image",
+    quoi: "Les outils calculent un aperçu réel et gardent les réglages en brouillon sur cet ordinateur. La version de la bibliothèque reste intacte jusqu’à Enregistrer les retouches.",
+    change: "Défaire et Refaire parcourent les gestes. Quitter permet d’enregistrer, de conserver le brouillon ou de l’abandonner ; la reprise est proposée à la réouverture. Copier une recette ou revenir au brut prépare aussi un brouillon. La découpe, l’extraction et l’équipement utilisent la version enregistrée.",
+    origine: "toi · recette non destructive et aperçu CPU local",
+    groupe: "En haut de l'écran — enregistrer",
+    ou: "tables",
+  },
+
+  // ── Enregistrer sous (`RP20`) ─────────────────────────────────────────────
+  //
+  // **Une entrée, pas trois.** Le sujet, la pose et la direction de la fenêtre
+  // sont la même question posée en trois champs : *où ça va*. Trois entrées
+  // auraient répété la même phrase, et la règle du guide est qu'une entrée
+  // décrit un réglage — celui-ci en est un seul.
+
+  "enregistrer-sous.case": {
+    nom: "où le résultat se range",
+    groupe: "En haut de l'écran — enregistrer",
+    ou: "tables",
+    quoi: "La pose et la direction sous lesquelles le résultat de la retouche vient se poser. Ce qui naît est une image — ou une animation — neuve : ses pixels sont ceux que tu as sous les yeux, et sa retouche repart de zéro.",
+    change:
+      "Rien à la génération, et rien à l'original : ni sa retouche, ni son rendu ne bougent. La nouvelle case n'est pas retenue pour le jeu — la retenir est un second geste.",
+    origine:
+      "l'atelier propose la case de l'image · la direction au miroir quand la retouche en porte un · toi dès que tu choisis",
+    long:
+      "**Ce n'est pas le miroir de la table du retournement, et les deux se ressemblent.** Là-bas, l'image neuve garde les pixels d'origine et c'est sa *recette* qui la retourne : retirer la place la redresse. Ici le retournement est cuit dans les pixels, et la recette repart vide — parce que la nouvelle case a sa vie à elle, qu'on va la retoucher, et que deux recettes posées sur la même image brute finiraient par se contredire.\n\n**Ce n'est pas non plus dupliquer** : la copie porterait la retouche, celle-ci porte le résultat. Le geste ne demande rien à personne et ne coûte rien.",
+  },
+
+  "tables.zoom": {
+    nom: "le pour cent d'agrandissement",
+    groupe: "L'image, et la barre au-dessus d'elle",
+    ou: "tables",
+    quoi: "À quelle taille l'image est montrée dans la table. Libre entre 1 et 250 %, écrit à la main ou réglé par *plus* et *moins* ; la molette approche et recule, et le point qu'on vise ne bouge pas de sous le pointeur.",
+    change:
+      "Rien à l'image — c'est une loupe, pas un réglage. *100 %* rend exactement un pixel d'image pour un pixel d'écran ; *ajusté* fait tenir l'image entière dans le cadre, et c'est ce qu'on obtient en ouvrant une table.",
+    origine: "toi · ajusté à l'ouverture",
+    long:
+      "Ailleurs dans le produit — la grille de la galerie, la vitrine — l'agrandissement ne prend que des multiples entiers : un sprite montré à une échelle qui n'est pas entière fabrique des pixels qui n'existent pas, et on jugerait alors un défaut né de la fenêtre où on l'a regardé. Cette règle appartient à ce qui **montre** une image ; la table est ce qui la **travaille**, et on n'y règle rien sans pouvoir approcher et reculer librement.\n\nL'avoir appliquée ici a coûté cher : une image d'origine de 1 024 pixels de côté dans un cadre de 606 ne pouvait pas descendre sous 100 %, donc on n'en voyait qu'un coin — et ce coin étant transparent, l'écran ne montrait que le damier. La table de recadrage paraissait cassée alors qu'elle marchait.",
+  },
+
+  "tables.png": {
+    nom: "PNG ↓",
+    groupe: "L'image, et la barre au-dessus d'elle",
+    ou: "tables",
+    quoi: "Télécharge l'image telle qu'elle est sous les yeux — le rendu, ou le brut quand on regarde le brut.",
+    change:
+      "Rien : c'est une copie. L'image reste dans la bibliothèque, sa recette aussi, et le fichier reçu est celui qu'on voyait.",
+    origine: "l'état courant de la table",
+  },
+
+  "bande.source": {
+    nom: "viser ou découper une frame",
+    groupe: "L'image, et la barre au-dessus d'elle",
+    ou: "tables",
+    quoi: "La pipette, le tracé du sujet et le rectangle visent l’image source ; la découpe prélève la frame retouchée.",
+    change: "Une visée corrige uniquement la frame choisie. Découper crée une image en bibliothèque, sans modifier ni enregistrer l’animation.",
+    origine: "toi · depuis l’atelier d’animation",
+    long: "La vue source possède son zoom et son déplacement : ses coordonnées restent celles du fichier original, avant réduction. La découpe part au contraire de la case finale, placement et Main compris. Après la découpe, Revenir à l’animation retrouve les réglages en cours. Les morceaux entrent dans la bibliothèque sans nouvel appel de génération.",
+  },
+
   "etape.detourage": {
     nom: "Détourage",
+    groupe: "La table Détourage",
     ou: "tables",
     quoi: "La première place de la recette : trouver le fond et le rendre transparent.",
     change:
@@ -1172,6 +1227,7 @@ export const AIDE: Record<string, Explication> = {
 
   "detourage.moteur": {
     nom: "moteur",
+    groupe: "La table Détourage",
     ou: "tables",
     quoi: "Comment le fond est trouvé : « bord » part des bords de l'image, « pipette » part d'un point que tu désignes, « modèle » demande une silhouette à un réseau.",
     change:
@@ -1181,30 +1237,9 @@ export const AIDE: Record<string, Explication> = {
       "Le remplissage depuis le bord est le moteur du geste courant : sur douze images issues de six modèles, PNG et JPEG, il a rendu douze silhouettes propres — squelette blanc sur fond gris clair et fioles translucides comprises.\n\nSa règle tient en un mot : relié. Un pixel n'est du fond que s'il est relié à un bord par une chaîne de pixels proches de la couleur de bordure. C'est ce qui le distingue d'un seuil global, qui perce le sujet — l'os d'un squelette et le reflet d'une fiole ont la couleur du fond sans y être reliés.\n\nEt c'est aussi ce qui lui interdit une chose. Un creux de fond entièrement entouré par le sujet — la lumière entre un bras et un torse, le trou d'une anse, l'intérieur d'un anneau — n'est relié à aucun bord : aucune valeur de tolérance ne l'atteindra jamais, parce que le chemin n'existe pas. La pipette est là pour ça, et pour rien d'autre : tu désignes ce creux du doigt, et il part.\n\nLes deux premiers moteurs ont été confrontés le 27 août sur six vraies images plus un cas composé. Sur ce que le produit fabrique — fond plat — le bord et le modèle s'accordent à 96,3 % en médiane : le second n'apporte rien, et c'est ce qui justifie qu'il reste facultatif. Sur un fond chargé, le bord garde 100 % de l'image — il échoue entièrement — quand le modèle en isole 19,8 %. C'est sa raison d'être, et elle se mesure.",
   },
 
-  "detourage.couleur": {
-    nom: "couleur visée",
-    ou: "tables",
-    quoi: "Le point que tu as cliqué dans l'image, et la couleur qu'il y avait dessous — c'est de là que la pipette part.",
-    change:
-      "Tant qu'aucun point n'est posé, la passe ne retire rien du tout. Recliquer ailleurs déplace le point de cette passe, sans en créer une deuxième.",
-    origine: "toi · cliquée dans l'image",
-    long:
-      "Ce qui est gardé est le point, pas la tache qu'il désigne, et ce n'est pas un détail. Une tache est une zone d'un seul tenant que l'atelier retrouve à chaque rendu : elle change de rang et de place dès qu'un réglage au-dessus bouge d'un cran, et ta recette se mettrait alors à viser autre chose sans rien dire. Un point, lui, ne bouge pas.\n\nLa couleur, elle, n'est pas gardée : elle se lit sous le point à chaque fois. Une couleur écrite à côté du point qui la porte serait une copie que plus rien ne met à jour.\n\nLe point est compté sur l'image d'origine — celle d'avant tout traitement —, comme le rectangle de recadrage. C'est pour ça que tu vises sur elle et pas sur le rendu.",
-  },
-
-  "detourage.portee": {
-    nom: "portée",
-    ou: "tables",
-    quoi: "Ce que la pipette retire depuis ton point : « cette tache » ne retire que la zone d'un seul tenant sous le curseur, « partout » retire toutes les zones de cette couleur dans l'image.",
-    change:
-      "« Cette tache » règle un creux sans toucher au reste — c'est le geste pour lequel la pipette existe. « Partout » va plus vite et atteint aussi ce qui touche le sujet : un reflet, un œil, une dent de la même couleur que le fond partiront avec.",
-    origine: "toi · défaut « cette tache »",
-    long:
-      "« Cette tache » veut dire : la zone d'un seul tenant que tu vois, et rien d'autre. Elle s'arrête à ce qui reste de l'image — jamais elle ne traverse ce qu'une passe précédente a déjà effacé.\n\nCette phrase a été écrite le 1er septembre 2026, et elle répare un défaut. Effacer un pixel ne change pas sa couleur ; ça ne change que sa transparence. Une seconde pipette lisait donc un fond qui, pour elle, était encore là, elle s'y propageait de proche en proche et ressortait ailleurs dans l'image — sur une zone qui n'avait rien à voir avec le point désigné, et qui à l'écran ne le touchait même pas. Entre les deux il n'y avait que du damier.\n\nDeux réponses étaient possibles : montrer d'avance la zone que la pipette prendra, ou l'empêcher de traverser ce qui n'est plus là. C'est la seconde qui a été retenue, parce qu'elle rend le geste prévisible au lieu de rendre sa surprise lisible.",
-  },
-
   "detourage.silhouette": {
     nom: "modèle",
+    groupe: "La table Détourage",
     ou: "tables",
     quoi: "Quel modèle va chercher la silhouette, du plus rapide au plus lourd. Le rapide est ce que tu obtiens sans rien demander.",
     change:
@@ -1214,30 +1249,9 @@ export const AIDE: Record<string, Explication> = {
       "Le détourage par modèle n'en connaissait qu'un seul, écrit dans le code. C'était une liste en dur là où la règle de la maison dit que le catalogue décide — et il fallait toucher au code pour en essayer un autre.\n\nUn modèle est un fichier de plusieurs centaines de mégaoctets, et il n'est pas dans le produit : il descend la première fois qu'on s'en sert, puis il reste. Deux absences se ressemblent et ne se traitent pas pareil. Si le moteur par modèle n'est pas installé du tout, il est grisé avec sa raison : rien ne le rendra choisissable sans une installation. Si le moteur est là mais que ce modèle-ci n'est pas encore descendu, il reste choisissable, et l'atelier dit ce qu'il va rapatrier et ce que ça pèse avant de partir. Griser les deux t'aurait envoyé faire à la main un téléchargement que l'atelier sait faire ; les confondre t'aurait laissé attendre plusieurs minutes sur un geste annoncé comme lent de quelques secondes.\n\nUne recette qui nomme un modèle absent de ta machine ne casse rien : cette passe-là n'agit pas, les autres places s'appliquent, et l'image sort. C'est la même règle que pour une passe masquée — ce qui n'agit pas n'empêche pas le reste d'agir.",
   },
 
-  "detourage.trace": {
-    nom: "forme entourée",
-    ou: "tables",
-    quoi: "La forme que tu as tracée à main levée autour du sujet, dans l'image. Elle se referme toute seule : le geste est d'entourer, pas de dessiner une ligne.",
-    change:
-      "Rien tant qu'elle est vide. Une fois tracée, l'atelier cherche le bord du sujet à l'intérieur de ce que tu as entouré et ne touche à rien au-dehors. Retracer remplace la forme de cette passe ; retirer la passe défait le geste d'un coup.",
-    origine: "toi · tracée dans l'image",
-    long:
-      "C'est la sélection magique des logiciels d'image, et elle répond à ce que ni le détourage automatique ni la retouche au pixel ne savent faire : le premier décide tout seul et se trompe parfois, la seconde demande de suivre un contour au pixel près, ce qui est très long sur une silhouette entière.\n\nTu traces gros, et c'est voulu : ton trait ne devient jamais le contour du sprite. Il borne la recherche. L'atelier part du liseré de ta forme — des pixels de fond, puisque tu as entouré large — et remplit vers l'intérieur jusqu'à buter sur le sujet. Ce qui sort est le bord du sujet lui-même, trouvé dans les pixels, pas ta main.\n\nElle vit avec le détourage et non avec la main : c'est une quatrième façon de désigner ce qu'on retire, à côté du bord, de la pipette et du modèle, et un seul endroit décide de ce qui est effacé. Elle agit donc avant le recadrage et la mise sur grille, qui ont tous les deux besoin de savoir où est le sujet — tant que le fond est là, la boîte du sujet, c'est toute l'image.\n\nLa forme ne voyage pas. Coller les réglages sur une autre image ou enregistrer une recette sous un nom la laisse derrière : c'est une coordonnée, comme le point de la pipette et comme le rectangle de recadrage, et une silhouette entourée sur une attitude tomberait à côté sur l'attitude suivante.",
-  },
-
-  "detourage.masquee": {
-    nom: "masquer une passe",
-    ou: "tables",
-    quoi: "Retire cette passe du calcul le temps que tu regardes. Elle garde tous ses réglages, et « montrer » rend exactement l'image d'avant.",
-    change:
-      "L'image se refait sans elle, et c'est tout ce que ça fait. Masquer n'est pas retirer : retirer la perd, masquer la met de côté. Toucher un de ses réglages la remontre — poser une valeur, c'est dire qu'on veut cette passe.",
-    origine: "toi · défaut visible",
-    long:
-      "Plusieurs passes s'enchaînent et tu ne vois que leur somme : impossible de savoir laquelle a mangé quoi. C'est le même geste que d'endormir une table, un cran plus bas, et la même règle — ce qu'on éteint garde ses réglages.\n\nUne passe supplémentaire travaille bien sur le résultat de la précédente, mais seulement à moitié, et c'est cette moitié qui surprend. La transparence s'accumule et ne se rend jamais : chaque passe ne peut que serrer ce que la précédente a laissé. La couleur, elle, ne bouge pas — effacer un pixel ne change pas sa couleur.\n\nC'est de là que venait le défaut de la pipette sur une seconde passe, corrigé le 1er septembre 2026 : la tache repartait à travers le fond déjà effacé, qui avait gardé sa couleur et formait un couloir invisible, et elle ressortait ailleurs dans l'image. Mesuré sur une image d'essai : 120 pixels pris sur une zone qui ne touchait pas le point désigné. Depuis, la propagation s'arrête à ce qui reste.",
-  },
-
   "detourage.tolerance": {
     nom: "tolérance",
+    groupe: "La table Détourage",
     ou: "tables",
     quoi: "Jusqu'où une couleur peut s'écarter du fond et compter quand même comme fond — l'écart toléré sur chaque composante de couleur.",
     change:
@@ -1249,6 +1263,7 @@ export const AIDE: Record<string, Explication> = {
 
   "detourage.seuil_alpha": {
     nom: "seuil alpha",
+    groupe: "La table Détourage",
     ou: "tables",
     quoi: "Au-dessus de cette valeur un pixel appartient au sujet, en dessous il appartient au fond. 0 à 255.",
     change:
@@ -1260,6 +1275,7 @@ export const AIDE: Record<string, Explication> = {
 
   "detourage.durcissement": {
     nom: "durcissement",
+    groupe: "La table Détourage",
     ou: "tables",
     quoi: "Combien de pixels sont rongés au bord de la silhouette après le seuil, de 0 à 4.",
     change:
@@ -1267,8 +1283,81 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · défaut 0",
   },
 
+  "detourage.couleur": {
+    nom: "couleur visée",
+    groupe: "La table Détourage",
+    ou: "tables",
+    quoi: "Le point que tu as cliqué dans l'image, et la couleur qu'il y avait dessous — c'est de là que la pipette part.",
+    change:
+      "Tant qu'aucun point n'est posé, la passe ne retire rien du tout. Recliquer ailleurs déplace le point de cette passe, sans en créer une deuxième.",
+    origine: "toi · cliquée dans l'image",
+    long:
+      "Ce qui est gardé est le point, pas la tache qu'il désigne, et ce n'est pas un détail. Une tache est une zone d'un seul tenant que l'atelier retrouve à chaque rendu : elle change de rang et de place dès qu'un réglage au-dessus bouge d'un cran, et ta recette se mettrait alors à viser autre chose sans rien dire. Un point, lui, ne bouge pas.\n\nLa couleur, elle, n'est pas gardée : elle se lit sous le point à chaque fois. Une couleur écrite à côté du point qui la porte serait une copie que plus rien ne met à jour.\n\nLe point est compté sur l'image d'origine — celle d'avant tout traitement —, comme le rectangle de recadrage. C'est pour ça que tu vises sur elle et pas sur le rendu.",
+  },
+
+  "detourage.portee": {
+    nom: "portée",
+    groupe: "La table Détourage",
+    ou: "tables",
+    quoi: "Ce que la pipette retire depuis ton point : « cette tache » ne retire que la zone d'un seul tenant sous le curseur, « partout » retire toutes les zones de cette couleur dans l'image.",
+    change:
+      "« Cette tache » règle un creux sans toucher au reste — c'est le geste pour lequel la pipette existe. « Partout » va plus vite et atteint aussi ce qui touche le sujet : un reflet, un œil, une dent de la même couleur que le fond partiront avec.",
+    origine: "toi · défaut « cette tache »",
+    long:
+      "« Cette tache » veut dire : la zone d'un seul tenant que tu vois, et rien d'autre. Elle s'arrête à ce qui reste de l'image — jamais elle ne traverse ce qu'une passe précédente a déjà effacé.\n\nCette phrase a été écrite le 1er septembre 2026, et elle répare un défaut. Effacer un pixel ne change pas sa couleur ; ça ne change que sa transparence. Une seconde pipette lisait donc un fond qui, pour elle, était encore là, elle s'y propageait de proche en proche et ressortait ailleurs dans l'image — sur une zone qui n'avait rien à voir avec le point désigné, et qui à l'écran ne le touchait même pas. Entre les deux il n'y avait que du damier.\n\nDeux réponses étaient possibles : montrer d'avance la zone que la pipette prendra, ou l'empêcher de traverser ce qui n'est plus là. C'est la seconde qui a été retenue, parce qu'elle rend le geste prévisible au lieu de rendre sa surprise lisible.",
+  },
+
+  "detourage.trace": {
+    nom: "forme entourée",
+    groupe: "La table Détourage",
+    ou: "tables",
+    quoi: "La forme que tu as tracée à main levée autour du sujet, dans l'image. Elle se referme toute seule : le geste est d'entourer, pas de dessiner une ligne.",
+    change:
+      "Rien tant qu'elle est vide. Une fois tracée, l'atelier cherche le bord du sujet à l'intérieur de ce que tu as entouré et ne touche à rien au-dehors. Retracer remplace la forme de cette passe ; retirer la passe défait le geste d'un coup.",
+    origine: "toi · tracée dans l'image",
+    long:
+      "C'est la sélection magique des logiciels d'image, et elle répond à ce que ni le détourage automatique ni la retouche au pixel ne savent faire : le premier décide tout seul et se trompe parfois, la seconde demande de suivre un contour au pixel près, ce qui est très long sur une silhouette entière.\n\nTu traces gros, et c'est voulu : ton trait ne devient jamais le contour du sprite. Il borne la recherche. L'atelier part du liseré de ta forme — des pixels de fond, puisque tu as entouré large — et remplit vers l'intérieur jusqu'à buter sur le sujet. Ce qui sort est le bord du sujet lui-même, trouvé dans les pixels, pas ta main.\n\nElle vit avec le détourage et non avec la main : c'est une quatrième façon de désigner ce qu'on retire, à côté du bord, de la pipette et du modèle, et un seul endroit décide de ce qui est effacé. Elle agit donc avant le recadrage et la mise sur grille, qui ont tous les deux besoin de savoir où est le sujet — tant que le fond est là, la boîte du sujet, c'est toute l'image.\n\nLa forme ne voyage pas. Coller les réglages sur une autre image ou enregistrer une recette sous un nom la laisse derrière : c'est une coordonnée, comme le point de la pipette et comme le rectangle de recadrage, et une silhouette entourée sur une attitude tomberait à côté sur l'attitude suivante.",
+  },
+
+  "detourage.masquee": {
+    nom: "masquer une passe",
+    groupe: "La table Détourage",
+    ou: "tables",
+    quoi: "Retire cette passe du calcul le temps que tu regardes. Elle garde tous ses réglages, et « montrer » rend exactement l'image d'avant.",
+    change:
+      "L'image se refait sans elle, et c'est tout ce que ça fait. Masquer n'est pas retirer : retirer la perd, masquer la met de côté. Toucher un de ses réglages la remontre — poser une valeur, c'est dire qu'on veut cette passe.",
+    origine: "toi · défaut visible",
+    long:
+      "Plusieurs passes s'enchaînent et tu ne vois que leur somme : impossible de savoir laquelle a mangé quoi. C'est le même geste que d'endormir une table, un cran plus bas, et la même règle — ce qu'on éteint garde ses réglages.\n\nUne passe supplémentaire travaille bien sur le résultat de la précédente, mais seulement à moitié, et c'est cette moitié qui surprend. La transparence s'accumule et ne se rend jamais : chaque passe ne peut que serrer ce que la précédente a laissé. La couleur, elle, ne bouge pas — effacer un pixel ne change pas sa couleur.\n\nC'est de là que venait le défaut de la pipette sur une seconde passe, corrigé le 1er septembre 2026 : la tache repartait à travers le fond déjà effacé, qui avait gardé sa couleur et formait un couloir invisible, et elle ressortait ailleurs dans l'image. Mesuré sur une image d'essai : 120 pixels pris sur une zone qui ne touchait pas le point désigné. Depuis, la propagation s'arrête à ce qui reste.",
+  },
+
+  "detourage.poches": {
+    nom: "poches de fond enfermées",
+    groupe: "La table Détourage",
+    ou: "tables",
+    quoi: "Les zones de fond que le sujet entoure complètement, et que le remplissage depuis le bord n'atteint donc pas : il n'y mène aucun chemin, à aucune tolérance.",
+    change:
+      "Rien, tant que tu n'y touches pas. Le produit les compte et propose de retirer les plus grandes ; il n'en efface aucune tout seul. La lumière entre un bras et un torse est du fond, l'intérieur d'un cabochon de lanterne est de la matière, et rien dans les pixels ne dit lequel des deux tu regardes. « La retirer › » ajoute simplement une passe pipette déjà visée dessus, qui s'annule comme les autres.",
+    origine: "mesuré sur l'image détourée",
+    long:
+      "Seules les plus grandes sont listées, et c'est une décision prise à la mesure plutôt qu'au jugé. Sur les soixante images du dépôt, détourées au réglage courant, une image porte quarante-trois de ces zones en médiane et jusqu'à seize mille — mais les trois quarts font un à trois pixels : du bruit de compression qui se trouve avoir la couleur du fond. Aucun seuil de taille ne sépare proprement le bruit du reste, c'est une longue traîne sans marche. On montre donc celles dont on se demande vraiment si c'est du fond ou de la matière, et le compte entier est écrit à côté.\n\nCe bloc annonçait longtemps zéro partout, et c'était une erreur, corrigée le 31 août 2026 : il lisait les trous de la silhouette, qui sont l'inverse exact. Un trou est du transparent — le détourage l'a déjà retiré. Une poche est encore opaque, justement parce que le détourage n'a pas pu l'atteindre. L'ancien bloc ne trouvait donc la poche qu'une fois celle-ci retirée, c'est-à-dire au moment où il n'y avait plus rien à proposer.",
+  },
+
+  "detourage.fond": {
+    nom: "le fond, tel qu'il est revenu",
+    groupe: "La table Détourage",
+    ou: "tables",
+    quoi: "Deux nombres, et la couleur de fond que cette image-là porte vraiment — lue sur ses bordures, jamais celle qu'on avait demandée. *Les pixels à demi transparents* sont ce que le découpage a laissé au bord ; *les pixels encore à la couleur du fond* sont ceux du sujet qu'un cran de tolérance de plus emporterait.",
+    change:
+      "Rien : c'est une lecture. Ce qu'elle sert à décider est ailleurs — le bord rongé, juste au-dessus, pour les premiers ; la couleur de fond du jeu, dans l'assistant, pour les seconds.",
+    origine: "mesuré sur l'image détourée",
+    long:
+      "**Ces deux nombres remplacent un banc d'essai.** La tranche qui a fait du fond un réglage du jeu réclamait d'abord huit tirages payants par branche avant sa première ligne de code ; l'auteur l'a retiré le 2 septembre 2026. La raison tient : le fond est devenu un réglage, pas une valeur imposée — si la couleur choisie donne un moins bon résultat, on la change en un geste et on le voit sur l'image suivante. Un banc aurait mesuré pendant trois heures ce que l'usage dit en trois images.\n\nCe qui prend sa place se lit **sur les images qu'on voulait de toute façon**, et c'est la doctrine du dépôt sur les notes de qualité, appliquée pour la première fois à un réglage d'envoi.\n\nLa couleur montrée est celle qui est *revenue* et non celle qu'on avait demandée : comparer la couleur demandée à elle-même n'aurait rien mesuré. Un écart entre les deux est une information — c'est la dérive du modèle, et c'est elle qui dit de combien il faut se tenir à l'écart de la palette du jeu.",
+  },
+
   "etape.recadrage": {
     nom: "Recadrage",
+    groupe: "La table Recadrage",
     ou: "tables",
     quoi: "La deuxième place : rogner l'image sur la boîte opaque du sujet.",
     change:
@@ -1276,13 +1365,661 @@ export const AIDE: Record<string, Explication> = {
     origine: "posé par l'univers quand le sujet a une silhouette",
   },
 
+  "recadrage.boite": {
+    nom: "ce qu'on garde",
+    groupe: "La table Recadrage",
+    ou: "tables",
+    quoi: "Deux valeurs, et une seule agit. *La boîte du sujet* est le plus petit rectangle qui contient tout ce qui n'est pas transparent : elle est mesurée, et remesurée chaque fois que le détourage change. *Une boîte tracée* est un rectangle qu'on a posé soi-même sur l'image, et qui ne bouge plus.",
+    change:
+      "Le recadrage s'arrête à ce rectangle-là, et non à ce que le sujet occupe. C'est le seul moyen de garder une part de fond que rien ne rend opaque — l'ombre portée d'un sprite, l'auréole d'une lanterne. La seconde valeur ne se choisit pas dans la colonne : on trace sur l'image, et le segment bascule tout seul. Le premier segment est le clic qui défait.",
+    origine: "mesurée sur l'alpha, ou tracée par toi",
+    long:
+      "Une boîte tracée n'agit que quand elle **coupe** le sujet, et la table le dit sous le rectangle. Plus large que lui, elle est sans effet sur le rendu : la remise sur grille recherche elle-même la boîte du sujet et rogne dessus, si bien que le surplus transparent disparaît de toute façon. C'est la même mécanique qui rend la marge sans effet quand une case est posée.\n\nElle ne voyage pas non plus. Quatre coordonnées ne veulent rien dire sur une autre image : posées sur une plus petite, elles tombent en partie hors du cadre ; posées sur un sujet cadré autrement, elles coupent n'importe où. C'est la règle générale du produit — un réglage voyage, une coordonnée ne voyage pas.",
+  },
+
   "recadrage.marge": {
     nom: "marge",
+    groupe: "La table Recadrage",
     ou: "tables",
     quoi: "Combien de pixels de l'image d'origine sont gardés autour de la boîte opaque du sujet.",
     change:
       "Élargit le recadrage. Sans marge, le sujet touche les quatre bords de son image recadrée — ce qui gêne les étapes suivantes et l'export.",
     origine: "toi · défaut 0",
+  },
+
+  "etape.grille": {
+    nom: "Grille",
+    groupe: "La table Pixelisation",
+    ou: "tables",
+    quoi: "La troisième place : remettre le sujet sur la grille de pixel du projet.",
+    change:
+      "C'est l'étape qui rend le produit possible — elle met toutes tes images sur le même pixel. Posée systématiquement, jamais en option : une grille qui a dérivé est le cas normal, pas l'incident.",
+    origine: "posée par l'univers, toujours",
+  },
+
+  "grille.cible": {
+    nom: "taille de pixel",
+    groupe: "La table Pixelisation",
+    ou: "tables",
+    quoi: "Le côté de la case, en pixels logiques — la taille finale de ton sprite avant export.",
+    change:
+      "C'est l'étape qui rend le produit possible : elle remet toutes tes images sur le même pixel. Elle est demandée, jamais déduite de l'image reçue.",
+    origine: "l'univers du projet, sinon toi · défaut 64",
+    long:
+      "Dix modèles sur douze font dériver la taille du pixel d'une étape à l'autre. Sans cette remise sur grille, les frames d'un même personnage ne partagent plus le même pixel, et un petit objet ressort plus grossier que le personnage qui le porte.\n\nDéduire la cible de l'image reçue reviendrait à laisser le fournisseur décider de l'échelle de ton jeu. C'est pour ça qu'elle se demande.\n\nLa ligne au-dessus du réglage dit sur quoi tu travailles : quand le modèle a vraiment peint des carrés, l'atelier les retrouve et te donne combien l'image en compte. C'est un renseignement, pas une décision — le chiffre ne se pose jamais tout seul.",
+  },
+
+  "grille.du-modele": {
+    nom: "les carrés du modèle",
+    groupe: "La table Pixelisation",
+    ou: "tables",
+    quoi: "La taille des carrés que le modèle a vraiment peints dans l'image qu'il t'a rendue — ou rien, quand il n'en a peint aucun.",
+    change:
+      "Rien. C'est une lecture, pas un réglage : elle te dit ce que l'image contient avant que tu choisisses la taille juste en dessous.",
+    origine: "mesuré sur l'image détourée, à chaque ouverture de la table",
+    long:
+      "Tu demandes du pixel art ; le modèle rend ce qu'il veut. Deux jeux de ce dépôt ont demandé exactement la même chose et n'ont pas reçu la même chose : l'un a reçu des carrés bien visibles, l'autre une peinture aux dégradés fins alors que sa consigne réclamait mot pour mot une grille stricte de 64.\n\nQuand les carrés sont là, l'atelier les retrouve et te dit combien l'image en compte. Demander plus de carrés que ce nombre-là ne fabrique aucun détail : il n'y en a plus à récupérer, et tu obtiendras des blocs coupés en deux plutôt qu'un sprite plus fin.\n\nQuand il n'y a pas de carrés du tout, l'atelier le dit et se tait. C'est la bonne réponse : sur une peinture, il n'y a rien à retrouver, et inventer un chiffre te ferait travailler sur une mesure fausse. La taille redevient alors entièrement ton choix — ce qu'elle est de toute façon, l'atelier ne la déduit jamais de l'image reçue.\n\nMesuré sur les 149 images du dépôt : sur le jeu qui a reçu des carrés, l'atelier en annonce sur 26 images sur 27 ; sur le jeu qui a reçu des peintures, il se tait sur 24 sur 26.",
+  },
+
+  "grille.occupation": {
+    nom: "hauteur",
+    groupe: "La table Pixelisation",
+    ou: "tables",
+    quoi: "La hauteur du sujet, comptée en personnages : 100 % en fait un, 300 % en fait trois.",
+    change:
+      "C'est elle, et non la taille de l'image d'origine, qui met un tonneau et un personnage à la même échelle de pixel. Au-delà de 100 %, l'image revient plus grande.",
+    origine: "le barème de l'univers via le sujet · défaut 100 %",
+    long:
+      "Le réglage le plus important du produit, et le moins évident. Deux images arrivent du fournisseur au même format ; si tu les remets simplement sur une grille de 64 carrés, le tonneau devient aussi grand que le personnage. La hauteur dit « ce tonneau fait 45 % d'un personnage », et l'échelle redevient juste.\n\nElle peut passer 100 %, et c'est ce qui rend un bâtiment, un arbre ou une tour fabricables : 300 % veut dire trois personnages de haut, et l'image revient trois fois plus grande. Le carré, lui, ne change jamais de taille — c'est la règle des jeux 2D, et l'enfreindre se voit tout de suite : deux tailles de pixel dans une même scène, ça s'appelle des « mixels », et l'œil les repère aux bords. Ce qui change entre un personnage et un bâtiment, c'est le nombre de carrés, jamais leur dimension.\n\nLe plafond dépend de ta case : un sujet ne monte pas au-delà de huit personnages, et pas au-delà de ce qu'une image de 2048 carrés peut porter — la plus basse des deux bornes gagne.\n\nC'est pour ça que le barème vit dans l'univers et se pose une fois : tu ne veux pas rejouer ce calcul à chaque génération.",
+  },
+
+  "grille.ancrage": {
+    nom: "ancrage",
+    groupe: "La table Pixelisation",
+    ou: "tables",
+    quoi: "Le point de la case par lequel le sujet est accroché, quand il ne la remplit pas entièrement. Neuf au choix : les quatre coins, les quatre milieux de bord, et le centre.",
+    change:
+      "Décide de l'alignement entre deux frames du même personnage. En bas par défaut, parce qu'un personnage se tient debout sur le bord bas de sa case.",
+    origine: "défaut du produit · bas",
+    long:
+      "Deux frames d'une même animation posées au centre flotteraient l'une par rapport à l'autre : le personnage semblerait monter et descendre entre deux images. Le bas est le bon défaut pour tout ce qui pose au sol.\n\nLes huit autres existent pour ce qui ne se tient pas debout. Une icône ou un objet d'inventaire tient par son centre ; une flamme au bout d'une torche et une bannière suspendue tiennent par leur haut ; une porte qui pivote tient par son côté.\n\nIl n'y en avait que deux avant le 4 septembre 2026, le bas et le centre, et c'était assez tant qu'on posait des images isolées. Une animation, elle, a un point fixe, et ce point n'est pas toujours au milieu d'un bord.",
+  },
+
+  "grille.methode": {
+    nom: "réduction",
+    groupe: "La table Pixelisation",
+    ou: "tables",
+    quoi: "Comment l'image passe de ses milliers de pixels aux carrés de la case. Quatre façons, qui rendent quatre sprites différents.",
+    change:
+      "C'est un choix de style, pas un classement : le vote rend un sprite calme, les traits épaissis un sprite détaillé, la réduction douce une image floue mais lisse, et « au plus proche » un résultat brut.",
+    origine: "défaut du projet · vote en deux temps",
+    long:
+      "Réduire une image de mille pixels à soixante-quatre carrés, c'est jeter quatre-vingt-dix-neuf pixels sur cent. Ce qu'on garde, et comment, décide de tout.\n\n**Au plus proche** garde un pixel sur N et jette les autres sans les regarder : un trait fin a une chance sur N de survivre. C'est ce que l'atelier faisait avant, et c'est un tirage au sort.\n\n**La réduction douce** fait la moyenne de chaque bloc. Rien n'est perdu, mais tout est mélangé : les contours deviennent des dégradés, ce qui convient à un dessin réduit et pas à un sprite.\n\n**Le vote en deux temps** regarde quelle couleur domine chaque case pour décider la forme, puis peint la case avec la moyenne des pixels d'origine de cette couleur-là. On obtient un trait net sans perdre les nuances.\n\n**Les traits épaissis** dilatent les lignes fines avant de réduire, pour qu'elles survivent au lieu d'être noyées. Une lance ou un fil reste un trait continu ; en échange, le contour est plus agité.\n\nLe projet donne le départ ; cette image-ci garde le dernier mot. Changer la méthode ne coûte rien : aucun appel payant ne part d'ici.",
+  },
+
+  "etape.quantification": {
+    nom: "Quantification",
+    groupe: "La table Couleurs",
+    ou: "tables",
+    quoi: "La quatrième place : ramener l'image à un nombre fini de couleurs, celles de la palette du projet.",
+    change:
+      "Donne au rendu sa cohérence de palette. Elle vient après la grille et jamais avant : quantifier 1024 px pour les jeter ensuite coûte cent fois plus pour le même résultat.",
+    origine: "posée par l'univers quand il a une palette",
+    long:
+      "Elle est déterministe, et c'est un critère du produit : une recette nommée, réappliquée ailleurs, donne exactement le même résultat. La coupe médiane de Pillow ne tire rien au sort ; une initialisation tirée au hasard — un k-means++, par exemple — rendrait deux images différentes pour la même recette.\n\nElle force l'alpha à 255 sans toucher à la couleur. C'est la seconde moitié du piège du liseré : un pixel de contour à peine visible qui a survécu au seuil ressort opaque, de la couleur du fond. Le seuil alpha se durcit avant, jamais après.",
+  },
+
+  "quantification.palette": {
+    nom: "palette",
+    groupe: "La table Couleurs",
+    ou: "tables",
+    quoi: "Les couleurs auxquelles l'image sera ramenée — celles de l'univers du projet, montrées ici en lecture seule.",
+    change:
+      "Rien à régler ici. La palette du jeu se déduit par calcul de ses artworks officiels, et les autres se fabriquent dans l'univers, côté Ambiances et couleurs ; la poser à la main ferait deux vérités sur la même chose.",
+    origine: "l'univers du projet · absente s'il n'a aucun artwork officiel",
+  },
+
+  "quantification.couleurs": {
+    nom: "couleurs",
+    groupe: "La table Couleurs",
+    ou: "tables",
+    quoi: "Sur combien de couleurs l'image est ramenée.",
+    change:
+      "Donne au rendu sa cohérence de palette. Cette étape s'applique après la réduction sur grille, jamais avant — quantifier 1024 px pour les jeter ensuite coûte cent fois plus pour le même résultat.",
+    origine: "toi · défaut 32",
+  },
+
+  "quantification.algorithme": {
+    nom: "algorithme",
+    groupe: "La table Couleurs",
+    ou: "tables",
+    quoi: "Comment les couleurs de la palette sont choisies, quand elles sont trouvées dans l'image plutôt qu'imposées par le jeu.",
+    change:
+      "**Coupe médiane** découpe l'espace des couleurs en deux, puis en deux, et rend le milieu de chaque boîte. C'est rapide et c'est ce que l'atelier fait depuis toujours ; une couleur rare mais franche y pèse peu et se noie.\n\n**K-moyennes** part de couleurs candidates et les laisse glisser vers le centre de ce qui les entoure : le vert d'une grenouille au milieu d'une image de bruns survit au lieu de virer olive. C'est le plus lent des trois.\n\n**Découpe en huit** sature moins vite : quand tu demandes 32 couleurs et que tu n'en obtiens que 14, c'est elle qui t'en rendra le plus.\n\nGrisé quand la palette du jeu est posée : elle décide alors seule, et il n'y a rien à choisir.",
+    origine: "toi · défaut coupe médiane",
+  },
+
+  "quantification.graine": {
+    nom: "graine",
+    groupe: "La table Couleurs",
+    ou: "tables",
+    quoi: "Le point de départ de k-moyennes. Elle n'existe que pour cet algorithme-là ; les deux autres ne tirent rien au sort.",
+    change:
+      "Deux graines donnent deux palettes légèrement différentes sur la même image : si une couleur te déplaît, changer la graine est le geste le moins cher pour en essayer une autre.\n\nElle est **écrite dans la recette**, et c'est ce qui permet à k-moyennes d'exister ici : sans elle, deux fois la même demande ne rendraient pas la même image, et le produit tient à ce que la même recette rende toujours le même pixel.",
+    origine: "toi · défaut 0",
+  },
+
+  "quantification.distance": {
+    nom: "distance des couleurs",
+    groupe: "La table Couleurs",
+    ou: "tables",
+    quoi: "Comment on décide quelle couleur de la palette est « la plus proche » d'un pixel.",
+    change:
+      "**Brute** compte le rouge, le vert et le bleu à parts égales — ce que l'œil ne fait pas. Le vert vif d'une grenouille peut alors partir sur un gris-vert terne, parce qu'il en est proche au calcul.\n\n**À l'œil** mesure dans un espace où deux couleurs également distantes paraissent également différentes. Le vert reste vert, et les gris restent des gris. Sur les bruns et les gris, les deux donnent la même image.",
+    origine: "toi · défaut brute",
+  },
+
+  "quantification.visibles_seuls": {
+    nom: "ne compter que ce qu'on voit",
+    groupe: "La table Couleurs",
+    ou: "tables",
+    quoi: "Si les pixels cachés sous la transparence entrent dans le compte des couleurs.",
+    change:
+      "Le fond qu'un détourage vient de retirer est encore là, sous la transparence, avec sa couleur intacte : il prend une place de la palette pour une couleur que personne ne regarde. Décoché, tu demandes 8 couleurs et tu en obtiens 7 sur le sujet. Coché, les 8 sont pour lui.\n\nUne animation ne compte déjà que les pixels visibles ; ce réglage donne la même correction à une image seule.",
+    origine: "toi · défaut non",
+  },
+
+  "quantification.tramage": {
+    nom: "tramage",
+    groupe: "La table Couleurs",
+    ou: "tables",
+    quoi: "Comment les couleurs qui n'existent pas dans la palette sont approchées : par la plus proche, ou par un mélange de points.",
+    change:
+      "Sans tramage, un dégradé réduit à seize couleurs se pose en bandes franches. Avec, les bandes se mêlent en un semis de points — ce qui ressemble davantage au pixel art d'époque et ce qui, sur un sprite de 64 px, se voit beaucoup.\n\nIl y en a deux, et ils ne servent pas au même. **Diffusion** reporte l'erreur d'un pixel sur ses voisins : le semis dépend de ce qu'il y a autour, donc il se recalcule à chaque frame et une animation grésille. **Trame régulière** décide par la position du pixel, sur un motif fixe de 4×4 : le damier se répète et tient d'une frame à l'autre. Sur ce qui bouge, c'est le seul des deux qui convienne.",
+    origine: "toi · défaut aucun",
+  },
+
+  "quantification.force_tramage": {
+    nom: "force du tramage",
+    groupe: "La table Couleurs",
+    ou: "tables",
+    quoi: "Combien de points le semis pose.",
+    change:
+      "À 25 %, seuls les grands dégradés reçoivent des points et les aplats restent propres. À 100 %, c'est le semis complet.\n\nGrisée tant qu'aucun tramage n'est choisi : il n'y a alors aucun point à doser.",
+    origine: "toi · défaut 100 %",
+  },
+
+  "quantification.curseurs": {
+    nom: "les quatre curseurs",
+    groupe: "La table Couleurs — avant et après la réduction",
+    ou: "tables",
+    quoi: "Luminosité, contraste, saturation et teinte, appliqués à l'image avant qu'elle soit ramenée sur ses couleurs.",
+    change:
+      "Change la couleur du rendu sans redemander l'image. Les quatre agissent avant la réduction, jamais après : régler après, c'est décaler des couleurs déjà choisies et en refabriquer qui ne sont plus dans la palette.",
+    origine: "toi · les quatre à zéro par défaut, et zéro ne touche à rien",
+    long:
+      "Ils sont posés dans la table Couleurs parce que c'est le même moment de la chaîne : on reçoit l'image, on la règle, on la réduit. Les quatre à zéro, le moteur rend l'image reçue sans la copier — un réglage neutre ne coûte rien et ne s'écrit pas dans la recette, donc l'empreinte d'une recette déjà en usage ne bouge pas.\n\nLa teinte tourne autour de l'axe des gris : un gris reste gris quel que soit l'angle. C'est la même matrice que le filtre `hue-rotate` d'un navigateur, pour que ce qu'on voit dans l'aperçu soit ce qui sort du serveur.\n\nAucun des quatre ne touche à la transparence. Un sujet détouré le reste, au pixel près.",
+  },
+
+  "quantification.gardees": {
+    nom: "couleurs gardées",
+    groupe: "La table Couleurs — avant et après la réduction",
+    ou: "tables",
+    quoi: "Les couleurs qu'aucune réduction ne doit fondre avec une voisine. Six au plus.",
+    change:
+      "Elles sont posées d'office dans la palette, avant que l'algorithme ne choisisse le reste : à 8 couleurs, en garder deux lui en laisse six.\n\nPique le noir d'un contour et le vert d'une grenouille, et à 8 couleurs le contour reste noir au lieu de virer brun foncé, la grenouille reste verte au milieu des bruns. Au-delà de six, il ne resterait plus rien à choisir.",
+    origine: "toi · défaut aucune",
+  },
+
+  "quantification.echanges": {
+    nom: "échanges de couleur",
+    groupe: "La table Couleurs — avant et après la réduction",
+    ou: "tables",
+    quoi: "Des paires — cette couleur-là devient celle-ci — appliquées après la réduction.",
+    change:
+      "Donne une variante sans payer une image : la même cape en bleu, en vert, en rouge. La silhouette est identique à l'octet près, puisque seule la couleur des pixels opaques change.",
+    origine: "toi · aucune paire par défaut",
+    long:
+      "Un échange vient après la réduction, et c'est ce qui le rend exact : à ce moment-là l'image ne porte plus qu'une poignée de couleurs franches, et nommer celle qu'on veut remplacer a un sens. Avant la réduction, la même couleur existe en cent nuances et la paire n'en attraperait qu'une.\n\nToutes les paires sont lues sur l'image reçue, jamais l'une sur le résultat de l'autre : une paire ne repeint pas ce qu'une autre vient de poser, donc *rouge devient bleu* suivi de *bleu devient vert* ne fait pas passer le rouge au vert. Si deux paires visent le même pixel — leurs tolérances se recouvrent —, c'est la première de la liste qui l'emporte.\n\nLa transparence n'est jamais touchée. Un échange ne peut ni découper ni reboucher.",
+  },
+
+  "quantification.echanges.tolerance": {
+    nom: "tolérance de la paire",
+    groupe: "La table Couleurs — avant et après la réduction",
+    ou: "tables",
+    quoi: "De combien une couleur de l'image peut s'écarter de la couleur nommée pour être quand même échangée.",
+    change:
+      "À 0, seule la couleur exacte part. Monter attrape les nuances voisines — les deux ou trois bleus qu'une réduction a laissés là où l'œil n'en voit qu'un.",
+    origine: "toi · défaut 0",
+    long:
+      "L'écart se mesure comme partout ailleurs dans le dépôt : le plus grand des trois écarts, sur le rouge, le vert et le bleu. C'est la même règle que la détection du fond et que le détourage par les bords, et c'est délibéré — deux distances de couleur dans un même produit donnent deux réponses à la même question.\n\nMonter trop haut fait déborder la paire sur un voisin qu'on voulait garder : la peau part avec la tunique. Le débordement se voit sur l'image tout de suite, puisque le rendu se refait à chaque cran du curseur.",
+  },
+
+  "etape.bords": {
+    nom: "Nettoyage des bords",
+    groupe: "La table Nettoyage",
+    ou: "tables",
+    quoi: "La cinquième et dernière place : effacer les taches trop petites pour être le sujet.",
+    change:
+      "Ne se pose jamais tout seul, et c'est délibéré : c'est le seul geste du post-traitement qui puisse enlever quelque chose au sujet. Il reste à la fiche, là où on le voit agir.",
+    origine: "toi seul · jamais posé par l'univers",
+  },
+
+  "bords.aire_min": {
+    nom: "tache minimale",
+    groupe: "La table Nettoyage",
+    ou: "tables",
+    quoi: "En dessous de cette aire, en pixels, une tache opaque isolée est effacée.",
+    change:
+      "Retire les pixels isolés qu'une réduction au plus proche voisin laisse derrière elle. À 64 px de côté un pixel isolé se voit ; à 1024 il ne se voyait pas.",
+    origine: "toi · défaut 3 px, et 0 n'efface rien",
+    long:
+      "Une tache est une zone opaque connexe, trouvée par le même remplissage par plages que la détection de la découpe — donc la même réponse sur la même image.\n\nMonter trop haut efface un détail détaché du corps : la pointe d'une lance, une étincelle, un éclat de magie. Le réglage est le dernier de la recette parce qu'il travaille sur ce que les quatre autres ont laissé, et pas sur l'image reçue.",
+  },
+
+  "bords.taches": {
+    nom: "taches effacées",
+    groupe: "La table Nettoyage",
+    ou: "tables",
+    quoi: "Toutes les taches opaques de l'image, de la plus petite à la plus grande, avec celle où le seuil tombe.",
+    change:
+      "Rien par elle-même : c'est la liste de ce que le curseur au-dessus va faire. Le trait bleu marque le seuil — au-dessus ce qui s'efface, au-dessous ce qui reste.",
+    origine: "mesuré sur l'image détourée",
+  },
+
+  "bords.garder": {
+    nom: "garder les plus grandes",
+    groupe: "La table Nettoyage",
+    ou: "tables",
+    quoi: "Seuls les N plus grands amas opaques restent ; tout le reste devient transparent.",
+    change:
+      "Efface d'un coup les îlots détachés du sujet — un reflet, une éclaboussure —, quelle que soit leur aire, dès lors qu'ils ne comptent pas parmi les plus grands.",
+    origine: "toi · défaut 0, et 0 ne trie rien",
+    long:
+      "Les amas sont classés par aire décroissante ; seuls les N premiers survivent. À 1, un seul amas reste — le sujet, s'il est bien le plus grand morceau de l'image. Si deux amas ont la même aire au pixel près, l'ordre entre eux est stable et ne dépend pas du sens de lecture de l'image, pour ne jamais dépendre du miroir.\n\nÀ la différence de la tache minimale, qui juge chaque amas contre un seuil fixe, ce réglage juge les amas les uns contre les autres : il efface même un gros îlot, s'il en existe un plus gros encore.",
+  },
+
+  "bords.boucher_jusqua": {
+    nom: "boucher les trous",
+    groupe: "La table Nettoyage",
+    ou: "tables",
+    quoi: "Un trou — une zone transparente entièrement entourée de sujet — plus petit que ce seuil se comble, avec la couleur qui l'entoure.",
+    change:
+      "Répare un trou de découpe au milieu du sujet, celui que la tache minimale ne voit jamais parce qu'il est transparent et non opaque.",
+    origine: "toi · défaut 0, et 0 ne comble rien",
+    long:
+      "Un trou se distingue d'une poche de fond par un seul fait : il est transparent, quand la poche est opaque et couleur du fond. Les deux sont enfermés dans le sujet, mais seul le trou tombe sous ce réglage — la poche a le sien, juste en dessous.\n\nLe remplissage reprend la couleur qui borde le trou, pixel par pixel autour du contour, jamais une couleur inventée.",
+  },
+
+  "bords.reboucher_jusqua": {
+    nom: "reboucher les poches de fond",
+    groupe: "La table Nettoyage",
+    ou: "tables",
+    quoi: "Une poche — une zone opaque couleur du fond, entièrement entourée de sujet, inatteignable depuis le bord de l'image — plus petite que ce seuil devient transparente.",
+    change:
+      "Efface le résidu de fond resté enfermé dans le sujet après le détourage, celui qu'un remplissage parti des bords de l'image n'a jamais pu atteindre.",
+    origine: "toi · défaut 0, et 0 ne reboucher rien",
+    long:
+      "Le détourage efface le fond en partant des bords de l'image et en propageant vers l'intérieur ; une poche enfermée au milieu du sujet — un rond de ciel entre deux bras — n'est jamais atteinte par cette propagation, et reste opaque. C'est l'inverse exact du trou : opaque et couleur du fond, là où le trou est transparent.\n\nLa comparaison de couleur tolère un petit écart — la compression ou l'anticrénelage changent une teinte de quelques valeurs sans changer sa nature de fond.",
+  },
+
+  "bords.ronger_regonfler": {
+    nom: "ronger puis regonfler",
+    groupe: "La table Nettoyage",
+    ou: "tables",
+    quoi: "Retire les excroissances plus fines que ce rayon, puis regonfle le sujet du même rayon pour lui rendre sa taille.",
+    change:
+      "Arrondit une pointe accidentelle ou un pont fin entre deux amas qui n'auraient jamais dû se toucher, sans faire maigrir le corps du sujet.",
+    origine: "toi · défaut 0, et 0 ne ronge rien",
+    long:
+      "L'opération est symétrique : ronger enlève une épaisseur de rayon donné tout autour du sujet, regonfler la lui rend. Ce qui était assez épais pour survivre au rongement revient à sa taille d'origine ; ce qui était plus fin que le rayon — une pointe, un pont — a disparu au rongement et ne revient pas.\n\n« Épargner les traits fins », juste en dessous, protège justement ce que ce réglage emporterait sinon — une hampe, un brin d'herbe d'un pixel de large.",
+  },
+
+  "bords.epargner_traits_fins": {
+    nom: "épargner les traits fins",
+    groupe: "La table Nettoyage",
+    ou: "tables",
+    quoi: "Un trait d'un pixel de large — une hampe, un brin d'herbe — survit au rongement plutôt que de disparaître avec le reste.",
+    change:
+      "Décide si « ronger puis regonfler » peut emporter un détail fin et volontaire, ou doit le laisser filer.",
+    origine: "toi · défaut oui — épargner",
+    long:
+      "Sans l'épargne, le rongement ne fait pas de différence entre une excroissance accidentelle et un détail dessiné exprès : les deux sont plus fins que le rayon, les deux disparaissent. Avec l'épargne, un pixel appartenant à un trait d'un seul pixel de large est reconnu avant le rongement et remis en place après.\n\nCe réglage ne fait rien tout seul : il ne change le résultat que si « ronger puis regonfler » est actif.",
+  },
+
+  "bords.regonfler_ronger": {
+    nom: "regonfler puis ronger",
+    groupe: "La table Nettoyage",
+    ou: "tables",
+    quoi: "Regonfle le sujet de ce rayon pour combler les entailles fines du bord, puis le ronge du même rayon pour lui rendre sa taille.",
+    change:
+      "Comble une entaille ou un pont manquant sur le bord du sujet — l'inverse de « ronger puis regonfler », qui retire plutôt que combler.",
+    origine: "toi · défaut 0, et 0 ne regonfle rien",
+    long:
+      "L'opération est symétrique : regonfler ajoute une épaisseur de rayon donné tout autour du sujet, ronger la lui retire. Une entaille plus fine que le rayon — une fente entre deux doigts mal découpée — se referme au regonflement et ne rouvre pas ; le contour général du sujet, lui, revient à sa taille d'origine.",
+  },
+
+  "bords.grain_min": {
+    nom: "grain de couleur",
+    groupe: "La table Nettoyage — la couleur, pas la silhouette",
+    ou: "tables",
+    quoi: "Un pixel posé au milieu du sujet, dont la couleur n'est portée par aucun voisin, reprend la couleur qui l'entoure.",
+    change:
+      "Efface le point de couleur accroché au sujet — celui que la tache minimale ne voit pas, parce qu'il n'est pas isolé : il est collé au corps, entouré de pixels opaques. C'est le seul réglage qui l'atteigne.",
+    origine: "toi · défaut 0, et 0 n'efface rien",
+    long:
+      "Le chiffre se lit ainsi : combien des huit voisins doivent porter exactement la couleur du pixel pour qu'on le laisse tranquille. À 1, un pixel dont pas un seul voisin ne partage la couleur est un grain. À 3, il faut trois complices pour survivre.\n\nDeux garde-fous l'empêchent d'abîmer le sujet. Il ne regarde que les pixels entourés de huit pixels opaques : le bord du sujet n'est jamais touché, donc la silhouette ne bouge pas. Et il ne repeint que si au moins cinq des huit voisins portent la même couleur — sinon il n'y a pas de couleur d'accueil évidente, et il ne fait rien. Sur une image non réduite, où chaque pixel a sa nuance, cette condition n'est jamais remplie : le réglage se désarme tout seul plutôt que de lisser un dégradé.\n\nIl ne peut pas inventer une couleur : celle qu'il pose est toujours celle d'un voisin.",
+  },
+
+  "bords.lissage": {
+    nom: "escalier des bords",
+    groupe: "La table Nettoyage — la couleur, pas la silhouette",
+    ou: "tables",
+    quoi: "Les pixels qui ne tiennent au sujet que par un coin sont décrochés — jusqu'à trois passes.",
+    change:
+      "Adoucit la marche d'escalier qu'une réduction laisse sur une diagonale. Une passe suffit presque toujours ; trois est le maximum, et c'est déjà beaucoup.",
+    origine: "toi · défaut 0, et 0 ne décroche rien",
+    long:
+      "Un pixel décroché est un pixel opaque qui n'a aucun voisin opaque en haut, en bas, à gauche ni à droite, mais qui en a un en diagonale. Il ne tient au corps que par un angle, et c'est exactement la dent qu'une réduction au plus proche voisin laisse le long d'un trait oblique.\n\nCe n'est pas la même chose que la tache minimale, et les deux réglages ne se remplacent pas : la tache minimale efface ce qui est détaché du sujet — une étincelle, un éclat —, ce réglage-ci rabote ce qui y tient mal. Une étincelle vraiment détachée survit au décrochage et meurt à la tache minimale.\n\nIl ne peut jamais couper le sujet en deux : il n'enlève que des pixels sans voisin orthogonal, et le corps tient par ses voisins orthogonaux.",
+  },
+
+  "bords.vote_voisins": {
+    nom: "vote des voisins",
+    groupe: "La table Nettoyage — la couleur, pas la silhouette",
+    ou: "tables",
+    quoi: "Chaque pixel du bord devient ce que sa majorité franche de huit voisins est déjà — jusqu'à trois passes.",
+    change:
+      "Régularise un bord irrégulier, dent par dent, sans jamais faire grossir ni maigrir le sujet en moyenne : ce qui gagne d'un côté est rendu de l'autre.",
+    origine: "toi · défaut 0, et 0 ne vote rien",
+    long:
+      "Un pixel ne change d'état — opaque ou transparent — que si cinq de ses huit voisins ou plus partagent l'état inverse du sien. Sur une égalité à quatre contre quatre, rien ne bouge : le vote ne tranche que sur une majorité franche, jamais sur un coup de dé, et c'est ce qui le rend identique qu'on regarde l'image telle quelle ou son reflet.\n\nCe n'est pas un lissage de couleur : il ne touche que la silhouette, pixel opaque ou transparent, jamais la teinte.",
+  },
+
+  // ── La sixième place : les contours ───────────────────────────────────────
+  //
+  // **La seule table entièrement neuve du lot** (E5) : rien n'en existait dans
+  // le produit. La panne qu'elle répare est précise — la mise sur grille mange
+  // les contours fins, et ce qui reste n'est pas un contour absent, ce qui
+  // serait franc, mais un contour *troué*, qui se voit et ne se rattrape pas.
+
+  "etape.contours": {
+    nom: "Les contours",
+    groupe: "La table Contour",
+    ou: "tables",
+    quoi: "La sixième place de la recette. Elle trace un trait sur le bord du sujet, d'une couleur choisie, et le pose dedans, dehors, ou à cheval.",
+    change:
+      "Posé dehors, le trait agrandit l'image rendue : c'est le seul réglage du produit qui change les dimensions du sprite sans qu'on le lui ait demandé, et la table le dit en ligne sœur au moment où l'on choisit la position.",
+    origine:
+      "toi · éteinte au départ · la couleur proposée est la plus sombre de ta palette",
+  },
+
+  "contours.epaisseur": {
+    nom: "épaisseur du contour",
+    groupe: "La table Contour",
+    ou: "tables",
+    quoi: "La largeur du trait, en pixels de l'image rendue — celle qui part dans le jeu.",
+    change:
+      "Rien à la génération. Au-delà de huit ce n'est plus un contour, c'est un cadre, et il vaut mieux le dessiner à la main : le plafond est là pour ça, pas pour une limite technique.",
+    origine: "toi · défaut 1 px",
+    long:
+      "L'unité est celle de l'image **rendue**, et pas celle de l'image reçue : une fois la grille posée, l'image rendue *est* la case du sprite, et un pixel y est un bloc.\n\nLa table ne devine pas l'épaisseur, et elle pourrait — mesurer celle du contour existant là où il survit. Mais un contour troué donne des épaisseurs qui varient de un à trois, et proposer la médiane de quelque chose de cassé serait deviner à partir de la panne qu'on répare.",
+  },
+
+  "contours.position": {
+    nom: "position du contour",
+    groupe: "La table Contour",
+    ou: "tables",
+    quoi: "Dehors, dedans, ou à cheval sur le bord de la silhouette.",
+    change:
+      "Posé dehors, le trait agrandit l'image rendue : c'est le seul réglage du produit qui change les dimensions du sprite sans qu'on le lui ait demandé. La table écrit de combien, au moment où tu choisis.",
+    origine: "toi · défaut externe",
+    long:
+      "**Externe** pose la ligne autour : le sujet n'est pas entamé, et les dimensions grandissent de deux fois l'épaisseur. **Interne** la pose en dedans : la boîte ne bouge pas, le sujet est mangé. **Centré** partage, et le pixel qui ne tombe pas juste va vers l'extérieur.\n\nLe défaut est externe pour la même raison que le pixel impair va dehors : agrandir est réversible, manger le sujet ne l'est pas.",
+  },
+
+  "contours.trous": {
+    nom: "les trous",
+    groupe: "La table Contour",
+    ou: "tables",
+    quoi: "Un trou de la silhouette — une boucle de ceinture, l'espace entre un bras et un torse — reçoit-il la même ligne que le pourtour ?",
+    change:
+      "Rien à la génération. Cerclés, un trou plus petit que deux fois l'épaisseur se bouche : la table donne le compte et la plus petite taille pour que ça se voie venir.",
+    origine: "toi · défaut cerclés",
+    long:
+      "Un trou est un bord du sujet exactement comme le pourtour, et c'est ce que fait un style « contour noir 2 px » — d'où le défaut. **Laissés** ne trace que le pourtour extérieur, pour les styles qui veulent une découpe nette sans lignes à l'intérieur du sujet.",
+  },
+
+  "contours.couleur": {
+    nom: "couleur du contour",
+    groupe: "La table Contour",
+    ou: "tables",
+    quoi: "La couleur exacte du trait. La palette du jeu est proposée en rangée ; le champ reste libre.",
+    change:
+      "Rien à la génération. Une couleur qui n'est pas dans la palette du jeu se marque « hors palette » au lieu d'être refusée — le produit constate, il ne décide pas à ta place.",
+    origine: "toi · proposé : la plus sombre de ta palette, ou le noir sans palette",
+    long:
+      "La règle du produit tient en une ligne : **la palette est imposée par la quantification, qui ramène chaque pixel sur la couleur la plus proche ; elle est proposée partout ailleurs.** Ici on est *après* la quantification — ce que le trait pose ne sera pas rattrapé, et c'est précisément ce qui mérite d'être dit plutôt que refusé.",
+  },
+
+  "contours.taches": {
+    nom: "taches contournées",
+    groupe: "La table Contour",
+    ou: "tables",
+    quoi: "Combien de zones opaques ont reçu la ligne, et la taille de la plus petite.",
+    change:
+      "Rien : c'est une lecture. Un compte qui surprend envoie dans la table des bords, qui est juste avant dans l'ordre.",
+    origine: "une mesure sur ton image",
+    long:
+      "Il n'y a **pas d'aire minimale ici**, et c'est délibéré : un contour tracé autour de trois miettes ferait trois pâtés, mais la table des bords existe déjà pour retirer les miettes, et deux réglages qui font la même chose à deux endroits finissent par se contredire. Ce que cette table fait à la place, c'est le dire.\n\nCe n'est pas un verdict : un personnage à deux lanternes détachées fait légitimement trois taches.",
+  },
+
+  // ── Les six capacités de B18 ────────────────────────────────────────────────
+
+  "contours.derivee": {
+    nom: "couleur du trait",
+    groupe: "La table Contour — les cinq cases à cocher",
+    ou: "tables",
+    quoi: "Fixe, ou dérivée : chaque pixel du trait prend alors la teinte du bord le plus proche, assombrie.",
+    change:
+      "Rien à la génération. Dérivée, la couleur choisie au-dessus est ignorée — le trait suit la matière du sujet plutôt qu'une seule teinte.",
+    origine: "toi · défaut fixe",
+    long:
+      "C'était la troisième façon d'obtenir la couleur du trait, prévue dans le plan qui a produit cette table et jamais écrite : « la teinte dominante du bord, assombrie de 30 à 40 % ». Un sujet à plusieurs matières — une robe, une peau, un bâton — garde alors chacune la sienne, cernée de sa propre couleur assombrie, plutôt que d'un même noir partout.",
+  },
+
+  "contours.reserver": {
+    nom: "réserver la place",
+    groupe: "La table Contour — les cinq cases à cocher",
+    ou: "tables",
+    quoi: "La case ne grandit jamais, quel que soit le choix de position.",
+    change:
+      "Rien à la génération. Posé, le sujet perd l'épaisseur du trait sur son bord plutôt que le fichier — la case du jeu reste à sa taille, quoi qu'il arrive.",
+    origine: "toi · défaut éteint",
+    long:
+      "Le trait posé « dehors » agrandit le rendu, et rien ne rattrapait ça avant B18. `reserver` prime sur `position` : la case ne bouge plus jamais. Ce n'est pas tout à fait ce que la planche de conception décrivait — réserver la place *en amont*, à l'étape de la case — parce que ça demanderait de faire circuler cette information entre deux tables de la chaîne ; le résultat obtenu ici est le même que « dedans », choisi automatiquement.",
+  },
+
+  "contours.inegal": {
+    nom: "trait inégal",
+    groupe: "La table Contour — les cinq cases à cocher",
+    ou: "tables",
+    quoi: "Un dégradé du haut (presque rien) vers le bas (plein), comme si la lumière venait du ciel — et rien sur la toute dernière rangée du sujet.",
+    change:
+      "Rien à la génération. La dernière rangée ne reçoit jamais le trait : pas de semelle noire qui décollerait le sujet de son ombre.",
+    origine: "toi · défaut éteint",
+    long:
+      "Le trait de la table est aujourd'hui de la même force partout. Posé, il s'éclaircit vers le haut et s'arrête net sous les pieds — ce qui sépare un sprite découpé d'un sprite posé au sol.",
+  },
+
+  "contours.sur_calques": {
+    nom: "sur l'ensemble empilé",
+    groupe: "La table Contour — les cinq cases à cocher",
+    ou: "tables",
+    quoi: "Le trait se calcule sur la silhouette de tous les calques posés ensemble, pas sur ce calque seul.",
+    change:
+      "Rien à la génération. Une pièce d'équipement — une épée, un casque — ne porte alors plus son propre liseré là où elle touche le corps.",
+    origine: "toi · défaut éteint",
+    long:
+      "Sur un calque d'équipement, le trait cernait la pièce toute seule — un liseré qui la détache du corps au lieu de l'y coller. Posé, le trait se trace après composition des calques, sur le pourtour de l'ensemble.",
+  },
+
+  "contours.desactive_plein_cadre": {
+    nom: "s'éteindre sur une tuile",
+    groupe: "La table Contour — les cinq cases à cocher",
+    ou: "tables",
+    quoi: "Un sujet qui touche les quatre bords de l'image sur toute leur longueur — une tuile, un décor plein cadre — ne reçoit pas de trait.",
+    change:
+      "Rien à la génération. Décoché, le trait se trace même sur un tel sujet, ce qui dessine un quadrillage une fois les images posées côte à côte.",
+    origine: "toi · défaut actif",
+    long:
+      "Une tuile n'a pas de silhouette à détacher : ses bords sont ceux du cadre. Ce garde-fou est plus fin que « entièrement opaque » — une tuile texturée peut laisser passer un peu de fond sans jamais ouvrir ses quatre bords.",
+  },
+
+  // ── La septième place : le retournement ───────────────────────────────────
+  //
+  // **La seule place du produit qui ne demande rien au modèle et ne coûte
+  // rien.** Elle existe parce qu'un personnage vu de dessus se dessine dans
+  // quatre directions et que la moitié d'entre elles sont les miroirs exacts de
+  // l'autre moitié : le produit n'avait aucune façon de le dire, donc les deux
+  // se payaient.
+
+  "retournement.sens": {
+    nom: "le sens du retournement",
+    groupe: "La table Retournement",
+    ou: "tables",
+    quoi: "Comment l'image bascule. Dix sens : le miroir gauche-droite, qui renvoie l'image comme une glace — le pèlerin qui marchait vers l'est marche vers l'ouest —, le miroir haut-bas, les deux quarts de tour, le demi-tour, la diagonale, le repli sur soi, « miroir sauf ici », et les deux rotations libres.",
+    change:
+      "Rien à la génération sur les huit premiers, et c'est tout le sujet : ils ne demandent rien au modèle et ne coûtent rien. Aucun pixel n'est réinventé — ce sont les mêmes carrés de couleur, rangés dans un autre ordre, donc la palette de l'image retournée est exactement celle d'où elle vient. Les deux rotations libres, elles, peuvent traverser un pixel entre deux carrés — c'est ce que RotSprite réduit sans l'effacer.",
+    origine: "toi · vide au départ · défaut miroir gauche-droite",
+    long:
+      "Le retournement s'endort sans se vider, comme les sept autres places : éteint, il garde son sens et cesse d'agir sur l'image. Trois sens ouvrent un réglage de plus sous ce cran-ci — l'angle pour les deux rotations libres, la moitié gardée pour le repli, les zones protégées pour « miroir sauf ici ».",
+  },
+
+  "retournement.angle": {
+    nom: "l'angle",
+    groupe: "La table Retournement",
+    ou: "tables",
+    quoi: "De combien tourner, pour les deux rotations libres. −180° à +180°.",
+    change:
+      "Le sujet pivote dans sa case. Au plus proche voisin, les diagonales se hachent dès quelques degrés sur une case de 64 px ; en RotSprite, le même angle garde des marches régulières au lieu d'un escalier au hasard.",
+    origine: "toi · 0° au départ",
+    long:
+      "Un angle multiple de 90° ne change rien à l'image : ce sont les quatre premiers sens qui font ce travail-là sans jamais réinventer un pixel. L'angle libre n'a de sens qu'entre deux quarts de tour.",
+  },
+
+  "retournement.repli": {
+    nom: "moitié gardée",
+    groupe: "La table Retournement",
+    ou: "tables",
+    quoi: "Laquelle des deux moitiés de l'image, coupée en son milieu, est recopiée sur l'autre — le sens « miroir sur soi ».",
+    change:
+      "La moitié écartée disparaît, remplacée par le reflet de celle qu'on garde. La roue du moulin cesse d'avoir une pale plus large que les autres ; en échange, tout ce que le sujet avait d'unique du côté écarté se perd.",
+    origine: "toi · gauche au départ",
+    long:
+      "L'axe du repli, lui, n'a pas encore de curseur à l'écran : il vaut le milieu de l'image tant que rien ne le déplace.",
+  },
+
+  "retournement.zones": {
+    nom: "zones protégées",
+    groupe: "La table Retournement",
+    ou: "tables",
+    quoi: "Les endroits qui reviennent tels quels après le miroir, dans le sens « miroir, sauf ici ». Le pèlerin qui tient son bâton à droite le garde à droite une fois retourné.",
+    change:
+      "Sans zone, « miroir, sauf ici » retourne toute l'image comme un miroir gauche-droite ordinaire. Chaque zone ajoutée y recolle, après coup, le pixel d'origine — au prix d'une petite couture visible au raccord.",
+    origine: "toi · aucune zone au départ",
+    long:
+      "Le geste d'aujourd'hui pose une zone ronde au centre de l'image, à ajuster à la main plus tard : peindre une zone du bout du doigt, comme la main le fait sur la huitième place, viendra avec l'écran qui le demande.",
+  },
+
+  "retournement.direction": {
+    nom: "ça se range en",
+    groupe: "La table Retournement",
+    ou: "tables",
+    quoi: "La direction sous laquelle l'image retournée vient se poser dans le plan du jeu. La case vide « ouest » du pèlerin se remplit, et l'image qui la remplit n'a rien coûté.",
+    change:
+      "Rien à la génération : l'image obtenue est la même que celle d'où elle vient, retournée. Elle entre en bibliothèque avec sa filiation, à zéro dollar, et son étiquette dit « miroir · gratuit » là où une image générée dit son prix.",
+    origine:
+      "l'atelier propose la direction opposée · toi dès que tu en écris une",
+    long:
+      "**La direction proposée vient du serveur, jamais d'un calcul de l'écran.** Les directions d'un jeu sont libres et se renomment : deviner qu'un mot français en désigne un autre serait exactement la déduction que le produit refuse ailleurs. Quand l'atelier ne connaît pas la direction de l'image, le champ reste vide et attend la tienne.\n\n**Il y a deux directions qu'un miroir gauche-droite ne fabrique pas** : le sud et le nord, qui se rendent eux-mêmes. Un miroir ne peut montrer que ce qui est déjà dessiné — on ne voit jamais le dos d'un personnage qui nous fait face. Le geste se grise alors, avec sa raison, avant le clic : ces directions-là se génèrent.",
+  },
+
+  // ── La huitième place : la main ───────────────────────────────────────────
+  //
+  // **C'est la seule table qui n'applique aucune règle**, et c'est exactement
+  // ce qu'une explication doit dire — sinon on la cherche parmi les réglages,
+  // où elle n'est pas.
+
+  "etape.main": {
+    nom: "La main",
+    groupe: "La table Main",
+    ou: "tables",
+    quoi: "La huitième et dernière place. Le crayon, la gomme et la pipette, au pixel. Là où les sept autres tables appliquent une règle à toute l'image, celle-ci ne fait que ce que tu désignes.",
+    change:
+      "Rien à la génération, et rien tant que tu ne poses pas un pixel. Elle existe pour les trois pixels qu'aucun réglage n'atteint : un coin de fond collé au sujet, une dent dans un contour, une miette accrochée à la silhouette.",
+    origine: "toi, geste par geste · rien au départ",
+    long:
+      "Comme toutes les tables, elle ne coûte rien. Le post-traitement ne touche jamais le fournisseur — on peut y passer une heure sans dépenser un centime, et c'est ce que la barre qui paie, absente ici, annonce avant qu'on ait lu quoi que ce soit.",
+  },
+
+  "main.calques": {
+    nom: "les calques de la main",
+    groupe: "La table Main",
+    ou: "tables",
+    quoi: "Une pile : « l'opacité » au fond, et autant de calques de dessin qu'on veut au-dessus.",
+    change:
+      "Rien à la génération, et rien tant que tu ne poses pas un pixel. Masquer un calque n'efface rien — il garde ses passages et cesse simplement d'être appliqué.",
+    origine: "toi · « l'opacité » seule au départ",
+    long:
+      "**« L'opacité » est le sol, et elle est d'une autre nature** : elle ne pose pas de couleur, elle décide de ce qui est là sur l'image que les six tables précédentes ont produite. Elle ne se supprime pas et ne se déplace pas — un calque de dessin sous l'image n'aurait aucun sens.\n\nLa pile se lit du dessus au dessous, comme partout où il y a des calques ; elle s'applique dans l'autre sens, qui est celui d'un pinceau.",
+  },
+
+  "main.sens": {
+    nom: "le sens du geste",
+    groupe: "La table Main",
+    ou: "tables",
+    quoi: "Ce que le prochain passage fera : ôter ou remettre sur l'opacité, poser ou effacer sur un calque de dessin.",
+    change:
+      "Rien à la génération. Le dernier passage l'emporte sur un pixel donné, comme un pinceau sur une toile.",
+    origine: "toi · le premier des deux",
+    long:
+      "Sur l'opacité : **ôter** rend transparent, **remettre** ramène ce que l'image avait avant qu'on le retire — la couleur est toujours là dessous, ni le détourage ni la quantification n'y touchent.\n\nSur un calque de dessin : **poser** ajoute des pixels à la couleur choisie, **effacer** retire ce que ce calque-là avait posé, et rien d'autre. Le pixel retombe alors sur ce qu'il y avait dessous.",
+  },
+
+  "main.diametre": {
+    nom: "le pinceau",
+    groupe: "La table Main",
+    ou: "tables",
+    quoi: "La largeur du trait, en pixels de l'image rendue. Impairs seulement — un pinceau a un centre.",
+    change:
+      "Rien à la génération, et rien tant qu'aucun passage n'est posé : ce curseur ne déclenche aucun calcul, il suit la main sans attendre le relâchement.",
+    origine: "toi · défaut 5 px",
+    long:
+      "**Le cran 1 px est le pixel** : un rayon nul ne couvre qu'un pixel de large, et c'est l'autre bout de « à main levée, puis au pixel ». Les deux échelles du geste sont les deux bouts d'un seul réglage, et non deux outils.\n\nC'est le diamètre qui s'affiche, pas le rayon : la largeur du trait est ce que la main voit.",
+  },
+
+  "main.couleur": {
+    nom: "la couleur du pinceau",
+    groupe: "La table Main",
+    ou: "tables",
+    quoi: "Ce qu'un passage pose sur un calque de dessin. La palette du jeu est proposée ; le champ reste libre.",
+    change:
+      "Rien à la génération. Une couleur hors palette se marque au lieu d'être refusée : une couleur de plus dans un jeu est un fait qui se lit, pas une faute.",
+    origine: "toi · proposé : la première de ta palette",
+    long:
+      "**La couleur est portée par le passage, pas par le calque** : un même calque peut en contenir plusieurs, ce qui évite d'en créer un par teinte — et ce qui laisse la porte ouverte le jour où un remplissage ou un dégradé s'ajoutera.\n\nL'opacité, elle, ne pose aucune couleur : elle décide de ce qui est là.",
+  },
+
+  "main.passages": {
+    nom: "le calque actif",
+    groupe: "La table Main",
+    ou: "tables",
+    quoi: "Combien de passages porte le calque choisi, et ce que Ctrl + Z va retirer.",
+    change:
+      "Rien : c'est un compte, et un geste. Ctrl + Z retire le dernier passage du calque actif ; « Sans la main › », en pied, vide la table entière.",
+    origine: "toi, geste par geste · rien au départ",
+    long:
+      "**Il n'y a pas de liste de passages, et c'est la seule table dans ce cas.** Un geste à main levée en produit des dizaines : trente rangées ne se relisent pas, elles se subissent. Le calque est l'unité de lecture — c'est lui qu'on nomme, qu'on masque, qu'on supprime — et le passage n'existe que comme un compte et un Ctrl + Z.\n\nUn passage est enregistré comme un **tracé, jamais comme des pixels** : il pèse quelques octets, il se défait un par un, et il se rejoue sur une image dont les dimensions ont changé. Remettre la grille à une autre taille ne fait pas perdre le dessin.",
   },
 
   // ── Ce que la galerie choisit de sa grille (RP11) ─────────────────────────
@@ -1337,376 +2074,6 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Rien : c'est une lecture. La fiche dit ce que l'image est ; les tables disent ce qu'on lui fait, et c'est là qu'on la règle — sur l'image en grand, ce que 380 pixels de colonne ne permettaient pas.",
     origine: "l'image elle-même",
-  },
-
-  "detourage.poches": {
-    nom: "poches de fond enfermées",
-    ou: "tables",
-    quoi: "Les zones de fond que le sujet entoure complètement, et que le remplissage depuis le bord n'atteint donc pas : il n'y mène aucun chemin, à aucune tolérance.",
-    change:
-      "Rien, tant que tu n'y touches pas. Le produit les compte et propose de retirer les plus grandes ; il n'en efface aucune tout seul. La lumière entre un bras et un torse est du fond, l'intérieur d'un cabochon de lanterne est de la matière, et rien dans les pixels ne dit lequel des deux tu regardes. « La retirer › » ajoute simplement une passe pipette déjà visée dessus, qui s'annule comme les autres.",
-    origine: "mesuré sur l'image détourée",
-    long:
-      "Seules les plus grandes sont listées, et c'est une décision prise à la mesure plutôt qu'au jugé. Sur les soixante images du dépôt, détourées au réglage courant, une image porte quarante-trois de ces zones en médiane et jusqu'à seize mille — mais les trois quarts font un à trois pixels : du bruit de compression qui se trouve avoir la couleur du fond. Aucun seuil de taille ne sépare proprement le bruit du reste, c'est une longue traîne sans marche. On montre donc celles dont on se demande vraiment si c'est du fond ou de la matière, et le compte entier est écrit à côté.\n\nCe bloc annonçait longtemps zéro partout, et c'était une erreur, corrigée le 31 août 2026 : il lisait les trous de la silhouette, qui sont l'inverse exact. Un trou est du transparent — le détourage l'a déjà retiré. Une poche est encore opaque, justement parce que le détourage n'a pas pu l'atteindre. L'ancien bloc ne trouvait donc la poche qu'une fois celle-ci retirée, c'est-à-dire au moment où il n'y avait plus rien à proposer.",
-  },
-
-  "detourage.fond": {
-    nom: "le fond, tel qu'il est revenu",
-    ou: "tables",
-    quoi: "Deux nombres, et la couleur de fond que cette image-là porte vraiment — lue sur ses bordures, jamais celle qu'on avait demandée. *Les pixels à demi transparents* sont ce que le découpage a laissé au bord ; *les pixels encore à la couleur du fond* sont ceux du sujet qu'un cran de tolérance de plus emporterait.",
-    change:
-      "Rien : c'est une lecture. Ce qu'elle sert à décider est ailleurs — le bord rongé, juste au-dessus, pour les premiers ; la couleur de fond du jeu, dans l'assistant, pour les seconds.",
-    origine: "mesuré sur l'image détourée",
-    long:
-      "**Ces deux nombres remplacent un banc d'essai.** La tranche qui a fait du fond un réglage du jeu réclamait d'abord huit tirages payants par branche avant sa première ligne de code ; l'auteur l'a retiré le 2 septembre 2026. La raison tient : le fond est devenu un réglage, pas une valeur imposée — si la couleur choisie donne un moins bon résultat, on la change en un geste et on le voit sur l'image suivante. Un banc aurait mesuré pendant trois heures ce que l'usage dit en trois images.\n\nCe qui prend sa place se lit **sur les images qu'on voulait de toute façon**, et c'est la doctrine du dépôt sur les notes de qualité, appliquée pour la première fois à un réglage d'envoi.\n\nLa couleur montrée est celle qui est *revenue* et non celle qu'on avait demandée : comparer la couleur demandée à elle-même n'aurait rien mesuré. Un écart entre les deux est une information — c'est la dérive du modèle, et c'est elle qui dit de combien il faut se tenir à l'écart de la palette du jeu.",
-  },
-
-  "bords.taches": {
-    nom: "taches effacées",
-    ou: "tables",
-    quoi: "Toutes les taches opaques de l'image, de la plus petite à la plus grande, avec celle où le seuil tombe.",
-    change:
-      "Rien par elle-même : c'est la liste de ce que le curseur au-dessus va faire. Le trait bleu marque le seuil — au-dessus ce qui s'efface, au-dessous ce qui reste.",
-    origine: "mesuré sur l'image détourée",
-  },
-
-  "recadrage.boite": {
-    nom: "ce qu'on garde",
-    ou: "tables",
-    quoi: "Deux valeurs, et une seule agit. *La boîte du sujet* est le plus petit rectangle qui contient tout ce qui n'est pas transparent : elle est mesurée, et remesurée chaque fois que le détourage change. *Une boîte tracée* est un rectangle qu'on a posé soi-même sur l'image, et qui ne bouge plus.",
-    change:
-      "Le recadrage s'arrête à ce rectangle-là, et non à ce que le sujet occupe. C'est le seul moyen de garder une part de fond que rien ne rend opaque — l'ombre portée d'un sprite, l'auréole d'une lanterne. La seconde valeur ne se choisit pas dans la colonne : on trace sur l'image, et le segment bascule tout seul. Le premier segment est le clic qui défait.",
-    origine: "mesurée sur l'alpha, ou tracée par toi",
-    long:
-      "Une boîte tracée n'agit que quand elle **coupe** le sujet, et la table le dit sous le rectangle. Plus large que lui, elle est sans effet sur le rendu : la remise sur grille recherche elle-même la boîte du sujet et rogne dessus, si bien que le surplus transparent disparaît de toute façon. C'est la même mécanique qui rend la marge sans effet quand une case est posée.\n\nElle ne voyage pas non plus. Quatre coordonnées ne veulent rien dire sur une autre image : posées sur une plus petite, elles tombent en partie hors du cadre ; posées sur un sujet cadré autrement, elles coupent n'importe où. C'est la règle générale du produit — un réglage voyage, une coordonnée ne voyage pas.",
-  },
-
-  "tables.zoom": {
-    nom: "le pour cent d'agrandissement",
-    ou: "tables",
-    quoi: "À quelle taille l'image est montrée dans la table. Libre entre 1 et 250 %, écrit à la main ou réglé par *plus* et *moins* ; la molette approche et recule, et le point qu'on vise ne bouge pas de sous le pointeur.",
-    change:
-      "Rien à l'image — c'est une loupe, pas un réglage. *100 %* rend exactement un pixel d'image pour un pixel d'écran ; *ajusté* fait tenir l'image entière dans le cadre, et c'est ce qu'on obtient en ouvrant une table.",
-    origine: "toi · ajusté à l'ouverture",
-    long:
-      "Ailleurs dans le produit — la grille de la galerie, la vitrine — l'agrandissement ne prend que des multiples entiers : un sprite montré à une échelle qui n'est pas entière fabrique des pixels qui n'existent pas, et on jugerait alors un défaut né de la fenêtre où on l'a regardé. Cette règle appartient à ce qui **montre** une image ; la table est ce qui la **travaille**, et on n'y règle rien sans pouvoir approcher et reculer librement.\n\nL'avoir appliquée ici a coûté cher : une image d'origine de 1 024 pixels de côté dans un cadre de 606 ne pouvait pas descendre sous 100 %, donc on n'en voyait qu'un coin — et ce coin étant transparent, l'écran ne montrait que le damier. La table de recadrage paraissait cassée alors qu'elle marchait.",
-  },
-
-  "tables.png": {
-    nom: "PNG ↓",
-    ou: "tables",
-    quoi: "Télécharge l'image telle qu'elle est sous les yeux — le rendu, ou le brut quand on regarde le brut.",
-    change:
-      "Rien : c'est une copie. L'image reste dans la bibliothèque, sa recette aussi, et le fichier reçu est celui qu'on voyait.",
-    origine: "l'état courant de la table",
-  },
-
-  "quantification.tramage": {
-    nom: "tramage",
-    ou: "tables",
-    quoi: "Comment les couleurs qui n'existent pas dans la palette sont approchées : par la plus proche, ou par un mélange de points.",
-    change:
-      "Sans tramage, un dégradé réduit à seize couleurs se pose en bandes franches. Avec, les bandes se mêlent en un semis de points — ce qui ressemble davantage au pixel art d'époque et ce qui, sur un sprite de 64 px, se voit beaucoup.\n\nIl y en a deux, et ils ne servent pas au même. **Diffusion** reporte l'erreur d'un pixel sur ses voisins : le semis dépend de ce qu'il y a autour, donc il se recalcule à chaque frame et une animation grésille. **Trame régulière** décide par la position du pixel, sur un motif fixe de 4×4 : le damier se répète et tient d'une frame à l'autre. Sur ce qui bouge, c'est le seul des deux qui convienne.",
-    origine: "toi · défaut aucun",
-  },
-
-  "quantification.algorithme": {
-    nom: "algorithme",
-    ou: "tables",
-    quoi: "Comment les couleurs de la palette sont choisies, quand elles sont trouvées dans l'image plutôt qu'imposées par le jeu.",
-    change:
-      "**Coupe médiane** découpe l'espace des couleurs en deux, puis en deux, et rend le milieu de chaque boîte. C'est rapide et c'est ce que l'atelier fait depuis toujours ; une couleur rare mais franche y pèse peu et se noie.\n\n**K-moyennes** part de couleurs candidates et les laisse glisser vers le centre de ce qui les entoure : le vert d'une grenouille au milieu d'une image de bruns survit au lieu de virer olive. C'est le plus lent des trois.\n\n**Découpe en huit** sature moins vite : quand tu demandes 32 couleurs et que tu n'en obtiens que 14, c'est elle qui t'en rendra le plus.\n\nGrisé quand la palette du jeu est posée : elle décide alors seule, et il n'y a rien à choisir.",
-    origine: "toi · défaut coupe médiane",
-  },
-
-  "quantification.graine": {
-    nom: "graine",
-    ou: "tables",
-    quoi: "Le point de départ de k-moyennes. Elle n'existe que pour cet algorithme-là ; les deux autres ne tirent rien au sort.",
-    change:
-      "Deux graines donnent deux palettes légèrement différentes sur la même image : si une couleur te déplaît, changer la graine est le geste le moins cher pour en essayer une autre.\n\nElle est **écrite dans la recette**, et c'est ce qui permet à k-moyennes d'exister ici : sans elle, deux fois la même demande ne rendraient pas la même image, et le produit tient à ce que la même recette rende toujours le même pixel.",
-    origine: "toi · défaut 0",
-  },
-
-  "quantification.force_tramage": {
-    nom: "force du tramage",
-    ou: "tables",
-    quoi: "Combien de points le semis pose.",
-    change:
-      "À 25 %, seuls les grands dégradés reçoivent des points et les aplats restent propres. À 100 %, c'est le semis complet.\n\nGrisée tant qu'aucun tramage n'est choisi : il n'y a alors aucun point à doser.",
-    origine: "toi · défaut 100 %",
-  },
-
-  "quantification.distance": {
-    nom: "distance des couleurs",
-    ou: "tables",
-    quoi: "Comment on décide quelle couleur de la palette est « la plus proche » d'un pixel.",
-    change:
-      "**Brute** compte le rouge, le vert et le bleu à parts égales — ce que l'œil ne fait pas. Le vert vif d'une grenouille peut alors partir sur un gris-vert terne, parce qu'il en est proche au calcul.\n\n**À l'œil** mesure dans un espace où deux couleurs également distantes paraissent également différentes. Le vert reste vert, et les gris restent des gris. Sur les bruns et les gris, les deux donnent la même image.",
-    origine: "toi · défaut brute",
-  },
-
-  "quantification.visibles_seuls": {
-    nom: "ne compter que ce qu'on voit",
-    ou: "tables",
-    quoi: "Si les pixels cachés sous la transparence entrent dans le compte des couleurs.",
-    change:
-      "Le fond qu'un détourage vient de retirer est encore là, sous la transparence, avec sa couleur intacte : il prend une place de la palette pour une couleur que personne ne regarde. Décoché, tu demandes 8 couleurs et tu en obtiens 7 sur le sujet. Coché, les 8 sont pour lui.\n\nUne animation ne compte déjà que les pixels visibles ; ce réglage donne la même correction à une image seule.",
-    origine: "toi · défaut non",
-  },
-
-  "quantification.gardees": {
-    nom: "couleurs gardées",
-    ou: "tables",
-    quoi: "Les couleurs qu'aucune réduction ne doit fondre avec une voisine. Six au plus.",
-    change:
-      "Elles sont posées d'office dans la palette, avant que l'algorithme ne choisisse le reste : à 8 couleurs, en garder deux lui en laisse six.\n\nPique le noir d'un contour et le vert d'une grenouille, et à 8 couleurs le contour reste noir au lieu de virer brun foncé, la grenouille reste verte au milieu des bruns. Au-delà de six, il ne resterait plus rien à choisir.",
-    origine: "toi · défaut aucune",
-  },
-
-  "etape.grille": {
-    nom: "Grille",
-    ou: "tables",
-    quoi: "La troisième place : remettre le sujet sur la grille de pixel du projet.",
-    change:
-      "C'est l'étape qui rend le produit possible — elle met toutes tes images sur le même pixel. Posée systématiquement, jamais en option : une grille qui a dérivé est le cas normal, pas l'incident.",
-    origine: "posée par l'univers, toujours",
-  },
-
-  "grille.cible": {
-    nom: "taille de pixel",
-    ou: "tables",
-    quoi: "Le côté de la case, en pixels logiques — la taille finale de ton sprite avant export.",
-    change:
-      "C'est l'étape qui rend le produit possible : elle remet toutes tes images sur le même pixel. Elle est demandée, jamais déduite de l'image reçue.",
-    origine: "l'univers du projet, sinon toi · défaut 64",
-    long:
-      "Dix modèles sur douze font dériver la taille du pixel d'une étape à l'autre. Sans cette remise sur grille, les frames d'un même personnage ne partagent plus le même pixel, et un petit objet ressort plus grossier que le personnage qui le porte.\n\nDéduire la cible de l'image reçue reviendrait à laisser le fournisseur décider de l'échelle de ton jeu. C'est pour ça qu'elle se demande.\n\nLa ligne au-dessus du réglage dit sur quoi tu travailles : quand le modèle a vraiment peint des carrés, l'atelier les retrouve et te donne combien l'image en compte. C'est un renseignement, pas une décision — le chiffre ne se pose jamais tout seul.",
-  },
-
-  "grille.du-modele": {
-    nom: "les carrés du modèle",
-    ou: "tables",
-    quoi: "La taille des carrés que le modèle a vraiment peints dans l'image qu'il t'a rendue — ou rien, quand il n'en a peint aucun.",
-    change:
-      "Rien. C'est une lecture, pas un réglage : elle te dit ce que l'image contient avant que tu choisisses la taille juste en dessous.",
-    origine: "mesuré sur l'image détourée, à chaque ouverture de la table",
-    long:
-      "Tu demandes du pixel art ; le modèle rend ce qu'il veut. Deux jeux de ce dépôt ont demandé exactement la même chose et n'ont pas reçu la même chose : l'un a reçu des carrés bien visibles, l'autre une peinture aux dégradés fins alors que sa consigne réclamait mot pour mot une grille stricte de 64.\n\nQuand les carrés sont là, l'atelier les retrouve et te dit combien l'image en compte. Demander plus de carrés que ce nombre-là ne fabrique aucun détail : il n'y en a plus à récupérer, et tu obtiendras des blocs coupés en deux plutôt qu'un sprite plus fin.\n\nQuand il n'y a pas de carrés du tout, l'atelier le dit et se tait. C'est la bonne réponse : sur une peinture, il n'y a rien à retrouver, et inventer un chiffre te ferait travailler sur une mesure fausse. La taille redevient alors entièrement ton choix — ce qu'elle est de toute façon, l'atelier ne la déduit jamais de l'image reçue.\n\nMesuré sur les 149 images du dépôt : sur le jeu qui a reçu des carrés, l'atelier en annonce sur 26 images sur 27 ; sur le jeu qui a reçu des peintures, il se tait sur 24 sur 26.",
-  },
-
-  "grille.occupation": {
-    nom: "hauteur",
-    ou: "tables",
-    quoi: "La hauteur du sujet, comptée en personnages : 100 % en fait un, 300 % en fait trois.",
-    change:
-      "C'est elle, et non la taille de l'image d'origine, qui met un tonneau et un personnage à la même échelle de pixel. Au-delà de 100 %, l'image revient plus grande.",
-    origine: "le barème de l'univers via le sujet · défaut 100 %",
-    long:
-      "Le réglage le plus important du produit, et le moins évident. Deux images arrivent du fournisseur au même format ; si tu les remets simplement sur une grille de 64 carrés, le tonneau devient aussi grand que le personnage. La hauteur dit « ce tonneau fait 45 % d'un personnage », et l'échelle redevient juste.\n\nElle peut passer 100 %, et c'est ce qui rend un bâtiment, un arbre ou une tour fabricables : 300 % veut dire trois personnages de haut, et l'image revient trois fois plus grande. Le carré, lui, ne change jamais de taille — c'est la règle des jeux 2D, et l'enfreindre se voit tout de suite : deux tailles de pixel dans une même scène, ça s'appelle des « mixels », et l'œil les repère aux bords. Ce qui change entre un personnage et un bâtiment, c'est le nombre de carrés, jamais leur dimension.\n\nLe plafond dépend de ta case : un sujet ne monte pas au-delà de huit personnages, et pas au-delà de ce qu'une image de 2048 carrés peut porter — la plus basse des deux bornes gagne.\n\nC'est pour ça que le barème vit dans l'univers et se pose une fois : tu ne veux pas rejouer ce calcul à chaque génération.",
-  },
-
-  "grille.ancrage": {
-    nom: "ancrage",
-    ou: "tables",
-    quoi: "Le point de la case par lequel le sujet est accroché, quand il ne la remplit pas entièrement. Neuf au choix : les quatre coins, les quatre milieux de bord, et le centre.",
-    change:
-      "Décide de l'alignement entre deux frames du même personnage. En bas par défaut, parce qu'un personnage se tient debout sur le bord bas de sa case.",
-    origine: "défaut du produit · bas",
-    long:
-      "Deux frames d'une même animation posées au centre flotteraient l'une par rapport à l'autre : le personnage semblerait monter et descendre entre deux images. Le bas est le bon défaut pour tout ce qui pose au sol.\n\nLes huit autres existent pour ce qui ne se tient pas debout. Une icône ou un objet d'inventaire tient par son centre ; une flamme au bout d'une torche et une bannière suspendue tiennent par leur haut ; une porte qui pivote tient par son côté.\n\nIl n'y en avait que deux avant le 4 septembre 2026, le bas et le centre, et c'était assez tant qu'on posait des images isolées. Une animation, elle, a un point fixe, et ce point n'est pas toujours au milieu d'un bord.",
-  },
-
-  "grille.methode": {
-    nom: "réduction",
-    ou: "tables",
-    quoi: "Comment l'image passe de ses milliers de pixels aux carrés de la case. Quatre façons, qui rendent quatre sprites différents.",
-    change:
-      "C'est un choix de style, pas un classement : le vote rend un sprite calme, les traits épaissis un sprite détaillé, la réduction douce une image floue mais lisse, et « au plus proche » un résultat brut.",
-    origine: "défaut du projet · vote en deux temps",
-    long:
-      "Réduire une image de mille pixels à soixante-quatre carrés, c'est jeter quatre-vingt-dix-neuf pixels sur cent. Ce qu'on garde, et comment, décide de tout.\n\n**Au plus proche** garde un pixel sur N et jette les autres sans les regarder : un trait fin a une chance sur N de survivre. C'est ce que l'atelier faisait avant, et c'est un tirage au sort.\n\n**La réduction douce** fait la moyenne de chaque bloc. Rien n'est perdu, mais tout est mélangé : les contours deviennent des dégradés, ce qui convient à un dessin réduit et pas à un sprite.\n\n**Le vote en deux temps** regarde quelle couleur domine chaque case pour décider la forme, puis peint la case avec la moyenne des pixels d'origine de cette couleur-là. On obtient un trait net sans perdre les nuances.\n\n**Les traits épaissis** dilatent les lignes fines avant de réduire, pour qu'elles survivent au lieu d'être noyées. Une lance ou un fil reste un trait continu ; en échange, le contour est plus agité.\n\nLe projet donne le départ ; cette image-ci garde le dernier mot. Changer la méthode ne coûte rien : aucun appel payant ne part d'ici.",
-  },
-
-  "etape.quantification": {
-    nom: "Quantification",
-    ou: "tables",
-    quoi: "La quatrième place : ramener l'image à un nombre fini de couleurs, celles de la palette du projet.",
-    change:
-      "Donne au rendu sa cohérence de palette. Elle vient après la grille et jamais avant : quantifier 1024 px pour les jeter ensuite coûte cent fois plus pour le même résultat.",
-    origine: "posée par l'univers quand il a une palette",
-    long:
-      "Elle est déterministe, et c'est un critère du produit : une recette nommée, réappliquée ailleurs, donne exactement le même résultat. La coupe médiane de Pillow ne tire rien au sort ; une initialisation tirée au hasard — un k-means++, par exemple — rendrait deux images différentes pour la même recette.\n\nElle force l'alpha à 255 sans toucher à la couleur. C'est la seconde moitié du piège du liseré : un pixel de contour à peine visible qui a survécu au seuil ressort opaque, de la couleur du fond. Le seuil alpha se durcit avant, jamais après.",
-  },
-
-  "quantification.palette": {
-    nom: "palette",
-    ou: "tables",
-    quoi: "Les couleurs auxquelles l'image sera ramenée — celles de l'univers du projet, montrées ici en lecture seule.",
-    change:
-      "Rien à régler ici. La palette du jeu se déduit par calcul de ses artworks officiels, et les autres se fabriquent dans l'univers, côté Ambiances et couleurs ; la poser à la main ferait deux vérités sur la même chose.",
-    origine: "l'univers du projet · absente s'il n'a aucun artwork officiel",
-  },
-
-  "quantification.couleurs": {
-    nom: "couleurs",
-    ou: "tables",
-    quoi: "Sur combien de couleurs l'image est ramenée.",
-    change:
-      "Donne au rendu sa cohérence de palette. Cette étape s'applique après la réduction sur grille, jamais avant — quantifier 1024 px pour les jeter ensuite coûte cent fois plus pour le même résultat.",
-    origine: "toi · défaut 32",
-  },
-
-  "quantification.curseurs": {
-    nom: "les quatre curseurs",
-    ou: "tables",
-    quoi: "Luminosité, contraste, saturation et teinte, appliqués à l'image avant qu'elle soit ramenée sur ses couleurs.",
-    change:
-      "Change la couleur du rendu sans redemander l'image. Les quatre agissent avant la réduction, jamais après : régler après, c'est décaler des couleurs déjà choisies et en refabriquer qui ne sont plus dans la palette.",
-    origine: "toi · les quatre à zéro par défaut, et zéro ne touche à rien",
-    long:
-      "Ils sont posés dans la table Couleurs parce que c'est le même moment de la chaîne : on reçoit l'image, on la règle, on la réduit. Les quatre à zéro, le moteur rend l'image reçue sans la copier — un réglage neutre ne coûte rien et ne s'écrit pas dans la recette, donc l'empreinte d'une recette déjà en usage ne bouge pas.\n\nLa teinte tourne autour de l'axe des gris : un gris reste gris quel que soit l'angle. C'est la même matrice que le filtre `hue-rotate` d'un navigateur, pour que ce qu'on voit dans l'aperçu soit ce qui sort du serveur.\n\nAucun des quatre ne touche à la transparence. Un sujet détouré le reste, au pixel près.",
-  },
-
-  "quantification.echanges": {
-    nom: "échanges de couleur",
-    ou: "tables",
-    quoi: "Des paires — cette couleur-là devient celle-ci — appliquées après la réduction.",
-    change:
-      "Donne une variante sans payer une image : la même cape en bleu, en vert, en rouge. La silhouette est identique à l'octet près, puisque seule la couleur des pixels opaques change.",
-    origine: "toi · aucune paire par défaut",
-    long:
-      "Un échange vient après la réduction, et c'est ce qui le rend exact : à ce moment-là l'image ne porte plus qu'une poignée de couleurs franches, et nommer celle qu'on veut remplacer a un sens. Avant la réduction, la même couleur existe en cent nuances et la paire n'en attraperait qu'une.\n\nToutes les paires sont lues sur l'image reçue, jamais l'une sur le résultat de l'autre : une paire ne repeint pas ce qu'une autre vient de poser, donc *rouge devient bleu* suivi de *bleu devient vert* ne fait pas passer le rouge au vert. Si deux paires visent le même pixel — leurs tolérances se recouvrent —, c'est la première de la liste qui l'emporte.\n\nLa transparence n'est jamais touchée. Un échange ne peut ni découper ni reboucher.",
-  },
-
-  "quantification.echanges.tolerance": {
-    nom: "tolérance de la paire",
-    ou: "tables",
-    quoi: "De combien une couleur de l'image peut s'écarter de la couleur nommée pour être quand même échangée.",
-    change:
-      "À 0, seule la couleur exacte part. Monter attrape les nuances voisines — les deux ou trois bleus qu'une réduction a laissés là où l'œil n'en voit qu'un.",
-    origine: "toi · défaut 0",
-    long:
-      "L'écart se mesure comme partout ailleurs dans le dépôt : le plus grand des trois écarts, sur le rouge, le vert et le bleu. C'est la même règle que la détection du fond et que le détourage par les bords, et c'est délibéré — deux distances de couleur dans un même produit donnent deux réponses à la même question.\n\nMonter trop haut fait déborder la paire sur un voisin qu'on voulait garder : la peau part avec la tunique. Le débordement se voit sur l'image tout de suite, puisque le rendu se refait à chaque cran du curseur.",
-  },
-
-  "etape.bords": {
-    nom: "Nettoyage des bords",
-    ou: "tables",
-    quoi: "La cinquième et dernière place : effacer les taches trop petites pour être le sujet.",
-    change:
-      "Ne se pose jamais tout seul, et c'est délibéré : c'est le seul geste du post-traitement qui puisse enlever quelque chose au sujet. Il reste à la fiche, là où on le voit agir.",
-    origine: "toi seul · jamais posé par l'univers",
-  },
-
-  "bords.aire_min": {
-    nom: "tache minimale",
-    ou: "tables",
-    quoi: "En dessous de cette aire, en pixels, une tache opaque isolée est effacée.",
-    change:
-      "Retire les pixels isolés qu'une réduction au plus proche voisin laisse derrière elle. À 64 px de côté un pixel isolé se voit ; à 1024 il ne se voyait pas.",
-    origine: "toi · défaut 3 px, et 0 n'efface rien",
-    long:
-      "Une tache est une zone opaque connexe, trouvée par le même remplissage par plages que la détection de la découpe — donc la même réponse sur la même image.\n\nMonter trop haut efface un détail détaché du corps : la pointe d'une lance, une étincelle, un éclat de magie. Le réglage est le dernier de la recette parce qu'il travaille sur ce que les quatre autres ont laissé, et pas sur l'image reçue.",
-  },
-
-  "bords.grain_min": {
-    nom: "grain de couleur",
-    ou: "tables",
-    quoi: "Un pixel posé au milieu du sujet, dont la couleur n'est portée par aucun voisin, reprend la couleur qui l'entoure.",
-    change:
-      "Efface le point de couleur accroché au sujet — celui que la tache minimale ne voit pas, parce qu'il n'est pas isolé : il est collé au corps, entouré de pixels opaques. C'est le seul réglage qui l'atteigne.",
-    origine: "toi · défaut 0, et 0 n'efface rien",
-    long:
-      "Le chiffre se lit ainsi : combien des huit voisins doivent porter exactement la couleur du pixel pour qu'on le laisse tranquille. À 1, un pixel dont pas un seul voisin ne partage la couleur est un grain. À 3, il faut trois complices pour survivre.\n\nDeux garde-fous l'empêchent d'abîmer le sujet. Il ne regarde que les pixels entourés de huit pixels opaques : le bord du sujet n'est jamais touché, donc la silhouette ne bouge pas. Et il ne repeint que si au moins cinq des huit voisins portent la même couleur — sinon il n'y a pas de couleur d'accueil évidente, et il ne fait rien. Sur une image non réduite, où chaque pixel a sa nuance, cette condition n'est jamais remplie : le réglage se désarme tout seul plutôt que de lisser un dégradé.\n\nIl ne peut pas inventer une couleur : celle qu'il pose est toujours celle d'un voisin.",
-  },
-
-  "bords.lissage": {
-    nom: "escalier des bords",
-    ou: "tables",
-    quoi: "Les pixels qui ne tiennent au sujet que par un coin sont décrochés — jusqu'à trois passes.",
-    change:
-      "Adoucit la marche d'escalier qu'une réduction laisse sur une diagonale. Une passe suffit presque toujours ; trois est le maximum, et c'est déjà beaucoup.",
-    origine: "toi · défaut 0, et 0 ne décroche rien",
-    long:
-      "Un pixel décroché est un pixel opaque qui n'a aucun voisin opaque en haut, en bas, à gauche ni à droite, mais qui en a un en diagonale. Il ne tient au corps que par un angle, et c'est exactement la dent qu'une réduction au plus proche voisin laisse le long d'un trait oblique.\n\nCe n'est pas la même chose que la tache minimale, et les deux réglages ne se remplacent pas : la tache minimale efface ce qui est détaché du sujet — une étincelle, un éclat —, ce réglage-ci rabote ce qui y tient mal. Une étincelle vraiment détachée survit au décrochage et meurt à la tache minimale.\n\nIl ne peut jamais couper le sujet en deux : il n'enlève que des pixels sans voisin orthogonal, et le corps tient par ses voisins orthogonaux.",
-  },
-
-  "bords.vote_voisins": {
-    nom: "vote des voisins",
-    ou: "tables",
-    quoi: "Chaque pixel du bord devient ce que sa majorité franche de huit voisins est déjà — jusqu'à trois passes.",
-    change:
-      "Régularise un bord irrégulier, dent par dent, sans jamais faire grossir ni maigrir le sujet en moyenne : ce qui gagne d'un côté est rendu de l'autre.",
-    origine: "toi · défaut 0, et 0 ne vote rien",
-    long:
-      "Un pixel ne change d'état — opaque ou transparent — que si cinq de ses huit voisins ou plus partagent l'état inverse du sien. Sur une égalité à quatre contre quatre, rien ne bouge : le vote ne tranche que sur une majorité franche, jamais sur un coup de dé, et c'est ce qui le rend identique qu'on regarde l'image telle quelle ou son reflet.\n\nCe n'est pas un lissage de couleur : il ne touche que la silhouette, pixel opaque ou transparent, jamais la teinte.",
-  },
-
-  "bords.garder": {
-    nom: "garder les plus grandes",
-    ou: "tables",
-    quoi: "Seuls les N plus grands amas opaques restent ; tout le reste devient transparent.",
-    change:
-      "Efface d'un coup les îlots détachés du sujet — un reflet, une éclaboussure —, quelle que soit leur aire, dès lors qu'ils ne comptent pas parmi les plus grands.",
-    origine: "toi · défaut 0, et 0 ne trie rien",
-    long:
-      "Les amas sont classés par aire décroissante ; seuls les N premiers survivent. À 1, un seul amas reste — le sujet, s'il est bien le plus grand morceau de l'image. Si deux amas ont la même aire au pixel près, l'ordre entre eux est stable et ne dépend pas du sens de lecture de l'image, pour ne jamais dépendre du miroir.\n\nÀ la différence de la tache minimale, qui juge chaque amas contre un seuil fixe, ce réglage juge les amas les uns contre les autres : il efface même un gros îlot, s'il en existe un plus gros encore.",
-  },
-
-  "bords.boucher_jusqua": {
-    nom: "boucher les trous",
-    ou: "tables",
-    quoi: "Un trou — une zone transparente entièrement entourée de sujet — plus petit que ce seuil se comble, avec la couleur qui l'entoure.",
-    change:
-      "Répare un trou de découpe au milieu du sujet, celui que la tache minimale ne voit jamais parce qu'il est transparent et non opaque.",
-    origine: "toi · défaut 0, et 0 ne comble rien",
-    long:
-      "Un trou se distingue d'une poche de fond par un seul fait : il est transparent, quand la poche est opaque et couleur du fond. Les deux sont enfermés dans le sujet, mais seul le trou tombe sous ce réglage — la poche a le sien, juste en dessous.\n\nLe remplissage reprend la couleur qui borde le trou, pixel par pixel autour du contour, jamais une couleur inventée.",
-  },
-
-  "bords.reboucher_jusqua": {
-    nom: "reboucher les poches de fond",
-    ou: "tables",
-    quoi: "Une poche — une zone opaque couleur du fond, entièrement entourée de sujet, inatteignable depuis le bord de l'image — plus petite que ce seuil devient transparente.",
-    change:
-      "Efface le résidu de fond resté enfermé dans le sujet après le détourage, celui qu'un remplissage parti des bords de l'image n'a jamais pu atteindre.",
-    origine: "toi · défaut 0, et 0 ne reboucher rien",
-    long:
-      "Le détourage efface le fond en partant des bords de l'image et en propageant vers l'intérieur ; une poche enfermée au milieu du sujet — un rond de ciel entre deux bras — n'est jamais atteinte par cette propagation, et reste opaque. C'est l'inverse exact du trou : opaque et couleur du fond, là où le trou est transparent.\n\nLa comparaison de couleur tolère un petit écart — la compression ou l'anticrénelage changent une teinte de quelques valeurs sans changer sa nature de fond.",
-  },
-
-  "bords.ronger_regonfler": {
-    nom: "ronger puis regonfler",
-    ou: "tables",
-    quoi: "Retire les excroissances plus fines que ce rayon, puis regonfle le sujet du même rayon pour lui rendre sa taille.",
-    change:
-      "Arrondit une pointe accidentelle ou un pont fin entre deux amas qui n'auraient jamais dû se toucher, sans faire maigrir le corps du sujet.",
-    origine: "toi · défaut 0, et 0 ne ronge rien",
-    long:
-      "L'opération est symétrique : ronger enlève une épaisseur de rayon donné tout autour du sujet, regonfler la lui rend. Ce qui était assez épais pour survivre au rongement revient à sa taille d'origine ; ce qui était plus fin que le rayon — une pointe, un pont — a disparu au rongement et ne revient pas.\n\n« Épargner les traits fins », juste en dessous, protège justement ce que ce réglage emporterait sinon — une hampe, un brin d'herbe d'un pixel de large.",
-  },
-
-  "bords.epargner_traits_fins": {
-    nom: "épargner les traits fins",
-    ou: "tables",
-    quoi: "Un trait d'un pixel de large — une hampe, un brin d'herbe — survit au rongement plutôt que de disparaître avec le reste.",
-    change:
-      "Décide si « ronger puis regonfler » peut emporter un détail fin et volontaire, ou doit le laisser filer.",
-    origine: "toi · défaut oui — épargner",
-    long:
-      "Sans l'épargne, le rongement ne fait pas de différence entre une excroissance accidentelle et un détail dessiné exprès : les deux sont plus fins que le rayon, les deux disparaissent. Avec l'épargne, un pixel appartenant à un trait d'un seul pixel de large est reconnu avant le rongement et remis en place après.\n\nCe réglage ne fait rien tout seul : il ne change le résultat que si « ronger puis regonfler » est actif.",
-  },
-
-  "bords.regonfler_ronger": {
-    nom: "regonfler puis ronger",
-    ou: "tables",
-    quoi: "Regonfle le sujet de ce rayon pour combler les entailles fines du bord, puis le ronge du même rayon pour lui rendre sa taille.",
-    change:
-      "Comble une entaille ou un pont manquant sur le bord du sujet — l'inverse de « ronger puis regonfler », qui retire plutôt que combler.",
-    origine: "toi · défaut 0, et 0 ne regonfle rien",
-    long:
-      "L'opération est symétrique : regonfler ajoute une épaisseur de rayon donné tout autour du sujet, ronger la lui retire. Une entaille plus fine que le rayon — une fente entre deux doigts mal découpée — se referme au regonflement et ne rouvre pas ; le contour général du sujet, lui, revient à sa taille d'origine.",
   },
 
   // ── L'assistant de démarrage — le seul écran qui règle un jeu ─────────────
@@ -1831,290 +2198,6 @@ export const AIDE: Record<string, Explication> = {
     origine: "la réponse du fournisseur, à chaque appel · rien à remplir",
     long:
       "Le mot **gratuit** veut dire *sans prix*, pas *sans limite*. Un modèle qui ne coûte rien prend quand même quelque chose chez celui qui le sert, et ce quelque chose est écrit à côté du mot : *gratuit · 1 jeton*.\n\nCe qu'il reste chez un fournisseur est dit aux deux endroits où ça sert — l'écran où l'on choisit un modèle, et celui qui confirme un appel —, avec **d'où le chiffre vient**. *Compté ici* veut dire compté sur les appels partis de cette machine : c'est un minimum, pas un relevé, parce qu'un appel lancé ailleurs entame la même réserve sans que ce compteur-là le voie. *Relevé chez le fournisseur* veut dire que c'est lui qui l'a dit, et c'est alors un fait.\n\nAucun des deux fournisseurs du produit n'annonce de réserve aujourd'hui. Celui qui ne demande rien limite une **cadence** — un appel toutes les quinze secondes — et non un nombre d'images : l'écran dit donc ce qui est parti depuis minuit, et à quel rythme on peut relancer, plutôt qu'un « il vous reste » que personne n'a mesuré.",
-  },
-
-  // ── La sixième place : les contours ───────────────────────────────────────
-  //
-  // **La seule table entièrement neuve du lot** (E5) : rien n'en existait dans
-  // le produit. La panne qu'elle répare est précise — la mise sur grille mange
-  // les contours fins, et ce qui reste n'est pas un contour absent, ce qui
-  // serait franc, mais un contour *troué*, qui se voit et ne se rattrape pas.
-
-  "etape.contours": {
-    nom: "Les contours",
-    ou: "tables",
-    quoi: "La sixième place de la recette. Elle trace un trait sur le bord du sujet, d'une couleur choisie, et le pose dedans, dehors, ou à cheval.",
-    change:
-      "Posé dehors, le trait agrandit l'image rendue : c'est le seul réglage du produit qui change les dimensions du sprite sans qu'on le lui ait demandé, et la table le dit en ligne sœur au moment où l'on choisit la position.",
-    origine:
-      "toi · éteinte au départ · la couleur proposée est la plus sombre de ta palette",
-  },
-
-  "contours.epaisseur": {
-    nom: "épaisseur du contour",
-    ou: "tables",
-    quoi: "La largeur du trait, en pixels de l'image rendue — celle qui part dans le jeu.",
-    change:
-      "Rien à la génération. Au-delà de huit ce n'est plus un contour, c'est un cadre, et il vaut mieux le dessiner à la main : le plafond est là pour ça, pas pour une limite technique.",
-    origine: "toi · défaut 1 px",
-    long:
-      "L'unité est celle de l'image **rendue**, et pas celle de l'image reçue : une fois la grille posée, l'image rendue *est* la case du sprite, et un pixel y est un bloc.\n\nLa table ne devine pas l'épaisseur, et elle pourrait — mesurer celle du contour existant là où il survit. Mais un contour troué donne des épaisseurs qui varient de un à trois, et proposer la médiane de quelque chose de cassé serait deviner à partir de la panne qu'on répare.",
-  },
-
-  "contours.couleur": {
-    nom: "couleur du contour",
-    ou: "tables",
-    quoi: "La couleur exacte du trait. La palette du jeu est proposée en rangée ; le champ reste libre.",
-    change:
-      "Rien à la génération. Une couleur qui n'est pas dans la palette du jeu se marque « hors palette » au lieu d'être refusée — le produit constate, il ne décide pas à ta place.",
-    origine: "toi · proposé : la plus sombre de ta palette, ou le noir sans palette",
-    long:
-      "La règle du produit tient en une ligne : **la palette est imposée par la quantification, qui ramène chaque pixel sur la couleur la plus proche ; elle est proposée partout ailleurs.** Ici on est *après* la quantification — ce que le trait pose ne sera pas rattrapé, et c'est précisément ce qui mérite d'être dit plutôt que refusé.",
-  },
-
-  "contours.position": {
-    nom: "position du contour",
-    ou: "tables",
-    quoi: "Dehors, dedans, ou à cheval sur le bord de la silhouette.",
-    change:
-      "Posé dehors, le trait agrandit l'image rendue : c'est le seul réglage du produit qui change les dimensions du sprite sans qu'on le lui ait demandé. La table écrit de combien, au moment où tu choisis.",
-    origine: "toi · défaut externe",
-    long:
-      "**Externe** pose la ligne autour : le sujet n'est pas entamé, et les dimensions grandissent de deux fois l'épaisseur. **Interne** la pose en dedans : la boîte ne bouge pas, le sujet est mangé. **Centré** partage, et le pixel qui ne tombe pas juste va vers l'extérieur.\n\nLe défaut est externe pour la même raison que le pixel impair va dehors : agrandir est réversible, manger le sujet ne l'est pas.",
-  },
-
-  "contours.trous": {
-    nom: "les trous",
-    ou: "tables",
-    quoi: "Un trou de la silhouette — une boucle de ceinture, l'espace entre un bras et un torse — reçoit-il la même ligne que le pourtour ?",
-    change:
-      "Rien à la génération. Cerclés, un trou plus petit que deux fois l'épaisseur se bouche : la table donne le compte et la plus petite taille pour que ça se voie venir.",
-    origine: "toi · défaut cerclés",
-    long:
-      "Un trou est un bord du sujet exactement comme le pourtour, et c'est ce que fait un style « contour noir 2 px » — d'où le défaut. **Laissés** ne trace que le pourtour extérieur, pour les styles qui veulent une découpe nette sans lignes à l'intérieur du sujet.",
-  },
-
-  "contours.taches": {
-    nom: "taches contournées",
-    ou: "tables",
-    quoi: "Combien de zones opaques ont reçu la ligne, et la taille de la plus petite.",
-    change:
-      "Rien : c'est une lecture. Un compte qui surprend envoie dans la table des bords, qui est juste avant dans l'ordre.",
-    origine: "une mesure sur ton image",
-    long:
-      "Il n'y a **pas d'aire minimale ici**, et c'est délibéré : un contour tracé autour de trois miettes ferait trois pâtés, mais la table des bords existe déjà pour retirer les miettes, et deux réglages qui font la même chose à deux endroits finissent par se contredire. Ce que cette table fait à la place, c'est le dire.\n\nCe n'est pas un verdict : un personnage à deux lanternes détachées fait légitimement trois taches.",
-  },
-
-  // ── Les six capacités de B18 ────────────────────────────────────────────────
-
-  "contours.derivee": {
-    nom: "couleur du trait",
-    ou: "tables",
-    quoi: "Fixe, ou dérivée : chaque pixel du trait prend alors la teinte du bord le plus proche, assombrie.",
-    change:
-      "Rien à la génération. Dérivée, la couleur choisie au-dessus est ignorée — le trait suit la matière du sujet plutôt qu'une seule teinte.",
-    origine: "toi · défaut fixe",
-    long:
-      "C'était la troisième façon d'obtenir la couleur du trait, prévue dans le plan qui a produit cette table et jamais écrite : « la teinte dominante du bord, assombrie de 30 à 40 % ». Un sujet à plusieurs matières — une robe, une peau, un bâton — garde alors chacune la sienne, cernée de sa propre couleur assombrie, plutôt que d'un même noir partout.",
-  },
-
-  "contours.reserver": {
-    nom: "réserver la place",
-    ou: "tables",
-    quoi: "La case ne grandit jamais, quel que soit le choix de position.",
-    change:
-      "Rien à la génération. Posé, le sujet perd l'épaisseur du trait sur son bord plutôt que le fichier — la case du jeu reste à sa taille, quoi qu'il arrive.",
-    origine: "toi · défaut éteint",
-    long:
-      "Le trait posé « dehors » agrandit le rendu, et rien ne rattrapait ça avant B18. `reserver` prime sur `position` : la case ne bouge plus jamais. Ce n'est pas tout à fait ce que la planche de conception décrivait — réserver la place *en amont*, à l'étape de la case — parce que ça demanderait de faire circuler cette information entre deux tables de la chaîne ; le résultat obtenu ici est le même que « dedans », choisi automatiquement.",
-  },
-
-  "contours.inegal": {
-    nom: "trait inégal",
-    ou: "tables",
-    quoi: "Un dégradé du haut (presque rien) vers le bas (plein), comme si la lumière venait du ciel — et rien sur la toute dernière rangée du sujet.",
-    change:
-      "Rien à la génération. La dernière rangée ne reçoit jamais le trait : pas de semelle noire qui décollerait le sujet de son ombre.",
-    origine: "toi · défaut éteint",
-    long:
-      "Le trait de la table est aujourd'hui de la même force partout. Posé, il s'éclaircit vers le haut et s'arrête net sous les pieds — ce qui sépare un sprite découpé d'un sprite posé au sol.",
-  },
-
-  "contours.sur_calques": {
-    nom: "sur l'ensemble empilé",
-    ou: "tables",
-    quoi: "Le trait se calcule sur la silhouette de tous les calques posés ensemble, pas sur ce calque seul.",
-    change:
-      "Rien à la génération. Une pièce d'équipement — une épée, un casque — ne porte alors plus son propre liseré là où elle touche le corps.",
-    origine: "toi · défaut éteint",
-    long:
-      "Sur un calque d'équipement, le trait cernait la pièce toute seule — un liseré qui la détache du corps au lieu de l'y coller. Posé, le trait se trace après composition des calques, sur le pourtour de l'ensemble.",
-  },
-
-  "contours.desactive_plein_cadre": {
-    nom: "s'éteindre sur une tuile",
-    ou: "tables",
-    quoi: "Un sujet qui touche les quatre bords de l'image sur toute leur longueur — une tuile, un décor plein cadre — ne reçoit pas de trait.",
-    change:
-      "Rien à la génération. Décoché, le trait se trace même sur un tel sujet, ce qui dessine un quadrillage une fois les images posées côte à côte.",
-    origine: "toi · défaut actif",
-    long:
-      "Une tuile n'a pas de silhouette à détacher : ses bords sont ceux du cadre. Ce garde-fou est plus fin que « entièrement opaque » — une tuile texturée peut laisser passer un peu de fond sans jamais ouvrir ses quatre bords.",
-  },
-
-  // ── La septième place : le retournement ───────────────────────────────────
-  //
-  // **La seule place du produit qui ne demande rien au modèle et ne coûte
-  // rien.** Elle existe parce qu'un personnage vu de dessus se dessine dans
-  // quatre directions et que la moitié d'entre elles sont les miroirs exacts de
-  // l'autre moitié : le produit n'avait aucune façon de le dire, donc les deux
-  // se payaient.
-
-  "retournement.sens": {
-    nom: "le sens du retournement",
-    ou: "tables",
-    quoi: "Comment l'image bascule. Dix sens : le miroir gauche-droite, qui renvoie l'image comme une glace — le pèlerin qui marchait vers l'est marche vers l'ouest —, le miroir haut-bas, les deux quarts de tour, le demi-tour, la diagonale, le repli sur soi, « miroir sauf ici », et les deux rotations libres.",
-    change:
-      "Rien à la génération sur les huit premiers, et c'est tout le sujet : ils ne demandent rien au modèle et ne coûtent rien. Aucun pixel n'est réinventé — ce sont les mêmes carrés de couleur, rangés dans un autre ordre, donc la palette de l'image retournée est exactement celle d'où elle vient. Les deux rotations libres, elles, peuvent traverser un pixel entre deux carrés — c'est ce que RotSprite réduit sans l'effacer.",
-    origine: "toi · vide au départ · défaut miroir gauche-droite",
-    long:
-      "Le retournement s'endort sans se vider, comme les sept autres places : éteint, il garde son sens et cesse d'agir sur l'image. Trois sens ouvrent un réglage de plus sous ce cran-ci — l'angle pour les deux rotations libres, la moitié gardée pour le repli, les zones protégées pour « miroir sauf ici ».",
-  },
-
-  "retournement.angle": {
-    nom: "l'angle",
-    ou: "tables",
-    quoi: "De combien tourner, pour les deux rotations libres. −180° à +180°.",
-    change:
-      "Le sujet pivote dans sa case. Au plus proche voisin, les diagonales se hachent dès quelques degrés sur une case de 64 px ; en RotSprite, le même angle garde des marches régulières au lieu d'un escalier au hasard.",
-    origine: "toi · 0° au départ",
-    long:
-      "Un angle multiple de 90° ne change rien à l'image : ce sont les quatre premiers sens qui font ce travail-là sans jamais réinventer un pixel. L'angle libre n'a de sens qu'entre deux quarts de tour.",
-  },
-
-  "retournement.repli": {
-    nom: "moitié gardée",
-    ou: "tables",
-    quoi: "Laquelle des deux moitiés de l'image, coupée en son milieu, est recopiée sur l'autre — le sens « miroir sur soi ».",
-    change:
-      "La moitié écartée disparaît, remplacée par le reflet de celle qu'on garde. La roue du moulin cesse d'avoir une pale plus large que les autres ; en échange, tout ce que le sujet avait d'unique du côté écarté se perd.",
-    origine: "toi · gauche au départ",
-    long:
-      "L'axe du repli, lui, n'a pas encore de curseur à l'écran : il vaut le milieu de l'image tant que rien ne le déplace.",
-  },
-
-  "retournement.zones": {
-    nom: "zones protégées",
-    ou: "tables",
-    quoi: "Les endroits qui reviennent tels quels après le miroir, dans le sens « miroir, sauf ici ». Le pèlerin qui tient son bâton à droite le garde à droite une fois retourné.",
-    change:
-      "Sans zone, « miroir, sauf ici » retourne toute l'image comme un miroir gauche-droite ordinaire. Chaque zone ajoutée y recolle, après coup, le pixel d'origine — au prix d'une petite couture visible au raccord.",
-    origine: "toi · aucune zone au départ",
-    long:
-      "Le geste d'aujourd'hui pose une zone ronde au centre de l'image, à ajuster à la main plus tard : peindre une zone du bout du doigt, comme la main le fait sur la huitième place, viendra avec l'écran qui le demande.",
-  },
-
-  "retournement.direction": {
-    nom: "ça se range en",
-    ou: "tables",
-    quoi: "La direction sous laquelle l'image retournée vient se poser dans le plan du jeu. La case vide « ouest » du pèlerin se remplit, et l'image qui la remplit n'a rien coûté.",
-    change:
-      "Rien à la génération : l'image obtenue est la même que celle d'où elle vient, retournée. Elle entre en bibliothèque avec sa filiation, à zéro dollar, et son étiquette dit « miroir · gratuit » là où une image générée dit son prix.",
-    origine:
-      "l'atelier propose la direction opposée · toi dès que tu en écris une",
-    long:
-      "**La direction proposée vient du serveur, jamais d'un calcul de l'écran.** Les directions d'un jeu sont libres et se renomment : deviner qu'un mot français en désigne un autre serait exactement la déduction que le produit refuse ailleurs. Quand l'atelier ne connaît pas la direction de l'image, le champ reste vide et attend la tienne.\n\n**Il y a deux directions qu'un miroir gauche-droite ne fabrique pas** : le sud et le nord, qui se rendent eux-mêmes. Un miroir ne peut montrer que ce qui est déjà dessiné — on ne voit jamais le dos d'un personnage qui nous fait face. Le geste se grise alors, avec sa raison, avant le clic : ces directions-là se génèrent.",
-  },
-
-  // ── Enregistrer sous (`RP20`) ─────────────────────────────────────────────
-  //
-  // **Une entrée, pas trois.** Le sujet, la pose et la direction de la fenêtre
-  // sont la même question posée en trois champs : *où ça va*. Trois entrées
-  // auraient répété la même phrase, et la règle du guide est qu'une entrée
-  // décrit un réglage — celui-ci en est un seul.
-
-  "enregistrer-sous.case": {
-    nom: "où le résultat se range",
-    ou: "tables",
-    quoi: "La pose et la direction sous lesquelles le résultat de la retouche vient se poser. Ce qui naît est une image — ou une animation — neuve : ses pixels sont ceux que tu as sous les yeux, et sa retouche repart de zéro.",
-    change:
-      "Rien à la génération, et rien à l'original : ni sa retouche, ni son rendu ne bougent. La nouvelle case n'est pas retenue pour le jeu — la retenir est un second geste.",
-    origine:
-      "l'atelier propose la case de l'image · la direction au miroir quand la retouche en porte un · toi dès que tu choisis",
-    long:
-      "**Ce n'est pas le miroir de la table du retournement, et les deux se ressemblent.** Là-bas, l'image neuve garde les pixels d'origine et c'est sa *recette* qui la retourne : retirer la place la redresse. Ici le retournement est cuit dans les pixels, et la recette repart vide — parce que la nouvelle case a sa vie à elle, qu'on va la retoucher, et que deux recettes posées sur la même image brute finiraient par se contredire.\n\n**Ce n'est pas non plus dupliquer** : la copie porterait la retouche, celle-ci porte le résultat. Le geste ne demande rien à personne et ne coûte rien.",
-  },
-
-  // ── La huitième place : la main ───────────────────────────────────────────
-  //
-  // **C'est la seule table qui n'applique aucune règle**, et c'est exactement
-  // ce qu'une explication doit dire — sinon on la cherche parmi les réglages,
-  // où elle n'est pas.
-
-  "etape.main": {
-    nom: "La main",
-    ou: "tables",
-    quoi: "La huitième et dernière place. Le crayon, la gomme et la pipette, au pixel. Là où les sept autres tables appliquent une règle à toute l'image, celle-ci ne fait que ce que tu désignes.",
-    change:
-      "Rien à la génération, et rien tant que tu ne poses pas un pixel. Elle existe pour les trois pixels qu'aucun réglage n'atteint : un coin de fond collé au sujet, une dent dans un contour, une miette accrochée à la silhouette.",
-    origine: "toi, geste par geste · rien au départ",
-    long:
-      "Comme toutes les tables, elle ne coûte rien. Le post-traitement ne touche jamais le fournisseur — on peut y passer une heure sans dépenser un centime, et c'est ce que la barre qui paie, absente ici, annonce avant qu'on ait lu quoi que ce soit.",
-  },
-
-  "main.calques": {
-    nom: "les calques de la main",
-    ou: "tables",
-    quoi: "Une pile : « l'opacité » au fond, et autant de calques de dessin qu'on veut au-dessus.",
-    change:
-      "Rien à la génération, et rien tant que tu ne poses pas un pixel. Masquer un calque n'efface rien — il garde ses passages et cesse simplement d'être appliqué.",
-    origine: "toi · « l'opacité » seule au départ",
-    long:
-      "**« L'opacité » est le sol, et elle est d'une autre nature** : elle ne pose pas de couleur, elle décide de ce qui est là sur l'image que les six tables précédentes ont produite. Elle ne se supprime pas et ne se déplace pas — un calque de dessin sous l'image n'aurait aucun sens.\n\nLa pile se lit du dessus au dessous, comme partout où il y a des calques ; elle s'applique dans l'autre sens, qui est celui d'un pinceau.",
-  },
-
-  "main.sens": {
-    nom: "le sens du geste",
-    ou: "tables",
-    quoi: "Ce que le prochain passage fera : ôter ou remettre sur l'opacité, poser ou effacer sur un calque de dessin.",
-    change:
-      "Rien à la génération. Le dernier passage l'emporte sur un pixel donné, comme un pinceau sur une toile.",
-    origine: "toi · le premier des deux",
-    long:
-      "Sur l'opacité : **ôter** rend transparent, **remettre** ramène ce que l'image avait avant qu'on le retire — la couleur est toujours là dessous, ni le détourage ni la quantification n'y touchent.\n\nSur un calque de dessin : **poser** ajoute des pixels à la couleur choisie, **effacer** retire ce que ce calque-là avait posé, et rien d'autre. Le pixel retombe alors sur ce qu'il y avait dessous.",
-  },
-
-  "main.diametre": {
-    nom: "le pinceau",
-    ou: "tables",
-    quoi: "La largeur du trait, en pixels de l'image rendue. Impairs seulement — un pinceau a un centre.",
-    change:
-      "Rien à la génération, et rien tant qu'aucun passage n'est posé : ce curseur ne déclenche aucun calcul, il suit la main sans attendre le relâchement.",
-    origine: "toi · défaut 5 px",
-    long:
-      "**Le cran 1 px est le pixel** : un rayon nul ne couvre qu'un pixel de large, et c'est l'autre bout de « à main levée, puis au pixel ». Les deux échelles du geste sont les deux bouts d'un seul réglage, et non deux outils.\n\nC'est le diamètre qui s'affiche, pas le rayon : la largeur du trait est ce que la main voit.",
-  },
-
-  "main.couleur": {
-    nom: "la couleur du pinceau",
-    ou: "tables",
-    quoi: "Ce qu'un passage pose sur un calque de dessin. La palette du jeu est proposée ; le champ reste libre.",
-    change:
-      "Rien à la génération. Une couleur hors palette se marque au lieu d'être refusée : une couleur de plus dans un jeu est un fait qui se lit, pas une faute.",
-    origine: "toi · proposé : la première de ta palette",
-    long:
-      "**La couleur est portée par le passage, pas par le calque** : un même calque peut en contenir plusieurs, ce qui évite d'en créer un par teinte — et ce qui laisse la porte ouverte le jour où un remplissage ou un dégradé s'ajoutera.\n\nL'opacité, elle, ne pose aucune couleur : elle décide de ce qui est là.",
-  },
-
-  "main.passages": {
-    nom: "le calque actif",
-    ou: "tables",
-    quoi: "Combien de passages porte le calque choisi, et ce que Ctrl + Z va retirer.",
-    change:
-      "Rien : c'est un compte, et un geste. Ctrl + Z retire le dernier passage du calque actif ; « Sans la main › », en pied, vide la table entière.",
-    origine: "toi, geste par geste · rien au départ",
-    long:
-      "**Il n'y a pas de liste de passages, et c'est la seule table dans ce cas.** Un geste à main levée en produit des dizaines : trente rangées ne se relisent pas, elles se subissent. Le calque est l'unité de lecture — c'est lui qu'on nomme, qu'on masque, qu'on supprime — et le passage n'existe que comme un compte et un Ctrl + Z.\n\nUn passage est enregistré comme un **tracé, jamais comme des pixels** : il pèse quelques octets, il se défait un par un, et il se rejoue sur une image dont les dimensions ont changé. Remettre la grille à une autre taille ne fait pas perdre le dessin.",
   },
 
   // ── La retouche — ce que la fiche fait d'un asset ─────────────────────────
@@ -2353,15 +2436,6 @@ export const AIDE: Record<string, Explication> = {
       "Ce que tu liras dans la liste des bandes, et ce qui partira dans le descriptif de l'export. **Un clip en porte plusieurs** : un même tirage donne souvent un repos et une marche, et sans nom tu ne saurais plus laquelle est laquelle.",
     origine: "l'atelier propose le mouvement demandé · tu écris ce que tu veux",
     long: "Une bande se garde sous un nom, toujours : c'est la seule chose que l'écran exige.\n\nLa case qu'elle remplit, elle, est facultative. **Une bande sans case est un brouillon, et un brouillon ne bloque rien** — tu gardes d'abord, tu ranges ensuite, comme partout ailleurs dans l'atelier.",
-  },
-
-  "bande.source": {
-    nom: "viser ou découper une frame",
-    ou: "tables",
-    quoi: "La pipette, le tracé du sujet et le rectangle visent l’image source ; la découpe prélève la frame retouchée.",
-    change: "Une visée corrige uniquement la frame choisie. Découper crée une image en bibliothèque, sans modifier ni enregistrer l’animation.",
-    origine: "toi · depuis l’atelier d’animation",
-    long: "La vue source possède son zoom et son déplacement : ses coordonnées restent celles du fichier original, avant réduction. La découpe part au contraire de la case finale, placement et Main compris. Après la découpe, Revenir à l’animation retrouve les réglages en cours. Les morceaux entrent dans la bibliothèque sans nouvel appel de génération.",
   },
 
   "bande.main": {

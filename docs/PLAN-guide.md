@@ -206,6 +206,23 @@ Chaque tranche ci-dessous porte les **mêmes six critères**, et ils ne sont pas
 c'est précisément la liste dont l'auteur dit qu'elle n'aide pas. Elle se découpe en groupes
 avant d'être réécrite, pas l'inverse.
 
+→ `GU5` (1/2), le découpage seul — aucun texte de fiche n'a bougé. **Treize zones**, dans
+l'ordre de l'écran réel, et les noms de table sont ceux que la barre affiche (*Pixelisation*,
+*Couleurs*, *Nettoyage*, *Contour*) et non ceux des fiches : En haut de l'écran — enregistrer
+(2) · L'image, et la barre au-dessus d'elle (3) · La table Détourage (12) · La table Recadrage
+(3) · La table Pixelisation (6) · La table Couleurs (9) · La table Couleurs — avant et après la
+réduction (4) · La table Nettoyage (9) · La table Nettoyage — la couleur, pas la silhouette (3)
+· La table Contour (6) · La table Contour — les cinq cases à cocher (5) · La table Retournement
+(5) · La table Main (6). Les soixante-treize entrées `ou: "tables"` sont désormais contiguës
+dans `aide.ts`, rangées dans cet ordre-là.
+
+→ **Ce que la lecture du code a trouvé de mort, pour `GU5` (2/2)** : sept fiches décrivent un
+réglage ou une lecture qui n'est plus à l'écran — `detourage.seuil_alpha`, `detourage.poches`,
+`detourage.fond`, `grille.du-modele`, `contours.taches`, `bords.taches`,
+`retournement.direction` — et deux sont sur le mauvais écran plutôt que mortes :
+`tables.png` (le *PNG ↓* n'existe que sur la fiche d'une image et sur une tuile) et
+`bande.source` (elle décrit l'atelier d'animation, son `ou` devrait être `bande`).
+
 ---
 
 ## Les écrans qui n'ont rien
