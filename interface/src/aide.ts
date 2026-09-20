@@ -1567,16 +1567,6 @@ export const AIDE: Record<string, Explication> = {
       "Une tache est une zone opaque connexe, trouvée par le même remplissage par plages que la détection de la découpe — donc la même réponse sur la même image.\n\nMonter trop haut efface un détail détaché du corps : la pointe d'une lance, une étincelle, un éclat de magie. Le réglage est le dernier de la recette parce qu'il travaille sur ce que les quatre autres ont laissé, et pas sur l'image reçue.",
   },
 
-  "bords.taches": {
-    nom: "taches effacées",
-    groupe: "La table Nettoyage",
-    ou: "tables",
-    quoi: "Toutes les taches opaques de l'image, de la plus petite à la plus grande, avec celle où le seuil tombe.",
-    change:
-      "Rien par elle-même : c'est la liste de ce que le curseur au-dessus va faire. Le trait bleu marque le seuil — au-dessus ce qui s'efface, au-dessous ce qui reste.",
-    origine: "mesuré sur l'image détourée",
-  },
-
   "bords.garder": {
     nom: "garder les plus grandes",
     groupe: "La table Nettoyage",
@@ -1586,7 +1576,7 @@ export const AIDE: Record<string, Explication> = {
       "Efface d'un coup les îlots détachés du sujet — un reflet, une éclaboussure —, quelle que soit leur aire, dès lors qu'ils ne comptent pas parmi les plus grands.",
     origine: "toi · défaut 0, et 0 ne trie rien",
     long:
-      "Les amas sont classés par aire décroissante ; seuls les N premiers survivent. À 1, un seul amas reste — le sujet, s'il est bien le plus grand morceau de l'image. Si deux amas ont la même aire au pixel près, l'ordre entre eux est stable et ne dépend pas du sens de lecture de l'image, pour ne jamais dépendre du miroir.\n\nÀ la différence de la tache minimale, qui juge chaque amas contre un seuil fixe, ce réglage juge les amas les uns contre les autres : il efface même un gros îlot, s'il en existe un plus gros encore.",
+      "Les amas sont classés par aire décroissante ; seuls les N premiers survivent. À 1, un seul amas reste — le sujet, s'il est bien le plus grand morceau de l'image.\n\nÀ la différence de la tache minimale, qui juge chaque amas contre un seuil fixe, ce réglage les juge les uns contre les autres : il efface même un gros îlot, s'il en existe un plus gros encore.",
   },
 
   "bords.boucher_jusqua": {
@@ -1605,12 +1595,12 @@ export const AIDE: Record<string, Explication> = {
     nom: "reboucher les poches de fond",
     groupe: "La table Nettoyage",
     ou: "tables",
-    quoi: "Une poche — une zone opaque couleur du fond, entièrement entourée de sujet, inatteignable depuis le bord de l'image — plus petite que ce seuil devient transparente.",
+    quoi: "Une poche de fond enfermée dans le sujet, plus petite que ce seuil, devient transparente.",
     change:
       "Efface le résidu de fond resté enfermé dans le sujet après le détourage, celui qu'un remplissage parti des bords de l'image n'a jamais pu atteindre.",
     origine: "toi · défaut 0, et 0 ne reboucher rien",
     long:
-      "Le détourage efface le fond en partant des bords de l'image et en propageant vers l'intérieur ; une poche enfermée au milieu du sujet — un rond de ciel entre deux bras — n'est jamais atteinte par cette propagation, et reste opaque. C'est l'inverse exact du trou : opaque et couleur du fond, là où le trou est transparent.\n\nLa comparaison de couleur tolère un petit écart — la compression ou l'anticrénelage changent une teinte de quelques valeurs sans changer sa nature de fond.",
+      "Une poche est opaque, couleur du fond, entourée de sujet, et jamais atteinte par le remplissage qui part des bords de l'image vers l'intérieur — l'inverse exact du trou, qui est transparent. La comparaison de couleur tolère un petit écart, pour la compression ou l'anticrénelage.",
   },
 
   "bords.ronger_regonfler": {
@@ -1622,7 +1612,7 @@ export const AIDE: Record<string, Explication> = {
       "Arrondit une pointe accidentelle ou un pont fin entre deux amas qui n'auraient jamais dû se toucher, sans faire maigrir le corps du sujet.",
     origine: "toi · défaut 0, et 0 ne ronge rien",
     long:
-      "L'opération est symétrique : ronger enlève une épaisseur de rayon donné tout autour du sujet, regonfler la lui rend. Ce qui était assez épais pour survivre au rongement revient à sa taille d'origine ; ce qui était plus fin que le rayon — une pointe, un pont — a disparu au rongement et ne revient pas.\n\n« Épargner les traits fins », juste en dessous, protège justement ce que ce réglage emporterait sinon — une hampe, un brin d'herbe d'un pixel de large.",
+      "L'opération est symétrique : ronger enlève une épaisseur donnée tout autour du sujet, regonfler la lui rend. Ce qui est assez épais pour survivre au rongement revient à sa taille ; ce qui est plus fin que le rayon — une pointe, un pont — disparaît et ne revient pas.\n\n« Épargner les traits fins », juste en dessous, protège ce que ce réglage emporterait sinon.",
   },
 
   "bords.epargner_traits_fins": {
@@ -1634,7 +1624,7 @@ export const AIDE: Record<string, Explication> = {
       "Décide si « ronger puis regonfler » peut emporter un détail fin et volontaire, ou doit le laisser filer.",
     origine: "toi · défaut oui — épargner",
     long:
-      "Sans l'épargne, le rongement ne fait pas de différence entre une excroissance accidentelle et un détail dessiné exprès : les deux sont plus fins que le rayon, les deux disparaissent. Avec l'épargne, un pixel appartenant à un trait d'un seul pixel de large est reconnu avant le rongement et remis en place après.\n\nCe réglage ne fait rien tout seul : il ne change le résultat que si « ronger puis regonfler » est actif.",
+      "Sans l'épargne, le rongement ne distingue pas une excroissance accidentelle d'un détail dessiné exprès : les deux sont plus fins que le rayon, les deux disparaissent. Avec l'épargne, un pixel d'un trait d'un seul pixel de large est reconnu avant le rongement et remis en place après.\n\nNe change rien seul : il agit seulement avec « ronger puis regonfler ».",
   },
 
   "bords.regonfler_ronger": {
@@ -1658,7 +1648,7 @@ export const AIDE: Record<string, Explication> = {
       "Efface le point de couleur accroché au sujet — celui que la tache minimale ne voit pas, parce qu'il n'est pas isolé : il est collé au corps, entouré de pixels opaques. C'est le seul réglage qui l'atteigne.",
     origine: "toi · défaut 0, et 0 n'efface rien",
     long:
-      "Le chiffre se lit ainsi : combien des huit voisins doivent porter exactement la couleur du pixel pour qu'on le laisse tranquille. À 1, un pixel dont pas un seul voisin ne partage la couleur est un grain. À 3, il faut trois complices pour survivre.\n\nDeux garde-fous l'empêchent d'abîmer le sujet. Il ne regarde que les pixels entourés de huit pixels opaques : le bord du sujet n'est jamais touché, donc la silhouette ne bouge pas. Et il ne repeint que si au moins cinq des huit voisins portent la même couleur — sinon il n'y a pas de couleur d'accueil évidente, et il ne fait rien. Sur une image non réduite, où chaque pixel a sa nuance, cette condition n'est jamais remplie : le réglage se désarme tout seul plutôt que de lisser un dégradé.\n\nIl ne peut pas inventer une couleur : celle qu'il pose est toujours celle d'un voisin.",
+      "Le chiffre dit combien des huit voisins doivent porter la couleur du pixel pour qu'on le laisse tranquille. Il ne touche jamais le bord du sujet : seuls les pixels entourés de huit pixels opaques sont concernés, et il ne repeint que si cinq voisins ou plus partagent une même couleur — sinon il s'efface seul. Il ne peut pas inventer une couleur : celle qu'il pose est toujours celle d'un voisin.",
   },
 
   "bords.lissage": {
@@ -1670,7 +1660,7 @@ export const AIDE: Record<string, Explication> = {
       "Adoucit la marche d'escalier qu'une réduction laisse sur une diagonale. Une passe suffit presque toujours ; trois est le maximum, et c'est déjà beaucoup.",
     origine: "toi · défaut 0, et 0 ne décroche rien",
     long:
-      "Un pixel décroché est un pixel opaque qui n'a aucun voisin opaque en haut, en bas, à gauche ni à droite, mais qui en a un en diagonale. Il ne tient au corps que par un angle, et c'est exactement la dent qu'une réduction au plus proche voisin laisse le long d'un trait oblique.\n\nCe n'est pas la même chose que la tache minimale, et les deux réglages ne se remplacent pas : la tache minimale efface ce qui est détaché du sujet — une étincelle, un éclat —, ce réglage-ci rabote ce qui y tient mal. Une étincelle vraiment détachée survit au décrochage et meurt à la tache minimale.\n\nIl ne peut jamais couper le sujet en deux : il n'enlève que des pixels sans voisin orthogonal, et le corps tient par ses voisins orthogonaux.",
+      "Un pixel décroché est un pixel opaque sans voisin opaque en haut, en bas, à gauche ni à droite, mais avec un en diagonale — la dent qu'une réduction au plus proche voisin laisse sur un trait oblique. Il diffère de la tache minimale, qui efface ce qui est détaché : celui-ci rabote ce qui tient par un seul coin, sans jamais couper le sujet en deux.",
   },
 
   "bords.vote_voisins": {
@@ -1682,7 +1672,7 @@ export const AIDE: Record<string, Explication> = {
       "Régularise un bord irrégulier, dent par dent, sans jamais faire grossir ni maigrir le sujet en moyenne : ce qui gagne d'un côté est rendu de l'autre.",
     origine: "toi · défaut 0, et 0 ne vote rien",
     long:
-      "Un pixel ne change d'état — opaque ou transparent — que si cinq de ses huit voisins ou plus partagent l'état inverse du sien. Sur une égalité à quatre contre quatre, rien ne bouge : le vote ne tranche que sur une majorité franche, jamais sur un coup de dé, et c'est ce qui le rend identique qu'on regarde l'image telle quelle ou son reflet.\n\nCe n'est pas un lissage de couleur : il ne touche que la silhouette, pixel opaque ou transparent, jamais la teinte.",
+      "Un pixel ne change d'état — opaque ou transparent — que si cinq de ses huit voisins ou plus partagent l'état inverse du sien. À quatre contre quatre, rien ne bouge : le vote ne tranche que sur une majorité franche, jamais sur un coup de dé. Ce n'est pas un lissage de couleur : il ne touche que la silhouette, jamais la teinte.",
   },
 
   // ── La sixième place : les contours ───────────────────────────────────────
@@ -1712,7 +1702,7 @@ export const AIDE: Record<string, Explication> = {
       "Rien à la génération. Au-delà de huit ce n'est plus un contour, c'est un cadre, et il vaut mieux le dessiner à la main : le plafond est là pour ça, pas pour une limite technique.",
     origine: "toi · défaut 1 px",
     long:
-      "L'unité est celle de l'image **rendue**, et pas celle de l'image reçue : une fois la grille posée, l'image rendue *est* la case du sprite, et un pixel y est un bloc.\n\nLa table ne devine pas l'épaisseur, et elle pourrait — mesurer celle du contour existant là où il survit. Mais un contour troué donne des épaisseurs qui varient de un à trois, et proposer la médiane de quelque chose de cassé serait deviner à partir de la panne qu'on répare.",
+      "L'unité est celle de l'image **rendue**, pas celle reçue : une fois la grille posée, l'image rendue *est* la case du sprite, et un pixel y est un bloc.\n\nLa table ne devine pas l'épaisseur en mesurant le contour existant : un contour troué donne des épaisseurs qui varient de un à trois, et proposer leur médiane serait deviner à partir de la panne qu'on répare.",
   },
 
   "contours.position": {
@@ -1751,18 +1741,6 @@ export const AIDE: Record<string, Explication> = {
       "La règle du produit tient en une ligne : **la palette est imposée par la quantification, qui ramène chaque pixel sur la couleur la plus proche ; elle est proposée partout ailleurs.** Ici on est *après* la quantification — ce que le trait pose ne sera pas rattrapé, et c'est précisément ce qui mérite d'être dit plutôt que refusé.",
   },
 
-  "contours.taches": {
-    nom: "taches contournées",
-    groupe: "La table Contour",
-    ou: "tables",
-    quoi: "Combien de zones opaques ont reçu la ligne, et la taille de la plus petite.",
-    change:
-      "Rien : c'est une lecture. Un compte qui surprend envoie dans la table des bords, qui est juste avant dans l'ordre.",
-    origine: "une mesure sur ton image",
-    long:
-      "Il n'y a **pas d'aire minimale ici**, et c'est délibéré : un contour tracé autour de trois miettes ferait trois pâtés, mais la table des bords existe déjà pour retirer les miettes, et deux réglages qui font la même chose à deux endroits finissent par se contredire. Ce que cette table fait à la place, c'est le dire.\n\nCe n'est pas un verdict : un personnage à deux lanternes détachées fait légitimement trois taches.",
-  },
-
   // ── Les six capacités de B18 ────────────────────────────────────────────────
 
   "contours.derivee": {
@@ -1786,7 +1764,7 @@ export const AIDE: Record<string, Explication> = {
       "Rien à la génération. Posé, le sujet perd l'épaisseur du trait sur son bord plutôt que le fichier — la case du jeu reste à sa taille, quoi qu'il arrive.",
     origine: "toi · défaut éteint",
     long:
-      "Le trait posé « dehors » agrandit le rendu, et rien ne rattrapait ça avant B18. `reserver` prime sur `position` : la case ne bouge plus jamais. Ce n'est pas tout à fait ce que la planche de conception décrivait — réserver la place *en amont*, à l'étape de la case — parce que ça demanderait de faire circuler cette information entre deux tables de la chaîne ; le résultat obtenu ici est le même que « dedans », choisi automatiquement.",
+      "« Réserver la place » prime sur « position » : la case ne bouge plus jamais, quel que soit le choix. Le résultat revient à poser le trait « dedans », choisi automatiquement — le sujet perd l'épaisseur du trait sur son bord plutôt que le fichier.",
   },
 
   "contours.inegal": {
@@ -1833,11 +1811,21 @@ export const AIDE: Record<string, Explication> = {
   // l'autre moitié : le produit n'avait aucune façon de le dire, donc les deux
   // se payaient.
 
+  "etape.retournement": {
+    nom: "Retournement",
+    groupe: "La table Retournement",
+    ou: "tables",
+    quoi: "La septième place : produire les autres directions du sujet par un miroir ou une rotation, sans repayer un modèle.",
+    change:
+      "Rien à la génération sur huit des dix sens : c'est un calcul sur l'image déjà rendue, jamais un nouvel appel au modèle. Ranger le résultat sous une direction du jeu se fait ensuite dans la fenêtre Enregistrer sous…, pas ici.",
+    origine: "toi · vide au départ · rien n'est posé tant qu'aucun sens n'est choisi",
+  },
+
   "retournement.sens": {
     nom: "le sens du retournement",
     groupe: "La table Retournement",
     ou: "tables",
-    quoi: "Comment l'image bascule. Dix sens : le miroir gauche-droite, qui renvoie l'image comme une glace — le pèlerin qui marchait vers l'est marche vers l'ouest —, le miroir haut-bas, les deux quarts de tour, le demi-tour, la diagonale, le repli sur soi, « miroir sauf ici », et les deux rotations libres.",
+    quoi: "Comment l'image bascule : dix sens possibles, du miroir gauche-droite à une rotation libre.",
     change:
       "Rien à la génération sur les huit premiers, et c'est tout le sujet : ils ne demandent rien au modèle et ne coûtent rien. Aucun pixel n'est réinventé — ce sont les mêmes carrés de couleur, rangés dans un autre ordre, donc la palette de l'image retournée est exactement celle d'où elle vient. Les deux rotations libres, elles, peuvent traverser un pixel entre deux carrés — c'est ce que RotSprite réduit sans l'effacer.",
     origine: "toi · vide au départ · défaut miroir gauche-droite",
@@ -1873,25 +1861,12 @@ export const AIDE: Record<string, Explication> = {
     nom: "zones protégées",
     groupe: "La table Retournement",
     ou: "tables",
-    quoi: "Les endroits qui reviennent tels quels après le miroir, dans le sens « miroir, sauf ici ». Le pèlerin qui tient son bâton à droite le garde à droite une fois retourné.",
+    quoi: "Les endroits qui reviennent tels quels après le miroir, dans le sens « miroir, sauf ici ».",
     change:
       "Sans zone, « miroir, sauf ici » retourne toute l'image comme un miroir gauche-droite ordinaire. Chaque zone ajoutée y recolle, après coup, le pixel d'origine — au prix d'une petite couture visible au raccord.",
     origine: "toi · aucune zone au départ",
     long:
-      "Le geste d'aujourd'hui pose une zone ronde au centre de l'image, à ajuster à la main plus tard : peindre une zone du bout du doigt, comme la main le fait sur la huitième place, viendra avec l'écran qui le demande.",
-  },
-
-  "retournement.direction": {
-    nom: "ça se range en",
-    groupe: "La table Retournement",
-    ou: "tables",
-    quoi: "La direction sous laquelle l'image retournée vient se poser dans le plan du jeu. La case vide « ouest » du pèlerin se remplit, et l'image qui la remplit n'a rien coûté.",
-    change:
-      "Rien à la génération : l'image obtenue est la même que celle d'où elle vient, retournée. Elle entre en bibliothèque avec sa filiation, à zéro dollar, et son étiquette dit « miroir · gratuit » là où une image générée dit son prix.",
-    origine:
-      "l'atelier propose la direction opposée · toi dès que tu en écris une",
-    long:
-      "**La direction proposée vient du serveur, jamais d'un calcul de l'écran.** Les directions d'un jeu sont libres et se renomment : deviner qu'un mot français en désigne un autre serait exactement la déduction que le produit refuse ailleurs. Quand l'atelier ne connaît pas la direction de l'image, le champ reste vide et attend la tienne.\n\n**Il y a deux directions qu'un miroir gauche-droite ne fabrique pas** : le sud et le nord, qui se rendent eux-mêmes. Un miroir ne peut montrer que ce qui est déjà dessiné — on ne voit jamais le dos d'un personnage qui nous fait face. Le geste se grise alors, avec sa raison, avant le clic : ces directions-là se génèrent.",
+      "Le geste d'aujourd'hui pose une zone ronde au centre de l'image, à ajuster à la main plus tard : peindre une zone du bout du doigt, comme la main le fait sur la table Main, viendra avec l'écran qui le demande. Exemple : un pèlerin qui tient son bâton à droite le garde à droite une fois retourné.",
   },
 
   // ── La huitième place : la main ───────────────────────────────────────────
@@ -1904,7 +1879,7 @@ export const AIDE: Record<string, Explication> = {
     nom: "La main",
     groupe: "La table Main",
     ou: "tables",
-    quoi: "La huitième et dernière place. Le crayon, la gomme et la pipette, au pixel. Là où les sept autres tables appliquent une règle à toute l'image, celle-ci ne fait que ce que tu désignes.",
+    quoi: "La huitième et dernière place : le crayon et la gomme, au pixel, là où les sept autres tables appliquent une règle à toute l'image.",
     change:
       "Rien à la génération, et rien tant que tu ne poses pas un pixel. Elle existe pour les trois pixels qu'aucun réglage n'atteint : un coin de fond collé au sujet, une dent dans un contour, une miette accrochée à la silhouette.",
     origine: "toi, geste par geste · rien au départ",
@@ -1921,7 +1896,7 @@ export const AIDE: Record<string, Explication> = {
       "Rien à la génération, et rien tant que tu ne poses pas un pixel. Masquer un calque n'efface rien — il garde ses passages et cesse simplement d'être appliqué.",
     origine: "toi · « l'opacité » seule au départ",
     long:
-      "**« L'opacité » est le sol, et elle est d'une autre nature** : elle ne pose pas de couleur, elle décide de ce qui est là sur l'image que les six tables précédentes ont produite. Elle ne se supprime pas et ne se déplace pas — un calque de dessin sous l'image n'aurait aucun sens.\n\nLa pile se lit du dessus au dessous, comme partout où il y a des calques ; elle s'applique dans l'autre sens, qui est celui d'un pinceau.",
+      "**« L'opacité » est le sol**, d'une autre nature : elle ne pose pas de couleur, elle décide de ce qui est là sur l'image que les tables précédentes ont produite. Elle ne se supprime pas et ne se déplace pas — un calque de dessin sous l'image n'aurait aucun sens.\n\nLa pile se lit du dessus au dessous, comme partout ; elle s'applique dans l'autre sens, celui d'un pinceau.",
   },
 
   "main.sens": {
@@ -1966,10 +1941,10 @@ export const AIDE: Record<string, Explication> = {
     ou: "tables",
     quoi: "Combien de passages porte le calque choisi, et ce que Ctrl + Z va retirer.",
     change:
-      "Rien : c'est un compte, et un geste. Ctrl + Z retire le dernier passage du calque actif ; « Sans la main › », en pied, vide la table entière.",
+      "Rien : c'est un compte, et un geste. Ctrl + Z retire le dernier passage du calque actif ; « Tout effacer », en pied, vide la table entière.",
     origine: "toi, geste par geste · rien au départ",
     long:
-      "**Il n'y a pas de liste de passages, et c'est la seule table dans ce cas.** Un geste à main levée en produit des dizaines : trente rangées ne se relisent pas, elles se subissent. Le calque est l'unité de lecture — c'est lui qu'on nomme, qu'on masque, qu'on supprime — et le passage n'existe que comme un compte et un Ctrl + Z.\n\nUn passage est enregistré comme un **tracé, jamais comme des pixels** : il pèse quelques octets, il se défait un par un, et il se rejoue sur une image dont les dimensions ont changé. Remettre la grille à une autre taille ne fait pas perdre le dessin.",
+      "**Il n'y a pas de liste de passages** : un geste à main levée en produit des dizaines, illisibles en rangées. Le calque est l'unité de lecture — on le nomme, le masque, le supprime — et le passage n'existe que comme un compte et un Ctrl + Z.\n\nUn passage est un **tracé, jamais des pixels** : il se rejoue sur une image dont les dimensions ont changé, sans perdre le dessin.",
   },
 
   // ── Ce que la galerie choisit de sa grille (RP11) ─────────────────────────

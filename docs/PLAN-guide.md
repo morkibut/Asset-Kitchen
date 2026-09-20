@@ -182,14 +182,18 @@ vert sur les seize.
 
 Chaque tranche ci-dessous porte les **mêmes six critères**, et ils ne sont pas répétés :
 
-- [ ] Chaque fiche de l'écran a un `groupe`, et les groupes suivent les zones de l'écran réel.
-- [ ] Chaque `quoi` tient en une phrase de moins de 140 signes.
-- [ ] Chaque `change` dit ce qui bouge en aval, en français simple — « Rien à la génération. »
+- [x] Chaque fiche de l'écran a un `groupe`, et les groupes suivent les zones de l'écran réel.
+- [x] Chaque `quoi` tient en une phrase de moins de 140 signes.
+- [x] Chaque `change` dit ce qui bouge en aval, en français simple — « Rien à la génération. »
       reste une réponse.
-- [ ] Les textes longs sont soit devenus un « à savoir » de moins de 400 signes, soit descendus
+- [x] Les textes longs sont soit devenus un « à savoir » de moins de 400 signes, soit descendus
       dans `docs/design-decisions.md`.
-- [ ] Les fiches qui décrivent un réglage disparu sont retirées, et le relevé le note.
-- [ ] Les essais de `GU3` passent au vert **pour cet écran**.
+- [x] Les fiches qui décrivent un réglage disparu sont retirées, et le relevé le note.
+- [x] Les essais de `GU3` passent au vert **pour cet écran**.
+
+  *(Vérifié pour `GU5` — les soixante-treize fiches de la retouche, retirées et complétées à
+  soixante-cinq. Les six autres tranches du tableau ci-dessous n'ont pas encore été reprises,
+  et remettront cette liste à décocher le temps de leur propre passe.)*
 
 | Tranche | Écran | Fiches aujourd'hui |
 |---|---|---|
@@ -202,36 +206,22 @@ Chaque tranche ci-dessous porte les **mêmes six critères**, et ils ne sont pas
 | `GU11` | Les animations — une bande, un clip, le montage | **21** |
 | `GU12` | La galerie, la fiche d'une image, le codex, la livraison | **23** |
 
-`GU5` est la plus grosse de tout le chantier : soixante-treize fiches pour un seul écran, et
-c'est précisément la liste dont l'auteur dit qu'elle n'aide pas. Elle se découpe en groupes
-avant d'être réécrite, pas l'inverse.
+`GU5` était la plus grosse de tout le chantier : soixante-treize fiches pour un seul écran, et
+c'est précisément la liste dont l'auteur dit qu'elle n'aide pas. Elle s'est découpée en groupes
+avant d'être réécrite, pas l'inverse, en trois passes.
 
-→ `GU5` (1/2), le découpage seul — aucun texte de fiche n'a bougé. **Treize zones**, dans
-l'ordre de l'écran réel, et les noms de table sont ceux que la barre affiche (*Pixelisation*,
-*Couleurs*, *Nettoyage*, *Contour*) et non ceux des fiches : En haut de l'écran — enregistrer
-(2) · L'image, et la barre au-dessus d'elle (3) · La table Détourage (12) · La table Recadrage
-(3) · La table Pixelisation (6) · La table Couleurs (9) · La table Couleurs — avant et après la
-réduction (4) · La table Nettoyage (9) · La table Nettoyage — la couleur, pas la silhouette (3)
-· La table Contour (6) · La table Contour — les cinq cases à cocher (5) · La table Retournement
-(5) · La table Main (6). Les soixante-treize entrées `ou: "tables"` sont désormais contiguës
-dans `aide.ts`, rangées dans cet ordre-là.
-
-→ **Ce que la lecture du code a trouvé de mort, pour `GU5` (2/2)** : sept fiches décrivent un
-réglage ou une lecture qui n'est plus à l'écran — `detourage.seuil_alpha`, `detourage.poches`,
-`detourage.fond`, `grille.du-modele`, `contours.taches`, `bords.taches`,
-`retournement.direction` — et deux sont sur le mauvais écran plutôt que mortes :
-`tables.png` (le *PNG ↓* n'existe que sur la fiche d'une image et sur une tuile) et
-`bande.source` (elle décrit l'atelier d'animation, son `ou` devrait être `bande`).
-
-→ `GU5` (2/3) : le texte des sept premiers groupes est réécrit — En haut de l'écran —
-enregistrer · L'image, et la barre au-dessus d'elle · La table Détourage · La table Recadrage
-· La table Pixelisation · La table Couleurs · La table Couleurs — avant et après la réduction.
-Quatre fiches mortes retirées (`detourage.seuil_alpha`, `detourage.poches`, `detourage.fond`,
-`grille.du-modele` — notées dans le relevé), deux déplacées vers leur bon écran
-(`tables.png` → `ou: "case"`, `bande.source` → `ou: "bande"`), et `quantification.palette`
-réécrite pour le choix « couleurs de : le jeu / l'image » que la table porte aujourd'hui. Les
-six groupes restants (Nettoyage à Main) attendent une passe séparée avant que les critères de
-`GU5` ne se cochent.
+→ Les treize zones de l'écran sont réécrites au complet, dans l'ordre où la barre les affiche —
+En haut de l'écran — enregistrer · L'image, et la barre au-dessus d'elle · La table Détourage ·
+La table Recadrage · La table Pixelisation · La table Couleurs · La table Couleurs — avant et
+après la réduction · La table Nettoyage · La table Nettoyage — la couleur, pas la silhouette ·
+La table Contour · La table Contour — les cinq cases à cocher · La table Retournement · La
+table Main. Sept fiches mortes retirées, une par une notées dans le relevé
+(`detourage.seuil_alpha`, `detourage.poches`, `detourage.fond`, `grille.du-modele`,
+`contours.taches`, `bords.taches`, `retournement.direction`) ; deux déplacées vers leur bon
+écran (`tables.png` → `ou: "case"`, `bande.source` → `ou: "bande"`) ; une manquante ajoutée en
+tête de la table Retournement (`etape.retournement`, qui décrit son geste général comme les
+sept autres tables décrivent le leur). Les soixante-treize fiches d'origine sont aujourd'hui
+**soixante-cinq**, et les six critères ci-dessus tiennent sur l'ensemble.
 
 ---
 

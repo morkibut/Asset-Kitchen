@@ -22896,11 +22896,16 @@ describe("B1 — le miroir", () => {
 
   // ── « Un écran neuf doit une ligne au guide » ──────────────────────────────
 
-  test("les deux réglages du retournement sont expliqués", () => {
+  test("la table du retournement est expliquée", () => {
     // Le guide est un volet scopé à l'écran ouvert depuis B7 : l'ouvrir sans
     // être sur les tables ne prouverait plus rien. Ce qui comptait déjà avant
     // B7 — un écran neuf doit une ligne au corpus — se vérifie directement.
-    for (const cle of ["retournement.sens", "retournement.direction"]) {
+    //
+    // **`retournement.direction` a quitté le corpus en `GU5`** : la question
+    // a déménagé dans la fenêtre *Enregistrer sous…*, qui porte déjà
+    // `enregistrer-sous.case`. Ce qui reste posé dans la table elle-même, et
+    // qui doit donc rester expliqué ici, c'est le sens du retournement.
+    for (const cle of ["etape.retournement", "retournement.sens"]) {
       expect(AIDE[cle], `${cle} — absent du corpus`).toBeTruthy()
     }
   })
