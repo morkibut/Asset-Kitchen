@@ -15,7 +15,8 @@ import { BibliothequePourImage } from "./BibliothequePourImage"
 import { CadreDialogue } from "./CadreDialogue"
 
 /** Une matière du jeu : l'image d'un sujet de nature « matière » (`TU2`). */
-export type MatiereDuJeu = { identifiant: string; nom: string }
+/** `detouree` (RG8) : l'image a été découpée comme un personnage — « Mes matières » le signale, sa fiche la répare. */
+export type MatiereDuJeu = { identifiant: string; nom: string; detouree?: boolean }
 
 export const BOUTON = "min-h-[30px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle transition-colors duration-120 hover:border-encre-3 disabled:opacity-50"
 export const PRINCIPAL = `${BOUTON} border-encre-controle font-medium`
@@ -607,7 +608,12 @@ function TiroirDesMatieres({ projet, jeu: j, cible, onglet, matieres, matieresEr
       </div> : onglet === "miennes" ? matieres.length ? <div className="grid grid-cols-3 gap-[8px]">
         {matieres.map((m) => <button key={m.identifiant} type="button" aria-pressed={m.identifiant === actuelAsset} disabled={lecture !== null} onClick={() => void poserMienne(m.identifiant, m.nom)}
           className={`flex flex-col items-center gap-[4px] rounded-8 border p-[4px] text-center text-[12px] text-encre-controle hover:bg-carte ${m.identifiant === actuelAsset ? "border-encre-controle bg-carte" : "border-transparent"}`}>
-          <img src={api.fichier(m.identifiant)} alt="" className="block h-[81px] w-[81px] rounded-5 object-cover" style={PIXELS} />{m.nom}{lecture === m.identifiant && <small className="text-[11px] text-encre-3">Lecture…</small>}</button>)}
+          <span className="relative">
+            <img src={api.fichier(m.identifiant)} alt="" className="block h-[81px] w-[81px] rounded-5 object-cover" style={PIXELS} />
+            {/* RG8 · un repère seulement sur celles qui ont été détourées : les autres restent nues. */}
+            {m.detouree && <span data-detouree className="mesure absolute right-1 top-1 rounded-5 border border-trait-attention bg-fond-attention px-1 text-[10.5px] text-encre-attention"
+              title="Cette matière a été détourée comme un personnage. Ouvre sa fiche, dans la galerie, pour la remettre d’aplomb.">détourée</span>}
+          </span>{m.nom}{lecture === m.identifiant && <small className="text-[11px] text-encre-3">Lecture…</small>}</button>)}
       </div> : matieresErreur
         ? <p role="alert" className="text-[13px] text-echec">Tes matières n’ont pas pu être lues : {matieresErreur}</p>
         : <p className="text-[13px] text-encre-3">Pas encore de matière dans ce jeu. Génère-en une dans l’onglet Générer, ou range une image dans les matières depuis sa fiche.</p>

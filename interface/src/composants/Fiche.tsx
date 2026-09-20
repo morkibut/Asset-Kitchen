@@ -348,6 +348,12 @@ export function Fiche({
             )}
 
           <DecisionsDeLaFiche asset={asset} onErreur={onErreur} onSupprimer={onSupprimer} />
+
+          {/* **Une matière détourée à tort, et ce qu'on peut y faire** (RG8). Ici et
+              non en zone 3, comme « Sa direction est à confirmer » juste au-dessus :
+              c'est une décision, et elle doit se voir sans ouvrir le bloc replié
+              « Ce que le jeu lui a fait ». Absente de toute image saine. */}
+          <MatiereDetouree asset={asset} onErreur={onErreur} />
         </div>
 
         {/* ══ Zone 2 · S'en resservir — l'actuel « Réinjecter », et les deux
@@ -1300,6 +1306,103 @@ function RangerEnMatiere({
       </button>
       {dansUnSujet && (
         <Raison texte="Cette image est rangée dans un sujet : sors-la de son sujet d'abord." />
+      )}
+    </div>
+  )
+}
+
+/**
+ * **Une matière née détourée** (RG8) : avant le 19 septembre 2026, le barème d'un jeu
+ * ne connaissait pas « matière », et chaque matière naissait découpée et recadrée comme
+ * un personnage. Le correctif empêche que cela recommence ; il ne répare pas ce qui est
+ * déjà né. Cette fiche le dit — seulement quand c'est vrai — et propose de le réparer.
+ *
+ * - *Son image d'origine est là* (`refaisable`) : un seul bouton remet la recette que
+ *   le jeu donne à une matière, à partir de cette image. Rien n'est regénéré, rien ne
+ *   coûte. **L'image actuelle est remplacée** : le produit ne garde pas d'historique des
+ *   rendus, et la phrase le dit au lieu de le laisser croire.
+ * - *Elle n'y est plus* : la phrase dit qu'il faut regénérer, et il n'y a pas de bouton.
+ *
+ * **Le bouton ne part jamais tout seul** : ni à l'ouverture de la fiche, ni à celle du
+ * jeu. C'est l'image de l'auteur ; il clique, ou il ne clique pas.
+ *
+ * L'état se lit à part de l'asset (`matieres.lire`) — c'est le même calcul que la
+ * bibliothèque et que l'agent —, et se relit quand la recette de l'image change : après
+ * le geste, la fiche se tait d'elle-même.
+ */
+function MatiereDetouree({
+  asset,
+  onErreur,
+}: {
+  asset: Asset
+  onErreur: (raison: string) => void
+}) {
+  // L'état porte l'identifiant de l'image qu'il décrit : en changeant de fiche, celui de
+  // la précédente ne s'affiche pas une demi-seconde sur la suivante.
+  const [etat, setEtat] = useState<{ pour: string; detouree: boolean; refaisable: boolean } | null>(null)
+  const [occupe, setOccupe] = useState(false)
+  const projet = asset.projet
+  const estMatiere = asset.matiere && !!projet
+
+  useEffect(() => {
+    if (!estMatiere || !projet) {
+      setEtat(null)
+      return
+    }
+    let vivant = true
+    matieres
+      .lire(projet, asset.identifiant)
+      .then((m) => vivant && setEtat({ pour: asset.identifiant, detouree: m.detouree, refaisable: m.refaisable }))
+      // Une matière qu'on ne sait pas relire ne se dit pas détourée : mieux vaut se taire.
+      .catch(() => vivant && setEtat(null))
+    return () => {
+      vivant = false
+    }
+  }, [asset.identifiant, asset.matiere, asset.projet, asset.empreinte, estMatiere, projet])
+
+  if (!estMatiere || !projet || !etat?.detouree || etat.pour !== asset.identifiant) return null
+
+  const refaire = async () => {
+    setOccupe(true)
+    try {
+      const refaite = await matieres.refaire(projet, asset.identifiant)
+      setEtat({ pour: asset.identifiant, detouree: refaite.detouree, refaisable: refaite.refaisable })
+    } catch (erreur) {
+      onErreur(erreur instanceof Error ? erreur.message : "refaire la matière a été refusé")
+    } finally {
+      setOccupe(false)
+    }
+  }
+
+  return (
+    <div
+      data-matiere-detouree
+      className="flex flex-col gap-1.5 rounded-5 border border-trait-attention bg-fond-attention p-2"
+    >
+      <p className="mesure text-[10.5px] text-encre-attention">Détourée comme un personnage</p>
+      <p className="text-[11px] leading-4 text-encre-3">
+        Une matière doit remplir tout son cadre, et celle-ci a été découpée et recadrée.
+      </p>
+      {etat.refaisable ? (
+        <>
+          <p className="text-[11px] leading-4 text-encre-3">
+            Son image d'origine est là : on la refait sans rien regénérer, et sans
+            rien payer. L'image actuelle est remplacée ; l'image d'origine n'est pas
+            touchée.
+          </p>
+          <button
+            type="button"
+            onClick={refaire}
+            disabled={occupe}
+            className="mesure h-[26px] self-start rounded-7 border border-contour bg-carte px-2 text-[11px] text-encre-controle transition-colors duration-120 hover:bg-papier-cote disabled:text-eteint disabled:hover:bg-carte"
+          >
+            La refaire comme une matière
+          </button>
+        </>
+      ) : (
+        <p className="text-[11px] leading-4 text-encre-3">
+          Son image d'origine n'est plus sur le disque : il faut la regénérer.
+        </p>
       )}
     </div>
   )

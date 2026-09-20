@@ -54,7 +54,7 @@ export function Tuiles({ projet, vue, onVue, onNoms, tailleDuJeu = 32, paletteUn
     const n = ++numeroLecture.current
     return apiMatieres.lister(projet).then(r => {
       if (n !== numeroLecture.current) return
-      setMatieres(r.matieres.map(m => ({ identifiant: m.identifiant, nom: m.nom })))
+      setMatieres(r.matieres.map(m => ({ identifiant: m.identifiant, nom: m.nom, detouree: m.detouree })))
       setMatieresErreur("")
     }).catch(e => {
       if (n !== numeroLecture.current) return

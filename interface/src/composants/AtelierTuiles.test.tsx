@@ -224,7 +224,7 @@ describe("Les tuiles du jeu", () => {
     // RG6 : « Mes matières » lit la bibliothèque du projet (`GET …/materials`) — plus les
     // images des sujets de nature « matière ». Aucun sujet ni `api.assets` n'est consulté.
     const lister = vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [
-      { identifiant: "vase-1", nom: "Vase du marais", largeur: 8, hauteur: 8, apercu: "/api/assets/vase-1/image", cadrage: "surface", cree_le: 1, collections: [] },
+      { identifiant: "vase-1", nom: "Vase du marais", largeur: 8, hauteur: 8, apercu: "/api/assets/vase-1/image", cadrage: "surface", cree_le: 1, collections: [], detouree: false, refaisable: false },
     ] })
     const assets = vi.spyOn(api, "assets")
     render(<Tuiles projet="jeu" />)
@@ -447,7 +447,7 @@ describe("Les tuiles du jeu", () => {
   })
 
   describe("« Mes matières » lit la bibliothèque du projet (RG6)", () => {
-    const UNE_MATIERE = { largeur: 8, hauteur: 8, apercu: "", cadrage: "surface", cree_le: 1, collections: [] }
+    const UNE_MATIERE = { largeur: 8, hauteur: 8, apercu: "", cadrage: "surface", cree_le: 1, collections: [], detouree: false, refaisable: false }
     const etape = (etat: "en_cours" | "termine"): FileLocale => ({ etapes: [{ identifiant: "et1", cle: "image:gen1:0", projet: "jeu", acteur: "auteur", nature: "image", moteur: "m", modele: "mod",
       etat, travail_externe: null, raison: "", soumission_engagee: true, cree_le: 0, demarre_le: 0, termine_le: etat === "termine" ? 1 : null, duree_s: etat === "termine" ? 4 : null, temperature: "chaud" }], regle: "", mesures: [] })
     /** Le bouton « Générer » n'est actif qu'une fois la disponibilité lue. */
@@ -569,6 +569,38 @@ describe("Les tuiles du jeu", () => {
       expect(await screen.findByText(/Pas encore de matière/)).toBeInTheDocument()
       arrivee = true
       expect(await screen.findByRole("button", { name: /des dalles/ }, { timeout: 5000 })).toBeInTheDocument()
+    })
+
+    it("signale d'un petit repère les matières détourées, et elles seules (RG8)", async () => {
+      vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [
+        { ...UNE_MATIERE, identifiant: "m-1", nom: "Dalles grises" },
+        { ...UNE_MATIERE, identifiant: "m-2", nom: "Mousse détourée", detouree: true, refaisable: true },
+        { ...UNE_MATIERE, identifiant: "m-3", nom: "Pavé sans brut", detouree: true, refaisable: false },
+      ] })
+      await ouvrirLAtelier()
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+
+      const saine = await screen.findByRole("button", { name: /Dalles grises/ })
+      // Rien n'est ajouté à une matière qui va bien : ni repère, ni phrase.
+      expect(saine.querySelector("[data-detouree]")).toBeNull()
+      expect(saine).toHaveTextContent(/^Dalles grises$/)
+      // Les deux détourées portent le repère — qu'on puisse les refaire ou non : on les retrouve.
+      for (const nom of [/Mousse détourée/, /Pavé sans brut/]) {
+        const repere = screen.getByRole("button", { name: nom }).querySelector("[data-detouree]")
+        expect(repere).not.toBeNull()
+        expect(repere).toHaveTextContent("détourée")
+        expect(repere).toHaveAttribute("title", expect.stringContaining("Ouvre sa fiche"))
+      }
+      expect(document.querySelectorAll("[data-detouree]")).toHaveLength(2)
+    })
+
+    it("le repère n'empêche pas de poser la matière : c'est un signal, pas un refus (RG8)", async () => {
+      vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [
+        { ...UNE_MATIERE, identifiant: "m-2", nom: "Mousse détourée", detouree: true, refaisable: true },
+      ] })
+      await ouvrirLAtelier()
+      fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+      expect(await screen.findByRole("button", { name: /Mousse détourée/ })).toBeEnabled()
     })
   })
 

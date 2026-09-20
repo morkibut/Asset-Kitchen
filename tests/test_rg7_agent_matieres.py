@@ -74,7 +74,9 @@ async def test_une_matiere_generee_se_liste_avec_son_cadrage_et_son_chemin(agent
     liste = await appeler("list_materials")
     assert liste["total"] == 1
     [m] = liste["materials"]
-    assert set(m) == {"id", "name", "framing", "width", "height", "path", "created", "collections"}
+    assert set(m) == {"id", "name", "framing", "width", "height", "path", "created", "collections", "cut_out", "redoable"}
+    # Née après le correctif de RG8 : ni détourée, ni rien à refaire (`tests/test_rg8_detourees.py`).
+    assert (m["cut_out"], m["redoable"]) == (False, False)
     assert m["id"] == identifiant
     assert m["framing"] == "face"
     assert m["name"] == atelier.assets.lire(identifiant).label

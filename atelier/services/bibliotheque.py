@@ -881,6 +881,34 @@ class ServiceBibliotheque:
         self._annoncer()
         return asset
 
+    def matiere_du_jeu(self, identifiant: str, projet: str) -> Asset:
+        """Une matière de **ce** jeu, ou un refus qui dit pourquoi (RG8).
+
+        La fiche d'une image lit ici si celle-ci a été détourée à tort : même
+        contrôle que la déclaration — l'image doit être rangée dans le jeu de
+        l'adresse —, et elle doit être une matière, sans quoi la question n'a pas
+        de sens et on ne répond pas « non » à sa place."""
+        if self._base.lire_projet(projet) is None:
+            raise ProjetInconnu(projet, [p.identifiant for p in self.projets()])
+        asset = self._trouver(identifiant)
+        if asset.projet != projet:
+            raise RangementRefuse("Cette image n'est pas rangée dans ce jeu.")
+        if not asset.matiere:
+            raise RangementRefuse("Cette image n'est pas une matière de ce jeu.")
+        return asset
+
+    def refaire_matiere(self, identifiant: str, projet: str) -> Asset:
+        """Remettre à une matière détourée la recette que le jeu lui donne, **à
+        partir de son image brute** (RG8). Gratuit : `ServiceAssets` n'a pas de
+        fournisseur, et cette méthode non plus.
+
+        Le geste vit à `ServiceAssets.refaire_une_matiere` — c'est lui qui rend et
+        qui écrit ; ici on ne fait que tenir la porte du jeu. Jamais lancé par
+        l'ouverture d'un jeu ni par la migration : c'est l'image de l'auteur, il
+        clique."""
+        self.matiere_du_jeu(identifiant, projet)
+        return self._assets.refaire_une_matiere(identifiant)
+
     # ── La migration des matières (RG8) ──────────────────────────────────────
     #
     # `docs/RG5-la-bibliotheque-des-matieres.md` §5, six règles. Une matière

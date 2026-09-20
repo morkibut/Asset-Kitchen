@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, ConfigDict, Field
 
+from atelier.depot import projet_lu_une_fois
 from atelier.services.matieres import TIRAGES_MAX, TIRAGES_MIN
 
 routeur = APIRouter(prefix="/projects/{projet}/materials")
@@ -36,6 +37,13 @@ def _matiere_json(atelier: Any, asset: Any) -> dict[str, Any]:
         if asset.projet is not None
         else []
     )
+    # **`detouree` et `refaisable`** (RG8) : un seul calcul, `ServiceAssets.
+    # etat_de_matiere`, que l'agent lit aussi (`list_materials`, `cut_out` /
+    # `redoable`). Dit-il « détourée » ? L'image a été découpée et recadrée comme
+    # un personnage, ce qu'une matière ne reçoit pas. « Refaisable » ? Son image
+    # brute est encore là : on peut lui remettre la bonne recette sans rien
+    # regénérer.
+    etat = atelier.assets.etat_de_matiere(asset)
     return {
         "identifiant": asset.identifiant,
         "nom": asset.label,
@@ -45,6 +53,8 @@ def _matiere_json(atelier: Any, asset: Any) -> dict[str, Any]:
         "cadrage": cadrage,
         "cree_le": asset.cree_le,
         "collections": collections,
+        "detouree": etat["detouree"],
+        "refaisable": etat["refaisable"],
     }
 
 
@@ -54,7 +64,10 @@ def bibliotheque(requete: Request, projet: str) -> dict[str, Any]:
     tuiles lira en RG6, et rien de plus : aucun sujet n'est consulté ici."""
     atelier = requete.app.state.atelier
     matieres = atelier.bibliotheque.matieres(projet)
-    return {"matieres": [_matiere_json(atelier, m) for m in matieres]}
+    # Le projet n'est lu qu'une fois pour toute la liste : `etat_de_matiere` le
+    # relit pour chaque image, et le barème ne bouge pas pendant la réponse.
+    with projet_lu_une_fois():
+        return {"matieres": [_matiere_json(atelier, m) for m in matieres]}
 
 
 class Declaration(BaseModel):
@@ -111,6 +124,30 @@ class Generer(Texte):
 @routeur.get("/availability")
 async def disponibilite(requete: Request, projet: str) -> dict[str, Any]:
     return await requete.app.state.atelier.matieres.disponibilite()
+
+
+# **Après `/availability`, et pas avant** : `/{asset}` prendrait ce mot pour un
+# identifiant d'image.
+@routeur.get("/{asset}")
+def matiere(requete: Request, projet: str, asset: str) -> dict[str, Any]:
+    """Une matière du jeu, avec ce que la liste dit d'elle (RG8) — la fiche d'une
+    image la relit ici pour savoir si elle a été détourée à tort, sans relire
+    toute la bibliothèque."""
+    atelier = requete.app.state.atelier
+    return _matiere_json(atelier, atelier.bibliotheque.matiere_du_jeu(asset, projet))
+
+
+@routeur.post("/{asset}/redo")
+def refaire(requete: Request, projet: str, asset: str) -> dict[str, Any]:
+    """Remettre à une matière détourée la recette que le jeu lui donne (RG8), **à
+    partir de son image brute : rien n'est regénéré, rien ne coûte**.
+
+    Jamais lancé tout seul — ni à l'ouverture d'un jeu, ni par la migration : c'est
+    l'image de l'auteur, et le geste remplace son rendu. 409 avec sa phrase quand
+    ce n'est pas une matière de ce jeu, quand le jeu ne dit pas comment on en fait
+    une, ou quand l'image d'origine a disparu (il faut alors la regénérer)."""
+    atelier = requete.app.state.atelier
+    return _matiere_json(atelier, atelier.bibliotheque.refaire_matiere(asset, projet))
 
 
 @routeur.post("/preview")

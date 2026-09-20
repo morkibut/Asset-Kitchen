@@ -179,7 +179,11 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
         "tile recipe slot, as {source: 'asset', asset: id}, in create_tile_set or update_tile_set —, `name`, `framing` "
         "(surface = floor seen from above, face = wall face, plat = flat material, motif = regular pattern; empty for an "
         "image declared a material by hand, which never said how it was made), `width`, `height`, `path` (the file on "
-        "disk, as in list_assets), `created` (unix time) and `collections` [{id, name}] where the author filed it. "
+        "disk, as in list_assets), `created` (unix time), `collections` [{id, name}] where the author filed it, `cut_out` "
+        "(true when the image was cut out and cropped like a character, which a material must not be — made before the "
+        "game's scale list knew materials) and `redoable` (cut_out and the original image is still on disk, so the game's "
+        "material recipe can be applied again without generating: the author does it on the material's sheet, never "
+        "automatically; false with cut_out true means only a new generation will do). "
         "`search` keeps the materials whose name contains that text, ignoring case; `limit` is 50 by default, 200 at "
         "most; `total` counts every match before the cut. `project` defaults to the open project."))
     @refus_lisible
@@ -200,6 +204,8 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
         matieres = []
         for asset in gardees:
             fiche = _asset_en_json(atelier, asset)
+            # Le même calcul que l'écran (`_matiere_json`, `atelier/api/matieres.py`) : un seul, celui de `ServiceAssets`.
+            etat = atelier.assets.etat_de_matiere(asset)
             # `framing` se relit sur la génération d'origine (`filiation["matiere"]["cadrage"]`), jamais sur
             # l'image : une image déclarée matière à la main n'a pas cette filiation, et rend une chaîne vide.
             generation = atelier.base.lire(asset.generation) if asset.generation else None
@@ -213,6 +219,8 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
                 "path": fiche["path"],
                 "created": asset.cree_le,
                 "collections": [{"id": c["identifiant"], "name": c["nom"]} for c in collections.get(asset.identifiant, [])],
+                "cut_out": etat["detouree"],
+                "redoable": etat["refaisable"],
             })
         return {"materials": matieres, "total": len(trouvees)}
 

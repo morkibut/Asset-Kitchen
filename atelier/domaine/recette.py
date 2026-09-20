@@ -2448,6 +2448,20 @@ class Recette:
             return ()
         return tuple(p for p in self.passes if not p.masquee)
 
+    @property
+    def decoupe(self) -> bool:
+        """Cette recette **détoure ou recadre-t-elle** ce qu'elle reçoit ? (RG8)
+
+        Une seule lecture, pour la même raison que `passes_vives` : ce qui compte
+        n'est pas qu'un détourage soit *écrit*, c'est qu'il *agisse*. Un détourage
+        endormi, ou une recette qui ne porte que sa grille et sa palette — celle
+        d'une matière —, ne découpe rien. Le recadrage se lit comme partout
+        ailleurs (`image/bande.py`, `image/traitement.py`) : posé, et éveillé.
+        """
+        return bool(self.passes_vives()) or (
+            self.recadrage is not None and not self.dort(RECADRAGE)
+        )
+
     # ── La marge que la case avale (B16) ─────────────────────────────────────
 
     def marge_sans_effet(self) -> bool:

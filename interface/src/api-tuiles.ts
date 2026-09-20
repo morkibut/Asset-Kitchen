@@ -59,6 +59,13 @@ export const assetDeGeneration = (g: Pick<GenerationMatiere, "identifiant">, ran
 export type MatiereDeLaBibliotheque = {
   identifiant: string; nom: string; largeur: number; hauteur: number; apercu: string
   cadrage: string; cree_le: number; collections: { identifiant: string; nom: string }[]
+  /** RG8 : l'image a été **détourée et recadrée comme un personnage**, ce qu'une matière ne
+   *  reçoit pas — elle est née avant que le barème du jeu connaisse « matière ». */
+  detouree: boolean
+  /** RG8 : `detouree`, **et** son image brute d'origine est encore sur le disque — la bonne
+   *  recette se rejoue dessus sans rien regénérer ni payer. `false` avec `detouree` : seule
+   *  une génération neuve la refera. */
+  refaisable: boolean
 }
 
 export const matieres = {
@@ -68,6 +75,14 @@ export const matieres = {
    *  projet. Refusée en 409, avec sa phrase, si l'image porte un sujet. */
   declarer: (p: string, asset: string, valeur: boolean) =>
     appeler<MatiereDeLaBibliotheque>(`${racineMatieres(p)}/${encodeURIComponent(asset)}`, { method: "PUT", body: JSON.stringify({ matiere: valeur }) }),
+  /** Une matière du jeu, avec son état (RG8) : la fiche d'une image y lit si elle a été détourée. */
+  lire: (p: string, asset: string) =>
+    appeler<MatiereDeLaBibliotheque>(`${racineMatieres(p)}/${encodeURIComponent(asset)}`),
+  /** Remettre à une matière détourée la recette que le jeu lui donne, **à partir de son image
+   *  brute** (RG8) : rien n'est regénéré, rien ne coûte. Refusée en 409, avec sa phrase, si
+   *  l'image d'origine a disparu. */
+  refaire: (p: string, asset: string) =>
+    appeler<MatiereDeLaBibliotheque>(`${racineMatieres(p)}/${encodeURIComponent(asset)}/redo`, { method: "POST" }),
   disponibilite: (p: string) => appeler<DisponibiliteMatieres>(`${racineMatieres(p)}/availability`),
   apercu: (p: string, r: { pierre: string; motif: string; cadrage: string; reference?: boolean }) =>
     appeler<ApercuMatiere>(`${racineMatieres(p)}/preview`, { method: "POST", body: JSON.stringify(r) }),
