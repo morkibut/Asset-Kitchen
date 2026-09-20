@@ -12042,6 +12042,39 @@ describe("les poses par type d'objet", () => {
       ).toBe(true),
     )
   })
+
+  // ── Une matière n'est plus un sujet (rangement, D4) ────────────────────────
+
+  const NATURE_MATIERE: PosesDesTypes["types"][number] = {
+    nom: "matière",
+    origine: "connue",
+    poses: [],
+    connues: [],
+    capacites: { directions: false, anime: false, sons: false, matiere: true },
+    se_decoupe: false,
+  }
+
+  test("le choix du type ne propose plus « matière » pour un sujet", async () => {
+    await ouvrir({
+      personnages: [personnage("La chose")],
+      types: [...TYPES, NATURE_MATIERE],
+    })
+    const ecran = await ouvrirLEtabli("La chose")
+
+    await ecran.findByRole("option", { name: /^meuble/ })
+    expect(ecran.queryByRole("option", { name: /^matière/ })).toBeNull()
+  })
+
+  test("un ancien sujet de nature « matière » la garde affichée", async () => {
+    await ouvrir({
+      personnages: [chose("Vieux pavés", "matière", [])],
+      types: [...TYPES, NATURE_MATIERE],
+    })
+    const ecran = await ouvrirLEtabli("Vieux pavés")
+
+    expect(await ecran.findByRole("option", { name: /^matière/ })).toBeTruthy()
+    expect((await ecran.findByLabelText("Type d'objet") as HTMLSelectElement).value).toBe("matière")
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -192,6 +192,10 @@ class ServiceBibliotheque:
         # processus**. Elle se rejoue sans danger, mais la rejouer à chaque lecture
         # de la bibliothèque relirait toutes les images du jeu pour rien.
         self._matieres_verifiees: set[str] = set()
+        # RG8 : le rapport de la **dernière** passe de chaque jeu, en mémoire — il se
+        # recalcule à la passe suivante, et ce qu'il dit des sujets vides se relit
+        # du journal (`etat_de_la_migration`).
+        self._derniers_rapports: dict[str, dict[str, Any]] = {}
         # RG8 : qui change la nature d'un sujet — `(jeu, sujet, nature)`. Branché
         # par l'`Atelier` sur `ServiceProduction.regler_personnage`, seul écrivain
         # de sujet du dépôt : cette classe est montée avant lui et ne peut pas le
@@ -835,6 +839,61 @@ class ServiceBibliotheque:
         self.assurer_matieres(projet)
         return self._base.assets(projet=projet, matiere=True, limite=limite)
 
+    def fiches_de_matieres(self, assets: Iterable[Asset]) -> list[dict[str, Any]]:
+        """**La fiche d'une matière, écrite une seule fois** (RG5) : l'écran
+        (`GET /api/projects/{jeu}/materials`) et l'agent (`list_materials`) la
+        lisent ici, chacun y ajoutant ce qui n'est qu'à lui (l'aperçu pour l'un,
+        le chemin du fichier pour l'autre) et rebaptisant les clés à sa langue.
+        Deux copies « à aligner à la main » ont déjà divergé une fois — les
+        dimensions du brut d'un côté, celles du rendu de l'autre.
+
+        - **`largeur` / `hauteur` : celles du fichier qui part**, le rendu quand il y
+          en a un, le brut sinon — la règle de `list_assets`. Zéro n'est pas une
+          mesure, c'est l'absence de mesure ;
+        - `cadrage` se relit sur la génération qui a fait naître l'image, jamais
+          sur l'image : c'est elle qui porte `filiation["matiere"]["cadrage"]`
+          (`ServiceGenerations.soumettre_matiere`). Une image devenue matière par
+          déclaration n'a pas cette filiation, et rend une chaîne vide plutôt
+          qu'une valeur inventée ;
+        - `collections` : `[{identifiant, nom}]`, celles où l'auteur l'a rangée ;
+        - `detouree` et `refaisable` : le calcul de `ServiceAssets.etat_de_matiere`.
+
+        Les collections se lisent d'un coup par jeu, pas image par image."""
+        assets = list(assets)
+        par_jeu: dict[str, list[str]] = {}
+        for asset in assets:
+            if asset.projet is not None:
+                par_jeu.setdefault(asset.projet, []).append(asset.identifiant)
+        collections: dict[tuple[str, str], list[dict[str, str]]] = {}
+        for jeu, identifiants in par_jeu.items():
+            for identifiant, rangees in self._base.collections_par_sujet(
+                jeu, identifiants, genre="matiere"
+            ).items():
+                collections[(jeu, identifiant)] = rangees
+
+        fiches: list[dict[str, Any]] = []
+        for asset in assets:
+            cadrage = ""
+            generation = self._base.lire(asset.generation) if asset.generation else None
+            if generation is not None:
+                filiation = generation.demande.get("filiation") or {}
+                cadrage = (filiation.get("matiere") or {}).get("cadrage", "")
+            etat = self._assets.etat_de_matiere(asset)
+            fiches.append(
+                {
+                    "identifiant": asset.identifiant,
+                    "nom": asset.label,
+                    "largeur": asset.rendu_largeur or asset.largeur,
+                    "hauteur": asset.rendu_hauteur or asset.hauteur,
+                    "cadrage": cadrage,
+                    "cree_le": asset.cree_le,
+                    "collections": list(collections.get((asset.projet or "", asset.identifiant), [])),
+                    "detouree": etat["detouree"],
+                    "refaisable": etat["refaisable"],
+                }
+            )
+        return fiches
+
     def declarer_matiere(
         self, identifiant: str, valeur: bool, projet: str | None = None
     ) -> Asset:
@@ -940,9 +999,53 @@ class ServiceBibliotheque:
             return self.migrer_matieres(projet, annoncer=annoncer)
         except Exception as erreur:  # noqa: BLE001 — jamais bloquer l'ouverture d'un jeu
             self._matieres_verifiees.add(projet)
-            return {"projet": projet, "refusee": f"la migration a échoué : {erreur}"}
+            rapport = {"projet": projet, "refusee": f"la migration a échoué : {erreur}"}
+            self._derniers_rapports[projet] = rapport
+            return rapport
 
     def migrer_matieres(self, projet: str, *, annoncer: bool = True) -> dict[str, Any]:
+        """Une passe de la migration (règles ci-dessous), **dont le rapport est gardé**
+        : `etat_de_la_migration` le relit. Ouvrir un jeu jette le rapport de
+        `assurer_matieres` à l'appelant, et un refus — journal illisible, fiche
+        qu'on ne sait pas relire — ne doit pas rester muet pour autant."""
+        rapport = self._migrer_matieres(projet, annoncer=annoncer)
+        self._derniers_rapports[projet] = rapport
+        return rapport
+
+    def etat_de_la_migration(self, projet: str) -> dict[str, Any]:
+        """Ce que la migration des matières a laissé au jeu, **pour qui veut le lire**
+        (l'écran des matières, l'agent) — trois clés :
+
+        - `sujets_vides` `[{identifiant, nom}]` : les sujets qu'elle a vidés et qui
+          sont encore là, encore vides. **Relu à chaque appel** sur le journal et sur
+          l'index : un sujet jeté ou de nouveau rempli en sort tout de suite ;
+        - `non_migrees` `[{identifiant, raison}]` : les images qu'elle a sautées,
+          avec la raison. C'est celle de **la dernière passe**, gardée en mémoire :
+          la passe suivante la recalcule, et un jeu qu'aucune passe n'a regardé
+          n'a rien à dire ;
+        - `migration_refusee` : la phrase d'une passe qui n'a pas pu aller au bout
+          (journal illisible ou non écrit, collections non écrites), ou `None`.
+          Sans elle un échec de la migration serait muet, ce qui est le contraire
+          de « sauter et dire »."""
+        if self._base.lire_projet(projet) is None:
+            raise ProjetInconnu(projet, [p.identifiant for p in self.projets()])
+        rapport = self._derniers_rapports.get(projet) or {}
+        try:
+            journal = self._lire_journal_matieres(projet)
+            vides = self._sujets_vides_de_la_migration(projet, journal)
+        except _JournalIllisible:
+            vides = []  # la raison est dans `migration_refusee`
+        return {
+            "sujets_vides": vides,
+            "non_migrees": [
+                {"identifiant": e["identifiant"], "raison": e["raison"]}
+                for e in rapport.get("ignorees", [])
+                if isinstance(e, dict) and "identifiant" in e and "raison" in e
+            ],
+            "migration_refusee": rapport.get("refusee"),
+        }
+
+    def _migrer_matieres(self, projet: str, *, annoncer: bool = True) -> dict[str, Any]:
         """Les six règles de RG5 §5, sur un jeu. **Rejouable : la seconde passe ne
         change pas un octet.**
 

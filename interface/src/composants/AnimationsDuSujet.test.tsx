@@ -402,6 +402,42 @@ describe("les rangées à l'écran", () => {
   })
 })
 
+// D1 (`docs/PLAN-rangement.md`) : seuls personnage et créature ont des directions.
+describe("une nature sans directions", () => {
+  function monterSans(avecDirections: boolean | undefined) {
+    const { fetchDouble } = construireDouble()
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<AnimationsDuSujet personnage={personnage([CASE_SUD])} plan={PLAN} onAnimer={vi.fn()} onOuvrirLaBande={vi.fn()} onErreur={vi.fn()}
+      {...(avecDirections === undefined ? {} : { avecDirections })} />)
+  }
+
+  test("une seule rangée pour la pose, qui garde toutes ses animations", () => {
+    const rangees = rangeesDeLaCase(CASE_SUD, false)
+    expect(rangees).toHaveLength(1)
+    expect(rangees[0].direction).toBeNull()
+    expect(rangees[0].compte).toBe(3)
+  })
+
+  test("sans la capacité, ni filtre Direction ni rangée par direction", () => {
+    monterSans(false)
+    expect(screen.queryByLabelText("Direction de la galerie")).toBeNull()
+    expect(rangee("repos/sud")).toBeNull()
+    expect(rangee("repos/nord")).toBeNull()
+    expect(rangee("repos/—")).toBeTruthy()
+    expect(document.querySelector('[data-pose-de-rangement="repos"]')?.textContent).not.toMatch(/\d+ directions?/)
+  })
+
+  test("avec la capacité, ou tant qu'elle n'est pas connue, rien ne change", () => {
+    monterSans(true)
+    expect(screen.getByLabelText("Direction de la galerie")).toBeTruthy()
+    expect(rangee("repos/sud")).toBeTruthy()
+    cleanup()
+    monterSans(undefined)
+    expect(screen.getByLabelText("Direction de la galerie")).toBeTruthy()
+    expect(rangee("repos/nord")).toBeTruthy()
+  })
+})
+
 describe("les écartées, à droite et repliables", () => {
   const ecartee = bande({ identifiant: "e", cree_le: 150, supprime_le: 1_700 })
   const avecEcartee = sienne({

@@ -1415,9 +1415,10 @@ function MatiereDetouree({
  * ouvrent sur ce qu'on lui fait ensuite.
  *
  * **Renommé par RG3** : « Réinjecter » ne disait pas ce que ça fait. Les
- * quatre boutons portent maintenant leur propre geste — *elle inspire*,
- * *elle est le point de départ*, *elle donne la manière*, *reprendre ses
- * réglages* — et les deux portes de la fiche (l'établi de la chose à qui
+ * quatre boutons portent maintenant leur propre geste — *référence*, *image
+ * à retoucher*, *guide de style*, *reprendre ses réglages* (les trois
+ * premiers mots viennent de la maquette : voir `LIBELLE_DU_ROLE` plus bas) —
+ * et les deux portes de la fiche (l'établi de la chose à qui
  * l'image appartient, la retouche) descendent dans cette même zone : ce sont
  * les deux gestes qui font quelque chose *avec* l'image, l'un en fabriquant
  * une nouvelle, l'autre en reprenant celle-ci.

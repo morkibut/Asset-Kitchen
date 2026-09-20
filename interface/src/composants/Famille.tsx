@@ -69,6 +69,7 @@ import {
 import { vignetteAsset } from "./Apercu"
 import { FAMILLES } from "./Carnet"
 import { useEtatDuParcours } from "./MemoireDuParcours"
+import { nomsDesNaturesMatiere, type NatureDuJeu } from "../natures"
 
 /** **Le seul type de glisser d'un ou plusieurs sujets du produit.**
  *
@@ -894,6 +895,23 @@ export function EcranFamille({
     [pieces, personnages],
   )
 
+  // **Les natures du jeu et ce qu'elles peuvent avoir**, demandées à la route
+  // qui les sert (rangement, D1) : c'est d'elle qu'on apprend qu'une nature est
+  // une matière, donc sans sujets. Vide tant qu'elle n'a pas répondu — on ne
+  // retire alors aucune ligne.
+  const [naturesDuJeu, setNaturesDuJeu] = useState<NatureDuJeu[]>([])
+  useEffect(() => {
+    let vivant = true
+    void Promise.resolve()
+      .then(() => api.posesDesTypes())
+      .then((recu) => vivant && setNaturesDuJeu(recu?.types ?? []))
+      .catch(() => vivant && setNaturesDuJeu([]))
+    return () => {
+      vivant = false
+    }
+  }, [])
+  const naturesMatiere = useMemo(() => nomsDesNaturesMatiere(naturesDuJeu), [naturesDuJeu])
+
   // **Un monde vide n'a qu'un geste à proposer** (repris de l'ancien codex,
   // `C3`) : sur la famille entière, sans filtre ni recherche, le champ qui
   // nomme s'ouvre de lui-même plutôt que d'attendre un clic sur « Ajouter ».
@@ -1156,7 +1174,14 @@ export function EcranFamille({
   const ligneDeFamille = (f: (typeof FAMILLES)[number]) => {
     const ouverte = famille === f.cle
     const etendue = (ouverte || recherche.trim() !== "") && f.cle !== "equipement"
-    const natures = univers.bareme.filter((e) => e.famille === f.cle)
+    // Une matière n'est plus un sujet : sa ligne vaudrait toujours « — ». On la
+    // garde seulement si des sujets de cette nature sont encore là.
+    const natures = univers.bareme.filter(
+      (e) =>
+        e.famille === f.cle &&
+        (!naturesMatiere.has(e.nom) ||
+          sujetsCharges.some((s) => s.famille === f.cle && s.type === e.nom)),
+    )
     return (
       <div className="mb-[8px]" key={f.cle}>
         <button

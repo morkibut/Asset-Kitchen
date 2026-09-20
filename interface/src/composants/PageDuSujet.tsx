@@ -490,6 +490,7 @@ export function PageDuSujet(proprietes: {
           onEcarter={proprietes.onSupprimer} onReinjecter={proprietes.onReinjecter} onReglages={proprietes.onReglages} onErreur={echouer} />}
 
         {onglet === "animations" && <AnimationsDuSujet personnage={ouvert} plan={sienPlan} onAnimer={proprietes.onAnimer}
+          avecDirections={capacites.directions}
           onOuvrirLaBande={proprietes.onOuvrirLaBande} onErreur={echouer}
           clips={proprietes.clips} onMonterLeClip={proprietes.onMonterLaBande} onClipsCommandes={proprietes.onClipsCommandes} />}
 

@@ -42,6 +42,7 @@ import {
 import { BandeQuiTourne, sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
 import { EnTeteDeSection } from "./pieces"
+import { naturesChoisissables } from "../natures"
 
 const BOUTON = "h-[30px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
 
@@ -259,7 +260,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
           <label className="flex flex-col gap-[8px] text-[13px]">Type d’objet
             <select aria-label="Type d'objet" className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.type ?? ""} onChange={(e) => void poserHabillage({ type: e.target.value })}>
               <option value="">aucun — suit le plan du jeu</option>
-              {types.map((type) => <option key={type.nom} value={type.nom}>{type.nom} — {type.poses.length === 0 ? "aucune pose" : `${type.poses.length} pose${type.poses.length > 1 ? "s" : ""}`}</option>)}
+              {naturesChoisissables(types, personnage.type).map((type) => <option key={type.nom} value={type.nom}>{type.nom} — {type.poses.length === 0 ? "aucune pose" : `${type.poses.length} pose${type.poses.length > 1 ? "s" : ""}`}</option>)}
             </select>
             <span className="text-[12px] text-encre-3">Il décide des mouvements demandés. Aucune image ne bouge.</span>
           </label>

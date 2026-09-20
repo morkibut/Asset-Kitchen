@@ -625,7 +625,9 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "different gesture and is passed alone: true declares the image a "
             "material of the game's library (what list_materials lists, ready "
             "for a tile recipe slot), false takes it out; the pixels are not "
-            "touched, and the result says `material`."
+            "touched, and the result says `material`. It is checked against a "
+            "game, `project` (the open project by default): an image filed in "
+            "another game, or in none, is refused, as on the screen."
         ),
     )
     @_refus_lisible
@@ -636,6 +638,7 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         steps: dict[str, Any] | None = None,
         folder: str | None = None,
         material: bool | None = None,
+        project: str | None = None,
     ) -> dict[str, Any]:
         """Trois chemins de retouche, dans l'ordre où l'agent les voudra — et
         un quatrième geste, qui ne retouche rien : `material`.
@@ -674,7 +677,13 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     "l'image à moitié changée si l'autre est refusé"
                 )
             _asset(atelier, asset_id)
-            asset = atelier.bibliotheque.declarer_matiere(asset_id, material)
+            # **Le même contrôle que l'écran** : la route HTTP passe le jeu de son
+            # adresse, et c'est lui qui refuse une image d'un autre jeu ou hors de
+            # tout jeu. Ici, le jeu nommé (`project`) ou, à défaut, celui qui est
+            # ouvert — sans jeu du tout, rien à comparer.
+            asset = atelier.bibliotheque.declarer_matiere(
+                asset_id, material, projet=_projet_ouvert(atelier, project) or None
+            )
         elif revert:
             asset = atelier.assets.revenir_au_brut(asset_id)
         elif recipe:

@@ -924,6 +924,25 @@ class ServiceAssets:
 
         identifiant = identifiant_de(generation.identifiant, emplacement.rang)
         ancien = self._base.lire_asset(identifiant)
+        # **C'est un ingrédient, pas une chose du jeu** (RG5, 20 septembre 2026) :
+        # une image dont la demande portait `echelle="matière"`
+        # (`ServiceGenerations.soumettre_matiere`) naît marquée matière, le même
+        # mot qui lui donne déjà sa recette de naissance plus bas. Comme pour le
+        # rangement et la case visée, une décision de l'auteur l'emporte à la
+        # relance : `ancien.matiere` reste ce que l'auteur en a fait, marque
+        # retirée comprise.
+        matiere = (
+            ancien.matiere
+            if ancien
+            else generation.demande.get("echelle") == "matière"
+        )
+        # **Une matière naît sans sujet, sans pose, sans direction** (RG5 §4) : la
+        # génération peut avoir visé une case de sujet, l'image n'y est pas rangée
+        # pour autant — sans quoi elle naîtrait matière ET rangée, ce que
+        # `declarer_matiere` refuse à l'auteur et que la migration ne nettoie
+        # qu'une fois par jeu. Seule une naissance neuve est concernée : une
+        # relance suit `ancien`, qui dit déjà la décision de l'auteur.
+        sans_sujet = matiere and ancien is None
         asset = Asset(
             identifiant=identifiant,
             generation=generation.identifiant,
@@ -972,25 +991,23 @@ class ServiceAssets:
             # Une image qu'il a désignée ailleurs — ou dont il a retiré la
             # désignation — ne revient pas dans sa case parce qu'on relance
             # l'appel qui l'avait produite.
-            personnage=ancien.personnage if ancien else generation.personnage,
-            pose=ancien.pose if ancien else generation.pose,
+            personnage=(
+                ancien.personnage
+                if ancien
+                else None if sans_sujet else generation.personnage
+            ),
+            pose=ancien.pose if ancien else None if sans_sujet else generation.pose,
             # **Et sous quel angle** (E10), à la même règle exactement : une
             # image que l'auteur a déplacée dans une autre direction n'y revient
             # pas parce qu'on relance l'appel qui l'avait produite.
-            direction=ancien.direction if ancien else generation.direction,
+            direction=(
+                ancien.direction
+                if ancien
+                else None if sans_sujet else generation.direction
+            ),
             personnage_supprime=ancien.personnage_supprime if ancien else False,
             favori=ancien.favori if ancien else False,
-            # **C'est un ingrédient, pas une chose du jeu** (RG5, 20 septembre
-            # 2026) : une image dont la demande portait `echelle="matière"`
-            # (`ServiceGenerations.soumettre_matiere`) naît marquée matière,
-            # le même mot qui lui donne déjà sa recette de naissance juste
-            # au-dessus. Comme pour le rangement et la case visée, une
-            # décision de l'auteur l'emporte à la relance.
-            matiere=(
-                ancien.matiere
-                if ancien
-                else generation.demande.get("echelle") == "matière"
-            ),
+            matiere=matiere,
             # La filiation vient de la source d'édition réinjectée (US-12).
             # Sans réinjection, l'asset n'a pas de parent — et c'est vrai, pas
             # provisoire : rien ne l'a engendré.

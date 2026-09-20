@@ -70,7 +70,14 @@ export type MatiereDeLaBibliotheque = {
 
 export const matieres = {
   /** Ce que la bibliothèque contient — jamais les sujets : aucun n'est consulté. */
-  lister: (p: string) => appeler<{ matieres: MatiereDeLaBibliotheque[] }>(racineMatieres(p)),
+  lister: (p: string) => appeler<{
+    matieres: MatiereDeLaBibliotheque[]
+    /** Les sujets que la migration a vidés de leurs images (RG5) : le sujet reste, vide, et
+     *  l'écran propose de le jeter. Absent d'un vieux serveur : vide. */
+    sujets_vides?: { identifiant: string; nom: string }[]
+    /** Les images qui n'ont pas pu passer en matières, avec la raison. Absent : vide. */
+    non_migrees?: { identifiant: string; raison: string }[]
+  }>(racineMatieres(p)),
   /** Poser (`true`) ou retirer (`false`) la marque « matière » sur une image du
    *  projet. Refusée en 409, avec sa phrase, si l'image porte un sujet. */
   declarer: (p: string, asset: string, valeur: boolean) =>

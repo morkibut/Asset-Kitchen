@@ -683,4 +683,21 @@ test("la page d'un personnage reste inchangée quand les capacités répondent",
   expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images de référence", "Galerie", "Pas encore rangé", "Équipement", "Sons", "Objectif & règles"])
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
   expect(screen.getByRole("button", { name: "Découper une image" })).toBeTruthy()
+  // Un personnage a des directions : son filtre est là.
+  expect(screen.getByLabelText("Direction de la galerie")).toBeTruthy()
+})
+
+test("un meuble s'anime, mais n'a pas de directions : pas de filtre Direction dans ses animations", async () => {
+  vi.spyOn(api, "posesDesTypes").mockResolvedValue({
+    plan: PLAN,
+    types: [
+      { nom: "meuble", origine: "connue", poses: PLAN, connues: PLAN, capacites: { directions: false, anime: true, sons: true, matiere: false }, se_decoupe: true },
+    ],
+  })
+  monter({ type: "meuble", famille: "objets" })
+  await waitFor(() => expect(vi.mocked(api.posesDesTypes)).toHaveBeenCalled())
+  fireEvent.click(await screen.findByRole("tab", { name: "Animations" }))
+  expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
+  expect(screen.getByLabelText("Mouvement de la galerie")).toBeTruthy()
+  expect(screen.queryByLabelText("Direction de la galerie")).toBeNull()
 })

@@ -14,7 +14,7 @@ import type { RGBAImage } from "../tuiles/moteur/types"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 import { CadreDialogue } from "./CadreDialogue"
 
-/** Une matière du jeu : l'image d'un sujet de nature « matière » (`TU2`). */
+/** Une matière du jeu : une image de la bibliothèque que le jeu a marquée comme matière (`RG6`). */
 /** `detouree` (RG8) : l'image a été découpée comme un personnage — « Mes matières » le signale, sa fiche la répare. */
 export type MatiereDuJeu = { identifiant: string; nom: string; detouree?: boolean }
 
@@ -237,11 +237,15 @@ const OPTIONS: Record<string, [string | number, string][]> = {
 
 export type Edition = { jeu: JeuEdite; signature: string; carte: string; nom: string }
 
-export function AtelierDuJeu({ projet, edition, matieres, matieresErreur = "", onRelireMatieres, modifie, occupe, message, onEnregistrer, onLivrer, onNom, onUnivers }: {
+export function AtelierDuJeu({ projet, edition, matieres, matieresErreur = "", sujetsVides = [], nonMigrees = [], onRelireMatieres, modifie, occupe, message, onEnregistrer, onLivrer, onNom, onUnivers }: {
   projet: string
   edition: Edition
   /** « Mes matières » : la bibliothèque du projet (RG6), lue par `Tuiles`. */
   matieres: MatiereDuJeu[]
+  /** Les sujets que la migration a vidés (RG5) : l'écran propose de les jeter. */
+  sujetsVides?: { identifiant: string; nom: string }[]
+  /** Les images qui n'ont pas pu passer en matières, avec la raison. */
+  nonMigrees?: { identifiant: string; raison: string }[]
   /** Pourquoi la bibliothèque n'a pas pu être lue — vide quand elle l'a été. */
   matieresErreur?: string
   /** Relire la bibliothèque : le tiroir s'ouvre sur « Mes matières », ou un tirage vient
@@ -433,7 +437,7 @@ export function AtelierDuJeu({ projet, edition, matieres, matieresErreur = "", o
 
       {/* Les réglages, ou le tiroir des matières */}
       {tiroir ? <TiroirDesMatieres projet={projet} jeu={j} cible={tiroir.cible} onglet={tiroir.onglet} matieres={matieres}
-        matieresErreur={matieresErreur} onRelireMatieres={onRelireMatieres}
+        matieresErreur={matieresErreur} sujetsVides={sujetsVides} nonMigrees={nonMigrees} onRelireMatieres={onRelireMatieres}
         onOnglet={(o) => setTiroir({ ...tiroir, onglet: o })} onFermer={() => setTiroir(null)} onErreur={setErreur}
         onPose={maj} />
         : <div className="flex min-h-0 min-w-0 flex-col gap-[8px] overflow-y-auto">
@@ -554,10 +558,49 @@ function Verifie({ v, jeu, onSurligner }: { v: ReturnType<typeof verifier>; jeu:
 
 // ── D · Le tiroir des matières ───────────────────────────────────────────────
 
-function TiroirDesMatieres({ projet, jeu: j, cible, onglet, matieres, matieresErreur, onRelireMatieres, onOnglet, onFermer, onErreur, onPose }: {
+/** Ce que la migration des matières a laissé derrière elle (RG5, règle 5) : un sujet vidé de ses
+ *  images — il reste, et on le jette d'un geste —, et les images qui n'ont pas pu être déplacées.
+ *  Rien n'est écrit quand il n'y a ni l'un ni l'autre. Le geste de suppression est celui de la
+ *  fiche du sujet : même route, même confirmation. */
+function ReliquatsDesMatieres({ projet, sujetsVides, nonMigrees, onRelire, onErreur }: {
+  projet: string
+  sujetsVides: { identifiant: string; nom: string }[]
+  nonMigrees: { identifiant: string; raison: string }[]
+  onRelire?: () => void
+  onErreur: (m: string) => void
+}) {
+  const [jetes, setJetes] = useState<string[]>([])
+  const [enCours, setEnCours] = useState<string | null>(null)
+  const restants = sujetsVides.filter((s) => !jetes.includes(s.identifiant))
+  if (restants.length === 0 && nonMigrees.length === 0) return null
+  async function jeter(s: { identifiant: string; nom: string }) {
+    if (!window.confirm(`Retirer « ${s.nom} » du jeu ? Ses fichiers restent conservés dans la bibliothèque.`)) return
+    setEnCours(s.identifiant)
+    try {
+      await api.supprimerPersonnage(s.identifiant, projet)
+      setJetes((l) => [...l, s.identifiant])
+      onRelire?.()
+    } catch (e) { onErreur(e instanceof Error ? e.message : "Le sujet n’a pas pu être retiré.") }
+    finally { setEnCours(null) }
+  }
+  return <div data-reliquats-des-matieres className="mb-[14px] flex flex-col gap-[8px]">
+    {restants.map((s) => <div key={s.identifiant} className="flex items-center justify-between gap-[8px] rounded-7 border border-trait bg-carte p-[8px] text-[12.5px] text-encre-2">
+      <span>Le sujet « {s.nom} » est vide : ses images sont maintenant des matières.</span>
+      <button type="button" className={`${PETIT} shrink-0`} disabled={enCours !== null} onClick={() => void jeter(s)}>Le jeter</button>
+    </div>)}
+    {nonMigrees.length > 0 && <div role="status" className="rounded-7 border border-trait-attention bg-fond-attention p-[8px] text-[12.5px] text-encre-attention">
+      <p>{nonMigrees.length === 1 ? "1 image n’a pas pu être déplacée vers les matières" : `${nonMigrees.length} images n’ont pas pu être déplacées vers les matières`}.</p>
+      <ul className="mt-[4px] list-disc pl-[14px]">{nonMigrees.map((n) => <li key={n.identifiant}>{n.raison}</li>)}</ul>
+    </div>}
+  </div>
+}
+
+function TiroirDesMatieres({ projet, jeu: j, cible, onglet, matieres, matieresErreur, sujetsVides = [], nonMigrees = [], onRelireMatieres, onOnglet, onFermer, onErreur, onPose }: {
   projet: string
   jeu: JeuEdite; cible: string; onglet: "integrees" | "miennes" | "generer"; matieres: MatiereDuJeu[]
   matieresErreur: string; onRelireMatieres?: () => void
+  sujetsVides?: { identifiant: string; nom: string }[]
+  nonMigrees?: { identifiant: string; raison: string }[]
   onOnglet: (o: "integrees" | "miennes" | "generer") => void; onFermer: () => void; onErreur: (m: string) => void; onPose: () => void
 }) {
   const [lecture, setLecture] = useState<string | null>(null)
@@ -601,6 +644,7 @@ function TiroirDesMatieres({ projet, jeu: j, cible, onglet, matieres, matieresEr
         className={`min-h-[30px] rounded-7 border px-[14px] text-[13px] ${onglet === id ? "border-contour bg-carte text-encre" : "border-transparent text-encre-controle"}`}>{nom}</button>)}
     </div>
     <div className="min-h-0 flex-1 overflow-auto p-[14px]">
+      {onglet === "miennes" && <ReliquatsDesMatieres projet={projet} sujetsVides={sujetsVides} nonMigrees={nonMigrees} onRelire={onRelireMatieres} onErreur={onErreur} />}
       {onglet === "integrees" ? <div className="grid grid-cols-3 gap-[8px]">
         {integrees.map((m) => <button key={m.id} type="button" aria-pressed={m.id === actuelle} onClick={() => { poserIntegree(j, cible, m.id); onPose() }}
           className={`flex flex-col items-center gap-[4px] rounded-8 border p-[4px] text-center text-[12px] text-encre-controle transition-colors duration-120 hover:bg-carte ${m.id === actuelle ? "border-encre-controle bg-carte" : "border-transparent"}`}>

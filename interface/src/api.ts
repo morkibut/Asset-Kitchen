@@ -6714,10 +6714,11 @@ export const api = {
   // le montre : `prevoirLaSortie` puis `sortir`, avec `sujet`.
 
   /** Le personnage part, **ses images restent** — chacune marquée « personnage
-   *  supprimé ». La réponse dit combien. */
-  supprimerPersonnage: (personnage: string) =>
+   *  supprimé ». La réponse dit combien. `projet` : le jeu du sujet, quand
+   *  l'écran qui l'appelle ne l'ouvre pas forcément (sinon celui du serveur). */
+  supprimerPersonnage: (personnage: string, projet?: string) =>
     appeler<{ personnage: Personnage; images: number }>(
-      `/characters/${personnage}`,
+      `/characters/${personnage}${duJeu(projet)}`,
       { method: "DELETE" },
     ),
 

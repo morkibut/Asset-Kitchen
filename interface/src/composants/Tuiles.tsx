@@ -49,22 +49,29 @@ export function Tuiles({ projet, vue, onVue, onNoms, tailleDuJeu = 32, paletteUn
   // vient de finir) : `numeroLecture` ne laisse gagner que la dernière demandée.
   const [matieres, setMatieres] = useState<MatiereDuJeu[]>([])
   const [matieresErreur, setMatieresErreur] = useState("")
+  // Ce que la migration a laissé derrière elle (RG5) : les sujets vidés de leurs images, et les
+  // images qui n'ont pas pu passer en matières. Vides tant que le serveur n'en dit rien.
+  const [sujetsVides, setSujetsVides] = useState<{ identifiant: string; nom: string }[]>([])
+  const [nonMigrees, setNonMigrees] = useState<{ identifiant: string; raison: string }[]>([])
   const numeroLecture = useRef(0)
   const relireMatieres = useCallback(() => {
     const n = ++numeroLecture.current
     return apiMatieres.lister(projet).then(r => {
       if (n !== numeroLecture.current) return
       setMatieres(r.matieres.map(m => ({ identifiant: m.identifiant, nom: m.nom, detouree: m.detouree })))
+      setSujetsVides(r.sujets_vides ?? [])
+      setNonMigrees(r.non_migrees ?? [])
       setMatieresErreur("")
     }).catch(e => {
       if (n !== numeroLecture.current) return
       // L'état vide habituel, et la raison dite à l'endroit où l'on regarde (le tiroir).
       setMatieres([])
+      setSujetsVides([]); setNonMigrees([])
       setMatieresErreur(e instanceof Error ? e.message : "La bibliothèque n’a pas répondu.")
     })
   }, [projet])
   useEffect(() => {
-    setMatieres([]); setMatieresErreur("")
+    setMatieres([]); setMatieresErreur(""); setSujetsVides([]); setNonMigrees([])
     void relireMatieres()
     return () => { numeroLecture.current++ }
   }, [relireMatieres])
@@ -151,7 +158,7 @@ export function Tuiles({ projet, vue, onVue, onNoms, tailleDuJeu = 32, paletteUn
   else if (ensemble && !ensemble.recette) corps = <EditeurTuiles key={ensemble.identifiant} ensemble={ensemble} onGarder={e => setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)])} onAsset={onAsset} onLivraisons={onLivraisons} />
   else if (!edition) corps = <p role="status" className="text-[13px] text-encre-3">{charge ? "Lecture du jeu de tuiles…" : "Lecture des jeux de tuiles…"}</p>
   else if (courante.livraison) corps = <LivraisonDuJeu projet={projet} edition={edition} onRetour={() => aller({ jeu: courante.jeu })} onLivraisons={onLivraisons} />
-  else corps = <AtelierDuJeu key={cle} projet={projet} edition={edition} matieres={matieres} matieresErreur={matieresErreur} onRelireMatieres={() => void relireMatieres()} modifie={() => estModifie(edition)} occupe={occupe}
+  else corps = <AtelierDuJeu key={cle} projet={projet} edition={edition} matieres={matieres} matieresErreur={matieresErreur} sujetsVides={sujetsVides} nonMigrees={nonMigrees} onRelireMatieres={() => void relireMatieres()} modifie={() => estModifie(edition)} occupe={occupe}
     message={estModifie(edition) ? (edition.jeu.identifiant ? "Modifications non enregistrées" : "Pas encore enregistré") : statut}
     onNom={nom => { edition.jeu.nom = nom; maj() }}
     onEnregistrer={() => void enregistrer(edition)}

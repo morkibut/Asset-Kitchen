@@ -16,58 +16,53 @@ from atelier.services.matieres import TIRAGES_MAX, TIRAGES_MIN
 routeur = APIRouter(prefix="/projects/{projet}/materials")
 
 
-def _matiere_json(atelier: Any, asset: Any) -> dict[str, Any]:
+def _matiere_json(atelier: Any, asset: Any, fiche: dict[str, Any] | None = None) -> dict[str, Any]:
     """La fiche d'une matière pour la bibliothèque (RG5).
 
-    **`cadrage` se relit sur la génération qui l'a fait naître**, jamais sur
-    l'asset : c'est elle qui porte `filiation["matiere"]["cadrage"]`
-    (`ServiceGenerations.soumettre_matiere`). Une image devenue matière par
-    déclaration — `PUT .../materials/{asset}` sur une image ordinaire — n'a
-    pas cette filiation, et rend une chaîne vide plutôt qu'une valeur inventée.
-    """
-    cadrage = ""
-    generation = atelier.base.lire(asset.generation)
-    if generation is not None:
-        filiation = generation.demande.get("filiation") or {}
-        cadrage = (filiation.get("matiere") or {}).get("cadrage", "")
-    collections = (
-        atelier.base.collections_par_sujet(
-            asset.projet, [asset.identifiant], genre="matiere"
-        ).get(asset.identifiant, [])
-        if asset.projet is not None
-        else []
-    )
-    # **`detouree` et `refaisable`** (RG8) : un seul calcul, `ServiceAssets.
-    # etat_de_matiere`, que l'agent lit aussi (`list_materials`, `cut_out` /
-    # `redoable`). Dit-il « détourée » ? L'image a été découpée et recadrée comme
-    # un personnage, ce qu'une matière ne reçoit pas. « Refaisable » ? Son image
-    # brute est encore là : on peut lui remettre la bonne recette sans rien
-    # regénérer.
-    etat = atelier.assets.etat_de_matiere(asset)
+    **Elle n'est pas construite ici** : `ServiceBibliotheque.fiches_de_matieres`
+    l'écrit une fois, et `list_materials` (l'agent) la lit au même endroit — les
+    dimensions du rendu, le cadrage relu sur la génération d'origine, les
+    collections, `detouree` / `refaisable` (RG8). Ne s'ajoute ici que ce qui est
+    de l'écran : l'aperçu."""
+    if fiche is None:
+        fiche = atelier.bibliotheque.fiches_de_matieres([asset])[0]
     return {
-        "identifiant": asset.identifiant,
-        "nom": asset.label,
-        "largeur": asset.largeur,
-        "hauteur": asset.hauteur,
+        "identifiant": fiche["identifiant"],
+        "nom": fiche["nom"],
+        "largeur": fiche["largeur"],
+        "hauteur": fiche["hauteur"],
         "apercu": f"/api/assets/{asset.identifiant}/image",
-        "cadrage": cadrage,
-        "cree_le": asset.cree_le,
-        "collections": collections,
-        "detouree": etat["detouree"],
-        "refaisable": etat["refaisable"],
+        "cadrage": fiche["cadrage"],
+        "cree_le": fiche["cree_le"],
+        "collections": fiche["collections"],
+        "detouree": fiche["detouree"],
+        "refaisable": fiche["refaisable"],
     }
 
 
 @routeur.get("")
 def bibliotheque(requete: Request, projet: str) -> dict[str, Any]:
     """La bibliothèque des matières du projet (RG5) — ce que l'écran des
-    tuiles lira en RG6, et rien de plus : aucun sujet n'est consulté ici."""
+    tuiles lira en RG6, et rien de plus : aucun sujet n'est consulté ici.
+
+    **Et ce que la migration a laissé** (RG8) : `sujets_vides`
+    `[{identifiant, nom}]` — les sujets qu'elle a vidés et que l'écran propose de
+    jeter, `DELETE /api/characters/{sujet}?projet=` —, `non_migrees`
+    `[{identifiant, raison}]` — les images qu'elle a sautées, en français —, et
+    `migration_refusee` (une phrase, ou `null`) quand une passe n'a pas pu aller
+    au bout. Deux listes vides, et `null`, sur un jeu sans rien à dire."""
     atelier = requete.app.state.atelier
+    # D'abord la lecture, qui passe la migration si le jeu n'a pas encore été vu :
+    # l'état qu'on rend ensuite est celui de cette passe-là.
     matieres = atelier.bibliotheque.matieres(projet)
     # Le projet n'est lu qu'une fois pour toute la liste : `etat_de_matiere` le
     # relit pour chaque image, et le barème ne bouge pas pendant la réponse.
     with projet_lu_une_fois():
-        return {"matieres": [_matiere_json(atelier, m) for m in matieres]}
+        fiches = atelier.bibliotheque.fiches_de_matieres(matieres)
+        return {
+            "matieres": [_matiere_json(atelier, m, f) for m, f in zip(matieres, fiches)],
+            **atelier.bibliotheque.etat_de_la_migration(projet),
+        }
 
 
 class Declaration(BaseModel):

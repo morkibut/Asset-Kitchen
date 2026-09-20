@@ -9,8 +9,14 @@
 > La maquette des deux colonnes : <https://claude.ai/artifact/Kq2BmNcULrPdB8HzkQeREo>
 > (avant/après, fiche d'une image et colonne des sujets).
 >
-> **Où en est le chantier (20 septembre 2026).** Rien n'est fait, sauf le correctif qui a
-> révélé le problème : voir « Ce qui a déclenché ce plan ».
+> **Où en est le chantier (20 septembre 2026).** Les huit tranches sont faites, sur la branche
+> `feat/rangement`, pas encore fusionnée dans `main`. Une relecture croisée (RG8) a corrigé
+> les écarts qu'elle a trouvés ; ce qu'elle laisse à décider à l'auteur est écrit en bas, sous
+> « Décisions laissées à l'auteur ».
+>
+> **La maquette est dépassée sur un point.** `Fiche-apres` montre une matière rangée *dans un
+> sujet* (menu « Sujet », option « Matières », lien vers son établi). D4 a décidé l'inverse :
+> l'écran livré (bouton « Ranger dans les matières ») a raison, pas la maquette.
 
 ## Ce qui a déclenché ce plan
 
@@ -154,23 +160,32 @@ La colonne de droite passe de dix-sept blocs à la file à trois zones, toujours
 ordre : **où elle est rangée** (le seul endroit où l'on décide), **s'en resservir**, **d'où elle
 vient** (replié).
 
-- [ ] « Corps de » s'appelle « Sujet », et la case Pose dit pourquoi elle est vide (« une
+- [x] « Corps de » s'appelle « Sujet », et la case Pose dit pourquoi elle est vide (« une
       matière n'a pas de pose ») au lieu d'être grisée sans raison.
-- [ ] « Réinjecter » est écrit en français et dit ce que ça fait.
-- [ ] « Imposé par le jeu » et « Sa recette » fusionnent en un seul bloc, qui donne la valeur
+      *(`Fiche.tsx`, `CaseDeLAsset` : `natureAvecArticle(porteur.type)` + « n'a pas de pose ».)*
+- [x] « Réinjecter » est écrit en français et dit ce que ça fait.
+      *(Le bloc s'appelle « S'en resservir ». Ses libellés ne sont pas ceux de
+      `RG3-bloc-fusionne.md` §5 : « elle inspire… » faisait parler l'image, l'écran dit
+      « référence · image à retoucher · guide de style ».)*
+- [x] « Imposé par le jeu » et « Sa recette » fusionnent en un seul bloc, qui donne la valeur
       **et la raison** : « Découpe du contour : non — une matière remplit son cadre ». C'est la
       ligne qui aurait permis à l'auteur de trouver le défaut seul.
-- [ ] Favori et Supprimer sont dans la zone des décisions, pas au milieu du texte descriptif.
+- [x] Favori et Supprimer sont dans la zone des décisions, pas au milieu du texte descriptif.
+      *(`DecisionsDeLaFiche`, appelée depuis la zone 1.)*
 
 ### RG4 · La colonne de gauche des sujets
 
 **Bloquée par** : RG1. Maquette : `Sujets-apres` de l'artifact.
 
-- [ ] Le champ de recherche cherche ce qu'il annonce — les sujets **et** les collections.
-- [ ] Une famille ouverte montre ses natures avec leur compte ; une nature se clique.
-- [ ] Les familles vides tiennent sur une ligne dépliable, au lieu de trois lignes à zéro.
-- [ ] « Les tuiles », « Les sons » et la galerie passent sous un titre qui dit que ce ne sont
+- [x] Le champ de recherche cherche ce qu'il annonce — les sujets **et** les collections.
+- [x] Une famille ouverte montre ses natures avec leur compte ; une nature se clique.
+      *(`Famille.tsx`. La nature « matière » n'y figure plus depuis la relecture croisée : elle
+      ne porte plus de sujets, voir D4 — sauf si un sujet de cette nature existe encore, pour
+      qu'il ne devienne pas invisible.)*
+- [x] Les familles vides tiennent sur une ligne dépliable, au lieu de trois lignes à zéro.
+- [x] « Les tuiles », « Les sons » et la galerie passent sous un titre qui dit que ce ne sont
       pas des familles.
+      *(Titre « Ailleurs dans le jeu ».)*
 
 ### RG5 · Les matières deviennent une bibliothèque
 
@@ -235,11 +250,44 @@ groupable en collections, sans sujet porteur.
 
 **Bloquée par** : RG6, RG7.
 
-- [ ] Les matières déjà rangées dans un sujet rejoignent la bibliothèque sans perdre leur nom.
-- [ ] Les images nées détourées avant le correctif sont retrouvables, et l'écran dit si l'on
+- [x] Les matières déjà rangées dans un sujet rejoignent la bibliothèque sans perdre leur nom.
+      *(`ServiceBibliotheque.migrer_matieres`, les six règles de `RG5` §5, rejouable, avec un
+      journal `migration-matieres.json` dans le dossier du jeu pour tout remettre. Elle tourne
+      une fois par jeu et par processus, à l'ouverture, au choix du jeu, à la première lecture de
+      la bibliothèque, ou par `POST /api/projects/{projet}/materials/migrate`. Mesurée sur une
+      copie de vos données : 6 images migrées dans `la-foret-magique`, les 6 autres jeux
+      inchangés à l'octet. `tests/test_rg8_migration_matieres.py`.)*
+- [x] Les images nées détourées avant le correctif sont retrouvables, et l'écran dit si l'on
       peut leur réappliquer la recette sans les regénérer.
-- [ ] Une relecture croise ce plan, les écrans livrés et la maquette : aucun des trois ne dit
+      *(`detouree` / `refaisable` sur la route et sur `list_materials` ; repère sur la vignette
+      de « Mes matières », encadré et bouton « La refaire comme une matière » sur la fiche ;
+      `POST …/materials/{asset}/redo`, jamais tout seul. **Mesuré : aucune des 6 matières de
+      `la-foret-magique` n'est détourée** — vous les aviez déjà remises d'aplomb à la main —
+      donc rien à réparer aujourd'hui sur ce jeu. `tests/test_rg8_detourees.py`.)*
+- [x] Une relecture croise ce plan, les écrans livrés et la maquette : aucun des trois ne dit
       ce que les deux autres démentent.
+      *(Faite le 20 septembre 2026 par le plus gros modèle : dix-sept écarts. Corrigés : les
+      menus de nature, la colonne des sujets, les directions, la naissance d'une matière, le
+      contrôle de projet de l'agent, les dimensions, le rapport de migration, le geste pour
+      jeter le sujet vidé, les cases du plan et deux commentaires. Restent ceux de « Décisions
+      laissées à l'auteur ».)*
+
+## Décisions laissées à l'auteur
+
+- **Ranger une matière dans une collection : aucun écran, aucun outil ne le fait.** Le domaine
+  le sait (`RG5`, case 2), mais les routes `…/collections/{id}/members` ne passent jamais le
+  genre « matière », donc seule la migration remplit `collections`. Et la phrase du refus 409
+  de `RG5` §4 dit « pour la ranger, mets-la dans une collection » : **c'est faux en usage
+  aujourd'hui.** Soit on construit le geste (quelle surface : « Mes matières » ? la fiche ?),
+  soit on réécrit la phrase.
+- **L'aide du guide dit « par le lien du bas » pour changer les règles du jeu depuis la fiche
+  d'une image, et ce n'est pas un lien** (`aide.ts`, `fiche.recette`). C'est votre chantier
+  du guide : à corriger là, ou à brancher une vraie porte vers Réglages.
+- **La migration réécrit des fichiers à l'ouverture d'un jeu.** Elle ne supprime rien et garde
+  un journal, mais elle change 6 fiches d'images de `la-foret-magique` dès la première
+  ouverture après fusion (leur sujet « Matières » reste, vide, jusqu'à ce que vous le jetiez).
+  À savoir avant de fusionner.
+- **La maquette `Fiche-apres` est à republier ou à marquer dépassée** (voir en tête).
 
 ## Ce que ce plan ne couvre pas
 

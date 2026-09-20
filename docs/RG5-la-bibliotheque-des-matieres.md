@@ -141,14 +141,14 @@ appartient à plusieurs collections, et aucune image ne porte la sienne.
 Elle n'a **ni sujet, ni pose, ni direction, ni objectif, ni livraison propre**. Deux routes
 peuvent encore le lui proposer ; elles refusent, en `409`, avec ces phrases-là :
 
-**`PUT /api/v1/assets/{identifiant}/character`** (`atelier/api/production.py` 1191), quand l'image
+**`PUT /api/v1/assets/{identifiant}/character`** (`atelier/api/production.py`, route de l'image d'un sujet), quand l'image
 porte `matiere=True` :
 
 > Une matière n'a pas de sujet : c'est un ingrédient du jeu de tuiles, pas une chose du jeu. Pour
 > la ranger, mets-la dans une collection ; pour en faire l'image d'un sujet, retire-lui d'abord la
 > marque « matière » depuis sa fiche.
 
-**`POST /api/v1/characters`** (`atelier/api/production.py` 1097) et
+**`POST /api/v1/characters`** (`atelier/api/production.py`, création d'un sujet) et
 `PUT /api/v1/characters/{identifiant}`, quand `type == "matière"` :
 
 > On ne crée plus de sujet de nature « matière ». Une matière est une image de la bibliothèque du

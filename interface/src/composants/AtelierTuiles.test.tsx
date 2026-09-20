@@ -487,6 +487,80 @@ describe("Les tuiles du jeu", () => {
       expect(screen.queryByRole("alert")).toBeNull()
     })
 
+    // RG5, règle 5 : la migration vide le sujet sans le supprimer ; l'écran propose de le jeter.
+    describe("le sujet vidé par la migration", () => {
+      const VIDE = { identifiant: "matieres", nom: "Matières" }
+      const supprime = () => ({ personnage: {} as never, images: 0 })
+
+      it("ne montre rien quand le serveur ne dit rien — ou dit des listes vides", async () => {
+        const lister = vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [{ ...UNE_MATIERE, identifiant: "m-1", nom: "Dalles grises" }] })
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        expect(await screen.findByRole("button", { name: /Dalles grises/ })).toBeInTheDocument()
+        expect(screen.queryByRole("button", { name: "Le jeter" })).toBeNull()
+        expect(screen.queryByText(/est vide/)).toBeNull()
+        expect(screen.queryByText(/pas pu être déplacée/)).toBeNull()
+        lister.mockResolvedValue({ matieres: [], sujets_vides: [], non_migrees: [] })
+        fireEvent.click(screen.getByRole("tab", { name: "Intégrées" }))
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        await screen.findByText(/Pas encore de matière dans ce jeu/)
+        expect(document.querySelector("[data-reliquats-des-matieres]")).toBeNull()
+      })
+
+      it("propose de le jeter, et ne supprime rien avant le clic", async () => {
+        vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [], sujets_vides: [VIDE] })
+        const jeter = vi.spyOn(api, "supprimerPersonnage").mockResolvedValue(supprime())
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        expect(await screen.findByText("Le sujet « Matières » est vide : ses images sont maintenant des matières.")).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: "Le jeter" })).toBeInTheDocument()
+        expect(jeter).not.toHaveBeenCalled()
+      })
+
+      it("le clic supprime le sujet du jeu par la route existante, et la ligne disparaît", async () => {
+        vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [], sujets_vides: [VIDE] })
+        const jeter = vi.spyOn(api, "supprimerPersonnage").mockResolvedValue(supprime())
+        const confirmer = vi.spyOn(window, "confirm").mockReturnValue(true)
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        fireEvent.click(await screen.findByRole("button", { name: "Le jeter" }))
+        await waitFor(() => expect(jeter).toHaveBeenCalledWith("matieres", "jeu"))
+        expect(confirmer).toHaveBeenCalledTimes(1)
+        await waitFor(() => expect(screen.queryByText(/est vide/)).toBeNull())
+        expect(screen.queryByRole("button", { name: "Le jeter" })).toBeNull()
+      })
+
+      it("annuler la confirmation ne supprime rien et garde la ligne", async () => {
+        vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [], sujets_vides: [VIDE] })
+        const jeter = vi.spyOn(api, "supprimerPersonnage").mockResolvedValue(supprime())
+        vi.spyOn(window, "confirm").mockReturnValue(false)
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        fireEvent.click(await screen.findByRole("button", { name: "Le jeter" }))
+        expect(jeter).not.toHaveBeenCalled()
+        expect(screen.getByText(/est vide/)).toBeInTheDocument()
+      })
+
+      it("dit combien d'images n'ont pas pu être déplacées, avec la raison de chacune", async () => {
+        vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [], non_migrees: [
+          { identifiant: "a", raison: "Elle porte déjà un sujet." }, { identifiant: "b", raison: "Le fichier a disparu." },
+        ] })
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        expect(await screen.findByText("2 images n’ont pas pu être déplacées vers les matières.")).toBeInTheDocument()
+        expect(screen.getByText("Elle porte déjà un sujet.")).toBeInTheDocument()
+        expect(screen.getByText("Le fichier a disparu.")).toBeInTheDocument()
+        expect(screen.queryByRole("button", { name: "Le jeter" })).toBeNull()
+      })
+
+      it("une seule image : la phrase est au singulier", async () => {
+        vi.spyOn(apiMatieres, "lister").mockResolvedValue({ matieres: [], non_migrees: [{ identifiant: "a", raison: "Le fichier a disparu." }] })
+        await ouvrirLAtelier()
+        fireEvent.click(screen.getByRole("tab", { name: "Mes matières" }))
+        expect(await screen.findByText("1 image n’a pas pu être déplacée vers les matières.")).toBeInTheDocument()
+      })
+    })
+
     it("la route en erreur : l'état vide habituel, la raison dite dans l'onglet, et l'écran tient", async () => {
       vi.spyOn(apiMatieres, "lister").mockRejectedValue(new Error("l'atelier ne répond pas"))
       await ouvrirLAtelier()

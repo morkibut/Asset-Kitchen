@@ -188,7 +188,7 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
         "most; `total` counts every match before the cut. `project` defaults to the open project."))
     @refus_lisible
     async def lister_matieres(project: str | None = None, search: str = "", limit: int = 50) -> dict[str, Any]:
-        from atelier.mcp.serveur import _asset_en_json, _projet_ouvert
+        from atelier.mcp.serveur import _chemin, _projet_ouvert
         projet = _projet_ouvert(atelier, project)
         if not projet:
             raise TuilesRefusees("Aucun projet n’est ouvert : nommez-en un (project) — list_projects les liste.")
@@ -199,28 +199,23 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
         if cherche:
             trouvees = [a for a in trouvees if cherche in (a.label or "").lower()]
         gardees = trouvees[:max(1, min(int(limit), 200))]
-        # `path`, `width`, `height` : les mêmes que `list_assets` (le rendu, jamais le brut).
-        collections = atelier.base.collections_par_sujet(projet, [a.identifiant for a in gardees], genre="matiere")
+        # **La fiche est celle de l'écran, écrite une seule fois** (`ServiceBibliotheque.fiches_de_matieres`,
+        # que `GET /api/projects/{jeu}/materials` lit aussi) : dimensions du rendu, cadrage, collections,
+        # `detouree` / `refaisable`. Ne se traduit ici que les mots ; seul `path` (le rendu, comme `list_assets`)
+        # est à l'agent.
         matieres = []
-        for asset in gardees:
-            fiche = _asset_en_json(atelier, asset)
-            # Le même calcul que l'écran (`_matiere_json`, `atelier/api/matieres.py`) : un seul, celui de `ServiceAssets`.
-            etat = atelier.assets.etat_de_matiere(asset)
-            # `framing` se relit sur la génération d'origine (`filiation["matiere"]["cadrage"]`), jamais sur
-            # l'image : une image déclarée matière à la main n'a pas cette filiation, et rend une chaîne vide.
-            generation = atelier.base.lire(asset.generation) if asset.generation else None
-            filiation = (generation.demande.get("filiation") or {}) if generation is not None else {}
+        for asset, fiche in zip(gardees, atelier.bibliotheque.fiches_de_matieres(gardees)):
             matieres.append({
-                "id": asset.identifiant,
-                "name": asset.label,
-                "framing": (filiation.get("matiere") or {}).get("cadrage", ""),
-                "width": fiche["width"],
-                "height": fiche["height"],
-                "path": fiche["path"],
-                "created": asset.cree_le,
-                "collections": [{"id": c["identifiant"], "name": c["nom"]} for c in collections.get(asset.identifiant, [])],
-                "cut_out": etat["detouree"],
-                "redoable": etat["refaisable"],
+                "id": fiche["identifiant"],
+                "name": fiche["nom"],
+                "framing": fiche["cadrage"],
+                "width": fiche["largeur"],
+                "height": fiche["hauteur"],
+                "path": _chemin(atelier, asset),
+                "created": fiche["cree_le"],
+                "collections": [{"id": c["identifiant"], "name": c["nom"]} for c in fiche["collections"]],
+                "cut_out": fiche["detouree"],
+                "redoable": fiche["refaisable"],
             })
         return {"materials": matieres, "total": len(trouvees)}
 
