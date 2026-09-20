@@ -34,6 +34,9 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
     meta_matiere = {"barre": {"verbe": "generer", "titre": "Générer une matière", "phrase": "Une texture qui se raccorde, fabriquée sur la machine.",
                               "paiement": "gratuit", "ou": "sortie", "route": "", "besoins": []}}
 
+    meta_liste_matieres = {"barre": {"verbe": "aller", "titre": "Voir les matières", "phrase": "Les textures du jeu, prêtes à poser dans une recette.",
+                                     "paiement": "gratuit", "ou": "sortie", "route": "", "besoins": []}}
+
     def _projet(project):
         return project or atelier.bibliotheque.courant
 
@@ -140,7 +143,9 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
         "— the text still commands, the image orients, and the result stays seamless. With it the draw runs at 512px "
         "instead of 256, so it takes longer. Returns one "
         "generation per draw, each with its own seed; poll them with check_generation (or wait here with wait_seconds). "
-        "Each finished draw is a library image of kind 'matière': put its id in a recipe slot as {source: 'asset', asset: id}. "
+        "Each finished draw is a library image of kind 'matière' and is already in the game's material library — no subject to "
+        "create, nothing to declare; find it again at any time with list_materials. Put its id in a recipe slot as "
+        "{source: 'asset', asset: id}. "
         "When ComfyUI, the style weights or the seamless nodes are missing, it refuses and says what to install."))
     @refus_lisible
     async def generer_matiere(material: str, pattern: str, framing: str = "surface", draws: int = 1,
@@ -167,7 +172,51 @@ def installer_outils_tuiles(serveur: Any, atelier: Any, refus_lisible: Callable)
                                                                        "cost_usd": 0.0, "images": [], "failures": []})
         return {"job": travail["identifiant"], "generations": sorties, "text": travail["texte"], "cost_usd": 0.0, "local": True}
 
-    @serveur.tool(name="extract_tile_for_editing", meta=meta, description="Copy one frozen atlas cell into the library with provenance for ordinary non-destructive retouching. Assign that returned image ID to cellule.correction in update_tile_set to reintegrate it. Exact tile dimensions required.")
+    @serveur.tool(name="list_materials", meta=meta_liste_matieres, description=(
+        "List the game's material library: the seamless textures made by generate_tile_material and every library image "
+        "declared a material (edit_asset with material=true). Free, read-only, never generates, and it needs no subject — a "
+        "material belongs to the game, not to a subject. Newest first. Each material carries `id` — exactly what goes in a "
+        "tile recipe slot, as {source: 'asset', asset: id}, in create_tile_set or update_tile_set —, `name`, `framing` "
+        "(surface = floor seen from above, face = wall face, plat = flat material, motif = regular pattern; empty for an "
+        "image declared a material by hand, which never said how it was made), `width`, `height`, `path` (the file on "
+        "disk, as in list_assets), `created` (unix time) and `collections` [{id, name}] where the author filed it. "
+        "`search` keeps the materials whose name contains that text, ignoring case; `limit` is 50 by default, 200 at "
+        "most; `total` counts every match before the cut. `project` defaults to the open project."))
+    @refus_lisible
+    async def lister_matieres(project: str | None = None, search: str = "", limit: int = 50) -> dict[str, Any]:
+        from atelier.mcp.serveur import _asset_en_json, _projet_ouvert
+        projet = _projet_ouvert(atelier, project)
+        if not projet:
+            raise TuilesRefusees("Aucun projet n’est ouvert : nommez-en un (project) — list_projects les liste.")
+        # La même bibliothèque que l'écran (`ServiceBibliotheque.matieres`, RG5) : aucun sujet consulté.
+        # Le nom se filtre ici parce que la recherche de la grille porte sur la demande, pas sur le nom.
+        trouvees = atelier.bibliotheque.matieres(projet, limite=100_000)
+        cherche = search.strip().lower()
+        if cherche:
+            trouvees = [a for a in trouvees if cherche in (a.label or "").lower()]
+        gardees = trouvees[:max(1, min(int(limit), 200))]
+        # `path`, `width`, `height` : les mêmes que `list_assets` (le rendu, jamais le brut).
+        collections = atelier.base.collections_par_sujet(projet, [a.identifiant for a in gardees], genre="matiere")
+        matieres = []
+        for asset in gardees:
+            fiche = _asset_en_json(atelier, asset)
+            # `framing` se relit sur la génération d'origine (`filiation["matiere"]["cadrage"]`), jamais sur
+            # l'image : une image déclarée matière à la main n'a pas cette filiation, et rend une chaîne vide.
+            generation = atelier.base.lire(asset.generation) if asset.generation else None
+            filiation = (generation.demande.get("filiation") or {}) if generation is not None else {}
+            matieres.append({
+                "id": asset.identifiant,
+                "name": asset.label,
+                "framing": (filiation.get("matiere") or {}).get("cadrage", ""),
+                "width": fiche["width"],
+                "height": fiche["height"],
+                "path": fiche["path"],
+                "created": asset.cree_le,
+                "collections": [{"id": c["identifiant"], "name": c["nom"]} for c in collections.get(asset.identifiant, [])],
+            })
+        return {"materials": matieres, "total": len(trouvees)}
+
+    @serveur.tool(name="extract_tile_for_editing", meta=meta,description="Copy one frozen atlas cell into the library with provenance for ordinary non-destructive retouching. Assign that returned image ID to cellule.correction in update_tile_set to reintegrate it. Exact tile dimensions required.")
     @refus_lisible
     async def extraire(project: str, tileset: str, x: int, y: int, revision: int):
         return atelier.tuiles.extraire(project, tileset, x, y, revision)

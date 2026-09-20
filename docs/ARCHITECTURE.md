@@ -509,6 +509,12 @@ locales (RP2)** : `preparer_pour_agent` écrit un travail durable de nature `mat
 cadre (calcul local, méthodes permises, plafond d'appels) et le crochet `avant_soumission` du
 fournisseur ComfyUI le relit au tour de la carte graphique. Un ensemble créé par l'agent porte
 `origine: "agent"` ; un ensemble sans ce champ se relit `"auteur"`, sans migration.
+**RG7 : l'agent voit les matières.** `list_materials(project, search, limit)` lit la
+bibliothèque des matières (`ServiceBibliotheque.matieres`, RG5) — `id`, `name`, `framing`,
+`width`, `height`, `path`, `created`, `collections` — et l'`id` se pose tel quel dans un
+emplacement de recette `{source: "asset", asset: id}` ; aucun sujet n'entre en jeu. Les
+tirages de `generate_tile_material` y sont déjà (ils naissent matières), et une image
+ordinaire s'y déclare par le champ `material` d'`edit_asset`, posé seul, sans retouche.
 
 ## 11 · Risques, et quand les lever → `docs/archi-risques.md`
 
