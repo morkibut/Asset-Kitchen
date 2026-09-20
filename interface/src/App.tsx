@@ -369,6 +369,15 @@ function AtelierApp() {
       return v.livraison ? entrer(ouvert, { genre: "livraison-de-tuiles" }) : ouvert
     })
 
+  /** Les sons du jeu (`RT8`) — **un lieu de la pile, comme les tuiles**, et plus
+   *  un dialogue plein écran gardé à part : `lieux.ts`, genre `sons`, en dit la
+   *  raison. `ouvrirLesSons` ferme d'abord la sortie et les réglages, comme
+   *  `ouvrirLesTuiles` — un jeu qu'on livre ou dont on règle les réglages ne
+   *  doit pas rester ouvert sous un écran qui n'en parle plus. */
+  const sonsOuverts = lieu(pile, "sons")
+  const ouvrirLesSons = (identifiant?: string) =>
+    setPile((p) => entrer(sortir(sortir(p, "sortie"), "regles"), { genre: "sons", ...(identifiant ? { identifiant } : {}) }))
+
   /** Le tour du propriétaire doit-il se dérouler tout seul ? (`B15`)
    *
    *  **Le serveur seul décide**, sur deux faits : personne n'a jamais réglé
@@ -698,7 +707,7 @@ function AtelierApp() {
   const envoiOuvert = dans(pile, "envoi")
   // Une profondeur de réglages ou de livraison occupe la surface centrale.
   // Sa racine reste dans le fil, elle ne monte pas un second écran dessous.
-  const surfaceDisponible = !reglesOuvertes && !installationOuverte && !sortieOuverte && !travailOuvert && !tuilesOuvertes
+  const surfaceDisponible = !reglesOuvertes && !installationOuverte && !sortieOuverte && !travailOuvert && !tuilesOuvertes && !sonsOuverts
   const setEnvoiOuvert = (ouvert: boolean) =>
     setPile((p) => (ouvert ? entrer(p, { genre: "envoi" }) : sortir(p, "envoi")))
   const [envoi, setEnvoi] = useState<Envoi | null>(null)
@@ -1099,7 +1108,6 @@ function AtelierApp() {
   // haut il ne sait rien ; ouvert depuis une rangée vide d'*Images fixes* ou
   // depuis « Fabriquer… », il arrive déjà pointé sur la pose qu'on regardait.
   const [importDuSujet, setImportDuSujet] = useState<{ pose?: string; direction?: string } | null>(null)
-  const [sonsOuverts, setSonsOuverts] = useState<{ identifiant?: string } | null>(null)
   /** Le type que la fenêtre de préparation montre **maintenant** (`GU14`). Elle
    *  s'ouvre sur `preparation.type`, mais le type se change dedans, et seule
    *  elle le sait : `ecranDuGuide` a besoin de savoir si l'on est sur *Un son*. */
@@ -1216,15 +1224,18 @@ function AtelierApp() {
   // livraison se pose sur un jeu ouvert, qui se pose sur la liste. Tester la
   // liste en premier aurait donné son guide aux deux autres.
   //
-  // ⚠️ **Le son n'est pas un lieu, et il avait deux portes sans écran de guide**
-  // (`GU14`). L'atelier des sons (`AtelierSon.tsx`) s'ouvre en dialogue
-  // (`sonsOuverts`) par-dessus n'importe quelle racine — et par-dessus la
-  // fenêtre de préparation, dont *Régler ce son* le rouvre sans la fermer.
-  // *Un son* (`FabricationAudio.tsx`) est le corps de cette fenêtre quand son
-  // type est *Son*. Les deux passent donc **avant tout le reste** : un dialogue
-  // posé par-dessus une racine qu'on testerait après elle rendrait le guide de
-  // la racine du dessous, la panne que `GU7`, `GU12` et `GU13` ont réparée
-  // trois fois. L'atelier d'abord, parce qu'il est au-dessus de la préparation.
+  // ⚠️ **Le son avait deux portes sans écran de guide** (`GU14`). *Un son*
+  // (`FabricationAudio.tsx`) est le corps de la fenêtre de préparation quand
+  // son type est *Son* ; elle reste un dialogue, et passe donc **avant tout le
+  // reste**, pour la même raison que `envoiOuvert` plus loin — un dialogue posé
+  // par-dessus une racine qu'on testerait après elle rendrait le guide de la
+  // racine du dessous, la panne que `GU7`, `GU12` et `GU13` ont réparée trois
+  // fois.
+  //
+  // **L'atelier des sons, lui, n'est plus un dialogue** (`RT8`) : il est devenu
+  // un lieu de la pile — `sonsOuverts`, plus haut, relit `lieu(pile, "sons")`
+  // au lieu d'un `useState` à part — et se teste donc au même rang que les
+  // tuiles, plus bas, pas ici.
   //
   // *Ce que ce rang ne couvre pas :* un travail sonore rouvert depuis le suivi
   // (`travail` → `FenetreDuTravail`, `nature === "audio"`) monte le même
@@ -1282,9 +1293,7 @@ function AtelierApp() {
   // cet écran — la carte, la planche de la galerie, celle de l'atelier de
   // bande, la retouche — n'en sont qu'une seule dans la pile ; un `ou` à lui
   // n'en servirait qu'une.
-  const ecranDuGuide: Explication["ou"] | null = sonsOuverts
-    ? "son"
-    : preparation && !envoiOuvert && typeDePreparation === "son"
+  const ecranDuGuide: Explication["ou"] | null = preparation && !envoiOuvert && typeDePreparation === "son"
     ? "un-son"
     : // **Le seul écran d'où l'argent part** (`GU15`) : il prend la place de
       // tout ce qui est en dessous — `depensesOuvertes`, la racine, la
@@ -1312,6 +1321,11 @@ function AtelierApp() {
           ? "jeu-de-tuiles"
           : tuilesOuvertes
           ? "tuiles"
+          : sonsOuverts
+          ? // Un lieu au même rang que les tuiles, et pour la même raison
+            // (`RT8`) : une surface posée sur la racine d'où l'on vient,
+            // plus un dialogue à tester avant tout le reste.
+            "son"
           : tableauDeBord
           ? "tableau-de-bord"
           : surface === "univers"
@@ -2059,7 +2073,7 @@ function AtelierApp() {
       <NavigationAtelier
         jeu={projetCourant?.nom ?? "Sans jeu"}
         descriptionJeu={`${projetCourant?.assets ?? 0} images dans ce jeu`}
-        actif={installationOuverte || reglesOuvertes ? "reglages" : sortieOuverte ? "livraison" : tuilesOuvertes ? "assets" : surface === "fabrications" ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
+        actif={installationOuverte || reglesOuvertes ? "reglages" : sortieOuverte ? "livraison" : tuilesOuvertes || sonsOuverts ? "assets" : surface === "fabrications" ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
         // **Toutes les familles, pas une seule** (`RP16`) : les emplacements
         // d'images encore en route, et les travaux du serveur qui ne sont ni
         // finis ni annulés — animations, équipements, images locales, vidéos
@@ -2268,6 +2282,38 @@ function AtelierApp() {
           />
         )}
 
+      {/* ── Les sons du jeu (`RT8`) ─────────────────────────────────────────
+          **Un lieu, comme les tuiles juste au-dessus** — la même chaîne de
+          gardes, et pour la même raison : il se pose sur la racine d'où l'on
+          vient, la navigation de gauche reste en place, et la porte qui y
+          mène (*Les sons*, sous « Ailleurs dans le jeu ») reste marquée
+          active, comme celle des tuiles.
+
+          Point dur tranché ici (`RT8`) : ni `onFermer` ni un bouton *Fermer*
+          — exactement comme *Les tuiles*, qui n'en a pas non plus. Un lieu
+          posé sur la pile se quitte en cliquant ailleurs dans la navigation
+          ou le fil d'Ariane, pas par un geste qui lui serait propre ; lui en
+          donner un aurait recréé, en plus petit, le bouton unique du dialogue
+          qu'on vient de retirer. `onLivraisons` seul reste : c'est un aller
+          vers un autre lieu (*Livrer au jeu*), pas une fermeture, exactement
+          comme `onLivraisons` des tuiles ci-dessus. */}
+      {sonsOuverts &&
+        bibliotheque.courant &&
+        !reglesOuvertes &&
+        !installationOuverte &&
+        !sortieOuverte &&
+        !travailOuvert &&
+        !depensesOuvertes &&
+        !envoiOuvert &&
+        !clipOuvert && (
+          <AtelierSon
+            key={bibliotheque.courant}
+            projet={bibliotheque.courant}
+            identifiantInitial={sonsOuverts.identifiant}
+            onLivraisons={() => setPile((p) => entrer(sortir(p, "sons"), { genre: "sortie" }))}
+          />
+        )}
+
       {/* ── Commander un clip, entre la case et la dépense (A9) ────────────
           **La troisième surface d'où l'argent part**, et la V3 l'assume : on ne
           commande pas une animation depuis une barre de saisie faite pour des
@@ -2441,7 +2487,7 @@ function AtelierApp() {
           surFamille={ouvrirLaFamille} surToutesLesFamilles={() => allerA("bibliotheque")}
           surRange={() => void api.arbre().then(setBibliotheque).catch(() => {})}
           surReglages={() => setReglagesDeFamille(true)} surErreur={setPanne}
-          onTuiles={ouvrirLesTuiles} onSons={() => setSonsOuverts({})}
+          onTuiles={ouvrirLesTuiles} onSons={ouvrirLesSons}
           onOuvrir={(id) => { setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
           onCree={fondrePersonnage}
           onPiece={ouvrirLaPiece} onGalerie={() => allerA("galerie")}
@@ -2463,7 +2509,7 @@ function AtelierApp() {
 
       {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "fabrications" && !montageOuvert && (
         <Fabrications projet={bibliotheque.courant} chantier={chantier} clips={clipsDuJeu} personnages={personnages}
-          onSon={(identifiant) => setSonsOuverts({ identifiant })}
+          onSon={ouvrirLesSons}
           onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))}
           onToile={(id) => { if (bibliotheque.courant) void api.poserAssetSurToile(bibliotheque.courant, id).then(async () => { await relireTableau(); allerA("univers") }).catch((e) => echouer(e, "L’image n’a pas pu être posée sur la toile.")) }}
           onCalqueEquipement={(piece, emploi, cible, variante) => setPile(entrer(entrer(poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi, cible, variante }))}
@@ -2490,7 +2536,7 @@ function AtelierApp() {
           setMontageOuvert={setMontageOuvert}
           ouvrirLAtelierDeBande={ouvrirLAtelierDeBande}
           ouvrirLaRetouche={ouvrirLaRetouche}
-          onSon={(identifiant) => setSonsOuverts({ identifiant })}
+          onSon={ouvrirLesSons}
           onSource3D={setSource3Douverte}
           personnages={personnages}
           plan={plan}
@@ -2600,7 +2646,7 @@ function AtelierApp() {
           onPiece={ouvrirLaPiece}
           onGalerie={() => allerA("galerie")}
           onTuiles={ouvrirLesTuiles}
-          onSons={() => setSonsOuverts({})}
+          onSons={ouvrirLesSons}
           onCreer={(famille) => setCreationAssetOuverte(famille)}
           onCommanderPlusieurs={() => setCommanderPlusieursOuvert(true)}
           // Le carnet compte les groupes ; un rangement fait dans la grille
@@ -2717,7 +2763,7 @@ function AtelierApp() {
           onDecouper={(id) => ouvrirLaRetouche(id, "decoupage")}
           onExtraire={(id) => ouvrirLaRetouche(id, "superposition")}
           onLivrer={() => setSortieOuverte(true)}
-          onSon={(identifiant) => setSonsOuverts({ identifiant })}
+          onSon={ouvrirLesSons}
           ouvert={choseOuverte}
           plan={plan}
           // **L'onglet survit au montage de la retouche** (`B25`) : elle prend
@@ -3194,7 +3240,7 @@ function AtelierApp() {
         />
       )}
 
-      {travailOuvert && bibliotheque.courant && <TravailConserve projet={bibliotheque.courant} identifiant={travailOuvert} personnages={personnages} onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))} onToile={async (id) => { await api.poserAssetSurToile(bibliotheque.courant!, id); await relireTableau(); allerA("univers") }} onCalqueEquipement={(piece, emploi, cible, variante) => setPile(entrer(entrer(poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi, cible, variante }))} onFermer={() => setPile((p) => sortir(p, "travail"))} onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))} onBande={(id) => setPile(entrer(poser("codex"), { genre: "bande", bande: id }))} onSon={(identifiant) => setSonsOuverts({ identifiant })} />}
+      {travailOuvert && bibliotheque.courant && <TravailConserve projet={bibliotheque.courant} identifiant={travailOuvert} personnages={personnages} onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))} onToile={async (id) => { await api.poserAssetSurToile(bibliotheque.courant!, id); await relireTableau(); allerA("univers") }} onCalqueEquipement={(piece, emploi, cible, variante) => setPile(entrer(entrer(poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi, cible, variante }))} onFermer={() => setPile((p) => sortir(p, "travail"))} onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))} onBande={(id) => setPile(entrer(poser("codex"), { genre: "bande", bande: id }))} onSon={ouvrirLesSons} />}
 
       {/* **Le tiroir des brouillons** (`RP16`) — une fenêtre partagée, pas un
           lieu : on l'ouvre du pied du carnet, on y reprend un travail, et il se
@@ -3237,7 +3283,7 @@ function AtelierApp() {
         onClip={(id) => { setPreparation(null); ouvrirLeMontage(id) }}
         onBande={(id) => { setPreparation(null); ouvrirLAtelierDeBande(id) }}
         onAsset={(id) => { setPreparation(null); ouvrirLaRetouche(id) }}
-        onSon={(id) => setSonsOuverts({ identifiant: id })}
+        onSon={ouvrirLesSons}
         onLivraisons={() => { setPreparation(null); setSortieOuverte(true) }}
         onFermer={() => { setPreparation(null); void relireProduction() }}
       />}
@@ -3289,7 +3335,6 @@ function AtelierApp() {
            donnait déjà à l'autre import, aux mêmes signatures. */
         onDecouper={(id) => { setImportDuSujet(null); ouvrirLaRetouche(id, "decoupage") }}
         onMonter={(clip) => { setImportDuSujet(null); poserLaRacine("galerie"); setMontageOuvert(clip) }} />}
-      {sonsOuverts && bibliotheque.courant && <CadreDialogue titre="Les sons du jeu" onFermer={() => setSonsOuverts(null)} enfants={<AtelierSon projet={bibliotheque.courant} identifiantInitial={sonsOuverts.identifiant} onFermer={() => setSonsOuverts(null)} onLivraisons={() => { setSonsOuverts(null); setSortieOuverte(true) }} />} />}
       {apercu && <Apercu sujet={apercu} onFermer={fermerApercu} />}
       </div>
     </div>

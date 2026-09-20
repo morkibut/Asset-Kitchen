@@ -122,14 +122,16 @@ export type Explication = {
    *  qui part. Une seule valeur aurait mis les fiches de l'atelier sous le nez
    *  de qui ouvre la liste.
    *
-   *  ⚠️ **Le son a deux valeurs, et ce ne sont pas des genres de `lieux.ts`**
-   *  (`GU14`) : ni l'un ni l'autre n'est un lieu de la pile. `son` est l'atelier
-   *  des sons — la liste, un son ouvert, ses réglages, sa livraison —, un
-   *  dialogue (`sonsOuverts`, `App.tsx`) posé par-dessus n'importe quelle
-   *  racine. `un-son` est le formulaire qui fabrique un son (`FabricationAudio`),
-   *  corps de la fenêtre de préparation quand son type est *Son*. Deux valeurs
-   *  parce qu'on ne fait pas la même chose dans les deux : on y *demande* un
-   *  son, on y *règle* un son déjà reçu. Les quatre fiches `son.*` rangées sous
+   *  ⚠️ **Le son a deux valeurs, et une seule est un genre de `lieux.ts`**
+   *  (`GU14`, puis `RT8`). `son` est l'atelier des sons — la liste, un son
+   *  ouvert, ses réglages, sa livraison. Un dialogue plein écran au départ
+   *  (`sonsOuverts`, `App.tsx`) ; `RT8` en a fait un lieu de la pile (genre
+   *  `sons`, `lieux.ts`), posé sur la racine d'où l'on vient au lieu de la
+   *  recouvrir — comme *Les tuiles* déjà. `un-son` reste, lui, un dialogue :
+   *  c'est le formulaire qui fabrique un son (`FabricationAudio`), corps de la
+   *  fenêtre de préparation quand son type est *Son*. Deux valeurs parce qu'on
+   *  ne fait pas la même chose dans les deux : on y *demande* un son, on y
+   *  *règle* un son déjà reçu. Les quatre fiches `son.*` rangées sous
    *  `galerie` par `GU12` — faute d'un écran — sont revenues ici.
    *
    *  ⚠️ **Quatre valeurs de plus depuis `GU15`** (1/2), et chacune répare un
@@ -3731,7 +3733,9 @@ export const AIDE: Record<string, Explication> = {
   //
   // - `son`, *Les sons* — l'atelier des sons (`AtelierSon.tsx`), avec ses
   //   réglages (`ReglagesSon.tsx`) et la relecture de sa livraison. Un
-  //   dialogue posé par-dessus une racine, pas un lieu de la pile.
+  //   dialogue posé par-dessus une racine à l'écriture de cette fiche ; `RT8`
+  //   en a fait un lieu de la pile (genre `sons`, `lieux.ts`), posé sur la
+  //   racine au lieu de la recouvrir, comme *Les tuiles*.
   // - `un-son`, *Un son* — le formulaire qui fabrique un son
   //   (`FabricationAudio.tsx`, `SonRetro.tsx`, `SerieSon.tsx`), corps de la
   //   fenêtre de préparation quand son type est *Son*.

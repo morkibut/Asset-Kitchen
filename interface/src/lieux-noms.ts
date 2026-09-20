@@ -254,6 +254,11 @@ return (ou, _profondeur, dedans) => {
       return nomsDesTuiles[ou.jeu ?? ""] || "Jeu de tuiles"
     case "livraison-de-tuiles":
       return "Livrer à Godot"
+
+    // Les sons du jeu (`RT8`) — un nom, comme les tuiles : l'écran range lui-même
+    // la liste, un son ouvert et sa livraison, sans profondeur de plus dans la pile.
+    case "sons":
+      return "Les sons"
   }
 }
 }

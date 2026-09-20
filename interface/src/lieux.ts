@@ -217,6 +217,19 @@ export type Lieu =
   | { genre: "tuiles" }
   | { genre: "jeu-de-tuiles"; jeu: string | null; ecran?: "sorte" | "image" }
   | { genre: "livraison-de-tuiles" }
+  // Les sons du jeu (`RT8`) — **un lieu, comme les tuiles juste au-dessus, et
+  // pour la même raison.** Il s'ouvrait en dialogue plein écran, le seul de
+  // tout le produit : il couvrait tout, rendait le reste inerte, et ne
+  // laissait que son propre bouton *Fermer* — la navigation de gauche
+  // disparaissait, et avec elle la porte d'où l'on venait. `TU3` avait déjà
+  // réglé le même défaut pour *Les tuiles* en en faisant un lieu qui se pose
+  // sur la racine d'où l'on vient plutôt qu'une fenêtre par-dessus tout ;
+  // *Les sons* suit maintenant le même chemin.
+  //
+  // `identifiant` porte le son qu'on rouvre directement — depuis la page d'un
+  // sujet, un travail repris, ou l'aperçu d'une livraison — comme `jeu` le
+  // fait pour un jeu de tuiles. Sans lui, l'écran ouvre sur la liste.
+  | { genre: "sons"; identifiant?: string }
   | { genre: "clip"; cible: CibleDuClip }
   | { genre: "montage"; clip: string }
   | { genre: "bande"; bande: string }

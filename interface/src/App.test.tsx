@@ -5191,9 +5191,11 @@ describe("l'infobulle et le guide", () => {
   })
 
   test("les sons : le guide suit l'atelier des sons, posé par-dessus la racine", async () => {
-    // **`GU14`.** `sonsOuverts` est un dialogue, pas un lieu de la pile : avant
-    // que `ecranDuGuide` le teste, ouvrir *Les sons* montrait le guide de la
-    // racine du dessous — le codex, qui ne dit rien d'une coupe ni d'une boucle.
+    // **`GU14`, puis `RT8`.** `sonsOuverts` est devenu un lieu de la pile
+    // (`RT8` : l'atelier des sons quitte le dialogue plein écran pour une
+    // surface, comme les tuiles) ; avant `GU14`, `ecranDuGuide` ne le testait
+    // pas du tout, et ouvrir *Les sons* montrait le guide de la racine du
+    // dessous — le codex, qui ne dit rien d'une coupe ni d'une boucle.
     const { fetchDouble } = serveurDouble()
     // Le double commun ne sert pas la liste des sons : un jeu sans aucun son.
     const fetchAvecSons = vi.fn((url: string, init?: RequestInit) =>

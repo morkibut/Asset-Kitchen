@@ -93,10 +93,11 @@ export function reinitialiserGuide() {
 // `<dialog>` par `showModal()` : le navigateur le pose dans sa *couche
 // supérieure*, qui passe au-dessus de tout élément ordinaire quel que soit son
 // `z-index`, et rend inerte tout ce qui n'est pas dans le dialogue. Sur les
-// écrans posés en dialogue (les sons, la préparation d'une fabrication,
-// l'éditeur de pixels…), presser `?` ouvrait bien l'état du guide — et le volet
-// restait **derrière**, invisible, et n'aurait pas répondu au clic s'il avait
-// été visible. Un `popover` aurait réglé la vue et laissé l'inertie.
+// écrans posés en dialogue (la préparation d'une fabrication, l'éditeur de
+// pixels… — les sons en faisaient partie, avant que `RT8` n'en fasse une
+// surface comme les tuiles), presser `?` ouvrait bien l'état du guide — et le
+// volet restait **derrière**, invisible, et n'aurait pas répondu au clic s'il
+// avait été visible. Un `popover` aurait réglé la vue et laissé l'inertie.
 //
 // Le volet se pose donc **dans** le dialogue modal le plus haut, quand il y
 // en a un : il est alors dans la couche supérieure avec lui, et il reste

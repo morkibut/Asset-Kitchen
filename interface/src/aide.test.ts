@@ -199,6 +199,9 @@ const GENRE_VERS_OU: Record<Genre, string> = {
   tuiles: "tuiles",
   "jeu-de-tuiles": "jeu-de-tuiles",
   "livraison-de-tuiles": "livraison-de-tuiles",
+  // Les sons (`RT8`) : un genre de plus depuis que l'atelier des sons a quitté
+  // le dialogue plein écran pour un lieu de la pile, comme les tuiles.
+  sons: "son",
   clip: "clip",
   montage: "montage",
   bande: "bande",
