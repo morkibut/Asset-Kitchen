@@ -908,6 +908,7 @@ export const AIDE: Record<string, Explication> = {
   "codex.chose.sujet": {
     nom: "Ce qu'il est",
     ou: "sujet",
+    groupe: "La fiche du sujet",
     quoi: "Le texte qui redit à la machine de qui il s'agit, et qui repart avec chaque image qu'on demande de cette chose.",
     change:
       "Il part dans le texte de chaque génération de cette chose, avant le reste. Sans lui, l'appel ne dit pas de quoi il s'agit et la machine invente.",
@@ -917,16 +918,18 @@ export const AIDE: Record<string, Explication> = {
   "codex.chose.style_combat": {
     nom: "Son style de combat",
     ou: "sujet",
-    quoi: "Comment ce personnage se bat — à mains nues, au bâton, à l'arc. Pour un mouvement que le style décrit (une attaque, un repos), c'est son texte qui part à la place de celui du mouvement.",
+    groupe: "La fiche du sujet",
+    quoi: "Comment ce personnage se bat — à mains nues, au bâton, à l'arc.",
     change:
-      "Choisi ici, il passe devant celui d'une pièce portée. Sans choix ni pièce qui en déclare un, le texte du mouvement part seul.",
+      "Pour un mouvement que le style décrit, son texte remplace celui du mouvement et passe devant celui d'une pièce portée. Sans style ni pièce, le texte du mouvement part seul.",
     origine: "toi, ou la pièce qu'il porte en calque, ou aucun",
   },
 
   "codex.chose.habillage": {
     nom: "Ce qui l'habille",
     ou: "sujet",
-    quoi: "Les sept textes de style qui décrivent le monde autour de la chose — le monde, l'époque, le rendu, la vue, le trait, la lumière, la technique.",
+    groupe: "La fiche du sujet",
+    quoi: "Les sept textes de style qui décrivent le monde autour du sujet — monde, époque, rendu, vue, trait, lumière, technique.",
     change:
       "Ils partent avec chaque image. Par défaut ils viennent du jeu ; en réécrire un ici ne vaut que pour cette chose, et le texte remplacé reste lisible en dessous, barré.",
     origine: "le jeu, ou l'ambiance choisie, ou toi",
@@ -935,6 +938,7 @@ export const AIDE: Record<string, Explication> = {
   "codex.chose.exemples": {
     nom: "Ses images d'exemple",
     ou: "sujet",
+    groupe: "La fiche du sujet",
     quoi: "Les images qu'on joint à la demande pour montrer le style visé, et qui sont disponibles pour chaque image de cette chose.",
     change:
       "Rien tout seul. Ce qui part vraiment se coche juste avant de payer — mais une image qui n'est pas retenue ici n'y sera pas proposée.",
@@ -944,6 +948,7 @@ export const AIDE: Record<string, Explication> = {
   "codex.chose.poses": {
     nom: "Ce que le jeu réclame",
     ou: "sujet",
+    groupe: "Cases et planches — sa matrice",
     quoi: "Les attitudes que cette chose doit avoir : repos, marche, course pour un personnage ; fermé, ouvert, vidé pour un coffre.",
     change:
       "Rien à la génération. C'est cette liste qui décide du nombre de cases à remplir, donc de ce que le tableau de droite compte.",
@@ -953,6 +958,7 @@ export const AIDE: Record<string, Explication> = {
   "codex.chose.faites": {
     nom: "Ce qui est fait",
     ou: "sujet",
+    groupe: "Cases et planches — sa matrice",
     quoi: "Les images qui existent déjà pour cette chose, une par attitude remplie.",
     change:
       "Rien du tout, et c'est le point : on regarde, on ne modifie rien et on ne paie rien.",
@@ -962,15 +968,20 @@ export const AIDE: Record<string, Explication> = {
   "codex.chose.matrice": {
     nom: "Sa matrice",
     ou: "sujet",
+    groupe: "Cases et planches — sa matrice",
     quoi: "Le tableau des attitudes de cette chose, avec ce qui les remplit, et il change pendant qu'on règle à gauche.",
     change:
       "Rien à la génération. Ranger une attitude retire sa ligne et son coût — le compte des rangées reste écrit à côté, pour qu'un tableau plein obtenu en rangeant ne passe pas pour un travail fini.",
     origine: "les images faites, comptées par le serveur",
   },
 
+  // **Déplacée sous `ou: "bande"` en GU6** : elle décrit une image du ruban
+  // dans l'atelier d'une bande (`AtelierDeBande.tsx`), au même titre que
+  // `bande.position`, `bande.remplacer` et `bande.pelure`, déjà rangées là —
+  // pas la fiche d'un sujet. Texte inchangé, ce sera le travail de `GU11`.
   "codex.bande.image": {
     nom: "L'image choisie",
-    ou: "sujet",
+    ou: "bande",
     quoi: "Une image de l'animation, et ce qu'on lui a fait à elle seule : de combien elle a été poussée, et de quel clip elle vient.",
     change:
       "Cette image-là, et aucune autre. C'est toute la différence avec les réglages de gauche : ceux-là valent pour l'animation entière, celui-ci ne corrige qu'une pose qui tombe à côté.",
@@ -979,33 +990,42 @@ export const AIDE: Record<string, Explication> = {
       "Les flèches la déplacent d'un pixel du sprite ; avec Maj, de cinq. On peut aussi la faire glisser à la souris.\n\nAux bords, les flèches cessent d'avoir un effet plutôt que de rogner l'image. C'est voulu : une correction qui mangerait un bras ne se verrait pas ici, et se découvrirait dans le jeu.\n\nPendant que l'animation tourne, une flèche pousse l'image qui passe — et cette image devient aussitôt l'image choisie. Ce panneau, lui, ne bouge pas : il reste sur celle qu'on a choisie dans le ruban, parce qu'on le lit avant d'y toucher.\n\nLa remplacer par une autre image du clip ne coûte rien : le clip est déjà payé, et il porte toutes ses images. Une bande peut ainsi prendre ses images dans deux clips différents — chaque image dit alors d'où elle vient.\n\nL'image d'avant, montrée en transparence sous celle-ci, est ce qui permet de juger un déplacement au lieu de le deviner.",
   },
 
-  // ── L'établi — ce qu'on touche à chaque génération ────────────────────────
+  // ── La barre qui paie — ce qu'on touche à chaque génération (GU6) ─────────
+  //
+  // **Pas « l'établi »** : ce mot-là est déjà pris par le tableau des cases
+  // d'un sujet (`codex.chose.matrice`, `EtabliDuSujet.tsx`), un cran plus
+  // haut à l'écran. Ce qui suit est la barre commune aux deux lieux d'où
+  // l'argent part (`BarreQuiPaie.tsx`) — l'établi d'une chose, et le repos de
+  // l'onglet Créer de l'univers.
 
   "reglages.modele": {
     nom: "modèle",
     ou: "sujet",
-    quoi: "Le moteur d'image qui fabriquera la génération, choisi dans une liste où plusieurs fournisseurs se mélangent — chaque ligne dit qui le propose.",
+    groupe: "La barre qui paie",
+    quoi: "Le moteur d'image qui fabriquera la génération, choisi dans une liste où plusieurs fournisseurs se mélangent.",
     change:
       "Le prix, le rendu, et deux plafonds : le nombre de références acceptées et le nombre de variations possibles. Un modèle qui ne peut pas honorer ta demande reste visible et grisé, avec sa raison — jamais remplacé en silence.",
     origine: "les catalogues · chaque ligne dit d'où vient sa fiche",
     long:
-      "Un modèle se nomme par deux choses ensemble : qui le propose, et son nom chez lui. C'est nécessaire depuis qu'il y en a plusieurs — deux fournisseurs peuvent offrir un modèle du même nom, et le nom seul ne dirait plus lequel a fait l'image. Tu le retrouves partout : sur la ligne du choix, sur la fiche d'une image, et dans la liste des dépenses.\n\nTous ne demandent pas la même chose. L'un veut une clé, un autre ne demande rien du tout — et c'est celui-là qui fait qu'une image peut arriver sur une machine où rien n'a été déposé. Ce qui manque à un fournisseur grise ses modèles à lui, et eux seuls ; les autres restent choisissables.\n\nLe catalogue est une photo, pas un flux : il est relu au démarrage et par le bouton Catalogue, et chaque ligne dit si sa fiche vient d'être relue chez le fournisseur ou si elle a été relevée à telle date. Hors ligne, le produit sert la dernière photo reçue — générer reste actif, et c'est le seul endroit du produit où l'on propose puis refuse, assumé, avec la conséquence écrite sous le bouton.\n\nLes réglages propres à un modèle ne sont écrits nulle part dans le code de l'interface : ils sont dessinés depuis ce que le catalogue déclare. Un modèle qui gagne un réglage demain l'affiche demain.",
+      "Un modèle se nomme par deux choses ensemble, qui le propose et son nom chez lui — deux fournisseurs peuvent proposer un modèle du même nom. Ce qui manque à un fournisseur (souvent une clé) grise ses modèles à lui seuls ; les autres restent choisissables. Le catalogue est relu au démarrage ou par le bouton Catalogue ; hors ligne, générer reste possible avec la dernière photo reçue.",
   },
 
   "reglages.styles-locaux": {
     nom: "styles locaux",
     ou: "sujet",
-    quoi: "Les vingt-deux styles de sc-clone, sous la liste des modèles, rangés sous leurs quatre moteurs (Z-Image, FLUX.2 Klein, FLUX.1-dev, SDXL) et repliés par défaut.",
+    groupe: "La barre qui paie",
+    quoi: "Les vingt-deux styles de sc-clone, sous la liste des modèles, rangés par moteur et repliés par défaut.",
     change:
       "Le choisir revient à choisir un modèle : le prix devient nul, le temps remplace le prix, et le genre de référence qu'il accepte — garder le même sujet, ou repeindre par-dessus une image — s'écrit sous son nom.",
     origine: "ComfyUI, relu par le bouton « vérifier » · rien ne se télécharge depuis l'atelier",
     long:
-      "Un style grisé manque un fichier : la ligne dit lequel, et un bouton « installer » suffit quand ComfyUI l'a déjà — sinon la commande de sc-clone qui le pose est écrite à côté, dans « Les workflows locaux ».\n\nLa carte graphique de cette machine tourne gratuitement : le bouton porte un temps mesuré par famille, jamais un prix. Le premier tirage d'une série charge le modèle en mémoire ; le temps ne se multiplie pas pour les suivants.",
+      "Les quatre moteurs sont Z-Image, FLUX.2 Klein, FLUX.1-dev et SDXL. Un style grisé manque un fichier : la ligne dit lequel, et « installer » suffit si ComfyUI l'a déjà. La carte graphique tourne gratuitement : le bouton porte un temps mesuré par famille, jamais un prix ; le premier tirage charge le modèle en mémoire, les suivants sont plus rapides.",
   },
 
   "reglages.proportions": {
     nom: "proportions",
     ou: "sujet",
+    groupe: "La barre qui paie",
     quoi: "Le rapport largeur / hauteur de l'image demandée au fournisseur.",
     change:
       "La forme de ce qui revient, avant tout post-traitement. Les valeurs que le modèle choisi n'accepte pas sont grisées, jamais cachées.",
@@ -1017,28 +1037,37 @@ export const AIDE: Record<string, Explication> = {
   "reglages.variations": {
     nom: "variations",
     ou: "sujet",
+    groupe: "La barre qui paie",
     quoi: "Combien d'images partent d'un seul clic — 1, 2 ou 4.",
     change:
       "Multiplie le prix à l'identique : 4 variations, ce sont 4 appels et 4 fois le coût. Ce ne sont pas 4 images différentes demandées, ce sont 4 tirages de la même demande.",
     origine: "toi · défaut 1",
     long:
-      "Un **lot d'attitudes** les éteint, et c'est l'inverse exact : quatre variations, ce sont quatre appels pour la même demande ; neuf attitudes cochées ensemble, c'est **un seul appel** pour neuf demandes différentes. Les deux ne se combinent pas — c'est tout l'intérêt du lot, et le refus le dit plutôt que de ramener silencieusement les variations à un.\n\nCe qu'un lot risque est écrit à côté du prix : si le nombre d'images revenues n'est pas celui demandé, **rien n'entre** et le lot se relance au prix plein. C'est le seul refus automatique du produit, et il est arithmétique. Tout le reste — ressemblance entre cases, dérive de grille — s'affiche case par case et ne bloque jamais : deux planches sur vingt-quatre, à l'essai qui a décidé de la méthode, avaient le compte juste et répétaient une pose. Le contrat était tenu, la planche sans valeur, et c'est à toi de le voir.",
+      "Un lot d'attitudes fait l'inverse : quatre variations sont quatre appels de la même demande, quand neuf attitudes cochées ensemble ne sont qu'un seul appel pour neuf demandes différentes. Les deux ne se combinent pas. Si le nombre d'images revenues n'est pas celui demandé, rien n'entre et le lot se relance au prix plein — c'est le seul refus automatique du produit, et il est arithmétique.",
   },
 
   "reglages.sujet": {
     nom: "sujet",
     ou: "sujet",
+    groupe: "La barre qui paie",
     quoi: "La nature de ce que tu fabriques — un personnage, un objet tenu en main, un décor — choisie dans le barème de ton univers.",
     change:
       "Trois choses d'un seul geste : quels artworks partent en référence, quel modèle est proposé par défaut, et quelle part de la case le sujet occupera une fois sur grille.",
     origine: "le barème de l'univers · aucun sujet par défaut",
     long:
-      "C'est le seul contrôle que le tableau d'inspiration ajoute à la barre qui paie, et il porte trois conséquences parce que deux taxonomies — une pour l'échelle, une pour la famille — se paieraient deux fois à chaque génération.\n\nSans sujet choisi, seules les planches marquées « tous » partiront en référence : c'est écrit sous le contrôle, en clair, plutôt que laissé à deviner.\n\nLe barème lui-même se pose dans l'univers, côté Réglages du jeu, une fois pour le projet. C'est lui qui dit qu'un personnage remplit 90 % de sa case et une fiole 40 % — et c'est ce qui met un tonneau et un personnage à la même échelle de pixel.",
+      "Sans sujet choisi, seules les planches marquées « tous » partent en référence — c'est écrit sous le contrôle, en clair, plutôt que laissé à deviner. Le barème se pose dans l'univers, côté Réglages du jeu, une fois pour le projet : c'est lui qui dit qu'un personnage remplit 90 % de sa case et une fiole 40 %, et c'est ce qui met un tonneau et un personnage à la même échelle de pixel.",
   },
 
+  // **`atelier.import` et `atelier.import.traitement` déplacées sous
+  // `ou: "galerie"` en GU6** : elles sont accrochées (`useInfobulle`) dans
+  // `Importer` (`Import.tsx`), monté par `BarreOutils.tsx`, lui-même monté
+  // par `Galerie.tsx` seul — le bouton d'import général de la grille, pas
+  // la fenêtre d'import d'un sujet (`ImporterPourUnSujet.tsx`, qui n'a
+  // aujourd'hui aucune fiche accrochée). Textes inchangés, exacts pour leur
+  // vrai écran ; groupés le jour où la galerie sera reprise.
   "atelier.import": {
     nom: "Importer",
-    ou: "sujet",
+    ou: "galerie",
     quoi: "Faire entrer une image de ton disque dans la bibliothèque — par le bouton, ou en la déposant sur la grille.",
     change:
       "Elle devient un asset entier : elle se retouche, se découpe, se réinjecte, s'exporte et se supprime comme celles que tu as payées. Sa fiche dit « importé » et un coût nul, et son nom est celui du fichier.",
@@ -1049,7 +1078,7 @@ export const AIDE: Record<string, Explication> = {
 
   "atelier.import.traitement": {
     nom: "brute ou traitée",
-    ou: "sujet",
+    ou: "galerie",
     quoi: "Ce que le projet appliquera à l'image qui entre : rien du tout, ou sa recette — détourage, taille de pixel, palette.",
     change:
       "Sur « brute », l'image entre aux dimensions du fichier et sa recette reste vide — c'est le même mot que la visionneuse de la fiche, et il veut dire la même chose. Sur « traitée », elle arrive habillée comme une image générée ici.",
@@ -1061,23 +1090,25 @@ export const AIDE: Record<string, Explication> = {
   "atelier.apercu": {
     nom: "Ce qui partira",
     ou: "sujet",
-    quoi: "Le texte exact envoyé au modèle, rangé en trois parties : le contexte — ce que ton jeu est —, les références — ce que chaque image jointe est —, et la demande — ton sujet, les consignes de planche, et la caméra qui ferme le texte.",
+    groupe: "La barre qui paie",
+    quoi: "Le texte exact envoyé au modèle, rangé en trois parties : le contexte, les références, et la demande.",
     change:
-      "Rien à la génération tant que tu le lis — c'est une lecture, pas un réglage. « Reprendre le texte » en fait le contenu du champ : ce que tu écris alors part mot pour mot, sans que l'atelier ajoute quoi que ce soit.",
+      "Rien à la génération tant que tu le lis. Le contexte dit ce qu'est ton jeu, les références ce que chaque image jointe est, la demande porte ton sujet, les consignes de planche et la caméra. « Reprendre le texte » en fait le contenu du champ : ce que tu écris part alors mot pour mot.",
     origine: "composé par l'atelier · l'ordre est celui de l'envoi",
     long:
-      "Il existe pour une raison mesurée : sur trois projets réels, la bible était vide dans les trois, donc rien du style ne partait — et pourtant tout ce qui sortait se ressemblait. Sans voir ce qui part, il n'y a aucun moyen de savoir si ce qu'on obtient vient du prompt ou du post-traitement.\n\nLe texte n'est pas recomposé à l'écran : il est demandé à l'atelier, par le chemin même que la soumission emprunte. Deux compositions écrites à deux endroits finiraient par diverger, et celle qui compte est celle qui part.\n\nReprendre le texte ne touche pas à ton univers : les textes du jeu restent exactement ce qu'ils étaient, et la reprise ne vaut que pour cette génération-là. Ce qui est parti reste attaché à la génération, au même titre que le modèle et le coût — reprendre les réglages d'un asset, des mois plus tard, renvoie donc exactement le même texte.\n\nRien d'autre ne change en mode repris : le sujet choisi décide toujours des artworks qui partent, du modèle proposé et de la part de case ; le gabarit d'un lot part toujours.\n\nCe texte se lit désormais sur **l'écran de confirmation** : le tiroir replié sous le champ a disparu en E14, parce que deux réponses à la même question finissent par n'en avoir qu'une de vraie.",
+      "Reprendre le texte ne touche pas à ton univers : les textes du jeu restent ce qu'ils étaient, et la reprise ne vaut que pour cette génération-là. Le sujet choisi décide toujours des artworks envoyés, du modèle proposé et de la part de case ; le gabarit d'un lot part toujours. Ce texte se relit en entier sur l'écran de confirmation, juste avant de payer.",
   },
 
   "envoi.ecran": {
     nom: "L'écran de confirmation",
     ou: "sujet",
-    quoi: "Ce qui s'ouvre entre le bouton et la dépense. Il montre, ligne par ligne et rangé en trois parties, tout ce qui va être envoyé — le contexte du jeu, les références, la demande — avec un interrupteur sur chacune et son prix à côté.",
+    groupe: "L'écran de confirmation, avant l'envoi",
+    quoi: "Ce qui s'ouvre entre le bouton et la dépense — chaque chose qui va partir, ligne par ligne, avec un interrupteur et son prix.",
     change:
       "Rien tout seul : c'est une relecture. Ce qu'on y éteint ou corrige ne vaut que pour cette génération-là, et rien ne remonte dans les réglages du jeu ni dans l'ambiance.",
     origine: "composé par l'atelier · l'ordre est celui de l'envoi",
     long:
-      "Garder une correction est un **second geste, écrit** : le bouton « garder sur le sujet » l'inscrit sur la fiche du sujet visé, et il ne paraît que là où il a une case où aller. Sans sujet visé, la correction part quand même — ce qui manque est l'endroit où la garder.\n\nLe sujet et la consigne de la pose ne s'éteignent pas, et leur marque grise le dit : sans le premier la génération ne demande rien, sans la seconde l'image qui revient n'appartient à aucune case.\n\nUne case le saute **pour la série en cours**, et il revient dès qu'on change de sujet ou de pose. Il n'y a pas de case « pour toujours » : on la cocherait le premier jour, quand on ne sait pas encore qu'on en aura besoin.\n\nOn y lit aussi, en gris, ce qui n'agira qu'**au retour** — le découpage, la remise sur grille, le détourage. Rien de tout ça ne part au modèle et rien ne coûte un centime, mais l'image qu'on verra revenir n'est pas celle que le modèle envoie, et il vaut mieux le savoir avant.\n\n**Les trois parties sont celles du texte qui part**, et les mots qui les annoncent — CONTEXT, REFERENCES, REQUEST — partent avec, en anglais, comme les intitulés de la bible. Chaque image jointe porte son numéro sur sa ligne, et le même numéro dans le texte : « Image 3 » à l'écran est « Image 3 » chez le modèle. La caméra reste la dernière phrase, parce qu'un modèle d'image pondère la fin — trente images payées l'ont établi.\n\n**Ce rangement ne promet aucune image meilleure**, et c'est mesuré : cinq façons de ranger ont été tirées, aucune n'a battu le texte d'avant. Ce qu'il donne à coup sûr est un texte qu'on relit sans démêler un pavé.",
+      "« Garder sur le sujet » inscrit la correction sur sa fiche ; sans sujet visé, elle part quand même, mais n'a nulle part où se garder. Le sujet et la pose ne s'éteignent pas. Une case peut sauter la relecture pour la série en cours ; elle revient au changement de sujet ou de pose — pas de case « pour toujours ». Ce qui n'agit qu'au retour (découpage, grille, détourage) est en gris.",
   },
 
   // ── Le calibrage ──────────────────────────────────────────────────────────
@@ -1096,18 +1127,20 @@ export const AIDE: Record<string, Explication> = {
   "etabli.calibrage": {
     nom: "Le calibrage",
     ou: "sujet",
-    quoi: "Les poses d'une même chose ne sortent pas toutes à la même hauteur, et cet outil les remet toutes à la même — sans rien redessiner et sans rien payer.",
+    groupe: "Le calibrage",
+    quoi: "Les poses d'une même chose ne sortent pas toutes à la même hauteur ; cet outil les remet à la même, sans rien redessiner ni payer.",
     change:
       "Il réécrit la taille rendue des poses qu'on lui désigne. Le défaut qu'il corrige est mesuré : six poses du même personnage, même recette, sont sorties à 64, 60, 64, 53, 64 et 43 pixels de haut — un bras tendu élargit la boîte du sujet, et la mise sur grille rétrécit tout le reste.",
     origine:
       "la matrice de l'établi, qui marque en doré les poses hors taille commune",
     long:
-      "Il travaille sur toutes les poses à la fois, et c'est pour ça qu'il n'est pas dans la barre des tables : la barre parle de l'image ouverte, lui écrit dans les autres.\n\nIl n'écrit que dans l'**occupation**, qui existait déjà et qui est une part de la case : c'est ce qui fait qu'un changement de taille de case ne défait aucun calage. Et il n'épingle pas — un calage n'est pas une main posée sur une image.\n\nIl ne coûte rien : aucun appel payant ne part d'ici.",
+      "Il travaille sur toutes les poses à la fois — la barre des tables parle de l'image ouverte, lui écrit dans les autres, donc il vit à part. Il n'écrit que dans l'occupation, une part de la case : changer la taille de la case ne défait donc aucun calage. Il n'épingle pas, et ne coûte rien : aucun appel payant ne part d'ici.",
   },
 
   "calibrage.occupation": {
     nom: "occupation",
     ou: "sujet",
+    groupe: "Le calibrage",
     quoi: "La part de la case que la chose occupe en hauteur — à cent pour cent elle touche le haut et le bas, à quatre-vingts elle flotte.",
     change:
       "La taille à laquelle elle apparaîtra dans le jeu, et rien d'autre. Comme c'est une part et non un nombre de pixels, changer la taille de la case plus tard ne défait aucun calage.",
@@ -1121,6 +1154,7 @@ export const AIDE: Record<string, Explication> = {
   "calibrage.decalage": {
     nom: "décalage",
     ou: "sujet",
+    groupe: "Le calibrage",
     quoi: "De combien la chose est poussée à gauche ou à droite dans sa case.",
     change:
       "Où elle se trouve dans la case, pas sa taille. Il sert à recentrer une pose dont le geste déporte la silhouette — un bras tendu, une arme levée.",
@@ -1130,6 +1164,7 @@ export const AIDE: Record<string, Explication> = {
   "calibrage.reference": {
     nom: "la référence",
     ou: "sujet",
+    groupe: "Le calibrage",
     quoi: "La pose à laquelle on compare les autres à l'œil — c'est presque toujours le repos, la première qu'on a dessinée.",
     change:
       "Rien du tout : elle décide seulement quelle silhouette est montrée à demi effacée dans l'empilement. Elle ne décide pas de la hauteur commune.",
@@ -1139,6 +1174,7 @@ export const AIDE: Record<string, Explication> = {
   "calibrage.mise_de_cote": {
     nom: "mettre de côté",
     ou: "sujet",
+    groupe: "Le calibrage",
     quoi: "Sortir une pose du calage commun — on le fait pour une pose couchée ou accroupie, qui est basse pour de bonnes raisons.",
     change:
       "Elle cesse de tirer la hauteur commune vers le bas, donc les autres cessent d'être rapetissées à cause d'elle. Sa case, elle, se remplit et se compte comme avant.",
@@ -2264,16 +2300,18 @@ export const AIDE: Record<string, Explication> = {
   "clip.depart": {
     nom: "L'image de départ",
     ou: "sujet",
+    groupe: "Commander un clip",
     quoi: "La première image du clip — celle que le modèle va animer, et il n'en prend qu'une.",
     change:
       "Tout ce à quoi le clip ressemblera. **Elle est obligatoire et ne cède jamais** : sans elle il n'y a pas d'appel du tout, là où les images jointes d'une génération ordinaire s'effacent quand le modèle n'a plus de place. Le clip n'hérite de rien d'autre — ni des textes du jeu, ni de son ambiance.",
     origine: "l'atelier propose · tu changes d'un clic",
-    long: "L'atelier propose **l'image de la case visée** quand elle en porte une : l'attitude et l'angle ont déjà été validés en fixe, et le clip les suit. Sinon il propose le **portrait** du personnage — la première image qu'il montre de lui, celle que tu as promue en référence, sinon le corps retenu de sa première attitude.\n\nCe n'est qu'une proposition : aucun automatisme ne sait tout, et n'importe quelle image de ta bibliothèque la remplace d'un clic.\n\nCe qui part n'est pas le sprite tel quel : il est agrandi sur la toile du format demandé. Un sprite de soixante-quatre pixels envoyé à un modèle qui rend du 480 lui demanderait d'inventer tout ce qu'il ne voit pas.",
+    long: "L'atelier propose l'image de la case visée si elle en a une, sinon le portrait du personnage — l'image promue en référence, ou le corps de sa première attitude. Ce n'est qu'une proposition : n'importe quelle image de ta bibliothèque la remplace d'un clic. Ce qui part n'est pas le sprite tel quel : il est agrandi sur la toile du format demandé, sinon le modèle inventerait ce qu'il ne voit pas.",
   },
 
   "clip.format": {
     nom: "Le format du clip",
     ou: "sujet",
+    groupe: "Commander un clip",
     quoi: "Sa durée, ses proportions et sa taille — les trois choses qui décident du prix.",
     change:
       "Le prix, à chaque cran. Un modèle vidéo se facture au **jeton vidéo** — hauteur × largeur × images par seconde × durée —, donc la surface compte autant que le temps : le carré coûte près de moitié moins que le format large, et il cadre mieux un personnage seul.",
@@ -2284,36 +2322,40 @@ export const AIDE: Record<string, Explication> = {
   "clip.lot": {
     nom: "Combien de clips",
     ou: "sujet",
+    groupe: "Commander un clip",
     quoi: "Le nombre de clips que ce geste lance d'un coup. Un est le défaut.",
     change:
       "Le prix, multiplié d'autant, et le bouton l'annonce avant. **Chacun est une dépense à part** : quatre clips coûtent quatre fois, et l'écran des dépenses le dira quatre fois — y compris pour ceux que tu jetteras.",
     origine: "toi · un clip",
-    long: "Un même texte ne rend jamais deux fois le même clip. En lancer plusieurs et n'en garder qu'un est le geste ordinaire ici, et il tient en un clic : *garder celui-ci* écarte les autres du même lot.\n\nLes clips écartés quittent la galerie, **jamais le journal**. C'est le premier invariant du produit, et il compte le plus ici : un lot de quatre coûte quatre fois, et n'en voir plus qu'un au journal ferait croire qu'on a payé une fois.\n\nRien n'expire : un clip écarté est toujours là, et *les rendre* marche quand tu veux — contrairement à une image jetée, dont les octets s'effacent après quelques secondes.",
+    long: "Un même texte ne rend jamais deux fois le même clip : en lancer plusieurs et n'en garder qu'un est le geste ordinaire, et « garder celui-ci » écarte les autres du même lot. Les clips écartés quittent la galerie, jamais le journal — un lot de quatre coûte quatre fois, et le journal le montre. Rien n'expire : un clip écarté reste là, et se rend quand tu veux, contrairement à une image jetée.",
   },
 
   "clip.prix": {
     nom: "Le prix du clip",
     ou: "sujet",
+    groupe: "Commander un clip",
     quoi: "Ce que le clip devrait coûter, avec la formule qui produit ce chiffre.",
     change:
       "Rien à ce qui part. C'est une **borne haute** affichée avant l'envoi : ce qui s'enregistre après est le montant que le fournisseur a facturé, et l'écart mesuré sur treize clips va de quatre pour cent de plus à cinquante-huit pour cent de moins.",
     origine: "relu chez le fournisseur, à chaque changement de format",
-    long: "La formule est là parce qu'un prix vidéo se **calcule** au lieu de se lire dans une grille : sans elle, le montant serait à croire sur parole. Elle dit le tarif, la surface, la cadence facturée et la durée — de quoi refaire le calcul et le vérifier sur la page du modèle.\n\nUn modèle dont le tarif n'a pas pu être relu est grisé avec sa raison. Ce n'est pas du zèle : un clip se fait attendre deux minutes, et proposer sans savoir ce qu'on engage serait proposer à l'aveugle.\n\n**Un des modèles de la liste ne coûte rien** : il tourne sur la carte graphique de cette machine. Ce qu'il coûte est du temps, et le bouton l'annonce à la place du montant — la règle *rien ne part sans que ce que ça coûte soit annoncé* ne disparaît pas, elle change d'unité. Ce temps ne se multiplie pas comme un prix : le premier clip charge le modèle en mémoire, les suivants sont plus courts.",
+    long: "La formule dit le tarif, la surface, la cadence facturée et la durée — de quoi vérifier le calcul sur la page du modèle. Un modèle dont le tarif n'a pas pu être relu est grisé avec sa raison : un clip se fait attendre deux minutes, proposer sans le savoir serait à l'aveugle. Un modèle de la liste ne coûte rien : il tourne sur cette machine, le bouton annonce un temps à la place d'un prix.",
   },
 
   "clip.moteur": {
     nom: "La carte de cette machine",
     ou: "sujet",
+    groupe: "Commander un clip",
     quoi: "Ce que ton ordinateur peut faire lui-même, et ce qu'il lui manque pour ça.",
     change:
       "Rien à ce qui part. Ce panneau ne dépense jamais d'argent — il regarde ce que l'application du moteur a sur son disque, et il te dit si le modèle gratuit est utilisable maintenant.",
     origine: "relu à chaque ouverture de cet écran",
-    long: "Trois choses peuvent manquer, et elles ne se réparent pas de la même façon.\n\n**L'application du moteur n'est pas ouverte.** C'est la seule des trois qui empêche : rien ne peut partir, et l'atelier ne sait pas ouvrir une fenêtre à ta place. Ouvre-la, reviens ici, le grisé tombe tout seul — le relevé se refait à chaque fois.\n\n**Des fichiers manquent.** Le modèle reste choisissable : l'atelier sait les rapatrier, et il te dit lesquels, combien ils pèsent et sous quelle licence **avant** que tu lances quoi que ce soit. C'est une question qu'on se pose avant, jamais après : ce qui descend là finira dans un jeu que tu vends.\n\n**Le greffon qui garde les gros pixels manque.** Simple avertissement — le clip sortira, il sortira lissé. Un clip lissé se juge à l'œil ; un refus ne se juge pas.\n\nUn téléchargement coupé se reprend là où il s'est arrêté : relance, rien n'est perdu.",
+    long: "Trois choses peuvent manquer. L'application du moteur fermée empêche tout : ouvre-la, reviens, le grisé tombe seul. Des fichiers manquants laissent le modèle choisissable — l'atelier les rapatrie, en disant poids et licence avant de lancer quoi que ce soit. Le greffon des gros pixels manquant n'est qu'un avertissement : le clip sort lissé, et un téléchargement coupé reprend où il s'est arrêté.",
   },
 
   "clip.mesure": {
     nom: "Ce qui est mesuré",
     ou: "sujet",
+    groupe: "Commander un clip",
     quoi: "Ce que ce dépôt-ci a observé du modèle en payant ses propres essais, et rien d'autre.",
     change:
       "Rien à ce qui part. C'est ce qui te permet de choisir en sachant sur quoi tu t'appuies — **aucun modèle proposé n'atteint la barre des huit tirages** : ce sont des propositions étayées, pas un arbitrage clos.",
@@ -2324,21 +2366,23 @@ export const AIDE: Record<string, Explication> = {
   "clip.liste": {
     nom: "La liste de modèles",
     ou: "sujet",
+    groupe: "Commander un clip",
     quoi: "L'ordre dans lequel les modèles se présentent, et le filtre qui range ce qui ne peut pas partir.",
     change:
       "Ce que tu lis d'abord, et à quel point la liste te laisse tranquille. **L'ordre vient du serveur** — le modèle gratuit en tête, puis les payants du moins cher au plus cher pour la demande courante — et l'interrupteur, allumé, ne montre que ce qui peut partir.",
     origine: "le serveur trie · tu filtres",
-    long: "Le prix d'un clip change avec la durée, le format et la résolution : le tri suit cette demande-là, au même endroit où le prix se calcule, et il n'y a pas de règle de tri à l'écran — deux endroits qui trient finiraient par ne plus trier pareil.\n\nL'interrupteur *seulement ce qui peut partir* est allumé par défaut : dans un atelier sans clé, vingt-huit cartes grisées avaleraient la liste. Éteint, elles reparaissent, intercalées par prix, et chacune se déplie pour lire pourquoi elle ne peut pas partir.\n\nUne carte repliée ne montre que le nom et l'estimation — c'est tout ce qu'il faut pour comparer. Le détail, le pli l'ouvre d'un geste à lui, distinct du geste qui choisit, et il reste possible sur une carte grisée : seul le choix est interdit, la lecture ne l'est jamais.",
+    long: "Le tri suit le prix du clip en cours (durée, format, résolution) — pas de règle à part, pour que deux endroits ne finissent pas par trier différemment. « Seulement ce qui peut partir » est allumé par défaut ; éteint, les cartes grisées reparaissent, chacune dépliable pour lire pourquoi elle ne peut pas partir. Une carte repliée montre son nom et son estimation — assez pour comparer.",
   },
 
   "clip.confirmation": {
     nom: "Ce qui part avec le clip",
     ou: "sujet",
+    groupe: "Commander un clip",
     quoi: "Le tiroir qui s'ouvre entre « Commander ce clip » et la dépense : la dernière relecture, corrigeable.",
     change:
       "Ce qui va partir. **Le texte, mot pour mot, et l'image de départ — rien d'autre.** Une correction faite ici vaut pour cet appel seulement, et ne touche jamais au mouvement de la bibliothèque.",
     origine: "le mouvement choisi et l'image de départ · ta correction éventuelle",
-    long: "Un clip n'emporte qu'une image et un texte : un modèle vidéo n'en accepte qu'une, et aucun plafond ne la fait céder. L'image se **change**, jamais elle ne se retire — proposer un interrupteur qui ne voudrait rien dire serait un mensonge de forme, et le tiroir le dit en toutes lettres.\n\nLe texte se **corrige pour cet appel** : la correction part, le mouvement de la bibliothèque ne bouge pas, et *remettre le texte du mouvement* le redonne intact. Le corriger pour tous les clips suivants se fait dans les Réglages, là où il s'écrit — une correction durable est un second geste, comme partout dans le produit.\n\nLe bouton porte le montant du **lot** — chacun des N clips se paie, y compris ceux qu'on jettera —, ou le temps, chez le moteur de la maison. Rien n'est consommé tant qu'il n'est pas pressé.",
+    long: "Un clip n'emporte qu'une image et un texte, jamais plus : l'image se change, elle ne se retire pas. Le texte se corrige pour cet appel seul — le mouvement de la bibliothèque ne bouge pas, « remettre le texte » le redonne intact ; le corriger pour tous les clips suivants se fait dans les Réglages. Le bouton porte le montant du lot, ou le temps chez le moteur de la maison.",
   },
 
   "clip.fiche": {
@@ -2363,9 +2407,14 @@ export const AIDE: Record<string, Explication> = {
     long: "Une bande se garde sous un nom, toujours : c'est la seule chose que l'écran exige.\n\nLa case qu'elle remplit, elle, est facultative. **Une bande sans case est un brouillon, et un brouillon ne bloque rien** — tu gardes d'abord, tu ranges ensuite, comme partout ailleurs dans l'atelier.",
   },
 
+  // **`bande.main` et `bande.historique` déplacées sous `ou: "bande"` en
+  // GU6** : la Table de retouche → Main et l'historique de gestes vivent
+  // dans le même atelier d'une bande que `bande.position` et
+  // `bande.remplacer`, déjà rangées là — pas la fiche d'un sujet. Textes
+  // inchangés, ce sera le travail de `GU11`.
   "bande.main": {
     nom: "Retoucher une frame à la main",
-    ou: "sujet",
+    ou: "bande",
     quoi: "Peindre ou gommer la frame affichée, avec son propre masque et ses calques de dessin.",
     change: "Une seule frame. Le début du trait arrête la lecture sur l’image touchée ; les autres frames gardent leurs retouches.",
     origine: "atelier de l’animation · Table de retouche → Main",
@@ -2373,7 +2422,7 @@ export const AIDE: Record<string, Explication> = {
   },
   "bande.historique": {
     nom: "Défaire et refaire une correction",
-    ou: "sujet",
+    ou: "bande",
     quoi: "Revenir sur les corrections de la session, puis les rétablir.",
     change: "Le montage, les recettes, la Main, la cadence et la boucle. La lecture et le zoom ne créent pas d’étape dans cet historique.",
     origine: "Défaire / Refaire · Ctrl + Z / Ctrl + Maj + Z · Ctrl + S pour enregistrer",
@@ -2465,7 +2514,10 @@ export const AIDE: Record<string, Explication> = {
     // animation se règle dans son atelier, qui s'ouvre depuis la matrice d'un
     // personnage. Le sommaire du guide envoyait encore chercher au mauvais
     // endroit.
-    ou: "sujet",
+    // **Déplacée sous `ou: "bande"` en GU6** : elle décrit l'atelier d'une
+    // bande (`AtelierDeBande.tsx`), au même titre que ses voisines
+    // `bande.cadre` et `bande.vitesse` — pas la fiche d'un sujet.
+    ou: "bande",
     quoi: "Ce qu'on fait aux images du clip pour en tirer des sprites : détourer, réduire, limiter les couleurs.",
     change:
       "L'aspect de la bande, et rien d'autre. **Elle part de celle du jeu et ne s'y substitue jamais** : ce que tu changes ici s'écrit sur cette bande-là, ton jeu ne bouge pas, et la bande suivante repart du jeu.",
@@ -2494,9 +2546,12 @@ export const AIDE: Record<string, Explication> = {
     long: "Effacer une bande n'efface ni le clip ni ses images : un découpage raté ne coûte rien. C'est toute la différence avec l'autre moitié de l'atelier, où jeter une image est jeter de l'argent.\n\nLe prix par bande est le seul chiffre que la version ne connaissait pas d'avance : combien de clips faut-il pour une animation utilisable. Il se remplit à l'usage, ici.",
   },
 
+  // **`bande.chutier` et `bande.montage` déplacées sous `ou: "bande"` en
+  // GU6** : toutes deux accrochées dans `AtelierDeBande.tsx`, au même titre
+  // que `bande.gardees` juste au-dessus — pas la fiche d'un sujet.
   "bande.chutier": {
     nom: "Le chutier",
-    ou: "sujet",
+    ou: "bande",
     quoi: "La réserve d'une animation : les images mises de côté, pas encore posées dans le ruban.",
     change:
       "Ce que tu retires du ruban y va **avec sa recette**, au lieu de disparaître. Retirer cesse d'être un geste qu'on hésite à faire : l'image est à côté, elle se repose où tu veux, et rien n'est perdu.",
@@ -2507,7 +2562,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bande.montage": {
     nom: "Reprendre le montage",
-    ou: "sujet",
+    ou: "bande",
     quoi: "Rouvrir la pellicule du clip sur une animation déjà gardée, pour en changer les images retenues.",
     change:
       "Ce que l'animation contient. Ce que tu gardes **retrouve ses réglages** — sa poussée au pixel, sa recette à elle — et ce que tu laisses tombe au chutier. Rien n'est perdu, et tu n'as rien à reposer de mémoire.",

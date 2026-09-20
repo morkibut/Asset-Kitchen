@@ -192,8 +192,15 @@ Chaque tranche ci-dessous porte les **mêmes six critères**, et ils ne sont pas
 - [x] Les essais de `GU3` passent au vert **pour cet écran**.
 
   *(Vérifié pour `GU5` — les soixante-treize fiches de la retouche, retirées et complétées à
-  soixante-cinq. Les six autres tranches du tableau ci-dessous n'ont pas encore été reprises,
-  et remettront cette liste à décocher le temps de leur propre passe.)*
+  soixante-cinq. Vérifié aussi pour `GU6` — la fiche d'un sujet, dans le même style : six
+  zones réelles (la fiche, sa matrice, la barre qui paie, l'écran de confirmation, le
+  calibrage, commander un clip), et huit des trente-cinq fiches sorties de l'écran plutôt
+  que réécrites sur place — deux vers `ou: "galerie"` (l'import général, accroché dans
+  `Import.tsx`/`BarreOutils.tsx`, pas dans la fenêtre d'import d'un sujet), six vers
+  `ou: "bande"` (l'atelier d'une bande, `AtelierDeBande.tsx`, déjà le foyer de leurs
+  voisines) — laissant vingt-sept fiches propres à cet écran. Les six autres tranches du
+  tableau ci-dessous n'ont pas encore été reprises, et remettront cette liste à décocher le
+  temps de leur propre passe.)*
 
 | Tranche | Écran | Fiches aujourd'hui |
 |---|---|---|
@@ -222,6 +229,24 @@ table Main. Sept fiches mortes retirées, une par une notées dans le relevé
 tête de la table Retournement (`etape.retournement`, qui décrit son geste général comme les
 sept autres tables décrivent le leur). Les soixante-treize fiches d'origine sont aujourd'hui
 **soixante-cinq**, et les six critères ci-dessus tiennent sur l'ensemble.
+
+→ `GU6` réécrit la fiche d'un sujet sous six zones, dans l'ordre où l'écran les montre : la
+fiche du sujet (nom, style de combat, habillage, images d'exemple) · cases et planches, sa
+matrice (ce que le jeu réclame, ce qui est fait, la matrice elle-même — trois fiches sans
+bulle avant cette passe, jamais câblées mais toujours vraies) · la barre qui paie (modèle,
+styles locaux, proportions, variations, sujet, l'aperçu de ce qui partira) · l'écran de
+confirmation, avant l'envoi · le calibrage · commander un clip. Onze fiches sans bulle
+relues une par une : toutes décrivent un réglage encore présent dans le code, donc réécrites
+et gardées, aucune retirée. Huit fiches mal rangées trouvées en lisant le code, comme
+`tables.png` et `bande.source` l'étaient en `GU5` : `atelier.import` et
+`atelier.import.traitement` décrivent le bouton d'import général de la galerie
+(`Import.tsx`, monté par `BarreOutils.tsx` dans `Galerie.tsx`), jamais la fenêtre d'import
+d'un sujet (`ImporterPourUnSujet.tsx`, qui n'a aucune fiche) — déplacées vers `ou:
+"galerie"`. `codex.bande.image`, `bande.main`, `bande.historique`, `bande.recette`,
+`bande.chutier` et `bande.montage` décrivent l'atelier d'une bande (`AtelierDeBande.tsx`),
+au même titre que leurs voisines déjà rangées sous `ou: "bande"` — déplacées avec elles,
+texte inchangé, ce sera le travail de `GU11`. Les trente-cinq fiches d'origine sont
+aujourd'hui **vingt-sept**, et les six critères ci-dessus tiennent sur l'écran restant.
 
 ---
 
