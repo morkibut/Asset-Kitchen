@@ -814,6 +814,7 @@ const asset = (
     consomme: 0.0245,
     unite: "usd",
     epingle: false,
+    matiere: false,
     projet: "bac-a-sable",
     collection: null,
     parent: null,

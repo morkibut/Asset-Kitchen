@@ -46,6 +46,7 @@ function image(surplus: Partial<Asset> & { identifiant: string }): Asset {
     lot: null,
     personnage_supprime: false,
     epingle: false,
+    matiere: false,
     projet: "le-marais",
     collection: null,
     parent: null,

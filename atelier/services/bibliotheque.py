@@ -70,6 +70,13 @@ ANNULATION_S = 8.0
 # plafond ne borne que ce qu'un seul filtre peut rendre, jamais la bibliothèque.
 PAR_DEFAUT = 200
 
+# RG6 : la phrase d'un refus, écrite une fois — l'écran l'affiche telle quelle,
+# et la fiche d'une image en dit la première moitié sans attendre le refus.
+REFUS_MATIERE_D_UN_SUJET = (
+    "Cette image est rangée dans un sujet : sors-la de son sujet d'abord, ou "
+    "génère la matière depuis l'écran des tuiles."
+)
+
 
 class ProjetInconnu(ErreurAtelier):
     code = "projet_inconnu"
@@ -738,15 +745,47 @@ class ServiceBibliotheque:
             raise ProjetInconnu(projet, [p.identifiant for p in self.projets()])
         return self._base.assets(projet=projet, matiere=True, limite=limite)
 
-    def declarer_matiere(self, identifiant: str, valeur: bool) -> Asset:
+    def declarer_matiere(
+        self, identifiant: str, valeur: bool, projet: str | None = None
+    ) -> Asset:
         """Poser — ou retirer — la marque « matière » sur une image existante.
 
         **Le « en un geste » de RG6** : nulle création de sujet, nul champ de
         plus qu'un booléen sur l'image déjà là. La marque décide de ce qui
         entre dans la bibliothèque, jamais de ce qu'un jeu de tuiles accepte —
         `_asset_valide` (`atelier/services/tuiles.py`) reste ouvert à toute
-        image du projet, marquée ou non."""
+        image du projet, marquée ou non.
+
+        **Deux refus, tous deux en 409 (`RangementRefuse`), et un seul sens.**
+
+        - *Une image qui porte un sujet ne devient pas matière* : la marque
+          dit « ingrédient, sans sujet » (RG5 §4), et l'image dirait le
+          contraire. Elle ne le devine pas et ne détache pas l'image à la
+          place de l'auteur : la phrase dit quoi faire. **Retirer la marque ne
+          refuse jamais pour cette raison** — c'est la sortie, et une image
+          qui porterait les deux (née avant RG5) doit pouvoir la prendre.
+        - *Une image qui n'est pas de ce projet* : `projet` est celui de
+          l'adresse. Sans ce contrôle, `PUT /projects/a/materials/{image de b}`
+          marquerait une image de `b` et la ferait paraître dans une
+          bibliothèque qui n'est pas celle qu'on croyait toucher. Une image
+          hors projet (`projet` nul) n'a pas de bibliothèque où entrer : la
+          marque serait posée sans que rien ne la liste — refusée aussi, mais
+          pas à la retirer, pour qu'une marque orpheline se nettoie."""
+        if projet is not None and self._base.lire_projet(projet) is None:
+            raise ProjetInconnu(projet, [p.identifiant for p in self.projets()])
         asset = self._trouver(identifiant)
+        if projet is not None and asset.projet is not None and asset.projet != projet:
+            raise RangementRefuse(
+                "Cette image est rangée dans un autre jeu : ouvre ce jeu pour "
+                "la déclarer matière."
+            )
+        if projet is not None and asset.projet is None and valeur:
+            raise RangementRefuse(
+                "Cette image n'est dans aucun jeu : range-la d'abord dans "
+                "celui-ci, puis déclare-la matière."
+            )
+        if valeur and asset.personnage:
+            raise RangementRefuse(REFUS_MATIERE_D_UN_SUJET)
         asset.matiere = valeur
         self._assets.sauver(asset)
         self._annoncer()

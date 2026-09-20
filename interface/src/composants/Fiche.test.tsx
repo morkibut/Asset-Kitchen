@@ -13,10 +13,11 @@
 // présence conditionnée par la porte qu'`App` lui donne, et le geste qu'il
 // déclenche.
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-import { api, UNIVERS_VIDE, type Asset, type Generation, type Recette } from "../api"
+import { api, Refus, UNIVERS_VIDE, type Asset, type Generation, type Recette } from "../api"
+import { matieres } from "../api-tuiles"
 import { Fiche } from "./Fiche"
 
 const RECETTE_VIDE: Recette = {
@@ -58,6 +59,7 @@ const UN_ASSET: Asset = {
   lot: null,
   personnage_supprime: false,
   epingle: false,
+  matiere: false,
   projet: "bac-a-sable",
   collection: null,
   parent: null,
@@ -172,5 +174,100 @@ describe("la fiche — la graine d'une image locale (défaut 6 de la relecture d
     await new Promise((r) => setTimeout(r, 0))
     expect(screen.queryByText(/^graine /)).not.toBeInTheDocument()
     vi.unstubAllGlobals()
+  })
+})
+
+describe("la fiche — ranger l'image dans les matières du jeu (RG6)", () => {
+  const PHRASE = "Cette image est rangée dans un sujet : sors-la de son sujet d'abord."
+  const RANGER = { name: "Ranger dans les matières" }
+  const RETIRER = { name: "Retirer des matières" }
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("essai : aucun serveur"))))
+  })
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const fiche = (asset: Asset, onErreur: (r: string) => void = () => {}) => (
+    <Fiche
+      asset={asset}
+      univers={UNIVERS_VIDE}
+      plan={[]}
+      personnages={[]}
+      onFermer={() => {}}
+      onErreur={onErreur}
+      onReinjecter={() => {}}
+      onReglages={() => {}}
+      onSupprimer={() => {}}
+      onRetoucher={() => {}}
+      onOuvrir={() => {}}
+    />
+  )
+  const reponse = { identifiant: "aaaa1111-0", nom: "un tonneau", largeur: 8, hauteur: 8, apercu: "", cadrage: "", cree_le: 1, collections: [] }
+
+  test("une image ordinaire du jeu se range en un geste, et le geste inverse prend la place du libellé", async () => {
+    const declarer = vi.spyOn(matieres, "declarer").mockResolvedValue(reponse)
+    render(fiche(UN_ASSET))
+    expect(screen.queryByRole("button", RETIRER)).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", RANGER))
+    // Le PUT part avec le projet de l'image, son identifiant, et la valeur voulue.
+    await waitFor(() => expect(declarer).toHaveBeenCalledWith("bac-a-sable", "aaaa1111-0", true))
+    expect(await screen.findByRole("button", RETIRER)).toBeInTheDocument()
+    expect(screen.queryByRole("button", RANGER)).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", RETIRER))
+    await waitFor(() => expect(declarer).toHaveBeenLastCalledWith("bac-a-sable", "aaaa1111-0", false))
+    expect(await screen.findByRole("button", RANGER)).toBeInTheDocument()
+    expect(declarer).toHaveBeenCalledTimes(2)
+  })
+
+  test("le libellé suit l'image quand le flux la change ailleurs", () => {
+    const vue = render(fiche(UN_ASSET))
+    expect(screen.getByRole("button", RANGER)).toBeInTheDocument()
+    vue.rerender(fiche({ ...UN_ASSET, matiere: true }))
+    expect(screen.getByRole("button", RETIRER)).toBeInTheDocument()
+    vue.rerender(fiche({ ...UN_ASSET, matiere: false }))
+    expect(screen.getByRole("button", RANGER)).toBeInTheDocument()
+  })
+
+  test("une image rangée dans un sujet ne propose pas le geste : elle dit pourquoi, et rien ne part", () => {
+    const declarer = vi.spyOn(matieres, "declarer")
+    render(fiche({ ...UN_ASSET, personnage: "pelerin" }))
+    expect(screen.getByText(PHRASE)).toBeInTheDocument()
+    const bouton = screen.getByRole("button", RANGER)
+    expect(bouton).toBeDisabled()
+    fireEvent.click(bouton)
+    expect(declarer).not.toHaveBeenCalled()
+  })
+
+  test("une image déjà marquée peut toujours retirer sa marque, même si elle porte un sujet", async () => {
+    // Née avant RG5, ou marquée par un ancien chemin : la sortie reste ouverte.
+    const declarer = vi.spyOn(matieres, "declarer").mockResolvedValue(reponse)
+    render(fiche({ ...UN_ASSET, personnage: "pelerin", matiere: true }))
+    expect(screen.queryByText(PHRASE)).toBeNull()
+    fireEvent.click(screen.getByRole("button", RETIRER))
+    await waitFor(() => expect(declarer).toHaveBeenCalledWith("bac-a-sable", "aaaa1111-0", false))
+  })
+
+  test("une image hors projet n'a ni le geste ni la phrase", () => {
+    render(fiche({ ...UN_ASSET, projet: null }))
+    expect(screen.queryByRole("button", RANGER)).toBeNull()
+    expect(screen.queryByRole("button", RETIRER)).toBeNull()
+    expect(screen.queryByText(PHRASE)).toBeNull()
+  })
+
+  test("un refus du serveur se lit avec sa phrase, et le libellé ne change pas", async () => {
+    const refus = "Cette image est rangée dans un sujet : sors-la de son sujet d'abord, ou génère la matière depuis l'écran des tuiles."
+    vi.spyOn(matieres, "declarer").mockRejectedValue(new Refus(refus, "rangement_refuse"))
+    const onErreur = vi.fn()
+    render(fiche(UN_ASSET, onErreur))
+    fireEvent.click(screen.getByRole("button", RANGER))
+    await waitFor(() => expect(onErreur).toHaveBeenCalledWith(refus))
+    expect(screen.getByRole("button", RANGER)).toBeInTheDocument()
+    expect(screen.getByRole("button", RANGER)).toBeEnabled()
   })
 })

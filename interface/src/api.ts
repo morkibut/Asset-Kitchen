@@ -1947,6 +1947,13 @@ export type Asset = {
   /** Toucher une recette à la main épingle l'asset. Relu en T4, quand un
    *  changement de palette de projet devra sauter ce qui a été réglé ici. */
   epingle: boolean
+  /** **Une matière du jeu** (RG5) : une image marquée comme ingrédient d'un jeu
+   *  de tuiles. La marque se pose à la naissance quand la génération l'a
+   *  demandé, ou depuis la fiche (`matieres.declarer`, RG6). Une image qui
+   *  porte un sujet ne peut pas la porter. ⚠️ Rien à voir avec `source:
+   *  "matiere"` du moteur des tuiles, qui désigne une matière *intégrée* au
+   *  code (herbe, pierre…) : celle-ci est une image de l'auteur. */
+  matiere: boolean
   projet: string | null
   collection: string | null
   parent: string | null

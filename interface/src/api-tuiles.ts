@@ -49,7 +49,25 @@ const racineMatieres = (p: string) => `/projects/${encodeURIComponent(p)}/materi
  *  qu'elle soit terminée, pour pouvoir le retrouver dans la bibliothèque dès
  *  que son emplacement passe à « reussie ». */
 export const assetDeGeneration = (g: Pick<GenerationMatiere, "identifiant">, rang = 0) => `${g.identifiant}-${rang}`
+
+// ── RG5 / RG6 : la bibliothèque des matières du projet ───────────────────────
+
+/** Une matière de la bibliothèque, telle que `GET …/materials` la rend
+ *  (`atelier/api/matieres.py`, `_matiere_json`). **Le nom est celui de l'image**
+ *  (`label`) : il n'y a pas de second nom à tenir d'accord. `cadrage` est vide
+ *  quand l'image est devenue matière par déclaration et non par génération. */
+export type MatiereDeLaBibliotheque = {
+  identifiant: string; nom: string; largeur: number; hauteur: number; apercu: string
+  cadrage: string; cree_le: number; collections: { identifiant: string; nom: string }[]
+}
+
 export const matieres = {
+  /** Ce que la bibliothèque contient — jamais les sujets : aucun n'est consulté. */
+  lister: (p: string) => appeler<{ matieres: MatiereDeLaBibliotheque[] }>(racineMatieres(p)),
+  /** Poser (`true`) ou retirer (`false`) la marque « matière » sur une image du
+   *  projet. Refusée en 409, avec sa phrase, si l'image porte un sujet. */
+  declarer: (p: string, asset: string, valeur: boolean) =>
+    appeler<MatiereDeLaBibliotheque>(`${racineMatieres(p)}/${encodeURIComponent(asset)}`, { method: "PUT", body: JSON.stringify({ matiere: valeur }) }),
   disponibilite: (p: string) => appeler<DisponibiliteMatieres>(`${racineMatieres(p)}/availability`),
   apercu: (p: string, r: { pierre: string; motif: string; cadrage: string; reference?: boolean }) =>
     appeler<ApercuMatiere>(`${racineMatieres(p)}/preview`, { method: "POST", body: JSON.stringify(r) }),

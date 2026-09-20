@@ -69,7 +69,9 @@ def declarer(requete: Request, projet: str, asset: str, corps: Declaration) -> d
     **Le « en un geste » de RG6** : la marque se pose ou se retire sur
     l'image déjà là, sans qu'un sujet n'entre ni ne sorte de rien."""
     atelier = requete.app.state.atelier
-    resultat = atelier.bibliotheque.declarer_matiere(asset, corps.matiere)
+    # **Le projet de l'adresse est celui qu'on vérifie** (RG6) : l'image doit y
+    # être rangée, sans quoi la marque paraîtrait dans une autre bibliothèque.
+    resultat = atelier.bibliotheque.declarer_matiere(asset, corps.matiere, projet=projet)
     return _matiere_json(atelier, resultat)
 
 

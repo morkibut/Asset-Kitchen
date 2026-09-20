@@ -43,6 +43,7 @@ import {
   type Univers,
 } from "../api"
 import { type EmplacementAvecGraine } from "../api-workflows"
+import { matieres } from "../api-tuiles"
 import { sujetAsset, useVisee } from "./Apercu"
 import { Bloc, Bouton, EnTetePanneau, Libelle, Raison, Segments } from "./pieces"
 import { PANNEAU } from "./Infobulle"
@@ -1188,6 +1189,7 @@ function DecisionsDeLaFiche({
   }
 
   return (
+    <div className="flex flex-col gap-1.5">
     <div className="flex items-center gap-2">
       <button
         type="button"
@@ -1227,6 +1229,78 @@ function DecisionsDeLaFiche({
       >
         Supprimer
       </button>
+    </div>
+    <RangerEnMatiere asset={asset} onErreur={onErreur} />
+    </div>
+  )
+}
+
+/**
+ * **Une image ordinaire devient une matière en un geste** (RG6) : la marque se
+ * pose — ou se retire — sur l'image elle-même, sans qu'un sujet n'entre ni ne
+ * sorte de rien. Une matière paraît ensuite dans « Mes matières », à l'écran
+ * des tuiles, et se pose dans un jeu.
+ *
+ * - *Hors projet* (`projet` nul) : le geste n'est pas proposé — une image qui
+ *   n'est dans aucun jeu n'a pas de bibliothèque où entrer.
+ * - *Déjà marquée* : « Retirer des matières », toujours ouvert (le serveur ne
+ *   refuse jamais ce sens-là).
+ * - *Rangée dans un sujet* : le geste se grise et **dit pourquoi**, comme
+ *   partout ailleurs (`Raison`). Le serveur refuse pareil, avec une phrase plus
+ *   longue qui dit aussi l'autre chemin ; ici on n'attend pas le refus.
+ *
+ * Le libellé suit la marque tout de suite (`pose`), sans attendre le flux : il
+ * rend la main à l'asset dès que celui-ci a changé.
+ */
+function RangerEnMatiere({
+  asset,
+  onErreur,
+}: {
+  asset: Asset
+  onErreur: (raison: string) => void
+}) {
+  const [pose, setPose] = useState<boolean | null>(null)
+  const [occupe, setOccupe] = useState(false)
+  useEffect(() => {
+    setPose(null)
+  }, [asset.identifiant, asset.matiere])
+
+  if (!asset.projet) return null
+  const projet = asset.projet
+  const matiere = pose ?? asset.matiere
+  const dansUnSujet = !matiere && !!asset.personnage
+
+  const changer = async () => {
+    const valeur = !matiere
+    setOccupe(true)
+    try {
+      await matieres.declarer(projet, asset.identifiant, valeur)
+      setPose(valeur)
+    } catch (erreur) {
+      onErreur(erreur instanceof Error ? erreur.message : "matière refusée")
+    } finally {
+      setOccupe(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col">
+      <button
+        type="button"
+        onClick={changer}
+        disabled={occupe || dansUnSujet}
+        title={
+          matiere
+            ? "Elle n'apparaîtra plus dans « Mes matières », à l'écran des tuiles."
+            : "Elle apparaîtra dans « Mes matières », à l'écran des tuiles."
+        }
+        className="mesure h-[26px] self-start rounded-7 border border-contour bg-carte px-2 text-[11px] text-encre-3 transition-colors duration-120 hover:bg-papier-cote disabled:text-eteint disabled:hover:bg-carte"
+      >
+        {matiere ? "Retirer des matières" : "Ranger dans les matières"}
+      </button>
+      {dansUnSujet && (
+        <Raison texte="Cette image est rangée dans un sujet : sors-la de son sujet d'abord." />
+      )}
     </div>
   )
 }

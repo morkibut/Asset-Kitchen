@@ -202,20 +202,34 @@ groupable en collections, sans sujet porteur.
 
 **Bloquée par** : RG5.
 
-- [ ] « Mes matières » lit la bibliothèque, plus les images des sujets de nature « matière ».
-- [ ] L'onglet n'est plus vide par construction : une matière générée y paraît sans qu'on ait
+- [x] « Mes matières » lit la bibliothèque, plus les images des sujets de nature « matière ».
+      *(`matieres.lister` dans `api-tuiles.ts` ; `Tuiles.tsx` la charge au montage et au
+      changement de projet, les props `matieres` / `sujetsMatieres` n'existent plus.)*
+- [x] L'onglet n'est plus vide par construction : une matière générée y paraît sans qu'on ait
       rien rangé.
-- [ ] Une image ordinaire de la galerie peut être déclarée matière depuis sa fiche, en un geste.
+      *(Relue quand le tiroir s'ouvre sur « Mes matières », quand un tirage passe à « termine »,
+      et toutes les 3 s tant que l'auteur regarde ses matières avec des tirages en route.
+      Route en erreur : état vide + la raison, l'écran continue.)*
+- [x] Une image ordinaire de la galerie peut être déclarée matière depuis sa fiche, en un geste.
+      *(Bouton « Ranger dans les matières » / « Retirer des matières », zone « Où elle est
+      rangée » de la fiche. Une image déjà rangée dans un sujet : bouton grisé **avec** sa
+      phrase. Refus serveur en 409, `RangementRefuse`, et la route vérifie désormais que
+      l'image est du projet de l'adresse — `tests/test_rg6_ecran_bibliotheque.py`.)*
 
 ### RG7 · L'agent voit les matières
 
 **Bloquée par** : RG5.
 
-- [ ] Un outil MCP liste les matières du projet, avec ce qu'il faut pour les poser dans une
+- [x] Un outil MCP liste les matières du projet, avec ce qu'il faut pour les poser dans une
       recette.
-- [ ] `generate_tile_material` dépose ses tirages dans la bibliothèque, sans sujet à créer.
-- [ ] Un agent enchaîne « générer une matière » puis « composer un jeu de tuiles » sans passer
+      *(`list_materials`, `atelier/mcp/tuiles.py` ; `edit_asset` gagne `material`, posé seul.)*
+- [x] `generate_tile_material` dépose ses tirages dans la bibliothèque, sans sujet à créer.
+      *(Vrai depuis RG5 — la règle est dans `ServiceAssets.naitre` ; RG7 le prouve par un essai
+      et l'écrit dans la description de l'outil.)*
+- [x] Un agent enchaîne « générer une matière » puis « composer un jeu de tuiles » sans passer
       par l'écran, et l'essai le prouve de bout en bout.
+      *(`tests/test_rg7_agent_matieres.py`, sur le banc de `test_tu10_agent.py` ; aucun sujet
+      n'existe au début ni à la fin.)*
 
 ### RG8 · La migration, et la relecture croisée
 

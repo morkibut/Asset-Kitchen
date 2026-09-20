@@ -236,9 +236,17 @@ const OPTIONS: Record<string, [string | number, string][]> = {
 
 export type Edition = { jeu: JeuEdite; signature: string; carte: string; nom: string }
 
-export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, message, onEnregistrer, onLivrer, onNom, onUnivers }: {
+export function AtelierDuJeu({ projet, edition, matieres, matieresErreur = "", onRelireMatieres, modifie, occupe, message, onEnregistrer, onLivrer, onNom, onUnivers }: {
   projet: string
-  edition: Edition; matieres: MatiereDuJeu[]; modifie: () => boolean; occupe: boolean; message: ReactNode
+  edition: Edition
+  /** « Mes matières » : la bibliothèque du projet (RG6), lue par `Tuiles`. */
+  matieres: MatiereDuJeu[]
+  /** Pourquoi la bibliothèque n'a pas pu être lue — vide quand elle l'a été. */
+  matieresErreur?: string
+  /** Relire la bibliothèque : le tiroir s'ouvre sur « Mes matières », ou un tirage vient
+   *  de finir — dans les deux cas une matière a pu y entrer sans que l'auteur ait rien rangé. */
+  onRelireMatieres?: () => void
+  modifie: () => boolean; occupe: boolean; message: ReactNode
   onEnregistrer: () => void; onLivrer: () => void; onNom: (nom: string) => void
   /** Le lien « Voir l’univers » quand la palette du jeu manque (TU6). */
   onUnivers?: () => void
@@ -424,6 +432,7 @@ export function AtelierDuJeu({ projet, edition, matieres, modifie, occupe, messa
 
       {/* Les réglages, ou le tiroir des matières */}
       {tiroir ? <TiroirDesMatieres projet={projet} jeu={j} cible={tiroir.cible} onglet={tiroir.onglet} matieres={matieres}
+        matieresErreur={matieresErreur} onRelireMatieres={onRelireMatieres}
         onOnglet={(o) => setTiroir({ ...tiroir, onglet: o })} onFermer={() => setTiroir(null)} onErreur={setErreur}
         onPose={maj} />
         : <div className="flex min-h-0 min-w-0 flex-col gap-[8px] overflow-y-auto">
@@ -544,12 +553,30 @@ function Verifie({ v, jeu, onSurligner }: { v: ReturnType<typeof verifier>; jeu:
 
 // ── D · Le tiroir des matières ───────────────────────────────────────────────
 
-function TiroirDesMatieres({ projet, jeu: j, cible, onglet, matieres, onOnglet, onFermer, onErreur, onPose }: {
+function TiroirDesMatieres({ projet, jeu: j, cible, onglet, matieres, matieresErreur, onRelireMatieres, onOnglet, onFermer, onErreur, onPose }: {
   projet: string
   jeu: JeuEdite; cible: string; onglet: "integrees" | "miennes" | "generer"; matieres: MatiereDuJeu[]
+  matieresErreur: string; onRelireMatieres?: () => void
   onOnglet: (o: "integrees" | "miennes" | "generer") => void; onFermer: () => void; onErreur: (m: string) => void; onPose: () => void
 }) {
   const [lecture, setLecture] = useState<string | null>(null)
+  // **« Mes matières » se relit à chaque ouverture** (RG6) : une image a pu y entrer depuis
+  // la dernière lecture — rangée depuis sa fiche, ou générée par l'agent — sans qu'aucun
+  // événement ne prévienne cet écran. Ouvrir le tiroir directement sur l'onglet compte aussi.
+  useEffect(() => { if (onglet === "miennes") onRelireMatieres?.() },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onglet])
+  // Des tirages sont en route et l'auteur attend sur « Mes matières » : la file locale n'est
+  // suivie que depuis « Générer », donc c'est la bibliothèque qu'on relit, sans bruit, jusqu'à
+  // ce qu'il en revienne. Sans cela, une matière finie pendant qu'il regardait ses matières
+  // n'y paraîtrait qu'à sa prochaine ouverture du tiroir.
+  const tiragesEnRoute = j.tirages.some((t) => !FINIES.has(t.statut))
+  useEffect(() => {
+    if (onglet !== "miennes" || !tiragesEnRoute || !onRelireMatieres) return
+    const minuteur = window.setInterval(onRelireMatieres, RELECTURE_MATIERES_MS)
+    return () => window.clearInterval(minuteur)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onglet, tiragesEnRoute])
   const prefere = cible === "face" ? "mur" : "sol"
   const actuelle = cible === "fond" ? ("matiere" in j.fond ? j.fond.matiere : "") : j.etat[cible]?.source === "matiere" ? j.etat[cible].matiere : ""
   const actuelAsset = cible === "fond" ? ("asset" in j.fond ? j.fond.asset : "") : j.assets[cible] ?? ""
@@ -581,8 +608,10 @@ function TiroirDesMatieres({ projet, jeu: j, cible, onglet, matieres, onOnglet, 
         {matieres.map((m) => <button key={m.identifiant} type="button" aria-pressed={m.identifiant === actuelAsset} disabled={lecture !== null} onClick={() => void poserMienne(m.identifiant, m.nom)}
           className={`flex flex-col items-center gap-[4px] rounded-8 border p-[4px] text-center text-[12px] text-encre-controle hover:bg-carte ${m.identifiant === actuelAsset ? "border-encre-controle bg-carte" : "border-transparent"}`}>
           <img src={api.fichier(m.identifiant)} alt="" className="block h-[81px] w-[81px] rounded-5 object-cover" style={PIXELS} />{m.nom}{lecture === m.identifiant && <small className="text-[11px] text-encre-3">Lecture…</small>}</button>)}
-      </div> : <p className="text-[13px] text-encre-3">Pas encore de matière dans ce jeu. Les images des sujets de nature « matière » apparaîtront ici.</p>
-        : <OngletGenerer projet={projet} jeu={j} cible={cible} lecture={lecture} onPoser={poserMienne} onErreur={onErreur} onPose={onPose} />}
+      </div> : matieresErreur
+        ? <p role="alert" className="text-[13px] text-echec">Tes matières n’ont pas pu être lues : {matieresErreur}</p>
+        : <p className="text-[13px] text-encre-3">Pas encore de matière dans ce jeu. Génère-en une dans l’onglet Générer, ou range une image dans les matières depuis sa fiche.</p>
+        : <OngletGenerer projet={projet} jeu={j} cible={cible} lecture={lecture} onPoser={poserMienne} onErreur={onErreur} onPose={onPose} onRelireMatieres={onRelireMatieres} />}
     </div>
   </aside>
 }
@@ -612,11 +641,17 @@ function TexteEnParts({ texte, pierre, motif }: { texte: string; pierre: string;
 }
 
 const FINIES = new Set(["termine", "echoue", "annule"])
+/** Toutes les trois secondes : assez pour voir arriver une matière (elle met des dizaines de
+ *  secondes), et une lecture locale ne coûte rien. */
+const RELECTURE_MATIERES_MS = 3000
 const ATTENTE_PAR_DEFAUT = "environ 2 min par image"
 
-function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPose }: {
+function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPose, onRelireMatieres }: {
   projet: string; jeu: JeuEdite; cible: string; lecture: string | null
   onPoser: (identifiant: string, nom: string) => Promise<void>; onErreur: (m: string) => void; onPose: () => void
+  /** Un tirage vient de finir : sa matière est déjà dans la bibliothèque (RG5, elle naît
+   *  matière), et « Mes matières » doit la montrer sans que l'auteur ait rien rangé. */
+  onRelireMatieres?: () => void
 }) {
   const [dispo, setDispo] = useState<DisponibiliteMatieres | null>(null)
   const [apercu, setApercu] = useState<{ texte: string; negatif: string; cadrages: Cadrage[] } | null>(null)
@@ -681,15 +716,16 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
     let vivant = true
     const lire = () => fileLocale.lire().then((f) => {
       if (!vivant) return
-      let change = false
+      let change = false, arrivee = false
       for (const t of j.tirages) {
         if (FINIES.has(t.statut)) continue
         const e = f.etapes.find((e) => e.cle === `image:${t.identifiant}:${t.rang}`)
-        if (e && e.etat !== t.statut) { t.statut = e.etat; change = true }
+        if (e && e.etat !== t.statut) { t.statut = e.etat; change = true; if (e.etat === "termine") arrivee = true }
         // Une estimation mesurée met à jour l'attente affichée pour les prochains tirages.
         if (f.mesures.length) { const m = f.mesures.find((m) => m.modele === e?.modele); if (m) setAttente(`environ ${Math.round(m.mediane_s)} s par image, mesuré sur cette machine`) }
       }
       if (change) onPose()
+      if (arrivee) onRelireMatieres?.()
     }).catch(() => undefined)
     void lire()
     const minuteur = window.setInterval(lire, 1500)
