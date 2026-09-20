@@ -1100,6 +1100,10 @@ function AtelierApp() {
   // depuis « Fabriquer… », il arrive déjà pointé sur la pose qu'on regardait.
   const [importDuSujet, setImportDuSujet] = useState<{ pose?: string; direction?: string } | null>(null)
   const [sonsOuverts, setSonsOuverts] = useState<{ identifiant?: string } | null>(null)
+  /** Le type que la fenêtre de préparation montre **maintenant** (`GU14`). Elle
+   *  s'ouvre sur `preparation.type`, mais le type se change dedans, et seule
+   *  elle le sait : `ecranDuGuide` a besoin de savoir si l'on est sur *Un son*. */
+  const [typeDePreparation, setTypeDePreparation] = useState<TypeDeResultat | null>(null)
   const [referenceDePreparation, setReferenceDePreparation] = useState(false)
   const [promptNegatif, setPromptNegatif] = useState("")
   /** **Le champ porte le texte entier, et il part mot pour mot** (US-159).
@@ -1211,7 +1215,27 @@ function AtelierApp() {
   // **Du plus profond au moins profond**, parce que les trois s'empilent : la
   // livraison se pose sur un jeu ouvert, qui se pose sur la liste. Tester la
   // liste en premier aurait donné son guide aux deux autres.
-  const ecranDuGuide: Explication["ou"] | null = depensesOuvertes
+  //
+  // ⚠️ **Le son n'est pas un lieu, et il avait deux portes sans écran de guide**
+  // (`GU14`). L'atelier des sons (`AtelierSon.tsx`) s'ouvre en dialogue
+  // (`sonsOuverts`) par-dessus n'importe quelle racine — et par-dessus la
+  // fenêtre de préparation, dont *Régler ce son* le rouvre sans la fermer.
+  // *Un son* (`FabricationAudio.tsx`) est le corps de cette fenêtre quand son
+  // type est *Son*. Les deux passent donc **avant tout le reste** : un dialogue
+  // posé par-dessus une racine qu'on testerait après elle rendrait le guide de
+  // la racine du dessous, la panne que `GU7`, `GU12` et `GU13` ont réparée
+  // trois fois. L'atelier d'abord, parce qu'il est au-dessus de la préparation.
+  //
+  // *Ce que ce rang ne couvre pas :* un travail sonore rouvert depuis le suivi
+  // (`travail` → `FenetreDuTravail`, `nature === "audio"`) monte le même
+  // formulaire, mais `App` n'y sait que l'identifiant du travail, pas sa
+  // nature. Il reste sur le guide de la racine — c'est `GU15` (« la fiche d'un
+  // travail »). Idem pour l'onglet *Sons* d'un sujet, qui garde `sujet`.
+  const ecranDuGuide: Explication["ou"] | null = sonsOuverts
+    ? "son"
+    : preparation && !envoiOuvert && typeDePreparation === "son"
+    ? "un-son"
+    : depensesOuvertes
     ? "depenses"
     : installationOuverte
       ? "reglages"
@@ -3108,6 +3132,7 @@ function AtelierApp() {
         plan={plan}
         personnages={personnages}
         typeInitial={preparation.type}
+        onType={setTypeDePreparation}
         poseInitiale={preparation.pose ?? posesCible[0]?.identifiant ?? ""}
         posesVisees={posesCible}
         sujetVise={personnageCible}

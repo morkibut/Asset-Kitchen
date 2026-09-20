@@ -43,6 +43,7 @@ export function PreparerUneFabrication({
   plan,
   personnages,
   typeInitial = "image",
+  onType,
   poseInitiale = "",
   directionInitiale = "",
   posesVisees = [],
@@ -67,6 +68,9 @@ export function PreparerUneFabrication({
   plan: Pose[]
   personnages: readonly Personnage[]
   typeInitial?: TypeDeResultat
+  /** Prévient l'appelant du type montré, à l'ouverture et à chaque changement :
+   *  le guide (`ecranDuGuide`, `App.tsx`) doit savoir si l'on est sur *Un son*. */
+  onType?: (type: TypeDeResultat) => void
   poseInitiale?: string
   directionInitiale?: string
   /** Les attitudes que le lot armé vise — une, ou N pour une planche. La
@@ -97,6 +101,7 @@ export function PreparerUneFabrication({
   onFermer: () => void
 }) {
   const [type, setType] = useState<TypeDeResultat>(typeInitial)
+  useEffect(() => { onType?.(type) }, [type]) // eslint-disable-line react-hooks/exhaustive-deps -- `onType` est un setter, stable ; seul le type déclenche.
   const [avecQuoi, setAvecQuoi] = useState(avecQuoiInitial)
   const [pour, setPour] = useState<"sujet" | "libre">(sujet ? "sujet" : "libre")
   // **Le sujet auquel l'image fixe sera rattachée**, pose ou pas. Venu d'une

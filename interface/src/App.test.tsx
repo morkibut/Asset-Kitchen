@@ -5176,6 +5176,57 @@ describe("l'infobulle et le guide", () => {
     expect(volet.textContent).not.toContain("La galerie — chaque résultat conservé dans le jeu")
   })
 
+  test("les sons : le guide suit l'atelier des sons, posé par-dessus la racine", async () => {
+    // **`GU14`.** `sonsOuverts` est un dialogue, pas un lieu de la pile : avant
+    // que `ecranDuGuide` le teste, ouvrir *Les sons* montrait le guide de la
+    // racine du dessous — le codex, qui ne dit rien d'une coupe ni d'une boucle.
+    const { fetchDouble } = serveurDouble()
+    // Le double commun ne sert pas la liste des sons : un jeu sans aucun son.
+    const fetchAvecSons = vi.fn((url: string, init?: RequestInit) =>
+      typeof url === "string" && url.endsWith("/sounds")
+        ? Promise.resolve({ ok: true, status: 200, json: async () => [] } as Response)
+        : fetchDouble(url, init),
+    )
+    await monter(fetchAvecSons)
+
+    fireEvent.click(screen.getByRole("button", { name: "Les sujets" }))
+    const bibliotheque = await screen.findByRole("main", { name: "Les sujets du jeu" })
+    fireEvent.click(within(bibliotheque).getByRole("button", { name: "Les sons" }))
+    await screen.findByLabelText("Atelier sonore")
+
+    fireEvent.keyDown(window, { key: "?" })
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    const volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.textContent).toContain("Les sons — chaque son du jeu s'écoute")
+    expect(volet.textContent).toContain("Jouer en boucle")
+    expect(volet.textContent).not.toContain("Le codex — l'inventaire")
+  })
+
+  test("la fenêtre de préparation, une fois son type passé à Son, ouvre le guide sur Un son", async () => {
+    // **`GU14`.** La fenêtre s'ouvre sur un type, mais le type se change
+    // dedans : `App` l'apprend par `onType`. Sur Image, le guide reste celui
+    // de la racine ; sur Son, c'est celui du formulaire qu'on voit.
+    const { fetchDouble } = serveurDouble()
+    // Le formulaire lit les moteurs par famille : aucun moteur, ici.
+    const fetchAvecMoteurs = vi.fn((url: string, init?: RequestInit) =>
+      typeof url === "string" && url.includes("/workflow-profiles/sound-defaults")
+        ? Promise.resolve({ ok: true, status: 200, json: async () => ({ familles: {} }) } as Response)
+        : fetchDouble(url, init),
+    )
+    await monter(fetchAvecMoteurs)
+    await champDePrompt()
+
+    const type = within(guichet()).getByRole("combobox", { name: "Type de résultat" })
+    fireEvent.change(type, { target: { value: "son" } })
+    await screen.findByLabelText("Ce qu’on doit entendre")
+
+    fireEvent.keyDown(window, { key: "?" })
+    await screen.findByRole("heading", { name: "Guide", level: 1 })
+    const volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
+    expect(volet.textContent).toContain("Un son — on décrit ce qu'on veut entendre")
+    expect(volet.textContent).not.toContain("La galerie — chaque résultat conservé")
+  })
+
   test("? ouvre le volet depuis n'importe où, et Échap le referme", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
@@ -5280,6 +5331,10 @@ describe("l'infobulle et le guide", () => {
       "tuiles",
       "jeu-de-tuiles",
       "livraison-de-tuiles",
+      // Le son (`GU14`) : l'atelier des sons et le formulaire *Un son*. Deux
+      // dialogues, pas deux lieux de la pile — `ecranDuGuide` les produit avant tout.
+      "son",
+      "un-son",
     ])
     // Le corpus a grandi avec les écrans unifiés. Son volume n'est pas un
     // contrat : l'adresse de chaque entrée et l'unicité testée ci-dessus le

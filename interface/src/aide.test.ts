@@ -91,6 +91,8 @@ const TOUS_LES_OU = [
   "tuiles",
   "jeu-de-tuiles",
   "livraison-de-tuiles",
+  "son",
+  "un-son",
 ] as const satisfies readonly Explication["ou"][]
 
 type ValeurDeOuManquante = Exclude<Explication["ou"], (typeof TOUS_LES_OU)[number]>

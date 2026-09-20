@@ -120,7 +120,17 @@ export type Explication = {
    *  ensemble : la liste des jeux ne porte aucun réglage, l'atelier d'un jeu en
    *  porte une vingtaine, et la livraison n'en porte aucun mais décide de ce
    *  qui part. Une seule valeur aurait mis les fiches de l'atelier sous le nez
-   *  de qui ouvre la liste. */
+   *  de qui ouvre la liste.
+   *
+   *  ⚠️ **Le son a deux valeurs, et ce ne sont pas des genres de `lieux.ts`**
+   *  (`GU14`) : ni l'un ni l'autre n'est un lieu de la pile. `son` est l'atelier
+   *  des sons — la liste, un son ouvert, ses réglages, sa livraison —, un
+   *  dialogue (`sonsOuverts`, `App.tsx`) posé par-dessus n'importe quelle
+   *  racine. `un-son` est le formulaire qui fabrique un son (`FabricationAudio`),
+   *  corps de la fenêtre de préparation quand son type est *Son*. Deux valeurs
+   *  parce qu'on ne fait pas la même chose dans les deux : on y *demande* un
+   *  son, on y *règle* un son déjà reçu. Les quatre fiches `son.*` rangées sous
+   *  `galerie` par `GU12` — faute d'un écran — sont revenues ici. */
   ou:
     | "tableau-de-bord"
     | "codex"
@@ -141,6 +151,8 @@ export type Explication = {
     | "tuiles"
     | "jeu-de-tuiles"
     | "livraison-de-tuiles"
+    | "son"
+    | "un-son"
 }
 
 /**
@@ -357,6 +369,26 @@ export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {
       "On relit les fichiers qui partent, et la planche telle qu'elle sera livrée.",
       "On vérifie que les raccords tiennent avant de continuer plus loin.",
       "On regarde où ça va, puis on dépose dans le projet Godot lié.",
+    ],
+  },
+
+  son: {
+    aQuoi:
+      "Les sons — chaque son du jeu s'écoute, se règle en coupe, en boucle et en niveau, puis se garde en version avant de partir vers Godot.",
+    gestes: [
+      "On importe un son, ou on en ouvre un, et on l'écoute avant de le juger.",
+      "On règle la coupe, la boucle et le niveau, puis on conserve une version de plus.",
+      "On relit les fichiers qui partiraient dans Godot, puis on livre au jeu.",
+    ],
+  },
+
+  "un-son": {
+    aQuoi:
+      "Un son — on décrit ce qu'on veut entendre, plusieurs tirages se calculent sur cette machine, et on garde ceux qui vont au jeu.",
+    gestes: [
+      "On choisit une famille, puis on écrit en anglais ce qu'on doit entendre.",
+      "On relit le texte qui part, on règle durée, tirages et moteur, puis on lance.",
+      "On écoute les tirages au clavier, et on garde ceux qui iront dans le jeu.",
     ],
   },
 }
@@ -2489,15 +2521,11 @@ export const AIDE: Record<string, Explication> = {
   // du son. `fiche.recette` en est partie — son `aide=` est posé dans
   // `Fiche.tsx`, donc sur `ou: "case"`.
   //
-  // ⚠️ **Les quatre `son.*` ne décrivent pas la galerie**, et aucun `ou`
-  // ne leur va : `AtelierSon.tsx` et `ReglagesSon.tsx` s'ouvrent en
-  // dialogue par-dessus la racine, et le guide montre donc celle-ci.
-  // L'onglet *Sons* de la galerie est l'une de leurs deux portes (l'autre
-  // est le bouton *Les sons* du codex). Groupées à part en attendant
-  // `GU14`, qui donnera un écran au son. Même chose pour
-  // `atelier.navigation`, qui décrit le châssis et non la galerie : elle
+  // ⚠️ **`atelier.navigation` décrit le châssis et non la galerie** : elle
   // se pose sur l'écran d'ouverture du produit, faute d'un `ou` pour ce
   // qui se voit partout — un point pour `GU16`, comme `bande.cadre`.
+  // (Les quatre `son.*` qui logeaient ici ont quitté la galerie en
+  // `GU14` : elles ont leur écran, plus bas, avec les autres fiches du son.)
 
   "atelier.navigation": {
     nom: "navigation repliée", ou: "galerie",
@@ -2571,45 +2599,6 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · défaut « brute »",
     long:
       "Le choix vaut pour toute la séance, bouton et dépôt confondus, plutôt que de reposer la question à chaque fichier : douze fichiers déposés ensemble la poseraient douze fois.\n\nUne image entrée telle quelle le reste : « Tout réaligner » ne la touche pas, une recette vide étant un choix, pas un oubli — la même règle que pour un asset ramené au brut.",
-  },
-
-  // ⚠️ **`son.fabrication` ne décrit pas l'atelier du son** : la durée et le
-  // moteur qu'elle porte sont ceux de `FabricationAudio.tsx`, ouvert depuis
-  // *Fabrications*, jamais depuis l'onglet *Sons* de la galerie — vérifié le
-  // 20 septembre 2026. Elle reste sous `ou: "galerie"` avec les trois
-  // suivantes, en attendant l'écran du son de `GU14` ; seul son `groupe` est
-  // corrigé pour ne pas prétendre le contraire.
-
-  "son.fabrication": {
-    nom: "durée et méthode sonore", ou: "galerie",
-    groupe: "Demander un son — depuis Fabrications",
-    quoi: "La durée vient des puces de la famille choisie ; le temps de calcul du moteur local se mesure à part, sur cette machine.",
-    change: "La relecture conserve le texte exact, la version du workflow et ses paramètres. Un son reçu rejoint l’atelier son, même silencieux ou illisible, avec une vérification à faire.",
-    origine: "toi · famille, durée et moteur choisis",
-  },
-
-  "son.coupe": {
-    nom: "coupe du son", ou: "galerie",
-    groupe: "L'atelier du son — ouvert depuis l'onglet Sons",
-    quoi: "Le début et la fin conservés dans la source sonore, en secondes.",
-    change: "Conserver une version produit un nouveau WAV sans modifier la source. Le lecteur peut revenir à la source ou à une ancienne version ; une sélection silencieuse reste à vérifier.",
-    origine: "toi · source entière au départ",
-  },
-
-  "son.niveau": {
-    nom: "niveau et fondus du son", ou: "galerie",
-    groupe: "L'atelier du son — ouvert depuis l'onglet Sons",
-    quoi: "Les fondus adoucissent les extrémités et la normalisation fixe la crête de tous les canaux ensemble.",
-    change: "Les fondus se règlent en millisecondes, le niveau en décibels. La stéréo reste stéréo. Le gain vient après la normalisation ; une saturation empêche la livraison tant qu’elle n’est pas corrigée.",
-    origine: "toi · fondus de 5 ms, gain nul",
-  },
-
-  "son.boucle": {
-    nom: "boucle du son", ou: "galerie",
-    groupe: "L'atelier du son — ouvert depuis l'onglet Sons",
-    quoi: "Le passage à rejouer dans le son après la coupe et les fondus.",
-    change: "Les repères sont conservés dans la ressource AudioStreamWAV pour Godot. Écoutez le raccord puis conservez la version avant de livrer ; les versions précédentes restent disponibles.",
-    origine: "toi · lecture unique au départ",
   },
 
   // ── Les fournisseurs — l'onglet *Moteurs & workflows*, et l'installation ──
@@ -3436,6 +3425,383 @@ export const AIDE: Record<string, Explication> = {
     quoi: "Écrit le paquet dans le projet Godot lié — seul geste de cet écran qui change quelque chose sur le disque.",
     change: "Une fois déposé, l'écran dit dans quel dossier et quelle scène ouvrir dans Godot pour voir la carte.",
     origine: "toi",
+  },
+
+  // ── Le son — deux écrans, deux `ou` (`GU14`) ─────────────────────────────
+  //
+  // Le son n'a jamais eu d'écran de guide : quatre fiches `son.*` logeaient
+  // sous `galerie` faute de mieux, et `GU12` a laissé exprès le vrai travail
+  // ici. `GU14` (1/2) a d'abord posé le routage (`ecranDuGuide`, `App.tsx`) et
+  // deux valeurs neuves d'`Explication["ou"]` :
+  //
+  // - `son`, *Les sons* — l'atelier des sons (`AtelierSon.tsx`), avec ses
+  //   réglages (`ReglagesSon.tsx`) et la relecture de sa livraison. Un
+  //   dialogue posé par-dessus une racine, pas un lieu de la pile.
+  // - `un-son`, *Un son* — le formulaire qui fabrique un son
+  //   (`FabricationAudio.tsx`, `SonRetro.tsx`, `SerieSon.tsx`), corps de la
+  //   fenêtre de préparation quand son type est *Son*.
+  //
+  // **Rien ne se paie dans tout le son**, et c'est vérifié dans le code : les
+  // moteurs sont tous locaux (l'annonce de temps porte `cout_usd: 0`, la
+  // consommation locale aussi), sfxr est un calcul sans modèle, l'import ne
+  // fait que copier un fichier. Ce que chaque geste coûte, c'est du **temps**
+  // — quelques secondes pour un bruitage, près d'une minute par tirage pour
+  // YuE2 — et de la **disponibilité** : un moteur non installé est grisé.
+  // Chaque fiche qui calcule le dit dans ces deux mots-là.
+  //
+  // Deux fiches sont posées ailleurs, parce que leur écran est ailleurs : le
+  // calage sonore d'un sujet sous `sujet` (c'est son onglet *Sons*), et la
+  // livraison des sons sous `sortie` (c'est l'onglet *Sons* de *Livrer au
+  // jeu*).
+
+  // ── Les sons — la liste et l'import ──────────────────────────────────────
+
+  "son.importer": {
+    nom: "Importer un son",
+    ou: "son",
+    groupe: "La liste des sons — importer, ouvrir",
+    quoi: "Un fichier audio de ton disque entre dans le jeu comme un son, sans famille, avec sa source gardée telle quelle.",
+    change:
+      "Il paraît dans la liste et se règle comme les autres. La source ne change jamais : chaque réglage conservé produit une version à côté. Rien à payer, rien à calculer ailleurs que sur ta machine.",
+    origine: "ton disque",
+    long:
+      "Formats lus : WAV, Ogg, MP3, FLAC, M4A, 256 Mo au plus. Un son importé n'a pas de famille : tant qu'on ne lui en pose pas une, il se livre à l'ancienne. Les sons fabriqués dans Un son arrivent ici aussi, avec leur famille déjà posée.",
+  },
+
+  // ── Les sons — une version : juger, classer, restaurer ───────────────────
+
+  "son.versions": {
+    nom: "Les versions d'un son",
+    ou: "son",
+    groupe: "Une version — choisir, juger, restaurer",
+    quoi: "Chaque « Conserver une version » en ajoute une ; la liste les garde toutes, et la source reste dessous, intacte.",
+    change:
+      "Choisir une ancienne version la fait écouter et régler. Restaurer dans une nouvelle version la recopie en tête, sans rien effacer. La liste se fige tant que des réglages ne sont pas conservés.",
+    origine: "l'atelier · une version de plus à chaque conservation",
+  },
+
+  "son.jugement": {
+    nom: "À juger, retenue, écartée",
+    ou: "son",
+    groupe: "Une version — choisir, juger, restaurer",
+    quoi: "Ton verdict sur une version : à juger au départ, retenue si tu la gardes, écartée si tu n'en veux pas.",
+    change:
+      "Une version écartée ne se livre pas. Une seule est retenue à la fois : en retenir une remet l'ancienne à juger. Une version silencieuse ne peut pas être retenue.",
+    origine: "toi · à juger au départ",
+  },
+
+  "son.famille": {
+    nom: "La famille d'un son",
+    ou: "son",
+    groupe: "Une version — choisir, juger, restaurer",
+    quoi: "Elle décide du fichier livré : son nom, son format, son bus dans Godot. Sans famille, le son se livre à l'ancienne.",
+    change:
+      "Poser ou changer la famille ajoute une version, sans toucher aux réglages. Appliquer les réglages de la famille les prend en plus, et ne paraît que s'ils diffèrent des tiens.",
+    origine: "toi, ou la demande qui a fabriqué le son",
+    long:
+      "Bruitage et interface : WAV en mono, crête à −3 dBFS. Ambiance : Ogg, −26 LUFS. Musique, jingle, chanson : Ogg, −17 LUFS, bus Music. Voix : Ogg en mono, −17 LUFS. Le nom du fichier commence par sfx_, ui_, amb_, mus_ ou vo_, puis suit le nom du son.",
+  },
+
+  // ── Les sons — l'écoute ──────────────────────────────────────────────────
+
+  "son.ecoute": {
+    nom: "Écouter, et la forme d'onde",
+    ou: "son",
+    groupe: "L'écoute — lecteur, forme d'onde, provenance",
+    quoi: "Le lecteur joue la version conservée, celle qui sera livrée ; la case « Écouter la source » joue le fichier d'origine.",
+    change:
+      "Rien ne change : on écoute. Cliquer la forme d'onde place la lecture. Des réglages touchés ne s'entendent qu'après « Conserver une version ». Un son en boucle rejoue sa boucle.",
+    origine: "la version ouverte",
+  },
+
+  "son.provenance": {
+    nom: "Source et provenance",
+    ou: "son",
+    groupe: "L'écoute — lecteur, forme d'onde, provenance",
+    quoi: "D'où vient ce son : le fichier d'origine, le moteur, la graine, le texte parti, la série dont il sort.",
+    change:
+      "Rien à régler : on lit, et on peut télécharger la source intacte. Le document brut, replié dessous, est ce que l'atelier a conservé mot pour mot.",
+    origine: "l'atelier · écrit à la réception du son",
+  },
+
+  // ── Les sons — régler ────────────────────────────────────────────────────
+
+  "son.coupe": {
+    nom: "Coupe et rognage du silence",
+    ou: "son",
+    groupe: "Régler — coupe et fondus",
+    quoi: "Le début et la fin gardés dans la source, en secondes, et le silence retiré aux deux bouts.",
+    change:
+      "Le rendu se refait à la conservation, la source reste intacte. Rogner le silence retire ce qui est sous le seuil aux extrémités, en gardant la marge : une sélection entièrement sous le seuil est refusée.",
+    origine: "toi · source entière ; seuil à −45 dB, marge de 10 ms",
+  },
+
+  "son.fondus": {
+    nom: "Fondus d'entrée et de sortie",
+    ou: "son",
+    groupe: "Régler — coupe et fondus",
+    quoi: "Une rampe au début et à la fin du son, en millisecondes, pour qu'il ne claque pas en commençant ou en finissant.",
+    change:
+      "Posés après la coupe et avant le niveau. Les 5 ms du départ ne comptent pas comme un réglage : le bloc ne s'ouvre seul qu'au-delà.",
+    origine: "toi · 5 ms de chaque côté",
+  },
+
+  "son.niveau": {
+    nom: "Niveau : normaliser, niveau visé, gain",
+    ou: "son",
+    groupe: "Régler — niveau et hauteur",
+    quoi: "La force du son : un niveau perçu visé pour une ambiance ou une musique, une crête pour un bruitage, puis un gain.",
+    change:
+      "Le niveau visé (LUFS) est un gain, pas un compresseur, et s'arrête à −1 dBTP de crête. Ailleurs, « Normaliser » ramène la crête à la cible, tous canaux ensemble. Le gain vient après.",
+    origine: "toi · rien au départ, ou les réglages de la famille",
+    long:
+      "Le niveau visé n'existe que pour l'ambiance, la musique, la chanson, le jingle et la voix ; un bruitage est trop court pour se mesurer ainsi. Une saturation est signalée en haut de la fiche mais n'empêche rien : seul un rendu silencieux bloque la livraison.",
+  },
+
+  "son.format": {
+    nom: "En mono, fréquence de sortie",
+    ou: "son",
+    groupe: "Régler — niveau et hauteur",
+    quoi: "Mélanger les canaux en un seul, ou changer la fréquence d'échantillonnage du fichier livré.",
+    change:
+      "Mono fait la moyenne des canaux. Sans choix, la fréquence de la source est gardée. Bruitages et sons d'interface passent en mono avec les réglages que leur famille propose.",
+    origine: "toi · stéréo et fréquence de la source",
+  },
+
+  "son.hauteur": {
+    nom: "Hauteur (demi-tons)",
+    ou: "son",
+    groupe: "Régler — niveau et hauteur",
+    quoi: "Monte ou descend le son de 24 demi-tons au plus, comme une bande qu'on accélère : plus aigu, il devient aussi plus court.",
+    change:
+      "La coupe est faite avant : c'est le son coupé qui est transposé, donc la durée conservée change, et la boucle se règle sur la durée obtenue.",
+    origine: "toi · aucun décalage",
+  },
+
+  "son.boucle": {
+    nom: "Jouer en boucle",
+    ou: "son",
+    groupe: "Régler — la boucle",
+    quoi: "Le passage à rejouer sans fin, après la coupe et les fondus : un début et une fin, en secondes.",
+    change:
+      "Les repères partent avec le fichier, dans le .import que Godot lit ; un Ogg s'arrête à la fin de la boucle. Un son fabriqué avec un nombre de mesures propose sa boucle pile sur une mesure.",
+    origine: "toi · lecture unique au départ",
+  },
+
+  "son.raccord": {
+    nom: "Le raccord",
+    ou: "son",
+    groupe: "Régler — la boucle",
+    quoi: "Recaler sur un passage par zéro, fondu enchaîné, et « Écouter le raccord » : les deux secondes autour du saut.",
+    change:
+      "Le verdict, raccord net ou le raccord claque, se mesure sur la version conservée : il faut d'abord en conserver une. Le recalage cherche à 50 ms des repères ; le fondu mêle la fin de la boucle à son début.",
+    origine: "toi · sans recalage ni fondu",
+  },
+
+  // ── Les sons — conserver, relire, livrer ─────────────────────────────────
+
+  "son.conserver": {
+    nom: "Nom, conserver, abandonner",
+    ou: "son",
+    groupe: "Conserver, relire, livrer",
+    quoi: "Le nom du son, et le bouton qui écrit tes réglages dans une nouvelle version. Abandonner les remet à la version ouverte.",
+    change:
+      "Conserver ne touche jamais la source : il ajoute une version, qu'on peut rouvrir. Il ne se fait que depuis la dernière version. Le nom compte : c'est de lui que vient le nom du fichier livré.",
+    origine: "toi · le nom du fichier, ou de la demande",
+    long:
+      "Un son qui s'appelle « Épée qui frappe » et qui est un bruitage se livre sous le nom sfx_epee_qui_frappe. Renommer un son déjà livré change donc le nom de son fichier dans le jeu.",
+  },
+
+  "son.livraison": {
+    nom: "Relire la livraison Godot",
+    ou: "son",
+    groupe: "Conserver, relire, livrer",
+    quoi: "La liste des fichiers qui partiraient dans ton projet Godot, avec leurs noms stables, sans rien écrire encore.",
+    change:
+      "Livrer cette version écrit le paquet dans le projet Godot lié. Un fichier que l'atelier n'a pas écrit est signalé en conflit, et se tranche dans Livrer au jeu. Rien à payer.",
+    origine: "la version ouverte · le projet Godot lié",
+    long:
+      "Le bouton attend une version conservée, audible et non écartée. Credits.json dit d'où vient chaque son : moteur, licence, graine, texte parti. Chaque .import dit à Godot si le son boucle. L'archive du paquet se télécharge aussi, sans projet lié.",
+  },
+
+  // ── Un son — la demande ──────────────────────────────────────────────────
+
+  "son.demande-famille": {
+    nom: "La famille demandée",
+    ou: "un-son",
+    groupe: "La demande — famille, texte, paroles",
+    quoi: "Ce qu'on fabrique : un bruitage, un son d'interface, une ambiance, une musique, un jingle ou une chanson. La voix est à venir.",
+    change:
+      "Elle décide de ce qui suit : les réglages qui paraissent, les moteurs proposés, la forme du fichier livré. Elle est posée sur les sons qui arrivent, sans rien à refaire.",
+    origine: "toi · bruitage au départ",
+  },
+
+  "son.texte": {
+    nom: "Ce qu'on doit entendre",
+    ou: "un-son",
+    groupe: "La demande — famille, texte, paroles",
+    quoi: "Une phrase en anglais sur ce qu'on entend, pas un titre. Elle part avec ce que l'univers du jeu y ajoute.",
+    change:
+      "Le texte part au moteur local sans traduction : un texte français est signalé, pas corrigé. Rien ne part avant « Lancer ». L'interface et rétro n'en prend pas : elle part d'un départ.",
+    origine: "toi · vide, avec un exemple gris",
+  },
+
+  "son.paroles": {
+    nom: "Paroles et partition",
+    ou: "un-son",
+    groupe: "La demande — famille, texte, paroles",
+    quoi: "Pour une chanson : les paroles avec leurs repères, et une partition que YuE2 écrit d'abord, qu'on corrige, puis qu'on joue.",
+    change:
+      "Écrire la partition n'envoie que le premier étage ; Jouer cette partition envoie le second avec le texte relu, tel quel. Tout se calcule sur ta machine, gratuitement, et longtemps.",
+    origine: "toi · repères Intro, Verse, Chorus, Outro",
+    long:
+      "YuE2 est le plus lent des moteurs sonores. Lancer N tirages fait les deux étages d'un coup, pour une série ; la partition à la main sert à corriger la mélodie avant de la jouer. Les paroles ne partent que si le moteur choisi les reçoit.",
+  },
+
+  "son.relecture": {
+    nom: "Relire avant l'envoi",
+    ou: "un-son",
+    groupe: "Relire ce qui part",
+    quoi: "Le texte final tel qu'il sera envoyé : le tien en noir, ce que l'univers et le moteur ajoutent en gris.",
+    change:
+      "Éditer ce texte le remplace à la main, pour cette série seulement ; Revenir au texte composé rend la main. Rien ne part avant « Lancer ».",
+    origine: "l'univers du jeu · le moteur · toi",
+  },
+
+  // ── Un son — les réglages ────────────────────────────────────────────────
+
+  "son.duree": {
+    nom: "Durée",
+    ou: "un-son",
+    groupe: "Réglages — durée, tirages, moteur",
+    quoi: "La longueur demandée au moteur : quelques secondes pour un bruitage ou un jingle, une demi-minute et plus pour une ambiance.",
+    change:
+      "Elle vient des puces de la famille : 0,5 à 4 s pour un bruitage, 20 à 60 s pour une ambiance, 2 à 8 s pour un jingle. Plus le son est long, plus le calcul l'est. Une musique se compte en mesures.",
+    origine: "toi · 1 s, 30 s, 4 s selon la famille",
+    long:
+      "Un bruitage demandé plus court que le minimum du moteur est calculé à ce minimum, puis coupé à la durée voulue : la coupe est déjà posée dans sa première version. Une chanson n'a pas de durée à choisir.",
+  },
+
+  "son.tirages": {
+    nom: "Les tirages",
+    ou: "un-son",
+    groupe: "Réglages — durée, tirages, moteur",
+    quoi: "Combien de sons d'un coup : autant de calculs, chacun avec sa graine, pour choisir à l'oreille.",
+    change:
+      "4, 8 ou 12 pour un bruitage, une ambiance ou l'interface ; 2, 4 ou 6 pour une musique ; 2, 4 ou 8 pour un jingle ou une chanson. Le temps annoncé grandit avec eux ; aucun ne coûte d'argent.",
+    origine: "toi · 8, ou 4 pour la musique et la chanson",
+  },
+
+  "son.moteur": {
+    nom: "Fournisseur et modèle",
+    ou: "un-son",
+    groupe: "Réglages — durée, tirages, moteur",
+    quoi: "Le modèle local qui calcule le son : celui de la famille au départ, les autres installés sur cette machine en choix.",
+    change:
+      "Un moteur absent ou incomplet est grisé avec ce qui manque ; l'installer se fait dans Réglages, onglet Moteurs. Tous tournent sur ta machine, sans clé ni compte : aucun ne se paie, tous prennent du temps.",
+    origine: "la famille · les moteurs installés",
+    long:
+      "Les moteurs connus : Stable Audio 3 Small-SFX, Stable Audio Open 1.0, Stable Audio 3 Medium, ACE-Step 1.5 et YuE2. Chaque famille propose ceux qui lui vont, et le premier tirage d'un moteur paie son chargement en mémoire.",
+  },
+
+  "son.musique": {
+    nom: "Tempo, tonalité, mesure, mesures",
+    ou: "un-son",
+    groupe: "Musique — tempo, tonalité, mesures",
+    quoi: "La vitesse, la gamme, la mesure et la longueur d'une musique, comptée en mesures et non en secondes.",
+    change:
+      "Seuls les réglages que le moteur reçoit partent ; les autres sont grisés, et la boucle se compte alors en 4/4. La durée de la boucle affichée compte une marge pour la couper proprement.",
+    origine: "toi · 16 mesures en 4/4 ; tempo et tonalité de l'univers, sinon 90",
+  },
+
+  "son.adaptative": {
+    nom: "Une musique qui s'adapte",
+    ou: "un-son",
+    groupe: "Musique — tempo, tonalité, mesures",
+    quoi: "Assemble des musiques déjà gardées : des couches qu'on monte ou baisse, ou des morceaux qui s'enchaînent sur la mesure.",
+    change:
+      "Aucun tirage : rien n'est calculé, rien n'est payé, on compose avec ce qui existe. Voir ce qui part au jeu relit les fichiers avant d'écrire quoi que ce soit dans le projet Godot.",
+    origine: "les musiques gardées du jeu",
+    long:
+      "Une couche joue avec les autres, à un volume de −80 à +6 dB. Un morceau s'enchaîne à un autre par une transition : départ (tout de suite, au temps, à la mesure, à la fin), arrivée et fondu. Seules les musiques, jingles et chansons prêts sont proposés.",
+  },
+
+  "son.retro": {
+    nom: "Interface et rétro",
+    ou: "un-son",
+    groupe: "Interface et rétro — sans texte",
+    quoi: "Pas de texte : on part d'un départ — clic, saut, pièce, explosion — et sfxr calcule le son en un instant.",
+    change:
+      "Un son en fait un ; Tirer N variantes en fait 4, 8 ou 12 autour du départ, ou autour du son seul quand il n'y en a qu'un. Aucune IA, aucun modèle, aucune attente, aucun prix : le calcul se fait dans l'atelier.",
+    origine: "toi · départ « clic », 8 variantes",
+  },
+
+  // ── Un son — lancer, écouter, garder ─────────────────────────────────────
+
+  "son.lancer": {
+    nom: "Lancer N tirages",
+    ou: "un-son",
+    groupe: "Lancer, écouter, garder",
+    quoi: "Le bouton qui envoie la demande au moteur local, avec le temps que le calcul prendra sur cette machine.",
+    change:
+      "Le temps vient des calculs déjà faits ici ; s'il est inconnu, le premier tirage le mesure. Rien ne se paie : c'est ta carte graphique qui travaille. Une série coupée se reprend d'un geste, sans refaire les tirages rendus.",
+    origine: "les calculs déjà faits sur ta machine",
+    long:
+      "De l'ordre d'une seconde par bruitage, quelques secondes pour ACE-Step, 35 à 95 s pour un tirage de YuE2 (relevé du 19 septembre 2026, carte de 8 Go). Le premier tirage de chaque moteur paie en plus son chargement.",
+  },
+
+  "son.serie": {
+    nom: "Écouter et garder les tirages",
+    ou: "un-son",
+    groupe: "Lancer, écouter, garder",
+    quoi: "Une forme d'onde par tirage : un clic écoute, « Garder » le range dans le jeu de variantes, les autres restent dans la série.",
+    change:
+      "Garder écrit tout de suite : le premier gardé forme le jeu et reçoit les réglages de sa famille, les suivants s'y ajoutent, un tirage dégardé en sort. Saturé et silencieux informent, ils n'empêchent rien.",
+    origine: "les tirages de la série",
+  },
+
+  "son.variantes": {
+    nom: "Le jeu de variantes",
+    ou: "un-son",
+    groupe: "Lancer, écouter, garder",
+    quoi: "Les tirages gardés ensemble sous un seul nom : le jeu en joue un au hasard, jamais deux fois le même de suite.",
+    change:
+      "Le nom du jeu se change dans son champ : c'est lui que Godot verra. Régler ouvre un tirage dans l'atelier des sons ; Voir ce qui part au jeu relit les fichiers, sans rien écrire.",
+    origine: "toi · le nom de la demande",
+  },
+
+  // ── Les sons d'un sujet — deux fiches posées sous `sujet` ────────────────
+
+  "son.emplacements": {
+    nom: "Les emplacements de sons",
+    ou: "sujet",
+    groupe: "L'onglet Sons — les emplacements d'un sujet",
+    quoi: "Les sons que sa famille prévoit — pas, saut, coup — remplis ou vides ; on peut en nommer d'autres à la main.",
+    change:
+      "Un emplacement vide lance une série déjà décrite par le sujet ; garder un tirage le range dans le jeu de l'emplacement, sous un nom stable qui suit le nom du sujet. Renommer le sujet renommerait ses sons dans le jeu.",
+    origine: "la famille du sujet · toi pour les emplacements ajoutés",
+  },
+
+  "son.calage": {
+    nom: "Caler un son sur une animation",
+    ou: "sujet",
+    groupe: "L'onglet Sons — les emplacements d'un sujet",
+    quoi: "Un son gardé se cale sur une image d'une animation : « image 3 : pas ». Jouer le fait entendre à chaque passage.",
+    change:
+      "Le repère tient à l'image, pas à un temps : changer la cadence ici change celle de l'animation, et le repère reste sur son image. Une voix ne se cale pas. Rien à payer.",
+    origine: "toi · les animations du sujet",
+  },
+
+  // ── Livrer au jeu — l'onglet Sons ────────────────────────────────────────
+
+  "livraison.sons": {
+    nom: "Les sons dans Godot",
+    ou: "sortie",
+    groupe: "Livrer dans Godot — les sons",
+    quoi: "Les sons du jeu rangés par famille : un jeu de variantes part comme un seul son, un tirage jamais gardé ne part pas.",
+    change:
+      "Voir ce qui part au jeu relit les fichiers de la ligne ; rien n'est écrit tant qu'on n'a pas livré. Les sons d'un sujet partent aussi avec lui, sous leurs noms stables.",
+    origine: "les sons gardés du jeu",
   },
 }
 

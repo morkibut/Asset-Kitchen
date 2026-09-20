@@ -129,6 +129,8 @@ const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   tuiles: "Les tuiles du jeu",
   "jeu-de-tuiles": "Un jeu de tuiles",
   "livraison-de-tuiles": "Livrer à Godot",
+  son: "Les sons",
+  "un-son": "Un son",
 }
 
 // ── Le panneau des touches ────────────────────────────────────────────────
@@ -156,6 +158,13 @@ const TOUCHES: Partial<Record<Explication["ou"], readonly { touche: string; quoi
   bande: [
     { touche: "↑ ↓ ← →", quoi: "déplace la case choisie d'un pixel" },
     { touche: "maj + flèche", quoi: "déplace de cinq pixels" },
+  ],
+  // Les touches de `GrilleEcoute.tsx` : elles vivent dans la grille des
+  // tirages, donc sur *Un son* — l'atelier des sons n'en a aucune.
+  "un-son": [
+    { touche: "← →", quoi: "passe au tirage suivant, et l'écoute" },
+    { touche: "espace", quoi: "écoute le tirage choisi, ou l'arrête" },
+    { touche: "G", quoi: "garde le tirage choisi, ou le retire du jeu" },
   ],
 }
 

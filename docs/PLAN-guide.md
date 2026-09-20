@@ -586,8 +586,56 @@ dans `atelier.ts` : les fiches en parlent à hauteur de ce que l'écran dit.
 L'atelier du son, le calage sonore, la livraison. **Zéro fiche aujourd'hui.**
 
 **Critères**
-- [ ] Les écrans du son ont leur résumé et leurs fiches.
-- [ ] Ce qui tourne sur la machine et ce qui se paie est distingué à chaque fiche qui dépense.
+- [x] Les écrans du son ont leur résumé et leurs fiches.
+- [x] Ce qui tourne sur la machine et ce qui se paie est distingué à chaque fiche qui dépense.
+
+→ `GU14` — **deux écrans de guide, un routage, trente et une fiches.** Le son n'est pas un lieu de
+`lieux.ts` : l'atelier des sons (`AtelierSon.tsx`) est un dialogue (`sonsOuverts`, `App.tsx`)
+posé par-dessus n'importe quelle racine, et *Un son* (`FabricationAudio.tsx`) est le corps de la
+fenêtre de préparation quand son type est *Son*. Deux valeurs neuves d'`Explication["ou"]` :
+`son` (*Les sons*) et `un-son` (*Un son*) — deux, parce qu'on y fait deux gestes, *régler* un son
+reçu et *demander* un son. `ecranDuGuide` les teste **avant tout le reste**, l'atelier d'abord
+(il se pose par-dessus la préparation). Pour savoir que la préparation est sur *Son*, une prop de
+plus, `onType`, dans `PreparerUneFabrication.tsx` : le type se change dedans et seule la fenêtre
+le sait. `Guide.tsx` nomme les deux écrans et porte les trois touches de la grille d'écoute
+(← →, espace, G) sur `un-son`. Deux essais d'`App.test.tsx` couvrent les deux portes.
+
+*Les fiches.* Quinze sous `son`, sur sept zones dans l'ordre de l'écran : la liste (importer), une
+version (les versions, le jugement, la famille), l'écoute (le lecteur, la provenance), régler —
+coupe et fondus (la coupe et le rognage, les fondus), régler — niveau et hauteur (le niveau, mono
+et fréquence, la hauteur), régler — la boucle (la boucle, le raccord), puis conserver, relire,
+livrer. Treize sous `un-son`, sur six zones : la demande (famille, texte, paroles et partition),
+relire ce qui part, les réglages (durée, tirages, moteur), la musique (tempo et mesures, la
+musique qui s'adapte), l'interface et rétro, puis lancer, écouter, garder (le lancement, la grille
+des tirages, le jeu de variantes). Les quatre `son.*` qui logeaient sous `galerie` sont
+revenues ici, **réécrites** : `son.niveau` disait « les fondus » alors qu'ils sont dans le bloc
+*Coupe et fondus*, « la stéréo reste stéréo » alors que *En mono* existe, et « une saturation
+empêche la livraison » alors que seul un rendu silencieux la bloque depuis le 18 septembre 2026 ;
+`son.fabrication` est éclatée en durée, tirages et moteur. Trois fiches sont posées hors des deux
+écrans, parce que leur écran est ailleurs : `son.emplacements` et `son.calage` sous `sujet`
+(l'onglet *Sons* d'un sujet, dont le calage sonore que le plan nomme), `livraison.sons` sous
+`sortie` (l'onglet *Sons* de *Livrer au jeu*). Aucune fiche d'un autre `ou` n'est touchée.
+
+*Ce qui se paie.* **Rien, dans tout le son** — vérifié dans le code, pas supposé : l'annonce
+de temps porte `cout_usd: 0`, la consommation locale d'un travail sonore aussi, sfxr est un
+calcul sans modèle, l'import copie un fichier, la musique adaptative ne tire rien. Ce que chaque
+geste coûte, c'est du **temps** et de la **disponibilité** (un moteur non installé est grisé) :
+les fiches qui calculent le disent en ces mots-là (`son.lancer`, `son.moteur`, `son.paroles`,
+`son.retro`, `son.tirages`, `son.adaptative`), et celles qui ne calculent rien disent « rien à
+payer ». La décision est écrite dans `docs/design-decisions.md`.
+
+*Incertitudes pour `GU16`.* **(1) Le guide est peut-être invisible sur les deux écrans du
+son.** `CadreDialogue` ouvre un `<dialog>` par `showModal()`, donc dans la couche supérieure du
+navigateur ; `VoletGuide` est un `fixed z-10` ordinaire, qui passe *sous* elle. `?` ouvre alors le
+guide — le clavier remonte jusqu'à `window` — sans qu'on le voie. C'est vrai pour tout écran
+posé en dialogue, pas pour le son seul ; non vérifié au navigateur ici (les essais jsdom ne
+peignent rien). **(2) Un travail sonore rouvert depuis le suivi** (`FenetreDuTravail`,
+`nature === "audio"`) monte le même formulaire, mais `App` ne connaît que l'identifiant du travail :
+il garde le guide de la racine — c'est `GU15` (« la fiche d'un travail »). **(3)** Aucune fiche du
+son n'est accrochée à une bulle : `AtelierSon.tsx`, `ReglagesSon.tsx` et `FabricationAudio.tsx` ne
+posent aucun `aide=`. **(4)** Les niveaux visés d'une famille (ambiance −26 LUFS, musique −17)
+sont ceux du code (`domaine/son.py`) ; le relevé du 19 septembre parle d'autres cibles (−19,
+−16) et le banc reste à trancher par l'auteur — la fiche `son.famille` dit le code.
 
 ### `GU15` — Les douze orphelins
 
