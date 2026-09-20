@@ -95,9 +95,9 @@ const TOUS_LES_OU = [
   "un-son",
   // `GU15` (1/2) — les quatre écrans que les genres orphelins réclamaient :
   // la racine `fabrications`, *Relire avant l'envoi*, *Sur la grille du jeu*
-  // et *Deux côte à côte*. Ils n'ont pas encore de résumé : leurs quatre
-  // essais ci-dessous sont **rouges jusqu'à `GU15` (2/2)**, comme l'étaient
-  // ceux des tuiles entre les deux moitiés de `GU13`.
+  // et *Deux côte à côte*. Leurs quatre essais ci-dessous ont été rouges
+  // entre les deux moitiés de `GU15`, comme ceux des tuiles entre celles de
+  // `GU13` : `GU15` (2/2) a écrit les résumés, et ils sont verts.
   "fabrications",
   "envoi",
   "grille",

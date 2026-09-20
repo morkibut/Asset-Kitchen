@@ -644,9 +644,9 @@ deux versions, la fiche d'un travail, les calques animés, le montage d'un clip 
 par l'auteur, aucun servi par le guide.
 
 **Critères**
-- [ ] Plus aucun genre de `lieux.ts` ne retombe sur « les explications du voisin le plus proche ».
-- [ ] Le commentaire d'`App.tsx` qui l'annonçait est retiré, parce qu'il est devenu faux.
-- [ ] L'essai de `GU3` sur les genres sans écran passe au vert.
+- [x] Plus aucun genre de `lieux.ts` ne retombe sur « les explications du voisin le plus proche ».
+- [x] Le commentaire d'`App.tsx` qui l'annonçait est retiré, parce qu'il est devenu faux.
+- [x] L'essai de `GU3` sur les genres sans écran passe au vert.
 
 → `GU15` (1/2) — **écran ou état, tranché genre par genre.** Quatre valeurs neuves
 d'`Explication["ou"]`, nommées d'après le `<h1>` de leur écran : `fabrications` (*Fabrications*,
@@ -669,6 +669,71 @@ quinze rouges de `GU3` tombent à cinq : les quatre « résumé manquant » des 
 des boutons de navigation et des comptes, le second un écran de lecture dont le résumé de `GU4`
 dit déjà les trois gestes — s'il faut des fiches, ce sont ses trois filtres et la reprise d'un
 clip en attente, et `GU15` (2/2) tranche.
+
+→ `GU15` (2/2) — **les quatre écrans neufs ont leur résumé et leurs fiches.** Les quatre
+résumés de `RESUMES` (`fabrications`, `envoi`, `grille`, `comparer`) suivent le gabarit de `GU4` ;
+quarante-six fiches en tout sous les quatre valeurs, dont trente-six écrites ici. Les trois
+critères sont tenus, vérifiés un par un : le commentaire « le voisin le plus proche » n'est plus
+dans `App.tsx` (`grep` vide), chaque genre de `lieux.ts` a une ligne non vide dans
+`GENRE_VERS_OU`, et les 856 essais d'`aide.test.ts` passent — `tsc -b` propre, la suite complète
+au vert (2742 essais).
+
+*`envoi`, seize fiches.* **Le relevé de la première moitié disait « zéro fiche » et c'était faux :**
+`envoi.ecran` existait, rangée sous `sujet` faute d'écran. Elle est passée sous `envoi`, et son
+texte mis d'accord avec l'écran tel qu'il est (elle parlait d'interrupteurs et d'un gris « au
+retour » que la seule présentation montée, `atelier`, ne dessine plus). Les autres suivent
+l'écran de haut en bas : le cadre, les trois cases, les textes (lire, interrupteur, corriger, texte
+à la main), le fond, le retour, les images, les consignes, le pied. **Ce qui coûte de l'argent est
+dit là où il le faut** : *Consommation estimée* est une estimation mesurée, jamais une facture, et
+« Coût inconnu » n'est pas zéro ; le bouton a trois formes — *Payer et lancer*, *Lancer sur ma
+carte graphique* (un style local se lance, il ne se paie pas) et *Lancer la fabrication* (un
+modèle qui ne facture pas en dollars) —, et **sans montant écrit l'argent part quand même** ; la
+case *ne plus me le montrer pour cette série* fait payer le bouton de la barre directement, sans
+dernière relecture. Tout ce qui se lit ou se corrige ne coûte rien : rien n'est appelé avant le
+bouton.
+
+*`fabrications`, neuf fiches de plus*, sur trois zones neuves : les portes (*Nouvelle fabrication*
+et *Préparer une image* — deux boutons, une fenêtre —, *Animer un sujet*, *Préparer un son*), la
+liste des travaux suivis (*Nouvelle animation*, et ce que la liste écrit), et le journal (la
+recherche, *Actualiser* et *Consommation*, une ligne, ses quatre boutons). Le journal est passé
+avant le rendu 3D rouvert, pour suivre l'écran. **Aucun de ces boutons ne paie** : les portes
+ouvrent la préparation, *Reprendre depuis la galerie* n'ouvre que la galerie.
+
+*`grille`, quatre fiches* — le zoom entier, *À côté de lui*, le volet *Ce qu'il occupe*, et le
+plafond réel avec le barème, que l'inventaire de la première moitié avait oublié. Les clés portent
+`grille-du-jeu.` : `grille.*` est déjà le préfixe des réglages de la table Pixelisation.
+`grille.ancrage` **est restée sous `tables`** — elle décrit ce qu'on *règle* dans la retouche ;
+l'écran de la grille ne fait que le lire, et le dit dans `grille-du-jeu.occupation`.
+
+*`comparer`, huit fiches* sur quatre zones : ce qu'on compare (*Comparer avec* et le choix de la
+pose ou du mouvement — le `<h1>` change avec le mode, et la fiche le dit), comment on le regarde
+(fond, zoom, superposés ; lecture commune des animations), ce que les chiffres disent (les
+écarts, *Ce qui ne va pas ensemble*, *Ce qui les sépare*), et le verdict sur une animation. Le
+seul geste qui écrit sur tout l'écran, *Choisir pour le jeu*, est dit tel quel.
+
+*Trois corrections.* `source3d.camera` reprend le fait tombé en première moitié — la vue 3D
+transmet son angle au prochain rendu, par « Utiliser cet angle pour le rendu » — dans `change`.
+`fiche.recettes` (`ou: "bande"`) **n'est pas dans le périmètre de `RG`** : `RG3` réécrit
+`fiche.recette`, `fiche.reinjecter` et `fiche.personnage`, `RG5` ne cite aucune fiche `fiche.*` ;
+son `long` passe de 685 à 375 signes, et ce qui racontait l'empreinte d'une recette est écrit dans
+`docs/design-decisions.md`. `tableau-de-bord` et `depenses` **restent sans fiche, décision
+confirmée** : des boutons de navigation, et un écran de lecture dont le résumé dit déjà les gestes.
+
+*Incertitudes pour `GU16`.* **(1)** *Nouvelle animation*, dans la liste des travaux, et *Préparer
+une vidéo* appellent exactement la même chose (`onPreparer("clip")`, sans sujet) : le premier ne
+mène donc pas à l'animation d'un sujet donné, comme son nom le laisse croire — la fiche le dit, mais
+c'est peut-être un défaut d'écran. **(2)** Seule l'image fixe monte encore `RelireAvantEnvoi` (avec
+*Refaire cette case seule*, `Depliages.tsx`) : le commentaire de `Relecture.tsx` qui parle de
+quatre types est périmé, et les relectures d'un clip, d'un son et d'un rendu 3D ont chacune leur
+corps — la fiche `envoi.*` ne décrit que l'image. *Refaire cette case seule* est une fenêtre posée
+par-dessus n'importe quelle racine : `ecranDuGuide` n'y connaît pas l'écran `envoi`. **(3)** Aucune
+fiche des quatre écrans n'est accrochée à une bulle (`aide=`). **(4)** Rien n'a été ouvert au
+navigateur : les essais jsdom ne peignent pas, et l'ordre de lecture des zones de `Envoi.tsx` (colonne
+de gauche, puis colonne de droite) reste à confronter à l'écran. **(5)** *Lancer la fabrication* est
+dit « un modèle dont la consommation se compte dans une autre unité » : c'est ce que `estArgent`
+et le serveur MCP autorisent à écrire, mais la liste exacte des modèles concernés n'a pas été
+relevée. **(6)** `fabrications-etat` et `fabrication.boutons-de-la-ligne` disent chacune, en
+d'autres mots, ce que fait *Terminé* — c'est redondant, pas contradictoire.
 
 ---
 

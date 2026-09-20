@@ -149,9 +149,11 @@ export type Explication = {
    *    écrit qui il est, on y fabrique ce qui manque — n'y est vrai d'aucune
    *    de ses trois lignes.
    *
-   *  Les quatre sont sans fiche ni résumé pour l'instant : c'est `GU15` (2/2)
-   *  qui les écrit, et les essais « résumé manquant » d'`aide.test.ts` sont
-   *  rouges jusque-là. */
+   *  Les quatre ont leur résumé et leurs fiches depuis `GU15` (2/2) : seize
+   *  pour `envoi` (dont `envoi.ecran`, venue de `sujet`), dix-huit pour
+   *  `fabrications` (neuf déjà là, neuf neuves), quatre pour `grille` — clés
+   *  `grille-du-jeu.*`, parce que `grille.*` est déjà le préfixe des réglages
+   *  de la retouche — et huit pour `comparer`. */
   ou:
     | "tableau-de-bord"
     | "codex"
@@ -416,6 +418,46 @@ export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {
       "On écoute les tirages au clavier, et on garde ceux qui iront dans le jeu.",
     ],
   },
+
+  fabrications: {
+    aQuoi:
+      "Fabrications — le journal de tout ce qui a été demandé, ce qui tourne en ce moment, et les portes pour préparer une demande neuve.",
+    gestes: [
+      "On repère d'un coup d'œil ce qui tourne, ce qui est terminé et ce qui a échoué.",
+      "On cherche une demande par son texte ou son modèle, et on filtre par état.",
+      "On rouvre un résultat, ou on prépare une fabrication neuve à relire avant l'envoi.",
+    ],
+  },
+
+  envoi: {
+    aQuoi:
+      "Relire avant l'envoi — le dernier écran avant la dépense : ce qui part au modèle, mot pour mot, et ce que l'appel devrait coûter.",
+    gestes: [
+      "On lit le texte exact, les images jointes et le prix estimé avant de décider.",
+      "On appuie sur Modifier l'envoi pour éteindre ou corriger, pour cet appel seulement.",
+      "On lance l'appel — payant chez un fournisseur — ou on ferme sans rien dépenser.",
+    ],
+  },
+
+  grille: {
+    aQuoi:
+      "Sur la grille du jeu — le sujet posé à sa vraie taille sur les cases du moteur, à côté des autres types, sans rien fabriquer.",
+    gestes: [
+      "On choisit un zoom entier et on voit le sujet à sa vraie taille sur les cases.",
+      "On allume d'autres types de sujet à côté de lui pour juger l'échelle.",
+      "On lit ce qu'il occupe de sa case, puis on revient à sa page ou on compare.",
+    ],
+  },
+
+  comparer: {
+    aQuoi:
+      "Deux côte à côte — deux images, deux animations ou deux sujets sur la même scène, avec l'écart chiffré et la porte pour le corriger.",
+    gestes: [
+      "On choisit ce qu'on compare, la pose ou le mouvement, puis l'image de chaque côté.",
+      "On lit les écarts chiffrés, et ce qui dépasse en rouge ou ce qui sépare les deux.",
+      "On retouche ce qui dépasse, ou on choisit pour le jeu l'animation qui reste.",
+    ],
+  },
 }
 
 export const AIDE: Record<string, Explication> = {
@@ -464,13 +506,60 @@ export const AIDE: Record<string, Explication> = {
   // `travail` rouvre par sa seconde porte, l'onglet *Agent MCP* des réglages.
   // C'est ce qui fait que `travail` hérite de cet écran-ci plutôt que du sien
   // (`ecranDuGuide`, `App.tsx`).
+  //
+  // **Neuf fiches de plus depuis `GU15` (2/2)**, pour ce que l'écran montre
+  // sans que rien ne l'explique : les portes qui ouvrent la préparation, la
+  // liste des travaux suivis, et le journal — sa recherche, ses boutons
+  // *Actualiser* et *Consommation*, ses lignes et leurs quatre boutons.
+  // L'ordre du fichier est
+  // celui de l'écran, de haut en bas ; le journal, qui est en bas, passe donc
+  // avant le rendu 3D rouvert, qui n'est dans aucune page mais dans la fenêtre
+  // d'un travail.
+  //
+  // **Rien de ce qui se lit ici ne paie.** Les portes ouvrent la fenêtre de
+  // préparation, qui n'envoie rien ; l'argent ne part que du bouton de
+  // *Relire avant l'envoi* (`ou: "envoi"`). *Consommation* mène aux dépenses,
+  // un écran de lecture. Chaque fiche qui ouvre quelque chose le dit.
 
-  "fabrications-etat": {
-    nom: "État des fabrications",
-    groupe: "Le journal — chercher, filtrer, rouvrir",
-    quoi: "Le journal réunit les demandes conservées et les appels encore en cours.",
-    change: "Le filtre À reprendre montre les échecs et les interruptions. Une demande terminée ouvre ses résultats ; un clip ouvre son montage sans commander une nouvelle vidéo.",
-    origine: "atelier · journal des appels",
+  "fabrication.commencer": {
+    nom: "Nouvelle fabrication, Préparer une image",
+    groupe: "Commencer une fabrication — une image, un sujet, un son",
+    quoi: "Les deux boutons ouvrent la même fenêtre, sur une image libre : le modèle, la demande et les références se choisissent dedans.",
+    change: "Rien ne part à l'ouverture. La fenêtre change de type — image, clip, son — sans qu'on la referme ; le prix se lit ensuite sur Relire avant l'envoi, et c'est ce bouton-là qui paie.",
+    origine: "toi · une demande neuve, sans sujet visé",
+    ou: "fabrications",
+  },
+  "fabrication.animer-un-sujet": {
+    nom: "Animer un sujet",
+    groupe: "Commencer une fabrication — une image, un sujet, un son",
+    quoi: "On choisit un sujet dans la liste : sa page s'ouvre sur l'onglet Animations, où se règlent le mouvement, la direction et l'image de départ.",
+    change: "Rien à la génération ici : choisir un sujet ne prépare ni n'envoie rien. La liste est celle des sujets du jeu ouvert.",
+    origine: "les sujets du jeu",
+    ou: "fabrications",
+  },
+  "fabrication.un-son": {
+    nom: "Préparer un son",
+    groupe: "Commencer une fabrication — une image, un sujet, un son",
+    quoi: "Ouvre la fenêtre de préparation sur le type Son : on décrit un effet, une ambiance ou une musique.",
+    change: "Rien à payer : les moteurs de son tournent sur cette machine, et le résultat rejoint l'atelier des sons. L'écran Un son détaille chaque geste.",
+    origine: "toi · une demande de son neuve",
+    ou: "fabrications",
+  },
+  "fabrication.nouvelle-animation": {
+    nom: "Nouvelle animation",
+    groupe: "Créer et suivre les fabrications",
+    quoi: "Le bouton du haut de la liste ouvre la fenêtre de préparation sur le type Clip, comme Préparer une vidéo plus bas.",
+    change: "Rien ne part à l'ouverture : la demande se prépare, puis se relit avant l'envoi. Le bouton ne mène pas à un sujet précis — pour animer un sujet donné, on passe par sa page.",
+    origine: "toi · une demande de clip neuve",
+    ou: "fabrications",
+  },
+  "fabrication.liste-des-travaux": {
+    nom: "La liste des travaux suivis",
+    groupe: "Créer et suivre les fabrications",
+    quoi: "Chaque ligne est un travail conservé : son nom, qui l'a demandé — l'agent ou toi —, la date, et où il en est.",
+    change: "Cliquer une ligne la rouvre pour la relire et la suivre ; rien ne part tant qu'on n'a pas pressé le bouton de sa relecture. La liste se relit d'elle-même toutes les cinq secondes.",
+    origine: "l'atelier · les travaux conservés pour ce jeu",
+    long: "Les états sont ceux du travail, pas ceux du journal plus bas : Prête à lancer, En cours, À reprendre, À vérifier, État à vérifier chez le fournisseur, Terminée, Annulée. « Agent » dit qu'un agent MCP a demandé le travail ; « Création manuelle », que c'est toi.",
     ou: "fabrications",
   },
   "fabrication.relecture": {
@@ -507,6 +596,46 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · profil importé ; ComfyUI · prérequis observés",
     ou: "fabrications",
   },
+  "fabrication.recherche": {
+    nom: "Rechercher une fabrication",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "Un mot cherché dans le texte de la demande et dans le nom du modèle, sans tenir compte des majuscules.",
+    change: "Se combine avec le filtre État : les deux s'appliquent ensemble. Ne change que ce qui s'affiche, rien n'est effacé du journal.",
+    origine: "toi · vide au départ",
+    ou: "fabrications",
+  },
+  "fabrications-etat": {
+    nom: "État des fabrications",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "Le journal réunit les demandes conservées et les appels encore en cours.",
+    change: "Le filtre À reprendre montre les échecs et les interruptions. Une demande terminée ouvre ses résultats ; un clip ouvre son montage sans commander une nouvelle vidéo.",
+    origine: "atelier · journal des appels",
+    ou: "fabrications",
+  },
+  "fabrication.actualiser": {
+    nom: "Actualiser, Consommation",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "Actualiser relit le journal sur le disque ; Consommation quitte cet écran pour celui des dépenses.",
+    change: "Rien à payer ni à envoyer. Le journal se relit aussi tout seul quand une fabrication change d'état. Les dépenses sont un écran de lecture : on y voit ce que chaque appel a coûté.",
+    origine: "l'atelier · le journal des appels de ce jeu",
+    ou: "fabrications",
+  },
+  "fabrication.ligne": {
+    nom: "Une ligne du journal",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "La date, Vidéo ou Images, l'état, la demande, le modèle — et, en rouge, la raison de chaque image ratée.",
+    change: "États : En attente, En cours, Terminé, Échec, Interrompu ; les deux derniers sont en rouge. Une demande sans texte s'écrit « Demande sans texte ». Rien à la génération : on lit.",
+    origine: "l'atelier · journal des appels, complété par les fabrications en cours",
+    ou: "fabrications",
+  },
+  "fabrication.boutons-de-la-ligne": {
+    nom: "Les boutons d'une ligne",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "Selon la ligne : ouvrir le montage du clip, voir les résultats dans la galerie, ouvrir le sujet, ou reprendre depuis la galerie.",
+    change: "Aucun ne lance ni ne paie. Reprendre depuis la galerie ne fait qu'ouvrir la galerie, sur une demande échouée ou interrompue : un nouvel appel se prépare et se relit à part. Ouvrir le sujet paraît quand la demande en vise un.",
+    origine: "l'état de la ligne · le sujet visé par la demande",
+    ou: "fabrications",
+  },
   "source3d.import": {
     nom: "Importer un rendu 3D",
     groupe: "Un rendu 3D rouvert — importer, inspecter, corriger, cadrer",
@@ -537,12 +666,12 @@ export const AIDE: Record<string, Explication> = {
   "source3d.camera": {
     nom: "Caméra et portion du rendu 3D",
     groupe: "Un rendu 3D rouvert — importer, inspecter, corriger, cadrer",
-    // Raccourcie de 204 à 136 signes (`GU3`). ⚠️ La phrase retirée disait un
-    // fait qu'aucun autre champ ne porte — *la vue 3D peut transmettre son
-    // angle au prochain rendu* : à remettre par `GU15` (2/2), dans `change`
-    // ou dans un « à savoir ».
+    // Raccourcie de 204 à 136 signes (`GU3`). La phrase retirée disait un fait
+    // qu'aucun autre champ ne portait — *la vue 3D peut transmettre son angle
+    // au prochain rendu* : remise dans `change` par `GU15` (2/2), vérifiée sur
+    // le bouton « Utiliser cet angle pour le rendu » d'`ApercuModele3D.tsx`.
     quoi: "Un angle du catalogue, ou l’azimut et la hauteur en degrés. Une portion limite le mouvement à extraire ; une pose garde une seule frame.",
-    change: "L’angle, la portion et les corrections sont conservés avec le travail. Le zoom de consultation ne change pas le cadre exporté : toutes les frames gardent la même taille et un cadre commun, mesuré sur le mouvement entier.",
+    change: "L’angle, la portion et les corrections sont conservés avec le travail. Le bouton « Utiliser cet angle pour le rendu » de la vue 3D transmet son angle au prochain rendu. Le zoom de consultation ne change pas le cadre exporté : toutes les frames gardent la même taille et un cadre commun, mesuré sur le mouvement entier.",
     origine: "toi · paramètres acceptés et relus par le moteur externe",
     ou: "fabrications",
   },
@@ -1461,16 +1590,25 @@ export const AIDE: Record<string, Explication> = {
       "Reprendre le texte ne touche pas à ton univers : les textes du jeu restent ce qu'ils étaient, et la reprise ne vaut que pour cette génération-là. Le sujet choisi décide toujours des artworks envoyés, du modèle proposé et de la part de case ; le gabarit d'un lot part toujours. Ce texte se relit en entier sur l'écran de confirmation, juste avant de payer.",
   },
 
+  // **`envoi.ecran` a changé d'écran en `GU15` (2/2)** : elle décrit *Relire
+  // avant l'envoi*, pas la page d'un sujet, et elle logeait sous `sujet` parce
+  // que l'envoi n'avait pas d'écran de guide. Elle est passée sous `ou:
+  // "envoi"`, et son texte a été mis d'accord avec l'écran tel qu'il est : elle
+  // parlait de « chaque chose, ligne par ligne, avec un interrupteur » comme si
+  // c'était le premier regard, alors que la lecture d'abord est en blocs et que
+  // les interrupteurs n'existent qu'après *Modifier l'envoi* ; et d'un gris
+  // « au retour » que l'ancienne présentation dessinait. Les fiches de cet
+  // écran sont en bas du fichier.
   "envoi.ecran": {
     nom: "L'écran de confirmation",
-    ou: "sujet",
-    groupe: "L'écran de confirmation, avant l'envoi",
-    quoi: "Ce qui s'ouvre entre le bouton et la dépense — chaque chose qui va partir, ligne par ligne, avec un interrupteur et son prix.",
+    ou: "envoi",
+    groupe: "Le cadre — ce qui s'ouvre avant la dépense",
+    quoi: "Ce qui s'ouvre entre le bouton et la dépense : le texte exact, les images jointes, le prix, puis le bouton qui lance.",
     change:
-      "Rien tout seul : c'est une relecture. Ce qu'on y éteint ou corrige ne vaut que pour cette génération-là, et rien ne remonte dans les réglages du jeu ni dans l'ambiance.",
-    origine: "composé par l'atelier · l'ordre est celui de l'envoi",
+      "Rien ne part tant qu'on n'a pas pressé le bouton du bas. À l'ouverture tout se lit sans rien changer ; ce qu'on corrige ensuite ne vaut que pour cet appel et ne remonte dans aucun réglage du jeu ni de l'ambiance.",
+    origine: "composé par l'atelier · le même chemin que l'envoi",
     long:
-      "« Garder sur le sujet » inscrit la correction sur sa fiche ; sans sujet visé, elle part quand même, mais n'a nulle part où se garder. Le sujet et la pose ne s'éteignent pas. Une case peut sauter la relecture pour la série en cours ; elle revient au changement de sujet ou de pose — pas de case « pour toujours ». Ce qui n'agit qu'au retour (découpage, grille, détourage) est en gris.",
+      "« Garder sur le sujet » inscrit la correction sur sa fiche ; sans sujet visé, elle part quand même, mais n'a nulle part où se garder. Le texte montré est demandé par le chemin même que l'envoi emprunte : ce qu'on lit est ce qui part.",
   },
 
   // ── Le calibrage ──────────────────────────────────────────────────────────
@@ -3098,7 +3236,7 @@ export const AIDE: Record<string, Explication> = {
       "Applique les huit places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
     origine: "toi, en nommant · aucune au départ",
     long:
-      "Une recette est nommée par son empreinte autant que par toi : deux recettes égales sont interchangeables. L'empreinte est rangée à côté de l'image, avec son rendu ; un rendu dont l'empreinte ne correspond plus est traité exactement comme un fichier absent, et se refait à la première lecture. Reposer une recette déjà appliquée ne recalcule donc rien.\n\nUne recette vide ne s'enregistre pas — elle n'aurait rien à rejouer.\n\nDans l'atelier d'une animation, elle **remplace tous les réglages à la fois** : une recette est un ensemble, et en prendre la moitié rendrait une image que personne n'a jamais jugée. Comme le reste de cet écran, elle n'écrit rien tant que tu n'as pas enregistré.",
+      "Une recette est un ensemble : dans l'atelier d'une animation, elle remplace tous les réglages à la fois — en prendre la moitié rendrait une image que personne n'a jugée. Une recette vide ne s'enregistre pas, et rien ne s'écrit tant que tu n'as pas enregistré. Deux recettes égales sont interchangeables : en reposer une déjà appliquée ne recalcule rien.",
   },
 
   // **Déplacée sous `ou: "montage"` en GU11** : wirée uniquement dans
@@ -3862,6 +4000,329 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Voir ce qui part au jeu relit les fichiers de la ligne ; rien n'est écrit tant qu'on n'a pas livré. Les sons d'un sujet partent aussi avec lui, sous leurs noms stables.",
     origine: "les sons gardés du jeu",
+  },
+
+  // ── Relire avant l'envoi — le seul écran d'où l'argent part (`GU15`) ───────
+  //
+  // `Envoi.tsx` monte, dans le cadre commun de `Relecture.tsx`, ce qu'une
+  // **image fixe** a de particulier. Les autres relectures — un clip, un son,
+  // un rendu 3D — ont leur propre corps et leur propre fenêtre.
+  //
+  // **Ce qui coûte de l'argent, et ce qui n'en coûte pas, est dit à chaque
+  // fiche qui le touche** — et c'est vérifié dans le code, pas supposé. Tout ce
+  // qui se lit ou se corrige ici ne coûte rien : rien n'est appelé avant le
+  // bouton du bas. Le bouton a trois formes : *Payer et lancer* (un fournisseur
+  // qui facture en dollars), *Lancer sur ma carte graphique* (un style local :
+  // un temps, jamais un prix) et *Lancer la fabrication* (un modèle dont la
+  // consommation se compte dans une autre unité). **Sans montant écrit, le
+  // coût est inconnu et l'argent part quand même** : c'est la seule phrase de
+  // l'écran qu'on ne peut pas se permettre de ne pas lire.
+  //
+  // **Les fiches suivent l'écran de haut en bas, colonne de gauche puis colonne
+  // de droite**, comme le fait `Envoi.tsx` : le cadre, le résumé en trois
+  // cases, les textes, le fond, le retour, les images, les consignes, le pied.
+  // `envoi.ecran`, plus haut, ouvre la liste : elle a été déplacée sous ce
+  // `ou` depuis `sujet`.
+
+  "envoi.cadre": {
+    nom: "Modifier l'envoi, Fermer",
+    ou: "envoi",
+    groupe: "Le cadre — ce qui s'ouvre avant la dépense",
+    quoi: "À l'ouverture l'écran se lit sans rien pouvoir changer ; Modifier l'envoi ouvre les interrupteurs, les corrections et les images.",
+    change:
+      "Terminer les modifications les referme. Les modifications ne valent que pour cette génération : l'univers reste inchangé. Fermer, ou Échap, revient sans rien dépenser ; le bouton est retenu tant que l'envoi est en cours.",
+    origine: "toi · verrouillé à l'ouverture",
+  },
+
+  "envoi.modele-et-resultat": {
+    nom: "Fournisseur et modèle, Résultat demandé",
+    ou: "envoi",
+    groupe: "Le résumé en trois cases",
+    quoi: "Le modèle qui recevra la demande, son identifiant dessous, puis ce qu'on lui demande : format, générations, options réglées.",
+    change:
+      "Rien à régler ici : ces deux cases lisent ce qui a été choisi à la préparation. Le nombre de générations est celui des appels que le prix compte.",
+    origine: "la préparation · le modèle et le format choisis",
+  },
+
+  "envoi.consommation": {
+    nom: "Consommation estimée",
+    ou: "envoi",
+    groupe: "Le résumé en trois cases",
+    quoi: "Ce que l'appel devrait coûter : des dollars chez un fournisseur payant, un temps sur un style local — et, dessous, d'où vient le chiffre.",
+    change:
+      "C'est une estimation, jamais une facture : la ligne du dessous dit sur combien de générations passées elle est mesurée. Sans mesure, l'écran écrit « Coût inconnu » et non $0,0000, qui se lirait gratuit ; le montant réellement payé se lit ensuite dans les dépenses.",
+    origine: "mesure · générations déjà passées à ce modèle, sinon durée mesurée sur cette machine",
+    long:
+      "Une moyenne n'est le prix de personne : elle ne tombera juste sur aucune génération donnée. Chaque image jointe ajoute son propre pas, mesuré sur ses propres générations ; quand il n'est pas mesurable, le chiffre est la médiane, images comprises. Sur un style local, la ligne dit d'où vient la durée : mesurée sur cette machine, ou la vitesse du style à défaut.",
+  },
+
+  "envoi.textes": {
+    nom: "Textes envoyés",
+    ou: "envoi",
+    groupe: "Les textes envoyés — lire, éteindre, corriger",
+    quoi: "Le texte exact que le modèle reçoit, mot pour mot, rangé en parties : le contexte, les références, la demande.",
+    change:
+      "Rien n'est résumé ni réécrit : ce qu'on lit est ce qui part. Un style local reçoit son texte d'un bloc, avec ce qui n'est pas parti et pourquoi. On lit d'abord ; on change avec Modifier l'envoi.",
+    origine: "l'atelier · composé par le serveur, dans l'ordre de l'envoi",
+  },
+
+  "envoi.interrupteur": {
+    nom: "L'interrupteur d'une ligne",
+    ou: "envoi",
+    groupe: "Les textes envoyés — lire, éteindre, corriger",
+    quoi: "Le carré à gauche d'une ligne : plein, elle part ; creux, elle ne part pas ; gris, elle part et ne se décoche pas.",
+    change:
+      "Ce qui est éteint n'est pas envoyé, et les textes et le coût se recalculent. Cela ne vaut que pour cet appel : le sujet, l'ambiance et les règles du jeu ne bougent pas. Les lignes sont rangées en groupes : textes du jeu, ambiance, sujet, planche, ce que les images disent, caméra.",
+    origine: "toi · pour cet appel seulement",
+    long:
+      "Éteindre les trois lignes d'une ambiance rallume d'elles-mêmes les textes du jeu qu'elle remplaçait : on ne garde que des écarts, jamais un état complet. Une ligne marquée « remplacé ↓ » est masquée par celle du dessous.",
+  },
+
+  "envoi.corriger": {
+    nom: "Corriger, remettre, garder",
+    ou: "envoi",
+    groupe: "Les textes envoyés — lire, éteindre, corriger",
+    quoi: "Corriger réécrit le texte d'une ligne ; remettre rend l'original ; « garder sur le sujet › » l'inscrit sur la fiche du sujet.",
+    change:
+      "Une correction ne vaut que pour cet appel et ne remonte nulle part : garder est un second geste, écrit, proposé seulement quand une fiche peut la recevoir. Le texte corrigé part mot pour mot.",
+    origine: "toi · pour cet appel seulement",
+  },
+
+  "envoi.texte-a-la-main": {
+    nom: "Modifier le texte complet à la main",
+    ou: "envoi",
+    groupe: "Les textes envoyés — lire, éteindre, corriger",
+    quoi: "Le champ de la demande reçoit tout le texte assemblé, et c'est ce texte-là qui part, mot pour mot.",
+    change:
+      "L'écran se referme sur la préparation, sans rien envoyer : on écrit dans le champ, puis on lance comme d'habitude. Ce n'est plus la somme des lignes qui part, c'est ce champ.",
+    origine: "toi · le texte assemblé au moment du clic",
+  },
+
+  "envoi.fond": {
+    nom: "Fond et prompt négatif",
+    ou: "envoi",
+    groupe: "Le fond et le prompt négatif",
+    quoi: "La couleur de fond demandée et, dessous, la consigne négative : ce qu'on interdit au modèle.",
+    change:
+      "Avec Modifier l'envoi, on prend une autre couleur, « Sans fond » ou « Remettre celui du jeu » ; cela ne vaut que pour cet appel. Le titre se réduit à « Fond » quand un style local ne lit pas le négatif : le fond part quand même, et le détourage au retour en dépend.",
+    origine: "le jeu · la couleur du fond, et l'interdiction qui en découle",
+  },
+
+  "envoi.retour": {
+    nom: "Traitements appliqués au retour",
+    ou: "envoi",
+    groupe: "Au retour, sur la machine",
+    quoi: "Ce que l'atelier fait à l'image une fois reçue : la liste s'ouvre d'un clic et se lit sans rien changer.",
+    change:
+      "Rien de tout cela ne part au modèle ni ne coûte un centime : ça se passe sur cette machine, et les originaux sont conservés. Ces traitements se modifient dans la retouche, à un seul endroit.",
+    origine: "les règles du jeu et la retouche · appliqués après l'arrivée",
+  },
+
+  "envoi.images": {
+    nom: "Images envoyées",
+    ou: "envoi",
+    groupe: "Les images envoyées et les consignes",
+    quoi: "Chaque image jointe, avec sa vignette, sa provenance et son prix ; « n images · m places » dit combien le modèle en accepte.",
+    change:
+      "Avec Modifier l'envoi, on décoche une image : elle ne part plus, pour cet appel seulement, et le coût se recalcule. La barre d'espace l'ouvre en grand ; « Ajouter une référence » en joint une de plus sans quitter l'écran. Une image au-delà des places du modèle est marquée.",
+    origine: "les références du jeu, du sujet et de l'appel · les places du modèle",
+    long:
+      "Chaque image cochée ajoute son prix, écrit sur sa ligne — sauf chez un fournisseur qui ne facture pas. Une planche jointe n'a pas de case : il n'y a rien à décider. Un style local dit ce qu'il fait d'une image jointe : la garder comme sujet, ou repeindre par-dessus.",
+  },
+
+  "envoi.consignes": {
+    nom: "Consignes facultatives",
+    ou: "envoi",
+    groupe: "Les images envoyées et les consignes",
+    quoi: "Des consignes en plus, chacune avec son texte et son interrupteur, que le modèle sait suivre ou non.",
+    change:
+      "Éteinte, une consigne ne part pas ; cela ne vaut que pour cet appel. Une consigne que le modèle ne sait pas suivre reste visible, grisée, avec ce qui l'empêche, plutôt que de disparaître.",
+    origine: "le modèle · ses options, avec leur texte",
+  },
+
+  "envoi.prix": {
+    nom: "Le prix au pied de l'écran",
+    ou: "envoi",
+    groupe: "Le pied — le prix, et le bouton qui lance",
+    quoi: "Le même chiffre que la case du haut, répété là où l'on décide : « estimation » quand il est chiffré, un temps pour un style local.",
+    change:
+      "Dessous, « Aucune génération avant de lancer » dit que rien n'est parti. Un refus s'écrit en rouge et retient le bouton ; un appel parti revenu sans image s'écrit en rouge aussi, et le bouton reste vivant. Il attend aussi la fin de l'actualisation des textes, des images et du coût.",
+    origine: "la case Consommation estimée · répétée au pied",
+  },
+
+  "envoi.avertissements": {
+    nom: "Le compte des avertissements",
+    ou: "envoi",
+    groupe: "Le pied — le prix, et le bouton qui lance",
+    quoi: "« N avertissements — non bloquants » : chacun est écrit là où il porte, sur sa ligne de texte ou dans le bloc des images.",
+    change:
+      "Aucun ne retient le bouton : on peut lancer avec. Le compte dit qu'il y en a, sans qu'on ait à descendre les chercher.",
+    origine: "l'atelier · la liste entière, lignes et images mêlées",
+  },
+
+  "envoi.sauter": {
+    nom: "Ne plus me le montrer pour cette série",
+    ou: "envoi",
+    groupe: "Le pied — le prix, et le bouton qui lance",
+    quoi: "Une case pour sauter cet écran tant qu'on reste sur le même sujet et la même pose — jamais pour toujours.",
+    change:
+      "Cochée, le bouton de la barre lance directement — et paie, si le modèle est payant : c'est la seule façon de lancer sans dernière relecture. L'écran revient dès qu'on change de sujet ou de pose, et la case n'existe pas sans sujet visé.",
+    origine: "toi · décochée au départ",
+  },
+
+  "envoi.bouton": {
+    nom: "Payer et lancer, Lancer sur ma carte graphique, Lancer la fabrication",
+    ou: "envoi",
+    groupe: "Le pied — le prix, et le bouton qui lance",
+    quoi: "Le seul bouton d'où l'argent part : son mot dit s'il paie, s'il lance sur ta machine, ou si le modèle ne facture pas en dollars.",
+    change:
+      "« Payer et lancer $0,0245 » : l'appel part chez le fournisseur et se facture ; le montant est l'estimation. Sans montant — « Payer et lancer » seul —, le coût est inconnu et l'argent part quand même. « Lancer sur ma carte graphique » : un style local se lance, il ne se paie pas. « Lancer la fabrication » : le modèle compte sa consommation dans une autre unité que les dollars.",
+    origine: "le modèle · le fournisseur, ou le style local, qui reçoit la demande",
+    long:
+      "Le bouton devient « Envoi en cours… » dès le premier clic et ne repart pas : un second clic ne repaie pas. Un appel parti qui revient sans image s'écrit en rouge au pied de l'écran, et le bouton reste vivant — mais en refaire un se paie de nouveau.",
+  },
+
+  // ── Sur la grille du jeu — la page d'un sujet, posée sur les cases (`GU15`) ─
+  //
+  // `GrilleDuJeu.tsx` **ne fabrique rien, ne modifie rien, ne coûte rien** : ni
+  // barre qui paie, ni bouton qui écrit. Deux contrôles (le zoom, les
+  // voisins), un volet de lecture. Les clés portent `grille-du-jeu.` et non
+  // `grille.`, qui est déjà le préfixe des réglages de la table Pixelisation
+  // (`ou: "tables"`) : `grille.occupation` et `grille.ancrage` y décrivent ce
+  // qu'on *règle*, ici on ne fait que *lire* les mêmes valeurs.
+
+  "grille-du-jeu.zoom": {
+    nom: "Le zoom ×1, ×2, ×4, ×8",
+    ou: "grille",
+    groupe: "Le zoom",
+    quoi: "Un facteur entier, jamais un zoom continu : à ×1,5 un pixel du jeu n'est plus un carré.",
+    change:
+      "Grossit ensemble le sujet, ses voisins et les cases, sans toucher à l'image. Rien à la génération, rien d'écrit.",
+    origine: "toi · ×2 au départ",
+    long:
+      "Un facteur non entier fabrique des pixels qui n'existent pas : certains carrés du jeu deviendraient plus larges que d'autres, et l'on jugerait une image que le jeu n'affichera jamais. C'est la même règle que la vitrine du sujet.",
+  },
+
+  "grille-du-jeu.voisins": {
+    nom: "À côté de lui",
+    ou: "grille",
+    groupe: "À côté de lui — juger l'échelle",
+    quoi: "Allume un autre type de sujet à côté du sien : une silhouette grise à la hauteur que le barème du jeu lui donne, avec son %.",
+    change:
+      "C'est un type, pas un vrai sujet du jeu : rien n'est cherché ni fabriqué, et rien ne s'écrit. Ça sert à juger l'échelle du sujet par rapport à ce qui l'entoure.",
+    origine: "le barème du jeu · un exemplaire de chaque autre type",
+  },
+
+  "grille-du-jeu.occupation": {
+    nom: "Ce qu'il occupe",
+    ou: "grille",
+    groupe: "Ce qu'il occupe — le volet",
+    quoi: "Son type de sujet, sa part de la case, la case du jeu, puis son ancrage, son décalage, sa réduction et s'il se détoure.",
+    change:
+      "Rien à régler ici : c'est une lecture. La part de la case et « Se détoure » viennent du barème du jeu, que règle la famille du type ; l'ancrage, le décalage et la réduction viennent de la recette de son portrait, et se règlent dans la retouche.",
+    origine: "le barème du jeu · la recette de l'image qui sert de portrait",
+    long:
+      "Sans image pour le portrait, les trois dernières lignes disent les valeurs par défaut — en bas, 0 px, au plus proche — et non celles d'une image réelle. Sans taille de case imposée, la ligne « La case du jeu » écrit « aucune imposée ».",
+  },
+
+  "grille-du-jeu.plafond": {
+    nom: "Le plafond réel de sa case, le barème du jeu",
+    ou: "grille",
+    groupe: "Ce qu'il occupe — le volet",
+    quoi: "Le pourcentage maximal qu'un sujet peut occuper sur cette case, puis la liste des types du jeu avec leur part de case.",
+    change:
+      "Rien à régler ici. Le plafond est de 800 % — huit personnages de haut — au plus ; il descend quand la toile de 2 048 px de côté ne suffit plus pour la case du jeu. Le type du sujet est surligné dans la liste.",
+    origine: "le calcul de la retouche · le barème du jeu",
+  },
+
+  // ── Deux côte à côte — comparer, sans rien fabriquer (`GU15`) ──────────────
+  //
+  // `Comparer.tsx` porte **trois écrans sous un seul composant**, et son `<h1>`
+  // change avec le mode : *Le même, deux fois* (deux images d'un sujet),
+  // *Deux animations, même temps* et *Deux côte à côte* (deux sujets). Les
+  // fiches disent le cas général et, quand un contrôle n'existe que dans un
+  // mode, le mode. **Un seul geste écrit** dans tout l'écran : *Choisir pour le
+  // jeu*, sur des animations — il retient l'une et éteint ses sœurs. Le reste
+  // ne fabrique rien, ne modifie rien, ne coûte rien.
+
+  "comparer.avec": {
+    nom: "Comparer avec",
+    ou: "comparer",
+    groupe: "Ce qu'on compare",
+    quoi: "Ses images, ses animations, ou un autre sujet du jeu : ce choix décide de ce que l'écran compare, et de son titre.",
+    change:
+      "Le titre le dit : « Le même, deux fois » pour deux de ses images, « Deux animations, même temps » pour deux animations, « Deux côte à côte » pour deux sujets. Comparer ne coûte rien et n'écrit rien — sauf « Choisir pour le jeu » sur des animations.",
+    origine: "toi · un autre sujet du jeu, quand il y en a un",
+  },
+
+  "comparer.pose": {
+    nom: "La pose, le mouvement, les versions comparées",
+    ou: "comparer",
+    groupe: "Ce qu'on compare",
+    quoi: "Quelle pose ou quel mouvement on regarde, puis quelle version de chaque côté, repérée par sa date.",
+    change:
+      "Pour des images : une pose qui en porte au moins deux. Pour des animations : un mouvement qui en porte deux, dans la même direction, repérées par leur date et leur cadence. Changer de mode remet la pose à la première disponible.",
+    origine: "les images et les animations du sujet",
+  },
+
+  "comparer.affichage": {
+    nom: "Fond, zoom, alignés ou superposés",
+    ou: "comparer",
+    groupe: "Comment on le regarde",
+    quoi: "Le fond derrière les deux côtés, le zoom en crans entiers ×1 à ×8, et — pour des images — alignés au sol ou superposés.",
+    change:
+      "Ne change que l'écran, jamais l'image ni ce qui sort à l'export. « Fond du jeu » prend la couleur du fond du jeu, quand il en a un. Superposés pose la seconde image à moitié transparente sur la première, au même sol. Le zoom est plafonné pour que la scène reste lisible, même à ×8.",
+    origine: "toi · fond neutre, ×4, alignés au sol au départ",
+  },
+
+  "comparer.lecture": {
+    nom: "Lire ensemble, Remettre au début, image d'avant et d'après, vitesse",
+    ou: "comparer",
+    groupe: "Comment on le regarde",
+    quoi: "Une seule horloge pour les deux animations : pause, remise au début, un cran à la fois, et une vitesse ×0.5, ×1 ou ×2.",
+    change:
+      "Chaque côté joue à sa propre cadence, celle qui sortira à l'export : la vitesse ne vaut que pour l'écran. Un cran avance du plus court des deux temps d'image et arrête la lecture ; « Remettre au début » est le seul geste qui remet les deux en phase.",
+    origine: "toi · en lecture, ×1 au départ",
+  },
+
+  "comparer.ecarts": {
+    nom: "Les écarts, chiffrés",
+    ou: "comparer",
+    groupe: "Ce que les chiffres disent",
+    quoi: "Un tableau : ce que mesure chaque côté, l'écart entre les deux, et sur fond rouge ce qui sort de la norme du jeu.",
+    change:
+      "Quatre lignes pour des images — hauteur, largeur, contour, couleurs —, cinq pour des animations — frames, cadence, temps d'image, sens, tour. Rien n'y est mesuré de neuf : ce sont des nombres que le produit calculait déjà, et l'ombre n'est pas mesurée.",
+    origine: "les images et les animations, telles que le jeu les exporte",
+  },
+
+  "comparer.pas-ensemble": {
+    nom: "Ce qui ne va pas ensemble",
+    ou: "comparer",
+    groupe: "Ce que les chiffres disent",
+    quoi: "Pour des images : un défaut par carte — une image qui dépasse sa case, un contour différent, des couleurs au-delà de la palette.",
+    change:
+      "Rien ne se paie ici. « La retoucher » ouvre la retouche sur cette image ; « sa dernière génération a coûté » n'est qu'un repère avant de décider d'en refaire une, depuis la page du sujet.",
+    origine: "la case du jeu, le contour et la palette de l'univers",
+  },
+
+  "comparer.ce-qui-les-separe": {
+    nom: "Ce qui les sépare",
+    ou: "comparer",
+    groupe: "Ce que les chiffres disent",
+    quoi: "Pour des animations : ce qui les distingue, en phrases — la cadence, le sens, le nombre de frames. Des écarts, pas des fautes.",
+    change:
+      "Rien en rouge : deux cadences différentes sont souvent ce qu'on vient départager. Si rien ne diffère, le volet dit qu'elles jouent pareil, et que la différence est ce qui est dessiné dedans.",
+    origine: "les deux animations choisies",
+  },
+
+  "comparer.retenu": {
+    nom: "Retenu, Non jugé, Écarté",
+    ou: "comparer",
+    groupe: "Le verdict sur une animation",
+    quoi: "Sous chaque animation, son verdict — non jugé, retenu, écarté — et « Choisir pour le jeu » retient celle-ci.",
+    change:
+      "C'est le seul geste qui écrit sur cet écran : il retient cette animation et éteint ses sœurs. Il change laquelle sort dans le jeu, jamais comment elle joue. « La retoucher » ouvre son atelier. Rien à payer.",
+    origine: "toi · non jugé au départ",
   },
 }
 
