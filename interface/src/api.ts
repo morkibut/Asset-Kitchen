@@ -5492,6 +5492,29 @@ export const api = {
   consequences: (cible_px: number) =>
     appeler<Consequences>(`/universe/consequences?cible_px=${cible_px}`),
 
+  /** **L'aperçu de « Son allure » (RT1, RT2)** : le rôdeur réduit par la
+   *  combinaison demandée, calculé par le même moteur que la vraie
+   *  fabrication et gardé sur le disque de l'atelier. Pas `appeler` — cette
+   *  route rend un PNG, pas du JSON — mais le même refus nommé que le reste
+   *  du produit : une méthode absente de la machine (`pixeloe` tire `torch`)
+   *  revient en `Refus`, jamais en image muette ni en erreur nue. */
+  apercuAllure: async (taille: number, methode: string, couleurs: number, signal?: AbortSignal) => {
+    const parametres = new URLSearchParams({
+      taille: String(taille),
+      methode,
+      couleurs: String(couleurs),
+    })
+    const reponse = await fetch(`/api/universe/allure/preview.png?${parametres}`, { signal })
+    if (!reponse.ok) {
+      const charge = await reponse.json().catch(() => null)
+      throw new Refus(
+        charge?.raison ?? "l'aperçu n'a pas pu être calculé",
+        charge?.code ?? "erreur",
+      )
+    }
+    return reponse.blob()
+  },
+
   etiquettes: () => appeler<{ etiquettes: Etiquette[] }>("/labels"),
 
   fabriquerEtiquette: (libelle: string, texte: string, casee: string) =>

@@ -207,31 +207,43 @@ function Alerte({ children }: { children: ReactNode }) {
   )
 }
 
-/** Une carte qu'on choisit — le geste répété de l'allure et de la vue. */
+/** Une carte qu'on choisit — le geste répété de l'allure et de la vue.
+ *
+ *  **`desactive`** (RT2) : la seule case du produit qui en a besoin est une
+ *  méthode de pixelisation absente de la machine — `pixeloe` tire `torch`, et
+ *  l'aperçu comme la fabrication partagent le même moteur (`apercu_allure.py`,
+ *  en tête). Une méthode qu'on ne peut pas prévisualiser est une méthode que
+ *  la fabrication ne rendrait pas non plus : la désactiver dit la vérité, elle
+ *  ne cache pas une limite provisoire de l'écran. */
 function Choix({
   titre,
   quoi,
   choisi,
   onChoisir,
   children,
+  desactive = false,
 }: {
   titre: string
   quoi: string
   choisi: boolean
   onChoisir: () => void
   children?: ReactNode
+  desactive?: boolean
 }) {
   return (
     <button
       type="button"
       aria-pressed={choisi}
       aria-label={titre}
+      disabled={desactive}
       onClick={onChoisir}
       className={[
         "flex h-full flex-col gap-[4px] rounded-8 border p-[14px] text-left transition-colors duration-120",
-        choisi
-          ? "border-signal bg-ligne-ouverte"
-          : "border-trait bg-carte hover:border-encre-4",
+        desactive
+          ? "cursor-not-allowed border-trait bg-papier-cote opacity-60"
+          : choisi
+            ? "border-signal bg-ligne-ouverte"
+            : "border-trait bg-carte hover:border-encre-4",
       ].join(" ")}
     >
       {children}
@@ -263,6 +275,181 @@ function Vignette({ fichier, alt }: { fichier: string; alt: string }) {
       // navigateur la lissait, et c'est très exactement ce qu'on compare.
       style={{ imageRendering: "pixelated" }}
     />
+  )
+}
+
+// ── Les vignettes calculées de « Son allure » (RT2) ──────────────────────────
+//
+// RT1 a ouvert `GET /universe/allure/preview.png` : le rôdeur réduit par une
+// combinaison — taille, méthode, couleurs —, calculé par le même moteur que
+// la vraie fabrication, et gardé sur le disque de l'atelier. Cette tranche
+// branche les trois rangées dessus : jusqu'ici elles ne montraient que des
+// mots, l'auteur veut « choisir en voyant ».
+
+/** Les neuf tailles que la route sait rendre — **exactement** celles que le
+ *  serveur propose pour cette grille (`atelier/services/apercu_allure.py`,
+ *  `TAILLES_PERMISES`), pas les dix, plus larges, des jeux déjà fabriqués. Une
+ *  taille hors de cette liste ne se demande jamais à la route : elle
+ *  recevrait un refus systématique, pour un aperçu que rien n'affiche déjà. */
+const TAILLES_APERCU = new Set<number>([8, 16, 24, 32, 48, 64, 96, 128, 256])
+
+/** Une combinaison déjà vue ne se redemande pas pendant que l'onglet reste
+ *  ouvert : le disque de l'atelier la garde déjà (RT1), mais épargner
+ *  l'aller-retour réseau garde la rangée réactive quand on revient sur une
+ *  taille déjà vue. Les images sont petites — rien ne justifie de les
+ *  libérer avant la fermeture de l'onglet. */
+const CACHE_APERCU_ALLURE = new Map<string, Promise<string>>()
+
+/** Réservé aux essais : sans ce vidage entre deux montages, un refus vu dans
+ *  un essai — la méthode absente qu'on simule — resterait mémorisé pour le
+ *  suivant, qui verrait alors le refus d'avant plutôt que sa propre machine
+ *  doublée. */
+export function _reinitialiserCacheApercuAllurePourEssais(): void {
+  CACHE_APERCU_ALLURE.clear()
+}
+
+function chargerApercuAllure(taille: number, methode: string, couleurs: number): Promise<string> {
+  const cle = `${taille}-${methode}-${couleurs}`
+  let promesse = CACHE_APERCU_ALLURE.get(cle)
+  if (!promesse) {
+    promesse = api.apercuAllure(taille, methode, couleurs).then((octets) => URL.createObjectURL(octets))
+    // Un refus ne se garde pas : la méthode absente aujourd'hui peut
+    // s'installer pendant que l'onglet reste ouvert, et le prochain rendu
+    // doit la redemander plutôt que répéter indéfiniment le refus d'avant.
+    promesse.catch(() => CACHE_APERCU_ALLURE.delete(cle))
+    CACHE_APERCU_ALLURE.set(cle, promesse)
+  }
+  return promesse
+}
+
+/** L'état d'une case : en attente, refusée — nommée, jamais muette —, ou son
+ *  image. **Chaque case a son propre appel** : neuf tailles, c'est neuf
+ *  appels, et rien ici ne bloque `onChoisir` pendant qu'ils arrivent — la
+ *  rangée reste utilisable avant que tout soit calculé. `taille` à `null`
+ *  n'appelle rien : c'est le cas d'« aucune » taille imposée, ou d'une taille
+ *  hors de ce que la route sait rendre. */
+function useApercuAllure(
+  taille: number | null,
+  methode: string,
+  couleurs: number,
+): { url: string | null; refus: string | null; enAttente: boolean } {
+  const [etat, setEtat] = useState<{ url: string | null; refus: string | null; enAttente: boolean }>(
+    { url: null, refus: null, enAttente: taille !== null },
+  )
+
+  useEffect(() => {
+    if (taille === null) {
+      setEtat({ url: null, refus: null, enAttente: false })
+      return
+    }
+    let vivant = true
+    setEtat({ url: null, refus: null, enAttente: true })
+    chargerApercuAllure(taille, methode, couleurs)
+      .then((url) => vivant && setEtat({ url, refus: null, enAttente: false }))
+      .catch(
+        (e: unknown) =>
+          vivant &&
+          setEtat({
+            url: null,
+            refus: e instanceof Refus ? e.message : "l'aperçu n'a pas pu être calculé",
+            enAttente: false,
+          }),
+      )
+    return () => {
+      vivant = false
+    }
+  }, [taille, methode, couleurs])
+
+  return etat
+}
+
+/** L'image elle-même, ou un aplat qui respire pendant le calcul — jamais un
+ *  vide qui laisserait croire que la case n'aura jamais rien. */
+function VisuelApercu({
+  url,
+  alt,
+}: {
+  url: string | null
+  alt: string
+}) {
+  return (
+    <span className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-5 bg-pourtour">
+      {url ? (
+        <img
+          src={url}
+          alt={alt}
+          className="h-full w-full object-contain"
+          // Au plus proche, comme `Vignette` : un aperçu de pixel art perdrait
+          // ses carrés si le navigateur le lissait, et c'est très exactement
+          // ce que la case compare.
+          style={{ imageRendering: "pixelated" }}
+        />
+      ) : (
+        <span aria-hidden className="h-full w-full animate-pulse bg-papier-cote" />
+      )}
+    </span>
+  )
+}
+
+/** Une case refusée — nommée dans le texte qui l'accompagne, jamais laissée
+ *  vide ni cassée. */
+function EmplacementRefuse({ children }: { children: ReactNode }) {
+  return (
+    <span className="flex aspect-[4/3] w-full items-center justify-center rounded-5 border border-dashed border-pointille p-[4px] text-center text-[10px] leading-[1.3] text-eteint">
+      {children}
+    </span>
+  )
+}
+
+/** La vignette d'une case de taille ou de couleurs — jamais désactivée : ces
+ *  deux réglages restent valides même quand l'aperçu qui les illustre a
+ *  échoué, à la différence d'une méthode absente de la machine (`CaseMethode`,
+ *  juste dessous). */
+function CaseApercu({
+  taille,
+  methode,
+  couleurs,
+  alt,
+}: {
+  taille: number | null
+  methode: string
+  couleurs: number
+  alt: string
+}) {
+  const { url, refus } = useApercuAllure(taille, methode, couleurs)
+  return refus ? <EmplacementRefuse>aperçu indisponible</EmplacementRefuse> : <VisuelApercu url={url} alt={alt} />
+}
+
+/** Une case de la rangée des méthodes : sa vignette, et son choix se ferme
+ *  s'il n'y a rien à en montrer. Voir la note de `Choix` sur `desactive`. */
+function CaseMethode({
+  methode,
+  taille,
+  couleurs,
+  choisi,
+  onChoisir,
+}: {
+  methode: Methode
+  taille: number | null
+  couleurs: number
+  choisi: boolean
+  onChoisir: () => void
+}) {
+  const { url, refus } = useApercuAllure(taille, methode, couleurs)
+  return (
+    <Choix
+      titre={NOM_DE_LA_METHODE[methode]}
+      quoi={refus ?? CE_QUE_LA_METHODE_REND[methode]}
+      choisi={choisi}
+      onChoisir={onChoisir}
+      desactive={Boolean(refus)}
+    >
+      {refus ? (
+        <EmplacementRefuse>pas sur cette machine</EmplacementRefuse>
+      ) : (
+        <VisuelApercu url={url} alt={`Le rôdeur réduit par « ${NOM_DE_LA_METHODE[methode]} »`} />
+      )}
+    </Choix>
   )
 }
 
@@ -371,6 +558,24 @@ function SonAllure({
   const paliers = paliersDeCouleurs(univers.cible_px)
   const fondPose = univers.fond !== ""
 
+  // **La taille à passer à la route d'aperçu** (RT2) : `null` quand aucune
+  // n'est imposée, ou quand la taille posée dépasse ce que la route sait
+  // rendre — les deux rangées du dessous se contentent alors de leur case
+  // sans image plutôt que d'un refus systématique.
+  const tailleApercu = TAILLES_APERCU.has(univers.cible_px) ? univers.cible_px : null
+  // **Le nombre de couleurs à illustrer sur la rangée des méthodes** : celui
+  // posé quand il tient sur la taille courante, sinon le plus haut palier
+  // qu'elle porte — la même règle que l'écran applique déjà pour ne jamais
+  // demander une combinaison hors barème.
+  const couleursPourApercu = paliers.includes(univers.couleurs) ? univers.couleurs : paliers[paliers.length - 1]
+  /** Le nombre de couleurs à illustrer sur une case de la rangée des
+   *  **tailles** — chaque taille candidate a son propre plafond de couleurs,
+   *  qui n'est pas forcément celui de la taille posée. */
+  const couleursPourTaille = (cible: number): number => {
+    const p = paliersDeCouleurs(cible)
+    return p.includes(univers.couleurs) ? univers.couleurs : p[p.length - 1]
+  }
+
   return (
     <div className="flex flex-col gap-[22px]">
       <p className="max-w-[880px] text-[13px] leading-[1.55] text-encre-2">
@@ -402,42 +607,90 @@ function SonAllure({
             ? "La taille — le côté de l'image, en pixels"
             : "La finesse — combien de détail le fichier garde"}
         </Intitule>
-        <div
-          data-echelle-du-jeu
-          className="flex flex-wrap gap-[4px]"
-          role="group"
-          aria-label={enPixel ? "La taille de l'image" : "La finesse"}
-        >
-          {echelle.map(({ cible }) => (
+        {/* **En pixel, chaque case montre le rôdeur à cette taille-là**
+            (RT2) : une image, pas un nombre nu, à la méthode et au nombre de
+            couleurs déjà posés. **En dessin, aucune vignette** — la finesse
+            ne pixelise ni ne quantifie rien, un aperçu construit sur cette
+            route-là mentirait sur ce que le style rend vraiment (« aperçu
+            orphelin », critère d'acceptation RT2) : la rangée reste des
+            boutons nus, comme avant. */}
+        {enPixel ? (
+          <div
+            data-echelle-du-jeu
+            className="grid grid-cols-3 gap-[8px] sm:grid-cols-5 xl:grid-cols-9"
+            role="group"
+            aria-label="La taille de l'image"
+          >
+            {echelle.map(({ cible }) => (
+              <Choix
+                key={cible}
+                titre={String(cible)}
+                quoi=""
+                choisi={univers.cible_px === cible}
+                onChoisir={() => void onRegler({ cible_px: cible })}
+              >
+                {TAILLES_APERCU.has(cible) && (
+                  <CaseApercu
+                    taille={cible}
+                    methode={univers.methode_pixels}
+                    couleurs={couleursPourTaille(cible)}
+                    alt={`Le rôdeur à ${cible} pixels de côté`}
+                  />
+                )}
+              </Choix>
+            ))}
             <button
-              key={cible}
               type="button"
-              aria-pressed={univers.cible_px === cible}
-              onClick={() => void onRegler({ cible_px: cible })}
+              aria-pressed={univers.cible_px === AUCUNE_CIBLE}
+              onClick={() => void onRegler({ cible_px: AUCUNE_CIBLE })}
               className={[
-                "mesure h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
-                univers.cible_px === cible
+                "h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
+                univers.cible_px === AUCUNE_CIBLE
                   ? "border-signal bg-ligne-ouverte text-encre"
                   : "border-trait bg-carte text-encre-3 hover:border-encre-4",
               ].join(" ")}
             >
-              {cible}
+              aucune
             </button>
-          ))}
-          <button
-            type="button"
-            aria-pressed={univers.cible_px === AUCUNE_CIBLE}
-            onClick={() => void onRegler({ cible_px: AUCUNE_CIBLE })}
-            className={[
-              "h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
-              univers.cible_px === AUCUNE_CIBLE
-                ? "border-signal bg-ligne-ouverte text-encre"
-                : "border-trait bg-carte text-encre-3 hover:border-encre-4",
-            ].join(" ")}
+          </div>
+        ) : (
+          <div
+            data-echelle-du-jeu
+            className="flex flex-wrap gap-[4px]"
+            role="group"
+            aria-label="La finesse"
           >
-            aucune
-          </button>
-        </div>
+            {echelle.map(({ cible }) => (
+              <button
+                key={cible}
+                type="button"
+                aria-pressed={univers.cible_px === cible}
+                onClick={() => void onRegler({ cible_px: cible })}
+                className={[
+                  "mesure h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
+                  univers.cible_px === cible
+                    ? "border-signal bg-ligne-ouverte text-encre"
+                    : "border-trait bg-carte text-encre-3 hover:border-encre-4",
+                ].join(" ")}
+              >
+                {cible}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-pressed={univers.cible_px === AUCUNE_CIBLE}
+              onClick={() => void onRegler({ cible_px: AUCUNE_CIBLE })}
+              className={[
+                "h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
+                univers.cible_px === AUCUNE_CIBLE
+                  ? "border-signal bg-ligne-ouverte text-encre"
+                  : "border-trait bg-carte text-encre-3 hover:border-encre-4",
+              ].join(" ")}
+            >
+              aucune
+            </button>
+          </div>
+        )}
         <p className="text-[11.5px] leading-[1.45] text-encre-3">
           {posee
             ? `${posee.cible} — ${posee.quoi}`
@@ -453,10 +706,11 @@ function SonAllure({
           </Intitule>
           <div className="grid grid-cols-2 gap-[14px] xl:grid-cols-4">
             {METHODES.map((m) => (
-              <Choix
+              <CaseMethode
                 key={m}
-                titre={NOM_DE_LA_METHODE[m]}
-                quoi={CE_QUE_LA_METHODE_REND[m]}
+                methode={m}
+                taille={tailleApercu}
+                couleurs={couleursPourApercu}
                 choisi={univers.methode_pixels === m}
                 onChoisir={() => void onRegler({ methode_pixels: m })}
               />
@@ -478,25 +732,25 @@ function SonAllure({
           <Intitule>Les couleurs demandées</Intitule>
           <div
             data-couleurs-du-jeu
-            className="flex flex-wrap gap-[4px]"
+            className="grid grid-cols-3 gap-[8px] sm:grid-cols-6"
             role="group"
             aria-label="Les couleurs demandées"
           >
             {paliers.map((palier) => (
-              <button
+              <Choix
                 key={palier}
-                type="button"
-                aria-pressed={univers.couleurs === palier}
-                onClick={() => void onRegler({ couleurs: palier })}
-                className={[
-                  "mesure h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
-                  univers.couleurs === palier
-                    ? "border-signal bg-ligne-ouverte text-encre"
-                    : "border-trait bg-carte text-encre-3 hover:border-encre-4",
-                ].join(" ")}
+                titre={String(palier)}
+                quoi=""
+                choisi={univers.couleurs === palier}
+                onChoisir={() => void onRegler({ couleurs: palier })}
               >
-                {palier}
-              </button>
+                <CaseApercu
+                  taille={tailleApercu}
+                  methode={univers.methode_pixels}
+                  couleurs={palier}
+                  alt={`Le rôdeur avec ${palier} couleurs`}
+                />
+              </Choix>
             ))}
           </div>
           {/* **Le plafond est le côté du sprite, et il est mesuré** : au-delà,

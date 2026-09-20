@@ -17,7 +17,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
-import { ReglesDuJeu, dossierPrevu } from "./ReglesDuJeu"
+import { ReglesDuJeu, _reinitialiserCacheApercuAllurePourEssais, dossierPrevu } from "./ReglesDuJeu"
 import { UNIVERS_VIDE, type Champ, type Univers, type VueDuJeu } from "../api"
 import type { MoteurParFamille, ProfilWorkflow } from "../api-workflows"
 
@@ -25,6 +25,10 @@ afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  // Le cache des vignettes d'aperçu vit au niveau du module (RT2) : sans ce
+  // vidage, un essai qui simule une méthode absente verrait le succès mémorisé
+  // par l'essai précédent au lieu de son propre refus doublé.
+  _reinitialiserCacheApercuAllurePourEssais()
 })
 
 // ── Les données du jeu doublé ───────────────────────────────────────────────
@@ -119,6 +123,11 @@ function construireDouble(
     /** Le moteur par défaut de chaque famille de sons (SN2), tel que
      *  `GET /workflow-profiles/sound-defaults` le rend. */
     moteursParFamille?: Record<string, MoteurParFamille>
+    /** RT2 : la seule méthode de pixelisation que la machine doublée n'a pas —
+     *  comme `pixeloe` sans `torch` sur la vraie machine de l'auteur. Le
+     *  double répond alors le refus nommé que rend la route, pour la seule
+     *  méthode citée. */
+    methodeApercuAbsente?: string
   } = {},
 ) {
   let univers: Univers = {
@@ -283,6 +292,31 @@ function construireDouble(
       return rendre({ familles: options.moteursParFamille ?? {} })
     }
 
+    // **RT2 — l'aperçu de « Son allure ».** Chaque case de la rangée des
+    // tailles, des méthodes et des couleurs appelle cette route pour son
+    // compte : le double rejoue le même refus nommé que le serveur pour la
+    // seule méthode citée par `methodeApercuAbsente`, et un PNG minuscule pour
+    // le reste — jamais une image muette ni une route qui jette.
+    if (url.startsWith("/api/universe/allure/preview.png") && methode === "GET") {
+      const requete = new URLSearchParams(url.split("?")[1] ?? "")
+      const methodeDemandee = requete.get("methode") ?? ""
+      if (options.methodeApercuAbsente && methodeDemandee === options.methodeApercuAbsente) {
+        return {
+          ok: false,
+          status: 400,
+          json: async () => ({
+            code: "apercu_refuse",
+            raison: `« ${methodeDemandee} » n'est pas installée sur cette machine.`,
+          }),
+        } as Response
+      }
+      return {
+        ok: true,
+        status: 200,
+        blob: async () => new Blob(["png"], { type: "image/png" }),
+      } as unknown as Response
+    }
+
     throw new Error(`route non doublée dans cet essai : ${methode} ${url}`)
   })
 
@@ -302,6 +336,11 @@ function monter(
   const onRenomme = vi.fn()
   const onErreur = vi.fn()
   vi.stubGlobal("fetch", fetchDouble)
+  // RT2 : chaque vignette d'aperçu se transforme en `blob:` — jsdom ne sait
+  // pas fabriquer cette adresse tout seul, et sa valeur ne compte pour aucun
+  // essai, seule son existence compte.
+  vi.spyOn(URL, "createObjectURL").mockImplementation(() => "blob:apercu-allure")
+  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined)
   render(
     <ReglesDuJeu
       mode={surplus.mode ?? "reglages"}
@@ -500,6 +539,157 @@ describe("l'étape de l'allure", () => {
     expect(await screen.findByText(/La taille — le côté de l'image/)).toBeTruthy()
     expect(screen.getByText(/La pixelisation/)).toBeTruthy()
     expect(screen.getByRole("button", { name: "au plus proche" })).toBeTruthy()
+  })
+})
+
+// ── Les trois rangées montrent ce qu'elles font (RT2) ───────────────────────
+//
+// RT1 a ouvert `GET /universe/allure/preview.png` ; ces essais vérifient que
+// les trois rangées de l'allure l'appellent — une image par choix, et qui
+// correspond au choix qu'elle porte —, qu'elles se refont quand la taille
+// change, qu'une méthode absente de la machine se lit sans casser la case, et
+// qu'un style dessin ne demande aucun aperçu orphelin.
+
+describe("les trois rangées montrent ce qu'elles font (RT2)", () => {
+  test("chaque rangée demande une image par choix, à la bonne combinaison", async () => {
+    const { fetchDouble, appels } = construireDouble({
+      univers: { style: "pixel", cible_px: 64, methode_pixels: "vote", couleurs: 32 },
+    })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    // La méthode choisie porte son image, à la taille et aux couleurs posées.
+    await screen.findByRole("img", { name: "Le rôdeur réduit par « vote en deux temps »" })
+
+    const apercus = () => appels.filter((a) => a.url.startsWith("/api/universe/allure/preview.png"))
+    await waitFor(() => expect(apercus().length).toBeGreaterThan(0))
+
+    // La rangée des tailles : une demande par taille proposée (32 et 64, ici).
+    expect(apercus().some((a) => a.url.includes("taille=32"))).toBe(true)
+    expect(apercus().some((a) => a.url.includes("taille=64"))).toBe(true)
+    // La rangée des méthodes : les quatre, à la taille posée (64).
+    for (const m of ["vote", "pixeloe", "lanczos", "proche"]) {
+      expect(apercus().some((a) => a.url.includes(`taille=64`) && a.url.includes(`methode=${m}`))).toBe(true)
+    }
+    // La rangée des couleurs : un palier par case, à la taille et la méthode
+    // posées (64, vote).
+    expect(
+      apercus().some(
+        (a) => a.url.includes("taille=64") && a.url.includes("methode=vote") && a.url.includes("couleurs=32"),
+      ),
+    ).toBe(true)
+  })
+
+  test("changer la taille refait la rangée des méthodes et celle des couleurs", async () => {
+    const { fetchDouble, appels } = construireDouble({
+      univers: { style: "pixel", cible_px: 64, methode_pixels: "vote", couleurs: 32 },
+    })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    await screen.findByRole("img", { name: "Le rôdeur réduit par « vote en deux temps »" })
+    const compteAvant = appels.filter((a) => a.url.includes("taille=32") && a.url.includes("methode=")).length
+
+    // Le double ne propose que deux tailles (32 et 64) — on clique l'autre.
+    // **Dans le groupe des tailles seulement** : 32 est aussi un palier de
+    // couleurs, et les deux rangées de cases se touchent.
+    const tailles = within(screen.getByRole("group", { name: "La taille de l'image" }))
+    fireEvent.click(tailles.getByRole("button", { name: "32" }))
+
+    await waitFor(() =>
+      expect(
+        appels.filter((a) => a.url.includes("taille=32") && a.url.includes("methode=")).length,
+      ).toBeGreaterThan(compteAvant),
+    )
+  })
+
+  test("le choix retenu porte une marque, pas seulement un mot dessous", async () => {
+    const { fetchDouble } = construireDouble({
+      univers: { style: "pixel", cible_px: 64, methode_pixels: "lanczos" },
+    })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    // Les cases de taille et de méthode sont des `Choix` : `aria-pressed`
+    // porte la sélection, comme le style et la vue ailleurs dans ce parcours.
+    // **Dans le groupe des tailles** : 64 se retrouve aussi comme palier de
+    // couleurs, et les deux rangées de cases se touchent.
+    const tailles = within(await screen.findByRole("group", { name: "La taille de l'image" }))
+    expect(tailles.getByRole("button", { name: "64" }).getAttribute("aria-pressed")).toBe("true")
+    expect(
+      screen.getByRole("button", { name: "réduction douce" }).getAttribute("aria-pressed"),
+    ).toBe("true")
+  })
+
+  test("la rangée reste cliquable avant que les images soient revenues", async () => {
+    // Un aperçu qui ne répond jamais pendant l'essai — pour prouver que le
+    // clic n'attend pas la promesse.
+    const attente: { resoudre: (() => void)[] } = { resoudre: [] }
+    const { fetchDouble, appels } = construireDouble({
+      univers: { style: "pixel", cible_px: 64 },
+    })
+    const fetchLent = vi.fn(async (chemin: unknown, init?: RequestInit) => {
+      const url = String(chemin)
+      if (url.startsWith("/api/universe/allure/preview.png")) {
+        await new Promise<void>((r) => attente.resoudre.push(r))
+        return { ok: true, status: 200, blob: async () => new Blob(["png"], { type: "image/png" }) } as unknown as Response
+      }
+      return fetchDouble(chemin, init)
+    })
+    monter(fetchLent)
+    ouvrir("Son allure")
+
+    // On clique une méthode avant qu'aucune image ne soit revenue.
+    fireEvent.click(await screen.findByRole("button", { name: "au plus proche" }))
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/universe" &&
+            a.methode === "PUT" &&
+            (a.corps as { methode_pixels?: string }).methode_pixels === "proche",
+        ),
+      ).toBe(true),
+    )
+
+    // Ménage : on libère les aperçus restés en attente.
+    attente.resoudre.forEach((r) => r())
+  })
+
+  test("une méthode absente de la machine se lit, et sa case se ferme", async () => {
+    const { fetchDouble } = construireDouble({
+      univers: { style: "pixel", cible_px: 64 },
+      methodeApercuAbsente: "pixeloe",
+    })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    const case_ = await screen.findByRole("button", { name: "traits épaissis" })
+    await waitFor(() =>
+      expect(screen.getByText(/« pixeloe » n'est pas installée sur cette machine/)).toBeTruthy(),
+    )
+    // **Elle ne rend rien qu'elle ne puisse tenir** : la méthode qu'on ne
+    // peut pas prévisualiser est celle que la fabrication ne rendrait pas non
+    // plus, puisque les deux partagent le même moteur — la case se ferme au
+    // lieu de promettre un choix qu'elle ne peut pas honorer.
+    expect(case_).toHaveProperty("disabled", true)
+
+    // Les trois autres méthodes, elles, restent normales.
+    expect(screen.getByRole("button", { name: "vote en deux temps" })).toHaveProperty("disabled", false)
+  })
+
+  test("en dessin, aucune vignette ne se demande — pas d'aperçu orphelin", async () => {
+    const { fetchDouble, appels } = construireDouble({ univers: { style: "dessin" } })
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    await screen.findByRole("button", { name: "Dessin" })
+    // Le temps qu'un aperçu, s'il devait partir, ait eu le temps de partir.
+    await waitFor(() => expect(screen.getByText(/La finesse/)).toBeTruthy())
+
+    expect(appels.some((a) => a.url.startsWith("/api/universe/allure/preview.png"))).toBe(false)
+    expect(screen.queryByRole("img", { name: /Le rôdeur/ })).toBeNull()
   })
 })
 
