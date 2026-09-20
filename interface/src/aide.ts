@@ -1100,6 +1100,24 @@ export const AIDE: Record<string, Explication> = {
     origine: "les images faites, comptées par le serveur",
   },
 
+  // **Déplacée depuis `ou: "equipement"` en `GU8`** (`docs/PLAN-guide.md`) :
+  // son propre texte le disait déjà — « les cases que tu coches dans
+  // l'établi ou dans le codex » — et `EtabliDuSujet.tsx` confirme : « les
+  // angles d'une planche de pose » (E13) ferment un appel sur plusieurs
+  // directions d'une même pose d'*un personnage*, jamais sur une pièce
+  // d'équipement. Groupée ici avec ses sœurs, vérifiée.
+  "fabrique.planche": {
+    nom: "La planche de poses",
+    groupe: "Cases et planches — sa matrice",
+    ou: "sujet",
+    quoi: "Une feuille où le modèle dessine plusieurs attitudes du même personnage en un seul appel, redécoupée ensuite en images séparées.",
+    change:
+      "Elle divise le prix : une planche coûte le prix d'un appel quel que soit le nombre de cases qu'elle porte. Et elle achète quelque chose qu'aucun appel séparé ne garantit — les cases sortent à la même échelle et dans le même style, puisqu'elles ont été peintes ensemble.",
+    origine: "les cases que tu coches dans l'établi ou dans le codex",
+    long:
+      "Le risque se dit avec : c'est **un jet unique**, que le modèle ne rend pas deux fois. Une planche ratée se repaie entière, et un compte de cases faux ne fait rien entrer du tout — la planche entière se relance au prix plein.\n\nLa feuille elle-même n'entre jamais en bibliothèque ; ses morceaux, oui, chacun filié vers elle.",
+  },
+
   // **Déplacée sous `ou: "bande"` en GU6** : elle décrit une image du ruban
   // dans l'atelier d'une bande (`AtelierDeBande.tsx`), au même titre que
   // `bande.position`, `bande.remplacer` et `bande.pelure`, déjà rangées là —
@@ -2108,6 +2126,237 @@ export const AIDE: Record<string, Explication> = {
       "**Il n'y a pas de liste de passages** : un geste à main levée en produit des dizaines, illisibles en rangées. Le calque est l'unité de lecture — on le nomme, le masque, le supprime — et le passage n'existe que comme un compte et un Ctrl + Z.\n\nUn passage est un **tracé, jamais des pixels** : il se rejoue sur une image dont les dimensions ont changé, sans perdre le dessin.",
   },
 
+  // ── La fabrique Superposition — poser une pièce sur une pose ──────────────
+  //
+  // **Née sous `ou: "equipement"`, jamais atteignable là** (`GU8`,
+  // `docs/PLAN-guide.md`) : une des deux fabriques de `TABLES`
+  // (`interface/src/recette.ts`), montée uniquement par `Retouche.tsx`,
+  // jamais par `Emplois.tsx`/`Emploi.tsx`. Choisie depuis la barre des
+  // tables, pas dans le fil d'un emploi — c'est pour ça que son groupe suit
+  // les treize de `GU5` plutôt que de s'y mêler. Groupée et vérifiée ici.
+
+  "fabrique.superposition": {
+    nom: "La superposition",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "Il prend deux images — un corps nu et le même habillé — et en tire le calque de ce qu'une pièce a ajouté.",
+    change:
+      "Rien sur les deux images de départ, qui ne sont jamais repeintes. Elle en produit une troisième — un calque —, et un calque est solidaire de la pose sur laquelle la pièce est apparue : il en faut un par pose.",
+    origine: "deux images que tu désignes, dans la même pose",
+  },
+
+  "superposition.images": {
+    nom: "les deux images",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "Le dessus, qui se déplace, et le dessous, qui est le sol et ne bouge jamais.",
+    change:
+      "Rien sur les deux images de départ, qui ne sont jamais repeintes. Intervertir les deux change le résultat, puisque le calque est fait de ce que le **dessus** ajoute.",
+    origine: "toi · deux images que tu désignes, dans la même pose",
+    long:
+      "Le cas principal : l'atelier assemble une planche avec les corps du personnage, la fait habiller par le modèle, et redécoupe chaque case — il obtient l'image envoyée et l'image revenue. C'est cette paire qui remplit l'outil par défaut.\n\nMais il marche sur n'importe quelles deux images. Poser un corps nu sur un corps casqué donnerait le crâne nu au lieu du casque : le sens compte.",
+  },
+
+  "superposition.detourage": {
+    nom: "avant de caler",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "L'état du détourage des deux images — c'est lui qui décide si un calque est seulement possible.",
+    change:
+      "Rien tant que tu ne reprends pas les passes. Une image qui revient du modèle est opaque de bord à bord : sans alpha sur le dessus, le calque emporte tout le fond de l'image.",
+    origine: "la recette de chaque image · reprendre écrit dans celle du dessus",
+    long:
+      "Un pixel entre dans le calque s'il est **opaque dans le dessus et transparent dans le dessous**. Si le dessus n'est pas détouré, tout y est opaque — fond compris —, et tout ce qui entoure le corps part avec la pièce.\n\nLe dessus hérite du détourage du dessous, prérempli. L'alerte nomme la conséquence et propose le geste ; elle ne refuse pas — une image qui remplit légitimement son cadre existe.",
+  },
+
+  "superposition.voir": {
+    nom: "voir les deux images",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "L'opacité et le mode de couleur du dessous, l'opacité du dessus.",
+    change:
+      "Rien du tout à ce qui sort — c'est de l'affichage, et rien d'autre. Ils existent pour une seule raison : caler à l'œil deux images qui se ressemblent.",
+    origine: "toi · le dessous teinté à 50 %, le dessus à 92 %",
+    long:
+      "**Teinte** repeint tous les pixels opaques du dessous d'une seule couleur vive : c'est celui qui sert au calage, parce qu'aucune de ces couleurs n'existe dans un sprite. **Négatif** sert quand les deux images ont déjà des couleurs proches. **Normale** sert à vérifier le rendu final.",
+  },
+
+  "superposition.calage": {
+    nom: "le calage",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "Où le dessus se pose sur le dessous — une proposition, puis ce que tu ajustes.",
+    change:
+      "Rien à la génération, et pas un centime : les deux images sont déjà payées. Avant, un recalage raté n'avait aucun recours — le calque était perdu et il fallait relancer une génération.",
+    origine: "une proposition du produit, reprise à la main",
+    long:
+      "**Recaler est un bouton, pas un mode.** Il essaie 131 échelles et cherche pour chacune le décalage qui fait le mieux coïncider les deux silhouettes, sur des vignettes de 128 px pour rester rapide, puis remplit les trois champs et s'arrête là.\n\nOn le relance autant qu'on veut. Quand il tombe à côté — modèle dézoomé —, on corrige à la main.",
+  },
+
+  "superposition.echelle": {
+    nom: "échelle du dessus",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "La taille du dessus par rapport au dessous. Détente à 1,000.",
+    change:
+      "C'est **le seul réglage de l'outil qui abîme l'image** : rééchantillonner du pixel art à un facteur qui n'est pas simple détruit la grille. Le champ le marque ; il ne le refuse pas.",
+    origine: "toi · proposé par le recalage",
+    long:
+      "**Elle ne part pas toujours de la taille d'arrivée de l'image.** Le cadre du dessous fait loi : un dessus plus grand que lui y entre entier, réduit pour tenir, et c'est *à partir de là* que 1,000 se compte. L'écran le dit quand ça arrive, avec la taille de départ et la réduction.\n\nUn dessus qui tient déjà dans le cadre s'y pose à sa taille et rien n'est dit — le cas courant.",
+  },
+
+  "superposition.decalage": {
+    nom: "décalage du dessus",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "De combien le dessus se déplace, en pixels de l'image rendue.",
+    change:
+      "Rien à la génération. Le signe suit l'écran : la touche qui monte fait monter l'image.",
+    origine: "toi · proposé par le recalage",
+    long:
+      "Les touches sont dessinées sous chaque rail plutôt que listées dans une aide, et **elles sont aussi les boutons** : une seule chose à l'écran fait donc deux métiers — elle enseigne et elle agit. Un raccourci écrit dans une aide n'est jamais lu ; dessiné sous le réglage qu'il commande, il se voit au moment où on en a besoin. Maj multiplie le pas par dix.",
+  },
+
+  "superposition.main": {
+    nom: "retoucher le masque d’extraction",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "Garder récupère les pixels du dessus que la différence a manqués ; Retirer efface ceux qui restent en trop sur le calque.",
+    change: "Les traits corrigent le masque après la différence. Les deux images sources restent intactes.",
+    origine: "toi · taille du pinceau réglable en pixels",
+    long: "Déplacer ajuste le placement du dessus par glissement. Rectangle borne la comparaison. Garder et Retirer montrent le masque en cours, avec l’empreinte du pinceau. Ctrl + molette zoome ; Espace + glisser déplace la vue. Rouvrir un résultat retrouve ses deux sources, ses réglages et ses traits enregistrés.",
+  },
+
+  "superposition.seuil": {
+    nom: "ce qu'on garde du dessus",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "De combien une couleur doit changer pour compter comme changée, et le rectangle hors duquel le dessus est masqué.",
+    change:
+      "Rien à la génération. **Le rectangle sert deux fois** : il isole la pièce pour qu'on voie le corps dessous pendant qu'on cale, et ce qu'il masque à l'écran, il le masque aussi à la sortie.",
+    origine: "toi · aucun rectangle au départ, seuil 32",
+    long:
+      "Le seuil est un réglage qui décide **partout** ; le rectangle est un cadre qui décide **quelque part**. Les deux se complètent : le seuil fait le gros du travail d'un coup, le rectangle rattrape ce qu'une couleur ne pouvait pas voir — un casque sombre sur des cheveux sombres, par exemple, qu'aucun seuil ne distingue.",
+  },
+
+  "superposition.sorties": {
+    nom: "ce qu'on en sort",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "Le calque — ce que le dessus ajoute, sur fond transparent — et l'aplat — les deux fondues en une.",
+    change:
+      "Les deux **se cochent au lieu de s'exclure** : on veut souvent le calque pour le réutiliser et l'aplat pour l'avoir tout de suite. Ce qui est fabriqué n'a rien coûté — l'argent a été dépensé deux fois, pour les deux images, et les deux filiations y mènent.",
+    origine: "toi · le calque seul au départ",
+    long:
+      "Le calque est la pièce d'équipement : elle va au vestiaire du personnage et s'empile ensuite sur les autres poses. L'aplat est le personnage habillé, en une seule image, prêt à partir dans le jeu tel quel.\n\nCe qui sort a **deux ascendants** : ses pixels et son parent viennent du dessus, le dessous reste une référence. Sa recette est vide, les deux images étaient déjà rendues.",
+  },
+
+  "superposition.fond": {
+    nom: "le fond du calque",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "Sur quoi on regarde le calque seul — le damier, ou l'un des cinq aplats vifs.",
+    change:
+      "Rien : c'est de l'affichage. Il sert à repérer les **pixels oubliés**, ceux qui auraient dû partir avec le corps et sont restés accrochés au calque.",
+    origine: "toi · le damier au départ",
+    long:
+      "Sur le damier, les miettes de fond se confondent avec la transparence ; sur un aplat vif elles sautent aux yeux. La bonne couleur dépend de celles du sprite, d'où six fonds et pas un.",
+  },
+
+  "superposition.resultat": {
+    nom: "le résultat",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "Le dessous à 100 %, le calque par-dessus — tel que ce sera dans le jeu.",
+    change:
+      "Rien : c'est une lecture. Maintenir « masquer le calque » le retire le temps de l'appui, et c'est ce qui dit si la pièce tient sur le corps.",
+    origine: "les deux images, telles que tu les as calées",
+    long:
+      "Les trois vues sont **vivantes** : déplacer le dessus d'un pixel les met toutes à jour. C'est ce qui permet de caler en regardant le résultat plutôt que le travail, et c'est la raison d'être de cette disposition à trois panneaux.",
+  },
+
+  "superposition.mesures": {
+    nom: "ce que la comparaison a mesuré",
+    groupe: "La fabrique Superposition",
+    ou: "tables",
+    quoi: "Cinq nombres : silhouette, corps repeint, ajout, échelle, compacité.",
+    change:
+      "Rien. **Aucune ne refuse quoi que ce soit** — elles disent si la superposition a réussi, et servent à ranger les calques d'un vestiaire dans l'ordre où il faut les regarder. Le seul refus automatique du produit reste le compte d'images.",
+    origine: "une mesure sur tes deux images",
+    long:
+      "**Silhouette** : ce qui reste du corps de départ, proche de 1 si la forme est gardée.\n\n**Corps repeint** : la part du corps changée hors de l'ajout — beaucoup veut dire un redessin plutôt qu'un habillage.\n\n**Ajout** : ce qui est apparu, en part du corps.\n\n**Échelle** : la taille du dessus au retour, 0,62 pour un dézoom.\n\n**Compacité** : proche de 1, un objet ; proche de 0, une poussière semée.",
+  },
+
+  // ── La fabrique Découpage — une planche multi-sprites, en rectangles ──────
+  //
+  // L'autre fabrique de `TABLES` (`interface/src/recette.ts`), rendue par
+  // `Decoupe.tsx` et montée par `Retouche.tsx` — même origine que la
+  // superposition ci-dessus, née sous `ou: "equipement"` sans jamais y être
+  // atteignable (`GU8`). Groupée et vérifiée ici.
+  //
+  // **`decoupe.animation` racontait encore la décision `AU19`** (« on garde
+  // d'abord, on range ensuite, depuis son atelier ») — retournée par `AU20`
+  // (`Decoupe.tsx`) : personnage et mouvement se demandent maintenant ici,
+  // pré-remplis depuis la feuille. Corrigée en relisant le code.
+
+  "decoupe.mode": {
+    nom: "Détection",
+    groupe: "La fabrique Découpage",
+    ou: "tables",
+    quoi: "Comment les rectangles sont proposés : « auto » cherche les zones opaques, « grille » des cases égales, « gouttières » les bandes de fond.",
+    change:
+      "Ne découpe rien — propose. Ce qui part à la découpe est la liste que tu vois à droite, corrections à la main comprises. Changer ce réglage relance la détection et remplace ce que tu as dessiné.",
+    origine: "toi · défaut auto",
+    long:
+      "Auto détoure d'abord : une planche fraîche est opaque de bord à bord, sa seule zone connexe serait l'image entière.\n\nGrille répond à une autre nature de planche — sprites qui se touchent, cases vides à conserver.\n\nGouttières lisent la brute telle quelle : bandes d'une seule couleur, coupées là.\n\nUne détection à une boîte, ou aucune, est un résultat, pas une panne.",
+  },
+
+  "decoupe.taille_min": {
+    nom: "taille minimale",
+    groupe: "La fabrique Découpage",
+    ou: "tables",
+    quoi: "En dessous de ce côté, en pixels, une zone opaque n'est pas un sprite.",
+    change:
+      "Monte-la pour ignorer les éclats de fond qui ont survécu au seuil ; descends-la pour rattraper un petit sprite oublié. Chaque cran relance la détection et remplace ce que tu avais dessiné.",
+    origine: "toi · défaut 16 px",
+    long:
+      "Exprimé en côté et non en aire, parce que c'est ce que l'œil voit : « ignore ce qui fait moins de seize pixels ». La comparaison, elle, se fait sur l'aire — une lance de 4 × 200 pixels a un petit côté minuscule et reste un sujet.\n\nDeux morceaux séparés de moins de deux pixels sont réunis avant le rejet, jamais après.",
+  },
+
+  "decoupe.colonnes": {
+    nom: "colonnes",
+    groupe: "La fabrique Découpage",
+    ou: "tables",
+    quoi: "Le nombre de colonnes égales dans lesquelles la planche est coupée.",
+    change:
+      "Avec les lignes, décide du nombre de découpes proposées : colonnes × lignes, cases vides comprises. Le reste de la division se répartit — rien n'est jeté au bord droit.",
+    origine: "toi · défaut 4",
+    long:
+      "Une planche de 1000 px en 3 colonnes donne 334, 333 et 333, et la dernière case va bien jusqu'au dernier pixel. Une division qui laisse tomber deux pixels laisse tomber une colonne de sprite au bord droit, et ça ne se voit qu'après découpe.",
+  },
+
+  "decoupe.lignes": {
+    nom: "lignes",
+    groupe: "La fabrique Découpage",
+    ou: "tables",
+    quoi: "Le nombre de rangées égales dans lesquelles la planche est coupée.",
+    change:
+      "Avec les colonnes, décide du nombre de découpes proposées. Une case vide donne quand même un rectangle : la grille fixe ne saute rien, et c'est ce qui la rend prévisible. Retire-le à la main si tu n'en veux pas.",
+    origine: "toi · défaut 2",
+  },
+
+  "decoupe.animation": {
+    nom: "en faire une animation",
+    groupe: "La fabrique Découpage",
+    ou: "tables",
+    quoi: "Les mêmes rectangles, mais les cases deviennent les images d'une animation au lieu d'images séparées.",
+    change:
+      "Elles sont jouées dans l'ordre où elles sont numérotées, à 8 images par seconde, et l'atelier de l'animation s'ouvre juste après pour la régler. Rien n'est dépensé : l'image a été payée une fois, à son entrée.",
+    origine: "toi",
+    long:
+      "Une feuille à plusieurs lignes est le plus souvent un jeu de directions : une ligne par direction. Le personnage et le mouvement visés se pré-remplissent depuis la feuille — vrai neuf fois sur dix — et se corrigent d'un clic avant de cliquer. L'atelier de l'animation s'ouvre juste après pour la régler.",
+  },
+
   // ── Ce que la galerie choisit de sa grille (RP11) ─────────────────────────
   //
   // Quatre réglages, quatre entrées — « une entrée décrit un réglage, pas un
@@ -2650,262 +2899,6 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · vide au départ, et c'est un état légitime",
     long:
       "Vide, l'agent nomme son dossier à chaque appel — c'est permis, et c'est même ce qu'il fera s'il range ses sprites et ses tuiles à deux endroits différents.\n\nCe qui est posé là est le rendu, jamais le brut : l'image qu'on voit, celle qui entre dans le jeu. Le brut reste ici, et c'est lui qui permet de refaire le rendu.",
-  },
-  // ── Les fabriques ─────────────────────────────────────────────────────────
-  //
-  // **Une fabrique ne modifie pas une image, elle en écrit d'autres sur le
-  // disque.** Ce n'est pas la même chose qu'une retouche qu'on défait, et c'est
-  // pour ça que ce groupe existe — le guide ne disait nulle part qu'il y a des
-  // outils qui ne sont pas des tables, et c'est pourtant la distinction qui
-  // décide où on va les chercher.
-  //
-  // **Aucune des dix-neuf fiches ci-dessous ne décrit l'écran d'un emploi**
-  // (`GU8`, `docs/PLAN-guide.md`) — elles sont nées sous `ou: "equipement"`
-  // mais n'y ont jamais été atteignables, et la relecture le confirme fiche
-  // par fiche plutôt que de le supposer. Textes inchangés, exacts pour leur
-  // vrai écran ; laissées à leur place dans ce fichier, comme `atelier.import`
-  // l'a été vers `"galerie"` en `GU6`.
-
-  "fabrique.planche": {
-    nom: "La planche de poses",
-    // **Déplacée sous `ou: "sujet"` en `GU8`** : son propre texte le disait
-    // déjà — « les cases que tu coches dans l'établi ou dans le codex » — et
-    // `EtabliDuSujet.tsx` confirme : « les angles d'une planche de pose »
-    // (E13) ferment un appel sur plusieurs directions d'une même pose d'*un
-    // personnage*, jamais sur une pièce d'équipement. Elle rejoint la zone
-    // « Cases et planches — sa matrice » que `GU6` a déjà posée pour le sujet.
-    ou: "sujet",
-    quoi: "Une feuille où le modèle dessine plusieurs attitudes du même personnage en un seul appel, et que l'atelier redécoupe ensuite en images séparées.",
-    change:
-      "Elle divise le prix : une planche coûte le prix d'un appel quel que soit le nombre de cases qu'elle porte. Et elle achète quelque chose qu'aucun appel séparé ne garantit — les cases sortent à la même échelle et dans le même style, puisqu'elles ont été peintes ensemble.",
-    origine: "les cases que tu coches dans l'établi ou dans le codex",
-    long:
-      "Le risque se dit avec : c'est **un jet unique**, que le modèle ne rend pas deux fois. Une planche ratée se repaie entière, et un compte de cases faux ne fait rien entrer du tout — la planche entière se relance au prix plein.\n\nLa feuille elle-même n'entre jamais en bibliothèque ; ses morceaux, oui, chacun filié vers elle.",
-  },
-
-  // ── La superposition ───────────────────────────────────────────────────────
-  //
-  // **Déplacées sous `ou: "tables"` en `GU8`**, les treize fiches qui suivent
-  // (`fabrique.superposition` et les douze `superposition.*`). `Superposition`
-  // est une des deux fabriques de `TABLES` (`interface/src/recette.ts`), montée
-  // uniquement par `Retouche.tsx` (`import { EcranSuperposition } from
-  // "./Superposition"`) — jamais par `Emplois.tsx`, `Emploi.tsx` ni
-  // `CalquesDeLEmploi.tsx`. `Emploi.tsx` l'exclut lui-même en toutes lettres :
-  // « caler à la main… existe déjà ailleurs dans le produit… c'est un atelier
-  // à lui, et le glisser dans un volet de 380 px l'aurait dupliqué au lieu de
-  // l'ouvrir. » Le geste qui l'ouvre confirme : `onSuperposition` appelle
-  // `ouvrirLaRetouche(identifiant, "superposition")` (`App.tsx`) — un aller
-  // dans le lieu `retouche`, jamais dans `piece`/`emploi`/`calques-animes`.
-  // **Le guide ne disait nulle part qu'il existe des outils qui ne sont pas des
-  // tables**, et c'est pourtant la distinction qui décide où on les cherche :
-  // une table règle une image et rend la même ; celui-ci en prend deux et en
-  // fabrique une troisième. Textes inchangés, exacts pour leur vrai écran ;
-  // ce sera le travail d'une reprise de la retouche que de les grouper.
-
-  "fabrique.superposition": {
-    nom: "La superposition",
-    ou: "tables",
-    quoi: "L'outil qui pose une pièce d'équipement sur un personnage : il prend le corps nu et le corps habillé, et il en tire le calque de ce qui a été ajouté.",
-    change:
-      "Rien sur les deux images de départ, qui ne sont jamais repeintes. Elle en produit une troisième — un calque —, et un calque est solidaire de la pose sur laquelle la pièce est apparue : il en faut un par pose.",
-    origine: "deux images que tu désignes, dans la même pose",
-  },
-
-  "superposition.images": {
-    nom: "les deux images",
-    ou: "tables",
-    quoi: "Le dessus, qui se déplace, et le dessous, qui est le sol et ne bouge jamais.",
-    change:
-      "Rien sur les deux images de départ, qui ne sont jamais repeintes. Intervertir les deux change le résultat, puisque le calque est fait de ce que le **dessus** ajoute.",
-    origine: "toi · deux images que tu désignes, dans la même pose",
-    long:
-      "Le cas principal est l'aller-retour d'un équipement : l'atelier assemble une planche avec les corps du personnage, la fait habiller par le modèle, et redécoupe chaque case — il obtient alors, pour chaque corps, l'image envoyée et l'image revenue. C'est cette paire qui remplit l'outil par défaut.\n\nMais il marche sur **n'importe quelles deux images** de la bibliothèque, sans aller-retour et sans planche. Poser un corps nu sur un corps casqué donnerait le crâne nu au lieu du casque : c'est pour ça que le sens compte.",
-  },
-
-  "superposition.detourage": {
-    nom: "avant de caler",
-    ou: "tables",
-    quoi: "L'état du détourage des deux images — c'est lui qui décide si un calque est seulement possible.",
-    change:
-      "Rien tant que tu ne reprends pas les passes. Une image qui revient du modèle est opaque de bord à bord : sans alpha sur le dessus, le calque emporte tout le fond de l'image.",
-    origine: "la recette de chaque image · reprendre écrit dans celle du dessus",
-    long:
-      "Un pixel entre dans le calque s'il est **opaque dans le dessus et transparent dans le dessous**. Si le dessus n'est pas détouré, tout y est opaque — fond compris —, donc tout ce qui entoure le corps remplit la condition et part avec la pièce.\n\nLe dessus hérite du détourage du dessous, prérempli : même sujet, même fond plat, même modèle. Ce que ça pose va dans la recette de l'image, pas dans la superposition — le détourage d'une image est vrai pour elle-même, elle en aura besoin de toute façon pour partir dans le jeu.\n\nL'alerte nomme la conséquence et propose le geste ; **elle ne refuse pas**. Une image qui remplit légitimement son cadre existe, et l'atelier n'a pas les moyens de savoir laquelle il a sous les yeux.",
-  },
-
-  "superposition.voir": {
-    nom: "voir les deux images",
-    ou: "tables",
-    quoi: "L'opacité et le mode de couleur du dessous, l'opacité du dessus.",
-    change:
-      "Rien du tout à ce qui sort — c'est de l'affichage, et rien d'autre. Ils existent pour une seule raison : caler à l'œil deux images qui se ressemblent.",
-    origine: "toi · le dessous teinté à 50 %, le dessus à 92 %",
-    long:
-      "**Teinte** repeint tous les pixels opaques du dessous d'une seule couleur vive : c'est celui qui sert au calage, parce qu'aucune de ces couleurs n'existe dans un sprite. **Négatif** sert quand les deux images ont déjà des couleurs proches. **Normale** sert à vérifier le rendu final.",
-  },
-
-  "superposition.calage": {
-    nom: "le calage",
-    ou: "tables",
-    quoi: "Où le dessus se pose sur le dessous — une proposition, puis ce que tu ajustes.",
-    change:
-      "Rien à la génération, et pas un centime : les deux images sont déjà payées. Avant, un recalage raté n'avait aucun recours — le calque était perdu et il fallait relancer une génération.",
-    origine: "une proposition du produit, reprise à la main",
-    long:
-      "**Recaler est un bouton, pas un mode.** Il essaie 131 échelles et cherche pour chacune le décalage qui fait le mieux coïncider les deux silhouettes, sur des vignettes de 128 px pour rester rapide. Puis il remplit les trois champs et s'arrête là : il ne verrouille rien, ne refuse rien, et n'empêche aucun ajustement.\n\nOn le relance autant qu'on veut — il repart alors de zéro, pas de l'ajustement. Quand il tombe à côté, ce qui arrive quand le modèle a dézoomé le personnage pour faire de la place à la pièce, on corrige à la main.",
-  },
-
-  "superposition.echelle": {
-    nom: "échelle du dessus",
-    ou: "tables",
-    quoi: "La taille du dessus par rapport au dessous. Détente à 1,000.",
-    change:
-      "C'est **le seul réglage de l'outil qui abîme l'image** : rééchantillonner du pixel art à un facteur qui n'est pas simple détruit la grille. Le champ le marque ; il ne le refuse pas.",
-    origine: "toi · proposé par le recalage",
-    long:
-      "**Elle ne part pas toujours de la taille d'arrivée de l'image.** Le cadre du dessous fait loi : un dessus plus grand que lui y entre entier, réduit pour tenir, et c'est *à partir de là* que 1,000 se compte. L'écran le dit quand ça arrive, avec la taille de départ et la réduction — sans quoi on lirait « × 1,00 » en croyant que rien n'a bougé.\n\nUn dessus qui tient déjà dans le cadre, lui, s'y pose à sa taille et rien n'est dit : c'est le cas courant.",
-  },
-
-  "superposition.decalage": {
-    nom: "décalage du dessus",
-    ou: "tables",
-    quoi: "De combien le dessus se déplace, en pixels de l'image rendue.",
-    change:
-      "Rien à la génération. Le signe suit l'écran : la touche qui monte fait monter l'image.",
-    origine: "toi · proposé par le recalage",
-    long:
-      "Les touches sont dessinées sous chaque rail plutôt que listées dans une aide, et **elles sont aussi les boutons** : une seule chose à l'écran fait donc deux métiers — elle enseigne et elle agit. Un raccourci écrit dans une aide n'est jamais lu ; dessiné sous le réglage qu'il commande, il se voit au moment où on en a besoin. Maj multiplie le pas par dix.",
-  },
-
-  "superposition.main": {
-    nom: "retoucher le masque d’extraction",
-    ou: "tables",
-    quoi: "Garder récupère les pixels du dessus aligné ; Retirer efface ceux que la comparaison a retenus à tort.",
-    change: "Les traits corrigent le masque après la différence. Les deux images sources restent intactes.",
-    origine: "toi · taille du pinceau réglable en pixels",
-    long: "Déplacer le dessus ajuste son placement par glissement. Rectangle borne la comparaison. Garder et Retirer montrent le masque en cours, avec l’empreinte du pinceau. Ctrl + molette zoome ; Espace + glisser déplace la vue. La bibliothèque permet de chercher toutes les images avec des filtres de collection et de favori. Rouvrir un résultat retrouve ses deux sources, ses réglages et ses traits enregistrés.",
-  },
-
-  "superposition.seuil": {
-    nom: "ce qu'on garde du dessus",
-    ou: "tables",
-    quoi: "De combien une couleur doit changer pour compter comme changée, et le rectangle hors duquel le dessus est masqué.",
-    change:
-      "Rien à la génération. **Le rectangle sert deux fois** : il isole la pièce pour qu'on voie le corps dessous pendant qu'on cale, et ce qu'il masque à l'écran, il le masque aussi à la sortie.",
-    origine: "toi · aucun rectangle au départ, seuil 32",
-    long:
-      "Le seuil est un réglage qui décide **partout** ; le rectangle est un cadre qui décide **quelque part**. Les deux se complètent : le seuil fait le gros du travail d'un coup, le rectangle rattrape ce qu'une couleur ne pouvait pas voir — un casque sombre sur des cheveux sombres, par exemple, qu'aucun seuil ne distingue.",
-  },
-
-  "superposition.sorties": {
-    nom: "ce qu'on en sort",
-    ou: "tables",
-    quoi: "Le calque — ce que le dessus ajoute, sur fond transparent — et l'aplat — les deux fondues en une.",
-    change:
-      "Les deux **se cochent au lieu de s'exclure** : on veut souvent le calque pour le réutiliser et l'aplat pour l'avoir tout de suite. Ce qui est fabriqué n'a rien coûté — l'argent a été dépensé deux fois, pour les deux images, et les deux filiations y mènent.",
-    origine: "toi · le calque seul au départ",
-    long:
-      "Le calque est la pièce d'équipement : elle va au vestiaire du personnage et s'empile ensuite sur les autres poses. L'aplat est le personnage habillé, en une seule image, prêt à partir dans le jeu tel quel.\n\nCe qui sort est un asset entier, et c'est le seul geste du produit dont le résultat a **deux ascendants** : ses pixels et son parent viennent du dessus, le dessous est une référence gardée pour que la superposition se rejoue. Sa recette est vide, parce que les deux images étaient déjà rendues.",
-  },
-
-  "superposition.fond": {
-    nom: "le fond du calque",
-    ou: "tables",
-    quoi: "Sur quoi on regarde le calque seul — le damier, ou l'un des cinq aplats vifs.",
-    change:
-      "Rien : c'est de l'affichage. Il sert à repérer les **pixels oubliés**, ceux qui auraient dû partir avec le corps et sont restés accrochés au calque.",
-    origine: "toi · le damier au départ",
-    long:
-      "Sur le damier, les miettes de fond se confondent avec la transparence ; sur un aplat vif elles sautent aux yeux. La bonne couleur dépend de celles du sprite, d'où six fonds et pas un.",
-  },
-
-  "superposition.resultat": {
-    nom: "le résultat",
-    ou: "tables",
-    quoi: "Le dessous à 100 %, le calque par-dessus — tel que ce sera dans le jeu.",
-    change:
-      "Rien : c'est une lecture. Maintenir « masquer le calque » le retire le temps de l'appui, et c'est ce qui dit si la pièce tient sur le corps.",
-    origine: "les deux images, telles que tu les as calées",
-    long:
-      "Les trois vues sont **vivantes** : déplacer le dessus d'un pixel les met toutes à jour. C'est ce qui permet de caler en regardant le résultat plutôt que le travail, et c'est la raison d'être de cette disposition à trois panneaux.",
-  },
-
-  "superposition.mesures": {
-    nom: "ce que la comparaison a mesuré",
-    ou: "tables",
-    quoi: "Cinq nombres : silhouette, corps repeint, ajout, échelle, compacité.",
-    change:
-      "Rien. **Aucune ne refuse quoi que ce soit** — elles disent si la superposition a réussi, et servent à ranger les calques d'un vestiaire dans l'ordre où il faut les regarder. Le seul refus automatique du produit reste le compte d'images.",
-    origine: "une mesure sur tes deux images",
-    long:
-      "**Silhouette** : ce qui reste du corps de départ. Proche de 1, le modèle a gardé la forme.\n\n**Corps repeint** : la part du corps dont la couleur a changé, hors de l'endroit où la pièce est tombée. C'est la mesure qui décide — beaucoup de repeint veut dire que le modèle a redessiné le personnage au lieu de l'habiller.\n\n**Ajout** : ce qui est apparu, en part du corps. Elle s'affiche mais ne classe rien : une pièce contenue en ajoute peu, une cape beaucoup, et les deux vont bien.\n\n**Échelle** : la taille du dessus au retour. 0,62 veut dire que le modèle a dézoomé pour faire de la place.\n\n**Compacité** : la part de la différence qui tient dans sa plus grosse tache. Proche de 1, un objet ; proche de 0, une poussière semée partout, donc un repeint déguisé.",
-  },
-
-  // ── Le découpage ─────────────────────────────────────────────────────────
-  //
-  // **Déplacées sous `ou: "tables"` en `GU8`**, les cinq fiches qui suivent.
-  // « Découpage » est l'autre fabrique de `TABLES`
-  // (`interface/src/recette.ts`, `{ cle: "decoupage", fabrique: true }`),
-  // rendue par `Decoupe.tsx` et montée par `Retouche.tsx` — jamais par
-  // `Emplois.tsx`, `Emploi.tsx` ni `CalquesDeLEmploi.tsx`. Même origine que la
-  // superposition juste au-dessus : nées sous `ou: "equipement"` sans jamais y
-  // être atteignables. **Deux gestes séparés exprès** : proposer ne crée
-  // rien, découper coupe ce qu'on lui donne. C'est cette séparation, et rien
-  // d'autre, qui tient la promesse « sans jamais bloquer » — et c'est ce que
-  // ces entrées doivent dire avant de décrire un curseur. Textes inchangés,
-  // exacts pour leur vrai écran.
-
-  "decoupe.mode": {
-    nom: "Détection",
-    ou: "tables",
-    quoi: "Comment les rectangles sont proposés : « auto » cherche les zones opaques, « grille » découpe en cases égales, « les gouttières » cherche les bandes de fond entre les cases.",
-    change:
-      "Ne découpe rien — propose. Ce qui part à la découpe est la liste que tu vois à droite, corrections à la main comprises. Changer ce réglage relance la détection et remplace ce que tu as dessiné.",
-    origine: "toi · défaut auto",
-    long:
-      "Le mode auto lit un alpha, donc il détoure d'abord : une planche telle qu'elle arrive du modèle est opaque de bord à bord, et sa seule zone connexe serait l'image entière. C'est la même règle que pour la palette — ce qui est majoritaire n'est pas ce qui compte.\n\nLa grille fixe n'est pas un repli de l'auto : elle répond à une planche d'une autre nature — des sprites qui se touchent, des cases vides à conserver — et c'est toi qui sais laquelle tu as.\n\nLes gouttières lisent la brute telle quelle, sans détourage : elles cherchent les rangées et les colonnes entièrement d'une seule couleur, et coupent là. C'est le cas le plus courant d'une feuille rendue par un modèle — opaque de bord à bord, avec des bandes de fond entre les cases — que ni l'auto (qui n'y verrait qu'une seule tache) ni la grille (qui coupe au mauvais endroit dès que les cases ne sont pas parfaitement régulières) ne savent lire.\n\nUne détection qui rend une seule boîte, ou aucune, est un résultat et pas une panne. Rien ici ne bloque : tu dessines les rectangles qui manquent, tu retires ceux qui sont en trop, et c'est ta liste qui part.",
-  },
-
-  "decoupe.taille_min": {
-    nom: "taille minimale",
-    ou: "tables",
-    quoi: "En dessous de ce côté, en pixels, une zone opaque n'est pas un sprite.",
-    change:
-      "Monte-la pour ignorer les éclats de fond qui ont survécu au seuil ; descends-la pour rattraper un petit sprite oublié. Chaque cran relance la détection et remplace ce que tu avais dessiné.",
-    origine: "toi · défaut 16 px",
-    long:
-      "Exprimé en côté et non en aire parce que c'est ce que l'œil voit sur l'image : « ignore ce qui fait moins de seize pixels ». La comparaison, elle, se fait sur l'aire — une lance de 4 × 200 pixels a un petit côté minuscule et reste un sujet.\n\nDeux morceaux séparés de moins de deux pixels sont réunis avant le rejet, jamais après : un arc détaché du corps qui le tient vaut 24 px une fois recollé, et les rejeter séparément les perdrait tous les deux.",
-  },
-
-  "decoupe.colonnes": {
-    nom: "colonnes",
-    ou: "tables",
-    quoi: "Le nombre de colonnes égales dans lesquelles la planche est coupée.",
-    change:
-      "Avec les lignes, décide du nombre de découpes proposées : colonnes × lignes, cases vides comprises. Le reste de la division se répartit — rien n'est jeté au bord droit.",
-    origine: "toi · défaut 4",
-    long:
-      "Une planche de 1000 px en 3 colonnes donne 334, 333 et 333, et la dernière case va bien jusqu'au dernier pixel. Une division qui laisse tomber deux pixels laisse tomber une colonne de sprite au bord droit, et ça ne se voit qu'après découpe.",
-  },
-
-  "decoupe.lignes": {
-    nom: "lignes",
-    ou: "tables",
-    quoi: "Le nombre de rangées égales dans lesquelles la planche est coupée.",
-    change:
-      "Avec les colonnes, décide du nombre de découpes proposées. Une case vide donne quand même un rectangle : la grille fixe ne saute rien, et c'est ce qui la rend prévisible. Retire-le à la main si tu n'en veux pas.",
-    origine: "toi · défaut 2",
-  },
-
-  "decoupe.animation": {
-    nom: "en faire une animation",
-    ou: "tables",
-    quoi: "Les mêmes rectangles, mais les cases deviennent les images d'une animation au lieu d'images séparées.",
-    change:
-      "Elles sont jouées dans l'ordre où elles sont numérotées, à 8 images par seconde, et l'atelier de l'animation s'ouvre juste après pour la régler. Rien n'est dépensé : l'image a été payée une fois, à son entrée.",
-    origine: "toi",
-    long:
-      "Une feuille à plusieurs lignes est le plus souvent un jeu de directions : une ligne par direction. Quand la grille en a autant que le jeu, « une animation par ligne » les range chacune dans la sienne, de haut en bas. L'animation n'est rangée sur aucun mouvement en sortant d'ici — on garde d'abord, on range ensuite, depuis son atelier.",
   },
 }
 

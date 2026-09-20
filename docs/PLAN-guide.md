@@ -242,6 +242,10 @@ tête de la table Retournement (`etape.retournement`, qui décrit son geste gén
 sept autres tables décrivent le leur). Les soixante-treize fiches d'origine sont aujourd'hui
 **soixante-cinq**, et les six critères ci-dessus tiennent sur l'ensemble.
 
+*(Complété hors tranche, le 20 septembre 2026 : les dix-huit fiches que `GU8` a déplacées ici
+depuis `ou: "equipement"` sont maintenant groupées — « La fabrique Superposition », « La
+fabrique Découpage », à la fin du bloc — et vérifiées contre `Superposition.tsx`/`Decoupe.tsx`.)*
+
 → `GU6` réécrit la fiche d'un sujet sous six zones, dans l'ordre où l'écran les montre : la
 fiche du sujet (nom, style de combat, habillage, images d'exemple) · cases et planches, sa
 matrice (ce que le jeu réclame, ce qui est fait, la matrice elle-même — trois fiches sans
@@ -336,6 +340,11 @@ cible — référence, personnage à extraire, ou calque déjà transparent) a p
 fausse, « Depuis la retouche », qui ne décrivait pas son vrai écran ; `equipement.couverture-fabrication`
 était déjà exacte. Les vingt et une fiches d'origine sont aujourd'hui **deux**, réparties sur
 deux zones, et les essais de `GU3` passent au vert pour cet écran.
+
+*(Complété hors tranche, le 20 septembre 2026 : les dix-neuf fiches déplacées ici sont
+maintenant groupées et vérifiées à leur nouvel écran — les dix-huit sous `ou: "tables"`, voir
+la note sous `GU5` ci-dessus ; `fabrique.planche` sous `ou: "sujet"`, dans la zone `Cases et
+planches — sa matrice` que `GU6` avait déjà posée.)*
 
 ---
 
