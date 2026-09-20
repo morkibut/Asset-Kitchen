@@ -15,11 +15,15 @@
     │     ├─ <carte>.json         une carte du tableau d'inspiration
     │     ├─ <carte>.<ext>        ses octets, tels qu'ils sont entrés
     │     └─ liens/<lien>.json    un trait entre deux objets de la toile (T9)
-    └─ generations/<identifiant>/
-       ├─ generation.json         l'enregistrement complet, lisible sans la base
-       ├─ <rang>-brut.<ext>       l'image telle qu'elle est arrivée
-       ├─ <rang>-asset.json       l'asset : sa recette, son rangement, ses mesures
-       └─ <rang>-rendu.png        le rendu — **un cache, effaçable**
+    ├─ generations/<identifiant>/
+    │  ├─ generation.json         l'enregistrement complet, lisible sans la base
+    │  ├─ <rang>-brut.<ext>       l'image telle qu'elle est arrivée
+    │  ├─ <rang>-asset.json       l'asset : sa recette, son rangement, ses mesures
+    │  └─ <rang>-rendu.png        le rendu — **un cache, effaçable**
+    └─ apercus/v<version>-<empreinte du rôdeur>/<taille>-<methode>-<couleurs>.png
+       l'aperçu de « Son allure » (RT1) — **un cache, effaçable**, à part des
+       générations : il ne porte aucun jeu, aucune bibliothèque, rien qu'une
+       combinaison de réglages appliquée à une image fixe du dépôt
 
 Trois fichiers par image produite, et un seul est irremplaçable. Le brut ne
 change jamais ; l'asset porte la recette, donc la vérité ; le rendu se recalcule
@@ -100,6 +104,12 @@ class Fichiers:
         # nôtres* — la question qu'un dossier ne peut pas trancher seul.
         self.sorties = self.racine / "sorties.json"
         self.base = self.racine / "atelier.sqlite3"
+        # Les aperçus de l'étape « Son allure » (RT1) — un cache pur, à côté du
+        # reste et pas dedans : il ne porte aucune vérité, une combinaison
+        # absente se recalcule en une fraction de seconde. Voir
+        # `atelier/services/apercu_allure.py` pour ce qui nomme un dossier et
+        # un fichier ici.
+        self.apercus = self.racine / "apercus"
 
     def preparer(self) -> None:
         self.generations.mkdir(parents=True, exist_ok=True)
@@ -286,6 +296,37 @@ class Fichiers:
     def supprimer(self, chemin_relatif: str) -> None:
         """Efface un fichier de cache. Ne lève pas s'il n'est plus là."""
         (self.racine / chemin_relatif).unlink(missing_ok=True)
+
+    # ── Les aperçus de l'étape « Son allure » (RT1) ──────────────────────────
+
+    def lire_apercu_allure(self, dossier: str, nom: str) -> bytes | None:
+        """L'aperçu déjà gardé, ou `None` s'il faut le calculer.
+
+        `dossier` porte ce qui rend tout le lot périmé d'un coup — la version
+        du pipeline et l'empreinte de l'image source ; `nom` porte la
+        combinaison demandée. Voir `atelier/services/apercu_allure.py`.
+        """
+        chemin = self.apercus / dossier / f"{nom}.png"
+        return chemin.read_bytes() if chemin.is_file() else None
+
+    def ecrire_apercu_allure(self, dossier: str, nom: str, octets: bytes) -> None:
+        self._poser(self.apercus / dossier / f"{nom}.png", octets)
+
+    def nettoyer_apercus_perimes(self, dossier_courant: str) -> None:
+        """Jette tout ce qui n'est plus `dossier_courant` — l'index jeté,
+        appliqué à des fichiers plutôt qu'à une base.
+
+        Appelé une fois, à la construction du service : un dossier d'une
+        version ou d'un rôdeur d'avant ne sert plus à rien, et personne ne le
+        redemandera jamais. Ne lève pas — un dossier qu'on ne peut pas effacer
+        (verrouillé par l'explorateur, par exemple) reste, et se réessaiera au
+        prochain démarrage.
+        """
+        if not self.apercus.is_dir():
+            return
+        for enfant in self.apercus.iterdir():
+            if enfant.is_dir() and enfant.name != dossier_courant:
+                shutil.rmtree(enfant, ignore_errors=True)
 
     def effacer_asset(self, generation: str, rang: int) -> None:
         """La suppression **définitive** d'une image, quand l'annulation a expiré.

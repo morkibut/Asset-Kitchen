@@ -69,6 +69,7 @@ from atelier.services.livraison_images import ServiceLivraisonImages
 from atelier.services.tuiles import ServiceTuiles
 from atelier.services.matieres import ServiceMatieres
 from atelier.services.rendu_tuiles import ServiceRenduTuiles
+from atelier.services.apercu_allure import ServiceApercuAllure
 from atelier.services.sons import ServiceSons
 from atelier.services.sfxr import ServiceSfxr
 from atelier.services.travaux import ServiceTravaux
@@ -622,6 +623,11 @@ class Atelier:
         # lancé sous Node (atelier/tuiles_node/rendre.mjs). Facultatif : sans Node,
         # seuls les gestes de l'agent qui fabriquent un atlas le disent.
         self.rendu_tuiles = ServiceRenduTuiles(self)
+        # RT1 : l'aperçu de « Son allure », calculé sur la machine et gardé sur
+        # le disque — treizième route d'aperçu du produit, sur le rôdeur plutôt
+        # que sur un asset. N'apporte ni fournisseur ni catalogue : elle ne lit
+        # que `self.fichiers` et le moteur de `atelier/image/traitement.py`.
+        self.apercu_allure = ServiceApercuAllure(self)
         self.sons = ServiceSons(self)
         # sfxr (SN8) : synthèse locale, sans ComfyUI — n'apporte ni
         # fournisseur ni catalogue, seulement le calcul et la bibliothèque

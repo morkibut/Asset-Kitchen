@@ -104,6 +104,7 @@ from atelier.services.univers import (
 )
 from atelier.fournisseur.toile import AdresseRefusee
 from atelier.services.generation import ImportRefuse
+from atelier.services.apercu_allure import ApercuRefuse
 
 # Le code HTTP de chaque refus du produit. La raison, elle, est toujours la
 # même phrase en français — c'est elle que l'interface affiche.
@@ -128,6 +129,10 @@ CODES = {
     LienInconnu: 404,
     LienRefuse: 409,
     UniversRefuse: 409,
+    # 400, et non 409 : une combinaison hors des paliers de couleurs d'une
+    # taille est mal formée, ce n'est pas un état du produit qui s'y oppose —
+    # deux appels identiques répondent toujours pareil, projet ou pas.
+    ApercuRefuse: 400,
     DecoupeRefusee: 409,
     # P1b : la planche supprimée ne se redécoupe plus, une planche d'équipement
     # se recale — l'état de la planche s'y oppose, la demande est bien formée.

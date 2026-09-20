@@ -97,14 +97,14 @@ rendent une recette complète à chaque geste*, et rien n'est payé.
 
 ### Critères d'acceptation
 
-- [ ] Une combinaison demandée rend une image, calculée par le **même** moteur que la vraie
+- [x] Une combinaison demandée rend une image, calculée par le **même** moteur que la vraie
       fabrication — pas une approximation.
-- [ ] La même combinaison redemandée revient du disque ; le second appel ne relance aucun calcul.
-- [ ] La méthode qui tire `torch` ne le charge que si on la demande. Ouvrir l'étape sans cliquer
+- [x] La même combinaison redemandée revient du disque ; le second appel ne relance aucun calcul.
+- [x] La méthode qui tire `torch` ne le charge que si on la demande. Ouvrir l'étape sans cliquer
       cette méthode-là n'importe pas `torch`.
-- [ ] Une combinaison impossible — un nombre de couleurs au-dessus de ce que la taille peut porter
+- [x] Une combinaison impossible — un nombre de couleurs au-dessus de ce que la taille peut porter
       — reçoit un refus qui la nomme, jamais une image muette ni une erreur nue.
-- [ ] Rien n'est envoyé à un fournisseur. Aucune ligne de dépense n'apparaît.
+- [x] Rien n'est envoyé à un fournisseur. Aucune ligne de dépense n'apparaît.
 
 ---
 

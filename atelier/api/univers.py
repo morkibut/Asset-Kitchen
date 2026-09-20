@@ -829,6 +829,27 @@ async def regler_univers(
     }
 
 
+@routeur.get("/universe/allure/preview.png")
+async def apercu_de_l_allure(
+    requete: Request, taille: int, methode: str, couleurs: int
+) -> Response:
+    """L'aperçu de « Son allure » (RT1) : le rôdeur réduit à `taille` par
+    `methode`, quantifié à `couleurs` couleurs — le même moteur que la vraie
+    fabrication, voir `atelier/services/apercu_allure.py`.
+
+    **Jamais scopée à un projet** : c'est une décision d'architecture du plan
+    — l'aperçu se fait toujours sur le rôdeur, même pour un jeu qui porte déjà
+    des images, parce que comparer neuf tailles n'a de sens que si le sujet ne
+    bouge pas. `Cache-Control: no-store` parce que le cache est **ici**, sur
+    le disque de l'atelier — le navigateur n'a pas à en tenir un second.
+    """
+    return Response(
+        content=_atelier(requete).apercu_allure.apercu(taille, methode, couleurs),
+        media_type="image/png",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
 @routeur.get("/universe/views")
 async def vues_et_tailles() -> dict[str, Any]:
     """Les huit vues et les neuf tailles — **deux listes fermées** (E8).
