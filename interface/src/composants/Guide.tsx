@@ -440,9 +440,9 @@ export function VoletGuide({
         )}
 
         {groupes.map((groupe, i) => (
-          <section key={groupe.titre ?? "sans-groupe"} className={i > 0 ? "mt-[28px]" : undefined}>
+          <section key={groupe.titre ?? "sans-groupe"} className={i > 0 ? "mt-[22px]" : undefined}>
             {groupe.titre && (
-              <h2 className="mesure mb-[10px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+              <h2 className="mesure mb-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
                 {groupe.titre}
               </h2>
             )}
