@@ -138,7 +138,37 @@ export type ResumeDecran = {
  * avant. Partiel au type, parce que le remplissage se fait écran par écran ;
  * c'est un essai (`GU3`) qui refuse un écran sans résumé, pas le compilateur.
  */
-export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {}
+export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {
+  tables: {
+    aQuoi:
+      "On reprend ici une image déjà faite : huit tables la traversent dans l'ordre, du fond qu'on retire au pixel qu'on repeint à la main.",
+    gestes: [
+      "On ouvre une table, on pousse ses réglages, et l'image se refait à chaque cran.",
+      "On bascule du brut au rendu pour juger ce qu'on vient de changer.",
+      "On enregistre les retouches, ou on range la recette pour la reposer ailleurs.",
+    ],
+  },
+
+  sujet: {
+    aQuoi:
+      "La page d'un sujet du jeu — un personnage, un coffre, un décor : qui il est, ce que le jeu lui réclame, et ce qui est déjà fait.",
+    gestes: [
+      "On écrit qui il est et ce qui l'habille ; ces textes repartent avec chaque image.",
+      "On parcourt ses onglets pour voir ce qui existe déjà et ce qui manque encore.",
+      "On fabrique ce qui manque, puis on range les images qui reviennent.",
+    ],
+  },
+
+  jeu: {
+    aQuoi:
+      "Ce qu'on pose une fois pour tout le jeu — son nom, son allure, sa vue, son monde, ses sons — et qui repart avec chaque image demandée.",
+    gestes: [
+      "On clique l'étape qu'on veut reprendre : l'ordre est libre, et chacune se saute.",
+      "On choisit le pixel ou le dessin, puis la taille que tout le jeu suivra.",
+      "On déplie une ligne du monde et on la tape ; une ligne vide ne part pas.",
+    ],
+  },
+}
 
 export const AIDE: Record<string, Explication> = {
   "son.fabrication": {
