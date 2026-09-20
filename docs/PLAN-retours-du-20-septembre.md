@@ -280,13 +280,13 @@ journal, et se fera en son temps.
 
 ### Critères d'acceptation
 
-- [ ] Une carte texte posée sur la toile s'ouvre, se corrige, et le texte corrigé est celui qu'on
+- [x] Une carte texte posée sur la toile s'ouvre, se corrige, et le texte corrigé est celui qu'on
       relit après rechargement.
-- [ ] La correction ne déplace pas la carte, ne perd pas sa teinte, ne coupe pas ses liens.
-- [ ] Le geste se voit sans qu'on l'ait appris — une personne qui vient de coller un texte trouve
+- [x] La correction ne déplace pas la carte, ne perd pas sa teinte, ne coupe pas ses liens.
+- [x] Le geste se voit sans qu'on l'ait appris — une personne qui vient de coller un texte trouve
       comment le reprendre.
-- [ ] Le geste se défait comme les autres gestes de la toile.
-- [ ] Une carte **image** refuse le champ texte, et c'est le serveur qui le dit — comme
+- [x] Le geste se défait comme les autres gestes de la toile.
+- [x] Une carte **image** refuse le champ texte, et c'est le serveur qui le dit — comme
       aujourd'hui.
 
 ---
@@ -339,14 +339,14 @@ Les mots *sujet*, *famille* et *collection* ne bougent pas.
 
 ### Critères d'acceptation
 
-- [ ] La porte du menu, le titre de l'écran, le fil d'ariane et les renvois depuis d'autres écrans
+- [x] La porte du menu, le titre de l'écran, le fil d'ariane et les renvois depuis d'autres écrans
       disent *Codex*.
-- [ ] Les libellés d'accessibilité disent la même chose que le texte visible — **jamais l'un sans
+- [x] Les libellés d'accessibilité disent la même chose que le texte visible — **jamais l'un sans
       l'autre**, ce sont eux que les essais interrogent.
-- [ ] Le guide dit *Codex* là où il disait *Les sujets*.
-- [ ] Les essais qui cherchaient l'ancien libellé sont repris. ⚠️ **Ils tomberont tous d'un coup
+- [x] Le guide dit *Codex* là où il disait *Les sujets*.
+- [x] Les essais qui cherchaient l'ancien libellé sont repris. ⚠️ **Ils tomberont tous d'un coup
       — une vingtaine — et c'est normal** : ce n'est pas une régression, c'est le renommage.
-- [ ] Les commentaires du serveur ne sont **pas** touchés : ils ne sont pas des libellés rendus.
+- [x] Les commentaires du serveur ne sont **pas** touchés : ils ne sont pas des libellés rendus.
       *(S'ils doivent suivre, c'est un second passage, à part — voir § Ce qui reste ouvert.)*
 
 ---
