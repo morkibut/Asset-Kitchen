@@ -210,9 +210,12 @@ Chaque tranche ci-dessous porte les **mêmes six critères**, et ils ne sont pas
   découpage), montées par `Retouche.tsx` et jamais par `Emplois.tsx` / `Emploi.tsx` /
   `CalquesDeLEmploi.tsx`, la dernière décrit la planche de poses de l'établi d'un sujet.
   Déplacées vers `ou: "tables"` et `ou: "sujet"`, textes inchangés — laissant deux fiches
-  propres à cet écran, réécrites sous ses deux seules vraies zones. Les quatre autres
-  tranches du tableau ci-dessous n'ont pas encore été reprises, et remettront cette liste
-  à décocher le temps de leur propre passe.)*
+  propres à cet écran, réécrites sous ses deux seules vraies zones. Vérifié aussi pour
+  `GU9` — l'univers : quinze fiches d'Inspiration sous six zones, deux des quatre fiches
+  d'Ambiances déplacées vers `ou: "jeu"` (`univers.couleurs`, `univers.fond`, relogées à
+  l'étape « Son allure » depuis `C2`), laissant deux fiches propres à ce côté-ci. Les trois
+  tranches restantes du tableau ci-dessous n'ont pas encore été reprises, et remettront
+  cette liste à décocher le temps de leur propre passe.)*
 
 | Tranche | Écran | Fiches aujourd'hui |
 |---|---|---|
@@ -345,6 +348,30 @@ deux zones, et les essais de `GU3` passent au vert pour cet écran.
 maintenant groupées et vérifiées à leur nouvel écran — les dix-huit sous `ou: "tables"`, voir
 la note sous `GU5` ci-dessus ; `fabrique.planche` sous `ou: "sujet"`, dans la zone `Cases et
 planches — sa matrice` que `GU6` avait déjà posée.)*
+
+→ `GU9` a commencé par le relevé lui-même (`docs/releves/guide-2026-09-20.md` §*Les côtés de
+l'univers*) : `Univers.tsx` n'a que **deux** côtés réels, `"inspiration"` et `"ambiances"` —
+« la toile » n'en est pas un troisième, c'est un mode d'affichage à l'intérieur du premier
+(`vueUnivers === "toile"`). Les quinze fiches d'Inspiration sont réécrites sous six zones
+réelles, dans l'ordre où l'écran les présente : la barre du tableau (sa bascule grille/toile),
+le menu d'une carte (îlot, note, taille), une carte texte (son texte, sa teinte), une carte
+image (concept art, artwork officiel, famille, ce que la palette y lit, la découper, sa
+provenance), le menu d'un lien, le menu d'un îlot. En croisant `ReglesDuJeu.tsx` — son propre
+tableau de migration, lignes « 7a » et « 7b » — avec l'écran Ambiances et couleurs
+(`Ambiances.tsx`, qui ne les montre nulle part), deux des quatre fiches nées sous
+`ou: "ambiances"` se sont révélées mal rangées : `univers.couleurs` et `univers.fond` se
+règlent depuis `C2` à l'étape « Son allure » des règles du jeu, pas sur ce côté-ci de
+l'univers — déplacées vers `ou: "jeu"`, dans le groupe que `GU7` y avait déjà posé, et
+réécrites pour dire le double rôle réel de `couleurs` (avec palette, combien de teintes y lire ;
+sans palette, combien en garder sur chaque image) que l'ancienne fiche ne couvrait qu'à moitié,
+et le défaut réel de `couleurs` — 32, pas 24, une valeur confondue avec celle d'une ambiance.
+Les deux fiches propres à ce côté, `ambiance.lot` et `univers.palette`, sont réécrites sous
+deux zones dans l'ordre de l'écran : les ambiances, puis les palettes. Trois récits mesurés
+sortis des « à savoir » trop longs rejoignent `docs/design-decisions.md` : la palette par
+défaut se lit après détourage, le fond du jeu a longtemps coûté un découpage repris à la main
+faute d'exister, et la famille d'un artwork filtre ses références depuis qu'un goblin a
+contaminé un squelette au banc d'essai. Les dix-neuf fiches d'origine restent **dix-neuf**,
+aucune n'était morte, et les six critères ci-dessus tiennent sur l'écran.
 
 ---
 

@@ -535,6 +535,37 @@ export const AIDE: Record<string, Explication> = {
       "« Aucune » dit que ton jeu n'est pas en pixel art — le rendu du modèle entre tel quel, sans grille imposée. Avec une cible, elle est toujours imposée, jamais déduite : dix modèles sur douze font dériver la taille du pixel d'une génération à l'autre, de 7 à 20 px dans un même lot. Réaligner ne coûte rien — aucun appel payant — et saute les assets déjà ramenés au brut.",
   },
 
+  // **Deux entrées relogées ici par `GU9`** (`docs/releves/guide-2026-09-20.md`) :
+  // `univers.couleurs` et `univers.fond` vivaient sous `ou: "ambiances"`, un
+  // héritage du modèle d'avant `C2`. Le code, lui, les règle ici depuis
+  // longtemps — `ReglesDuJeu.tsx` le dit dans son propre tableau de migration,
+  // « 7a » et « 7b » — et l'écran Ambiances et couleurs n'en montre plus
+  // aucune trace.
+
+  "univers.couleurs": {
+    nom: "Couleurs demandées",
+    ou: "jeu",
+    groupe: "Son allure — le style, la taille, les couleurs",
+    quoi: "Combien de couleurs ton jeu garde — lues dans ta palette, ou gardées sur chaque image sans palette. Ne paraît qu'en pixel art.",
+    change:
+      "Avec une palette : elle en relance le calcul sur les mêmes artworks, sans un appel payant, et ça change le rendu de tout ce qui se quantifie ensuite. Sans palette : elle règle directement combien de teintes chaque image garde à sa sortie.",
+    origine: "toi · défaut 32",
+    long:
+      "Elle sert deux fois, et c'est voulu : avant `D2` elle ne servait que la première — un projet sans artwork ne réduisait aucune couleur, en silence. Le plafond dépend de la taille de case : une petite image ne porte pas assez de teintes distinctes pour remplir une liste longue, et l'écran le dit plutôt que de laisser une liste courte se lire comme une panne.",
+  },
+
+  "univers.fond": {
+    nom: "Le fond du jeu",
+    ou: "jeu",
+    groupe: "Son allure — le style, la taille, les couleurs",
+    quoi: "La couleur sur laquelle poser le sujet, avec une phrase qui interdit au modèle de l'employer sur le sujet lui-même.",
+    change:
+      "Ce que le modèle rend derrière le sujet, et donc ce que le découpage aura à retirer. Une couleur que rien dans ton jeu ne contient rend le découpage presque parfait ; sans fond posé, le modèle rend un gris clair — la couleur d'une joue aussi — et le découpage la mange avec le fond.",
+    origine: "toi · aucun fond au départ, et l'atelier en propose un sans jamais l'imposer",
+    long:
+      "⚠️ Changer le fond change ce qui part au fournisseur : les images tirées avant ne se comparent plus à celles d'après — pas moins bonnes, juste plus demandées de la même façon. L'atelier propose sans jamais imposer, et se corrige encore juste avant de payer, sur l'écran de confirmation, sans que ce choix ne remonte au jeu.",
+  },
+
   // Sa vue — d'où l'on regarde le jeu
 
   "assistant.vue": {
@@ -747,232 +778,236 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · vide au départ",
   },
 
-  // ── Les ambiances et les couleurs — le troisième côté de l'univers ────────
+  // ── L'univers, côté Inspiration — la toile, ses cartes, ses liens ─────────
   //
-  // **Les deux entrées d'ici décrivaient le modèle d'avant**, celui où il
-  // n'existait qu'*une* palette, sans nom, attachée au projet et lue sur ses
-  // artworks. Il a changé en E11 : une palette est devenue un objet nommé, en
-  // plusieurs exemplaires, et une ambiance est un lot de style qui en porte une.
-  // **Une explication fausse coûte plus cher qu'une explication absente** : on
-  // la lit, et on la croit. Réécrites en E20.
+  // **Deux côtés réels, pas trois** (`Univers.tsx`, `export type Cote =
+  // "inspiration" | "ambiances"`) : la toile n'est pas un troisième côté,
+  // c'est un mode d'affichage à l'intérieur de celui-ci
+  // (`vueUnivers === "toile"`). Les deux premières fiches ci-dessous sont
+  // celles qui ont provoqué tout ce chantier : voisines dans le même menu,
+  // l'une inerte et l'autre décisive, et rien à l'écran ne les distinguait.
 
-  "univers.palette": {
-    nom: "Une palette",
-    ou: "ambiances",
-    quoi: "Une liste de couleurs qui porte un nom, tirée d'un paquet d'images. Ton jeu peut en avoir autant que tu veux, et une chose du jeu n'en porte qu'une à la fois.",
+  // La barre du tableau
+
+  "tableau.vue": {
+    nom: "Vue",
+    ou: "inspiration",
+    groupe: "La barre du tableau",
+    quoi: "Les deux façons de regarder le tableau : la grille, tout d'un coup d'œil, ou la toile, où une carte se pose où tu veux et garde sa place.",
     change:
-      "La quantification ramène chaque pixel sur la couleur la plus proche de la palette en cours. Partout ailleurs, une couleur hors palette se marque au lieu d'être refusée.",
-    origine: "toi · aucune palette au départ, et un jeu sans palette ne quantifie rien",
+      "Rien à la génération. Mais tirer une carte dans un îlot écrit son groupe, et l'en sortir le vide : sur la toile, composer et classer sont le même geste.",
+    origine: "toi · la grille au départ · rien ne s'enregistre",
     long:
-      "Le jeu en a une par défaut, et c'est celle que l'assistant montre : elle se lit **par calcul sur les artworks officiels**, et ne se saisit jamais. Elle porte l'empreinte des artworks qui l'ont produite — promouvoir une carte, en retirer une, ou changer le nombre de couleurs ne correspond plus, donc se recalcule tout seul.\n\nElle est lue sur le sujet, jamais sur le fond. La coupe médiane appliquée aux artworks tels quels rendait vingt gris sur vingt-quatre : le fond plat occupe 75 % des pixels et son anti-crénelage l'éclate en autant de seaux. On détoure donc d'abord, et la palette passe à quinze couleurs franchement distinctes. Corollaire à connaître : une région fermée reste opaque au détourage, donc l'intérieur d'un cadre d'interface entre dans la palette. C'est la même règle qui sauve l'os d'un squelette.\n\nLes autres se fabriquent côté Ambiances et couleurs, et ce sont des **recettes** : des sources — d'autres palettes, des paquets du tableau d'inspiration —, deux dosages, et des retouches. Une couleur du résultat dit d'où elle vient, et une couleur retirée reste montrée barrée : on doit pouvoir défaire.",
+      "La règle tient en une phrase : la toile montre ce qui est classé, la réserve contient ce qui reste à classer. Une carte posée sans être classée reste sur le plan nu, son pied dit « posée ». Double-cliquer sur le plan nu écrit une note à cet endroit précis ; le bouton **+ note** de la barre fait la même chose sans viser.",
   },
 
-  "univers.couleurs": {
-    nom: "Couleurs demandées",
-    ou: "ambiances",
-    quoi: "Combien de couleurs on demande à la lecture d'un paquet d'images — le seul réglage qu'on ait sur une palette lue par calcul.",
-    change:
-      "Change la palette, donc le rendu de tout ce qui se quantifie ensuite. La changer relance le calcul sur les mêmes images, sans un appel payant.",
-    origine: "toi · défaut 24",
-  },
-
-  "univers.fond": {
-    nom: "Le fond du jeu",
-    ou: "ambiances",
-    quoi: "La couleur sur laquelle on demande que le sujet soit posé. Elle part dans le texte, avec une phrase qui interdit au modèle de l'employer sur le sujet lui-même.",
-    change:
-      "Ce que le modèle rend derrière le sujet, et donc ce que le découpage aura à retirer. Une couleur que rien dans ton jeu ne contient rend le découpage presque parfait ; sans fond posé, le modèle rend un gris clair — qui est aussi la couleur d'une joue, et le découpage la mange avec le fond.",
-    origine: "toi · aucun fond au départ, et l'atelier en propose un sans jamais l'imposer",
-    long:
-      "L'atelier calcule la distance de quelques couleurs franches à la palette de ton jeu et te propose la première qui passe le seuil. **Il ne l'impose jamais** : s'il n'y a pas de candidat sûr, il le dit et laisse le fond en place plutôt que de choisir en silence. La distance employée est celle du découpage lui-même — un pixel est mangé avec le fond quand aucune de ses trois composantes ne s'en écarte de plus que la tolérance —, si bien que la question posée est exactement celle qui compte : *le découpage va-t-il manger une couleur de mon jeu ?*\n\nIl se corrige aussi **juste avant de payer**, sur l'écran de confirmation, et cette correction-là ne vaut que pour cet appel : elle ne remonte pas au jeu. C'est le même geste que corriger une ligne de texte avant de partir.\n\n⚠️ **Changer le fond change ce qui part au fournisseur.** Les images tirées avant ne se comparent donc plus à celles d'après — pas parce qu'elles sont moins bonnes, mais parce qu'on n'a plus demandé la même chose. C'est un prix accepté, pas un oubli.\n\nCe que ça a coûté de ne pas l'avoir : le produit demandait *un fond plat* sans dire lequel depuis le premier jour, et presque chaque image revenait avec un découpage à reprendre à la main.",
-  },
-
-  "ambiance.lot": {
-    nom: "Une ambiance",
-    ou: "ambiances",
-    quoi: "Un lot de style réutilisable : une palette, des images de référence, et trois textes. On la désigne sur une chose du jeu.",
-    change:
-      "Rien tant qu'on ne s'en sert pas. Au moment de fabriquer, on choisit ce qu'on lui prend — tout, les couleurs seules, ou tout sauf les images —, et ce choix ne vaut que pour cet appel-là.",
-    origine: "toi · aucune ambiance au départ",
-    long:
-      "Les palettes sont les ingrédients, les ambiances les recettes — c'est pour ça que les deux listes vivent au même endroit.\n\nSes trois textes remplacent ceux du jeu, champ par champ : le monde, l'éclairage, le trait. Ils ne s'ajoutent pas, ils prennent la place — et l'écran de confirmation le montre, ligne par ligne, la perdante barrée sous la gagnante. Éteindre les lignes d'une ambiance rallume donc les textes du jeu **d'elles-mêmes** : ils redeviennent la couche la plus haute qui reste candidate.\n\nCe qu'un appel lui a réellement pris est enregistré avec la génération. Sans ça, relire une vieille image ne dirait plus d'où venait ce qu'elle montre : le réglage aura changé, l'ambiance aura été retouchée, et le texte enregistré porte les mots sans dire lequel venait du jeu.",
-  },
-
-  // ── L'univers — le tableau d'inspiration ──────────────────────────────────
-  //
-  // Les deux premières entrées sont celles qui ont provoqué tout ce chantier :
-  // voisines dans le même menu, l'une inerte et l'autre décisive, et rien à
-  // l'écran ne les distinguait.
+  // Le menu d'une carte
 
   "carte.groupe": {
     nom: "îlot",
     ou: "inspiration",
+    groupe: "Le menu d'une carte",
     quoi: "Un nom libre pour ranger les cartes du tableau. Vide = hors îlot.",
     change:
       "Rien à la génération. C'est un rangement pour l'œil. Ce qui décide des références envoyées, c'est artwork officiel + famille.",
     origine: "toi · aucun défaut",
     long:
-      "Un tableau d'inspiration monte vite à cent cartes, et l'îlot est ce qui te permet d'en retrouver douze. Il ne voyage nulle part : ni dans un prompt, ni dans une référence envoyée au fournisseur, ni dans un export. Tu peux le remplir, le changer, le vider sans qu'aucune image déjà produite ne bouge, et sans qu'aucune génération à venir ne change de résultat ni de prix.\n\nSi tu cherches le champ qui agit, c'est famille — juste à côté, dans le même menu.",
-  },
-
-  "carte.famille": {
-    nom: "famille",
-    ou: "inspiration",
-    quoi: "La catégorie d'un artwork officiel : personnages, objets, décors, interface, ou « tous » pour une planche non figurative.",
-    change:
-      "Beaucoup. À la génération, seuls les artworks de la famille de ton sujet partent en référence, plus ceux marqués « tous ». Le nombre de références change le coût.",
-    origine: "toi, en promouvant · défaut « tous »",
-    long:
-      "C'est le mécanisme qui empêche un artwork de contaminer un sujet qui n'a rien à voir avec lui. Au banc d'essai, un goblin figuratif laissé en référence a transmis sa tunique et ses bottes lacées au squelette généré ensuite : la famille est la réponse à ça.\n\n« Tous » est le cas particulier utile — une planche de matières, de palette ou d'échantillons de trait, qui accompagne toute génération sans transmettre de personnage. C'est le défaut, et c'est le bon défaut pour une planche de style.\n\nDeux conséquences à garder en tête : le compte de références est plafonné par modèle (le bloc « Ce qui part » affiche n / max, en rouge au-dessus), et chez certains fournisseurs le prix croît avec le nombre de références — un univers riche peut donc renverser le classement des modèles par coût.",
-  },
-
-  "carte.concept": {
-    nom: "Concept art de",
-    ou: "inspiration",
-    quoi: "Les personnages qui se servent de cette carte comme référence.",
-    change:
-      "Elle part avec chaque génération de ce personnage-là, **quelle que soit la famille du sujet** — un artwork officiel se filtre par famille, un concept art a été désigné pour lui.",
-    origine: "toi · les personnages viennent du projet",
-    long:
-      "Désigner ne déplace rien : la carte reste sur le tableau, à sa place, ni promue ni copiée en bibliothèque. Il n'y a pas de second endroit où ranger des images, et c'est ce qui évite d'en avoir deux qui divergent.\n\nUne carte peut servir à plusieurs personnages — d'où des bascules et non un choix unique. Le coin qui paraît en haut à gauche dit qu'elle sert ; celui d'en haut à droite dit qu'elle est un artwork officiel. Une carte peut porter les deux.",
-  },
-
-  "carte.officiel": {
-    nom: "artwork officiel",
-    ou: "inspiration",
-    quoi: "Promouvoir une carte : elle cesse d'être une inspiration et devient une référence que l'application enverra toute seule.",
-    change:
-      "C'est l'interrupteur des références envoyées toutes seules : une carte non promue n'en devient jamais une, quoi qu'il y ait dans son groupe ou sa famille. Elle peut malgré tout partir si tu la désignes toi-même comme concept art d'une chose du jeu — c'est alors ton geste, pas une règle du projet.",
-    origine: "toi · non promu par défaut",
-    long:
-      "Promouvoir est un geste unique : tu poses officiel et famille une fois, et l'application choisit seule à chaque génération. Il n'y a rien à sélectionner au moment de générer, et c'est délibéré — le cadrage du produit écarte explicitement la sélection manuelle des artworks, génération par génération.\n\nUn texte ne peut pas être promu : ce qui part en référence, ce sont des octets d'image, et la bible dit déjà ce qu'un texte aurait à dire.",
-  },
-
-  "carte.lecture": {
-    nom: "ce que la palette y lit",
-    ou: "inspiration",
-    quoi: "La part de cet artwork qui donne ses couleurs au jeu. Pour voir ce qui a été mis de côté — en magenta, sur l'image en grand —, il faut ouvrir l'écran de découpe : ce bloc-ci donne le chiffre, pas l'image.",
-    change:
-      "Rien. C'est une mesure, elle ne règle rien : elle montre ce que l'application fait déjà de cette image.",
-    origine: "mesuré sur l'image · rien n'est calculé tant que tu n'as pas cliqué",
-    long:
-      "Avant de tirer les couleurs d'un artwork, l'application en détoure le fond : un ciel, un mur, un carré uni derrière un personnage sont écartés d'eux-mêmes, et n'entrent pas dans la palette du jeu. C'est vrai depuis toujours, mais rien ne le montrait — d'où la question qui revenait à chaque promotion, « est-ce que mon fond va polluer mes couleurs ? ». Non.\n\nCe qui pollue vraiment, ce sont les voisins : un titre d'interface, une barre de vie, un second personnage dans le même cadre. Eux sont opaques, donc ils comptent. C'est là que découper la carte sert à quelque chose — pas pour retirer un fond, qui ne compte déjà pas.\n\nQuand rien n'est mis de côté, ce n'est pas une panne : une matière ou une texture qui remplit son cadre n'a pas de fond à retirer, et la palette prend l'image entière. L'écran le dit avec cette phrase-là plutôt qu'avec un « 0 % », qui voudrait dire l'inverse.",
-  },
-
-  "carte.decouper": {
-    nom: "découper une carte",
-    ou: "inspiration",
-    quoi: "Couper une carte en plusieurs, ou la recadrer — sans quitter le tableau.",
-    change:
-      "Chaque morceau devient une carte du même tableau, dans la réserve, non promue. Ce sont des cartes et jamais des images produites : elles n'ont ni recette ni rendu.",
-    origine: "toi · l'originale reste, sauf si tu demandes le remplacement",
-    long:
-      "Une planche trouvée porte souvent trois personnages sur un même fond. Découper en fait trois cartes, qu'on promeut séparément — et c'est ce qui compte pour la palette : ce n'est pas le fond qui la pollue, ce sont les voisins.\n\nLe remplacement n'existe qu'avec **un seul** rectangle, et c'est alors un recadrage : le morceau prend tout ce qui faisait l'originale — son groupe, sa note, sa place, sa promotion — et l'originale s'en va. C'est le seul endroit du produit où découper efface quelque chose, d'où la case décochée par défaut.",
+      "Un tableau monte vite à cent cartes, et l'îlot est ce qui te permet d'en retrouver douze. Il ne voyage nulle part : ni dans un prompt, ni dans une référence envoyée, ni dans un export. Le champ qui agit vraiment sur la génération, c'est famille — juste à côté, dans le même menu.",
   },
 
   "carte.note": {
     nom: "note",
     ou: "inspiration",
+    groupe: "Le menu d'une carte",
     quoi: "Une annotation libre sur une carte — pourquoi tu l'as gardée, ce que tu veux en retenir.",
     change: "Rien à la génération. Elle ne part nulle part, comme le groupe.",
     origine: "toi · aucun défaut",
   },
 
-  "carte.source": {
-    nom: "provenance",
-    ou: "inspiration",
-    quoi: "L'adresse d'où vient la carte, gardée telle quelle au collage.",
-    change:
-      "Rien à la génération. Elle est là pour créditer et retrouver : une image trouvée dont on a perdu la source est une image qu'on ne peut plus faire ni l'un ni l'autre.",
-    origine: "le collage · vide si tu as collé des octets",
-  },
-
   "carte.taille": {
     nom: "taille",
     ou: "inspiration",
+    groupe: "Le menu d'une carte",
     quoi: "La place qu'une carte occupe dans le tableau : 1×, 2× ou 4×.",
     change:
       "Rien à la génération. Ce sont les crans du zoom de la grille d'assets, réemployés — un seul vocabulaire de taille dans tout le produit.",
     origine: "toi · défaut 1×",
     long:
-      "C'est un cran, et il vaut des deux côtés du tableau : dans la grille il décide du nombre de colonnes que la carte occupe, sur la toile il donne sa largeur de départ.\n\nÉlargir une carte sur la toile ne le change pas, et c'est voulu. La largeur libre est une place occupée sur un plan ; la taille est un cran que lit la grille. Une valeur unique pour les deux aurait fait qu'agrandir une carte pour lui donner du poids sur la toile change la grille de tout le monde.",
+      "C'est un cran, et il vaut des deux côtés du tableau : dans la grille il décide du nombre de colonnes que la carte occupe, sur la toile il donne sa largeur de départ. Élargir une carte sur la toile ne le change pas, et c'est voulu : la largeur libre est une place sur le plan, la taille un cran que lit la grille.",
   },
 
-  // ── L'Univers — la toile ──────────────────────────────────────────────────
-  //
-  // Une seule entrée, et c'est délibéré : la règle de cet écran tient en une
-  // phrase, et si l'interrupteur qui l'ouvre doit l'expliquer, c'est ici.
-
-  "tableau.vue": {
-    nom: "Vue",
-    ou: "inspiration",
-    quoi: "Les deux façons de regarder le même tableau : la grille, qui montre tout d'un coup d'œil, et la toile, où une carte se pose où tu veux et garde sa place.",
-    change:
-      "Rien à la génération. Mais tirer une carte dans un îlot écrit son groupe, et l'en sortir le vide : sur la toile, composer et classer sont le même geste.",
-    origine: "toi · la grille au départ · rien ne s'enregistre",
-    long:
-      "La règle tient en une phrase, et c'est tout ce qu'il y a à comprendre de cet écran : **la toile montre ce qui est classé, la réserve contient ce qui reste à classer.** Une carte groupée est dans son îlot, une carte posée sans groupe est sur le plan nu, et ce qui n'a ni l'un ni l'autre attend à droite.\n\nUn îlot *est* un groupe — pas un cadre indépendant. Il n'a ni nom propre ni existence propre : il est l'étendue de ses cartes. Le créer, c'est taper un nom de groupe dans le menu d'une carte, ou en tirer une dans un îlot voisin ; le vider de son dernier membre le fait disparaître, parce qu'un groupe sans carte n'est écrit nulle part — et pendant que tu tires cette dernière carte dehors, l'îlot vire au rouge et te dit ce qu'il emporte.\n\nUne carte peut être posée sans être classée : trois images côte à côte pour voir si elles vont ensemble avant de décider qu'elles font un groupe. Son pied dit « posée ».\n\n**Quatre gestes, et ils tiennent en quatre lignes.** *Tirer* une carte la pose et la classe. *Tirer un îlot par la bande de son titre* le déplace avec toutes ses cartes, sans rien reclasser — un clic au même endroit ouvre son menu, c'est la distance qui sépare les deux. *Tirer depuis la petite poignée* d'une carte ou du nom d'un îlot trace un lien vers ce qu'on lâche dessous. *Double-cliquer* sur le plan nu écrit une note à cet endroit-là — c'est une carte texte, tu la retrouves dans la grille. Le bouton **+ note** de la barre fait la même chose sans viser : en toile il pose le brouillon au milieu de ce que tu regardes, en grille il le fait naître en réserve. Le double-clic reste le geste précis, celui qui désigne l'endroit.\n\nCtrl+Z défait le dernier geste de composition — déplacer une carte ou un îlot entier, élargir, classer, déclasser, tirer un lien, le couper. Un îlot de douze cartes se défait d'un seul Ctrl+Z, pas de douze : la pile compte les gestes, pas les écritures. La pile vit dans l'onglet et meurt en quittant l'écran : ce n'est pas un historique de projet, c'est le rattrapage du geste en cours. Au retour, ce qui est sur le disque fait foi.",
-  },
-
-  // ── L'Univers — les liens, les notes et la couleur (T9) ───────────────────
-  //
-  // Cinq entrées pour quatre user stories, et aucune ne porte de raison : ce qui
-  // refuse un geste — « ces deux-là sont déjà joints », « aucun îlot de ce
-  // nom » — vit dans la fente de l'écran Univers, et ne se survole pas.
-
-  "lien.mot": {
-    nom: "mot d'un lien",
-    ou: "inspiration",
-    quoi: "Une étiquette courte posée au milieu d'un trait, pour dire *quel* rapport il montre.",
-    change:
-      "Rien à la génération. Un lien naît muet, et il reste muet tant que tu n'écris rien : un trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant.",
-    origine: "toi · vide au tracé · 32 signes au plus",
-    long:
-      "Le défaut est muet, l'exception s'exprime. C'est ce qui rend le geste de tracer gratuit : si le mot était demandé au moment du tracé, il faudrait répondre à chaque trait à une question dont la réponse est presque toujours « rien ».\n\nLa borne de 32 signes n'est pas du confort. L'étiquette se pose entre deux objets qui peuvent être à trente pixels l'un de l'autre, et ce qui déborde recouvre ce qu'il relie. Au-delà, ce que tu veux écrire est une note — et une note se pose à même la toile.\n\nLe vider le retire, et le trait redevient ce qu'il était en naissant. Un lien qui porte un mot se survole par son mot ; un lien muet se survole par sa bande.",
-  },
-
-  "lien.pointe": {
-    nom: "pointe",
-    ou: "inspiration",
-    quoi: "La flèche au bout d'un trait, quand le sens du rapport compte.",
-    change:
-      "Rien à la génération. Elle ne change que ce que le trait montre : sans elle il dit « ces deux-là ont rapport », avec elle il dit « celui-ci va vers celui-là ».",
-    origine: "toi · sans pointe au tracé",
-    long:
-      "Elle se pose à l'arrivée, et l'arrivée est l'objet sur lequel tu as lâché : on tire du départ vers l'arrivée, et la pointe ne fait que rendre visible ce que le geste a déjà décidé.\n\nIl n'y a pas de troisième état — pas de double pointe, pas de retournement. Retourner un lien, c'est le couper et le retirer dans l'autre sens : deux gestes rares plutôt qu'un contrôle permanent sur chaque trait.",
-  },
+  // Une carte texte
 
   "note.texte": {
     nom: "texte d'une note",
     ou: "inspiration",
+    groupe: "Une carte texte",
     quoi: "Ce qu'une carte texte dit — l'intention que tu as posée au milieu des images.",
     change:
       "Rien à la génération. Une note ne part nulle part : ce qui voyage en référence, ce sont des octets d'image, et la bible dit déjà ce qu'un texte aurait à dire.",
     origine: "toi · au collage, au double-clic sur la toile, ou par « + note »",
     long:
-      "Sur la toile, un double-clic sur le plan nu ouvre un champ à l'endroit exact où tu as cliqué, et ce que tu écris devient une note posée là. Un champ quitté vide ne crée rien, et Échap l'abandonne : le geste s'essaie sans rien casser.\n\nLe bouton **+ note** de la barre du tableau ouvre le même champ sans avoir à viser — au milieu de ce que la toile montre, ou en réserve quand tu es en grille, qui est très exactement l'endroit de ce qui n'est pas encore classé. C'est le seul chemin qui existe quand tu n'as pas déjà le texte dans le presse-papier.\n\nLe corriger ici plutôt que de retirer la note et de la recoller : recoller lui ferait perdre sa place, sa teinte et les liens qui y aboutissent.",
+      "Sur la toile, un double-clic sur le plan nu ouvre un champ à l'endroit exact où tu as cliqué ; un champ quitté vide ne crée rien, et Échap l'abandonne. Le bouton **+ note** de la barre ouvre le même champ sans avoir à viser. Corrige-la ici plutôt que de la recoller : recoller lui ferait perdre sa place, sa teinte et ses liens.",
   },
 
   "note.teinte": {
     nom: "teinte d'une note",
     ou: "inspiration",
+    groupe: "Une carte texte",
     quoi: "Une des dix couleurs sourdes, posée sur le fond d'une note.",
     change:
       "Rien à la génération, et rien au rangement non plus. C'est **le seul endroit du produit où une couleur ne veut rien dire** : elle est là parce que tu l'as choisie, jamais parce qu'un état la commande.",
     origine: "toi · sans teinte au départ",
     long:
-      "La liste est fermée à dix, et il n'existe aucun sélecteur libre : le premier îlot rouge vif se lirait comme un échec. Les dix sont posées à la même clarté et sous le contraste de toutes les couleurs qui, elles, disent quelque chose — réussi, réglé à la main, raté, et l'accent du produit. Deux arcs de la roue sont interdits, et ce sont ceux des sémantiques : c'est pour ça qu'aucune n'est un rouge, un vert franc ou un ambre.\n\nUne carte image n'en porte aucune, et ce n'est pas un oubli : colorier chaque carte reconstruirait un second rangement, invisible dans la grille et concurrent du groupe. La couleur se pose sur ce qui rassemble — un îlot, une note —, jamais sur ce qui est rassemblé.\n\nLa dernière pastille n'est pas une couleur de plus : c'est le châssis, c'est-à-dire l'absence de teinte, montrée plutôt que dite.",
+      "La liste est fermée à dix, à la même clarté que les couleurs qui, elles, disent quelque chose — réussi, réglé à la main, raté. Aucune n'est un rouge, un vert franc ou un ambre : ce sont les arcs des sémantiques. Une carte image n'en porte aucune : colorier chaque carte referait un second rangement, invisible dans la grille et concurrent du groupe.",
   },
+
+  // Une carte image
+
+  "carte.concept": {
+    nom: "Concept art de",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "Les personnages qui se servent de cette carte comme référence.",
+    change:
+      "Elle part avec chaque génération de ce personnage-là, **quelle que soit la famille du sujet** — un artwork officiel se filtre par famille, un concept art a été désigné pour lui.",
+    origine: "toi · les personnages viennent du projet",
+    long:
+      "Désigner ne déplace rien : la carte reste sur le tableau, ni promue ni copiée. Une carte peut servir à plusieurs personnages, d'où des bascules et non un choix unique. Le coin en haut à gauche dit qu'elle sert ; celui d'en haut à droite dit qu'elle est un artwork officiel. Elle peut porter les deux.",
+  },
+
+  "carte.officiel": {
+    nom: "artwork officiel",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "Promouvoir une carte : elle cesse d'être une inspiration et devient une référence envoyée toute seule.",
+    change:
+      "C'est l'interrupteur des références envoyées toutes seules : une carte non promue n'en devient jamais une, quoi qu'il y ait dans son groupe ou sa famille. Elle peut malgré tout partir si tu la désignes toi-même comme concept art — c'est alors ton geste, pas une règle du projet.",
+    origine: "toi · non promu par défaut",
+    long:
+      "Promouvoir est un geste unique : tu poses officiel et famille une fois, et l'application choisit seule à chaque génération — le cadrage du produit écarte la sélection manuelle des artworks au moment de générer. Un texte ne peut pas être promu : ce qui part en référence, ce sont des octets d'image.",
+  },
+
+  "carte.famille": {
+    nom: "famille",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "La catégorie d'un artwork officiel : personnages, objets, décors, interface, ou « tous » pour une planche non figurative.",
+    change:
+      "Beaucoup. À la génération, seuls les artworks de la famille de ton sujet partent en référence, plus ceux marqués « tous ». Le nombre de références change le coût.",
+    origine: "toi, en promouvant · défaut « tous »",
+    long:
+      "C'est ce qui empêche un artwork de contaminer un sujet qui n'a rien à voir avec lui. « Tous » est le cas utile pour une planche de matières ou de trait, qui accompagne toute génération sans transmettre de personnage. Le compte de références est plafonné par modèle, et chez certains fournisseurs le prix croît avec ce nombre.",
+  },
+
+  "carte.lecture": {
+    nom: "ce que la palette y lit",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "La part de cet artwork qui donne ses couleurs au jeu. Pour la voir en magenta, il faut ouvrir l'écran de découpe.",
+    change:
+      "Rien. C'est une mesure, elle ne règle rien : elle montre ce que l'application fait déjà de cette image.",
+    origine: "mesuré sur l'image · rien n'est calculé tant que tu n'as pas cliqué",
+    long:
+      "L'application détoure le fond avant de lire les couleurs : un ciel, un mur uni derrière un personnage n'entrent pas dans la palette. Ce qui pollue vraiment, ce sont les voisins opaques — un titre d'interface, un second personnage dans le cadre. Rien de mis de côté n'est pas une panne : une matière sans fond donne l'image entière.",
+  },
+
+  "carte.decouper": {
+    nom: "découper une carte",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "Couper une carte en plusieurs, ou la recadrer — sans quitter le tableau.",
+    change:
+      "Chaque morceau devient une carte du même tableau, dans la réserve, non promue. Ce sont des cartes et jamais des images produites : elles n'ont ni recette ni rendu.",
+    origine: "toi · l'originale reste, sauf si tu demandes le remplacement",
+    long:
+      "Une planche porte souvent plusieurs personnages sur un même fond : découper en fait autant de cartes, promues séparément. Le remplacement n'existe qu'avec un seul rectangle — c'est alors un recadrage, et l'originale s'en va avec sa place, son groupe, sa note et sa promotion. C'est le seul endroit du produit où découper efface quelque chose.",
+  },
+
+  "carte.source": {
+    nom: "provenance",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "L'adresse d'où vient la carte — collée, ou posée depuis un clip animé — gardée telle quelle.",
+    change:
+      "Rien à la génération. Elle sert à créditer et à retrouver : une image dont on a perdu la source est une image qu'on ne peut plus faire ni l'un ni l'autre.",
+    origine: "le collage, ou le dépôt d'un clip sur la toile · vide si tu as collé des octets",
+  },
+
+  // Le menu d'un lien
+
+  "lien.mot": {
+    nom: "mot d'un lien",
+    ou: "inspiration",
+    groupe: "Le menu d'un lien",
+    quoi: "Une étiquette courte posée au milieu d'un trait, pour dire *quel* rapport il montre.",
+    change:
+      "Rien à la génération. Un lien naît muet, et le reste tant que tu n'écris rien : un trait nu dit déjà « ceci a rapport avec cela », le cas courant.",
+    origine: "toi · vide au tracé · 32 signes au plus",
+    long:
+      "Le défaut est muet, l'exception s'exprime : demander le mot à chaque tracé transformerait un geste gratuit en question. La borne de 32 signes tient parce que l'étiquette se pose entre deux objets parfois très proches ; au-delà, c'est une note qu'il faut poser sur la toile, pas un mot de lien. Le vider retire l'étiquette.",
+  },
+
+  "lien.pointe": {
+    nom: "pointe",
+    ou: "inspiration",
+    groupe: "Le menu d'un lien",
+    quoi: "La flèche au bout d'un trait, quand le sens du rapport compte.",
+    change:
+      "Rien à la génération. Elle ne change que ce que le trait montre : sans elle il dit « ces deux-là ont rapport », avec elle il dit « celui-ci va vers celui-là ».",
+    origine: "toi · sans pointe au tracé",
+    long:
+      "Elle se pose à l'arrivée, celle sur laquelle tu as lâché : la pointe ne fait que rendre visible ce que le tracé a déjà décidé. Pas de troisième état — retourner un lien, c'est le couper et le retirer dans l'autre sens, deux gestes rares plutôt qu'un contrôle permanent.",
+  },
+
+  // Le menu d'un îlot
 
   "ilot.teinte": {
     nom: "teinte d'un îlot",
     ou: "inspiration",
+    groupe: "Le menu d'un îlot",
     quoi: "La même palette de dix, posée sur le cadre, le bandeau et le fond d'un îlot.",
     change:
       "Rien à la génération, et rien au groupe. Un îlot teinté et un îlot nu contiennent exactement les mêmes cartes, et envoient exactement les mêmes références.",
     origine: "toi · sans teinte au départ · part avec le dernier membre",
     long:
-      "Elle ne vit pas sur les cartes de l'îlot : six membres feraient six réponses possibles pour un seul cadre. Elle vit avec le projet, une entrée par nom de groupe.\n\nCorollaire de « un îlot *est* son groupe » : quand la dernière carte en sort, l'îlot cesse d'exister, et sa couleur s'en va avec lui — comme les liens qui y aboutissaient. Ctrl+Z rend les trois d'un coup.",
+      "Elle ne vit pas sur les cartes de l'îlot — six membres feraient six réponses pour un seul cadre — mais avec le projet, une entrée par nom de groupe. Corollaire de « un îlot *est* son groupe » : quand la dernière carte en sort, l'îlot cesse d'exister, et sa couleur s'en va avec lui, comme les liens qui y aboutissaient.",
+  },
+
+  // ── L'univers, côté Ambiances — les palettes, et les lots de style ────────
+  //
+  // **Deux entrées ont quitté ce bloc en `GU9`** : `univers.couleurs` et
+  // `univers.fond` ne se règlent plus ici depuis `C2` — elles se règlent à
+  // l'étape « Son allure » des règles du jeu (`ou: "jeu"`), où
+  // `ReglesDuJeu.tsx` les a relogées. Il ne reste ici que ce que l'écran
+  // Ambiances et couleurs montre vraiment : les ambiances, et les palettes.
+
+  // Les ambiances
+
+  "ambiance.lot": {
+    nom: "Une ambiance",
+    ou: "ambiances",
+    groupe: "Les ambiances",
+    quoi: "Un lot de style réutilisable : une palette, des images de référence, et trois textes. On la désigne sur une chose du jeu.",
+    change:
+      "Rien tant qu'on ne s'en sert pas. Au moment de fabriquer, on choisit ce qu'on lui prend — tout, les couleurs seules, ou tout sauf les images —, et ce choix ne vaut que pour cet appel-là.",
+    origine: "toi · aucune ambiance au départ",
+    long:
+      "Les palettes sont les ingrédients, les ambiances les recettes. Ses trois textes remplacent ceux du jeu, champ par champ, et l'écran de confirmation le montre, la perdante barrée sous la gagnante. Éteindre une ligne d'ambiance rallume donc le texte du jeu d'elle-même. Ce qu'un appel a réellement pris est enregistré avec la génération.",
+  },
+
+  // Les palettes
+
+  "univers.palette": {
+    nom: "Une palette",
+    ou: "ambiances",
+    groupe: "Les palettes",
+    quoi: "Une liste de couleurs qui porte un nom, tirée d'un paquet d'images. Ton jeu peut en avoir autant que tu veux.",
+    change:
+      "La quantification ramène chaque pixel sur la couleur la plus proche de la palette en cours. Partout ailleurs, une couleur hors palette se marque au lieu d'être refusée.",
+    origine: "toi · aucune palette au départ, et un jeu sans palette ne quantifie rien",
+    long:
+      "Le jeu en a une par défaut, « du jeu » en tête de la liste : elle se lit par calcul sur les artworks officiels, jamais ne se saisit, et se recalcule seule dès qu'un artwork ou le nombre de couleurs change. Les autres se fabriquent ici, à côté : des recettes faites de sources, de deux dosages et de retouches — une couleur retirée reste montrée barrée, pour qu'on puisse défaire.",
   },
 
   // ── Le codex — l'inventaire du monde, et le seul endroit où l'on nomme ────
