@@ -319,3 +319,61 @@ def plan_du_type(nom: str) -> tuple[Pose, ...]:
     pire qu'une liste absente — il faudrait la ranger.
     """
     return PLANS_PAR_TYPE.get(nom, ())
+
+
+# ── Ce qu'une nature peut avoir, au-delà de sa découpe et de ses poses (D1) ──
+#
+# **Le mensonge de fond, nommé dans `docs/PLAN-rangement.md`** : l'écran d'un
+# sujet proposait à tout le monde le même onglet *Animations*, le même filtre
+# *Direction*, le même onglet *Sons* — qu'il s'agisse d'un personnage ou d'une
+# matière. La page d'une matière ouvrait ainsi sur *Animations*, avec un filtre
+# *Direction*, et écrivait juste dessous « Ce type d'objet ne réclame aucune
+# pose » : l'écran proposait ce qu'il venait de déclarer impossible.
+#
+# **Quatre questions, pas six.** `se découpe` et `poses` existent déjà —
+# `Echelle.silhouette` et `PLANS_PAR_TYPE`/`SANS_POSES` juste au-dessus — et
+# cette table-ci ne les répète pas : deux tables qui disent la même chose
+# finiraient par en dire deux différentes. Elle ne porte que les quatre
+# colonnes neuves : directions, animation, sons, sert de matière.
+@dataclass(frozen=True, slots=True)
+class Capacites:
+    """Ce qu'une nature peut avoir, en dehors de sa découpe et de ses poses."""
+
+    directions: bool
+    anime: bool
+    sons: bool
+    matiere: bool
+
+
+# **La table de D1, au mot près.** Recopiée depuis `docs/PLAN-rangement.md`
+# § D1, décidée le 20 septembre 2026 — c'est ce document qui fait foi, celui-ci
+# n'en est qu'une seconde écriture qui doit rester identique. Une matière ne
+# porte aucune des trois premières colonnes : elle est un ingrédient (D4), pas
+# un sujet qui part dans le jeu. Un décor et une tuile s'animent, une matière
+# non (D2) — c'est le jeu de tuiles qui l'anime, jamais elle.
+CAPACITES_PAR_NATURE: dict[str, Capacites] = {
+    "personnage": Capacites(directions=True, anime=True, sons=True, matiere=False),
+    "créature": Capacites(directions=True, anime=True, sons=True, matiere=False),
+    "meuble": Capacites(directions=False, anime=True, sons=True, matiere=False),
+    "objet posé": Capacites(directions=False, anime=False, sons=True, matiere=False),
+    "objet tenu": Capacites(directions=False, anime=False, sons=True, matiere=False),
+    "décor": Capacites(directions=False, anime=True, sons=True, matiere=False),
+    "tuile": Capacites(directions=False, anime=True, sons=False, matiere=False),
+    "matière": Capacites(directions=False, anime=False, sons=False, matiere=True),
+    "élément d'interface": Capacites(directions=False, anime=True, sons=True, matiere=False),
+}
+
+
+def capacites_de(nom: str) -> Capacites:
+    """Ce qu'une nature peut avoir — **et jamais un trou**.
+
+    **Une nature inconnue prend les réponses d'un décor** (D1, dernière
+    phrase) : « une nature écrite à la main par l'auteur prend les réponses
+    d'un décor, et sa silhouette reste réglable comme aujourd'hui ». Le décor
+    est le choix le plus permissif de la table qui ne sert pas de matière —
+    il s'anime et porte des sons, sans pour autant prétendre à des directions
+    qu'une nature neuve n'a pas déclarées. C'est la même politique que
+    `plan_du_type` et `suit_le_plan_du_jeu` : l'ignorance retombe sur ce qui
+    existe déjà, elle n'invente rien.
+    """
+    return CAPACITES_PAR_NATURE.get(nom, CAPACITES_PAR_NATURE["décor"])

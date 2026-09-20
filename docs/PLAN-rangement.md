@@ -110,12 +110,17 @@ La table de D1 entre dans le domaine, à côté de `PLANS_PAR_TYPE` : quatre cap
 nature (directions, animations, sons, sert de matière), lues par une seule fonction. Rien ne
 change à l'écran dans cette tranche — c'est le socle des deux suivantes.
 
-- [ ] Une fonction unique répond « cette nature a-t-elle des directions / des animations / des
+- [x] Une fonction unique répond « cette nature a-t-elle des directions / des animations / des
       sons ? », et la table de D1 est celle du plan, au mot près.
-- [ ] Une nature inconnue — écrite à la main par l'auteur — prend les réponses d'un décor, et
+      *(`Capacites` et `capacites_de`, `atelier/domaine/plan.py` ; un essai compare la table
+      ligne à ligne à celle de ce document.)*
+- [x] Une nature inconnue — écrite à la main par l'auteur — prend les réponses d'un décor, et
       un essai le prouve plutôt que de le supposer.
-- [ ] Les deux capacités qui existaient déjà (`silhouette`, poses) ne sont pas recopiées : la
+      *(Le décor est le plus permissif de la table qui ne sert pas de matière : il s'anime et
+      porte des sons, sans prétendre aux directions qu'une nature neuve n'a pas déclarées.)*
+- [x] Les deux capacités qui existaient déjà (`silhouette`, poses) ne sont pas recopiées : la
       fonction les lit où elles vivent, sinon deux tables diraient bientôt deux choses.
+      *(La table ne porte que les quatre colonnes neuves.)*
 
 ### RG2 · La page d'un sujet ne montre que ce qui s'applique
 
