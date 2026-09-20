@@ -130,10 +130,21 @@ Les onglets *Animations*, *Sons*, les filtres *Direction* et *Mouvement / pose*,
 *Découper une image* : chacun paraît si la nature le porte, et disparaît sinon — jamais grisé
 sans raison.
 
-- [ ] La page d'une matière n'a plus d'onglet Animations ni de filtre Direction.
-- [ ] La page d'un personnage est inchangée, au pixel près.
-- [ ] Aucun onglet n'est grisé sans une phrase qui dit pourquoi ; un onglet qui ne s'applique
+- [x] La page d'une matière n'a plus d'onglet Animations ni de filtre Direction.
+      *(Le filtre Direction et le menu Mouvement/pose vivent dans `AnimationsDuSujet.tsx`,
+      monté seulement quand l'onglet existe : le faire disparaître au niveau de l'onglet
+      suffit à faire disparaître les deux.)*
+- [x] La page d'un personnage est inchangée, au pixel près.
+      *(`PageDuSujet.test.tsx` : les 28 essais d'avant la tranche passent tels quels, plus un
+      essai dédié qui mocke `posesDesTypes` et revérifie les sept onglets et le bouton
+      Découper.)*
+- [x] Aucun onglet n'est grisé sans une phrase qui dit pourquoi ; un onglet qui ne s'applique
       pas n'existe pas.
+      *(`atelier/services/production.py`, `poses_des_types` rend `capacites` — D1 au mot
+      près — et `se_decoupe` (`Echelle.silhouette`) ; `PageDuSujet.tsx` filtre les onglets
+      Animations/Sons et le bouton Découper une image dessus. Repli permissif tant que la
+      route n'a pas répondu, pour ne jamais faire disparaître un onglet d'un personnage par
+      erreur.)*
 
 ### RG3 · La fiche d'une image, en trois zones
 
@@ -168,10 +179,24 @@ vient** (replié).
 Le rang « ingrédient » côté serveur : une matière est une image du projet marquée comme telle,
 groupable en collections, sans sujet porteur.
 
-- [ ] Une matière existe sans sujet, et se liste par une route dédiée.
-- [ ] Les collections existantes la rangent, sans nouveau mécanisme de groupement.
-- [ ] Une matière n'a ni objectif, ni poses, ni livraison propre — et les routes qui en
+- [x] Une matière existe sans sujet, et se liste par une route dédiée.
+      *(`Asset.matiere`, posé par `ServiceAssets.naitre` quand la génération portait
+      `echelle="matière"` ; `GET /api/projects/{projet}/materials`, servie par
+      `ServiceBibliotheque.matieres`.)*
+- [x] La spécification a montré qu'une collection tient des sujets et jamais des images
+      (`Collection.membres`) : le critère devient donc *les collections la rangent par le
+      mécanisme qui range déjà un sujet, sans qu'un second en naisse*.
+      *(`Membre.genre` — `sujet` ou `matiere` —, `Collection.avec` / `sans` / `matieres_du_jeu`
+      l'étendent ; `ServiceBibliotheque.ranger_sujet` / `retirer_sujet` prennent le genre. Une
+      fiche de collection écrite avant RG5 se relit à l'identique, `genre` ne s'écrivant que
+      pour une matière — `membres_depuis_json`, `tests/test_rg5_bibliotheque_matieres.py`.)*
+- [x] Une matière n'a ni objectif, ni poses, ni livraison propre — et les routes qui en
       proposent la refusent avec une phrase en clair.
+      *(`PUT /assets/{id}/character` et `POST`/`PUT /characters` — `atelier/api/production.py` —,
+      refusées en 409 dès que l'image porte `matiere=True`, ou que `type == "matière"` est
+      demandé pour un sujet. `_asset_valide` ne change pas : le marqueur décide de ce qui est
+      listé, jamais de ce qui est accepté dans une recette —
+      `test_asset_valide_accepte_une_image_quel_que_soit_le_marqueur`.)*
 
 ### RG6 · L'écran des tuiles adopte la bibliothèque
 

@@ -34,9 +34,27 @@ from pydantic import BaseModel, Field
 from atelier.api.routes import CorpsTrait, reponse_archive
 from atelier.domaine.recette import OCCUPATION_MAX_ABSOLU, RAYON_MAX
 from atelier.services import Atelier
-from atelier.services.production import TOUS_LES_SUJETS
+from atelier.services.production import TOUS_LES_SUJETS, ProductionRefusee
 
 routeur = APIRouter()
+
+# **Ce qu'une matière ne peut pas faire** (RG5, 20 septembre 2026). Une
+# matière est un ingrédient de jeu de tuiles, pas une chose du jeu
+# (`docs/PLAN-rangement.md` § Le mensonge de fond) : elle n'a ni sujet, ni
+# poses, ni objectif. Les deux phrases ci-dessous sont celles de la
+# spécification au mot près (`docs/RG5-la-bibliotheque-des-matieres.md` §4) —
+# l'écran les affiche telles quelles.
+_REFUS_SUJET_DUNE_MATIERE = (
+    "Une matière n'a pas de sujet : c'est un ingrédient du jeu de tuiles, pas "
+    "une chose du jeu. Pour la ranger, mets-la dans une collection ; pour en "
+    "faire l'image d'un sujet, retire-lui d'abord la marque « matière » "
+    "depuis sa fiche."
+)
+_REFUS_SUJET_DE_NATURE_MATIERE = (
+    "On ne crée plus de sujet de nature « matière ». Une matière est une "
+    "image de la bibliothèque du jeu : génère-la depuis l'écran des tuiles, "
+    "ou déclare une image existante « matière » depuis sa fiche."
+)
 
 
 def _atelier(requete: Request) -> Atelier:
@@ -1097,6 +1115,8 @@ async def bilan_du_jeu(requete: Request, projet: str | None = Query(None)) -> di
 @routeur.post("/characters", status_code=201)
 async def creer_personnage(requete: Request, corps: CorpsPersonnage) -> dict[str, Any]:
     """Un personnage de plus dans le projet (US-115). Ne coûte rien, ne sort pas."""
+    if corps.type == "matière":
+        raise ProductionRefusee(_REFUS_SUJET_DE_NATURE_MATIERE)
     atelier = _atelier(requete)
     projet = _projet(requete, corps.projet)
     personnage = atelier.production.creer_personnage(
@@ -1139,6 +1159,8 @@ async def regler_personnage(
     requete: Request, identifiant: str, corps: CorpsReglagePersonnage
 ) -> dict[str, Any]:
     """Décrire, renommer, cocher ses poses, désigner ses concept arts."""
+    if corps.type == "matière":
+        raise ProductionRefusee(_REFUS_SUJET_DE_NATURE_MATIERE)
     atelier = _atelier(requete)
     projet = _projet(requete, corps.projet)
     personnage = atelier.production.regler_personnage(
@@ -1200,6 +1222,9 @@ async def designer(
     cette image remplit », et c'est la question de la matrice.
     """
     atelier = _atelier(requete)
+    existant = atelier.assets.lire(identifiant)
+    if existant is not None and existant.matiere:
+        raise ProductionRefusee(_REFUS_SUJET_DUNE_MATIERE)
     asset = atelier.production.designer(
         identifiant,
         projet=_projet(requete, corps.projet),

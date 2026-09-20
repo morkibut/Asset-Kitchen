@@ -974,6 +974,17 @@ class ServiceAssets:
             direction=ancien.direction if ancien else generation.direction,
             personnage_supprime=ancien.personnage_supprime if ancien else False,
             favori=ancien.favori if ancien else False,
+            # **C'est un ingrédient, pas une chose du jeu** (RG5, 20 septembre
+            # 2026) : une image dont la demande portait `echelle="matière"`
+            # (`ServiceGenerations.soumettre_matiere`) naît marquée matière,
+            # le même mot qui lui donne déjà sa recette de naissance juste
+            # au-dessus. Comme pour le rangement et la case visée, une
+            # décision de l'auteur l'emporte à la relance.
+            matiere=(
+                ancien.matiere
+                if ancien
+                else generation.demande.get("echelle") == "matière"
+            ),
             # La filiation vient de la source d'édition réinjectée (US-12).
             # Sans réinjection, l'asset n'a pas de parent — et c'est vrai, pas
             # provisoire : rien ne l'a engendré.

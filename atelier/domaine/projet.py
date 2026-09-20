@@ -1578,9 +1578,20 @@ class Projet:
         )
 
 
+# **Les deux genres d'un membre** (RG5, 20 septembre 2026). Une collection
+# rangeait jusqu'ici des sujets seuls ; une matière n'en est pas un
+# (`docs/PLAN-rangement.md` § Le mensonge de fond), et pourtant l'auteur doit
+# pouvoir la grouper avec ses semblables. Plutôt qu'un second mécanisme de
+# groupement — une bibliothèque de plus à tenir d'accord —, `Membre` porte
+# désormais lequel des deux il range : le mécanisme ne change pas, ce qu'il
+# range s'élargit.
+SUJET = "sujet"
+MATIERE = "matiere"
+
+
 @dataclass(frozen=True, slots=True)
 class Membre:
-    """Un sujet rangé dans une collection — **le jeu et le sujet ensemble**.
+    """Un sujet — ou une matière — rangé dans une collection.
 
     Jamais un identifiant seul, et c'est la seule chose à retenir de cet
     objet. Les identifiants de sujet sont uniques **par jeu** : `balthazar`
@@ -1605,10 +1616,19 @@ class Membre:
     """
 
     jeu: str
-    sujet: str
+    sujet: str  # l'identifiant du sujet, ou celui de l'image pour une matière
+    genre: str = SUJET
 
     def en_json(self) -> dict[str, Any]:
-        return {"jeu": self.jeu, "sujet": self.sujet}
+        # **`genre` ne s'écrit que pour une matière** (RG5), comme `planche` et
+        # `depliage` sur `Asset` : un sujet — le cas courant, et tout ce qui
+        # existait avant RG5 — garde une fiche au caractère près identique à
+        # celle d'hier, ce qui tient le critère « les collections déjà écrites
+        # se relisent sans perte » au sens le plus strict, celui de l'octet.
+        d: dict[str, Any] = {"jeu": self.jeu, "sujet": self.sujet}
+        if self.genre != SUJET:
+            d["genre"] = self.genre
+        return d
 
 
 def membres_depuis_json(brut: Any) -> tuple[Membre, ...]:
@@ -1619,14 +1639,19 @@ def membres_depuis_json(brut: Any) -> tuple[Membre, ...]:
     perdu. C'est ce qui tient le critère « les collections déjà écrites sur le
     disque se relisent sans perte » sans qu'aucune conversion ait lieu.
 
+    **Une fiche écrite avant RG5 n'a pas de genre**, et c'est la même
+    tolérance : une entrée sans `genre` est un sujet, comme toutes les
+    entrées l'étaient avant que la matière n'existe. Un genre écrit mais
+    inconnu retombe sur `sujet`, pour la même raison qu'un membre mal formé
+    ne doit pas emporter la collection entière avec lui.
+
     Ce qui est mal formé — une entrée sans jeu, sans sujet, ou qui n'est pas
-    une fiche — est écarté plutôt que de faire échouer la lecture : un membre
-    illisible ne doit pas emporter la collection entière avec lui.
+    une fiche — est écarté plutôt que de faire échouer la lecture.
     """
     if not isinstance(brut, (list, tuple)):
         return ()
     membres: list[Membre] = []
-    deja: set[tuple[str, str]] = set()
+    deja: set[tuple[str, str, str]] = set()
     for entree in brut:
         if not isinstance(entree, dict):
             continue
@@ -1636,11 +1661,13 @@ def membres_depuis_json(brut: Any) -> tuple[Membre, ...]:
             continue
         if not isinstance(sujet, str) or not sujet:
             continue
-        couple = (jeu, sujet)
+        genre = entree.get("genre")
+        genre = genre if genre in (SUJET, MATIERE) else SUJET
+        couple = (jeu, sujet, genre)
         if couple in deja:
             continue
         deja.add(couple)
-        membres.append(Membre(jeu=jeu, sujet=sujet))
+        membres.append(Membre(jeu=jeu, sujet=sujet, genre=genre))
     return tuple(membres)
 
 
@@ -1678,24 +1705,28 @@ class Collection:
     cree_le: float = field(default_factory=time.time)
     membres: tuple[Membre, ...] = ()
 
-    def contient(self, jeu: str, sujet: str) -> bool:
-        return Membre(jeu=jeu, sujet=sujet) in self.membres
+    def contient(self, jeu: str, sujet: str, genre: str = SUJET) -> bool:
+        return Membre(jeu=jeu, sujet=sujet, genre=genre) in self.membres
 
-    def avec(self, jeu: str, sujet: str) -> "Collection":
-        """Le sujet rangé. **Deux fois ne fait pas deux membres** : ranger ce
-        qui est déjà rangé est un geste sans effet, pas une erreur — c'est ce
-        qui rend un glisser-déposer répété inoffensif."""
-        if self.contient(jeu, sujet):
+    def avec(self, jeu: str, sujet: str, genre: str = SUJET) -> "Collection":
+        """Le sujet — ou la matière — rangé. **Deux fois ne fait pas deux
+        membres** : ranger ce qui est déjà rangé est un geste sans effet, pas
+        une erreur — c'est ce qui rend un glisser-déposer répété inoffensif."""
+        if self.contient(jeu, sujet, genre):
             return self
-        return replace(self, membres=self.membres + (Membre(jeu=jeu, sujet=sujet),))
+        return replace(
+            self, membres=self.membres + (Membre(jeu=jeu, sujet=sujet, genre=genre),)
+        )
 
-    def sans(self, jeu: str, sujet: str) -> "Collection":
-        """Le sujet retiré du groupe. **Le sujet lui-même ne bouge pas** : ni
-        son fichier, ni son jeu, ni ses images."""
+    def sans(self, jeu: str, sujet: str, genre: str = SUJET) -> "Collection":
+        """Le sujet retiré du groupe. **Il ne bouge pas lui-même** : ni son
+        fichier, ni son jeu, ni ses images."""
         return replace(
             self,
             membres=tuple(
-                m for m in self.membres if m.jeu != jeu or m.sujet != sujet
+                m
+                for m in self.membres
+                if m.jeu != jeu or m.sujet != sujet or m.genre != genre
             ),
         )
 
@@ -1704,8 +1735,21 @@ class Collection:
 
         **La méthode par laquelle un groupe se lit**, et pas un raccourci :
         une collection peut mêler deux univers (voir plus haut), si bien que
-        lire `membres` sans filtrer, c'est compter deux jeux ensemble."""
-        return tuple(m.sujet for m in self.membres if m.jeu == jeu)
+        lire `membres` sans filtrer, c'est compter deux jeux ensemble.
+
+        **Ne rend que les sujets** (RG5) : une matière rangée dans la même
+        collection ne s'y mêle pas, sinon un écran de sujets compterait des
+        images. `matieres_du_jeu()`, juste en dessous, rend l'autre moitié."""
+        return tuple(m.sujet for m in self.membres if m.jeu == jeu and m.genre == SUJET)
+
+    def matieres_du_jeu(self, jeu: str) -> tuple[str, ...]:
+        """Les matières de ce jeu-là, dans l'ordre où elles ont été rangées.
+
+        La jumelle de `sujets_du_jeu()` (RG5) : même filtre par jeu, l'autre
+        genre. `sujet` y porte l'identifiant de l'**image**, pas d'un sujet."""
+        return tuple(
+            m.sujet for m in self.membres if m.jeu == jeu and m.genre == MATIERE
+        )
 
     def en_json(self) -> dict[str, Any]:
         return {

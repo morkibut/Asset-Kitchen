@@ -49,6 +49,7 @@ from atelier.domaine.generation import Generation, Statut
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.projet import (
     NOM_BAC_A_SABLE,
+    SUJET,
     Collection,
     Projet,
     deja_porte,
@@ -507,28 +508,36 @@ class ServiceBibliotheque:
         self._annoncer()
         return {"collection": identifiant, "sujets": len(collection.membres)}
 
-    def ranger_sujet(self, identifiant: str, jeu: str, sujet: str) -> Collection:
-        """Un sujet de plus dans le groupe (B8.4).
+    def ranger_sujet(
+        self, identifiant: str, jeu: str, sujet: str, genre: str = SUJET
+    ) -> Collection:
+        """Un sujet — ou une matière (RG5) — de plus dans le groupe (B8.4).
 
         **Deux fois ne fait pas deux membres** (`Collection.avec`), donc un
         glisser-déposer répété sur la même case ne casse rien. Et ranger ne
         juge jamais : un sujet d'un autre jeu que celui de la collection y
         entre quand même — tranché par l'auteur en `B8.1`, contre la
         recommandation inverse.
+
+        **`genre` étend le geste, sans en ouvrir un second** (RG5) : une
+        matière se range par le même chemin qu'un sujet, `sujet` portant
+        alors l'identifiant de l'image.
         """
         collection = self._base.lire_collection(identifiant)
         if collection is None:
             raise CollectionInconnue(identifiant)
-        return self._sauver_collection(collection.avec(jeu, sujet))
+        return self._sauver_collection(collection.avec(jeu, sujet, genre))
 
-    def retirer_sujet(self, identifiant: str, jeu: str, sujet: str) -> Collection:
-        """Le sujet quitte le groupe (B8.4). **Il ne bouge pas lui-même** — ni
-        son fichier, ni son jeu, ni ses images : seule l'adhésion change
-        (`Collection.sans`)."""
+    def retirer_sujet(
+        self, identifiant: str, jeu: str, sujet: str, genre: str = SUJET
+    ) -> Collection:
+        """Le sujet — ou la matière — quitte le groupe (B8.4). **Il ne bouge
+        pas lui-même** — ni son fichier, ni son jeu, ni ses images : seule
+        l'adhésion change (`Collection.sans`)."""
         collection = self._base.lire_collection(identifiant)
         if collection is None:
             raise CollectionInconnue(identifiant)
-        return self._sauver_collection(collection.sans(jeu, sujet))
+        return self._sauver_collection(collection.sans(jeu, sujet, genre))
 
     def _ecrire_collections(self) -> None:
         self._fichiers.ecrire_collections(
@@ -714,6 +723,34 @@ class ServiceBibliotheque:
             marques.append(asset)
         self._annoncer()
         return marques
+
+    # ── La bibliothèque des matières (RG5) ───────────────────────────────────
+
+    def matieres(self, projet: str, limite: int = PAR_DEFAUT) -> list[Asset]:
+        """Les images marquées matière de ce projet — l'ingrédient, jamais le
+        sujet (`docs/RG5-la-bibliotheque-des-matieres.md`).
+
+        **Une lecture, pas un second index** : le même `Base.assets()` que la
+        grille et le MCP de T7, filtré sur la colonne posée à côté de `favori`
+        (`assets_matieres`). Aucun sujet n'est consulté — une matière n'en a
+        pas."""
+        if self._base.lire_projet(projet) is None:
+            raise ProjetInconnu(projet, [p.identifiant for p in self.projets()])
+        return self._base.assets(projet=projet, matiere=True, limite=limite)
+
+    def declarer_matiere(self, identifiant: str, valeur: bool) -> Asset:
+        """Poser — ou retirer — la marque « matière » sur une image existante.
+
+        **Le « en un geste » de RG6** : nulle création de sujet, nul champ de
+        plus qu'un booléen sur l'image déjà là. La marque décide de ce qui
+        entre dans la bibliothèque, jamais de ce qu'un jeu de tuiles accepte —
+        `_asset_valide` (`atelier/services/tuiles.py`) reste ouvert à toute
+        image du projet, marquée ou non."""
+        asset = self._trouver(identifiant)
+        asset.matiere = valeur
+        self._assets.sauver(asset)
+        self._annoncer()
+        return asset
 
     # ── Jeter ────────────────────────────────────────────────────────────────
 
