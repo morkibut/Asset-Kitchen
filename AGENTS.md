@@ -190,8 +190,29 @@ lancer-atelier.bat                   le double-clic du bureau : il recompile l'i
                                      qui tourne date d'avant les dernières modifications du
                                      serveur — une interface neuve devant un serveur périmé
                                      ne se voit pas autrement
-pytest -q                            les critères d'acceptation, sans un centime
-cd interface && npm test             les essais d'écran — flux et fetch doublés, sans serveur
+py essais/lancer_les_essais.py       **le contrôle rapide — à chaque tranche.** Tout ce qui
+                                     n'est pas marqué lent, sur quatre processus, plus les
+                                     garde-fous et ce qui touche à ce qu'on vient d'écrire.
+                                     C'est la commande de tous les jours
+py essais/lancer_les_essais.py --complet
+                                     **le contrôle complet — avant de fusionner dans main.**
+                                     Tout, lent compris, les lents sans concurrence
+py essais/lancer_les_essais.py --proches
+                                     **le cran le plus court** — les garde-fous, plus les
+                                     essais qui nomment ce qu'on vient d'écrire. Le geste de
+                                     la boucle de travail ; il ne remplace pas le rapide
+py essais/lancer_les_essais.py --liste
+                                     ne lance rien : dit quels essais touchent ce qu'on a
+                                     modifié, **et quels fichiers modifiés n'en ont aucun**
+pytest -q                            les critères d'acceptation d'un seul bloc, sans un
+                                     centime. ⚠️ **Compter une heure** — 71 minutes de
+                                     processeur mesurées le 20 septembre 2026, contre une
+                                     dizaine de minutes à quatre processus. Les commandes
+                                     ci-dessus existent pour ça
+cd interface && npm test             les essais d'écran — flux et fetch doublés, sans serveur.
+                                     3 min 19 pour les 95 fichiers. ⚠️ **Ne pas trier** :
+                                     `vitest related` sur trois fichiers met aussi longtemps
+                                     que la suite entière, mesuré (`docs/essais.md`)
 py essais/essai_docs.py              le corpus de démarrage pesé et sa dérive lue,
                                      et tous les renvois vers les documents résolus
 py essais/essai_jetons.py            le système de design **dans les deux sens** :
@@ -240,6 +261,20 @@ millisecondes, rien à faire, et rien à sauvegarder. L'effacer soi-même est un
 conséquence — c'est même un critère d'acceptation de T3.
 
 L'API est documentée d'elle-même sur `/api/docs`.
+
+## Les essais : deux niveaux de contrôle → `docs/essais.md`
+
+```
+py essais/lancer_les_essais.py --proches   le cran court — pendant qu'on écrit
+py essais/lancer_les_essais.py             le rapide — à chaque tranche de travail
+py essais/lancer_les_essais.py --complet   le complet — avant de fusionner dans main
+```
+
+**Le rapide** lance tout ce qui n'est pas marqué `lent`, plus les garde-fous, plus les essais
+qui touchent à ce qu'on vient d'écrire. **Le complet** lance tout, les lents sans concurrence.
+
+`docs/essais.md` dit le reste, et surtout **ce que le rapide ne voit pas** : la règle des
+essais proches se fait par les noms et rate ce qu'un essai n'appelle qu'à travers l'API.
 
 ## Les documents et leur autorité
 

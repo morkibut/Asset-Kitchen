@@ -75,9 +75,17 @@ le plan du chantier lui-même pour `AU` et `RP`.
 | **Le rangement** — RG1 à RG8 | Qui est quoi, et ce que chacun peut avoir. Une nature de sujet déclare ses six capacités et l'écran n'affiche que ce dont la réponse est oui ; la fiche d'une image passe à trois zones ; la colonne des sujets sépare les familles de ce qui n'en est pas ; les **matières quittent les sujets** pour devenir une bibliothèque d'ingrédients, que l'agent sait lister. Né d'une séance d'usage du 19 septembre où les matières générées arrivaient détourées, sans que rien à l'écran ne le dise | **cinq tranches sur huit, le 20 septembre 2026, sur la branche `feat/rangement`** (worktree `../gag2-rangement`) — `RG1` une nature déclare ses quatre capacités neuves, `RG2` les onglets d'une nature qui ne les porte pas disparaissent au lieu d'être gris, `RG3` la fiche en trois zones et le bloc fusionné qui dit la valeur **et** la raison, `RG4` la colonne montre les natures et sépare ce qui n'est pas une famille, `RG5` une matière existe sans sujet et naît matière de son échelle. Essais d'écran 674/674 ; essais serveur ciblés 132/132 + 604 sur le domaine de `RG5` — **la suite serveur complète n'a pas encore tourné sur la branche**. Restent `RG6` (l'écran des tuiles lit la bibliothèque), `RG7` (l'outil de l'agent) et `RG8` (migration et relecture croisée). N'appelle aucun modèle et ne dépense rien | `docs/PLAN-rangement.md` |
 | **Le guide** — GU1 à GU16 | Le volet `?` revu écran par écran : un résumé en tête, les réglages groupés par zone et repliés, le détail au clic. Une aide écrite à la main, gratuite, qu'un débutant lit en dix secondes | **à programmer, ouvert le 20 septembre 2026** — aucune tranche faite. Relevé du même jour : 229 fiches à plat dont 73 sur un seul écran, 156 textes longs de 521 signes de médiane, aucun résumé, et **zéro fiche pour les tuiles comme pour le son**. N'appelle aucun modèle et ne dépense rien | `docs/PLAN-guide.md` |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 2 668 essais de
-serveur et 1 310 d'écran** tiennent le dépôt — recomptés le 13 septembre 2026, et **aucun ne
-coûte un centime**.
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 3 750 essais de
+serveur en 201 fichiers et 2 659 d'écran en 95** tiennent le dépôt — recomptés le 20 septembre
+2026, et **aucun ne coûte un centime**.
+
+**Ils se lancent en deux niveaux depuis le 20 septembre 2026 → `docs/essais.md`.** D'un seul
+bloc, la suite serveur pèse 71 minutes de processeur, et une suite d'une heure ne se lance pas :
+une largeur écrite dans un composant a fait échouer `tests/test_b0.py` trois séances durant sans
+que personne le voie. `py essais/lancer_les_essais.py` la passe en **une dizaine de minutes sur
+quatre processus** — quatre mesuré, pas choisi : à douze c'est à la fois plus lent et faux. Deux
+marqueurs trient, `lent` pour les vingt-quatre essais qui lancent un processus extérieur et
+`gardefou` pour les six qui balaient un dossier entier.
 
 ### Ce que la remise à plat a mesuré, le 13 septembre 2026
 

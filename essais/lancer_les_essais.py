@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Lancer la suite serveur — vite, ou en entier, ou fichier par fichier pour mesurer.
 
-**Le problème qu'il règle.** `pytest -q` lance trois mille sept cents essais d'un
-seul bloc, et il n'en finit plus : mesuré le 20 septembre 2026, vingt-sept essais
-en quatre minutes. Personne ne lance ça, donc personne ne lance rien, donc une
-faute reste cachée. C'est très exactement ce qui est arrivé à `tests/test_b0.py`,
+**Le problème qu'il règle.** `pytest -q` lance trois mille sept cent cinquante
+essais d'un seul bloc, et il n'en finit plus : mesuré le 20 septembre 2026,
+**71 minutes de processeur** pour les deux cent un fichiers — contre 18 minutes
+de montre à quatre processus. Personne ne lance une heure d'essais, donc personne
+ne lance rien, donc une faute reste cachée. C'est ce qui est arrivé à
+`tests/test_b0.py`,
 qui contrôle les tailles écrites dans tous les écrans : une largeur posée dans un
 composant l'a fait échouer, et l'échec a dormi trois séances.
 
@@ -12,6 +14,8 @@ composant l'a fait échouer, et l'échec a dormi trois séances.
 
     py essais/lancer_les_essais.py              le niveau rapide — à chaque tranche
     py essais/lancer_les_essais.py --complet    tout, lent compris — avant de fusionner
+    py essais/lancer_les_essais.py --proches    le cran le plus court — ce qu'on vient d'écrire
+    py essais/lancer_les_essais.py --liste      ne rien lancer, dire ce qui serait lancé
     py essais/lancer_les_essais.py --mesure     fichier par fichier, et le tableau des lenteurs
 
 **Ce que le niveau rapide lance**, et pourquoi c'est cet assemblage-là :
@@ -56,11 +60,21 @@ from pathlib import Path
 RACINE = Path(__file__).resolve().parents[1]
 TESTS = RACINE / "tests"
 
-# **Combien de processus.** Mesuré le 20 septembre 2026 sur une machine à seize
-# cœurs : au-delà, des essais qui passent seuls échouent sous la charge — les
-# deux qui lancent le moteur Godot dépassent leur délai de trente secondes, et
-# ceux qui ouvrent un serveur d'essai attendent leur tour. Quatre laisse de la
-# marge à chaque processus et tient la moitié du temps d'un passage séquentiel.
+# **Combien de processus — quatre, et c'est mesuré, pas deviné.** Le
+# 20 septembre 2026, sur une machine à seize cœurs, la suite entière moins les
+# lents a été lancée trois fois :
+#
+#     4 processus   7 min 36   1 échec (connu : Guide.tsx, GU7)
+#     8 processus   8 min 45   le même échec, et rien de plus
+#    12 processus   9 min 16   le même, **plus deux faux échecs**
+#
+# Deux choses, et les deux vont contre l'intuition. **Monter ne fait pas gagner
+# de temps** : au-delà de quatre, les essais se disputent la machine — ils
+# travaillent presque tous des images, et Pillow comme numpy occupent déjà
+# plusieurs cœurs chacun. Et **monter rend le résultat faux** : à douze,
+# `test_t1_jalon3_4` mesure une attente de 0,19 s là où il en attend 0,12, et
+# `test_au6` échoue aussi ; les deux passent seuls. Un essai qui échoue à cause
+# du voisin ne dit plus rien de vrai sur le produit.
 PROCESSUS = 4
 
 # **Le délai par fichier**, en secondes, pour `--mesure`. Le plus long fichier
@@ -149,11 +163,19 @@ def jetons_du_fichier(chemin: str) -> list[str]:
     chemin, par son module pointé, ou par son seul nom. On cherche les trois ;
     trop large vaut mieux que trop étroit, puisque le prix d'un essai lancé pour
     rien est quelques secondes et celui d'un essai oublié est une faute cachée.
+
+    **Le nom sans son extension n'est gardé que pour un module Python**, et c'est
+    une correction payée le 20 septembre 2026 : un fichier nommé `docs/essais.md`
+    donnait le jeton « essais », présent dans presque tous les fichiers du
+    dépôt, et la règle proposait alors la suite entière. Un module Python, lui,
+    se cite vraiment par son seul nom — `from atelier.image import decoupe` —,
+    donc il garde ce jeton-là.
     """
     p = Path(chemin)
-    jetons = [chemin, chemin.replace("/", "\\"), p.name, p.stem]
+    jetons = [chemin, chemin.replace("/", "\\"), p.name]
     if p.suffix == ".py":
         jetons.append(".".join(p.with_suffix("").parts))
+        jetons.append(p.stem)
     return [j for j in jetons if len(j) > 2]
 
 
@@ -283,11 +305,39 @@ def base(procs: int) -> list[str]:
     ]
 
 
-def rapide(procs: int, depuis: str) -> int:
-    """Le niveau rapide — à lancer à chaque tranche de travail."""
+def proches_seulement(procs: int, depuis: str) -> int:
+    """Le cran le plus court — les garde-fous, et ce qu'on vient de toucher.
+
+    **Il existe à cause d'une mesure.** Le 20 septembre 2026, on a constaté que
+    presque rien de ce dépôt n'est assez lourd pour mériter le marqueur `lent` :
+    la suite est lente par accumulation, pas par quelques essais. Du coup
+    `-m "not lent"` est presque toute la suite, et le niveau rapide coûte presque
+    le prix du complet.
+
+    Ce cran-ci est le vrai geste de la boucle de travail : on relit ce qu'on
+    vient d'écrire, plus les garde-fous qui surveillent le reste. ⚠️ **Il ne
+    remplace pas le rapide** — il voit beaucoup moins, et il faut lancer le
+    rapide avant de quitter une tranche.
+    """
     modifies = fichiers_modifies(depuis)
     proches, orphelins = essais_proches(modifies)
+    annoncer(modifies, proches, orphelins, depuis)
 
+    code = lancer(base(procs) + ["-m", "gardefou"], "Les garde-fous")
+    cibles = [f"tests/{p.name}" for p in proches]
+    if cibles:
+        code |= lancer(base(procs) + cibles, "Ce qu'on vient de toucher")
+    else:
+        print("\nAucun essai ne nomme les fichiers modifiés — rien de plus à lancer.")
+    return code | bancs_gardefous()
+
+
+def annoncer(modifies: list[str], proches: list[Path], orphelins: list[str],
+             depuis: str) -> None:
+    """Ce qu'on a touché, ce que ça propose, et ce que la règle ne devine pas.
+
+    La troisième liste est la plus utile : elle nomme les trous.
+    """
     print(f"\n{len(modifies)} fichier(s) modifié(s) depuis {depuis}.")
     if proches:
         print(f"{len(proches)} essai(s) les nomment :")
@@ -298,12 +348,19 @@ def rapide(procs: int, depuis: str) -> int:
     if orphelins:
         print(
             f"\n{len(orphelins)} fichier(s) qu'aucun essai ne nomme — la règle ne les\n"
-            "devine pas, c'est pour eux que le passage complet ci-dessous existe :"
+            "devine pas, et c'est pour eux que le passage large existe :"
         )
         for o in orphelins[:12]:
             print(f"    {o}")
         if len(orphelins) > 12:
             print(f"    … et {len(orphelins) - 12} de plus")
+
+
+def rapide(procs: int, depuis: str) -> int:
+    """Le niveau rapide — à lancer à chaque tranche de travail."""
+    modifies = fichiers_modifies(depuis)
+    proches, orphelins = essais_proches(modifies)
+    annoncer(modifies, proches, orphelins, depuis)
 
     # Le gros du contrôle : tout ce qui n'est pas marqué lent.
     code = lancer(
@@ -460,7 +517,9 @@ def main() -> int:
     analyseur.add_argument("--mesure", action="store_true",
                            help="fichier par fichier, et le tableau des lenteurs")
     analyseur.add_argument("--proches", action="store_true",
-                           help="dire seulement quels essais touchent ce qu'on a modifié")
+                           help="le cran le plus court : garde-fous + ce qu'on a touché, rien d'autre")
+    analyseur.add_argument("--liste", action="store_true",
+                           help="ne rien lancer : dire seulement quels essais sont proches")
     analyseur.add_argument("-n", type=int, default=PROCESSUS, dest="procs",
                            help=f"combien de processus à la fois (défaut {PROCESSUS})")
     analyseur.add_argument("--delai", type=int, default=DELAI,
@@ -474,7 +533,7 @@ def main() -> int:
     for manque in avertir_du_terrain():
         print(f"\n⚠️  {manque}\n")
 
-    if options.proches:
+    if options.liste:
         modifies = fichiers_modifies(options.depuis)
         proches, orphelins = essais_proches(modifies)
         print(f"\n{len(modifies)} fichier(s) modifié(s) depuis {options.depuis}.")
@@ -485,6 +544,9 @@ def main() -> int:
             for o in orphelins:
                 print(f"    {o}")
         return 0
+
+    if options.proches:
+        return proches_seulement(options.procs, options.depuis)
 
     if options.mesure:
         return mesurer(options.procs, options.delai, options.fichiers)

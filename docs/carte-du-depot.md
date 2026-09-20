@@ -156,6 +156,12 @@ React + Vite + Tailwind. `src/index.css` porte **toutes les couleurs et tous les
 Un fichier par tranche, nommé d'après elle. **Aucun test ne coûte un centime** : le
 fournisseur est doublé côté serveur, `fetch` et `EventSource` côté écran.
 
+**Deux niveaux de contrôle depuis le 20 septembre 2026 → `docs/essais.md`.** Les trois mille
+sept cents essais de serveur ne se lancent plus d'un bloc : `py essais/lancer_les_essais.py`
+pour le rapide, `--complet` avant de fusionner. Deux marqueurs les trient — `lent`, mesuré et
+non supposé, et `gardefou`, pour ceux qui balaient un dossier entier et que nulle règle de
+proximité ne peut deviner.
+
 | | |
 |---|---|
 | `interface/src/App.test.tsx` | les essais d'écran — le seul endroit du dépôt où l'interface est **montée et pilotée**. `fetch` et `EventSource` y sont doublés, comme `tests/conftest.py` double le fournisseur. Ils existent parce qu'un défaut a traversé T1 et T2 sans que rien ne le voie : ce que le serveur tient, l'écran ne le tient pas. Cinq des seize critères de T3 n'existent que là |
@@ -215,6 +221,7 @@ Ce qui se mesure au lieu de se supposer. Les payants ne partent qu'à la main, e
 
 | | |
 |---|---|
+| `essais/lancer_les_essais.py` | **l'outil qui lance la suite serveur** — le rapide, le complet, et une mesure fichier par fichier. Gratuit. Il ne tient **aucune liste de fichiers** : il lit `tests/`, il demande à pytest qui porte quel marqueur, et il déduit les essais proches de `git diff --name-only`. Un chantier qui arrive avec ses essais entre donc dans le contrôle sans qu'on y touche. ⚠️ Il détecte l'absence d'`interface/dist` — le piège du worktree, qui fait répondre 404 au lieu de 405 — et donne le geste plutôt que de laisser un échec trompeur. La règle des proches se fait **par les noms**, et `docs/essais.md` dit ce qu'elle ne devine pas |
 | `essais/catalogue.json`, `prix.json` | relevé OpenRouter du 26 août 2026 |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
 | `essais/essai_fournisseurs.py` | F0 — **un relevé, pas un banc** : ce que savent faire les trois fournisseurs qui donnent des images gratuites, avant de décider lequel entre. Un vrai banc de qualité épuiserait leurs crédits du jour avant d'avoir rien conclu, et sur la mauvaise question : ce qu'on cherche n'est pas *lequel est le meilleur* mais ce que chacun sait faire et ce qu'il fait payer dans sa monnaie. **La deuxième des cinq questions décide de tout** — par quel chemin chacun accepte une image de référence : un modèle qui n'en prend que par adresse web publique est inutilisable pour un univers qui vit sur le disque de l'auteur, et publier ses artworks pour le contourner est exclu. **Sa propre consommation est un critère du relevé** : au plus une image par modèle retenu, et seulement pour vérifier qu'un modèle *fait* ce qu'il *déclare* — l'écart entre les deux est le résultat le plus utile qu'il puisse rendre, et il n'est écrit dans aucune documentation. Ce qui manque faute d'identifiants s'écrit au lieu de se deviner. Sortie : `essais/fournisseurs.json`, et la fiche par fournisseur dans `docs/archive/releve-fournisseurs.md` |
@@ -372,6 +379,7 @@ tranche seul. Ce qui suit ne dit que ce que chacun contient.
 | `docs/PLAN.md` | l'ordre de construction — **ce qui reste à faire seulement** : le tableau d'état, les invariants du produit, la couverture des user stories, l'ordre, et la V3.5 non ouverte. Le plan de la version en cours est à côté, `docs/PLAN-carnet.md`. Trois descentes en archive, sans qu'un mot change : les cinq premières versions tenues le 2 septembre 2026, puis `R6`→V3.02 et les blocs périmés par la V4 le 6 septembre |
 | `docs/README.md` | **l'index des annexes** — une trentaine de fichiers, chacun avec ce qu'il prolonge et le moment où on l'ouvre. Descendu d'`AGENTS.md` le 6 septembre 2026 |
 | `docs/bancs.md` | **les vingt-neuf bancs** — ce que chacun mesure, ce qu'il coûte, ce qu'il a trouvé. Descendu d'`AGENTS.md` § Lancer le 6 septembre 2026, où le catalogue pesait 13 Ko d'un document qui s'ouvre à chaque séance. ⚠️ Les payants ne partent qu'à la main |
+| `docs/essais.md` | **les deux niveaux de contrôle** — quand lancer le rapide, quand lancer le complet, ce que veulent dire les marqueurs `lent` et `gardefou`, et **ce que le rapide ne voit pas**. Écrit le 20 septembre 2026, après la mesure qui a donné vingt-sept essais en quatre minutes pour la suite d'un seul bloc. Il porte aussi les échecs connus du jour, pour qu'on ne les cherche pas |
 | `docs/PLAN-carnet.md`, `docs/tranches/V4.md` | **le plan de la V4 et ses tranches** — le seul plan à ouvrir tant que le carnet se construit. Une tranche tenue voit son plan descendre dans `tranches/V4.md`, à côté de son rapport de tenue : on n'ouvre qu'un fichier pour la reprendre |
 | `essais/verdict-essais.json` | **ce que les six essais ont tranché**, et la source du renversement de la V3 : le texte du produit ne bouge pas, la référence reste en 64 px, la prep n'entre pas, la pose imposée non plus, la grille 4×2 bat le 3×3, et la vidéo devient le chemin de l'animation |
 | `docs/bilan-v3.md` | **le seul document à lire avant d'ouvrir la V2.3 ou la V3** — ce que les trois bancs payés et le relevé d'outillage ont établi, chiffre par chiffre : la loterie à une bonne planche sur dix, les chemins morts qui ne doivent pas se reproposer, les trois défauts que le code porte aujourd'hui, et ce qui est repris d'ailleurs. Il remplace la lecture de sept fichiers et 210 Ko |
