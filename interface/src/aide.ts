@@ -313,55 +313,35 @@ export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {
 }
 
 export const AIDE: Record<string, Explication> = {
-  "son.fabrication": {
-    nom: "durée et méthode sonore", ou: "galerie",
-    quoi: "La durée choisie est celle du son demandé. Le temps de calcul de la méthode locale se lit séparément, d’après les calculs déjà mesurés sur cette machine.",
-    change: "La relecture conserve le texte exact, la version du workflow et ses paramètres. Un son reçu se retrouve dans l’atelier son, même s’il est silencieux ou illisible et demande une vérification.",
-    origine: "toi · workflow sonore importé et paramètres déclarés",
-  },
-  "son.coupe": {
-    nom: "coupe du son", ou: "galerie",
-    quoi: "Le début et la fin conservés dans la source sonore, en secondes.",
-    change: "Conserver une version produit un nouveau WAV sans modifier la source. Le lecteur peut revenir à la source ou à une ancienne version ; une sélection silencieuse reste à vérifier.",
-    origine: "toi · source entière au départ",
-  },
-  "son.niveau": {
-    nom: "niveau et fondus du son", ou: "galerie",
-    quoi: "Les fondus adoucissent les extrémités et la normalisation fixe la crête de tous les canaux ensemble.",
-    change: "Les fondus se règlent en millisecondes, le niveau en décibels. La stéréo reste stéréo. Le gain vient après la normalisation ; une saturation empêche la livraison tant qu’elle n’est pas corrigée.",
-    origine: "toi · fondus de 5 ms, gain nul",
-  },
-  "son.boucle": {
-    nom: "boucle du son", ou: "galerie",
-    quoi: "Le passage à rejouer dans le son après la coupe et les fondus.",
-    change: "Les repères sont conservés dans la ressource AudioStreamWAV pour Godot. Écoutez le raccord puis conservez la version avant de livrer ; les versions précédentes restent disponibles.",
-    origine: "toi · lecture unique au départ",
-  },
-  "bibliotheque.collections": {
-    nom: "collections de sujets", ou: "sortie",
-    quoi: "Des groupes nommés pour retrouver les personnages, objets, décors et interfaces du jeu.",
-    change: "Choisissez une famille puis une collection dans les assets. La sélection se range dans une collection ou se glisse sur son nom ; retirer un sujet d’un groupe conserve ses images. La recherche et le tri interrogent toute la famille avant de charger les résultats.",
-    origine: "toi · rangement conservé dans la bibliothèque",
-  },
-  "atelier.navigation": {
-    nom: "navigation repliée", ou: "sortie",
-    quoi: "Une colonne compacte pour passer du jeu à sa toile, ses assets, sa galerie, ses fabrications et sa livraison.",
-    change: "Le bouton en haut replie la colonne sans retirer les destinations. Les familles et collections se rangent dans les assets ; les outils conservent leur place dans leurs ateliers.",
-    origine: "toi · navigation dépliée au départ",
-  },
-  "tuiles.terrains": {
-    nom: "terrains et raccords des tuiles", ou: "sortie",
-    quoi: "Le terrain au centre et sur les huit bords ou coins d’une tuile carrée.",
-    change: "Les cases voisines de la carte doivent annoncer le même terrain sur leur raccord commun. Ces relations sont exportées dans le TileSet de Godot. Elles ne jugent pas la qualité visuelle des pixels : regardez aussi les répétitions et la transparence sur la carte.",
-    origine: "toi · aucun terrain implicite",
-  },
+  // ── Livrer au jeu — les deux onglets de `Livraisons.tsx` ────────────────
+  //
+  // **Trois des cinq fiches nées ici ne parlaient pas de cet écran**
+  // (`GU12`) : `bibliotheque.collections` décrit la colonne des familles et
+  // des collections du codex, `atelier.navigation` la colonne de gauche de
+  // l'atelier, `tuiles.terrains` les raccords d'une tuile — celle-là est
+  // bien accrochée, mais dans `Tuiles.tsx`. Parties vers `codex` et
+  // `galerie`, textes inchangés. Les deux qui restent décrivent l'onglet
+  // *Livrer dans Godot*, et `livraison.image-fixe` y est accrochée
+  // (`ImagesALivrer.tsx`).
+
   "livraison.image-fixe": {
     nom: "L’image fixe dans Godot",
+    groupe: "Livrer dans Godot — 2 · Les versions à livrer",
     quoi: "Choisissez une version existante pour un objet, un décor, un portrait ou une interface. La scène garde son adresse quand une nouvelle version remplace la même pose et direction.",
     change: "Le mode monde crée un Sprite2D ; le mode interface un TextureRect. Le repère utilise les pixels du rendu exporté. La préparation fige les pixels, la recette et la provenance avant publication.",
     origine: "toi · version relue ; atelier · fichiers et révisions conservés",
     ou: "sortie",
   },
+
+  "livraison-godot": {
+    nom: "Les versions livrées dans Godot",
+    groupe: "Livrer dans Godot — l'historique des livraisons",
+    quoi: "Une livraison conserve les animations choisies et les fichiers relus avant l’écriture.",
+    change: "Un nouveau favori ne remplace pas le jeu ; une nouvelle livraison remplace seulement les animations choisies, et signale un fichier modifié à la main.",
+    origine: "Ta sélection et le dossier Godot explicitement associé au jeu.",
+    ou: "sortie",
+  },
+
   "fabrication.video-libre": {
     nom: "Une vidéo avant de choisir son asset",
     quoi: "Une image de départ est toujours envoyée au modèle vidéo. Vous pouvez l’importer, la choisir dans la bibliothèque ou la fabriquer avec un modèle d’image.",
@@ -449,20 +429,6 @@ export const AIDE: Record<string, Explication> = {
     change: "L’angle, la portion et les corrections sont conservés avec le travail. Le zoom de consultation ne change pas le cadre exporté : toutes les frames gardent la même taille et un cadre commun, mesuré sur le mouvement entier.",
     origine: "toi · paramètres acceptés et relus par le moteur externe",
     ou: "clip",
-  },
-  "livraison-godot": {
-    nom: "Les versions livrées dans Godot",
-    quoi: "Une livraison conserve les animations choisies et les fichiers relus avant l’écriture.",
-    change: "Un nouveau favori ne remplace pas le jeu ; une nouvelle livraison remplace seulement les animations choisies, et signale un fichier modifié à la main.",
-    origine: "Ta sélection et le dossier Godot explicitement associé au jeu.",
-    ou: "sortie",
-  },
-  "assets-recherche": {
-    nom: "Rechercher dans les assets",
-    quoi: "La recherche porte sur les noms et descriptions de toutes les familles du jeu.",
-    change: "Le filtre est envoyé au serveur : les sujets non encore affichés sont recherchés eux aussi. La colonne de gauche retrouve les collections et leur rangement.",
-    origine: "toi · bibliothèque du jeu",
-    ou: "codex",
   },
   "fabrications-etat": {
     nom: "État des fabrications",
@@ -1082,23 +1048,63 @@ export const AIDE: Record<string, Explication> = {
   //
   // **Un onglet entier sur trois, et le guide n'en disait pas un mot** — ni
   // visite, ni réglage. Écrit en E20.
+  //
+  // **Rangé sur l'écran réel en `GU12`** : `EcranFamille` (`Famille.tsx`),
+  // que la porte *Les sujets* et la grille d'une famille montrent toutes
+  // deux. Il reçoit `bibliotheque.collections` — sa colonne de gauche — et
+  // `tuiles.terrains`, qui venaient l'une et l'autre de `ou: "sortie"` : les
+  // écrans des tuiles héritent du codex faute d'un `ou` à eux, et c'est
+  // `GU13` qui leur en donnera un.
+  //
+  // ⚠️ **`codex.vitrine` décrit un écran supprimé** — `Vitrine.tsx` est
+  // parti du dépôt le 16 septembre 2026. Ce qu'il en reste est ailleurs :
+  // l'aperçu à la barre d'espace, partout, et `Comparer.tsx`, qui attend
+  // son écran de guide en `GU15`. Laissée sans `groupe` : c'est `GU12`
+  // (2/2) qui la retire.
+
+  "bibliotheque.collections": {
+    nom: "collections de sujets", ou: "codex",
+    groupe: "La colonne des familles et des collections",
+    quoi: "Des groupes nommés pour retrouver les personnages, objets, décors et interfaces du jeu.",
+    change: "Choisissez une famille puis une collection dans les assets. La sélection se range dans une collection ou se glisse sur son nom ; retirer un sujet d’un groupe conserve ses images. La recherche et le tri interrogent toute la famille avant de charger les résultats.",
+    origine: "toi · rangement conservé dans la bibliothèque",
+  },
+
+  "codex.nommer": {
+    nom: "Écrire un nom",
+    ou: "codex",
+    groupe: "En haut de l'écran — nommer un sujet",
+    quoi: "La dernière rangée de la liste. On y tape le nom d'une chose, et la chose entre dans le codex sur-le-champ, dans la famille allumée à gauche.",
+    change:
+      "Rien à la génération : on nomme, on ne paie pas. Mais c'est ce qui permet de fabriquer une image qui n'appartient encore à rien, sans ouvrir un troisième endroit où l'argent part.",
+    origine: "toi · vide, et seul au milieu de l'écran quand le monde l'est aussi",
+  },
+
+  "assets-recherche": {
+    nom: "Rechercher dans les assets",
+    groupe: "La barre d'outils — chercher, la vue, le filtre, le tri",
+    quoi: "La recherche porte sur les noms et descriptions de toutes les familles du jeu.",
+    change: "Le filtre est envoyé au serveur : les sujets non encore affichés sont recherchés eux aussi. La colonne de gauche retrouve les collections et leur rangement.",
+    origine: "toi · bibliothèque du jeu",
+    ou: "codex",
+  },
 
   "codex.index": {
     nom: "Le codex",
     ou: "codex",
+    groupe: "La grille des sujets — ce que chacun a, ce qui lui manque",
     quoi: "L'index de ce que ton monde contient, rangé par famille : personnages, décors, objets, interface, équipement. Chaque chose y porte ce qui lui manque encore.",
     change:
       "Rien à la génération. C'est de là qu'on ouvre l'établi d'une chose, et c'est le second des deux seuls endroits d'où l'argent part.",
     origine: "toi, au fur et à mesure · les cinq familles existent avant toute chose",
   },
 
-  "codex.nommer": {
-    nom: "Écrire un nom",
-    ou: "codex",
-    quoi: "La dernière rangée de la liste. On y tape le nom d'une chose, et la chose entre dans le codex sur-le-champ, dans la famille allumée à gauche.",
-    change:
-      "Rien à la génération : on nomme, on ne paie pas. Mais c'est ce qui permet de fabriquer une image qui n'appartient encore à rien, sans ouvrir un troisième endroit où l'argent part.",
-    origine: "toi · vide, et seul au milieu de l'écran quand le monde l'est aussi",
+  "tuiles.terrains": {
+    nom: "terrains et raccords des tuiles", ou: "codex",
+    groupe: "L'atelier des tuiles — ouvert depuis Les tuiles",
+    quoi: "Le terrain au centre et sur les huit bords ou coins d’une tuile carrée.",
+    change: "Les cases voisines de la carte doivent annoncer le même terrain sur leur raccord commun. Ces relations sont exportées dans le TileSet de Godot. Elles ne jugent pas la qualité visuelle des pixels : regardez aussi les répétitions et la transparence sur la carte.",
+    origine: "toi · aucun terrain implicite",
   },
 
   "codex.vitrine": {
@@ -1320,35 +1326,6 @@ export const AIDE: Record<string, Explication> = {
       "Sans sujet choisi, seules les planches marquées « tous » partent en référence — c'est écrit sous le contrôle, en clair, plutôt que laissé à deviner. Le barème se pose dans l'univers, côté Réglages du jeu, une fois pour le projet : c'est lui qui dit qu'un personnage remplit 90 % de sa case et une fiole 40 %, et c'est ce qui met un tonneau et un personnage à la même échelle de pixel.",
   },
 
-  // **`atelier.import` et `atelier.import.traitement` déplacées sous
-  // `ou: "galerie"` en GU6** : elles sont accrochées (`useInfobulle`) dans
-  // `Importer` (`Import.tsx`), monté par `BarreOutils.tsx`, lui-même monté
-  // par `Galerie.tsx` seul — le bouton d'import général de la grille, pas
-  // la fenêtre d'import d'un sujet (`ImporterPourUnSujet.tsx`, qui n'a
-  // aujourd'hui aucune fiche accrochée). Textes inchangés, exacts pour leur
-  // vrai écran ; groupés le jour où la galerie sera reprise.
-  "atelier.import": {
-    nom: "Importer",
-    ou: "galerie",
-    quoi: "Faire entrer une image de ton disque dans la bibliothèque — par le bouton, ou en la déposant sur la grille.",
-    change:
-      "Elle devient un asset entier : elle se retouche, se découpe, se réinjecte, s'exporte et se supprime comme celles que tu as payées. Sa fiche dit « importé » et un coût nul, et son nom est celui du fichier.",
-    origine: "ton disque · le même geste que l'agent a depuis le serveur MCP",
-    long:
-      "Un appel par fichier, et chacun répond pour lui-même : douze fichiers déposés ensemble font entrer les onze images et nomment le douzième s'il n'en est pas une. Les onze premières paraissent sans attendre que la douzième soit lue.\n\nSi les mêmes octets sont déjà dans ce projet, rien n'entre : le doublon est signalé avec un lien vers l'image existante, et « Importer quand même » reste offert. C'est exactement la règle du tableau d'inspiration, et la portée est la même — ce projet-ci, pas toute la bibliothèque : la même référence a de bonnes raisons de servir dans deux jeux.\n\nRien de tout cela ne demande le réseau, et rien ne coûte un centime.",
-  },
-
-  "atelier.import.traitement": {
-    nom: "brute ou traitée",
-    ou: "galerie",
-    quoi: "Ce que le projet appliquera à l'image qui entre : rien du tout, ou sa recette — détourage, taille de pixel, palette.",
-    change:
-      "Sur « brute », l'image entre aux dimensions du fichier et sa recette reste vide — c'est le même mot que la visionneuse de la fiche, et il veut dire la même chose. Sur « traitée », elle arrive habillée comme une image générée ici.",
-    origine: "toi · défaut « brute »",
-    long:
-      "Le défaut a changé, et c'est une correction : l'import héritait de la recette du projet en silence, donc une référence de 2048 pixels revenait à 64 sans que personne l'ait demandé.\n\nLe choix vaut pour la séance et pour les deux gestes — le bouton et le dépôt —, plutôt que d'ouvrir une question à chaque fichier : douze fichiers déposés ensemble poseraient douze fois la même.\n\nUne image entrée telle quelle le reste : « Tout réaligner » ne la touche pas, parce qu'une recette vide est une décision, pas un oubli. C'est la même règle qui protège un asset ramené au brut.",
-  },
-
   "atelier.apercu": {
     nom: "Ce qui partira",
     ou: "sujet",
@@ -1489,15 +1466,6 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · ajusté à l'ouverture",
     long:
       "Ailleurs dans le produit — la galerie, la vitrine — l'agrandissement ne prend que des multiples entiers : un sprite montré à une échelle qui n'est pas entière fabrique des pixels qui n'existent pas. Cette règle sert à montrer une image ; ici on la travaille, et il faut pouvoir approcher et reculer librement.",
-  },
-
-  "tables.png": {
-    nom: "PNG ↓",
-    ou: "case",
-    quoi: "Télécharge l'image telle qu'elle est sous les yeux — le rendu, ou le brut quand on regarde le brut.",
-    change:
-      "Rien : c'est une copie. L'image reste dans la bibliothèque, sa recette aussi, et le fichier reçu est celui qu'on voyait.",
-    origine: "l'état courant de la table",
   },
 
   "bande.source": {
@@ -2477,27 +2445,41 @@ export const AIDE: Record<string, Explication> = {
       "Une feuille à plusieurs lignes est le plus souvent un jeu de directions : une ligne par direction. Le personnage et le mouvement visés se pré-remplissent depuis la feuille — vrai neuf fois sur dix — et se corrigent d'un clic avant de cliquer. L'atelier de l'animation s'ouvre juste après pour la régler.",
   },
 
-  // ── Ce que la galerie choisit de sa grille (RP11) ─────────────────────────
+  // ── La galerie — sa colonne, sa barre d'outils, son import ───────────────
   //
+  // **Ce que la galerie choisit de sa grille** (RP11).
   // Quatre réglages, quatre entrées — « une entrée décrit un réglage, pas un
   // écran ». Ils sont ensemble parce qu'ils se règlent côte à côte, et chacun
   // dit surtout **ce qu'il ne fait pas** : c'est là que se logent les
   // malentendus d'une barre de filtres.
+  //
+  // **Tout l'écran est rangé ici depuis `GU12`**, dans l'ordre où on le
+  // rencontre : la colonne de gauche, les filtres, l'import, puis l'atelier
+  // du son. `fiche.recette` en est partie — son `aide=` est posé dans
+  // `Fiche.tsx`, donc sur `ou: "case"`.
+  //
+  // ⚠️ **Les quatre `son.*` ne décrivent pas la galerie**, et aucun `ou`
+  // ne leur va : `AtelierSon.tsx` et `ReglagesSon.tsx` s'ouvrent en
+  // dialogue par-dessus la racine, et le guide montre donc celle-ci.
+  // L'onglet *Sons* de la galerie est l'une de leurs deux portes (l'autre
+  // est le bouton *Les sons* du codex). Groupées à part en attendant
+  // `GU14`, qui donnera un écran au son. Même chose pour
+  // `atelier.navigation`, qui décrit le châssis et non la galerie : elle
+  // se pose sur l'écran d'ouverture du produit, faute d'un `ou` pour ce
+  // qui se voit partout — un point pour `GU16`, comme `bande.cadre`.
 
-  "galerie.tri": {
-    nom: "l'ordre de la grille",
-    ou: "galerie",
-    quoi: "Plus récents, plus anciens, ou par nom. Le choix se retrouve à la prochaine ouverture.",
-    change:
-      "L'ordre de toute la bibliothèque, pas celui de la page. Le tri est fait par le serveur : sans ça, il ne trierait que les deux cents images déjà chargées, et « la plus ancienne » serait la plus ancienne des deux cents.",
-    origine: "toi · défaut plus récents",
-    long:
-      "Par nom, ce qui n'a pas de nom passe après le reste. Beaucoup d'images n'en portent pas — le nom vient du prompt ou du fichier importé —, et les mettre en tête reviendrait à ouvrir la liste par ce qu'elle a de moins lisible.",
+  "atelier.navigation": {
+    nom: "navigation repliée", ou: "galerie",
+    groupe: "La colonne de gauche — la même sur tous les écrans",
+    quoi: "Une colonne compacte pour passer du jeu à sa toile, ses assets, sa galerie, ses fabrications et sa livraison.",
+    change: "Le bouton en haut replie la colonne sans retirer les destinations. Les familles et collections se rangent dans les assets ; les outils conservent leur place dans leurs ateliers.",
+    origine: "toi · navigation dépliée au départ",
   },
 
   "galerie.role": {
     nom: "le rôle",
     ou: "galerie",
+    groupe: "La barre d'outils — filtrer, trier, regrouper",
     quoi: "Ce qu'une image est dans l'atelier : une origine, une dérivée, un calque, un équipement, ou rien de tout ça.",
     change:
       "Ce que la grille montre. Une **origine** est une image dont d'autres sont sorties — une feuille découpée, une image dont on a tiré un miroir ; une **dérivée** est l'inverse. Ce filtre ne dit rien du sujet ni de la pose : ça, c'est la liste des familles juste à côté.",
@@ -2507,28 +2489,89 @@ export const AIDE: Record<string, Explication> = {
   "galerie.jugement": {
     nom: "le jugement",
     ou: "galerie",
+    groupe: "La barre d'outils — filtrer, trier, regrouper",
     quoi: "Les favoris, ou ce qui ne l'est pas encore.",
     change:
       "Ce que la grille montre. Il n'y a que deux états parce que juger, ici, c'est marquer favori ou supprimer — et un supprimé n'est plus dans la bibliothèque. *Non jugés* est la question de cet écran : qu'est-ce que je n'ai pas encore regardé ?",
     origine: "toi, quand tu marques une image",
   },
 
+  "galerie.tri": {
+    nom: "l'ordre de la grille",
+    ou: "galerie",
+    groupe: "La barre d'outils — filtrer, trier, regrouper",
+    quoi: "Plus récents, plus anciens, ou par nom. Le choix se retrouve à la prochaine ouverture.",
+    change:
+      "L'ordre de toute la bibliothèque, pas celui de la page. Le tri est fait par le serveur : sans ça, il ne trierait que les deux cents images déjà chargées, et « la plus ancienne » serait la plus ancienne des deux cents.",
+    origine: "toi · défaut plus récents",
+    long:
+      "Par nom, ce qui n'a pas de nom passe après le reste. Beaucoup d'images n'en portent pas — le nom vient du prompt ou du fichier importé —, et les mettre en tête reviendrait à ouvrir la liste par ce qu'elle a de moins lisible.",
+  },
+
   "galerie.regroupement": {
     nom: "regrouper",
     ou: "galerie",
+    groupe: "La barre d'outils — filtrer, trier, regrouper",
     quoi: "Pose chaque image sous celle d'où elle vient : une feuille et ses cases tiennent une seule place.",
     change:
       "La place que prend la grille, jamais ce qu'elle contient. Un groupe replié compte ce qu'il montre, et un clic le déplie — rien n'est redemandé au serveur, tout est déjà là. Une image dont l'origine ne répond pas au filtre reste seule, à sa place : regrouper ne fait venir personne.",
     origine: "la filiation des images",
   },
 
-  "fiche.recette": {
-    nom: "Sa recette",
+  "atelier.import": {
+    nom: "Importer",
     ou: "galerie",
-    quoi: "Les places du traitement qui sont posées sur cette image, avec ce que chacune vaut.",
+    groupe: "Faire entrer une image — le bouton, ou un dépôt sur la grille",
+    quoi: "Faire entrer une image de ton disque dans la bibliothèque — par le bouton, ou en la déposant sur la grille.",
     change:
-      "Rien : c'est une lecture. La fiche dit ce que l'image est ; les tables disent ce qu'on lui fait, et c'est là qu'on la règle — sur l'image en grand, ce que 380 pixels de colonne ne permettaient pas.",
-    origine: "l'image elle-même",
+      "Elle devient un asset entier : elle se retouche, se découpe, se réinjecte, s'exporte et se supprime comme celles que tu as payées. Sa fiche dit « importé » et un coût nul, et son nom est celui du fichier.",
+    origine: "ton disque · le même geste que l'agent a depuis le serveur MCP",
+    long:
+      "Un appel par fichier, et chacun répond pour lui-même : douze fichiers déposés ensemble font entrer les onze images et nomment le douzième s'il n'en est pas une. Les onze premières paraissent sans attendre que la douzième soit lue.\n\nSi les mêmes octets sont déjà dans ce projet, rien n'entre : le doublon est signalé avec un lien vers l'image existante, et « Importer quand même » reste offert. C'est exactement la règle du tableau d'inspiration, et la portée est la même — ce projet-ci, pas toute la bibliothèque : la même référence a de bonnes raisons de servir dans deux jeux.\n\nRien de tout cela ne demande le réseau, et rien ne coûte un centime.",
+  },
+
+  "atelier.import.traitement": {
+    nom: "brute ou traitée",
+    ou: "galerie",
+    groupe: "Faire entrer une image — le bouton, ou un dépôt sur la grille",
+    quoi: "Ce que le projet appliquera à l'image qui entre : rien du tout, ou sa recette — détourage, taille de pixel, palette.",
+    change:
+      "Sur « brute », l'image entre aux dimensions du fichier et sa recette reste vide — c'est le même mot que la visionneuse de la fiche, et il veut dire la même chose. Sur « traitée », elle arrive habillée comme une image générée ici.",
+    origine: "toi · défaut « brute »",
+    long:
+      "Le défaut a changé, et c'est une correction : l'import héritait de la recette du projet en silence, donc une référence de 2048 pixels revenait à 64 sans que personne l'ait demandé.\n\nLe choix vaut pour la séance et pour les deux gestes — le bouton et le dépôt —, plutôt que d'ouvrir une question à chaque fichier : douze fichiers déposés ensemble poseraient douze fois la même.\n\nUne image entrée telle quelle le reste : « Tout réaligner » ne la touche pas, parce qu'une recette vide est une décision, pas un oubli. C'est la même règle qui protège un asset ramené au brut.",
+  },
+
+  "son.fabrication": {
+    nom: "durée et méthode sonore", ou: "galerie",
+    groupe: "L'atelier du son — ouvert depuis l'onglet Sons",
+    quoi: "La durée choisie est celle du son demandé. Le temps de calcul de la méthode locale se lit séparément, d’après les calculs déjà mesurés sur cette machine.",
+    change: "La relecture conserve le texte exact, la version du workflow et ses paramètres. Un son reçu se retrouve dans l’atelier son, même s’il est silencieux ou illisible et demande une vérification.",
+    origine: "toi · workflow sonore importé et paramètres déclarés",
+  },
+
+  "son.coupe": {
+    nom: "coupe du son", ou: "galerie",
+    groupe: "L'atelier du son — ouvert depuis l'onglet Sons",
+    quoi: "Le début et la fin conservés dans la source sonore, en secondes.",
+    change: "Conserver une version produit un nouveau WAV sans modifier la source. Le lecteur peut revenir à la source ou à une ancienne version ; une sélection silencieuse reste à vérifier.",
+    origine: "toi · source entière au départ",
+  },
+
+  "son.niveau": {
+    nom: "niveau et fondus du son", ou: "galerie",
+    groupe: "L'atelier du son — ouvert depuis l'onglet Sons",
+    quoi: "Les fondus adoucissent les extrémités et la normalisation fixe la crête de tous les canaux ensemble.",
+    change: "Les fondus se règlent en millisecondes, le niveau en décibels. La stéréo reste stéréo. Le gain vient après la normalisation ; une saturation empêche la livraison tant qu’elle n’est pas corrigée.",
+    origine: "toi · fondus de 5 ms, gain nul",
+  },
+
+  "son.boucle": {
+    nom: "boucle du son", ou: "galerie",
+    groupe: "L'atelier du son — ouvert depuis l'onglet Sons",
+    quoi: "Le passage à rejouer dans le son après la coupe et les fondus.",
+    change: "Les repères sont conservés dans la ressource AudioStreamWAV pour Godot. Écoutez le raccord puis conservez la version avant de livrer ; les versions précédentes restent disponibles.",
+    origine: "toi · lecture unique au départ",
   },
 
   // ── Les fournisseurs — l'onglet *Moteurs & workflows*, et l'installation ──
@@ -2568,33 +2611,22 @@ export const AIDE: Record<string, Explication> = {
       "Deux totaux ne comptent pas la même chose : celui de la barre du haut compte le jeu ouvert, celui d'ici compte l'atelier depuis le premier jour. Un appel gratuit qui consomme quand même dit **gratuit** dans la liste — jamais *0,00 $*, qui se lirait *sans limite* là où il faut lire *sans prix* — et ce qu'il a pris n'est jamais ajouté au total en argent.",
   },
 
-  // ── La retouche — ce que la fiche fait d'un asset ─────────────────────────
-
-  "fiche.impose": {
-    nom: "Imposé par le jeu",
-    ou: "case",
-    quoi: "Ce que l'univers de ton jeu a appliqué à cette image-là — la taille de pixel, la part de case qu'elle occupe, la palette.",
-    change:
-      "Rien : c'est une lecture. Chaque ligne dit si la valeur du jeu est encore appliquée ou si tu l'as réglée à la main depuis, et les huit places en dessous sont l'endroit où l'on change.",
-    origine: "l'univers du jeu, tel qu'il est maintenant · l'échelle demandée à la naissance",
-    long:
-      "Sans cette rubrique, tu vois une image qui ne ressemble pas à ce que le modèle a rendu, sans jamais savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, sans rien demander et sans rien dire.\n\nElle est calculée à la lecture, jamais rangée avec l'image : la question posée est « qu'est-ce que le jeu impose *maintenant* », et une valeur enregistrée aurait vieilli au premier réglage d'univers.\n\nElle dit « on ne sait pas » quand la génération de l'image n'est plus sur le disque. Une image importée n'en a jamais eu : le produit préfère l'avouer que de répondre « rien d'imposé », qui est une réponse différente et fausse.",
-  },
-
-  "fiche.recettes": {
-    nom: "Recettes",
-    ou: "case",
-    quoi: "Les recettes que tu as nommées, à reposer sur cette image d'un clic.",
-    change:
-      "Applique les huit places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
-    origine: "toi, en nommant · aucune au départ",
-    long:
-      "Une recette est nommée par son empreinte autant que par toi : deux recettes égales sont interchangeables. L'empreinte est rangée à côté de l'image, avec son rendu ; un rendu dont l'empreinte ne correspond plus est traité exactement comme un fichier absent, et se refait à la première lecture. Reposer une recette déjà appliquée ne recalcule donc rien.\n\nUne recette vide ne s'enregistre pas — elle n'aurait rien à rejouer.\n\nDans l'atelier d'une animation, elle **remplace tous les réglages à la fois** : une recette est un ensemble, et en prendre la moitié rendrait une image que personne n'a jamais jugée. Comme le reste de cet écran, elle n'écrit rien tant que tu n'as pas enregistré.",
-  },
+  // ── La fiche d'une image — les cinq zones du panneau (`GU12`) ───────────
+  //
+  // Dans l'ordre où `Fiche.tsx` les montre : juger, la case du personnage,
+  // ses découpages, ce que l'image est, et le pied. `fiche.recette` arrive
+  // de `ou: "galerie"`, `tables.png` était déjà venue de `ou: "tables"` en
+  // `GU5` — le lien *PNG ↓* n'existe que dans ce panneau-ci.
+  //
+  // **`fiche.recettes` est partie** : la liste des recettes nommées n'est
+  // pas dans la fiche. Elle est dans le panneau de l'atelier d'une
+  // animation (`AtelierDeBande.tsx`), seul endroit du dépôt qui
+  // l'accroche — et dans celui de la retouche, qui n'accroche rien.
 
   "fiche.reinjecter": {
     nom: "Réinjecter",
     ou: "case",
+    groupe: "Juger l'image — favori, réinjecter, supprimer",
     quoi: "Renvoyer cette image dans le générateur, dans l'un de ses quatre rôles.",
     change:
       "Trois rôles envoient l'image — référence (elle inspire), source d'édition (elle engendre), guide de style (elle donne la manière). Le quatrième n'envoie rien : il reprend le prompt, le modèle et les réglages de la génération qui a produit cet asset.",
@@ -2606,6 +2638,7 @@ export const AIDE: Record<string, Explication> = {
   "fiche.personnage": {
     nom: "Corps de",
     ou: "case",
+    groupe: "Corps de — à quelle case du personnage elle sert",
     quoi: "Le personnage et l'attitude dont cette image est le corps.",
     change:
       "Rien à la génération. La case correspondante cesse d'être vide dans l'écran Personnages, et l'image y paraît en vignette — elle ne bouge pas de la bibliothèque pour autant.",
@@ -2618,12 +2651,45 @@ export const AIDE: Record<string, Explication> = {
   "fiche.depliages": {
     nom: "Ses découpages",
     ou: "case",
+    groupe: "Ses découpages — refaire le découpage d'une planche",
     quoi: "Comment cette planche a été coupée en images, et refaire ce découpage quand il est tombé mal.",
     change:
       "Un nouveau découpage fait ses propres images ; les précédents restent. Supprimer un découpage ne touche ni la planche ni les autres.",
     origine: "toi · tu corriges les coupes que l'atelier propose",
     long:
       "Le premier découpage se fait tout seul dès que la planche revient — rien à demander. Le refaire est un geste qu'on demande : l'atelier repropose les mêmes coupes, tu les déplaces, en ajoutes, en retires, puis tu valides, autant de fois que tu veux, sans jamais perdre les images déjà sorties d'un découpage précédent.",
+  },
+
+  "fiche.impose": {
+    nom: "Imposé par le jeu",
+    ou: "case",
+    groupe: "Ce que l'image est — imposé par le jeu, sa recette",
+    quoi: "Ce que l'univers de ton jeu a appliqué à cette image-là — la taille de pixel, la part de case qu'elle occupe, la palette.",
+    change:
+      "Rien : c'est une lecture. Chaque ligne dit si la valeur du jeu est encore appliquée ou si tu l'as réglée à la main depuis, et les huit places en dessous sont l'endroit où l'on change.",
+    origine: "l'univers du jeu, tel qu'il est maintenant · l'échelle demandée à la naissance",
+    long:
+      "Sans cette rubrique, tu vois une image qui ne ressemble pas à ce que le modèle a rendu, sans jamais savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, sans rien demander et sans rien dire.\n\nElle est calculée à la lecture, jamais rangée avec l'image : la question posée est « qu'est-ce que le jeu impose *maintenant* », et une valeur enregistrée aurait vieilli au premier réglage d'univers.\n\nElle dit « on ne sait pas » quand la génération de l'image n'est plus sur le disque. Une image importée n'en a jamais eu : le produit préfère l'avouer que de répondre « rien d'imposé », qui est une réponse différente et fausse.",
+  },
+
+  "fiche.recette": {
+    nom: "Sa recette",
+    ou: "case",
+    groupe: "Ce que l'image est — imposé par le jeu, sa recette",
+    quoi: "Les places du traitement qui sont posées sur cette image, avec ce que chacune vaut.",
+    change:
+      "Rien : c'est une lecture. La fiche dit ce que l'image est ; les tables disent ce qu'on lui fait, et c'est là qu'on la règle — sur l'image en grand, ce que 380 pixels de colonne ne permettaient pas.",
+    origine: "l'image elle-même",
+  },
+
+  "tables.png": {
+    nom: "PNG ↓",
+    ou: "case",
+    groupe: "Au pied de la fiche — les deux portes, et le PNG",
+    quoi: "Télécharge l'image telle qu'elle est sous les yeux — le rendu, ou le brut quand on regarde le brut.",
+    change:
+      "Rien : c'est une copie. L'image reste dans la bibliothèque, sa recette aussi, et le fichier reçu est celui qu'on voyait.",
+    origine: "l'état courant de la table",
   },
 
   // ── Commander un clip (A9) ────────────────────────────────────────────────
@@ -2934,6 +3000,18 @@ export const AIDE: Record<string, Explication> = {
     origine:
       "celle du jeu · celle de la bande · celle d'une image ou de plusieurs",
     long: "On règle une image, plusieurs choisies (clic, maj-clic, ctrl-clic, « toutes »), ou l'animation entière — jamais le jeu, qui reste un point de départ. Un curseur ne déplace que sa valeur ; une recette enregistrée remplace tout l'ensemble, et l'écran dit avant combien d'images vont perdre la leur. La Main, elle, ne se remplace jamais.",
+  },
+
+  "fiche.recettes": {
+    nom: "Recettes",
+    ou: "bande",
+    groupe: "La recette — détourer, réduire, limiter les couleurs",
+    quoi: "Les recettes que tu as nommées, à reposer sur cette image d'un clic.",
+    change:
+      "Applique les huit places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
+    origine: "toi, en nommant · aucune au départ",
+    long:
+      "Une recette est nommée par son empreinte autant que par toi : deux recettes égales sont interchangeables. L'empreinte est rangée à côté de l'image, avec son rendu ; un rendu dont l'empreinte ne correspond plus est traité exactement comme un fichier absent, et se refait à la première lecture. Reposer une recette déjà appliquée ne recalcule donc rien.\n\nUne recette vide ne s'enregistre pas — elle n'aurait rien à rejouer.\n\nDans l'atelier d'une animation, elle **remplace tous les réglages à la fois** : une recette est un ensemble, et en prendre la moitié rendrait une image que personne n'a jamais jugée. Comme le reste de cet écran, elle n'écrit rien tant que tu n'as pas enregistré.",
   },
 
   // **Déplacée sous `ou: "montage"` en GU11** : wirée uniquement dans

@@ -471,6 +471,41 @@ zones. `bande` portait dix-huit fiches (le compte de `GU1` a grossi avec les dé
 parties vers `montage`, une vers `sujet`. `montage` ne portait aucune fiche ; il en porte
 aujourd'hui huit, sur huit zones. Les six critères ci-dessus tiennent sur les trois écrans.
 
+→ `GU12` (1/2) — **quel écran sert quoi, avant d'écrire une ligne.** Les vingt-six fiches
+des quatre écrans (le relevé en comptait vingt-trois ; `GU6` en a ajouté deux et `GU5` une)
+relues contre `Galerie.tsx`/`BarreOutils.tsx`, `Fiche.tsx`, `Famille.tsx` et
+`Livraisons.tsx`. **Six changent d'écran** : `fiche.recette` de `galerie` vers `case` (son
+`aide=` est dans `Fiche.tsx`) ; `fiche.recettes` de `case` vers `bande` (la liste des
+recettes nommées n'est pas dans la fiche — elle est dans `AtelierDeBande.tsx`, seul endroit
+qui l'accroche, et dans le panneau de la retouche, qui n'accroche rien) ;
+`bibliotheque.collections` et `tuiles.terrains` de `sortie` vers `codex` ;
+`atelier.navigation` de `sortie` vers `galerie`. **Une est morte** : `codex.vitrine` décrit
+`Vitrine.tsx`, supprimé du dépôt le 16 septembre 2026 — ce qu'il en reste est l'aperçu à la
+barre d'espace (partout) et `Comparer.tsx` (orphelin de `GU15`). Laissée sans `groupe` ;
+c'est `GU12` (2/2) qui la retire et qui le note au relevé. **Vingt-cinq fiches reçoivent
+leur zone**, sur quatorze zones réelles : quatre pour `galerie` (la colonne de gauche, la
+barre d'outils, faire entrer une image, l'atelier du son), cinq pour `case` (juger, corps
+de, ses découpages, ce que l'image est, le pied), cinq pour `codex` (la colonne des familles
+et des collections, nommer un sujet, la barre d'outils, la grille des sujets, l'atelier des
+tuiles), deux pour `sortie` (les versions à livrer, l'historique). Les fiches sans `groupe`
+tombent de **35 à 10** — les neuf qui restent sont les orphelines de `GU15` (`fabrication.*`,
+`workflow.version`, `source3d.*`), plus `codex.vitrine`.
+
+*Ce qui reste ouvert pour la suite.* **Trois écrans empruntent un `ou` qui n'est pas le
+leur, et aucun n'est de cette tranche** : le son (`son.fabrication`, `son.coupe`,
+`son.niveau`, `son.boucle` décrivent `AtelierSon.tsx`/`ReglagesSon.tsx`, qui s'ouvrent en
+dialogue par-dessus la racine — restées sous `galerie`, groupées à part, pour `GU14`) ; les
+tuiles (`tuiles.terrains`, désormais sous `codex` comme les écrans qu'elle décrit, pour
+`GU13`) ; et le châssis (`atelier.navigation` décrit `NavigationAtelier.tsx`, visible
+partout — posée sur l'écran d'ouverture, faute d'un `ou` pour ce qui se voit partout, comme
+`bande.cadre` : à trancher en `GU16`). **Et `ou: "sortie"` n'est jamais calculé par
+`ecranDuGuide`** (`App.tsx`) : `sortieOuverte` n'y est pas testé, donc presser `?` sur
+*Livrer au jeu* montre le guide de la racine du dessous. C'est la panne de `ou: "jeu"` que
+`GU7` (1/2) a réparée, sur un autre écran ; une ligne suffit, et elle n'a pas été posée ici
+pour ne pas mêler du code à une tranche de décisions. Enfin, `codex.nommer` dit « la
+dernière rangée de la liste » ; nommer un sujet se fait aujourd'hui en haut de l'écran,
+par *Ajouter un…* — c'est `GU12` (2/2) qui corrige le texte.
+
 ---
 
 ## Les écrans qui n'ont rien
