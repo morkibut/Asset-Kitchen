@@ -2624,27 +2624,27 @@ export const AIDE: Record<string, Explication> = {
   // l'accroche — et dans celui de la retouche, qui n'accroche rien.
 
   "fiche.reinjecter": {
-    nom: "Réinjecter",
+    nom: "S'en resservir",
     ou: "case",
-    groupe: "Juger l'image — favori, réinjecter, supprimer",
-    quoi: "Renvoyer cette image dans le générateur, dans l'un de ses quatre rôles.",
+    groupe: "S'en resservir — repartir de cette image",
+    quoi: "Repartir de cette image pour en fabriquer une autre, de quatre façons.",
     change:
-      "Trois rôles envoient l'image — référence (elle inspire), source d'édition (elle engendre), guide de style (elle donne la manière). Le quatrième n'envoie rien : il reprend le prompt, le modèle et les réglages de la génération qui a produit cet asset.",
-    origine: "toi · le contrat de génération nomme les rôles",
+      "Trois façons envoient l'image au modèle : référence (une inspiration de plus), image à retoucher (le modèle part de celle-ci), guide de style (sa couleur et son trait sont repris). La quatrième n'envoie rien : elle recharge le texte, le modèle et les réglages qui ont fabriqué celle-ci, pour retenter.",
+    origine: "toi · rien tant que tu n'as pas cliqué",
     long:
-      "Réinjecter ne coûte rien tant que tu n'as pas cliqué Générer : le rôle se pose dans le panneau de l'atelier, et le bloc « Ce qui part » se met à jour pour le dire. Le compte de références y grimpe d'un cran, et il est plafonné par le modèle choisi.\n\nLe quatrième rôle est le seul qui touche au prompt. Il est là pour la reprise : refaire une image dont on a perdu les réglages est le geste qu'on fait le plus souvent après un tri.",
+      "Rien ne part et rien n'est dépensé tant que tu n'as pas appuyé sur Générer : le rôle se pose dans le panneau de l'atelier, et le bloc « Ce qui part » se met à jour pour le dire. Le nombre de références y monte d'un cran, et chaque modèle a son plafond.\n\nLa quatrième est celle qu'on prend le plus souvent : après un tri, refaire une image dont on a perdu les réglages est le geste courant.",
   },
 
   "fiche.personnage": {
-    nom: "Corps de",
+    nom: "Sujet",
     ou: "case",
-    groupe: "Corps de — à quelle case du personnage elle sert",
-    quoi: "Le personnage et l'attitude dont cette image est le corps.",
+    groupe: "Sujet — à quelle case du personnage elle sert",
+    quoi: "Le sujet du jeu auquel cette image appartient, et la pose qu'elle en montre.",
     change:
-      "Rien à la génération. La case correspondante cesse d'être vide dans l'écran Personnages, et l'image y paraît en vignette — elle ne bouge pas de la bibliothèque pour autant.",
-    origine: "toi · le plan d'attitudes vient du projet",
+      "Rien à la génération. L'image vient remplir la case correspondante sur la page du sujet, en vignette — elle ne quitte pas la bibliothèque pour autant.",
+    origine: "toi · les poses proposées viennent du sujet",
     long:
-      "Un corps naît dans l'atelier et nulle part ailleurs : on écrit un sujet, on génère, on obtient une image, et c'est ici qu'on dit ce qu'elle est. Il n'existe pas d'écran de création de personnage avec son propre prompt, et c'est délibéré — tout ce qui s'empilera ensuite repose sur une image dont on connaît déjà la grille et la palette.\n\nLes attitudes proposées sont celles que ce personnage-là tient, jamais toutes celles du jeu : désigner une case qu'il ne réclame pas n'aurait aucun sens. Retirer la désignation ne touche pas à l'image — elle reste dans la bibliothèque, sa case redevient vide.",
+      "Une image naît dans l'atelier et nulle part ailleurs : on écrit ce qu'on veut, on génère, et c'est ici qu'on dit à quoi ça appartient.\n\nLes poses proposées sont celles que ce sujet-là réclame, jamais toutes celles du jeu. Quand la case est vide et le reste, c'est que sa sorte n'a pas de pose du tout — une matière, une tuile —, et la case l'écrit plutôt que de se griser.\n\nRetirer la désignation ne touche pas à l'image : elle reste dans la bibliothèque, la case redevient vide.",
   },
 
   // P1c (V3.5) : le retour en arrière du dépliage.
@@ -2660,26 +2660,16 @@ export const AIDE: Record<string, Explication> = {
       "Le premier découpage se fait tout seul dès que la planche revient — rien à demander. Le refaire est un geste qu'on demande : l'atelier repropose les mêmes coupes, tu les déplaces, en ajoutes, en retires, puis tu valides, autant de fois que tu veux, sans jamais perdre les images déjà sorties d'un découpage précédent.",
   },
 
-  "fiche.impose": {
-    nom: "Imposé par le jeu",
-    ou: "case",
-    groupe: "Ce que l'image est — imposé par le jeu, sa recette",
-    quoi: "Ce que l'univers de ton jeu a appliqué à cette image-là — la taille de pixel, la part de case qu'elle occupe, la palette.",
-    change:
-      "Rien : c'est une lecture. Chaque ligne dit si la valeur du jeu est encore appliquée ou si tu l'as réglée à la main depuis, et les huit places en dessous sont l'endroit où l'on change.",
-    origine: "l'univers du jeu, tel qu'il est maintenant · l'échelle demandée à la naissance",
-    long:
-      "Sans cette rubrique, tu vois une image qui ne ressemble pas à ce que le modèle a rendu, sans jamais savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, sans rien demander et sans rien dire.\n\nElle est calculée à la lecture, jamais rangée avec l'image : la question posée est « qu'est-ce que le jeu impose *maintenant* », et une valeur enregistrée aurait vieilli au premier réglage d'univers.\n\nElle dit « on ne sait pas » quand la génération de l'image n'est plus sur le disque. Une image importée n'en a jamais eu : le produit préfère l'avouer que de répondre « rien d'imposé », qui est une réponse différente et fausse.",
-  },
-
   "fiche.recette": {
-    nom: "Sa recette",
+    nom: "Ce que le jeu lui a fait",
     ou: "case",
-    groupe: "Ce que l'image est — imposé par le jeu, sa recette",
-    quoi: "Les places du traitement qui sont posées sur cette image, avec ce que chacune vaut.",
+    groupe: "Ce que le jeu lui a fait",
+    quoi: "Chaque étape que cette image a subie depuis qu'elle est revenue du modèle — avec, pour chacune, pourquoi elle s'est appliquée ou non.",
     change:
-      "Rien : c'est une lecture. La fiche dit ce que l'image est ; les tables disent ce qu'on lui fait, et c'est là qu'on la règle — sur l'image en grand, ce que 380 pixels de colonne ne permettaient pas.",
-    origine: "l'image elle-même",
+      "Rien : c'est une lecture. Une ligne marquée « réglé à la main » dit que tu as changé ce que le jeu proposait ; une ligne marquée « posé par toi » dit que le jeu ne proposait rien. On règle dans les tables, sur l'image en grand — et on change les règles du jeu dans Réglages, par le lien du bas.",
+    origine: "les règles de ton jeu, telles qu'elles sont maintenant · l'image elle-même",
+    long:
+      "Sans ce bloc, tu vois une image qui ne ressemble pas à ce que le modèle a rendu, sans savoir pourquoi : la remise sur grille et la réduction des couleurs s'appliquent à la naissance, sans rien demander et sans rien dire.\n\nCe qui décide n'est presque jamais un réglage, c'est la sorte d'image. Une matière remplit son cadre, donc elle n'est pas découpée ; un personnage a un contour, donc il l'est. Si la ligne du haut dit qu'une sorte d'image n'est pas au barème du jeu, c'est la cause à corriger en premier : le jeu traite alors cette image comme un personnage, il la découpe et la recadre — et le lien du bas mène droit à l'endroit où l'ajouter.\n\nLes valeurs du jeu sont recalculées à chaque lecture, jamais rangées avec l'image : la question posée est « qu'est-ce que le jeu impose maintenant », et une valeur enregistrée aurait vieilli au premier réglage changé.\n\nLe bloc dit « on ne sait pas » quand la génération de l'image n'est plus sur le disque, et une image importée n'en a jamais eu : le produit préfère l'avouer que de répondre « rien », qui est une réponse différente et fausse.",
   },
 
   "tables.png": {

@@ -739,16 +739,29 @@ const POSES_DU_MEUBLE: Pose[] = [
 /** Ce que le produit propose à chaque type d'objet, et d'où sa liste lui vient
  *  (E9). Deux qui suivent le plan du jeu, un qui n'a aucune attitude, un qui a
  *  la sienne : de quoi mesurer les trois origines sans en inventer une. */
+// **RG2** (`docs/PLAN-rangement.md`) — `capacites` et `se_decoupe` rendus par
+// `GET /characters/types` depuis cette tranche. Les quatre types ci-dessous
+// reprennent la table de D1 au mot près.
+const CAPACITES_PLEINES = { directions: true, anime: true, sons: true, matiere: false }
 const TYPES: PosesDesTypes["types"] = [
-  { nom: "personnage", origine: "projet", poses: PLAN, connues: PLAN },
-  { nom: "créature", origine: "projet", poses: PLAN, connues: PLAN },
+  { nom: "personnage", origine: "projet", poses: PLAN, connues: PLAN, capacites: CAPACITES_PLEINES, se_decoupe: true },
+  { nom: "créature", origine: "projet", poses: PLAN, connues: PLAN, capacites: CAPACITES_PLEINES, se_decoupe: true },
   {
     nom: "meuble",
     origine: "connue",
     poses: POSES_DU_MEUBLE,
     connues: POSES_DU_MEUBLE,
+    capacites: { directions: false, anime: true, sons: true, matiere: false },
+    se_decoupe: true,
   },
-  { nom: "tuile", origine: "connue", poses: [], connues: [] },
+  {
+    nom: "tuile",
+    origine: "connue",
+    poses: [],
+    connues: [],
+    capacites: { directions: false, anime: true, sons: false, matiere: false },
+    se_decoupe: false,
+  },
 ]
 
 const asset = (
@@ -7730,7 +7743,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     await waitFor(() => expect(tuiles()).toHaveLength(1))
     fireEvent.click(tuiles()[0])
     await screen.findByLabelText("Fermer la fiche")
-    fireEvent.click(screen.getByRole("button", { name: "jeu de réglages" }))
+    fireEvent.click(screen.getByRole("button", { name: "reprendre ses réglages" }))
 
     const libre = (await screen.findByLabelText(
       "Texte complet à envoyer",
@@ -7794,21 +7807,22 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     fireEvent.click(tuiles()[0])
     await screen.findByLabelText("Fermer la fiche")
 
-    // Replié, le bloc porte déjà les trois valeurs du projet — c'est ce qui
-    // permet de lire la fiche entière sans rien ouvrir.
-    const entete = await screen.findByRole("button", { name: /^Imposé par le jeu/ })
-    // **Quatre valeurs depuis D2** : la façon de réduire s'ajoute aux trois
-    // autres, parce qu'elle décide autant du rendu que la taille.
-    expect(entete.textContent).toContain("64 px · 40 % · au plus proche · aucune")
+    // Replié, le bloc porte déjà la taille, les couleurs et le compte des
+    // reprises à la main — c'est ce qui permet de lire la fiche entière sans
+    // rien ouvrir (RG3, le bloc fusionné « Ce que le jeu lui a fait »).
+    const entete = await screen.findByRole("button", { name: /^Ce que le jeu lui a fait/ })
+    expect(entete.textContent).toContain("64 px · toutes les couleurs · 1 à la main")
 
     fireEvent.click(entete)
     const bloc = within(entete.closest("section") as HTMLElement)
     // La cible diffère : réglée à la main. L'occupation, elle, est celle du
-    // projet, et le mot « appliqué » le dit.
+    // projet, et son silence le dit — plus de mot « appliqué » qui répétait
+    // la même chose sur chaque ligne sans rien apprendre.
     const lignes = bloc.getAllByRole("listitem").map((li) => li.textContent)
     expect(lignes[0]).toContain("réglé à la main")
-    expect(lignes[1]).toContain("40 % · objet tenu")
-    expect(lignes[1]).toContain("appliqué")
+    expect(lignes[1]).toContain("40 %")
+    expect(lignes[1]).toContain("un objet tenu")
+    expect(lignes[1]).not.toContain("réglé à la main")
   })
 
   test("la fiche dit qu'elle ne sait pas quand la génération a disparu", async () => {
@@ -7823,10 +7837,10 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     await screen.findByLabelText("Fermer la fiche")
 
     // « Zéro n'est pas une dimension mesurée, c'est l'absence de mesure » : le
-    // produit l'avoue plutôt que de répondre « rien d'imposé », qui serait une
-    // réponse différente et fausse.
+    // produit l'avoue plutôt que de répondre « rien n'est posé », qui serait
+    // une réponse différente et fausse.
     expect(
-      await screen.findByRole("button", { name: /^Imposé par le jeuon ne sait pas/ }),
+      await screen.findByRole("button", { name: /^Ce que le jeu lui a faiton ne sait pas/ }),
     ).toBeTruthy()
   })
 
@@ -8071,10 +8085,10 @@ describe("l'infobulle sort du panneau, sur les trois écrans", () => {
     fireEvent.click(tuiles()[0])
     await screen.findByLabelText("Fermer la fiche")
 
-    // **La poignée que la fiche garde après E4.** Les cinq places sont parties
-    // dans les tables ; ce qui reste est ce que l'image *est*, et sa recette
-    // s'y lit sans s'y régler.
-    const marque = poignee("Sa recette")
+    // **La poignée que la fiche garde après E4, et RG3 l'a renommée.** Les
+    // cinq places sont parties dans les tables ; ce qui reste est ce que
+    // l'image *est*, et le bloc fusionné le lit sans s'y régler.
+    const marque = poignee("Ce que le jeu lui a fait")
     expect(marque).toBeTruthy()
     expect(marque!.closest("[data-panneau]")).toBeTruthy()
   })
@@ -11309,10 +11323,11 @@ describe("la galerie dégraissée", () => {
     await waitFor(() => expect(tuiles()).toHaveLength(1))
     fireEvent.click(tuiles()[0])
 
-    // « Corps de » : le geste qui rattache une image à une chose du jeu. Il
-    // existait déjà en C1 ; ce que E4 ajoute est qu'il est le seul chemin vers
-    // l'établi pour une image qui n'appartient à personne.
-    expect(await screen.findByText("Corps de")).toBeTruthy()
+    // « Sujet » (« Corps de » avant RG3) : le geste qui rattache une image à
+    // une chose du jeu. Il existait déjà en C1 ; ce que E4 ajoute est qu'il
+    // est le seul chemin vers l'établi pour une image qui n'appartient à
+    // personne.
+    expect(await screen.findByText("Sujet")).toBeTruthy()
     expect(screen.getByLabelText("Personnage de cette image")).toBeTruthy()
   })
 
@@ -11350,8 +11365,11 @@ describe("la galerie dégraissée", () => {
     }
     await ouvrirLaFiche(image)
 
-    // Elle se **lit** : la fiche dit ce que l'image est.
-    expect(await screen.findByText("Sa recette")).toBeTruthy()
+    // Elle se **lit** : la fiche dit ce que l'image est. « Sa recette » a
+    // rejoint le bloc fusionné de RG3, « Ce que le jeu lui a fait » — ses
+    // places n'existent plus qu'ouvert, chacune devenue une ligne.
+    const entete = await screen.findByRole("button", { name: /^Ce que le jeu lui a fait/ })
+    fireEvent.click(entete)
     expect(screen.getByText("tache 4 px")).toBeTruthy()
 
     // Et elle dit où elle se règle : le geste n'a pas disparu, il a changé
@@ -23513,7 +23531,7 @@ describe("reprendre les réglages recoche la case (RS4)", () => {
     await waitFor(() => expect(tuiles()).toHaveLength(1))
     fireEvent.click(tuiles()[0])
     await screen.findByLabelText("Fermer la fiche")
-    fireEvent.click(screen.getByRole("button", { name: "jeu de réglages" }))
+    fireEvent.click(screen.getByRole("button", { name: "reprendre ses réglages" }))
 
     await waitFor(() =>
       expect(
@@ -23530,7 +23548,7 @@ describe("reprendre les réglages recoche la case (RS4)", () => {
     await waitFor(() => expect(tuiles()).toHaveLength(1))
     fireEvent.click(tuiles()[0])
     await screen.findByLabelText("Fermer la fiche")
-    fireEvent.click(screen.getByRole("button", { name: "jeu de réglages" }))
+    fireEvent.click(screen.getByRole("button", { name: "reprendre ses réglages" }))
 
     await champDePrompt()
     expect(
