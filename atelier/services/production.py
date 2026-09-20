@@ -59,6 +59,7 @@ from atelier.domaine.envoi import (
 from atelier.domaine.projet import CHAMPS_BIBLE
 from atelier.domaine.plan import (
     Pose,
+    capacites_de,
     plan_depuis_json,
     plan_du_type,
     suit_le_plan_du_jeu,
@@ -306,6 +307,22 @@ class ServiceProduction:
 
         Sans cette phrase, une liste héritée aurait l'air d'une liste choisie,
         et l'auteur ne saurait pas laquelle il peut changer sans conséquence.
+
+        **`se_decoupe` reprend `Echelle.silhouette`**, qui existe déjà et que
+        RG1 a exclu de `Capacites` pour cette raison (« quatre questions, pas
+        six ») : une matière remplit son cadre, un personnage a un contour.
+        Rendu ici pour la même raison que les capacités — l'écran doit pouvoir
+        faire disparaître le bouton *Découper une image* sans recalculer ce
+        que le serveur sait déjà (RG2).
+
+        **`capacites` porte les quatre questions de D1** (`docs/PLAN-rangement.md`,
+        RG1 : `Capacites`, `atelier/domaine/plan.py`) — directions, animation,
+        sons, sert-de-matière. C'est la seule route qui les rend : l'écran ne
+        connaît pas `capacites_de`, qui est du Python, et une seconde table
+        écrite côté interface finirait par dire une autre chose que celle-ci
+        (RG2). Ce n'est pas une origine de plus à côté de `écrite`/`connue`/
+        `projet` — une nature ne choisit pas ses capacités comme elle choisit
+        ses poses, elle les a.
         """
         objet = self._exiger(projet)
         types: list[dict[str, Any]] = []
@@ -316,6 +333,7 @@ class ServiceProduction:
                 origine = "projet"
             else:
                 origine = "connue"
+            capacites = capacites_de(echelle.nom)
             types.append(
                 {
                     "nom": echelle.nom,
@@ -328,6 +346,13 @@ class ServiceProduction:
                     # ce qu'un « revenir à la liste connue » remettrait, et
                     # l'écran ne doit pas avoir à le deviner.
                     "connues": [p.en_json() for p in plan_du_type(echelle.nom)],
+                    "se_decoupe": echelle.silhouette,
+                    "capacites": {
+                        "directions": capacites.directions,
+                        "anime": capacites.anime,
+                        "sons": capacites.sons,
+                        "matiere": capacites.matiere,
+                    },
                 }
             )
         return {"types": types, "plan": [p.en_json() for p in objet.plan]}

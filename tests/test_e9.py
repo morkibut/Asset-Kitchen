@@ -162,6 +162,36 @@ def test_une_liste_vide_est_une_decision_et_non_un_oubli(client):
     assert _poses(chose) == []
 
 
+def test_chaque_type_porte_ses_capacites_de_d1(client):
+    """**RG2** (`docs/PLAN-rangement.md`) : l'écran ne connaît pas
+    `capacites_de`, qui est du Python — c'est cette route qui doit les rendre,
+    sinon rien côté écran ne peut savoir qu'une matière n'a ni direction ni
+    animation. La table est comparée mot à mot à celle de D1.
+    """
+    types = _types(client)
+
+    assert types["personnage"]["capacites"] == {
+        "directions": True, "anime": True, "sons": True, "matiere": False,
+    }
+    assert types["matière"]["capacites"] == {
+        "directions": False, "anime": False, "sons": False, "matiere": True,
+    }
+    assert types["tuile"]["capacites"] == {
+        "directions": False, "anime": True, "sons": False, "matiere": False,
+    }
+
+
+def test_se_decoupe_reprend_echelle_silhouette(client):
+    """**RG2** : le bouton *Découper une image* doit pouvoir disparaître pour
+    une matière, un décor ou une tuile — aucun des trois n'a de contour."""
+    types = _types(client)
+
+    assert types["personnage"]["se_decoupe"] is True
+    assert types["matière"]["se_decoupe"] is False
+    assert types["décor"]["se_decoupe"] is False
+    assert types["tuile"]["se_decoupe"] is False
+
+
 def test_un_type_inconnu_du_jeu_est_refuse_en_le_disant(client):
     """Le refus nomme les types qui existent — il ne dit pas seulement non."""
     refus = client.put("/api/characters/types/dragon/poses", json={"poses": []})

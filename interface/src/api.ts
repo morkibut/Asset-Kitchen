@@ -2263,6 +2263,19 @@ export type PosesDesTypes = {
     /** Ce qu'un « revenir à la liste proposée » remettrait. Envoyé à côté pour
      *  que l'écran n'ait pas à le deviner. */
     connues: Pose[]
+    /** **Ce que cette nature peut avoir, en dehors de ses poses** (D1,
+     *  `docs/PLAN-rangement.md` ; `Capacites`, `atelier/domaine/plan.py`).
+     *  Rendu par le serveur, jamais recalculé ici — deux tables qui disent la
+     *  même chose finiraient par en dire deux différentes (RG2). */
+    capacites: {
+      directions: boolean
+      anime: boolean
+      sons: boolean
+      matiere: boolean
+    }
+    /** Reprend `Echelle.silhouette` — une matière, un décor, une tuile
+     *  remplissent leur cadre et n'ont pas de contour à découper (RG2). */
+    se_decoupe: boolean
   }[]
   /** Le plan du jeu — ce que suivent les types qui n'ont rien écrit. */
   plan: Pose[]

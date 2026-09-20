@@ -1,6 +1,6 @@
 /** La page d'un sujet : sa fiche, ses onglets, la porte de sa matrice. */
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
-import { api, Refus, type Collection, type Echelle, type GroupeDeRangement, type Asset, type Personnage, type Piece, type Pose, type Role, type EmplacementCorps, type Univers, type VestiaireDuJeu, type Generation } from "../api"
+import { api, Refus, type Collection, type Echelle, type GroupeDeRangement, type Asset, type Personnage, type Piece, type Pose, type PosesDesTypes, type Role, type EmplacementCorps, type Univers, type VestiaireDuJeu, type Generation } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
 import { EcranEtabli } from "./EtabliDuSujet"
 import { EcranCalibrage } from "./Calibrage"
@@ -39,6 +39,38 @@ const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text
 const ongletInitial = (s: Personnage): Onglet => s.objectif
   ? s.objectif.sorties.some(o => o.nature === "animation" && o.quantite > 0) ? "animations" : "images"
   : s.cases.some(c => c.bandes?.length) || s.famille === "personnages" ? "animations" : "images"
+
+// ── RG2 (`docs/PLAN-rangement.md`) — ce que la nature de ce sujet porte ─────
+//
+// **Le repli permissif, et pourquoi il l'est.** Avant que `capacites` réponde
+// — et pour une nature que la liste ne connaît pas encore —, on affiche tout,
+// jamais rien : c'est l'état de toute la page avant cette tranche, et c'est
+// ce que le critère d'acceptation « la page d'un personnage est inchangée, au
+// pixel près » demande. Une matière qui affiche par erreur un onglet
+// Animations le temps d'un aller-retour réseau est un défaut mineur ; un
+// personnage qui perdrait le sien parce que la réponse n'est pas encore là
+// serait la régression que ce plan répare.
+const CAPACITES_PAR_DEFAUT: PosesDesTypes["types"][number]["capacites"] = {
+  directions: true, anime: true, sons: true, matiere: false,
+}
+const SE_DECOUPE_PAR_DEFAUT = true
+
+/** **Une chose sans type déclaré suit le plan du jeu** (`atelier/services/
+ *  production.py`, `creer_personnage`) — c'est l'état de toutes celles
+ *  d'avant E9, et de tout ce qui a été créé sans famille nommée. Ce n'est pas
+ *  la même chose qu'une nature que l'auteur a écrite à la main et que le
+ *  produit ne connaît pas (`capacites_de`, réponses d'un décor) : ici on sait
+ *  très bien ce que « suit le plan du jeu » veut dire, c'est ce qu'un
+ *  personnage a toujours fait. */
+const natureDe = (s: Personnage): string => s.type || "personnage"
+
+function capacitesDe(s: Personnage, types: PosesDesTypes["types"]): PosesDesTypes["types"][number]["capacites"] {
+  return types.find((t) => t.nom === natureDe(s))?.capacites ?? CAPACITES_PAR_DEFAUT
+}
+
+function seDecoupeDe(s: Personnage, types: PosesDesTypes["types"]): boolean {
+  return types.find((t) => t.nom === natureDe(s))?.se_decoupe ?? SE_DECOUPE_PAR_DEFAUT
+}
 
 export function PageDuSujet(proprietes: {
   ouvert: Personnage
@@ -268,6 +300,35 @@ export function PageDuSujet(proprietes: {
     }
   }, [])
 
+  // **RG2 — ce que chaque nature peut avoir**, lu une fois comme le barème
+  // juste au-dessus : c'est une liste du projet, pas de ce sujet, et elle ne
+  // change pas pendant qu'on le regarde. L'écran ne recalcule rien — il lit
+  // `capacites`, rendu par `GET /characters/types`
+  // (`atelier/services/production.py`, `poses_des_types`) — sinon cette table
+  // et celle du serveur finiraient par dire deux choses différentes.
+  const [natures, setNatures] = useState<PosesDesTypes["types"]>([])
+  useEffect(() => {
+    let vivant = true
+    void api
+      .posesDesTypes()
+      .then((recu) => vivant && setNatures(recu?.types ?? []))
+      .catch(() => undefined)
+    return () => {
+      vivant = false
+    }
+  }, [])
+  const capacites = capacitesDe(ouvert, natures)
+  const seDecoupe = seDecoupeDe(ouvert, natures)
+  // **L'onglet ouvert se corrige dès que les capacités répondent.** L'état
+  // initial retombe sur le repli permissif (ci-dessus) le temps de l'aller-
+  // retour réseau ; si la nature ne s'anime pas, on referme sur *Images de
+  // référence* — le premier onglet que toute nature porte. Rien à corriger
+  // côté « sons » : aucune règle n'ouvre jamais sur cet onglet-là en premier.
+  useEffect(() => {
+    if (onglet === "animations" && !capacites.anime) setOnglet("images")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onglet, capacites.anime])
+
   // **Les collections de ce sujet, et il faut aller les chercher loin.** Aucune
   // route ne dit « dans quelles collections est ce sujet » : la seule qui le
   // sache est celle de sa famille (B9), et elle répond par une page de sujets.
@@ -390,12 +451,22 @@ export function PageDuSujet(proprietes: {
           onImages={() => setOnglet("images")} onObjectif={() => setOnglet("objectif")} />
 
         <nav role="tablist" aria-label="Les onglets de sa fiche" className="flex shrink-0 flex-wrap gap-[4px] border-b border-trait pb-[8px]">
-          {ONGLETS.filter(({ clef }) => clef !== "equipement" || ouvert.equipable).map(({ clef, nom }) => <button key={clef} type="button" role="tab" aria-selected={onglet === clef} onClick={() => setOnglet(clef)} className={`relative h-[34px] rounded-7 px-[14px] text-[13px] transition-colors duration-120 ${onglet === clef ? "bg-encre text-papier" : "text-encre-3 hover:bg-papier-cote hover:text-encre"}`}>{nom}{clef === "sources" && nouveauxClips > 0 && <span data-nouveaux-clips title={nouveauxClips > 1 ? `${nouveauxClips} nouveaux clips` : "Un nouveau clip"} aria-hidden className="absolute right-[4px] top-[4px] h-[8px] w-[8px] rounded-full bg-encre-attention" />}</button>)}
+          {/* **RG2** : un onglet qui ne s'applique pas n'existe pas, jamais
+              grisé sans phrase. *Animations* et *Sons* suivent `capacites`,
+              *Équipement* suit `ouvert.equipable` comme avant cette tranche. */}
+          {ONGLETS.filter(({ clef }) =>
+            (clef !== "equipement" || ouvert.equipable) &&
+            (clef !== "animations" || capacites.anime) &&
+            (clef !== "sons" || capacites.sons)
+          ).map(({ clef, nom }) => <button key={clef} type="button" role="tab" aria-selected={onglet === clef} onClick={() => setOnglet(clef)} className={`relative h-[34px] rounded-7 px-[14px] text-[13px] transition-colors duration-120 ${onglet === clef ? "bg-encre text-papier" : "text-encre-3 hover:bg-papier-cote hover:text-encre"}`}>{nom}{clef === "sources" && nouveauxClips > 0 && <span data-nouveaux-clips title={nouveauxClips > 1 ? `${nouveauxClips} nouveaux clips` : "Un nouveau clip"} aria-hidden className="absolute right-[4px] top-[4px] h-[8px] w-[8px] rounded-full bg-encre-attention" />}</button>)}
         </nav>
 
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-[14px]">
           <div className="flex items-center gap-[8px]">
-            {proprietes.onDecouper && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images de référence."} onClick={() => imageCible && proprietes.onDecouper?.(imageCible)}>Découper une image</button>}
+            {/* **RG2** : une nature qui ne se découpe pas — une matière, un
+                décor, une tuile, qui remplissent leur cadre — n'a pas ce
+                bouton du tout, plutôt qu'un bouton grisé sans raison. */}
+            {proprietes.onDecouper && seDecoupe && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images de référence."} onClick={() => imageCible && proprietes.onDecouper?.(imageCible)}>Découper une image</button>}
             {proprietes.onExtraire && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images de référence."} onClick={() => imageCible && proprietes.onExtraire?.(imageCible)}>Extraire un élément</button>}
             {onglet === "animations" && <button className={BOUTON} onClick={() => setOnglet("essai")}>Tester les animations</button>}
             {onglet === "essai" && <button className={BOUTON} onClick={() => setOnglet("animations")}>‹ Animations</button>}
