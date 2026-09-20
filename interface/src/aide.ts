@@ -1154,7 +1154,7 @@ export const AIDE: Record<string, Explication> = {
 
   "retouche.brouillon": {
     nom: "Enregistrer les retouches d’une image",
-    quoi: "Les outils calculent un aperçu réel et gardent les réglages en brouillon sur cet ordinateur. La version de la bibliothèque reste intacte jusqu’à Enregistrer les retouches.",
+    quoi: "Le brouillon garde tes réglages sur cet ordinateur, aperçu réel — l’image de la bibliothèque ne bouge qu’à Enregistrer les retouches.",
     change: "Défaire et Refaire parcourent les gestes. Quitter permet d’enregistrer, de conserver le brouillon ou de l’abandonner ; la reprise est proposée à la réouverture. Copier une recette ou revenir au brut prépare aussi un brouillon. La découpe, l’extraction et l’équipement utilisent la version enregistrée.",
     origine: "toi · recette non destructive et aperçu CPU local",
     groupe: "En haut de l'écran — enregistrer",
@@ -1172,31 +1172,30 @@ export const AIDE: Record<string, Explication> = {
     nom: "où le résultat se range",
     groupe: "En haut de l'écran — enregistrer",
     ou: "tables",
-    quoi: "La pose et la direction sous lesquelles le résultat de la retouche vient se poser. Ce qui naît est une image — ou une animation — neuve : ses pixels sont ceux que tu as sous les yeux, et sa retouche repart de zéro.",
+    quoi: "La pose et la direction où ranger le résultat : une image, ou une animation, toute neuve, dont la retouche repart de zéro.",
     change:
       "Rien à la génération, et rien à l'original : ni sa retouche, ni son rendu ne bougent. La nouvelle case n'est pas retenue pour le jeu — la retenir est un second geste.",
     origine:
       "l'atelier propose la case de l'image · la direction au miroir quand la retouche en porte un · toi dès que tu choisis",
     long:
-      "**Ce n'est pas le miroir de la table du retournement, et les deux se ressemblent.** Là-bas, l'image neuve garde les pixels d'origine et c'est sa *recette* qui la retourne : retirer la place la redresse. Ici le retournement est cuit dans les pixels, et la recette repart vide — parce que la nouvelle case a sa vie à elle, qu'on va la retoucher, et que deux recettes posées sur la même image brute finiraient par se contredire.\n\n**Ce n'est pas non plus dupliquer** : la copie porterait la retouche, celle-ci porte le résultat. Le geste ne demande rien à personne et ne coûte rien.",
+      "Ce n'est pas le miroir du retournement : là-bas l'image garde ses pixels d'origine et c'est la recette qui la retourne ; ici le retournement est déjà cuit dans les pixels, et la nouvelle case repart d'une recette vide. Ce n'est pas non plus dupliquer : la copie porterait la retouche, celle-ci porte le résultat.",
   },
 
   "tables.zoom": {
     nom: "le pour cent d'agrandissement",
     groupe: "L'image, et la barre au-dessus d'elle",
     ou: "tables",
-    quoi: "À quelle taille l'image est montrée dans la table. Libre entre 1 et 250 %, écrit à la main ou réglé par *plus* et *moins* ; la molette approche et recule, et le point qu'on vise ne bouge pas de sous le pointeur.",
+    quoi: "À quelle taille l'image est montrée dans la table : de 1 à 250 %, à la main, au clic, ou à la molette.",
     change:
       "Rien à l'image — c'est une loupe, pas un réglage. *100 %* rend exactement un pixel d'image pour un pixel d'écran ; *ajusté* fait tenir l'image entière dans le cadre, et c'est ce qu'on obtient en ouvrant une table.",
     origine: "toi · ajusté à l'ouverture",
     long:
-      "Ailleurs dans le produit — la grille de la galerie, la vitrine — l'agrandissement ne prend que des multiples entiers : un sprite montré à une échelle qui n'est pas entière fabrique des pixels qui n'existent pas, et on jugerait alors un défaut né de la fenêtre où on l'a regardé. Cette règle appartient à ce qui **montre** une image ; la table est ce qui la **travaille**, et on n'y règle rien sans pouvoir approcher et reculer librement.\n\nL'avoir appliquée ici a coûté cher : une image d'origine de 1 024 pixels de côté dans un cadre de 606 ne pouvait pas descendre sous 100 %, donc on n'en voyait qu'un coin — et ce coin étant transparent, l'écran ne montrait que le damier. La table de recadrage paraissait cassée alors qu'elle marchait.",
+      "Ailleurs dans le produit — la galerie, la vitrine — l'agrandissement ne prend que des multiples entiers : un sprite montré à une échelle qui n'est pas entière fabrique des pixels qui n'existent pas. Cette règle sert à montrer une image ; ici on la travaille, et il faut pouvoir approcher et reculer librement.",
   },
 
   "tables.png": {
     nom: "PNG ↓",
-    groupe: "L'image, et la barre au-dessus d'elle",
-    ou: "tables",
+    ou: "case",
     quoi: "Télécharge l'image telle qu'elle est sous les yeux — le rendu, ou le brut quand on regarde le brut.",
     change:
       "Rien : c'est une copie. L'image reste dans la bibliothèque, sa recette aussi, et le fichier reçu est celui qu'on voyait.",
@@ -1205,8 +1204,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bande.source": {
     nom: "viser ou découper une frame",
-    groupe: "L'image, et la barre au-dessus d'elle",
-    ou: "tables",
+    ou: "bande",
     quoi: "La pipette, le tracé du sujet et le rectangle visent l’image source ; la découpe prélève la frame retouchée.",
     change: "Une visée corrige uniquement la frame choisie. Découper crée une image en bibliothèque, sans modifier ni enregistrer l’animation.",
     origine: "toi · depuis l’atelier d’animation",
@@ -1222,31 +1220,31 @@ export const AIDE: Record<string, Explication> = {
       "Tout ce qui suit en dépend — le recadrage cherche le sujet dans l'alpha, la grille mesure son occupation dessus. C'est aussi l'étape la plus chère : environ 130 ms, contre 28 pour les quatre autres réunies.",
     origine: "posé par l'univers quand le sujet a une silhouette",
     long:
-      "Une étape, mais plusieurs passes possibles. Une passe est un moteur avec ses réglages ; deux passes s'enchaînent sur le résultat de la première, ce qui permet d'attaquer un fond en deux temps — un remplissage large, puis un durcissement de contour.\n\nSéparé de la finition dans le code pour une raison qui se voit à l'usage : bouger un curseur de grille ou de couleurs ne relance pas le détourage, et la retouche reste instantanée. Un cran de tolérance, lui, coûte la seconde et demie complète.",
+      "Une étape peut porter plusieurs passes, qui s'enchaînent sur le résultat de la précédente — un remplissage large, puis un durcissement de contour. Bouger un curseur de grille ou de couleurs ne relance pas le détourage : la retouche reste instantanée ; un cran de tolérance, lui, coûte environ 1,5 s.",
   },
 
   "detourage.moteur": {
     nom: "moteur",
     groupe: "La table Détourage",
     ou: "tables",
-    quoi: "Comment le fond est trouvé : « bord » part des bords de l'image, « pipette » part d'un point que tu désignes, « modèle » demande une silhouette à un réseau.",
+    quoi: "Comment le fond part : bord, pipette, sélection et palette du jeu l'enlèvent directement ; modèle demande une silhouette à un réseau.",
     change:
-      "« Bord » et « pipette » ne demandent aucun réseau et répondent en dizaines de millisecondes ; « modèle » coûte une à deux secondes par passe. Le rendu diffère surtout sur les images qui n'ont pas de fond plat.",
+      "« Bord », « pipette », « sélection » et « palette du jeu » ne demandent aucun réseau et répondent en dizaines de millisecondes ; « modèle » coûte une à deux secondes par passe. Le rendu diffère surtout sur les images qui n'ont pas de fond plat.",
     origine: "mesuré le 27/08 sur 12 images · défaut « bord »",
     long:
-      "Le remplissage depuis le bord est le moteur du geste courant : sur douze images issues de six modèles, PNG et JPEG, il a rendu douze silhouettes propres — squelette blanc sur fond gris clair et fioles translucides comprises.\n\nSa règle tient en un mot : relié. Un pixel n'est du fond que s'il est relié à un bord par une chaîne de pixels proches de la couleur de bordure. C'est ce qui le distingue d'un seuil global, qui perce le sujet — l'os d'un squelette et le reflet d'une fiole ont la couleur du fond sans y être reliés.\n\nEt c'est aussi ce qui lui interdit une chose. Un creux de fond entièrement entouré par le sujet — la lumière entre un bras et un torse, le trou d'une anse, l'intérieur d'un anneau — n'est relié à aucun bord : aucune valeur de tolérance ne l'atteindra jamais, parce que le chemin n'existe pas. La pipette est là pour ça, et pour rien d'autre : tu désignes ce creux du doigt, et il part.\n\nLes deux premiers moteurs ont été confrontés le 27 août sur six vraies images plus un cas composé. Sur ce que le produit fabrique — fond plat — le bord et le modèle s'accordent à 96,3 % en médiane : le second n'apporte rien, et c'est ce qui justifie qu'il reste facultatif. Sur un fond chargé, le bord garde 100 % de l'image — il échoue entièrement — quand le modèle en isole 19,8 %. C'est sa raison d'être, et elle se mesure.",
+      "Le remplissage depuis le bord ne part que d'un pixel relié au bord par une chaîne de la couleur du fond : un creux entouré par le sujet n'y est jamais relié, quelle que soit la tolérance — la pipette existe pour ce cas. Sur un fond plat, bord et modèle rendent la même image à 96 % ; sur un fond chargé, modèle isole 20 % quand bord échoue entièrement.",
   },
 
   "detourage.silhouette": {
     nom: "modèle",
     groupe: "La table Détourage",
     ou: "tables",
-    quoi: "Quel modèle va chercher la silhouette, du plus rapide au plus lourd. Le rapide est ce que tu obtiens sans rien demander.",
+    quoi: "Quel modèle va chercher la silhouette, du plus rapide — obtenu sans rien demander — au plus lourd.",
     change:
       "Le lourd trouve un meilleur bord sur les silhouettes difficiles — des cheveux, une frange, un objet ajouré — et met plusieurs secondes par image au lieu d'une demi-seconde. Le choix se fait passe par passe : deux passes du même détourage peuvent employer deux modèles.",
     origine: "toi · défaut « rapide »",
     long:
-      "Le détourage par modèle n'en connaissait qu'un seul, écrit dans le code. C'était une liste en dur là où la règle de la maison dit que le catalogue décide — et il fallait toucher au code pour en essayer un autre.\n\nUn modèle est un fichier de plusieurs centaines de mégaoctets, et il n'est pas dans le produit : il descend la première fois qu'on s'en sert, puis il reste. Deux absences se ressemblent et ne se traitent pas pareil. Si le moteur par modèle n'est pas installé du tout, il est grisé avec sa raison : rien ne le rendra choisissable sans une installation. Si le moteur est là mais que ce modèle-ci n'est pas encore descendu, il reste choisissable, et l'atelier dit ce qu'il va rapatrier et ce que ça pèse avant de partir. Griser les deux t'aurait envoyé faire à la main un téléchargement que l'atelier sait faire ; les confondre t'aurait laissé attendre plusieurs minutes sur un geste annoncé comme lent de quelques secondes.\n\nUne recette qui nomme un modèle absent de ta machine ne casse rien : cette passe-là n'agit pas, les autres places s'appliquent, et l'image sort. C'est la même règle que pour une passe masquée — ce qui n'agit pas n'empêche pas le reste d'agir.",
+      "Un modèle pèse plusieurs centaines de mégaoctets et n'est pas livré avec le produit : s'il n'est pas installé, le moteur est grisé avec sa raison ; s'il est installé mais pas encore descendu, l'atelier dit ce qu'il va rapatrier avant de commencer. Une recette qui nomme un modèle absent n'arrête rien : cette passe n'agit pas, les autres s'appliquent, et l'image sort quand même.",
   },
 
   "detourage.tolerance": {
@@ -1258,19 +1256,7 @@ export const AIDE: Record<string, Explication> = {
       "Monter mange le sujet par les bords ; descendre laisse un halo de fond autour de lui. Chaque cran relance le détourage : environ 1,5 s.",
     origine: "toi · défaut 28",
     long:
-      "C'est pour ce réglage que le curseur du produit envoie ce qu'on a lâché et non ce qu'on a traversé. Mesuré au navigateur : un cran de tolérance coûte 1 492 ms au serveur, et un glissement sur vingt crans, c'était vingt appels sérialisés — une demi-minute de file pendant laquelle l'image défilait des valeurs que personne n'avait demandé à voir.\n\nLa valeur sous le curseur suit ta main tout de suite. Le rendu, lui, attend que tu lâches.",
-  },
-
-  "detourage.seuil_alpha": {
-    nom: "seuil alpha",
-    groupe: "La table Détourage",
-    ou: "tables",
-    quoi: "Au-dessus de cette valeur un pixel appartient au sujet, en dessous il appartient au fond. 0 à 255.",
-    change:
-      "Tranche les contours à demi transparents. Sans ce durcissement, un rééchantillonnage au plus proche voisin les décide à pile ou face, et deux passes identiques rendent deux silhouettes différentes.",
-    origine: "défaut du produit · 128",
-    long:
-      "C'est le réglage qui évite le liseré clair autour d'un sprite, et le liseré naît ici, pas ailleurs. Un pixel de contour à peine visible, dont la couleur est déjà celle du fond, passe le seuil et ressort franchement opaque — de la couleur du fond. Baisser ce seuil l'efface, ronger un pixel de plus aussi.\n\nCe paragraphe accusait la quantification, et c'est faux : mesuré sur six images, elle met la transparence de côté et la remet telle quelle. Elle ne fait que ramener la couleur de ces pixels-là sur ta palette. Y toucher ne changera jamais rien au liseré.\n\nD'où l'ordre fixe des étapes : le seuil se durcit avant la réduction sur grille, jamais après.",
+      "C'est pour ce réglage que le curseur du produit envoie ce qu'on a lâché et non ce qu'on a traversé — la valeur suit ta main tout de suite, le rendu attend que tu lâches. Sans ça, glisser sur vingt crans ferait vingt appels sérialisés, chacun coûtant près de 1,5 s.",
   },
 
   "detourage.durcissement": {
@@ -1292,67 +1278,43 @@ export const AIDE: Record<string, Explication> = {
       "Tant qu'aucun point n'est posé, la passe ne retire rien du tout. Recliquer ailleurs déplace le point de cette passe, sans en créer une deuxième.",
     origine: "toi · cliquée dans l'image",
     long:
-      "Ce qui est gardé est le point, pas la tache qu'il désigne, et ce n'est pas un détail. Une tache est une zone d'un seul tenant que l'atelier retrouve à chaque rendu : elle change de rang et de place dès qu'un réglage au-dessus bouge d'un cran, et ta recette se mettrait alors à viser autre chose sans rien dire. Un point, lui, ne bouge pas.\n\nLa couleur, elle, n'est pas gardée : elle se lit sous le point à chaque fois. Une couleur écrite à côté du point qui la porte serait une copie que plus rien ne met à jour.\n\nLe point est compté sur l'image d'origine — celle d'avant tout traitement —, comme le rectangle de recadrage. C'est pour ça que tu vises sur elle et pas sur le rendu.",
+      "Ce qui est gardé est le point, pas la tache qu'il désigne : une tache change de rang à chaque réglage qui bouge au-dessus, et un point ne bouge pas. La couleur, elle, se relit sous le point à chaque rendu — elle n'est jamais recopiée. Le point se compte sur l'image d'origine, avant tout traitement, comme le rectangle de recadrage : c'est pour ça qu'on vise sur elle, pas sur le rendu.",
   },
 
   "detourage.portee": {
     nom: "portée",
     groupe: "La table Détourage",
     ou: "tables",
-    quoi: "Ce que la pipette retire depuis ton point : « cette tache » ne retire que la zone d'un seul tenant sous le curseur, « partout » retire toutes les zones de cette couleur dans l'image.",
+    quoi: "Ce que la pipette retire : « cette tache », la seule zone sous le curseur, ou « partout », toutes les zones de cette couleur dans l'image.",
     change:
       "« Cette tache » règle un creux sans toucher au reste — c'est le geste pour lequel la pipette existe. « Partout » va plus vite et atteint aussi ce qui touche le sujet : un reflet, un œil, une dent de la même couleur que le fond partiront avec.",
     origine: "toi · défaut « cette tache »",
     long:
-      "« Cette tache » veut dire : la zone d'un seul tenant que tu vois, et rien d'autre. Elle s'arrête à ce qui reste de l'image — jamais elle ne traverse ce qu'une passe précédente a déjà effacé.\n\nCette phrase a été écrite le 1er septembre 2026, et elle répare un défaut. Effacer un pixel ne change pas sa couleur ; ça ne change que sa transparence. Une seconde pipette lisait donc un fond qui, pour elle, était encore là, elle s'y propageait de proche en proche et ressortait ailleurs dans l'image — sur une zone qui n'avait rien à voir avec le point désigné, et qui à l'écran ne le touchait même pas. Entre les deux il n'y avait que du damier.\n\nDeux réponses étaient possibles : montrer d'avance la zone que la pipette prendra, ou l'empêcher de traverser ce qui n'est plus là. C'est la seconde qui a été retenue, parce qu'elle rend le geste prévisible au lieu de rendre sa surprise lisible.",
+      "« Cette tache » s'arrête à ce qui reste de l'image : elle ne traverse jamais une zone qu'une passe précédente a déjà effacée, même si cette zone garde encore la couleur du fond sous sa transparence — c'est ce qui rend le geste prévisible sur plusieurs passes empilées.",
   },
 
   "detourage.trace": {
     nom: "forme entourée",
     groupe: "La table Détourage",
     ou: "tables",
-    quoi: "La forme que tu as tracée à main levée autour du sujet, dans l'image. Elle se referme toute seule : le geste est d'entourer, pas de dessiner une ligne.",
+    quoi: "La forme que tu traces à main levée autour du sujet, refermée toute seule — le geste est d'entourer, pas de dessiner une ligne.",
     change:
       "Rien tant qu'elle est vide. Une fois tracée, l'atelier cherche le bord du sujet à l'intérieur de ce que tu as entouré et ne touche à rien au-dehors. Retracer remplace la forme de cette passe ; retirer la passe défait le geste d'un coup.",
     origine: "toi · tracée dans l'image",
     long:
-      "C'est la sélection magique des logiciels d'image, et elle répond à ce que ni le détourage automatique ni la retouche au pixel ne savent faire : le premier décide tout seul et se trompe parfois, la seconde demande de suivre un contour au pixel près, ce qui est très long sur une silhouette entière.\n\nTu traces gros, et c'est voulu : ton trait ne devient jamais le contour du sprite. Il borne la recherche. L'atelier part du liseré de ta forme — des pixels de fond, puisque tu as entouré large — et remplit vers l'intérieur jusqu'à buter sur le sujet. Ce qui sort est le bord du sujet lui-même, trouvé dans les pixels, pas ta main.\n\nElle vit avec le détourage et non avec la main : c'est une quatrième façon de désigner ce qu'on retire, à côté du bord, de la pipette et du modèle, et un seul endroit décide de ce qui est effacé. Elle agit donc avant le recadrage et la mise sur grille, qui ont tous les deux besoin de savoir où est le sujet — tant que le fond est là, la boîte du sujet, c'est toute l'image.\n\nLa forme ne voyage pas. Coller les réglages sur une autre image ou enregistrer une recette sous un nom la laisse derrière : c'est une coordonnée, comme le point de la pipette et comme le rectangle de recadrage, et une silhouette entourée sur une attitude tomberait à côté sur l'attitude suivante.",
+      "C'est la sélection magique des logiciels d'image : tu traces gros, sans suivre le contour, et l'atelier part du liseré de ta forme — du fond — et remplit vers l'intérieur jusqu'à buter sur le sujet. Elle agit avant le recadrage et la grille, qui ont besoin de savoir où est le sujet. Comme le point de la pipette, la forme ne voyage pas : coller une recette ailleurs la laisse derrière.",
   },
 
   "detourage.masquee": {
     nom: "masquer une passe",
     groupe: "La table Détourage",
     ou: "tables",
-    quoi: "Retire cette passe du calcul le temps que tu regardes. Elle garde tous ses réglages, et « montrer » rend exactement l'image d'avant.",
+    quoi: "Retire cette passe du calcul le temps que tu regardes, sans perdre ses réglages — « montrer » rend exactement l'image d'avant.",
     change:
       "L'image se refait sans elle, et c'est tout ce que ça fait. Masquer n'est pas retirer : retirer la perd, masquer la met de côté. Toucher un de ses réglages la remontre — poser une valeur, c'est dire qu'on veut cette passe.",
     origine: "toi · défaut visible",
     long:
-      "Plusieurs passes s'enchaînent et tu ne vois que leur somme : impossible de savoir laquelle a mangé quoi. C'est le même geste que d'endormir une table, un cran plus bas, et la même règle — ce qu'on éteint garde ses réglages.\n\nUne passe supplémentaire travaille bien sur le résultat de la précédente, mais seulement à moitié, et c'est cette moitié qui surprend. La transparence s'accumule et ne se rend jamais : chaque passe ne peut que serrer ce que la précédente a laissé. La couleur, elle, ne bouge pas — effacer un pixel ne change pas sa couleur.\n\nC'est de là que venait le défaut de la pipette sur une seconde passe, corrigé le 1er septembre 2026 : la tache repartait à travers le fond déjà effacé, qui avait gardé sa couleur et formait un couloir invisible, et elle ressortait ailleurs dans l'image. Mesuré sur une image d'essai : 120 pixels pris sur une zone qui ne touchait pas le point désigné. Depuis, la propagation s'arrête à ce qui reste.",
-  },
-
-  "detourage.poches": {
-    nom: "poches de fond enfermées",
-    groupe: "La table Détourage",
-    ou: "tables",
-    quoi: "Les zones de fond que le sujet entoure complètement, et que le remplissage depuis le bord n'atteint donc pas : il n'y mène aucun chemin, à aucune tolérance.",
-    change:
-      "Rien, tant que tu n'y touches pas. Le produit les compte et propose de retirer les plus grandes ; il n'en efface aucune tout seul. La lumière entre un bras et un torse est du fond, l'intérieur d'un cabochon de lanterne est de la matière, et rien dans les pixels ne dit lequel des deux tu regardes. « La retirer › » ajoute simplement une passe pipette déjà visée dessus, qui s'annule comme les autres.",
-    origine: "mesuré sur l'image détourée",
-    long:
-      "Seules les plus grandes sont listées, et c'est une décision prise à la mesure plutôt qu'au jugé. Sur les soixante images du dépôt, détourées au réglage courant, une image porte quarante-trois de ces zones en médiane et jusqu'à seize mille — mais les trois quarts font un à trois pixels : du bruit de compression qui se trouve avoir la couleur du fond. Aucun seuil de taille ne sépare proprement le bruit du reste, c'est une longue traîne sans marche. On montre donc celles dont on se demande vraiment si c'est du fond ou de la matière, et le compte entier est écrit à côté.\n\nCe bloc annonçait longtemps zéro partout, et c'était une erreur, corrigée le 31 août 2026 : il lisait les trous de la silhouette, qui sont l'inverse exact. Un trou est du transparent — le détourage l'a déjà retiré. Une poche est encore opaque, justement parce que le détourage n'a pas pu l'atteindre. L'ancien bloc ne trouvait donc la poche qu'une fois celle-ci retirée, c'est-à-dire au moment où il n'y avait plus rien à proposer.",
-  },
-
-  "detourage.fond": {
-    nom: "le fond, tel qu'il est revenu",
-    groupe: "La table Détourage",
-    ou: "tables",
-    quoi: "Deux nombres, et la couleur de fond que cette image-là porte vraiment — lue sur ses bordures, jamais celle qu'on avait demandée. *Les pixels à demi transparents* sont ce que le découpage a laissé au bord ; *les pixels encore à la couleur du fond* sont ceux du sujet qu'un cran de tolérance de plus emporterait.",
-    change:
-      "Rien : c'est une lecture. Ce qu'elle sert à décider est ailleurs — le bord rongé, juste au-dessus, pour les premiers ; la couleur de fond du jeu, dans l'assistant, pour les seconds.",
-    origine: "mesuré sur l'image détourée",
-    long:
-      "**Ces deux nombres remplacent un banc d'essai.** La tranche qui a fait du fond un réglage du jeu réclamait d'abord huit tirages payants par branche avant sa première ligne de code ; l'auteur l'a retiré le 2 septembre 2026. La raison tient : le fond est devenu un réglage, pas une valeur imposée — si la couleur choisie donne un moins bon résultat, on la change en un geste et on le voit sur l'image suivante. Un banc aurait mesuré pendant trois heures ce que l'usage dit en trois images.\n\nCe qui prend sa place se lit **sur les images qu'on voulait de toute façon**, et c'est la doctrine du dépôt sur les notes de qualité, appliquée pour la première fois à un réglage d'envoi.\n\nLa couleur montrée est celle qui est *revenue* et non celle qu'on avait demandée : comparer la couleur demandée à elle-même n'aurait rien mesuré. Un écart entre les deux est une information — c'est la dérive du modèle, et c'est elle qui dit de combien il faut se tenir à l'écart de la palette du jeu.",
+      "Plusieurs passes s'enchaînent et ne montrent que leur somme : impossible de savoir laquelle a mangé quoi sans les masquer une à une. C'est le même geste, et la même règle, qu'endormir une table plus bas — ce qu'on éteint garde ses réglages. Un pixel effacé ne change pas de couleur : seule sa transparence bouge, et une passe suivante lit encore cette couleur-là dessous.",
   },
 
   "etape.recadrage": {
@@ -1369,12 +1331,12 @@ export const AIDE: Record<string, Explication> = {
     nom: "ce qu'on garde",
     groupe: "La table Recadrage",
     ou: "tables",
-    quoi: "Deux valeurs, et une seule agit. *La boîte du sujet* est le plus petit rectangle qui contient tout ce qui n'est pas transparent : elle est mesurée, et remesurée chaque fois que le détourage change. *Une boîte tracée* est un rectangle qu'on a posé soi-même sur l'image, et qui ne bouge plus.",
+    quoi: "Ce qu'on garde du recadrage : la boîte du sujet, mesurée sur l'alpha à chaque changement, ou une boîte tracée à la main, qui ne bouge plus.",
     change:
       "Le recadrage s'arrête à ce rectangle-là, et non à ce que le sujet occupe. C'est le seul moyen de garder une part de fond que rien ne rend opaque — l'ombre portée d'un sprite, l'auréole d'une lanterne. La seconde valeur ne se choisit pas dans la colonne : on trace sur l'image, et le segment bascule tout seul. Le premier segment est le clic qui défait.",
     origine: "mesurée sur l'alpha, ou tracée par toi",
     long:
-      "Une boîte tracée n'agit que quand elle **coupe** le sujet, et la table le dit sous le rectangle. Plus large que lui, elle est sans effet sur le rendu : la remise sur grille recherche elle-même la boîte du sujet et rogne dessus, si bien que le surplus transparent disparaît de toute façon. C'est la même mécanique qui rend la marge sans effet quand une case est posée.\n\nElle ne voyage pas non plus. Quatre coordonnées ne veulent rien dire sur une autre image : posées sur une plus petite, elles tombent en partie hors du cadre ; posées sur un sujet cadré autrement, elles coupent n'importe où. C'est la règle générale du produit — un réglage voyage, une coordonnée ne voyage pas.",
+      "Elle n'agit que si elle coupe le sujet : plus large que lui, elle est sans effet, parce que la grille recherche elle-même la boîte du sujet et rogne dessus — même mécanique que la marge sans effet quand une case est posée. Et elle ne voyage pas : quatre coordonnées collées sur une autre image tombent hors du cadre ou coupent n'importe où.",
   },
 
   "recadrage.marge": {
@@ -1406,19 +1368,7 @@ export const AIDE: Record<string, Explication> = {
       "C'est l'étape qui rend le produit possible : elle remet toutes tes images sur le même pixel. Elle est demandée, jamais déduite de l'image reçue.",
     origine: "l'univers du projet, sinon toi · défaut 64",
     long:
-      "Dix modèles sur douze font dériver la taille du pixel d'une étape à l'autre. Sans cette remise sur grille, les frames d'un même personnage ne partagent plus le même pixel, et un petit objet ressort plus grossier que le personnage qui le porte.\n\nDéduire la cible de l'image reçue reviendrait à laisser le fournisseur décider de l'échelle de ton jeu. C'est pour ça qu'elle se demande.\n\nLa ligne au-dessus du réglage dit sur quoi tu travailles : quand le modèle a vraiment peint des carrés, l'atelier les retrouve et te donne combien l'image en compte. C'est un renseignement, pas une décision — le chiffre ne se pose jamais tout seul.",
-  },
-
-  "grille.du-modele": {
-    nom: "les carrés du modèle",
-    groupe: "La table Pixelisation",
-    ou: "tables",
-    quoi: "La taille des carrés que le modèle a vraiment peints dans l'image qu'il t'a rendue — ou rien, quand il n'en a peint aucun.",
-    change:
-      "Rien. C'est une lecture, pas un réglage : elle te dit ce que l'image contient avant que tu choisisses la taille juste en dessous.",
-    origine: "mesuré sur l'image détourée, à chaque ouverture de la table",
-    long:
-      "Tu demandes du pixel art ; le modèle rend ce qu'il veut. Deux jeux de ce dépôt ont demandé exactement la même chose et n'ont pas reçu la même chose : l'un a reçu des carrés bien visibles, l'autre une peinture aux dégradés fins alors que sa consigne réclamait mot pour mot une grille stricte de 64.\n\nQuand les carrés sont là, l'atelier les retrouve et te dit combien l'image en compte. Demander plus de carrés que ce nombre-là ne fabrique aucun détail : il n'y en a plus à récupérer, et tu obtiendras des blocs coupés en deux plutôt qu'un sprite plus fin.\n\nQuand il n'y a pas de carrés du tout, l'atelier le dit et se tait. C'est la bonne réponse : sur une peinture, il n'y a rien à retrouver, et inventer un chiffre te ferait travailler sur une mesure fausse. La taille redevient alors entièrement ton choix — ce qu'elle est de toute façon, l'atelier ne la déduit jamais de l'image reçue.\n\nMesuré sur les 149 images du dépôt : sur le jeu qui a reçu des carrés, l'atelier en annonce sur 26 images sur 27 ; sur le jeu qui a reçu des peintures, il se tait sur 24 sur 26.",
+      "Dix modèles sur douze font dériver la taille du pixel d'une étape à l'autre : sans cette remise à niveau, les frames d'un même personnage ne partagent plus le même pixel. La déduire de l'image reçue laisserait le fournisseur décider de l'échelle du jeu : elle se demande, jamais ne se devine. La ligne au-dessus dit la taille des carrés que le modèle a peints, s'il en a peint.",
   },
 
   "grille.occupation": {
@@ -1430,31 +1380,31 @@ export const AIDE: Record<string, Explication> = {
       "C'est elle, et non la taille de l'image d'origine, qui met un tonneau et un personnage à la même échelle de pixel. Au-delà de 100 %, l'image revient plus grande.",
     origine: "le barème de l'univers via le sujet · défaut 100 %",
     long:
-      "Le réglage le plus important du produit, et le moins évident. Deux images arrivent du fournisseur au même format ; si tu les remets simplement sur une grille de 64 carrés, le tonneau devient aussi grand que le personnage. La hauteur dit « ce tonneau fait 45 % d'un personnage », et l'échelle redevient juste.\n\nElle peut passer 100 %, et c'est ce qui rend un bâtiment, un arbre ou une tour fabricables : 300 % veut dire trois personnages de haut, et l'image revient trois fois plus grande. Le carré, lui, ne change jamais de taille — c'est la règle des jeux 2D, et l'enfreindre se voit tout de suite : deux tailles de pixel dans une même scène, ça s'appelle des « mixels », et l'œil les repère aux bords. Ce qui change entre un personnage et un bâtiment, c'est le nombre de carrés, jamais leur dimension.\n\nLe plafond dépend de ta case : un sujet ne monte pas au-delà de huit personnages, et pas au-delà de ce qu'une image de 2048 carrés peut porter — la plus basse des deux bornes gagne.\n\nC'est pour ça que le barème vit dans l'univers et se pose une fois : tu ne veux pas rejouer ce calcul à chaque génération.",
+      "Deux images du même fournisseur n'arrivent pas à la même échelle : sans ce réglage, un tonneau deviendrait aussi grand qu'un personnage. Elle peut dépasser 100 % — 300 % fait trois personnages de haut — mais le carré, lui, ne change jamais de taille : deux tailles de pixel dans une scène s'appellent des « mixels », et l'œil les repère aux bords. Le plafond dépend de la case posée.",
   },
 
   "grille.ancrage": {
     nom: "ancrage",
     groupe: "La table Pixelisation",
     ou: "tables",
-    quoi: "Le point de la case par lequel le sujet est accroché, quand il ne la remplit pas entièrement. Neuf au choix : les quatre coins, les quatre milieux de bord, et le centre.",
+    quoi: "Le point de la case qui accroche le sujet quand il ne la remplit pas : les coins, les milieux de bord ou le centre, neuf en tout.",
     change:
       "Décide de l'alignement entre deux frames du même personnage. En bas par défaut, parce qu'un personnage se tient debout sur le bord bas de sa case.",
     origine: "défaut du produit · bas",
     long:
-      "Deux frames d'une même animation posées au centre flotteraient l'une par rapport à l'autre : le personnage semblerait monter et descendre entre deux images. Le bas est le bon défaut pour tout ce qui pose au sol.\n\nLes huit autres existent pour ce qui ne se tient pas debout. Une icône ou un objet d'inventaire tient par son centre ; une flamme au bout d'une torche et une bannière suspendue tiennent par leur haut ; une porte qui pivote tient par son côté.\n\nIl n'y en avait que deux avant le 4 septembre 2026, le bas et le centre, et c'était assez tant qu'on posait des images isolées. Une animation, elle, a un point fixe, et ce point n'est pas toujours au milieu d'un bord.",
+      "Deux frames d'une même animation posées au centre flotteraient l'une par rapport à l'autre : le bas est le bon défaut pour tout ce qui se tient debout. Les huit autres servent à ce qui ne se tient pas au sol — une icône par son centre, une flamme ou une bannière par leur haut, une porte qui pivote par son côté.",
   },
 
   "grille.methode": {
     nom: "réduction",
     groupe: "La table Pixelisation",
     ou: "tables",
-    quoi: "Comment l'image passe de ses milliers de pixels aux carrés de la case. Quatre façons, qui rendent quatre sprites différents.",
+    quoi: "Comment l'image passe de ses milliers de pixels aux carrés de la case, en quatre façons qui rendent quatre sprites différents.",
     change:
       "C'est un choix de style, pas un classement : le vote rend un sprite calme, les traits épaissis un sprite détaillé, la réduction douce une image floue mais lisse, et « au plus proche » un résultat brut.",
     origine: "défaut du projet · vote en deux temps",
     long:
-      "Réduire une image de mille pixels à soixante-quatre carrés, c'est jeter quatre-vingt-dix-neuf pixels sur cent. Ce qu'on garde, et comment, décide de tout.\n\n**Au plus proche** garde un pixel sur N et jette les autres sans les regarder : un trait fin a une chance sur N de survivre. C'est ce que l'atelier faisait avant, et c'est un tirage au sort.\n\n**La réduction douce** fait la moyenne de chaque bloc. Rien n'est perdu, mais tout est mélangé : les contours deviennent des dégradés, ce qui convient à un dessin réduit et pas à un sprite.\n\n**Le vote en deux temps** regarde quelle couleur domine chaque case pour décider la forme, puis peint la case avec la moyenne des pixels d'origine de cette couleur-là. On obtient un trait net sans perdre les nuances.\n\n**Les traits épaissis** dilatent les lignes fines avant de réduire, pour qu'elles survivent au lieu d'être noyées. Une lance ou un fil reste un trait continu ; en échange, le contour est plus agité.\n\nLe projet donne le départ ; cette image-ci garde le dernier mot. Changer la méthode ne coûte rien : aucun appel payant ne part d'ici.",
+      "Réduire mille pixels à soixante-quatre carrés, c'est en jeter quatre-vingt-dix-neuf sur cent : ce qu'on garde et comment décide de tout le style du sprite. Le projet donne un défaut, mais cette image garde le dernier mot, et changer de méthode ne coûte rien — aucun appel payant ne part d'ici.",
   },
 
   "etape.quantification": {
@@ -1466,17 +1416,17 @@ export const AIDE: Record<string, Explication> = {
       "Donne au rendu sa cohérence de palette. Elle vient après la grille et jamais avant : quantifier 1024 px pour les jeter ensuite coûte cent fois plus pour le même résultat.",
     origine: "posée par l'univers quand il a une palette",
     long:
-      "Elle est déterministe, et c'est un critère du produit : une recette nommée, réappliquée ailleurs, donne exactement le même résultat. La coupe médiane de Pillow ne tire rien au sort ; une initialisation tirée au hasard — un k-means++, par exemple — rendrait deux images différentes pour la même recette.\n\nElle force l'alpha à 255 sans toucher à la couleur. C'est la seconde moitié du piège du liseré : un pixel de contour à peine visible qui a survécu au seuil ressort opaque, de la couleur du fond. Le seuil alpha se durcit avant, jamais après.",
+      "Elle est déterministe : une recette nommée, rejouée ailleurs, rend exactement le même résultat — la coupe médiane ne tire rien au sort, à l'inverse d'un k-moyennes mal initialisé. Elle force aussi l'alpha à 255 sans toucher à la couleur, ce qui referme le liseré qu'un rééchantillonnage laisse à demi transparent.",
   },
 
   "quantification.palette": {
-    nom: "palette",
+    nom: "couleurs de",
     groupe: "La table Couleurs",
     ou: "tables",
-    quoi: "Les couleurs auxquelles l'image sera ramenée — celles de l'univers du projet, montrées ici en lecture seule.",
+    quoi: "D'où viennent les couleurs de la palette : celles du jeu, copiées telles quelles, ou celles que l'algorithme choisit sur l'image.",
     change:
-      "Rien à régler ici. La palette du jeu se déduit par calcul de ses artworks officiels, et les autres se fabriquent dans l'univers, côté Ambiances et couleurs ; la poser à la main ferait deux vérités sur la même chose.",
-    origine: "l'univers du projet · absente s'il n'a aucun artwork officiel",
+      "Copie la palette du jeu dans la recette au moment du choix, comme celle d'une passe « palette » du détourage, ou la vide pour laisser l'algorithme décider sur l'image seule.",
+    origine: "l'univers du projet · « le jeu » par défaut s'il a une palette, sinon « l'image »",
   },
 
   "quantification.couleurs": {
@@ -1503,7 +1453,7 @@ export const AIDE: Record<string, Explication> = {
     nom: "graine",
     groupe: "La table Couleurs",
     ou: "tables",
-    quoi: "Le point de départ de k-moyennes. Elle n'existe que pour cet algorithme-là ; les deux autres ne tirent rien au sort.",
+    quoi: "Le point de départ de k-moyennes, le seul des trois algorithmes qui tire quelque chose au sort.",
     change:
       "Deux graines donnent deux palettes légèrement différentes sur la même image : si une couleur te déplaît, changer la graine est le geste le moins cher pour en essayer une autre.\n\nElle est **écrite dans la recette**, et c'est ce qui permet à k-moyennes d'exister ici : sans elle, deux fois la même demande ne rendraient pas la même image, et le produit tient à ce que la même recette rende toujours le même pixel.",
     origine: "toi · défaut 0",
@@ -1558,14 +1508,14 @@ export const AIDE: Record<string, Explication> = {
       "Change la couleur du rendu sans redemander l'image. Les quatre agissent avant la réduction, jamais après : régler après, c'est décaler des couleurs déjà choisies et en refabriquer qui ne sont plus dans la palette.",
     origine: "toi · les quatre à zéro par défaut, et zéro ne touche à rien",
     long:
-      "Ils sont posés dans la table Couleurs parce que c'est le même moment de la chaîne : on reçoit l'image, on la règle, on la réduit. Les quatre à zéro, le moteur rend l'image reçue sans la copier — un réglage neutre ne coûte rien et ne s'écrit pas dans la recette, donc l'empreinte d'une recette déjà en usage ne bouge pas.\n\nLa teinte tourne autour de l'axe des gris : un gris reste gris quel que soit l'angle. C'est la même matrice que le filtre `hue-rotate` d'un navigateur, pour que ce qu'on voit dans l'aperçu soit ce qui sort du serveur.\n\nAucun des quatre ne touche à la transparence. Un sujet détouré le reste, au pixel près.",
+      "À zéro, les quatre ne changent rien et ne s'écrivent pas dans la recette : l'empreinte d'une recette déjà en usage ne bouge pas. La teinte tourne autour de l'axe des gris, comme le ferait un filtre de navigateur — un gris reste gris quel que soit l'angle. Aucun des quatre ne touche à la transparence : un sujet détouré le reste, au pixel près.",
   },
 
   "quantification.gardees": {
     nom: "couleurs gardées",
     groupe: "La table Couleurs — avant et après la réduction",
     ou: "tables",
-    quoi: "Les couleurs qu'aucune réduction ne doit fondre avec une voisine. Six au plus.",
+    quoi: "Les couleurs qu'aucune réduction ne doit fondre avec une voisine, six au plus.",
     change:
       "Elles sont posées d'office dans la palette, avant que l'algorithme ne choisisse le reste : à 8 couleurs, en garder deux lui en laisse six.\n\nPique le noir d'un contour et le vert d'une grenouille, et à 8 couleurs le contour reste noir au lieu de virer brun foncé, la grenouille reste verte au milieu des bruns. Au-delà de six, il ne resterait plus rien à choisir.",
     origine: "toi · défaut aucune",
@@ -1580,7 +1530,7 @@ export const AIDE: Record<string, Explication> = {
       "Donne une variante sans payer une image : la même cape en bleu, en vert, en rouge. La silhouette est identique à l'octet près, puisque seule la couleur des pixels opaques change.",
     origine: "toi · aucune paire par défaut",
     long:
-      "Un échange vient après la réduction, et c'est ce qui le rend exact : à ce moment-là l'image ne porte plus qu'une poignée de couleurs franches, et nommer celle qu'on veut remplacer a un sens. Avant la réduction, la même couleur existe en cent nuances et la paire n'en attraperait qu'une.\n\nToutes les paires sont lues sur l'image reçue, jamais l'une sur le résultat de l'autre : une paire ne repeint pas ce qu'une autre vient de poser, donc *rouge devient bleu* suivi de *bleu devient vert* ne fait pas passer le rouge au vert. Si deux paires visent le même pixel — leurs tolérances se recouvrent —, c'est la première de la liste qui l'emporte.\n\nLa transparence n'est jamais touchée. Un échange ne peut ni découper ni reboucher.",
+      "Vient après la réduction, quand l'image ne porte déjà plus qu'une poignée de couleurs franches — avant, la même couleur existe en cent nuances. Toutes les paires se lisent sur l'image reçue, jamais sur le résultat d'une autre : « rouge devient bleu » puis « bleu devient vert » ne fait pas passer le rouge au vert. La transparence n'est jamais touchée.",
   },
 
   "quantification.echanges.tolerance": {
@@ -1592,7 +1542,7 @@ export const AIDE: Record<string, Explication> = {
       "À 0, seule la couleur exacte part. Monter attrape les nuances voisines — les deux ou trois bleus qu'une réduction a laissés là où l'œil n'en voit qu'un.",
     origine: "toi · défaut 0",
     long:
-      "L'écart se mesure comme partout ailleurs dans le dépôt : le plus grand des trois écarts, sur le rouge, le vert et le bleu. C'est la même règle que la détection du fond et que le détourage par les bords, et c'est délibéré — deux distances de couleur dans un même produit donnent deux réponses à la même question.\n\nMonter trop haut fait déborder la paire sur un voisin qu'on voulait garder : la peau part avec la tunique. Le débordement se voit sur l'image tout de suite, puisque le rendu se refait à chaque cran du curseur.",
+      "L'écart se mesure comme partout dans le dépôt : le plus grand des trois écarts, sur le rouge, le vert et le bleu — la même règle que la détection du fond et le détourage par les bords. Monter trop haut fait déborder la paire sur un voisin qu'on voulait garder ; le rendu se refait à chaque cran, donc le débordement se voit tout de suite.",
   },
 
   "etape.bords": {

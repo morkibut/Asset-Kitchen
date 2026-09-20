@@ -223,6 +223,16 @@ réglage ou une lecture qui n'est plus à l'écran — `detourage.seuil_alpha`, 
 `tables.png` (le *PNG ↓* n'existe que sur la fiche d'une image et sur une tuile) et
 `bande.source` (elle décrit l'atelier d'animation, son `ou` devrait être `bande`).
 
+→ `GU5` (2/3) : le texte des sept premiers groupes est réécrit — En haut de l'écran —
+enregistrer · L'image, et la barre au-dessus d'elle · La table Détourage · La table Recadrage
+· La table Pixelisation · La table Couleurs · La table Couleurs — avant et après la réduction.
+Quatre fiches mortes retirées (`detourage.seuil_alpha`, `detourage.poches`, `detourage.fond`,
+`grille.du-modele` — notées dans le relevé), deux déplacées vers leur bon écran
+(`tables.png` → `ou: "case"`, `bande.source` → `ou: "bande"`), et `quantification.palette`
+réécrite pour le choix « couleurs de : le jeu / l'image » que la table porte aujourd'hui. Les
+six groupes restants (Nettoyage à Main) attendent une passe séparée avant que les critères de
+`GU5` ne se cochent.
+
 ---
 
 ## Les écrans qui n'ont rien
