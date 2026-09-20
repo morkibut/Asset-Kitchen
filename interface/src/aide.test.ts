@@ -93,6 +93,15 @@ const TOUS_LES_OU = [
   "livraison-de-tuiles",
   "son",
   "un-son",
+  // `GU15` (1/2) — les quatre écrans que les genres orphelins réclamaient :
+  // la racine `fabrications`, *Relire avant l'envoi*, *Sur la grille du jeu*
+  // et *Deux côte à côte*. Ils n'ont pas encore de résumé : leurs quatre
+  // essais ci-dessous sont **rouges jusqu'à `GU15` (2/2)**, comme l'étaient
+  // ceux des tuiles entre les deux moitiés de `GU13`.
+  "fabrications",
+  "envoi",
+  "grille",
+  "comparer",
 ] as const satisfies readonly Explication["ou"][]
 
 type ValeurDeOuManquante = Exclude<Explication["ou"], (typeof TOUS_LES_OU)[number]>
@@ -114,14 +123,11 @@ describe("GU3 — chaque écran du guide a son résumé", () => {
 // La table vient du relevé de `GU1` (`docs/releves/guide-2026-09-20.md`) :
 // pour chaque genre de `Lieu` (`interface/src/lieux.ts`), l'écran du guide
 // qui le sert aujourd'hui — le sien, ou celui d'un genre parent quand c'est
-// un choix documenté dans le code : `bibliotheque` → `codex`, `fabrications`
-// → `clip`, `famille` → `codex` (la grille d'une famille se pose sur le
-// codex), `piece`/`emploi`/
-// `calques-animes` → `equipement`, `sujet`/`grille`/`comparer` → `sujet`,
-// `retouche` → `tables`, `montage-de-bande` → `bande`. `univers` et `carte`
-// héritent du côté par défaut de l'univers (`coteUnivers`, `App.tsx:829`,
-// vaut `"inspiration"` au départ ; l'autre côté possible est `"ambiances"`,
-// jamais `"jeu"` — § *Le grand constat* du relevé).
+// un choix documenté dans le code : `bibliotheque` et `famille` → `codex`,
+// `piece`/`emploi`/`calques-animes` → `equipement`, `retouche` → `tables`.
+// `univers` et `carte` héritent du côté par défaut de l'univers
+// (`coteUnivers`, `App.tsx`, vaut `"inspiration"` au départ ; l'autre côté
+// possible est `"ambiances"`, jamais `"jeu"` — § *Le grand constat* du relevé).
 //
 // **Deux lignes ont changé en `GU7`**, et c'est la correction de routage que
 // le relevé réclamait :
@@ -144,16 +150,35 @@ describe("GU3 — chaque écran du guide a son résumé", () => {
 // même rang que la sortie dans `ecranDuGuide` (`App.tsx`) — c'est la décision
 // d'architecture n°5 du plan appliquée : la liste des `ou` suit les genres.
 //
-// Une chaîne vide dit que le genre n'a **aujourd'hui aucun écran de guide**,
-// ni le sien ni hérité : c'est le cas de `travail` et d'`envoi`, et c'est
-// exactement ce que cet essai doit refuser.
+// **`GU15` (1/2) a tranché les douze derniers, genre par genre**, et la table
+// ne porte plus une seule chaîne vide. Quatre genres ont reçu un écran à eux —
+// `fabrications`, `envoi`, `grille`, `comparer` —, parce qu'ils montrent un
+// contenu, des réglages et des gestes qu'aucun autre écran ne porte. Sept
+// gardent un héritage, mais **décidé et écrit** : la branche d'`ecranDuGuide`
+// nomme le genre, et un commentaire dit pourquoi c'est un état.
+//
+// - `bibliotheque` et `famille` → `codex` : les trois montent le même
+//   composant, `EcranFamille` (`Famille.tsx`), dont le `<h1>` est *Les sujets*.
+// - `travail` → `fabrications` : le lieu monte `FenetreDuTravail`, la fenêtre
+//   que `Fabrications.tsx` rend déjà en place ; six des neuf fiches de cet
+//   écran la décrivent.
+// - `emploi` et `calques-animes` → `equipement` : les deux fiches de cet écran
+//   viennent de `CalquesDeLEmploi.tsx`, la page d'un emploi.
+// - `carte` → `inspiration` : découper une carte prend la place du tableau sans
+//   quitter ce côté-là de l'univers.
+// - `montage-de-bande` → `montage` **et non plus `bande`** : il monte
+//   `EcranMontage` en mode reprise, pas l'atelier d'une bande. C'est la
+//   quatrième réparation de routage du chantier, après `GU7`, `GU12` et `GU13`.
+//
+// Une chaîne vide dirait que le genre n'a **aucun écran de guide**, ni le sien
+// ni hérité — et c'est exactement ce que cet essai refuse.
 //
 // `Record<Genre, string>` force la table à couvrir chaque membre de `Genre` :
 // un genre ajouté à `lieux.ts` sans être ajouté ici casse `tsc -b`.
 const GENRE_VERS_OU: Record<Genre, string> = {
   "tableau-de-bord": "tableau-de-bord",
   bibliotheque: "codex",
-  fabrications: "clip",
+  fabrications: "fabrications",
   galerie: "galerie",
   univers: "inspiration",
   codex: "codex",
@@ -161,15 +186,15 @@ const GENRE_VERS_OU: Record<Genre, string> = {
   carte: "inspiration",
   famille: "codex",
   regles: "jeu",
-  travail: "",
+  travail: "fabrications",
   installation: "reglages",
   sortie: "sortie",
   piece: "equipement",
   emploi: "equipement",
   "calques-animes": "equipement",
   sujet: "sujet",
-  grille: "sujet",
-  comparer: "sujet",
+  grille: "grille",
+  comparer: "comparer",
   retouche: "tables",
   tuiles: "tuiles",
   "jeu-de-tuiles": "jeu-de-tuiles",
@@ -177,8 +202,8 @@ const GENRE_VERS_OU: Record<Genre, string> = {
   clip: "clip",
   montage: "montage",
   bande: "bande",
-  "montage-de-bande": "bande",
-  envoi: "",
+  "montage-de-bande": "montage",
+  envoi: "envoi",
 }
 
 describe("GU3 — chaque genre de lieu a un écran de guide", () => {

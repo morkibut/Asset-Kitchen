@@ -1229,12 +1229,73 @@ function AtelierApp() {
   // *Ce que ce rang ne couvre pas :* un travail sonore rouvert depuis le suivi
   // (`travail` → `FenetreDuTravail`, `nature === "audio"`) monte le même
   // formulaire, mais `App` n'y sait que l'identifiant du travail, pas sa
-  // nature. Il reste sur le guide de la racine — c'est `GU15` (« la fiche d'un
-  // travail »). Idem pour l'onglet *Sons* d'un sujet, qui garde `sujet`.
+  // nature. Il tombe donc sur `fabrications` avec les autres travaux rouverts
+  // (voir juste en dessous). Idem pour l'onglet *Sons* d'un sujet, qui garde
+  // `sujet`.
+  //
+  // ── `GU15` (1/2) — écran ou état, genre par genre ───────────────────────
+  //
+  // **Chaque genre de `lieux.ts` est maintenant nommé ici**, et plus aucun ne
+  // tombe sur la racine par accident. Quatre écrans neufs, sept héritages
+  // décidés, un routage corrigé.
+  //
+  // *Quatre écrans neufs.* `envoi` — *Relire avant l'envoi* (`Relecture.tsx`),
+  // le seul écran du produit où l'argent part : il n'était testé nulle part, et
+  // l'ouvrir montrait le guide de la racine du dessous. `fabrications` — la
+  // racine du même nom, dont les neuf fiches logeaient sous `ou: "clip"`.
+  // `grille` — *Sur la grille du jeu* et `comparer` — *Deux côte à côte* : les
+  // deux **prennent la place** de la page d'un sujet au lieu de s'y poser, et
+  // le résumé de `sujet` (« on y écrit qui il est », « on y fabrique ce qui
+  // manque ») n'y est vrai d'aucune de ses trois lignes.
+  //
+  // *Sept héritages décidés — un état, pas un repli.* Chacun est écrit dans la
+  // chaîne sous le nom de son genre, pour qu'un genre oublié se voie :
+  //
+  // - `bibliotheque` et `famille` → `codex`. Les deux montent **le même
+  //   composant** que le codex, `EcranFamille` (`Famille.tsx`), dont le `<h1>`
+  //   est *Les sujets* — le nom que `Guide.tsx` donne déjà à `codex`. Une
+  //   famille ouverte, c'est cette grille restreinte à une famille.
+  // - `travail` → `fabrications`. Le lieu monte `FenetreDuTravail`, la fenêtre
+  //   que `Fabrications.tsx` rend déjà **en place** quand on clique une demande
+  //   dans *Créer et suivre les fabrications* : c'est la même fenêtre par une
+  //   seconde porte (l'onglet *Agent MCP*). Six des neuf fiches de
+  //   `fabrications` la décrivent — la demande relue, la vidéo libre, les
+  //   quatre du rendu 3D.
+  // - `emploi` et `calques-animes` → `equipement`. Les deux fiches de cet écran
+  //   viennent de `CalquesDeLEmploi.tsx`, c'est-à-dire de la page d'un emploi,
+  //   et son résumé parle déjà des calques qui manquent.
+  // - `carte` → `inspiration`. Découper une carte prend la place du tableau
+  //   sans quitter le côté *Inspiration* (`Univers.tsx` ne rend `EcranDecoupe`
+  //   que si `cote === "inspiration"`), et la fiche `carte.decouper` du même
+  //   côté décrit ce geste et ce que les morceaux deviennent.
+  // - `grille` et `comparer` ne sont **pas** dans cette liste : voir ci-dessus.
+  //
+  // *Un routage corrigé.* `montage-de-bande` héritait de `bande` ; il monte
+  // `EcranMontage` en mode reprise — le même écran que le lieu `montage`, pas
+  // l'atelier d'une bande. Le résumé de `bande` y parlait de tables qui n'y
+  // sont pas. Il suit `montage` désormais.
+  //
+  // *Ce qui reste ouvert :* les cinq réglages visibles sur la découpe d'une
+  // carte (`decoupe.mode`, `decoupe.taille_min`, `decoupe.colonnes`,
+  // `decoupe.lignes`, `decoupe.animation`) vivent sous `ou: "tables"`, parce que
+  // `Decoupe.tsx` est aussi une fabrique de la retouche. Les quatre portes de
+  // cet écran — la carte, la planche de la galerie, celle de l'atelier de
+  // bande, la retouche — n'en sont qu'une seule dans la pile ; un `ou` à lui
+  // n'en servirait qu'une.
   const ecranDuGuide: Explication["ou"] | null = sonsOuverts
     ? "son"
     : preparation && !envoiOuvert && typeDePreparation === "son"
     ? "un-son"
+    : // **Le seul écran d'où l'argent part** (`GU15`) : il prend la place de
+      // tout ce qui est en dessous — `depensesOuvertes`, la racine, la
+      // préparation juste au-dessus le nomment déjà dans leur garde de rendu.
+      envoiOuvert
+    ? "envoi"
+    : // **Une demande rouverte par l'onglet *Agent MCP*** (`GU15`) — même
+      // fenêtre que celle des fabrications, testée avant les réglages parce
+      // qu'elle se pose par-dessus eux.
+      travailOuvert
+    ? "fabrications"
     : depensesOuvertes
     ? "depenses"
     : installationOuverte
@@ -1254,12 +1315,20 @@ function AtelierApp() {
           : tableauDeBord
           ? "tableau-de-bord"
           : surface === "univers"
-            ? coteUnivers
+            ? // Le genre `carte` — la découpe d'une carte — est un état du côté
+              // *Inspiration*, jamais d'*Ambiances* : `Univers.tsx` ne le rend
+              // que là. Nommé plutôt que déduit, pour qu'il se voie.
+              carteDecoupee
+              ? "inspiration"
+              : coteUnivers
             : retoucheOuverte
               ? "tables"
               : surface === "galerie" && selection.length === 1
                 ? "case"
-                : montageOuvert
+                : // `montage-de-bande` monte `EcranMontage` en mode reprise —
+                  // le même écran que `montage`, et non l'atelier d'une bande
+                  // (`GU15`).
+                  montageOuvert || montageDeLaBande
                   ? "montage"
                   : bandeOuverte
                     ? "bande"
@@ -1271,19 +1340,33 @@ function AtelierApp() {
                         // rendait jamais cette valeur** : dix-sept
                         // explications écrites, joignables par rien. La page
                         // d'une pièce et celle d'un emploi les servent.
-                        pieceOuverte
+                        //
+                        // `emploi` et `calques-animes` sont deux profondeurs de
+                        // la même page, nommées ici plutôt que ramassées par
+                        // `pieceOuverte` — un genre qu'on lit est un genre
+                        // qu'on peut contredire (`GU15`).
+                        pieceOuverte || emploiOuvertLieu || calquesAnimesLieu
                         ? "equipement"
+                        : // Les deux profondeurs de la page d'un sujet qui la
+                          // **remplacent** à l'écran (`GU15`) : elles ne
+                          // montrent ni son établi ni ses onglets, donc elles
+                          // n'héritent pas de son guide.
+                          grilleOuverte
+                        ? "grille"
+                        : comparerOuvert
+                        ? "comparer"
                         : clipOuvert || choseOuverteId
                         ? "sujet"
-                        : // ⚠️ **La grille d'une famille se documente encore
-                          // comme le codex** : le guide (B7) n'a pas d'entrées à
-                          // elle, et lui en écrire est le travail de sa tranche,
-                          // pas de B9. Mieux vaut les explications du voisin le
-                          // plus proche qu'un volet vide.
-                          surface === "codex" || surface === "bibliotheque"
+                        : // La grille d'une famille et la racine
+                          // `bibliotheque` montent **le même composant** que le
+                          // codex — `EcranFamille`, dont le `<h1>` est *Les
+                          // sujets*. Un état, pas un repli (`GU15`).
+                          familleOuverte ||
+                          surface === "codex" ||
+                          surface === "bibliotheque"
                           ? "codex"
                           : surface === "fabrications"
-                          ? "clip"
+                          ? "fabrications"
                           : "galerie"
 
   // ── B6 · La barre ─────────────────────────────────────────────────────────

@@ -648,6 +648,28 @@ par l'auteur, aucun servi par le guide.
 - [ ] Le commentaire d'`App.tsx` qui l'annonçait est retiré, parce qu'il est devenu faux.
 - [ ] L'essai de `GU3` sur les genres sans écran passe au vert.
 
+→ `GU15` (1/2) — **écran ou état, tranché genre par genre.** Quatre valeurs neuves
+d'`Explication["ou"]`, nommées d'après le `<h1>` de leur écran : `fabrications` (*Fabrications*,
+la racine du même nom), `envoi` (*Relire avant l'envoi*, le seul écran d'où l'argent part, testé
+nulle part dans `ecranDuGuide` jusqu'ici), `grille` (*Sur la grille du jeu*) et `comparer` (*Deux
+côte à côte*) — ces deux-là **prennent la place** de la page d'un sujet au lieu de s'y poser, et
+le résumé de `sujet` n'y était vrai d'aucune de ses trois lignes. Les **neuf fiches orphelines**
+qui empruntaient `ou: "clip"` rejoignent `fabrications`, groupées sur six zones dans l'ordre de
+`Fabrications.tsx` ; trois `quoi` sont ramenés sous 140 signes par retrait de la phrase de trop
+(un fait perdu, noté dans le code sur `source3d.camera`). Sept genres gardent un héritage, mais
+**décidé et écrit** — la branche d'`ecranDuGuide` nomme chacun : `bibliotheque` et `famille` →
+`codex` (même composant, `EcranFamille`, `<h1>` *Les sujets*), `travail` → `fabrications` (même
+`FenetreDuTravail` que la liste des fabrications rend en place), `emploi` et `calques-animes` →
+`equipement`, `carte` → `inspiration`. Un routage corrigé : `montage-de-bande` suit `montage` et
+non plus `bande` — il monte `EcranMontage` en mode reprise, pas l'atelier d'une bande. Quatre
+essais de routage dans `App.test.tsx`, `TOUS_LES_OU`/`GENRE_VERS_OU`/`LIEUX_FERMES` à jour. Les
+quinze rouges de `GU3` tombent à cinq : les quatre « résumé manquant » des écrans neufs, que
+`GU15` (2/2) écrira, et `fiche.recettes` (`ou: "bande"`, hors périmètre de cette moitié).
+`tableau-de-bord` et `depenses` restent sans fiche, et c'est une décision : le premier n'est que
+des boutons de navigation et des comptes, le second un écran de lecture dont le résumé de `GU4`
+dit déjà les trois gestes — s'il faut des fiches, ce sont ses trois filtres et la reprise d'un
+clip en attente, et `GU15` (2/2) tranche.
+
 ---
 
 ## La fin

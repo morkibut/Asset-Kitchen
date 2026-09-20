@@ -131,6 +131,15 @@ const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   "livraison-de-tuiles": "Livrer à Godot",
   son: "Les sons",
   "un-son": "Un son",
+  // `GU15` (1/2). Les quatre noms sont recopiés du `<h1>` de leur écran :
+  // *Fabrications* (`Fabrications.tsx`), *Relire avant l'envoi*
+  // (`Relecture.tsx`, le cadre commun aux quatre types), *Sur la grille du
+  // jeu* (`GrilleDuJeu.tsx`) et *Deux côte à côte* (`Comparer.tsx` — son titre
+  // change avec ce qu'on compare ; celui-ci est le cas général).
+  fabrications: "Fabrications",
+  envoi: "Relire avant l’envoi",
+  grille: "Sur la grille du jeu",
+  comparer: "Deux côte à côte",
 }
 
 // ── Le panneau des touches ────────────────────────────────────────────────

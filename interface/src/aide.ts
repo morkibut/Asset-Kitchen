@@ -130,7 +130,28 @@ export type Explication = {
    *  corps de la fenêtre de préparation quand son type est *Son*. Deux valeurs
    *  parce qu'on ne fait pas la même chose dans les deux : on y *demande* un
    *  son, on y *règle* un son déjà reçu. Les quatre fiches `son.*` rangées sous
-   *  `galerie` par `GU12` — faute d'un écran — sont revenues ici. */
+   *  `galerie` par `GU12` — faute d'un écran — sont revenues ici.
+   *
+   *  ⚠️ **Quatre valeurs de plus depuis `GU15`** (1/2), et chacune répare un
+   *  écran qui empruntait le guide d'un autre :
+   *
+   *  - `fabrications` est la racine du même nom (`Fabrications.tsx`) : le
+   *    journal des appels, la file des calculs locaux, les méthodes locales,
+   *    et la liste des demandes qu'on rouvre. Ses neuf fiches empruntaient
+   *    `ou: "clip"` — l'écran d'un clip —, où aucune n'était à sa place.
+   *  - `envoi` est *Relire avant l'envoi* (`Relecture.tsx`), le dernier écran
+   *    avant que l'argent parte. Il n'était testé nulle part dans
+   *    `ecranDuGuide` : on y voyait le guide de la racine du dessous, sur le
+   *    seul écran du produit où l'on paie.
+   *  - `grille` est *Sur la grille du jeu* (`GrilleDuJeu.tsx`) et `comparer`
+   *    *Deux côte à côte* (`Comparer.tsx`). Les deux **prennent la place** de
+   *    la page d'un sujet, ils ne s'y posent pas : le résumé de `sujet` — on y
+   *    écrit qui il est, on y fabrique ce qui manque — n'y est vrai d'aucune
+   *    de ses trois lignes.
+   *
+   *  Les quatre sont sans fiche ni résumé pour l'instant : c'est `GU15` (2/2)
+   *  qui les écrit, et les essais « résumé manquant » d'`aide.test.ts` sont
+   *  rouges jusque-là. */
   ou:
     | "tableau-de-bord"
     | "codex"
@@ -153,6 +174,10 @@ export type Explication = {
     | "livraison-de-tuiles"
     | "son"
     | "un-son"
+    | "fabrications"
+    | "envoi"
+    | "grille"
+    | "comparer"
 }
 
 /**
@@ -423,33 +448,103 @@ export const AIDE: Record<string, Explication> = {
     ou: "sortie",
   },
 
-  "fabrication.video-libre": {
-    nom: "Une vidéo avant de choisir son asset",
-    quoi: "Une image de départ est toujours envoyée au modèle vidéo. Vous pouvez l’importer, la choisir dans la bibliothèque ou la fabriquer avec un modèle d’image.",
-    change: "Le clip rejoint la galerie. Le montage permet ensuite de choisir un personnage, son mouvement et sa direction, puis de garder les frames en animation. Reprendre conserve le travail envoyé et ses références.",
-    origine: "toi · image, mouvement et méthode de fabrication",
-    ou: "clip",
-  },
-  "workflow.version": {
-    nom: "Une version de workflow local",
-    quoi: "Un profil nomme un graphe ComfyUI, ses entrées, ses références et les réglages utilisables au quotidien.",
-    change: "Modifier crée une nouvelle version. Une fabrication conserve le graphe et les images de sa propre version ; reprendre suit le numéro déjà envoyé sans recommander. Vérifier lit les prérequis, sans installer ni lancer de modèle.",
-    origine: "toi · profil importé ; ComfyUI · prérequis observés",
-    ou: "clip",
+  // ── Fabrications — la racine du même nom (`Fabrications.tsx`) ─────────────
+  //
+  // **Ces neuf fiches empruntaient `ou: "clip"`, et aucune ne parle d'un
+  // clip** (`GU15`, 1/2). Elles décrivent l'écran *Fabrications* : le journal
+  // des appels, la file des calculs locaux, les méthodes locales, la vidéo
+  // libre, et les demandes qu'on rouvre depuis *Créer et suivre les
+  // fabrications*. L'écran n'avait pas de valeur à lui ; il en a une, et les
+  // neuf y sont rangées sur six zones, dans l'ordre où `Fabrications.tsx` les
+  // montre. Textes inchangés, sauf trois `quoi` ramenés sous les 140 signes de
+  // `GU3` — la phrase de trop est retirée, aucun mot n'est réécrit.
+  //
+  // ⚠️ **Six des neuf décrivent la fenêtre d'une demande**, celle que
+  // `SuiviDesTravaux` ouvre ici même (`FenetreDuTravail`) et que le lieu
+  // `travail` rouvre par sa seconde porte, l'onglet *Agent MCP* des réglages.
+  // C'est ce qui fait que `travail` hérite de cet écran-ci plutôt que du sien
+  // (`ecranDuGuide`, `App.tsx`).
+
+  "fabrications-etat": {
+    nom: "État des fabrications",
+    groupe: "Le journal — chercher, filtrer, rouvrir",
+    quoi: "Le journal réunit les demandes conservées et les appels encore en cours.",
+    change: "Le filtre À reprendre montre les échecs et les interruptions. Une demande terminée ouvre ses résultats ; un clip ouvre son montage sans commander une nouvelle vidéo.",
+    origine: "atelier · journal des appels",
+    ou: "fabrications",
   },
   "fabrication.relecture": {
     nom: "La demande relue avant l’envoi",
+    groupe: "Créer et suivre les fabrications",
     quoi: "Le texte composé, les références, le fournisseur, le modèle et ses réglages se relisent ensemble avant de lancer une fabrication.",
     change: "Modifier prépare une nouvelle version de la demande. Reprendre garde l’envoi précédent et son identifiant : un travail déjà accepté ne se paie pas une seconde fois.",
     origine: "toi · demande conservée avec ses résultats",
-    ou: "clip",
+    ou: "fabrications",
   },
   "fabrication.file-locale": {
     nom: "Le suivi des calculs locaux",
+    groupe: "Les calculs locaux",
     quoi: "La file ordonne les calculs de l’atelier et distingue un moteur disponible, occupé ou non vérifiable.",
     change: "Annuler retire une attente avant son envoi. Reprendre retrouve le travail conservé. Les durées sont mesurées ; un chargement inconnu n’est pas annoncé comme un modèle déjà prêt.",
     origine: "atelier · observation des moteurs et historique conservé sur cette machine",
-    ou: "clip",
+    ou: "fabrications",
+  },
+  "fabrication.video-libre": {
+    nom: "Une vidéo avant de choisir son asset",
+    groupe: "Une vidéo libre",
+    // Raccourcie de 158 à 128 signes (`GU3`) : « Vous pouvez l'importer, la
+    // choisir… » disait en deux phrases ce que la liste dit en une.
+    quoi: "Une image de départ part toujours au modèle vidéo : importée, choisie dans la bibliothèque, ou fabriquée avec un modèle d’image.",
+    change: "Le clip rejoint la galerie. Le montage permet ensuite de choisir un personnage, son mouvement et sa direction, puis de garder les frames en animation. Reprendre conserve le travail envoyé et ses références.",
+    origine: "toi · image, mouvement et méthode de fabrication",
+    ou: "fabrications",
+  },
+  "workflow.version": {
+    nom: "Une version de workflow local",
+    groupe: "Mes méthodes locales — importer, vérifier, choisir un workflow",
+    quoi: "Un profil nomme un graphe ComfyUI, ses entrées, ses références et les réglages utilisables au quotidien.",
+    change: "Modifier crée une nouvelle version. Une fabrication conserve le graphe et les images de sa propre version ; reprendre suit le numéro déjà envoyé sans recommander. Vérifier lit les prérequis, sans installer ni lancer de modèle.",
+    origine: "toi · profil importé ; ComfyUI · prérequis observés",
+    ou: "fabrications",
+  },
+  "source3d.import": {
+    nom: "Importer un rendu 3D",
+    groupe: "Un rendu 3D rouvert — importer, inspecter, corriger, cadrer",
+    quoi: "Le rendu rejoint le personnage sous forme de frames transparentes, avec ses réglages, son modèle et les fichiers disponibles.",
+    change: "Choisissez le mouvement, la direction et la cadence. L’import ne relance aucun calcul ; la copie reste retouchable après arrêt d’asset3d. Le modèle animé fourni par une ancienne version d’asset3d reflète ses corrections au moment de l’import, pas nécessairement celles du rendu historique.",
+    origine: "rendu choisi dans le moteur externe · copie conservée dans ce jeu",
+    ou: "fabrications",
+  },
+  "source3d.inspection": {
+    nom: "Inspecter le modèle animé",
+    groupe: "Un rendu 3D rouvert — importer, inspecter, corriger, cadrer",
+    quoi: "La vue 3D permet de tourner la caméra, de zoomer, de voir le squelette et de lire les animations intégrées au fichier.",
+    change: "Les réglages de cette inspection changent seulement la vue. Le cadre englobe les poses de l’animation pour garder la silhouette entière pendant la lecture ; les frames déjà importées ne sont pas recalculées.",
+    origine: "copie GLB locale · caméra de consultation",
+    ou: "fabrications",
+  },
+  "source3d.corrections": {
+    nom: "Corrections du squelette",
+    groupe: "Un rendu 3D rouvert — importer, inspecter, corriger, cadrer",
+    // Raccourcie de 170 à 123 signes (`GU3`) : « avec le curseur ou la valeur
+    // en degrés » devient « en degrés » — les deux entrées restent dites par
+    // l'écran, qui les montre côte à côte.
+    quoi: "Un os proposé par le moteur, puis sa vrille, sa flexion et son écart en degrés. Gauche et droite sont celles du personnage.",
+    change: "Enregistrer actualise le GLB de contrôle avec Blender, sans génération IA. Les corrections s’appliquent aux prochains rendus ; les travaux conservés gardent leur copie. Le rendu refuse des corrections changées depuis sa relecture. Les réglages non enregistrés restent disponibles comme brouillon.",
+    origine: "source 3D externe · os et bornes déclarés par le moteur",
+    ou: "fabrications",
+  },
+  "source3d.camera": {
+    nom: "Caméra et portion du rendu 3D",
+    groupe: "Un rendu 3D rouvert — importer, inspecter, corriger, cadrer",
+    // Raccourcie de 204 à 136 signes (`GU3`). ⚠️ La phrase retirée disait un
+    // fait qu'aucun autre champ ne porte — *la vue 3D peut transmettre son
+    // angle au prochain rendu* : à remettre par `GU15` (2/2), dans `change`
+    // ou dans un « à savoir ».
+    quoi: "Un angle du catalogue, ou l’azimut et la hauteur en degrés. Une portion limite le mouvement à extraire ; une pose garde une seule frame.",
+    change: "L’angle, la portion et les corrections sont conservés avec le travail. Le zoom de consultation ne change pas le cadre exporté : toutes les frames gardent la même taille et un cadre commun, mesuré sur le mouvement entier.",
+    origine: "toi · paramètres acceptés et relus par le moteur externe",
+    ou: "fabrications",
   },
   // ── Cibles de cet emploi — associer une image, lancer une fabrication ──────
   //
@@ -482,41 +577,6 @@ export const AIDE: Record<string, Explication> = {
     change:
       "La relecture distingue les images attendues des appels nécessaires : plusieurs cibles peuvent partager une planche. Les références et les paramètres restent modifiables avant l'envoi. Un résultat équipé doit ensuite être extrait, ajusté et vérifié sur sa cible.",
     origine: "objectif du personnage · versions choisies et variantes déjà vérifiées",
-  },
-  "source3d.import": {
-    nom: "Importer un rendu 3D",
-    quoi: "Le rendu rejoint le personnage sous forme de frames transparentes, avec ses réglages, son modèle et les fichiers disponibles.",
-    change: "Choisissez le mouvement, la direction et la cadence. L’import ne relance aucun calcul ; la copie reste retouchable après arrêt d’asset3d. Le modèle animé fourni par une ancienne version d’asset3d reflète ses corrections au moment de l’import, pas nécessairement celles du rendu historique.",
-    origine: "rendu choisi dans le moteur externe · copie conservée dans ce jeu",
-    ou: "clip",
-  },
-  "source3d.inspection": {
-    nom: "Inspecter le modèle animé",
-    quoi: "La vue 3D permet de tourner la caméra, de zoomer, de voir le squelette et de lire les animations intégrées au fichier.",
-    change: "Les réglages de cette inspection changent seulement la vue. Le cadre englobe les poses de l’animation pour garder la silhouette entière pendant la lecture ; les frames déjà importées ne sont pas recalculées.",
-    origine: "copie GLB locale · caméra de consultation",
-    ou: "clip",
-  },
-  "source3d.corrections": {
-    nom: "Corrections du squelette",
-    quoi: "Choisissez un os proposé par le moteur, puis réglez sa vrille, sa flexion et son écart avec le curseur ou la valeur en degrés. Gauche et droite sont celles du personnage.",
-    change: "Enregistrer actualise le GLB de contrôle avec Blender, sans génération IA. Les corrections s’appliquent aux prochains rendus ; les travaux conservés gardent leur copie. Le rendu refuse des corrections changées depuis sa relecture. Les réglages non enregistrés restent disponibles comme brouillon.",
-    origine: "source 3D externe · os et bornes déclarés par le moteur",
-    ou: "clip",
-  },
-  "source3d.camera": {
-    nom: "Caméra et portion du rendu 3D",
-    quoi: "Choisissez un angle du catalogue ou réglez l’azimut et la hauteur en degrés. La vue 3D peut transmettre son angle au prochain rendu. Une portion limite le mouvement à extraire ; une pose en garde une seule frame.",
-    change: "L’angle, la portion et les corrections sont conservés avec le travail. Le zoom de consultation ne change pas le cadre exporté : toutes les frames gardent la même taille et un cadre commun, mesuré sur le mouvement entier.",
-    origine: "toi · paramètres acceptés et relus par le moteur externe",
-    ou: "clip",
-  },
-  "fabrications-etat": {
-    nom: "État des fabrications",
-    quoi: "Le journal réunit les demandes conservées et les appels encore en cours.",
-    change: "Le filtre À reprendre montre les échecs et les interruptions. Une demande terminée ouvre ses résultats ; un clip ouvre son montage sans commander une nouvelle vidéo.",
-    origine: "atelier · journal des appels",
-    ou: "clip",
   },
   // ── Les règles du jeu — l'écran « Réglages », onglet Univers ──────────────
   //
