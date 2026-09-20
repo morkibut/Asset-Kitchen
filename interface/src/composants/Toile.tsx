@@ -830,6 +830,20 @@ export function cequiPartDeLaToile(
   return { images, notes }
 }
 
+/** Ce qu'un champ de correction doit écrire au blur, ou rien.
+ *
+ *  **Vide referme sans écrire, comme le brouillon d'une note neuve** — c'est le
+ *  même argument que `cequiPartDeLaToile` applique déjà à ce qui part : une
+ *  carte texte n'existe que par son texte, et l'effacer par un blur maladroit
+ *  serait bien pire qu'une note vide qu'on ne crée jamais. C'est aussi ce qui
+ *  évite un appel à chaque fermeture — coller, relire, refermer sans y toucher
+ *  ne doit rien écrire. */
+export function texteACorriger(carte: Carte, valeur: string): string | null {
+  const corrige = valeur.trim()
+  if (!corrige || corrige === carte.texte) return null
+  return corrige
+}
+
 /** Les trois gestes du lot, **au-dessus de la toile** (`RP9`).
  *
  * La maquette compte la sélection au-dessus du plan, et c'est le bon endroit :
@@ -941,6 +955,10 @@ type Cadre = {
   onEpingler: (cle: string | null) => void
   onErreur: (raison: string) => void
   onLargeur: (carte: Carte, largeur: number) => void
+  /** Le texte d'une note, corrigé en place (`RT7`). Passe par `poser` comme
+   *  `onLargeur` : le serveur sait le champ depuis `T9`, il ne manquait qu'un
+   *  écran pour l'appeler — et la pile de défaire pour le reste. */
+  onCorrigerTexte: (carte: Carte, texte: string) => void
   onTeinterIlot: (nom: string, teinte: Teinte) => void
   /** **Les deux gestes de fabrication du paquet** (E7, ouverts en E11).
    *
@@ -1349,6 +1367,9 @@ function Plan({
       // toute façon la largeur qu'on voyait avant de tirer.
       if ("largeur_libre" in reglage && crans)
         avant.largeur_libre = carte.largeur_libre ?? crans[carte.taille]
+      // Le texte d'une note, corrigé en place (`RT7`) : même geste que la
+      // largeur, même pile.
+      if ("texte" in reglage) avant.texte = carte.texte
       // **Et ce que ce geste-là va emporter avec l'îlot qu'il vide** (T9). Sortir
       // la dernière carte d'un groupe efface, sur le disque, les liens qui
       // aboutissaient à son îlot et la teinte qu'on lui avait donnée : c'est la
@@ -1817,6 +1838,7 @@ function Plan({
       onEpingler: setEpingle,
       onErreur,
       onLargeur: (carte, largeur) => poser(carte, { largeur_libre: largeur }),
+      onCorrigerTexte: (carte, texte) => poser(carte, { texte }),
       onTeinterIlot: (nom, teinte) =>
         void api.teinterIlot(nom, teinte).catch((e) => echouer(e, "teinte refusée")),
       // **Le paquet n'est pas la palette**, et c'est ce que ces deux gestes
@@ -2662,6 +2684,25 @@ function NoeudCarte({ data }: NodeProps) {
   // une largeur encore nulle — et le geste ne s'écrit pas. L'état sert à rendre,
   // la référence à poser ; c'est la même valeur, tenue là où chacun la lit.
   const derniere = useRef<number | null>(null)
+
+  // ── La correction d'une note posée (`RT7`) ────────────────────────────────
+  //
+  // **Le serveur sait le champ `texte` depuis T9, aucun écran ne le lui
+  // envoyait.** Une carte collée ici ne se corrigeait jamais : réparer une
+  // faute demandait de la retirer et de la recoller, donc de perdre sa place,
+  // sa teinte et ses liens — exactement ce que le champ existe pour éviter.
+  //
+  // **Un crayon, pas une note qu'on rouvre.** Le menu de `CarteTuile` porte
+  // déjà un champ *Texte*, mais il vit dans le tableau, sans `nodrag`/`nopan` :
+  // cliquer dedans sur la toile saisirait le nœud comme au premier pixel d'un
+  // glissement. L'édition de la toile est donc la sienne, à côté — un champ
+  // plein cadre qui reprend le geste du brouillon d'une note neuve
+  // (`NoeudBrouillon`), et le referme de la même façon.
+  const [enEdition, setEnEdition] = useState(false)
+  const champTexte = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (enEdition) champTexte.current?.focus()
+  }, [enEdition])
   if (!cadre) return null
 
   const posee = carte.largeur_libre ?? (cadre.crans ? cadre.crans[carte.taille] : 0)
@@ -2681,8 +2722,10 @@ function NoeudCarte({ data }: NodeProps) {
            menu : un menu règle une carte, et ce qu'on fait de plusieurs se lit
            au-dessus de la toile (`RP9`). */
         selectionnee={cadre.selection.includes(carte.identifiant)}
-        menu={cadre.selection.length < 2}
-        survolee={cleCarte(carte.identifiant) === cadre.survolee}
+        // Le menu du tableau referme pendant qu'on écrit : les deux champs
+        // *Texte* se contrediraient sinon, posés l'un sur l'autre.
+        menu={!enEdition && cadre.selection.length < 2}
+        survolee={!enEdition && cleCarte(carte.identifiant) === cadre.survolee}
         onSurvol={(dedans) => cadre.onSurvol(cleCarte(carte.identifiant), dedans)}
         onChoisir={(evenement) =>
           cadre.onChoisir(
@@ -2692,6 +2735,49 @@ function NoeudCarte({ data }: NodeProps) {
         }
         onErreur={cadre.onErreur}
       />
+      {/* Le crayon — révélé au survol comme la poignée de largeur, dans le
+          coin resté libre : le triangle d'artwork et la marque de concept art
+          n'existent que sur une image (`CarteTuile`), jamais sur une note. */}
+      {carte.genre === "texte" && !enEdition && (
+        <div style={ancreEcran(zoom, { left: "100%", top: "0%" })}>
+          <button
+            type="button"
+            aria-label="Corriger le texte"
+            onClick={(evenement) => {
+              evenement.stopPropagation()
+              setEnEdition(true)
+            }}
+            className="nodrag nopan absolute top-[4px] -left-[24px] flex h-[20px] w-[20px] items-center justify-center rounded-5 border border-contour bg-carte text-[11px] leading-none text-encre-3 opacity-0 transition duration-[120ms] group-hover:opacity-100 hover:border-signal hover:text-signal focus-visible:opacity-100"
+          >
+            ✎
+          </button>
+        </div>
+      )}
+      {/* Le champ plein cadre, par-dessus la carte : `Échap` referme sans
+          écrire, `blur` écrit ce qui a changé — et rien quand le champ revient
+          vide ou inchangé (`texteACorriger`), pour qu'une relecture refermée
+          sans y toucher n'envoie aucun appel. */}
+      {enEdition && (
+        <div className="absolute inset-0 z-30">
+          <textarea
+            ref={champTexte}
+            defaultValue={carte.texte}
+            onKeyDown={(evenement) => {
+              if (evenement.key !== "Escape") return
+              evenement.stopPropagation()
+              setEnEdition(false)
+            }}
+            onBlur={(evenement) => {
+              const corrige = texteACorriger(carte, evenement.target.value)
+              if (corrige) cadre.onCorrigerTexte(carte, corrige)
+              setEnEdition(false)
+            }}
+            // `nopan` avec les deux autres, comme `NoeudBrouillon` : sélectionner
+            // le texte à la souris déplacerait sinon le plan sous le champ.
+            className="nodrag nowheel nopan h-full w-full resize-none rounded-5 border border-signal bg-carte p-3 text-[12.5px] leading-relaxed text-encre shadow-[0_0_0_2px_var(--color-signal)]"
+          />
+        </div>
+      )}
       {/* **Le carré — on tire une dimension**, 10 px au coin bas-droit, révélé
           au survol. Le seul des trois qui garde le motif *le survol révèle*, et
           il le garde avec sa raison : il règle **la carte qu'on regarde déjà**,

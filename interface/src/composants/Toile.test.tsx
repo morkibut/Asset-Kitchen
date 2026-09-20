@@ -37,6 +37,7 @@ import {
   menaceDe,
   placeLibre,
   selectionVive,
+  texteACorriger,
   type Crans,
 } from "./Toile"
 
@@ -711,5 +712,35 @@ describe("ce qu'un lot emporte en partant", () => {
   test("des cartes sans groupe ne perdent aucun îlot", () => {
     const libre = carte("libre", { position: [10, 10] })
     expect(ilotsPerdusParLeLot(["libre"], [libre], traits, teintes)).toEqual([])
+  })
+})
+
+describe("ce qu'un blur de correction doit écrire (RT7)", () => {
+  test("un texte changé se corrige", () => {
+    const note = carte("note", {
+      genre: "texte",
+      texte: "des tons de tourbe",
+      position: [0, 0],
+    })
+    expect(texteACorriger(note, "des tons de tourbe froide")).toBe(
+      "des tons de tourbe froide",
+    )
+  })
+
+  test("les blancs qui l'entourent ne partent pas dans la comparaison ni dans l'écriture", () => {
+    const note = carte("note", { genre: "texte", texte: "tourbe", position: [0, 0] })
+    expect(texteACorriger(note, "  tourbe  ")).toBeNull()
+    expect(texteACorriger(note, "  tourbe froide  ")).toBe("tourbe froide")
+  })
+
+  test("un champ vidé referme sans écrire — comme le brouillon d'une note neuve", () => {
+    const note = carte("note", { genre: "texte", texte: "tourbe", position: [0, 0] })
+    expect(texteACorriger(note, "   ")).toBeNull()
+    expect(texteACorriger(note, "")).toBeNull()
+  })
+
+  test("relire sans corriger referme sans appel", () => {
+    const note = carte("note", { genre: "texte", texte: "tourbe", position: [0, 0] })
+    expect(texteACorriger(note, "tourbe")).toBeNull()
   })
 })
