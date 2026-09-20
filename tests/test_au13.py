@@ -127,6 +127,7 @@ async def test_http_mcp_et_livraison_sans_personnage(fixe):
     assert {"create_tile_set", "update_tile_set", "extract_tile_for_editing", "preview_tile_delivery"} <= noms
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Godot absent : contrat natif non vérifié.")
 async def test_godot_charge_atlas_raccords_carte_et_alpha(fixe):
     a, p, godot = fixe

@@ -148,6 +148,7 @@ def test_livraison_tenue_cible_distincte_et_aseprite_exact(tenue, atelier, tmp_p
     assert atelier.livraison.livrer(t["projet"], ancienne["jeton"])["etat"] == "terminee"
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Godot absent : contrôle moteur non effectué.")
 def test_godot_synchronise_les_couches_et_retire_une_piece(tenue, atelier, tmp_path):
     service, t, _ = tenue

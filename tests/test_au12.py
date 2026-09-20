@@ -120,6 +120,7 @@ async def test_api_mcp_images_utilisent_meme_preparation(fixe):
     assert {"list_image_delivery_versions", "preview_image_delivery"} <= noms
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Godot absent : contrôle moteur non effectué.")
 async def test_godot_charge_sprite_decor_et_texture_interface(fixe):
     atelier, projet, godot = fixe

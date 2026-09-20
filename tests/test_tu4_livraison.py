@@ -264,6 +264,7 @@ func _initialize():
 '''
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Godot absent : pose native non vérifiée.")
 async def test_godot_pose_les_memes_pieces_que_l_atelier(fixe):
     a, p, godot = fixe
@@ -315,6 +316,7 @@ func _initialize():
 '''
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Godot absent : animation native non vérifiée.")
 async def test_godot_charge_les_jeux_animes_et_les_autres_formats(fixe):
     a, p, godot = fixe

@@ -254,6 +254,7 @@ def _lancer(jeu, *arguments, delai=90):
                           timeout=delai, encoding="utf-8", errors="replace")
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Moteur Godot non installé")
 def test_godot_charge_la_piste_audio_et_la_joue_a_chaque_boucle(atelier, heros, tmp_path):
     projet, sujet, marche = heros

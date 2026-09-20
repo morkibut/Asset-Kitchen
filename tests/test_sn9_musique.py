@@ -139,6 +139,7 @@ def _godot_run(jeu, *arguments, delai=90):
         timeout=delai, encoding="utf-8", errors="replace")
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Moteur Godot non installé")
 def test_godot_boucle_exploration_24_mesures_90_bpm_sans_saut_de_temps(audio, tmp_path):
     """Le critère d'acceptation de SN9 : une boucle d'exploration de 24

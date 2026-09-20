@@ -143,6 +143,7 @@ def test_wav_format_extensible_se_decode_comme_pcm():
     assert contenu == donnees
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Moteur Godot non installé")
 def test_audio_stream_player_reel_sans_import_deforme(audio, tmp_path):
     atelier, projet = audio

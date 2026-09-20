@@ -36,7 +36,15 @@ import dataclasses
 import re
 from pathlib import Path
 
+import pytest
+
 from atelier.domaine.recette import Retournement
+
+# **Garde-fou** : il balaie tous les `.ts` et `.tsx` d'`interface/src` pour
+# vérifier que les trois surfaces déménagées ne réapparaissent nulle part. Le
+# fichier qui les ferait revenir est, par construction, un fichier qu'il ne
+# nomme pas — donc il tourne toujours (`essais/lancer_les_essais.py`).
+pytestmark = pytest.mark.gardefou
 
 RACINE = Path(__file__).resolve().parents[1]
 COMPOSANTS = RACINE / "interface" / "src" / "composants"

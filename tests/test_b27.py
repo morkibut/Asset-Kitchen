@@ -31,6 +31,12 @@ from pathlib import Path
 
 import pytest
 
+# **Garde-fou**, sur le patron exact de `tests/test_b0.py` : `essai_imports.py`
+# balaie tous les fichiers du carnet pour y chercher un emprunt à un écran du
+# dehors. L'emprunt fautif peut apparaître dans un fichier que ce test ne nomme
+# nulle part, donc il doit tourner même loin de ce qu'on vient de toucher.
+pytestmark = pytest.mark.gardefou
+
 RACINE = Path(__file__).resolve().parent.parent
 
 

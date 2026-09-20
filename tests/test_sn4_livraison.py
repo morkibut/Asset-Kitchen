@@ -426,6 +426,7 @@ def _godot(jeu, *arguments, delai=90):
         timeout=delai, encoding="utf-8", errors="replace")
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Moteur Godot non installé")
 def test_godot_importe_sans_reecrire_et_joue_boucle_et_tempo(audio, tmp_path):
     atelier, projet = audio
@@ -488,6 +489,7 @@ func _initialize():
     assert not encore["conflits"] and encore["pret"]
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Moteur Godot non installé")
 def test_godot_charge_un_jeu_de_huit_variantes(tmp_path):
     jeu = _jeu(tmp_path, "jeu-variantes")
@@ -531,6 +533,7 @@ func _initialize():
     assert "SCRIPT ERROR" not in preuve.stderr
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Moteur Godot non installé")
 def test_godot_livre_importe_et_charge_un_jeu_de_huit_variantes(audio, tmp_path):
     # Bout en bout, cette fois par l'atelier : créer huit sons, en faire un

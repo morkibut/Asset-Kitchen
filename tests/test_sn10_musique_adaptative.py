@@ -248,6 +248,7 @@ def _godot(jeu, *arguments, delai=90):
         timeout=delai, encoding="utf-8", errors="replace")
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Moteur Godot non installé")
 def test_godot_passe_d_exploration_a_combat_sur_la_mesure_suivante_sans_coupure(audio, tmp_path):
     """SN10, critère 1 : dans Godot, passer d'« exploration » à « combat » se
@@ -313,6 +314,7 @@ func _initialize():
     assert "SCRIPT ERROR" not in preuve.stderr
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Moteur Godot non installé")
 def test_godot_monter_la_couche_tension_ne_decale_pas_les_autres(audio, tmp_path):
     """SN10, critère 2 : monter la couche « tension » ne décale pas les

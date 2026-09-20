@@ -37,6 +37,15 @@ from pathlib import Path
 
 import pytest
 
+# **Garde-fou** : ce fichier ne surveille pas une tranche, il surveille tout ce
+# qu'on écrit à l'écran — les listes fermées valent pour chaque fichier du
+# carnet, et `essai_jetons.py` balaie `interface/src` en entier. Il casse donc
+# sur un fichier qu'il ne nomme nulle part, ce qu'aucune règle de proximité ne
+# peut deviner : une largeur posée dans un composant l'a fait échouer trois
+# séances sans que personne le voie. Le marqueur le fait tourner **toujours**,
+# même loin de ce qu'on vient de toucher (`essais/lancer_les_essais.py`).
+pytestmark = pytest.mark.gardefou
+
 RACINE = Path(__file__).resolve().parent.parent
 APP = RACINE / "interface" / "src" / "App.tsx"
 LIEUX = RACINE / "interface" / "src" / "lieux.ts"

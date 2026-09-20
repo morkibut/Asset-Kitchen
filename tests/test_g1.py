@@ -35,6 +35,12 @@ from pathlib import Path
 
 import pytest
 
+# **Garde-fou**, et c'est même sa raison d'être : les neuf phrases qu'il tient
+# ont toutes été démenties « par un changement venu d'ailleurs ». Il balaie
+# `interface/src` en entier, donc ce qui le casse est par définition un fichier
+# qu'il ne nomme pas. Il tourne toujours (`essais/lancer_les_essais.py`).
+pytestmark = pytest.mark.gardefou
+
 RACINE = Path(__file__).resolve().parents[1]
 SOURCES = RACINE / "interface" / "src"
 

@@ -23,7 +23,15 @@ import ast
 from pathlib import Path
 
 from test_c3 import _cases, _corps, _habiller, _personnage, _piece
+import pytest
+
 from tests.test_t7 import appeler, mcp, refuser  # noqa: F401
+
+# **Garde-fou** : « une seule porte » se prouve en lisant *tous* les `.py` d'
+# `atelier/` pour y chercher une seconde écriture dans le dossier du jeu. Une
+# porte neuve s'ouvrirait dans un fichier que ce test ne nomme pas — donc il
+# tourne toujours (`essais/lancer_les_essais.py`).
+pytestmark = pytest.mark.gardefou
 
 RACINE = Path(__file__).resolve().parent.parent
 

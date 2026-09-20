@@ -46,8 +46,22 @@ EDGE = Path("C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe")
 PLAYWRIGHT = RACINE / "interface" / "node_modules" / "playwright-core"
 BRUIT_DE_SORTIE = ("instances were leaked at exit", "resources still in use at exit")
 
-sans_node = pytest.mark.skipif(not NODE or ServiceRenduTuiles(None).disponibilite()["disponible"] is False,
-                               reason="Node.js 22.18+ absent : rendu serveur non vérifié.")
+def sans_node(essai):
+    """Skipé si Node manque — **et marqué `lent`**, parce qu'il lance Node.
+
+    Les deux vont ensemble et ne se séparent pas : un essai qui démarre un
+    processus extérieur coûte des secondes entières (8,5 s pour la comparaison
+    au navigateur, 5,4 s pour la livraison de bout en bout, mesurés le
+    20 septembre 2026) et **porte son propre délai d'attente**. Sous la charge de
+    plusieurs processus, ce délai se dépasse et l'essai échoue alors qu'il passe
+    seul. Le marqueur le fait partir sans concurrence
+    (`essais/lancer_les_essais.py`).
+    """
+    return pytest.mark.lent(_sans_node(essai))
+
+
+_sans_node = pytest.mark.skipif(not NODE or ServiceRenduTuiles(None).disponibilite()["disponible"] is False,
+                                reason="Node.js 22.18+ absent : rendu serveur non vérifié.")
 
 HERBE = {"sorte": "sol", "taille": 16, "graine": 42, "emplacements": {"surface": {"source": "integree", "nom": "herbe"}}}
 

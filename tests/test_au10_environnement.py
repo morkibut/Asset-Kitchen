@@ -13,6 +13,12 @@ from pathlib import Path
 
 import pytest
 
+# **Garde-fou** : il relève l'empreinte du dossier du voisin **en entier** avant
+# et après le chargement du pont, et refuse la moindre écriture. Ce qui le
+# casserait est une ligne écrite n'importe où dans le pont, pas un fichier qu'il
+# nomme — donc il tourne toujours (`essais/lancer_les_essais.py`).
+pytestmark = pytest.mark.gardefou
+
 SOURCE = Path(__file__).resolve().parents[2] / "asset3d"
 
 

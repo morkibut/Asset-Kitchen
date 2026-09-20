@@ -364,6 +364,11 @@ GODOT = next((str(p) for p in [Path(os.environ.get("GODOT_EXECUTABLE", "absent")
              if p.is_file()), shutil.which("godot") or shutil.which("godot4"))
 
 
+# **Marqué `lent`** : il lance le moteur Godot dans un processus à part, avec son
+# propre délai d'attente. Sous la charge de plusieurs processus ce délai se
+# dépasse et l'essai échoue alors qu'il passe seul — il part donc sans
+# concurrence (`essais/lancer_les_essais.py`).
+@pytest.mark.lent
 @pytest.mark.skipif(not GODOT, reason="Godot absent : contrôle moteur non effectué.")
 def test_godot_charge_la_scene_et_joue_ordre_cadence_pivot(atelier, decor):
     projet, personnage, godot, _ = decor

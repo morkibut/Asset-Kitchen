@@ -215,6 +215,7 @@ def _lancer(godot, script):
     return preuve.stdout
 
 
+@pytest.mark.lent  # lance le moteur Godot — voir tests/test_au1.py, GODOT
 @pytest.mark.skipif(not GODOT, reason="Godot absent : pose native du décor non vérifiée.")
 async def test_godot_charge_le_decor_et_retrouve_la_pose(fixe):
     a, p, godot = fixe
