@@ -198,9 +198,14 @@ Chaque tranche ci-dessous porte les **mêmes six critères**, et ils ne sont pas
   que réécrites sur place — deux vers `ou: "galerie"` (l'import général, accroché dans
   `Import.tsx`/`BarreOutils.tsx`, pas dans la fenêtre d'import d'un sujet), six vers
   `ou: "bande"` (l'atelier d'une bande, `AtelierDeBande.tsx`, déjà le foyer de leurs
-  voisines) — laissant vingt-sept fiches propres à cet écran. Les six autres tranches du
-  tableau ci-dessous n'ont pas encore été reprises, et remettront cette liste à décocher le
-  temps de leur propre passe.)*
+  voisines) — laissant vingt-sept fiches propres à cet écran. Vérifié aussi pour `GU7` — les
+  règles du jeu, en deux temps : `GU7` (1/2) a d'abord réparé le routage qui rendait l'écran
+  injoignable, `GU7` (2/2) a réécrit les vingt-deux fiches restantes sous sept zones réelles,
+  retiré un doublon (`assistant.taille`, le même champ qu'`univers.cible_px` sous un autre
+  nom) et corrigé deux fiches qui présentaient un champ en lecture seule comme un champ à
+  taper (`bible.rendu`, `bible.vue`) — laissant vingt et une fiches propres à cet écran. Les
+  cinq autres tranches du tableau ci-dessous n'ont pas encore été reprises, et remettront
+  cette liste à décocher le temps de leur propre passe.)*
 
 | Tranche | Écran | Fiches aujourd'hui |
 |---|---|---|
@@ -277,6 +282,27 @@ relevé (`assistant.ecran`, `assistant.texte`) ; une déplacée vers son bon éc
 (`agent.cadre-durable` → `ou: "reglages"` : elle décrit `DelegationDuJeu`, monté par l'onglet
 *Agent MCP*). Les vingt-cinq fiches d'origine sont aujourd'hui **vingt-deux**, toutes rangées
 et toutes joignables — **mais aucune n'est encore réécrite** : c'est `GU7` (2/2).
+
+→ `GU7` (2/2) réécrit les vingt-deux fiches sous leurs sept zones. **Son nom** est corrigée
+contre l'étape réelle : elle ne se contente plus de renommer un jeu déjà là, elle dit qu'elle
+crée le projet en `mode="creation"` et le renomme en `mode="reglages"` — le même écran, deux
+usages, un dossier calculé une fois et jamais repris. **Son allure** perd un doublon :
+`assistant.taille` et `univers.cible_px` décrivaient le même champ (`cible_px`) sous deux
+noms, la première avec le compte des « dix réglages » d'un assistant qui n'existe plus —
+`univers.cible_px` reste seule, rien d'exact ne disparaît avec l'autre (le détail est dans
+`docs/releves/guide-2026-09-20.md`). **Son monde — les deux lignes que l'atelier écrit**
+(`bible.rendu`, `bible.vue`) ne mentent plus : les deux disaient qu'on les tapait, elles
+disent maintenant qu'elles s'écrivent seules depuis « Son allure » et « Sa vue », avec un
+renvoi vers l'étape qui les remplit. **Les étiquettes** ne disent plus que la base part vide :
+soixante-dix sont livrées, rangées par case, et la fiche le dit. **Les huit lignes de la
+dernière zone** (barème, modèle par famille, détourage, poses, emplacements) disent
+maintenant qu'elles sont en lecture seule ici et où elles se règlent vraiment ; elles restent
+toutes sous `ou: "jeu"` plutôt que de suivre `univers.detourage` — seule du groupe à se régler
+ailleurs que dans `ReglagesDeFamille.tsx` — vers `ou: "codex"`, ce qui aurait scindé un bloc
+que l'écran affiche d'une pièce. Les neuf fiches qui dépassaient encore une limite de `GU3`
+(`quoi` ou « à savoir ») sont retaillées ; ce qu'elles perdaient en détail mesuré part dans
+sept lignes neuves de `docs/design-decisions.md`. Vingt et une fiches, réparties sur sept
+zones, et les essais de `GU3` passent au vert pour cet écran.
 
 ---
 
