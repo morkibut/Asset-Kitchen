@@ -121,13 +121,23 @@ repliées. Une ligne dépliée montre ce que ça change, d'où ça sort, et le �
 a un. Les touches de l'écran restent où elles sont.
 
 **Critères**
-- [ ] Le résumé de l'écran paraît en tête, avant tout réglage.
-- [ ] Les fiches sont rendues sous le titre de leur `groupe`, dans l'ordre du fichier.
-- [ ] Une fiche est repliée par défaut et montre son nom et son `quoi` ; un clic la déplie.
-- [ ] Le lien « Le guide › » d'une bulle ouvre le volet **avec sa fiche déjà dépliée**.
-- [ ] Un écran sans résumé ni fiche dit ce qu'il dit déjà — « Rien à expliquer ici » — et rien
+- [x] Le résumé de l'écran paraît en tête, avant tout réglage.
+- [x] Les fiches sont rendues sous le titre de leur `groupe`, dans l'ordre du fichier.
+- [x] Une fiche est repliée par défaut et montre son nom et son `quoi` ; un clic la déplie.
+- [x] Le lien « Le guide › » d'une bulle ouvre le volet **avec sa fiche déjà dépliée**.
+- [x] Un écran sans résumé ni fiche dit ce qu'il dit déjà — « Rien à expliquer ici » — et rien
       de plus.
-- [ ] Essais d'écran : l'encadré, un groupe, un repli, le lien de bulle.
+- [x] Essais d'écran : l'encadré, un groupe, un repli, le lien de bulle.
+
+**Ce qui a été tranché, et dont les douze tranches suivantes héritent** : `groupe` est
+facultatif au type le temps du chantier (le rendre obligatoire casserait la compilation sur
+les 229 fiches ; c'est l'essai de `GU3` qui l'exige, pas le compilateur). Les résumés vivent
+dans `RESUMES`, à part de `AIDE`, indexés par l'écran. Le volet **ne retrie jamais** : l'ordre
+des groupes est celui de leur première apparition dans le fichier, et deux fiches éloignées
+qui portent le même `groupe` se rejoignent sous un seul titre. Les fiches pas encore rangées
+paraissent sans titre tant qu'aucune fiche de l'écran n'en a un, et passent à la fin sous
+« Le reste de cet écran » dès qu'une seule est rangée — l'état d'un écran à moitié fait se
+voit au lieu de se cacher.
 
 ### `GU3` — Les garde-fous : un essai refuse ce qui redevient pompeux
 

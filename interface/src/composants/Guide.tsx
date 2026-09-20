@@ -17,6 +17,12 @@
  * **Il ne porte pas de fente de refus**, pour la même raison qu'avant : il ne
  * demande rien au serveur, ne dépense rien, ne peut pas échouer.
  *
+ * **Depuis `GU2`, il se parcourt au lieu de se lire** : l'écran se présente en
+ * trois lignes tout en haut quand il a son résumé, les réglages se rangent
+ * sous le titre de leur zone, et chaque fiche est repliée sur son nom et ce
+ * que c'est. Un clic ouvre ce que ça change, d'où ça sort et l'« à savoir ».
+ * Les textes, eux, n'ont pas bougé : c'est le travail de `GU4` à `GU15`.
+ *
  * **Ce qui ne fait pas le voyage depuis l'écran d'avant** : les six pas de
  * « Le geste » et les quatre visites d'écran (« L'univers », « Le codex »,
  * « La galerie », « L'établi ») — une prose longue, écrite pour une colonne de
@@ -27,8 +33,8 @@
  * jour redevenir un vrai parcours d'accueil.
  */
 
-import { useEffect, useRef, useSyncExternalStore } from "react"
-import { AIDE, SANS_ENTREE, type Explication } from "../aide"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react"
+import { AIDE, RESUMES, SANS_ENTREE, type Explication } from "../aide"
 
 // ── Ouvrir le guide depuis n'importe où ─────────────────────────────────────
 //
@@ -132,6 +138,50 @@ const TOUCHES: Partial<Record<Explication["ou"], readonly { touche: string; quoi
   ],
 }
 
+// ── Les groupes ──────────────────────────────────────────────────────────
+
+/** Le titre que prennent les fiches qui n'ont pas encore de `groupe`, sur un
+ *  écran où d'autres en ont déjà un. */
+const RESTE = "Le reste de cet écran"
+
+type Groupe = { titre: string | null; fiches: [string, Explication][] }
+
+/**
+ * Les fiches d'un écran, rangées sous le titre de leur zone.
+ *
+ * Deux choix, et ils tiennent pendant tout le remplissage de `GU4` à `GU15`,
+ * où un écran aura des fiches rangées et des fiches qui ne le sont pas encore :
+ *
+ * 1. **On ne retrie rien.** L'ordre des groupes est celui de leur première
+ *    apparition dans le fichier, et l'ordre des fiches dans un groupe reste
+ *    celui du fichier. Deux fiches éloignées qui portent le même `groupe` se
+ *    rejoignent sous un seul titre, plutôt que d'en fabriquer deux identiques
+ *    parce qu'une troisième s'était glissée entre elles.
+ * 2. **Les fiches sans `groupe` finissent ensemble, à la fin.** Tant qu'aucune
+ *    fiche de l'écran n'est rangée — le cas de tous les écrans aujourd'hui —
+ *    elles paraissent sans titre du tout, exactement comme avant. Dès qu'une
+ *    seule est rangée, les autres passent sous « Le reste de cet écran » : un
+ *    titre honnête, qui dit où en est le chantier au lieu de le cacher.
+ */
+function grouper(entrees: [string, Explication][]): Groupe[] {
+  const ranges: Groupe[] = []
+  const sansGroupe: [string, Explication][] = []
+
+  for (const fiche of entrees) {
+    const titre = fiche[1].groupe
+    if (!titre) {
+      sansGroupe.push(fiche)
+      continue
+    }
+    const deja = ranges.find((g) => g.titre === titre)
+    if (deja) deja.fiches.push(fiche)
+    else ranges.push({ titre, fiches: [fiche] })
+  }
+
+  if (sansGroupe.length === 0) return ranges
+  return [...ranges, { titre: ranges.length > 0 ? RESTE : null, fiches: sansGroupe }]
+}
+
 // ── Le volet ─────────────────────────────────────────────────────────────
 
 export function VoletGuide({
@@ -158,16 +208,21 @@ export function VoletGuide({
   // vide parce que l'écran calculé aurait divergé d'un rendu à l'autre.
   const cible = ancre && AIDE[ancre] ? AIDE[ancre] : null
   const scope = cible?.ou ?? ecran
+  // Lu pendant le rendu, comme `ancre` juste au-dessus : le volet ne se rend
+  // que parce que `useGuide` a prévenu, donc la valeur est toujours fraîche.
+  const visee = cible ? ancre : null
 
   useEffect(() => {
-    if (!ancre) return
-    const noeud = corps.current?.querySelector(`#reglage-${ancre.replace(/\W/g, "-")}`)
+    if (!visee) return
+    const noeud = corps.current?.querySelector(`#reglage-${visee.replace(/\W/g, "-")}`)
     noeud?.scrollIntoView({ block: "start" })
-  }, [])
+  }, [visee])
 
   const entrees = scope ? Object.entries(AIDE).filter(([, e]) => e.ou === scope) : []
+  const groupes = grouper(entrees)
+  const resume = scope ? RESUMES[scope] : undefined
   const touches = scope ? TOUCHES[scope] : undefined
-  const rien = entrees.length === 0 && !touches
+  const rien = entrees.length === 0 && !touches && !resume
 
   return (
     <div
@@ -200,6 +255,30 @@ export function VoletGuide({
           </p>
         )}
 
+        {/* L'encadré de tête : à quoi sert la page, et les trois gestes qu'on
+            y fait. Avant tout réglage, parce qu'on vient ici quand on ne sait
+            pas encore quel réglage chercher. */}
+        {resume && (
+          <div className="mb-[22px] rounded-8 border border-trait bg-papier p-[14px]">
+            <p className="text-[12px] leading-[1.5] text-encre">{resume.aQuoi}</p>
+            {resume.gestes.length > 0 && (
+              <ul className="mt-[8px] flex flex-col gap-[4px]">
+                {resume.gestes.map((geste) => (
+                  <li
+                    key={geste}
+                    className="flex items-baseline gap-[8px] text-[12px] leading-[1.5] text-encre-2"
+                  >
+                    <span aria-hidden className="shrink-0 text-encre-4">
+                      ·
+                    </span>
+                    <span>{geste}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
         {touches && touches.length > 0 && (
           <div className="mb-[22px] rounded-8 border border-trait bg-papier p-[14px]">
             <h2 className="mesure mb-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
@@ -218,8 +297,17 @@ export function VoletGuide({
           </div>
         )}
 
-        {entrees.map(([cle, entree]) => (
-          <Reglage key={cle} cle={cle} entree={entree} />
+        {groupes.map((groupe, i) => (
+          <section key={groupe.titre ?? "sans-groupe"} className={i > 0 ? "mt-[28px]" : undefined}>
+            {groupe.titre && (
+              <h2 className="mesure mb-[10px] text-[10.5px] uppercase tracking-[0.14em] text-encre-4">
+                {groupe.titre}
+              </h2>
+            )}
+            {groupe.fiches.map(([cle, entree]) => (
+              <Reglage key={cle} cle={cle} entree={entree} deplieeAuDepart={cle === visee} />
+            ))}
+          </section>
         ))}
 
         {SANS_ENTREE.length > 0 && (
@@ -239,21 +327,64 @@ export function VoletGuide({
   )
 }
 
-/** Une entrée du corpus — **le même texte que la bulle**, jamais recopié. */
-function Reglage({ cle, entree }: { cle: string; entree: Explication }) {
+/**
+ * Une entrée du corpus — **le même texte que la bulle**, jamais recopié.
+ *
+ * **Repliée au départ** : on montre le nom et ce que c'est, et rien d'autre.
+ * Sur un écran qui porte soixante-treize réglages, c'est la seule façon de
+ * parcourir sans lire. Un clic ouvre ce que ça change, d'où ça sort, et le
+ * « à savoir » quand il y en a un.
+ *
+ * Le titre reste un `h3` et le bouton se pose dedans, pas l'inverse : la
+ * liste des réglages se parcourt au clavier comme un sommaire, et le nom
+ * garde son rang de titre.
+ */
+function Reglage({
+  cle,
+  entree,
+  deplieeAuDepart,
+}: {
+  cle: string
+  entree: Explication
+  /** Le lien « Le guide › » d'une bulle vise cette fiche-là : elle s'ouvre
+   *  dépliée, sinon on aurait fait défiler jusqu'à une ligne fermée. */
+  deplieeAuDepart: boolean
+}) {
+  const [depliee, setDepliee] = useState(deplieeAuDepart)
+
+  // Le volet peut déjà être ouvert quand une bulle vise une autre fiche : on
+  // déplie la nouvelle visée sans refermer celles que le lecteur avait ouvertes.
+  useEffect(() => {
+    if (deplieeAuDepart) setDepliee(true)
+  }, [deplieeAuDepart])
+
   return (
     <section id={`reglage-${cle.replace(/\W/g, "-")}`} className="mt-[22px] first:mt-0">
-      <h3 className="text-[13px] font-medium text-encre">{entree.nom}</h3>
+      <h3 className="text-[13px] font-medium text-encre">
+        <button
+          type="button"
+          aria-expanded={depliee}
+          onClick={() => setDepliee((d) => !d)}
+          className="w-full text-left transition-colors duration-120 hover:text-signal"
+        >
+          {entree.nom}
+        </button>
+      </h3>
       <p className="mt-[4px] text-[12px] leading-[1.5] text-encre">{entree.quoi}</p>
-      <p className="mt-[4px] text-[12px] leading-[1.5] text-encre-2">{entree.change}</p>
-      <p className="mesure mt-[8px] text-[10.5px] text-encre-4">{entree.origine}</p>
-      {entree.long
-        ?.split("\n\n")
-        .map((para, i) => (
-          <p key={i} className="mt-[8px] text-[12px] leading-[1.5] text-encre-2">
-            {para}
-          </p>
-        ))}
+
+      {depliee && (
+        <>
+          <p className="mt-[4px] text-[12px] leading-[1.5] text-encre-2">{entree.change}</p>
+          <p className="mesure mt-[8px] text-[10.5px] text-encre-4">{entree.origine}</p>
+          {entree.long
+            ?.split("\n\n")
+            .map((para, i) => (
+              <p key={i} className="mt-[8px] text-[12px] leading-[1.5] text-encre-2">
+                {para}
+              </p>
+            ))}
+        </>
+      )}
     </section>
   )
 }

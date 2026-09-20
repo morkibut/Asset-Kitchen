@@ -14,6 +14,66 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 import { VoletGuide, ouvrirGuide, reinitialiserGuide } from "./Guide"
 import { AIDE, SANS_ENTREE, type Explication } from "../aide"
 
+// Quatre choses que `GU2` apporte — l'encadré de tête, les groupes, le repli,
+// le lien de bulle — ne peuvent pas toutes se vérifier contre le vrai corpus :
+// aucune de ses 229 fiches ne porte encore de `groupe`, et aucun écran n'a
+// encore son résumé. Les deux s'écrivent écran par écran, de `GU4` à `GU15`.
+//
+// On ajoute donc quelques fiches d'essai sur « tableau-de-bord » — un écran
+// que le corpus laisse vide — et un résumé pour lui. Le reste du corpus passe
+// tel quel : les essais qui vérifient qui paraît où lisent toujours le vrai.
+const essai = vi.hoisted(() => ({
+  fiches: {
+    "essai.pinceau.taille": {
+      nom: "La taille du pinceau",
+      groupe: "le pinceau",
+      ou: "tableau-de-bord" as const,
+      quoi: "La largeur du trait, en pixels.",
+      change: "Rien à la génération.",
+      origine: "toi · douze pixels au départ",
+    },
+    "essai.palette.teintes": {
+      nom: "Les teintes tenues",
+      groupe: "la palette",
+      ou: "tableau-de-bord" as const,
+      quoi: "Les couleurs que le trait a le droit de poser.",
+      change: "Une couleur hors palette est ramenée à la plus proche.",
+      origine: "univers · la palette du projet",
+    },
+    "essai.pinceau.durete": {
+      nom: "La dureté du pinceau",
+      groupe: "le pinceau",
+      ou: "tableau-de-bord" as const,
+      quoi: "La netteté du bord du trait.",
+      change: "Rien à la génération.",
+      origine: "toi · bord net au départ",
+      long: "Un bord flou sur une image de seize pixels se voit comme une tache.",
+    },
+    "essai.pas-encore-rangee": {
+      nom: "Un réglage pas encore rangé",
+      ou: "tableau-de-bord" as const,
+      quoi: "Une fiche que le chantier n'a pas encore visitée.",
+      change: "Rien à la génération.",
+      origine: "toi",
+    },
+  },
+  resumes: {
+    "tableau-de-bord": {
+      aQuoi: "On y peint sur l'image qu'on vient de recevoir.",
+      gestes: ["on choisit un pinceau", "on peint", "on garde la version"],
+    },
+  },
+}))
+
+vi.mock("../aide", async (reel) => {
+  const vrai = await reel<typeof import("../aide")>()
+  return {
+    ...vrai,
+    AIDE: { ...vrai.AIDE, ...essai.fiches },
+    RESUMES: { ...vrai.RESUMES, ...essai.resumes },
+  }
+})
+
 afterEach(() => {
   cleanup()
   reinitialiserGuide()
@@ -56,6 +116,7 @@ describe("il montre ce qui concerne l'écran ouvert, pas un sommaire", () => {
     render(<VoletGuide onFermer={vi.fn()} ecran="ambiances" />)
 
     expect(screen.getByText(AIDE["univers.palette"].quoi)).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "Une palette" }))
     expect(screen.getByText(AIDE["univers.palette"].change)).toBeTruthy()
   })
 })
@@ -124,6 +185,132 @@ describe("le lien d'une bulle retombe toujours juste", () => {
     render(<VoletGuide onFermer={vi.fn()} ecran="codex" />)
 
     expect(screen.getByRole("heading", { name: "Une palette" })).toBeTruthy()
+  })
+
+  test("la fiche visée arrive déjà dépliée, pas seulement sous les yeux", () => {
+    ouvrirGuide("univers.palette")
+
+    render(<VoletGuide onFermer={vi.fn()} ecran="codex" />)
+
+    // Dépliée : ce que ça change et d'où ça sort sont là sans avoir cliqué.
+    expect(screen.getByText(AIDE["univers.palette"].change)).toBeTruthy()
+    expect(screen.getByRole("button", { name: "Une palette" }).getAttribute("aria-expanded")).toBe(
+      "true",
+    )
+  })
+
+  test("les fiches voisines, elles, restent repliées", () => {
+    ouvrirGuide("univers.palette")
+
+    render(<VoletGuide onFermer={vi.fn()} ecran="ambiances" />)
+
+    expect(screen.getByRole("button", { name: "Une ambiance" }).getAttribute("aria-expanded")).toBe(
+      "false",
+    )
+  })
+})
+
+// ── Ce que GU2 ajoute ──────────────────────────────────────────────────────
+
+describe("l'encadré de tête — à quoi sert la page", () => {
+  test("le résumé de l'écran paraît, avant tout réglage", () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="tableau-de-bord" />)
+
+    const resume = screen.getByText(essai.resumes["tableau-de-bord"].aQuoi)
+    for (const geste of essai.resumes["tableau-de-bord"].gestes) {
+      expect(screen.getByText(geste)).toBeTruthy()
+    }
+
+    // « Avant tout réglage » se vérifie, sinon ce n'est qu'une intention.
+    const premiereFiche = screen.getByRole("heading", { name: "La taille du pinceau" })
+    expect(resume.compareDocumentPosition(premiereFiche)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+  })
+
+  test("un écran sans résumé n'en invente pas et ouvre sur ses réglages", () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="ambiances" />)
+
+    expect(screen.queryByText(essai.resumes["tableau-de-bord"].aQuoi)).toBeNull()
+    expect(screen.getByRole("heading", { name: "Une palette" })).toBeTruthy()
+  })
+})
+
+describe("les groupes — les fiches d'une même zone sous un même titre", () => {
+  test("deux fiches du même groupe se retrouvent sous le seul titre de ce groupe", () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="tableau-de-bord" />)
+
+    const titre = screen.getByRole("heading", { name: "le pinceau" })
+    const zone = titre.closest("section")!
+
+    expect(zone.contains(screen.getByRole("heading", { name: "La taille du pinceau" }))).toBe(true)
+    expect(zone.contains(screen.getByRole("heading", { name: "La dureté du pinceau" }))).toBe(true)
+    // Elles sont séparées dans le fichier : un seul titre, pas deux identiques.
+    expect(screen.getAllByRole("heading", { name: "le pinceau" })).toHaveLength(1)
+    expect(zone.contains(screen.getByRole("heading", { name: "Les teintes tenues" }))).toBe(false)
+  })
+
+  test("l'ordre des groupes est celui du fichier, jamais l'alphabet", () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="tableau-de-bord" />)
+
+    const pinceau = screen.getByRole("heading", { name: "le pinceau" })
+    const palette = screen.getByRole("heading", { name: "la palette" })
+
+    expect(pinceau.compareDocumentPosition(palette)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  test("une fiche pas encore rangée passe à la fin, sous un titre honnête", () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="tableau-de-bord" />)
+
+    const reste = screen.getByRole("heading", { name: "Le reste de cet écran" })
+    expect(reste.closest("section")!.contains(
+      screen.getByRole("heading", { name: "Un réglage pas encore rangé" }),
+    )).toBe(true)
+
+    const palette = screen.getByRole("heading", { name: "la palette" })
+    expect(palette.compareDocumentPosition(reste)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  test("un écran dont aucune fiche n'est rangée ne montre aucun titre de zone", () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="ambiances" />)
+
+    expect(screen.queryByRole("heading", { name: "Le reste de cet écran" })).toBeNull()
+    expect(screen.getByRole("heading", { name: "Une palette" })).toBeTruthy()
+  })
+})
+
+describe("le repli — on parcourt, on ne lit pas", () => {
+  test("une fiche repliée montre son nom et ce que c'est, rien d'autre", () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="tableau-de-bord" />)
+
+    expect(screen.getByRole("heading", { name: "La dureté du pinceau" })).toBeTruthy()
+    expect(screen.getByText("La netteté du bord du trait.")).toBeTruthy()
+
+    expect(screen.queryByText("toi · bord net au départ")).toBeNull()
+    expect(
+      screen.queryByText("Un bord flou sur une image de seize pixels se voit comme une tache."),
+    ).toBeNull()
+  })
+
+  test("un clic la déplie sur ce que ça change, d'où ça sort et l'à savoir", () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="tableau-de-bord" />)
+
+    fireEvent.click(screen.getByRole("button", { name: "La dureté du pinceau" }))
+
+    expect(screen.getByText("toi · bord net au départ")).toBeTruthy()
+    expect(
+      screen.getByText("Un bord flou sur une image de seize pixels se voit comme une tache."),
+    ).toBeTruthy()
+  })
+
+  test("un second clic la referme", () => {
+    render(<VoletGuide onFermer={vi.fn()} ecran="tableau-de-bord" />)
+
+    const ligne = screen.getByRole("button", { name: "La dureté du pinceau" })
+    fireEvent.click(ligne)
+    fireEvent.click(ligne)
+
+    expect(screen.queryByText("toi · bord net au départ")).toBeNull()
   })
 })
 

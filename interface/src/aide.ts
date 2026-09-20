@@ -58,6 +58,18 @@ export type Explication = {
   /** La version longue, rendue par l'écran Guide seul. Le panneau de 280 px ne
    *  la porte jamais : au-delà de trois lignes, c'est le guide qu'on veut. */
   long?: string
+  /** La zone de l'écran où le réglage se trouve, en toutes lettres : « le
+   *  pinceau », « la palette », « ce qui part dans le prompt ». C'est ce qui
+   *  casse les listes de soixante-treize fiches à la file : le volet met les
+   *  fiches d'une même zone sous un même titre.
+   *
+   *  **Facultatif ici, obligatoire pour de vrai.** Les 229 fiches du dépôt ne
+   *  l'ont pas encore — elles le reçoivent écran par écran, de `GU4` à `GU15`.
+   *  Le rendre obligatoire au type aujourd'hui casserait la compilation sur
+   *  toutes. C'est un essai (`GU3`) qui refuse une fiche sans `groupe`, et il
+   *  est rouge jusqu'à ce que le dernier écran soit passé : c'est la mesure
+   *  d'avancement du chantier, pas un oubli. */
+  groupe?: string
   /** Où ça se règle, pour le volet du guide (`B7`). **Un lieu, pas un thème** :
    *  quand on cherche une explication, on se souvient d'où l'on était.
    *
@@ -100,6 +112,33 @@ export type Explication = {
     | "equipement"
     | "sortie"
 }
+
+/**
+ * Le résumé d'un écran — trois lignes en tête du volet, avant tout réglage.
+ *
+ * **Ce n'est pas une fiche**, et c'est pour ça que ça vit à part de `AIDE` :
+ * une fiche décrit un réglage qu'on peut toucher, un résumé décrit la page.
+ * Les mélanger aurait rendu `groupe` et `ou` vides de sens sur trente entrées
+ * qui ne sont le réglage de rien.
+ */
+export type ResumeDecran = {
+  /** À quoi sert cette page. Une phrase. */
+  aQuoi: string
+  /** Les trois gestes qu'on y fait, un par ligne. Des gestes, pas des
+   *  concepts : « on y peint », pas « on y applique une recette ». */
+  gestes: readonly string[]
+}
+
+/**
+ * Un résumé par écran du guide.
+ *
+ * **Vide aujourd'hui, et c'est voulu** : les textes s'écrivent d'un coup en
+ * `GU4`, par la même main, pour qu'ils se ressemblent. Le volet fonctionne
+ * sans — un écran sans résumé ouvre directement sur ses réglages, comme
+ * avant. Partiel au type, parce que le remplissage se fait écran par écran ;
+ * c'est un essai (`GU3`) qui refuse un écran sans résumé, pas le compilateur.
+ */
+export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {}
 
 export const AIDE: Record<string, Explication> = {
   "son.fabrication": {
