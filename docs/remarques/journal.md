@@ -674,3 +674,38 @@ l'auteur, mot pour mot ; rien n'est vérifié dans le code — elles sont en vra
   en repartant du premier sac et en ajoutant juste des détails en plus dans la génération.
   AUjourd'hui je ne peux pas le faire sauf en passant par la galerie pour trouver le calque et le
   reinjecter.
+
+---
+
+## Séance du 20 septembre 2026 — voir avant de choisir, et le fond qui s'en va
+
+*Six retours sur l'étape 2 du parcours de création, « Son allure », plus un sur l'onglet Univers.
+**Relevés et étayés le jour même** : le texte de l'auteur, ce que le code en dit déjà, et les
+trois questions qui restent ouvertes sont dans `remarques/voir-avant-de-choisir.md`. Rien n'est
+tranché ; le quatrième retour renverse une décision datée du 2 septembre.*
+
+- les trois rangées de l'étape « Son allure » — la pixelisation, la taille, les couleurs — se
+  choisissent sans rien voir. Il faudrait le rôdeur des deux vignettes du haut, décliné.
+
+- « Le fond du jeu » n'est pas clair, on croit qu'il s'agit de la couleur de fond du jeu. Le
+  réglage part ; à sa place, un calcul à chaque appel image ou vidéo qui prend la couleur la plus
+  différenciante par rapport à l'image de référence envoyée, et le vert par défaut s'il n'y en a
+  pas.
+
+- masquer les textes qui embrouillent une personne qui ouvre l'app pour la première fois — deux
+  cités nommément, et la consigne générale : si ce n'est pas utile ou vital pour la configuration,
+  ça s'enlève.
+
+- dans l'onglet Univers, pouvoir modifier un texte ou une note qu'on a écrit.
+
+- quand on clique dans « son », on se retrouve dans une fenêtre immense, sans menu ni rien autour.
+
+- le guide décrit le menu « Les sujets » comme « le codex ». Préférence de l'auteur : que la porte
+  s'appelle **Codex** et qu'elle contienne des sujets. Le nom change.
+
+**Trois questions posées le jour même, trois réponses.** (1) Ce qui doit se modifier dans
+*Univers*, ce sont les **cartes texte de la toile** — *« si je colle du texte, je peux plus le
+modifier »* —, ni la bible ni les étiquettes. (2) L'avertissement sur la taille de case est
+**déplacé**, pas supprimé : il reparaît au moment où l'on change la taille sur un jeu qui porte
+déjà des images. (3) Le vert par défaut est le **vert de studio `#00B140`**, pas le vert pur que
+`fond.py` porte déjà.

@@ -1,21 +1,21 @@
 {
- "releve_le": 1789932621.3401453,
+ "releve_le": 1789942164.855527,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 171800,
+  "octets": 176238,
   "documents": {
    "AGENTS.md": {
-    "octets": 35208,
-    "titres": 14,
+    "octets": 37683,
+    "titres": 15,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 34722
+      "octets": 37162
      },
      {
       "titre": "Où en est le dépôt → `docs/PLAN.md`",
@@ -39,60 +39,66 @@
       "titre": "Lancer",
       "niveau": 2,
       "ligne": 171,
-      "octets": 4626
+      "octets": 6363
+     },
+     {
+      "titre": "Les essais : deux niveaux de contrôle → `docs/essais.md`",
+      "niveau": 2,
+      "ligne": 265,
+      "octets": 703
      },
      {
       "titre": "Les documents et leur autorité",
       "niveau": 2,
-      "ligne": 244,
+      "ligne": 279,
       "octets": 3981
      },
      {
       "titre": "Les skills et leurs frontières",
       "niveau": 2,
-      "ligne": 303,
+      "ligne": 338,
       "octets": 1963
      },
      {
       "titre": "Où sont les choses → `docs/carte-du-depot.md`",
       "niveau": 2,
-      "ligne": 333,
+      "ligne": 368,
       "octets": 1663
      },
      {
       "titre": "Les projets voisins — les lire avant de réinventer",
       "niveau": 2,
-      "ligne": 350,
+      "ligne": 385,
       "octets": 1035
      },
      {
       "titre": "Règles durables",
       "niveau": 2,
-      "ligne": 367,
+      "ligne": 402,
       "octets": 3529
      },
      {
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
-      "ligne": 412,
+      "ligne": 447,
       "octets": 631
      },
      {
       "titre": "Règle systématique : comment finir une étape",
       "niveau": 2,
-      "ligne": 423,
+      "ligne": 458,
       "octets": 2249
      },
      {
       "titre": "Avant de coder une tranche, vérifier son affectation",
       "niveau": 2,
-      "ligne": 462,
+      "ligne": 497,
       "octets": 627
      },
      {
       "titre": "Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell",
       "niveau": 2,
-      "ligne": 471,
+      "ligne": 506,
       "octets": 1087
      }
     ]
@@ -158,14 +164,14 @@
     ]
    },
    "docs/ARCHITECTURE.md": {
-    "octets": 49755,
+    "octets": 50300,
     "titres": 15,
     "sections": [
      {
       "titre": "Asset Kitchen — Architecture",
       "niveau": 1,
       "ligne": 1,
-      "octets": 49202
+      "octets": 49741
      },
      {
       "titre": "1 · Ce que c'est",
@@ -213,7 +219,7 @@
       "titre": "6 à 10 · Les versions → `docs/archi-versions.md`",
       "niveau": 2,
       "ligne": 395,
-      "octets": 9177
+      "octets": 9716
      },
      {
       "titre": "Les jeux de tuiles fabriqués (TU2, `docs/PLAN-tuiles.md`)",
@@ -231,150 +237,150 @@
       "titre": "L'agent fabrique des tuiles (TU10, `docs/PLAN-tuiles.md`)",
       "niveau": 3,
       "ligne": 485,
-      "octets": 2312
+      "octets": 2851
      },
      {
       "titre": "11 · Risques, et quand les lever → `docs/archi-risques.md`",
       "niveau": 2,
-      "ligne": 513,
+      "ligne": 519,
       "octets": 327
      },
      {
       "titre": "12 · Ce qu'on récupère",
       "niveau": 2,
-      "ligne": 522,
+      "ligne": 528,
       "octets": 2483
      },
      {
       "titre": "13 · Hors périmètre, et pourquoi",
       "niveau": 2,
-      "ligne": 537,
+      "ligne": 543,
       "octets": 3199
      }
     ]
    },
    "docs/PLAN.md": {
-    "octets": 44227,
+    "octets": 45645,
     "titres": 20,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 43769
+      "octets": 45645
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 44,
-      "octets": 14971
+      "octets": 16847
      },
      {
       "titre": "Ce que la remise à plat a mesuré, le 13 septembre 2026",
       "niveau": 3,
-      "ligne": 82,
+      "ligne": 91,
       "octets": 1110
      },
      {
       "titre": "Les invariants du produit",
       "niveau": 2,
-      "ligne": 101,
+      "ligne": 110,
       "octets": 8448
      },
      {
       "titre": "L'argent et l'appel",
       "niveau": 3,
-      "ligne": 107,
+      "ligne": 116,
       "octets": 1137
      },
      {
       "titre": "Ce qui décide, et ce qui refuse",
       "niveau": 3,
-      "ligne": 122,
+      "ligne": 131,
       "octets": 975
      },
      {
       "titre": "Le traitement des images",
       "niveau": 3,
-      "ligne": 132,
+      "ligne": 141,
       "octets": 962
      },
      {
       "titre": "Le rangement",
       "niveau": 3,
-      "ligne": 144,
+      "ligne": 153,
       "octets": 1116
      },
      {
       "titre": "Le personnage, la planche et le calque",
       "niveau": 3,
-      "ligne": 157,
+      "ligne": 166,
       "octets": 1277
      },
      {
       "titre": "Les fournisseurs",
       "niveau": 3,
-      "ligne": 170,
+      "ligne": 179,
       "octets": 723
      },
      {
       "titre": "L'écran",
       "niveau": 3,
-      "ligne": 181,
+      "ligne": 190,
       "octets": 1966
      },
      {
       "titre": "Couverture des user stories",
       "niveau": 2,
-      "ligne": 199,
+      "ligne": 208,
       "octets": 4427
      },
      {
       "titre": "L'ordre historique → `docs/archive/ordre-historique-jusqu-au-10-septembre.md`",
       "niveau": 2,
-      "ligne": 259,
+      "ligne": 268,
       "octets": 437
      },
      {
       "titre": "Le détail des versions closes → `docs/archive/plan-r6-a-v3.02.md`",
       "niveau": 2,
-      "ligne": 268,
+      "ligne": 277,
       "octets": 366
      },
      {
       "titre": "Les tranches périmées par la V4 → `docs/archive/plan-perime-par-la-v4.md`",
       "niveau": 2,
-      "ligne": 276,
+      "ligne": 285,
       "octets": 529
      },
      {
       "titre": "V3.5 — Le dépliage généralisé",
       "niveau": 2,
-      "ligne": 286,
+      "ligne": 295,
       "octets": 8317
      },
      {
       "titre": "P1 · La planche se garde, et son découpage se refait",
       "niveau": 3,
-      "ligne": 313,
+      "ligne": 322,
       "octets": 3419
      },
      {
       "titre": "P2 · Une planche pour plusieurs choses",
       "niveau": 3,
-      "ligne": 362,
+      "ligne": 371,
       "octets": 3408
      },
      {
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
-      "ligne": 415,
+      "ligne": 424,
       "octets": 3172
      },
      {
       "titre": "Les trois risques encore ouverts",
       "niveau": 3,
-      "ligne": 435,
+      "ligne": 444,
       "octets": 1772
      }
     ]
@@ -581,11 +587,11 @@
  },
  "renvois": {
   "code": {
-   "total": 826,
+   "total": 857,
    "casses": []
   },
   "docs": {
-   "total": 1392,
+   "total": 1415,
    "casses": []
   }
  }
