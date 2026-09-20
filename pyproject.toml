@@ -18,7 +18,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
+# `pytest-xdist` lance la suite sur plusieurs processus. **Dépendance de
+# développement dure, pas un confort** : mesurée le 20 septembre 2026, la suite
+# d'un seul bloc met vingt-sept essais dans quatre minutes, et une suite que
+# personne ne lance ne prouve rien — `tests/test_b0.py` a gardé trois séances un
+# échec venu d'une largeur écrite dans un composant.
+#
+# `pytest-timeout` n'est **pas** ici, et c'est délibéré : un délai par essai se
+# mesure en secondes de machine, donc il refuserait sous charge des essais qui
+# passent seuls — le défaut même qu'on cherche à supprimer. Le délai par
+# *fichier* vit dans `essais/lancer_les_essais.py`, posé autour du processus.
+dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "pytest-xdist>=3.6"]
 # Le second moteur de détourage. Optionnel **exprès** : il télécharge au premier
 # usage le modèle ONNX `u2net` (176 Mo), et le produit doit continuer de détourer
 # hors ligne sans lui. Absent, il est grisé avec sa raison.
@@ -72,3 +82,20 @@ packages = ["atelier"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# **Les deux marqueurs**, déclarés ici pour que pytest ne les prenne pas pour des
+# fautes de frappe. Ils sont lus par `essais/lancer_les_essais.py`, qui ne tient
+# aucune liste de fichiers : c'est le marqueur qui fait entrer un essai dans l'un
+# ou l'autre contrôle, et un essai neuf y entre sans qu'on touche à l'outil.
+markers = [
+    # **lent** — l'essai met plus de quarante-cinq secondes seul, mesuré, pas
+    # supposé. `pytest -m "not lent"` est le passage courant ; les lents partent
+    # sans concurrence, parce que ceux qui lancent le moteur Godot lui donnent
+    # trente secondes et dépassent ce délai dès qu'un voisin mange la machine.
+    "lent: met plus de 45 s seul — hors du passage courant, lancé sans concurrence",
+    # **gardefou** — l'essai lit des fichiers du dépôt au lieu d'appeler du code.
+    # Il ne surveille pas une tranche, il surveille tout ce qu'on écrit, donc il
+    # tourne **même** quand il est lent et même loin de ce qu'on a touché. C'est
+    # ce marqueur qui manquait le jour où une largeur écrite dans un composant a
+    # fait échouer `tests/test_b0.py` sans que personne le voie.
+    "gardefou: lit des fichiers du dépôt — surveille tout, pas une tranche",
+]
