@@ -2293,7 +2293,7 @@ function AtelierApp() {
         <EcranFamille key={`${bibliotheque.courant}:${lieu(pile, "bibliotheque")?.famille ?? ""}`}
           famille={lieu(pile, "bibliotheque")?.famille ?? null}
           nom={NOM_DANS_LE_CARNET[lieu(pile, "bibliotheque")?.famille ?? ""]}
-          jeu={bibliotheque.courant ?? ""} pieces={pieces} personnages={personnages} rafraichi={grilleARelire}
+          jeu={bibliotheque.courant ?? ""} pieces={pieces} personnages={personnages} univers={univers} rafraichi={grilleARelire}
           surGroupes={setGroupesDeLaFamille} surCollection={setCollectionOuverte}
           surFamille={ouvrirLaFamille} surToutesLesFamilles={() => allerA("bibliotheque")}
           surRange={() => void api.arbre().then(setBibliotheque).catch(() => {})}
@@ -2446,6 +2446,7 @@ function AtelierApp() {
           collectionInitiale={collectionOuverte}
           pieces={pieces}
           personnages={personnages}
+          univers={univers}
           rafraichi={grilleARelire}
           surGroupes={setGroupesDeLaFamille}
           // La collection ouverte n'est pas un lieu, mais le fil la nomme : la
