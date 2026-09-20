@@ -111,7 +111,7 @@ describe("il montre ce qui concerne l'écran ouvert, pas un sommaire", () => {
 
     rerender(<VoletGuide onFermer={vi.fn()} ecran="bande" />)
     expect(screen.queryByRole("heading", { name: "Le codex" })).toBeNull()
-    expect(screen.getByRole("heading", { name: "Le nom de l'animation" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "L'image choisie" })).toBeTruthy()
   })
 
   test("sans écran calculé, aucune entrée ne paraît", () => {

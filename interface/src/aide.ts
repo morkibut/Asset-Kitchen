@@ -1221,19 +1221,20 @@ export const AIDE: Record<string, Explication> = {
       "Le risque se dit avec : c'est **un jet unique**, que le modèle ne rend pas deux fois. Une planche ratée se repaie entière, et un compte de cases faux ne fait rien entrer du tout — la planche entière se relance au prix plein.\n\nLa feuille elle-même n'entre jamais en bibliothèque ; ses morceaux, oui, chacun filié vers elle.",
   },
 
-  // **Déplacée sous `ou: "bande"` en GU6** : elle décrit une image du ruban
-  // dans l'atelier d'une bande (`AtelierDeBande.tsx`), au même titre que
-  // `bande.position`, `bande.remplacer` et `bande.pelure`, déjà rangées là —
-  // pas la fiche d'un sujet. Texte inchangé, ce sera le travail de `GU11`.
+  // **Déplacée sous `ou: "bande"` en GU6**, réécrite en GU11 : elle décrit
+  // une image du ruban dans l'atelier d'une bande (`AtelierDeBande.tsx`), au
+  // même titre que `bande.position`, `bande.remplacer` et `bande.pelure` —
+  // les quatre forment la zone « la frame choisie » (`CorrectionDeLImage`).
   "codex.bande.image": {
     nom: "L'image choisie",
     ou: "bande",
+    groupe: "La frame choisie — position, remplacer, pelure d'oignon",
     quoi: "Une image de l'animation, et ce qu'on lui a fait à elle seule : de combien elle a été poussée, et de quel clip elle vient.",
     change:
       "Cette image-là, et aucune autre. C'est toute la différence avec les réglages de gauche : ceux-là valent pour l'animation entière, celui-ci ne corrige qu'une pose qui tombe à côté.",
     origine: "prise dans le clip · poussée à la main",
     long:
-      "Les flèches la déplacent d'un pixel du sprite ; avec Maj, de cinq. On peut aussi la faire glisser à la souris.\n\nAux bords, les flèches cessent d'avoir un effet plutôt que de rogner l'image. C'est voulu : une correction qui mangerait un bras ne se verrait pas ici, et se découvrirait dans le jeu.\n\nPendant que l'animation tourne, une flèche pousse l'image qui passe — et cette image devient aussitôt l'image choisie. Ce panneau, lui, ne bouge pas : il reste sur celle qu'on a choisie dans le ruban, parce qu'on le lit avant d'y toucher.\n\nLa remplacer par une autre image du clip ne coûte rien : le clip est déjà payé, et il porte toutes ses images. Une bande peut ainsi prendre ses images dans deux clips différents — chaque image dit alors d'où elle vient.\n\nL'image d'avant, montrée en transparence sous celle-ci, est ce qui permet de juger un déplacement au lieu de le deviner.",
+      "Les flèches la déplacent d'un pixel du sprite, cinq avec Maj, ou on la glisse à la souris. Aux bords, elles cessent d'agir plutôt que de rogner l'image. La remplacer par une autre image du clip ne coûte rien : il porte déjà toutes ses images. L'image d'avant, en transparence dessous, permet de juger un déplacement au lieu de le deviner.",
   },
 
   // ── La barre qui paie — ce qu'on touche à chaque génération (GU6) ─────────
@@ -1502,6 +1503,7 @@ export const AIDE: Record<string, Explication> = {
   "bande.source": {
     nom: "viser ou découper une frame",
     ou: "bande",
+    groupe: "Viser ou découper une frame",
     quoi: "La pipette, le tracé du sujet et le rectangle visent l’image source ; la découpe prélève la frame retouchée.",
     change: "Une visée corrige uniquement la frame choisie. Découper crée une image en bibliothèque, sans modifier ni enregistrer l’animation.",
     origine: "toi · depuis l’atelier d’animation",
@@ -2626,13 +2628,19 @@ export const AIDE: Record<string, Explication> = {
 
   // ── Commander un clip (A9) ────────────────────────────────────────────────
   //
-  // Rangées dans l'établi, parce que c'est de là qu'on ouvre l'écran : *un
-  // lieu, pas un thème*. Le mouvement, lui, reste dans les réglages — on
-  // l'écrit là-bas, on le choisit ici.
+  // **Déplacées sous `ou: "clip"` en GU11** (`docs/PLAN-guide.md`) : posées
+  // sous `ou: "sujet"` depuis GU6 au motif que « c'est de là qu'on ouvre
+  // l'écran », elles décrivent pourtant `Clip.tsx` au mot près — l'image de
+  // départ, le format, le lot, le prix, la carte de la machine, ce qui est
+  // mesuré. Ouvrir le guide *depuis Clip.tsx* ne les montrait jamais : la
+  // pile de lieux route cet écran vers `"clip"` (`lieux.ts`, genre `clip`),
+  // pas vers `"sujet"`. *Un lieu, pas un thème* voulait déjà dire l'écran
+  // qu'on a sous les yeux, pas celui d'où l'on est venu. Le mouvement, lui,
+  // reste dans les réglages — on l'écrit là-bas, on le choisit ici.
 
   "clip.depart": {
     nom: "L'image de départ",
-    ou: "sujet",
+    ou: "clip",
     groupe: "Commander un clip",
     quoi: "La première image du clip — celle que le modèle va animer, et il n'en prend qu'une.",
     change:
@@ -2643,7 +2651,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.format": {
     nom: "Le format du clip",
-    ou: "sujet",
+    ou: "clip",
     groupe: "Commander un clip",
     quoi: "Sa durée, ses proportions et sa taille — les trois choses qui décident du prix.",
     change:
@@ -2654,7 +2662,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.lot": {
     nom: "Combien de clips",
-    ou: "sujet",
+    ou: "clip",
     groupe: "Commander un clip",
     quoi: "Le nombre de clips que ce geste lance d'un coup. Un est le défaut.",
     change:
@@ -2665,7 +2673,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.prix": {
     nom: "Le prix du clip",
-    ou: "sujet",
+    ou: "clip",
     groupe: "Commander un clip",
     quoi: "Ce que le clip devrait coûter, avec la formule qui produit ce chiffre.",
     change:
@@ -2676,7 +2684,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.moteur": {
     nom: "La carte de cette machine",
-    ou: "sujet",
+    ou: "clip",
     groupe: "Commander un clip",
     quoi: "Ce que ton ordinateur peut faire lui-même, et ce qu'il lui manque pour ça.",
     change:
@@ -2687,7 +2695,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.mesure": {
     nom: "Ce qui est mesuré",
-    ou: "sujet",
+    ou: "clip",
     groupe: "Commander un clip",
     quoi: "Ce que ce dépôt-ci a observé du modèle en payant ses propres essais, et rien d'autre.",
     change:
@@ -2698,7 +2706,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.liste": {
     nom: "La liste de modèles",
-    ou: "sujet",
+    ou: "clip",
     groupe: "Commander un clip",
     quoi: "L'ordre dans lequel les modèles se présentent, et le filtre qui range ce qui ne peut pas partir.",
     change:
@@ -2709,7 +2717,7 @@ export const AIDE: Record<string, Explication> = {
 
   "clip.confirmation": {
     nom: "Ce qui part avec le clip",
-    ou: "sujet",
+    ou: "clip",
     groupe: "Commander un clip",
     quoi: "Le tiroir qui s'ouvre entre « Commander ce clip » et la dépense : la dernière relecture, corrigeable.",
     change:
@@ -2721,18 +2729,60 @@ export const AIDE: Record<string, Explication> = {
   "clip.fiche": {
     nom: "La fiche d'un clip",
     ou: "clip",
-    quoi: "La colonne de droite qui s'ouvre quand on clique sur la vignette d'un clip — comme la fiche d'une image, pour ce que la galerie garde sans que ce soit une image.",
+    groupe: "La fiche du clip, une fois lancé",
+    quoi: "La colonne de droite d'un clip, comme la fiche d'une image — pour ce que la galerie garde sans que ce soit une image.",
     change:
-      "**La vidéo du clip, en boucle** — son rythme, ses fondus, ce qu'il fait entre deux images —, ce qu'il a coûté, ce qu'il anime, ce qu'il a produit, et la porte du montage.",
+      "**La vidéo du clip, en boucle** — son rythme, ses fondus, ce qu'il fait entre deux images —, ce qu'il a coûté, ce qu'il anime, ce qu'il a produit, et la porte du montage. **Rien ici ne dépense** : le clip est déjà payé, et garder ou jeter restent les gestes de la grille.",
     origine: "le clip, tel qu'il est arrivé · les bandes qu'on en a déjà taillées",
-    long: "La fiche d'un clip est la fiche d'une image, adaptée à ce qu'un clip est : la vignette, c'est la **vidéo elle-même** — pas une image prélevée que l'écran rejoue à sa cadence —, avec jeu, pause et une barre de lecture qui se déplace.\n\nElle dit ce que le clip porte — le texte qui l'a fait, le modèle, combien il a coûté **et si ce montant a été relu chez le fournisseur** —, ce qu'il anime — le personnage, la pose, la direction —, et le sprite dont il est parti.\n\nCe qu'il a produit s'y lit dans l'autre sens : les bandes déjà gardées, chacune s'ouvrant dans l'atelier d'une animation. Et *Découper* y mène au montage, comme sur la tuile. **Rien ici ne dépense** : le clip est déjà payé, et garder ou jeter restent les gestes de la grille.",
+    long: "La vignette est la **vidéo elle-même**, pas une image rejouée : jeu, pause, barre de lecture. Elle dit ce que le clip porte, ce qu'il a coûté **et si ce montant a été relu chez le fournisseur**, ce qu'il anime, et le sprite de départ. Les bandes déjà gardées s'y lisent aussi, chacune ouvrant son atelier.",
   },
 
   // ── Le montage : découper un clip en bandes (A10) ─────────────────────────
+  //
+  // **Trois fiches neuves en GU11** : `montage.boucles`, `montage.pellicule`
+  // et `montage.propositions` décrivent des zones réelles de `Montage.tsx`
+  // qui n'avaient encore aucune fiche — le seul des trois écrans de la
+  // tranche qui en manquait plutôt que d'en réécrire. `bande.nom` est
+  // déplacée sous `ou: "montage"` : wirée uniquement dans `Montage.tsx`,
+  // jamais dans l'atelier d'une bande.
+
+  "montage.boucles": {
+    nom: "Les deux boucles",
+    ou: "montage",
+    groupe: "Les deux boucles — juger le mouvement, juger le découpage",
+    quoi: "Deux vignettes côte à côte, sur un même métronome : ce que le modèle a rendu, et les images qu'on a retenues.",
+    change:
+      "Rien à la génération. Juger un mouvement et juger un découpage sont deux métiers : les séparer évite de trancher les deux au jugé d'une seule image.",
+    origine: "le clip payé · les images qu'on a retenues jusqu'ici",
+    long: "Elles tournent à la même vitesse, sur le même pas : au banc, chacune démarrait quand elle avait fini de charger, jamais en phase avec sa voisine. « la vidéo entière › » bascule la première boucle sur le clip tel qu'il est arrivé — son rythme, ses fondus — plutôt que sur les images figées rejouées à la vitesse de la bande.",
+  },
+
+  "montage.pellicule": {
+    nom: "La pellicule",
+    ou: "montage",
+    groupe: "La pellicule — prendre et laisser une image",
+    quoi: "Le ruban de toutes les images du clip ; un clic en prend ou en laisse une, la loupe suit ce qu'on regarde.",
+    change:
+      "Ce qui sera monté, dans l'ordre où on les prend. « Prélever » range une image en bibliothèque sans toucher au découpage en cours.",
+    origine: "la planche contact du clip",
+    long: "Les flèches déplacent le curseur, espace prend ou laisse l'image visée — le clavier fait tout ce que fait la souris, pour un geste qui se répète des dizaines de fois par clip. « Prélever » est un second geste, séparé : il met une image de côté pour la regarder, sans l'ajouter au découpage.",
+  },
+
+  "montage.propositions": {
+    nom: "Des propositions gratuites",
+    ou: "montage",
+    groupe: "Des propositions gratuites",
+    quoi: "Des découpages tout faits, à poser d'un clic — régulier, repartir de zéro, inverser l'ordre.",
+    change:
+      "Remplace les images retenues par la proposition choisie. Rien n'est décidé pour de bon : chaque image se corrige ensuite, une par une.",
+    origine: "calculées sur le clip ouvert · gratuites",
+    long: "Elles ne remplacent pas le jugement, elles évitent de partir d'un ruban vide. « Repartir de zéro » vide la sélection pour choisir une par une ; « inverser l'ordre » rejoue les images retenues à l'envers, utile pour un aller-retour tapé à la main.",
+  },
 
   "bande.nom": {
     nom: "Le nom de l'animation",
-    ou: "bande",
+    ou: "montage",
+    groupe: "Cette animation — son nom",
     quoi: "Comment cette animation-là s'appellera, une fois tirée du clip.",
     change:
       "Ce que tu liras dans la liste des bandes, et ce qui partira dans le descriptif de l'export. **Un clip en porte plusieurs** : un même tirage donne souvent un repos et une marche, et sans nom tu ne saurais plus laquelle est laquelle.",
@@ -2741,21 +2791,22 @@ export const AIDE: Record<string, Explication> = {
   },
 
   // **`bande.main` et `bande.historique` déplacées sous `ou: "bande"` en
-  // GU6** : la Table de retouche → Main et l'historique de gestes vivent
-  // dans le même atelier d'une bande que `bande.position` et
-  // `bande.remplacer`, déjà rangées là — pas la fiche d'un sujet. Textes
-  // inchangés, ce sera le travail de `GU11`.
+  // GU6**, réécrites et zonées en GU11 : la Table de retouche → Main et
+  // l'historique de gestes vivent dans le même atelier d'une bande que
+  // `bande.position` et `bande.remplacer` — pas la fiche d'un sujet.
   "bande.main": {
     nom: "Retoucher une frame à la main",
     ou: "bande",
+    groupe: "Retoucher une frame à la main",
     quoi: "Peindre ou gommer la frame affichée, avec son propre masque et ses calques de dessin.",
     change: "Une seule frame. Le début du trait arrête la lecture sur l’image touchée ; les autres frames gardent leurs retouches.",
     origine: "atelier de l’animation · Table de retouche → Main",
-    long: "Les traits se posent après le placement de la frame : le pixel sous le pinceau est celui qui sera modifié, même si l’image a été déplacée. Le masque contrôle la transparence ; les calques permettent d’ajouter des couleurs, de les masquer ou de les renommer. Une recette nommée conserve ces retouches. Elles suivent leur occurrence lors d’un déplacement ou d’un passage au chutier. Remplacer la source de cette frame efface ses retouches, car les coordonnées ne désignent plus la même image. Enregistrer les conserve après fermeture et réouverture.",
+    long: "Les traits se posent après le placement de la frame : le pixel sous le pinceau est celui qui sera modifié, même si l’image a bougé. Le masque contrôle la transparence ; les calques ajoutent des couleurs, les masquent ou les renomment. Remplacer la source de cette frame efface ses retouches — les coordonnées ne désignent plus la même image. Enregistrer les conserve après fermeture.",
   },
   "bande.historique": {
     nom: "Défaire et refaire une correction",
     ou: "bande",
+    groupe: "En haut de l'écran — défaire, refaire, le brouillon",
     quoi: "Revenir sur les corrections de la session, puis les rétablir.",
     change: "Le montage, les recettes, la Main, la cadence et la boucle. La lecture et le zoom ne créent pas d’étape dans cet historique.",
     origine: "Défaire / Refaire · Ctrl + Z / Ctrl + Maj + Z · Ctrl + S pour enregistrer",
@@ -2769,6 +2820,7 @@ export const AIDE: Record<string, Explication> = {
   "bande.position": {
     nom: "Déplacer une image dans son cadre",
     ou: "bande",
+    groupe: "La frame choisie — position, remplacer, pelure d'oignon",
     quoi: "Les flèches du clavier poussent l'image choisie d'un pixel du sprite ; avec Majuscule, de cinq.",
     change:
       "Cette image-là seule, dans sa case. Rien d'autre ne bouge, et rien n'est écrit avant Enregistrer.",
@@ -2779,6 +2831,7 @@ export const AIDE: Record<string, Explication> = {
   "bande.remplacer": {
     nom: "Remplacer la source d'une frame",
     ou: "bande",
+    groupe: "La frame choisie — position, remplacer, pelure d'oignon",
     quoi: "Choisir une autre image du même clip, ou d'un clip voisin du même personnage, pour la case choisie.",
     change:
       "Rien n'est payé : le clip est déjà réglé, et il porte déjà toutes ses images. Une recette posée en regardant l'ancienne image ne suit pas — elle désignait un endroit qui n'existe pas forcément au même endroit sur la nouvelle.",
@@ -2789,31 +2842,47 @@ export const AIDE: Record<string, Explication> = {
   "bande.pelure": {
     nom: "Voir l'image précédente en transparence",
     ou: "bande",
+    groupe: "La frame choisie — position, remplacer, pelure d'oignon",
     quoi: "Superposer l'image d'avant à celle qu'on règle, avec un curseur d'opacité.",
     change: "Rien à l'animation : c'est un repère pour l'œil, jamais enregistré.",
     origine: "toi · les images voisines de l'animation",
     long: "C'est ce qui permet de juger un déplacement au lieu de le deviner : à zéro pour cent, rien ne se voit ; monté, l'image d'avant apparaît en fondu derrière celle qu'on corrige.",
   },
 
+  // **Rétrécie en GU11** : le texte listait cinq écrans (retouche,
+  // extraction, découpe, montage, fabrication vidéo) — le même mécanisme
+  // que `retouche.brouillon` couvre déjà pour les trois premiers. Cette
+  // fiche-ci vit sous `ou: "bande"` ; elle ne parle donc que de ce que
+  // l'atelier d'une bande et le montage en font.
   "atelier.brouillon": {
     nom: "Reprendre des réglages non enregistrés",
     ou: "bande",
-    quoi: "Conserver un brouillon sur cet ordinateur quand on quitte une retouche, une extraction, une découpe, un montage ou une fabrication vidéo.",
-    change: "Reprendre restaure les réglages dans l’écran. Cela n’enregistre pas l’animation et ne lance aucun appel à un modèle.",
+    groupe: "En haut de l'écran — défaire, refaire, le brouillon",
+    quoi: "Conserver un brouillon sur cet ordinateur quand on quitte l'atelier d'une bande ou le montage sans enregistrer.",
+    change: "Reprendre restaure les réglages dans l'écran. Cela n'enregistre pas l'animation et ne lance aucun appel à un modèle.",
     origine: "Brouillon conservé · Reprendre le brouillon / Abandonner le brouillon",
-    long: "Le brouillon est séparé de la version enregistrée et du travail déjà préparé. Au retour, choisis de le reprendre ou de l’abandonner. Si la version enregistrée a changé, un message le dit avant la reprise. Enregistrer la bande, appliquer les réglages repris à l’image ou préparer la relecture d’une fabrication termine ce brouillon. Les onglets, filtres, vignettes choisies et positions de défilement restent en mémoire pendant la session, séparément pour chaque jeu et sujet.",
+    long: "Le brouillon est séparé de la version enregistrée. Au retour, on le reprend ou on l'abandonne ; si la version enregistrée a changé entretemps, un message le dit avant la reprise. Enregistrer la bande, ou garder une animation depuis le montage, termine ce brouillon.",
   },
+  // **Déplacée sous `ou: "sujet"` en GU11** : son propre `origine` le disait
+  // déjà — « Ses animations » — l'onglet de `PageDuSujet.tsx` qui rend
+  // `AnimationsDuSujet.tsx`, pas l'atelier d'une bande. `GU6` avait réécrit
+  // six zones de la fiche d'un sujet sans repérer celle-ci.
   "bande.galerie": {
     nom: "Parcourir et juger les animations",
-    ou: "bande",
+    ou: "sujet",
+    groupe: "Ses animations",
     quoi: "Une pose ou un mouvement repliable, puis une rangée par direction ; une galerie en grand se filtre en dessous.",
     change: "Le jugement distingue la retenue, les versions à juger et les écartées. Les filtres changent uniquement la vue.",
     origine: "Ses animations · Mouvement / Direction / Jugement",
     long: "La retenue reste à gauche, les essais arrivent à sa suite, puis les écartées à droite. La flèche des écartées les masque sans les supprimer. Survole une vignette ou donne-lui le focus au clavier pour voir toute son animation dans son cadre commun. Ouvrir une animation puis revenir retrouve la sélection et les filtres du sujet.",
   },
+  // **Déplacée sous `ou: "montage"` en GU11** : son propre `origine` le
+  // disait déjà — « montage vidéo · Classement de l'animation » — le
+  // fieldset de `Montage.tsx`, pas l'atelier d'une bande.
   "bande.destination": {
     nom: "Classer une animation",
-    ou: "bande",
+    ou: "montage",
+    groupe: "Classement de l'animation",
     quoi: "Choisir le personnage, son mouvement et sa direction indépendamment du nom libre de l’animation.",
     change: "La case où l’animation se retrouve. Son clip source, son montage et ses retouches restent conservés.",
     origine: "montage vidéo · Classement de l’animation",
@@ -2823,16 +2892,22 @@ export const AIDE: Record<string, Explication> = {
   "bande.cadre": {
     nom: "Le cadre de la bande",
     ou: "bande",
+    groupe: "Le cadre — la fenêtre commune",
     quoi: "Le rectangle sur lequel toutes les images de la bande sont recadrées.",
     change:
       "La taille à laquelle ton personnage sort, et **si elle reste la même d'une animation à l'autre**. Pris sur le clip entier, toutes les bandes de ce clip ont la même assise ; pris sur la bande seule, elles ne s'accordent plus entre elles.",
     origine: "mesuré par l'atelier · repris à la main si besoin",
-    long: "Sans cadre commun, chaque image se recadre sur sa propre silhouette. Un bras tendu agrandit la silhouette, donc réduit tout le personnage : mesuré sur un vrai clip, **il grandit de dix pour cent en se mettant à marcher**.\n\nUne fenêtre par bande cale les images *d'une* bande entre elles ; il faut une fenêtre par clip pour caler *les bandes* entre elles. C'est pourquoi « du clip » est le choix par défaut.\n\nLes deux autres existent quand même : un cadrage automatique se trompe parfois, et une bande où le personnage quitte le champ a besoin du sien.",
+    long: "Sans cadre commun, chaque image se recadre sur sa propre silhouette — un bras tendu l'agrandit, donc réduit le personnage. Une fenêtre par bande cale les images entre elles ; il en faut une par clip pour caler les bandes entre elles, d'où « du clip » par défaut. Les deux autres existent : un cadrage automatique se trompe parfois, et une bande où le personnage quitte le champ a besoin du sien.",
   },
 
+  // **Déplacée sous `ou: "montage"` en GU11** : wirée uniquement dans
+  // `Montage.tsx` (« le pivot — le point d'ancrage dans le jeu »), jamais
+  // dans l'atelier d'une bande — l'écran de reprise le lit, il ne le règle
+  // pas (§ *le cadre s'y lit et ne s'y règle pas* de `Montage.tsx`).
   "bande.pivot": {
     nom: "Le pivot de l'animation",
-    ou: "bande",
+    ou: "montage",
+    groupe: "Le pivot — le point d'ancrage dans le jeu",
     quoi: "Le point de la case sur lequel le sprite s'aligne dans le jeu.",
     change:
       "L'endroit où ton personnage touche le sol dans le moteur — décalé, il flotte ou s'enfonce. Sans réglage, l'animation garde le repère déjà déclaré pour ce mouvement.",
@@ -2840,28 +2915,34 @@ export const AIDE: Record<string, Explication> = {
     long: "Deux champs, et ils se règlent ensemble : vider l'un efface aussi l'autre, parce qu'un point n'a pas qu'une coordonnée. Le laisser vide n'est pas un oubli — c'est l'animation qui suit son mouvement, comme toutes celles qui n'ont jamais touché ce champ.",
   },
 
+  // **Le codex, plus la galerie** : depuis la V3.03, le montage ne règle
+  // aucun traitement — il taille le mouvement —, et la recette d'une
+  // animation se règle dans son atelier, qui s'ouvre depuis la matrice d'un
+  // personnage.
+  // **Déplacée sous `ou: "bande"` en GU6**, retaillée en GU11 : le « à
+  // savoir » dépassait 2 750 signes. Les deux règles datées qu'il racontait
+  // (3 et 5 septembre 2026) et le détail du comportement à l'échange d'une
+  // frame rejoignent `docs/design-decisions.md` ; ce qui reste ici est ce
+  // qu'on fait aujourd'hui, pas pourquoi.
   "bande.recette": {
     nom: "La recette du découpage",
-    // **Le codex, plus la galerie** : depuis la V3.03, le montage ne règle
-    // aucun traitement — il taille le mouvement —, et la recette d'une
-    // animation se règle dans son atelier, qui s'ouvre depuis la matrice d'un
-    // personnage. Le sommaire du guide envoyait encore chercher au mauvais
-    // endroit.
-    // **Déplacée sous `ou: "bande"` en GU6** : elle décrit l'atelier d'une
-    // bande (`AtelierDeBande.tsx`), au même titre que ses voisines
-    // `bande.cadre` et `bande.vitesse` — pas la fiche d'un sujet.
     ou: "bande",
+    groupe: "La recette — détourer, réduire, limiter les couleurs",
     quoi: "Ce qu'on fait aux images du clip pour en tirer des sprites : détourer, réduire, limiter les couleurs.",
     change:
-      "L'aspect de la bande, et rien d'autre. **Elle part de celle du jeu et ne s'y substitue jamais** : ce que tu changes ici s'écrit sur cette bande-là, ton jeu ne bouge pas, et la bande suivante repart du jeu.",
+      "L'aspect de la bande, et rien d'autre. **Trois échelles possibles** — le jeu, la bande, une image ou plusieurs — et elle ne remplace jamais celle du dessus : ce que tu changes ici s'écrit sur cette bande-là, ton jeu ne bouge pas, et la bande suivante repart du jeu. Une retouche à la main ne se remplace jamais par une recette enregistrée.",
     origine:
       "celle du jeu · celle de la bande · celle d'une image ou de plusieurs",
-    long: "La règle a changé le 3 septembre 2026 : le jeu est le **point de départ**, jamais une prison. Une bande a le droit de sortir plus fine ou avec moins de couleurs que le reste.\n\nCe qui reste de l'ancienne règle en est le fond : **une bande qui s'écarte de son jeu le dit**, en clair, sous les réglages, une phrase par écart.\n\nIl y a un cran de plus depuis le 5 septembre 2026 : **une image seule peut porter sa recette à elle**. Elle naît au premier réglage que tu touches sur cette image-là, copiée de celle de la bande à cet instant — rien ne se remet à zéro —, et le ruban marque d'un liseré les images qui s'écartent. « Reprendre la recette de l'animation » rend l'image au défaut, et se défait comme le reste.\n\n**Tu peux en choisir plusieurs.** Clique une image du ruban, puis maj-clique une autre pour prendre tout ce qui est entre les deux ; ctrl-clic en ajoute ou en retire une ; « toutes » et « une seule » font la même chose sans souris. Ce que tu règles ensuite se pose sur toutes les images choisies.\n\nDeux gestes, et ils ne font pas la même chose. **Un curseur ne déplace que la valeur que tu touches** : une image qui avait douze couleurs les garde, seule la tolérance que tu viens de bouger voyage. **Une recette enregistrée remplace tout** — c'est un ensemble, en prendre la moitié donnerait une image que personne n'a jamais jugée —, et l'écran te dit avant, en une phrase, combien d'images vont perdre la leur. Quand les images choisies ne sont pas d'accord, la table concernée porte le mot *séparé* et les curseurs montrent la valeur de l'image en cours.\n\nUne retouche à la main, elle, ne se remplace pas : une recette enregistrée n'en porte aucune — l'atelier la lui retire quand tu l'enregistres, parce qu'un point posé sur une pose tombe ailleurs sur la suivante — et poser cette recette laisse donc en place celle que l'image avait.\n\n**Une recette d'image ne suit pas l'image qu'on remplace.** Si tu changes la 3ᵉ frame pour une autre image du clip, elle revient à la recette de l'animation, et l'écran te le dit avant : un point de pipette ou un cadre tracé désigne un endroit de *cette* image-là, et l'image d'à côté n'a pas le bras au même endroit. En revanche elle **voyage avec sa prise** : retirer une frame l'emmène au chutier avec sa recette, la dupliquer donne à la copie la même, et reprendre le montage rend à chaque image gardée la sienne.\n\nUne animation d'avant ce jour-là se rouvre telle quelle : sans recette d'image, c'est celle de la bande qui vaut pour toutes, et rien n'a été migré.\n\nLa fenêtre commune, elle, reste mesurée avec la recette de la bande. Une image qui s'en écarte peut donc déborder d'un côté, et l'écran te le dit plutôt que de remesurer vingt secondes à chaque cran de curseur : c'est un bouton.",
+    long: "On règle une image, plusieurs choisies (clic, maj-clic, ctrl-clic, « toutes »), ou l'animation entière — jamais le jeu, qui reste un point de départ. Un curseur ne déplace que sa valeur ; une recette enregistrée remplace tout l'ensemble, et l'écran dit avant combien d'images vont perdre la leur. La Main, elle, ne se remplace jamais.",
   },
 
+  // **Déplacée sous `ou: "montage"` en GU11** : wirée uniquement dans
+  // `Montage.tsx` (« le jeu » — cadence et sens), jamais dans l'atelier
+  // d'une bande.
   "bande.vitesse": {
     nom: "La vitesse de la bande",
-    ou: "bande",
+    ou: "montage",
+    groupe: "Le jeu — cadence et sens",
     quoi: "Combien d'images par seconde, et dans quel sens elles se jouent.",
     change:
       "L'aperçu que tu regardes **et** ce qui partira dans ton moteur de jeu. C'est le même réglage : deux — un pour regarder, un pour livrer — finiraient par se contredire, et c'est toi qui découvrirais l'écart dans le jeu.",
@@ -2869,9 +2950,13 @@ export const AIDE: Record<string, Explication> = {
     long: "*En boucle* : la dernière image est suivie de la première. *Aller-retour* : on repart en arrière au lieu de sauter au début — ce qui double la durée sans doubler les images, et qui est la bonne réponse pour un balancement, une respiration, une flamme.\n\nIl n'y a pas de *une seule fois* : ce n'est pas une propriété de la bande, c'est une décision de ton moteur au moment où il la joue.",
   },
 
+  // **Déplacée sous `ou: "montage"` en GU11** : wirée uniquement dans
+  // `Montage.tsx` (« gardées de ce clip »), jamais dans l'atelier d'une
+  // bande.
   "bande.gardees": {
     nom: "Les bandes de ce clip",
-    ou: "bande",
+    ou: "montage",
+    groupe: "Les bandes déjà gardées de ce clip",
     quoi: "Ce que tu as déjà tiré de ce tirage-ci.",
     change:
       "Le prix par animation, qui **baisse à chaque bande gardée**. Un clip de cinq secondes porte plus qu'un cycle de marche, et c'est ce compteur qui te dit ce que tu as vraiment payé pour une animation utilisable.",
@@ -2880,27 +2965,30 @@ export const AIDE: Record<string, Explication> = {
   },
 
   // **`bande.chutier` et `bande.montage` déplacées sous `ou: "bande"` en
-  // GU6** : toutes deux accrochées dans `AtelierDeBande.tsx`, au même titre
-  // que `bande.gardees` juste au-dessus — pas la fiche d'un sujet.
+  // GU6**, retaillées et zonées en GU11 : toutes deux accrochées dans
+  // `AtelierDeBande.tsx`, au même titre que `bande.gardees` avant son
+  // départ vers `ou: "montage"` — pas la fiche d'un sujet.
   "bande.chutier": {
     nom: "Le chutier",
     ou: "bande",
+    groupe: "Le chutier, et reprendre le montage",
     quoi: "La réserve d'une animation : les images mises de côté, pas encore posées dans le ruban.",
     change:
       "Ce que tu retires du ruban y va **avec sa recette**, au lieu de disparaître. Retirer cesse d'être un geste qu'on hésite à faire : l'image est à côté, elle se repose où tu veux, et rien n'est perdu.",
     origine:
       "les images que tu retires du ruban · celles que tu vas chercher dans le clip",
-    long: "Deux chemins le remplissent. **Retirer** une ou plusieurs images du ruban les met ici. Et **« prendre des images dans le clip »** ouvre toute la pellicule du tirage : tu y prends ce qui te manque, d'un geste, et ça entre ici — le ruban ne bouge pas.\n\nPour reposer une image, deux boutons : *avant* et *après*. Ils la posent à côté de **l'image que les tables règlent**, pas de celle qui passe à l'écran — l'animation peut tourner pendant que tu travailles, et viser l'image affichée poserait ton image à un rang tiré au sort par le lecteur.\n\nUne image est **dans la bande ou au chutier, jamais dans les deux** : la poser l'en sort, la retirer l'y remet. Et la même image n'y entre qu'une fois.\n\nLe chutier **se garde avec l'animation** : ferme l'atelier, rouvre-le, il est là. C'est tout son intérêt — sinon il faudrait retrouver l'image dans la pellicule à chaque visite, c'est-à-dire refaire le geste qu'il évite.\n\nLa croix laisse tomber une image du chutier. Elle ne détruit rien : l'image est dans le clip, elle s'y reprend.",
+    long: "Deux chemins le remplissent : retirer une image du ruban, ou « prendre des images dans le clip » pour aller chercher ce qui manque dans toute la pellicule. Les boutons avant/après la reposent à côté de l'image que les tables règlent, pas de celle qui joue. Une image est dans la bande ou au chutier, jamais les deux, et il se garde avec l'animation d'une visite à l'autre.",
   },
 
   "bande.montage": {
     nom: "Reprendre le montage",
     ou: "bande",
+    groupe: "Le chutier, et reprendre le montage",
     quoi: "Rouvrir la pellicule du clip sur une animation déjà gardée, pour en changer les images retenues.",
     change:
       "Ce que l'animation contient. Ce que tu gardes **retrouve ses réglages** — sa poussée au pixel, sa recette à elle — et ce que tu laisses tombe au chutier. Rien n'est perdu, et tu n'as rien à reposer de mémoire.",
     origine: "l'animation telle qu'elle est gardée",
-    long: "Avant, le montage repartait toujours des réglages du jeu : ajouter une image à une animation demandait de la refaire entière. Il s'ouvre désormais sur **ton découpage** et **ta vitesse**.\n\nLe bouton du bas dit ce qu'il fait — *Reprendre « marche »* — et revenir sans le presser laisse l'animation telle qu'elle était.\n\nDeux cas où il est fermé, chacun avec sa raison. **Des corrections attendent** : le montage écrit sur l'animation, et le faire par-dessus des réglages en cours les perdrait — enregistre d'abord. **L'animation prend ses images dans plusieurs clips** : le montage n'en montre qu'un, et y reprendre le découpage laisserait tomber celles de l'autre.\n\nLe cadre s'y lit et ne s'y règle pas : la fenêtre commune se reprend dans l'atelier de l'animation, où l'écran dit les vingt secondes que ça coûte.",
+    long: "Le bouton du bas dit ce qu'il fait — *Reprendre « marche »* — et revenir sans le presser laisse l'animation telle quelle. Deux cas où il est fermé : des corrections de l'atelier attendent (enregistre d'abord), ou l'animation prend ses images dans plusieurs clips. Le cadre s'y lit et ne s'y règle pas : il se reprend dans l'atelier de l'animation.",
   },
 
   "agent.cadre-durable": {

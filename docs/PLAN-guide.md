@@ -219,10 +219,21 @@ Chaque tranche ci-dessous porte les **mêmes six critères**, et ils ne sont pas
   18 septembre dans l'onglet Univers et sont parties vers `ou: "jeu"`, une (`reglages.consommation`)
   décrivait la barre qui paie de l'établi et est partie vers `ou: "sujet"` — laissant six
   fiches propres à cet écran, réparties sur quatre zones (les fournisseurs, les
-  consommations, le cadre de délégation de l'agent, la séance de l'agent). Les deux
-  tranches restantes du tableau
-  ci-dessous n'ont pas encore été reprises, et remettront cette liste à décocher le temps
-  de leur propre passe.)*
+  consommations, le cadre de délégation de l'agent, la séance de l'agent). Vérifié aussi
+  pour `GU11` — les animations : trois écrans voisins qu'on confondait facilement, démêlés
+  à la lecture du code plutôt que du nom des fiches. Huit fiches de « commander un clip »
+  vivaient sous `ou: "sujet"` depuis `GU6` alors qu'elles décrivent `Clip.tsx` au mot
+  près — déplacées vers `ou: "clip"`. Cinq fiches (`bande.nom`, `bande.pivot`,
+  `bande.vitesse`, `bande.gardees`, `bande.destination`) n'étaient wirées que dans
+  `Montage.tsx` alors qu'elles vivaient sous `ou: "bande"` — déplacées vers `ou: "montage"`,
+  qui gagne aussi trois fiches neuves pour ses zones jusque-là sans aucune (les deux
+  boucles, la pellicule, les propositions gratuites). Une fiche (`bande.galerie`) décrivait
+  l'onglet « Ses animations » de la fiche d'un sujet, oubliée par `GU6` — déplacée vers
+  `ou: "sujet"`. Neuf fiches nées sous `ou: "clip"` restent hors sujet pour cette tranche :
+  elles décrivent l'écran « Fabrications » et les rendus 3D, qui héritent de `"clip"` faute
+  d'`ou` à eux — c'est `GU15` qui leur en donnera un. La tranche restante du tableau
+  ci-dessous n'a pas encore été reprise, et remettra cette liste à décocher le temps de sa
+  propre passe.)*
 
 | Tranche | Écran | Fiches aujourd'hui |
 |---|---|---|
@@ -403,6 +414,62 @@ l'agent — et quatre d'entre elles dépassaient une limite de `GU3` (`quoi` ou 
 `agent.plafond` sur son seul « à savoir »), retaillées, ce qu'elles perdaient en détail
 mesuré rejoignant cinq lignes neuves de `docs/design-decisions.md`. Treize fiches d'origine,
 six propres à cet écran, et les six critères ci-dessus tiennent sur l'ensemble.
+
+→ `GU11` a commencé par lire `lieux.ts` plutôt que la liste des vingt et une fiches : trois
+lieux voisins qu'on confond facilement — `clip` (la fiche d'une commande de clip vidéo,
+`Clip.tsx`/`FicheDuClip.tsx`), `montage` (l'écran où un clip payé devient plusieurs bandes,
+`Montage.tsx`) et `bande` (l'atelier d'une animation image par image, `AtelierDeBande.tsx`,
+qui sert aussi `montage-de-bande` par héritage). Le seul moyen de les distinguer était de
+lire quel composant montait chaque `aide="…"`, pas de deviner au nom de la fiche.
+
+Sur les huit fiches de « commander un clip » (`clip.depart`, `clip.format`, `clip.lot`,
+`clip.prix`, `clip.moteur`, `clip.mesure`, `clip.liste`, `clip.confirmation`), toutes vivaient
+sous `ou: "sujet"` depuis `GU6`, au motif que « c'est de l'établi qu'on ouvre l'écran ».
+Mais leur `aide=` est posé dans `Clip.tsx`, dont le lieu produit `ou: "clip"` — le guide
+ouvert *depuis cet écran* ne les montrait donc jamais. Déplacées vers `ou: "clip"`, texte
+inchangé pour six d'entre elles, `clip.fiche` retaillée (« à savoir » à 726 signes). Neuf
+fiches nées sous `ou: "clip"` restent hors sujet : `fabrication.video-libre`,
+`workflow.version`, `fabrication.relecture`, `fabrication.file-locale`,
+`fabrications-etat` décrivent l'écran « Fabrications » (`Fabrications.tsx`), et
+`source3d.*` les rendus 3D — les deux héritent de `"clip"` faute d'`ou` à eux
+(`App.tsx`, `surface === "fabrications" ? "clip" : …`), exactement comme les tuiles
+héritaient de `codex` avant `GU9`. Ce n'est pas la fiche d'un clip, et ce sera `GU15`.
+
+Les dix-huit fiches de `bande` sont réparties sur sept zones réelles, dans l'ordre où
+`AtelierDeBande.tsx` les montre : en haut de l'écran — défaire, refaire, le brouillon
+(`bande.historique`, `atelier.brouillon`, ce dernier rétréci pour ne plus parler des trois
+écrans de la retouche que `retouche.brouillon` couvre déjà) · retoucher une frame à la main
+(`bande.main`) · la recette — détourer, réduire, limiter les couleurs (`bande.recette`,
+son « à savoir » retaillé de 2 752 à 336 signes) · viser ou découper une frame
+(`bande.source`) · la frame choisie — position, remplacer, pelure d'oignon
+(`codex.bande.image`, `bande.position`, `bande.remplacer`, `bande.pelure`) · le chutier, et
+reprendre le montage (`bande.chutier`, `bande.montage`) · le cadre — la fenêtre commune
+(`bande.cadre`). Cinq fiches (`bande.nom`, `bande.pivot`, `bande.vitesse`, `bande.gardees`,
+`bande.destination`) n'étaient wirées que dans `Montage.tsx`, jamais dans l'atelier d'une
+bande — déplacées vers `ou: "montage"`. Une (`bande.galerie`) décrit « Ses animations »,
+l'onglet de `PageDuSujet.tsx` qui rend `AnimationsDuSujet.tsx` — une septième zone que `GU6`
+n'avait pas repérée sur la fiche d'un sujet — déplacée vers `ou: "sujet"`, texte inchangé.
+
+`montage` est le seul des trois écrans qui avait besoin de fiches neuves plutôt que d'une
+réécriture : `montage.boucles` (les deux vignettes sur un même métronome — juger le
+mouvement, juger le découpage), `montage.pellicule` (le ruban, prendre et laisser une
+image) et `montage.propositions` (les découpages tout faits, gratuits) décrivent des zones
+de `Montage.tsx` qui n'avaient encore aucune fiche. Avec les cinq fiches reçues de `bande`,
+l'écran compte huit fiches sur huit zones — une par fiche, faute d'un geste qui en
+regrouperait plusieurs sous un même titre. Le cadre de `Montage.tsx` reste documenté par
+`bande.cadre` — une bulle partagée entre les deux écrans, comme `mouvement.texte` l'est déjà
+entre `Clip.tsx` et `ou: "jeu"` ; c'est un point encore ouvert pour `GU16`, à trancher une
+fois toutes les tranches passées. Deux décisions datées (3 et 5 septembre 2026, sur
+`bande.recette`), une mesure (les dix pour cent de `bande.cadre`) et l'historique de
+`V3.03.3` (`bande.montage`) rejoignent `docs/design-decisions.md`.
+
+**Le compte, écran par écran.** `clip` portait dix fiches : neuf restent hors sujet
+(`fabrication.*`, `workflow.version`, `source3d.*`) et une seule — `clip.fiche` — décrivait
+vraiment cet écran ; avec les huit reçues de `sujet`, il en porte aujourd'hui neuf, sur deux
+zones. `bande` portait dix-huit fiches (le compte de `GU1` a grossi avec les déplacements de
+`GU5` et `GU6`, faits après la mesure du relevé) : douze restent, sur sept zones ; cinq sont
+parties vers `montage`, une vers `sujet`. `montage` ne portait aucune fiche ; il en porte
+aujourd'hui huit, sur huit zones. Les six critères ci-dessus tiennent sur les trois écrans.
 
 ---
 
