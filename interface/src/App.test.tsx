@@ -5273,6 +5273,13 @@ describe("l'infobulle et le guide", () => {
       "reglages",
       "equipement",
       "sortie",
+      // Les trois écrans des tuiles (`GU13`, 1/2) : ils n'ont pas encore de
+      // fiche, et la boucle ci-dessous ne les verra donc pas — la liste les
+      // porte quand même, sans quoi la première fiche écrite par `GU13` (2/2)
+      // ferait rougir cet essai-ci au lieu d'être simplement rangée.
+      "tuiles",
+      "jeu-de-tuiles",
+      "livraison-de-tuiles",
     ])
     // Le corpus a grandi avec les écrans unifiés. Son volume n'est pas un
     // contrat : l'adresse de chaque entrée et l'unicité testée ci-dessus le

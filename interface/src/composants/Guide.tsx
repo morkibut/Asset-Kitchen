@@ -100,7 +100,15 @@ export function reinitialiserGuide() {
  *  depuis `GU7` — l'installation de la machine (`Installation.tsx`) et les
  *  trois autres onglets des réglages, *Moteurs & workflows*, *Agent MCP*,
  *  *Consommations*. Aucun des deux ne parle d'un jeu, et les deux partagent
- *  des blocs (`BlocSecrets`), d'où un seul écran de guide pour les deux. */
+ *  des blocs (`BlocSecrets`), d'où un seul écran de guide pour les deux.
+ *
+ *  **Les trois noms des tuiles sont les `<h1>` de leurs écrans** (`GU13`) —
+ *  *Les tuiles du jeu* pour la liste, *Livrer à Godot* pour la livraison. Le
+ *  deuxième est le seul des seize qui ne recopie pas un titre : `jeu-de-tuiles`
+ *  sert deux écrans, le choix de la sorte (*Quelle sorte de tuiles ?*) et
+ *  l'atelier ouvert, dont le titre est le nom du jeu qu'on est en train de
+ *  taper. Un nom vivant n'entre pas dans une table figée, et *Quelle sorte de
+ *  tuiles ?* nommerait l'écran qu'on quitte au premier clic. */
 const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   "tableau-de-bord": "Le jeu",
   codex: "Les sujets",
@@ -118,6 +126,9 @@ const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   reglages: "L'atelier et sa machine",
   equipement: "Les équipements",
   sortie: "Livrer au jeu",
+  tuiles: "Les tuiles du jeu",
+  "jeu-de-tuiles": "Un jeu de tuiles",
+  "livraison-de-tuiles": "Livrer à Godot",
 }
 
 // ── Le panneau des touches ────────────────────────────────────────────────

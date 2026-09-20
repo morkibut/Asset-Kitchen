@@ -104,7 +104,23 @@ export type Explication = {
    *    réglages — moteurs, agent, consommations. Les deux écrans montent les
    *    mêmes blocs, d'où une seule valeur pour les deux.
    *
-   *  Les confondre ferait grossir le mauvais groupe de vingt et une entrées. */
+   *  Les confondre ferait grossir le mauvais groupe de vingt et une entrées.
+   *
+   *  ⚠️ **Les trois écrans des tuiles ont chacun le leur depuis `GU13`**, et ils
+   *  portent le nom de leur genre dans `lieux.ts` — `tuiles`, `jeu-de-tuiles`,
+   *  `livraison-de-tuiles` — pour qu'on lise d'un coup d'œil lequel sert quoi.
+   *  Aucun des trois n'était testé dans `ecranDuGuide` (`App.tsx`) : les ouvrir
+   *  montrait le guide de la racine du dessous, le plus souvent `codex`, qui ne
+   *  parle ni de matières ni de raccords. C'est la panne exacte que `GU7` (1/2)
+   *  a réparée sur les règles du jeu et `GU12` (2/2) sur la sortie ; la
+   *  décision d'architecture n°5 du plan la ferme pour de bon — **un genre de
+   *  `lieux.ts` sans écran de guide est une erreur d'essai, pas un oubli.**
+   *
+   *  Trois valeurs et non une, parce que les trois écrans ne se règlent pas
+   *  ensemble : la liste des jeux ne porte aucun réglage, l'atelier d'un jeu en
+   *  porte une vingtaine, et la livraison n'en porte aucun mais décide de ce
+   *  qui part. Une seule valeur aurait mis les fiches de l'atelier sous le nez
+   *  de qui ouvre la liste. */
   ou:
     | "tableau-de-bord"
     | "codex"
@@ -122,6 +138,9 @@ export type Explication = {
     | "reglages"
     | "equipement"
     | "sortie"
+    | "tuiles"
+    | "jeu-de-tuiles"
+    | "livraison-de-tuiles"
 }
 
 /**

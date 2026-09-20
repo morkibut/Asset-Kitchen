@@ -541,6 +541,19 @@ livraison. **Zéro fiche aujourd'hui.**
 - [ ] Ce que coûte une matière générée sur la machine, et ce que ne coûte pas une matière
       intégrée, est dit.
 
+→ `GU13` (1/2) — **la structure, avant tout texte.** Aucun des trois lieux n'était testé dans
+`ecranDuGuide` (`App.tsx`) : les ouvrir montrait le guide de la racine du dessous, `codex` le
+plus souvent. Trois valeurs neuves d'`Explication["ou"]` (`aide.ts`) portent désormais le nom
+de leur genre dans `lieux.ts` — `tuiles`, `jeu-de-tuiles`, `livraison-de-tuiles` —, `Guide.tsx`
+les nomme dans l'en-tête du volet (*Les tuiles du jeu*, *Un jeu de tuiles*, *Livrer à Godot* ;
+le deuxième ne recopie aucun `<h1>`, parce que l'atelier ouvert porte le nom du jeu qu'on tape),
+et `ecranDuGuide` les produit **au même rang que la sortie, du plus profond au moins profond** :
+le lieu `tuiles` couvre la surface entière, et les deux autres se posent sur la racine d'où
+l'on vient. Une variable de pile de plus, `livraisonDeTuiles`, sur le modèle de
+`tuilesOuvertes`. Aucun résumé, aucune fiche : c'est `GU13` (2/2) qui les écrit, et les trois
+essais « résumé manquant » d'`aide.test.ts` sont rouges jusque-là — en échange, les trois
+essais « genre sans écran de guide » des tuiles sont passés au vert.
+
 ### `GU14` — Le son
 
 L'atelier du son, le calage sonore, la livraison. **Zéro fiche aujourd'hui.**

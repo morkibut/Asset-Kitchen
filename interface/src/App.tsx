@@ -350,8 +350,13 @@ function AtelierApp() {
    *  l'écran, qui seul les tient — celui qu'on est en train de taper compris. */
   const tuilesOuvertes = dans(pile, "tuiles")
   const jeuDeTuiles = lieu(pile, "jeu-de-tuiles")
+  /** La livraison d'un jeu de tuiles (`GU13`) — **lue comme un lieu, et plus
+   *  seulement comme un champ de `vueDesTuiles`**. `ecranDuGuide` en a besoin
+   *  pour router vers son écran de guide ; la vue ci-dessous la relit du même
+   *  endroit, pour qu'il n'y ait pas deux façons de savoir où l'on est. */
+  const livraisonDeTuiles = dans(pile, "livraison-de-tuiles")
   const vueDesTuiles: VueTuiles = jeuDeTuiles
-    ? { jeu: jeuDeTuiles.jeu, ...(jeuDeTuiles.ecran ? { ecran: jeuDeTuiles.ecran } : {}), livraison: dans(pile, "livraison-de-tuiles") }
+    ? { jeu: jeuDeTuiles.jeu, ...(jeuDeTuiles.ecran ? { ecran: jeuDeTuiles.ecran } : {}), livraison: livraisonDeTuiles }
     : null
   const [nomsDesTuiles, setNomsDesTuiles] = useState<Record<string, string>>({})
   const ouvrirLesTuiles = () =>
@@ -1192,6 +1197,20 @@ function AtelierApp() {
   // `ou: "jeu"` que `GU7` (1/2) a réparée, ici sur la sortie. Elle se pose au
   // même rang que les dépenses, les réglages et l'installation : les quatre
   // s'ouvrent d'où qu'on vienne, par-dessus n'importe quelle racine.
+  //
+  // ⚠️ **Les trois lieux des tuiles n'étaient testés nulle part non plus**
+  // (`GU13`), et c'est la même panne une troisième fois : ouvrir *Les tuiles
+  // du jeu* montrait le guide de la racine d'où l'on venait — `codex` le plus
+  // souvent, qui ne dit pas un mot des matières ni des raccords. Ils entrent
+  // ici, **au même rang que la sortie**, et pour la même raison : le lieu
+  // `tuiles` couvre la surface entière (c'est `surfaceDisponible`, plus bas,
+  // qui l'écrit : `!tuilesOuvertes`), et les deux autres se posent sur la
+  // racine d'où l'on vient (`lieux.ts`, § *Les jeux de tuiles*). Les tester
+  // après `surface` aurait rendu la racine du dessous, c'est-à-dire la panne.
+  //
+  // **Du plus profond au moins profond**, parce que les trois s'empilent : la
+  // livraison se pose sur un jeu ouvert, qui se pose sur la liste. Tester la
+  // liste en premier aurait donné son guide aux deux autres.
   const ecranDuGuide: Explication["ou"] | null = depensesOuvertes
     ? "depenses"
     : installationOuverte
@@ -1202,6 +1221,12 @@ function AtelierApp() {
           : "reglages"
         : sortieOuverte
           ? "sortie"
+          : livraisonDeTuiles
+          ? "livraison-de-tuiles"
+          : jeuDeTuiles
+          ? "jeu-de-tuiles"
+          : tuilesOuvertes
+          ? "tuiles"
           : tableauDeBord
           ? "tableau-de-bord"
           : surface === "univers"

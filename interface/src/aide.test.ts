@@ -88,6 +88,9 @@ const TOUS_LES_OU = [
   "reglages",
   "equipement",
   "sortie",
+  "tuiles",
+  "jeu-de-tuiles",
+  "livraison-de-tuiles",
 ] as const satisfies readonly Explication["ou"][]
 
 type ValeurDeOuManquante = Exclude<Explication["ou"], (typeof TOUS_LES_OU)[number]>
@@ -132,10 +135,16 @@ describe("GU3 — chaque écran du guide a son résumé", () => {
 //   `"reglages"`, qu'elle partage avec l'onglet *Moteurs & workflows* — les
 //   deux écrans montent les mêmes blocs.
 //
+// **Les trois genres de tuiles ont le leur depuis `GU13`** (1/2), et ils
+// portent leur propre nom : `tuiles` → `"tuiles"`, `jeu-de-tuiles` →
+// `"jeu-de-tuiles"`, `livraison-de-tuiles` → `"livraison-de-tuiles"`. Ce n'est
+// plus un héritage mais trois valeurs neuves d'`Explication["ou"]`, testées au
+// même rang que la sortie dans `ecranDuGuide` (`App.tsx`) — c'est la décision
+// d'architecture n°5 du plan appliquée : la liste des `ou` suit les genres.
+//
 // Une chaîne vide dit que le genre n'a **aujourd'hui aucun écran de guide**,
-// ni le sien ni hérité : c'est le cas de `travail`, `envoi`
-// et des trois genres de tuiles (`tuiles`, `jeu-de-tuiles`,
-// `livraison-de-tuiles`), et c'est exactement ce que cet essai doit refuser.
+// ni le sien ni hérité : c'est le cas de `travail` et d'`envoi`, et c'est
+// exactement ce que cet essai doit refuser.
 //
 // `Record<Genre, string>` force la table à couvrir chaque membre de `Genre` :
 // un genre ajouté à `lieux.ts` sans être ajouté ici casse `tsc -b`.
@@ -160,9 +169,9 @@ const GENRE_VERS_OU: Record<Genre, string> = {
   grille: "sujet",
   comparer: "sujet",
   retouche: "tables",
-  tuiles: "",
-  "jeu-de-tuiles": "",
-  "livraison-de-tuiles": "",
+  tuiles: "tuiles",
+  "jeu-de-tuiles": "jeu-de-tuiles",
+  "livraison-de-tuiles": "livraison-de-tuiles",
   clip: "clip",
   montage: "montage",
   bande: "bande",
