@@ -195,11 +195,11 @@ n'existe plus.
 
 ### Critères d'acceptation
 
-- [ ] L'étape *Son allure* ne montre plus rien du fond, ni en création ni dans l'onglet *Univers*.
-- [ ] La phrase *« ce jeu n'a pas encore de palette… »* disparaît avec la section qui la portait.
-- [ ] Le guide ne décrit plus un réglage qui n'existe pas : les fiches d'aide qui le nommaient sont
+- [x] L'étape *Son allure* ne montre plus rien du fond, ni en création ni dans l'onglet *Univers*.
+- [x] La phrase *« ce jeu n'a pas encore de palette… »* disparaît avec la section qui la portait.
+- [x] Le guide ne décrit plus un réglage qui n'existe pas : les fiches d'aide qui le nommaient sont
       retirées ou réécrites. *(Le guide vient d'être clos ; il ne doit pas rouvrir faux.)*
-- [ ] Rien ailleurs dans le produit ne propose encore d'écrire ce champ.
+- [x] Rien ailleurs dans le produit ne propose encore d'écrire ce champ.
 
 ---
 
@@ -223,13 +223,13 @@ besoin qu'on écrive ce qu'elle montre.
 
 ### Critères d'acceptation
 
-- [ ] Les deux phrases citées par l'auteur ne sont plus à l'écran.
-- [ ] Une personne qui ouvre l'application pour la première fois traverse l'étape sans rencontrer
+- [x] Les deux phrases citées par l'auteur ne sont plus à l'écran.
+- [x] Une personne qui ouvre l'application pour la première fois traverse l'étape sans rencontrer
       une phrase qui parle d'un mécanisme qu'elle n'a pas encore vu.
-- [ ] Ce qui reste écrit est soit une question, soit la conséquence immédiate d'un clic.
-- [ ] Aucune information **nécessaire** n'est perdue en silence : ce qui part et qui comptait est
+- [x] Ce qui reste écrit est soit une question, soit la conséquence immédiate d'un clic.
+- [x] Aucune information **nécessaire** n'est perdue en silence : ce qui part et qui comptait est
       relogé (voir `RT6`) ou nommé dans le relevé de la tranche.
-- [ ] Le guide reste d'accord avec l'écran : les fiches qui citaient les phrases retirées sont
+- [x] Le guide reste d'accord avec l'écran : les fiches qui citaient les phrases retirées sont
       reprises.
 
 ---

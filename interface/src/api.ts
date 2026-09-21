@@ -3297,8 +3297,11 @@ export type Univers = {
    *  couleur franche que rien dans le jeu ne contient rend le découpage presque
    *  gratuit.
    *
-   *  **Un réglage, jamais un calcul** : l'atelier *propose* — voir
-   *  `fond_propose` —, l'auteur tranche. */
+   *  **Relue depuis le disque, jamais réécrite par l'écran** (RT4, 20
+   *  septembre 2026) : ce n'est plus un réglage du jeu, l'atelier calcule le
+   *  fond de chaque appel sur les images de référence qui partent avec lui —
+   *  voir `atelier/domaine/fond.py`. Le champ reste pour que les jeux déjà
+   *  écrits se relisent sans changer de mot. */
   fond: string
   modeles: Partial<Record<Famille, string>>
   /** **Les deux modèles d'appel** (C2). Ils ne sont pas dans `modeles`, qui est
@@ -7100,11 +7103,6 @@ export const api = {
       univers: Univers
       /** Les deux cases que l'atelier écrit seul (B14). */
       atelier: CeQueLAtelierEcrit
-      /** **Ce que l'atelier proposerait comme fond à ce jeu-là** (D3), calculé
-       *  par le serveur : la distance qui décide de la sûreté d'un fond est
-       *  celle du détourage, et une seconde arithmétique ici aurait fini par
-       *  proposer une couleur que le découpage mange. */
-      fond_propose: FondPropose
       artworks: Carte[]
     }>("/universe"),
 
@@ -7153,7 +7151,6 @@ export const api = {
       projet: string
       univers: Univers
       atelier: CeQueLAtelierEcrit
-      fond_propose: FondPropose
     }>("/universe", { method: "PUT", body: JSON.stringify(reglage) }),
 
   /** Réappliquer la palette et la grille du projet — **sans un appel payant**.

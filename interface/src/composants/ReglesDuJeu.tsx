@@ -112,7 +112,6 @@ import {
   type EtatAgent,
   type EtatSecret,
   type Etiquette,
-  type FondPropose,
   type GardeFous,
   type Methode,
   type Modele,
@@ -505,17 +504,29 @@ function SonNom({
           {dossier ?? (nom.trim() ? dossierPrevu(nom) : "")}
         </span>
         <span className="text-[11.5px] leading-[1.45] text-encre-4">
+          {/* La permanence du dossier se dit déjà dans la phrase d'ouverture
+              de l'étape (« Le dossier, non », ci-dessus) : la répéter ici
+              n'ajoutait rien, seulement du texte à lire avant le premier
+              geste (RT5). */}
           {dossier
-            ? "Calculé du nom à la création : accents enlevés, minuscules, tirets. Il ne changera plus jamais, même si le nom change."
-            : "Il se calculera du nom : accents enlevés, minuscules, tirets. C'est là que les images iront se ranger, et il ne changera plus jamais."}
+            ? "Calculé du nom à la création : accents enlevés, minuscules, tirets."
+            : "Se calculera du nom : accents enlevés, minuscules, tirets."}
         </span>
       </div>
 
       {avertissement && <Alerte>{avertissement}</Alerte>}
 
+      {/* Deux notes, une par mode (RT5). Le paragraphe de création disait deux
+          choses à la fois — qu'on peut s'arrêter là, et que rien n'est encore
+          payé. La première annonçait un mécanisme qu'on ne rencontre pas à
+          cette étape, et elle part. **La seconde reste, réduite à son seul
+          fait** : la règle de l'auteur écarte ce qui n'est ni utile ni vital,
+          et l'argent est vital. Quelqu'un qui règle son premier jeu sur un
+          outil qui dépense doit savoir que le réglage, lui, ne dépense pas —
+          et il ne doit pas avoir à le lire dans le guide pour en être sûr. */}
       <Note>
         {mode === "creation"
-          ? "On peut s'arrêter ici : un jeu créé sans rien régler fonctionne, avec les valeurs de l'atelier. Rien de ce parcours ne coûte quoi que ce soit — la première dépense arrive quand on demande la première image."
+          ? "Rien ne coûte d'argent avant la première image."
           : "Le nom se change ici ; le dossier reste celui de la création. Renommer ne déplace aucun fichier et ne change aucune image."}
       </Note>
     </div>
@@ -535,7 +546,6 @@ function SonAllure({
   univers,
   tailles,
   finesses,
-  fondPropose,
   retourDuRealignement,
   onRegler,
   onRealigner,
@@ -543,11 +553,6 @@ function SonAllure({
   univers: Univers
   tailles: TailleDImage[]
   finesses: TailleDImage[]
-  /** **Ce que l'atelier proposerait comme fond à ce jeu-là** (D3), calculé par
-   *  le serveur — `null` tant qu'aucun univers n'a été lu. Il arrive par le GET
-   *  et il est rafraîchi par chaque PUT : la couleur sûre dépend de la palette,
-   *  et la palette bouge. */
-  fondPropose: FondPropose | null
   retourDuRealignement: string | null
   onRegler: (reglage: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
   onRealigner: () => void
@@ -556,7 +561,6 @@ function SonAllure({
   const echelle = enPixel ? tailles : finesses
   const posee = echelle.find((t) => t.cible === univers.cible_px) ?? null
   const paliers = paliersDeCouleurs(univers.cible_px)
-  const fondPose = univers.fond !== ""
 
   // **La taille à passer à la route d'aperçu** (RT2) : `null` quand aucune
   // n'est imposée, ou quand la taille posée dépasse ce que la route sait
@@ -716,10 +720,6 @@ function SonAllure({
               />
             ))}
           </div>
-          <Note>
-            Les quatre sont des partis pris, pas un classement. Changer de méthode
-            et refaire la réduction se fait sur la machine, sans rien payer.
-          </Note>
         </section>
       )}
 
@@ -753,15 +753,12 @@ function SonAllure({
               </Choix>
             ))}
           </div>
-          {/* **Le plafond est le côté du sprite, et il est mesuré** : au-delà,
-              l'image ne contient plus assez de teintes distinctes pour remplir
-              la palette demandée. Dit ici pour qu'une liste courte ne se lise
-              pas comme une panne. */}
-          <p className="text-[11.5px] leading-[1.45] text-encre-3">
-            {paliers.length < 6
-              ? `Une image de ${univers.cible_px} carrés de côté ne porte pas plus de ${paliers[paliers.length - 1]} couleurs — au-delà, l'image n'a plus assez de teintes distinctes.`
-              : "Avec une palette, c'est le nombre de teintes à y lire ; sans palette, le nombre à garder sur chaque image."}
-          </p>
+          {/* Le plafond de la liste et le sens du réglage (lu dans la palette,
+              ou gardé par image) se lisaient ici en phrase — retiré en RT5 :
+              la rangée au-dessus, avec ses images du rôdeur à chaque palier,
+              montre déjà ce que chaque nombre donne. Ce que la palette ou son
+              absence change au sens du réglage reste dans le guide
+              (`aide.ts`, fiche `univers.couleurs`), pour qui veut creuser. */}
           <button
             type="button"
             onClick={onRealigner}
@@ -777,113 +774,17 @@ function SonAllure({
               {retourDuRealignement}
             </p>
           )}
-          <Note>
-            Le réalignement repose la palette et la grille sur les images déjà
-            faites, en sautant les épinglées. Tout se passe sur la machine :
-            rien n'est payé.
-          </Note>
         </section>
       )}
 
-      {/* ── La couleur de fond (`C2`, relogée de l'assistant) ──────────────
-          Elle part avec chaque demande d'image, donc elle est ici. L'assistant
-          en était le seul écrivain du produit. */}
-      <section className="flex flex-col gap-[8px]">
-        <Intitule>Le fond du jeu</Intitule>
-        <p className="max-w-[880px] text-[13px] leading-[1.55] text-encre-2">
-          Sur quelle couleur le sujet est demandé. Une couleur que rien dans ton
-          jeu ne contient rend le découpage presque parfait ; un gris clair — ce
-          que le modèle rend quand on ne dit rien — est aussi la couleur d'une
-          joue, et le découpage la mange avec le fond.
-        </p>
-        <div className="flex items-center gap-[8px]">
-          {/* ⚠️ **Pas de pastille de couleur tant qu'aucun fond n'est posé.**
-              Un `input type=color` n'a pas d'état vide : il *doit* porter une
-              couleur, et il porterait donc celle de la proposition, juste à
-              côté des mots « aucun fond posé ». Le damier est ce que le produit
-              montre partout ailleurs pour « pas de couleur » — et il reste
-              cliquable, parce que quand aucun candidat n'est sûr, c'est le seul
-              chemin qui reste. */}
-          {fondPose ? (
-            <input
-              type="color"
-              value={univers.fond}
-              aria-label="Couleur du fond"
-              onChange={(e) => void onRegler({ fond: e.target.value })}
-              className="h-[26px] w-[34px] shrink-0 rounded-5 border border-trait bg-carte"
-            />
-          ) : (
-            <span className="damier-papier relative h-[26px] w-[34px] shrink-0 overflow-hidden rounded-5 border border-trait">
-              {/* Le sélecteur est transparent par-dessus le damier : il
-                  s'ouvre sur la couleur proposée quand il y en a une, et sur
-                  ce que le navigateur met par défaut quand il n'y en a pas.
-                  **Aucune couleur de repli n'est écrite ici** — une couleur en
-                  clair dans un écran est ce que le banc des jetons refuse, et
-                  celle-ci ne se voit de toute façon jamais. */}
-              <input
-                type="color"
-                value={fondPropose?.couleur ?? ""}
-                aria-label="Couleur du fond"
-                onChange={(e) => void onRegler({ fond: e.target.value })}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              />
-            </span>
-          )}
-          <span className="mesure text-[11.5px] text-encre-3">
-            {fondPose ? univers.fond : "aucun fond posé"}
-          </span>
-          {fondPose && (
-            <button
-              type="button"
-              onClick={() => void onRegler({ fond: "" })}
-              className="mesure h-[26px] text-[11.5px] text-encre-4 hover:text-encre"
-            >
-              Retirer
-            </button>
-          )}
-        </div>
-        {/* **La proposition, et l'écart qui la porte.** Un chiffre nu ne se lit
-            pas : « à 192 de la couleur de ton jeu la plus proche » dit à la fois
-            ce qu'on gagne et sur quoi le calcul a porté. */}
-        {fondPropose?.couleur && fondPropose.couleur !== univers.fond && (
-          <div className="flex items-center gap-[8px]">
-            <button
-              type="button"
-              onClick={() => void onRegler({ fond: fondPropose.couleur })}
-              style={{ background: fondPropose.couleur }}
-              aria-label={`Prendre ${fondPropose.couleur}`}
-              className="h-[22px] w-[22px] shrink-0 rounded-5 border border-trait"
-            />
-            <button
-              type="button"
-              onClick={() => void onRegler({ fond: fondPropose.couleur })}
-              className="mesure text-[11.5px] text-signal hover:text-encre"
-            >
-              Prendre {fondPropose.nom || fondPropose.couleur}
-            </button>
-            <span className="mesure text-[11.5px] text-encre-4">
-              à {fondPropose.ecart} de {fondPropose.voisine}, la couleur de ton
-              jeu la plus proche
-            </span>
-          </div>
-        )}
-        {/* **Aucun candidat sûr est une réponse, pas une panne** — et l'atelier
-            le dit au lieu de choisir en silence. */}
-        {fondPropose?.raison && <Note>{fondPropose.raison}</Note>}
-        {fondPose && (
-          <Alerte>
-            Changer le fond change ce qui part au fournisseur : les images
-            tirées avant ne se comparent plus à celles d'après.
-          </Alerte>
-        )}
-      </section>
-
-      <Note>
-        La taille de case est le seul choix qu'on ne reprend pas gratuitement :
-        changer le style ou la méthode se refait sur la machine, puisque la grande
-        image est gardée sur le disque. Changer la taille après coup laisse les
-        images déjà faites à leur ancienne taille.
-      </Note>
+      {/* L'avertissement sur la taille de case — « changer la taille après
+          coup laisse les images déjà faites à leur ancienne taille » —
+          vivait ici, avant qu'on l'ait rencontrée. Retiré en RT5 : à cette
+          étape, aucun jeu ne porte encore d'image, donc rien ne rend
+          l'avertissement vrai pour qui le lit. RT6 le repose au bon
+          moment — quand on change la taille sur un jeu qui a déjà des
+          images — là où il décrit une conséquence réelle plutôt qu'un
+          risque abstrait. */}
     </div>
   )
 }
@@ -2038,11 +1939,6 @@ export function ReglesDuJeu({
   const [tailles, setTailles] = useState<TailleDImage[]>([])
   const [finesses, setFinesses] = useState<TailleDImage[]>([])
   const [etiquettes, setEtiquettes] = useState<Etiquette[]>([])
-  /** **La couleur de fond que l'atelier proposerait** (D3, relogée par `C2`).
-   *  Le serveur la calcule sur la palette du jeu ; l'écran ne la recalcule
-   *  jamais, parce que la distance qui décide de la sûreté d'un fond est celle
-   *  du détourage. */
-  const [fondPropose, setFondPropose] = useState<FondPropose | null>(null)
   /** Ce que le dernier réalignement a fait, ou rien. Il se pose sous son
    *  bouton : c'est là qu'on l'a demandé. */
   const [retourDuRealignement, setRetourDuRealignement] = useState<string | null>(null)
@@ -2082,7 +1978,6 @@ export function ReglesDuJeu({
     const recu = await api.univers()
     setUnivers(recu.univers)
     setAtelier(recu.atelier ?? { champs: [], sans_effet: {} })
-    setFondPropose(recu.fond_propose ?? null)
   }, [])
 
   // En réglages, le jeu existe déjà : on lit son univers tout de suite. En
@@ -2097,7 +1992,6 @@ export function ReglesDuJeu({
         if (!vivant) return
         setUnivers(recu.univers)
         setAtelier(recu.atelier ?? { champs: [], sans_effet: {} })
-        setFondPropose(recu.fond_propose ?? null)
       })
       .catch((erreur) => vivant && echouer(erreur, "l'univers n'a pas pu être lu"))
     return () => {
@@ -2111,7 +2005,6 @@ export function ReglesDuJeu({
         const recu = await api.reglerUnivers(reglage)
         setUnivers(recu.univers)
         setAtelier(recu.atelier ?? { champs: [], sans_effet: {} })
-        setFondPropose(recu.fond_propose ?? null)
       } catch (erreur) {
         echouer(erreur, "le réglage a été refusé")
       }
@@ -2332,7 +2225,6 @@ export function ReglesDuJeu({
             univers={univers}
             tailles={tailles}
             finesses={finesses}
-            fondPropose={fondPropose}
             retourDuRealignement={retourDuRealignement}
             onRegler={regler}
             onRealigner={realigner}

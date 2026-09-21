@@ -102,16 +102,6 @@ function construireDouble(
   options: {
     univers?: Partial<Univers>
     sansEffet?: Record<string, string>
-    /** **Ce que l'atelier proposerait comme fond** (D3) — relogé de l'assistant
-     *  par `C2`. Le serveur le calcule sur la palette du jeu ; l'écran ne fait
-     *  que le montrer. */
-    fondPropose?: {
-      couleur: string
-      nom: string
-      ecart: number
-      voisine: string
-      raison: string | null
-    }
     /** Ce que le double répond à `POST /api/board/realign`. */
     realignement?: { realignes: number; conserves: number; sur_grille: boolean }
     /** Les jeux déjà nommés — le double y cherche un homonyme, comme le
@@ -147,9 +137,6 @@ function construireDouble(
     projet: "le-marais",
     univers,
     atelier: { champs: ["rendu", "vue"], sans_effet: sansEffet },
-    fond_propose:
-      options.fondPropose ??
-      ({ couleur: "", nom: "", ecart: 0, voisine: "", raison: null } as const),
     artworks: [],
   })
 
@@ -879,12 +866,11 @@ describe("les réglages relogés de l'assistant (C2)", () => {
 
     const groupe = await screen.findByRole("group", { name: "Les couleurs demandées" })
     // 64, 128 et 256 ne paraissent pas : un sprite de 32 carrés de côté ne
-    // porte pas tant de teintes distinctes, et le dire évite qu'une liste
-    // courte se lise comme une panne.
+    // porte pas tant de teintes distinctes. La liste raccourcit d'elle-même
+    // (RT5) — plus de phrase pour le dire, la rangée courte le montre.
     expect(
       Array.from(groupe.querySelectorAll("button")).map((b) => b.textContent),
     ).toEqual(["8", "16", "32"])
-    expect(screen.getByText(/ne porte pas plus de 32 couleurs/)).toBeTruthy()
   })
 
   test("en dessin, le nombre de couleurs ne paraît pas — un dessin garde ses nuances", async () => {
@@ -894,60 +880,6 @@ describe("les réglages relogés de l'assistant (C2)", () => {
 
     await screen.findByRole("button", { name: "Dessin" })
     expect(screen.queryByRole("group", { name: "Les couleurs demandées" })).toBeNull()
-  })
-
-  test("sans fond posé, le damier le dit, et la proposition du serveur se prend d'un clic", async () => {
-    const { fetchDouble, appels } = construireDouble({
-      univers: { style: "pixel", cible_px: 64, fond: "" },
-      fondPropose: {
-        couleur: "#ff00c8",
-        nom: "magenta",
-        ecart: 192,
-        voisine: "brun de robe",
-        raison: null,
-      },
-    })
-    monter(fetchDouble)
-    ouvrir("Son allure")
-
-    expect(await screen.findByText("aucun fond posé")).toBeTruthy()
-    // **Le prix est dit avec la proposition** : l'écart, et sur quoi il a été
-    // mesuré. Un chiffre nu ne se lirait pas.
-    expect(
-      screen.getByText(/à 192 de brun de robe, la couleur de ton jeu la plus proche/),
-    ).toBeTruthy()
-
-    fireEvent.click(screen.getByRole("button", { name: "Prendre magenta" }))
-
-    await waitFor(() =>
-      expect(
-        appels.some(
-          (a) =>
-            a.url === "/api/universe" &&
-            a.methode === "PUT" &&
-            (a.corps as { fond?: string }).fond === "#ff00c8",
-        ),
-      ).toBe(true),
-    )
-    // Et l'écran montre le fond posé, avec l'avertissement qui va avec.
-    expect(await screen.findByText("#ff00c8")).toBeTruthy()
-    expect(screen.getByText(/les images tirées avant ne se comparent plus/)).toBeTruthy()
-  })
-
-  test("le fond posé se retire, et l'écran repasse au damier", async () => {
-    const { fetchDouble, appels } = construireDouble({
-      univers: { style: "pixel", cible_px: 64, fond: "#ff00c8" },
-    })
-    monter(fetchDouble)
-    ouvrir("Son allure")
-
-    fireEvent.click(await screen.findByRole("button", { name: "Retirer" }))
-
-    await waitFor(() => expect(screen.getByText("aucun fond posé")).toBeTruthy())
-    const envoi = appels.find(
-      (a) => a.url === "/api/universe" && a.methode === "PUT",
-    )!
-    expect((envoi.corps as { fond: string }).fond).toBe("")
   })
 
   test("réaligner tout le jeu dit ce qu'il a fait, sous son bouton", async () => {
@@ -1042,7 +974,7 @@ describe("le nom et son dossier", () => {
       target: { value: "Le Marais" },
     })
     expect(screen.getByText("le-marais")).toBeTruthy()
-    expect(screen.getByText(/il ne changera plus jamais/)).toBeTruthy()
+    expect(screen.getByText(/Se calculera du nom/)).toBeTruthy()
   })
 })
 

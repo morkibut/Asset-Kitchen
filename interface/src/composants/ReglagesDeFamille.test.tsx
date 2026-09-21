@@ -110,7 +110,6 @@ function construireDouble(
   const universJson = () => ({
     projet: "le-marais",
     univers: { ...UNIVERS_VIDE, bareme, modeles },
-    fond_propose: { couleur: "", distance: 0 },
     artworks: [],
   })
   const typesJson = () => ({

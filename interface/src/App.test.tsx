@@ -72,7 +72,6 @@ import type {
   Stabilite,
   Bande,
   Montage,
-  FondPropose,
   Main,
   Modele,
   TachesDeLAsset,
@@ -1395,11 +1394,6 @@ function serveurDouble(options: {
   assets?: Asset[]
   cartes?: Carte[]
   univers?: Univers
-  /** Ce que l'atelier propose comme fond, d'après la palette du jeu (D3). Le
-   *  test le décide, comme le vrai serveur le déciderait sur les artworks : la
-   *  réponse a deux branches — une couleur sûre, ou un refus qui dit de quelle
-   *  couleur du jeu il s'approchait —, et l'écran ne se comporte pas pareil. */
-  fondPropose?: FondPropose
   /** Un catalogue à plusieurs modèles — ce qu'il faut pour qu'un filtre ait
    *  quelque chose à écarter. Par défaut, ceux du `CATALOGUE`. */
   modeles?: Modele[]
@@ -3782,21 +3776,10 @@ function serveurDouble(options: {
         )
         etat.univers = { ...etat.univers, ...pose }
       }
-      // **La proposition de fond voyage avec l'univers** (D3), en lecture et en
-      // écriture : régler le fond doit rendre la proposition *à jour*, sans que
-      // l'écran ait à redemander. Le double la rend donc sur les deux verbes,
-      // comme la vraie route.
       return rendre({
         projet: "bac-a-sable",
         univers: etat.univers,
         artworks: [],
-        fond_propose: options.fondPropose ?? {
-          couleur: "#FF00FF",
-          nom: "magenta",
-          ecart: 192,
-          voisine: "#C0C0C0",
-          raison: null,
-        },
       })
     }
     if (url === "/api/generations" && init?.method === "POST") {
@@ -23606,13 +23589,6 @@ describe("B4 — l'ouverture", () => {
             projet: courant,
             univers: courant === "foret" ? UNIVERS_FORET : UNIVERS,
             artworks: [],
-            fond_propose: {
-              couleur: "#FF00FF",
-              nom: "magenta",
-              ecart: 192,
-              voisine: "#C0C0C0",
-              raison: null,
-            },
           }),
         } as Response
       }

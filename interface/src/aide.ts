@@ -790,12 +790,15 @@ export const AIDE: Record<string, Explication> = {
       "« Aucune » dit que ton jeu n'est pas en pixel art — le rendu du modèle entre tel quel, sans grille imposée. Avec une cible, elle est toujours imposée, jamais déduite : dix modèles sur douze font dériver la taille du pixel d'une génération à l'autre, de 7 à 20 px dans un même lot. Réaligner ne coûte rien — aucun appel payant — et saute les images déjà ramenées au brut.",
   },
 
-  // **Deux entrées relogées ici par `GU9`** (`docs/releves/guide-2026-09-20.md`) :
-  // `univers.couleurs` et `univers.fond` vivaient sous `ou: "ambiances"`, un
-  // héritage du modèle d'avant `C2`. Le code, lui, les règle ici depuis
-  // longtemps — `ReglesDuJeu.tsx` le dit dans son propre tableau de migration,
-  // « 7a » et « 7b » — et l'écran Ambiances et couleurs n'en montre plus
-  // aucune trace.
+  // **Relogée ici par `GU9`** (`docs/releves/guide-2026-09-20.md`) :
+  // `univers.couleurs` vivait sous `ou: "ambiances"`, un héritage du modèle
+  // d'avant `C2`. Le code la règle ici depuis longtemps — `ReglesDuJeu.tsx` le
+  // dit dans son propre tableau de migration, « 7a » — et l'écran Ambiances et
+  // couleurs n'en montre plus aucune trace.
+  //
+  // `univers.fond` l'a rejointe le même jour, puis a disparu avec elle le 20
+  // septembre 2026 (RT4) : le réglage qu'elle décrivait n'existe plus, le fond
+  // se calculant désormais à chaque demande d'image (`atelier/domaine/fond.py`).
 
   "univers.couleurs": {
     nom: "Couleurs demandées",
@@ -806,19 +809,7 @@ export const AIDE: Record<string, Explication> = {
       "Avec une palette : elle en relance le calcul sur les mêmes artworks, sans un appel payant, et ça change le rendu de tout ce qui se quantifie ensuite. Sans palette : elle règle directement combien de teintes chaque image garde à sa sortie.",
     origine: "toi · défaut 32",
     long:
-      "Elle sert deux fois, et c'est voulu : avant `D2` elle ne servait que la première — un projet sans artwork ne réduisait aucune couleur, en silence. Le plafond dépend de la taille de case : une petite image ne porte pas assez de teintes distinctes pour remplir une liste longue, et l'écran le dit plutôt que de laisser une liste courte se lire comme une panne.",
-  },
-
-  "univers.fond": {
-    nom: "Le fond du jeu",
-    ou: "jeu",
-    groupe: "Son allure — le style, la taille, les couleurs",
-    quoi: "La couleur sur laquelle poser le sujet, avec une phrase qui interdit au modèle de l'employer sur le sujet lui-même.",
-    change:
-      "Ce que le modèle rend derrière le sujet, et donc ce que le découpage aura à retirer. Une couleur que rien dans ton jeu ne contient rend le découpage presque parfait ; sans fond posé, le modèle rend un gris clair — la couleur d'une joue aussi — et le découpage la mange avec le fond.",
-    origine: "toi · aucun fond au départ, et l'atelier en propose un sans jamais l'imposer",
-    long:
-      "⚠️ Changer le fond change ce qui part au fournisseur : les images tirées avant ne se comparent plus à celles d'après — pas moins bonnes, juste plus demandées de la même façon. L'atelier propose sans jamais imposer, et se corrige encore juste avant de payer, sur l'écran de confirmation, sans que ce choix ne remonte au jeu.",
+      "Elle sert deux fois, et c'est voulu : avant `D2` elle ne servait que la première — un projet sans artwork ne réduisait aucune couleur, en silence. Le plafond dépend de la taille de case : une petite image ne porte pas assez de teintes distinctes pour remplir une liste longue — la liste proposée à l'écran raccourcit d'elle-même, plutôt que de refuser un choix hors barème.",
   },
 
   // Sa vue — d'où l'on regarde le jeu
@@ -1339,10 +1330,11 @@ export const AIDE: Record<string, Explication> = {
 
   // ── L'univers, côté Ambiances — les palettes, et les lots de style ────────
   //
-  // **Deux entrées ont quitté ce bloc en `GU9`** : `univers.couleurs` et
-  // `univers.fond` ne se règlent plus ici depuis `C2` — elles se règlent à
-  // l'étape « Son allure » des règles du jeu (`ou: "jeu"`), où
-  // `ReglesDuJeu.tsx` les a relogées. Il ne reste ici que ce que l'écran
+  // **Une entrée a quitté ce bloc en `GU9`** : `univers.couleurs` ne se règle
+  // plus ici depuis `C2` — elle se règle à l'étape « Son allure » des règles
+  // du jeu (`ou: "jeu"`), où `ReglesDuJeu.tsx` l'a relogée. `univers.fond`
+  // l'accompagnait jusqu'au 20 septembre 2026 (RT4), où le réglage qu'elle
+  // décrivait a disparu avec elle. Il ne reste ici que ce que l'écran
   // Ambiances et couleurs montre vraiment : les ambiances, et les palettes.
 
   // Les ambiances

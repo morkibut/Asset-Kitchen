@@ -301,7 +301,6 @@ function construireDouble(
         projet: "le-marais",
         univers: { ...univers(), ...(corps as object) },
         atelier: {},
-        fond_propose: { couleur: "", distance: 0 },
       })
 
     return rendre(image({ recette: recetteDeTravail() }))
