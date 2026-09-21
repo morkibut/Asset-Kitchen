@@ -28,7 +28,7 @@ const BASE = {
   cases: 0,
   caracteres: { total: 0, sujet: 0, eteints: 0 },
   corrections: 0,
-  fond: { couleur: "", interdiction: "", du_jeu: "", corrige: false, propose: null },
+  fond: { couleur: "", interdiction: "", corrige: false, propose: null },
 }
 
 /** Un `Envoi` pour un style local, complété de ce que `local`, `modele.reference_nom`

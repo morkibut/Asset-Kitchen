@@ -1330,7 +1330,13 @@ class ServiceUnivers:
                 raise UniversRefuse(manque)
             univers.methode_pixels = methode_pixels
 
-        # ── Le fond du jeu (D3) ──────────────────────────────────────────────
+        # ── Le fond du jeu (D3), et son seul écrivain restant ─────────────────
+        #
+        # ⚠️ **La route ne le transmet plus** (RT4, 20 septembre 2026) : le fond
+        # n'est plus un réglage, l'atelier le calcule à chaque demande. Ce
+        # paramètre ne sert donc plus qu'à monter un jeu d'avant la tranche —
+        # ce que font les essais qui vérifient qu'un tel jeu se relit sans
+        # erreur. Aucun écran ne l'atteint.
         #
         # **Une couleur hors palette se pose, elle ne se refuse pas**, et c'est
         # la règle du dépôt reprise telle quelle : l'atelier *propose* une

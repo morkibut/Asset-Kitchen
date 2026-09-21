@@ -339,8 +339,8 @@ class ServiceEnvoi:
             # **Le fond, et ce qu'il coûte de le changer ici** (D3). Trois
             # choses, et elles répondent à trois questions différentes : sur
             # quelle couleur cet appel part, ce que l'atelier proposerait à ce
-            # jeu-là, et si la couleur est bien celle du jeu ou une correction
-            # posée pour cet appel seulement.
+            # jeu-là, et si la couleur est celle qu'il a calculée ou une
+            # correction posée pour cet appel seulement.
             #
             # **La correction ne remonte nulle part**, comme tout ce que cet
             # écran renvoie : elle habille l'appel et disparaît. Poser le fond
@@ -356,18 +356,21 @@ class ServiceEnvoi:
 
         **Il ne recompose rien** : la couleur et l'interdiction viennent de
         l'aperçu, c'est-à-dire du chemin même que l'envoi emprunte. Ce que ce
-        service ajoute est ce qui n'appartient qu'à l'écran — la proposition du
-        jeu, et le fait qu'une correction est posée —, et aucun des deux
+        service ajoute est ce qui n'appartient qu'à l'écran — la couleur
+        proposée, et le fait qu'une correction est posée —, et aucun des deux
         n'entre dans ce qui part.
 
-        ⚠️ **`du_jeu` et `propose` ont perdu l'écran de réglage qu'ils
-        décrivaient** (RT4, 20 septembre 2026) : `ReglesDuJeu.tsx` ne montre
-        plus rien du fond, et `GET /api/universe` ne sert plus `fond_propose`.
-        Le fond n'est plus un réglage : `couleur` est ce que l'atelier a
-        calculé sur les images jointes. Les deux champs restent ici parce que
-        cet écran-ci, la confirmation d'un envoi, les lit encore — `du_jeu`
-        pour offrir « remettre celui du jeu », `propose` pour offrir la
-        couleur la plus sûre pour cet appel-là.
+        ⚠️ **`propose` a perdu l'écran de réglage qu'il décrivait** (RT4,
+        20 septembre 2026) : `ReglesDuJeu.tsx` ne montre plus rien du fond, et
+        `GET /api/universe` ne sert plus `fond_propose`. Le fond n'est plus un
+        réglage : `couleur` est ce que l'atelier a calculé sur les images
+        jointes. `propose` reste parce que cet écran-ci, la confirmation d'un
+        envoi, le lit encore — pour offrir la couleur la plus sûre pour cet
+        appel-là.
+
+        **`du_jeu` est parti avec le réglage** : il servait au bouton
+        « remettre celui du jeu », que plus aucun écran ne montre. Le garder
+        aurait laissé croire qu'un fond du jeu décide encore de quelque chose.
         """
         propose = self._univers.fond_propose(projet).en_json()
         return {
@@ -375,7 +378,6 @@ class ServiceEnvoi:
             "interdiction": apercu["interdiction"],
             # Faux quand le modèle choisi ne lit aucun négatif (ML4).
             "negatif_lu": apercu["negatif_lu"],
-            "du_jeu": self._univers.univers(projet).fond,
             "corrige": tri.fond is not None,
             "propose": propose,
         }

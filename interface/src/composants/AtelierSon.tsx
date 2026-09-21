@@ -34,7 +34,7 @@ function provenanceLisible(brut: Record<string, unknown>): ProvenanceLisible {
 }
 
 /** Le lecteur joue le WAV de la version conservée, celui qui sera livré. */
-export function AtelierSon({ projet, identifiantInitial, onFermer, onLivraisons }: { projet: string; identifiantInitial?: string; onFermer?: () => void; onLivraisons?: () => void }) {
+export function AtelierSon({ projet, identifiantInitial, onLivraisons }: { projet: string; identifiantInitial?: string; onLivraisons?: () => void }) {
   const [liste, setListe] = useState<Son[]>([])
   const [son, setSon] = useState<Son | null>(null)
   const [recette, setRecette] = useState<RecetteSon | null>(null)
@@ -52,6 +52,14 @@ export function AtelierSon({ projet, identifiantInitial, onFermer, onLivraisons 
   const faire = async (action: () => Promise<void>) => { setOccupe(true); setErreur(""); try { await action() } catch (e) { setErreur(erreurDe(e)) } finally { setOccupe(false) } }
   useEffect(() => { let actif = true; setSon(null); sons.lister(projet).then(v => { if (actif) setListe(v) }).catch(e => { if (actif) setErreur(erreurDe(e)) }); if (identifiantInitial) sons.lire(projet, identifiantInitial).then(s => { if (actif) installer(s) }).catch(e => { if (actif) setErreur(erreurDe(e)) }); return () => { actif = false } }, [projet, identifiantInitial])
   useEffect(() => { let actif = true; setOnde(null); if (son?.mesures) sons.onde(son, brut).then(o => { if (actif) setOnde(o) }).catch(e => { if (actif) setErreur(erreurDe(e)) }); return () => { actif = false } }, [son, brut])
+  // **L'avertissement d'abandon ne couvre plus la sortie du lieu** (RT8, 20
+  // septembre 2026). Il tenait à un bouton « Fermer » du dialogue plein écran ;
+  // depuis que *Les sons* est une surface normale, on en sort par la navigation
+  // de gauche, qui n'appartient pas à cet écran et ne lui demande rien. Le
+  // garde-fou subsiste où il est encore atteignable : « Tous les sons », l'ouverture
+  // d'un autre son, l'import, et le rechargement de la page ci-dessous.
+  // Le reprendre sur la navigation demanderait un garde global au parent —
+  // une capacité, pas une correction : c'est écrit dans le critère de RT8.
   useEffect(() => { if (!modifie) return; const avertir = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = "" }; window.addEventListener("beforeunload", avertir); return () => window.removeEventListener("beforeunload", avertir) }, [modifie])
   const changer = <K extends keyof RecetteSon>(cle: K, valeur: RecetteSon[K]) => { setRecette(r => r && { ...r, [cle]: valeur }) }
   const rafraichir = async (s: Son) => { installer(s); setListe(await sons.lister(projet)) }
@@ -60,7 +68,7 @@ export function AtelierSon({ projet, identifiantInitial, onFermer, onLivraisons 
   const appliquerReglagesFamille = () => { if (!son || !son.famille) return; void faire(async () => rafraichir(await sons.classer(son, son.famille, true))) }
   const recetteProposeeDiffere = !!son?.recette_proposee && !!recette && JSON.stringify(son.recette_proposee) !== JSON.stringify(recette)
   return <section className="space-y-[22px]" aria-label="Atelier sonore">
-    <header className="flex items-start justify-between gap-[14px]"><div><h1 className="font-serif text-[38px]">{son ? son.nom : "Les sons"}</h1><p className="mt-[8px] text-[13px] text-encre-3">Écouter, ajuster et conserver les sons du jeu. La source reste toujours disponible.</p></div><div className="flex gap-[8px]"><label className={`${BOUTON} inline-flex items-center cursor-pointer`}>Importer un son<input aria-label="Importer un son" type="file" accept="audio/*,.wav,.ogg,.mp3" hidden disabled={occupe} onChange={e => { const f = e.target.files?.[0]; if (f && (!modifie || window.confirm("Abandonner les réglages non conservés ?"))) void faire(async () => rafraichir(await sons.importer(projet, f))); e.target.value = "" }} /></label>{onFermer && <button className={BOUTON} onClick={() => { if (!modifie || window.confirm("Abandonner les réglages non conservés ?")) onFermer() }}>Fermer</button>}</div></header>
+    <header className="flex items-start justify-between gap-[14px]"><div><h1 className="font-serif text-[38px]">{son ? son.nom : "Les sons"}</h1><p className="mt-[8px] text-[13px] text-encre-3">Écouter, ajuster et conserver les sons du jeu. La source reste toujours disponible.</p></div><div className="flex gap-[8px]"><label className={`${BOUTON} inline-flex items-center cursor-pointer`}>Importer un son<input aria-label="Importer un son" type="file" accept="audio/*,.wav,.ogg,.mp3" hidden disabled={occupe} onChange={e => { const f = e.target.files?.[0]; if (f && (!modifie || window.confirm("Abandonner les réglages non conservés ?"))) void faire(async () => rafraichir(await sons.importer(projet, f))); e.target.value = "" }} /></label></div></header>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
     {!son ? (liste.length
       ? <div className="grid grid-cols-2 gap-[14px]">{liste.map(s => <button key={s.identifiant} className="rounded-8 border border-trait bg-carte p-[22px] text-left" onClick={() => ouvrir(s)}><span className="font-serif text-[25px]">{s.nom}</span><span className="mt-[8px] block text-[13px] text-encre-3">{s.mesures ? `${s.mesures.duree.toFixed(2)} s · ${s.mesures.canaux === 2 ? "stéréo" : "mono"}` : "Source à vérifier"} · {s.versions.length} versions{s.famille ? ` · ${NOMS_FAMILLES_SON[s.famille]}` : ""}</span>{s.raison && <span className="mt-[8px] block text-[12px] text-echec">{s.raison}</span>}</button>)}</div>

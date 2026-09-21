@@ -62,7 +62,7 @@
  * | 5 · Les types d'objets (barème d'échelles) | `ReglagesDeFamille.tsx`, table 1 — les natures se règlent dans la famille qui les porte |
  * | 6 · L'allure (les cinq cases de la bible) | ici, étape « Son monde » |
  * | 7a · Références et couleurs (le nombre de couleurs) | **relogé ici**, étape « Son allure » — il part avec chaque demande d'image, donc il passe le critère d'entrée du parcours |
- * | 7b · La couleur de fond du jeu | **relogé ici**, étape « Son allure » — même raison, et l'assistant en était le seul écrivain. `ReglesDAilleurs` la renvoyait à « l'atelier Détourer », qui ne l'a jamais écrite : le renvoi était faux, il est retiré |
+ * | 7b · La couleur de fond du jeu | **retirée** (`RT4`, 20 septembre 2026). Elle avait été relogée ici, étape « Son allure » ; le fond a cessé d'être un réglage — l'atelier le calcule à chaque demande sur les images de référence qui partent avec elle, le vert de studio à défaut. Il ne se règle donc plus nulle part, et se corrige seulement pour un appel, sur l'écran de confirmation |
  * | 7c · Le texte à copier dans un outil d'images | **retiré.** Il assemblait une description à coller ailleurs pour récupérer des images d'inspiration à la main. La toile de l'univers reçoit ces images par collage ou par dépôt, sans passer par un texte que personne ne relit ; et le parcours neuf montre déjà la description assemblée, étape « Son monde » |
  * | 8 · Poses et états | `ReglagesDeFamille.tsx`, table 2 — le plan de poses est propre à chaque nature |
  * | 9 · Emplacements de corps | `ReglagesDeFamille.tsx`, table 3a — famille personnages |
@@ -1461,10 +1461,12 @@ function LeSon({
 
 /** Les lignes que le carnet perd, rassemblées ici en **lecture seule**.
  *
- *  ⚠️ **« La couleur de fond » en est sortie avec `C2`.** Elle renvoyait à
- *  « l'atelier Détourer », qui ne l'a jamais écrite : `Assistant.tsx` en était
- *  le seul écrivain du produit, et le renvoi était donc faux. Elle se règle
- *  maintenant à l'étape « Son allure », deux écrans plus haut.
+ *  ⚠️ **« La couleur de fond » n'est plus une ligne de nulle part** (`RT4`, 20
+ *  septembre 2026). Elle a d'abord quitté cette liste avec `C2` pour l'étape
+ *  « Son allure » ; cette section-là a disparu à son tour, parce que le fond
+ *  n'est plus un réglage : l'atelier le calcule à chaque demande sur les images
+ *  de référence qui partent avec elle. Il n'y a donc plus d'endroit où le
+ *  renvoyer, et c'est voulu.
  *
  *  Elles ne sont pas dans le parcours parce qu'elles ne passent pas son critère
  *  d'entrée — elles ne partent pas avec la demande d'image, ou elles ne

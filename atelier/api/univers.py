@@ -261,11 +261,14 @@ class CorpsUnivers(BaseModel):
     # les recettes fabriquées à neuf : en changer ne rejoue aucune image déjà
     # rendue, exactement comme la taille de case.
     methode_pixels: str | None = None
-    # **La couleur de fond du jeu** (D3). Elle part dans le texte, et elle décide
-    # de ce que le découpage aura à manger. La chaîne vide la retire et rend le
-    # comportement d'avant la tranche ; `null` reste *ne touche pas*, comme
-    # partout ailleurs dans ce corps.
-    fond: str | None = None
+    # ⚠️ **`fond` n'est plus accepté** (RT4, 20 septembre 2026). Le fond n'est
+    # plus un réglage du jeu : l'atelier le calcule à chaque demande sur les
+    # images de référence qui partent avec elle. `Univers.fond` reste **en
+    # lecture** pour que les jeux déjà écrits se relisent sans changer de mot,
+    # mais plus rien dans le produit ne propose de l'écrire — laisser la route
+    # l'accepter aurait gardé un réglage que plus aucun écran ne montre et que
+    # plus aucune génération ne lit. Le service garde le paramètre, pour les
+    # essais qui ont besoin d'un jeu d'avant la tranche.
     modeles: dict[str, str] | None = None
     # **Deux défauts d'appel, pas de famille** (C2) : produire une planche et
     # éditer un corps ne se jouent pas chez le même modèle — mesuré le 28 août.
@@ -796,7 +799,6 @@ async def regler_univers(
         vue=corps.vue,
         couleurs=corps.couleurs,
         methode_pixels=corps.methode_pixels,
-        fond=corps.fond,
         modeles=corps.modeles,
         modele_planche=corps.modele_planche,
         modele_edition=corps.modele_edition,

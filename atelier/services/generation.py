@@ -913,7 +913,7 @@ class ServiceGenerations:
             # **Un workflow local qui ne relie pas le négatif ne le lit pas**
             # (ML4) : la génération ne dit donc pas qu'il est parti.
             prompt_negatif=(
-                self._interdit(projet, demande.prompt_negatif, fond)
+                self._interdit(demande.prompt_negatif, fond)
                 if self._negatif_lu(identifiant_modele)
                 else ""
             ),
@@ -2623,9 +2623,7 @@ class ServiceGenerations:
             self.lignes(sujet, repris=repris, projet=projet, pliage=pliage)
         )
 
-    def _interdit(
-        self, projet: str | None, ecrit: str, fond: str | None = None
-    ) -> str:
+    def _interdit(self, ecrit: str, fond: str | None = None) -> str:
         """Le champ d'interdiction tel qu'il partira — **un seul endroit l'écrit**.
 
         Jumelle exacte de `_texte` un cran plus bas, et pour la raison exacte :
@@ -2643,7 +2641,7 @@ class ServiceGenerations:
         """
         if self._production is None:
             return ecrit
-        return self._production.interdit(projet, ecrit, fond)
+        return self._production.interdit(ecrit, fond)
 
     def _texte(
         self,
@@ -2893,7 +2891,7 @@ class ServiceGenerations:
             # aurait un angle mort — et ce serait celui que la tranche vient
             # d'ouvrir.
             "interdiction": (
-                self._interdit(projet, prompt_negatif, fond)
+                self._interdit(prompt_negatif, fond)
                 if self._negatif_lu(modele)
                 else ""
             ),

@@ -4395,8 +4395,9 @@ export type Envoi = {
   corrections: number
   /** **Le fond de cet appel-ci, et ce qu'il interdit** (D3).
    *
-   *  `couleur` est celle sur laquelle l'appel part — celle du jeu, ou celle
-   *  qu'on vient de corriger ici. Elle est **déjà** dans le texte, dans la case
+   *  `couleur` est celle sur laquelle l'appel part — celle que l'atelier a
+   *  calculée sur les images envoyées, ou celle qu'on vient de corriger ici.
+   *  Elle est **déjà** dans le texte, dans la case
    *  `technique` : ce champ ne la double pas, il la nomme, pour que l'écran
    *  puisse en dessiner la pastille sans relire de l'anglais.
    *
@@ -4405,13 +4406,16 @@ export type Envoi = {
    *  ce qui part que le texte ne contient pas ; sans lui, l'écran qui promet de
    *  tout montrer aurait un angle mort.
    *
-   *  `corrige` dit si la couleur vient d'ici plutôt que du jeu — **et la
-   *  correction ne remonte nulle part** : la poser durablement est un second
-   *  geste, qui passe par le codex. */
+   *  `corrige` dit si la couleur vient d'ici plutôt que du calcul — **et la
+   *  correction ne remonte nulle part** : elle ne vaut que pour cet appel, et
+   *  la demande suivante repart du calcul.
+   *
+   *  ⚠️ **Il n'y a plus de `du_jeu`** (20 septembre 2026) : le fond n'est plus
+   *  un réglage du jeu, donc annuler la correction rend la main au calcul et
+   *  n'a rien à comparer. */
   fond: {
     couleur: string
     interdiction: string
-    du_jeu: string
     corrige: boolean
     propose: FondPropose
   }
@@ -4427,15 +4431,15 @@ export type Tri = {
   /** **La couleur de fond corrigée pour cet appel-ci** (D3).
    *
    *  **Un quatrième écart, et il ne se range pas dans `textes`** : le fond n'est
-   *  pas une ligne du texte, c'est un réglage qui en *fabrique* une — la phrase
+   *  pas une ligne du texte, c'est une couleur qui en *fabrique* une — la phrase
    *  de calage — et qui fabrique en plus la phrase d'interdiction, laquelle part
    *  dans un autre champ de la demande. Le corriger en tapant dans la ligne
    *  aurait changé l'une sans l'autre, et l'appel serait parti en demandant un
    *  fond magenta tout en interdisant le cyan.
    *
-   *  `null` — ou absent — laisse le fond du jeu ; `""` le retire pour cet
-   *  appel, ce qui est un geste légitime quand on veut comparer avec ce que le
-   *  jeu rendait avant. */
+   *  `null` — ou absent — laisse la couleur que l'atelier a calculée pour cet
+   *  appel ; `""` retire le fond, ce qui est un geste légitime quand on veut
+   *  comparer avec ce que le jeu rendait avant. */
   fond?: string | null
 }
 
@@ -7121,10 +7125,11 @@ export const api = {
     /** **La méthode de pixelisation du projet** (D2). Elle ne descend que dans
      *  les recettes fabriquées à neuf : en changer ne rejoue aucune image. */
     methode_pixels?: Methode
-    /** **La couleur de fond du jeu** (D3). La chaîne vide la retire et rend le
-     *  comportement d'avant la tranche ; ne pas envoyer le champ ne touche à
-     *  rien, comme partout ailleurs dans ce message. */
-    fond?: string
+    /* ⚠️ **`fond` a disparu de ce message** (RT4, 20 septembre 2026) : la
+     *  route ne l'accepte plus. Le fond n'est plus un réglage du jeu, l'atelier
+     *  le calcule à chaque demande sur les images de référence qui partent avec
+     *  elle. `Univers.fond` se lit encore — les jeux déjà écrits le portent —,
+     *  mais rien ne l'écrit. */
     modeles?: Partial<Record<Famille, string>>
     modele_planche?: string
     modele_edition?: string

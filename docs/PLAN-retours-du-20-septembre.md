@@ -318,8 +318,14 @@ commencer.
       active — le même comportement que *Les tuiles*.
 - [x] On revient d'où l'on venait ; on ne se retrouve pas ailleurs après avoir fermé.
 - [x] Un jeu sans son montre une phrase qui le dit et les deux gestes possibles, au lieu du blanc.
-- [x] Ce qu'on était en train de régler n'est pas perdu par le changement de cadre : l'avertissement
+- [ ] Ce qu'on était en train de régler n'est pas perdu par le changement de cadre : l'avertissement
       d'abandon qui existe aujourd'hui tient toujours.
+      **Décoché à la relecture croisée du 21 septembre 2026.** Il tient sur *Tous les sons*, sur
+      l'ouverture d'un autre son, sur l'import et sur le rechargement de la page — mais pas sur la
+      sortie du lieu, qui se fait désormais par la navigation de gauche. Cette navigation
+      n'appartient pas à l'écran des sons : l'y accrocher demande un garde que le parent consulte
+      avant de changer de lieu, c'est-à-dire une capacité nouvelle, pas une correction. Le bouton
+      *Fermer* qui portait l'avertissement a été retiré, parce qu'il n'était plus atteignable.
 - [x] Le guide de l'écran *Les sons* reste juste : il vient d'être écrit et décrit un dialogue.
 
 ---

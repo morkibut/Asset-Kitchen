@@ -1,7 +1,7 @@
 /**
  * **La grille d'assets — il n'y en a qu'une** (`RP7`, 16 septembre 2026).
  *
- * Elle montre *toutes les familles* quand on ouvre la porte « Les sujets », et
+ * Elle montre *toutes les familles* quand on ouvre la porte « Codex », et
  * *une seule* quand on en ouvre une. C'est le même composant, le même appel
  * (`api.familleDeSujets`), les mêmes filtres et les mêmes gestes : avant `RP7`
  * il y avait deux écrans, `BibliothequeDesAssets.tsx` pour la porte et
@@ -590,7 +590,7 @@ export function EcranFamille({
 }: {
   /** La clé de la famille — "personnages", "objets", "decors", "interface",
    *  "equipement" —, ou `null` pour **toutes les familles** : c'est ce que la
-   *  porte « Les sujets » ouvre. */
+   *  porte « Codex » ouvre. */
   famille: string | null
   /** Son nom dans le carnet — « Les personnages ». Ignoré sans famille. */
   nom?: string
@@ -625,7 +625,7 @@ export function EcranFamille({
   surCollection?: (collection: string | null) => void
   /** Ouvrir une famille : c'est un lieu, et c'est donc le parent qui y va. */
   surFamille?: (famille: string) => void
-  /** Revenir à toutes les familles — la porte « Les sujets ». */
+  /** Revenir à toutes les familles — la porte « Codex ». */
   surToutesLesFamilles?: () => void
   /** À appeler après un rangement fait ici, pour que le parent relise l'arbre. */
   surRange: () => void

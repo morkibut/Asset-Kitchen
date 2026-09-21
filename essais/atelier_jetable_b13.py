@@ -65,9 +65,9 @@ par une route de génération.
    sélecteurs d'image retombent tous les deux dessus. (Pour voir deux images
    distinctes, importer une seconde image sur le même sujet avant d'ouvrir cet
    écran.)
-5. Le zoom (×1, ×2, ×4, ×8), le bouton Fond neutre / Fond du jeu, Alignés au
-   sol / Superposés : aucun n'appelle le serveur — vérifiable par l'onglet
-   réseau du navigateur, vide pendant la manipulation.
+5. Le zoom (×1, ×2, ×4, ×8) et Alignés au sol / Superposés : aucun n'appelle le
+   serveur — vérifiable par l'onglet réseau du navigateur, vide pendant la
+   manipulation.
 
 ## ⚠️ Ce qu'il ne faut pas faire
 

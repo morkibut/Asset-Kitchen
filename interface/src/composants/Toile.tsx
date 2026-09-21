@@ -880,7 +880,7 @@ export function GestesDeLaSelection({
 }) {
   if (choisies === 0) return null
   const bouton =
-    "mesure flex h-[26px] items-center rounded-7 border border-contour bg-carte px-2 text-[11.5px] text-encre transition-colors duration-[120ms] hover:bg-papier-cote"
+    "mesure flex h-[26px] items-center rounded-7 border border-contour bg-carte px-2 text-[11.5px] text-encre transition-colors duration-120 hover:bg-papier-cote"
   return (
     <div data-selection className="flex shrink-0 items-center gap-2">
       <span className="mesure shrink-0 text-[10.5px] text-signal">
@@ -2367,7 +2367,7 @@ function NoeudIlot({ data }: NodeProps) {
           borderStyle: perd ? "dashed" : "solid",
           background: fond,
         }}
-        className="absolute right-0 bottom-0 left-0 rounded-5 border transition-colors duration-[120ms]"
+        className="absolute right-0 bottom-0 left-0 rounded-5 border transition-colors duration-120"
       />
 
       {/* **Le bandeau, en pixels d'écran** — voir `ancreEcran`. Sa largeur est
@@ -2507,7 +2507,7 @@ function NoeudIlot({ data }: NodeProps) {
               isConnectableStart
               isConnectableEnd={false}
               style={{ borderColor: `color-mix(in srgb, ${encre} 55%, transparent)` }}
-              className="!relative !ml-1.5 !h-3 !w-3 !min-w-0 !shrink-0 !transform-none !cursor-crosshair !rounded-full !border !bg-transparent !opacity-100 !transition !duration-[120ms] hover:!border-signal"
+              className="!relative !ml-1.5 !h-3 !w-3 !min-w-0 !shrink-0 !transform-none !cursor-crosshair !rounded-full !border !bg-transparent !opacity-100 !transition !duration-120 hover:!border-signal"
             />
           )}
           <Ancrage />
@@ -2661,7 +2661,7 @@ function NoeudBrouillon({ positionAbsoluteX, positionAbsoluteY }: NodeProps) {
       // `nopan` avec les deux autres : sélectionner son texte à la souris
       // déplaçait le plan sous le champ, et la note s'en allait de l'écran
       // pendant qu'on la relisait.
-      className="nodrag nowheel nopan h-full w-full resize-none rounded-7 border border-signal bg-carte p-3 text-[12.5px] leading-relaxed text-encre shadow-[0_0_0_2px_var(--color-signal)] placeholder:text-encre-4"
+      className="nodrag nowheel nopan h-full w-full resize-none rounded-7 border border-signal bg-carte p-[14px] text-[12.5px] leading-[1.5] text-encre shadow-[0_0_0_2px_var(--color-signal)] placeholder:text-encre-4"
     />
   )
 }
@@ -2747,7 +2747,7 @@ function NoeudCarte({ data }: NodeProps) {
               evenement.stopPropagation()
               setEnEdition(true)
             }}
-            className="nodrag nopan absolute top-[4px] -left-[24px] flex h-[22px] w-[22px] items-center justify-center rounded-5 border border-contour bg-carte text-[11px] leading-none text-encre-3 opacity-0 transition duration-[120ms] group-hover:opacity-100 hover:border-signal hover:text-signal focus-visible:opacity-100"
+            className="nodrag nopan absolute top-[4px] -left-[24px] flex h-[22px] w-[22px] items-center justify-center rounded-5 border border-contour bg-carte text-[11px] leading-none text-encre-3 opacity-0 transition duration-120 group-hover:opacity-100 hover:border-signal hover:text-signal focus-visible:opacity-100"
           >
             ✎
           </button>
@@ -2774,7 +2774,7 @@ function NoeudCarte({ data }: NodeProps) {
             }}
             // `nopan` avec les deux autres, comme `NoeudBrouillon` : sélectionner
             // le texte à la souris déplacerait sinon le plan sous le champ.
-            className="nodrag nowheel nopan h-full w-full resize-none rounded-5 border border-signal bg-carte p-3 text-[12.5px] leading-relaxed text-encre shadow-[0_0_0_2px_var(--color-signal)]"
+            className="nodrag nowheel nopan h-full w-full resize-none rounded-5 border border-signal bg-carte p-[14px] text-[12.5px] leading-[1.5] text-encre shadow-[0_0_0_2px_var(--color-signal)]"
           />
         </div>
       )}
@@ -2827,7 +2827,7 @@ function NoeudCarte({ data }: NodeProps) {
           position={Position.Right}
           isConnectableStart
           isConnectableEnd={false}
-          className="!top-[-6px] !left-0 !h-3 !w-3 !min-w-0 !transform-none !cursor-crosshair !rounded-full !border !border-contour !bg-carte !opacity-100 !transition !duration-[120ms] hover:!border-signal"
+          className="!top-[-6px] !left-0 !h-3 !w-3 !min-w-0 !transform-none !cursor-crosshair !rounded-full !border !border-contour !bg-carte !opacity-100 !transition !duration-120 hover:!border-signal"
         />
       </div>
       <Ancrage />
@@ -3005,7 +3005,7 @@ function PavéLien({ lien, cadre }: { lien: Lien; cadre: Cadre }) {
           aria-pressed={lien.pointe}
           onClick={() => cadre.onReglerLien(lien, { pointe: !lien.pointe })}
           className={[
-            "mesure h-[26px] rounded-7 border px-2 text-[10.5px] transition-colors duration-[120ms]",
+            "mesure h-[26px] rounded-7 border px-2 text-[10.5px] transition-colors duration-120",
             lien.pointe
               ? "border-signal bg-ligne-ouverte text-signal"
               : "border-trait bg-carte text-encre-3 hover:bg-papier-cote",
@@ -3076,7 +3076,7 @@ function Poignee({
       type="button"
       aria-label="Régler la largeur sur la toile"
       style={{ pointerEvents: "auto" }}
-      className="nodrag nopan absolute -top-[5px] -left-[5px] h-[8px] w-[8px] cursor-ew-resize rounded-5 border border-contour bg-carte opacity-0 transition duration-[120ms] group-hover:opacity-100 hover:border-signal focus-visible:opacity-100"
+      className="nodrag nopan absolute -top-[5px] -left-[5px] h-[8px] w-[8px] cursor-ew-resize rounded-5 border border-contour bg-carte opacity-0 transition duration-120 group-hover:opacity-100 hover:border-signal focus-visible:opacity-100"
       onPointerDown={(evenement) => {
         evenement.stopPropagation()
         evenement.currentTarget.setPointerCapture(evenement.pointerId)

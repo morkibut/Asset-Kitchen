@@ -1967,13 +1967,12 @@ function serveurDouble(options: {
         caracteres: { total: texte.length, sujet: sujet.length, eteints: 0 },
         corrections: Object.keys(tri.textes).length,
         // **Le fond de cet appel-ci** (D3). Le double le rend comme le serveur
-        // le rend : la couleur du jeu, ou celle que l'écran vient de corriger
-        // pour cet appel — `tri.fond`, qui est un écart de plus et non une
-        // ligne de texte.
+        // le rend : la couleur que l'atelier a calculée, ou celle que l'écran
+        // vient de corriger pour cet appel — `tri.fond`, qui est un écart de
+        // plus et non une ligne de texte.
         fond: {
           couleur: tri.fond ?? UNIVERS.fond,
           interdiction: "",
-          du_jeu: UNIVERS.fond,
           corrige: tri.fond != null,
           propose: {
             couleur: "",
@@ -14127,7 +14126,6 @@ describe("l'écran de confirmation", () => {
     fond: {
       couleur: "",
       interdiction: "",
-      du_jeu: "",
       corrige: false,
       propose: {
         couleur: "",
@@ -14254,7 +14252,6 @@ describe("l'écran de confirmation", () => {
           couleur: "#FF00FF",
           interdiction:
             "the background colour #FF00FF magenta, or any shade close to it",
-          du_jeu: "#FF00FF",
           corrige: false,
           propose: {
             couleur: "#FF00FF",

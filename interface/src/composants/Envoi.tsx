@@ -926,17 +926,22 @@ function SectionFond({
           <span className="mesure text-[10px] text-encre-3">
             {fond.couleur || "aucun fond — le modèle rendra ce qu'il voudra"}
           </span>
-          {/* **Remettre celui du jeu, et retirer le fond, sont deux gestes** :
-              l'un annule la correction, l'autre en est une. Les confondre aurait
-              rendu « pas de fond pour cet essai » impossible à demander sur un
-              jeu qui en a un. */}
+          {/* **Annuler la correction, et retirer le fond, sont deux gestes** :
+              l'un rend la main au calcul, l'autre demande un appel sans fond.
+              Les confondre aurait rendu « pas de fond pour cet essai »
+              impossible à demander.
+
+              **Le libellé ne dit plus « celui du jeu »** (20 septembre 2026) :
+              le jeu n'a plus de fond, l'atelier le calcule à chaque demande sur
+              les images de référence qui partent. Revenir en arrière retombe
+              donc sur ce calcul, pas sur un réglage. */}
           {fond.corrige && (
             <button
               type="button"
               onClick={() => onFond(null)}
               className="mesure h-[26px] text-[10px] text-encre-4 hover:text-encre"
             >
-              Remettre celui du jeu
+              Reprendre la couleur calculée
             </button>
           )}
           {!fond.corrige && fond.couleur !== "" && (
@@ -951,7 +956,7 @@ function SectionFond({
         </div>
 
         {fond.corrige && (
-          <Raison texte="corrigé pour cette génération seulement — le jeu garde le sien" />
+          <Raison texte="corrigé pour cette génération seulement — la suivante repart du calcul" />
         )}
 
         {/* **La proposition n'apparaît que si elle ajoute quelque chose** : la

@@ -35,6 +35,7 @@ comme les six autres.
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from atelier.domaine.envoi import Tri
 from atelier.domaine.fond import (
@@ -57,6 +58,7 @@ from atelier.domaine.projet import Univers, bible_complete
 from atelier.domaine.recette import Passe
 from atelier.domaine.vue import phrase_de_calage, phrases_du_produit
 from atelier.image.traitement import _rvb, mesures_du_fond
+from atelier.services.univers import UniversRefuse
 
 from tests.conftest import image_sujet
 
@@ -77,6 +79,17 @@ def _regler(client, **corps) -> dict:
     return reponse.json()["univers"]
 
 
+def _poser_un_fond_d_avant(atelier, couleur: str) -> None:
+    """Monter un jeu **tel qu'il s'écrivait avant le 20 septembre 2026**.
+
+    `PUT /api/universe` n'accepte plus `fond` (RT4) : plus rien dans le produit
+    ne propose d'écrire ce champ. Les essais qui ont besoin d'un jeu qui en
+    porte un passent donc par le service, seul écrivain qui reste — et c'est
+    exactement ce qu'ils simulent, un projet déjà sur le disque.
+    """
+    atelier.univers.regler_univers(atelier.bibliotheque.courant, fond=couleur)
+
+
 def _envoi(client, **corps) -> dict:
     reponse = client.post(
         "/api/outgoing", json={"modele": MODELE, "prompt": "un nain", **corps}
@@ -92,45 +105,57 @@ def _technique(envoi: dict) -> str:
 # ── Critère 1 — le fond est un réglage d'univers ─────────────────────────────
 
 
-def test_le_fond_se_voit_se_choisit_et_s_enregistre(client):
-    """**Trois gestes, et c'est tout ce que « un réglage » veut dire.**
+def test_la_route_n_ecrit_plus_le_fond_et_le_champ_relu_ne_bouge_pas(client, atelier):
+    """**Le premier critère de D3, renversé par RT4.**
 
-    Il n'y en avait aucun avant la tranche : le fond était une phrase anglaise
-    enterrée dans une fonction du domaine, et rien à l'écran ne disait qu'il
-    existait.
+    Il disait *le fond se voit, se choisit et s'enregistre* — trois gestes, et
+    c'est ce que « un réglage » veut dire. Le fond n'est plus un réglage :
+    l'atelier le calcule à chaque demande. `PUT /api/universe` ignore donc le
+    champ, et le relire ne montre que ce qu'un jeu d'avant la tranche portait
+    déjà.
     """
-    assert _univers(client)["fond"] == AUCUN_FOND
+    _poser_un_fond_d_avant(atelier, POSE_A_LA_MAIN)
+    assert _univers(client)["fond"] == POSE_A_LA_MAIN
 
-    regle = _regler(client, fond=POSE_A_LA_MAIN)
+    _regler(client, fond="#00FFFF")
 
-    assert regle["fond"] == POSE_A_LA_MAIN
-    # **Il s'enregistre** : relu par une autre route, c'est le même.
     assert _univers(client)["fond"] == POSE_A_LA_MAIN
 
 
-def test_le_fond_se_retire_et_rend_exactement_l_etat_d_avant(client):
+def test_le_fond_se_retire_et_rend_exactement_l_etat_d_avant(atelier, client):
     """**La chaîne vide retire, et elle est le seul geste de retrait nécessaire.**
 
     Une couleur est toujours quelque chose : *jamais posé* et *posé sur rien* sont
     le même état. C'est l'inverse exact du détourage par défaut de `D1`, qui a
     besoin de ses trois états parce qu'une passe vide n'existe pas.
+
+    *Repris le 20 septembre 2026 (RT4)* : le geste ne s'atteint plus depuis un
+    écran, mais il reste celui du service, qui relit et réécrit les jeux déjà
+    sur le disque.
     """
-    _regler(client, fond=POSE_A_LA_MAIN)
+    _poser_un_fond_d_avant(atelier, POSE_A_LA_MAIN)
 
-    assert _regler(client, fond="")["fond"] == AUCUN_FOND
+    _poser_un_fond_d_avant(atelier, "")
+
+    assert _univers(client)["fond"] == AUCUN_FOND
 
 
-def test_une_couleur_illisible_est_refusee_avant_de_partir_dans_un_texte_paye(client):
+def test_une_couleur_illisible_est_refusee_avant_de_partir_dans_un_texte_paye(
+    atelier, client
+):
     """**Ce qui se refuse n'est pas *hors palette*, c'est *pas une couleur*.**
 
     Une couleur que le jeu contient se pose : l'atelier propose et n'impose
     jamais. Ce qui ne peut pas passer est une chaîne qui partirait telle quelle
     dans un texte payé et se relirait des mois plus tard sur la génération.
-    """
-    reponse = client.put("/api/universe", json={"fond": "bleu"})
 
-    assert reponse.status_code == 409, reponse.text
-    assert "n'est pas une couleur" in reponse.json()["raison"]
+    *Repris le 20 septembre 2026 (RT4)* : la route n'accepte plus le champ, donc
+    c'est le service qui refuse — le seul endroit où il s'écrive encore.
+    """
+    with pytest.raises(UniversRefuse) as refus:
+        _poser_un_fond_d_avant(atelier, "bleu")
+
+    assert "n'est pas une couleur" in str(refus.value)
     assert _univers(client)["fond"] == AUCUN_FOND
 
 
@@ -182,20 +207,24 @@ def test_un_univers_qui_n_a_que_son_fond_reste_vide_et_dit_quand_meme_son_fond()
 # ── Critère 2 — il se corrige sur l'écran de confirmation, pour cet appel ─────
 
 
-def test_le_fond_se_corrige_avant_de_payer_et_ne_vaut_que_pour_cet_appel(client):
+def test_le_fond_se_corrige_avant_de_payer_et_ne_vaut_que_pour_cet_appel(
+    atelier, client
+):
     """**Corriger ici habille l'appel et disparaît.**
 
     C'est la règle de tout ce que l'écran de confirmation renvoie, appliquée au
     fond : ce qui est oublié est le réglage pour la suite, ce qui est gardé est
     l'histoire de ce qui a été fait.
     """
-    _regler(client, fond=POSE_A_LA_MAIN)
+    _poser_un_fond_d_avant(atelier, POSE_A_LA_MAIN)
 
     corrige = _envoi(client, tri={"fond": "#00FFFF"})
 
     assert corrige["fond"]["couleur"] == "#00FFFF"
     assert corrige["fond"]["corrige"] is True
-    assert corrige["fond"]["du_jeu"] == POSE_A_LA_MAIN
+    # **L'aperçu ne renvoie plus de fond du jeu** (20 septembre 2026) : le champ
+    # du disque ne décide plus rien, et l'écran n'avait plus rien à en faire.
+    assert "du_jeu" not in corrige["fond"]
     # **Le texte suit, et il n'y a pas deux fonds dans le même appel** : la
     # couleur corrigée est celle de la phrase de calage.
     assert "#00FFFF" in _technique(corrige)
@@ -204,7 +233,7 @@ def test_le_fond_se_corrige_avant_de_payer_et_ne_vaut_que_pour_cet_appel(client)
     assert _univers(client)["fond"] == POSE_A_LA_MAIN
 
 
-def test_la_chaine_vide_retire_le_fond_pour_cet_appel_seulement(client):
+def test_la_chaine_vide_retire_le_fond_pour_cet_appel_seulement(atelier, client):
     """**Absent et vide ne se confondent pas.** `null` laisse l'atelier calculer ;
     `""` retire le fond pour cet essai-ci — le geste qu'on fait quand on veut
     comparer avec ce que le jeu rendait avant la tranche.
@@ -214,7 +243,7 @@ def test_la_chaine_vide_retire_le_fond_pour_cet_appel_seulement(client):
     d'image de référence à comparer. Ce que le test vérifiait reste entier : la
     chaîne vide est un geste, et l'absence de clé n'en est pas un.
     """
-    _regler(client, fond=POSE_A_LA_MAIN)
+    _poser_un_fond_d_avant(atelier, POSE_A_LA_MAIN)
 
     sans = _envoi(client, tri={"fond": ""})
     avec = _envoi(client, tri={"eteints": []})
@@ -225,7 +254,9 @@ def test_la_chaine_vide_retire_le_fond_pour_cet_appel_seulement(client):
     assert avec["fond"]["corrige"] is False
 
 
-def test_le_fond_corrige_change_aussi_l_interdiction_dans_le_meme_appel(client):
+def test_le_fond_corrige_change_aussi_l_interdiction_dans_le_meme_appel(
+    atelier, client
+):
     """**C'est la raison d'être du quatrième écart du tri.**
 
     Le fond fabrique deux textes qui partent dans deux champs différents. Le
@@ -233,7 +264,7 @@ def test_le_fond_corrige_change_aussi_l_interdiction_dans_le_meme_appel(client):
     l'appel serait parti en demandant du magenta et en interdisant du cyan, sans
     que rien ne le dise.
     """
-    _regler(client, fond="#FF00FF")
+    _poser_un_fond_d_avant(atelier, "#FF00FF")
 
     corrige = _envoi(client, tri={"fond": "#00FFFF"})
 
@@ -409,8 +440,7 @@ def test_l_interdiction_ne_porte_aucune_negation(client):
     assert " not " not in f" {phrase} "
     assert "(on its outfit" in phrase
 
-    _regler(client, fond="#FF00FF")
-    negatif = _lancer(client)["demande"]["prompt_negatif"]
+    negatif = _lancer(client, tri={"fond": "#FF00FF"})["demande"]["prompt_negatif"]
 
     assert " not " not in f" {negatif} "
 
@@ -636,9 +666,9 @@ def test_le_tri_ne_porte_que_des_ecarts_et_le_fond_en_est_un():
     """`None` est *n'y touche pas*, `""` est *retire-le pour cet appel*. Les
     confondre aurait rendu « pas de fond pour cet essai » impossible à demander
     sur un jeu qui en a un."""
-    assert Tri().fond_de("#FF00FF") == "#FF00FF"
-    assert Tri(fond="").fond_de("#FF00FF") == ""
-    assert Tri(fond="#00FFFF").fond_de("#FF00FF") == "#00FFFF"
+    assert Tri().fond is None
+    assert Tri(fond="").fond == ""
+    assert Tri(fond="#00FFFF").fond == "#00FFFF"
     assert Tri.depuis_json({"fond": ""}).fond == ""
     assert Tri.depuis_json({"eteints": ["a"]}).fond is None
 
@@ -750,14 +780,16 @@ def test_plusieurs_references_sont_un_seul_ensemble_de_couleurs():
     assert ecart(ensemble.couleur, "#00FFFF") >= ensemble.ecart
 
 
-def test_le_fond_d_un_univers_existant_reste_sur_le_disque_et_n_est_plus_lu(client):
+def test_le_fond_d_un_univers_existant_reste_sur_le_disque_et_n_est_plus_lu(
+    atelier, client
+):
     """**Le quatrième critère, et ses deux moitiés.**
 
     Le champ se relit — les jeux déjà écrits le portent, et le retirer du modèle
     aurait cassé leur lecture pour un champ que plus rien n'emploie. Mais la
     production ne le lit plus : ce qui part est la couleur calculée.
     """
-    _regler(client, fond="#FF00FF")
+    _poser_un_fond_d_avant(atelier, "#FF00FF")
 
     # Il est toujours là, relu par la route de l'univers.
     assert _univers(client)["fond"] == "#FF00FF"

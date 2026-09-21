@@ -53,7 +53,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type ReactNode,
 } from "react"
 import {
@@ -402,7 +401,6 @@ export function Comparer({
   }
 
   const [zoom, setZoom] = useState<Zoom>(4)
-  const [fond, setFond] = useState<"neutre" | "jeu">("neutre")
   const [superposes, setSuperposes] = useState(false)
 
   const imageA = modeImages
@@ -448,8 +446,6 @@ export function Comparer({
   const echelleMax = 320 / Math.max(1, cible) // garde la scène lisible même à ×8
   const facteur = Math.min(zoom, Math.max(1, Math.floor(echelleMax)))
 
-  const fondStyle =
-    fond === "jeu" && univers.fond ? { background: univers.fond } : undefined
 
   return (
     <main
@@ -608,25 +604,14 @@ export function Comparer({
           )}
         </div>
 
+        {/* **Le choix « Fond du jeu » est retiré** (20 septembre 2026) : il
+            posait `univers.fond` derrière les deux côtés, or plus rien n'écrit
+            ce champ depuis que le fond se calcule à chaque demande — le bouton
+            ne faisait donc rien sur un jeu créé depuis. Rien ne le remplace :
+            les deux images comparées sont parties chacune sur la couleur
+            calculée pour son appel, il n'existe aucune couleur du jeu à leur
+            mettre derrière. Le fond de repérage reste celui du panneau. */}
         <div className="flex flex-wrap items-center gap-[8px]">
-          <div className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]">
-            {(["neutre", "jeu"] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                aria-pressed={fond === f}
-                onClick={() => setFond(f)}
-                className={[
-                  "flex h-[26px] items-center justify-center rounded-7 px-[14px] text-[12.5px] transition-colors duration-120",
-                  fond === f
-                    ? "bg-carte font-medium text-encre"
-                    : "text-encre-3 hover:text-encre",
-                ].join(" ")}
-              >
-                {f === "neutre" ? "Fond neutre" : "Fond du jeu"}
-              </button>
-            ))}
-          </div>
           <div className="flex gap-[4px] rounded-8 bg-papier-cote p-[4px]">
             {ZOOMS.map((z) => (
               <button
@@ -744,14 +729,12 @@ export function Comparer({
                       tempsMs={tempsMs}
                       nom={bandeA ? jour(bandeA.cree_le) : "—"}
                       facteur={facteur}
-                      style={fondStyle}
                     />
                     <PanneauDeBande
                       bande={bandeB}
                       tempsMs={tempsMs}
                       nom={bandeB ? jour(bandeB.cree_le) : "—"}
                       facteur={facteur}
-                      style={fondStyle}
                     />
                   </div>
 
@@ -891,7 +874,6 @@ export function Comparer({
                 image={imageA}
                 nom={modeImages ? jour(imageA?.cree_le ?? 0) : personnage.nom}
                 facteur={facteur}
-                style={fondStyle}
                 calque={superposes ? imageB : null}
                 calqueFacteur={facteur}
               />
@@ -900,8 +882,7 @@ export function Comparer({
                   image={imageB}
                   nom={modeImages ? jour(imageB?.cree_le ?? 0) : sujetB.nom}
                   facteur={facteur}
-                  style={fondStyle}
-                  calque={null}
+                    calque={null}
                   calqueFacteur={facteur}
                 />
               )}
@@ -1034,13 +1015,11 @@ function PanneauDeBande({
   tempsMs,
   nom,
   facteur,
-  style,
 }: {
   bande: Bande | null
   tempsMs: number
   nom: string
   facteur: number
-  style?: CSSProperties
 }) {
   const montrable =
     bande !== null && bande.compte > 0 && bande.case_largeur > 0 && bande.case_hauteur > 0
@@ -1048,7 +1027,6 @@ function PanneauDeBande({
   return (
     <div
       className="relative flex min-h-[300px] items-end justify-center bg-pourtour p-[14px]"
-      style={style}
     >
       {montrable ? (
         <span
@@ -1162,21 +1140,18 @@ function Panneau({
   image,
   nom,
   facteur,
-  style,
   calque,
   calqueFacteur,
 }: {
   image: Asset | null
   nom: string
   facteur: number
-  style?: CSSProperties
   calque: Asset | null
   calqueFacteur: number
 }) {
   return (
     <div
       className="relative flex min-h-[300px] items-end justify-center bg-pourtour p-[14px]"
-      style={style}
     >
       {image ? (
         <img

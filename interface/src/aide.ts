@@ -1371,7 +1371,7 @@ export const AIDE: Record<string, Explication> = {
   // visite, ni réglage. Écrit en E20.
   //
   // **Rangé sur l'écran réel en `GU12`** : `EcranFamille` (`Famille.tsx`),
-  // que la porte *Les sujets* et la grille d'une famille montrent toutes
+  // que la porte *Codex* et la grille d'une famille montrent toutes
   // deux. Il reçoit `bibliotheque.collections` — sa colonne de gauche —,
   // venue de `ou: "sortie"`. `tuiles.terrains` était logée ici pour la même
   // raison — les écrans des tuiles héritaient du codex faute d'un `ou` à
@@ -4197,8 +4197,8 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Le fond et le prompt négatif",
     quoi: "La couleur de fond demandée et, dessous, la consigne négative : ce qu'on interdit au modèle.",
     change:
-      "Avec Modifier l'envoi, on prend une autre couleur, « Sans fond » ou « Remettre celui du jeu » ; cela ne vaut que pour cet appel. Le titre se réduit à « Fond » quand un style local ne lit pas le négatif : le fond part quand même, et le détourage au retour en dépend.",
-    origine: "le jeu · la couleur du fond, et l'interdiction qui en découle",
+      "Avec Modifier l'envoi, on prend une autre couleur, « Sans fond » ou « Reprendre la couleur calculée » ; cela ne vaut que pour cet appel. Le titre se réduit à « Fond » quand un style local ne lit pas le négatif : le fond part quand même, et le détourage au retour en dépend.",
+    origine: "l'atelier · la couleur calculée sur les images envoyées, et l'interdiction qui en découle",
   },
 
   "envoi.retour": {
@@ -4359,13 +4359,13 @@ export const AIDE: Record<string, Explication> = {
   },
 
   "comparer.affichage": {
-    nom: "Fond, zoom, alignés ou superposés",
+    nom: "Zoom, alignés ou superposés",
     ou: "comparer",
     groupe: "Comment on le regarde",
-    quoi: "Le fond derrière les deux côtés, le zoom en crans entiers ×1 à ×8, et — pour des images — alignés au sol ou superposés.",
+    quoi: "Le zoom en crans entiers ×1 à ×8, et — pour des images — alignés au sol ou superposés.",
     change:
-      "Ne change que l'écran, jamais l'image ni ce qui sort à l'export. « Fond du jeu » prend la couleur du fond du jeu, quand il en a un. Superposés pose la seconde image à moitié transparente sur la première, au même sol. Le zoom est plafonné pour que la scène reste lisible, même à ×8.",
-    origine: "toi · fond neutre, ×4, alignés au sol au départ",
+      "Ne change que l'écran, jamais l'image ni ce qui sort à l'export. Superposés pose la seconde image à moitié transparente sur la première, au même sol. Le zoom est plafonné pour que la scène reste lisible, même à ×8.",
+    origine: "toi · ×4, alignés au sol au départ",
   },
 
   "comparer.lecture": {

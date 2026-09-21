@@ -8,8 +8,8 @@ méthode de réduction et un nombre de couleurs sans jamais voir ce que ça rend
 calcule le rendu réel, avec le même moteur que la vraie fabrication, sur une
 image fixe du dépôt : **le rôdeur**, le seul sujet que l'écran montre déjà
 (`docs/remarques/voir-avant-de-choisir.md` § 2a — « le rôdeur en pixel, le
-rôdeur en dessin »). RT2 branchera les trois rangées sur cette route-ci ;
-cette tranche ne touche à aucun écran.
+rôdeur en dessin »). RT1 n'a touché aucun écran ; **RT2 a depuis branché les
+trois rangées sur cette route-ci**.
 
 **La source est `style-dessin.png`, pas `style-pixel.png`.** Les deux
 montrent le même rôdeur, mais `style-pixel.png` est déjà réduit et quantifié

@@ -1264,8 +1264,8 @@ function AtelierApp() {
   //
   // - `bibliotheque` et `famille` → `codex`. Les deux montent **le même
   //   composant** que le codex, `EcranFamille` (`Famille.tsx`), dont le `<h1>`
-  //   est *Les sujets* — le nom que `Guide.tsx` donne déjà à `codex`. Une
-  //   famille ouverte, c'est cette grille restreinte à une famille.
+  //   est *Codex* — le nom que `Guide.tsx` donne déjà à `codex`. Une famille
+  //   ouverte, c'est cette grille restreinte à une famille.
   // - `travail` → `fabrications`. Le lieu monte `FenetreDuTravail`, la fenêtre
   //   que `Fabrications.tsx` rend déjà **en place** quand on clique une demande
   //   dans *Créer et suivre les fabrications* : c'est la même fenêtre par une

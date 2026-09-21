@@ -176,16 +176,19 @@ class Tri:
     ── `fond` : la couleur corrigée juste avant de payer (D3) ────────────────
 
     **Un quatrième écart, et il ne se range pas dans `textes`.** La couleur de
-    fond n'est pas une ligne du texte : c'est un réglage du jeu qui *fabrique*
-    une ligne — la phrase de calage — **et** la phrase d'interdiction qui part
-    dans un autre champ de la demande. La corriger en tapant dans la ligne aurait
+    fond n'est pas une ligne du texte : c'est une couleur qui *fabrique* une
+    ligne — la phrase de calage — **et** la phrase d'interdiction qui part dans
+    un autre champ de la demande. La corriger en tapant dans la ligne aurait
     changé l'une sans l'autre, et l'appel serait parti en demandant un fond
     magenta tout en interdisant le cyan.
 
-    Sa valeur suit la règle du `Tri` : elle ne vaut que pour cet appel, elle ne
-    remonte pas au projet, et **la chaîne vide est une valeur** — c'est *retire
-    le fond pour cet appel-ci*, ce qui est un geste légitime quand on veut
-    comparer avec ce que le jeu rendait avant. `None` est *n'y touche pas*.
+    **Ce qu'elle corrige est un calcul, plus un réglage** (20 septembre 2026) :
+    l'atelier choisit le fond de chaque demande sur les images de référence qui
+    partent avec elle, le vert de studio à défaut. Sa valeur suit la règle du
+    `Tri` : elle ne vaut que pour cet appel, elle ne remonte nulle part, et **la
+    chaîne vide est une valeur** — c'est *retire le fond pour cet appel-ci*, ce
+    qui est un geste légitime quand on veut comparer avec ce que le jeu rendait
+    avant. `None` est *n'y touche pas*, et laisse donc le calcul décider.
     """
 
     eteints: frozenset[str] = frozenset()
@@ -217,15 +220,10 @@ class Tri:
         corrige = self.textes.get(ligne)
         return defaut if corrige is None else corrige
 
-    def fond_de(self, defaut: str) -> str:
-        """Le fond de cet appel-ci, sachant celui du jeu.
-
-        **La chaîne vide corrige, elle ne se confond pas avec l'absence** :
-        `None` laisse le fond du jeu, `""` le retire pour cet appel. C'est la
-        même distinction que `texte`, où effacer un texte est un geste distinct
-        d'éteindre sa ligne.
-        """
-        return defaut if self.fond is None else self.fond
+    # **`fond_de` a été retirée le 21 septembre 2026** : elle rendait « le fond
+    # du jeu, sauf correction », et plus aucun appel de production ne s'en
+    # servait depuis que le fond se calcule. C'est `ServiceGeneration` qui
+    # arbitre désormais entre le calcul et la correction, à un seul endroit.
 
     @staticmethod
     def depuis_json(d: Mapping[str, Any] | None) -> "Tri | None":

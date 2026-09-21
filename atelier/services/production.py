@@ -3236,7 +3236,7 @@ class ServiceProduction:
 
     # ── Le fond du jeu, et ce qu'il interdit (D3) ────────────────────────────
 
-    def fond(self, projet: str | None, corrige: str | None = None) -> str:
+    def fond(self, corrige: str | None = None) -> str:
         """La couleur de fond de cet appel-ci, **telle qu'on la lui donne**.
 
         **Un seul endroit la résout**, et c'est ce qui garantit que la phrase qui
@@ -3258,6 +3258,10 @@ class ServiceProduction:
         jeux déjà écrits pour un champ que rien ne lit — on paie un champ mort,
         pas un projet illisible.
 
+        **Le paramètre `projet` est parti avec la lecture** (21 septembre 2026) :
+        rien ici n'ouvre plus le jeu, et le transporter aurait laissé croire le
+        contraire à la lecture.
+
         `corrige` vaut donc désormais le fond calculé pour cet appel ; `None` reste
         *aucun fond*, c'est-à-dire la phrase d'avant D3, et la chaîne vide dit la
         même chose — un appel où l'auteur a retiré le fond depuis l'écran de
@@ -3265,9 +3269,7 @@ class ServiceProduction:
         """
         return fond_valide(corrige) if corrige is not None else ""
 
-    def interdit(
-        self, projet: str | None, ecrit: str = "", corrige: str | None = None
-    ) -> str:
+    def interdit(self, ecrit: str = "", corrige: str | None = None) -> str:
         """Le champ d'interdiction tel qu'il partira — l'auteur, puis le fond (D3).
 
         **Le produit n'a rien eu à écrire pour que ça parte** : `prompt_negatif`
@@ -3279,7 +3281,7 @@ class ServiceProduction:
         Sans fond, elle rend le texte de l'auteur mot pour mot : un projet
         d'avant la tranche envoie donc exactement ce qu'il envoyait.
         """
-        return replier(interdiction(self.fond(projet, corrige)), ecrit)
+        return replier(interdiction(self.fond(corrige)), ecrit)
 
     # ── La caméra du jeu, redite en queue de prompt ──────────────────────────
 

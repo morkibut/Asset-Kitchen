@@ -471,12 +471,18 @@ def phrase_de_grille(cible: int) -> str:
 
 
 def phrase_de_calage(cible: int, fond: str = "") -> str:
-    """Ce que le choix de taille et **le fond du jeu** écrivent dans `technique`.
+    """Ce que le choix de taille et **le fond de l'appel** écrivent dans `technique`.
 
     Vide sans cible **et sans fond**, pour la raison de `phrase_de_grille` : un
     univers qui n'a rien posé ne contraint rien.
 
     ── Le fond, arrivé en D3 ────────────────────────────────────────────────
+
+    ⚠️ **`fond` est la couleur de cet appel-ci, pas un réglage du jeu** (RT3, 20
+    septembre 2026). L'atelier la calcule sur les images de référence qui partent
+    avec la demande, le vert de studio à défaut, et l'écran de confirmation
+    laisse la corriger pour un seul appel. Cette fonction ne lit rien : elle
+    écrit la couleur qu'on lui donne.
 
     **C'est ici, et nulle part ailleurs, que le fond part.** Il était déjà écrit
     en toutes lettres dans cette phrase — *a flat background* — sans qu'on dise
@@ -484,8 +490,7 @@ def phrase_de_calage(cible: int, fond: str = "") -> str:
     le sujet porte aussi. Nommer la couleur ne déplace rien : c'est le même mot
     de la même phrase, qui cesse d'être vague.
 
-    **Sans fond posé, la phrase est celle d'avant la tranche, au caractère
-    près.** C'est le sixième critère de D3, et il vaut pour les centaines
+    **Sans fond, la phrase est celle d'avant la tranche, au caractère près.** C'est le sixième critère de D3, et il vaut pour les centaines
     d'images déjà traitées comme pour un univers qui n'a pas de palette.
 
     **Les deux moitiés se séparent, et c'est le style qui les sépare** (D2). Un
