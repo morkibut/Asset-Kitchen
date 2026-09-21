@@ -146,7 +146,7 @@ function Relecture({ compo, manuel, onManuel }: { compo: Composition; manuel: st
   if (manuel !== null) return <div className="grid gap-[8px] rounded-7 bg-papier-cote p-[14px] text-[13px]">
     <p className="text-[12px] text-encre-3">Ce texte part à la place du texte composé, pour cette série seulement.</p>
     <textarea aria-label="Texte qui part" className="min-h-[128px] w-full rounded-7 border border-contour bg-carte p-[8px] font-mono text-[12px] leading-[1.6]" value={manuel} onChange={(e) => onManuel(e.target.value)} />
-    <div><button type="button" className={PETIT} onClick={() => onManuel(null)}>Revenir au texte composé</button></div>
+    <div><button type="button" className={PETIT} onClick={() => onManuel(null)}>Reprendre le texte composé</button></div>
   </div>
   const morceaux = compo.morceaux ?? []
   const seps = joindre(morceaux)
@@ -159,7 +159,7 @@ function Relecture({ compo, manuel, onManuel }: { compo: Composition; manuel: st
       {compo.texte_negatif && <div><span className="text-encre-4">À éviter : </span><span className="text-encre-4">{compo.texte_negatif}</span></div>}
     </div>
     <div className="flex flex-wrap items-center justify-between gap-[8px]">
-      <p className="text-[12px]"><span className="text-encre">en noir : votre texte</span> · <span className="text-encre-4">en gris : ajouté par l’univers et le moteur</span></p>
+      <p className="text-[12px]"><span className="text-encre">en noir : ton texte</span> · <span className="text-encre-4">en gris : ajouté par l’univers et le moteur</span></p>
       {compo.texte && <button type="button" className={PETIT} onClick={() => onManuel(compo.texte ?? "")}>Éditer ce texte ›</button>}
     </div>
   </div>
@@ -217,7 +217,7 @@ function PartitionYue2({ projet, texte, paroles, profils, onSon }: {
   }
 
   return <div className="grid gap-[8px] rounded-7 border border-dashed border-pointille p-[14px]">
-    <p className="text-[12px] text-encre-3">YuE2 écrit d’abord sa partition (mélodie et accords) : relisez-la, corrigez-la si besoin, puis jouez-la. « Lancer N tirages » ci-dessous fait les deux étapes en un envoi, pour une série.</p>
+    <p className="text-[12px] text-encre-3">YuE2 écrit d’abord sa partition (mélodie et accords) : relis-la, corrige-la si besoin, puis joue-la. « Lancer N tirages » ci-dessous fait les deux étapes en un envoi, pour une série.</p>
     <div className="flex flex-wrap items-center gap-[8px]">
       <button type="button" className={PETIT} disabled={!texte || ecriture || !!raisonAbsent} onClick={() => void ecrire()}>{ecriture ? "Écriture…" : "Écrire la partition"}</button>
       {raisonAbsent && <span className="text-[12px] text-encre-3">{raisonAbsent}</span>}
@@ -348,7 +348,7 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
   }, [projet, cleDemande, sonore])
 
   const changer = (v: Partial<Demande>) => setD((x) => ({ ...x, ...v }))
-  const raison = !texte ? "Écrivez d’abord ce qu’on doit entendre."
+  const raison = !texte ? "Écris d’abord ce qu’on doit entendre."
     : refus || compo?.erreur || (compo && !compo.compose ? compo.raison : "") || compo?.raison || ""
 
   const lancer = async (bouton: HTMLButtonElement) => {

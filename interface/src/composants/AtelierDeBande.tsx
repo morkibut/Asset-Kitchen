@@ -1527,7 +1527,7 @@ export function EcranAtelierDeBande({
         {change && (
           <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
             <p className="mesure text-[10px] leading-4 text-signal">
-              des corrections attendent — rien n'est écrit tant que vous n'avez
+              des corrections attendent — rien n'est écrit tant que tu n'as
               pas enregistré
             </p>
             <div className="flex gap-2">
@@ -2016,7 +2016,7 @@ const CaseEnGrand = (() => {
         data-case-en-grand={rang}
         role="application"
         aria-label="l'image à corriger — les flèches la déplacent d'un pixel"
-        title="cliquez, puis les flèches — Maj pour cinq pixels à la fois"
+        title="clique, puis les flèches — Maj pour cinq pixels à la fois"
         className="relative cursor-move overflow-hidden border border-trait bg-pourtour outline-none focus:border-signal"
         style={{ width: large * facteur, height: haut * facteur }}
         onPointerDown={(evenement) => {
@@ -2470,7 +2470,7 @@ function MontageDuRuban({
             L'ordre du ruban est{" "}
             <b className="text-encre-2">l'ordre de l'export</b>. Une image
             retirée part au chutier avec sa recette, une copie garde la sienne,
-            et rien n'est écrit tant que vous n'avez pas enregistré.
+            et rien n'est écrit tant que tu n'as pas enregistré.
           </>
         )}
       </p>}
@@ -2530,8 +2530,8 @@ function LeChutier({
 
       {chutier.length === 0 ? (
         <p className="mesure text-[10px] leading-4 text-encre-3">
-          Vide. Ce que vous retirez du ruban vient ici, avec sa recette, et se
-          repose où vous voulez — <b className="text-encre-2">retirer n'est pas
+          Vide. Ce que tu retires du ruban vient ici, avec sa recette, et se
+          repose où tu veux — <b className="text-encre-2">retirer n'est pas
           jeter</b>.
         </p>
       ) : (
@@ -2706,7 +2706,7 @@ function PelliculeDuClip({
       </div>
 
       <p className="mesure max-w-[70ch] text-[10px] leading-4 text-encre-3">
-        Prenez ce qui vous manque : les images choisies entrent{" "}
+        Prends ce qui te manque : les images choisies entrent{" "}
         <b className="text-encre-2">au chutier</b>, et rien du ruban ne bouge.
         Le clip est payé — en reprendre une image ne coûte rien.
       </p>
@@ -2764,7 +2764,7 @@ function PelliculeDuClip({
           className="mesure border border-signal px-2 py-1 text-[10px] text-signal hover:bg-signal hover:text-encre-sur-signal disabled:border-trait disabled:text-encre-3"
         >
           {choisies.length === 0
-            ? "choisissez au moins une image"
+            ? "choisis au moins une image"
             : `Prendre ${choisies.length} image${
                 choisies.length > 1 ? "s" : ""
               } ›`}
@@ -2833,8 +2833,8 @@ function RepriseDuMontage({
           <>
             La pellicule du clip, avec{" "}
             <b className="text-encre-2">les images déjà retenues</b> et la
-            vitesse de cette animation. Ce que vous gardez revient ici, recettes
-            comprises ; ce que vous laissez tombe au chutier.
+            vitesse de cette animation. Ce que tu gardes revient ici, recettes
+            comprises ; ce que tu laisses tombe au chutier.
           </>
         )}
       </p>
@@ -3312,7 +3312,7 @@ function RecettesDeLaBande({
             {enVol ? "…" : aRemplacer === propre ? "Remplacer" : "Enregistrer"}
           </button>
         </div>
-        {aRemplacer === propre && <p className="text-signal">« {propre} » existe déjà — cliquez « Remplacer » pour l'écraser.</p>}
+        {aRemplacer === propre && <p className="text-signal">« {propre} » existe déjà — clique « Remplacer » pour l'écraser.</p>}
         {fait && <p role="status" className="text-encre-2">✓ « {fait.nom} » enregistrée.{fait.laisse.length > 0 && ` Pas gardé : ${fait.laisse.join(", ")}.`}</p>}
       </section>
 
@@ -3384,7 +3384,7 @@ function RecetteEnregistree({
           : plusieurs
             ? `des ${choisies} images choisies`
             : "de l'image choisie"}
-        , et rien n'est écrit tant que vous n'avez pas enregistré.
+        , et rien n'est écrit tant que tu n'as pas enregistré.
         {/* **Une fois pour le lot** — jamais une phrase par image. Elle ne
             paraît que quand il y a vraiment quelque chose à écraser : annoncer
             « 0 recette individuelle sera remplacée » ferait craindre une perte

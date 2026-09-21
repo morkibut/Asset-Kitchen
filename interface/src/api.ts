@@ -1614,7 +1614,7 @@ export type Methode =
  *  fiche qui afficherait alors `pixeloe` en clair aurait perdu le seul mot que
  *  l'auteur comprend. */
 export const NOM_DE_LA_METHODE: Record<Methode, string> = {
-  vote: "vote en deux temps",
+  vote: "contour net (recommandé)",
   pixeloe: "traits épaissis",
   lanczos: "réduction douce",
   proche: "au plus proche",
@@ -7953,6 +7953,14 @@ export const secondes = (duree: number) =>
   `${String(Math.floor(duree / 60)).padStart(2, "0")}:${String(
     Math.floor(duree % 60),
   ).padStart(2, "0")}`
+
+/** Une durée telle qu'on la dit, pas telle qu'un chronomètre l'écrit (RV4).
+ *  « 20 s » sous la minute, « 2 min 28 » au-dessus — jamais « 148.00 s », qui
+ *  fait faire le calcul à l'auteur pour une musique. */
+export const dureeEnClair = (duree: number): string => {
+  const s = Math.round(duree)
+  return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")}`
+}
 
 export const heure = (horodatage: number) =>
   new Date(horodatage * 1000).toLocaleString("fr-FR", {

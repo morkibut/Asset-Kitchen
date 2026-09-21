@@ -68,7 +68,7 @@ test("une phrase, la relecture de ce qui part, et le bouton porte le temps annon
   render(<FabricationAudio projet="jeu" onFermer={vi.fn()} />)
   const bouton = screen.getByRole("button", { name: /^Lancer 8 tirages/ })
   expect(bouton).toBeDisabled()
-  expect(screen.getByText("Écrivez d’abord ce qu’on doit entendre.")).toBeInTheDocument()
+  expect(screen.getByText("Écris d’abord ce qu’on doit entendre.")).toBeInTheDocument()
 
   fireEvent.change(screen.getByLabelText("Ce qu’on doit entendre"), { target: { value: "Une épée sort du fourreau" } })
   const pret = await lancer("Lancer 8 tirages · environ 45 s")

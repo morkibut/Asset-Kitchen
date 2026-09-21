@@ -295,7 +295,7 @@ function AgentMcp({
           />
         ) : (
           <p className="text-[13px] text-encre-3">
-            Le cadre de délégation appartient à un jeu ; ouvrez-en un pour le
+            Le cadre de délégation appartient à un jeu ; ouvre-en un pour le
             régler.
           </p>
         )}

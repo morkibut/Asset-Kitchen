@@ -30,6 +30,7 @@ import {
 } from "../api"
 import { Bouton, Libelle, Raison } from "./pieces"
 import { faitesDeLaCase } from "./EtabliDuSujet"
+import { nomDuModele } from "./Fiche"
 
 export function EcranPlanche({
   personnage,
@@ -311,9 +312,9 @@ export function EcranPlanche({
                     <>
                       {" "}
                       Le prix est celui de{" "}
-                      <span className="text-encre-3">{lu.modele}</span>, le
+                      <span className="text-encre-3">{nomDuModele(lu.modele)}</span>, le
                       modèle de planche du jeu ; la barre qui paie garde celui
-                      que vous y avez choisi.
+                      que tu y as choisi.
                     </>
                   )}
                   {/* **L'écart de cette machine, quand il y en a un.** Deux

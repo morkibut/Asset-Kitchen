@@ -160,7 +160,7 @@ export function EnAttenteDuSujet({
           <h2 className="font-serif text-[25px] text-encre">Pas encore rangé</h2>
           <p className="mt-[8px] text-[13px] text-encre-3">
             {total
-              ? `${total} élément${total > 1 ? "s" : ""} appartiennent à ${personnage.nom} sans occuper de case. Rien n’est perdu : choisissez un mouvement pour les ranger.`
+              ? `${total} élément${total > 1 ? "s" : ""} appartiennent à ${personnage.nom} sans occuper de case. Rien n’est perdu : choisis un mouvement pour les ranger.`
               : `Tout ce qui appartient à ${personnage.nom} est rangé sur un mouvement.`}
           </p>
         </div>
@@ -239,7 +239,7 @@ export function EnAttenteDuSujet({
               un geste qui n'existe pas, et de laisser croire que ce clip-là
               est bloqué. */}
           <p className="mt-[4px] text-[12px] text-encre-3">
-            Rien n’a encore été tiré de ceux-ci. Ouvrez leur montage depuis
+            Rien n’a encore été tiré de ceux-ci. Ouvre leur montage depuis
             « Galerie › Clips vidéo » pour en tailler une animation.
           </p>
           <div className="mt-[14px] grid grid-cols-2 gap-[14px]">

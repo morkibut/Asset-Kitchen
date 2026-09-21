@@ -24,7 +24,6 @@ import {
   coteDuSujet,
   quantite,
   secondes,
-  type Modele,
   type Reserve,
 } from "../api"
 import { POINTILLE, useInfobulle } from "./Infobulle"
@@ -41,7 +40,7 @@ import { explication } from "../aide"
  *  Le nom du catalogue porte déjà l'éditeur quand il en a un — `Meta: Muse
  *  Image` —, donc on ne le répète pas : ce qu'on ajoute est **à qui l'appel se
  *  paie**, qui est une autre question. */
-export function libelleModele(modele: Modele): string {
+export function libelleModele(modele: { fournisseur?: string | null; nom: string }): string {
   return modele.fournisseur ? `${modele.fournisseur} · ${modele.nom}` : modele.nom
 }
 

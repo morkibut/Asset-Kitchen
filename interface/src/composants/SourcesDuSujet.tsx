@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { api, type Asset, type Bande, type Generation, type Personnage, type Piece, type Pose } from "../api"
 import { BandeQuiTourne, sujetVideo, useVisee, vignetteAsset } from "./Apercu"
 import { Sources3D } from "./Sources3D"
+import { nomDuModele } from "./Fiche"
 
 const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
 const PETIT = "h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
@@ -296,7 +297,7 @@ function CarteClip({ element, personnage, onMontage, onClipsChange, onErreur }: 
     <video controls loop muted preload="metadata" onPointerEnter={visee.entrer} onPointerLeave={visee.sortir} src={api.videoDuClip(g.identifiant)} aria-label={`Clip de ${personnage.nom} · ${g.identifiant}`} className="aspect-square w-full bg-pourtour object-contain" />
     <div className="flex flex-1 flex-col gap-[6px] p-[8px]">
       <p className="mesure text-[11px] text-encre-4">{dire(HEURE, g.cree_le)} · {g.clip!.images} images · {g.clip!.cadence} i/s</p>
-      <p className="mesure truncate text-[11px] text-encre-4">{importe(g) ? "vidéo importée · aucune génération" : g.modele}</p>
+      <p className="mesure truncate text-[11px] text-encre-4">{importe(g) ? "vidéo importée · aucune génération" : nomDuModele(g.modele)}</p>
       <Rattachement liens={element.liens} note={element.note} />
       {g.clip!.extraction_refus && <p className="text-[12px] text-echec">{g.clip!.extraction_refus}</p>}
       {avis && <p role={avis.ton === "refus" ? "alert" : "status"} className={`text-[12px] ${avis.ton === "refus" ? "text-echec" : "text-signal"}`}>{avis.texte}</p>}
@@ -304,7 +305,7 @@ function CarteClip({ element, personnage, onMontage, onClipsChange, onErreur }: 
         <button className={PETIT} disabled={!pret} onClick={() => onMontage(g.identifiant)}>Monter une animation</button>
         <button className={PETIT} disabled={!pret} onClick={() => void poserSurLaToile()}>Poser sur la toile</button>
         {utilise
-          ? <button className={PETIT} disabled title="Une animation est taillée dans ce clip : supprimez-la d’abord.">Supprimer</button>
+          ? <button className={PETIT} disabled title="Une animation est taillée dans ce clip : supprime-la d’abord.">Supprimer</button>
           : confirme
             ? <button className={`${PETIT} border-trait-echec text-echec`} onClick={() => void supprimer()}>Confirmer la suppression</button>
             : <button className={PETIT} disabled={g.statut === "en_attente" || g.statut === "en_cours"} onClick={() => setConfirme(true)}>Supprimer</button>}

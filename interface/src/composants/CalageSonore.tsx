@@ -147,7 +147,7 @@ export function CalageSonore({ projet, sujet, cle, nom, animations, vue, onVue, 
       })}
     </div>}
     <p className="text-[12px] text-encre-3">
-      Cliquez une image pour y poser « {mot} ». {images.length ? images.map((k) => `Image ${k} : ${mot}.`).join(" ") : "Aucun repère sur cette animation."}
+      Clique une image pour y poser « {mot} ». {images.length ? images.map((k) => `Image ${k} : ${mot}.`).join(" ") : "Aucun repère sur cette animation."}
     </p>
     {signaux.map((r, i) => <span key={i} className={ATTENTION}>Image {r.image} : {r.signal}</span>)}
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}

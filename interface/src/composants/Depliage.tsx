@@ -155,7 +155,7 @@ function Phrase({ pliage }: { pliage: NonNullable<Generation["pliage"]> }) {
           <strong className="font-medium">
             {pliage.surplus} sujet{pliage.surplus > 1 ? "s" : ""} de trop
           </strong>{" "}
-          — cliquez ceux que vous ne gardez pas. L'appel a été payé une fois, et
+          — clique ceux que tu ne gardes pas. L'appel a été payé une fois, et
           il ne se rejoue pas.
         </p>
       )}
@@ -170,7 +170,7 @@ function Phrase({ pliage }: { pliage: NonNullable<Generation["pliage"]> }) {
           Les garder ferait entrer du fond.
         </p>
       )}
-      <Raison texte="rien n'est entré en bibliothèque tant que vous n'avez pas tranché" />
+      <Raison texte="rien n'est entré en bibliothèque tant que tu n'as pas tranché" />
     </div>
   )
 }
@@ -217,8 +217,8 @@ function Sujet({
         aria-label={`sujet n° ${numero}`}
         title={
           ecarte
-            ? `sujet n° ${numero} — écarté, cliquez pour le reprendre`
-            : `sujet n° ${numero} — cliquez pour l'écarter`
+            ? `sujet n° ${numero} — écarté, clique pour le reprendre`
+            : `sujet n° ${numero} — clique pour l'écarter`
         }
         className={[
           "flex cursor-pointer flex-col overflow-hidden rounded-5 border transition-colors duration-120",

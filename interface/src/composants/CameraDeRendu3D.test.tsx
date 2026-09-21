@@ -21,7 +21,7 @@ test("l’angle de la vue devient le réglage du rendu ; la pose demande une seu
   expect(lu!.camera).toEqual({ azimut: 137, elevation: 41 })
   fireEvent.click(screen.getByLabelText("Choisir une portion du mouvement"))
   fireEvent.change(screen.getByLabelText("debut du mouvement"), { target: { value: "24" } })
-  fireEvent.click(screen.getByLabelText("Une seule frame (pose)"))
+  fireEvent.click(screen.getByLabelText("Une seule image (pose)"))
   expect(lu!.plage).toEqual({ debut: 24, fin: 24 })
   expect(lu!.reglages.nombre_images).toBe(1)
 })

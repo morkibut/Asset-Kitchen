@@ -225,10 +225,10 @@ export function EcranEnvoi({
     // plus que ce qu'une image fixe a de particulier — ses lignes de texte, ses
     // images jointes, son fond, ses consignes.
     const resume: ResumeDeLEnvoi | null = !envoi ? null : {
-      // **Son nom, pas l'identifiant brut qu'il transporte** (ML5) : un style
-      // local le porte sous une forme illisible — « ComfyUI:zimage-pixel@ca12…
-      // » — que rien ne demande à l'écran de déchiffrer avant de payer.
-      modele: <>{envoi.modele.nom}<span className="mt-[2px] block text-[11px] text-encre-4">{envoi.modele.identifiant}</span></>,
+      // **Son nom, pas l'identifiant brut qu'il transporte** (ML5, RV4) : un
+      // style local le porte sous une forme illisible — « ComfyUI:zimage-pixel@ca12…
+      // » — et rien ne l'affiche plus ici, pas même en petit sous le nom.
+      modele: <>{envoi.modele.nom}</>,
       resultat: <><p>{reglages?.proportions ?? "Format du modèle"} · {envoi.prix.appels} génération{envoi.prix.appels > 1 ? "s" : ""}{envoi.cases > 1 ? ` · ${envoi.cases} cases sur une planche` : ""}</p>{reglages && Object.entries(reglages.options).filter(([,v]) => v !== "").map(([k,v]) => <p key={k} className="mt-[4px] text-encre-3">{k} : {v}</p>)}</>,
       consommation: local ? (tempsEcrit ?? "Durée non encore mesurée pour ce workflow.") : prixEcrit,
       mesure: <>

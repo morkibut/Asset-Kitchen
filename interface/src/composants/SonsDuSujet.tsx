@@ -64,7 +64,7 @@ export function SonsDuSujet({ projet, sujet, nomSujet, onRegler, personnage, pla
     </div>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
     {!vue && !erreur && <p className="text-[13px] text-encre-3">Lecture des sons…</p>}
-    {vue && vue.total === 0 && <p className="text-[13px] text-encre-3">Cette famille de sujets n’a pas d’emplacement proposé. Nommez-en un.</p>}
+    {vue && vue.total === 0 && <p className="text-[13px] text-encre-3">Cette famille de sujets n’a pas d’emplacement proposé. Nomme-en un.</p>}
     {vue && vue.remplis > 0 && <p className="text-[12px] text-encre-3">
       Renommer {nomSujet} changerait le nom de ses sons dans le jeu (comme {vue.emplacements.find((e) => e.rempli)?.nom_stable}).
     </p>}

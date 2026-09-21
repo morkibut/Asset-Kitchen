@@ -93,7 +93,7 @@ export function LectureDesCalques({ chemin, vue, selection, onCalque, onFermer }
 
   if (!bande || !image) return <section aria-label="Vérifier les calques en mouvement" className="mt-[22px] rounded-10 border border-trait bg-carte p-[22px]">
     <div className="flex items-center justify-between gap-[14px]"><h3 className="font-serif text-[25px]">Vérifier les calques en mouvement</h3><button className={BOUTON} onClick={onFermer}>Fermer la lecture</button></div>
-    <p className="mt-[8px] text-[13px] text-encre-3">Aucune image de base n’est disponible pour cet emploi. Produisez ou choisissez d’abord une version du corps.</p>
+    <p className="mt-[8px] text-[13px] text-encre-3">Aucune image de base n’est disponible pour cet emploi. Produis ou choisis d’abord une version du corps.</p>
   </section>
 
   const dansLaSelection = selection.some((s) => cleCible(s) === cleCible(image.cible))
@@ -113,15 +113,15 @@ export function LectureDesCalques({ chemin, vue, selection, onCalque, onFermer }
       <img className="damier-papier h-[300px] w-[300px] shrink-0 object-contain" style={{ imageRendering: "pixelated" }} alt={`Frame ${rang + 1} de ${bande.nom}`} src={calque ? apiCalques.image(chemin, calque) : apiCalques.imageCible(chemin, image.cible)} />
       <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
         <div className="flex flex-wrap gap-[8px]">
-          <button className={BOUTON} disabled={compte < 2} onClick={() => aller(-1)}>Frame précédente</button>
+          <button className={BOUTON} disabled={compte < 2} onClick={() => aller(-1)}>Image précédente</button>
           <button className={BOUTON} disabled={compte < 2} onClick={() => poser((e) => ({ ...e, joue: !e.joue }))}>{etat.joue ? "Mettre en pause" : "Lire la bande"}</button>
-          <button className={BOUTON} disabled={compte < 2} onClick={() => aller(1)}>Frame suivante</button>
+          <button className={BOUTON} disabled={compte < 2} onClick={() => aller(1)}>Image suivante</button>
         </div>
         <p role="status" className="text-[13px] text-encre">{image.cible.nature === "frame" ? `Frame ${rang + 1} / ${compte}` : "Image fixe"} · {ETATS_EQUIPEMENT[image.etat]}{dansLaSelection ? "" : " · hors sélection"}</p>
         <p className="text-[12px] text-encre-3">Corrections de cette frame : {motsDeLaCorrection(calque)}.</p>
         <p className="text-[12px] text-encre-3">Source : {calque ? `${calque.source_fiche?.label || calque.source} · ${calque.role === "calque" ? "calque transparent" : calque.role === "source-equipee" ? "personnage équipé à extraire" : "référence d’apparence"}` : "le corps nu de cette frame"}</p>
         {image.raison && <p className="text-[12px] text-encre-3">{image.raison}</p>}
-        <button className={`${BOUTON} self-start`} onClick={() => onCalque(image.cible, image.variante ?? undefined)}>Corriger cette frame</button>
+        <button className={`${BOUTON} self-start`} onClick={() => onCalque(image.cible, image.variante ?? undefined)}>Corriger cette image</button>
       </div>
     </div>
     <div className="defile mt-[14px] flex gap-[8px] overflow-x-auto">{bande.images.map((i, n) => <button key={cleCible(i.cible)} aria-label={`Examiner la frame ${n + 1}`} aria-pressed={n === rang} onClick={() => poser((e) => ({ ...e, joue: false, rang: n }))} className={`w-[128px] shrink-0 rounded-7 border p-[4px] text-left ${n === rang ? "border-signal bg-ligne-ouverte" : "border-trait"}`}><img className="damier-papier h-[128px] w-full object-contain" loading="lazy" alt="" src={apiCalques.imageCible(chemin, i.cible)} /><span className="mt-[4px] block text-[11px] text-encre">{i.cible.nature === "frame" ? `Frame ${n + 1}` : "Image fixe"}</span><span className="block text-[11px] text-encre-3">{ETATS_EQUIPEMENT[i.etat]}</span></button>)}</div>

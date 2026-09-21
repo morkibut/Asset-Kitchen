@@ -6,7 +6,7 @@
 // page partielle d'un autre.
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { api, type AnimationDeLivraison, type Bande, type Filtre, type Generation } from "../api"
+import { api, dureeEnClair, type AnimationDeLivraison, type Bande, type Filtre, type Generation } from "../api"
 import { sources3d, type Source3D } from "../api-3d"
 import { sons, type Son } from "../api-sons"
 import { BandeQuiTourne } from "./Apercu"
@@ -188,7 +188,7 @@ export function GalerieMedias({
           {erreur && <p role="alert" className="mb-[14px] text-[13px] text-echec">{erreur}</p>}
           {erreur && projet && <button type="button" onClick={() => setTentative((fois) => fois + 1)} className="mb-[14px] text-[12px] text-signal hover:opacity-70">Réessayer la lecture</button>}
           {(!projet && (sorte === "animations" || sorte === "modeles-3d" || sorte === "sons")) ? (
-            <EtatVide texte="Ouvrez un jeu pour relire ses médias." />
+            <EtatVide texte="Ouvre un jeu pour relire ses médias." />
           ) : (
             <>
               {etatLecture === "en-cours" && sorte === "animations" && <p role="status" className="text-[13px] text-encre-3">Lecture des animations conservées…</p>}
@@ -242,7 +242,7 @@ function Carte3D({ source, onOuvrir }: { source: Source3D; onOuvrir?: (source: S
 function CarteSon({ son, onOuvrir }: { son: Son; onOuvrir?: (identifiant: string) => void }) {
   return <article className="flex min-w-0 flex-col gap-[8px] rounded-8 border border-trait bg-carte p-[14px]">
     <ApercuOnde son={son} />
-    <div className="min-w-0"><h2 className="truncate text-[14px] font-medium text-encre" title={son.nom}>{son.nom}</h2><p className="mt-[4px] text-[12px] text-encre-3">{son.mesures ? `${son.mesures.duree.toLocaleString("fr-FR", { maximumFractionDigits: son.mesures.duree < 1 ? 2 : 1 })} s · ${son.mesures.canaux > 1 ? `${son.mesures.canaux} canaux` : "1 canal"}` : son.raison}</p></div>
+    <div className="min-w-0"><h2 className="truncate text-[14px] font-medium text-encre" title={son.nom}>{son.nom}</h2><p className="mt-[4px] text-[12px] text-encre-3">{son.mesures ? `${son.mesures.duree < 1 ? son.mesures.duree.toLocaleString("fr-FR", { maximumFractionDigits: 2 }) + " s" : dureeEnClair(son.mesures.duree)} · ${son.mesures.canaux > 1 ? `${son.mesures.canaux} canaux` : "1 canal"}` : son.raison}</p></div>
     <button type="button" disabled={!onOuvrir} onClick={() => onOuvrir?.(son.identifiant)} className="self-start text-[12px] text-signal disabled:text-eteint">Ouvrir le son ›</button>
   </article>
 }

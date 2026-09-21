@@ -183,23 +183,25 @@ comment l'atelier est construit.
 
 ### Critères d'acceptation
 
-- [ ] « frames » devient « images », « Asset » devient « Sujet », partout à l'écran.
-- [ ] Aucun identifiant technique de modèle (`ComfyUI:…@<empreinte>`) n'apparaît dans une liste ni
+- [x] « frames » devient « images », « Asset » devient « Sujet », partout à l'écran.
+- [x] Aucun identifiant technique de modèle (`ComfyUI:…@<empreinte>`) n'apparaît dans une liste ni
       une relecture : le nom lisible, déjà connu ailleurs, le remplace.
-- [ ] Plus de « Travail conservé chez le moteur : <identifiant> », de « .env », de
+- [x] Plus de « Travail conservé chez le moteur : <identifiant> », de « .env », de
       « cudaMallocAsync » — y compris dans Réglages › Installation, que `RV2` n'a pas touché.
-- [ ] « vote en deux temps » reçoit un nom qui dit le résultat.
-- [ ] Plus de « l'établi », « le carnet », « le vestiaire » à l'écran.
-- [ ] « Tu » partout ; un essai le tient.
-- [ ] Sur un calcul local, aucune ligne d'argent (« déjà payé », « 0,0000 $ par animation ») : le
+- [x] « vote en deux temps » reçoit un nom qui dit le résultat.
+- [x] Plus de « l'établi », « le carnet », « le vestiaire » à l'écran.
+- [x] « Tu » partout ; un essai le tient.
+- [x] Sur un calcul local, aucune ligne d'argent (« déjà payé », « 0,0000 $ par animation ») : le
       temps passé à la place.
-- [ ] Les sons : « 1 version », durées en minutes et secondes.
-- [ ] Le style de combat « karaté » a son propre texte, ou disparaît.
-- [ ] `essais/essai_vocabulaire.py` repasse : les 8 écarts relevés le 21 septembre (« Codex », les
+- [x] Les sons : « 1 version », durées en minutes et secondes.
+- [x] Le style de combat « karaté » a son propre texte, ou disparaît.
+- [x] `essais/essai_vocabulaire.py` repasse : les 8 écarts relevés le 21 septembre (« Codex », les
       onglets de la fiche, deux retours en arrière) sont réglés dans le code ou dans
       `docs/vocabulaire.html`.
-- [ ] Les nouvelles phrases sont lues dans le recueil, jamais retapées (*R4*), et `aide.test.ts`
+- [x] Les nouvelles phrases sont lues dans le recueil, jamais retapées (*R4*), et `aide.test.ts`
       passe.
+
+*Fait le 22 septembre 2026.* « frame » reste dans l'atelier de retouche image par image, mot anglais gardé par `docs/vocabulaire.html` §4. Le style « karaté » avait déjà son texte au dépôt : l'écart venait des données du testeur. « Revenir au… » devient « Reprendre le texte composé » / « Reprendre le choix automatique » (ce sont des annulations, pas des retours). Pour le Codex et les onglets, c'est `docs/vocabulaire.html` qui suit le code. Un nouveau garde-fou, `essais/essai_tutoiement.py`, tourne avec la suite ; sa liste d'impératifs est fermée, un impératif neuf s'y ajoute d'une ligne.
 
 ---
 

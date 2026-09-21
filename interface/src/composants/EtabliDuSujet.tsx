@@ -2378,7 +2378,7 @@ function VignetteDeCase({
         type="button"
         onClick={() => onOuvrir(asset.identifiant)}
         aria-label={`Ouvrir ${asset.label} dans son outil`}
-        title="l'outil s'ouvre en plein cadre, sans quitter l'établi"
+        title="l'outil s'ouvre en plein cadre, sans quitter cet écran"
         className="block"
       >
         <img

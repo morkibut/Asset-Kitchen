@@ -1125,8 +1125,11 @@ export function EcranMontage({
 
         {/* **Le prix par bande compte les bandes qu'on garde**, et remonter
             celle-ci n'en ajoute aucune : l'afficher ici ferait croire qu'on va
-            payer un cran de plus. Une ligne discrète, pas une carte. */}
-        {!reprise && (
+            payer un cran de plus. Une ligne discrète, pas une carte.
+
+            **Sur un calcul local, le clip n'a rien coûté** (RV4) : ces deux
+            lignes ne disent rien plutôt que d'afficher $0,0000. */}
+        {!reprise && montage.prix.clip > 0 && (
           <div className="flex flex-col gap-[4px]">
             <p className="text-[12px] text-encre-3">
               <span className="text-encre">{dollars(montage.prix.par_bande)}</span>
@@ -1164,14 +1167,14 @@ export function EcranMontage({
                 retenues.length === 0
                   ? "prenez au moins une image"
                   : !nom.trim()
-                    ? "nommez cette animation"
+                    ? "nomme cette animation"
                     : `Garder « ${nom.trim()} » · ${retenues.length} images`
               }
             />
           )}
         </div>
         <p className={NOTE}>
-          <b className="font-normal text-encre">Rien sur cet écran ne dépense.</b> {montage.clip.nature && montage.clip.nature !== "video" ? "Les frames originales sont conservées." : "Le clip est déjà payé."}
+          <b className="font-normal text-encre">Rien sur cet écran ne dépense.</b> {montage.clip.nature && montage.clip.nature !== "video" ? "Les images originales sont conservées." : montage.prix.clip > 0 ? "Le clip est déjà payé." : null}
           {reprise && " Revenir sans reprendre laisse l'animation telle quelle."}
         </p>
       </aside>
@@ -1448,11 +1451,11 @@ function Pellicule({
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="mesure text-[11px] text-encre-4">frame 0</span>
+        <span className="mesure text-[11px] text-encre-4">image 0</span>
         <span className="text-[12px] text-encre-3">
-          {retenues.length} {retenues.length > 1 ? "frames retenues" : "frame retenue"}
+          {retenues.length} {retenues.length > 1 ? "images retenues" : "image retenue"}
         </span>
-        <span className="mesure text-[11px] text-encre-4">frame {images - 1}</span>
+        <span className="mesure text-[11px] text-encre-4">image {images - 1}</span>
       </div>
 
       {/* **La loupe, parce qu'à sept pixels de large on ne sait pas ce qu'on
@@ -1477,7 +1480,7 @@ function Pellicule({
           }}
         />
         <div className="flex min-w-0 flex-col gap-[4px]">
-          <span className="mesure text-[11px] text-encre-3">frame {regarde}</span>
+          <span className="mesure text-[11px] text-encre-3">image {regarde}</span>
 
           {/* **Le second geste de la pellicule** (A13), et il est ici plutôt que
               sur le ruban : à sept pixels de large, une cellule ne porte pas
@@ -1490,8 +1493,8 @@ function Pellicule({
           <button
             type="button"
             onClick={() => onPrelever(regarde)}
-            aria-label={`Mettre la frame ${regarde} de côté`}
-            title="elle entre en bibliothèque — rien n'est dépensé, et les frames retenues ne bougent pas"
+            aria-label={`Mettre l’image ${regarde} de côté`}
+            title="elle entre en bibliothèque — rien n'est dépensé, et les images retenues ne bougent pas"
             className={LIEN}
           >
             Mettre de côté ›
@@ -1559,13 +1562,13 @@ function Retenues({
   if (retenues.length === 0) {
     return (
       <p className="rounded-8 border border-dashed border-contour p-[14px] text-[12px] text-encre-3">
-        aucune frame retenue — cliquez la pellicule, ou posez une des deux
+        aucune image retenue — clique la pellicule, ou pose une des deux
         propositions
       </p>
     )
   }
   return (
-    <div aria-label="Ordre des frames retenues" className="flex flex-wrap gap-[8px]">
+    <div aria-label="Ordre des images retenues" className="flex flex-wrap gap-[8px]">
       {retenues.map((numero, place) => (
         <button
           key={occurrences[place]?.identifiant || `${numero}-${place}`}

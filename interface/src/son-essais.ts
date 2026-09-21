@@ -17,7 +17,7 @@ export const serie = (tirages: TirageSerie[], o: Partial<Serie> = {}): Serie => 
 })
 export const jeu = (rangs: number[], o: Partial<JeuVariantes> = {}): JeuVariantes => ({
   identifiant: "jeu1", projet: "jeu", nom: "Sword leaves a leather sheath", famille: "bruitage", serie: "serie1", cle: null,
-  membres: rangs.map((r) => ({ son: `s${r}`, rang: r, ajoute_le: 1, statut: "present", a_livrer: true, signal: r === 2 ? "Ce son sature : il reste dans le jeu, à vous de décider." : "", sature: r === 2,
+  membres: rangs.map((r) => ({ son: `s${r}`, rang: r, ajoute_le: 1, statut: "present", a_livrer: true, signal: r === 2 ? "Ce son sature : il reste dans le jeu, à toi de décider." : "", sature: r === 2,
     nom: "Épée", revision: 2, famille: "bruitage", pret: true, raison: "", mesures: mesures() })),
   sons: rangs.map((r) => `s${r}`), a_livrer: rangs.map((r) => `s${r}`), signalements: [], vide: false, revision: 1, cree_le: 1, ...o,
 })

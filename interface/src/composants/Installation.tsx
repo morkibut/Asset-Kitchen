@@ -332,7 +332,7 @@ function LeTour({ etat, tiroirs }: { etat: EtatInstallation | null; tiroirs: Tir
       </section>
 
       <Note>
-        Ce guide ne parle pas de votre jeu. Le nom du jeu, son allure, son monde :
+        Ce guide ne parle pas de ton jeu. Le nom du jeu, son allure, son monde :
         c'est l'autre parcours, Commencer un jeu, qui vient juste après. Ici on ne
         branche que la machine, et on n'y revient presque jamais.
       </Note>
@@ -639,7 +639,7 @@ function LesAnimations({
     <div className="flex max-w-[880px] flex-col gap-[22px]">
       <p className="text-[13px] leading-[1.55] text-encre-2">
         Une animation se fabrique à partir d'une image, par un modèle vidéo. Sur
-        votre carte graphique c'est gratuit et lent ; chez un fournisseur c'est
+        ta carte graphique c'est gratuit et lent ; chez un fournisseur c'est
         immédiat et payé au clip. Cette étape est la plus longue et la plus facile
         à sauter.
       </p>
@@ -701,11 +701,11 @@ function LesAnimations({
           >
             {moteur.allume
               ? moteur.phrase || "elle répond, et tout ce qu'il lui faut est là"
-              : "elle ne répond pas — ouvrez-la, puis cliquez Chercher"}
+              : "elle ne répond pas — ouvre-la, puis clique Chercher"}
           </p>
           {moteur.allume && moteur.carte && (
             <p className="text-[12px] text-encre-3">
-              {moteur.carte} · {gigas(moteur.memoire_libre_go)} Go de mémoire libre
+              Mémoire libre : {gigas(moteur.memoire_libre_go)} Go
             </p>
           )}
           {moteur.manquants.length > 0 && (
@@ -843,7 +843,7 @@ function OuToutSeRange({
             {etat.dossier_au_prochain_demarrage}
           </Chemin>
           <span className="text-[11.5px] leading-[1.45] text-encre-4">
-            Rien n'a été déplacé. Pour retrouver ce qui est déjà rangé, copiez le
+            Rien n'a été déplacé. Pour retrouver ce qui est déjà rangé, copie le
             contenu du dossier du dessus dans celui-ci avant de relancer.
           </span>
         </section>
@@ -874,7 +874,7 @@ function OuToutSeRange({
         </div>
         <span className="text-[11.5px] leading-[1.45] text-encre-4">
           Le chemin se tape : un navigateur ne donne jamais à une page le chemin
-          d'un dossier de votre disque.
+          d'un dossier de ton disque.
         </span>
 
         {vu && (

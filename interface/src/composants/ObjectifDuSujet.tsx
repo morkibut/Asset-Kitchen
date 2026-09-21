@@ -130,7 +130,7 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
     <div className="flex items-start justify-between gap-[22px]">
       <div>
         <h2 id="objectif-titre" className="font-serif text-[25px] text-encre">Ce qui doit exister dans le jeu</h2>
-        <p className="mt-[8px] text-[13px] text-encre-4">Choisissez les mouvements et les directions utiles. Une référence aide à fabriquer ; elle ne remplace pas une animation.</p>
+        <p className="mt-[8px] text-[13px] text-encre-4">Choisis les mouvements et les directions utiles. Une référence aide à fabriquer ; elle ne remplace pas une animation.</p>
       </div>
       {!edition && <button type="button" className={bouton} onClick={() => { setEdition(true); setMessage("") }}>Modifier l’objectif</button>}
     </div>
@@ -144,7 +144,7 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
         </div>)}
     </div>
 
-    {lecture.origine === "plan-existant" && !edition && <p className="text-[12px] text-encre-4">Ce personnage suit son plan de poses existant. Vous pouvez maintenant choisir seulement les sorties utiles.</p>}
+    {lecture.origine === "plan-existant" && !edition && <p className="text-[12px] text-encre-4">Ce personnage suit son plan de poses existant. Tu peux maintenant choisir seulement les sorties utiles.</p>}
 
     {!edition ? <div className="space-y-[8px]">
       {mouvements.filter((m) => lecture.couverture.cases.some((c) => c.pose === m.id && c.demande > 0)).map((m) =>

@@ -31,7 +31,7 @@ test("la pipette d’une frame vise le pixel source malgré la réduction de la 
   fireEvent.click(surface, { clientX: 100, clientY: 40 })
   expect(garder.mock.calls[0][0].passes[0].point).toEqual([200, 80])
   expect(fermer).toHaveBeenCalledOnce()
-  expect(screen.getByAltText("Source de la frame").getAttribute("src")).toBe("/api/clips/source/frames/8")
+  expect(screen.getByAltText("Source de l’image").getAttribute("src")).toBe("/api/clips/source/frames/8")
 })
 
 test("la bibliothèque cherche au-delà des voisines et combine les filtres", async () => {

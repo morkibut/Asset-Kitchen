@@ -1577,8 +1577,8 @@ export function Galerie({
               <span />
             )}
             <span className="text-right">
-              aucune génération ne part d'ici — on paie depuis le codex et depuis
-              l'établi d'un sujet du jeu
+              aucune génération ne part d'ici — on paie depuis le Codex et depuis
+              la fiche d'un sujet du jeu
             </span>
           </div>
           </>}

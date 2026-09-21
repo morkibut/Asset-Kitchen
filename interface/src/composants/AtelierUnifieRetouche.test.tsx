@@ -138,7 +138,7 @@ test("le montage réordonne par clavier et glissement, puis garde le classement 
   const repris = vi.fn()
   render(<EcranMontage clip={bande.clip} reprise={{ bande, onRepris: repris }} onFermer={vi.fn()} onErreur={vi.fn()} />)
   await screen.findByLabelText("Personnage de l’animation")
-  const boutons = () => document.querySelectorAll('[aria-label="Ordre des frames retenues"] button')
+  const boutons = () => document.querySelectorAll('[aria-label="Ordre des images retenues"] button')
   fireEvent.keyDown(boutons()[1], { key: "ArrowLeft", altKey: true })
   const dataTransfer = { setData: vi.fn(), effectAllowed: "" }
   fireEvent.dragStart(boutons()[2], { dataTransfer })
@@ -168,7 +168,7 @@ test("le montage retrouve son nom, sa vitesse et son ordre après fermeture sans
   fireEvent.change(await screen.findByLabelText("Le nom de l'animation"), { target: { value: "Attaque lourde" } })
   fireEvent.change(screen.getByLabelText("Cadence, en chiffres"), { target: { value: "13" } })
   fireEvent.blur(screen.getByLabelText("Cadence, en chiffres"))
-  const boutons = document.querySelectorAll('[aria-label="Ordre des frames retenues"] button')
+  const boutons = document.querySelectorAll('[aria-label="Ordre des images retenues"] button')
   fireEvent.keyDown(boutons[2], { key: "ArrowLeft", altKey: true })
   await screen.findByText("Brouillon conservé sur cet ordinateur.")
   vue.unmount()

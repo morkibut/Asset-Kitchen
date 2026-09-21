@@ -77,7 +77,7 @@ export function BlocMouvements({ projet }: { projet: string | null }) {
       <p data-mouvements-du-jeu className="mt-2 text-[12.5px] leading-relaxed text-encre-2">
         {base.propres_au_jeu
           ? "Ce jeu a ses propres textes."
-          : "Ce jeu utilise les textes de départ de l'atelier. Votre première modification lui en fait une copie : les autres jeux ne changent pas."}
+          : "Ce jeu utilise les textes de départ de l'atelier. Ta première modification lui en fait une copie : les autres jeux ne changent pas."}
       </p>
 
       <ul className="mt-3 flex flex-col gap-px">
@@ -428,7 +428,7 @@ function PhraseDeDirection({
           value={texte}
           rows={2}
           aria-label={`Phrase d'animation — ${direction.nom}`}
-          placeholder={livree || "aucune phrase proposée pour cette direction — écrivez-en une"}
+          placeholder={livree || "aucune phrase proposée pour cette direction — écris-en une"}
           onChange={(e) => setTexte(e.target.value)}
           className={`${CHAMP} h-auto py-1.5 leading-relaxed`}
         />
@@ -497,7 +497,7 @@ export function BlocStyles({ projet }: { projet: string | null }) {
       <p data-styles-du-jeu className="mt-2 text-[12.5px] leading-relaxed text-encre-2">
         {base.propres_au_jeu
           ? "Ce jeu a ses propres styles."
-          : "Ce jeu utilise les styles de départ de l'atelier. Votre première modification lui en fait une copie : les autres jeux ne changent pas."}
+          : "Ce jeu utilise les styles de départ de l'atelier. Ta première modification lui en fait une copie : les autres jeux ne changent pas."}
       </p>
 
       <ul className="mt-3 flex flex-col gap-px">

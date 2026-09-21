@@ -397,7 +397,7 @@ export function PageDuSujet(proprietes: {
             ‹ {proprietes.ouvert.nom}
           </button>
           <span className="text-[12.5px] text-encre-3">
-            Ses cases — le vestiaire et les planches vivent encore ici.
+            Ses cases — l'équipement et les planches vivent encore ici.
           </span>
         </div>
         <EcranEtabli
@@ -466,8 +466,8 @@ export function PageDuSujet(proprietes: {
             {/* **RG2** : une nature qui ne se découpe pas — une matière, un
                 décor, une tuile, qui remplissent leur cadre — n'a pas ce
                 bouton du tout, plutôt qu'un bouton grisé sans raison. */}
-            {proprietes.onDecouper && seDecoupe && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images de référence."} onClick={() => imageCible && proprietes.onDecouper?.(imageCible)}>Découper une image</button>}
-            {proprietes.onExtraire && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisissez une image dans Images de référence."} onClick={() => imageCible && proprietes.onExtraire?.(imageCible)}>Extraire un élément</button>}
+            {proprietes.onDecouper && seDecoupe && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisis une image dans Images de référence."} onClick={() => imageCible && proprietes.onDecouper?.(imageCible)}>Découper une image</button>}
+            {proprietes.onExtraire && <button className={BOUTON} disabled={!imageCible} title={imageCible ? undefined : "Choisis une image dans Images de référence."} onClick={() => imageCible && proprietes.onExtraire?.(imageCible)}>Extraire un élément</button>}
             {onglet === "animations" && <button className={BOUTON} onClick={() => setOnglet("essai")}>Tester les animations</button>}
             {onglet === "essai" && <button className={BOUTON} onClick={() => setOnglet("animations")}>‹ Animations</button>}
           </div>

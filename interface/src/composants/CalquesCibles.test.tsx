@@ -169,7 +169,7 @@ test("l'emploi explique l'ordre des images sans parler d'orientation, et le règ
   const troisQuarts = screen.getByText("Et en vue de dessus à 3/4 ?")
   expect(troisQuarts.parentElement!.textContent).toContain("Passer cette partie dessous")
   expect(troisQuarts.parentElement!.textContent).toContain("Ramener cette partie dessus")
-  expect(troisQuarts.parentElement!.textContent).toContain("sur cette frame seule")
+  expect(troisQuarts.parentElement!.textContent).toContain("sur cette image seule")
   fireEvent.change(ordre, { target: { value: "derriere" } })
   expect(onRegler).toHaveBeenCalledWith({ devant: false })
 })
@@ -178,7 +178,7 @@ test("l'atelier du calque dit que la direction de la base ne change pas l'ordre"
   render(<EditeurCalqueCible chemin={chemin} variante={variante} onGarde={vi.fn()} onSale={vi.fn()} />)
   await screen.findByAltText("Aperçu du calque sur sa base")
   expect(screen.getByText(/la direction de cette base \(ouest\) ne change rien/)).toBeInTheDocument()
-  expect(screen.getByText(/sur cette frame seule/)).toBeInTheDocument()
+  expect(screen.getByText(/sur cette image seule/)).toBeInTheDocument()
   expect(screen.getByText("Aucun passage peint ici : toute la pièce suit l’ordre par défaut.")).toBeInTheDocument()
   // Les deux pinceaux qui font passer une partie dessous et l'autre dessus.
   expect(screen.getByRole("option", { name: "Passer cette partie dessous" })).toBeInTheDocument()

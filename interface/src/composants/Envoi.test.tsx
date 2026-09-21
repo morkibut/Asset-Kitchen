@@ -173,10 +173,10 @@ test("un modèle distant garde son bouton habituel — « Payer et lancer », ja
   expect(screen.queryByRole("button", { name: /Lancer sur ma carte graphique/ })).not.toBeInTheDocument()
 })
 
-test("le modèle se lit par son nom, l’identifiant brut reste en petit dessous", () => {
+test("le modèle se lit par son nom, jamais par son identifiant technique", () => {
   render(<EcranEnvoi {...props(BASE as unknown as Envoi)} />)
   expect(screen.getByText("Pixel art net et rapide")).toBeInTheDocument()
-  expect(screen.getByText("ComfyUI:zimage-pixel@v1")).toBeInTheDocument()
+  expect(screen.queryByText("ComfyUI:zimage-pixel@v1")).not.toBeInTheDocument()
 })
 
 test("un modèle distant garde l’écran habituel — aucun bloc de texte local", () => {

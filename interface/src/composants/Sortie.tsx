@@ -440,7 +440,7 @@ export function Sortie({
           />
           <Raison
             enfants={
-              "En dossiers range par famille — un mot que vous avez posé, pas" +
+              "En dossiers range par famille — un mot que tu as posé, pas" +
               " une arborescence que l'atelier invente."
             }
           />
@@ -467,7 +467,7 @@ export function Sortie({
           <Raison
             enfants={
               "Effacer ne retire que ce que la sortie précédente avait posé ici." +
-              " Un fichier que vous avez mis là n'est jamais touché."
+              " Un fichier que tu as mis là n'est jamais touché."
             }
           />
         </Bloc>

@@ -402,9 +402,9 @@ export function EcranClip({
         : null
 
   const empeche = !image
-    ? "un clip part toujours d'une image : choisissez-en une"
+    ? "un clip part toujours d'une image : choisis-en une"
     : !texte
-      ? "choisissez un mouvement — c'est lui qui écrit ce qui part"
+      ? "choisis un mouvement — c'est lui qui écrit ce qui part"
       : !choisi
         ? "aucun modèle vidéo ne peut honorer cette demande"
         : (choisi.grise ?? null)
@@ -554,7 +554,7 @@ export function EcranClip({
           data-texte-du-clip
           className="mesure rounded-[2px] border border-trait bg-carte p-2 text-[10.5px] leading-4 text-encre-3"
         >
-          {texte || "choisissez un mouvement pour lire ce qui partira"}
+          {texte || "choisis un mouvement pour lire ce qui partira"}
         </p>
         <p className="mesure text-[10px] leading-4 text-encre-4">
           La phrase de la direction, puis le style du personnage s'il en a un
@@ -576,8 +576,8 @@ export function EcranClip({
             {pose ? ` — ${pose.nom}${ou}` : ""}
           </h2>
           <p className="mt-1 text-[12px] leading-relaxed text-encre-3">
-            Un clip part d'une image et revient en vidéo. Vous en découperez
-            ensuite autant d'animations que vous voudrez, sans repayer.
+            Un clip part d'une image et revient en vidéo. Tu en découperas
+            ensuite autant d'animations que tu voudras, sans repayer.
           </p>
         </div>
 
@@ -625,9 +625,9 @@ export function EcranClip({
               <td className="py-1">
                 {attenteDuLot === null ? (
                   <>
-                    deux minutes environ. <strong className="text-encre">Vous
+                    deux minutes environ. <strong className="text-encre">Tu
                     pouvez fermer l'atelier</strong> : le clip continue de se
-                    fabriquer chez le fournisseur, et vous le retrouverez.
+                    fabriquer chez le fournisseur, et tu le retrouveras.
                   </>
                 ) : (
                   <>
@@ -643,8 +643,8 @@ export function EcranClip({
                         prise, et laisser la phrase d'à côté le passerait sous
                         silence. */}
                     Il se fabrique <strong className="text-encre">sur cette
-                    machine</strong>, dans la fenêtre du moteur. Vous pouvez
-                    fermer l'atelier ; ne fermez pas celle-là, et attendez-vous à
+                    machine</strong>, dans la fenêtre du moteur. Tu peux
+                    fermer l'atelier ; ne ferme pas celle-là, et attends-toi à
                     ce que le reste de l'ordinateur rame pendant ce temps.
                   </>
                 )}
@@ -654,7 +654,7 @@ export function EcranClip({
         </table>
 
         <p className="rounded-[2px] border-l-2 border-signal bg-carte p-3 text-[11.5px] leading-relaxed text-encre-3">
-          <strong className="text-encre">Ce clip n'hérite que de votre
+          <strong className="text-encre">Ce clip n'hérite que de ton
           image.</strong> Ni les textes du jeu, ni ses images d'ambiance ne
           partent avec lui : un modèle vidéo ne prend qu'une seule image, et
           c'est celle du personnage.
@@ -812,7 +812,7 @@ export function EcranClip({
           <Raison texte={refus} />
           {attente ? (
             <p className="mesure text-[10px] leading-4 text-encre-4">
-              Ce clip ne coûte rien : il se fabrique sur votre machine.{" "}
+              Ce clip ne coûte rien : il se fabrique sur ta machine.{" "}
               <strong className="text-encre-3">
                 Ce qu'il coûte est ce temps-là
               </strong>
@@ -948,7 +948,7 @@ function ConfirmationClip({
           <p className="mesure text-[10px] leading-4 text-encre-3">
             <strong className="text-encre">elle est obligatoire et ne cède
             jamais</strong> — un modèle vidéo n'en accepte qu'une, et la retirer
-            ne veut rien dire. Vous pouvez seulement la changer.
+            ne veut rien dire. Tu peux seulement la changer.
           </p>
           <button
             type="button"
@@ -1078,7 +1078,7 @@ function ConfirmationClip({
             <span className="mesure text-[11.5px] text-encre">
               ≈ {duree(attenteDuLot)}
               <span className="ml-1.5 text-[9.5px] text-encre-4">
-                sur votre carte · gratuit{nombre > 1 ? ` · ${nombre} clips` : ""}
+                sur ta carte · gratuit{nombre > 1 ? ` · ${nombre} clips` : ""}
               </span>
             </span>
             <p className="mesure text-[9.5px] leading-4 text-encre-4">
@@ -1130,7 +1130,7 @@ function ConfirmationClip({
                     (cout === null ? "" : ` · ${cout}`)
             }
           />
-          <Raison texte={!texteFinal ? "un clip part d'un texte — écrivez-en un" : null} />
+          <Raison texte={!texteFinal ? "un clip part d'un texte — écris-en un" : null} />
           <button
             type="button"
             onClick={onRevenir}
@@ -1293,7 +1293,7 @@ function CarteModele({
             <span className="mesure text-[11.5px] text-encre">
               ≈ {duree(attenteDeLot(attente, nombre) ?? 0)}
               <span className="ml-1.5 text-[9.5px] text-encre-4">
-                sur votre carte · gratuit
+                sur ta carte · gratuit
                 {nombre > 1 ? ` · ${nombre} clips` : ""}
               </span>
             </span>

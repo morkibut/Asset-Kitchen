@@ -1740,7 +1740,7 @@ export function EcranFamille({
           <div className="rounded-8 border border-dashed border-contour p-[22px]">
             <h2 className="font-serif text-[25px]">Aucun sujet pour ces filtres</h2>
             <p className="mt-[8px] text-[13px] text-encre-3">
-              Choisissez toutes les familles, une autre collection, ou créez le premier.
+              Choisis toutes les familles, une autre collection, ou créez le premier.
             </p>
           </div>
         )}

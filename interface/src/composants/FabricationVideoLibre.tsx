@@ -98,7 +98,7 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
     setOccupe(true); setErreur("")
     try {
       const r = await api.televerser(fichier), asset = r.asset || r.doublon
-      if (!asset || asset.projet !== projet) throw new Error("L’image doit appartenir au jeu ouvert. Choisissez une image de ce jeu dans la bibliothèque.")
+      if (!asset || asset.projet !== projet) throw new Error("L’image doit appartenir au jeu ouvert. Choisis une image de ce jeu dans la bibliothèque.")
       changer({ reference_asset: asset.identifiant, modele_image: null }); setFabriquerImage(false)
     } catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
   }
@@ -107,9 +107,9 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
     setDemande({ ...travail.demande, cle: crypto.randomUUID(), ...(travail.envoi_image ? { prompt_image: travail.envoi_image.prompt, repris_image: true } : {}) })
     setFabriquerImage(!travail.demande.reference_asset && !!travail.demande.modele_image); setEdition(true)
   }
-  const bloque = !demande.reference_asset && !fabriquerImage ? "Choisissez ou importez une image de départ." : fabriquerImage && (!image || image.refus) ? image?.refus || "Choisissez le modèle qui créera l’image de départ." : fabriquerImage && !demande.prompt_image?.trim() ? "Décrivez l’image de départ." : !video || video.grise ? video?.grise || "Choisissez un modèle vidéo compatible avec le format." : !demande.prompt_video.trim() ? "Décrivez le mouvement à filmer." : ""
+  const bloque = !demande.reference_asset && !fabriquerImage ? "Choisis ou importez une image de départ." : fabriquerImage && (!image || image.refus) ? image?.refus || "Choisis le modèle qui créera l’image de départ." : fabriquerImage && !demande.prompt_image?.trim() ? "Décris l’image de départ." : !video || video.grise ? video?.grise || "Choisis un modèle vidéo compatible avec le format." : !demande.prompt_video.trim() ? "Décris le mouvement à filmer." : ""
   if (choix) return <BibliothequePourImage retour="Vidéo libre" onFermer={() => setChoix(null)} onChoisir={a => {
-    if (a.projet !== projet) { setErreur("Choisissez une image du jeu ouvert."); setChoix(null); return }
+    if (a.projet !== projet) { setErreur("Choisis une image du jeu ouvert."); setChoix(null); return }
     changer(choix === "depart" ? { reference_asset: a.identifiant, modele_image: null } : { references_image: [...refs, a.identifiant] })
     if (choix === "depart") setFabriquerImage(false)
     setChoix(null)
@@ -147,7 +147,7 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
         {video?.de_la_maison && <p className="text-[12px] text-encre-3">{video.attente ? `Attente mesurée : ${Math.round(video.attente.secondes)} s · ${video.attente.mesure}` : "Aucune durée mesurée pour ces réglages. Le calcul reste local et gratuit."}</p>}
         {video?.de_la_maison && <MemoireLocale etat={moteur} />}
         <Parametres options={video?.options || {}} valeurs={demande.options_video || {}} changer={options_video => changer({ options_video })} prefixe="Vidéo" />
-        <p className="text-[12px] text-encre-3">Cette demande fabrique un clip. Le montage choisira les frames, leur cadence et leur classement dans un sujet.</p>
+        <p className="text-[12px] text-encre-3">Cette demande fabrique un clip. Le montage choisira les images, leur cadence et leur classement dans un sujet.</p>
       </fieldset>
       <div className="flex items-center gap-[14px]"><button className={BOUTON} disabled={occupe || lecture || !!bloque}>{VERS_LA_RELECTURE}</button>{bloque && <p className="text-[12px] text-encre-3">{bloque}</p>}</div>
     </form> : travail && <div className="space-y-[22px]">

@@ -587,7 +587,7 @@ const ETAT: Etat = {
       note: "aucun artwork officiel — les couleurs se déduisent de chaque image",
     },
     reductions: [
-      { nom: "vote", libelle: "vote en deux temps", raison: null },
+      { nom: "vote", libelle: "contour net (recommandé)", raison: null },
       { nom: "pixeloe", libelle: "traits épaissis", raison: null },
       { nom: "lanczos", libelle: "réduction douce", raison: null },
       { nom: "proche", libelle: "au plus proche", raison: null },
@@ -6719,7 +6719,7 @@ describe("l'agent, vu de l'atelier", () => {
     const bande = await screen.findByRole("region", { name: "Références jointes" })
     const vignettes = bande.querySelectorAll("img")
     expect(vignettes).toHaveLength(1)
-    // **L'image vient de la route des cartes**, pas de celle des assets : une
+    // **L’image vient de la route des cartes**, pas de celle des assets : une
     // carte n'est pas dans la bibliothèque, et lui demander une vignette
     // d'asset ferait un trou là où l'auteur croit avoir joint quelque chose.
     expect(vignettes[0].getAttribute("src")).toContain("/api/board/m1/image")
@@ -10524,7 +10524,7 @@ describe("le châssis des tables", () => {
     expect([...rangs].sort((a, b) => a - b)).toEqual(rangs)
   })
 
-  // ── « L'image s'ouvre à la taille du cadre » (31 août 2026) ────────────────
+  // ── « L’image s'ouvre à la taille du cadre » (31 août 2026) ────────────────
   //
   // **Le seul métier de cet écran est de montrer des pixels assez grands pour
   // qu'on les juge**, et il ne le tenait pas : l'image s'affichait un pixel
@@ -10561,10 +10561,10 @@ describe("le châssis des tables", () => {
   test("cent pour cent rend un pixel d'image pour un pixel d'écran", async () => {
     const { cadre } = await ouvrirUneTable()
 
-    // **L'image porte le zoom, et elle seule** : tout ce qui se rend au milieu
+    // **L’image porte le zoom, et elle seule** : tout ce qui se rend au milieu
     // suit le même facteur — l'image seule, les deux côte à côte, la surface
     // qui se peint —, donc aucune de ces trois surfaces n'a son propre calcul.
-    // **L'image de la scène, et non la vignette d'une sœur** : les deux portent
+    // **L’image de la scène, et non la vignette d'une sœur** : les deux portent
     // le même libellé, et seule la première porte le grossissement.
     const image = () =>
       document.querySelector(
@@ -10705,7 +10705,7 @@ describe("le châssis des tables", () => {
     expect(await cadre.findByText("les deux images")).toBeTruthy()
   })
 
-  // ── « L'image brute et l'image rendue se comparent côte à côte et
+  // ── « L’image brute et l'image rendue se comparent côte à côte et
   //     superposées, et le mode est écrit dès que ce n'est pas le rendu » ──────
 
   test("deux contrôles, deux questions — et le travail s'écrit dès que ce n'est pas le rendu", async () => {
@@ -15499,7 +15499,7 @@ describe("l'écran de confirmation", () => {
 
     fireEvent.click(tuiles[0])
 
-    // L'image entre avec son rôle, **et le tri part avec elle inchangé** : même
+    // L’image entre avec son rôle, **et le tri part avec elle inchangé** : même
     // ligne éteinte, même texte réécrit, dans la même demande.
     await waitFor(() => {
       const dernier = appels.filter((a) => a.url === "/api/outgoing").at(-1)!
@@ -16227,7 +16227,7 @@ describe("la main peint carré, et là où on la pose", () => {
   // ── « L'écart est mesuré avant correction, puis après, et il vaut zéro » ───
 
   test("le trait tombe sur le pixel visé, même quand la surface ment", async () => {
-    // **La surface fait 600 × 400 pour une image de 64 × 64.** L'image y est
+    // **La surface fait 600 × 400 pour une image de 64 × 64.** L’image y est
     // donc dessinée en 400 × 400, centrée : cent pixels de bande vide à gauche
     // et autant à droite. L'ancien calcul mesurait la surface — il aurait rendu
     // `(clientX / 600) × 64`, soit **seize pixels d'image trop à droite** au
@@ -16464,7 +16464,7 @@ describe("une table s'éteint, et ça se voit", () => {
     const { cadre, appels } = await ouvrirLesTables()
     fireEvent.click(cadre.getByRole("button", { name: /^Pixelisation/ }))
 
-    fireEvent.click(await cadre.findByRole("button", { name: "vote en deux temps" }))
+    fireEvent.click(await cadre.findByRole("button", { name: "contour net (recommandé)" }))
 
     await waitFor(() =>
       expect(recettesPosees(appels).at(-1)?.grille?.methode).toBe("vote"),
@@ -18692,7 +18692,7 @@ describe("R6 — la planche qui attend un regard", () => {
     ).toBeTruthy()
     expect(
       screen.getByText(
-        "rien n'est entré en bibliothèque tant que vous n'avez pas tranché",
+        "rien n'est entré en bibliothèque tant que tu n'as pas tranché",
       ),
     ).toBeTruthy()
   })
@@ -18791,7 +18791,7 @@ describe("A9 — commander un clip", () => {
   test("l'écran porte l'image de départ, le mouvement, les modèles et le montant", async () => {
     const { panneau } = await ouvrirLeClip()
 
-    // L'image de départ, avec la raison de ce choix-là — jamais un cadre muet.
+    // L’image de départ, avec la raison de ce choix-là — jamais un cadre muet.
     expect(await panneau.findByAltText("le nain, de profil")).toBeTruthy()
     expect(panneau.getByText(/la première image qu'il montre de lui/)).toBeTruthy()
 
@@ -18983,7 +18983,7 @@ describe("A9 — commander un clip", () => {
     )
   })
 
-  // ── « L'image de départ se propose et se change » ─────────────────────────
+  // ── « L’image de départ se propose et se change » ─────────────────────────
 
   test("n'importe quelle image de la bibliothèque remplace la proposition, d'un clic", async () => {
     const autre = asset("bbbb2222-0", "un nain accroupi")
@@ -19113,7 +19113,7 @@ describe("A9 — commander un clip", () => {
       "walking cycle, full body, walking in place, looping seamlessly",
     )
     expect(pavé).toBeTruthy()
-    // L'image de départ est là, avec la raison « obligatoire » en toutes
+    // L’image de départ est là, avec la raison « obligatoire » en toutes
     // lettres — et **aucun interrupteur pour la retirer** : un modèle vidéo
     // n'en accepte qu'une, et proposer un interrupteur qui ne voudrait rien
     // dire serait un mensonge de forme.
@@ -19429,7 +19429,7 @@ describe("A10 — découper un clip en bandes", () => {
     // Et il tourne déjà : la première proposition est posée, donc huit images
     // sont retenues avant le moindre clic. Le montage est brut depuis V3.03 :
     // aucune demande d'aperçu traité ne part de lui.
-    expect(await panneau.findByText("8 frames retenues")).toBeTruthy()
+    expect(await panneau.findByText("8 images retenues")).toBeTruthy()
     expect(appels.filter((a) => a.url === "/api/montage/preview")).toHaveLength(0)
   })
 
@@ -19467,18 +19467,18 @@ describe("A10 — découper un clip en bandes", () => {
 
   test("repartir de zéro ne garde aucune image, et le dit", async () => {
     const { panneau } = await ouvrirLeMontage()
-    await panneau.findByText("8 frames retenues")
+    await panneau.findByText("8 images retenues")
     fireEvent.click(panneau.getByText(/ne garder aucune image/))
-    expect(await panneau.findByText(/aucune frame retenue/)).toBeTruthy()
+    expect(await panneau.findByText(/aucune image retenue/)).toBeTruthy()
   })
 
   // ── « Chaque image se prend ou se laisse d'un clic » ──────────────────────
 
   test("un clic sur la pellicule prend une image, un second la laisse", async () => {
     const { panneau } = await ouvrirLeMontage()
-    await panneau.findByText("8 frames retenues")
+    await panneau.findByText("8 images retenues")
 
-    // L'image 0 n'est pas dans la proposition : le clic l'ajoute. La sélection
+    // L’image 0 n'est pas dans la proposition : le clic l'ajoute. La sélection
     // se lit sur la pellicule — le montage est brut, il ne demande pas d'aperçu.
     fireEvent.click(panneau.getByRole("button", { name: "Image 0" }))
     await waitFor(() =>
@@ -19494,7 +19494,7 @@ describe("A10 — découper un clip en bandes", () => {
 
   test("les images retenues se voient dans l'ordre et se retirent de là", async () => {
     const { panneau } = await ouvrirLeMontage()
-    await panneau.findByText("8 frames retenues")
+    await panneau.findByText("8 images retenues")
     fireEvent.click(await panneau.findByRole("button", { name: "Retirer l'image 6" }))
     await waitFor(() =>
       expect(panneau.getAllByRole("button", { name: /— retenue$/ })).toHaveLength(7),
@@ -19564,7 +19564,7 @@ describe("A10 — découper un clip en bandes", () => {
 
   test("la vitesse réglée ici est celle qui part", async () => {
     const { panneau, appels } = await ouvrirLeMontage()
-    await panneau.findByText("8 frames retenues")
+    await panneau.findByText("8 images retenues")
     const vitesse = panneau
       .getAllByRole("slider")
       .find((rail) => rail.getAttribute("max") === "24")
@@ -19598,13 +19598,13 @@ describe("A10 — découper un clip en bandes", () => {
 
   test("une bande se garde sous un nom, et le bouton dit ce qui manque", async () => {
     const { panneau } = await ouvrirLeMontage()
-    await panneau.findByText("8 frames retenues")
+    await panneau.findByText("8 images retenues")
     // Le nom arrive proposé — celui du mouvement demandé —, et on peut l'effacer.
     fireEvent.change(panneau.getByLabelText("Le nom de l'animation"), {
       target: { value: "" },
     })
     expect(
-      panneau.getByRole("button", { name: "nommez cette animation" }),
+      panneau.getByRole("button", { name: "nomme cette animation" }),
     ).toBeTruthy()
   })
 
@@ -19820,7 +19820,7 @@ describe("A10 — découper un clip en bandes", () => {
 
   test("aucune mesure de stabilité ne paraît plus dans le montage", async () => {
     const { panneau } = await ouvrirLeMontage()
-    await panneau.findByText("8 frames retenues")
+    await panneau.findByText("8 images retenues")
     expect(document.querySelector("[data-stabilite]")).toBeNull()
     expect(panneau.queryByText(/Ce qui bouge entre les images/)).toBeNull()
     expect(panneau.queryByText(/un balancement — ou du grésil/)).toBeNull()
@@ -19911,7 +19911,7 @@ describe("A11 — le moteur de la maison", () => {
     // Un temps, avec le mot qui dit que c'en est un coût — « ≈ 2 min » tout
     // seul se lirait comme un délai de livraison.
     expect(dedans.getByText(/≈ 2 min/)).toBeTruthy()
-    expect(dedans.getByText(/sur votre carte · gratuit/)).toBeTruthy()
+    expect(dedans.getByText(/sur ta carte · gratuit/)).toBeTruthy()
     // Et aucun dollar sur cette carte-là : zéro dollar affiché « ≈ $0,0000 »
     // serait exact et illisible.
     expect(carte.textContent).not.toMatch(/\$/)
@@ -20548,7 +20548,7 @@ describe("A13 — l'image attrapée au vol", () => {
       panneau.getByRole("button", { name: new RegExp(`^Image ${numero}(?: —|$)`) }),
     )
     fireEvent.click(
-      await panneau.findByRole("button", { name: `Mettre la frame ${numero} de côté` }),
+      await panneau.findByRole("button", { name: `Mettre l’image ${numero} de côté` }),
     )
   }
 
@@ -20560,26 +20560,26 @@ describe("A13 — l'image attrapée au vol", () => {
     // ⚠️ **La loupe est là avant le premier survol.** Sans cible, elle n'aurait
     // pas de geste à porter ; elle montre l'image du curseur, c'est-à-dire la
     // première. On lit *à côté de la loupe* et non dans tout l'écran : le pied
-    // du ruban porte aussi les mots « frame 0 », qui nomment son extrémité
+    // du ruban porte aussi les mots « image 0 », qui nomment son extrémité
     // gauche et non ce qu'on regarde.
     const aCoteDeLaLoupe = () =>
       within(document.querySelector("[data-loupe]")!.parentElement!)
     await waitFor(() => expect(document.querySelector("[data-loupe]")).toBeTruthy())
-    expect(aCoteDeLaLoupe().getByText("frame 0")).toBeTruthy()
+    expect(aCoteDeLaLoupe().getByText("image 0")).toBeTruthy()
 
     fireEvent.mouseEnter(
       panneau.getByRole("button", { name: /^Image 12(?: —|$)/ }),
     )
-    expect(aCoteDeLaLoupe().getByText("frame 12")).toBeTruthy()
+    expect(aCoteDeLaLoupe().getByText("image 12")).toBeTruthy()
 
     // Le pointeur quitte le ruban : **la loupe reste sur la dernière image
     // regardée**, et c'est ce qui rend son bouton atteignable. Avant `A13`, le
     // ruban relâchait le survol en partant et la loupe disparaissait au moment
     // précis où l'on allait cliquer dessus.
     fireEvent.mouseLeave(document.querySelector("[data-pellicule]")!)
-    expect(aCoteDeLaLoupe().getByText("frame 12")).toBeTruthy()
+    expect(aCoteDeLaLoupe().getByText("image 12")).toBeTruthy()
     expect(
-      panneau.getByRole("button", { name: "Mettre la frame 12 de côté" }),
+      panneau.getByRole("button", { name: "Mettre l’image 12 de côté" }),
     ).toBeTruthy()
   })
 
@@ -20602,7 +20602,7 @@ describe("A13 — l'image attrapée au vol", () => {
     // la même pellicule ; on pose un découpage, on prélève, et on relit.
     const { panneau } = await ouvrirLeMontage()
     fireEvent.click(await panneau.findByText(/la boucle se referme le mieux/))
-    const avant = await panneau.findByText(/\d+ frames retenues/)
+    const avant = await panneau.findByText(/\d+ images retenues/)
     const compte = avant.textContent
 
     await mettreDeCote(panneau, 3)
@@ -20671,14 +20671,14 @@ describe("A13 — l'image attrapée au vol", () => {
     fireEvent.mouseEnter(
       panneau.getByRole("button", { name: /^Image 12(?: —|$)/ }),
     )
-    expect(aCoteDeLaLoupe().getByText("frame 12")).toBeTruthy()
+    expect(aCoteDeLaLoupe().getByText("image 12")).toBeTruthy()
 
     // ⚠️ Sans cette reprise, un survol laissé derrière figerait la loupe pendant
     // que les flèches déplacent le curseur ailleurs — et le geste porterait sur
     // une image qu'on ne regarde plus.
     fireEvent.keyDown(window, { key: "ArrowRight" })
     await waitFor(() =>
-      expect(aCoteDeLaLoupe().getByText("frame 1")).toBeTruthy(),
+      expect(aCoteDeLaLoupe().getByText("image 1")).toBeTruthy(),
     )
   })
 })
@@ -21167,23 +21167,23 @@ describe("A7 · l'atelier d'une animation", () => {
     fireEvent.click(await atelier.findByRole("button", { name: "pipette" }))
     // **La surface n'est pas là avant d'armer** : sans quoi tout regard sur la
     // bande serait un risque de clic.
-    expect(atelier.queryByText(/Source de la frame/)).toBeNull()
+    expect(atelier.queryByText(/Source de l’image/)).toBeNull()
     fireEvent.click(await atelier.findByRole("button", { name: /viser dans l'image/ }))
 
     // La frame cède la place à son image d'origine, et le bandeau dit quel
     // geste est attendu — c'est là que la pipette se pose.
-    expect(await atelier.findByText(/Source de la frame · viser une couleur/)).toBeTruthy()
+    expect(await atelier.findByText(/Source de l’image · viser une couleur/)).toBeTruthy()
     expect(
       atelier.getByRole("button", { name: "clique dans l'image" }).getAttribute("aria-pressed"),
     ).toBe("true")
 
     // Le geste se termine aussi sans viser : la frame revient.
-    fireEvent.click(atelier.getByRole("button", { name: "‹ La frame" }))
-    await waitFor(() => expect(atelier.queryByText(/Source de la frame/)).toBeNull())
+    fireEvent.click(atelier.getByRole("button", { name: "‹ L’image" }))
+    await waitFor(() => expect(atelier.queryByText(/Source de l’image/)).toBeNull())
 
     fireEvent.click(atelier.getByRole("button", { name: "sélection" }))
     fireEvent.click(await atelier.findByRole("button", { name: /entourer dans l'image/ }))
-    expect(await atelier.findByText(/Source de la frame · entourer le sujet/)).toBeTruthy()
+    expect(await atelier.findByText(/Source de l’image · entourer le sujet/)).toBeTruthy()
     expect(
       atelier
         .getByRole("button", { name: "entoure le sujet dans l'image" })
@@ -22174,7 +22174,7 @@ describe("A7 · l'atelier d'une animation", () => {
     cadre.querySelector(`[data-au-chutier="${numero}"]`) as HTMLElement | null
 
   test("retirer une image la met au chutier, avec sa recette", async () => {
-    // **Retirer n'est pas jeter.** L'image part au chutier *entière* : sans ça,
+    // **Retirer n'est pas jeter.** L’image part au chutier *entière* : sans ça,
     // « retirer puis remettre » serait une façon silencieuse d'effacer les
     // réglages posés dessus.
     const { atelier, cadre, appels } = await ouvrirSeparee()
@@ -22577,7 +22577,7 @@ describe("A7 · l'atelier d'une animation", () => {
     const parti = appels.find(
       (a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps),
     )?.corps as { prises: Prise[]; chutier: Prise[] }
-    // L'image ajoutée se pose **au bout**, et pas à son rang de numéro : sur une
+    // L’image ajoutée se pose **au bout**, et pas à son rang de numéro : sur une
     // reprise, l'ordre du ruban vient de l'auteur, et la ranger le défairait.
     expect(parti.prises.map((p) => p.numero)).toEqual([12, 14, 16, 18, 0])
     // ⚠️ **Une recette individuelle voyage avec sa prise** : les images gardées
@@ -22663,7 +22663,7 @@ describe("A7 · l'atelier d'une animation", () => {
     await waitFor(() =>
       expect(document.querySelector("[data-atelier-de-bande]")).toBeTruthy(),
     )
-    // L'image ajoutée se pose **au bout** — on la déplacera dans l'atelier —, et
+    // L’image ajoutée se pose **au bout** — on la déplacera dans l'atelier —, et
     // les quatre autres n'ont pas bougé d'un rang.
     expect(cePartiParLaReprise(appels).prises.map((p) => p.numero)).toEqual([
       12, 18, 14, 16, 9,
@@ -23072,7 +23072,7 @@ describe("B1 — le miroir", () => {
   // Les deux sont notées dans `docs/PLAN-carnet.md` § `B27`. Le serveur, lui,
   // n'a pas bougé : `tests/test_b1.py` tient la route du miroir.
 
-  // ── « L'image retournée se range dans la direction qu'on lui désigne, et la
+  // ── « L’image retournée se range dans la direction qu'on lui désigne, et la
   //     case se remplit » ──────────────────────────────────────────────────────
 
   /** Une chose à quatre directions dont **une seule** est dessinée — le cas

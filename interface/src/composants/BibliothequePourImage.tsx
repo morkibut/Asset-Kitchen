@@ -30,7 +30,7 @@ function TuileDeChoix({ asset, choisie, onChoisir }: { asset: Asset; choisie: bo
 
 const EXPLICATION: Record<RoleCalque, string> = {
   "source-equipee": "Le personnage complet reste une source. L’extraction créera une nouvelle image transparente à vérifier.",
-  calque: "Le calque doit contenir uniquement l’équipement. Vérifiez sa superposition avant de le retenir.",
+  calque: "Le calque doit contenir uniquement l’équipement. Vérifie sa superposition avant de le retenir.",
   reference: "Cette image décrit la pièce ; elle ne remplit pas la cible et ne se superpose pas au personnage.",
 }
 

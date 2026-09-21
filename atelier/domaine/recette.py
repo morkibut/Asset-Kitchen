@@ -1005,7 +1005,7 @@ METHODES_DE_REDUCTION = (
 )
 
 NOM_DE_LA_METHODE = {
-    VOTE: "vote en deux temps",
+    VOTE: "contour net (recommandé)",
     PIXELOE: "traits épaissis",
     LANCZOS: "réduction douce",
     AU_PLUS_PROCHE: "au plus proche",
