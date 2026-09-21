@@ -4197,8 +4197,8 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Le fond et le prompt négatif",
     quoi: "La couleur de fond demandée et, dessous, la consigne négative : ce qu'on interdit au modèle.",
     change:
-      "Avec Modifier l'envoi, on prend une autre couleur, « Sans fond » ou « Reprendre la couleur calculée » ; cela ne vaut que pour cet appel. Le titre se réduit à « Fond » quand un style local ne lit pas le négatif : le fond part quand même, et le détourage au retour en dépend.",
-    origine: "l'atelier · la couleur calculée sur les images envoyées, et l'interdiction qui en découle",
+      "Avec Modifier l'envoi, on prend une autre couleur, « Sans fond » ou « Reprendre la couleur calculée » ; cela ne vaut que pour cet appel. Le titre se réduit à « Fond » quand un style local ne lit pas le négatif : le fond part quand même, et le détourage au retour en dépend.\n\nSans image jointe, l'atelier regarde aussi ce que tu as écrit : si ta description nomme une couleur — « cape verte », « red cloak » — il évite un fond de cette couleur-là plutôt que de retomber sur le vert de studio par défaut, et te dit pourquoi juste en dessous.",
+    origine: "l'atelier · la couleur calculée sur les images envoyées ou, à défaut, sur les couleurs que ta description nomme, et l'interdiction qui en découle",
   },
 
   "envoi.retour": {

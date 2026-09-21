@@ -74,7 +74,7 @@ from atelier.domaine.personnage import LIBRE
 from atelier.domaine.personnage import PLANCHE as USAGE_PLANCHE
 from atelier.domaine.personnage import direction_de_lusage
 from atelier.domaine.direction import composer
-from atelier.domaine.fond import choisir, fond_valide
+from atelier.domaine.fond import Choix, choisir, fond_valide, nom_du_fond
 from atelier.domaine.ambiance import COULEURS, REFERENCES, TEXTES, prises_du_mode
 from atelier.domaine.envoi import (
     AMBIANCE,
@@ -887,7 +887,7 @@ class ServiceGenerations:
         # nomme, la phrase d'interdiction le nomme, et les références
         # transparentes s'y posent — trois emplois d'une seule couleur, qui ne
         # peuvent donc pas se contredire.
-        fond = self._fond_de_l_appel(projet, reinjectes, tri)
+        fond = self._fond_de_l_appel(projet, reinjectes, tri, demande.prompt)
         # **Le texte tel qu'il partira, et un seul endroit le compose** (US-158).
         # `_texte` est aussi ce que l'aperçu du champ de prompt montre avant de
         # lancer : deux compositions écrites à deux endroits finiraient par
@@ -1632,7 +1632,11 @@ class ServiceGenerations:
                 generation.projet,
                 fond=self._fond_des_references(
                     generation.modele,
-                    self._fond_de_l_appel(generation.projet, generation.references),
+                    self._fond_de_l_appel(
+                        generation.projet,
+                        generation.references,
+                        description=demande.get("prompt", ""),
+                    ),
                 ),
             )
             # **Le gabarit se redessine, il ne se relit pas.** Il n'est ni un
@@ -2817,10 +2821,12 @@ class ServiceGenerations:
         # parce qu'il la calcule par le même chemin, sur les mêmes références.
         #
         # **Sans modèle, il n'y a pas de références à lire** — `partantes` reste
-        # vide, faute de plafond pour les trier — et le fond tombe alors sur le
-        # vert de studio. C'est la même convention que le reste de la méthode :
-        # un aperçu sans modèle compose comme si rien n'était joint.
-        fond = self._fond_de_l_appel(projet, partantes, tri)
+        # vide, faute de plafond pour les trier —, exactement comme un appel
+        # sans image jointe : c'est le même repli, et depuis RV3 (21 septembre
+        # 2026) la même lecture de `sujet` quand il nomme une couleur. Un aperçu
+        # sans modèle compose donc comme un aperçu sans image, jamais autrement.
+        fond_choix = self._fond_choix_de_l_appel(projet, partantes, tri, sujet)
+        fond = fond_choix.couleur
         lignes = self.lignes(
             sujet,
             repris=repris,
@@ -2885,6 +2891,15 @@ class ServiceGenerations:
             # double pas, il le nomme, pour que l'écran puisse en dessiner la
             # pastille sans relire de l'anglais.
             "fond": fond,
+            # **Le nom du fond, et pourquoi il a changé** (RV3, 21 septembre
+            # 2026). `fond_nom` est celui de la liste fermée quand l'atelier
+            # connaît la couleur (« magenta », « studio green »), vide sur une
+            # couleur tapée à la main — la même lecture que `fond.dit`.
+            # `fond_motif` est vide la plupart du temps ; il ne se remplit que
+            # lorsque le fond n'est plus le vert de studio à cause d'une
+            # couleur nommée dans `sujet`, et dit alors laquelle en une ligne.
+            "fond_nom": fond_choix.nom,
+            "fond_motif": fond_choix.raison,
             # **Et l'interdiction telle qu'elle partira**, dans l'autre champ de
             # la demande. C'est le seul morceau de ce qui part que le texte ne
             # contient pas ; sans cette ligne, l'écran qui promet de tout montrer
@@ -2899,13 +2914,14 @@ class ServiceGenerations:
             "negatif_lu": self._negatif_lu(modele),
         }
 
-    def _fond_de_l_appel(
+    def _fond_choix_de_l_appel(
         self,
         projet: str | None,
         reinjectes: Sequence[Reinjection],
         tri: "Tri | None" = None,
-    ) -> str:
-        """La couleur de fond de cet appel-ci — **calculée sur ce qui part avec lui**.
+        description: str = "",
+    ) -> Choix:
+        """Le fond de cet appel-ci, **en entier** — calculé sur ce qui part avec lui.
 
         C'est le cœur de RT3, et c'est ici qu'il vit plutôt que dans la production
         pour une raison mécanique : **ce service est le seul qui voie les images
@@ -2917,13 +2933,17 @@ class ServiceGenerations:
            geste de l'auteur sur cet appel-là, et la règle du dépôt ne bouge pas :
            ce que l'auteur pose ne cède jamais devant ce que le produit calcule.
            La chaîne vide est un geste elle aussi — *pas de fond pour cet appel*.
+           La description ne compte alors pas non plus : une correction posée à
+           la main l'emporte sur les deux calculs.
         2. **Les couleurs des références se lisent en un seul tas**, par le même
            chemin que la palette d'un jeu (`couleurs_lues`) : même détourage
            préalable, même coupe médiane. Un tas et non une liste par image,
            parce que le fond doit être loin de **toutes** — il n'y a qu'une image
            qui revient.
-        3. **Le domaine tranche** (`fond.choisir`) : le candidat le plus éloigné,
-           ou le vert de studio quand il n'y a rien à comparer.
+        3. **Le domaine tranche** (`fond.choisir`) : le candidat le plus éloigné
+           des références, ou — **sans référence, depuis RV3** (21 septembre
+           2026) — des couleurs que `description` nomme ; le vert de studio
+           quand ni l'une ni l'autre n'a rien à comparer.
 
         **Rien de ce qui se lit ici ne refuse l'appel.** Une image illisible ne
         dit rien de ses couleurs, et `couleurs_lues` l'écarte seule. Un asset
@@ -2932,14 +2952,31 @@ class ServiceGenerations:
         laisser partir d'ici aurait déplacé la panne d'un cran trop tôt — l'écran
         qui montre *ce qui partirait* n'a jamais eu à résoudre une image pour
         afficher un texte, et il s'est mis à répondre 409 là où il rendait 200.
+
+        **Rend le `Choix` entier, pas seulement sa couleur** (RV3) : c'est de
+        là que `apercu` tire de quoi nommer le fond et dire, quand il a changé
+        à cause de la description, pourquoi.
         """
         if tri is not None and tri.fond is not None:
-            return fond_valide(tri.fond)
+            couleur = fond_valide(tri.fond)
+            return Choix(couleur=couleur, nom=nom_du_fond(couleur))
         try:
             octets = self._octets_references(tuple(reinjectes), projet)
         except DemandeRefusee:
             octets = ()
-        return choisir(couleurs_lues(octets)).couleur
+        return choisir(couleurs_lues(octets), description)
+
+    def _fond_de_l_appel(
+        self,
+        projet: str | None,
+        reinjectes: Sequence[Reinjection],
+        tri: "Tri | None" = None,
+        description: str = "",
+    ) -> str:
+        """La seule couleur, pour les appelants qui n'ont pas besoin du reste."""
+        return self._fond_choix_de_l_appel(
+            projet, reinjectes, tri, description
+        ).couleur
 
     def _sous_le_plafond(
         self,

@@ -160,13 +160,15 @@ détourage.
 
 ### Critères d'acceptation
 
-- [ ] « cape verte » sans référence → le fond envoyé n'est pas le vert de studio.
-- [ ] Avec une image de référence, le calcul de `RT3` est inchangé.
-- [ ] La relecture nomme le fond choisi et, quand il a changé à cause de la description, dit
+- [x] « cape verte » sans référence → le fond envoyé n'est pas le vert de studio.
+- [x] Avec une image de référence, le calcul de `RT3` est inchangé.
+- [x] La relecture nomme le fond choisi et, quand il a changé à cause de la description, dit
       pourquoi en une ligne.
-- [ ] La tête de `atelier/domaine/fond.py` décrit cette nouvelle entrée.
-- [ ] ⚠️ Écrit au plan à la clôture : les tirages faits avant `RV3` sur un sujet vert ne se
+- [x] La tête de `atelier/domaine/fond.py` décrit cette nouvelle entrée.
+- [x] ⚠️ Écrit au plan à la clôture : les tirages faits avant `RV3` sur un sujet vert ne se
       comparent plus aux suivants.
+
+*Fait le 21 septembre 2026.* Une table fermée de mots de couleur, en français et en anglais, lus en mots entiers (« couvert » ne compte pas). Sans référence, les couleurs nommées sont traitées comme les couleurs d'une référence ; le vert de studio reste premier à égalité, donc inchangé quand rien ne le contredit. La relecture nomme le fond et, s'il a cédé, dit pourquoi (« fond magenta : ta description dit vert »). Les 41 essais de `RT3` passent sans changement. ⚠️ À partir d'ici, un sujet dont la description nomme la couleur du vert de studio part sur un autre fond : ses tirages ne se comparent plus à ceux d'avant.
 
 ---
 

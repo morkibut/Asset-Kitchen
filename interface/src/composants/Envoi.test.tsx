@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 import { EcranEnvoi, TRI_VIDE } from "./Envoi"
 import type { Envoi } from "../api"
@@ -98,6 +98,39 @@ test("seul le négatif se cache quand le style local ne le lit pas — le fond r
   expect(screen.getByText(/Fond : #336699/)).toBeInTheDocument()
   // Seule la consigne négative, elle, disparaît.
   expect(screen.queryByText("pas de flou")).not.toBeInTheDocument()
+})
+
+test("la relecture nomme le fond, et dit pourquoi il a changé à cause de la description (RV3)", () => {
+  const envoi = { ...BASE, fond: { ...BASE.fond, couleur: "#FF00FF", nom: "magenta", motif: "ta description dit verte" } } as unknown as Envoi
+  render(<EcranEnvoi {...props(envoi)} />)
+  // Le fond est nommé, pas seulement sa couleur hexadécimale.
+  expect(screen.getByText(/Fond : #FF00FF magenta/)).toBeInTheDocument()
+  // Et la raison du changement tient en une ligne, à côté.
+  expect(screen.getByText("fond magenta : ta description dit verte")).toBeInTheDocument()
+})
+
+test("aucune ligne de raison quand le fond n'a pas changé à cause de la description", () => {
+  const envoi = { ...BASE, fond: { ...BASE.fond, couleur: "#00B140", nom: "studio green", motif: "" } } as unknown as Envoi
+  render(<EcranEnvoi {...props(envoi)} />)
+  expect(screen.getByText(/Fond : #00B140 studio green/)).toBeInTheDocument()
+  expect(screen.queryByText(/ta description dit/)).not.toBeInTheDocument()
+})
+
+test("en modification, le fond corrigé montre son nom et la raison quand elle existe", () => {
+  const envoi = {
+    ...BASE,
+    fond: {
+      ...BASE.fond,
+      couleur: "#FF00FF",
+      nom: "magenta",
+      motif: "ta description dit verte",
+      propose: { couleur: "", nom: "", ecart: 0, voisine: "", raison: "ce jeu n'a pas encore de palette" },
+    },
+  } as unknown as Envoi
+  render(<EcranEnvoi {...props(envoi)} />)
+  fireEvent.click(screen.getByRole("button", { name: "Modifier l’envoi" }))
+  expect(screen.getByText("#FF00FF magenta")).toBeInTheDocument()
+  expect(screen.getByText("fond magenta : ta description dit verte")).toBeInTheDocument()
 })
 
 test("le fond reste montré quand le style local lit bien le négatif", () => {

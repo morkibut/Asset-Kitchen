@@ -371,10 +371,20 @@ class ServiceEnvoi:
         **`du_jeu` est parti avec le réglage** : il servait au bouton
         « remettre celui du jeu », que plus aucun écran ne montre. Le garder
         aurait laissé croire qu'un fond du jeu décide encore de quelque chose.
+
+        **`nom` et `motif` viennent de l'aperçu eux aussi** (RV3, 21 septembre
+        2026) : ni l'un ni l'autre ne se recompose ici, pour la même raison que
+        `couleur` — deux vérités sur le même fond auraient fini par diverger.
         """
         propose = self._univers.fond_propose(projet).en_json()
         return {
             "couleur": apercu["fond"],
+            # **Le nom du fond choisi, et pourquoi il a changé** (RV3,
+            # 21 septembre 2026). `nom` vient de la même liste fermée que
+            # `propose.nom` ; `motif` reste vide sauf quand une couleur de la
+            # description a écarté le vert de studio, et dit alors laquelle.
+            "nom": apercu.get("fond_nom", ""),
+            "motif": apercu.get("fond_motif", ""),
             "interdiction": apercu["interdiction"],
             # Faux quand le modèle choisi ne lit aucun négatif (ML4).
             "negatif_lu": apercu["negatif_lu"],

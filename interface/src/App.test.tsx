@@ -14156,6 +14156,8 @@ describe("l'écran de confirmation", () => {
     // et l'écran doit donc rendre exactement ce qu'il rendait.
     fond: {
       couleur: "",
+      nom: "",
+      motif: "",
       interdiction: "",
       corrige: false,
       propose: {
@@ -14281,6 +14283,8 @@ describe("l'écran de confirmation", () => {
         ...ENVOI,
         fond: {
           couleur: "#FF00FF",
+          nom: "magenta",
+          motif: "",
           interdiction:
             "the background colour #FF00FF magenta, or any shade close to it",
           corrige: false,
@@ -14296,7 +14300,9 @@ describe("l'écran de confirmation", () => {
     })
 
     expect(ecran.getByText("le fond")).toBeTruthy()
-    expect(ecran.getByText("#FF00FF")).toBeTruthy()
+    // **Le fond est nommé, pas seulement son hexadécimal** (RV3, 21 septembre
+    // 2026) : `nom` vient avec `couleur` dès que l'atelier connaît la teinte.
+    expect(ecran.getByText("#FF00FF magenta")).toBeTruthy()
     expect(ecran.getByText(/or any shade close to it/)).toBeTruthy()
   })
 

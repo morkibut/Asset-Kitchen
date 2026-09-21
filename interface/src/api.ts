@@ -4427,9 +4427,18 @@ export type Envoi = {
    *
    *  ⚠️ **Il n'y a plus de `du_jeu`** (20 septembre 2026) : le fond n'est plus
    *  un réglage du jeu, donc annuler la correction rend la main au calcul et
-   *  n'a rien à comparer. */
+   *  n'a rien à comparer.
+   *
+   *  `nom` et `motif` sont arrivés avec `RV3` (21 septembre 2026), quand la
+   *  couleur s'est mise à dépendre de la description sur un appel sans
+   *  référence. `nom` est celui de la liste fermée (« magenta », « studio
+   *  green »), vide sur une couleur tapée à la main. `motif` est vide la
+   *  plupart du temps ; il ne se remplit que lorsque la description a écarté
+   *  le vert de studio, et dit alors pourquoi en une ligne. */
   fond: {
     couleur: string
+    nom: string
+    motif: string
     interdiction: string
     corrige: boolean
     propose: FondPropose
