@@ -216,15 +216,17 @@ vidéo » savait faire, pour pouvoir le remplacer.
 
 ### Critères d'acceptation
 
-- [ ] Le mouvement choisi remplit le texte depuis la bibliothèque des mouvements ; le nom du
+- [x] Le mouvement choisi remplit le texte depuis la bibliothèque des mouvements ; le nom du
       mouvement s'affiche en français, le texte anglais envoyé se déplie.
-- [ ] Ce texte se corrige dans la fenêtre pour cet appel ; « garder pour le jeu » est un second
+- [x] Ce texte se corrige dans la fenêtre pour cet appel ; « garder pour le jeu » est un second
       geste.
-- [ ] On choisit le nombre de clips (1, 2, 4, 8).
-- [ ] La durée proposée est toujours une durée que le modèle choisi accepte.
-- [ ] Le bouton porte le prix (payant) ou le temps attendu (local) ; l'état de la carte vient de
+- [x] On choisit le nombre de clips (1, 2, 4, 8).
+- [x] La durée proposée est toujours une durée que le modèle choisi accepte.
+- [x] Le bouton porte le prix (payant) ou le temps attendu (local) ; l'état de la carte vient de
       `RV2`.
-- [ ] Le choix local ou payant montre des noms lisibles.
+- [x] Le choix local ou payant montre des noms lisibles.
+
+*Fait le 22 septembre 2026.* Un travail par clip, regroupés en série (`preparer_serie`, `demarrer_serie`) : N = directions cochées × nombre de clips, lancés tout ou rien pour l'agent. Le texte se compose dans un seul module serveur, que la route des mouvements et les travaux appellent ; la correction porte sur le geste, pour cet appel. Dans la fenêtre, le sélecteur de la bibliothèque s'appelle « Geste », pour ne pas le confondre avec le mouvement du plan. **Reste** : les textes neufs de la fenêtre sont écrits dans le composant, comme le reste du fichier ; ils passeront dans `aide.ts` quand `RV6` en fera la seule fenêtre.
 
 ---
 

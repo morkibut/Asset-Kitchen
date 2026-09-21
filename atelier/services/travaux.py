@@ -678,6 +678,20 @@ class ServiceTravaux:
             await asyncio.sleep(min(0.1, max(0, limite - time.monotonic())))
         return self.lire(projet, identifiant)
 
+    async def attendre_serie(self, projet: str, cle: str, secondes: float = 0) -> dict[str, Any]:
+        """Comme `attendre`, pour tous les travaux d'une série à la fois — une
+        seule attente bornée à 30 s, partagée entre eux (l'agent MCP)."""
+        seul = self._lire(self._dossier(projet, self.identifiant_serie(projet, cle)) / "travail.json")
+        travaux = [seul] if seul else self._membres(projet, cle)
+        if not travaux:
+            raise TravailRefuse("Cette série n'est pas conservée dans ce jeu.")
+        identifiants = [t["identifiant"] for t in travaux]
+        limite = time.monotonic() + min(max(secondes, 0), 30)
+        while (any(i in self._taches and not self._taches[i].done() for i in identifiants)
+               and time.monotonic() < limite):
+            await asyncio.sleep(min(0.1, max(0, limite - time.monotonic())))
+        return self._en_serie(projet, cle, [self.lire(projet, i) for i in identifiants])
+
     async def attendre_tout(self) -> None:
         if self._taches:
             await asyncio.gather(*list(self._taches.values()), return_exceptions=True)

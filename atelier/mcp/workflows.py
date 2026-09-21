@@ -24,7 +24,12 @@ def installer_outils_workflow(serveur, atelier, refus_lisible):
     @serveur.tool(name="prepare_free_video", meta=meta("Préparer un clip libre"), description="Prepare a durable agent-owned video without a character or animation objective. A starting image is mandatory: provide reference_asset or an image model and prompt. The completed source clip enters the gallery for later montage and classification. Uses the same start/resume production job tools and delegation budget.")
     @refus_lisible
     async def prepare_free_video(project: str, request: dict[str, Any]) -> dict[str, Any]:
-        return await atelier.travaux.preparer(project, request, "agent", source_libre=True)
+        # **RV5, T7** : prépare une série d'un seul clip, par le même chemin
+        # (`preparer_serie`) que la fenêtre « Animer » — puis rend le travail
+        # nu, comme avant : les outils de démarrage (`.../start`,
+        # `resume_animation_production`) attendent son `identifiant` en tête.
+        serie = await atelier.travaux.preparer_serie(project, request, [], 1, "agent", source_libre=True)
+        return serie["travaux"][0]
 
     @serveur.tool(name="install_local_styles", meta=meta("Installer les styles locaux"), description="List the 22 built-in local sc-clone styles (family, kind, speed, readiness) and install every style whose required ComfyUI files and nodes are already present. Never downloads model weights; a style missing files stays uninstalled and is reported with what's missing.")
     @refus_lisible

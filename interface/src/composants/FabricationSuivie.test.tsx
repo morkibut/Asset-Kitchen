@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { api, type Personnage } from "../api"
-import { travaux, type Travail } from "../api-travaux"
+import { travaux, type Serie, type Travail } from "../api-travaux"
 import { brouillonsLaissesEnPlan } from "../brouillons"
 import { FabricationSuivie } from "./FabricationSuivie"
 
@@ -20,6 +20,8 @@ beforeEach(() => {
   vi.spyOn(travaux, "demarrer").mockResolvedValue({ ...t, etat: "en_cours" })
   vi.spyOn(travaux, "reprendre").mockResolvedValue({ ...t, etat: "en_cours" })
   vi.spyOn(travaux, "lire").mockResolvedValue({ ...t, etat: "termine" })
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [], masques: [] })
+  vi.spyOn(api, "mouvementDeLaPose").mockRejectedValue(new Error("non mocké dans cet essai"))
 })
 afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks() })
 
@@ -155,4 +157,106 @@ test("ComfyUI déjà occupé par un autre calcul se dit avant le lancement, sans
   render(<FabricationSuivie projet="jeu" personnages={[personnage]} modeleInitial="maison/wan-2.2-i2v-14b-pixel" onClip={() => {}} onFermer={() => {}} />)
   await screen.findByRole("option", { name: /Wan 2.2/ })
   expect(await screen.findByText(/ComfyUI est déjà occupé par un autre calcul/)).toBeTruthy()
+})
+
+// ── RV5 : la fenêtre reçoit le meilleur du formulaire A ───────────────────
+
+const mouvementFlotte = { identifiant: "flotte", nom: "Il flotte", texte: "it floats", cadence: 8, directions: [], livre: true, masque: false }
+
+test("un mouvement choisi remplit le texte depuis la bibliothèque, avec son nom en français et le texte anglais repliable", async () => {
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
+  vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue({
+    pose: "marche", mouvement: mouvementFlotte, texte: "Facing south. it floats", direction: "Facing south.",
+    geste: "it floats", origine: "mouvement", style: null, origine_du_style: "aucun",
+  })
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: "Il flotte" })
+  await waitFor(() => expect(screen.getByLabelText("Geste")).toHaveValue("flotte"))
+  expect(screen.queryByLabelText("Décrire l’animation")).toBeNull()
+  fireEvent.click(screen.getByText("Voir le texte anglais envoyé"))
+  expect(screen.getByText("Facing south. it floats")).toBeTruthy()
+})
+
+test("corriger le geste puis « Garder pour le jeu » écrit le texte dans la bibliothèque des mouvements", async () => {
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
+  vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue({
+    pose: "marche", mouvement: mouvementFlotte, texte: "Facing south. it floats", direction: "Facing south.",
+    geste: "it floats", origine: "mouvement", style: null, origine_du_style: "aucun",
+  })
+  const regler = vi.spyOn(api, "reglerMouvement").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  await waitFor(() => expect(screen.getByLabelText("Geste")).toHaveValue("flotte"))
+  fireEvent.click(screen.getByText("corriger le geste ›"))
+  fireEvent.change(screen.getByLabelText("Corriger le geste pour cet appel"), { target: { value: "it drifts gently" } })
+  fireEvent.click(screen.getByRole("button", { name: "Garder pour le jeu" }))
+  await waitFor(() => expect(regler).toHaveBeenCalledWith("flotte", { texte: "it drifts gently" }, "jeu"))
+})
+
+test("un geste hérité d’un style se garde sur le style, pas sur le mouvement", async () => {
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
+  vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue({
+    pose: "marche", mouvement: mouvementFlotte, texte: "Facing south. it strides on the water", direction: "Facing south.",
+    geste: "it strides on the water", origine: "mouvement",
+    style: { identifiant: "baton", nom: "Bâton" }, origine_du_style: "choisi",
+  })
+  const reglerStyle = vi.spyOn(api, "reglerStyle").mockResolvedValue({ styles: [], masques: [] })
+  const reglerMouvement = vi.spyOn(api, "reglerMouvement")
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  await waitFor(() => expect(screen.getByLabelText("Geste")).toHaveValue("flotte"))
+  fireEvent.click(screen.getByText("corriger le geste ›"))
+  fireEvent.change(screen.getByLabelText("Corriger le geste pour cet appel"), { target: { value: "it glides across the water" } })
+  fireEvent.click(screen.getByRole("button", { name: "Garder pour le jeu" }))
+  await waitFor(() => expect(reglerStyle).toHaveBeenCalledWith("baton", { textes: { flotte: "it glides across the water" } }, "jeu"))
+  expect(reglerMouvement).not.toHaveBeenCalled()
+})
+
+test("le nombre de clips par case se choisit parmi 1, 2, 4 et 8", () => {
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} onClip={() => {}} onFermer={() => {}} />)
+  const select = screen.getByLabelText("Nombre de clips") as HTMLSelectElement
+  expect([...select.options].map((o) => o.value)).toEqual(["1", "2", "4", "8"])
+})
+
+test("la durée proposée suit le modèle choisi, et reste une durée qu’il accepte", async () => {
+  vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [{ identifiant: "Video:modele", nom: "Vidéo test", grise: null, prix: { montant: .3 }, durees: [2, 3], duree_par_defaut: 3, resolutions: ["480p"], proportions: ["1:1"] }] } as Awaited<ReturnType<typeof api.modelesVideo>>)
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} modeleInitial="Video:modele" onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: /Vidéo test/ })
+  await waitFor(() => expect(screen.getByLabelText("Durée du clip")).toHaveValue("3"))
+})
+
+test("le bouton porte le temps attendu quand le clip est local", () => {
+  const local = { ...t, annonce: { ...t.annonce, video_locale: true,
+    temps_local: { secondes: 420, secondes_suivant: 60, premier: true, images: 1, mesure: "essai", nature: "video" } } } as unknown as Travail
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} initiale={local} onClip={() => {}} onFermer={() => {}} />)
+  expect(screen.getByRole("button", { name: "Lancer · ≈ 7 min" })).toBeTruthy()
+})
+
+test("plusieurs directions cochées préparent une série, lancée d’un geste, relue avec un en-tête commun et des cases repliables", async () => {
+  const deuxDirections = { ...personnage, cases: [{ pose: "marche", directions: [{ identifiant: "sud", nom: "Sud" }, { identifiant: "est", nom: "Est" }] }] } as unknown as Personnage
+  const serieReponse: Serie = {
+    serie: { cle: "cle-serie", identifiant: "id-serie", total: 2 },
+    travaux: [
+      { ...t, identifiant: "t-sud", demande: { ...t.demande, direction: "sud", prompt_video: "Facing south. Il marche" }, etat: "prepare" },
+      { ...t, identifiant: "t-est", demande: { ...t.demande, direction: "est", prompt_video: "Facing east. Il marche" }, etat: "prepare" },
+    ] as unknown as Travail[],
+    annonce_serie: { reservation_usd: 1, temps_s: null, appels: 2, locale: false },
+  }
+  const preparerSerie = vi.spyOn(travaux, "preparerSerie").mockResolvedValue(serieReponse)
+  const demarrerSerie = vi.spyOn(travaux, "demarrerSerie").mockResolvedValue({
+    ...serieReponse, travaux: serieReponse.travaux.map((v) => ({ ...v, etat: "en_cours" }) as Travail),
+  })
+  render(<FabricationSuivie projet="jeu" personnages={[deuxDirections]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} modeleInitial="Video:modele" onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: /Vidéo test/ })
+  fireEvent.click(screen.getByLabelText("Est"))
+  fireEvent.change(screen.getByLabelText("Décrire l’animation"), { target: { value: "Il marche" } })
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
+  await waitFor(() => expect(preparerSerie).toHaveBeenCalledOnce())
+  const [projetAppele, , cases, nombre] = vi.mocked(travaux.preparerSerie).mock.calls[0]
+  expect(projetAppele).toBe("jeu")
+  expect(cases).toEqual([{ pose: "marche", direction: "sud" }, { pose: "marche", direction: "est" }])
+  expect(nombre).toBe(1)
+  expect(await screen.findByText("2 clips")).toBeTruthy()
+  fireEvent.click(screen.getByText("Sud"))
+  expect(screen.getByText("Facing south. Il marche")).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: /Lancer 2 clips/ }))
+  await waitFor(() => expect(demarrerSerie).toHaveBeenCalledWith("jeu", "cle-serie"))
 })

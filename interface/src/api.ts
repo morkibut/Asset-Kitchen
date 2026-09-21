@@ -839,6 +839,11 @@ export type ModeleVideo = {
    *  dire *la question ne se pose pas pour celui-ci*. */
   duree_conseillee: number
   raison_de_la_duree: string
+  /** **RV5** : la durée à proposer quand on choisit ce modèle — `duree_conseillee`
+   *  si elle est renseignée, sinon 1,5 s si ce modèle l'accepte, sinon sa plus
+   *  petite durée. Toujours une durée que ce modèle accepte vraiment.
+   *  Optionnel : les essais d'avant RV5 ne le donnent pas toujours. */
+  duree_par_defaut?: number
   /** Le nombre d'images réel pour chaque durée offerte, **calculé au serveur**.
    *  Le moteur n'accepte que certains comptes ; la règle est une contrainte du
    *  modèle et n'a rien à faire dans une interface — deux endroits qui la
