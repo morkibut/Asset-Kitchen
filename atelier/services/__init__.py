@@ -672,6 +672,8 @@ class Atelier:
             self.montage,
             self.agent,
             self.export,
+            # RV8 : le dossier des fichiers se lit sur le jeu Godot rattaché.
+            self.livraison,
         )
 
     async def ouvrir(self) -> None:

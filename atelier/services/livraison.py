@@ -28,6 +28,7 @@ from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.projet import repere
 from atelier.services.evenements import Diffusion
 from atelier.services.export import ServiceExport
+from atelier.services.livrables import bandes_livrables, tous_echoues
 from atelier.services.production import ServiceProduction
 
 
@@ -38,6 +39,12 @@ class LivraisonRefusee(ErreurAtelier):
 #: Les trois décisions qu'un conflit accepte, et rien d'autre (`RP10`).
 #: `conserver` n'écrit rien, `copier` écrit à côté, `remplacer` écrit par-dessus.
 DECISIONS = ("conserver", "copier", "remplacer")
+
+#: Où la forme « fichiers » (B21) se pose sous la racine Godot du jeu (`RV8`).
+#: À côté du paquet d'AU1 (`assets/asset-kitchen/<cle(projet)>/…`) et jamais
+#: dedans : une clé de projet finit toujours par son empreinte, elle ne vaut
+#: jamais `fichiers`.
+SOUS_DOSSIER_FICHIERS = "assets/asset-kitchen/fichiers"
 
 
 def _erreurs_disque(geste):
@@ -204,6 +211,42 @@ class ServiceLivraison:
         self._diffusion.publier("livraison", {"projet": projet, "association": association})
         return association
 
+    # ── La forme « fichiers » du même jeu (RV8) ─────────────────────────────
+    #
+    # ⚠️ **Le sous-dossier de B21 vit à côté de l'association, jamais dedans.**
+    # `association.json` est comparé en entier (`prevoir`, `preparer_paquet`,
+    # `livrer`, `reprendre`) et recopié dans chaque `livraison.json` posé dans le
+    # jeu : lui ajouter une clé ferait, pour chaque sujet déjà livré, un projet
+    # vu comme neuf, des fichiers de l'atelier tous en conflit, et un manifeste
+    # aux octets changés (C03). Son format reste donc figé —
+    # `{projet, dossier, sous_dossier, version_godot}` — et la forme « fichiers »
+    # tient dans un fichier voisin, `fichiers.json` = `{sous_dossier}`.
+
+    @_erreurs_disque
+    def fichiers(self, projet: str) -> dict[str, Any]:
+        """Le sous-dossier de la forme « fichiers », ou le défaut s'il n'est pas posé."""
+        lu = _lire(self._dossier(projet) / "fichiers.json") or {}
+        sous_dossier = lu.get("sous_dossier") if isinstance(lu, dict) else None
+        return {"sous_dossier": _relatif(sous_dossier) if sous_dossier else SOUS_DOSSIER_FICHIERS}
+
+    @_erreurs_disque
+    def regler_fichiers(self, projet: str, sous_dossier: str) -> dict[str, Any]:
+        """Pose le sous-dossier de la forme « fichiers », relatif à la racine du jeu.
+
+        Relatif, sans remontée ni lecteur, et **borné au jeu rattaché** quand il
+        y en a un : c'est la règle d'AU1, et la même porte n'en a pas deux.
+        """
+        interieur = self._dossier(projet)
+        sous_dossier = _relatif(sous_dossier.strip() if sous_dossier else "")
+        association = self.association(projet)
+        if association:
+            _borne(Path(association["dossier"]), sous_dossier)
+        fiche = {"sous_dossier": sous_dossier}
+        with _verrou(interieur / ".verrou"):
+            _poser(interieur / "fichiers.json", _json(fiche))
+        self._diffusion.publier("livraison", {"projet": projet, "fichiers": fiche})
+        return fiche
+
     @staticmethod
     def _version(racine: Path) -> str:
         fichier = racine / "project.godot"
@@ -231,14 +274,62 @@ class ServiceLivraison:
         return association
 
     def animations(self, projet: str, personnage: str | None = None) -> list[dict[str, Any]]:
+        """Les animations qu'on peut choisir — **la règle `bandes_livrables`** (`RV8`) :
+        une bande dont tous les clips ont échoué n'y est pas."""
         self._dossier(projet)
         return [{"identifiant": b.identifiant, "nom": b.nom, "personnage": b.personnage,
                  "pose": b.pose, "direction": b.direction, "compte": b.compte,
                  "cadence": b.cadence, "sens": b.sens, "favori": b.favori,
                  "case_largeur": b.case_largeur, "case_hauteur": b.case_hauteur}
-                for b in self._base.bandes()
-                if b.projet == projet and not b.supprime and
-                (personnage is None or b.personnage == personnage)]
+                for b in bandes_livrables(self._base, projet, personnage).bandes]
+
+    def prevoir_plusieurs(self, projet: str, personnages: Sequence[str] | None = None) -> dict[str, Any]:
+        """Tout le jeu (ou ces sujets) en paquets Godot — **un `prevoir` par sujet** (`RV8`).
+
+        Un regroupeur et rien d'autre : chaque sujet passe par `prevoir`, avec
+        son verrou, sa révision et son journal, si bien que **chaque paquet a
+        les octets qu'il aurait eus préparé seul**. Rien n'est fusionné, aucun
+        manifeste commun n'est inventé ; l'écran livre ensuite jeton par jeton.
+
+        Les animations d'un sujet : ses bandes livrables, rangées dans une case
+        (pas de brouillon), non vides — **une par mouvement, direction et pièce**,
+        la même clé que `prevoir` refuse de voir deux fois. Quand une case en a
+        plusieurs, la retenue est celle des images (`corps_retenu`) : la favorite,
+        sinon la plus récente.
+
+        Rend `{paquets, ecartes}` : `paquets` les vues de `prevoir`, dans l'ordre
+        des sujets ; `ecartes` les sujets qui ne partent pas, chacun avec sa
+        raison — aucun sans le dire.
+        """
+        self._dossier(projet)
+        if personnages is None:
+            personnages = [p.identifiant for p in self._production.personnages(projet)]
+        paquets: list[dict[str, Any]] = []
+        ecartes: list[dict[str, Any]] = []
+        for personnage in dict.fromkeys(personnages):
+            sujet = self._production.personnage(projet, personnage)
+            par_case: dict[tuple[str, str, str], Any] = {}
+            for bande in bandes_livrables(self._base, projet, personnage).bandes:
+                if bande.brouillon or bande.compte <= 0 or bande.case_largeur <= 0 or bande.case_hauteur <= 0:
+                    continue
+                case = (bande.pose or "", bande.direction or "", bande.piece or "")
+                garde = par_case.get(case)
+                if garde is None or (bande.favori, bande.cree_le, bande.rang) > (garde.favori, garde.cree_le, garde.rang):
+                    par_case[case] = bande
+            if not par_case:
+                ecartes.append({"personnage": personnage, "nom": sujet.nom or personnage,
+                                "raison": "Aucune animation livrable."})
+                continue
+            try:
+                paquets.append(self.prevoir(projet, personnage, [b.identifiant for b in par_case.values()]))
+            except LivraisonRefusee as refus:
+                # Le jeu non rattaché refuse pour tous : inutile de le redire
+                # une fois par sujet.
+                if not self.association(projet):
+                    raise
+                ecartes.append({"personnage": personnage, "nom": sujet.nom or personnage,
+                                "raison": str(refus)})
+        return {"paquets": paquets, "ecartes": ecartes}
 
     @_erreurs_disque
     def historique(self, projet: str) -> dict[str, Any]:
@@ -288,6 +379,10 @@ class ServiceLivraison:
                 bande = self._base.lire_bande(identifiant)
                 if not bande or bande.supprime or bande.projet != projet or bande.personnage != personnage:
                     raise LivraisonRefusee(f"« {identifiant} » n'est pas une animation disponible de ce personnage.")
+                # RV8 : la règle `bandes_livrables`, lue ici aussi — une bande
+                # montée à la main sur un clip échoué ne part pas au jeu.
+                if tous_echoues(self._base, bande):
+                    raise LivraisonRefusee(f"« {bande.nom or identifiant} » vient d'un clip échoué : refaire le clip, ou monter l'animation sur un autre.")
                 # Un brouillon ne vise aucune case : son nom dans le jeu serait
                 # son identifiant, et il changerait le jour où on la range.
                 if bande.brouillon:

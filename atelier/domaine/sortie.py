@@ -222,6 +222,9 @@ SANS_IMAGE = "sans_image"
 UNE_SEULE_DIRECTION = "une_seule_direction"
 ANIMATION_VIDE = "animation_vide"
 CORPS_HABILLE = "corps_habille"
+# Le cinquième (`RV8`) : une animation dont tous les clips ont échoué — écartée
+# par `bandes_livrables`, la règle que le paquet Godot lit aussi.
+ANIMATION_ECHOUEE = "animation_echouee"
 
 
 @dataclass(frozen=True, slots=True)

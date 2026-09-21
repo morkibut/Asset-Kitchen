@@ -54,9 +54,10 @@ class CorpsSortie(BaseModel):
 
     projet: str | None = None
     lot: str = vocabulaire.TOUT
-    # Le dossier du jeu, quand on veut celui d'aujourd'hui plutôt que celui
-    # gardé avec ce jeu-ci. Absent, le service redescend : ce jeu-là, puis le
-    # dossier commun de l'atelier.
+    # Le dossier du jeu, quand on veut celui d'aujourd'hui plutôt que celui du
+    # jeu rattaché. Absent, le service redescend (`RV8`) : le jeu Godot
+    # rattaché, puis l'ancien dossier de sortie — jamais le dossier commun de
+    # l'atelier.
     dossier: str | None = None
     rangement: str = vocabulaire.A_PLAT
     collision: str = vocabulaire.REMPLACER
@@ -94,6 +95,7 @@ async def reglages_de_la_sortie(
     atelier = _atelier(requete)
     vise = _projet(requete, projet)
     precedente = atelier.sortie.precedente(vise)
+    destination = atelier.sortie.destination(vise)
     return {
         "lots": list(vocabulaire.LOTS),
         "rangements": list(vocabulaire.RANGEMENTS),
@@ -109,9 +111,39 @@ async def reglages_de_la_sortie(
         ]
         if vise
         else [],
-        "dossier": atelier.sortie.dossier(vise),
+        # Le dossier entier, **gardé tel quel** pour qui le lisait avant RV8…
+        "dossier": destination["dossier"],
+        # … et d'où il vient (`RV8`) : `racine` (le jeu Godot rattaché, ou
+        # l'ancien dossier), `sous_dossier` (celui des fichiers, sous la racine),
+        # `origine` (`jeu`, `ancien` ou `aucun`), la `mention` d'un ancien
+        # dossier, la proposition `rattacher` (`{dossier, sous_dossier}` ou
+        # `null`) et le `refus` à montrer quand on ne peut pas sortir.
+        **{cle: destination[cle] for cle in (
+            "racine", "sous_dossier", "origine", "mention", "rattacher", "refus",
+        )},
         "precedente": precedente.en_json() if precedente else None,
     }
+
+
+class CorpsDossier(BaseModel):
+    """Le sous-dossier de la forme « fichiers », relatif au jeu Godot rattaché."""
+
+    projet: str | None = None
+    sous_dossier: str = ""
+
+
+@routeur.put("/output/folder")
+async def regler_le_dossier(requete: Request, corps: CorpsDossier) -> dict[str, Any]:
+    """Pose le sous-dossier des fichiers (`RV8`), et rend la destination relue.
+
+    **La racine ne se pose pas ici** : c'est le rattachement du jeu Godot
+    (`PUT /projects/{projet}/godot-link`), la source unique. Cette route ne
+    règle que l'endroit, sous cette racine, où la forme « fichiers » se pose —
+    rangé à côté de l'association, jamais dedans (son format est figé).
+    """
+    return _atelier(requete).sortie.regler_sous_dossier(
+        _projet(requete, corps.projet), corps.sous_dossier
+    )
 
 
 @routeur.post("/output/preview")

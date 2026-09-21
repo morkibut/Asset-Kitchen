@@ -382,20 +382,37 @@ def test_un_dossier_non_inscriptible_est_refuse_avec_son_chemin(
 
 
 def test_sans_dossier_de_jeu_le_refus_dit_ou_le_poser(client, double, tmp_path):
-    """Le dossier des Réglages sert de défaut ; absent, le refus emmène là où on
-    le pose. C'est le refus de T7, et il n'est pas réécrit ici."""
+    """L'association du jeu est lue, **pas le réglage de l'agent** (`RV8`).
+
+    Avant RV8, ce test attendait le repli sur `dossier_jeu` des Réglages —
+    c'est-à-dire la fuite que RV8 ferme : ce réglage est commun à tout
+    l'atelier, et deux jeux ouverts tour à tour se déposaient au même endroit.
+    Le seul essai existant que RV8 réécrit, et il est déclaré comme tel."""
     personnage, _, _ = _habille(client, double, poses=1)
 
     reponse = client.post("/api/output", json={"sujet": personnage})
     assert reponse.status_code == 409
     corps = reponse.json()
     assert "aucun dossier de jeu" in corps["raison"]
-    assert corps["ou_aller"] == "reglages"
+    assert "rattache ton jeu Godot" in corps["raison"]
 
-    # Posé une fois pour toutes, il n'a plus à être nommé.
-    client.put("/api/settings/agent", json={"dossier_jeu": str(tmp_path / "jeu")})
+    # Le dossier de l'agent posé : **il ne sert plus de défaut**.
+    client.put("/api/settings/agent", json={"dossier_jeu": str(tmp_path / "depot-agent")})
+    assert client.post("/api/output", json={"sujet": personnage}).status_code == 409
+    assert not (tmp_path / "depot-agent").exists()
+
+    # Le jeu Godot rattaché, lui, en sert : sa racine, plus le sous-dossier
+    # des fichiers, sans qu'on ait à le nommer.
+    jeu = tmp_path / "Jeu Godot"
+    jeu.mkdir()
+    (jeu / "project.godot").write_text("config_version=5\n", encoding="utf-8")
+    projet = client.app.state.atelier.bibliotheque.courant
+    assert client.put(
+        f"/api/projects/{projet}/godot-link", json={"dossier": str(jeu)}
+    ).status_code == 200
     sortie = client.post("/api/output", json={"sujet": personnage}).json()
-    assert Path(sortie["dossier"]) == tmp_path / "jeu"
+    assert Path(sortie["dossier"]) == jeu.resolve() / "assets" / "asset-kitchen" / "fichiers"
+    assert not (tmp_path / "depot-agent").exists()
 
 
 # ── Ce que l'atelier n'écrit pas ────────────────────────────────────────────

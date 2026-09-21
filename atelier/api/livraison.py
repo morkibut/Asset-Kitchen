@@ -21,6 +21,12 @@ class PreparationLivraison(BaseModel):
     boucles: dict[str, bool] = Field(default_factory=dict)
 
 
+class PreparationDuJeu(BaseModel):
+    """Tout le jeu en paquets Godot (`RV8`) — ou seulement ces sujets."""
+
+    personnages: list[str] | None = None
+
+
 class PublicationLivraison(BaseModel):
     jeton: str
 
@@ -55,6 +61,12 @@ def historique(requete: Request, projet: str) -> dict[str, Any]:
 @routeur.post("/projects/{projet}/deliveries/preview")
 def prevoir(requete: Request, projet: str, corps: PreparationLivraison) -> dict[str, Any]:
     return requete.app.state.atelier.livraison.prevoir(projet, **corps.model_dump())
+
+
+@routeur.post("/projects/{projet}/deliveries/preview-all")
+def prevoir_plusieurs(requete: Request, projet: str, corps: PreparationDuJeu) -> dict[str, Any]:
+    """Un paquet par sujet, chacun préparé comme seul ; `{paquets, ecartes}`."""
+    return requete.app.state.atelier.livraison.prevoir_plusieurs(projet, corps.personnages)
 
 
 @routeur.post("/projects/{projet}/deliveries")
