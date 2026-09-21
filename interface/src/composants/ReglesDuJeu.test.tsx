@@ -118,6 +118,9 @@ function construireDouble(
      *  double répond alors le refus nommé que rend la route, pour la seule
      *  méthode citée. */
     methodeApercuAbsente?: string
+    /** RT6 : le total que `GET /assets` rend pour le jeu ouvert — zéro par
+     *  défaut, comme un jeu neuf sans image. */
+    nombreDImages?: number
   } = {},
 ) {
   let univers: Univers = {
@@ -302,6 +305,12 @@ function construireDouble(
         status: 200,
         blob: async () => new Blob(["png"], { type: "image/png" }),
       } as unknown as Response
+    }
+
+    // RT6 : le compte d'images du jeu ouvert, lu par `SonAllure` avant
+    // d'avertir sur un changement de taille.
+    if (url === "/api/assets?limite=1" && methode === "GET") {
+      return rendre({ assets: [], total: options.nombreDImages ?? 0 })
     }
 
     throw new Error(`route non doublée dans cet essai : ${methode} ${url}`)
@@ -677,6 +686,89 @@ describe("les trois rangées montrent ce qu'elles font (RT2)", () => {
 
     expect(appels.some((a) => a.url.startsWith("/api/universe/allure/preview.png"))).toBe(false)
     expect(screen.queryByRole("img", { name: /Le rôdeur/ })).toBeNull()
+  })
+})
+
+// ── Le garde-fou de la taille (RT6) ──────────────────────────────────────────
+//
+// Retiré de la configuration initiale par RT5, reposé ici : sur un jeu qui
+// porte déjà des images, changer la taille les laisse à leur ancienne taille.
+// L'avertissement se joue avant le réglage, avec le compte, et on peut passer
+// outre — ce n'est pas une interdiction.
+
+describe("le garde-fou de la taille (RT6)", () => {
+  test("un jeu sans image ne demande rien : le réglage part tout de suite", async () => {
+    const { fetchDouble, appels } = construireDouble({
+      univers: { style: "pixel", cible_px: 64 },
+      nombreDImages: 0,
+    })
+    const confirme = vi.spyOn(window, "confirm")
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    const tailles = within(await screen.findByRole("group", { name: "La taille de l'image" }))
+    fireEvent.click(tailles.getByRole("button", { name: "32" }))
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/universe" &&
+            a.methode === "PUT" &&
+            (a.corps as { cible_px?: number }).cible_px === 32,
+        ),
+      ).toBe(true),
+    )
+    expect(confirme).not.toHaveBeenCalled()
+  })
+
+  test("un jeu qui porte des images avertit avant, avec leur compte", async () => {
+    const { fetchDouble, appels } = construireDouble({
+      univers: { style: "pixel", cible_px: 64 },
+      nombreDImages: 12,
+    })
+    const confirme = vi.spyOn(window, "confirm").mockReturnValue(true)
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    const tailles = within(await screen.findByRole("group", { name: "La taille de l'image" }))
+    fireEvent.click(tailles.getByRole("button", { name: "32" }))
+
+    // L'avertissement se lit sans connaître le produit : il nomme le compte
+    // et ce qui arrive, pas un mécanisme interne.
+    await waitFor(() => expect(confirme).toHaveBeenCalledTimes(1))
+    expect(confirme.mock.calls[0][0]).toContain("12 images")
+    expect(confirme.mock.calls[0][0]).toContain("ancienne taille")
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/universe" &&
+            a.methode === "PUT" &&
+            (a.corps as { cible_px?: number }).cible_px === 32,
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("passer outre l'avertissement pose quand même le réglage", async () => {
+    const { fetchDouble } = construireDouble({
+      univers: { style: "pixel", cible_px: 64 },
+      nombreDImages: 3,
+    })
+    vi.spyOn(window, "confirm").mockReturnValue(false)
+    monter(fetchDouble)
+    ouvrir("Son allure")
+
+    const tailles = within(await screen.findByRole("group", { name: "La taille de l'image" }))
+    fireEvent.click(tailles.getByRole("button", { name: "32" }))
+
+    // Le temps qu'un envoi refusé, s'il devait partir, ait eu le temps de partir.
+    await waitFor(() => expect(window.confirm).toHaveBeenCalled())
+    expect(
+      tailles.getByRole("button", { name: "64" }).getAttribute("aria-pressed"),
+    ).toBe("true")
   })
 })
 

@@ -784,7 +784,7 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Son allure — le style, la taille, les couleurs",
     quoi: "Le côté de case, en pixels, imposé à tout ce qui entre dans ce projet — ou aucune, et le rendu du modèle entre tel quel.",
     change:
-      "Toute image née ici arrive déjà remise sur cette grille. Sur « aucune », il n'y a pas de remise sur grille du tout : le détourage, le recadrage et la palette continuent, l'occupation du barème cesse d'agir. Les images déjà là ne bougent pas toutes seules — « Tout réaligner » est un geste, jamais un effet de bord.",
+      "Toute image née ici arrive déjà remise sur cette grille. Sur « aucune », il n'y a pas de remise sur grille du tout : le détourage, le recadrage et la palette continuent, l'occupation du barème cesse d'agir. Les images déjà là ne bougent pas toutes seules — « Tout réaligner » est un geste, jamais un effet de bord. Sur un jeu qui porte déjà des images, changer cette case le dit avant de le faire, avec le compte de ce qui reste à l'ancienne taille — on peut passer outre.",
     origine: "toi, une fois par projet · défaut 64",
     long:
       "« Aucune » dit que ton jeu n'est pas en pixel art — le rendu du modèle entre tel quel, sans grille imposée. Avec une cible, elle est toujours imposée, jamais déduite : dix modèles sur douze font dériver la taille du pixel d'une génération à l'autre, de 7 à 20 px dans un même lot. Réaligner ne coûte rien — aucun appel payant — et saute les images déjà ramenées au brut.",

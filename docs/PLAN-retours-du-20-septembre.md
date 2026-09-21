@@ -252,12 +252,12 @@ utile, et on ne peut pas l'ignorer.
 
 ### Critères d'acceptation
 
-- [ ] Changer la taille sur un jeu **sans image** ne dit rien : il n'y a rien à perdre.
-- [ ] Changer la taille sur un jeu **qui porte des images** avertit avant, et dit combien d'images
+- [x] Changer la taille sur un jeu **sans image** ne dit rien : il n'y a rien à perdre.
+- [x] Changer la taille sur un jeu **qui porte des images** avertit avant, et dit combien d'images
       resteront à leur ancienne taille.
-- [ ] L'avertissement se lit sans connaître le produit : il dit ce qui arrive, pas comment c'est
+- [x] L'avertissement se lit sans connaître le produit : il dit ce qui arrive, pas comment c'est
       construit.
-- [ ] On peut passer outre — c'est un avertissement, pas une interdiction.
+- [x] On peut passer outre — c'est un avertissement, pas une interdiction.
 
 ---
 

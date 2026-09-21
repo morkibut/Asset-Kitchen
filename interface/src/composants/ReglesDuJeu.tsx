@@ -547,6 +547,7 @@ function SonAllure({
   tailles,
   finesses,
   retourDuRealignement,
+  nombreDImages,
   onRegler,
   onRealigner,
 }: {
@@ -554,6 +555,9 @@ function SonAllure({
   tailles: TailleDImage[]
   finesses: TailleDImage[]
   retourDuRealignement: string | null
+  /** RT6 : combien d'images le jeu porte déjà — `null` tant que le compte
+   *  n'est pas revenu, ou sur un jeu qui n'existe pas encore. */
+  nombreDImages: number | null
   onRegler: (reglage: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
   onRealigner: () => void
 }) {
@@ -578,6 +582,25 @@ function SonAllure({
   const couleursPourTaille = (cible: number): number => {
     const p = paliersDeCouleurs(cible)
     return p.includes(univers.couleurs) ? univers.couleurs : p[p.length - 1]
+  }
+
+  // **RT6** — le garde-fou que RT5 avait retiré de la configuration initiale,
+  // reposé ici : sur un jeu qui porte déjà des images, changer la taille les
+  // laisse à leur ancienne taille, et c'est réel dès qu'une seule existe. Un
+  // jeu vide n'a rien à perdre — `nombreDImages` vaut alors zéro ou `null`, et
+  // aucune question ne se pose. On peut passer outre : c'est un avertissement,
+  // pas une interdiction.
+  const changerTaille = (cible: number) => {
+    if (cible === univers.cible_px || !nombreDImages) {
+      void onRegler({ cible_px: cible })
+      return
+    }
+    const veut = window.confirm(
+      nombreDImages === 1
+        ? "1 image déjà faite sur ce jeu restera à son ancienne taille : le changement ne s'applique qu'aux prochaines. Continuer ?"
+        : `${nombreDImages} images déjà faites sur ce jeu resteront à leur ancienne taille : le changement ne s'applique qu'aux prochaines. Continuer ?`,
+    )
+    if (veut) void onRegler({ cible_px: cible })
   }
 
   return (
@@ -631,7 +654,7 @@ function SonAllure({
                 titre={String(cible)}
                 quoi=""
                 choisi={univers.cible_px === cible}
-                onChoisir={() => void onRegler({ cible_px: cible })}
+                onChoisir={() => changerTaille(cible)}
               >
                 {TAILLES_APERCU.has(cible) && (
                   <CaseApercu
@@ -646,7 +669,7 @@ function SonAllure({
             <button
               type="button"
               aria-pressed={univers.cible_px === AUCUNE_CIBLE}
-              onClick={() => void onRegler({ cible_px: AUCUNE_CIBLE })}
+              onClick={() => changerTaille(AUCUNE_CIBLE)}
               className={[
                 "h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
                 univers.cible_px === AUCUNE_CIBLE
@@ -669,7 +692,7 @@ function SonAllure({
                 key={cible}
                 type="button"
                 aria-pressed={univers.cible_px === cible}
-                onClick={() => void onRegler({ cible_px: cible })}
+                onClick={() => changerTaille(cible)}
                 className={[
                   "mesure h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
                   univers.cible_px === cible
@@ -683,7 +706,7 @@ function SonAllure({
             <button
               type="button"
               aria-pressed={univers.cible_px === AUCUNE_CIBLE}
-              onClick={() => void onRegler({ cible_px: AUCUNE_CIBLE })}
+              onClick={() => changerTaille(AUCUNE_CIBLE)}
               className={[
                 "h-[30px] rounded-7 border px-[14px] text-[12.5px] transition-colors duration-120",
                 univers.cible_px === AUCUNE_CIBLE
@@ -782,9 +805,9 @@ function SonAllure({
           vivait ici, avant qu'on l'ait rencontrée. Retiré en RT5 : à cette
           étape, aucun jeu ne porte encore d'image, donc rien ne rend
           l'avertissement vrai pour qui le lit. RT6 le repose au bon
-          moment — quand on change la taille sur un jeu qui a déjà des
-          images — là où il décrit une conséquence réelle plutôt qu'un
-          risque abstrait. */}
+          moment : `changerTaille`, plus haut dans ce composant, le pose en
+          confirmation — sur la rangée des tailles elle-même, seulement
+          quand `nombreDImages` dit qu'un jeu déjà servi en dépend. */}
     </div>
   )
 }
@@ -2138,6 +2161,32 @@ export function ReglesDuJeu({
   // Le jeu existe-t-il ? En création, seulement après l'étape du nom.
   const pret = mode === "reglages" || cree
 
+  // **RT6** — combien d'images ce jeu porte déjà, pour avertir avant de
+  // changer la taille (voir `SonAllure`). `GET /assets` sans paramètre rend
+  // déjà la grille du projet ouvert (`bibliotheque.courant`), la même
+  // hypothèse que `api.univers()` fait juste au-dessus : aucune route neuve.
+  // **Le total du jeu, pas le compte à l'ancienne taille seulement** — ce
+  // second chiffre serait plus juste, mais il faudrait une route qui sache
+  // filtrer sur une taille enregistrée dans le JSON de chaque image, pour une
+  // nuance que l'avertissement peut se permettre d'arrondir. Sans image, le
+  // total vaut zéro et rien ne s'affiche — le seul cas que critère
+  // d'acceptation distingue vraiment.
+  const [nombreDImages, setNombreDImages] = useState<number | null>(null)
+  useEffect(() => {
+    if (!dossier) {
+      setNombreDImages(null)
+      return
+    }
+    let vivant = true
+    api
+      .assets({ limite: 1 })
+      .then((recu) => vivant && setNombreDImages(recu.total))
+      .catch(() => undefined) // Non critique : sans compte, l'avertissement se tait.
+    return () => {
+      vivant = false
+    }
+  }, [dossier])
+
   return (
     <main
       data-regles-du-jeu
@@ -2226,6 +2275,7 @@ export function ReglesDuJeu({
             tailles={tailles}
             finesses={finesses}
             retourDuRealignement={retourDuRealignement}
+            nombreDImages={nombreDImages}
             onRegler={regler}
             onRealigner={realigner}
           />
