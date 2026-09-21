@@ -81,12 +81,15 @@ La branche `feat/retours-du-20-septembre` (seize commits d'avance, aucun de reta
 
 ### Critères d'acceptation
 
-- [ ] `main` contient les neuf tranches `RT` ; la suite serveur et la suite d'écran passent sur
-      l'état fusionné (`docs/essais.md`).
-- [ ] Le tableau d'état ne dit plus que *Le son* vit sur une branche à part.
-- [ ] Le tableau d'état porte une ligne pour *Les moteurs locaux* et *Les styles de combat*,
+- [x] `main` contient les neuf tranches `RT` ; la suite serveur et la suite d'écran passent sur
+      l'état fusionné (`docs/essais.md`). *Fait le 21 septembre 2026 en avance rapide (`main` n'avait
+      aucun commit d'avance) : 3 846 essais serveur et 2 815 d'écran verts. Le garde-fou
+      `essais/essai_vocabulaire.py` échouait déjà avant la fusion (8 écarts, dont « Codex » absent
+      de `docs/vocabulaire.html`) : repris par `RV4`.*
+- [x] Le tableau d'état ne dit plus que *Le son* vit sur une branche à part.
+- [x] Le tableau d'état porte une ligne pour *Les moteurs locaux* et *Les styles de combat*,
       chantiers finis qui n'y figuraient pas.
-- [ ] Le tableau d'état porte la ligne de ce chantier.
+- [x] Le tableau d'état porte la ligne de ce chantier.
 
 ---
 
@@ -184,6 +187,9 @@ comment l'atelier est construit.
       temps passé à la place.
 - [ ] Les sons : « 1 version », durées en minutes et secondes.
 - [ ] Le style de combat « karaté » a son propre texte, ou disparaît.
+- [ ] `essais/essai_vocabulaire.py` repasse : les 8 écarts relevés le 21 septembre (« Codex », les
+      onglets de la fiche, deux retours en arrière) sont réglés dans le code ou dans
+      `docs/vocabulaire.html`.
 - [ ] Les nouvelles phrases sont lues dans le recueil, jamais retapées (*R4*), et `aide.test.ts`
       passe.
 
