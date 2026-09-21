@@ -154,42 +154,24 @@ export function BarreOutils({
   sansRecherche?: boolean
 }) {
   return (
-    <div className="flex h-[34px] shrink-0 items-center gap-3 border-b border-trait bg-papier-cote px-4">
-      {/* **Deux blocs, et un seul cède.** Celui-ci porte tout ce qui varie — la
-          sélection ajoute cinq contrôles d'un coup —, et il est le seul à
-          pouvoir rétrécir.
+    <div className="flex min-h-[34px] shrink-0 flex-wrap items-center gap-x-3 gap-y-[4px] border-b border-trait bg-papier-cote px-4 py-[4px]">
+      {/* **Elle passe à la ligne, elle ne rogne plus** — corrigé le 22
+          septembre 2026 (RV13). Le défilement horizontal d'avant coupait un
+          filtre en plein mot dès que la colonne centrale descendait vers
+          1280 px : un contrôle caché par un `overflow-x-auto` sans barre de
+          défilement visible à 34 px de haut est un contrôle qui n'existe
+          plus, exactement le défaut que la note du 31 août 2026 avait déjà
+          nommé une fois pour la queue de la rangée.
 
-          Sans `min-w-0`, une barre trop pleine élargit sa colonne, puis la
-          page : mesuré le 27 août 2026 au navigateur, à 1280 px et panneaux
-          ouverts, une image sélectionnée demandait 963 px pour 740 — l'export
-          partait à 150 px hors de l'écran et l'atelier entier glissait vers la
-          droite, en-tête et pied compris.
-
-          **Et il défile plutôt qu'il ne rogne.** Une colonne centrale peut
-          descendre à 520 px — 1440 px, quatre colonnes, fiche ouverte —, et
-          aucune économie de largeur ne fait tenir 750 px de contrôles dans 390.
-          Rogner cacherait Supprimer sans le dire ; défiler le rend atteignable
-          et le montre, avec la barre de 9 px que le produit dessine déjà. Ce
-          qui cède en premier reste le champ de recherche, celui dont on ne se
-          sert pas pendant qu'on agit sur une sélection.
-
-          **Et il fallait le dire à la mise en page** — corrigé le 31 août 2026.
-          La phrase ci-dessus était l'intention ; le rendu faisait l'inverse.
-          Tout vivait dans un seul défilement, donc **ce qui sortait était la
-          queue de la rangée**, c'est-à-dire précisément les gestes de la
-          sélection : mesuré au navigateur, *Supprimer* s'affichait coupé en
-          plein mot et *Désélectionner* était entièrement hors du cadre. Rien
-          ne l'annonçait — le défilement horizontal ne dessine aucune barre à
-          cette hauteur-là, et un contrôle rogné en silence est un contrôle qui
-          n'existe plus.
-
-          Deux groupes, donc, et un seul cède : **ce qui consulte** — chercher,
-          filtrer, le compte, le zoom — se replie et défile ; **ce qui agit sur
-          la sélection** ne bouge jamais. C'est la même règle que le fil
-          d'Ariane de la barre du haut, qui cède en dernier parce qu'il porte ce
-          qui ne se devine pas. */}
-      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto overflow-y-hidden">
-        <div className="flex min-w-24 shrink items-center gap-2 overflow-x-auto overflow-y-hidden">
+          Le remède retenu est le plus simple : `flex-wrap` plutôt qu'un
+          second calcul de largeur. La barre grandit alors verticalement
+          quand la rangée ne tient plus — `min-h-[34px]` remplace le
+          `h-[34px]` fixe —, et chaque contrôle garde sa hauteur de la liste
+          fermée (26 ou 34 px, `docs/DESIGN.md` § Spacing). Rien ne se cache
+          plus en silence : ce qui ne tient pas descend d'une ligne, visible
+          entier. */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* **Chercher et filtrer ne disparaissent jamais.** Une sélection ajoute
               des gestes ; elle ne prend pas la place de ceux qui étaient là. Sans
               ça, ouvrir une fiche — qui sélectionne — effacerait le filtre posé, et
@@ -212,10 +194,6 @@ export function BarreOutils({
             value={famille}
             onChange={(e) => onFamille(e.target.value)}
             aria-label="Ne montrer qu'une famille, ou les clips"
-            // `shrink` et un plancher, plutôt que `shrink-0` : quand la rangée
-            // manque de place, un filtre dont le nom se rogne vaut mieux qu'un
-            // geste de sélection qui sort du cadre. La liste déroulée, elle,
-            // montre les noms entiers — ce n'est pas elle qui est bornée.
             className="mesure h-[26px] w-40 min-w-26 shrink rounded-5 border border-trait bg-carte px-1 text-[11px] text-encre-2"
           >
             <option value="">toutes les familles</option>

@@ -392,11 +392,13 @@ déborde pas, et des légendes « sujet · mouvement · direction » au lieu du 
 
 ### Critères d'acceptation
 
-- [ ] La page d'un son a les mêmes marges que les autres pages.
-- [ ] Aucun titre de son n'est la demande entière.
-- [ ] L'onglet Vidéos de la Galerie n'affiche ni les filtres ni le compteur des images.
-- [ ] Aucun filtre coupé à 1280 px.
-- [ ] Les légendes de la Galerie nomment le sujet quand il y en a un.
+- [x] La page d'un son a les mêmes marges que les autres pages.
+- [x] Aucun titre de son n'est la demande entière.
+- [x] L'onglet Vidéos de la Galerie n'affiche ni les filtres ni le compteur des images.
+- [x] Aucun filtre coupé à 1280 px.
+- [x] Les légendes de la Galerie nomment le sujet quand il y en a un.
+
+*Fait le 22 septembre 2026.* Le titre d'un son est sa famille et son nom coupé au mot (42 signes) ; la demande se lit en petit dessous dès que le titre a coupé quelque chose. Sans nom français, le titre garde le début de la demande : « mine des nains » demandera un nom court donné par l'auteur. La barre d'outils passe à la ligne au lieu de défiler. La légende d'une tuile ne change que si le sujet est connu.
 
 ---
 

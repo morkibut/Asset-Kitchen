@@ -10,7 +10,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { Tuile, type Entree } from "./Tuile"
-import type { Generation } from "../api"
+import type { Generation, Personnage, Pose } from "../api"
 
 afterEach(() => {
   cleanup()
@@ -236,5 +236,57 @@ describe("Tuile — un clip enregistré à la main", () => {
     render(<Tuile entree={entreeClip(rendu())} {...PROPS_DE_BASE} />)
 
     expect(screen.getByRole("img", { name: "Marche — retenue" })).toBeTruthy()
+  })
+})
+
+// ── La légende : « sujet · mouvement · direction » (RV13) ──────────────────
+
+const PERSONNAGES: Personnage[] = [
+  { identifiant: "perso-1", nom: "Le nain" } as unknown as Personnage,
+]
+const PLAN: Pose[] = [{ identifiant: "pose-1", nom: "marche" } as unknown as Pose]
+
+describe("Tuile — la légende de la galerie", () => {
+  test("dit « sujet · mouvement · direction » quand le sujet est connu", () => {
+    const generation: Generation = {
+      ...clip(),
+      personnage: "perso-1",
+      pose: "pose-1",
+      direction: "sud",
+    }
+    render(
+      <Tuile
+        entree={entreeClip(generation)}
+        personnages={PERSONNAGES}
+        plan={PLAN}
+        {...PROPS_DE_BASE}
+      />,
+    )
+
+    expect(screen.getByText("Le nain · marche · sud")).toBeTruthy()
+    // Le début de la demande ne se lit plus à l'écran, seulement au survol.
+    expect(screen.queryByText("walking cycle, walking in place")).toBeNull()
+  })
+
+  test("retombe sur le début de la demande sans sujet connu", () => {
+    // Un mouvement inscrit à la commande sans sujet résolu ne nomme rien de
+    // plus que le prompt : la légende doit rester celle d'avant la tranche.
+    render(<Tuile entree={entreeClip(clip())} personnages={[]} plan={[]} {...PROPS_DE_BASE} />)
+
+    expect(screen.getByText("walking cycle, walking in place")).toBeTruthy()
+  })
+
+  test("un sujet inconnu du jeu (identifiant sans correspondance) retombe aussi sur la demande", () => {
+    const generation: Generation = { ...clip(), personnage: "perso-disparu" }
+    render(
+      <Tuile
+        entree={entreeClip(generation)}
+        personnages={PERSONNAGES}
+        plan={PLAN}
+        {...PROPS_DE_BASE}
+      />,
+    )
+
+    expect(screen.getByText("walking cycle, walking in place")).toBeTruthy()
   })
 })
