@@ -221,6 +221,16 @@ class ServiceAssets:
         Vide sans projet, comme sans fond choisi : les deux absences se lisent
         pareil, et c'est très exactement ce qui fait qu'un moteur `bord`
         continue de deviner sur les bordures tant que personne n'a choisi.
+
+        ⚠️ **Elle rend le vide sur tout jeu neuf depuis RT3** (20 septembre
+        2026) : plus rien n'écrit ce champ, puisque le fond se calcule à chaque
+        appel. Le détourage retombe donc sur la devinette des bordures, qui est
+        ce qu'il faisait avant B18 et qui marche — d'autant mieux que le fond
+        qui part est maintenant toujours une couleur franche. **Lui donner la
+        couleur qui est vraiment partie demanderait de la relire sur la
+        génération de l'image**, ce qui est un autre chemin et une autre
+        tranche ; c'est noté ici pour que le vide ne se lise pas comme un
+        oubli.
         """
         if projet is None:
             return ""

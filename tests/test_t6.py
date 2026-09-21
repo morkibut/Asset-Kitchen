@@ -189,8 +189,17 @@ def test_le_descriptif_porte_label_prompt_reglages_dimensions_et_filiation(
     # 2 · le prompt, et le prompt négatif : ceux de l'appel qui a produit la
     #     planche. Une découpe qui ne dirait pas d'où elle vient serait, dans un
     #     dossier de jeu, une image sans histoire.
-    assert fiche["generation"]["prompt"] == "REQUEST\n\nune planche de deux"
-    assert fiche["generation"]["prompt_negatif"] == "flou"
+    #     *Repris le 20 septembre 2026 (RT3)* : le texte porte en tête le fond
+    #     que l'atelier calcule pour l'appel — ici le vert de studio, faute
+    #     d'image de référence. Ce que le test dit n'a pas bougé : la découpe
+    #     porte le prompt **de l'appel qui l'a produite**, mot pour mot.
+    assert fiche["generation"]["prompt"] == (
+        "CONTEXT\n\n"
+        "Technical constraints: single isolated sprite on a flat solid "
+        "#00B140 studio green background\n\n"
+        "REQUEST\n\nune planche de deux"
+    )
+    assert fiche["generation"]["prompt_negatif"].startswith("flou")
     assert fiche["generation"]["modele"] == "essai:rend-du-png"
 
     # 3 · les réglages résolus — ce qui est réellement parti, pas ce qui a été

@@ -186,6 +186,13 @@ async def test_le_texte_entre_tel_quel_dans_le_graphe(jeu):
 
 # Figé le 18 septembre 2026 : le texte qu'un modèle payant reçoit pour la case
 # « marche, sud » du nain, au caractère près.
+#
+# **Refigé le 20 septembre 2026 (RT3)**, et sur un seul mot : le fond. Il n'est
+# plus le réglage que le décor pose (`fond="#FF00FF"`, toujours écrit sur le
+# disque et toujours relu) mais la couleur que l'atelier calcule pour cet appel.
+# Cet appel-ci ne joint aucune image de référence, donc il n'y a rien à
+# comparer, donc c'est le vert de studio. Tout le reste du texte est inchangé,
+# et c'est ce que ce test existe pour dire.
 FIGE = (
     "CONTEXT\n\n"
     "World: high fantasy, elves and dwarves, ancient kingdoms, deep old-growth forest, moss, ferns and giant roots. Every village hides a shrine.\n"
@@ -194,7 +201,7 @@ FIGE = (
     "Line and shading: flat colour fills, clean dark outline, no anti-aliasing\n"
     "Lighting: thick low-lying fog, volumetric haze, moonlight, cool blue key light, deep shadows, long cast shadows\n"
     "View and framing: 3/4 top-down orthographic view, subject centered\n"
-    "Technical constraints: single isolated sprite on a flat solid #FF00FF magenta background, strict 64x64 px tile snap\n\n"
+    "Technical constraints: single isolated sprite on a flat solid #00B140 studio green background, strict 64x64 px tile snap\n\n"
     "REQUEST\n\n"
     "a stocky dwarf miner with a copper lantern, walking posture, full body, facing south, toward the viewer\n\n"
     "FRAMING — one single sprite and nothing else: no scenery, no ground, no extra props, nothing the description "
@@ -206,7 +213,7 @@ FIGE = (
     "is visible below it. On a character, the face and the top of the head at once, with the feet showing."
 )
 INTERDICTION_FIGEE = (
-    "blurry, watermark ; the background colour #FF00FF magenta, or any shade close to it, anywhere on the subject "
+    "blurry, watermark ; the background colour #00B140 studio green, or any shade close to it, anywhere on the subject "
     "itself (on its outfit, its skin, its hair, its accessories, its reflections or its shadows)"
 )
 

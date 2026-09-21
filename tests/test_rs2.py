@@ -377,7 +377,15 @@ def test_une_image_opaque_repart_telle_quelle():
     assert sur_le_fond(b"pas une image", "#FF70B5") == b"pas une image"
 
 
-def test_le_fournisseur_recoit_la_planche_sur_le_fond_du_jeu(client, tmp_path, double):
+def test_le_fournisseur_recoit_la_planche_sur_le_fond_de_l_appel(client, tmp_path, double):
+    """*Repris le 20 septembre 2026 (RT3)* : le fond n'est plus celui que `_jeu`
+    règle — ce réglage-là n'est plus lu —, c'est celui que l'atelier calcule sur
+    la planche même qui part. Ce que le test vérifiait tient, et il vérifie
+    maintenant quelque chose de plus fort : la couleur sous la planche est
+    **exactement** celle que le texte de l'appel demande."""
+    from atelier.domaine.fond import choisir, rvb
+    from atelier.image.palette import couleurs_lues
+
     chose = _creer(client)
     _jeu(client)
     fichier = tmp_path / "planche-transparente.png"
@@ -396,7 +404,11 @@ def test_le_fournisseur_recoit_la_planche_sur_le_fond_du_jeu(client, tmp_path, d
     (partie,) = double.demandes[-1].references
     mode, coin = _pixel(partie)
     assert mode == "RGB"
-    assert coin == (255, 112, 181)
+    # Le carré rouge de `_transparente` est à 215 du magenta comme du cyan ;
+    # l'ordre des candidats tranche, et le magenta est écrit le premier.
+    attendu = choisir(couleurs_lues([_transparente((48, 24))])).couleur
+    assert attendu == "#FF00FF"
+    assert coin == rvb(attendu)
 
 
 def test_refaire_une_planche_n_envoie_pas_le_concept_art(client, tmp_path):

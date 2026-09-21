@@ -861,12 +861,17 @@ class ServiceProduction:
         chose disparue rend la même chose plutôt qu'un refus : un appel ne doit
         pas échouer parce qu'un personnage a été supprimé entre-temps.
 
-        **`fond` corrige la couleur pour cet appel-ci, et rien d'autre** (D3).
-        `None` laisse celle du jeu ; une couleur la remplace ; la chaîne vide la
-        retire. La correction se fait **sur une copie de l'univers**, pas sur une
-        phrase composée à côté : la case `technique` porte déjà le fond, elle
-        sait déjà l'écrire, et recomposer sa phrase ici aurait été la seconde
-        vérité que le 1ᵉʳ septembre 2026 venait de retirer.
+        **`fond` est la couleur de cet appel-ci, et elle s'impose** (D3, RT3).
+        La pose se fait **sur une copie de l'univers**, pas sur une phrase
+        composée à côté : la case `technique` porte déjà le fond, elle sait déjà
+        l'écrire, et recomposer sa phrase ici aurait été la seconde vérité que le
+        1ᵉʳ septembre 2026 venait de retirer.
+
+        **`None` vaut *aucun fond*, et non plus *celui du jeu*** — c'est tout le
+        changement du 20 septembre 2026. La copie est donc faite dans les deux
+        cas : sans elle, une fiche ou un appel sans fond calculé aurait fait
+        reparaître dans la phrase le vieux réglage écrit sur le disque, c'est-à-
+        dire la couleur que plus personne n'a choisie.
         """
         if not projet:
             return Couches()
@@ -874,9 +879,7 @@ class ServiceProduction:
             objet = self._exiger(projet)
         except ProjetInconnu:
             return Couches()
-        univers = objet.univers
-        if fond is not None:
-            univers = replace(univers, fond=fond_valide(fond))
+        univers = replace(objet.univers, fond=fond_valide(fond or ""))
         # **Ce que la case dit vraiment**, et non ce qu'elle range : depuis le
         # 1ᵉʳ septembre 2026 la phrase de l'atelier — la grille, le calage, le
         # cadrage — se calcule ici plutôt que d'être recopiée dans le texte.
@@ -3234,7 +3237,7 @@ class ServiceProduction:
     # ── Le fond du jeu, et ce qu'il interdit (D3) ────────────────────────────
 
     def fond(self, projet: str | None, corrige: str | None = None) -> str:
-        """La couleur de fond de cet appel-ci — celle du jeu, ou celle qu'on corrige.
+        """La couleur de fond de cet appel-ci, **telle qu'on la lui donne**.
 
         **Un seul endroit la résout**, et c'est ce qui garantit que la phrase qui
         *demande* le fond et celle qui *l'interdit sur le sujet* parlent de la
@@ -3242,18 +3245,25 @@ class ServiceProduction:
         appel qui demande un fond magenta en interdisant le cyan — et il serait
         parti sans que rien ne le dise.
 
-        `corrige` vaut `None` quand rien n'a été corrigé, une couleur quand
-        l'écran de confirmation en a posé une, la chaîne vide quand il l'a
-        retirée pour cet appel.
+        ── Elle ne lit plus l'univers, depuis le 20 septembre 2026 (RT3) ──────
+
+        **Le fond n'est plus un réglage du jeu.** Il se calcule à chaque appel sur
+        les couleurs de l'image de référence envoyée, et c'est le service de
+        génération qui le fait, parce que c'est lui — et lui seul — qui voit les
+        images jointes. La production ne décide donc plus rien ici : elle résout
+        ce qu'on lui passe, et compose les deux phrases avec.
+
+        **`univers.fond` reste sur le disque et se relit sans casser** ; plus
+        personne ne l'emploie. Le retirer du modèle aurait cassé la relecture des
+        jeux déjà écrits pour un champ que rien ne lit — on paie un champ mort,
+        pas un projet illisible.
+
+        `corrige` vaut donc désormais le fond calculé pour cet appel ; `None` reste
+        *aucun fond*, c'est-à-dire la phrase d'avant D3, et la chaîne vide dit la
+        même chose — un appel où l'auteur a retiré le fond depuis l'écran de
+        confirmation.
         """
-        if corrige is not None:
-            return fond_valide(corrige)
-        if not projet:
-            return ""
-        try:
-            return self._exiger(projet).univers.fond
-        except ProjetInconnu:
-            return ""
+        return fond_valide(corrige) if corrige is not None else ""
 
     def interdit(
         self, projet: str | None, ecrit: str = "", corrige: str | None = None

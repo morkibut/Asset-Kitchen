@@ -731,11 +731,19 @@ class Univers:
     # un univers sans palette, qui n'a rien pour proposer — ne change pas d'un
     # mot.
     #
-    # **Un réglage, pas un calcul**, et c'est l'arbitrage de l'auteur du
-    # 2 septembre 2026. `atelier.domaine.fond.proposer` calcule la distance de
-    # quelques couleurs franches à la palette du jeu et nomme la première qui
-    # passe le seuil ; l'écran la propose, l'auteur tranche, et *s'il n'y a pas
-    # de candidat sûr l'atelier le dit* au lieu de choisir en silence.
+    # ⚠️ **Ce champ est relu, et plus jamais employé** — RT3, 20 septembre 2026.
+    #
+    # Il a été un réglage du jeu du 2 septembre au 20 septembre 2026 : l'écran
+    # proposait une couleur franche, l'auteur tranchait, et la phrase de calage
+    # la portait. L'auteur a changé d'avis — le fond se **calcule** maintenant à
+    # chaque appel sur l'image de référence envoyée, et
+    # `ServiceProduction.couches` impose cette couleur-là à la place de celle-ci.
+    # Le raisonnement entier est en tête de `atelier/domaine/fond.py`.
+    #
+    # **Il reste dans le modèle pour une seule raison, et elle suffit** : les
+    # jeux écrits entre ces deux dates le portent sur le disque, et le retirer
+    # rendrait leur `projet.json` illisible. On paie un champ mort plutôt qu'un
+    # projet qu'on ne sait plus ouvrir. L'écran qui l'expose part en RT4.
     fond: str = AUCUN_FOND
 
     # **Le modèle est un défaut par type d'asset, pas un réglage global**
@@ -818,16 +826,45 @@ class Univers:
         distinguables, et un univers ne se dira jamais réglé pour une valeur
         que personne n'a choisie.
 
-        **Le fond y entre en D3, et pour la raison exacte de la vue** : c'est un
-        choix que personne ne fait par défaut — il n'y en a pas —, donc « posé »
-        et « pas encore touché » s'y distinguent sans ambiguïté. Sans cette
-        ligne, un jeu dont on vient de choisir le fond se dirait vierge, et la
-        phrase de calage — celle qui *porte* ce fond — ne partirait pas : on
-        aurait réglé la couleur et rien ne serait parti avec.
+        ~~**Le fond y entre en D3, et pour la raison exacte de la vue.**~~
+        **Il en ressort le 20 septembre 2026 (RT3)**, et pour une raison qui est
+        l'exacte réciproque : le fond n'est plus un choix de l'auteur mais un
+        calcul de l'atelier, fait à chaque appel. Compter un calcul comme une
+        déclaration aurait fait sortir un jeu neuf de son silence — un premier
+        essai serait parti avec la grille et la caméra que personne n'a
+        choisies, ce que US-57 interdit. **Ce qui remplace la ligne retirée est
+        `dit_quelque_chose`** : le fond part quand même, seul, sans réveiller le
+        reste.
         """
         return not (
-            self.palette or self.vue or self.fond or any(c.porte for c in self.bible)
+            self.palette or self.vue or any(c.porte for c in self.bible)
         )
+
+    def dit_quelque_chose(self, nom: str) -> bool:
+        """Cette case-là a-t-elle une phrase de l'atelier à dire ? (RT3)
+
+        **Une seule case échappe au silence d'un univers vide, et c'est
+        `technique`** — parce que le fond y est entré le 20 septembre 2026 et
+        qu'il n'est pas un réglage.
+
+        US-57 interdit de faire parler un jeu que personne n'a décrit : la
+        grille, le calage et la caméra viennent de choix qu'on n'a pas faits, et
+        les envoyer quand même ferait obéir le modèle à une configuration
+        imaginaire. **Le fond n'est rien de tout cela.** Personne ne le choisit
+        plus ; l'atelier le calcule pour se protéger d'une panne mécanique — le
+        découpage qui mange une couleur du sujet —, et cette panne frappe un jeu
+        neuf exactement comme un jeu réglé. Le taire sur un premier essai
+        rendrait à ce premier essai le gris que la tranche existe pour chasser.
+
+        **Et il part seul** : sur un univers vide, `phrase_du_produit` compose la
+        phrase de calage avec une cible nulle, donc *single isolated sprite on a
+        flat solid #00B140 studio green background* et rien d'autre — pas de
+        `tile snap`, pas de grille, pas de caméra. Ce que personne n'a choisi
+        reste muet.
+        """
+        if not self.vide:
+            return True
+        return nom == "technique" and bool(self.fond)
 
     def champ(self, nom: str) -> Champ:
         for c in self.bible:
@@ -869,7 +906,20 @@ class Univers:
             # (D3). Un jeu en dessin n'a pas de carrés à caler — sa cible vaut
             # zéro ici — mais il a un fond comme les autres, et la phrase part
             # alors réduite à sa première moitié.
-            cible = self.cible_px if self.style == PIXEL_ART else 0
+            #
+            # **`self.fond` est ici la couleur de l'appel, pas celle du disque**
+            # (RT3) : `ServiceProduction.couches` compose cette phrase sur une
+            # copie de l'univers dont le fond est celui que l'atelier vient de
+            # calculer. Le champ relu du `projet.json` n'atteint donc jamais un
+            # texte qui part.
+            #
+            # **Et sur un univers vide, la cible tombe à zéro** : le fond part,
+            # le calage reste muet — voir `dit_quelque_chose`. C'est ce qui
+            # permet au fond d'atteindre un jeu neuf sans faire parler un jeu
+            # que personne n'a décrit.
+            cible = (
+                self.cible_px if self.style == PIXEL_ART and not self.vide else 0
+            )
             return phrase_de_calage(cible, self.fond)
         if nom == "vue":
             connue = vue_connue(self.vue) if self.vue else None
@@ -962,7 +1012,7 @@ class Univers:
         champ = self.champ(nom)
         if not champ.actif:
             return ""
-        atelier = "" if self.vide else self.phrase_du_produit(nom)
+        atelier = self.phrase_du_produit(nom) if self.dit_quelque_chose(nom) else ""
         if nom in CHAMPS_DE_L_ATELIER:
             return atelier
         ecrit = champ.texte.strip()

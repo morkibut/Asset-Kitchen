@@ -241,7 +241,11 @@ def test_la_case_technique_garde_son_texte_dauteur(client, double):
     _envoyer(client)
     parti = _parti(double)
 
-    assert "single isolated sprite on a flat background" in parti
+    # *Le fond nommé est arrivé avec RT3* : la phrase de calage porte désormais
+    # la couleur que l'atelier calcule pour l'appel. Ce que ce test dit n'a pas
+    # bougé — les deux textes s'empilent dans la même case.
+    assert "single isolated sprite on a flat solid" in parti
+    assert "background" in parti
     assert "pas de texte, pas de cadre" in parti
 
 
@@ -444,10 +448,27 @@ def test_un_jeu_cree_sans_rien_regler_fabrique_quand_meme(client, double):
     Un jeu neuf, aucune allure, aucune vue, aucun monde : l'appel part, et il ne
     porte que le sujet. C'est l'invariant d'US-57 vérifié une fois de plus, et
     c'est lui qui autorise les trois derniers pas du parcours à être optionnels.
+
+    *Repris le 20 septembre 2026 (RT3)* : **une phrase s'ajoute, et une seule**
+    — le fond que l'atelier calcule pour cet appel. Elle n'enfreint pas US-57,
+    elle en est la lecture exacte : ce que la règle interdit, c'est de faire
+    obéir le modèle à une configuration que personne n'a choisie, et le fond
+    n'en est pas une — personne ne le choisit plus, l'atelier le calcule pour se
+    protéger du découpage qui mange une couleur du sujet. **Tout ce qui vient
+    d'un choix reste muet** : pas de grille, pas de calage en carrés, pas de
+    caméra. C'est ce que les trois dernières lignes vérifient.
     """
     client.post("/api/projects", json={"nom": "Tout neuf"})
 
     _envoyer(client, prompt="un tonneau")
     parti = _parti(double)
 
-    assert parti.strip() == "REQUEST\n\nun tonneau"
+    assert parti.strip() == (
+        "CONTEXT\n\n"
+        "Technical constraints: single isolated sprite on a flat solid "
+        "#00B140 studio green background\n\n"
+        "REQUEST\n\nun tonneau"
+    )
+    assert "tile snap" not in parti
+    assert "pixel art on a" not in parti
+    assert "CAMERA" not in parti

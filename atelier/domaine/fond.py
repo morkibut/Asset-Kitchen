@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Le fond sur lequel le sujet est posé — **un réglage du jeu, jamais un calcul** (D3).
+"""Le fond sur lequel le sujet est posé — **un calcul par appel, et non un réglage** (D3, RT3).
 
 Le produit demandait jusqu'ici *un fond plat*, sans dire lequel : le modèle
 rendait donc un gris clair, c'est-à-dire une couleur que le sujet porte aussi.
@@ -7,20 +7,44 @@ De là le découpage à reprendre sur presque chaque image — le remplissage de
 le bord mange ce qui ressemble au fond, et une joue grise ressemble à un fond
 gris.
 
-**Une couleur franche que rien dans le jeu ne contient rend le découpage presque
-gratuit et presque parfait.** C'est tout le contenu de cette tranche, et c'est
-aussi tout ce qu'elle promet.
+**Une couleur franche que le sujet ne contient pas rend le découpage presque
+gratuit et presque parfait.** C'est tout le contenu de ce module, et c'est aussi
+tout ce qu'il promet.
 
-── Ce que ce module fait, et surtout ce qu'il ne fait pas ────────────────────
+── Il choisit, il ne propose plus — **et c'est un revirement daté** ──────────
 
-**Il propose, il n'impose pas.** L'auteur choisit son fond ; l'atelier calcule à
-quelle distance chaque candidat tombe de la palette du jeu et nomme le premier
-qui passe le seuil. *S'il n'y en a aucun, il le dit* et laisse le fond en place :
-choisir en silence une couleur que le jeu contient serait exactement la panne
-qu'on répare. La version précédente de la tranche voulait qu'il **calcule** la
-couleur et l'impose ; l'auteur a tranché autrement le 2 septembre 2026, et c'est
-plus simple — *si la couleur choisie donne un moins bon résultat, il la change en
-un geste et le voit sur l'image suivante.*
+**Deux décisions contraires se sont succédé sur ce module, et seule la seconde
+est en vigueur.**
+
+*Le 2 septembre 2026, l'auteur a tranché : il propose, il n'impose pas.* Le fond
+était alors un réglage du jeu ; l'atelier calculait à quelle distance chaque
+candidat tombait de **la palette du projet**, nommait le premier qui passait le
+seuil, et se taisait quand il n'y en avait aucun. La raison était bonne : *si la
+couleur choisie donne un moins bon résultat, l'auteur la change en un geste et le
+voit sur l'image suivante.*
+
+*Le 20 septembre 2026, l'auteur a changé d'avis, et il l'emporte.* À l'usage, le
+réglage s'est révélé être un faux ami — son nom à l'écran, *« le fond du jeu »*,
+se lisait comme la couleur de fond de l'application, et personne ne le posait
+donc jamais. Un réglage que l'on ne pose pas ne protège rien : les images
+partaient sur *un fond plat* sans couleur, c'est-à-dire sur la panne que la
+tranche existait pour fermer. **Ce qui protège vraiment le découpage, c'est le
+calcul fait à chaque appel** — et il est plus juste que le réglage, parce qu'il
+regarde les couleurs de **l'image de référence envoyée avec cet appel-là**, qui
+est le vrai sujet, plutôt que la palette moyenne du jeu entier.
+
+Quatre choses changent, et rien d'autre :
+
+· **sur quoi on calcule** — l'image de référence envoyée, au lieu de la palette ;
+· **quand on calcule** — à chaque appel, au lieu d'une fois au réglage ;
+· **ce qu'on fait sans rien à comparer** — le vert de studio, au lieu du silence ;
+· **qui décide** — l'atelier seul, au lieu de l'auteur.
+
+Le calcul lui-même — les six candidats, la distance du détourage — ne bouge pas
+d'une ligne : il était juste, il l'est resté, il a seulement changé d'entrée.
+
+**`proposer` survit en sursis** : il ne sert plus qu'à l'écran de réglage, que la
+tranche suivante retire. Rien de ce qui part au fournisseur ne le lit plus.
 
 **La distance est celle du détourage, et pas une autre.** Un pixel est mangé par
 le remplissage depuis le bord quand aucune de ses trois composantes ne s'écarte
@@ -39,7 +63,10 @@ bord, et les pixels encore collés à la couleur de fond
 ⚠️ **Ce que ça coûte, et il faut le savoir** : cette tranche change ce qui part
 au fournisseur, donc elle **invalide les comparaisons avec les tirages déjà
 payés**. Les 135 notes d'animation restent valables entre elles, jamais contre un
-tirage postérieur. C'est un prix accepté, pas un oubli.
+tirage postérieur. C'est un prix accepté, pas un oubli — **et il se repaie le
+20 septembre 2026**, puisque le fond qui part change une seconde fois. Une image
+tirée avant RT3 et une image tirée après ne se comparent pas davantage qu'un
+tirage d'avant D3 et un tirage d'après.
 """
 
 from __future__ import annotations
@@ -172,9 +199,29 @@ CANDIDATS: tuple[Candidat, ...] = (
 )
 
 
+# **Le septième, et il n'est pas dans la liste des six** — c'est la décision du
+# 20 septembre 2026, prise à la lettre. Il n'est pas un concurrent qu'on élit :
+# il est ce qu'on prend **quand il n'y a rien à comparer**, c'est-à-dire quand
+# aucune image de référence ne part avec l'appel. L'entrer dans `CANDIDATS`
+# l'aurait mis en compétition avec les six, donc rendu gagnant sur des sujets où
+# il est justement le plus dangereux — un décor, un feuillage, une potion.
+#
+# `#00B140` et non `#00FF00` : c'est le vert des fonds de studio, celui des
+# plateaux de télévision, et l'auteur l'a nommé lui-même le 20 septembre. Le vert
+# pur est plus éloigné d'une peau sur le papier, mais il est aussi la couleur la
+# plus courante d'un dessin de jeu ; le vert de studio est celui que le monde
+# entier emploie précisément parce qu'il ne ressemble à rien de ce qu'on filme.
+VERT_DE_STUDIO = Candidat("#00B140", "studio green")
+
+
 @dataclass(frozen=True, slots=True)
 class Proposition:
     """Ce que l'atelier propose comme fond — **ou la raison de ne rien proposer**.
+
+    ⚠️ **En sursis depuis le 20 septembre 2026.** Rien de ce qui part au
+    fournisseur ne passe plus par là : c'est `Choix` qui décide, plus bas. Cette
+    classe et `proposer` ne servent plus qu'à l'écran de réglage du fond, que la
+    tranche suivante retire — et elles partiront avec lui.
 
     `couleur` vide veut dire *aucun candidat sûr*, et `raison` dit alors pourquoi,
     en français et à l'auteur. Les deux ne se contredisent jamais : `sure` est la
@@ -224,6 +271,10 @@ AUCUN_CANDIDAT_SUR = (
 def proposer(palette: Iterable[str]) -> Proposition:
     """Le premier candidat assez loin de la palette du jeu — **ou rien** (D3).
 
+    ⚠️ **Plus rien de ce qui part ne l'appelle** (RT3, 20 septembre 2026) : le
+    fond d'un appel se décide par `choisir`, sur l'image de référence envoyée.
+    Cette fonction ne sert plus qu'à l'écran de réglage que RT4 retire.
+
     **Un calcul fait une fois, et il tient en trois lignes** : la palette d'un
     projet est une liste fermée de quelques dizaines de couleurs, et l'écart d'un
     candidat à cette liste est le plus petit de ses écarts à chacune.
@@ -271,6 +322,88 @@ def proposer(palette: Iterable[str]) -> Proposition:
     )
 
 
+@dataclass(frozen=True, slots=True)
+class Choix:
+    """Le fond de **cet appel-ci** — une couleur, toujours, jamais un refus.
+
+    C'est ce qui le sépare de `Proposition` : celle-ci pouvait ne rien dire et
+    laisser l'auteur trancher ; celui-ci part au fournisseur, donc il doit
+    répondre. Quand rien ne permet de choisir, il répond le vert de studio et le
+    dit par `par_defaut` plutôt que de rendre le vide.
+
+    `ecart` et `voisine` sont là pour **comprendre**, jamais pour décider : la
+    couleur de l'image la plus proche du fond retenu, et de combien elle en est.
+    Un écart de 200 dit que le découpage est hors de danger, un écart de 30 dit
+    qu'il va mordre — et c'est une information utile même quand on n'a rien de
+    mieux à proposer, parce qu'il n'y a pas d'autre candidat à aller chercher.
+    """
+
+    couleur: str
+    nom: str
+    ecart: int = 0
+    voisine: str = ""
+    par_defaut: bool = False
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "couleur": self.couleur,
+            "nom": self.nom,
+            "ecart": self.ecart,
+            "voisine": self.voisine,
+            "par_defaut": self.par_defaut,
+        }
+
+
+def choisir(couleurs: Iterable[str]) -> Choix:
+    """Le candidat **le plus éloigné** de ces couleurs-là — ou le vert de studio.
+
+    Ce sont les couleurs lues sur les images de référence de l'appel, et elles
+    arrivent **en un seul tas**. Plusieurs références ne se départagent donc pas :
+    la couleur retenue est loin de toutes, parce qu'un fond qui fuirait la
+    première image en tombant sur la seconde ne protégerait rien — c'est bien la
+    même image que le modèle va rendre.
+
+    **Le plus éloigné, et non le premier qui passe un seuil.** `proposer` cherchait
+    un candidat *acceptable* parce qu'il y avait un humain derrière pour arbitrer
+    le refus ; ici il n'y a personne, l'appel part, et « aucun candidat sûr » ne
+    serait pas une réponse mais une image perdue. On prend donc toujours le moins
+    mauvais, ce qui, sur un jeu peu coloré, est aussi le très bon.
+
+    **À égalité, c'est l'ordre de `CANDIDATS` qui tranche**, donc la rareté dans
+    un dessin de jeu : le magenta avant le cyan, le vert pur seulement quatrième.
+    Deux candidats exactement aussi loin arrivent sur des images très pauvres en
+    couleurs — une silhouette noire, un aplat blanc — et il n'y a alors rien de
+    mieux à lire qu'une préférence écrite d'avance.
+
+    **Rien à comparer rend le vert de studio**, et c'est le cas nommé : un appel
+    sans image de référence, ou dont les références sont illisibles. On ne rend
+    pas le vide, parce que le vide était le comportement d'avant D3 — *un fond
+    plat* sans couleur, que le modèle rendait en gris clair, c'est-à-dire en une
+    couleur que le sujet porte aussi.
+    """
+    propres = [c for c in (fond_valide(x) for x in couleurs) if c]
+    if not propres:
+        return Choix(
+            couleur=VERT_DE_STUDIO.couleur, nom=VERT_DE_STUDIO.nom, par_defaut=True
+        )
+
+    meilleur: Choix | None = None
+    for candidat in CANDIDATS:
+        voisine = min(propres, key=lambda c: ecart(candidat.couleur, c))
+        distance = ecart(candidat.couleur, voisine)
+        # **Strictement supérieur** : à égalité, le premier écrit gagne, et
+        # l'ordre de la liste est la préférence.
+        if meilleur is None or distance > meilleur.ecart:
+            meilleur = Choix(
+                couleur=candidat.couleur,
+                nom=candidat.nom,
+                ecart=distance,
+                voisine=voisine,
+            )
+    assert meilleur is not None  # `CANDIDATS` n'est jamais vide.
+    return meilleur
+
+
 def nom_du_fond(couleur: str) -> str:
     """Le mot anglais de cette couleur-là, quand l'atelier la connaît.
 
@@ -278,9 +411,16 @@ def nom_du_fond(couleur: str) -> str:
     déduit de la couleur, il ne se range pas à côté d'elle. Une couleur que
     l'auteur a tapée lui-même n'a pas de nom, et le texte part alors avec le seul
     hexadécimal — ce qui est exact, et vaut mieux qu'un nom approché.
+
+    **Le vert de studio est lu ici avec les six autres** bien qu'il ne soit pas
+    dans `CANDIDATS` : il ne concourt pas, mais quand c'est lui qui part, le
+    modèle doit lire *studio green* à côté de `#00B140` comme il lit *magenta* à
+    côté de `#FF00FF`. Le laisser sans nom aurait fait partir le repli — donc le
+    cas le plus fréquent d'un appel sans référence — moins bien armé que les six.
     """
     propre = fond_valide(couleur)
-    return next((c.nom for c in CANDIDATS if c.couleur == propre), "")
+    connus = CANDIDATS + (VERT_DE_STUDIO,)
+    return next((c.nom for c in connus if c.couleur == propre), "")
 
 
 def dit(couleur: str) -> str:

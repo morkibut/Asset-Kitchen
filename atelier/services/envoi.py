@@ -359,6 +359,12 @@ class ServiceEnvoi:
         service ajoute est ce qui n'appartient qu'à l'écran — la proposition du
         jeu, et le fait qu'une correction est posée —, et aucun des deux
         n'entre dans ce qui part.
+
+        ⚠️ **`du_jeu` et `propose` sont en sursis depuis RT3** (20 septembre
+        2026). Le fond n'est plus un réglage : `couleur` est désormais ce que
+        l'atelier a calculé sur les images jointes, et ces deux champs-là ne
+        décrivent plus que l'écran de réglage que la tranche suivante retire.
+        Ils restent tant qu'il est là, pour ne pas le casser d'ici.
         """
         propose = self._univers.fond_propose(projet).en_json()
         return {

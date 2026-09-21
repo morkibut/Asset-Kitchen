@@ -52,40 +52,37 @@ class MesureClip:
         return round(self.images / self.cadence, 2) if self.cadence else 0.0
 
 
-# **Les fonds francs qu'une image de départ peut recevoir**, dans l'ordre où on
-# les préfère à écart égal. Le gris d'avant ressemblait au sujet — une joue, une
-# armure, une ombre —, et le détourage de chaque image du clip mangeait ce qui lui
-# ressemblait. Le modèle vidéo garde le fond de l'image de départ : c'est donc
-# ici, et nulle part ailleurs, qu'il se choisit.
-FONDS_FRANCS: tuple[tuple[str, tuple[int, int, int]], ...] = (
-    ("vert", (0, 255, 0)),
-    ("magenta", (255, 0, 255)),
-    ("bleu", (0, 0, 255)),
-)
+def fond_le_plus_eloigne(sprite: bytes) -> tuple[int, int, int]:
+    """Le fond franc **le plus loin de toutes les couleurs de l'image de départ**.
 
+    Le gris d'avant ressemblait au sujet — une joue, une armure, une ombre —, et
+    le détourage de chaque image du clip mangeait ce qui lui ressemblait. Le
+    modèle vidéo garde le fond de l'image de départ : c'est donc bien ici que le
+    fond d'un clip se décide.
 
-def fond_le_plus_eloigne(image: "Image.Image") -> tuple[int, int, int]:
-    """Le fond franc **le plus loin de toutes les couleurs du sujet**.
+    ── Le même choix que l'image, depuis le 20 septembre 2026 (RT3) ───────────
 
-    La distance est celle du détourage : la plus grande des trois différences
-    de composante. Pour chaque fond, on regarde les pixels du sujet qui en sont
-    le plus près ; le fond retenu est celui dont ces pixels-là sont le plus loin.
-    Le 1 % le plus proche est laissé de côté, pour qu'une poussière verte dans
-    un œil ne chasse pas le vert d'un sujet qui n'en porte pas.
+    **Ce module avait sa propre liste de trois couleurs — vert, magenta, bleu —
+    et sa propre façon de les départager.** C'était une seconde vérité sur la
+    même question : *quelle couleur franche le découpage ne confondra pas avec ce
+    sujet ?* L'auteur a nommé l'image et la vidéo ensemble, et il a raison de les
+    nommer ensemble — un clip part d'une image, et les deux se détourent pareil.
+
+    La décision est donc rendue par `atelier.domaine.fond.choisir`, avec les six
+    candidats de l'atelier et le vert de studio en repli. Les couleurs du sujet
+    se lisent par `couleurs_lues`, **exactement comme pour une image** : le même
+    détourage préalable, la même coupe médiane, donc la même réponse sur la même
+    image. Deux lectures différentes auraient fini par poser un clip sur un fond
+    et son image de départ sur un autre.
+
+    *Ce que cela change à l'arrivée* : le vert pur cesse d'être le premier servi —
+    il était en tête d'une liste de trois, il est quatrième sur six —, et une
+    image de départ illisible tombe sur le vert de studio au lieu du vert pur.
     """
-    import numpy as np
+    from atelier.domaine.fond import choisir, rvb
+    from atelier.image.palette import couleurs_lues
 
-    pixels = np.asarray(image.convert("RGBA"), dtype=np.int16).reshape(-1, 4)
-    sujet = pixels[pixels[:, 3] >= 128, :3]
-    if not len(sujet):
-        return FONDS_FRANCS[0][1]
-    meilleur, score = FONDS_FRANCS[0][1], -1.0
-    for _, couleur in FONDS_FRANCS:
-        ecarts = np.abs(sujet - np.asarray(couleur, dtype=np.int16)).max(axis=1)
-        proche = float(np.percentile(ecarts, 1))
-        if proche > score:
-            meilleur, score = couleur, proche
-    return meilleur
+    return rvb(choisir(couleurs_lues([sprite])).couleur)
 
 
 def composer_entree(
@@ -97,8 +94,9 @@ def composer_entree(
     plus ; lui envoyer un sprite de 64 px, c'est lui demander d'inventer tout ce
     qu'il ne voit pas. Le sujet est donc agrandi jusqu'à occuper les quatre
     cinquièmes de la toile, sur le fond franc le plus éloigné de ses couleurs
-    (`fond_le_plus_eloigne`) — vert, magenta ou bleu vif. Le modèle vidéo garde
-    ce fond sur tout le clip, et le détourage le retire sans toucher au sujet.
+    (`fond_le_plus_eloigne`) — **le même choix que pour une image**, par les mêmes
+    six candidats. Le modèle vidéo garde ce fond sur tout le clip, et le détourage
+    le retire sans toucher au sujet.
 
     **Le facteur est entier**, dans un sens comme dans l'autre. Un facteur
     quelconque rendrait les pixels rectangulaires, et le modèle animerait une
@@ -152,7 +150,11 @@ def composer_entree(
             f"le sujet mis à l'échelle ({sujet.width}×{sujet.height}) ne tient pas "
             f"dans une toile de {canevas[0]}×{canevas[1]}"
         )
-    toile = Image.new("RGB", canevas, fond_le_plus_eloigne(image))
+    # **Le fond se lit sur le sprite reçu, pas sur l'image détourée ci-dessus** :
+    # `couleurs_lues` refait le détourage lui-même, de la façon dont il se fait
+    # partout ailleurs dans l'atelier, et lui donner une image déjà travaillée
+    # aurait été une seconde préparation de la même chose.
+    toile = Image.new("RGB", canevas, fond_le_plus_eloigne(sprite))
     toile.paste(
         sujet, ((canevas[0] - sujet.width) // 2, (canevas[1] - sujet.height) // 2), sujet
     )

@@ -74,7 +74,7 @@ from atelier.domaine.personnage import LIBRE
 from atelier.domaine.personnage import PLANCHE as USAGE_PLANCHE
 from atelier.domaine.personnage import direction_de_lusage
 from atelier.domaine.direction import composer
-from atelier.domaine.fond import fond_valide
+from atelier.domaine.fond import choisir, fond_valide
 from atelier.domaine.ambiance import COULEURS, REFERENCES, TEXTES, prises_du_mode
 from atelier.domaine.envoi import (
     AMBIANCE,
@@ -105,6 +105,7 @@ from atelier.domaine import texte_local
 from atelier.domaine.workflow import GRAINE_MAX, WorkflowRefuse
 from atelier.fournisseur import PortFournisseur
 from atelier.image import bande_de_palette, empreinte_de, mesurer
+from atelier.image.palette import couleurs_lues
 from atelier.image.mesures import extension
 from atelier.domaine.asset import Asset
 from atelier.services.assets import AssetInconnu, ServiceAssets
@@ -881,6 +882,12 @@ class ServiceGenerations:
         source = _source_de_mise_en_page(
             demande.garder_mise_en_page, reinjectes, references
         )
+        # **Le fond de cet appel-ci, calculé sur les images qui partent avec lui**
+        # (RT3). Il se résout **ici**, avant le texte : la phrase de calage le
+        # nomme, la phrase d'interdiction le nomme, et les références
+        # transparentes s'y posent — trois emplois d'une seule couleur, qui ne
+        # peuvent donc pas se contredire.
+        fond = self._fond_de_l_appel(projet, reinjectes, tri)
         # **Le texte tel qu'il partira, et un seul endroit le compose** (US-158).
         # `_texte` est aussi ce que l'aperçu du champ de prompt montre avant de
         # lancer : deux compositions écrites à deux endroits finiraient par
@@ -906,7 +913,7 @@ class ServiceGenerations:
             # **Un workflow local qui ne relie pas le négatif ne le lit pas**
             # (ML4) : la génération ne dit donc pas qu'il est parti.
             prompt_negatif=(
-                self._interdit(projet, demande.prompt_negatif, tri)
+                self._interdit(projet, demande.prompt_negatif, fond)
                 if self._negatif_lu(identifiant_modele)
                 else ""
             ),
@@ -935,12 +942,13 @@ class ServiceGenerations:
                     mise_en_page=source,
                 ),
                 mise_en_page=demande.garder_mise_en_page,
+                fond=fond,
             ),
         )
         demande = replace(
             demande,
             references=self._octets_references(
-                reinjectes, projet, fond=self._fond_des_references(identifiant_modele, projet, tri)
+                reinjectes, projet, fond=self._fond_des_references(identifiant_modele, fond)
             )
             # **Le gabarit part comme une référence de plus, et il en est une.**
             # Il occupe donc une place dans le plafond du modèle et il coûte chez
@@ -1139,8 +1147,14 @@ class ServiceGenerations:
             echelle="matière",
             # Les octets, pour que le refus du modèle compte de vraies références
             # (`Modele.refus`) au lieu d'une liste vide qui mentirait.
+            # **Une matière ne part sur aucun fond** (RT3). Son texte est
+            # composé de bout en bout par l'appelant et ne parle jamais de fond ;
+            # poser sa référence sur une couleur franche que le texte ne demande
+            # pas aurait mis l'image et la phrase en désaccord — exactement la
+            # panne que le fond calculé existe pour fermer. Le gris neutre de
+            # `sur_le_fond`, donc, comme avant la tranche.
             references=self._octets_references(
-                reinjectes, projet, fond=self._fond_des_references(identifiant_modele, projet, None)
+                reinjectes, projet, fond=self._fond_des_references(identifiant_modele, "")
             ),
             options=({"graine": graine} if graine is not None else {}),
         )
@@ -1608,10 +1622,18 @@ class ServiceGenerations:
                 demande.get("decouper_a_l_arrivee")
                 and demande.get("garder_mise_en_page")
             ),
+            # **Le fond se recalcule, il ne se relit pas** (RT3). Le texte de la
+            # génération porte déjà la couleur qui est partie ; les références,
+            # elles, se reposent dessus, et le calcul rend la même réponse sur
+            # les mêmes images — c'est ce qui fait qu'un appel et sa relance
+            # suivent le même chemin, la promesse de cette méthode.
             references=self._octets_references(
                 generation.references,
                 generation.projet,
-                fond=self._fond_des_references(generation.modele, generation.projet, None),
+                fond=self._fond_des_references(
+                    generation.modele,
+                    self._fond_de_l_appel(generation.projet, generation.references),
+                ),
             )
             # **Le gabarit se redessine, il ne se relit pas.** Il n'est ni un
             # asset ni une carte : il n'a pas d'identifiant, il n'est nulle part
@@ -2073,6 +2095,12 @@ class ServiceGenerations:
         # **Refaire une planche** (RS2) : le calage passe au pluriel, le cadre
         # cède sa place à la consigne de mise en page, la caméra cesse de primer.
         mise_en_page: bool = False,
+        # **Le fond calculé pour cet appel-ci** (RT3). `None` veut dire *aucun
+        # fond* : la phrase de calage est alors celle d'avant D3. Seuls les deux
+        # chemins qui voient les images jointes — la soumission et son aperçu —
+        # savent le calculer, et ils le passent ; un appelant qui l'ignore
+        # compose comme si rien n'était joint.
+        fond: str | None = None,
     ) -> list[dict[str, Any]]:
         """Ce qui part, **une ligne par chose**, dans l'ordre de l'assemblage (E14).
 
@@ -2130,14 +2158,18 @@ class ServiceGenerations:
         if self._production is not None:
             lignes.extend(
                 resoudre(
-                    # **Le fond corrigé descend jusqu'à la case qui le porte**
+                    # **Le fond de l'appel descend jusqu'à la case qui le porte**
                     # (D3). Il ne fabrique pas de ligne à lui : la case
                     # `technique` dit déjà le fond depuis que la phrase de calage
                     # le nomme, et lui en donner une seconde aurait fait partir
                     # la couleur deux fois dans le même texte.
-                    self._production.couches(
-                        projet, personnage, (tri or Tri()).fond
-                    ),
+                    #
+                    # **Le calcul l'emporte sur le tri, et non l'inverse** (RT3) :
+                    # `fond` arrive déjà résolu par `_fond_de_l_appel`, qui a lu
+                    # la correction de l'écran de confirmation avant de calculer.
+                    # Relire `tri.fond` ici aurait été une seconde résolution de
+                    # la même chose.
+                    self._production.couches(projet, personnage, fond),
                     tri,
                 )
             )
@@ -2592,7 +2624,7 @@ class ServiceGenerations:
         )
 
     def _interdit(
-        self, projet: str | None, ecrit: str, tri: "Tri | None" = None
+        self, projet: str | None, ecrit: str, fond: str | None = None
     ) -> str:
         """Le champ d'interdiction tel qu'il partira — **un seul endroit l'écrit**.
 
@@ -2604,10 +2636,14 @@ class ServiceGenerations:
 
         Sans service de production — un essai qui n'en monte pas — il reste ce
         que l'auteur a écrit, ce qui est le comportement d'avant D3.
+
+        **`fond` est la couleur calculée pour cet appel** (RT3), déjà résolue :
+        c'est exactement celle que la phrase de calage demande, donc les deux
+        phrases ne peuvent pas se contredire.
         """
         if self._production is None:
             return ecrit
-        return self._production.interdit(projet, ecrit, (tri or Tri()).fond)
+        return self._production.interdit(projet, ecrit, fond)
 
     def _texte(
         self,
@@ -2623,6 +2659,7 @@ class ServiceGenerations:
         tri: Tri | None = None,
         roles: Sequence[str] = (),
         mise_en_page: bool = False,
+        fond: str | None = None,
     ) -> str:
         """Les lignes allumées, jointes — **le seul endroit qui écrive le prompt**.
 
@@ -2645,6 +2682,7 @@ class ServiceGenerations:
             tri=tri,
             roles=roles,
             mise_en_page=mise_en_page,
+            fond=fond,
         )
         local = self._texte_local(lignes, modele, pliage)
         return joindre(lignes) if local is None else local["texte"]
@@ -2747,6 +2785,7 @@ class ServiceGenerations:
         if garder_mise_en_page:
             _mise_en_page_permise(pliage, piece, pose, direction)
         roles: tuple[str, ...] = ()
+        partantes: tuple[Reinjection, ...] = ()
         if modele:
             partantes, _ = self._reinjections(
                 projet,
@@ -2774,6 +2813,16 @@ class ServiceGenerations:
                     garder_mise_en_page, partantes, references
                 ),
             )
+        # **Le fond de l'appel, calculé sur les mêmes images qu'à la soumission**
+        # (RT3). C'est la promesse de cet aperçu prise à la lettre sur le seul
+        # champ que la tranche ajoute : l'écran montre la couleur qui partira,
+        # parce qu'il la calcule par le même chemin, sur les mêmes références.
+        #
+        # **Sans modèle, il n'y a pas de références à lire** — `partantes` reste
+        # vide, faute de plafond pour les trier — et le fond tombe alors sur le
+        # vert de studio. C'est la même convention que le reste de la méthode :
+        # un aperçu sans modèle compose comme si rien n'était joint.
+        fond = self._fond_de_l_appel(projet, partantes, tri)
         lignes = self.lignes(
             sujet,
             repris=repris,
@@ -2787,6 +2836,7 @@ class ServiceGenerations:
             tri=tri,
             roles=roles,
             mise_en_page=garder_mise_en_page,
+            fond=fond,
         )
         # **Un style local lit les mêmes lignes, jointes autrement** (ML4) : une
         # seule partie sans titre, et ce qui n'y entre pas est dans `local`.
@@ -2830,19 +2880,20 @@ class ServiceGenerations:
             ],
             # ── Le fond, et ce qu'il interdit (D3) ───────────────────────────
             #
-            # **Le fond résolu, pour que l'écran montre la couleur sur laquelle
-            # il travaille** — celle du jeu, ou celle qu'on vient de corriger
-            # pour cet appel. Il est *déjà* dans le texte, dans la case
-            # `technique` : ce champ ne le double pas, il le nomme, pour que
-            # l'écran puisse en dessiner la pastille sans relire de l'anglais.
-            "fond": self._interdit_fond(projet, tri),
+            # **Le fond calculé, pour que l'écran montre la couleur sur laquelle
+            # il travaille** — celle que l'atelier vient de choisir sur les
+            # images jointes, ou celle que l'auteur a corrigée pour cet appel. Il
+            # est *déjà* dans le texte, dans la case `technique` : ce champ ne le
+            # double pas, il le nomme, pour que l'écran puisse en dessiner la
+            # pastille sans relire de l'anglais.
+            "fond": fond,
             # **Et l'interdiction telle qu'elle partira**, dans l'autre champ de
             # la demande. C'est le seul morceau de ce qui part que le texte ne
             # contient pas ; sans cette ligne, l'écran qui promet de tout montrer
             # aurait un angle mort — et ce serait celui que la tranche vient
             # d'ouvrir.
             "interdiction": (
-                self._interdit(projet, prompt_negatif, tri)
+                self._interdit(projet, prompt_negatif, fond)
                 if self._negatif_lu(modele)
                 else ""
             ),
@@ -2850,11 +2901,43 @@ class ServiceGenerations:
             "negatif_lu": self._negatif_lu(modele),
         }
 
-    def _interdit_fond(self, projet: str | None, tri: "Tri | None") -> str:
-        """La couleur de fond de cet appel-ci, résolue par la production."""
-        if self._production is None:
-            return ""
-        return self._production.fond(projet, (tri or Tri()).fond)
+    def _fond_de_l_appel(
+        self,
+        projet: str | None,
+        reinjectes: Sequence[Reinjection],
+        tri: "Tri | None" = None,
+    ) -> str:
+        """La couleur de fond de cet appel-ci — **calculée sur ce qui part avec lui**.
+
+        C'est le cœur de RT3, et c'est ici qu'il vit plutôt que dans la production
+        pour une raison mécanique : **ce service est le seul qui voie les images
+        jointes**. La production compose des phrases, elle ne relit pas d'octets.
+
+        Trois pas, et rien de plus :
+
+        1. **La correction de l'écran de confirmation passe devant.** Elle est un
+           geste de l'auteur sur cet appel-là, et la règle du dépôt ne bouge pas :
+           ce que l'auteur pose ne cède jamais devant ce que le produit calcule.
+           La chaîne vide est un geste elle aussi — *pas de fond pour cet appel*.
+        2. **Les couleurs des références se lisent en un seul tas**, par le même
+           chemin que la palette d'un jeu (`couleurs_lues`) : même détourage
+           préalable, même coupe médiane. Un tas et non une liste par image,
+           parce que le fond doit être loin de **toutes** — il n'y a qu'une image
+           qui revient.
+        3. **Le domaine tranche** (`fond.choisir`) : le candidat le plus éloigné,
+           ou le vert de studio quand il n'y a rien à comparer.
+
+        **Une image illisible ne fait pas échouer l'appel** : elle ne dit rien de
+        ses couleurs, et un appel qui ne part pas coûte plus cher qu'un fond
+        choisi sur une image de moins. Un asset **absent**, lui, refuse comme il
+        refusait déjà — c'est `_octets_references` qui le dit, et la raison n'a
+        pas changé.
+        """
+        if tri is not None and tri.fond is not None:
+            return fond_valide(tri.fond)
+        return choisir(
+            couleurs_lues(self._octets_references(tuple(reinjectes), projet))
+        ).couleur
 
     def _sous_le_plafond(
         self,
@@ -3611,28 +3694,30 @@ class ServiceGenerations:
             return tuple(octets)
         return tuple(sur_le_fond(image, fond) for image in octets)
 
-    def _fond_des_references(
-        self, modele: str, projet: str | None, tri: "Tri | None"
-    ) -> str | None:
+    def _fond_des_references(self, modele: str, fond: str) -> str | None:
         """Le fond sur lequel poser une référence transparente, ou rien.
 
         **Rien pour un workflow importé à la main** : ComfyUI reçoit l'image
         avec sa transparence, la file locale la garde telle quelle, et c'est le
         moteur qui la pose sur blanc au dépôt (ML1).
 
-        **Le fond du jeu pour un style local** (relecture ML, défaut 8), comme
-        pour un modèle distant depuis 99b88c5 : « partir de cette image »
+        **Le fond de l'appel pour un style local** (relecture ML, défaut 8),
+        comme pour un modèle distant depuis 99b88c5 : « partir de cette image »
         repeint aussi le fond, et une image de départ sur blanc sous un texte qui
         demande #FF00FF rendait du blanc que le détourage du retour ne connaît
         pas. « Garder ce sujet » suit la même règle : Klein recopie ce qu'il
         voit autour du sujet, et le fond qu'il voit doit être celui que le texte
-        demande. Sans fond réglé, le gris neutre de `sur_le_fond`.
+        demande. Sans fond, le gris neutre de `sur_le_fond`.
+
+        **Elle ne calcule plus rien depuis RT3** : le fond arrive tranché par
+        `_fond_de_l_appel`, et cette méthode ne décide plus que d'une chose —
+        *cet adaptateur-ci veut-il l'image posée, ou telle quelle ?*
         """
         if self._genre_local(modele):
-            return self._interdit_fond(projet, tri)
+            return fond
         if modele.startswith("ComfyUI:"):
             return None
-        return self._interdit_fond(projet, tri)
+        return fond
 
     # ── Enregistrement ───────────────────────────────────────────────────────
 

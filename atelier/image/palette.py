@@ -243,6 +243,45 @@ def palette_de(artworks: list[bytes], couleurs: int = COULEURS) -> tuple[str, ..
     )
 
 
+def couleurs_lues(images: Sequence[bytes]) -> tuple[str, ...]:
+    """Les couleurs de ces images-là, **en un seul tas et sans jamais lever** (RT3).
+
+    C'est `palette_de`, la lecture de palette des artworks, rendue employable
+    par ce qui choisit un fond — l'image comme la vidéo. Le même chemin, et
+    c'est une décision : deux façons de lire les couleurs d'une image auraient
+    fini par répondre deux choses sur la même image, et le fond calculé n'aurait
+    plus correspondu à ce que l'écran de la palette montre.
+
+    **Un seul tas pour toutes les images**, parce que le modèle ne rend qu'une
+    image : un fond qui fuirait la première référence en tombant sur la seconde
+    ne protégerait pas le découpage. `palette_de` empile déjà les pixels de tous
+    les artworks avant de couper, donc il n'y a rien à ajouter — seulement à ne
+    pas boucler.
+
+    **Une image illisible ne dit rien et n'arrête rien** — *et elle n'emporte
+    pas les autres avec elle*. Un PNG tronqué, un format que Pillow ne connaît
+    pas : elle est écartée seule, et le tas se fait sur ce qui reste. Écarter le
+    lot entier aurait fait tomber un appel sur le repli parce qu'une des trois
+    images jointes était abîmée, ce qui est le contraire de ce qu'on veut.
+    `palette_de`, lui, continue de lever — un artwork illisible promu à la main
+    est une faute qu'il vaut mieux voir.
+    """
+    lisibles: list[bytes] = []
+    for image in images:
+        try:
+            with Image.open(io.BytesIO(image)) as ouverte:
+                ouverte.verify()
+        except Exception:
+            continue
+        lisibles.append(image)
+    if not lisibles:
+        return ()
+    try:
+        return palette_de(lisibles)
+    except (OSError, ValueError):
+        return ()
+
+
 # ── La fusion de deux palettes, arrivée en E11 ───────────────────────────────
 #
 # **Ces trois fonctions viennent du banc d'essai**, où elles ont été mesurées

@@ -1,7 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Les critères d'acceptation de D3 — le fond devient un réglage du projet.
+"""Les critères d'acceptation de D3, **et leur renversement par RT3**.
 
-Un test par critère de `docs/archive/plan-r6-a-v3.02.md` § D3, nommé d'après lui.
+Un test par critère de `docs/archive/plan-r6-a-v3.02.md` § D3, nommé d'après lui
+— puis, en queue de fichier, un test par critère de
+`docs/PLAN-retours-du-20-septembre.md` § RT3.
+
+⚠️ **Deux tranches, deux décisions contraires, et seule la seconde est en
+vigueur.** Le 2 septembre 2026, le fond était un réglage du jeu que l'atelier se
+contentait de proposer ; le 20 septembre, l'auteur a changé d'avis et l'atelier
+calcule le fond à chaque appel sur l'image de référence envoyée. Les tests de D3
+qui vérifiaient le **mécanisme** — la phrase de calage, l'interdiction, la
+mesure sur une planche revenue — sont restés, parce que ce mécanisme n'a pas
+bougé ; ceux qui vérifiaient que *le réglage du jeu décide* ont été repris, et
+c'est écrit dans chacun d'eux. Le raisonnement complet est en tête de
+`atelier/domaine/fond.py`.
 
 **Ce que la tranche répare, et c'est mesuré ailleurs qu'ici.** Le produit
 demandait *un fond plat* sans dire lequel depuis le premier jour : le modèle
@@ -30,6 +42,8 @@ from atelier.domaine.fond import (
     CANDIDATS,
     ECART_MINIMAL,
     TOLERANCE_LIVREE,
+    VERT_DE_STUDIO,
+    choisir,
     dit,
     ecart,
     fond_valide,
@@ -132,15 +146,35 @@ def test_le_fond_relu_du_disque_se_normalise_pour_ne_pas_faire_deux_fonds():
     assert fond_valide("#zzzzzz") == AUCUN_FOND
 
 
-def test_un_univers_qui_n_a_que_son_fond_n_est_plus_vide():
-    """**Sinon on aurait réglé la couleur et rien ne serait parti avec.**
+def test_un_univers_qui_n_a_que_son_fond_reste_vide_et_dit_quand_meme_son_fond():
+    """*Renversé le 20 septembre 2026 (RT3)*, et c'est le bon sens retrouvé.
 
-    `vide` commande si la phrase de l'atelier part ; la phrase de calage *porte*
-    le fond. Le fond entre donc dans le compte, pour la raison exacte qui y a
-    fait entrer la vue le 1ᵉʳ septembre 2026.
+    D3 faisait entrer le fond dans le compte de `vide`, pour que la phrase de
+    calage — celle qui le porte — parte avec lui. Le fond n'étant plus un choix
+    mais un calcul, le compter comme une déclaration ferait sortir un jeu neuf
+    de son silence : un premier essai partirait avec la grille et la caméra que
+    personne n'a choisies, ce que US-57 interdit.
+
+    **Les deux se tiennent maintenant par `dit_quelque_chose`** : l'univers
+    reste vide, la case `technique` parle quand même, et elle ne dit que le
+    fond.
     """
-    assert Univers(bible=bible_complete(())).vide
-    assert not Univers(bible=bible_complete(()), fond="#FF00FF").vide
+    neuf = Univers(bible=bible_complete(()))
+    avec_fond = Univers(bible=bible_complete(()), fond="#00B140")
+
+    assert neuf.vide and avec_fond.vide
+    # Rien à dire sans fond : le jeu neuf se tait entièrement.
+    assert neuf.texte_de_la_case("technique") == ""
+    assert neuf.texte_de_la_case("rendu") == ""
+    # Avec le fond calculé : la phrase part, réduite à sa moitié de fond.
+    dite = avec_fond.texte_de_la_case("technique")
+    assert dite == (
+        "single isolated sprite on a flat solid #00B140 studio green background"
+    )
+    assert "tile snap" not in dite
+    # Et rien d'autre ne se réveille.
+    assert avec_fond.texte_de_la_case("rendu") == ""
+    assert avec_fond.texte_de_la_case("vue") == ""
 
 
 # ── Critère 2 — il se corrige sur l'écran de confirmation, pour cet appel ─────
@@ -169,9 +203,15 @@ def test_le_fond_se_corrige_avant_de_payer_et_ne_vaut_que_pour_cet_appel(client)
 
 
 def test_la_chaine_vide_retire_le_fond_pour_cet_appel_seulement(client):
-    """**Absent et vide ne se confondent pas.** `null` laisse le fond du jeu ;
-    `""` le retire pour cet essai-ci — le geste qu'on fait quand on veut comparer
-    avec ce que le jeu rendait avant la tranche."""
+    """**Absent et vide ne se confondent pas.** `null` laisse l'atelier calculer ;
+    `""` retire le fond pour cet essai-ci — le geste qu'on fait quand on veut
+    comparer avec ce que le jeu rendait avant la tranche.
+
+    *Repris le 20 septembre 2026 (RT3)* : sans correction, la couleur n'est plus
+    celle du jeu mais celle que l'atelier calcule — ici le vert de studio, faute
+    d'image de référence à comparer. Ce que le test vérifiait reste entier : la
+    chaîne vide est un geste, et l'absence de clé n'en est pas un.
+    """
     _regler(client, fond=POSE_A_LA_MAIN)
 
     sans = _envoi(client, tri={"fond": ""})
@@ -179,7 +219,7 @@ def test_la_chaine_vide_retire_le_fond_pour_cet_appel_seulement(client):
 
     assert sans["fond"]["couleur"] == AUCUN_FOND
     assert sans["fond"]["corrige"] is True
-    assert avec["fond"]["couleur"] == POSE_A_LA_MAIN
+    assert avec["fond"]["couleur"] == VERT_DE_STUDIO.couleur
     assert avec["fond"]["corrige"] is False
 
 
@@ -300,9 +340,7 @@ def test_la_phrase_d_interdiction_part_avec_la_demande(client, double):
     """**Elle entre dans un champ qui existait déjà**, et c'est ce qui rend ce
     critère-là presque gratuit : `prompt_negatif` est là depuis T1, et les deux
     adaptateurs le replient en fin de demande sous *« Do not include: »*."""
-    _regler(client, fond="#FF00FF")
-
-    lue = _lancer(client)
+    lue = _lancer(client, tri={"fond": "#FF00FF"})
 
     assert "#FF00FF" in lue["demande"]["prompt_negatif"]
     assert "magenta" in lue["demande"]["prompt_negatif"]
@@ -311,8 +349,7 @@ def test_la_phrase_d_interdiction_part_avec_la_demande(client, double):
 def test_l_interdiction_se_relit_dans_la_generation_enregistree(client):
     """**Composée avant l'enregistrement**, comme le prompt : une génération se
     relit des mois après sans avoir à reconstituer le fond du jour."""
-    _regler(client, fond="#00FFFF")
-    lancee = _lancer(client)
+    lancee = _lancer(client, tri={"fond": "#00FFFF"})
 
     relue = client.get(f"/api/generations/{lancee['identifiant']}").json()
 
@@ -324,9 +361,9 @@ def test_ce_que_l_auteur_interdit_ne_cede_jamais_devant_ce_que_le_produit_ajoute
 ):
     """**La règle du dépôt, appliquée au champ d'interdiction.** Elle vaut déjà
     pour les images jointes ; il n'y avait aucune raison qu'elle s'arrête ici."""
-    _regler(client, fond="#FF00FF")
-
-    lue = _lancer(client, prompt_negatif="blurry, watermark")
+    lue = _lancer(
+        client, prompt_negatif="blurry, watermark", tri={"fond": "#FF00FF"}
+    )
 
     negatif = lue["demande"]["prompt_negatif"]
     assert negatif.startswith("blurry, watermark")
@@ -370,11 +407,16 @@ def test_l_interdiction_ne_porte_aucune_negation(client):
 
 def test_sans_fond_rien_n_est_interdit(client):
     """*« Do not include: »* suivi de rien serait une phrase qui ne dit rien au
-    prix d'un appel."""
+    prix d'un appel.
+
+    *Repris le 20 septembre 2026 (RT3)* : un appel n'a plus de fond que si
+    l'auteur le retire lui-même pour cet appel-là, puisque l'atelier en calcule
+    un sinon. Le geste existe toujours, et c'est lui qu'on vérifie.
+    """
     assert interdiction(AUCUN_FOND) == ""
     assert replier("", "") == ""
 
-    lue = _lancer(client)
+    lue = _lancer(client, tri={"fond": ""})
 
     assert lue["demande"]["prompt_negatif"] == ""
 
@@ -442,9 +484,7 @@ def test_le_fond_part_dans_la_phrase_de_calage_et_nulle_part_ailleurs(client):
     """**Une seule ligne le porte**, et c'est celle qui le portait déjà sans le
     nommer. Lui en donner une seconde aurait fait partir la couleur deux fois
     dans le même texte."""
-    _regler(client, fond="#FF00FF")
-
-    envoi = _envoi(client)
+    envoi = _envoi(client, tri={"fond": "#FF00FF"})
 
     portantes = [l for l in envoi["lignes"] if "#FF00FF" in l["texte"]]
     assert [l["clef"] for l in portantes] == ["jeu.technique"]
@@ -605,3 +645,181 @@ def _lancer(client, **corps) -> dict:
             return lue
         time.sleep(0.05)
     return client.get(f"/api/generations/{identifiant}").json()
+
+
+# ═══ RT3 — le fond se calcule sur l'image de référence ═══════════════════════
+#
+# Les critères de `docs/PLAN-retours-du-20-septembre.md` § RT3, un par test.
+# **Ils renversent le critère 3 de D3** — *l'atelier propose, il n'impose
+# jamais* —, et c'est assumé : l'auteur a changé d'avis le 20 septembre 2026.
+# Les tests de D3 qui disaient le contraire ont été repris plus haut, chacun
+# avec la raison de sa reprise.
+
+
+def _aplat(couleur: tuple[int, int, int], cote: int = 48) -> bytes:
+    """Une image d'une seule couleur, avec une bordure transparente.
+
+    La bordure est ce qui fait que le détourage préalable de `palette_de` trouve
+    un bord à manger : sans elle, il mangerait l'aplat entier, et la lecture
+    retomberait sur l'image complète par un autre chemin que celui qu'on veut
+    éprouver.
+    """
+    import io
+
+    from PIL import Image
+
+    image = Image.new("RGBA", (cote, cote), (0, 0, 0, 0))
+    image.paste(Image.new("RGBA", (cote - 16, cote - 16), (*couleur, 255)), (8, 8))
+    tampon = io.BytesIO()
+    image.save(tampon, format="PNG")
+    return tampon.getvalue()
+
+
+def _importer(client, tmp_path, octets: bytes, nom: str) -> str:
+    chemin = tmp_path / f"{nom}.png"
+    chemin.write_bytes(octets)
+    reponse = client.post(
+        "/api/assets/import", json={"chemin": str(chemin), "forcer": True}
+    )
+    assert reponse.status_code == 201, reponse.text
+    return reponse.json()["asset"]["identifiant"]
+
+
+def test_une_demande_avec_image_de_reference_part_sur_la_couleur_la_plus_eloignee(
+    client, tmp_path
+):
+    """**Le premier critère de RT3, par la route de tout le monde.**
+
+    Un sujet magenta ne peut pas partir sur du magenta — le découpage le
+    mangerait avec le fond. L'atelier prend donc le candidat qui s'en éloigne le
+    plus, et c'est le cyan.
+    """
+    reference = _importer(client, tmp_path, _aplat((230, 40, 230)), "magenta")
+
+    envoi = _envoi(client, references=[{"asset": reference, "role": "reference"}])
+
+    assert envoi["fond"]["couleur"] == "#00FFFF"
+    assert "#00FFFF cyan" in _technique(envoi)
+
+
+def test_une_demande_sans_image_de_reference_part_sur_le_vert_de_studio(client):
+    """**Le deuxième critère**, et c'est le cas le plus fréquent : la première
+    image d'un jeu neuf ne joint rien.
+
+    `#00B140` et non le vide : le vide était le comportement d'avant D3 — *un
+    fond plat* sans couleur, que le modèle rendait en gris clair, c'est-à-dire
+    en une couleur que le sujet porte aussi.
+    """
+    envoi = _envoi(client)
+
+    assert envoi["fond"]["couleur"] == "#00B140"
+    assert "#00B140 studio green" in _technique(envoi)
+
+
+def test_plusieurs_references_sont_un_seul_ensemble_de_couleurs():
+    """**Le troisième critère.** Le modèle ne rend qu'une image : un fond qui
+    fuirait la première référence en tombant sur la seconde ne protégerait
+    rien."""
+    seule = choisir(["#FF00FF"])
+    ensemble = choisir(["#FF00FF", "#00FFFF"])
+
+    # Seul, le magenta chasse le cyan, qui en est le plus loin.
+    assert seule.couleur == "#00FFFF"
+    # Les deux ensemble chassent le cyan avec : ce qui reste est loin des deux.
+    assert ensemble.couleur == "#00FF00"
+    assert ecart(ensemble.couleur, "#FF00FF") >= ensemble.ecart
+    assert ecart(ensemble.couleur, "#00FFFF") >= ensemble.ecart
+
+
+def test_le_fond_d_un_univers_existant_reste_sur_le_disque_et_n_est_plus_lu(client):
+    """**Le quatrième critère, et ses deux moitiés.**
+
+    Le champ se relit — les jeux déjà écrits le portent, et le retirer du modèle
+    aurait cassé leur lecture pour un champ que plus rien n'emploie. Mais la
+    production ne le lit plus : ce qui part est la couleur calculée.
+    """
+    _regler(client, fond="#FF00FF")
+
+    # Il est toujours là, relu par la route de l'univers.
+    assert _univers(client)["fond"] == "#FF00FF"
+    # Et il ne part plus : le texte porte le calcul, pas le réglage.
+    envoi = _envoi(client)
+    assert "#FF00FF" not in envoi["texte"]
+    assert envoi["fond"]["couleur"] == "#00B140"
+
+
+def test_le_paragraphe_du_2_septembre_est_reecrit():
+    """**Le cinquième critère**, et c'est le seul de la tranche qui ne porte pas
+    sur le comportement.
+
+    Deux décisions contraires ne cohabitent pas dans ce dépôt : l'en-tête du
+    module doit porter les deux dates, dire laquelle l'emporte, et ne plus
+    énoncer l'ancienne règle au présent.
+    """
+    import atelier.domaine.fond as module
+
+    tete = module.__doc__ or ""
+
+    assert "2 septembre 2026" in tete, "la décision d'origine est datée"
+    assert "20 septembre 2026" in tete, "le revirement est daté"
+    assert "changé d'avis" in tete
+    # L'ancienne règle n'est plus affirmée : elle est racontée au passé.
+    assert "**Il propose, il n'impose pas.**" not in tete
+
+
+def test_la_video_passe_par_le_meme_choix_que_l_image():
+    """**Le sixième critère** — l'auteur a nommé l'image et la vidéo ensemble.
+
+    `atelier/image/clip.py` tenait sa propre liste de trois couleurs et sa
+    propre façon de les départager. C'était une seconde vérité sur la même
+    question, et elle répondait autrement : un sujet rouge partait sur du vert
+    là où les six candidats trouvent le cyan.
+    """
+    from atelier.image.clip import fond_le_plus_eloigne
+    from atelier.image.palette import palette_de
+
+    for couleur in ((200, 60, 60), (30, 220, 40), (230, 40, 230)):
+        sprite = _aplat(couleur)
+        attendu = choisir(palette_de([sprite])).couleur
+        assert fond_le_plus_eloigne(sprite) == rvb(attendu)
+    # Et une image illisible ne fait pas échouer un clip : elle tombe sur le
+    # vert de studio, comme un appel d'image sans référence.
+    assert fond_le_plus_eloigne(b"") == rvb(VERT_DE_STUDIO.couleur)
+
+
+def test_le_vert_de_studio_est_un_septieme_candidat_et_ne_concourt_pas():
+    """**Il n'est pas un concurrent qu'on élit, il est ce qu'on prend quand il
+    n'y a rien à comparer.**
+
+    L'entrer dans `CANDIDATS` l'aurait mis en compétition avec les six, donc
+    rendu gagnant sur des sujets où il est justement le plus dangereux — un
+    décor, un feuillage, une potion.
+    """
+    assert VERT_DE_STUDIO.couleur == "#00B140"
+    assert VERT_DE_STUDIO not in CANDIDATS
+    assert all(c.couleur != VERT_DE_STUDIO.couleur for c in CANDIDATS)
+    # Rien à comparer : c'est lui, et il se déclare comme repli.
+    vide = choisir(())
+    assert (vide.couleur, vide.par_defaut) == ("#00B140", True)
+    # Mais il ne gagne jamais un choix : sur une image verte, c'est un des six.
+    assert choisir(["#00B140"]).couleur in {c.couleur for c in CANDIDATS}
+    # **Et il porte son nom anglais**, comme les six, parce qu'il part avec eux.
+    assert dit("#00B140") == "#00B140 studio green"
+
+
+def test_le_calcul_ne_cede_pas_devant_ce_que_l_auteur_a_corrige(client, tmp_path):
+    """**La règle du dépôt tient, même quand c'est l'atelier qui calcule.**
+
+    Ce que l'auteur pose pour cet appel-là ne cède jamais devant ce que le
+    produit ajoute — c'est vrai des images jointes, du champ d'interdiction, et
+    ça reste vrai du fond.
+    """
+    reference = _importer(client, tmp_path, _aplat((230, 40, 230)), "magenta")
+    jointe = [{"asset": reference, "role": "reference"}]
+
+    calcule = _envoi(client, references=jointe)
+    corrige = _envoi(client, references=jointe, tri={"fond": "#FF7A00"})
+
+    assert calcule["fond"]["couleur"] == "#00FFFF"
+    assert corrige["fond"]["couleur"] == "#FF7A00"
+    assert "#FF7A00" in corrige["fond"]["interdiction"]
