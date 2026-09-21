@@ -5196,7 +5196,7 @@ describe("l'infobulle et le guide", () => {
     fireEvent.click(screen.getByRole("button", { name: "Codex" }))
     const bibliotheque = await screen.findByRole("main", { name: "Codex" })
     fireEvent.click(within(bibliotheque).getByRole("button", { name: "Les sons" }))
-    await screen.findByLabelText("Atelier sonore")
+    await screen.findByLabelText("Les sons")
 
     fireEvent.keyDown(window, { key: "?" })
     await screen.findByRole("heading", { name: "Guide", level: 1 })
@@ -5223,7 +5223,7 @@ describe("l'infobulle et le guide", () => {
     fireEvent.click(screen.getByRole("button", { name: "Codex" }))
     const bibliotheque = await screen.findByRole("main", { name: "Codex" })
     fireEvent.click(within(bibliotheque).getByRole("button", { name: "Les sons" }))
-    const atelier = await screen.findByLabelText("Atelier sonore")
+    const atelier = await screen.findByLabelText("Les sons")
     expect(within(atelier).queryByRole("alert")).toBeNull()
     expect(fetchAvecSons.mock.calls.some(([u]) => typeof u === "string" && /\/sounds\/[^/]+/.test(u))).toBe(false)
 
