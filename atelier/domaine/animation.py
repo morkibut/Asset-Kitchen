@@ -603,6 +603,19 @@ class Clip:
     # journal ; seul le fichier est parti.
     efface: bool = False
 
+    # ── Le contrôle d'arrivée (RV1) ──────────────────────────────────────────
+    #
+    # **Posé seulement sur un clip généré** (`nature == "video"`) qui a échoué
+    # au contrôle — jamais sur un import, jamais sur une réussite. C'est ce
+    # champ, et lui seul, qui distingue une case « ratée » d'un clip échoué
+    # pour une tout autre raison (réseau, fournisseur) : l'écran le lit pour
+    # proposer « Relancer », et le serveur le lit pour ne jamais relancer de
+    # lui-même (T1).
+    controle: str | None = None
+    # Ce que le contrôle a mesuré, réussite ou échec — pour recalibrer les
+    # seuils plus tard sans reprendre chaque clip.
+    arrivee: dict[str, Any] | None = None
+
     @property
     def montant_dit(self) -> str:
         """Ce que l'écran écrit à côté du chiffre. **Une phrase, pas un drapeau.**
@@ -658,6 +671,8 @@ class Clip:
             "depart": self.depart,
             **({"monter_auto": True} if self.monter_auto else {}),
             **({"efface": True} if self.efface else {}),
+            **({"controle": self.controle} if self.controle else {}),
+            **({"arrivee": self.arrivee} if self.arrivee else {}),
             # Déduit, écrit quand même : c'est la phrase que l'écran affiche à
             # côté du montant, et deux rédactions finiraient par dire deux
             # choses.
@@ -686,4 +701,6 @@ class Clip:
             depart=d.get("depart", ""),
             monter_auto=bool(d.get("monter_auto", False)),
             efface=bool(d.get("efface", False)),
+            controle=d.get("controle"),
+            arrivee=d.get("arrivee"),
         )

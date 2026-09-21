@@ -45,6 +45,7 @@ from atelier.domaine.animation import (
 )
 from atelier.domaine.consommation import USD
 from atelier.domaine.erreurs import (
+    ClipVideApresDetourage,
     DemandeRefusee,
     ErreurAtelier,
     GenerationInconnue,
@@ -60,6 +61,7 @@ from atelier.domaine.generation import (
 )
 from atelier.fournisseur.port import PortAnimateur
 from atelier.image import clip as decodeur
+from atelier.image import controle_clip
 from atelier.image.mesures import empreinte_de
 from atelier.services.generation import ImportRefuse
 from atelier.services.evenements import Diffusion
@@ -376,6 +378,11 @@ class ServiceAnimation:
         for generation in self._base.recentes(500):
             if generation.clip is None or not generation.clip.prete_a_reprendre:
                 continue
+            # **RV1, T1** : un clip raté au contrôle d'arrivée n'attend aucun
+            # geste de rapatriement — il a son fichier brut, et « récupérer »
+            # ne changerait rien à ce que le contrôle a déjà jugé.
+            if generation.clip.controle:
+                continue
             if any(e.statut != Statut.REUSSIE for e in generation.emplacements):
                 en_souffrance.append(generation)
         return en_souffrance
@@ -557,6 +564,13 @@ class ServiceAnimation:
         # refus qui parle de la mauvaise chose. L'appel est gratuit et déjà en
         # cache la seconde fois.
         await self.a_jour()
+        # **RV1, T1** : un clip raté au contrôle d'arrivée est rendu tel quel,
+        # avant même de regarder la file locale — le récupérer ne le ferait
+        # pas passer le contrôle une seconde fois, et rouvrirait une étape
+        # locale que rien ne doit reprendre.
+        deja = self._base.lire(identifiant)
+        if deja is not None and deja.clip is not None and deja.clip.controle:
+            return deja
         if self._file_locale is not None:
             etape = self._file_locale.trouver("video:" + identifiant)
             if etape:
@@ -846,6 +860,10 @@ class ServiceAnimation:
         Une reprise consulte le même travail ; elle ne soumet aucune vidéo.
         """
         await self.a_jour()
+        # **RV1, T1** : même garde que `recuperer`, avant la branche locale.
+        deja = self._base.lire(identifiant)
+        if deja is not None and deja.clip is not None and deja.clip.controle:
+            return deja
         if self._file_locale is not None:
             etape = self._file_locale.trouver("video:" + identifiant)
             if etape:
@@ -947,6 +965,16 @@ class ServiceAnimation:
         # 3. Les images, une fois et plus jamais. Un échec ici ne défait rien.
         self._tirer_les_images(generation)
 
+        # 3bis. Le contrôle d'arrivée (RV1) — seulement sur un clip généré, et
+        # seulement s'il porte des images à regarder. **Hors du fil principal** :
+        # décoder de 25 à 97 PNG pour les mesurer ne doit pas bloquer la boucle,
+        # même règle que le montage juste en dessous. Un clip qui refuse ici
+        # s'arrête net : aucun montage n'a lieu.
+        if generation.clip.nature == "video" and generation.clip.images:
+            code = await asyncio.to_thread(self._controler_a_l_arrivee, generation)
+            if code:
+                return
+
         # 4. L'animation, quand elle a été demandée avec le clip. **Dans un fil à
         # part** : détourer chaque image prend plusieurs secondes, et le serveur
         # doit continuer de répondre pendant ce temps. Un échec ne touche pas au
@@ -954,8 +982,40 @@ class ServiceAnimation:
         if generation.clip.monter_auto and generation.clip.images and self.apres_les_images:
             try:
                 await asyncio.to_thread(self.apres_les_images, generation)
+            except ClipVideApresDetourage as erreur:
+                # **Le détourage n'a rien laissé** (RV1c) : le montage
+                # automatique est celui qui a détecté le raté, et c'est donc
+                # lui qui le prononce — comme (a) et (b) juste au-dessus.
+                self.rater_a_l_arrivee(generation, controle_clip.VIDE, erreur.raison)
             except Exception as erreur:  # noqa: BLE001 — le clip payé ne doit rien perdre
                 self._diffusion.publier("clip.montage_auto_refuse", {"clip": generation.identifiant, "raison": str(erreur)})
+
+    def _controler_a_l_arrivee(self, generation: Generation) -> str | None:
+        """Lit les images déjà tirées sur le disque, et rate le clip s'il faut.
+
+        **Synchrone, appelé via `asyncio.to_thread`.** Les mesures elles-mêmes
+        vivent dans `atelier.image.controle_clip`, un module pur ; ici on ne
+        fait que charger les PNG et écrire le verdict.
+        """
+        import numpy as np
+        from PIL import Image
+
+        emplacement = generation.emplacements[0]
+        dossier = self._fichiers.dossier_images_clip(generation.identifiant, emplacement.rang)
+        images = [
+            np.asarray(Image.open(chemin).convert("RGB"))
+            for chemin in sorted(dossier.glob("*.png"))
+        ]
+        code, mesure = controle_clip.controler_images(images)
+        generation.clip.arrivee = {
+            "luminance_p99": mesure.luminance_p99,
+            "ecart_median": mesure.ecart_median,
+        }
+        if code:
+            self.rater_a_l_arrivee(generation, code, controle_clip.RAISON[code])
+        else:
+            self._sauver(generation)
+        return code
 
     def _tirer_les_images(self, generation: Generation) -> None:
         """Décode le clip et range ses images. **Ne fait jamais échouer le clip.**
@@ -1019,6 +1079,27 @@ class ServiceAnimation:
         emplacement = generation.emplacements[0]
         emplacement.statut = Statut.INTERROMPUE
         emplacement.raison = raison
+        self._sauver(generation)
+
+    def rater_a_l_arrivee(self, generation: Generation, code: str, raison: str) -> None:
+        """Le contrôle d'arrivée refuse ce clip (RV1) — **jamais `_echouer`**.
+
+        `_echouer` écrase `unite` en dollars ; un raté au contrôle n'a rien
+        consommé de plus que ce que le clip avait déjà consommé pour arriver,
+        et ce montant ne doit pas changer d'unité sous ce prétexte. `consomme`
+        n'est pas touché non plus (E18) : le total du projet (`SUM(cout_usd)`
+        sans filtre de statut) le compte toujours, et le brut reste sur le
+        disque pour qu'on puisse le regarder.
+
+        `clip.controle` est le seul champ qui distingue ce raté-là d'un échec
+        de fournisseur ou de réseau ; c'est lui que `recuperer`, `suivre` et
+        `en_souffrance` lisent pour ne jamais relancer ce clip de eux-mêmes
+        (T1), et c'est lui que l'écran lit pour proposer « Relancer ».
+        """
+        emplacement = generation.emplacements[0]
+        emplacement.statut = Statut.ECHOUEE
+        emplacement.raison = raison
+        generation.clip.controle = code
         self._sauver(generation)
 
     # ── Mesures et écriture ──────────────────────────────────────────────────

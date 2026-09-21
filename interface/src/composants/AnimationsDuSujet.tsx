@@ -292,6 +292,34 @@ function CaseDeGeneration({ onArmer, quoi }: { onArmer: () => void; quoi: string
 
 // ── Les rangées d'une pose ──────────────────────────────────────────────────
 
+/** **Une vidéo ratée au contrôle d'arrivée** (RV1) : noire, figée ou vide
+ *  après détourage. Sa raison est déjà écrite au serveur
+ *  (`emplacements[0].raison`) ; le seul geste possible est « Relancer », et
+ *  rien ne part avant ce clic — il rouvre la préparation de cette case, comme
+ *  le bouton « générer » juste à côté. */
+function VignetteDeClipRatee({ clip, onRelancer }: { clip: Generation; onRelancer?: () => void }) {
+  const raison = clip.emplacements[0]?.raison || "cette vidéo est ratée"
+  return (
+    <span className="flex w-[81px] shrink-0 flex-col gap-[4px]">
+      <span
+        data-clip-rate={clip.identifiant}
+        title={raison}
+        className="flex h-[81px] w-[81px] items-center justify-center rounded-7 border-2 border-dashed border-trait-echec bg-fond-echec px-[4px] text-center text-[10.5px] leading-[1.2] text-echec"
+      >
+        {raison}
+      </span>
+      <button
+        type="button"
+        onClick={onRelancer}
+        disabled={!onRelancer}
+        className="h-[22px] rounded-5 border border-trait bg-carte text-[10.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4 disabled:opacity-50"
+      >
+        Relancer
+      </button>
+    </span>
+  )
+}
+
 /** **Un clip pas encore monté**, dans sa rangée : en route, ou arrivé sans
  *  animation. Un cadre en pointillés couleur signal le distingue des
  *  animations ; cliquer un clip arrivé ouvre son montage.
@@ -299,10 +327,13 @@ function CaseDeGeneration({ onArmer, quoi }: { onArmer: () => void; quoi: string
  *  **Au survol, la vidéo entière se lit** — pas une sélection d'images : rien
  *  n'est encore taillé dedans, et c'est justement ce qu'on vient regarder. Au
  *  repos, la couverture seule, pour ne télécharger aucune vidéo. */
-function VignetteDeClip({ clip, onMonter }: { clip: Generation; onMonter?: (clip: string) => void }) {
+function VignetteDeClip({ clip, onMonter, onRelancer }: { clip: Generation; onMonter?: (clip: string) => void; onRelancer?: () => void }) {
   const arrive = clip.statut === "reussie"
   const [survol, setSurvol] = useState(false)
   const visee = useVisee(arrive ? sujetVideo(clip.identifiant, clip.demande.prompt || "clip") : null)
+  if (clip.statut === "echouee" && clip.clip?.controle) {
+    return <VignetteDeClipRatee clip={clip} onRelancer={onRelancer} />
+  }
   return (
     <span className="flex w-[81px] shrink-0 flex-col gap-[4px]">
       <button
@@ -475,7 +506,9 @@ function LigneDeRangee({
           (demandé le 18 septembre 2026) : hors de la piste qui défile, ils
           restent en vue quelle que soit la longueur de la rangée. */}
       <span className="flex shrink-0 items-start gap-[8px]">
-        {enAttente.map((clip) => <VignetteDeClip key={clip.identifiant} clip={clip} onMonter={onMonter} />)}
+        {enAttente.map((clip) => (
+          <VignetteDeClip key={clip.identifiant} clip={clip} onMonter={onMonter} onRelancer={() => onGenerer(rangee)} />
+        ))}
         <CaseDeGeneration
           onArmer={() => onGenerer(rangee)}
           quoi={rangee.angle ?? "cette pose"}

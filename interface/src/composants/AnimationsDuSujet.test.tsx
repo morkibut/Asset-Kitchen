@@ -678,6 +678,37 @@ test("un clip en route se montre dans sa rangée, et bloque sa case dans un lot"
   expect(within(dialogue).getByText("nord").closest("label")!.querySelector("input")!.disabled).toBe(true)
 })
 
+// ── Une vidéo ratée au contrôle d'arrivée (RV1) ─────────────────────────────
+
+test("une vidéo ratée au contrôle reste visible dans sa rangée, avec sa raison", () => {
+  const ratee = {
+    identifiant: "ratee-1", personnage: "pelerin", pose: "repos", direction: "nord",
+    statut: "echouee", clip: { jete: false, controle: "noire" },
+    emplacements: [{ raison: "la vidéo est revenue noire" }],
+  } as unknown as import("../api").Generation
+  monterAvecServeur([CASE_SUD], [ratee])
+  const carte = rangee("repos/nord").querySelector('[data-clip-rate="ratee-1"]')
+  expect(carte).toBeTruthy()
+  expect(carte!.textContent).toContain("la vidéo est revenue noire")
+})
+
+test("« Relancer » rouvre la préparation de la case, et rien ne part avant ce clic", () => {
+  const ratee = {
+    identifiant: "ratee-1", personnage: "pelerin", pose: "repos", direction: "nord",
+    statut: "echouee", clip: { jete: false, controle: "vide" },
+    emplacements: [{ raison: "le détourage n'a rien laissé" }],
+  } as unknown as import("../api").Generation
+  const { onAnimer, appels } = monterAvecServeur([CASE_SUD], [ratee])
+  const conteneur = rangee("repos/nord")
+  const relancer = within(conteneur as unknown as HTMLElement).getByRole("button", { name: "Relancer" })
+  fireEvent.click(relancer)
+  expect(onAnimer).toHaveBeenCalledTimes(1)
+  expect(onAnimer.mock.calls[0][1]).toMatchObject({ identifiant: "repos" })
+  expect(onAnimer.mock.calls[0][2]).toMatchObject({ identifiant: "nord" })
+  // Rouvrir la préparation n'envoie aucune commande de son propre chef.
+  expect(appels.some((a) => a.url === "/api/clips" && a.methode === "POST")).toBe(false)
+})
+
 test("le volet déplace l'animation choisie vers une autre pose", async () => {
   const marche = sienne({ pose: "marche", directions: [{ ...DIRECTION, identifiant: "est", nom: "est", bandes: [] }] })
   const { appels } = monterAvecServeur([CASE_SUD, marche])

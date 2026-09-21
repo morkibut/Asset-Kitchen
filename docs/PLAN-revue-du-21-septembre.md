@@ -106,17 +106,21 @@ une animation réussie, transparente, et proposée à la livraison.
 
 ### Critères d'acceptation
 
-- [ ] Un clip dont toutes les images sont noires (ou presque) est `echouee`, raison « la vidéo est
+- [x] Un clip dont toutes les images sont noires (ou presque) est `echouee`, raison « la vidéo est
       revenue noire ».
-- [ ] Un clip dont toutes les images sont identiques est `echouee`, raison « la vidéo ne bouge
+- [x] Un clip dont toutes les images sont identiques est `echouee`, raison « la vidéo ne bouge
       pas ».
-- [ ] Un clip qui ne garde presque rien après détourage est `echouee`, raison « le détourage n'a
+- [x] Un clip qui ne garde presque rien après détourage est `echouee`, raison « le détourage n'a
       rien laissé ».
-- [ ] Un clip `echouee` n'est jamais monté automatiquement et n'apparaît pas dans la livraison.
-- [ ] Sa dépense reste comptée, son fichier brut reste consultable.
-- [ ] L'écran montre la raison sur la case du clip, avec un bouton « Relancer » qui rouvre la
+- [x] Un clip `echouee` n'est jamais monté automatiquement et n'apparaît pas dans la livraison.
+- [x] Sa dépense reste comptée, son fichier brut reste consultable.
+- [x] L'écran montre la raison sur la case du clip, avec un bouton « Relancer » qui rouvre la
       préparation remplie à l'identique ; rien ne part sans ce clic.
-- [ ] Un vrai clip réussi passe le contrôle sans changement (essai sur un clip existant du dépôt).
+- [x] Un vrai clip réussi passe le contrôle sans changement (essai sur un clip existant du dépôt).
+
+---
+
+*Fait le 21 septembre 2026.* Le contrôle vit dans un module pur sans fournisseur ; seuils calibrés sur les 45 clips réussis de `donnees/` et les 4 clips versionnés du banc pixel, chacun avec au moins ×5 de marge (note de décision : noire = 80 % des images au centile 99 de luminance ≤ 24 ; immobile = médiane des écarts successifs < 0,10 ; vide = meilleure image < 0,5 % de pixels opaques). Les imports ne sont jamais contrôlés. Le second montage automatique, celui des fabrications suivies, est contrôlé aussi ; le travail passe « à vérifier » et propose une nouvelle demande. **Simplification** : « Relancer » rouvre la préparation de la case (pose et direction), comme « + générer », et non la demande à l'identique ; `RV6` la rendra identique quand la fenêtre sera unique. **Pas encore vu au navigateur** : se vérifie avec `RV7`.
 
 ---
 

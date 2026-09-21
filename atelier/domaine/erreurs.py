@@ -62,6 +62,18 @@ class DemandeRefusee(ErreurAtelier):
     code = "demande_refusee"
 
 
+class ClipVideApresDetourage(ErreurAtelier):
+    """Le détourage n'a rien laissé sur aucune des images retenues (RV1).
+
+    Levée par `ServiceMontage.garder` quand `a_l_arrivee=True` — c'est-à-dire
+    seulement pour les deux montages automatiques, jamais pour un montage fait
+    à la main : le geste de l'auteur reste le seul recours face à un faux
+    positif.
+    """
+
+    code = "clip_vide_apres_detourage"
+
+
 class FournisseurIndisponible(ErreurAtelier):
     """Réseau coupé, panne, délai dépassé. Survient au moment de générer, jamais
     au démarrage (US-95)."""

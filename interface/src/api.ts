@@ -959,6 +959,12 @@ export type Clip = {
   extraction_refus: string | null
   montant_relu: boolean
   recupere: boolean
+  /** **Le contrôle d'arrivée a refusé ce clip** (RV1) — jamais posé sur un
+   *  import, jamais sur une réussite. C'est lui qui distingue une case
+   *  « ratée » d'un échec pour une autre raison, et lui seul que l'écran doit
+   *  lire pour proposer « Relancer » : la raison affichable est déjà dans
+   *  `emplacements[0].raison`. */
+  controle?: "noire" | "immobile" | "vide" | null
   /** Écarté d'un lot. **Il quitte la galerie, pas le journal** : ce qui a été
    *  payé reste payé, et rien n'expire — le geste se défait quand on veut. */
   jete: boolean

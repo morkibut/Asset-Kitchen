@@ -53,11 +53,12 @@ from atelier.domaine.bande import (
     Cadre,
     Prise,
 )
-from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
+from atelier.domaine.erreurs import ClipVideApresDetourage, ErreurAtelier, GenerationInconnue
 from atelier.domaine.generation import Generation
 from atelier.domaine.projet import IMAGE_SEULE
 from atelier.domaine.recette import Recette
 from atelier.image import clip as decodeur
+from atelier.image import controle_clip
 from atelier.image.bande import (
     Fenetre,
     Planche,
@@ -465,6 +466,7 @@ class ServiceMontage:
         direction: str | None = None,
         identifiant_bande: str | None = None,
         personnage: str | None = None,
+        a_l_arrivee: bool = False,
     ) -> Bande:
         """Une bande de plus, taillée dans ce clip. **Rien n'est dépensé.**
 
@@ -472,6 +474,13 @@ class ServiceMontage:
         On garde d'abord et on range ensuite — c'est l'enchaînement que le
         produit emploie partout, et il évite de poser une question au moment où
         l'on découpe pour voir.
+
+        **`a_l_arrivee` contrôle, un montage à la main non** (RV1). Vrai, il
+        lève `ClipVideApresDetourage` si même la meilleure image retenue n'a
+        presque rien laissé après détourage — avant `_fenetre` et toute
+        écriture, donc aucun fichier de bande n'existe alors. Les deux montages
+        automatiques le passent ; un montage fait à la main ne le passe jamais,
+        et reste le seul recours face à un faux positif.
         """
         if identifiant_bande:
             existante = self._base.lire_bande(identifiant_bande)
@@ -511,6 +520,8 @@ class ServiceMontage:
         preparees = [
             preparer(fichier.read_bytes(), recette) for fichier in retenues
         ]
+        if a_l_arrivee and controle_clip.vide_apres_detourage(preparees):
+            raise ClipVideApresDetourage(controle_clip.RAISON[controle_clip.VIDE])
         fenetre = self._fenetre(generation, recette, cadre, preparees)
         planche = assembler(preparees, recette, fenetre)
 
@@ -579,6 +590,7 @@ class ServiceMontage:
             pose=generation.pose,
             direction=generation.direction,
             personnage=generation.personnage,
+            a_l_arrivee=True,
         )
 
     def bandes(self, clip: str) -> list[Bande]:

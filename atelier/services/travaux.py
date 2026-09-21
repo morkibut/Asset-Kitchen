@@ -23,8 +23,10 @@ from atelier.domaine.asset import identifiant_de
 from atelier.domaine.bande import Cadre
 from atelier.domaine.consommation import USD
 from atelier.domaine.demande import Demande
+from atelier.domaine.erreurs import ClipVideApresDetourage
 from atelier.domaine.generation import AUTEUR, AGENT, Generation, Reinjection, Statut
 from atelier.domaine.recette import Grille, Recette
+from atelier.image import controle_clip
 from atelier.domaine.travail import TravailRefuse, cadre_valide, demande_normalisee, moteur_sonore_permis
 
 
@@ -142,7 +144,11 @@ class ServiceTravaux:
         if travail["etat"] == "en_cours" and not actif:
             retour["etat"] = "a_reprendre"
             retour["raison"] = "Le suivi a été interrompu. Reprendre vérifie les résultats existants sans recommander."
-        retour["prochaine_action"] = ("creer_nouvelle_demande" if retour["etat"] == "annule" else "livrer" if retour["etat"] == "termine" else
+        # **RV1** : un travail rejeté par le contrôle d'arrivée (`controle`
+        # posé) ne se reprend jamais — son clip est `echouee` pour de bon, et
+        # « reprendre » rouvrirait une étape que rien ne peut relancer (T1).
+        # Seule une nouvelle demande, un nouveau clip, refait le tour.
+        retour["prochaine_action"] = ("creer_nouvelle_demande" if retour.get("controle") or retour["etat"] == "annule" else "livrer" if retour["etat"] == "termine" else
             "demarrer" if retour["etat"] == "prepare" else
             "reprendre" if retour["etat"] in ("a_reprendre", "a_verifier") else
             "verifier_chez_le_fournisseur" if retour["etat"] == "externe_inconnu" else "attendre")
@@ -546,6 +552,15 @@ class ServiceTravaux:
                 if clip.statut != Statut.REUSSIE or not clip.clip.images:
                     travail["etat"] = "a_verifier"
                     travail["raison"] = clip.clip.extraction_refus or clip.emplacements[0].raison or "Le clip reste à récupérer."
+                    # **RV1** : le contrôle d'arrivée a déjà tranché — noire ou
+                    # immobile, ici, puisque « vide » se découvre seulement au
+                    # montage ci-dessous. La dépense est connue, elle n'est
+                    # plus incertaine : `reserve` se libère comme pour une
+                    # fabrication terminée, et `prochaine_action` (`lire`) en
+                    # tient compte pour ne jamais proposer de reprendre.
+                    if clip.clip.controle:
+                        travail["controle"] = clip.clip.controle
+                        travail["reserve"] = None
                     self._garder(travail)
                     return
                 if travail.get("nature") == "video-libre":
@@ -556,9 +571,21 @@ class ServiceTravaux:
                 self._garder(travail)
                 n = min(d["nombre_images"], clip.clip.images)
                 images = [round(i * (clip.clip.images - 1) / max(n - 1, 1)) for i in range(n)]
-                bande = self.a.montage.garder(clip.identifiant, f"{d['pose']} · {d['direction'] or 'toutes'}", images,
-                    cadence=d["cadence"], sens=d["sens"], cadre=Cadre(), recette=Recette.depuis_json(travail["recette"]),
-                    pose=d["pose"], direction=d["direction"], identifiant_bande=identifiant + "-bande")
+                try:
+                    # **Le second montage automatique, oublié par la revue**
+                    # (RV1) : lui aussi contrôle, sur le même signal que
+                    # `monter_a_l_arrivee`.
+                    bande = self.a.montage.garder(clip.identifiant, f"{d['pose']} · {d['direction'] or 'toutes'}", images,
+                        cadence=d["cadence"], sens=d["sens"], cadre=Cadre(), recette=Recette.depuis_json(travail["recette"]),
+                        pose=d["pose"], direction=d["direction"], identifiant_bande=identifiant + "-bande", a_l_arrivee=True)
+                except ClipVideApresDetourage as erreur:
+                    self.a.animation.rater_a_l_arrivee(clip, controle_clip.VIDE, erreur.raison)
+                    travail["etat"] = "a_verifier"
+                    travail["controle"] = controle_clip.VIDE
+                    travail["raison"] = erreur.raison
+                    travail["reserve"] = None
+                    self._garder(travail)
+                    return
                 travail["bandes"] = [bande.identifiant]
                 travail["etape"] = "livraison" if d["livrer_provisoire"] else "termine"
                 self._garder(travail)
