@@ -413,11 +413,13 @@ Réglages : nom en français, texte envoyé replié.
 
 ### Critères d'acceptation
 
-- [ ] Le montage n'affiche plus l'en-tête ni les filtres de la Galerie.
-- [ ] Son panneau tient en trois blocs repliables.
-- [ ] Le calibrage n'a plus de colonne hors échelle ni le mot « établi ».
-- [ ] Plus de marque dorée de l'ancien style (`epingle`) sur ces écrans.
-- [ ] Aucun texte sous 10,5 px sur ces trois écrans.
+- [x] Le montage n'affiche plus l'en-tête ni les filtres de la Galerie.
+- [x] Son panneau tient en trois blocs repliables.
+- [x] Le calibrage n'a plus de colonne hors échelle ni le mot « établi ».
+- [x] Plus de marque dorée de l'ancien style (`epingle`) sur ces écrans.
+- [x] Aucun texte sous 10,5 px sur ces trois écrans.
+
+*Fait le 22 septembre 2026.* Le montage passe en plein écran par lui-même (comme les dépliages), sans toucher la Galerie ; ses trois blocs s'ouvrent dépliés, parce que ce sont les réglages qu'on vient poser. Le calibrage revient au sujet par son nom. Calibrage et Mouvements gardent leurs arrondis et hauteurs d'avant (`essai_jetons.py`) : seul ce que RV14 demandait est repris.
 
 ---
 

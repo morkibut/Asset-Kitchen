@@ -155,7 +155,10 @@ LA_GEOMETRIE_D_AVANT = (
     # sont la géométrie d'avant, migrée telle quelle, comme `FicheDuSujet.tsx`
     # ci-dessus. Rien de neuf n'est dessiné hors des listes.
     "interface/src/composants/Relecture.tsx",
-    "interface/src/composants/Montage.tsx",
+    # `Montage.tsx` est sorti le 22 septembre 2026 (`RV14`) : le montage prend
+    # le volet standard de 380 px, ses trois blocs de droite viennent de
+    # `Bloc` — les jetons du panneau, pas les siens —, et aucun texte n'y
+    # reste sous 10.5 px. Le banc le confirme lui-même à la relecture.
     "interface/src/composants/Mouvements.tsx",
     "interface/src/composants/Planche.tsx",
     "interface/src/composants/Vitrine.tsx",

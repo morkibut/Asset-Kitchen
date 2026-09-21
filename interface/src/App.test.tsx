@@ -5704,22 +5704,31 @@ describe("l'agent, vu de l'atelier", () => {
     return double
   }
 
-  test("l'atelier arrive avec ses mouvements, et le texte qui part se lit sans déplier", async () => {
+  test("l'atelier arrive avec ses mouvements, et le texte qui part reste replié jusqu'au dépliant", async () => {
     await ouvrirLesMouvements()
 
-    // **Ce que l'auteur vient vérifier ici est le texte anglais** : c'est lui
-    // qui part, et c'est la seule chose qu'une liste de noms ne dirait pas.
+    // **Le nom en français suffit à reconnaître un mouvement dans la liste**
+    // (RV14) : le texte anglais envoyé au modèle ne se lit plus sans déplier.
     expect(screen.getByRole("button", { name: "marche" })).toBeTruthy()
     expect(
-      screen.getByText(
+      screen.queryByText(
+        "walking cycle, full body, walking in place, looping seamlessly",
+      ),
+    ).toBeNull()
+
+    // La cadence et les directions se lisent sur la ligne, repliée. **Vide
+    // veut dire toutes** : seule la mort en déclare une, et c'est un fait sur
+    // le monde.
+    expect(screen.getByText("10 i/s · sud")).toBeTruthy()
+    expect(screen.getByText("12 i/s")).toBeTruthy()
+
+    // Le dépliant le montre, dans le champ qu'il édite aussi.
+    fireEvent.click(screen.getByRole("button", { name: "marche" }))
+    expect(
+      screen.getByDisplayValue(
         "walking cycle, full body, walking in place, looping seamlessly",
       ),
     ).toBeTruthy()
-
-    // La cadence et les directions se lisent sur la ligne. **Vide veut dire
-    // toutes** : seule la mort en déclare une, et c'est un fait sur le monde.
-    expect(screen.getByText("10 i/s · sud")).toBeTruthy()
-    expect(screen.getByText("12 i/s")).toBeTruthy()
   })
 
   test("un mouvement nommé ici porte sa marque, un livré n'en porte aucune", async () => {
@@ -5847,15 +5856,20 @@ describe("l'agent, vu de l'atelier", () => {
 
   // ── Les styles de combat (SC4) ─────────────────────────────────────────────
 
-  test("l'atelier arrive avec ses styles, et le texte d'un mouvement se lit en dépliant", async () => {
+  test("l'atelier arrive avec ses styles, et ce qu'ils tiennent se lit en dépliant", async () => {
     await ouvrirLesMouvements({ styles: { styles: STYLES, masques: [] } })
 
     await screen.findByRole("heading", { name: "Les styles de combat" })
     expect(screen.getByRole("button", { name: "bâton à deux mains" })).toBeTruthy()
-    // Ce qu'il tient se lit sans déplier.
-    expect(screen.getByText("a long wooden staff held in both hands")).toBeTruthy()
+    // **Ce qu'il tient reste replié** (RV14) : c'est du texte anglais envoyé
+    // au modèle, comme le texte d'un mouvement, et le nom du style suffit à
+    // le reconnaître replié.
+    expect(screen.queryByText("a long wooden staff held in both hands")).toBeNull()
 
     fireEvent.click(screen.getByRole("button", { name: "bâton à deux mains" }))
+    expect(
+      screen.getByDisplayValue("a long wooden staff held in both hands"),
+    ).toBeTruthy()
     expect(
       screen.getByRole("textbox", { name: "bâton à deux mains — marche" }),
     ).toHaveValue("a two-handed staff carried while walking, staying in place")
