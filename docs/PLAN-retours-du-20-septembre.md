@@ -128,16 +128,18 @@ dessous, puisque leur résultat en dépend.
 
 ### Critères d'acceptation
 
-- [ ] Les trois rangées montrent une image par choix, et l'image correspond au choix qu'elle
+- [x] Les trois rangées montrent une image par choix, et l'image correspond au choix qu'elle
       porte.
-- [ ] Changer la taille met à jour la rangée des méthodes et celle des couleurs.
-- [ ] Le choix retenu se voit sans lire — une marque sur la case, pas seulement un mot dessous.
-- [ ] La rangée reste utilisable pendant que les images arrivent : on peut cliquer un choix avant
+- [x] Changer la taille met à jour la rangée des méthodes et celle des couleurs.
+- [x] Le choix retenu se voit sans lire — une marque sur la case, pas seulement un mot dessous.
+- [x] La rangée reste utilisable pendant que les images arrivent : on peut cliquer un choix avant
       que tout soit calculé.
-- [ ] En style *dessin*, où la taille devient une finesse et où les deux autres rangées
+- [x] En style *dessin*, où la taille devient une finesse et où les deux autres rangées
       disparaissent, l'écran ne montre pas d'aperçu orphelin.
-- [ ] Les neuf `taille-*.png` du dossier public, que plus rien n'affiche, sont retirés — ou
-      réemployés comme repli si la machine ne peut pas calculer.
+- [x] Les neuf `taille-*.png` du dossier public, que plus rien n'affiche, sont retirés — **retirés,
+      pas réemployés** : leur seul rôle possible aurait été un repli si la machine ne pouvait pas
+      calculer, mais si l'atelier local ne répond pas, l'écran entier est déjà hors d'usage — rien
+      dans ce parcours ne fonctionne sans lui —, si bien qu'un repli statique n'aurait jamais servi.
 
 ---
 
@@ -159,17 +161,17 @@ et de moment — chaque appel au lieu d'une fois au réglage.
 
 ### Critères d'acceptation
 
-- [ ] Une demande avec image de référence part sur la couleur la plus éloignée de cette image,
+- [x] Une demande avec image de référence part sur la couleur la plus éloignée de cette image,
       mesurée par la **distance du détourage** — celle qui répond à la vraie question.
-- [ ] Une demande sans image de référence part sur `#00B140`.
-- [ ] Plusieurs images de référence sont traitées comme un seul ensemble de couleurs : la couleur
+- [x] Une demande sans image de référence part sur `#00B140`.
+- [x] Plusieurs images de référence sont traitées comme un seul ensemble de couleurs : la couleur
       retenue est loin de **toutes**.
-- [ ] Le fond écrit dans un univers existant n'est plus lu par la production ; il reste sur le
+- [x] Le fond écrit dans un univers existant n'est plus lu par la production ; il reste sur le
       disque et sa relecture ne casse pas.
-- [ ] Le paragraphe *« Il propose, il n'impose pas »* en tête de `fond.py` est réécrit : il dit la
+- [x] Le paragraphe *« Il propose, il n'impose pas »* en tête de `fond.py` est réécrit : il dit la
       décision du 2 septembre, le changement d'avis du 20, et pourquoi. **Deux décisions contraires
       ne cohabitent pas dans le dépôt.**
-- [ ] La vidéo passe par le même choix que l'image — l'auteur a nommé les deux.
+- [x] La vidéo passe par le même choix que l'image — l'auteur a nommé les deux.
 
 > ⚠️ **Ce que ça coûte, et c'est déjà écrit dans `fond.py`** : changer ce qui part au fournisseur
 > **invalide les comparaisons avec les tirages déjà payés**. Les notes d'animation restent valables
@@ -312,13 +314,13 @@ commencer.
 
 ### Critères d'acceptation
 
-- [ ] *Les sons* garde la navigation de gauche, et la porte d'où l'on vient est marquée comme
+- [x] *Les sons* garde la navigation de gauche, et la porte d'où l'on vient est marquée comme
       active — le même comportement que *Les tuiles*.
-- [ ] On revient d'où l'on venait ; on ne se retrouve pas ailleurs après avoir fermé.
-- [ ] Un jeu sans son montre une phrase qui le dit et les deux gestes possibles, au lieu du blanc.
-- [ ] Ce qu'on était en train de régler n'est pas perdu par le changement de cadre : l'avertissement
+- [x] On revient d'où l'on venait ; on ne se retrouve pas ailleurs après avoir fermé.
+- [x] Un jeu sans son montre une phrase qui le dit et les deux gestes possibles, au lieu du blanc.
+- [x] Ce qu'on était en train de régler n'est pas perdu par le changement de cadre : l'avertissement
       d'abandon qui existe aujourd'hui tient toujours.
-- [ ] Le guide de l'écran *Les sons* reste juste : il vient d'être écrit et décrit un dialogue.
+- [x] Le guide de l'écran *Les sons* reste juste : il vient d'être écrit et décrit un dialogue.
 
 ---
 

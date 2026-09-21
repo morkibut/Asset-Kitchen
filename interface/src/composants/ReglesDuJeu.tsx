@@ -395,7 +395,7 @@ function VisuelApercu({
  *  vide ni cassée. */
 function EmplacementRefuse({ children }: { children: ReactNode }) {
   return (
-    <span className="flex aspect-[4/3] w-full items-center justify-center rounded-5 border border-dashed border-pointille p-[4px] text-center text-[10px] leading-[1.3] text-eteint">
+    <span className="flex aspect-[4/3] w-full items-center justify-center rounded-5 border border-dashed border-pointille p-[4px] text-center text-[10.5px] leading-[1.3] text-eteint">
       {children}
     </span>
   )

@@ -2747,7 +2747,7 @@ function NoeudCarte({ data }: NodeProps) {
               evenement.stopPropagation()
               setEnEdition(true)
             }}
-            className="nodrag nopan absolute top-[4px] -left-[24px] flex h-[20px] w-[20px] items-center justify-center rounded-5 border border-contour bg-carte text-[11px] leading-none text-encre-3 opacity-0 transition duration-[120ms] group-hover:opacity-100 hover:border-signal hover:text-signal focus-visible:opacity-100"
+            className="nodrag nopan absolute top-[4px] -left-[24px] flex h-[22px] w-[22px] items-center justify-center rounded-5 border border-contour bg-carte text-[11px] leading-none text-encre-3 opacity-0 transition duration-[120ms] group-hover:opacity-100 hover:border-signal hover:text-signal focus-visible:opacity-100"
           >
             ✎
           </button>
