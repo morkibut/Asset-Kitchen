@@ -656,13 +656,23 @@ function SonAllure({
                 choisi={univers.cible_px === cible}
                 onChoisir={() => changerTaille(cible)}
               >
-                {TAILLES_APERCU.has(cible) && (
+                {/* **Une case sans aperçu se nomme, elle ne reste pas vide.**
+                    La route s'arrête à 256 : au-delà, elle agrandirait sa
+                    source au lieu de la réduire, et montrerait un résultat que
+                    la fabrication ne rend pas. Mais un trou au milieu d'une
+                    rangée d'images est précisément le défaut qu'on répare —
+                    l'auteur veut choisir en voyant, et « je ne peux pas te
+                    montrer ça » est une réponse, tandis qu'un blanc n'en est
+                    pas une. */}
+                {TAILLES_APERCU.has(cible) ? (
                   <CaseApercu
                     taille={cible}
                     methode={univers.methode_pixels}
                     couleurs={couleursPourTaille(cible)}
                     alt={`Le rôdeur à ${cible} pixels de côté`}
                   />
+                ) : (
+                  <EmplacementRefuse>pas d'aperçu au-dessus de 256</EmplacementRefuse>
                 )}
               </Choix>
             ))}

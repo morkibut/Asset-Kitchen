@@ -1,11 +1,11 @@
 {
- "releve_le": 1789942164.855527,
+ "releve_le": 1789951854.3928928,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 176238,
+  "octets": 176819,
   "documents": {
    "AGENTS.md": {
     "octets": 37683,
@@ -164,14 +164,14 @@
     ]
    },
    "docs/ARCHITECTURE.md": {
-    "octets": 50300,
+    "octets": 50881,
     "titres": 15,
     "sections": [
      {
       "titre": "Asset Kitchen — Architecture",
       "niveau": 1,
       "ligne": 1,
-      "octets": 49741
+      "octets": 50322
      },
      {
       "titre": "1 · Ce que c'est",
@@ -189,7 +189,7 @@
       "titre": "3 · Décisions de cadrage",
       "niveau": 2,
       "ligne": 48,
-      "octets": 8697
+      "octets": 9278
      },
      {
       "titre": "4 · Architecture",
@@ -587,7 +587,7 @@
  },
  "renvois": {
   "code": {
-   "total": 857,
+   "total": 864,
    "casses": []
   },
   "docs": {
