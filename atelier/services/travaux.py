@@ -27,7 +27,14 @@ from atelier.domaine.erreurs import ClipVideApresDetourage
 from atelier.domaine.generation import AUTEUR, AGENT, Generation, Reinjection, Statut
 from atelier.domaine.recette import Grille, Recette
 from atelier.image import controle_clip
-from atelier.domaine.travail import TravailRefuse, cadre_valide, demande_normalisee, moteur_sonore_permis
+from atelier.domaine.travail import (TravailRefuse, cadre_valide, demande_normalisee, moteur_sonore_permis,
+                                     pour_l_empreinte)
+from atelier.services.texte_clip import composer
+
+# **Le plus gros geste d'un coup** : huit clips, la même borne que le lot de
+# l'ancien formulaire (`api/animation.LOT_MAX`). Une série est un geste qui
+# paie N fois ; au-delà ce n'est plus un lot, c'est une fuite.
+SERIE_MAX = 8
 
 
 def _json(objet: Any) -> bytes:
@@ -162,13 +169,20 @@ class ServiceTravaux:
         return sorted([self.lire(projet, p.parent.name) for p in self._projet(projet).glob("*/travail.json")],
                       key=lambda t: t["cree_le"], reverse=True)
 
-    async def preparer(self, projet: str, brute: dict[str, Any], acteur: str = AUTEUR, *, source_libre: bool = False) -> dict[str, Any]:
+    async def preparer(self, projet: str, brute: dict[str, Any], acteur: str = AUTEUR, *, source_libre: bool = False,
+                       serie: dict[str, Any] | None = None) -> dict[str, Any]:
         demande = demande_normalisee(brute, source_libre=source_libre)
         if acteur not in (AUTEUR, AGENT):
             raise TravailRefuse("L'origine de la demande doit être auteur ou agent.")
         identifiant = _hash((projet + "\0" + demande["cle"]).encode())[:32]
         dossier = self._dossier(projet, identifiant)
-        empreinte = _hash(_json({"demande": demande, "acteur": acteur}))
+        # **RV5, E14** : avec un mouvement, le texte se compose ici et s'écrit
+        # dans la demande conservée **avant** l'empreinte. La relecture montre
+        # `demande.prompt_video`, `_demande_video` envoie ce même champ : il n'y
+        # a qu'un texte, et c'est celui qu'on a lu.
+        if demande["mouvement"] is not None:
+            self._composer_texte(projet, demande)
+        empreinte = _hash(_json({"demande": pour_l_empreinte(demande), "acteur": acteur}))
         existant = self._lire(dossier / "travail.json")
         if existant:
             if existant["empreinte"] != empreinte:
@@ -181,11 +195,7 @@ class ServiceTravaux:
                 if existant["empreinte"] != empreinte:
                     raise TravailRefuse("Cette clé a déjà une autre demande.")
                 return self.lire(projet, identifiant)
-            personnage = None if source_libre else self.a.production.personnage(projet, demande["personnage"])
-            objectif = None if source_libre else self.a.production.objectif_de(projet, personnage.identifiant)["objectif"]
-            if objectif is not None and not any(s["nature"] == "animation" and s["pose"] == demande["pose"] and
-                       s["direction"] == demande["direction"] and s["quantite"] for s in objectif["sorties"]):
-                raise TravailRefuse("Cette animation n'est pas demandée dans l'objectif du personnage.")
+            personnage, objectif = self._personnage_et_objectif(projet, demande, source_libre)
             # La recette est conservée maintenant, comme les références : une
             # palette changée pendant l'attente ne repeint pas le travail relu.
             recette = self.a.montage.recette_du_jeu(Generation(identifiant="preparation", modele="",
@@ -202,6 +212,8 @@ class ServiceTravaux:
                        "appels_engages": 0, "reserve": None, "demarrage_recu": False}
             if source_libre:
                 travail["nature"] = "video-libre"
+            if serie is not None:
+                travail["serie"] = dict(serie)
             if personnage and not travail["reference_asset"]:
                 choix = self.a.production.image_de_depart(projet, personnage.identifiant, demande["pose"], demande["direction"])
                 travail["reference_asset"] = (choix.get("asset") or {}).get("identifiant")
@@ -256,6 +268,43 @@ class ServiceTravaux:
             self._garder(travail)
             return self.lire(projet, identifiant)
 
+    def _personnage_et_objectif(self, projet: str, demande: dict[str, Any], source_libre: bool):
+        """Le personnage de la case et son objectif — **refus si l'objectif ne
+        demande pas cette case**. Case par case, pour une série aussi."""
+        personnage = None if source_libre else self.a.production.personnage(projet, demande["personnage"])
+        objectif = None if source_libre else self.a.production.objectif_de(projet, personnage.identifiant)["objectif"]
+        if objectif is not None and not any(s["nature"] == "animation" and s["pose"] == demande["pose"] and
+                   s["direction"] == demande["direction"] and s["quantite"] for s in objectif["sorties"]):
+            raise TravailRefuse("Cette animation n'est pas demandée dans l'objectif du personnage.")
+        return personnage, objectif
+
+    def _composer_texte(self, projet: str, demande: dict[str, Any]) -> None:
+        """Écrit dans `demande["prompt_video"]` le texte composé du mouvement.
+
+        Le même compositeur que la route qui le montre (`texte_clip.composer`) :
+        la phrase de la direction du jeu en tête, puis le geste — la correction
+        de cet appel s'il y en a une, sinon celui du style du personnage pour ce
+        mouvement, sinon celui du mouvement. **La correction porte sur le geste seul** :
+        la phrase de direction est remise en tête ici, si bien qu'une
+        correction vaut pour chaque direction d'une série.
+
+        Un texte déjà présent n'est accepté que s'il est **exactement** le
+        composé — c'est le cas d'une demande relue puis renvoyée telle quelle.
+        Un autre texte serait une correction qui écrase la phrase de direction :
+        elle passe par `correction_geste`, jamais par le texte entier.
+        """
+        compose = composer(self.a, projet, demande["personnage"], demande["direction"] or None,
+                           demande["pose"], demande["mouvement"], demande["correction_geste"])
+        if compose["mouvement"] is None:
+            raise TravailRefuse(f"Aucun mouvement « {demande['mouvement']} » dans la bibliothèque de ce jeu.")
+        texte = compose["texte"].strip()
+        if not texte:
+            raise TravailRefuse("Ce mouvement n'a pas de texte à envoyer. L'écrire dans la bibliothèque des mouvements, ou corriger le geste.")
+        ecrit = demande["prompt_video"].strip()
+        if ecrit and ecrit != texte:
+            raise TravailRefuse("Le texte de la vidéo se compose depuis le mouvement. Corriger le geste (« correction_geste »), pas le texte entier.")
+        demande["prompt_video"] = texte
+
     def _reference(self, travail: dict[str, Any], identifiant: str) -> None:
         asset = self.a.assets.lire(identifiant)
         if not asset or asset.supprime_le is not None or asset.projet != travail["projet"]:
@@ -308,7 +357,14 @@ class ServiceTravaux:
             raise TravailRefuse("Le plafond de temps de calcul sonore de l'agent est déjà consommé ou réservé — "
                                 "relevez-le dans le cadre de délégation de ce jeu (Réglages › Agent MCP).")
 
-    def _autoriser(self, travail: dict[str, Any], *, reserver=False) -> None:
+    def _autoriser(self, travail: dict[str, Any], *, reserver=False, en_plus: tuple[float, int] = (0.0, 0)) -> None:
+        """Le cadre de l'agent, relu à chaque pas qui peut engager.
+
+        `en_plus` : ce que d'autres travaux de la **même série** réservent dans
+        ce même passage, sous le même verrou, sans être encore écrits sur le
+        disque (`demarrer_serie`). Dollars et appels, ajoutés à ceux des autres
+        demandes de l'agent comme s'ils étaient déjà réservés.
+        """
         if travail["acteur"] != AGENT:
             return
         # Un son de l'agent que l'auteur lance ou reprend à l'écran : c'est
@@ -361,6 +417,8 @@ class ServiceTravaux:
             reserve = autre.get("reserve") or {}
             montant += max(reel, reserve.get("usd", 0))
             appels += max(autre["appels_engages"], reserve.get("appels", 0))
+        montant += en_plus[0]
+        appels += en_plus[1]
         reel = sum(c["cout_usd"] for c in self._consommations(travail))
         # Dès que la référence a réellement été facturée, sa mesure remplace
         # l'estimation ; la vidéo encore à soumettre reste réservée à côté.
@@ -390,33 +448,229 @@ class ServiceTravaux:
     async def demarrer(self, projet: str, identifiant: str, acteur: str = AUTEUR,
                        *, reprise=False) -> dict[str, Any]:
         travail = self._brut(projet, identifiant)
+        if not self._a_lancer(travail, acteur, reprise):
+            return self.lire(projet, identifiant)
+        executer = self._executant(travail)
+        with _verrou(self._projet(projet) / ".budget"):
+            self._garder(self._reserver(projet, identifiant, acteur))
+        self._lancer(projet, identifiant, executer, reprise)
+        return self.lire(projet, identifiant)
+
+    # ── `demarrer`, en deux temps (RV5) ──────────────────────────────────────
+    #
+    # **Réserver** sous le verrou du budget, **lancer** une fois dehors. Un
+    # travail seul enchaîne les deux ; une série réserve tous ses travaux sous
+    # un seul verrou avant d'en lancer aucun (`demarrer_serie`).
+
+    def _a_lancer(self, travail: dict[str, Any], acteur: str, reprise: bool) -> bool:
+        """Faux quand il n'y a rien à lancer — la demande se relit telle quelle."""
+        identifiant = travail["identifiant"]
         if travail["acteur"] != acteur and acteur != AUTEUR:
             raise TravailRefuse("Cette demande appartient à l'autre mode d'utilisation ; reprendre depuis son contexte.")
         if identifiant in self._taches and not self._taches[identifiant].done():
-            return self.lire(projet, identifiant)
+            return False
         if travail["etat"] in ("termine", "annule"):
-            return self.lire(projet, identifiant)
+            return False
         if travail["etat"] == "externe_inconnu":
             raise TravailRefuse("L'acceptation de cet appel reste inconnue. Vérifier chez le fournisseur ; aucun nouvel appel automatique.")
         if travail["demarrage_recu"] and not reprise:
-            return self.lire(projet, identifiant)
+            return False
+        return True
+
+    def _executant(self, travail: dict[str, Any]):
         executer = self._executants.get(travail.get("nature"), self._executer)
         if travail.get("nature") and travail["nature"] not in self._executants:
             raise TravailRefuse("Le moteur de cette fabrication n'est pas disponible dans cette version.")
-        with _verrou(self._projet(projet) / ".budget"):
-            travail = self._brut(projet, identifiant)
-            # Qui lance, cette fois : l'auteur qui reprend à l'écran une
-            # demande de l'agent n'est pas bridé par le cadre de l'agent.
-            travail["lance_par"] = acteur
-            self._autoriser(travail, reserver=True)
-            if travail["demande"]["livrer_provisoire"] and not self.a.livraison.association(projet):
-                raise TravailRefuse("Associer le projet Godot avant d'autoriser cette livraison provisoire.")
-            travail["demarrage_recu"] = True
-            travail["etat"] = "en_cours"
-            self._garder(travail)
-        tache = asyncio.create_task(executer(projet, identifiant, reprise))
-        self._taches[identifiant] = tache
-        return self.lire(projet, identifiant)
+        return executer
+
+    def _reserver(self, projet: str, identifiant: str, acteur: str, *,
+                  en_plus: tuple[float, int] = (0.0, 0)) -> dict[str, Any]:
+        """Le travail relu, autorisé et marqué parti — **pas encore écrit**.
+
+        L'appelant tient le verrou du budget et écrit (`_garder`) quand il sait
+        que tout passe : un refus ici ne laisse aucune trace sur le disque.
+        """
+        travail = self._brut(projet, identifiant)
+        # Qui lance, cette fois : l'auteur qui reprend à l'écran une
+        # demande de l'agent n'est pas bridé par le cadre de l'agent.
+        travail["lance_par"] = acteur
+        self._autoriser(travail, reserver=True, en_plus=en_plus)
+        if travail["demande"]["livrer_provisoire"] and not self.a.livraison.association(projet):
+            raise TravailRefuse("Associer le projet Godot avant d'autoriser cette livraison provisoire.")
+        travail["demarrage_recu"] = True
+        travail["etat"] = "en_cours"
+        return travail
+
+    def _lancer(self, projet: str, identifiant: str, executer, reprise: bool) -> None:
+        self._taches[identifiant] = asyncio.create_task(executer(projet, identifiant, reprise))
+
+    # ── La série (RV5) : un geste, N travaux ─────────────────────────────────
+    #
+    # **Un travail par clip, regroupés en série.** Un geste de la fenêtre
+    # « Animer » prépare N travaux — cases cochées × nombre de clips —, qui se
+    # relisent une fois et se lancent une fois. Chacun garde son propre suivi
+    # (acceptation incertaine, reprise, contrôle d'arrivée RV1, réserve) :
+    # `_executer` ne connaît toujours qu'un clip, et c'est voulu — c'est le
+    # chemin de l'argent. Ce qui les rassemble :
+    #
+    # - des **clés déterministes**, `<clé>:<direction>:<k>`, si bien qu'une
+    #   série répétée se relit au lieu de se refabriquer ;
+    # - `serie = {cle, rang, total}` sur chaque travail ;
+    # - le **lot** de leurs clips, l'identifiant de la série, que la Galerie lit
+    #   pour « en garder un ».
+    #
+    # **Une case et un clip, c'est exactement `preparer`** : même clé, même
+    # travail, sans `serie` — et l'identifiant de la série est alors celui du
+    # travail, comme le lot l'a toujours été.
+
+    @staticmethod
+    def identifiant_serie(projet: str, cle: str) -> str:
+        """L'identifiant d'une série — celui qu'aurait un travail seul de même clé."""
+        return _hash((projet + "\0" + cle).encode())[:32]
+
+    def _lot(self, travail: dict[str, Any]) -> str:
+        return self.identifiant_serie(travail["projet"], (travail.get("serie") or {}).get("cle") or travail["cle"])
+
+    def _membres(self, projet: str, cle: str) -> list[dict[str, Any]]:
+        """Les travaux conservés d'une série, dans l'ordre de leur rang."""
+        membres = [t for p in self._projet(projet).glob("*/travail.json")
+                   if (t := self._lire(p)) and (t.get("serie") or {}).get("cle") == cle]
+        return sorted(membres, key=lambda t: t["serie"]["rang"])
+
+    def _depart_existant(self, projet: str, demande: dict[str, Any], personnage) -> bool:
+        """Vrai quand la case part d'une image qui existe déjà — aucune
+        référence à fabriquer, donc rien à payer N fois."""
+        if demande["reference_asset"]:
+            return True
+        if personnage is None:
+            return False
+        choix = self.a.production.image_de_depart(projet, personnage.identifiant, demande["pose"], demande["direction"])
+        return bool((choix.get("asset") or {}).get("identifiant"))
+
+    def _en_serie(self, projet: str, cle: str, travaux: list[dict[str, Any]]) -> dict[str, Any]:
+        """La série telle que l'écran et l'agent la relisent, **avec son annonce**.
+
+        `annonce_serie.temps_s` : le premier clip paie le chargement du modèle,
+        les suivants non — la formule d'`Attente.lot`, passée au serveur pour
+        que l'écran n'ait plus à la tenir. `None` quand ce n'est pas la question
+        (payant) ou que rien n'est mesuré. `locale` : rien ne se paie — la vidéo
+        tourne ici et aucune réservation en dollars n'est faite.
+        """
+        annonces = [t.get("annonce") or {} for t in travaux]
+        reservation = round(sum(a.get("reservation_usd") or 0 for a in annonces), 6)
+        attente = annonces[0].get("temps_local") if annonces else None
+        temps = None
+        if attente:
+            temps = attente["secondes"] + (len(travaux) - 1) * (attente.get("secondes_suivant") or attente["secondes"])
+        return {
+            "serie": {"cle": cle, "identifiant": self.identifiant_serie(projet, cle), "total": len(travaux)},
+            "travaux": travaux,
+            "annonce_serie": {
+                "reservation_usd": reservation,
+                "temps_s": temps,
+                "appels": sum(a.get("appels") or 0 for a in annonces),
+                "locale": bool(annonces) and all(a.get("video_locale") for a in annonces) and reservation == 0,
+            },
+        }
+
+    async def preparer_serie(self, projet: str, commune: dict[str, Any], cases: list[dict[str, Any]],
+                             nombre: int = 1, acteur: str = AUTEUR, *, source_libre: bool = False) -> dict[str, Any]:
+        """Prépare `len(cases) × nombre` travaux d'un coup. **Rien ne part.**
+
+        `commune` est une demande de `preparer` sans sa case ; chaque élément de
+        `cases` apporte `pose` et `direction` (vide : la case de `commune`). Chaque
+        case a son image de départ, sa phrase de direction et sa règle
+        d'objectif, comme un travail seul.
+
+        Deux refus, avant d'écrire quoi que ce soit :
+        - plusieurs clips d'une même case **sans image de départ existante** —
+          chacun paierait sa propre référence ;
+        - la **livraison provisoire** d'une série de plus d'un clip — on ne
+          saurait pas laquelle livrer.
+        """
+        if not isinstance(commune, dict):
+            raise TravailRefuse("Une fabrication doit contenir des réglages nommés.")
+        if isinstance(nombre, bool) or not isinstance(nombre, int) or not 1 <= nombre <= SERIE_MAX:
+            raise TravailRefuse(f"Le nombre de clips va de 1 à {SERIE_MAX}.")
+        if not isinstance(cases, list) or any(not isinstance(c, dict) or set(c) - {"pose", "direction"} for c in cases):
+            raise TravailRefuse("Les cases d'une série sont des paires pose et direction.")
+        cle = commune.get("cle")
+        if not isinstance(cle, str) or not cle.strip():
+            raise TravailRefuse("Préciser « cle » avant de préparer l'animation.")
+        demandes = [{**commune, **case} for case in (cases or [{}])]
+        vues = [(d.get("pose"), d.get("direction") or "") for d in demandes]
+        if len(set(vues)) != len(vues):
+            raise TravailRefuse("La même case est cochée deux fois dans la série.")
+        total = len(demandes) * nombre
+        if total == 1:
+            if self._membres(projet, cle):
+                raise TravailRefuse("Cette clé a déjà une autre demande. Utiliser une nouvelle clé pour la modifier.")
+            return self._en_serie(projet, cle, [await self.preparer(projet, {**demandes[0], "cle": cle}, acteur,
+                                                                    source_libre=source_libre)])
+        if commune.get("livrer_provisoire"):
+            raise TravailRefuse("La livraison provisoire vaut pour un clip seul : dans une série, on ne saurait pas lequel livrer.")
+        # **Les clés.** La direction suffit quand la série ne compte qu'une
+        # pose ; la pose y entre quand il y en a plusieurs, sinon deux cases de
+        # même direction se confondraient.
+        plusieurs_poses = len({d.get("pose") for d in demandes}) > 1
+        prevues = []
+        for d in demandes:
+            direction = d.get("direction") or ""
+            for k in range(nombre):
+                sous_cle = f"{cle}:{d.get('pose')}:{direction}:{k}" if plusieurs_poses else f"{cle}:{direction}:{k}"
+                prevues.append(({**d, "cle": sous_cle}, {"cle": cle, "rang": len(prevues), "total": total}))
+        # **Tout se vérifie avant d'écrire** : une série à moitié préparée
+        # laisserait dans Fabrications des lignes que personne n'a demandées.
+        if (self._lire(self._dossier(projet, self.identifiant_serie(projet, cle)) / "travail.json")
+                or any(t["cle"] not in {p[0]["cle"] for p in prevues} or t["serie"]["total"] != total
+                       for t in self._membres(projet, cle))):
+            raise TravailRefuse("Cette clé a déjà une autre série. Utiliser une nouvelle clé pour la modifier.")
+        for d in demandes:
+            normalisee = demande_normalisee({**d, "cle": cle}, source_libre=source_libre)
+            personnage, _ = self._personnage_et_objectif(projet, normalisee, source_libre)
+            if nombre > 1 and not self._depart_existant(projet, normalisee, personnage):
+                raise TravailRefuse("Plusieurs clips d'une même case partent d'une image existante : sans elle, chacun "
+                                    "paierait sa propre image de départ. Choisir une image de départ, ou demander un seul clip.")
+        travaux = [await self.preparer(projet, demande, acteur, source_libre=source_libre, serie=serie)
+                   for demande, serie in prevues]
+        return self._en_serie(projet, cle, travaux)
+
+    async def demarrer_serie(self, projet: str, cle: str, acteur: str = AUTEUR) -> dict[str, Any]:
+        """Lance tous les travaux préparés d'une série, **ou aucun**.
+
+        Sous un seul verrou du budget, chaque travail est réservé en comptant
+        ceux de la série déjà réservés dans ce passage ; un seul refus, et rien
+        n'est écrit ni lancé. Pour l'agent, c'est tout ou rien. Pour l'auteur,
+        rien ne change : son cadre ne le bride pas (`_autoriser`).
+
+        Un travail déjà parti n'est pas relancé : ce geste ne reprend rien
+        (`demarrer(..., reprise=True)`, travail par travail, le fait).
+        """
+        seul = self._lire(self._dossier(projet, self.identifiant_serie(projet, cle)) / "travail.json")
+        travaux = [seul] if seul else self._membres(projet, cle)
+        if not travaux:
+            raise TravailRefuse("Cette série n'est pas conservée dans ce jeu.")
+        total = (travaux[0].get("serie") or {}).get("total", 1)
+        if len(travaux) != total:
+            raise TravailRefuse("Cette série est incomplète. La préparer de nouveau avant de la lancer.")
+        if total > 1 and any(t["demande"]["livrer_provisoire"] for t in travaux):
+            raise TravailRefuse("La livraison provisoire vaut pour un clip seul : dans une série, on ne saurait pas lequel livrer.")
+        a_lancer = [t for t in travaux if not t["demarrage_recu"] and self._a_lancer(t, acteur, False)]
+        executants = {t["identifiant"]: self._executant(t) for t in a_lancer}
+        if a_lancer:
+            with _verrou(self._projet(projet) / ".budget"):
+                prets, usd, appels = [], 0.0, 0
+                for t in a_lancer:
+                    pret = self._reserver(projet, t["identifiant"], acteur, en_plus=(usd, appels))
+                    reserve = pret.get("reserve") or {}
+                    usd += reserve.get("usd", 0)
+                    appels += reserve.get("appels", 0)
+                    prets.append(pret)
+                for pret in prets:
+                    self._garder(pret)
+            for t in a_lancer:
+                self._lancer(projet, t["identifiant"], executants[t["identifiant"]], False)
+        return self._en_serie(projet, cle, [self.lire(projet, t["identifiant"]) for t in travaux])
 
     async def attendre(self, projet: str, identifiant: str, secondes: float = 0) -> dict[str, Any]:
         limite = time.monotonic() + min(max(secondes, 0), 30)
@@ -432,10 +686,18 @@ class ServiceTravaux:
         """Le cadre se relit quand le GPU prend son tour, après l'attente éventuelle."""
         if generation.provenance != AGENT:
             return
-        if not generation.projet or not generation.clip or not generation.clip.lot:
+        # **Par l'identifiant du clip, plus par son lot** (RV5) : le lot d'un
+        # clip est désormais l'identifiant de sa série, que la Galerie lit pour
+        # « en garder un ». Le clip d'un travail s'appelle `<travail>-video`
+        # (`_executer`), et c'est de là qu'on remonte au travail.
+        identifiant = generation.identifiant.removesuffix("-video")
+        if not generation.projet or not generation.clip or identifiant == generation.identifiant:
             raise TravailRefuse("Cette génération agent n'appartient pas à une demande durable autorisée.")
         with _verrou(self._projet(generation.projet) / ".budget"):
-            travail = self._brut(generation.projet, generation.clip.lot)
+            try:
+                travail = self._brut(generation.projet, identifiant)
+            except TravailRefuse as erreur:
+                raise TravailRefuse("Cette génération agent n'appartient pas à une demande durable autorisée.") from erreur
             if travail["clip"] != generation.identifiant:
                 raise TravailRefuse("Le clip ne correspond plus à la demande autorisée.")
             self._autoriser(travail)
@@ -514,10 +776,15 @@ class ServiceTravaux:
                         travail["appels_engages"] += 1
                         self._garder(travail)
                     try:
+                        # **Le lot du clip est la série** (RV5) — l'identifiant
+                        # du travail quand il est seul, comme avant —, et le
+                        # mouvement part avec lui : c'est ce que le montage lit
+                        # pour nommer ses bandes.
                         await self.a.animation.commander(d["modele_video"], self._demande_video(travail, entree),
                             identifiant=travail["clip"], projet=projet, personnage=d["personnage"],
                             pose=d["pose"], direction=d["direction"], provenance=travail["acteur"],
-                            lot=identifiant, depart=travail["reference_asset"], attendre=False)
+                            mouvement=d.get("mouvement"), lot=self._lot(travail),
+                            depart=travail["reference_asset"], attendre=False)
                     except Exception as erreur:
                         travail["etat"] = "externe_inconnu"
                         travail["raison"] = f"Acceptation externe incertaine : {erreur}. Aucun nouvel appel automatique."

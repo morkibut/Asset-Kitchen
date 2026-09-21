@@ -1169,6 +1169,9 @@ def _modele_en_json(modele: ModeleVideo) -> dict[str, Any]:
         "images_par_seconde": modele.images_par_seconde,
         "duree_conseillee": modele.duree_conseillee,
         "raison_de_la_duree": modele.raison_de_la_duree,
+        # **La durée que la fenêtre adopte quand on change de modèle** (RV5) —
+        # toujours une qu'il accepte ; la règle est dans le domaine.
+        "duree_par_defaut": modele.duree_par_defaut,
         # Le compte réel pour chaque durée proposée. **Calculé au serveur**, parce
         # que la règle `4n + 1` est une contrainte du modèle et n'a rien à faire
         # dans une interface — et que deux endroits qui la calculent finiraient

@@ -201,7 +201,7 @@ comment l'atelier est construit.
 - [x] Les nouvelles phrases sont lues dans le recueil, jamais retapées (*R4*), et `aide.test.ts`
       passe.
 
-*Fait le 22 septembre 2026.* « frame » reste dans l'atelier de retouche image par image, mot anglais gardé par `docs/vocabulaire.html` §4. Le style « karaté » avait déjà son texte au dépôt : l'écart venait des données du testeur. « Revenir au… » devient « Reprendre le texte composé » / « Reprendre le choix automatique » (ce sont des annulations, pas des retours). Pour le Codex et les onglets, c'est `docs/vocabulaire.html` qui suit le code. Un nouveau garde-fou, `essais/essai_tutoiement.py`, tourne avec la suite ; sa liste d'impératifs est fermée, un impératif neuf s'y ajoute d'une ligne.
+*Fait le 22 septembre 2026.* « frame » reste dans l'atelier de retouche image par image, mot anglais que `docs/vocabulaire.html` garde. Le style « karaté » avait déjà son texte au dépôt : l'écart venait des données du testeur. « Revenir au… » devient « Reprendre le texte composé » / « Reprendre le choix automatique » (ce sont des annulations, pas des retours). Pour le Codex et les onglets, c'est `docs/vocabulaire.html` qui suit le code. Un nouveau garde-fou, `essais/essai_tutoiement.py`, tourne avec la suite ; sa liste d'impératifs est fermée, un impératif neuf s'y ajoute d'une ligne.
 
 ---
 

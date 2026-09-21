@@ -35,10 +35,9 @@ from atelier.domaine.bande import BOUCLE
 from atelier.domaine.bande import CADENCE_PAR_DEFAUT as CADENCE_DE_BANDE
 from atelier.domaine.bande import Cadre, Prise
 from atelier.domaine.calque_anime import TIENT
-from atelier.domaine.direction import phrase_animee, texte_du_clip
+from atelier.domaine.direction import texte_du_clip
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.domaine.recette import Recette
-from atelier.domaine.style import texte_du_style
 from atelier.api.routes import reponse_archive
 from atelier.image import vignette
 from atelier.services import Atelier
@@ -52,6 +51,9 @@ from atelier.services import Atelier
 # décrit de deux façons selon la porte par laquelle on le demande est une panne
 # qui ne se voit qu'à l'usage.
 from atelier.services.animation import _modele_en_json
+from atelier.services.texte_clip import composer
+from atelier.services.texte_clip import geste_anime as _geste_anime
+from atelier.services.texte_clip import phrase_de_direction as _phrase_de_direction
 
 routeur = APIRouter()
 
@@ -97,72 +99,10 @@ async def liste_mouvements(
     return _atelier(requete).mouvements.en_json(projet)
 
 
-def _phrase_de_direction(atelier: Atelier, projet: str | None, direction: str | None) -> str:
-    """La phrase qui part en tête d'un clip pour cette direction du jeu, ou rien."""
-    if not projet or not direction:
-        return ""
-    try:
-        directions = atelier.production.directions_du_jeu(projet)
-    except ErreurAtelier:
-        return ""
-    return phrase_animee(next((d for d in directions if d.identifiant == direction), None))
-
-
-def _style_du_personnage(
-    atelier: Atelier, projet: str | None, personnage: str | None
-) -> tuple[Any, str, dict[str, str] | None]:
-    """Le style résolu d'un personnage pour ce jeu, **et d'où il vient** (SC3).
-
-    Un seul endroit lit `ServiceStyles.style_du_personnage` pour composer un
-    texte de clip : la route qui montre ce qui partira et celle qui commande
-    un clip appellent celle-ci, jamais chacune la résolution de son côté —
-    même raison que `_phrase_de_direction` pour l'autre moitié du texte. Sans
-    jeu ou sans personnage connu, la question ne se pose pas : rien n'est
-    deviné, comme le veut `SC2`.
-
-    Rend en plus la pièce **nommée**, pas seulement son identifiant : c'est ce
-    que l'écran affiche à côté du style (« celui du bâton »), et il ne doit
-    pas avoir à rappeler l'équipement pour traduire un identifiant en nom.
-    """
-    if not projet or not personnage:
-        return None, "aucun", None
-    style, origine, piece = atelier.styles.style_du_personnage(projet, personnage)
-    if style is None:
-        return None, "aucun", None
-    piece_json: dict[str, str] | None = None
-    if origine == "piece" and piece:
-        objet = next(
-            (p for p in atelier.equipement.pieces(projet) if p.identifiant == piece),
-            None,
-        )
-        piece_json = {"identifiant": piece, "nom": objet.nom if objet else piece}
-    return style, origine, piece_json
-
-
-def _geste_anime(
-    atelier: Atelier,
-    projet: str | None,
-    personnage: str | None,
-    mouvement: Any,
-    repli: str = "",
-) -> tuple[str, Any, str, dict[str, str] | None]:
-    """Le texte du geste — **celui du style pour ce mouvement, sinon celui du
-    mouvement** — et le style qui l'a éventuellement écrit (SC3).
-
-    C'est ici, et nulle part ailleurs, que se décide *comment* ce
-    personnage-là joue ce mouvement : `mouvement_de_la_pose` et
-    `commander_clip` appellent cette fonction plutôt que de recoller
-    chacune le mouvement et le style de son côté. **Le style ne remplace le
-    texte du mouvement que s'il dit quelque chose pour ce mouvement précis** —
-    sinon le mouvement garde la main, et c'est le deuxième critère du plan.
-    """
-    base = mouvement.texte if mouvement and mouvement.texte else repli
-    style, origine, piece = _style_du_personnage(atelier, projet, personnage)
-    if style is not None and mouvement is not None:
-        texte_style = texte_du_style(style, mouvement.identifiant)
-        if texte_style:
-            return texte_style, style, origine, piece
-    return base, style, origine, piece
+# **Le compositeur du texte a quitté cette couche** (RV5) : il vit dans
+# `atelier/services/texte_clip.py`, pour que les fabrications suivies et l'agent
+# composent par le même chemin que la route qui montre le texte (E14, T7).
+# `commander_clip` garde ses deux appels jusqu'à son retrait en RV6.
 
 
 @routeur.get("/movements/for-pose/{identifiant_pose}")
@@ -194,37 +134,14 @@ async def mouvement_de_la_pose(
     **`mouvement`, depuis SC3** : composer pour un mouvement *autre* que celui
     de la pose — l'écran laisse choisir dans une liste, et cette case garde
     son mouvement propre par défaut tant qu'on n'a rien choisi.
+
+    **Composé par le service depuis RV5** (`services/texte_clip.composer`) :
+    c'est le même appel que fait `ServiceTravaux.preparer` pour écrire le
+    texte d'une fabrication suivie — ce que l'écran montre est ce qui part.
     """
     atelier = _atelier(requete)
     ouvert = projet or atelier.bibliotheque.courant
-    repli = ""
-    for pose in atelier.production.plan(ouvert):
-        if pose.identifiant == identifiant_pose:
-            repli = pose.dit()
-            break
-    if mouvement:
-        objet_mouvement = atelier.mouvements.lire(mouvement, ouvert)
-        origine = "mouvement" if objet_mouvement else "aucun"
-    else:
-        objet_mouvement = atelier.mouvements.pour_la_pose(identifiant_pose, ouvert)
-        origine = "mouvement" if objet_mouvement else ("pose" if repli else "aucun")
-    geste, style, origine_du_style, piece_du_style = _geste_anime(
-        atelier, ouvert, personnage, objet_mouvement, repli
-    )
-    # **La phrase de la direction en tête** (18 septembre 2026) — la même que
-    # `commander_clip` écrira : ce que l'écran montre est ce qui part.
-    phrase = _phrase_de_direction(atelier, ouvert, direction)
-    return {
-        "pose": identifiant_pose,
-        "mouvement": objet_mouvement.en_json() if objet_mouvement else None,
-        "texte": texte_du_clip(phrase, geste),
-        "direction": phrase,
-        "geste": geste,
-        "origine": origine,
-        "style": style.en_json() if style else None,
-        "origine_du_style": origine_du_style,
-        "piece_du_style": piece_du_style,
-    }
+    return composer(atelier, ouvert, personnage, direction, identifiant_pose, mouvement)
 
 
 @routeur.post("/movements", status_code=201)
