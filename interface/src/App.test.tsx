@@ -1038,6 +1038,8 @@ const MODELES_VIDEO: BaseModelesVideo = {
         greffon_absent: false,
         carte: "cuda:0 NVIDIA GeForce RTX 3080 Laptop GPU",
         memoire_libre_go: 6.7,
+        besoin_go: 6,
+        occupe: false,
         phrase: "",
       },
     },
@@ -1046,7 +1048,9 @@ const MODELES_VIDEO: BaseModelesVideo = {
 }
 
 /** La machine en ordre : tout est là, il n'y a rien à dire — et **rien à dire
- *  est une réponse**, pas un trou. */
+ *  est une réponse**, pas un trou. Mémoire libre au-dessus du besoin mesuré,
+ *  et file ComfyUI libre : aucun des deux avertissements de RV2 ne doit
+ *  s'écrire. */
 const MOTEUR_EN_ORDRE: EtatDuMoteur = {
   allume: true,
   grise: null,
@@ -1055,6 +1059,8 @@ const MOTEUR_EN_ORDRE: EtatDuMoteur = {
   greffon_absent: false,
   carte: "cuda:0 NVIDIA GeForce RTX 3080 Laptop GPU",
   memoire_libre_go: 6.7,
+  besoin_go: 6,
+  occupe: false,
   phrase: "",
 }
 
@@ -19979,11 +19985,69 @@ describe("A11 — le moteur de la maison", () => {
       if (!trouve) throw new Error("le panneau du moteur ne s'est pas affiché")
       return trouve as HTMLElement
     })
-    // Il dit ce qu'est la carte — une attente sans sa machine ne veut rien dire.
-    expect(within(moteur).getByText(/RTX 3080/)).toBeTruthy()
-    // Et rien d'autre : **rien à dire est une réponse**.
+    // La mémoire libre, en clair — **jamais l'identifiant technique du
+    // pilote** (RV2) : « cuda:0 … » ne doit paraître nulle part à l'écran.
+    expect(within(moteur).getByText(/Mémoire libre : 6,7 Go/)).toBeTruthy()
+    expect(within(moteur).queryByText(/cuda:0/)).toBeNull()
+    // Et rien d'autre : **rien à dire est une réponse**. La mémoire libre
+    // dépasse le besoin mesuré, et ComfyUI n'est occupé par rien : aucun des
+    // deux avertissements de RV2 ne s'écrit.
     expect(moteur.querySelector("[data-moteur-phrase]")).toBeNull()
+    expect(within(moteur).queryByRole("status")).toBeNull()
     expect(within(moteur).queryByRole("button", { name: /Télécharger/ })).toBeNull()
+  })
+
+  // ── « La carte graphique prévient avant de lancer » (RV2) ─────────────────
+
+  test("moins de mémoire libre que le besoin mesuré : un avertissement nomme l'écart, sans bloquer", async () => {
+    const { panneau } = await ouvrirLeClip({
+      moteur: { ...MOTEUR_EN_ORDRE, memoire_libre_go: 0.9, besoin_go: 6 },
+    })
+
+    const moteur = await waitFor(() => {
+      const trouve = document.querySelector("[data-moteur]")
+      if (!trouve) throw new Error("le panneau du moteur ne s'est pas affiché")
+      return trouve as HTMLElement
+    })
+    expect(within(moteur).getByText(/Mémoire libre : 0,9 Go/)).toBeTruthy()
+    expect(within(moteur).getByText(/environ 6 Go.*ferme les autres calculs/)).toBeTruthy()
+    // Il avertit, il ne bloque pas : le modèle reste choisissable.
+    const carte = await panneau.findByRole("button", {
+      name: "Choisir Wan 2.2 · sur votre machine",
+    })
+    expect((carte as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  test("un modèle dont le besoin n'est pas mesuré ne reçoit aucun avertissement", async () => {
+    await ouvrirLeClip({
+      moteur: { ...MOTEUR_EN_ORDRE, memoire_libre_go: 0.9, besoin_go: null },
+    })
+
+    const moteur = await waitFor(() => {
+      const trouve = document.querySelector("[data-moteur]")
+      if (!trouve) throw new Error("le panneau du moteur ne s'est pas affiché")
+      return trouve as HTMLElement
+    })
+    expect(within(moteur).getByText(/Mémoire libre : 0,9 Go/)).toBeTruthy()
+    // Un besoin non mesuré ne s'invente pas : l'avertissement se tait.
+    expect(within(moteur).queryByRole("status")).toBeNull()
+  })
+
+  test("ComfyUI occupé par un autre calcul se dit avant le lancement, sans bloquer", async () => {
+    const { panneau } = await ouvrirLeClip({
+      moteur: { ...MOTEUR_EN_ORDRE, occupe: true },
+    })
+
+    const moteur = await waitFor(() => {
+      const trouve = document.querySelector("[data-moteur]")
+      if (!trouve) throw new Error("le panneau du moteur ne s'est pas affiché")
+      return trouve as HTMLElement
+    })
+    expect(within(moteur).getByText(/ComfyUI est déjà occupé par un autre calcul/)).toBeTruthy()
+    const carte = await panneau.findByRole("button", {
+      name: "Choisir Wan 2.2 · sur votre machine",
+    })
+    expect((carte as HTMLButtonElement).disabled).toBe(false)
   })
 
   test("l'application éteinte grise le modèle et dit d'ouvrir la fenêtre", async () => {

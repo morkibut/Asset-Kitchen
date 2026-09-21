@@ -891,9 +891,18 @@ export type EtatDuMoteur = {
   go_a_telecharger: number
   greffon_absent: boolean
   /** La carte graphique telle qu'elle se nomme, et ce qui lui reste de mémoire
-   *  libre. Vide quand l'application n'est pas ouverte. */
+   *  libre. Vide quand l'application n'est pas ouverte. **Ne s'affiche jamais
+   *  telle quelle** — c'est l'identifiant technique du pilote (RV2) ; l'écran
+   *  n'en montre que la mémoire libre, en clair. */
   carte: string
   memoire_libre_go: number
+  /** Ce que ce dépôt a mesuré comme besoin pour ce modèle, ou `null` quand rien
+   *  ne le justifie (RV2). Un besoin non mesuré ne s'invente pas : l'écran se
+   *  tait plutôt que d'afficher un chiffre deviné. */
+  besoin_go: number | null
+  /** ComfyUI traite ou attend déjà un autre calcul, à dire **avant** de lancer
+   *  (RV2). Un avertissement, jamais un blocage. */
+  occupe: boolean
   /** Ce qu'il y a à dire, déjà écrit — ou la chaîne vide quand il n'y a rien à
    *  dire. Rien à dire est une réponse. */
   phrase: string

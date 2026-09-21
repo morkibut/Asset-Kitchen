@@ -1,10 +1,11 @@
 import { SuiviFabrication3D } from "./Fabrication3D"
 import { useEffect, useRef, useState } from "react"
-import { api, dollars, prix, Refus, type Asset, type Modele, type ModeleVideo, type Personnage } from "../api"
+import { api, dollars, prix, Refus, type Asset, type EtatDuMoteur, type Modele, type ModeleVideo, type Personnage } from "../api"
 import { nomDuTravail, travaux, NOM_DE_L_ETAPE, NOM_DE_L_ETAT, type DemandeTravail, type Travail, type TravailSuivi } from "../api-travaux"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
+import { MemoireLocale } from "./MemoireLocale"
 import { RelectureEquipement } from "./RelectureEquipement"
 import { FabricationVideoLibre } from "./FabricationVideoLibre"
 import { FabricationAudio } from "./FabricationAudio"
@@ -68,6 +69,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   const [optionsVideo, setOptionsVideo] = useState(JSON.stringify(demande.options_video ?? {}, null, 2))
   const [optionsImage, setOptionsImage] = useState(JSON.stringify(demande.options_image ?? {}, null, 2))
   const [videosLues, setVideosLues] = useState(false)
+  const [moteur, setMoteur] = useState<EtatDuMoteur | null>(null)
   const personnage = personnages.find((p) => p.identifiant === demande.personnage)
   const brouillon = useBrouillonLocal({
     cle: `fabrication-video:${projet}:${initiale?.identifiant ?? (cibleInitiale ? `${cibleInitiale.personnage}:${cibleInitiale.pose}:${cibleInitiale.direction}` : "nouvelle")}:${modeleInitial ?? "auto"}`, pret: edition,
@@ -106,6 +108,14 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
       .then((c) => { if (vivant) { setVideos(c.modeles); setVideosLues(true) } }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
     return () => { vivant = false }
   }, [edition, demande.secondes, demande.resolution, demande.proportions])
+  // **RV2 : la carte prévient avant de lancer**, seulement quand le modèle
+  // choisi est local — un modèle payant n'a pas de carte à regarder.
+  useEffect(() => {
+    if (!edition || !video?.de_la_maison) { setMoteur(null); return }
+    let vivant = true
+    api.etatDuMoteur().then((e) => { if (vivant) setMoteur(e) }).catch(() => { if (vivant) setMoteur(null) })
+    return () => { vivant = false }
+  }, [edition, video?.de_la_maison])
   useEffect(() => {
     if (!choix) return
     let vivant = true
@@ -172,6 +182,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
           <label className="flex flex-col gap-[4px] text-[12px]">Décrire l’animation<textarea rows={3} className="rounded-7 border border-contour p-[14px] text-[13px]" value={demande.prompt_video} onChange={(e) => changer({ prompt_video: e.target.value })} placeholder="Le personnage marche sur place, cycle régulier, caméra fixe…" /></label>
           <div className="mt-[14px] grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Durée du clip<select className={CHAMP} value={demande.secondes} onChange={(e) => changer({ secondes: Number(e.target.value) })}>{[...new Set([demande.secondes, ...videos.flatMap((m) => m.durees)])].sort((a, b) => a - b).map((n) => <option key={n} value={n}>{n} s</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]">Résolution<select className={CHAMP} value={demande.resolution} onChange={(e) => changer({ resolution: e.target.value })}>{[...new Set([demande.resolution, ...videos.flatMap((m) => m.resolutions)])].map((v) => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]">Proportions<select className={CHAMP} value={demande.proportions} onChange={(e) => changer({ proportions: e.target.value })}>{[...new Set([demande.proportions, ...videos.flatMap((m) => m.proportions)])].map((v) => <option key={v}>{v}</option>)}</select></label></div>
           <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">{CHAMP_DU_MODELE}<select className={CHAMP} value={demande.modele_video} onChange={(e) => changer({ modele_video: e.target.value })}><option value="">Choisir un modèle…</option>{demande.modele_video && !video && <option value={demande.modele_video} disabled>{demande.modele_video} · {videosLues ? "indisponible" : "chargement…"}</option>}{videos.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.grise}>{m.identifiant}{m.grise ? ` — ${m.grise}` : m.de_la_maison ? " · local" : ` · ${prix(m.prix.montant)}`}</option>)}</select></label>
+          {video?.de_la_maison && <div className="mt-[8px]"><MemoireLocale etat={moteur} /></div>}
           <details className="mt-[14px]"><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres avancés du workflow</summary><p className="my-[8px] text-[12px] text-encre-3">Réglages nommés du workflow, par exemple la seed. Le fournisseur vérifie les paramètres avant l’envoi.</p><textarea aria-label="Paramètres vidéo JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsVideo} onChange={(e) => setOptionsVideo(e.target.value)} /></details>
         </fieldset>
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">4. Animation à obtenir</legend><div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Frames à extraire<input className={CHAMP} type="number" min={1} max={64} value={demande.nombre_images} onChange={(e) => changer({ nombre_images: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Cadence (images/s)<input className={CHAMP} type="number" min={0.1} max={120} step={0.1} value={demande.cadence} onChange={(e) => changer({ cadence: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Lecture<select className={CHAMP} value={demande.sens} onChange={(e) => changer({ sens: e.target.value as DemandeTravail["sens"] })}><option value="boucle">En boucle</option><option value="aller-retour">Aller-retour</option></select></label></div><label className="mt-[14px] flex items-center gap-[8px] text-[13px]"><input type="checkbox" checked={!!demande.livrer_provisoire} onChange={(e) => changer({ livrer_provisoire: e.target.checked })} />Livrer automatiquement cette première version dans le projet Godot associé</label><p className="mt-[8px] text-[12px] text-encre-3">Le clip et les frames restent conservés. Le montage permet ensuite de choisir un passage, réordonner les frames et retoucher chaque image.</p></fieldset>

@@ -137,11 +137,13 @@ revenue noire.
 
 ### Critères d'acceptation
 
-- [ ] La préparation affiche « Mémoire libre : 0,9 Go » et non l'identifiant technique du pilote.
-- [ ] Sous le besoin connu du modèle, un avertissement nomme l'écart et le remède (« fermez les
+- [x] La préparation affiche « Mémoire libre : 0,9 Go » et non l'identifiant technique du pilote.
+- [x] Sous le besoin connu du modèle, un avertissement nomme l'écart et le remède (« fermez les
       autres calculs »). Il avertit, il ne bloque pas.
-- [ ] ComfyUI occupé par un autre calcul est dit avant le lancement.
-- [ ] Un modèle dont le besoin n'est pas connu n'invente pas de chiffre : l'avertissement se tait.
+- [x] ComfyUI occupé par un autre calcul est dit avant le lancement.
+- [x] Un modèle dont le besoin n'est pas connu n'invente pas de chiffre : l'avertissement se tait.
+
+*Fait le 21 septembre 2026.* Un seul chiffre de besoin existe au dépôt : 6,0 Go pour le moteur de la maison (Wan 2.2), mesuré le 3 septembre ; les moteurs d'image locaux restent à besoin inconnu, donc muets. « Occupé » reprend la lecture de la file ComfyUI déjà en service. Le même petit composant sert l'écran « Faire une vidéo » et la fenêtre « Préparer une fabrication ». **Reste** : Réglages › Installation affiche encore l'identifiant technique du pilote — repris par `RV4`.
 
 ---
 
@@ -183,7 +185,7 @@ comment l'atelier est construit.
 - [ ] Aucun identifiant technique de modèle (`ComfyUI:…@<empreinte>`) n'apparaît dans une liste ni
       une relecture : le nom lisible, déjà connu ailleurs, le remplace.
 - [ ] Plus de « Travail conservé chez le moteur : <identifiant> », de « .env », de
-      « cudaMallocAsync ».
+      « cudaMallocAsync » — y compris dans Réglages › Installation, que `RV2` n'a pas touché.
 - [ ] « vote en deux temps » reçoit un nom qui dit le résultat.
 - [ ] Plus de « l'établi », « le carnet », « le vestiaire » à l'écran.
 - [ ] « Tu » partout ; un essai le tient.

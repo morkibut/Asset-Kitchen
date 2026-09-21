@@ -70,6 +70,7 @@ import {
   type Pose,
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
+import { gigas, MemoireLocale } from "./MemoireLocale"
 import { Bouton, Libelle, Raison } from "./pieces"
 
 /** La case qu'on vient animer. **La pose peut manquer** : on anime aussi un
@@ -105,14 +106,6 @@ const RESOLUTIONS = [
 /** Combien de clips d'un coup. **Un est le défaut, et le produit n'impose
  *  jamais un lot** : c'est tout ce qui reste de l'ancienne tranche `A3`. */
 const LOTS = [1, 2, 4, 8] as const
-
-/** Une taille de fichier telle qu'elle s'écrit en français. **La virgule n'est
- *  pas un détail** : le serveur écrit « 8,9 Go » dans sa phrase, et un bouton
- *  qui dirait « 8.9 Go » juste au-dessous ferait douter que les deux parlent du
- *  même chiffre. */
-function gigas(valeur: number): string {
-  return `${valeur.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} Go`
-}
 
 /** Ce qu'un lot de `nombre` clips prendra de temps, **et il ne se multiplie pas
  *  comme un prix** : le premier tirage charge le modèle en mémoire, les suivants
@@ -1453,13 +1446,11 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
         </button>
       </div>
 
-      {/* Ce qu'elle est, quand elle répond. Une attente sans sa machine ne veut
-          rien dire — la même mesure sur une autre carte donnerait autre chose. */}
-      {etat.carte && (
-        <span className="mesure text-[9.5px] leading-4 text-encre-4">
-          {etat.carte} · {gigas(etat.memoire_libre_go)} libres
-        </span>
-      )}
+      {/* **La mémoire en clair, jamais l'identifiant technique du pilote**
+          (RV2) — et l'avertissement quand elle est sous le besoin mesuré du
+          modèle, ou que ComfyUI est déjà occupé par un autre calcul. Le même
+          petit composant que la fenêtre « Préparer une fabrication ». */}
+      <MemoireLocale etat={etat} />
 
       {/* La phrase du moment, déjà écrite au serveur. **Vide veut dire qu'il n'y
           a rien à dire**, et rien à dire est une réponse. */}

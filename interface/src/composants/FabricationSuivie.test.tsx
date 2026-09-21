@@ -121,3 +121,38 @@ test("sans écran de sortie branché, aucune porte de livraison n’est promise"
   render(<FabricationSuivie projet="jeu" personnages={[personnage]} initiale={fini} onClip={() => {}} onFermer={() => {}} />)
   expect(screen.queryByRole("button", { name: /Livrer dans le jeu/ })).toBeNull()
 })
+
+// ── « La carte graphique prévient avant de lancer » (RV2) ─────────────────
+
+test("un modèle local montre la mémoire libre et avertit sous le besoin mesuré, sans bloquer", async () => {
+  vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [{ identifiant: "maison/wan-2.2-i2v-14b-pixel", grise: null, de_la_maison: true, prix: { montant: 0 }, durees: [1, 2, 3], resolutions: ["480p"], proportions: ["1:1"] }] } as Awaited<ReturnType<typeof api.modelesVideo>>)
+  vi.spyOn(api, "etatDuMoteur").mockResolvedValue({
+    allume: true, grise: null, manquants: [], go_a_telecharger: 0, greffon_absent: false,
+    carte: "cuda:0 NVIDIA GeForce RTX 3080 Laptop GPU", memoire_libre_go: 0.9, besoin_go: 6, occupe: false, phrase: "",
+  })
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} modeleInitial="maison/wan-2.2-i2v-14b-pixel" onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: /maison\/wan/ })
+  expect(await screen.findByText(/Mémoire libre : 0,9 Go/)).toBeTruthy()
+  expect(screen.getByText(/environ 6 Go.*ferme les autres calculs/)).toBeTruthy()
+  // Jamais l'identifiant technique du pilote.
+  expect(screen.queryByText(/cuda:0/)).toBeNull()
+})
+
+test("un modèle payant ne regarde jamais la carte graphique", async () => {
+  const espionEtat = vi.spyOn(api, "etatDuMoteur")
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} modeleInitial="Video:modele" onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: /Video:modele ·/ })
+  expect(screen.queryByText(/Mémoire libre/)).toBeNull()
+  expect(espionEtat).not.toHaveBeenCalled()
+})
+
+test("ComfyUI déjà occupé par un autre calcul se dit avant le lancement, sans bloquer", async () => {
+  vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [{ identifiant: "maison/wan-2.2-i2v-14b-pixel", grise: null, de_la_maison: true, prix: { montant: 0 }, durees: [1, 2, 3], resolutions: ["480p"], proportions: ["1:1"] }] } as Awaited<ReturnType<typeof api.modelesVideo>>)
+  vi.spyOn(api, "etatDuMoteur").mockResolvedValue({
+    allume: true, grise: null, manquants: [], go_a_telecharger: 0, greffon_absent: false,
+    carte: "cuda:0 NVIDIA GeForce RTX 3080 Laptop GPU", memoire_libre_go: 6.7, besoin_go: 6, occupe: true, phrase: "",
+  })
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} modeleInitial="maison/wan-2.2-i2v-14b-pixel" onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: /maison\/wan/ })
+  expect(await screen.findByText(/ComfyUI est déjà occupé par un autre calcul/)).toBeTruthy()
+})

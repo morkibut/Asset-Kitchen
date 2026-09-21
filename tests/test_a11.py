@@ -114,6 +114,9 @@ class ComfyDouble:
         ]
         self.appels: list[str] = []
         self._forme = 0
+        # **La file, pour RV2** : `None` traité par un autre travail, sinon
+        # vide. `observer_ressource` en tire « occupé » ou « disponible ».
+        self.file_occupee = False
 
     # ── Ce que le transport lui envoie ───────────────────────────────────────
 
@@ -136,6 +139,11 @@ class ComfyDouble:
                         }
                     ],
                 },
+            )
+        if chemin == "/queue":
+            travaux = [[0, "un-autre-travail"]] if self.file_occupee else []
+            return httpx.Response(
+                200, json={"queue_running": travaux, "queue_pending": []}
             )
         if chemin.startswith("/object_info/"):
             return self._fichiers_vus(chemin.rsplit("/", 1)[-1])
@@ -414,6 +422,44 @@ async def test_un_chargeur_absent_compte_ses_fichiers_comme_manquants(moteur, co
     comfy.installes["diffusion_models"] = None  # type: ignore[assignment]
     etat = await moteur.visiter()
     assert {f.famille for f in etat.manquants} == {"diffusion_models"}
+
+
+# ── « La carte graphique prévient avant de lancer » (RV2) ────────────────────
+
+
+async def test_le_besoin_mesure_accompagne_une_carte_allumee(moteur, comfy):
+    """Le seul chiffre que ce dépôt ait mesuré : 6,0 Go (`MESURE`, 3 septembre
+    2026). Il voyage avec l'état dès que la carte répond, pas seulement quand
+    l'installation est complète — le grisé et le besoin sont deux questions
+    différentes."""
+    etat = await moteur.visiter()
+    assert etat.besoin_go == 6.0
+    comfy.installes["vae"] = []  # deuxième absence : reste choisissable
+    etat = await moteur.visiter()
+    assert etat.besoin_go == 6.0
+
+
+async def test_le_besoin_se_tait_quand_la_carte_ne_repond_pas(moteur, comfy):
+    """Moteur éteint : aucun besoin ne s'affiche, parce que rien ne se lance et
+    qu'un chiffre affiché sans carte pour le lire ne voudrait rien dire."""
+    comfy.eteint = True
+    etat = await moteur.visiter()
+    assert etat.besoin_go is None
+
+
+async def test_comfyui_occupe_par_un_autre_calcul_se_dit_avant_le_lancement(moteur, comfy):
+    """Un autre travail dans la file ComfyUI : `occupe` devient vrai, et il ne
+    grise rien — RV2 avertit, il ne bloque pas."""
+    comfy.file_occupee = True
+    etat = await moteur.visiter()
+    assert etat.occupe is True
+    assert etat.allume is True and etat.grise is None
+
+
+async def test_une_file_vide_n_est_pas_occupee(moteur, comfy):
+    """La file ComfyUI vide dit *disponible*, jamais *occupé*."""
+    etat = await moteur.visiter()
+    assert etat.occupe is False
 
 
 async def test_l_adaptateur_du_produit_se_garde_et_se_souvient_de_sa_visite(comfy):
@@ -985,6 +1031,16 @@ def test_l_ecran_voit_le_moteur_s_allumer_sans_redemarrer(client_maison):
     assert client_maison.get("/api/clips/engine").json()["allume"] is False
     client_maison.comfy.eteint = False
     assert client_maison.get("/api/clips/engine").json()["allume"] is True
+
+
+def test_lecran_recoit_le_besoin_mesure_et_l_occupation_de_la_file(client_maison):
+    """RV2 : deux champs neufs, pour que l'écran prévienne avant de lancer sans
+    que le serveur invente rien."""
+    rendu = client_maison.get("/api/clips/engine").json()
+    assert rendu["besoin_go"] == 6.0
+    assert rendu["occupe"] is False
+    client_maison.comfy.file_occupee = True
+    assert client_maison.get("/api/clips/engine").json()["occupe"] is True
 
 
 def test_l_ecran_liste_ce_qui_manque_avec_sa_taille_et_sa_licence(client_maison):

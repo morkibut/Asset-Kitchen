@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { beforeEach, expect, test, vi } from "vitest"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { FabricationVideoLibre } from "./FabricationVideoLibre"
 import { api, type Asset, type ModeleVideo } from "../api"
 import { videoLibre, type TravailVideoLibre } from "../api-video-libre"
@@ -11,10 +11,18 @@ vi.mock("./BibliothequePourImage", () => ({ BibliothequePourImage: ({ onChoisir 
 const modele: ModeleVideo = { identifiant: "Moteur:clip", nom: "Clip", fournisseur: "Moteur", durees: [5, 8], resolutions: ["480p", "720p"], proportions: ["1:1", "16:9"], grise: null, de_la_maison: false,
   images_par_seconde: 0, duree_conseillee: 0, raison_de_la_duree: "", images_par_duree: {}, mesure: "",
   options: { seed: { nom: "Graine", genre: "intervalle", minimum: 0, maximum: 999, valeurs: [] } }, prix: { montant: 0.12, nature: "estimation", releve_le: null, formule: "Un clip" }, attente: null }
+// **RV2** : le modèle de la maison, pour vérifier que la carte prévient avant
+// de lancer — seulement quand c'est lui qui est choisi.
+const local: ModeleVideo = { identifiant: "maison/wan-2.2-i2v-14b-pixel", nom: "Wan 2.2 · sur votre machine", fournisseur: "Maison", durees: [1, 2, 3], resolutions: ["480p"], proportions: ["1:1"], grise: null, de_la_maison: true,
+  images_par_seconde: 16, duree_conseillee: 1, raison_de_la_duree: "", images_par_duree: { "1": 17 }, mesure: "",
+  options: {}, prix: { montant: 0, nature: "certain", releve_le: null, formule: "gratuit — la carte de la maison" },
+  attente: { secondes: 129, secondes_suivant: 80, premier: true, images: 17, mesure: "mesure", nature: "attente" } }
 const travail: TravailVideoLibre = { nature: "video-libre", identifiant: "conserve", projet: "jeu", cle: "cle", acteur: "auteur", etat: "prepare", etape: "reference", cree_le: 1000,
   demande: { cle: "cle", reference_asset: "depart", modele_video: modele.identifiant, prompt_video: "Une marche précise", secondes: 8, resolution: "720p", proportions: "16:9", options_video: { seed: 314 }, nombre_images: 8, cadence: 8, sens: "boucle" },
   reference_asset: "depart", clip: null, bandes: [], references: [], objectif: null, entree_video: { url: "/image-figee.png", empreinte: "hash" },
   annonce: { appels: 1, reservation_usd: 0.12, image_usd: 0, video: modele.prix, temps_local: null, video_locale: false, limite: "Le prix final peut varier." }, consommations: [], prochaine_action: "demarrer" }
+
+afterEach(() => { cleanup() })
 
 beforeEach(() => {
   vi.clearAllMocks(); localStorage.clear()
@@ -89,4 +97,43 @@ test("importer garde l’image en bibliothèque sans lancer de modèle", async (
   expect(await screen.findByAltText("Image de départ choisie")).toHaveAttribute("src", api.fichier("importe"))
   expect(api.televerser).toHaveBeenCalledWith(fichier)
   expect(videoLibre.preparer).not.toHaveBeenCalled(); expect(videoLibre.demarrer).not.toHaveBeenCalled()
+})
+
+// ── « La carte graphique prévient avant de lancer » (RV2) ─────────────────
+
+test("le modèle local montre la mémoire libre en clair, et avertit sous le besoin mesuré sans bloquer", async () => {
+  vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [modele, local] } as never)
+  vi.spyOn(api, "etatDuMoteur").mockResolvedValue({
+    allume: true, grise: null, manquants: [], go_a_telecharger: 0, greffon_absent: false,
+    carte: "cuda:0 NVIDIA GeForce RTX 3080 Laptop GPU", memoire_libre_go: 0.9, besoin_go: 6, occupe: false, phrase: "",
+  })
+  render(<FabricationVideoLibre projet="jeu" onClip={vi.fn()} />)
+  await screen.findByRole("option", { name: /maison\/wan/ })
+  fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: local.identifiant } })
+  expect(await screen.findByText(/Mémoire libre : 0,9 Go/)).toBeInTheDocument()
+  expect(screen.getByText(/environ 6 Go.*ferme les autres calculs/)).toBeInTheDocument()
+  // Jamais l'identifiant technique du pilote.
+  expect(screen.queryByText(/cuda:0/)).not.toBeInTheDocument()
+})
+
+test("un modèle payant ne regarde jamais la carte graphique", async () => {
+  vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [modele, local] } as never)
+  const espionEtat = vi.spyOn(api, "etatDuMoteur")
+  render(<FabricationVideoLibre projet="jeu" onClip={vi.fn()} />)
+  fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: modele.identifiant } })
+  await screen.findByText(/Cette demande fabrique un clip/)
+  expect(screen.queryByText(/Mémoire libre/)).not.toBeInTheDocument()
+  expect(espionEtat).not.toHaveBeenCalled()
+})
+
+test("ComfyUI déjà occupé par un autre calcul se dit avant le lancement, sans bloquer", async () => {
+  vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [modele, local] } as never)
+  vi.spyOn(api, "etatDuMoteur").mockResolvedValue({
+    allume: true, grise: null, manquants: [], go_a_telecharger: 0, greffon_absent: false,
+    carte: "cuda:0 NVIDIA GeForce RTX 3080 Laptop GPU", memoire_libre_go: 6.7, besoin_go: 6, occupe: true, phrase: "",
+  })
+  render(<FabricationVideoLibre projet="jeu" onClip={vi.fn()} />)
+  await screen.findByRole("option", { name: /maison\/wan/ })
+  fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: local.identifiant } })
+  expect(await screen.findByText(/ComfyUI est déjà occupé par un autre calcul/)).toBeInTheDocument()
 })

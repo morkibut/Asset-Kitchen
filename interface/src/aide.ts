@@ -3036,7 +3036,7 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Rien à ce qui part. Ce panneau ne dépense jamais d'argent — il regarde ce que l'application du moteur a sur son disque, et il te dit si le modèle gratuit est utilisable maintenant.",
     origine: "relu à chaque ouverture de cet écran",
-    long: "Trois choses peuvent manquer. L'application du moteur fermée empêche tout : ouvre-la, reviens, le grisé tombe seul. Des fichiers manquants laissent le modèle choisissable — l'atelier les rapatrie, en disant poids et licence avant de lancer quoi que ce soit. Le greffon des gros pixels manquant n'est qu'un avertissement : le clip sort lissé, et un téléchargement coupé reprend où il s'est arrêté.",
+    long: "Trois choses peuvent manquer. L'application fermée empêche tout : ouvre-la, reviens, le grisé tombe seul. Des fichiers manquants laissent le modèle choisissable — l'atelier les rapatrie. Le greffon des gros pixels manquant n'est qu'un avertissement : le clip sort lissé. La mémoire libre est en clair, jamais l'identifiant du pilote — deux avertissements sans blocage : trop peu, ou ComfyUI pris.",
   },
 
   "clip.mesure": {
