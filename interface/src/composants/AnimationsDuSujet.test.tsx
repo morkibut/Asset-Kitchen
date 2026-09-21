@@ -11,8 +11,6 @@
 // dont ce fichier reprend la structure au mot près pour les bandes.
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import { useState } from "react"
-import { MemoireDuParcours } from "./MemoireDuParcours"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { AnimationsDuSujet, rangerLaLigne, rangeesDeLaCase } from "./AnimationsDuSujet"
@@ -185,28 +183,10 @@ function monter(cases: Case[] = [CASE_SUD], objectif?: ObjectifProduction) {
 const rangee = (cle: string) =>
   document.querySelector(`[data-rangee="${cle}"]`) as HTMLElement
 
-// **Le défilement ne se retient plus ici** : depuis que la page du sujet ne
-// fait qu'un seul bloc qui défile, c'est elle qui garde la position, et
-// `PageDuSujet.test.tsx` l'essaie. Il reste ici les filtres et le volet.
-test("la galerie retrouve ses filtres au retour de retouche, sans volet imposé", () => {
-  const cases = [CASE_SUD, sienne({ pose: "marche", directions: [{ ...DIRECTION, identifiant: "nord", nom: "nord", bandes: [bande({ identifiant: "marche-nord", cree_le: 400, pose: "marche", direction: "nord" })] }] })]
-  function Parcours() {
-    const [retouche, setRetouche] = useState(false)
-    return retouche ? <button onClick={() => setRetouche(false)}>Retour au sujet</button> : <AnimationsDuSujet personnage={personnage(cases)} plan={PLAN} onAnimer={vi.fn()} onErreur={vi.fn()} onOuvrirLaBande={() => setRetouche(true)} />
-  }
-  render(<MemoireDuParcours><Parcours /></MemoireDuParcours>)
-  fireEvent.change(screen.getByLabelText("Mouvement de la galerie"), { target: { value: "marche" } })
-  fireEvent.change(screen.getByLabelText("Direction de la galerie"), { target: { value: "nord" } })
-  fireEvent.change(screen.getByLabelText("Jugement de la galerie"), { target: { value: "gardee" } })
-  expect(document.querySelectorAll("[data-carte-animation]")).toHaveLength(1)
-  fireEvent.click(screen.getByRole("button", { name: "Retoucher essai marche-nord" }))
-  fireEvent.click(screen.getByRole("button", { name: "Retour au sujet" }))
-  expect((screen.getByLabelText("Mouvement de la galerie") as HTMLSelectElement).value).toBe("marche")
-  expect((screen.getByLabelText("Direction de la galerie") as HTMLSelectElement).value).toBe("nord")
-  expect((screen.getByLabelText("Jugement de la galerie") as HTMLSelectElement).value).toBe("gardee")
-  expect(document.querySelectorAll("[data-carte-animation]")).toHaveLength(1)
-  expect(document.querySelector('[data-volet-de-la-bande]')).toBeNull()
-})
+// **La galerie des animations a été retirée** (RV10) : ses filtres
+// (Mouvement / Direction / Jugement de la galerie) vivaient en double avec
+// les rangées ci-dessus, et c'est elle qui a gardé la vérité. Ses filtres
+// iront dans la Galerie de la fiche (RV12).
 
 test("une vignette joue au survol ou au focus, et reste immobile autrement", () => {
   vi.useFakeTimers()
@@ -418,9 +398,8 @@ describe("une nature sans directions", () => {
     expect(rangees[0].compte).toBe(3)
   })
 
-  test("sans la capacité, ni filtre Direction ni rangée par direction", () => {
+  test("sans la capacité, aucune rangée par direction", () => {
     monterSans(false)
-    expect(screen.queryByLabelText("Direction de la galerie")).toBeNull()
     expect(rangee("repos/sud")).toBeNull()
     expect(rangee("repos/nord")).toBeNull()
     expect(rangee("repos/—")).toBeTruthy()
@@ -429,11 +408,9 @@ describe("une nature sans directions", () => {
 
   test("avec la capacité, ou tant qu'elle n'est pas connue, rien ne change", () => {
     monterSans(true)
-    expect(screen.getByLabelText("Direction de la galerie")).toBeTruthy()
     expect(rangee("repos/sud")).toBeTruthy()
     cleanup()
     monterSans(undefined)
-    expect(screen.getByLabelText("Direction de la galerie")).toBeTruthy()
     expect(rangee("repos/nord")).toBeTruthy()
   })
 })

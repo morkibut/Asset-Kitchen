@@ -61,8 +61,13 @@ def _generer_une_pose(client, double, personnage: str, pose: str) -> None:
 
 
 def test_la_complétude_ne_compte_que_les_poses_tenues(client, double):
-    """Deux poses demandées, une seule faite : la famille dit *une pose faite
-    sur deux*, jamais sur le total théorique du jeu (E12)."""
+    """Deux poses demandées, une seule faite : la famille dit *une image sur
+    deux*, jamais sur le total théorique du jeu (E12).
+
+    **RV10** : `complet` n'est plus un ratio, il regarde les deux calques —
+    *rien ne manque, animations comprises*. La fraction se lit maintenant sur
+    `images`/`animations`, chacun avec `pretes` et `demandees`.
+    """
     personnage, plan = _personnage(client, "Le pèlerin", poses=2)
     assert len(plan) == 2, "le projet de test doit déclarer au moins deux poses"
     _generer_une_pose(client, double, personnage, plan[0])
@@ -70,8 +75,9 @@ def test_la_complétude_ne_compte_que_les_poses_tenues(client, double):
     bilan = client.get("/api/dashboard").json()
     famille = next(f for f in bilan["familles"] if f["cle"] == "personnages")
     assert famille["compte"] == 1
-    assert famille["complet"] == 0.5
-    assert famille["manque_texte"] == "1 poses faites sur 2."
+    assert famille["images"] == {"pretes": 1, "demandees": 2, "a_fabriquer": 1, "a_departager": 0}
+    assert famille["complet"] is False
+    assert famille["manque_texte"] == "0/2 animations · 1/2 images prêtes."
 
 
 def test_une_pose_écartée_sort_du_dénominateur(client, double):
@@ -83,13 +89,16 @@ def test_une_pose_écartée_sort_du_dénominateur(client, double):
 
     avant = client.get("/api/dashboard").json()
     famille_avant = next(f for f in avant["familles"] if f["cle"] == "personnages")
-    assert famille_avant["complet"] == 0.5
+    assert famille_avant["images"]["demandees"] == 2
 
     client.put(f"/api/characters/{personnage}", json={"poses": [plan[0]]})
 
     apres = client.get("/api/dashboard").json()
     famille_apres = next(f for f in apres["familles"] if f["cle"] == "personnages")
-    assert famille_apres["complet"] == 1.0
+    assert famille_apres["images"] == {"pretes": 1, "demandees": 1, "a_fabriquer": 0, "a_departager": 0}
+    # L'image seule ne suffit plus à dire « complet » (RV10) : l'animation
+    # de cette pose-là manque encore.
+    assert famille_apres["complet"] is False
 
 
 # ── Ce qui manque le plus ────────────────────────────────────────────────────

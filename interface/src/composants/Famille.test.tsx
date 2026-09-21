@@ -36,13 +36,12 @@ function sujet(surplus: Partial<SujetDeLaGrille> & { identifiant: string; nom: s
     type: "personnage",
     cree_le: 1_700_000_000,
     compte: {
-      poses: { fait: 6, attendu: 6 },
-      images: { fait: 12, attendu: 12 },
-      bandes: { fait: 0, attendu: 6 },
-      complet: true,
+      images: { pretes: 12, demandees: 12, a_fabriquer: 0, a_departager: 0 },
+      animations: { pretes: 0, demandees: 6, a_fabriquer: 6, a_departager: 0 },
+      complet: true, hors_plan: 0,
       detail: [
-        { identifiant: "repos", nom: "repos", fait: 1, attendu: 1 },
-        { identifiant: "marche", nom: "marche", fait: 1, attendu: 1 },
+        { identifiant: "repos", nom: "repos", images: { pretes: 1, demandees: 1, a_fabriquer: 0, a_departager: 0 }, animations: { pretes: 1, demandees: 1, a_fabriquer: 0, a_departager: 0 } },
+        { identifiant: "marche", nom: "marche", images: { pretes: 1, demandees: 1, a_fabriquer: 0, a_departager: 0 }, animations: { pretes: 1, demandees: 1, a_fabriquer: 0, a_departager: 0 } },
       ],
     },
     collections: [],
@@ -63,13 +62,12 @@ const B = sujet({
   type: "créature",
   vignette: null,
   compte: {
-    poses: { fait: 0, attendu: 4 },
-    images: { fait: 0, attendu: 8 },
-    bandes: { fait: 0, attendu: 4 },
-    complet: false,
+    images: { pretes: 0, demandees: 8, a_fabriquer: 8, a_departager: 0 },
+    animations: { pretes: 0, demandees: 4, a_fabriquer: 4, a_departager: 0 },
+    complet: false, hors_plan: 0,
     // Cette créature ne tient pas la pose « marche » : aucune entrée pour
     // elle, pas une entrée à zéro.
-    detail: [{ identifiant: "repos", nom: "repos", fait: 0, attendu: 1 }],
+    detail: [{ identifiant: "repos", nom: "repos", images: { pretes: 0, demandees: 1, a_fabriquer: 1, a_departager: 0 }, animations: { pretes: 0, demandees: 1, a_fabriquer: 1, a_departager: 0 } }],
   },
 })
 const C = sujet({
@@ -77,13 +75,12 @@ const C = sujet({
   nom: "Le passeur",
   collections: [{ identifiant: "pnj", nom: "Les PNJ" }],
   compte: {
-    poses: { fait: 3, attendu: 6 },
-    images: { fait: 5, attendu: 12 },
-    bandes: { fait: 2, attendu: 6 },
-    complet: false,
+    images: { pretes: 5, demandees: 12, a_fabriquer: 7, a_departager: 0 },
+    animations: { pretes: 2, demandees: 6, a_fabriquer: 4, a_departager: 0 },
+    complet: false, hors_plan: 0,
     detail: [
-      { identifiant: "repos", nom: "repos", fait: 1, attendu: 1 },
-      { identifiant: "marche", nom: "marche", fait: 0, attendu: 1 },
+      { identifiant: "repos", nom: "repos", images: { pretes: 1, demandees: 1, a_fabriquer: 0, a_departager: 0 }, animations: { pretes: 1, demandees: 1, a_fabriquer: 0, a_departager: 0 } },
+      { identifiant: "marche", nom: "marche", images: { pretes: 0, demandees: 1, a_fabriquer: 1, a_departager: 0 }, animations: { pretes: 0, demandees: 1, a_fabriquer: 1, a_departager: 0 } },
     ],
   },
 })

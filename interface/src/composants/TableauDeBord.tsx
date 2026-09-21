@@ -153,14 +153,22 @@ export function TableauDeBord({
                     {famille.compte == null ? "aucun" : famille.compte}
                   </span>
                 </span>
-                {/* La barre ne paraît que si le serveur a un compte à en
-                    tirer — une famille sans sujet n'a rien à mesurer. */}
+                {/* **Deux barres, jamais une** (RV10, A12) : les images et les
+                    animations ne se mêlent pas dans une même jauge. Elles ne
+                    paraissent que si le serveur a un compte à en tirer — une
+                    famille sans sujet n'a rien à mesurer. */}
                 {detail && detail.complet != null && (
-                  <span className="block h-[4px] overflow-hidden rounded-5 bg-trait-faible">
-                    <span
-                      className="block h-full rounded-5 bg-ok"
-                      style={{ width: `${Math.round(detail.complet * 100)}%` }}
-                    />
+                  <span className="flex flex-col gap-[3px]">
+                    {([["animations", detail.animations], ["images", detail.images]] as const).map(([nom, fraction]) => (
+                      <span key={nom} className="block h-[4px] overflow-hidden rounded-5 bg-trait-faible">
+                        <span
+                          className="block h-full rounded-5 bg-ok"
+                          style={{
+                            width: `${fraction.demandees > 0 ? Math.round((fraction.pretes / fraction.demandees) * 100) : 100}%`,
+                          }}
+                        />
+                      </span>
+                    ))}
                   </span>
                 )}
                 {/* **Le manque, dit en clair, sans couleur d'alerte** (E2). */}

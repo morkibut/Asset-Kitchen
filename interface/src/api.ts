@@ -43,9 +43,24 @@ export type CaseObjectif = SortieDemandee & CompteObjectif & {
   nom_pose: string; nom_direction: string; etat: "non-demande" | "manquant" | "produit" | "retenu"
   versions: { retenues: (Asset | Bande)[]; a_juger: (Asset | Bande)[]; ecartees: (Asset | Bande)[] }
 }
+/** Une fraction d'avancement, sur un seul calque (RV10) — jamais mêlée à
+ *  l'autre (A12) : `pretes` compte les cases qui partiraient dans le jeu si
+ *  on livrait maintenant, la retenue n'étant pas nécessaire (E2). */
+export type FractionAvancement = {
+  pretes: number; demandees: number; a_fabriquer: number; a_departager: number
+}
+/** Le seul compte d'avancement (RV10) — lu par la carte du Codex, la fiche,
+ *  l'objectif, l'accueil et la liste des jeux. `complet` veut dire « rien ne
+ *  manque, animations comprises ». */
+export type Avancement = {
+  images: FractionAvancement; animations: FractionAvancement
+  complet: boolean; hors_plan: number
+  detail?: { identifiant: string; nom: string; images: FractionAvancement; animations: FractionAvancement }[]
+}
 export type ObjectifDuPersonnage = {
   personnage: string; objectif: ObjectifProduction; origine: "explicite" | "plan-existant"
   couverture: { images: CompteObjectif; animations: CompteObjectif; cases: CaseObjectif[] }
+  avancement: Avancement
 }
 
 export type Option = {
@@ -2728,10 +2743,12 @@ export type Vestiaire = {
 export type FamilleDuBilan = {
   cle: string
   compte: number
-  /** La fraction de ce qui est fabricable maintenant qui est fait (E12), ou
-   *  `null` quand rien n'est réclamé — une barre à 0 % dirait « en retard »,
-   *  ce que le manque n'est jamais. */
-  complet: number | null
+  images: FractionAvancement
+  animations: FractionAvancement
+  /** `null` quand rien n'est réclamé — une barre à 0 % dirait « en retard »,
+   *  ce que le manque n'est jamais (E2). Sinon, « rien ne manque, animations
+   *  comprises » (RV10) : les deux calques comptent, jamais un seul. */
+  complet: boolean | null
   manque_texte: string
 }
 
@@ -3531,23 +3548,15 @@ export type Collection = {
 // ── La grille d'une famille (B9) ────────────────────────────────────────────
 
 /** Ce qu'un sujet a de fait sur ce qu'il attend, **dans ses deux calques**
- *  (B9.1).
+ *  (RV10 — le même compte que `Avancement`, sans le nom : c'est
+ *  `ServiceProduction.avancements` qui le rend, pour toute une page de
+ *  sujets en deux requêtes).
  *
  *  Les images et les animations se comptent séparément, et ne se mêlent jamais
  *  en un seul total : une animation manquante se cacherait derrière une image
- *  présente. `complet` ne regarde que les images — sans quoi le filtre
- *  *Incomplets* rendrait le jeu entier tant qu'une bande manque, c'est-à-dire
- *  toujours. */
-export type CompteDuSujet = {
-  poses: { fait: number; attendu: number }
-  images: { fait: number; attendu: number }
-  bandes: { fait: number; attendu: number }
-  complet: boolean
-  /** Le même compte, pose par pose — **ce que la vue *Les poses* dessine**.
-   *  Il sort de la même boucle que les totaux ci-dessus : les deux ne peuvent
-   *  pas se contredire. */
-  detail: { identifiant: string; nom: string; fait: number; attendu: number }[]
-}
+ *  présente (A12). `complet` regarde désormais les deux calques : *rien ne
+ *  manque, animations comprises*. */
+export type CompteDuSujet = Avancement
 
 /** Une collection où l'on peut ranger, et ce qu'elle contient **de ce jeu-ci**.
  *

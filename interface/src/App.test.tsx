@@ -3020,16 +3020,18 @@ function serveurDouble(options: {
           type: p.type,
           cree_le: p.cree_le,
           compte: {
-            poses: { fait: posesFait, attendu: plan.length },
-            images: { fait: imagesFait, attendu: imagesAttendu },
-            bandes: { fait: 0, attendu: 0 },
+            images: { pretes: imagesFait, demandees: imagesAttendu, a_fabriquer: Math.max(0, imagesAttendu - imagesFait), a_departager: 0 },
+            animations: { pretes: 0, demandees: 0, a_fabriquer: 0, a_departager: 0 },
             complet: plan.length > 0 && posesFait >= plan.length,
+            hors_plan: 0,
             detail: plan.map((pose) => ({
               identifiant: pose.identifiant,
               nom: pose.nom,
-              fait: p.cases.find((c) => c.pose === pose.identifiant)?.images.length ?? 0,
-              attendu:
-                p.cases.find((c) => c.pose === pose.identifiant)?.demandees ?? pose.images,
+              images: {
+                pretes: p.cases.find((c) => c.pose === pose.identifiant)?.images.length ?? 0,
+                demandees: p.cases.find((c) => c.pose === pose.identifiant)?.demandees ?? pose.images,
+              },
+              animations: { pretes: 0, demandees: 0 },
             })),
           },
           collections: [],
@@ -23502,7 +23504,12 @@ describe("B0 — la navigation de l'atelier", () => {
   test("la barre et le manque d'une famille viennent du bilan servi par le serveur", async () => {
     const bilan: BilanDuJeu = {
       familles: [
-        { cle: "personnages", compte: 1, complet: 0.5, manque_texte: "1 poses faites sur 2." },
+        {
+          cle: "personnages", compte: 1, complet: false,
+          images: { pretes: 1, demandees: 2, a_fabriquer: 1, a_departager: 0 },
+          animations: { pretes: 0, demandees: 2, a_fabriquer: 2, a_departager: 0 },
+          manque_texte: "0/2 animations · 1/2 images prêtes.",
+        },
       ],
       manques: [
         {
@@ -23525,7 +23532,7 @@ describe("B0 — la navigation de l'atelier", () => {
 
     // La phrase de manque, sous la carte de famille — jamais recalculée à
     // l'écran, exactement ce que le serveur a rendu.
-    expect(await within(tableau).findByText("1 poses faites sur 2.")).toBeTruthy()
+    expect(await within(tableau).findByText("0/2 animations · 1/2 images prêtes.")).toBeTruthy()
 
     // « Ce qui manque le plus » : la ligne, son coût, et le total du lot —
     // annoncé avant de cliquer.

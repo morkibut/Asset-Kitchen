@@ -578,9 +578,6 @@ export function AnimationsDuSujet({
   )
   const [filtre, setFiltre] = useEtatDuParcours<Filtre>(`${cle}:filtre`, "toutes")
   const [choisie, setChoisie] = useEtatDuParcours<string | null>(`${cle}:choisie`, null)
-  const [galeriePose, setGaleriePose] = useEtatDuParcours(`${cle}:galerie-pose`, "")
-  const [galerieDirection, setGalerieDirection] = useEtatDuParcours(`${cle}:galerie-direction`, "")
-  const [galerieStatut, setGalerieStatut] = useEtatDuParcours(`${cle}:galerie-statut`, "")
 
   const parPose = useMemo(() => {
     const estDemandee = (rangee: Rangee) => animationsDemandees.some(
@@ -633,13 +630,6 @@ export function AnimationsDuSujet({
     if (filtre === "toutes") return true
     return rangees.some((r) => r.compte > 1 && !r.retenue)
   })
-  const galerie = parPose.flatMap(({ nom, rangees }) => rangees.flatMap((rangee) => [
-    ...(rangee.retenue ? [{ bande: rangee.retenue, statut: "retenue" as const, rangee, nom }] : []),
-    ...rangee.gardees.map((bande) => ({ bande, statut: "gardee" as const, rangee, nom })),
-    ...rangee.ecartees.map((bande) => ({ bande, statut: "ecartee" as const, rangee, nom })),
-  ]))
-  const galerieFiltree = galerie.filter((item) => (!galeriePose || item.rangee.pose === galeriePose) && (!galerieDirection || item.rangee.direction === galerieDirection) && (!galerieStatut || item.statut === galerieStatut))
-  const directionsGalerie = [...new Map(parPose.flatMap(({ rangees }) => rangees.filter((r) => r.direction).map((r) => [r.direction!, r.angle ?? r.nom] as const))).entries()]
 
   /** La bande du volet, ouvert à la demande. Relue dans les cases à chaque rendu, comme pour
    *  les images : gardée en objet, elle serait celle d'avant le dernier
@@ -890,25 +880,6 @@ export function AnimationsDuSujet({
               </div>
             )
           })}
-          <section aria-label="Galerie des animations" className="mt-[22px] flex flex-col gap-[14px] border-t border-trait pt-[14px]">
-            <h2 className="font-serif text-[25px]">Galerie des animations</h2>
-            <div className="flex flex-wrap gap-[8px] text-[12px]">
-              <label>Mouvement / pose <select aria-label="Mouvement de la galerie" value={galeriePose} onChange={(e) => setGaleriePose(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option>{parPose.map((p) => <option key={p.sienne.pose} value={p.sienne.pose}>{p.nom}</option>)}</select></label>
-              {avecDirections && <label>Direction <select aria-label="Direction de la galerie" value={galerieDirection} onChange={(e) => setGalerieDirection(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Toutes</option>{directionsGalerie.map(([id, nom]) => <option key={id} value={id}>{nom}</option>)}</select></label>}
-              <label>Jugement <select aria-label="Jugement de la galerie" value={galerieStatut} onChange={(e) => setGalerieStatut(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option><option value="retenue">Retenu</option><option value="gardee">Non jugé</option><option value="ecartee">Écarté</option></select></label>
-            </div>
-            <p role="status" className="text-[12px] text-encre-3">{galerieFiltree.length} animation{galerieFiltree.length > 1 ? "s" : ""}</p>
-            <div className="grid grid-cols-2 gap-[14px]">
-              {galerieFiltree.map(({ bande: cible, statut, rangee, nom }) => <article key={cible.identifiant} data-carte-animation={cible.identifiant} className="flex min-w-0 flex-col gap-[8px] rounded-10 border border-trait bg-carte p-[14px]">
-                <div className="flex justify-center"><VignetteDeBande bande={cible} galerie cote={192} etat={statut} choisie={choisie === cible.identifiant} onChoisir={() => { setChoisie(null); onOuvrirLaBande(cible.identifiant) }} /></div>
-                <p className="truncate text-[13px]">{nom} · {rangee.angle ?? "sans direction"}</p>
-                <p className="text-[11px] text-encre-3">{statut === "gardee" ? "Non jugé" : statut === "retenue" ? "Retenu" : "Écarté"} · {cible.compte} frames · {cible.cadence} i/s</p>
-                {statut === "ecartee" ? <button type="button" onClick={() => void restaurer(cible)}>Remettre à juger</button> : <Marques contexte={` dans la galerie : ${cible.nom}`} retenue={statut === "retenue"} onRetenir={() => void retenir(cible, rangee)} onGarder={() => void garder(cible)} onEcarter={() => void ecarter(cible, rangee)} />}
-                <button type="button" onClick={() => { setChoisie(null); onOuvrirLaBande(cible.identifiant) }} className="rounded-7 border border-trait px-[8px] py-[4px] text-[12px]">Retoucher</button>
-              </article>)}
-            </div>
-            {galerieFiltree.length === 0 && <p className="text-[12px] text-encre-3">Aucune animation pour ces filtres.</p>}
-          </section>
         </div>
       </section>
 

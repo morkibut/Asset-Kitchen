@@ -43,7 +43,7 @@ def test_une_marche_seule_ne_demande_aucune_image_ni_autre_direction(client, ate
     assert lu["couverture"]["animations"]["manquant"] == 1
     assert sum(c["etat"] == "non-demande" for c in lu["couverture"]["cases"]) == 47
     comptes = atelier.production.comptes(lu["projet"], [atelier.production.personnage(lu["projet"], p)])
-    assert comptes[p]["images"]["attendu"] == 0
+    assert comptes[p]["images"]["demandees"] == 0
     assert not comptes[p]["complet"]
     assert double.appels == 0
 

@@ -26,6 +26,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks() })
 const sentinelle = { identifiant: "la-sentinelle", projet: "marais", nom: "La sentinelle de contrôle" } as Personnage
 
 const compte = { demande: 0, produit: 0, retenu: 0, manquant: 0, a_retenir: 0 }
+const fractionVide = { pretes: 0, demandees: 0, a_fabriquer: 0, a_departager: 0 }
 
 /** Ce que le serveur rend d'un sujet neuf : son plan de poses, aucune sortie
  *  demandée. C'est l'état dans lequel la création dépose l'auteur. */
@@ -40,6 +41,7 @@ const vierge: ObjectifDuPersonnage = {
       etat: "non-demande" as const, versions: { retenues: [], a_juger: [], ecartees: [] },
     }))),
   },
+  avancement: { images: fractionVide, animations: fractionVide, complet: true, hors_plan: 0 },
 }
 
 test("créer un sujet n’appelle que la création, et aucune génération", async () => {

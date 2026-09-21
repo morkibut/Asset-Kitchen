@@ -109,26 +109,41 @@ def _par_la_matrice(atelier, personnage: str) -> dict:
     sujet montre depuis E10 et A12, résumé en chiffres. Écrit ici plutôt
     qu'appelé sur le service exprès — s'il appelait `comptes`, il ne
     prouverait rien.
+
+    **RV10** : la référence n'est plus « fait / attendu » sur les images
+    seules, mais le même compte d'avancement que `comptes` lit désormais —
+    une case (pose × direction) est prête dès qu'elle porte au moins une
+    version vivante, sur chacun des deux calques.
     """
     projet = atelier.bibliotheque.courant
     vise = atelier.production.personnage(projet, personnage)
     cases = atelier.production.cases(projet, vise)
-    fait = attendu = anime_fait = anime_attendu = poses_faites = 0
-    for case in cases:
-        demandees = int(case["demandees"])
-        sienne = min(len(case["images"]), demandees)
-        fait += sienne
-        attendu += demandees
-        anime_fait += min(len(case["bandes"]), int(case["bandes_demandees"]))
-        anime_attendu += int(case["bandes_demandees"])
-        if sienne >= demandees:
-            poses_faites += 1
-    return {
-        "poses": {"fait": poses_faites, "attendu": len(cases)},
-        "images": {"fait": fait, "attendu": attendu},
-        "bandes": {"fait": anime_fait, "attendu": anime_attendu},
-        "complet": fait >= attendu,
+    totaux = {
+        nom: {"pretes": 0, "demandees": 0, "a_fabriquer": 0, "a_departager": 0}
+        for nom in ("images", "animations")
     }
+
+    def compter(nature: str, vivantes: list[dict]) -> None:
+        total = totaux[nature]
+        total["demandees"] += 1
+        if vivantes:
+            total["pretes"] += 1
+        else:
+            total["a_fabriquer"] += 1
+        if len(vivantes) >= 2 and not any(v.get("favori") for v in vivantes):
+            total["a_departager"] += 1
+
+    for case in cases:
+        lignes = case["directions"] or [{"images": case["images"], "bandes": case["bandes"]}]
+        for ligne in lignes:
+            compter("images", [a for a in ligne["images"] if not a.get("piece")])
+            compter(
+                "animations",
+                [b for b in ligne["bandes"] if b.get("images") and not b.get("brouillon")],
+            )
+
+    complet = not any(t["a_fabriquer"] for t in totaux.values())
+    return {**totaux, "complet": complet, "hors_plan": 0}
 
 
 def _les_deux_disent_pareil(atelier, personnage: str) -> dict:
@@ -151,15 +166,15 @@ def test_un_sujet_neuf_ne_doit_rien_et_n_a_rien_fait(client, atelier):
 
     compte = _les_deux_disent_pareil(atelier, pelerin)
 
-    assert compte["poses"]["attendu"] == len(_plan(client))
-    assert compte["poses"]["fait"] == 0
-    assert compte["images"]["fait"] == 0
-    assert compte["images"]["attendu"] > 0
+    assert compte["images"]["demandees"] == len(_plan(client))
+    assert compte["images"]["pretes"] == 0
+    assert compte["animations"]["demandees"] == len(_plan(client))
+    assert compte["animations"]["pretes"] == 0
     assert compte["complet"] is False
 
 
 def test_une_pose_remplie_compte_pour_une_pose_faite(client, atelier, tmp_path):
-    """Le compte de la carte : *une pose sur six*. Et il se lit sur les images,
+    """Le compte de la carte : *une image sur six*. Et il se lit sur les images,
     jamais sur un état gardé à côté — c'est l'invariant de la matrice."""
     pelerin = _creer(client)
     plan = _plan(client)
@@ -167,8 +182,9 @@ def test_une_pose_remplie_compte_pour_une_pose_faite(client, atelier, tmp_path):
 
     compte = _les_deux_disent_pareil(atelier, pelerin)
 
-    assert compte["poses"] == {"fait": 1, "attendu": len(plan)}
-    assert compte["images"]["fait"] == 1
+    assert compte["images"] == {
+        "pretes": 1, "demandees": len(plan), "a_fabriquer": len(plan) - 1, "a_departager": 0,
+    }
 
 
 def test_une_pose_ecartee_sort_du_denominateur(client, atelier, tmp_path):
@@ -187,8 +203,9 @@ def test_une_pose_ecartee_sort_du_denominateur(client, atelier, tmp_path):
     client.put(f"/api/characters/{pelerin}", json={"poses": [plan[0]]})
 
     compte = _les_deux_disent_pareil(atelier, pelerin)
-    assert compte["poses"] == {"fait": 1, "attendu": 1}
-    assert compte["complet"] is True
+    assert compte["images"] == {"pretes": 1, "demandees": 1, "a_fabriquer": 0, "a_departager": 0}
+    # L'animation manque encore : `complet` regarde désormais les deux calques (RV10).
+    assert compte["complet"] is False
 
 
 def test_une_pose_ajoutee_pour_ce_sujet_la_entre_dans_le_denominateur(
@@ -202,16 +219,17 @@ def test_une_pose_ajoutee_pour_ce_sujet_la_entre_dans_le_denominateur(
     plan = _plan(client)
     for pose in plan:
         _poser(client, tmp_path, pelerin, pose)
+        _poser_une_bande(atelier, pelerin, pose)
     assert _les_deux_disent_pareil(atelier, pelerin)["complet"] is True
 
     reponse = client.put(f"/api/characters/{pelerin}", json={"ajouter": "en prière"})
     assert reponse.status_code == 200, reponse.text
 
     compte = _les_deux_disent_pareil(atelier, pelerin)
-    assert compte["poses"]["attendu"] == len(plan) + 1
+    assert compte["images"]["demandees"] == len(plan) + 1
     assert compte["complet"] is False
     # Et le voisin n'a rien vu paraître.
-    assert _les_deux_disent_pareil(atelier, heron)["poses"]["attendu"] == len(plan)
+    assert _les_deux_disent_pareil(atelier, heron)["images"]["demandees"] == len(plan)
 
 
 def test_les_directions_multiplient_ce_qui_est_attendu_et_un_angle_range_le_reduit(
@@ -231,7 +249,7 @@ def test_les_directions_multiplient_ce_qui_est_attendu_et_un_angle_range_le_redu
     _poser(client, tmp_path, pelerin, plan[0], "sud")
     _poser(client, tmp_path, pelerin, plan[0], "nord")
     partiel = _les_deux_disent_pareil(atelier, pelerin)
-    assert partiel["images"]["attendu"] == quatre_angles["images"]["attendu"]
+    assert partiel["images"]["demandees"] == quatre_angles["images"]["demandees"]
     assert partiel["complet"] is False
 
     # Ce sujet-ci ne tient plus que deux angles pour cette pose-là : ce qu'il
@@ -245,8 +263,8 @@ def test_les_directions_multiplient_ce_qui_est_attendu_et_un_angle_range_le_redu
         assert reponse.json()["portee"] == "ici"
 
     reduit = _les_deux_disent_pareil(atelier, pelerin)
-    assert reduit["images"]["attendu"] < partiel["images"]["attendu"]
-    assert reduit["complet"] is True
+    assert reduit["images"]["demandees"] < partiel["images"]["demandees"]
+    assert reduit["images"]["pretes"] == reduit["images"]["demandees"]
 
 
 def test_un_calque_ne_remplit_pas_la_case_d_un_corps(client, atelier, tmp_path):
@@ -267,8 +285,7 @@ def test_un_calque_ne_remplit_pas_la_case_d_un_corps(client, atelier, tmp_path):
     atelier.assets.sauver(replace(asset, piece="casque"))
 
     compte = _les_deux_disent_pareil(atelier, pelerin)
-    assert compte["images"]["fait"] == 0
-    assert compte["poses"]["fait"] == 0
+    assert compte["images"]["pretes"] == 0
     assert compte["complet"] is False
 
 
@@ -279,6 +296,7 @@ def test_une_image_supprimee_vide_sa_case_toute_seule(client, atelier, tmp_path)
     plan = _plan(client)
     client.put(f"/api/characters/{pelerin}", json={"poses": [plan[0]]})
     pose_l = _poser(client, tmp_path, pelerin, plan[0])
+    _poser_une_bande(atelier, pelerin, plan[0])
     assert _les_deux_disent_pareil(atelier, pelerin)["complet"] is True
 
     reponse = client.post(
@@ -287,7 +305,7 @@ def test_une_image_supprimee_vide_sa_case_toute_seule(client, atelier, tmp_path)
     assert reponse.status_code == 200, reponse.text
 
     compte = _les_deux_disent_pareil(atelier, pelerin)
-    assert compte["images"]["fait"] == 0
+    assert compte["images"]["pretes"] == 0
     assert compte["complet"] is False
 
 
@@ -303,7 +321,7 @@ def test_dix_images_dans_une_case_qui_en_reclame_une_ne_font_pas_mille_pour_cent
         _poser(client, tmp_path, pelerin, plan[0])
 
     compte = _les_deux_disent_pareil(atelier, pelerin)
-    assert compte["images"]["fait"] == compte["images"]["attendu"]
+    assert compte["images"]["pretes"] == compte["images"]["demandees"]
 
 
 # ── Les deux calques ne se mêlent pas (A12) ──────────────────────────────────
@@ -325,30 +343,28 @@ def test_une_bande_ne_remplit_pas_la_case_d_une_image_et_reciproquement(
     _poser_une_bande(atelier, pelerin, plan[0])
 
     anime_seul = _les_deux_disent_pareil(atelier, pelerin)
-    assert anime_seul["bandes"] == {"fait": 1, "attendu": 1}
+    assert anime_seul["animations"] == {
+        "pretes": 1, "demandees": 1, "a_fabriquer": 0, "a_departager": 0,
+    }
     # L'animation ne remplit rien du côté dessiné.
-    assert anime_seul["images"]["fait"] == 0
+    assert anime_seul["images"]["pretes"] == 0
 
     _poser(client, tmp_path, pelerin, plan[0])
 
     les_deux = _les_deux_disent_pareil(atelier, pelerin)
-    assert les_deux["images"]["fait"] == les_deux["images"]["attendu"]
+    assert les_deux["images"]["pretes"] == les_deux["images"]["demandees"]
     # Et l'image n'a rien rempli du côté animé.
-    assert les_deux["bandes"] == {"fait": 1, "attendu": 1}
+    assert les_deux["animations"] == {
+        "pretes": 1, "demandees": 1, "a_fabriquer": 0, "a_departager": 0,
+    }
 
 
-def test_complet_ne_regarde_que_les_images_et_le_calque_anime_se_lit_a_cote(
-    client, atelier, tmp_path
-):
-    """**Le piège du filtre « incomplets » (B9.6), fermé ici.**
-
-    Toute pose réclame au moins une animation par direction. Si `complet` les
-    comptait, un jeu qui n'anime rien serait incomplet en entier, et le filtre
-    ne trierait plus rien. C'est aussi le calque que `bilan_du_jeu` compte
-    depuis B5 : deux écrans qui disent « complet » doivent dire la même chose.
-
-    Le calque animé n'est pas caché pour autant — il est rendu entier, à côté,
-    et une carte peut le montrer.
+def test_complet_regarde_desormais_les_deux_calques(client, atelier, tmp_path):
+    """**Le renversement de RV10.** Avant la tranche, `complet` ne regardait
+    que les images — c'était l'une des cinq lectures que la revue du
+    21 septembre a fermées, le chiffre de l'accueil qui ne comptait que des
+    images sous le mot « poses ». Il regarde maintenant les deux calques :
+    *rien ne manque, animations comprises* (note de décision RV10, §2).
     """
     pelerin = _creer(client)
     plan = _plan(client)
@@ -356,8 +372,15 @@ def test_complet_ne_regarde_que_les_images_et_le_calque_anime_se_lit_a_cote(
     _poser(client, tmp_path, pelerin, plan[0])
 
     compte = _les_deux_disent_pareil(atelier, pelerin)
-    assert compte["complet"] is True
-    assert compte["bandes"] == {"fait": 0, "attendu": 1}
+    assert compte["images"]["pretes"] == compte["images"]["demandees"]
+    assert compte["animations"] == {
+        "pretes": 0, "demandees": 1, "a_fabriquer": 1, "a_departager": 0,
+    }
+    # L'image seule ne suffit plus : l'animation manque encore.
+    assert compte["complet"] is False
+
+    _poser_une_bande(atelier, pelerin, plan[0])
+    assert _les_deux_disent_pareil(atelier, pelerin)["complet"] is True
 
 
 def test_un_sujet_qui_ne_reclame_rien_est_complet_jamais_en_retard(client, atelier):
@@ -368,8 +391,8 @@ def test_un_sujet_qui_ne_reclame_rien_est_complet_jamais_en_retard(client, ateli
     client.put(f"/api/characters/{tuile}", json={"poses": []})
 
     compte = _les_deux_disent_pareil(atelier, tuile)
-    assert compte["poses"] == {"fait": 0, "attendu": 0}
-    assert compte["images"] == {"fait": 0, "attendu": 0}
+    assert compte["images"] == {"pretes": 0, "demandees": 0, "a_fabriquer": 0, "a_departager": 0}
+    assert compte["animations"] == {"pretes": 0, "demandees": 0, "a_fabriquer": 0, "a_departager": 0}
     assert compte["complet"] is True
 
 
@@ -397,7 +420,7 @@ def test_l_homonyme_d_un_autre_jeu_ne_gonfle_pas_le_compte(client, atelier, tmp_
     client.put(f"/api/characters/{chez_marais}", json={"poses": [plan[0]]})
 
     compte = _les_deux_disent_pareil(atelier, chez_marais)
-    assert compte["images"]["fait"] == 0
+    assert compte["images"]["pretes"] == 0
     assert compte["complet"] is False
 
 
@@ -485,7 +508,7 @@ def test_les_colonnes_neuves_se_retrouvent_apres_un_index_jete(
     client.put(f"/api/characters/{pelerin}", json={"poses": plan[:2]})
     _poser(client, tmp_path, pelerin, plan[0])
     avant = _les_deux_disent_pareil(atelier, pelerin)
-    assert avant["images"]["fait"] == 1
+    assert avant["images"]["pretes"] == 1
 
     # L'index est jeté et reconstruit des fichiers — le geste de T3, sans
     # conséquence par construction.
@@ -568,12 +591,15 @@ def test_le_decoupage_pose_par_pose_dit_laquelle_manque(client, tmp_path):
     detail = compte["detail"]
 
     assert [d["identifiant"] for d in detail] == plan[:2]
-    assert detail[0]["fait"] == detail[0]["attendu"]
-    assert detail[1]["fait"] == 0
-    # Le total n'est pas un second calcul : c'est la somme de ce découpage-là.
-    assert sum(d["fait"] for d in detail) == compte["images"]["fait"]
-    assert sum(d["attendu"] for d in detail) == compte["images"]["attendu"]
-    assert sum(1 for d in detail if d["fait"] >= d["attendu"]) == compte["poses"]["fait"]
+    assert detail[0]["images"]["pretes"] == detail[0]["images"]["demandees"]
+    assert detail[1]["images"]["pretes"] == 0
+    # Le total n'est pas un second calcul : c'est la somme de ce découpage-là,
+    # sur les deux fractions (RV10 : `CompteDuSujet.poses` a disparu, `detail`
+    # porte maintenant les images et les animations).
+    assert sum(d["images"]["pretes"] for d in detail) == compte["images"]["pretes"]
+    assert sum(d["images"]["demandees"] for d in detail) == compte["images"]["demandees"]
+    assert sum(d["animations"]["pretes"] for d in detail) == compte["animations"]["pretes"]
+    assert sum(d["animations"]["demandees"] for d in detail) == compte["animations"]["demandees"]
 
 
 def test_la_grille_se_restreint_a_une_collection_et_ses_comptes_suivent(
@@ -883,21 +909,24 @@ def test_le_compte_projete_se_lit_sur_ce_que_la_route_a_deja_servi(client, ateli
 # différence se voie.
 
 
-def _remplir(client, tmp_path, personnage: str) -> None:
-    """Ce sujet-là n'attend plus rien — toutes ses poses sont faites."""
+def _remplir(client, atelier, tmp_path, personnage: str) -> None:
+    """Ce sujet-là n'attend plus rien — toutes ses poses sont faites, sur les
+    deux calques (RV10 : `complet` regarde désormais les images et les
+    animations, jamais les images seules)."""
     plan = _plan(client)
     client.put(f"/api/characters/{personnage}", json={"poses": [plan[0]]})
     _poser(client, tmp_path, personnage, plan[0])
+    _poser_une_bande(atelier, personnage, plan[0])
 
 
 def test_les_trois_comptes_portent_sur_la_famille_entiere_pas_sur_la_page(
-    client, tmp_path
+    client, atelier, tmp_path
 ):
     """**Le chiffre de l'onglet compte ce qu'on ne voit pas encore.** Cinq
     sujets, une page d'un seul : les comptes doivent dire cinq et quatre, jamais
     un et un."""
     complet = _creer(client, "Le pèlerin complet")
-    _remplir(client, tmp_path, complet)
+    _remplir(client, atelier, tmp_path, complet)
     for n in range(4):
         _creer(client, f"Le sujet vide {n}")
 
@@ -915,7 +944,7 @@ def test_incomplet_est_le_complet_de_b9_1_retourne_jamais_recalcule(
     « complet » doivent dire la même chose.
     """
     complet = _creer(client, "Le pèlerin complet")
-    _remplir(client, tmp_path, complet)
+    _remplir(client, atelier, tmp_path, complet)
     manquant = _creer(client, "Le pèlerin en retard")
 
     page = _famille(client, filtre="incomplets")
@@ -957,14 +986,14 @@ def test_sans_description_lit_le_champ_et_ne_confond_pas_les_blancs(client):
 
 
 def test_le_filtre_s_applique_avant_la_pagination_comme_la_famille(
-    client, tmp_path
+    client, atelier, tmp_path
 ):
     """**Le même piège que la famille, une marche plus bas.** Deux sujets
     complets créés d'abord, un incomplet ensuite, une page d'un seul rang : la
     page doit contenir l'incomplet, jamais un des deux poussés devant lui par
     l'ordre de création."""
     for nom in ("Le premier complet", "Le second complet"):
-        _remplir(client, tmp_path, _creer(client, nom))
+        _remplir(client, atelier, tmp_path, _creer(client, nom))
     en_retard = _creer(client, "Le troisième, en retard")
 
     page = _famille(client, filtre="incomplets", limite=1)
@@ -972,12 +1001,12 @@ def test_le_filtre_s_applique_avant_la_pagination_comme_la_famille(
     assert [p["identifiant"] for p in page["personnages"]] == [en_retard]
 
 
-def test_le_filtre_et_la_recherche_se_combinent_sans_se_manger(client, tmp_path):
+def test_le_filtre_et_la_recherche_se_combinent_sans_se_manger(client, atelier, tmp_path):
     """Chercher dans les incomplets doit rendre l'intersection, et les comptes
     des trois onglets doivent alors porter sur ce que la recherche a laissé —
     sinon « Incomplets 31 » resterait affiché au-dessus d'une grille qui n'en
     montre que deux."""
-    _remplir(client, tmp_path, _creer(client, "Le pèlerin bavard"))
+    _remplir(client, atelier, tmp_path, _creer(client, "Le pèlerin bavard"))
     cherche = _creer(client, "Le pèlerin discret")
     _creer(client, "Le passeur discret")
 

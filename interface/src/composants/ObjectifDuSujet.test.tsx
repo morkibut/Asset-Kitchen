@@ -21,6 +21,11 @@ const lecture: ObjectifDuPersonnage = {
       etat: "non-demande" as const, versions: { retenues: [], a_juger: [], ecartees: [] },
     }))),
   },
+  avancement: {
+    images: { pretes: 0, demandees: 0, a_fabriquer: 0, a_departager: 0 },
+    animations: { pretes: 0, demandees: 1, a_fabriquer: 1, a_departager: 0 },
+    complet: false, hors_plan: 0,
+  },
 }
 
 test("l'objectif animé se rouvre avec cadence, boucle et repère non défaut puis se corrige", async () => {

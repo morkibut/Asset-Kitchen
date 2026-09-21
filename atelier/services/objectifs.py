@@ -54,6 +54,118 @@ def objectif_resolu(
     return ObjectifProduction(tuple(sorties), taille, taille, repere_x=taille / 2, repere_y=taille)
 
 
+def grouper_contenus(
+    production: ServiceProduction, projet: str, personnage: Personnage,
+    images: list[dict[str, Any]], bandes: list[dict[str, Any]],
+) -> dict[tuple[str, str, str], list[dict[str, Any]]]:
+    """Les versions vivantes ou non, rangées par nature, pose et direction.
+
+    Le même rangement que `couverture` tenait en boucle (RV10) — extrait pour
+    être appelé aussi par le compte groupé (`ServiceProduction.avancements`),
+    qui n'a pas de matrice à construire, juste ce classement.
+
+    Les sources sans pose et les calques d'équipement sont hors compte, et le
+    rangement implicite (sans direction, pour un sujet sans objectif écrit)
+    retombe sur la première direction que la chose tient pour sa pose.
+    """
+    directions = production.directions_du_jeu(projet)
+    premieres: dict[str, str] = {}
+    if personnage.objectif is None:
+        for pose in personnage.tenues(production.plan_de(projet, personnage)):
+            angles = personnage.directions_tenues(pose, directions)
+            premieres[pose.identifiant] = angles[0].identifiant if angles else ""
+    contenus: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for nature, resultats in (("image", images), ("animation", bandes)):
+        for resultat in resultats:
+            if not resultat.get("pose") or resultat.get("piece"):
+                continue
+            direction = resultat.get("direction") or ""
+            if not direction and resultat["pose"] in premieres:
+                direction = premieres[resultat["pose"]]
+            contenus.setdefault((nature, resultat["pose"], direction), []).append(resultat)
+    return contenus
+
+
+def avancement(
+    objectif: ObjectifProduction,
+    contenus: dict[tuple[str, str, str], list[dict[str, Any]]],
+    *,
+    poses: set[str] | None = None,
+    directions: set[str] | None = None,
+    noms_poses: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """**Le seul compte d'avancement** (RV10), lu par `comptes`, `bilan_du_jeu`
+    et `objectif_de` : les autres chemins disparaissent.
+
+    Une case est **prête** quand elle porte au moins une version vivante et
+    livrable — pas écartée, sans pièce d'équipement, et pour une animation pas
+    un brouillon et avec au moins une image dedans. La retenir n'est pas
+    nécessaire (E2) : la retenue reste une information à part, **à
+    départager**, dès qu'une case a au moins deux versions vivantes et aucune
+    retenue — c'est ce que refuse la livraison Godot sur une même case.
+
+    **Les deux calques ne se mêlent jamais** dans un même total (A12) : une
+    fraction pour les images, une pour les animations, jamais de dénominateur
+    commun.
+
+    **Une sortie hors plan sort du total demandé** (E12) : si `poses` ou
+    `directions` est fourni et que la pose ou la direction demandée n'y est
+    plus, la sortie ne pèse plus dans `demandees` — elle est comptée à part,
+    dans `hors_plan`. Un objectif implicite (repris du plan courant) n'a pas
+    cette question à se poser : ses deux ensembles restent à `None`, et rien
+    n'y est jamais hors plan par construction.
+
+    **`noms_poses` ajoute le découpage pose par pose, et rien d'autre**
+    (B9.4) : `CompteDuSujet.poses` a disparu, cette clé porte maintenant les
+    deux fractions par pose plutôt qu'une seule. Facultatif, parce que la
+    carte de la grille et le tableau de bord n'écrivent qu'un total.
+    """
+    totaux = {
+        nom: {"pretes": 0, "demandees": 0, "a_fabriquer": 0, "a_departager": 0}
+        for nom in ("images", "animations")
+    }
+    hors_plan = 0
+    detail: dict[str, dict[str, Any]] | None = {} if noms_poses is not None else None
+    for sortie in objectif.sorties:
+        if (poses is not None and sortie.pose not in poses) or (
+            directions is not None and sortie.direction not in directions
+        ):
+            hors_plan += 1
+            continue
+        cle_totaux = "images" if sortie.nature == "image" else "animations"
+        total = totaux[cle_totaux]
+        versions = contenus.get((sortie.nature, sortie.pose, sortie.direction), [])
+        vivantes = [
+            v for v in versions if v.get("supprime_le") is None and not v.get("piece")
+        ]
+        if sortie.nature == "animation":
+            vivantes = [v for v in vivantes if not v.get("brouillon") and v.get("images")]
+        retenues = [v for v in vivantes if v.get("favori")]
+        prete = bool(vivantes)
+        total["demandees"] += 1
+        if prete:
+            total["pretes"] += 1
+        else:
+            total["a_fabriquer"] += 1
+        if len(vivantes) >= 2 and not retenues:
+            total["a_departager"] += 1
+        if detail is not None:
+            ligne = detail.setdefault(sortie.pose, {
+                "identifiant": sortie.pose,
+                "nom": noms_poses.get(sortie.pose, sortie.pose) if noms_poses else sortie.pose,
+                "images": {"pretes": 0, "demandees": 0},
+                "animations": {"pretes": 0, "demandees": 0},
+            })
+            ligne[cle_totaux]["demandees"] += 1
+            if prete:
+                ligne[cle_totaux]["pretes"] += 1
+    complet = not any(t["a_fabriquer"] for t in totaux.values())
+    rendu = {**totaux, "complet": complet, "hors_plan": hors_plan}
+    if detail is not None:
+        rendu["detail"] = list(detail.values())
+    return rendu
+
+
 def couverture(
     production: ServiceProduction, projet: str, personnage: Personnage,
     objectif: ObjectifProduction, images: list[dict[str, Any]], bandes: list[dict[str, Any]],
