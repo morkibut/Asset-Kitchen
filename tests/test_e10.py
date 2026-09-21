@@ -441,7 +441,15 @@ def test_une_pose_ecrite_par_lauteur_part_telle_quelle(client):
 
     # Le titre de la partie vient de R7 ; ce que cet essai protège est le texte
     # dessous, qui est celui de la pose et rien d'autre.
-    assert reponse.json()["texte"] == "REQUEST\n\ngrimpe"
+    #
+    # *Repris le 20 septembre 2026 (RT3)* : la ligne de contexte est le fond que
+    # l'atelier calcule pour cet appel, pas un texte inventé à la place de
+    # l'auteur. Ce que cet essai protège n'a pas bougé d'un mot — après
+    # `REQUEST`, c'est toujours `grimpe` et rien d'autre.
+    assert reponse.json()["texte"] == (
+        "CONTEXT\n\nTechnical constraints: single isolated sprite on a flat "
+        "solid #00B140 studio green background\n\nREQUEST\n\ngrimpe"
+    )
 
 
 def test_les_projets_davant_recoivent_langlais_sans_quun_fichier_soit_reecrit():

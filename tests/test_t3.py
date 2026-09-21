@@ -522,7 +522,15 @@ def test_un_asset_se_reinjecte_dans_ses_quatre_roles(client, double):
     # 4 · jeu de réglages — aucune image ne part : l'écran relit les paramètres
     #     de la génération d'un asset et repeuple le générateur avec.
     reglages = client.get(f"/api/generations/{souche['generation']}").json()
-    assert reglages["demande"]["prompt"] == "REQUEST\n\nla souche"
+    # *Repris le 20 septembre 2026 (RT3)* : la génération relue porte le fond
+    # que l'atelier avait calculé pour elle — la souche est partie sans image
+    # de référence, donc sur le vert de studio. Ce que ce quatrième rôle
+    # vérifie est inchangé : **aucune image ne part**, et c'est la ligne
+    # suivante qui le dit.
+    assert reglages["demande"]["prompt"] == (
+        "CONTEXT\n\nTechnical constraints: single isolated sprite on a flat "
+        "solid #00B140 studio green background\n\nREQUEST\n\nla souche"
+    )
     assert reglages["modele"] == MODELE
 
 

@@ -43,8 +43,12 @@ Quatre choses changent, et rien d'autre :
 Le calcul lui-même — les six candidats, la distance du détourage — ne bouge pas
 d'une ligne : il était juste, il l'est resté, il a seulement changé d'entrée.
 
-**`proposer` survit en sursis** : il ne sert plus qu'à l'écran de réglage, que la
-tranche suivante retire. Rien de ce qui part au fournisseur ne le lit plus.
+**`proposer` a perdu son écran de réglage** (RT4, 20 septembre 2026) : la
+section qui l'affichait dans les règles du jeu est retirée, et `GET /api/universe`
+ne sert plus sa réponse. Il survit pour l'écran de confirmation d'un envoi
+(`atelier.services.envoi._fond`), qui laisse encore corriger le fond pour un
+seul appel avant de payer — un geste distinct de l'ancien réglage permanent.
+Rien de ce qui part au fournisseur ne le lit plus.
 
 **La distance est celle du détourage, et pas une autre.** Un pixel est mangé par
 le remplissage depuis le bord quand aucune de ses trois composantes ne s'écarte
@@ -218,10 +222,11 @@ VERT_DE_STUDIO = Candidat("#00B140", "studio green")
 class Proposition:
     """Ce que l'atelier propose comme fond — **ou la raison de ne rien proposer**.
 
-    ⚠️ **En sursis depuis le 20 septembre 2026.** Rien de ce qui part au
-    fournisseur ne passe plus par là : c'est `Choix` qui décide, plus bas. Cette
-    classe et `proposer` ne servent plus qu'à l'écran de réglage du fond, que la
-    tranche suivante retire — et elles partiront avec lui.
+    ⚠️ **Son seul écran restant est celui de la confirmation d'un envoi**
+    (depuis RT4, 20 septembre 2026). Rien de ce qui part au fournisseur ne
+    passe plus par là : c'est `Choix` qui décide, plus bas. L'écran de réglage
+    du fond, qui en était le premier lecteur, est retiré ; `Envoi.tsx` continue
+    d'offrir cette couleur comme correction ponctuelle, pour un seul appel.
 
     `couleur` vide veut dire *aucun candidat sûr*, et `raison` dit alors pourquoi,
     en français et à l'auteur. Les deux ne se contredisent jamais : `sure` est la
@@ -273,7 +278,9 @@ def proposer(palette: Iterable[str]) -> Proposition:
 
     ⚠️ **Plus rien de ce qui part ne l'appelle** (RT3, 20 septembre 2026) : le
     fond d'un appel se décide par `choisir`, sur l'image de référence envoyée.
-    Cette fonction ne sert plus qu'à l'écran de réglage que RT4 retire.
+    Cette fonction ne sert plus que l'écran de confirmation d'un envoi
+    (`atelier.services.envoi._fond`), depuis que RT4 a retiré l'écran de
+    réglage du fond.
 
     **Un calcul fait une fois, et il tient en trois lignes** : la palette d'un
     projet est une liste fermée de quelques dizaines de couleurs, et l'écart d'un

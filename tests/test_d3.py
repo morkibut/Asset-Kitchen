@@ -155,9 +155,11 @@ def test_un_univers_qui_n_a_que_son_fond_reste_vide_et_dit_quand_meme_son_fond()
     de son silence : un premier essai partirait avec la grille et la caméra que
     personne n'a choisies, ce que US-57 interdit.
 
-    **Les deux se tiennent maintenant par `dit_quelque_chose`** : l'univers
+    **Les deux se tiennent maintenant dans `texte_de_la_case`** : l'univers
     reste vide, la case `technique` parle quand même, et elle ne dit que le
-    fond.
+    fond. C'est là, et non dans `phrase_du_produit`, parce que cette
+    propriété-là répond aussi à l'écran des réglages, qui doit montrer la
+    taille qu'on vient de poser sur un univers encore compté vide.
     """
     neuf = Univers(bible=bible_complete(()))
     avec_fond = Univers(bible=bible_complete(()), fond="#00B140")
@@ -260,11 +262,17 @@ def test_l_atelier_propose_une_couleur_sure_depuis_la_palette_du_projet():
     assert ecart(propose.couleur, propose.voisine) == propose.ecart
 
 
-def test_proposer_ne_pose_rien_tout_seul(client, tmp_path):
+def test_proposer_ne_pose_rien_tout_seul(client, atelier, tmp_path):
     """**Proposer est un geste de l'écran, jamais une valeur du produit.**
 
     C'est l'arbitrage de l'auteur, et la phrase de la tranche : *l'atelier peut
     proposer, il ne décide pas*. Lire la proposition ne doit donc rien écrire.
+
+    ⚠️ **`GET /api/universe` ne sert plus `fond_propose` depuis RT4** (20
+    septembre 2026) : l'écran de réglage qui l'affichait est retiré. Le calcul
+    reste vivant pour l'écran de confirmation d'un envoi
+    (`atelier.services.univers.Univers.fond_propose`), et c'est lui que ce test
+    interroge directement plutôt qu'à travers une route qui ne le rend plus.
     """
     depose = client.post(
         "/api/board/paste",
@@ -273,9 +281,11 @@ def test_proposer_ne_pose_rien_tout_seul(client, tmp_path):
     )
     assert depose.status_code == 201, depose.text
 
+    projet = atelier.bibliotheque.courant
+    atelier.univers.fond_propose(projet)
     lu = client.get("/api/universe").json()
 
-    assert "fond_propose" in lu
+    assert "fond_propose" not in lu
     assert lu["univers"]["fond"] == AUCUN_FOND
 
 
@@ -436,15 +446,24 @@ def test_sans_fond_pose_la_phrase_de_calage_est_celle_d_avant_la_tranche():
     assert phrase_de_calage(0) == ""
 
 
-def test_un_univers_sans_palette_ne_recoit_aucune_proposition_et_ne_change_rien(client):
+def test_un_univers_sans_palette_ne_recoit_aucune_proposition_et_ne_change_rien(
+    client, atelier
+):
     """**Un jeu sans artwork n'a rien dit de ses couleurs.** Il garde donc
     exactement ce qu'il envoyait, et l'atelier se tait plutôt que de proposer au
-    hasard."""
-    lu = client.get("/api/universe").json()
+    hasard.
 
+    ⚠️ **Interrogé directement depuis RT4** (20 septembre 2026), comme le test
+    juste au-dessus : `GET /api/universe` ne sert plus `fond_propose`, retiré
+    avec l'écran de réglage.
+    """
+    lu = client.get("/api/universe").json()
     assert lu["univers"]["palette"] == []
-    assert lu["fond_propose"]["couleur"] == AUCUN_FOND
-    assert lu["fond_propose"]["raison"] is not None
+    assert "fond_propose" not in lu
+
+    propose = atelier.univers.fond_propose(atelier.bibliotheque.courant)
+    assert propose.couleur == AUCUN_FOND
+    assert propose.raison is not None
 
 
 def test_la_liste_de_migration_du_1er_septembre_ne_grossit_pas_du_fond():

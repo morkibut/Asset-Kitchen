@@ -1141,6 +1141,12 @@ class ServiceUnivers:
     def fond_propose(self, projet: str | None) -> Proposition:
         """La couleur de fond que l'atelier propose à ce jeu-là — **ou rien** (D3).
 
+        ⚠️ **N'atteint plus l'écran de réglage** (RT4, 20 septembre 2026) : la
+        section qui en affichait le résultat a été retirée de `ReglesDuJeu.tsx`,
+        et `GET /api/universe` ne sert plus `fond_propose`. Cette méthode reste
+        pour l'écran de confirmation d'un envoi (`atelier.services.envoi._fond`,
+        `Envoi.tsx`), qui laisse encore corriger le fond pour un seul appel.
+
         **Elle se calcule, elle ne s'enregistre pas.** La palette est déjà un
         cache nommé par sa provenance ; ranger à côté d'elle une couleur qui s'en
         déduit aurait été une seconde vérité qui se périme dès qu'un artwork
@@ -1150,15 +1156,9 @@ class ServiceUnivers:
         ⚠️ **Elle lit la palette telle qu'elle est, sans la remettre d'accord**,
         et c'est la seule subtilité du chemin. `palette()` réaccorde la palette
         avec les artworks et **écrit** quand elle a changé : la brancher ici
-        aurait fait de `GET /api/universe` une route qui modifie le projet
+        aurait fait d'une route de lecture une route qui modifie le projet
         qu'elle rend — ce que `tests/test_r1.py` a rattrapé dans l'heure, sur un
         essai qui vérifie qu'un réglage refusé ne laisse rien derrière lui.
-
-        Rien n'est perdu : la même route rend la palette *et* la proposition, et
-        toutes deux lisent le même état. Elles sont donc d'accord entre elles,
-        ce qui est la seule chose que l'écran demande. Un artwork promu réaccorde
-        la palette par son propre chemin, et la proposition suit à la lecture
-        suivante.
 
         Sans projet, elle dit qu'il n'y a pas de palette — ce qui est vrai, et
         c'est la même réponse qu'un projet qui n'a pas encore d'artwork.

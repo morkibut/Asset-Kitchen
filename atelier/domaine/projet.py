@@ -832,39 +832,18 @@ class Univers:
         calcul de l'atelier, fait à chaque appel. Compter un calcul comme une
         déclaration aurait fait sortir un jeu neuf de son silence — un premier
         essai serait parti avec la grille et la caméra que personne n'a
-        choisies, ce que US-57 interdit. **Ce qui remplace la ligne retirée est
-        `dit_quelque_chose`** : le fond part quand même, seul, sans réveiller le
-        reste.
+        choisies, ce que US-57 interdit. Ce compte commande deux silences à la
+        fois — la caméra (`ServiceProduction`) et la parole de l'atelier
+        (`texte_de_la_case`) —, et un fond posé à chaque appel les aurait levés
+        tous les deux d'un coup.
+
+        **Le fond part quand même, et il part seul** : `texte_de_la_case` le
+        laisse passer nommément sur un univers vide. C'est là qu'il faut lire la
+        suite de cette décision.
         """
         return not (
             self.palette or self.vue or any(c.porte for c in self.bible)
         )
-
-    def dit_quelque_chose(self, nom: str) -> bool:
-        """Cette case-là a-t-elle une phrase de l'atelier à dire ? (RT3)
-
-        **Une seule case échappe au silence d'un univers vide, et c'est
-        `technique`** — parce que le fond y est entré le 20 septembre 2026 et
-        qu'il n'est pas un réglage.
-
-        US-57 interdit de faire parler un jeu que personne n'a décrit : la
-        grille, le calage et la caméra viennent de choix qu'on n'a pas faits, et
-        les envoyer quand même ferait obéir le modèle à une configuration
-        imaginaire. **Le fond n'est rien de tout cela.** Personne ne le choisit
-        plus ; l'atelier le calcule pour se protéger d'une panne mécanique — le
-        découpage qui mange une couleur du sujet —, et cette panne frappe un jeu
-        neuf exactement comme un jeu réglé. Le taire sur un premier essai
-        rendrait à ce premier essai le gris que la tranche existe pour chasser.
-
-        **Et il part seul** : sur un univers vide, `phrase_du_produit` compose la
-        phrase de calage avec une cible nulle, donc *single isolated sprite on a
-        flat solid #00B140 studio green background* et rien d'autre — pas de
-        `tile snap`, pas de grille, pas de caméra. Ce que personne n'a choisi
-        reste muet.
-        """
-        if not self.vide:
-            return True
-        return nom == "technique" and bool(self.fond)
 
     def champ(self, nom: str) -> Champ:
         for c in self.bible:
@@ -913,13 +892,11 @@ class Univers:
             # calculer. Le champ relu du `projet.json` n'atteint donc jamais un
             # texte qui part.
             #
-            # **Et sur un univers vide, la cible tombe à zéro** : le fond part,
-            # le calage reste muet — voir `dit_quelque_chose`. C'est ce qui
-            # permet au fond d'atteindre un jeu neuf sans faire parler un jeu
-            # que personne n'a décrit.
-            cible = (
-                self.cible_px if self.style == PIXEL_ART and not self.vide else 0
-            )
+            # **Le silence d'un univers vide ne se décide pas ici** mais dans
+            # `texte_de_la_case` : cette propriété-là répond aussi à l'écran des
+            # réglages, qui doit montrer la taille qu'on vient de poser même
+            # quand le compte déclare l'univers encore vide.
+            cible = self.cible_px if self.style == PIXEL_ART else 0
             return phrase_de_calage(cible, self.fond)
         if nom == "vue":
             connue = vue_connue(self.vue) if self.vue else None
@@ -1008,11 +985,33 @@ class Univers:
         **Ce que l'auteur avait tapé là reste lisible** : `texte_sans_effet` le
         rend, l'écran le montre barré avec l'étape qui écrit à sa place, et le
         fichier ne perd rien.
+
+        ── **Un univers vide se tait, sauf sur son fond** (RT3) ─────────────────
+
+        US-57 coupe la parole de l'atelier tant que personne n'a rien décrit :
+        la grille, le calage et la caméra viennent de choix qu'on n'a pas faits,
+        et les envoyer quand même ferait obéir le modèle à une configuration
+        imaginaire. **Le fond n'est plus de ceux-là depuis le 20 septembre
+        2026** : personne ne le choisit, l'atelier le calcule à chaque appel
+        pour se protéger du découpage qui mange une couleur du sujet — et cette
+        panne frappe un jeu neuf exactement comme un jeu réglé. Le taire sur un
+        premier essai rendrait à ce premier essai le gris que RT3 existe pour
+        chasser.
+
+        Il part donc **seul** : la phrase de calage est recomposée ici avec une
+        cible nulle, donc le fond et rien d'autre — pas de `tile snap`, pas de
+        grille, pas de caméra. **Et c'est ici que ça se décide, pas dans
+        `phrase_du_produit`** : cette propriété-là répond pour l'écran des
+        réglages, qui doit montrer la taille qu'on vient de poser même sur un
+        univers que le compte déclare encore vide.
         """
         champ = self.champ(nom)
         if not champ.actif:
             return ""
-        atelier = self.phrase_du_produit(nom) if self.dit_quelque_chose(nom) else ""
+        if self.vide:
+            atelier = phrase_de_calage(0, self.fond) if nom == "technique" else ""
+        else:
+            atelier = self.phrase_du_produit(nom)
         if nom in CHAMPS_DE_L_ATELIER:
             return atelier
         ecrit = champ.texte.strip()

@@ -404,7 +404,13 @@ def test_chaque_champ_de_la_bible_s_active_independamment(client, double):
 
 
 def test_generer_sans_bible_ni_artwork_fonctionne(client, double):
-    """Un univers vide ne contraint rien plutôt que de bloquer (US-57)."""
+    """Un univers vide ne contraint rien plutôt que de bloquer (US-57).
+
+    *Repris le 20 septembre 2026 (RT3)* : le fond que l'atelier calcule pour
+    l'appel s'ajoute, seul. Il n'est plus un réglage que personne n'a posé mais
+    une protection contre le découpage, et elle vaut pour un jeu neuf comme
+    pour un jeu réglé — voir `tests/test_r2.py`, qui tient le raisonnement.
+    """
     univers = client.get("/api/universe").json()["univers"]
     assert univers["vide"] is True
     assert univers["palette"] == []
@@ -412,7 +418,10 @@ def test_generer_sans_bible_ni_artwork_fonctionne(client, double):
     generation = _generer(client, "un tonneau")
     assert generation["statut"] == "reussie"
     assert double.references_recues[-1] == 0
-    assert double.demandes[-1].prompt == "REQUEST\n\nun tonneau"
+    assert double.demandes[-1].prompt == (
+        "CONTEXT\n\nTechnical constraints: single isolated sprite on a flat "
+        "solid #00B140 studio green background\n\nREQUEST\n\nun tonneau"
+    )
 
     # La grille du projet s'applique quand même : « un univers vide ne contraint
     # rien » ne veut pas dire « un univers vide ne fait rien ».

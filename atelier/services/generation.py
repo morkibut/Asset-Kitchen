@@ -2927,17 +2927,21 @@ class ServiceGenerations:
         3. **Le domaine tranche** (`fond.choisir`) : le candidat le plus éloigné,
            ou le vert de studio quand il n'y a rien à comparer.
 
-        **Une image illisible ne fait pas échouer l'appel** : elle ne dit rien de
-        ses couleurs, et un appel qui ne part pas coûte plus cher qu'un fond
-        choisi sur une image de moins. Un asset **absent**, lui, refuse comme il
-        refusait déjà — c'est `_octets_references` qui le dit, et la raison n'a
-        pas changé.
+        **Rien de ce qui se lit ici ne refuse l'appel.** Une image illisible ne
+        dit rien de ses couleurs, et `couleurs_lues` l'écarte seule. Un asset
+        **absent** refuse toujours, mais pas ici : le refus appartient à la
+        composition qui suit, qui relit les mêmes références pour de bon. Le
+        laisser partir d'ici aurait déplacé la panne d'un cran trop tôt — l'écran
+        qui montre *ce qui partirait* n'a jamais eu à résoudre une image pour
+        afficher un texte, et il s'est mis à répondre 409 là où il rendait 200.
         """
         if tri is not None and tri.fond is not None:
             return fond_valide(tri.fond)
-        return choisir(
-            couleurs_lues(self._octets_references(tuple(reinjectes), projet))
-        ).couleur
+        try:
+            octets = self._octets_references(tuple(reinjectes), projet)
+        except DemandeRefusee:
+            octets = ()
+        return choisir(couleurs_lues(octets)).couleur
 
     def _sous_le_plafond(
         self,

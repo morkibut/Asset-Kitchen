@@ -464,18 +464,38 @@ def test_ce_que_le_projet_impose_suit_le_projet_et_non_l_asset(client):
 
 def test_un_univers_vide_ne_contraint_toujours_rien(client, double):
     """Sans bible, sans artwork **et sans cible** : ce qui part est le sujet seul,
-    et ce qui rentre est ce que le modèle a rendu."""
+    et ce qui rentre est ce que le modèle a rendu.
+
+    *Repris le 20 septembre 2026 (RT3)* : **une ligne s'ajoute, et une seule** —
+    le fond que l'atelier calcule pour cet appel. Elle ne dit pas le contraire
+    d'US-57, elle en est la lecture exacte : ce que la règle interdit est de
+    faire obéir le modèle à une configuration que personne n'a choisie, et le
+    fond n'en est plus une — personne ne le choisit, l'atelier le calcule à
+    chaque appel pour se protéger du découpage qui mange une couleur du sujet.
+    **Tout ce qui vient d'un choix reste muet**, et c'est ce que les trois
+    refus vérifient : ni grille, ni calage en carrés, ni caméra.
+    """
     client.put("/api/universe", json={"cible_px": AUCUNE_CIBLE})
 
+    fond = (
+        "Technical constraints: single isolated sprite on a flat solid "
+        "#00B140 studio green background"
+    )
     apercu = _apercu(client, "un tonneau")
-    assert _parties(apercu) == ["demande"]
-    # **Une seule partie porte quand même son titre** (R7) : `REQUEST` dit au
-    # modèle que ce qui suit est ce qu'on lui demande, et l'absence des deux
-    # autres dit qu'il n'y a ni contexte ni image.
-    assert apercu["texte"] == "REQUEST\n\nun tonneau"
+    assert _parties(apercu) == ["contexte", "demande"]
+    # **Chaque partie porte son titre** (R7) : `REQUEST` dit au modèle que ce
+    # qui suit est ce qu'on lui demande, et l'absence d'`IMAGES` dit qu'aucune
+    # image ne part.
+    assert apercu["texte"] == f"CONTEXT\n\n{fond}\n\nREQUEST\n\nun tonneau"
+    assert "tile snap" not in apercu["texte"]
+    assert "pixel art on a" not in apercu["texte"]
+    assert "CAMERA" not in apercu["texte"]
 
     asset = _asset_de(client, _generer(client))
-    assert double.demandes[-1].prompt == "REQUEST\n\nun tonneau"
+    assert (
+        double.demandes[-1].prompt
+        == f"CONTEXT\n\n{fond}\n\nREQUEST\n\nun tonneau"
+    )
     assert asset["recette"]["grille"] is None
 
 

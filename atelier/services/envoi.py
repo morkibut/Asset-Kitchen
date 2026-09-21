@@ -360,11 +360,14 @@ class ServiceEnvoi:
         jeu, et le fait qu'une correction est posée —, et aucun des deux
         n'entre dans ce qui part.
 
-        ⚠️ **`du_jeu` et `propose` sont en sursis depuis RT3** (20 septembre
-        2026). Le fond n'est plus un réglage : `couleur` est désormais ce que
-        l'atelier a calculé sur les images jointes, et ces deux champs-là ne
-        décrivent plus que l'écran de réglage que la tranche suivante retire.
-        Ils restent tant qu'il est là, pour ne pas le casser d'ici.
+        ⚠️ **`du_jeu` et `propose` ont perdu l'écran de réglage qu'ils
+        décrivaient** (RT4, 20 septembre 2026) : `ReglesDuJeu.tsx` ne montre
+        plus rien du fond, et `GET /api/universe` ne sert plus `fond_propose`.
+        Le fond n'est plus un réglage : `couleur` est ce que l'atelier a
+        calculé sur les images jointes. Les deux champs restent ici parce que
+        cet écran-ci, la confirmation d'un envoi, les lit encore — `du_jeu`
+        pour offrir « remettre celui du jeu », `propose` pour offrir la
+        couleur la plus sûre pour cet appel-là.
         """
         propose = self._univers.fond_propose(projet).en_json()
         return {

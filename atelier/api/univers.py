@@ -769,12 +769,6 @@ async def lire_univers(requete: Request, projet: str | None = None) -> dict[str,
         "projet": identifiant,
         "univers": univers.en_json(),
         "atelier": _ce_que_l_atelier_ecrit(univers),
-        # **Ce que l'atelier proposerait comme fond, et ce qu'il en sait** (D3).
-        # Servie ici plutôt que calculée à l'écran pour la raison de toutes les
-        # autres listes de cette route : la distance qui décide de la sûreté d'un
-        # fond est celle du détourage, et une seconde arithmétique à l'écran
-        # aurait fini par proposer une couleur que le découpage mange.
-        "fond_propose": atelier.univers.fond_propose(identifiant).en_json(),
         # Les artworks tels qu'ils sont, pour que l'écran montre d'où vient la
         # palette sans recouper le tableau lui-même.
         "artworks": [c.en_json() for c in atelier.univers.artworks(identifiant, None)]
@@ -821,11 +815,6 @@ async def regler_univers(
         # phrase de caméra, et un écran qui garderait l'ancienne montrerait le
         # texte d'une vue qu'on vient de quitter.
         "atelier": _ce_que_l_atelier_ecrit(objet.univers),
-        # **La proposition suit le réglage** (D3) : changer la palette change ce
-        # que l'atelier proposerait, et un écran qui garderait l'ancienne
-        # proposition montrerait une couleur calculée sur des artworks qui ne
-        # sont plus là.
-        "fond_propose": atelier.univers.fond_propose(identifiant).en_json(),
     }
 
 
