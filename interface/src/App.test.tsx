@@ -5200,6 +5200,31 @@ describe("l'infobulle et le guide", () => {
     expect(volet.textContent).not.toContain("Le codex — l'inventaire")
   })
 
+  test("les sons, ouverts depuis le Codex sur un jeu vide : pas de son fantôme, et la fabrication au centre", async () => {
+    // Vu par l'auteur le 21 septembre : le bouton du Codex passait l'événement
+    // du clic à `ouvrirLesSons`, qui le prenait pour l'identifiant d'un son —
+    // d'où « Ce son n'existe pas dans ce jeu » sur un jeu qui n'en a aucun.
+    const { fetchDouble } = serveurDouble()
+    const fetchAvecSons = vi.fn((url: string, init?: RequestInit) =>
+      typeof url === "string" && url.endsWith("/sounds")
+        ? Promise.resolve({ ok: true, status: 200, json: async () => [] } as Response)
+        : typeof url === "string" && url.includes("/workflow-profiles/sound-defaults")
+          ? Promise.resolve({ ok: true, status: 200, json: async () => ({ familles: {} }) } as Response)
+          : fetchDouble(url, init),
+    )
+    await monter(fetchAvecSons)
+
+    fireEvent.click(screen.getByRole("button", { name: "Codex" }))
+    const bibliotheque = await screen.findByRole("main", { name: "Codex" })
+    fireEvent.click(within(bibliotheque).getByRole("button", { name: "Les sons" }))
+    const atelier = await screen.findByLabelText("Atelier sonore")
+    expect(within(atelier).queryByRole("alert")).toBeNull()
+    expect(fetchAvecSons.mock.calls.some(([u]) => typeof u === "string" && /\/sounds\/[^/]+/.test(u))).toBe(false)
+
+    fireEvent.click(within(atelier).getByRole("button", { name: "Fabriquer un son" }))
+    await screen.findByLabelText("Ce qu’on doit entendre")
+  })
+
   test("la fenêtre de préparation, une fois son type passé à Son, ouvre le guide sur Un son", async () => {
     // **`GU14`.** La fenêtre s'ouvre sur un type, mais le type se change
     // dedans : `App` l'apprend par `onType`. Sur Image, le guide reste celui

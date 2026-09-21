@@ -34,7 +34,13 @@ function provenanceLisible(brut: Record<string, unknown>): ProvenanceLisible {
 }
 
 /** Le lecteur joue le WAV de la version conservée, celui qui sera livré. */
-export function AtelierSon({ projet, identifiantInitial, onLivraisons }: { projet: string; identifiantInitial?: string; onLivraisons?: () => void }) {
+// **Un seul bouton rouille par écran** (`docs/DESIGN.md`), et ce fichier porte
+// deux écrans qui ne s'affichent jamais ensemble : le jeu sans aucun son, dont
+// le geste est « Fabriquer un son », et un son ouvert, dont le geste est de
+// conserver ses réglages. Une seule déclaration pour les deux.
+const ROUILLE = "border-signal bg-signal text-encre-sur-signal"
+
+export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriquer }: { projet: string; identifiantInitial?: string; onLivraisons?: () => void; onFabriquer?: () => void }) {
   const [liste, setListe] = useState<Son[]>([])
   const [son, setSon] = useState<Son | null>(null)
   const [recette, setRecette] = useState<RecetteSon | null>(null)
@@ -76,7 +82,9 @@ export function AtelierSon({ projet, identifiantInitial, onLivraisons }: { proje
       // plutôt qu'une grille sans rien dedans — la panne signalée le 20
       // septembre, « une fenêtre immense sans menu ni rien autour » — une
       // phrase courte dit l'absence et les deux gestes possibles.
-      : <p className="rounded-8 border border-trait bg-carte p-[22px] text-[13px] text-encre-3">Ce jeu n’a encore aucun son : importez-en un ci-dessus, ou fabriquez-en un depuis Fabrications.</p>
+      // Le 21 septembre, l'auteur a demandé mieux qu'une phrase : le geste de
+      // fabrication, au centre, là où l'œil tombe sur un écran vide.
+      : <div className="flex flex-col items-center gap-[14px] rounded-8 border border-trait bg-carte px-[22px] py-[54px] text-center"><p className="text-[13px] text-encre-3">Ce jeu n’a encore aucun son.</p>{onFabriquer && <button className={`${BOUTON} ${ROUILLE}`} onClick={onFabriquer}>Fabriquer un son</button>}<p className="text-[12px] text-encre-3">ou importez un fichier audio avec le bouton en haut à droite.</p></div>
     ) : recette && <>
       <div className="flex flex-wrap items-center gap-[14px]"><button className={BOUTON} onClick={() => { if (!modifie || window.confirm("Abandonner les réglages non conservés ?")) setSon(null) }}>Tous les sons</button><label className="text-[13px]">Version <select aria-label="Version du son" className={CHAMP} value={son.revision} disabled={occupe || modifie} onChange={e => void faire(async () => installer(await sons.lire(projet, son.identifiant, Number(e.target.value))))}>{son.versions.map(v => <option key={v.revision} value={v.revision}>Version {v.revision} · {v.jugement === "retenue" ? "retenue" : v.jugement === "ecartee" ? "écartée" : "à juger"}</option>)}</select></label><select aria-label="Jugement du son" className={CHAMP} value={son.jugement} disabled={occupe || modifie} onChange={e => void faire(async () => rafraichir(await sons.juger(son, e.target.value as JugementSon)))}><option value="a-juger">À juger</option><option value="retenue" disabled={!son.pret}>Retenue</option><option value="ecartee">Écartée</option></select>{son.revision !== son.revision_courante && <button className={BOUTON} disabled={occupe} onClick={() => void faire(async () => rafraichir(await sons.restaurer(son)))}>Restaurer dans une nouvelle version</button>}</div>
       {son.raison && <p className="rounded-8 border border-trait bg-carte p-[14px] text-[13px] text-echec">{son.raison}</p>}
@@ -112,7 +120,7 @@ export function AtelierSon({ projet, identifiantInitial, onLivraisons }: { proje
           <ReglagesSon son={son} recette={recette} mesures={son.mesures} famille={son.famille} occupe={occupe} onChange={changer} />
         </aside>
       </div>
-      <footer className="sticky bottom-0 flex flex-wrap items-center gap-[14px] border-t border-trait bg-papier py-[14px]"><button className={`${BOUTON} border-signal bg-signal text-encre-sur-signal`} disabled={occupe || !modifie || son.revision !== son.revision_courante} onClick={() => void faire(async () => rafraichir(await sons.regler(son, recette, nom)))}>Conserver une version</button>{modifie && <button className={BOUTON} onClick={() => installer(son)}>Abandonner les réglages</button>}<button className={BOUTON} disabled={occupe || modifie || !son.pret || son.jugement === "ecartee"} onClick={() => setAfficherLivraison(v => !v)}>Relire la livraison Godot</button>{son.pret && !modifie && <a href={sons.archive(son)} className="text-[13px] underline" download>Télécharger WAV et scène</a>}{onLivraisons && <button className={BOUTON} onClick={onLivraisons}>Livrer au jeu</button>}</footer>
+      <footer className="sticky bottom-0 flex flex-wrap items-center gap-[14px] border-t border-trait bg-papier py-[14px]"><button className={`${BOUTON} ${ROUILLE}`} disabled={occupe || !modifie || son.revision !== son.revision_courante} onClick={() => void faire(async () => rafraichir(await sons.regler(son, recette, nom)))}>Conserver une version</button>{modifie && <button className={BOUTON} onClick={() => installer(son)}>Abandonner les réglages</button>}<button className={BOUTON} disabled={occupe || modifie || !son.pret || son.jugement === "ecartee"} onClick={() => setAfficherLivraison(v => !v)}>Relire la livraison Godot</button>{son.pret && !modifie && <a href={sons.archive(son)} className="text-[13px] underline" download>Télécharger WAV et scène</a>}{onLivraisons && <button className={BOUTON} onClick={onLivraisons}>Livrer au jeu</button>}</footer>
       {afficherLivraison && <ApercuLivraisonSon projet={projet} son={son} onLivraisons={onLivraisons} />}
     </>}
   </section>

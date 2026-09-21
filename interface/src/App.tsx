@@ -376,7 +376,7 @@ function AtelierApp() {
    *  doit pas rester ouvert sous un écran qui n'en parle plus. */
   const sonsOuverts = lieu(pile, "sons")
   const ouvrirLesSons = (identifiant?: string) =>
-    setPile((p) => entrer(sortir(sortir(p, "sortie"), "regles"), { genre: "sons", ...(identifiant ? { identifiant } : {}) }))
+    setPile((p) => entrer(sortir(sortir(p, "sortie"), "regles"), { genre: "sons", ...(typeof identifiant === "string" && identifiant ? { identifiant } : {}) }))
 
   /** Le tour du propriétaire doit-il se dérouler tout seul ? (`B15`)
    *
@@ -2310,6 +2310,7 @@ function AtelierApp() {
             key={bibliotheque.courant}
             projet={bibliotheque.courant}
             identifiantInitial={sonsOuverts.identifiant}
+            onFabriquer={() => { setCible(null); setPreparation({ type: "son" }) }}
             onLivraisons={() => setPile((p) => entrer(sortir(p, "sons"), { genre: "sortie" }))}
           />
         )}

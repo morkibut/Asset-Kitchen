@@ -1352,7 +1352,7 @@ export function EcranFamille({
               <button
                 type="button"
                 className="block min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-encre-2 hover:text-encre"
-                onClick={onTuiles}
+                onClick={() => onTuiles()}
               >
                 Les tuiles
               </button>
@@ -1361,7 +1361,7 @@ export function EcranFamille({
               <button
                 type="button"
                 className="block min-h-[26px] w-full px-[8px] text-left text-[12.5px] text-encre-2 hover:text-encre"
-                onClick={onSons}
+                onClick={() => onSons()}
               >
                 Les sons
               </button>
