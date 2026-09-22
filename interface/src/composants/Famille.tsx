@@ -1600,6 +1600,36 @@ export function EcranFamille({
           </div>
         )}
 
+        {/* **Une collection ouverte se supprime d'ici** — la route existait
+            depuis B8.4 sans aucun chemin depuis un écran (AGENTS.md, 8nonies).
+            Aucun sujet n'est touché : seul le groupe part. */}
+        {collection && selection.length === 0 && (
+          <div data-supprimer-la-collection className="flex justify-end">
+            <button
+              type="button"
+              disabled={occupe}
+              onClick={() => {
+                const nomDuGroupe = groupes.find((g) => g.identifiant === collection)?.nom ?? collection
+                if (!window.confirm(`Supprimer la collection « ${nomDuGroupe} » ? Les sujets qu'elle range ne sont pas touchés.`)) return
+                void api
+                  .supprimerCollection(collection)
+                  .then(() => {
+                    setCollectionsConnues((avant) => avant.filter((g) => g.identifiant !== collection))
+                    ouvrirLaCollection(null)
+                    setVersion((n) => n + 1)
+                    surRange()
+                  })
+                  .catch((erreur) =>
+                    surErreur(erreur instanceof Refus ? erreur.message : "la collection n'a pas pu être supprimée"),
+                  )
+              }}
+              className="h-[26px] rounded-7 border border-trait px-[14px] text-[12.5px] text-encre-3 hover:border-trait-echec hover:text-echec disabled:opacity-50"
+            >
+              Supprimer cette collection
+            </button>
+          </div>
+        )}
+
         {/* ── La barre de masse ──────────────────────────────────────────── */}
         {selection.length > 0 && (
           <div

@@ -232,7 +232,15 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
         {personnage.image_de_reference && <footer className="flex justify-end border-t border-trait px-[30px] py-[14px]"><button type="button" className={BOUTON} onClick={() => void choisirLePortrait(null)}>Reprendre le choix automatique</button></footer>}
       </div>} />}
       <div className="min-w-0 flex-1 space-y-[8px]">
-        <p className="line-clamp-2 whitespace-pre-line text-[13px] leading-relaxed text-encre-2">{personnage.description || "Décris sa silhouette, son rôle et les détails à conserver d’une fabrication à l’autre."}</p>
+        {/* **Une description absente se voit comme un manque**, pas comme un
+            texte gris qu'on prend pour du contenu : c'est elle qui préremplit
+            chaque génération de ce sujet, et sans elle le champ arrive vide. */}
+        {personnage.description?.trim()
+          ? <p className="line-clamp-2 whitespace-pre-line text-[13px] leading-relaxed text-encre-2">{personnage.description}</p>
+          : <div data-description-manquante className="flex flex-wrap items-center gap-[10px] rounded-5 border border-trait-attention bg-fond-attention px-[10px] py-[6px] text-[13px] text-encre-attention">
+              <span>Description manquante : les générations de {personnage.nom} partiront avec un texte vide. Décris sa silhouette, sa tenue et ce qui doit rester pareil d’une image à l’autre.</span>
+              <button type="button" className={BOUTON} onClick={ouvrir}>L’écrire</button>
+            </div>}
         <div className="flex flex-wrap items-center gap-[8px] text-[12px] text-encre-3"><span className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{images.length + bandes.length} résultat{images.length + bandes.length > 1 ? "s" : ""}</span>{collections?.map(c => <span key={c.identifiant} className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{c.nom}</span>)}<button className={BOUTON} onClick={ouvrir}>Modifier la fiche</button></div>
         {/* **Le seul compte d'avancement** (RV10) : la même fraction que le
             Codex et l'objectif, jamais plus « retenus pour le jeu » — la
