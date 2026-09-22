@@ -284,7 +284,11 @@ def construire_qwen21(entree, fichiers):
         "6": _noeud("KSampler", seed=0, steps=entree["etapes"], cfg=1, sampler_name="euler", scheduler="simple",
             denoise=1, model=["1", 0], positive=["4", 0], negative=["4", 1], latent_image=["5", 0]),
         "7": _noeud("VAEDecode", samples=["6", 0], vae=["3", 0]),
-        "8": _noeud("SaveImage", images=["7", 0], filename_prefix="AssetKitchen_Qwen21"),
+        # Le décodeur de la 2.1 rend toujours quatre canaux. Sans demande de
+        # transparence, l'alpha n'est que du bruit (223 à 255, mesuré le
+        # 22/09/2026) : on le retire, sinon l'atelier croirait l'image détourée.
+        "9": _noeud("SplitImageWithAlpha", image=["7", 0]),
+        "8": _noeud("SaveImage", images=["9", 0], filename_prefix="AssetKitchen_Qwen21"),
     }
     liaisons = {"prompt": [{"noeud": "4", "champ": "prompt"}],
         "largeur": [{"noeud": "5", "champ": "width"}], "hauteur": [{"noeud": "5", "champ": "height"}],

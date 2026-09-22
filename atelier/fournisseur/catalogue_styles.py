@@ -49,11 +49,11 @@ FAMILLES: dict[str, dict] = {
     # texte et se décharge ensuite.
     'qwen21': {
         'nom': 'Qwen-Image 2.1',
-        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'TextEncodeQwenImage21', 'EmptyLatentImage', 'KSampler', 'VAEDecode', 'LoadImage'),
+        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'TextEncodeQwenImage21', 'EmptyLatentImage', 'KSampler', 'VAEDecode', 'SplitImageWithAlpha', 'LoadImage'),
         'unet': re.compile(r'qwen.?image.?2\.?1.*(int8|int4|\.gguf$)', re.I),
         'clip': re.compile(r'qwen.?3.?vl.?8b.*(int8|int4)', re.I),
         'vae': re.compile(r'qwen.?image.?2\.?1.?vae', re.I),
-        'vitesse': 'de 20 secondes à 2 minutes par image selon le réglage',
+        'vitesse': 'de 12 secondes à 2 minutes par image selon le réglage',
         'reference': 'sujet'
     }
 }
@@ -401,7 +401,7 @@ STYLES: tuple[dict, ...] = (
         'etapes': 12,
         'genre': 'asset',
         'formats': ('512', '1024'),
-        'vitesse': 'environ 20 secondes en 512, 1 minute en 1024 (estimation, à mesurer)',
+        'vitesse': 'environ 12 secondes en 512, 16 secondes en 1024',
         'nom': 'Très rapide',
         'description': 'Le modèle principal en brouillon : 12 étapes, idéal pour chercher une idée ou tirer beaucoup de variantes. Détails un peu moins fins.',
         'etiquette': 'Recommandé',
@@ -414,7 +414,7 @@ STYLES: tuple[dict, ...] = (
         'etapes': 30,
         'genre': 'asset',
         'formats': ('512', '1024', '1536'),
-        'vitesse': 'environ 2 à 3 minutes en 1024 (estimation, à mesurer)',
+        'vitesse': 'environ 36 secondes en 1024, 2 minutes en 1536',
         'nom': 'Meilleure qualité',
         'description': 'Le même modèle avec 30 étapes : textes lisibles, mains et petits détails propres. Pour l’image qu’on garde.',
         'etiquette': 'Qualité',

@@ -36,6 +36,8 @@ def releve_avec_qwen21(*, noeud=True, unets=(UNET_INT8, "qwen_image_2.1_bf16.saf
                 "images": ["COMFY_AUTOGROW_V3", {"template": {"input": {"required": {"image": ["IMAGE", {}]}},
                     "names": [f"image_{i}" for i in range(1, 17)], "min": 0}}]},
             "optional": {"vae": ["VAE", {}]}}}
+    # Nœud de base, présent bien avant la 0.37 (absent du relevé réduit du 18).
+    info["SplitImageWithAlpha"] = {"input": {"required": {"image": ["IMAGE", {}]}}}
     return info
 
 
@@ -83,6 +85,9 @@ def test_le_mode_rapide_tire_12_etapes_en_512():
     assert k["positive"] == ["4", 0] and k["negative"] == ["4", 1]
     assert "vae" not in encode
     assert "prompt_negatif" not in profil["liaisons"]
+    # L'alpha de bruit du décodeur est retiré avant l'enregistrement.
+    assert graphe["9"] == {"class_type": "SplitImageWithAlpha", "inputs": {"image": ["7", 0]}}
+    assert graphe["8"]["inputs"]["images"] == ["9", 0]
 
 
 def test_le_mode_qualite_tire_30_etapes_et_monte_a_1536():

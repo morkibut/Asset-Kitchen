@@ -250,7 +250,22 @@ non commercial seulement (sans objet ici : le jeu n'est pas vendu).
 
 Il n'existe pas encore de LoRA « Lightning » pour la 2.1. Le mode rapide gagne donc sa vitesse
 sur la taille et le nombre d'étapes. Quand un tel LoRA sortira, c'est lui qu'il faudra brancher
-sur le mode rapide. Les temps annoncés dans le catalogue sont des estimations **non mesurées**.
+sur le mode rapide.
+
+**Mesuré le 22 septembre 2026** : RTX 3080 Laptop 8 Go, ComfyUI 0.37, poids int8. Le graphe de
+l'app a été envoyé tel quel à ComfyUI. Un seul tirage par cas : ce sont des constats.
+
+| Cas | Temps | Ce qu'on a vu |
+|---|---|---|
+| Très rapide, 512 | **12 s** | petit mage lisible, trait propre, fond clair, ombre au sol |
+| Très rapide, 1024 | **16 s** | même rendu, plus fin |
+| Très rapide, 1024, une image jointe (le mage de dos) | **26 s** | le personnage est gardé **et** la pose demandée passe (Klein n'y arrivait pas) |
+| Meilleure qualité, 1024 | **36 s** | détails plus propres |
+| Meilleure qualité, 1536 | **115 s** | tient sur 8 Go |
+
+Le décodeur rend toujours une image à quatre canaux. Sans demande de transparence, ce canal
+alpha n'est que du bruit : 92 % de l'image est opaque, le reste va de 223 à 254. Le graphe le
+retire (`SplitImageWithAlpha`) avant l'enregistrement.
 
 **Défaut.** Installé et disponible, `qwen21-rapide` devient le modèle par défaut de l'atelier.
 Il passe devant GPT Image (`atelier/services/catalogue.py` § `DEFAUT_LOCAL`). Un choix par
