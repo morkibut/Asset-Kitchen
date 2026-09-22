@@ -123,98 +123,111 @@ def texte_du_mouvement(client, nom: str) -> str:
 
 
 # ── Le texte corrigé prime sur le mouvement ─────────────────────────────────
+#
+# **RV5/RV6** : `POST /clips` a été retirée (21 septembre 2026). Ce que cette
+# tranche appelait « le texte corrigé dans le tiroir » est devenu
+# `correction_geste`, porté par la fabrication suivie et composé une fois pour
+# toutes dans `ServiceTravaux.preparer` (voir aussi `tests/test_rv5_serie.py`).
+# La génération garde le même invariant : le mouvement reste inscrit, la
+# correction ne l'efface jamais.
 
 
-def test_le_prompt_corrige_prime_sur_le_mouvement_et_part(client_video, animateur):
+async def _une_case(atelier_video, client_video) -> tuple[str, str]:
+    """Un personnage et le projet ouvert — de quoi préparer un travail."""
+    personnage = client_video.post(
+        "/api/characters", json={"nom": "Michel", "description": "un voyageur"}
+    ).json()["personnage"]["identifiant"]
+    return personnage, atelier_video.bibliotheque.courant
+
+
+async def test_la_correction_du_geste_prime_sur_le_mouvement_et_part(atelier_video, client_video, animateur):
     """*Le texte corrigé part, le mouvement reste inscrit sur la génération.*
 
-    C'est le cœur du changement : la route employait *le mouvement* quand il
-    était donné, prompt ou non. Une relecture d'avant l'envoi corrige le texte
-    **et** garde le mouvement — le montage d'`A10` nomme ses bandes d'après
-    lui, et perdre la filiation parce qu'on a retouché une virgule serait
-    casser l'animation pour corriger le texte.
+    C'est le cœur du changement : le mouvement écrivait le texte, prompt ou
+    non. Une correction du geste, avant l'envoi, corrige le texte **et**
+    garde le mouvement — le montage d'`A10` nomme ses bandes d'après lui, et
+    perdre la filiation parce qu'on a retouché une virgule serait casser
+    l'animation pour corriger le texte.
     """
     sprite = un_sprite(client_video)
+    personnage, projet = await _une_case(atelier_video, client_video)
     corrige = "Marche lente, en place, boucle parfaite — le personnage s'arrête net."
 
-    reponse = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MODELE.identifiant,
-            "mouvement": "marche",
-            "prompt": corrige,
-            "asset": sprite,
-        },
-    )
-    assert reponse.status_code == 202
+    travail = await atelier_video.travaux.preparer(projet, {
+        "cle": "v301-corrige", "personnage": personnage, "pose": "marche", "direction": "",
+        "modele_video": MODELE.identifiant, "mouvement": "marche", "reference_asset": sprite,
+        "correction_geste": corrige,
+    })
+    assert travail["demande"]["prompt_video"] == corrige
+    assert travail["demande"]["prompt_video"] != texte_du_mouvement(client_video, "marche")
+    await atelier_video.travaux.demarrer(projet, travail["identifiant"])
+    await atelier_video.travaux.attendre_tout()
 
     _, demande = animateur.soumissions[0]
     assert demande.texte == corrige
-    assert demande.texte != texte_du_mouvement(client_video, "marche")
 
     # **La filiation est inscrite, texte corrigé ou non** : c'est ce que le
     # montage lira pour nommer les bandes taillées dans ce clip.
-    generation = reponse.json()["clips"][0]
-    assert generation["demande"]["mouvement"] == "marche"
-    assert generation["demande"]["prompt"] == corrige
+    fini = atelier_video.travaux.lire(projet, travail["identifiant"])
+    generation = atelier_video.animation.lire(fini["clip"])
+    assert generation.demande["mouvement"] == "marche"
+    assert generation.demande["prompt"] == corrige
 
 
-def test_sans_correction_le_mouvement_ecrit_le_texte_comme_avant(
-    client_video, animateur
+async def test_sans_correction_le_mouvement_ecrit_le_texte_comme_avant(
+    atelier_video, client_video, animateur
 ):
-    """*Le comportement d'`A9` est inchangé* : sans prompt, le serveur relit le
-    mouvement, et le texte anglais n'a qu'un seul endroit où il s'écrit."""
+    """*Le comportement d'`A9` est inchangé* : sans correction, le serveur relit
+    le mouvement, et le texte anglais n'a qu'un seul endroit où il s'écrit."""
     sprite = un_sprite(client_video)
-    reponse = client_video.post(
-        "/api/clips",
-        json={"modele": MODELE.identifiant, "mouvement": "marche", "asset": sprite},
-    )
-    assert reponse.status_code == 202
+    personnage, projet = await _une_case(atelier_video, client_video)
+    travail = await atelier_video.travaux.preparer(projet, {
+        "cle": "v301-sans-correction", "personnage": personnage, "pose": "marche", "direction": "",
+        "modele_video": MODELE.identifiant, "mouvement": "marche", "reference_asset": sprite,
+    })
+    await atelier_video.travaux.demarrer(projet, travail["identifiant"])
+    await atelier_video.travaux.attendre_tout()
 
     _, demande = animateur.soumissions[0]
     assert demande.texte == texte_du_mouvement(client_video, "marche")
 
 
-def test_un_mouvement_inconnu_se_refuse_meme_avec_un_prompt_corrige(
-    client_video, animateur
+async def test_un_mouvement_inconnu_se_refuse_meme_avec_une_correction_du_geste(
+    atelier_video, client_video, animateur
 ):
     """La filiation ne peut pas mentir : un mouvement qui n'existe pas se refuse
     avant de payer, qu'on ait corrigé le texte ou non — sans quoi la génération
     porterait une chose qu'il n'y a pas."""
+    from atelier.domaine.travail import TravailRefuse
+
     sprite = un_sprite(client_video)
-    reponse = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MODELE.identifiant,
-            "mouvement": "danse-de-la-pluie",
-            "prompt": "un texte corrigé, peu importe",
-            "asset": sprite,
-        },
-    )
-    assert reponse.status_code == 400
-    assert "danse-de-la-pluie" in reponse.json()["raison"]
+    personnage, projet = await _une_case(atelier_video, client_video)
+    with pytest.raises(TravailRefuse, match="danse-de-la-pluie"):
+        await atelier_video.travaux.preparer(projet, {
+            "cle": "v301-inconnu", "personnage": personnage, "pose": "marche", "direction": "",
+            "modele_video": MODELE.identifiant, "mouvement": "danse-de-la-pluie",
+            "reference_asset": sprite, "correction_geste": "un texte corrigé, peu importe",
+        })
     assert animateur.soumissions == []
 
 
-def test_des_espaces_seules_ne_sont_pas_une_correction(client_video, animateur):
+async def test_des_espaces_seuls_ne_sont_pas_une_correction(atelier_video, client_video, animateur):
     """*Un clip part d'un texte* — et des espaces ne sont pas une correction.
 
-    Un prompt réduit à des espaces reprend le mouvement, comme l'absence de
-    prompt : c'est la même réserve que la route d'`A9` sur le promp, appliquée
-    à une correction. Le vrai refus — *aucun texte du tout* — est déjà tenu
-    par `test_a9` quand il n'y a ni prompt ni mouvement.
+    Une correction réduite à des espaces reprend le mouvement, comme l'absence
+    de correction : c'est la même réserve que la route d'`A9` sur le prompt,
+    appliquée à une correction. Le vrai refus — *aucun texte du tout* — est
+    déjà tenu par `test_a9` quand il n'y a ni texte ni mouvement.
     """
     sprite = un_sprite(client_video)
-    reponse = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MODELE.identifiant,
-            "mouvement": "marche",
-            "prompt": "   ",
-            "asset": sprite,
-        },
-    )
-    assert reponse.status_code == 202
+    personnage, projet = await _une_case(atelier_video, client_video)
+    travail = await atelier_video.travaux.preparer(projet, {
+        "cle": "v301-espaces", "personnage": personnage, "pose": "marche", "direction": "",
+        "modele_video": MODELE.identifiant, "mouvement": "marche", "reference_asset": sprite,
+        "correction_geste": "   ",
+    })
+    await atelier_video.travaux.demarrer(projet, travail["identifiant"])
+    await atelier_video.travaux.attendre_tout()
     _, demande = animateur.soumissions[0]
     assert demande.texte == texte_du_mouvement(client_video, "marche")
 
@@ -222,7 +235,7 @@ def test_des_espaces_seules_ne_sont_pas_une_correction(client_video, animateur):
 # ── La génération se referme et se rouvre avec sa correction ────────────────
 
 
-def test_un_clip_corrige_rouvert_se_relit_avec_son_texte_et_sa_filiation(
+async def test_un_clip_corrige_rouvert_se_relit_avec_son_texte_et_sa_filiation(
     atelier_video, client_video, tmp_path, double, animateur
 ):
     """⚠️ *Un objet qu'on sait écrire et qu'on ne sait pas relire n'est pas fini*
@@ -236,16 +249,17 @@ def test_un_clip_corrige_rouvert_se_relit_avec_son_texte_et_sa_filiation(
     from atelier.services import Atelier
 
     sprite = un_sprite(client_video)
+    personnage, projet = await _une_case(atelier_video, client_video)
     corrige = "Marche lente, en place, boucle parfaite — correction du tiroir."
-    identifiant = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MODELE.identifiant,
-            "mouvement": "marche",
-            "prompt": corrige,
-            "asset": sprite,
-        },
-    ).json()["clips"][0]["identifiant"]
+    travail = await atelier_video.travaux.preparer(projet, {
+        "cle": "v301-rouvert", "personnage": personnage, "pose": "marche", "direction": "",
+        "modele_video": MODELE.identifiant, "mouvement": "marche", "reference_asset": sprite,
+        "correction_geste": corrige,
+    })
+    await atelier_video.travaux.demarrer(projet, travail["identifiant"])
+    await atelier_video.travaux.attendre_tout()
+    fini = atelier_video.travaux.lire(projet, travail["identifiant"])
+    identifiant = fini["clip"]
 
     relu = Atelier(
         racine=tmp_path,

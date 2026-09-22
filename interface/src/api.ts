@@ -953,20 +953,6 @@ export type BaseModelesVideo = {
   demande: { secondes: number; resolution: string; proportions: string }
 }
 
-/** L'image qu'un clip prendrait au départ, **et pourquoi celle-là**.
- *
- *  Une proposition, jamais une contrainte : l'auteur en change d'un clic pour
- *  n'importe quelle image de la bibliothèque. */
-export type ImageDeDepart = {
-  asset: Asset | null
-  /** `case` : l'image de la case visée, dont l'attitude et l'angle ont déjà été
-   *  validés. `portrait` : ce que le personnage montre de lui — sa première
-   *  référence promue, sinon le corps retenu de sa première attitude.
-   *  `aucune` : il n'y a rien, et la raison le dit. */
-  origine: "case" | "reference" | "portrait" | "aucune"
-  raison: string
-}
-
 /** Ce qu'une génération porte quand c'est un clip. Absent partout ailleurs —
  *  et c'est ce champ, jamais le nom du modèle, qui dit qu'un appel est vidéo. */
 export type Clip = {
@@ -5735,10 +5721,12 @@ export const api = {
 
   // ── Les clips (A9) ────────────────────────────────────────────────────────
   //
-  // **Une seule de ces routes dépense** — `commanderClips`. Toutes les autres
-  // lisent, rangent ou rendent, et aucune ne rappelle le fournisseur : même
-  // `rendreClips`, qui remontre un clip écarté, ne fait que défaire une marque
-  // sur le disque.
+  // **Aucune de ces routes ne dépense.** Elles lisent, rangent ou rendent, et
+  // aucune ne rappelle le fournisseur : même `rendreClips`, qui remontre un
+  // clip écarté, ne fait que défaire une marque sur le disque. La seule route
+  // qui dépensait — `commanderClips`, `POST /clips` — est partie avec
+  // `Clip.tsx` et `AnimerEnLot.tsx` (RV6) : la fenêtre unique commande un
+  // travail (`api-travaux.ts`), jamais un clip directement.
 
   /** Les modèles vidéo et **le prix du jour pour ce réglage-là**.
    *
@@ -5783,44 +5771,6 @@ export const api = {
   telechargerLesModeles: () =>
     appeler<EtatDuMoteur & { descendus: string[] }>("/clips/engine/download", {
       method: "POST",
-    }),
-
-  /** Ce qu'un clip prendrait au départ, **et pourquoi celle-là**. Une
-   *  proposition : l'écran la montre, l'auteur en change d'un clic. */
-  imageDeDepart: (
-    personnage: string,
-    pose?: string | null,
-    direction?: string | null,
-  ) =>
-    appeler<ImageDeDepart>(
-      `/clips/start-image?personnage=${encodeURIComponent(personnage)}` +
-        (pose ? `&pose=${encodeURIComponent(pose)}` : "") +
-        (direction ? `&direction=${encodeURIComponent(direction)}` : ""),
-    ),
-
-  /** **La seule route de ce bloc qui dépense**, et elle dépense `nombre` fois.
-   *
-   *  L'écran envoie le **mouvement**, pas le texte qu'il vient d'afficher :
-   *  deux chemins vers le même texte anglais finiraient par en envoyer un
-   *  troisième, et c'est un appel payé qui le dirait. */
-  commanderClips: (corps: {
-    modele: string
-    asset: string
-    mouvement?: string | null
-    prompt?: string
-    secondes?: number
-    resolution?: string
-    proportions?: string
-    nombre?: number
-    personnage?: string | null
-    pose?: string | null
-    direction?: string | null
-    /** Monter l'animation dès que le clip arrive. */
-    monter_auto?: boolean
-  }) =>
-    appeler<{ clips: Generation[] }>("/clips", {
-      method: "POST",
-      body: JSON.stringify(corps),
     }),
 
   /** **Tous les clips gardés d'un jeu** (B22), pas seulement ceux que le

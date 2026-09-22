@@ -36,6 +36,7 @@ from atelier.image import controle_clip
 from atelier.services.animation import ServiceAnimation
 from atelier.depot import Base, Fichiers
 
+from tests.conftest import commander_un_clip
 from tests.test_a9 import (  # noqa: F401 — fixtures reprises telles quelles
     MELE,
     AnimateurDouble,
@@ -100,16 +101,16 @@ def _attendre_le_statut_final(client, identifiant: str, cible: str, rounds: int 
 # ── 1. Noire ─────────────────────────────────────────────────────────────────
 
 
-def test_un_clip_noir_echoue_au_controle_et_rien_n_est_monte(client_video, animateur):
+async def test_un_clip_noir_echoue_au_controle_et_rien_n_est_monte(atelier_video, client_video, animateur):
     animateur.octets = clip_noir()
     sprite = un_sprite(client_video)
     personnage = un_personnage(client_video)
     client_video.put(f"/api/assets/{sprite}/character", json={"personnage": personnage, "pose": "marche"})
-    lot = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite,
-              "personnage": personnage, "pose": "marche", "monter_auto": True},
-    ).json()["clips"]
+    lot = await commander_un_clip(
+        atelier_video, modele=MELE.identifiant, mouvement="marche", asset=sprite,
+        personnage=personnage, pose="marche", monter_auto=True,
+    )
+    await atelier_video.animation.attendre_tout()
     identifiant = lot[0]["identifiant"]
     arrive = _attendre_le_statut_final(client_video, identifiant, "echouee")
     assert arrive is not None and arrive["statut"] == "echouee", arrive
@@ -134,16 +135,16 @@ def atelier_video_fichiers(client_video, identifiant: str) -> Path:
 # ── 2. Figée ─────────────────────────────────────────────────────────────────
 
 
-def test_un_clip_fige_echoue_au_controle(client_video, animateur):
+async def test_un_clip_fige_echoue_au_controle(atelier_video, client_video, animateur):
     animateur.octets = clip_fige()
     sprite = un_sprite(client_video)
     personnage = un_personnage(client_video)
     client_video.put(f"/api/assets/{sprite}/character", json={"personnage": personnage, "pose": "marche"})
-    lot = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite,
-              "personnage": personnage, "pose": "marche", "monter_auto": True},
-    ).json()["clips"]
+    lot = await commander_un_clip(
+        atelier_video, modele=MELE.identifiant, mouvement="marche", asset=sprite,
+        personnage=personnage, pose="marche", monter_auto=True,
+    )
+    await atelier_video.animation.attendre_tout()
     identifiant = lot[0]["identifiant"]
     arrive = _attendre_le_statut_final(client_video, identifiant, "echouee")
     assert arrive is not None and arrive["statut"] == "echouee", arrive
@@ -155,16 +156,17 @@ def test_un_clip_fige_echoue_au_controle(client_video, animateur):
 
 
 async def test_vide_apres_detourage_refuse_et_le_montage_a_la_main_reste_possible(
-    client_video, animateur, monkeypatch
+    atelier_video, client_video, animateur, monkeypatch
 ):
     animateur.octets = clip_mp4()
     sprite = un_sprite(client_video)
     personnage = un_personnage(client_video)
     client_video.put(f"/api/assets/{sprite}/character", json={"personnage": personnage, "pose": "marche"})
-    lot = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite, "personnage": personnage, "pose": "marche"},
-    ).json()["clips"]
+    lot = await commander_un_clip(
+        atelier_video, modele=MELE.identifiant, mouvement="marche", asset=sprite,
+        personnage=personnage, pose="marche",
+    )
+    await atelier_video.animation.attendre_tout()
     identifiant = lot[0]["identifiant"]
     arrive = _attendre_le_statut_final(client_video, identifiant, "reussie")
     assert arrive is not None and arrive["statut"] == "reussie", arrive
@@ -253,15 +255,16 @@ def _demande():
 # ── 6. `en_souffrance` l'exclut ; la vidéo se sert toujours ─────────────────
 
 
-def test_en_souffrance_exclut_le_clip_rate_et_la_video_se_sert_toujours(client_video, animateur):
+async def test_en_souffrance_exclut_le_clip_rate_et_la_video_se_sert_toujours(atelier_video, client_video, animateur):
     animateur.octets = clip_noir()
     sprite = un_sprite(client_video)
     personnage = un_personnage(client_video)
     client_video.put(f"/api/assets/{sprite}/character", json={"personnage": personnage, "pose": "marche"})
-    lot = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite, "personnage": personnage, "pose": "marche"},
-    ).json()["clips"]
+    lot = await commander_un_clip(
+        atelier_video, modele=MELE.identifiant, mouvement="marche", asset=sprite,
+        personnage=personnage, pose="marche",
+    )
+    await atelier_video.animation.attendre_tout()
     identifiant = lot[0]["identifiant"]
     arrive = _attendre_le_statut_final(client_video, identifiant, "echouee")
     assert arrive is not None and arrive["statut"] == "echouee", arrive

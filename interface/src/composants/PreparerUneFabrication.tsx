@@ -15,7 +15,7 @@
 
 import { useEffect, useState, type ReactNode } from "react"
 import type { Personnage, Pose } from "../api"
-import { NOM_DU_TYPE, TYPES_DE_RESULTAT, type TypeDeResultat } from "../fabrication"
+import { NOM_DU_TYPE, TYPES_DE_RESULTAT, type OptionsAnimer, type TypeDeResultat } from "../fabrication"
 import { CadreDialogue } from "./CadreDialogue"
 import { FabricationAudio } from "./FabricationAudio"
 import { FabricationSuivie } from "./FabricationSuivie"
@@ -46,6 +46,7 @@ export function PreparerUneFabrication({
   onType,
   poseInitiale = "",
   directionInitiale = "",
+  clipInitial,
   posesVisees = [],
   sujetVise = null,
   modeleInitial,
@@ -73,6 +74,11 @@ export function PreparerUneFabrication({
   onType?: (type: TypeDeResultat) => void
   poseInitiale?: string
   directionInitiale?: string
+  /** **RV6** : ce qu'une porte de clip apporte en plus d'une case — d'autres
+   *  directions cochées, l'image de départ d'un clip d'origine, ou la
+   *  reprise à l'identique d'un travail raté. Transmis tel quel à
+   *  `FabricationSuivie.cibleInitiale`. */
+  clipInitial?: OptionsAnimer
   /** Les attitudes que le lot armé vise — une, ou N pour une planche. La
    *  fenêtre les nomme toutes sous son titre : c'est ce qu'on paie. */
   posesVisees?: Pose[]
@@ -214,7 +220,7 @@ export function PreparerUneFabrication({
           autonome={false}
           projet={projet}
           personnages={personnages}
-          cibleInitiale={{ personnage: sujet.identifiant, pose, direction }}
+          cibleInitiale={{ personnage: sujet.identifiant, pose, direction, ...clipInitial }}
           modeleInitial={modeleInitial}
           onClip={onClip}
           onBande={onBande}

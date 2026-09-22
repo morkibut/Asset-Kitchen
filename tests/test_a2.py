@@ -264,7 +264,7 @@ def test_la_fenetre_survit_a_un_aller_retour_par_le_json():
     assert relue.largeur == 38 and relue.hauteur == 86
 
 
-def test_l_apercu_brut_montre_les_pixels_du_modele(client_video):
+async def test_l_apercu_brut_montre_les_pixels_du_modele(atelier_video, client_video):
     """*L'aperçu brut est monté sur les images du modèle : aucun détourage entre
     le clip et l'œil.*
 
@@ -275,13 +275,14 @@ def test_l_apercu_brut_montre_les_pixels_du_modele(client_video):
 
     Ce que l'essai tient : l'image servie est **opaque de bout en bout**. Un
     détourage, quel qu'il soit, y aurait laissé de la transparence."""
+    from conftest import commander_un_clip
     from test_a9 import MELE, un_sprite
 
     sprite = un_sprite(client_video)
-    identifiant = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "prompt": "marche", "asset": sprite},
-    ).json()["clips"][0]["identifiant"]
+    identifiant = (
+        await commander_un_clip(atelier_video, modele=MELE.identifiant, prompt="marche", asset=sprite)
+    )[0]["identifiant"]
+    await atelier_video.animation.attendre_tout()
 
     reponse = client_video.get(f"/api/clips/{identifiant}/frames/0")
     assert reponse.status_code == 200

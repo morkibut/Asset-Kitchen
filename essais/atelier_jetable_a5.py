@@ -63,6 +63,9 @@ from pathlib import Path
 RACINE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RACINE))
 sys.path.insert(0, str(RACINE / "tests"))
+# `atelier_jetable_a4` est archivé (21 septembre 2026, retrait de `POST /clips`)
+# mais son `peupler` reste importé d'ici plutôt que recopié.
+sys.path.insert(0, str(RACINE / "essais" / "archive"))
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")

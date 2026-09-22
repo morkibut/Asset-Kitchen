@@ -56,8 +56,10 @@
 import { useCallback, useMemo, useState } from "react"
 import { api, type Bande, type Case, type Generation, type Personnage, type Pose } from "../api"
 import { BandeQuiTourne, sujetVideo, useVisee } from "./Apercu"
-import { AnimerEnLot, clipsNonMontes, etatDeLaCase, type CaseAAnimer } from "./AnimerEnLot"
 import { useEtatDuParcours } from "./MemoireDuParcours"
+import { clipsNonMontes, etatDeLaCase, imageDeDepartDuClip, type CaseAAnimer } from "../bande"
+import { demandeDeRelance, type OptionsAnimer } from "../fabrication"
+import type { CaseSerie } from "../api-travaux"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. */
 const COTE = 81
@@ -380,6 +382,7 @@ function LigneDeRangee({
   onEcarter,
   onRestaurer,
   onGenerer,
+  onRelancer,
 }: {
   rangee: Rangee
   enAttente: Generation[]
@@ -392,6 +395,10 @@ function LigneDeRangee({
   onEcarter: (bande: Bande, rangee: Rangee) => void
   onRestaurer: (bande: Bande) => void
   onGenerer: (rangee: Rangee) => void
+  /** **Relancer un travail raté, à l'identique** (RV1 → RV6) : la case du
+   *  clip échoué, pas seulement sa rangée — c'est de lui que la demande
+   *  reprise est tirée (`demandeDeRelance`, `fabrication.ts`). */
+  onRelancer: (clip: Generation, rangee: Rangee) => void
 }) {
   const [ecarteesOuvertes, setEcarteesOuvertes] = useEtatDuParcours(`${cleMemoire}:ecartees`, true)
 
@@ -507,7 +514,7 @@ function LigneDeRangee({
           restent en vue quelle que soit la longueur de la rangée. */}
       <span className="flex shrink-0 items-start gap-[8px]">
         {enAttente.map((clip) => (
-          <VignetteDeClip key={clip.identifiant} clip={clip} onMonter={onMonter} onRelancer={() => onGenerer(rangee)} />
+          <VignetteDeClip key={clip.identifiant} clip={clip} onMonter={onMonter} onRelancer={() => onRelancer(clip, rangee)} />
         ))}
         <CaseDeGeneration
           onArmer={() => onGenerer(rangee)}
@@ -530,7 +537,6 @@ export function AnimationsDuSujet({
   onErreur,
   clips = [],
   onMonterLeClip,
-  onClipsCommandes,
   avecDirections = true,
 }: {
   personnage: Personnage
@@ -541,13 +547,17 @@ export function AnimationsDuSujet({
    *  défaut** : tant que la nature n'est pas connue, un personnage ne perd
    *  rien. */
   avecDirections?: boolean
-  /** **Animer cette attitude** (A9) — l'écran qui commande un clip, déjà
-   *  porté par `PageDuSujet`. Il ne dépense rien ici : c'est le bouton de cet
-   *  écran-là qui paie. */
+  /** **Animer cette attitude** (A9) — la fenêtre unique de préparation, en
+   *  mode clip, déjà portée par `PageDuSujet` (RP4, RV6). Elle ne dépense
+   *  rien ici : c'est le bouton de cet écran-là qui paie. `options` porte ce
+   *  qu'une porte de plus qu'une simple case apporte — d'autres directions
+   *  cochées, l'image de départ d'une variante, ou la reprise d'un travail
+   *  raté (`OptionsAnimer`, `fabrication.ts`). */
   onAnimer: (
     personnage: Personnage,
     pose: Pose,
     direction?: { identifiant: string; nom: string } | null,
+    options?: OptionsAnimer,
   ) => void
   /** **Retravailler une animation gardée** (A7) — l'autre porte de la
    *  vignette, déjà portée par `PageDuSujet`. */
@@ -557,11 +567,8 @@ export function AnimationsDuSujet({
    *  leur rangée, et un lot ne relance pas une case dont un clip est en route. */
   clips?: readonly Generation[]
   onMonterLeClip?: (clip: string) => void
-  /** Des clips viennent de partir d'un lot : la liste est à relire. */
-  onClipsCommandes?: (clips: Generation[]) => void
 }) {
   const nonMontes = useMemo(() => clipsNonMontes(clips, personnage), [clips, personnage])
-  const [lot, setLot] = useState<{ titre: string; cases: CaseAAnimer[] } | null>(null)
   const nomDePose = useMemo(
     () => new Map(plan.map((p) => [p.identifiant, p.nom])),
     [plan],
@@ -607,7 +614,34 @@ export function AnimationsDuSujet({
         etat: etatDeLaCase(r, nonMontes),
       })),
     )
-  const ouvrirLot = (titre: string, cases: CaseAAnimer[]) => setLot({ titre, cases })
+  /** **« Tout animer » et « Animer les directions »** (RV6) : elles
+   *  ouvraient `AnimerEnLot`, sa propre file d'envoi. Elles ouvrent
+   *  maintenant la fenêtre unique, avec les cases à armer déjà cochées
+   *  (`cibleInitiale.cases`, `FabricationSuivie.tsx`) — un travail par case,
+   *  dans la même série. **Une série n'est plus bornée à une seule pose**
+   *  (le serveur, `preparer_serie`, acceptait déjà des cases de poses
+   *  différentes) : « Tout animer » arme donc toutes les cases du sujet,
+   *  poses comprises, pas seulement les directions de la première.
+   *
+   *  **Une case déjà retenue ou déjà en route ne repart pas** — la même
+   *  garde qu'`AnimerEnLot` posait par ses cases grisées.
+   */
+  const animerLeLot = (cases: CaseAAnimer[]) => {
+    const armables = cases.filter((c) => c.etat !== "retenue" && c.etat !== "en-route")
+    const premiere = armables[0]
+    if (!premiere) return
+    const pose = plan.find((p) => p.identifiant === premiere.pose)
+    if (!pose) return
+    const autres: CaseSerie[] = armables
+      .slice(1)
+      .map((c) => ({ pose: c.pose, direction: c.direction ?? "" }))
+    onAnimer(
+      personnage,
+      pose,
+      premiere.direction ? { identifiant: premiere.direction, nom: premiere.directionNom ?? premiere.direction } : null,
+      autres.length ? { cases: autres } : undefined,
+    )
+  }
   const enAttenteDe = (r: Rangee) =>
     nonMontes.filter((g) => g.pose === r.pose && (g.direction ?? null) === r.direction)
 
@@ -742,7 +776,7 @@ export function AnimationsDuSujet({
             type="button"
             data-tout-animer
             disabled={parPose.length === 0}
-            onClick={() => ouvrirLot(`Animer ${personnage.nom}`, casesDe(parPose))}
+            onClick={() => animerLeLot(casesDe(parPose))}
             className="h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle hover:border-encre-4 disabled:opacity-50"
           >
             Tout animer
@@ -843,7 +877,7 @@ export function AnimationsDuSujet({
                 <button
                   type="button"
                   data-animer-la-pose={sienne.pose}
-                  onClick={() => ouvrirLot(`Animer « ${nom} »`, casesDe([{ sienne, nom, rangees }]))}
+                  onClick={() => animerLeLot(casesDe([{ sienne, nom, rangees }]))}
                   className="h-[26px] shrink-0 rounded-7 border border-contour bg-carte px-[8px] text-[11.5px] text-encre-controle hover:border-encre-4"
                 >
                   {rangees.length > 1 ? "Animer les directions" : "Animer"}
@@ -871,6 +905,16 @@ export function AnimationsDuSujet({
                               personnage,
                               pose,
                               sa.direction ? { identifiant: sa.direction, nom: sa.angle ?? sa.nom } : null,
+                            )
+                        }}
+                        onRelancer={(clip, sa) => {
+                          const pose = poseDe(sa.pose)
+                          if (pose)
+                            onAnimer(
+                              personnage,
+                              pose,
+                              sa.direction ? { identifiant: sa.direction, nom: sa.angle ?? sa.nom } : null,
+                              { relance: demandeDeRelance(clip, imageDeDepartDuClip(clips, clip.identifiant)) },
                             )
                         }}
                       />
@@ -1012,6 +1056,10 @@ export function AnimationsDuSujet({
                     personnage,
                     pose,
                     bande.direction ? { identifiant: bande.direction, nom: bande.direction } : null,
+                    // **L'image de départ du clip d'origine** (RV6) — perdue
+                    // jusqu'ici : une variante repartait de la reproposition
+                    // du serveur plutôt que de celle qui a fait cette bande.
+                    { referenceAsset: imageDeDepartDuClip(clips, bande.clip) },
                   )
               }}
               className="h-[34px] rounded-7 border border-contour bg-carte text-[13px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
@@ -1037,16 +1085,6 @@ export function AnimationsDuSujet({
           </div>
         </aside>
       ) : null}
-      {lot && (
-        <AnimerEnLot
-          personnage={personnage}
-          plan={plan}
-          titre={lot.titre}
-          cases={lot.cases}
-          onFermer={() => setLot(null)}
-          onCommande={(partis) => onClipsCommandes?.(partis)}
-        />
-      )}
     </div>
   )
 }
