@@ -2739,7 +2739,9 @@ function NoeudCarte({ data }: NodeProps) {
           coin resté libre : le triangle d'artwork et la marque de concept art
           n'existent que sur une image (`CarteTuile`), jamais sur une note. */}
       {carte.genre === "texte" && !enEdition && (
-        <div style={ancreEcran(zoom, { left: "100%", top: "0%" })}>
+        // `z-30` : le menu ouvert fait passer la carte en `z-20`
+        // (`CarteTuile`), et elle recouvrait le crayon dès qu'il apparaissait.
+        <div className="z-30" style={ancreEcran(zoom, { left: "100%", top: "0%" })}>
           <button
             type="button"
             aria-label="Corriger le texte"
@@ -2747,7 +2749,7 @@ function NoeudCarte({ data }: NodeProps) {
               evenement.stopPropagation()
               setEnEdition(true)
             }}
-            className="nodrag nopan absolute top-[4px] -left-[24px] flex h-[22px] w-[22px] items-center justify-center rounded-5 border border-contour bg-carte text-[11px] leading-none text-encre-3 opacity-0 transition duration-120 group-hover:opacity-100 hover:border-signal hover:text-signal focus-visible:opacity-100"
+            className="nodrag nopan pointer-events-auto absolute top-[4px] -left-[24px] flex h-[22px] w-[22px] items-center justify-center rounded-5 border border-contour bg-carte text-[11px] leading-none text-encre-3 opacity-0 transition duration-120 group-hover:opacity-100 hover:border-signal hover:text-signal focus-visible:opacity-100"
           >
             ✎
           </button>
