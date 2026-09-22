@@ -1278,6 +1278,18 @@ export const AIDE: Record<string, Explication> = {
       "Une planche porte souvent plusieurs personnages sur un même fond : découper en fait autant de cartes, promues séparément. Le remplacement n'existe qu'avec un seul rectangle — c'est alors un recadrage, et l'originale s'en va avec sa place, son groupe, sa note et sa promotion. C'est le seul endroit du produit où découper efface quelque chose.",
   },
 
+  "carte.creer-sujet": {
+    nom: "Créer un sujet avec cette image",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "Faire de cette image le portrait d'un sujet neuf, prêt à recevoir ses autres images.",
+    change:
+      "L'image entre en bibliothèque comme une copie, jamais un déplacement — la carte reste sur le tableau. Une carte déjà concept art d'un sujet ouvre ce sujet-là au lieu d'en créer un second.",
+    origine: "toi · rien tant que tu n'as pas cliqué",
+    long:
+      "La fenêtre « Créer un sujet » s'ouvre pré-remplie : le nom vient de la première ligne de la note, la famille de celle de la carte, la description du reste de la note. Tu peux tout corriger avant de valider. Une carte texte n'a pas ce bouton — ce qui part en portrait, ce sont des octets d'image.",
+  },
+
   "carte.source": {
     nom: "provenance",
     ou: "inspiration",
@@ -1392,6 +1404,16 @@ export const AIDE: Record<string, Explication> = {
     quoi: "Des groupes nommés pour retrouver les personnages, objets, décors et interfaces du jeu.",
     change: "On choisit une famille à gauche, puis une collection. Une sélection se range dans une collection, ou se glisse sur son nom ; retirer un sujet d’un groupe garde toutes ses images. La recherche et le tri portent sur la famille entière, pas sur les sujets déjà affichés.",
     origine: "toi · rangement conservé dans la bibliothèque",
+  },
+
+  "codex.depuis-toile": {
+    nom: "Partir d'une image de la toile",
+    ou: "codex",
+    groupe: "Créer un sujet",
+    quoi: "Choisir une carte image du tableau pour démarrer le sujet avec elle comme portrait.",
+    change:
+      "Remplit le nom, la famille et la description proposés depuis la carte choisie ; tu peux les corriger avant de créer. La validation passe par la même route que depuis le panneau d'une carte.",
+    origine: "toi · aucune carte choisie au départ",
   },
 
   "codex.nommer": {

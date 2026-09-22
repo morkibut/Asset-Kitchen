@@ -41,7 +41,7 @@ import {
   type Teinte,
 } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
-import { DECOUPER, Reserve, Tableau, useCollage, type Vue } from "./Tableau"
+import { CREER_SUJET, DECOUPER, OUVRIR_SUJET, Reserve, Tableau, useCollage, type Vue } from "./Tableau"
 import { EcranDecoupe } from "./Decoupe"
 import {
   GestesDeLaSelection,
@@ -75,6 +75,8 @@ export function EcranUnivers({
   onCibleVue,
   carteDecoupee,
   onDecouperCarte,
+  onCreerSujet,
+  onOuvrirSujet,
   onAnimerCarte,
   onFabriquerDepuisLaToile,
   projet,
@@ -128,6 +130,12 @@ export function EcranUnivers({
    *  tableau. */
   carteDecoupee: Carte | null
   onDecouperCarte: (carte: Carte | null) => void
+  /** TS2 — faire d'une carte image le portrait d'un sujet neuf : `App` ouvre
+   *  la fenêtre « Créer un sujet », pré-remplie avec elle. */
+  onCreerSujet: (carte: Carte) => void
+  /** TS2 — une carte déjà concept art d'un sujet ouvre ce sujet, sans repasser
+   *  par la fenêtre de création. */
+  onOuvrirSujet: (identifiant: string) => void
   /** **Ce que la sélection de la toile donne à faire** (`RP9`) : les cartes
    *  choisies deviennent les références de la prochaine demande d'image, et
    *  les notes la consigne qui l'accompagne — si l'auteur l'a dit.
@@ -352,6 +360,8 @@ export function EcranUnivers({
            porte** (`docs/archive/DESIGN-chassis-chaud-2026-09-04.md`
            § Six règles de comportement, la première). */
         <DECOUPER.Provider value={onDecouperCarte}>
+        <CREER_SUJET.Provider value={onCreerSujet}>
+        <OUVRIR_SUJET.Provider value={onOuvrirSujet}>
           <div
             data-colonnes
             className="grid min-h-0 flex-1"
@@ -422,6 +432,8 @@ export function EcranUnivers({
               </div>
             )}
           </div>
+        </OUVRIR_SUJET.Provider>
+        </CREER_SUJET.Provider>
         </DECOUPER.Provider>
       )}
 

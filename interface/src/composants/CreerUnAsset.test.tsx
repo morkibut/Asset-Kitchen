@@ -17,13 +17,26 @@
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
-import { api, type ObjectifDuPersonnage, type Personnage, type Piece } from "../api"
+import { api, type Carte, type ObjectifDuPersonnage, type Personnage, type Piece } from "../api"
 import { CreerUnAsset } from "./CreerUnAsset"
 import { ObjectifDuSujet } from "./ObjectifDuSujet"
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 const sentinelle = { identifiant: "la-sentinelle", projet: "marais", nom: "La sentinelle de contrôle" } as Personnage
+
+/** TS2 — une carte image du tableau, minimale : ce que la fenêtre lit d'elle. */
+function carteImage(champs: Partial<Carte> = {}): Carte {
+  return {
+    identifiant: "carte-1", projet: "marais", genre: "image", texte: "",
+    statut: "prete", raison: null, source: "", cree_le: 0, groupe: "",
+    note: "Le forgeron\nUn colosse taciturne.", taille: 1, position: null,
+    largeur_libre: null, teinte: "", officiel: false, famille: "objets",
+    empreinte: "v1", largeur: 64, hauteur: 64, type_media: "image/png", octets: 100,
+    montrable: true, artwork: false, en_reserve: false,
+    ...champs,
+  } as Carte
+}
 
 const compte = { demande: 0, produit: 0, retenu: 0, manquant: 0, a_retenir: 0 }
 const fractionVide = { pretes: 0, demandees: 0, a_fabriquer: 0, a_departager: 0 }
@@ -131,4 +144,58 @@ test("le sujet créé reçoit son objectif dans l’interface, et le relit aprè
   expect(screen.getByLabelText("Repère X (px)")).toHaveValue(29)
   expect(screen.getByLabelText("Rejouer en boucle")).not.toBeChecked()
   expect(screen.getByLabelText("Marche · Est · animation")).toBeChecked()
+})
+
+// TS2 — un sujet peut naître d'une carte de la toile, depuis le panneau d'une
+// carte (`carteInitiale`) ou depuis le Codex (« Partir d'une image »). Dans
+// les deux cas la validation appelle `creerSujetDepuisCarte`, jamais
+// `creerPersonnage` : c'est la route qui copie l'image en bibliothèque.
+
+test("une carte pré-remplit nom, famille et description, et crée par la route de la carte", async () => {
+  const carte = carteImage()
+  const asset = { identifiant: "portrait-1" } as Awaited<ReturnType<typeof api.creerSujetDepuisCarte>>["asset"]
+  const depuisCarte = vi.spyOn(api, "creerSujetDepuisCarte")
+    .mockResolvedValue({ projet: "marais", personnage: sentinelle, asset, deja: null })
+  const personnage = vi.spyOn(api, "creerPersonnage")
+  const onPersonnage = vi.fn()
+
+  render(<CreerUnAsset familleInitiale="personnages" carteInitiale={carte} onFermer={vi.fn()} onPersonnage={onPersonnage} onPiece={vi.fn()} />)
+
+  expect(screen.getByLabelText("Nom du sujet")).toHaveValue("Le forgeron")
+  expect(screen.getByLabelText("Description créative")).toHaveValue("Un colosse taciturne.")
+  expect(screen.getByLabelText("Famille")).toHaveValue("objets")
+
+  fireEvent.click(screen.getByRole("button", { name: "Créer le sujet" }))
+
+  await waitFor(() => expect(onPersonnage).toHaveBeenCalledWith(sentinelle))
+  expect(depuisCarte).toHaveBeenCalledWith("carte-1", { nom: "Le forgeron", description: "Un colosse taciturne.", famille: "objets" })
+  expect(personnage).not.toHaveBeenCalled()
+})
+
+test("une carte déjà concept art d’un sujet ouvre ce sujet, sans créer un second", async () => {
+  const carte = carteImage()
+  vi.spyOn(api, "creerSujetDepuisCarte").mockResolvedValue({
+    projet: "marais", personnage: null, asset: null,
+    deja: { identifiant: "la-sentinelle", nom: "La sentinelle de contrôle" },
+  })
+  const onPersonnage = vi.fn()
+  const onDeja = vi.fn()
+
+  render(<CreerUnAsset familleInitiale="personnages" carteInitiale={carte} onFermer={vi.fn()} onPersonnage={onPersonnage} onPiece={vi.fn()} onDeja={onDeja} />)
+  fireEvent.click(screen.getByRole("button", { name: "Créer le sujet" }))
+
+  await waitFor(() => expect(onDeja).toHaveBeenCalledWith("la-sentinelle"))
+  expect(onPersonnage).not.toHaveBeenCalled()
+})
+
+test("« Partir d’une image de la toile » choisit une carte et pré-remplit la fenêtre", async () => {
+  const carte = carteImage({ identifiant: "carte-2", note: "Une auberge" })
+  vi.spyOn(api, "creerSujetDepuisCarte").mockResolvedValue({ projet: "marais", personnage: sentinelle, asset: null, deja: null })
+
+  render(<CreerUnAsset familleInitiale="personnages" cartesImages={[carte]} onFermer={vi.fn()} onPersonnage={vi.fn()} onPiece={vi.fn()} />)
+
+  fireEvent.click(screen.getByRole("button", { name: /Partir d.une image de la toile/ }))
+  fireEvent.click(screen.getByRole("button", { name: "Une auberge" }))
+
+  expect(screen.getByLabelText("Nom du sujet")).toHaveValue("Une auberge")
 })

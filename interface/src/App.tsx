@@ -878,6 +878,9 @@ function AtelierApp() {
    *  /api/characters`), comme au repos de l'ancien codex. */
   const [nomDeLaCreationRapide, setNomDeLaCreationRapide] = useState("")
   const [creationAssetOuverte, setCreationAssetOuverte] = useState<string | null>(null)
+  // TS2 — la carte qui part avec la fenêtre « Créer un sujet », quand elle
+  // s'ouvre depuis le panneau d'une carte de la toile plutôt que du Codex.
+  const [carteSourceDuSujet, setCarteSourceDuSujet] = useState<Carte | null>(null)
   // P2 (V3.5) : la fenêtre de commande d'une planche de plusieurs objets.
   const [commanderPlusieursOuvert, setCommanderPlusieursOuvert] = useState(false)
   const [source3Douverte, setSource3Douverte] = useState<Source3D | null>(null)
@@ -2537,6 +2540,16 @@ function AtelierApp() {
           // à la place du tableau.
           carteDecoupee={carteDecoupee}
           onDecouperCarte={setCarteDecoupee}
+          // TS2 — le panneau d'une carte image ouvre « Créer un sujet »,
+          // pré-remplie avec elle ; une carte déjà concept art ouvre son sujet.
+          onCreerSujet={(carte) => {
+            setCarteSourceDuSujet(carte)
+            setCreationAssetOuverte(carte.famille !== "tous" ? carte.famille : "personnages")
+          }}
+          onOuvrirSujet={(id) => {
+            memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "objectif")
+            setPile(entrer(poser("codex"), { genre: "sujet", sujet: id }))
+          }}
           // **Une carte découpée en animation ouvre son atelier** (`RP21`),
           // la même porte que depuis la découpe d'une planche.
           onAnimerCarte={(bandes) => {
@@ -3234,13 +3247,26 @@ function AtelierApp() {
           onLancee={() => { setCommanderPlusieursOuvert(false); void relireProduction() }}
         />
       )}
-      {creationAssetOuverte && <CreerUnAsset familleInitiale={creationAssetOuverte} onFermer={() => setCreationAssetOuverte(null)}
+      {creationAssetOuverte && <CreerUnAsset familleInitiale={creationAssetOuverte}
+        carteInitiale={carteSourceDuSujet}
+        cartesImages={cartes.filter((c) => c.genre === "image" && c.montrable)}
+        onFermer={() => { setCreationAssetOuverte(null); setCarteSourceDuSujet(null) }}
         onPersonnage={(personnage) => {
           fondrePersonnage(personnage)
           memoriserParcours(`sujet:${personnage.projet}:${personnage.identifiant}:onglet`, "objectif")
           setCreationAssetOuverte(null)
+          setCarteSourceDuSujet(null)
           setPile(entrer(poser("codex"), { genre: "sujet", sujet: personnage.identifiant }))
           void relireProduction().catch(e => echouer(e, "L’asset est créé ; sa liste n’a pas pu être actualisée."))
+          void relireTableau().catch(e => echouer(e, "L’asset est créé ; le tableau n’a pas pu être actualisé."))
+        }}
+        // TS2 — une carte déjà concept art d'un sujet : on ouvre ce sujet-là
+        // au lieu d'en créer un second, la forme du doublon au collage.
+        onDeja={(identifiant) => {
+          memoriserParcours(`sujet:${bibliotheque.courant}:${identifiant}:onglet`, "objectif")
+          setCreationAssetOuverte(null)
+          setCarteSourceDuSujet(null)
+          setPile(entrer(poser("codex"), { genre: "sujet", sujet: identifiant }))
         }}
         onPiece={(piece) => {
           setPieces(deja => [...deja.filter(p => p.identifiant !== piece.identifiant), piece])

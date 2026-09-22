@@ -75,11 +75,11 @@ retour, sans cache à percer.
 
 - [x] une route crée le sujet depuis une carte : nom, famille, concept art, copie de l'image en
       asset du sujet, portrait posé
-- [ ] le panneau d'une carte image porte le bouton ; il ouvre la fenêtre « Créer un sujet »
+- [x] le panneau d'une carte image porte le bouton ; il ouvre la fenêtre « Créer un sujet »
       pré-remplie, l'image visible
-- [ ] une carte déjà concept art d'un sujet le dit et ouvre ce sujet au lieu d'en créer un second
-- [ ] la fenêtre « Créer un sujet » du Codex peut aussi partir d'une carte de la toile
-- [ ] essais sans appel payant
+- [x] une carte déjà concept art d'un sujet le dit et ouvre ce sujet au lieu d'en créer un second
+- [x] la fenêtre « Créer un sujet » du Codex peut aussi partir d'une carte de la toile
+- [x] essais sans appel payant
 
 **Tranché en TS2** (serveur) : l'image de la carte entre **toujours** en bibliothèque comme une
 copie neuve, importée pour le sujet et marquée de sa carte (`origine` dans la demande de sa
@@ -91,6 +91,16 @@ de la carte promue, sinon `personnages`). Une carte déjà concept art rend `200
 `deja: {identifiant, nom}` et ne crée rien — la forme du doublon au collage. L'écran le sait
 avant de cliquer par les `concept_arts` de `GET /characters`. Service :
 `atelier/services/sujet_depuis_carte.py` ; outil de l'agent : `create_character_from_card`.
+
+**Tranché en TS2** (écran) : deux contextes React, `CREER_SUJET` et `OUVRIR_SUJET`
+(`Tableau.tsx`), fournis par `Univers.tsx` — même geste que `DECOUPER`, pour que le panneau
+d'une carte (grille et toile, un seul composant `Reglages`) porte le bouton sans qu'un prop
+traverse quatre couches. La fenêtre « Créer un sujet » (`CreerUnAsset.tsx`) devient le seul
+appelant de `creerSujetDepuisCarte` : une carte arrivée par `carteInitiale` (le panneau) ou
+choisie via « Partir d'une image de la toile » (`cartesImages`, un pavé de vignettes, sans
+recherche) suivent le même chemin de validation et la même réponse `deja`. Le nom et la
+description proposés reprennent la première ligne de la note et son reste, à l'identique du
+défaut serveur — l'auteur les corrige avant de valider, il ne les redemande pas.
 
 ### TS3 · La première planche
 

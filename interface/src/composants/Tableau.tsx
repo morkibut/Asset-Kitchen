@@ -65,6 +65,16 @@ const SPAN: Record<number, string> = { 1: "span 1", 2: "span 2", 4: "span 4" }
  *  rien de grisé, rien à expliquer. */
 export const DECOUPER = createContext<((carte: Carte) => void) | null>(null)
 
+/** TS2 — faire d'une carte image le portrait d'un sujet neuf. Ouvre la fenêtre
+ *  « Créer un sujet », pré-remplie avec cette carte. `null` là où le geste n'a
+ *  pas de sens (un aperçu, une capture d'essai) : le bouton disparaît alors,
+ *  plutôt que d'apparaître grisé sans explication. */
+export const CREER_SUJET = createContext<((carte: Carte) => void) | null>(null)
+
+/** TS2 — une carte déjà concept art d'un sujet ouvre ce sujet au lieu d'en
+ *  créer un second. Même règle de `null` que `CREER_SUJET`. */
+export const OUVRIR_SUJET = createContext<((identifiant: string) => void) | null>(null)
+
 /** La gouttière de la grille — un seul vocabulaire d'écart dans tout le produit.
  *  La toile la reprend telle quelle pour ranger ce qu'elle dispose seule. */
 export const GOUTTIERE = 9
@@ -1428,6 +1438,8 @@ function Reglages({
   onErreur: (r: string) => void
 }) {
   const decouper = useContext(DECOUPER)
+  const creerSujet = useContext(CREER_SUJET)
+  const ouvrirSujet = useContext(OUVRIR_SUJET)
   const [groupe, setGroupe] = useState(carte.groupe)
   const [note, setNote] = useState(carte.note)
   const [texte, setTexte] = useState(carte.texte)
@@ -1545,6 +1557,43 @@ function Reglages({
           </div>
         </div>
       )}
+
+      {carte.genre === "image" && (creerSujet || ouvrirSujet) && (() => {
+        // **La forme du doublon au collage** (TS2) : une carte déjà concept
+        // art d'un sujet ne repropose pas de le créer, elle rouvre celui-là.
+        const dejaSujet = personnages.find((p) =>
+          p.concept_arts.includes(carte.identifiant),
+        )
+        return (
+          <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
+            <Libelle aide="carte.creer-sujet">
+              {dejaSujet ? "Déjà un sujet" : "Créer un sujet avec cette image"}
+            </Libelle>
+            {dejaSujet ? (
+              <>
+                <p className="mesure text-[10.5px] leading-snug text-encre-4">
+                  Déjà le sujet {dejaSujet.nom}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => ouvrirSujet?.(dejaSujet.identifiant)}
+                  className="mesure h-[26px] self-start rounded-7 border border-trait bg-carte px-2 text-[10.5px] text-encre-3 hover:bg-papier-cote"
+                >
+                  Ouvrir {dejaSujet.nom}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => creerSujet?.(carte)}
+                className="mesure h-[26px] self-start rounded-7 border border-trait bg-carte px-2 text-[10.5px] text-encre-3 hover:bg-papier-cote"
+              >
+                Créer un sujet avec cette image
+              </button>
+            )}
+          </div>
+        )
+      })()}
 
       {carte.genre === "image" && personnages.length > 0 && (
         <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
