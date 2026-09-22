@@ -1,6 +1,18 @@
 /** AU2 — définir ce qui sera livré, indépendamment des références et des variantes. */
 import { useEffect, useMemo, useState } from "react"
-import { api, type Personnage, type ObjectifProduction, type ObjectifDuPersonnage } from "../api"
+import { api, type Personnage, type ObjectifProduction, type ObjectifDuPersonnage, type CaseObjectif } from "../api"
+
+/** **Ce que dit une case** (RV10, §4) : le même jugement que le compte
+ *  d'ensemble, mais case par case — « à fabriquer » sans version vivante et
+ *  livrable, « prête » avec une, « à départager » avec au moins deux et
+ *  aucune retenue (E2, §2). Rien n'est recalculé : `versions` porte déjà le
+ *  tri que le serveur a fait. */
+function etatDeLaCase(c: CaseObjectif): string {
+  const total = c.versions.retenues.length + c.versions.a_juger.length
+  if (total === 0) return "à fabriquer"
+  if (c.versions.retenues.length === 0 && total >= 2) return `${total} versions, à départager`
+  return "prête"
+}
 
 type Props = {
   personnage: Personnage
@@ -122,8 +134,8 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
     {erreur ? <p role="alert" className="text-echec">{erreur}</p> : <p role="status">Lecture de l’objectif…</p>}
   </section>
 
-  const images = lecture.couverture.images
-  const animations = lecture.couverture.animations
+  const images = lecture.avancement.images
+  const animations = lecture.avancement.animations
   const demande = brouillon.sorties.reduce((n, s) => n + s.quantite, 0)
 
   return <section aria-labelledby="objectif-titre" className="space-y-[22px]">
@@ -135,12 +147,20 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
       {!edition && <button type="button" className={bouton} onClick={() => { setEdition(true); setMessage("") }}>Modifier l’objectif</button>}
     </div>
 
-    <div className="flex flex-wrap gap-[14px]" aria-label="Couverture enregistrée">
-      {[{ nom: "Animations", compte: animations }, { nom: "Images fixes", compte: images }].map(({ nom, compte }) =>
+    {/* **Le seul compte d'avancement** (RV10) : la même fraction que le Codex,
+        la fiche et l'accueil — jamais un second calcul ici. Le manque reste
+        en gris neutre (E2). */}
+    <div className="flex flex-wrap gap-[14px]" aria-label="Avancement enregistré">
+      {[{ nom: "Animations", fraction: animations }, { nom: "Images fixes", fraction: images }].map(({ nom, fraction }) =>
         <div key={nom} className="min-w-[128px] rounded-10 border border-contour bg-carte p-[14px]">
           <p className="text-[13px] text-encre-4">{nom}</p>
-          <p className="mt-[8px] font-serif text-[25px] text-encre">{compte.demande ? `${compte.produit} / ${compte.demande} produites` : "Non demandées"}</p>
-          {compte.demande > 0 && <p className="mt-[8px] text-[12px] text-encre-4">{compte.retenu} retenues pour le jeu · {compte.manquant} à produire</p>}
+          <p className="mt-[8px] font-serif text-[25px] text-encre">{fraction.demandees ? `${fraction.pretes} / ${fraction.demandees} prêtes` : "Non demandées"}</p>
+          {fraction.demandees > 0 && <p className="mt-[8px] text-[12px] text-encre-4">
+            {[
+              fraction.a_fabriquer ? `${fraction.a_fabriquer} à fabriquer` : "",
+              fraction.a_departager ? `${fraction.a_departager} à départager` : "",
+            ].filter(Boolean).join(" · ")}
+          </p>}
         </div>)}
     </div>
 
@@ -152,7 +172,7 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
           <summary className="cursor-pointer font-serif text-[25px] text-encre">{m.nom}</summary>
           <ul className="mt-[8px] space-y-[8px] text-[13px] text-encre-3">
             {lecture.couverture.cases.filter((c) => c.pose === m.id && c.demande > 0).map((c) => <li key={c.identifiant}>
-              {c.nom_direction} · {c.nature === "animation" ? "Animation" : "Image fixe"} · {c.produit}/{c.demande} produites · {c.retenu} retenues
+              {c.nom_direction} · {c.nature === "animation" ? "Animation" : "Image fixe"} · {etatDeLaCase(c)}
             </li>)}
           </ul>
         </details>)}

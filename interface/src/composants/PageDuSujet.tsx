@@ -1,8 +1,7 @@
-/** La page d'un sujet : sa fiche, ses onglets, la porte de sa matrice. */
+/** La page d'un sujet : sa fiche, ses onglets, ses profondeurs. */
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { api, Refus, type Collection, type Echelle, type GroupeDeRangement, type Asset, type Personnage, type Piece, type Pose, type PosesDesTypes, type Role, type EmplacementCorps, type Univers, type VestiaireDuJeu, type Generation } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
-import { EcranEtabli } from "./EtabliDuSujet"
 import { EcranCalibrage } from "./Calibrage"
 import { ImagesDuSujet } from "./ImagesDuSujet"
 import { AnimationsDuSujet } from "./AnimationsDuSujet"
@@ -102,7 +101,6 @@ export function PageDuSujet(proprietes: {
   onOuvrirCase: (identifiant: string) => void
   onMonterLaBande: (clip: string) => void
   onOuvrirLaBande: (bande: string) => void
-  onSuperposition: (identifiant: string) => void
   onSupprimer: (identifiants: string[]) => void
   /** Les deux rôles que la fiche d'une image porte (`C4`) : renvoyer l'image au
    *  générateur, et reprendre les réglages de sa génération. Ils traversent
@@ -145,21 +143,6 @@ export function PageDuSujet(proprietes: {
    *  elle-même, comme avant. */
   onglet?: Onglet
   onOnglet?: (onglet: Onglet) => void
-  /** **La matrice ouverte, tenue au même endroit que l'onglet** (`B25`) — et
-   *  pour la même raison : la superposition d'un calque s'ouvre depuis elle, et
-   *  remonter d'un cran y revient. */
-  matrice?: boolean
-  onMatriceOuverte?: (ouverte: boolean) => void
-  /** **La colonne ouverte de la matrice, et le panneau d'un calque, tenus au
-   *  même endroit** (`B27`) — le défaut laissé en aparté par `B25` : ces deux
-   *  états vivaient dans `EcranEtabli`, que la retouche démonte en prenant sa
-   *  place, si bien que remonter d'un cran depuis *la différence* d'un calque
-   *  ramenait sur la matrice, colonne au corps, panneau fermé. Optionnels :
-   *  sans eux, `EcranEtabli` les tient elle-même, comme avant. */
-  colonne?: string | null
-  onColonne?: (identifiant: string | null) => void
-  calque?: string | null
-  onCalque?: (identifiant: string | null) => void
   clips?: readonly Generation[]
   /** La liste des clips a été lue au moins une fois — sans quoi une liste vide
    *  ne dit rien, et tous les anciens clips passeraient pour nouveaux. */
@@ -233,32 +216,9 @@ export function PageDuSujet(proprietes: {
   // image ne suffit plus à décider si la porte s'ouvre : un sujet qui n'a que
   // des animations a bel et bien quelque chose à comparer.
   const auMoinsUneAnimation = ouvert.cases.some((c) => c.bandes.length > 0)
-  // La matrice, profondeur suivante de cette page — voir l'en-tête du fichier.
-  const [matriceTenueIci, setMatriceTenueIci] = useState(false)
-  const matriceOuverte = proprietes.matrice ?? matriceTenueIci
   /** **Le calibrage, rangé dans « Autres outils »** (16 septembre 2026). */
   const [calibrageOuvert, setCalibrageOuvert] = useState(false)
   useEffect(() => { setCalibrageOuvert(false) }, [ouvert.identifiant])
-  const setMatriceOuverte = (ouverte: boolean) => {
-    setMatriceTenueIci(ouverte)
-    proprietes.onMatriceOuverte?.(ouverte)
-  }
-  // **La colonne de la matrice, et le panneau d'un calque — même relais, même
-  // raison** (`B27`) : sans lui, ouvrir *la différence* d'un calque puis
-  // remonter d'un cran ramenait sur la matrice, colonne au corps, panneau
-  // fermé.
-  const [colonneTenueIci, setColonneTenueIci] = useState<string | null>(null)
-  const colonne = proprietes.colonne ?? colonneTenueIci
-  const setColonne = (identifiant: string | null) => {
-    setColonneTenueIci(identifiant)
-    proprietes.onColonne?.(identifiant)
-  }
-  const [calqueTenuIci, setCalqueTenuIci] = useState<string | null>(null)
-  const calque = proprietes.calque ?? calqueTenuIci
-  const setCalque = (identifiant: string | null) => {
-    setCalqueTenuIci(identifiant)
-    proprietes.onCalque?.(identifiant)
-  }
   /** L'image qu'on regarde dans *Ses images* — celle du volet (`B25`). Elle
    *  monte jusqu'ici parce que le bouton *La retouche ›* vit dans le bandeau,
    *  au-dessus des onglets, et qu'il n'a aucun autre moyen de savoir laquelle
@@ -272,18 +232,15 @@ export function PageDuSujet(proprietes: {
   })
   const [range, setRange] = useState(0)
 
-  // Changer de sujet rend la fiche et referme la matrice : les onglets décrivent
-  // celui qu'on regardait, et rester sur « Ses images » du précédent ferait
-  // croire qu'on regarde encore les siennes.
+  // Changer de sujet rend la fiche à zéro : les onglets décrivent celui qu'on
+  // regardait, et rester sur « Ses images » du précédent ferait croire qu'on
+  // regarde encore les siennes.
   // ⚠️ **Elle ne prévient pas le cran du dessus** : cet effet se rejoue à chaque
   // montage, et la page se remonte au retour de la retouche. Le lui dire
   // écraserait justement l'onglet qu'on cherche à retrouver. Celui qui tient
   // l'onglet pour nous tient aussi son remise à zéro, sur le même sujet ouvert.
   useEffect(() => {
     setOngletTenuIci(ongletInitial(ouvert))
-    setMatriceTenueIci(false)
-    setColonneTenueIci(null)
-    setCalqueTenuIci(null)
     setRegardee(null)
   }, [ouvert.identifiant])
 
@@ -385,31 +342,6 @@ export function PageDuSujet(proprietes: {
       </div>
     )
 
-  if (matriceOuverte)
-    return (
-      <div data-etabli className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier">
-        <div className="flex items-center gap-[8px] border-b border-trait bg-papier-cote px-[30px] py-[8px]">
-          <button
-            type="button"
-            onClick={() => setMatriceOuverte(false)}
-            className="h-[26px] rounded-7 border border-contour bg-carte px-[14px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4"
-          >
-            ‹ {proprietes.ouvert.nom}
-          </button>
-          <span className="text-[12.5px] text-encre-3">
-            Ses cases — l'équipement et les planches vivent encore ici.
-          </span>
-        </div>
-        <EcranEtabli
-          {...proprietes}
-          colonne={colonne}
-          onColonne={setColonne}
-          calque={calque}
-          onCalque={setCalque}
-        />
-      </div>
-    )
-
   return (
     <main data-etabli data-page-du-sujet aria-label={`La page de ${ouvert.nom}`} className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier">
       {/* **Un seul défilement pour toute la page** — le titre, la fiche, les
@@ -477,7 +409,6 @@ export function PageDuSujet(proprietes: {
               <button className={BOUTON} onClick={proprietes.onGrille} disabled={!auMoinsUneImage} title={!auMoinsUneImage ? "Aucune image encore à poser sur la grille." : undefined}>Voir la grille du jeu</button>
               <button className={BOUTON} onClick={proprietes.onComparer} disabled={!auMoinsUneImage && !auMoinsUneAnimation} title={!auMoinsUneImage && !auMoinsUneAnimation ? "Ni image ni animation encore à comparer." : undefined}>Comparer</button>
               <button className={BOUTON} disabled={!auMoinsUneImage || !proprietes.onRetoucher} onClick={() => proprietes.onRetoucher?.(regardee)}>Retoucher l’image</button>
-              <button data-porte-de-la-matrice className={BOUTON} onClick={() => setMatriceOuverte(true)}>Cases et planches</button>
               <button data-ouvrir-le-calibrage className={BOUTON} onClick={() => setCalibrageOuvert(true)}>Calibrage</button>
             </div>
           </details>
@@ -505,9 +436,9 @@ export function PageDuSujet(proprietes: {
         {onglet === "attente" && <EnAttenteDuSujet personnage={ouvert} plan={sienPlan}
           onOuvrir={proprietes.onOuvrirCase}
           onChange={() => setRange(n => n + 1)} onErreur={echouer} />}
-        {onglet === "equipement" && <div><VestiaireDuSujet personnage={ouvert}
+        {onglet === "equipement" && <div><VestiaireDuSujet personnage={ouvert} plan={sienPlan}
           vestiaire={proprietes.vestiaire} onPiece={proprietes.onPiece} onEmploi={proprietes.onEmploiEquipement} onCreerPiece={proprietes.onCreerPiece}
-          onRetirerLEmploi={proprietes.onRetirerLEmploi} /><TenuesDuSujet personnage={ouvert} vestiaire={proprietes.vestiaire} onEmploi={proprietes.onEmploiEquipement} onLivraisons={proprietes.onLivrer} /></div>}
+          onRetirerLEmploi={proprietes.onRetirerLEmploi} onArmer={proprietes.onArmer} /><TenuesDuSujet personnage={ouvert} vestiaire={proprietes.vestiaire} onEmploi={proprietes.onEmploiEquipement} onLivraisons={proprietes.onLivrer} /></div>}
         {onglet === "sons" && <SonsDuSujet projet={ouvert.projet} sujet={ouvert.identifiant} nomSujet={ouvert.nom} onRegler={proprietes.onSon}
           personnage={ouvert} plan={sienPlan} />}
         {onglet === "objectif" &&<div><ObjectifDuSujet personnage={ouvert} projet={ouvert.projet} onChange={proprietes.onObjectifChange} /></div>}

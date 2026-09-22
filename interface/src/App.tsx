@@ -1025,17 +1025,6 @@ function AtelierApp() {
    *  fiche*, ce qui n'est pas d'où l'on venait. */
   const cleDuSujet = `sujet:${bibliotheque.courant}:${choseOuverteId}`
   const [ongletDuSujet, setOngletDuSujet] = useEtatDuParcours<OngletDuSujet>(`${cleDuSujet}:onglet`, "fiche")
-  /** **Sa matrice ouverte** — même raison, même remise à zéro : la
-   *  superposition d'un calque part de là, et y revient. */
-  const [matriceDuSujet, setMatriceDuSujet] = useEtatDuParcours(`${cleDuSujet}:matrice`, false)
-  /** **La colonne ouverte de la matrice, et le panneau d'un calque** (`B27`) —
-   *  montés au même cran que l'onglet et la matrice, pour la même raison
-   *  laissée en aparté par `B27` : ouvrir *la différence* d'un calque puis
-   *  remonter d'un cran ramenait sur la matrice, colonne au corps, panneau
-   *  fermé — parce que ces deux états vivaient dans `EcranEtabli`, que la
-   *  retouche démonte en prenant sa place. */
-  const [colonneDeLaMatrice, setColonneDeLaMatrice] = useEtatDuParcours<string | null>(`${cleDuSujet}:colonne`, null)
-  const [calqueDuPanneau, setCalqueDuPanneau] = useEtatDuParcours<string | null>(`${cleDuSujet}:calque`, null)
 
   /** Le sujet dont la grille du jeu, ou le comparateur, est ouvert — **relus
    *  dans la liste vivante**, pour la même raison que `choseOuverte`. */
@@ -2049,8 +2038,6 @@ function AtelierApp() {
     return (
       <Ouverture
         bibliotheque={bibliotheque}
-        personnages={personnages}
-        plan={plan}
         onOuvrir={(identifiant) => {
           void ouvrirJeu(identifiant)
           setChoixDuJeu(null)
@@ -2784,14 +2771,6 @@ function AtelierApp() {
             void relireClipsDuJeu()
           }}
           onObjectifChange={() => void relireProduction()}
-          matrice={matriceDuSujet}
-          onMatriceOuverte={setMatriceDuSujet}
-          // **La colonne et le panneau d'un calque survivent au montage de la
-          // retouche, pour la même raison que l'onglet et la matrice** (`B27`).
-          colonne={colonneDeLaMatrice}
-          onColonne={setColonneDeLaMatrice}
-          calque={calqueDuPanneau}
-          onCalque={setCalqueDuPanneau}
           /* **B12** — l'essai pose un second sujet à côté pour comparer les
              tailles en mouvement, et règle sa scène sur la case et la couleur
              de fond du jeu. Les deux sont déjà ici ; les relire aurait fait
@@ -2845,15 +2824,6 @@ function AtelierApp() {
           /* **Et la vignette, elle, ouvre l'animation** (A7) — sans changer
              d'onglet : on la retravaille là où on la regarde. */
           onOuvrirLaBande={ouvrirLAtelierDeBande}
-          // **Deux gestes en un, et l'ordre compte** (G16) : l'image s'ouvre en
-          // retouche, et la table ouverte est la superposition. Écrit ici parce
-          // que la table ouverte est un état de l'écran — la matrice, elle, n'a
-          // pas à savoir qu'il existe des tables. **En un seul geste** (`B25`) :
-          // c'est la porte qui dit sur quelle table on arrive, et l'écran est
-          // toujours fermé quand elle l'ouvre.
-          onSuperposition={(identifiant) =>
-            ouvrirLaRetouche(identifiant, "superposition")
-          }
           // **Jeter depuis la matrice passe par le même geste que la galerie**
           // (US-505) : un seul chemin de suppression dans tout le produit.
           //

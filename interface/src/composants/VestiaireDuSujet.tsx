@@ -37,7 +37,7 @@
  */
 
 import { useEffect, useState, type ReactNode } from "react"
-import { api, type Asset, type Personnage, type PieceEtSesEmplois, type VestiaireDuJeu } from "../api"
+import { api, type Asset, type Personnage, type PieceEtSesEmplois, type Pose, type VestiaireDuJeu } from "../api"
 import { vignetteAsset } from "./Apercu"
 import { apiCalques, type CiblesEmploi } from "../api-calques"
 
@@ -98,21 +98,31 @@ function Etiquette({ children }: { children: ReactNode }) {
 export function VestiaireDuSujet({
   personnage,
   vestiaire,
+  plan,
   onPiece,
   onCreerPiece,
   onRetirerLEmploi,
   onEmploi,
+  onArmer,
 }: {
   personnage: Personnage
   /** Le vestiaire résolu du jeu, ou `null` tant qu'on ne le sait pas. La
    *  section ne va pas le chercher elle-même : elle montre ce que la page a lu,
    *  comme le carnet montre les collections que la grille a lues. */
   vestiaire: VestiaireDuJeu | null
+  /** Ce que ce sujet réclame (E9) — pour lister ses poses, pas celles du jeu.
+   *  Optionnelle : sans elle, l'armement pose par pose ne paraît pas, comme
+   *  `onArmer` juste en dessous. */
+  plan?: Pose[]
   onPiece: (piece: string) => void
   /** Nommer une pièce **que ce sujet porte** — un seul aller-retour. */
   onCreerPiece: (nom: string) => void
   onRetirerLEmploi: (piece: string, emploi: string) => void
   onEmploi?: (piece: string, emploi: string) => void
+  /** **Lancer une planche d'équipement, pose par pose** (US-141, relogé ici
+   *  depuis « Cases et planches », RV10) : armer, jamais payer — le guichet
+   *  paie, plus loin. */
+  onArmer?: (personnage: Personnage, poses: Pose[], piece: PieceEtSesEmplois["piece"]) => void
 }) {
   const [nom, setNom] = useState("")
   const [pieceCommune, setPieceCommune] = useState("")
@@ -181,7 +191,7 @@ export function VestiaireDuSujet({
                 aria-label={`Ouvrir ${sien.piece.nom}`}
                 className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-8 border border-trait bg-pourtour transition-colors duration-120 hover:border-encre-4"
               >
-                {precis[sien.piece.identifiant]?.variantes.some((v) => v.utilisable) ? <img src={apiCalques.image({ projet: personnage.projet, piece: sien.piece.identifiant, emploi: emploi.identifiant }, precis[sien.piece.identifiant].variantes.find((v) => v.utilisable)!)} alt={`${sien.piece.nom} sur ${personnage.nom}`} className="max-h-full max-w-full object-contain" /> : calque ? (
+                {precis[sien.piece.identifiant]?.variantes?.some((v) => v.utilisable) ? <img src={apiCalques.image({ projet: personnage.projet, piece: sien.piece.identifiant, emploi: emploi.identifiant }, precis[sien.piece.identifiant].variantes.find((v) => v.utilisable)!)} alt={`${sien.piece.nom} sur ${personnage.nom}`} className="max-h-full max-w-full object-contain" /> : calque ? (
                   <img
                     src={vignetteAsset(calque, 300)}
                     alt={calque.label}
@@ -216,6 +226,14 @@ export function VestiaireDuSujet({
                 {precis[sien.piece.identifiant] ? `${precis[sien.piece.identifiant].calques_retenus} calques précis retenus · ${precis[sien.piece.identifiant].images_disponibles} cibles disponibles` : onEmploi ? "Lecture des calques…" : `${emploi.fait} / ${emploi.attendu}`} ·{" "}
                 {emploi.emplacement_nom || "sans emplacement"}
               </span>
+              {onArmer && plan && (
+                <HabillageDeLaPiece
+                  personnage={personnage}
+                  piece={sien.piece}
+                  plan={plan}
+                  onArmer={(poses) => onArmer(personnage, poses, sien.piece)}
+                />
+              )}
             </div>
           ))}
         </div>
@@ -251,5 +269,81 @@ export function VestiaireDuSujet({
       {onEmploi && vestiaire && <div className="mt-[14px] flex flex-col gap-[8px] border-t border-trait pt-[14px]"><label className="flex flex-col gap-[4px] text-[13px] text-encre">Ou utiliser une pièce commune du jeu<select aria-label="Pièce commune à attribuer" value={pieceCommune} onChange={(e) => setPieceCommune(e.target.value)} className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle"><option value="">Choisir une pièce existante…</option>{vestiaire.pieces.filter((p) => !portees.some((v) => v.sien.piece.identifiant === p.piece.identifiant)).map((p) => <option value={p.piece.identifiant} key={p.piece.identifiant}>{p.piece.nom}</option>)}</select></label><button disabled={!pieceCommune || attente} className="h-[34px] self-start rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle" onClick={async () => { setAttente(true); setErreur(""); try { const r = await api.ajouterEmploi(pieceCommune, { genre: "porte", porteur: personnage.identifiant }); onEmploi(pieceCommune, r.emploi.identifiant) } catch (e) { setErreur(e instanceof Error ? e.message : "La pièce n’a pas pu être attribuée.") } finally { setAttente(false) } }}>Créer son emploi pour {personnage.nom}</button><p className="text-[11px] text-encre-3">La pièce garde son identité commune. Ce personnage possède ses propres calques et placements.</p></div>}
       {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
     </section>
+  )
+}
+
+/** **Lancer une planche d'équipement, pose par pose** (US-141, relogé ici
+ *  depuis « Cases et planches », RV10).
+ *
+ *  **Une pose sans corps est visiblement inéligible, et elle porte sa
+ *  raison.** On ne paie jamais pour habiller une case vide : la coche est
+ *  éteinte et la phrase dit pourquoi. Le serveur refuserait de toute façon
+ *  (`ServiceEquipement.plier`) — mais un refus qui n'arrive qu'après le clic
+ *  est un refus qui arrive trop tard. */
+function HabillageDeLaPiece({
+  personnage,
+  piece,
+  plan,
+  onArmer,
+}: {
+  personnage: Personnage
+  piece: PieceEtSesEmplois["piece"]
+  plan: Pose[]
+  onArmer: (poses: Pose[]) => void
+}) {
+  const [ouvert, setOuvert] = useState(false)
+  const tenues = plan.filter((p) => !personnage.ecartees.includes(p.identifiant))
+  return (
+    <div className="mt-[4px]">
+      <button
+        type="button"
+        onClick={() => setOuvert((v) => !v)}
+        aria-expanded={ouvert}
+        className="text-[11px] text-signal hover:opacity-70"
+      >
+        {ouvert ? "Fermer" : "Fabriquer pose par pose ›"}
+      </button>
+      {ouvert && (
+        <ul className="mt-[4px] flex flex-col gap-[4px]">
+          {tenues.map((pose) => {
+            const case_ = personnage.cases.find((c) => c.pose === pose.identifiant)
+            const habillable = Boolean(case_?.corps)
+            return (
+              <li key={pose.identifiant} className="flex items-center gap-[8px] text-[11px]">
+                <input
+                  type="checkbox"
+                  checked={false}
+                  disabled={!habillable}
+                  onChange={() => onArmer([pose])}
+                  aria-label={`Habiller ${pose.nom} avec ${piece.nom}`}
+                  title={
+                    habillable
+                      ? "cochées ensemble, elles partent en une seule planche"
+                      : "cette attitude n'a pas encore de corps"
+                  }
+                  className="shrink-0 accent-signal disabled:opacity-40"
+                />
+                <span className="min-w-0 flex-1 truncate text-encre-3">{pose.nom}</span>
+                {habillable ? (
+                  <button
+                    type="button"
+                    onClick={() => onArmer([pose])}
+                    aria-label={`Habiller ${pose.nom} de ${piece.nom}`}
+                    title="prépare la planche dans l'atelier — rien n'est dépensé ici"
+                    className="ml-auto shrink-0 text-signal hover:opacity-70"
+                  >
+                    Habiller ›
+                  </button>
+                ) : (
+                  <span className="ml-auto shrink-0 text-encre-4">
+                    « {pose.nom} » n'a pas encore de corps
+                  </span>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }

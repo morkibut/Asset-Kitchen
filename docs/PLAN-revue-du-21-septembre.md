@@ -294,12 +294,14 @@ second débordait à droite à 1280 px.
 
 ### Critères d'acceptation
 
-- [ ] Un seul écran « Livrer au jeu », sans onglet interne.
-- [ ] Le dossier Godot est le même quel que soit le chemin d'arrivée.
-- [ ] Livrer un sujet depuis sa fiche ouvre l'écran filtré sur ce sujet.
-- [ ] Les animations `echouee` n'y apparaissent pas.
-- [ ] Rien ne déborde à 1280 px ; lisible à 1024 px.
-- [ ] Ce que la livraison écrit dans Godot est identique à avant pour un même choix (*C03*).
+- [x] Un seul écran « Livrer au jeu », sans onglet interne.
+- [x] Le dossier Godot est le même quel que soit le chemin d'arrivée.
+- [x] Livrer un sujet depuis sa fiche ouvre l'écran filtré sur ce sujet.
+- [x] Les animations `echouee` n'y apparaissent pas.
+- [x] Rien ne déborde à 1280 px ; lisible à 1024 px.
+- [x] Ce que la livraison écrit dans Godot est identique à avant pour un même choix (*C03*).
+
+*Fait le 22 septembre 2026.* Le dossier se lit sur le jeu Godot rattaché (`association.json`, format inchangé) et un fichier voisin porte le sous-dossier des fichiers ; le réglage de l'agent sort de la chaîne. L'écran s'ouvre sur un sujet par défaut (contrat des essais d'avant). Identité C03 prouvée par `essais/essai_rv8_identite.py` : 55 fichiers, mêmes empreintes. **À confirmer avec l'auteur** : le dossier `moulinssets` n'a pas de `project.godot` à côté ; et le sous-dossier par défaut `assets/asset-kitchen/fichiers`.
 
 ---
 
@@ -337,12 +339,24 @@ d'avancement.
 
 ### Critères d'acceptation
 
-- [ ] « Cases et planches » n'existe plus ; changer de nature et supprimer un sujet se font depuis
+- [x] « Cases et planches » n'existe plus ; changer de nature et supprimer un sujet se font depuis
       « Modifier la fiche ».
-- [ ] L'onglet Animations ne montre plus les animations deux fois.
-- [ ] Accueil, Codex, fiche et objectif affichent le même compte pour un même sujet (essai sur
+- [x] L'onglet Animations ne montre plus les animations deux fois.
+- [x] Accueil, Codex, fiche et objectif affichent le même compte pour un même sujet (essai sur
       Champy : un seul chiffre là où il y en avait cinq).
-- [ ] Les planches que seul cet écran montrait restent atteignables (Galerie ou onglet Images).
+- [x] Les planches que seul cet écran montrait restent atteignables (Galerie ou onglet Images) — la
+      porte de la planche vit maintenant sur l'onglet Images, à côté de chaque pose à plusieurs
+      directions.
+
+*Fait le 22 septembre 2026.* Des quatre capacités que l'établi emportait avec lui : écarter une
+pose et la reprendre avait déjà un successeur, `ObjectifDuSujet.tsx` (« Objectif & règles »), en
+place avant cette tranche ; sortir toutes les animations d'un sujet passe maintenant par le bouton
+« Livrer… » de la page, qui ouvre « Livrer au jeu » filtré sur ce sujet, nature Animations ; le lot
+d'images (cocher plusieurs poses pour les faire partir en une seule planche) est relogé dans
+l'onglet Images ; lancer une planche d'équipement pose par pose, avec sa grille d'éligibilité, est
+relogé dans l'onglet Équipement, sous chaque pièce portée. La génération d'images par lot
+(« image-lot ») n'avait pas de successeur ailleurs ; c'est la même relocalisation que le lot
+d'images ci-dessus.
 
 ---
 

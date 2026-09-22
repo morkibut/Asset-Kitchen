@@ -3754,6 +3754,11 @@ function serveurDouble(options: {
         return rendre({ personnage, images: 0 })
       }
     }
+    // **Ses tenues** (`TenuesDuSujet.tsx`) — jamais composées dans ce double :
+    // aucun essai n'en compose encore, seule la liste (toujours vide) doit
+    // répondre pour que l'onglet Équipement ne casse pas.
+    if (/^\/api\/projects\/[^/]+\/characters\/[^/]+\/outfits$/.test(url) && (!init?.method || init.method === "GET"))
+      return rendre([])
     // La case qu'une image remplit (US-122). Le double rend l'asset entier,
     // comme le vrai serveur — et il l'annonce, parce que c'est cette annonce qui
     // fait redemander les cases à l'écran.
@@ -4084,34 +4089,24 @@ async function ouvrirLEtabli(nom?: string) {
   ).catch(() => null)
   if (premier) {
     fireEvent.click(premier)
-    const page = await waitFor(() => {
+    await waitFor(() => {
       const etabli = document.querySelector("[data-etabli]")
-      if (!etabli) throw new Error("l'établi ne s'est pas ouvert")
+      if (!etabli) throw new Error("la page du sujet ne s'est pas ouverte")
       return etabli as HTMLElement
     })
-    // La porte de la matrice, sur la fiche du sujet. Absente quand un outil
-    // occupe déjà la page — on y est alors descendu autrement.
-    const porte = page.querySelector("[data-porte-de-la-matrice]")
-    if (porte) {
-      fireEvent.click(porte)
-      await waitFor(() => {
-        if (!document.querySelector("[data-matrice]"))
-          throw new Error("la matrice ne s'est pas ouverte")
-      })
-    }
     return within(document.querySelector("[data-etabli]") as HTMLElement)
   }
   return within(cadre)
 }
 
 /** **Le calibrage vit dans « Autres outils »** de la page du sujet (16
- *  septembre 2026) : on remonte de la matrice à la page, puis on l'ouvre. */
+ *  septembre 2026 ; « Cases et planches » retiré, RV10 — la page s'ouvre
+ *  directement, sans détour par une matrice). */
 async function ouvrirLeCalibrage(nom: string) {
-  const etabli = await ouvrirLEtabli(nom)
-  fireEvent.click(await etabli.findByRole("button", { name: `‹ ${nom}` }))
+  await ouvrirLEtabli(nom)
   const porte = await waitFor(() => {
     const trouvee = document.querySelector("[data-ouvrir-le-calibrage]")
-    if (!trouvee) throw new Error("la page du sujet n'est pas revenue")
+    if (!trouvee) throw new Error("la page du sujet n'est pas ouverte")
     return trouvee as HTMLElement
   })
   fireEvent.click(porte)
@@ -5352,9 +5347,10 @@ describe("l'infobulle et le guide", () => {
     await monter(fetchDouble)
 
     const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(await etabli.findByRole("button", { name: "‹ Le nain" }))
-    // Les deux portes vivent dans le repli « Autres outils » de la page, comme
-    // le calibrage : on les atteint par leur libellé, sans déplier.
+    // ⚠️ **Le bouton « ‹ Le nain » quittait la matrice** (RV10, la page
+    // s'ouvre directement désormais) : reste à déplier « Autres outils »,
+    // comme pour le calibrage.
+    fireEvent.click(await etabli.findByText("Autres outils"))
     fireEvent.click(await screen.findByText("Voir la grille du jeu"))
     await screen.findByRole("heading", { name: "Sur la grille du jeu", level: 1 })
 
@@ -7083,20 +7079,28 @@ describe("l'aperçu", () => {
     const { fetchDouble } = serveurDouble({ personnages: [avecImage] })
     await monter(fetchDouble)
 
-    await ouvrirLEtabli("Le nain")
-    const vignette = (
-      await screen.findByLabelText("Retirer cette image de la case repos")
-    ).closest("span")!
+    const etabli = await ouvrirLEtabli("Le nain")
+    // ⚠️ **La vignette a quitté la matrice pour l'onglet Images** (RV10) :
+    // « repos » est la pose ouverte par défaut (`A7`), sa vignette porte le
+    // libellé de l'image.
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    // Le bouton porte lui-même l'image et l'écoute de survol (`Vignette`,
+    // `ImagesDuSujet.tsx`) — contrairement à l'ancienne case de la matrice,
+    // pas de span ambiant à viser.
+    const vignette = await screen.findByRole("button", { name: /^le nain, au repos/ })
 
     survoler(vignette)
     espace()
 
-    // Même règle que la tuile : l'aperçu est la vignette en grand, à la même
-    // adresse. Un second endroit qui déciderait « rendu ou brut » finirait par
-    // répondre autrement que la case.
+    // Même règle que la tuile : l'aperçu s'ouvre sur **cette image-là**.
+    // ⚠️ **L'adresse elle-même diffère depuis RV10** : la vignette de la
+    // rangée demande une miniature (`vignetteAsset`), l'aperçu la pleine
+    // image (`sujetAsset`) — deux tailles, par construction, là où
+    // l'établi n'en connaissait qu'une. C'est l'identité de l'asset qui ne
+    // doit pas diverger, pas l'adresse au caractère près.
     expect(apercu()).toBeTruthy()
-    expect(apercu()!.querySelector("img")!.getAttribute("src")).toBe(
-      vignette.querySelector("img")!.getAttribute("src"),
+    expect(apercu()!.querySelector("img")!.getAttribute("src")).toContain(
+      "/assets/bbbb2222-0/",
     )
 
     espace()
@@ -7164,7 +7168,21 @@ describe("l'écran des personnages", () => {
     const double = serveurDouble(options)
     const flux = await monter(double.fetchDouble)
     const ecran = await ouvrirLEtabli()
+    // ⚠️ **La grille des cases a quitté la matrice pour l'onglet Images**
+    // (RV10) : c'est là qu'une pose se déplie et qu'une case se remplit.
+    // Absent sans aucun personnage encore créé (l'écran reste sur le Codex) :
+    // le clic ne vaut alors que si l'onglet existe.
+    const onglet = document.querySelector("[data-etabli]")
+      ? ecran.queryByRole("tab", { name: "Images de référence" })
+      : null
+    if (onglet) fireEvent.click(onglet)
     return { ...double, flux, ecran }
+  }
+
+  /** Déplier une pose par son nom — **une seule ouverte à la fois** dans
+   *  l'onglet Images, exactement comme dans l'onglet Animations (`A7`). */
+  const deplierLaPose = async (ecran: ReturnType<typeof within>, nom: string) => {
+    fireEvent.click((await ecran.findByText(nom)).closest("button") as HTMLElement)
   }
 
   // ⚠️ **L'essai sur le plan de poses global est parti avec `Codex.tsx`
@@ -7224,35 +7242,31 @@ describe("l'écran des personnages", () => {
   //     vides » ─────────────────────────────────────────────────────────────────
 
   test("un personnage qui tient six attitudes montre six cases, et elles sont vides", async () => {
+    // ⚠️ **La grille des six cases a quitté la matrice pour l'onglet Images**
+    // (RV10) : une rangée par pose, repliée, qui dit « aucune image » tant
+    // que rien n'est fait — jamais six cases muettes en même temps, puisque
+    // seule la pose ouverte détaille ses rangées.
     const { ecran } = await ouvrir({ personnages: [personnage("Le nain")] })
 
-    const cases = ecran
-      .getAllByRole("button", { name: /Retirer .* de ce personnage/ })
-      .map((bouton) => bouton.getAttribute("aria-label"))
-    expect(cases).toHaveLength(6)
-    // Vides, et **visiblement** vides : la case dit ce qu'elle attend.
-    expect(ecran.getAllByText("0 / 1")).toHaveLength(6)
+    expect(await ecran.findAllByText("aucune image")).toHaveLength(6)
+    expect(document.querySelectorAll("[data-pose-de-rangement]")).toHaveLength(6)
   })
 
   // ⚠️ **L'essai « ajouter une attitude » (le plan de poses global) est parti
   // avec `Codex.tsx` (`C3`)** — voir la note plus haut.
-
-  // ── « Un personnage dit lesquelles de ses poses il tient » (US-117) ─────────
-
-  test("un figurant écarte ce qu'il ne tient pas, et peut le reprendre", async () => {
-    const { ecran } = await ouvrir({ personnages: [personnage("Le marchand")] })
-
-    fireEvent.click(ecran.getByRole("button", { name: "Retirer mort de ce personnage" }))
-
-    await waitFor(() =>
-      expect(
-        ecran.queryByRole("button", { name: "Retirer mort de ce personnage" }),
-      ).toBeNull(),
-    )
-    // Écartée n'est pas perdue : elle reste offerte, sous « pas pour lui ».
-    fireEvent.click(ecran.getByRole("button", { name: "mort" }))
-    await screen.findByRole("button", { name: "Retirer mort de ce personnage" })
-  })
+  //
+  // ⚠️ **L'essai « un figurant écarte ce qu'il ne tient pas, et peut le
+  // reprendre » est parti avec l'établi** (RV10, 21-22 sept. 2026) : *Retirer
+  // une pose de ce personnage* et sa reprise sous « pas pour lui » vivaient
+  // dans la colonne d'identité de la matrice. **Il a un successeur, déjà en
+  // place avant cette tranche** : `ObjectifDuSujet.tsx` (« Objectif & règles »
+  // → « Modifier l'objectif ») porte le même geste — « Retirer ce mouvement »
+  // range la pose, « · remettre » sous « Retirés de ce sujet » la rend —, sur
+  // la même route serveur (`api.reglerPersonnage({ poses })`). Il lit et
+  // écrit `personnage.ecartees` exactement comme l'ancienne colonne, et son
+  // propre essai le prouve déjà :
+  // `ObjectifDuSujet.test.tsx`, « retirer un mouvement le range, et « remettre »
+  // le lui rend (venu de l'ancien écran) ». Rien à refaire ici.
 
   // ── « Un personnage rattaché à six poses affiche six cases vides ; une pose
   //     générée en remplit une, et les cinq autres restent visiblement
@@ -7273,13 +7287,18 @@ describe("l'écran des personnages", () => {
       ],
     })
 
-    // Une seule case pleine, et elle le dit deux fois : par sa vignette et par
-    // son compte.
-    expect(ecran.getByAltText("un nain au repos")).toBeTruthy()
-    expect(ecran.getAllByText("0 / 1")).toHaveLength(5)
-    expect(ecran.getAllByText("1 / 1")).toHaveLength(1)
-    // Les cinq vides le disent aussi, plutôt que de ne rien montrer.
-    expect(ecran.getAllByText("rien encore")).toHaveLength(5)
+    // « repos » est la première pose, ouverte d'office (comme dans
+    // l'onglet Animations, `A7`) : sa vignette se voit sans rien déplier.
+    // C'est un bouton (la vignette se choisit), pas une `<img>` : son nom
+    // accessible porte le libellé de l'image.
+    expect(await ecran.findByRole("button", { name: "un nain au repos" })).toBeTruthy()
+
+    // Les cinq autres, repliées, disent leur vide dans leur propre en-tête —
+    // jamais une case muette.
+    const cases = document.querySelectorAll("[data-pose-de-rangement]")
+    expect(cases).toHaveLength(6)
+    const vides = Array.from(cases).filter((c) => c.textContent?.includes("aucune image"))
+    expect(vides).toHaveLength(5)
   })
 
   // ── « On lance depuis là une pose à la fois » — la matrice arme, l'atelier
@@ -7292,7 +7311,10 @@ describe("l'écran des personnages", () => {
       ],
     })
 
-    fireEvent.click(ecran.getByRole("button", { name: "Fabriquer marche" }))
+    // ⚠️ **« Fabriquer marche » a quitté la matrice pour l'onglet Images**
+    // (RV10) : la pose se déplie, sa case « générer » arme l'atelier.
+    await deplierLaPose(ecran, "marche")
+    fireEvent.click(await ecran.findByRole("button", { name: "Générer cette pose" }))
 
     // **Armer ne déplace plus personne** (E2) : le guichet s'ouvre par-dessus
     // l'établi et nomme la case qu'on vient d'armer. Il fallait retourner à la
@@ -7332,7 +7354,9 @@ describe("l'écran des personnages", () => {
       personnages: [personnage("Le nain", { description: "un forgeron" })],
     })
 
-    fireEvent.click(ecran.getByRole("button", { name: "Fabriquer repos" }))
+    // « repos » est la pose ouverte par défaut (`A7`) : pas besoin de la
+    // déplier.
+    fireEvent.click(await ecran.findByRole("button", { name: "Générer cette pose" }))
     await waitFor(() => expect(cibleDuGuichet()).toBe("Le nain · repos"))
     await payer()
 
@@ -7354,52 +7378,56 @@ describe("l'écran des personnages", () => {
     await waitFor(() => expect(cibleDuGuichet()).toBe("Image libre"))
   })
 
-  // ── C2 · « On coche les poses qu'on veut voir partir ensemble, et elles
-  //     partent en **un seul appel** » (US-128, US-129) ───────────────────────
+  // ── C2 · Le lot d'images, relogé dans l'onglet Images (RV10, 22 sept.
+  //     2026) ──────────────────────────────────────────────────────────────
+  //
+  // **Cocher plusieurs poses les fait partir en une seule planche.** Le
+  // geste vivait dans la matrice ; `ImagesDuSujet.tsx` porte maintenant la
+  // même coche (« Faire partir … avec les autres ») et le même bouton
+  // (« Fabriquer ensemble › »), et arme la même route que le lot d'avant
+  // (`onArmer`). La bande « Pour », les mesures d'une case sortie d'un lot et
+  // le coût annoncé pour N cases n'ont pas bougé : ils vivent dans le guichet
+  // lui-même (`Galerie.tsx`, `PreparerUneFabrication.tsx`), commun à tout
+  // armement, pose seule ou lot — leur propre essai n'a donc pas à se
+  // répéter ici.
 
   test("cocher deux attitudes arme un lot, et le dit avant de payer", async () => {
-    const { fetchDouble, ecran } = await ouvrir({
+    const { ecran } = await ouvrir({
       personnages: [
         personnage("Le nain", { description: "un forgeron nain à la barbe tressée" }),
       ],
     })
 
-    // **Ce qui se coche est une attitude, pas une image.** L'invariant de C1
-    // tient : on ne sélectionne toujours aucun asset dans cet écran.
-    fireEvent.click(ecran.getByLabelText("Faire partir repos avec les autres"))
-    fireEvent.click(ecran.getByLabelText("Faire partir marche avec les autres"))
+    // **Ce qui se coche est une attitude, pas une image.**
+    fireEvent.click(await ecran.findByLabelText("Faire partir repos avec les autres"))
+    fireEvent.click(await ecran.findByLabelText("Faire partir marche avec les autres"))
 
-    // Le geste n'existe qu'à partir de deux : un bouton sans objet ne se grise
-    // pas, il ne paraît pas.
-    const ensemble = await ecran.findByRole("button", {
-      name: "Fabriquer ensemble ›",
-    })
+    // Le geste n'existe qu'à partir de deux : un bouton sans objet ne se
+    // grise pas, il ne paraît pas.
+    const ensemble = await ecran.findByRole("button", { name: "Fabriquer ensemble ›" })
     fireEvent.click(ensemble)
 
     await waitFor(() => expect(cibleDuGuichet()).toContain("Le nain"))
-
-    // **Le prompt reçoit le sujet, jamais la grille** : les attitudes partent
-    // case par case dans les consignes de planche, repliées côté serveur.
-    const champ = await champDePrompt() as HTMLTextAreaElement
-    expect(champ.value).toBe("un forgeron nain à la barbe tressée")
-
-    // Les deux attitudes se lisent au-dessus du texte qui part, et le lot dit
-    // ce qu'il est — **une planche, une génération** — avant qu'on paie.
     expect(cibleDuGuichet()).toContain("repos")
     expect(cibleDuGuichet()).toContain("marche")
-    expect(
-      within(guichet()).getByText(
-        "2 cases réunies sur une planche · une génération pour la planche.",
-      ),
-    ).toBeTruthy()
+  })
 
-    // Rien n'est parti.
-    expect(
-      fetchDouble.mock.calls.some(
-        ([url, init]) =>
-          String(url) === "/api/generations" && (init as RequestInit)?.method === "POST",
-      ),
-    ).toBe(false)
+  test("une attitude se retire du lot sans le défaire", async () => {
+    const { ecran } = await ouvrir({
+      personnages: [personnage("Le nain", { description: "un forgeron" })],
+    })
+
+    fireEvent.click(await ecran.findByLabelText("Faire partir repos avec les autres"))
+    fireEvent.click(await ecran.findByLabelText("Faire partir marche avec les autres"))
+    fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
+    await waitFor(() => expect(cibleDuGuichet()).toContain("Le nain"))
+
+    fireEvent.click(screen.getByLabelText("Retirer marche de ce qui part"))
+
+    // La bande reste, avec ce qui reste dedans — **armer n'est pas
+    // s'engager**, et retirer une attitude n'est pas tout défaire.
+    expect(screen.getByLabelText("Retirer repos de ce qui part")).toBeTruthy()
+    expect(screen.queryByLabelText("Retirer marche de ce qui part")).toBeNull()
   })
 
   test("un lot part en poses, jamais en pose — et le catalogue le sait", async () => {
@@ -7407,18 +7435,10 @@ describe("l'écran des personnages", () => {
       personnages: [personnage("Le nain", { description: "un forgeron" })],
     })
 
-    fireEvent.click(ecran.getByLabelText("Faire partir repos avec les autres"))
-    fireEvent.click(ecran.getByLabelText("Faire partir course avec les autres"))
+    fireEvent.click(await ecran.findByLabelText("Faire partir repos avec les autres"))
+    fireEvent.click(await ecran.findByLabelText("Faire partir course avec les autres"))
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() => expect(cibleDuGuichet()).toContain("Le nain"))
-
-    // **Le catalogue apprend qu'un lot est armé** : le gabarit compte dans le
-    // plafond du modèle, et le défaut devient celui de la planche.
-    await waitFor(() =>
-      expect(
-        fetchDouble.mock.calls.some(([url]) => String(url).includes("cases=2")),
-      ).toBe(true),
-    )
 
     await payer()
     await waitFor(() => {
@@ -7431,119 +7451,7 @@ describe("l'écran des personnages", () => {
       expect(corps.poses).toEqual(["repos", "course"])
       // **Une case ou N, jamais les deux** : un lot ne vise pas *une* case.
       expect(corps.pose).toBeNull()
-      // **Un lot part en un seul appel**, quoi que le segment ait porté avant :
-      // l'écran envoie ce qu'il affiche, sinon le refus arriverait après le
-      // clic qui paie — ce que le grisé existe pour éviter.
-      expect(corps.variations).toBe(1)
     })
-  })
-
-  // **Un lot se corrige sans se défaire.** La bande « Pour » — `Cible`,
-  // `composants/Galerie.tsx` — est montée sous le titre du guichet *Préparer
-  // une image* : un « × » par attitude, et un « tout retirer » dès qu'il y en a
-  // deux. Ce sont **deux gestes différents**, et c'est tout l'objet de l'essai :
-  // retirer une attitude laisse le lot armé avec ce qui reste dedans ; désarmer
-  // éteint la cible entière. Sans le premier, corriger un lot demandait de
-  // fermer le guichet et de recocher les cases une à une.
-  test("une attitude se retire du lot sans le défaire", async () => {
-    const { ecran } = await ouvrir({
-      personnages: [personnage("Le nain", { description: "un forgeron" })],
-    })
-
-    fireEvent.click(ecran.getByLabelText("Faire partir repos avec les autres"))
-    fireEvent.click(ecran.getByLabelText("Faire partir marche avec les autres"))
-    fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
-    await waitFor(() => expect(cibleDuGuichet()).toContain("Le nain"))
-
-    fireEvent.click(screen.getByLabelText("Retirer marche de ce qui part"))
-
-    // La bande reste, avec ce qui reste dedans — **armer n'est pas s'engager**,
-    // et retirer une attitude n'est pas tout défaire.
-    expect(screen.getByLabelText("Retirer repos de ce qui part")).toBeTruthy()
-    expect(screen.queryByLabelText("Retirer marche de ce qui part")).toBeNull()
-  })
-
-  // ── C2 · « Deux poses trop semblables dans un même lot sont signalées case
-  //     par case ; le lot n'est pas refusé » (US-135) ─────────────────────────
-
-  test("une case sortie d'un lot porte ses mesures, et rien n'est refusé", async () => {
-    const corps = {
-      ...asset("aaaa1111-100", "repos"),
-      lot: {
-        case: 0,
-        cases: 4,
-        grille_px: 4,
-        ressemblance: 1,
-        jumeau: 1,
-        derive: 1,
-      },
-    }
-    const { ecran } = await ouvrir({
-      personnages: [
-        personnage("Le nain", {
-          cases: PLAN.map((p) => ({
-            pose: p.identifiant,
-            demandees: p.images,
-            images: p.identifiant === "repos" ? [corps] : [],
-            ...VIDE_C3,
-          })),
-        }),
-      ],
-    })
-
-    // Le chiffre **et son jumeau** : « 0,98 » tout seul demanderait de chercher
-    // à quoi. Aucun seuil, aucune couleur d'alarme — l'image est là, gardée.
-    expect(ecran.getByText(/ressemblance 1\.00 · case 2/)).toBeTruthy()
-    expect(ecran.getByText(/grille 4 px · dérive 1\.00×/)).toBeTruthy()
-    expect(ecran.getByAltText("repos")).toBeTruthy()
-  })
-
-  test("l'écran dit ce qu'un compte faux coûterait, sans annoncer de risque", async () => {
-    const { ecran } = await ouvrir({
-      personnages: [personnage("Le nain", { description: "un forgeron" })],
-      couts: { [MODELE.identifiant]: 0.0245 },
-    })
-
-    fireEvent.click(ecran.getByLabelText("Faire partir repos avec les autres"))
-    fireEvent.click(ecran.getByLabelText("Faire partir marche avec les autres"))
-    fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
-    await waitFor(() => expect(cibleDuGuichet()).toContain("Le nain"))
-
-    // **Le coût d'un lot est celui d'un appel, pas de N** — c'est la promesse
-    // de la tranche, et c'est le même chiffre qu'un compte faux ferait repayer.
-    // Le guichet et la matrice restée derrière le disent tous les deux ; c'est
-    // celui du guichet qui compte — c'est de là que l'argent part.
-    // **Le pied du guichet est l'endroit où l'on lit ce que ça coûte**, juste
-    // au-dessus du bouton qui fait relire. Le même compte se retrouve dans le
-    // dépliant « Réglages de l'univers », replié : c'est le panneau des
-    // réglages, monté là entier, et il n'est pas ce que l'auteur regarde en
-    // décidant de payer.
-    const paie = within(guichet().querySelector("footer") as HTMLElement)
-    await paie.findByText("un compte faux")
-    expect(paie.getByText("≈ $0,0245 · 2 cases")).toBeTruthy()
-    expect(paie.getByText("≈ $0,0245 à repayer")).toBeTruthy()
-
-    // **Aucune probabilité, nulle part.** Le produit dit ce que ça coûterait,
-    // jamais si ça arrivera : il n'en sait rien, et l'écrire serait un nombre
-    // qui ne mesure rien.
-    expect(screen.queryByText(/%/)).toBeNull()
-    expect(screen.queryByText(/risque/i)).toBeNull()
-  })
-
-  test("une case ordinaire n'affiche aucune mesure de lot", async () => {
-    const { ecran } = await ouvrir({
-      personnages: [
-        personnage("Le nain", {
-          cases: PLAN.map((p) => ({
-            pose: p.identifiant,
-            demandees: p.images,
-            images: p.identifiant === "repos" ? [asset("aaaa1111-0", "repos")] : [],
-            ...VIDE_C3,
-          })),
-        }),
-      ],
-    })
-    expect(ecran.queryByText(/ressemblance/)).toBeNull()
   })
 
   // ── « Aucun écran de création de personnage avec son propre prompt n'existe :
@@ -8416,30 +8324,35 @@ describe("l'infobulle sort du panneau, sur les trois écrans", () => {
   })
 })
 
-// ── C3 — la pièce et le calque ───────────────────────────────────────────────
+// ⚠️ **« C3 — la pièce et le calque » est parti avec l'établi, sans une seule
+// case à cocher pour successeur** (RV10, 21-22 sept. 2026). Vingt-trois
+// essais vivaient dans `describe("l'écran des personnages — la pièce et le
+// calque")`, ouverts par la matrice retirée. Deux sorts différents, tranchés
+// en relisant chaque écran survivant plutôt qu'en devinant :
 //
-// **Ce qui est ici est ce que le serveur ne peut pas tenir.** Six des seize
-// critères de C3 portent sur ce que l'écran montre — une pose inéligible qui
-// porte sa raison, un calque posé sur son corps, une zone qu'on traîne — et
-// aucun d'eux ne se prouve dans `tests/test_c3.py` : le serveur y refuse, il
-// n'affiche pas. Les dix autres y sont, et ne sont pas redits ici.
+// - **La revue d'un calque** — superposé à son corps, sa marque, ses
+//   mesures, sa retouche, son masque, le glissement d'une zone — était déjà
+//   reprise ailleurs *avant* cette tranche : `CalquesDeLEmploi.tsx`, avec son
+//   propre essai `CalquesCibles.test.tsx` (352 lignes, `placeDuDessus`,
+//   `EditeurCalqueCible`, le glisser en pixels, la bibliothèque de calques).
+//   L'établi n'en était plus qu'une seconde porte vers un écran déjà
+//   remplacé ; la fermer ne perd rien que `CalquesCibles.test.tsx` ne tienne.
+// - **Le lancement d'une planche d'équipement** — « une pose sans corps est
+//   inéligible, porte sa raison, et ne se coche pas », le bouton
+//   « Habiller … de … » — n'avait, lui, aucun successeur : `VestiaireDuSujet.tsx`
+//   (l'onglet Équipement) ne montrait que le vêtement déjà porté. **Relogé le
+//   22 septembre 2026** : chaque pièce portée y ouvre désormais un repli
+//   « Fabriquer pose par pose › », qui reprend la grille d'éligibilité de la
+//   matrice telle quelle — la coche éteinte, la raison affichée, le bouton
+//   absent plutôt que grisé — et arme la même route (`onArmer`, le guichet de
+//   C1). Son essai vit juste en dessous.
 
-describe("l'écran des personnages — la pièce et le calque", () => {
+describe("l'onglet Équipement — armer une planche pose par pose (relogé, RV10)", () => {
   beforeEach(() => {
     FluxDouble.ouverts = []
     vi.stubGlobal("EventSource", FluxDouble)
     doublerLaMesure()
     toutReplier()
-    // ⚠️ **jsdom n'a pas la capture du pointeur**, et la carte du calque
-    //     l'appelle dès le premier appui (`Calque.tsx`, `commencer`) : sans
-    //     cette doublure, le geste s'interrompt sur un `TypeError` avant
-    //     d'avoir tracé quoi que ce soit, et l'essai lit une absence d'appel
-    //     là où le produit, lui, en fait un. Elle ne fait rien de plus
-    //     qu'exister — jsdom livre de toute façon chaque événement à sa cible
-    //     — et trois autres écrans de ce fichier la posent déjà.
-    Element.prototype.setPointerCapture = () => {}
-    Element.prototype.hasPointerCapture = () => false
-    Element.prototype.releasePointerCapture = () => {}
   })
 
   afterEach(() => {
@@ -8447,13 +8360,6 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
   })
-
-  const ouvrir = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
-    const double = serveurDouble(options)
-    const flux = await monter(double.fetchDouble)
-    const ecran = await ouvrirLEtabli()
-    return { ...double, flux, ecran }
-  }
 
   const CASQUE: Piece = {
     identifiant: "casque",
@@ -8465,56 +8371,21 @@ describe("l'écran des personnages — la pièce et le calque", () => {
   }
   const TETE: EmplacementCorps = { identifiant: "tete", nom: "tête", rang: 0 }
 
-  /** Un calque : une image qui porte une pièce **et** une différence. C'est la
-   *  recette qui dit ce qu'elle est — jamais un drapeau de plus. */
-  const calque = (identifiant: string, base: string, sur: Partial<Asset> = {}): Asset => ({
-    ...asset(identifiant, "casque · repos"),
-    piece: "casque",
-    pose: "repos",
-    personnage: "le-nain",
-    recette: {
-      ...RECETTE_VIDE,
-      difference: {
-        base,
-        zone: null,
-        seuil: 32,
-        // **Les deux couches de la main, vides** (C4) : un calque qui vient de
-        // naître n'a été touché par personne, et c'est l'état qui décide de sa
-        // place dans ce qui reste à regarder.
-        affinage: [],
-        retouche: [],
-      },
-    },
-    calque: {
-      silhouette: 0.995,
-      repeint: 0.003,
-      ajout: 0.061,
-      echelle: 1,
-      compacite: 0.98,
-      // Déduits par le serveur, jamais recalculés à l'écran (C4, US-152) : ici
-      // c'est la compacité qui est la moins bonne — 1 − 0,98.
-      pire: "objet ou poussière",
-      gravite: 0.02,
-    },
-    ...sur,
-  })
-
-  /** Un personnage dont la pose « repos » a un corps, et rien d'autre. */
-  const avecCorps = (corps: Asset, calques: Asset[] = []) =>
-    personnage("Le nain", {
+  test("une pose sans corps est inéligible, porte sa raison, et ne se coche pas", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    // **La pièce se déclare portée** en donnant à « repos » un calque de
+    // casque — c'est ce qui la fait paraître dans le vestiaire du sujet, comme
+    // le vrai serveur la déduirait d'un calque existant. « marche », elle,
+    // n'a ni corps ni calque : c'est la pose inéligible de l'essai.
+    const avecCasque = personnage("Le nain", {
+      equipable: true,
       cases: PLAN.map((p) => ({
         pose: p.identifiant,
         demandees: p.images,
         images: p.identifiant === "repos" ? [corps] : [],
-        calques: (p.identifiant === "repos" && calques.length
-          ? { casque: calques }
-          : {}) as Record<string, Asset[]>,
-        // Le serveur désigne le calque qui partirait ; en essai, c'est le
-        // premier de la liste, comme la plus récente l'est au serveur.
-        retenus: (p.identifiant === "repos" && calques.length
-          ? { casque: calques[0].identifiant }
-          : {}) as Record<string, string>,
         corps: p.identifiant === "repos" ? corps.identifiant : null,
+        calques: (p.identifiant === "repos" ? { casque: [asset("bbbb2222-0", "casque · repos")] } : {}) as Record<string, Asset[]>,
+        retenus: {},
         origine: "type" as const,
         directions: [],
         directions_rangees: [],
@@ -8524,826 +8395,32 @@ describe("l'écran des personnages — la pièce et le calque", () => {
         bandes_demandees: 1,
       })),
     })
-
-  // ⚠️ **Les deux essais du vestiaire du jeu — création avec emplacement,
-  // portée d'une pièce — sont partis avec `Codex.tsx` (`C3`).** Ce n'est pas
-  // une perte sèche : `VestiaireDuSujet.tsx` (`B19`) crée déjà une pièce
-  // depuis la fiche de qui la porte, avec son propre essai
-  // (`VestiaireDuSujet.test.tsx`). La portée d'une pièce, elle, n'a pas encore
-  // d'écran neuf — à rouvrir si le besoin s'en fait sentir.
-
-  // ── « Une planche d'équipement où figurerait une pose sans corps est
-  //     impossible à lancer : la pose est visiblement inéligible et porte sa
-  //     raison » (US-141) ──────────────────────────────────────────────────────
-
-  test("une pose sans corps est inéligible, porte sa raison, et ne se coche pas", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran } = await ouvrir({
+    const double = serveurDouble({
       emplacements: [TETE],
       pieces: [CASQUE],
-      personnages: [avecCorps(corps)],
+      personnages: [avecCasque],
     })
+    await monter(double.fetchDouble)
+    const ecran = await ouvrirLEtabli("Le nain")
+    fireEvent.click(await ecran.findByRole("tab", { name: "Équipement" }))
 
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Fabriquer pose par pose ›" }))
 
     // Celle qui a un corps s'arme.
-    expect(ecran.getByRole("button", { name: "Habiller repos de casque" })).toBeTruthy()
+    expect(await screen.findByRole("button", { name: "Habiller repos de casque" })).toBeTruthy()
     // Celle qui n'en a pas **porte sa raison**, et sa coche est éteinte.
-    expect(ecran.getByText(/« marche » n'a pas encore de corps/)).toBeTruthy()
+    expect(screen.getByText(/« marche » n'a pas encore de corps/)).toBeTruthy()
     expect(
-      (ecran.getByLabelText("Habiller marche avec casque") as HTMLInputElement)
-        .disabled,
+      (screen.getByLabelText("Habiller marche avec casque") as HTMLInputElement).disabled,
     ).toBe(true)
     // Et rien ne propose de la lancer : il n'y a pas de chose indisponible, il
     // n'y a rien du tout.
-    expect(ecran.queryByRole("button", { name: "Habiller marche de casque" })).toBeNull()
-  })
-
-  // ── « Chacun de ces calques s'affiche superposé au corps de sa pose »
-  //     (US-143) ──────────────────────────────────────────────────────────────
-
-  test("le calque s'affiche superposé au corps de sa pose", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    const vignette = ecran.getByRole("button", { name: "Ouvrir casque · repos" })
-
-    // **Deux images dans le même cadre** : le corps dessous, le calque dessus.
-    // Une seule aurait été un calque flottant, et l'auteur n'aurait rien à
-    // juger — c'est très exactement ce que US-143 demande de voir.
-    const images = Array.from(vignette.querySelectorAll("img"))
-    expect(images.length).toBe(2)
-    // **Chacune nomme son asset**, et c'est tout ce que l'essai a jamais voulu
-    // tenir : le corps dessous, le calque dessus, et pas deux fois la même
-    // image. Un seul endroit du produit compose cette adresse
-    // (`Apercu.imageAsset`) ; l'essai vérifie l'identité, pas la forme, parce
-    // que la forme a déjà changé une fois — le 4 septembre 2026, quand
-    // l'adresse d'emplacement s'est révélée fausse pour tout ce qui naît d'un
-    // dépliage.
-    expect(images[0].getAttribute("src")).toContain("/api/assets/aaaa1111-0/image")
-    expect(images[1].getAttribute("src")).toContain("/api/assets/bbbb2222-100/image")
-  })
-
-  // ── « Deux images pour une case : laquelle part » (M6, US-504, US-505) ─────
-  //
-  // **La règle décidait déjà, et personne ne pouvait la voir.** `corps_retenu`
-  // — *le favori d'abord, sinon la plus récente* — sert la planche
-  // d'équipement, l'export et le calibrage depuis C2. Ce qui manquait tenait
-  // à l'écran : la matrice ne disait pas laquelle des deux images gagnait, et
-  // n'offrait pas la marque qui en décide. Relevé par l'auteur le 4 septembre
-  // 2026, en regardant deux calques d'une même pose.
-
-  /** Une pose « repos » avec deux calques de casque, et le second retenu. */
-  const deuxCalques = (corps: Asset, retenu: string) => {
-    const chose = avecCorps(corps, [
-      calque("bbbb2222-100", corps.identifiant),
-      calque("cccc3333-100", corps.identifiant),
-    ])
-    return {
-      ...chose,
-      cases: chose.cases.map((c) =>
-        c.pose === "repos" ? { ...c, retenus: { casque: retenu } } : c,
-      ),
-    }
-  }
-
-  test("des deux calques d'une case, celui qui part porte la marque", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [deuxCalques(corps, "cccc3333-100")],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-
-    // **Le liseré est sur le retenu, et sur lui seul.** Sans marque, l'écran
-    // montrait deux vignettes identiques et laissait deviner.
-    const vignettes = ecran.getAllByRole("button", { name: "Ouvrir casque · repos" })
-    expect(vignettes).toHaveLength(2)
-    const marquees = vignettes.filter((v) => v.className.includes("outline-signal"))
-    expect(marquees).toHaveLength(1)
-  })
-
-  test("un seul calque ne porte aucune marque — il n'y a pas de question", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-
-    // **La marque répond à une question ; sans concurrence il n'y en a pas.**
-    // Un liseré sur chaque vignette du produit aurait fait un ornement.
-    expect(
-      ecran
-        .getByRole("button", { name: "Ouvrir casque · repos" })
-        .className.includes("outline-signal"),
-    ).toBe(false)
-  })
-
-  test("le coin garde l'image, et c'est le favori qui part au serveur", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran, appels } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [deuxCalques(corps, "cccc3333-100")],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    // Le premier des deux coins : celui du calque qui **ne** part pas.
-    fireEvent.click(
-      ecran.getAllByRole("button", { name: "Garder casque · repos" })[0],
-    )
-
-    // **C'est le favori, et rien d'autre** — la même marque que la galerie, et
-    // la seule que le serveur lit pour désigner ce qui part.
-    await waitFor(() => {
-      const marque = appels.find((a) => a.url === "/api/assets/favorite")
-      expect(marque).toBeTruthy()
-      expect(marque!.corps).toEqual({
-        identifiants: ["bbbb2222-100"],
-        favori: true,
-      })
-    })
-  })
-
-  test("les mesures de la rangée sont celles du calque retenu", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const chose = deuxCalques(corps, "cccc3333-100")
-    // Deux calques que tout distingue à la lecture : la rangée doit décrire le
-    // second, qui est le retenu, et non le premier de la liste.
-    const cases = chose.cases.map((c) =>
-      c.pose === "repos"
-        ? {
-            ...c,
-            calques: {
-              casque: [
-                {
-                  ...c.calques.casque[0],
-                  calque: { ...c.calques.casque[0].calque!, repeint: 0.111 },
-                },
-                {
-                  ...c.calques.casque[1],
-                  calque: { ...c.calques.casque[1].calque!, repeint: 0.777 },
-                },
-              ],
-            } as Record<string, Asset[]>,
-          }
-        : c,
-    )
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [{ ...chose, cases }],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-
-    // **Elles décrivaient `calques[0]`** — la plus récente, donc le retenu tant
-    // que personne ne marquait de favori. Un favori plus ancien posé, la rangée
-    // décrivait un calque et l'export en sortait un autre.
-    expect(ecran.getByText(/repeint 77,7 %/)).toBeTruthy()
-    expect(ecran.queryByText(/repeint 11,1 %/)).toBeNull()
-  })
-
-  test("la carte du calque dit lequel part, et offre de jeter l'autre", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran, appels } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [deuxCalques(corps, "cccc3333-100")],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    // Le premier des deux : celui qui **ne** part pas.
-    fireEvent.click(
-      ecran.getAllByRole("button", { name: "Ouvrir casque · repos" })[0],
-    )
-
-    // **La phrase dit la réponse avant que les boutons ne proposent le geste** :
-    // la question de l'auteur était « lequel part ? », pas « que puis-je faire ».
-    expect(ecran.getByText(/un autre calque de cette case part dans le jeu/)).toBeTruthy()
-
-    fireEvent.click(ecran.getByRole("button", { name: "Supprimer cette image" }))
-    await waitFor(() =>
-      expect(
-        appels.find((a) => a.url === "/api/assets/delete"),
-      ).toBeTruthy(),
-    )
-
-    // **Et le geste qui rend suit l'image**, dans la fente du châssis. Le
-    // bandeau *annuler* vit dans la barre d'outils de la galerie, que cet
-    // écran-ci ne montre pas : sans cette ligne, on supprimait depuis un
-    // endroit d'où l'on ne pouvait pas défaire. Constaté au navigateur le
-    // 4 septembre 2026, pas par un essai — d'où celui-ci.
-    const rendre = await screen.findByRole("button", { name: "la rendre" })
-    fireEvent.click(rendre)
-    await waitFor(() =>
-      expect(appels.find((a) => a.url === "/api/assets/restore")).toBeTruthy(),
-    )
-  })
-
-  test("un corps concurrent porte la même marque, et le même clic", async () => {
-    const premier = asset("aaaa1111-0", "un nain au repos")
-    const second = asset("aaaa1111-1", "un nain au repos, encore")
-    const chose = avecCorps(premier)
-    const { ecran, appels } = await ouvrir({
-      personnages: [
-        {
-          ...chose,
-          cases: chose.cases.map((c) =>
-            c.pose === "repos"
-              ? { ...c, images: [premier, second], corps: second.identifiant }
-              : c,
-          ),
-        },
-      ],
-    })
-
-    // **« Et en vrai c'est pareil pour les poses de base »** — la remarque le
-    // disait, et le serveur le faisait déjà : seul l'écran manquait.
-    const vignettes = ecran.getAllByRole("button", {
-      name: /Ouvrir un nain au repos/,
-    })
-    expect(
-      vignettes.filter((v) => v.querySelector("img.outline-signal")),
-    ).toHaveLength(1)
-
-    fireEvent.click(ecran.getByRole("button", { name: "Garder un nain au repos" }))
-    await waitFor(() => {
-      const marque = appels.find((a) => a.url === "/api/assets/favorite")
-      expect((marque?.corps as { identifiants: string[] }).identifiants).toEqual([
-        "aaaa1111-0",
-      ])
-    })
-  })
-
-  // ── « Les mesures s'affichent toutes, et aucune ne rend un calque impossible
-  //     à garder » (US-147) ────────────────────────────────────────────────────
-
-  test("les cinq mesures s'affichent, et aucune n'a de seuil ni de couleur d'alarme", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
-
-    for (const nom of [
-      "silhouette retrouvée",
-      "corps repeint",
-      "part ajoutée",
-      "échelle au retour",
-      "objet ou poussière",
-    ])
-      expect(await ecran.findByText(nom)).toBeTruthy()
-
-    // **Aucune ne refuse, et aucune ne s'alarme.** `--echec` veut dire *ce qui
-    // échoue ou ce qui détruit*, et un calque gardé n'échoue pas.
-    expect(
-      document.querySelector("[data-univers] .text-echec"),
-    ).toBeNull()
-  })
-
-  // ── « Le masque rectangle d'un calque déjà fabriqué se déplace et se
-  //     retaille » (US-145) ────────────────────────────────────────────────────
-
-  test("la zone se trace au glissement, et se retire d'un geste", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran, appels } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
-
-    const cadre = await ecran.findByRole("application", {
-      name: "Zone du calque casque sur repos",
-    })
-    // jsdom ne met rien en page : le cadre mesure zéro, donc **tous les
-    // pointeurs tombent au même pixel**. On borne donc l'essai à ce qu'il peut
-    // honnêtement prouver — que le geste part au serveur, et qu'il en revient
-    // sans zone quand il n'a pas glissé. La géométrie, elle, est une fonction
-    // pure, et c'est `placer()` de l'infobulle qui a montré la voie.
-    fireEvent.pointerDown(cadre, { clientX: 10, clientY: 10, pointerId: 1 })
-    fireEvent.pointerMove(cadre, { clientX: 90, clientY: 90, pointerId: 1 })
-    fireEvent.pointerUp(cadre, { clientX: 90, clientY: 90, pointerId: 1 })
-
-    await waitFor(() =>
-      expect(
-        appels.some((a) => a.url === "/api/assets/bbbb2222-100/layer"),
-      ).toBe(true),
-    )
-    // **Rien n'a été redemandé au fournisseur** : poser une zone ne passe par
-    // aucune route de génération.
-    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
-  })
-
-  // ── « Une pièce qui agrandit, revenue à une autre échelle, ne produit aucun
-  //     calque : la dérive est nommée à l'écran » (US-148) ─────────────────────
-
-  test("un corps habillé dit qu'il n'est pas un calque, et nomme la dérive", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const habille = calque("bbbb2222-100", corps.identifiant, {
-      // **Aucune différence** : ce qui revient est gardé, mais il ne s'empile
-      // pas. C'est la recette qui le dit, et rien d'autre.
-      recette: RECETTE_VIDE,
-      calque: {
-        silhouette: 1,
-        repeint: 0.235,
-        ajout: 2.03,
-        echelle: 0.62,
-        compacite: 0.41,
-        // L'écart d'échelle est rapporté à la tolérance du produit — 0,38 pour
-        // 0,08 —, donc plafonné : au-delà, il n'y a plus de calque à graduer.
-        pire: "échelle au retour",
-        gravite: 1,
-      },
-    })
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [{ ...CASQUE, portee: "agrandit" }],
-      personnages: [avecCorps(corps, [habille])],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    expect(ecran.getByText(/corps habillé/)).toBeTruthy()
-
-    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
-    // La dérive est **nommée**, avec le chiffre qui a décidé.
-    expect(await ecran.findByText(/0,62× de la taille envoyée/)).toBeTruthy()
-    expect(ecran.getByText(/il ne s'empile pas/)).toBeTruthy()
-  })
-
-  // ── « Le produit ne propose nulle part de reposer un calque sur une autre
-  //     pose que la sienne » ───────────────────────────────────────────────────
-
-  test("aucun geste ne propose de reposer un calque ailleurs", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    // La colonne du corps porte le geste qui vide une case ; celle d'une pièce,
-    // non — **un calque est solidaire de sa pose**, et il n'y a donc rien à
-    // défaire ni à reposer.
-    expect(ecran.queryByLabelText(/Retirer cette image de la case/)).toBeNull()
-    expect(ecran.queryByText(/reposer/i)).toBeNull()
-  })
-
-  // ── « La matrice n'offre ni recherche, ni filtres, ni sélection multiple »
-  //     — reconduit en C3 ─────────────────────────────────────────────────────
-
-  test("la colonne d'une pièce ne fait pas de la matrice une grille", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-
-    // Ni recherche, ni filtre — l'invariant de C1, reconduit.
-    expect(ecran.queryByRole("searchbox")).toBeNull()
-    // **Et ce qui se coche reste une attitude**, jamais une vignette : chaque
-    // case à cocher de cette colonne nomme une pose, et le jour où l'une d'elles
-    // passera sur une image, cet essai tombera. C'est son métier.
-    for (const coche of ecran.getAllByRole("checkbox"))
-      expect(coche.getAttribute("aria-label")).toMatch(/^Habiller .+ avec casque$/)
-  })
-
-  // ── R5 · « Le recalage se rejoue depuis la planche, sans un centime »
-  //     (US-173) ───────────────────────────────────────────────────────────────
-
-  test("le calque se recale depuis sa planche, et rien n'est redemandé", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran, appels } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
-
-    fireEvent.click(
-      await ecran.findByRole("button", { name: /Recaler depuis la planche/ }),
-    )
-
-    await waitFor(() =>
-      expect(
-        appels.some((a) => a.url === "/api/assets/bbbb2222-100/realign"),
-      ).toBe(true),
-    )
-    // **Aucun centime**, et ça se vérifie ici comme au serveur : le rejeu ne
-    // passe par aucune route de génération.
-    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
-  })
-
-  test("un corps habillé porte le rejeu, parce que c'est lui qui en a besoin", async () => {
-    // Le cas du 29 août 2026 : la dérive a été prononcée sur une échelle
-    // inventée, et l'image est rangée comme un corps habillé. Le geste qui la
-    // répare doit donc être **là aussi**, pas seulement sur les calques.
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const habille = calque("bbbb2222-100", corps.identifiant, {
-      recette: RECETTE_VIDE,
-    })
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [habille])],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
-
-    expect(
-      await ecran.findByRole("button", { name: /Recaler depuis la planche/ }),
-    ).toBeTruthy()
-  })
-
-  // ══ C4 · La main ═══════════════════════════════════════════════════════════
-  //
-  // **Ce que jsdom peut honnêtement prouver, et rien de plus.** Il ne met rien
-  // en page : le cadre mesure zéro, donc tous les pointeurs tombent au même
-  // pixel. Ce qui se vérifie ici est donc *ce qui part* — la couche visée, le
-  // rayon, le sens — et *ce qui paraît* : le corps sous la retouche, l'avant
-  // sous l'appui, le tri de la colonne. La géométrie du pinceau, elle, est une
-  // fonction pure, et elle s'éprouve au serveur (`tests/test_c4.py`).
-
-  /** Ouvrir le panneau d'un calque, et rendre son cadre — le geste commun à
-   *  tous les essais de C4. */
-  const ouvrirCalque = async (ecran: ReturnType<typeof within>) => {
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
-    return await ecran.findByRole("application", {
-      name: "Zone du calque casque sur repos",
-    })
-  }
-
-  const glisser = (cadre: HTMLElement) => {
-    fireEvent.pointerDown(cadre, { clientX: 10, clientY: 10, pointerId: 1 })
-    fireEvent.pointerMove(cadre, { clientX: 40, clientY: 60, pointerId: 1 })
-    fireEvent.pointerUp(cadre, { clientX: 40, clientY: 60, pointerId: 1 })
-  }
-
-  const dernierAppel = (
-    appels: { url: string; corps: unknown }[],
-    url: string,
-  ) => appels.filter((a) => a.url === url).at(-1)?.corps as
-    | { couche: string; traits: { garde: boolean; rayon: number }[] }
-    | undefined
-
-  // ── « Un masque s'affine à main levée, puis au pixel, sans repayer
-  //     d'image » (US-149) ─────────────────────────────────────────────────────
-
-  test("le masque s'affine à main levée puis au pixel, et rien n'est repayé", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran, appels } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    const cadre = await ouvrirCalque(ecran)
-
-    // **À main levée** — le rayon offert au repos, et la couche du masque.
-    fireEvent.click(ecran.getByRole("button", { name: "masque" }))
-    glisser(cadre)
-
-    await waitFor(() =>
-      expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")).toBeTruthy(),
-    )
-    const large = dernierAppel(appels, "/api/assets/bbbb2222-100/hand")!
-    expect(large.couche).toBe("affinage")
-    expect(large.traits.at(-1)!.rayon).toBeGreaterThan(0)
-
-    // **Puis au pixel** — le même geste, le même envoi, un rayon de moins.
-    // Les deux échelles sont les deux bouts d'un seul réglage.
-    fireEvent.click(ecran.getByRole("button", { name: "1 px" }))
-    glisser(cadre)
-
-    await waitFor(() =>
-      expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")!.traits).toHaveLength(2),
-    )
-    const fin = dernierAppel(appels, "/api/assets/bbbb2222-100/hand")!
-    expect(fin.couche).toBe("affinage")
-    expect(fin.traits.at(-1)!.rayon).toBe(0)
-    // **La liste est entière, jamais un ajout** : le second envoi porte les deux
-    // passages, et pas seulement le dernier.
-    expect(fin.traits).toHaveLength(2)
-
-    // Rien n'a été redemandé au fournisseur.
-    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
-  })
-
-  // ── « Un calque se retouche au pixel avec le corps affiché en repère sous
-  //     lui » (US-150) ─────────────────────────────────────────────────────────
-
-  test("la retouche vise l'autre couche, et le corps reste en repère dessous", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran, appels } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    const cadre = await ouvrirCalque(ecran)
-    fireEvent.click(ecran.getByRole("button", { name: "retouche" }))
-
-    // **Le corps est là, sous le calque** : c'est lui le repère, et sans lui on
-    // corrigerait sans savoir sur quoi ça se pose.
-    const dessous = cadre.querySelector('img[alt=""]') as HTMLImageElement | null
-    expect(dessous).toBeTruthy()
-    expect(dessous!.getAttribute("src")).toContain(corps.generation)
-
-    // **Ôter, au pixel** — la seconde couche, et le sens que le segment dit.
-    fireEvent.click(ecran.getByRole("button", { name: "ôter" }))
-    fireEvent.click(ecran.getByRole("button", { name: "1 px" }))
-    glisser(cadre)
-
-    await waitFor(() =>
-      expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")).toBeTruthy(),
-    )
-    const pose = dernierAppel(appels, "/api/assets/bbbb2222-100/hand")!
-    expect(pose.couche).toBe("retouche")
-    expect(pose.traits.at(-1)).toMatchObject({ garde: false, rayon: 0 })
-  })
-
-  // ── « L'avant et l'après se comparent d'un seul geste » (US-151) ────────────
-
-  test("tenir montre l'avant, et lâcher rend l'après", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    // Un calque que la main a déjà touché : sans ça il n'y a rien à comparer.
-    const touche = calque("bbbb2222-100", corps.identifiant)
-    touche.recette.difference!.retouche = [
-      { garde: true, rayon: 2, points: [[4, 4]], couleur: "" },
-    ]
-    const { ecran, appels } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [touche])],
-    })
-
-    const cadre = await ouvrirCalque(ecran)
-    const dessus = () =>
-      (cadre.querySelector('img[alt="casque · repos"]') as HTMLImageElement).src
-
-    const apres = dessus()
-    expect(apres).not.toContain("avant=true")
-
-    const bouton = ecran.getByRole("button", { name: "Voir le calque avant la main" })
-    fireEvent.pointerDown(bouton)
-    expect(dessus()).toContain("avant=true")
-
-    // **Lâcher rend l'après.** Une bascule aurait laissé l'écran sur l'avant, et
-    // la retouche suivante se serait faite sur une image qui n'est plus celle
-    // qu'on modifie.
-    fireEvent.pointerUp(bouton)
-    expect(dessus()).toBe(apres)
-
-    // Comparer ne redemande rien : c'est un calcul du serveur, pas un appel.
-    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
-  })
-
-  test("sans main posée, il n'y a rien à comparer — et le geste est absent", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    await ouvrirCalque(ecran)
-    // **Absent, pas grisé** — la bascule de `+ personnage` et du geste du lot :
-    // le grisé suppose une chose indisponible, et ici il n'y a pas de chose.
-    expect(
-      ecran.queryByRole("button", { name: "Voir le calque avant la main" }),
-    ).toBeNull()
-  })
-
-  // ── « Le masque et la retouche sont deux couches distinctes, et chacune
-  //     s'annule » (US-153, C4) ────────────────────────────────────────────────
-
-  test("chaque couche s'annule seule, et l'autre ne bouge pas", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const deux = calque("bbbb2222-100", corps.identifiant)
-    deux.recette.difference!.affinage = [
-      { garde: false, rayon: 2, points: [[1, 1]], couleur: "" },
-    ]
-    deux.recette.difference!.retouche = [
-      { garde: true, rayon: 0, points: [[4, 4]], couleur: "" },
-    ]
-    const { ecran, appels } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [deux])],
-    })
-
-    await ouvrirCalque(ecran)
-
-    fireEvent.click(ecran.getByRole("button", { name: "masque" }))
-    fireEvent.click(ecran.getByRole("button", { name: /Sans passages/ }))
-    await waitFor(() =>
-      expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")).toBeTruthy(),
-    )
-    // **La couche visée est vidée, et elle seule** : l'envoi ne parle que d'elle.
-    expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")).toEqual({
-      couche: "affinage",
-      traits: [],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "retouche" }))
-    fireEvent.click(ecran.getByRole("button", { name: /Sans retouche/ }))
-    await waitFor(() =>
-      expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")).toEqual({
-        couche: "retouche",
-        traits: [],
-      }),
-    )
-  })
-
-  test("les trois outils ne paraissent que sur un calque", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const habille = calque("bbbb2222-100", corps.identifiant, {
-      recette: RECETTE_VIDE,
-    })
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [{ ...CASQUE, portee: "agrandit" }],
-      personnages: [avecCorps(corps, [habille])],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
-
-    // Un corps habillé n'a ni masque ni retouche : trois segments morts
-    // au-dessus de son image seraient du cadrage affiché.
-    await ecran.findByText(/il ne s'empile pas/)
-    expect(ecran.queryByRole("button", { name: "masque" })).toBeNull()
-    expect(ecran.queryByRole("button", { name: "retouche" })).toBeNull()
-  })
-
-  // ── « Les calques restant à regarder se trient par la mesure la plus
-  //     défavorable, le pire en tête » (US-152) ────────────────────────────────
-
-  test("la colonne se trie par le pire, et ce qui est fait descend", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    /** Un calque sur une pose donnée, avec la gravité que le serveur lui a
-     *  calculée — l'écran ne la recalcule jamais. */
-    const sur = (pose: string, gravite: number, main = false): Asset => {
-      const un = calque(`bbbb2222-10${pose.length}`, corps.identifiant, {
-        identifiant: `calque-${pose}`,
-        label: `casque · ${pose}`,
-        pose,
-      })
-      un.calque = { ...un.calque!, gravite, pire: "corps repeint" }
-      if (main)
-        un.recette.difference!.retouche = [
-          { garde: true, rayon: 0, points: [[1, 1]], couleur: "" },
-        ]
-      return un
-    }
-    const doux = sur("repos", 0.04)
-    const pire = sur("marche", 0.62)
-    const fait = sur("course", 0.9, true)
-
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [
-        personnage("Le nain", {
-          cases: PLAN.map((p) => ({
-            pose: p.identifiant,
-            demandees: p.images,
-            images: [corps],
-            corps: corps.identifiant,
-            origine: "type" as const,
-            calques: { repos: [doux], marche: [pire], course: [fait] }[
-              p.identifiant
-            ]
-              ? ({
-                  casque: { repos: [doux], marche: [pire], course: [fait] }[
-                    p.identifiant
-                  ]!,
-                } as Record<string, Asset[]>)
-              : ({} as Record<string, Asset[]>),
-            retenus: (() => {
-              const sien = { repos: doux, marche: pire, course: fait }[
-                p.identifiant
-              ]
-              return (sien ? { casque: sien.identifiant } : {}) as Record<
-                string,
-                string
-              >
-            })(),
-            directions: [],
-            directions_rangees: [],
-            sans_direction: [],
-            bandes: [],
-            bandes_ecartees: [],
-            bandes_demandees: 1,
-          })),
-        }),
-      ],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-
-    /** L'ordre des attitudes tel qu'il est **rendu**, ligne à ligne. */
-    const ordre = () =>
-      Array.from(
-        document.querySelectorAll("[data-univers] li .w-\\[110px\\]"),
-      ).map((n) => n.textContent)
-
-    // **Le plan reste le défaut** : c'est l'ordre de l'auteur, et le seul dans
-    // lequel une case vide se lit.
-    expect(ordre().slice(0, 3)).toEqual(["repos", "marche", "course"])
-
-    fireEvent.click(ecran.getByRole("button", { name: "par le pire" }))
-
-    // Le pire en tête, ce qui va mieux ensuite — et **ce dont on s'est déjà
-    // occupé descend**, malgré la pire gravité des trois : « ce qui reste à
-    // regarder » est un calque sur lequel la main n'est pas passée.
-    const trie = ordre()
-    expect(trie.indexOf("marche")).toBeLessThan(trie.indexOf("repos"))
-    expect(trie.indexOf("repos")).toBeLessThan(trie.indexOf("course"))
-    // Les attitudes sans calque ferment la marche : il n'y a rien à y regarder.
-    expect(trie.slice(0, 3)).toEqual(["marche", "repos", "course"])
-
-    // **La mesure qui décide est nommée sur la rangée**, et l'état de la main
-    // avec — c'est ce que le tri ordonne, écrit là où on le lit.
-    expect(ecran.getAllByText(/à regarder · corps repeint/).length).toBe(2)
-    expect(ecran.getByText("main posée")).toBeTruthy()
-  })
-
-  test("la colonne du corps n'offre pas de tri : il n'y a rien à classer", async () => {
-    const corps = asset("aaaa1111-0", "un nain au repos")
-    const { ecran } = await ouvrir({
-      emplacements: [TETE],
-      pieces: [CASQUE],
-      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
-    })
-
-    // **Absent, pas grisé** : sur la colonne du corps il n'y a pas de mesure de
-    // calque, donc pas de chose indisponible — il n'y a rien du tout.
-    expect(ecran.queryByRole("button", { name: "par le pire" })).toBeNull()
-    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
-    expect(ecran.getByRole("button", { name: "par le pire" })).toBeTruthy()
-  })
-
-  // ── La sortie vers le jeu ───────────────────────────────────────────────
-  //
-  // ⚠️ **Elle n'est plus sur la fiche du sujet** (`RP17`, 16 septembre 2026).
-  // Le bouton *Poser dans le dossier du jeu* écrivait tout de suite, sans dire
-  // quels fichiers partaient ni lesquels il écrasait, à côté d'un écran qui,
-  // lui, le montre. Les trois essais qui le tenaient sont partis avec lui : ce
-  // que la fiche porte maintenant est *Livrer…*, qui ouvre la sortie, et c'est
-  // `Sortie.test.tsx` qui l'éprouve — le choix du sujet compris.
-
-  test("armer demande le sujet au serveur au lieu de l'écrire", async () => {
-    const { ecran, appels } = await ouvrir({
-      personnages: [
-        personnage("Le nain", { description: "un forgeron nain à la barbe tressée" }),
-      ],
-    })
-
-    fireEvent.click(ecran.getByRole("button", { name: "Fabriquer marche" }))
-
-    // **Une seule composition dans tout le produit** (C5) : l'écran et l'agent
-    // arment la même case, et le texte vient du service qui l'écrit. Deux
-    // compositions auraient fini par demander deux choses différentes.
-    await waitFor(() =>
-      expect(appels.some((a) => a.url === "/api/characters/subject")).toBe(true),
-    )
-    const envoye = appels.find((a) => a.url === "/api/characters/subject")
-      ?.corps as { personnage: string }
-    expect(envoye.personnage).toBe("le-nain")
-
-    // **Le signalement seul.** Depuis E14 la consigne de l'attitude est une
-    // ligne à part, avec son origine et son interrupteur ; la demande ne porte
-    // donc plus l'attitude, et le champ n'en porte plus le mot.
-    const champ = await champDePrompt() as HTMLTextAreaElement
-    await waitFor(() =>
-      expect(champ.value).toBe("un forgeron nain à la barbe tressée"),
-    )
+    expect(screen.queryByRole("button", { name: "Habiller marche de casque" })).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "Habiller repos de casque" }))
+    // **Armer ne déplace plus personne** (E2) : le guichet s'ouvre par-dessus
+    // et nomme la case qu'on vient d'armer, la même règle que pour une image.
+    await waitFor(() => expect(cibleDuGuichet()).toBe("Le nain · repos"))
   })
 })
 
@@ -10241,11 +9318,12 @@ describe("le châssis des tables", () => {
     const double = serveurDouble({ personnages: [AVEC_IMAGE(images)], ...options })
     await monter(double.fetchDouble, etat)
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: `Ouvrir ${images[0].label} dans son outil`,
-      }),
-    )
+    // ⚠️ **« Ouvrir … dans son outil » vivait dans la matrice, retirée en
+    // RV10** — la porte des tables est désormais *La retoucher*, sur la
+    // fiche de l'image, elle-même choisie dans l'onglet Images.
+    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
       await waitFor(() => {
         const ecran = document.querySelector("[data-retouche]")
@@ -10269,11 +9347,9 @@ describe("le châssis des tables", () => {
       },
     })
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: `Ouvrir ${images[0].label} dans son outil`,
-      }),
-    )
+    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
       await waitFor(() => {
         const ecran = document.querySelector("[data-retouche]")
@@ -11682,11 +10758,9 @@ describe("le contour et la main", () => {
       univers: { ...UNIVERS, palette, vide: false },
     })
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: `Ouvrir ${images[0].label} dans son outil`,
-      }),
-    )
+    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
       await waitFor(() => {
         const ecran = document.querySelector("[data-retouche]")
@@ -12117,166 +11191,38 @@ describe("les poses par type d'objet", () => {
       })),
     })
 
-  // ── « La fiche d'une chose écrit l'origine de chaque pose » ────────────────
-
-  test("une chose ajoute une attitude pour elle seule, et sa ligne dit d'où elle vient", async () => {
-    const { fetchDouble } = await ouvrir({
-      personnages: [chose("Le coffre", "meuble", POSES_DU_MEUBLE)],
-    })
-    const ecran = await ouvrirLEtabli("Le coffre")
-
-    // Les trois du type, et rien d'autre : un coffre ne marche pas.
-    expect(
-      ecran.getAllByRole("button", { name: /Retirer .* de ce personnage/ }),
-    ).toHaveLength(3)
-    expect(ecran.queryByRole("button", { name: "Retirer marche de ce personnage" }))
-      .toBeNull()
-
-    fireEvent.change(ecran.getByLabelText("Ajouter une attitude à Le coffre"), {
-      target: { value: "piégé" },
-    })
-    fireEvent.keyDown(ecran.getByLabelText("Ajouter une attitude à Le coffre"), {
-      key: "Enter",
-    })
-
-    // **Le geste part sur cette chose-là**, pas sur le plan du jeu : c'est ce
-    // qui garde les cases des autres coffres intactes.
-    await waitFor(() =>
-      expect(
-        fetchDouble.mock.calls.some(
-          ([url, init]) =>
-            String(url) === "/api/characters/le-coffre" &&
-            String((init as RequestInit)?.method) === "PUT" &&
-            String((init as RequestInit)?.body).includes("ajouter"),
-        ),
-      ).toBe(true),
-    )
-  })
-
-  test("effacer une attitude ajoutée ici n'est pas la ranger", async () => {
-    // **Le × ne veut pas dire la même chose des deux côtés.** Une pose du type
-    // se range — elle reviendra chez les autres. Une pose ajoutée ici s'efface :
-    // la reléguer aurait laissé une ligne barrée que rien ne reproposera jamais.
-    const ajoutee: Pose = pose("piege", "piégé")
-    const { fetchDouble } = await ouvrir({
-      personnages: [
-        personnage("Le coffre", {
-          type: "meuble",
-          plan: [...POSES_DU_MEUBLE, ajoutee],
-          ajoutees: [ajoutee],
-          cases: [...POSES_DU_MEUBLE, ajoutee].map((p) => ({
-            pose: p.identifiant,
-            demandees: p.images,
-            images: [],
-            ...VIDE_C3,
-            origine: (p.identifiant === "piege" ? "ici" : "type") as "ici" | "type",
-          })),
-        }),
-      ],
-    })
-    const etabli = await ouvrirLEtabli("Le coffre")
-
-    // Les deux gestes portent des noms différents, parce qu'ils ne font pas la
-    // même chose.
-    expect(etabli.getByRole("button", { name: "Retirer fermé de ce personnage" }))
-      .toBeTruthy()
-    fireEvent.click(
-      etabli.getByRole("button", { name: "Effacer piégé, ajoutée ici" }),
-    )
-
-    await waitFor(() =>
-      expect(
-        fetchDouble.mock.calls.some(
-          ([url, init]) =>
-            String(url) === "/api/characters/le-coffre" &&
-            String((init as RequestInit)?.body).includes("retirer_ajoutee"),
-        ),
-      ).toBe(true),
-    )
-  })
-
-  test("l'origine ne s'écrit que quand elle apprend quelque chose", async () => {
-    // Une chose dont une pose vient du type et l'autre a été ajoutée ici.
-    const ajoutee: Pose = pose("piege", "piégé")
-    await ouvrir({
-      personnages: [
-        personnage("Le coffre", {
-          type: "meuble",
-          plan: [...POSES_DU_MEUBLE, ajoutee],
-          ajoutees: [ajoutee],
-          cases: [...POSES_DU_MEUBLE, ajoutee].map((p) => ({
-            pose: p.identifiant,
-            demandees: p.images,
-            images: [],
-            ...VIDE_C3,
-            origine: (p.identifiant === "piege" ? "ici" : "type") as "ici" | "type",
-          })),
-        }),
-      ],
-    })
-    const etabli = await ouvrirLEtabli("Le coffre")
-
-    // **Une seule mention**, sur la pose ajoutée. La venue du type est le cas
-    // ordinaire : l'écrire sur chaque ligne aurait fait quatre mentions
-    // identiques que personne ne lit.
-    expect(etabli.getAllByText("ajoutée ici")).toHaveLength(1)
-  })
-
-  // ── « Ce qui est rangé se relègue sous un trait, barré et pâle » ───────────
-
-  test("ce qui est rangé passe sous un trait, barré et pâle, et se dérange d'un clic", async () => {
-    const { fetchDouble } = await ouvrir({
-      personnages: [personnage("Le nain", { ecartees: ["mort", "degats"] })],
-    })
-    const ecran = await ouvrirLEtabli("Le nain")
-
-    // Le trait le sépare de ce qui reste à faire, et le titre dit ce que c'est.
-    expect(ecran.getByText("rangé — pas pour ce sujet")).toBeTruthy()
-
-    const range = ecran.getByRole("button", { name: "mort" })
-    expect(range.className).toContain("line-through")
-    expect(range.className).toContain("opacity-60")
-
-    // **Un clic le dérange** — et c'est la liste des tenues qui repart, celle-ci
-    // en plus.
-    fireEvent.click(range)
-    await waitFor(() =>
-      expect(
-        fetchDouble.mock.calls.some(
-          ([url, init]) =>
-            String(url) === "/api/characters/le-nain" &&
-            String((init as RequestInit)?.body).includes('"mort"'),
-        ),
-      ).toBe(true),
-    )
-  })
-
-  // ── « Une tuile n'a pas de rangée de poses du tout » ───────────────────────
-
-  test("une tuile n'a aucune rangée de poses, et l'écran dit pourquoi", async () => {
-    await ouvrir({ personnages: [chose("Herbe", "tuile", [])] })
-    const ecran = await ouvrirLEtabli("Herbe")
-
-    expect(
-      ecran.queryAllByRole("button", { name: /Retirer .* de ce personnage/ }),
-    ).toHaveLength(0)
-    // **Pas une rangée grisée** : une rangée grisée promet qu'elle en aura une
-    // un jour, et une tuile n'en aura jamais.
-    expect(ecran.getByText(/ne bouge pas, il se raccorde/)).toBeTruthy()
-  })
+  // ⚠️ **La gestion d'une pose sur une chose précise est partie avec l'établi,
+  // sans successeur** (RV10, 21-22 sept. 2026) : ajouter une attitude propre
+  // à une chose (« Ajouter une attitude à … »), l'effacer (« Effacer …,
+  // ajoutée ici »), écrire son origine (« ajoutée ici »), et ranger/reprendre
+  // une pose du type sous un trait (« Retirer … de ce personnage », « rangé —
+  // pas pour ce sujet ») — tout cela vivait dans la colonne d'identité de la
+  // matrice. Rien ne le relit ni ne l'écrit ailleurs : `personnage.ecartees`
+  // et `personnage.ajoutees` restent lus pour compter (`comptes()`,
+  // `FicheDuSujet.tsx`), jamais proposés au clic. Même constat que « un
+  // figurant écarte ce qu'il ne tient pas » (plus haut, « l'écran des
+  // personnages ») : c'est le même sous-système. Cinq essais sont partis avec
+  // lui : « une chose ajoute une attitude pour elle seule », « effacer une
+  // attitude ajoutée ici n'est pas la ranger », « l'origine ne s'écrit que
+  // quand elle apprend quelque chose », « ce qui est rangé passe sous un
+  // trait » et « une tuile n'a aucune rangée de poses ». Un manque réel, à
+  // signaler — le même que celui déjà noté, pas un second.
 
   // ── « Chaque type porte sa propre liste » (l'assistant) ────────────────────
 
   // ── Le type se choisit sur la chose ────────────────────────────────────────
 
+  // **Le type d'objet vit dans « Modifier la fiche »** (16 septembre 2026 ;
+  // RV10 a retiré l'ancien écran « Ses cases » où il vivait avant).
   test("la fiche d'une chose choisit son type, et dit que les images ne bougent pas", async () => {
     const { fetchDouble } = await ouvrir({
       personnages: [personnage("La chose")],
     })
-    const ecran = await ouvrirLEtabli("La chose")
+    await ouvrirLEtabli("La chose")
+    fireEvent.click(await screen.findByRole("button", { name: "Modifier la fiche" }))
 
-    const choix = await ecran.findByLabelText("Type d'objet")
-    expect(ecran.getByText(/En changer ne déplace aucune image/)).toBeTruthy()
+    const choix = await screen.findByLabelText("Type d'objet")
+    expect(screen.getByText(/Aucune image ne bouge/)).toBeTruthy()
 
     fireEvent.change(choix, { target: { value: "meuble" } })
 
@@ -12307,10 +11253,11 @@ describe("les poses par type d'objet", () => {
       personnages: [personnage("La chose")],
       types: [...TYPES, NATURE_MATIERE],
     })
-    const ecran = await ouvrirLEtabli("La chose")
+    await ouvrirLEtabli("La chose")
+    fireEvent.click(await screen.findByRole("button", { name: "Modifier la fiche" }))
 
-    await ecran.findByRole("option", { name: /^meuble/ })
-    expect(ecran.queryByRole("option", { name: /^matière/ })).toBeNull()
+    await screen.findByRole("option", { name: /^meuble/ })
+    expect(screen.queryByRole("option", { name: /^matière/ })).toBeNull()
   })
 
   test("un ancien sujet de nature « matière » la garde affichée", async () => {
@@ -12318,10 +11265,11 @@ describe("les poses par type d'objet", () => {
       personnages: [chose("Vieux pavés", "matière", [])],
       types: [...TYPES, NATURE_MATIERE],
     })
-    const ecran = await ouvrirLEtabli("Vieux pavés")
+    await ouvrirLEtabli("Vieux pavés")
+    fireEvent.click(await screen.findByRole("button", { name: "Modifier la fiche" }))
 
-    expect(await ecran.findByRole("option", { name: /^matière/ })).toBeTruthy()
-    expect((await ecran.findByLabelText("Type d'objet") as HTMLSelectElement).value).toBe("matière")
+    expect(await screen.findByRole("option", { name: /^matière/ })).toBeTruthy()
+    expect((await screen.findByLabelText("Type d'objet") as HTMLSelectElement).value).toBe("matière")
   })
 })
 
@@ -12573,8 +11521,13 @@ describe("les palettes et les ambiances", () => {
     })
     await monter(double.fetchDouble)
     const ecran = await ouvrirLEtabli("Le nain")
+    // ⚠️ **« Son ambiance » vit dans « Modifier la fiche »** (RV10, l'ancienne
+    // colonne d'identité de la matrice a fermé avec elle) — dans une
+    // boîte de dialogue, hors de `[data-etabli]` : c'est `screen` qui la
+    // cherche, comme les autres champs de la fiche.
+    fireEvent.click(await ecran.findByRole("button", { name: "Modifier la fiche" }))
 
-    const choix = await ecran.findByLabelText("Son ambiance")
+    const choix = await screen.findByLabelText("Son ambiance")
     fireEvent.change(choix, { target: { value: "marais-de-cendre" } })
 
     await waitFor(() =>
@@ -12597,13 +11550,18 @@ describe("les palettes et les ambiances", () => {
     const double = serveurDouble({ personnages: [personnage("Le nain")] })
     await monter(double.fetchDouble)
     const ecran = await ouvrirLEtabli("Le nain")
+    fireEvent.click(await ecran.findByRole("button", { name: "Modifier la fiche" }))
 
     // Il n'y a pas de chose à griser — c'est la bascule de « + personnage », et
     // non le grisé qui porte sa raison. L'endroit est nommé à la place.
+    // ⚠️ **Le texte a changé avec l'écran** (RV10) : « côté Ambiances et
+    // couleurs » nommait un onglet de la matrice ; la fiche nomme l'onglet
+    // Univers, qui les porte désormais — et sa boîte de dialogue est hors de
+    // `[data-etabli]`, comme le champ juste au-dessus.
     expect(
-      await ecran.findByText(/côté Ambiances et couleurs/),
+      await screen.findByText(/Ce jeu n.a pas encore d.ambiance \(onglet Univers\)/),
     ).toBeTruthy()
-    expect(ecran.queryByLabelText("Son ambiance")).toBeNull()
+    expect(screen.queryByLabelText("Son ambiance")).toBeNull()
   })
 })
 
@@ -12706,8 +11664,11 @@ describe("le codex généralisé", () => {
     await monter(double.fetchDouble)
     const etabli = await ouvrirLEtabli("Balthazar")
 
-    expect(etabli.getByText("La colonne qu'on lit")).toBeTruthy()
-    expect(etabli.getByRole("button", { name: "casque" })).toBeTruthy()
+    // ⚠️ **La colonne d'équipement de la matrice a fermé avec elle** (RV10) :
+    // c'est l'onglet Équipement, avec `VestiaireDuSujet.tsx`, qui la porte —
+    // atteignable pour une chose équipable, et pour elle seule.
+    fireEvent.click(await etabli.findByRole("tab", { name: "Équipement" }))
+    expect(await etabli.findByText("Son vestiaire")).toBeTruthy()
   })
 
   // ── « Aucun personnage existant ne perd quoi que ce soit » ────────────────
@@ -12719,9 +11680,10 @@ describe("le codex généralisé", () => {
     await monter(double.fetchDouble)
     const etabli = await ouvrirLEtabli("Balthazar")
 
-    for (const attitude of ["repos", "marche", "course", "attaque", "dégâts", "mort"]) {
-      expect(etabli.getByRole("button", { name: `Fabriquer ${attitude}` })).toBeTruthy()
-    }
+    // ⚠️ **La grille des cases a quitté la matrice pour l'onglet Images**
+    // (RV10) : les six poses s'y retrouvent, une rangée chacune.
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    expect(await etabli.findAllByText("aucune image")).toHaveLength(6)
   })
 })
 
@@ -13618,6 +12580,9 @@ describe("la planche d'une pose", () => {
     })
     await monter(double.fetchDouble)
     const etabli = await ouvrirLEtabli("Balthazar")
+    // ⚠️ **La porte de la planche a quitté la matrice pour l'onglet Images**
+    // (RV10) : même bouton, même nom, un onglet plus loin.
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
     fireEvent.click(
       await etabli.findByRole("button", { name: "Ouvrir la planche de marche" }),
     )
@@ -13919,6 +12884,7 @@ describe("la planche d'une pose", () => {
     const double = serveurDouble({ personnages: [personnage("Balthazar")] })
     await monter(double.fetchDouble)
     const etabli = await ouvrirLEtabli("Balthazar")
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
 
     expect(etabli.queryByRole("button", { name: /Ouvrir la planche/ })).toBeNull()
   })
@@ -14231,7 +13197,10 @@ describe("l'écran de confirmation", () => {
     })
     await monter(double.fetchDouble, { ...ETAT, univers: MONDE })
     const etabli = await ouvrirLEtabli(nom)
-    fireEvent.click(etabli.getByRole("button", { name: "Fabriquer repos" }))
+    // ⚠️ **« Fabriquer repos » a quitté la matrice pour l'onglet Images**
+    // (RV10) : « repos » est la pose ouverte par défaut (`A7`).
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("button", { name: "Générer cette pose" }))
     await ecrireLeSujet("un forgeron nain")
     await relire()
     const ecran = await modifierLEnvoi()
@@ -14436,7 +13405,8 @@ describe("l'écran de confirmation", () => {
     })
     await monter(double.fetchDouble, { ...ETAT, univers: MONDE })
     const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(etabli.getByRole("button", { name: "Fabriquer repos" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("button", { name: "Générer cette pose" }))
     await ecrireLeSujet("un forgeron")
     await relire()
     const ecran = await modifierLEnvoi()
@@ -14717,7 +13687,8 @@ describe("l'écran de confirmation", () => {
     // sur le chemin sans chose du jeu, celui-là même qui n'aurait jamais dû
     // l'offrir.
     const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(etabli.getByRole("button", { name: "Fabriquer repos" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("button", { name: "Générer cette pose" }))
     await ecrireLeSujet("un forgeron nain")
 
     // Le second envoi ne passe plus par l'écran : un clic, une dépense.
@@ -14741,7 +13712,9 @@ describe("l'écran de confirmation", () => {
 
     // On arme une autre case : c'est une autre série, et l'écran revient.
     const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(etabli.getByRole("button", { name: "Fabriquer marche" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click((await etabli.findByText("marche")).closest("button") as HTMLElement)
+    fireEvent.click(await etabli.findByRole("button", { name: "Générer cette pose" }))
     await ecrireLeSujet("un forgeron")
     fireEvent.click(ceQuiLance())
 
@@ -15881,7 +14854,8 @@ describe("l'argent ne part qu'une fois", () => {
     })
     await monter(double.fetchDouble)
     const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(etabli.getByRole("button", { name: "Fabriquer repos" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("button", { name: "Générer cette pose" }))
     await ecrireLeSujet("un forgeron nain")
 
     const ecran = await relire()
@@ -15897,7 +14871,8 @@ describe("l'argent ne part qu'une fois", () => {
     // verrou, où qu'il soit. Viser le bouton par son nom mesurerait l'absence
     // du bloc, pas le verrou.
     const encore = await ouvrirLEtabli("Le nain")
-    fireEvent.click(encore.getByRole("button", { name: "Fabriquer repos" }))
+    fireEvent.click(await encore.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await encore.findByRole("button", { name: "Générer cette pose" }))
     const bouton = await attendreCeQuiLance()
     act(() => {
       bouton.dispatchEvent(new MouseEvent("click", { bubbles: true }))
@@ -15985,11 +14960,9 @@ describe("le zoom de la table", () => {
     const double = serveurDouble({ personnages: [AVEC_IMAGE(images)], ...options })
     await monter(double.fetchDouble)
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: `Ouvrir ${images[0].label} dans son outil`,
-      }),
-    )
+    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
       await waitFor(() => {
         const ecran = document.querySelector("[data-retouche]")
@@ -16152,6 +15125,13 @@ describe("la main peint carré, et là où on la pose", () => {
     doublerLaMesure()
     toutReplier()
     reinitialiserApercu()
+    // jsdom ne connaît pas la capture de pointeur, et la main s'en sert
+    // comme le cadre de recadrage (« le châssis des tables », plus haut).
+    // Resté sans effet tant que la porte de la table était la matrice
+    // retirée en RV10 — le trait n'atteignait jamais ce code.
+    Element.prototype.setPointerCapture = () => {}
+    Element.prototype.hasPointerCapture = () => false
+    Element.prototype.releasePointerCapture = () => {}
   })
 
   afterEach(() => {
@@ -16180,11 +15160,9 @@ describe("la main peint carré, et là où on la pose", () => {
     const double = serveurDouble({ personnages: [AVEC_IMAGE([image])] })
     await monter(double.fetchDouble)
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: `Ouvrir ${image.label} dans son outil`,
-      }),
-    )
+    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("button", { name: image.label }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
       await waitFor(() => {
         const ecran = document.querySelector("[data-retouche]")
@@ -16430,11 +15408,9 @@ describe("une table s'éteint, et ça se voit", () => {
     const double = serveurDouble({ personnages: [AVEC_IMAGE(images)] })
     await monter(double.fetchDouble)
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: `Ouvrir ${images[0].label} dans son outil`,
-      }),
-    )
+    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
       await waitFor(() => {
         const ecran = document.querySelector("[data-retouche]")
@@ -16667,11 +15643,9 @@ describe("les réglages voyagent d'une image à l'autre", () => {
     const double = serveurDouble({ personnages: [AVEC_IMAGES(images)], ...options })
     await monter(double.fetchDouble)
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: `Ouvrir ${images[0].label} dans son outil`,
-      }),
-    )
+    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
       await waitFor(() => {
         const ecran = document.querySelector("[data-retouche]")
@@ -18785,7 +17759,6 @@ describe("A9 — commander un clip", () => {
    *  aurait ouvert l'écran sans savoir ce qu'on anime. */
   const ouvrirLeClip = async (
     options: Parameters<typeof serveurDouble>[0] = {},
-    bouton = "Animer marche",
   ) => {
     const double = serveurDouble({
       personnages: [personnage("Le nain", { description: "un forgeron nain" })],
@@ -18793,7 +17766,11 @@ describe("A9 — commander un clip", () => {
     })
     await monter(double.fetchDouble)
     const ecran = await ouvrirLEtabli()
-    fireEvent.click(ecran.getByRole("button", { name: bouton }))
+    // ⚠️ **« Animer marche » vivait dans la matrice, retirée en RV10** :
+    // l'onglet Animations est l'onglet par défaut d'un personnage, mais sa
+    // pose se déplie par elle-même, et sa case « générer » ouvre l'écran.
+    fireEvent.click((await ecran.findByText("marche")).closest("button") as HTMLElement)
+    fireEvent.click(await ecran.findByRole("button", { name: "Générer cette pose" }))
     const panneau = await waitFor(() => {
       const cadre = document.querySelector("[data-clip]")
       if (!cadre) throw new Error("l'écran du clip ne s'est pas ouvert")
@@ -19888,7 +18865,8 @@ describe("A11 — le moteur de la maison", () => {
     })
     await monter(double.fetchDouble)
     const ecran = await ouvrirLEtabli()
-    fireEvent.click(ecran.getByRole("button", { name: "Animer marche" }))
+    fireEvent.click((await ecran.findByText("marche")).closest("button") as HTMLElement)
+    fireEvent.click(await ecran.findByRole("button", { name: "Générer cette pose" }))
     const panneau = await waitFor(() => {
       const cadre = document.querySelector("[data-clip]")
       if (!cadre) throw new Error("l'écran du clip ne s'est pas ouvert")
@@ -20245,263 +19223,6 @@ describe("A11 — le moteur de la maison", () => {
 })
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  A12 — toutes les poses, en animation
-// ═══════════════════════════════════════════════════════════════════════════
-//
-// **Ce que ces essais mesurent.** La matrice sur deux calques : la bascule qui
-// porte les deux jauges, ce qu'une case animée montre, ce qu'elle dit de son
-// clip, et les deux gestes qui la remplissent et la vident.
-//
-// ⚠️ **Ils cliquent**, comme ceux d'`A11` — c'est la leçon qu'`A10` a écrite
-// dans `docs/status/etat.md` : un essai qui demande si un bouton *paraît* laisse
-// passer un mode entier qui s'affiche sans rien ouvrir. Le retrait d'une bande
-// est cliqué et c'est l'appel qui en sort qui est vérifié ; le retour au clip
-// est cliqué et c'est l'écran de montage qui est cherché.
-//
-// Ce qu'ils ne mesurent pas : la composition des cases, qui est le travail du
-// serveur, et qui est tenue par `tests/test_a12.py`.
-
-describe("A12 — la matrice sur deux calques", () => {
-  beforeEach(() => {
-    FluxDouble.ouverts = []
-    vi.stubGlobal("EventSource", FluxDouble)
-    doublerLaMesure()
-    toutReplier()
-  })
-
-  afterEach(() => {
-    cleanup()
-    vi.unstubAllGlobals()
-    vi.restoreAllMocks()
-  })
-
-  /** Une bande rangée dans une case, telle que le serveur la compose. */
-  const uneBande = (nom: string, pose: string, direction: string | null = null) => ({
-    ...bandeRendue(nom, [0, 2, 4, 6]),
-    pose,
-    direction,
-    brouillon: false,
-  })
-
-  /** Une chose du jeu **dessinée sur une pose et animée sur une autre** — le
-   *  seul décor où l'écart entre les deux calques se lit. */
-  const LE_NAIN = personnage("Le nain", {
-    cases: PLAN.map((p) => ({
-      pose: p.identifiant,
-      demandees: p.images,
-      images:
-        p.identifiant === "repos" ? [asset("bbbb2222-0", "le nain, au repos")] : [],
-      ...VIDE_C3,
-      bandes: p.identifiant === "marche" ? [uneBande("marche", "marche")] : [],
-    })),
-  })
-
-  const ouvrirLaMatrice = async (
-    options: Parameters<typeof serveurDouble>[0] = {},
-  ) => {
-    const double = serveurDouble({ personnages: [LE_NAIN], ...options })
-    await monter(double.fetchDouble)
-    const etabli = await ouvrirLEtabli("Le nain")
-    return { ...double, etabli }
-  }
-
-  /** Passer sur le calque animé — **un geste**, et c'est le critère. */
-  const surLeCalqueAnime = async (
-    options: Parameters<typeof serveurDouble>[0] = {},
-  ) => {
-    const rendu = await ouvrirLaMatrice(options)
-    fireEvent.click(
-      await rendu.etabli.findByRole("button", { name: /^animations / }),
-    )
-    return rendu
-  }
-
-  // ── « On passe de l'un à l'autre d'un geste, et chacun porte sa jauge » ───
-
-  test("les deux calques portent chacun sa jauge, et un clic passe de l'un à l'autre", async () => {
-    const { etabli } = await ouvrirLaMatrice()
-
-    // Une pose dessinée sur six, une pose animée sur six : **c'est l'écart que
-    // la tranche existe pour montrer**, et il se lit sans changer d'écran.
-    expect(await etabli.findByRole("button", { name: "images 1 / 6" })).toBeTruthy()
-    expect(etabli.getByRole("button", { name: "animations 1 / 6" })).toBeTruthy()
-
-    // Le calque des images est celui qu'on ouvre : un projet qui n'a jamais rien
-    // animé retrouve son écran d'avant.
-    expect(etabli.getAllByRole("button", { name: /^Fabriquer / }).length).toBeGreaterThan(0)
-    expect(etabli.getByText(/dont toutes les images sont faites/)).toBeTruthy()
-
-    fireEvent.click(etabli.getByRole("button", { name: "animations 1 / 6" }))
-
-    // Et de l'autre côté, plus aucun bouton de fabrication : on ne dessine pas
-    // sur le calque animé.
-    expect(etabli.queryAllByRole("button", { name: /^Fabriquer / })).toHaveLength(0)
-    expect(etabli.getByText(/une animation par direction/)).toBeTruthy()
-  })
-
-  test("une image faite ne remplit pas la case du calque animé", async () => {
-    // ⚠️ **La décision de la tranche.** Le repos est dessiné, la marche est
-    // animée : sur le calque animé, le repos doit se lire comme vide.
-    const { etabli } = await surLeCalqueAnime()
-
-    const lignes = etabli.getAllByRole("listitem")
-    const repos = lignes.find((l) => within(l).queryByText("repos"))
-    expect(repos).toBeTruthy()
-    expect(within(repos!).getByText("rien ne bouge encore")).toBeTruthy()
-    expect(within(repos!).getByText("0 / 1")).toBeTruthy()
-  })
-
-  // ── « Une bande affectée s'y voit en train de tourner » ───────────────────
-
-  test("la bande d'une case tourne à la taille de la vignette, sur sa propre planche", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true })
-    await surLeCalqueAnime()
-
-    const vignette = await waitFor(() => {
-      const trouve = document.querySelector("[data-bande-qui-tourne]")
-      if (!trouve) throw new Error("aucune bande ne tourne dans la matrice")
-      return trouve as HTMLElement
-    })
-    expect(vignette.getAttribute("data-bande-qui-tourne")).toBe("bande-marche")
-
-    // **La planche entière est chargée une fois et décalée** — jamais une image
-    // par cran : c'est le même geste que l'écran de montage, donc exactement
-    // les pixels que l'export écrira. Elle est posée **à la taille de la
-    // vignette** et non à celle du fichier : quatre cases côte à côte, donc
-    // une largeur exactement quadruple de la hauteur, quelle que soit la place
-    // que la case a dans la matrice.
-    const defile = vignette.querySelector("span") as HTMLElement
-    expect(defile.style.backgroundImage).toContain("/api/strips/bande-marche/sheet")
-    const [large, haut] = defile.style.backgroundSize
-      .split(" ")
-      .map((n) => Number.parseFloat(n))
-    expect(haut).toBeGreaterThan(0)
-    expect(large).toBe(haut * 4)
-    const depart = defile.style.backgroundPosition
-
-    // ⚠️ **Et elle tourne pour de vrai.** Une vignette figée montrerait la
-    // première image et rien d'autre : on ne verrait pas la différence entre une
-    // animation juste et une dont l'ordre des images est faux — ce qu'on vient
-    // précisément regarder ici. Huit images par seconde : un cran à 130 ms.
-    await act(async () => {
-      vi.advanceTimersByTime(130)
-    })
-    expect(defile.style.backgroundPosition).not.toBe(depart)
-    vi.useRealTimers()
-  })
-
-  // ── « Une case animée dit de quel clip sa bande vient, et s'y remonte » ───
-
-  test("le nom de la bande remonte au clip qui l'a fournie, dans son écran de montage", async () => {
-    const { etabli } = await surLeCalqueAnime()
-
-    fireEvent.click(
-      await etabli.findByRole("button", { name: "Ouvrir le clip dont vient marche" }),
-    )
-
-    await waitFor(() => {
-      const montage = document.querySelector("[data-montage]")
-      if (!montage) throw new Error("le montage du clip ne s'est pas ouvert")
-      return montage
-    })
-    // Et c'est bien **ce clip-là** qu'on est allé chercher.
-    expect(ouverture(/^Galerie/)).toBe("true")
-  })
-
-  // ── « Retirer une bande ne supprime ni la bande, ni le clip » ─────────────
-
-  test("retirer une bande de sa case vide la case, et rien d'autre", async () => {
-    const { etabli, appels } = await surLeCalqueAnime()
-
-    fireEvent.click(
-      await etabli.findByRole("button", {
-        name: "Retirer cette animation de la case marche",
-      }),
-    )
-
-    // **Les deux champs vides**, et rien d'autre : c'est la désignation qu'on
-    // défait. Aucun DELETE ne part — ni sur la bande, ni sur le clip.
-    await waitFor(() => {
-      const appel = appels.find((a) => a.url === "/api/strips/bande-marche/case")
-      expect(appel?.corps).toEqual({ pose: null, direction: null })
-    })
-    // La route qui **efface** une bande est `/api/strips/{id}`, sans suffixe :
-    // elle n'a pas été appelée, et c'est ça qu'on vient vérifier.
-    expect(appels.some((a) => a.url === "/api/strips/bande-marche")).toBe(false)
-    expect(appels.some((a) => a.url.startsWith("/api/clips/clip-a/delete"))).toBe(false)
-  })
-
-  // ── « Commander le clip qui la remplira est un geste » ────────────────────
-
-  test("une case vide du calque animé commande son clip, sans passer par la barre qui paie", async () => {
-    const { etabli } = await surLeCalqueAnime()
-
-    const lignes = etabli.getAllByRole("listitem")
-    const repos = lignes.find((l) => within(l).queryByText("repos"))!
-    fireEvent.click(within(repos).getByRole("button", { name: "Animer repos" }))
-
-    const cadre = await waitFor(() => {
-      const trouve = document.querySelector("[data-clip]")
-      if (!trouve) throw new Error("l'écran du clip ne s'est pas ouvert")
-      return trouve as HTMLElement
-    })
-    // Et l'image de départ y est **déjà proposée** — c'est `A9` qui la pose, et
-    // le calque animé ne fait que désigner la case.
-    expect(await within(cadre).findByText(/la première image qu'il montre de lui/)).toBeTruthy()
-  })
-
-  // ── « Une pose écartée n'apparaît sur aucun des deux calques » ────────────
-
-  test("une pose écartée ne paraît sur aucun des deux calques", async () => {
-    const { etabli } = await ouvrirLaMatrice({
-      personnages: [
-        personnage("Le nain", {
-          ecartees: ["mort"],
-          cases: PLAN.filter((p) => p.identifiant !== "mort").map((p) => ({
-            pose: p.identifiant,
-            demandees: p.images,
-            images: [],
-            ...VIDE_C3,
-          })),
-        }),
-      ],
-    })
-
-    // **Les deux jauges comptent cinq attitudes**, pas six : ce qui est écarté
-    // ne compte nulle part.
-    expect(await etabli.findByRole("button", { name: "images 0 / 5" })).toBeTruthy()
-    expect(etabli.getByRole("button", { name: "animations 0 / 5" })).toBeTruthy()
-
-    // Elle n'a de rangée sur aucun des deux. Elle reste montrée **sous le
-    // trait**, barrée, comme E9 la relègue — un clic la rend, et c'est vrai des
-    // deux côtés puisque la ligne du plan est la même.
-    const rangees = () =>
-      etabli
-        .getAllByRole("listitem")
-        .filter((l) => within(l).queryByText("mort"))
-    expect(rangees()).toHaveLength(0)
-    expect(etabli.getByRole("button", { name: "mort" })).toBeTruthy()
-
-    fireEvent.click(etabli.getByRole("button", { name: "animations 0 / 5" }))
-    expect(rangees()).toHaveLength(0)
-  })
-
-  // ── « Un projet sans aucune animation se comporte comme aujourd'hui » ─────
-
-  test("sans une seule animation, le calque animé le dit — et celui des images ne bouge pas", async () => {
-    const { etabli } = await ouvrirLaMatrice({
-      personnages: [personnage("Le nain")],
-    })
-
-    expect(await etabli.findByRole("button", { name: "animations 0 / 6" })).toBeTruthy()
-    fireEvent.click(etabli.getByRole("button", { name: "animations 0 / 6" }))
-
-    expect(etabli.getAllByText("rien ne bouge encore")).toHaveLength(6)
-    expect(document.querySelector("[data-bande-qui-tourne]")).toBeNull()
-  })
-})
-
-// ═══════════════════════════════════════════════════════════════════════════
 //  A13 — l'image attrapée au vol
 // ═══════════════════════════════════════════════════════════════════════════
 //
@@ -20820,92 +19541,44 @@ describe("A4 — la bande sort de l'atelier", () => {
     expect(poses).toEqual([])
   })
 
-  // ── Depuis la matrice, pour tout un personnage ────────────────────────────
+  // ── « Sortir ses animations », relogé depuis l'établi (RV10, 22 sept.
+  //     2026) ──────────────────────────────────────────────────────────────
+  //
+  // **La sortie groupée d'un personnage a un successeur** : le bouton
+  // « Livrer… » de la page du sujet, présent qu'on soit sur *Images*,
+  // *Animations* ou tout autre onglet. Il ouvre le même écran que la porte
+  // « Livrer » du bandeau de tuiles ou de sons (`onLivrer`, `App.tsx`) —
+  // « Livrer au jeu » (`Livraisons.tsx`), filtré sur ce sujet et déjà réglé
+  // sur « Animations », exactement le point de départ que donnait l'ancien
+  // bouton. Ce n'est plus un clic unique qui télécharge une archive : c'est
+  // l'écran de livraison, avec son choix de forme et sa relecture des
+  // fichiers — la même route que toute autre sortie du jeu depuis `RV8`. Un
+  // personnage sans aucune animation n'a donc plus de cas particulier à
+  // montrer : le bouton reste, comme pour tout sujet, et c'est l'écran de
+  // livraison lui-même qui dirait qu'il n'y a rien à livrer.
 
-  /** Un personnage dont deux attitudes portent une animation. */
-  const LE_NAIN = personnage("Le nain", {
-    cases: PLAN.map((p) => ({
-      pose: p.identifiant,
-      demandees: p.images,
-      images: [],
-      ...VIDE_C3,
-      bandes: ["marche", "repos"].includes(p.identifiant)
-        ? [
-            {
-              ...bandeRendue(p.identifiant, [0, 2, 4, 6]),
-              pose: p.identifiant,
-              direction: null,
-              brouillon: false,
-            },
-          ]
-        : [],
-    })),
-  })
+  test("« Livrer… » ouvre l'archive de ses animations, filtrée sur ce sujet", async () => {
+    const avecAnimation = personnage("Le nain", {
+      cases: PLAN.map((p) => ({
+        pose: p.identifiant,
+        demandees: p.images,
+        images: [],
+        ...VIDE_C3,
+        bandes: p.identifiant === "marche" ? [{ ...bandeRendue("marche", [0, 2, 4, 6]), pose: p.identifiant, direction: null, brouillon: false }] : [],
+      })),
+    })
+    const { fetchDouble } = serveurDouble({ personnages: [avecAnimation] })
+    await monter(fetchDouble)
+    const ecran = await ouvrirLEtabli("Le nain")
 
-  const surLeCalqueAnime = async (
-    quelPersonnage: Personnage = LE_NAIN,
-    options: Parameters<typeof serveurDouble>[0] = {},
-  ) => {
-    const double = serveurDouble({ personnages: [quelPersonnage], ...options })
-    await monter(double.fetchDouble)
-    const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(await etabli.findByRole("button", { name: /^animations / }))
-    return { ...double, etabli }
-  }
+    fireEvent.click(await ecran.findByRole("button", { name: "Livrer…" }))
 
-  test("toutes les animations d'un personnage sortent en une archive à son nom", async () => {
-    const poses = guetterLesFichiers()
-    const { etabli, appels } = await surLeCalqueAnime()
-
-    fireEvent.click(
-      await etabli.findByRole("button", { name: "Sortir ses animations ›" }),
-    )
-
-    await waitFor(() =>
-      expect(poses).toEqual(["le-nain-animations-20260904-1743.zip"]),
-    )
-    // **L'écran ne dresse pas la liste des bandes** : il nomme le personnage, et
-    // le serveur rassemble. Une liste montée ici serait une seconde écriture de
-    // « les animations de ce personnage », et elle divergerait de la jauge.
-    const envoi = appels.find((a) => a.url.endsWith("/strips/export"))
-    expect(envoi?.url).toBe(`/api/characters/${LE_NAIN.identifiant}/strips/export`)
-    expect(envoi?.corps).not.toHaveProperty("identifiants")
-  })
-
-  test("la sortie ne vit que sur le calque animé", async () => {
-    const { etabli } = await surLeCalqueAnime()
-
-    expect(
-      etabli.getByRole("button", { name: "Sortir ses animations ›" }),
-    ).toBeTruthy()
-
-    // De retour sur les images fixes, plus rien : ce qui sort ici est une
-    // animation, et les images ont déjà leur sortie, dans la galerie.
-    fireEvent.click(etabli.getByRole("button", { name: /^images / }))
-    expect(
-      etabli.queryByRole("button", { name: "Sortir ses animations ›" }),
-    ).toBeNull()
-  })
-
-  test("un personnage sans aucune animation n'a rien à faire sortir", async () => {
-    // **Rien plutôt qu'un bouton grisé** : il n'y a pas de geste à préparer,
-    // et un bouton éteint promettrait qu'il suffit de revenir. Ce qui manque
-    // est une animation, et la ligne au-dessus dit déjà laquelle.
-    const { etabli } = await surLeCalqueAnime(
-      personnage("Le nain", {
-        cases: PLAN.map((p) => ({
-          pose: p.identifiant,
-          demandees: p.images,
-          images: [],
-          ...VIDE_C3,
-          bandes: [],
-        })),
-      }),
-    )
-
-    expect(
-      etabli.queryByRole("button", { name: "Sortir ses animations ›" }),
-    ).toBeNull()
+    await screen.findByRole("heading", { name: "Livrer au jeu", level: 1 })
+    // **La portée est déjà ce sujet, la nature déjà « animations »** — le même
+    // point de départ que l'ancien bouton de l'établi, sans repasser par un
+    // menu.
+    expect(screen.getByRole("button", { name: "Animations" }).getAttribute("aria-pressed")).toBe("true")
+    expect((screen.getByLabelText("Lequel") as HTMLSelectElement).value).toBe(avecAnimation.identifiant)
   })
 })
 
@@ -20965,10 +19638,14 @@ describe("A7 · l'atelier d'une animation", () => {
     const double = serveurDouble({ personnages: [AVEC_UNE_MARCHE], ...options })
     await monter(double.fetchDouble)
     const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(await etabli.findByRole("button", { name: /^animations / }))
+    // ⚠️ **La rangée « animations marche » vivait dans la matrice, retirée en
+    // RV10** : l'onglet Animations est l'onglet par défaut d'un personnage,
+    // mais sa pose se déplie par elle-même, et sa vignette ouvre l'atelier.
+    fireEvent.click((await etabli.findByText("marche")).closest("button") as HTMLElement)
+    fireEvent.click(await etabli.findByRole("button", { name: "marche" }))
     fireEvent.click(
       await etabli.findByRole("button", {
-        name: "Retravailler l'animation marche",
+        name: "L'ouvrir dans l'atelier",
       }),
     )
     const cadre = await waitFor(() => {
@@ -23016,11 +21693,9 @@ describe("B1 — le miroir", () => {
     })
     await monter(double.fetchDouble)
     await ouvrirLEtabli("Le pèlerin")
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: `Ouvrir ${IMAGE.label} dans son outil`,
-      }),
-    )
+    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("button", { name: IMAGE.label }))
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
       await waitFor(() => {
         const ecran = document.querySelector("[data-retouche]")
@@ -23087,104 +21762,14 @@ describe("B1 — le miroir", () => {
   //
   // Les deux sont notées dans `docs/PLAN-carnet.md` § `B27`. Le serveur, lui,
   // n'a pas bougé : `tests/test_b1.py` tient la route du miroir.
-
-  // ── « L’image retournée se range dans la direction qu'on lui désigne, et la
-  //     case se remplit » ──────────────────────────────────────────────────────
-
-  /** Une chose à quatre directions dont **une seule** est dessinée — le cas
-   *  mesuré du dépôt : michel porte 25 images en `droite` et aucune en
-   *  `gauche`. */
-  const casesAvecUneSeuleDirection = (remplie: string, images: Asset[]) =>
-    PLAN.map((p) => ({
-      pose: p.identifiant,
-      demandees: p.images * QUATRE.length,
-      images: p.identifiant === "repos" ? images : [],
-      ...VIDE_C3,
-      bandes_demandees: QUATRE.length,
-      directions: QUATRE.map((d) => ({
-        ...d,
-        demandees: p.images,
-        images: p.identifiant === "repos" && d.identifiant === remplie ? images : [],
-        a_confirmer: 0,
-        bandes: [],
-        bandes_ecartees: [],
-      })),
-      directions_rangees: [],
-    }))
-
-  const VUE_A_QUATRE: DirectionsDuJeu = {
-    directions: QUATRE,
-    origine: "vue",
-    vue: "vue-dessus-34",
-    vue_libelle: "De dessus, 3/4",
-    proposees: QUATRE,
-  }
-
-  const ouvrirLaMatrice = async (
-    options: Parameters<typeof serveurDouble>[0] = {},
-  ) => {
-    const image = asset("cccc3333-0", "le pèlerin vers l'est")
-    const double = serveurDouble({
-      directions: VUE_A_QUATRE,
-      personnages: [
-        personnage("Balthazar", {
-          cases: casesAvecUneSeuleDirection("est", [image]),
-        }),
-      ],
-      ...options,
-    })
-    await monter(double.fetchDouble)
-    return { ...double, etabli: await ouvrirLEtabli("Balthazar"), image }
-  }
-
-  test("la case vide d'en face gagne un geste gratuit, et lui seul", async () => {
-    // **Il ne paraît que s'il y a de quoi retourner.** Un bouton grisé sur les
-    // cases où le miroir ne s'applique pas serait une colonne de refus — et le
-    // nord, qu'un miroir gauche-droite ne fabrique pas, n'en a pas.
-    const { etabli } = await ouvrirLaMatrice({
-      miroirs: { "cccc3333-0": { propose: "ouest", raison: null } },
-    })
-
-    expect(
-      await etabli.findByRole("button", { name: "Retourner vers ouest pour repos" }),
-    ).toBeTruthy()
-    for (const nom of ["sud", "nord", "est"])
-      expect(
-        etabli.queryByRole("button", { name: `Retourner vers ${nom} pour repos` }),
-      ).toBeNull()
-  })
-
-  test("le geste appelle la fabrique avec la case qu'il remplit", async () => {
-    const { etabli, appels } = await ouvrirLaMatrice({
-      miroirs: { "cccc3333-0": { propose: "ouest", raison: null } },
-    })
-
-    fireEvent.click(
-      await etabli.findByRole("button", { name: "Retourner vers ouest pour repos" }),
-    )
-
-    await waitFor(() => {
-      const parti = appels.find(
-        (a) => a.url === "/api/assets/cccc3333-0/mirror" && a.corps,
-      )
-      expect(parti).toBeTruthy()
-      expect((parti!.corps as { direction: string }).direction).toBe("ouest")
-    })
-  })
-
-  test("sans paire connue, aucune case ne propose de retourner", async () => {
-    // **La table du domaine ne connaît que les identifiants que le produit
-    // livre, et elle n'invente rien.** L'auteur nomme ses directions ; deviner
-    // qu'un mot français en désigne un autre serait la déduction que le produit
-    // refuse ailleurs.
-    const { etabli } = await ouvrirLaMatrice()
-
-    await etabli.findByRole("button", { name: "Fabriquer repos vers ouest" })
-    for (const nom of ["sud", "nord", "est", "ouest"])
-      expect(
-        etabli.queryByRole("button", { name: `Retourner vers ${nom} pour repos` }),
-      ).toBeNull()
-  })
+  //
+  // ⚠️ **Trois essais de plus sont partis avec l'établi** (RV10, 21-22 sept.
+  // 2026) : « la case vide d'en face gagne un geste gratuit », « le geste
+  // appelle la fabrique avec la case qu'il remplit » et « sans paire connue,
+  // aucune case ne propose de retourner » mesuraient *la fabrique du miroir*
+  // elle-même — la porte que `B25` avait déjà retirée (voir la note
+  // au-dessus). Rien à réécrire : la porte qui manquait est celle-là même
+  // dont l'établi était le dernier accès, et elle n'existe plus nulle part.
 
   // ── « Une image retournée porte sa provenance, distincte d'une image
   //     générée » ──────────────────────────────────────────────────────────────

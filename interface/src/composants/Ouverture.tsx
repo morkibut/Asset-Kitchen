@@ -17,30 +17,33 @@
  * **Les puces d'une carte lisent l'univers du jeu, pas seulement le sien** :
  * `Projet.en_json()` porte l'univers de chaque jeu, ouvert ou non — c'est
  * l'arbre entier qui le sert, aucun aller-retour de plus. Seule la carte du
- * jeu **ouvert** ajoute une fraction de poses : elle seule dispose du plan et
- * des personnages déjà chargés dans l'atelier.
+ * jeu **ouvert** ajoute une fraction d'avancement (RV10) : elle seule peut lire
+ * `GET /dashboard`, qui ne parle que du jeu déjà choisi.
  */
 
 import { useEffect, useState, type ReactNode } from "react"
 import {
+  api,
   dollars,
   Refus,
   AUCUNE_CIBLE,
   type Bibliotheque,
-  type Personnage,
-  type Pose,
+  type FractionAvancement,
   type Projet,
 } from "../api"
 
 const JOUR = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long" })
 
-/** Combien de poses du plan ont déjà au moins une image, tous personnages
- *  confondus — la seule fraction qu'on puisse donner sans un second appel :
- *  elle lit ce que l'atelier a déjà en mémoire pour le jeu ouvert. */
-function posesCouvertes(plan: readonly Pose[], personnages: readonly Personnage[]): number {
-  return plan.filter((pose) =>
-    personnages.some((p) => p.cases.some((c) => c.pose === pose.identifiant && c.images.length > 0)),
-  ).length
+/** Ce qu'une carte de jeu montre de son avancement (RV10) : le même compte
+ *  que la carte du Codex, la fiche et l'objectif — jamais recalculé ici,
+ *  seulement sommé sur les familles que `GET /dashboard` rend déjà. */
+function sommerLesFamilles(familles: readonly { images: FractionAvancement; animations: FractionAvancement }[]) {
+  const sommer = (lire: (f: { images: FractionAvancement; animations: FractionAvancement }) => number) =>
+    familles.reduce((n, f) => n + lire(f), 0)
+  return {
+    images: { pretes: sommer((f) => f.images.pretes), demandees: sommer((f) => f.images.demandees) },
+    animations: { pretes: sommer((f) => f.animations.pretes), demandees: sommer((f) => f.animations.demandees) },
+  }
 }
 
 function Puce({ children, vide }: { children: ReactNode; vide?: boolean }) {
@@ -83,7 +86,7 @@ function BandeDePalette({ palette }: { palette: readonly string[] }) {
 function CarteDuJeu({
   projet,
   ouvert,
-  posesFraction,
+  avancement,
   onOuvrir,
   onSupprimer,
   confirmerSuppression,
@@ -91,7 +94,7 @@ function CarteDuJeu({
 }: {
   projet: Projet
   ouvert: boolean
-  posesFraction: string | null
+  avancement: { images: { pretes: number; demandees: number }; animations: { pretes: number; demandees: number } } | null
   onOuvrir: () => void
   onSupprimer: () => void
   confirmerSuppression: boolean
@@ -127,7 +130,9 @@ function CarteDuJeu({
             {projet.assets === 0
               ? "aucune image · rien dépensé"
               : `${projet.assets} image${projet.assets > 1 ? "s" : ""} · ${dollars(projet.total_usd)}`}
-            {posesFraction ? ` · ${posesFraction}` : ""}
+            {avancement && avancement.animations.demandees + avancement.images.demandees > 0
+              ? ` · ${avancement.animations.pretes}/${avancement.animations.demandees} anim. · ${avancement.images.pretes}/${avancement.images.demandees} im.`
+              : ""}
           </span>
           <div className="flex flex-wrap gap-[8px]">
             <Puce>{univers.style === "dessin" ? "dessin" : "pixel art"}</Puce>
@@ -196,8 +201,6 @@ function CarteDuJeu({
 
 export function Ouverture({
   bibliotheque,
-  personnages,
-  plan,
   onOuvrir,
   onCommencer,
   onSupprimer,
@@ -208,12 +211,6 @@ export function Ouverture({
   onErreur,
 }: {
   bibliotheque: Bibliotheque
-  /** Le plan et les personnages du jeu **ouvert** — pour sa seule carte, la
-   *  fraction de poses déjà couvertes. Les autres jeux n'ont pas cette
-   *  donnée en mémoire, et ce n'est pas cet écran qui doit les rouvrir un par
-   *  un pour l'obtenir. */
-  personnages: readonly Personnage[]
-  plan: readonly Pose[]
   onOuvrir: (identifiant: string) => void
   /** Ouvrir le parcours des règles du jeu, en mode création (`B14`). C'est lui
    *  qui demande le nom, et lui qui crée : cet écran-ci ne fait que choisir
@@ -229,6 +226,22 @@ export function Ouverture({
   const [recherche, setRecherche] = useState("")
   const [aSupprimer, setASupprimer] = useState<string | null>(null)
   const [reconstruction, setReconstruction] = useState(false)
+
+  // **La fraction d'avancement du jeu ouvert** (RV10) — le même compte que la
+  // carte du Codex, la fiche et l'objectif, jamais recalculé ici. Un seul
+  // aller-retour, et seulement pour celui déjà choisi : les autres jeux n'ont
+  // pas de fraction sur leur carte, et ce n'est pas cet écran qui doit les
+  // rouvrir un par un pour l'obtenir.
+  const [avancementDuJeuOuvert, setAvancementDuJeuOuvert] = useState<ReturnType<typeof sommerLesFamilles> | null>(null)
+  useEffect(() => {
+    let actif = true
+    setAvancementDuJeuOuvert(null)
+    if (!bibliotheque.courant) return
+    api.bilanDuJeu().then((bilan) => {
+      if (actif) setAvancementDuJeuOuvert(sommerLesFamilles(bilan.familles))
+    }).catch(() => { /* la carte se contente alors de ce qu'elle sait déjà */ })
+    return () => { actif = false }
+  }, [bibliotheque.courant])
 
   const echouer = (erreur: unknown, defaut: string) =>
     onErreur(erreur instanceof Refus ? erreur.message : defaut)
@@ -315,11 +328,7 @@ export function Ouverture({
               key={projet.identifiant}
               projet={projet}
               ouvert={projet.identifiant === bibliotheque.courant}
-              posesFraction={
-                projet.identifiant === bibliotheque.courant && plan.length > 0
-                  ? `${posesCouvertes(plan, personnages)} poses sur ${plan.length}`
-                  : null
-              }
+              avancement={projet.identifiant === bibliotheque.courant ? avancementDuJeuOuvert : null}
               onOuvrir={() => onOuvrir(projet.identifiant)}
               onSupprimer={() => void supprimer(projet.identifiant)}
               confirmerSuppression={aSupprimer === projet.identifiant}

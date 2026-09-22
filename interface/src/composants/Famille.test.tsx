@@ -306,6 +306,19 @@ describe("la grille et son pied", () => {
   })
 })
 
+// **RV10** — la carte affiche le compte que le serveur rend, jamais un
+// second calcul : les mêmes chiffres que la fiche et l'objectif liraient
+// pour ce sujet (`FicheDuSujet.test.tsx`, `ObjectifDuSujet.test.tsx`).
+describe("la carte affiche le compte du serveur, sans le recalculer", () => {
+  test("la carte du passeur montre 2 / 6 animations et 5 images", async () => {
+    monter()
+    await screen.findByText("Le passeur")
+    expect(carte("c").textContent).toContain("2")
+    expect(carte("c").textContent).toContain("6")
+    expect(carte("c").textContent).toContain("5 im.")
+  })
+})
+
 describe("la recherche et les filtres partent au serveur", () => {
   test("chercher relance la lecture avec la recherche, et remet la page à sa première limite", async () => {
     const { appels } = monter()
