@@ -57,6 +57,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   api,
   prix,
+  duree,
   type Asset,
   type AttenteVideo,
   type BaseModelesVideo,
@@ -119,17 +120,6 @@ function attenteDeLot(attente: AttenteVideo | null, nombre: number): number | nu
   if (!attente) return null
   if (nombre <= 1) return attente.secondes
   return attente.secondes + (nombre - 1) * (attente.secondes_suivant || attente.secondes)
-}
-
-/** Une durée en toutes lettres. **Jamais un nombre de secondes nu** au-delà de
- *  la minute : « 442 s » ne se lit pas, « 7 min » se lit. */
-export function duree(secondes: number): string {
-  if (secondes < 60) return `${Math.round(secondes)} s`
-  const minutes = Math.round(secondes / 60)
-  if (minutes < 60) return `${minutes} min`
-  const heures = Math.floor(minutes / 60)
-  const reste = minutes % 60
-  return reste ? `${heures} h ${reste} min` : `${heures} h`
 }
 
 export function EcranClip({

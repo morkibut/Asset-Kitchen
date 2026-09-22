@@ -44,7 +44,7 @@ import {
   type Prise,
   type Personnage,
 } from "../api"
-import { remonterLaBande } from "./AtelierDeBande"
+import { remonterLaBande } from "../bande"
 import { Bloc, Bouton, Curseur, Libelle, Raison, Segments, usePli } from "./pieces"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 

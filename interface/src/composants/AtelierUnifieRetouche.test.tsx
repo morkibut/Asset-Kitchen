@@ -2,7 +2,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, expect, test, vi } from "vitest"
 import { api, RECETTE_VIDE, UNIVERS_VIDE, type Asset, type AtelierDeBande, type Bande, type EtatTraitement } from "../api"
 import { AIDE } from "../aide"
-import { EcranAtelierDeBande, remonterLaBande } from "./AtelierDeBande"
+import { EcranAtelierDeBande } from "./AtelierDeBande"
+import { remonterLaBande } from "../bande"
 import { EcranMontage } from "./Montage"
 import { toutReplier } from "./pieces"
 

@@ -8008,6 +8008,17 @@ export const secondes = (duree: number) =>
 /** Une durée telle qu'on la dit, pas telle qu'un chronomètre l'écrit (RV4).
  *  « 20 s » sous la minute, « 2 min 28 » au-dessus — jamais « 148.00 s », qui
  *  fait faire le calcul à l'auteur pour une musique. */
+/** Une durée en toutes lettres. **Jamais un nombre de secondes nu** au-delà de
+ *  la minute : « 442 s » ne se lit pas, « 7 min » se lit. */
+export function duree(secondes: number): string {
+  if (secondes < 60) return `${Math.round(secondes)} s`
+  const minutes = Math.round(secondes / 60)
+  if (minutes < 60) return `${minutes} min`
+  const heures = Math.floor(minutes / 60)
+  const reste = minutes % 60
+  return reste ? `${heures} h ${reste} min` : `${heures} h`
+}
+
 export const dureeEnClair = (duree: number): string => {
   const s = Math.round(duree)
   return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")}`

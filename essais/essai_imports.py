@@ -175,35 +175,35 @@ def auto_essai() -> list[str]:
     Retourne les phrases d'échec de l'auto-essai — vide si le garde-fou se
     comporte comme annoncé."""
     fautes = []
-    # `Montage.tsx` existe, n'est pas dans le carnet, n'est pas une exception :
+    # `Calibrage.tsx` existe, n'est pas dans le carnet, n'est pas une exception :
     # emprunter une fonction à ce fichier doit être refusé.
     depuis = RACINE / "interface" / "src" / "composants" / "Retouche.tsx"
-    regression = 'import { unReglageEmprunte } from "./Montage"\n'
+    regression = 'import { unReglageEmprunte } from "./Calibrage"\n'
     trouve = emprunts_hors_carnet(regression, depuis)
     if not trouve:
         fautes.append(
-            "l'auto-essai : un import fabriqué de `Montage.tsx` (hors carnet, hors "
+            "l'auto-essai : un import fabriqué de `Calibrage.tsx` (hors carnet, hors "
             "exceptions) n'a pas été refusé — le garde-fou ne garde rien"
         )
     # Une constante en SCREAMING_CASE commence aussi par une majuscule, mais ce
     # n'est pas un composant qu'on monte — c'est exactement le genre de symbole
     # que l'import réel de `B16` empruntait à `Places.tsx` (`TROUS`,
     # `SENS_LIVRES`), et il doit être refusé comme n'importe quelle fonction.
-    constante = 'import { TROUS, SENS_LIVRES } from "./Montage"\n'
+    constante = 'import { TROUS, SENS_LIVRES } from "./Calibrage"\n'
     trouve = emprunts_hors_carnet(constante, depuis)
     if not trouve:
         fautes.append(
             "l'auto-essai : une constante SCREAMING_CASE (`TROUS`, `SENS_LIVRES`) "
-            "empruntée à `Montage.tsx` n'a pas été refusée — elle passe pour un "
+            "empruntée à `Calibrage.tsx` n'a pas été refusée — elle passe pour un "
             "composant alors qu'elle n'en est pas un"
         )
     # Monter un composant du même fichier hors-carnet reste un geste normal —
     # une majuscule dit qu'on l'affiche, pas qu'on lui emprunte une logique.
-    composition = 'import { EcranDeMontage } from "./Montage"\n'
+    composition = 'import { EcranCalibrage } from "./Calibrage"\n'
     trouve = emprunts_hors_carnet(composition, depuis)
     if trouve:
         fautes.append(
-            "l'auto-essai : monter un composant (`EcranDeMontage`) d'un fichier "
+            "l'auto-essai : monter un composant (`EcranCalibrage`) d'un fichier "
             f"hors carnet a été refusé à tort — {trouve}"
         )
     # Une exception nommée reste un laissez-passer, quel que soit ce qu'on lui
