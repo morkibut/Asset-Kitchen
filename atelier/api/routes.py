@@ -745,6 +745,11 @@ class CorpsGeneration(BaseModel):
     # le sujet de sa case. Ni `personnage`, ni `poses`, ni `piece` à côté ; un
     # décor, une tuile ou un sujet inconnu sont refusés avant de payer.
     sujets: list[str] | None = None
+    # **La première planche d'un sujet** (TS3) : la pose de repos dans les
+    # directions du jeu, d'après son concept art pris comme le personnage à
+    # reproduire. `pose` et `directions` peuvent être omis — le service les
+    # remplit — ; donnés, ils doivent être ceux du jeu.
+    premiere_planche: bool = False
 
 
 @routeur.post("/generations", status_code=202)
@@ -766,6 +771,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         palette=corps.palette,
         garder_mise_en_page=corps.garder_mise_en_page,
         decouper_a_l_arrivee=corps.decouper_a_l_arrivee,
+        premiere_planche=corps.premiere_planche,
     )
     atelier = _atelier(requete)
     generation = await atelier.generations.soumettre(
@@ -832,6 +838,8 @@ class CorpsApercu(BaseModel):
     garder_mise_en_page: bool = False
     # La planche à plusieurs sujets (P2) — même liste que `CorpsGeneration`.
     sujets: list[str] | None = None
+    # La première planche (TS3) — même drapeau que `CorpsGeneration`.
+    premiere_planche: bool = False
 
 
 @routeur.post("/prompt/preview")
@@ -870,6 +878,7 @@ async def apercu_prompt(requete: Request, corps: CorpsApercu) -> dict[str, Any]:
         prompt_negatif=corps.prompt_negatif,
         garder_mise_en_page=corps.garder_mise_en_page,
         sujets=corps.sujets,
+        premiere_planche=corps.premiere_planche,
     )
 
 
@@ -923,6 +932,7 @@ async def envoi(requete: Request, corps: CorpsEnvoi) -> dict[str, Any]:
         prompt_negatif=corps.prompt_negatif,
         garder_mise_en_page=corps.garder_mise_en_page,
         sujets=corps.sujets,
+        premiere_planche=corps.premiere_planche,
     )
 
 

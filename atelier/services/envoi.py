@@ -156,6 +156,11 @@ class ServiceEnvoi:
         # **Une chose du jeu par case** (P2) : la planche à plusieurs sujets. Le
         # prix se dit alors deux fois — la planche, et ce que coûte un sujet.
         sujets: Sequence[str] | None = None,
+        # **La première planche** (TS3) : la pose de repos dans les directions
+        # du jeu, le concept art compté comme le personnage à reproduire. La
+        # pose et les directions se remplissent ici, par la même lecture que la
+        # soumission, pour que les cases et le prix soient ceux de la planche.
+        premiere_planche: bool = False,
     ) -> dict[str, Any]:
         """Tout ce que l'écran montre, en un aller-retour.
 
@@ -168,6 +173,12 @@ class ServiceEnvoi:
         palette_cochee = tri.etat(PALETTE, False)
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
+        if premiere_planche:
+            pose, direction, directions = self._generations.cases_de_premiere_planche(
+                projet, personnage, pose, direction, directions,
+                poses=poses, piece=piece, sujets=sujets,
+            )
+            poses = None
 
         apercu = self._generations.apercu(
             sujet,
@@ -198,6 +209,7 @@ class ServiceEnvoi:
             prompt_negatif=prompt_negatif,
             garder_mise_en_page=garder_mise_en_page,
             sujets=sujets,
+            premiere_planche=premiere_planche,
         )
         lignes = apercu["lignes"]
         cases = self._cases(poses, directions, piece, sujets)
@@ -224,6 +236,7 @@ class ServiceEnvoi:
             direction=direction,
             directions=directions,
             mise_en_page=garder_mise_en_page,
+            premiere_planche=premiere_planche,
             # **Un style local ne lit pas tout ce que le produit ajoute**
             # (relecture ML, défaut 1) : le compte le sait par le modèle, avec
             # les fonctions mêmes de l'envoi.

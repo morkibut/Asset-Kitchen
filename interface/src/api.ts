@@ -216,6 +216,8 @@ export type Generation = {
     /** **La case « Découper à l'arrivée » était cochée** (RS7) — absent sinon,
      *  pour la même raison. Jamais sans `garder_mise_en_page`. */
     decouper_a_l_arrivee?: boolean
+    /** **C'était la première planche du sujet** (TS3) — absent sinon. */
+    premiere_planche?: boolean
   }
   parametres_resolus: Record<string, unknown>
   ecartees: string[]
@@ -3130,6 +3132,19 @@ export type ReferenceDeLaChose = {
   ordre_des_vues?: string[]
 }
 
+/** **La première planche d'un sujet** (TS3), lue avant de payer : ce que
+ *  `generer({ premiere_planche: true })` demandera. `directions` vide = un jeu
+ *  vu de face, une seule image de repos. `design` est l'image qui part comme
+ *  le personnage à reproduire — la carte du concept art, sinon le portrait. */
+export type PremierePlanche = {
+  personnage: string
+  pose: string
+  pose_nom: string
+  directions: string[]
+  directions_noms: string[]
+  design: { asset: string; role: "reference"; origine: "asset" | "carte"; usage: "design" }[]
+}
+
 export type ReferencesDeLaChose = {
   personnage: string
   lignes: ReferenceDeLaChose[]
@@ -5099,6 +5114,12 @@ export const api = {
      *  l'ordre de lecture — la n-ième case porte le n-ième objet. Deux ou
      *  plus, jamais avec `personnage`, `poses` ni `piece`. */
     sujets?: string[] | null
+    /** **La première planche du sujet** (TS3) : sa pose de repos dans les
+     *  directions du jeu, d'après son concept art (ou portrait) envoyé comme
+     *  le personnage à reproduire. `pose` et `directions` peuvent être omis ;
+     *  donnés, ils doivent être ceux de `premierePlanche`. Refusé (409) avant
+     *  de payer sans concept art ni portrait. */
+    premiere_planche?: boolean
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",
@@ -5158,6 +5179,9 @@ export const api = {
     /** **Une planche à plusieurs objets** (P2) : les identifiants, dans
      *  l'ordre de lecture — la n-ième case porte le n-ième objet. */
     sujets?: string[] | null
+    /** **La première planche** (TS3), lue avant de payer — même drapeau que
+     *  `generer`. */
+    premiere_planche?: boolean
   }) =>
     appeler<Envoi>("/outgoing", {
       method: "POST",
@@ -6691,6 +6715,24 @@ export const api = {
     appeler<{ personnage: Personnage; references: ReferencesDeLaChose }>(
       `/characters/${personnage}/references/view-order`,
       { method: "PUT", body: JSON.stringify({ asset, ordre }) },
+    ),
+
+  /** **Ce que « Faire la planche des directions » demanderait** (TS3) : la
+   *  pose de repos, les directions du jeu dans son ordre, et l'image qui part
+   *  comme le personnage à reproduire. Rien n'est facturé. Refusé (409) quand
+   *  le sujet n'a ni concept art ni portrait. */
+  premierePlanche: (personnage: string) =>
+    appeler<PremierePlanche>(`/characters/${personnage}/first-sheet`),
+
+  /** **« C'est la référence »** (TS3) : cette planche devient la planche du
+   *  sujet (usage `planche`, les autres planches dépromues, l'image reste en
+   *  bibliothèque) et ses vues sont rangées dans ses directions, l'ordre lu sur
+   *  l'appel qui l'a faite. Refusé (409) : image d'un autre sujet, calque,
+   *  image écartée. */
+  choisirLaPlanche: (personnage: string, asset: string) =>
+    appeler<{ personnage: Personnage; references: ReferencesDeLaChose }>(
+      `/characters/${personnage}/references/sheet`,
+      { method: "PUT", body: JSON.stringify({ asset }) },
     ),
 
   /** **L'image de référence de sa fiche** (RP19) — celle qui dit à quoi le

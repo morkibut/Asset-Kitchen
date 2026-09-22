@@ -1166,19 +1166,27 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "says which of the game's directions this image shows — its "
             "instruction is appended automatically. Two poses or "
             "more go out as a single folded call, which is how a plan gets "
-            "filled without paying pose by pose. Costs money."
+            "filled without paying pose by pose. `first_sheet` makes the "
+            "character's FIRST SHEET instead (TS3): its rest pose in the game's "
+            "directions only, in one folded call, drawn after its concept art "
+            "(or portrait) sent as the character design to reproduce — `poses` "
+            "and `direction` are then filled by the atelier and may be left "
+            "empty; refused before paying when the character has neither "
+            "concept art nor portrait. Pick the sheet you like with "
+            "choose_character_sheet. Costs money."
         ),
     )
     @_refus_lisible
     async def generate_pose(
         character: str,
-        poses: list[str],
+        poses: list[str] | None = None,
         subject: str = "",
         direction: str = "",
         project: str | None = None,
         model: str | None = None,
         wait_seconds: float = ATTENTE_PAR_DEFAUT,
         folder: str | None = None,
+        first_sheet: bool = False,
     ) -> dict[str, Any]:
         """La case que l'écran arme, armée par l'agent (US-156).
 
@@ -1195,9 +1203,14 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         """
         projet = _projet_ouvert(atelier, project)
         vise = _personnage(atelier, projet, character)
-        voulues = [_pose(atelier, projet, nomme) for nomme in poses]
-        if not voulues:
+        voulues = [_pose(atelier, projet, nomme) for nomme in (poses or ())]
+        if not voulues and not first_sheet:
             raise ErreurAtelier("dis quelle attitude remplir — « poses » est vide")
+        if first_sheet:
+            # **La première planche** (TS3) : le service remplit la pose de
+            # repos et les directions du jeu, et refuse ce qui ne s'y prête pas
+            # — la même lecture que l'écran, jamais une seconde règle ici.
+            voulues = voulues[:1]
 
         # **La place est retenue avant l'appel, et rendue quoi qu'il arrive** —
         # même `finally` que `generate_asset`, et pour la même raison. Un lot
@@ -1219,6 +1232,7 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     or atelier.production.sujet(projet, vise.identifiant),
                     variations=1,
                     options=options,
+                    premiere_planche=first_sheet,
                 ),
                 projet=projet,
                 provenance=AGENT,

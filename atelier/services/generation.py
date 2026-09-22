@@ -51,6 +51,7 @@ from atelier.domaine.erreurs import (
     GenerationInconnue,
     SansCle,
 )
+from atelier.domaine.demande import REFUS_PREMIERE_ET_MISE_EN_PAGE
 from atelier.domaine.generation import (
     ASSET,
     AUTEUR,
@@ -60,10 +61,12 @@ from atelier.domaine.generation import (
     PALETTE,
     PLANCHE_JOINTE,
     REFERENCE,
+    REFERENCE_DESIGN,
     REFERENCE_DIRECTION,
     REFERENCE_MISE_EN_PAGE,
     REFERENCE_PLANCHE,
     STYLE,
+    USAGE_DESIGN,
 )
 from atelier.domaine.vue import (
     calage_de_planche,
@@ -162,6 +165,14 @@ SUJET_A_GARDER = "sujet"
 # 6). Une clé réservée des options, comme pour le clip de la maison : c'est le
 # seul endroit de la demande qui voyage jusqu'au fournisseur.
 GRAINE = "graine"
+
+# **La première planche d'un sujet** (TS3). La pose de repos s'appelle `repos`
+# dans le plan par défaut (`atelier/domaine/plan.py`) ; un plan qui ne la tient
+# pas retombe sur sa première pose. Et la provenance du personnage à reproduire,
+# nommée dans le compte de l'écran de confirmation selon d'où il vient.
+POSE_DE_REPOS = "repos"
+PROVENANCE_DESIGN_CARTE = "concept art · personnage à reproduire"
+PROVENANCE_DESIGN_PORTRAIT = "portrait · personnage à reproduire"
 
 
 def role_de_planche(*, cases: int, piece: bool) -> str | None:
@@ -801,6 +812,16 @@ class ServiceGenerations:
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
 
+        # **La première planche** (TS3) : la pose de repos, les directions du
+        # jeu dans son ordre — remplies ou vérifiées, et refusées avant de payer
+        # sans rien à reproduire.
+        if demande.premiere_planche:
+            pose, direction, directions = self.cases_de_premiere_planche(
+                projet, personnage, pose, direction, directions,
+                poses=poses, piece=piece, sujets=sujets,
+            )
+            poses = None
+
         # **La case visée est vérifiée avant qu'un centime parte** (US-120). Un
         # personnage disparu ou une pose qu'il ne tient plus doivent se dire
         # ici : l'écran n'arme que des cases visibles, mais un onglet resté
@@ -885,6 +906,7 @@ class ServiceGenerations:
             directions=directions,
             # Refaire une planche emporte la planche du sujet (RS2).
             mise_en_page=demande.garder_mise_en_page,
+            premiere_planche=demande.premiere_planche,
         )
         # **L'image dont on garde la mise en page** (RS2), choisie sur ce qui
         # part vraiment — ou le refus, avant tout paiement.
@@ -1657,6 +1679,8 @@ class ServiceGenerations:
                 demande.get("decouper_a_l_arrivee")
                 and demande.get("garder_mise_en_page")
             ),
+            # Et la première planche (TS3), pour la même raison.
+            premiere_planche=bool(demande.get("premiere_planche")),
             # **Le fond se recalcule, il ne se relit pas** (RT3). Le texte de la
             # génération porte déjà la couleur qui est partie ; les références,
             # elles, se reposent dessus, et le calcul rend la même réponse sur
@@ -2574,6 +2598,18 @@ class ServiceGenerations:
                     f"the same layout, framing and scale — changing only what the "
                     f"request below asks for. Every view is the same character."
                 )
+            elif role == REFERENCE_DESIGN:
+                # **Le personnage à reproduire** (TS3) : le concept art d'une
+                # première planche. Pas une inspiration de style — le dessin
+                # même, à redessiner dans le style et la caméra du jeu. Sa
+                # pose et son cadrage ne sont pas la demande : la planche, plus
+                # bas, dit quoi dessiner et dans quelles directions.
+                texte = (
+                    f"Image {rang} — THE CHARACTER DESIGN TO REPRODUCE (its concept "
+                    f"art): keep the same proportions, outfit, colours and "
+                    f"silhouette, and redraw it in the game's style and camera. Do "
+                    f"NOT copy its pose, its framing or its background."
+                )
             elif role.startswith(f"{REFERENCE_DIRECTION}:"):
                 # **Une vue rangée dans une direction se dit vue sous cet angle**
                 # (RS1), avec la consigne du jeu pour cet angle-là — la phrase
@@ -2793,6 +2829,10 @@ class ServiceGenerations:
         garder_mise_en_page: bool = False,
         # La planche à plusieurs sujets (P2), composée par le même `_plier`.
         sujets: Sequence[str] | None = None,
+        # **La première planche** (TS3) : pose et directions remplies ou
+        # vérifiées par `cases_de_premiere_planche`, le concept art nommé comme le personnage à
+        # reproduire — mêmes refus qu'à la soumission.
+        premiere_planche: bool = False,
     ) -> dict[str, Any]:
         """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
 
@@ -2816,6 +2856,14 @@ class ServiceGenerations:
         """
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
+        if premiere_planche:
+            if garder_mise_en_page:
+                raise DemandeRefusee(REFUS_PREMIERE_ET_MISE_EN_PAGE)
+            pose, direction, directions = self.cases_de_premiere_planche(
+                projet, personnage, pose, direction, directions,
+                poses=poses, piece=piece, sujets=sujets,
+            )
+            poses = None
         pliage = self._plier(
             projet, personnage, poses, piece, pose, directions, sujets=sujets
         )
@@ -2835,6 +2883,7 @@ class ServiceGenerations:
                 direction=direction,
                 directions=directions,
                 mise_en_page=garder_mise_en_page,
+                premiere_planche=premiere_planche,
             )
             # **Exactement la liste de `preparer`, par la même fonction** (R7) :
             # gabarit ou planche, puis bande de couleurs, dans l'ordre où les
@@ -3110,6 +3159,7 @@ class ServiceGenerations:
         direction: str | None = None,
         directions: Sequence[str] | None = None,
         mise_en_page: bool = False,
+        premiere_planche: bool = False,
     ) -> tuple[tuple[Reinjection, ...], tuple[Reinjection, ...]]:
         """Ce qui part en image, et ce que le plafond laisse au sol.
 
@@ -3140,6 +3190,7 @@ class ServiceGenerations:
             planche=planche,
             direction=angle,
             sans_concept_arts=mise_en_page,
+            premiere_planche=premiere_planche,
         )
         reinjectes = _reinjectes(
             tuple(references)
@@ -3147,6 +3198,10 @@ class ServiceGenerations:
             + self._de_lambiance(projet, personnage)
             + self._artworks(echelle, projet)
         )
+        # **Le personnage à reproduire est la demande** (TS3), comme le gabarit
+        # d'une planche : il ne s'écarte pas et ne cède pas devant le plafond —
+        # un modèle qui ne peut pas le recevoir est refusé avant de payer.
+        design = {r.asset for r in reinjectes if r.usage == USAGE_DESIGN}
         # **Puis ce qui est écarté** (US-126). La portée de la génération, quand
         # elle a un avis, décide **seule** : c'est la plus étroite, et c'est la
         # règle affichée à l'écran. Sans avis — un agent, une relance —, les
@@ -3156,12 +3211,14 @@ class ServiceGenerations:
             if references_ecartees is not None
             else set(self._ecartees_durables(projet, personnage))
         )
-        reinjectes = tuple(r for r in reinjectes if r.asset not in hors_images)
+        reinjectes = tuple(
+            r for r in reinjectes if r.asset not in hors_images or r.asset in design
+        )
         # **Puis le plafond du modèle** (F6). Ce que le produit ajoute de
         # lui-même cède ; ce que l'auteur a joint ne cède jamais.
         return self._sous_le_plafond(
             reinjectes,
-            {r.asset for r in references},
+            {r.asset for r in references} | design,
             identifiant_modele,
             du_sujet={r.asset for r in concepts},
         )
@@ -3206,6 +3263,9 @@ class ServiceGenerations:
         # 1) : ce qu'il ne sait pas lire ne part pas, et le compte le dit. Pour
         # tout autre modèle — ou absent —, le compte est celui d'avant.
         modele: str | None = None,
+        # **La première planche** (TS3) : le concept art se compte comme le
+        # personnage à reproduire, et il ne s'écarte pas.
+        premiere_planche: bool = False,
     ) -> dict[str, Any]:
         """Ce qui partira, **ligne par ligne, avec sa provenance** (US-52, US-127).
 
@@ -3231,7 +3291,9 @@ class ServiceGenerations:
             planche=planche,
             direction=angle,
             sans_concept_arts=mise_en_page,
+            premiere_planche=premiere_planche,
         )
+        design = {r.asset for r in concepts if r.usage == USAGE_DESIGN}
         de_lambiance = self._de_lambiance(projet, personnage)
         ecartees = (
             self._production.ecartees(projet, personnage)
@@ -3257,6 +3319,10 @@ class ServiceGenerations:
                 asset: "décoché pour cet appel"
                 for asset in retenus
             }
+        # Le personnage à reproduire ne s'écarte à aucune portée (TS3) — comme
+        # à la soumission, par `_reinjections`.
+        for asset in design:
+            ecartees.pop(asset, None)
 
         toutes = _reinjectes(
             tuple(manuelles) + concepts + de_lambiance + artworks
@@ -3299,7 +3365,13 @@ class ServiceGenerations:
                 # part avant de décider de la retirer ». Six sources, six
                 # phrases, et jamais un mot que l'écran devrait interpréter.
                 "provenance": (
-                    "carte de la toile"
+                    # Le personnage à reproduire (TS3), dit comme tel : c'est
+                    # lui que la première planche redessine.
+                    PROVENANCE_DESIGN_CARTE
+                    if r.usage == USAGE_DESIGN and r.origine == CARTE
+                    else PROVENANCE_DESIGN_PORTRAIT
+                    if r.usage == USAGE_DESIGN
+                    else "carte de la toile"
                     if r.origine == CARTE and r.asset in de_la_toile
                     else "image de son ambiance"
                     if r.asset in siennes
@@ -3395,7 +3467,9 @@ class ServiceGenerations:
             # a cédé. C'est **ce chiffre-ci** qui décide du grisé d'un modèle,
             # pas le total : le total dit ce qu'on aimerait envoyer, celui-ci
             # dit ce qu'on ne peut pas ne pas envoyer.
-            "incompressibles": len({r.asset for r in manuelles}) + gabarit + bande,
+            "incompressibles": len({r.asset for r in manuelles} | design)
+            + gabarit
+            + bande,
             "gabarit": gabarit,
             # **Laquelle des deux, en toutes lettres** (M4) — `gabarit` dit
             # *combien*, celui-ci dit *laquelle*, et l'écran ne peut plus
@@ -3412,7 +3486,11 @@ class ServiceGenerations:
             "artworks": sum(
                 1 for l in retenues if l["provenance"] == "artwork officiel"
             ),
-            "concepts": sum(1 for l in retenues if l["provenance"] == "concept art"),
+            "concepts": sum(
+                1
+                for l in retenues
+                if l["provenance"] in ("concept art", PROVENANCE_DESIGN_CARTE)
+            ),
             "ambiance": sum(
                 1 for l in retenues if l["provenance"] == "image de son ambiance"
             ),
@@ -3607,6 +3685,142 @@ class ServiceGenerations:
             designes = designes + self._equipement.concept_arts(projet, piece)
         return tuple(dict.fromkeys(designes))
 
+    # ── La première planche (TS3) ────────────────────────────────────────────
+
+    def premiere_planche(
+        self, projet: str | None, personnage: str | None
+    ) -> dict[str, Any]:
+        """Ce que la première planche de ce sujet demanderait — **ou le refus**.
+
+        Lu, jamais enregistré, et c'est la même lecture que la soumission : la
+        pose de repos (`repos` si le sujet la tient, sinon la première pose de
+        son plan), les directions du jeu qu'il tient pour elle, **dans l'ordre
+        du jeu**, et l'image qui partira comme le personnage à reproduire.
+
+        Refuse **avant de payer** un sujet sans rien à reproduire : ni concept
+        art, ni portrait — l'appel dessinerait alors un inconnu.
+        """
+        if projet is None and self._bibliotheque is not None:
+            projet = self._bibliotheque.courant
+        if not personnage or self._production is None or not projet:
+            raise DemandeRefusee(
+                "la première planche se lance depuis un sujet — il n'y a rien à "
+                "reproduire sans lui"
+            )
+        vise = self._production.personnage(projet, personnage)
+        tenues = vise.tenues(self._production.plan_de(projet, vise))
+        if not tenues:
+            raise DemandeRefusee(
+                f"« {vise.nom} » ne tient aucune pose — la première planche est "
+                f"sa pose de repos dans les directions du jeu"
+            )
+        repos = next((p for p in tenues if p.identifiant == POSE_DE_REPOS), tenues[0])
+        angles = vise.directions_tenues(
+            repos, self._production.directions_du_jeu(projet)
+        )
+        design = self._design(projet, personnage)
+        if not design:
+            raise DemandeRefusee(
+                f"« {vise.nom} » n'a ni concept art ni portrait — rien à reproduire. "
+                f"Désignez-lui un concept art sur la toile, ou choisissez son "
+                f"portrait sur sa fiche"
+            )
+        return {
+            "personnage": vise.identifiant,
+            "pose": repos.identifiant,
+            "pose_nom": repos.nom,
+            "directions": [d.identifiant for d in angles],
+            "directions_noms": [d.nom for d in angles],
+            "design": [r.en_json() for r in design],
+        }
+
+    def cases_de_premiere_planche(
+        self,
+        projet: str | None,
+        personnage: str | None,
+        pose: str | None,
+        direction: str | None,
+        directions: Sequence[str] | None,
+        *,
+        poses: Sequence[str] | None = None,
+        piece: str | None = None,
+        sujets: Sequence[str] | None = None,
+    ) -> tuple[str, str | None, tuple[str, ...] | None]:
+        """`(pose, direction, directions)` de la première planche, **remplis ou
+        vérifiés** — un seul endroit, lu par la soumission, l'aperçu et l'écran
+        de confirmation.
+
+        Absents, ils sont remplis ; donnés, ils doivent être exactement ceux du
+        jeu, dans son ordre — sinon refus, jamais une correction silencieuse.
+        Deux directions ou plus font la planche pliée d'E13 ; une seule, la case
+        de cette direction ; aucune (un jeu vu de face), la case de la pose.
+        """
+        if (poses and len(dict.fromkeys(poses)) > 1) or piece or sujets:
+            raise DemandeRefusee(
+                "la première planche est une seule pose dans les directions du jeu "
+                "— ni lot de poses, ni pièce, ni planche à plusieurs sujets"
+            )
+        lue = self.premiere_planche(projet, personnage)
+        attendues = tuple(lue["directions"])
+        if pose and pose != lue["pose"]:
+            raise DemandeRefusee(
+                f"la première planche se fait dans la pose de repos "
+                f"(« {lue['pose']} »), pas dans « {pose} »"
+            )
+        demandees = tuple(
+            dict.fromkeys(d for d in (directions or ()) if d)
+        ) or ((direction,) if direction else ())
+        if demandees and demandees != attendues:
+            raise DemandeRefusee(
+                "la première planche demande les directions du jeu, et elles "
+                f"seules, dans son ordre : {', '.join(attendues) or 'aucune'}"
+            )
+        if len(attendues) >= 2:
+            return lue["pose"], None, attendues
+        return lue["pose"], (attendues[0] if attendues else None), None
+
+    def _design(
+        self, projet: str | None, personnage: str | None
+    ) -> tuple[Reinjection, ...]:
+        """**Le personnage à reproduire** de la première planche (TS3).
+
+        Règle tranchée : *le concept art part en référence seulement, jamais
+        aussi en style* — une seule fois l'image, une seule place dans le
+        plafond du modèle (`AGENTS.md`, point 4), et une seule façon de la lire.
+
+        **La carte d'abord, le portrait à défaut.** La carte est ce que
+        l'auteur a désigné comme concept art (US-124), y compris sur un sujet
+        qui n'est pas né de la toile ; depuis TS2 le portrait d'un sujet né
+        d'une carte en est une copie à l'octet près, et l'envoyer en plus ferait
+        partir deux fois la même image. Le portrait — le choisi, sinon le repli
+        de la fiche — ne sert donc que quand aucun concept art n'est désigné.
+        """
+        if self._production is None or not projet or not personnage:
+            return ()
+        cartes = self._concepts_identifiants(projet, personnage)
+        if cartes:
+            return tuple(
+                Reinjection(
+                    asset=identifiant,
+                    role=REFERENCE,
+                    origine=CARTE,
+                    usage=USAGE_DESIGN,
+                )
+                for identifiant in cartes
+            )
+        try:
+            vise = self._production.personnage(projet, personnage)
+            portrait = self._production.image_de_reference(projet, vise)
+        except ErreurAtelier:
+            return ()
+        if not portrait:
+            return ()
+        return (
+            Reinjection(
+                asset=portrait, role=REFERENCE, origine=ASSET, usage=USAGE_DESIGN
+            ),
+        )
+
     def _concepts(
         self,
         projet: str | None,
@@ -3616,6 +3830,7 @@ class ServiceGenerations:
         planche: bool = False,
         direction: str | None = None,
         sans_concept_arts: bool = False,
+        premiere_planche: bool = False,
     ) -> tuple[Reinjection, ...]:
         """Les concept arts du personnage visé, et de la pièce (US-124).
 
@@ -3638,7 +3853,19 @@ class ServiceGenerations:
         partent toujours ; une planche, une vue dans une direction ne partent que
         là où elles servent. L'usage voyage sur la réinjection — vide pour une
         libre, pour que ce qui partait avant parte à l'identique.
+
+        **La première planche** (TS3) : le concept art part comme le personnage
+        à reproduire (`_design`), et seules les promues libres l'accompagnent —
+        une planche ou une vue déjà rangée décrirait un autre dessin que celui
+        qu'on est en train de fabriquer.
         """
+        if premiere_planche:
+            return self._design(projet, personnage) + tuple(
+                Reinjection(asset=identifiant, role=REFERENCE, origine=ASSET)
+                for identifiant, _ in self._promues(
+                    projet, personnage, planche=False, direction=None
+                )
+            )
         return tuple(
             Reinjection(asset=identifiant, role=STYLE, origine=CARTE)
             for identifiant in (
@@ -3942,6 +4169,8 @@ def _role_a_nommer(reinjection: Reinjection) -> str:
     """
     if reinjection.role != REFERENCE or not reinjection.usage:
         return reinjection.role
+    if reinjection.usage == USAGE_DESIGN:
+        return REFERENCE_DESIGN
     if reinjection.usage == USAGE_PLANCHE:
         return REFERENCE_PLANCHE
     angle = direction_de_lusage(reinjection.usage)

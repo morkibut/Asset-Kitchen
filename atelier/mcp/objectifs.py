@@ -58,3 +58,21 @@ def installer_outils_objectifs(serveur: Any, atelier: Any, refus: Callable,
         projet = projet_vise(atelier, project)
         return {"project": projet, **atelier.sujet_depuis_carte.creer(
             projet, card, nom=name, description=description, famille=family, provenance=AGENT)}
+
+    @serveur.tool(name="choose_character_sheet", meta=fiche("C'est la référence"), description=
+                  "Make one sheet image of a character THE character's reference sheet (TS3), free and "
+                  "offline — the same gesture as the desktop 'C'est la référence'. The sheet is promoted "
+                  "with usage 'planche' (any other 'planche' reference of the character is demoted, "
+                  "the image stays in the library), and its views are ranked in their directions: the "
+                  "order is read on the call that made it (the directions of a first sheet / folded "
+                  "sheet, or the frozen order of a redone sheet). Later poses and animations start "
+                  "from this sheet. Refused: an image of another character, a layer, a discarded image.")
+    @refus
+    async def choose_character_sheet(character: str, asset: str,
+                                  project: str | None = None) -> dict[str, Any]:
+        projet = projet_vise(atelier, project)
+        personnage = personnage_vise(atelier, projet, character)
+        choisi = atelier.production.choisir_la_planche(projet, personnage.identifiant, asset)
+        return {"project": projet,
+                "character": atelier.production.en_charge(projet, choisi),
+                "references": atelier.production.references_de(projet, personnage.identifiant)}

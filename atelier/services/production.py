@@ -57,6 +57,7 @@ from atelier.domaine.envoi import (
     resoudre,
 )
 from atelier.domaine.projet import CHAMPS_BIBLE
+from atelier.domaine.planche import est_une_planche_refaite
 from atelier.domaine.plan import (
     Pose,
     capacites_de,
@@ -1487,6 +1488,86 @@ class ServiceProduction:
         personnage.ordres_des_vues = ordres
         self._sauver(personnage)
         return personnage
+
+    def choisir_la_planche(
+        self, projet: str, identifiant: str, asset: str
+    ) -> Personnage:
+        """« C'est la référence » (TS3) : **cette** planche devient la planche du
+        sujet, et ses vues sont rangées dans ses directions.
+
+        Trois règles tranchées, dans cet ordre :
+
+        - **une seule planche à la fois** : celle qu'on choisit remplace les
+          autres références `planche` du sujet, qui sont dépromues (elles
+          restent en bibliothèque). Deux planches partiraient ensemble à chaque
+          planche suivante et décriraient deux dessins ;
+        - **promue en usage `planche`**, par `promouvoir_reference` — le même
+          geste que la fiche (RS1) ;
+        - **l'ordre des vues vient de l'appel qui l'a faite, jamais d'une
+          devinette** : les cases d'une planche pliée par directions (E13), dans
+          l'ordre de lecture — ses morceaux sont déjà dépliés dans leurs cases à
+          l'arrivée —, sinon l'ordre figé d'une planche refaite (RS8), sinon
+          l'ordre déjà dit sur la fiche, sinon aucun (il se dit à la main,
+          `OrdreDesVues`).
+
+        Refuse, avant d'écrire quoi que ce soit, ce que `poser_image_de_reference`
+        refuse : une image d'un autre sujet, un calque, une image écartée.
+        """
+        personnage = self.personnage(projet, identifiant)
+        objet = self._assets.lire(asset)
+        if objet is None:
+            raise AssetInconnu(asset)
+        if objet.piece:
+            raise ProductionRefusee(
+                "un calque n'est pas une planche de ce sujet — c'est une "
+                "différence posée sur une image"
+            )
+        if objet.personnage != identifiant or (objet.projet or "") != projet:
+            raise ProductionRefusee(
+                f"cette image n'est pas une planche de « {personnage.nom} »"
+            )
+        if objet.supprime_le is not None:
+            raise ProductionRefusee(
+                "cette image est écartée de la bibliothèque — la rendre d'abord"
+            )
+
+        ordre = self._ordre_de_la_planche(objet) or personnage.ordre_des_vues(asset)
+        tenues = {d.identifiant for d in self.directions_du_sujet(projet, personnage)}
+        if any(angle not in tenues for angle in ordre) or len(set(ordre)) != len(ordre):
+            # Un ordre que le sujet ne tient plus (une direction retirée depuis)
+            # ne range rien plutôt que de refuser le choix de la planche.
+            ordre = ()
+
+        for ancienne in personnage.references:
+            if ancienne != asset and personnage.usage_de(ancienne) == PLANCHE:
+                self.promouvoir_reference(projet, identifiant, ancienne, promue=False)
+        self.promouvoir_reference(projet, identifiant, asset, promue=True, usage=PLANCHE)
+        if ordre:
+            return self.poser_ordre_des_vues(projet, identifiant, asset, ordre)
+        return self.personnage(projet, identifiant)
+
+    def _ordre_de_la_planche(self, objet: Asset) -> tuple[str, ...]:
+        """Les directions des vues de cette planche, **lues sur l'appel** qui
+        l'a faite — ou rien quand l'appel ne les dit pas."""
+        generation = self._base.lire(objet.generation) if objet.generation else None
+        if generation is None:
+            return ()
+        feuille = objet.lot is None and objet.rang < len(generation.emplacements)
+        if not feuille:
+            # Un morceau n'a pas de vues à ranger : il en est une.
+            return ()
+        pliage = generation.pliage
+        if pliage is not None:
+            angles = tuple(case.direction or "" for case in pliage.cases)
+            if angles and all(angles) and not pliage.plusieurs:
+                return angles
+            return ()
+        if not est_une_planche_refaite(generation, objet.rang):
+            return ()
+        fige = generation.demande.get("ordre_des_vues")
+        if isinstance(fige, list) and all(isinstance(a, str) and a for a in fige):
+            return tuple(fige)
+        return ()
 
     def ordre_des_vues(
         self, projet: str | None, personnage: str | None, asset: str

@@ -9,6 +9,14 @@ from typing import Any, Mapping
 from atelier.domaine.erreurs import DemandeRefusee
 
 
+# La phrase du refus, écrite une fois : `Demande` la lève à la construction, et
+# l'aperçu — qui ne construit pas de demande — la lève telle quelle (TS3).
+REFUS_PREMIERE_ET_MISE_EN_PAGE = (
+    "la première planche part d'un concept art, pas d'une planche à "
+    "reproduire — décochez « garder la mise en page de la référence »"
+)
+
+
 @dataclass(frozen=True, slots=True)
 class Demande:
     """Un sujet, ce qu'on n'en veut pas, et le cadrage.
@@ -102,6 +110,14 @@ class Demande:
     # construction, pour que la route et l'agent reçoivent la même phrase.
     decouper_a_l_arrivee: bool = False
 
+    # **La première planche d'un sujet** (TS3, 22 septembre 2026) : la pose de
+    # repos dans les seules directions du jeu, d'après son concept art pris
+    # comme le personnage à reproduire (rôle référence, jamais style). Le service
+    # remplit la pose et les directions, et refuse avant de payer ce qui ne s'y
+    # prête pas. Ici pour la raison de `palette` : aucun fournisseur ne la
+    # déclare, c'est une décision du produit sur ce qui part.
+    premiere_planche: bool = False
+
     def __post_init__(self) -> None:
         if not self.prompt.strip():
             raise ValueError("prompt vide")
@@ -114,6 +130,10 @@ class Demande:
                 "découper à l'arrivée coupe une planche refaite — cochez aussi "
                 "« garder la mise en page de la référence », ou décochez la découpe"
             )
+        if self.premiere_planche and self.garder_mise_en_page:
+            # Deux planches à la fois : l'une reproduit une planche existante,
+            # l'autre fabrique la première. Refusé, jamais arbitré en silence.
+            raise DemandeRefusee(REFUS_PREMIERE_ET_MISE_EN_PAGE)
 
     def resume(self) -> dict[str, Any]:
         """Les paramètres, sans les octets des références — pour l'enregistrement."""
@@ -146,4 +166,7 @@ class Demande:
         # que l'arrivée lit pour décider de couper, et la relance le relit.
         if self.decouper_a_l_arrivee:
             resume["decouper_a_l_arrivee"] = True
+        # Même règle (TS3) : absent tant que ce n'est pas une première planche.
+        if self.premiere_planche:
+            resume["premiere_planche"] = True
         return resume

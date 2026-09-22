@@ -811,6 +811,45 @@ async def poser_ordre_des_vues(
     }
 
 
+class CorpsLaPlanche(BaseModel):
+    """« C'est la référence » (TS3) : la planche choisie, par son asset."""
+
+    asset: str = Field(min_length=1)
+    projet: str | None = None
+
+
+@routeur.put("/characters/{identifiant}/references/sheet")
+async def choisir_la_planche(
+    requete: Request, identifiant: str, corps: CorpsLaPlanche
+) -> dict[str, Any]:
+    """« C'est la référence » : cette planche devient **la** planche du sujet
+    (usage `planche`, les autres planches dépromues) et ses vues sont rangées
+    dans ses directions — l'ordre lu sur l'appel qui l'a faite (TS3).
+
+    Refusé (409) : une image d'un autre sujet, un calque, une image écartée.
+    Même réponse que les deux routes voisines."""
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    personnage = atelier.production.choisir_la_planche(vise, identifiant, corps.asset)
+    return {
+        "personnage": atelier.production.en_charge(vise, personnage),
+        "references": atelier.production.references_de(vise, identifiant),
+    }
+
+
+@routeur.get("/characters/{identifiant}/first-sheet")
+async def premiere_planche(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Ce que « Faire la planche des directions » demanderait (TS3) : la pose
+    de repos, les directions du jeu dans son ordre, et l'image qui partira
+    comme le personnage à reproduire. **Rien n'est facturé.** Refusé (409)
+    avant de payer quand le sujet n'a ni concept art ni portrait."""
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    return atelier.generations.premiere_planche(vise, identifiant)
+
+
 @routeur.put("/characters/{identifiant}/reference-image")
 async def poser_image_de_reference(
     requete: Request, identifiant: str, corps: CorpsImageDeReference

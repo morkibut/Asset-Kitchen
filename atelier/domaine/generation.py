@@ -113,6 +113,15 @@ REFERENCE_DIRECTION = "reference-direction"
 # garde son rôle — `reference`, ou `edition` si l'auteur l'a jointe ainsi.
 REFERENCE_MISE_EN_PAGE = "reference-mise-en-page"
 
+# **Le personnage à reproduire** (TS3, 22 septembre 2026) — quatrième rôle à
+# nommer. Pour la première planche d'un sujet, son concept art ne part plus en
+# `style` (une inspiration) mais en `reference` avec l'usage `USAGE_DESIGN` : il
+# *est* le personnage, qu'il faut redessiner dans le style et la caméra du jeu.
+# L'usage ne vit que sur la réinjection (jamais sur la fiche du sujet) : c'est
+# lui qui dit au texte de le nommer ainsi, et au journal pourquoi il est parti.
+REFERENCE_DESIGN = "reference-design"
+USAGE_DESIGN = "design"
+
 # **D'où viennent les octets** — la deuxième famille d'images du produit est
 # arrivée en T4. Un asset vient de la bibliothèque et se relit par son
 # emplacement ; une carte vient du tableau d'inspiration de son projet et se

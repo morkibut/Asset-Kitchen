@@ -107,12 +107,44 @@ défaut serveur — l'auteur les corrige avant de valider, il ne les redemande p
 - [ ] sur un sujet sans planche, « Faire la planche des directions » ouvre la préparation
       remplie : pose de repos, directions du jeu, concept art joint comme personnage à
       reproduire
-- [ ] le texte qui part décrit le concept art comme le design à reproduire, et ne demande que
+- [x] le texte qui part décrit le concept art comme le design à reproduire, et ne demande que
       les directions du jeu (lisible dans *Relire avant l'envoi*)
-- [ ] « C'est la référence » sur une planche du sujet la promeut en `planche` et range ses vues
-- [ ] l'outil de génération de l'agent sait le même geste
+- [x] « C'est la référence » sur une planche du sujet la promeut en `planche` et range ses vues
+      (serveur ; le bouton reste à l'écran)
+- [x] l'outil de génération de l'agent sait le même geste
 - [ ] essais sans appel payant ; **un essai payé**, fait par l'auteur, sur un personnage de la
       toile
+
+**Tranché en TS3** (serveur) :
+
+- le drapeau s'appelle `premiere_planche` (`Demande`, écrit dans `generation.json` seulement
+  s'il est vrai, relu à la relance) ; il passe par `POST /generations`, `/outgoing` et
+  `/prompt/preview`. Le service remplit la pose et les directions
+  (`ServiceGenerations.cases_de_premiere_planche`) : la pose `repos` si le sujet la tient, sinon
+  la première de son plan ; les directions du jeu qu'il tient pour elle, dans l'ordre du jeu.
+  Deux ou plus font la planche pliée d'E13 ; une, la case de cette direction ; aucune (jeu vu de
+  face), la case de la pose. Données, elles doivent être exactement celles-là — sinon refus ;
+- **le concept art part en référence seulement, jamais aussi en style** : une seule fois
+  l'image, une seule place dans le plafond du modèle. Il se nomme `THE CHARACTER DESIGN TO
+  REPRODUCE` (rôle à nommer `reference-design`, usage `design` sur la réinjection seulement) ;
+- **la carte d'abord, le portrait à défaut** : la carte est ce que l'auteur a désigné, et depuis
+  TS2 le portrait d'un sujet né d'une carte en est une copie à l'octet près — l'envoyer aussi
+  ferait partir deux fois la même image. Ni l'un ni l'autre : refus avant de payer
+  (« rien à reproduire ») ;
+- le personnage à reproduire **est la demande**, comme le gabarit : il ne s'écarte à aucune
+  portée et ne cède pas devant le plafond du modèle ; seules les références promues `libre`
+  l'accompagnent (une planche déjà rangée décrirait un autre dessin) ;
+- `GET /characters/{id}/first-sheet` dit ce que la planche demanderait (pose, directions,
+  image), sans rien facturer ;
+- « C'est la référence » : `PUT /characters/{id}/references/sheet` `{asset}`
+  (`ServiceProduction.choisir_la_planche`). **Une seule planche à la fois** : les autres
+  références `planche` du sujet sont dépromues, et restent en bibliothèque. L'ordre des vues est
+  lu sur l'appel qui l'a faite — les cases d'une planche pliée, dans l'ordre de lecture (ses
+  morceaux sont déjà dépliés dans leurs cases à l'arrivée), sinon l'ordre figé d'une planche
+  refaite, sinon celui de la fiche ; les morceaux ne sont pas marqués favoris ;
+- l'agent : `generate_pose(first_sheet=true)` (poses facultatives) et
+  `choose_character_sheet(character, asset)` — pas « reference » dans le nom : RP19 veut
+  qu'aucun outil n'ait l'air de choisir le portrait. Essais : `tests/test_ts3.py`.
 
 ## Ce que ce plan ne couvre pas
 
