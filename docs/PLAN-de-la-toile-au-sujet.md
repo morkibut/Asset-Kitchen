@@ -51,6 +51,8 @@
 
 ## Les tranches
 
+> Le modèle et le niveau de réflexion de chaque tranche : `docs/PLAN-de-la-toile-au-sujet-affectation.md`.
+
 ### TS1 · Le Codex montre le portrait
 
 - [ ] la vignette d'un sujet est son portrait choisi ; sans choix, rien ne change
