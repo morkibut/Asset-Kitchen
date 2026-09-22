@@ -1034,7 +1034,7 @@ async def grille_de_famille(
     )
     identifiants = [p.identifiant for p in page["personnages"]]
     collections = atelier.base.collections_par_sujet(vise, identifiants)
-    vignettes = atelier.base.vignettes_par_personnage(vise, identifiants)
+    vignettes = atelier.base.vignettes_par_personnage(vise, page["personnages"])
     comptes = page["comptes"]
     combien = atelier.base.compter_par_collection(vise)
     return {

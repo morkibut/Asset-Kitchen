@@ -26,8 +26,9 @@
 - Les **directions du jeu** se lisent dans l'univers (`vue`, `directions`,
   `GET /characters/directions`).
 - Le **portrait** d'un sujet se choisit sur sa fiche (`image_de_reference`, RP19, « Changer »
-  sur le portrait). Mais la carte du Codex ne le lit pas : `base.vignettes_par_personnage`
-  (`atelier/depot/base.py`) prend toujours l'image la plus récente.
+  sur le portrait). ~~Mais la carte du Codex ne le lit pas~~ — `base.vignettes_par_personnage`
+  (`atelier/depot/base.py`) le lit désormais en premier, et retombe sur l'image la plus récente
+  sans lui (TS1).
 
 ## Les décisions
 
@@ -55,9 +56,20 @@
 
 ### TS1 · Le Codex montre le portrait
 
-- [ ] la vignette d'un sujet est son portrait choisi ; sans choix, rien ne change
-- [ ] choisir un autre portrait sur la fiche change la carte du Codex au retour
-- [ ] essais serveur et d'écran
+- [x] la vignette d'un sujet est son portrait choisi ; sans choix, rien ne change
+- [x] choisir un autre portrait sur la fiche change la carte du Codex au retour
+- [x] essais serveur et d'écran
+
+**Tranché en TS1** : `vignettes_par_personnage` prend désormais les `Personnage`
+entiers (plus une liste d'identifiants) pour lire `image_de_reference` sans
+aller-retour de plus — un seul lot de lecture des portraits choisis, à côté du
+lot déjà groupé pour la plus fraîche. Le repli suit exactement la règle de
+`ServiceProduction.image_de_reference` (RP19) : un asset supprimé, devenu un
+calque, ou rattaché à un autre sujet ne compte plus comme portrait. Aucun
+changement d'écran n'a été nécessaire : `EcranFamille` se démonte entièrement
+en quittant le Codex pour la page d'un sujet (rendu conditionnel dans
+`App.tsx`), et remonte au retour — la grille relit donc déjà la route à chaque
+retour, sans cache à percer.
 
 ### TS2 · Créer un sujet depuis une carte de la toile
 

@@ -1062,9 +1062,9 @@ class Base:
         return self._versions_par_pose("bandes", projet, personnages)
 
     def vignettes_par_personnage(
-        self, projet: str, personnages: Sequence[str]
+        self, projet: str, personnages: Sequence[Personnage]
     ) -> dict[str, Asset]:
-        """Une image par sujet — **celle que sa carte montre** (B9.4).
+        """Une image par sujet — **celle que sa carte montre** (B9.4, TS1).
 
         La grille d'une famille dessine deux cents cartes, chacune avec une
         vignette. Relire les images de chaque sujet pour n'en garder qu'une
@@ -1072,21 +1072,31 @@ class Base:
         exactement ce que `B9.1` a retiré au compte, et le rendre ici par la
         bande n'aurait aucun sens.
 
-        **La plus fraîche gagne**, comme dans `assets_du_personnage` : c'est la
-        dernière image faite qui représente son sujet. `MAX(cree_le)` avec les
-        autres colonnes nues est défini en SQLite — la ligne rendue est celle
-        du maximum, pas une ligne au hasard.
+        **Le portrait choisi gagne, sinon la plus fraîche** (TS1) — c'est la
+        même bascule que la fiche du sujet tient déjà
+        (`ServiceProduction.image_de_reference`) : `image_de_reference` posé,
+        et désignant toujours un asset vivant de ce sujet, prime sur la règle
+        d'hier. Sans choix, ou si l'asset choisi n'existe plus, a été écarté,
+        appartient à un autre sujet ou n'est qu'un calque, on retombe sur
+        `MAX(cree_le)` — **la dernière image faite** qui représente son sujet.
+        `MAX(cree_le)` avec les autres colonnes nues est défini en SQLite : la
+        ligne rendue est celle du maximum, pas une ligne au hasard.
 
         **Un corps, jamais une pièce** : un casque n'est pas le portrait de
         celui qui le porte. C'est la même séparation que `piece IS NULL` tient
-        déjà dans le compte des cases.
+        déjà dans le compte des cases, et elle vaut aussi pour un portrait
+        choisi à la main.
+
+        **Un seul lot de lecture pour les portraits choisis**, comme pour la
+        règle du jour : deux cents sujets ne valent jamais deux cents requêtes.
         """
         vignettes: dict[str, Asset] = {}
-        if not personnages:
+        identifiants = [p.identifiant for p in personnages]
+        if not identifiants:
             return vignettes
         with self._connexion() as connexion:
-            for depart in range(0, len(personnages), 400):
-                paquet = list(personnages[depart : depart + 400])
+            for depart in range(0, len(identifiants), 400):
+                paquet = list(identifiants[depart : depart + 400])
                 trous = ",".join("?" * len(paquet))
                 lignes = connexion.execute(
                     "SELECT personnage, contenu, MAX(cree_le) FROM assets "
@@ -1099,6 +1109,32 @@ class Base:
                     vignettes[ligne["personnage"]] = Asset.depuis_json(
                         json.loads(ligne["contenu"])
                     )
+
+        choisis = sorted({p.image_de_reference for p in personnages if p.image_de_reference})
+        if choisis:
+            portraits: dict[str, Asset] = {}
+            with self._connexion() as connexion:
+                for depart in range(0, len(choisis), 400):
+                    paquet = list(choisis[depart : depart + 400])
+                    trous = ",".join("?" * len(paquet))
+                    lignes = connexion.execute(
+                        "SELECT identifiant, contenu FROM assets WHERE "
+                        "supprime_le IS NULL AND piece IS NULL "
+                        f"AND identifiant IN ({trous})",
+                        paquet,
+                    ).fetchall()
+                    for ligne in lignes:
+                        portraits[ligne["identifiant"]] = Asset.depuis_json(
+                            json.loads(ligne["contenu"])
+                        )
+            for p in personnages:
+                choisi = portraits.get(p.image_de_reference) if p.image_de_reference else None
+                if (
+                    choisi is not None
+                    and choisi.personnage == p.identifiant
+                    and (choisi.projet or "") == projet
+                ):
+                    vignettes[p.identifiant] = choisi
         return vignettes
 
     def rangs_vivants(self, generations: Sequence[str]) -> dict[str, set[int]]:
