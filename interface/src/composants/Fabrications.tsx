@@ -11,7 +11,7 @@ const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text
 
 /** Le journal est relu sur disque, le chantier le complète pendant les appels.
  * Les identifiants les fusionnent : un même appel ne devient jamais deux lignes. */
-export function Fabrications({ projet, chantier, clips, personnages, onCreer, onPreparer, onGalerie, onClip, onBande, onSujet, onDepenses, onAsset, onToile, onSon, onCalqueEquipement }: {
+export function Fabrications({ projet, chantier, clips, personnages, onCreer, onPreparer, onGalerie, onClip, onBande, onSujet, onAnimerSujet, onDepenses, onAsset, onToile, onSon, onCalqueEquipement }: {
   projet: string | null
   chantier: readonly Generation[]
   clips: readonly Generation[]
@@ -25,6 +25,7 @@ export function Fabrications({ projet, chantier, clips, personnages, onCreer, on
   onClip: (id: string) => void
   onBande?: (id: string) => void
   onSujet: (id: string) => void
+  onAnimerSujet: (id: string) => void
   onDepenses: () => void
   onAsset?: (id: string) => void
   onToile?: (id: string) => void
@@ -58,7 +59,7 @@ export function Fabrications({ projet, chantier, clips, personnages, onCreer, on
     <FileDesCalculsLocaux projet={projet} />
     <section aria-label="Commencer une fabrication" className="mt-[22px] grid grid-cols-2 gap-[14px]">
       <div className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px] text-encre">Une image libre</h2><p className="mt-[8px] text-[13px] text-encre-3">Choisis le modèle, écris ta demande et ajoute les références. Tu reliras l’envoi avant de lancer.</p><button className={`${BOUTON} mt-[14px]`} onClick={onCreer}>Préparer une image</button></div>
-      <div className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px] text-encre">Animer un sujet</h2><p className="mt-[8px] text-[13px] text-encre-3">Partez de sa fiche pour choisir le mouvement, la direction et l’image de départ du clip.</p><label className="mt-[14px] flex items-center gap-[8px] text-[12px] text-encre-3">Sujet<select aria-label="Sujet à animer" defaultValue="" onChange={(e) => { if (e.target.value) onSujet(e.target.value) }} className={`${BOUTON} min-w-0 flex-1`}><option value="">Choisir un sujet…</option>{personnages.map((p) => <option value={p.identifiant} key={p.identifiant}>{p.nom}</option>)}</select></label>{!personnages.length && <p className="mt-[8px] text-[12px] text-encre-3">Créez d’abord un personnage depuis Codex.</p>}</div>
+      <div className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px] text-encre">Animer un sujet</h2><p className="mt-[8px] text-[13px] text-encre-3">Choisis le sujet : la fenêtre d’animation s’ouvre sur lui, tu y choisis le mouvement et la direction.</p><label className="mt-[14px] flex items-center gap-[8px] text-[12px] text-encre-3">Sujet<select aria-label="Sujet à animer" defaultValue="" onChange={(e) => { if (e.target.value) onAnimerSujet(e.target.value) }} className={`${BOUTON} min-w-0 flex-1`}><option value="">Choisir un sujet…</option>{personnages.map((p) => <option value={p.identifiant} key={p.identifiant}>{p.nom}</option>)}</select></label>{!personnages.length && <p className="mt-[8px] text-[12px] text-encre-3">Créez d’abord un personnage depuis Codex.</p>}</div>
     </section>
     {projet && <div className="mt-[14px] rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Une vidéo libre</h2><p className="mt-[8px] text-[13px] text-encre-3">Choisis ou fabriquez son image de départ, puis écris le mouvement. Tu pourras classer ses images dans un sujet au montage.</p><button className={`${BOUTON} mt-[14px]`} onClick={() => onPreparer("clip")}>Préparer une vidéo</button></div>}
     {projet && <div className="mt-[14px] rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Un son</h2><p className="mt-[8px] text-[13px] text-encre-3">Décris un effet, une ambiance ou une musique. Le résultat rejoint l’atelier son pour l’écouter, le couper, régler sa boucle et le livrer dans Godot.</p><button className={`${BOUTON} mt-[14px]`} onClick={() => onPreparer("son")}>Préparer un son</button></div>}

@@ -538,8 +538,8 @@ export const AIDE: Record<string, Explication> = {
   "fabrication.animer-un-sujet": {
     nom: "Animer un sujet",
     groupe: "Commencer une fabrication — une image, un sujet, un son",
-    quoi: "On choisit un sujet dans la liste : sa page s'ouvre sur l'onglet Animations, où se règlent le mouvement, la direction et l'image de départ.",
-    change: "Rien à la génération ici : choisir un sujet ne prépare ni n'envoie rien. La liste est celle des sujets du jeu ouvert.",
+    quoi: "On choisit un sujet : la fenêtre d'animation s'ouvre sur lui, pour régler le mouvement et la direction.",
+    change: "Rien ne part à l'ouverture : la demande se prépare, puis se relit avant l'envoi. La liste est celle des sujets du jeu ouvert.",
     origine: "les sujets du jeu",
     ou: "fabrications",
   },

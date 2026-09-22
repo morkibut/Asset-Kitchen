@@ -245,14 +245,16 @@ même fenêtre.
 
 ### Critères d'acceptation
 
-- [ ] Chaque bouton ouvre la même fenêtre, remplie selon l'endroit du clic.
-- [ ] « Tout animer » ouvre la fenêtre avec plusieurs directions cochées ; un clip part par case.
-- [ ] « Fabriquer… » depuis l'onglet Animations s'ouvre en mode clip, pas en image fixe.
-- [ ] Une seule relecture, celle des images ; la vue « ce qui part » à trois colonnes disparaît.
-- [ ] Tous les clips passent par le circuit des fabrications suivies et apparaissent dans
+- [x] Chaque bouton ouvre la même fenêtre, remplie selon l'endroit du clic.
+- [x] « Tout animer » ouvre la fenêtre avec plusieurs directions cochées ; un clip part par case.
+- [x] « Fabriquer… » depuis l'onglet Animations s'ouvre en mode clip, pas en image fixe.
+- [x] Une seule relecture, celle des images ; la vue « ce qui part » à trois colonnes disparaît.
+- [x] Tous les clips passent par le circuit des fabrications suivies et apparaissent dans
       Fabrications.
-- [ ] Les anciens écrans et leur code sont retirés ; aucun essai ne les monte plus.
-- [ ] L'agent (MCP) lance un clip par le même service que l'écran (*T7*).
+- [x] Les anciens écrans et leur code sont retirés ; aucun essai ne les monte plus.
+- [x] L'agent (MCP) lance un clip par le même service que l'écran (*T7*).
+
+*Fait le 22 septembre 2026*, en deux sessions : la première a retiré `Clip.tsx`, `AnimerEnLot.tsx` et `POST /clips` et rebranché neuf portes, puis s'est arrêtée sans commiter ; la seconde a repris ce travail, branché la dixième (« Animer un sujet » de Fabrications, qui ouvrait encore la fiche) et relancé les deux suites. **Tranché** : « En générer une variante » d'une *image* reste une image — c'est une variante fixe, pas un clip ; « Nouvelle animation » n'était plus un bouton mais le nom de « Nouvelle fabrication » dans le guide ; la vidéo libre reste son propre formulaire *dans* la fenêtre (le cas « sans sujet »), pas un écran à part ; `animate_sheet` (l'agent) découpe une planche déjà faite et ne lance aucun clip, il reste. **Pas encore vu au navigateur.**
 
 ---
 
