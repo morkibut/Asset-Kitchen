@@ -5,15 +5,21 @@ ComfyUI est doublé avec le relevé réel de la machine (`object_info_local.json
 18/09/2026), auquel on ajoute ce que ComfyUI 0.37 et les poids de
 Comfy-Org/Qwen-Image-2.1 y feraient paraître."""
 import copy
+import io
 
 import pytest
+from PIL import Image
 
+from atelier.domaine.catalogue import Modele, modele_depuis_json, modele_en_json
 from atelier.domaine.workflow import composer, normaliser
 from atelier.fournisseur.catalogue_styles import inventaire, qualite, resoudre, style
 from atelier.fournisseur.styles_locaux import QWEN21_RESOLUTION_REFERENCE, construire_profil
+from atelier.image import aplatir_alpha
 from atelier.services import Atelier
+from tests.conftest import image_sujet
 from tests.test_a9 import AnimateurDouble
-from tests.test_au7_au8 import raccorder
+from tests.test_au7_au8 import ComfyDouble, ajouter, raccorder
+from tests.test_au7_au8 import profil as profil_generique
 from tests.test_ml2 import OBJECT_INFO, ComfyStylesDouble
 
 UNET_INT8 = "qwen_image_2.1_int8_convrot.safetensors"
@@ -36,8 +42,6 @@ def releve_avec_qwen21(*, noeud=True, unets=(UNET_INT8, "qwen_image_2.1_bf16.saf
                 "images": ["COMFY_AUTOGROW_V3", {"template": {"input": {"required": {"image": ["IMAGE", {}]}},
                     "names": [f"image_{i}" for i in range(1, 17)], "min": 0}}]},
             "optional": {"vae": ["VAE", {}]}}}
-    # Nœud de base, présent bien avant la 0.37 (absent du relevé réduit du 18).
-    info["SplitImageWithAlpha"] = {"input": {"required": {"image": ["IMAGE", {}]}}}
     return info
 
 
@@ -85,9 +89,12 @@ def test_le_mode_rapide_tire_12_etapes_en_512():
     assert k["positive"] == ["4", 0] and k["negative"] == ["4", 1]
     assert "vae" not in encode
     assert "prompt_negatif" not in profil["liaisons"]
-    # L'alpha de bruit du décodeur est retiré avant l'enregistrement.
-    assert graphe["9"] == {"class_type": "SplitImageWithAlpha", "inputs": {"image": ["7", 0]}}
-    assert graphe["8"]["inputs"]["images"] == ["9", 0]
+    # TN1 (22/09/2026) : le graphe garde toujours l'alpha — plus de
+    # `SplitImageWithAlpha` dedans, l'enregistrement lit directement le
+    # décodeur. Le tri (garder ou jeter la transparence) se fait maintenant à
+    # l'arrivée, côté atelier (`atelier.image.aplatir_alpha`).
+    assert "9" not in graphe
+    assert graphe["8"]["inputs"]["images"] == ["7", 0]
 
 
 def test_le_mode_qualite_tire_30_etapes_et_monte_a_1536():
@@ -156,3 +163,165 @@ async def test_grise_il_rend_la_main_au_defaut_d_avant(atelier_qwen):
     comfy.informations = {k: v for k, v in comfy.informations.items() if k != "TextEncodeQwenImage21"}
     await atelier.catalogue.rafraichir()
     assert not (atelier.catalogue.defaut().modele or "").startswith("ComfyUI:qwen21")
+
+
+# ── TN1 : la capacité « rend un vrai fond vide » ─────────────────────────────
+
+
+def test_qwen_declare_la_transparence_les_autres_styles_non():
+    profil_qwen = _profil("qwen21-rapide")
+    assert profil_qwen["style"]["transparence"] is True
+
+    # Un style d'une autre famille, recopié tel quel de sc-clone : la clé
+    # « transparence » n'existe même pas — absente, pas fausse, même règle que
+    # `suffixe` pour un style qui n'en déclare pas.
+    from atelier.fournisseur.catalogue_styles import style as style_de
+    from atelier.fournisseur.styles_locaux import construire_profil as construire
+
+    entree = style_de("zimage-pixel")
+    fichiers = {"unet": "z_image_turbo_bf16.safetensors", "clip": "qwen_3_4b.safetensors",
+        "vae": "ae.safetensors", "lora": "pixel_art_style_z_image_turbo.safetensors"}
+    profil_zimage = normaliser(construire(entree, fichiers))
+    assert "transparence" not in profil_zimage["style"]
+
+
+async def test_le_catalogue_ne_declare_la_transparence_que_pour_qwen(atelier_qwen):
+    atelier, comfy = atelier_qwen
+    installes = await atelier.styles_locaux.installer_prets()
+    await atelier.catalogue.rafraichir()
+    for p in installes:
+        modele = atelier.catalogue.modele(p["modele"])
+        assert modele.transparence == (p["identifiant"] in ("qwen21-rapide", "qwen21-qualite")), p["identifiant"]
+
+
+async def test_list_models_montre_transparent_background_pour_qwen_seul(tmp_path, double):
+    from atelier.mcp.serveur import creer_serveur
+    from tests.test_t7 import appeler
+
+    comfy = ComfyStylesDouble(releve_avec_qwen21())
+    atelier = Atelier(racine=tmp_path / "donnees", fabrique_fournisseur=lambda: double, fabrique_animateur=lambda: AnimateurDouble())
+    raccorder(atelier, comfy)
+    await atelier.ouvrir()
+    try:
+        mcp = creer_serveur(atelier)
+        await appeler(mcp, "install_local_styles")
+        modeles = {m["id"].split("@")[0]: m for m in (await appeler(mcp, "list_models"))["models"]}
+        assert modeles["ComfyUI:qwen21-rapide"]["transparent_background"] is True
+        assert modeles["ComfyUI:qwen21-qualite"]["transparent_background"] is True
+        assert modeles["ComfyUI:zimage-pixel"]["transparent_background"] is False
+    finally:
+        await atelier.file_locale.fermer()
+
+
+def test_le_champ_transparence_du_modele_se_serialise_et_se_relit():
+    m = Modele("ComfyUI:qwen21-rapide@v1", "Qwen-Image 2.1 · Très rapide", fournisseur="ComfyUI", transparence=True)
+    d = modele_en_json(m)
+    assert d["transparence"] is True
+    assert modele_depuis_json(d).transparence is True
+    assert modele_depuis_json({**d, "transparence": False}).transparence is False
+    # Absent d'une photo de catalogue antérieure à TN1 : faux par défaut, sans erreur.
+    assert modele_depuis_json({k: v for k, v in d.items() if k != "transparence"}).transparence is False
+
+
+# ── TN1 : `aplatir_alpha`, le point d'arrivée d'une image locale ────────────
+
+
+def _png(mode, couleur):
+    image = Image.new(mode, (4, 4), couleur)
+    tampon = io.BytesIO()
+    image.save(tampon, format="PNG")
+    return tampon.getvalue()
+
+
+def _sujet_avec_alpha(alpha):
+    """`image_sujet()` (un vrai sujet reconnaissable, pas un aplat) avec un
+    canal alpha uniforme posé dessus — ce que rend un décodeur qui garde
+    toujours quatre canaux, bruit (223-255) ou vraie transparence (0)."""
+    with Image.open(io.BytesIO(image_sujet())) as image:
+        rgba = image.convert("RGBA")
+    canal = Image.new("L", rgba.size, alpha)
+    rgba.putalpha(canal)
+    tampon = io.BytesIO()
+    rgba.save(tampon, format="PNG")
+    return tampon.getvalue()
+
+
+def test_aplatir_alpha_retire_un_canal_qui_netait_que_du_bruit():
+    octets = _png("RGBA", (12, 200, 40, 230))  # 230 : le bruit mesuré le 22/09/2026 (223 à 255)
+    resultat = aplatir_alpha(octets)
+    with Image.open(io.BytesIO(resultat)) as image:
+        assert image.mode == "RGB"
+        assert image.getpixel((0, 0)) == (12, 200, 40)  # le RVB ne bouge pas, seul l'alpha part
+
+
+def test_aplatir_alpha_ne_touche_pas_une_image_deja_sans_alpha():
+    octets = _png("RGB", (5, 5, 5))
+    assert aplatir_alpha(octets) == octets  # pas un octet ne bouge — c'est le cas de tous les autres moteurs
+
+
+def _profil_capable(**style_):
+    """Le profil générique de `test_au7_au8` (déjà câblé pour `ComfyDouble` :
+    nœud de sortie « 5 », un seul format), avec des métadonnées de style —
+    la seule chose qu'`atelier.image.aplatir_alpha` regarde vraiment."""
+    p = profil_generique()
+    p["style"] = {"famille": "essai", "declencheur": "x", "genre": "sprite", "vitesse": "vite",
+        "source": "essai", "reference": "depart", **style_}
+    return p
+
+
+async def test_une_image_locale_avec_alpha_de_bruit_arrive_opaque(tmp_path, double):
+    """Bout en bout, à travers `ServiceGenerations._executer_emplacement` : un
+    profil qui déclare `transparence: true` — n'importe lequel, pas seulement
+    Qwen — voit son alpha de bruit disparaître à l'arrivée."""
+    comfy = ComfyDouble()
+    comfy.image = _sujet_avec_alpha(240)  # 240 : dans la fourchette du bruit mesuré
+    atelier = Atelier(racine=tmp_path / "donnees", fabrique_fournisseur=lambda: double, fabrique_animateur=lambda: AnimateurDouble())
+    raccorder(atelier, comfy)
+    await atelier.ouvrir()
+    try:
+        p = await ajouter(atelier, comfy, _profil_capable(transparence=True))
+        assert atelier.catalogue.modele(p["modele"]).transparence is True
+        projet = atelier.bibliotheque.courant
+        demande = {"cle": "tn1-alpha", "modele": p["modele"], "prompt": "Un test", "repris": True, "resolution": "64"}
+        travail = await atelier.travaux_workflow.preparer(projet, demande)
+        await atelier.travaux.demarrer(projet, travail["identifiant"])
+        await atelier.travaux.attendre_tout()
+        fini = atelier.travaux.lire(projet, travail["identifiant"])
+        assert fini["etat"] == "termine", fini
+        asset = atelier.assets.lire(fini["reference_asset"])
+        octets, _ = atelier.assets.octets(asset, brut=True)
+        with Image.open(io.BytesIO(octets)) as image:
+            assert image.mode == "RGB"  # l'alpha de bruit a disparu — ni détouré, ni transparent
+    finally:
+        await atelier.file_locale.fermer()
+
+
+async def test_un_modele_sans_la_capacite_garde_son_alpha_meme_reel(tmp_path, double):
+    """Le garde-fou trouvé le 22/09/2026 : un premier essai aplatissait
+    *toute* image locale, sans regarder si le modèle déclare la capacité —
+    et cassait `tests/test_b1.py`, dont le double distant rend un sujet à
+    fond **vraiment** transparent pour éprouver le contour. Un modèle qui ne
+    déclare pas `transparence` doit traverser l'aplatissement sans qu'un
+    octet ne change, même quand son alpha est réel."""
+    comfy = ComfyDouble()
+    comfy.image = _sujet_avec_alpha(0)  # une vraie transparence, pas du bruit
+    atelier = Atelier(racine=tmp_path / "donnees", fabrique_fournisseur=lambda: double, fabrique_animateur=lambda: AnimateurDouble())
+    raccorder(atelier, comfy)
+    await atelier.ouvrir()
+    try:
+        p = await ajouter(atelier, comfy, profil_generique())
+        assert atelier.catalogue.modele(p["modele"]).transparence is False
+        projet = atelier.bibliotheque.courant
+        demande = {"cle": "tn1-sans-capacite", "modele": p["modele"], "prompt": "Un test", "repris": True, "resolution": "64"}
+        travail = await atelier.travaux_workflow.preparer(projet, demande)
+        await atelier.travaux.demarrer(projet, travail["identifiant"])
+        await atelier.travaux.attendre_tout()
+        fini = atelier.travaux.lire(projet, travail["identifiant"])
+        assert fini["etat"] == "termine", fini
+        asset = atelier.assets.lire(fini["reference_asset"])
+        octets, _ = atelier.assets.octets(asset, brut=True)
+        assert octets == comfy.image  # inchangé, alpha réel gardé intact
+        with Image.open(io.BytesIO(octets)) as image:
+            assert image.mode == "RGBA" and image.getpixel((0, 0))[3] == 0
+    finally:
+        await atelier.file_locale.fermer()

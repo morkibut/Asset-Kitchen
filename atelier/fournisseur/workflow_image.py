@@ -104,7 +104,8 @@ class FournisseurWorkflowImage:
                     indisponible=" · ".join(diagnostic["problemes"]) or None,
                     reference=(p.get("style") or {}).get("reference"),
                     negatif_lu="prompt_negatif" in p["liaisons"],
-                    famille=(p.get("style") or {}).get("famille")))
+                    famille=(p.get("style") or {}).get("famille"),
+                    transparence=bool((p.get("style") or {}).get("transparence"))))
         return modeles
 
     def _versions_a_publier(self, identifiant, versions):

@@ -104,6 +104,13 @@ class Modele:
     # « sdxl ». `None` pour tout modèle qui n'est pas un style de sc-clone —
     # c'est ce que l'écran groupe sous les quatre optgroups.
     famille: str | None = None
+    # **Rend un vrai fond vide quand on le lui demande** (TN1, 22 septembre
+    # 2026) : Qwen-Image 2.1 est le premier modèle du catalogue à le déclarer.
+    # Une capacité comme une autre — jamais de `if qwen` ailleurs dans le code
+    # (`AGENTS.md` § Règles durables) — donc pas réservée aux modèles locaux :
+    # un fournisseur distant (GPT Image et son `background: transparent`) la
+    # déclarera un jour de la même façon.
+    transparence: bool = False
 
     @property
     def envoi(self) -> str:
@@ -225,6 +232,9 @@ def modele_en_json(modele: Modele) -> dict[str, Any]:
         "resolutions": list(modele.resolutions),
         "variations_max": modele.variations_max,
         "options": {n: _option_en_json(o) for n, o in modele.options.items()},
+        # Hors du bloc « locale » : une capacité de modèle, pas un trait de
+        # style local (TN1).
+        "transparence": modele.transparence,
     }
 
 
@@ -245,4 +255,5 @@ def modele_depuis_json(d: dict[str, Any]) -> Modele:
         references_min=d.get("references_min", 0), locale=d.get("locale", False),
         indisponible=d.get("indisponible"), reference=d.get("reference"),
         negatif_lu=d.get("negatif_lu", True), famille=d.get("famille"),
+        transparence=d.get("transparence", False),
     )

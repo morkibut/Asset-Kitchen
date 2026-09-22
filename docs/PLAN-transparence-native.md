@@ -103,6 +103,20 @@ Elles valent pour toutes les tranches.
 
 ### TN1 — Le catalogue sait qui rend la transparence
 
+**Faite le 22 septembre 2026.** `Modele.transparence`, la métadonnée de style, le retrait de
+`SplitImageWithAlpha` et `atelier.image.aplatir_alpha` sont en place et testés (20 essais dans
+`tests/test_qwen21.py`, suite entière rejouée : 3895 passés). Reste en dehors de cette tranche,
+pour TN2 ou plus tard : le badge « fond transparent » dans l'écran des modèles (pas demandé par
+les critères ci-dessous, seulement par la phrase d'intention).
+
+**Un garde-fou posé en cours de route, pas prévu au départ.** Une première version aplatissait
+l'alpha de *toute* image locale, sans regarder si le modèle déclare la capacité — et cassait
+`tests/test_b1.py` : son double distant rend un sujet à fond **vraiment** transparent pour
+éprouver le contour, une transparence légitime que rien ne demandait de jeter. Le retrait est
+donc gardé par `modele.transparence` : seul un modèle qui déclare la capacité voit son image
+aplatie, tout le reste (y compris une vraie transparence d'un autre modèle) traverse l'appel
+sans qu'un octet ne change.
+
 **Ce qu'on voit.** Dans la liste des modèles, Qwen-Image 2.1 porte la mention « fond transparent ».
 
 - `Modele.transparence: bool` (défaut faux), sérialisé, relu, montré par `list_models`.

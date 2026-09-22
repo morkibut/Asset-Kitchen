@@ -49,12 +49,21 @@ FAMILLES: dict[str, dict] = {
     # texte et se décharge ensuite.
     'qwen21': {
         'nom': 'Qwen-Image 2.1',
-        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'TextEncodeQwenImage21', 'EmptyLatentImage', 'KSampler', 'VAEDecode', 'SplitImageWithAlpha', 'LoadImage'),
+        # TN1 (22/09/2026) : `SplitImageWithAlpha` est sorti du graphe — un seul
+        # graphe sert les deux demandes (transparence gardée ou jetée), le tri se
+        # fait maintenant côté atelier (`atelier.image.aplatir_alpha`). Exiger ce
+        # nœud ici grisait le style pour rien sur une installation qui ne l'a pas,
+        # alors qu'il ne sert plus au graphe.
+        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'TextEncodeQwenImage21', 'EmptyLatentImage', 'KSampler', 'VAEDecode', 'LoadImage'),
         'unet': re.compile(r'qwen.?image.?2\.?1.*(int8|int4|\.gguf$)', re.I),
         'clip': re.compile(r'qwen.?3.?vl.?8b.*(int8|int4)', re.I),
         'vae': re.compile(r'qwen.?image.?2\.?1.?vae', re.I),
         'vitesse': 'de 12 secondes à 2 minutes par image selon le réglage',
-        'reference': 'sujet'
+        'reference': 'sujet',
+        # Capacité déclarée pour TN1 : Qwen-Image 2.1 sait rendre un fond vraiment
+        # vide (l'alpha ne redevient du bruit qu'en l'absence de cette demande —
+        # voir `construire_qwen21` et `atelier.image.aplatir_alpha`).
+        'transparence': True
     }
 }
 

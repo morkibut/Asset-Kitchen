@@ -104,7 +104,7 @@ from atelier.domaine.carte import DECORS
 from atelier.domaine import texte_local
 from atelier.domaine.workflow import GRAINE_MAX, WorkflowRefuse
 from atelier.fournisseur import PortFournisseur
-from atelier.image import bande_de_palette, empreinte_de, mesurer
+from atelier.image import aplatir_alpha, bande_de_palette, empreinte_de, mesurer
 from atelier.image.palette import couleurs_lues
 from atelier.image.mesures import extension
 from atelier.domaine.asset import Asset
@@ -1464,7 +1464,33 @@ class ServiceGenerations:
             emplacement.consomme = image.consomme
             emplacement.unite = image.unite
             self._sauver(generation, annoncer=False)
-            mesure = mesurer(image.octets)
+            # **TN1, 22 septembre 2026** : le point unique où une image reçue
+            # devient le brut écrit sur le disque. Un graphe qui garde toujours
+            # son alpha (Qwen-Image 2.1, `atelier/fournisseur/styles_locaux.py`)
+            # rend un bruit de 223 à 255 quand la transparence n'a pas été
+            # demandée ; ce nettoyage se faisait avant *dans* le graphe ComfyUI
+            # (`SplitImageWithAlpha`), il se fait maintenant ici, au même
+            # instant — avant que quoi que ce soit ne devienne « le brut »
+            # (voir `aplatir_alpha`).
+            #
+            # **Seul un modèle qui déclare la capacité est concerné**
+            # (`Modele.transparence`) : lui seul peut rendre ce bruit-là. Un
+            # modèle qui ne la déclare pas traverse cet appel sans qu'un octet
+            # ne change — y compris s'il rend déjà une vraie transparence
+            # (`tests/test_b1.py` en dépend, sur le double distant : un contour
+            # tracé sur un sujet à fond transparent). Aucun `if qwen` : une
+            # capacité du catalogue, comme `references_max`.
+            #
+            # **Aucune image importée ne passe par ici** : cette méthode ne voit
+            # que ce qu'un fournisseur vient de produire (`generer`,
+            # `generer_suivi`), jamais un fichier déposé par l'auteur.
+            #
+            # Tant que rien ne demande la transparence (TN2, pas encore écrit),
+            # ce retrait vaut pour toute image d'un modèle qui déclare la
+            # capacité — c'est exactement ce que rendrait une demande toujours
+            # refusée.
+            octets = aplatir_alpha(image.octets) if modele.transparence else image.octets
+            mesure = mesurer(octets)
         except ErreurAtelier as erreur:
             # Un refus peut coûter : le fournisseur facture dès que l'appel a
             # atteint le modèle. Ce montant part au journal du projet (US-24).
@@ -1491,7 +1517,7 @@ class ServiceGenerations:
         chemin = self._fichiers.ecrire_brut(
             generation.identifiant,
             emplacement.rang,
-            image.octets,
+            octets,
             extension(mesure.type_media),
         )
         emplacement.resultat = Resultat(

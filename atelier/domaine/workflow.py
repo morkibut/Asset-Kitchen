@@ -194,7 +194,13 @@ def _valider_style(info):
         raise WorkflowRefuse("Le genre de référence d'un style est « sujet » (garder ce sujet) ou « depart » (partir de cette image).")
     if "suffixe" in info and (not isinstance(info["suffixe"], str) or not info["suffixe"]):
         raise WorkflowRefuse("Le suffixe de style doit être un texte non vide.")
-    return {**{c: info[c] for c in obligatoires}, **({"suffixe": info["suffixe"]} if "suffixe" in info else {})}
+    # TN1 : la capacité « rend un vrai fond vide », vraie ou fausse — absente,
+    # comme `suffixe`, pour tout style qui ne la déclare pas.
+    if "transparence" in info and not isinstance(info["transparence"], bool):
+        raise WorkflowRefuse("La transparence d'un style est vraie ou fausse.")
+    return {**{c: info[c] for c in obligatoires},
+        **({"suffixe": info["suffixe"]} if "suffixe" in info else {}),
+        **({"transparence": info["transparence"]} if "transparence" in info else {})}
 
 
 def _duree_libre(brut, nature, durees, liaisons):
