@@ -213,8 +213,20 @@ class ServiceUnivers:
 
     # ── Coller ───────────────────────────────────────────────────────────────
 
-    def poser_asset(self, projet: str, identifiant: str) -> dict[str, Any]:
-        """Une copie de ce rendu sur la toile ; le lien et l’original restent."""
+    def poser_asset(
+        self,
+        projet: str,
+        identifiant: str,
+        *,
+        position: Iterable[float] | None = None,
+    ) -> dict[str, Any]:
+        """Une copie de ce rendu sur la toile ; le lien et l’original restent.
+
+        **`position` pose la carte là où on l'attendait** — une image fabriquée
+        depuis la toile arrive à l'endroit où son emplacement attendait, pas au
+        bout de la rangée. Un doublon déjà disposé garde sa place : l'écran ne
+        déplace pas en silence ce que l'auteur a rangé.
+        """
         self._exige(projet)
         asset = self._assets.lire(identifiant)
         if asset is None or asset.projet != projet:
@@ -224,9 +236,13 @@ class ServiceUnivers:
         carte = self.carte(projet, (resultat["carte"] or resultat["doublon"])["identifiant"])
         # Un doublon déjà disposé garde sa place. Une nouvelle carte se pose
         # à côté des existantes, visible dès l’arrivée dans la toile.
+        voulue = _place(position) if position is not None else None
         if carte.position is None:
-            autres = [c for c in self.cartes(projet) if c.position is not None]
-            carte.position = (max((c.position[0] + (c.largeur_libre or 240) for c in autres), default=-30) + 30, 0)
+            if voulue is not None:
+                carte.position = voulue
+            else:
+                autres = [c for c in self.cartes(projet) if c.position is not None]
+                carte.position = (max((c.position[0] + (c.largeur_libre or 240) for c in autres), default=-30) + 30, 0)
             self._sauver(carte)
         return {"carte": carte.en_json(), "deja_presente": resultat["doublon"] is not None}
 
