@@ -693,6 +693,43 @@ async def promouvoir(
     }
 
 
+class CorpsSujetDepuisCarte(BaseModel):
+    """Tout est facultatif : sans rien, le sujet prend le nom et la famille de
+    la carte, et une description vide. L'écran pré-remplit et envoie ce que
+    l'auteur a relu."""
+
+    nom: str | None = None
+    description: str = ""
+    famille: Literal["personnages", "objets", "decors", "interface"] | None = None
+    projet: str | None = None
+
+
+@routeur.post("/board/{carte}/subject", status_code=201)
+async def sujet_depuis_carte(
+    requete: Request, reponse: Response, carte: str, corps: CorpsSujetDepuisCarte
+) -> dict[str, Any]:
+    """TS2 — un sujet du Codex naît de cette carte : nom, famille, concept art,
+    copie de l'image en bibliothèque, portrait posé. Ne coûte rien.
+
+    **Une carte déjà concept art d'un sujet ne crée rien** et rend `200` avec
+    `deja: {identifiant, nom}` — la forme du doublon au collage, pas un refus.
+    L'écran le sait d'ailleurs avant de cliquer : `GET /characters` porte les
+    `concept_arts` de chaque sujet.
+    """
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, corps.projet)
+    resultat = atelier.sujet_depuis_carte.creer(
+        identifiant,
+        carte,
+        nom=corps.nom,
+        description=corps.description,
+        famille=corps.famille,
+    )
+    if resultat["deja"] is not None:
+        reponse.status_code = 200
+    return {"projet": identifiant, **resultat}
+
+
 @routeur.delete("/board/{carte}")
 async def oublier_carte(
     requete: Request, carte: str, projet: str | None = None

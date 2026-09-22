@@ -41,3 +41,20 @@ def installer_outils_objectifs(serveur: Any, atelier: Any, refus: Callable,
         personnage = atelier.production.creer_personnage(projet, name, description, objectif=objective)
         return {"asset": atelier.production.en_charge(projet, personnage),
                 **atelier.production.objectif_de(projet, personnage.identifiant)}
+
+    @serveur.tool(name="create_character_from_card", meta=fiche("Créer un sujet depuis une carte de la toile"), description=
+                  "Create a character from an image card of the project's board (TS2), free and offline. "
+                  "The character takes the card's note (or source file) as name and its promoted family "
+                  "(default 'personnages'); the card becomes its concept art; the card image is copied "
+                  "into the library as an import of this character, tagged with its card of origin, and "
+                  "becomes its portrait. Nothing is promoted to reference. If the card is already the "
+                  "concept art of a character, nothing is created and `deja` names that character. "
+                  "family: personnages | objets | decors | interface.")
+    @refus
+    async def create_character_from_card(card: str, name: str | None = None, description: str = "",
+                                         family: str | None = None,
+                                         project: str | None = None) -> dict[str, Any]:
+        from atelier.domaine.generation import AGENT
+        projet = projet_vise(atelier, project)
+        return {"project": projet, **atelier.sujet_depuis_carte.creer(
+            projet, card, nom=name, description=description, famille=family, provenance=AGENT)}

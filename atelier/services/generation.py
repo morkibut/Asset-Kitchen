@@ -577,8 +577,16 @@ class ServiceGenerations:
         forcer: bool = False,
         echelle: str = "",
         filiation: dict[str, Any] | None = None,
+        origine: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Un fichier devient un asset entier (US-82, US-167, US-168).
+
+        **`origine` dit d'où vient un import qui ne sort pas du disque** (TS2) :
+        l'image d'une carte de la toile copiée en bibliothèque porte
+        `{"carte": …, "projet": …}`. Le modèle reste `IMPORT` — rien n'a été
+        payé, à la différence d'une filiation de clip —, et la trace s'écrit
+        dans la demande, donc dans le `generation.json`, où elle survit à
+        l'effacement de l'index.
 
         **Le seul endroit du dépôt qui fasse entrer une image**, et c'est ce qui
         rend vraie la phrase « ce que l'agent peut faire, l'écran le peut aussi »
@@ -683,6 +691,7 @@ class ServiceGenerations:
                 "empreinte": empreinte,
                 **({"echelle": echelle} if echelle else {}),
                 **({"filiation": filiation} if filiation else {}),
+                **({"origine": origine} if origine else {}),
             },
             parametres_resolus={"modele": modele, "source": nom},
             emplacements=[emplacement],

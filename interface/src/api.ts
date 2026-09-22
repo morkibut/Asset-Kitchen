@@ -2418,6 +2418,15 @@ export type Case = {
   sans_direction: Asset[]
 }
 
+/** TS2 — la réponse de « créer un sujet depuis une carte » : soit le sujet
+ *  créé et la copie de l'image, soit `deja`, le sujet que la carte désigne déjà. */
+export type SujetDepuisCarte = {
+  projet: string
+  personnage: Personnage | null
+  asset: Asset | null
+  deja: { identifiant: string; nom: string } | null
+}
+
 export type Personnage = {
   objectif?: ObjectifProduction | null
   identifiant: string
@@ -6498,6 +6507,24 @@ export const api = {
     appeler<{ personnage: Personnage }>("/characters", {
       method: "POST",
       body: JSON.stringify({ nom, description, famille: famille || null }),
+    }),
+
+  /** TS2 — un sujet naît d'une carte image de la toile : nom, famille, concept
+   *  art, copie de l'image en bibliothèque et portrait, en un geste. Une carte
+   *  déjà concept art d'un sujet ne crée rien : `deja` nomme ce sujet, et
+   *  `personnage` est nul. Savoir avant de cliquer : les `concept_arts` de
+   *  `GET /characters`. */
+  creerSujetDepuisCarte: (
+    carte: string,
+    champs: { nom?: string; description?: string; famille?: string } = {},
+  ) =>
+    appeler<SujetDepuisCarte>(`/board/${encodeURIComponent(carte)}/subject`, {
+      method: "POST",
+      body: JSON.stringify({
+        nom: champs.nom || null,
+        description: champs.description ?? "",
+        famille: champs.famille || null,
+      }),
     }),
 
   /** **En un seul geste** : les champs se remplissent ensemble à l'écran, et un

@@ -73,13 +73,24 @@ retour, sans cache à percer.
 
 ### TS2 · Créer un sujet depuis une carte de la toile
 
-- [ ] une route crée le sujet depuis une carte : nom, famille, concept art, copie de l'image en
+- [x] une route crée le sujet depuis une carte : nom, famille, concept art, copie de l'image en
       asset du sujet, portrait posé
 - [ ] le panneau d'une carte image porte le bouton ; il ouvre la fenêtre « Créer un sujet »
       pré-remplie, l'image visible
 - [ ] une carte déjà concept art d'un sujet le dit et ouvre ce sujet au lieu d'en créer un second
 - [ ] la fenêtre « Créer un sujet » du Codex peut aussi partir d'une carte de la toile
 - [ ] essais sans appel payant
+
+**Tranché en TS2** (serveur) : l'image de la carte entre **toujours** en bibliothèque comme une
+copie neuve, importée pour le sujet et marquée de sa carte (`origine` dans la demande de sa
+génération, modèle `import`) — un asset qui porte déjà les mêmes octets garde son histoire et
+n'est ni rattaché ni déplacé. `POST /board/{carte}/subject` (`nom`, `description`, `famille`
+facultatifs ; le nom par défaut est la première ligne de la note de la carte, puis le fichier
+d'origine, puis « Sujet de la toile », suffixé s'il est pris ; la famille par défaut est celle
+de la carte promue, sinon `personnages`). Une carte déjà concept art rend `200` avec
+`deja: {identifiant, nom}` et ne crée rien — la forme du doublon au collage. L'écran le sait
+avant de cliquer par les `concept_arts` de `GET /characters`. Service :
+`atelier/services/sujet_depuis_carte.py` ; outil de l'agent : `create_character_from_card`.
 
 ### TS3 · La première planche
 
