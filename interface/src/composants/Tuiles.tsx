@@ -38,7 +38,10 @@ export function Tuiles({ projet, vue, onVue, onNoms, tailleDuJeu = 32, paletteUn
   tailleDuJeu?: number
   /** La palette de l'univers du projet (TU6) : `[]` sans palette. */
   paletteUnivers?: readonly string[]
-  onAsset?: (a: Asset) => void; onLivraisons?: () => void
+  onAsset?: (a: Asset) => void
+  /** Vers l'écran unique « Livrer au jeu » (`RV8`), filtré sur ce jeu de
+   *  tuiles quand on le connaît déjà. */
+  onLivraisons?: (jeu?: string) => void
   /** Le lien « Voir l’univers » quand la palette du jeu manque (TU6). */
   onUnivers?: () => void
 }) {
@@ -155,9 +158,9 @@ export function Tuiles({ projet, vue, onVue, onNoms, tailleDuJeu = 32, paletteUn
     setStatut("Peins la carte, change les matières : tout se refait sur ta machine.")
   }} />
   else if (courante.ecran === "image") corps = <NouvelEnsemble projet={projet} onGarder={e => { setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)]); aller({ jeu: e.identifiant }) }} onFermer={() => aller(null)} />
-  else if (ensemble && !ensemble.recette) corps = <EditeurTuiles key={ensemble.identifiant} ensemble={ensemble} onGarder={e => setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)])} onAsset={onAsset} onLivraisons={onLivraisons} />
+  else if (ensemble && !ensemble.recette) corps = <EditeurTuiles key={ensemble.identifiant} ensemble={ensemble} onGarder={e => setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)])} onAsset={onAsset} onLivraisons={onLivraisons && (() => onLivraisons(ensemble.identifiant))} />
   else if (!edition) corps = <p role="status" className="text-[13px] text-encre-3">{charge ? "Lecture du jeu de tuiles…" : "Lecture des jeux de tuiles…"}</p>
-  else if (courante.livraison) corps = <LivraisonDuJeu projet={projet} edition={edition} onRetour={() => aller({ jeu: courante.jeu })} onLivraisons={onLivraisons} />
+  else if (courante.livraison) corps = <LivraisonDuJeu projet={projet} edition={edition} onRetour={() => aller({ jeu: courante.jeu })} onLivraisons={onLivraisons && (() => onLivraisons(edition.jeu.identifiant || undefined))} />
   else corps = <AtelierDuJeu key={cle} projet={projet} edition={edition} matieres={matieres} matieresErreur={matieresErreur} sujetsVides={sujetsVides} nonMigrees={nonMigrees} onRelireMatieres={() => void relireMatieres()} modifie={() => estModifie(edition)} occupe={occupe}
     message={estModifie(edition) ? (edition.jeu.identifiant ? "Modifications non enregistrées" : "Pas encore enregistré") : statut}
     onNom={nom => { edition.jeu.nom = nom; maj() }}

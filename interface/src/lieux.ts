@@ -135,7 +135,11 @@ export type Lieu =
   // gardé avec ce jeu-ci, et le lot qui sort est fait de ses sujets. Elle ne
   // porte pourtant aucune charge — les cinq réglages sont un état de l'écran,
   // pas cinq lieux (§ *Ce qui n'est pas un lieu*, en tête de ce fichier).
-  | { genre: "sortie" }
+  //
+  // **`filtre` ouvre l'écran déjà posé sur une chose** (`RV8`) — la fiche d'un
+  // sujet, la page d'un son, un jeu de tuiles. Sans lui, l'écran ouvre sur
+  // « tout le jeu » : c'est la même porte, seulement plus ou moins refermée.
+  | { genre: "sortie"; filtre?: FiltreDeSortie }
   // Une pièce d'équipement et ses emplois (`B19`) — **elle se pose sur le
   // codex**, comme la grille d'une famille, et pour la même raison : c'est le
   // même endroit vu par une porte de plus. Le carnet la déplie sous *Les
@@ -235,6 +239,15 @@ export type Lieu =
   | { genre: "bande"; bande: string }
   | { genre: "montage-de-bande"; bande: Bande }
   | { genre: "envoi" }
+
+/** Ce qui filtre l'écran « Livrer au jeu » quand on y entre d'ailleurs — un
+ *  sujet (sa fiche), un son (sa page) ou un jeu de tuiles (RV8, §4 « Entrées
+ *  filtrées »). Trois natures, trois porteurs : la sortie ne peut pas ouvrir
+ *  filtrée sur une nature sans dire sur quoi. */
+export type FiltreDeSortie =
+  | { genre: "sujet"; sujet: string }
+  | { genre: "son"; son: string }
+  | { genre: "tuiles"; jeu: string }
 
 export type Genre = Lieu["genre"]
 

@@ -110,6 +110,7 @@ import {
   racine,
   remonterA,
   sortir,
+  type FiltreDeSortie,
   type Lieu,
   type Racine,
 } from "./lieux"
@@ -338,11 +339,14 @@ function AtelierApp() {
    *  l'installation. Ce qui la distingue de la dernière : elle appartient au
    *  jeu — son dossier est gardé avec lui, et son lot est fait de ses sujets. */
   const sortieOuverte = dans(pile, "sortie")
+  const filtreDeSortie = lieu(pile, "sortie")?.filtre
   /** Une demande complète de l'agent, ouverte depuis le cadre de délégation —
    *  l'onglet *Agent MCP* des réglages. */
   const travailOuvert = lieu(pile, "travail")?.travail
-  const setSortieOuverte = (ouvert: boolean) =>
-    setPile((p) => (ouvert ? entrer(p, { genre: "sortie" }) : sortir(p, "sortie")))
+  /** `filtre` ouvre l'écran unique déjà posé sur une chose (`RV8`, §4) — la
+   *  fiche d'un sujet, la page d'un son, un jeu de tuiles. */
+  const setSortieOuverte = (ouvert: boolean, filtre?: FiltreDeSortie) =>
+    setPile((p) => (ouvert ? entrer(p, { genre: "sortie", ...(filtre ? { filtre } : {}) }) : sortir(p, "sortie")))
 
   /** Les jeux de tuiles (`TU3`) — **un lieu, plus un dialogue**. On y entre par le
    *  bouton *Les tuiles* des familles ; la liste, un jeu ouvert et sa livraison sont
@@ -2248,6 +2252,7 @@ function AtelierApp() {
         !clipOuvert && (
           <Livraisons
             projet={projetCourant?.identifiant ?? null}
+            filtre={filtreDeSortie}
             onFerme={() => setSortieOuverte(false)}
             onErreur={(refus) => setPanne(refus.message)}
           />
@@ -2277,7 +2282,7 @@ function AtelierApp() {
             tailleDuJeu={tailleDeLUnivers(univers)}
             paletteUnivers={univers.palette}
             onAsset={(a) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: a.identifiant }))}
-            onLivraisons={() => setPile((p) => entrer(sortir(p, "tuiles"), { genre: "sortie" }))}
+            onLivraisons={(jeu) => setPile((p) => entrer(sortir(p, "tuiles"), { genre: "sortie", ...(jeu ? { filtre: { genre: "tuiles", jeu } } : {}) }))}
             onUnivers={() => allerA("univers")}
           />
         )}
@@ -2311,7 +2316,7 @@ function AtelierApp() {
             projet={bibliotheque.courant}
             identifiantInitial={sonsOuverts.identifiant}
             onFabriquer={() => { setCible(null); setPreparation({ type: "son" }) }}
-            onLivraisons={() => setPile((p) => entrer(sortir(p, "sons"), { genre: "sortie" }))}
+            onLivraisons={(son) => setPile((p) => entrer(sortir(p, "sons"), { genre: "sortie", ...(son ? { filtre: { genre: "son", son } } : {}) }))}
           />
         )}
 
@@ -2763,7 +2768,7 @@ function AtelierApp() {
           onImporter={(cible) => setImportDuSujet(cible ?? {})}
           onDecouper={(id) => ouvrirLaRetouche(id, "decoupage")}
           onExtraire={(id) => ouvrirLaRetouche(id, "superposition")}
-          onLivrer={() => setSortieOuverte(true)}
+          onLivrer={() => choseOuverteId && setSortieOuverte(true, { genre: "sujet", sujet: choseOuverteId })}
           onSon={ouvrirLesSons}
           ouvert={choseOuverte}
           plan={plan}

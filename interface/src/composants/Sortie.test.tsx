@@ -1,37 +1,22 @@
-// Ce que l'écran de la sortie montre (B21) : les cinq listes servies par le
-// serveur, l'arbre des fichiers avec leurs trois marques, les quatre comptes,
-// et ce qui n'est pas prêt.
+// Ce qui reste de l'écran de la sortie après `RV8` : les pièces réutilisées
+// par l'écran unique (`Livraisons.tsx`) pour la forme « fichiers » — l'arbre
+// de ce qui va être écrit, ses trois marques, ses quatre comptes, « pas prêt »
+// et « la dernière sortie ». Elles ne sont plus assemblées en écran ici :
+// c'est `Livraisons.test.tsx` qui les monte, dans leur vrai contexte.
 //
 // **Les listes ne sont pas écrites dans l'écran**, elles arrivent du serveur :
-// les essais montent donc un double d'`api` et vérifient que l'écran affiche
-// *ce qu'il a reçu*, jamais ce qu'il aurait pu deviner. C'est le seul niveau
-// qui prouve quelque chose — un écran qui redéclarerait les cinq listes
-// passerait ces essais tout en refusant, au premier moteur ajouté, de le
-// montrer.
+// les essais vérifient donc que ces pièces affichent *ce qu'on leur a donné*,
+// jamais ce qu'elles auraient pu deviner.
 //
-// ⚠️ **jsdom ne met rien en page** : aucun de ces essais ne voit une largeur,
-// un débordement ni un recouvrement. Les trois colonnes se vérifient au
-// navigateur, sur `essais/atelier_jetable_b21.py`.
+// ⚠️ **jsdom ne met rien en page** : aucun de ces essais ne voit une largeur
+// ni un débordement. Ça se vérifie au navigateur, sur `essais/atelier_jetable_*.py`.
 
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { useState } from "react"
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { afterEach, describe, expect, test } from "vitest"
 
-import { MOTS, parDossier, poids, quand, Sortie } from "./Sortie"
-import type { ApercuDeSortie, FichierDeSortie, ReglagesDeLaSortie } from "../api"
-
-const REGLAGES: ReglagesDeLaSortie = {
-  lots: ["tout", "personnages", "objets", "decors", "interface", "animations"],
-  rangements: ["a_plat", "en_dossiers"],
-  collisions: ["remplacer", "numeroter", "arreter", "effacer"],
-  moteurs: ["aucun", "godot", "unity", "phaser"],
-  sujets: [
-    { identifiant: "le-pelerin", nom: "le pèlerin" },
-    { identifiant: "le-passeur", nom: "le passeur" },
-  ],
-  dossier: "D:\\jeux\\marais\\assets",
-  precedente: null,
-}
+import { ArbreDeSortie, DerniereSortie, MOTS, PasPretDeSortie, parDossier, poids, quand } from "./Sortie"
+import type { ApercuDeSortie, FichierDeSortie } from "../api"
 
 function fichier(surplus: Partial<FichierDeSortie> & { chemin: string }): FichierDeSortie {
   return {
@@ -97,89 +82,14 @@ const APERCU: ApercuDeSortie = {
   refus: "",
 }
 
-const prevoir = vi.fn()
-const sortir = vi.fn()
-
-vi.mock("../api", async (vrai) => {
-  const module = await vrai<typeof import("../api")>()
-  return {
-    ...module,
-    api: {
-      ...module.api,
-      reglagesDeLaSortie: () => Promise.resolve(REGLAGES),
-      prevoirLaSortie: (...args: unknown[]) => prevoir(...args),
-      sortir: (...args: unknown[]) => sortir(...args),
-    },
-  }
-})
-
-beforeEach(() => {
-  prevoir.mockReset()
-  prevoir.mockResolvedValue(APERCU)
-  sortir.mockReset()
-  sortir.mockResolvedValue({
-    dossier: "D:\\jeux\\marais\\assets",
-    ecrits: APERCU.fichiers,
-    effaces: [],
-    inchanges: 1,
-    descriptif: "D:\\jeux\\marais\\assets\\descriptif.json",
-    catalogue: "",
-    le: 1_757_000_000,
-    compte: 4,
-    octets: 8192,
-  })
-})
-
 afterEach(cleanup)
-
-function monter(surplus: Partial<Parameters<typeof Sortie>[0]> = {}) {
-  const onFerme = vi.fn()
-  render(<Sortie projet="le-marais" onFerme={onFerme} {...surplus} />)
-  return { onFerme }
-}
-
-// ── Les cinq listes viennent du serveur ─────────────────────────────────────
-
-describe("les cinq listes fermées", () => {
-  test("elles sont affichées telles que le serveur les a servies", async () => {
-    monter()
-
-    for (const valeur of [...REGLAGES.lots, ...REGLAGES.collisions]) {
-      expect(await screen.findByText(MOTS[valeur])).toBeTruthy()
-    }
-    for (const valeur of [...REGLAGES.rangements, ...REGLAGES.moteurs]) {
-      expect(await screen.findByText(MOTS[valeur])).toBeTruthy()
-    }
-  })
-
-  test("« Remplacer » est le mode par défaut", async () => {
-    monter()
-    const remplacer = await screen.findByRole("radio", { name: /Remplacer/ })
-    expect(remplacer.getAttribute("aria-checked")).toBe("true")
-  })
-
-  test("changer un réglage redemande un aperçu, et ne coûte rien", async () => {
-    monter()
-    await screen.findByRole("radio", { name: /Remplacer/ })
-    const premiers = prevoir.mock.calls.length
-
-    fireEvent.click(screen.getByRole("radio", { name: "en dossiers" }))
-
-    await waitFor(() => expect(prevoir.mock.calls.length).toBeGreaterThan(premiers))
-    // **Prévoir, et jamais sortir** : le second appel n'écrit rien.
-    expect(sortir).not.toHaveBeenCalled()
-    expect(prevoir.mock.calls.at(-1)?.[0]).toMatchObject({
-      rangement: "en_dossiers",
-    })
-  })
-})
 
 // ── L'arbre, ses marques et ses comptes ─────────────────────────────────────
 
-describe("l'arbre des fichiers", () => {
-  test("chaque fichier porte sa marque", async () => {
-    monter()
-    const arbre = await screen.findByText("personnages/")
+describe("ArbreDeSortie", () => {
+  test("chaque fichier porte sa marque", () => {
+    render(<ArbreDeSortie apercu={APERCU} filtre="tout" onFiltre={() => {}} />)
+    const arbre = screen.getByText("personnages/")
 
     const dans = (chemin: string) =>
       document.querySelector(`[data-fichier="${chemin}"]`) as HTMLElement
@@ -191,62 +101,45 @@ describe("l'arbre des fichiers", () => {
     expect(within(dans("personnages/pelerin-mort-est.png")).getByText("à effacer")).toBeTruthy()
   })
 
-  test("un reste porte son chemin entier, jamais son seul nom", async () => {
-    // ⚠️ **Trouvé au navigateur, pas ici.** Un reste n'est rangé sous aucun
-    // dossier de l'arbre : affiché par son seul nom, il se lisait à côté d'un
-    // fichier prévu portant le même nom dans un autre dossier — deux lignes
-    // identiques, l'une « nouveau », l'autre « à effacer ».
-    prevoir.mockResolvedValue({
+  test("un reste porte son chemin entier, jamais son seul nom", () => {
+    render(<ArbreDeSortie apercu={{
       ...APERCU,
       fichiers: [fichier({ chemin: "pelerin-mort-est.png", marque: "nouveau" })],
-      restes: [
-        fichier({ chemin: "personnages/pelerin-mort-est.png", marque: "reste" }),
-      ],
-    })
-    monter()
+      restes: [fichier({ chemin: "personnages/pelerin-mort-est.png", marque: "reste" })],
+    }} filtre="tout" onFiltre={() => {}} />)
 
-    const reste = (await screen.findByText(
-      "personnages/pelerin-mort-est.png",
-    )) as HTMLElement
-    expect(reste).toBeTruthy()
+    expect(screen.getByText("personnages/pelerin-mort-est.png")).toBeTruthy()
     // Et le fichier prévu, lui, garde son nom court : il est sous sa racine.
     expect(screen.getByText("pelerin-mort-est.png")).toBeTruthy()
   })
 
-  test("un fichier sans dimensions n'en affiche aucune", async () => {
-    monter()
-    await screen.findByText("personnages/")
+  test("un fichier sans dimensions n'en affiche aucune", () => {
+    render(<ArbreDeSortie apercu={APERCU} filtre="tout" onFiltre={() => {}} />)
+    screen.getByText("personnages/")
 
-    // **Zéro n'est pas une dimension, c'est l'absence de mesure.** Un descriptif
-    // est du texte : l'arbre n'écrit rien à sa droite, plutôt que « 0×0 ».
     const ligne = document.querySelector('[data-fichier="descriptif.json"]')
     expect(ligne?.textContent).not.toContain("0×0")
     expect(ligne?.textContent).toContain("descriptif.json")
   })
 
-  test("le filtre « ce qui a changé » retire les inchangés", async () => {
-    monter()
-    await screen.findByText("personnages/")
+  test("le filtre « ce qui a changé » retire les inchangés", () => {
+    function Test() {
+      const [f, setF] = useState<"change" | "tout">("tout")
+      return <ArbreDeSortie apercu={APERCU} filtre={f} onFiltre={setF} />
+    }
+    render(<Test />)
     expect(document.querySelector('[data-fichier="personnages/pelerin-course-est.png"]')).toBeTruthy()
 
     fireEvent.click(screen.getByRole("button", { name: "ce qui a changé" }))
 
-    expect(
-      document.querySelector('[data-fichier="personnages/pelerin-course-est.png"]'),
-    ).toBeNull()
-    // Ceux qui changent restent.
-    expect(
-      document.querySelector('[data-fichier="personnages/pelerin-repos-est.png"]'),
-    ).toBeTruthy()
+    expect(document.querySelector('[data-fichier="personnages/pelerin-course-est.png"]')).toBeNull()
+    expect(document.querySelector('[data-fichier="personnages/pelerin-repos-est.png"]')).toBeTruthy()
   })
 
-  test("les quatre comptes se lisent sous l'arbre", async () => {
-    monter()
-    await screen.findByText("personnages/")
+  test("les quatre comptes se lisent sous l'arbre", () => {
+    render(<ArbreDeSortie apercu={APERCU} filtre="tout" onFiltre={() => {}} />)
+    screen.getByText("personnages/")
 
-    // Cherchés **dans le bloc des comptes** : « à effacer » est aussi la marque
-    // d'une ligne de l'arbre, et une recherche sur toute la page en trouverait
-    // deux — ce qui est juste, et ce n'est pas ce qu'on mesure ici.
     const comptes = within(document.querySelector("[data-comptes]") as HTMLElement)
     for (const [chiffre, mot] of [
       ["2", "nouveaux"],
@@ -260,97 +153,40 @@ describe("l'arbre des fichiers", () => {
   })
 })
 
-// ── Le bouton porte le compte et le poids ───────────────────────────────────
-
-describe("le bouton", () => {
-  test("il porte le compte exact et le poids", async () => {
-    monter()
-
-    expect(await screen.findByText("Livrer 4 fichiers ›")).toBeTruthy()
-    expect(screen.getByText("8 ko · rien ne part sur le réseau")).toBeTruthy()
-  })
-
-  test("sans dossier, il est grisé et porte sa raison", async () => {
-    prevoir.mockResolvedValue({
-      ...APERCU,
-      dossier: "",
-      fichiers: [],
-      restes: [],
-      compte: 0,
-      octets: 0,
-      comptes: {},
-      refus: "aucun dossier de jeu — pose-le dans l'installation",
-    })
-    monter()
-
-    const bouton = (await screen.findByText(/Livrer \d+ fichier/)) as HTMLButtonElement
-    expect(bouton.disabled).toBe(true)
-    // **Le grisé porte sa raison**, et jamais dans une infobulle.
-    expect(
-      screen.getByText("aucun dossier de jeu — pose-le dans l'installation"),
-    ).toBeTruthy()
-  })
-
-  test("cliquer sort, puis redemande un aperçu", async () => {
-    monter()
-    fireEvent.click(await screen.findByText("Livrer 4 fichiers ›"))
-
-    await waitFor(() => expect(sortir).toHaveBeenCalledTimes(1))
-    // Le compte rendu paraît, et il dit le chemin.
-    expect(await screen.findByRole("status")).toBeTruthy()
-    expect(screen.getByRole("status").textContent).toContain("D:\\jeux\\marais\\assets")
-  })
-})
-
 // ── Ce qui n'est pas prêt ───────────────────────────────────────────────────
 
-describe("ce qui n'est pas prêt", () => {
-  test("le panneau nomme les sujets et accorde son titre", async () => {
-    monter()
+describe("PasPretDeSortie", () => {
+  test("le panneau nomme les sujets et accorde son titre", () => {
+    render(<PasPretDeSortie apercu={APERCU} />)
 
-    expect(await screen.findByText("2 sujets n'ont aucune image qui sort")).toBeTruthy()
+    expect(screen.getByText("2 sujets n'ont aucune image qui sort")).toBeTruthy()
     expect(screen.getByText("le passeur")).toBeTruthy()
     expect(screen.getByText("le chaudron")).toBeTruthy()
-    // La phrase vient du serveur, au caractère près.
-    expect(
-      screen.getByText("ils seront sautés — aucune de leurs poses n'a d'image"),
-    ).toBeTruthy()
+    expect(screen.getByText("ils seront sautés — aucune de leurs poses n'a d'image")).toBeTruthy()
   })
 
-  test("quand tout est prêt, il le dit plutôt que de disparaître", async () => {
-    prevoir.mockResolvedValue({ ...APERCU, pas_prets: [] })
-    monter()
+  test("quand tout est prêt, il le dit plutôt que de disparaître", () => {
+    render(<PasPretDeSortie apercu={{ ...APERCU, pas_prets: [] }} />)
 
-    expect(
-      await screen.findByText("Tout ce que ce lot contient a de quoi sortir."),
-    ).toBeTruthy()
+    expect(screen.getByText("Tout ce que ce lot contient a de quoi sortir.")).toBeTruthy()
   })
 })
 
 // ── La fois d'avant ─────────────────────────────────────────────────────────
 
-describe("la dernière sortie", () => {
-  test("jamais sortie, elle le dit", async () => {
-    monter()
-    expect(
-      await screen.findByText("Ce jeu n'est jamais sorti. Tout sera nouveau."),
-    ).toBeTruthy()
+describe("DerniereSortie", () => {
+  test("jamais sortie, elle le dit", () => {
+    render(<DerniereSortie apercu={APERCU} />)
+    expect(screen.getByText("Ce jeu n'est jamais sorti. Tout sera nouveau.")).toBeTruthy()
   })
 
-  test("déjà sortie, elle donne la date, le compte et le poids", async () => {
-    prevoir.mockResolvedValue({
+  test("déjà sortie, elle donne la date, le compte et le poids", () => {
+    render(<DerniereSortie apercu={{
       ...APERCU,
-      precedente: {
-        le: 1_757_000_400,
-        dossier: "D:\\jeux\\marais\\assets",
-        compte: 726,
-        chemins: [],
-        octets: 14_260_000,
-      },
-    })
-    monter()
+      precedente: { le: 1_757_000_400, dossier: "D:\\jeux\\marais\\assets", compte: 726, chemins: [], octets: 14_260_000 },
+    }} />)
 
-    expect(await screen.findByText("726 fichiers · 13,6 Mo")).toBeTruthy()
+    expect(screen.getByText("726 fichiers · 13,6 Mo")).toBeTruthy()
   })
 })
 
@@ -358,63 +194,9 @@ describe("la dernière sortie", () => {
 
 describe("poids", () => {
   test("il met la virgule, jamais le point", () => {
-    // Le dépôt a déjà payé un écran qui écrivait « 26,5 Go » et « 8.7 Go » à
-    // deux lignes d'écart.
     expect(poids(14_260_000)).toBe("13,6 Mo")
     expect(poids(2048)).toBe("2 ko")
     expect(poids(12)).toBe("12 o")
-  })
-})
-
-// ── Un seul sujet, à la place du lot (`RP17`) ───────────────────────────────
-
-describe("un seul asset", () => {
-  test("le choix paraît avec les lots, et la liste vient du serveur", async () => {
-    monter()
-
-    expect(await screen.findByRole("radio", { name: "Un seul sujet" })).toBeTruthy()
-    // Tant qu'on ne l'a pas pris, le lot décide et aucune liste de sujets ne
-    // s'affiche : un menu sans objet se lit comme un réglage à remplir.
-    expect(screen.queryByLabelText("Lequel")).toBeNull()
-
-    fireEvent.click(screen.getByRole("radio", { name: "Un seul sujet" }))
-    const lequel = screen.getByLabelText("Lequel") as HTMLSelectElement
-    expect([...lequel.options].map((o) => o.textContent)).toEqual([
-      "le pèlerin",
-      "le passeur",
-    ])
-  })
-
-  test("le prendre envoie le sujet, et le reprendre au lot le relâche", async () => {
-    monter()
-    await screen.findByRole("radio", { name: "Un seul sujet" })
-
-    fireEvent.click(screen.getByRole("radio", { name: "Un seul sujet" }))
-    await waitFor(() =>
-      expect(prevoir.mock.calls.at(-1)?.[0]).toMatchObject({
-        sujet: "le-pelerin",
-      }),
-    )
-    // Le lot n'est plus allumé : deux réponses à la même question se
-    // contrediraient, et l'écran le montre au lieu de l'expliquer.
-    expect(
-      screen.getByRole("radio", { name: MOTS.tout }).getAttribute("aria-checked"),
-    ).toBe("false")
-
-    fireEvent.change(screen.getByLabelText("Lequel"), {
-      target: { value: "le-passeur" },
-    })
-    await waitFor(() =>
-      expect(prevoir.mock.calls.at(-1)?.[0]).toMatchObject({
-        sujet: "le-passeur",
-      }),
-    )
-
-    fireEvent.click(screen.getByRole("radio", { name: MOTS.tout }))
-    await waitFor(() =>
-      expect(prevoir.mock.calls.at(-1)?.[0]).toMatchObject({ sujet: "" }),
-    )
-    expect(screen.queryByLabelText("Lequel")).toBeNull()
   })
 })
 
@@ -427,11 +209,7 @@ describe("parDossier", () => {
       fichier({ chemin: "personnages/trois.png" }),
     ])
 
-    expect(groupes.map((g) => g.dossier)).toEqual([
-      "animations",
-      "personnages",
-      "",
-    ])
+    expect(groupes.map((g) => g.dossier)).toEqual(["animations", "personnages", ""])
     expect(groupes[1].fichiers).toHaveLength(2)
   })
 })
@@ -443,42 +221,12 @@ describe("quand", () => {
   })
 })
 
-// ── Le chemin tapé survit aux rendus de l'atelier ───────────────────────────
-
-describe("le dossier de destination", () => {
-  test("un rendu de l'atelier ne réécrit pas le chemin qu'on est en train de taper", async () => {
-    // **`onErreur` arrive en fonction fléchée**, recréée à chaque rendu de
-    // `App.tsx` — et l'atelier se rend à chaque événement du serveur. Quand
-    // l'effet qui relit les réglages en dépendait, il repartait tout seul et
-    // remettait le chemin conservé à la place de celui qu'on tapait : mesuré
-    // au navigateur le 16 septembre 2026, le champ se vidait au bout de six
-    // secondes et le bouton retombait à « Livrer 0 fichier ».
-    function Atelier() {
-      const [rendus, refaire] = useState(0)
-      return (
-        <>
-          <button onClick={() => refaire(rendus + 1)}>refaire un rendu</button>
-          <Sortie
-            projet="le-marais"
-            onFerme={() => {}}
-            onErreur={() => {
-              /* une identité neuve à chaque rendu, comme dans App.tsx */
-            }}
-          />
-        </>
-      )
-    }
-
-    render(<Atelier />)
-    const champ = (await screen.findByLabelText("Le dossier du jeu")) as HTMLInputElement
-    expect(champ.value).toBe(REGLAGES.dossier)
-
-    fireEvent.change(champ, { target: { value: "E:\\ailleurs\\assets" } })
-    fireEvent.click(screen.getByRole("button", { name: "refaire un rendu" }))
-
-    await waitFor(() =>
-      expect(prevoir.mock.calls.at(-1)?.[0]).toMatchObject({ dossier: "E:\\ailleurs\\assets" }),
-    )
-    expect(champ.value).toBe("E:\\ailleurs\\assets")
+describe("MOTS", () => {
+  test("le catalogue « godot » n'est plus un mot de l'écran des fichiers", () => {
+    // **RV8, §3.** La référence Godot est le paquet AU1 ; la forme « fichiers »
+    // garde son mot pour Unity et Phaser, mais son propre catalogue Godot n'a
+    // jamais été fidèle à `_sprite_frames` — il reste servi à l'API, jamais
+    // proposé à l'écran (`ReglagesFichiersReplies` filtre « godot »).
+    expect(MOTS.godot).toBe("Godot")
   })
 })

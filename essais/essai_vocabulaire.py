@@ -124,8 +124,10 @@ TITRE_A_L_ECRAN = {
     "interface/src/composants/Famille.tsx": 3,
     "interface/src/composants/GalerieMedias.tsx": 4,
     "interface/src/composants/Fabrications.tsx": 5,
+    # `RV8` : l'écran unique « Livrer au jeu » vit tout entier dans
+    # `Livraisons.tsx` ; `Sortie.tsx` n'en est plus que des pièces reprises
+    # (l'arbre B21, « pas prêt », « la dernière sortie »), sans `<h1>` à lui.
     "interface/src/composants/Livraisons.tsx": 6,
-    "interface/src/composants/Sortie.tsx": 6,
     "interface/src/composants/Guide.tsx": 8,
 }
 

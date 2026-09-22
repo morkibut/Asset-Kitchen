@@ -62,7 +62,13 @@ function titreCourtSon(s: { nom: string; famille: FamilleSon | null }): string {
 // conserver ses réglages. Une seule déclaration pour les deux.
 const ROUILLE = "border-signal bg-signal text-encre-sur-signal"
 
-export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriquer }: { projet: string; identifiantInitial?: string; onLivraisons?: () => void; onFabriquer?: () => void }) {
+export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriquer }: {
+  projet: string; identifiantInitial?: string
+  /** Vers l'écran unique « Livrer au jeu » (`RV8`), filtré sur le son ouvert
+   *  quand il y en a un. */
+  onLivraisons?: (son?: string) => void
+  onFabriquer?: () => void
+}) {
   const [liste, setListe] = useState<Son[]>([])
   const [son, setSon] = useState<Son | null>(null)
   const [recette, setRecette] = useState<RecetteSon | null>(null)
@@ -167,7 +173,7 @@ export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriqu
           <ReglagesSon son={son} recette={recette} mesures={son.mesures} famille={son.famille} occupe={occupe} onChange={changer} />
         </aside>
       </div>
-      <footer className="sticky bottom-0 flex flex-wrap items-center gap-[14px] border-t border-trait bg-papier py-[14px]"><button className={`${BOUTON} ${ROUILLE}`} disabled={occupe || !modifie || son.revision !== son.revision_courante} onClick={() => void faire(async () => rafraichir(await sons.regler(son, recette, nom)))}>Conserver une version</button>{modifie && <button className={BOUTON} onClick={() => installer(son)}>Abandonner les réglages</button>}<button className={BOUTON} disabled={occupe || modifie || !son.pret || son.jugement === "ecartee"} onClick={() => setAfficherLivraison(v => !v)}>Relire la livraison Godot</button>{son.pret && !modifie && <a href={sons.archive(son)} className="text-[13px] underline" download>Télécharger WAV et scène</a>}{onLivraisons && <button className={BOUTON} onClick={onLivraisons}>Livrer au jeu</button>}</footer>
+      <footer className="sticky bottom-0 flex flex-wrap items-center gap-[14px] border-t border-trait bg-papier py-[14px]"><button className={`${BOUTON} ${ROUILLE}`} disabled={occupe || !modifie || son.revision !== son.revision_courante} onClick={() => void faire(async () => rafraichir(await sons.regler(son, recette, nom)))}>Conserver une version</button>{modifie && <button className={BOUTON} onClick={() => installer(son)}>Abandonner les réglages</button>}<button className={BOUTON} disabled={occupe || modifie || !son.pret || son.jugement === "ecartee"} onClick={() => setAfficherLivraison(v => !v)}>Relire la livraison Godot</button>{son.pret && !modifie && <a href={sons.archive(son)} className="text-[13px] underline" download>Télécharger WAV et scène</a>}{onLivraisons && <button className={BOUTON} onClick={() => onLivraisons(son.identifiant)}>Livrer au jeu</button>}</footer>
       {afficherLivraison && <ApercuLivraisonSon projet={projet} son={son} onLivraisons={onLivraisons} />}
     </>}
     </div>

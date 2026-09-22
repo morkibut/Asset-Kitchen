@@ -4918,6 +4918,14 @@ export const api = {
    *  *Livrer* qui l'applique. */
   deciderConflit: (projet: string, jeton: string, chemin: string, decision: DecisionSurConflit) =>
     appeler<ApercuLivraison>(`/projects/${encodeURIComponent(projet)}/deliveries/${encodeURIComponent(jeton)}/decisions`, { method: "POST", body: JSON.stringify({ chemin, decision }) }),
+  /** Tout le jeu, ou ces sujets-là, en paquets Godot — un `prevoirLivraison`
+   *  par sujet (`RV8`). `paquets` dans l'ordre des sujets ; `ecartes` ceux qui
+   *  ne partent pas, chacun avec sa raison. */
+  prevoirLivraisonsDuJeu: (projet: string, personnages?: string[]) =>
+    appeler<{ paquets: ApercuLivraison[]; ecartes: { personnage: string; nom: string; raison: string }[] }>(
+      `/projects/${encodeURIComponent(projet)}/deliveries/preview-all`,
+      { method: "POST", body: JSON.stringify({ ...(personnages ? { personnages } : {}) }) },
+    ),
   etat: () => appeler<Etat>("/status"),
 
   /** Le catalogue, le grisé de chaque modèle, **et le compte de références**.
@@ -7397,6 +7405,16 @@ export const api = {
       body: JSON.stringify(reglage),
     }),
 
+  /** Le sous-dossier de la forme « fichiers », sous le jeu Godot rattaché
+   *  (`RV8`). La racine ne se pose pas ici — c'est `associerGodot`, la
+   *  source unique. Rend la destination relue — les mêmes six champs que
+   *  `reglagesDeLaSortie` sait déjà lire, et rien de plus. */
+  reglerSousDossier: (sous_dossier: string, projet?: string | null) =>
+    appeler<Destination>("/output/folder", {
+      method: "PUT",
+      body: JSON.stringify({ sous_dossier, ...(projet ? { projet } : {}) }),
+    }),
+
   // ── P1c (V3.5) : les dépliages d'une planche, sur l'écran ──────────────────
   //
   // `{identifiant}` est la planche **ou n'importe quelle image sortie
@@ -7612,7 +7630,27 @@ export type ReglageDeSortie = {
   sujet: string
 }
 
-export type ReglagesDeLaSortie = {
+/** Où la forme « fichiers » se pose, et d'où on le sait (`RV8`, §4). Un seul
+ *  bandeau la lit — celui du haut de l'écran unique — et c'est le seul endroit
+ *  où le dossier Godot du jeu se voit. */
+export type Destination = {
+  /** `racine/sous_dossier`, ou `""` : rien n'a de dossier. */
+  dossier: string
+  /** Le jeu Godot rattaché, ou l'ancien dossier — jamais le réglage commun de
+   *  l'agent (`T7`), qui a cessé d'en faire partie avec `RV8`. */
+  racine: string
+  sous_dossier: string
+  origine: "jeu" | "ancien" | "aucun"
+  /** La phrase à montrer quand `origine` vaut `"ancien"` — vide sinon. */
+  mention: string
+  /** « Rattacher » en un clic : `PUT godot-link {dossier}` puis
+   *  `PUT /output/folder {sous_dossier}`. `null` quand rien ne le propose. */
+  rattacher: { dossier: string; sous_dossier: string } | null
+  /** La phrase à montrer quand on ne peut pas sortir — vide sinon. */
+  refus: string
+}
+
+export type ReglagesDeLaSortie = Destination & {
   lots: string[]
   rangements: string[]
   collisions: string[]
@@ -7620,7 +7658,6 @@ export type ReglagesDeLaSortie = {
   /** Les sujets du jeu, servis par le serveur comme les quatre listes : l'écran
    *  ne peut pas en proposer un que la sortie refuserait (`RP17`). */
   sujets: { identifiant: string; nom: string }[]
-  dossier: string
   precedente: SortiePrecedente | null
 }
 
