@@ -75,6 +75,11 @@ export const CREER_SUJET = createContext<((carte: Carte) => void) | null>(null)
  *  créer un second. Même règle de `null` que `CREER_SUJET`. */
 export const OUVRIR_SUJET = createContext<((identifiant: string) => void) | null>(null)
 
+/** Fabriquer depuis cette image : la carte part en référence de la barre de
+ *  fabrication de la toile, et le champ prend la main. `null` hors de la
+ *  toile — la grille n'a pas de barre, le bouton n'y paraît donc pas. */
+export const VARIER = createContext<((carte: Carte) => void) | null>(null)
+
 /** La gouttière de la grille — un seul vocabulaire d'écart dans tout le produit.
  *  La toile la reprend telle quelle pour ranger ce qu'elle dispose seule. */
 export const GOUTTIERE = 9
@@ -1438,6 +1443,7 @@ function Reglages({
   onErreur: (r: string) => void
 }) {
   const decouper = useContext(DECOUPER)
+  const varier = useContext(VARIER)
   const creerSujet = useContext(CREER_SUJET)
   const ouvrirSujet = useContext(OUVRIR_SUJET)
   const [groupe, setGroupe] = useState(carte.groupe)
@@ -1710,6 +1716,15 @@ function Reglages({
             className="mesure text-[10.5px] text-signal hover:opacity-70"
           >
             Découper ›
+          </button>
+        )}
+        {varier && carte.genre === "image" && carte.statut === "prete" && (
+          <button
+            type="button"
+            onClick={() => varier(carte)}
+            className="mesure text-[10.5px] text-signal hover:opacity-70"
+          >
+            Varier
           </button>
         )}
         {carte.source && carte.statut === "echouee" && (

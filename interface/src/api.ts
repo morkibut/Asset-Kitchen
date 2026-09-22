@@ -6221,7 +6221,13 @@ export const api = {
       { method: "POST" },
     ),
 
-  poserAssetSurToile: (projet: string, asset: string) => appeler<{ carte: Carte; deja_presente: boolean }>(`/projects/${encodeURIComponent(projet)}/board/assets/${encodeURIComponent(asset)}`, { method: "POST" }),
+  /** `position` pose une carte neuve à cet endroit du plan (la fabrication de
+   *  la toile) ; absente, elle se range au bout. Un doublon garde sa place. */
+  poserAssetSurToile: (projet: string, asset: string, position?: [number, number]) =>
+    appeler<{ carte: Carte; deja_presente: boolean }>(
+      `/projects/${encodeURIComponent(projet)}/board/assets/${encodeURIComponent(asset)}`,
+      position ? { method: "POST", body: JSON.stringify({ position }) } : { method: "POST" },
+    ),
 
   /** Coller une adresse — la carte paraît **avant** que l'image n'arrive. La
    *  route rend la main tout de suite ; l'issue arrive par le flux. */
