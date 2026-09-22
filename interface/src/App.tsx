@@ -826,7 +826,7 @@ function AtelierApp() {
   // V2.1** : la barre du châssis doit savoir quelles colonnes l'écran replie, et
   // la réserve n'a de colonne qu'en vue toile. Un état de navigation qui décide
   // du contenu d'une bande partagée ne peut plus vivre sous cette bande.
-  const [vueUnivers, setVueUnivers] = useState<VueUnivers>("grille")
+  const [vueUnivers, setVueUnivers] = useState<VueUnivers>("toile")
   // **Lequel des trois côtés de l'Univers est allumé** (E7). Monté ici pour la
   // même raison que la vue : la barre du châssis rend les bascules de repli de
   // l'écran actif, et il n'y en a qu'au côté Inspiration, en vue toile.
