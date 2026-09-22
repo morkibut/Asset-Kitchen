@@ -36,6 +36,11 @@ export type CibleDeLAppel = {
   piece?: string | null
   direction?: string | null
   directions?: string[] | null
+  /** **La première planche du sujet** (TS3) : cet appel-ci pose la pose de
+   *  repos dans les directions du jeu, d'après son concept art. Incompatible
+   *  avec `garder_mise_en_page` — la barre qui paie retire sa case tant que
+   *  ce drapeau est vrai. */
+  premierePlanche?: boolean
 }
 
 // **Le temps qu'on laisse à la frappe de se poser** (M3). Corriger une ligne de
@@ -146,6 +151,7 @@ export function usePaiement({
    *  une case restée cochée sous un lot ou une pose armés ne part pas, plutôt
    *  que de faire refuser l'appel par l'atelier. */
   const refaitUnePlanche =
+    !cible?.premierePlanche &&
     garderMiseEnPage && !cases && posesCible.length === 0 && !cible?.piece
   /** **La découpe à l'arrivée, telle qu'elle part** (RS7) : seulement avec une
    *  planche refaite qui part. Restée cochée sous une case décochée, elle ne
@@ -461,6 +467,10 @@ export function usePaiement({
         // **Et la découpe à l'arrivée** (RS7), absente elle aussi quand elle
         // ne part pas.
         ...(coupeALArrivee ? { decouper_a_l_arrivee: true } : {}),
+        // **La première planche du sujet** (TS3) : la pose et les directions
+        // sont déjà celles que le serveur a rendues — `armerPremierePlanche`
+        // les a posées dans la cible.
+        ...(cible?.premierePlanche ? { premiere_planche: true } : {}),
       })
       // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
       setChantier((liste) => fondre(liste, generation))
@@ -548,6 +558,9 @@ export function usePaiement({
           prompt_negatif: promptNegatif.trim(),
           // **La consigne de planche se relit avant de payer** (RS2).
           ...(refaitUnePlanche ? { garder_mise_en_page: true } : {}),
+          // **La première planche**, lue avant de payer (TS3) — même drapeau
+          // que `generer`.
+          ...(cible?.premierePlanche ? { premiere_planche: true } : {}),
         })
         .then((recu) => {
           if (!vivant) return

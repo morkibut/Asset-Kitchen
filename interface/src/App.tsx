@@ -682,6 +682,9 @@ function AtelierApp() {
      *  le prochain appel remplira* —, et un second état se serait contredit avec
      *  celui-ci au premier désarmement. */
     directions?: string[] | null
+    /** **La première planche du sujet** (TS3) — voir `paiement.ts`,
+     *  `CibleDeLAppel`. */
+    premierePlanche?: boolean
   } | null>(null)
   // **Ce que cette génération-ci n'envoie pas** (US-126). `null` — aucun avis,
   // donc les deux portées durables s'appliquent telles que le serveur les rend.
@@ -1692,6 +1695,7 @@ function AtelierApp() {
   const {
     ajouterUneReference,
     armer: armerLaCible,
+    armerPremierePlanche,
     garderLeTexte,
     reinjecter,
     reprendreReglages,
@@ -1844,7 +1848,9 @@ function AtelierApp() {
       variations={variations}
       onVariations={setVariations}
       garderMiseEnPage={garderMiseEnPage}
-      onGarderMiseEnPage={setGarderMiseEnPage}
+      // **Incompatible avec la première planche** (TS3) : sans cette case, la
+      // barre ne montre plus « Garder la mise en page de la référence ».
+      onGarderMiseEnPage={cible?.premierePlanche ? undefined : setGarderMiseEnPage}
       decouperALArrivee={decouperALArrivee}
       onDecouperALArrivee={setDecouperALArrivee}
       options={options}
@@ -2746,6 +2752,8 @@ function AtelierApp() {
           emplacements={emplacements}
           pieces={pieces}
           onArmer={armer}
+          onPremierePlanche={armerPremierePlanche}
+          onAllerALaToile={() => { setPreparation(null); setVueUnivers("toile"); allerA("univers") }}
           /* **Animer une case ouvre la fenêtre unique de préparation, en mode
              clip** (A9, RP4, RV6). Onze portes du produit passaient par
              `EcranClip` ou `AnimerEnLot` chacune à sa façon ; elles ouvrent

@@ -56,6 +56,7 @@ import {
   type Personnage,
   type Piece,
   type Pose,
+  type PremierePlanche,
   type ReferenceDeLaChose,
   type ReferencesDeLaChose,
   type Role,
@@ -367,6 +368,50 @@ function PropositionDeDirection({
   )
 }
 
+/** **Faire la planche des directions** (TS3) — le geste suivant d'un sujet
+ *  neuf, quand il n'a pas encore de planche. Un clic demande au serveur ce
+ *  qu'il faudrait pour la fabriquer ; rien n'est facturé ici, l'atelier
+ *  s'ouvre déjà rempli. Refusé (409) : la phrase du serveur remplace le
+ *  bouton, avec un lien vers la toile — c'est là qu'on pose un concept art. */
+function BoutonPremierePlanche({
+  enCours,
+  refus,
+  onDemander,
+  onAllerALaToile,
+}: {
+  enCours: boolean
+  refus: string | null
+  onDemander: () => void
+  onAllerALaToile?: () => void
+}) {
+  if (refus)
+    return (
+      <div className="flex flex-col gap-[4px]">
+        <p className="text-[12px] text-encre-3">{refus}</p>
+        {onAllerALaToile && (
+          <button
+            type="button"
+            onClick={onAllerALaToile}
+            className="self-start text-[10.5px] text-signal hover:opacity-70"
+          >
+            Aller à la toile ›
+          </button>
+        )}
+      </div>
+    )
+  return (
+    <button
+      type="button"
+      onClick={onDemander}
+      disabled={enCours}
+      title="Sa pose de repos, dans les directions du jeu, d'après son concept art — rien n'est payé ici."
+      className="self-start rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[12.5px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
+    >
+      {enCours ? "Ça se prépare…" : "Faire la planche des directions"}
+    </button>
+  )
+}
+
 /** Les références promues, rangées par usage — la planche, une place par
  *  direction du sujet, puis les libres (RS3). */
 function SesReferencesParUsage({
@@ -375,12 +420,16 @@ function SesReferencesParUsage({
   erreurs,
   onChangerUsage,
   onUtiliserPourDirection,
+  boutonPlanche,
 }: {
   personnage: Personnage
   references: ReferencesDeLaChose | null
   erreurs: Record<string, string>
   onChangerUsage: (asset: string, usage: string) => void
   onUtiliserPourDirection: (image: Asset, direction: Direction) => void
+  /** **Faire la planche des directions** (TS3) — montré dans le bloc
+   *  *Planche* seulement quand il n'y en a pas encore. */
+  boutonPlanche?: ReactNode
 }) {
   const directions = useMemo(() => directionsDuSujet(personnage), [personnage])
   // **Seules les lignes d'images promues portent un usage** (RS1) : une carte
@@ -407,6 +456,7 @@ function SesReferencesParUsage({
           directions={directions}
           erreurs={erreurs}
           onChangerUsage={onChangerUsage}
+          vide={boutonPlanche}
         />
         {planche[0] && (
           <OrdreDesVues personnage={personnage.identifiant} planche={planche[0]} directions={directions} />
@@ -736,6 +786,8 @@ export function ImagesDuSujet({
   onReglages,
   onErreur,
   onPersonnage,
+  onPremierePlanche,
+  onAllerALaToile,
 }: {
   personnage: Personnage
   /** Ce que cette chose-là réclame — sa liste, pas celle du jeu (E9). */
@@ -780,6 +832,12 @@ export function ImagesDuSujet({
    *  aussitôt. Facultatif — cet onglet se rend seul dans ses essais, et le
    *  geste se grise alors comme les autres. */
   onPersonnage?: (personnage: Personnage) => void
+  /** **Faire la planche des directions** (TS3) : arme l'atelier avec ce que
+   *  le serveur a rendu. Facultatif — sans lui, le bouton ne paraît pas. */
+  onPremierePlanche?: (personnage: Personnage, reponse: PremierePlanche) => void
+  /** Le lien montré à la place du bouton sur un refus (409, « rien à
+   *  reproduire »). */
+  onAllerALaToile?: () => void
 }) {
   const nomDePose = useMemo(
     () => new Map(plan.map((p) => [p.identifiant, p.nom])),
@@ -1004,6 +1062,44 @@ export function ImagesDuSujet({
     [personnage.identifiant, onPersonnage, onErreur],
   )
 
+  /** **« C'est la référence »** (TS3) : cette planche devient la planche du
+   *  sujet, et ses vues se rangent dans ses directions. Le pattern de
+   *  `changerUsage`, un asset à la fois. */
+  const [preparantPlanche, setPreparantPlanche] = useState(false)
+  const [refusPlanche, setRefusPlanche] = useState<string | null>(null)
+  const [erreursPlanche, setErreursPlanche] = useState<Record<string, string>>({})
+
+  const demanderLaPlanche = useCallback(async () => {
+    setPreparantPlanche(true)
+    setRefusPlanche(null)
+    try {
+      const reponse = await api.premierePlanche(personnage.identifiant)
+      onPremierePlanche?.(personnage, reponse)
+    } catch (erreur) {
+      setRefusPlanche(
+        erreur instanceof Refus ? erreur.message : "rien à reproduire pour ce sujet",
+      )
+    } finally {
+      setPreparantPlanche(false)
+    }
+  }, [personnage, onPremierePlanche])
+
+  const choisirLaPlanche = useCallback(
+    async (asset: string) => {
+      setErreursPlanche((e) => { const { [asset]: _ignore, ...reste } = e; return reste })
+      try {
+        const rendu = await api.choisirLaPlanche(personnage.identifiant, asset)
+        onPersonnage?.(rendu.personnage)
+        setReferences(rendu.references)
+      } catch (erreur) {
+        const message = erreur instanceof Refus ? erreur.message : "la référence a été refusée"
+        setErreursPlanche((e) => ({ ...e, [asset]: message }))
+        onErreur(erreur, "la référence a été refusée")
+      }
+    },
+    [personnage.identifiant, onPersonnage, onErreur],
+  )
+
   if (planchePose) return (
     <EcranPlanche
       personnage={personnage}
@@ -1206,6 +1302,16 @@ export function ImagesDuSujet({
           onUtiliserPourDirection={(image, direction) =>
             void utiliserPourDirection(image, direction.identifiant)
           }
+          boutonPlanche={
+            onPremierePlanche && (
+              <BoutonPremierePlanche
+                enCours={preparantPlanche}
+                refus={refusPlanche}
+                onDemander={() => void demanderLaPlanche()}
+                onAllerALaToile={onAllerALaToile}
+              />
+            )
+          }
         />
 
         {/* ── Ses calques ────────────────────────────────────────────────── */}
@@ -1285,6 +1391,13 @@ export function ImagesDuSujet({
             image.piece ? undefined : (faire) => void referencer(image, faire)
           }
           estLaReference={personnage.image_de_reference === image.identifiant}
+          onChoisirLaPlanche={() => void choisirLaPlanche(image.identifiant)}
+          estLaPlanche={
+            (references?.lignes ?? []).some(
+              (l) => l.reference === image.identifiant && l.usage === USAGE_PLANCHE,
+            )
+          }
+          erreurPlanche={erreursPlanche[image.identifiant]}
           onFermer={() => setChoisie(null)}
           onErreur={(raison) => onErreur(raison, raison)}
           onReinjecter={(role) => onReinjecter(image.identifiant, role)}

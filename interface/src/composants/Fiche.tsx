@@ -126,6 +126,9 @@ export function Fiche({
   onEcarter,
   onReference,
   estLaReference = false,
+  onChoisirLaPlanche,
+  estLaPlanche = false,
+  erreurPlanche,
   // P1c (V3.5) : refaire ou supprimer un découpage change ce que la grille
   // montre — absent, la fiche se contente de se relire elle-même.
   onDecoupageChange,
@@ -204,6 +207,17 @@ export function Fiche({
   /** Celle-ci **est** déjà la référence : le geste se grise avec sa raison, et
    *  le geste inverse paraît à côté. */
   estLaReference?: boolean
+  /** **« C'est la référence »** (TS3) : cette planche devient la planche du
+   *  sujet, ses vues rangées dans ses directions. Montré seulement sur une
+   *  planche faite en première planche (`generation.demande.
+   *  premiere_planche`) — au minimum, c'est la seule qu'on sait reconnaître
+   *  sans redemander la fiche du sujet. Absent partout où l'on ne sait pas
+   *  de quel sujet on parle. */
+  onChoisirLaPlanche?: () => void
+  /** Celle-ci **est** déjà la planche du sujet. */
+  estLaPlanche?: boolean
+  /** Le refus du serveur (409), en clair, sur celle qu'on vient d'essayer. */
+  erreurPlanche?: string
   /** Refaire ou supprimer un découpage de planche a changé la bibliothèque —
    *  la grille qui l'a ouverte se relit. */
   onDecoupageChange?: () => void
@@ -484,6 +498,23 @@ export function Fiche({
                     Ne plus en faire la référence
                   </button>
                 </>
+              )}
+            </>
+          )}
+          {/* **« C'est la référence »** (TS3). Montré seulement sur une
+              planche faite en première planche — `generation.demande.
+              premiere_planche` — le seul signe qu'on sait lire ici sans
+              redemander les usages du sujet. */}
+          {onChoisirLaPlanche && generation?.demande.premiere_planche && (
+            <>
+              <Bouton
+                inactif={estLaPlanche}
+                onClick={onChoisirLaPlanche}
+                enfants="C'est la référence"
+              />
+              {estLaPlanche && <Raison texte="c'est déjà la planche de ce sujet" />}
+              {erreurPlanche && (
+                <p className="text-[11px] leading-4 text-echec">{erreurPlanche}</p>
               )}
             </>
           )}

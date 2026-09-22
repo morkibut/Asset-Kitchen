@@ -74,3 +74,39 @@ it("attend l’envoi actualisé, même si la réponse d’une ancienne correctio
   expect(envoyer).toHaveBeenCalledOnce()
   expect(envoyer.mock.calls[0][0]).toMatchObject({ prompt: "Pèlerin avec une cape rouge" })
 })
+
+// **TS3** : `premiere_planche` part avec l'appel qui paie, et « Garder la
+// mise en page » ne part jamais avec lui — les deux sont incompatibles
+// (point 6 d'`AGENTS.md`).
+it("la première planche part avec l'appel, et jamais avec « garder la mise en page »", async () => {
+  const envoyer = vi.spyOn(api, "generer").mockImplementation(() => new Promise(() => {}))
+  const c = {
+    ...contexte(),
+    cases: 0,
+    posesCible: [],
+    cible: { personnage: "pelerin", poses: [], direction: null, directions: ["sud", "nord"], premierePlanche: true },
+    garderMiseEnPage: true,
+  } as unknown as CeQueLePaiementLit
+  const { result } = renderHook(() => usePaiement(c))
+  act(() => { void result.current.payer() })
+  expect(envoyer).toHaveBeenCalledOnce()
+  expect(envoyer.mock.calls[0][0]).toMatchObject({ premiere_planche: true })
+  expect(envoyer.mock.calls[0][0]).not.toHaveProperty("garder_mise_en_page")
+})
+
+it("la première planche part aussi avec l'écran de confirmation (« Relire avant l'envoi »)", async () => {
+  vi.useFakeTimers()
+  vi.spyOn(api, "generer").mockImplementation(() => new Promise(() => {}))
+  const envoi = vi.spyOn(api, "envoi").mockImplementation(() => new Promise(() => {}))
+  const c = {
+    ...contexte(),
+    cases: 0,
+    posesCible: [],
+    cible: { personnage: "pelerin", poses: [], direction: null, directions: ["sud", "nord"], premierePlanche: true },
+    envoiOuvert: true,
+  } as unknown as CeQueLePaiementLit
+  renderHook(() => usePaiement(c))
+  await act(async () => { await vi.runOnlyPendingTimersAsync() })
+  expect(envoi).toHaveBeenCalledOnce()
+  expect(envoi.mock.calls[0][0]).toMatchObject({ premiere_planche: true })
+})

@@ -104,7 +104,7 @@ défaut serveur — l'auteur les corrige avant de valider, il ne les redemande p
 
 ### TS3 · La première planche
 
-- [ ] sur un sujet sans planche, « Faire la planche des directions » ouvre la préparation
+- [x] sur un sujet sans planche, « Faire la planche des directions » ouvre la préparation
       remplie : pose de repos, directions du jeu, concept art joint comme personnage à
       reproduire
 - [x] le texte qui part décrit le concept art comme le design à reproduire, et ne demande que
@@ -145,6 +145,18 @@ défaut serveur — l'auteur les corrige avant de valider, il ne les redemande p
 - l'agent : `generate_pose(first_sheet=true)` (poses facultatives) et
   `choose_character_sheet(character, asset)` — pas « reference » dans le nom : RP19 veut
   qu'aucun outil n'ait l'air de choisir le portrait. Essais : `tests/test_ts3.py`.
+
+**Tranché en TS3** (écran) :
+
+- « Faire la planche des directions » vit dans le bloc *Planche* de *Ses références*
+  (`SesReferencesParUsage`, `ImagesDuSujet.tsx`), à la place du texte « rien encore » — c'est le
+  geste suivant d'un sujet qui n'a pas encore de planche, montré exactement là où la ligne
+  apparaîtra une fois choisie ;
+- une planche « première planche » se reconnaît par `generation.demande.premiere_planche`, lu sur
+  la fiche de l'image (`Fiche.tsx`) — c'est le seul signe qu'elle sait lire sans redemander les
+  usages du sujet, donc « C'est la référence » n'y paraît que sur celles-là ;
+- le refus (409, « rien à reproduire ») remplace le bouton par la phrase du serveur et un lien
+  « Aller à la toile › », dans le même bloc — il n'y a pas de second endroit où avertir.
 
 ## Ce que ce plan ne couvre pas
 

@@ -15,6 +15,7 @@ import {
   type Personnage,
   type Piece,
   type Pose,
+  type PremierePlanche,
   type Reinjection,
   type Role,
   type Tri,
@@ -181,6 +182,35 @@ export function useGestes({
     if (ouvrirPreparation) ouvrirPreparation()
   }
 
+  /** **Faire la planche des directions** (TS3) : ce que
+   *  `api.premierePlanche` a rendu arme l'atelier — sa pose de repos, les
+   *  directions du jeu, et son concept art (ou portrait) comme le
+   *  personnage à reproduire. Rien n'est facturé ici : c'est
+   *  `premiere_planche: true`, posé sur la cible, qui fera le reste au
+   *  moment de payer (`paiement.ts`). */
+  const armerPremierePlanche = (personnage: Personnage, reponse: PremierePlanche) => {
+    setCible({
+      personnage: personnage.identifiant,
+      poses: [reponse.pose],
+      piece: null,
+      direction: null,
+      directions: reponse.directions,
+      premierePlanche: true,
+    })
+    // **Le concept art (ou portrait) part comme personnage à reproduire.**
+    // Le serveur le sait déjà par le sujet ; ce qu'on montre ici sert à ce
+    // que l'écran de confirmation le voie sous les yeux.
+    setReinjections(reponse.design.map((d) => ({ asset: d.asset, role: "reference" as Role })))
+    setPrompt("")
+    setProvenance(
+      `proposé, d'après son signalement · ${reponse.pose_nom} dans ${reponse.directions_noms.join(", ")}`,
+    )
+    setRepris(false)
+    // **Incompatible avec « Garder la mise en page »** (point 6 d'`AGENTS.md`).
+    setGarderMiseEnPage(false)
+    if (ouvrirPreparation) ouvrirPreparation()
+  }
+
 
   // ── Réinjecter ────────────────────────────────────────────────────────────
 
@@ -261,6 +291,7 @@ export function useGestes({
   return {
     ajouterUneReference,
     armer,
+    armerPremierePlanche,
     garderLeTexte,
     reinjecter,
     reprendreReglages,

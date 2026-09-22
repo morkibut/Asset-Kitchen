@@ -20,6 +20,7 @@ import {
 } from "./ImagesDuSujet"
 import {
   api,
+  Refus,
   RECETTE_VIDE,
   UNIVERS_VIDE,
   type Asset,
@@ -969,5 +970,97 @@ describe("les directions tenues et la retenue proposée", () => {
   test("une direction sans la moindre image ne propose rien", () => {
     const proposee = imageProposeeDeDirection(personnage([CASE_SUD]), "nord")
     expect(proposee).toBeNull()
+  })
+})
+
+// ── « Faire la planche des directions » (TS3) ───────────────────────────────
+//
+// Le geste suivant d'un sujet neuf, montré dans le bloc *Planche* seulement
+// tant qu'il n'y en a pas déjà une. Un clic demande `api.premierePlanche` et
+// arme l'atelier avec ce qu'elle rend ; un refus (409) le remplace par la
+// phrase du serveur et un lien vers la toile.
+
+function monterAvecPlanche(
+  referencesInitiales: ReferencesDeLaChose = REFERENCES_VIDES,
+) {
+  const { fetchDouble, appels } = construireDouble(referencesInitiales)
+  vi.stubGlobal("fetch", fetchDouble)
+  const rappels = {
+    onArmer: vi.fn(),
+    onOuvrirCase: vi.fn(),
+    onEcarter: vi.fn(),
+    onReinjecter: vi.fn(),
+    onReglages: vi.fn(),
+    onErreur: vi.fn(),
+    onPersonnage: vi.fn(),
+    onPremierePlanche: vi.fn(),
+    onAllerALaToile: vi.fn(),
+  }
+  render(
+    <ImagesDuSujet
+      personnage={personnage([CASE_SUD])}
+      plan={PLAN}
+      pieces={[]}
+      personnages={[personnage([CASE_SUD])]}
+      univers={UNIVERS_VIDE}
+      {...rappels}
+    />,
+  )
+  return { ...rappels, appels }
+}
+
+describe("« Faire la planche des directions » (TS3)", () => {
+  test("paraît sans planche, et disparaît dès qu'il y en a une", async () => {
+    monterAvecPlanche()
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Faire la planche des directions" }),
+      ).toBeTruthy(),
+    )
+
+    cleanup()
+    const avecPlanche: ReferencesDeLaChose = {
+      personnage: "pelerin",
+      lignes: [ligneReference({ reference: "p", usage: "planche" })],
+      propositions: [],
+      disponibles: 1,
+    }
+    monterAvecPlanche(avecPlanche)
+    await waitFor(() => expect(document.querySelector("[data-references-par-usage]")).toBeTruthy())
+    expect(
+      screen.queryByRole("button", { name: "Faire la planche des directions" }),
+    ).toBeNull()
+  })
+
+  test("un clic demande la planche et arme l'atelier avec ce que le serveur rend", async () => {
+    const reponse = {
+      personnage: "pelerin",
+      pose: "repos",
+      pose_nom: "repos",
+      directions: ["sud", "nord"],
+      directions_noms: ["sud", "nord"],
+      design: [{ asset: "concept-1", role: "reference" as const, origine: "asset" as const, usage: "design" as const }],
+    }
+    const lire = vi.spyOn(api, "premierePlanche").mockResolvedValue(reponse)
+    const { onPremierePlanche } = monterAvecPlanche()
+    const bouton = await screen.findByRole("button", { name: "Faire la planche des directions" })
+    fireEvent.click(bouton)
+    await waitFor(() => expect(lire).toHaveBeenCalledWith("pelerin"))
+    await waitFor(() => expect(onPremierePlanche).toHaveBeenCalledWith(personnage([CASE_SUD]), reponse))
+  })
+
+  test("un refus (409) remplace le bouton par la phrase du serveur, et un lien vers la toile", async () => {
+    vi.spyOn(api, "premierePlanche").mockRejectedValue(
+      new Refus("rien à reproduire pour ce sujet — ni concept art ni portrait"),
+    )
+    const { onAllerALaToile } = monterAvecPlanche()
+    const bouton = await screen.findByRole("button", { name: "Faire la planche des directions" })
+    fireEvent.click(bouton)
+    await waitFor(() =>
+      expect(screen.getByText("rien à reproduire pour ce sujet — ni concept art ni portrait")).toBeTruthy(),
+    )
+    expect(screen.queryByRole("button", { name: "Faire la planche des directions" })).toBeNull()
+    fireEvent.click(screen.getByText("Aller à la toile ›"))
+    expect(onAllerALaToile).toHaveBeenCalledTimes(1)
   })
 })

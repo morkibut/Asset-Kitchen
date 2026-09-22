@@ -92,6 +92,12 @@ export function PageDuSujet(proprietes: {
     direction?: string | null,
     directions?: string[] | null,
   ) => void
+  /** **Faire la planche des directions** (TS3) : arme l'atelier avec ce que
+   *  `api.premierePlanche` a rendu. Rien n'est facturé ici. */
+  onPremierePlanche?: (personnage: Personnage, reponse: import("../api").PremierePlanche) => void
+  /** Le lien montré à la place du bouton quand le sujet n'a ni concept art
+   *  ni portrait (409 de `api.premierePlanche`). */
+  onAllerALaToile?: () => void
   onAnimer: (
     personnage: Personnage,
     pose: Pose,
@@ -421,6 +427,8 @@ export function PageDuSujet(proprietes: {
           univers={proprietes.univers} onArmer={proprietes.onArmer} onOuvrirCase={proprietes.onOuvrirCase} onRegardee={setRegardee}
           onImporter={proprietes.onImporter}
           onPersonnage={proprietes.onPersonnage}
+          onPremierePlanche={proprietes.onPremierePlanche}
+          onAllerALaToile={proprietes.onAllerALaToile}
           onEcarter={proprietes.onSupprimer} onReinjecter={proprietes.onReinjecter} onReglages={proprietes.onReglages} onErreur={echouer} />}
 
         {onglet === "animations" && <AnimationsDuSujet personnage={ouvert} plan={sienPlan} onAnimer={proprietes.onAnimer}

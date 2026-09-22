@@ -418,3 +418,105 @@ describe("la fiche — une matière née détourée (RG8)", () => {
     await waitFor(() => expect(screen.queryByText(TITRE)).toBeNull())
   })
 })
+
+// ── « C'est la référence » (TS3) ────────────────────────────────────────────
+//
+// Montré seulement sur une planche faite en première planche —
+// `generation.demande.premiere_planche` — puisque c'est le seul signe que la
+// fiche sait lire sans redemander les usages du sujet.
+describe("la fiche — « C'est la référence » (TS3)", () => {
+  afterEach(() => {
+    cleanup()
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  const GENERATION_PLANCHE = {
+    identifiant: "aaaa1111",
+    modele: "google/gemini-2.5-flash-image",
+    demande: {
+      prompt: "le pèlerin",
+      prompt_negatif: "",
+      proportions: "1:1",
+      resolution: null,
+      variations: 1,
+      references: 1,
+      options: {},
+      premiere_planche: true,
+    },
+    parametres_resolus: {},
+    ecartees: [],
+    emplacements: [],
+    cree_le: 1_787_800_100,
+    projet: "bac-a-sable",
+    references: [],
+    hors_plafond: [],
+    parent: null,
+    statut: "reussie",
+    cout_usd: 0,
+    consomme: 0,
+    unite: "usd",
+    reussies: 1,
+  } as unknown as Generation
+
+  function monter(surplus: Partial<Parameters<typeof Fiche>[0]> = {}) {
+    return render(
+      <Fiche
+        asset={UN_ASSET}
+        univers={UNIVERS_VIDE}
+        plan={[]}
+        personnages={[]}
+        onFermer={() => {}}
+        onErreur={() => {}}
+        onReinjecter={() => {}}
+        onReglages={() => {}}
+        onSupprimer={() => {}}
+        onRetoucher={() => {}}
+        onOuvrir={() => {}}
+        {...surplus}
+      />,
+    )
+  }
+
+  test("absent sur une image ordinaire — sa génération n'est pas une première planche", async () => {
+    vi.spyOn(api, "generation").mockResolvedValue({
+      ...GENERATION_PLANCHE,
+      demande: { ...GENERATION_PLANCHE.demande, premiere_planche: undefined },
+    } as unknown as Generation)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+    const onChoisirLaPlanche = vi.fn()
+    monter({ onChoisirLaPlanche })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(screen.queryByRole("button", { name: "C'est la référence" })).toBeNull()
+  })
+
+  test("paraît sur une planche faite en première planche, et appelle le geste au clic", async () => {
+    vi.spyOn(api, "generation").mockResolvedValue(GENERATION_PLANCHE)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+    const onChoisirLaPlanche = vi.fn()
+    monter({ onChoisirLaPlanche })
+
+    const bouton = await screen.findByRole("button", { name: "C'est la référence" })
+    fireEvent.click(bouton)
+    expect(onChoisirLaPlanche).toHaveBeenCalledTimes(1)
+  })
+
+  test("celle qui est déjà la planche se grise avec sa raison", async () => {
+    vi.spyOn(api, "generation").mockResolvedValue(GENERATION_PLANCHE)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+    monter({ onChoisirLaPlanche: () => {}, estLaPlanche: true })
+
+    expect(await screen.findByText("c'est déjà la planche de ce sujet")).toBeInTheDocument()
+  })
+
+  test("un refus du serveur s'affiche en clair, à côté du bouton", async () => {
+    vi.spyOn(api, "generation").mockResolvedValue(GENERATION_PLANCHE)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+    monter({
+      onChoisirLaPlanche: () => {},
+      erreurPlanche: "image d'un autre sujet",
+    })
+
+    expect(await screen.findByText("image d'un autre sujet")).toBeInTheDocument()
+  })
+})

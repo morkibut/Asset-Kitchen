@@ -1530,6 +1530,27 @@ export const AIDE: Record<string, Explication> = {
       "Le risque se dit avec : c'est **un jet unique**, que le modèle ne rend pas deux fois. Une planche ratée se repaie entière, et un compte de cases faux ne fait rien entrer du tout — la planche entière se relance au prix plein.\n\nLa feuille elle-même n'entre jamais en bibliothèque ; ses morceaux, oui, chacun filié vers elle.",
   },
 
+  // **TS3** : le premier geste d'un sujet neuf, avant même la première pose.
+  "fabrique.premiere-planche": {
+    nom: "Faire la planche des directions",
+    groupe: "La fiche du sujet",
+    ou: "sujet",
+    quoi: "Fabrique sa pose de repos dans les directions du jeu, à partir de son concept art ou de son portrait.",
+    change:
+      "Ouvre l'atelier déjà rempli — pose, directions et concept art à reproduire. Rien n'est payé avant Générer.",
+    origine: "le concept art ou le portrait du sujet · absent sans l'un des deux",
+  },
+
+  "fabrique.cest-la-reference": {
+    nom: "C'est la référence",
+    groupe: "La fiche du sujet",
+    ou: "sujet",
+    quoi: "Fait de cette planche la planche du sujet : ses vues se rangent dans ses directions.",
+    change:
+      "Les autres planches sont dépromues. L'image reste en bibliothèque — rien n'est supprimé, rien n'est payé.",
+    origine: "une planche faite par « Faire la planche des directions »",
+  },
+
   // ── La barre qui paie — ce qu'on touche à chaque génération (GU6) ─────────
   //
   // Ce qui suit est la barre commune aux lieux d'où l'argent part
