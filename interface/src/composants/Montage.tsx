@@ -44,8 +44,8 @@ import {
   type Prise,
   type Personnage,
 } from "../api"
-import { remonterLaBande } from "./AtelierDeBande"
-import { Bouton, Curseur, Libelle, Raison, Segments } from "./pieces"
+import { remonterLaBande } from "../bande"
+import { Bloc, Bouton, Curseur, Libelle, Raison, Segments, usePli } from "./pieces"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 
 /** La hauteur du ruban. Chaque cellule prend sa part de la largeur : sur un long
@@ -223,6 +223,24 @@ export function EcranMontage({
   // de corriger. Même remède que l'aperçu de l'atelier d'une animation.
   const laReprise = useRef(reprise)
   laReprise.current = reprise
+
+  // **Les trois blocs du panneau s'ouvrent par défaut** (RV14) : « Où
+  // ranger », « Cadre et ancrage » et « Vitesse » portent les réglages
+  // qu'on vient poser en arrivant, pas des détails qu'on irait chercher — à
+  // la différence d'un bloc de fiche, qui résume ce qu'on a déjà réglé. Le
+  // repli reste un geste possible pendant la visite ; il n'est simplement pas
+  // le point de départ ici. Le registre est celui de `Bloc`, partagé par tout
+  // le produit : on y bascule les trois mêmes clés que celles posées plus
+  // bas.
+  const [ouvertRangement, basculerRangement] = usePli("montage.rangement")
+  const [ouvertCadreAncrage, basculerCadreAncrage] = usePli("montage.cadre-ancrage")
+  const [ouvertVitesse, basculerVitesse] = usePli("montage.vitesse")
+  useEffect(() => {
+    if (!ouvertRangement) basculerRangement()
+    if (!ouvertCadreAncrage) basculerCadreAncrage()
+    if (!ouvertVitesse) basculerVitesse()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // **Échap referme**, comme partout ailleurs — et ici il ne renonce à rien :
   // les bandes gardées sont déjà sur le disque.
@@ -561,7 +579,14 @@ export function EcranMontage({
       onClickCapture={() => { if (!referenceMontage) setReferenceMontage(etatMontage) }}
       onDragStartCapture={() => { if (!referenceMontage) setReferenceMontage(etatMontage) }}
       onKeyDownCapture={() => { if (!referenceMontage) setReferenceMontage(etatMontage) }}
-      className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_380px] bg-papier"
+      // **Plein écran, toujours** (RV14) : le montage est la profondeur suivante
+      // du lieu d'où on l'ouvre — galerie, fabrications, animation reprise — et
+      // aucun des trois ne doit laisser paraître son en-tête ni ses filtres
+      // derrière lui. `fixed inset-0` sort du flux de son parent, quel qu'il
+      // soit, plutôt que d'exiger que chacun des trois endroits qui le montent
+      // le fasse correctement ; c'est le même geste que `Depliages.tsx` pour la
+      // profondeur suivante d'une planche.
+      className="fixed inset-0 z-50 grid grid-cols-[minmax(0,1fr)_380px] bg-papier"
     >
       {/* ── Les deux boucles, la pellicule, ce qui est retenu ─────────────── */}
       <section className="defile flex min-h-0 flex-col gap-[14px] overflow-y-auto p-[22px]">
@@ -737,97 +762,126 @@ export function EcranMontage({
       {/* ── Ce qu'on garde ────────────────────────────────────────────────── */}
       <aside className="defile flex min-h-0 flex-col gap-[14px] overflow-y-auto border-l border-trait bg-papier-cote p-[22px]">
         <AvisBrouillon brouillon={brouillon} />
-        {/* **Ce qu'on remonte, dit une fois** (V3.03.3). Le nom n'est pas un
-            champ ici : on ne baptise pas une animation qui en porte déjà un, et
-            un champ qui n'écrirait rien serait un contrôle mort. */}
-        {reprise ? (
-          <>
-            <Libelle aide="bande.nom">on remonte cette animation</Libelle>
-            <p data-on-remonte className="text-[13px] text-encre">
-              {reprise.bande.nom}
-            </p>
-            <p className={NOTE}>
-              Elle avait {reprise.bande.compte} image
-              {reprise.bande.compte > 1 ? "s" : ""}. Les images retirées vont au
-              chutier, pas à la corbeille.
-            </p>
-          </>
-        ) : (
-          <>
-            <Libelle aide="bande.nom">cette animation</Libelle>
-            <input
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-              aria-label="Le nom de l'animation"
-              placeholder="repos, marche, attaque…"
-              className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre"
-            />
 
-            <div className="flex items-baseline justify-between gap-[8px]">
-              <span className="text-[12px] text-encre-3">
-                Remplit la case
-              </span>
-              <span className="text-[13px] text-encre">
-                {pose
-                  ? `${pose}${direction ? ` · ${direction}` : ""}`
-                  : "aucune — brouillon"}
-              </span>
-            </div>
-            {!pose && (
-              <p className={NOTE}>
-                Sans case, c'est un brouillon — et un brouillon ne bloque rien.
+        {/* **Le panneau tient en trois blocs repliables** (RV14) : où ranger
+            l'animation, son cadre et son ancrage, sa vitesse. Chacun se
+            résume replié — le nom, la pose, la cadence — pour que fermer les
+            trois ne perde aucun repère. */}
+        <Bloc
+          cle="montage.rangement"
+          titre="Où ranger"
+          aide="bande.destination"
+          etat={
+            reprise
+              ? reprise.bande.nom
+              : pose
+                ? `${pose}${direction ? ` · ${direction}` : ""}`
+                : nom || "brouillon"
+          }
+        >
+          {/* **Ce qu'on remonte, dit une fois** (V3.03.3). Le nom n'est pas un
+              champ ici : on ne baptise pas une animation qui en porte déjà un,
+              et un champ qui n'écrirait rien serait un contrôle mort. */}
+          {reprise ? (
+            <>
+              <Libelle aide="bande.nom">on remonte cette animation</Libelle>
+              <p data-on-remonte className="text-[13px] text-encre">
+                {reprise.bande.nom}
               </p>
-            )}
-            {montage.clip.pose && (
-              <button
-                type="button"
-                onClick={() => {
-                  setPose(pose ? null : montage.clip.pose)
-                  setDirection(pose ? null : montage.clip.direction)
-                }}
-                className={LIEN}
-              >
-                {pose ? "en faire un brouillon" : `viser ${montage.clip.pose} ›`}
-              </button>
-            )}
-          </>
-        )}
+              <p className={NOTE}>
+                Elle avait {reprise.bande.compte} image
+                {reprise.bande.compte > 1 ? "s" : ""}. Les images retirées vont
+                au chutier, pas à la corbeille.
+              </p>
+            </>
+          ) : (
+            <>
+              <Libelle aide="bande.nom">cette animation</Libelle>
+              <input
+                value={nom}
+                onChange={(e) => setNom(e.target.value)}
+                aria-label="Le nom de l'animation"
+                placeholder="repos, marche, attaque…"
+                className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre"
+              />
 
-        <fieldset className="flex flex-col gap-[8px] border-t border-trait pt-[14px]">
-          <legend className="text-[13px] text-encre-2">Classement de l’animation</legend>
-          <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Personnage
-            <select aria-label="Personnage de l’animation" value={personnage ?? ""}
-              onChange={(event) => { setPersonnage(event.target.value || null); setPose(null); setDirection(null) }}
-              className="h-[34px] rounded-7 border border-trait bg-carte px-[8px] text-encre">
-              <option value="">Aucun · brouillon libre</option>
-              {personnage && !sujet && <option value={personnage}>{personnage}</option>}
-              {sujets.map((un) => <option key={un.identifiant} value={un.identifiant}>{un.nom}</option>)}
-            </select>
-          </label>
-          <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Mouvement / pose
-            <select aria-label="Mouvement de l’animation" value={pose ?? ""} disabled={!personnage}
-              onChange={(event) => { setPose(event.target.value || null); setDirection(null) }}
-              className="h-[34px] rounded-7 border border-trait bg-carte px-[8px] text-encre disabled:opacity-50">
-              <option value="">À classer</option>
-              {pose && !poses.some((une) => une.pose === pose) && <option value={pose}>{pose} · ancien classement</option>}
-              {poses.map((une) => <option key={une.pose} value={une.pose}>{sujet?.plan.find((p) => p.identifiant === une.pose)?.nom || une.pose}</option>)}
-            </select>
-          </label>
-          <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Direction
-            <select aria-label="Direction de l’animation" value={direction ?? ""} disabled={!pose || directions.length === 0}
-              onChange={(event) => setDirection(event.target.value || null)}
-              className="h-[34px] rounded-7 border border-trait bg-carte px-[8px] text-encre disabled:opacity-50">
-              <option value="">{directions.length ? "Sans direction" : "Aucune direction prévue"}</option>
-              {direction && !directions.some((une) => une.identifiant === direction) && <option value={direction}>{direction} · ancien classement</option>}
-              {directions.map((une) => <option key={une.identifiant} value={une.identifiant}>{une.nom}</option>)}
-            </select>
-          </label>
-          <p className="text-[11px] text-encre-3">Le nom reste libre. Ce classement indique où retrouver l’animation ; son clip source reste conservé.</p>
-        </fieldset>
+              <div className="flex items-baseline justify-between gap-[8px]">
+                <span className="text-[12px] text-encre-3">
+                  Remplit la case
+                </span>
+                <span className="text-[13px] text-encre">
+                  {pose
+                    ? `${pose}${direction ? ` · ${direction}` : ""}`
+                    : "aucune — brouillon"}
+                </span>
+              </div>
+              {!pose && (
+                <p className={NOTE}>
+                  Sans case, c'est un brouillon — et un brouillon ne bloque rien.
+                </p>
+              )}
+              {montage.clip.pose && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPose(pose ? null : montage.clip.pose)
+                    setDirection(pose ? null : montage.clip.direction)
+                  }}
+                  className={LIEN}
+                >
+                  {pose ? "en faire un brouillon" : `viser ${montage.clip.pose} ›`}
+                </button>
+              )}
+            </>
+          )}
 
-        <div className={SECTION}>
-          <Libelle aide="bande.cadre">le cadre — la fenêtre commune</Libelle>
-        </div>
+          <fieldset className="flex flex-col gap-[8px] border-t border-trait pt-[14px]">
+            <legend className="text-[13px] text-encre-2">Classement de l’animation</legend>
+            <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Personnage
+              <select aria-label="Personnage de l’animation" value={personnage ?? ""}
+                onChange={(event) => { setPersonnage(event.target.value || null); setPose(null); setDirection(null) }}
+                className="h-[34px] rounded-7 border border-trait bg-carte px-[8px] text-encre">
+                <option value="">Aucun · brouillon libre</option>
+                {personnage && !sujet && <option value={personnage}>{personnage}</option>}
+                {sujets.map((un) => <option key={un.identifiant} value={un.identifiant}>{un.nom}</option>)}
+              </select>
+            </label>
+            <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Mouvement / pose
+              <select aria-label="Mouvement de l’animation" value={pose ?? ""} disabled={!personnage}
+                onChange={(event) => { setPose(event.target.value || null); setDirection(null) }}
+                className="h-[34px] rounded-7 border border-trait bg-carte px-[8px] text-encre disabled:opacity-50">
+                <option value="">À classer</option>
+                {pose && !poses.some((une) => une.pose === pose) && <option value={pose}>{pose} · ancien classement</option>}
+                {poses.map((une) => <option key={une.pose} value={une.pose}>{sujet?.plan.find((p) => p.identifiant === une.pose)?.nom || une.pose}</option>)}
+              </select>
+            </label>
+            <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Direction
+              <select aria-label="Direction de l’animation" value={direction ?? ""} disabled={!pose || directions.length === 0}
+                onChange={(event) => setDirection(event.target.value || null)}
+                className="h-[34px] rounded-7 border border-trait bg-carte px-[8px] text-encre disabled:opacity-50">
+                <option value="">{directions.length ? "Sans direction" : "Aucune direction prévue"}</option>
+                {direction && !directions.some((une) => une.identifiant === direction) && <option value={direction}>{direction} · ancien classement</option>}
+                {directions.map((une) => <option key={une.identifiant} value={une.identifiant}>{une.nom}</option>)}
+              </select>
+            </label>
+            <p className="text-[11px] text-encre-3">Le nom reste libre. Ce classement indique où retrouver l’animation ; son clip source reste conservé.</p>
+          </fieldset>
+        </Bloc>
+
+        <Bloc
+          cle="montage.cadre-ancrage"
+          titre="Cadre et ancrage"
+          aide="bande.cadre"
+          etat={
+            reprise
+              ? (reprise.bande.cadre.mot ?? "réglé dans l'atelier de l'animation")
+              : cadre === "main"
+                ? "à la main"
+                : cadre === "clip"
+                  ? "du clip"
+                  : "de l'animation"
+          }
+        >
         {/* ⚠️ **Sur une reprise, le cadre se lit et ne se règle pas.** Le
             rectangle gardé porte quatre nombres mesurés ; le changer d'ici ne
             les referait pas, et un choix qui ne change rien à l'image ne se
@@ -1024,10 +1078,14 @@ export function EcranMontage({
             </div>
           </>
         )}
+        </Bloc>
 
-        <div className={SECTION}>
-          <Libelle aide="bande.vitesse">le jeu</Libelle>
-        </div>
+        <Bloc
+          cle="montage.vitesse"
+          titre="Vitesse"
+          aide="bande.vitesse"
+          etat={`${cadence} i/s · ${sens === "boucle" ? "boucle" : "aller-retour"}`}
+        >
         <Curseur
           libelle="Cadence"
           valeur={cadence}
@@ -1045,6 +1103,7 @@ export function EcranMontage({
         <p className={NOTE}>
           Cette vitesse part telle quelle dans le jeu.
         </p>
+        </Bloc>
 
         {/* **Ce qu'on a déjà tiré de ce clip n'a rien à faire dans une
             reprise** (V3.03.3) : on est venu pour une animation, et la liste
@@ -1125,8 +1184,11 @@ export function EcranMontage({
 
         {/* **Le prix par bande compte les bandes qu'on garde**, et remonter
             celle-ci n'en ajoute aucune : l'afficher ici ferait croire qu'on va
-            payer un cran de plus. Une ligne discrète, pas une carte. */}
-        {!reprise && (
+            payer un cran de plus. Une ligne discrète, pas une carte.
+
+            **Sur un calcul local, le clip n'a rien coûté** (RV4) : ces deux
+            lignes ne disent rien plutôt que d'afficher $0,0000. */}
+        {!reprise && montage.prix.clip > 0 && (
           <div className="flex flex-col gap-[4px]">
             <p className="text-[12px] text-encre-3">
               <span className="text-encre">{dollars(montage.prix.par_bande)}</span>
@@ -1164,14 +1226,14 @@ export function EcranMontage({
                 retenues.length === 0
                   ? "prenez au moins une image"
                   : !nom.trim()
-                    ? "nommez cette animation"
+                    ? "nomme cette animation"
                     : `Garder « ${nom.trim()} » · ${retenues.length} images`
               }
             />
           )}
         </div>
         <p className={NOTE}>
-          <b className="font-normal text-encre">Rien sur cet écran ne dépense.</b> {montage.clip.nature && montage.clip.nature !== "video" ? "Les frames originales sont conservées." : "Le clip est déjà payé."}
+          <b className="font-normal text-encre">Rien sur cet écran ne dépense.</b> {montage.clip.nature && montage.clip.nature !== "video" ? "Les images originales sont conservées." : montage.prix.clip > 0 ? "Le clip est déjà payé." : null}
           {reprise && " Revenir sans reprendre laisse l'animation telle quelle."}
         </p>
       </aside>
@@ -1448,11 +1510,11 @@ function Pellicule({
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="mesure text-[11px] text-encre-4">frame 0</span>
+        <span className="mesure text-[11px] text-encre-4">image 0</span>
         <span className="text-[12px] text-encre-3">
-          {retenues.length} {retenues.length > 1 ? "frames retenues" : "frame retenue"}
+          {retenues.length} {retenues.length > 1 ? "images retenues" : "image retenue"}
         </span>
-        <span className="mesure text-[11px] text-encre-4">frame {images - 1}</span>
+        <span className="mesure text-[11px] text-encre-4">image {images - 1}</span>
       </div>
 
       {/* **La loupe, parce qu'à sept pixels de large on ne sait pas ce qu'on
@@ -1477,7 +1539,7 @@ function Pellicule({
           }}
         />
         <div className="flex min-w-0 flex-col gap-[4px]">
-          <span className="mesure text-[11px] text-encre-3">frame {regarde}</span>
+          <span className="mesure text-[11px] text-encre-3">image {regarde}</span>
 
           {/* **Le second geste de la pellicule** (A13), et il est ici plutôt que
               sur le ruban : à sept pixels de large, une cellule ne porte pas
@@ -1490,8 +1552,8 @@ function Pellicule({
           <button
             type="button"
             onClick={() => onPrelever(regarde)}
-            aria-label={`Mettre la frame ${regarde} de côté`}
-            title="elle entre en bibliothèque — rien n'est dépensé, et les frames retenues ne bougent pas"
+            aria-label={`Mettre l’image ${regarde} de côté`}
+            title="elle entre en bibliothèque — rien n'est dépensé, et les images retenues ne bougent pas"
             className={LIEN}
           >
             Mettre de côté ›
@@ -1559,13 +1621,13 @@ function Retenues({
   if (retenues.length === 0) {
     return (
       <p className="rounded-8 border border-dashed border-contour p-[14px] text-[12px] text-encre-3">
-        aucune frame retenue — cliquez la pellicule, ou posez une des deux
+        aucune image retenue — clique la pellicule, ou pose une des deux
         propositions
       </p>
     )
   }
   return (
-    <div aria-label="Ordre des frames retenues" className="flex flex-wrap gap-[8px]">
+    <div aria-label="Ordre des images retenues" className="flex flex-wrap gap-[8px]">
       {retenues.map((numero, place) => (
         <button
           key={occurrences[place]?.identifiant || `${numero}-${place}`}

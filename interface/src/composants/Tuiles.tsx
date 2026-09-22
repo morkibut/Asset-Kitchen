@@ -38,7 +38,10 @@ export function Tuiles({ projet, vue, onVue, onNoms, tailleDuJeu = 32, paletteUn
   tailleDuJeu?: number
   /** La palette de l'univers du projet (TU6) : `[]` sans palette. */
   paletteUnivers?: readonly string[]
-  onAsset?: (a: Asset) => void; onLivraisons?: () => void
+  onAsset?: (a: Asset) => void
+  /** Vers l'écran unique « Livrer au jeu » (`RV8`), filtré sur ce jeu de
+   *  tuiles quand on le connaît déjà. */
+  onLivraisons?: (jeu?: string) => void
   /** Le lien « Voir l’univers » quand la palette du jeu manque (TU6). */
   onUnivers?: () => void
 }) {
@@ -155,9 +158,9 @@ export function Tuiles({ projet, vue, onVue, onNoms, tailleDuJeu = 32, paletteUn
     setStatut("Peins la carte, change les matières : tout se refait sur ta machine.")
   }} />
   else if (courante.ecran === "image") corps = <NouvelEnsemble projet={projet} onGarder={e => { setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)]); aller({ jeu: e.identifiant }) }} onFermer={() => aller(null)} />
-  else if (ensemble && !ensemble.recette) corps = <EditeurTuiles key={ensemble.identifiant} ensemble={ensemble} onGarder={e => setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)])} onAsset={onAsset} onLivraisons={onLivraisons} />
+  else if (ensemble && !ensemble.recette) corps = <EditeurTuiles key={ensemble.identifiant} ensemble={ensemble} onGarder={e => setListe(l => [e, ...l.filter(x => x.identifiant !== e.identifiant)])} onAsset={onAsset} onLivraisons={onLivraisons && (() => onLivraisons(ensemble.identifiant))} />
   else if (!edition) corps = <p role="status" className="text-[13px] text-encre-3">{charge ? "Lecture du jeu de tuiles…" : "Lecture des jeux de tuiles…"}</p>
-  else if (courante.livraison) corps = <LivraisonDuJeu projet={projet} edition={edition} onRetour={() => aller({ jeu: courante.jeu })} onLivraisons={onLivraisons} />
+  else if (courante.livraison) corps = <LivraisonDuJeu projet={projet} edition={edition} onRetour={() => aller({ jeu: courante.jeu })} onLivraisons={onLivraisons && (() => onLivraisons(edition.jeu.identifiant || undefined))} />
   else corps = <AtelierDuJeu key={cle} projet={projet} edition={edition} matieres={matieres} matieresErreur={matieresErreur} sujetsVides={sujetsVides} nonMigrees={nonMigrees} onRelireMatieres={() => void relireMatieres()} modifie={() => estModifie(edition)} occupe={occupe}
     message={estModifie(edition) ? (edition.jeu.identifiant ? "Modifications non enregistrées" : "Pas encore enregistré") : statut}
     onNom={nom => { edition.jeu.nom = nom; maj() }}
@@ -181,7 +184,7 @@ function NouvelEnsemble({ projet, onGarder, onFermer }: { projet: string; onGard
   const [occupe, setOccupe] = useState(false)
   const [erreur, setErreur] = useState("")
   const fichier = useRef<HTMLInputElement>(null)
-  const choisir = (a: Asset) => { if (a.projet !== projet) { setErreur("Choisissez une image de ce jeu."); return }; setImage(a); setBibliotheque(false); setFabriquer(false); setErreur("") }
+  const choisir = (a: Asset) => { if (a.projet !== projet) { setErreur("Choisis une image de ce jeu."); return }; setImage(a); setBibliotheque(false); setFabriquer(false); setErreur("") }
   async function agir(f: () => Promise<void>) { setOccupe(true); setErreur(""); try { await f() } catch (e) { setErreur(message(e)) } finally { setOccupe(false) } }
   return <div className="rounded-8 border border-trait bg-carte p-[22px]">
     <h2 className="font-serif text-[25px]">Préparer l’atlas</h2><p className="my-[8px] text-[13px] text-encre-3">Tuiles carrées en vue orthogonale. La grille reste fixe dans cet ensemble ; un atlas de dimensions différentes mérite un nouvel ensemble.</p>
@@ -241,7 +244,7 @@ function EditeurTuiles({ ensemble: e, onGarder, onAsset, onLivraisons }: { ensem
     {erreur && <p role="alert" className="text-echec">{erreur}</p>}
     <div className="grid grid-cols-2 items-start gap-[22px]">
       <section className="min-w-0 rounded-8 border border-trait bg-carte p-[14px]">
-        <h2 className="font-serif text-[25px]">Les tuiles de l’atlas</h2><p className="my-[8px] text-[12px] text-encre-3">Choisissez une tuile pour la nommer, définir ses raccords et la peindre sur la carte.</p>
+        <h2 className="font-serif text-[25px]">Les tuiles de l’atlas</h2><p className="my-[8px] text-[12px] text-encre-3">Choisis une tuile pour la nommer, définir ses raccords et la peindre sur la carte.</p>
         <div className="mb-[14px] flex gap-[8px]"><input className={CHAMP} placeholder="Filtrer les tuiles…" aria-label="Filtrer les tuiles" value={filtre} onChange={ev => setFiltre(ev.target.value)} /><button className={BOUTON} onClick={() => changer({ ...regles, cellules: regles.cellules.map(c => ({ ...c, retenue: true })) })}>Tout retenir</button></div>
         <div className="flex max-h-[300px] flex-wrap gap-[8px] overflow-auto">{regles.cellules.map((c, i) => c.nom.toLowerCase().includes(filtre.toLowerCase()) && <button key={`${c.x},${c.y}`} className={`flex flex-col items-center gap-[4px] rounded-7 border p-[8px] text-[11px] ${selection === i ? 'border-encre bg-papier-cote' : 'border-trait'}`} aria-pressed={selection === i} onClick={() => { setSelection(i); setExtraite(null) }}><VignetteTuile ensemble={e} cellule={c} /><span>{c.nom}</span><span>{c.retenue ? 'Retenue' : 'À juger'}{c.correction ? ' · retouchée' : ''}</span></button>)}</div>
         <div className="mt-[14px] flex flex-wrap gap-[8px]"><input aria-label="Nom de la tuile" className={CHAMP} value={cellule.nom} onChange={ev => changerCellule({ nom: ev.target.value })} /><label className="flex items-center gap-[8px] text-[13px]"><input type="checkbox" checked={cellule.retenue} onChange={ev => changerCellule({ retenue: ev.target.checked })} />Retenir cette tuile</label></div>
@@ -254,16 +257,16 @@ function EditeurTuiles({ ensemble: e, onGarder, onAsset, onLivraisons }: { ensem
         <button className={`${BOUTON} mt-[8px]`} onClick={() => changerCellule({ raccords: Object.fromEntries(RACCORDS.map(r => [r, cellule.terrain])) as CelluleTuile['raccords'] })}>Même terrain sur tous les raccords</button>
       </section>
       <section className="min-w-0 rounded-8 border border-trait bg-carte p-[14px]">
-        <h2 className="font-serif text-[25px]">La carte d’essai</h2><p className="my-[8px] text-[12px] text-encre-3">Cliquez ou faites glisser pour peindre la tuile choisie. Vérifiez les répétitions, les coins et la transparence avant de livrer.</p>
+        <h2 className="font-serif text-[25px]">La carte d’essai</h2><p className="my-[8px] text-[12px] text-encre-3">Clique ou faites glisser pour peindre la tuile choisie. Vérifie les répétitions, les coins et la transparence avant de livrer.</p>
         <div className="mb-[14px] flex flex-wrap items-center gap-[8px]">{(['largeur', 'hauteur'] as const).map(c => <label className="text-[12px]" key={c}>{c}<input className={`${CHAMP} ml-[4px] w-[54px]`} type="number" min={1} max={64} value={regles.carte[c]} onChange={ev => dimension(c, Number(ev.target.value))} /></label>)}<button className={BOUTON} aria-pressed={gomme} onClick={() => setGomme(v => !v)}>{gomme ? 'Gomme active' : 'Gommer'}</button><label className="text-[12px]">Zoom<select className={CHAMP} value={zoom} onChange={ev => setZoom(Number(ev.target.value))}>{[0.5, 1, 2, 4].map(v => <option key={v} value={v}>{v*100} %</option>)}</select></label></div>
         <div className="max-h-[300px] overflow-auto bg-papier-cote"><div className="grid w-max select-none" style={{ gridTemplateColumns: `repeat(${regles.carte.largeur}, ${Math.max(8, e.grille.taille)*zoom}px)` }} onDragStart={ev => ev.preventDefault()}>{Array.from({ length: regles.carte.largeur*regles.carte.hauteur }, (_, i) => { const x = i % regles.carte.largeur, y = Math.floor(i / regles.carte.largeur), caseCarte = regles.carte.cases.find(c => c.x === x && c.y === y); return <button key={i} type="button" aria-label={`Case ${x+1}, ${y+1}${caseCarte ? ' peinte' : ' vide'}`} className="flex overflow-hidden border border-trait focus-visible:outline focus-visible:outline-encre" style={{ width: Math.max(8, e.grille.taille)*zoom, height: Math.max(8, e.grille.taille)*zoom }} onClick={() => peindre(x, y)} onPointerEnter={ev => { if (ev.buttons === 1) peindre(x, y) }}>{caseCarte && <VignetteTuile ensemble={e} cellule={{ x: caseCarte.tuile_x, y: caseCarte.tuile_y }} cote={Math.max(8, e.grille.taille)*zoom} />}</button> })}</div></div>
-        <p className="mt-[14px] text-[12px] text-encre-3">{modifie ? 'Gardez les changements pour calculer le diagnostic et exporter cette carte.' : e.diagnostic.limite}</p>
+        <p className="mt-[14px] text-[12px] text-encre-3">{modifie ? 'Garde les changements pour calculer le diagnostic et exporter cette carte.' : e.diagnostic.limite}</p>
         {!modifie && <><ul className="mt-[8px] list-inside list-disc text-[12px] text-encre-attention">{e.diagnostic.problemes.map(p => <li key={p}>{p}</li>)}</ul>{e.diagnostic.pret && <p className="mt-[8px] text-[13px] text-ok">Les tuiles retenues et les raccords déclarés sont cohérents.</p>}{e.diagnostic.raccords.map((r, i) => <p key={i} className="text-[12px] text-encre-attention">Case {r.x+1}, {r.y+1} vers {r.vers} : {r.raison}</p>)}</>}
         <div className="mt-[22px] flex flex-wrap gap-[8px]">{!modifie && e.diagnostic.pret && <a className={BOUTON} href={tuiles.archive(e.projet, e.identifiant, e.revision)}>Télécharger le paquet Godot</a>}<button className={BOUTON} disabled={occupe || modifie || !e.diagnostic.pret} onClick={() => void agir(async () => { setLivraison(await tuiles.prevoir(e.projet, e.identifiant, e.revision)); setPublie(false) })}>Relire la livraison Godot</button>{onLivraisons && <button className={BOUTON} onClick={onLivraisons}>Projet Godot et historique</button>}</div>
         <p className="mt-[8px] text-[12px] text-encre-3">Godot 4.3 ou plus récent : atlas PNG, TileSet avec terrains, carte TileMapLayer et provenance. Aucune génération IA pour exporter ou changer de carte.</p>
-        {livraison && <div className="mt-[14px] rounded-7 border border-contour p-[14px]"><h3 className="font-serif text-[25px]">Relire les fichiers</h3><p className="break-all text-[12px]">{livraison.dossier}</p><ul className="my-[8px] space-y-[4px] text-[12px]">{livraison.fichiers.map(f => <li key={f.chemin} className="break-all">{f.role} · {f.etat}<br />{f.chemin}</li>)}</ul>{livraison.conflits.map(c => <p key={c.chemin} className="text-[12px] text-echec">{c.chemin} : {c.raison}</p>)}{publie ? <p role="status" className="break-all text-[13px]">Livraison terminée. Ouvrez {livraison.scene} dans Godot.</p> : <button className={BOUTON} disabled={occupe || !livraison.pret} onClick={() => void agir(async () => { await api.livrerGodot(e.projet, livraison.jeton); setPublie(true) })}>Déposer ces fichiers dans Godot</button>}</div>}
+        {livraison && <div className="mt-[14px] rounded-7 border border-contour p-[14px]"><h3 className="font-serif text-[25px]">Relire les fichiers</h3><p className="break-all text-[12px]">{livraison.dossier}</p><ul className="my-[8px] space-y-[4px] text-[12px]">{livraison.fichiers.map(f => <li key={f.chemin} className="break-all">{f.role} · {f.etat}<br />{f.chemin}</li>)}</ul>{livraison.conflits.map(c => <p key={c.chemin} className="text-[12px] text-echec">{c.chemin} : {c.raison}</p>)}{publie ? <p role="status" className="break-all text-[13px]">Livraison terminée. Ouvre {livraison.scene} dans Godot.</p> : <button className={BOUTON} disabled={occupe || !livraison.pret} onClick={() => void agir(async () => { await api.livrerGodot(e.projet, livraison.jeton); setPublie(true) })}>Déposer ces fichiers dans Godot</button>}</div>}
       </section>
     </div>
-    {bibliotheque && <BibliothequePourImage retour="Les tuiles" onFermer={() => setBibliotheque(false)} onChoisir={a => { if (a.projet !== e.projet) { setErreur('Choisissez une image de ce jeu.'); return }; changerCellule({ correction: a.identifiant }); setBibliotheque(false) }} />}
+    {bibliotheque && <BibliothequePourImage retour="Les tuiles" onFermer={() => setBibliotheque(false)} onChoisir={a => { if (a.projet !== e.projet) { setErreur('Choisis une image de ce jeu.'); return }; changerCellule({ correction: a.identifiant }); setBibliotheque(false) }} />}
   </div>
 }

@@ -600,7 +600,7 @@ describe("l'adresse de ComfyUI", () => {
 
     expect(
       await screen.findByText(
-        "elle ne répond pas — ouvrez-la, puis cliquez Chercher",
+        "elle ne répond pas — ouvre-la, puis clique Chercher",
       ),
     ).toBeTruthy()
     expect(screen.queryByRole("button", { name: /Descendre les/ })).toBeNull()
@@ -683,8 +683,10 @@ describe("l'adresse de ComfyUI", () => {
       await screen.findByRole("button", { name: "Descendre les 2 fichiers — 9,3 Go" }),
     ).toBeTruthy()
     expect(screen.getByText("0,6 Go · facultatif")).toBeTruthy()
-    // La mémoire libre passe par la même virgule que le reste de l'écran.
-    expect(screen.getByText("RTX 3080 · 6,9 Go de mémoire libre")).toBeTruthy()
+    // La mémoire libre passe par la même virgule que le reste de l'écran ;
+    // l'identifiant technique de la carte (« RTX 3080 ») ne s'affiche pas (RV4).
+    expect(screen.getByText("Mémoire libre : 6,9 Go")).toBeTruthy()
+    expect(screen.queryByText(/RTX 3080/)).not.toBeInTheDocument()
   })
 
   test("le téléchargement ne part que sur demande, et se reprend", async () => {

@@ -403,14 +403,21 @@ class ModeleVideo:
         return self.chez_lui or self.identifiant
 
     @property
-    def duree_par_defaut(self) -> int:
-        """La durée du produit si le modèle l'accepte, sinon la plus courte.
+    def duree_par_defaut(self) -> float:
+        """La durée que la fenêtre propose d'abord — **toujours une durée que
+        ce modèle accepte** (RV5).
 
-        La plus courte est aussi la moins chère : à défaut de pouvoir donner à
-        l'auteur ce qu'il demande, on ne lui fait pas payer plus.
+        Dans l'ordre : la durée conseillée quand il en a une (le moteur de la
+        maison, où la bande se dégrade au-delà) ; sinon 1,5 s s'il l'accepte ;
+        sinon la plus courte de ses durées. La plus courte est aussi la moins
+        chère : à défaut de pouvoir donner ce qu'on voulait, on ne fait pas
+        payer plus. ⚠️ L'ancienne règle proposait 5 s, que le moteur de la
+        maison refuse (il ne fait que 1, 1,5, 2 et 3 s).
         """
-        if not self.durees or SECONDES_DEFAUT in self.durees:
-            return SECONDES_DEFAUT
+        if self.duree_conseillee > 0 and (not self.durees or self.duree_conseillee in self.durees):
+            return self.duree_conseillee
+        if not self.durees or 1.5 in self.durees:
+            return 1.5
         return min(self.durees)
 
     def prix(self, demande: DemandeClip, releve_le: str = "") -> Prix:
@@ -603,6 +610,19 @@ class Clip:
     # journal ; seul le fichier est parti.
     efface: bool = False
 
+    # ── Le contrôle d'arrivée (RV1) ──────────────────────────────────────────
+    #
+    # **Posé seulement sur un clip généré** (`nature == "video"`) qui a échoué
+    # au contrôle — jamais sur un import, jamais sur une réussite. C'est ce
+    # champ, et lui seul, qui distingue une case « ratée » d'un clip échoué
+    # pour une tout autre raison (réseau, fournisseur) : l'écran le lit pour
+    # proposer « Relancer », et le serveur le lit pour ne jamais relancer de
+    # lui-même (T1).
+    controle: str | None = None
+    # Ce que le contrôle a mesuré, réussite ou échec — pour recalibrer les
+    # seuils plus tard sans reprendre chaque clip.
+    arrivee: dict[str, Any] | None = None
+
     @property
     def montant_dit(self) -> str:
         """Ce que l'écran écrit à côté du chiffre. **Une phrase, pas un drapeau.**
@@ -658,6 +678,8 @@ class Clip:
             "depart": self.depart,
             **({"monter_auto": True} if self.monter_auto else {}),
             **({"efface": True} if self.efface else {}),
+            **({"controle": self.controle} if self.controle else {}),
+            **({"arrivee": self.arrivee} if self.arrivee else {}),
             # Déduit, écrit quand même : c'est la phrase que l'écran affiche à
             # côté du montant, et deux rédactions finiraient par dire deux
             # choses.
@@ -686,4 +708,6 @@ class Clip:
             depart=d.get("depart", ""),
             monter_auto=bool(d.get("monter_auto", False)),
             efface=bool(d.get("efface", False)),
+            controle=d.get("controle"),
+            arrivee=d.get("arrivee"),
         )

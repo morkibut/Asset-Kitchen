@@ -36,7 +36,7 @@ const RESOLUTION = "480p"
 const PROPORTIONS = "1:1"
 const MODELE_PAR_DEFAUT = "maison/wan-2.2-i2v-14b-pixel"
 
-export type EtatDeCase = "retenue" | "en-route" | "a-juger" | "vide"
+export type EtatDeCase = "retenue" | "en-route" | "ratee" | "a-juger" | "vide"
 
 export type CaseAAnimer = {
   pose: string
@@ -49,8 +49,15 @@ export type CaseAAnimer = {
 const enRoute = (g: Generation) =>
   g.statut === "en_attente" || g.statut === "en_cours"
 
-/** Les clips de ce sujet **pas encore montés** : en route, ou arrivés sans
- *  animation taillée dedans. Ce sont eux que la rangée montre en vignette. */
+/** **Ratée au contrôle d'arrivée** (RV1) : `echouee`, et `clip.controle` le
+ *  dit. Un clip échoué pour une autre raison (fournisseur, réseau) ne porte
+ *  pas ce champ, et ne paraît donc pas ici. */
+const ratee = (g: Generation) => g.statut === "echouee" && !!g.clip?.controle
+
+/** Les clips de ce sujet **pas encore montés** : en route, ratés, ou arrivés
+ *  sans animation taillée dedans. Ce sont eux que la rangée montre en
+ *  vignette — une case ratée y reste visible, avec sa raison, au lieu de
+ *  disparaître sans bruit. */
 export function clipsNonMontes(
   clips: readonly Generation[],
   personnage: Personnage,
@@ -70,7 +77,7 @@ export function clipsNonMontes(
       g.clip &&
       !g.clip.jete &&
       (!g.clip.nature || g.clip.nature === "video") &&
-      (enRoute(g) || (g.statut === "reussie" && !montes.has(g.identifiant))),
+      (enRoute(g) || ratee(g) || (g.statut === "reussie" && !montes.has(g.identifiant))),
   )
 }
 
@@ -84,6 +91,7 @@ export function etatDeLaCase(
     (g) => g.pose === rangee.pose && (g.direction ?? null) === rangee.direction,
   )
   if (siens.some(enRoute)) return "en-route"
+  if (siens.some(ratee)) return "ratee"
   if (rangee.compte > 0 || siens.length > 0) return "a-juger"
   return "vide"
 }
@@ -91,6 +99,7 @@ export function etatDeLaCase(
 const MOT: Record<EtatDeCase, string> = {
   retenue: "déjà retenue — ignorée",
   "en-route": "un clip est déjà en route — ignorée",
+  ratee: "une vidéo a raté son contrôle — voir la case",
   "a-juger": "a déjà une animation à juger",
   vide: "à fabriquer",
 }

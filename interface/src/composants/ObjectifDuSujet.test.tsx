@@ -21,7 +21,31 @@ const lecture: ObjectifDuPersonnage = {
       etat: "non-demande" as const, versions: { retenues: [], a_juger: [], ecartees: [] },
     }))),
   },
+  avancement: {
+    images: { pretes: 0, demandees: 0, a_fabriquer: 0, a_departager: 0 },
+    animations: { pretes: 0, demandees: 1, a_fabriquer: 1, a_departager: 0 },
+    complet: false, hors_plan: 0,
+  },
 }
+
+// **RV10** — l'objectif lit le même `avancement` que la carte du Codex
+// (`Famille.test.tsx`, « Le passeur », 5/12 images · 2/6 animations) et la
+// fiche (`FicheDuSujet.test.tsx`) : mêmes chiffres, jamais un second calcul.
+test("l'objectif affiche le même compte d'avancement que le Codex et la fiche", async () => {
+  vi.spyOn(api, "objectifPersonnage").mockResolvedValue({
+    personnage: "passeur", origine: "explicite",
+    objectif: { sorties: [], largeur: 96, hauteur: 128, cadence: 8, boucle: false, repere: { x: 0, y: 0 } },
+    couverture: { images: compte, animations: compte, cases: [] },
+    avancement: {
+      images: { pretes: 5, demandees: 12, a_fabriquer: 7, a_departager: 0 },
+      animations: { pretes: 2, demandees: 6, a_fabriquer: 4, a_departager: 0 },
+      complet: false, hors_plan: 0,
+    },
+  })
+  render(<ObjectifDuSujet personnage={personnage} projet="marais" />)
+  expect(await screen.findByText("2 / 6 prêtes")).toBeInTheDocument()
+  expect(await screen.findByText("5 / 12 prêtes")).toBeInTheDocument()
+})
 
 test("l'objectif animé se rouvre avec cadence, boucle et repère non défaut puis se corrige", async () => {
   const lire = vi.spyOn(api, "objectifPersonnage").mockResolvedValue(structuredClone(lecture))
@@ -117,6 +141,26 @@ test("une direction manquante se déclare depuis une rangée, et vaut pour tout 
   expect(ajouterDirection).toHaveBeenCalledWith("Nord")
   await screen.findByLabelText("Marche · Nord · animation")
   expect(onChange).toHaveBeenCalled()
+})
+
+// RV10 §4 — chaque case dit son état, jamais un compte à part : « à
+// fabriquer » sans version, « prête » avec une, « à départager » avec deux
+// versions vivantes et aucune retenue (E2, §2).
+test("chaque case dit son état : à fabriquer, prête ou à départager", async () => {
+  const image = { identifiant: "image-ouest", empreinte: "e" } as never
+  const casesEtendues = structuredClone(lecture).couverture.cases.map((c) => {
+    if (c.identifiant === "animation-ouest") return { ...c, demande: 1, versions: { retenues: [], a_juger: [], ecartees: [] } }
+    if (c.identifiant === "animation-sud") return { ...c, demande: 1, versions: { retenues: [image], a_juger: [], ecartees: [] } }
+    if (c.identifiant === "image-ouest") return { ...c, demande: 1, versions: { retenues: [], a_juger: [image, image], ecartees: [] } }
+    return c
+  })
+  const lectureAvecEtats: ObjectifDuPersonnage = { ...structuredClone(lecture), couverture: { ...structuredClone(lecture).couverture, cases: casesEtendues } }
+  vi.spyOn(api, "objectifPersonnage").mockResolvedValue(lectureAvecEtats)
+  render(<ObjectifDuSujet personnage={personnage} projet="marais" />)
+  await screen.findByText("Marche")
+  expect(screen.getByText("Ouest · Animation · à fabriquer")).toBeInTheDocument()
+  expect(screen.getByText("Sud · Animation · prête")).toBeInTheDocument()
+  expect(screen.getByText("Ouest · Image fixe · 2 versions, à départager")).toBeInTheDocument()
 })
 
 test("retirer un mouvement le range, et « remettre » le lui rend (venu de l'ancien écran)", async () => {

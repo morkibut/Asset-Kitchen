@@ -117,7 +117,7 @@ const TRAITEMENT: EtatTraitement = {
     note: "aucun artwork officiel — les couleurs se déduisent de chaque image",
   },
   reductions: [
-    { nom: "vote", libelle: "vote en deux temps", raison: null },
+    { nom: "vote", libelle: "contour net (recommandé)", raison: null },
     { nom: "pixeloe", libelle: "traits épaissis", raison: "la bibliothèque manque" },
     { nom: "lanczos", libelle: "réduction douce", raison: null },
     { nom: "proche", libelle: "au plus proche", raison: null },
@@ -2466,7 +2466,7 @@ describe("les six capacités rattrapées par B26", () => {
       await within(colonne()).findByText("brut : un pixel sur N gardé, les autres jetés"),
     ).toBeTruthy()
 
-    fireEvent.click(within(colonne()).getByRole("button", { name: "vote en deux temps" }))
+    fireEvent.click(within(colonne()).getByRole("button", { name: "contour net (recommandé)" }))
     await waitFor(() => expect(dernierePose(appels)?.grille?.methode).toBe("vote"))
     expect(
       within(colonne()).getByText("contour net et intérieur lisible — un sprite calme"),

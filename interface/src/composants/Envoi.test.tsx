@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 import { EcranEnvoi, TRI_VIDE } from "./Envoi"
 import type { Envoi } from "../api"
@@ -100,6 +100,39 @@ test("seul le négatif se cache quand le style local ne le lit pas — le fond r
   expect(screen.queryByText("pas de flou")).not.toBeInTheDocument()
 })
 
+test("la relecture nomme le fond, et dit pourquoi il a changé à cause de la description (RV3)", () => {
+  const envoi = { ...BASE, fond: { ...BASE.fond, couleur: "#FF00FF", nom: "magenta", motif: "ta description dit verte" } } as unknown as Envoi
+  render(<EcranEnvoi {...props(envoi)} />)
+  // Le fond est nommé, pas seulement sa couleur hexadécimale.
+  expect(screen.getByText(/Fond : #FF00FF magenta/)).toBeInTheDocument()
+  // Et la raison du changement tient en une ligne, à côté.
+  expect(screen.getByText("fond magenta : ta description dit verte")).toBeInTheDocument()
+})
+
+test("aucune ligne de raison quand le fond n'a pas changé à cause de la description", () => {
+  const envoi = { ...BASE, fond: { ...BASE.fond, couleur: "#00B140", nom: "studio green", motif: "" } } as unknown as Envoi
+  render(<EcranEnvoi {...props(envoi)} />)
+  expect(screen.getByText(/Fond : #00B140 studio green/)).toBeInTheDocument()
+  expect(screen.queryByText(/ta description dit/)).not.toBeInTheDocument()
+})
+
+test("en modification, le fond corrigé montre son nom et la raison quand elle existe", () => {
+  const envoi = {
+    ...BASE,
+    fond: {
+      ...BASE.fond,
+      couleur: "#FF00FF",
+      nom: "magenta",
+      motif: "ta description dit verte",
+      propose: { couleur: "", nom: "", ecart: 0, voisine: "", raison: "ce jeu n'a pas encore de palette" },
+    },
+  } as unknown as Envoi
+  render(<EcranEnvoi {...props(envoi)} />)
+  fireEvent.click(screen.getByRole("button", { name: "Modifier l’envoi" }))
+  expect(screen.getByText("#FF00FF magenta")).toBeInTheDocument()
+  expect(screen.getByText("fond magenta : ta description dit verte")).toBeInTheDocument()
+})
+
 test("le fond reste montré quand le style local lit bien le négatif", () => {
   const local: NonNullable<TexteLocal> = {
     famille: "sdxl", texte: "Pixel art style. un pèlerin", segments: [], retires: [],
@@ -140,10 +173,10 @@ test("un modèle distant garde son bouton habituel — « Payer et lancer », ja
   expect(screen.queryByRole("button", { name: /Lancer sur ma carte graphique/ })).not.toBeInTheDocument()
 })
 
-test("le modèle se lit par son nom, l’identifiant brut reste en petit dessous", () => {
+test("le modèle se lit par son nom, jamais par son identifiant technique", () => {
   render(<EcranEnvoi {...props(BASE as unknown as Envoi)} />)
   expect(screen.getByText("Pixel art net et rapide")).toBeInTheDocument()
-  expect(screen.getByText("ComfyUI:zimage-pixel@v1")).toBeInTheDocument()
+  expect(screen.queryByText("ComfyUI:zimage-pixel@v1")).not.toBeInTheDocument()
 })
 
 test("un modèle distant garde l’écran habituel — aucun bloc de texte local", () => {

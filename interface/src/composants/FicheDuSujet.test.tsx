@@ -34,6 +34,68 @@ test("le type d'objet et l'ambiance se règlent dans la fiche du sujet", async (
   expect(onPersonnage).toHaveBeenCalled()
 })
 
+// **Retirer le sujet vit dans « Modifier la fiche »** (16 septembre 2026 ;
+// RV10 a retiré l'ancien écran « Ses cases » où ce geste vivait avant, sous
+// le nom « Supprimer »). Ses images restent, marquées « personnage supprimé ».
+test("la fiche retire le sujet du jeu, après confirmation", async () => {
+  const pelerin = { identifiant: "pelerin", nom: "Le pèlerin", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type: "", ambiance: "" } as unknown as Personnage
+  vi.spyOn(api, "objectifPersonnage").mockRejectedValue(new Error("hors sujet"))
+  vi.spyOn(api, "habillage").mockResolvedValue(null as never)
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(null as never)
+  vi.spyOn(api, "posesDesTypes").mockResolvedValue({ types: [] } as never)
+  vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [] } as never)
+  const confirmer = vi.spyOn(window, "confirm").mockReturnValue(true)
+  const supprimer = vi.spyOn(api, "supprimerPersonnage").mockResolvedValue({ personnage: pelerin } as never)
+  const onPersonnage = vi.fn()
+  render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  fireEvent.click(screen.getByText("Rangement et retrait du jeu"))
+  fireEvent.click(screen.getByRole("button", { name: "Le retirer du jeu" }))
+  expect(confirmer).toHaveBeenCalled()
+  await waitFor(() => expect(supprimer).toHaveBeenCalledWith("pelerin"))
+  expect(onPersonnage).toHaveBeenCalledWith(expect.objectContaining({ supprime: true }))
+})
+
+test("un refus de confirmation ne retire rien", async () => {
+  const pelerin = { identifiant: "pelerin", nom: "Le pèlerin", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type: "", ambiance: "" } as unknown as Personnage
+  vi.spyOn(api, "objectifPersonnage").mockRejectedValue(new Error("hors sujet"))
+  vi.spyOn(api, "habillage").mockResolvedValue(null as never)
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(null as never)
+  vi.spyOn(api, "posesDesTypes").mockResolvedValue({ types: [] } as never)
+  vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [] } as never)
+  vi.spyOn(window, "confirm").mockReturnValue(false)
+  const supprimer = vi.spyOn(api, "supprimerPersonnage")
+  render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  fireEvent.click(screen.getByText("Rangement et retrait du jeu"))
+  fireEvent.click(screen.getByRole("button", { name: "Le retirer du jeu" }))
+  expect(supprimer).not.toHaveBeenCalled()
+})
+
+// **RV10** — la fiche lit `objectif.avancement`, le même compte que la carte
+// du Codex (`Famille.test.tsx`, « Le passeur », 5/12 images · 2/6
+// animations) et l'objectif (`ObjectifDuSujet.test.tsx`) : mêmes chiffres,
+// jamais un second calcul.
+test("la fiche affiche le même compte d'avancement que le Codex et l'objectif", async () => {
+  const passeur = { identifiant: "passeur", nom: "Le passeur", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type: "", ambiance: "" } as unknown as Personnage
+  vi.spyOn(api, "objectifPersonnage").mockResolvedValue({
+    personnage: "passeur", origine: "explicite",
+    objectif: { sorties: [], largeur: 96, hauteur: 128, cadence: 8, boucle: false, repere: { x: 0, y: 0 } },
+    couverture: { images: { demande: 12, produit: 5, retenu: 5, manquant: 7, a_retenir: 0 }, animations: { demande: 6, produit: 2, retenu: 2, manquant: 4, a_retenir: 0 }, cases: [] },
+    avancement: {
+      images: { pretes: 5, demandees: 12, a_fabriquer: 7, a_departager: 0 },
+      animations: { pretes: 2, demandees: 6, a_fabriquer: 4, a_departager: 0 },
+      complet: false, hors_plan: 0,
+    },
+  } as never)
+  vi.spyOn(api, "habillage").mockResolvedValue(null as never)
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(null as never)
+  render(<FicheDuSujet personnage={passeur} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  expect(await screen.findByText(/Prêtes pour le jeu/)).toHaveTextContent(
+    "Prêtes pour le jeu : 2 animations sur 6 · 5 images fixes sur 12",
+  )
+})
+
 // ── Son style de combat (SC4, 18 septembre 2026) ────────────────────────────
 
 // ── Une matière n'est plus un sujet (rangement, D4) ─────────────────────────

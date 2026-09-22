@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Refus } from "../api"
 import { fileLocale, type EtapeLocale, type FileLocale, type MoteurLocal } from "../api-file-locale"
+import { nomDuModele } from "./Fiche"
 
 const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle disabled:opacity-50"
 const ETATS: Record<EtapeLocale["etat"], string> = { en_attente: "En attente", en_cours: "Calcul en cours", a_reprendre: "Suivi à reprendre", externe_inconnu: "Envoi à vérifier", termine: "Terminé", echoue: "Échec", annule: "Annulé" }
@@ -41,7 +42,7 @@ export function FileDesCalculsLocaux({ projet }: { projet: string | null }) {
   const agir = async (e: EtapeLocale, annuler: boolean) => {
     setOccupe(e.identifiant); setErreur("")
     try { await (annuler ? fileLocale.annuler(e.identifiant) : fileLocale.reprendre(e.identifiant)); setRevision((r) => r + 1) }
-    catch (e) { setErreur(e instanceof Refus ? e.message : "Le geste n’a pas abouti. Relisez le suivi avant de réessayer.") }
+    catch (e) { setErreur(e instanceof Refus ? e.message : "Le geste n’a pas abouti. Relis le suivi avant de réessayer.") }
     finally { setOccupe(null) }
   }
   const visibles = file?.etapes.filter((e) => (autresJeux || e.projet === projet || e.projet === null) && (historique || !fini(e))) ?? []
@@ -65,17 +66,17 @@ export function FileDesCalculsLocaux({ projet }: { projet: string | null }) {
     {!file && !erreur && <p role="status" className="text-[13px] text-encre-3">Lecture de la file…</p>}
     {file && !visibles.length && <p className="text-[13px] text-encre-3">Aucun calcul local {historique ? "conservé" : "en attente ou en cours"} pour ce jeu.</p>}
     <ol className="divide-y divide-trait">{visibles.map((e) => <li key={e.identifiant} className="flex flex-wrap items-start gap-[14px] py-[14px]">
-      <div className="min-w-0 flex-1"><p className="text-[13px]"><strong>{NATURES[e.nature]}</strong> · {e.modele} · {ETATS[e.etat]}</p>
+      <div className="min-w-0 flex-1"><p className="text-[13px]"><strong>{NATURES[e.nature]}</strong> · {nomDuModele(e.modele)} · {ETATS[e.etat]}</p>
         <p className="mt-[4px] text-[12px] text-encre-3">{e.acteur === "agent" ? "Demandé par l’agent" : "Création manuelle"}{e.projet !== projet ? ` · ${e.projet || "sans jeu"}` : ""} · {new Date(e.cree_le * 1000).toLocaleString("fr-FR")}</p>
         <p className="mt-[8px] text-[13px] text-encre-2">{e.raison}</p>
-        {e.travail_externe && <p className="mt-[4px] break-all text-[11px] text-encre-3">Travail conservé chez le moteur : {e.travail_externe}</p>}
+        {e.travail_externe && <p className="mt-[4px] text-[11px] text-encre-3">En cours sur ta carte graphique.</p>}
         {e.duree_s !== null && <p className="mt-[4px] text-[12px] text-encre-3">Temps mesuré : {duree(e.duree_s)} · {TEMPERATURE[e.temperature]}</p>}
-        {e.etat === "externe_inconnu" && <p className="mt-[4px] text-[12px] text-encre-3">Vérifiez le travail dans le moteur. Cette demande reste réservée pour éviter un second envoi.</p>}
+        {e.etat === "externe_inconnu" && <p className="mt-[4px] text-[12px] text-encre-3">Vérifie le travail dans le moteur. Cette demande reste réservée pour éviter un second envoi.</p>}
       </div>
       {e.etat === "a_reprendre" && <button disabled={occupe !== null} className={BOUTON} onClick={() => void agir(e, false)}>Reprendre le suivi</button>}
       {e.etat === "en_attente" && !e.soumission_engagee && <button disabled={occupe !== null} className={BOUTON} onClick={() => void agir(e, true)}>Annuler cette attente</button>}
     </li>)}</ol>
-    {!!file?.mesures.length && <details className="mt-[14px] text-[12px] text-encre-3"><summary className="cursor-pointer">Les durées mesurées sur cette machine</summary><ul className="mt-[8px] space-y-[4px]">{file.mesures.map((m) => <li key={`${m.moteur}:${m.modele}:${m.temperature}`}>{m.modele} · {duree(m.mediane_s)} · {TEMPERATURE[m.temperature]} · {m.mesures} mesure(s)</li>)}</ul><p className="mt-[8px]">Ces durées décrivent les calculs terminés. Le chargement du modèle peut changer entre deux générations.</p></details>}
+    {!!file?.mesures.length && <details className="mt-[14px] text-[12px] text-encre-3"><summary className="cursor-pointer">Les durées mesurées sur cette machine</summary><ul className="mt-[8px] space-y-[4px]">{file.mesures.map((m) => <li key={`${m.moteur}:${m.modele}:${m.temperature}`}>{nomDuModele(m.modele)} · {duree(m.mediane_s)} · {TEMPERATURE[m.temperature]} · {m.mesures} mesure(s)</li>)}</ul><p className="mt-[8px]">Ces durées décrivent les calculs terminés. Le chargement du modèle peut changer entre deux générations.</p></details>}
     <p className="mt-[14px] text-[12px] text-encre-3">{file?.regle || "L’état inconnu d’un moteur reste à vérifier. La file n’arrête jamais les calculs lancés par une autre application."}</p>
   </section>
 }

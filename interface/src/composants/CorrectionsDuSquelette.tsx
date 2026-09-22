@@ -39,12 +39,12 @@ export function CorrectionsDuSquelette({ personnage, animation, onChangement, on
       const r = await sources3d.poserCorrections(personnage, JSON.parse(forme(valeurs)), animation || undefined)
       setCatalogue(r); setValeurs(r.corrections); brouillon.effacer(); setRevision((v) => v + 1)
       setMessage(r.message || "Corrections enregistrées pour les prochains rendus."); onChangement?.()
-    } catch (e) { setErreur(e instanceof Error ? e.message : "L’enregistrement des corrections a échoué. Vos réglages restent ici.") }
+    } catch (e) { setErreur(e instanceof Error ? e.message : "L’enregistrement des corrections a échoué. Tes réglages restent ici.") }
     finally { setAttente(false) }
   }
   return <section aria-label="Corrections du squelette" className="rounded-8 border border-trait bg-papier p-[22px]">
     <h3 className="font-serif text-[25px]">Ajuster le squelette</h3>
-    <p className="mt-[8px] text-[13px] text-encre-3">Ces rotations corrigent la pose sur les prochains rendus de cette source. Les frames et les modèles déjà conservés dans le jeu gardent leurs corrections d’origine. Gauche et droite désignent celles du personnage.</p>
+    <p className="mt-[8px] text-[13px] text-encre-3">Ces rotations corrigent la pose sur les prochains rendus de cette source. Les images et les modèles déjà conservés dans le jeu gardent leurs corrections d’origine. Gauche et droite désignent celles du personnage.</p>
     {erreur && <p role="alert" className="mt-[14px] text-[13px] text-echec">{erreur}</p>}
     {!catalogue && !erreur && <p role="status" className="mt-[14px] text-[13px]">Lecture des os et des corrections…</p>}
     {catalogue && <><AvisBrouillon brouillon={brouillon} />
@@ -55,7 +55,7 @@ export function CorrectionsDuSquelette({ personnage, animation, onChangement, on
         <div className="flex flex-wrap gap-[8px]"><button className={CHAMP} onClick={() => setValeurs((v) => ({ ...v, [os]: {} }))}>Remettre cet os à zéro</button><button className={CHAMP} onClick={() => setValeurs({})}>Remettre tout à zéro</button><button className={CHAMP} disabled={!modifie} onClick={() => { setValeurs(catalogue.corrections); brouillon.effacer(); setMessage("") }}>Annuler les changements</button></div>
       </fieldset>
       <div className="mt-[22px] flex flex-wrap items-center gap-[14px]"><button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50" disabled={!modifie || attente} onClick={() => void enregistrer()}>{attente ? "Enregistrement et aperçu…" : "Enregistrer les corrections"}</button><button className={CHAMP} disabled={attente} onClick={() => setApercu((v) => !v)}>{apercu ? "Masquer la vue 3D" : "Voir le squelette animé"}</button></div>
-      <p className="mt-[8px] text-[12px] text-encre-3">Enregistrer actualise l’aperçu avec Blender, sans génération IA. {modifie ? "La vue montre encore les corrections enregistrées. Enregistrez ou annulez avant de préparer un rendu." : "Vous pouvez ensuite préparer un rendu pour vérifier les images."}</p>
+      <p className="mt-[8px] text-[12px] text-encre-3">Enregistrer actualise l’aperçu avec Blender, sans génération IA. {modifie ? "La vue montre encore les corrections enregistrées. Enregistre ou annule avant de préparer un rendu." : "Tu peux ensuite préparer un rendu pour vérifier les images."}</p>
       {message && <p role="status" className="mt-[14px] text-[13px] text-encre">{message}</p>}
       {apercu && <div className="mt-[22px] flex h-[60vh] min-h-[380px] flex-col"><Suspense fallback={<p role="status">Ouverture de la vue animée…</p>}><ApercuModele3D url={sources3d.rig(personnage, animation, revision)} nom="Squelette avec les corrections enregistrées" /></Suspense></div>}
     </>}

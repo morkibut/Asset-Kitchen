@@ -77,7 +77,7 @@ export function BlocMouvements({ projet }: { projet: string | null }) {
       <p data-mouvements-du-jeu className="mt-2 text-[12.5px] leading-relaxed text-encre-2">
         {base.propres_au_jeu
           ? "Ce jeu a ses propres textes."
-          : "Ce jeu utilise les textes de départ de l'atelier. Votre première modification lui en fait une copie : les autres jeux ne changent pas."}
+          : "Ce jeu utilise les textes de départ de l'atelier. Ta première modification lui en fait une copie : les autres jeux ne changent pas."}
       </p>
 
       <ul className="mt-3 flex flex-col gap-px">
@@ -104,7 +104,7 @@ export function BlocMouvements({ projet }: { projet: string | null }) {
           une raison : sans elle, masquer serait irréversible, et un geste
           irréversible sur du vocabulaire livré n'a aucune raison d'être. */}
       {base.masques.length > 0 && (
-        <p className="mesure mt-2 flex flex-wrap items-center gap-2 text-[10px] text-encre-3">
+        <p className="mesure mt-2 flex flex-wrap items-center gap-2 text-[10.5px] text-encre-3">
           <span>masqués</span>
           {base.masques.map((mouvement) => (
             <button
@@ -146,7 +146,7 @@ export function BlocMouvements({ projet }: { projet: string | null }) {
  *  disent « section » partout dans le produit ; aucune typographie neuve ici. */
 function Titre({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mesure mt-7 mb-3 border-b border-trait pb-1.5 text-[9.5px] tracking-[.11em] text-encre-3 uppercase">
+    <h3 className="mesure mt-7 mb-3 border-b border-trait pb-1.5 text-[10.5px] tracking-[.11em] text-encre-3 uppercase">
       {children}
     </h3>
   )
@@ -203,11 +203,11 @@ function Ligne({
             ailleurs dans le produit. Un livré est le même chez tout le monde ;
             un fabriqué n'existe que dans cet atelier-ci. */}
         {!mouvement.livre && (
-          <span className="mesure text-[9px] tracking-[.08em] text-epingle uppercase">
+          <span className="mesure text-[10.5px] tracking-[.08em] text-encre-attention uppercase">
             nommé ici
           </span>
         )}
-        <span className="mesure ml-auto text-[10px] text-encre-3">
+        <span className="mesure ml-auto text-[10.5px] text-encre-3">
           {mouvement.cadence} i/s
           {mouvement.directions.length > 0 &&
             ` · ${mouvement.directions.join(", ")}`}
@@ -215,17 +215,16 @@ function Ligne({
         <button
           type="button"
           onClick={onOuvrir}
-          className="mesure rounded-[2px] border border-trait px-1.5 py-0.5 text-[10px] text-encre-2 hover:text-signal"
+          className="mesure rounded-[2px] border border-trait px-1.5 py-0.5 text-[10.5px] text-encre-2 hover:text-signal"
         >
           {ouvert ? "fermer" : "modifier"}
         </button>
       </div>
 
-      {/* Le texte anglais est visible sans déplier : **c'est lui qui part**, et
-          c'est la seule chose que l'auteur vient vérifier ici. */}
-      <p className="mesure mt-0.5 truncate text-[10px] text-encre-3" title={mouvement.texte}>
-        {mouvement.texte}
-      </p>
+      {/* **Le texte anglais part replié** (RV14) : c'est ce que le modèle
+          reçoit, pas ce que l'auteur vient lire d'un coup d'œil — le nom en
+          français suffit à reconnaître un mouvement dans la liste. Le
+          dépliant le montre, dans le champ qu'il édite aussi. */}
 
       {ouvert && (
         <div className="mt-2 flex flex-col gap-2 border-t border-trait pt-2">
@@ -254,13 +253,13 @@ function Ligne({
               onChange={(e) => setCadence(e.target.value)}
               className={`${CHAMP} w-[64px]`}
             />
-            <span className="mesure text-[10px] text-encre-3">images par seconde</span>
+            <span className="mesure text-[10.5px] text-encre-3">images par seconde</span>
           </label>
           <div className="flex justify-between gap-2">
             <button
               type="button"
               onClick={() => void onMasquer()}
-              className="mesure text-[10px] text-encre-3 hover:text-signal"
+              className="mesure text-[10.5px] text-encre-3 hover:text-signal"
             >
               {mouvement.livre ? "masquer — il se remontre" : "masquer — il s'en va"}
             </button>
@@ -329,7 +328,7 @@ function Fabrique({
           onChange={(e) => setCadence(e.target.value)}
           className={`${CHAMP} w-[64px]`}
         />
-        <span className="mesure text-[10px] text-encre-3">images par seconde</span>
+        <span className="mesure text-[10.5px] text-encre-3">images par seconde</span>
       </label>
       <div className="flex justify-end gap-2">
         <Bouton onClick={onFermer} enfants="Laisser" />
@@ -428,7 +427,7 @@ function PhraseDeDirection({
           value={texte}
           rows={2}
           aria-label={`Phrase d'animation — ${direction.nom}`}
-          placeholder={livree || "aucune phrase proposée pour cette direction — écrivez-en une"}
+          placeholder={livree || "aucune phrase proposée pour cette direction — écris-en une"}
           onChange={(e) => setTexte(e.target.value)}
           className={`${CHAMP} h-auto py-1.5 leading-relaxed`}
         />
@@ -497,7 +496,7 @@ export function BlocStyles({ projet }: { projet: string | null }) {
       <p data-styles-du-jeu className="mt-2 text-[12.5px] leading-relaxed text-encre-2">
         {base.propres_au_jeu
           ? "Ce jeu a ses propres styles."
-          : "Ce jeu utilise les styles de départ de l'atelier. Votre première modification lui en fait une copie : les autres jeux ne changent pas."}
+          : "Ce jeu utilise les styles de départ de l'atelier. Ta première modification lui en fait une copie : les autres jeux ne changent pas."}
       </p>
 
       <ul className="mt-3 flex flex-col gap-px">
@@ -522,7 +521,7 @@ export function BlocStyles({ projet }: { projet: string | null }) {
       </ul>
 
       {base.masques.length > 0 && (
-        <p className="mesure mt-2 flex flex-wrap items-center gap-2 text-[10px] text-encre-3">
+        <p className="mesure mt-2 flex flex-wrap items-center gap-2 text-[10.5px] text-encre-3">
           <span>masqués</span>
           {base.masques.map((style) => (
             <button
@@ -607,27 +606,26 @@ function LigneDeStyle({
           {style.nom}
         </button>
         {!style.livre && (
-          <span className="mesure text-[9px] tracking-[.08em] text-epingle uppercase">
+          <span className="mesure text-[10.5px] tracking-[.08em] text-encre-attention uppercase">
             nommé ici
           </span>
         )}
-        <span className="mesure ml-auto text-[10px] text-encre-3">
+        <span className="mesure ml-auto text-[10.5px] text-encre-3">
           {ceQuIlDit.length > 0 ? ceQuIlDit.join(", ") : "aucun texte"}
         </span>
         <button
           type="button"
           onClick={onOuvrir}
-          className="mesure rounded-[2px] border border-trait px-1.5 py-0.5 text-[10px] text-encre-2 hover:text-signal"
+          className="mesure rounded-[2px] border border-trait px-1.5 py-0.5 text-[10.5px] text-encre-2 hover:text-signal"
         >
           {ouvert ? "fermer" : "modifier"}
         </button>
       </div>
 
-      {/* Ce qu'il tient est visible sans déplier : c'est ce qui distingue un
-          style d'un autre, plus vite que ses textes. */}
-      <p className="mesure mt-0.5 truncate text-[10px] text-encre-3">
-        {style.tient || "mains nues"}
-      </p>
+      {/* **Ce qu'il tient part aussi replié** (RV14) : c'est du texte anglais
+          envoyé au modèle, comme le texte d'un mouvement — le nom du style et
+          les mouvements qu'il modifie, sur la ligne au-dessus, suffisent à le
+          reconnaître replié. */}
 
       {ouvert && (
         <div className="mt-2 flex flex-col gap-2 border-t border-trait pt-2">
@@ -667,7 +665,7 @@ function LigneDeStyle({
             <button
               type="button"
               onClick={() => void onMasquer()}
-              className="mesure text-[10px] text-encre-3 hover:text-signal"
+              className="mesure text-[10.5px] text-encre-3 hover:text-signal"
             >
               {style.livre ? "masquer — il se remontre" : "masquer — il s'en va"}
             </button>

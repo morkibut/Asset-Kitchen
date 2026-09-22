@@ -9,9 +9,9 @@
 
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
-import { Grille, useGalerie } from "./Galerie"
+import { Galerie, Grille, useGalerie } from "./Galerie"
 import type { Entree } from "./Tuile"
-import { PlancheAConfirmer, type Asset, type Bibliotheque } from "../api"
+import { PlancheAConfirmer, type Asset, type Bibliotheque, type Univers } from "../api"
 
 const { assets, supprimerAssetsConfirmable } = vi.hoisted(() => ({
   assets: vi.fn(),
@@ -274,4 +274,54 @@ test("une image ordinaire se supprime sans confirmation", async () => {
   expect(supprimerAssetsConfirmable).toHaveBeenCalledWith(["asset-1"], false)
   expect(resultat).toEqual(["asset-1"])
   expect(vue.result.current.plancheAConfirmer).toBeNull()
+})
+
+// ── L'onglet Vidéos n'a ni filtres ni compteur d'images (RV13) ──────────────
+
+function monterLaGaleriePleine() {
+  const vue = monterLaGalerie()
+  render(
+    <Galerie
+      g={vue.result.current}
+      bibliotheque={BIBLIOTHEQUE}
+      echouer={vi.fn()}
+      etat={null}
+      montageOuvert={null}
+      setMontageOuvert={vi.fn()}
+      ouvrirLAtelierDeBande={vi.fn()}
+      ouvrirLaRetouche={vi.fn()}
+      personnages={[]}
+      plan={[]}
+      reinjecter={vi.fn()}
+      reprendreReglages={vi.fn()}
+      setChantier={vi.fn()}
+      setChoseOuverte={vi.fn()}
+      poserLaRacine={vi.fn()}
+      setPanne={vi.fn()}
+      univers={{} as unknown as Univers}
+    />,
+  )
+  return vue
+}
+
+test("l'onglet Vidéos n'affiche ni la barre de filtres ni le compteur des images", async () => {
+  assets.mockResolvedValue({ assets: [], total: 3 })
+  const vue = monterLaGaleriePleine()
+  await waitFor(() => expect(assets).toHaveBeenCalled())
+  expect(vue.result.current).toBeTruthy()
+
+  // Sur Images (par défaut) : la barre de filtres et le compte d'images
+  // paraissent tous les deux.
+  expect(screen.getByLabelText("Ne montrer qu'une famille, ou les clips")).toBeTruthy()
+  expect(screen.getByLabelText("Trier la grille")).toBeTruthy()
+
+  fireEvent.click(screen.getByRole("button", { name: "Vidéos" }))
+
+  // Sur Vidéos : ni l'une ni l'autre — les clips ne passent pas par la même
+  // liste, et un filtre ou un compte d'images n'y dirait rien de juste.
+  expect(screen.queryByLabelText("Ne montrer qu'une famille, ou les clips")).toBeNull()
+  expect(screen.queryByLabelText("Trier la grille")).toBeNull()
+  expect(screen.queryByText(/montrées sur/)).toBeNull()
+  // Le pied de grille, lui, reste : ce n'est pas un compteur d'images.
+  expect(screen.getByText(/aucune génération ne part d'ici/)).toBeTruthy()
 })

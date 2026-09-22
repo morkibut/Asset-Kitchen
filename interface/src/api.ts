@@ -43,9 +43,24 @@ export type CaseObjectif = SortieDemandee & CompteObjectif & {
   nom_pose: string; nom_direction: string; etat: "non-demande" | "manquant" | "produit" | "retenu"
   versions: { retenues: (Asset | Bande)[]; a_juger: (Asset | Bande)[]; ecartees: (Asset | Bande)[] }
 }
+/** Une fraction d'avancement, sur un seul calque (RV10) — jamais mêlée à
+ *  l'autre (A12) : `pretes` compte les cases qui partiraient dans le jeu si
+ *  on livrait maintenant, la retenue n'étant pas nécessaire (E2). */
+export type FractionAvancement = {
+  pretes: number; demandees: number; a_fabriquer: number; a_departager: number
+}
+/** Le seul compte d'avancement (RV10) — lu par la carte du Codex, la fiche,
+ *  l'objectif, l'accueil et la liste des jeux. `complet` veut dire « rien ne
+ *  manque, animations comprises ». */
+export type Avancement = {
+  images: FractionAvancement; animations: FractionAvancement
+  complet: boolean; hors_plan: number
+  detail?: { identifiant: string; nom: string; images: FractionAvancement; animations: FractionAvancement }[]
+}
 export type ObjectifDuPersonnage = {
   personnage: string; objectif: ObjectifProduction; origine: "explicite" | "plan-existant"
   couverture: { images: CompteObjectif; animations: CompteObjectif; cases: CaseObjectif[] }
+  avancement: Avancement
 }
 
 export type Option = {
@@ -839,6 +854,11 @@ export type ModeleVideo = {
    *  dire *la question ne se pose pas pour celui-ci*. */
   duree_conseillee: number
   raison_de_la_duree: string
+  /** **RV5** : la durée à proposer quand on choisit ce modèle — `duree_conseillee`
+   *  si elle est renseignée, sinon 1,5 s si ce modèle l'accepte, sinon sa plus
+   *  petite durée. Toujours une durée que ce modèle accepte vraiment.
+   *  Optionnel : les essais d'avant RV5 ne le donnent pas toujours. */
+  duree_par_defaut?: number
   /** Le nombre d'images réel pour chaque durée offerte, **calculé au serveur**.
    *  Le moteur n'accepte que certains comptes ; la règle est une contrainte du
    *  modèle et n'a rien à faire dans une interface — deux endroits qui la
@@ -891,9 +911,18 @@ export type EtatDuMoteur = {
   go_a_telecharger: number
   greffon_absent: boolean
   /** La carte graphique telle qu'elle se nomme, et ce qui lui reste de mémoire
-   *  libre. Vide quand l'application n'est pas ouverte. */
+   *  libre. Vide quand l'application n'est pas ouverte. **Ne s'affiche jamais
+   *  telle quelle** — c'est l'identifiant technique du pilote (RV2) ; l'écran
+   *  n'en montre que la mémoire libre, en clair. */
   carte: string
   memoire_libre_go: number
+  /** Ce que ce dépôt a mesuré comme besoin pour ce modèle, ou `null` quand rien
+   *  ne le justifie (RV2). Un besoin non mesuré ne s'invente pas : l'écran se
+   *  tait plutôt que d'afficher un chiffre deviné. */
+  besoin_go: number | null
+  /** ComfyUI traite ou attend déjà un autre calcul, à dire **avant** de lancer
+   *  (RV2). Un avertissement, jamais un blocage. */
+  occupe: boolean
   /** Ce qu'il y a à dire, déjà écrit — ou la chaîne vide quand il n'y a rien à
    *  dire. Rien à dire est une réponse. */
   phrase: string
@@ -959,6 +988,12 @@ export type Clip = {
   extraction_refus: string | null
   montant_relu: boolean
   recupere: boolean
+  /** **Le contrôle d'arrivée a refusé ce clip** (RV1) — jamais posé sur un
+   *  import, jamais sur une réussite. C'est lui qui distingue une case
+   *  « ratée » d'un échec pour une autre raison, et lui seul que l'écran doit
+   *  lire pour proposer « Relancer » : la raison affichable est déjà dans
+   *  `emplacements[0].raison`. */
+  controle?: "noire" | "immobile" | "vide" | null
   /** Écarté d'un lot. **Il quitte la galerie, pas le journal** : ce qui a été
    *  payé reste payé, et rien n'expire — le geste se défait quand on veut. */
   jete: boolean
@@ -1599,7 +1634,7 @@ export type Methode =
  *  fiche qui afficherait alors `pixeloe` en clair aurait perdu le seul mot que
  *  l'auteur comprend. */
 export const NOM_DE_LA_METHODE: Record<Methode, string> = {
-  vote: "vote en deux temps",
+  vote: "contour net (recommandé)",
   pixeloe: "traits épaissis",
   lanczos: "réduction douce",
   proche: "au plus proche",
@@ -2708,10 +2743,12 @@ export type Vestiaire = {
 export type FamilleDuBilan = {
   cle: string
   compte: number
-  /** La fraction de ce qui est fabricable maintenant qui est fait (E12), ou
-   *  `null` quand rien n'est réclamé — une barre à 0 % dirait « en retard »,
-   *  ce que le manque n'est jamais. */
-  complet: number | null
+  images: FractionAvancement
+  animations: FractionAvancement
+  /** `null` quand rien n'est réclamé — une barre à 0 % dirait « en retard »,
+   *  ce que le manque n'est jamais (E2). Sinon, « rien ne manque, animations
+   *  comprises » (RV10) : les deux calques comptent, jamais un seul. */
+  complet: boolean | null
   manque_texte: string
 }
 
@@ -3511,23 +3548,15 @@ export type Collection = {
 // ── La grille d'une famille (B9) ────────────────────────────────────────────
 
 /** Ce qu'un sujet a de fait sur ce qu'il attend, **dans ses deux calques**
- *  (B9.1).
+ *  (RV10 — le même compte que `Avancement`, sans le nom : c'est
+ *  `ServiceProduction.avancements` qui le rend, pour toute une page de
+ *  sujets en deux requêtes).
  *
  *  Les images et les animations se comptent séparément, et ne se mêlent jamais
  *  en un seul total : une animation manquante se cacherait derrière une image
- *  présente. `complet` ne regarde que les images — sans quoi le filtre
- *  *Incomplets* rendrait le jeu entier tant qu'une bande manque, c'est-à-dire
- *  toujours. */
-export type CompteDuSujet = {
-  poses: { fait: number; attendu: number }
-  images: { fait: number; attendu: number }
-  bandes: { fait: number; attendu: number }
-  complet: boolean
-  /** Le même compte, pose par pose — **ce que la vue *Les poses* dessine**.
-   *  Il sort de la même boucle que les totaux ci-dessus : les deux ne peuvent
-   *  pas se contredire. */
-  detail: { identifiant: string; nom: string; fait: number; attendu: number }[]
-}
+ *  présente (A12). `complet` regarde désormais les deux calques : *rien ne
+ *  manque, animations comprises*. */
+export type CompteDuSujet = Avancement
 
 /** Une collection où l'on peut ranger, et ce qu'elle contient **de ce jeu-ci**.
  *
@@ -4412,9 +4441,18 @@ export type Envoi = {
    *
    *  ⚠️ **Il n'y a plus de `du_jeu`** (20 septembre 2026) : le fond n'est plus
    *  un réglage du jeu, donc annuler la correction rend la main au calcul et
-   *  n'a rien à comparer. */
+   *  n'a rien à comparer.
+   *
+   *  `nom` et `motif` sont arrivés avec `RV3` (21 septembre 2026), quand la
+   *  couleur s'est mise à dépendre de la description sur un appel sans
+   *  référence. `nom` est celui de la liste fermée (« magenta », « studio
+   *  green »), vide sur une couleur tapée à la main. `motif` est vide la
+   *  plupart du temps ; il ne se remplit que lorsque la description a écarté
+   *  le vert de studio, et dit alors pourquoi en une ligne. */
   fond: {
     couleur: string
+    nom: string
+    motif: string
     interdiction: string
     corrige: boolean
     propose: FondPropose
@@ -4880,6 +4918,14 @@ export const api = {
    *  *Livrer* qui l'applique. */
   deciderConflit: (projet: string, jeton: string, chemin: string, decision: DecisionSurConflit) =>
     appeler<ApercuLivraison>(`/projects/${encodeURIComponent(projet)}/deliveries/${encodeURIComponent(jeton)}/decisions`, { method: "POST", body: JSON.stringify({ chemin, decision }) }),
+  /** Tout le jeu, ou ces sujets-là, en paquets Godot — un `prevoirLivraison`
+   *  par sujet (`RV8`). `paquets` dans l'ordre des sujets ; `ecartes` ceux qui
+   *  ne partent pas, chacun avec sa raison. */
+  prevoirLivraisonsDuJeu: (projet: string, personnages?: string[]) =>
+    appeler<{ paquets: ApercuLivraison[]; ecartes: { personnage: string; nom: string; raison: string }[] }>(
+      `/projects/${encodeURIComponent(projet)}/deliveries/preview-all`,
+      { method: "POST", body: JSON.stringify({ ...(personnages ? { personnages } : {}) }) },
+    ),
   etat: () => appeler<Etat>("/status"),
 
   /** Le catalogue, le grisé de chaque modèle, **et le compte de références**.
@@ -7359,6 +7405,16 @@ export const api = {
       body: JSON.stringify(reglage),
     }),
 
+  /** Le sous-dossier de la forme « fichiers », sous le jeu Godot rattaché
+   *  (`RV8`). La racine ne se pose pas ici — c'est `associerGodot`, la
+   *  source unique. Rend la destination relue — les mêmes six champs que
+   *  `reglagesDeLaSortie` sait déjà lire, et rien de plus. */
+  reglerSousDossier: (sous_dossier: string, projet?: string | null) =>
+    appeler<Destination>("/output/folder", {
+      method: "PUT",
+      body: JSON.stringify({ sous_dossier, ...(projet ? { projet } : {}) }),
+    }),
+
   // ── P1c (V3.5) : les dépliages d'une planche, sur l'écran ──────────────────
   //
   // `{identifiant}` est la planche **ou n'importe quelle image sortie
@@ -7574,7 +7630,27 @@ export type ReglageDeSortie = {
   sujet: string
 }
 
-export type ReglagesDeLaSortie = {
+/** Où la forme « fichiers » se pose, et d'où on le sait (`RV8`, §4). Un seul
+ *  bandeau la lit — celui du haut de l'écran unique — et c'est le seul endroit
+ *  où le dossier Godot du jeu se voit. */
+export type Destination = {
+  /** `racine/sous_dossier`, ou `""` : rien n'a de dossier. */
+  dossier: string
+  /** Le jeu Godot rattaché, ou l'ancien dossier — jamais le réglage commun de
+   *  l'agent (`T7`), qui a cessé d'en faire partie avec `RV8`. */
+  racine: string
+  sous_dossier: string
+  origine: "jeu" | "ancien" | "aucun"
+  /** La phrase à montrer quand `origine` vaut `"ancien"` — vide sinon. */
+  mention: string
+  /** « Rattacher » en un clic : `PUT godot-link {dossier}` puis
+   *  `PUT /output/folder {sous_dossier}`. `null` quand rien ne le propose. */
+  rattacher: { dossier: string; sous_dossier: string } | null
+  /** La phrase à montrer quand on ne peut pas sortir — vide sinon. */
+  refus: string
+}
+
+export type ReglagesDeLaSortie = Destination & {
   lots: string[]
   rangements: string[]
   collisions: string[]
@@ -7582,7 +7658,6 @@ export type ReglagesDeLaSortie = {
   /** Les sujets du jeu, servis par le serveur comme les quatre listes : l'écran
    *  ne peut pas en proposer un que la sortie refuserait (`RP17`). */
   sujets: { identifiant: string; nom: string }[]
-  dossier: string
   precedente: SortiePrecedente | null
 }
 
@@ -7929,6 +8004,25 @@ export const secondes = (duree: number) =>
   `${String(Math.floor(duree / 60)).padStart(2, "0")}:${String(
     Math.floor(duree % 60),
   ).padStart(2, "0")}`
+
+/** Une durée telle qu'on la dit, pas telle qu'un chronomètre l'écrit (RV4).
+ *  « 20 s » sous la minute, « 2 min 28 » au-dessus — jamais « 148.00 s », qui
+ *  fait faire le calcul à l'auteur pour une musique. */
+/** Une durée en toutes lettres. **Jamais un nombre de secondes nu** au-delà de
+ *  la minute : « 442 s » ne se lit pas, « 7 min » se lit. */
+export function duree(secondes: number): string {
+  if (secondes < 60) return `${Math.round(secondes)} s`
+  const minutes = Math.round(secondes / 60)
+  if (minutes < 60) return `${minutes} min`
+  const heures = Math.floor(minutes / 60)
+  const reste = minutes % 60
+  return reste ? `${heures} h ${reste} min` : `${heures} h`
+}
+
+export const dureeEnClair = (duree: number): string => {
+  const s = Math.round(duree)
+  return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")}`
+}
 
 export const heure = (horodatage: number) =>
   new Date(horodatage * 1000).toLocaleString("fr-FR", {

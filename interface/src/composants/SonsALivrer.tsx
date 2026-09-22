@@ -54,7 +54,7 @@ export function SonsALivrer({ projet }: { projet: string }) {
   return <div className="grid gap-[22px]">
     {ORDRE.filter((f) => lignes.some((l) => l.famille === f)).map((f) => <section key={f} aria-label={TITRES[f]} className="grid gap-[8px]">
       <h3 className="font-serif text-[25px]">{TITRES[f]}</h3>
-      {f === "aucune" && <p className="text-[12px] text-encre-3">Posez-leur une famille sur leur fiche pour qu’ils partent en fichiers prêts pour le jeu.</p>}
+      {f === "aucune" && <p className="text-[12px] text-encre-3">Pose-leur une famille sur leur fiche pour qu’ils partent en fichiers prêts pour le jeu.</p>}
       {lignes.filter((l) => l.famille === f).map((l) => <div key={l.cle} className="grid gap-[8px] rounded-7 border border-trait p-[8px]">
         <div className="flex flex-wrap items-center gap-[14px]">
           <span className="min-w-0 flex-1"><strong className="block text-[13px]">{l.titre}</strong>

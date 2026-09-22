@@ -280,11 +280,11 @@ def lancer(args: list[str], titre: str) -> int:
 # passage : c'est voulu, c'est ainsi qu'il compare la dérive du corpus d'une fois
 # sur l'autre. Le fichier apparaît donc modifié après un contrôle ; ce n'est pas
 # une faute, et il se commite avec le reste ou se remet en place.
-BANCS_GARDEFOUS = ("essai_docs.py", "essai_vocabulaire.py")
+BANCS_GARDEFOUS = ("essai_docs.py", "essai_vocabulaire.py", "essai_tutoiement.py")
 
 
 def bancs_gardefous() -> int:
-    """Les deux bancs qui surveillent le dépôt, lancés comme le reste."""
+    """Les bancs qui surveillent le dépôt, lancés comme le reste."""
     code = 0
     for banc in BANCS_GARDEFOUS:
         code |= lancer(

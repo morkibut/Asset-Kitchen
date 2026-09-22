@@ -2,10 +2,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, expect, test, vi } from "vitest"
 import { api, RECETTE_VIDE, UNIVERS_VIDE, type Asset, type AtelierDeBande, type Bande, type EtatTraitement } from "../api"
 import { AIDE } from "../aide"
-import { EcranAtelierDeBande, remonterLaBande } from "./AtelierDeBande"
+import { EcranAtelierDeBande } from "./AtelierDeBande"
+import { remonterLaBande } from "../bande"
 import { EcranMontage } from "./Montage"
+import { toutReplier } from "./pieces"
 
-afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks(); vi.unstubAllGlobals(); toutReplier() })
 
 const traitement = { moteurs: [], silhouettes: [], reductions: [], recettes: [], quantification: { raison: null, note: "" } } as unknown as EtatTraitement
 function fixture(): AtelierDeBande {
@@ -138,7 +140,7 @@ test("le montage réordonne par clavier et glissement, puis garde le classement 
   const repris = vi.fn()
   render(<EcranMontage clip={bande.clip} reprise={{ bande, onRepris: repris }} onFermer={vi.fn()} onErreur={vi.fn()} />)
   await screen.findByLabelText("Personnage de l’animation")
-  const boutons = () => document.querySelectorAll('[aria-label="Ordre des frames retenues"] button')
+  const boutons = () => document.querySelectorAll('[aria-label="Ordre des images retenues"] button')
   fireEvent.keyDown(boutons()[1], { key: "ArrowLeft", altKey: true })
   const dataTransfer = { setData: vi.fn(), effectAllowed: "" }
   fireEvent.dragStart(boutons()[2], { dataTransfer })
@@ -168,7 +170,7 @@ test("le montage retrouve son nom, sa vitesse et son ordre après fermeture sans
   fireEvent.change(await screen.findByLabelText("Le nom de l'animation"), { target: { value: "Attaque lourde" } })
   fireEvent.change(screen.getByLabelText("Cadence, en chiffres"), { target: { value: "13" } })
   fireEvent.blur(screen.getByLabelText("Cadence, en chiffres"))
-  const boutons = document.querySelectorAll('[aria-label="Ordre des frames retenues"] button')
+  const boutons = document.querySelectorAll('[aria-label="Ordre des images retenues"] button')
   fireEvent.keyDown(boutons[2], { key: "ArrowLeft", altKey: true })
   await screen.findByText("Brouillon conservé sur cet ordinateur.")
   vue.unmount()
@@ -381,4 +383,60 @@ test("l'éditeur de pixels : clic gauche peint, clic droit efface, et Valider ra
     [false, "", [[5, 5]]],
   ])
   expect(main?.opacite.map((t) => [t.garde, t.points])).toEqual([[false, [[5, 5]]]])
+})
+
+// ── RV14 · Le montage prend l'écran, et son panneau tient en trois blocs ────
+
+test("RV14 — le montage s'ouvre en plein écran, sans l'en-tête ni les filtres de la Galerie", async () => {
+  const disque = fixture().bande
+  vi.spyOn(api, "ouvrirLeMontage").mockResolvedValue({
+    clip: { identifiant: disque.clip, images: 3, personnage: null, pose: null, direction: null, mouvement: "marche", secondes: 1, montant_dit: "0 €" },
+    bandes: [], propositions: [], contact: { cote: 96, colonnes: 16, lignes: 1 }, fenetre: null,
+    prix: { clip: 0, bandes: 0, par_bande: 0, si_une_de_plus: 0 },
+  } as never)
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [] } as never)
+  vi.spyOn(api, "production").mockResolvedValue({ personnages: [] } as never)
+  const onFermer = vi.fn()
+  render(<EcranMontage clip={disque.clip} onFermer={onFermer} onErreur={vi.fn()} />)
+
+  await screen.findByText("le mouvement est-il bon ?")
+  const cadre = document.querySelector("[data-montage]") as HTMLElement
+  // **Plein écran, toujours** (RV14) : `fixed inset-0` sort le montage du
+  // flux de son parent — la galerie, comme les deux autres endroits d'où on
+  // l'ouvre —, quel que soit l'en-tête ou les filtres qui l'entourent.
+  expect(cadre.className).toContain("fixed")
+  expect(cadre.className).toContain("inset-0")
+
+  // Fermable par Échap, et par un bouton retour — les deux déjà en place.
+  expect(screen.getByRole("button", { name: /^‹/ })).toBeTruthy()
+  fireEvent.keyDown(window, { key: "Escape" })
+  expect(onFermer).toHaveBeenCalledOnce()
+})
+
+test("RV14 — le panneau de droite tient en trois blocs repliables", async () => {
+  const disque = fixture().bande
+  vi.spyOn(api, "ouvrirLeMontage").mockResolvedValue({
+    clip: { identifiant: disque.clip, images: 3, personnage: null, pose: null, direction: null, mouvement: "marche", secondes: 1, montant_dit: "0 €" },
+    bandes: [], propositions: [], contact: { cote: 96, colonnes: 16, lignes: 1 }, fenetre: null,
+    prix: { clip: 0, bandes: 0, par_bande: 0, si_une_de_plus: 0 },
+  } as never)
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [] } as never)
+  vi.spyOn(api, "production").mockResolvedValue({ personnages: [] } as never)
+  render(<EcranMontage clip={disque.clip} onFermer={vi.fn()} onErreur={vi.fn()} />)
+
+  // Les trois blocs, ouverts par défaut : ce sont les réglages qu'on vient
+  // poser en arrivant, pas des détails qu'on irait chercher.
+  const ranger = await screen.findByRole("button", { name: /Où ranger/ })
+  const cadreEtAncrage = screen.getByRole("button", { name: /Cadre et ancrage/ })
+  const vitesse = screen.getByRole("button", { name: /Vitesse/ })
+  expect(ranger.getAttribute("aria-expanded")).toBe("true")
+  expect(cadreEtAncrage.getAttribute("aria-expanded")).toBe("true")
+  expect(vitesse.getAttribute("aria-expanded")).toBe("true")
+  expect(screen.getByLabelText("Le nom de l'animation")).toBeTruthy()
+  expect(screen.getByLabelText("Cadence, en chiffres")).toBeTruthy()
+
+  // Chacun se replie, et referme ce qu'il porte.
+  fireEvent.click(ranger)
+  expect(ranger.getAttribute("aria-expanded")).toBe("false")
+  expect(screen.queryByLabelText("Le nom de l'animation")).toBeNull()
 })

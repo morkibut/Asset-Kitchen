@@ -3,7 +3,7 @@
 // coexister : des couches qu'on monte ou qu'on baisse (AudioStreamSynchronized),
 // des morceaux qui s'enchaînent sur la mesure suivante (AudioStreamInteractive).
 import { useEffect, useState } from "react"
-import { api } from "../api"
+import { api, dureeEnClair } from "../api"
 import {
   musiqueAdaptative,
   type Arrivee,
@@ -56,7 +56,7 @@ function nomDistinct(liste: Son[], i: number) {
   const s = liste[i]
   const memes = liste.filter(x => x.nom === s.nom)
   if (memes.length < 2) return s.nom
-  const duree = s.mesures?.duree != null ? ` · ${Math.round(s.mesures.duree)} s` : ""
+  const duree = s.mesures?.duree != null ? ` · ${dureeEnClair(s.mesures.duree)}` : ""
   return `${s.nom} · ${memes.indexOf(s) + 1}${duree}`
 }
 
@@ -92,7 +92,7 @@ function LivraisonMusiqueAdaptative({ projet, identifiant }: { projet: string; i
       <ul className="flex flex-wrap gap-[8px] font-mono text-[12px]">
         {apercu.fichiers.filter(f => /\.(ogg|tres)$/.test(f.chemin)).map(f => <li key={f.chemin} className="rounded-7 border border-trait px-[8px] py-[4px]">{f.chemin.split("/").at(-1)}</li>)}
       </ul>
-      <p className="text-encre-3">Rien n’est écrit dans le jeu tant que vous n’avez pas livré.</p>
+      <p className="text-encre-3">Rien n’est écrit dans le jeu tant que tu n’as pas livré.</p>
       <button type="button" className={`${BOUTON} border-signal bg-signal text-encre-sur-signal`}
         disabled={occupe || !apercu.pret} onClick={() => void publier()}>
         {"etat" in apercu && apercu.etat === "terminee" ? "Livraison terminée" : "Livrer cette version"}
@@ -212,7 +212,7 @@ function EditeurMusiqueAdaptative({ projet, objet, sonsMusicaux, onChange, onSup
 
     <button type="button" className={`${PETIT} block`} aria-expanded={livrer} onClick={() => setLivrer(v => !v)}>Voir ce qui part au jeu</button>
     {livrer && objet.livrable && <LivraisonMusiqueAdaptative projet={projet} identifiant={objet.identifiant} />}
-    {livrer && !objet.livrable && <p className="text-[13px] text-encre-3">Rien n’est encore livrable : ajoutez une couche ou un morceau prêt.</p>}
+    {livrer && !objet.livrable && <p className="text-[13px] text-encre-3">Rien n’est encore livrable : ajoute une couche ou un morceau prêt.</p>}
   </div>
 }
 

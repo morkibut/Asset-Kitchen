@@ -57,6 +57,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   api,
   prix,
+  duree,
   type Asset,
   type AttenteVideo,
   type BaseModelesVideo,
@@ -70,6 +71,7 @@ import {
   type Pose,
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
+import { gigas, MemoireLocale } from "./MemoireLocale"
 import { Bouton, Libelle, Raison } from "./pieces"
 
 /** La case qu'on vient animer. **La pose peut manquer** : on anime aussi un
@@ -106,14 +108,6 @@ const RESOLUTIONS = [
  *  jamais un lot** : c'est tout ce qui reste de l'ancienne tranche `A3`. */
 const LOTS = [1, 2, 4, 8] as const
 
-/** Une taille de fichier telle qu'elle s'écrit en français. **La virgule n'est
- *  pas un détail** : le serveur écrit « 8,9 Go » dans sa phrase, et un bouton
- *  qui dirait « 8.9 Go » juste au-dessous ferait douter que les deux parlent du
- *  même chiffre. */
-function gigas(valeur: number): string {
-  return `${valeur.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} Go`
-}
-
 /** Ce qu'un lot de `nombre` clips prendra de temps, **et il ne se multiplie pas
  *  comme un prix** : le premier tirage charge le modèle en mémoire, les suivants
  *  non. Le serveur envoie les deux mesures — le rapport entre elles ne se
@@ -126,17 +120,6 @@ function attenteDeLot(attente: AttenteVideo | null, nombre: number): number | nu
   if (!attente) return null
   if (nombre <= 1) return attente.secondes
   return attente.secondes + (nombre - 1) * (attente.secondes_suivant || attente.secondes)
-}
-
-/** Une durée en toutes lettres. **Jamais un nombre de secondes nu** au-delà de
- *  la minute : « 442 s » ne se lit pas, « 7 min » se lit. */
-export function duree(secondes: number): string {
-  if (secondes < 60) return `${Math.round(secondes)} s`
-  const minutes = Math.round(secondes / 60)
-  if (minutes < 60) return `${minutes} min`
-  const heures = Math.floor(minutes / 60)
-  const reste = minutes % 60
-  return reste ? `${heures} h ${reste} min` : `${heures} h`
 }
 
 export function EcranClip({
@@ -409,9 +392,9 @@ export function EcranClip({
         : null
 
   const empeche = !image
-    ? "un clip part toujours d'une image : choisissez-en une"
+    ? "un clip part toujours d'une image : choisis-en une"
     : !texte
-      ? "choisissez un mouvement — c'est lui qui écrit ce qui part"
+      ? "choisis un mouvement — c'est lui qui écrit ce qui part"
       : !choisi
         ? "aucun modèle vidéo ne peut honorer cette demande"
         : (choisi.grise ?? null)
@@ -561,7 +544,7 @@ export function EcranClip({
           data-texte-du-clip
           className="mesure rounded-[2px] border border-trait bg-carte p-2 text-[10.5px] leading-4 text-encre-3"
         >
-          {texte || "choisissez un mouvement pour lire ce qui partira"}
+          {texte || "choisis un mouvement pour lire ce qui partira"}
         </p>
         <p className="mesure text-[10px] leading-4 text-encre-4">
           La phrase de la direction, puis le style du personnage s'il en a un
@@ -583,8 +566,8 @@ export function EcranClip({
             {pose ? ` — ${pose.nom}${ou}` : ""}
           </h2>
           <p className="mt-1 text-[12px] leading-relaxed text-encre-3">
-            Un clip part d'une image et revient en vidéo. Vous en découperez
-            ensuite autant d'animations que vous voudrez, sans repayer.
+            Un clip part d'une image et revient en vidéo. Tu en découperas
+            ensuite autant d'animations que tu voudras, sans repayer.
           </p>
         </div>
 
@@ -632,9 +615,9 @@ export function EcranClip({
               <td className="py-1">
                 {attenteDuLot === null ? (
                   <>
-                    deux minutes environ. <strong className="text-encre">Vous
+                    deux minutes environ. <strong className="text-encre">Tu
                     pouvez fermer l'atelier</strong> : le clip continue de se
-                    fabriquer chez le fournisseur, et vous le retrouverez.
+                    fabriquer chez le fournisseur, et tu le retrouveras.
                   </>
                 ) : (
                   <>
@@ -650,8 +633,8 @@ export function EcranClip({
                         prise, et laisser la phrase d'à côté le passerait sous
                         silence. */}
                     Il se fabrique <strong className="text-encre">sur cette
-                    machine</strong>, dans la fenêtre du moteur. Vous pouvez
-                    fermer l'atelier ; ne fermez pas celle-là, et attendez-vous à
+                    machine</strong>, dans la fenêtre du moteur. Tu peux
+                    fermer l'atelier ; ne ferme pas celle-là, et attends-toi à
                     ce que le reste de l'ordinateur rame pendant ce temps.
                   </>
                 )}
@@ -661,7 +644,7 @@ export function EcranClip({
         </table>
 
         <p className="rounded-[2px] border-l-2 border-signal bg-carte p-3 text-[11.5px] leading-relaxed text-encre-3">
-          <strong className="text-encre">Ce clip n'hérite que de votre
+          <strong className="text-encre">Ce clip n'hérite que de ton
           image.</strong> Ni les textes du jeu, ni ses images d'ambiance ne
           partent avec lui : un modèle vidéo ne prend qu'une seule image, et
           c'est celle du personnage.
@@ -819,7 +802,7 @@ export function EcranClip({
           <Raison texte={refus} />
           {attente ? (
             <p className="mesure text-[10px] leading-4 text-encre-4">
-              Ce clip ne coûte rien : il se fabrique sur votre machine.{" "}
+              Ce clip ne coûte rien : il se fabrique sur ta machine.{" "}
               <strong className="text-encre-3">
                 Ce qu'il coûte est ce temps-là
               </strong>
@@ -955,7 +938,7 @@ function ConfirmationClip({
           <p className="mesure text-[10px] leading-4 text-encre-3">
             <strong className="text-encre">elle est obligatoire et ne cède
             jamais</strong> — un modèle vidéo n'en accepte qu'une, et la retirer
-            ne veut rien dire. Vous pouvez seulement la changer.
+            ne veut rien dire. Tu peux seulement la changer.
           </p>
           <button
             type="button"
@@ -1085,7 +1068,7 @@ function ConfirmationClip({
             <span className="mesure text-[11.5px] text-encre">
               ≈ {duree(attenteDuLot)}
               <span className="ml-1.5 text-[9.5px] text-encre-4">
-                sur votre carte · gratuit{nombre > 1 ? ` · ${nombre} clips` : ""}
+                sur ta carte · gratuit{nombre > 1 ? ` · ${nombre} clips` : ""}
               </span>
             </span>
             <p className="mesure text-[9.5px] leading-4 text-encre-4">
@@ -1137,7 +1120,7 @@ function ConfirmationClip({
                     (cout === null ? "" : ` · ${cout}`)
             }
           />
-          <Raison texte={!texteFinal ? "un clip part d'un texte — écrivez-en un" : null} />
+          <Raison texte={!texteFinal ? "un clip part d'un texte — écris-en un" : null} />
           <button
             type="button"
             onClick={onRevenir}
@@ -1300,7 +1283,7 @@ function CarteModele({
             <span className="mesure text-[11.5px] text-encre">
               ≈ {duree(attenteDeLot(attente, nombre) ?? 0)}
               <span className="ml-1.5 text-[9.5px] text-encre-4">
-                sur votre carte · gratuit
+                sur ta carte · gratuit
                 {nombre > 1 ? ` · ${nombre} clips` : ""}
               </span>
             </span>
@@ -1453,13 +1436,11 @@ function PanneauDuMoteur({ onChange }: { onChange: () => void }) {
         </button>
       </div>
 
-      {/* Ce qu'elle est, quand elle répond. Une attente sans sa machine ne veut
-          rien dire — la même mesure sur une autre carte donnerait autre chose. */}
-      {etat.carte && (
-        <span className="mesure text-[9.5px] leading-4 text-encre-4">
-          {etat.carte} · {gigas(etat.memoire_libre_go)} libres
-        </span>
-      )}
+      {/* **La mémoire en clair, jamais l'identifiant technique du pilote**
+          (RV2) — et l'avertissement quand elle est sous le besoin mesuré du
+          modèle, ou que ComfyUI est déjà occupé par un autre calcul. Le même
+          petit composant que la fenêtre « Préparer une fabrication ». */}
+      <MemoireLocale etat={etat} />
 
       {/* La phrase du moment, déjà écrite au serveur. **Vide veut dire qu'il n'y
           a rien à dire**, et rien à dire est une réponse. */}

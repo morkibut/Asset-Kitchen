@@ -272,6 +272,8 @@ export function Grille({
   zoom,
   entree,
   groupes,
+  personnages = [],
+  plan = [],
   vueRestreinte = false,
   onRelancer,
   onChoisir,
@@ -284,6 +286,11 @@ export function Grille({
   entrees: Entree[]
   selection: string[]
   filtre: Filtre
+  /** **Pour la légende de chaque tuile** (RV13) : « sujet · mouvement ·
+   *  direction » plutôt que le début de la demande, quand ces données
+   *  existent. Vides par défaut, comme `Tuile`. */
+  personnages?: Personnage[]
+  plan?: Pose[]
   /** Les groupes que le serveur a formés (RP11), ou rien si l'on ne regroupe
    *  pas. Replié, un groupe montre son origine et **compte ce qu'il montre** :
    *  ses dérivés sont dans la page, et il ne prétend jamais à un total qu'il
@@ -407,6 +414,8 @@ export function Grille({
           <Tuile
             entree={entree}
             selectionnee={selection.includes(entree.cle)}
+            personnages={personnages}
+            plan={plan}
             // **Deux tailles servies, pas trois, et jamais la largeur rendue.**
             // Une case d'`auto-fill` mesure entre son cran et presque deux
             // fois son cran ; demander 256 px au cran 1 couvre donc la case la
@@ -1429,7 +1438,12 @@ export function Galerie({
             onSource3D={onSource3D}
           >
           {(sorte, videos) => <>
-          <BarreOutils
+          {/* **Les filtres portent sur la bibliothèque d'images** (RV13) :
+              tri, rôle, jugement, famille, regroupement et zoom lisent tous
+              `grille`/`vue`, et l'onglet Vidéos ne les demande jamais — ses
+              clips ne passent pas par `/assets`. Les montrer là proposerait
+              des gestes qui ne changent rien à ce que l'onglet affiche. */}
+          {sorte !== "videos" && <BarreOutils
             recherche={filtre.recherche}
             onRecherche={(recherche) => setFiltre((f) => ({ ...f, recherche }))}
             sansRecherche
@@ -1463,7 +1477,7 @@ export function Galerie({
             onZoom={setZoom}
             zoomsIndisponibles={indisponibles}
             zoomRendu={zoomRendu}
-          />
+          />}
           {/* Ce qui n'est pas entré — un refus qui nomme le fichier, un doublon
               qui propose. **Au-dessus de la grille et non dans la barre d'état** :
               un import refusé ne doit pas griser Générer, et la barre d'état est
@@ -1520,6 +1534,8 @@ export function Galerie({
             filtre={filtre}
             zoom={zoomRendu}
             entree={entree}
+            personnages={personnages}
+            plan={plan}
             /* **Les groupes ne valent que pour l'onglet des images** : les
                vidéos sont des clips, pas des images de la bibliothèque, et
                aucune filiation ne les relie. */
@@ -1562,7 +1578,12 @@ export function Galerie({
               tient la place de la barre qui paie, et c'est son absence qui est
               le message. */}
           <div className="flex shrink-0 items-center justify-between gap-[22px] border-t border-trait px-[30px] py-[14px] text-[12.5px] text-encre-3">
-            {totalGrille !== null && grille.length < totalGrille ? (
+            {/* **Le compte est celui des images** (`grille`) : l'onglet
+                Vidéos ne le demande jamais (RV13), pour la même raison que la
+                barre de filtres juste au-dessus — ses clips ne viennent pas
+                de la même liste, et un compte d'images sous les vidéos
+                mentirait sur ce que l'onglet montre. */}
+            {sorte !== "videos" && totalGrille !== null && grille.length < totalGrille ? (
               <span className="mesure flex items-center gap-2 text-[11px] text-encre-4">
                 {`${grille.length} montrées sur ${totalGrille}`}
                 <button
@@ -1577,8 +1598,8 @@ export function Galerie({
               <span />
             )}
             <span className="text-right">
-              aucune génération ne part d'ici — on paie depuis le codex et depuis
-              l'établi d'un sujet du jeu
+              aucune génération ne part d'ici — on paie depuis le Codex et depuis
+              la fiche d'un sujet du jeu
             </span>
           </div>
           </>}

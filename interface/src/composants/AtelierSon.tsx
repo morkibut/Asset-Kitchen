@@ -3,6 +3,7 @@ import { ApercuLivraisonSon } from "./ApercuLivraisonSon"
 import { ReglagesSon } from "./ReglagesSon"
 import { nomMoteurSonore } from "./WorkflowsLocaux"
 import { FAMILLES_AVEC_LUFS, NOMS_FAMILLES_SON, sons, type FamilleSon, type JugementSon, type OndeSon, type RecetteSon, type Son } from "../api-sons"
+import { dureeEnClair } from "../api"
 
 const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] disabled:opacity-50"
 const CHAMP = "h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]"
@@ -33,6 +34,27 @@ function provenanceLisible(brut: Record<string, unknown>): ProvenanceLisible {
   }
 }
 
+/** Coupe un nom sur un mot entier plutôt qu'en plein milieu — jamais la
+ *  demande entière en titre (RV13). Le nom complet reste lisible au survol
+ *  (`title`) et dans le champ « Nom » plus bas. */
+function nomCourt(nom: string): string {
+  const t = nom.trim()
+  if (t.length <= 42) return t
+  const coupe = t.slice(0, 42)
+  const dernierEspace = coupe.lastIndexOf(" ")
+  return (dernierEspace > 20 ? coupe.slice(0, dernierEspace) : coupe).trimEnd() + "…"
+}
+
+/** Le titre court d'un son ouvert (RV13) — « Musique · mine des nains » : la
+ *  famille, quand elle est posée, se lit devant le nom coupé. Sans famille, le
+ *  nom coupé seul — la liste des sons, elle, montre déjà la famille sur sa
+ *  ligne de mesures, et la répéter dans le titre de chaque carte serait la
+ *  dire deux fois. */
+function titreCourtSon(s: { nom: string; famille: FamilleSon | null }): string {
+  const court = nomCourt(s.nom)
+  return s.famille ? `${NOMS_FAMILLES_SON[s.famille]} · ${court}` : court
+}
+
 /** Le lecteur joue le WAV de la version conservée, celui qui sera livré. */
 // **Un seul bouton rouille par écran** (`docs/DESIGN.md`), et ce fichier porte
 // deux écrans qui ne s'affichent jamais ensemble : le jeu sans aucun son, dont
@@ -40,7 +62,13 @@ function provenanceLisible(brut: Record<string, unknown>): ProvenanceLisible {
 // conserver ses réglages. Une seule déclaration pour les deux.
 const ROUILLE = "border-signal bg-signal text-encre-sur-signal"
 
-export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriquer }: { projet: string; identifiantInitial?: string; onLivraisons?: () => void; onFabriquer?: () => void }) {
+export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriquer }: {
+  projet: string; identifiantInitial?: string
+  /** Vers l'écran unique « Livrer au jeu » (`RV8`), filtré sur le son ouvert
+   *  quand il y en a un. */
+  onLivraisons?: (son?: string) => void
+  onFabriquer?: () => void
+}) {
   const [liste, setListe] = useState<Son[]>([])
   const [son, setSon] = useState<Son | null>(null)
   const [recette, setRecette] = useState<RecetteSon | null>(null)
@@ -73,11 +101,36 @@ export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriqu
   const poserFamille = (famille: FamilleSon) => { if (!son) return; void faire(async () => rafraichir(await sons.classer(son, famille))) }
   const appliquerReglagesFamille = () => { if (!son || !son.famille) return; void faire(async () => rafraichir(await sons.classer(son, son.famille, true))) }
   const recetteProposeeDiffere = !!son?.recette_proposee && !!recette && JSON.stringify(son.recette_proposee) !== JSON.stringify(recette)
-  return <section className="space-y-[22px]" aria-label="Atelier sonore">
-    <header className="flex items-start justify-between gap-[14px]"><div><h1 className="font-serif text-[38px]">{son ? son.nom : "Les sons"}</h1><p className="mt-[8px] text-[13px] text-encre-3">Écouter, ajuster et conserver les sons du jeu. La source reste toujours disponible.</p></div><div className="flex gap-[8px]"><label className={`${BOUTON} inline-flex items-center cursor-pointer`}>Importer un son<input aria-label="Importer un son" type="file" accept="audio/*,.wav,.ogg,.mp3" hidden disabled={occupe} onChange={e => { const f = e.target.files?.[0]; if (f && (!modifie || window.confirm("Abandonner les réglages non conservés ?"))) void faire(async () => rafraichir(await sons.importer(projet, f))); e.target.value = "" }} /></label></div></header>
+  // **Le titre court, et ce qu'il ne montre plus** (RV13). Le titre d'écran
+  // ne doit jamais être la demande entière ; ce qui manque — le nom coupé, ou
+  // une demande anglaise différente du nom — doit rester lisible juste en
+  // dessous. **Jamais pour la seule famille ajoutée devant** : elle ne cache
+  // rien, le nom reste entier derrière elle, et répéter « Épée » sous
+  // « Bruitage · Épée » ne dirait rien de plus.
+  //
+  // `provenanceLisible` a déjà replié la demande anglaise une fois, pour
+  // « Source et provenance » plus bas dans l'écran (`texte`, l'envoi tel
+  // qu'il est vraiment parti) : elle prime quand elle diffère du nom — un son
+  // renommé peut dire autre chose que ce qui est vraiment parti au moteur.
+  // Sans elle, le nom sert de repli, et seulement s'il a été tronqué.
+  const titreAffiche = son ? titreCourtSon(son) : "Les sons"
+  const provenanceTexte = son ? provenanceLisible(son.provenance).texte : null
+  const demandeVisible = !son ? null
+    : provenanceTexte && provenanceTexte !== son.nom ? provenanceTexte
+    : nomCourt(son.nom) !== son.nom ? son.nom
+    : null
+  return <main data-etabli aria-label="Les sons" className="flex min-h-0 min-w-0 flex-1 flex-col bg-papier">
+    {/* **Les mêmes marges que les autres pages** (RV13, `docs/DESIGN.md` §
+        Spacing) : 30 de marge, 22 de haut et de bas. L'écran n'avait aucun
+        padding et collait au bord du châssis — la seule page du produit dans
+        ce cas, mesuré en relisant `PageDuSujet.tsx`, qui pose exactement ce
+        gabarit pour la même forme d'écran (« une page », `docs/DESIGN.md` §
+        Layout). */}
+    <div className="defile flex min-h-0 flex-1 flex-col gap-[22px] overflow-y-auto px-[30px] pt-[22px] pb-[22px]">
+    <header className="flex items-start justify-between gap-[14px]"><div><h1 className="font-serif text-[38px]" title={son ? son.nom : undefined}>{titreAffiche}</h1>{demandeVisible && <p className="mt-[4px] text-[12px] text-encre-4">{demandeVisible}</p>}<p className="mt-[8px] text-[13px] text-encre-3">Écouter, ajuster et conserver les sons du jeu. La source reste toujours disponible.</p></div><div className="flex gap-[8px]"><label className={`${BOUTON} inline-flex items-center cursor-pointer`}>Importer un son<input aria-label="Importer un son" type="file" accept="audio/*,.wav,.ogg,.mp3" hidden disabled={occupe} onChange={e => { const f = e.target.files?.[0]; if (f && (!modifie || window.confirm("Abandonner les réglages non conservés ?"))) void faire(async () => rafraichir(await sons.importer(projet, f))); e.target.value = "" }} /></label></div></header>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
     {!son ? (liste.length
-      ? <div className="grid grid-cols-2 gap-[14px]">{liste.map(s => <button key={s.identifiant} className="rounded-8 border border-trait bg-carte p-[22px] text-left" onClick={() => ouvrir(s)}><span className="font-serif text-[25px]">{s.nom}</span><span className="mt-[8px] block text-[13px] text-encre-3">{s.mesures ? `${s.mesures.duree.toFixed(2)} s · ${s.mesures.canaux === 2 ? "stéréo" : "mono"}` : "Source à vérifier"} · {s.versions.length} versions{s.famille ? ` · ${NOMS_FAMILLES_SON[s.famille]}` : ""}</span>{s.raison && <span className="mt-[8px] block text-[12px] text-echec">{s.raison}</span>}</button>)}</div>
+      ? <div className="grid grid-cols-2 gap-[14px]">{liste.map(s => <button key={s.identifiant} className="rounded-8 border border-trait bg-carte p-[22px] text-left" onClick={() => ouvrir(s)}><span className="font-serif text-[25px]" title={s.nom}>{nomCourt(s.nom)}</span><span className="mt-[8px] block text-[13px] text-encre-3">{s.mesures ? `${dureeEnClair(s.mesures.duree)} · ${s.mesures.canaux === 2 ? "stéréo" : "mono"}` : "Source à vérifier"} · {s.versions.length} version{s.versions.length > 1 ? "s" : ""}{s.famille ? ` · ${NOMS_FAMILLES_SON[s.famille]}` : ""}</span>{s.raison && <span className="mt-[8px] block text-[12px] text-echec">{s.raison}</span>}</button>)}</div>
       // **Le vide se déclare** (`RT8`) : ce jeu n'a encore aucun son, et
       // plutôt qu'une grille sans rien dedans — la panne signalée le 20
       // septembre, « une fenêtre immense sans menu ni rien autour » — une
@@ -91,7 +144,7 @@ export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriqu
       {son.avertissements.length > 0 && <ul className="space-y-[4px] rounded-8 border border-trait bg-carte p-[14px] text-[13px] text-encre-attention">{son.avertissements.map((a, i) => <li key={i}>{a}</li>)}</ul>}
       <div className="flex flex-wrap items-center gap-[8px] text-[13px]">
         <span className="text-encre-3">Famille</span>
-        {son.famille ? <span className="rounded-7 border border-trait bg-carte px-[8px] py-[4px]">{NOMS_FAMILLES_SON[son.famille]}</span> : <span className="text-encre-3">aucune — choisissez-en une pour qu’il se livre en fichier prêt pour le jeu.</span>}
+        {son.famille ? <span className="rounded-7 border border-trait bg-carte px-[8px] py-[4px]">{NOMS_FAMILLES_SON[son.famille]}</span> : <span className="text-encre-3">aucune — choisis-en une pour qu’il se livre en fichier prêt pour le jeu.</span>}
         <button className={`${BOUTON} h-[26px] px-[8px]`} disabled={occupe} onClick={() => setChoisirFamille(v => !v)}>{son.famille ? "Changer" : "Poser une famille"}</button>
         {recetteProposeeDiffere && <button className={`${BOUTON} h-[26px] px-[8px]`} disabled={occupe} onClick={appliquerReglagesFamille}>Appliquer les réglages de la famille</button>}
       </div>
@@ -102,7 +155,7 @@ export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriqu
           {onde && <div className="space-y-[8px]">{onde.canaux_ondes.map((c, i) => <svg key={i} role="img" aria-label={`Forme d’onde · canal ${i + 1}`} viewBox="0 0 1000 128" className="h-[128px] w-full rounded-7 bg-papier-cote text-signal" onClick={e => { const box = e.currentTarget.getBoundingClientRect(); if (lecteur.current) lecteur.current.currentTime = Math.max(0, Math.min(1, (e.clientX - box.left) / box.width)) * onde.duree }}><path fill="currentColor" opacity="0.6" d={`M ${c.maximum.map((v, j) => `${j * 1000 / c.maximum.length},${64-v*60}`).join(" L ")} L ${[...c.minimum].reverse().map((v, j) => `${(c.minimum.length - j - 1) * 1000 / c.minimum.length},${64-v*60}`).join(" L ")} Z`} /><line x1={position / onde.duree * 1000} x2={position / onde.duree * 1000} y1="0" y2="128" stroke="currentColor" strokeWidth="2" /></svg>)}</div>}
           {son.mesures && <audio key={`${son.identifiant}-${son.revision}-${brut}`} ref={lecteur} className="w-full" controls preload="metadata" src={sons.audio(son, brut)} onTimeUpdate={e => { const audio = e.currentTarget; const b = son.mesures?.boucle; if (!brut && b?.active && audio.currentTime >= b.fin / son.mesures!.taux) audio.currentTime = b.debut / son.mesures!.taux; setPosition(audio.currentTime) }} onEnded={e => { if (!brut && son.mesures?.boucle?.active) { e.currentTarget.currentTime = son.mesures.boucle.debut / son.mesures.taux; void e.currentTarget.play() } }} />}
           {son.mesures && <p className="text-[13px] text-encre-3">{son.mesures.duree.toFixed(3)} s · {son.mesures.taux.toLocaleString("fr")} Hz · {son.mesures.canaux === 2 ? "stéréo" : "mono"} · crête {son.mesures.crete_db?.toFixed(1) ?? "−∞"} dBFS{son.famille && FAMILLES_AVEC_LUFS.includes(son.famille) && son.mesures.lufs != null ? ` · ${son.mesures.lufs.toFixed(1)} LUFS` : ""}</p>}
-          <p className="text-[12px] text-encre-3">{modifie ? "Réglages modifiés : conservez une version pour entendre le nouveau rendu." : "Vous écoutez la version conservée. Le WAV livré contient exactement ce signal."}</p>
+          <p className="text-[12px] text-encre-3">{modifie ? "Réglages modifiés : conserve une version pour entendre le nouveau rendu." : "Tu écoutes la version conservée. Le WAV livré contient exactement ce signal."}</p>
           <label className="flex flex-col gap-[8px] text-[13px]">Nom<input className={CHAMP} value={nom} onChange={e => setNom(e.target.value)} /></label>
           <details className="text-[13px]"><summary className="cursor-pointer">Source et provenance</summary><p className="mt-[8px]">{son.source.nom} · {(son.source.octets / 1024).toFixed(1)} Ko</p>
             {(() => { const p = provenanceLisible(son.provenance); const rien = !p.moteur && !p.graine && !p.texte && !p.serie
@@ -120,8 +173,9 @@ export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriqu
           <ReglagesSon son={son} recette={recette} mesures={son.mesures} famille={son.famille} occupe={occupe} onChange={changer} />
         </aside>
       </div>
-      <footer className="sticky bottom-0 flex flex-wrap items-center gap-[14px] border-t border-trait bg-papier py-[14px]"><button className={`${BOUTON} ${ROUILLE}`} disabled={occupe || !modifie || son.revision !== son.revision_courante} onClick={() => void faire(async () => rafraichir(await sons.regler(son, recette, nom)))}>Conserver une version</button>{modifie && <button className={BOUTON} onClick={() => installer(son)}>Abandonner les réglages</button>}<button className={BOUTON} disabled={occupe || modifie || !son.pret || son.jugement === "ecartee"} onClick={() => setAfficherLivraison(v => !v)}>Relire la livraison Godot</button>{son.pret && !modifie && <a href={sons.archive(son)} className="text-[13px] underline" download>Télécharger WAV et scène</a>}{onLivraisons && <button className={BOUTON} onClick={onLivraisons}>Livrer au jeu</button>}</footer>
+      <footer className="sticky bottom-0 flex flex-wrap items-center gap-[14px] border-t border-trait bg-papier py-[14px]"><button className={`${BOUTON} ${ROUILLE}`} disabled={occupe || !modifie || son.revision !== son.revision_courante} onClick={() => void faire(async () => rafraichir(await sons.regler(son, recette, nom)))}>Conserver une version</button>{modifie && <button className={BOUTON} onClick={() => installer(son)}>Abandonner les réglages</button>}<button className={BOUTON} disabled={occupe || modifie || !son.pret || son.jugement === "ecartee"} onClick={() => setAfficherLivraison(v => !v)}>Relire la livraison Godot</button>{son.pret && !modifie && <a href={sons.archive(son)} className="text-[13px] underline" download>Télécharger WAV et scène</a>}{onLivraisons && <button className={BOUTON} onClick={() => onLivraisons(son.identifiant)}>Livrer au jeu</button>}</footer>
       {afficherLivraison && <ApercuLivraisonSon projet={projet} son={son} onLivraisons={onLivraisons} />}
     </>}
-  </section>
+    </div>
+  </main>
 }

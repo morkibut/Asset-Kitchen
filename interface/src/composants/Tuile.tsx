@@ -40,6 +40,8 @@ import {
   type Asset,
   type Emplacement,
   type Generation,
+  type Personnage,
+  type Pose,
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
 import { Jauge, type Zoom } from "./pieces"
@@ -77,6 +79,8 @@ export function Tuile({
   selectionnee,
   cote,
   zoom,
+  personnages = [],
+  plan = [],
   onOuvrir,
   onRelancer,
   onChoisir,
@@ -87,6 +91,12 @@ export function Tuile({
 }: {
   entree: Entree
   selectionnee: boolean
+  /** **Pour nommer la légende** (RV13) : « sujet · mouvement · direction »
+   *  plutôt que le début de la demande, quand ces données existent. Vides par
+   *  défaut — une grille qui ne les lit pas (la découpe, par exemple) montre
+   *  alors le repli d'avant, jamais un sujet manquant. */
+  personnages?: Personnage[]
+  plan?: Pose[]
   /** Le cran de la grille, en pixels — ce que la tuile demande au serveur, et
    *  non ce qu'elle rend. Voir `api.vignette`. */
   cote: number
@@ -163,6 +173,24 @@ export function Tuile({
     entree.sorte === "asset"
       ? entree.asset.label
       : entree.generation.demande.prompt || entree.generation.demande.nom || ""
+
+  // **La légende nomme ce que l'image montre, pas ce qu'on a demandé** (RV13).
+  // « sujet · mouvement · direction » plutôt que le début du prompt, remonté
+  // par l'API (`Asset.personnage/pose/direction`,
+  // `Generation.personnage/pose/direction`, `demande.mouvement`). **Seulement
+  // quand le sujet est connu** — résolu dans `personnages`, jamais laissé à
+  // son identifiant : un mouvement ou une direction sans sujet ne nomme rien
+  // de plus que le prompt, et la légende retombe alors sur la demande
+  // entière, comme avant cette tranche.
+  const personnageId = entree.sorte === "asset" ? entree.asset.personnage : entree.generation.personnage
+  const poseId = entree.sorte === "asset" ? entree.asset.pose : entree.generation.pose
+  const direction = entree.sorte === "asset" ? entree.asset.direction : entree.generation.direction
+  const mouvement = entree.sorte === "asset" ? null : entree.generation.demande.mouvement ?? null
+  const nomSujet = personnageId ? (personnages.find((p) => p.identifiant === personnageId)?.nom ?? null) : null
+  const nomPose = poseId ? (plan.find((p) => p.identifiant === poseId)?.nom ?? null) : null
+  const legende = nomSujet
+    ? [nomSujet, nomPose ?? mouvement, direction].filter((v): v is string => !!v).join(" · ")
+    : ""
 
   // **La tuile montre ce que l'asset est devenu**, pas ce que le fournisseur a
   // rendu : dès qu'une recette existe, c'est le rendu qui s'affiche. Juger sur
@@ -305,7 +333,7 @@ export function Tuile({
 
       <figcaption className="flex min-h-[34px] flex-col justify-center gap-[4px] border-t border-trait px-2 py-1.5">
         <span className="truncate text-[11.5px] text-encre" title={titre}>
-          {titre}
+          {legende || titre}
         </span>
         {clipArrive && lot ? (
           <CeQueLeClipDit

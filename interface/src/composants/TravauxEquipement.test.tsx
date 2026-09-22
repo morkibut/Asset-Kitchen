@@ -184,7 +184,7 @@ test("fermer pendant la lecture puis rouvrir retrouve sélection, bande, frame, 
   // La cadence de la bande est reprise du corps, puis ralentie à la main.
   expect(screen.getByLabelText("Images par seconde")).toHaveValue(11)
   fireEvent.change(screen.getByLabelText("Images par seconde"), { target: { value: "1" } })
-  fireEvent.click(screen.getByRole("button", { name: "Frame suivante" }))
+  fireEvent.click(screen.getByRole("button", { name: "Image suivante" }))
   fireEvent.click(screen.getByRole("button", { name: "Lire la bande" }))
   expect(within(lecture).getByRole("status")).toHaveTextContent("Frame 2 / 3 · À vérifier")
 

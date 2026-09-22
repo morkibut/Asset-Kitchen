@@ -129,7 +129,6 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   const images = [...new Map(personnage.cases.flatMap(c => c.images).filter(a => !a.piece && !a.supprime_le).map(a => [a.identifiant, a])).values()]
   const bandes = [...new Map(personnage.cases.flatMap(c => c.bandes ?? []).filter(b => !b.piece && !b.supprime).map(b => [b.identifiant, b])).values()]
   const bande = bandes.find(b => b.favori) ?? bandes[0]
-  const retenus = images.filter(a => a.favori).length + bandes.filter(b => b.favori).length
   const modifie = nom !== personnage.nom || description !== personnage.description
   const ouvrir = () => { setNom(personnage.nom); setDescription(personnage.description); setEdition(true) }
   const fermer = () => { if (!modifie || window.confirm("Abandonner les modifications de la fiche ?")) setEdition(false) }
@@ -224,18 +223,36 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
       </div>
       {choixDuPortrait && <CadreDialogue titre="Choisir la vignette" format="preparation" onFermer={() => setChoixDuPortrait(false)} enfants={<div data-choix-du-portrait className="flex min-h-0 flex-col">
         <header className="flex items-center justify-between gap-[22px] border-b border-trait px-[30px] py-[22px]">
-          <div><h1 className="font-serif text-[25px]">Choisir la vignette</h1><p className="mt-[8px] text-[13px] text-encre-3">Cliquez une image : elle devient le portrait de {personnage.nom}. Rien n’est retenu pour le jeu.</p></div>
+          <div><h1 className="font-serif text-[25px]">Choisir la vignette</h1><p className="mt-[8px] text-[13px] text-encre-3">Clique une image : elle devient le portrait de {personnage.nom}. Rien n’est retenu pour le jeu.</p></div>
           <button type="button" className={BOUTON} onClick={() => setChoixDuPortrait(false)}>Fermer</button>
         </header>
         <div className="defile grid min-h-0 grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-[8px] overflow-y-auto p-[30px]">
           {images.map((image) => { const actuel = portrait?.asset.identifiant === image.identifiant; return <button key={image.identifiant} type="button" aria-pressed={actuel} aria-label={`Prendre ${image.label} pour vignette`} onClick={() => void choisirLePortrait(image.identifiant)} className={`damier-papier flex aspect-square items-center justify-center overflow-hidden rounded-7 border-2 ${actuel ? "border-signal" : "border-transparent hover:border-contour"}`}><img src={vignetteAsset(image, 256)} alt="" className="h-full w-full object-contain" style={{ imageRendering: "pixelated" }} /></button> })}
         </div>
-        {personnage.image_de_reference && <footer className="flex justify-end border-t border-trait px-[30px] py-[14px]"><button type="button" className={BOUTON} onClick={() => void choisirLePortrait(null)}>Revenir au choix automatique</button></footer>}
+        {personnage.image_de_reference && <footer className="flex justify-end border-t border-trait px-[30px] py-[14px]"><button type="button" className={BOUTON} onClick={() => void choisirLePortrait(null)}>Reprendre le choix automatique</button></footer>}
       </div>} />}
       <div className="min-w-0 flex-1 space-y-[8px]">
-        <p className="line-clamp-2 whitespace-pre-line text-[13px] leading-relaxed text-encre-2">{personnage.description || "Décrivez sa silhouette, son rôle et les détails à conserver d’une fabrication à l’autre."}</p>
-        <div className="flex flex-wrap items-center gap-[8px] text-[12px] text-encre-3"><span className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{images.length + bandes.length} résultat{images.length + bandes.length > 1 ? "s" : ""}</span><span className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{retenus} retenu{retenus > 1 ? "s" : ""} pour le jeu</span>{collections?.map(c => <span key={c.identifiant} className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{c.nom}</span>)}<button className={BOUTON} onClick={ouvrir}>Modifier la fiche</button></div>
-        {objectif && <div className="flex flex-wrap items-center gap-[8px] text-[12px] text-encre-3">{([['animations', 'animation', 'animations'], ['images', 'image fixe', 'images fixes']] as const).map(([cle, singulier, pluriel]) => { const c = objectif.couverture[cle]; return c.demande > 0 && <span key={cle}>{c.retenu} / {c.demande} {c.demande > 1 ? pluriel : singulier} retenue{c.demande > 1 ? "s" : ""}{c.manquant ? ` · ${c.manquant} à fabriquer` : c.a_retenir ? ` · ${c.a_retenir} à juger` : ""}</span> })}<button className="underline" onClick={onObjectif}>{objectif.objectif.sorties.length ? "Revoir l’objectif" : "Définir l’objectif"}</button></div>}
+        <p className="line-clamp-2 whitespace-pre-line text-[13px] leading-relaxed text-encre-2">{personnage.description || "Décris sa silhouette, son rôle et les détails à conserver d’une fabrication à l’autre."}</p>
+        <div className="flex flex-wrap items-center gap-[8px] text-[12px] text-encre-3"><span className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{images.length + bandes.length} résultat{images.length + bandes.length > 1 ? "s" : ""}</span>{collections?.map(c => <span key={c.identifiant} className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{c.nom}</span>)}<button className={BOUTON} onClick={ouvrir}>Modifier la fiche</button></div>
+        {/* **Le seul compte d'avancement** (RV10) : la même fraction que le
+            Codex et l'objectif, jamais plus « retenus pour le jeu » — la
+            retenue n'a jamais été nécessaire pour partir dans le jeu (E2). Le
+            manque reste en gris neutre. */}
+        {objectif && <div className="flex flex-wrap items-center gap-[8px] text-[12px]">
+          <span className="text-encre-3">
+            Prêtes pour le jeu : {objectif.avancement.animations.pretes} animation{objectif.avancement.animations.pretes > 1 ? "s" : ""} sur {objectif.avancement.animations.demandees} · {objectif.avancement.images.pretes} image{objectif.avancement.images.pretes > 1 ? "s" : ""} fixe{objectif.avancement.images.pretes > 1 ? "s" : ""} sur {objectif.avancement.images.demandees}
+          </span>
+          {[
+            objectif.avancement.animations.a_fabriquer ? `${objectif.avancement.animations.a_fabriquer} à fabriquer` : "",
+            objectif.avancement.animations.a_departager ? `${objectif.avancement.animations.a_departager} à départager` : "",
+            objectif.avancement.images.a_fabriquer ? `${objectif.avancement.images.a_fabriquer} images à fabriquer` : "",
+          ].filter(Boolean).join(" · ") && <span className="text-encre-4">{[
+            objectif.avancement.animations.a_fabriquer ? `${objectif.avancement.animations.a_fabriquer} à fabriquer` : "",
+            objectif.avancement.animations.a_departager ? `${objectif.avancement.animations.a_departager} à départager` : "",
+            objectif.avancement.images.a_fabriquer ? `${objectif.avancement.images.a_fabriquer} images à fabriquer` : "",
+          ].filter(Boolean).join(" · ")}</span>}
+          <button className="underline" onClick={onObjectif}>{objectif.objectif.sorties.length ? "Revoir l’objectif" : "Définir l’objectif"}</button>
+        </div>}
       </div>
     </section>
     {edition && <CadreDialogue titre="La fiche du sujet" format="preparation" onFermer={fermer} enfants={<>

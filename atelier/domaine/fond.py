@@ -71,10 +71,25 @@ tirage postérieur. C'est un prix accepté, pas un oubli — **et il se repaie l
 20 septembre 2026**, puisque le fond qui part change une seconde fois. Une image
 tirée avant RT3 et une image tirée après ne se comparent pas davantage qu'un
 tirage d'avant D3 et un tirage d'après.
+
+**Le 21 septembre 2026, `RV3` ajoute une entrée au calcul, sans en changer le
+principe.** Constaté à l'usage : un rôdeur décrit « encapuchonné, cape verte,
+torche à la main », envoyé sans image de référence, est parti sur le vert de
+studio — le repli de RT3 — et le détourage a mangé la cape avec le fond, faute
+d'avoir jamais regardé ce que la description elle-même nommait. **Sans référence,
+le choix lit maintenant les couleurs que la description nomme** (`vert`, `rouge`,
+`magenta`… en français comme en anglais, table fermée comme celle des candidats)
+et n'élit plus un fond qui leur ressemble : il prend, parmi le vert de studio et
+les six candidats, celui qui s'en éloigne le plus — le vert de studio en tête
+quand il convient, exactement comme il l'a toujours fait quand rien ne le
+contredit. Une référence qui part avec l'appel continue de trancher seule,
+**comme avant `RV3` au caractère près** : la description n'entre en jeu que là où
+il n'y avait jusqu'ici rien à regarder.
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any, Iterable
 
@@ -218,6 +233,80 @@ CANDIDATS: tuple[Candidat, ...] = (
 VERT_DE_STUDIO = Candidat("#00B140", "studio green")
 
 
+# **Les couleurs qu'une description peut nommer, sans image jointe** (RV3,
+# 21 septembre 2026). Une table simple, mot vers teinte représentative — pas un
+# détourage, juste de quoi savoir qu'une description qui dit « cape verte » ne
+# doit pas s'entendre proposer du vert. **Liste fermée**, comme celle des
+# candidats, français et anglais mêlés parce qu'une description part dans l'une
+# ou l'autre langue selon qui l'écrit.
+#
+# Chaque teinte reprend, quand il en existe une, la couleur du candidat ou du
+# vert de studio qu'elle doit écarter : « vert » vaut `VERT_DE_STUDIO`
+# lui-même, pour que « cape verte » écarte aussi bien le repli que la couleur
+# la plus proche de `CANDIDATS`.
+MOTS_COULEUR: dict[str, str] = {
+    # vert — écarte aussi bien le repli que le candidat le plus proche.
+    "vert": VERT_DE_STUDIO.couleur,
+    "verte": VERT_DE_STUDIO.couleur,
+    "verts": VERT_DE_STUDIO.couleur,
+    "vertes": VERT_DE_STUDIO.couleur,
+    "green": VERT_DE_STUDIO.couleur,
+    "émeraude": VERT_DE_STUDIO.couleur,
+    "emeraude": VERT_DE_STUDIO.couleur,
+    "emerald": VERT_DE_STUDIO.couleur,
+    "olive": VERT_DE_STUDIO.couleur,
+    # magenta / rose
+    "magenta": "#FF00FF",
+    "rose": "#FF0090",
+    "roses": "#FF0090",
+    "pink": "#FF0090",
+    # bleu / cyan
+    "bleu": "#0000FF",
+    "bleue": "#0000FF",
+    "bleus": "#0000FF",
+    "bleues": "#0000FF",
+    "blue": "#0000FF",
+    "cyan": "#00FFFF",
+    # rouge
+    "rouge": "#FF0000",
+    "rouges": "#FF0000",
+    "red": "#FF0000",
+    # jaune
+    "jaune": "#FFFF00",
+    "jaunes": "#FFFF00",
+    "yellow": "#FFFF00",
+    # violet / mauve
+    "violet": "#9000FF",
+    "violette": "#9000FF",
+    "violets": "#9000FF",
+    "violettes": "#9000FF",
+    "purple": "#9000FF",
+    "mauve": "#9000FF",
+    # orange
+    "orange": "#FF7A00",
+    "oranges": "#FF7A00",
+}
+
+
+def couleurs_nommees(description: str) -> list[tuple[str, str]]:
+    """Les couleurs que cette description nomme, mot lu et teinte, dans l'ordre.
+
+    **Un mot entier, jamais un fragment** : `re.findall` isole les suites de
+    lettres — accentuées comprises —, donc « verte » compte et « couvert » ne
+    compte pas. Chaque teinte n'apparaît qu'une fois, à sa première rencontre :
+    c'est le mot qui a fait entrer une couleur dans la liste qui vaut pour la
+    phrase de la relecture, pas ceux qui la répètent.
+    """
+    trouvees: list[tuple[str, str]] = []
+    vues: set[str] = set()
+    for mot in re.findall(r"[^\W\d_]+", description.lower(), flags=re.UNICODE):
+        teinte = MOTS_COULEUR.get(mot)
+        if teinte and teinte not in vues:
+            vues.add(teinte)
+            trouvees.append((mot, teinte))
+    return trouvees
+
+
 @dataclass(frozen=True, slots=True)
 class Proposition:
     """Ce que l'atelier propose comme fond — **ou la raison de ne rien proposer**.
@@ -343,6 +432,13 @@ class Choix:
     Un écart de 200 dit que le découpage est hors de danger, un écart de 30 dit
     qu'il va mordre — et c'est une information utile même quand on n'a rien de
     mieux à proposer, parce qu'il n'y a pas d'autre candidat à aller chercher.
+
+    `raison` est vide la plupart du temps. Elle se remplit d'une seule ligne
+    quand **la description a changé le fond** (RV3, 21 septembre 2026) : sans
+    elle le fond serait resté le vert de studio, et il ne l'est plus parce que
+    la description nommait une couleur trop proche. `par_defaut` et `raison`
+    ne se contredisent jamais : le premier dit que rien n'a été comparé, le
+    second dit qu'une comparaison a déplacé le résultat.
     """
 
     couleur: str
@@ -350,6 +446,7 @@ class Choix:
     ecart: int = 0
     voisine: str = ""
     par_defaut: bool = False
+    raison: str = ""
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -358,10 +455,36 @@ class Choix:
             "ecart": self.ecart,
             "voisine": self.voisine,
             "par_defaut": self.par_defaut,
+            "raison": self.raison,
         }
 
 
-def choisir(couleurs: Iterable[str]) -> Choix:
+def _plus_eloigne(candidats: Iterable[Candidat], couleurs: list[str]) -> Choix:
+    """Le candidat de `candidats` le plus loin de `couleurs` — **un seul calcul**,
+    partagé par le choix sur une image et, depuis RV3, par le choix sur une
+    description.
+
+    **À égalité, c'est l'ordre de `candidats` qui tranche** : strictement
+    supérieur, donc le premier écrit gagne. C'est ce qui met le vert de studio
+    en tête quand on l'ajoute devant `CANDIDATS` — il reste le repli tant
+    qu'aucune couleur ne le rapproche assez d'une couleur à éviter.
+    """
+    meilleur: Choix | None = None
+    for candidat in candidats:
+        voisine = min(couleurs, key=lambda c: ecart(candidat.couleur, c))
+        distance = ecart(candidat.couleur, voisine)
+        if meilleur is None or distance > meilleur.ecart:
+            meilleur = Choix(
+                couleur=candidat.couleur,
+                nom=candidat.nom,
+                ecart=distance,
+                voisine=voisine,
+            )
+    assert meilleur is not None  # ni `CANDIDATS` ni le septième ne sont vides.
+    return meilleur
+
+
+def choisir(couleurs: Iterable[str], description: str = "") -> Choix:
     """Le candidat **le plus éloigné** de ces couleurs-là — ou le vert de studio.
 
     Ce sont les couleurs lues sur les images de référence de l'appel, et elles
@@ -382,33 +505,50 @@ def choisir(couleurs: Iterable[str]) -> Choix:
     couleurs — une silhouette noire, un aplat blanc — et il n'y a alors rien de
     mieux à lire qu'une préférence écrite d'avance.
 
-    **Rien à comparer rend le vert de studio**, et c'est le cas nommé : un appel
-    sans image de référence, ou dont les références sont illisibles. On ne rend
-    pas le vide, parce que le vide était le comportement d'avant D3 — *un fond
-    plat* sans couleur, que le modèle rendait en gris clair, c'est-à-dire en une
-    couleur que le sujet porte aussi.
+    **Une image de référence tranche seule, `description` ne compte pas** — le
+    critère de RV3 pris à la lettre : ce paramètre n'est même pas lu si
+    `couleurs` n'est pas vide, donc un appel avec référence rend exactement ce
+    qu'il rendait avant RV3.
+
+    **Rien à comparer sur une image, et c'est là que `description` entre en
+    jeu** (RV3, 21 septembre 2026). Avant cette tranche, ce cas rendait toujours
+    le vert de studio : c'est encore ce qui se passe quand la description ne
+    nomme aucune couleur connue — même calcul, même repli. Quand elle en nomme
+    une, ces couleurs sont traitées comme les couleurs d'une image de référence
+    et comparées au **même jeu de candidats, le vert de studio en tête** : le
+    repli reste le repli tant qu'il n'est pas trop proche de ce qu'on veut
+    éviter, et cède sa place — `raison` le dit alors en une ligne — à celui de
+    `CANDIDATS` qui s'en éloigne le plus.
     """
     propres = [c for c in (fond_valide(x) for x in couleurs) if c]
-    if not propres:
+    if propres:
+        return _plus_eloigne(CANDIDATS, propres)
+
+    nommees = couleurs_nommees(description)
+    if not nommees:
         return Choix(
             couleur=VERT_DE_STUDIO.couleur, nom=VERT_DE_STUDIO.nom, par_defaut=True
         )
 
-    meilleur: Choix | None = None
-    for candidat in CANDIDATS:
-        voisine = min(propres, key=lambda c: ecart(candidat.couleur, c))
-        distance = ecart(candidat.couleur, voisine)
-        # **Strictement supérieur** : à égalité, le premier écrit gagne, et
-        # l'ordre de la liste est la préférence.
-        if meilleur is None or distance > meilleur.ecart:
-            meilleur = Choix(
-                couleur=candidat.couleur,
-                nom=candidat.nom,
-                ecart=distance,
-                voisine=voisine,
-            )
-    assert meilleur is not None  # `CANDIDATS` n'est jamais vide.
-    return meilleur
+    trouve = _plus_eloigne((VERT_DE_STUDIO,) + CANDIDATS, [t for _, t in nommees])
+    if trouve.couleur == VERT_DE_STUDIO.couleur:
+        # Le repli tient encore : rien de ce que la description nomme ne s'en
+        # approche assez pour l'écarter.
+        return Choix(
+            couleur=trouve.couleur,
+            nom=trouve.nom,
+            ecart=trouve.ecart,
+            voisine=trouve.voisine,
+            par_defaut=True,
+        )
+    mot = nommees[0][0]
+    return Choix(
+        couleur=trouve.couleur,
+        nom=trouve.nom,
+        ecart=trouve.ecart,
+        voisine=trouve.voisine,
+        raison=f"ta description dit {mot}",
+    )
 
 
 def nom_du_fond(couleur: str) -> str:

@@ -54,7 +54,7 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio, actualiserSur }: {
     try {
       const p = await workflows.importer(brut)
       await relire(); setEditeur(false); setContenu("")
-      setConfirmation(`« ${p.nom} » enregistré. Vérifiez ses prérequis avant de le choisir.`)
+      setConfirmation(`« ${p.nom} » enregistré. Vérifie ses prérequis avant de le choisir.`)
     } catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
   }
   async function verifier(p: ProfilWorkflow) {
@@ -63,7 +63,7 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio, actualiserSur }: {
     catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
   }
   return <section aria-label="Workflows locaux" className="space-y-[22px] text-encre">
-    <header><h2 className="font-serif text-[38px]">Les workflows locaux</h2><p className="mt-[8px] text-[13px] text-encre-3">Nommez une méthode une fois, puis utilisez ses réglages dans vos fabrications. ComfyUI reste installé et lancé séparément.</p></header>
+    <header><h2 className="font-serif text-[38px]">Les workflows locaux</h2><p className="mt-[8px] text-[13px] text-encre-3">Nomme une méthode une fois, puis utilise ses réglages dans tes fabrications. ComfyUI reste installé et lancé séparément.</p></header>
     <StylesDeScClone onChoisir={onImage} onInstalle={relire} />
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}{confirmation && <p role="status" className="text-[13px] text-ok">{confirmation}</p>}
     <div className="flex flex-wrap gap-[8px]"><button className={BOUTON} onClick={() => setEditeur(v => !v)}>Ajouter un workflow</button><button className={BOUTON} onClick={() => void relire()} disabled={chargement}>Actualiser les profils</button></div>
@@ -200,7 +200,7 @@ export function MethodesSonores({ onInstalle }: {
     catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
   }
   return <section aria-label="Les méthodes sonores" className="space-y-[22px] text-encre">
-    <header><h2 className="font-serif text-[38px]">Les méthodes sonores</h2><p className="mt-[8px] text-[13px] text-encre-3">Cinq moteurs fabriquent les sons du jeu. Rien n’est jamais téléchargé par l’atelier : c’est vous qui posez les fichiers, l’atelier ne fait que les retrouver.</p></header>
+    <header><h2 className="font-serif text-[38px]">Les méthodes sonores</h2><p className="mt-[8px] text-[13px] text-encre-3">Cinq moteurs fabriquent les sons du jeu. Rien n’est jamais téléchargé par l’atelier : c’est toi qui poses les fichiers, l’atelier ne fait que les retrouver.</p></header>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
     <button className={BOUTON} disabled={occupe} onClick={() => void installer()}>Installer les méthodes sonores</button>
     <div className="grid grid-cols-2 gap-[14px]">{MOTEURS_SONORES.map(m => {
@@ -231,7 +231,7 @@ function ConfigurerGraphe({ contenu, garder, occupe }: { contenu: string; garder
   let lu: Record<string, unknown>
   try { lu = JSON.parse(contenu) as Record<string, unknown> } catch { return <p role="alert" className="text-[13px] text-echec">Ce document n’est pas un JSON valide.</p> }
   if (lu && lu.graphe && lu.liaisons) return <button className={BOUTON} disabled={occupe} onClick={() => void garder(lu)}>Enregistrer cette version de profil</button>
-  if (!lu || Array.isArray(lu) || lu.nodes || !Object.values(lu).every(n => typeof n === "object" && n !== null && "class_type" in n && "inputs" in n)) return <p role="alert" className="text-[13px] text-echec">Choisissez l’export « format API » de ComfyUI. Le fichier qui décrit seulement la disposition des nœuds ne suffit pas.</p>
+  if (!lu || Array.isArray(lu) || lu.nodes || !Object.values(lu).every(n => typeof n === "object" && n !== null && "class_type" in n && "inputs" in n)) return <p role="alert" className="text-[13px] text-echec">Choisis l’export « format API » de ComfyUI. Le fichier qui décrit seulement la disposition des nœuds ne suffit pas.</p>
   const graphe = lu as ProfilWorkflow["graphe"]
   const entrees = Object.entries(graphe).flatMap(([id, n]) => Object.entries(n.inputs).filter(([, v]) => !Array.isArray(v)).map(([champ]) => ({ valeur: `${id}/${champ}`, nom: `${n.class_type} · ${id} · ${champ}` })))
   const lien = (v: string) => { const [noeud, champ] = v.split("/"); return [{ noeud, champ }] }
@@ -283,10 +283,10 @@ export function FabricationImageLocale({ projet, identifiantInitial, modeleIniti
   function changer(champs: Partial<DemandeImageLocale>) { setDemande(d => ({ ...d, ...champs })); setErreur("") }
   async function action(geste: () => Promise<TravailImageLocale>) { setOccupe(true); setErreur(""); try { const t = await geste(); setTravail(t); setEdition(false) } catch (e) { setErreur(message(e)) } finally { setOccupe(false) } }
   const refs = demande.references || []
-  const bloque = !profil ? "Choisissez un workflow image." : !diagnostic?.disponible ? "Vérifiez les prérequis du workflow." : refs.length !== profil.references_min ? `Ce workflow demande exactement ${profil.references_min} référence(s).` : !demande.prompt.trim() ? "Décrivez l’image à fabriquer." : ""
+  const bloque = !profil ? "Choisis un workflow image." : !diagnostic?.disponible ? "Vérifie les prérequis du workflow." : refs.length !== profil.references_min ? `Ce workflow demande exactement ${profil.references_min} référence(s).` : !demande.prompt.trim() ? "Décris l’image à fabriquer." : ""
   if (bibliotheque) return <BibliothequePourImage retour="Workflows locaux" onFermer={() => setBibliotheque(false)} onChoisir={a => { changer({ references: [...refs, a.identifiant] }); setBibliotheque(false) }} />
   return <section aria-label="Fabriquer une image locale" className="space-y-[22px] p-[22px] text-encre">
-    <header className="flex items-start justify-between gap-[14px]"><div>{autonome && <h2 className="font-serif text-[38px]">Fabriquer une image locale</h2>}<p className="mt-[8px] text-[13px] text-encre-3">Le résultat rejoint la galerie et reste disponible pour vos assets et votre univers.</p></div>{autonome && onFermer && <button className={BOUTON} onClick={onFermer}>Fermer</button>}</header>
+    <header className="flex items-start justify-between gap-[14px]"><div>{autonome && <h2 className="font-serif text-[38px]">Fabriquer une image locale</h2>}<p className="mt-[8px] text-[13px] text-encre-3">Le résultat rejoint la galerie et reste disponible pour tes sujets et ton univers.</p></div>{autonome && onFermer && <button className={BOUTON} onClick={onFermer}>Fermer</button>}</header>
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}<AvisBrouillon brouillon={brouillon} />
     {edition ? <form className="space-y-[22px]" onSubmit={e => { e.preventDefault(); void action(() => workflows.preparerImage(projet, { ...demande, cle: travail ? crypto.randomUUID() : demande.cle })) }}>
       <fieldset disabled={occupe} className={`${SURFACE} space-y-[14px]`}><label className="flex flex-col gap-[8px] text-[13px]">{CHAMP_DU_MODELE}<select className={CHAMP} value={demande.modele} onChange={e => { const p = profils.find(p => p.modele === e.target.value); changer({ modele: e.target.value, resolution: p?.formats[0].resolution, proportions: p?.formats[0].proportions, options: Object.fromEntries(Object.entries(p?.parametres || {}).map(([n, v]) => [n, v.defaut])) }) }}><option value="">{chargement ? "Lecture des workflows…" : "Choisir une méthode"}</option>{profils.map(p => <option key={p.modele} value={p.modele}>{p.nom} · {new Date(p.cree_le * 1000).toLocaleString("fr-FR")}</option>)}</select></label>

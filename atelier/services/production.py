@@ -71,7 +71,13 @@ from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ProjetInconnu, ServiceBibliotheque
 from atelier.services.evenements import Diffusion
 from atelier.services.montre import de_quoi_montrer
-from atelier.services.objectifs import couverture, objectif_resolu, valider_objectif
+from atelier.services.objectifs import (
+    avancement,
+    couverture,
+    grouper_contenus,
+    objectif_resolu,
+    valider_objectif,
+)
 
 
 class PersonnageInconnu(ErreurAtelier):
@@ -2014,7 +2020,13 @@ class ServiceProduction:
         if tri:
             retenus.sort(key=lambda p: p.nom.casefold(), reverse=tri == "nom-desc")
             if tri == "resultats":
-                retenus.sort(key=lambda p: comptes[p.identifiant]["images"]["fait"] + comptes[p.identifiant]["bandes"]["fait"], reverse=True)
+                retenus.sort(
+                    key=lambda p: (
+                        comptes[p.identifiant]["images"]["pretes"]
+                        + comptes[p.identifiant]["animations"]["pretes"]
+                    ),
+                    reverse=True,
+                )
         page = retenus[:limite]
         return {
             "personnages": page,
@@ -2091,7 +2103,15 @@ class ServiceProduction:
         return self.objectif_de(projet, identifiant)
 
     def objectif_de(self, projet: str, identifiant: str) -> dict[str, Any]:
-        """Même objectif et mêmes résultats pour l'interface et le MCP."""
+        """Même objectif et mêmes résultats pour l'interface et le MCP.
+
+        **`avancement` est le seul compte lu par les trois écrans** (RV10) —
+        la carte du Codex, la fiche et l'objectif affichent tous cette même
+        clé. `couverture` reste à côté : c'est elle qui porte la matrice
+        case par case (versions, jugement, « à confirmer ») que l'écran
+        Objectif détaille ; `avancement` n'en est que le total, aux deux
+        fractions.
+        """
         personnage = self.personnage(projet, identifiant)
         objectif = objectif_resolu(self, projet, personnage)
         images = self._base.assets_du_personnage(
@@ -2107,6 +2127,7 @@ class ServiceProduction:
                 self, projet, personnage, objectif,
                 [a.en_json() for a in images], [b.en_json() for b in bandes],
             ),
+            "avancement": self.avancements(projet, [personnage])[identifiant],
         }
 
     def regler_personnage(
@@ -2630,9 +2651,76 @@ class ServiceProduction:
 
         return rendues
 
-    # ── Le compte groupé, pour une page entière de sujets (B9.1) ─────────────
+    # ── Le compte d'avancement groupé, pour une page entière de sujets (RV10) ─
 
     @projet_lu_une_fois()
+    def avancements(
+        self,
+        projet: str,
+        personnages: Sequence[Personnage],
+        *,
+        detail: bool = False,
+    ) -> dict[str, dict[str, Any]]:
+        """**Le seul compte d'avancement**, pour deux cents sujets, en deux
+        requêtes (RV10) — remplace l'ancien `comptes`, dont c'est ici le nom.
+
+        `comptes`, `bilan_du_jeu` et `objectif_de` lisaient trois calculs
+        différents, qui ne comptaient pas la même chose et divergeaient sur un
+        même sujet (note de décision RV10, 21 sept. 2026). Les trois lisent
+        maintenant `avancement()` (`services/objectifs.py`), nourri par les
+        mêmes deux requêtes groupées qu'avant — une pour les images, une pour
+        les animations —, qu'un sujet ait un objectif explicite ou non : le
+        chemin implicite qui ne regardait que les images et groupait par pose
+        plutôt que par direction a disparu.
+
+        **Les deux calques ne se mêlent pas** (A12) : une fraction pour les
+        images, une pour les animations, jamais de dénominateur commun.
+
+        **Une case est prête dès qu'une version vivante et livrable la
+        porte** — la retenir n'est pas nécessaire (E2). `complet` veut dire
+        « rien ne manque, animations comprises » : un sujet qui ne réclame
+        rien est complet, jamais « en retard ».
+
+        **`detail` ajoute le découpage pose par pose, sur les deux calques**
+        (B9.4) — `CompteDuSujet.poses` a disparu, cette clé porte maintenant
+        les deux fractions par pose plutôt qu'une seule.
+
+        ⚠️ **Le mémo du projet est ouvert ici** : deux requêtes groupées ne
+        servent à rien si `plan_de` relit le jeu une fois par sujet — c'est le
+        défaut mesuré en M3, et une page de deux cents sujets le rejouerait à
+        l'identique.
+        """
+        identifiants = [p.identifiant for p in personnages]
+        # Deux requêtes pour toute la page, quel que soit son nombre de sujets.
+        toutes_images = self._base.images_versions_par_sujet(projet, identifiants)
+        toutes_bandes = self._base.bandes_versions_par_sujet(projet, identifiants)
+        # Les directions du jeu, lues **une fois** pour toute la page.
+        toutes_directions = self.directions_du_jeu(projet)
+
+        rendus: dict[str, dict[str, Any]] = {}
+        for personnage in personnages:
+            images = toutes_images.get(personnage.identifiant, [])
+            bandes = toutes_bandes.get(personnage.identifiant, [])
+            contenus = grouper_contenus(self, projet, personnage, images, bandes)
+            if personnage.objectif is not None:
+                objectif = personnage.objectif
+                plan = self.plan_de(projet, personnage)
+                poses_valides = {p.identifiant for p in plan}
+                directions_valides = {d.identifiant for d in toutes_directions} or {""}
+            else:
+                objectif = objectif_resolu(self, projet, personnage)
+                plan = personnage.tenues(self.plan_de(projet, personnage))
+                # Repris tel quel du plan courant : rien n'y est jamais hors
+                # plan (E12 ne se pose pas sur un chemin qui EST le plan).
+                poses_valides = directions_valides = None
+            noms_poses = {p.identifiant: p.nom for p in plan} if detail else None
+            rendus[personnage.identifiant] = avancement(
+                objectif, contenus,
+                poses=poses_valides, directions=directions_valides,
+                noms_poses=noms_poses,
+            )
+        return rendus
+
     def comptes(
         self,
         projet: str,
@@ -2640,134 +2728,8 @@ class ServiceProduction:
         *,
         detail: bool = False,
     ) -> dict[str, dict[str, Any]]:
-        """« 4 poses sur 6 » pour deux cents sujets, en **deux** requêtes.
-
-        C'est le même compte que `cases`, sans les objets d'écran : la grille
-        d'une famille montre un chiffre par carte, pas une matrice par carte.
-        `cases` reste la réponse pour *un* sujet — elle porte les images
-        elles-mêmes, leurs vignettes, leurs directions rangées —, et cette
-        méthode-ci ne la remplace nulle part.
-
-        **Ce qui change est l'aller-retour, pas la règle.** `cases` demande à
-        SQLite les images d'un sujet, puis les siennes, puis celles du suivant :
-        `bilan_du_jeu` le fait déjà en boucle et le dit. Ici, une requête groupée
-        rend d'un coup ce que chaque sujet de la page a de fait — et le reste du
-        calcul est **exactement** celui d'en dessus, par les mêmes appels :
-        `plan_de`, `tenues`, `directions_tenues`, `reclame`. Aucune de ces quatre
-        règles n'est réécrite en SQL, et c'est la décision de la tranche
-        (`docs/tranches/V4.md` § B9, décision 2) : les poses qu'un sujet écarte,
-        celles qu'il ajoute pour lui seul, les angles que le jeu range et ceux
-        que cette chose-là range pour cette pose-là vivent sur le `Personnage`,
-        déjà écrits et déjà testés. Les redire en SQL aurait fabriqué une seconde
-        vérité qui diverge au premier sujet qui écarte une pose.
-
-        **Les deux calques ne se mêlent pas** (A12, `AGENTS.md` 8quater) : les
-        images d'un côté, les animations de l'autre, et jamais un total commun —
-        une animation manquante se cacherait derrière une image présente.
-
-        ⚠️ **`complet` ne regarde que les images**, et c'est délibéré. Toute pose
-        réclame au moins une animation par direction ; si `complet` les comptait,
-        le filtre « incomplets » de la grille (B9.6) rendrait le jeu entier tant
-        qu'une seule bande manque, et ne trierait donc plus rien. C'est aussi le
-        calque que `bilan_du_jeu` compte depuis B5 : deux écrans qui disent
-        « complet » doivent dire la même chose. Le calque animé est rendu à côté,
-        entier, pour que la carte puisse le montrer sans que le filtre s'y noie.
-
-        **Un sujet qui ne réclame rien est complet, jamais « en retard »** — même
-        garde que la barre à `None` du tableau de bord (E2) : *rien ne manque*
-        n'est pas *tout manque*, et un décor sans pose n'a pas à remonter dans une
-        liste de choses à finir.
-
-        **`detail` ajoute le découpage pose par pose, et rien d'autre** (B9.4).
-        La vue *Les poses* de la grille montre une colonne par pose et une ligne
-        par sujet : elle a besoin de savoir *laquelle* manque, pas seulement
-        combien. Le calcul est déjà fait dans la boucle ci-dessous — le drapeau
-        ne fait que garder ce qu'elle jetait. **Il est facultatif parce que le
-        reste du produit n'en veut pas** : la carte de la grille et le tableau de
-        bord n'écrivent qu'un total, et leur faire porter six fois plus de JSON
-        pour un chiffre qu'ils n'affichent pas serait payer pour rien.
-
-        ⚠️ **Le mémo du projet est ouvert ici, et il fallait le faire.** Deux
-        requêtes groupées ne servent à rien si `plan_de` relit le jeu une fois
-        par sujet — c'est le défaut mesuré en M3, quarante-deux relectures pour
-        une seule question, et une page de deux cents sujets le rejouerait à
-        l'identique. La portée est celle de la question, et elle se referme avec
-        elle.
-        """
-        objet = self._exiger(projet)
-        identifiants = [p.identifiant for p in personnages]
-        # Deux requêtes pour toute la page, quel que soit son nombre de sujets.
-        images = self._base.images_par_pose(projet, identifiants)
-        animations = self._base.bandes_par_pose(projet, identifiants)
-        # Les directions du jeu, lues **une fois** pour toute la page — comme
-        # `cases` les lit une fois par sujet.
-        toutes = objet.univers.directions_du_jeu()
-
-        rendus: dict[str, dict[str, Any]] = {}
-        for personnage in personnages:
-            if personnage.objectif is not None:
-                etat = self.objectif_de(projet, personnage.identifiant)["couverture"]
-                cases_demandees = [c for c in etat["cases"] if c["demande"]]
-                noms = dict.fromkeys(c["pose"] for c in cases_demandees)
-                par_pose = []
-                for pose in noms:
-                    cases_pose = [c for c in cases_demandees if c["pose"] == pose]
-                    par_pose.append({
-                        "identifiant": pose, "nom": cases_pose[0]["nom_pose"],
-                        "fait": sum(c["produit"] for c in cases_pose),
-                        "attendu": sum(c["demande"] for c in cases_pose),
-                    })
-                rendus[personnage.identifiant] = {
-                    "poses": {"fait": sum(p["fait"] >= p["attendu"] for p in par_pose),
-                              "attendu": len(par_pose)},
-                    "images": {"fait": etat["images"]["produit"],
-                               "attendu": etat["images"]["demande"]},
-                    "bandes": {"fait": etat["animations"]["produit"],
-                               "attendu": etat["animations"]["demande"]},
-                    "complet": not any(c["manquant"] for c in cases_demandees),
-                    **({"detail": par_pose} if detail else {}),
-                }
-                continue
-            poses_faites = 0
-            fait = attendu = 0
-            anime_fait = anime_attendu = 0
-            tenues = personnage.tenues(self.plan_de(projet, personnage))
-            par_pose: list[dict[str, Any]] = []
-            for pose in tenues:
-                reclamees = reclame(
-                    pose, personnage.directions_tenues(pose, toutes)
-                )
-                cle = (personnage.identifiant, pose.identifiant)
-                # **Plafonné, comme le tableau de bord le plafonne** : dix images
-                # dans une case qui en réclame quatre ne font pas 250 % — elles
-                # font une case pleine, et les six autres sont des variantes que
-                # personne n'a encore départagées.
-                sienne = min(images.get(cle, 0), reclamees.images)
-                fait += sienne
-                attendu += reclamees.images
-                anime_fait += min(animations.get(cle, 0), reclamees.bandes)
-                anime_attendu += reclamees.bandes
-                if sienne >= reclamees.images:
-                    poses_faites += 1
-                if detail:
-                    par_pose.append(
-                        {
-                            "identifiant": pose.identifiant,
-                            "nom": pose.nom,
-                            "fait": sienne,
-                            "attendu": reclamees.images,
-                        }
-                    )
-
-            rendus[personnage.identifiant] = {
-                # La ligne que la carte écrit en toutes lettres : « 4 / 6 poses ».
-                "poses": {"fait": poses_faites, "attendu": len(tenues)},
-                "images": {"fait": fait, "attendu": attendu},
-                "bandes": {"fait": anime_fait, "attendu": anime_attendu},
-                "complet": fait >= attendu,
-                **({"detail": par_pose} if detail else {}),
-            }
-        return rendus
+        """Alias conservé pour les appelants existants — voir `avancements`."""
+        return self.avancements(projet, personnages, detail=detail)
 
     # ── Le tableau de bord du jeu (B5) ────────────────────────────────────────
 
@@ -2802,10 +2764,15 @@ class ServiceProduction:
         chacune garde son nom pour que la phrase soit actionnable.
         """
         objet = self._exiger(projet)
-        par_famille: dict[str, dict[str, int]] = {}
+        par_famille: dict[str, dict[str, Any]] = {}
         groupes_de_manques: dict[tuple[str, str], dict[str, Any]] = {}
         couts_connus: dict[str, float | None] = {}
         familles_objectifs: set[str] = set()
+        # **Le seul compte d'avancement, lu ici comme partout** (RV10) : ce que
+        # la famille affiche vient de la même règle que la carte et la fiche —
+        # deux requêtes groupées, jamais une matrice relue sujet par sujet.
+        tous = self.personnages(projet)
+        avancements = self.avancements(projet, tous)
 
         def ajouter_manque(
             personnage: Personnage,
@@ -2837,17 +2804,22 @@ class ServiceProduction:
                 {"pose": pose, "direction": direction, "quantite": quantite}
             )
 
-        for personnage in self.personnages(projet):
+        for personnage in tous:
             famille = self.famille_de(projet, personnage)
-            groupe = par_famille.setdefault(famille, {"compte": 0, "fait": 0, "total": 0})
+            groupe = par_famille.setdefault(famille, {
+                "compte": 0,
+                "images": {"pretes": 0, "demandees": 0, "a_fabriquer": 0, "a_departager": 0},
+                "animations": {"pretes": 0, "demandees": 0, "a_fabriquer": 0, "a_departager": 0},
+            })
             groupe["compte"] += 1
+            av = avancements[personnage.identifiant]
+            for nature in ("images", "animations"):
+                for champ in groupe[nature]:
+                    groupe[nature][champ] += av[nature][champ]
             if personnage.objectif is not None:
                 familles_objectifs.add(famille)
                 etat = self.objectif_de(projet, personnage.identifiant)["couverture"]
                 for nature, cle_de_compte in (("image", "images"), ("animation", "animations")):
-                    compte = etat[cle_de_compte]
-                    groupe["fait"] += compte["produit"]
-                    groupe["total"] += compte["demande"]
                     for case in etat["cases"]:
                         if case["nature"] != nature:
                             continue
@@ -2860,8 +2832,6 @@ class ServiceProduction:
             for case in self.cases(projet, personnage):
                 demandees = int(case["demandees"])
                 fait = min(len(case["images"]), demandees)
-                groupe["fait"] += fait
-                groupe["total"] += demandees
                 directions = case["directions"]
                 if directions:
                     for direction in directions:
@@ -2921,21 +2891,34 @@ class ServiceProduction:
             manque["cibles"] = cibles
             manques.append(manque)
 
-        familles = [
-            {
+        def _famille_json(cle: str, g: dict[str, Any]) -> dict[str, Any]:
+            images, animations = g["images"], g["animations"]
+            total = images["demandees"] + animations["demandees"]
+            return {
                 "cle": cle,
                 "compte": g["compte"],
+                "images": images,
+                "animations": animations,
                 # `None` quand rien n'est réclamé — une barre à 0 % dirait
-                # « en retard », ce que le manque n'est jamais (E2).
-                "complet": (g["fait"] / g["total"]) if g["total"] else None,
+                # « en retard », ce que le manque n'est jamais (E2). Sinon,
+                # « rien ne manque, animations comprises » (RV10) : les deux
+                # calques doivent être prêts, jamais un seul.
+                "complet": (
+                    None if total == 0
+                    else images["pretes"] >= images["demandees"]
+                    and animations["pretes"] >= animations["demandees"]
+                ),
                 "manque_texte": (
                     "rien n'est encore réclamé"
-                    if g["total"] == 0
-                    else f"{g['fait']} {'sorties produites' if cle in familles_objectifs else 'poses faites'} sur {g['total']}."
+                    if total == 0
+                    else (
+                        f"{animations['pretes']}/{animations['demandees']} animations · "
+                        f"{images['pretes']}/{images['demandees']} images prêtes."
+                    )
                 ),
             }
-            for cle, g in par_famille.items()
-        ]
+
+        familles = [_famille_json(cle, g) for cle, g in par_famille.items()]
 
         # **Le coût mesuré décide de l'ordre**, puis le volume lorsqu'il reste
         # inconnu : l'absence de mesure ne se déguise jamais en gratuité.

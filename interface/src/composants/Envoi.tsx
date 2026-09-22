@@ -225,10 +225,10 @@ export function EcranEnvoi({
     // plus que ce qu'une image fixe a de particulier — ses lignes de texte, ses
     // images jointes, son fond, ses consignes.
     const resume: ResumeDeLEnvoi | null = !envoi ? null : {
-      // **Son nom, pas l'identifiant brut qu'il transporte** (ML5) : un style
-      // local le porte sous une forme illisible — « ComfyUI:zimage-pixel@ca12…
-      // » — que rien ne demande à l'écran de déchiffrer avant de payer.
-      modele: <>{envoi.modele.nom}<span className="mt-[2px] block text-[11px] text-encre-4">{envoi.modele.identifiant}</span></>,
+      // **Son nom, pas l'identifiant brut qu'il transporte** (ML5, RV4) : un
+      // style local le porte sous une forme illisible — « ComfyUI:zimage-pixel@ca12…
+      // » — et rien ne l'affiche plus ici, pas même en petit sous le nom.
+      modele: <>{envoi.modele.nom}</>,
       resultat: <><p>{reglages?.proportions ?? "Format du modèle"} · {envoi.prix.appels} génération{envoi.prix.appels > 1 ? "s" : ""}{envoi.cases > 1 ? ` · ${envoi.cases} cases sur une planche` : ""}</p>{reglages && Object.entries(reglages.options).filter(([,v]) => v !== "").map(([k,v]) => <p key={k} className="mt-[4px] text-encre-3">{k} : {v}</p>)}</>,
       consommation: local ? (tempsEcrit ?? "Durée non encore mesurée pour ce workflow.") : prixEcrit,
       mesure: <>
@@ -293,7 +293,7 @@ export function EcranEnvoi({
                 style local ne le lit pas (`negatifLu === false`), mais le
                 fond part toujours dans le texte et sert au retour — le
                 détourage en dépend. Seule la consigne négative disparaît. */}
-            <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="mb-[14px] font-serif text-[25px]">{local && !negatifLu ? "Fond" : "Fond et prompt négatif"}</h2>{edition ? <div className="[&_.mesure]:text-[12px]"><SectionFond fond={envoi.fond} onFond={couleur => onTri({ ...tri, fond: couleur })} /></div> : <><p>Fond : {envoi.fond.couleur || "aucun fond imposé"}</p>{!(local && !negatifLu) && <p className="mesure mt-[14px] whitespace-pre-wrap text-[12px] leading-relaxed">{envoi.fond.interdiction || "Aucune consigne négative."}</p>}</>}</section>
+            <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="mb-[14px] font-serif text-[25px]">{local && !negatifLu ? "Fond" : "Fond et prompt négatif"}</h2>{edition ? <div className="[&_.mesure]:text-[12px]"><SectionFond fond={envoi.fond} onFond={couleur => onTri({ ...tri, fond: couleur })} /></div> : <><p>Fond : {envoi.fond.couleur || "aucun fond imposé"}{envoi.fond.nom && ` ${envoi.fond.nom}`}</p>{envoi.fond.motif && <p className="mesure mt-[4px] text-[12px] text-encre-3">fond {envoi.fond.nom || envoi.fond.couleur} : {envoi.fond.motif}</p>}{!(local && !negatifLu) && <p className="mesure mt-[14px] whitespace-pre-wrap text-[12px] leading-relaxed">{envoi.fond.interdiction || "Aucune consigne négative."}</p>}</>}</section>
             {envoi.retour.length > 0 && <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Traitements appliqués au retour · sur la machine</summary><ul className="mt-[14px] space-y-[8px]">{envoi.retour.map(r => <li key={r.nom}>{r.nom} · {r.detail}</li>)}</ul><p className="mt-[14px] text-encre-3">Les originaux sont conservés. Ces traitements se modifient dans la retouche.</p></details>}
           </div>
           <div className="space-y-[22px]">
@@ -924,7 +924,9 @@ function SectionFond({
             </span>
           )}
           <span className="mesure text-[10px] text-encre-3">
-            {fond.couleur || "aucun fond — le modèle rendra ce qu'il voudra"}
+            {fond.couleur
+              ? `${fond.couleur}${fond.nom ? ` ${fond.nom}` : ""}`
+              : "aucun fond — le modèle rendra ce qu'il voudra"}
           </span>
           {/* **Annuler la correction, et retirer le fond, sont deux gestes** :
               l'un rend la main au calcul, l'autre demande un appel sans fond.
@@ -957,6 +959,15 @@ function SectionFond({
 
         {fond.corrige && (
           <Raison texte="corrigé pour cette génération seulement — la suivante repart du calcul" />
+        )}
+
+        {/* **Pourquoi le fond n'est plus le vert de studio** (RV3,
+            21 septembre 2026), quand c'est le cas : `motif` reste vide sauf si
+            la description a écarté le repli, et cette ligne ne paraît alors
+            que sur un appel non corrigé — une correction porte déjà sa propre
+            raison, juste au-dessus. */}
+        {!fond.corrige && fond.motif && (
+          <Raison texte={`fond ${fond.nom || fond.couleur} : ${fond.motif}`} />
         )}
 
         {/* **La proposition n'apparaît que si elle ajoute quelque chose** : la

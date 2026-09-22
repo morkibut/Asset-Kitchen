@@ -10,7 +10,13 @@ const { animationsDeLivraison, ouvrirLaBande, lister3d, listerSons, onde } = vi.
   animationsDeLivraison: vi.fn(), ouvrirLaBande: vi.fn(), lister3d: vi.fn(), listerSons: vi.fn(), onde: vi.fn(),
 }))
 
-vi.mock("../api", () => ({ api: { animationsDeLivraison, ouvrirLaBande } }))
+vi.mock("../api", () => ({
+  api: { animationsDeLivraison, ouvrirLaBande },
+  dureeEnClair: (duree: number) => {
+    const s = Math.round(duree)
+    return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")}`
+  },
+}))
 vi.mock("../api-3d", () => ({
   sources3d: { lister: lister3d, fichier: () => "/frame.png" },
 }))

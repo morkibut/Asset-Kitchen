@@ -62,7 +62,7 @@ test("« Garder » écrit : le premier forme le jeu de la série, les suivants s
   vi.mocked(jeuxDeVariantes.retirer).mockResolvedValue(jeu([2], { revision: 3 }))
   const onRegler = vi.fn()
   render(<SerieSon projet="jeu" identifiant="serie1" initiale={s} titre="Série 1" onRegler={onRegler} />)
-  expect(screen.getByText("Gardez un ou plusieurs tirages. Les autres restent dans la série.")).toBeInTheDocument()
+  expect(screen.getByText("Garde un ou plusieurs tirages. Les autres restent dans la série.")).toBeInTheDocument()
 
   fireEvent.keyDown(document.body, { key: "ArrowRight" })
   fireEvent.keyDown(document.body, { key: "g" })
@@ -70,7 +70,7 @@ test("« Garder » écrit : le premier forme le jeu de la série, les suivants s
   expect(within(tuile(2)).getByRole("button", { name: "Garder le tirage 2" })).toHaveAttribute("aria-pressed", "true")
   await waitFor(() => expect(seriesSon.garder).toHaveBeenCalledWith("jeu", "serie1", { sons: ["s2"] }))
   expect(await screen.findByRole("region", { name: /Jeu de variantes/ })).toBeInTheDocument()
-  expect(screen.getByText("Ce son sature : il reste dans le jeu, à vous de décider.")).toBeInTheDocument()
+  expect(screen.getByText("Ce son sature : il reste dans le jeu, à toi de décider.")).toBeInTheDocument()
 
   const garder3 = within(tuile(3)).getByRole("button", { name: "Garder le tirage 3" })
   garder3.focus()

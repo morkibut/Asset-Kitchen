@@ -555,7 +555,7 @@ describe("les trois rangées montrent ce qu'elles font (RT2)", () => {
     ouvrir("Son allure")
 
     // La méthode choisie porte son image, à la taille et aux couleurs posées.
-    await screen.findByRole("img", { name: "Le rôdeur réduit par « vote en deux temps »" })
+    await screen.findByRole("img", { name: "Le rôdeur réduit par « contour net (recommandé) »" })
 
     const apercus = () => appels.filter((a) => a.url.startsWith("/api/universe/allure/preview.png"))
     await waitFor(() => expect(apercus().length).toBeGreaterThan(0))
@@ -583,7 +583,7 @@ describe("les trois rangées montrent ce qu'elles font (RT2)", () => {
     monter(fetchDouble)
     ouvrir("Son allure")
 
-    await screen.findByRole("img", { name: "Le rôdeur réduit par « vote en deux temps »" })
+    await screen.findByRole("img", { name: "Le rôdeur réduit par « contour net (recommandé) »" })
     const compteAvant = appels.filter((a) => a.url.includes("taille=32") && a.url.includes("methode=")).length
 
     // Le double ne propose que deux tailles (32 et 64) — on clique l'autre.
@@ -672,7 +672,7 @@ describe("les trois rangées montrent ce qu'elles font (RT2)", () => {
     expect(case_).toHaveProperty("disabled", true)
 
     // Les trois autres méthodes, elles, restent normales.
-    expect(screen.getByRole("button", { name: "vote en deux temps" })).toHaveProperty("disabled", false)
+    expect(screen.getByRole("button", { name: "contour net (recommandé)" })).toHaveProperty("disabled", false)
   })
 
   test("en dessin, aucune vignette ne se demande — pas d'aperçu orphelin", async () => {

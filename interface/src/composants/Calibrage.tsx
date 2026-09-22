@@ -158,13 +158,14 @@ export function EcranCalibrage({
   return (
     <div
       data-calibrage
-      className="grid min-h-0 flex-1 grid-cols-[308px_minmax(0,1fr)] bg-papier"
+      className="grid min-h-0 flex-1 grid-cols-[380px_minmax(0,1fr)] bg-papier"
     >
-      {/* **La colonne se déclare comme panneau** (R9) : elle porte cinq
-          poignées d'explication sur 308 px, et une bulle qui sortirait de
-          l'ancre seule couvrirait le réglage d'à côté — celui-là même qu'on
-          compare. Elle n'en portait aucune avant cette tranche, et la
-          déclaration n'avait donc rien à faire. */}
+      {/* **La colonne prend le volet standard, 380 px** (RV14) : c'était une
+          largeur à elle, hors des listes fermées de `docs/DESIGN.md`, et une
+          bulle qui sortirait de l'ancre seule couvrirait le réglage d'à côté —
+          celui-là même qu'on compare. Le volet ferme cette largeur pour tout
+          le produit ; le calibrage la reprend telle quelle plutôt que d'en
+          garder une à lui. */}
       <aside
         {...PANNEAU}
         className="defile flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-trait p-4"
@@ -172,10 +173,10 @@ export function EcranCalibrage({
         <button
           type="button"
           onClick={onFermer}
-          title="Échap ramène à l'établi"
-          className="mesure -mb-2 self-end px-1 text-[10px] text-encre-4 hover:text-encre"
+          title={`Échap ramène à la fiche de ${personnage.nom}`}
+          className="mesure -mb-2 self-end px-1 text-[10.5px] text-encre-4 hover:text-encre"
         >
-          ‹ l'établi
+          ‹ {personnage.nom}
         </button>
 
         {/* **Ce qu'il répare, avant de proposer de le réparer** (R9). La phrase
@@ -207,7 +208,7 @@ export function EcranCalibrage({
                 devenir faux — c'est la leçon de `G1`, où douze phrases justes le
                 jour de leur écriture avaient cessé de l'être. */}
             {lu.poses.length > 0 && (
-              <p className="mesure -mt-2 text-[10px] leading-[1.5] text-encre-4">
+              <p className="mesure -mt-2 text-[10.5px] leading-[1.5] text-encre-4">
                 {lu.poses.length === 1 ? "sa pose sort" : "ses poses sortent"} à{" "}
                 <span className="text-encre-3">
                   {lu.poses.map((p) => p.rendue).join(", ")}
@@ -240,13 +241,13 @@ export function EcranCalibrage({
                       la fente sous un contrôle sert à dire pourquoi il est
                       éteint, et rien d'autre. Une explication rangée là prend
                       l'air d'un avertissement, et l'œil apprend à la sauter. */}
-                  <p className="mt-1 text-[10px] leading-[1.5] text-encre-3">
+                  <p className="mt-1 text-[10.5px] leading-[1.5] text-encre-3">
                     c'est le prix de la cohérence : une fois calées, elles font
                     toutes la même taille dans le jeu
                   </p>
                 </div>
               ) : (
-                <p className="mesure text-[10px] leading-4 text-encre-4">
+                <p className="mesure text-[10.5px] leading-4 text-encre-4">
                   rien à mesurer tant qu'aucune pose n'a de corps
                 </p>
               )}
@@ -276,7 +277,7 @@ export function EcranCalibrage({
                   pose est couchée : il voit qu'elle est très en dehors des
                   autres, et un clic la met de côté. */}
               {lu.de_cote && (
-                <p className="mesure flex flex-wrap items-baseline gap-x-2 text-[10px] leading-4 text-encre-4">
+                <p className="mesure flex flex-wrap items-baseline gap-x-2 text-[10.5px] leading-4 text-encre-4">
                   <span>
                     «&nbsp;{lu.de_cote}&nbsp;» est très en dehors des autres — la
                     garder les rapetisse toutes.
@@ -360,12 +361,12 @@ export function EcranCalibrage({
                     ont quitté la ligne de pose, qui n'a pas la place. Le produit
                     dit déjà *retenir*, *éteindre*, *rallumer* : un geste est un
                     mot. */}
-                <div className="mesure flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-1 text-[10px]">
+                <div className="mesure flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-1 text-[10.5px]">
                   <Geste
                     aide="calibrage.reference"
                     onClick={() => setReference(courante.pose)}
                     inactif={courante.pose === reference}
-                    ton="epingle"
+                    ton="attention"
                   >
                     {courante.pose === reference
                       ? "c'est la référence"
@@ -395,7 +396,7 @@ export function EcranCalibrage({
                 {/* **En gris de lecture, pas dans la fente des refus** (R8) :
                     c'est une explication, et la fente ne porte que des
                     raisons. */}
-                <p className="text-[10px] leading-[1.5] text-encre-3">
+                <p className="text-[10.5px] leading-[1.5] text-encre-3">
                   la taille est une part de la case : changer la taille de la
                   case ne défait aucun calage
                 </p>
@@ -413,7 +414,7 @@ export function EcranCalibrage({
                     aria-pressed={vue === quoi}
                     onClick={() => setVue(quoi)}
                     className={[
-                      "mesure h-[26px] rounded-[2px] px-2 text-[10px] transition-colors duration-[80ms]",
+                      "mesure h-[26px] rounded-[2px] px-2 text-[10.5px] transition-colors duration-[80ms]",
                       vue === quoi
                         ? "bg-carte text-encre"
                         : "text-encre-4 hover:bg-carte hover:text-encre-3",
@@ -426,7 +427,7 @@ export function EcranCalibrage({
               {/* **La légende nomme les trois traitements** (R9). Le premier
                   dessin assumait de n'écrire rien ; à l'usage, personne ne
                   devine que la silhouette à demi effacée est la référence. */}
-              <ul className="mesure flex flex-col gap-1 text-[9.5px] text-encre-4">
+              <ul className="mesure flex flex-col gap-1 text-[10.5px] text-encre-4">
                 <Legende etat="reglee" quoi={`celle qu'on règle${reglee ? ` — ${reglee}` : ""}`} />
                 <Legende
                   etat="reference"
@@ -468,7 +469,7 @@ function Geste({
   aide: string
   onClick: () => void
   inactif?: boolean
-  ton: "epingle" | "signal"
+  ton: "attention" | "signal"
   children: ReactNode
 }) {
   const infobulle = useInfobulle(aide, { epinglable: false })
@@ -480,7 +481,7 @@ function Geste({
         disabled={inactif}
         {...infobulle.declencheurs}
         className={
-          ton === "epingle"
+          ton === "attention"
             ? "text-encre-attention hover:text-encre disabled:text-encre-4"
             : "text-signal hover:opacity-70 disabled:text-encre-4"
         }
@@ -513,7 +514,7 @@ function Fait({
   return (
     <p
       data-fait
-      className="mesure flex h-[18px] items-baseline gap-2 text-[10px] text-encre-4"
+      className="mesure flex h-[18px] items-baseline gap-2 text-[10.5px] text-encre-4"
     >
       <span className="min-w-0 flex-1 truncate">{nom}</span>
       <span className={dore ? "shrink-0 text-encre-attention" : "shrink-0 text-encre-3"}>
@@ -602,16 +603,16 @@ function LignePose({
           danseraient d'une ligne à l'autre. */}
       <span
         data-marque-reference
-        className="mesure w-[22px] shrink-0 text-right text-[9px] text-encre-attention"
+        className="mesure w-[22px] shrink-0 text-right text-[10.5px] text-encre-attention"
       >
         {reference ? "réf" : ""}
       </span>
-      <span className="mesure w-[36px] shrink-0 text-right text-[9.5px] whitespace-nowrap text-encre-4">
+      <span className="mesure w-[36px] shrink-0 text-right text-[10.5px] whitespace-nowrap text-encre-4">
         {pose.de_cote ? "" : `${pose.occupation} %`}
       </span>
       <span
         className={[
-          "mesure w-[46px] shrink-0 text-right text-[9.5px] whitespace-nowrap",
+          "mesure w-[46px] shrink-0 text-right text-[10.5px] whitespace-nowrap",
           pose.de_cote ? "text-encre-4" : "text-encre-3",
         ].join(" ")}
       >
@@ -659,9 +660,9 @@ function Reglage({
         max={max}
         onChange={(e) => onChange(borner(Number(e.target.value)))}
         aria-label={`${nom} de la pose réglée`}
-        className="mesure h-[26px] w-[60px] shrink-0 rounded-[2px] border border-trait bg-carte px-1 text-right text-[10px] text-encre-3"
+        className="mesure h-[26px] w-[60px] shrink-0 rounded-[2px] border border-trait bg-carte px-1 text-right text-[10.5px] text-encre-3"
       />
-      <span className="mesure w-[18px] shrink-0 text-[9.5px] text-encre-4">
+      <span className="mesure w-[18px] shrink-0 text-[10.5px] text-encre-4">
         {unite}
       </span>
       <button
@@ -773,7 +774,7 @@ function Scene({
           </div>
         )}
       </div>
-      <p className="mesure text-[9.5px] text-encre-4">
+      <p className="mesure text-[10.5px] text-encre-4">
         case de {calibrage.cible} × {calibrage.cible} px, montrée ×{echelle}
         {calibrage.commune > 0 &&
           " · la ligne dorée est la hauteur que toutes atteindront"}
@@ -804,7 +805,7 @@ function Empilement({
     <div className="flex flex-col gap-2">
       <span
         className={[
-          "mesure text-[9.5px] tracking-[.11em] uppercase",
+          "mesure text-[10.5px] tracking-[.11em] uppercase",
           apres ? "text-ok" : "text-encre-4",
         ].join(" ")}
       >
@@ -833,7 +834,7 @@ function Empilement({
             className="absolute right-0 left-0 border-t border-dashed border-trait-attention/70"
             style={{ bottom: commune * echelle }}
           >
-            <span className="mesure absolute -top-[13px] right-[3px] text-[9px] text-encre-attention">
+            <span className="mesure absolute -top-[13px] right-[3px] text-[10.5px] text-encre-attention">
               {commune} px
             </span>
           </div>
@@ -843,7 +844,7 @@ function Empilement({
           className="absolute right-0 bottom-0 left-0 border-t border-contour"
         />
       </div>
-      <span className="mesure text-[9.5px] text-encre-4">{sous}</span>
+      <span className="mesure text-[10.5px] text-encre-4">{sous}</span>
     </div>
   )
 }

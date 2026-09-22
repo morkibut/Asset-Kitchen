@@ -1018,6 +1018,49 @@ class Base:
             "bandes", projet, personnages, conditions=("piece IS NULL",)
         )
 
+    def _versions_par_pose(
+        self, table: str, projet: str, personnages: Sequence[str],
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Les lignes entières d'un calque, groupées par sujet (RV10).
+
+        Le même aller-retour que `_comptes_par_pose`, mais avec la ligne
+        entière plutôt qu'un compte : le compte d'avancement a besoin de savoir
+        si une case est écartée, retenue, ou porte une pièce — pas seulement
+        combien elle a de versions. Deux requêtes groupées pour toute une page
+        de sujets (une par calque), à la place d'une matrice relue sujet par
+        sujet.
+        """
+        if not personnages:
+            return {}
+        rendu: dict[str, list[dict[str, Any]]] = {}
+        with self._connexion() as connexion:
+            for depart in range(0, len(personnages), 400):
+                paquet = list(personnages[depart : depart + 400])
+                trous = ",".join("?" * len(paquet))
+                lignes = connexion.execute(
+                    f"SELECT personnage, contenu FROM {table} WHERE "
+                    "pose IS NOT NULL AND pose <> '' AND (projet = ? OR projet IS NULL) "
+                    f"AND personnage IN ({trous})",
+                    (projet, *paquet),
+                ).fetchall()
+                for ligne in lignes:
+                    rendu.setdefault(ligne["personnage"], []).append(
+                        json.loads(ligne["contenu"])
+                    )
+        return rendu
+
+    def images_versions_par_sujet(
+        self, projet: str, personnages: Sequence[str]
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Les images entières, groupées par sujet — pour le compte d'avancement (RV10)."""
+        return self._versions_par_pose("assets", projet, personnages)
+
+    def bandes_versions_par_sujet(
+        self, projet: str, personnages: Sequence[str]
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Les animations entières, groupées par sujet — pour le compte d'avancement (RV10)."""
+        return self._versions_par_pose("bandes", projet, personnages)
+
     def vignettes_par_personnage(
         self, projet: str, personnages: Sequence[str]
     ) -> dict[str, Asset]:

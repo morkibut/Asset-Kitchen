@@ -5,6 +5,7 @@ import { apiCalques, type CheminEmploi, type CibleCalque } from "../api-calques"
 import { equipements, type DemandeEquipement, type OuvrirCalque, type TravailEquipement } from "../api-travaux-equipement"
 import { vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
+import { nomDuModele } from "./Fiche"
 
 const CHAMP = "h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle disabled:opacity-50"
 const ACTION = "h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50"
@@ -102,7 +103,7 @@ export function RelectureEquipement({ chemin, initiale, cibles, nomPiece, piece,
           <label className="mt-[22px] flex flex-col gap-[4px] text-[13px]">Moyen de fabrication<select className={CHAMP} value={demande.methode} onChange={(e) => changer({ methode: e.target.value as "images" | "planches" })}><option value="planches">Plier plusieurs bases dans une planche</option><option value="images">Une génération distincte par image</option></select></label>
           {demande.methode === "planches" && <label className="mt-[14px] flex flex-col gap-[4px] text-[13px]">Cases par planche<input className={CHAMP} type="number" min="1" step="1" value={demande.cases_par_planche ?? 4} onChange={(e) => changer({ cases_par_planche: Number(e.target.value) })} /></label>}
           <label className="mt-[14px] flex flex-col gap-[4px] text-[13px]">Place occupée par le corps (%)<input className={CHAMP} type="number" min="1" max="100" value={Math.round((demande.occupation ?? .75) * 100)} onChange={(e) => changer({ occupation: Number(e.target.value) / 100 })} /></label><p className="mt-[8px] text-[12px] text-encre-3">L’espace autour du corps permet à la pièce de dépasser. Le retour sera replacé dans le cadre exact de chaque base.</p>
-          <p className="mt-[22px] text-[12px] text-encre-3">Les frames issues d’une vidéo ou d’un modèle 3D passent par ce même pliage 2D. Une graine identique ne garantit pas une vidéo identique.</p>
+          <p className="mt-[22px] text-[12px] text-encre-3">Les images issues d’une vidéo ou d’un modèle 3D passent par ce même pliage 2D. Une graine identique ne garantit pas une vidéo identique.</p>
         </section>
         <section className="rounded-10 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">La méthode et sa demande</h2>
           <label className="mt-[14px] flex flex-col gap-[4px] text-[13px]">{CHAMP_DU_MODELE}<select className={CHAMP} value={demande.modele} onChange={(e) => changer({ modele: e.target.value, resolution: null, options: {} })}><option value="">Choisir une méthode</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus || m.references_max < 1}>{m.identifiant}{m.refus ? ` — ${m.refus}` : m.references_max < 1 ? " — sans image d’entrée" : ""}</option>)}</select></label>
@@ -140,7 +141,7 @@ export function RelectureEquipement({ chemin, initiale, cibles, nomPiece, piece,
           {appel.retour_url && <figure className="mt-[22px]"><figcaption className="mb-[8px] text-[13px]">Planche réellement reçue — à contrôler avant extraction</figcaption><a href={appel.retour_url} target="_blank" rel="noreferrer"><img className="damier-papier max-h-[380px] max-w-full object-contain" src={appel.retour_url} alt={`Planche reçue de la génération ${appel.numero + 1}`} /></a></figure>}
           {appel.raison && <p className="mt-[14px] text-[13px] text-echec">{appel.raison}</p>}{appel.pliage.attend_un_choix && <button className={`${CHAMP} mt-[8px]`} disabled={occupe} onClick={() => void agir(() => equipements.confirmer(chemin, travail.identifiant, appel.numero))}>J’ai vérifié la planche : garder toutes ses cases</button>}
         </section>)}
-        {travail.consommations.length > 0 && <section className="mt-[22px] rounded-10 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Consommation enregistrée</h2>{travail.consommations.map((c, i) => <p className="mt-[8px] text-[13px]" key={i}>{c.modele} · {montant(c.consomme, c.unite)}</p>)}</section>}
+        {travail.consommations.length > 0 && <section className="mt-[22px] rounded-10 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Consommation enregistrée</h2>{travail.consommations.map((c, i) => <p className="mt-[8px] text-[13px]" key={i}>{nomDuModele(c.modele)} · {montant(c.consomme, c.unite)}</p>)}</section>}
       </>}
     </div>
     <footer className="flex shrink-0 items-center justify-between gap-[14px] border-t border-trait bg-carte px-[30px] py-[14px]"><p className="max-w-prose text-[12px] text-encre-3">{edition ? "La prochaine étape montre l’envoi exact, sans appeler le fournisseur." : "Les retours restent à extraire et à vérifier. Fermer conserve le suivi et les résultats."}</p><div className="flex gap-[8px]">

@@ -64,6 +64,7 @@ import {
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
 import { Fiche } from "./Fiche"
 import { OrdreDesVues } from "./OrdreDesVues"
+import { EcranPlanche } from "./Planche"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. Le double part au
  *  serveur : un écran à deux pixels par point rend l'image floue sinon. */
@@ -793,6 +794,19 @@ export function ImagesDuSujet({
   const [poseOuverte, setPoseOuverte] = useEtatDuParcours<string | null>(`${cle}:pose`, personnage.cases[0]?.pose ?? null)
   const [filtre, setFiltre] = useEtatDuParcours<Filtre>(`${cle}:filtre`, "toutes")
   const [choisie, setChoisie] = useEtatDuParcours<string | null>(`${cle}:choisie`, null)
+  /** **La planche, ouverte d'ici** (RV10, retrait de « Cases et planches ») —
+   *  la seule porte qui reste vers la feuille achetée qui regroupe les
+   *  directions d'une pose. Elle retient la pose, pas un booléen : on en
+   *  change en rouvrant sur une autre sans repasser par cet onglet. */
+  const [planchePose, setPlanchePose] = useState<string | null>(null)
+
+  /** **Le lot d'images** (C2, relogé ici depuis « Cases et planches », RV10) :
+   *  cocher plusieurs poses les fait partir en une seule planche — une seule
+   *  génération, un seul appel — au lieu d'une par pose. Ce qui se coche est
+   *  une attitude, jamais une image : l'invariant tient encore. Le bandeau
+   *  « Pour », les mesures d'une case sortie d'un lot et le coût annoncé
+   *  vivent dans le guichet lui-même (`onArmer` → `Galerie.tsx`), pas ici. */
+  const [lot, setLot] = useState<string[]>([])
 
   const parPose = useMemo(
     () =>
@@ -990,6 +1004,21 @@ export function ImagesDuSujet({
     [personnage.identifiant, onPersonnage, onErreur],
   )
 
+  if (planchePose) return (
+    <EcranPlanche
+      personnage={personnage}
+      pose={planchePose}
+      plan={plan}
+      onPose={setPlanchePose}
+      onFermer={() => setPlanchePose(null)}
+      onArmer={(pose, directions) => {
+        const attitude = plan.find((p) => p.identifiant === pose)
+        if (attitude) onArmer(personnage, [attitude], null, null, directions)
+      }}
+      onErreur={onErreur}
+    />
+  )
+
   return (
     <div data-onglet-images className="flex items-start" onDoubleClick={(e) => {
       const cible = (e.target as HTMLElement).closest<HTMLElement>("[data-vignette-de-rangee]")?.dataset.vignetteDeRangee
@@ -1056,34 +1085,65 @@ export function ImagesDuSujet({
                 data-pose-de-rangement={sienne.pose}
                 className="flex flex-col rounded-10 border border-trait bg-carte px-[14px]"
               >
-                <button
-                  type="button"
-                  aria-expanded={ouverte}
-                  onClick={() => setPoseOuverte(ouverte ? null : sienne.pose)}
-                  className="flex items-baseline gap-[8px] py-[8px] text-left"
-                >
-                  <span aria-hidden className="text-[12px] text-encre-4">
-                    {ouverte ? "▾" : "▸"}
-                  </span>
-                  <span className="font-serif text-[25px] leading-[1.15] text-encre">{nom}</span>
-                  <span className="text-[12px] text-encre-3">
-                    {images === 0 ? (
-                      "aucune image"
-                    ) : (
-                      <>
-                        <span className="mesure">{rangees.length}</span>{" "}
-                        {rangees.length > 1 ? "directions" : "direction"} ·{" "}
-                        <span className="mesure">{images}</span>{" "}
-                        {images > 1 ? "images" : "image"}
-                      </>
-                    )}
-                  </span>
-                  {cloche && (
-                    <span className="ml-auto rounded-5 border border-trait-attention bg-fond-attention px-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-attention">
-                      {cloche}
+                <div className="flex items-baseline gap-[8px]">
+                  <input
+                    type="checkbox"
+                    checked={lot.includes(sienne.pose)}
+                    onChange={(e) =>
+                      setLot((precedentes) =>
+                        e.target.checked
+                          ? [...precedentes, sienne.pose]
+                          : precedentes.filter((p) => p !== sienne.pose),
+                      )
+                    }
+                    aria-label={`Faire partir ${nom} avec les autres`}
+                    title="cochées ensemble, elles partent en une seule planche"
+                    className="shrink-0 accent-signal"
+                  />
+                  <button
+                    type="button"
+                    aria-expanded={ouverte}
+                    onClick={() => setPoseOuverte(ouverte ? null : sienne.pose)}
+                    className="flex flex-1 items-baseline gap-[8px] py-[8px] text-left"
+                  >
+                    <span aria-hidden className="text-[12px] text-encre-4">
+                      {ouverte ? "▾" : "▸"}
                     </span>
+                    <span className="font-serif text-[25px] leading-[1.15] text-encre">{nom}</span>
+                    <span className="text-[12px] text-encre-3">
+                      {images === 0 ? (
+                        "aucune image"
+                      ) : (
+                        <>
+                          <span className="mesure">{rangees.length}</span>{" "}
+                          {rangees.length > 1 ? "directions" : "direction"} ·{" "}
+                          <span className="mesure">{images}</span>{" "}
+                          {images > 1 ? "images" : "image"}
+                        </>
+                      )}
+                    </span>
+                    {cloche && (
+                      <span className="ml-auto rounded-5 border border-trait-attention bg-fond-attention px-[8px] text-[10.5px] uppercase tracking-[0.14em] text-encre-attention">
+                        {cloche}
+                      </span>
+                    )}
+                  </button>
+                  {/* **La planche s'ouvre d'ici** (E13, RV10 — seule porte
+                      restante depuis le retrait de « Cases et planches »), sur
+                      plusieurs directions seulement : sans elles, une pose vaut
+                      une image et il n'y a pas de feuille à regarder. */}
+                  {rangees.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setPlanchePose(sienne.pose)}
+                      aria-label={`Ouvrir la planche de ${nom}`}
+                      title="plusieurs directions, un seul appel — on voit ce qu'on achète avant de payer"
+                      className="shrink-0 px-1 text-[10.5px] text-signal hover:opacity-70"
+                    >
+                      la planche ›
+                    </button>
                   )}
-                </button>
+                </div>
                 {ouverte && (
                   <div className="flex flex-col pb-[8px]">
                     {rangees.map((rangee) => (
@@ -1111,6 +1171,32 @@ export function ImagesDuSujet({
             )
           })}
         </div>
+
+        {/* **Le geste du lot, et il n'existe que quand il a un objet** (C2) :
+            sans deux attitudes cochées, `Fabriquer ensemble` ne désigne rien —
+            il est absent, pas grisé avec sa raison, comme partout ailleurs
+            dans ce fichier. */}
+        {lot.length >= 2 && (
+          <div className="flex items-center gap-2 pt-1">
+            <span className="mesure text-[10.5px] text-encre-4">
+              {lot.length} attitudes, un seul appel
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const poses = lot
+                  .map((id) => plan.find((p) => p.identifiant === id))
+                  .filter((p): p is Pose => Boolean(p))
+                onArmer(personnage, poses, null)
+                setLot([])
+              }}
+              title="prépare la planche dans l'atelier — rien n'est dépensé ici"
+              className="mesure ml-auto px-1 text-[10.5px] text-signal hover:opacity-70"
+            >
+              Fabriquer ensemble ›
+            </button>
+          </div>
+        )}
 
         <SesReferencesParUsage
           personnage={personnage}

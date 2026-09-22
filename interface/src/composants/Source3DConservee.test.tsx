@@ -26,6 +26,6 @@ it("relit une source conservée hors ligne avec le bon GLB, ses fichiers et ses 
 it("montre la première frame quand aucun GLB n'est conservé", () => {
   const sansGlb = { ...source, fichiers: { "frame-0000.png": "frame-0000.png" } }
   render(<Source3DConservee source={sansGlb} onFermer={vi.fn()} onBande={vi.fn()} />)
-  expect(screen.getByRole("img", { name: "Première frame de Pèlerin animé" })).toHaveAttribute("src", sources3d.fichier(sansGlb, "frame-0000.png"))
+  expect(screen.getByRole("img", { name: "Première image de Pèlerin animé" })).toHaveAttribute("src", sources3d.fichier(sansGlb, "frame-0000.png"))
   expect(screen.getByText(/Seules les images rendues ont été conservées/)).toBeTruthy()
 })

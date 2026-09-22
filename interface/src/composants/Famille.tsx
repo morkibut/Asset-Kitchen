@@ -150,9 +150,9 @@ type SujetAffiche = SujetDeLaGrille & { famille: string }
 function trierLesSujets(sujets: SujetAffiche[], tri: TriDesSujets): SujetAffiche[] {
   return [...sujets].sort((a, b) =>
     tri === "resultats"
-      ? b.compte.images.fait +
-        b.compte.bandes.fait -
-        (a.compte.images.fait + a.compte.bandes.fait) ||
+      ? b.compte.images.pretes +
+        b.compte.animations.pretes -
+        (a.compte.images.pretes + a.compte.animations.pretes) ||
         a.nom.localeCompare(b.nom, "fr")
       : (tri === "nom-desc" ? -1 : 1) * a.nom.localeCompare(b.nom, "fr"),
   )
@@ -261,8 +261,8 @@ function CarteDeGrille({
   onPrendreEnMain: (e: React.DragEvent<HTMLButtonElement>) => void
   onFinDeGlissement: () => void
 }) {
-  const { poses, images } = sujet.compte
-  const pct = poses.attendu > 0 ? Math.round((poses.fait / poses.attendu) * 100) : 0
+  const { animations, images } = sujet.compte
+  const pct = animations.demandees > 0 ? Math.round((animations.pretes / animations.demandees) * 100) : 0
   return (
     <button
       type="button"
@@ -271,7 +271,7 @@ function CarteDeGrille({
       onDragEnd={onFinDeGlissement}
       onClick={onChoisir}
       aria-pressed={choisi}
-      aria-label={`${sujet.nom}, ${poses.fait} sur ${poses.attendu} poses`}
+      aria-label={`${sujet.nom}, ${animations.pretes} sur ${animations.demandees} animations`}
       data-carte-de-sujet={sujet.identifiant}
       className={[
         "relative flex flex-col gap-[8px] rounded-8 border bg-carte p-[8px] text-left transition-colors duration-120",
@@ -297,9 +297,9 @@ function CarteDeGrille({
       </span>
       <span className="flex items-center justify-between text-[10.5px] text-encre-3">
         <span className="mesure">
-          {poses.fait} / {poses.attendu}
+          {animations.pretes} / {animations.demandees}
         </span>
-        <span className="mesure">{images.fait === 0 ? "—" : `${images.fait} im.`}</span>
+        <span className="mesure">{images.pretes === 0 ? "—" : `${images.pretes} im.`}</span>
       </span>
     </button>
   )
@@ -318,7 +318,7 @@ function LigneDeListe({
   onPrendreEnMain: (e: React.DragEvent<HTMLButtonElement>) => void
   onFinDeGlissement: () => void
 }) {
-  const { poses, images } = sujet.compte
+  const { animations, images } = sujet.compte
   return (
     <button
       type="button"
@@ -347,10 +347,10 @@ function LigneDeListe({
         ))}
       </span>
       <span className="mesure shrink-0 text-[11px] text-encre-3">
-        {poses.fait} / {poses.attendu}
+        {animations.pretes} / {animations.demandees}
       </span>
       <span className="mesure shrink-0 text-[11px] text-encre-3">
-        {images.fait === 0 ? "—" : `${images.fait} im.`}
+        {images.pretes === 0 ? "—" : `${images.pretes} im.`}
       </span>
     </button>
   )
@@ -418,7 +418,7 @@ function colonnesDesPoses(
 ): { identifiant: string; nom: string }[] {
   const vues = new Map<string, string>()
   for (const sujet of sujets)
-    for (const d of sujet.compte.detail) if (!vues.has(d.identifiant)) vues.set(d.identifiant, d.nom)
+    for (const d of sujet.compte.detail ?? []) if (!vues.has(d.identifiant)) vues.set(d.identifiant, d.nom)
   return [...vues.entries()].map(([identifiant, nom]) => ({ identifiant, nom }))
 }
 
@@ -447,7 +447,7 @@ function TableauDesPoses({ sujets }: { sujets: readonly SujetDeLaGrille[] }) {
         </thead>
         <tbody>
           {sujets.map((sujet) => {
-            const parPose = new Map(sujet.compte.detail.map((d) => [d.identifiant, d]))
+            const parPose = new Map((sujet.compte.detail ?? []).map((d) => [d.identifiant, d]))
             return (
               <tr key={sujet.identifiant} className="border-t border-trait-faible">
                 <td className="sticky left-0 whitespace-nowrap bg-carte px-[14px] py-[8px] text-encre">
@@ -465,15 +465,16 @@ function TableauDesPoses({ sujets }: { sujets: readonly SujetDeLaGrille[] }) {
                         ·
                       </td>
                     )
-                  const teinte =
-                    d.attendu > 0 && d.fait >= d.attendu
-                      ? "text-encre"
-                      : d.fait > 0
-                        ? "text-encre-2"
-                        : "text-encre-4"
+                  const complet = d.animations.pretes >= d.animations.demandees
+                    && d.images.pretes >= d.images.demandees
+                  const teinte = complet
+                    ? "text-encre"
+                    : d.animations.pretes > 0 || d.images.pretes > 0
+                      ? "text-encre-2"
+                      : "text-encre-4"
                   return (
                     <td key={c.identifiant} className={`mesure px-[14px] py-[8px] ${teinte}`}>
-                      {d.fait} / {d.attendu}
+                      {d.animations.pretes} / {d.animations.demandees} · {d.images.pretes} / {d.images.demandees}
                     </td>
                   )
                 })}
@@ -1740,7 +1741,7 @@ export function EcranFamille({
           <div className="rounded-8 border border-dashed border-contour p-[22px]">
             <h2 className="font-serif text-[25px]">Aucun sujet pour ces filtres</h2>
             <p className="mt-[8px] text-[13px] text-encre-3">
-              Choisissez toutes les familles, une autre collection, ou créez le premier.
+              Choisis toutes les familles, une autre collection, ou créez le premier.
             </p>
           </div>
         )}
@@ -1826,7 +1827,7 @@ export function EcranFamille({
                   <p className="truncate text-[11.5px] text-encre-4">
                     {sujet.collections[0]?.nom ?? sujet.type} ·{" "}
                     <span className="mesure">
-                      {sujet.compte.poses.fait} / {sujet.compte.poses.attendu}
+                      {sujet.compte.animations.pretes} / {sujet.compte.animations.demandees}
                     </span>
                   </p>
                 </div>
@@ -1898,9 +1899,9 @@ export function EcranFamille({
           <div className="flex flex-col gap-[8px] rounded-8 border border-trait bg-carte p-[14px]">
             <p className="text-[13px] font-medium text-encre">Ce qui leur manque</p>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-y-[4px] text-[12.5px]">
-              <span className="text-encre-2">Poses manquantes</span>
+              <span className="text-encre-2">Animations manquantes</span>
               <span className="mesure text-right text-encre">
-                {choisis.filter((s) => s.compte.poses.fait < s.compte.poses.attendu).length}
+                {choisis.filter((s) => s.compte.animations.pretes < s.compte.animations.demandees).length}
               </span>
               <span className="text-encre-2">Sans description</span>
               <span className="mesure text-right text-encre">
@@ -1908,7 +1909,7 @@ export function EcranFamille({
               </span>
               <span className="text-encre-2">Sans animation</span>
               <span className="mesure text-right text-encre">
-                {choisis.filter((s) => s.compte.bandes.fait === 0).length}
+                {choisis.filter((s) => s.compte.animations.pretes === 0).length}
               </span>
             </div>
           </div>

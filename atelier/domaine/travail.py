@@ -21,7 +21,24 @@ DEFAUTS = {
     "secondes": 5, "resolution": "480p", "proportions": "1:1",
     "nombre_images": 8, "cadence": 8.0, "sens": "boucle",
     "livrer_provisoire": False, "plafond_image_usd": None,
+    # **RV5** : le mouvement de la bibliothèque qui écrit le texte, et la
+    # correction du geste pour cet appel seulement (E14). Avec un mouvement,
+    # `prompt_video` devient facultatif : `ServiceTravaux.preparer` le compose
+    # (`services/texte_clip.composer`) et l'écrit dans la demande conservée,
+    # avant l'empreinte — le texte relu est celui qui part.
+    "mouvement": None, "correction_geste": "",
 }
+
+# Les réglages arrivés après que des demandes ont déjà été conservées. Laissés à
+# leur défaut, ils ne comptent pas dans l'empreinte : une demande de l'agent
+# répétée avec sa clé d'avant RV5 se relit, au lieu de se voir refusée comme
+# « une autre demande » parce que le dictionnaire a grandi.
+TARDIFS = {"mouvement": None, "correction_geste": ""}
+
+
+def pour_l_empreinte(demande: dict[str, Any]) -> dict[str, Any]:
+    """La demande sans les réglages tardifs restés à leur défaut."""
+    return {k: v for k, v in demande.items() if not (k in TARDIFS and v == TARDIFS[k])}
 
 
 def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> dict[str, Any]:
@@ -32,6 +49,21 @@ def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> 
     if inconnus:
         raise TravailRefuse("Réglage de fabrication inconnu : " + ", ".join(sorted(inconnus)))
     demande = {**DEFAUTS, **brute}
+    if demande["mouvement"] is not None and (not isinstance(demande["mouvement"], str) or not demande["mouvement"].strip()):
+        raise TravailRefuse("« mouvement » doit être l'identifiant d'un mouvement ou rester vide.")
+    if not isinstance(demande["correction_geste"], str):
+        raise TravailRefuse("« correction_geste » doit être du texte.")
+    if demande["correction_geste"].strip() and demande["mouvement"] is None:
+        raise TravailRefuse("Une correction du geste corrige un mouvement : choisir le mouvement avec elle.")
+    if demande["mouvement"] is not None:
+        # Le texte sera composé par le serveur ; un texte vide à ce stade est
+        # attendu. Un texte déjà écrit est comparé au composé par `preparer`.
+        demande.setdefault("prompt_video", "")
+        if demande["prompt_video"] is None:
+            demande["prompt_video"] = ""
+        obligatoires = obligatoires - {"prompt_video"}
+        if not isinstance(demande["prompt_video"], str):
+            raise TravailRefuse("« prompt_video » doit être du texte.")
     if source_libre:
         if any(brute.get(nom) for nom in ("personnage", "pose", "direction")):
             raise TravailRefuse("Une vidéo libre se classe dans un asset au montage ; laisser son personnage, sa pose et sa direction vides.")
@@ -53,10 +85,15 @@ def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> 
     for nom in ("livrer_provisoire", "repris_image"):
         if not isinstance(demande[nom], bool):
             raise TravailRefuse(f"« {nom} » doit être activé ou désactivé.")
-    for nom, maximum in (("nombre_images", 64), ("secondes", 60)):
-        valeur = demande[nom]
-        if not isinstance(valeur, int) or isinstance(valeur, bool) or not 1 <= valeur <= maximum:
-            raise TravailRefuse(f"« {nom} » doit être un entier de 1 à {maximum}.")
+    valeur = demande["nombre_images"]
+    if not isinstance(valeur, int) or isinstance(valeur, bool) or not 1 <= valeur <= 64:
+        raise TravailRefuse("« nombre_images » doit être un entier de 1 à 64.")
+    # **Un réel depuis RV5** : le moteur de la maison n'accepte que 1, 1,5, 2 et
+    # 3 s, et l'entier de 5 par défaut était refusé par lui. Ce que le modèle
+    # choisi accepte vraiment, `ServiceAnimation.grise` le dit à la préparation.
+    valeur = demande["secondes"]
+    if isinstance(valeur, bool) or not isinstance(valeur, (int, float)) or not math.isfinite(valeur) or not 0 < valeur <= 60:
+        raise TravailRefuse("« secondes » doit être une durée de plus de 0 et d'au plus 60 secondes.")
     cadence = demande["cadence"]
     if isinstance(cadence, bool) or not isinstance(cadence, (int, float)) or not math.isfinite(cadence) or not 0.1 <= cadence <= 120:
         raise TravailRefuse("La cadence doit être comprise entre 0,1 et 120 images par seconde.")

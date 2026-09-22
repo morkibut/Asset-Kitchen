@@ -81,12 +81,15 @@ La branche `feat/retours-du-20-septembre` (seize commits d'avance, aucun de reta
 
 ### Critères d'acceptation
 
-- [ ] `main` contient les neuf tranches `RT` ; la suite serveur et la suite d'écran passent sur
-      l'état fusionné (`docs/essais.md`).
-- [ ] Le tableau d'état ne dit plus que *Le son* vit sur une branche à part.
-- [ ] Le tableau d'état porte une ligne pour *Les moteurs locaux* et *Les styles de combat*,
+- [x] `main` contient les neuf tranches `RT` ; la suite serveur et la suite d'écran passent sur
+      l'état fusionné (`docs/essais.md`). *Fait le 21 septembre 2026 en avance rapide (`main` n'avait
+      aucun commit d'avance) : 3 846 essais serveur et 2 815 d'écran verts. Le garde-fou
+      `essais/essai_vocabulaire.py` échouait déjà avant la fusion (8 écarts, dont « Codex » absent
+      de `docs/vocabulaire.html`) : repris par `RV4`.*
+- [x] Le tableau d'état ne dit plus que *Le son* vit sur une branche à part.
+- [x] Le tableau d'état porte une ligne pour *Les moteurs locaux* et *Les styles de combat*,
       chantiers finis qui n'y figuraient pas.
-- [ ] Le tableau d'état porte la ligne de ce chantier.
+- [x] Le tableau d'état porte la ligne de ce chantier.
 
 ---
 
@@ -103,17 +106,21 @@ une animation réussie, transparente, et proposée à la livraison.
 
 ### Critères d'acceptation
 
-- [ ] Un clip dont toutes les images sont noires (ou presque) est `echouee`, raison « la vidéo est
+- [x] Un clip dont toutes les images sont noires (ou presque) est `echouee`, raison « la vidéo est
       revenue noire ».
-- [ ] Un clip dont toutes les images sont identiques est `echouee`, raison « la vidéo ne bouge
+- [x] Un clip dont toutes les images sont identiques est `echouee`, raison « la vidéo ne bouge
       pas ».
-- [ ] Un clip qui ne garde presque rien après détourage est `echouee`, raison « le détourage n'a
+- [x] Un clip qui ne garde presque rien après détourage est `echouee`, raison « le détourage n'a
       rien laissé ».
-- [ ] Un clip `echouee` n'est jamais monté automatiquement et n'apparaît pas dans la livraison.
-- [ ] Sa dépense reste comptée, son fichier brut reste consultable.
-- [ ] L'écran montre la raison sur la case du clip, avec un bouton « Relancer » qui rouvre la
+- [x] Un clip `echouee` n'est jamais monté automatiquement et n'apparaît pas dans la livraison.
+- [x] Sa dépense reste comptée, son fichier brut reste consultable.
+- [x] L'écran montre la raison sur la case du clip, avec un bouton « Relancer » qui rouvre la
       préparation remplie à l'identique ; rien ne part sans ce clic.
-- [ ] Un vrai clip réussi passe le contrôle sans changement (essai sur un clip existant du dépôt).
+- [x] Un vrai clip réussi passe le contrôle sans changement (essai sur un clip existant du dépôt).
+
+---
+
+*Fait le 21 septembre 2026.* Le contrôle vit dans un module pur sans fournisseur ; seuils calibrés sur les 45 clips réussis de `donnees/` et les 4 clips versionnés du banc pixel, chacun avec au moins ×5 de marge (note de décision : noire = 80 % des images au centile 99 de luminance ≤ 24 ; immobile = médiane des écarts successifs < 0,10 ; vide = meilleure image < 0,5 % de pixels opaques). Les imports ne sont jamais contrôlés. Le second montage automatique, celui des fabrications suivies, est contrôlé aussi ; le travail passe « à vérifier » et propose une nouvelle demande. **Simplification** : « Relancer » rouvre la préparation de la case (pose et direction), comme « + générer », et non la demande à l'identique ; `RV6` la rendra identique quand la fenêtre sera unique. **Pas encore vu au navigateur** : se vérifie avec `RV7`.
 
 ---
 
@@ -130,11 +137,13 @@ revenue noire.
 
 ### Critères d'acceptation
 
-- [ ] La préparation affiche « Mémoire libre : 0,9 Go » et non l'identifiant technique du pilote.
-- [ ] Sous le besoin connu du modèle, un avertissement nomme l'écart et le remède (« fermez les
+- [x] La préparation affiche « Mémoire libre : 0,9 Go » et non l'identifiant technique du pilote.
+- [x] Sous le besoin connu du modèle, un avertissement nomme l'écart et le remède (« fermez les
       autres calculs »). Il avertit, il ne bloque pas.
-- [ ] ComfyUI occupé par un autre calcul est dit avant le lancement.
-- [ ] Un modèle dont le besoin n'est pas connu n'invente pas de chiffre : l'avertissement se tait.
+- [x] ComfyUI occupé par un autre calcul est dit avant le lancement.
+- [x] Un modèle dont le besoin n'est pas connu n'invente pas de chiffre : l'avertissement se tait.
+
+*Fait le 21 septembre 2026.* Un seul chiffre de besoin existe au dépôt : 6,0 Go pour le moteur de la maison (Wan 2.2), mesuré le 3 septembre ; les moteurs d'image locaux restent à besoin inconnu, donc muets. « Occupé » reprend la lecture de la file ComfyUI déjà en service. Le même petit composant sert l'écran « Faire une vidéo » et la fenêtre « Préparer une fabrication ». **Reste** : Réglages › Installation affiche encore l'identifiant technique du pilote — repris par `RV4`.
 
 ---
 
@@ -151,13 +160,15 @@ détourage.
 
 ### Critères d'acceptation
 
-- [ ] « cape verte » sans référence → le fond envoyé n'est pas le vert de studio.
-- [ ] Avec une image de référence, le calcul de `RT3` est inchangé.
-- [ ] La relecture nomme le fond choisi et, quand il a changé à cause de la description, dit
+- [x] « cape verte » sans référence → le fond envoyé n'est pas le vert de studio.
+- [x] Avec une image de référence, le calcul de `RT3` est inchangé.
+- [x] La relecture nomme le fond choisi et, quand il a changé à cause de la description, dit
       pourquoi en une ligne.
-- [ ] La tête de `atelier/domaine/fond.py` décrit cette nouvelle entrée.
-- [ ] ⚠️ Écrit au plan à la clôture : les tirages faits avant `RV3` sur un sujet vert ne se
+- [x] La tête de `atelier/domaine/fond.py` décrit cette nouvelle entrée.
+- [x] ⚠️ Écrit au plan à la clôture : les tirages faits avant `RV3` sur un sujet vert ne se
       comparent plus aux suivants.
+
+*Fait le 21 septembre 2026.* Une table fermée de mots de couleur, en français et en anglais, lus en mots entiers (« couvert » ne compte pas). Sans référence, les couleurs nommées sont traitées comme les couleurs d'une référence ; le vert de studio reste premier à égalité, donc inchangé quand rien ne le contredit. La relecture nomme le fond et, s'il a cédé, dit pourquoi (« fond magenta : ta description dit vert »). Les 41 essais de `RT3` passent sans changement. ⚠️ À partir d'ici, un sujet dont la description nomme la couleur du vert de studio part sur un autre fond : ses tirages ne se comparent plus à ceux d'avant.
 
 ---
 
@@ -172,20 +183,25 @@ comment l'atelier est construit.
 
 ### Critères d'acceptation
 
-- [ ] « frames » devient « images », « Asset » devient « Sujet », partout à l'écran.
-- [ ] Aucun identifiant technique de modèle (`ComfyUI:…@<empreinte>`) n'apparaît dans une liste ni
+- [x] « frames » devient « images », « Asset » devient « Sujet », partout à l'écran.
+- [x] Aucun identifiant technique de modèle (`ComfyUI:…@<empreinte>`) n'apparaît dans une liste ni
       une relecture : le nom lisible, déjà connu ailleurs, le remplace.
-- [ ] Plus de « Travail conservé chez le moteur : <identifiant> », de « .env », de
-      « cudaMallocAsync ».
-- [ ] « vote en deux temps » reçoit un nom qui dit le résultat.
-- [ ] Plus de « l'établi », « le carnet », « le vestiaire » à l'écran.
-- [ ] « Tu » partout ; un essai le tient.
-- [ ] Sur un calcul local, aucune ligne d'argent (« déjà payé », « 0,0000 $ par animation ») : le
+- [x] Plus de « Travail conservé chez le moteur : <identifiant> », de « .env », de
+      « cudaMallocAsync » — y compris dans Réglages › Installation, que `RV2` n'a pas touché.
+- [x] « vote en deux temps » reçoit un nom qui dit le résultat.
+- [x] Plus de « l'établi », « le carnet », « le vestiaire » à l'écran.
+- [x] « Tu » partout ; un essai le tient.
+- [x] Sur un calcul local, aucune ligne d'argent (« déjà payé », « 0,0000 $ par animation ») : le
       temps passé à la place.
-- [ ] Les sons : « 1 version », durées en minutes et secondes.
-- [ ] Le style de combat « karaté » a son propre texte, ou disparaît.
-- [ ] Les nouvelles phrases sont lues dans le recueil, jamais retapées (*R4*), et `aide.test.ts`
+- [x] Les sons : « 1 version », durées en minutes et secondes.
+- [x] Le style de combat « karaté » a son propre texte, ou disparaît.
+- [x] `essais/essai_vocabulaire.py` repasse : les 8 écarts relevés le 21 septembre (« Codex », les
+      onglets de la fiche, deux retours en arrière) sont réglés dans le code ou dans
+      `docs/vocabulaire.html`.
+- [x] Les nouvelles phrases sont lues dans le recueil, jamais retapées (*R4*), et `aide.test.ts`
       passe.
+
+*Fait le 22 septembre 2026.* « frame » reste dans l'atelier de retouche image par image, mot anglais que `docs/vocabulaire.html` garde. Le style « karaté » avait déjà son texte au dépôt : l'écart venait des données du testeur. « Revenir au… » devient « Reprendre le texte composé » / « Reprendre le choix automatique » (ce sont des annulations, pas des retours). Pour le Codex et les onglets, c'est `docs/vocabulaire.html` qui suit le code. Un nouveau garde-fou, `essais/essai_tutoiement.py`, tourne avec la suite ; sa liste d'impératifs est fermée, un impératif neuf s'y ajoute d'une ligne.
 
 ---
 
@@ -200,15 +216,17 @@ vidéo » savait faire, pour pouvoir le remplacer.
 
 ### Critères d'acceptation
 
-- [ ] Le mouvement choisi remplit le texte depuis la bibliothèque des mouvements ; le nom du
+- [x] Le mouvement choisi remplit le texte depuis la bibliothèque des mouvements ; le nom du
       mouvement s'affiche en français, le texte anglais envoyé se déplie.
-- [ ] Ce texte se corrige dans la fenêtre pour cet appel ; « garder pour le jeu » est un second
+- [x] Ce texte se corrige dans la fenêtre pour cet appel ; « garder pour le jeu » est un second
       geste.
-- [ ] On choisit le nombre de clips (1, 2, 4, 8).
-- [ ] La durée proposée est toujours une durée que le modèle choisi accepte.
-- [ ] Le bouton porte le prix (payant) ou le temps attendu (local) ; l'état de la carte vient de
+- [x] On choisit le nombre de clips (1, 2, 4, 8).
+- [x] La durée proposée est toujours une durée que le modèle choisi accepte.
+- [x] Le bouton porte le prix (payant) ou le temps attendu (local) ; l'état de la carte vient de
       `RV2`.
-- [ ] Le choix local ou payant montre des noms lisibles.
+- [x] Le choix local ou payant montre des noms lisibles.
+
+*Fait le 22 septembre 2026.* Un travail par clip, regroupés en série (`preparer_serie`, `demarrer_serie`) : N = directions cochées × nombre de clips, lancés tout ou rien pour l'agent. Le texte se compose dans un seul module serveur, que la route des mouvements et les travaux appellent ; la correction porte sur le geste, pour cet appel. Dans la fenêtre, le sélecteur de la bibliothèque s'appelle « Geste », pour ne pas le confondre avec le mouvement du plan. **Reste** : les textes neufs de la fenêtre sont écrits dans le composant, comme le reste du fichier ; ils passeront dans `aide.ts` quand `RV6` en fera la seule fenêtre.
 
 ---
 
@@ -276,12 +294,14 @@ second débordait à droite à 1280 px.
 
 ### Critères d'acceptation
 
-- [ ] Un seul écran « Livrer au jeu », sans onglet interne.
-- [ ] Le dossier Godot est le même quel que soit le chemin d'arrivée.
-- [ ] Livrer un sujet depuis sa fiche ouvre l'écran filtré sur ce sujet.
-- [ ] Les animations `echouee` n'y apparaissent pas.
-- [ ] Rien ne déborde à 1280 px ; lisible à 1024 px.
-- [ ] Ce que la livraison écrit dans Godot est identique à avant pour un même choix (*C03*).
+- [x] Un seul écran « Livrer au jeu », sans onglet interne.
+- [x] Le dossier Godot est le même quel que soit le chemin d'arrivée.
+- [x] Livrer un sujet depuis sa fiche ouvre l'écran filtré sur ce sujet.
+- [x] Les animations `echouee` n'y apparaissent pas.
+- [x] Rien ne déborde à 1280 px ; lisible à 1024 px.
+- [x] Ce que la livraison écrit dans Godot est identique à avant pour un même choix (*C03*).
+
+*Fait le 22 septembre 2026.* Le dossier se lit sur le jeu Godot rattaché (`association.json`, format inchangé) et un fichier voisin porte le sous-dossier des fichiers ; le réglage de l'agent sort de la chaîne. L'écran s'ouvre sur un sujet par défaut (contrat des essais d'avant). Identité C03 prouvée par `essais/essai_rv8_identite.py` : 55 fichiers, mêmes empreintes. **À confirmer avec l'auteur** : le dossier `moulinssets` n'a pas de `project.godot` à côté ; et le sous-dossier par défaut `assets/asset-kitchen/fichiers`.
 
 ---
 
@@ -319,12 +339,24 @@ d'avancement.
 
 ### Critères d'acceptation
 
-- [ ] « Cases et planches » n'existe plus ; changer de nature et supprimer un sujet se font depuis
+- [x] « Cases et planches » n'existe plus ; changer de nature et supprimer un sujet se font depuis
       « Modifier la fiche ».
-- [ ] L'onglet Animations ne montre plus les animations deux fois.
-- [ ] Accueil, Codex, fiche et objectif affichent le même compte pour un même sujet (essai sur
+- [x] L'onglet Animations ne montre plus les animations deux fois.
+- [x] Accueil, Codex, fiche et objectif affichent le même compte pour un même sujet (essai sur
       Champy : un seul chiffre là où il y en avait cinq).
-- [ ] Les planches que seul cet écran montrait restent atteignables (Galerie ou onglet Images).
+- [x] Les planches que seul cet écran montrait restent atteignables (Galerie ou onglet Images) — la
+      porte de la planche vit maintenant sur l'onglet Images, à côté de chaque pose à plusieurs
+      directions.
+
+*Fait le 22 septembre 2026.* Des quatre capacités que l'établi emportait avec lui : écarter une
+pose et la reprendre avait déjà un successeur, `ObjectifDuSujet.tsx` (« Objectif & règles »), en
+place avant cette tranche ; sortir toutes les animations d'un sujet passe maintenant par le bouton
+« Livrer… » de la page, qui ouvre « Livrer au jeu » filtré sur ce sujet, nature Animations ; le lot
+d'images (cocher plusieurs poses pour les faire partir en une seule planche) est relogé dans
+l'onglet Images ; lancer une planche d'équipement pose par pose, avec sa grille d'éligibilité, est
+relogé dans l'onglet Équipement, sous chaque pièce portée. La génération d'images par lot
+(« image-lot ») n'avait pas de successeur ailleurs ; c'est la même relocalisation que le lot
+d'images ci-dessus.
 
 ---
 
@@ -376,11 +408,13 @@ déborde pas, et des légendes « sujet · mouvement · direction » au lieu du 
 
 ### Critères d'acceptation
 
-- [ ] La page d'un son a les mêmes marges que les autres pages.
-- [ ] Aucun titre de son n'est la demande entière.
-- [ ] L'onglet Vidéos de la Galerie n'affiche ni les filtres ni le compteur des images.
-- [ ] Aucun filtre coupé à 1280 px.
-- [ ] Les légendes de la Galerie nomment le sujet quand il y en a un.
+- [x] La page d'un son a les mêmes marges que les autres pages.
+- [x] Aucun titre de son n'est la demande entière.
+- [x] L'onglet Vidéos de la Galerie n'affiche ni les filtres ni le compteur des images.
+- [x] Aucun filtre coupé à 1280 px.
+- [x] Les légendes de la Galerie nomment le sujet quand il y en a un.
+
+*Fait le 22 septembre 2026.* Le titre d'un son est sa famille et son nom coupé au mot (42 signes) ; la demande se lit en petit dessous dès que le titre a coupé quelque chose. Sans nom français, le titre garde le début de la demande : « mine des nains » demandera un nom court donné par l'auteur. La barre d'outils passe à la ligne au lieu de défiler. La légende d'une tuile ne change que si le sujet est connu.
 
 ---
 
@@ -397,11 +431,13 @@ Réglages : nom en français, texte envoyé replié.
 
 ### Critères d'acceptation
 
-- [ ] Le montage n'affiche plus l'en-tête ni les filtres de la Galerie.
-- [ ] Son panneau tient en trois blocs repliables.
-- [ ] Le calibrage n'a plus de colonne hors échelle ni le mot « établi ».
-- [ ] Plus de marque dorée de l'ancien style (`epingle`) sur ces écrans.
-- [ ] Aucun texte sous 10,5 px sur ces trois écrans.
+- [x] Le montage n'affiche plus l'en-tête ni les filtres de la Galerie.
+- [x] Son panneau tient en trois blocs repliables.
+- [x] Le calibrage n'a plus de colonne hors échelle ni le mot « établi ».
+- [x] Plus de marque dorée de l'ancien style (`epingle`) sur ces écrans.
+- [x] Aucun texte sous 10,5 px sur ces trois écrans.
+
+*Fait le 22 septembre 2026.* Le montage passe en plein écran par lui-même (comme les dépliages), sans toucher la Galerie ; ses trois blocs s'ouvrent dépliés, parce que ce sont les réglages qu'on vient poser. Le calibrage revient au sujet par son nom. Calibrage et Mouvements gardent leurs arrondis et hauteurs d'avant (`essai_jetons.py`) : seul ce que RV14 demandait est repris.
 
 ---
 

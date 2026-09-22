@@ -227,6 +227,12 @@ class EtatDuMoteur:
     greffon_absent: bool = False
     carte: str = ""
     memoire_libre: int = 0
+    # **Un chiffre mesuré, jamais deviné** (RV2). `None` tant qu'aucune mesure
+    # de ce dépôt ne le justifie — l'écran se tait plutôt que d'inventer.
+    besoin_go: float | None = None
+    # ComfyUI traite ou attend déjà un autre calcul (`observer_ressource`), à
+    # dire **avant** le lancement — un avertissement, jamais un blocage.
+    occupe: bool = False
 
     @property
     def a_telecharger(self) -> int:
@@ -254,6 +260,8 @@ class EtatDuMoteur:
             "greffon_absent": self.greffon_absent,
             "carte": self.carte,
             "memoire_libre_go": round(self.memoire_libre / GO, 1),
+            "besoin_go": self.besoin_go,
+            "occupe": self.occupe,
         }
 
 
@@ -269,6 +277,12 @@ MESURE = (
     "fond qui reste détourable — il dérive de 3 niveaux là où le payant dérive de "
     "20. Sur les deux lignes qui décident du détourage, le local est meilleur."
 )
+
+# **Le besoin que l'écran prévient avant de lancer** (RV2) — le même chiffre que
+# `MESURE` ci-dessus, extrait pour être comparé à la mémoire libre du moment.
+# Aucun autre modèle local de ce dépôt n'a de mesure comparable aujourd'hui :
+# tant qu'elle n'existe pas, `EtatDuMoteur.besoin_go` reste `None`.
+BESOIN_MESURE_GO = 6.0
 
 RAISON_DE_LA_DUREE = (
     "Une seconde donne une bande nettement plus propre que deux, et deux plus "
@@ -550,13 +564,23 @@ class MoteurDeLaMaison:
         appareils = stats.get("devices") or [{}]
         carte = str(appareils[0].get("name") or "")
         libre = int(appareils[0].get("vram_free") or 0)
+        # **Dit avant le lancement, jamais après** (RV2) : `observer_ressource`
+        # ne lève jamais — un ComfyUI muet sur sa file rend « inconnu », pas
+        # « occupé », et on ne le confond pas avec un vrai calcul en cours.
+        occupe = (await self.observer_ressource()).get("etat") == "occupe"
 
         try:
             vus = await self._ce_que_comfy_voit()
         except (FournisseurIndisponible, AppelRefuse):
             # Le moteur répond mais ne dit pas ce qu'il voit : on ne devine pas.
             # Le modèle reste choisissable, et le tirage dira la vérité.
-            return EtatDuMoteur(allume=True, carte=carte, memoire_libre=libre)
+            return EtatDuMoteur(
+                allume=True,
+                carte=carte,
+                memoire_libre=libre,
+                besoin_go=BESOIN_MESURE_GO,
+                occupe=occupe,
+            )
 
         manquants = tuple(
             fichier
@@ -571,6 +595,8 @@ class MoteurDeLaMaison:
             greffon_absent=greffon_absent,
             carte=carte,
             memoire_libre=libre,
+            besoin_go=BESOIN_MESURE_GO,
+            occupe=occupe,
         )
 
     async def _ce_que_comfy_voit(self) -> dict[str, tuple[str, ...]]:

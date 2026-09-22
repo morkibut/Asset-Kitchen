@@ -92,7 +92,7 @@ function LectureDeLaSource({ preparation, nomDeLaPose, pose, attente, onAgrandir
       <p>{Math.round(dehors * 100)} % de l’image équipée tombe hors du cadre de la pose et a été coupé à cette lecture.</p>
       <button type="button" className={`${PETIT} self-start`} disabled={attente} onClick={onAgrandir}>Relire en agrandissant le cadre</button>
     </div>}
-    {preparation.accord !== undefined && preparation.accord < 0.5 && <p role="note" className="rounded-7 border border-trait-attention bg-fond-attention p-[8px] text-encre-attention">Les deux corps se recouvrent mal ({Math.round(preparation.accord * 100)} %) : vérifiez la superposition avant d’extraire.</p>}
+    {preparation.accord !== undefined && preparation.accord < 0.5 && <p role="note" className="rounded-7 border border-trait-attention bg-fond-attention p-[8px] text-encre-attention">Les deux corps se recouvrent mal ({Math.round(preparation.accord * 100)} %) : vérifie la superposition avant d’extraire.</p>}
   </div>
 }
 
@@ -304,7 +304,7 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
               {preparation?.recette !== "pose" && <button type="button" className={CONTROLE} disabled={attente} onClick={() => relire("sienne", preparation?.echelle ?? false)}>Relire après retouche</button>}
               {variante.planche_d_origine && <button type="button" className={CONTROLE} disabled={attente || sale} title="Reprend la case entière de l’image reçue, sans nouvel appel au modèle" onClick={() => void action(() => apiCalques.relireDepuisLaPlanche(chemin, variante.identifiant, variante.revision))}>Relire depuis l’image reçue</button>}
             </div>
-            {onRetoucher && <p className="text-[11px] leading-[1.45] text-encre-4">La retouche ordinaire change l’image dans la bibliothèque. Revenez ici et choisissez « Sa propre recette » pour la relire.</p>}
+            {onRetoucher && <p className="text-[11px] leading-[1.45] text-encre-4">La retouche ordinaire change l’image dans la bibliothèque. Reviens ici et choisis « Sa propre recette » pour la relire.</p>}
           </Etape>
           <Etape numero={3} titre="Caler les deux corps">
             <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Outil<select aria-label="Outil du calque" value={outil} onChange={(e) => setOutil(e.target.value as Outil)} className={CONTROLE}><option value="deplacer">{outils.deplacer}</option><option value="vue">{outils.vue}</option></select></label>
@@ -345,7 +345,7 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
                 `derriere` décident, et ils appartiennent à cette variante — donc
                 à cette frame. Deux frames de la même bande peuvent ranger la même
                 pièce à l'envers l'une de l'autre. */}
-            <p className="text-[12px] leading-[1.45] text-encre-3">C’est l’ordre des images, pas la direction du regard : la direction de cette base ({variante.base.direction || "sans direction"}) ne change rien. Avec « Passer cette partie dessous » et « Ramener cette partie dessus », une partie de la pièce passe sous le personnage et le reste au-dessus — {variante.cible.nature === "frame" ? "sur cette frame seule" : "sur cette image seule"}.</p>
+            <p className="text-[12px] leading-[1.45] text-encre-3">C’est l’ordre des images, pas la direction du regard : la direction de cette base ({variante.base.direction || "sans direction"}) ne change rien. Avec « Passer cette partie dessous » et « Ramener cette partie dessus », une partie de la pièce passe sous le personnage et le reste au-dessus — sur cette image seule.</p>
             <p className="text-[11px] leading-[1.45] text-encre-4">{brouillon.masques.derriere.length ? `${brouillon.masques.derriere.length} passage${brouillon.masques.derriere.length > 1 ? "s" : ""} peint${brouillon.masques.derriere.length > 1 ? "s" : ""} ici : une partie de la pièce ne suit pas l’ordre par défaut.` : "Aucun passage peint ici : toute la pièce suit l’ordre par défaut."}</p>
             <Mesure nom="Ordre entre équipements" valeur={brouillon.placement.ordre} min={-1000} max={1000} onChange={(v) => nombre("ordre", v)} />
           </Etape>

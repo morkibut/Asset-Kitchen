@@ -26,12 +26,21 @@ ajoute les trois choses qui manquaient :
 l'export : ni fournisseur, ni animateur, ni catalogue. Sortir est du disque et du
 processeur.
 
-**Et depuis `RP17`, c'est le seul code du serveur qui écrit dans le dossier du
-jeu.** L'ancienne porte — un personnage nommé posé sur le disque, sans aperçu et
-sans comparaison — est retirée ; ce qu'elle savait faire est devenu un réglage
-d'ici, `Reglage.sujet`. Un seul écrivain veut dire une seule liste de fichiers
-annoncée avant d'être écrite, et c'est ce qui rend « rien n'est écrasé sans que
-la comparaison l'ait dit » vérifiable plutôt que promis.
+**Depuis `RP17`, c'est la seule porte des *fichiers* vers le dossier du jeu** —
+pas la seule écriture du serveur dans ce dossier : le paquet Godot d'AU1
+(`services/livraison.py`, `_poser`) y écrit aussi, avec ses propres garanties
+(journal, propriété prouvée, décisions de `RP10`). L'ancienne porte — un
+personnage nommé posé sur le disque, sans aperçu et sans comparaison — est
+retirée ; ce qu'elle savait faire est devenu un réglage d'ici, `Reglage.sujet`.
+Une seule porte pour les fichiers veut dire une seule liste annoncée avant
+d'être écrite, et c'est ce qui rend « rien n'est écrasé sans que la comparaison
+l'ait dit » vérifiable plutôt que promis.
+
+**Depuis `RV8`, le dossier est celui du jeu Godot rattaché** — l'association
+d'AU1, plus un sous-dossier rangé à côté d'elle (`fichiers.json`). Le réglage
+`dossier_jeu` de l'agent, commun à tout l'atelier, n'en décide plus : c'était la
+fuite que B21 voulait fermer, deux jeux ouverts tour à tour se déposant au même
+endroit.
 
 **Les octets ne s'accumulent jamais.** La planche relève, sur l'archive
 d'aujourd'hui, qu'elle est « construite entièrement en mémoire avant de partir,
@@ -44,6 +53,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -69,6 +79,8 @@ from atelier.services.agent import ServiceAgent
 from atelier.services.assets import ServiceAssets
 from atelier.services.equipement import ServiceEquipement
 from atelier.services.export import CALQUE, CORPS, HABILLE, ServiceExport
+from atelier.services.livrables import bandes_livrables
+from atelier.services.livraison import ServiceLivraison
 from atelier.services.montage import ServiceMontage
 from atelier.services.production import ServiceProduction, corps_retenu
 
@@ -76,6 +88,22 @@ from atelier.services.production import ServiceProduction, corps_retenu
 # qui sait lire celui d'une archive lit celui d'une sortie, et c'est le même
 # code qui l'écrit.
 from atelier.services.export import DESCRIPTIF, FORMAT
+
+
+# ── D'où vient le dossier (`RV8`) ────────────────────────────────────────────
+#
+# Les quatre origines que `ServiceSortie.destination` rend, dans l'ordre de la
+# chaîne. L'écran les lit pour dire d'où vient le dossier qu'il montre.
+DEMANDE = "demande"  # nommé dans l'appel (l'écran, le `folder` du MCP)
+JEU = "jeu"  # le jeu Godot rattaché, plus le sous-dossier des fichiers
+ANCIEN = "ancien"  # la dernière sortie, en lecture seule
+AUCUN = "aucun"
+
+MENTION_ANCIEN = "ancien dossier, pas rattaché au jeu Godot"
+REFUS_SANS_DOSSIER = (
+    "aucun dossier de jeu — rattache ton jeu Godot (le dossier qui contient "
+    "project.godot), ou nomme un dossier ici"
+)
 
 
 class SortieRefusee(ErreurAtelier):
@@ -131,6 +159,7 @@ class ServiceSortie:
         montage: ServiceMontage,
         agent: ServiceAgent,
         export: ServiceExport,
+        livraison: ServiceLivraison | None = None,
     ) -> None:
         self._base = base
         self._fichiers = fichiers
@@ -138,10 +167,15 @@ class ServiceSortie:
         self._production = production
         self._equipement = equipement
         self._montage = montage
-        # **Le seul écrivain du dossier du jeu, et il le reste** : ce service
-        # ne pose pas un octet lui-même, il lui demande — avec, depuis B21, la
-        # permission d'écraser quand l'auteur l'a cochée devant la liste.
+        # **Celui qui pose les fichiers de cette porte** : ce service ne pose
+        # pas un octet lui-même, il demande au dépôt de T7 — avec, depuis B21,
+        # la permission d'écraser quand l'auteur l'a cochée devant la liste. (Le
+        # paquet Godot d'AU1 écrit dans le même jeu par son propre chemin.)
         self._agent = agent
+        # **Où est le jeu** (`RV8`) : l'association d'AU1 et le sous-dossier de
+        # la forme « fichiers ». Absente — un service monté seul dans un essai —,
+        # la chaîne saute cette source.
+        self._livraison = livraison
         # **Celui qui sait fabriquer**, et qui n'est pas refait ici : le rendu
         # d'une image, sa fiche, et les trois fichiers d'une animation.
         self._export = export
@@ -149,24 +183,80 @@ class ServiceSortie:
     # ── Où ça va ────────────────────────────────────────────────────────────
 
     def dossier(self, projet: str, reglage: Reglage | None = None) -> str:
-        """Le dossier de ce jeu-ci, **et il est à ce jeu-ci** (B21).
+        """Le dossier de ce jeu-ci, en entier — ou `""` s'il n'y en a pas.
 
-        Trois sources, dans cet ordre : ce que l'écran envoie, ce que ce jeu-là
-        a utilisé la dernière fois, et enfin le dossier commun de l'atelier.
-
-        **La deuxième est neuve, et c'est le défaut que la planche relève** :
-        « le chemin est commun à tout l'atelier, pas rangé avec le jeu », si bien
-        que deux jeux ouverts tour à tour se déposaient au même endroit. Elle ne
-        coûte rien — la sortie précédente garde déjà son dossier pour savoir
-        où comparer.
+        La lecture est celle de `destination` ; ceci n'en garde que le chemin.
         """
-        demande = (reglage.dossier if reglage else None) or ""
-        if demande.strip():
-            return demande.strip()
-        precedente = self.precedente(projet)
+        return self.destination(projet, reglage)["dossier"]
+
+    def destination(self, projet: str, reglage: Reglage | None = None) -> dict[str, Any]:
+        """Où la forme « fichiers » de ce jeu se pose, et **d'où on le sait** (`RV8`).
+
+        Quatre sources, dans cet ordre, et la première qui répond gagne :
+
+        1. `demande` — le dossier nommé dans l'appel (`Reglage.dossier`, le
+           `folder` du MCP). Gardé tel quel : c'est l'entrée d'avant `RV8`, et
+           c'est par elle que l'essai d'identité compare avant et après.
+        2. `jeu` — la racine Godot rattachée (`association.json` d'AU1) et le
+           sous-dossier de `fichiers.json`. **La source unique** : le même
+           dossier quel que soit le chemin d'arrivée.
+        3. `ancien` — le dossier de la dernière sortie (`sorties.json`), **en
+           lecture seule**, avec sa mention : il n'est pas rattaché au jeu
+           Godot. Rien n'est migré en silence ; quand ce dossier est sous un
+           `project.godot`, `rattacher` propose de le rattacher en un clic.
+        4. `aucun` — et le refus dit « rattache ton jeu Godot ».
+
+        **`dossier_jeu` de l'agent n'est plus dans cette chaîne.** Commun à tout
+        l'atelier, il déposait deux jeux au même endroit ; il reste le dossier
+        du dépôt de l'agent (T7), et rien d'autre.
+
+        Rend `{dossier, racine, sous_dossier, origine, mention, rattacher,
+        refus}` : `dossier` est `racine/sous_dossier`, `""` quand il n'y en a
+        pas ; `refus` est la phrase à montrer quand on ne peut pas sortir.
+        """
+        vide = {"dossier": "", "racine": "", "sous_dossier": "", "origine": AUCUN,
+                "mention": "", "rattacher": None, "refus": ""}
+
+        demande = ((reglage.dossier if reglage else None) or "").strip()
+        if demande:
+            return {**vide, "dossier": demande, "racine": demande, "origine": DEMANDE}
+
+        association = self._association(projet)
+        if association:
+            racine = Path(association["dossier"])
+            sous_dossier = self._livraison.fichiers(projet)["sous_dossier"]
+            rendu = {**vide, "racine": str(racine), "sous_dossier": sous_dossier,
+                     "origine": JEU}
+            # **Un jeu déplacé ne se recrée pas en silence.** Sans ce contrôle,
+            # le dépôt créerait le chemin manquant, et les fichiers partiraient
+            # dans un dossier que Godot n'ouvre plus.
+            if not (racine / "project.godot").is_file():
+                return {**rendu, "refus": (
+                    f"le jeu Godot rattaché n'est plus là — « {racine} » ne contient "
+                    "plus de project.godot ; rattache ton jeu Godot de nouveau"
+                )}
+            return {**rendu, "dossier": str(racine / sous_dossier)}
+
+        precedente = self.precedente(projet) if projet else None
         if precedente and precedente.dossier:
-            return precedente.dossier
-        return self._agent.garde_fous().dossier_jeu
+            return {**vide, "dossier": precedente.dossier, "racine": precedente.dossier,
+                    "origine": ANCIEN, "mention": MENTION_ANCIEN,
+                    "rattacher": _sous_un_jeu_godot(precedente.dossier)}
+
+        return {**vide, "refus": REFUS_SANS_DOSSIER}
+
+    def _association(self, projet: str) -> dict[str, Any] | None:
+        """L'association d'AU1, **lue et jamais complétée** — son format est figé."""
+        if self._livraison is None or not projet or self._base.lire_projet(projet) is None:
+            return None
+        return self._livraison.association(projet)
+
+    def regler_sous_dossier(self, projet: str, sous_dossier: str) -> dict[str, Any]:
+        """Pose le sous-dossier de la forme « fichiers », et rend la destination relue."""
+        if self._livraison is None or not projet or self._base.lire_projet(projet) is None:
+            raise SortieRefusee("ce jeu n'existe plus")
+        self._livraison.regler_fichiers(projet, sous_dossier)
+        return self.destination(projet)
 
     # ── La fois d'avant ─────────────────────────────────────────────────────
 
@@ -211,7 +301,8 @@ class ServiceSortie:
         qui s'y trouve déjà, pour le comparer.
         """
         _valider(reglage)
-        dossier = self.dossier(projet, reglage)
+        destination = self.destination(projet, reglage)
+        dossier = destination["dossier"]
         precedente = self.precedente(projet)
         pas_prets = self._pas_prets(projet, reglage)
 
@@ -223,10 +314,7 @@ class ServiceSortie:
                 pas_prets=pas_prets,
                 precedente=precedente,
                 reglage=reglage,
-                refus=(
-                    "aucun dossier de jeu — pose-le une fois pour toutes dans "
-                    "l'installation, ou nomme-le ici"
-                ),
+                refus=destination["refus"] or REFUS_SANS_DOSSIER,
             )
 
         racine = Path(dossier).expanduser()
@@ -286,7 +374,12 @@ class ServiceSortie:
         seule chose que la mémoire de la sortie précédente sert à trancher, et
         c'est la raison pour laquelle elle existe.
         """
-        if precedente is None or precedente.dossier != str(racine):
+        # **Des chemins résolus, sans casse** (`RV8`) : le même dossier arrive
+        # désormais par deux entrées — nommé à la main, ou relu de
+        # l'association —, et une barre, une lettre de lecteur en minuscule ou
+        # un `..` suffisaient à ce que « effacer ce qui ne sort plus » ne
+        # retrouve plus rien.
+        if precedente is None or not _meme_dossier(precedente.dossier, str(racine)):
             return ()
         restes = []
         for chemin in precedente.chemins:
@@ -318,13 +411,12 @@ class ServiceSortie:
         refaire coûte le prix du disque et rend la même liste.
         """
         _valider(reglage)
-        dossier = self.dossier(projet, reglage)
+        destination = self.destination(projet, reglage)
+        dossier = destination["dossier"]
         if not dossier.strip():
-            raise SortieRefusee(
-                "aucun dossier de jeu — pose-le une fois pour toutes dans "
-                "l'atelier, écran L'installation, ou nomme-le ici",
-                ou_aller="reglages",
-            )
+            # **Pas d'`ou_aller` vers les Réglages** (`RV8`) : le dossier ne s'y
+            # pose plus. On le rattache sur l'écran de livraison lui-même.
+            raise SortieRefusee(destination["refus"] or REFUS_SANS_DOSSIER)
 
         racine = Path(dossier).expanduser()
         # **On prévoit d'abord, entièrement, et on écrit ensuite.** C'est ce que
@@ -750,17 +842,13 @@ class ServiceSortie:
         endroit pour en parler.
 
         `sujet` réduit la liste à celles d'un seul personnage (`RP17`).
+
+        **Une bande dont tous les clips ont échoué ne sort pas non plus**
+        (`RV8`) : la règle est `bandes_livrables`, la même que le paquet Godot,
+        et `_pas_prets` la dit.
         """
-        gardees = []
-        for bande in self._base.bandes():
-            if bande.projet != projet or bande.supprime_le is not None:
-                continue
-            if bande.compte <= 0:
-                continue
-            if sujet and bande.personnage != sujet:
-                continue
-            gardees.append(bande)
-        return gardees
+        livrables = bandes_livrables(self._base, projet, sujet or None)
+        return [bande for bande in livrables.bandes if bande.compte > 0]
 
     def _assets_de(self, fiches: Sequence[dict[str, Any]]) -> list[Asset]:
         lus = (self._assets.lire(f.get("identifiant", "")) for f in fiches)
@@ -943,18 +1031,26 @@ class ServiceSortie:
                                 }
                             )
 
+        # Un sujet nommé ne fait pas parler des animations d'un autre.
+        livrables = bandes_livrables(self._base, projet, reglage.sujet or None)
         vides = [
             {
                 "identifiant": b.identifiant,
                 "nom": b.nom or b.identifiant,
                 "quoi": "aucune image",
             }
-            for b in self._base.bandes()
-            if b.projet == projet
-            and b.supprime_le is None
-            and b.compte <= 0
-            # Un sujet nommé ne fait pas parler des animations d'un autre.
-            and (not reglage.sujet or b.personnage == reglage.sujet)
+            for b in livrables.bandes
+            if b.compte <= 0
+        ]
+        # **Les animations tirées de clips tous échoués** (`RV8`) : écartées
+        # par la règle commune, et dites ici plutôt que tues.
+        echouees = [
+            {
+                "identifiant": b.identifiant,
+                "nom": b.nom or b.identifiant,
+                "quoi": "tirée d'un clip échoué",
+            }
+            for b in livrables.ecartees
         ]
 
         alertes = []
@@ -986,6 +1082,17 @@ class ServiceSortie:
                         "pas faire de planche de sprites"
                     ),
                     sujets=tuple(vides),
+                )
+            )
+        if echouees:
+            alertes.append(
+                PasPret(
+                    genre=vocabulaire.ANIMATION_ECHOUEE,
+                    phrase=(
+                        "leurs images viennent d'un clip échoué ; elles ne partent "
+                        "pas — refais le clip, ou monte l'animation sur un autre"
+                    ),
+                    sujets=tuple(echouees),
                 )
             )
         if habilles:
@@ -1166,6 +1273,46 @@ def _prevu(morceau: Morceau, chemin: str, empreinte: str, marque: str) -> Prevu:
 
 def _empreinte(octets: bytes) -> str:
     return hashlib.sha256(octets).hexdigest()
+
+
+def _cle_de_dossier(chemin: str) -> str:
+    """Un dossier réduit à ce qui le désigne : résolu, barres unifiées, sans casse.
+
+    Sans casse parce que le disque de l'auteur est sous Windows, où
+    `C:/Jeu` et `c:/jeu` sont le même dossier.
+    """
+    try:
+        resolu = Path(chemin).expanduser().resolve()
+    except (OSError, RuntimeError):
+        resolu = Path(chemin).expanduser()
+    return os.path.normcase(str(resolu)).replace("\\", "/").rstrip("/").casefold()
+
+
+def _meme_dossier(un: str, autre: str) -> bool:
+    return bool(un.strip()) and _cle_de_dossier(un) == _cle_de_dossier(autre)
+
+
+def _sous_un_jeu_godot(dossier: str) -> dict[str, str] | None:
+    """Le jeu Godot qui contient cet ancien dossier, **proposé, jamais rattaché**.
+
+    Rend `{dossier, sous_dossier}` — la racine qui porte `project.godot` et le
+    chemin relatif jusqu'à l'ancien dossier —, de quoi rattacher le jeu en un
+    clic sans que les fichiers changent de place. `None` quand aucun parent ne
+    porte de `project.godot` : il n'y a alors rien à proposer.
+    """
+    try:
+        depart = Path(dossier).expanduser().resolve()
+    except (OSError, RuntimeError):
+        return None
+    for racine in (depart, *depart.parents):
+        if (racine / "project.godot").is_file():
+            relatif = depart.relative_to(racine).as_posix()
+            # À la racine même du jeu, il n'y a pas de sous-dossier à proposer :
+            # la forme « fichiers » se poserait sur project.godot.
+            if relatif in ("", "."):
+                return None
+            return {"dossier": str(racine), "sous_dossier": relatif}
+    return None
 
 
 def _octets_de(chemin: Path) -> bytes | None:

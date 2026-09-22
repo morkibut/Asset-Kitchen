@@ -19,11 +19,13 @@ import {
   imageProposeeDeDirection,
 } from "./ImagesDuSujet"
 import {
+  api,
   RECETTE_VIDE,
   UNIVERS_VIDE,
   type Asset,
   type Case,
   type Personnage,
+  type Planche,
   type Pose,
   type ReferenceDeLaChose,
   type ReferencesDeLaChose,
@@ -891,6 +893,44 @@ describe("ses références, rangées par usage", () => {
     expect(
       within(blocUsage("direction:nord")).getByText("Aucune image de cette direction encore."),
     ).toBeTruthy()
+  })
+})
+
+// **La planche s'ouvre d'ici** (RV10, retrait de « Cases et planches ») —
+// c'est la seule porte qui reste vers la feuille achetée qui regroupe les
+// directions d'une pose.
+describe("la porte de la planche", () => {
+  test("paraît sur une pose à plusieurs directions, et ouvre sa planche", async () => {
+    const planche: Planche = {
+      personnage: "pelerin",
+      personnage_nom: "Le pèlerin",
+      pose: "repos",
+      pose_nom: "repos",
+      cases: [],
+      geometrie: { largeur: 512, hauteur: 512, colonnes: 2, lignes: 1 } as never,
+      choix: [],
+      prix: { usd: 0, connu: true } as never,
+      deja_pleines: [],
+      banc: { usd: 0, connu: true } as never,
+      jointes: { compte: 0, plafond: 0 } as never,
+    } as unknown as Planche
+    const lire = vi.spyOn(api, "planche").mockResolvedValue(planche)
+    monter([CASE_SUD])
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir la planche de repos" }))
+    await waitFor(() => expect(lire).toHaveBeenCalledWith("pelerin", "repos"))
+    expect(await screen.findByText("la planche de repos")).toBeInTheDocument()
+    expect(document.querySelector("[data-planche]")).toBeTruthy()
+  })
+
+  test("absente sur une pose à une seule direction : rien à plier", async () => {
+    const uneDirection = sienne({
+      pose: "repos",
+      images: [VIEILLE],
+      directions: [{ ...DIRECTION, identifiant: "sud", nom: "sud", images: [VIEILLE] }],
+    })
+    monter([uneDirection])
+    await screen.findByText("repos")
+    expect(screen.queryByRole("button", { name: /Ouvrir la planche/ })).toBeNull()
   })
 })
 

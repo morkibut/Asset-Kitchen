@@ -27,6 +27,23 @@ async def preparer(requete: Request, projet: str, corps: dict[str, Any]):
     return await requete.app.state.atelier.travaux.preparer(projet, corps, "auteur")
 
 
+# **RV5** : une série, préparée puis lancée par la fenêtre « Animer » pour
+# plusieurs directions ou plusieurs clips d'un coup — même style que `preview`
+# et `{identifiant}/start`, mêmes erreurs (`TravailRefuse` → 409, app.py:165).
+# `corps` porte les réglages communs (comme `preview`), plus `cases` (les
+# paires pose/direction, vide pour la case de `commune`) et `nombre` (1 à 8).
+@routeur.post("/projects/{projet}/production-jobs/preview-series")
+async def preparer_serie(requete: Request, projet: str, corps: dict[str, Any]):
+    cases = corps.pop("cases", [])
+    nombre = corps.pop("nombre", 1)
+    return await requete.app.state.atelier.travaux.preparer_serie(projet, corps, cases, nombre, "auteur")
+
+
+@routeur.post("/projects/{projet}/production-jobs/series/{cle}/start")
+async def demarrer_serie(requete: Request, projet: str, cle: str):
+    return await requete.app.state.atelier.travaux.demarrer_serie(projet, cle, "auteur")
+
+
 @routeur.post("/projects/{projet}/production-jobs/{identifiant}/start")
 async def demarrer(requete: Request, projet: str, identifiant: str):
     return await requete.app.state.atelier.travaux.demarrer(projet, identifiant, "auteur")

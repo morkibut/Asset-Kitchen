@@ -105,7 +105,7 @@ export function SerieSon({ projet, identifiant, initiale, titre = "Série", onRe
     {!!serie.refus?.length && <ul className="mb-[8px] text-[13px] text-echec">{serie.refus.map((r) => <li key={r.rang}>Tirage {r.rang} : {r.raison}</li>)}</ul>}
     {!!serie.laisses?.length && <ul className="mb-[8px] text-[13px] text-encre-3">{serie.laisses.map((r) => <li key={r.rang}>Tirage {r.rang} : {r.raison || "laissé à son suivi"}</li>)}</ul>}
     <GrilleEcoute projet={projet} tuiles={serie.tirages.map(tuileDeTirage)} gardes={gardes} onGarder={basculer} onRegler={onRegler} longue={longue} />
-    {gardes.size === 0 && serie.tirages.some((t) => t.son) && <p className="mt-[14px] text-[12px] text-encre-3">Gardez un ou plusieurs tirages. Les autres restent dans la série.</p>}
+    {gardes.size === 0 && serie.tirages.some((t) => t.son) && <p className="mt-[14px] text-[12px] text-encre-3">Garde un ou plusieurs tirages. Les autres restent dans la série.</p>}
     <div className="mt-[14px] space-y-[14px]">
       {montres.map((j) => <JeuDeVariantes key={j.identifiant} projet={projet} jeu={j} onJeu={ranger} onRegler={onRegler} />)}
     </div>

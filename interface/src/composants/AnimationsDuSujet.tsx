@@ -292,6 +292,34 @@ function CaseDeGeneration({ onArmer, quoi }: { onArmer: () => void; quoi: string
 
 // ── Les rangées d'une pose ──────────────────────────────────────────────────
 
+/** **Une vidéo ratée au contrôle d'arrivée** (RV1) : noire, figée ou vide
+ *  après détourage. Sa raison est déjà écrite au serveur
+ *  (`emplacements[0].raison`) ; le seul geste possible est « Relancer », et
+ *  rien ne part avant ce clic — il rouvre la préparation de cette case, comme
+ *  le bouton « générer » juste à côté. */
+function VignetteDeClipRatee({ clip, onRelancer }: { clip: Generation; onRelancer?: () => void }) {
+  const raison = clip.emplacements[0]?.raison || "cette vidéo est ratée"
+  return (
+    <span className="flex w-[81px] shrink-0 flex-col gap-[4px]">
+      <span
+        data-clip-rate={clip.identifiant}
+        title={raison}
+        className="flex h-[81px] w-[81px] items-center justify-center rounded-7 border-2 border-dashed border-trait-echec bg-fond-echec px-[4px] text-center text-[10.5px] leading-[1.2] text-echec"
+      >
+        {raison}
+      </span>
+      <button
+        type="button"
+        onClick={onRelancer}
+        disabled={!onRelancer}
+        className="h-[22px] rounded-5 border border-trait bg-carte text-[10.5px] text-encre-controle transition-colors duration-120 hover:border-encre-4 disabled:opacity-50"
+      >
+        Relancer
+      </button>
+    </span>
+  )
+}
+
 /** **Un clip pas encore monté**, dans sa rangée : en route, ou arrivé sans
  *  animation. Un cadre en pointillés couleur signal le distingue des
  *  animations ; cliquer un clip arrivé ouvre son montage.
@@ -299,10 +327,13 @@ function CaseDeGeneration({ onArmer, quoi }: { onArmer: () => void; quoi: string
  *  **Au survol, la vidéo entière se lit** — pas une sélection d'images : rien
  *  n'est encore taillé dedans, et c'est justement ce qu'on vient regarder. Au
  *  repos, la couverture seule, pour ne télécharger aucune vidéo. */
-function VignetteDeClip({ clip, onMonter }: { clip: Generation; onMonter?: (clip: string) => void }) {
+function VignetteDeClip({ clip, onMonter, onRelancer }: { clip: Generation; onMonter?: (clip: string) => void; onRelancer?: () => void }) {
   const arrive = clip.statut === "reussie"
   const [survol, setSurvol] = useState(false)
   const visee = useVisee(arrive ? sujetVideo(clip.identifiant, clip.demande.prompt || "clip") : null)
+  if (clip.statut === "echouee" && clip.clip?.controle) {
+    return <VignetteDeClipRatee clip={clip} onRelancer={onRelancer} />
+  }
   return (
     <span className="flex w-[81px] shrink-0 flex-col gap-[4px]">
       <button
@@ -475,7 +506,9 @@ function LigneDeRangee({
           (demandé le 18 septembre 2026) : hors de la piste qui défile, ils
           restent en vue quelle que soit la longueur de la rangée. */}
       <span className="flex shrink-0 items-start gap-[8px]">
-        {enAttente.map((clip) => <VignetteDeClip key={clip.identifiant} clip={clip} onMonter={onMonter} />)}
+        {enAttente.map((clip) => (
+          <VignetteDeClip key={clip.identifiant} clip={clip} onMonter={onMonter} onRelancer={() => onGenerer(rangee)} />
+        ))}
         <CaseDeGeneration
           onArmer={() => onGenerer(rangee)}
           quoi={rangee.angle ?? "cette pose"}
@@ -545,9 +578,6 @@ export function AnimationsDuSujet({
   )
   const [filtre, setFiltre] = useEtatDuParcours<Filtre>(`${cle}:filtre`, "toutes")
   const [choisie, setChoisie] = useEtatDuParcours<string | null>(`${cle}:choisie`, null)
-  const [galeriePose, setGaleriePose] = useEtatDuParcours(`${cle}:galerie-pose`, "")
-  const [galerieDirection, setGalerieDirection] = useEtatDuParcours(`${cle}:galerie-direction`, "")
-  const [galerieStatut, setGalerieStatut] = useEtatDuParcours(`${cle}:galerie-statut`, "")
 
   const parPose = useMemo(() => {
     const estDemandee = (rangee: Rangee) => animationsDemandees.some(
@@ -600,13 +630,6 @@ export function AnimationsDuSujet({
     if (filtre === "toutes") return true
     return rangees.some((r) => r.compte > 1 && !r.retenue)
   })
-  const galerie = parPose.flatMap(({ nom, rangees }) => rangees.flatMap((rangee) => [
-    ...(rangee.retenue ? [{ bande: rangee.retenue, statut: "retenue" as const, rangee, nom }] : []),
-    ...rangee.gardees.map((bande) => ({ bande, statut: "gardee" as const, rangee, nom })),
-    ...rangee.ecartees.map((bande) => ({ bande, statut: "ecartee" as const, rangee, nom })),
-  ]))
-  const galerieFiltree = galerie.filter((item) => (!galeriePose || item.rangee.pose === galeriePose) && (!galerieDirection || item.rangee.direction === galerieDirection) && (!galerieStatut || item.statut === galerieStatut))
-  const directionsGalerie = [...new Map(parPose.flatMap(({ rangees }) => rangees.filter((r) => r.direction).map((r) => [r.direction!, r.angle ?? r.nom] as const))).entries()]
 
   /** La bande du volet, ouvert à la demande. Relue dans les cases à chaque rendu, comme pour
    *  les images : gardée en objet, elle serait celle d'avant le dernier
@@ -857,25 +880,6 @@ export function AnimationsDuSujet({
               </div>
             )
           })}
-          <section aria-label="Galerie des animations" className="mt-[22px] flex flex-col gap-[14px] border-t border-trait pt-[14px]">
-            <h2 className="font-serif text-[25px]">Galerie des animations</h2>
-            <div className="flex flex-wrap gap-[8px] text-[12px]">
-              <label>Mouvement / pose <select aria-label="Mouvement de la galerie" value={galeriePose} onChange={(e) => setGaleriePose(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option>{parPose.map((p) => <option key={p.sienne.pose} value={p.sienne.pose}>{p.nom}</option>)}</select></label>
-              {avecDirections && <label>Direction <select aria-label="Direction de la galerie" value={galerieDirection} onChange={(e) => setGalerieDirection(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Toutes</option>{directionsGalerie.map(([id, nom]) => <option key={id} value={id}>{nom}</option>)}</select></label>}
-              <label>Jugement <select aria-label="Jugement de la galerie" value={galerieStatut} onChange={(e) => setGalerieStatut(e.target.value)} className="rounded-7 border border-trait bg-carte p-[8px]"><option value="">Tous</option><option value="retenue">Retenu</option><option value="gardee">Non jugé</option><option value="ecartee">Écarté</option></select></label>
-            </div>
-            <p role="status" className="text-[12px] text-encre-3">{galerieFiltree.length} animation{galerieFiltree.length > 1 ? "s" : ""}</p>
-            <div className="grid grid-cols-2 gap-[14px]">
-              {galerieFiltree.map(({ bande: cible, statut, rangee, nom }) => <article key={cible.identifiant} data-carte-animation={cible.identifiant} className="flex min-w-0 flex-col gap-[8px] rounded-10 border border-trait bg-carte p-[14px]">
-                <div className="flex justify-center"><VignetteDeBande bande={cible} galerie cote={192} etat={statut} choisie={choisie === cible.identifiant} onChoisir={() => { setChoisie(null); onOuvrirLaBande(cible.identifiant) }} /></div>
-                <p className="truncate text-[13px]">{nom} · {rangee.angle ?? "sans direction"}</p>
-                <p className="text-[11px] text-encre-3">{statut === "gardee" ? "Non jugé" : statut === "retenue" ? "Retenu" : "Écarté"} · {cible.compte} frames · {cible.cadence} i/s</p>
-                {statut === "ecartee" ? <button type="button" onClick={() => void restaurer(cible)}>Remettre à juger</button> : <Marques contexte={` dans la galerie : ${cible.nom}`} retenue={statut === "retenue"} onRetenir={() => void retenir(cible, rangee)} onGarder={() => void garder(cible)} onEcarter={() => void ecarter(cible, rangee)} />}
-                <button type="button" onClick={() => { setChoisie(null); onOuvrirLaBande(cible.identifiant) }} className="rounded-7 border border-trait px-[8px] py-[4px] text-[12px]">Retoucher</button>
-              </article>)}
-            </div>
-            {galerieFiltree.length === 0 && <p className="text-[12px] text-encre-3">Aucune animation pour ces filtres.</p>}
-          </section>
         </div>
       </section>
 

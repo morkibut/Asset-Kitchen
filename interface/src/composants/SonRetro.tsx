@@ -108,7 +108,7 @@ export function SonRetro({ projet, onRegler, departInitial = "clic", nomDuJeu, j
     {garde.erreur && <p role="alert" className="text-[13px] text-echec">{garde.erreur}</p>}
     {sons.length > 0 && <section aria-label="Les sons rétro" className="mt-[14px]">
       <GrilleEcoute projet={projet} tuiles={tuiles} gardes={gardes} onGarder={basculer} onRegler={onRegler} />
-      {gardes.size === 0 && <p className="mt-[14px] text-[12px] text-encre-3">Gardez un ou plusieurs sons. Les autres restent dans la galerie.</p>}
+      {gardes.size === 0 && <p className="mt-[14px] text-[12px] text-encre-3">Garde un ou plusieurs sons. Les autres restent dans la galerie.</p>}
       {jeu && jeu.membres.length > 0 && <div className="mt-[14px]"><JeuDeVariantes projet={projet} jeu={jeu} onJeu={ranger} onRegler={onRegler} /></div>}
     </section>}
   </>

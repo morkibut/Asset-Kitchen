@@ -23,6 +23,22 @@ export type DemandeTravail = {
   modele_video: string; prompt_video: string; secondes: number; resolution: string; proportions: string
   nombre_images: number; cadence: number; sens: "boucle" | "aller-retour"
   livrer_provisoire?: boolean; plafond_image_usd?: number | null
+  /** **RV5** : le mouvement choisi dans la bibliothèque — le serveur compose
+   *  alors `prompt_video`, qui devient facultatif. `correction_geste` corrige
+   *  le geste seul pour cet appel ; la phrase de direction reste celle du
+   *  serveur, et vaut donc pour chaque direction d'une série. */
+  mouvement?: string | null; correction_geste?: string
+}
+/** Une case d'une série (RV5) : sa pose et sa direction, le reste vient de la
+ *  demande commune. */
+export type CaseSerie = { pose: string; direction: string }
+/** Ce que rend `preview-series` / `series/{cle}/start` — **avec son
+ *  annonce**, pour que la fenêtre n'ait pas à recalculer le prix ou le temps
+ *  d'un lot à partir des travaux un par un. */
+export type Serie = {
+  serie: { cle: string; identifiant: string; total: number }
+  travaux: Travail[]
+  annonce_serie: { reservation_usd: number; temps_s: number | null; appels: number; locale: boolean }
 }
 export type Travail = {
   nature?: "animation"
@@ -84,6 +100,12 @@ export const travaux = {
   },
   lister: (projet: string) => appeler<TravailSuivi[]>(`${chemin(projet)}/production-jobs`),
   preparer: (projet: string, demande: DemandeTravail) => appeler<Travail>(`${chemin(projet)}/production-jobs/preview`, { method: "POST", body: JSON.stringify(demande) }),
+  /** **RV5** : prépare `cases.length × nombre` travaux d'un coup — une case
+   *  vide reprend celle de `commune`. `commune` est une `DemandeTravail` sans
+   *  sa case ; le serveur refuse si la clé porte déjà une autre série. */
+  preparerSerie: (projet: string, commune: Omit<DemandeTravail, "pose" | "direction">, cases: CaseSerie[], nombre: number) =>
+    appeler<Serie>(`${chemin(projet)}/production-jobs/preview-series`, { method: "POST", body: JSON.stringify({ ...commune, cases, nombre }) }),
+  demarrerSerie: (projet: string, cle: string) => appeler<Serie>(`${chemin(projet)}/production-jobs/series/${encodeURIComponent(cle)}/start`, { method: "POST" }),
   lire: (projet: string, id: string) => appeler<Travail>(travail(projet, id)),
   lireSuivi: (projet: string, id: string) => appeler<TravailSuivi>(travail(projet, id)),
   demarrer: (projet: string, id: string) => appeler<Travail>(`${travail(projet, id)}/start`, { method: "POST" }),

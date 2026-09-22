@@ -78,7 +78,7 @@ export function ApercuLivraisonSon({ projet, son, jeu, onLivraisons, onTrancherC
         <ul className="mt-[8px] space-y-[4px] break-all text-[12px] text-encre-3">{fichiers.map(f => <li key={f.chemin}>{f.chemin} · {f.etat}</li>)}</ul>
         <p className="mt-[8px] text-[12px] text-encre-3">Chaque <span className="font-mono">.import</span> dit à Godot si le son boucle, et pour une musique son tempo et ses mesures.</p>
       </details>
-      <p className="text-[12px] text-encre-3">Rien n’est écrit dans le jeu tant que vous n’avez pas livré.</p>
+      <p className="text-[12px] text-encre-3">Rien n’est écrit dans le jeu tant que tu n’as pas livré.</p>
       {conflitsOuverts.map(c => <p key={c.chemin} className="text-[13px] text-echec">{c.chemin} : {c.raison}{onTrancherConflit && <> · <button type="button" className="underline" onClick={onTrancherConflit}>Trancher dans Livrer au jeu</button></>}</p>)}
       <button className={`${BOUTON} border-signal bg-signal text-encre-sur-signal`}
         disabled={occupe || !livraison.pret || livraison.etat === "terminee"}

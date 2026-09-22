@@ -487,7 +487,7 @@ function SonNom({
           className="h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre outline-none placeholder:text-eteint focus:border-encre-4"
         />
         <span className="text-[11.5px] text-encre-4">
-          Il s'affiche en haut du carnet, et se change quand on veut.
+          Il s'affiche en haut de la colonne de gauche, et se change quand on veut.
         </span>
       </label>
 
@@ -1593,9 +1593,7 @@ export function BlocSecrets({
       <TitreDeLAtelier>Les fournisseurs</TitreDeLAtelier>
       <p className="text-[12.5px] leading-[1.5] text-encre-2">
         Ce qu'un fournisseur demande se dépose une fois, et l'atelier ne le
-        réaffiche plus jamais. Tout est écrit dans{" "}
-        <span className="text-[11.5px] text-encre">.env</span>, qui n'est
-        jamais versionné.{" "}
+        réaffiche plus jamais.{" "}
         <strong className="text-encre">Déposer chez l'un ne touche à aucun autre</strong>,
         et retirer ne grise que ses modèles : ses images et ses lignes de
         dépense restent.

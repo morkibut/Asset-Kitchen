@@ -44,6 +44,7 @@ import {
   type Trait,
   type Univers,
 } from "../api"
+import { auChutier } from "../bande"
 import { rangDeLaBande } from "./Apercu"
 import { Curseur, EnTetePanneau, Libelle, useEcoule } from "./pieces"
 import { PANNEAU } from "./Infobulle"
@@ -214,92 +215,6 @@ export function placesSeparees(recettes: (Recette | null)[]): string[] {
  *  pour les recettes individuelles historiques, qui pouvaient déjà en porter. */
 const sansToucherALaMain = (rendue: Recette, dOrigine: Recette | null): Recette =>
   ({ ...rendue, main: dOrigine?.main ?? null })
-
-/** Deux prises désignent-elles **la même image du même clip** ? Une prise sans
- *  clip nommé prend celui de la bande — c'est la règle du serveur, et la
- *  réécrire autrement ferait entrer deux fois la même image au chutier. */
-const memeImage = (une: Prise, autre: Prise, clipDeLaBande: string) =>
-  une.numero === autre.numero &&
-  (une.clip || clipDeLaBande) === (autre.clip || clipDeLaBande)
-
-/** **Mettre des images au chutier** (V3.03.3), sans jamais l'y écrire deux fois.
- *
- *  Le chutier est la réserve de la bande : les images retirées du ruban, et
- *  celles qu'on est allé chercher dans le clip. Une prise y arrive **entière** —
- *  sa recette individuelle comprise —, parce que la reposer trois gestes plus
- *  loin doit la rendre telle qu'elle était : *retirer puis remettre* n'est pas
- *  une façon d'effacer un réglage.
- *
- *  ⚠️ **Elle n'y entre qu'une fois.** La même image mise de côté deux fois
- *  ferait deux vignettes identiques dans une réserve qu'on lit d'un coup d'œil,
- *  et il faudrait choisir laquelle poser. La dernière venue gagne : c'est celle
- *  dont on vient de décider, et elle porte les réglages les plus récents.
- *
- *  Écrite ici et employée aussi par le montage, qui repose un découpage sur une
- *  animation gardée — **deux règles pour le même fait finiraient par ne pas
- *  ranger pareil**. */
-export function auChutier(
-  chutier: Prise[],
-  emportees: Prise[],
-  clipDeLaBande: string,
-): Prise[] {
-  const rendu = [...chutier]
-  for (const prise of emportees) {
-    const deja = rendu.findIndex((une) => memeImage(une, prise, clipDeLaBande))
-    if (deja >= 0) rendu[deja] = prise
-    else rendu.push(prise)
-  }
-  return rendu
-}
-
-/** **Reposer un découpage sur une animation déjà gardée** (V3.03.3).
- *
- *  C'est ce que « Reprendre le montage » écrit au retour : le montage ne connaît
- *  que des **numéros d'image**, l'animation porte des **prises** — d'où elles
- *  viennent, de combien elles sont poussées, et leur recette à elles.
- *
- *  > ### ⚠️ Une recette individuelle voyage avec sa prise
- *  >
- *  > Une image qu'on garde retrouve **sa** prise, poussée et recette comprises :
- *  > passer par le montage pour ajouter une image ne doit pas défaire les
- *  > réglages posés sur les onze autres. Et une image que le nouveau découpage
- *  > laisse tombe **au chutier** au lieu de disparaître — changer d'avis sur une
- *  > image ne doit pas effacer ce qu'on avait réglé dessus.
- *
- *  Une image demandée deux fois — le geste *dupliquer* — reçoit la prise
- *  d'origine une fois et une prise neuve ensuite : c'est la même image, et rien
- *  ne dit que la seconde copie doit hériter d'une correction au pixel posée sur
- *  la première.
- *
- *  > ### ⚠️ Le chutier est cherché lui aussi, et ce qu'on y prend en sort
- *  >
- *  > Une image mise de côté que le montage reprend revenait **neuve** : sans sa
- *  > poussée, sans sa recette — et elle restait au chutier par-dessus le marché,
- *  > si bien que le ruban la jouait pendant que la réserve proposait encore de
- *  > la poser. C'est très exactement ce à quoi le chutier sert, et la reprise
- *  > était le seul chemin qui le contournait. Vu au navigateur le 5 septembre
- *  > 2026, sur l'atelier jetable de la tranche. */
-export function remonterLaBande(
-  bande: Bande,
-  clip: string,
-  retenues: number[],
-  occurrences?: (string | undefined)[],
-): { prises: Prise[]; chutier: Prise[] } {
-  const restantes = [...bande.prises]
-  const reserve = [...bande.chutier]
-  const chercher = (ou: Prise[], numero: number, identifiant?: string) => {
-    const la = ou.findIndex(
-      (prise) => prise.numero === numero && (prise.clip || bande.clip) === clip && (!identifiant || prise.identifiant === identifiant),
-    )
-    return la < 0 ? undefined : ou.splice(la, 1)[0]
-  }
-  const prises = retenues.map(
-    (numero, index) =>
-      chercher(restantes, numero, occurrences?.[index]) ??
-      chercher(reserve, numero, occurrences?.[index]) ?? { numero, clip: "", dx: 0, dy: 0, ...(occurrences?.[index] ? { identifiant: occurrences[index] } : {}) },
-  )
-  return { prises, chutier: auChutier(reserve, restantes, bande.clip) }
-}
 
 export function EcranAtelierDeBande({
   identifiant,
@@ -1527,7 +1442,7 @@ export function EcranAtelierDeBande({
         {change && (
           <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
             <p className="mesure text-[10px] leading-4 text-signal">
-              des corrections attendent — rien n'est écrit tant que vous n'avez
+              des corrections attendent — rien n'est écrit tant que tu n'as
               pas enregistré
             </p>
             <div className="flex gap-2">
@@ -2016,7 +1931,7 @@ const CaseEnGrand = (() => {
         data-case-en-grand={rang}
         role="application"
         aria-label="l'image à corriger — les flèches la déplacent d'un pixel"
-        title="cliquez, puis les flèches — Maj pour cinq pixels à la fois"
+        title="clique, puis les flèches — Maj pour cinq pixels à la fois"
         className="relative cursor-move overflow-hidden border border-trait bg-pourtour outline-none focus:border-signal"
         style={{ width: large * facteur, height: haut * facteur }}
         onPointerDown={(evenement) => {
@@ -2470,7 +2385,7 @@ function MontageDuRuban({
             L'ordre du ruban est{" "}
             <b className="text-encre-2">l'ordre de l'export</b>. Une image
             retirée part au chutier avec sa recette, une copie garde la sienne,
-            et rien n'est écrit tant que vous n'avez pas enregistré.
+            et rien n'est écrit tant que tu n'as pas enregistré.
           </>
         )}
       </p>}
@@ -2530,8 +2445,8 @@ function LeChutier({
 
       {chutier.length === 0 ? (
         <p className="mesure text-[10px] leading-4 text-encre-3">
-          Vide. Ce que vous retirez du ruban vient ici, avec sa recette, et se
-          repose où vous voulez — <b className="text-encre-2">retirer n'est pas
+          Vide. Ce que tu retires du ruban vient ici, avec sa recette, et se
+          repose où tu veux — <b className="text-encre-2">retirer n'est pas
           jeter</b>.
         </p>
       ) : (
@@ -2706,7 +2621,7 @@ function PelliculeDuClip({
       </div>
 
       <p className="mesure max-w-[70ch] text-[10px] leading-4 text-encre-3">
-        Prenez ce qui vous manque : les images choisies entrent{" "}
+        Prends ce qui te manque : les images choisies entrent{" "}
         <b className="text-encre-2">au chutier</b>, et rien du ruban ne bouge.
         Le clip est payé — en reprendre une image ne coûte rien.
       </p>
@@ -2764,7 +2679,7 @@ function PelliculeDuClip({
           className="mesure border border-signal px-2 py-1 text-[10px] text-signal hover:bg-signal hover:text-encre-sur-signal disabled:border-trait disabled:text-encre-3"
         >
           {choisies.length === 0
-            ? "choisissez au moins une image"
+            ? "choisis au moins une image"
             : `Prendre ${choisies.length} image${
                 choisies.length > 1 ? "s" : ""
               } ›`}
@@ -2833,8 +2748,8 @@ function RepriseDuMontage({
           <>
             La pellicule du clip, avec{" "}
             <b className="text-encre-2">les images déjà retenues</b> et la
-            vitesse de cette animation. Ce que vous gardez revient ici, recettes
-            comprises ; ce que vous laissez tombe au chutier.
+            vitesse de cette animation. Ce que tu gardes revient ici, recettes
+            comprises ; ce que tu laisses tombe au chutier.
           </>
         )}
       </p>
@@ -3312,7 +3227,7 @@ function RecettesDeLaBande({
             {enVol ? "…" : aRemplacer === propre ? "Remplacer" : "Enregistrer"}
           </button>
         </div>
-        {aRemplacer === propre && <p className="text-signal">« {propre} » existe déjà — cliquez « Remplacer » pour l'écraser.</p>}
+        {aRemplacer === propre && <p className="text-signal">« {propre} » existe déjà — clique « Remplacer » pour l'écraser.</p>}
         {fait && <p role="status" className="text-encre-2">✓ « {fait.nom} » enregistrée.{fait.laisse.length > 0 && ` Pas gardé : ${fait.laisse.join(", ")}.`}</p>}
       </section>
 
@@ -3384,7 +3299,7 @@ function RecetteEnregistree({
           : plusieurs
             ? `des ${choisies} images choisies`
             : "de l'image choisie"}
-        , et rien n'est écrit tant que vous n'avez pas enregistré.
+        , et rien n'est écrit tant que tu n'as pas enregistré.
         {/* **Une fois pour le lot** — jamais une phrase par image. Elle ne
             paraît que quand il y a vraiment quelque chose à écraser : annoncer
             « 0 recette individuelle sera remplacée » ferait craindre une perte

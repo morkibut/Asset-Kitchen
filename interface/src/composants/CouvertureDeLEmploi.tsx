@@ -50,7 +50,7 @@ export function CouvertureDeLEmploi({ chemin, onCalque }: { chemin: CheminEmploi
   const origine = calques.find((v) => v.identifiant === source)
   const reutiliser = async () => {
     setOccupe(true); setErreur("")
-    try { const variantes = await apiCalques.reutiliser(chemin, source, selection, copierPlacement, copierMasques); setConfirmation(`${variantes.length} variantes indépendantes créées. Vérifiez chaque frame avant de retenir ces calques.`); setReemploi(false); setRafraichi((n) => n + 1) }
+    try { const variantes = await apiCalques.reutiliser(chemin, source, selection, copierPlacement, copierMasques); setConfirmation(`${variantes.length} variantes indépendantes créées. Vérifie chaque frame avant de retenir ces calques.`); setReemploi(false); setRafraichi((n) => n + 1) }
     catch (e) { setErreur(e instanceof Error ? e.message : "Le réemploi n’a pas pu être enregistré.") }
     finally { setOccupe(false) }
   }

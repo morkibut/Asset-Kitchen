@@ -829,7 +829,7 @@ export function Comparer({
               <Etiquette>Ce qui les sépare</Etiquette>
               {!bandeA || !bandeB ? (
                 <p className="text-[12.5px] leading-[1.5] text-encre-2">
-                  Choisissez deux animations du même mouvement.
+                  Choisis deux animations du même mouvement.
                 </p>
               ) : !cadencesDifferent && !sensDifferent && bandeA.compte === bandeB.compte ? (
                 <p className="text-[12.5px] leading-[1.5] text-encre-2">

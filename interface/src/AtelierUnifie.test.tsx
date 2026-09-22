@@ -8,7 +8,7 @@ import { SourcesDuSujet } from "./composants/SourcesDuSujet"
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 const vide = (): GrilleDeFamille => ({ personnages: [], groupes: [], filtres: { tous: 0, incomplets: 0, "sans-description": 0 }, total: 0 })
-const sujet = (id: string, nom: string): SujetDeLaGrille => ({ identifiant: id, projet: "jeu", nom, description: "Un héros", type: "personnage", cree_le: 1, collections: [{ identifiant: "heros", nom: "Héros" }], vignette: { identifiant: `image-${id}`, empreinte: "v1" }, compte: { images: { fait: 1, attendu: 1 }, bandes: { fait: 0, attendu: 4 }, poses: { fait: 1, attendu: 4 }, complet: true, detail: [] } })
+const sujet = (id: string, nom: string): SujetDeLaGrille => ({ identifiant: id, projet: "jeu", nom, description: "Un héros", type: "personnage", cree_le: 1, collections: [{ identifiant: "heros", nom: "Héros" }], vignette: { identifiant: `image-${id}`, empreinte: "v1" }, compte: { images: { pretes: 1, demandees: 1, a_fabriquer: 0, a_departager: 0 }, animations: { pretes: 1, demandees: 4, a_fabriquer: 3, a_departager: 0 }, complet: false, hors_plan: 0, detail: [] } })
 // **La porte « Les sujets » et la grille d'une famille sont le même composant**
 // depuis `RP7` (16 septembre 2026) : `BibliothequeDesAssets.tsx` a disparu, et
 // `EcranFamille` monté sans famille montre les quatre d'un coup.

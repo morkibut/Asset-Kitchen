@@ -205,7 +205,6 @@ function monter(surplus: Partial<Personnage> = {}, _dossierJeu = "D:/jeu", onLiv
     onOuvrirCase: vi.fn(),
     onMonterLaBande: vi.fn(),
     onOuvrirLaBande: vi.fn(),
-    onSuperposition: vi.fn(),
     onSupprimer: vi.fn(),
     // Les deux rôles de la fiche d une image, montée dans *Ses images* (C4).
     onReinjecter: vi.fn(),
@@ -267,17 +266,24 @@ test("la fiche validée ouvre sur sept onglets, sans formulaire ni barre permane
   expect(await screen.findByText("Les héros")).toBeTruthy()
 })
 
+// **RV10** — la fiche lit `avancement`, pas `couverture` : le double doit
+// désormais fournir les deux, sans quoi la fiche plante en lisant
+// `objectif.avancement` (trouvé en faisant tourner la suite entière).
 test("un objectif d’animation n’ajoute aucun manque d’image fixe au résumé", async () => {
   const objectif = { sorties: [{ nature: "animation", pose: "marche", direction: "", quantite: 1 }], largeur: 64, hauteur: 64, cadence: 8, boucle: true, repere: { x: 32, y: 64 } } as const
   vi.spyOn(api, "objectifPersonnage").mockResolvedValue({ objectif, couverture: {
     images: { demande: 0, produit: 0, retenu: 0, manquant: 0, a_retenir: 0 },
     animations: { demande: 1, produit: 0, retenu: 0, manquant: 1, a_retenir: 0 }, cases: [],
+  }, avancement: {
+    images: { pretes: 0, demandees: 0, a_fabriquer: 0, a_departager: 0 },
+    animations: { pretes: 0, demandees: 1, a_fabriquer: 1, a_departager: 0 },
+    complet: false, hors_plan: 0,
   } } as never)
   const livrer = vi.fn()
   monter({ objectif: { ...objectif, sorties: objectif.sorties.map(s => ({ ...s })) } }, "", livrer)
   const resume = screen.getByRole("region", { name: "Résumé du sujet" })
-  expect(await within(resume).findByText(/0 \/ 1 animation retenue · 1 à fabriquer/)).toBeTruthy()
-  expect(within(resume).queryByText(/image fixe.*fabriquer/)).toBeNull()
+  expect(await within(resume).findByText(/Prêtes pour le jeu : 0 animation sur 1/)).toBeTruthy()
+  expect(within(resume).queryByText(/image.*fabriquer/)).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "Livrer…" }))
   expect(livrer).toHaveBeenCalledOnce()
 })
@@ -621,7 +627,7 @@ test("un clip arrivé pour ce sujet allume une pastille sur « Galerie », étei
     <PageDuSujet ouvert={personnage} plan={PLAN} personnages={[personnage]} univers={UNIVERS.univers as unknown as Univers}
       emplacements={[]} pieces={[]} vestiaire={null} barreQuiPaie={null} clips={clips} clipsLus
       onPersonnage={rien} onArmer={rien} onAnimer={rien} onFente={rien} onOuvrirCase={rien} onMonterLaBande={rien}
-      onOuvrirLaBande={rien} onSuperposition={rien} onSupprimer={rien} onReinjecter={rien} onReglages={rien}
+      onOuvrirLaBande={rien} onSupprimer={rien} onReinjecter={rien} onReglages={rien}
       onGrille={rien} onComparer={rien} onPiece={rien} onCreerPiece={rien} onRetirerLEmploi={rien} />
   )
   const { rerender } = render(page([clip("ancien")]))
@@ -683,11 +689,13 @@ test("la page d'un personnage reste inchangée quand les capacités répondent",
   expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images de référence", "Galerie", "Pas encore rangé", "Équipement", "Sons", "Objectif & règles"])
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
   expect(screen.getByRole("button", { name: "Découper une image" })).toBeTruthy()
-  // Un personnage a des directions : son filtre est là.
-  expect(screen.getByLabelText("Direction de la galerie")).toBeTruthy()
 })
 
-test("un meuble s'anime, mais n'a pas de directions : pas de filtre Direction dans ses animations", async () => {
+// ⚠️ **Le filtre par direction, sur la galerie des animations, est parti
+// avec elle** (RV10, § 5 — la galerie de bas d'onglet Animations est
+// retirée) : ce test ne mesure donc plus que l'onglet lui-même, pas un
+// filtre qui n'existe plus.
+test("un meuble s'anime, mais n'a pas de directions : l'onglet Animations reste ouvert", async () => {
   vi.spyOn(api, "posesDesTypes").mockResolvedValue({
     plan: PLAN,
     types: [
@@ -698,6 +706,5 @@ test("un meuble s'anime, mais n'a pas de directions : pas de filtre Direction da
   await waitFor(() => expect(vi.mocked(api.posesDesTypes)).toHaveBeenCalled())
   fireEvent.click(await screen.findByRole("tab", { name: "Animations" }))
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
-  expect(screen.getByLabelText("Mouvement de la galerie")).toBeTruthy()
-  expect(screen.queryByLabelText("Direction de la galerie")).toBeNull()
+  expect(document.querySelector("[data-onglet-animations]")).toBeTruthy()
 })

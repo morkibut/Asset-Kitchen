@@ -1483,60 +1483,35 @@ export const AIDE: Record<string, Explication> = {
     origine: "le tableau d'inspiration, les images déjà faites, toi",
   },
 
-  "codex.chose.poses": {
-    nom: "Ce que le jeu réclame",
-    ou: "sujet",
-    groupe: "Cases et planches — sa matrice",
-    quoi: "Les attitudes que ce sujet doit avoir : repos, marche, course pour un personnage ; fermé, ouvert, vidé pour un coffre.",
-    change:
-      "Rien à la génération. C'est cette liste qui décide du nombre de cases à remplir, donc de ce que le tableau de droite compte.",
-    origine: "la nature du sujet · plus ce qu'il s'est ajouté lui-même",
-  },
-
-  "codex.chose.faites": {
-    nom: "Ce qui est fait",
-    ou: "sujet",
-    groupe: "Cases et planches — sa matrice",
-    quoi: "Les images qui existent déjà pour ce sujet, une par attitude remplie.",
-    change:
-      "Rien du tout, et c'est le point : on regarde, on ne modifie rien et on ne paie rien.",
-    origine: "les images faites · le manque n'a pas de couleur, il est en cours",
-  },
-
-  "codex.chose.matrice": {
-    nom: "Sa matrice",
-    ou: "sujet",
-    groupe: "Cases et planches — sa matrice",
-    quoi: "Le tableau des attitudes de ce sujet, avec ce qui les remplit, et il change pendant qu'on règle à gauche.",
-    change:
-      "Rien à la génération. Ranger une attitude retire sa ligne et son coût — le compte des rangées reste écrit à côté, pour qu'un tableau plein obtenu en rangeant ne passe pas pour un travail fini.",
-    origine: "les images faites, comptées par le serveur",
-  },
+  // **« Ses cases » a été retirée** (RV10, 21-22 sept. 2026) : le compte
+  // qu'elle affichait — ce que le jeu réclame, ce qui est fait — vit
+  // maintenant en un seul endroit, l'avancement rendu par le serveur et lu
+  // pareil par la carte du Codex, la fiche et l'objectif (`ObjectifDuSujet.tsx`).
+  // « Type d'objet » et « Supprimer » sont passés dans *Modifier la fiche*
+  // (`FicheDuSujet.tsx`) depuis le 16 septembre 2026 déjà.
 
   // **Déplacée depuis `ou: "equipement"` en `GU8`** (`docs/PLAN-guide.md`) :
   // son propre texte le disait déjà — « les cases que tu coches dans
-  // l'établi ou dans le codex » — et `EtabliDuSujet.tsx` confirme : « les
-  // angles d'une planche de pose » (E13) ferment un appel sur plusieurs
-  // directions d'une même pose d'*un personnage*, jamais sur une pièce
-  // d'équipement. Groupée ici avec ses sœurs, vérifiée.
+  // l'établi ou dans le codex ». **Sa seule porte est désormais l'onglet
+  // Images** (RV10) : « les angles d'une planche de pose » (E13) ferment un
+  // appel sur plusieurs directions d'une même pose d'*un personnage*, jamais
+  // sur une pièce d'équipement.
   "fabrique.planche": {
     nom: "La planche de poses",
-    groupe: "Cases et planches — sa matrice",
+    groupe: "La fiche du sujet",
     ou: "sujet",
     quoi: "Une feuille où le modèle dessine plusieurs attitudes du même personnage en un seul appel, redécoupée ensuite en images séparées.",
     change:
       "Elle divise le prix : une planche coûte le prix d'un appel quel que soit le nombre de cases qu'elle porte. Et elle achète quelque chose qu'aucun appel séparé ne garantit — les cases sortent à la même échelle et dans le même style, puisqu'elles ont été peintes ensemble.",
-    origine: "les cases que tu coches dans l'établi ou dans le codex",
+    origine: "les directions de la pose, ouverte depuis l'onglet Images",
     long:
       "Le risque se dit avec : c'est **un jet unique**, que le modèle ne rend pas deux fois. Une planche ratée se repaie entière, et un compte de cases faux ne fait rien entrer du tout — la planche entière se relance au prix plein.\n\nLa feuille elle-même n'entre jamais en bibliothèque ; ses morceaux, oui, chacun filié vers elle.",
   },
 
   // ── La barre qui paie — ce qu'on touche à chaque génération (GU6) ─────────
   //
-  // **Pas « l'établi »** : ce mot-là est déjà pris par le tableau des cases
-  // d'un sujet (`codex.chose.matrice`, `EtabliDuSujet.tsx`), un cran plus
-  // haut à l'écran. Ce qui suit est la barre commune aux lieux d'où l'argent
-  // part (`BarreQuiPaie.tsx`).
+  // Ce qui suit est la barre commune aux lieux d'où l'argent part
+  // (`BarreQuiPaie.tsx`).
   //
   // ⚠️ **Ces sept fiches ne sont pas sur la page d'un sujet, et les groupes le
   // disent depuis `GU16` (2/2)** : `BarreQuiPaie` n'est plus montée qu'avec sa
@@ -1683,7 +1658,7 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Il réécrit la taille rendue des poses qu'on lui désigne. Le défaut qu'il corrige est mesuré : six poses du même personnage, même recette, sont sorties à 64, 60, 64, 53, 64 et 43 pixels de haut — un bras tendu élargit la boîte du sujet, et la mise sur grille rétrécit tout le reste.",
     origine:
-      "la matrice de l'établi, qui marque en doré les poses hors taille commune",
+      "ses poses, comparées entre elles — il marque en doré celles hors taille commune",
     long:
       "Il travaille sur toutes les poses à la fois — la barre des tables parle de l'image ouverte, lui écrit dans les autres, donc il vit à part. Il n'écrit que dans l'occupation, une part de la case : changer la taille de la case ne défait donc aucun calage. Il n'épingle pas, et ne coûte rien : aucun appel payant ne part d'ici.",
   },
@@ -1981,7 +1956,7 @@ export const AIDE: Record<string, Explication> = {
     quoi: "Comment l'image passe de ses milliers de pixels aux carrés de la case, en quatre façons qui rendent quatre sprites différents.",
     change:
       "C'est un choix de style, pas un classement : le vote rend un sprite calme, les traits épaissis un sprite détaillé, la réduction douce une image floue mais lisse, et « au plus proche » un résultat brut.",
-    origine: "défaut du projet · vote en deux temps",
+    origine: "défaut du projet · contour net (recommandé)",
     long:
       "Réduire mille pixels à soixante-quatre carrés, c'est en jeter quatre-vingt-dix-neuf sur cent : ce qu'on garde et comment décide de tout le style du sprite. Le projet donne un défaut, mais cette image garde le dernier mot, et changer de méthode ne coûte rien — aucun appel payant ne part d'ici.",
   },
@@ -3036,7 +3011,7 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Rien à ce qui part. Ce panneau ne dépense jamais d'argent — il regarde ce que l'application du moteur a sur son disque, et il te dit si le modèle gratuit est utilisable maintenant.",
     origine: "relu à chaque ouverture de cet écran",
-    long: "Trois choses peuvent manquer. L'application du moteur fermée empêche tout : ouvre-la, reviens, le grisé tombe seul. Des fichiers manquants laissent le modèle choisissable — l'atelier les rapatrie, en disant poids et licence avant de lancer quoi que ce soit. Le greffon des gros pixels manquant n'est qu'un avertissement : le clip sort lissé, et un téléchargement coupé reprend où il s'est arrêté.",
+    long: "Trois choses peuvent manquer. L'application fermée empêche tout : ouvre-la, reviens, le grisé tombe seul. Des fichiers manquants laissent le modèle choisissable — l'atelier les rapatrie. Le greffon des gros pixels manquant n'est qu'un avertissement : le clip sort lissé. La mémoire libre est en clair, jamais l'identifiant du pilote — deux avertissements sans blocage : trop peu, ou ComfyUI pris.",
   },
 
   "clip.mesure": {
@@ -3177,8 +3152,8 @@ export const AIDE: Record<string, Explication> = {
 
   // **Le codex, plus la galerie** : depuis la V3.03, le montage ne règle
   // aucun traitement — il taille le mouvement —, et la recette d'une
-  // animation se règle dans son atelier, qui s'ouvre depuis la matrice d'un
-  // personnage.
+  // animation se règle dans son atelier, qui s'ouvre depuis l'onglet
+  // Animations d'un sujet.
   // **Déplacée sous `ou: "bande"` en GU6**, retaillée en GU11 : le « à
   // savoir » dépassait 2 750 signes. Les deux règles datées qu'il racontait
   // (3 et 5 septembre 2026) et le détail du comportement à l'échange d'une
@@ -4197,8 +4172,8 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Le fond et le prompt négatif",
     quoi: "La couleur de fond demandée et, dessous, la consigne négative : ce qu'on interdit au modèle.",
     change:
-      "Avec Modifier l'envoi, on prend une autre couleur, « Sans fond » ou « Reprendre la couleur calculée » ; cela ne vaut que pour cet appel. Le titre se réduit à « Fond » quand un style local ne lit pas le négatif : le fond part quand même, et le détourage au retour en dépend.",
-    origine: "l'atelier · la couleur calculée sur les images envoyées, et l'interdiction qui en découle",
+      "Avec Modifier l'envoi, on prend une autre couleur, « Sans fond » ou « Reprendre la couleur calculée » ; cela ne vaut que pour cet appel. Le titre se réduit à « Fond » quand un style local ne lit pas le négatif : le fond part quand même, et le détourage au retour en dépend.\n\nSans image jointe, l'atelier regarde aussi ce que tu as écrit : si ta description nomme une couleur — « cape verte », « red cloak » — il évite un fond de cette couleur-là plutôt que de retomber sur le vert de studio par défaut, et te dit pourquoi juste en dessous.",
+    origine: "l'atelier · la couleur calculée sur les images envoyées ou, à défaut, sur les couleurs que ta description nomme, et l'interdiction qui en découle",
   },
 
   "envoi.retour": {

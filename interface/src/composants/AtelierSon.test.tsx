@@ -67,11 +67,34 @@ test("la provenance se lit en clair (moteur, graine, texte, série), le document
   fireEvent.click(screen.getByText("Source et provenance"))
   expect(screen.getByText("Stable Audio 3 Small-SFX")).toBeTruthy()
   expect(screen.getByText("42")).toBeTruthy()
-  expect(screen.getByText("Un pas dans la boue")).toBeTruthy()
+  // **Deux fois, et c'est voulu** (RV13) : la demande anglaise se lit en
+  // petit sous le titre court, et encore une fois ici, en détail, dans
+  // « Source et provenance ».
+  expect(screen.getAllByText("Un pas dans la boue")).toHaveLength(2)
   expect(screen.getByText("série serie-1, tirage 3")).toBeTruthy()
   expect(screen.getByText(/"modele":/)).not.toBeVisible()
   fireEvent.click(screen.getByText("Document brut"))
   expect(screen.getByText(/"modele":/)).toBeVisible()
+})
+
+test("un son jamais retitré porte un titre court, jamais la demande entière — elle se lit en petit dessous", async () => {
+  const demande = "A deep, echoing mining chamber ambiance with distant pickaxe strikes, dripping water and the low rumble of dwarven machinery"
+  monter({ ...son, nom: demande, famille: "musique", provenance: { nature: "sfxr" } })
+  await screen.findByLabelText("Fondu d’entrée (ms)")
+  const titre = screen.getByRole("heading", { level: 1 })
+  expect(titre.textContent).not.toBe(demande)
+  expect(titre.textContent).toMatch(/^Musique · /)
+  expect(titre.textContent!.length).toBeLessThan(demande.length)
+  expect(screen.getByText(demande)).toBeTruthy()
+})
+
+test("un titre déjà court ne répète rien en dessous — la famille seule ne cache aucun mot du nom", async () => {
+  monter()
+  await screen.findByLabelText("Fondu d’entrée (ms)")
+  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Bruitage · Épée")
+  // Le nom n'est nulle part répété en petit sous le titre : la famille
+  // ajoutée devant ne cache aucun mot du nom, elle n'a donc rien à répéter.
+  expect(screen.queryByText("Épée")).toBeNull()
 })
 
 test("les avertissements s’affichent sans bloquer, et un son saturé se livre quand même", async () => {
@@ -83,7 +106,7 @@ test("les avertissements s’affichent sans bloquer, et un son saturé se livre 
 test("un son sans famille propose de la poser, et le dit clairement", async () => {
   const classer = vi.spyOn(sons, "classer").mockResolvedValue({ ...son, famille: "ambiance" })
   monter({ ...son, famille: null })
-  expect(await screen.findByText(/choisissez-en une pour qu’il se livre en fichier prêt pour le jeu/)).toBeTruthy()
+  expect(await screen.findByText(/choisis-en une pour qu’il se livre en fichier prêt pour le jeu/)).toBeTruthy()
   fireEvent.click(screen.getByRole("button", { name: "Poser une famille" }))
   fireEvent.click(screen.getByRole("button", { name: "Ambiance" }))
   await waitFor(() => expect(classer).toHaveBeenCalledWith(expect.objectContaining({ identifiant: "son1" }), "ambiance"))

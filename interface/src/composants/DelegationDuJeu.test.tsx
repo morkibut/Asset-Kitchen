@@ -50,7 +50,7 @@ test("retirer le dernier modèle ne transforme jamais la sélection en autorisat
   render(<DelegationDuJeu projet="jeu" onAtelier={() => {}} />)
   fireEvent.click(await screen.findByRole("checkbox", { name: /ancien:reference/ }))
   fireEvent.click(screen.getByRole("button", { name: "Enregistrer le cadre du jeu" }))
-  expect(await screen.findByRole("alert")).toHaveTextContent("Choisissez au moins un modèle")
+  expect(await screen.findByRole("alert")).toHaveTextContent("Choisis au moins un modèle")
   expect(travaux.reglerCadre).not.toHaveBeenCalled()
   fireEvent.change(screen.getByRole("combobox", { name: "Image de référence" }), { target: { value: "tous" } })
   fireEvent.click(screen.getByRole("button", { name: "Enregistrer le cadre du jeu" }))
