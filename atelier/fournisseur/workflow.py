@@ -40,6 +40,40 @@ def sur_fond_blanc(octets):
     return sortie.getvalue()
 
 
+# **Les entrées « qui poussent »** (`io.Autogrow` de ComfyUI récent) : /object_info
+# déclare un seul champ, `images: ["COMFY_AUTOGROW_V3", {"template": …}]`, rangé
+# parmi les obligatoires même quand il en faut zéro (`min: 0`) ; le graphe, lui,
+# relie `images.image_1`, `images.image_2`… Relevé le 22/09/2026 sur
+# `TextEncodeQwenImage21` (ComfyUI 0.37) et `TextEncodeBooguEdit` (0.36).
+_GROUPE = "COMFY_AUTOGROW_V3"
+
+
+def _gabarit_de_groupe(declaration):
+    if isinstance(declaration, list) and len(declaration) > 1 and declaration[0] == _GROUPE \
+            and isinstance(declaration[1], dict):
+        return declaration[1].get("template") or {}
+    return None
+
+
+def _groupe_facultatif(declaration, champ, entrees):
+    gabarit = _gabarit_de_groupe(declaration)
+    if gabarit is None:
+        return False
+    presents = sum(1 for c in entrees if c.startswith(champ + "."))
+    return presents >= (gabarit.get("min") or 0)
+
+
+def _membre_de_groupe(champ, champs):
+    groupe, _, membre = champ.partition(".")
+    gabarit = _gabarit_de_groupe(champs.get(groupe)) if membre else None
+    if gabarit is None:
+        return False
+    if gabarit.get("names"):
+        return membre in gabarit["names"]
+    prefixe = gabarit.get("prefix")
+    return bool(prefixe) and membre.startswith(prefixe) and membre[len(prefixe):].isdigit()
+
+
 class MoteurWorkflow(MoteurDeLaMaison):
     nom = "ComfyUI"
 
@@ -67,15 +101,15 @@ class MoteurWorkflow(MoteurDeLaMaison):
             entree = definition.get("input", {})
             champs = {**entree.get("required", {}), **entree.get("optional", {})}
             for champ in entree.get("required", {}):
-                if champ not in noeud["inputs"]:
+                if champ not in noeud["inputs"] and not _groupe_facultatif(champs[champ], champ, noeud["inputs"]):
                     problemes.append(f"{classe} : le champ obligatoire {champ} manque.")
             for champ, valeur in noeud["inputs"].items():
-                if champ not in champs:
+                if champ not in champs and not _membre_de_groupe(champ, champs):
                     problemes.append(f"{classe} : le champ {champ} n'est pas déclaré par cette installation.")
                     continue
                 if (identifiant, champ) in liees:
                     continue
-                declaration = champs[champ]
+                declaration = champs.get(champ)
                 # Deux formes de liste de choix : `[[…], {…}]`, et `["COMBO",
                 # {"options": […]}]` que ComfyUI récent emploie déjà.
                 choix = None

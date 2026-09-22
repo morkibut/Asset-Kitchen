@@ -1,11 +1,11 @@
 {
- "releve_le": 1790042724.5997453,
+ "releve_le": 1790098597.9817238,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 179714,
+  "octets": 181692,
   "documents": {
    "AGENTS.md": {
     "octets": 37683,
@@ -260,127 +260,127 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 48540,
+    "octets": 50518,
     "titres": 20,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 48070
+      "octets": 50046
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 44,
-      "octets": 19272
+      "octets": 21248
      },
      {
       "titre": "Ce que la remise à plat a mesuré, le 13 septembre 2026",
       "niveau": 3,
-      "ligne": 94,
+      "ligne": 96,
       "octets": 1110
      },
      {
       "titre": "Les invariants du produit",
       "niveau": 2,
-      "ligne": 113,
+      "ligne": 115,
       "octets": 8448
      },
      {
       "titre": "L'argent et l'appel",
       "niveau": 3,
-      "ligne": 119,
+      "ligne": 121,
       "octets": 1137
      },
      {
       "titre": "Ce qui décide, et ce qui refuse",
       "niveau": 3,
-      "ligne": 134,
+      "ligne": 136,
       "octets": 975
      },
      {
       "titre": "Le traitement des images",
       "niveau": 3,
-      "ligne": 144,
+      "ligne": 146,
       "octets": 962
      },
      {
       "titre": "Le rangement",
       "niveau": 3,
-      "ligne": 156,
+      "ligne": 158,
       "octets": 1116
      },
      {
       "titre": "Le personnage, la planche et le calque",
       "niveau": 3,
-      "ligne": 169,
+      "ligne": 171,
       "octets": 1277
      },
      {
       "titre": "Les fournisseurs",
       "niveau": 3,
-      "ligne": 182,
+      "ligne": 184,
       "octets": 723
      },
      {
       "titre": "L'écran",
       "niveau": 3,
-      "ligne": 193,
+      "ligne": 195,
       "octets": 1966
      },
      {
       "titre": "Couverture des user stories",
       "niveau": 2,
-      "ligne": 211,
+      "ligne": 213,
       "octets": 4427
      },
      {
       "titre": "L'ordre historique → `docs/archive/ordre-historique-jusqu-au-10-septembre.md`",
       "niveau": 2,
-      "ligne": 271,
+      "ligne": 273,
       "octets": 437
      },
      {
       "titre": "Le détail des versions closes → `docs/archive/plan-r6-a-v3.02.md`",
       "niveau": 2,
-      "ligne": 280,
+      "ligne": 282,
       "octets": 366
      },
      {
       "titre": "Les tranches périmées par la V4 → `docs/archive/plan-perime-par-la-v4.md`",
       "niveau": 2,
-      "ligne": 288,
+      "ligne": 290,
       "octets": 529
      },
      {
       "titre": "V3.5 — Le dépliage généralisé",
       "niveau": 2,
-      "ligne": 298,
+      "ligne": 300,
       "octets": 8317
      },
      {
       "titre": "P1 · La planche se garde, et son découpage se refait",
       "niveau": 3,
-      "ligne": 325,
+      "ligne": 327,
       "octets": 3419
      },
      {
       "titre": "P2 · Une planche pour plusieurs choses",
       "niveau": 3,
-      "ligne": 374,
+      "ligne": 376,
       "octets": 3408
      },
      {
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
-      "ligne": 427,
+      "ligne": 429,
       "octets": 3172
      },
      {
       "titre": "Les trois risques encore ouverts",
       "niveau": 3,
-      "ligne": 447,
+      "ligne": 449,
       "octets": 1772
      }
     ]
@@ -587,11 +587,11 @@
  },
  "renvois": {
   "code": {
-   "total": 861,
+   "total": 862,
    "casses": []
   },
   "docs": {
-   "total": 1432,
+   "total": 1442,
    "casses": []
   }
  }

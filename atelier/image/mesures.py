@@ -92,6 +92,40 @@ def rendre_en_png(octets: bytes) -> bytes:
         return tampon.getvalue()
 
 
+def aplatir_alpha(octets: bytes) -> bytes:
+    """Retire un canal alpha qui ne portait aucune vraie transparence (TN1,
+    22 septembre 2026).
+
+    **Le pendant, côté réception, du nœud `SplitImageWithAlpha`** qu'un graphe
+    ComfyUI posait *avant* cette tranche : il coupait ce canal à l'intérieur
+    même du graphe, avant que le moindre octet n'atteigne l'atelier — ce qui
+    comptait comme « brut », pour une image locale, n'avait donc jamais porté
+    ce bruit. Un seul graphe sert maintenant deux demandes à la fois (garder la
+    transparence, ou la jeter) : le tri qui se faisait dans ComfyUI se fait ici,
+    au même instant de la chaîne — avant que quoi que ce soit ne soit écrit
+    comme brut sur le disque, jamais après. Ce n'est donc pas une exception au
+    principe non destructif (`atelier/image/mesures.py`, en tête de fichier) :
+    c'est le même geste qu'avant, seulement déplacé du GPU au CPU.
+
+    Le décodeur de Qwen-Image 2.1 rend toujours quatre canaux. Sans demande de
+    transparence, l'alpha n'est que du bruit — mesuré entre 223 et 255 le
+    22 septembre 2026, donc déjà presque opaque. Le RVB est déjà la couleur
+    réellement peinte : un simple retrait du canal suffit, nul besoin de
+    composer sur un fond comme `atelier.fournisseur.workflow.sur_fond_blanc`
+    le fait pour une référence *envoyée* à ComfyUI (l'autre sens).
+
+    Rend les octets tels quels si l'image n'a pas de canal alpha — le cas de
+    toute image reçue d'un autre moteur, qui n'a jamais porté ce bruit.
+    """
+    with Image.open(io.BytesIO(octets)) as image:
+        if image.mode not in ("RGBA", "LA", "PA"):
+            return octets
+        converti = image.convert("RGB")
+        tampon = io.BytesIO()
+        converti.save(tampon, format="PNG", optimize=True)
+        return tampon.getvalue()
+
+
 def vignette(octets: bytes, cote: int) -> bytes:
     """La même image, réduite pour tenir dans un carré de `cote` pixels.
 

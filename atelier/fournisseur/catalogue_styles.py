@@ -40,6 +40,30 @@ FAMILLES: dict[str, dict] = {
         'checkpoint': re.compile(r'sd_xl_base', re.I),
         'vitesse': 'environ 40 secondes par image',
         'reference': 'depart'
+    },
+    # Qwen-Image 2.1 (sorti le 20/09/2026, pris en charge par ComfyUI à partir de
+    # la 0.37). Pas de LoRA : le modèle de base est le style. Pour une carte de
+    # 8 Go, on ne prend jamais les poids bf16 (13 Go) : int8_convrot d'abord
+    # (6,8 Go, quasi sans perte), puis int4 ou GGUF en repli. Même règle pour
+    # l'encodeur Qwen3-VL 8B (8,7 Go en int8), qui ne tourne qu'une fois par
+    # texte et se décharge ensuite.
+    'qwen21': {
+        'nom': 'Qwen-Image 2.1',
+        # TN1 (22/09/2026) : `SplitImageWithAlpha` est sorti du graphe — un seul
+        # graphe sert les deux demandes (transparence gardée ou jetée), le tri se
+        # fait maintenant côté atelier (`atelier.image.aplatir_alpha`). Exiger ce
+        # nœud ici grisait le style pour rien sur une installation qui ne l'a pas,
+        # alors qu'il ne sert plus au graphe.
+        'noeuds': ('UNETLoader', 'CLIPLoader', 'VAELoader', 'TextEncodeQwenImage21', 'EmptyLatentImage', 'KSampler', 'VAEDecode', 'LoadImage'),
+        'unet': re.compile(r'qwen.?image.?2\.?1.*(int8|int4|\.gguf$)', re.I),
+        'clip': re.compile(r'qwen.?3.?vl.?8b.*(int8|int4)', re.I),
+        'vae': re.compile(r'qwen.?image.?2\.?1.?vae', re.I),
+        'vitesse': 'de 12 secondes à 2 minutes par image selon le réglage',
+        'reference': 'sujet',
+        # Capacité déclarée pour TN1 : Qwen-Image 2.1 sait rendre un fond vraiment
+        # vide (l'alpha ne redevient du bruit qu'en l'absence de cette demande —
+        # voir `construire_qwen21` et `atelier.image.aplatir_alpha`).
+        'transparence': True
     }
 }
 
@@ -373,6 +397,37 @@ STYLES: tuple[dict, ...] = (
         'description': 'La même matière que « Tuiles et décors », avec le raccord sans couture appliqué : le bord gauche continue exactement sur le bord droit, le haut sur le bas.',
         'etiquette': 'Sans couture',
         'source': 'crafiq/flux-2-klein-9b-game-asset-tiles-lora'
+    },
+    # Qwen-Image 2.1, le moteur local principal : un seul modèle, deux réglages.
+    # Il n'existe pas encore de LoRA « Lightning » pour la 2.1 : le mode rapide
+    # gagne sa vitesse sur la taille (512 = quatre fois moins de calcul que
+    # 1024) et sur le nombre d'étapes. Le gabarit officiel part de 25 étapes,
+    # la chaîne de Qwen en fait 40 à 50.
+    {
+        'identifiant': 'qwen21-rapide',
+        'famille': 'qwen21',
+        'declencheur': '2D game art.',
+        'etapes': 12,
+        'genre': 'asset',
+        'formats': ('512', '1024'),
+        'vitesse': 'environ 12 secondes en 512, 16 secondes en 1024',
+        'nom': 'Très rapide',
+        'description': 'Le modèle principal en brouillon : 12 étapes, idéal pour chercher une idée ou tirer beaucoup de variantes. Détails un peu moins fins.',
+        'etiquette': 'Recommandé',
+        'source': 'Comfy-Org/Qwen-Image-2.1'
+    },
+    {
+        'identifiant': 'qwen21-qualite',
+        'famille': 'qwen21',
+        'declencheur': '2D game art.',
+        'etapes': 30,
+        'genre': 'asset',
+        'formats': ('512', '1024', '1536'),
+        'vitesse': 'environ 36 secondes en 1024, 2 minutes en 1536',
+        'nom': 'Meilleure qualité',
+        'description': 'Le même modèle avec 30 étapes : textes lisibles, mains et petits détails propres. Pour l’image qu’on garde.',
+        'etiquette': 'Qualité',
+        'source': 'Comfy-Org/Qwen-Image-2.1'
     }
 )
 
@@ -385,6 +440,10 @@ _CONSIGNE_RACCORD = ('installer le nœud personnalisé ComfyUI-seamless-tiling :
     'dossier custom_nodes de ComfyUI, git clone https://github.com/spinagon/ComfyUI-seamless-tiling '
     'puis redémarrer ComfyUI')
 
+# Qwen-Image 2.1 : le nœud d'encodage arrive avec ComfyUI 0.37 (21/09/2026).
+_NOEUDS_QWEN21 = ('TextEncodeQwenImage21',)
+_CONSIGNE_QWEN21 = 'mettre à jour ComfyUI en version 0.37 ou plus récente'
+
 
 def style(identifiant):
     """Renvoie le dict du style ou None."""
@@ -396,15 +455,23 @@ def style(identifiant):
 
 _QUALITE = re.compile(r'Q(\d)(?:_K)?(_[SM])?', re.I)
 _FP8 = re.compile(r'fp8', re.I)
+_INT8 = re.compile(r'int8', re.I)
+_INT4 = re.compile(r'int4', re.I)
 
 
 def qualite(nom):
     """Port de `quality` (catalog.mjs) : entre deux fichiers compatibles, la
-    quantification la plus fidèle d'abord."""
+    quantification la plus fidèle d'abord. Ajout gag2 : les poids int8 / int4
+    de ComfyUI (Qwen-Image 2.1), que sc-clone ne connaissait pas — int8 passe
+    devant un GGUF Q8, int4 se range entre Q4 et Q5."""
     m = _QUALITE.search(nom)
     if m:
         suffixe = (m.group(2) or '').upper()
         return int(m.group(1)) * 10 + (2 if suffixe == '_M' else 1 if suffixe else 3)
+    if _INT8.search(nom):
+        return 90
+    if _INT4.search(nom):
+        return 45
     return 55 if _FP8.search(nom) else 100
 
 
@@ -454,7 +521,8 @@ def resoudre(entree, inventaire_):
     if not entree:
         return {'pret': False, 'manque': ['style inconnu'], 'fichiers': {}}
     famille = FAMILLES[entree['famille']]
-    besoin = {'lora': (entree.get('lora'), inventaire_['loras'], 'le LoRA de style')}
+    # Qwen-Image 2.1 n'a pas de LoRA : un style sans motif de LoRA n'en exige pas.
+    besoin = {'lora': (entree['lora'], inventaire_['loras'], 'le LoRA de style')} if entree.get('lora') else {}
     if entree.get('unet') or famille.get('unet'):
         besoin['unet'] = (entree.get('unet') or famille.get('unet'), inventaire_['unets'], 'le modèle de base')
     if entree.get('clip') or famille.get('clip'):
@@ -480,6 +548,8 @@ def resoudre(entree, inventaire_):
             if n not in noeuds:
                 if n in _NOEUDS_RACCORD:
                     manque.append(f'le nœud {n} ({_CONSIGNE_RACCORD})')
+                elif n in _NOEUDS_QWEN21:
+                    manque.append(f'le nœud {n} ({_CONSIGNE_QWEN21})')
                 else:
                     manque.append('le nœud ' + n)
     return {'pret': not manque, 'manque': manque, 'fichiers': fichiers}

@@ -190,8 +190,10 @@ async def test_deux_references_sur_un_style_depart_est_refuse_avant_la_file(atel
 # ── Le genre de référence, exposé ───────────────────────────────────────────
 
 def test_le_genre_de_reference_est_porte_par_chaque_style():
+    # Qwen-Image 2.1 garde le sujet aussi ; absent de ce relevé, il est couvert
+    # par tests/test_qwen21.py.
     inv = inventaire(OBJECT_INFO)
-    for e in STYLES:
+    for e in (e for e in STYLES if e["famille"] != "qwen21"):
         resolu = resoudre(e, inv)
         assert resolu["pret"]
         profil = normaliser(construire_profil(e, resolu["fichiers"]))

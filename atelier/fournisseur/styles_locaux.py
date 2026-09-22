@@ -44,6 +44,12 @@ def _formats_tuile():
     ]
 
 
+# Un style qui déclare ses propres tailles (Qwen-Image 2.1 : le mode qualité
+# monte à 1536, que les autres moteurs n'ont jamais tenu sur 8 Go).
+def _formats_declares(resolutions):
+    return [{"resolution": r, "proportions": "1:1", "largeur": int(r), "hauteur": int(r)} for r in resolutions]
+
+
 def _noeud(class_type, **inputs):
     return {"class_type": class_type, "inputs": inputs}
 
@@ -112,9 +118,13 @@ def _variante_klein(graphe, liaisons, *, distille, nombre):
 def _metadonnees_style(entree):
     famille = FAMILLES[entree["famille"]]
     d = {"famille": entree["famille"], "declencheur": entree["declencheur"], "genre": entree.get("genre", "sprite"),
-        "vitesse": famille["vitesse"], "source": entree["source"], "reference": famille["reference"]}
+        "vitesse": entree.get("vitesse") or famille["vitesse"], "source": entree["source"], "reference": famille["reference"]}
     if entree.get("suffixe"):
         d["suffixe"] = entree["suffixe"]
+    # TN1 : une capacité du moteur, pas du style — absente pour les vingt-deux
+    # styles recopiés de sc-clone, vraie pour les deux réglages Qwen-Image 2.1.
+    if famille.get("transparence"):
+        d["transparence"] = True
     return d
 
 
@@ -126,7 +136,8 @@ def _profil(entree, *, graphe, liaisons, sortie_noeud, etapes, parametres=None, 
         "graphe": graphe,
         "liaisons": liaisons,
         "parametres": parametres or {},
-        "formats": _formats_tuile() if entree.get("genre") == "tile" else _formats(),
+        "formats": _formats_declares(entree["formats"]) if entree.get("formats")
+            else _formats_tuile() if entree.get("genre") == "tile" else _formats(),
         "sortie": {"noeud": sortie_noeud, "champ": "images"},
         "description": entree["description"],
         "style": _metadonnees_style(entree),
@@ -255,7 +266,58 @@ def construire_sdxl(entree, fichiers):
         parametres=PARAMETRE_FORCE, variantes={"1": {"graphe": variante_graphe, "liaisons": variante_liaisons}})
 
 
-CONSTRUCTEURS = {"zimage": construire_zimage, "klein": construire_klein, "flux1dev": construire_flux1, "sdxl": construire_sdxl}
+# Taille à laquelle Qwen-Image 2.1 ramène chaque image de référence (côté du
+# carré équivalent). Le nœud part de 1024 ; chaque référence ajoute ses propres
+# jetons au calcul, et trois références en 1024 ne tiennent plus sur 8 Go.
+QWEN21_RESOLUTION_REFERENCE = 768
+
+
+def construire_qwen21(entree, fichiers):
+    """Gabarit officiel `image_qwen_image_2_1_t2i` (workflow_templates, relevé le
+    22/09/2026), aplati hors de son sous-graphe : cfg 1, euler, simple, pas de
+    décalage de sigmas. Le négatif ne pèse rien à cfg 1 — pas de liaison."""
+    charge_unet = _noeud("UnetLoaderGGUF", unet_name=fichiers["unet"]) if fichiers["unet"].lower().endswith(".gguf") \
+        else _noeud("UNETLoader", unet_name=fichiers["unet"], weight_dtype="default")
+    graphe = {
+        "1": charge_unet,
+        "2": _noeud("CLIPLoader", clip_name=fichiers["clip"], type="qwen_image", device="default"),
+        "3": _noeud("VAELoader", vae_name=fichiers["vae"]),
+        "4": _noeud("TextEncodeQwenImage21", clip=["2", 0], prompt="", negative_prompt="",
+            resolution=QWEN21_RESOLUTION_REFERENCE),
+        "5": _noeud("EmptyLatentImage", width=512, height=512, batch_size=1),
+        "6": _noeud("KSampler", seed=0, steps=entree["etapes"], cfg=1, sampler_name="euler", scheduler="simple",
+            denoise=1, model=["1", 0], positive=["4", 0], negative=["4", 1], latent_image=["5", 0]),
+        "7": _noeud("VAEDecode", samples=["6", 0], vae=["3", 0]),
+        # TN1 (22/09/2026) : le graphe garde toujours l'alpha, pour servir les
+        # deux demandes (transparence gardée ou jetée) sans deux variantes de
+        # graphe. Le décodeur de la 2.1 rend toujours quatre canaux ; sans
+        # demande de transparence, ce canal n'est que du bruit (223 à 255,
+        # mesuré ce jour-là) — c'est l'atelier qui le retire à l'arrivée
+        # (`atelier.image.aplatir_alpha`, appelé depuis
+        # `ServiceGenerations._executer_emplacement`), plus jamais le graphe.
+        "8": _noeud("SaveImage", images=["7", 0], filename_prefix="AssetKitchen_Qwen21"),
+    }
+    liaisons = {"prompt": [{"noeud": "4", "champ": "prompt"}],
+        "largeur": [{"noeud": "5", "champ": "width"}], "hauteur": [{"noeud": "5", "champ": "height"}],
+        "graine": [{"noeud": "6", "champ": "seed"}]}
+    # Les références (gabarit `image_qwen_image_2_1_image_edit`) entrent dans le
+    # même nœud d'encodage, qui reçoit alors le VAE : le modèle garde le sujet,
+    # comme Klein. Le latent de départ ne change pas.
+    variantes = {}
+    for nombre in (1, 2, 3):
+        variante_graphe, variante_liaisons = _copier(graphe, liaisons)
+        variante_graphe["4"]["inputs"]["vae"] = ["3", 0]
+        for i in range(nombre):
+            charge = str(10 + i)
+            variante_graphe[charge] = _noeud("LoadImage", image="")
+            variante_graphe["4"]["inputs"][f"images.image_{i + 1}"] = [charge, 0]
+            variante_liaisons[f"reference:{i}"] = [{"noeud": charge, "champ": "image"}]
+        variantes[str(nombre)] = {"graphe": variante_graphe, "liaisons": variante_liaisons}
+    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="8", etapes=entree["etapes"], variantes=variantes)
+
+
+CONSTRUCTEURS = {"zimage": construire_zimage, "klein": construire_klein, "flux1dev": construire_flux1, "sdxl": construire_sdxl,
+    "qwen21": construire_qwen21}
 
 
 # ML6 : le raccord sans couture, port de `applySeamless` (`sc-clone/lib/seamless.mjs`).

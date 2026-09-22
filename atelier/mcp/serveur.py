@@ -463,6 +463,10 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     "resolutions": list(m.resolutions),
                     "variations_max": m.variations_max,
                     "options": sorted(m.options),
+                    # TN1 (22/09/2026) : Qwen-Image 2.1 rend un vrai fond vide sur
+                    # demande. Une capacité, comme `references_max` ou
+                    # `aspect_ratios` — jamais un nom de modèle en dur.
+                    "transparent_background": m.transparence,
                     "unavailable": grises.get(m.fournisseur),
                     # Dans quoi ce modèle-là se paie. `usd` pour tout ce qui
                     # facture ; autre chose pour ce qui consomme sans facturer,

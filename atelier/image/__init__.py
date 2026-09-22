@@ -20,6 +20,7 @@ from atelier.image.decoupe import (
 )
 from atelier.image.mesures import (
     Mesure,
+    aplatir_alpha,
     empreinte_de,
     extension,
     mesurer,
@@ -72,6 +73,7 @@ __all__ = [
     "COULEURS_MAX",
     "COULEURS_MIN",
     "alpha_du_sujet",
+    "aplatir_alpha",
     "apercu_de_la_lecture",
     "part_lue",
     "Boite",
