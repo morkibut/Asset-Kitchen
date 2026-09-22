@@ -128,49 +128,45 @@ def test_un_jeu_inconnu_ne_s_ecrit_pas(client):
 
 
 # ── Ce qui part vraiment ────────────────────────────────────────────────────
+#
+# **RV5/RV6** : `POST /clips` a été retirée (21 septembre 2026). Le texte se
+# compose désormais dans `ServiceTravaux.preparer` (même compositeur), et se
+# lit sur `demande.prompt_video` (E14) — voir aussi `tests/test_rv5_serie.py`.
 
 from test_a9 import MELE, atelier_video, client_video, animateur  # noqa: E402,F401
-from test_a10 import un_sprite  # noqa: E402
+from test_a10 import un_personnage, un_sprite  # noqa: E402
 
 
-def test_un_clip_commande_vers_le_nord_part_avec_la_phrase_du_nord(
+async def test_un_clip_commande_vers_le_nord_part_avec_la_phrase_du_nord(
     client_video, atelier_video, animateur
 ):
     projet = _avec_le_nord(client_video, atelier_video)
     sprite = un_sprite(client_video)
+    personnage = un_personnage(client_video, "Coureuse")
 
-    lot = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "course",
-            "asset": sprite,
-            "direction": "nord",
-            "projet": projet,
-        },
-    )
+    travail = await atelier_video.travaux.preparer(projet, {
+        "cle": "tj-nord", "personnage": personnage, "pose": "course", "direction": "nord",
+        "modele_video": MELE.identifiant, "mouvement": "course", "reference_asset": sprite,
+    })
 
-    assert lot.status_code == 202, lot.text
-    texte = lot.json()["clips"][0]["demande"]["prompt"]
+    texte = travail["demande"]["prompt_video"]
     assert texte.startswith(PHRASES_ANIMEES["nord"]) and "running cycle" in texte
 
 
-def test_un_texte_relu_part_tel_quel_sans_phrase_ajoutee(
+async def test_une_correction_du_geste_part_sans_phrase_ajoutee_en_plus_de_la_direction(
     client_video, atelier_video, animateur
 ):
+    """Ce que la relecture d'avant RV5 vérifiait par un texte entier retapé se
+    vérifie maintenant par `correction_geste` — le texte entier n'est plus
+    accepté tel quel, `ServiceTravaux.preparer` le refuse (E14)."""
     projet = _avec_le_nord(client_video, atelier_video)
     sprite = un_sprite(client_video)
+    personnage = un_personnage(client_video, "Coureuse")
 
-    lot = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "course",
-            "prompt": "my own words",
-            "asset": sprite,
-            "direction": "nord",
-            "projet": projet,
-        },
-    )
+    travail = await atelier_video.travaux.preparer(projet, {
+        "cle": "tj-correction", "personnage": personnage, "pose": "course", "direction": "nord",
+        "modele_video": MELE.identifiant, "mouvement": "course", "reference_asset": sprite,
+        "correction_geste": "my own words",
+    })
 
-    assert lot.json()["clips"][0]["demande"]["prompt"] == "my own words"
+    assert travail["demande"]["prompt_video"] == f'{PHRASES_ANIMEES["nord"]} my own words'

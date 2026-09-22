@@ -538,8 +538,8 @@ export const AIDE: Record<string, Explication> = {
   "fabrication.animer-un-sujet": {
     nom: "Animer un sujet",
     groupe: "Commencer une fabrication — une image, un sujet, un son",
-    quoi: "On choisit un sujet dans la liste : sa page s'ouvre sur l'onglet Animations, où se règlent le mouvement, la direction et l'image de départ.",
-    change: "Rien à la génération ici : choisir un sujet ne prépare ni n'envoie rien. La liste est celle des sujets du jeu ouvert.",
+    quoi: "On choisit un sujet : la fenêtre d'animation s'ouvre sur lui, pour régler le mouvement et la direction.",
+    change: "Rien ne part à l'ouverture : la demande se prépare, puis se relit avant l'envoi. La liste est celle des sujets du jeu ouvert.",
     origine: "les sujets du jeu",
     ou: "fabrications",
   },
@@ -2959,17 +2959,6 @@ export const AIDE: Record<string, Explication> = {
   // qu'on a sous les yeux, pas celui d'où l'on est venu. Le mouvement, lui,
   // reste dans les réglages — on l'écrit là-bas, on le choisit ici.
 
-  "clip.depart": {
-    nom: "L'image de départ",
-    ou: "clip",
-    groupe: "Commander un clip",
-    quoi: "La première image du clip — celle que le modèle va animer, et il n'en prend qu'une.",
-    change:
-      "Tout ce à quoi le clip ressemblera. **Elle est obligatoire et ne cède jamais** : sans elle il n'y a pas d'appel du tout, là où les images jointes d'une génération ordinaire s'effacent quand le modèle n'a plus de place. Le clip n'hérite de rien d'autre — ni des textes du jeu, ni de son ambiance.",
-    origine: "l'atelier propose · tu changes d'un clic",
-    long: "L'atelier propose l'image de la case visée si elle en a une, sinon le portrait du personnage — l'image promue en référence, ou le corps de sa première attitude. Ce n'est qu'une proposition : n'importe quelle image de ta bibliothèque la remplace d'un clic. Ce qui part n'est pas le sprite tel quel : il est agrandi sur la toile du format demandé, sinon le modèle inventerait ce qu'il ne voit pas.",
-  },
-
   "clip.format": {
     nom: "Le format du clip",
     ou: "clip",
@@ -3001,50 +2990,6 @@ export const AIDE: Record<string, Explication> = {
       "Rien à ce qui part. C'est une **borne haute** affichée avant l'envoi : ce qui s'enregistre après est le montant que le fournisseur a facturé, et l'écart mesuré sur treize clips va de quatre pour cent de plus à cinquante-huit pour cent de moins.",
     origine: "relu chez le fournisseur, à chaque changement de format",
     long: "La formule dit le tarif, la surface, la cadence facturée et la durée — de quoi vérifier le calcul sur la page du modèle. Un modèle dont le tarif n'a pas pu être relu est grisé avec sa raison : un clip se fait attendre deux minutes, proposer sans le savoir serait à l'aveugle. Un modèle de la liste ne coûte rien : il tourne sur cette machine, le bouton annonce un temps à la place d'un prix.",
-  },
-
-  "clip.moteur": {
-    nom: "La carte de cette machine",
-    ou: "clip",
-    groupe: "Commander un clip",
-    quoi: "Ce que ton ordinateur peut faire lui-même, et ce qu'il lui manque pour ça.",
-    change:
-      "Rien à ce qui part. Ce panneau ne dépense jamais d'argent — il regarde ce que l'application du moteur a sur son disque, et il te dit si le modèle gratuit est utilisable maintenant.",
-    origine: "relu à chaque ouverture de cet écran",
-    long: "Trois choses peuvent manquer. L'application fermée empêche tout : ouvre-la, reviens, le grisé tombe seul. Des fichiers manquants laissent le modèle choisissable — l'atelier les rapatrie. Le greffon des gros pixels manquant n'est qu'un avertissement : le clip sort lissé. La mémoire libre est en clair, jamais l'identifiant du pilote — deux avertissements sans blocage : trop peu, ou ComfyUI pris.",
-  },
-
-  "clip.mesure": {
-    nom: "Ce qui est mesuré",
-    ou: "clip",
-    groupe: "Commander un clip",
-    quoi: "Ce que ce dépôt-ci a observé du modèle en payant ses propres essais, et rien d'autre.",
-    change:
-      "Rien à ce qui part. C'est ce qui te permet de choisir en sachant sur quoi tu t'appuies — **aucun modèle proposé n'atteint la barre des huit tirages** : ce sont des propositions étayées, pas un arbitrage clos.",
-    origine: "les essais payés du dépôt · vide quand rien n'a été mesuré",
-    long: "Aucun fournisseur ne déclare ça, et un écran qui proposerait deux modèles sans le dire ferait passer une hypothèse pour un résultat.\n\nVide veut dire *on n'en sait rien*, et l'écran l'écrit plutôt que de laisser croire qu'un modèle proposé a été éprouvé.",
-  },
-
-  "clip.liste": {
-    nom: "La liste de modèles",
-    ou: "clip",
-    groupe: "Commander un clip",
-    quoi: "L'ordre dans lequel les modèles se présentent, et le filtre qui range ce qui ne peut pas partir.",
-    change:
-      "Ce que tu lis d'abord, et à quel point la liste te laisse tranquille. **L'ordre vient du serveur** — le modèle gratuit en tête, puis les payants du moins cher au plus cher pour la demande courante — et l'interrupteur, allumé, ne montre que ce qui peut partir.",
-    origine: "le serveur trie · tu filtres",
-    long: "Le tri suit le prix du clip en cours (durée, format, résolution) — pas de règle à part, pour que deux endroits ne finissent pas par trier différemment. « Seulement ce qui peut partir » est allumé par défaut ; éteint, les cartes grisées reparaissent, chacune dépliable pour lire pourquoi elle ne peut pas partir. Une carte repliée montre son nom et son estimation — assez pour comparer.",
-  },
-
-  "clip.confirmation": {
-    nom: "Ce qui part avec le clip",
-    ou: "clip",
-    groupe: "Commander un clip",
-    quoi: "Le tiroir qui s'ouvre entre « Commander ce clip » et la dépense : la dernière relecture, corrigeable.",
-    change:
-      "Ce qui va partir. **Le texte, mot pour mot, et l'image de départ — rien d'autre.** Une correction faite ici vaut pour cet appel seulement, et ne touche jamais au mouvement de la bibliothèque.",
-    origine: "le mouvement choisi et l'image de départ · ta correction éventuelle",
-    long: "Un clip n'emporte qu'une image et un texte, jamais plus : l'image se change, elle ne se retire pas. Le texte se corrige pour cet appel seul — le mouvement de la bibliothèque ne bouge pas, « remettre le texte » le redonne intact ; le corriger pour tous les clips suivants se fait dans les Réglages. Le bouton porte le montant du lot, ou le temps chez le moteur de la maison.",
   },
 
   "clip.fiche": {

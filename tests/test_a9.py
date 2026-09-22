@@ -39,6 +39,8 @@ from atelier.domaine.animation import (
     Tarification,
 )
 from atelier.domaine.erreurs import AppelRefuse, DemandeRefusee, ErreurAtelier
+from atelier.domaine.travail import TravailRefuse
+from conftest import commander_un_clip
 from atelier.domaine.generation import Statut
 from atelier.depot import Base, Fichiers
 from atelier.fournisseur.openrouter_video import (
@@ -747,29 +749,32 @@ def test_le_prix_suit_la_duree_demandee(client_video):
     assert prix(quatre) < prix(six)
 
 
-def test_commander_un_clip_part_du_sprite_de_la_bibliotheque(
-    client_video, animateur
+async def test_commander_un_clip_part_du_sprite_de_la_bibliotheque(
+    atelier_video, client_video, animateur
 ):
     """*Le sprite part comme image de départ.*
 
     Et il ne part pas tel quel : un sprite de 48 px envoyé à un modèle qui rend
     du 480 px lui demanderait d'inventer tout ce qu'il ne voit pas. Ce qui part
     est le sprite agrandi sur la toile du format demandé.
+
+    **RV5/RV6** : `POST /clips` a été retirée (21 septembre 2026) ; ce que
+    l'écran fait désormais par `preparer_serie`/`demarrer_serie`, un essai
+    serveur qui n'a besoin ni de série ni de personnage le fait par
+    `commander_un_clip`, l'utilitaire d'essai qui appelle directement
+    `animation.commander`.
     """
     sprite = un_sprite(client_video)
-    reponse = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "prompt": "Idle 2 s, puis marche.",
-            "asset": sprite,
-            "secondes": 5,
-        },
+    clips = await commander_un_clip(
+        atelier_video,
+        modele=MELE.identifiant,
+        prompt="Idle 2 s, puis marche.",
+        asset=sprite,
+        secondes=5,
     )
-    assert reponse.status_code == 202
     # **Une liste, même à un seul clip** : la réponse a la même forme qu'on en
     # demande un ou huit, et aucun appelant n'a deux cas à traiter.
-    corps = reponse.json()["clips"][0]
+    corps = clips[0]
     assert corps["clip"]["travail"] == "travail-1"
     assert corps["parametres_resolus"]["image_de_depart"] == "obligatoire, jointe"
 
@@ -780,12 +785,12 @@ def test_commander_un_clip_part_du_sprite_de_la_bibliotheque(
         assert envoyee.size == (480, 480)  # la toile du 480p carré
 
 
-def test_un_clip_commande_se_voit_dans_la_liste_et_se_sert_en_video(client_video):
+async def test_un_clip_commande_se_voit_dans_la_liste_et_se_sert_en_video(atelier_video, client_video):
     sprite = un_sprite(client_video)
-    identifiant = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "prompt": "marche", "asset": sprite},
-    ).json()["clips"][0]["identifiant"]
+    identifiant = (
+        await commander_un_clip(atelier_video, modele=MELE.identifiant, prompt="marche", asset=sprite)
+    )[0]["identifiant"]
+    await atelier_video.animation.attendre_tout()
 
     clips = client_video.get("/api/clips").json()["clips"]
     assert [c["identifiant"] for c in clips] == [identifiant]
@@ -799,14 +804,14 @@ def test_un_clip_commande_se_voit_dans_la_liste_et_se_sert_en_video(client_video
     decodeur.indisponible() is not None,
     reason="le décodeur de clips manque",
 )
-def test_la_galerie_montre_un_clip_par_une_image_prelevee_dedans(client_video):
+async def test_la_galerie_montre_un_clip_par_une_image_prelevee_dedans(atelier_video, client_video):
     """*La galerie montre un clip par une image prélevée dedans, jamais par une
     tuile en erreur.*"""
     sprite = un_sprite(client_video)
-    identifiant = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "prompt": "marche", "asset": sprite},
-    ).json()["clips"][0]["identifiant"]
+    identifiant = (
+        await commander_un_clip(atelier_video, modele=MELE.identifiant, prompt="marche", asset=sprite)
+    )[0]["identifiant"]
+    await atelier_video.animation.attendre_tout()
 
     image = client_video.get(f"/api/clips/{identifiant}/frames/0")
     assert image.status_code == 200
@@ -816,12 +821,11 @@ def test_la_galerie_montre_un_clip_par_une_image_prelevee_dedans(client_video):
     assert client_video.get(f"/api/clips/{identifiant}/frames/999").status_code == 400
 
 
-def test_recuperer_par_la_route_ne_recommande_rien(client_video, animateur):
+async def test_recuperer_par_la_route_ne_recommande_rien(atelier_video, client_video, animateur):
     sprite = un_sprite(client_video)
-    identifiant = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "prompt": "marche", "asset": sprite},
-    ).json()["clips"][0]["identifiant"]
+    identifiant = (
+        await commander_un_clip(atelier_video, modele=MELE.identifiant, prompt="marche", asset=sprite)
+    )[0]["identifiant"]
 
     reprise = client_video.post(f"/api/clips/{identifiant}/recover")
     assert reprise.status_code == 200
@@ -869,15 +873,11 @@ async def test_recuperer_quand_le_lien_a_expire_ne_leve_pas_et_ne_repaie_pas(
     assert len(animateur.recuperations) == 2
 
 
-def test_commander_sans_image_de_la_bibliotheque_se_refuse_avant_de_payer(
-    client_video, animateur
+async def test_commander_sans_image_de_la_bibliotheque_se_refuse_avant_de_payer(
+    atelier_video, animateur
 ):
-    reponse = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "prompt": "marche", "asset": "pas-la"},
-    )
-    assert reponse.status_code == 400
-    assert "pas-la" in reponse.json()["raison"]
+    with pytest.raises(ErreurAtelier, match="pas-la"):
+        await commander_un_clip(atelier_video, modele=MELE.identifiant, prompt="marche", asset="pas-la")
     assert animateur.soumissions == []
 
 
@@ -899,13 +899,18 @@ def un_personnage(client, nom: str = "Michel") -> str:
 
 
 def test_l_image_de_depart_est_celle_de_la_case_quand_la_case_en_porte_une(
-    client_video,
+    atelier_video, client_video,
 ):
     """*L'image de départ se propose : la case visée si elle porte une image.*
 
     C'est le cas où le produit sait le mieux ce qu'il fait : l'attitude et
     l'angle ont déjà été validés en fixe, et le clip les suit au lieu de
     repartir d'une posture neutre.
+
+    **RV5/RV6** : la route `GET /clips/start-image` a été retirée (21
+    septembre 2026, aucun appelant restant). Le service qu'elle exposait,
+    `production.image_de_depart`, reste — c'est lui qu'on appelle ici
+    directement, ce que fait aussi `ServiceTravaux.preparer`.
     """
     personnage = un_personnage(client_video)
     sprite = un_sprite(client_video)
@@ -914,15 +919,15 @@ def test_l_image_de_depart_est_celle_de_la_case_quand_la_case_en_porte_une(
         json={"personnage": personnage, "pose": "marche"},
     )
 
-    recu = client_video.get(
-        "/api/clips/start-image", params={"personnage": personnage, "pose": "marche"}
-    ).json()
+    recu = atelier_video.production.image_de_depart(
+        atelier_video.bibliotheque.courant, personnage, "marche"
+    )
     assert recu["origine"] == "case"
     assert recu["asset"]["identifiant"] == sprite
     assert "case visée" in recu["raison"]
 
 
-def test_sans_image_dans_la_case_c_est_le_portrait_qui_se_propose(client_video):
+def test_sans_image_dans_la_case_c_est_le_portrait_qui_se_propose(atelier_video, client_video):
     """*Le portrait sinon.*
 
     Le produit n'a pas d'objet portrait, et n'en invente pas un : le portrait
@@ -941,15 +946,15 @@ def test_sans_image_dans_la_case_c_est_le_portrait_qui_se_propose(client_video):
     )
 
     # La case *course* est vide : c'est le portrait qui vient.
-    recu = client_video.get(
-        "/api/clips/start-image", params={"personnage": personnage, "pose": "course"}
-    ).json()
+    recu = atelier_video.production.image_de_depart(
+        atelier_video.bibliotheque.courant, personnage, "course"
+    )
     assert recu["origine"] == "portrait"
     assert recu["asset"]["identifiant"] == sprite
     assert "montre de lui" in recu["raison"]
 
 
-def test_une_case_vide_part_du_repos_dans_la_meme_direction(client_video):
+def test_une_case_vide_part_du_repos_dans_la_meme_direction(atelier_video, client_video):
     """*En cascade* (16 septembre 2026) : la marche vers le nord part du repos
     vers le nord, pas du repos vers le sud ni du portrait."""
     objectif = {"sorties": [
@@ -978,30 +983,29 @@ def test_une_case_vide_part_du_repos_dans_la_meme_direction(client_video):
     )
 
     for direction in ("sud", "nord"):
-        recu = client_video.get(
-            "/api/clips/start-image",
-            params={"personnage": personnage, "pose": "marche", "direction": direction},
-        ).json()
+        recu = atelier_video.production.image_de_depart(
+            atelier_video.bibliotheque.courant, personnage, "marche", direction
+        )
         assert recu["origine"] == "reference", recu
         assert recu["asset"]["identifiant"] == images[direction]
 
 
 def test_un_personnage_sans_la_moindre_image_le_dit_au_lieu_de_rendre_un_cadre_vide(
-    client_video,
+    atelier_video, client_video,
 ):
     """Un clip part toujours d'une image : quand il n'y en a aucune, l'écran
     doit pouvoir écrire pourquoi plutôt que d'afficher un carré gris."""
     personnage = un_personnage(client_video, "Perceval")
-    recu = client_video.get(
-        "/api/clips/start-image", params={"personnage": personnage, "pose": "repos"}
-    ).json()
+    recu = atelier_video.production.image_de_depart(
+        atelier_video.bibliotheque.courant, personnage, "repos"
+    )
     assert recu["origine"] == "aucune"
     assert recu["asset"] is None
     assert "n'a encore aucune image" in recu["raison"]
 
 
-def test_le_mouvement_choisi_ecrit_le_texte_et_l_ecran_ne_le_retape_pas(
-    client_video, animateur
+async def test_le_mouvement_choisi_ecrit_le_texte_et_l_ecran_ne_le_retape_pas(
+    atelier_video, client_video, animateur
 ):
     """*Le mouvement se choisit dans la liste d'`A6`, et le texte qui part se
     lit avant l'envoi.*
@@ -1011,49 +1015,70 @@ def test_le_mouvement_choisi_ecrit_le_texte_et_l_ecran_ne_le_retape_pas(
     et c'est un appel payé qui le dirait.
     """
     sprite = un_sprite(client_video)
-    reponse = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite},
-    )
-    assert reponse.status_code == 202
+    clips = await commander_un_clip(atelier_video, modele=MELE.identifiant, mouvement="marche", asset=sprite)
 
     _, demande = animateur.soumissions[0]
     connus = client_video.get("/api/movements").json()["mouvements"]
     marche = next(m for m in connus if m["identifiant"] == "marche")
     assert demande.texte == marche["texte"]
     # Et la génération garde lequel, pour qu'`A10` sache quoi tailler dedans.
-    assert reponse.json()["clips"][0]["demande"]["mouvement"] == "marche"
+    assert clips[0]["demande"]["mouvement"] == "marche"
 
 
-def test_un_mouvement_inconnu_se_refuse_avant_de_payer(client_video, animateur):
+async def test_un_mouvement_inconnu_se_refuse_avant_de_payer(atelier_video, client_video, animateur):
     sprite = un_sprite(client_video)
-    reponse = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "danse-de-la-pluie",
-            "asset": sprite,
-        },
-    )
-    assert reponse.status_code == 400
-    assert "danse-de-la-pluie" in reponse.json()["raison"]
+    with pytest.raises(ErreurAtelier, match="danse-de-la-pluie"):
+        await commander_un_clip(
+            atelier_video, modele=MELE.identifiant, mouvement="danse-de-la-pluie", asset=sprite
+        )
     assert animateur.soumissions == []
 
 
-def test_un_clip_sans_texte_ni_mouvement_se_refuse_avant_de_payer(
-    client_video, animateur
+async def test_un_clip_sans_texte_ni_mouvement_se_refuse_avant_de_payer(
+    atelier_video, client_video, animateur
 ):
     sprite = un_sprite(client_video)
-    reponse = client_video.post(
-        "/api/clips", json={"modele": MELE.identifiant, "asset": sprite}
-    )
-    assert reponse.status_code == 400
-    assert "part d'un texte" in reponse.json()["raison"]
+    with pytest.raises(ErreurAtelier, match="part d'un texte"):
+        await commander_un_clip(atelier_video, modele=MELE.identifiant, asset=sprite)
     assert animateur.soumissions == []
 
 
-def test_un_lot_lance_autant_de_clips_que_demande_et_chacun_est_une_depense(
-    client_video, animateur
+# **RV5/RV6** : `POST /clips` avait un lot en son sein (`nombre`) ; le nouveau
+# circuit le fait par une série de travaux — `preparer_serie` puis
+# `demarrer_serie` (`atelier/services/travaux.py`) —, et c'est ce que ces
+# essais exercent maintenant, un travail par clip du lot. `_lot_de_clips`
+# rejoue exactement ce que faisait l'ancienne route : une case, une image de
+# départ déjà posée (pour que plusieurs clips n'en paient chacun une), et le
+# mouvement « marche ».
+
+
+async def _lot_de_clips(atelier_video, client_video, sprite, nombre, cle):
+    personnage = un_personnage(client_video, f"Lot-{cle}")
+    client_video.put(
+        f"/api/assets/{sprite}/character",
+        json={"personnage": personnage, "pose": "marche"},
+    )
+    projet = atelier_video.bibliotheque.courant
+    commune = {
+        "cle": cle,
+        "personnage": personnage,
+        "modele_video": MELE.identifiant,
+        "mouvement": "marche",
+    }
+    serie = await atelier_video.travaux.preparer_serie(
+        projet, commune, [{"pose": "marche", "direction": ""}], nombre
+    )
+    await atelier_video.travaux.demarrer_serie(projet, serie["serie"]["cle"])
+    await atelier_video.travaux.attendre_tout()
+    finis = [
+        atelier_video.travaux.lire(projet, t["identifiant"])
+        for t in serie["travaux"]
+    ]
+    return [atelier_video.animation.lire(t["clip"]).en_json() for t in finis]
+
+
+async def test_un_lot_lance_autant_de_clips_que_demande_et_chacun_est_une_depense(
+    atelier_video, client_video, animateur
 ):
     """*Le nombre de clips à lancer se choisit à chaque fois — un est le défaut.*
 
@@ -1062,15 +1087,7 @@ def test_un_lot_lance_autant_de_clips_que_demande_et_chacun_est_une_depense(
     dire quatre fois.
     """
     sprite = un_sprite(client_video)
-    lot = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "marche",
-            "asset": sprite,
-            "nombre": 4,
-        },
-    ).json()["clips"]
+    lot = await _lot_de_clips(atelier_video, client_video, sprite, 4, "lot-quatre")
 
     assert len(lot) == 4
     assert len({c["identifiant"] for c in lot}) == 4
@@ -1083,45 +1100,24 @@ def test_un_lot_lance_autant_de_clips_que_demande_et_chacun_est_une_depense(
     lots = {c["clip"]["lot"] for c in lot}
     assert len(lots) == 1 and lots != {""}
     # Et un défaut à un, sans qu'on ait à l'écrire.
-    seul = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite},
-    ).json()["clips"]
+    seul = await _lot_de_clips(atelier_video, client_video, sprite, 1, "lot-un")
     assert len(seul) == 1
 
 
-def test_un_lot_demesure_se_refuse_avant_de_payer(client_video, animateur):
+async def test_un_lot_demesure_se_refuse_avant_de_payer(atelier_video, client_video, animateur):
     """Le geste paie N fois : il a une borne, et elle se dit en clair."""
-    sprite = un_sprite(client_video)
-    reponse = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "marche",
-            "asset": sprite,
-            "nombre": 40,
-        },
-    )
-    assert reponse.status_code == 400
-    assert "1 à 8" in reponse.json()["raison"]
+    with pytest.raises(TravailRefuse, match="1 à 8"):
+        await _lot_de_clips(atelier_video, client_video, un_sprite(client_video), 40, "lot-demesure")
     assert animateur.soumissions == []
 
 
-def test_garder_un_clip_et_jeter_les_autres_est_un_seul_geste_et_il_se_defait(
-    client_video,
+async def test_garder_un_clip_et_jeter_les_autres_est_un_seul_geste_et_il_se_defait(
+    atelier_video, client_video,
 ):
     """*Garder un clip et jeter les autres est un seul geste, et il est
     annulable.*"""
     sprite = un_sprite(client_video)
-    lot = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "marche",
-            "asset": sprite,
-            "nombre": 3,
-        },
-    ).json()["clips"]
+    lot = await _lot_de_clips(atelier_video, client_video, sprite, 3, "lot-garder")
     garde, *autres = [c["identifiant"] for c in lot]
 
     rendu = client_video.post(
@@ -1135,7 +1131,7 @@ def test_garder_un_clip_et_jeter_les_autres_est_un_seul_geste_et_il_se_defait(
     assert [c["clip"]["jete"] for c in repris["clips"]] == [False, False]
 
 
-def test_un_clip_jete_reste_au_journal_des_depenses(client_video):
+async def test_un_clip_jete_reste_au_journal_des_depenses(atelier_video, client_video):
     """*Le journal garde ce qui a été payé, y compris les clips jetés.*
 
     C'est le premier invariant du produit, et c'est ici qu'il compte le plus :
@@ -1143,15 +1139,7 @@ def test_un_clip_jete_reste_au_journal_des_depenses(client_video):
     qu'un au journal croirait avoir payé une fois.
     """
     sprite = un_sprite(client_video)
-    lot = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "marche",
-            "asset": sprite,
-            "nombre": 3,
-        },
-    ).json()["clips"]
+    lot = await _lot_de_clips(atelier_video, client_video, sprite, 3, "lot-journal")
     garde, *autres = [c["identifiant"] for c in lot]
     client_video.post("/api/clips/keep", json={"garde": garde, "jette": autres})
 
@@ -1166,7 +1154,7 @@ def test_un_clip_jete_reste_au_journal_des_depenses(client_video):
     assert {c["identifiant"] for c in lot} <= payes
 
 
-def test_un_clip_arrive_garde_sa_place_au_rechargement(client_video):
+async def test_un_clip_arrive_garde_sa_place_au_rechargement(atelier_video, client_video):
     """⚠️ *La galerie était vide alors que trois clips payés étaient là.*
 
     Vu au navigateur le 4 septembre 2026. Ce que la grille montre à côté de la
@@ -1181,20 +1169,7 @@ def test_un_clip_arrive_garde_sa_place_au_rechargement(client_video):
     **Jeté, il s'en va** : c'est très exactement ce que le geste veut dire.
     """
     sprite = un_sprite(client_video)
-    lot = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "marche",
-            "asset": sprite,
-            "nombre": 2,
-        },
-    ).json()["clips"]
-    for _ in range(300):
-        arrives = client_video.get("/api/clips").json()["clips"]
-        if all(c["statut"] == "reussie" for c in arrives):
-            break
-        client_video.get("/api/status")
+    lot = await _lot_de_clips(atelier_video, client_video, sprite, 2, "lot-rechargement")
 
     chantier = client_video.app.state.atelier.generations.chantier()
     assert {g.identifiant for g in chantier} == {c["identifiant"] for c in lot}
@@ -1218,18 +1193,12 @@ async def test_un_atelier_qui_porte_un_clip_se_rouvre(atelier_video, client_vide
     et ne le rouvrent jamais. Celui-ci le rouvre, et c'est tout son objet.
     """
     sprite = un_sprite(client_video)
-    client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite},
-    )
+    await commander_un_clip(atelier_video, modele=MELE.identifiant, mouvement="marche", asset=sprite)
     # **Arrivé, et c'est la condition du défaut** : un clip encore en vol n'a
     # pas de fichier sur le disque, donc rien que le rattrapage puisse essayer
     # de lire comme une image.
-    for _ in range(300):
-        clips = client_video.get("/api/clips").json()["clips"]
-        if clips and clips[0]["statut"] == "reussie":
-            break
-        client_video.get("/api/status")
+    await atelier_video.animation.attendre_tout()
+    clips = client_video.get("/api/clips").json()["clips"]
     assert clips[0]["statut"] == "reussie"
 
     # Le geste du démarrage, sur un atelier qui porte déjà un clip arrivé.
@@ -1242,21 +1211,13 @@ async def test_un_atelier_qui_porte_un_clip_se_rouvre(atelier_video, client_vide
     assert clips[0]["identifiant"] not in {a["generation"] for a in assets}
 
 
-def test_garder_celui_qu_on_avait_jete_est_le_meme_geste_dans_l_autre_sens(
-    client_video,
+async def test_garder_celui_qu_on_avait_jete_est_le_meme_geste_dans_l_autre_sens(
+    atelier_video, client_video,
 ):
     """On garde un clip, puis on change d'avis : le même bouton le ramène, sans
     qu'il faille se rappeler qu'il avait été écarté."""
     sprite = un_sprite(client_video)
-    lot = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "marche",
-            "asset": sprite,
-            "nombre": 2,
-        },
-    ).json()["clips"]
+    lot = await _lot_de_clips(atelier_video, client_video, sprite, 2, "lot-retour")
     premier, second = [c["identifiant"] for c in lot]
 
     client_video.post("/api/clips/keep", json={"garde": premier, "jette": [second]})

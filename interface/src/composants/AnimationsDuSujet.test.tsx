@@ -623,36 +623,33 @@ function monterAvecServeur(cases: Case[], clips: import("../api").Generation[] =
     if (url === "/api/clips") return rendre({ clips: [{ identifiant: "neuf" }] })
     return rendre({})
   }))
-  const rappels = { onAnimer: vi.fn(), onOuvrirLaBande: vi.fn(), onErreur: vi.fn(), onMonterLeClip: vi.fn(), onClipsCommandes: vi.fn() }
+  const rappels = { onAnimer: vi.fn(), onOuvrirLaBande: vi.fn(), onErreur: vi.fn(), onMonterLeClip: vi.fn() }
   render(<AnimationsDuSujet personnage={personnage(cases)} plan={PLAN} clips={clips} {...rappels} />)
   return { ...rappels, appels }
 }
 
-test("« Tout animer » ne relance pas une direction retenue, et monte chaque clip à l'arrivée", async () => {
-  const { appels, onClipsCommandes } = monterAvecServeur([CASE_SUD])
+// **RV6** : « Tout animer » et « Animer les directions » n'ouvrent plus leur
+// propre file d'envoi (`AnimerEnLot`) — elles ouvrent la fenêtre unique, en
+// mode clip, avec les cases à armer déjà cochées dans `options.directions`.
+test("« Tout animer » ne relance pas une direction retenue, et arme les autres", () => {
+  const { onAnimer } = monterAvecServeur([CASE_SUD])
   fireEvent.click(screen.getByRole("button", { name: "Tout animer" }))
-  const dialogue = document.querySelector("[data-animer-en-lot]") as HTMLElement
-  const sud = within(dialogue).getByText("sud").closest("label")!.querySelector("input")!
-  const nord = within(dialogue).getByText("nord").closest("label")!.querySelector("input")!
-  expect(sud.disabled).toBe(true)
-  expect(nord.checked).toBe(true)
-  const lancer = await within(dialogue).findByRole("button", { name: /Lancer 1 clip/ })
-  await waitFor(() => expect((lancer as HTMLButtonElement).disabled).toBe(false))
-  fireEvent.click(lancer)
-  await within(dialogue).findByText(/1 clip dans la file/)
-  const commandes = appels.filter((a) => a.url === "/api/clips" && a.methode === "POST")
-  expect(commandes).toHaveLength(1)
-  expect(commandes[0].corps).toMatchObject({ pose: "repos", direction: "nord", asset: "sprite-1", mouvement: "respire", secondes: 1.5, monter_auto: true })
-  expect(onClipsCommandes).toHaveBeenCalled()
+  expect(onAnimer).toHaveBeenCalledTimes(1)
+  expect(onAnimer.mock.calls[0][1]).toMatchObject({ identifiant: "repos" })
+  expect(onAnimer.mock.calls[0][2]).toMatchObject({ identifiant: "nord" })
+  // « sud » est déjà retenue : la seule case armable est « nord », seule —
+  // rien à cocher en plus dans la série.
+  expect(onAnimer.mock.calls[0][3]?.directions ?? []).toEqual([])
 })
 
 test("un clip en route se montre dans sa rangée, et bloque sa case dans un lot", () => {
   const enRoute = { identifiant: "en-route", personnage: "pelerin", pose: "repos", direction: "nord", statut: "en_cours", clip: { jete: false } } as unknown as import("../api").Generation
-  monterAvecServeur([CASE_SUD], [enRoute])
+  const { onAnimer } = monterAvecServeur([CASE_SUD], [enRoute])
   expect(rangee("repos/nord").querySelector('[data-clip-non-monte="en-route"]')).toBeTruthy()
   fireEvent.click(screen.getByRole("button", { name: "Animer les directions" }))
-  const dialogue = document.querySelector("[data-animer-en-lot]") as HTMLElement
-  expect(within(dialogue).getByText("nord").closest("label")!.querySelector("input")!.disabled).toBe(true)
+  // « sud » est retenue, « nord » a déjà un clip en route : aucune case
+  // n'est armable, la fenêtre ne s'ouvre donc pas.
+  expect(onAnimer).not.toHaveBeenCalled()
 })
 
 // ── Une vidéo ratée au contrôle d'arrivée (RV1) ─────────────────────────────

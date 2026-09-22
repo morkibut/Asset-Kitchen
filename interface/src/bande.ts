@@ -3,7 +3,7 @@
  *  Sorties d'`AtelierDeBande.tsx` le 22 septembre 2026 (revue du 21, `RV14`) :
  *  le montage est entré dans le carnet, et un écran du carnet n'emprunte pas
  *  une logique à un autre écran (`essais/essai_imports.py`). */
-import type { Bande, Prise } from "./api"
+import type { Bande, Generation, Personnage, Prise } from "./api"
 
 /** Deux prises désignent-elles **la même image du même clip** ? Une prise sans
  *  clip nommé prend celui de la bande — c'est la règle du serveur, et la
@@ -28,6 +28,16 @@ const memeImage = (une: Prise, autre: Prise, clipDeLaBande: string) =>
  *  Écrite ici et employée aussi par le montage, qui repose un découpage sur une
  *  animation gardée — **deux règles pour le même fait finiraient par ne pas
  *  ranger pareil**. */
+/** **L'image de départ d'un clip** (RV6, porte « En générer une variante ») :
+ *  la référence « edition » de sa génération — celle qui l'a engendré. `null`
+ *  sans elle : le clip est parti sans image jointe, ou sa génération n'est
+ *  plus dans la liste reçue (un vieux clip, hors de la fenêtre glissante que
+ *  le jeu relit). Une variante propose alors la reprise habituelle plutôt
+ *  qu'une image perdue. */
+export function imageDeDepartDuClip(clips: readonly Generation[], clip: string): string | null {
+  return clips.find((g) => g.identifiant === clip)?.references?.find((r) => r.role === "edition")?.asset ?? null
+}
+
 export function auChutier(
   chutier: Prise[],
   emportees: Prise[],
@@ -89,4 +99,72 @@ export function remonterLaBande(
       chercher(reserve, numero, occurrences?.[index]) ?? { numero, clip: "", dx: 0, dy: 0, ...(occurrences?.[index] ? { identifiant: occurrences[index] } : {}) },
   )
   return { prises, chutier: auChutier(reserve, restantes, bande.clip) }
+}
+
+// ── Les cases d'un lot d'animation (RV6) ────────────────────────────────────
+//
+// Sorties d'`AnimerEnLot.tsx` le 22 septembre 2026 (RV6) : `AnimerEnLot`
+// disparaît — les onze portes ouvrent maintenant la fenêtre unique — mais
+// `AnimationsDuSujet.tsx` s'appuie toujours sur ce que ces deux fonctions
+// décident, et un écran du carnet n'emprunte pas de logique à un autre écran
+// (`essais/essai_imports.py`).
+
+export type EtatDeCase = "retenue" | "en-route" | "ratee" | "a-juger" | "vide"
+
+export type CaseAAnimer = {
+  pose: string
+  poseNom: string
+  direction: string | null
+  directionNom: string | null
+  etat: EtatDeCase
+}
+
+const enRoute = (g: Generation) =>
+  g.statut === "en_attente" || g.statut === "en_cours"
+
+/** **Ratée au contrôle d'arrivée** (RV1) : `echouee`, et `clip.controle` le
+ *  dit. Un clip échoué pour une autre raison (fournisseur, réseau) ne porte
+ *  pas ce champ, et ne paraît donc pas ici. */
+const ratee = (g: Generation) => g.statut === "echouee" && !!g.clip?.controle
+
+/** Les clips de ce sujet **pas encore montés** : en route, ratés, ou arrivés
+ *  sans animation taillée dedans. Ce sont eux que la rangée montre en
+ *  vignette — une case ratée y reste visible, avec sa raison, au lieu de
+ *  disparaître sans bruit. */
+export function clipsNonMontes(
+  clips: readonly Generation[],
+  personnage: Personnage,
+): Generation[] {
+  const montes = new Set<string>()
+  for (const sienne of personnage.cases) {
+    const bandes: Bande[] = [
+      ...sienne.bandes,
+      ...sienne.bandes_ecartees,
+      ...sienne.directions.flatMap((d) => [...d.bandes, ...d.bandes_ecartees]),
+    ]
+    for (const b of bandes) montes.add(b.clip)
+  }
+  return clips.filter(
+    (g) =>
+      g.personnage === personnage.identifiant &&
+      g.clip &&
+      !g.clip.jete &&
+      (!g.clip.nature || g.clip.nature === "video") &&
+      (enRoute(g) || ratee(g) || (g.statut === "reussie" && !montes.has(g.identifiant))),
+  )
+}
+
+/** L'état d'une case pour un lot : ce qui décide si elle repart. */
+export function etatDeLaCase(
+  rangee: { pose: string; direction: string | null; retenue: Bande | null; compte: number },
+  nonMontes: readonly Generation[],
+): EtatDeCase {
+  if (rangee.retenue) return "retenue"
+  const siens = nonMontes.filter(
+    (g) => g.pose === rangee.pose && (g.direction ?? null) === rangee.direction,
+  )
+  if (siens.some(enRoute)) return "en-route"
+  if (siens.some(ratee)) return "ratee"
+  if (rangee.compte > 0 || siens.length > 0) return "a-juger"
+  return "vide"
 }

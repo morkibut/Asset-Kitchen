@@ -232,8 +232,6 @@ return (ou, _profondeur, dedans) => {
     // **Ces écrans ont un fil aussi** (18 septembre 2026). Ils n'en avaient
     // pas, au motif qu'ils « recouvrent » le produit — et l'auteur s'y
     // retrouvait sans aucun moyen de voir d'où il venait ni d'y revenir.
-    case "clip":
-      return [ou.cible.personnage.nom, "Faire une vidéo"]
     case "envoi":
       return "L'envoi"
     case "montage": {

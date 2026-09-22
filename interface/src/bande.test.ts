@@ -2,11 +2,15 @@
 // sans bruit. `clipsNonMontes` l'écartait avant (seul `echouee` sans
 // `clip.controle` en sort) ; `etatDeLaCase` doit dire « ratee » plutôt que
 // « à juger » ou « à fabriquer ».
+//
+// Déplacés depuis `composants/AnimerEnLot.test.tsx` le 22 septembre 2026
+// (RV6) : `AnimerEnLot.tsx` disparaît, et les deux fonctions vivent
+// maintenant dans `bande.ts`, hors de `composants/`.
 
 import { describe, expect, test } from "vitest"
 
-import type { Generation, Personnage } from "../api"
-import { clipsNonMontes, etatDeLaCase } from "./AnimerEnLot"
+import type { Generation, Personnage } from "./api"
+import { clipsNonMontes, etatDeLaCase } from "./bande"
 
 function personnage(): Personnage {
   return {

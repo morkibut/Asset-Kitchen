@@ -331,6 +331,10 @@ async def test_cadre_agent_relu_apres_attente_du_gpu(production):
 
 
 async def test_api_et_mcp_lisent_la_meme_file_et_annulent_uniquement_avant_envoi(production):
+    """**RV5/RV6** : `POST /clips` a été retirée (21 septembre 2026). Le geste
+    équivalent passe par le nouveau circuit — `ServiceTravaux.preparer` puis
+    `demarrer` —, ce que les autres essais de ce fichier font déjà (voir
+    `test_cadre_agent_relu_apres_attente_du_gpu` juste au-dessus)."""
     atelier, projet, demande, animateur = production
     local = replace(MELE, identifiant="essai:local", tarification=Tarification("maison", 0))
     animateur.modeles = [local]
@@ -341,9 +345,11 @@ async def test_api_et_mcp_lisent_la_meme_file_et_annulent_uniquement_avant_envoi
     async with app.router.lifespan_context(app):
         await atelier.animation.rafraichir()
         reference = atelier.generations.importer(image_sujet(), "référence", projet=projet)["asset"]["identifiant"]
+        travail = await atelier.travaux.preparer(
+            projet, {**demande, "modele_video": local.identifiant, "reference_asset": reference}
+        )
+        await atelier.travaux.demarrer(projet, travail["identifiant"])
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://127.0.0.1:8420") as client:
-            r = await client.post("/api/clips", json={"modele": local.identifiant, "asset": reference, "prompt": "Walk in place", "secondes": 5, "resolution": "480p", "proportions": "1:1"})
-            assert r.status_code == 202, r.text
             file = (await client.get("/api/local-queue")).json()
             assert len(file["etapes"]) == 1 and not animateur.soumissions
             moteurs = (await client.get("/api/local-queue/engines")).json()["moteurs"]

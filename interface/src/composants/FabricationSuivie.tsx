@@ -2,11 +2,11 @@ import { SuiviFabrication3D } from "./Fabrication3D"
 import { useEffect, useRef, useState } from "react"
 import { api, dollars, duree, prix, Refus, type Asset, type EtatDuMoteur, type Modele, type ModeleVideo, type Mouvement, type MouvementDeLaPose, type Personnage } from "../api"
 import { nomDuTravail, travaux, NOM_DE_L_ETAPE, NOM_DE_L_ETAT, type CaseSerie, type DemandeTravail, type Serie, type Travail, type TravailSuivi } from "../api-travaux"
-import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
+import { CHAMP_DU_MODELE, VERS_LA_RELECTURE, type OptionsAnimer } from "../fabrication"
 import { vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
 import { MemoireLocale } from "./MemoireLocale"
-import { libelleModele } from "./pieces"
+import { Libelle, libelleModele } from "./pieces"
 import { RelectureEquipement } from "./RelectureEquipement"
 import { FabricationVideoLibre } from "./FabricationVideoLibre"
 import { FabricationAudio } from "./FabricationAudio"
@@ -43,7 +43,12 @@ const nouvelle = (personnage = ""): DemandeTravail => ({ cle: crypto.randomUUID(
  * tandis que la reprise conserve l'identifiant payé et ses références figées. */
 export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivraisons, onFermer, initiale, modeleInitial, cibleInitiale, autonome = true }: {
   projet: string; personnages: readonly Personnage[]; initiale?: Travail; modeleInitial?: string
-  cibleInitiale?: { personnage: string; pose: string; direction: string }
+  /** **Les onze portes du produit, réunies** (RV6) : `cases`,
+   *  `referenceAsset` et `relance` viennent d'`OptionsAnimer`
+   *  (`fabrication.ts`) — les autres cases cochées (pose et direction, pas
+   *  seulement la direction), l'image de départ d'un clip d'origine, ou la
+   *  reprise à l'identique d'un travail raté. */
+  cibleInitiale?: { personnage: string; pose: string; direction: string } & OptionsAnimer
   onClip: (id: string) => void; onBande?: (id: string) => void
   /** L'écran de la sortie, pour livrer la bande obtenue sans repasser par le carnet. */
   onLivraisons?: () => void
@@ -55,6 +60,9 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
 }) {
   const [depart] = useState<DemandeTravail>(() => {
     if (initiale) return initiale.demande
+    // **Relancer, c'est reprendre — pas resaisir** (RV1 → RV6, E14) : la
+    // demande du travail raté repart mot pour mot, sous une clé neuve.
+    if (cibleInitiale?.relance) return { ...cibleInitiale.relance, cle: crypto.randomUUID() }
     const sujet = personnages.find(p => p.identifiant === cibleInitiale?.personnage) ?? personnages[0]
     const sortie = sujet?.objectif?.sorties.find(s => s.nature === "animation" && s.quantite > 0)
     const pose = cibleInitiale?.pose ?? sortie?.pose ?? ""
@@ -63,7 +71,11 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
       pose,
       direction: cibleInitiale?.direction || sortieDePose?.direction || sujet?.cases.find(c => c.pose === pose)?.directions[0]?.identifiant || "",
       cadence: sujet?.objectif?.cadence ?? 8,
-      modele_video: modeleInitial ?? "" }
+      modele_video: modeleInitial ?? "",
+      // **Une variante part de l'image de départ du clip d'origine** (porte
+      // « En générer une variante ») quand on la connaît, plutôt que de la
+      // repropose du serveur.
+      ...(cibleInitiale?.referenceAsset ? { reference_asset: cibleInitiale.referenceAsset } : {}) }
   })
   const [demande, setDemande] = useState<DemandeTravail>(depart)
   const [travail, setTravail] = useState<Travail | null>(initiale ?? null)
@@ -90,7 +102,15 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   const [mouvements, setMouvements] = useState<Mouvement[]>([])
   const [composition, setComposition] = useState<MouvementDeLaPose | null>(null)
   const [correctionOuverte, setCorrectionOuverte] = useState(false)
-  const [autresDirections, setAutresDirections] = useState<string[]>([])
+  // **Les cases cochées d'avance** (RV6, portes « Tout animer » et « Animer
+  // les directions ») : celles de `cibleInitiale.cases`, moins la case déjà
+  // portée par les champs « Mouvement »/« Direction » — `casesChoisies` ne
+  // doit jamais compter la même case deux fois. Pose et direction, pas
+  // seulement la direction : « Tout animer » peut cocher des cases d'autres
+  // poses que celle-ci (une série n'est plus bornée à une seule pose).
+  const [autresCases, setAutresCases] = useState<CaseSerie[]>(
+    () => cibleInitiale?.cases?.filter((c) => !(c.pose === depart.pose && c.direction === depart.direction)) ?? [],
+  )
   const [nombre, setNombre] = useState<number>(1)
   const [serie, setSerie] = useState<Serie | null>(null)
   const personnage = personnages.find((p) => p.identifiant === demande.personnage)
@@ -114,17 +134,28 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   const choisirPose = (pose: string) => {
     const direction = personnage?.cases.find((c) => c.pose === pose)?.directions.find((d) => !cases || cases.some((s) => s.pose === pose && s.direction === d.identifiant))?.identifiant ?? ""
     // Une autre pose n'a pas forcément les mêmes directions ni le même
-    // mouvement par défaut : la série et le geste repartent de zéro.
-    setAutresDirections([])
+    // mouvement par défaut : la série et le geste repartent de zéro. Les
+    // cases cochées d'une autre pose que la précédente n'ont plus de sens
+    // ici — changer le champ « Mouvement » repart sans elles.
+    setAutresCases([])
     changer({ pose, direction, mouvement: undefined, correction_geste: "" })
   }
-  // **Les directions d'une série** (RV5) : celle du champ « Direction », plus
-  // celles cochées en plus. Sans case cochée en plus, c'est le `preparer`
-  // d'un clip seul, inchangé.
-  const directionsChoisies = [demande.direction, ...autresDirections].filter((d, i, tous) => d && tous.indexOf(d) === i)
-  const enSerie = directionsChoisies.length > 1 || nombre > 1
+  // **Les cases d'une série** (RV5 → RV6) : celle des champs « Mouvement »/
+  // « Direction », plus celles cochées en plus — d'autres directions de la
+  // même pose (la case à cocher ci-dessous), ou d'autres poses entières,
+  // armées d'un coup par « Tout animer » (`cibleInitiale.cases`). Sans case
+  // cochée en plus, c'est le `preparer` d'un clip seul, inchangé.
+  const casesChoisies: CaseSerie[] = [{ pose: demande.pose, direction: demande.direction }, ...autresCases]
+    .filter((c, i, tous) => tous.findIndex((a) => a.pose === c.pose && a.direction === c.direction) === i)
+  const enSerie = casesChoisies.length > 1 || nombre > 1
+  // **La case à cocher ne touche que la pose courante** : d'autres
+  // directions de `demande.pose`, ajoutées ou retirées une à une.
   const basculerDirection = (identifiant: string) => {
-    setAutresDirections((liste) => liste.includes(identifiant) ? liste.filter((d) => d !== identifiant) : [...liste, identifiant])
+    setAutresCases((liste) =>
+      liste.some((c) => c.pose === demande.pose && c.direction === identifiant)
+        ? liste.filter((c) => !(c.pose === demande.pose && c.direction === identifiant))
+        : [...liste, { pose: demande.pose, direction: identifiant }],
+    )
   }
   const choisirMouvement = (mouvement: string) => {
     // **Un texte figé ne part jamais avec un mouvement choisi** (`_composer_texte`,
@@ -222,8 +253,11 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
       const d = { ...demande, options_video: JSON.parse(optionsVideo), options_image: JSON.parse(optionsImage) } as DemandeTravail
       if (enSerie) {
         const { pose: _p, direction: _d, ...commune } = d
-        const cases: CaseSerie[] = directionsChoisies.map((direction) => ({ pose: d.pose, direction }))
-        const s = await travaux.preparerSerie(projet, commune, cases, nombre)
+        // **Les cases partent telles quelles** (RV6) : `casesChoisies` porte
+        // déjà sa propre pose par case — le serveur (`preparer_serie`) les
+        // accepte de poses différentes, une série n'y est plus bornée à une
+        // seule.
+        const s = await travaux.preparerSerie(projet, commune, casesChoisies, nombre)
         brouillon.effacer()
         setSerie(s); setTravail(null); setEdition(false)
       } else {
@@ -249,7 +283,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
       ...(travail.envoi_image ? { prompt_image: travail.envoi_image.prompt, repris_image: true } : {}) })
     setOptionsImage(JSON.stringify(travail.demande.options_image ?? {}, null, 2))
     setOptionsVideo(JSON.stringify(travail.demande.options_video ?? {}, null, 2))
-    setAutresDirections([]); setNombre(1); setSerie(null)
+    setAutresCases([]); setNombre(1); setSerie(null)
     setEdition(true); setErreur("")
   }
   // **« Garder pour le jeu »** (RV5) : la correction du geste s'écrit dans la
@@ -285,12 +319,20 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">1. Animation à créer</legend><div className="grid grid-cols-3 gap-[14px]">
           <label className="flex flex-col gap-[4px] text-[12px]">Sujet<select className={CHAMP} value={demande.personnage} onChange={(e) => changer({ personnage: e.target.value, pose: "", direction: "", reference_asset: null })}>{personnages.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
           <label className="flex flex-col gap-[4px] text-[12px]">Mouvement<select className={CHAMP} value={demande.pose} onChange={(e) => choisirPose(e.target.value)}><option value="">Choisir…</option>{poses.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
-          <label className="flex flex-col gap-[4px] text-[12px]">Direction<select className={CHAMP} value={demande.direction} onChange={(e) => { setAutresDirections((l) => l.filter((d) => d !== e.target.value)); changer({ direction: e.target.value }) }}>{!directions.length && <option value="">Sans direction</option>}{directions.map((d) => <option key={d.identifiant} value={d.identifiant}>{d.nom}</option>)}</select></label>
+          <label className="flex flex-col gap-[4px] text-[12px]">Direction<select className={CHAMP} value={demande.direction} onChange={(e) => { setAutresCases((l) => l.filter((c) => !(c.pose === demande.pose && c.direction === e.target.value))); changer({ direction: e.target.value }) }}>{!directions.length && <option value="">Sans direction</option>}{directions.map((d) => <option key={d.identifiant} value={d.identifiant}>{d.nom}</option>)}</select></label>
         </div>{!poses.length && <p className="mt-[14px] text-[13px] text-encre-3">Ajoute d’abord une animation demandée dans « Objectif & règles » de cet asset.</p>}
         {/* **RV5** : d'autres directions cochées en plus font une série — un
             travail par case, lancés d'un seul geste. */}
-        {directions.length > 1 && <div className="mt-[14px]"><p className="text-[12px] text-encre-3">Lancer aussi ces directions dans le même geste</p><div className="mt-[8px] flex flex-wrap gap-[14px]">{directions.filter((d) => d.identifiant !== demande.direction).map((d) => <label key={d.identifiant} className="flex items-center gap-[4px] text-[13px]"><input type="checkbox" checked={autresDirections.includes(d.identifiant)} onChange={() => basculerDirection(d.identifiant)} />{d.nom}</label>)}</div></div>}
-        <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">Combien de clips par case<select aria-label="Nombre de clips" className={CHAMP} value={nombre} onChange={(e) => setNombre(Number(e.target.value))}>{NOMBRES_DE_CLIPS.map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
+        {directions.length > 1 && <div className="mt-[14px]"><p className="text-[12px] text-encre-3">Lancer aussi ces directions dans le même geste</p><div className="mt-[8px] flex flex-wrap gap-[14px]">{directions.filter((d) => d.identifiant !== demande.direction).map((d) => <label key={d.identifiant} className="flex items-center gap-[4px] text-[13px]"><input type="checkbox" checked={autresCases.some((c) => c.pose === demande.pose && c.direction === d.identifiant)} onChange={() => basculerDirection(d.identifiant)} />{d.nom}</label>)}</div></div>}
+        {/* **D'autres poses, cochées d'avance par « Tout animer »** (RV6) :
+            pas de case à cocher ici — elles arrivent déjà armées depuis
+            `cibleInitiale.cases`, et la fenêtre ne sait pas encore les
+            choisir elle-même. Le nombre suffit à dire ce qui partira ; le
+            détail de chaque case se lit à la relecture, une par une. */}
+        {autresCases.some((c) => c.pose !== demande.pose) && <p className="mt-[8px] text-[12px] text-encre-3">
+          + {autresCases.filter((c) => c.pose !== demande.pose).length} case{autresCases.filter((c) => c.pose !== demande.pose).length > 1 ? "s" : ""} d’autres poses, déjà armée{autresCases.filter((c) => c.pose !== demande.pose).length > 1 ? "s" : ""} par « Tout animer »
+        </p>}
+        <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.lot">Combien de clips par case</Libelle><select aria-label="Nombre de clips" className={CHAMP} value={nombre} onChange={(e) => setNombre(Number(e.target.value))}>{NOMBRES_DE_CLIPS.map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
         {nombre > 1 && !demande.reference_asset && <p className="mt-[8px] text-[12px] text-encre-attention">Plusieurs clips d’une même case partent d’une image existante : choisis une image de départ, sinon chacun paierait la sienne.</p>}</fieldset>
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">2. Image de départ</legend>
           <p className="text-[13px] text-encre-3">La référence existante du personnage sera proposée à la relecture. Tu peux en choisir une autre ; si aucune n’existe, le modèle d’image la créera.</p>
@@ -302,7 +344,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
           <details><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres du modèle d’image</summary><p className="my-[8px] text-[12px] text-encre-3">Paramètres disponibles : {Object.keys(image?.options ?? {}).join(", ") || "aucun paramètre supplémentaire déclaré"}.</p><textarea aria-label="Paramètres d’image JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsImage} onChange={(e) => setOptionsImage(e.target.value)} /></details></> }</div>}
         </fieldset>
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">3. Mouvement et clip vidéo</legend>
-          <label className="flex flex-col gap-[4px] text-[12px]">Geste<select aria-label="Geste" className={CHAMP} value={demande.mouvement ?? ""} onChange={(e) => choisirMouvement(e.target.value)}><option value="">— texte libre —</option>{mouvements.map((m) => <option key={m.identifiant} value={m.identifiant}>{m.nom}</option>)}</select></label>
+          <label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="mouvement.texte">Geste</Libelle><select aria-label="Geste" className={CHAMP} value={demande.mouvement ?? ""} onChange={(e) => choisirMouvement(e.target.value)}><option value="">— texte libre —</option>{mouvements.map((m) => <option key={m.identifiant} value={m.identifiant}>{m.nom}</option>)}</select></label>
           {demande.mouvement ? <div className="mt-[14px]">
             <p className="text-[12px] text-encre-3">{composition?.style ? `Style : ${composition.style.nom}${composition.origine_du_style === "piece" ? ` (hérité de ${composition.piece_du_style?.nom ?? "une pièce"})` : ""}` : "Aucun style de combat n’ajoute son texte ici."}</p>
             <details className="mt-[8px]"><summary className="cursor-pointer text-[12px] text-encre-3">Voir le texte anglais envoyé</summary><p data-texte-du-mouvement className="mt-[8px] whitespace-pre-wrap rounded-7 border border-contour bg-papier p-[14px] text-[13px]">{(demande.correction_geste?.trim() ? composition?.direction ? `${composition.direction} ${demande.correction_geste.trim()}` : demande.correction_geste.trim() : composition?.texte) || "choisis une case — c’est elle qui écrit ce qui part"}</p></details>
@@ -316,8 +358,8 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
               <button type="button" className={BOUTON} disabled={occupe || !demande.correction_geste?.trim()} onClick={() => void garderPourLeJeu()}>Garder pour le jeu</button>
             </div>}
           </div> : <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">Décrire l’animation<textarea rows={3} className="rounded-7 border border-contour p-[14px] text-[13px]" value={demande.prompt_video} onChange={(e) => changer({ prompt_video: e.target.value })} placeholder="Le personnage marche sur place, cycle régulier, caméra fixe…" /></label>}
-          <div className="mt-[14px] grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Durée du clip<select className={CHAMP} value={demande.secondes} onChange={(e) => changer({ secondes: Number(e.target.value) })}>{[...new Set([demande.secondes, ...(video?.durees ?? [])])].sort((a, b) => a - b).map((n) => <option key={n} value={n} disabled={!!video && !video.durees.includes(n)}>{n} s{video && !video.durees.includes(n) ? " — non accepté par ce modèle" : ""}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]">Résolution<select className={CHAMP} value={demande.resolution} onChange={(e) => changer({ resolution: e.target.value })}>{[...new Set([demande.resolution, ...videos.flatMap((m) => m.resolutions)])].map((v) => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]">Proportions<select className={CHAMP} value={demande.proportions} onChange={(e) => changer({ proportions: e.target.value })}>{[...new Set([demande.proportions, ...videos.flatMap((m) => m.proportions)])].map((v) => <option key={v}>{v}</option>)}</select></label></div>
-          <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">{CHAMP_DU_MODELE}<select className={CHAMP} value={demande.modele_video} onChange={(e) => changer({ modele_video: e.target.value })}><option value="">Choisir un modèle…</option>{demande.modele_video && !video && <option value={demande.modele_video} disabled>{videosLues ? "modèle indisponible" : "chargement…"}</option>}{videos.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.grise}>{libelleModele(m)}{m.grise ? ` — ${m.grise}` : m.de_la_maison ? " · local" : ` · ${prix(m.prix.montant)}`}</option>)}</select></label>
+          <div className="mt-[14px] grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Durée du clip</Libelle><select className={CHAMP} value={demande.secondes} onChange={(e) => changer({ secondes: Number(e.target.value) })}>{[...new Set([demande.secondes, ...(video?.durees ?? [])])].sort((a, b) => a - b).map((n) => <option key={n} value={n} disabled={!!video && !video.durees.includes(n)}>{n} s{video && !video.durees.includes(n) ? " — non accepté par ce modèle" : ""}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Résolution</Libelle><select className={CHAMP} value={demande.resolution} onChange={(e) => changer({ resolution: e.target.value })}>{[...new Set([demande.resolution, ...videos.flatMap((m) => m.resolutions)])].map((v) => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Proportions</Libelle><select className={CHAMP} value={demande.proportions} onChange={(e) => changer({ proportions: e.target.value })}>{[...new Set([demande.proportions, ...videos.flatMap((m) => m.proportions)])].map((v) => <option key={v}>{v}</option>)}</select></label></div>
+          <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.prix">{CHAMP_DU_MODELE}</Libelle><select className={CHAMP} value={demande.modele_video} onChange={(e) => changer({ modele_video: e.target.value })}><option value="">Choisir un modèle…</option>{demande.modele_video && !video && <option value={demande.modele_video} disabled>{videosLues ? "modèle indisponible" : "chargement…"}</option>}{videos.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.grise}>{libelleModele(m)}{m.grise ? ` — ${m.grise}` : m.de_la_maison ? " · local" : ` · ${prix(m.prix.montant)}`}</option>)}</select></label>
           {video?.de_la_maison && <div className="mt-[8px]"><MemoireLocale etat={moteur} /></div>}
           <details className="mt-[14px]"><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres avancés du workflow</summary><p className="my-[8px] text-[12px] text-encre-3">Réglages nommés du workflow, par exemple la seed. Le fournisseur vérifie les paramètres avant l’envoi.</p><textarea aria-label="Paramètres vidéo JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsVideo} onChange={(e) => setOptionsVideo(e.target.value)} /></details>
         </fieldset>
@@ -347,13 +389,25 @@ function RelectureDeSerie({ serie, personnage, onClip }: {
   return <div className="mx-auto max-w-[880px] space-y-[22px]">
     <div className="rounded-8 border border-trait bg-carte p-[22px]">
       <div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px]">{personnage?.nom ?? premier?.demande.personnage}</h2><span className="text-[13px] text-encre-3">{serie.serie.total} clip{serie.serie.total > 1 ? "s" : ""}</span></div>
-      <p className="mt-[8px] text-[13px]">{personnage?.plan.find((p) => p.identifiant === premier?.demande.pose)?.nom ?? premier?.demande.pose} · {premier?.demande.secondes} s · {premier?.demande.resolution} · {premier?.demande.proportions}</p>
+      {/* **RV6** : `secondes`/`resolution`/`proportions` viennent de la
+          demande commune, la même pour chaque case — mais pas la pose : une
+          série de « Tout animer » en mélange plusieurs, donc ce résumé ne
+          nomme plus celle du premier travail comme si elle valait pour
+          tous. Chaque case dit la sienne ci-dessous. */}
+      <p className="mt-[8px] text-[13px]">{premier?.demande.secondes} s · {premier?.demande.resolution} · {premier?.demande.proportions}</p>
       <p className="mt-[8px] text-[14px]">{serie.annonce_serie.locale ? `Local · ${serie.annonce_serie.temps_s ? `≈ ${duree(serie.annonce_serie.temps_s)}` : "temps non mesuré"}` : `Réservation totale : ${dollars(serie.annonce_serie.reservation_usd)}`}</p>
     </div>
+    {/* **Le nom de la pose ne paraît que si elle varie** (RV6) : une série
+        d'« Animer les directions » reste sur une seule pose, et la répéter à
+        chaque case n'ajouterait rien à côté du titre qui la nomme déjà. Une
+        série de « Tout animer » en mélange plusieurs — c'est là qu'il faut
+        la voir, case par case. */}
     <div className="space-y-[8px]">{serie.travaux.map((t) => {
+      const plusieursPoses = serie.travaux.some((v) => v.demande.pose !== premier?.demande.pose)
+      const pose = personnage?.plan.find((p) => p.identifiant === t.demande.pose)?.nom ?? t.demande.pose
       const direction = personnage?.cases.find((c) => c.pose === t.demande.pose)?.directions.find((d) => d.identifiant === t.demande.direction)?.nom ?? t.demande.direction ?? "Sans direction"
       return <details key={t.identifiant} className="rounded-8 border border-trait bg-carte p-[14px]">
-        <summary className="flex cursor-pointer items-center justify-between gap-[14px] text-[13px]"><span>{direction}</span><span className="text-encre-3">{ETATS[t.etat]}</span></summary>
+        <summary className="flex cursor-pointer items-center justify-between gap-[14px] text-[13px]"><span>{plusieursPoses ? `${pose} · ${direction}` : direction}</span><span className="text-encre-3">{ETATS[t.etat]}</span></summary>
         <p className="mt-[8px] whitespace-pre-wrap text-[13px]">{t.demande.prompt_video}</p>
         {t.raison && <p className="mt-[8px] text-[13px] text-echec">{t.raison}</p>}
         {t.clip && <button className={BOUTON} onClick={() => onClip(t.clip!)}>Ouvrir le clip et son montage</button>}

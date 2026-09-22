@@ -34,6 +34,7 @@ from atelier.domaine.bande import ALLER_RETOUR, BOUCLE, Bande, Cadre, Prise
 from atelier.domaine.recette import Grille, Passe, Recette
 from atelier.image import clip as decodeur
 from atelier.image.rythme import empreintes, lire as lire_le_rythme
+from conftest import commander_un_clip
 
 from test_a9 import (  # noqa: F401 — fixtures réemployées telles quelles
     MELE,
@@ -99,7 +100,7 @@ def clip_connu() -> bytes:
 
 
 @pytest.fixture
-def clip(client_video, animateur) -> str:
+async def clip(atelier_video, client_video, animateur) -> str:
     """Un clip arrivé, à découper. Rien n'a été payé : le double facture zéro."""
     animateur.octets = clip_connu()
     animateur.facture = 0.067
@@ -109,16 +110,11 @@ def clip(client_video, animateur) -> str:
         f"/api/assets/{sprite}/character",
         json={"personnage": personnage, "pose": "marche"},
     )
-    lot = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite},
-    ).json()["clips"]
+    lot = await commander_un_clip(
+        atelier_video, modele=MELE.identifiant, mouvement="marche", asset=sprite
+    )
     identifiant = lot[0]["identifiant"]
-    for _ in range(300):
-        arrives = client_video.get("/api/clips").json()["clips"]
-        if arrives and arrives[0]["statut"] == "reussie":
-            break
-        client_video.get("/api/status")
+    await atelier_video.animation.attendre_tout()
     return identifiant
 
 
@@ -553,8 +549,8 @@ def test_oublier_une_bande_laisse_le_clip_et_ses_images(client_video, clip):
     )
 
 
-def test_ecarter_le_clip_source_d_une_bande_ne_touche_pas_la_bande(
-    client_video, animateur
+async def test_ecarter_le_clip_source_d_une_bande_ne_touche_pas_la_bande(
+    atelier_video, client_video, animateur
 ):
     """*Le sort d'un clip écarté, tranché.* (C5)
 
@@ -580,20 +576,10 @@ def test_ecarter_le_clip_source_d_une_bande_ne_touche_pas_la_bande(
         f"/api/assets/{sprite}/character",
         json={"personnage": personnage, "pose": "marche"},
     )
-    lot = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "marche",
-            "asset": sprite,
-            "nombre": 2,
-        },
-    ).json()["clips"]
-    for _ in range(300):
-        arrives = client_video.get("/api/clips").json()["clips"]
-        if arrives and all(c["statut"] == "reussie" for c in arrives):
-            break
-        client_video.get("/api/status")
+    lot = await commander_un_clip(
+        atelier_video, modele=MELE.identifiant, mouvement="marche", asset=sprite, nombre=2
+    )
+    await atelier_video.animation.attendre_tout()
     garde, ecarte = [c["identifiant"] for c in lot]
 
     # Une bande est taillée dans le clip qui va être écarté — le cas précis où
@@ -948,26 +934,19 @@ def test_un_montage_demande_sur_une_generation_qui_n_est_pas_un_clip_se_refuse(
     assert sprite
 
 
-def test_un_clip_commande_avec_monter_auto_arrive_deja_monte_dans_sa_case(client_video, animateur):
+async def test_un_clip_commande_avec_monter_auto_arrive_deja_monte_dans_sa_case(atelier_video, client_video, animateur):
     """Demandé le 16 septembre 2026 : le clip arrive déjà monté, à juger."""
     animateur.octets = clip_connu()
     sprite = un_sprite(client_video)
     personnage = un_personnage(client_video)
     client_video.put(f"/api/assets/{sprite}/character", json={"personnage": personnage, "pose": "marche"})
-    lot = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite,
-              "personnage": personnage, "pose": "marche", "monter_auto": True},
-    ).json()["clips"]
+    lot = await commander_un_clip(
+        atelier_video, modele=MELE.identifiant, mouvement="marche", asset=sprite,
+        personnage=personnage, pose="marche", monter_auto=True,
+    )
     identifiant = lot[0]["identifiant"]
-    bandes = []
-    for _ in range(300):
-        arrive = [c for c in client_video.get("/api/clips").json()["clips"] if c["identifiant"] == identifiant]
-        if arrive and arrive[0]["statut"] == "reussie":
-            bandes = client_video.get(f"/api/montage/{identifiant}").json()["bandes"]
-            if bandes:
-                break
-        client_video.get("/api/status")
+    await atelier_video.animation.attendre_tout()
+    bandes = client_video.get(f"/api/montage/{identifiant}").json()["bandes"]
     assert len(bandes) == 1, "une seule animation, taillée à l'arrivée"
     assert bandes[0]["personnage"] == personnage and bandes[0]["pose"] == "marche"
     assert not bandes[0]["favori"], "elle arrive à juger, jamais retenue d'office"

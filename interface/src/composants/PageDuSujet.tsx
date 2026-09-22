@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { api, Refus, type Collection, type Echelle, type GroupeDeRangement, type Asset, type Personnage, type Piece, type Pose, type PosesDesTypes, type Role, type EmplacementCorps, type Univers, type VestiaireDuJeu, type Generation } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
+import type { OptionsAnimer } from "../fabrication"
 import { EcranCalibrage } from "./Calibrage"
 import { ImagesDuSujet } from "./ImagesDuSujet"
 import { AnimationsDuSujet } from "./AnimationsDuSujet"
@@ -95,6 +96,7 @@ export function PageDuSujet(proprietes: {
     personnage: Personnage,
     pose: Pose,
     direction?: { identifiant: string; nom: string } | null,
+    options?: OptionsAnimer,
   ) => void
   onFente: (fente: Fente) => void
   barreQuiPaie: ReactNode
@@ -149,11 +151,12 @@ export function PageDuSujet(proprietes: {
   clipsLus?: boolean
   /** Une vidéo vient d'entrer : la liste des clips est à relire. */
   onClipsChange?: () => void
-  /** Des clips viennent de partir d'un lot (« Tout animer »). */
-  onClipsCommandes?: (clips: Generation[]) => void
   onObjectifChange?: () => void
   onLivrer?: () => void
-  onFabriquer?: () => void
+  /** **RV6** : « Fabriquer… » ouvre une image, sauf sur l'onglet *Animations*
+   *  où il ouvre un clip — l'onglet actif décide, pas un bouton distinct par
+   *  type. */
+  onFabriquer?: (onglet: Onglet) => void
   /** **Une case peut être visée** : ouvert depuis une rangée vide d'*Images
    *  fixes*, l'import arrive pointé sur cette pose-là. Sans cible, il s'ouvre
    *  sur la première pose du sujet, comme le bouton du haut. */
@@ -371,7 +374,7 @@ export function PageDuSujet(proprietes: {
                 vide lui passe sa case ; le bandeau n'en passe aucune. */}
             {proprietes.onImporter && <button className={BOUTON} onClick={() => proprietes.onImporter?.()}>Importer…</button>}
             <button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal" onClick={() => {
-              if (proprietes.onFabriquer) proprietes.onFabriquer()
+              if (proprietes.onFabriquer) proprietes.onFabriquer(onglet)
               else { const pose = sienPlan.find(p => !ouvert.ecartees.includes(p.identifiant)); if (pose) onglet === "animations" ? proprietes.onAnimer(ouvert, pose) : proprietes.onArmer(ouvert, [pose]); else setOnglet("objectif") }
             }}>Fabriquer…</button>
             {proprietes.onLivrer && <button className={BOUTON} onClick={proprietes.onLivrer}>Livrer…</button>}
@@ -423,7 +426,7 @@ export function PageDuSujet(proprietes: {
         {onglet === "animations" && <AnimationsDuSujet personnage={ouvert} plan={sienPlan} onAnimer={proprietes.onAnimer}
           avecDirections={capacites.directions}
           onOuvrirLaBande={proprietes.onOuvrirLaBande} onErreur={echouer}
-          clips={proprietes.clips} onMonterLeClip={proprietes.onMonterLaBande} onClipsCommandes={proprietes.onClipsCommandes} />}
+          clips={proprietes.clips} onMonterLeClip={proprietes.onMonterLaBande} />}
 
         {onglet === "essai" && <EssaiDuSujet personnage={ouvert} personnages={proprietes.personnages} plan={sienPlan} univers={proprietes.univers}
           onAnimer={proprietes.onAnimer} onAnimations={() => setOnglet("animations")}

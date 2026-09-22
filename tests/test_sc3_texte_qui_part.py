@@ -143,18 +143,26 @@ def test_sans_personnage_connu_rien_ne_change(client, atelier):
     assert recu["origine_du_style"] == "aucun"
 
 
-# ── Critère 3 — ce qui part vraiment, par la commande d'un clip ──────────────
+# ── Critère 3 — ce qui part vraiment, par une fabrication suivie ─────────────
+#
+# **RV5/RV6** : `POST /clips` composait ce texte dans la couche API et prenait
+# un `prompt` explicite en priorité (retirée le 21 septembre 2026). Le nouveau
+# circuit compose une fois pour toutes dans `ServiceTravaux.preparer`, par le
+# même compositeur (`services/texte_clip.composer`) — E14, la relecture montre
+# `demande.prompt_video`, et c'est ce champ-là qu'on vérifie ici. Un texte ne
+# se corrige plus en l'écrasant : `correction_geste` porte la correction, et
+# la phrase de direction reste en tête (voir aussi `tests/test_rv5_serie.py`).
 
 from test_a9 import MELE, animateur, atelier_video, client_video  # noqa: E402,F401
 from test_a10 import un_personnage, un_sprite  # noqa: E402,F401
 
 
-def test_un_clip_commande_au_baton_vers_le_nord_part_avec_la_phrase_et_le_texte_du_baton(
+async def test_un_clip_commande_au_baton_vers_le_nord_part_avec_la_phrase_et_le_texte_du_baton(
     client_video, atelier_video, animateur
 ):
-    """L'écran d'un clip montre exactement ce texte avant l'envoi — vérifié
-    ici sur ce que le serveur enregistre pour l'appel, sa seule source de
-    vérité (`SC3`)."""
+    """La fabrication suivie compose exactement ce texte avant l'envoi —
+    vérifié ici sur ce que le serveur conserve pour l'appel, sa seule source
+    de vérité (`SC3`, E14)."""
     projet = _avec_le_nord(client_video, atelier_video)
     sprite = un_sprite(client_video)
     champy = un_personnage(client_video, "Champy")
@@ -165,41 +173,28 @@ def test_un_clip_commande_au_baton_vers_le_nord_part_avec_la_phrase_et_le_texte_
     ).status_code == 200
     _choisir_style(client_video, projet, champy, "baton")
 
-    lot = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "attaque",
-            "asset": sprite,
-            "direction": "nord",
-            "projet": projet,
-        },
-    )
-    assert lot.status_code == 202, lot.text
-    texte = lot.json()["clips"][0]["demande"]["prompt"]
-    assert texte == f'{PHRASES_ANIMEES["nord"]} {_BATON.texte("attaque")}'
+    travail = await atelier_video.travaux.preparer(projet, {
+        "cle": "sc3-baton", "personnage": champy, "pose": "attaque", "direction": "nord",
+        "modele_video": MELE.identifiant, "mouvement": "attaque", "reference_asset": sprite,
+    })
+    assert travail["demande"]["prompt_video"] == f'{PHRASES_ANIMEES["nord"]} {_BATON.texte("attaque")}'
 
 
-def test_un_texte_relu_part_tel_quel_meme_avec_un_style_pose(
+async def test_une_correction_du_geste_part_telle_quelle_meme_avec_un_style_pose(
     client_video, atelier_video, animateur
 ):
-    """*Un texte relu à la main part tel quel* — le style ne s'invite pas dans
-    une correction que l'auteur vient de faire pour cet appel."""
+    """*Une correction du geste part telle quelle* — le style ne s'invite pas
+    dans une correction que l'auteur vient de faire pour cet appel, et la
+    phrase de direction reste en tête."""
     projet = _avec_le_nord(client_video, atelier_video)
     sprite = un_sprite(client_video)
     champy = un_personnage(client_video, "Champy")
     client_video.put(f"/api/assets/{sprite}/character", json={"personnage": champy})
     _choisir_style(client_video, projet, champy, "baton")
 
-    lot = client_video.post(
-        "/api/clips",
-        json={
-            "modele": MELE.identifiant,
-            "mouvement": "attaque",
-            "prompt": "my own words",
-            "asset": sprite,
-            "direction": "nord",
-            "projet": projet,
-        },
-    )
-    assert lot.json()["clips"][0]["demande"]["prompt"] == "my own words"
+    travail = await atelier_video.travaux.preparer(projet, {
+        "cle": "sc3-correction", "personnage": champy, "pose": "attaque", "direction": "nord",
+        "modele_video": MELE.identifiant, "mouvement": "attaque", "reference_asset": sprite,
+        "correction_geste": "my own words",
+    })
+    assert travail["demande"]["prompt_video"] == f'{PHRASES_ANIMEES["nord"]} my own words'

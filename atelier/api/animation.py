@@ -18,7 +18,6 @@ vocabulaire, il s'écrit sur le disque, et tout y marche réseau coupé.
 
 from __future__ import annotations
 
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +34,6 @@ from atelier.domaine.bande import BOUCLE
 from atelier.domaine.bande import CADENCE_PAR_DEFAUT as CADENCE_DE_BANDE
 from atelier.domaine.bande import Cadre, Prise
 from atelier.domaine.calque_anime import TIENT
-from atelier.domaine.direction import texte_du_clip
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.domaine.recette import Recette
 from atelier.api.routes import reponse_archive
@@ -52,8 +50,6 @@ from atelier.services import Atelier
 # qui ne se voit qu'à l'usage.
 from atelier.services.animation import _modele_en_json
 from atelier.services.texte_clip import composer
-from atelier.services.texte_clip import geste_anime as _geste_anime
-from atelier.services.texte_clip import phrase_de_direction as _phrase_de_direction
 
 routeur = APIRouter()
 
@@ -556,175 +552,6 @@ def _moteur(requete: Request) -> Any:
         status_code=404,
         detail={"raison": "cet atelier n'a pas de moteur de la maison"},
     )
-
-
-class CorpsClip(BaseModel):
-    """Ce qu'il faut pour commander un clip. **L'asset de départ est obligatoire.**
-
-    Il n'est pas dans une liste de références : il n'y a pas de liste. Un clip
-    part d'une image et d'une seule, et sans elle il n'y a pas d'appel — c'est
-    la distinction que la tranche instaure, et elle se lit jusque dans la forme
-    de ce corps.
-    """
-
-    modele: str
-    asset: str
-    # **Le texte, ou le mouvement qui l'écrit** — au moins l'un des deux. Un
-    # écran passe le mouvement et ne retape rien ; un script passe le texte.
-    # **Le prompt corrigé prime sur le mouvement** (V3.01.1) : une relecture
-    # d'avant l'envoi peut corriger le texte pour cet appel, et le serveur
-    # l'emploie alors tel quel. Le mouvement, lui, reste inscrit sur la
-    # génération — c'est lui que le montage lit pour nommer ses bandes.
-    prompt: str = ""
-    mouvement: str | None = None
-    secondes: float = SECONDES_DEFAUT
-    resolution: str = RESOLUTION_DEFAUT
-    proportions: str = PROPORTIONS_DEFAUT
-    # **Combien de clips ce geste lance. Un est le défaut**, et le produit
-    # n'impose jamais un lot : c'est ce qui reste de l'ancienne tranche `A3`.
-    nombre: int = 1
-    identifiant: str | None = None
-    projet: str | None = None
-    personnage: str | None = None
-    pose: str | None = None
-    direction: str | None = None
-    options: dict[str, Any] = {}
-    # Monter l'animation dès que le clip arrive (16 septembre 2026).
-    monter_auto: bool = False
-
-
-# Au-delà, ce n'est plus un lot, c'est une fuite. **Ce n'est pas la règle des
-# huit tirages** — celle-là parle de ce qu'il faut voir avant de juger un
-# modèle, pas de ce qu'on lance d'un clic. C'est une borne de sécurité sur un
-# geste qui paie N fois : à 0,067 $ le clip, huit font un peu plus d'un demi
-# dollar, et c'est le plus gros geste d'un coup que le produit accepte.
-LOT_MAX = 8
-
-
-@routeur.post("/clips", status_code=202)
-async def commander_clip(requete: Request, corps: CorpsClip) -> dict[str, Any]:
-    """Commande un lot de clips et rend leurs identifiants **dès qu'ils sont écrits**.
-
-    L'attente continue côté serveur, un clip par attente. L'appelant a déjà de
-    quoi les retrouver si l'atelier ferme : c'est tout l'intérêt de rendre si
-    tôt.
-
-    **Une liste même à un seul clip.** Deux formes de réponse selon le nombre
-    demandé auraient obligé chaque appelant à traiter les deux, et le cas rare
-    — le lot — est celui qui aurait été oublié.
-
-    **Les clips d'un lot ne sont pas un lot pour autant.** Chacun est une
-    génération à part, avec sa dépense, son numéro de travail et son attente :
-    l'un revient pendant que l'autre se fabrique encore, et c'est très
-    exactement ce qu'on veut en regardant quatre tirages arriver.
-    """
-    atelier = _atelier(requete)
-    asset = atelier.assets.lire(corps.asset)
-    if asset is None:
-        raise ErreurAtelier(f"aucune image « {corps.asset} » dans la bibliothèque")
-    if not 1 <= corps.nombre <= LOT_MAX:
-        raise ErreurAtelier(
-            f"un lot va de 1 à {LOT_MAX} clips — {corps.nombre} demandés"
-        )
-
-    # **Le texte s'écrit à un seul endroit (A6), avec une exception nommée.**
-    # Sans correction, l'écran envoie le mouvement qu'il a choisi, pas le texte
-    # qu'il vient d'afficher : deux chemins vers le même texte finiraient par
-    # en envoyer un troisième. Avec correction (V3.01.1), le prompt porté par
-    # l'écran **prime** — c'est une relecture de cet appel, comme sur l'écran
-    # des images —, et le mouvement reste inscrit pour la filiation que le
-    # montage d'`A10` lit. Un mouvement inconnu se refuse dans les deux cas :
-    # la filiation ne peut pas mentir, elle porterait une chose qu'il n'y a
-    # pas.
-    projet = corps.projet or asset.projet
-    mouvement = None
-    if corps.mouvement:
-        mouvement = atelier.mouvements.lire(corps.mouvement, projet)
-        if mouvement is None:
-            raise ErreurAtelier(
-                f"aucun mouvement « {corps.mouvement} » dans la bibliothèque"
-            )
-    # **La direction en tête, le style ou le mouvement ensuite** (SC3), sauf
-    # quand l'écran porte un texte relu : celui-là part tel quel, il a déjà
-    # été lu. Le style se résout sur le personnage porté par l'appel, ou à
-    # défaut celui de l'asset de départ — un script qui commande un clip sans
-    # nommer de personnage garde celui que l'image porte déjà.
-    if mouvement:
-        geste, _style, _origine, _piece = _geste_anime(
-            atelier, projet, corps.personnage or asset.personnage, mouvement
-        )
-    else:
-        geste = ""
-    texte = corps.prompt.strip() or (
-        texte_du_clip(_phrase_de_direction(atelier, projet, corps.direction), geste)
-        if mouvement
-        else ""
-    )
-    if not texte.strip():
-        raise ErreurAtelier(
-            "un clip part d'un texte — choisissez un mouvement, ou écrivez-en un"
-        )
-
-    # **Le rendu, pas le brut** : ce qui part doit être ce qu'on voit. C'est la
-    # règle de la réinjection (US-12), et elle vaut ici pour la même raison.
-    # Préparée **une fois pour tout le lot** : c'est la même image de départ,
-    # et la redimensionner huit fois ne changerait que le temps d'attente.
-    sprite = atelier.assets.reference(corps.asset)
-    entree = atelier.animation.preparer_entree(
-        sprite, corps.resolution, corps.proportions
-    )
-    # **Le lot s'écrit, il ne se déduit pas.** Quatre clips lancés d'un coup
-    # partagent tout — même texte, même image, même minute —, et les rapprocher
-    # après coup se tromperait le jour où l'auteur relance la même chose. « En
-    # garder un, jeter les autres » a besoin de savoir *lesquels* sans hésiter.
-    lot = uuid.uuid4().hex[:12]
-    clips = []
-    for rang in range(corps.nombre):
-        demande = DemandeClip(
-            texte=texte,
-            image=entree,
-            secondes=corps.secondes,
-            resolution=corps.resolution,
-            proportions=corps.proportions,
-            options=corps.options,
-        )
-        generation = await atelier.animation.commander(
-            corps.modele,
-            demande,
-            # **L'identifiant imposé ne vaut que pour le premier.** Il sert à
-            # rejouer un appel connu ; les suivants d'un lot sont des clips
-            # neufs, et leur en donner le même écraserait le premier.
-            identifiant=corps.identifiant if rang == 0 else None,
-            projet=projet,
-            personnage=corps.personnage or asset.personnage,
-            pose=corps.pose,
-            direction=corps.direction,
-            mouvement=corps.mouvement,
-            lot=lot,
-            depart=corps.asset,
-            monter_auto=corps.monter_auto,
-        )
-        clips.append(generation.en_json())
-    return {"clips": clips}
-
-
-@routeur.get("/clips/start-image")
-async def image_de_depart(
-    requete: Request,
-    personnage: str,
-    projet: str | None = Query(None),
-    pose: str | None = Query(None),
-    direction: str | None = Query(None),
-) -> dict[str, Any]:
-    """Ce qu'un clip prendrait au départ, **et pourquoi celle-là** (A9).
-
-    Une proposition, jamais une contrainte : l'écran la montre, et l'auteur en
-    change d'un clic pour n'importe quelle image de la bibliothèque. La règle
-    est dans le service — ici il n'y a qu'une porte.
-    """
-    atelier = _atelier(requete)
-    vise = projet or atelier.bibliotheque.courant or ""
-    return atelier.production.image_de_depart(vise, personnage, pose, direction)
 
 
 class CorpsGarder(BaseModel):

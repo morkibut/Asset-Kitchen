@@ -48,7 +48,6 @@
  */
 
 import type { Bande, Carte } from "./api"
-import type { CibleDuClip } from "./composants/Clip"
 
 // ── Ce qu'un lieu est ───────────────────────────────────────────────────────
 
@@ -234,7 +233,6 @@ export type Lieu =
   // sujet, un travail repris, ou l'aperçu d'une livraison — comme `jeu` le
   // fait pour un jeu de tuiles. Sans lui, l'écran ouvre sur la liste.
   | { genre: "sons"; identifiant?: string }
-  | { genre: "clip"; cible: CibleDuClip }
   | { genre: "montage"; clip: string }
   | { genre: "bande"; bande: string }
   | { genre: "montage-de-bande"; bande: Bande }

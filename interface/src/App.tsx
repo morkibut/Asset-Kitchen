@@ -69,8 +69,7 @@ import { BarreQuiPaie } from "./composants/BarreQuiPaie"
 import { PreparerUneFabrication } from "./composants/PreparerUneFabrication"
 // P2 (V3.5) : commander une planche de plusieurs objets en un seul appel.
 import { PlancheDePlusieursObjets } from "./composants/PlancheDePlusieursObjets"
-import type { TypeDeResultat } from "./fabrication"
-import { EcranClip, type CibleDuClip } from "./composants/Clip"
+import type { OptionsAnimer, TypeDeResultat } from "./fabrication"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { Emplois } from "./composants/Emplois"
 import { Emploi } from "./composants/Emploi"
@@ -129,7 +128,7 @@ import { BibliothequePourImage } from "./composants/BibliothequePourImage"
 // vingt et un autres écrans du carnet. `App` n'en garde que ce que les autres
 // écrans lui empruntent — la cible et les réinjections vivent dans la barre qui
 // paie, et `fondreAsset` sert au flux d'événements.
-import { fondre, useFlux } from "./flux"
+import { useFlux } from "./flux"
 import { useGestes } from "./gestes"
 import { useVestiaire } from "./vestiaire"
 import { useRelectures } from "./relectures"
@@ -459,19 +458,6 @@ function AtelierApp() {
     setPile((p) =>
       ouvert ? entrer(p, { genre: "depenses" }) : sortir(p, "depenses"),
     )
-
-  /** **Commander un clip est une profondeur, pas un quatrième onglet** (A9).
-   *
-   *  Il s'ouvre depuis une case de l'établi — *animer celle-ci* — et recouvre
-   *  le produit comme l'écran de confirmation, pour la même raison : c'est le
-   *  dernier écran avant que l'argent parte, et il porte le montant sur son
-   *  bouton.
-   *
-   *  Il tient **la case visée**, jamais un booléen : l'image de départ
-   *  proposée, le mouvement proposé et le titre en dépendent tous les trois. */
-  const clipOuvert = lieu(pile, "clip")?.cible ?? null
-  const setClipOuvert = (cible: CibleDuClip | null) =>
-    setPile((p) => (cible ? entrer(p, { genre: "clip", cible }) : sortir(p, "clip")))
 
   /** **Le clip qu'on est en train de découper** (A10) — l'identifiant de sa
    *  génération, ou rien.
@@ -1096,7 +1082,13 @@ function AtelierApp() {
    *  l'animation d'un sujet. Trois fenêtres, trois façons d'entrer, et aucun
    *  passage de l'une à l'autre. Il n'en reste qu'un : le bouton pressé dit
    *  seulement sur *quel type* la fenêtre s'ouvre — elle sait changer d'elle-même. */
-  const [preparation, setPreparation] = useState<{ type: TypeDeResultat; pose?: string; direction?: string; modele?: string; avecQuoi?: "catalogue" | "workflow" } | null>(null)
+  /** **RV6** : `sujet` porte l'identifiant du sujet visé quand la porte n'en
+   *  ouvre aucune fiche derrière elle (Fabrications, un workflow local) —
+   *  sans lui, `sujet={choseOuverte ?? personnageCible}` retomberait sur rien.
+   *  `cases`, `referenceAsset` et `relance` sont celles d'`OptionsAnimer`
+   *  (`fabrication.ts`), transmises telles quelles à
+   *  `FabricationSuivie.cibleInitiale`. */
+  const [preparation, setPreparation] = useState<{ type: TypeDeResultat; pose?: string; direction?: string; modele?: string; avecQuoi?: "catalogue" | "workflow"; sujet?: string } & OptionsAnimer | null>(null)
   // **L'import vise une case, ou n'en vise aucune.** Ouvert par le bouton du
   // haut il ne sait rien ; ouvert depuis une rangée vide d'*Images fixes* ou
   // depuis « Fabriquer… », il arrive déjà pointé sur la pose qu'on regardait.
@@ -1368,7 +1360,7 @@ function AtelierApp() {
                         ? "grille"
                         : comparerOuvert
                         ? "comparer"
-                        : clipOuvert || choseOuverteId
+                        : choseOuverteId
                         ? "sujet"
                         : // La grille d'une famille et la racine
                           // `bibliotheque` montent **le même composant** que le
@@ -2145,7 +2137,7 @@ function AtelierApp() {
           s'ouvre depuis le total de la barre de tête, qui est sur les trois ;
           il n'a donc pas de lieu à lui, parce qu'il ne parle d'aucun des
           trois — il parle de l'atelier entier. */}
-      {depensesOuvertes && !envoiOuvert && !clipOuvert && (
+      {depensesOuvertes && !envoiOuvert && (
         <EcranDepenses
           projetCourant={bibliotheque.courant}
           onErreur={setPanne}
@@ -2169,7 +2161,7 @@ function AtelierApp() {
         !travailOuvert &&
         !depensesOuvertes &&
         !envoiOuvert &&
-        !clipOuvert && (
+        (
           <Reglages
             onglet={ongletDesReglages}
             onOnglet={setOngletDesReglages}
@@ -2207,7 +2199,7 @@ function AtelierApp() {
         !travailOuvert &&
         !depensesOuvertes &&
         !envoiOuvert &&
-        !clipOuvert && (
+        (
           <Installation
             mode="reglages"
             tiroirs={etat?.secrets ?? []}
@@ -2236,7 +2228,7 @@ function AtelierApp() {
         !installationOuverte &&
         !depensesOuvertes &&
         !envoiOuvert &&
-        !clipOuvert && (
+        (
           <Livraisons
             projet={projetCourant?.identifiant ?? null}
             filtre={filtreDeSortie}
@@ -2257,7 +2249,7 @@ function AtelierApp() {
         !travailOuvert &&
         !depensesOuvertes &&
         !envoiOuvert &&
-        !clipOuvert && (
+        (
           <Tuiles
             key={bibliotheque.courant}
             projet={bibliotheque.courant}
@@ -2297,7 +2289,7 @@ function AtelierApp() {
         !travailOuvert &&
         !depensesOuvertes &&
         !envoiOuvert &&
-        !clipOuvert && (
+        (
           <AtelierSon
             key={bibliotheque.courant}
             projet={bibliotheque.courant}
@@ -2306,45 +2298,6 @@ function AtelierApp() {
             onLivraisons={(son) => setPile((p) => entrer(sortir(p, "sons"), { genre: "sortie", ...(son ? { filtre: { genre: "son", son } } : {}) }))}
           />
         )}
-
-      {/* ── Commander un clip, entre la case et la dépense (A9) ────────────
-          **La troisième surface d'où l'argent part**, et la V3 l'assume : on ne
-          commande pas une animation depuis une barre de saisie faite pour des
-          images, parce qu'on n'y choisit ni durée, ni format, ni image de
-          départ obligatoire. Ce qui tenait derrière la règle tient toujours —
-          l'argent ne part jamais sans un écran qui recouvre le produit, montre
-          ce qui va partir et porte le montant sur son bouton.
-
-          Il prend la même ligne que les dépenses et la confirmation : il
-          n'appartient à aucun des trois onglets. */}
-      {clipOuvert && !envoiOuvert && (
-        <EcranClip
-          cible={clipOuvert}
-          onFermer={() => setClipOuvert(null)}
-          /* **Les clips partis arrivent dans la galerie, mais on reste où
-             l'on était.** L'écran se referme sur la fiche et l'onglet d'où on
-             l'avait ouvert ; avant, il emmenait à la galerie, et il fallait
-             retrouver la fiche. Signalé le 16 septembre 2026. Une fente dit où
-             les regarder arriver, et y mène d'un clic. */
-          onCommande={(clips) => {
-            setClipOuvert(null)
-            setChantier((liste) =>
-              clips.reduce((tenue, clip) => fondre(tenue, clip), liste),
-            )
-            setFente({
-              ton: "ok",
-              texte: (
-                <>
-                  {clips.length > 1 ? `${clips.length} clips commandés — ils arrivent` : "clip commandé — il arrive"} dans la galerie ·{" "}
-                  <button type="button" className="underline" onClick={() => { setFente(null); poserLaRacine("galerie") }}>
-                    voir la galerie
-                  </button>
-                </>
-              ),
-            })
-          }}
-        />
-      )}
 
       {/* ── Ce qui part, entre le bouton et la dépense (E14) ──────────────
           **Il s'intercale, il ne remplace rien.** Il prend la ligne du milieu,
@@ -2439,7 +2392,7 @@ function AtelierApp() {
           Il prend la surface, jamais la fenêtre : le carnet reste à gauche. Il
           n'a pas de fil d'Ariane, parce qu'il est le haut du jeu — c'est de lui
           qu'on descend, et c'est vers lui qu'on remonte. */}
-      {surfaceDisponible && tableauDeBord && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && (
+      {surfaceDisponible && tableauDeBord && !bandeOuverte && !depensesOuvertes && !envoiOuvert && (
         <TableauDeBord
           jeu={projetCourant?.nom ?? "sans jeu"}
           images={projetCourant?.assets ?? 0}
@@ -2471,7 +2424,7 @@ function AtelierApp() {
           Elle montre toutes les familles ; ouvrir une famille montre la même
           grille restreinte. Un seul composant, un seul appel, un seul type de
           glisser : `BibliothequeDesAssets.tsx` est parti le 16 septembre 2026. */}
-      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "bibliotheque" && (
+      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && surface === "bibliotheque" && (
         <EcranFamille key={`${bibliotheque.courant}:${lieu(pile, "bibliotheque")?.famille ?? ""}`}
           famille={lieu(pile, "bibliotheque")?.famille ?? null}
           nom={NOM_DANS_LE_CARNET[lieu(pile, "bibliotheque")?.famille ?? ""]}
@@ -2487,7 +2440,7 @@ function AtelierApp() {
           onCreer={(famille) => setCreationAssetOuverte(famille)} onCommanderPlusieurs={() => setCommanderPlusieursOuvert(true)} />
       )}
 
-      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "fabrications" && montageOuvert && (
+      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && surface === "fabrications" && montageOuvert && (
         /* **Le clip ouvert depuis les fabrications** reste chez elles : il en
            prend la place, et « revenir » y ramène. */
         <EcranMontage
@@ -2500,7 +2453,7 @@ function AtelierApp() {
         />
       )}
 
-      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "fabrications" && !montageOuvert && (
+      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && surface === "fabrications" && !montageOuvert && (
         <Fabrications projet={bibliotheque.courant} chantier={chantier} clips={clipsDuJeu} personnages={personnages}
           onSon={ouvrirLesSons}
           onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))}
@@ -2511,6 +2464,7 @@ function AtelierApp() {
           onPreparer={(type, modele, avecQuoi) => { setCible(null); setPreparation({ type, modele, avecQuoi }) }}
           onClip={ouvrirLeMontage}
           onSujet={(id) => { memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "animations"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
+          onAnimerSujet={(id) => { setCible(null); setPreparation({ type: "clip", sujet: id }) }}
           onDepenses={() => setDepensesOuvertes(true)} />
       )}
 
@@ -2518,7 +2472,7 @@ function AtelierApp() {
           Elle a son fichier depuis `C4` : `composants/Galerie.tsx`. Ce qui suit
           n'est plus que la condition de son montage — la même qu'avant, aux
           mêmes mots. */}
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord && surface === "galerie" &&
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !tableauDeBord && surface === "galerie" &&
         !imageDeLaRetouche && !bandeOuverte && (
         <Galerie
           g={galerie}
@@ -2553,7 +2507,7 @@ function AtelierApp() {
           existait parce que le côté Réglages avait besoin de savoir quelles
           façons de réduire cette machine-ci sait faire. Les deux côtés qui
           restent ne lisent que le tableau. */}
-      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "univers" && (
+      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && surface === "univers" && (
         <EcranUnivers
           projet={bibliotheque.courant ?? ""}
           cartes={cartes}
@@ -2620,7 +2574,7 @@ function AtelierApp() {
           deux écrans pour le même geste auraient été deux vérités sur ce qu'est
           une famille. Nommer une chose neuve se fait maintenant depuis cet
           écran lui-même — plus par un aller-retour vers le codex (`C3`). */}
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && familleOuverte && !choseOuverte && !bandeOuverte && !imageDeLaRetouche && !sujetDeLaGrille && !sujetDuComparateur && !pieceOuverte && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && familleOuverte && !choseOuverte && !bandeOuverte && !imageDeLaRetouche && !sujetDeLaGrille && !sujetDuComparateur && !pieceOuverte && (
         <EcranFamille
           famille={familleOuverte}
           nom={NOM_DANS_LE_CARNET[familleOuverte] ?? familleOuverte}
@@ -2670,7 +2624,7 @@ function AtelierApp() {
           surface ne porte plus qu'elle, sans colonnes. */}
       {/* ⚠️ **Et pas non plus quand une pièce est ouverte** (`B19`) : la page
           d'une pièce se pose ici comme la grille d'une famille. */}
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && !bandeOuverte && !imageDeLaRetouche && !sujetDeLaGrille && !sujetDuComparateur && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && surface === "codex" && !choseOuverte && !familleOuverte && !pieceOuverte && !bandeOuverte && !imageDeLaRetouche && !sujetDeLaGrille && !sujetDuComparateur && (
         <div
           data-codex
           className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 bg-papier p-4"
@@ -2696,7 +2650,7 @@ function AtelierApp() {
           matrice pour la raison du montage : les deux ne peuvent pas être
           ouverts ensemble, on ne corrige pas une animation depuis un écran
           qui en montre douze. */}
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && bandeOuverte && etat ? (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && bandeOuverte && etat ? (
         montageDeLaBande ? (
         /* **Le montage rouvert sur cette animation** (V3.03.3). Il prend la
            place de l'atelier, comme l'atelier prend celle de la matrice : ce
@@ -2742,7 +2696,7 @@ function AtelierApp() {
         )
       ) : null}
 
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && choseOuverte && !pieceOuverte && !bandeOuverte && !sujetDeLaGrille && !sujetDuComparateur && !imageDeLaRetouche && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && surface === "codex" && choseOuverte && !pieceOuverte && !bandeOuverte && !sujetDeLaGrille && !sujetDuComparateur && !imageDeLaRetouche && (
         /* **La page du sujet, et non plus sa matrice** (B10) : on arrive sur la
            chose, quatre onglets sur un seul écran. La matrice est devenue une
            profondeur de cette page — elle porte encore le vestiaire, les
@@ -2751,7 +2705,9 @@ function AtelierApp() {
            signatures : la page en sert la moitié et passe l'autre à la
            matrice. */
         <PageDuSujet
-          onFabriquer={() => setPreparation({ type: "image" })}
+          // **RV6** : sur l'onglet *Animations*, « Fabriquer… » ouvre un clip
+          // pour ce sujet ; ailleurs, une image, comme avant.
+          onFabriquer={(onglet) => setPreparation(onglet === "animations" ? { type: "clip", sujet: choseOuverteId ?? undefined } : { type: "image" })}
           onImporter={(cible) => setImportDuSujet(cible ?? {})}
           onDecouper={(id) => ouvrirLaRetouche(id, "decoupage")}
           onExtraire={(id) => ouvrirLaRetouche(id, "superposition")}
@@ -2766,10 +2722,6 @@ function AtelierApp() {
           clips={clipsDuJeu}
           clipsLus={clipsDuJeuLus}
           onClipsChange={() => void relireClipsDuJeu()}
-          onClipsCommandes={(clips) => {
-            setChantier((liste) => clips.reduce((tenue, clip) => fondre(tenue, clip), liste))
-            void relireClipsDuJeu()
-          }}
           onObjectifChange={() => void relireProduction()}
           /* **B12** — l'essai pose un second sujet à côté pour comparer les
              tailles en mouvement, et règle sa scène sur la case et la couleur
@@ -2781,12 +2733,19 @@ function AtelierApp() {
           emplacements={emplacements}
           pieces={pieces}
           onArmer={armer}
-          /* **Animer une case ouvre l'écran du clip** (A9). La matrice désigne,
-             cet écran-là paie — exactement le partage que `onArmer` tient déjà
-             avec la barre qui paie, sauf que le guichet n'est pas le même : on
-             y commande une vidéo, pas une image. */
-          onAnimer={(personnage, pose, direction) =>
-            setClipOuvert({ personnage, pose, direction: direction ?? null })
+          /* **Animer une case ouvre la fenêtre unique de préparation, en mode
+             clip** (A9, RP4, RV6). Onze portes du produit passaient par
+             `EcranClip` ou `AnimerEnLot` chacune à sa façon ; elles ouvrent
+             maintenant toutes le même écran, déjà rempli. La matrice désigne,
+             cet écran-là paie. */
+          onAnimer={(personnage, pose, direction, options) =>
+            setPreparation({
+              type: "clip",
+              sujet: personnage.identifiant,
+              pose: pose.identifiant,
+              direction: direction?.identifiant,
+              ...options,
+            })
           }
           onFente={setFente}
           barreQuiPaie={null}
@@ -2876,7 +2835,7 @@ function AtelierApp() {
         />
       )}
 
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && !tableauDeBord &&
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !tableauDeBord &&
         (surface === "galerie" || surface === "codex") &&
         imageDeLaRetouche && etat && !bandeOuverte && (
         /* **La retouche** (B16) — la chaîne redessinée sur le papier du
@@ -2965,7 +2924,7 @@ function AtelierApp() {
         />
       )}
 
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && sujetDeLaGrille && !bandeOuverte && !imageDeLaRetouche && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && surface === "codex" && sujetDeLaGrille && !bandeOuverte && !imageDeLaRetouche && (
         /* **La grille du jeu** (B13) — une profondeur de plus de la page d'un
            sujet, comme la matrice l'était déjà avant B10. Elle ne dépense
            rien : pas de barre qui paie. */
@@ -2981,7 +2940,7 @@ function AtelierApp() {
         />
       )}
 
-      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !clipOuvert && surface === "codex" && sujetDuComparateur && !bandeOuverte && !imageDeLaRetouche && (
+      {surfaceDisponible && !depensesOuvertes && !envoiOuvert && surface === "codex" && sujetDuComparateur && !bandeOuverte && !imageDeLaRetouche && (
         /* **Comparer** (B13) — deux sujets côte à côte, ou deux images d'un
            même sujet. Elle non plus ne dépense rien. */
         <Comparer
@@ -3020,7 +2979,6 @@ function AtelierApp() {
           à la fois n'existent pas. */}
       {surfaceDisponible && !depensesOuvertes &&
         !envoiOuvert &&
-        !clipOuvert &&
         surface === "codex" &&
         !bandeOuverte &&
         !imageDeLaRetouche &&
@@ -3043,7 +3001,6 @@ function AtelierApp() {
 
       {surfaceDisponible && !depensesOuvertes &&
         !envoiOuvert &&
-        !clipOuvert &&
         surface === "codex" &&
         !bandeOuverte &&
         /* **Et la retouche passe devant les deux** (`B25`) : *retoucher ce
@@ -3126,7 +3083,6 @@ function AtelierApp() {
           dépense** : le recalage tourne sur la machine. */}
       {surfaceDisponible && !depensesOuvertes &&
         !envoiOuvert &&
-        !clipOuvert &&
         surface === "codex" &&
         !bandeOuverte &&
         calquesAnimesLieu &&
@@ -3236,12 +3192,16 @@ function AtelierApp() {
           est ouvert en arrivant. */}
       {preparation && !envoiOuvert && <PreparerUneFabrication
         projet={bibliotheque.courant}
-        sujet={choseOuverte ?? personnageCible}
+        // **RV6** : le sujet nommé par la porte l'emporte — c'est lui qu'elle
+        // vient d'armer —, sinon la fiche ouverte, sinon la case armée par la
+        // barre qui paie.
+        sujet={personnages.find((p) => p.identifiant === preparation.sujet) ?? choseOuverte ?? personnageCible}
         plan={plan}
         personnages={personnages}
         typeInitial={preparation.type}
         onType={setTypeDePreparation}
         poseInitiale={preparation.pose ?? posesCible[0]?.identifiant ?? ""}
+        clipInitial={{ cases: preparation.cases, referenceAsset: preparation.referenceAsset, relance: preparation.relance }}
         posesVisees={posesCible}
         sujetVise={personnageCible}
         directionInitiale={preparation.direction ?? cible?.direction ?? ""}

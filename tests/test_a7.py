@@ -33,6 +33,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
+from conftest import commander_un_clip
 from test_a9 import MELE, atelier_video, client_video, animateur  # noqa: F401
 from test_a10 import clip, clip_connu, un_personnage, un_sprite  # noqa: F401
 
@@ -228,7 +229,7 @@ def test_pousser_une_image_vide_ne_devine_rien():
 
 
 @pytest.fixture
-def second_clip(client_video, animateur) -> str:
+async def second_clip(atelier_video, client_video, animateur) -> str:
     """Un deuxième clip payé zéro, pour aller y chercher une image."""
     animateur.octets = clip_connu()
     animateur.facture = 0.0
@@ -238,17 +239,9 @@ def second_clip(client_video, animateur) -> str:
         f"/api/assets/{sprite}/character",
         json={"personnage": personnage, "pose": "course"},
     )
-    lot = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "course", "asset": sprite},
-    ).json()["clips"]
-    identifiant = lot[0]["identifiant"]
-    for _ in range(300):
-        arrives = client_video.get("/api/clips").json()["clips"]
-        if any(c["identifiant"] == identifiant and c["statut"] == "reussie" for c in arrives):
-            break
-        client_video.get("/api/status")
-    return identifiant
+    lot = await commander_un_clip(atelier_video, modele=MELE.identifiant, mouvement="course", asset=sprite)
+    await atelier_video.animation.attendre_tout()
+    return lot[0]["identifiant"]
 
 
 def test_une_image_se_prend_dans_un_autre_clip(
@@ -276,7 +269,7 @@ def test_une_image_se_prend_dans_un_autre_clip(
 
 
 @pytest.fixture
-def clip_du_meme(client_video, clip, animateur) -> str:
+async def clip_du_meme(atelier_video, client_video, clip, animateur) -> str:
     """Un second clip **du même personnage** — de quoi composer honnêtement.
 
     C'est le cas exact que la tranche veut servir : deux tirages du même
@@ -299,22 +292,9 @@ def clip_du_meme(client_video, clip, animateur) -> str:
         f"/api/assets/{sprite}/character",
         json={"personnage": le_sien, "pose": "marche"},
     )
-    reponse = client_video.post(
-        "/api/clips",
-        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite},
-    )
-    assert reponse.status_code == 202, reponse.text
-    lot = reponse.json()["clips"]
-    identifiant = lot[0]["identifiant"]
-    for _ in range(300):
-        arrives = client_video.get("/api/clips").json()["clips"]
-        if any(
-            c["identifiant"] == identifiant and c["statut"] == "reussie"
-            for c in arrives
-        ):
-            break
-        client_video.get("/api/status")
-    return identifiant
+    lot = await commander_un_clip(atelier_video, modele=MELE.identifiant, mouvement="marche", asset=sprite)
+    await atelier_video.animation.attendre_tout()
+    return lot[0]["identifiant"]
 
 
 def test_les_clips_offerts_sont_ceux_du_meme_personnage(

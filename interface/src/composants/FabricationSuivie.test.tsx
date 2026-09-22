@@ -163,6 +163,29 @@ test("ComfyUI déjà occupé par un autre calcul se dit avant le lancement, sans
 
 const mouvementFlotte = { identifiant: "flotte", nom: "Il flotte", texte: "it floats", cadence: 8, directions: [], livre: true, masque: false }
 
+// SC3 — déplacé et réécrit depuis `ClipCatalogue.test.tsx` le 22 septembre
+// 2026 (RV6) : « le serveur seul compose » vaut ici comme sur l'ancien écran
+// « Faire une vidéo » — la fenêtre affiche exactement ce que
+// `mouvementDeLaPose` a rendu, jamais un recollage de la phrase de direction
+// et du texte du mouvement pris isolément (E14 : le texte relu est celui qui
+// part).
+test("le texte affiché est celui que le serveur a composé — la phrase, puis le style, pas le mouvement seul", async () => {
+  const mouvementAttaque = { identifiant: "attaque", nom: "attaque", texte: "attack, winding up", cadence: 14, directions: [], livre: true, masque: false }
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementAttaque], masques: [] })
+  const composition = {
+    pose: "marche", mouvement: mouvementAttaque,
+    texte: "Seen from the front. a horizontal swing with the wooden staff",
+    direction: "Seen from the front.", geste: "a horizontal swing with the wooden staff",
+    origine: "mouvement" as const, style: { identifiant: "baton", nom: "bâton" }, origine_du_style: "choisi" as const, piece_du_style: null,
+  }
+  vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue(composition)
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  await waitFor(() => expect(screen.getByLabelText("Geste")).toHaveValue("attaque"))
+  fireEvent.click(screen.getByText("Voir le texte anglais envoyé"))
+  expect(screen.getByText(composition.texte)).toBeTruthy()
+  expect(screen.getByText("Style : bâton")).toBeTruthy()
+})
+
 test("un mouvement choisi remplit le texte depuis la bibliothèque, avec son nom en français et le texte anglais repliable", async () => {
   vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
   vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue({
@@ -230,6 +253,32 @@ test("le bouton porte le temps attendu quand le clip est local", () => {
   expect(screen.getByRole("button", { name: "Lancer · ≈ 7 min" })).toBeTruthy()
 })
 
+// **RV6** (repris d'`App.test.tsx`, bloc A11 — « un lot n'additionne pas la
+// même attente ») : un lot local ne multiplie pas le temps du premier clip
+// par le nombre de clips. La formule (`temps_s = premier +
+// (N−1)×secondes_suivant`) est du serveur (`preparer_serie`) ; la fenêtre
+// affiche `annonce_serie.temps_s` tel quel, jamais un calcul refait ici.
+test("un lot local affiche le temps du serveur, jamais le premier multiplié par le nombre de clips", async () => {
+  const deuxDirections = { ...personnage, cases: [{ pose: "marche", directions: [{ identifiant: "sud", nom: "Sud" }, { identifiant: "est", nom: "Est" }] }] } as unknown as Personnage
+  vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [{ identifiant: "maison/wan-2.2-i2v-14b-pixel", nom: "Wan 2.2 image→vidéo (pixel)", grise: null, de_la_maison: true, prix: { montant: 0 }, durees: [1, 2, 3], resolutions: ["480p"], proportions: ["1:1"] }] } as Awaited<ReturnType<typeof api.modelesVideo>>)
+  const serieLocale: Serie = {
+    serie: { cle: "cle-serie-locale", identifiant: "id-serie-locale", total: 2 },
+    travaux: [
+      { ...t, identifiant: "t-sud", demande: { ...t.demande, direction: "sud" }, etat: "prepare" },
+      { ...t, identifiant: "t-est", demande: { ...t.demande, direction: "est" }, etat: "prepare" },
+    ] as unknown as Travail[],
+    // 129 s pour le premier, 80 s pour le suivant = 209 s — pas 258 s (2×129).
+    annonce_serie: { reservation_usd: 0, temps_s: 209, appels: 2, locale: true },
+  }
+  vi.spyOn(travaux, "preparerSerie").mockResolvedValue(serieLocale)
+  render(<FabricationSuivie projet="jeu" personnages={[deuxDirections]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} modeleInitial="maison/wan-2.2-i2v-14b-pixel" onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: /Wan 2.2/ })
+  fireEvent.click(screen.getByLabelText("Est"))
+  fireEvent.change(screen.getByLabelText("Décrire l’animation"), { target: { value: "Il marche" } })
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
+  expect(await screen.findByRole("button", { name: "Lancer · ≈ 3 min" })).toBeTruthy()
+})
+
 test("plusieurs directions cochées préparent une série, lancée d’un geste, relue avec un en-tête commun et des cases repliables", async () => {
   const deuxDirections = { ...personnage, cases: [{ pose: "marche", directions: [{ identifiant: "sud", nom: "Sud" }, { identifiant: "est", nom: "Est" }] }] } as unknown as Personnage
   const serieReponse: Serie = {
@@ -259,4 +308,48 @@ test("plusieurs directions cochées préparent une série, lancée d’un geste,
   expect(screen.getByText("Facing south. Il marche")).toBeTruthy()
   fireEvent.click(screen.getByRole("button", { name: /Lancer 2 clips/ }))
   await waitFor(() => expect(demarrerSerie).toHaveBeenCalledWith("jeu", "cle-serie"))
+})
+
+// **RV6** : « Tout animer » arme des cases de poses différentes — une série
+// n'est plus bornée à la pose du champ « Mouvement ». Le serveur
+// (`preparer_serie`) les acceptait déjà telles quelles ; c'est la fenêtre qui
+// les réduisait à une seule pose jusqu'ici.
+test("« Tout animer » arme des cases de poses différentes dans la même série", async () => {
+  const deuxPoses = {
+    ...personnage,
+    plan: [{ identifiant: "marche", nom: "Marche" }, { identifiant: "repos", nom: "Repos" }],
+    cases: [
+      { pose: "marche", directions: [{ identifiant: "sud", nom: "Sud" }, { identifiant: "est", nom: "Est" }] },
+      { pose: "repos", directions: [{ identifiant: "nord", nom: "Nord" }, { identifiant: "ouest", nom: "Ouest" }] },
+    ],
+  } as unknown as Personnage
+  const serieReponse: Serie = {
+    serie: { cle: "cle-serie-multi", identifiant: "id-serie-multi", total: 4 },
+    travaux: [
+      { ...t, identifiant: "t-marche-sud", demande: { ...t.demande, pose: "marche", direction: "sud" }, etat: "prepare" },
+      { ...t, identifiant: "t-marche-est", demande: { ...t.demande, pose: "marche", direction: "est" }, etat: "prepare" },
+      { ...t, identifiant: "t-repos-nord", demande: { ...t.demande, pose: "repos", direction: "nord" }, etat: "prepare" },
+      { ...t, identifiant: "t-repos-ouest", demande: { ...t.demande, pose: "repos", direction: "ouest" }, etat: "prepare" },
+    ] as unknown as Travail[],
+    annonce_serie: { reservation_usd: 2, temps_s: null, appels: 4, locale: false },
+  }
+  const preparerSerie = vi.spyOn(travaux, "preparerSerie").mockResolvedValue(serieReponse)
+  render(<FabricationSuivie projet="jeu" personnages={[deuxPoses]} cibleInitiale={{
+    personnage: "pelerin", pose: "marche", direction: "sud",
+    cases: [{ pose: "marche", direction: "est" }, { pose: "repos", direction: "nord" }, { pose: "repos", direction: "ouest" }],
+  }} modeleInitial="Video:modele" onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: /Vidéo test/ })
+  fireEvent.change(screen.getByLabelText("Décrire l’animation"), { target: { value: "Il marche" } })
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
+  await waitFor(() => expect(preparerSerie).toHaveBeenCalledOnce())
+  const [, , cases, nombre] = vi.mocked(travaux.preparerSerie).mock.calls[0]
+  expect(cases).toHaveLength(4)
+  expect(cases).toEqual(expect.arrayContaining([
+    { pose: "marche", direction: "sud" },
+    { pose: "marche", direction: "est" },
+    { pose: "repos", direction: "nord" },
+    { pose: "repos", direction: "ouest" },
+  ]))
+  expect(nombre).toBe(1)
+  expect(await screen.findByText("4 clips")).toBeTruthy()
 })

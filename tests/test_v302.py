@@ -117,7 +117,7 @@ def un_sprite(client) -> str:
 # ── Le sprite dont le clip est parti ────────────────────────────────────────
 
 
-def test_le_clip_se_relit_avec_le_sprite_dont_il_part(
+async def test_le_clip_se_relit_avec_le_sprite_dont_il_part(
     atelier_video, client_video, tmp_path, double, animateur
 ):
     """*La fiche dit de quoi le clip est parti* — et un objet qu'on sait écrire et
@@ -128,12 +128,13 @@ def test_le_clip_se_relit_avec_le_sprite_dont_il_part(
     la vidéo, les bandes, le texte corrigé, le mouvement — était déjà servi.
     """
     from atelier.services import Atelier
+    from conftest import commander_un_clip
 
     sprite = un_sprite(client_video)
-    identifiant = client_video.post(
-        "/api/clips",
-        json={"modele": MODELE.identifiant, "mouvement": "marche", "asset": sprite},
-    ).json()["clips"][0]["identifiant"]
+    identifiant = (
+        await commander_un_clip(atelier_video, modele=MODELE.identifiant, mouvement="marche", asset=sprite)
+    )[0]["identifiant"]
+    await atelier_video.animation.attendre_tout()
 
     # Ce que la galerie lirait : le champ voyage dans le JSON de la génération.
     gen = client_video.get(f"/api/generations/{identifiant}").json()

@@ -17,17 +17,27 @@ from __future__ import annotations
 import asyncio
 import io
 import math
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw
 
+from typing import Any
+
 from atelier.api.app import creer_application
 from atelier.domaine import USD, Compte, Demande, Modele, Option
-from atelier.domaine.erreurs import FournisseurIndisponible
+from atelier.domaine.animation import (
+    PROPORTIONS_DEFAUT,
+    RESOLUTION_DEFAUT,
+    SECONDES_DEFAUT,
+    DemandeClip,
+)
+from atelier.domaine.erreurs import ErreurAtelier, FournisseurIndisponible
 from atelier.domaine.secret import Secret
 from atelier.fournisseur.port import ImageProduite
 from atelier.services import Atelier
+from atelier.services.texte_clip import composer
 
 # **Le nom du fournisseur double, et il qualifie ses modèles** (F1). Un modèle se
 # nomme par son fournisseur et par son nom depuis la V2.2 : `essai:rend-du-png`
@@ -401,6 +411,89 @@ class AnimateurMuet:
 
     async def recuperer(self, travail):  # pragma: no cover
         raise AssertionError("ce double ne commande pas de clip : voir tests/test_a9.py")
+
+
+async def commander_un_clip(
+    atelier: Atelier,
+    *,
+    modele: str,
+    asset: str,
+    prompt: str = "",
+    mouvement: str | None = None,
+    secondes: float = SECONDES_DEFAUT,
+    resolution: str = RESOLUTION_DEFAUT,
+    proportions: str = PROPORTIONS_DEFAUT,
+    nombre: int = 1,
+    identifiant: str | None = None,
+    projet: str | None = None,
+    personnage: str | None = None,
+    pose: str | None = None,
+    direction: str | None = None,
+    options: dict[str, Any] | None = None,
+    monter_auto: bool = False,
+) -> list[dict[str, Any]]:
+    """Commande un ou plusieurs clips **directement par le service**, sans HTTP.
+
+    Reprend, hors de la route, ce que faisait `POST /clips` (retirée le 21
+    septembre 2026 — RV5/RV6, aucun appelant restant côté serveur ni MCP) :
+    résoudre l'asset de départ, composer le texte à partir d'un mouvement (par
+    le compositeur unique, `services.texte_clip.composer`) ou du texte donné
+    tel quel, puis appeler `atelier.animation.commander` une fois par clip
+    demandé. Rend la liste des générations en JSON, dans le même ordre —
+    `["clips"]` de l'ancienne réponse.
+
+    Les essais qui commandaient un clip par la route la remplacent par cet
+    appel ; ceux qui portent sur le lot ou sur la correction passent par
+    `preparer_serie`/`demarrer_serie` (`atelier/services/travaux.py`), qui est
+    le nouveau circuit.
+    """
+    objet_asset = atelier.assets.lire(asset)
+    if objet_asset is None:
+        raise ErreurAtelier(f"aucune image « {asset} » dans la bibliothèque")
+    projet_resolu = projet or objet_asset.projet
+    personnage_resolu = personnage or objet_asset.personnage
+
+    texte = prompt.strip()
+    if not texte and mouvement:
+        if atelier.mouvements.lire(mouvement, projet_resolu) is None:
+            raise ErreurAtelier(f"aucun mouvement « {mouvement} » dans la bibliothèque")
+        texte = composer(
+            atelier, projet_resolu, personnage_resolu, direction, pose, mouvement
+        )["texte"]
+    if not texte.strip():
+        raise ErreurAtelier(
+            "un clip part d'un texte — choisissez un mouvement, ou écrivez-en un"
+        )
+
+    sprite = atelier.assets.reference(asset)
+    entree = atelier.animation.preparer_entree(sprite, resolution, proportions)
+
+    lot = "" if nombre <= 1 else uuid.uuid4().hex[:12]
+    clips = []
+    for rang in range(nombre):
+        demande = DemandeClip(
+            texte=texte,
+            image=entree,
+            secondes=secondes,
+            resolution=resolution,
+            proportions=proportions,
+            options=dict(options or {}),
+        )
+        generation = await atelier.animation.commander(
+            modele,
+            demande,
+            identifiant=identifiant if rang == 0 else None,
+            projet=projet_resolu,
+            personnage=personnage_resolu,
+            pose=pose,
+            direction=direction,
+            mouvement=mouvement,
+            lot=lot,
+            depart=asset,
+            monter_auto=monter_auto,
+        )
+        clips.append(generation.en_json())
+    return clips
 
 
 @pytest.fixture

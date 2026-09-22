@@ -13,7 +13,7 @@
 // s'écrit.
 
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { api, type Generation, type Personnage } from "../api"
 import { fileLocale } from "../api-file-locale"
@@ -50,6 +50,7 @@ const RIEN = {
   onGalerie: () => {},
   onClip: () => {},
   onSujet: () => {},
+  onAnimerSujet: () => {},
   onDepenses: () => {},
 }
 
@@ -80,4 +81,17 @@ test("l'écran dit « sujet », jamais « asset »", () => {
   expect(ecran.textContent).not.toMatch(/asset/i)
   for (const element of ecran.querySelectorAll("[aria-label]"))
     expect(element.getAttribute("aria-label")).not.toMatch(/asset/i)
+})
+
+// RV6 : « Animer un sujet » ouvre la fenêtre d'animation sur ce sujet, comme
+// les autres portes — plus la fiche, où il fallait encore trouver le bouton.
+test("choisir un sujet à animer ouvre la fenêtre d'animation sur lui, pas sa fiche", () => {
+  const onAnimerSujet = vi.fn()
+  const onSujet = vi.fn()
+  render(<Fabrications projet={null} chantier={[]} clips={[]} personnages={[personnage]} {...RIEN} onAnimerSujet={onAnimerSujet} onSujet={onSujet} />)
+
+  fireEvent.change(screen.getByLabelText("Sujet à animer"), { target: { value: "pelerin" } })
+
+  expect(onAnimerSujet).toHaveBeenCalledWith("pelerin")
+  expect(onSujet).not.toHaveBeenCalled()
 })

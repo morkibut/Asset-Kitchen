@@ -152,7 +152,7 @@
       "name": "atelier-jetable-a9",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [
-        "essais/atelier_jetable_a9.py"
+        "essais/archive/atelier_jetable_a9.py"
       ],
       "port": 8431
     },
@@ -160,7 +160,7 @@
       "name": "atelier-jetable-a10",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [
-        "essais/atelier_jetable_a10.py"
+        "essais/archive/atelier_jetable_a10.py"
       ],
       "port": 8432
     },
@@ -203,7 +203,7 @@
       "name": "atelier-jetable-v303-3",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [
-        "essais/atelier_jetable_v303_3.py"
+        "essais/archive/atelier_jetable_v303_3.py"
       ],
       "port": 8472
     },
@@ -425,7 +425,7 @@
       "name": "atelier-jetable-verif-c9",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [
-        "essais/atelier_jetable_verif_c9.py"
+        "essais/archive/atelier_jetable_verif_c9.py"
       ],
       "port": 8496
     },
@@ -473,7 +473,7 @@
       "name": "atelier-jetable-verif-d6",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [
-        "essais/atelier_jetable_verif_d6.py"
+        "essais/archive/atelier_jetable_verif_d6.py"
       ],
       "port": 8502
     },
