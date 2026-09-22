@@ -85,14 +85,16 @@ export const workflows = {
 // elle ne bougera pas au gré d'un style de plus dans le même moteur.
 
 export const NOM_MOTEUR_LOCAL: Record<string, string> = {
+  qwen21: "Qwen-Image 2.1",
   zimage: "Z-Image Turbo",
   klein: "FLUX.2 Klein",
   flux1dev: "FLUX.1-dev",
   sdxl: "SDXL",
 }
 
-/** L'ordre d'affichage des quatre moteurs — celui du plan et de `docs/PLAN-moteurs-locaux.md`. */
-export const ORDRE_MOTEURS_LOCAUX = ["zimage", "klein", "flux1dev", "sdxl"] as const
+/** L'ordre d'affichage des moteurs — celui du plan et de `docs/PLAN-moteurs-locaux.md`,
+ *  avec Qwen-Image 2.1 en tête depuis le 22/09/2026 : c'est le moteur local principal. */
+export const ORDRE_MOTEURS_LOCAUX = ["qwen21", "zimage", "klein", "flux1dev", "sdxl"] as const
 
 /** Ce qu'un style local fait d'une image jointe (ML3) : il *garde le sujet*
  *  (Klein, plusieurs images possibles) ou il *part de l'image* (les trois

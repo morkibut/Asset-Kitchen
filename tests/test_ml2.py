@@ -58,12 +58,15 @@ async def atelier_styles(tmp_path, double):
 def test_les_22_styles_sont_prets_contre_le_releve_reel():
     # 22 recopiés de sc-clone + 1 (ML6, `klein9b-tiles-raccordable`) : un style ajouté
     # par construction, sans toucher aux 22 valeurs recopiées.
+    # Qwen-Image 2.1 (22/09/2026) n'est pas dans ce relevé du 18 : il a ses
+    # propres essais, `tests/test_qwen21.py`.
     inv = inventaire(OBJECT_INFO)
-    resolus = {e["identifiant"]: resoudre(e, inv) for e in STYLES}
+    anciens = [e for e in STYLES if e["famille"] != "qwen21"]
+    resolus = {e["identifiant"]: resoudre(e, inv) for e in anciens}
     non_prets = {i: r["manque"] for i, r in resolus.items() if not r["pret"]}
     assert non_prets == {} and len(resolus) == 23
     # Chaque style prêt construit un profil que `normaliser` accepte.
-    for e in STYLES:
+    for e in anciens:
         normaliser(construire_profil(e, resolus[e["identifiant"]]["fichiers"]))
 
 
@@ -153,7 +156,7 @@ async def test_installer_les_styles_prets_en_une_fois_et_le_catalogue_les_relit(
 async def test_lister_les_styles_dit_pret_famille_genre_vitesse_et_modele(atelier_styles):
     atelier, comfy = atelier_styles
     avant = await atelier.styles_locaux.lister()
-    assert len(avant) == 23
+    assert len(avant) == 25
     ligne = next(s for s in avant if s["identifiant"] == "zimage-pixel")
     assert ligne["pret"] and ligne["modele"] is None
     assert ligne["famille"] == "zimage" and ligne["genre"] == "sprite" and ligne["vitesse"] == FAMILLES["zimage"]["vitesse"]
@@ -170,7 +173,7 @@ async def test_route_lister_et_installer_les_styles(atelier_styles):
     atelier, comfy = atelier_styles
     client = TestClient(creer_application(atelier))
     styles = client.get("/api/workflow-profiles/styles").json()["styles"]
-    assert len(styles) == 23 and all(s["pret"] for s in styles)
+    assert len(styles) == 25 and all(s["pret"] for s in styles if s["famille"] != "qwen21")
     installe = client.post("/api/workflow-profiles/styles/zimage-pixel/install").json()
     assert installe["modele"].startswith("ComfyUI:zimage-pixel@")
     tous = client.post("/api/workflow-profiles/styles/install").json()["installes"]

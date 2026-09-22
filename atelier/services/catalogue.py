@@ -52,6 +52,13 @@ from atelier.services.fournisseurs import Fournisseurs, indisponible_de
 DEFAUT = nommer("OpenRouter", "openai/gpt-image-2")
 OPTIONS_DEFAUT = {"quality": "low"}
 
+# **Le moteur local principal passe devant** (22/09/2026, demande de l'auteur) :
+# Qwen-Image 2.1 en mode « Très rapide », gratuit et sur la machine. Son
+# identifiant porte la version du profil (`ComfyUI:qwen21-rapide@<empreinte>`),
+# d'où la recherche par préfixe. Absent, grisé (ComfyUI trop ancien, fichier
+# manquant) ou incapable de la demande en cours : on retombe sur `DEFAUT`.
+DEFAUT_LOCAL = "qwen21-rapide@"
+
 
 @dataclass(slots=True)
 class Defaut:
@@ -272,6 +279,10 @@ class ServiceCatalogue:
         demande pas, et une image arrive.
         """
         grises = self.grises()
+        for modele in self._etat.modeles:
+            if modele.locale and (modele.chez_lui or "").startswith(DEFAUT_LOCAL) \
+                    and modele.indisponible is None and _utilisable(modele, demande, grises):
+                return Defaut(modele.identifiant, {})
         prefere = self._index.get(DEFAUT)
         if prefere is not None and _utilisable(prefere, demande, grises):
             return Defaut(prefere.identifiant, dict(OPTIONS_DEFAUT))

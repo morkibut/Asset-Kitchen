@@ -235,6 +235,55 @@ vide au lieu d'une jonction vers `D:\SpriteForge-Models\<dossier>`. Les jonction
 ComfyUI les a vues sans redémarrer, et les 23 styles sont passés prêts. L'atelier avait affiché
 la panne correctement (« il manque le LoRA de style… ») ; il ne répare pas une installation.
 
+## Qwen-Image 2.1 — le moteur local principal (22 septembre 2026)
+
+Sorti le 20 septembre 2026 : 7 milliards de paramètres, génération et édition dans le même
+modèle, textes lisibles dans l'image, jusqu'à 2048 px en natif. Licence Qwen Research, usage
+non commercial seulement (sans objet ici : le jeu n'est pas vendu).
+
+**Deux réglages du même modèle**, installés comme les autres styles locaux, sans LoRA :
+
+| Réglage | Étapes | Tailles | Pour quoi |
+|---|---|---|---|
+| `qwen21-rapide` · Très rapide | 12 | 512, 1024 | chercher, tirer beaucoup de variantes |
+| `qwen21-qualite` · Meilleure qualité | 30 | 512, 1024, 1536 | l'image qu'on garde |
+
+Il n'existe pas encore de LoRA « Lightning » pour la 2.1. Le mode rapide gagne donc sa vitesse
+sur la taille et le nombre d'étapes. Quand un tel LoRA sortira, c'est lui qu'il faudra brancher
+sur le mode rapide. Les temps annoncés dans le catalogue sont des estimations **non mesurées**.
+
+**Défaut.** Installé et disponible, `qwen21-rapide` devient le modèle par défaut de l'atelier.
+Il passe devant GPT Image (`atelier/services/catalogue.py` § `DEFAUT_LOCAL`). Un choix par
+famille fait dans l'univers d'un projet reste prioritaire.
+
+**Sur 8 Go.** On ne prend jamais les poids bf16 (13 Go pour le modèle, 16 Go pour l'encodeur).
+
+| Rôle | Fichier choisi en premier | Taille | Replis acceptés |
+|---|---|---|---|
+| modèle | `qwen_image_2.1_int8_convrot.safetensors` | 6,8 Go | GGUF (Q8 d'abord), puis int4 |
+| encodeur de texte | `qwen3vl_8b_int8_convrot.safetensors` | 8,7 Go | int4 |
+| décodeur | `qwen_image_2.1_vae_bf16.safetensors` | 0,6 Go | aucun |
+
+L'encodeur ne tourne qu'une fois par texte, puis ComfyUI le décharge. Les images de référence
+sont ramenées à environ 768 × 768 (1024 par défaut dans ComfyUI), parce que chacune ajoute du
+calcul. Au maximum 3 références (le modèle en accepte 10).
+
+**Il faut ComfyUI 0.37 ou plus récent** : c'est cette version qui apporte le nœud
+`TextEncodeQwenImage21`. Avant, les deux réglages s'affichent grisés, avec cette consigne.
+
+**Entrées « qui poussent ».** Les images de référence entrent par un groupe (`images.image_1`,
+`images.image_2`…) que `/object_info` déclare en un seul champ `COMFY_AUTOGROW_V3`. Ce champ est
+rangé parmi les obligatoires, même quand il en faut zéro. Le contrôle des profils
+(`atelier/fournisseur/workflow.py`) sait lire cette forme depuis le 22 septembre.
+
+**Pas encore exploité :**
+
+- **La transparence native.** Le modèle sort un canal alpha si on le lui demande : « This is an
+  RGBA format image with transparency. […] The image has an alpha channel and a transparent
+  background. » Ça pourrait remplacer le détourage pour les sprites.
+- **Les textes longs.** Qwen lit un texte long aussi bien que GPT Image. Or le texte local (ML4)
+  ne garde que la première phrase des textes du jeu.
+
 ## Objets et tuiles
 
 **Les objets** n'ont pas encore de style à eux : ils passent par les styles d'image ordinaires,
