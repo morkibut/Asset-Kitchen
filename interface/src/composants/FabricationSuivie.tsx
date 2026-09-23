@@ -17,6 +17,7 @@ import { FabricationAudio } from "./FabricationAudio"
 import { FabricationImageLocale } from "./WorkflowsLocaux"
 import type { CibleCalque } from "../api-calques"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
+import { nomsDesNaturesMatiere, type NatureDuJeu } from "../natures"
 
 // **RV5** : le nombre de clips que la fenêtre propose d'un coup — la même
 // borne que l'ancien lot de `Clip.tsx` (`SERIE_MAX` côté serveur).
@@ -121,6 +122,16 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   // par la même règle que la relecture — pas recalculée ici.
   const [imagesDeDepart, setImagesDeDepart] = useState<CaseImageDeDepart[]>([])
   const personnage = personnages.find((p) => p.identifiant === demande.personnage)
+  // **Une matière ne se propose plus au choix du sujet à animer** (RV11) :
+  // elle n'est plus un sujet — la bibliothèque des matières l'a remplacée.
+  // `personnages` garde tout, pour qu'une fabrication déjà rattachée à une
+  // ancienne matière continue de se résoudre.
+  const [naturesDuJeu, setNaturesDuJeu] = useState<NatureDuJeu[]>([])
+  useEffect(() => {
+    api.posesDesTypes().then((recu) => setNaturesDuJeu(recu?.types ?? [])).catch(() => {})
+  }, [])
+  const naturesMatiere = useMemo(() => nomsDesNaturesMatiere(naturesDuJeu), [naturesDuJeu])
+  const sujetsProposables = useMemo(() => personnages.filter((p) => !naturesMatiere.has(p.type)), [personnages, naturesMatiere])
   const brouillon = useBrouillonLocal({
     cle: `fabrication-video:${projet}:${initiale?.identifiant ?? (cibleInitiale ? `${cibleInitiale.personnage}:${cibleInitiale.pose}:${cibleInitiale.direction}` : "nouvelle")}:${modeleInitial ?? "auto"}`, pret: edition,
     reference: { demande: depart, optionsVideo: JSON.stringify(depart.options_video ?? {}, null, 2), optionsImage: JSON.stringify(depart.options_image ?? {}, null, 2) },
@@ -383,7 +394,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
         <AvisBrouillon brouillon={brouillon} />
         {demande.modele_video && videosLues && (!video || video.grise) && <p role="status" className="rounded-7 border border-trait-attention bg-fond-attention p-[14px] text-[13px]">Le modèle choisi « {demande.modele_video} » est indisponible : {video?.grise || "il n’est plus proposé par le catalogue"}. Modifie les réglages du clip ou choisis un autre modèle.</p>}
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">1. Animation à créer</legend><div className="grid grid-cols-3 gap-[14px]">
-          <label className="flex flex-col gap-[4px] text-[12px]">Sujet<select className={CHAMP} value={demande.personnage} onChange={(e) => changer({ personnage: e.target.value, pose: "", direction: "", reference_asset: null })}>{personnages.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
+          <label className="flex flex-col gap-[4px] text-[12px]">Sujet<select className={CHAMP} value={demande.personnage} onChange={(e) => changer({ personnage: e.target.value, pose: "", direction: "", reference_asset: null })}>{sujetsProposables.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
           <label className="flex flex-col gap-[4px] text-[12px]">Mouvement<select className={CHAMP} value={demande.pose} onChange={(e) => choisirPose(e.target.value)}><option value="">Choisir…</option>{poses.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
           <label className="flex flex-col gap-[4px] text-[12px]">Direction<select className={CHAMP} value={demande.direction} onChange={(e) => { setAutresCases((l) => l.filter((c) => !(c.pose === demande.pose && c.direction === e.target.value))); changer({ direction: e.target.value }) }}>{!directions.length && <option value="">Sans direction</option>}{directions.map((d) => <option key={d.identifiant} value={d.identifiant}>{d.nom}</option>)}</select></label>
         </div>{!poses.length && <p className="mt-[14px] text-[13px] text-encre-3">Ajoute d’abord une animation demandée dans « Objectif & règles » de cet asset.</p>}

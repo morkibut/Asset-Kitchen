@@ -410,9 +410,35 @@ qu'un champ de recherche.
 
 ### Critères d'acceptation
 
-- [ ] Aucune liste de sujets ne propose « Matières ».
-- [ ] Une seule page gère les méthodes locales.
-- [ ] Un seul champ de recherche dans le Codex.
+- [x] Aucune liste de sujets ne propose « Matières ».
+- [x] Une seule page gère les méthodes locales.
+- [x] Un seul champ de recherche dans le Codex.
+
+**Fait le 23 septembre 2026.** Trois décisions non tranchées par le plan, une contrainte
+trouvée par un essai existant. (1) Un sujet dont la nature est une matière (`capacites.matiere`)
+reste une carte du Codex quand il en porte déjà une : `App.test.tsx` (« un ancien sujet de
+nature "matière" la garde affichée ») fige ce comportement depuis le rangement D4, pour que sa
+fiche reste l'endroit où corriger son type — un premier essai plus large (excluant ces sujets de
+`sujetsCharges` dans `Famille.tsx`) le faisait échouer, corrigé en resserrant le filtre aux
+listes de travail. (2) « Animer », « livrer », « classer au montage » sont les sélecteurs de
+sujet de `FabricationSuivie.tsx` (le champ « Sujet », ligne ~386 — pas
+`PreparerUneFabrication.tsx`, qui ne montre pas de liste pour une animation), `Livraisons.tsx`
+(`PorteeAnimation`/`PorteeSujet`) et `Montage.tsx` (« Classement de l'animation »), tous les
+trois filtrés par `nomsDesNaturesMatiere` (`interface/src/natures.ts`) — la liste brute reste
+gardée pour la résolution d'un identifiant déjà choisi, seule la liste proposée est filtrée.
+(3) « Une seule page gère les méthodes locales » : le `<details>` de `Fabrications.tsx` qui
+montait `ProfilsWorkflow` en double de Réglages › Moteurs & workflows devient un lien
+(`onMethodesLocales`, nouveau prop, câblé sur `ouvrirLesReglages("moteurs")` dans `App.tsx`) ;
+lancer une fabrication depuis un modèle local se fait maintenant par « Nouvelle fabrication »
+(qui sait déjà choisir un workflow) plutôt que par un raccourci direct depuis la liste, retiré
+avec elle. Le doublon de recherche du Codex (deux champs sur `recherche`) est retiré côté
+colonne des familles ; celui de la barre d'outils reste, et cherche déjà sujets et collections.
+Essais : `Famille.test.tsx` (35/35), `FabricationSuivie.test.tsx`, `Livraisons.test.tsx`,
+`Fabrications.test.tsx`, `AtelierUnifie.test.tsx` au vert (le seul échec de
+`FabricationSuivie.test.tsx` est la mémoire libre du moteur local, connu, hors tranche) ;
+`App.test.tsx` entier, **549/549**. `essai_vocabulaire.py`, `essai_jetons.py` (mêmes 4
+manquements préexistants sur `Retouche.tsx`, hors tranche), `essai_tutoiement.py` et
+`essai_imports.py` au vert. `tsc --noEmit` propre. Non vérifié au navigateur.
 
 ---
 

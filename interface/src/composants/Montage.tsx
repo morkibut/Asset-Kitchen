@@ -44,6 +44,7 @@ import {
   type Prise,
   type Personnage,
 } from "../api"
+import { nomsDesNaturesMatiere, type NatureDuJeu } from "../natures"
 import { remonterLaBande } from "../bande"
 import { Bloc, Bouton, Curseur, Libelle, Raison, Segments, usePli } from "./pieces"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
@@ -185,6 +186,17 @@ export function EcranMontage({
   const [mouvements, setMouvements] = useState<Mouvement[]>([])
   const [sujets, setSujets] = useState<Personnage[]>([])
   const [reprend, setReprend] = useState(false)
+  // **Une matière ne se propose plus au classement** (RV11) : elle n'est plus
+  // un sujet. On garde `sujets` intact — un vieux montage peut encore en
+  // désigner une — et on ne filtre que la liste proposée au choix.
+  const [naturesDuJeu, setNaturesDuJeu] = useState<NatureDuJeu[]>([])
+  useEffect(() => {
+    let vivant = true
+    api.posesDesTypes().then((recu) => { if (vivant) setNaturesDuJeu(recu?.types ?? []) }).catch(() => {})
+    return () => { vivant = false }
+  }, [])
+  const naturesMatiere = useMemo(() => nomsDesNaturesMatiere(naturesDuJeu), [naturesDuJeu])
+  const sujetsProposables = useMemo(() => sujets.filter((s) => !naturesMatiere.has(s.type)), [sujets, naturesMatiere])
 
   // ── L'état de l'écran ─────────────────────────────────────────────────────
   /** Le cran du métronome. **Un seul pour les deux boucles** : c'est ce qui les
@@ -843,7 +855,7 @@ export function EcranMontage({
                 className="h-[34px] rounded-7 border border-trait bg-carte px-[8px] text-encre">
                 <option value="">Aucun · brouillon libre</option>
                 {personnage && !sujet && <option value={personnage}>{personnage}</option>}
-                {sujets.map((un) => <option key={un.identifiant} value={un.identifiant}>{un.nom}</option>)}
+                {sujetsProposables.map((un) => <option key={un.identifiant} value={un.identifiant}>{un.nom}</option>)}
               </select>
             </label>
             <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Mouvement / pose

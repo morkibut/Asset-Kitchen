@@ -707,6 +707,24 @@ export function EcranFamille({
    *  seule à la fois — cliquer la même l'éteint, comme un onglet qu'on
    *  referme. */
   const [natureFiltree, setNatureFiltree] = useState<string | null>(null)
+  // **Les natures du jeu et ce qu'elles peuvent avoir**, demandées à la route
+  // qui les sert (rangement, D1) : c'est d'elle qu'on apprend qu'une nature est
+  // une matière, donc sans sujets. Vide tant qu'elle n'a pas répondu — on ne
+  // retire alors aucune ligne. Montée ici, avant `sujets`, pour pouvoir déjà
+  // filtrer la grille (RV11) : une matière n'est plus un sujet, dans aucune
+  // liste de sujets, celle-ci comprise.
+  const [naturesDuJeu, setNaturesDuJeu] = useState<NatureDuJeu[]>([])
+  useEffect(() => {
+    let vivant = true
+    void Promise.resolve()
+      .then(() => api.posesDesTypes())
+      .then((recu) => vivant && setNaturesDuJeu(recu?.types ?? []))
+      .catch(() => vivant && setNaturesDuJeu([]))
+    return () => {
+      vivant = false
+    }
+  }, [])
+  const naturesMatiere = useMemo(() => nomsDesNaturesMatiere(naturesDuJeu), [naturesDuJeu])
   /** Les familles vides tiennent sur une seule ligne dépliable (RG4) — fermée
    *  par défaut, personne ne veut lire trois lignes à zéro avant d'avoir
    *  demandé à les voir. */
@@ -844,6 +862,12 @@ export function EcranFamille({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signatureDesFamilles, collection, recherche, filtre, limite, tri, rafraichi, version])
 
+  // **Une matière n'est plus un sujet** (RV11), mais un ancien sujet qui en
+  // porte encore la nature reste une carte du Codex — sa fiche est le seul
+  // endroit où corriger son type (`App.test.tsx`, « un ancien sujet de
+  // nature "matière" la garde affichée »). Ce que RV11 retire, ce sont les
+  // *listes de travail* qui la proposaient : animer, livrer, classer au
+  // montage (`Montage.tsx`, `Livraisons.tsx`, `FabricationSuivie.tsx`).
   const sujetsCharges = donnee?.sujets ?? []
   // **Une nature choisie filtre la page déjà chargée, jamais le serveur**
   // (RG4) : il n'a pas de route pour ça, et la colonne ne compte de toute
@@ -895,23 +919,6 @@ export function EcranFamille({
       ),
     [pieces, personnages],
   )
-
-  // **Les natures du jeu et ce qu'elles peuvent avoir**, demandées à la route
-  // qui les sert (rangement, D1) : c'est d'elle qu'on apprend qu'une nature est
-  // une matière, donc sans sujets. Vide tant qu'elle n'a pas répondu — on ne
-  // retire alors aucune ligne.
-  const [naturesDuJeu, setNaturesDuJeu] = useState<NatureDuJeu[]>([])
-  useEffect(() => {
-    let vivant = true
-    void Promise.resolve()
-      .then(() => api.posesDesTypes())
-      .then((recu) => vivant && setNaturesDuJeu(recu?.types ?? []))
-      .catch(() => vivant && setNaturesDuJeu([]))
-    return () => {
-      vivant = false
-    }
-  }, [])
-  const naturesMatiere = useMemo(() => nomsDesNaturesMatiere(naturesDuJeu), [naturesDuJeu])
 
   // **Un monde vide n'a qu'un geste à proposer** (repris de l'ancien codex,
   // `C3`) : sur la famille entière, sans filtre ni recherche, le champ qui
@@ -1295,23 +1302,11 @@ export function EcranFamille({
         aria-label="Familles et collections"
         className="defile w-navigation-atelier shrink-0 overflow-y-auto border-r border-trait px-[14px] py-[22px]"
       >
-        {/* **Il cherche ce qu'il annonce** (RG4) : un sujet ou une collection,
-            plus « Trouver une collection », qui ne disait que la moitié de ce
-            que le champ faisait déjà — il dépliait aussi les familles pour
-            montrer une collection dedans. Il partage `recherche` avec la
-            barre d'outils : un seul mot tapé, une seule recherche, jamais
-            deux états qui pourraient se contredire. */}
-        <label className="mb-[8px] flex flex-col gap-[4px] text-[12px] text-encre-3">
-          Chercher
-          <input
-            type="text"
-            value={recherche}
-            onChange={(e) => chercher(e.target.value)}
-            placeholder="un sujet, une collection…"
-            aria-label="Chercher un sujet ou une collection"
-            className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12.5px] text-encre outline-none"
-          />
-        </label>
+        {/* **Un seul champ de recherche** (RV11) : celui-ci doublait celui de
+            la barre d'outils, tous deux sur le même état `recherche` — deux
+            champs pour un seul mot tapé. Retiré ; le champ de la barre
+            d'outils cherche déjà un sujet ou une collection, et déplie les
+            familles pour montrer une collection dedans. */}
         <button
           type="button"
           className={`mb-[8px] flex w-full items-center gap-[8px] text-left ${BOUTON}`}

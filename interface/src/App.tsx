@@ -2524,7 +2524,7 @@ function AtelierApp() {
           onCalqueEquipement={(piece, emploi, cible, variante) => setPile(entrer(entrer(poser("codex"), { genre: "piece", piece }), { genre: "emploi", piece, emploi, cible, variante }))}
           onBande={ouvrirLAtelierDeBande}
           onCreer={() => { setCible(null); setPreparation({ type: "image" }) }} onGalerie={() => allerA("galerie")}
-          onPreparer={(type, modele, avecQuoi) => { setCible(null); setPreparation({ type, modele, avecQuoi }) }}
+          onMethodesLocales={() => ouvrirLesReglages("moteurs")}
           onClip={ouvrirLeMontage}
           onSujet={(id) => { memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "animations"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
           onDepenses={() => setDepensesOuvertes(true)} />

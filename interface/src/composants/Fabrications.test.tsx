@@ -53,7 +53,7 @@ const faite = {
 
 const RIEN = {
   onCreer: () => {},
-  onPreparer: () => {},
+  onMethodesLocales: () => {},
   onGalerie: () => {},
   onClip: () => {},
   onSujet: () => {},

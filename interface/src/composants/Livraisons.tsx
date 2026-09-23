@@ -37,6 +37,7 @@ import {
 } from "../api"
 import { tuiles, type EnsembleTuiles } from "../api-tuiles"
 import type { FiltreDeSortie } from "../lieux"
+import { nomsDesNaturesMatiere, type NatureDuJeu } from "../natures"
 import { BandeQuiTourne } from "./Apercu"
 import { ImagesALivrer } from "./ImagesALivrer"
 import { SonsALivrer, SonsDuSujetALivrer } from "./SonsALivrer"
@@ -217,6 +218,15 @@ function EcranDeSortie({ projet, filtre, onFerme, onErreur }: {
   const [apercuRepris, setApercuRepris] = useState<ApercuLivraison | null>(null)
   const direLErreur = useRef(onErreur)
   direLErreur.current = onErreur
+  // **Une matière ne se livre pas comme un sujet** (RV11) : la bibliothèque
+  // des matières l'a remplacée. `sujets` garde tout — une vieille livraison
+  // peut encore en désigner une —, seul le choix proposé est filtré.
+  const [naturesDuJeu, setNaturesDuJeu] = useState<NatureDuJeu[]>([])
+  useEffect(() => {
+    api.posesDesTypes().then((recu) => setNaturesDuJeu(recu?.types ?? [])).catch(() => {})
+  }, [])
+  const naturesMatiere = useMemo(() => nomsDesNaturesMatiere(naturesDuJeu), [naturesDuJeu])
+  const sujetsProposables = useMemo(() => sujets.filter((s) => !naturesMatiere.has(s.type)), [sujets, naturesMatiere])
 
   const relireReglages = () => api.reglagesDeLaSortie(projet).then(setReglages).catch((e) => direLErreur.current?.(e as Refus))
   const relireHistorique = () => api.livraisonsGodot(projet).then((r) => setHistorique(r.livraisons ?? [])).catch(() => {})
@@ -264,8 +274,8 @@ function EcranDeSortie({ projet, filtre, onFerme, onErreur }: {
       {/* ── À gauche — ce qui part ───────────────────────────────────── */}
       <div className="defile flex w-[300px] shrink-0 flex-col overflow-y-auto">
         <Bloc titre="Ce qui part">
-          {nature === "animation" && <PorteeAnimation portee={portee} onPortee={setPortee} sujets={sujets} />}
-          {nature === "image" && <PorteeSujet sujet={portee.genre === "sujet" ? portee.sujet : ""} onSujet={(s) => setPortee({ genre: "sujet", sujet: s })} sujets={sujets} />}
+          {nature === "animation" && <PorteeAnimation portee={portee} onPortee={setPortee} sujets={sujetsProposables} />}
+          {nature === "image" && <PorteeSujet sujet={portee.genre === "sujet" ? portee.sujet : ""} onSujet={(s) => setPortee({ genre: "sujet", sujet: s })} sujets={sujetsProposables} />}
           {nature === "son" && <Raison enfants="Tous les sons du jeu, rangés par famille." />}
         </Bloc>
         <Bloc titre="La nature">
@@ -284,7 +294,7 @@ function EcranDeSortie({ projet, filtre, onFerme, onErreur }: {
         {forme === "fichiers"
           ? <PanneauFichiers projet={projet} portee={portee} nature={nature as "animation" | "image"} reglages={reglages} occupeGlobal={occupe} />
           : <PanneauPaquet
-              projet={projet} portee={portee} nature={nature} sujets={sujets} filtre={filtre}
+              projet={projet} portee={portee} nature={nature} sujets={sujetsProposables} filtre={filtre}
               apercuRepris={apercuRepris} onApercuReprisConsomme={() => setApercuRepris(null)}
               onLivre={() => { void relireReglages(); void relireHistorique() }}
             />}
