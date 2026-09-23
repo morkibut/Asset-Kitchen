@@ -75,10 +75,20 @@ export const CREER_SUJET = createContext<((carte: Carte) => void) | null>(null)
  *  créer un second. Même règle de `null` que `CREER_SUJET`. */
 export const OUVRIR_SUJET = createContext<((identifiant: string) => void) | null>(null)
 
-/** Fabriquer depuis cette image : la carte part en référence de la barre de
- *  fabrication de la toile, et le champ prend la main. `null` hors de la
- *  toile — la grille n'a pas de barre, le bouton n'y paraît donc pas. */
-export const VARIER = createContext<((carte: Carte) => void) | null>(null)
+/** « Prendre comme référence » (TS6) : la carte entre — ou sort, si elle y
+ *  était déjà — de la liste explicite que montre la barre de fabrication de
+ *  la toile, en vignette ; le champ prend la main. `null` hors de la toile —
+ *  la grille n'a pas de barre, le bouton n'y paraît donc pas.
+ *
+ *  **Une bascule, et non un remplacement** : contrairement à l'ancien
+ *  « Varier », prendre une seconde carte n'efface pas la première — c'est
+ *  `EST_REFERENCE`, juste en dessous, qui dit si celle-ci y est déjà. */
+export const PRENDRE_REFERENCE = createContext<((carte: Carte) => void) | null>(null)
+
+/** Cette carte est-elle déjà prise comme référence ? Sert à afficher le
+ *  bouton du panneau comme une bascule (« Prendre… » / « Retirer… ») plutôt
+ *  que comme un geste à sens unique. `false` par défaut, hors de la toile. */
+export const EST_REFERENCE = createContext<(identifiant: string) => boolean>(() => false)
 
 /** La gouttière de la grille — un seul vocabulaire d'écart dans tout le produit.
  *  La toile la reprend telle quelle pour ranger ce qu'elle dispose seule. */
@@ -1443,7 +1453,8 @@ function Reglages({
   onErreur: (r: string) => void
 }) {
   const decouper = useContext(DECOUPER)
-  const varier = useContext(VARIER)
+  const prendreReference = useContext(PRENDRE_REFERENCE)
+  const estReference = useContext(EST_REFERENCE)
   const creerSujet = useContext(CREER_SUJET)
   const ouvrirSujet = useContext(OUVRIR_SUJET)
   const [groupe, setGroupe] = useState(carte.groupe)
@@ -1718,13 +1729,14 @@ function Reglages({
             Découper ›
           </button>
         )}
-        {varier && carte.genre === "image" && carte.statut === "prete" && (
+        {prendreReference && carte.genre === "image" && carte.statut === "prete" && (
           <button
             type="button"
-            onClick={() => varier(carte)}
+            aria-pressed={estReference(carte.identifiant)}
+            onClick={() => prendreReference(carte)}
             className="mesure text-[10.5px] text-signal hover:opacity-70"
           >
-            Varier
+            {estReference(carte.identifiant) ? "Retirer des références" : "Prendre comme référence"}
           </button>
         )}
         {carte.source && carte.statut === "echouee" && (

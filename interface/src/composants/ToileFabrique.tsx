@@ -120,29 +120,35 @@ export function annonce(
   return prix(unitaire === undefined ? null : unitaire * n, modele.unite)
 }
 
-/** Les cartes qui partent en référence : celle qu'on a demandé de varier, puis
- *  la sélection de la toile (ou la carte choisie, qui est la sélection à un).
- *  **Seules les images arrivées partent** : une note ou une adresse encore en
- *  attente n'ont pas d'image à envoyer. */
-export function referencesDeLaToile(
-  cartes: readonly Carte[],
-  selection: readonly string[],
-  choisie: string | null,
-  variee: string | null,
-): Carte[] {
-  const voulues = [
-    ...(variee ? [variee] : []),
-    ...(selection.length ? selection : choisie ? [choisie] : []),
-  ]
+/** Les cartes prises comme référence — **le bouton prend, la sélection ne
+ *  décide plus rien en silence** (TS6, retour de l'auteur du 23 septembre :
+ *  « à partir de 1 image » sans qu'il sache pourquoi). `prises` est la liste
+ *  explicite qu'écrit « Prendre comme référence », dans l'ordre où on les a
+ *  prises. **Seules les images arrivées partent** : une note, une adresse
+ *  encore en attente, ou une carte prise puis renvoyée en réserve n'ont pas
+ *  d'image à envoyer — elle disparaît alors de la barre sans qu'il y ait de
+ *  croix à cliquer, l'absence dans la vignette est la seule chose qui reste à
+ *  lire. */
+export function referencesPrises(cartes: readonly Carte[], prises: readonly string[]): Carte[] {
+  const parIdentifiant = new Map(cartes.map((c) => [c.identifiant, c]))
   const vues = new Set<string>()
   const sortie: Carte[] = []
-  for (const identifiant of voulues) {
+  for (const identifiant of prises) {
     if (vues.has(identifiant)) continue
     vues.add(identifiant)
-    const carte = cartes.find((c) => c.identifiant === identifiant)
+    const carte = parIdentifiant.get(identifiant)
     if (carte && carte.genre === "image" && carte.statut === "prete") sortie.push(carte)
   }
   return sortie
+}
+
+/** Le plafond d'un modèle **ne cède jamais devant ce que l'auteur a joint**
+ *  (AGENTS.md, point 4) : si les références prises dépassent ce que le
+ *  modèle choisi accepte, la barre le dit au lieu de lancer — elle ne rogne
+ *  jamais la liste en silence pour faire tenir l'appel. */
+export function refusDesReferences(modele: Modele | null, nombre: number): string | null {
+  if (!modele || nombre <= modele.references_max) return null
+  return `${modele.nom} accepte au plus ${modele.references_max} image${modele.references_max > 1 ? "s" : ""} en référence, ${nombre} sont prises`
 }
 
 /** **Le rôle des cartes jointes : l'image qu'on modifie** (`edition`). La
@@ -474,12 +480,13 @@ function RepliCeQuiPart({
  *  modèle, et le bouton qui porte ce que ça coûte. Entrée lance. */
 export function BarreDeFabrication({
   references,
-  onOublierReferences,
+  onRetirerReference,
   onLancer,
   champ,
 }: {
   references: Carte[]
-  onOublierReferences: () => void
+  /** Retirer **une seule** référence prise — la croix de sa vignette. */
+  onRetirerReference: (identifiant: string) => void
   onLancer: (demande: {
     prompt: string
     modele: string
@@ -529,7 +536,11 @@ export function BarreDeFabrication({
   const modele = modeles.find((m) => m.identifiant === retenu) ?? null
   const n = Math.min(versions, modele?.variations_max ?? versions)
   const tailleRetenu = tailleRetenue(modele, taille)
-  const pret = !!modele && prompt.trim().length > 0
+  // **Le plafond ne cède jamais devant ce que l'auteur a joint** (point 4) :
+  // trop de références prises pour ce modèle refuse de partir, et le dit au
+  // lieu de lancer un appel qui aurait rogné la liste en silence.
+  const refusReferences = refusDesReferences(modele, references.length)
+  const pret = !!modele && prompt.trim().length > 0 && !refusReferences
 
   const lancer = () => {
     if (!pret || !modele) return
@@ -557,20 +568,39 @@ export function BarreDeFabrication({
       onDoubleClick={(e) => e.stopPropagation()}
       className="pointer-events-auto absolute bottom-[14px] left-1/2 z-10 flex w-[min(640px,calc(100%-28px))] -translate-x-1/2 flex-col gap-1.5 rounded-8 border border-contour bg-carte px-[8px] py-[8px] shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
     >
+      {/* **Les références prises, en vignettes** (TS6) — ce qui part se voit
+          avant de cliquer, chacune avec sa croix : plus de liste qui décide
+          en silence depuis la sélection de la toile, seul ce qui a été
+          explicitement pris paraît ici. */}
       {references.length > 0 && (
-        <div className="mesure flex items-center gap-1.5 text-[10.5px] text-encre-3">
-          <span>
-            à partir de {references.length === 1 ? "1 image" : `${references.length} images`}
-          </span>
-          <button
-            type="button"
-            aria-label="Ne pas partir des images choisies"
-            onClick={onOublierReferences}
-            className="h-[22px] w-[22px] rounded-5 leading-none text-encre-4 hover:text-signal"
-          >
-            ×
-          </button>
+        <div
+          aria-label={`${references.length === 1 ? "1 image prise en référence" : `${references.length} images prises en référence`}`}
+          className="mesure flex flex-wrap items-center gap-1.5"
+        >
+          {references.map((carte) => (
+            <div
+              key={carte.identifiant}
+              className="relative h-[34px] w-[34px] shrink-0 overflow-hidden rounded-5 border border-trait bg-pourtour"
+            >
+              <img
+                src={api.imageCarte(carte.identifiant, carte.empreinte)}
+                alt={carte.note || "référence"}
+                className="h-full w-full object-cover"
+              />
+              <button
+                type="button"
+                aria-label="Retirer cette référence"
+                onClick={() => onRetirerReference(carte.identifiant)}
+                className="absolute top-0 right-0 flex h-[14px] w-[14px] items-center justify-center rounded-bl-5 bg-carte leading-none text-encre-4 hover:text-signal"
+              >
+                ×
+              </button>
+            </div>
+          ))}
         </div>
+      )}
+      {refusReferences && (
+        <p className="mesure text-[10.5px] leading-snug text-echec">{refusReferences}</p>
       )}
       <div className="flex items-center gap-2">
         <Libelle aide="toile.fabriquer">Fabriquer</Libelle>
@@ -674,10 +704,13 @@ export function BarreDeFabrication({
         <button
           type="button"
           disabled={!pret}
+          title={refusReferences ?? undefined}
           onClick={lancer}
           className="mesure h-[30px] shrink-0 rounded-7 bg-signal px-[14px] text-[11.5px] text-encre-sur-signal disabled:opacity-50"
         >
-          {`Fabriquer ${n > 1 ? `${n} ` : ""}· ${annonce(modele, catalogue?.couts ?? {}, n, tailleRetenu)}`}
+          {refusReferences
+            ? "Trop de références pour ce modèle"
+            : `Fabriquer ${n > 1 ? `${n} ` : ""}· ${annonce(modele, catalogue?.couts ?? {}, n, tailleRetenu)}`}
         </button>
       </div>
       <RepliCeQuiPart

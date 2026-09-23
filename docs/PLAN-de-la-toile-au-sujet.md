@@ -241,13 +241,27 @@ tranche a été vérifiée par essais seulement (`ToileFabrique.test.tsx`, `test
 
 ### TS6 · Prendre une carte comme référence
 
-- [ ] chaque carte image porte un bouton visible « Prendre comme référence » (sur la carte ou
+- [x] chaque carte image porte un bouton visible « Prendre comme référence » (sur la carte ou
       dans son panneau) ; les références prises apparaissent en vignettes au-dessus de la barre,
       chacune avec sa croix
-- [ ] la sélection de la toile ne décide plus seule en silence : ce qui part se lit dans la barre
+- [x] la sélection de la toile ne décide plus seule en silence : ce qui part se lit dans la barre
       avant de cliquer
-- [ ] le plafond d'images du modèle s'applique comme ailleurs (*point 4* : ce que l'auteur a joint
+- [x] le plafond d'images du modèle s'applique comme ailleurs (*point 4* : ce que l'auteur a joint
       ne cède pas — la barre le dit au lieu de lancer)
+
+*Fait le 23 septembre 2026.* Tranché : « la sélection propose, le bouton prend » — choisir des
+cartes sur la toile (Ctrl+clic, cadre) ne remplit plus la barre en silence. L'ancien « Varier »
+du menu d'une carte devient « Prendre comme référence » (ou « Retirer des références » quand
+elle y est déjà) : une bascule qui accumule plutôt qu'un remplacement à une seule carte. La
+liste explicite (`prises`, dans `Toile.tsx`) est la seule source des références de la barre —
+`referencesDeLaToile` (qui combinait sélection, carte choisie et « variee ») devient
+`referencesPrises`, qui ne lit plus que cette liste. Chaque référence paraît en vignette
+(`api.imageCarte`, 34 px, le cran des hauteurs de contrôle) avec sa propre croix — retirer l'une
+ne touche pas les autres. Le plafond (`Modele.references_max`) est vérifié côté client
+(`refusDesReferences`, pure) : au-delà, le bouton se désactive et affiche la raison au lieu du
+prix, sans jamais rogner la liste pour faire tenir l'appel. Lancer une fabrication vide la liste
+des références prises, comme un brouillon envoyé. Non vérifié au navigateur — vérifié par essais
+seulement (`ToileFabrique.test.tsx`, `Toile.test.tsx`, `Tableau.test.tsx`, `App.test.tsx`).
 
 ### TS7 · Les gestes de Mixboard — à valider par l'auteur avant d'écrire
 

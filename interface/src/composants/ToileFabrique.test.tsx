@@ -15,7 +15,8 @@ import {
   BarreDeFabrication,
   modeleParDefaut,
   refusDeLaTaille,
-  referencesDeLaToile,
+  refusDesReferences,
+  referencesPrises,
   tailleRetenue,
   useFabricationSurToile,
 } from "./ToileFabrique"
@@ -120,7 +121,7 @@ function Banc({ references = [] as Carte[] }) {
     <>
       <BarreDeFabrication
         references={references}
-        onOublierReferences={() => {}}
+        onRetirerReference={() => {}}
         champ={champ}
         onLancer={(demande) =>
           void fabrication.lancer({
@@ -165,16 +166,39 @@ describe("les règles de la barre, sans écran", () => {
     expect(annonce(QWEN, {}, 3)).toBe("≈ 12 secondes par image")
   })
 
-  test("la sélection part en référence, et seules les images arrivées", () => {
+  test("seules les cartes prises partent, et seules les images arrivées (TS6)", () => {
     const cartes = [
       carte("a"),
       carte("b"),
       carte("note", { genre: "texte" }),
       carte("attente", { statut: "attente" }),
     ]
-    expect(referencesDeLaToile(cartes, ["a", "note", "attente"], null, null).map((c) => c.identifiant)).toEqual(["a"])
-    expect(referencesDeLaToile(cartes, [], "b", null).map((c) => c.identifiant)).toEqual(["b"])
-    expect(referencesDeLaToile(cartes, ["a"], null, "b").map((c) => c.identifiant)).toEqual(["b", "a"])
+    // Prendre "note" ou "attente" ne fait rien paraître : une note n'a pas
+    // d'image, une adresse en attente n'a pas encore la sienne.
+    expect(referencesPrises(cartes, ["a", "note", "attente"]).map((c) => c.identifiant)).toEqual(["a"])
+    // L'ordre de prise est celui qu'on relit — pas l'ordre des cartes.
+    expect(referencesPrises(cartes, ["b", "a"]).map((c) => c.identifiant)).toEqual(["b", "a"])
+    // Une carte prise deux fois ne paraît qu'une fois.
+    expect(referencesPrises(cartes, ["a", "a"]).map((c) => c.identifiant)).toEqual(["a"])
+    // Rien de pris, rien qui parte — la sélection de la toile n'entre plus en
+    // ligne de compte ici (c'était l'ancien silence que l'auteur n'avait pas
+    // compris).
+    expect(referencesPrises(cartes, [])).toEqual([])
+  })
+
+  test("le plafond du modèle ne cède jamais devant ce qui est pris (point 4)", () => {
+    const trois = modele("OpenRouter:trois-refs", { references_max: 3 })
+    expect(refusDesReferences(trois, 2)).toBeNull()
+    expect(refusDesReferences(trois, 3)).toBeNull()
+    expect(refusDesReferences(trois, 4)).toBe(
+      "trois-refs accepte au plus 3 images en référence, 4 sont prises",
+    )
+    // Un modèle gratuit qui n'accepte aucune image : le premier pris refuse déjà.
+    const sansImage = modele("ComfyUI:texte-seul", { references_max: 0 })
+    expect(refusDesReferences(sansImage, 1)).toBe(
+      "texte-seul accepte au plus 0 image en référence, 1 sont prises",
+    )
+    expect(refusDesReferences(null, 5)).toBeNull()
   })
 
   test("le catalogue décide de la taille (TS4) : sans résolutions déclarées, rien n'est grisé", () => {
@@ -246,9 +270,11 @@ describe("la barre de fabrication", () => {
   test("une carte choisie part en image à modifier, venue de la toile", async () => {
     const { fetchDouble, appels } = serveur()
     vi.stubGlobal("fetch", fetchDouble)
-    const refs = referencesDeLaToile([carte("heron")], [], "heron", null)
+    const refs = referencesPrises([carte("heron")], ["heron"])
     render(<Banc references={refs} />)
-    expect(await screen.findByText("à partir de 1 image")).toBeTruthy()
+    // La référence prise paraît en vignette, avec sa croix pour la retirer.
+    expect(await screen.findByLabelText("1 image prise en référence")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "Retirer cette référence" })).toBeTruthy()
     const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
     await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
     // Le catalogue est demandé pour une référence : c'est lui qui grise.
@@ -367,7 +393,7 @@ describe("la barre de fabrication", () => {
   test("« Ce qui part » relit le texte exact, la taille et les références avant de cliquer", async () => {
     const { fetchDouble, appels } = serveur()
     vi.stubGlobal("fetch", fetchDouble)
-    const refs = referencesDeLaToile([carte("heron")], [], "heron", null)
+    const refs = referencesPrises([carte("heron")], ["heron"])
     render(<Banc references={refs} />)
     const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
     await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
@@ -380,6 +406,52 @@ describe("la barre de fabrication", () => {
     expect(screen.getByText(/512 px/)).toBeTruthy()
     expect(screen.getByText(/1 image jointe/)).toBeTruthy()
     // Un aperçu, jamais un appel qui paie.
+    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
+  })
+
+  test("la croix d'une vignette ne retire que la sienne (TS6)", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const retirees: string[] = []
+    function BancDeuxReferences() {
+      const champ = useRef<HTMLInputElement>(null)
+      return (
+        <BarreDeFabrication
+          references={referencesPrises([carte("heron"), carte("renard")], ["heron", "renard"])}
+          onRetirerReference={(identifiant) => retirees.push(identifiant)}
+          onLancer={() => {}}
+          champ={champ}
+        />
+      )
+    }
+    render(<BancDeuxReferences />)
+    await screen.findByLabelText("2 images prises en référence")
+    const croix = screen.getAllByRole("button", { name: "Retirer cette référence" })
+    expect(croix).toHaveLength(2)
+    fireEvent.click(croix[1])
+    expect(retirees).toEqual(["renard"])
+  })
+
+  test("trop de références prises refuse de partir, sans en écarter aucune (point 4)", async () => {
+    const { fetchDouble, appels } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    // QWEN, choisi par défaut, accepte 4 références (le défaut de la fabrique
+    // d'essai) : cinq prises dépassent son plafond.
+    const cinq = ["a", "b", "c", "d", "e"].map((id) => carte(id))
+    render(<Banc references={referencesPrises(cinq, cinq.map((c) => c.identifiant))} />)
+    await waitFor(() =>
+      expect((screen.getByLabelText("Modèle") as HTMLSelectElement).value).toBe(QWEN.identifiant),
+    )
+    expect(
+      await screen.findByText(`${QWEN.nom} accepte au plus 4 images en référence, 5 sont prises`),
+    ).toBeTruthy()
+    const bouton = screen.getByRole("button", { name: "Trop de références pour ce modèle" })
+    expect(bouton.hasAttribute("disabled")).toBe(true)
+
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "un tonneau" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+    // Rien ne part : la barre refuse plutôt que de rogner la liste en silence.
     expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
   })
 })

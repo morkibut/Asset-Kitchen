@@ -74,6 +74,7 @@ import type { CibleAmbiances } from "./Ambiances"
 import {
   BarreTableau,
   CarteTuile,
+  EST_REFERENCE,
   GLISSE_CARTE,
   GOUTTIERE,
   Pastilles,
@@ -81,14 +82,14 @@ import {
   useCollage,
   useDepot,
   useSurvol,
-  VARIER,
+  PRENDRE_REFERENCE,
   type Vue,
 } from "./Tableau"
 import { Libelle, Raison } from "./pieces"
 import {
   BarreDeFabrication,
   NoeudFantome,
-  referencesDeLaToile,
+  referencesPrises,
   useFabricationSurToile,
 } from "./ToileFabrique"
 
@@ -1148,21 +1149,19 @@ function Plan({
 
   // ── Fabriquer sur la toile ───────────────────────────────────────────────
   //
-  // La barre du bas part de ce qui est choisi sur la toile, ou de la carte
-  // qu'on a demandé de varier ; la croix laisse les deux de côté jusqu'à ce que
-  // la sélection change. Les fantômes sont des nœuds comme les autres : ils
-  // sont *sur* le plan, là où les images vont se poser.
+  // **La sélection propose, le bouton prend** (TS6, retour de l'auteur du
+  // 23 septembre : « à partir de 1 image » sans qu'il sache d'où ça sortait).
+  // Choisir des cartes sur la toile ne remplit plus la barre tout seul ;
+  // seule « Prendre comme référence », dans le menu d'une carte, écrit dans
+  // `prises` — la liste explicite, et la seule, que la barre montre en
+  // vignettes. Les fantômes sont des nœuds comme les autres : ils sont *sur*
+  // le plan, là où les images vont se poser.
   const fabrication = useFabricationSurToile(onErreur)
-  const [variee, setVariee] = useState<string | null>(null)
-  const [sansReferences, setSansReferences] = useState(false)
+  const [prises, setPrises] = useState<string[]>([])
   const champFabrique = useRef<HTMLInputElement>(null)
-  // Par sa signature : la sélection arrive recalculée à chaque rendu.
-  const signatureSelection = `${choisie ?? ""}|${selection.join(",")}`
-  useEffect(() => setSansReferences(false), [signatureSelection])
   const referencesFabrique = useMemo(
-    () =>
-      sansReferences ? [] : referencesDeLaToile(cartes, selection, choisie, variee),
-    [sansReferences, cartes, selection, choisie, variee],
+    () => referencesPrises(cartes, prises),
+    [cartes, prises],
   )
 
   // **Chaque nœud porte ses dimensions, et c'est la librairie qui l'exige.** Un
@@ -1856,16 +1855,31 @@ function Plan({
         occupees.push({ ...place, ...taille })
       }
       void fabrication.lancer({ ...demande, places: posees })
-      setVariee(null)
+      // Les références prises sont consommées par l'appel qui part — comme un
+      // brouillon qu'on vide en l'envoyant, pas comme un choix qui resterait
+      // coché pour la suivante.
+      setPrises([])
     },
     [crans, cartes, referencesFabrique, places, screenToFlowPosition, fabrication],
   )
 
-  const varier = useCallback((carte: Carte) => {
-    setVariee(carte.identifiant)
-    setSansReferences(false)
+  /** « Prendre comme référence » — **une bascule**, pas un remplacement : une
+   *  carte déjà prise se retire, une carte neuve s'ajoute à la fin de la
+   *  liste. Rien n'écrase les références déjà prises, à la différence de
+   *  l'ancien « Varier » qui ne gardait qu'une carte à la fois (TS6). */
+  const prendreReference = useCallback((carte: Carte) => {
+    setPrises((liste) =>
+      liste.includes(carte.identifiant)
+        ? liste.filter((id) => id !== carte.identifiant)
+        : [...liste, carte.identifiant],
+    )
     champFabrique.current?.focus({ preventScroll: true })
   }, [])
+
+  const estReference = useCallback(
+    (identifiant: string) => prises.includes(identifiant),
+    [prises],
+  )
 
   /** Défaire un geste — trois formes, trois chemins.
    *
@@ -2106,7 +2120,8 @@ function Plan({
         data-plan
         className="relative min-h-0 min-w-0 flex-1"
       >
-        <VARIER.Provider value={varier}>
+        <PRENDRE_REFERENCE.Provider value={prendreReference}>
+        <EST_REFERENCE.Provider value={estReference}>
         <CADRE.Provider value={cadre}>
           <ReactFlow
             nodes={noeuds}
@@ -2202,7 +2217,8 @@ function Plan({
             </svg>
           </ReactFlow>
         </CADRE.Provider>
-        </VARIER.Provider>
+        </EST_REFERENCE.Provider>
+        </PRENDRE_REFERENCE.Provider>
 
         {!crans ? (
           <p className="mesure pointer-events-none absolute inset-0 flex items-center justify-center text-[10.5px] text-encre-4">
@@ -2215,10 +2231,9 @@ function Plan({
         {crans && (
           <BarreDeFabrication
             references={referencesFabrique}
-            onOublierReferences={() => {
-              setVariee(null)
-              setSansReferences(true)
-            }}
+            onRetirerReference={(identifiant) =>
+              setPrises((liste) => liste.filter((id) => id !== identifiant))
+            }
             onLancer={fabriquer}
             champ={champFabrique}
           />
