@@ -12,8 +12,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 
-import type { Carte, Personnage } from "../api"
-import { CREER_SUJET, CarteTuile, OUVRIR_SUJET } from "./Tableau"
+import type { Carte, Personnage, PhraseDeCarte } from "../api"
+import { CREER_SUJET, CarteTuile, OUVRIR_SUJET, REPRENDRE_TEXTE } from "./Tableau"
 
 afterEach(cleanup)
 
@@ -57,19 +57,22 @@ function monterPanneau(carte: Carte, options: {
   personnages?: Personnage[]
   creerSujet?: (c: Carte) => void
   ouvrirSujet?: (id: string) => void
+  reprendreTexte?: (p: PhraseDeCarte) => void
 } = {}) {
   return render(
     <CREER_SUJET.Provider value={options.creerSujet ?? null}>
       <OUVRIR_SUJET.Provider value={options.ouvrirSujet ?? null}>
-        <CarteTuile
-          carte={carte}
-          personnages={options.personnages ?? []}
-          choisie
-          survolee={false}
-          onSurvol={() => {}}
-          onChoisir={() => {}}
-          onErreur={() => {}}
-        />
+        <REPRENDRE_TEXTE.Provider value={options.reprendreTexte ?? null}>
+          <CarteTuile
+            carte={carte}
+            personnages={options.personnages ?? []}
+            choisie
+            survolee={false}
+            onSurvol={() => {}}
+            onChoisir={() => {}}
+            onErreur={() => {}}
+          />
+        </REPRENDRE_TEXTE.Provider>
       </OUVRIR_SUJET.Provider>
     </CREER_SUJET.Provider>,
   )
@@ -117,4 +120,45 @@ test("une carte déjà concept art d'un sujet dit lequel et l'ouvre, plutôt que
   fireEvent.click(screen.getByRole("button", { name: "Ouvrir Le forgeron" }))
   expect(ouvrirSujet).toHaveBeenCalledWith("le-forgeron")
   expect(creerSujet).not.toHaveBeenCalled()
+})
+
+// TS5 — la phrase d'une carte fabriquée depuis la toile, et « Reprendre ce
+// texte ». Même montage isolé, sans serveur : `carte.phrase` est ce que
+// `/board` a déjà calculé, il n'y a rien à demander de plus ici.
+
+const phrase = (sur: Partial<PhraseDeCarte> = {}): PhraseDeCarte => ({
+  texte: "un héron au bord de l'eau",
+  modele: "essai:rend-du-png",
+  resolution: "512",
+  repris: false,
+  ...sur,
+})
+
+test("une carte fabriquée depuis la toile montre sa phrase", () => {
+  monterPanneau(carteImage({ phrase: phrase() }))
+  expect(screen.getByText("un héron au bord de l'eau")).toBeInTheDocument()
+})
+
+test("une carte sans phrase — note, image collée, clip — ne montre rien de tout ça", () => {
+  monterPanneau(carteImage({ phrase: null }))
+  expect(screen.queryByText(/Phrase/)).toBeNull()
+})
+
+test("une carte texte ne porte pas ce bloc, même si un genre voisin en portait un", () => {
+  monterPanneau(carteTexte({ phrase: phrase() }))
+  expect(screen.queryByText("un héron au bord de l'eau")).toBeNull()
+})
+
+test("« Reprendre ce texte » rend la phrase entière, le modèle et la taille d'origine", () => {
+  const reprendreTexte = vi.fn()
+  const laPhrase = phrase({ modele: "OpenRouter:openai/gpt-image-2", resolution: "1024", repris: true })
+  monterPanneau(carteImage({ phrase: laPhrase }), { reprendreTexte })
+
+  fireEvent.click(boutonNomme("Reprendre ce texte ›"))
+  expect(reprendreTexte).toHaveBeenCalledWith(laPhrase)
+})
+
+test("sans le geste fourni, le bouton disparaît — comme « Prendre comme référence » hors toile", () => {
+  monterPanneau(carteImage({ phrase: phrase() }))
+  expect(screen.queryByRole("button", { name: "Reprendre ce texte ›" })).toBeNull()
 })

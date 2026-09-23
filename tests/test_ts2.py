@@ -68,12 +68,13 @@ def test_une_carte_fait_un_sujet_complet(client, atelier):
     assert sujet["image_de_reference"] == asset["identifiant"]
     assert sujet["references"] == []  # rien n'est promu en référence
 
-    # La copie est un asset du sujet, du bon projet, aux octets de la carte.
+    # La copie est un asset du sujet, du bon projet, **et reçoit la recette du
+    # jeu** (TS4) — l'image brute au sens du disque reste gardée, elle.
     objet = atelier.assets.lire(asset["identifiant"])
     assert objet.personnage == sujet["identifiant"]
     assert objet.projet == corps["projet"]
     assert objet.pose is None
-    assert atelier.assets.octets(objet)[0] == octets
+    assert atelier.assets.octets(objet, brut=True)[0] == octets
 
     # Relu, pas seulement rendu (8septies) : le sujet tient après la réponse.
     relu = _sujet(client, sujet["identifiant"])
@@ -155,7 +156,8 @@ def test_une_image_deja_en_bibliotheque_n_est_pas_deplacee(client, atelier, tmp_
     corps = _creer(client, carte["identifiant"], nom="La loutre").json()
     assert corps["asset"]["identifiant"] != ancien
     assert atelier.assets.lire(ancien).personnage is None
-    assert atelier.assets.octets(atelier.assets.lire(corps["asset"]["identifiant"]))[0] == octets
+    nouveau = atelier.assets.lire(corps["asset"]["identifiant"])
+    assert atelier.assets.octets(nouveau, brut=True)[0] == octets
 
 
 # ── 4. L'agent fait le même geste (T7) ───────────────────────────────────────
@@ -173,7 +175,7 @@ async def test_l_agent_cree_le_meme_sujet(client, mcp, atelier):
     assert sujet["image_de_reference"] == recu["asset"]["identifiant"]
     objet = atelier.assets.lire(recu["asset"]["identifiant"])
     assert objet.personnage == sujet["identifiant"]
-    assert atelier.assets.octets(objet)[0] == octets
+    assert atelier.assets.octets(objet, brut=True)[0] == octets
 
     encore = await appeler(mcp, "create_character_from_card", card=carte["identifiant"])
     assert encore["personnage"] is None

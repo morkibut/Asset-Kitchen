@@ -3228,6 +3228,27 @@ export type Carte = {
    *  qu'un endroit où elle s'écrive : la toile montre ce qui est classé, la
    *  réserve contient ce qui reste à classer. */
   en_reserve: boolean
+  /** La phrase de la génération qui l'a produite, si elle en a une (TS5).
+   *
+   *  **Facultatif, et absent veut dire « rien »** — comme `phrase` sur une
+   *  carte que `/board` sait toujours servir mais qu'un essai construit à la
+   *  main n'a aucune raison de porter : une note, une image collée, un clip
+   *  n'en ont pas plus qu'une carte fabriquée avant TS5. */
+  phrase?: PhraseDeCarte | null
+}
+
+/** La phrase de la génération qui a produit cette carte (TS5), ou rien —
+ *  une note, une image collée à la main, un clip n'en ont pas. **Le texte
+ *  tapé par l'auteur**, jamais le texte composé qui est parti au modèle : le
+ *  serveur le garde à part sur la génération (`demande.sujet`) avant de le
+ *  noyer dans la bible et les consignes de planche, et c'est cette même
+ *  valeur qui vit ici. Calculée par le serveur dans la même lecture que le
+ *  reste du tableau — jamais une requête par carte. */
+export type PhraseDeCarte = {
+  texte: string
+  modele: string
+  resolution: string | null
+  repris: boolean
 }
 
 export type Champ = { nom: string; texte: string; actif: boolean }
@@ -5063,6 +5084,9 @@ export const api = {
     prompt: string
     prompt_negatif: string
     proportions: string
+    /** La résolution choisie, quand le modèle en déclare (TS4) — « 512 »,
+     *  « 1024 »… Absente ou non déclarée par le modèle, il rend la sienne. */
+    resolution?: string | null
     /** La case que cet appel vise (US-120). Absente pour une génération
      *  ordinaire, qui est le cas courant. */
     personnage?: string | null
@@ -5122,6 +5146,9 @@ export const api = {
      *  donnés, ils doivent être ceux de `premierePlanche`. Refusé (409) avant
      *  de payer sans concept art ni portrait. */
     premiere_planche?: boolean
+    /** **L'image arrive brute** (TS4) : ni détourage, ni réduction, ni grille,
+     *  ni palette à sa naissance — ce que la toile qui fabrique promet. */
+    brut?: boolean
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",

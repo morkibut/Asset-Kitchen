@@ -20,9 +20,11 @@ import {
   prix,
   Refus,
   type Carte,
+  type Envoi,
   type EtatCatalogue,
   type Generation,
   type Modele,
+  type PhraseDeCarte,
   type Reinjection,
 } from "../api"
 import { tempsParImage, type ModeleAvecReference } from "../api-workflows"
@@ -44,6 +46,12 @@ const PREFERE = "qwen21-rapide"
  *  existe déjà ailleurs. Un modèle qui ne le fait pas prend son premier. */
 const PROPORTIONS = "1:1"
 
+/** Les deux tailles que la barre propose (TS4) — **le catalogue décide**, la
+ *  barre ne fait que reconnaître ces deux mots parmi les résolutions qu'un
+ *  modèle déclare. 512 par défaut : la toile essaie, elle ne livre pas. */
+export const TAILLES = ["512", "1024"] as const
+export type Taille = (typeof TAILLES)[number]
+
 const MEMOIRE = "atelier.toile.fabrique"
 
 /** Le modèle par défaut : le premier Qwen rapide disponible, sinon le premier
@@ -57,49 +65,91 @@ export function modeleParDefaut(modeles: readonly Modele[]): string | null {
   )
 }
 
-/** Ce que le bouton annonce pour `n` versions.
+/** La taille est-elle possible pour ce modèle, et sinon pourquoi (TS4) —
+ *  **le catalogue décide**. Un modèle qui ne déclare aucune résolution n'a pas
+ *  cette notion : on ne peut pas dire qu'il refuse une taille qu'il ne
+ *  connaît pas, donc rien n'est grisé — la demande part, et c'est le modèle
+ *  qui répond de la sienne. Un modèle qui en déclare grise celles qu'il
+ *  n'a pas, avec le nom qui manque. */
+export function refusDeLaTaille(modele: Modele | null, taille: Taille): string | null {
+  if (!modele) return null
+  if (!modele.resolutions.length) return null
+  if (modele.resolutions.includes(taille)) return null
+  return `${modele.nom} ne rend pas ${taille}`
+}
+
+/** La taille retenue : celle qu'on visait si elle tient encore, sinon la
+ *  première que le modèle rend, sinon celle qu'on visait quand même — un
+ *  modèle qui n'a jamais fini de charger ne doit pas empêcher de choisir. */
+export function tailleRetenue(modele: Modele | null, visee: Taille): Taille {
+  if (!refusDeLaTaille(modele, visee)) return visee
+  const libre = TAILLES.find((t) => !refusDeLaTaille(modele, t))
+  return libre ?? visee
+}
+
+/** Le morceau de la vitesse déclarée qui parle de cette taille-ci — « ≈ 12
+ *  secondes en 512, ≈ 16 en 1024 » ne doit annoncer que la moitié qui compte
+ *  (TS4). Aucune clause reconnue : la phrase entière, plutôt qu'un silence. */
+function vitessePourLaTaille(vitesse: string | null, taille: Taille): string | null {
+  if (!vitesse) return null
+  const clause = vitesse.split(",").find((bout) => bout.includes(taille))
+  return (clause ?? vitesse).trim()
+}
+
+/** Ce que le bouton annonce pour `n` versions, à la `taille` choisie.
  *
  *  **Un modèle local annonce un temps, et ce temps ne se multiplie pas** (8ter)
  *  : le premier tirage charge le modèle, les suivants non. Un modèle payant
  *  annonce le prix mesuré sur cette machine, multiplié par le nombre d'images —
- *  ou « Coût inconnu » quand il n'a jamais été appelé ici. */
+ *  ou « Coût inconnu » quand il n'a jamais été appelé ici. **Le prix ne dépend
+ *  pas de la taille** (point 8 d'AGENTS.md : une planche coûte le prix d'un
+ *  appel, quel que soit ce qu'elle porte) — seul le temps d'un modèle local en
+ *  dépend. */
 export function annonce(
   modele: Modele | null,
   couts: Record<string, number>,
   n: number,
+  taille: Taille = "512",
 ): string {
   if (!modele) return "aucun modèle"
   if (modele.locale) {
     const temps = (modele as Modele & ModeleAvecReference).temps
-    return tempsParImage(temps) ?? "temps non mesuré"
+    if (temps?.secondes != null) return tempsParImage(temps) ?? "temps non mesuré"
+    return vitessePourLaTaille(temps?.vitesse ?? null, taille) ?? "temps non mesuré"
   }
   const unitaire = couts[modele.identifiant]
   return prix(unitaire === undefined ? null : unitaire * n, modele.unite)
 }
 
-/** Les cartes qui partent en référence : celle qu'on a demandé de varier, puis
- *  la sélection de la toile (ou la carte choisie, qui est la sélection à un).
- *  **Seules les images arrivées partent** : une note ou une adresse encore en
- *  attente n'ont pas d'image à envoyer. */
-export function referencesDeLaToile(
-  cartes: readonly Carte[],
-  selection: readonly string[],
-  choisie: string | null,
-  variee: string | null,
-): Carte[] {
-  const voulues = [
-    ...(variee ? [variee] : []),
-    ...(selection.length ? selection : choisie ? [choisie] : []),
-  ]
+/** Les cartes prises comme référence — **le bouton prend, la sélection ne
+ *  décide plus rien en silence** (TS6, retour de l'auteur du 23 septembre :
+ *  « à partir de 1 image » sans qu'il sache pourquoi). `prises` est la liste
+ *  explicite qu'écrit « Prendre comme référence », dans l'ordre où on les a
+ *  prises. **Seules les images arrivées partent** : une note, une adresse
+ *  encore en attente, ou une carte prise puis renvoyée en réserve n'ont pas
+ *  d'image à envoyer — elle disparaît alors de la barre sans qu'il y ait de
+ *  croix à cliquer, l'absence dans la vignette est la seule chose qui reste à
+ *  lire. */
+export function referencesPrises(cartes: readonly Carte[], prises: readonly string[]): Carte[] {
+  const parIdentifiant = new Map(cartes.map((c) => [c.identifiant, c]))
   const vues = new Set<string>()
   const sortie: Carte[] = []
-  for (const identifiant of voulues) {
+  for (const identifiant of prises) {
     if (vues.has(identifiant)) continue
     vues.add(identifiant)
-    const carte = cartes.find((c) => c.identifiant === identifiant)
+    const carte = parIdentifiant.get(identifiant)
     if (carte && carte.genre === "image" && carte.statut === "prete") sortie.push(carte)
   }
   return sortie
+}
+
+/** Le plafond d'un modèle **ne cède jamais devant ce que l'auteur a joint**
+ *  (AGENTS.md, point 4) : si les références prises dépassent ce que le
+ *  modèle choisi accepte, la barre le dit au lieu de lancer — elle ne rogne
+ *  jamais la liste en silence pour faire tenir l'appel. */
+export function refusDesReferences(modele: Modele | null, nombre: number): string | null {
+  if (!modele || nombre <= modele.references_max) return null
+  return `${modele.nom} accepte au plus ${modele.references_max} image${modele.references_max > 1 ? "s" : ""} en référence, ${nombre} sont prises`
 }
 
 /** **Le rôle des cartes jointes : l'image qu'on modifie** (`edition`). La
@@ -216,8 +266,15 @@ export function useFabricationSurToile(onErreur: (raison: string) => void) {
       prompt: string
       modele: string
       proportions: string
+      /** Vide quand le modèle ne connaît pas la notion (`refusDeLaTaille`) —
+       *  la demande part alors sans, comme avant TS4. */
+      taille: Taille | ""
       variations: number
       references: Reinjection[]
+      /** **Le texte tapé part seul par défaut** — la case « avec le style du
+       *  jeu » de la barre la fait passer à `false` (US-159/US-160 réemployés :
+       *  `repris` décide déjà de ne pas replier la bible en tête). */
+      repris: boolean
       places: Place[]
     }) => {
       const lot = crypto.randomUUID().replace(/-/g, "")
@@ -235,12 +292,17 @@ export function useFabricationSurToile(onErreur: (raison: string) => void) {
           prompt: demande.prompt,
           prompt_negatif: "",
           proportions: demande.proportions,
+          resolution: demande.taille || null,
           variations: demande.variations,
           options: {},
           identifiant: lot,
           references: demande.references,
           echelle: "",
-          repris: false,
+          repris: demande.repris,
+          // **La toile est l'endroit où l'on essaie** (TS4) : ce qui en sort
+          // n'est pas encore une chose du jeu — aucun modèle, à la différence
+          // de `repris`, ne peut désactiver ce drapeau.
+          brut: true,
         })
         if (!vivant.current) return
         // Les fantômes prennent les rangs que le serveur a vraiment donnés, dans
@@ -312,7 +374,7 @@ export function NoeudFantome({ data }: NodeProps) {
 
 // ── La barre ────────────────────────────────────────────────────────────────
 
-type Memoire = { modele?: string; versions?: number }
+type Memoire = { modele?: string; versions?: number; taille?: string; avecStyle?: boolean }
 
 function lireMemoire(): Memoire {
   try {
@@ -331,24 +393,123 @@ function ecrireMemoire(memoire: Memoire) {
   }
 }
 
+/** **Ce qui part, relu avant de cliquer** (TS4) — « comme partout ailleurs » :
+ *  le texte exact, la taille, les références. Rien n'est recomposé ici :
+ *  `api.envoi` est l'aperçu que le serveur sait déjà rendre pour l'écran de
+ *  confirmation (E14), et c'est le même qu'on rouvre en petit — deux
+ *  compositions du même texte auraient fini par diverger.
+ *
+ *  Fermé par défaut, pour ne pas payer un aller-retour à chaque frappe : il ne
+ *  se demande que quand on l'ouvre, et se redemande tant qu'il reste ouvert et
+ *  que la demande change sous lui. */
+function RepliCeQuiPart({
+  prompt,
+  modele,
+  taille,
+  repris,
+  references,
+}: {
+  prompt: string
+  modele: Modele | null
+  taille: Taille
+  repris: boolean
+  references: Carte[]
+}) {
+  const [ouvert, setOuvert] = useState(false)
+  const [envoi, setEnvoi] = useState<Envoi | null>(null)
+  const [erreur, setErreur] = useState<string | null>(null)
+  const propre = prompt.trim()
+
+  useEffect(() => {
+    if (!ouvert || !modele || !propre) {
+      setEnvoi(null)
+      return
+    }
+    let vivant = true
+    setErreur(null)
+    api
+      .envoi({
+        prompt: propre,
+        modele: modele.identifiant,
+        repris,
+        variations: 1,
+        references: references.map((c) => ({
+          asset: c.identifiant,
+          role: ROLE_DES_CARTES,
+          origine: "carte",
+        })),
+      })
+      .then((recu) => vivant && setEnvoi(recu))
+      .catch(() => vivant && setErreur("ce qui part ne se relit pas pour l'instant"))
+    return () => {
+      vivant = false
+    }
+  }, [ouvert, modele, propre, repris, references])
+
+  return (
+    <div className="mesure text-[10.5px] text-encre-3">
+      <button
+        type="button"
+        aria-expanded={ouvert}
+        onClick={() => setOuvert((v) => !v)}
+        className="hover:text-encre"
+      >
+        {ouvert ? "▾" : "▸"} Ce qui part
+      </button>
+      {ouvert && (
+        <div className="mt-1 flex flex-col gap-1 rounded-5 border border-trait bg-papier-cote p-[8px]">
+          {!propre && <p className="text-encre-4">Rien à fabriquer — le champ est vide.</p>}
+          {propre && erreur && <p className="text-echec">{erreur}</p>}
+          {propre && !erreur && !envoi && <p className="text-encre-4">…</p>}
+          {propre && envoi && (
+            <>
+              <p className="whitespace-pre-wrap text-encre">{envoi.texte}</p>
+              <p>
+                {taille} px
+                {references.length > 0 &&
+                  ` · ${references.length === 1 ? "1 image jointe" : `${references.length} images jointes`}`}
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Ce que « Reprendre ce texte » (TS5) envoie à la barre — la phrase d'une
+ *  carte, plus une `cle` qui change à chaque clic. Sans elle, reprendre deux
+ *  fois la même carte à la file ne rejouerait rien : l'effet qui applique la
+ *  reprise se déclenche sur un changement, et le second clic porterait la
+ *  même phrase que le premier. */
+export type Reprise = PhraseDeCarte & { cle: string }
+
 /** La barre flottante, en bas au centre du plan : une phrase, 1/2/3, le
  *  modèle, et le bouton qui porte ce que ça coûte. Entrée lance. */
 export function BarreDeFabrication({
   references,
-  onOublierReferences,
+  onRetirerReference,
   onLancer,
   champ,
+  reprise,
 }: {
   references: Carte[]
-  onOublierReferences: () => void
+  /** Retirer **une seule** référence prise — la croix de sa vignette. */
+  onRetirerReference: (identifiant: string) => void
   onLancer: (demande: {
     prompt: string
     modele: string
     proportions: string
+    taille: Taille
     variations: number
     references: Reinjection[]
+    repris: boolean
   }) => void
   champ: React.RefObject<HTMLInputElement | null>
+  /** « Reprendre ce texte » (TS5) : la phrase, le modèle et la taille d'une
+   *  carte reviennent dans la barre, prêts à corriger et relancer. `null` au
+   *  repos — la barre ne réagit qu'au changement de `cle`. */
+  reprise?: Reprise | null
 }) {
   const [catalogue, setCatalogue] = useState<EtatCatalogue | null>(null)
   const [prompt, setPrompt] = useState("")
@@ -357,6 +518,33 @@ export function BarreDeFabrication({
     const v = lireMemoire().versions
     return VERSIONS.includes(v as Versions) ? (v as number) : 1
   })
+  const [taille, setTaille] = useState<Taille>(() => {
+    const t = lireMemoire().taille
+    return (TAILLES as readonly string[]).includes(t ?? "") ? (t as Taille) : "512"
+  })
+  // **Décochée par défaut** (TS4, décision « à trancher ») : le texte tapé
+  // part seul, sans la bible du jeu repliée en tête ni ses consignes de
+  // planche — c'est la même chose que « reprendre le texte » (US-159/US-160),
+  // pour une raison qui n'a rien à voir avec la reprise : on **essaie**.
+  const [avecStyle, setAvecStyle] = useState<boolean>(() => lireMemoire().avecStyle ?? false)
+
+  // **« Reprendre ce texte »** (TS5) : la phrase, le modèle et la taille d'une
+  // carte remplacent ceux de la barre. Sur `reprise.cle`, jamais sur les
+  // champs eux-mêmes — sinon reprendre deux fois la même carte ne
+  // déclencherait rien la seconde fois, `cle` seule change à chaque clic.
+  // **La case « avec le style du jeu » suit aussi** : reprendre veut dire
+  // relancer *exactement* la même demande pour la corriger, pas la moitié
+  // d'entre elle.
+  useEffect(() => {
+    if (!reprise) return
+    setPrompt(reprise.texte)
+    setChoix(reprise.modele)
+    if ((TAILLES as readonly string[]).includes(reprise.resolution ?? ""))
+      setTaille(reprise.resolution as Taille)
+    setAvecStyle(!reprise.repris)
+    champ.current?.focus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reprise?.cle])
 
   // Le catalogue dépend du nombre d'images jointes : un modèle qui n'en prend
   // aucune se grise avec sa raison dès qu'on en joint une.
@@ -378,7 +566,12 @@ export function BarreDeFabrication({
     modeleParDefaut(modeles)
   const modele = modeles.find((m) => m.identifiant === retenu) ?? null
   const n = Math.min(versions, modele?.variations_max ?? versions)
-  const pret = !!modele && prompt.trim().length > 0
+  const tailleRetenu = tailleRetenue(modele, taille)
+  // **Le plafond ne cède jamais devant ce que l'auteur a joint** (point 4) :
+  // trop de références prises pour ce modèle refuse de partir, et le dit au
+  // lieu de lancer un appel qui aurait rogné la liste en silence.
+  const refusReferences = refusDesReferences(modele, references.length)
+  const pret = !!modele && prompt.trim().length > 0 && !refusReferences
 
   const lancer = () => {
     if (!pret || !modele) return
@@ -388,12 +581,14 @@ export function BarreDeFabrication({
       proportions: modele.proportions.includes(PROPORTIONS)
         ? PROPORTIONS
         : (modele.proportions[0] ?? PROPORTIONS),
+      taille: tailleRetenu,
       variations: n,
       references: references.map((c) => ({
         asset: c.identifiant,
         role: ROLE_DES_CARTES,
         origine: "carte",
       })),
+      repris: !avecStyle,
     })
     setPrompt("")
   }
@@ -404,20 +599,39 @@ export function BarreDeFabrication({
       onDoubleClick={(e) => e.stopPropagation()}
       className="pointer-events-auto absolute bottom-[14px] left-1/2 z-10 flex w-[min(640px,calc(100%-28px))] -translate-x-1/2 flex-col gap-1.5 rounded-8 border border-contour bg-carte px-[8px] py-[8px] shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
     >
+      {/* **Les références prises, en vignettes** (TS6) — ce qui part se voit
+          avant de cliquer, chacune avec sa croix : plus de liste qui décide
+          en silence depuis la sélection de la toile, seul ce qui a été
+          explicitement pris paraît ici. */}
       {references.length > 0 && (
-        <div className="mesure flex items-center gap-1.5 text-[10.5px] text-encre-3">
-          <span>
-            à partir de {references.length === 1 ? "1 image" : `${references.length} images`}
-          </span>
-          <button
-            type="button"
-            aria-label="Ne pas partir des images choisies"
-            onClick={onOublierReferences}
-            className="h-[22px] w-[22px] rounded-5 leading-none text-encre-4 hover:text-signal"
-          >
-            ×
-          </button>
+        <div
+          aria-label={`${references.length === 1 ? "1 image prise en référence" : `${references.length} images prises en référence`}`}
+          className="mesure flex flex-wrap items-center gap-1.5"
+        >
+          {references.map((carte) => (
+            <div
+              key={carte.identifiant}
+              className="relative h-[34px] w-[34px] shrink-0 overflow-hidden rounded-5 border border-trait bg-pourtour"
+            >
+              <img
+                src={api.imageCarte(carte.identifiant, carte.empreinte)}
+                alt={carte.note || "référence"}
+                className="h-full w-full object-cover"
+              />
+              <button
+                type="button"
+                aria-label="Retirer cette référence"
+                onClick={() => onRetirerReference(carte.identifiant)}
+                className="absolute top-0 right-0 flex h-[14px] w-[14px] items-center justify-center rounded-bl-5 bg-carte leading-none text-encre-4 hover:text-signal"
+              >
+                ×
+              </button>
+            </div>
+          ))}
         </div>
+      )}
+      {refusReferences && (
+        <p className="mesure text-[10.5px] leading-snug text-echec">{refusReferences}</p>
       )}
       <div className="flex items-center gap-2">
         <Libelle aide="toile.fabriquer">Fabriquer</Libelle>
@@ -438,7 +652,7 @@ export function BarreDeFabrication({
       </div>
       {/* Les réglages sous la phrase : sur une toile étroite (réserve ouverte),
           une seule rangée écrasait le champ jusqu'à le rendre inutilisable. */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <div role="group" aria-label="Nombre de versions" className="flex gap-0.5">
           {VERSIONS.map((v) => (
             <button
@@ -447,7 +661,7 @@ export function BarreDeFabrication({
               aria-pressed={versions === v}
               onClick={() => {
                 setVersions(v)
-                ecrireMemoire({ modele: choix ?? undefined, versions: v })
+                ecrireMemoire({ modele: choix ?? undefined, versions: v, taille, avecStyle })
               }}
               className={[
                 "mesure h-[30px] w-[30px] rounded-5 border text-[11px]",
@@ -460,12 +674,38 @@ export function BarreDeFabrication({
             </button>
           ))}
         </div>
+        <div role="group" aria-label="Taille" className="flex gap-0.5">
+          {TAILLES.map((t) => {
+            const refus = refusDeLaTaille(modele, t)
+            return (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={tailleRetenu === t}
+                disabled={!!refus}
+                title={refus ?? undefined}
+                onClick={() => {
+                  setTaille(t)
+                  ecrireMemoire({ modele: choix ?? undefined, versions, taille: t, avecStyle })
+                }}
+                className={[
+                  "mesure h-[30px] rounded-5 border px-[8px] text-[11px] disabled:opacity-40",
+                  tailleRetenu === t
+                    ? "border-signal bg-carte text-signal"
+                    : "border-trait bg-carte text-encre-3 hover:border-encre-3",
+                ].join(" ")}
+              >
+                {t}
+              </button>
+            )
+          })}
+        </div>
         <select
           aria-label="Modèle"
           value={retenu ?? ""}
           onChange={(e) => {
             setChoix(e.target.value)
-            ecrireMemoire({ modele: e.target.value, versions })
+            ecrireMemoire({ modele: e.target.value, versions, taille, avecStyle })
           }}
           className="h-[30px] max-w-[240px] min-w-0 flex-1 rounded-7 border border-trait bg-carte px-[8px] text-[11.5px] text-encre-controle"
         >
@@ -481,15 +721,36 @@ export function BarreDeFabrication({
             </option>
           ))}
         </select>
+        <label className="mesure flex shrink-0 items-center gap-1 text-[10.5px] text-encre-3">
+          <input
+            type="checkbox"
+            checked={avecStyle}
+            onChange={(e) => {
+              setAvecStyle(e.target.checked)
+              ecrireMemoire({ modele: choix ?? undefined, versions, taille, avecStyle: e.target.checked })
+            }}
+          />
+          avec le style du jeu
+        </label>
         <button
           type="button"
           disabled={!pret}
+          title={refusReferences ?? undefined}
           onClick={lancer}
           className="mesure h-[30px] shrink-0 rounded-7 bg-signal px-[14px] text-[11.5px] text-encre-sur-signal disabled:opacity-50"
         >
-          {`Fabriquer ${n > 1 ? `${n} ` : ""}· ${annonce(modele, catalogue?.couts ?? {}, n)}`}
+          {refusReferences
+            ? "Trop de références pour ce modèle"
+            : `Fabriquer ${n > 1 ? `${n} ` : ""}· ${annonce(modele, catalogue?.couts ?? {}, n, tailleRetenu)}`}
         </button>
       </div>
+      <RepliCeQuiPart
+        prompt={prompt}
+        modele={modele}
+        taille={tailleRetenu}
+        repris={!avecStyle}
+        references={references}
+      />
     </div>
   )
 }

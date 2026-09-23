@@ -118,6 +118,17 @@ class Demande:
     # déclare, c'est une décision du produit sur ce qui part.
     premiere_planche: bool = False
 
+    # **L'image arrive brute** (TS4, 23 septembre 2026) : ni détourage, ni
+    # réduction, ni grille, ni palette — la toile est l'endroit où l'on essaie,
+    # pas encore une chose du jeu. Ici pour la raison de `palette` : aucun
+    # fournisseur ne la déclare, c'est une décision du produit sur ce que
+    # l'image reçoit à sa naissance (`ServiceAssets.recette_du_projet`,
+    # `recette_du_sujet`, `_provenance_du_detourage`) — jamais sur ce qui part
+    # au modèle, qui ne change pas. L'image brute au sens du disque
+    # (`Asset.brut`) est de toute façon toujours gardée : c'est ce drapeau qui
+    # décide si le *rendu* — le cache affiché — s'en écarte ou non.
+    brut: bool = False
+
     def __post_init__(self) -> None:
         if not self.prompt.strip():
             raise ValueError("prompt vide")
@@ -169,4 +180,9 @@ class Demande:
         # Même règle (TS3) : absent tant que ce n'est pas une première planche.
         if self.premiere_planche:
             resume["premiere_planche"] = True
+        # Même règle (TS4) : absent tant que la case n'est pas cochée — un
+        # `generation.json` d'avant cette tranche reste celui d'avant, et une
+        # relance le relit.
+        if self.brut:
+            resume["brut"] = True
         return resume

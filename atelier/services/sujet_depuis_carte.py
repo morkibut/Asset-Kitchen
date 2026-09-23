@@ -128,6 +128,13 @@ class ServiceSujetDepuisCarte:
             projet=projet,
             provenance=provenance,
             forcer=True,
+            # **Elle reçoit la recette du jeu** (TS4) : la carte, elle, reste
+            # brute — c'est justement ce que la toile promet —, mais devenir le
+            # concept art d'un sujet est le geste qui la fait entrer dans le
+            # jeu. `traiter=True` ici, à la différence du défaut d'un import
+            # ordinaire (US-170) : un import générique ne sait pas encore ce
+            # que l'auteur en fera, ce geste-ci le sait déjà.
+            traiter=True,
             origine={"carte": carte, "projet": projet},
         )
         asset = entre["asset"]["identifiant"]
