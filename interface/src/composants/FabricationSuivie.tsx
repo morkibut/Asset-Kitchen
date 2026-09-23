@@ -1,6 +1,7 @@
 import { SuiviFabrication3D } from "./Fabrication3D"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { api, dollars, duree, prix, Refus, type Appel, type Asset, type EtatDuMoteur, type Generation, type Modele, type ModeleVideo, type Mouvement, type MouvementDeLaPose, type Personnage, type Statut } from "../api"
+import { api, dollars, duree, prix, Refus, type Appel, type Asset, type CaseImageDeDepart, type EtatDuMoteur, type Generation, type Modele, type ModeleVideo, type Mouvement, type MouvementDeLaPose, type Personnage, type Statut } from "../api"
+import { modeleParDefaut } from "./ToileFabrique"
 import { nomDuTravail, travaux, NOM_DE_L_ETAPE, NOM_DE_L_ETAT, NOM_DE_LA_PHASE, type CaseSerie, type DemandeTravail, type Serie, type Travail, type TravailSuivi } from "../api-travaux"
 import { fileLocale, type EtapeLocale, type MoteurLocal } from "../api-file-locale"
 import { tempsDuRetour } from "../retours"
@@ -116,6 +117,9 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   )
   const [nombre, setNombre] = useState<number>(1)
   const [serie, setSerie] = useState<Serie | null>(null)
+  // **RV19** : l'image de départ que chaque case proposerait, lue au serveur
+  // par la même règle que la relecture — pas recalculée ici.
+  const [imagesDeDepart, setImagesDeDepart] = useState<CaseImageDeDepart[]>([])
   const personnage = personnages.find((p) => p.identifiant === demande.personnage)
   const brouillon = useBrouillonLocal({
     cle: `fabrication-video:${projet}:${initiale?.identifiant ?? (cibleInitiale ? `${cibleInitiale.personnage}:${cibleInitiale.pose}:${cibleInitiale.direction}` : "nouvelle")}:${modeleInitial ?? "auto"}`, pret: edition,
@@ -151,6 +155,20 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   const casesChoisies: CaseSerie[] = [{ pose: demande.pose, direction: demande.direction }, ...autresCases]
     .filter((c, i, tous) => tous.findIndex((a) => a.pose === c.pose && a.direction === c.direction) === i)
   const enSerie = casesChoisies.length > 1 || nombre > 1
+  // **RV19** : les directions à interroger pour l'image de départ — celle du
+  // champ « Direction » plus celles cochées en plus, **de la pose courante
+  // seulement** ; les cases d'autres poses armées par « Tout animer » restent
+  // un compte (ligne 359 ci-dessous), pas une vignette de plus ici.
+  const directionsPourImageDeDepart = [...new Set(
+    [demande.direction, ...autresCases.filter((c) => c.pose === demande.pose).map((c) => c.direction)],
+  )]
+  const nomDirection = (id: string) => id ? (directions.find((d) => d.identifiant === id)?.nom ?? id) : "sans direction"
+  const casesPretes = demande.pose ? imagesDeDepart : []
+  // **8nonies : la liste ne disparaît que confirmée inutile.** Tant que la
+  // lecture n'a pas prouvé que chaque case a déjà son image — y compris
+  // pendant le chargement —, la liste reste ; elle ne se cache que sur un
+  // « oui » sûr, jamais sur un silence qui pourrait être un chargement.
+  const toutesLesCasesOntLeurImage = !!demande.pose && casesPretes.length > 0 && casesPretes.every((c) => !!c.asset)
   // **La case à cocher ne touche que la pose courante** : d'autres
   // directions de `demande.pose`, ajoutées ou retirées une à une.
   const basculerDirection = (identifiant: string) => {
@@ -183,6 +201,27 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
       .then((c) => { if (vivant) { setVideos(c.modeles); setVideosLues(true) } }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
     return () => { vivant = false }
   }, [edition, demande.secondes, demande.resolution, demande.proportions])
+  // **RV19** : l'image de départ de chaque case, lue au serveur par la même
+  // règle que la relecture — recalculée quand le mouvement (la pose) ou les
+  // directions changent, jamais devinée ici.
+  useEffect(() => {
+    if (!edition || !demande.personnage || !demande.pose) { setImagesDeDepart([]); return }
+    let vivant = true
+    api.imageDeDepart(demande.personnage, demande.pose, directionsPourImageDeDepart, projet)
+      .then((r) => { if (vivant) setImagesDeDepart(r.cases ?? []) })
+      .catch(() => { if (vivant) setImagesDeDepart([]) })
+    return () => { vivant = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- la liste de directions se compare jointe, pas par référence.
+  }, [edition, demande.personnage, demande.pose, projet, directionsPourImageDeDepart.join("|")])
+  // **Le modèle recommandé se présélectionne** dès qu'une case manque son
+  // image — la même règle que la barre d'image fixe (`modeleParDefaut`,
+  // `ToileFabrique.tsx`), pas une seconde préférence inventée ici.
+  useEffect(() => {
+    if (!edition || !demande.pose || demande.reference_asset || demande.modele_image || toutesLesCasesOntLeurImage) return
+    const recommande = modeleParDefaut(modeles)
+    if (recommande) changer({ modele_image: recommande })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `changer` est stable ; seule la présélection nous intéresse.
+  }, [edition, demande.pose, demande.reference_asset, demande.modele_image, toutesLesCasesOntLeurImage, modeles])
   // **RV2 : la carte prévient avant de lancer**, seulement quand le modèle
   // choisi est local — un modèle payant n'a pas de carte à regarder.
   useEffect(() => {
@@ -361,16 +400,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
         </p>}
         <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.lot">Combien de clips par case</Libelle><select aria-label="Nombre de clips" className={CHAMP} value={nombre} onChange={(e) => setNombre(Number(e.target.value))}>{NOMBRES_DE_CLIPS.map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
         {nombre > 1 && !demande.reference_asset && <p className="mt-[8px] text-[12px] text-encre-attention">Plusieurs clips d’une même case partent d’une image existante : choisis une image de départ, sinon chacun paierait la sienne.</p>}</fieldset>
-        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">2. Image de départ</legend>
-          <p className="text-[13px] text-encre-3">La référence existante du personnage sera proposée à la relecture. Tu peux en choisir une autre ; si aucune n’existe, le modèle d’image la créera.</p>
-          <div className="mt-[14px] flex items-center gap-[14px]">{demande.reference_asset && <img alt="Image de départ choisie" src={api.vignette(demande.reference_asset, "", 128)} className="h-[128px] w-[128px] object-contain" />}<button className={BOUTON} onClick={() => setChoix("depart")}>Choisir dans la bibliothèque</button>{demande.reference_asset && <button className={BOUTON} onClick={() => changer({ reference_asset: null })}>‹ La proposition</button>}</div>
-          {!demande.reference_asset && <div className="mt-[14px] space-y-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Modèle pour créer la référence si elle manque<select className={CHAMP} value={demande.modele_image ?? ""} onChange={(e) => changer({ modele_image: e.target.value || null })}><option value="">Utiliser seulement une image existante</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{libelleModele(m)}{m.refus ? ` — ${m.refus}` : ""}</option>)}</select></label>
-          {demande.modele_image && <><label className="flex flex-col gap-[4px] text-[12px]">{demande.repris_image ? "Texte complet de l’image, édité pour cet envoi" : "Description de l’image à créer"}<textarea rows={3} value={demande.prompt_image ?? ""} onChange={(e) => changer({ prompt_image: e.target.value })} className="rounded-7 border border-contour bg-papier p-[14px] text-[13px]" /></label><label className="flex flex-col gap-[4px] text-[12px]">Réservation estimée pour l’image, en dollars (si son coût n’est pas encore mesuré)<input type="number" min={0} step="0.01" className={CHAMP} value={demande.plafond_image_usd ?? ""} onChange={(e) => changer({ plafond_image_usd: e.target.value === "" ? null : Number(e.target.value) })} /></label>
-          <div className="flex flex-wrap gap-[8px]">{(demande.references_image ?? []).map((id) => <button key={id} className="rounded-7 border border-contour p-[4px]" title="Retirer cette référence" onClick={() => changer({ references_image: demande.references_image?.filter((r) => r !== id) })}><img className="h-[54px] w-[54px] object-contain" src={api.vignette(id, "", 128)} alt="Référence jointe, cliquer pour retirer" /></button>)}<button className={BOUTON} onClick={() => setChoix("reference")}>Ajouter des références</button></div>
-          {travail?.references.filter((r) => r.asset && !(demande.references_image_ecartees ?? []).includes(r.asset)).map((r) => <div className="flex items-center gap-[8px]" key={r.nom}><img alt="Référence composée à la relecture" src={r.url} className="h-[54px] w-[54px] object-contain" /><button className={BOUTON} onClick={() => changer({ references_image_ecartees: [...(demande.references_image_ecartees ?? []), r.asset!] })}>Retirer de cet envoi</button></div>)}
-          <details><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres du modèle d’image</summary><p className="my-[8px] text-[12px] text-encre-3">Paramètres disponibles : {Object.keys(image?.options ?? {}).join(", ") || "aucun paramètre supplémentaire déclaré"}.</p><textarea aria-label="Paramètres d’image JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsImage} onChange={(e) => setOptionsImage(e.target.value)} /></details></> }</div>}
-        </fieldset>
-        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">3. Mouvement et clip vidéo</legend>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">2. Le geste et le style de combat</legend>
           <label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="mouvement.texte">Geste</Libelle><select aria-label="Geste" className={CHAMP} value={demande.mouvement ?? ""} onChange={(e) => choisirMouvement(e.target.value)}><option value="">— texte libre —</option>{mouvements.map((m) => <option key={m.identifiant} value={m.identifiant}>{m.nom}</option>)}</select></label>
           {demande.mouvement ? <div className="mt-[14px]">
             {/* **Le style se coche à chaque envoi, jamais d'office** (22 septembre
@@ -386,17 +416,72 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
               {!!demande.correction_geste?.trim() && <button type="button" className="text-[12px] text-signal hover:opacity-70" onClick={() => changer({ correction_geste: "" })}>remettre le texte du mouvement</button>}
             </div>
             {correctionOuverte && <div className="mt-[8px] space-y-[8px]">
-              <textarea aria-label="Corriger le geste pour cet appel" rows={2} className="mesure w-full rounded-7 border border-signal bg-carte p-[14px] text-[13px]" value={demande.correction_geste ?? ""} onChange={(e) => changer({ correction_geste: e.target.value })} placeholder={composition?.geste || "geste en anglais"} />
+              {/* **RV19** : le champ s'ouvre rempli du geste actuel, modifiable —
+                  jamais montré en texte d'exemple grisé qu'il faudrait retaper
+                  pour changer un mot. Retrouver exactement ce texte n'est pas
+                  une correction : rien ne part en plus (`changer` ci-dessous
+                  revient alors à `""`). */}
+              <textarea aria-label="Corriger le geste pour cet appel" rows={2} className="mesure w-full rounded-7 border border-signal bg-carte p-[14px] text-[13px]"
+                value={demande.correction_geste || composition?.geste || ""}
+                onChange={(e) => { const texte = e.target.value; const original = (composition?.geste ?? "").trim(); changer({ correction_geste: texte.trim() && texte.trim() !== original ? texte : "" }) }}
+                placeholder="geste en anglais" />
               <p className="text-[12px] text-encre-3">Cette correction part avec cet appel ; le mouvement de la bibliothèque ne bouge pas.</p>
               <button type="button" className={BOUTON} disabled={occupe || !demande.correction_geste?.trim()} onClick={() => void garderPourLeJeu()}>Garder pour le jeu</button>
             </div>}
           </div> : <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">Décrire l’animation<textarea rows={3} className="rounded-7 border border-contour p-[14px] text-[13px]" value={demande.prompt_video} onChange={(e) => changer({ prompt_video: e.target.value })} placeholder="Le personnage marche sur place, cycle régulier, caméra fixe…" /></label>}
-          <div className="mt-[14px] grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Durée du clip</Libelle><select className={CHAMP} value={demande.secondes} onChange={(e) => changer({ secondes: Number(e.target.value) })}>{[...new Set([demande.secondes, 1, 1.5, 2, 3, 4, 5, ...(video?.durees ?? [])])].sort((a, b) => a - b).map((n) => <option key={n} value={n} disabled={!!video && !video.durees.includes(n)}>{n} s{video && !video.durees.includes(n) ? " — non accepté par ce modèle" : ""}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Résolution</Libelle><select className={CHAMP} value={demande.resolution} onChange={(e) => changer({ resolution: e.target.value })}>{[...new Set([demande.resolution, ...videos.flatMap((m) => m.resolutions)])].map((v) => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Proportions</Libelle><select className={CHAMP} value={demande.proportions} onChange={(e) => changer({ proportions: e.target.value })}>{[...new Set([demande.proportions, ...videos.flatMap((m) => m.proportions)])].map((v) => <option key={v}>{v}</option>)}</select></label></div>
+        </fieldset>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">3. Image de départ</legend>
+          {demande.reference_asset
+            ? <div className="mt-[8px] flex items-center gap-[14px]"><img alt="Image de départ choisie" src={api.vignette(demande.reference_asset, "", 128)} className="h-[128px] w-[128px] object-contain" /><button className={BOUTON} onClick={() => setChoix("depart")}>Choisir dans la bibliothèque</button><button className={BOUTON} onClick={() => changer({ reference_asset: null })}>‹ La proposition</button></div>
+            : <>
+              <p className="text-[13px] text-encre-3">L’image qui partira pour chaque case, calculée comme à la relecture. Choisis-en une autre si besoin.</p>
+              {!demande.pose
+                ? <p className="mt-[14px] text-[13px] text-encre-3">Choisis un mouvement au point 1 pour voir l’image de départ proposée.</p>
+                : <div className="mt-[14px] flex flex-wrap gap-[14px]">{casesPretes.map((c) => <div key={c.direction} className="w-[128px] text-center">
+                  {c.asset
+                    ? <img alt={`Image de départ proposée — ${nomDirection(c.direction)}`} src={api.vignette(c.asset.identifiant, "", 128)} className="h-[128px] w-[128px] rounded-7 border border-trait object-contain" title={c.raison} />
+                    : <div role="status" className="flex h-[128px] w-[128px] items-center justify-center rounded-7 border border-dashed border-trait p-[8px] text-[11px] text-encre-3">aucune image pour {nomDirection(c.direction)}</div>}
+                  <p className="mt-[4px] truncate text-[12px] text-encre-3">{nomDirection(c.direction)}</p>
+                </div>)}</div>}
+              <button className={`${BOUTON} mt-[14px]`} onClick={() => setChoix("depart")}>Choisir une autre image dans la bibliothèque</button>
+            </>}
+          {/* **8nonies** : un contrôle inerte disparaît — la liste des modèles
+              ne se cache que sur un « oui » sûr (chaque case a sa réponse, et
+              c'est une image) ; tant que ce n'est pas prouvé — chargement
+              compris —, elle reste, pour ne jamais clignoter sur un silence
+              qui n'est pas une réponse. */}
+          {!demande.reference_asset && demande.pose && (toutesLesCasesOntLeurImage
+            ? <p className="mt-[14px] text-[13px] text-encre-3">Chaque case ci-dessus a déjà son image de départ.</p>
+            : <div className="mt-[14px] space-y-[14px]">
+              <div className="space-y-[4px]">
+                <p className="text-[12px] text-encre-3">Modèle pour créer l’image des cases qui en manquent</p>
+                <label className="flex items-center gap-[8px] text-[13px]"><input type="radio" name="modele-image" checked={!demande.modele_image} onChange={() => changer({ modele_image: null })} />Utiliser seulement une image existante</label>
+                {(() => {
+                  const recommande = modeleParDefaut(modeles)
+                  const modeleRecommande = modeles.find((m) => m.identifiant === recommande)
+                  const locaux = modeles.filter((m) => m.locale && m.identifiant !== recommande)
+                  const autresModeles = modeles.filter((m) => !m.locale && m.identifiant !== recommande)
+                  const ligne = (m: Modele, suffixe?: string) => <label key={m.identifiant} className="flex items-center gap-[8px] text-[13px]"><input type="radio" name="modele-image" disabled={!!m.refus} checked={demande.modele_image === m.identifiant} onChange={() => changer({ modele_image: m.identifiant })} />{libelleModele(m)}{m.refus ? ` — ${m.refus}` : suffixe}</label>
+                  return <>
+                    {modeleRecommande && ligne(modeleRecommande, " · recommandé")}
+                    {locaux.map((m) => ligne(m, " · local"))}
+                    {!!autresModeles.length && <details><summary className="cursor-pointer text-[12px] text-encre-3">Autres modèles ({autresModeles.length})</summary><div className="mt-[8px] space-y-[4px]">{autresModeles.map((m) => ligne(m))}</div></details>}
+                  </>
+                })()}
+              </div>
+              {demande.modele_image && <><label className="flex flex-col gap-[4px] text-[12px]">{demande.repris_image ? "Texte complet de l’image, édité pour cet envoi" : "Description de l’image à créer"}<textarea rows={3} value={demande.prompt_image ?? ""} onChange={(e) => changer({ prompt_image: e.target.value })} className="rounded-7 border border-contour bg-papier p-[14px] text-[13px]" /></label><label className="flex flex-col gap-[4px] text-[12px]">Réservation estimée pour l’image, en dollars (si son coût n’est pas encore mesuré)<input type="number" min={0} step="0.01" className={CHAMP} value={demande.plafond_image_usd ?? ""} onChange={(e) => changer({ plafond_image_usd: e.target.value === "" ? null : Number(e.target.value) })} /></label>
+              <div className="flex flex-wrap gap-[8px]">{(demande.references_image ?? []).map((id) => <button key={id} className="rounded-7 border border-contour p-[4px]" title="Retirer cette référence" onClick={() => changer({ references_image: demande.references_image?.filter((r) => r !== id) })}><img className="h-[54px] w-[54px] object-contain" src={api.vignette(id, "", 128)} alt="Référence jointe, cliquer pour retirer" /></button>)}<button className={BOUTON} onClick={() => setChoix("reference")}>Ajouter des références</button></div>
+              {travail?.references.filter((r) => r.asset && !(demande.references_image_ecartees ?? []).includes(r.asset)).map((r) => <div className="flex items-center gap-[8px]" key={r.nom}><img alt="Référence composée à la relecture" src={r.url} className="h-[54px] w-[54px] object-contain" /><button className={BOUTON} onClick={() => changer({ references_image_ecartees: [...(demande.references_image_ecartees ?? []), r.asset!] })}>Retirer de cet envoi</button></div>)}
+              <details><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres du modèle d’image</summary><p className="my-[8px] text-[12px] text-encre-3">Paramètres disponibles : {Object.keys(image?.options ?? {}).join(", ") || "aucun paramètre supplémentaire déclaré"}.</p><textarea aria-label="Paramètres d’image JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsImage} onChange={(e) => setOptionsImage(e.target.value)} /></details></> }
+            </div>)}
+        </fieldset>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">4. Le clip</legend>
+          <div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Durée du clip</Libelle><select className={CHAMP} value={demande.secondes} onChange={(e) => changer({ secondes: Number(e.target.value) })}>{[...new Set([demande.secondes, 1, 1.5, 2, 3, 4, 5, ...(video?.durees ?? [])])].sort((a, b) => a - b).map((n) => <option key={n} value={n} disabled={!!video && !video.durees.includes(n)}>{n} s{video && !video.durees.includes(n) ? " — non accepté par ce modèle" : ""}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Résolution</Libelle><select className={CHAMP} value={demande.resolution} onChange={(e) => changer({ resolution: e.target.value })}>{[...new Set([demande.resolution, ...videos.flatMap((m) => m.resolutions)])].map((v) => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Proportions</Libelle><select className={CHAMP} value={demande.proportions} onChange={(e) => changer({ proportions: e.target.value })}>{[...new Set([demande.proportions, ...videos.flatMap((m) => m.proportions)])].map((v) => <option key={v}>{v}</option>)}</select></label></div>
           <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.prix">{CHAMP_DU_MODELE}</Libelle><select className={CHAMP} value={demande.modele_video} onChange={(e) => changer({ modele_video: e.target.value })}><option value="">Choisir un modèle…</option>{demande.modele_video && !video && <option value={demande.modele_video} disabled>{videosLues ? "modèle indisponible" : "chargement…"}</option>}{videos.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.grise}>{libelleModele(m)}{m.grise ? ` — ${m.grise}` : m.de_la_maison ? " · local" : ` · ${prix(m.prix.montant)}`}</option>)}</select></label>
           {video?.de_la_maison && <div className="mt-[8px]"><MemoireLocale etat={moteur} /></div>}
           <details className="mt-[14px]"><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres avancés du workflow</summary><p className="my-[8px] text-[12px] text-encre-3">Réglages nommés du workflow, par exemple la seed. Le fournisseur vérifie les paramètres avant l’envoi.</p><textarea aria-label="Paramètres vidéo JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsVideo} onChange={(e) => setOptionsVideo(e.target.value)} /></details>
         </fieldset>
-        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">4. Animation à obtenir</legend><div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Images à extraire<input className={CHAMP} type="number" min={1} max={64} value={demande.nombre_images} onChange={(e) => changer({ nombre_images: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Cadence (images/s)<input className={CHAMP} type="number" min={0.1} max={120} step={0.1} value={demande.cadence} onChange={(e) => changer({ cadence: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Lecture<select className={CHAMP} value={demande.sens} onChange={(e) => changer({ sens: e.target.value as DemandeTravail["sens"] })}><option value="boucle">En boucle</option><option value="aller-retour">Aller-retour</option></select></label></div><label className="mt-[14px] flex items-center gap-[8px] text-[13px]"><input type="checkbox" checked={!!demande.livrer_provisoire} onChange={(e) => changer({ livrer_provisoire: e.target.checked })} />Livrer automatiquement cette première version dans le projet Godot associé</label><p className="mt-[8px] text-[12px] text-encre-3">Le clip et ses images restent conservés. Le montage permet ensuite de choisir un passage, réordonner les images et retoucher chaque image.</p></fieldset>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">5. Animation à obtenir</legend><div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Images à extraire<input className={CHAMP} type="number" min={1} max={64} value={demande.nombre_images} onChange={(e) => changer({ nombre_images: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Cadence (images/s)<input className={CHAMP} type="number" min={0.1} max={120} step={0.1} value={demande.cadence} onChange={(e) => changer({ cadence: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Lecture<select className={CHAMP} value={demande.sens} onChange={(e) => changer({ sens: e.target.value as DemandeTravail["sens"] })}><option value="boucle">En boucle</option><option value="aller-retour">Aller-retour</option></select></label></div><label className="mt-[14px] flex items-center gap-[8px] text-[13px]"><input type="checkbox" checked={!!demande.livrer_provisoire} onChange={(e) => changer({ livrer_provisoire: e.target.checked })} />Livrer automatiquement cette première version dans le projet Godot associé</label><p className="mt-[8px] text-[12px] text-encre-3">Le clip et ses images restent conservés. Le montage permet ensuite de choisir un passage, réordonner les images et retoucher chaque image.</p></fieldset>
       </div> : travail ? <div className="mx-auto max-w-[880px] space-y-[22px]">
         <div className="rounded-8 border border-trait bg-carte p-[22px]"><div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px]">{personnage?.nom ?? travail.demande.personnage}</h2><span role="status" className="text-[13px] text-encre-3">{travail.etat === "en_cours" && travail.phase ? `${NOM_DE_LA_PHASE[travail.phase]} · ${tempsDuRetour(travail.lance_le, travail.attendu_s, maintenant) || ETATS.en_cours}` : `${ETATS[travail.etat]} · ${ETAPES[travail.etape] ?? travail.etape}`}</span></div><p className="mt-[8px] text-[13px]">{personnage?.plan.find((p) => p.identifiant === travail.demande.pose)?.nom ?? travail.demande.pose} · {travail.demande.direction || "Sans direction"} · {travail.demande.nombre_images} images à {travail.demande.cadence} i/s · {travail.objectif.largeur} × {travail.objectif.hauteur} px</p>{travail.raison && <p className="mt-[14px] text-[13px] text-echec">{travail.raison}</p>}</div>
         <div className="grid grid-cols-2 gap-[22px]">

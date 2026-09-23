@@ -3156,6 +3156,18 @@ export type ReferencesDeLaChose = {
   disponibles: number
 }
 
+/** **RV19** : l'image de départ qu'une case proposerait, **par la même règle
+ *  que la relecture** (`production.image_de_depart`, appelée depuis
+ *  `travaux.preparer`) — une lecture, jamais une seconde règle côté écran.
+ *  `asset` est `null` quand rien ne part avec cette case ; `raison` le dit
+ *  toujours, y compris quand une image est proposée. */
+export type CaseImageDeDepart = {
+  direction: string
+  asset: Asset | null
+  origine: "case" | "reference" | "portrait" | "aucune"
+  raison: string
+}
+
 /** ── La vitrine (E16) ──────────────────────────────────────────────────────
  *
  *  **Le codex compte des cases, la vitrine montre des images finies.** Elle ne
@@ -6733,6 +6745,18 @@ export const api = {
    *  le sujet n'a ni concept art ni portrait. */
   premierePlanche: (personnage: string) =>
     appeler<PremierePlanche>(`/characters/${personnage}/first-sheet`),
+
+  /** **RV19** : l'image de départ que chaque direction demandée proposerait —
+   *  calculée par la même règle que la relecture (`production.image_de_depart`),
+   *  appelée ici en lecture seule, sans rien facturer. Une direction vide veut
+   *  dire « sans direction ». */
+  imageDeDepart: (personnage: string, pose: string, directions: readonly string[], projet: string) => {
+    const q = new URLSearchParams({ pose, projet })
+    for (const d of directions) q.append("direction", d)
+    return appeler<{ cases: CaseImageDeDepart[] }>(
+      `/characters/${encodeURIComponent(personnage)}/starting-image?${q.toString()}`,
+    )
+  },
 
   /** **« C'est la référence »** (TS3) : cette planche devient la planche du
    *  sujet (usage `planche`, les autres planches dépromues, l'image reste en

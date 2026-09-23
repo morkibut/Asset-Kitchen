@@ -22,6 +22,9 @@ beforeEach(() => {
   vi.spyOn(travaux, "lire").mockResolvedValue({ ...t, etat: "termine" })
   vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [], masques: [] })
   vi.spyOn(api, "mouvementDeLaPose").mockRejectedValue(new Error("non mocké dans cet essai"))
+  // **RV19** : par défaut, aucune case n'a d'image — chaque essai qui s'y
+  // intéresse précise sa propre réponse.
+  vi.spyOn(api, "imageDeDepart").mockResolvedValue({ cases: [] })
 })
 afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks() })
 
@@ -221,6 +224,50 @@ test("corriger le geste puis « Garder pour le jeu » écrit le texte dans la bi
   fireEvent.change(screen.getByLabelText("Corriger le geste pour cet appel"), { target: { value: "it drifts gently" } })
   fireEvent.click(screen.getByRole("button", { name: "Garder pour le jeu" }))
   await waitFor(() => expect(regler).toHaveBeenCalledWith("flotte", { texte: "it drifts gently" }, "jeu"))
+})
+
+// ── RV19 : l'image de départ se voit avant de choisir ───────────────────────
+
+test("« corriger le geste » ouvre le champ déjà rempli du geste actuel, modifiable", async () => {
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
+  vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue({
+    pose: "marche", mouvement: mouvementFlotte, texte: "Facing south. it floats", direction: "Facing south.",
+    geste: "it floats", origine: "mouvement", style: null, styles_proposes: [],
+  })
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  await waitFor(() => expect(screen.getByLabelText("Geste")).toHaveValue("flotte"))
+  fireEvent.click(screen.getByText("corriger le geste ›"))
+  // **Rempli, pas grisé** : le champ porte déjà le geste actuel, prêt à modifier.
+  expect(screen.getByLabelText("Corriger le geste pour cet appel")).toHaveValue("it floats")
+  // Retrouver exactement ce texte n'est pas une correction : rien ne part en plus.
+  expect(screen.queryByText("remettre le texte du mouvement")).toBeNull()
+})
+
+test("une case sans image le dit, et propose le modèle recommandé, présélectionné", async () => {
+  vi.spyOn(api, "imageDeDepart").mockResolvedValue({
+    cases: [{ direction: "sud", asset: null, origine: "aucune", raison: "« Pèlerin » n’a encore aucune image." }],
+  })
+  vi.spyOn(api, "modeles").mockResolvedValue({
+    modeles: [
+      { identifiant: "Local:qwen21-rapide", nom: "Qwen rapide", fournisseur: "Local", locale: true, options: {}, refus: null },
+      { identifiant: "Images:payant", nom: "Modèle payant", fournisseur: "Images", options: {}, refus: null },
+    ],
+  } as Awaited<ReturnType<typeof api.modeles>>)
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  expect(await screen.findByText("aucune image pour Sud")).toBeTruthy()
+  const recommande = await screen.findByRole("radio", { name: /Qwen rapide.*recommandé/ })
+  await waitFor(() => expect(recommande).toBeChecked())
+  expect(screen.getByLabelText("Description de l’image à créer")).toBeTruthy()
+})
+
+test("quand chaque case a déjà son image, la liste des modèles disparaît et laisse une phrase", async () => {
+  vi.spyOn(api, "imageDeDepart").mockResolvedValue({
+    cases: [{ direction: "sud", asset: { identifiant: "portrait-1", label: "Portrait" } as Awaited<ReturnType<typeof api.imageDeDepart>>["cases"][number]["asset"], origine: "portrait", raison: "le portrait de Pèlerin" }],
+  })
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  expect(await screen.findByAltText("Image de départ proposée — Sud")).toHaveAttribute("src", expect.stringContaining("portrait-1"))
+  expect(screen.getByText("Chaque case ci-dessus a déjà son image de départ.")).toBeTruthy()
+  expect(screen.queryByText(/Modèle pour créer/)).toBeNull()
 })
 
 test("un geste hérité d’un style se garde sur le style, pas sur le mouvement", async () => {

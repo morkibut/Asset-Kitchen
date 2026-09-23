@@ -595,25 +595,38 @@ après le point 3, quand on a choisi le geste et le style de combat ? »
 
 ### Critères d'acceptation
 
-- [ ] **Dès l'ouverture, le point « Image de départ » montre, case par case, l'image qui
+- [x] **Dès l'ouverture, le point « Image de départ » montre, case par case, l'image qui
       partira** (la référence de la direction, sinon celle que la relecture proposerait), en
       vignette, avec « Changer » à côté. Elle est calculée par le serveur par **la même règle**
       que la relecture — pas une seconde règle côté écran.
-- [ ] Une case sans image le dit en clair (« aucune image pour gauche ») ; **la liste des modèles
+- [x] Une case sans image le dit en clair (« aucune image pour gauche ») ; **la liste des modèles
       n'apparaît que dans ce cas**, pour ces cases-là. Quand toutes les cases ont leur image, la
       liste disparaît et laisse une phrase (*un contrôle inerte disparaît*, 8nonies).
-- [ ] Quand elle apparaît, la liste des modèles propose d'abord celui que le jeu recommande,
+- [x] Quand elle apparaît, la liste des modèles propose d'abord celui que le jeu recommande,
       présélectionné, et ne montre pas quatre-vingts lignes à plat (les modèles grisés restent
       grisés avec leur raison).
-- [ ] **L'ordre de la fenêtre suit le geste** : 1. l'animation à créer (sujet, mouvement,
+- [x] **L'ordre de la fenêtre suit le geste** : 1. l'animation à créer (sujet, mouvement,
       directions) ; 2. le geste et le style de combat ; 3. l'image de départ ; 4. le clip ; 5.
       l'animation à obtenir. L'image proposée se recalcule quand le mouvement ou les directions
       changent.
-- [ ] **« Corriger le geste » part du texte existant** (retour de l'auteur du même jour) : en
+- [x] **« Corriger le geste » part du texte existant** (retour de l'auteur du même jour) : en
       ouvrant la correction, le champ est **rempli** avec le geste actuel, modifiable — pas
       montré en texte d'exemple grisé qu'il faudrait retaper pour changer un mot. Une correction
       qui revient au texte d'origine n'en est pas une (rien ne part en plus) ; « remettre le
       texte du mouvement » reste là.
+
+Fait le 23 septembre 2026. Une seule route neuve, en lecture, `GET
+/characters/{id}/starting-image` — elle appelle `production.image_de_depart` case par case, la
+même fonction que `services/travaux.py` (`preparer`) utilise à la préparation ; aucune seconde
+règle côté écran. Tranché : la liste des modèles ne se cache que sur un « oui » sûr (chaque case
+a sa réponse, et c'est une image) — pendant le chargement, elle reste, pour ne jamais clignoter
+sur un silence qui n'est pas une réponse ; le plan ne tranchait pas ce cas. Le modèle recommandé
+réutilise `modeleParDefaut` de `ToileFabrique.tsx` (la barre d'image fixe) plutôt que d'inventer
+une seconde préférence. Non vu au navigateur : le worktree n'a pas d'`interface/dist` à
+reconstruire sans y toucher (règle du worktree) ; vérifié par `npx tsc --noEmit`, les essais
+d'écran de `FabricationSuivie.tsx` (24/25, le 25<sup>e</sup> est l'échec connu de la mémoire
+locale) et la suite entière (`App.test.tsx`, 547/547), plus quatre essais serveur neufs
+(`tests/test_rv19.py`).
 
 ---
 
