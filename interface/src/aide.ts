@@ -1266,6 +1266,18 @@ export const AIDE: Record<string, Explication> = {
       "C'est ce qui empêche un artwork de contaminer un sujet qui n'a rien à voir avec lui. « Tous » est le cas utile pour une planche de matières ou de trait, qui accompagne toute génération sans transmettre de personnage. Le compte de références est plafonné par modèle, et chez certains fournisseurs le prix croît avec ce nombre.",
   },
 
+  "carte.phrase": {
+    nom: "phrase",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "Le texte tapé pour fabriquer cette image sur la toile — jamais le texte composé qui est parti au modèle.",
+    change:
+      "Rien à la génération. « Reprendre ce texte » remet cette phrase dans la barre, avec le modèle et la taille d'origine, pour la corriger et relancer.",
+    origine: "la génération qui a produit cette carte · vide sur une note, une image collée, un clip, ou une carte d'avant cette tranche",
+    long:
+      "Ce n'est pas ce que le modèle a lu — bible du jeu repliée en tête, consignes de planche en queue comprises — c'est le texte que tu as tapé dans la barre, gardé à part avant d'être noyé dans le reste. « Reprendre ce texte » ne rejoue rien : il ouvre la barre sur ce texte-là, prête à corriger avant de relancer, exactement comme si tu venais de le taper.",
+  },
+
   "carte.lecture": {
     nom: "ce que la palette y lit",
     ou: "inspiration",

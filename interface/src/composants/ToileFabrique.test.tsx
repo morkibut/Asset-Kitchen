@@ -19,6 +19,7 @@ import {
   referencesPrises,
   tailleRetenue,
   useFabricationSurToile,
+  type Reprise,
 } from "./ToileFabrique"
 
 const modele = (identifiant: string, sur: Partial<Modele> = {}): Modele => ({
@@ -114,7 +115,7 @@ function serveur() {
   return { fetchDouble, appels }
 }
 
-function Banc({ references = [] as Carte[] }) {
+function Banc({ references = [] as Carte[], reprise }: { references?: Carte[]; reprise?: Reprise | null }) {
   const fabrication = useFabricationSurToile(() => {})
   const champ = useRef<HTMLInputElement>(null)
   return (
@@ -123,6 +124,7 @@ function Banc({ references = [] as Carte[] }) {
         references={references}
         onRetirerReference={() => {}}
         champ={champ}
+        reprise={reprise}
         onLancer={(demande) =>
           void fabrication.lancer({
             ...demande,
@@ -453,5 +455,66 @@ describe("la barre de fabrication", () => {
     fireEvent.keyDown(champ, { key: "Enter" })
     // Rien ne part : la barre refuse plutôt que de rogner la liste en silence.
     expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
+  })
+
+  // TS5 — « Reprendre ce texte » : la phrase d'une carte revient dans la
+  // barre, avec le modèle et la taille d'origine.
+
+  test("« Reprendre ce texte » remet la phrase, le modèle et la taille dans la barre", async () => {
+    const { fetchDouble, appels } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const { rerender } = render(<Banc reprise={null} />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+
+    rerender(
+      <Banc
+        reprise={{
+          cle: "reprise-1",
+          texte: "un héron au bord de l'eau",
+          modele: PAYANT.identifiant,
+          resolution: "1024",
+          repris: false,
+        }}
+      />,
+    )
+
+    await waitFor(() => expect(liste.value).toBe(PAYANT.identifiant))
+    expect((screen.getByLabelText("Décris une image") as HTMLInputElement).value).toBe(
+      "un héron au bord de l'eau",
+    )
+    expect(screen.getByRole("button", { name: "1024" }).getAttribute("aria-pressed")).toBe("true")
+    // `repris: false` veut dire « avec le style du jeu » — la case le montre.
+    expect((screen.getByLabelText("avec le style du jeu") as HTMLInputElement).checked).toBe(true)
+
+    fireEvent.click(screen.getByRole("button", { name: /^Fabriquer ·/ }))
+    await waitFor(() => expect(appels.some((a) => a.url === "/api/generations")).toBe(true))
+    const corps = appels.find((a) => a.url === "/api/generations")!.corps as Record<string, unknown>
+    expect(corps.prompt).toBe("un héron au bord de l'eau")
+    expect(corps.modele).toBe(PAYANT.identifiant)
+    expect(corps.resolution).toBe("1024")
+    expect(corps.repris).toBe(false)
+  })
+
+  test("reprendre deux fois la même carte de suite la remet à chaque fois — la clé change", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const uneReprise = (): Reprise => ({
+      cle: crypto.randomUUID(),
+      texte: "un héron",
+      modele: QWEN.identifiant,
+      resolution: "512",
+      repris: true,
+    })
+    const { rerender } = render(<Banc reprise={uneReprise()} />)
+    const champ = (await screen.findByLabelText("Décris une image")) as HTMLInputElement
+    await waitFor(() => expect(champ.value).toBe("un héron"))
+
+    // On corrige le texte à la main, comme le geste le promet...
+    fireEvent.change(champ, { target: { value: "un héron corrigé" } })
+    // ... et on reprend la même carte une seconde fois : la barre doit
+    // revenir à la phrase d'origine, malgré une correction en cours.
+    rerender(<Banc reprise={uneReprise()} />)
+    await waitFor(() => expect(champ.value).toBe("un héron"))
   })
 })

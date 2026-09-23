@@ -44,6 +44,7 @@ import {
   type LectureDePalette,
   type Personnage,
   type Famille,
+  type PhraseDeCarte,
   type Teinte,
 } from "../api"
 import { mots, sujetCarte, useVisee } from "./Apercu"
@@ -89,6 +90,13 @@ export const PRENDRE_REFERENCE = createContext<((carte: Carte) => void) | null>(
  *  bouton du panneau comme une bascule (« Prendre… » / « Retirer… ») plutôt
  *  que comme un geste à sens unique. `false` par défaut, hors de la toile. */
 export const EST_REFERENCE = createContext<(identifiant: string) => boolean>(() => false)
+
+/** « Reprendre ce texte » (TS5) : la phrase d'une carte fabriquée depuis la
+ *  toile revient dans la barre — avec le modèle et la taille d'origine —,
+ *  prête à corriger et relancer. Même règle de `null` que `PRENDRE_REFERENCE` :
+ *  hors de la toile, la grille n'a pas de barre où reprendre quoi que ce
+ *  soit, et le geste disparaît plutôt que de paraître grisé sans raison. */
+export const REPRENDRE_TEXTE = createContext<((phrase: PhraseDeCarte) => void) | null>(null)
 
 /** La gouttière de la grille — un seul vocabulaire d'écart dans tout le produit.
  *  La toile la reprend telle quelle pour ranger ce qu'elle dispose seule. */
@@ -1455,6 +1463,7 @@ function Reglages({
   const decouper = useContext(DECOUPER)
   const prendreReference = useContext(PRENDRE_REFERENCE)
   const estReference = useContext(EST_REFERENCE)
+  const reprendreTexte = useContext(REPRENDRE_TEXTE)
   const creerSujet = useContext(CREER_SUJET)
   const ouvrirSujet = useContext(OUVRIR_SUJET)
   const [groupe, setGroupe] = useState(carte.groupe)
@@ -1538,6 +1547,32 @@ function Reglages({
           onChange={(taille) => void regler({ taille })}
         />
       </div>
+
+      {/* **La phrase de la génération qui a fait cette carte** (TS5) — jamais
+          le texte composé qui est parti au modèle, seulement celui que
+          l'auteur a tapé. Repliée à trois lignes quand elle déborde : une
+          carte porte au maximum une image, une provenance, un mot de pied et
+          une marque, et un pavé de texte libre casserait cette densité — ce
+          menu est l'endroit qui porte déjà `groupe` et `note` pour la même
+          raison. Absente pour une note, une image collée à la main, un clip,
+          ou une carte d'avant cette tranche : `carte.phrase` est alors nul. */}
+      {carte.genre === "image" && carte.phrase && (
+        <div className="flex flex-col gap-1 border-t border-trait pt-2">
+          <Libelle aide="carte.phrase">Phrase</Libelle>
+          <p className="line-clamp-3 text-[11.5px] leading-snug text-encre-3">
+            {carte.phrase.texte}
+          </p>
+          {reprendreTexte && (
+            <button
+              type="button"
+              onClick={() => reprendreTexte(carte.phrase as PhraseDeCarte)}
+              className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
+            >
+              Reprendre ce texte ›
+            </button>
+          )}
+        </div>
+      )}
 
       {/* **Ce qui n'appartient qu'à une note**, et qui n'existe donc pas sur une
           carte image : son texte, et sa teinte. L'absence du bloc **est** le

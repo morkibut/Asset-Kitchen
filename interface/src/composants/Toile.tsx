@@ -68,6 +68,7 @@ import {
   type Fabrique,
   type Lien,
   type Personnage,
+  type PhraseDeCarte,
   type Teinte,
 } from "../api"
 import type { CibleAmbiances } from "./Ambiances"
@@ -83,6 +84,7 @@ import {
   useDepot,
   useSurvol,
   PRENDRE_REFERENCE,
+  REPRENDRE_TEXTE,
   type Vue,
 } from "./Tableau"
 import { Libelle, Raison } from "./pieces"
@@ -91,6 +93,7 @@ import {
   NoeudFantome,
   referencesPrises,
   useFabricationSurToile,
+  type Reprise,
 } from "./ToileFabrique"
 
 // ── Les mesures de l'îlot ───────────────────────────────────────────────────
@@ -1881,6 +1884,16 @@ function Plan({
     [prises],
   )
 
+  // **« Reprendre ce texte »** (TS5) : la phrase d'une carte revient dans la
+  // barre. `cle` change à chaque appel — même carte reprise deux fois de
+  // suite — pour que l'effet de la barre se déclenche à chaque fois, et pas
+  // seulement au premier clic.
+  const [reprise, setReprise] = useState<Reprise | null>(null)
+  const reprendreTexte = useCallback(
+    (phrase: PhraseDeCarte) => setReprise({ ...phrase, cle: crypto.randomUUID() }),
+    [],
+  )
+
   /** Défaire un geste — trois formes, trois chemins.
    *
    *  L'ordre compte pour l'îlot rendu : son groupe doit être réécrit **avant**
@@ -2122,6 +2135,7 @@ function Plan({
       >
         <PRENDRE_REFERENCE.Provider value={prendreReference}>
         <EST_REFERENCE.Provider value={estReference}>
+        <REPRENDRE_TEXTE.Provider value={reprendreTexte}>
         <CADRE.Provider value={cadre}>
           <ReactFlow
             nodes={noeuds}
@@ -2217,6 +2231,7 @@ function Plan({
             </svg>
           </ReactFlow>
         </CADRE.Provider>
+        </REPRENDRE_TEXTE.Provider>
         </EST_REFERENCE.Provider>
         </PRENDRE_REFERENCE.Provider>
 
@@ -2236,6 +2251,7 @@ function Plan({
             }
             onLancer={fabriquer}
             champ={champFabrique}
+            reprise={reprise}
           />
         )}
       </div>

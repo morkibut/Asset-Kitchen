@@ -234,10 +234,29 @@ tranche a été vérifiée par essais seulement (`ToileFabrique.test.tsx`, `test
 
 ### TS5 · Le texte d'une image reste sur sa carte
 
-- [ ] une carte fabriquée depuis la toile montre sa phrase (repliée si elle est longue)
-- [ ] un geste « Reprendre ce texte » remet la phrase dans la barre, avec le modèle et la taille
+- [x] une carte fabriquée depuis la toile montre sa phrase (repliée si elle est longue)
+- [x] un geste « Reprendre ce texte » remet la phrase dans la barre, avec le modèle et la taille
       d'origine, pour la corriger et relancer
-- [ ] une image fabriquée ailleurs et posée sur la toile montre aussi son texte, s'il existe
+- [x] une image fabriquée ailleurs et posée sur la toile montre aussi son texte, s'il existe
+
+*Fait le 23 septembre 2026.* Le point dur était exactement celui annoncé : la phrase vit sur la
+génération (`generation.json`, `demande`), pas sur la carte. Trouvé en lisant
+`ServiceGenerations.soumettre` : `demande.sujet` porte déjà le texte de l'auteur, gardé à part
+*avant* que la bible et les consignes de planche ne le noient dans `demande.prompt` — un champ
+existant depuis le 1ᵉʳ septembre 2026, pour nommer l'asset, et qui se trouve être exactement ce
+qu'il fallait ici. Rien à changer côté génération. Ajouté : `ServiceUnivers.phrase_de_carte`, qui
+remonte le fil `carte.source` (`asset:<id>`) → `Asset.generation` → `Generation.demande`, et
+`GET /board` l'appelle une fois par carte **dans sa propre boucle serveur** — c'est bien la seule
+lecture que fait la toile, aucune route n'est ajoutée, aucun aller-retour de plus depuis l'écran.
+Tranché : le tri « reprendre exactement » l'emporte sur le tri « la lettre du plan » — la case
+« avec le style du jeu » (donc `repris`) revient elle aussi avec la phrase, alors que les trois
+critères ne nomment que le modèle et la taille ; sans elle, reprendre une phrase composée avec le
+style du jeu relançait un appel qui n'aurait plus eu le même texte. Densité de la carte respectée
+(AGENTS.md, `docs/design-motifs.md` § Le menu d'une carte) : la phrase et « Reprendre ce texte »
+vivent dans le menu au survol, à côté d'Îlot/Note, jamais sur la face visible — `line-clamp-3`
+fait le repli. Une ligne de guide ajoutée (`carte.phrase`, `interface/src/aide.ts`). Non vérifié
+au navigateur : vérifié par essais serveur (`tests/test_ts5.py`) et écran
+(`Tableau.test.tsx`, `ToileFabrique.test.tsx`).
 
 ### TS6 · Prendre une carte comme référence
 

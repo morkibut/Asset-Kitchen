@@ -24,6 +24,7 @@ import {
   type EtatCatalogue,
   type Generation,
   type Modele,
+  type PhraseDeCarte,
   type Reinjection,
 } from "../api"
 import { tempsParImage, type ModeleAvecReference } from "../api-workflows"
@@ -476,6 +477,13 @@ function RepliCeQuiPart({
   )
 }
 
+/** Ce que « Reprendre ce texte » (TS5) envoie à la barre — la phrase d'une
+ *  carte, plus une `cle` qui change à chaque clic. Sans elle, reprendre deux
+ *  fois la même carte à la file ne rejouerait rien : l'effet qui applique la
+ *  reprise se déclenche sur un changement, et le second clic porterait la
+ *  même phrase que le premier. */
+export type Reprise = PhraseDeCarte & { cle: string }
+
 /** La barre flottante, en bas au centre du plan : une phrase, 1/2/3, le
  *  modèle, et le bouton qui porte ce que ça coûte. Entrée lance. */
 export function BarreDeFabrication({
@@ -483,6 +491,7 @@ export function BarreDeFabrication({
   onRetirerReference,
   onLancer,
   champ,
+  reprise,
 }: {
   references: Carte[]
   /** Retirer **une seule** référence prise — la croix de sa vignette. */
@@ -497,6 +506,10 @@ export function BarreDeFabrication({
     repris: boolean
   }) => void
   champ: React.RefObject<HTMLInputElement | null>
+  /** « Reprendre ce texte » (TS5) : la phrase, le modèle et la taille d'une
+   *  carte reviennent dans la barre, prêts à corriger et relancer. `null` au
+   *  repos — la barre ne réagit qu'au changement de `cle`. */
+  reprise?: Reprise | null
 }) {
   const [catalogue, setCatalogue] = useState<EtatCatalogue | null>(null)
   const [prompt, setPrompt] = useState("")
@@ -514,6 +527,24 @@ export function BarreDeFabrication({
   // planche — c'est la même chose que « reprendre le texte » (US-159/US-160),
   // pour une raison qui n'a rien à voir avec la reprise : on **essaie**.
   const [avecStyle, setAvecStyle] = useState<boolean>(() => lireMemoire().avecStyle ?? false)
+
+  // **« Reprendre ce texte »** (TS5) : la phrase, le modèle et la taille d'une
+  // carte remplacent ceux de la barre. Sur `reprise.cle`, jamais sur les
+  // champs eux-mêmes — sinon reprendre deux fois la même carte ne
+  // déclencherait rien la seconde fois, `cle` seule change à chaque clic.
+  // **La case « avec le style du jeu » suit aussi** : reprendre veut dire
+  // relancer *exactement* la même demande pour la corriger, pas la moitié
+  // d'entre elle.
+  useEffect(() => {
+    if (!reprise) return
+    setPrompt(reprise.texte)
+    setChoix(reprise.modele)
+    if ((TAILLES as readonly string[]).includes(reprise.resolution ?? ""))
+      setTaille(reprise.resolution as Taille)
+    setAvecStyle(!reprise.repris)
+    champ.current?.focus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reprise?.cle])
 
   // Le catalogue dépend du nombre d'images jointes : un modèle qui n'en prend
   // aucune se grise avec sa raison dès qu'on en joint une.
