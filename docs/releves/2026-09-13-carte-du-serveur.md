@@ -7,7 +7,7 @@ Ce relevé décrit ce que le serveur (`atelier/`) sait faire : ses routes HTTP, 
 | | Nombre |
 |---|---|
 | Routes HTTP | **316** *(318 avant `RP18` puis `RP17`, le 16 septembre 2026)* |
-| Outils MCP | 87 *(`RP17` retire `export_assets` et `export_character`, ajoute `preview_output` et `write_output` ; `RP20` avait déjà ajouté `save_render_as` et `preview_save_render_as`)* |
+| Outils MCP | 90 *(`RP17` retire `export_assets` et `export_character`, ajoute `preview_output` et `write_output` ; `RP20` avait déjà ajouté `save_render_as` et `preview_save_render_as` ; `RV22` ajoute `detach_asset`, `delete_asset` et `restore_asset`)* |
 | Routes que l'interface n'appelle pas | **1** — `POST /strips/{id}/layer/align` (+ `/health`, à part — voir plus bas) |
 | Doublons de capacité | 2 *(`RP17` a refermé le troisième)* |
 | Modules plus importés (services/ + domaine/) | 0 |
@@ -107,8 +107,8 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | DELETE /collections/{id}/members/{jeu}/{sujet} | Retire un sujet d'une collection | Oui | — |
 | PUT /assets/arrangement | Range une sélection d'assets dans un projet | Oui | — |
 | PUT /assets/favorite | Marque des assets favoris | Oui | — |
-| POST /assets/delete | Supprime une sélection d'assets (annulable un temps) | Oui | — |
-| POST /assets/restore | Annule une suppression récente | Oui | — |
+| POST /assets/delete | Supprime une sélection d'assets (annulable un temps) | Oui | `delete_asset` *(ajouté par `RV22`)* |
+| POST /assets/restore | Annule une suppression récente | Oui | `restore_asset` *(ajouté par `RV22`)* |
 | POST /exports | Exporte une sélection d'assets en archive ZIP | Oui | — *(`export_assets` retiré par `RP17`)* |
 | GET /assets/{id}/lineage | D'où vient cet asset, et ce qui en descend | Oui | — |
 
@@ -194,7 +194,7 @@ Colonne « Outil MCP équivalent ? » : un nom d'outil quand le même service es
 | PUT /characters/{id} | Règle un personnage (nom, description, poses, ambiance…) | Oui | — |
 | GET /characters/{id}/unplaced | Ce qui est fait pour ce sujet sans occuper de case (images, clips, animations) | Oui | — |
 | DELETE /characters/{id} | Supprime un personnage (ses images restent, marquées) | Oui | — |
-| PUT /assets/{id}/character | Désigne cette image comme le corps d'une case | Oui | — |
+| PUT /assets/{id}/character | Désigne cette image comme le corps d'une case | Oui | `detach_asset`, à `personnage: null` seulement *(ajouté par `RV22`)* |
 | POST /characters/slots | Ajoute un emplacement au vestiaire | Oui | — |
 | POST /characters/slots/suggested | Pose les six emplacements proposés par l'atelier | Oui | — |
 | PUT /characters/slots/{id} | Renomme un emplacement, ou le déplace dans l'ordre | Oui | — |

@@ -952,7 +952,7 @@ retour de l'auteur* : « si elle ne va nulle part, elle reste là pour rien ».
 - [x] les deux gestes se défont (« Annuler » un instant, comme ailleurs dans l'atelier) ; aucun
       ne supprime un fichier du disque sans passer par ce que la Galerie fait déjà
 - [x] le bandeau se met à jour tout de suite et disparaît quand il n'y a plus rien à ranger
-- [ ] l'agent (MCP) sait les mêmes gestes par les mêmes services (*T7*), s'ils ne les a pas déjà
+- [x] l'agent (MCP) sait les mêmes gestes par les mêmes services (*T7*), s'ils ne les a pas déjà
 
 Fait le 23 septembre 2026. **Écarter** rejoue `api.designer(asset, null, null, null)` — le même
 `PUT /assets/{id}/character` à `personnage: null` que la fiche pose déjà pour détacher une image
@@ -967,13 +967,20 @@ tant qu'une annulation y est possible, même quand il n'a plus rien à ranger �
 dernier élément emporterait le seul endroit où « Annuler » se trouve ; il disparaît entier une
 fois l'annulation résolue (acceptée ou expirée) et la liste vide.
 
-**Dernier critère non tenu, constaté plutôt que corrigé** : aucun outil MCP n'expose aujourd'hui
-ni le détachement d'une image (`atelier.production.designer`) ni sa suppression douce
-(`supprimer_assets`, côté service) — `atelier/mcp/serveur.py` n'a que `edit_asset` (retouche,
-matière) et `import_asset`/`import_clip` (qui *posent* un personnage à l'entrée, jamais ne le
-retirent). Inventer une paire d'outils `detach_asset`/`delete_asset` sort du geste `[EASY]` de
-cette tranche ; à faire à part, sur le modèle d'`edit_asset` (mêmes services que l'écran, refus
-lisible, `planche_a_confirmer` remonté tel quel).
+Fait le 24 septembre 2026. Trois outils, sur le modèle d'`edit_asset` : `detach_asset` rejoue
+`atelier.production.designer(asset, personnage=None, pose=None)` — le même service que
+`PUT /assets/{id}/character` à `personnage: null` — et refuse une matière avec la même phrase que
+la fiche. `delete_asset` rejoue `verifier_suppression` puis `atelier.bibliotheque.supprimer` — le
+même service que `POST /assets/delete` — et remonte `planche_a_confirmer` tel quel (sa phrase,
+avec le compte) ; un `confirm: true` le franchit, comme le `confirmer` de la route. `restore_asset`
+rejoue `atelier.bibliotheque.annuler_suppression` — le même service que `POST /assets/restore`,
+avec le même délai compté par le serveur. Décision : un outil de restauration manquait à la
+liste ; sans lui, un agent qui supprime par erreur n'aurait eu aucun moyen de se défaire de son
+geste, alors que l'écran en a un — ajouté pour tenir la même promesse des deux côtés.
+`tests/test_rv22_mcp.py` couvre les quatre gestes : écarter puis relire, supprimer puis restaurer
+(et son expiration), un identifiant inconnu, et `planche_a_confirmer`. Mis à jour aussi :
+`docs/releves/2026-09-13-carte-du-serveur.md` (87 → 90 outils, les trois routes désormais
+équipées d'un outil MCP).
 
 ---
 

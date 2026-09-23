@@ -51,6 +51,7 @@ from atelier.domaine.sortie import Reglage as ReglageDeSortie
 from atelier.mcp.objectifs import palette_du_sujet
 from atelier.services import Atelier
 from atelier.services.bibliotheque import ProjetInconnu
+from atelier.services.depliages import depliages_de
 
 # Ce que l'agent attend avant qu'on lui rende un identifiant, s'il ne le dit
 # pas. Trente secondes : au-dessus de la durée médiane d'un appel du catalogue,
@@ -711,6 +712,109 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "not_applied": list(laisse),
             "material": asset.matiere,
         }
+
+    # ── Écarter, supprimer — les mêmes gestes que le bandeau « Pas encore
+    #    rangé » (RV22) ─────────────────────────────────────────────────────
+
+    @serveur.tool(
+        name="detach_asset",
+        meta=_barre(
+            verbe="travailler",
+            titre="Écarter une image",
+            phrase="Elle quitte le sujet et retourne à la Galerie, sans être supprimée.",
+            ou="galerie",
+            besoins=("images",),
+        ),
+        title="Detach an asset from its character",
+        description=(
+            "Detach an asset from the character (subject) it is attached to, "
+            "without deleting it: the image stays in the library, and its "
+            "slot in the matrix becomes empty again. The exact gesture the "
+            "screen calls \"Écarter\" — the same PUT /assets/{id}/character "
+            "with a null character, through the same service. A material is "
+            "refused, as on the screen: it has no subject to detach from."
+        ),
+    )
+    @_refus_lisible
+    async def detach_asset(
+        asset_id: str,
+        project: str | None = None,
+        folder: str | None = None,
+    ) -> dict[str, Any]:
+        # Importé ici, pas en tête de fichier : `atelier.api.production`
+        # importe `atelier.api`, qui importe `atelier.api.app`, qui importe
+        # ce module pour monter le serveur MCP — un import en tête bouclerait.
+        from atelier.api.production import _REFUS_SUJET_DUNE_MATIERE
+
+        existant = _asset(atelier, asset_id)
+        if existant.matiere:
+            raise ErreurAtelier(_REFUS_SUJET_DUNE_MATIERE)
+        asset = atelier.production.designer(
+            asset_id,
+            projet=_projet_ouvert(atelier, project),
+            personnage=None,
+            pose=None,
+        )
+        return {
+            **_asset_en_json(atelier, asset, folder),
+            "character": asset.personnage,
+        }
+
+    @serveur.tool(
+        name="delete_asset",
+        meta=_barre(
+            verbe="travailler",
+            titre="Supprimer une image",
+            phrase="Le geste de jugement de la Galerie — annulable un instant.",
+            ou="galerie",
+            besoins=("images",),
+        ),
+        title="Delete assets",
+        description=(
+            "Soft-delete one or more assets — the same judgement gesture as "
+            "the gallery, through the same service. Never erases a file "
+            "outright: the deletion can be undone with restore_asset within "
+            "`undo_seconds` of this call, past `expires_at` it becomes "
+            "final. Children of a deleted asset are kept, marked as having a "
+            "deleted parent. Deleting a plate whose cut-out images still "
+            "depend on it is refused with `planche_a_confirmer` and the "
+            "dependent count, unless `confirm` is true — the dependent "
+            "images stay, but the plate can no longer be re-cut."
+        ),
+    )
+    @_refus_lisible
+    async def delete_asset(
+        asset_ids: list[str],
+        confirm: bool = False,
+    ) -> dict[str, Any]:
+        depliages_de(atelier).verifier_suppression(asset_ids, confirm)
+        resultat = atelier.bibliotheque.supprimer(asset_ids)
+        return {
+            "deleted": resultat["supprimes"],
+            "undo_seconds": resultat["annulation_s"],
+            "expires_at": resultat["expire_le"],
+        }
+
+    @serveur.tool(
+        name="restore_asset",
+        meta=_barre(
+            verbe="travailler",
+            titre="Annuler une suppression",
+            phrase="L'annulation courte — refusée, en le disant, au-delà du délai.",
+            ou="galerie",
+            besoins=("images",),
+        ),
+        title="Undo a deletion",
+        description=(
+            "Undo a soft-delete made by delete_asset, through the same "
+            "service as the gallery's \"Annuler\". Refused, with a readable "
+            "reason, once `undo_seconds` have passed."
+        ),
+    )
+    @_refus_lisible
+    async def restore_asset(asset_ids: list[str]) -> dict[str, Any]:
+        rendus = atelier.bibliotheque.annuler_suppression(asset_ids)
+        return {"assets": [_asset_en_json(atelier, a) for a in rendus]}
 
     @serveur.tool(
         name="slice_asset",
