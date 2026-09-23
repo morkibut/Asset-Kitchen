@@ -794,7 +794,7 @@ bulle au survol — « je peux le lire mais pas le récupérer »).
 
 ### Critères d'acceptation
 
-- [ ] Partout où l'atelier montre un texte parti au modèle — le volet d'un clip et la fiche d'une
+- [x] Partout où l'atelier montre un texte parti au modèle — le volet d'un clip et la fiche d'une
       image dans la Galerie, la relecture avant l'envoi, la carte de la toile (`TS5`) —, un bouton
       **« Copier »** met le texte entier dans le presse-papiers et le dit (« copié ») un instant.
 - [x] Le texte coupé se déplie au clic, au lieu de n'exister qu'en bulle au survol.
@@ -807,13 +807,20 @@ bulle au survol — « je peux le lire mais pas le récupérer »).
 trois des quatre endroits listés : le volet d'un clip (`FicheDuClip.tsx`, qui montrait le texte
 tronqué sans bouton), la fiche d'une image (`Fiche.tsx`, `LeTexteQuiLAFaite` — le bouton copiait
 déjà mais échouait en silence ; il dit maintenant l'échec), et le tiroir de relecture avant
-l'envoi côté image fixe (`Envoi.tsx`, à côté de « Reprendre le texte › »). **Restent à brancher,
-hors de cette tranche** — un autre agent tient ces fichiers : la carte de la toile (`TS5`,
-`Tableau.tsx` / `ToileFabrique.tsx`) et la fenêtre des clips (`FabricationSuivie.tsx`) ; les deux
-peuvent importer `TexteEnvoye`/`BoutonCopierTexte` de `interface/src/composants/TexteEnvoye.tsx`
-sans rien recomposer. Essais : `interface/src/composants/TexteEnvoye.test.tsx` (copie du texte
-entier, échec dit, dépliage au clic) plus les essais existants de `Fiche.tsx` et `Envoi.tsx`, tous
-au vert.
+l'envoi côté image fixe (`Envoi.tsx`, à côté de « Reprendre le texte › »).
+
+**Suite le 23 septembre 2026** : les deux derniers endroits. La fenêtre des clips
+(`FabricationSuivie.tsx`) portait trois textes non copiables — la relecture d'un clip seul (« Image
+de départ » et « Vidéo à fabriquer », deux `<p>` sans bouton) et, par case d'une série
+(`CaseDeLaSerie`), le texte de l'image de départ tronqué à deux lignes sans recours
+(`line-clamp-2`) et le texte vidéo, déjà repliable dans un `<details>` mais sans bouton
+« Copier ». Les quatre passent à `TexteEnvoye` ; le `<details>` disparaît, `TexteEnvoye` portant
+déjà son propre dépliage au clic. La carte de la toile (`TS5`, `Tableau.tsx`) montrait la phrase
+d'une carte tronquée à trois lignes (`line-clamp-3`, sans recours ni bouton) à côté de « Reprendre
+ce texte › » — remplacée par `TexteEnvoye`, le bouton de reprise restant à part sous elle.
+Essais : `interface/src/composants/TexteEnvoye.test.tsx`, `FabricationSuivie.test.tsx` (24/25, le
+25<sup>e</sup> est l'échec connu de la mémoire locale, hors tranche) et `Tableau.test.tsx` (9/9),
+plus `App.test.tsx` entier, **549/549**. `tsc --noEmit` propre. Non vérifié au navigateur.
 
 ---
 

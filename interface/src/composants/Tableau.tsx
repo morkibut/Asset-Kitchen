@@ -49,6 +49,7 @@ import {
 } from "../api"
 import { mots, sujetCarte, useVisee } from "./Apercu"
 import { Libelle, Raison, Segments, ZoneTexte } from "./pieces"
+import { TexteEnvoye } from "./TexteEnvoye"
 
 const SPAN: Record<number, string> = { 1: "span 1", 2: "span 2", 4: "span 4" }
 
@@ -1550,18 +1551,17 @@ function Reglages({
 
       {/* **La phrase de la génération qui a fait cette carte** (TS5) — jamais
           le texte composé qui est parti au modèle, seulement celui que
-          l'auteur a tapé. Repliée à trois lignes quand elle déborde : une
-          carte porte au maximum une image, une provenance, un mot de pied et
-          une marque, et un pavé de texte libre casserait cette densité — ce
-          menu est l'endroit qui porte déjà `groupe` et `note` pour la même
-          raison. Absente pour une note, une image collée à la main, un clip,
-          ou une carte d'avant cette tranche : `carte.phrase` est alors nul. */}
+          l'auteur a tapé. Ce menu est l'endroit qui porte déjà `groupe` et
+          `note` pour la même raison. Absente pour une note, une image collée
+          à la main, un clip, ou une carte d'avant cette tranche :
+          `carte.phrase` est alors nul.
+          **Fin de RV20** : `TexteEnvoye` porte la troncature, le dépliage au
+          clic et son propre bouton « Copier », au lieu d'une troncature sans
+          recours. */}
       {carte.genre === "image" && carte.phrase && (
         <div className="flex flex-col gap-1 border-t border-trait pt-2">
           <Libelle aide="carte.phrase">Phrase</Libelle>
-          <p className="line-clamp-3 text-[11.5px] leading-snug text-encre-3">
-            {carte.phrase.texte}
-          </p>
+          <TexteEnvoye texte={carte.phrase.texte} />
           {reprendreTexte && (
             <button
               type="button"
