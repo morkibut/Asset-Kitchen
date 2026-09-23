@@ -105,6 +105,17 @@ export const REPRENDRE_TEXTE = createContext<((phrase: PhraseDeCarte) => void) |
  *  hors de la toile, le geste disparaît plutôt que de paraître grisé. */
 export const DEVELOPPER = createContext<((carte: Carte) => void) | null>(null)
 
+/** « Encore » (TS7) : relance **la même demande** qu'une carte fabriquée
+ *  depuis la barre — phrase, modèle, taille, références, case « avec le
+ *  style du jeu » — sans rien retaper. Le résultat se pose à côté de
+ *  l'original, relié à lui. Même règle de `null` que les autres gestes de
+ *  la toile : hors d'elle, il n'y a pas de barre où relancer quoi que ce
+ *  soit. Reçoit la carte, pour savoir à quoi relier le résultat, et sa
+ *  phrase, pour savoir quoi relancer. */
+export const ENCORE = createContext<((carte: Carte, phrase: PhraseDeCarte) => void) | null>(
+  null,
+)
+
 /** La gouttière de la grille — un seul vocabulaire d'écart dans tout le produit.
  *  La toile la reprend telle quelle pour ranger ce qu'elle dispose seule. */
 export const GOUTTIERE = 9
@@ -1474,6 +1485,7 @@ function Reglages({
   const creerSujet = useContext(CREER_SUJET)
   const ouvrirSujet = useContext(OUVRIR_SUJET)
   const developper = useContext(DEVELOPPER)
+  const encore = useContext(ENCORE)
   const [groupe, setGroupe] = useState(carte.groupe)
   const [note, setNote] = useState(carte.note)
   const [texte, setTexte] = useState(carte.texte)
@@ -1569,15 +1581,30 @@ function Reglages({
         <div className="flex flex-col gap-1 border-t border-trait pt-2">
           <Libelle aide="carte.phrase">Phrase</Libelle>
           <TexteEnvoye texte={carte.phrase.texte} />
-          {reprendreTexte && (
-            <button
-              type="button"
-              onClick={() => reprendreTexte(carte.phrase as PhraseDeCarte)}
-              className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
-            >
-              Reprendre ce texte ›
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {reprendreTexte && (
+              <button
+                type="button"
+                onClick={() => reprendreTexte(carte.phrase as PhraseDeCarte)}
+                className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
+              >
+                Reprendre ce texte ›
+              </button>
+            )}
+            {/* **« Encore »** (TS7) : la même demande, sans rien retaper — la
+                phrase, le modèle, la taille et les références que TS5 et
+                TS7 savent relire sur la carte. Le résultat se pose à côté de
+                l'original, relié à lui. */}
+            {encore && (
+              <button
+                type="button"
+                onClick={() => encore(carte, carte.phrase as PhraseDeCarte)}
+                className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
+              >
+                Encore ›
+              </button>
+            )}
+          </div>
         </div>
       )}
 

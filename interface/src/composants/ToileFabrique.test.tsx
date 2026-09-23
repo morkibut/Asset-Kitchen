@@ -519,6 +519,7 @@ describe("la barre de fabrication", () => {
           modele: PAYANT.identifiant,
           resolution: "1024",
           repris: false,
+          references: [],
         }}
       />,
     )
@@ -549,6 +550,7 @@ describe("la barre de fabrication", () => {
       modele: QWEN.identifiant,
       resolution: "512",
       repris: true,
+      references: [],
     })
     const { rerender } = render(<Banc reprise={uneReprise()} />)
     const champ = (await screen.findByLabelText("Décris une image")) as HTMLInputElement

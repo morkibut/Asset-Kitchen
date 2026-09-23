@@ -253,6 +253,13 @@ class ServiceUnivers:
             "modele": generation.modele,
             "resolution": demande.get("resolution"),
             "repris": bool(demande.get("repris", False)),
+            # **Les références de cet appel-là, pour « Encore » (TS7).** Ce que
+            # `generation.references` porte déjà — l'auteur a posé, rien de
+            # plus, puisque `echelle` part vide depuis la barre et qu'aucun
+            # personnage n'accompagne un appel du tableau : `_reinjections` n'y
+            # ajoute donc aucun artwork de famille. Relancer exactement la même
+            # demande, c'est relancer avec exactement cette liste.
+            "references": [r.en_json() for r in generation.references],
         }
 
     def octets(self, projet: str, identifiant: str) -> tuple[bytes, str]:

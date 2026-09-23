@@ -13,7 +13,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 
 import type { Carte, Personnage, PhraseDeCarte } from "../api"
-import { CREER_SUJET, CarteTuile, DEVELOPPER, OUVRIR_SUJET, REPRENDRE_TEXTE } from "./Tableau"
+import { CREER_SUJET, CarteTuile, DEVELOPPER, ENCORE, OUVRIR_SUJET, REPRENDRE_TEXTE } from "./Tableau"
 
 afterEach(cleanup)
 
@@ -59,21 +59,24 @@ function monterPanneau(carte: Carte, options: {
   ouvrirSujet?: (id: string) => void
   reprendreTexte?: (p: PhraseDeCarte) => void
   developper?: (c: Carte) => void
+  encore?: (c: Carte, p: PhraseDeCarte) => void
 } = {}) {
   return render(
     <CREER_SUJET.Provider value={options.creerSujet ?? null}>
       <OUVRIR_SUJET.Provider value={options.ouvrirSujet ?? null}>
         <REPRENDRE_TEXTE.Provider value={options.reprendreTexte ?? null}>
           <DEVELOPPER.Provider value={options.developper ?? null}>
-            <CarteTuile
-              carte={carte}
-              personnages={options.personnages ?? []}
-              choisie
-              survolee={false}
-              onSurvol={() => {}}
-              onChoisir={() => {}}
-              onErreur={() => {}}
-            />
+            <ENCORE.Provider value={options.encore ?? null}>
+              <CarteTuile
+                carte={carte}
+                personnages={options.personnages ?? []}
+                choisie
+                survolee={false}
+                onSurvol={() => {}}
+                onChoisir={() => {}}
+                onErreur={() => {}}
+              />
+            </ENCORE.Provider>
           </DEVELOPPER.Provider>
         </REPRENDRE_TEXTE.Provider>
       </OUVRIR_SUJET.Provider>
@@ -134,6 +137,7 @@ const phrase = (sur: Partial<PhraseDeCarte> = {}): PhraseDeCarte => ({
   modele: "essai:rend-du-png",
   resolution: "512",
   repris: false,
+  references: [],
   ...sur,
 })
 
@@ -164,6 +168,41 @@ test("« Reprendre ce texte » rend la phrase entière, le modèle et la taille 
 test("sans le geste fourni, le bouton disparaît — comme « Prendre comme référence » hors toile", () => {
   monterPanneau(carteImage({ phrase: phrase() }))
   expect(screen.queryByRole("button", { name: "Reprendre ce texte ›" })).toBeNull()
+})
+
+// TS7 — « Encore » : relancer la même demande qu'une carte fabriquée depuis
+// la barre, sans rien retaper. Même carte, même bloc que « Reprendre ce
+// texte » — la phrase doit exister pour qu'il y ait quelque chose à
+// relancer — mais reçoit en plus la carte elle-même, pour savoir à quoi
+// relier le résultat.
+
+test("« Encore » relance avec la carte et sa phrase entière", () => {
+  const encore = vi.fn()
+  const laPhrase = phrase({
+    modele: "OpenRouter:openai/gpt-image-2",
+    resolution: "1024",
+    references: [{ asset: "renard", role: "edition", origine: "carte" }],
+  })
+  monterPanneau(carteImage({ phrase: laPhrase }), { encore })
+
+  fireEvent.click(boutonNomme("Encore ›"))
+  expect(encore).toHaveBeenCalledWith(expect.objectContaining({ identifiant: "carte-1" }), laPhrase)
+})
+
+test("sans phrase, « Encore » ne paraît pas — rien à relancer", () => {
+  // **C'est le cas que le seul essai « sans le geste fourni » ne verrait
+  // pas** : même avec `encore` fourni, sans `carte.phrase` le bouton ne
+  // peut pas paraître — un essai qui oublierait cette condition et
+  // monterait toujours le bouton dès que le geste est fourni passerait à
+  // tort (8octies : ce test tombe si le bloc entier n'est plus gardé par
+  // `carte.phrase`).
+  monterPanneau(carteImage({ phrase: null }), { encore: vi.fn() })
+  expect(screen.queryByRole("button", { name: "Encore ›" })).toBeNull()
+})
+
+test("sans le geste fourni, « Encore » disparaît — même règle que les autres gestes de la toile", () => {
+  monterPanneau(carteImage({ phrase: phrase() }))
+  expect(screen.queryByRole("button", { name: "Encore ›" })).toBeNull()
 })
 
 // TS10 — « Développer ce sujet » : sur toute carte image arrivée, pas

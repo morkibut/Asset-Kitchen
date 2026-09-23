@@ -21,7 +21,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import type { Carte, Lien, Teinte } from "../api"
+import type { Carte, Lien, PhraseDeCarte, Teinte } from "../api"
 import {
   aimanter,
   ancrer,
@@ -29,13 +29,16 @@ import {
   carteSous,
   cequiPartDeLaToile,
   classer,
+  departDeFabrication,
   disposer,
   ilotPerdu,
   ilotSous,
   ilotsDe,
   ilotsPerdusParLeLot,
   menaceDe,
+  originesReliees,
   placeLibre,
+  referencesDEncore,
   selectionVive,
   texteACorriger,
   type Crans,
@@ -768,5 +771,104 @@ describe("la carte à relier, quand on développe un sujet (TS10)", () => {
     const renard = carte("renard", { position: [0, 0] })
     expect(origineDeLiaison("heron", [renard])).toBeUndefined()
     expect(origineDeLiaison("heron", [])).toBeUndefined()
+  })
+})
+
+// TS7 — les trois gestes de Mixboard : Combiner, Encore, et le lien visible
+// généralisé à toute fabrication avec des références (TS10 ne reliait qu'à
+// l'origine d'un développement).
+
+describe("le lien visible, généralisé à toute référence (TS7)", () => {
+  test("sans rien de pris ni d'« Encore » en cours, rien à relier — le cas courant", () => {
+    expect(originesReliees([], null, null)).toBeUndefined()
+  })
+
+  test("« Combiner » relie le résultat à chacune des cartes combinées, pas seulement à une", () => {
+    // **C'est le cas que TS10 seul ne couvrait pas** : deux références sans
+    // développement en cours (`origineDeveloppement: null`) ne donnaient
+    // jamais de lien avant cette tranche — `origineDeLiaison(null, ...)` est
+    // toujours `undefined`. Un essai qui neutraliserait `origineEncore` et
+    // repasserait par `origineDeLiaison` seul tomberait ici (8octies).
+    const heron = carte("heron", { position: [0, 0] })
+    const renard = carte("renard", { position: [200, 0] })
+    expect(originesReliees([heron, renard], null, null)?.sort()).toEqual(["heron", "renard"])
+  })
+
+  test("« Encore » relie au fabriqué d'origine, qui n'est pourtant pas une référence envoyée", () => {
+    // L'original n'est jamais dans `references` — « Encore » ne le réinjecte
+    // pas, il relance la même demande. Sans `origineEncore`, aucune des deux
+    // autres sources (`references`, `origineDeLiaison`) ne le verrait.
+    expect(originesReliees([], null, "le-heron-original")).toEqual(["le-heron-original"])
+  })
+
+  test("une référence prise à la main (TS6, sans Développer ni Encore) relie aussi désormais", () => {
+    const renard = carte("renard", { position: [0, 0] })
+    expect(originesReliees([renard], null, null)).toEqual(["renard"])
+  })
+
+  test("les trois sources se cumulent sans jamais doubler un identifiant", () => {
+    const heron = carte("heron", { position: [0, 0] })
+    expect(originesReliees([heron], "heron", "heron")).toEqual(["heron"])
+  })
+})
+
+describe("où se pose une fabrication par rapport à ses références (Combiner, TS7)", () => {
+  const boite = (x: number, y: number, l: number, h: number) => ({ x, y, l, h })
+
+  test("sans référence posée sur le plan, rien à calculer ici — l'appelant retombe sur le centre de l'écran", () => {
+    expect(departDeFabrication(null, 0, 60, 20)).toBeNull()
+  })
+
+  test("une seule référence : à côté, comme TS10 — inchangé", () => {
+    const autour = boite(100, 40, 160, 160)
+    expect(departDeFabrication(autour, 1, 60, 20)).toEqual({
+      x: autour.x + autour.l + 27, // GOUTTIERE (9) × 3
+      y: autour.y,
+    })
+  })
+
+  test("« Combiner » — deux références ou plus : centré sur leur englobant, pas à côté", () => {
+    // **Le cas que TS10 seul rendait faux** : avant cette tranche, tout
+    // lancement se posait à droite des références, quel qu'en soit le
+    // nombre — un essai qui repasserait par la seule branche « à côté »
+    // tomberait ici (8octies).
+    const autour = boite(100, 40, 160, 160)
+    const depart = departDeFabrication(autour, 2, 60, 20)
+    expect(depart).toEqual({
+      x: autour.x + autour.l / 2 - 30,
+      y: autour.y + autour.h / 2 - 10,
+    })
+    // Et ce n'est bien pas la formule « à côté » : le point calculé tombe à
+    // l'intérieur de l'englobant, pas à sa droite.
+    expect(depart!.x).toBeLessThan(autour.x + autour.l)
+  })
+})
+
+describe("« Encore » : les références de l'appel d'origine, reconstituées (TS7)", () => {
+  const phrase = (references: PhraseDeCarte["references"]): PhraseDeCarte => ({
+    texte: "un héron",
+    modele: "essai:rend-du-png",
+    resolution: "512",
+    repris: false,
+    references,
+  })
+
+  test("aucune référence à l'origine : rien à reconstituer", () => {
+    expect(referencesDEncore(phrase([]))).toEqual([])
+  })
+
+  test("une référence venue d'une carte du tableau se reconstitue", () => {
+    expect(
+      referencesDEncore(phrase([{ asset: "renard", role: "edition", origine: "carte" }])),
+    ).toEqual(["renard"])
+  })
+
+  test("une référence venue de la bibliothèque (pas une carte) ne se reconstitue pas en prise", () => {
+    // Une prise de la barre ne peut désigner qu'une carte du tableau
+    // (`referencesPrises`) : une référence `origine: "asset"` — un artwork
+    // promu, par exemple — n'a pas de vignette à rouvrir ici.
+    expect(
+      referencesDEncore(phrase([{ asset: "artwork-1", role: "reference", origine: "asset" }])),
+    ).toEqual([])
   })
 })
