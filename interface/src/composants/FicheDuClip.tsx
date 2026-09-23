@@ -40,6 +40,7 @@ import { vignetteAsset } from "./Apercu"
 import { Bouton, EnTetePanneau, Libelle } from "./pieces"
 import { nomDuModele } from "./Fiche"
 import { PANNEAU } from "./Infobulle"
+import { TexteEnvoye } from "./TexteEnvoye"
 
 /** La fiche d'un clip, posée dans la quatrième colonne — la même largeur, les
  *  mêmes classes, la même grammaire que la fiche d'une image. */
@@ -134,10 +135,10 @@ export function FicheDuClip({
         {/* **Le texte qui l'a fait** — le même rang que sur la fiche d'une
             image, où l'on lit d'où l'image vient. Ici c'est le texte anglais
             qui est parti, corrigé ou non par le tiroir : c'est lui, et
-            personne d'autre, qui a écrit ce mouvement. */}
-        <p className="truncate text-[11.5px] text-encre-2" title={generation.demande.prompt}>
-          {generation.demande.prompt}
-        </p>
+            personne d'autre, qui a écrit ce mouvement.
+            **Se déplie au clic et se copie** (RV20) : il était coupé à une
+            ligne, lisible en entier seulement en bulle au survol. */}
+        <TexteEnvoye texte={generation.demande.prompt} />
         <p className="mesure truncate text-[10.5px] text-encre-4" title={generation.modele}>
           {nomDuModele(generation.modele)}
         </p>

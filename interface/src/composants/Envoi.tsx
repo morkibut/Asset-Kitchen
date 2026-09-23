@@ -54,6 +54,7 @@ import { origineDuTemps, tempsParImage, type EnvoiAvecLocal } from "../api-workf
 import { Bouton, Libelle, LigneReserve, Raison } from "./pieces"
 import { sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 import { RelireAvantEnvoi, type ResumeDeLEnvoi } from "./Relecture"
+import { BoutonCopierTexte } from "./TexteEnvoye"
 
 /** Le tri de départ — **rien**. Il ne porte que des écarts, jamais un état
  *  complet : c'est ce qui fait qu'éteindre les trois lignes d'une ambiance
@@ -676,14 +677,20 @@ export function EcranEnvoi({
                 l'univers n'est pas touché, la bible reste ce qu'elle est. C'est
                 la différence entre corriger une formulation et démonter son
                 projet. */}
-            <button
-              type="button"
-              onClick={() => onReprendre(envoi.texte)}
-              disabled={!envoi.texte}
-              className="mesure h-[26px] self-start text-[10px] text-signal hover:opacity-70 disabled:text-encre-4"
-            >
-              Reprendre le texte ›
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => onReprendre(envoi.texte)}
+                disabled={!envoi.texte}
+                className="mesure h-[26px] self-start text-[10px] text-signal hover:opacity-70 disabled:text-encre-4"
+              >
+                Reprendre le texte ›
+              </button>
+              {/* **Copier, à côté de reprendre** (RV20) : reprendre change
+                  d'onglet et remplit le champ qui paie ; copier emporte le
+                  texte sans rien changer ici. */}
+              {envoi.texte && <BoutonCopierTexte texte={envoi.texte} />}
+            </div>
 
             <p className="mesure text-[9.5px] leading-4 text-encre-4">
               {envoi.caracteres.total} caractères ·{" "}

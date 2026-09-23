@@ -51,6 +51,7 @@ import { posesTenues } from "../production"
 import { MOTEUR, RESUME } from "../recette"
 // P1c (V3.5) : refaire, lister et supprimer les découpages d'une planche.
 import { LesDecoupagesDeLaPlanche } from "./Depliages"
+import { BoutonCopierTexte } from "./TexteEnvoye"
 
 /** Le modèle qui a produit une image, tel qu'il se lit (US-123).
  *
@@ -1110,7 +1111,6 @@ function LeTexteQuiLAFaite({
   generation: Generation | null
   onOuvrir: (identifiant: string) => void
 }) {
-  const [copie, setCopie] = useState(false)
   const parti = generation?.demande.prompt?.trim() ?? ""
 
   // **Née d'une autre image** : sa parente porte le texte, pas elle.
@@ -1179,19 +1179,11 @@ function LeTexteQuiLAFaite({
         </p>
         {/* **Copier, et rien d'autre.** *Reprendre les réglages* existe déjà
             deux blocs plus haut et fait autre chose : il change d'onglet et
-            remplit le champ qui paie. Ici on lit, et on emporte le texte. */}
-        <button
-          type="button"
-          onClick={() => {
-            void navigator.clipboard
-              ?.writeText(parti)
-              .then(() => setCopie(true))
-              .catch(() => setCopie(false))
-          }}
-          className="mesure self-start text-[10.5px] text-signal hover:opacity-70"
-        >
-          {copie ? "copié" : "copier le texte"}
-        </button>
+            remplit le champ qui paie. Ici on lit, et on emporte le texte.
+            **Composant partagé depuis RV20** (23 septembre 2026) : le même
+            bouton sert le volet d'un clip et le tiroir de relecture — et dit
+            désormais l'échec au lieu d'échouer en silence. */}
+        <BoutonCopierTexte texte={parti} libelle="copier le texte" />
       </div>
     </Bloc>
   )
