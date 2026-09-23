@@ -1648,6 +1648,63 @@ class ServiceProduction:
         self._sauver(personnage)
         return personnage
 
+    def poser_palette_du_sujet(
+        self, projet: str, identifiant: str, palette: str | None
+    ) -> Personnage:
+        """La palette nommée qui quantifie ses images à naître — ou plus aucune (TS12).
+
+        Même geste que `poser_recette_du_sujet`, et la même route pour l'écran
+        et pour l'agent : `None` et la chaîne vide retirent le choix. **Une
+        palette que ce jeu ne connaît pas est refusée**, avec la liste de
+        celles qui existent — nommée par son identifiant ou par son nom, parce
+        qu'un agent lit plus volontiers le second.
+
+        **Rien n'est rejoué** : une image déjà née garde sa recette, donc ses
+        couleurs. Choisir efface la trace d'une palette supprimée : la fiche
+        n'a plus à la dire.
+        """
+        personnage = self.personnage(projet, identifiant)
+        propre = (palette or "").strip()
+        if propre:
+            palettes = self._exiger(projet).palettes
+            trouvee = next(
+                (p for p in palettes if p.identifiant == propre), None
+            ) or next(
+                (p for p in palettes if p.nom.casefold() == propre.casefold()), None
+            )
+            if trouvee is None:
+                raise ProductionRefusee(
+                    f"aucune palette « {propre} » dans ce jeu — "
+                    + (
+                        "les palettes sont : "
+                        + ", ".join(f"{p.nom} ({p.identifiant})" for p in palettes)
+                        if palettes
+                        else "il n'y en a encore aucune (on en fait une sur la toile)"
+                    )
+                )
+            propre = trouvee.identifiant
+        personnage.palette = propre
+        personnage.palette_supprimee = ""
+        self._sauver(personnage)
+        return personnage
+
+    def oublier_palette(self, projet: str, palette: str, nom: str) -> int:
+        """Les sujets qui la portaient par défaut **retombent sur aucune** (TS12).
+
+        Le pendant d'`oublier_ambiance`, plus une trace : le nom perdu reste
+        sur le sujet pour que sa fiche dise pourquoi il n'a plus de palette.
+        Aucune image ne bouge — chacune garde sa copie des couleurs.
+        """
+        retombes = 0
+        for personnage in self.personnages(projet):
+            if personnage.palette != palette:
+                continue
+            personnage.palette = ""
+            personnage.palette_supprimee = nom
+            self._sauver(personnage)
+            retombes += 1
+        return retombes
+
     def poser_image_de_reference(
         self, projet: str, identifiant: str, asset: str | None
     ) -> Personnage:

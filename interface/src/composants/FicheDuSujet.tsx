@@ -39,6 +39,7 @@ import {
   type GroupeDeRangement,
   type Habillage,
   type ObjectifDuPersonnage,
+  type PaletteNommee,
   type Personnage,
   type Pose,
   type ReferenceDeLaChose,
@@ -137,6 +138,9 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   // **La recette de ses images** (RS6, 18 septembre 2026) : les recettes
   // nommées se lisent à l'ouverture de la fiche, comme les types.
   const [nommees, setNommees] = useState<string[]>([])
+  // **La palette de ses images** (TS12) : les palettes nommées du jeu, lues
+  // dans le même aller-retour que les ambiances.
+  const [palettes, setPalettes] = useState<PaletteNommee[]>([])
   const [occupe, setOccupe] = useState(false)
   const [survol, setSurvol] = useState(false)
   // **Changer la vignette en deux clics** (16 septembre 2026) : un bouton sur
@@ -192,7 +196,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     relireReglages()
     relireStyle()
     void api.posesDesTypes().then((recu) => setTypes(recu?.types ?? [])).catch(() => setTypes([]))
-    void api.coteAmbiances().then((recu) => setAmbiances(recu?.ambiances ?? [])).catch(() => setAmbiances([]))
+    void api.coteAmbiances().then((recu) => { setAmbiances(recu?.ambiances ?? []); setPalettes(recu?.palettes ?? []) }).catch(() => { setAmbiances([]); setPalettes([]) })
     void api.recettesNommees().then((recu) => setNommees(Object.keys(recu?.recettes ?? {}).sort())).catch(() => setNommees([]))
     if (personnage.famille === "personnages")
       void api.styles(personnage.projet).then((recu) => setCatalogueStyles(recu?.styles ?? [])).catch(() => setCatalogueStyles([]))
@@ -216,6 +220,14 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
       onPersonnage(rendu.personnage)
     } catch (erreur) { onErreur(erreur, "la recette a été refusée") }
   }
+
+  const poserPalette = async (palette: string | null) => {
+    try {
+      const rendu = await api.poserPaletteDuSujet(personnage.identifiant, palette, personnage.projet)
+      onPersonnage(rendu.personnage)
+    } catch (erreur) { onErreur(erreur, "la palette a été refusée") }
+  }
+  const saPalette = palettes.find((p) => p.identifiant === personnage.palette)
 
   const garder = async () => {
     setOccupe(true)
@@ -357,6 +369,25 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
             </select>
           </label>
           <span className="text-[12px] text-encre-3">Les images déjà faites ne changent pas.</span>
+        </section>
+
+        {/* **La palette de ses images** (TS12) — même geste que la recette,
+            juste au-dessus : les images qui naissent ensuite pour ce sujet
+            sont ramenées à ses couleurs, celles déjà faites ne bougent pas.
+            Une palette supprimée depuis le choix est dite en clair : le sujet
+            est retombé sur aucune. */}
+        <section data-palette-du-sujet className="flex flex-col gap-[4px]">
+          <label className="flex items-center gap-[8px] text-[13px]">Palette par défaut :
+            <select aria-label="Palette par défaut" className="h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.palette ?? ""} onChange={(e) => void poserPalette(e.target.value || null)}>
+              <option value="">aucune</option>
+              {personnage.palette && !saPalette && <option value={personnage.palette}>{personnage.palette}</option>}
+              {palettes.map((p) => <option key={p.identifiant} value={p.identifiant} disabled={p.rendue.length === 0}>{p.nom} — {p.rendue.length === 0 ? "aucune couleur" : `${p.rendue.length} couleur${p.rendue.length > 1 ? "s" : ""}`}</option>)}
+            </select>
+          </label>
+          {saPalette && saPalette.rendue.length > 0 && <span aria-hidden className="flex flex-wrap gap-[2px]">{saPalette.rendue.map((c, i) => <span key={`${c}-${i}`} data-pastille-du-sujet className="h-[14px] w-[14px] rounded-5 border border-trait-faible" style={{ background: c }} />)}</span>}
+          {personnage.palette_supprimee && !personnage.palette
+            ? <span data-palette-supprimee className="text-[12px] text-encre-attention">La palette « {personnage.palette_supprimee} » a été supprimée : ses nouvelles images n’ont plus de palette par défaut. Les images déjà faites gardent leurs couleurs.</span>
+            : <span className="text-[12px] text-encre-3">{palettes.length === 0 && !personnage.palette ? "Ce jeu n’a pas encore de palette : fais-en une sur la toile, depuis un paquet d’images." : "Ses nouvelles images sont ramenées à ces couleurs. Les images déjà faites ne changent pas."}</span>}
         </section>
 
         {/* **Seuls les personnages se battent** — un décor ou un objet n'a

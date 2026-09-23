@@ -407,6 +407,14 @@ export const quantificationDe = (
   distance: recette.quantification?.distance ?? "brute",
   visibles_seuls: recette.quantification?.visibles_seuls ?? false,
   gardees: recette.quantification?.gardees ?? [],
+  // **Absentes, pas une palette nommée** (TS12) — et elles ne s'inventent pas :
+  // une recette qui ne nomme aucune palette la relit sans clé neuve.
+  ...(recette.quantification?.palette_nommee
+    ? { palette_nommee: recette.quantification.palette_nommee }
+    : {}),
+  ...(recette.quantification?.palette_nom
+    ? { palette_nom: recette.quantification.palette_nom }
+    : {}),
 })
 /** Une paire qui ne nomme encore aucune couleur. Elle vit dans le panneau, pas
  *  dans la recette : voir `TableDEchange`. Exportée : `Retouche.tsx` pose la

@@ -930,6 +930,31 @@ async def poser_recette_du_sujet(
     return {"personnage": atelier.production.en_charge(vise, personnage)}
 
 
+class CorpsPaletteDuSujet(BaseModel):
+    """La palette de ses images — **une seule route, `null` la retire** (TS12)."""
+
+    palette: str | None = None
+    projet: str | None = None
+
+
+@routeur.put("/characters/{identifiant}/palette")
+async def poser_palette_du_sujet(
+    requete: Request, identifiant: str, corps: CorpsPaletteDuSujet
+) -> dict[str, Any]:
+    """Choisir la palette nommée qui quantifie ses images à naître.
+
+    Elle passe par-dessus la recette (du sujet ou du jeu) pour chaque image
+    faite pour ce sujet ; une image déjà née ne change pas. Une palette que ce
+    jeu ne connaît pas est refusée (409), avec la liste des palettes.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    personnage = atelier.production.poser_palette_du_sujet(
+        vise, identifiant, corps.palette
+    )
+    return {"personnage": atelier.production.en_charge(vise, personnage)}
+
+
 @routeur.get("/characters/showcase")
 async def vitrine_du_monde(
     requete: Request, projet: str | None = Query(None)

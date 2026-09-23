@@ -76,6 +76,7 @@ import {
   type Main,
   type Methode,
   type Nature,
+  type PaletteNommee,
   type Passe,
   type Quantification,
   type Recadrage,
@@ -1685,16 +1686,42 @@ export function ReglagesDesCouleurs({
     quantification: { ...valeurs, ...suivant },
   })
 
+  /** **Les palettes nommées du jeu** (TS12) — celles qu'on fabrique sur la
+   *  toile. `null` le temps de les lire : sans ça, une recette qui nomme une
+   *  palette dirait « elle n'existe plus » avant que la liste n'arrive. */
+  const palettes = usePalettesDuJeu()
+  const nommee = valeurs.palette_nommee ?? ""
+  const choisie = nommee && palettes ? palettes.find((p) => p.identifiant === nommee) ?? null : null
+  const perdue = Boolean(nommee) && palettes !== null && choisie === null
+  const aChange = choisie !== null && !memesCouleurs(choisie.rendue, valeurs.palette)
+  /** **Le jeu et l'image effacent la provenance** : la copie ne vient plus
+   *  d'une palette nommée, et la garder ferait dire à l'écran le nom d'une
+   *  palette qui n'y est plus. */
+  const sansProvenance = { palette_nommee: undefined, palette_nom: undefined }
+  /** **La palette se copie dans la recette au moment du choix** (TS12, la
+   *  règle de `B26` pour le jeu) — ses couleurs, son identifiant pour la
+   *  retrouver, son nom pour la dire. Si elle change ensuite sur la toile, la
+   *  recette rend toujours la même image. */
+  const prendre = (palette: PaletteNommee) =>
+    void poser(
+      avec({
+        palette: palette.rendue,
+        palette_nommee: palette.identifiant,
+        palette_nom: palette.nom,
+      }),
+    )
+
   return (
     <div className="flex flex-col gap-[14px]">
-      {/* ── D'où viennent les couleurs (rattrapé en `B26`) ──────────────────
-          **Deux sources, et le modèle les portait déjà.** *Le jeu* copie la
-          palette du projet dans la recette ; *l'image* la vide, et l'algorithme
-          choisi ci-dessous décide alors des couleurs sur l'image elle-même. */}
+      {/* ── D'où viennent les couleurs (rattrapé en `B26`, étendu en TS12) ──
+          **Trois sources.** *Le jeu* copie la palette du projet dans la
+          recette ; *l'image* la vide, et l'algorithme choisi ci-dessous décide
+          alors des couleurs sur l'image elle-même ; *une palette nommée* de la
+          toile copie les siennes, et garde son nom pour qu'on la reconnaisse. */}
       <Reglage nom="couleurs de">
         <Choix
           valeurs={["le jeu", "l'image"] as const}
-          valeur={surLImage ? "l'image" : "le jeu"}
+          valeur={nommee ? null : surLImage ? "l'image" : "le jeu"}
           eteints={
             univers.palette.length === 0
               ? {
@@ -1707,9 +1734,37 @@ export function ReglagesDesCouleurs({
             // **La palette se copie dans la recette au moment du choix**, comme
             // celle d'une passe `palette` : une recette est un calcul complet,
             // rejouable sans redemander au projet ce qu'il contenait ce jour-là.
-            void poser(avec({ palette: source === "l'image" ? [] : univers.palette }))
+            void poser(
+              avec({
+                palette: source === "l'image" ? [] : univers.palette,
+                ...sansProvenance,
+              }),
+            )
           }
         />
+        {palettes && palettes.length > 0 && (
+          <PalettesDuJeu palettes={palettes} choisie={nommee} onChoisir={prendre} />
+        )}
+        {perdue && (
+          <Pourquoi
+            texte={`la palette « ${valeurs.palette_nom || nommee} » n'existe plus — ses ${valeurs.palette.length} couleurs restent dans la recette`}
+          />
+        )}
+        {aChange && choisie && (
+          <div
+            data-palette-changee
+            className="flex flex-wrap items-center gap-[8px] text-[11.5px] leading-[1.45] text-encre-3"
+          >
+            <span>la palette « {choisie.nom} » a changé depuis — la recette garde ses anciennes couleurs</span>
+            <button
+              type="button"
+              className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-controle hover:border-encre-4"
+              onClick={() => prendre(choisie)}
+            >
+              Reprendre ses couleurs
+            </button>
+          </div>
+        )}
       </Reglage>
 
       <Reglage nom="couleurs">
@@ -1884,10 +1939,105 @@ export function ReglagesDesCouleurs({
   )
 }
 
+/** Deux listes de couleurs sont-elles la même palette ? L'ordre compte : c'est
+ *  celui que la palette rend, et la recette le recopie tel quel. */
+function memesCouleurs(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((c, i) => c.toLowerCase() === (b[i] ?? "").toLowerCase())
+}
+
+/** Les palettes nommées du jeu (TS12), lues à l'ouverture de la table.
+ *
+ *  **Lues ici plutôt que portées par `Poste`** : les deux écrans qui montent
+ *  cette table — la retouche d'une image et l'atelier d'une animation — n'ont
+ *  pas à les connaître pour autre chose, et les leur faire charger tous deux
+ *  aurait fait deux lectures à tenir d'accord. `null` tant que rien n'est lu. */
+function usePalettesDuJeu(): PaletteNommee[] | null {
+  const [palettes, setPalettes] = useState<PaletteNommee[] | null>(null)
+  useEffect(() => {
+    let vivant = true
+    api
+      .coteAmbiances()
+      .then((recu) => {
+        if (vivant) setPalettes(Array.isArray(recu?.palettes) ? recu.palettes : [])
+      })
+      .catch(() => {
+        if (vivant) setPalettes([])
+      })
+    return () => {
+      vivant = false
+    }
+  }, [])
+  return palettes
+}
+
+/** Combien de pastilles une ligne montre avant de compter le reste. */
+const PASTILLES_MONTREES = 12
+
+/** **Chaque palette nommée, montrée avec ses pastilles** (TS12) — un nom seul
+ *  ne dit pas ce qu'on va poser sur l'image. Une palette sans couleur est
+ *  grisée avec sa raison, jamais retirée. */
+function PalettesDuJeu({
+  palettes,
+  choisie,
+  onChoisir,
+}: {
+  palettes: PaletteNommee[]
+  choisie: string
+  onChoisir: (palette: PaletteNommee) => void
+}) {
+  const videExiste = palettes.some((p) => p.rendue.length === 0)
+  return (
+    <div role="group" aria-label="les palettes du jeu" className="flex flex-col gap-[4px]">
+      {palettes.map((palette) => {
+        const vide = palette.rendue.length === 0
+        const pressee = choisie === palette.identifiant
+        return (
+          <button
+            key={palette.identifiant}
+            type="button"
+            aria-pressed={pressee}
+            aria-label={`palette ${palette.nom}`}
+            disabled={vide}
+            onClick={() => onChoisir(palette)}
+            className={[
+              "flex min-h-[26px] items-center gap-[8px] rounded-7 border px-[8px] py-[4px] text-left text-[12px] transition-colors duration-120",
+              vide
+                ? "cursor-not-allowed border-trait-faible bg-papier-cote text-eteint"
+                : pressee
+                  ? "border-encre-4 bg-carte font-medium text-encre"
+                  : "border-trait bg-carte text-encre-3 hover:border-encre-4",
+            ].join(" ")}
+          >
+            <span className="min-w-0 flex-1 truncate">{palette.nom}</span>
+            <span aria-hidden className="flex shrink-0 flex-wrap items-center gap-[2px]">
+              {palette.rendue.slice(0, PASTILLES_MONTREES).map((couleur, rang) => (
+                <span
+                  key={`${couleur}-${rang}`}
+                  data-pastille-de-palette
+                  className="h-[14px] w-[14px] rounded-5 border border-trait-faible"
+                  style={{ background: couleur }}
+                />
+              ))}
+              {palette.rendue.length > PASTILLES_MONTREES && (
+                <span className="mesure text-[10.5px] text-encre-4">
+                  +{palette.rendue.length - PASTILLES_MONTREES}
+                </span>
+              )}
+            </span>
+          </button>
+        )
+      })}
+      {videExiste && (
+        <Pourquoi texte="une palette sans couleur ne se choisit pas — donne-lui des images sur la toile" />
+      )}
+    </div>
+  )
+}
+
 /** La raison écrite à côté du grisé, quand la palette du jeu est posée.
  *  **Écrite une fois** : trois grisés qui la recopieraient finiraient par ne
  *  plus dire la même chose. */
-const SOUS_LA_PALETTE = "la palette du jeu décide seule des couleurs"
+const SOUS_LA_PALETTE = "la palette choisie décide seule des couleurs"
 
 /** Les couleurs qu'aucune fusion n'emporte (`B18`).
  *

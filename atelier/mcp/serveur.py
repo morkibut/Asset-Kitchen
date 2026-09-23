@@ -48,6 +48,7 @@ from atelier.domaine.generation import AGENT, REFERENCE, Generation, Reinjection
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.recette import PLACES, Recette, places_inconnues
 from atelier.domaine.sortie import Reglage as ReglageDeSortie
+from atelier.mcp.objectifs import palette_du_sujet
 from atelier.services import Atelier
 from atelier.services.bibliotheque import ProjetInconnu
 
@@ -1066,6 +1067,9 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                         projet, personnage, cases
                     )
                     or None,
+                    # **Sa palette par défaut** (TS12) — lue ici, posée par
+                    # `set_character_objective`. `null` quand il n'en a pas.
+                    "palette": palette_du_sujet(atelier, projet, personnage),
                     "poses": [
                         {
                             "pose": case["pose"],

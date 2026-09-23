@@ -76,6 +76,7 @@ from atelier.domaine.recette import (
     Difference,
     Main,
     Passe,
+    Quantification,
     Recette,
     cote_du_canevas,
     cote_du_sujet,
@@ -867,7 +868,9 @@ class ServiceAssets:
         # remettrait la grille que RS2 a retirée. Ses morceaux, eux, la
         # reçoivent (`recette_d_un_morceau_refait`).
         du_sujet = self.recette_du_sujet(generation)
-        return du_sujet if du_sujet is not None else du_projet
+        return self.avec_la_palette_du_sujet(
+            generation, du_sujet if du_sujet is not None else du_projet
+        )
 
     def recette_d_un_morceau_refait(self, generation: Generation) -> Recette:
         """La recette d'un morceau coupé dans la feuille d'une planche refaite.
@@ -875,12 +878,67 @@ class ServiceAssets:
         Ce que le projet impose à **un morceau de planche**, grille comprise
         (RS2) — ou la recette du sujet s'il en a une (RS6), puisque ce sont
         eux, les images du sujet. Écrite ici pour que la découpe et la fiche
-        (`impose`) lisent la même chose.
+        (`impose`) lisent la même chose. La palette du sujet s'y pose aussi
+        (TS12), pour la même raison.
         """
         du_sujet = self.recette_du_sujet(generation)
-        if du_sujet is not None:
-            return du_sujet
-        return self.recette_du_projet(generation, PLANCHE)
+        return self.avec_la_palette_du_sujet(
+            generation,
+            du_sujet
+            if du_sujet is not None
+            else self.recette_du_projet(generation, PLANCHE),
+        )
+
+    def avec_la_palette_du_sujet(
+        self, generation: Generation, recette: Recette
+    ) -> Recette:
+        """La recette, **quantifiée avec la palette par défaut du sujet** (TS12).
+
+        La palette passe par-dessus la recette — celle du sujet ou celle du
+        jeu — et ne touche qu'à la source des couleurs : le tramage, les
+        curseurs, les couleurs gardées de la recette restent les siens. Une
+        recette sans quantification en reçoit une, sur les seules couleurs de
+        la palette : c'est ce que l'auteur a demandé en la choisissant.
+
+        **La copie des couleurs est prise maintenant**, avec l'identifiant et
+        le nom de la palette (`atelier/domaine/recette.py`) : l'image qui naît
+        rendra toujours ces couleurs-là, même si la palette change ensuite.
+
+        Rend la recette inchangée dans les mêmes cas que `recette_du_sujet`
+        (image entrée telle quelle, image brute de la toile, lot plié, appel
+        sans sujet) — et quand la palette n'existe plus ou n'a encore aucune
+        couleur : on ne quantifie pas sur une liste vide, qui voudrait dire
+        « les couleurs de l'image ».
+        """
+        if generation.demande.get("traiter") is False or generation.demande.get("brut"):
+            return recette
+        if generation.pliage is not None:
+            return recette
+        if not generation.personnage or generation.projet is None:
+            return recette
+        contenu = self._fichiers.lire_personnage(
+            generation.projet, generation.personnage
+        )
+        if contenu is None:
+            return recette
+        choisie = Personnage.depuis_json(contenu).palette
+        if not choisie:
+            return recette
+        objet = self._base.lire_projet(generation.projet)
+        palette = objet.palette_nommee(choisie) if objet is not None else None
+        if palette is None or not palette.rendue:
+            return recette
+        couleurs = tuple(palette.rendue)
+        depart = recette.quantification or Quantification(couleurs=len(couleurs))
+        return replace(
+            recette,
+            quantification=replace(
+                depart,
+                palette=couleurs,
+                palette_nommee=palette.identifiant,
+                palette_nom=palette.nom,
+            ),
+        )
 
     def recette_du_sujet(self, generation: Generation) -> Recette | None:
         """La recette nommée du sujet de cet appel, prête à poser — ou `None`.

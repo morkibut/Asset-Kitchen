@@ -1263,6 +1263,11 @@ class CorpsQuantification(BaseModel):
     distance: str = BRUTE
     visibles_seuls: bool = False
     gardees: list[str] = Field(default_factory=list)
+    # **La palette nommée d'où vient la copie** (TS12). Même leçon : absente du
+    # corps, elle disparaîtrait de la recette au premier curseur touché à côté,
+    # et l'écran ne saurait plus dire « la palette X a changé depuis ».
+    palette_nommee: str = ""
+    palette_nom: str = ""
 
 
 class CorpsDesignation(BaseModel):

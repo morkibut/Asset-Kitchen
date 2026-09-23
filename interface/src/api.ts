@@ -1750,6 +1750,12 @@ export type Quantification = {
   visibles_seuls?: boolean
   /** Les couleurs qu'aucune fusion n'emporte, au plus `GARDEES_MAX`. */
   gardees?: string[]
+  /** **De quelle palette nommée `palette` est la copie** (TS12) — son
+   *  identifiant pour la retrouver, son nom pour la dire même supprimée.
+   *  Absents : le jeu, ou l'image. Aucun des deux ne change un pixel : la
+   *  recette garde la copie des couleurs, et c'est elle qui rend. */
+  palette_nommee?: string
+  palette_nom?: string
 }
 
 /** Le neutre de la force du tramage — **cent, et non zéro**. Voir le
@@ -2489,6 +2495,13 @@ export type Personnage = {
    *  reçoit chaque image qui naît pour ce sujet à la place de la recette du
    *  jeu. Vide ou absente : la recette du jeu. */
   recette?: string
+  /** **La palette de ses images** (TS12) — l'identifiant d'une palette nommée
+   *  du jeu, qui quantifie chaque image qui naît ensuite pour ce sujet. Vide
+   *  ou absente : aucune. */
+  palette?: string
+  /** Le nom d'une palette supprimée depuis le choix : le sujet est retombé
+   *  sur aucune, et sa fiche le dit. Vide dès qu'on choisit de nouveau. */
+  palette_supprimee?: string
   /** Ce qu'elle s'est ajouté pour elle seule. Elles viennent après celles du
    *  type, jamais mêlées. */
   ajoutees: Pose[]
@@ -6828,6 +6841,14 @@ export const api = {
     appeler<{ personnage: Personnage }>(`/characters/${personnage}/recipe`, {
       method: "PUT",
       body: JSON.stringify({ recette, ...(projet ? { projet } : {}) }),
+    }),
+
+  /** **La palette de ses images** (TS12) — `null` la retire. Seules les
+   *  images à naître la reçoivent ; une palette inconnue est refusée. */
+  poserPaletteDuSujet: (personnage: string, palette: string | null, projet?: string) =>
+    appeler<{ personnage: Personnage }>(`/characters/${personnage}/palette`, {
+      method: "PUT",
+      body: JSON.stringify({ palette, ...(projet ? { projet } : {}) }),
     }),
 
   /** De quoi regarder une chose finie : les fonds du projet, et la taille

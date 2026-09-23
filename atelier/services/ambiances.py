@@ -576,6 +576,9 @@ class ServiceAmbiances:
             for p in objet.palettes
         )
         self._bibliotheque.sauver_projet(objet)
+        # **Les sujets qui la portaient par défaut retombent sur aucune** (TS12),
+        # et le disent. Aucune recette n'est touchée : chacune garde sa copie.
+        self._production.oublier_palette(objet.identifiant, identifiant, palette.nom)
         return palette
 
     def creer_ambiance(

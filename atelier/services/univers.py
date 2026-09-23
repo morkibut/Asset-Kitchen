@@ -1710,11 +1710,23 @@ class ServiceUnivers:
                     if asset.recette.grille is None
                     else replace(asset.recette.grille, cible=univers.cible_px)
                 ),
+                # **Une palette nommée n'est pas celle du jeu** (TS12) : le
+                # balayage d'un projet la laisse — c'est un choix de l'auteur,
+                # posé sur l'image ou hérité de son sujet. Un réalignement
+                # demandé pour cette image-là la remet sur le jeu, et efface
+                # alors la provenance : garder le nom sur les couleurs du jeu
+                # ferait dire à la fiche une palette qui n'est plus là.
                 quantification=(
-                    replace(
+                    asset.recette.quantification
+                    if vises is None
+                    and asset.recette.quantification is not None
+                    and asset.recette.quantification.palette_nommee
+                    else replace(
                         asset.recette.quantification or _quantification_neuve(univers),
                         couleurs=univers.couleurs,
                         palette=univers.palette,
+                        palette_nommee="",
+                        palette_nom="",
                     )
                     if univers.palette
                     else asset.recette.quantification

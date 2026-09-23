@@ -269,18 +269,42 @@ palette », `Toile.tsx`, `Palette` dans `atelier/domaine/ambiance.py`) n'y sont 
 la fiche » d'un sujet ne permet pas de lui donner une palette par défaut, comme on lui donne
 une recette.
 
-- [ ] la quantification propose **le jeu**, **l'image**, et **chaque palette nommée du jeu**,
+- [x] la quantification propose **le jeu**, **l'image**, et **chaque palette nommée du jeu**,
       montrée avec ses pastilles ; choisir une palette réduit l'image à ses couleurs
-- [ ] **déterminisme** (règle durable d'AGENTS.md) : une recette qui nomme une palette garde
+- [x] **déterminisme** (règle durable d'AGENTS.md) : une recette qui nomme une palette garde
       **la copie de ses couleurs** au moment du choix ; si la palette change ensuite sur la
       toile, la recette rend toujours la même image, et l'écran dit « la palette X a changé
       depuis » avec un geste pour reprendre ses nouvelles couleurs
-- [ ] « Modifier la fiche » d'un sujet porte **« Palette par défaut »** (aucune, ou une palette
+- [x] « Modifier la fiche » d'un sujet porte **« Palette par défaut »** (aucune, ou une palette
       nommée) ; les images qui arrivent ensuite pour ce sujet sont quantifiées avec elle ; celles
       déjà faites ne bougent pas (*traitement non destructif*) tant qu'on ne réapplique pas
-- [ ] l'agent (MCP) lit et pose la palette d'un sujet par le même service (*T7*)
-- [ ] une palette supprimée de la toile ne casse aucune recette (la copie des couleurs reste) ;
+- [x] l'agent (MCP) lit et pose la palette d'un sujet par le même service (*T7*)
+- [x] une palette supprimée de la toile ne casse aucune recette (la copie des couleurs reste) ;
       le sujet qui la portait par défaut retombe sur « aucune », et sa fiche le dit
+
+*Fait le 23 septembre 2026.* **La décision** est écrite en tête de `atelier/domaine/recette.py` :
+la quantification garde la copie des couleurs (`palette`, comme pour le jeu depuis T2) plus
+`palette_nommee` et `palette_nom`, qui ne servent qu'à la relire. Les deux clés ne s'écrivent
+que remplies et **sortent de l'empreinte** (comme le nom d'une recette) : aucune recette
+existante ne change de rendu ni de nom de cache — pas de prix à écrire dans AGENTS.md. Le
+sujet garde un **renvoi** (`palette`, comme `recette` en RS6) ; ses images prennent la copie à
+leur naissance, par-dessus sa recette ou celle du jeu (image seule et morceaux d'une planche
+refaite ; pas la feuille, pas un lot plié, pas une image brute de la toile). Tranché en
+route : (1) une palette supprimée **vide** le renvoi et laisse son nom dans
+`palette_supprimee`, que la fiche dit — garder l'identifiant aurait fait prendre au sujet une
+palette neuve du même nom, qui reprend le même identifiant ; (2) « Tout réaligner » sur le
+projet **laisse** une quantification qui nomme une palette ; demandé pour une image, il la
+remet sur le jeu et efface la provenance ; (3) l'agent : `set_character_objective` gagne
+`palette` (identifiant ou nom, `""` retire, `objective` devient facultatif) et
+`list_characters` la lit — pas d'outil neuf. La table « Couleurs » lit les palettes elle-même
+(`/moods`), donc l'atelier d'une animation les reçoit sans rien de plus. **Vu au navigateur**
+sur un atelier jetable (8429) : la liste et ses pastilles dans la table d'une image,
+l'enregistrement, « a changé depuis » après une retouche de la palette, la fiche refermée et
+rouverte, la notice après suppression. **Pas vu** : l'atelier d'une animation lui-même (même
+composant, non ouvert faute de bande dans l'atelier jetable). Reste : les couleurs copiées à
+la naissance sont celles gardées dans le fichier du projet, recalculées chaque fois que les
+palettes sont lues — une palette dont une source a changé sans que personne ne l'ait relue
+donnerait sa lecture précédente.
 
 ## La toile qui fabrique — façon Mixboard
 
