@@ -531,9 +531,115 @@ ne défile jamais.
 
 ---
 
+## RV18 · « Sa vue » dit vrai, et se voit en scène
+
+**Bloquée par** : aucune. *Ajoutée le 23 septembre 2026, sur un retour de l'auteur* (Réglages ›
+Univers › étape 3 « Sa vue », avec des captures d'A Link to the Past, du premier Zelda, de
+Hotline Miami, d'EarthBound, de Diablo 2 et de Hollow Knight à l'appui). Deux problèmes : des
+jeux cités en exemple ne correspondent pas à la vue, et une vignette du rôdeur seul sur fond gris
+ne fait pas comprendre quel jeu on pourra construire.
+
+### Le relevé, vue par vue (fait le 23 septembre contre les captures de l'auteur)
+
+La liste vit dans `atelier/domaine/vue.py`. ⚠️ Le texte « CAMERA » de chaque vue **part au
+modèle** et certains y nomment les jeux : changer un exemple là change ce qui part, et les
+tirages d'avant ne se comparent plus.
+
+| Vue | Exemples aujourd'hui | Verdict |
+|---|---|---|
+| De face, fixe (1) | « les écrans de combat au tour par tour » | juste ; nommer des jeux : Dragon Quest, les combats d'EarthBound |
+| De dessus, verticale (1) | « les jeux de tir à défilement vertical » | juste ; nommer : 1942, Raiden |
+| De côté — plateforme (2) | Mario, Celeste, Hollow Knight | **juste** (la capture de Hollow Knight le confirme) |
+| De côté — défilement (2) | « les jeux de baston de rue » | juste ; nommer : Streets of Rage, Final Fight |
+| De dessus, stricte (4) | le premier Zelda, Hotline Miami | **faux à moitié.** Hotline Miami est bien vu de dessus (on voit le crâne), mais ses personnages **tournent librement**, pas 4 directions. Le premier Zelda n'est **pas** vu de dessus au sens strict : le décor est à plat, mais Link est dessiné de face ou de profil — il appartient à la famille 3/4 |
+| De dessus, 3/4 (4) | Zelda A Link to the Past, Stardew Valley | **juste** (la capture le confirme : murs vus de face, sol vu de dessus). Y ajouter le premier Zelda, en plus plat |
+| Oblique (cavalière) (4) | Ultima, EarthBound | projection **juste** pour EarthBound (dallages et étals en biais sur les captures) ; « Ultima » est trop vague — c'est Ultima VII. Mais EarthBound dessine **8 directions**, pas 4 |
+| Isométrique (4) | Diablo 2, Age of Empires 2 | projection **juste** (vue d'un coin, losanges) ; mais ces deux jeux dessinent **8 directions**. Pour 4 : Final Fantasy Tactics, Into the Breach |
+
+### Critères d'acceptation
+
+- [ ] Chaque exemple cité correspond à la vue **et** au nombre de directions annoncé ; un jeu qui
+      n'y correspond pas est retiré ou déplacé (tableau ci-dessus).
+- [ ] « De dessus, stricte » dit la vérité sur les directions : soit elle passe à un personnage
+      qui tourne (une image, que le jeu fait pivoter — comme la verticale), soit elle garde 4
+      directions avec des exemples qui en ont 4. **À trancher par l'auteur.**
+- [ ] L'oblique et l'isométrique disent si elles proposent 4 ou 8 directions ; si l'atelier ne
+      sait faire que 4, l'écran le dit au lieu de citer des jeux à 8.
+- [ ] Le texte envoyé au modèle suit les exemples corrigés, et l'écart est noté ici (*les tirages
+      d'avant ne se comparent plus*).
+- [ ] **Chaque vue se montre en scène** : le rôdeur dans un décor construit pour cette vue (sol,
+      un mur ou un obstacle, un objet), à la place du rôdeur seul sur fond gris.
+- [ ] **Au survol, la scène joue** : le rôdeur marche dans le décor, dans les directions de la
+      vue — on comprend en deux secondes à quel jeu ça ressemble.
+- [ ] Les scènes sont des fichiers du dépôt, fabriqués une fois (pas à chaque ouverture), et ne
+      dépensent rien à l'usage.
+
+**Tranché par l'auteur le 23 septembre 2026** : **(a)**, le rôdeur en scène animée ; et « De
+dessus, stricte » devient **une image qui tourne** (le jeu la fait pivoter, comme la verticale),
+avec Hotline Miami et GTA 1-2 pour exemples — le premier Zelda passe en 3/4.
+
+*Les choix qui étaient proposés* : (a) scènes fabriquées par l'atelier lui-même —
+le rôdeur et un petit décor par vue, puis animées au survol à partir de ses sprites
+(recommandé : c'est le produit qui se montre, et il n'y a pas de droits sur des captures) ;
+(b) captures de vrais jeux (plus parlant, plus simple, mais des images qui ne sont pas à nous) ;
+(c) les deux : la scène du rôdeur, et un nom de jeu cliquable qui ouvre une capture. Le coût
+d'une fabrication de huit scènes est à annoncer avant de lancer quoi que ce soit.
+
+---
+
+## RV19 · L'image de départ se voit avant de choisir
+
+**Bloquée par** : RV7, RV9 (même fenêtre). *Ajoutée le 23 septembre 2026, sur un retour de
+l'auteur* : « Animer les directions » sur un personnage ; au point 2 de la fenêtre, « Image de
+départ », on ne voit que « La référence existante du personnage sera proposée à la relecture »
+et une liste de quatre-vingts modèles « pour créer la référence si elle manque ». « On pourrait
+pas avoir les propositions déjà calculées et affichées ici ? Peut-être que ce point doit arriver
+après le point 3, quand on a choisi le geste et le style de combat ? »
+
+### Critères d'acceptation
+
+- [ ] **Dès l'ouverture, le point « Image de départ » montre, case par case, l'image qui
+      partira** (la référence de la direction, sinon celle que la relecture proposerait), en
+      vignette, avec « Changer » à côté. Elle est calculée par le serveur par **la même règle**
+      que la relecture — pas une seconde règle côté écran.
+- [ ] Une case sans image le dit en clair (« aucune image pour gauche ») ; **la liste des modèles
+      n'apparaît que dans ce cas**, pour ces cases-là. Quand toutes les cases ont leur image, la
+      liste disparaît et laisse une phrase (*un contrôle inerte disparaît*, 8nonies).
+- [ ] Quand elle apparaît, la liste des modèles propose d'abord celui que le jeu recommande,
+      présélectionné, et ne montre pas quatre-vingts lignes à plat (les modèles grisés restent
+      grisés avec leur raison).
+- [ ] **L'ordre de la fenêtre suit le geste** : 1. l'animation à créer (sujet, mouvement,
+      directions) ; 2. le geste et le style de combat ; 3. l'image de départ ; 4. le clip ; 5.
+      l'animation à obtenir. L'image proposée se recalcule quand le mouvement ou les directions
+      changent.
+- [ ] **« Corriger le geste » part du texte existant** (retour de l'auteur du même jour) : en
+      ouvrant la correction, le champ est **rempli** avec le geste actuel, modifiable — pas
+      montré en texte d'exemple grisé qu'il faudrait retaper pour changer un mot. Une correction
+      qui revient au texte d'origine n'en est pas une (rien ne part en plus) ; « remettre le
+      texte du mouvement » reste là.
+
+---
+
+## RV20 · Un texte envoyé se copie
+
+**Bloquée par** : aucune. *Ajoutée le 23 septembre 2026, sur un retour de l'auteur* (Galerie,
+volet « Le clip » : le texte envoyé est coupé à une ligne, lisible en entier seulement dans une
+bulle au survol — « je peux le lire mais pas le récupérer »).
+
+### Critères d'acceptation
+
+- [ ] Partout où l'atelier montre un texte parti au modèle — le volet d'un clip et la fiche d'une
+      image dans la Galerie, la relecture avant l'envoi, la carte de la toile (`TS5`) —, un bouton
+      **« Copier »** met le texte entier dans le presse-papiers et le dit (« copié ») un instant.
+- [ ] Le texte coupé se déplie au clic, au lieu de n'exister qu'en bulle au survol.
+- [ ] Un seul petit composant sert tous ces endroits ; une copie refusée par le navigateur le dit
+      au lieu d'échouer en silence.
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20.
 
 ### Ce qu'on livre
 
