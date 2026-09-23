@@ -350,7 +350,12 @@ async def tableau(requete: Request, projet: str | None = None) -> dict[str, Any]
     groupes = sorted({c.groupe for c in cartes if c.groupe})
     return {
         "projet": identifiant,
-        "cartes": [c.en_json() for c in cartes],
+        # **La phrase de chaque carte, dans le même aller-retour** (TS5). Elle
+        # vit sur la génération qui a produit l'asset, pas sur la carte — la
+        # remonter ici est ce qui évite à l'écran une requête par carte pour la
+        # lire ; `null` pour une carte qui n'en a pas (une note, une image
+        # collée à la main, un clip).
+        "cartes": [{**c.en_json(), "phrase": atelier.univers.phrase_de_carte(c)} for c in cartes],
         # Les groupes tels qu'ils existent, dans l'ordre où on les a nommés.
         # Calculés ici plutôt qu'à l'écran : c'est le serveur qui tient les
         # cartes, et deux listes de groupes finiraient par diverger.

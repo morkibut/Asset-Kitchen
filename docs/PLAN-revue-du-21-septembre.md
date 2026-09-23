@@ -428,9 +428,43 @@ devient un filtre.
 
 ### Critères d'acceptation
 
-- [ ] Quatre onglets au plus (`docs/DESIGN.md`).
-- [ ] Rien de ce que portaient les trois onglets retirés ne devient inatteignable.
-- [ ] Le bandeau « à ranger » n'apparaît que s'il y a des éléments à ranger.
+- [x] Quatre onglets au plus (`docs/DESIGN.md`).
+- [x] Rien de ce que portaient les trois onglets retirés ne devient inatteignable.
+- [x] Le bandeau « à ranger » n'apparaît que s'il y a des éléments à ranger.
+
+*Fait le 23 septembre 2026.* Quatre onglets, dans l'ordre du plan : Animations · Images · Sons ·
+Équipement. Trois décisions non tranchées par le plan : « Galerie » devient une section repliable
+« Sources » sous l'onglet *Animations* (clips vidéo et modèles 3D — les images et animations
+qu'elle montrait aussi faisaient double emploi avec les onglets qui les rangent déjà par pose) ;
+« Pas encore rangé » devient un bandeau replié par défaut, entre les onglets et leur contenu,
+absent quand il n'y a rien ; « Objectif & règles » est monté dans « Modifier la fiche »
+(`FicheDuSujet.tsx`), entre le type/l'ambiance et la recette. Les trois anciens onglets restent
+des destinations valides pour `App.tsx` (la carte d'un sujet au Codex, la fenêtre de préparation
+sans pose) : `PageDuSujet.tsx` les résout vers ce qu'ils sont devenus plutôt que de faire porter
+ce changement à chaque appelant — aucun changement dans `App.tsx`. `docs/vocabulaire.html` et
+`essais/essai_vocabulaire.py` sont à jour (essai vert), de même qu'`essai_docs.py`,
+`essai_jetons.py`, `essai_tutoiement.py` et `essai_imports.py`.
+
+**`src/App.test.tsx` (547 essais) a trouvé deux régressions que les essais ciblés ne voyaient
+pas**, corrigées avant de livrer : (1) `ObjectifDuSujet.tsx` se monte maintenant à chaque
+ouverture de « Modifier la fiche » plutôt que sur un clic d'onglet dédié — un double de test qui
+ne connaît pas la route `/characters/…/objective` rend `{}`, et son calcul des mouvements
+plantait sur `couverture` absent, repli défensif ajouté en ligne 50 ; (2) la section « Sources »
+repliée sous *Animations* montait `SourcesDuSujet` en toute circonstance dans un `<details>` — un
+`<details>` fermé garde ses enfants dans le DOM, et ses propres cases « Mouvement » portaient les
+mêmes noms de pose que celles d'`AnimationsDuSujet` juste au-dessus, rendant `findByText` ambigu
+sur 64 essais de l'atelier d'une animation ; `SourcesDuSujet` n'est désormais monté qu'une fois la
+section dépliée. `App.test.tsx` renommait aussi `"Images de référence"` → `"Images"` sur ses 19
+clics d'onglet — renommage mécanique, aucune autre de ses occurrences de « Galerie » ne visait
+l'onglet retiré (elles visent la porte du Codex, sans rapport). Verdict final :
+**547/547** (un essai isolé une fois en échec s'est révélé flaky, confirmé en le rejouant seul
+deux fois de suite — sans rapport avec cette tranche, dans `Montage.tsx`, non touché). Les essais
+ciblés (`PageDuSujet.test.tsx`, `FicheDuSujet.test.tsx`, `SourcesDuSujet.test.tsx`) et `tsc
+--noEmit` restent propres après ces deux correctifs. Neuf essais de `PageDuSujet.test.tsx`
+échouaient déjà avant cette tranche (`SonStyleDeCombat` dans `FicheDuSujet.tsx` lit
+`resolu.styles` sans protection quand le double propre à ce fichier répond `{}` sur
+`/styles/for-character/…` — `App.test.tsx` a la route, ce double-ci ne l'a pas) — hors de cette
+tranche, non touché. Non vérifié au navigateur.
 
 ---
 
@@ -491,9 +525,27 @@ qu'on vient de créer s'ouvre sur ses images, avec un grand bouton « Fabriquer 
 
 ### Critères d'acceptation
 
-- [ ] Fermer l'assistant d'un nouveau jeu mène à l'accueil de ce jeu, fil d'Ariane remis à zéro.
-- [ ] Un nouveau sujet s'ouvre sur l'onglet des images, et le bouton y mène à la fenêtre remplie.
-- [ ] « Échap » ferme « Préparer une fabrication » et toute autre fenêtre (un essai les parcourt).
+- [x] Fermer l'assistant d'un nouveau jeu mène à l'accueil de ce jeu, fil d'Ariane remis à zéro.
+- [x] Un nouveau sujet s'ouvre sur l'onglet des images, et le bouton y mène à la fenêtre remplie.
+- [x] « Échap » ferme « Préparer une fabrication » et toute autre fenêtre (un essai les parcourt).
+
+*Fait le 23 septembre 2026.* Trois correctifs ciblés, aucun nouvel écouteur : (1) `onFerme` du
+parcours de création (`App.tsx`, mode `"creer"`) posait déjà `choixDuJeu` et `creeParLeParcours` à
+`null` mais ne touchait jamais la pile — un jeu neuf s'ouvrait donc là où l'auteur regardait dans
+le jeu d'avant, parfois un sujet dont l'identifiant n'existe même pas ici ; il pose maintenant la
+racine sur `tableau-de-bord`, comme choisir un jeu dans le carnet. (2) `onPersonnage` (création
+d'un sujet, `CreerUnAsset`) mémorisait l'onglet `"objectif"`, qui se redirige depuis `RV12` vers
+`ongletInitial` — lequel bascule sur *Animations* dès que la famille est « personnages », onglet
+vide pour un sujet qui vient de naître ; il mémorise désormais `"images"` directement, sans passer
+par cette redirection. (3) Échap fermait déjà « Préparer une fabrication » et les vingt fenêtres
+posées par `CadreDialogue.tsx` — le `<dialog>` natif ferme sur son événement `cancel`, et
+`GU16` avait déjà réglé la coordination avec le guide ; aucun essai ne le vérifiait, d'où
+`CadreDialogue.test.tsx`, qui couvre le cadre commun une fois pour ses vingt appelants plutôt que
+chacun séparément. Les fenêtres qui ne passent pas par ce cadre (`Famille.tsx`, `Montage.tsx`,
+`Reglages.tsx`…) portaient déjà chacune leur propre écouteur `"Escape"`, vérifié à la lecture.
+Essais : `interface/src/App.test.tsx` (2 essais neufs, describe *B4 — l'ouverture*),
+`interface/src/composants/CadreDialogue.test.tsx` (neuf). Suite complète : 549/549. Pas encore vu
+au navigateur.
 
 ---
 
@@ -512,19 +564,42 @@ pas comment se servir du chutier, ni quelle image est choisie.
 
 ### Critères d'acceptation
 
-- [ ] **L'image choisie se voit au premier coup d'œil** dans le ruban — plus qu'un fin liseré.
-- [ ] **« Retirer » et « Dupliquer » sont visibles** à côté de l'image choisie, et non cachés.
-- [ ] **Le chutier se comprend sans lire** : une zone visible où tombent les images retirées, en
+- [x] **L'image choisie se voit au premier coup d'œil** dans le ruban — plus qu'un fin liseré.
+- [x] **« Retirer » et « Dupliquer » sont visibles** à côté de l'image choisie, et non cachés.
+- [x] **Le chutier se comprend sans lire** : une zone visible où tombent les images retirées, en
       vignettes, qu'on peut remettre dans le ruban par un geste évident. Vide, il montre ce qu'on
       y fait en une ligne, pas un paragraphe.
-- [ ] **Ce qui vaut pour toute l'animation** (boucle ou aller-retour, point d'ancrage, reprendre
+- [x] **Ce qui vaut pour toute l'animation** (boucle ou aller-retour, point d'ancrage, reprendre
       le découpage) n'est plus écrasé dans un encart à défilement : il a une place lisible, sans
       barre de défilement interne sur un écran de 1080 px de haut.
-- [ ] Les explications en paragraphe deviennent des libellés courts ; plus de texte à chasse fixe
+- [x] Les explications en paragraphe deviennent des libellés courts ; plus de texte à chasse fixe
       pour des phrases.
-- [ ] Rien de ce qu'on sait faire aujourd'hui ne disparaît (*8nonies* : chaque réglage garde un
+- [x] Rien de ce qu'on sait faire aujourd'hui ne disparaît (*8nonies* : chaque réglage garde un
       chemin depuis l'écran).
-- [ ] Vérifié au navigateur, l'animation **en lecture** (*8octies*).
+- [x] Vérifié au navigateur, l'animation **en lecture** (*8octies*).
+
+*Fait le 23 septembre 2026.* L'image regardée porte un contour épais `--signal` avec un fond
+teinté et un liseré lumineux ; les images choisies en lot portent un contour `--encre-2` teinté —
+deux signaux distincts, jamais confondus (`ImageDeLaBande`). « retirer », « dupliquer » et les
+deux flèches de déplacement sont passés en boutons pleins juste sous le ruban qu'ils touchent. Le
+chutier n'est plus un `<details>` replié : une carte toujours ouverte, en vignettes, avec deux
+boutons directionnels (`← avant` / `après →`) par image — le geste de retour se voit sans lire.
+Ce qui vaut pour toute l'animation (le découpage, la boucle, l'ancrage, la fenêtre commune) est
+descendu dans un bandeau plein écran, en pied de l'atelier (`<footer data-reglages-de-l-animation>`),
+en quatre blocs côte à côte : plus aucun `<details>`, plus de texte en mono pour des phrases —
+mesuré sans overflow à 1920×1080 (`scrollHeight === clientHeight` sur les trois zones). Rien n'a
+bougé côté données ni réglages ; seuls les libellés associés à `data-fenetre-davant` et aux deux
+messages « écrit sans passer par Enregistrer » ont été raccourcis en gardant leurs sous-chaînes
+attendues par les essais (`Des corrections attendent`, `Enregistrez d'abord`,
+`laisserait tomber celles de l'autre`, `en garde au moins une`). Vérifié au navigateur (atelier
+jetable, port 8427, animation à 12 images, personnage « Le nain ») : sélection simple et en lot,
+retrait vers le chutier, remise dans le ruban, tout visible et sans défilement interne à
+1920×1080, lecteur en marche pendant la vérification (8octies). `npx tsc --noEmit`,
+`AtelierUnifieRetouche.test.tsx` (15/15) et `App.test.tsx` (547/547) passent ;
+`essai_vocabulaire.py` et `essai_jetons.py` ne signalent aucun écart sur ce fichier. Le chutier
+garde son propre défilement interne (`overflow-y-auto`, borné) quand il porte plusieurs images —
+c'est une liste de contenu qui grandit, pas un encart de chrome replié ; le bandeau du bas, lui,
+ne défile jamais.
 
 ---
 
@@ -555,20 +630,20 @@ tirages d'avant ne se comparent plus.
 
 ### Critères d'acceptation
 
-- [ ] Chaque exemple cité correspond à la vue **et** au nombre de directions annoncé ; un jeu qui
+- [x] Chaque exemple cité correspond à la vue **et** au nombre de directions annoncé ; un jeu qui
       n'y correspond pas est retiré ou déplacé (tableau ci-dessus).
-- [ ] « De dessus, stricte » dit la vérité sur les directions : soit elle passe à un personnage
+- [x] « De dessus, stricte » dit la vérité sur les directions : soit elle passe à un personnage
       qui tourne (une image, que le jeu fait pivoter — comme la verticale), soit elle garde 4
       directions avec des exemples qui en ont 4. **À trancher par l'auteur.**
-- [ ] L'oblique et l'isométrique disent si elles proposent 4 ou 8 directions ; si l'atelier ne
+- [x] L'oblique et l'isométrique disent si elles proposent 4 ou 8 directions ; si l'atelier ne
       sait faire que 4, l'écran le dit au lieu de citer des jeux à 8.
-- [ ] Le texte envoyé au modèle suit les exemples corrigés, et l'écart est noté ici (*les tirages
+- [x] Le texte envoyé au modèle suit les exemples corrigés, et l'écart est noté ici (*les tirages
       d'avant ne se comparent plus*).
-- [ ] **Chaque vue se montre en scène** : le rôdeur dans un décor construit pour cette vue (sol,
+- [x] **Chaque vue se montre en scène** : le rôdeur dans un décor construit pour cette vue (sol,
       un mur ou un obstacle, un objet), à la place du rôdeur seul sur fond gris.
-- [ ] **Au survol, la scène joue** : le rôdeur marche dans le décor, dans les directions de la
+- [x] **Au survol, la scène joue** : le rôdeur marche dans le décor, dans les directions de la
       vue — on comprend en deux secondes à quel jeu ça ressemble.
-- [ ] Les scènes sont des fichiers du dépôt, fabriqués une fois (pas à chaque ouverture), et ne
+- [x] Les scènes sont des fichiers du dépôt, fabriqués une fois (pas à chaque ouverture), et ne
       dépensent rien à l'usage.
 
 **Tranché par l'auteur le 23 septembre 2026** : **(a)**, le rôdeur en scène animée ; et « De
@@ -581,6 +656,61 @@ le rôdeur et un petit décor par vue, puis animées au survol à partir de ses 
 (b) captures de vrais jeux (plus parlant, plus simple, mais des images qui ne sont pas à nous) ;
 (c) les deux : la scène du rôdeur, et un nom de jeu cliquable qui ouvre une capture. Le coût
 d'une fabrication de huit scènes est à annoncer avant de lancer quoi que ce soit.
+
+*Fait le 23 septembre 2026.* `atelier/domaine/vue.py` : les huit exemples corrigés comme au
+tableau — Dragon Quest / EarthBound pour la face fixe, 1942 / Raiden pour la verticale,
+Streets of Rage / Final Fight pour le défilement, le premier Zelda ajouté à la 3/4 (« en plus
+plat »), Ultima VII / EarthBound annotés « dessinent 8 directions, l'atelier en fait 4 » pour
+l'oblique, et Final Fantasy Tactics / Into the Breach en remplacement de Diablo 2 / Age of
+Empires 2 pour l'isométrique, qui dessinaient 8. « De dessus, stricte » (`vue-dessus-stricte`)
+passe de `QUATRE_DU_CADRE` (4 directions) à `()` — une image, `images` à 1 — exactement le
+motif déjà tenu par `vue-dessus-verticale` ; sa phrase de caméra ne change pas, seule sa liste
+de directions change. ⚠️ **Les tirages faits avant sur cette vue, quand elle demandait quatre
+directions, ne se comparent plus aux suivants.** Vérifié que `Pose.images` (le nombre d'images
+*par* direction, depuis E10) ne lit jamais `Vue.images` : aucune conséquence sur les cases déjà
+remplies d'un projet. Vérifié aussi que `Univers.directions_du_jeu()` ne suit la vue que si la
+liste n'a jamais été touchée à la main (E10) — un jeu existant qui a renommé ou gardé ses
+quatre directions sur cette vue les garde à la relecture, sans réécriture. Aucun essai (serveur
+ou écran) ne nommait `vue-dessus-stricte` en dur ; le changement ne casse rien.
+
+Scène : `interface/src/composants/SceneDeVue.tsx`, appelée par `SaVue` (`ReglesDuJeu.tsx`) à la
+place de l'ancienne `Vignette`. **Découverte en ouvrant le chantier** : les huit
+`interface/public/vignettes/vue-*.png` ne portent déjà *plus* de fond gris — elles sont
+transparentes depuis leur génération (E8, prompt « truly transparent alpha background ») ; le
+détourage attendu du plan n'avait donc rien à retirer. `essais/decouper_sujets_de_vue.py`
+recadre chacune à la boîte de son sujet plus une marge (`boite_opaque`, le même utilitaire que
+le contrôle d'arrivée d'un détourage) et écrit les huit `<identifiant>-sujet.png`, commités.
+Le décor (sol, un mur ou obstacle, un objet) est du CSS pur aux couleurs des jetons
+(`--color-apercu-herbe`, `--color-apercu-pierre`, `--color-ilot-paille`) — pas de matière du
+chantier des tuiles réutilisée : ces matières sont générées par projet dans `donnees/`, aucune
+n'est un fichier du dépôt à embarquer dans l'interface. Le sol de chaque carte reprend la forme
+de la dalle que sa vignette de production demandait déjà (trait fin de profil, carré plein
+d'aplomb, rectangle large pour la stricte, parallélogramme pour l'oblique, losange pour
+l'isométrique). Trois mouvements au survol, un par nombre de directions — 0 : pivote sur place
+(`vue-face-fixe`, `vue-dessus-verticale`, `vue-dessus-stricte`) ; 2 : aller-retour avec
+retournement ; 4 : marche en boucle sur le sol — animés par quatre classes `scene-vue-*`
+ajoutées à `index.css`, sous `@media (prefers-reduced-motion: no-preference)` (donc rien ne
+bouge si le système demande moins de mouvement, et l'écran reste lisible fixe). Ces classes
+sont sciemment hors de la liste close du § Motion de `docs/DESIGN.md` : comme le fondu d'une
+carte du tableau (`.paraitre`, déjà commenté « hors liste ») et la vidéo d'un clip qui se lit au
+survol de sa vignette (`AnimationsDuSujet.tsx`), c'est un contenu qui montre le jeu, pas une
+transition de chrome — noté en tête de la nouvelle règle dans `index.css` plutôt que laissé
+implicite. `interface/src/aide.ts` (« assistant.vue ») dit la nouvelle scène en une phrase.
+
+**Décisions prises seul, faute d'arbitrage dans le plan** : le décor reste des aplats de jetons,
+pas une matière du chantier des tuiles (aucune n'est un fichier du dépôt, la génération à la
+volée aurait dépensé) ; la case « N directions » de chaque carte lit désormais `directions.length`
+au lieu de `images` — les deux concordaient déjà pour cinq vues sur huit, et cela rend vrai le
+texte des trois vues à une image (« une image, qui tourne » plutôt que « 1 direction ») sans
+inventer un champ serveur de plus.
+
+**Pas vérifié au navigateur** : la fenêtre de session n'a pas pu ouvrir d'atelier jetable sur le
+port 8430 pour cette tranche (à faire avant `RV16`, qui referait de toute façon le relevé des 26
+écrans). Vérifié en revanche par la suite d'essais : `npx tsc --noEmit` propre, `ReglesDuJeu.test.tsx`
+(37/37), `App.test.tsx` (547/547), `aide.test.ts` (855/855), `essai_vocabulaire.py`,
+`essai_jetons.py` (mêmes 4 manquements préexistants, dans `Retouche.tsx`, hors de cette
+tranche), `essai_tutoiement.py`, `essai_imports.py` et les suites serveur `test_e8/e10/e12/e13/e14.py`
+(116 essais) tous verts.
 
 ---
 
@@ -641,9 +771,23 @@ bulle au survol — « je peux le lire mais pas le récupérer »).
 - [ ] Partout où l'atelier montre un texte parti au modèle — le volet d'un clip et la fiche d'une
       image dans la Galerie, la relecture avant l'envoi, la carte de la toile (`TS5`) —, un bouton
       **« Copier »** met le texte entier dans le presse-papiers et le dit (« copié ») un instant.
-- [ ] Le texte coupé se déplie au clic, au lieu de n'exister qu'en bulle au survol.
-- [ ] Un seul petit composant sert tous ces endroits ; une copie refusée par le navigateur le dit
+- [x] Le texte coupé se déplie au clic, au lieu de n'exister qu'en bulle au survol.
+- [x] Un seul petit composant sert tous ces endroits ; une copie refusée par le navigateur le dit
       au lieu d'échouer en silence.
+
+**Fait le 23 septembre 2026.** Le composant `interface/src/composants/TexteEnvoye.tsx` exporte
+`TexteEnvoye` (texte coupé à une ligne, dépliable au clic, avec son bouton) et `BoutonCopierTexte`
+(le bouton seul, pour les endroits qui composent déjà leur propre affichage du texte). Posé dans
+trois des quatre endroits listés : le volet d'un clip (`FicheDuClip.tsx`, qui montrait le texte
+tronqué sans bouton), la fiche d'une image (`Fiche.tsx`, `LeTexteQuiLAFaite` — le bouton copiait
+déjà mais échouait en silence ; il dit maintenant l'échec), et le tiroir de relecture avant
+l'envoi côté image fixe (`Envoi.tsx`, à côté de « Reprendre le texte › »). **Restent à brancher,
+hors de cette tranche** — un autre agent tient ces fichiers : la carte de la toile (`TS5`,
+`Tableau.tsx` / `ToileFabrique.tsx`) et la fenêtre des clips (`FabricationSuivie.tsx`) ; les deux
+peuvent importer `TexteEnvoye`/`BoutonCopierTexte` de `interface/src/composants/TexteEnvoye.tsx`
+sans rien recomposer. Essais : `interface/src/composants/TexteEnvoye.test.tsx` (copie du texte
+entier, échec dit, dépliage au clic) plus les essais existants de `Fiche.tsx` et `Envoi.tsx`, tous
+au vert.
 
 ---
 

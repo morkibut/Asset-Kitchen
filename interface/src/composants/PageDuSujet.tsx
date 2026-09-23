@@ -9,30 +9,40 @@ import { AnimationsDuSujet } from "./AnimationsDuSujet"
 import { EssaiDuSujet } from "./EssaiDuSujet"
 import { VestiaireDuSujet } from "./VestiaireDuSujet"
 import { TenuesDuSujet } from "./TenuesDuSujet"
-import { ObjectifDuSujet } from "./ObjectifDuSujet"
 import { SourcesDuSujet } from "./SourcesDuSujet"
 import { EnAttenteDuSujet } from "./EnAttenteDuSujet"
 import { SonsDuSujet } from "./SonsDuSujet"
 import { useSonsCales } from "../api-reperes-sonores"
 import { FicheDuSujet, portraitDe } from "./FicheDuSujet"
 import { useScrollDuParcours } from "./MemoireDuParcours"
+import { ProchainGeste } from "./ProchainGeste"
 
-export type Onglet = "fiche" | "images" | "animations" | "sources" | "attente" | "equipement" | "sons" | "objectif" | "essai"
-// **« Pas encore rangé » est entre les sources et l'équipement, et sa place dit
-// ce qu'il est** (`AU20`) : le dernier des trois onglets qui montrent *ce qui
-// existe pour ce sujet*, avant ceux qui décrivent ce qu'il doit devenir. Les
-// trois premiers montrent des cases pleines ; celui-ci montre ce qui n'a pas
-// encore de case, et sans lui ce qui n'est rangé nulle part n'est nulle part.
+// **Quatre onglets, au plus** (`RV12`) — la revue du 21 septembre 2026 en
+// comptait sept, trois de plus que ce que la maquette autorise. Trois sont
+// partis, et rien de ce qu'ils portaient n'est devenu inatteignable
+// (`AGENTS.md`, point 8nonies) :
+// - « Galerie » est devenue une section repliable de l'onglet *Animations*
+//   (`SourcesDuSujet.tsx`, réduite aux clips et aux sources 3D — les images et
+//   animations qu'elle montrait aussi faisaient double emploi avec les onglets
+//   qui les rangent déjà par pose) ;
+// - « Pas encore rangé » est devenue un bandeau, entre les onglets et leur
+//   contenu, qui ne paraît que s'il y a vraiment quelque chose à ranger
+//   (`EnAttenteDuSujet.tsx`) ;
+// - « Objectif & règles » est passée dans « Modifier la fiche »
+//   (`FicheDuSujet.tsx`) — un lien qui visait cet onglet ouvre maintenant ce
+//   dialogue.
+//
+// `Onglet` garde ces trois clefs : `App.tsx` les mémorise encore comme
+// destination d'un lien (la carte d'un sujet au Codex, la fenêtre de
+// préparation sans pose…), et c'est ici qu'elles se résolvent vers ce
+// qu'elles sont devenues plutôt que dans chaque appelant.
+export type Onglet = "fiche" | "images" | "animations" | "sources" | "equipement" | "sons" | "objectif" | "essai"
 const ONGLETS: readonly { clef: Onglet; nom: string }[] = [
   { clef: "animations", nom: "Animations" },
-  { clef: "images", nom: "Images de référence" },
-  { clef: "sources", nom: "Galerie" },
-  { clef: "attente", nom: "Pas encore rangé" },
-  { clef: "equipement", nom: "Équipement" },
-  // **Sons** (SN6) : les emplacements sonores du sujet — sixième de la liste
-  // fermée de `docs/vocabulaire.html`, avant ce qu'il doit devenir.
+  { clef: "images", nom: "Images" },
+  // **Sons** (SN6) : les emplacements sonores du sujet.
   { clef: "sons", nom: "Sons" },
-  { clef: "objectif", nom: "Objectif & règles" },
+  { clef: "equipement", nom: "Équipement" },
 ]
 type CeQueLaFicheLit = { bareme: Echelle[]; siennes: Collection[] | null; groupes: GroupeDeRangement[] }
 const BOUTON = "h-[34px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
@@ -176,19 +186,39 @@ export function PageDuSujet(proprietes: {
   const [ongletTenuIci, setOngletTenuIci] = useState<Onglet>(() => ongletInitial(ouvert))
   const choixOnglet = proprietes.onglet ?? ongletTenuIci
   // L’ancien état « fiche » se relit sans réinstaller son formulaire permanent.
-  const onglet = choixOnglet === "fiche" ? ongletInitial(ouvert) : choixOnglet
+  // **`sources` et `objectif` sont d'anciens onglets** (`RV12`) : un lien qui
+  // en mémorisait un se résout ici plutôt que chez chacun de ses appelants —
+  // `sources` (les clips et les sources 3D) retombe sur *Animations*, qui les
+  // porte maintenant.
+  const onglet = choixOnglet === "fiche" || choixOnglet === "objectif" ? ongletInitial(ouvert)
+    : choixOnglet === "sources" ? "animations"
+    : choixOnglet
   const setOnglet = (choisi: Onglet) => {
     setOngletTenuIci(choisi)
     proprietes.onOnglet?.(choisi)
   }
+  // **« Objectif & règles » ouvre désormais « Modifier la fiche »** plutôt
+  // qu'un onglet. Un compteur, jamais un booléen : il se déclenche une fois
+  // par demande, et retomber aussitôt sur l'onglet par défaut (ci-dessus)
+  // coupe la boucle qu'un état resté à `"objectif"` ferait sinon.
+  const [editionDemandee, setEditionDemandee] = useState(0)
+  useEffect(() => {
+    if (choixOnglet !== "objectif") return
+    setEditionDemandee((n) => n + 1)
+    setOnglet(ongletInitial(ouvert))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choixOnglet])
   // **La position du défilement se retient ici**, parce que c'est ici qu'on
   // défile depuis qu'il n'y a plus qu'un bloc. Une position par onglet et par
   // sujet : revenir d'une retouche rend la page où on l'avait laissée.
-  // **Une pastille sur « Galerie » quand un clip est arrivé** pour ce
-  // sujet depuis la dernière visite de l'onglet. Demandé le 16 septembre 2026 :
-  // on commande depuis la fiche, on y reste, et rien ne disait que le clip
-  // était là. Ce qui a été vu se retient dans ce navigateur, par sujet ; la
-  // première visite prend tout ce qui existe déjà pour vu.
+  // **Une pastille sur « Sources » quand un clip est arrivé** pour ce
+  // sujet depuis la dernière visite de cette section. Demandé le 16 septembre
+  // 2026, sur l'ancien onglet « Galerie » ; portée par la section repliable
+  // « Sources » de l'onglet *Animations* depuis `RV12`, au même geste — on
+  // commande depuis la fiche, on y reste, et rien ne disait que le clip était
+  // là. Ce qui a été vu se retient dans ce navigateur, par sujet ; la première
+  // visite prend tout ce qui existe déjà pour vu.
+  const [sourcesOuvertes, setSourcesOuvertes] = useState(false)
   const cleDesVus = `clips-vus:${ouvert.projet}:${ouvert.identifiant}`
   const siensArrives = useMemo(() => (proprietes.clips ?? [])
     .filter((g) => g.personnage === ouvert.identifiant && g.clip && !g.clip.jete && g.statut === "reussie")
@@ -210,10 +240,10 @@ export function PageDuSujet(proprietes: {
   }, [proprietes.clipsLus, cleDesVus, siensArrives, vus?.cle])
   const nouveauxClips = vus?.cle === cleDesVus ? siensArrives.filter((id) => !vus.ids.includes(id)).length : 0
   useEffect(() => {
-    if (onglet !== "sources" || nouveauxClips === 0) return
+    if (!sourcesOuvertes || nouveauxClips === 0) return
     setVus({ cle: cleDesVus, ids: siensArrives })
     try { window.localStorage.setItem(cleDesVus, JSON.stringify(siensArrives)) } catch { /* rien */ }
-  }, [onglet, nouveauxClips, cleDesVus, siensArrives])
+  }, [sourcesOuvertes, nouveauxClips, cleDesVus, siensArrives])
   const defilement = useScrollDuParcours(`${onglet}:${ouvert.projet}:${ouvert.identifiant}`)
   // SN7 : la salle d'essai joue les sons calés ; elle ne lit rien elle-même.
   const sonsCales = useSonsCales(ouvert.projet, ouvert.identifiant, onglet === "essai")
@@ -335,6 +365,15 @@ export function PageDuSujet(proprietes: {
   const portrait = useMemo(() => portraitDe(ouvert, sienPlan), [ouvert, sienPlan])
   const imageCible = regardee ?? portrait?.asset.identifiant ?? null
 
+  /** « Fabriquer sa première image » (`RV15`, `TS8`) — **le même choix de
+   *  pose que le bouton *Fabriquer…* du haut de la page**, sans dépendre de
+   *  l'onglet ouvert : le bandeau du prochain geste reste visible quel qu'il
+   *  soit, et il parle toujours d'une image, jamais d'un clip. */
+  const fabriquerLaPremiereImage = useCallback(() => {
+    const pose = sienPlan.find((p) => !ouvert.ecartees.includes(p.identifiant))
+    if (pose) proprietes.onArmer(ouvert, [pose])
+  }, [sienPlan, ouvert, proprietes])
+
   // **La matrice prend toute la page, la barre qui paie comprise** : elle est
   // l'un des deux lieux d'où l'argent part, et la lui retirer aurait obligé à
   // remonter d'un cran pour dépenser.
@@ -387,9 +426,23 @@ export function PageDuSujet(proprietes: {
           </div>
         </header>
 
+        {/* **Le prochain geste** (`TS8`) — en tête, quel que soit l'onglet
+            ouvert, tant qu'il a quelque chose à proposer. Un sujet neuf
+            l'ouvre déjà sur l'onglet *Images* (`RV15`) : c'est la même règle
+            d'arrivée, pas une seconde. */}
+        <ProchainGeste
+          personnage={ouvert}
+          onPersonnage={proprietes.onPersonnage}
+          onPremierePlanche={proprietes.onPremierePlanche}
+          onAllerALaToile={proprietes.onAllerALaToile}
+          onFabriquerLaPremiereImage={fabriquerLaPremiereImage}
+          onErreur={echouer}
+        />
+
         <FicheDuSujet personnage={ouvert} plan={sienPlan} collections={lu.siennes} groupes={lu.groupes}
           onRange={() => setRange(n => n + 1)} onPersonnage={proprietes.onPersonnage} onErreur={echouer}
-          onImages={() => setOnglet("images")} onObjectif={() => setOnglet("objectif")} />
+          onImages={() => setOnglet("images")} onObjectifChange={proprietes.onObjectifChange}
+          demandeEdition={editionDemandee} />
 
         <nav role="tablist" aria-label="Les onglets de sa fiche" className="flex shrink-0 flex-wrap gap-[4px] border-b border-trait pb-[8px]">
           {/* **RG2** : un onglet qui ne s'applique pas n'existe pas, jamais
@@ -399,8 +452,12 @@ export function PageDuSujet(proprietes: {
             (clef !== "equipement" || ouvert.equipable) &&
             (clef !== "animations" || capacites.anime) &&
             (clef !== "sons" || capacites.sons)
-          ).map(({ clef, nom }) => <button key={clef} type="button" role="tab" aria-selected={onglet === clef} onClick={() => setOnglet(clef)} className={`relative h-[34px] rounded-7 px-[14px] text-[13px] transition-colors duration-120 ${onglet === clef ? "bg-encre text-papier" : "text-encre-3 hover:bg-papier-cote hover:text-encre"}`}>{nom}{clef === "sources" && nouveauxClips > 0 && <span data-nouveaux-clips title={nouveauxClips > 1 ? `${nouveauxClips} nouveaux clips` : "Un nouveau clip"} aria-hidden className="absolute right-[4px] top-[4px] h-[8px] w-[8px] rounded-full bg-encre-attention" />}</button>)}
+          ).map(({ clef, nom }) => <button key={clef} type="button" role="tab" aria-selected={onglet === clef} onClick={() => setOnglet(clef)} className={`relative h-[34px] rounded-7 px-[14px] text-[13px] transition-colors duration-120 ${onglet === clef ? "bg-encre text-papier" : "text-encre-3 hover:bg-papier-cote hover:text-encre"}`}>{nom}{clef === "animations" && !sourcesOuvertes && nouveauxClips > 0 && <span data-nouveaux-clips title={nouveauxClips > 1 ? `${nouveauxClips} nouveaux clips` : "Un nouveau clip"} aria-hidden className="absolute right-[4px] top-[4px] h-[8px] w-[8px] rounded-full bg-encre-attention" />}</button>)}
         </nav>
+
+        <EnAttenteDuSujet personnage={ouvert} plan={sienPlan}
+          onOuvrir={proprietes.onOuvrirCase}
+          onChange={() => setRange(n => n + 1)} onErreur={echouer} />
 
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-[14px]">
           <div className="flex items-center gap-[8px]">
@@ -431,28 +488,45 @@ export function PageDuSujet(proprietes: {
           onAllerALaToile={proprietes.onAllerALaToile}
           onEcarter={proprietes.onSupprimer} onReinjecter={proprietes.onReinjecter} onReglages={proprietes.onReglages} onErreur={echouer} />}
 
-        {onglet === "animations" && <AnimationsDuSujet personnage={ouvert} plan={sienPlan} onAnimer={proprietes.onAnimer}
-          avecDirections={capacites.directions}
-          onOuvrirLaBande={proprietes.onOuvrirLaBande} onErreur={echouer}
-          clips={proprietes.clips} onMonterLeClip={proprietes.onMonterLaBande} />}
+        {onglet === "animations" && <>
+          <AnimationsDuSujet personnage={ouvert} plan={sienPlan} onAnimer={proprietes.onAnimer}
+            avecDirections={capacites.directions}
+            onOuvrirLaBande={proprietes.onOuvrirLaBande} onErreur={echouer}
+            clips={proprietes.clips} onMonterLeClip={proprietes.onMonterLaBande} />
+          {/* **« Galerie » devenue une section** (`RV12`) : ce dont on tire des
+              animations — clips vidéo, modèles 3D —, repliée par défaut, sous
+              l'onglet qui en profite.
+              **Montée seulement à l'ouverture** : un `<details>` fermé garde
+              ses enfants dans le DOM — le navigateur les cache par CSS, mais
+              un essai qui ne regarde pas la visibilité les voit quand même.
+              `SourcesDuSujet` porte ses propres cases « Mouvement », aux
+              mêmes noms que celles d'`AnimationsDuSujet` juste au-dessus :
+              montées toutes les deux, un `findByText` sur un nom de pose
+              devient ambigu. Ne la monter qu'une fois dépliée évite le
+              doublon sans changer ce que l'auteur voit. */}
+          <details data-sources-du-sujet className="rounded-10 border border-trait bg-carte px-[14px] py-[8px]"
+            open={sourcesOuvertes} onToggle={(e) => setSourcesOuvertes((e.target as HTMLDetailsElement).open)}>
+            <summary className="relative cursor-pointer py-[8px] text-[13px] text-encre-2">
+              Sources — clips vidéo et modèles 3D
+              {!sourcesOuvertes && nouveauxClips > 0 && <span data-nouveaux-clips-sources title={nouveauxClips > 1 ? `${nouveauxClips} nouveaux clips` : "Un nouveau clip"} aria-hidden className="absolute -right-[10px] top-[10px] h-[8px] w-[8px] rounded-full bg-encre-attention" />}
+            </summary>
+            {sourcesOuvertes && <div className="pb-[8px] pt-[8px]">
+              <SourcesDuSujet onBande={proprietes.onOuvrirLaBande} personnage={ouvert} clips={proprietes.clips ?? []}
+                onClipsChange={proprietes.onClipsChange} onErreur={echouer}
+                onMontage={proprietes.onMonterLaBande} onAnimer={(pose, direction) => proprietes.onAnimer(ouvert, pose, direction)} />
+            </div>}
+          </details>
+        </>}
 
         {onglet === "essai" && <EssaiDuSujet personnage={ouvert} personnages={proprietes.personnages} plan={sienPlan} univers={proprietes.univers}
           onAnimer={proprietes.onAnimer} onAnimations={() => setOnglet("animations")}
           reperes={sonsCales.vue?.reperes.filter((r) => !r.signal)} onRepere={sonsCales.jouer} />}
 
-        {onglet === "sources" && <SourcesDuSujet onBande={proprietes.onOuvrirLaBande} personnage={ouvert} clips={proprietes.clips ?? []}
-          pieces={proprietes.pieces} onOuvrirImage={proprietes.onOuvrirCase} ongletInitial={nouveauxClips > 0 ? "clips" : "images"}
-          onClipsChange={proprietes.onClipsChange} onErreur={echouer}
-          onMontage={proprietes.onMonterLaBande} onAnimer={(pose, direction) => proprietes.onAnimer(ouvert, pose, direction)} />}
-        {onglet === "attente" && <EnAttenteDuSujet personnage={ouvert} plan={sienPlan}
-          onOuvrir={proprietes.onOuvrirCase}
-          onChange={() => setRange(n => n + 1)} onErreur={echouer} />}
         {onglet === "equipement" && <div><VestiaireDuSujet personnage={ouvert} plan={sienPlan}
           vestiaire={proprietes.vestiaire} onPiece={proprietes.onPiece} onEmploi={proprietes.onEmploiEquipement} onCreerPiece={proprietes.onCreerPiece}
           onRetirerLEmploi={proprietes.onRetirerLEmploi} onArmer={proprietes.onArmer} /><TenuesDuSujet personnage={ouvert} vestiaire={proprietes.vestiaire} onEmploi={proprietes.onEmploiEquipement} onLivraisons={proprietes.onLivrer} /></div>}
         {onglet === "sons" && <SonsDuSujet projet={ouvert.projet} sujet={ouvert.identifiant} nomSujet={ouvert.nom} onRegler={proprietes.onSon}
           personnage={ouvert} plan={sienPlan} />}
-        {onglet === "objectif" &&<div><ObjectifDuSujet personnage={ouvert} projet={ouvert.projet} onChange={proprietes.onObjectifChange} /></div>}
       </div>
     </main>
   )

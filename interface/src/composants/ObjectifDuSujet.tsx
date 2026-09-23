@@ -47,7 +47,13 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
 
   const mouvements = useMemo(() => {
     const parPose = new Map<string, { nom: string; directions: { id: string; nom: string }[] }>()
-    for (const case_ of lecture?.couverture.cases ?? []) {
+    // **Un repli défensif** (`RV12`) : `ObjectifDuSujet` se monte maintenant à
+    // chaque ouverture de « Modifier la fiche » plutôt que sur un clic
+    // d'onglet dédié — un double de test qui ne connaît pas encore la route
+    // `/characters/…/objective` rend souvent `{}`, une lecture tronquée sans
+    // `couverture`. Ce calcul tourne à chaque rendu, avant le repli plus bas
+    // qui attend une lecture complète.
+    for (const case_ of lecture?.couverture?.cases ?? []) {
       if (!parPose.has(case_.pose)) parPose.set(case_.pose, { nom: case_.nom_pose, directions: [] })
       const mouvement = parPose.get(case_.pose)!
       if (!mouvement.directions.some((d) => d.id === case_.direction)) {
@@ -143,6 +149,9 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
       <div>
         <h2 id="objectif-titre" className="font-serif text-[25px] text-encre">Ce qui doit exister dans le jeu</h2>
         <p className="mt-[8px] text-[13px] text-encre-4">Choisis les mouvements et les directions utiles. Une référence aide à fabriquer ; elle ne remplace pas une animation.</p>
+        {/* **TS8** : cet écran règle les quantités, il ne dit pas quoi faire
+            ensuite — cette réponse-là est en tête de la page, pas ici. */}
+        <p className="mt-[4px] text-[11.5px] text-encre-4">Le prochain geste, s’il y en a un, reste en tête de sa page.</p>
       </div>
       {!edition && <button type="button" className={bouton} onClick={() => { setEdition(true); setMessage("") }}>Modifier l’objectif</button>}
     </div>

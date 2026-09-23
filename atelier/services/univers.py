@@ -204,6 +204,49 @@ class ServiceUnivers:
             raise CarteInconnue(identifiant)
         return Carte.depuis_json(contenu)
 
+    def phrase_de_carte(self, carte: Carte) -> dict[str, Any] | None:
+        """La phrase tapée par l'auteur pour la génération qui a produit cette
+        carte, ou rien (TS5).
+
+        **La phrase vit sur la génération, jamais sur la carte** : `Carte` ne
+        porte aucun lien vers l'appel qui l'a produite, seulement une `source`
+        libre. Une carte posée depuis un asset (`poser_asset`) porte
+        `source == "asset:<identifiant>"`, et c'est le seul fil qui remonte
+        jusqu'à `generation.json`.
+
+        **Le texte rendu est `demande.sujet`, jamais `demande.prompt`.** Le
+        service de génération garde le texte de l'auteur à part *avant* de le
+        noyer dans la bible et les consignes de planche (`ServiceGenerations.
+        soumettre`, `demande = replace(demande, sujet=demande.prompt.strip(),
+        ...)`) — c'est déjà écrit, pour nommer l'asset, et c'est exactement ce
+        qu'il faut ici : la phrase que l'auteur a tapée, jamais le texte
+        composé qui est parti au modèle. `sujet` est vide sur les générations
+        d'avant le 1ᵉʳ septembre 2026 ; on retombe alors sur `prompt` en entier,
+        ce qui est le comportement d'avant cette date.
+
+        **Appelée depuis `/board`, qui est la seule lecture que la toile fait
+        de ses cartes** — jamais une route à elle, qui aurait fait une requête
+        par carte pour un tableau qui en tient des dizaines.
+        """
+        if carte.genre != IMAGE or not carte.source.startswith("asset:"):
+            return None
+        asset = self._assets.lire(carte.source[len("asset:") :])
+        if asset is None:
+            return None
+        generation = self._base.lire(asset.generation)
+        if generation is None:
+            return None
+        demande = generation.demande
+        texte = str(demande.get("sujet") or demande.get("prompt") or "").strip()
+        if not texte:
+            return None
+        return {
+            "texte": texte,
+            "modele": generation.modele,
+            "resolution": demande.get("resolution"),
+            "repris": bool(demande.get("repris", False)),
+        }
+
     def octets(self, projet: str, identifiant: str) -> tuple[bytes, str]:
         """Les octets d'une carte image, tels qu'ils sont entrés."""
         carte = self.carte(projet, identifiant)

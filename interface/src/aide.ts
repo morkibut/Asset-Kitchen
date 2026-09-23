@@ -782,7 +782,7 @@ export const AIDE: Record<string, Explication> = {
       "**La liste des directions de ton jeu**, et la phrase de style qui part au modèle. C'est cette liste qui multiplie toute la production, donc tout ce qu'on paiera : un personnage qui marche vu de côté se dessine deux fois ; le même vu de dessus, quatre.",
     origine: "toi · aucune au départ",
     long:
-      "Ce choix remplit deux endroits d'un coup : la liste des directions du codex, et la phrase de caméra qui part au modèle — les deux viennent du même geste, et ne peuvent plus se contredire. La liste est une proposition, jamais une contrainte : on la modifie depuis le codex, et un clic la rend à ce que la vue propose tant qu'on n'y a pas touché.",
+      "Ce choix remplit deux endroits d'un coup : la liste des directions du codex, et la phrase de caméra qui part au modèle. La liste est une proposition, jamais une contrainte : on la modifie depuis le codex, et un clic la rend à ce que la vue propose tant qu'on n'y a pas touché. Chaque carte montre le rôdeur dans un décor construit pour la vue ; au survol, il y marche.",
   },
 
   // Son monde — les cinq lignes qu'on tape
@@ -1118,12 +1118,12 @@ export const AIDE: Record<string, Explication> = {
     nom: "Fabriquer",
     ou: "inspiration",
     groupe: "La barre du tableau",
-    quoi: "Décris une image, choisis 1, 2 ou 3 versions, Entrée : les images se fabriquent et se posent sur la toile.",
+    quoi: "Décris une image, choisis 1, 2 ou 3 versions, une taille, Entrée : les images se fabriquent et se posent sur la toile.",
     change:
-      "Une vraie génération : le bouton dit ce qu'elle coûte avant de partir — un prix pour un modèle payant, un temps pour un modèle local. Chaque image entre aussi dans la galerie.",
-    origine: "toi · Qwen rapide par défaut, sinon le premier modèle disponible · le modèle et le nombre sont retenus",
+      "Une vraie génération : le bouton dit ce qu'elle coûte avant de partir — un prix pour un modèle payant, un temps pour un modèle local, pour la taille choisie. Chaque image entre aussi dans la galerie, mais **brute** : ni détourage, ni réduction, ni grille, ni palette — la toile est l'endroit où l'on essaie, ce n'est pas encore une chose du jeu.",
+    origine: "toi · Qwen rapide par défaut, sinon le premier modèle disponible · le modèle, le nombre et la taille sont retenus",
     long:
-      "Sans rien de choisi, on part de rien. Avec une ou plusieurs images choisies sur la toile — ou **Varier** dans le menu d'une carte —, elles partent comme images à modifier ; la croix les laisse de côté. Plusieurs fabrications peuvent tourner en même temps ; un échec reste à sa place avec sa raison, et la croix le retire.",
+      "Sans rien de pris, on part de rien : choisir des cartes sur la toile ne remplit plus la barre tout seul (TS6). **Prendre comme référence**, dans le menu d'une carte, l'ajoute en vignette au-dessus de la barre ; chaque vignette a sa croix, et elles partent comme images à modifier. Plusieurs fabrications peuvent tourner en même temps ; un échec reste à sa place avec sa raison, et la croix le retire. La taille — 512 ou 1024 — se lit sur ce que le modèle choisi sait rendre ; une taille qu'il ne rend pas est grisée avec sa raison. Un modèle qui accepte moins de références que ce qui est pris refuse de partir — le bouton le dit, il ne rogne jamais la liste. Le texte tapé part seul par défaut, sans la bible du jeu ; la case « avec le style du jeu » l'ajoute. « Ce qui part » replie le texte exact, la taille et les références, à relire avant de cliquer. Une image qu'on fait entrer dans un sujet (depuis sa carte) reçoit alors la recette du jeu — l'image brute reste gardée.",
   },
 
   // Le menu d'une carte
@@ -1223,6 +1223,18 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi, en promouvant · défaut « tous »",
     long:
       "C'est ce qui empêche un artwork de contaminer un sujet qui n'a rien à voir avec lui. « Tous » est le cas utile pour une planche de matières ou de trait, qui accompagne toute génération sans transmettre de personnage. Le compte de références est plafonné par modèle, et chez certains fournisseurs le prix croît avec ce nombre.",
+  },
+
+  "carte.phrase": {
+    nom: "phrase",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "Le texte tapé pour fabriquer cette image sur la toile — jamais le texte composé qui est parti au modèle.",
+    change:
+      "Rien à la génération. « Reprendre ce texte » remet cette phrase dans la barre, avec le modèle et la taille d'origine, pour la corriger et relancer.",
+    origine: "la génération qui a produit cette carte · vide sur une note, une image collée, un clip, ou une carte d'avant cette tranche",
+    long:
+      "Ce n'est pas ce que le modèle a lu — bible du jeu repliée en tête, consignes de planche en queue comprises — c'est le texte que tu as tapé dans la barre, gardé à part avant d'être noyé dans le reste. « Reprendre ce texte » ne rejoue rien : il ouvre la barre sur ce texte-là, prête à corriger avant de relancer, exactement comme si tu venais de le taper.",
   },
 
   "carte.lecture": {

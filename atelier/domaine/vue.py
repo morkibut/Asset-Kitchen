@@ -245,7 +245,7 @@ VUES: tuple[Vue, ...] = (
     Vue(
         "vue-face-fixe",
         "De face, fixe",
-        "les écrans de combat au tour par tour",
+        "les écrans de combat au tour par tour — Dragon Quest, les combats d'EarthBound",
         1,
         "front-facing orthographic view, subject centered",
         (),
@@ -260,7 +260,7 @@ VUES: tuple[Vue, ...] = (
     Vue(
         "vue-dessus-verticale",
         "De dessus, verticale",
-        "les jeux de tir à défilement vertical",
+        "les jeux de tir à défilement vertical — 1942, Raiden",
         1,
         "strict top-down view seen from directly above",
         (),
@@ -292,7 +292,7 @@ VUES: tuple[Vue, ...] = (
     Vue(
         "vue-cote-defilement",
         "De côté — défilement",
-        "les jeux de baston de rue",
+        "les jeux de baston de rue — Streets of Rage, Final Fight",
         2,
         "side view, orthographic, subject centered",
         DEUX,
@@ -307,10 +307,17 @@ VUES: tuple[Vue, ...] = (
     Vue(
         "vue-dessus-stricte",
         "De dessus, stricte",
-        "le premier Zelda, Hotline Miami",
-        4,
+        # **Une image qui tourne, et non quatre.** Tranché par l'auteur le 23
+        # septembre 2026 (RV18) : Hotline Miami et GTA 1-2 sont bien vus de
+        # dessus, mais leur personnage tourne librement — ce n'est pas quatre
+        # directions dessinées, c'est une seule image que le jeu fait pivoter,
+        # comme `vue-dessus-verticale`. Le premier Zelda est retiré d'ici : son
+        # décor est à plat, mais Link lui-même est dessiné de face ou de
+        # profil — il appartient à `vue-dessus-34`, où il a été ajouté.
+        "Hotline Miami, GTA 1 et 2 — une seule image, que le jeu fait pivoter",
+        1,
         "top-down view, subject centered",
-        QUATRE_DU_CADRE,
+        (),
         "CAMERA — this overrides everything above. The camera is high above the "
         "subject and looks down at a steep angle, close to straight down. Not a "
         "side view, not a front view. No horizon line, no perspective, no "
@@ -323,7 +330,10 @@ VUES: tuple[Vue, ...] = (
     Vue(
         "vue-dessus-34",
         "De dessus, 3/4",
-        "Zelda A Link to the Past, Stardew Valley",
+        # Le premier Zelda rejoint cette vue le 23 septembre 2026 (RV18) : son
+        # décor est à plat, mais Link est dessiné de face ou de profil, plus
+        # plat que Link to the Past — c'est la famille 3/4, pas la stricte.
+        "Zelda A Link to the Past, Stardew Valley, le premier Zelda (en plus plat)",
         4,
         "3/4 top-down orthographic view, subject centered",
         QUATRE,
@@ -339,7 +349,10 @@ VUES: tuple[Vue, ...] = (
     Vue(
         "vue-oblique",
         "Oblique (cavalière)",
-        "Ultima, EarthBound",
+        # « Ultima » précisé en « Ultima VII » (23 septembre 2026, RV18) : les
+        # deux jeux dessinent huit directions, l'atelier n'en fait que quatre,
+        # et l'écran le dit plutôt que de citer des jeux à 8 sans le préciser.
+        "Ultima VII, EarthBound — ces jeux dessinent 8 directions, l'atelier en fait 4",
         4,
         "oblique cavalier projection, no vanishing point, subject centered",
         QUATRE_OBLIQUES,
@@ -354,7 +367,11 @@ VUES: tuple[Vue, ...] = (
     Vue(
         "vue-isometrique",
         "Isométrique",
-        "Diablo 2, Age of Empires 2",
+        # Diablo 2 et Age of Empires 2 dessinent huit directions ; l'atelier
+        # n'en fait que quatre, donc l'écran cite des jeux qui en ont
+        # vraiment 4 plutôt que d'annoncer un nombre qu'il ne tient pas
+        # (23 septembre 2026, RV18).
+        "Final Fantasy Tactics, Into the Breach",
         4,
         "isometric projection, 30 degrees above the horizon, no vanishing point",
         QUATRE_ISOMETRIQUES,

@@ -2075,8 +2075,14 @@ function AtelierApp() {
         }}
         onRenomme={() => void rafraichirLArbre()}
         onFerme={() => {
+          // **Le fil d'Ariane repart de l'accueil** (`RV15`) : sans ça, la
+          // pile gardait l'endroit qu'on regardait dans le jeu d'avant —
+          // parfois un sujet dont l'identifiant n'existe même pas dans le
+          // jeu neuf. Fermer le parcours mène donc à l'accueil de ce jeu,
+          // comme le ferait un jeu choisi dans le carnet.
           setChoixDuJeu(null)
           setCreeParLeParcours(null)
+          poserLaRacine("tableau-de-bord")
         }}
         onErreur={setPanne}
       />
@@ -3308,7 +3314,11 @@ function AtelierApp() {
         onFermer={() => { setCreationAssetOuverte(null); setCarteSourceDuSujet(null) }}
         onPersonnage={(personnage) => {
           fondrePersonnage(personnage)
-          memoriserParcours(`sujet:${personnage.projet}:${personnage.identifiant}:onglet`, "objectif")
+          // **Un sujet neuf s'ouvre sur ses images** (`RV15`) : « Objectifs »
+          // ne dit rien à faire, et n'existe plus comme onglet depuis `RV12`
+          // — il redirigeait déjà ici, cette mémoire suit juste la
+          // destination réelle.
+          memoriserParcours(`sujet:${personnage.projet}:${personnage.identifiant}:onglet`, "images")
           setCreationAssetOuverte(null)
           setCarteSourceDuSujet(null)
           setPile(entrer(poser("codex"), { genre: "sujet", sujet: personnage.identifiant }))
@@ -3318,7 +3328,7 @@ function AtelierApp() {
         // TS2 — une carte déjà concept art d'un sujet : on ouvre ce sujet-là
         // au lieu d'en créer un second, la forme du doublon au collage.
         onDeja={(identifiant) => {
-          memoriserParcours(`sujet:${bibliotheque.courant}:${identifiant}:onglet`, "objectif")
+          memoriserParcours(`sujet:${bibliotheque.courant}:${identifiant}:onglet`, "images")
           setCreationAssetOuverte(null)
           setCarteSourceDuSujet(null)
           setPile(entrer(poser("codex"), { genre: "sujet", sujet: identifiant }))
