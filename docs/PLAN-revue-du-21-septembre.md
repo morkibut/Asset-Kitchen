@@ -597,9 +597,26 @@ après le point 3, quand on a choisi le geste et le style de combat ? »
 
 ---
 
+## RV20 · Un texte envoyé se copie
+
+**Bloquée par** : aucune. *Ajoutée le 23 septembre 2026, sur un retour de l'auteur* (Galerie,
+volet « Le clip » : le texte envoyé est coupé à une ligne, lisible en entier seulement dans une
+bulle au survol — « je peux le lire mais pas le récupérer »).
+
+### Critères d'acceptation
+
+- [ ] Partout où l'atelier montre un texte parti au modèle — le volet d'un clip et la fiche d'une
+      image dans la Galerie, la relecture avant l'envoi, la carte de la toile (`TS5`) —, un bouton
+      **« Copier »** met le texte entier dans le presse-papiers et le dit (« copié ») un instant.
+- [ ] Le texte coupé se déplie au clic, au lieu de n'exister qu'en bulle au survol.
+- [ ] Un seul petit composant sert tous ces endroits ; une copie refusée par le navigateur le dit
+      au lieu d'échouer en silence.
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20.
 
 ### Ce qu'on livre
 
