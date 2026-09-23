@@ -338,11 +338,29 @@ autres. Les boutons de départ se réduisent à « Nouvelle fabrication ».
 
 ### Critères d'acceptation
 
-- [ ] Une seule liste ; les sections « Les calculs locaux » et « Rechercher une fabrication » sont
+- [x] Une seule liste ; les sections « Les calculs locaux » et « Rechercher une fabrication » sont
       fondues dedans.
-- [ ] Toute génération (image, clip, son, équipement, locale ou payée) y apparaît dès son départ.
-- [ ] Les séries identiques se regroupent.
-- [ ] L'état des moteurs locaux reste lisible en une ligne en tête.
+- [x] Toute génération (image, clip, son, équipement, locale ou payée) y apparaît dès son départ.
+- [x] Les séries identiques se regroupent.
+- [x] L'état des moteurs locaux reste lisible en une ligne en tête.
+
+*Fait le 23 septembre 2026.* Les trois listes (travaux suivis, file locale, journal des appels)
+vivent maintenant dans `SuiviDesTravaux` (`FabricationSuivie.tsx`), fusionnées et dédoublonnées :
+un travail porte déjà `generation_image`, `clip` et `etape_locale` — les identifiants **des mêmes
+lignes** que le journal et la file locale connaissent sous leur propre nom —, donc la fusion les
+en retire avant de tout trier par date de départ. **Tranché** : pas de route serveur — ces trois
+champs voyagent déjà dans le JSON d'un travail depuis leur tranche d'origine, seul leur type
+TypeScript manquait ; les ajouter là a suffi, sans dupliquer la question à un second endroit.
+Le regroupement d'une série suit la même règle que le mouvement/nom lancés dans la même minute
+proposée par le plan quand le serveur ne porte pas de `serie` ; la règle est écrite en tête du
+code qui la porte. Quatre humeurs (en cours, terminées, ratées, à reprendre) valent pour les trois
+origines ; une fabrication encore « prête à lancer » (jamais partie) n'y figure pas — elle reste
+dans le tiroir des brouillons. Les boutons de départ se réduisent à « Nouvelle fabrication » et
+« Consommation » (dépenses, un écran de lecture) ; « Animer un sujet », « Préparer une image »,
+« Préparer une vidéo » et « Préparer un son » disparaissent — la fenêtre unique porte déjà son
+propre choix de sujet et de type. `interface/src/aide.ts` a suivi : les fiches des portes disparues sont
+retirées, celles de la liste réécrites pour la réalité fusionnée. **Pas vu au navigateur** : vérifié
+par les essais d'écran et `tsc --noEmit` seulement.
 
 ---
 

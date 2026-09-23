@@ -1,12 +1,14 @@
 import { SuiviFabrication3D } from "./Fabrication3D"
-import { useEffect, useRef, useState } from "react"
-import { api, dollars, duree, prix, Refus, type Asset, type EtatDuMoteur, type Modele, type ModeleVideo, type Mouvement, type MouvementDeLaPose, type Personnage } from "../api"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { api, dollars, duree, prix, Refus, type Appel, type Asset, type EtatDuMoteur, type Generation, type Modele, type ModeleVideo, type Mouvement, type MouvementDeLaPose, type Personnage, type Statut } from "../api"
 import { nomDuTravail, travaux, NOM_DE_L_ETAPE, NOM_DE_L_ETAT, NOM_DE_LA_PHASE, type CaseSerie, type DemandeTravail, type Serie, type Travail, type TravailSuivi } from "../api-travaux"
+import { fileLocale, type EtapeLocale, type MoteurLocal } from "../api-file-locale"
 import { tempsDuRetour } from "../retours"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE, type OptionsAnimer } from "../fabrication"
 import { vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
 import { MemoireLocale } from "./MemoireLocale"
+import { nomDuModele } from "./Fiche"
 import { Libelle, libelleModele } from "./pieces"
 import { RelectureEquipement } from "./RelectureEquipement"
 import { FabricationVideoLibre } from "./FabricationVideoLibre"
@@ -504,29 +506,307 @@ function FenetreDuTravail({ travail, projet, personnages, onClip, onBande, onFer
   return <FabricationSuivie projet={projet} personnages={personnages} initiale={travail} onClip={onClip} onBande={onBande} onFermer={onFermer} />
 }
 
-export function SuiviDesTravaux({ projet, personnages, onClip, onBande, onCalqueEquipement, onAsset, onToile, onSon, onPreparer }: {
-  projet: string; personnages: readonly Personnage[]; onClip: (id: string) => void; onBande?: (id: string) => void; onCalqueEquipement?: OuvrirCalqueEquipement; onAsset?: (id: string) => void; onToile?: (id: string) => void; onSon?: (id: string) => void
-  /** **Une animation neuve passe par la fenêtre unique** (RP4) : c'était la
-   *  neuvième porte de préparation du produit. */
-  onPreparer?: (type: "clip") => void
+// ── RV9 : une seule liste de fabrications ───────────────────────────────────
+//
+// Trois listes vivaient côte à côte sur l'écran Fabrications : « Créer et
+// suivre » (les travaux suivis), « Les calculs locaux » (la file locale) et
+// « Rechercher une fabrication » (le journal des appels). La même fabrication
+// pouvait déjà y paraître deux fois — un travail garde `generation_image`,
+// `clip` et `etape_locale`, les identifiants **des mêmes lignes** que le
+// journal et la file locale connaissent sous leur propre nom : ce ne sont pas
+// trois fabrications, c'est une fabrication racontée à trois endroits.
+//
+// La fusion ci-dessous **retire** du journal et de la file locale ce qu'un
+// travail porte déjà, avant de tout trier ensemble par date de départ. Elle
+// vit ici, dans le seul écran qui la montre — une route serveur n'apportait
+// rien que le client n'ait déjà : `generation_image`, `clip` et
+// `etape_locale` voyagent tous les trois dans le JSON d'un travail depuis
+// leur tranche d'origine, seul leur type TypeScript manquait.
+
+/** Les quatre humeurs qu'un filtre reconnaît, toutes origines confondues — un
+ *  travail suivi, un calcul local ou une ligne du journal. Une fabrication
+ *  encore « prête à lancer » (jamais partie) n'en porte aucune : elle vit dans
+ *  le tiroir des brouillons, pas ici — cette liste ne montre que ce qui est
+ *  **parti**. */
+type Humeur = "en_cours" | "terminee" | "ratee" | "a_reprendre"
+const NOM_DE_L_HUMEUR: Record<Humeur, string> = { en_cours: "En cours", terminee: "Terminées", ratee: "Ratées", a_reprendre: "À reprendre" }
+const NATURES_LOCALES: Record<EtapeLocale["nature"], string> = { image: "Image", video: "Vidéo", modele3d: "Modèle 3D", rig: "Rigging", rendu3d: "Rendu 3D", audio: "Son" }
+const LETTRES_LOCALES: Record<EtapeLocale["nature"], string> = { image: "I", video: "V", modele3d: "3D", rig: "3D", rendu3d: "3D", audio: "S" }
+const MOTEURS_LABEL: Record<MoteurLocal["etat"], string> = { disponible: "Disponible", occupe: "Occupé", inconnu: "État inconnu" }
+
+function humeurDuTravail(etat: Travail["etat"]): Humeur | null {
+  if (etat === "en_cours") return "en_cours"
+  if (etat === "termine" || etat === "annule") return "terminee"
+  if (etat === "a_verifier") return "ratee"
+  if (etat === "a_reprendre" || etat === "externe_inconnu") return "a_reprendre"
+  return null // "prepare" : pas encore parti, le tiroir des brouillons le porte déjà
+}
+function humeurDeLAppel(statut: Statut): Humeur {
+  if (statut === "en_attente" || statut === "en_cours") return "en_cours"
+  if (statut === "reussie") return "terminee"
+  if (statut === "echouee") return "ratee"
+  return "a_reprendre"
+}
+function humeurLocale(etat: EtapeLocale["etat"]): Humeur {
+  if (etat === "en_attente" || etat === "en_cours") return "en_cours"
+  if (etat === "termine" || etat === "annule") return "terminee"
+  if (etat === "echoue") return "ratee"
+  return "a_reprendre"
+}
+// La série d'un travail d'animation (RV5/RV6) n'est pas encore typée sur
+// `Travail` : un travail son (`TravailAudio`) porte un champ du même nom mais
+// d'une autre forme (`{identifiant,rang}`, sans `cle`). Lire les deux à la
+// prudence évite de figer un type commun aux deux, qui n'existe pas côté
+// serveur.
+function cleDeLaSerieDuTravail(t: TravailSuivi): string | null {
+  const s = (t as unknown as { serie?: { cle?: string; identifiant?: string } }).serie
+  return s?.cle ?? s?.identifiant ?? null
+}
+
+type LigneFabrication = {
+  cle: string
+  origine: "travail" | "locale" | "appel"
+  titre: string
+  sousTitre: string
+  humeur: Humeur
+  raison: string | null
+  laceLe: number
+  serieCle: string | null
+  vignette: { src: string | null; lettre: string }
+  travail?: TravailSuivi
+  locale?: EtapeLocale
+  appel?: Appel
+  generation?: Generation
+}
+
+/** **RV9 : le regroupement d'une série.** Deux lignes se regroupent quand le
+ *  serveur leur connaît la même série (RV5/RV6 : plusieurs clips d'une même
+ *  case, ou plusieurs directions lancées d'un coup). Sans série — un son ou un
+ *  calcul local relancés à la main plusieurs fois de suite —, elles se
+ *  regroupent quand elles partagent l'origine et le titre et sont parties à
+ *  moins d'une minute d'écart : passé la minute, ce n'est plus le même geste. */
+function cleDeGroupe(l: LigneFabrication): string {
+  if (l.serieCle) return `serie:${l.serieCle}`
+  return `seule:${l.origine}:${l.titre}:${Math.floor(l.laceLe / 60)}`
+}
+
+const LETTRE_DU_TRAVAIL: Record<string, string> = { equipement: "É", audio: "S", "3d": "3D", "image-locale": "I", "video-libre": "V" }
+
+/** **Quatre champs qu'un travail d'animation porte, et que deux natures
+ *  (équipement, 3D) ne portent pas du tout** — `TravailEquipement` et
+ *  `Travail3D` ne dérivent pas de `Travail` (`api-travaux-equipement.ts`,
+ *  `api-3d.ts`). Lus à la prudence plutôt que d'importer les cinq types
+ *  satellites pour un champ optionnel chacun : à l'exécution, ils sont
+ *  simplement absents pour les natures qui ne les portent pas. */
+function champsAnimes(t: TravailSuivi) {
+  return t as unknown as { clip?: string | null; entree_video?: { url: string }; lance_le?: number; modifie_le?: number; generation_image?: string | null; etape_locale?: string | null }
+}
+
+function vignetteDuTravail(t: TravailSuivi): { src: string | null; lettre: string } {
+  const anime = t.nature === undefined || t.nature === "animation" || t.nature === "video-libre"
+  const { clip, entree_video: entreeVideo } = champsAnimes(t)
+  if (anime && clip && t.etat === "termine") return { src: api.couvertureDuClip(clip, 108), lettre: "" }
+  if ((t.nature === undefined || t.nature === "animation") && entreeVideo) return { src: entreeVideo.url, lettre: "" }
+  return { src: null, lettre: LETTRE_DU_TRAVAIL[t.nature ?? "animation"] ?? "A" }
+}
+
+export function SuiviDesTravaux({ projet, personnages, chantier = [], clips = [], onClip, onBande, onGalerie, onSujet, onCalqueEquipement, onAsset, onToile, onSon }: {
+  /** **RV9** : sans jeu ouvert, les travaux suivis restent vides — il n'y a
+   *  pas de production-jobs sans jeu —, mais le journal et la file locale
+   *  savent tous les deux lire « sans projet » : la liste ne disparaît pas. */
+  projet: string | null; personnages: readonly Personnage[]
+  /** **RV9** : le chantier et les clips déjà connus de l'écran qui monte
+   *  celle-ci (flux SSE) — pour ne pas relire deux fois la même chose en
+   *  attendant le prochain tour du journal. Facultatifs : un travail seul
+   *  (l'onglet Agent MCP des réglages, par exemple) n'en a aucun à offrir. */
+  chantier?: readonly Generation[]; clips?: readonly Generation[]
+  onClip: (id: string) => void; onBande?: (id: string) => void
+  /** Absent, les boutons qui mènent à la galerie d'une ligne du journal ne
+   *  paraissent pas — un travail seul n'a pas de galerie à côté de lui. */
+  onGalerie?: () => void; onSujet?: (id: string) => void
+  onCalqueEquipement?: OuvrirCalqueEquipement; onAsset?: (id: string) => void; onToile?: (id: string) => void; onSon?: (id: string) => void
 }) {
   const [liste, setListe] = useState<TravailSuivi[]>([])
+  const [appels, setAppels] = useState<Appel[]>([])
+  const [locales, setLocales] = useState<EtapeLocale[]>([])
+  const [moteurs, setMoteurs] = useState<MoteurLocal[]>([])
   const [ouvert, setOuvert] = useState<TravailSuivi | null>(null)
   const [erreur, setErreur] = useState("")
+  const [humeur, setHumeur] = useState<Humeur | "">("")
+  const [recherche, setRecherche] = useState("")
+  const [deplies, setDeplies] = useState<Set<string>>(new Set())
+  const [occupeLocal, setOccupeLocal] = useState<string | null>(null)
+
   useEffect(() => {
+    if (!projet) { setListe([]); return }
     let vivant = true
     const lire = () => void travaux.lister(projet).then((r) => { if (vivant) setListe(r) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
     lire(); const intervalle = window.setInterval(lire, 5000)
     return () => { vivant = false; window.clearInterval(intervalle) }
   }, [projet, ouvert])
+  useEffect(() => {
+    let vivant = true
+    const lire = () => void api.journal(projet).then((j) => { if (vivant) setAppels(j.appels) }).catch(() => {})
+    lire(); const intervalle = window.setInterval(lire, 5000)
+    return () => { vivant = false; window.clearInterval(intervalle) }
+  }, [projet])
+  useEffect(() => {
+    let vivant = true
+    const lire = () => void fileLocale.lire().then((f) => { if (vivant) setLocales(f.etapes) }).catch(() => {})
+    lire(); const intervalle = window.setInterval(lire, 5000)
+    return () => { vivant = false; window.clearInterval(intervalle) }
+  }, [])
+  useEffect(() => {
+    let vivant = true
+    fileLocale.moteurs().then((r) => { if (vivant) setMoteurs(r.moteurs) }).catch(() => {})
+    return () => { vivant = false }
+  }, [])
+
+  const lignes = useMemo<LigneFabrication[]>(() => {
+    const generationsDeTravaux = new Set(liste.flatMap((t) => { const c = champsAnimes(t); return [c.generation_image, c.clip].filter((x): x is string => !!x) }))
+    const etapesDeTravaux = new Set(liste.map((t) => champsAnimes(t).etape_locale).filter((x): x is string => !!x))
+
+    const deTravaux: LigneFabrication[] = liste.flatMap((t) => {
+      const h = humeurDuTravail(t.etat)
+      if (!h) return []
+      return [{
+        cle: `travail:${t.identifiant}`, origine: "travail" as const,
+        titre: nomDuTravail(t, personnages), sousTitre: t.acteur === "agent" ? "Agent" : "Création manuelle",
+        humeur: h, raison: h !== "en_cours" ? (t.raison ?? null) : null,
+        laceLe: champsAnimes(t).lance_le ?? champsAnimes(t).modifie_le ?? t.cree_le, serieCle: cleDeLaSerieDuTravail(t),
+        vignette: vignetteDuTravail(t), travail: t,
+      }]
+    })
+
+    // **Le même mélange qu'avant RV9** (chantier et clips l'emportent sur le
+    // journal à identifiant égal, RP11) — sauf ce qu'un travail porte déjà.
+    const parGeneration = new Map<string, { appel: Appel; generation?: Generation }>()
+    appels.forEach((a) => { if (!generationsDeTravaux.has(a.identifiant)) parGeneration.set(a.identifiant, { appel: a }) })
+    ;[...clips, ...chantier].filter((g) => g.projet === projet && !generationsDeTravaux.has(g.identifiant)).forEach((g) =>
+      parGeneration.set(g.identifiant, { appel: { identifiant: g.identifiant, modele: g.modele, prompt: g.demande.prompt, cree_le: g.cree_le, cout_usd: g.cout_usd, statut: g.statut, reussies: g.reussies, rates: [] }, generation: g }))
+    const dAppels: LigneFabrication[] = [...parGeneration.values()].map(({ appel: a, generation: g }) => ({
+      cle: `appel:${a.identifiant}`, origine: "appel" as const,
+      titre: a.prompt || "Demande sans texte", sousTitre: a.modele,
+      humeur: humeurDeLAppel(a.statut), raison: a.rates.find((r) => r.raison)?.raison ?? null,
+      laceLe: a.cree_le, serieCle: null,
+      vignette: g?.clip ? { src: api.couvertureDuClip(a.identifiant, 108), lettre: "" } : { src: null, lettre: "I" },
+      appel: a, generation: g,
+    }))
+
+    const deLocales: LigneFabrication[] = locales
+      .filter((e) => !etapesDeTravaux.has(e.identifiant) && (e.projet === projet || e.projet === null))
+      .map((e) => ({
+        cle: `locale:${e.identifiant}`, origine: "locale" as const,
+        titre: `${NATURES_LOCALES[e.nature]} · ${nomDuModele(e.modele)}`, sousTitre: e.acteur === "agent" ? "Agent" : "Création manuelle",
+        humeur: humeurLocale(e.etat), raison: e.raison || null,
+        laceLe: e.cree_le, serieCle: null,
+        vignette: { src: null, lettre: LETTRES_LOCALES[e.nature] },
+        locale: e,
+      }))
+
+    return [...deTravaux, ...dAppels, ...deLocales].sort((a, b) => b.laceLe - a.laceLe)
+  }, [liste, appels, locales, chantier, clips, projet, personnages])
+
+  const texteDeRecherche = recherche.trim().toLocaleLowerCase("fr")
+  const filtrees = lignes.filter((l) =>
+    (!humeur || l.humeur === humeur) &&
+    (!texteDeRecherche || `${l.titre} ${l.sousTitre}`.toLocaleLowerCase("fr").includes(texteDeRecherche)))
+  const groupes = useMemo(() => {
+    const parCle = new Map<string, LigneFabrication[]>()
+    for (const l of filtrees) {
+      const cle = cleDeGroupe(l)
+      const groupe = parCle.get(cle)
+      if (groupe) groupe.push(l); else parCle.set(cle, [l])
+    }
+    return [...parCle.values()].sort((a, b) => b[0].laceLe - a[0].laceLe)
+  }, [filtrees])
+
+  async function agirLocal(e: EtapeLocale, annuler: boolean) {
+    setOccupeLocal(e.identifiant); setErreur("")
+    try {
+      await (annuler ? fileLocale.annuler(e.identifiant) : fileLocale.reprendre(e.identifiant))
+      setLocales((ls) => ls.map((x) => x.identifiant === e.identifiant ? { ...x, etat: annuler ? "annule" : "en_attente" } : x))
+    } catch (err) { setErreur(message(err)) }
+    finally { setOccupeLocal(null) }
+  }
+
   return <section aria-label="Fabrications suivies" className="mt-[22px] rounded-8 border border-trait bg-carte p-[22px]">
-    <div className="flex items-center justify-between gap-[14px]"><div><h2 className="font-serif text-[25px]">Créer et suivre les fabrications</h2><p className="mt-[8px] text-[13px] text-encre-3">Images, clips, équipements et sons : retrouvez chaque demande et ses résultats ici.</p></div><button className={BOUTON} disabled={!personnages.length || !onPreparer} onClick={() => onPreparer?.("clip")}>Nouvelle animation</button></div>
+    <div><h2 className="font-serif text-[25px]">Les fabrications</h2>
+      <p className="mt-[4px] text-[13px] text-encre-3">{moteurs.length ? moteurs.map((m) => `${m.nom} : ${MOTEURS_LABEL[m.etat]}`).join(" · ") : "Images, clips, équipements et sons : chaque demande et son résultat, dès qu'elle part."}</p></div>
+    <div className="mt-[14px] flex flex-wrap items-end gap-[14px]">
+      <label className="flex flex-1 flex-col gap-[4px] text-[12px] text-encre-3"><Libelle aide="fabrication.recherche">Rechercher une fabrication</Libelle><input type="search" value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder="Demande ou modèle…" className={CHAMP} /></label>
+      <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">État<select value={humeur} onChange={(e) => setHumeur(e.target.value as Humeur | "")} className={CHAMP}><option value="">Toutes</option>{(Object.keys(NOM_DE_L_HUMEUR) as Humeur[]).map((h) => <option key={h} value={h}>{NOM_DE_L_HUMEUR[h]}</option>)}</select></label>
+    </div>
     {erreur && <p role="alert" className="mt-[14px] text-echec">{erreur}</p>}
-    <div className="mt-[14px] space-y-[8px]">{liste.map((t) => <button key={t.identifiant} className="flex w-full items-center justify-between gap-[14px] rounded-7 border border-trait p-[14px] text-left hover:border-contour" onClick={() => setOuvert(t)}>
-      <span className="text-[13px]">{nomDuTravail(t, personnages)}<small className="mt-[4px] block text-encre-3">{t.acteur === "agent" ? "Agent" : "Création manuelle"} · {new Date(t.cree_le * 1000).toLocaleString("fr-FR")}</small></span><span className="text-[12px] text-encre-3">{ETATS[t.etat]}</span>
-    </button>)}</div>
-    {ouvert && <FenetreDuTravail key={ouvert.identifiant} travail={ouvert} projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} onFermer={() => setOuvert(null)} onCalqueEquipement={onCalqueEquipement} onAsset={onAsset} onToile={onToile} onSon={onSon} />}
+    <div className="mt-[14px] space-y-[8px]">
+      {groupes.map((groupe) => {
+        const cle = cleDeGroupe(groupe[0])
+        return <LigneDeLaListe key={cle} groupe={groupe} deplie={deplies.has(cle)}
+          onDeplier={() => setDeplies((d) => { const n = new Set(d); n.has(cle) ? n.delete(cle) : n.add(cle); return n })}
+          onOuvrir={(l) => l.travail && setOuvert(l.travail)}
+          occupeLocal={occupeLocal} onAgirLocal={agirLocal}
+          onClip={onClip} onSujet={onSujet} onGalerie={onGalerie} />
+      })}
+      {!groupes.length && <p className="text-[13px] text-encre-3">Aucune fabrication pour ces filtres.</p>}
+    </div>
+    {projet && ouvert && <FenetreDuTravail key={ouvert.identifiant} travail={ouvert} projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} onFermer={() => setOuvert(null)} onCalqueEquipement={onCalqueEquipement} onAsset={onAsset} onToile={onToile} onSon={onSon} />}
   </section>
+}
+
+function Vignette({ v }: { v: { src: string | null; lettre: string } }) {
+  return v.src
+    ? <img src={v.src} alt="" className="h-[34px] w-[34px] shrink-0 rounded-7 border border-trait object-contain" />
+    : <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-7 border border-trait bg-pourtour text-[12px] text-encre-3">{v.lettre}</span>
+}
+
+function LigneDeLaListe({ groupe, deplie, onDeplier, onOuvrir, occupeLocal, onAgirLocal, onClip, onSujet, onGalerie }: {
+  groupe: LigneFabrication[]; deplie: boolean; onDeplier: () => void
+  onOuvrir: (l: LigneFabrication) => void
+  occupeLocal: string | null; onAgirLocal: (e: EtapeLocale, annuler: boolean) => void
+  onClip: (id: string) => void; onSujet?: (id: string) => void; onGalerie?: () => void
+}) {
+  const premiere = groupe[0]
+  if (groupe.length === 1) return <LigneUnique ligne={premiere} onOuvrir={onOuvrir} occupeLocal={occupeLocal} onAgirLocal={onAgirLocal} onClip={onClip} onSujet={onSujet} onGalerie={onGalerie} />
+  const humeurGroupe: Humeur = groupe.some((l) => l.humeur === "en_cours") ? "en_cours"
+    : groupe.some((l) => l.humeur === "ratee") ? "ratee" : groupe.some((l) => l.humeur === "a_reprendre") ? "a_reprendre" : "terminee"
+  return <article className="rounded-7 border border-trait p-[14px]">
+    <button type="button" className="flex w-full items-center justify-between gap-[14px] text-left" onClick={onDeplier} aria-expanded={deplie}>
+      <span className="flex min-w-0 items-center gap-[14px]"><Vignette v={premiere.vignette} /><span className="min-w-0 truncate text-[13px]">{premiere.titre}<small className="mt-[4px] block text-encre-3">× {groupe.length}</small></span></span>
+      <span className="shrink-0 text-[12px] text-encre-3">{NOM_DE_L_HUMEUR[humeurGroupe]} · {deplie ? "replier ›" : "déplier ›"}</span>
+    </button>
+    {deplie && <div className="mt-[14px] space-y-[8px] border-t border-trait pt-[14px]">{groupe.map((l) => <LigneUnique key={l.cle} ligne={l} onOuvrir={onOuvrir} occupeLocal={occupeLocal} onAgirLocal={onAgirLocal} onClip={onClip} onSujet={onSujet} onGalerie={onGalerie} />)}</div>}
+  </article>
+}
+
+function LigneUnique({ ligne: l, onOuvrir, occupeLocal, onAgirLocal, onClip, onSujet, onGalerie }: {
+  ligne: LigneFabrication; onOuvrir: (l: LigneFabrication) => void
+  occupeLocal: string | null; onAgirLocal: (e: EtapeLocale, annuler: boolean) => void
+  onClip: (id: string) => void; onSujet?: (id: string) => void; onGalerie?: () => void
+}) {
+  return <article className="rounded-7 border border-trait p-[14px]">
+    <div className="flex items-center gap-[14px]">
+      <Vignette v={l.vignette} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-[14px]">
+          {l.origine === "travail"
+            ? <button type="button" className="min-w-0 flex-1 truncate text-left text-[13px] text-encre" onClick={() => onOuvrir(l)}>{l.titre}</button>
+            : <span className="min-w-0 flex-1 truncate text-[13px] text-encre">{l.titre}</span>}
+          <span className={`shrink-0 text-[12px] ${l.humeur === "ratee" ? "text-echec" : l.humeur === "en_cours" ? "text-signal" : "text-encre-3"}`}>{NOM_DE_L_HUMEUR[l.humeur]}</span>
+        </div>
+        <p className="mesure mt-[4px] text-[11px] text-encre-3">{l.sousTitre} · {new Date(l.laceLe * 1000).toLocaleString("fr-FR")}</p>
+        {l.raison && <p className="mt-[4px] text-[12px] text-echec">{l.raison}</p>}
+        {l.origine === "appel" && l.appel && <div className="mt-[8px] flex flex-wrap gap-[8px]">
+          {l.appel.statut === "reussie" && (l.generation?.clip || onGalerie) && <button className={BOUTON} onClick={() => l.generation?.clip ? onClip(l.appel!.identifiant) : onGalerie?.()}>{l.generation?.clip ? "Ouvrir le montage du clip" : "Voir les résultats dans la galerie"}</button>}
+          {l.generation?.personnage && <button className={BOUTON} onClick={() => onSujet?.(l.generation!.personnage!)}>Ouvrir le sujet</button>}
+          {onGalerie && (l.appel.statut === "echouee" || l.appel.statut === "interrompue") && <button className={BOUTON} onClick={onGalerie}>Reprendre depuis la galerie</button>}
+        </div>}
+        {l.origine === "locale" && l.locale && (l.locale.etat === "a_reprendre" || (l.locale.etat === "en_attente" && !l.locale.soumission_engagee)) && <div className="mt-[8px]">
+          {l.locale.etat === "a_reprendre" && <button disabled={occupeLocal !== null} className={BOUTON} onClick={() => onAgirLocal(l.locale!, false)}>Reprendre le suivi</button>}
+          {l.locale.etat === "en_attente" && !l.locale.soumission_engagee && <button disabled={occupeLocal !== null} className={BOUTON} onClick={() => onAgirLocal(l.locale!, true)}>Annuler cette attente</button>}
+        </div>}
+      </div>
+    </div>
+  </article>
 }
 
 export function TravailConserve({ projet, identifiant, personnages, onClip, onBande, onFermer, onCalqueEquipement, onAsset, onToile, onSon }: {

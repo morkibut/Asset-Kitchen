@@ -2,11 +2,17 @@
 // `docs/vocabulaire.html`.
 //
 // Le mot *asset* y est interdit : une chose du jeu s'appelle **un sujet**.
-// L'écran l'écrivait cinq fois — un titre, un libellé de champ, son
-// `aria-label`, l'option vide de la liste et le bouton d'une ligne du journal
-// —, et le banc `essais/essai_vocabulaire.py` ne pouvait pas le voir : il ne
-// lit que les libellés d'ossature (les portes du carnet, les onglets de la
-// fiche, les titres d'écran), jamais le texte des cartes.
+// L'écran l'écrivait cinq fois avant `RV9` — un titre, un libellé de champ,
+// son `aria-label`, l'option vide de la liste et le bouton d'une ligne du
+// journal —, et le banc `essais/essai_vocabulaire.py` ne pouvait pas le voir :
+// il ne lit que les libellés d'ossature (les portes du carnet, les onglets de
+// la fiche, les titres d'écran), jamais le texte des cartes.
+//
+// **RV9 — une seule liste de fabrications** a retiré « Animer un sujet » (son
+// propre sélecteur de sujet, remplacé par le champ « Sujet » de la fenêtre
+// unique) : ce qui reste à vérifier est que la ligne fusionnée d'une image
+// libre — celle que le chantier et le journal portaient déjà — ne dit toujours
+// pas « asset », et que le seul bouton de départ ouvre bien la fenêtre.
 //
 // Rien ici ne part sur le réseau : les quatre lectures que l'écran lance à
 // l'ouverture sont doublées, et la seule chose qu'on regarde est ce qui
@@ -17,6 +23,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { api, type Generation, type Personnage } from "../api"
 import { fileLocale } from "../api-file-locale"
+import { travaux } from "../api-travaux"
 import { workflows } from "../api-workflows"
 import { Fabrications } from "./Fabrications"
 
@@ -50,12 +57,12 @@ const RIEN = {
   onGalerie: () => {},
   onClip: () => {},
   onSujet: () => {},
-  onAnimerSujet: () => {},
   onDepenses: () => {},
 }
 
 beforeEach(() => {
   vi.spyOn(api, "journal").mockResolvedValue({ appels: [] } as unknown as Awaited<ReturnType<typeof api.journal>>)
+  vi.spyOn(travaux, "lister").mockResolvedValue([])
   vi.spyOn(fileLocale, "lire").mockResolvedValue({ etapes: [], moteurs: [] } as unknown as Awaited<ReturnType<typeof fileLocale.lire>>)
   vi.spyOn(fileLocale, "moteurs").mockResolvedValue({ moteurs: [] } as unknown as Awaited<ReturnType<typeof fileLocale.moteurs>>)
   vi.spyOn(workflows, "lister").mockResolvedValue({ profils: [] } as unknown as Awaited<ReturnType<typeof workflows.lister>>)
@@ -65,13 +72,11 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-test("l'écran dit « sujet », jamais « asset »", () => {
+test("l'écran dit « sujet », jamais « asset »", async () => {
   render(<Fabrications projet={null} chantier={[faite]} clips={[]} personnages={[personnage]} {...RIEN} />)
 
-  expect(screen.getByRole("heading", { name: "Animer un sujet" })).toBeTruthy()
-  expect(screen.getByLabelText("Sujet à animer")).toBeTruthy()
-  expect(screen.getByRole("option", { name: "Choisir un sujet…" })).toBeTruthy()
-  expect(screen.getByRole("button", { name: "Ouvrir le sujet" })).toBeTruthy()
+  expect(screen.getByRole("button", { name: "Nouvelle fabrication" })).toBeTruthy()
+  expect(await screen.findByRole("button", { name: "Ouvrir le sujet" })).toBeTruthy()
 
   // Et le mot interdit ne reste nulle part — ni dans le texte, ni dans un
   // libellé que seul le lecteur d'écran entend. *Asset Kitchen*, le nom du
@@ -83,15 +88,17 @@ test("l'écran dit « sujet », jamais « asset »", () => {
     expect(element.getAttribute("aria-label")).not.toMatch(/asset/i)
 })
 
-// RV6 : « Animer un sujet » ouvre la fenêtre d'animation sur ce sujet, comme
-// les autres portes — plus la fiche, où il fallait encore trouver le bouton.
-test("choisir un sujet à animer ouvre la fenêtre d'animation sur lui, pas sa fiche", () => {
-  const onAnimerSujet = vi.fn()
-  const onSujet = vi.fn()
-  render(<Fabrications projet={null} chantier={[]} clips={[]} personnages={[personnage]} {...RIEN} onAnimerSujet={onAnimerSujet} onSujet={onSujet} />)
+// RV9 : les trois portes « Préparer une image », « Animer un sujet » et
+// « Préparer une vidéo »/« Un son » se réduisent à un seul bouton de départ.
+test("« Nouvelle fabrication » est le seul bouton de départ, et il ouvre la fenêtre", () => {
+  const onCreer = vi.fn()
+  render(<Fabrications projet={null} chantier={[]} clips={[]} personnages={[personnage]} {...RIEN} onCreer={onCreer} />)
 
-  fireEvent.change(screen.getByLabelText("Sujet à animer"), { target: { value: "pelerin" } })
+  expect(screen.queryByRole("button", { name: "Préparer une image" })).toBeNull()
+  expect(screen.queryByRole("button", { name: "Préparer une vidéo" })).toBeNull()
+  expect(screen.queryByRole("button", { name: "Préparer un son" })).toBeNull()
+  expect(screen.queryByLabelText("Sujet à animer")).toBeNull()
 
-  expect(onAnimerSujet).toHaveBeenCalledWith("pelerin")
-  expect(onSujet).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: "Nouvelle fabrication" }))
+  expect(onCreer).toHaveBeenCalledOnce()
 })

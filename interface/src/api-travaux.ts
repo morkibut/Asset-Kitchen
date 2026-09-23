@@ -48,9 +48,18 @@ export type Travail = {
   nature?: "animation"
   identifiant: string; projet: string; cle: string; acteur: "auteur" | "agent"
   etat: "prepare" | "en_cours" | "a_reprendre" | "a_verifier" | "externe_inconnu" | "termine" | "annule"
+  /** **RV9** : l'étape de la file locale que ce travail a fait tourner, quand
+   *  il tourne ou a tourné en local — la liste unique des fabrications l'utilise
+   *  pour ne pas montrer deux fois le même calcul (une fois comme travail, une
+   *  fois comme ligne de la file locale). */
   etape_locale?: string | null
   etape: string; demande: DemandeTravail; cree_le: number; modifie_le?: number
   reference_asset: string | null; clip: string | null; bandes: string[]
+  /** **RV9** : la génération de l'image de départ, quand ce travail en a créé
+   *  une — c'est elle que le journal des appels connaît sous son propre
+   *  identifiant. Même raison qu'`etape_locale` : ne pas montrer deux fois le
+   *  même appel (une fois comme travail, une fois comme ligne de journal). */
+  generation_image?: string | null
   references: { asset?: string | null; nom: string; url: string; empreinte: string }[]
   entree_video?: { url: string; empreinte: string }
   envoi_image?: { prompt: string; prompt_negatif?: string; options: Record<string, unknown>; proportions: string; resolution?: string | null }

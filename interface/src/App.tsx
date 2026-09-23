@@ -2521,7 +2521,6 @@ function AtelierApp() {
           onPreparer={(type, modele, avecQuoi) => { setCible(null); setPreparation({ type, modele, avecQuoi }) }}
           onClip={ouvrirLeMontage}
           onSujet={(id) => { memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "animations"); setPile(entrer(poser("codex"), { genre: "sujet", sujet: id })) }}
-          onAnimerSujet={(id) => { setCible(null); setPreparation({ type: "clip", sujet: id }) }}
           onDepenses={() => setDepensesOuvertes(true)} />
       )}
 
