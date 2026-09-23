@@ -221,16 +221,44 @@ carte se sert à `/api/board/9c09adf6b8d745ac/image`. Le pied dit aussi « aucun
 sur un sujet né par `TS2`, dont le concept art est une **copie en asset** ; un concept art posé
 comme carte seule n'a jamais été essayé. Bloque l'essai payé de `TS3`.
 
-- [ ] la référence d'un concept art qui est une carte part et s'affiche comme une carte (image de
+- [x] la référence d'un concept art qui est une carte part et s'affiche comme une carte (image de
       la carte, rôle référence) — dans la préparation, dans « Relire avant l'envoi » et dans ce
       qui part au modèle ; ou bien elle est copiée en asset du sujet au premier geste, comme `TS2`
       — choisir, et le dire ici
-- [ ] le texte de la demande est rempli par le geste (le signalement du sujet, et ce que `TS3`
+- [x] le texte de la demande est rempli par le geste (le signalement du sujet, et ce que `TS3`
       ajoute) ; « Relire avant l'envoi » est actif
-- [ ] le même chemin tient depuis le bandeau de `TS8` **et** depuis le bloc *Planche* de l'onglet
+- [x] le même chemin tient depuis le bandeau de `TS8` **et** depuis le bloc *Planche* de l'onglet
       Images
-- [ ] un essai part d'un sujet dont le concept art est une carte **non copiée**, et tombe sans le
+- [x] un essai part d'un sujet dont le concept art est une carte **non copiée**, et tombe sans le
       correctif
+
+*Fait le 23 septembre 2026.* **Trois défauts, pas un.** (1) *À l'écran* : `armerPremierePlanche`
+(`gestes.ts`) — seul point de passage des deux portes, bandeau et bloc *Planche* — recopiait le
+design de `first-sheet` sans son `origine` ; la carte devenait un asset, d'où l'image demandée à
+`/api/assets/…` (404). La route et le service rendaient bien `origine: "carte"` : la marque se
+perdait là, et nulle part ailleurs. (2) *Le texte vide* : le même geste posait `setPrompt("")`
+alors que sa provenance annonçait « d'après son signalement » — et le serveur refuse un appel sans
+texte. Il demande maintenant le signalement à `POST /characters/subject`, comme `armer` pour toute
+case. (3) *Ce qui partait au modèle, vu au serveur* : même avec l'origine, la copie de l'écran
+passait devant la réinjection du service au dédoublonnage (première occurrence gardée) et perdait
+l'usage `design` — plus de « THE CHARACTER DESIGN TO REPRODUCE », une ligne « carte de la toile ».
+Sans l'origine, c'était pire : un asset introuvable plus la carte. Le défaut touchait donc **aussi**
+les sujets nés de `TS2` (leur concept art est la carte, pas sa copie) ; `TS3` ne l'avait pas vu
+parce que ses essais serveur n'envoyaient jamais ce que l'écran joint. Réparé par
+`_sans_le_design` (`services/generation.py`) : la réinjection du service fait foi, à la
+soumission comme dans le compte de la relecture. Et une carte à reproduire devenue illisible
+**arrête** l'appel au lieu d'être sautée comme un artwork. **Tranché : la carte part comme
+carte**, sans copie au premier geste — c'est déjà la règle de `TS3` (« la carte d'abord »), le
+tuyau sait lire une carte depuis `T4`, et `first-sheet` est une lecture gratuite qui ne doit rien
+écrire en bibliothèque ; copier aurait fait naître un asset à chaque préparation abandonnée.
+Essais : `tests/test_ts11.py` (4, dont 3 tombent sans le correctif serveur), deux essais
+d'`App.test.tsx` (bandeau et bloc *Planche*, tombent sans le correctif d'écran sur
+`/api/assets/…?brut=false`, l'adresse même du journal de l'auteur), `gestes-preparation.test.tsx` mis à jour.
+Vu au navigateur sur un atelier jetable (Elias, carte non copiée) : image de la carte chargée,
+champ rempli, « Relire avant l'envoi » actif depuis les deux portes, relecture « concept art ·
+personnage à reproduire » avec le texte `DESIGN` — aucun envoi lancé. Reste : le grisé de
+`GET /models` ne connaît pas `premiere_planche` (il compte la carte comme une image jointe, ce
+qui tombe juste en nombre) ; l'essai payé de `TS3` peut maintenant se faire.
 
 ## La toile qui fabrique — façon Mixboard
 

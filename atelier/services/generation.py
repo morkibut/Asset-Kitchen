@@ -3193,7 +3193,7 @@ class ServiceGenerations:
             premiere_planche=premiere_planche,
         )
         reinjectes = _reinjectes(
-            tuple(references)
+            _sans_le_design(references, concepts)
             + concepts
             + self._de_lambiance(projet, personnage)
             + self._artworks(echelle, projet)
@@ -3325,7 +3325,7 @@ class ServiceGenerations:
             ecartees.pop(asset, None)
 
         toutes = _reinjectes(
-            tuple(manuelles) + concepts + de_lambiance + artworks
+            _sans_le_design(manuelles, concepts) + concepts + de_lambiance + artworks
         )
         echelle_lue = (
             self._univers.echelle(projet, echelle) if self._univers and echelle else None
@@ -3980,6 +3980,14 @@ class ServiceGenerations:
                         self._univers.octets_reference(projet, reinjection.asset)
                     )
                 except ErreurAtelier:
+                    # **Sauf le personnage à reproduire** (TS11) : une carte qui
+                    # est la demande même d'une première planche ne se saute
+                    # pas — l'appel partirait dessiner un inconnu, payé.
+                    if reinjection.usage == USAGE_DESIGN:
+                        raise DemandeRefusee(
+                            "le concept art à reproduire n'est plus sur la toile "
+                            "— désignez-en un autre avant de relancer"
+                        ) from None
                     continue
                 continue
             if self._assets is None:
@@ -4177,6 +4185,26 @@ def _role_a_nommer(reinjection: Reinjection) -> str:
     if angle:
         return f"{REFERENCE_DIRECTION}:{angle}"
     return reinjection.role
+
+
+def _sans_le_design(
+    manuelles: Sequence[Reinjection], concepts: Sequence[Reinjection]
+) -> tuple[Reinjection, ...]:
+    """Les images posées à la main, **moins le personnage à reproduire** (TS11).
+
+    L'écran de la première planche montre le concept art parmi les images
+    jointes, pour qu'on le voie avant de payer — il revient donc aussi dans
+    `references`. Or le dédoublonnage garde la **première** occurrence : la
+    copie de l'écran, sans usage, passait devant celle du service, et l'image
+    partait comme une simple référence — le texte ne disait plus « THE
+    CHARACTER DESIGN TO REPRODUCE ». Le personnage à reproduire est la
+    demande : c'est la réinjection du service qui fait foi, quel que soit le
+    rôle que l'écran lui a laissé.
+    """
+    design = {(r.origine, r.asset) for r in concepts if r.usage == USAGE_DESIGN}
+    if not design:
+        return tuple(manuelles)
+    return tuple(r for r in manuelles if (r.origine, r.asset) not in design)
 
 
 def _reinjectes(references: Sequence[Reinjection]) -> tuple[Reinjection, ...]:
