@@ -22,8 +22,9 @@
 // elle-même, une fois dépliée, n'a pas changé de forme.
 
 import { useCallback, useEffect, useState } from "react"
-import { api, type Asset, type Bande, type Generation, type Personnage, type Pose } from "../api"
+import { api, PlancheAConfirmer, type Asset, type Bande, type Generation, type Personnage, type Pose } from "../api"
 import { useVisee, sujetVideo } from "./Apercu"
+import { FenteAnnulation, type Annulation } from "./BarreOutils"
 
 const BOUTON = "h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50"
 
@@ -77,6 +78,7 @@ export function EnAttenteDuSujet({
     personnage.cases.find((c) => c.pose === pose)?.directions ?? []
 
   const [ouvert, setOuvert] = useState(false)
+  const [annulation, setAnnulation] = useState<Annulation | null>(null)
 
   const relire = useCallback(async () => {
     try {
@@ -137,11 +139,69 @@ export function EnAttenteDuSujet({
     }
   }
 
+  /** Écarter : l'image quitte le sujet et retourne à la Galerie, intacte —
+   *  le même `personnage: null` que la fiche pose déjà pour en détacher une
+   *  (US-122, `api.designer`). Rien n'est supprimé, rien n'est payé. */
+  async function ecarterImage(asset: Asset) {
+    if (occupe) return
+    setOccupe(asset.identifiant)
+    try {
+      await api.designer(asset.identifiant, null, null, null)
+      await relire()
+      onChange?.()
+    } catch (erreur) {
+      onErreur?.(erreur, "cette image n’a pas pu être écartée")
+    } finally {
+      setOccupe("")
+    }
+  }
+
+  /** Supprimer : le geste de jugement de la Galerie, à l'identique — même
+   *  route confirmable, même délai d'annulation (US-27). Une planche dont
+   *  d'autres images dépendent se refuse ici comme là-bas ; ce bandeau ne
+   *  rejoue pas sa question « confirmer quand même », il renvoie vers la
+   *  Galerie qui la pose déjà. */
+  async function supprimerImage(asset: Asset) {
+    if (occupe) return
+    setOccupe(asset.identifiant)
+    try {
+      const rendu = await api.supprimerAssetsConfirmable([asset.identifiant])
+      setAnnulation({ identifiants: rendu.supprimes, expireLe: rendu.expire_le })
+      await relire()
+      onChange?.()
+    } catch (erreur) {
+      if (erreur instanceof PlancheAConfirmer)
+        onErreur?.(erreur, "cette image appartient à une planche partagée — supprime-la depuis la Galerie")
+      else onErreur?.(erreur, "cette image n’a pas pu être supprimée")
+    } finally {
+      setOccupe("")
+    }
+  }
+
+  /** Rendre ce qui vient d'être supprimé, comme `Galerie.annuler` — les
+   *  identifiants sont ceux que la suppression a renvoyés, jamais relus sur
+   *  `annulation`, qui aurait encore sa valeur d'avant au même rendu. */
+  async function annulerSuppression() {
+    if (!annulation) return
+    try {
+      await api.restaurer(annulation.identifiants)
+      setAnnulation(null)
+      await relire()
+      onChange?.()
+    } catch (erreur) {
+      setAnnulation(null)
+      onErreur?.(erreur, "annulation refusée")
+    }
+  }
+
   const total = lu.images.length + lu.clips.length + lu.animations.length
 
   // **Le bandeau ne paraît que s'il y a quelque chose à ranger** — replié le
-  // temps de la lecture, absent une fois qu'on sait qu'il n'y a rien.
-  if (!charge || total === 0) return null
+  // temps de la lecture, absent une fois qu'on sait qu'il n'y a rien. **Sauf
+  // une annulation encore possible** : supprimer le dernier élément vide
+  // `total` au même rendu, et un bandeau qui s'efface avec lui emporterait
+  // le seul endroit où « Annuler » se trouve.
+  if (!charge || (total === 0 && !annulation)) return null
 
   const choixDePose = (surChoix: (pose: string) => void, desactive: boolean) => (
     <select
@@ -165,26 +225,38 @@ export function EnAttenteDuSujet({
   return (
     <section data-bandeau-pas-encore-range aria-label="Pas encore rangé" className="shrink-0 rounded-8 border border-trait-attention bg-fond-attention px-[14px] py-[8px]">
       <div className="flex flex-wrap items-center justify-between gap-[14px]">
-        <button
-          type="button"
-          onClick={() => setOuvert((v) => !v)}
-          aria-expanded={ouvert}
-          className="flex min-w-0 flex-1 items-center gap-[8px] py-[4px] text-left"
-        >
-          <span aria-hidden className="text-[12px] text-encre-attention">{ouvert ? "▾" : "▸"}</span>
-          <span className="font-serif text-[13px] text-encre-attention">Pas encore rangé</span>
-          <span className="text-[12.5px] text-encre-attention">
-            {total} élément{total > 1 ? "s" : ""} appartiennent à {personnage.nom} sans occuper de case — rien n’est perdu, choisis un mouvement pour les ranger.
-          </span>
-        </button>
-        {ouvert && (
-          <button className={BOUTON} onClick={() => void relire()}>
-            Relire
+        {total > 0 ? (
+          <button
+            type="button"
+            onClick={() => setOuvert((v) => !v)}
+            aria-expanded={ouvert}
+            className="flex min-w-0 flex-1 items-center gap-[8px] py-[4px] text-left"
+          >
+            <span aria-hidden className="text-[12px] text-encre-attention">{ouvert ? "▾" : "▸"}</span>
+            <span className="font-serif text-[13px] text-encre-attention">Pas encore rangé</span>
+            <span className="text-[12.5px] text-encre-attention">
+              {total} élément{total > 1 ? "s" : ""} appartiennent à {personnage.nom} sans occuper de case — rien n’est perdu, choisis un mouvement pour les ranger.
+            </span>
           </button>
+        ) : (
+          // **Le bandeau lui-même vient de se vider** (dernière image écartée
+          // ou supprimée) : la seule chose qu'il porte encore est l'annulation
+          // ci-dessous, le temps qu'elle reste possible.
+          <p className="flex min-w-0 flex-1 items-center gap-[8px] py-[4px] text-[12.5px] text-encre-attention">
+            Plus rien à ranger pour {personnage.nom}.
+          </p>
         )}
+        <div className="flex shrink-0 items-center gap-[14px]">
+          {annulation && <FenteAnnulation annulation={annulation} onAnnuler={() => void annulerSuppression()} />}
+          {ouvert && total > 0 && (
+            <button className={BOUTON} onClick={() => void relire()}>
+              Relire
+            </button>
+          )}
+        </div>
       </div>
 
-      {ouvert && <div className="mt-[14px] space-y-[22px]">
+      {ouvert && total > 0 && <div className="mt-[14px] space-y-[22px]">
 
       {lu.images.length > 0 && (
         <div>
@@ -211,6 +283,25 @@ export function EnAttenteDuSujet({
                         Ouvrir
                       </button>
                     )}
+                    {/* **Écarter et Supprimer** (`RV22`) : une image qui n'ira
+                        nulle part ne doit pas rester là pour rien. Écarter
+                        rejoue le même détachement que la fiche (`api.designer`
+                        avec `personnage: null`) ; Supprimer rejoue le geste de
+                        jugement de la Galerie, avec sa même annulation. */}
+                    <button
+                      className={BOUTON}
+                      disabled={occupe === a.identifiant}
+                      onClick={() => void ecarterImage(a)}
+                    >
+                      Écarter
+                    </button>
+                    <button
+                      className={`${BOUTON} hover:text-echec`}
+                      disabled={occupe === a.identifiant}
+                      onClick={() => void supprimerImage(a)}
+                    >
+                      Supprimer
+                    </button>
                   </div>
                 </div>
               </article>

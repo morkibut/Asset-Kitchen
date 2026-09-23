@@ -922,13 +922,34 @@ retour de l'auteur* : « si elle ne va nulle part, elle reste là pour rien ».
 
 ### Critères d'acceptation
 
-- [ ] chaque image du bandeau « Pas encore rangé » porte, à côté de « Ranger », **« Écarter »**
+- [x] chaque image du bandeau « Pas encore rangé » porte, à côté de « Ranger », **« Écarter »**
       (elle quitte le sujet et retourne à la Galerie, sans être supprimée) et **« Supprimer »**
       (le geste de jugement du produit, le même que dans la Galerie, avec la même confirmation)
-- [ ] les deux gestes se défont (« Annuler » un instant, comme ailleurs dans l'atelier) ; aucun
+- [x] les deux gestes se défont (« Annuler » un instant, comme ailleurs dans l'atelier) ; aucun
       ne supprime un fichier du disque sans passer par ce que la Galerie fait déjà
-- [ ] le bandeau se met à jour tout de suite et disparaît quand il n'y a plus rien à ranger
+- [x] le bandeau se met à jour tout de suite et disparaît quand il n'y a plus rien à ranger
 - [ ] l'agent (MCP) sait les mêmes gestes par les mêmes services (*T7*), s'ils ne les a pas déjà
+
+Fait le 23 septembre 2026. **Écarter** rejoue `api.designer(asset, null, null, null)` — le même
+`PUT /assets/{id}/character` à `personnage: null` que la fiche pose déjà pour détacher une image
+(US-122) ; rien n'est supprimé, rien n'est payé. **Supprimer** rejoue
+`api.supprimerAssetsConfirmable`, puis, sur 409 `planche_a_confirmer`, renvoie vers la Galerie
+plutôt que de reposer sa question ici — un choix, pas une lacune : dupliquer l'écran de
+confirmation d'une planche à deux endroits aurait ouvert la fragilité que « une question, un
+document » interdit déjà pour la doc. L'annulation est la **même fente**
+(`FenteAnnulation`, exportée de `BarreOutils.tsx`) que la Galerie, pas une seconde forme du même
+revers : même route (`api.restaurer`), même délai compté par le serveur. Le bandeau reste monté
+tant qu'une annulation y est possible, même quand il n'a plus rien à ranger — sinon supprimer le
+dernier élément emporterait le seul endroit où « Annuler » se trouve ; il disparaît entier une
+fois l'annulation résolue (acceptée ou expirée) et la liste vide.
+
+**Dernier critère non tenu, constaté plutôt que corrigé** : aucun outil MCP n'expose aujourd'hui
+ni le détachement d'une image (`atelier.production.designer`) ni sa suppression douce
+(`supprimer_assets`, côté service) — `atelier/mcp/serveur.py` n'a que `edit_asset` (retouche,
+matière) et `import_asset`/`import_clip` (qui *posent* un personnage à l'entrée, jamais ne le
+retirent). Inventer une paire d'outils `detach_asset`/`delete_asset` sort du geste `[EASY]` de
+cette tranche ; à faire à part, sur le modèle d'`edit_asset` (mêmes services que l'écran, refus
+lisible, `planche_a_confirmer` remonté tel quel).
 
 ---
 
