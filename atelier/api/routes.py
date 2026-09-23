@@ -446,6 +446,7 @@ async def modeles(
     personnage: str = Query(""),
     cases: int = Query(0, ge=0),
     piece: str = Query(""),
+    premiere_planche: bool = Query(False),
 ) -> dict[str, Any]:
     """Le catalogue, **et la raison du grisé de chaque modèle**.
 
@@ -477,11 +478,34 @@ async def modeles(
     # jamais une par modèle.
     reserves = {r.fournisseur: r for r in atelier.reserves.toutes()}
     projet = atelier.bibliotheque.courant
+    # **La première planche** (TS3, grisé ajouté le 24 septembre 2026 après
+    # relecture de TS11) : son concept art part comme le personnage à
+    # reproduire, et **il ne cède pas** — un modèle qui n'accepte aucune image
+    # ne peut pas la faire. Sans ce drapeau, le catalogue ne le savait pas et
+    # le refus tombait en 409 à l'envoi ; il se compte maintenant ici, par la
+    # même lecture que la soumission. L'écran joint ce même concept art
+    # (`armerPremierePlanche`) : ses premières images annoncées sont celles-là,
+    # et elles ne se comptent qu'une fois, comme `_sans_le_design` le fait à
+    # l'envoi.
+    deja_jointes = 0
+    if premiere_planche and personnage:
+        try:
+            deja_jointes = len(
+                atelier.generations.premiere_planche(projet, personnage)["design"]
+            )
+        except ErreurAtelier:
+            # Rien à reproduire : l'envoi le refusera avec sa phrase, et la
+            # préparation ne s'ouvre pas sans lui. Rien à griser de plus ici.
+            deja_jointes = 0
     compte = atelier.generations.compter_references(
         projet,
         echelle,
-        tuple(Reinjection(asset=f"~{rang}") for rang in range(references)),
+        tuple(
+            Reinjection(asset=f"~{rang}")
+            for rang in range(max(0, references - deja_jointes))
+        ),
         personnage=personnage or None,
+        premiere_planche=premiere_planche,
         # **Combien de cases le lot armé demande**, ou zéro. Il ne change qu'une
         # chose ici, et elle compte : le gabarit part avec l'appel, donc il
         # occupe une place dans le plafond du modèle et décide du grisé.

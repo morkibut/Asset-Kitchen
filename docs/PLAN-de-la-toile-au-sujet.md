@@ -260,6 +260,15 @@ personnage à reproduire » avec le texte `DESIGN` — aucun envoi lancé. Reste
 `GET /models` ne connaît pas `premiere_planche` (il compte la carte comme une image jointe, ce
 qui tombe juste en nombre) ; l'essai payé de `TS3` peut maintenant se faire.
 
+*Corrigé le 24 septembre 2026 après relecture.* Le reste ci-dessus est tenu : `GET /models`
+prend `premiere_planche`, compte le concept art comme le personnage à reproduire — il ne cède
+pas — et grise d'avance un modèle sans image d'entrée avec sa raison (« n'accepte aucune image
+de référence »). Les images que l'écran joint et qui sont ce concept art ne se comptent qu'une
+fois, comme `_sans_le_design` à l'envoi (avant, le total en comptait deux). L'écran passe le
+drapeau depuis la cible armée (`App.tsx`). Le 409 à l'envoi reste le filet. Essais : deux de
+`tests/test_ts11.py`, et les deux de TS11 d'`App.test.tsx` vérifient que la liste est demandée
+avec le drapeau — tous tombent sans le correctif. L'outil MCP n'a pas été touché.
+
 ### TS12 · Les palettes de la toile servent à la retouche et au sujet
 
 *Demandé par l'auteur le 23 septembre 2026*, dans l'atelier d'une animation (Mara, marche ·
@@ -305,6 +314,16 @@ composant, non ouvert faute de bande dans l'atelier jetable). Reste : les couleu
 la naissance sont celles gardées dans le fichier du projet, recalculées chaque fois que les
 palettes sont lues — une palette dont une source a changé sans que personne ne l'ait relue
 donnerait sa lecture précédente.
+
+*Corrigé le 24 septembre 2026 après relecture.* « Chaque nouvelle image » tenait mal : les
+vues dépliées d'une planche (première planche, planche de poses, corps habillés d'une planche
+d'équipement) naissaient sans la palette du sujet. Elles la reçoivent maintenant, par la même
+copie, posée sur la recette du jeu pour un morceau de planche (`recette_d_une_vue_depliee`) —
+le sujet est celui de **la case**, donc chaque vue d'une planche à plusieurs sujets prend la
+palette du sien. La feuille garde sa recette vide ; un calque d'équipement garde sa différence.
+Sans palette au sujet, rien ne change (essai). La fiche (`impose`) lit la même chose. Essais :
+deux de `tests/test_ts12.py`, dont un qui referme l'atelier, le rouvre et relit chaque vue
+après une retouche de la palette — il tombe sans le correctif.
 
 ## La toile qui fabrique — façon Mixboard
 

@@ -53,7 +53,7 @@ from atelier.domaine.equipement import (
 )
 from atelier.domaine.generation import Generation
 from atelier.domaine.pliage import CasePliee, MesuresLot, Pliage
-from atelier.domaine.projet import PLANCHE, Projet, repere
+from atelier.domaine.projet import Projet, repere
 from atelier.domaine.recette import Difference, Recette, traits_depuis_json
 from atelier.image.calque import (
     ECHELLE_TOLEREE,
@@ -1305,7 +1305,9 @@ class ServiceEquipement:
             recette = (
                 ancien.recette
                 if not etait_calque
-                else self._assets.recette_du_projet(generation, PLANCHE)
+                else self._assets.recette_d_une_vue_depliee(
+                    generation, generation.personnage
+                )
             )
 
         ancien.brut = self._fichiers.ecrire_brut(
@@ -1382,7 +1384,9 @@ class ServiceEquipement:
             recette = Recette(difference=Difference(base=base.identifiant))
         else:
             image = octets
-            recette = self._assets.recette_du_projet(generation, PLANCHE)
+            recette = self._assets.recette_d_une_vue_depliee(
+                generation, generation.personnage
+            )
 
         chemin = self._fichiers.ecrire_brut(
             generation.identifiant, rang, image, ".png"

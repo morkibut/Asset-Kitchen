@@ -5017,12 +5017,18 @@ export const api = {
      *  le modèle d'**édition** du projet — habiller un corps est une édition,
      *  pas une création de planche. */
     piece = "",
+    /** La première planche d'un sujet (TS3) : son concept art part comme le
+     *  personnage à reproduire et ne cède pas, donc un modèle qui n'accepte
+     *  aucune image se grise d'avance au lieu d'être refusé à l'envoi. Les
+     *  images jointes qui sont ce concept art ne se comptent qu'une fois. */
+    premierePlanche = false,
   ) =>
     appeler<EtatCatalogue>(
       `/models?proportions=${encodeURIComponent(proportions)}` +
         `&references=${references}&echelle=${encodeURIComponent(echelle)}` +
         `&personnage=${encodeURIComponent(personnage)}&cases=${cases}` +
-        `&piece=${encodeURIComponent(piece)}`,
+        `&piece=${encodeURIComponent(piece)}` +
+        (premierePlanche ? "&premiere_planche=true" : ""),
     ),
 
   rafraichirCatalogue: () =>
