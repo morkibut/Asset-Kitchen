@@ -23,7 +23,7 @@ test("le type d'objet et l'ambiance se règlent dans la fiche du sujet", async (
   vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [{ identifiant: "brume", nom: "Brume" }] } as never)
   const regler = vi.spyOn(api, "reglerPersonnage").mockImplementation(async (_id, champs) => ({ personnage: { ...pelerin, ...champs } }) as never)
   const onPersonnage = vi.fn()
-  render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   const type = screen.getByLabelText("Type d'objet")
   await screen.findByRole("option", { name: "coffre — 2 poses" })
@@ -47,7 +47,7 @@ test("la fiche retire le sujet du jeu, après confirmation", async () => {
   const confirmer = vi.spyOn(window, "confirm").mockReturnValue(true)
   const supprimer = vi.spyOn(api, "supprimerPersonnage").mockResolvedValue({ personnage: pelerin } as never)
   const onPersonnage = vi.fn()
-  render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   fireEvent.click(screen.getByText("Rangement et retrait du jeu"))
   fireEvent.click(screen.getByRole("button", { name: "Le retirer du jeu" }))
@@ -65,7 +65,7 @@ test("un refus de confirmation ne retire rien", async () => {
   vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [] } as never)
   vi.spyOn(window, "confirm").mockReturnValue(false)
   const supprimer = vi.spyOn(api, "supprimerPersonnage")
-  render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   fireEvent.click(screen.getByText("Rangement et retrait du jeu"))
   fireEvent.click(screen.getByRole("button", { name: "Le retirer du jeu" }))
@@ -90,7 +90,7 @@ test("la fiche affiche le même compte d'avancement que le Codex et l'objectif",
   } as never)
   vi.spyOn(api, "habillage").mockResolvedValue(null as never)
   vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(null as never)
-  render(<FicheDuSujet personnage={passeur} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  render(<FicheDuSujet personnage={passeur} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} />)
   expect(await screen.findByText(/Prêtes pour le jeu/)).toHaveTextContent(
     "Prêtes pour le jeu : 2 animations sur 6 · 5 images fixes sur 12",
   )
@@ -112,7 +112,7 @@ async function ouvrirLaFicheDeType(type: string) {
   vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(null as never)
   vi.spyOn(api, "posesDesTypes").mockResolvedValue({ types: NATURES_AVEC_MATIERE } as never)
   vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [] } as never)
-  render(<FicheDuSujet personnage={chose} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  render(<FicheDuSujet personnage={chose} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   await screen.findByRole("option", { name: "coffre — 2 poses" })
 }
@@ -156,7 +156,7 @@ test("la fiche coche plusieurs styles de combat, et dit celui qu'une pièce appo
     ],
   } as StyleDuPersonnage)
 
-  render(<FicheDuSujet personnage={champy} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  render(<FicheDuSujet personnage={champy} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
 
   expect(await screen.findByText("(celui du Bâton de chêne)")).toBeTruthy()
@@ -176,7 +176,7 @@ test("un décor n'a rien à choisir : aucun style de combat sur sa fiche", async
   vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [] } as never)
   const styles = vi.spyOn(api, "styles")
 
-  render(<FicheDuSujet personnage={tonneau} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  render(<FicheDuSujet personnage={tonneau} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   await screen.findByLabelText("Description du sujet")
 
@@ -197,7 +197,7 @@ test("la recette de ses images se choisit parmi les recettes nommées, et se ret
   const poser = vi.spyOn(api, "poserRecetteDuSujet").mockImplementation(async (_id, recette) => ({ personnage: { ...champy, recette: recette ?? "" } }) as never)
   const onPersonnage = vi.fn()
 
-  const { rerender } = render(<FicheDuSujet personnage={champy} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  const { rerender } = render(<FicheDuSujet personnage={champy} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
 
   const select = screen.getByRole("combobox", { name: "Recette de ses images" })
@@ -211,7 +211,7 @@ test("la recette de ses images se choisit parmi les recettes nommées, et se ret
   expect(onPersonnage).toHaveBeenCalledWith(expect.objectContaining({ recette: "champy 01" }))
 
   // Le parent rend le sujet tel que le serveur l'a écrit : le choix se lit.
-  rerender(<FicheDuSujet personnage={{ ...champy, recette: "champy 01" }} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
+  rerender(<FicheDuSujet personnage={{ ...champy, recette: "champy 01" }} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} />)
   expect((screen.getByRole("combobox", { name: "Recette de ses images" }) as HTMLSelectElement).value).toBe("champy 01")
 
   // « aucune » retire le choix : `null`, pas une chaîne vide.

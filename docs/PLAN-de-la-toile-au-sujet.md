@@ -166,17 +166,49 @@ ce que je dois faire. » Le bouton de `TS3` existe, mais il est enterré : ongle
 tout en bas, section *Ses références*, bloc *Planche*, à la place de « rien encore ». Un sujet
 créé depuis la toile s'ouvre ailleurs, sur un onglet qui ne propose rien.
 
-- [ ] un sujet qui vient d'être créé s'ouvre sur **son prochain geste**, pas sur un onglet de
+- [x] un sujet qui vient d'être créé s'ouvre sur **son prochain geste**, pas sur un onglet de
       réglages : pour un personnage avec un concept art et sans planche, c'est « Faire la planche
       des directions », en grand, en haut, avec l'image qui servira à côté
-- [ ] tant que le sujet n'a pas de planche, ce geste reste visible en tête de la page du sujet,
+- [x] tant que le sujet n'a pas de planche, ce geste reste visible en tête de la page du sujet,
       quel que soit l'onglet ouvert — pas seulement dans le bloc *Planche* en bas des Images
-- [ ] une fois la planche revenue, la même place propose « C'est la référence » sur elle, puis le
+- [x] une fois la planche revenue, la même place propose « C'est la référence » sur elle, puis le
       geste suivant (les poses, les animations)
-- [ ] l'onglet Objectifs, ouvert seul, dit en une ligne à quoi il sert et renvoie au prochain
+- [x] l'onglet Objectifs, ouvert seul, dit en une ligne à quoi il sert et renvoie au prochain
       geste
-- [ ] à régler avec `RV15` (*un nouveau sujet s'ouvre sur ses images, avec « Fabriquer sa
+- [x] à régler avec `RV15` (*un nouveau sujet s'ouvre sur ses images, avec « Fabriquer sa
       première image »*) : une seule règle d'arrivée pour tout sujet neuf, pas deux
+
+*Fait le 23 septembre 2026.* Un nouveau composant, `interface/src/composants/ProchainGeste.tsx`,
+monté en tête de `PageDuSujet.tsx` — juste sous l'en-tête, avant la fiche et les onglets — donc
+visible quel que soit l'onglet ouvert. **La règle tient en quatre cas, lus sur ce que le sujet a
+déjà, jamais sur la façon dont il est né** : rien nulle part → « Fabriquer sa première image »
+(la même règle que `RV15`, qui ouvre déjà le sujet neuf sur l'onglet *Images* — le bandeau y
+apparaît donc dès l'arrivée, sans second geste) ; un concept art (ou un portrait) et une image
+déjà posée mais aucune planche choisie → « C'est la référence », montrée directement avec la
+vignette de la candidate ; un concept art et rien de posé encore → « Faire la planche des
+directions » (`TS3`), avec la vignette du concept art à côté ; une planche déjà choisie → le
+bandeau n'a plus rien à imposer et se tait. **Tranché** : « le geste suivant » du troisième
+critère (poses, animations) reste le bouton *Fabriquer…* déjà en tête de la page, qui les
+propose un à un depuis toujours — un second bouton à côté aurait dit deux fois la même chose,
+et rien dans ce chantier ne change ce que ce bouton sait déjà faire. La candidate de la
+seconde règle est « la retenue, sinon la plus récente », toutes cases confondues : une planche
+vaut aussi pour un jeu à une seule vue (`TS3`, décision 3), donc même une image seule en est une
+valable, et la choisir passe avant d'en redemander une pour ne pas payer deux fois le même appel.
+« Faire la planche » et « C'est la référence » appellent les mêmes routes que le bloc *Planche*
+de `ImagesDuSujet.tsx` (`api.premierePlanche`, `api.choisirLaPlanche`) — la même résolution,
+montrée à deux endroits, jamais réécrite ; le bloc du bas continue de servir qui reste sur
+l'onglet *Images*, et les deux relisent le même sujet. Pour l'onglet Objectifs : il n'existe
+plus comme onglet depuis `RV12` (dissous dans « Modifier la fiche »), donc « ouvert seul » ne se
+pose plus tout à fait de la même façon ; `ObjectifDuSujet.tsx` porte désormais une ligne de plus
+sous son intitulé (« Le prochain geste, s'il y en a un, reste en tête de sa page »), qui renvoie
+sans lien cliquable — fermer le dialogue suffit, le bandeau est déjà là. Essais :
+`interface/src/composants/PageDuSujet.test.tsx` (5 essais neufs, les quatre cas plus la
+persistance entre onglets), suite complète de l'interface 2 791/2 806 verts (les 12 échecs
+restants sont tous connus d'avance — 9 `SonStyleDeCombat`, 2 « mémoire libre » d'un modèle
+local, 1 hors de ce fichier — et non touchés). `tsc --noEmit` propre, `essai_vocabulaire.py`,
+`essai_jetons.py`, `essai_tutoiement.py`, `essai_imports.py` et `essai_docs.py` verts (les
+écarts jetons/Retouche.tsx restants sont connus d'avance). Non vérifié au navigateur : pas
+d'`interface/dist` dans le worktree (`AGENTS.md`).
 
 ## La toile qui fabrique — façon Mixboard
 

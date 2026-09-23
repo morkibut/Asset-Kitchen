@@ -408,9 +408,43 @@ devient un filtre.
 
 ### Critères d'acceptation
 
-- [ ] Quatre onglets au plus (`docs/DESIGN.md`).
-- [ ] Rien de ce que portaient les trois onglets retirés ne devient inatteignable.
-- [ ] Le bandeau « à ranger » n'apparaît que s'il y a des éléments à ranger.
+- [x] Quatre onglets au plus (`docs/DESIGN.md`).
+- [x] Rien de ce que portaient les trois onglets retirés ne devient inatteignable.
+- [x] Le bandeau « à ranger » n'apparaît que s'il y a des éléments à ranger.
+
+*Fait le 23 septembre 2026.* Quatre onglets, dans l'ordre du plan : Animations · Images · Sons ·
+Équipement. Trois décisions non tranchées par le plan : « Galerie » devient une section repliable
+« Sources » sous l'onglet *Animations* (clips vidéo et modèles 3D — les images et animations
+qu'elle montrait aussi faisaient double emploi avec les onglets qui les rangent déjà par pose) ;
+« Pas encore rangé » devient un bandeau replié par défaut, entre les onglets et leur contenu,
+absent quand il n'y a rien ; « Objectif & règles » est monté dans « Modifier la fiche »
+(`FicheDuSujet.tsx`), entre le type/l'ambiance et la recette. Les trois anciens onglets restent
+des destinations valides pour `App.tsx` (la carte d'un sujet au Codex, la fenêtre de préparation
+sans pose) : `PageDuSujet.tsx` les résout vers ce qu'ils sont devenus plutôt que de faire porter
+ce changement à chaque appelant — aucun changement dans `App.tsx`. `docs/vocabulaire.html` et
+`essais/essai_vocabulaire.py` sont à jour (essai vert), de même qu'`essai_docs.py`,
+`essai_jetons.py`, `essai_tutoiement.py` et `essai_imports.py`.
+
+**`src/App.test.tsx` (547 essais) a trouvé deux régressions que les essais ciblés ne voyaient
+pas**, corrigées avant de livrer : (1) `ObjectifDuSujet.tsx` se monte maintenant à chaque
+ouverture de « Modifier la fiche » plutôt que sur un clic d'onglet dédié — un double de test qui
+ne connaît pas la route `/characters/…/objective` rend `{}`, et son calcul des mouvements
+plantait sur `couverture` absent, repli défensif ajouté en ligne 50 ; (2) la section « Sources »
+repliée sous *Animations* montait `SourcesDuSujet` en toute circonstance dans un `<details>` — un
+`<details>` fermé garde ses enfants dans le DOM, et ses propres cases « Mouvement » portaient les
+mêmes noms de pose que celles d'`AnimationsDuSujet` juste au-dessus, rendant `findByText` ambigu
+sur 64 essais de l'atelier d'une animation ; `SourcesDuSujet` n'est désormais monté qu'une fois la
+section dépliée. `App.test.tsx` renommait aussi `"Images de référence"` → `"Images"` sur ses 19
+clics d'onglet — renommage mécanique, aucune autre de ses occurrences de « Galerie » ne visait
+l'onglet retiré (elles visent la porte du Codex, sans rapport). Verdict final :
+**547/547** (un essai isolé une fois en échec s'est révélé flaky, confirmé en le rejouant seul
+deux fois de suite — sans rapport avec cette tranche, dans `Montage.tsx`, non touché). Les essais
+ciblés (`PageDuSujet.test.tsx`, `FicheDuSujet.test.tsx`, `SourcesDuSujet.test.tsx`) et `tsc
+--noEmit` restent propres après ces deux correctifs. Neuf essais de `PageDuSujet.test.tsx`
+échouaient déjà avant cette tranche (`SonStyleDeCombat` dans `FicheDuSujet.tsx` lit
+`resolu.styles` sans protection quand le double propre à ce fichier répond `{}` sur
+`/styles/for-character/…` — `App.test.tsx` a la route, ce double-ci ne l'a pas) — hors de cette
+tranche, non touché. Non vérifié au navigateur.
 
 ---
 
@@ -471,9 +505,27 @@ qu'on vient de créer s'ouvre sur ses images, avec un grand bouton « Fabriquer 
 
 ### Critères d'acceptation
 
-- [ ] Fermer l'assistant d'un nouveau jeu mène à l'accueil de ce jeu, fil d'Ariane remis à zéro.
-- [ ] Un nouveau sujet s'ouvre sur l'onglet des images, et le bouton y mène à la fenêtre remplie.
-- [ ] « Échap » ferme « Préparer une fabrication » et toute autre fenêtre (un essai les parcourt).
+- [x] Fermer l'assistant d'un nouveau jeu mène à l'accueil de ce jeu, fil d'Ariane remis à zéro.
+- [x] Un nouveau sujet s'ouvre sur l'onglet des images, et le bouton y mène à la fenêtre remplie.
+- [x] « Échap » ferme « Préparer une fabrication » et toute autre fenêtre (un essai les parcourt).
+
+*Fait le 23 septembre 2026.* Trois correctifs ciblés, aucun nouvel écouteur : (1) `onFerme` du
+parcours de création (`App.tsx`, mode `"creer"`) posait déjà `choixDuJeu` et `creeParLeParcours` à
+`null` mais ne touchait jamais la pile — un jeu neuf s'ouvrait donc là où l'auteur regardait dans
+le jeu d'avant, parfois un sujet dont l'identifiant n'existe même pas ici ; il pose maintenant la
+racine sur `tableau-de-bord`, comme choisir un jeu dans le carnet. (2) `onPersonnage` (création
+d'un sujet, `CreerUnAsset`) mémorisait l'onglet `"objectif"`, qui se redirige depuis `RV12` vers
+`ongletInitial` — lequel bascule sur *Animations* dès que la famille est « personnages », onglet
+vide pour un sujet qui vient de naître ; il mémorise désormais `"images"` directement, sans passer
+par cette redirection. (3) Échap fermait déjà « Préparer une fabrication » et les vingt fenêtres
+posées par `CadreDialogue.tsx` — le `<dialog>` natif ferme sur son événement `cancel`, et
+`GU16` avait déjà réglé la coordination avec le guide ; aucun essai ne le vérifiait, d'où
+`CadreDialogue.test.tsx`, qui couvre le cadre commun une fois pour ses vingt appelants plutôt que
+chacun séparément. Les fenêtres qui ne passent pas par ce cadre (`Famille.tsx`, `Montage.tsx`,
+`Reglages.tsx`…) portaient déjà chacune leur propre écouteur `"Escape"`, vérifié à la lecture.
+Essais : `interface/src/App.test.tsx` (2 essais neufs, describe *B4 — l'ouverture*),
+`interface/src/composants/CadreDialogue.test.tsx` (neuf). Suite complète : 549/549. Pas encore vu
+au navigateur.
 
 ---
 

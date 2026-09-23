@@ -2,9 +2,10 @@
 """Le garde-fou des mots de l'ossature — **il lit le document, il ne le recopie pas.**
 
 `docs/vocabulaire.html` fait foi sur les mots. Depuis `RP3` il porte en plus une
-**liste fermée** : les huit portes du carnet, les six onglets de la fiche d'un
-sujet, le titre de chaque écran, et la forme d'un retour en arrière. Fermée veut
-dire la même chose que dans `docs/DESIGN.md` — rien d'autre ne s'écrit.
+**liste fermée** : les huit portes du carnet, les quatre onglets de la fiche
+d'un sujet (`RV12`), le titre de chaque écran, et la forme d'un retour en
+arrière. Fermée veut dire la même chose que dans `docs/DESIGN.md` — rien
+d'autre ne s'écrit.
 
 Ce banc pose la question dans ce sens-là, et pas dans l'autre : **le document
 donne les mots, le code est mesuré contre eux.** Aucun nom n'est écrit ici ; si

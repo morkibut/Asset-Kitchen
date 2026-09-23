@@ -7140,7 +7140,7 @@ describe("l'aperçu", () => {
     // ⚠️ **La vignette a quitté la matrice pour l'onglet Images** (RV10) :
     // « repos » est la pose ouverte par défaut (`A7`), sa vignette porte le
     // libellé de l'image.
-    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images" }))
     // Le bouton porte lui-même l'image et l'écoute de survol (`Vignette`,
     // `ImagesDuSujet.tsx`) — contrairement à l'ancienne case de la matrice,
     // pas de span ambiant à viser.
@@ -7230,7 +7230,7 @@ describe("l'écran des personnages", () => {
     // Absent sans aucun personnage encore créé (l'écran reste sur le Codex) :
     // le clic ne vaut alors que si l'onglet existe.
     const onglet = document.querySelector("[data-etabli]")
-      ? ecran.queryByRole("tab", { name: "Images de référence" })
+      ? ecran.queryByRole("tab", { name: "Images" })
       : null
     if (onglet) fireEvent.click(onglet)
     return { ...double, flux, ecran }
@@ -9381,7 +9381,7 @@ describe("le châssis des tables", () => {
     // ⚠️ **« Ouvrir … dans son outil » vivait dans la matrice, retirée en
     // RV10** — la porte des tables est désormais *La retoucher*, sur la
     // fiche de l'image, elle-même choisie dans l'onglet Images.
-    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Images" }))
     fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
     fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
@@ -9407,7 +9407,7 @@ describe("le châssis des tables", () => {
       },
     })
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Images" }))
     fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
     fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
@@ -10818,7 +10818,7 @@ describe("le contour et la main", () => {
       univers: { ...UNIVERS, palette, vide: false },
     })
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Images" }))
     fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
     fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
@@ -11742,7 +11742,7 @@ describe("le codex généralisé", () => {
 
     // ⚠️ **La grille des cases a quitté la matrice pour l'onglet Images**
     // (RV10) : les six poses s'y retrouvent, une rangée chacune.
-    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images" }))
     expect(await etabli.findAllByText("aucune image")).toHaveLength(6)
   })
 })
@@ -12642,7 +12642,7 @@ describe("la planche d'une pose", () => {
     const etabli = await ouvrirLEtabli("Balthazar")
     // ⚠️ **La porte de la planche a quitté la matrice pour l'onglet Images**
     // (RV10) : même bouton, même nom, un onglet plus loin.
-    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images" }))
     fireEvent.click(
       await etabli.findByRole("button", { name: "Ouvrir la planche de marche" }),
     )
@@ -12944,7 +12944,7 @@ describe("la planche d'une pose", () => {
     const double = serveurDouble({ personnages: [personnage("Balthazar")] })
     await monter(double.fetchDouble)
     const etabli = await ouvrirLEtabli("Balthazar")
-    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images" }))
 
     expect(etabli.queryByRole("button", { name: /Ouvrir la planche/ })).toBeNull()
   })
@@ -13259,7 +13259,7 @@ describe("l'écran de confirmation", () => {
     const etabli = await ouvrirLEtabli(nom)
     // ⚠️ **« Fabriquer repos » a quitté la matrice pour l'onglet Images**
     // (RV10) : « repos » est la pose ouverte par défaut (`A7`).
-    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images" }))
     fireEvent.click(await etabli.findByRole("button", { name: "Générer cette pose" }))
     await ecrireLeSujet("un forgeron nain")
     await relire()
@@ -13465,7 +13465,7 @@ describe("l'écran de confirmation", () => {
     })
     await monter(double.fetchDouble, { ...ETAT, univers: MONDE })
     const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images" }))
     fireEvent.click(await etabli.findByRole("button", { name: "Générer cette pose" }))
     await ecrireLeSujet("un forgeron")
     await relire()
@@ -13747,7 +13747,7 @@ describe("l'écran de confirmation", () => {
     // sur le chemin sans chose du jeu, celui-là même qui n'aurait jamais dû
     // l'offrir.
     const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images" }))
     fireEvent.click(await etabli.findByRole("button", { name: "Générer cette pose" }))
     await ecrireLeSujet("un forgeron nain")
 
@@ -13772,7 +13772,7 @@ describe("l'écran de confirmation", () => {
 
     // On arme une autre case : c'est une autre série, et l'écran revient.
     const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images" }))
     fireEvent.click((await etabli.findByText("marche")).closest("button") as HTMLElement)
     fireEvent.click(await etabli.findByRole("button", { name: "Générer cette pose" }))
     await ecrireLeSujet("un forgeron")
@@ -14914,7 +14914,7 @@ describe("l'argent ne part qu'une fois", () => {
     })
     await monter(double.fetchDouble)
     const etabli = await ouvrirLEtabli("Le nain")
-    fireEvent.click(await etabli.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await etabli.findByRole("tab", { name: "Images" }))
     fireEvent.click(await etabli.findByRole("button", { name: "Générer cette pose" }))
     await ecrireLeSujet("un forgeron nain")
 
@@ -14931,7 +14931,7 @@ describe("l'argent ne part qu'une fois", () => {
     // verrou, où qu'il soit. Viser le bouton par son nom mesurerait l'absence
     // du bloc, pas le verrou.
     const encore = await ouvrirLEtabli("Le nain")
-    fireEvent.click(await encore.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await encore.findByRole("tab", { name: "Images" }))
     fireEvent.click(await encore.findByRole("button", { name: "Générer cette pose" }))
     const bouton = await attendreCeQuiLance()
     act(() => {
@@ -15020,7 +15020,7 @@ describe("le zoom de la table", () => {
     const double = serveurDouble({ personnages: [AVEC_IMAGE(images)], ...options })
     await monter(double.fetchDouble)
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Images" }))
     fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
     fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
@@ -15220,7 +15220,7 @@ describe("la main peint carré, et là où on la pose", () => {
     const double = serveurDouble({ personnages: [AVEC_IMAGE([image])] })
     await monter(double.fetchDouble)
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Images" }))
     fireEvent.click(await screen.findByRole("button", { name: image.label }))
     fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
@@ -15468,7 +15468,7 @@ describe("une table s'éteint, et ça se voit", () => {
     const double = serveurDouble({ personnages: [AVEC_IMAGE(images)] })
     await monter(double.fetchDouble)
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Images" }))
     fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
     fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
@@ -15703,7 +15703,7 @@ describe("les réglages voyagent d'une image à l'autre", () => {
     const double = serveurDouble({ personnages: [AVEC_IMAGES(images)], ...options })
     await monter(double.fetchDouble)
     await ouvrirLEtabli("Le nain")
-    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Images" }))
     fireEvent.click(await screen.findByRole("button", { name: images[0].label }))
     fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
@@ -21024,7 +21024,7 @@ describe("B1 — le miroir", () => {
     })
     await monter(double.fetchDouble)
     await ouvrirLEtabli("Le pèlerin")
-    fireEvent.click(await screen.findByRole("tab", { name: "Images de référence" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Images" }))
     fireEvent.click(await screen.findByRole("button", { name: IMAGE.label }))
     fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
     const cadre = within(
@@ -21392,6 +21392,36 @@ describe("B0 — la navigation de l'atelier", () => {
     expect(await screen.findByRole("heading", { name: "Créer un sujet" })).toBeTruthy()
   })
 
+  /** **RV15** : un sujet neuf s'ouvre sur ses images, jamais sur « Objectifs »
+   *  — qui ne dit rien à faire. Avant cette tranche, `onPersonnage`
+   *  mémorisait l'onglet « objectif », lequel se redirigeait (`RV12`) vers
+   *  `ongletInitial`, qui bascule sur *Animations* dès que la famille est
+   *  « personnages » — un onglet vide pour un sujet qui vient de naître. */
+  test("un sujet neuf s'ouvre sur l'onglet des images", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Le jeu" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Créer un sujet" }))
+
+    fireEvent.change(screen.getByLabelText("Nom du sujet"), {
+      target: { value: "Champy" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Créer le sujet" }))
+
+    const onglets = await screen.findByRole("tablist", { name: "Les onglets de sa fiche" })
+    await waitFor(() =>
+      expect(within(onglets).getByRole("tab", { name: "Images" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      ),
+    )
+    expect(within(onglets).getByRole("tab", { name: "Animations" })).toHaveAttribute(
+      "aria-selected",
+      "false",
+    )
+  })
+
   // ── B5 — la barre de complétude, les manques, et la feuille en attente ────
 
   /** Une planche arrivée qui attend un choix — le pendant minimal de celle de
@@ -21685,6 +21715,67 @@ describe("B4 — l'ouverture", () => {
         }),
       ).toBe(true),
     )
+  })
+
+  /** **RV15** : fermer le parcours de création d'un jeu remet le fil
+   *  d'Ariane à zéro. Avant cette tranche, `onFerme` ne touchait pas la
+   *  pile : le jeu neuf s'ouvrait là où l'auteur regardait dans le jeu
+   *  d'avant — parfois un sujet dont l'identifiant n'existe même pas ici. */
+  test("fermer l'assistant d'un nouveau jeu mène à l'accueil de ce jeu, fil d'Ariane remis à zéro", async () => {
+    const NOUVEAU: Projet = {
+      identifiant: "second-jeu",
+      nom: "Second jeu",
+      cree_le: 1_787_950_000,
+      dernier_travail_le: 1_787_950_000,
+      assets: 0,
+      total_usd: 0,
+      univers: UNIVERS_VIDE,
+      pieces: [],
+    }
+    const socle = serveurDouble()
+    const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
+      const url = String(chemin)
+      if (url === "/api/projects" && init?.method === "POST") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            projet: NOUVEAU,
+            avertissement: "",
+            bibliotheque: { ...BIBLIOTHEQUE, courant: "second-jeu", projets: [...BIBLIOTHEQUE.projets, NOUVEAU] },
+          }),
+        } as Response
+      }
+      return socle.fetchDouble(chemin, init)
+    })
+    await monter(fetchDouble)
+
+    // On part de la galerie — l'écran de départ (`lieux.ts`, `PILE_INITIALE`)
+    // — et non de l'accueil, pour prouver que la fermeture *remet* le fil à
+    // zéro plutôt que de le laisser tel quel par coïncidence.
+    expect(await screen.findByRole("region", { name: "Grille des images" })).toBeTruthy()
+    expect(document.querySelector("[data-tableau-de-bord]")).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: /Changer de jeu/ }))
+    fireEvent.click(await screen.findByText("+ Commencer un jeu"))
+
+    const ecran = await screen.findByRole("main", { name: "Commencer un jeu" })
+    fireEvent.change(within(ecran).getByLabelText("Le nom du jeu"), {
+      target: { value: "Second jeu" },
+    })
+    fireEvent.click(within(ecran).getByRole("button", { name: "Créer et choisir son allure" }))
+
+    await waitFor(() =>
+      expect(fetchDouble.mock.calls.some(([u, i]) => String(u) === "/api/projects" && (i as RequestInit | undefined)?.method === "POST")).toBe(true),
+    )
+
+    // Le jeu est créé ; on ferme le parcours sans aller plus loin dans ses
+    // étapes — c'est le geste de l'auteur qui a vu ce qu'il voulait.
+    fireEvent.click(await screen.findByRole("button", { name: "Fermer" }))
+
+    await waitFor(() => expect(document.querySelector("[data-tableau-de-bord]")).toBeTruthy())
+    expect(screen.queryByRole("main", { name: "Commencer un jeu" })).toBeNull()
+    expect(screen.queryByRole("region", { name: "Grille des images" })).toBeNull()
   })
 })
 
