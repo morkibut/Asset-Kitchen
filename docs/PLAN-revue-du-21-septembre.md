@@ -943,17 +943,45 @@ Aujourd'hui l'aperçu (`Apercu.tsx`) ne s'ouvre que sur les surfaces qui ont dé
 
 ### Critères d'acceptation
 
-- [ ] **toute image affichée par l'atelier** s'agrandit avec Espace quand le pointeur est dessus —
+- [x] **toute image affichée par l'atelier** s'agrandit avec Espace quand le pointeur est dessus —
       vignettes de références, relectures, fenêtres, Fabrications, bandeau « Prochain geste »,
       toile, chutier… — sans que chaque écran ait à le déclarer : une surface qui déclare sa
       vignette (`useVisee`) garde sa réponse plus riche (titre, mesures, animation) ; les autres
       reçoivent une réponse par défaut tirée de l'image elle-même (son adresse affichée, sa taille
       naturelle, pixelisée si l'image l'est à l'écran)
-- [ ] Espace ne s'ouvre jamais pendant qu'on écrit dans un champ, et ne vole pas l'Espace d'un
+- [x] Espace ne s'ouvre jamais pendant qu'on écrit dans un champ, et ne vole pas l'Espace d'un
       écran qui s'en sert déjà (le lecteur d'une animation, l'éditeur de pixels, la toile qui
       glisse la vue)
-- [ ] un essai parcourt quelques vignettes **qui ne déclaraient rien** (dont celles de *Ses
+- [x] un essai parcourt quelques vignettes **qui ne déclaraient rien** (dont celles de *Ses
       références*) et vérifie que l'aperçu s'ouvre sur la bonne image
+
+*Fait le 24 septembre 2026.* Le repli vit dans `Apercu.tsx` (`sujetDuRepli`, `elementDuRepli`) :
+sans visée déclarée, Espace reprend **l'image ou la vidéo sous le dernier pointeur connu**
+(`document.elementsFromPoint`, suivi en continu par un `pointermove` sur `window`, sans jamais
+provoquer de rendu), son adresse affichée (`currentSrc` puis repli sur `src`), sa taille
+naturelle, pixelisée si son `image-rendering` calculé l'est. Une visée déclarée garde toujours la
+priorité (`vise ?? sujetDuRepli()`). **Deux décisions non tranchées par le plan.** (1) *La taille
+minimale des icônes écartées* : 28 px, entre les boutons d'icône du produit (22 px au plus) et la
+plus petite vignette qui montre vraiment un sujet, celle d'une référence promue sur la fiche
+(34 px, `ImagesDuSujet.tsx`) — le cas que l'auteur a signalé muet, et qu'un seuil plus prudent
+aurait laissé muet quand même. (2) *Ne pas voler l'Espace des surfaces qui s'en servent déjà* :
+`AtelierDeBande.tsx` et `Montage.tsx` portaient déjà un marqueur sur leur racine
+(`data-atelier-de-bande`, `data-montage`), repris tel quel ; `SurfaceZoomable.tsx` n'en avait
+aucun, et en reçoit un (`data-surface-zoomable`), seul fichier de la liste surveillée touché par
+cette tranche. `GrilleEcoute.tsx` n'a rien à exclure : ses tuiles sont des ondes en SVG, hors du
+filtre `<img>`/`<video>` du repli. `document.elementsFromPoint` manque entièrement à jsdom (vérifié :
+la propriété n'existe pas sur `document`) ; le repli s'en tait plutôt que de jeter — c'est pour ça
+qu'aucun des 551 essais déjà écrits d'`App.test.tsx` ne pouvait basculer en silence sur le repli,
+et il en fallait un neuf, `Apercu.test.tsx`, qui fournit lui-même un double
+d'`elementsFromPoint`. Essais : `Apercu.test.tsx` (4/4, un essai désarmé à la main confirme qu'il
+tombe sans le correctif — 8octies), `ImagesDuSujet.test.tsx` (61/61, `SesReferencesParUsage`
+exportée pour le monter tel quel), `App.test.tsx` (551/551), `Decoupe.test.tsx`,
+`AtelierUnifieRetouche.test.tsx`, `SerieSon.test.tsx`, `Retouche.test.tsx` (140/140 — les écrans qui
+embarquent `SurfaceZoomable`). `tsc --noEmit`, `essai_vocabulaire.py`, `essai_jetons.py`,
+`essai_tutoiement.py`, `essai_imports.py` propres. **Pas vu au navigateur** : le worktree n'a pas
+d'`interface/dist` (règle de la tranche, pour ne pas gêner les quatre autres agents) ; à confirmer
+sur un atelier construit hors worktree. `Toile.tsx` (glisser la vue) n'a aucun geste Espace à lui —
+vérifié à la lecture, aucun marqueur n'y était donc nécessaire.
 
 ---
 
