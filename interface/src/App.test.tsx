@@ -2088,12 +2088,7 @@ function serveurDouble(options: {
     if (url.includes("/styles/for-character/")) {
       const personnage = url.split("/styles/for-character/")[1].split("?")[0]
       return rendre(
-        options.stylesDesPersonnages?.[personnage] ?? {
-          personnage,
-          style: null,
-          origine: "aucun",
-          piece: null,
-        },
+        options.stylesDesPersonnages?.[personnage] ?? { personnage, styles: [] },
       )
     }
     if (url.includes("/styles/for-piece/"))

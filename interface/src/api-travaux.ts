@@ -28,6 +28,10 @@ export type DemandeTravail = {
    *  le geste seul pour cet appel ; la phrase de direction reste celle du
    *  serveur, et vaut donc pour chaque direction d'une série. */
   mouvement?: string | null; correction_geste?: string
+  /** Le style de combat **coché pour cet envoi** — jamais d'office : `null`
+   *  laisse le texte du mouvement partir seul. Coché, il écrit son texte pour
+   *  le mouvement de chaque case (le repos du fusil n'est pas son tir). */
+  style_combat?: string | null
 }
 /** Une case d'une série (RV5) : sa pose et sa direction, le reste vient de la
  *  demande commune. */

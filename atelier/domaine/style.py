@@ -150,6 +150,12 @@ def texte_du_style(style: Style | None, mouvement: str) -> str:
 
 # ── Les styles que l'atelier apporte avec lui ────────────────────────────────
 #
+# **Au repos, l'objet tenu ne bouge pas** (22 septembre 2026). Un repos qui
+# disait « la pointe de l'épée oscille » ou rien du tout faisait viser, tirer
+# ou brandir l'arme par le modèle vidéo : chaque texte de repos dit désormais
+# que l'objet reste immobile et que seuls la poitrine et les épaules
+# respirent.
+#
 # **Dix styles, choisis pour couvrir les familles d'armes courantes d'un jeu
 # de combat.** Chaque texte livré nomme la main ou la partie du corps qui
 # agit, nomme l'objet tenu quand il y en a un, et revient à la position de
@@ -212,8 +218,9 @@ _CATALOGUE: tuple[dict[str, Any], ...] = (
             "repos": (
                 "guard idle holding the sword in the right hand, blade raised "
                 "forward at waist height, left hand loose at the side, knees "
-                "slightly bent, feet planted, staying in place; the sword tip "
-                "sways gently with breathing, looping seamlessly"
+                "slightly bent, feet planted, staying in place; the sword stays "
+                "perfectly still in the hand, only the chest and shoulders move "
+                "with breathing, looping seamlessly"
             ),
         },
     },
@@ -231,8 +238,9 @@ _CATALOGUE: tuple[dict[str, Any], ...] = (
             "repos": (
                 "heavy guard idle with the two-handed axe gripped in both "
                 "hands, the axe head held low in front, wide stance, feet "
-                "planted, staying in place; the shoulders rise and fall with "
-                "slow heavy breathing, looping seamlessly"
+                "planted, staying in place; the axe stays still in the hands, "
+                "only the shoulders rise and fall with slow heavy breathing, "
+                "looping seamlessly"
             ),
             "course": (
                 "running cycle holding the two-handed axe with both hands, its "
@@ -256,8 +264,9 @@ _CATALOGUE: tuple[dict[str, Any], ...] = (
             "repos": (
                 "guard idle with the wooden staff held across the body in both "
                 "hands, one end pointing forward and slightly down, knees bent, "
-                "feet planted, staying in place; the staff rises and falls "
-                "gently with breathing, looping seamlessly"
+                "feet planted, staying in place; the staff stays perfectly "
+                "still in the hands, only the chest and shoulders move with "
+                "breathing, looping seamlessly"
             ),
         },
     },
@@ -276,8 +285,9 @@ _CATALOGUE: tuple[dict[str, Any], ...] = (
             "repos": (
                 "guard idle holding the spear in both hands, point aimed "
                 "forward at chest height, butt of the shaft behind the hip, "
-                "knees slightly bent, feet planted, staying in place; the spear "
-                "point bobs gently with breathing, looping seamlessly"
+                "knees slightly bent, feet planted, staying in place; the spear stays "
+                "perfectly still in the hands, only the chest and shoulders "
+                "move with breathing, looping seamlessly"
             ),
         },
     },
@@ -295,8 +305,8 @@ _CATALOGUE: tuple[dict[str, Any], ...] = (
             "repos": (
                 "crouched guard idle with a dagger in each hand, both blades "
                 "held low and forward, knees bent, weight on the toes, staying "
-                "in place; the body sways lightly and the daggers stay ready, "
-                "looping seamlessly"
+                "in place; the daggers stay still in the hands, only the body "
+                "sways lightly with breathing, looping seamlessly"
             ),
         },
     },
@@ -314,8 +324,9 @@ _CATALOGUE: tuple[dict[str, Any], ...] = (
             "repos": (
                 "ready idle holding the bow in the left hand, lowered in front "
                 "of the body, the right hand resting near the string, feet "
-                "planted, staying in place; the shoulders rise and fall with "
-                "calm breathing, looping seamlessly"
+                "planted, staying in place; the bow stays still in the hand, "
+                "only the shoulders rise and fall with calm breathing, looping "
+                "seamlessly"
             ),
             "course": (
                 "running cycle with the bow held low in the left hand, the "
@@ -339,8 +350,9 @@ _CATALOGUE: tuple[dict[str, Any], ...] = (
             "repos": (
                 "casting guard idle holding the wand in the right hand, raised "
                 "forward at chest height, left hand open at the side, feet "
-                "planted, staying in place; a faint glow pulses softly at the "
-                "wand tip with breathing, looping seamlessly"
+                "planted, staying in place; the wand stays still in the hand "
+                "while a faint glow pulses softly at its tip, only the chest "
+                "moves with breathing, looping seamlessly"
             ),
         },
     },
@@ -359,8 +371,143 @@ _CATALOGUE: tuple[dict[str, Any], ...] = (
             "repos": (
                 "shield guard idle, the left arm holding the shield raised in "
                 "front of the chest, the sword ready in the right hand at the "
-                "hip, knees bent, feet planted, staying in place; the shoulders "
-                "rise and fall gently, looping seamlessly"
+                "hip, knees bent, feet planted, staying in place; the shield and "
+                "the sword stay still, only the shoulders rise and fall gently, "
+                "looping seamlessly"
+            ),
+        },
+    },
+    # ── Les armes à feu — demandées par l'auteur le 22 septembre 2026 ────────
+    # Une main, deux mains, deux armes, lourdes. **Le recul remplace l'élan** :
+    # une arme à feu n'a pas de coup à armer, elle vise, tire et encaisse.
+    {
+        "identifiant": "pistolet",
+        "nom": "pistolet",
+        "tient": "a pistol held in the right hand",
+        "textes": {
+            "attaque": (
+                "a pistol shot with the pistol in the right hand, staying in "
+                "place: the right arm raises the pistol forward at shoulder "
+                "height and aims, fires once with a small muzzle flash, the "
+                "wrist kicks up with the recoil, then returns to the starting "
+                "stance"
+            ),
+            "repos": (
+                "ready idle holding the pistol in the right hand, lowered "
+                "forward at waist height, left hand loose at the side, feet "
+                "planted, staying in place; the pistol stays still in the hand, "
+                "only the shoulders rise and fall with calm breathing, looping "
+                "seamlessly"
+            ),
+        },
+    },
+    {
+        "identifiant": "deux-pistolets",
+        "nom": "deux pistolets",
+        "tient": "a pistol in each hand",
+        "textes": {
+            "attaque": (
+                "alternating shots with a pistol in each hand, staying in "
+                "place: both arms raise the pistols forward at shoulder "
+                "height, the right pistol fires with a small muzzle flash and "
+                "kicks up, then the left one, then returns to the starting "
+                "stance"
+            ),
+            "repos": (
+                "ready idle with a pistol in each hand, both held low and "
+                "forward, knees slightly bent, feet planted, staying in place; "
+                "both pistols stay still in the hands, only the body sways "
+                "lightly with breathing, looping seamlessly"
+            ),
+        },
+    },
+    {
+        "identifiant": "fusil",
+        "nom": "fusil",
+        "tient": "a rifle held in both hands, stock against the right shoulder",
+        "textes": {
+            "attaque": (
+                "a rifle shot with the rifle held in both hands, staying in "
+                "place: the stock comes up against the right shoulder and the "
+                "head leans to aim along the barrel, fires once with a muzzle "
+                "flash, the shoulder is pushed back by the recoil, then returns "
+                "to the starting stance"
+            ),
+            "repos": (
+                "ready idle holding the rifle in both hands across the body, "
+                "barrel pointing forward and slightly down, feet planted, "
+                "staying in place; the rifle stays perfectly still in the "
+                "hands, no aiming and no shooting, only the shoulders rise and "
+                "fall with calm breathing, looping seamlessly"
+            ),
+            "course": (
+                "running cycle holding the rifle in both hands across the "
+                "chest, barrel pointing up and forward, arms steady, legs "
+                "pumping, staying in place without moving across the frame, "
+                "looping seamlessly"
+            ),
+        },
+    },
+    {
+        "identifiant": "fusil-a-pompe",
+        "nom": "fusil à pompe",
+        "tient": "a pump-action shotgun held in both hands",
+        "textes": {
+            "attaque": (
+                "a shotgun blast with the shotgun held in both hands, staying "
+                "in place: the stock comes up to the right shoulder, fires once "
+                "with a wide muzzle flash, the upper body rocks back with the "
+                "strong recoil, the left hand pumps the slide back and forth, "
+                "then returns to the starting stance"
+            ),
+            "repos": (
+                "ready idle holding the shotgun in both hands at the hip, "
+                "barrel pointing forward and slightly down, feet planted, "
+                "staying in place; the shotgun stays still in the hands, no "
+                "aiming and no shooting, only the shoulders rise and fall with "
+                "breathing, looping seamlessly"
+            ),
+        },
+    },
+    {
+        "identifiant": "arme-lourde-a-feu",
+        "nom": "mitrailleuse lourde",
+        "tient": "a heavy machine gun carried at the hip in both hands",
+        "textes": {
+            "attaque": (
+                "a burst of fire with the heavy machine gun carried at the hip "
+                "in both hands, staying in place: wide stance, the barrel "
+                "levels forward, a rapid burst with flickering muzzle flashes, "
+                "the whole body shakes with the continuous recoil, then "
+                "returns to the starting stance"
+            ),
+            "repos": (
+                "heavy ready idle carrying the heavy machine gun at the hip in "
+                "both hands, barrel pointing forward and down, wide stance, "
+                "feet planted, staying in place; the gun stays still, no "
+                "shooting, only the shoulders rise and fall with slow heavy "
+                "breathing, looping seamlessly"
+            ),
+        },
+    },
+    {
+        "identifiant": "lance-roquettes",
+        "nom": "lance-roquettes",
+        "tient": "a rocket launcher tube resting on the right shoulder",
+        "textes": {
+            "attaque": (
+                "a rocket launch with the launcher tube on the right shoulder, "
+                "staying in place: both hands steady the tube and the head "
+                "leans to aim, the rocket fires forward with a flash and a "
+                "puff of smoke from the back of the tube, the body is pushed "
+                "back a little, then returns to the starting stance"
+            ),
+            "repos": (
+                "ready idle with the rocket launcher tube resting on the right "
+                "shoulder, both hands on it, wide stance, feet planted, "
+                "staying in place; the launcher stays still, no firing, only "
+                "the shoulders rise and fall with slow breathing, looping "
+                "seamlessly"
             ),
         },
     },

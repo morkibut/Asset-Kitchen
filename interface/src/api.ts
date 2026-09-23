@@ -739,15 +739,20 @@ export type BaseStyles = {
   propres_au_jeu?: boolean
 }
 
-/** Le style résolu d'un personnage, **et d'où il vient** (SC2/SC4) : choisi
- *  sur lui, hérité d'une pièce portée en calque qui le déclare, ou aucun —
- *  rien n'est deviné d'après un nom. `piece` porte son nom, pas seulement son
- *  identifiant : c'est ce que la fiche affiche à côté du style. */
+/** Un style proposé pour un personnage, **et d'où il vient** : choisi sur sa
+ *  fiche, ou déclaré par une pièce portée en calque — rien n'est deviné
+ *  d'après un nom. `piece` porte son nom, pas seulement son identifiant. */
+export type StylePropose = {
+  style: StyleDeCombat
+  origine: "choisi" | "piece"
+  piece: { identifiant: string; nom: string } | null
+}
+
+/** Les styles d'un personnage (22 septembre 2026 : **une liste**). Ce sont
+ *  des propositions : aucun ne part dans un clip sans être coché à l'envoi. */
 export type StyleDuPersonnage = {
   personnage: string
-  style: StyleDeCombat | null
-  origine: "choisi" | "piece" | "aucun"
-  piece: { identifiant: string; nom: string } | null
+  styles: StylePropose[]
 }
 
 /** Ce qui partira pour animer une case du plan, **et d'où le texte vient**.
@@ -770,15 +775,12 @@ export type MouvementDeLaPose = {
    *  case-là, et il le dit plutôt que d'inventer un texte qui partira dans un
    *  appel payé. */
   origine: "mouvement" | "pose" | "aucun"
-  /** Le style résolu du personnage, s'il en a un (SC3) — `null` sans
-   *  personnage connu ou sans style. Il ne dit pas si ce style parle de *ce*
-   *  mouvement précis : c'est `geste` qui en porte la trace. */
-  style?: { identifiant: string; nom: string } | null
-  /** D'où vient ce style — `choisi`, `piece` ou `aucun` (`ServiceStyles`). */
-  origine_du_style?: "choisi" | "piece" | "aucun"
-  /** La pièce qui a déclaré le style, nommée — seulement quand `origine_du_style`
-   *  vaut `piece`. */
-  piece_du_style?: { identifiant: string; nom: string } | null
+  /** Le style **coché pour cet envoi**, ou `null` — jamais coché d'office.
+   *  Il ne dit pas si ce style parle de *ce* mouvement précis : c'est `geste`
+   *  qui en porte la trace. */
+  style?: StyleDeCombat | null
+  /** Les styles du personnage, proposés à cocher. */
+  styles_proposes?: StylePropose[]
 }
 
 // ── L'animation par la vidéo (A9) ───────────────────────────────────────────
@@ -5627,6 +5629,7 @@ export const api = {
     direction?: string | null,
     personnage?: string | null,
     mouvement?: string | null,
+    style?: string | null,
   ) =>
     appeler<MouvementDeLaPose>(
       `/movements/for-pose/${encodeURIComponent(pose)}?` +
@@ -5635,6 +5638,7 @@ export const api = {
           ...(direction ? { direction } : {}),
           ...(personnage ? { personnage } : {}),
           ...(mouvement ? { mouvement } : {}),
+          ...(style ? { style } : {}),
         }).toString(),
     ),
 
@@ -5715,7 +5719,7 @@ export const api = {
       method: "POST",
     }),
 
-  /** Le style résolu de ce personnage, **et d'où il vient**. */
+  /** Les styles de ce personnage, **et d'où chacun vient**. */
   styleDuPersonnage: (personnage: string, projet?: string | null) =>
     appeler<StyleDuPersonnage>(
       `/styles/for-character/${encodeURIComponent(personnage)}` + duJeu(projet),
@@ -5728,16 +5732,16 @@ export const api = {
       `/styles/for-piece/${encodeURIComponent(piece)}` + duJeu(projet),
     ),
 
-  /** Poser ou retirer (`null`) le style choisi d'un personnage — il passe
-   *  devant celui de ses pièces. */
-  choisirStyleDuPersonnage: (
+  /** Poser la liste des styles d'un personnage — vide, elle les retire tous.
+   *  Rend la liste neuve, styles hérités des pièces compris. */
+  choisirStylesDuPersonnage: (
     personnage: string,
-    style: string | null,
+    styles: string[],
     projet?: string | null,
   ) =>
     appeler<StyleDuPersonnage>(
       `/characters/${encodeURIComponent(personnage)}/combat-style` + duJeu(projet),
-      { method: "PUT", body: JSON.stringify({ style }) },
+      { method: "PUT", body: JSON.stringify({ styles }) },
     ),
 
   /** Poser ou retirer le style qu'une pièce déclare — hérité par qui la porte

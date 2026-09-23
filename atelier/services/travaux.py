@@ -283,8 +283,8 @@ class ServiceTravaux:
 
         Le même compositeur que la route qui le montre (`texte_clip.composer`) :
         la phrase de la direction du jeu en tête, puis le geste — la correction
-        de cet appel s'il y en a une, sinon celui du style du personnage pour ce
-        mouvement, sinon celui du mouvement. **La correction porte sur le geste seul** :
+        de cet appel s'il y en a une, sinon celui du style coché pour ce
+        mouvement (`style_combat`), sinon celui du mouvement. **La correction porte sur le geste seul** :
         la phrase de direction est remise en tête ici, si bien qu'une
         correction vaut pour chaque direction d'une série.
 
@@ -294,7 +294,8 @@ class ServiceTravaux:
         elle passe par `correction_geste`, jamais par le texte entier.
         """
         compose = composer(self.a, projet, demande["personnage"], demande["direction"] or None,
-                           demande["pose"], demande["mouvement"], demande["correction_geste"])
+                           demande["pose"], demande["mouvement"], demande["correction_geste"],
+                           demande["style_combat"])
         if compose["mouvement"] is None:
             raise TravailRefuse(f"Aucun mouvement « {demande['mouvement']} » dans la bibliothèque de ce jeu.")
         texte = compose["texte"].strip()

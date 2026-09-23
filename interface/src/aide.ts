@@ -1476,13 +1476,13 @@ export const AIDE: Record<string, Explication> = {
   },
 
   "codex.chose.style_combat": {
-    nom: "Son style de combat",
+    nom: "Ses styles de combat",
     ou: "sujet",
     groupe: "La fiche du sujet",
-    quoi: "Comment ce personnage se bat — à mains nues, au bâton, à l'arc.",
+    quoi: "Comment ce personnage peut se battre — au fusil, au couteau, à mains nues. Plusieurs se cochent.",
     change:
-      "Pour un mouvement que le style décrit, son texte remplace celui du mouvement et passe devant celui d'une pièce portée. Sans style ni pièce, le texte du mouvement part seul.",
-    origine: "toi, ou la pièce qu'il porte en calque, ou aucun",
+      "Rien tout seul : ils sont proposés au moment d'animer, où l'on en coche un — ou aucun. Une pièce portée qui déclare un style l'ajoute à la liste.",
+    origine: "toi, et les pièces qu'il porte en calque",
   },
 
   "codex.chose.habillage": {
@@ -3011,6 +3011,16 @@ export const AIDE: Record<string, Explication> = {
       "Le prix, à chaque cran. Un modèle vidéo se facture au **jeton vidéo** — hauteur × largeur × images par seconde × durée —, donc la surface compte autant que le temps : le carré coûte près de moitié moins que le format large, et il cadre mieux un personnage seul.",
     origine: "toi · 5 secondes, carré, petit format",
     long: "Cinq secondes plutôt que quatre, et c'est mesuré : quatre suffisent à un cycle de marche seul, mais le geste de la version est d'en tirer **plusieurs animations dans un clip**, et il faut de la place pour les transitions entre elles.\n\nUn modèle qui ne sait pas faire la durée que tu demandes se grise avec sa raison plutôt que de disparaître : ce qui est impossible se voit avant d'être choisi.",
+  },
+
+  "clip.style_combat": {
+    nom: "Style de combat",
+    ou: "clip",
+    groupe: "Commander un clip",
+    quoi: "Le style avec lequel ce personnage joue ce mouvement, pour cet envoi. Rien n'est coché d'office.",
+    change:
+      "Coché, son texte pour ce mouvement remplace celui du mouvement : au fusil, le repos tient l'arme immobile et l'attaque tire. Aucun : le texte du mouvement part seul.",
+    origine: "toi · aucun",
   },
 
   "clip.lot": {

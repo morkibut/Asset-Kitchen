@@ -27,13 +27,16 @@ DEFAUTS = {
     # (`services/texte_clip.composer`) et l'écrit dans la demande conservée,
     # avant l'empreinte — le texte relu est celui qui part.
     "mouvement": None, "correction_geste": "",
+    # **Le style de combat coché pour cet envoi** (22 septembre 2026) — jamais
+    # un style posé d'office : `None` veut dire le texte du mouvement seul.
+    "style_combat": None,
 }
 
 # Les réglages arrivés après que des demandes ont déjà été conservées. Laissés à
 # leur défaut, ils ne comptent pas dans l'empreinte : une demande de l'agent
 # répétée avec sa clé d'avant RV5 se relit, au lieu de se voir refusée comme
 # « une autre demande » parce que le dictionnaire a grandi.
-TARDIFS = {"mouvement": None, "correction_geste": ""}
+TARDIFS = {"mouvement": None, "correction_geste": "", "style_combat": None}
 
 
 def pour_l_empreinte(demande: dict[str, Any]) -> dict[str, Any]:
@@ -55,6 +58,10 @@ def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> 
         raise TravailRefuse("« correction_geste » doit être du texte.")
     if demande["correction_geste"].strip() and demande["mouvement"] is None:
         raise TravailRefuse("Une correction du geste corrige un mouvement : choisir le mouvement avec elle.")
+    if demande["style_combat"] is not None and (not isinstance(demande["style_combat"], str) or not demande["style_combat"].strip()):
+        raise TravailRefuse("« style_combat » doit être l'identifiant d'un style de combat ou rester vide.")
+    if demande["style_combat"] is not None and demande["mouvement"] is None:
+        raise TravailRefuse("Un style de combat écrit le texte d'un mouvement : choisir le mouvement avec lui.")
     if demande["mouvement"] is not None:
         # Le texte sera composé par le serveur ; un texte vide à ce stade est
         # attendu. Un texte déjà écrit est comparé au composé par `preparer`.

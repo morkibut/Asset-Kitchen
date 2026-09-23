@@ -128,37 +128,43 @@ test("un ancien sujet de nature « matière » la garde affichée", async () => 
   expect((screen.getByLabelText("Type d'objet") as HTMLSelectElement).value).toBe("matière")
 })
 
-test("la fiche dit d'où vient le style de combat, et un choix l'écrit", async () => {
+test("la fiche coche plusieurs styles de combat, et dit celui qu'une pièce apporte", async () => {
   const champy = { identifiant: "champy", nom: "Champy", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type: "", ambiance: "", famille: "personnages" } as unknown as Personnage
+  const FUSIL = { ...BATON, identifiant: "fusil", nom: "fusil" }
+  const DAGUES = { ...BATON, identifiant: "dagues", nom: "deux dagues" }
   vi.spyOn(api, "objectifPersonnage").mockRejectedValue(new Error("hors sujet"))
   vi.spyOn(api, "habillage").mockResolvedValue(null as never)
   vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(null as never)
   vi.spyOn(api, "posesDesTypes").mockResolvedValue({ types: [] } as never)
   vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [] } as never)
-  vi.spyOn(api, "styles").mockResolvedValue({ styles: [BATON], masques: [] })
-  // **Hérité de la pièce qu'il porte en calque** (SC2) — la fiche le dit en
-  // clair, avec le nom de la pièce, pas seulement son identifiant.
+  vi.spyOn(api, "styles").mockResolvedValue({ styles: [BATON, FUSIL, DAGUES], masques: [] })
+  // Le fusil est choisi ; le bâton vient de la pièce qu'il porte en calque
+  // (SC2) — la fiche le dit avec le nom de la pièce.
   vi.spyOn(api, "styleDuPersonnage").mockResolvedValue({
     personnage: "champy",
-    style: BATON,
-    origine: "piece",
-    piece: { identifiant: "baton-1", nom: "Bâton de chêne" },
+    styles: [
+      { style: FUSIL, origine: "choisi", piece: null },
+      { style: BATON, origine: "piece", piece: { identifiant: "baton-1", nom: "Bâton de chêne" } },
+    ],
   } as StyleDuPersonnage)
-  const choisir = vi.spyOn(api, "choisirStyleDuPersonnage").mockResolvedValue({
+  const choisir = vi.spyOn(api, "choisirStylesDuPersonnage").mockResolvedValue({
     personnage: "champy",
-    style: BATON,
-    origine: "choisi",
-    piece: null,
+    styles: [
+      { style: FUSIL, origine: "choisi", piece: null },
+      { style: DAGUES, origine: "choisi", piece: null },
+      { style: BATON, origine: "piece", piece: { identifiant: "baton-1", nom: "Bâton de chêne" } },
+    ],
   } as StyleDuPersonnage)
 
   render(<FicheDuSujet personnage={champy} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} onObjectif={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
 
-  expect(await screen.findByText("celui du Bâton de chêne")).toBeTruthy()
-  const select = screen.getByRole("combobox", { name: "Son style de combat" })
-  fireEvent.change(select, { target: { value: "baton" } })
-  await waitFor(() => expect(choisir).toHaveBeenCalledWith("champy", "baton", "marais"))
-  expect(await screen.findByText("choisi")).toBeTruthy()
+  expect(await screen.findByText("(celui du Bâton de chêne)")).toBeTruthy()
+  expect(screen.getByRole("checkbox", { name: "fusil" })).toBeChecked()
+  expect(screen.getByRole("checkbox", { name: /bâton/ })).toBeDisabled()
+  fireEvent.click(screen.getByRole("checkbox", { name: "deux dagues" }))
+  await waitFor(() => expect(choisir).toHaveBeenCalledWith("champy", ["fusil", "dagues"], "marais"))
+  await waitFor(() => expect(screen.getByRole("checkbox", { name: "deux dagues" })).toBeChecked())
 })
 
 test("un décor n'a rien à choisir : aucun style de combat sur sa fiche", async () => {

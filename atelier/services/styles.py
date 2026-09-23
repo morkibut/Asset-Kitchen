@@ -218,15 +218,40 @@ class ServiceStyles:
     # fichier l'est aussi.
 
     def choisir_pour_le_personnage(
-        self, projet: str, personnage: str, style: str | None
-    ) -> Style | None:
-        """Poser (ou retirer, avec `None` ou `""`) le style choisi d'un personnage.
+        self, projet: str, personnage: str, styles: Sequence[str] | str | None
+    ) -> tuple[Style, ...]:
+        """Poser la liste des styles d'un personnage — **vide, elle les retire tous**.
+
+        Demandé par l'auteur le 22 septembre 2026 : un personnage peut se
+        battre au fusil *et* au couteau. Cette liste ne décide plus de ce qui
+        part : elle dit **ce qu'on propose** au moment d'animer, où rien n'est
+        coché d'avance (`texte_clip.composer`).
 
         **Le personnage n'est pas cherché ici** : ce service ne connaît pas la
         production. Un identifiant vide est refusé — il ne désigne personne et
         ferait une clé fantôme dans le fichier.
         """
-        return self._choisir(projet, "personnages", personnage, style)
+        jeu = self._jeu(projet)
+        propre = (personnage or "").strip()
+        if not propre:
+            raise StyleRefuse(
+                "un style se pose sur un personnage nommé — l'identifiant est vide"
+            )
+        voulus = [styles] if isinstance(styles, str) else list(styles or ())
+        retenus: list[Style] = []
+        for voulu in dict.fromkeys(" ".join(str(s).split()) for s in voulus):
+            if voulu:
+                retenus.append(self._visible(voulu, jeu))
+        choix = self._fichiers.lire_styles_choisis(jeu)
+        if retenus:
+            choix["personnages"][propre] = [s.identifiant for s in retenus]
+        else:
+            choix["personnages"].pop(propre, None)
+        try:
+            self._fichiers.ecrire_styles_choisis(jeu, choix)
+        except ValueError as erreur:
+            raise StyleRefuse(str(erreur)) from erreur
+        return tuple(retenus)
 
     def choisir_pour_la_piece(
         self, projet: str, piece: str, style: str | None
@@ -244,44 +269,70 @@ class ServiceStyles:
                 raise StyleRefuse(f"aucune pièce « {propre} » dans ce jeu")
         return self._choisir(projet, "pieces", propre, style)
 
-    def style_du_personnage(
+    def styles_du_personnage(
         self, projet: str, personnage: str
-    ) -> tuple[Style | None, Origine, str | None]:
-        """Le style de ce personnage, **et d'où il vient** : `(style, origine, pièce)`.
+    ) -> tuple[tuple[Style, Origine, str | None], ...]:
+        """Les styles de ce personnage, **et d'où chacun vient** : `(style, origine, pièce)`.
 
-        La résolution, dans cet ordre et nulle part ailleurs — l'écran et le
-        texte qui part (`SC3`) la lisent ici, ils ne la rejouent pas :
+        **Ce sont des propositions, pas un choix** (22 septembre 2026). Avant,
+        le premier style résolu partait d'office dans chaque clip — le fusil
+        de Mara jusque dans son repos, sans moyen de le décocher. Désormais
+        rien ne part sans être coché au moment d'animer ; cette liste dit
+        seulement ce qu'on coche d'un clic. Dans cet ordre, sans doublon :
 
-        1. **choisi** — un style posé sur le personnage passe devant tout ;
-        2. **pièce** — sinon, le style déclaré par une pièce qu'il porte *en
-           calque sur ses poses*. Si plusieurs en déclarent un, la première
-           dans l'ordre de la garde-robe du jeu : emplacements par rang, puis
-           pièces dans l'ordre où elles ont été nommées ; une pièce portée mais
-           absente de la garde-robe vient après, par identifiant. Un ordre
-           stable, parce qu'un style qui changerait d'un appel à l'autre ferait
-           partir deux textes différents pour la même case ;
-        3. **aucun** — sinon rien. **Rien n'est deviné d'après un nom** : une
-           pièce appelée « bâton » qui ne déclare pas de style ne donne pas le
-           style bâton.
+        1. **choisi** — les styles posés sur le personnage, dans leur ordre ;
+        2. **pièce** — puis ceux que déclarent les pièces qu'il porte *en
+           calque sur ses poses*, dans l'ordre de la garde-robe du jeu :
+           emplacements par rang, puis pièces dans l'ordre où elles ont été
+           nommées ; une pièce portée mais absente de la garde-robe vient
+           après, par identifiant. Un ordre stable, pour que la liste ne
+           saute pas d'un affichage à l'autre.
 
-        Un style choisi ou déclaré qui a été masqué depuis ne compte plus : il
-        est sauté comme s'il n'était pas posé, et la résolution continue.
+        **Rien n'est deviné d'après un nom** : une pièce appelée « bâton » qui
+        ne déclare pas de style ne donne pas le style bâton. Un style masqué
+        depuis ne compte plus.
         """
         choix = self._fichiers.lire_styles_choisis(self._jeu(projet))
         visibles = {s.identifiant: s for s in self.tous(projet)}
-
-        choisi = visibles.get(choix["personnages"].get(personnage, ""))
-        if choisi is not None:
-            return choisi, "choisi", None
-
+        rendus: list[tuple[Style, Origine, str | None]] = []
+        vus: set[str] = set()
+        for identifiant in choix["personnages"].get(personnage, ()):
+            style = visibles.get(identifiant)
+            if style is not None and identifiant not in vus:
+                vus.add(identifiant)
+                rendus.append((style, "choisi", None))
         declares = choix["pieces"]
         if declares and self._pieces_portees is not None:
             portees = set(self._pieces_portees(projet, personnage))
             for piece in self._dans_l_ordre(projet, portees):
                 style = visibles.get(declares.get(piece, ""))
-                if style is not None:
-                    return style, "piece", piece
-        return None, "aucun", None
+                if style is not None and style.identifiant not in vus:
+                    vus.add(style.identifiant)
+                    rendus.append((style, "piece", piece))
+        return tuple(rendus)
+
+    def style_pour_l_envoi(self, projet: str | None, identifiant: str | None) -> Style | None:
+        """Le style **coché** pour un envoi, ou `None` — jamais un style deviné.
+
+        N'importe quel style visible du jeu se coche : ceux du personnage sont
+        proposés d'abord à l'écran, mais l'agent peut en nommer un autre. Un
+        identifiant inconnu ou masqué est refusé plutôt qu'ignoré — un clip
+        payé sans le style qu'on croyait avoir coché serait perdu.
+        """
+        voulu = (identifiant or "").strip()
+        if not voulu:
+            return None
+        return self._visible(voulu, projet)
+
+    def _visible(self, identifiant: str, projet: str | None) -> Style:
+        style = self.lire(identifiant, projet)
+        if style is None:
+            raise StyleRefuse(f"aucun style « {identifiant} » dans ce jeu")
+        if style.masque:
+            raise StyleRefuse(
+                f"« {style.nom} » est masqué dans ce jeu — le remontrer d'abord"
+            )
+        return style
 
     def choix_en_json(self, projet: str) -> dict[str, dict[str, str]]:
         """Les choix bruts du jeu, tels que le fichier les tient."""

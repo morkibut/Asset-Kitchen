@@ -57,12 +57,12 @@ async def test_le_compositeur_du_service_est_celui_de_la_route(production):
     ouest, _est = _deux_directions(atelier, projet)
     gardienne = _sujet(atelier, projet, "attaque", [ouest])
     atelier.styles.choisir_pour_le_personnage(projet, gardienne, "baton")
-    recu = composer(atelier, projet, gardienne, ouest, "attaque")
+    recu = composer(atelier, projet, gardienne, ouest, "attaque", style="baton")
     phrase = phrase_de_direction(atelier, projet, ouest)
     assert phrase, "la vue du jeu d'essai donne une phrase à l'ouest"
     assert recu["texte"] == f"{phrase} {_BATON.texte('attaque')}"
     assert recu["origine"] == "mouvement" and recu["style"]["identifiant"] == "baton"
-    corrige = composer(atelier, projet, gardienne, ouest, "attaque", correction="  swing the staff low  ")
+    corrige = composer(atelier, projet, gardienne, ouest, "attaque", correction="  swing the staff low  ", style="baton")
     assert corrige["texte"] == f"{phrase} swing the staff low" and corrige["geste"] == "swing the staff low"
 
 
@@ -74,7 +74,8 @@ async def test_le_mouvement_compose_le_texte_qui_part_avec_style_et_direction(pr
     ouest, _est = _deux_directions(atelier, projet)
     gardienne = _sujet(atelier, projet, "attaque", [ouest])
     atelier.styles.choisir_pour_le_personnage(projet, gardienne, "baton")
-    travail = await atelier.travaux.preparer(projet, {**_commune(demande, gardienne, _reference(atelier, projet)),
+    travail = await atelier.travaux.preparer(projet, {**_commune(demande, gardienne, _reference(atelier, projet),
+                                                                 style_combat="baton"),
                                                       "pose": "attaque", "direction": ouest})
     attendu = f"{phrase_de_direction(atelier, projet, ouest)} {_BATON.texte('attaque')}"
     # **E14** : la relecture montre ce champ, et c'est celui qui part.
@@ -129,7 +130,7 @@ def test_les_secondes_sont_un_reel_de_0_a_60():
 
 def test_une_demande_d_avant_rv5_garde_son_empreinte():
     brute = {"cle": "k", "personnage": "p", "pose": "marche", "direction": "", "modele_video": "m", "prompt_video": "t"}
-    assert set(pour_l_empreinte(demande_normalisee(brute))) == set(demande_normalisee(brute)) - {"mouvement", "correction_geste"}
+    assert set(pour_l_empreinte(demande_normalisee(brute))) == set(demande_normalisee(brute)) - {"mouvement", "correction_geste", "style_combat"}
 
 
 def test_la_duree_par_defaut_est_toujours_acceptee():

@@ -457,29 +457,39 @@ class Fichiers:
         """
         return self.styles_du_jeu(projet).with_name("styles-choisis.json")
 
-    def lire_styles_choisis(self, projet: str) -> dict[str, dict[str, str]]:
-        """`{"personnages": {id: style}, "pieces": {id: style}}` — **toujours les deux clés**.
+    def lire_styles_choisis(self, projet: str) -> dict[str, dict[str, Any]]:
+        """`{"personnages": {id: [styles]}, "pieces": {id: style}}` — **toujours les deux clés**.
 
         Un fichier absent ou abîmé rend deux dictionnaires vides : aucun choix
         n'est un état normal (rien n'est deviné), pas une erreur. Une entrée
         dont la clé ou la valeur n'est pas une chaîne non vide est sautée.
+
+        **Un personnage a une liste de styles depuis le 22 septembre 2026** —
+        il peut se battre au fusil et au couteau. Un fichier d'avant portait
+        une seule chaîne ; elle se relit comme une liste d'un seul style.
         """
         lu = self._lire_json(self.styles_choisis_du_jeu(projet))
-        rendu: dict[str, dict[str, str]] = {"personnages": {}, "pieces": {}}
+        rendu: dict[str, dict[str, Any]] = {"personnages": {}, "pieces": {}}
         if not isinstance(lu, dict):
             return rendu
-        for cle in rendu:
-            brut = lu.get(cle)
-            if isinstance(brut, dict):
-                rendu[cle] = {
-                    k: v
-                    for k, v in brut.items()
-                    if isinstance(k, str) and k and isinstance(v, str) and v
-                }
+        brut = lu.get("pieces")
+        if isinstance(brut, dict):
+            rendu["pieces"] = {
+                k: v
+                for k, v in brut.items()
+                if isinstance(k, str) and k and isinstance(v, str) and v
+            }
+        brut = lu.get("personnages")
+        if isinstance(brut, dict):
+            for k, v in brut.items():
+                valeurs = [v] if isinstance(v, str) else v if isinstance(v, list) else []
+                liste = list(dict.fromkeys(s for s in valeurs if isinstance(s, str) and s))
+                if isinstance(k, str) and k and liste:
+                    rendu["personnages"][k] = liste
         return rendu
 
     def ecrire_styles_choisis(
-        self, projet: str, contenu: dict[str, dict[str, str]]
+        self, projet: str, contenu: dict[str, dict[str, Any]]
     ) -> None:
         """Refusé si le jeu n'a pas de `projet.json` — **même garde que `ecrire_styles`** :
         un identifiant qui ne désigne aucun jeu ne crée pas de dossier fantôme."""

@@ -229,7 +229,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   useEffect(() => {
     if (!edition || !demande.pose) { setComposition(null); return }
     let vivant = true
-    api.mouvementDeLaPose(demande.pose, projet, demande.direction || undefined, demande.personnage || undefined, demande.mouvement ?? undefined)
+    api.mouvementDeLaPose(demande.pose, projet, demande.direction || undefined, demande.personnage || undefined, demande.mouvement ?? undefined, demande.style_combat)
       .then((recu) => {
         if (!vivant) return
         setComposition(recu)
@@ -238,7 +238,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
       .catch(() => { if (vivant) setComposition(null) })
     return () => { vivant = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `changer` est stable ; seuls ces champs font relire la composition.
-  }, [edition, demande.pose, demande.direction, demande.personnage, demande.mouvement, projet])
+  }, [edition, demande.pose, demande.direction, demande.personnage, demande.mouvement, demande.style_combat, projet])
   // **RV5 : la durée proposée suit le modèle choisi**, et seulement quand il
   // change — sinon un réglage manuel serait effacé à chaque rendu.
   useEffect(() => {
@@ -294,12 +294,12 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
     if (!composition?.mouvement || !geste) return
     setOccupe(true); setErreur("")
     try {
-      if (composition.origine_du_style === "choisi" || composition.origine_du_style === "piece") {
+      if (composition.style) {
         await api.reglerStyle(composition.style!.identifiant, { textes: { [composition.mouvement.identifiant]: geste } }, projet)
       } else {
         await api.reglerMouvement(composition.mouvement.identifiant, { texte: geste }, projet)
       }
-      const recu = await api.mouvementDeLaPose(demande.pose, projet, demande.direction || undefined, demande.personnage || undefined, demande.mouvement ?? undefined)
+      const recu = await api.mouvementDeLaPose(demande.pose, projet, demande.direction || undefined, demande.personnage || undefined, demande.mouvement ?? undefined, demande.style_combat)
       setComposition(recu)
       changer({ correction_geste: "" })
       setCorrectionOuverte(false)
@@ -346,7 +346,13 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">3. Mouvement et clip vidéo</legend>
           <label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="mouvement.texte">Geste</Libelle><select aria-label="Geste" className={CHAMP} value={demande.mouvement ?? ""} onChange={(e) => choisirMouvement(e.target.value)}><option value="">— texte libre —</option>{mouvements.map((m) => <option key={m.identifiant} value={m.identifiant}>{m.nom}</option>)}</select></label>
           {demande.mouvement ? <div className="mt-[14px]">
-            <p className="text-[12px] text-encre-3">{composition?.style ? `Style : ${composition.style.nom}${composition.origine_du_style === "piece" ? ` (hérité de ${composition.piece_du_style?.nom ?? "une pièce"})` : ""}` : "Aucun style de combat n’ajoute son texte ici."}</p>
+            {/* **Le style se coche à chaque envoi, jamais d'office** (22 septembre
+                2026) : ceux de la fiche sont proposés, « Aucun » est le défaut.
+                Coché, il écrit son texte pour le mouvement de chaque case. */}
+            <fieldset aria-label="Style de combat" className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.style_combat">Style de combat</Libelle><div className="flex flex-wrap gap-x-[14px] gap-y-[4px]">
+              <label className="flex items-center gap-[4px] text-[13px]"><input type="radio" name="style-combat" checked={!demande.style_combat} onChange={() => changer({ style_combat: null, correction_geste: "" })} />Aucun</label>
+              {[...(composition?.styles_proposes ?? []).map((p) => ({ style: p.style, piece: p.piece?.nom })), ...(composition?.style && !composition.styles_proposes?.some((p) => p.style.identifiant === composition.style!.identifiant) ? [{ style: composition.style, piece: undefined }] : [])].map(({ style, piece }) => <label key={style.identifiant} className="flex items-center gap-[4px] text-[13px]"><input type="radio" name="style-combat" checked={demande.style_combat === style.identifiant} onChange={() => changer({ style_combat: style.identifiant, correction_geste: "" })} />{style.nom}{piece && <span className="text-[11px] text-encre-4">(celui du {piece})</span>}</label>)}
+            </div>{!composition?.styles_proposes?.length && <p className="text-[12px] text-encre-3">Ce personnage n’a pas de style de combat sur sa fiche.</p>}{composition?.style && composition.mouvement && !composition.style.textes[composition.mouvement.identifiant] && <p className="text-[12px] text-encre-3">« {composition.style.nom} » ne dit rien pour ce mouvement : son texte à lui part seul.</p>}</fieldset>
             <details className="mt-[8px]"><summary className="cursor-pointer text-[12px] text-encre-3">Voir le texte anglais envoyé</summary><p data-texte-du-mouvement className="mt-[8px] whitespace-pre-wrap rounded-7 border border-contour bg-papier p-[14px] text-[13px]">{(demande.correction_geste?.trim() ? composition?.direction ? `${composition.direction} ${demande.correction_geste.trim()}` : demande.correction_geste.trim() : composition?.texte) || "choisis une case — c’est elle qui écrit ce qui part"}</p></details>
             <div className="mt-[8px] flex items-center gap-[14px]">
               <button type="button" className="text-[12px] text-signal hover:opacity-70" onClick={() => setCorrectionOuverte((o) => !o)}>{correctionOuverte ? "fermer la correction" : "corriger le geste ›"}</button>

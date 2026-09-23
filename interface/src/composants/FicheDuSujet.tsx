@@ -167,9 +167,9 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     if (personnage.famille === "personnages")
       void api.styles(personnage.projet).then((recu) => setCatalogueStyles(recu?.styles ?? [])).catch(() => setCatalogueStyles([]))
   }, [edition, relireReglages, relireStyle, personnage.projet, personnage.famille])
-  const poserStyle = async (style: string | null) => {
+  const poserStyles = async (styles: string[]) => {
     try {
-      setStyleDuPersonnage(await api.choisirStyleDuPersonnage(personnage.identifiant, style, personnage.projet))
+      setStyleDuPersonnage(await api.choisirStylesDuPersonnage(personnage.identifiant, styles, personnage.projet))
     } catch (erreur) { onErreur(erreur, "le style a été refusé") }
   }
   const poserHabillage = async (champs: Parameters<typeof api.reglerPersonnage>[1]) => {
@@ -326,7 +326,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
             <SonStyleDeCombat
               resolu={styleDuPersonnage}
               catalogue={catalogueStyles}
-              onPoser={poserStyle}
+              onPoser={poserStyles}
             />
           </section>
         )}
@@ -357,10 +357,13 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   </>
 }
 
-// ── Son style de combat — un choix, et sa provenance dite en clair (SC4) ────
+// ── Ses styles de combat — plusieurs, et leur provenance dite en clair ─────
 
-/** Une ligne : la liste déroulante, et une phrase qui dit d'où vient le
- *  style — jamais les deux à deviner l'un de l'autre. */
+/** Une case à cocher par style du jeu (22 septembre 2026 : un personnage peut
+ *  se battre au fusil *et* au couteau). **Ce sont des propositions** : aucun
+ *  ne part dans une animation sans être coché au moment de l'envoyer. Un
+ *  style hérité d'une pièce portée est coché et grisé, sa pièce nommée — il
+ *  se retire en retirant la pièce, pas ici. */
 function SonStyleDeCombat({
   resolu,
   catalogue,
@@ -368,39 +371,41 @@ function SonStyleDeCombat({
 }: {
   resolu: StyleDuPersonnage | null
   catalogue: StyleDeCombat[]
-  onPoser: (style: string | null) => Promise<void>
+  onPoser: (styles: string[]) => Promise<void>
 }) {
   if (!resolu) return null
 
-  const phrase =
-    resolu.origine === "choisi"
-      ? "choisi"
-      : resolu.origine === "piece"
-        ? `celui du ${resolu.piece?.nom ?? "?"}`
-        : "aucun style — le texte du mouvement part seul"
+  const choisis = resolu.styles.filter((s) => s.origine === "choisi").map((s) => s.style.identifiant)
+  const herites = new Map(resolu.styles.filter((s) => s.origine === "piece").map((s) => [s.style.identifiant, s.piece?.nom ?? "?"]))
+  const basculer = (identifiant: string) =>
+    void onPoser(choisis.includes(identifiant) ? choisis.filter((s) => s !== identifiant) : [...choisis, identifiant])
 
   return (
     <div className="flex flex-col gap-1">
-      <select
-        aria-label="Son style de combat"
-        className="mesure h-[34px] w-full max-w-[360px] rounded-7 border border-contour bg-carte px-[8px] text-[13px] text-encre-controle"
-        value={resolu.style && resolu.origine === "choisi" ? resolu.style.identifiant : ""}
-        onChange={(e) => void onPoser(e.target.value || null)}
-      >
-        {/* Sans choix, la ligne vide dit ce qui s'applique quand même :
-            le style de la pièce portée, ou rien. */}
-        <option value="">
-          {resolu.origine === "piece" && resolu.style
-            ? `pas de choix (${resolu.style.nom}, par la pièce)`
-            : "aucun"}
-        </option>
-        {catalogue.map((style) => (
-          <option key={style.identifiant} value={style.identifiant}>
-            {style.nom}
-          </option>
-        ))}
-      </select>
-      <p className="mesure text-[11px] text-encre-4">{phrase}</p>
+      <div role="group" aria-label="Ses styles de combat" className="flex flex-wrap gap-x-[14px] gap-y-[4px]">
+        {catalogue.map((style) => {
+          const piece = herites.get(style.identifiant)
+          return (
+            <label key={style.identifiant} className="flex items-center gap-[4px] text-[13px]">
+              <input
+                type="checkbox"
+                checked={choisis.includes(style.identifiant) || piece !== undefined}
+                disabled={piece !== undefined && !choisis.includes(style.identifiant)}
+                onChange={() => basculer(style.identifiant)}
+              />
+              {style.nom}
+              {piece !== undefined && !choisis.includes(style.identifiant) && (
+                <span className="text-[11px] text-encre-4">(celui du {piece})</span>
+              )}
+            </label>
+          )
+        })}
+      </div>
+      <p className="mesure text-[11px] text-encre-4">
+        {resolu.styles.length
+          ? "Proposés au moment d’animer — rien n’est coché d’office."
+          : "Aucun style — le texte du mouvement part seul."}
+      </p>
     </div>
   )
 }

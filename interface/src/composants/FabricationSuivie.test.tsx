@@ -169,28 +169,36 @@ const mouvementFlotte = { identifiant: "flotte", nom: "Il flotte", texte: "it fl
 // `mouvementDeLaPose` a rendu, jamais un recollage de la phrase de direction
 // et du texte du mouvement pris isolément (E14 : le texte relu est celui qui
 // part).
-test("le texte affiché est celui que le serveur a composé — la phrase, puis le style, pas le mouvement seul", async () => {
+// **22 septembre 2026** : le style de la fiche est proposé, jamais coché
+// d'office — Mara au fusil gardait son fusil jusque dans son repos.
+test("aucun style n’est coché d’office ; en cocher un recompose le texte au serveur, avec lui", async () => {
   const mouvementAttaque = { identifiant: "attaque", nom: "attaque", texte: "attack, winding up", cadence: 14, directions: [], livre: true, masque: false }
   vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementAttaque], masques: [] })
-  const composition = {
-    pose: "marche", mouvement: mouvementAttaque,
-    texte: "Seen from the front. a horizontal swing with the wooden staff",
-    direction: "Seen from the front.", geste: "a horizontal swing with the wooden staff",
-    origine: "mouvement" as const, style: { identifiant: "baton", nom: "bâton" }, origine_du_style: "choisi" as const, piece_du_style: null,
-  }
-  vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue(composition)
+  const baton = { identifiant: "baton", nom: "bâton", tient: "a staff", textes: { attaque: "a horizontal swing with the wooden staff" }, livre: true, masque: false }
+  const compose = vi.spyOn(api, "mouvementDeLaPose").mockImplementation(async (_pose, _projet, _direction, _personnage, _mouvement, style) => ({
+    pose: "marche", mouvement: mouvementAttaque, origine: "mouvement" as const,
+    direction: "Seen from the front.",
+    geste: style ? baton.textes.attaque : mouvementAttaque.texte,
+    texte: `Seen from the front. ${style ? baton.textes.attaque : mouvementAttaque.texte}`,
+    style: style ? baton : null,
+    styles_proposes: [{ style: baton, origine: "choisi" as const, piece: null }],
+  }))
   render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
   await waitFor(() => expect(screen.getByLabelText("Geste")).toHaveValue("attaque"))
+  expect(screen.getByRole("radio", { name: "Aucun" })).toBeChecked()
   fireEvent.click(screen.getByText("Voir le texte anglais envoyé"))
-  expect(screen.getByText(composition.texte)).toBeTruthy()
-  expect(screen.getByText("Style : bâton")).toBeTruthy()
+  expect(screen.getByText("Seen from the front. attack, winding up")).toBeTruthy()
+
+  fireEvent.click(screen.getByRole("radio", { name: "bâton" }))
+  await waitFor(() => expect(compose).toHaveBeenLastCalledWith("marche", "jeu", "sud", "pelerin", "attaque", "baton"))
+  expect(await screen.findByText("Seen from the front. a horizontal swing with the wooden staff")).toBeTruthy()
 })
 
 test("un mouvement choisi remplit le texte depuis la bibliothèque, avec son nom en français et le texte anglais repliable", async () => {
   vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
   vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue({
     pose: "marche", mouvement: mouvementFlotte, texte: "Facing south. it floats", direction: "Facing south.",
-    geste: "it floats", origine: "mouvement", style: null, origine_du_style: "aucun",
+    geste: "it floats", origine: "mouvement", style: null, styles_proposes: [],
   })
   render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
   await screen.findByRole("option", { name: "Il flotte" })
@@ -204,7 +212,7 @@ test("corriger le geste puis « Garder pour le jeu » écrit le texte dans la bi
   vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
   vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue({
     pose: "marche", mouvement: mouvementFlotte, texte: "Facing south. it floats", direction: "Facing south.",
-    geste: "it floats", origine: "mouvement", style: null, origine_du_style: "aucun",
+    geste: "it floats", origine: "mouvement", style: null, styles_proposes: [],
   })
   const regler = vi.spyOn(api, "reglerMouvement").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
   render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
@@ -220,7 +228,7 @@ test("un geste hérité d’un style se garde sur le style, pas sur le mouvement
   vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue({
     pose: "marche", mouvement: mouvementFlotte, texte: "Facing south. it strides on the water", direction: "Facing south.",
     geste: "it strides on the water", origine: "mouvement",
-    style: { identifiant: "baton", nom: "Bâton" }, origine_du_style: "choisi",
+    style: { identifiant: "baton", nom: "Bâton", tient: "", textes: {}, livre: true, masque: false }, styles_proposes: [],
   })
   const reglerStyle = vi.spyOn(api, "reglerStyle").mockResolvedValue({ styles: [], masques: [] })
   const reglerMouvement = vi.spyOn(api, "reglerMouvement")

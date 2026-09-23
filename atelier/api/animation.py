@@ -49,7 +49,7 @@ from atelier.services import Atelier
 # décrit de deux façons selon la porte par laquelle on le demande est une panne
 # qui ne se voit qu'à l'usage.
 from atelier.services.animation import _modele_en_json
-from atelier.services.texte_clip import composer
+from atelier.services.texte_clip import composer, styles_proposes
 
 routeur = APIRouter()
 
@@ -109,6 +109,7 @@ async def mouvement_de_la_pose(
     direction: str | None = Query(None),
     personnage: str | None = Query(None),
     mouvement: str | None = Query(None),
+    style: str | None = Query(None),
 ) -> dict[str, Any]:
     """Ce qui partira pour animer cette case du plan, **et d'où le texte vient**.
 
@@ -122,10 +123,11 @@ async def mouvement_de_la_pose(
     la consigne figée du plan — moins bonne, mais en anglais et juste sur
     l'attitude —, `aucun` quand le produit ne sait rien dire de cette case-là.
 
-    **`personnage`, depuis SC3** : quand il est connu, `geste` devient le
-    texte du style résolu de ce personnage s'il dit ce mouvement, et `style` /
-    `origine_du_style` disent ce style et d'où il vient — même sans personnage
-    connu, rien ne change (`style` reste `null`).
+    **`style`, depuis le 22 septembre 2026** : le style de combat *coché pour
+    cet envoi* — `geste` devient son texte pour ce mouvement s'il en dit un.
+    Rien n'est coché d'office ; `styles_proposes` liste ceux du `personnage`
+    (choisis sur sa fiche, ou déclarés par une pièce portée) pour que l'écran
+    les propose.
 
     **`mouvement`, depuis SC3** : composer pour un mouvement *autre* que celui
     de la pose — l'écran laisse choisir dans une liste, et cette case garde
@@ -137,7 +139,7 @@ async def mouvement_de_la_pose(
     """
     atelier = _atelier(requete)
     ouvert = projet or atelier.bibliotheque.courant
-    return composer(atelier, ouvert, personnage, direction, identifiant_pose, mouvement)
+    return composer(atelier, ouvert, personnage, direction, identifiant_pose, mouvement, style=style)
 
 
 @routeur.post("/movements", status_code=201)
@@ -305,40 +307,36 @@ class CorpsChoixStyle(BaseModel):
     style: str | None = None
 
 
+class CorpsStylesDuPersonnage(BaseModel):
+    """`styles` : la liste des styles du personnage — vide, elle les retire tous.
+
+    `style`, seul, est la forme d'avant le 22 septembre 2026 : il pose une
+    liste d'un seul style, ou la vide avec `null`."""
+
+    styles: list[str] | None = None
+    style: str | None = None
+
+
 def _resolution_en_json(atelier: Atelier, projet: str, personnage: str) -> dict[str, Any]:
-    """La résolution du style d'un personnage, **la pièce nommée** (SC4).
+    """Les styles d'un personnage, **chaque pièce nommée** (SC4).
 
     L'identifiant seul ne suffit pas à l'écran, qui doit dire « celui du
     Bâton de chêne » sans rappeler l'équipement pour traduire un identifiant
-    en nom — même manque, et même remède, que `_style_du_personnage` un peu
-    plus haut dans ce fichier, pour la route qui compose le texte d'un clip.
+    en nom — c'est `texte_clip.styles_proposes` qui les nomme, la même liste
+    que l'écran d'une animation propose à cocher.
     """
-    style, origine, piece = atelier.styles.style_du_personnage(projet, personnage)
-    piece_json: dict[str, str] | None = None
-    if origine == "piece" and piece:
-        objet = next(
-            (p for p in atelier.equipement.pieces(projet) if p.identifiant == piece),
-            None,
-        )
-        piece_json = {"identifiant": piece, "nom": objet.nom if objet else piece}
-    return {
-        "personnage": personnage,
-        "style": style.en_json() if style else None,
-        "origine": origine,
-        "piece": piece_json,
-    }
+    return {"personnage": personnage, "styles": styles_proposes(atelier, projet, personnage)}
 
 
 @routeur.get("/styles/for-character/{personnage}")
 async def style_du_personnage(
     requete: Request, personnage: str, projet: str | None = Query(None)
 ) -> dict[str, Any]:
-    """Le style de ce personnage **et d'où il vient** — `choisi`, `piece` ou `aucun`.
+    """Les styles de ce personnage **et d'où chacun vient** — `choisi` ou `piece`.
 
-    La résolution vit dans `ServiceStyles.style_du_personnage` et nulle part
-    ailleurs : l'écran écrit l'origine à côté du nom, il ne la recalcule pas.
-    Le personnage est cherché d'abord, pour qu'un identifiant inconnu rende un
-    404 plutôt qu'un « aucun » trompeur.
+    **Ce sont des propositions** : aucun ne part dans un clip sans être coché
+    au moment d'animer. Le personnage est cherché d'abord, pour qu'un
+    identifiant inconnu rende un 404 plutôt qu'une liste vide trompeuse.
     """
     atelier = _atelier(requete)
     ouvert = projet or atelier.bibliotheque.courant
@@ -350,16 +348,16 @@ async def style_du_personnage(
 async def choisir_style_du_personnage(
     requete: Request,
     personnage: str,
-    corps: CorpsChoixStyle,
+    corps: CorpsStylesDuPersonnage,
     projet: str | None = Query(None),
 ) -> dict[str, Any]:
-    """Poser ou retirer le style choisi d'un personnage — **il passe devant
-    celui de ses pièces**. Rend la résolution neuve, pas seulement le choix :
-    retirer un choix peut laisser paraître le style hérité d'une pièce."""
+    """Poser la liste des styles d'un personnage. Rend la liste neuve, pièces
+    comprises : retirer un style peut laisser paraître celui d'une pièce."""
     atelier = _atelier(requete)
     ouvert = projet or atelier.bibliotheque.courant
     atelier.production.personnage(ouvert, personnage)
-    atelier.styles.choisir_pour_le_personnage(ouvert, personnage, corps.style)
+    voulus = corps.styles if corps.styles is not None else ([corps.style] if corps.style else [])
+    atelier.styles.choisir_pour_le_personnage(ouvert, personnage, voulus)
     return _resolution_en_json(atelier, ouvert, personnage)
 
 
@@ -374,7 +372,7 @@ async def style_de_la_piece(
     son écriture (`PUT .../combat-style`) — l'écran des Réglages d'une pièce
     (`SC4`) en a besoin pour montrer la valeur actuelle sans la deviner. Un
     style masqué depuis compte pour absent, comme dans
-    `ServiceStyles.style_du_personnage`.
+    `ServiceStyles.styles_du_personnage`.
     """
     atelier = _atelier(requete)
     ouvert = projet or atelier.bibliotheque.courant

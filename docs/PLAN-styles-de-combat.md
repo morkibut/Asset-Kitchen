@@ -75,3 +75,19 @@ pièce, dit en clair), et le choix du style sur une pièce d'équipement.
 - [x] Les trois gestes se font sans rien payer, et se vérifient au navigateur sur un atelier
       jetable.
 - [x] La fiche dit d'où vient le style : « choisi » ou « celui du bâton ».
+
+### SC5 · Plusieurs styles, et un style coché à l'envoi
+
+**Demandé par l'auteur le 22 septembre 2026.** Mara avait « fusil » sur sa fiche : une série de
+repos partait avec le fusil dans le texte, et rien ne permettait de le décocher. **La résolution
+*choisi → pièce → aucun* de SC2 ne décide plus de ce qui part** : elle range ce qu'on propose.
+
+- [x] Un personnage a une **liste** de styles (cases à cocher sur sa fiche) ; une pièce portée
+      qui en déclare un l'ajoute, sa pièce nommée. Un fichier d'avant, une chaîne par
+      personnage, se relit comme une liste d'un style.
+- [x] **Rien n'est coché d'office** à l'envoi : l'écran d'une animation propose « Aucun » puis
+      les styles du personnage ; la demande porte `style_combat`, et sans lui le texte du
+      mouvement part seul.
+- [x] Le style coché écrit **son texte pour le mouvement de chaque case** — au fusil, le repos
+      tient l'arme immobile, l'attaque tire. Chaque repos livré dit désormais que l'objet tenu
+      ne bouge pas.

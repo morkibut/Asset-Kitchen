@@ -2,7 +2,9 @@
 """Les critères d'acceptation de SC2 — le style d'un personnage, et celui d'une pièce.
 
 **Ce que la tranche ajoute.** SC1 a fait du style une donnée du jeu ; SC2 dit
-*qui* se bat dans quel style. Deux façons d'en avoir un : le choisir sur le
+*qui* se bat dans quel style. **Depuis le 22 septembre 2026, un personnage en
+a une liste** — ce sont des propositions, cochées ou non au moment d'animer
+(`tests/test_sc5_style_coche.py`). Deux façons d'en avoir un : le choisir sur le
 personnage, ou l'hériter d'une pièce qu'il porte **en calque sur ses poses**
 et qui en déclare un. La résolution est *choisi → pièce portée → aucun*, et
 **rien n'est deviné d'après un nom**.
@@ -82,10 +84,16 @@ def _declarer(client, projet: str, piece: str, style: str | None):
 
 
 def _choisir(client, projet: str, personnage: str, style: str | None):
+    """La forme d'avant le 22 septembre 2026 — un seul style, ou `None`."""
     return client.put(
         f"/api/characters/{personnage}/combat-style?projet={projet}",
         json={"style": style},
     )
+
+
+def _origines(recu: dict) -> list[tuple[str, str]]:
+    """`[(style, origine), …]` — ce que la liste propose, dans son ordre."""
+    return [(s["style"]["identifiant"], s["origine"]) for s in recu["styles"]]
 
 
 # ── Les trois critères du plan ───────────────────────────────────────────────
@@ -103,12 +111,11 @@ def test_la_piece_portee_en_calque_donne_son_style_sans_qu_on_le_choisisse(
     assert _declarer(client, projet, baton, "baton").status_code == 200
 
     recu = _style_de(client, projet, champy)
-    assert recu["origine"] == "piece"
+    assert _origines(recu) == [("baton", "piece")]
     # **La pièce nommée** (SC4) — la fiche du personnage dit « celui du Bâton
     # de chêne », pas « celui du baton-1 » : l'identifiant seul ne le permet
-    # pas, même remède que `_style_du_personnage` pour la route du clip.
-    assert recu["piece"] == {"identifiant": baton, "nom": "Bâton de chêne"}
-    assert recu["style"]["identifiant"] == "baton"
+    # pas.
+    assert recu["styles"][0]["piece"] == {"identifiant": baton, "nom": "Bâton de chêne"}
 
 
 def test_le_style_choisi_passe_devant_celui_de_la_piece(client, atelier, tmp_path):
@@ -122,13 +129,11 @@ def test_le_style_choisi_passe_devant_celui_de_la_piece(client, atelier, tmp_pat
 
     choisi = _choisir(client, projet, champy, "karate")
     assert choisi.status_code == 200, choisi.text
-    assert choisi.json()["origine"] == "choisi"
-    assert choisi.json()["style"]["identifiant"] == "karate"
-    assert _style_de(client, projet, champy)["style"]["identifiant"] == "karate"
+    assert _origines(choisi.json()) == [("karate", "choisi"), ("baton", "piece")]
+    assert _origines(_style_de(client, projet, champy))[0] == ("karate", "choisi")
 
     retire = _choisir(client, projet, champy, None).json()
-    assert retire["origine"] == "piece"
-    assert retire["style"]["identifiant"] == "baton"
+    assert _origines(retire) == [("baton", "piece")]
 
 
 def test_sans_choix_ni_piece_declaree_aucun_style_rien_n_est_devine(
@@ -144,7 +149,7 @@ def test_sans_choix_ni_piece_declaree_aucun_style_rien_n_est_devine(
     _porter_en_calque(client, atelier, tmp_path, champy, baton)
 
     recu = _style_de(client, projet, champy)
-    assert recu == {"personnage": champy, "style": None, "origine": "aucun", "piece": None}
+    assert recu == {"personnage": champy, "styles": []}
 
 
 def test_une_piece_qui_n_est_pas_portee_ne_donne_rien(client, atelier):
@@ -153,7 +158,7 @@ def test_une_piece_qui_n_est_pas_portee_ne_donne_rien(client, atelier):
     champy = _creer(client, projet)
     baton = _piece(client, projet, "Bâton de chêne")
     _declarer(client, projet, baton, "baton")
-    assert _style_de(client, projet, champy)["origine"] == "aucun"
+    assert _style_de(client, projet, champy)["styles"] == []
 
 
 # ── Les refus ────────────────────────────────────────────────────────────────
@@ -170,7 +175,7 @@ def test_un_style_inconnu_est_refuse(client, atelier):
 
     sur_la_piece = _declarer(client, projet, baton, "nunchaku")
     assert sur_la_piece.status_code == 409
-    assert _style_de(client, projet, champy)["origine"] == "aucun"
+    assert _style_de(client, projet, champy)["styles"] == []
 
 
 def test_un_style_masque_est_refuse(client, atelier):
@@ -211,9 +216,9 @@ def test_un_identifiant_vide_est_refuse(atelier):
 def test_deux_pieces_qui_declarent_un_style_l_ordre_de_la_garde_robe_decide(
     client, atelier, tmp_path
 ):
-    """Deux pièces portées déclarent chacune un style : **la première dans
-    l'ordre de la garde-robe** gagne — emplacements par rang. L'ordre de pose
-    des calques n'y est pour rien."""
+    """Deux pièces portées déclarent chacune un style : **l'ordre de la
+    garde-robe** range la liste — emplacements par rang. L'ordre de pose des
+    calques n'y est pour rien."""
     projet = _projet(atelier)
     champy = _creer(client, projet)
     arc = _piece(client, projet, "Arc court", emplacement="dos")
@@ -224,12 +229,12 @@ def test_deux_pieces_qui_declarent_un_style_l_ordre_de_la_garde_robe_decide(
     _declarer(client, projet, arc, "arc")
 
     # « dos » a été nommé en premier : il a le premier rang.
-    assert _style_de(client, projet, champy)["piece"]["identifiant"] == arc
+    assert _origines(_style_de(client, projet, champy)) == [("arc", "piece"), ("lance", "piece")]
 
     rangs = {e.identifiant: e.rang for e in atelier.equipement.emplacements(projet)}
     mains = next(p.emplacement for p in atelier.equipement.pieces(projet) if p.identifiant == lance)
     atelier.equipement.regler_emplacement(projet, mains, rang=min(rangs.values()) - 1)
-    assert _style_de(client, projet, champy)["piece"]["identifiant"] == lance
+    assert _origines(_style_de(client, projet, champy)) == [("lance", "piece"), ("arc", "piece")]
 
 
 def test_un_jeu_n_influence_pas_un_autre(client, atelier, tmp_path):
@@ -244,9 +249,9 @@ def test_un_jeu_n_influence_pas_un_autre(client, atelier, tmp_path):
     homonyme = _creer(client, second)
     assert homonyme == champy, "même nom, même identifiant — c'est tout le piège"
 
-    assert _style_de(client, second, homonyme)["origine"] == "aucun"
+    assert _style_de(client, second, homonyme)["styles"] == []
     assert atelier.styles.choix_en_json(second) == {"personnages": {}, "pieces": {}}
-    assert _style_de(client, premier, champy)["style"]["identifiant"] == "baton"
+    assert _origines(_style_de(client, premier, champy)) == [("baton", "choisi")]
 
 
 def test_le_choix_s_ecrit_dans_le_fichier_du_jeu_et_pas_sur_le_personnage(
@@ -257,7 +262,7 @@ def test_le_choix_s_ecrit_dans_le_fichier_du_jeu_et_pas_sur_le_personnage(
     _choisir(client, projet, champy, "baton")
     chemin = atelier.fichiers.styles_choisis_du_jeu(projet)
     assert chemin.is_file()
-    assert atelier.fichiers.lire_styles_choisis(projet)["personnages"] == {champy: "baton"}
+    assert atelier.fichiers.lire_styles_choisis(projet)["personnages"] == {champy: ["baton"]}
 
 
 def test_un_jeu_inconnu_ne_s_ecrit_pas(client):

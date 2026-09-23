@@ -12,9 +12,10 @@ demandé par le chemin même que l'envoi emprunte*) et T7 (*le MCP appelle les
 services de l'écran*).
 
 **L'ordre du texte, et il ne se discute pas ailleurs.** La phrase de la
-direction en tête (18 septembre 2026), puis le geste : le texte du style du
-personnage pour ce mouvement s'il en dit un (SC3), sinon celui du mouvement,
-sinon la consigne figée de la pose. **Une correction porte sur le geste seul** :
+direction en tête (18 septembre 2026), puis le geste : le texte du style
+pour ce mouvement s'il en dit un (SC3), sinon celui du mouvement,
+sinon la consigne figée de la pose — le style étant celui **coché pour cet
+envoi**, jamais un style posé d'office. **Une correction porte sur le geste seul** :
 la phrase de direction est remise en tête par le serveur, si bien qu'une même
 correction vaut pour toutes les directions d'une série.
 
@@ -42,59 +43,43 @@ def phrase_de_direction(atelier: Any, projet: str | None, direction: str | None)
     return phrase_animee(next((d for d in directions if d.identifiant == direction), None))
 
 
-def style_du_personnage(
-    atelier: Any, projet: str | None, personnage: str | None
-) -> tuple[Any, str, dict[str, str] | None]:
-    """Le style résolu d'un personnage pour ce jeu, **et d'où il vient** (SC3).
+def styles_proposes(atelier: Any, projet: str | None, personnage: str | None) -> list[dict[str, Any]]:
+    """Les styles du personnage, **proposés au moment d'animer et jamais cochés d'avance**.
 
-    Un seul endroit lit `ServiceStyles.style_du_personnage` pour composer un
-    texte de clip : la route qui montre ce qui partira et celle qui commande
-    un clip appellent celle-ci, jamais chacune la résolution de son côté —
-    même raison que `phrase_de_direction` pour l'autre moitié du texte. Sans
-    jeu ou sans personnage connu, la question ne se pose pas : rien n'est
-    deviné, comme le veut `SC2`.
-
-    Rend en plus la pièce **nommée**, pas seulement son identifiant : c'est ce
-    que l'écran affiche à côté du style (« celui du bâton »), et il ne doit
-    pas avoir à rappeler l'équipement pour traduire un identifiant en nom.
+    Chacun avec son origine — `choisi` sur la fiche, ou `piece` quand une pièce
+    portée en calque le déclare, la pièce **nommée** pour que l'écran dise
+    « celui du bâton » sans rappeler l'équipement. Sans jeu ou sans
+    personnage connu, la liste est vide : rien n'est deviné.
     """
     if not projet or not personnage:
-        return None, "aucun", None
-    style, origine, piece = atelier.styles.style_du_personnage(projet, personnage)
-    if style is None:
-        return None, "aucun", None
-    piece_json: dict[str, str] | None = None
-    if origine == "piece" and piece:
-        objet = next(
-            (p for p in atelier.equipement.pieces(projet) if p.identifiant == piece),
-            None,
-        )
-        piece_json = {"identifiant": piece, "nom": objet.nom if objet else piece}
-    return style, origine, piece_json
+        return []
+    noms = {p.identifiant: p.nom for p in atelier.equipement.pieces(projet)}
+    return [
+        {
+            "style": style.en_json(),
+            "origine": origine,
+            "piece": {"identifiant": piece, "nom": noms.get(piece, piece)} if piece else None,
+        }
+        for style, origine, piece in atelier.styles.styles_du_personnage(projet, personnage)
+    ]
 
 
-def geste_anime(
-    atelier: Any,
-    projet: str | None,
-    personnage: str | None,
-    mouvement: Any,
-    repli: str = "",
-) -> tuple[str, Any, str, dict[str, str] | None]:
-    """Le texte du geste — **celui du style pour ce mouvement, sinon celui du
-    mouvement** — et le style qui l'a éventuellement écrit (SC3).
+def geste_anime(mouvement: Any, style: Any, repli: str = "") -> str:
+    """Le texte du geste — **celui du style coché pour ce mouvement, sinon
+    celui du mouvement**.
 
     C'est ici, et nulle part ailleurs, que se décide *comment* ce
     personnage-là joue ce mouvement. **Le style ne remplace le texte du
-    mouvement que s'il dit quelque chose pour ce mouvement précis** — sinon le
-    mouvement garde la main, et c'est le deuxième critère de SC3.
+    mouvement que s'il dit quelque chose pour ce mouvement précis** : le
+    fusil a son repos (l'arme tenue immobile) et son attaque (le tir) ; un
+    mouvement qu'il ne dit pas garde son texte à lui.
     """
     base = mouvement.texte if mouvement and mouvement.texte else repli
-    style, origine, piece = style_du_personnage(atelier, projet, personnage)
     if style is not None and mouvement is not None:
         texte_style = texte_du_style(style, mouvement.identifiant)
         if texte_style:
-            return texte_style, style, origine, piece
-    return base, style, origine, piece
+            return texte_style
+    return base
 
 
 def composer(
@@ -105,6 +90,7 @@ def composer(
     pose: str | None,
     mouvement: str | None = None,
     correction: str = "",
+    style: str | None = None,
 ) -> dict[str, Any]:
     """Ce qui partira pour animer cette case, **et d'où le texte vient**.
 
@@ -117,8 +103,15 @@ def composer(
     - `origine` : `mouvement` quand un mouvement connu écrit le geste, `pose`
       quand on retombe sur la consigne figée du plan, `aucun` sinon — y
       compris quand `mouvement` nomme une entrée inconnue ;
-    - `style`, `origine_du_style`, `piece_du_style` : le style résolu du
-      personnage (SC3), ou `None` / `"aucun"` / `None`.
+    - `style` : le style **coché pour cet envoi**, ou `None` ;
+    - `styles_proposes` : ceux du personnage, à cocher (`styles_proposes`).
+
+    **`style` est coché à chaque envoi, jamais par défaut** (22 septembre
+    2026). Avant, le style du personnage partait d'office : Mara au fusil
+    gardait son fusil jusque dans un repos où l'auteur n'en voulait pas, sans
+    rien pour le décocher. Le même envoi coché « fusil » écrit pour chaque
+    case le texte du fusil *pour son mouvement* — tenu immobile au repos,
+    épaulé pour tirer à l'attaque.
 
     `mouvement` nomme un mouvement **autre** que celui de la pose ; vide, la
     case garde le sien. `correction`, non vide, **remplace le geste pour cet
@@ -138,9 +131,8 @@ def composer(
     else:
         objet_mouvement = atelier.mouvements.pour_la_pose(pose, projet) if pose else None
         origine = "mouvement" if objet_mouvement else ("pose" if repli else "aucun")
-    geste, style, origine_du_style, piece_du_style = geste_anime(
-        atelier, projet, personnage, objet_mouvement, repli
-    )
+    coche = atelier.styles.style_pour_l_envoi(projet, style)
+    geste = geste_anime(objet_mouvement, coche, repli)
     if correction and correction.strip():
         geste = correction.strip()
     phrase = phrase_de_direction(atelier, projet, direction)
@@ -151,7 +143,6 @@ def composer(
         "direction": phrase,
         "geste": geste,
         "origine": origine,
-        "style": style.en_json() if style else None,
-        "origine_du_style": origine_du_style,
-        "piece_du_style": piece_du_style,
+        "style": coche.en_json() if coche else None,
+        "styles_proposes": styles_proposes(atelier, projet, personnage),
     }

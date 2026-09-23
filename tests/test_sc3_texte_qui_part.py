@@ -9,12 +9,15 @@ mouvement s'il en dit un, sinon le texte du mouvement — exactement comme
 
 Les trois critères du plan, dans l'ordre où il les énonce :
 
-1. une attaque vers le nord d'un personnage dont le style résolu est
-   « bâton » part avec la phrase du nord puis le texte d'attaque du bâton ;
+1. une attaque vers le nord, le style « bâton » coché, part avec la phrase
+   du nord puis le texte d'attaque du bâton ;
 2. un mouvement que le style ne dit pas (« saut ») part avec le texte du
    mouvement ;
 3. l'écran d'un clip montre exactement ce texte avant l'envoi — vérifié ici
    par la route qu'il interroge — et un texte relu part tel quel.
+
+**Depuis le 22 septembre 2026, le style est coché à l'envoi** : celui du
+personnage n'est plus qu'une proposition (`tests/test_sc5_style_coche.py`).
 
 **Aucun essai ne coûte un centime** : le fournisseur vidéo est doublé
 (`test_a9.animateur`), et la route `for-pose` n'appelle jamais personne.
@@ -70,19 +73,19 @@ def test_une_attaque_au_baton_vers_le_nord_part_avec_la_phrase_du_nord_et_le_tex
     _choisir_style(client, projet, champy, "baton")
 
     recu = client.get(
-        f"/api/movements/for-pose/attaque?projet={projet}&direction=nord&personnage={champy}"
+        f"/api/movements/for-pose/attaque?projet={projet}&direction=nord&personnage={champy}&style=baton"
     ).json()
 
     texte_du_baton = _BATON.texte("attaque")
     assert recu["geste"] == texte_du_baton
     assert recu["texte"] == f'{PHRASES_ANIMEES["nord"]} {texte_du_baton}'
     assert recu["style"]["identifiant"] == "baton"
-    assert recu["origine_du_style"] == "choisi"
+    assert [s["origine"] for s in recu["styles_proposes"]] == ["choisi"]
 
 
 def test_le_baton_porte_en_calque_donne_son_texte_et_se_nomme(client, atelier, tmp_path):
-    """Le même texte quand le style vient du bâton porté plutôt que d'un choix
-    — et la route nomme la pièce, pour que l'écran dise « hérité de … »."""
+    """Le bâton porté est **proposé**, la pièce nommée pour que l'écran dise
+    « celui du … » — et coché, il donne le même texte qu'un choix."""
     from tests.test_sc2_style_du_personnage import _declarer, _piece, _porter_en_calque
 
     projet = _avec_le_nord(client, atelier)
@@ -92,12 +95,13 @@ def test_le_baton_porte_en_calque_donne_son_texte_et_se_nomme(client, atelier, t
     assert _declarer(client, projet, baton, "baton").status_code == 200
 
     recu = client.get(
-        f"/api/movements/for-pose/attaque?projet={projet}&direction=nord&personnage={champy}"
+        f"/api/movements/for-pose/attaque?projet={projet}&direction=nord&personnage={champy}&style=baton"
     ).json()
 
     assert recu["texte"] == f'{PHRASES_ANIMEES["nord"]} {_BATON.texte("attaque")}'
-    assert recu["origine_du_style"] == "piece"
-    assert recu["piece_du_style"] == {"identifiant": baton, "nom": "Bâton de chêne"}
+    propose = recu["styles_proposes"][0]
+    assert propose["origine"] == "piece"
+    assert propose["piece"] == {"identifiant": baton, "nom": "Bâton de chêne"}
 
 
 # ── Critère 2 — un mouvement que le style ne dit pas ─────────────────────────
@@ -114,13 +118,13 @@ def test_un_mouvement_que_le_style_ne_dit_pas_part_avec_le_texte_du_mouvement(
     assert _BATON.texte("saut") == ""
 
     recu = client.get(
-        f"/api/movements/for-pose/saut?projet={projet}&personnage={champy}"
+        f"/api/movements/for-pose/saut?projet={projet}&personnage={champy}&style=baton"
     ).json()
     texte_du_mouvement = client.get(f"/api/movements?projet={projet}").json()
     saut = next(m for m in texte_du_mouvement["mouvements"] if m["identifiant"] == "saut")
 
     assert recu["geste"] == saut["texte"]
-    # Le style est bien résolu — l'écran peut dire « bâton » à côté — mais il
+    # Le style est bien coché — l'écran peut dire « bâton » à côté — mais il
     # ne change rien au texte de ce mouvement-ci, qu'il ne dit pas.
     assert recu["style"]["identifiant"] == "baton"
 
@@ -140,7 +144,7 @@ def test_sans_personnage_connu_rien_ne_change(client, atelier):
     )
     assert recu["geste"] == attaque["texte"]
     assert recu["style"] is None
-    assert recu["origine_du_style"] == "aucun"
+    assert recu["styles_proposes"] == []
 
 
 # ── Critère 3 — ce qui part vraiment, par une fabrication suivie ─────────────
@@ -176,6 +180,7 @@ async def test_un_clip_commande_au_baton_vers_le_nord_part_avec_la_phrase_et_le_
     travail = await atelier_video.travaux.preparer(projet, {
         "cle": "sc3-baton", "personnage": champy, "pose": "attaque", "direction": "nord",
         "modele_video": MELE.identifiant, "mouvement": "attaque", "reference_asset": sprite,
+        "style_combat": "baton",
     })
     assert travail["demande"]["prompt_video"] == f'{PHRASES_ANIMEES["nord"]} {_BATON.texte("attaque")}'
 
@@ -195,6 +200,6 @@ async def test_une_correction_du_geste_part_telle_quelle_meme_avec_un_style_pose
     travail = await atelier_video.travaux.preparer(projet, {
         "cle": "sc3-correction", "personnage": champy, "pose": "attaque", "direction": "nord",
         "modele_video": MELE.identifiant, "mouvement": "attaque", "reference_asset": sprite,
-        "correction_geste": "my own words",
+        "correction_geste": "my own words", "style_combat": "baton",
     })
     assert travail["demande"]["prompt_video"] == f'{PHRASES_ANIMEES["nord"]} my own words'
