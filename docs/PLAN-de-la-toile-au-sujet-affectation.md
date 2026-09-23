@@ -18,7 +18,7 @@
 
 ---
 
-## Les neuf tranches
+## Les dix tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -30,11 +30,12 @@
 | **TS5** · Le texte reste sur la carte | `[MEDIUM]` | la phrase vit sur la génération, pas sur la carte : il faut la faire remonter jusqu'à la toile, puis la rejouer dans la barre |
 | **TS6** · Prendre une carte comme référence | `[EASY]` | les références de la barre existent ; il manque un geste visible et leur liste lisible |
 | **TS9** · Les deux défauts du premier usage | `[EASY]` | un appel par version quand le modèle n'en fait qu'une, et la phrase portée par la carte posée ; deux causes lues |
+| **TS10** · « Développer ce sujet » | `[MEDIUM]` | une image devient la référence d'édition de la barre, le résultat se pose relié à elle ; réutilise TS6 et la pose de TS4 |
 | **TS7** · Les gestes de Mixboard | `[MEDIUM]` | à découper après le tri de l'auteur ; « Modifier » et « Combiner » réutilisent l'envoi existant avec des références |
 
-**Compte** : 0 `[VERY-HARD]`, 1 `[HARD]`, 5 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 1 `[HARD]`, 6 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
 
-*TS4 à TS9 ajoutées le 23 septembre 2026.*
+*TS4 à TS10 ajoutées le 23 septembre 2026.*
 
 ---
 

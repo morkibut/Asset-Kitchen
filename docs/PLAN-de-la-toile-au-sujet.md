@@ -311,6 +311,24 @@ au navigateur : vérifié par essais serveur (`tests/test_ts5.py`) et écran
       cartes à l'arrivée
 - [ ] un essai d'écran pour chacun, qui **tombe en défaisant le correctif** (8octies)
 
+### TS10 · « Développer ce sujet »
+
+*Demandée par l'auteur le 23 septembre 2026*, à côté de « Reprendre ce texte » : un geste qui
+part **d'une image** au lieu de son texte. C'est le « Modifier » de `TS7`, choisi par l'auteur ;
+le reste de `TS7` attend toujours son tri.
+
+- [ ] le menu d'une carte image porte **« Développer ce sujet »**, à côté de « Reprendre ce
+      texte » (et sur toute carte image, pas seulement celles fabriquées par la barre)
+- [ ] le geste met l'image **en référence** dans la barre (la liste de `TS6`, avec sa vignette et
+      sa croix) et place le curseur dans le champ, **vide**, avec un exemple en gris qui dit quoi
+      écrire : « une variante plus sombre », « la même de dos », « sans la cape »…
+- [ ] ce qui part dit au modèle de **partir de cette image** (rôle d'édition, comme la
+      référence d'une carte en `TS6`) et d'appliquer la demande ; « Ce qui part » (`TS4`) le
+      montre avant de cliquer
+- [ ] le résultat se pose **à côté de l'image d'origine**, reliée à elle par un lien de la toile,
+      pour qu'on voie d'où il vient
+- [ ] plusieurs versions (`TS9`) marchent de même : N variantes de la même image
+
 ### TS6 · Prendre une carte comme référence
 
 - [x] chaque carte image porte un bouton visible « Prendre comme référence » (sur la carte ou
