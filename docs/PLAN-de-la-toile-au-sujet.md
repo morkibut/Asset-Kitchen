@@ -290,6 +290,27 @@ fait le repli. Une ligne de guide ajoutée (`carte.phrase`, `interface/src/aide.
 au navigateur : vérifié par essais serveur (`tests/test_ts5.py`) et écran
 (`Tableau.test.tsx`, `ToileFabrique.test.tsx`).
 
+### TS9 · Les deux défauts vus au premier usage de TS4 et TS5
+
+*Ajoutée le 23 septembre 2026, sur deux retours de l'auteur au navigateur.*
+
+1. **« 2 » ou « 3 » versions ne font qu'une image avec le modèle local.** La barre borne en
+   silence le nombre au plafond du modèle (`Math.min(versions, modele.variations_max)` dans
+   `ToileFabrique.tsx`), et un style local déclare une variation par appel. Le bouton annonce
+   pourtant trois images, et trois fantômes ne se posent pas.
+2. **La phrase et « Reprendre ce texte » n'apparaissent sur une carte fabriquée qu'après un
+   rechargement de la page.** La phrase n'arrive qu'avec la lecture complète de la toile ; la
+   carte posée à l'arrivée ne la porte pas.
+
+- [ ] demander N versions à un modèle qui n'en fait qu'une par appel lance **N appels** (ou
+      autant qu'il en faut au plafond du modèle), et pose N fantômes ; le bouton annonce le bon
+      prix (payant : prix d'un appel × nombre d'appels, point 8) ou le temps (local : non
+      multiplié, 8ter) ; un échec d'un des appels n'efface pas les autres
+- [ ] une carte fabriquée depuis la barre montre sa phrase et « Reprendre ce texte » **dès qu'elle
+      est posée**, sans recharger — la lecture qui la pose porte la phrase, ou la toile relit ses
+      cartes à l'arrivée
+- [ ] un essai d'écran pour chacun, qui **tombe en défaisant le correctif** (8octies)
+
 ### TS6 · Prendre une carte comme référence
 
 - [x] chaque carte image porte un bouton visible « Prendre comme référence » (sur la carte ou
