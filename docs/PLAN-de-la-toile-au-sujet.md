@@ -198,19 +198,39 @@ enveloppe la phrase de l'univers du jeu et applique au retour la recette du jeu,
 réduction à sa taille de sprite. **Décidé par l'auteur** : la toile est l'endroit où l'on
 essaie ; ce qui en sort n'est pas encore un asset du jeu.
 
-- [ ] une image fabriquée depuis la toile arrive **brute** : aucune recette appliquée — ni
+- [x] une image fabriquée depuis la toile arrive **brute** : aucune recette appliquée — ni
       détourage, ni réduction, ni grille, ni palette. La carte montre la taille reçue
-- [ ] la barre propose **512 et 1024**, 512 par défaut ; une taille que le modèle choisi ne sait
+- [x] la barre propose **512 et 1024**, 512 par défaut ; une taille que le modèle choisi ne sait
       pas faire est grisée avec sa raison (*le catalogue décide*)
-- [ ] le texte qui part est **celui que l'auteur a tapé**, sans le style du jeu ajouté d'office
+- [x] le texte qui part est **celui que l'auteur a tapé**, sans le style du jeu ajouté d'office
       — à trancher avec l'auteur : une case « avec le style du jeu », décochée par défaut ?
-- [ ] ce qui part se relit depuis la barre avant de cliquer (le texte exact, la taille, les
+- [x] ce qui part se relit depuis la barre avant de cliquer (le texte exact, la taille, les
       références), comme partout ailleurs
-- [ ] le bouton annonce le temps ou le prix **pour la taille choisie**, et non plus « 12 s en
+- [x] le bouton annonce le temps ou le prix **pour la taille choisie**, et non plus « 12 s en
       512, 16 s en 1024 »
-- [ ] le choix est retenu d'une fabrication à l'autre, comme le modèle et le nombre
-- [ ] une image de la toile qu'on fait entrer dans un sujet (TS2) reçoit alors la recette du jeu,
+- [x] le choix est retenu d'une fabrication à l'autre, comme le modèle et le nombre
+- [x] une image de la toile qu'on fait entrer dans un sujet (TS2) reçoit alors la recette du jeu,
       comme une image importée — l'image brute reste gardée (*traitement non destructif*)
+
+*Fait le 23 septembre 2026.* Cause confirmée : deux défauts, pas un. La barre envoyait bien
+`repris: false` (la bible et les consignes de planche du jeu se repliaient dans le texte), et
+surtout aucune génération de la toile ne portait de drapeau disant « ne traite pas » — la
+naissance de l'asset appliquait donc la recette du projet (grille à 64) comme n'importe quelle
+génération ordinaire. Réparé par un drapeau `brut` sur `Demande` (même famille que
+`premiere_planche` : absent du `generation.json` tant qu'il n'est pas vrai), lu à trois endroits
+de `ServiceAssets` (`impose`, `recette_du_projet`, `recette_du_sujet`) qui savaient déjà lire
+`traiter=False` pour un import « telle quelle ». Le texte suit sa propre règle, `repris` — la
+case « avec le style du jeu », décochée par défaut, la bascule ; `brut`, lui, ne se décoche
+jamais depuis la toile. Tranché : le prix d'un appel ne dépend pas de la taille (point 8
+d'AGENTS.md), donc seul le temps d'un modèle local varie avec elle — un modèle payant annonce le
+même prix aux deux tailles. `sujet_depuis_carte.py` passe maintenant `traiter=True` à l'import :
+promouvoir une carte en concept art d'un sujet est le geste qui la fait entrer dans le jeu, à la
+différence d'un import générique (US-170) qui ne sait pas encore ce que l'auteur en fera — trois
+essais de `test_ts2.py` attendaient l'ancien comportement et ont été corrigés pour vérifier le
+brut (`octets(asset, brut=True)`) plutôt que le rendu. « Ce qui part » réutilise `api.envoi`
+(`/outgoing`) tel quel, replié sous un bouton, fermé par défaut. Non vérifié au navigateur : la
+tranche a été vérifiée par essais seulement (`ToileFabrique.test.tsx`, `test_ts4.py`,
+`test_ts2.py`), pas par une session d'usage.
 
 ### TS5 · Le texte d'une image reste sur sa carte
 

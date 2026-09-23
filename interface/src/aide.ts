@@ -1159,12 +1159,12 @@ export const AIDE: Record<string, Explication> = {
     nom: "Fabriquer",
     ou: "inspiration",
     groupe: "La barre du tableau",
-    quoi: "Décris une image, choisis 1, 2 ou 3 versions, Entrée : les images se fabriquent et se posent sur la toile.",
+    quoi: "Décris une image, choisis 1, 2 ou 3 versions, une taille, Entrée : les images se fabriquent et se posent sur la toile.",
     change:
-      "Une vraie génération : le bouton dit ce qu'elle coûte avant de partir — un prix pour un modèle payant, un temps pour un modèle local. Chaque image entre aussi dans la galerie.",
-    origine: "toi · Qwen rapide par défaut, sinon le premier modèle disponible · le modèle et le nombre sont retenus",
+      "Une vraie génération : le bouton dit ce qu'elle coûte avant de partir — un prix pour un modèle payant, un temps pour un modèle local, pour la taille choisie. Chaque image entre aussi dans la galerie, mais **brute** : ni détourage, ni réduction, ni grille, ni palette — la toile est l'endroit où l'on essaie, ce n'est pas encore une chose du jeu.",
+    origine: "toi · Qwen rapide par défaut, sinon le premier modèle disponible · le modèle, le nombre et la taille sont retenus",
     long:
-      "Sans rien de choisi, on part de rien. Avec une ou plusieurs images choisies sur la toile — ou **Varier** dans le menu d'une carte —, elles partent comme images à modifier ; la croix les laisse de côté. Plusieurs fabrications peuvent tourner en même temps ; un échec reste à sa place avec sa raison, et la croix le retire.",
+      "Sans rien de choisi, on part de rien. Avec une ou plusieurs images choisies sur la toile — ou **Varier** dans le menu d'une carte —, elles partent comme images à modifier ; la croix les laisse de côté. Plusieurs fabrications peuvent tourner en même temps ; un échec reste à sa place avec sa raison, et la croix le retire. La taille — 512 ou 1024 — se lit sur ce que le modèle choisi sait rendre ; une taille qu'il ne rend pas est grisée avec sa raison. Le texte tapé part seul par défaut, sans la bible du jeu ; la case « avec le style du jeu » l'ajoute. « Ce qui part » replie le texte exact, la taille et les références, à relire avant de cliquer. Une image qu'on fait entrer dans un sujet (depuis sa carte) reçoit alors la recette du jeu — l'image brute reste gardée.",
   },
 
   // Le menu d'une carte

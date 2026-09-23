@@ -14,7 +14,9 @@ import {
   annonce,
   BarreDeFabrication,
   modeleParDefaut,
+  refusDeLaTaille,
   referencesDeLaToile,
+  tailleRetenue,
   useFabricationSurToile,
 } from "./ToileFabrique"
 
@@ -104,6 +106,8 @@ function serveur() {
     }
     if (url === "/api/generations/gen1") return reponse(generation("reussie"))
     if (url.includes("/board/assets/")) return reponse({ carte: {}, deja_presente: false })
+    if (url === "/api/outgoing" && methode === "POST")
+      return reponse({ texte: `[[${(corps as { prompt: string }).prompt}]]` })
     return reponse({}, 404)
   })
   return { fetchDouble, appels }
@@ -171,6 +175,22 @@ describe("les règles de la barre, sans écran", () => {
     expect(referencesDeLaToile(cartes, ["a", "note", "attente"], null, null).map((c) => c.identifiant)).toEqual(["a"])
     expect(referencesDeLaToile(cartes, [], "b", null).map((c) => c.identifiant)).toEqual(["b"])
     expect(referencesDeLaToile(cartes, ["a"], null, "b").map((c) => c.identifiant)).toEqual(["b", "a"])
+  })
+
+  test("le catalogue décide de la taille (TS4) : sans résolutions déclarées, rien n'est grisé", () => {
+    expect(refusDeLaTaille(QWEN, "512")).toBeNull()
+    expect(refusDeLaTaille(QWEN, "1024")).toBeNull()
+    expect(refusDeLaTaille(null, "512")).toBeNull()
+  })
+
+  test("un modèle qui déclare ses résolutions grise celle qu'il ne rend pas", () => {
+    const seul1024 = modele("OpenRouter:seul-1024", { resolutions: ["1024"] })
+    expect(refusDeLaTaille(seul1024, "1024")).toBeNull()
+    expect(refusDeLaTaille(seul1024, "512")).toBe("seul-1024 ne rend pas 512")
+    // La taille retenue retombe sur celle qui tient, jamais sur un grisé.
+    expect(tailleRetenue(seul1024, "512")).toBe("1024")
+    expect(tailleRetenue(seul1024, "1024")).toBe("1024")
+    expect(tailleRetenue(QWEN, "1024")).toBe("1024")
   })
 })
 
@@ -287,5 +307,79 @@ describe("la barre de fabrication", () => {
     await waitFor(() => expect(relue.value).toBe(PAYANT.identifiant))
     expect(screen.getByRole("button", { name: "3" }).getAttribute("aria-pressed")).toBe("true")
     expect(screen.getByRole("button", { name: /Fabriquer 3 · \$0,1200/ })).toBeTruthy()
+  })
+
+  test("l'image arrive brute, en 512 par défaut, et sans le style du jeu (TS4)", async () => {
+    const { fetchDouble, appels } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "un héron" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() => expect(appels.some((a) => a.url === "/api/generations")).toBe(true))
+    const corps = appels.find((a) => a.url === "/api/generations")!.corps as Record<string, unknown>
+    expect(corps.brut).toBe(true)
+    expect(corps.resolution).toBe("512")
+    // Le texte tapé part seul par défaut — la case du style du jeu est décochée.
+    expect(corps.repris).toBe(true)
+  })
+
+  test("1024 se choisit, se retient, et part dans la demande", async () => {
+    const { fetchDouble, appels } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+
+    fireEvent.click(screen.getByRole("button", { name: "1024" }))
+    expect(screen.getByRole("button", { name: "1024" }).getAttribute("aria-pressed")).toBe("true")
+
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "un héron" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() => expect(appels.some((a) => a.url === "/api/generations")).toBe(true))
+    const corps = appels.find((a) => a.url === "/api/generations")!.corps as Record<string, unknown>
+    expect(corps.resolution).toBe("1024")
+  })
+
+  test("« avec le style du jeu » fait partir le texte composé, pas le texte repris", async () => {
+    const { fetchDouble, appels } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+
+    fireEvent.click(screen.getByLabelText("avec le style du jeu"))
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "un héron" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() => expect(appels.some((a) => a.url === "/api/generations")).toBe(true))
+    const corps = appels.find((a) => a.url === "/api/generations")!.corps as Record<string, unknown>
+    expect(corps.repris).toBe(false)
+  })
+
+  test("« Ce qui part » relit le texte exact, la taille et les références avant de cliquer", async () => {
+    const { fetchDouble, appels } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const refs = referencesDeLaToile([carte("heron")], [], "heron", null)
+    render(<Banc references={refs} />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "un héron" } })
+    fireEvent.click(screen.getByRole("button", { name: /Ce qui part/ }))
+
+    expect(await screen.findByText("[[un héron]]")).toBeTruthy()
+    expect(screen.getByText(/512 px/)).toBeTruthy()
+    expect(screen.getByText(/1 image jointe/)).toBeTruthy()
+    // Un aperçu, jamais un appel qui paie.
+    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
   })
 })

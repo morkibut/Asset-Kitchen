@@ -5063,6 +5063,9 @@ export const api = {
     prompt: string
     prompt_negatif: string
     proportions: string
+    /** La résolution choisie, quand le modèle en déclare (TS4) — « 512 »,
+     *  « 1024 »… Absente ou non déclarée par le modèle, il rend la sienne. */
+    resolution?: string | null
     /** La case que cet appel vise (US-120). Absente pour une génération
      *  ordinaire, qui est le cas courant. */
     personnage?: string | null
@@ -5122,6 +5125,9 @@ export const api = {
      *  donnés, ils doivent être ceux de `premierePlanche`. Refusé (409) avant
      *  de payer sans concept art ni portrait. */
     premiere_planche?: boolean
+    /** **L'image arrive brute** (TS4) : ni détourage, ni réduction, ni grille,
+     *  ni palette à sa naissance — ce que la toile qui fabrique promet. */
+    brut?: boolean
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",

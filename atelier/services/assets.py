@@ -410,7 +410,9 @@ class ServiceAssets:
         une image entrée « telle quelle » : il n'y a alors pas de défaut à
         montrer, et afficher celui du produit ferait croire qu'il s'applique.
         """
-        if generation.demande.get("traiter") is False or generation.projet is None:
+        if generation.demande.get("traiter") is False or generation.demande.get("brut"):
+            return None
+        if generation.projet is None:
             return None
         objet = self._base.lire_projet(generation.projet)
         if objet is None:
@@ -823,6 +825,12 @@ class ServiceAssets:
         reste au brut »). Une image entrée telle quelle le reste donc, sans
         qu'aucune règle nouvelle ait à le dire.
 
+        **Même règle pour une image fabriquée sur la toile de l'univers**
+        (TS4) : `demande["brut"]` est à `traiter=False` ce que `premiere_planche`
+        est à `garder_mise_en_page` — un mot différent pour le même refus, parce
+        que ce n'est pas un import et que la question n'est pas « comment le
+        fichier est-il entré ? » mais « qu'a-t-on demandé de fabriquer ? ».
+
         **`nature` dit comment l'image est venue** (D1), et il est **posé par
         l'appelant plutôt que deviné ici**. On aurait pu le lire dans la
         génération — celle qui porte un pliage fabrique une planche — mais la
@@ -830,7 +838,7 @@ class ServiceAssets:
         `naitre`, ses morceaux naissent au dépliage. Une seule génération, deux
         natures ; il n'y a donc rien à deviner, seulement à dire.
         """
-        if generation.demande.get("traiter") is False:
+        if generation.demande.get("traiter") is False or generation.demande.get("brut"):
             return Recette()
         if generation.projet is None:
             return Recette()
@@ -900,7 +908,7 @@ class ServiceAssets:
         Le sujet est relu **dans son fichier**, qui fait foi, et c'est aussi ce
         qui fait qu'un choix posé à l'instant vaut pour l'image suivante.
         """
-        if generation.demande.get("traiter") is False:
+        if generation.demande.get("traiter") is False or generation.demande.get("brut"):
             return None
         if generation.pliage is not None:
             return None

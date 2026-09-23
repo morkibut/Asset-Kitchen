@@ -750,6 +750,10 @@ class CorpsGeneration(BaseModel):
     # reproduire. `pose` et `directions` peuvent être omis — le service les
     # remplit — ; donnés, ils doivent être ceux du jeu.
     premiere_planche: bool = False
+    # **L'image arrive brute** (TS4) : ni détourage, ni réduction, ni grille,
+    # ni palette à sa naissance — la toile qui fabrique en a besoin, une chose
+    # du jeu jamais. Ce que l'appel envoie au modèle ne change pas.
+    brut: bool = False
 
 
 @routeur.post("/generations", status_code=202)
@@ -772,6 +776,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         garder_mise_en_page=corps.garder_mise_en_page,
         decouper_a_l_arrivee=corps.decouper_a_l_arrivee,
         premiere_planche=corps.premiere_planche,
+        brut=corps.brut,
     )
     atelier = _atelier(requete)
     generation = await atelier.generations.soumettre(
