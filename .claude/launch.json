@@ -2,6 +2,14 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "atelier-jetable-rv18",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_rv18.py"
+      ],
+      "port": 8430
+    },
+    {
       "name": "atelier",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [

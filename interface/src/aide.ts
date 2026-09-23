@@ -823,7 +823,7 @@ export const AIDE: Record<string, Explication> = {
       "**La liste des directions de ton jeu**, et la phrase de style qui part au modèle. C'est cette liste qui multiplie toute la production, donc tout ce qu'on paiera : un personnage qui marche vu de côté se dessine deux fois ; le même vu de dessus, quatre.",
     origine: "toi · aucune au départ",
     long:
-      "Ce choix remplit deux endroits d'un coup : la liste des directions du codex, et la phrase de caméra qui part au modèle — les deux viennent du même geste, et ne peuvent plus se contredire. La liste est une proposition, jamais une contrainte : on la modifie depuis le codex, et un clic la rend à ce que la vue propose tant qu'on n'y a pas touché.",
+      "Ce choix remplit deux endroits d'un coup : la liste des directions du codex, et la phrase de caméra qui part au modèle. La liste est une proposition, jamais une contrainte : on la modifie depuis le codex, et un clic la rend à ce que la vue propose tant qu'on n'y a pas touché. Chaque carte montre le rôdeur dans un décor construit pour la vue ; au survol, il y marche.",
   },
 
   // Son monde — les cinq lignes qu'on tape

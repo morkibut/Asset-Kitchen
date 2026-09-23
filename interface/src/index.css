@@ -531,3 +531,74 @@ button:disabled {
 .paraitre {
   animation: paraitre 80ms var(--ease-entree);
 }
+
+/* La scène d'une vue, à l'étape « Sa vue » des réglages d'un jeu (RV18).
+   Le rôdeur marche dans le petit décor de sa carte, **au survol seulement** —
+   ce n'est pas du chrome d'écran, donc le § Motion ci-dessus ne le régit pas
+   (même exemption que la vidéo d'un clip qui se lit au survol de sa
+   vignette, `AnimationsDuSujet.tsx`) : c'est un contenu qui montre à quoi
+   ressemblerait le jeu, pas une transition d'interface. Trois mouvements,
+   un par nombre de directions de la vue choisie — une image que le jeu fait
+   pivoter, un aller-retour avec retournement, une marche en boucle sur le
+   sol — et `prefers-reduced-motion` les coupe tous les trois : sans lui, la
+   scène reste fixe, ce qui suffit à la lire. */
+@media (prefers-reduced-motion: no-preference) {
+  .scene-vue-pivote {
+    animation: scene-vue-pivote 4s linear infinite;
+  }
+  .scene-vue-va-et-vient {
+    animation: scene-vue-va-et-vient 2.4s ease-in-out infinite;
+  }
+  .scene-vue-va-et-vient-retourne {
+    animation: scene-vue-va-et-vient-retourne 2.4s steps(1) infinite;
+  }
+  .scene-vue-boucle {
+    animation: scene-vue-boucle 3.6s linear infinite;
+  }
+}
+@keyframes scene-vue-pivote {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes scene-vue-va-et-vient {
+  0%,
+  100% {
+    left: var(--scene-x0);
+  }
+  50% {
+    left: var(--scene-x1);
+  }
+}
+@keyframes scene-vue-va-et-vient-retourne {
+  0%,
+  49.9% {
+    transform: scaleX(1);
+  }
+  50%,
+  99.9% {
+    transform: scaleX(-1);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+@keyframes scene-vue-boucle {
+  0%,
+  100% {
+    left: var(--scene-x0);
+    top: var(--scene-y0);
+  }
+  25% {
+    left: var(--scene-x1);
+    top: var(--scene-y1);
+  }
+  50% {
+    left: var(--scene-x2);
+    top: var(--scene-y2);
+  }
+  75% {
+    left: var(--scene-x3);
+    top: var(--scene-y3);
+  }
+}

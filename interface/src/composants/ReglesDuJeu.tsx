@@ -126,6 +126,7 @@ import { Bouton, Curseur, Libelle, Raison, libelleModele } from "./pieces"
 import { nomDuModele } from "./Fiche"
 import { nomMoteurSonore } from "./WorkflowsLocaux"
 import { BlocDirectionsAnimees, BlocMouvements, BlocStyles } from "./Mouvements"
+import { SceneDeVue } from "./SceneDeVue"
 
 // ── Les quatre étapes ────────────────────────────────────────────────────────
 
@@ -861,9 +862,11 @@ function SaVue({
             choisi={univers.vue === v.identifiant}
             onChoisir={() => void onRegler({ vue: v.identifiant })}
           >
-            <Vignette fichier={v.identifiant} alt="" />
+            <SceneDeVue identifiant={v.identifiant} />
             <span className="mesure text-[11px] text-encre-4">
-              {v.images} direction{v.images > 1 ? "s" : ""}
+              {v.directions.length > 0
+                ? `${v.directions.length} directions`
+                : "une image, qui tourne"}
             </span>
           </Choix>
         ))}
