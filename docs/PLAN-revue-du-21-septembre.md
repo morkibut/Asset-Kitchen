@@ -842,9 +842,32 @@ plus `App.test.tsx` entier, **549/549**. `tsc --noEmit` propre. Non vérifié au
 
 ---
 
+## RV21 · « Modifier la fiche » se range en onglets
+
+**Bloquée par** : RV12 (qui y a fait entrer « Objectif & règles »), et `TS12` du plan de la toile
+(qui y ajoute « Palette par défaut ») — même fenêtre. *Ajoutée le 23 septembre 2026, sur un retour
+de l'auteur* : « il y a beaucoup de choses et on doit scroller très longtemps ».
+
+### Critères d'acceptation
+
+- [ ] la fenêtre « Modifier la fiche » (`FicheDuSujet.tsx`) range ses réglages en **quelques
+      onglets** nommés par ce qu'on y fait — lecture recommandée : *L'essentiel* (nom, nature,
+      description, portrait), *Apparence* (recette, palette par défaut, références), *Objectif
+      & règles* (poses et mouvements demandés, styles de combat), *Supprimer* ou une zone à part
+      pour les gestes dangereux ; les mots viennent de `docs/vocabulaire.html` ou y entrent
+- [ ] aucun onglet ne défile plus que la hauteur de la fenêtre à 1080 px pour un sujet ordinaire
+- [ ] rien ne disparaît (*8nonies*) ; un onglet qui n'a pas d'objet pour la nature du sujet
+      (capacités RG1) est absent, pas vide
+- [ ] ce qui est modifié dans un onglet n'est pas perdu en changeant d'onglet ; un seul
+      « Enregistrer » pour toute la fiche, qui dit ce qui a changé
+- [ ] l'essai **referme et rouvre** la fiche avec des valeurs qui ne sont pas celles du défaut
+      (*8septies*)
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21.
 
 ### Ce qu'on livre
 
