@@ -99,6 +99,12 @@ export const EST_REFERENCE = createContext<(identifiant: string) => boolean>(() 
  *  soit, et le geste disparaît plutôt que de paraître grisé sans raison. */
 export const REPRENDRE_TEXTE = createContext<((phrase: PhraseDeCarte) => void) | null>(null)
 
+/** « Développer ce sujet » (TS10) : l'image part **en référence d'édition**
+ *  dans la barre, le champ se vide pour une nouvelle demande, et le résultat
+ *  se posera relié à cette carte. Même règle de `null` que `PRENDRE_REFERENCE` :
+ *  hors de la toile, le geste disparaît plutôt que de paraître grisé. */
+export const DEVELOPPER = createContext<((carte: Carte) => void) | null>(null)
+
 /** La gouttière de la grille — un seul vocabulaire d'écart dans tout le produit.
  *  La toile la reprend telle quelle pour ranger ce qu'elle dispose seule. */
 export const GOUTTIERE = 9
@@ -1467,6 +1473,7 @@ function Reglages({
   const reprendreTexte = useContext(REPRENDRE_TEXTE)
   const creerSujet = useContext(CREER_SUJET)
   const ouvrirSujet = useContext(OUVRIR_SUJET)
+  const developper = useContext(DEVELOPPER)
   const [groupe, setGroupe] = useState(carte.groupe)
   const [note, setNote] = useState(carte.note)
   const [texte, setTexte] = useState(carte.texte)
@@ -1772,6 +1779,20 @@ function Reglages({
             className="mesure text-[10.5px] text-signal hover:opacity-70"
           >
             {estReference(carte.identifiant) ? "Retirer des références" : "Prendre comme référence"}
+          </button>
+        )}
+        {/* **« Développer ce sujet »** (TS10) : sur toute carte image arrivée,
+            pas seulement celles que la barre a fabriquées — c'est le
+            « Modifier » de Mixboard, choisi par l'auteur. L'image part en
+            référence d'édition, le champ se vide pour la demande, et le
+            résultat se pose relié à cette carte-ci. */}
+        {developper && carte.genre === "image" && carte.statut === "prete" && (
+          <button
+            type="button"
+            onClick={() => developper(carte)}
+            className="mesure text-[10.5px] text-signal hover:opacity-70"
+          >
+            Développer ce sujet
           </button>
         )}
         {carte.source && carte.statut === "echouee" && (

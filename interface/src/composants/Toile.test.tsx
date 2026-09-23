@@ -40,6 +40,7 @@ import {
   texteACorriger,
   type Crans,
 } from "./Toile"
+import { origineDeLiaison } from "./ToileFabrique"
 
 /** Un trait entre deux objets, tel que le serveur le rend. */
 const lien = (identifiant: string, de: Lien["de"], vers: Lien["de"]): Lien => ({
@@ -742,5 +743,30 @@ describe("ce qu'un blur de correction doit écrire (RT7)", () => {
   test("relire sans corriger referme sans appel", () => {
     const note = carte("note", { genre: "texte", texte: "tourbe", position: [0, 0] })
     expect(texteACorriger(note, "tourbe")).toBeNull()
+  })
+})
+
+// TS10 — « Développer ce sujet » : quelle carte relier au résultat, calculée
+// au moment précis du clic sur Fabriquer, pas mémorisée au clic sur
+// « Développer ».
+
+describe("la carte à relier, quand on développe un sujet (TS10)", () => {
+  test("sans développement en cours, rien à relier", () => {
+    const heron = carte("heron", { position: [0, 0] })
+    expect(origineDeLiaison(null, [heron])).toBeUndefined()
+  })
+
+  test("l'origine part tant qu'elle est toujours parmi ce qui part", () => {
+    const heron = carte("heron", { position: [0, 0] })
+    expect(origineDeLiaison("heron", [heron])).toEqual(["heron"])
+  })
+
+  test("une croix retirée entre les deux clics annule la liaison, pas seulement la vignette", () => {
+    // « Développer » a mémorisé « heron », mais sa vignette a été retirée de
+    // la barre avant qu'on clique sur Fabriquer : la référence prise, elle,
+    // le sait déjà (elle ne l'envoie plus) — la liaison doit le savoir aussi.
+    const renard = carte("renard", { position: [0, 0] })
+    expect(origineDeLiaison("heron", [renard])).toBeUndefined()
+    expect(origineDeLiaison("heron", [])).toBeUndefined()
   })
 })

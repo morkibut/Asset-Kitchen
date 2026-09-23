@@ -19,6 +19,7 @@ import {
   api,
   prix,
   Refus,
+  type Bout,
   type Carte,
   type Envoi,
   type EtatCatalogue,
@@ -146,6 +147,22 @@ export function referencesPrises(cartes: readonly Carte[], prises: readonly stri
   return sortie
 }
 
+/** « Développer ce sujet » (TS10) : la carte à relier au moment du clic sur
+ *  Fabriquer, **si elle est toujours parmi ce qui part**. Vérifié à cet
+ *  instant précis, et non juste mémorisé au clic sur « Développer » : une
+ *  croix sur sa vignette entre les deux doit annuler la liaison comme elle
+ *  annule déjà la référence — sinon le résultat se relierait à une image que
+ *  la barre elle-même dit ne plus envoyer. */
+export function origineDeLiaison(
+  origineDeveloppement: string | null,
+  references: readonly Carte[],
+): string[] | undefined {
+  if (!origineDeveloppement) return undefined
+  return references.some((c) => c.identifiant === origineDeveloppement)
+    ? [origineDeveloppement]
+    : undefined
+}
+
 /** Le plafond d'un modèle **ne cède jamais devant ce que l'auteur a joint**
  *  (AGENTS.md, point 4) : si les références prises dépassent ce que le
  *  modèle choisi accepte, la barre le dit au lieu de lancer — elle ne rogne
@@ -161,6 +178,21 @@ export function refusDesReferences(modele: Modele | null, nombre: number): strin
  *  pas), donc rien d'autre ne change côté serveur. */
 export const ROLE_DES_CARTES = "edition" as const
 
+/** « Développer ce sujet » (TS10) : trois amorces, tirées au hasard à chaque
+ *  déclenchement — elles montrent *quoi* écrire sans imposer *quoi*, un champ
+ *  vide avec un exemple grisé plutôt qu'une phrase toute faite qu'on efface. */
+export const EXEMPLES_DEVELOPPEMENT = [
+  "une variante plus sombre",
+  "la même de dos",
+  "sans la cape",
+] as const
+
+/** Ce que « Développer ce sujet » envoie à la barre : vider le champ, y
+ *  remettre le curseur, montrer un exemple. Même motif que `Reprise` — une
+ *  `cle` qui change à chaque clic, pour que développer deux fois la même
+ *  image de suite redéclenche l'effet la seconde fois aussi. */
+export type Developpement = { cle: string; exemple: string }
+
 // ── Les fantômes ────────────────────────────────────────────────────────────
 
 /** Une image attendue, posée sur le plan avant d'exister. */
@@ -172,6 +204,10 @@ export type Fantome = {
   /** Le rang de l'emplacement que ce fantôme attend, dans la génération. */
   rang: number
   raison: string | null
+  /** « Développer ce sujet » (TS10) : les cartes dont ce fantôme, une fois
+   *  posé, doit être relié — un lien de la toile par identifiant, tiré une
+   *  fois l'asset devenu une carte. Vide pour une fabrication ordinaire. */
+  origines?: string[]
 }
 
 const SONDE_MS = 1500
@@ -182,8 +218,16 @@ const SONDE_MS = 1500
  *  vit dans `App` et nourrit le chantier de toutes les générations ; le brancher
  *  jusqu'ici aurait traversé trois écrans pour une seule question — *cet
  *  emplacement-là est-il revenu ?* — que `GET /generations/{id}` pose seul.
- *  Plusieurs fabrications tournent en même temps : chacune a ses fantômes. */
-export function useFabricationSurToile(onErreur: (raison: string) => void) {
+ *  Plusieurs fabrications tournent en même temps : chacune a ses fantômes.
+ *
+ *  `lier` est **la même route que l'écran** (`Toile.tsx`, `tirer`) : « Développer
+ *  ce sujet » (TS10) la passe pour que chaque image posée se relie à celle
+ *  dont elle est partie, sans que ce fichier invente une seconde façon de
+ *  tirer un trait — et TS7 la réutilisera pour « Combiner » et « Encore ». */
+export function useFabricationSurToile(
+  onErreur: (raison: string) => void,
+  lier?: (de: Bout, vers: Bout) => void,
+) {
   const [fantomes, setFantomes] = useState<Fantome[]>([])
   // Le miroir que la sonde lit : elle vit hors du rendu, et lirait sinon la
   // liste figée au moment où elle est partie.
@@ -252,10 +296,20 @@ export function useFabricationSurToile(onErreur: (raison: string) => void) {
     const projet = generation.projet
     if (!fantome || !projet) return
     try {
-      await api.poserAssetSurToile(projet, `${generation.identifiant}-${rang}`, [
+      const { carte } = await api.poserAssetSurToile(projet, `${generation.identifiant}-${rang}`, [
         fantome.place.x,
         fantome.place.y,
       ])
+      // **La liaison ne remet pas la pose en cause.** L'image est arrivée et
+      // posée ; si le trait ne se tire pas (un bout disparu entre-temps, par
+      // exemple), la carte reste — elle n'a rien coûté de plus à garder sans
+      // son lien, alors que la faire disparaître aurait perdu une image payée.
+      if (carte?.identifiant && fantome.origines?.length) {
+        for (const origine of fantome.origines) {
+          if (origine !== carte.identifiant)
+            lier?.({ genre: "carte", valeur: origine }, { genre: "carte", valeur: carte.identifiant })
+        }
+      }
       if (vivant.current) changer((liste) => liste.filter((f) => f.cle !== fantome.cle))
     } catch (erreur) {
       const raison = erreur instanceof Refus ? erreur.message : "l'image n'a pas pu être posée"
@@ -277,6 +331,8 @@ export function useFabricationSurToile(onErreur: (raison: string) => void) {
       references: Reinjection[]
       repris: boolean
       places: Place[]
+      /** TS10 : les cartes à relier une fois chaque place posée. */
+      origines?: string[]
     }) => {
       const lot = crypto.randomUUID().replace(/-/g, "")
       const nes: Fantome[] = demande.places.map((place, rang) => ({
@@ -285,6 +341,7 @@ export function useFabricationSurToile(onErreur: (raison: string) => void) {
         generation: null,
         rang,
         raison: null,
+        origines: demande.origines,
       }))
       changer((liste) => [...liste, ...nes])
       try {
@@ -357,6 +414,9 @@ export function useFabricationSurToile(onErreur: (raison: string) => void) {
        *  `repris` décide déjà de ne pas replier la bible en tête). */
       repris: boolean
       places: Place[]
+      /** TS10 : reconduites à chaque appel du lot — chaque variante relie à
+       *  la même carte d'origine. */
+      origines?: string[]
     }) => {
       const max = Math.max(1, demande.variations_max)
       for (let i = 0; i < demande.places.length; i += max) {
@@ -368,6 +428,7 @@ export function useFabricationSurToile(onErreur: (raison: string) => void) {
           references: demande.references,
           repris: demande.repris,
           places: demande.places.slice(i, i + max),
+          origines: demande.origines,
         })
       }
     },
@@ -554,6 +615,7 @@ export function BarreDeFabrication({
   onLancer,
   champ,
   reprise,
+  developpement,
 }: {
   references: Carte[]
   /** Retirer **une seule** référence prise — la croix de sa vignette. */
@@ -564,6 +626,10 @@ export function BarreDeFabrication({
    *  carte reviennent dans la barre, prêts à corriger et relancer. `null` au
    *  repos — la barre ne réagit qu'au changement de `cle`. */
   reprise?: Reprise | null
+  /** « Développer ce sujet » (TS10) : vide le champ, y remet le curseur, et
+   *  montre un exemple grisé. `null` au repos — même règle de `cle` que
+   *  `reprise`, pour que développer deux fois de suite redéclenche l'effet. */
+  developpement?: Developpement | null
 }) {
   const [catalogue, setCatalogue] = useState<EtatCatalogue | null>(null)
   const [prompt, setPrompt] = useState("")
@@ -599,6 +665,19 @@ export function BarreDeFabrication({
     champ.current?.focus()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reprise?.cle])
+
+  // **« Développer ce sujet »** (TS10) : le champ se vide, le curseur s'y
+  // pose, et un exemple grisé dit quoi écrire — sur `developpement.cle`, pour
+  // la même raison que `reprise.cle` : développer deux fois la même image de
+  // suite doit redéclencher l'effet la seconde fois aussi.
+  const [exemple, setExemple] = useState<string | null>(null)
+  useEffect(() => {
+    if (!developpement) return
+    setPrompt("")
+    setExemple(developpement.exemple)
+    champ.current?.focus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [developpement?.cle])
 
   // Le catalogue dépend du nombre d'images jointes : un modèle qui n'en prend
   // aucune se grise avec sa raison dès qu'on en joint une.
@@ -700,7 +779,7 @@ export function BarreDeFabrication({
         <input
           ref={champ}
           aria-label="Décris une image"
-          placeholder="Décris une image…"
+          placeholder={exemple ?? "Décris une image…"}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={(e) => {
