@@ -18,7 +18,7 @@
 
 ---
 
-## Les dix tranches
+## Les onze tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -26,6 +26,7 @@
 | **TS2** · Créer un sujet depuis une carte | `[MEDIUM]` | une route neuve qui enchaîne des services existants, avec un seul point dur sorti plus bas |
 | **TS3** · La première planche | `[HARD]` | elle change ce qui part au modèle — un concept art cesse d'être un style pour devenir le design à reproduire — et chaque essai coûte de l'argent |
 | **TS8** · Le sujet neuf dit quoi faire ensuite | `[MEDIUM]` | une règle neuve — quel est le prochain geste d'un sujet selon ce qu'il a — et une place en tête de page ; à accorder avec `RV15` |
+| **TS11** · La première planche d'un concept art qui est une carte | `[MEDIUM]` | un défaut qui touche ce qui part au modèle ; la cause est à lire avant de corriger |
 | **TS4** · L'image arrive brute, en 512 ou 1024 | `[MEDIUM]` | une règle neuve : la toile échappe à l'univers et à la recette du jeu, sans que les autres chemins d'envoi changent ; le choix 512/1024 lui-même est simple |
 | **TS5** · Le texte reste sur la carte | `[MEDIUM]` | la phrase vit sur la génération, pas sur la carte : il faut la faire remonter jusqu'à la toile, puis la rejouer dans la barre |
 | **TS6** · Prendre une carte comme référence | `[EASY]` | les références de la barre existent ; il manque un geste visible et leur liste lisible |
@@ -33,9 +34,9 @@
 | **TS10** · « Développer ce sujet » | `[MEDIUM]` | une image devient la référence d'édition de la barre, le résultat se pose relié à elle ; réutilise TS6 et la pose de TS4 |
 | **TS7** · Les gestes de Mixboard | `[MEDIUM]` | triés par l'auteur : Combiner, Encore, et le lien visible ; tous reposent sur l'envoi et la pose reliée de TS10 |
 
-**Compte** : 0 `[VERY-HARD]`, 1 `[HARD]`, 6 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 1 `[HARD]`, 7 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
 
-*TS4 à TS10 ajoutées le 23 septembre 2026.*
+*TS4 à TS11 ajoutées le 23 septembre 2026.*
 
 ---
 

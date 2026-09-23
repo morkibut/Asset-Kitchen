@@ -210,6 +210,28 @@ local, 1 hors de ce fichier — et non touchés). `tsc --noEmit` propre, `essai_
 écarts jetons/Retouche.tsx restants sont connus d'avance). Non vérifié au navigateur : pas
 d'`interface/dist` dans le worktree (`AGENTS.md`).
 
+### TS11 · La première planche d'un sujet dont le concept art est une carte
+
+*Défaut vu par l'auteur le 23 septembre 2026, en préparant l'essai payé de `TS3` sur Elias* :
+« Faire la planche des directions » (bandeau de `TS8`) ouvre la préparation ; la référence
+jointe — le concept art d'Elias, **une carte de la toile** (`9c09adf6b8d745ac`) — s'affiche
+cassée : l'écran demande `/api/assets/9c09adf6b8d745ac/image` (404) alors que l'image de la
+carte se sert à `/api/board/9c09adf6b8d745ac/image`. Le pied dit aussi « aucun prompt » et
+« Relire avant l'envoi » reste grisé, alors qu'Elias a une description. `TS3` avait été essayé
+sur un sujet né par `TS2`, dont le concept art est une **copie en asset** ; un concept art posé
+comme carte seule n'a jamais été essayé. Bloque l'essai payé de `TS3`.
+
+- [ ] la référence d'un concept art qui est une carte part et s'affiche comme une carte (image de
+      la carte, rôle référence) — dans la préparation, dans « Relire avant l'envoi » et dans ce
+      qui part au modèle ; ou bien elle est copiée en asset du sujet au premier geste, comme `TS2`
+      — choisir, et le dire ici
+- [ ] le texte de la demande est rempli par le geste (le signalement du sujet, et ce que `TS3`
+      ajoute) ; « Relire avant l'envoi » est actif
+- [ ] le même chemin tient depuis le bandeau de `TS8` **et** depuis le bloc *Planche* de l'onglet
+      Images
+- [ ] un essai part d'un sujet dont le concept art est une carte **non copiée**, et tombe sans le
+      correctif
+
 ## La toile qui fabrique — façon Mixboard
 
 *Ajouté le 23 septembre 2026, sur les retours de l'auteur au premier usage.* La barre
