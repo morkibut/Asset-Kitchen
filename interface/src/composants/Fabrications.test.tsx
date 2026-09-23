@@ -102,3 +102,60 @@ test("« Nouvelle fabrication » est le seul bouton de départ, et il ouvre la f
   fireEvent.click(screen.getByRole("button", { name: "Nouvelle fabrication" }))
   expect(onCreer).toHaveBeenCalledOnce()
 })
+
+// RV9 — retour de l'auteur du 23 septembre : toutes les vignettes étaient des
+// carrés gris, y compris pour des images terminées. Les essais d'avant
+// passaient avec des carrés gris parce qu'aucun ne lisait `src` : celui-ci le
+// lit, sur les deux origines qui peuvent maintenant montrer une image réelle
+// — le journal (un appel que `bibliotheque.journal` joint désormais à
+// l'asset qu'il a produit) et un travail (l'image locale qu'il a gardée).
+test("une ligne terminée montre la vignette réelle du résultat, jamais un carré gris", async () => {
+  vi.spyOn(api, "journal").mockResolvedValue({
+    appels: [{
+      identifiant: "g-2", modele: "OpenRouter:openai/gpt-image-2", prompt: "un gobelin, de face",
+      cree_le: 1_700_000_100, cout_usd: 0.01, statut: "reussie", reussies: 1, rates: [], vignette: "asset-du-gobelin",
+    }],
+  } as unknown as Awaited<ReturnType<typeof api.journal>>)
+  vi.spyOn(travaux, "lister").mockResolvedValue([{
+    nature: "image-locale", identifiant: "t-1", projet: null, acteur: "auteur", cle: "c-1",
+    cree_le: 1_700_000_200, etat: "termine", etape: "termine",
+    demande: { cle: "c-1", prompt: "une porte de donjon" }, generation_image: "g-3", assets: ["asset-de-la-porte"],
+  } as unknown as Awaited<ReturnType<typeof travaux.lister>>[number]])
+
+  const { container } = render(<Fabrications projet="jeu" chantier={[]} clips={[]} personnages={[personnage]} {...RIEN} />)
+
+  await screen.findByText("un gobelin, de face")
+  // **C'est bien l'attribut `src` qu'on lit** : les essais d'avant passaient
+  // avec des carrés gris parce qu'aucun ne le faisait.
+  const sources = [...container.querySelectorAll("img")].map((i) => i.getAttribute("src"))
+  expect(sources.some((s) => s?.includes("/api/assets/asset-du-gobelin/vignette"))).toBe(true)
+  expect(sources.some((s) => s?.includes("/api/assets/asset-de-la-porte/vignette"))).toBe(true)
+  // Aucun carré gris (lettre seule, sans image) pour ces deux lignes-là.
+  expect(container.querySelectorAll("span.rounded-7").length).toBe(0)
+})
+
+// RV9 — même retour : « ComfyUI · qwen21-qualite@e3563da64c0c7b8… » restait
+// lisible tel quel dans la liste fusionnée, alors qu'`RV4` avait retiré cet
+// identifiant technique partout ailleurs. La liste doit lire le même nom que
+// le catalogue donne ailleurs (`libelleModele`), jamais la chaîne brute.
+test("le nom du modèle reste lisible dans la liste, jamais l'identifiant technique", async () => {
+  const identifiantTechnique = "ComfyUI:qwen21-qualite@e3563da64c0c7b8eecc0e4afc6782acb"
+  vi.spyOn(api, "modeles").mockResolvedValue({
+    modeles: [{ identifiant: identifiantTechnique, nom: "Qwen 2.1 qualité", fournisseur: "ComfyUI" }],
+  } as unknown as Awaited<ReturnType<typeof api.modeles>>)
+  vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [] } as unknown as Awaited<ReturnType<typeof api.modelesVideo>>)
+  vi.spyOn(fileLocale, "lire").mockResolvedValue({
+    etapes: [{
+      identifiant: "e-1", cle: "c-2", projet: null, acteur: "auteur", nature: "image",
+      moteur: "comfyui", modele: identifiantTechnique, etat: "termine",
+      travail_externe: null, raison: "", soumission_engagee: true,
+      cree_le: 1_700_000_300, demarre_le: null, termine_le: null, duree_s: null, temperature: "chaud",
+    }],
+  } as unknown as Awaited<ReturnType<typeof fileLocale.lire>>)
+
+  render(<Fabrications projet="jeu" chantier={[]} clips={[]} personnages={[personnage]} {...RIEN} />)
+
+  const ecran = await screen.findByText(/Qwen 2\.1 qualité/)
+  expect(ecran.textContent).toContain("ComfyUI · Qwen 2.1 qualité")
+  expect(screen.getByLabelText("Fabrications").textContent).not.toMatch(/@e3563da64c0c7b8/)
+})

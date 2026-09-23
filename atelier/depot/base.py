@@ -1172,6 +1172,33 @@ class Base:
                     vivants.setdefault(str(ligne["generation"]), set()).add(int(ligne["rang"]))
         return vivants
 
+    def premiere_image_vivante(self, generations: Sequence[str]) -> dict[str, str]:
+        """**L'asset du plus petit rang encore vivant, pour un lot d'appels** (RV9).
+
+        C'est ce qui manquait au journal pour montrer une vignette réelle : il
+        connaît ses appels, jamais ce qu'ils ont produit. Même règle que
+        `rangs_vivants` — une requête pour tout le lot, jamais une par ligne —,
+        et le même filtre `supprime_le IS NULL` : une image supprimée ne prête
+        pas sa vignette à la ligne qui l'a payée.
+        """
+        if not generations:
+            return {}
+        premiers: dict[str, tuple[int, str]] = {}
+        with self._connexion() as connexion:
+            for depart in range(0, len(generations), 400):
+                paquet = list(generations[depart : depart + 400])
+                trous = ",".join("?" * len(paquet))
+                lignes = connexion.execute(
+                    "SELECT generation, rang, identifiant FROM assets "
+                    f"WHERE supprime_le IS NULL AND generation IN ({trous})",
+                    paquet,
+                ).fetchall()
+                for ligne in lignes:
+                    g, rang = str(ligne["generation"]), int(ligne["rang"])
+                    if g not in premiers or rang < premiers[g][0]:
+                        premiers[g] = (rang, str(ligne["identifiant"]))
+        return {g: identifiant for g, (_rang, identifiant) in premiers.items()}
+
     def rangs_de_generation(self, generation: str) -> list[int]:
         """Les rangs déjà pris dans une génération — **supprimés compris**.
 

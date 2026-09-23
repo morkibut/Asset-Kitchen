@@ -3708,6 +3708,11 @@ export type Appel = {
   statut: Statut
   reussies: number
   rates: Rate[]
+  /** **RV9** : l'asset de la première image encore vivante que cet appel a
+   *  produite, joint au journal en une seule requête pour tout le lot —
+   *  `null` pour un appel raté, un clip vidéo, ou une image supprimée
+   *  depuis. */
+  vignette?: string | null
 }
 
 /** Le journal d'un projet : ses appels, **ratés compris** (US-24). C'est ici que
