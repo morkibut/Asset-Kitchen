@@ -55,6 +55,22 @@ import { ObjectifDuSujet } from "./ObjectifDuSujet"
 
 const BOUTON = "h-[30px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
 
+// **Quatre onglets** (`RV21`, 23 septembre 2026) — la fiche listait tous ses
+// réglages d'affilée, et il fallait défiler longtemps pour en trouver un
+// (retour de l'auteur). Ils se rangent par ce qu'on y fait, sur le même
+// geste que les onglets de la page (`PageDuSujet.tsx`, `ONGLETS`) sans être
+// la même liste : celle-ci n'est pas la liste fermée que lit
+// `essais/essai_vocabulaire.py`, qui ne mesure que `PageDuSujet.tsx`.
+// « Supprimer » tient à part le seul geste dangereux d'ici — retirer le
+// sujet du jeu — jamais mêlé aux réglages ordinaires (AGENTS.md, RV21).
+type OngletFiche = "essentiel" | "apparence" | "objectif" | "supprimer"
+const ONGLETS_FICHE: readonly { clef: OngletFiche; nom: string }[] = [
+  { clef: "essentiel", nom: "L’essentiel" },
+  { clef: "apparence", nom: "Apparence" },
+  { clef: "objectif", nom: "Objectif & règles" },
+  { clef: "supprimer", nom: "Supprimer" },
+]
+
 /** Ce que la chose a de fait — les poses que ce sujet tient, et celles qu'il a
  *  rangées, comptées à côté. Repris de la fiche longue, où c'était déjà
  *  l'unique définition du compte : la matrice s'y accorde. */
@@ -120,6 +136,10 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   demandeEdition?: number;
 }) {
   const [edition, setEdition] = useState(false)
+  // **L'onglet ouvert de « Modifier la fiche »** (`RV21`) — remis à
+  // « L'essentiel » à chaque ouverture, sauf demande explicite (l'objectif,
+  // depuis l'extérieur ou depuis le résumé ci-dessous).
+  const [ongletFiche, setOngletFiche] = useState<OngletFiche>("essentiel")
   const [nom, setNom] = useState(personnage.nom)
   const [description, setDescription] = useState(personnage.description)
   const [objectif, setObjectif] = useState<ObjectifDuPersonnage | null>(null)
@@ -152,13 +172,14 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   const bandes = [...new Map(personnage.cases.flatMap(c => c.bandes ?? []).filter(b => !b.piece && !b.supprime).map(b => [b.identifiant, b])).values()]
   const bande = bandes.find(b => b.favori) ?? bandes[0]
   const modifie = nom !== personnage.nom || description !== personnage.description
-  const ouvrir = () => { setNom(personnage.nom); setDescription(personnage.description); setEdition(true) }
+  const ouvrir = (onglet: OngletFiche = "essentiel") => { setNom(personnage.nom); setDescription(personnage.description); setOngletFiche(onglet); setEdition(true) }
   const fermer = () => { if (!modifie || window.confirm("Abandonner les modifications de la fiche ?")) setEdition(false) }
   useEffect(() => { setEdition(false) }, [personnage.identifiant])
   // **Une demande venue de l'extérieur** (RV12) — un lien qui visait autrefois
-  // l'onglet « Objectif & règles » ouvre maintenant ce dialogue. `0` (aucune
-  // demande) ne déclenche rien, y compris au montage.
-  useEffect(() => { if (demandeEdition) ouvrir() }, [demandeEdition])
+  // l'onglet « Objectif & règles » de la page ouvre maintenant ce dialogue,
+  // directement sur son propre onglet « Objectif & règles » (`RV21`). `0`
+  // (aucune demande) ne déclenche rien, y compris au montage.
+  useEffect(() => { if (demandeEdition) ouvrir("objectif") }, [demandeEdition])
   useEffect(() => {
     let vivant = true
     setObjectif(null)
@@ -281,9 +302,9 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
           ? <p className="line-clamp-2 whitespace-pre-line text-[13px] leading-relaxed text-encre-2">{personnage.description}</p>
           : <div data-description-manquante className="flex flex-wrap items-center gap-[10px] rounded-5 border border-trait-attention bg-fond-attention px-[10px] py-[6px] text-[13px] text-encre-attention">
               <span>Description manquante : les générations de {personnage.nom} partiront avec un texte vide. Décris sa silhouette, sa tenue et ce qui doit rester pareil d’une image à l’autre.</span>
-              <button type="button" className={BOUTON} onClick={ouvrir}>L’écrire</button>
+              <button type="button" className={BOUTON} onClick={() => ouvrir()}>L’écrire</button>
             </div>}
-        <div className="flex flex-wrap items-center gap-[8px] text-[12px] text-encre-3"><span className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{images.length + bandes.length} résultat{images.length + bandes.length > 1 ? "s" : ""}</span>{collections?.map(c => <span key={c.identifiant} className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{c.nom}</span>)}<button className={BOUTON} onClick={ouvrir}>Modifier la fiche</button></div>
+        <div className="flex flex-wrap items-center gap-[8px] text-[12px] text-encre-3"><span className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{images.length + bandes.length} résultat{images.length + bandes.length > 1 ? "s" : ""}</span>{collections?.map(c => <span key={c.identifiant} className="rounded-5 bg-papier-cote px-[8px] py-[4px]">{c.nom}</span>)}<button className={BOUTON} onClick={() => ouvrir()}>Modifier la fiche</button></div>
         {/* **Le seul compte d'avancement** (RV10) : la même fraction que le
             Codex et l'objectif, jamais plus « retenus pour le jeu » — la
             retenue n'a jamais été nécessaire pour partir dans le jeu (E2). Le
@@ -301,128 +322,150 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
             objectif.avancement.animations.a_departager ? `${objectif.avancement.animations.a_departager} à départager` : "",
             objectif.avancement.images.a_fabriquer ? `${objectif.avancement.images.a_fabriquer} images à fabriquer` : "",
           ].filter(Boolean).join(" · ")}</span>}
-          <button className="underline" onClick={ouvrir}>{objectif.objectif.sorties.length ? "Revoir l’objectif" : "Définir l’objectif"}</button>
+          <button className="underline" onClick={() => ouvrir("objectif")}>{objectif.objectif.sorties.length ? "Revoir l’objectif" : "Définir l’objectif"}</button>
         </div>}
       </div>
     </section>
     {edition && <CadreDialogue titre="La fiche du sujet" format="preparation" onFermer={fermer} enfants={<>
       <header className="flex items-center justify-between border-b border-trait p-[22px]"><h2 className="font-serif text-[25px]">La fiche du sujet</h2><button className={BOUTON} onClick={fermer}>Fermer</button></header>
-      <div className="defile space-y-[22px] overflow-y-auto p-[22px]">
+      <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[22px]">
         <p className="text-[12px] text-encre-3">Ce qui est réglé ici part avec chaque demande de ce sujet, et se relit avant chaque envoi.</p>
-        <label className="flex flex-col gap-[8px] text-[13px]">Nom<input aria-label="Nom du sujet" className="h-[34px] rounded-7 border border-contour bg-carte px-[14px]" value={nom} onChange={e => setNom(e.target.value)} /></label>
 
-        <section className="flex flex-col gap-[8px]">
-          <EnTeteDeSection aide="codex.chose.sujet" compte={`${description.length} lettres`} />
-          <textarea
-            aria-label="Description du sujet"
-            placeholder="ce qu’il faut redire au modèle à chaque image de ce sujet"
-            className="min-h-[128px] resize-y rounded-7 border border-contour bg-carte p-[14px] text-[13px]"
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-          />
-          {!personnage.description && <p className="text-[12px] text-encre-3">aucun signalement — chaque génération part sans dire de quoi il s’agit</p>}
-        </section>
+        {/* **Quatre onglets** (`RV21`) — même forme que ceux de la page du
+            sujet (`PageDuSujet.tsx`, `role="tablist"`), pour ne pas réinventer
+            un second geste. Aucun n'est vide pour une nature donnée : chacun
+            porte au moins un réglage qui s'applique à tout sujet. */}
+        <nav role="tablist" aria-label="Les onglets de la fiche" className="flex shrink-0 flex-wrap gap-[4px] border-b border-trait pb-[8px]">
+          {ONGLETS_FICHE.map(({ clef, nom: nomOnglet }) => <button key={clef} type="button" role="tab" aria-selected={ongletFiche === clef} onClick={() => setOngletFiche(clef)} className={`h-[34px] rounded-7 px-[14px] text-[13px] transition-colors duration-120 ${ongletFiche === clef ? "bg-encre text-papier" : clef === "supprimer" ? "text-echec hover:bg-papier-cote" : "text-encre-3 hover:bg-papier-cote hover:text-encre"}`}>{nomOnglet}</button>)}
+        </nav>
 
-        <section data-type-et-ambiance className="grid grid-cols-2 gap-[14px]">
-          <label className="flex flex-col gap-[8px] text-[13px]">Type d’objet
-            <select aria-label="Type d'objet" className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.type ?? ""} onChange={(e) => void poserHabillage({ type: e.target.value })}>
-              <option value="">aucun — suit le plan du jeu</option>
-              {naturesChoisissables(types, personnage.type).map((type) => <option key={type.nom} value={type.nom}>{type.nom} — {type.poses.length === 0 ? "aucune pose" : `${type.poses.length} pose${type.poses.length > 1 ? "s" : ""}`}</option>)}
-            </select>
-            <span className="text-[12px] text-encre-3">Il décide des mouvements demandés. Aucune image ne bouge.</span>
-          </label>
-          <div className="flex flex-col gap-[8px] text-[13px]">
-            <label className="flex flex-col gap-[8px]">Ambiance
-              {ambiances.length === 0
-                ? <span className="text-[12px] text-encre-3">Ce jeu n’a pas encore d’ambiance (onglet Univers).</span>
-                : <select aria-label="Son ambiance" className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.ambiance ?? ""} onChange={(e) => void poserHabillage({ ambiance: e.target.value })}>
-                    <option value="">aucune — le style du jeu</option>
-                    {ambiances.map((a) => <option key={a.identifiant} value={a.identifiant}>{a.nom}</option>)}
-                  </select>}
+        {ongletFiche === "essentiel" && <div className="flex flex-col gap-[22px]">
+          <label className="flex flex-col gap-[8px] text-[13px]">Nom<input aria-label="Nom du sujet" className="h-[34px] rounded-7 border border-contour bg-carte px-[14px]" value={nom} onChange={e => setNom(e.target.value)} /></label>
+
+          <section className="flex flex-col gap-[8px]">
+            <EnTeteDeSection aide="codex.chose.sujet" compte={`${description.length} lettres`} />
+            <textarea
+              aria-label="Description du sujet"
+              placeholder="ce qu’il faut redire au modèle à chaque image de ce sujet"
+              className="min-h-[128px] resize-y rounded-7 border border-contour bg-carte p-[14px] text-[13px]"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+            />
+            {!personnage.description && <p className="text-[12px] text-encre-3">aucun signalement — chaque génération part sans dire de quoi il s’agit</p>}
+          </section>
+
+          <section data-type-et-ambiance className="grid grid-cols-2 gap-[14px]">
+            <label className="flex flex-col gap-[8px] text-[13px]">Type d’objet
+              <select aria-label="Type d'objet" className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.type ?? ""} onChange={(e) => void poserHabillage({ type: e.target.value })}>
+                <option value="">aucun — suit le plan du jeu</option>
+                {naturesChoisissables(types, personnage.type).map((type) => <option key={type.nom} value={type.nom}>{type.nom} — {type.poses.length === 0 ? "aucune pose" : `${type.poses.length} pose${type.poses.length > 1 ? "s" : ""}`}</option>)}
+              </select>
+              <span className="text-[12px] text-encre-3">Il décide des mouvements demandés. Aucune image ne bouge.</span>
             </label>
-            {personnage.ambiance && ambiances.length > 0 && <select aria-label="Ce qu'elle prend à son ambiance" className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.prend ?? "tout"} onChange={(e) => void poserHabillage({ prend: e.target.value })}>
-              {CE_QU_ON_PREND.map((quoi) => <option key={quoi} value={quoi}>elle lui prend {NOM_DE_CE_QU_ON_PREND[quoi]}</option>)}
-            </select>}
-          </div>
-        </section>
+            <div className="flex flex-col gap-[8px] text-[13px]">
+              <label className="flex flex-col gap-[8px]">Ambiance
+                {ambiances.length === 0
+                  ? <span className="text-[12px] text-encre-3">Ce jeu n’a pas encore d’ambiance (onglet Univers).</span>
+                  : <select aria-label="Son ambiance" className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.ambiance ?? ""} onChange={(e) => void poserHabillage({ ambiance: e.target.value })}>
+                      <option value="">aucune — le style du jeu</option>
+                      {ambiances.map((a) => <option key={a.identifiant} value={a.identifiant}>{a.nom}</option>)}
+                    </select>}
+              </label>
+              {personnage.ambiance && ambiances.length > 0 && <select aria-label="Ce qu'elle prend à son ambiance" className="h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.prend ?? "tout"} onChange={(e) => void poserHabillage({ prend: e.target.value })}>
+                {CE_QU_ON_PREND.map((quoi) => <option key={quoi} value={quoi}>elle lui prend {NOM_DE_CE_QU_ON_PREND[quoi]}</option>)}
+              </select>}
+            </div>
+          </section>
 
-        {/* **Ce qu'il faut produire, et ce que le jeu impose** (RV12) — l'ancien
-            onglet *Objectif & règles*, ici plutôt qu'à un clic de plus : il se
-            montre déjà lui-même, avec son propre titre. */}
-        <section data-objectif-du-sujet className="border-t border-trait pt-[22px]">
-          <ObjectifDuSujet
-            personnage={personnage}
-            projet={personnage.projet}
-            onChange={() => { relireObjectif(); onObjectifChange?.() }}
-          />
-        </section>
+          <section><h3 className="text-[13px] font-medium">Collections</h3><div className="mt-[8px] flex flex-wrap gap-[8px]">{collections?.map(c => <span key={c.identifiant} data-collection-du-sujet={c.identifiant} className="flex items-center gap-[8px] rounded-5 bg-papier-cote px-[8px] py-[4px] text-[13px]">{c.nom}<button disabled={occupe} aria-label={`Retirer de ${c.nom}`} onClick={() => void ranger(c.identifiant, true)}>×</button></span>)}</div><div className="mt-[14px] flex gap-[8px]"><select aria-label="Ajouter à une collection" className="h-[34px] min-w-0 flex-1 rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={collection} onChange={e => setCollection(e.target.value)}><option value="">Choisir une collection</option>{groupes.filter(g => !collections?.some(c => c.identifiant === g.identifiant)).map(g => <option key={g.identifiant} value={g.identifiant}>{g.nom}</option>)}</select><button className={BOUTON} disabled={occupe || !collection} onClick={() => void ranger(collection)}>Ranger</button></div><p className="mt-[8px] text-[12px] text-encre-3">Le rangement est conservé immédiatement. Il ne change pas les règles de fabrication.</p></section>
+        </div>}
 
-        {/* **La recette de ses images** (RS6) — en une ligne. Seules les
-            images à naître la reçoivent ; un nom effacé depuis le choix reste
-            affiché, et c'est alors la recette du jeu qui s'applique. */}
-        <section data-recette-du-sujet className="flex flex-col gap-[4px]">
-          <label className="flex items-center gap-[8px] text-[13px]">Recette de ses images :
-            <select aria-label="Recette de ses images" className="h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.recette ?? ""} onChange={(e) => void poserRecette(e.target.value || null)}>
-              <option value="">aucune (celle du jeu)</option>
-              {personnage.recette && !nommees.includes(personnage.recette) && <option value={personnage.recette}>{personnage.recette} (effacée)</option>}
-              {nommees.map((nom) => <option key={nom} value={nom}>{nom}</option>)}
-            </select>
-          </label>
-          <span className="text-[12px] text-encre-3">Les images déjà faites ne changent pas.</span>
-        </section>
+        {ongletFiche === "apparence" && <div className="flex flex-col gap-[22px]">
+          {/* **La recette de ses images** (RS6) — en une ligne. Seules les
+              images à naître la reçoivent ; un nom effacé depuis le choix reste
+              affiché, et c'est alors la recette du jeu qui s'applique. */}
+          <section data-recette-du-sujet className="flex flex-col gap-[4px]">
+            <label className="flex items-center gap-[8px] text-[13px]">Recette de ses images :
+              <select aria-label="Recette de ses images" className="h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.recette ?? ""} onChange={(e) => void poserRecette(e.target.value || null)}>
+                <option value="">aucune (celle du jeu)</option>
+                {personnage.recette && !nommees.includes(personnage.recette) && <option value={personnage.recette}>{personnage.recette} (effacée)</option>}
+                {nommees.map((nom) => <option key={nom} value={nom}>{nom}</option>)}
+              </select>
+            </label>
+            <span className="text-[12px] text-encre-3">Les images déjà faites ne changent pas.</span>
+          </section>
 
-        {/* **La palette de ses images** (TS12) — même geste que la recette,
-            juste au-dessus : les images qui naissent ensuite pour ce sujet
-            sont ramenées à ses couleurs, celles déjà faites ne bougent pas.
-            Une palette supprimée depuis le choix est dite en clair : le sujet
-            est retombé sur aucune. */}
-        <section data-palette-du-sujet className="flex flex-col gap-[4px]">
-          <label className="flex items-center gap-[8px] text-[13px]">Palette par défaut :
-            <select aria-label="Palette par défaut" className="h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.palette ?? ""} onChange={(e) => void poserPalette(e.target.value || null)}>
-              <option value="">aucune</option>
-              {personnage.palette && !saPalette && <option value={personnage.palette}>{personnage.palette}</option>}
-              {palettes.map((p) => <option key={p.identifiant} value={p.identifiant} disabled={p.rendue.length === 0}>{p.nom} — {p.rendue.length === 0 ? "aucune couleur" : `${p.rendue.length} couleur${p.rendue.length > 1 ? "s" : ""}`}</option>)}
-            </select>
-          </label>
-          {saPalette && saPalette.rendue.length > 0 && <span aria-hidden className="flex flex-wrap gap-[2px]">{saPalette.rendue.map((c, i) => <span key={`${c}-${i}`} data-pastille-du-sujet className="h-[14px] w-[14px] rounded-5 border border-trait-faible" style={{ background: c }} />)}</span>}
-          {personnage.palette_supprimee && !personnage.palette
-            ? <span data-palette-supprimee className="text-[12px] text-encre-attention">La palette « {personnage.palette_supprimee} » a été supprimée : ses nouvelles images n’ont plus de palette par défaut. Les images déjà faites gardent leurs couleurs.</span>
-            : <span className="text-[12px] text-encre-3">{palettes.length === 0 && !personnage.palette ? "Ce jeu n’a pas encore de palette : fais-en une sur la toile, depuis un paquet d’images." : "Ses nouvelles images sont ramenées à ces couleurs. Les images déjà faites ne changent pas."}</span>}
-        </section>
+          {/* **La palette de ses images** (TS12) — même geste que la recette,
+              juste au-dessus : les images qui naissent ensuite pour ce sujet
+              sont ramenées à ses couleurs, celles déjà faites ne bougent pas.
+              Une palette supprimée depuis le choix est dite en clair : le sujet
+              est retombé sur aucune. */}
+          <section data-palette-du-sujet className="flex flex-col gap-[4px]">
+            <label className="flex items-center gap-[8px] text-[13px]">Palette par défaut :
+              <select aria-label="Palette par défaut" className="h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.palette ?? ""} onChange={(e) => void poserPalette(e.target.value || null)}>
+                <option value="">aucune</option>
+                {personnage.palette && !saPalette && <option value={personnage.palette}>{personnage.palette}</option>}
+                {palettes.map((p) => <option key={p.identifiant} value={p.identifiant} disabled={p.rendue.length === 0}>{p.nom} — {p.rendue.length === 0 ? "aucune couleur" : `${p.rendue.length} couleur${p.rendue.length > 1 ? "s" : ""}`}</option>)}
+              </select>
+            </label>
+            {saPalette && saPalette.rendue.length > 0 && <span aria-hidden className="flex flex-wrap gap-[2px]">{saPalette.rendue.map((c, i) => <span key={`${c}-${i}`} data-pastille-du-sujet className="h-[14px] w-[14px] rounded-5 border border-trait-faible" style={{ background: c }} />)}</span>}
+            {personnage.palette_supprimee && !personnage.palette
+              ? <span data-palette-supprimee className="text-[12px] text-encre-attention">La palette « {personnage.palette_supprimee} » a été supprimée : ses nouvelles images n’ont plus de palette par défaut. Les images déjà faites gardent leurs couleurs.</span>
+              : <span className="text-[12px] text-encre-3">{palettes.length === 0 && !personnage.palette ? "Ce jeu n’a pas encore de palette : fais-en une sur la toile, depuis un paquet d’images." : "Ses nouvelles images sont ramenées à ces couleurs. Les images déjà faites ne changent pas."}</span>}
+          </section>
 
-        {/* **Seuls les personnages se battent** — un décor ou un objet n'a
-            rien à choisir ici (18 septembre 2026, SC4). */}
-        {personnage.famille === "personnages" && (
-          <section data-style-de-combat className="flex flex-col gap-[8px]">
-            <EnTeteDeSection aide="codex.chose.style_combat" />
-            <SonStyleDeCombat
-              resolu={styleDuPersonnage}
-              catalogue={catalogueStyles}
-              onPoser={poserStyles}
+          <section className="flex flex-col gap-[8px]">
+            <EnTeteDeSection aide="codex.chose.habillage" compte={habillage ? `${habillage.champs.length} textes · ${habillage.de_l_ambiance} de son ambiance` : "…"} />
+            <CeQuiLHabille habillage={habillage} onPoser={poserHabillage} />
+          </section>
+
+          <section className="flex flex-col gap-[8px]">
+            <EnTeteDeSection aide="codex.chose.exemples" compte={references ? `${references.disponibles} retenue${references.disponibles > 1 ? "s" : ""} · ${references.propositions.length} proposée${references.propositions.length > 1 ? "s" : ""}` : "…"} />
+            <SesReferences
+              references={references}
+              onPromouvoir={(asset, promue) =>
+                void api
+                  .promouvoirReference(personnage.identifiant, asset, promue)
+                  .then((recu) => { onPersonnage(recu.personnage); setReferences(recu.references) })
+                  .catch((erreur) => onErreur(erreur, "promotion refusée"))
+              }
             />
           </section>
-        )}
+        </div>}
 
-        <section className="flex flex-col gap-[8px]">
-          <EnTeteDeSection aide="codex.chose.habillage" compte={habillage ? `${habillage.champs.length} textes · ${habillage.de_l_ambiance} de son ambiance` : "…"} />
-          <CeQuiLHabille habillage={habillage} onPoser={poserHabillage} />
-        </section>
+        {ongletFiche === "objectif" && <div className="flex flex-col gap-[22px]">
+          {/* **Ce qu'il faut produire, et ce que le jeu impose** (RV12) — l'ancien
+              onglet *Objectif & règles*, ici plutôt qu'à un clic de plus : il se
+              montre déjà lui-même, avec son propre titre. */}
+          <section data-objectif-du-sujet>
+            <ObjectifDuSujet
+              personnage={personnage}
+              projet={personnage.projet}
+              onChange={() => { relireObjectif(); onObjectifChange?.() }}
+            />
+          </section>
 
-        <section className="flex flex-col gap-[8px]">
-          <EnTeteDeSection aide="codex.chose.exemples" compte={references ? `${references.disponibles} retenue${references.disponibles > 1 ? "s" : ""} · ${references.propositions.length} proposée${references.propositions.length > 1 ? "s" : ""}` : "…"} />
-          <SesReferences
-            references={references}
-            onPromouvoir={(asset, promue) =>
-              void api
-                .promouvoirReference(personnage.identifiant, asset, promue)
-                .then((recu) => { onPersonnage(recu.personnage); setReferences(recu.references) })
-                .catch((erreur) => onErreur(erreur, "promotion refusée"))
-            }
-          />
-        </section>
+          {/* **Seuls les personnages se battent** — un décor ou un objet n'a
+              rien à choisir ici (18 septembre 2026, SC4). */}
+          {personnage.famille === "personnages" && (
+            <section data-style-de-combat className="flex flex-col gap-[8px] border-t border-trait pt-[22px]">
+              <EnTeteDeSection aide="codex.chose.style_combat" />
+              <SonStyleDeCombat
+                resolu={styleDuPersonnage}
+                catalogue={catalogueStyles}
+                onPoser={poserStyles}
+              />
+            </section>
+          )}
+        </div>}
 
-        <details className="text-[13px]"><summary className="cursor-pointer">Rangement et retrait du jeu</summary><p className="mt-[8px] text-[12px] text-encre-3">Type : {personnage.type || personnage.famille}. Retirer le sujet du jeu conserve ses fichiers et ses images.</p><button className={`${BOUTON} mt-[14px] text-echec`} disabled={occupe} onClick={() => void retirer()}>Le retirer du jeu</button></details>
-        <section><h3 className="text-[13px] font-medium">Collections</h3><div className="mt-[8px] flex flex-wrap gap-[8px]">{collections?.map(c => <span key={c.identifiant} data-collection-du-sujet={c.identifiant} className="flex items-center gap-[8px] rounded-5 bg-papier-cote px-[8px] py-[4px] text-[13px]">{c.nom}<button disabled={occupe} aria-label={`Retirer de ${c.nom}`} onClick={() => void ranger(c.identifiant, true)}>×</button></span>)}</div><div className="mt-[14px] flex gap-[8px]"><select aria-label="Ajouter à une collection" className="h-[34px] min-w-0 flex-1 rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={collection} onChange={e => setCollection(e.target.value)}><option value="">Choisir une collection</option>{groupes.filter(g => !collections?.some(c => c.identifiant === g.identifiant)).map(g => <option key={g.identifiant} value={g.identifiant}>{g.nom}</option>)}</select><button className={BOUTON} disabled={occupe || !collection} onClick={() => void ranger(collection)}>Ranger</button></div><p className="mt-[8px] text-[12px] text-encre-3">Le rangement est conservé immédiatement. Il ne change pas les règles de fabrication.</p></section>
+        {/* **Le seul geste dangereux d'ici, à part** (`RV21`) — retirer le
+            sujet du jeu, jamais mêlé aux réglages ordinaires qui s'écrivent
+            tout seuls en tapant. */}
+        {ongletFiche === "supprimer" && <section className="flex flex-col gap-[8px] rounded-7 border border-trait-attention bg-fond-attention p-[14px] text-[13px]">
+          <p>Type : {personnage.type || personnage.famille}. Retirer le sujet du jeu conserve ses fichiers et ses images — rien n’est supprimé du disque.</p>
+          <button className={`${BOUTON} self-start text-echec`} disabled={occupe} onClick={() => void retirer()}>Le retirer du jeu</button>
+        </section>}
       </div>
       <footer className="flex justify-end gap-[8px] border-t border-trait p-[14px]"><button className={BOUTON} onClick={fermer}>Annuler</button><button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50" disabled={occupe || !nom.trim() || !modifie} onClick={() => void garder()}>Garder la fiche</button></footer>
     </>} />}

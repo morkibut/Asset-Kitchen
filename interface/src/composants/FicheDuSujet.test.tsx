@@ -50,7 +50,7 @@ test("la fiche retire le sujet du jeu, après confirmation", async () => {
   const onPersonnage = vi.fn()
   render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
-  fireEvent.click(screen.getByText("Rangement et retrait du jeu"))
+  fireEvent.click(screen.getByRole("tab", { name: "Supprimer" }))
   fireEvent.click(screen.getByRole("button", { name: "Le retirer du jeu" }))
   expect(confirmer).toHaveBeenCalled()
   await waitFor(() => expect(supprimer).toHaveBeenCalledWith("pelerin"))
@@ -68,7 +68,7 @@ test("un refus de confirmation ne retire rien", async () => {
   const supprimer = vi.spyOn(api, "supprimerPersonnage")
   render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
-  fireEvent.click(screen.getByText("Rangement et retrait du jeu"))
+  fireEvent.click(screen.getByRole("tab", { name: "Supprimer" }))
   fireEvent.click(screen.getByRole("button", { name: "Le retirer du jeu" }))
   expect(supprimer).not.toHaveBeenCalled()
 })
@@ -159,6 +159,8 @@ test("la fiche coche plusieurs styles de combat, et dit celui qu'une pièce appo
 
   render(<FicheDuSujet personnage={champy} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  // Le style de combat vit dans l'onglet « Objectif & règles » (RV21).
+  fireEvent.click(screen.getByRole("tab", { name: "Objectif & règles" }))
 
   expect(await screen.findByText("(celui du Bâton de chêne)")).toBeTruthy()
   expect(screen.getByRole("checkbox", { name: "fusil" })).toBeChecked()
@@ -200,6 +202,8 @@ test("la recette de ses images se choisit parmi les recettes nommées, et se ret
 
   const { rerender } = render(<FicheDuSujet personnage={champy} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  // La recette vit dans l'onglet « Apparence » (RV21).
+  fireEvent.click(screen.getByRole("tab", { name: "Apparence" }))
 
   const select = screen.getByRole("combobox", { name: "Recette de ses images" })
   expect(screen.getByText(/Recette de ses images :/)).toBeTruthy()
@@ -252,6 +256,8 @@ test("la palette par défaut se choisit, se garde, et se relit en rouvrant la fi
   monterLaFicheQuiSeRelit(mara)
 
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  // La palette vit dans l'onglet « Apparence » (RV21).
+  fireEvent.click(screen.getByRole("tab", { name: "Apparence" }))
   const select = screen.getByRole("combobox", { name: "Palette par défaut" }) as HTMLSelectElement
   expect(select.value).toBe("")
   await screen.findByRole("option", { name: "Braises — 3 couleurs" })
@@ -265,6 +271,8 @@ test("la palette par défaut se choisit, se garde, et se relit en rouvrant la fi
   fireEvent.click(screen.getAllByRole("button", { name: "Fermer" })[0])
   await waitFor(() => expect(screen.queryByRole("combobox", { name: "Palette par défaut" })).toBeNull())
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  // Refermée puis rouverte, la fiche revient sur son premier onglet.
+  fireEvent.click(screen.getByRole("tab", { name: "Apparence" }))
   await screen.findByRole("option", { name: "Braises — 3 couleurs" })
   expect((screen.getByRole("combobox", { name: "Palette par défaut" }) as HTMLSelectElement).value).toBe("braises")
   // Et ses pastilles se montrent sous le choix.
@@ -280,6 +288,7 @@ test("une palette supprimée se dit sur la fiche, et le sujet est retombé sur a
   doublerLaFiche()
   monterLaFicheQuiSeRelit(mara)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  fireEvent.click(screen.getByRole("tab", { name: "Apparence" }))
   expect((screen.getByRole("combobox", { name: "Palette par défaut" }) as HTMLSelectElement).value).toBe("")
   expect(document.querySelector("[data-palette-supprimee]")?.textContent).toContain("La palette « Cendres » a été supprimée")
 })
