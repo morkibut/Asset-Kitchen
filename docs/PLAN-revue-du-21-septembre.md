@@ -492,19 +492,42 @@ pas comment se servir du chutier, ni quelle image est choisie.
 
 ### Critères d'acceptation
 
-- [ ] **L'image choisie se voit au premier coup d'œil** dans le ruban — plus qu'un fin liseré.
-- [ ] **« Retirer » et « Dupliquer » sont visibles** à côté de l'image choisie, et non cachés.
-- [ ] **Le chutier se comprend sans lire** : une zone visible où tombent les images retirées, en
+- [x] **L'image choisie se voit au premier coup d'œil** dans le ruban — plus qu'un fin liseré.
+- [x] **« Retirer » et « Dupliquer » sont visibles** à côté de l'image choisie, et non cachés.
+- [x] **Le chutier se comprend sans lire** : une zone visible où tombent les images retirées, en
       vignettes, qu'on peut remettre dans le ruban par un geste évident. Vide, il montre ce qu'on
       y fait en une ligne, pas un paragraphe.
-- [ ] **Ce qui vaut pour toute l'animation** (boucle ou aller-retour, point d'ancrage, reprendre
+- [x] **Ce qui vaut pour toute l'animation** (boucle ou aller-retour, point d'ancrage, reprendre
       le découpage) n'est plus écrasé dans un encart à défilement : il a une place lisible, sans
       barre de défilement interne sur un écran de 1080 px de haut.
-- [ ] Les explications en paragraphe deviennent des libellés courts ; plus de texte à chasse fixe
+- [x] Les explications en paragraphe deviennent des libellés courts ; plus de texte à chasse fixe
       pour des phrases.
-- [ ] Rien de ce qu'on sait faire aujourd'hui ne disparaît (*8nonies* : chaque réglage garde un
+- [x] Rien de ce qu'on sait faire aujourd'hui ne disparaît (*8nonies* : chaque réglage garde un
       chemin depuis l'écran).
-- [ ] Vérifié au navigateur, l'animation **en lecture** (*8octies*).
+- [x] Vérifié au navigateur, l'animation **en lecture** (*8octies*).
+
+*Fait le 23 septembre 2026.* L'image regardée porte un contour épais `--signal` avec un fond
+teinté et un liseré lumineux ; les images choisies en lot portent un contour `--encre-2` teinté —
+deux signaux distincts, jamais confondus (`ImageDeLaBande`). « retirer », « dupliquer » et les
+deux flèches de déplacement sont passés en boutons pleins juste sous le ruban qu'ils touchent. Le
+chutier n'est plus un `<details>` replié : une carte toujours ouverte, en vignettes, avec deux
+boutons directionnels (`← avant` / `après →`) par image — le geste de retour se voit sans lire.
+Ce qui vaut pour toute l'animation (le découpage, la boucle, l'ancrage, la fenêtre commune) est
+descendu dans un bandeau plein écran, en pied de l'atelier (`<footer data-reglages-de-l-animation>`),
+en quatre blocs côte à côte : plus aucun `<details>`, plus de texte en mono pour des phrases —
+mesuré sans overflow à 1920×1080 (`scrollHeight === clientHeight` sur les trois zones). Rien n'a
+bougé côté données ni réglages ; seuls les libellés associés à `data-fenetre-davant` et aux deux
+messages « écrit sans passer par Enregistrer » ont été raccourcis en gardant leurs sous-chaînes
+attendues par les essais (`Des corrections attendent`, `Enregistrez d'abord`,
+`laisserait tomber celles de l'autre`, `en garde au moins une`). Vérifié au navigateur (atelier
+jetable, port 8427, animation à 12 images, personnage « Le nain ») : sélection simple et en lot,
+retrait vers le chutier, remise dans le ruban, tout visible et sans défilement interne à
+1920×1080, lecteur en marche pendant la vérification (8octies). `npx tsc --noEmit`,
+`AtelierUnifieRetouche.test.tsx` (15/15) et `App.test.tsx` (547/547) passent ;
+`essai_vocabulaire.py` et `essai_jetons.py` ne signalent aucun écart sur ce fichier. Le chutier
+garde son propre défilement interne (`overflow-y-auto`, borné) quand il porte plusieurs images —
+c'est une liste de contenu qui grandit, pas un encart de chrome replié ; le bandeau du bas, lui,
+ne défile jamais.
 
 ---
 

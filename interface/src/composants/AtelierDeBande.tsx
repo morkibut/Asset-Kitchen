@@ -1277,7 +1277,7 @@ export function EcranAtelierDeBande({
   return (
     <div
       data-atelier-de-bande={bande.identifiant}
-      className="atelier-animation-unifie grid h-full min-h-0 grid-cols-[minmax(0,1fr)_minmax(300px,40%)] grid-rows-[auto_minmax(0,1fr)_auto] gap-[14px] bg-papier p-[14px]"
+      className="atelier-animation-unifie grid h-full min-h-0 grid-cols-[minmax(0,1fr)_minmax(300px,40%)] grid-rows-[auto_minmax(0,1fr)_auto_auto] gap-[14px] bg-papier p-[14px]"
     >
       <header className="col-span-2 flex min-w-0 items-center justify-between gap-[22px]">
         <div className="min-w-0"><h1 className="truncate font-serif text-[25px] text-encre">{bande.nom}</h1><p className="mt-[4px] text-[12px] text-encre-3">Animation · {compte} frames · {cadence} par seconde · {(Math.max(1, sens === "aller-retour" && compte > 1 ? compte * 2 - 2 : compte) / cadence).toFixed(2)} s par tour · {change ? "Brouillon de retouche" : "Version enregistrée"}</p></div>
@@ -1519,10 +1519,13 @@ export function EcranAtelierDeBande({
       </div>
       )}
 
-      {/* ── Ses images, et le lecteur sous elles ─────────────────────────── */}
+      {/* ── Ses images, le lecteur, et le chutier juste dessous ──────────────
+          RV17 : l'animation entière (boucle, ancrage, fenêtre commune) est
+          descendue dans le bandeau du bas — plus rien ici ne défile à
+          l'intérieur d'un encart replié. */}
       <aside
         {...PANNEAU}
-        className="atelier-timeline col-start-1 row-start-3 flex max-h-[300px] min-h-0 min-w-0 flex-col gap-[8px] overflow-y-auto"
+        className="atelier-timeline col-start-1 row-start-3 flex max-h-[340px] min-h-0 min-w-0 flex-col gap-[8px] overflow-y-auto"
       >
         <Lecteur joue={joue} onJoue={setJoue} cadence={cadence} onCadence={setCadence} rang={rang} compte={compte} />
         <div className="flex items-baseline gap-[8px]">
@@ -1537,22 +1540,6 @@ export function EcranAtelierDeBande({
             {toutes ? "réglages : toute l'animation" : plusieurs ? `réglages : ${choisies.length} frames` : `réglages : frame ${choisie + 1} seule`}
           </span>
         </div>
-
-        {/* **Le montage du ruban** (V3.03.3) — une bande gardée n'est pas un
-            tirage figé. Les quatre gestes sont des boutons et pas seulement des
-            raccourcis : le glissement fait la même chose à la souris, mais
-            *tout se fait au clavier autant qu'à la souris* est un critère de la
-            version, et les flèches sont déjà prises par la poussée au pixel. */}
-        <MontageDuRuban
-          choisies={choisies.length}
-          compte={compte}
-          place={placeDuChoix}
-          restants={compte - choisies.length}
-          plafond={imagesMax}
-          onRetirer={retirer}
-          onDupliquer={dupliquer}
-          onDeplacer={deplacerVers}
-        />
 
         <div className="defile flex shrink-0 gap-[8px] overflow-x-auto p-[8px]">
           {prises.map((prise, index) => (
@@ -1583,7 +1570,26 @@ export function EcranAtelierDeBande({
           ))}
         </div>
 
-        <details className="px-[8px]"><summary className="cursor-pointer text-[12px] text-encre-3">Chutier · {chutier.length} image{chutier.length > 1 ? "s" : ""}</summary><LeChutier
+        {/* **Le montage du ruban, juste sous les vignettes qu'il touche**
+            (RV17) — une bande gardée n'est pas un tirage figé. Les quatre
+            gestes sont des boutons et pas seulement des raccourcis : le
+            glissement fait la même chose à la souris, mais *tout se fait au
+            clavier autant qu'à la souris* est un critère de la version, et
+            les flèches sont déjà prises par la poussée au pixel. */}
+        <MontageDuRuban
+          choisies={choisies.length}
+          compte={compte}
+          place={placeDuChoix}
+          restants={compte - choisies.length}
+          plafond={imagesMax}
+          onRetirer={retirer}
+          onDupliquer={dupliquer}
+          onDeplacer={deplacerVers}
+        />
+
+        {/* **Le chutier reste ouvert** (RV17) — replié derrière un
+            `<summary>`, l'auteur ne le trouvait pas. */}
+        <LeChutier
           chutier={chutier}
           clipDeLaBande={bande.clip}
           contact={recu.contact}
@@ -1593,46 +1599,48 @@ export function EcranAtelierDeBande({
           onInserer={insererDuChutier}
           onVider={viderDuChutier}
           onAllerAuClip={() => setAuClip(true)}
-        /></details>
-
-        {/* **Les réglages de l'animation restent avec jouer et pause** —
-            tranché avec l'auteur le 5 septembre 2026. La vitesse, le sens, la
-            fenêtre et l'ancrage décrivent la bande entière, pas l'image qu'on
-            corrige : les laisser à gauche, sous un titre qui dit « la recette
-            de cette image », aurait fait croire qu'on règle une pose alors
-            qu'on règle les douze. */}
-        <details className="shrink-0 border-t border-trait p-[8px]"><summary className="cursor-pointer text-[12px] text-encre-3">Animation · boucle, repère et fenêtre commune</summary>
-        <div className="flex flex-col gap-[14px] pt-[8px]">
-          {onReprendreLeMontage && (
-            <RepriseDuMontage
-              melangee={bande.melangee}
-              bloquee={change}
-              onReprendre={() => onReprendreLeMontage(bande)}
-            />
-          )}
-
-          <ReglagesDeLaBande sens={sens} onSens={setSens} />
-
-          <ChoixDeLAncrage
-            ancrage={recette?.grille?.ancrage ?? "bas"}
-            onAncrage={(point) =>
-              setRecette((avant) =>
-                avant?.grille
-                  ? { ...avant, grille: { ...avant.grille, ancrage: point } }
-                  : avant,
-              )
-            }
-          />
-
-          <FenetreDeLaBande
-            cadre={bande.cadre}
-            etat={recu.cadre}
-            enCours={remesure}
-            bloquee={change}
-            onReprendre={() => void reprendreLeCadre()}
-          />
-        </div></details>
+        />
       </aside>
+
+      {/* ── Ce qui vaut pour toute l'animation ────────────────────────────
+          RV17 : la vitesse, le sens, l'ancrage et la fenêtre commune décrivent
+          la bande entière, pas l'image qu'on corrige — un bandeau à part, en
+          pleine largeur, plutôt qu'un encart replié sous le ruban. Quatre
+          blocs côte à côte : rien à faire défiler pour les lire sur un écran
+          de 1080 px de haut. */}
+      <footer
+        data-reglages-de-l-animation
+        className="atelier-reglages-animation col-span-2 row-start-4 flex flex-wrap gap-[14px] rounded-8 border border-trait bg-carte p-[14px]"
+      >
+        {onReprendreLeMontage && (
+          <RepriseDuMontage
+            melangee={bande.melangee}
+            bloquee={change}
+            onReprendre={() => onReprendreLeMontage(bande)}
+          />
+        )}
+
+        <ReglagesDeLaBande sens={sens} onSens={setSens} />
+
+        <ChoixDeLAncrage
+          ancrage={recette?.grille?.ancrage ?? "bas"}
+          onAncrage={(point) =>
+            setRecette((avant) =>
+              avant?.grille
+                ? { ...avant, grille: { ...avant.grille, ancrage: point } }
+                : avant,
+            )
+          }
+        />
+
+        <FenetreDeLaBande
+          cadre={bande.cadre}
+          etat={recu.cadre}
+          enCours={remesure}
+          bloquee={change}
+          onReprendre={() => void reprendreLeCadre()}
+        />
+      </footer>
       {/* **La fenêtre d'Enregistrer sous…** (`RP20`). Elle emporte la recette et
           le ruban en cours : ce qui sort est ce que l'écran montre, y compris
           avant d'avoir enregistré. */}
@@ -2215,11 +2223,15 @@ function ImageDeLaBande({
       aria-current={courante}
       aria-pressed={choisie}
       title={dit}
-      className={`relative flex items-center justify-center overflow-hidden border bg-pourtour ${
+      // **L'image choisie se voit au premier coup d'œil** (RV17) : un simple
+      // liseré d'un pixel se perdait dans un ruban de trente vignettes. Le
+      // contour s'épaissit et se remplit d'une teinte, pour la frame regardée
+      // comme pour tout un lot choisi — deux signaux distincts, jamais confondus.
+      className={`relative flex items-center justify-center overflow-hidden border-[3px] bg-pourtour ${
         courante
-          ? "border-signal"
+          ? "border-signal bg-signal/10 shadow-[0_0_0_2px_var(--color-signal)]"
           : choisie
-            ? "border-encre-3"
+            ? "border-encre-2 bg-encre-3/10"
             : "border-trait hover:border-encre-4"
       }`}
       style={{ width: cote, height: cote }}
@@ -2314,13 +2326,13 @@ function MontageDuRuban({
       data-montage-du-ruban
       className="flex shrink-0 flex-col gap-[4px]"
     >
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex flex-wrap items-center gap-[6px]">
         <button
           type="button"
           onClick={onRetirer}
           disabled={tout}
           aria-label={`Retirer ${mot} du ruban`}
-          className="mesure border border-trait px-1.5 py-0.5 text-[10px] text-encre-3 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-[28px] rounded-7 border border-trait bg-papier-cote px-[10px] text-[12px] text-encre-2 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
         >
           retirer
         </button>
@@ -2329,17 +2341,17 @@ function MontageDuRuban({
           onClick={onDupliquer}
           disabled={deborde}
           aria-label={`Dupliquer ${mot}`}
-          className="mesure border border-trait px-1.5 py-0.5 text-[10px] text-encre-3 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-[28px] rounded-7 border border-trait bg-papier-cote px-[10px] text-[12px] text-encre-2 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
         >
           dupliquer
         </button>
-        <span className="mesure ml-auto text-[10px] text-encre-3">déplacer</span>
+        <span className="ml-auto text-[12px] text-encre-3">déplacer</span>
         <button
           type="button"
           onClick={() => onDeplacer(place - 1)}
           disabled={place <= 0}
           aria-label={`Déplacer ${mot} vers la gauche`}
-          className="h-[22px] w-[22px] border border-trait text-[10px] text-encre-2 hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-[28px] w-[28px] rounded-7 border border-trait bg-papier-cote text-[13px] text-encre-2 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
         >
           ‹
         </button>
@@ -2348,7 +2360,7 @@ function MontageDuRuban({
           onClick={() => onDeplacer(place + 1)}
           disabled={place >= restants}
           aria-label={`Déplacer ${mot} vers la droite`}
-          className="h-[22px] w-[22px] border border-trait text-[10px] text-encre-2 hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-[28px] w-[28px] rounded-7 border border-trait bg-papier-cote text-[13px] text-encre-2 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
         >
           ›
         </button>
@@ -2413,96 +2425,99 @@ function LeChutier({
   onVider: (rang: number) => void
   onAllerAuClip: () => void
 }) {
+  // **Le chutier reste ouvert en permanence** (RV17) : replié derrière un
+  // `<summary>`, personne ne comprenait à quoi il servait. Une carte à soi,
+  // toujours visible sous le ruban — vide, elle dit en une ligne ce qu'on y
+  // fait ; pleine, chaque vignette porte ses deux gestes de retour.
   return (
     <div
       data-chutier={chutier.length}
-      className="flex shrink-0 flex-col gap-1 border-t border-trait p-2"
+      className="flex shrink-0 flex-col gap-[8px] rounded-7 border border-trait bg-papier-cote p-[10px]"
     >
-      <div className="flex items-baseline gap-2">
+      <div className="flex items-baseline gap-[8px]">
         <Libelle aide="bande.chutier">le chutier</Libelle>
+        <span className="text-[12px] text-encre-3">
+          {chutier.length} image{chutier.length > 1 ? "s" : ""}
+        </span>
         <button
           type="button"
           onClick={onAllerAuClip}
-          className="mesure ml-auto text-[10px] text-signal hover:text-encre"
+          className="ml-auto h-[26px] rounded-7 border border-trait bg-carte px-[10px] text-[12px] text-signal hover:text-encre"
         >
           prendre des images dans le clip ›
         </button>
       </div>
 
       {chutier.length === 0 ? (
-        <p className="mesure text-[10px] leading-4 text-encre-3">
-          Vide. Ce que tu retires du ruban vient ici, avec sa recette, et se
-          repose où tu veux — <b className="text-encre-2">retirer n'est pas
-          jeter</b>.
+        <p className="text-[12px] leading-snug text-encre-3">
+          Vide — <b className="text-encre-2">retirer n'est pas jeter</b> :
+          les images retirées du ruban tombent ici, avec leur recette.
         </p>
       ) : (
-        <>
-          <ul className="defile flex max-h-[132px] flex-col gap-1 overflow-y-auto">
-            {chutier.map((prise, rang) => {
-              const venue = prise.clip || clipDeLaBande
-              const combien = imagesParClip[venue] ?? 0
-              return (
-                <li
-                  key={`${venue}-${prise.numero}-${rang}`}
-                  data-au-chutier={prise.numero}
-                  className="flex items-center gap-1.5 border border-trait bg-carte p-1"
-                >
-                  <CaseDuContact
-                    clip={venue}
-                    numero={prise.numero}
-                    images={combien}
-                    contact={contact}
-                    cote={32}
-                  />
-                  <span className="mesure text-[10px] text-encre-3">
-                    image {prise.numero}
-                    {prise.recette && (
-                      <b
-                        data-recette-au-chutier
-                        title="elle garde la recette qu'elle avait dans l'animation"
-                        className="ml-1 text-encre-2"
-                      >
-                        · sa recette
-                      </b>
-                    )}
-                  </span>
+        <ul className="defile flex max-h-[168px] flex-col gap-[6px] overflow-y-auto">
+          {chutier.map((prise, rang) => {
+            const venue = prise.clip || clipDeLaBande
+            const combien = imagesParClip[venue] ?? 0
+            return (
+              <li
+                key={`${venue}-${prise.numero}-${rang}`}
+                data-au-chutier={prise.numero}
+                className="flex items-center gap-[8px] rounded-7 border border-trait bg-carte p-[6px]"
+              >
+                <CaseDuContact
+                  clip={venue}
+                  numero={prise.numero}
+                  images={combien}
+                  contact={contact}
+                  cote={40}
+                />
+                <span className="text-[12px] text-encre-2">
+                  image {prise.numero}
+                  {prise.recette && (
+                    <b
+                      data-recette-au-chutier
+                      title="elle garde la recette qu'elle avait dans l'animation"
+                      className="ml-1 text-encre-3"
+                    >
+                      · sa recette
+                    </b>
+                  )}
+                </span>
+                <span className="ml-auto flex items-center gap-[4px]">
                   <button
                     type="button"
                     onClick={() => onInserer(rang, "avant")}
                     disabled={plein}
                     aria-label={`Poser l'image ${prise.numero} avant l'image ${ancre}`}
-                    className="mesure ml-auto border border-trait px-1 py-0.5 text-[10px] text-encre-3 hover:border-signal hover:text-signal disabled:opacity-40"
+                    title={`la reposer avant l'image ${ancre}`}
+                    className="h-[26px] rounded-7 border border-trait px-[8px] text-[12px] text-encre-2 hover:border-signal hover:text-signal disabled:opacity-40"
                   >
-                    avant
+                    ← avant
                   </button>
                   <button
                     type="button"
                     onClick={() => onInserer(rang, "apres")}
                     disabled={plein}
                     aria-label={`Poser l'image ${prise.numero} après l'image ${ancre}`}
-                    className="mesure border border-trait px-1 py-0.5 text-[10px] text-encre-3 hover:border-signal hover:text-signal disabled:opacity-40"
+                    title={`la reposer après l'image ${ancre}`}
+                    className="h-[26px] rounded-7 border border-trait px-[8px] text-[12px] text-encre-2 hover:border-signal hover:text-signal disabled:opacity-40"
                   >
-                    après
+                    après →
                   </button>
                   <button
                     type="button"
                     onClick={() => onVider(rang)}
                     aria-label={`Laisser tomber l'image ${prise.numero} du chutier`}
                     title="elle reste dans le clip, on peut la reprendre"
-                    className="mesure px-1 text-[10px] text-encre-3 hover:text-signal"
+                    className="h-[26px] w-[26px] rounded-7 text-[13px] text-encre-3 hover:text-signal"
                   >
                     ×
                   </button>
-                </li>
-              )
-            })}
-          </ul>
-          <p className="mesure text-[10px] leading-4 text-encre-3">
-            Elles se posent <b className="text-encre-2">avant ou après l'image{" "}
-            {ancre}</b>, celle que les tables règlent — pas celle qui passe à
-            l'écran.
-          </p>
-        </>
+                </span>
+              </li>
+            )
+          })}
+        </ul>
       )}
     </div>
   )
@@ -2699,22 +2714,21 @@ function RepriseDuMontage({
   onReprendre: () => void
 }) {
   return (
-    <div data-reprise-du-montage className="flex flex-col gap-1">
+    <div data-reprise-du-montage className="flex min-w-[220px] flex-1 flex-col gap-[6px]">
       <Libelle aide="bande.montage">le découpage</Libelle>
       <button
         type="button"
         disabled={melangee || bloquee}
         onClick={onReprendre}
-        className="mesure self-start border border-trait px-2 py-1 text-[10px] text-encre-3 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
+        className="h-[30px] self-start rounded-7 border border-trait px-[10px] text-[12px] text-encre-2 hover:border-signal hover:text-signal disabled:cursor-not-allowed disabled:opacity-40"
       >
         Reprendre le montage ›
       </button>
-      <p className="mesure text-[10px] leading-4 text-encre-3">
+      <p className="text-[12px] leading-snug text-encre-3">
         {melangee ? (
           <>
-            Cette animation prend ses images dans{" "}
-            <b className="text-encre-2">plusieurs clips</b>, et le montage n'en
-            montre qu'un : y reprendre le découpage laisserait tomber celles de
+            <b className="text-encre-2">Plusieurs clips</b> dans cette
+            animation : y reprendre le découpage laisserait tomber celles de
             l'autre.
           </>
         ) : bloquee ? (
@@ -2726,16 +2740,13 @@ function RepriseDuMontage({
               se lisent comme une seule répétée — le défaut trouvé au navigateur
               le 5 septembre 2026, sur la V3.03.2. */
           <>
-            <b className="text-encre-2">Des corrections attendent</b>, et le
-            montage écrit sur l'animation : les enregistrer d'abord évite de les
-            perdre en chemin.
+            <b className="text-encre-2">Des corrections attendent</b> — le
+            montage écrit sur l'animation, enregistre d'abord.
           </>
         ) : (
           <>
-            La pellicule du clip, avec{" "}
-            <b className="text-encre-2">les images déjà retenues</b> et la
-            vitesse de cette animation. Ce que tu gardes revient ici, recettes
-            comprises ; ce que tu laisses tombe au chutier.
+            La pellicule du clip, avec <b className="text-encre-2">les images
+            déjà retenues</b>. Ce que tu laisses tombe au chutier.
           </>
         )}
       </p>
@@ -3029,17 +3040,17 @@ function ReglagesDeLaBande({
   onSens: (v: "boucle" | "aller-retour") => void
 }) {
   return (
-    <div className="flex flex-col gap-1 border-t border-trait pt-2">
+    <div className="flex min-w-[160px] flex-col gap-[6px]">
       <Libelle aide="bande.recette">ce qui vaut pour l'animation</Libelle>
-      <div className="mt-1 flex items-center gap-2">
-        <span className="mesure text-[10px] text-encre-3">Boucler</span>
+      <div className="flex items-center gap-[8px]">
+        <span className="text-[12px] text-encre-3">Boucler</span>
         {(["boucle", "aller-retour"] as const).map((choix) => (
           <button
             key={choix}
             type="button"
             onClick={() => onSens(choix)}
             aria-pressed={sens === choix}
-            className={`mesure border px-1.5 py-0.5 text-[10px] ${
+            className={`h-[28px] rounded-7 border px-[10px] text-[12px] ${
               sens === choix
                 ? "border-signal text-signal"
                 : "border-trait text-encre-3 hover:text-encre"
@@ -3082,9 +3093,9 @@ function FenetreDeLaBande({
   const bas = cadre.bas ?? 0
   const pose = droite > gauche && bas > sommet
   return (
-    <div data-fenetre className="flex flex-col gap-1 border-t border-trait pt-2">
+    <div data-fenetre className="flex min-w-[220px] flex-1 flex-col gap-[6px]">
       <Libelle aide="bande.cadre">la fenêtre commune</Libelle>
-      <p className="mesure text-[10px] leading-4 text-encre-3">
+      <p className="text-[12px] leading-snug text-encre-3">
         {pose ? (
           <>
             <b className="text-encre-2">
@@ -3098,9 +3109,8 @@ function FenetreDeLaBande({
       </p>
 
       {!etat.a_jour && (
-        <p data-fenetre-davant className="mesure text-[10px] leading-4 text-signal">
-          Elle a été mesurée avec d'autres réglages. L'aperçu se cale sur les
-          images de l'animation, et la fenêtre se remesure en enregistrant.
+        <p data-fenetre-davant className="text-[12px] leading-snug text-signal">
+          Mesurée avec d'autres réglages — elle se remesure en enregistrant.
         </p>
       )}
 
@@ -3108,14 +3118,14 @@ function FenetreDeLaBande({
         type="button"
         disabled={enCours || bloquee}
         onClick={onReprendre}
-        className="mesure self-start border border-trait px-2 py-1 text-[10px] text-encre-3 hover:text-encre disabled:opacity-40"
+        className="h-[30px] self-start rounded-7 border border-trait px-[10px] text-[12px] text-encre-2 hover:text-encre disabled:opacity-40"
       >
         {enCours ? "on remesure…" : "Reprendre la fenêtre"}
       </button>
-      <p className="mesure text-[10px] leading-4 text-encre-3">
+      <p className="text-[12px] leading-snug text-encre-3">
         {bloquee
-          ? "Enregistrez d'abord : reprendre la fenêtre écrit sur l'animation, et le faire par-dessus des réglages en cours la laisserait à moitié neuve."
-          : "Une vingtaine de secondes — toutes les images sont redétourées et remesurées. Rien n'est dépensé."}
+          ? "Enregistrez d'abord : reprendre la fenêtre écrit sur l'animation en cours."
+          : "Environ 20 secondes, tout est redétouré et remesuré — rien n'est dépensé."}
       </p>
     </div>
   )
@@ -3320,33 +3330,34 @@ function ChoixDeLAncrage({
   onAncrage: (point: Ancrage) => void
 }) {
   return (
-    <div className="flex flex-col gap-1 border-t border-trait pt-2">
+    <div className="flex min-w-[180px] flex-col gap-[6px]">
       <Libelle aide="grille.ancrage">par où l'animation tient</Libelle>
-      <div
-        data-ancrages
-        role="radiogroup"
-        aria-label="par où l'animation tient dans sa case"
-        className="grid w-[72px] grid-cols-3 gap-px border border-trait bg-trait"
-      >
-        {ANCRAGES.flat().map((point) => (
-          <button
-            key={point}
-            type="button"
-            role="radio"
-            aria-checked={ancrage === point}
-            aria-label={MOT_DE_L_ANCRAGE[point]}
-            title={MOT_DE_L_ANCRAGE[point]}
-            onClick={() => onAncrage(point)}
-            className={`h-5 w-5 ${
-              ancrage === point ? "bg-signal" : "bg-carte hover:bg-papier-cote"
-            }`}
-          />
-        ))}
+      <div className="flex items-center gap-[10px]">
+        <div
+          data-ancrages
+          role="radiogroup"
+          aria-label="par où l'animation tient dans sa case"
+          className="grid w-[72px] grid-cols-3 gap-px border border-trait bg-trait"
+        >
+          {ANCRAGES.flat().map((point) => (
+            <button
+              key={point}
+              type="button"
+              role="radio"
+              aria-checked={ancrage === point}
+              aria-label={MOT_DE_L_ANCRAGE[point]}
+              title={MOT_DE_L_ANCRAGE[point]}
+              onClick={() => onAncrage(point)}
+              className={`h-5 w-5 ${
+                ancrage === point ? "bg-signal" : "bg-carte hover:bg-papier-cote"
+              }`}
+            />
+          ))}
+        </div>
+        <p className="text-[12px] leading-snug text-encre-3">
+          {MOT_DE_L_ANCRAGE[ancrage] ?? MOT_DE_L_ANCRAGE.bas}
+        </p>
       </div>
-      <p className="mesure text-[10px] leading-4 text-encre-3">
-        {MOT_DE_L_ANCRAGE[ancrage] ?? MOT_DE_L_ANCRAGE.bas}. Un personnage tient
-        par ses pieds, une bannière par son haut, une porte par son côté.
-      </p>
     </div>
   )
 }
