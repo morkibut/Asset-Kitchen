@@ -5247,6 +5247,10 @@ export const api = {
     /** **La première planche** (TS3), lue avant de payer — même drapeau que
      *  `generer`. */
     premiere_planche?: boolean
+    /** **La toile** (TS4) — même drapeau que `generer`. Avec `repris`, ni
+     *  l'ambiance ni les artworks ne partent : la relecture doit l'envoyer
+     *  pour dire exactement ce qui part. */
+    brut?: boolean
   }) =>
     appeler<Envoi>("/outgoing", {
       method: "POST",

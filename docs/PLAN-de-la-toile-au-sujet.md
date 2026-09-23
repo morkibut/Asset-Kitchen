@@ -210,6 +210,19 @@ local, 1 hors de ce fichier — et non touchés). `tsc --noEmit` propre, `essai_
 écarts jetons/Retouche.tsx restants sont connus d'avance). Non vérifié au navigateur : pas
 d'`interface/dist` dans le worktree (`AGENTS.md`).
 
+*Corrigé le 24 septembre 2026 après relecture.* Deux défauts. **« C'est la référence » proposait
+une vue** : après une première planche, les cases ne portent que ses vues, la feuille entière n'en
+a aucune — une vue était promue en planche du sujet, sans ordre de vues. La candidate est
+désormais la feuille : `idDeLaCandidate` fait passer les vues d'une planche devant les images
+isolées et propose leur `planche` (une image isolée reste valable sans vue, `TS3` décision 3).
+Tranché : **les deux côtés**, parce qu'un seul ne suffisait pas — la feuille ne tombe plus non plus
+dans « Pas encore rangé » (`en_attente`, `production.py`) tant qu'une de ses vues est rangée, la
+règle des clips dont on a tiré des bandes ; elle n'y était proposée à « Écarter » et
+« Supprimer » que comme une image perdue. Sortie de ses cases, elle y revient. **« Rien encore »
+à un sujet qui a des images** : le bandeau compte maintenant aussi ce qui attend d'être rangé
+(même route que « Pas encore rangé »), et se tait. Essais : `tests/test_ts8_planche_candidate.py`
+et deux essais neufs dans `PageDuSujet.test.tsx`, chacun vérifié en défaisant le correctif.
+
 ### TS11 · La première planche d'un sujet dont le concept art est une carte
 
 *Défaut vu par l'auteur le 23 septembre 2026, en préparant l'essai payé de `TS3` sur Elias* :
@@ -359,6 +372,17 @@ brut (`octets(asset, brut=True)`) plutôt que le rendu. « Ce qui part » réuti
 (`/outgoing`) tel quel, replié sous un bouton, fermé par défaut. Non vérifié au navigateur : la
 tranche a été vérifiée par essais seulement (`ToileFabrique.test.tsx`, `test_ts4.py`,
 `test_ts2.py`), pas par une session d'usage.
+
+*Corrigé le 24 septembre 2026 après relecture.* Le troisième critère n'était tenu que pour le
+texte : case « avec le style du jeu » décochée, un artwork marqué « tous » partait encore en
+image. Désormais `brut` et `repris` ensemble (`sans_le_style_du_jeu`, `generation.py`) retirent
+l'ambiance et les artworks, à la soumission, à l'aperçu et dans le compte de « Ce qui part » — une
+seule fonction pour les trois. Case cochée, ou hors de la toile, rien ne change : `repris` seul ne
+touche toujours que le texte (R2). `/outgoing` et `/prompt/preview` reçoivent `brut` pour le dire.
+**Reste une ligne** : la relecture « Ce qui part » de la barre (`RepliCeQuiPart`,
+`ToileFabrique.tsx`) doit envoyer `brut: true` à `api.envoi` — sans elle, elle annonce encore
+l'artwork que l'appel n'envoie plus. Essais : `tests/test_ts4_artworks.py` (sept, dont trois qui
+vérifient que les autres chemins ne bougent pas), vérifié en défaisant le correctif.
 
 ### TS5 · Le texte d'une image reste sur sa carte
 
@@ -557,6 +581,14 @@ reçues, et une liste vide plutôt qu'absente). Essais d'écran : `Toile.test.ts
 le correctif, 8octies), `Tableau.test.tsx` (le bouton `Encore ›`, gardé par `carte.phrase` comme
 `Reprendre ce texte`). Non vérifié au navigateur : pas d'`interface/dist` dans ce worktree
 (`AGENTS.md`).
+
+*Corrigé le 24 septembre 2026 après relecture.* L'hypothèse ci-dessus était fausse :
+`generation.references` porte tout ce qui est parti, et une échelle vide envoie quand même les
+artworks marqués « tous » (rôle `style`). « Encore » les reprenait donc comme des cartes prises à
+la main, en image à modifier, et reliait le résultat à eux. `referencesDEncore` écarte désormais le
+rôle `style` — une carte prise part toujours en `edition` —, et le serveur les rajoute seul si la
+case « avec le style du jeu » revient cochée. Voir aussi la correction de `TS4`. Essai :
+`Toile.test.tsx`, un cas neuf.
 
 ## Ce que ce plan ne couvre pas
 

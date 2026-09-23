@@ -845,6 +845,10 @@ class CorpsApercu(BaseModel):
     sujets: list[str] | None = None
     # La première planche (TS3) — même drapeau que `CorpsGeneration`.
     premiere_planche: bool = False
+    # La toile (TS4) — même drapeau que `CorpsGeneration`. Avec `repris`, il
+    # retire l'ambiance et les artworks de ce qui part : la relecture doit le
+    # recevoir pour le dire.
+    brut: bool = False
 
 
 @routeur.post("/prompt/preview")
@@ -884,6 +888,7 @@ async def apercu_prompt(requete: Request, corps: CorpsApercu) -> dict[str, Any]:
         garder_mise_en_page=corps.garder_mise_en_page,
         sujets=corps.sujets,
         premiere_planche=corps.premiere_planche,
+        brut=corps.brut,
     )
 
 
@@ -938,6 +943,7 @@ async def envoi(requete: Request, corps: CorpsEnvoi) -> dict[str, Any]:
         garder_mise_en_page=corps.garder_mise_en_page,
         sujets=corps.sujets,
         premiere_planche=corps.premiere_planche,
+        brut=corps.brut,
     )
 
 

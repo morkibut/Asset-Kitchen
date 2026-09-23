@@ -871,4 +871,18 @@ describe("« Encore » : les références de l'appel d'origine, reconstituées (
       referencesDEncore(phrase([{ asset: "artwork-1", role: "reference", origine: "asset" }])),
     ).toEqual([])
   })
+
+  // **Corrigé le 24 septembre 2026 après relecture** : un artwork marqué
+  // « tous » partait avec l'appel (rôle `style`, origine `carte`) et « Encore »
+  // le reprenait comme une carte prise à la main — en image à modifier.
+  test("un artwork ajouté par le style du jeu ne revient pas en image à modifier", () => {
+    expect(
+      referencesDEncore(
+        phrase([
+          { asset: "renard", role: "edition", origine: "carte" },
+          { asset: "artwork-tous", role: "style", origine: "carte" },
+        ]),
+      ),
+    ).toEqual(["renard"])
+  })
 })

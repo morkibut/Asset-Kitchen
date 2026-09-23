@@ -832,6 +832,55 @@ test("une image déjà posée, un concept art et aucune planche : « C'est la r�
   await waitFor(() => expect(onPersonnage).toHaveBeenCalledWith(rendu.personnage))
 })
 
+// **Corrigé le 24 septembre 2026 après relecture.** Après une première
+// planche, les cases ne portent que ses vues (chacune avec `planche`) ; la
+// feuille entière n'occupe aucune case. Le bandeau proposait une vue — un
+// seul angle promu en planche du sujet.
+test("après une première planche, « C'est la référence » promeut la planche entière, jamais une vue", async () => {
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue({ ...REFERENCES_VIDES, lignes: [LIGNE_CONCEPT_ART] })
+  const lire = vi.spyOn(api, "lireAsset").mockResolvedValue(
+    image({ identifiant: "feuille-0", generation: "feuille", pose: null, direction: null, empreinte: "ef" }),
+  )
+  const choisir = vi.spyOn(api, "choisirLaPlanche").mockResolvedValue({
+    personnage: sujet({ concept_arts: ["carte-1"] }),
+    references: { ...REFERENCES_VIDES, lignes: [LIGNE_CONCEPT_ART] },
+  })
+  const vue = (identifiant: string, direction: string, rang: number) =>
+    image({ identifiant, generation: "feuille", rang, direction, planche: "feuille-0" })
+  monter({
+    concept_arts: ["carte-1"],
+    cases: [
+      sienne({ pose: "repos", images: [vue("feuille-100", "sud", 100), vue("feuille-103", "ouest", 103)] }),
+      sienne({ pose: "marche" }),
+    ],
+  })
+  expect(await screen.findByText("Sa planche est arrivée")).toBeTruthy()
+  expect(document.querySelector("[data-candidate]")?.getAttribute("data-candidate")).toBe("feuille-0")
+  // La vignette est celle de la feuille, relue par son identifiant.
+  await waitFor(() => expect(lire).toHaveBeenCalledWith("feuille-0"))
+  fireEvent.click(screen.getByRole("button", { name: "C'est la référence" }))
+  await waitFor(() => expect(choisir).toHaveBeenCalledWith("le-pelerin", "feuille-0"))
+})
+
+// **Corrigé le 24 septembre 2026 après relecture** : un sujet sans concept
+// art dont toutes les images attendent dans « Pas encore rangé » s'entendait
+// dire « Rien encore sur ce sujet ».
+test("des images en attente d'être rangées : pas de « Rien encore »", async () => {
+  const attente = vi.spyOn(api, "enAttenteDuSujet").mockResolvedValue({
+    personnage: "le-pelerin",
+    images: [image({ identifiant: "importee", pose: null, direction: null })],
+    clips: [],
+    animations: [],
+  })
+  const { appels } = monter({ cases: [sienne({ pose: "repos" }), sienne({ pose: "marche" })] })
+  await waitFor(() => expect(attente).toHaveBeenCalled())
+  await waitFor(() => expect(appels.some((a) => /\/characters\/[^/]+\/references$/.test(a.url))).toBe(true))
+  // Laisser les deux lectures revenir avant de conclure à l'absence.
+  await new Promise((r) => setTimeout(r, 30))
+  expect(screen.queryByText("Fabriquer sa première image")).toBeNull()
+  expect(document.querySelector("[data-prochain-geste]")).toBeNull()
+})
+
 test("une planche déjà choisie : le bandeau n'a plus rien à imposer", async () => {
   vi.spyOn(api, "referencesDeLaChose").mockResolvedValue({
     ...REFERENCES_VIDES,
