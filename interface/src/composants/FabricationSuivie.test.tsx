@@ -138,7 +138,7 @@ test("un modèle local montre la mémoire libre et avertit sous le besoin mesur�
   render(<FabricationSuivie projet="jeu" personnages={[personnage]} modeleInitial="maison/wan-2.2-i2v-14b-pixel" onClip={() => {}} onFermer={() => {}} />)
   await screen.findByRole("option", { name: /Wan 2.2/ })
   expect(await screen.findByText(/Mémoire libre : 0,9 Go/)).toBeTruthy()
-  expect(screen.getByText(/environ 6 Go.*ferme les autres calculs/)).toBeTruthy()
+  expect(screen.getByText(/environ 6 Go.*ferme les autres programmes/)).toBeTruthy()
   // Jamais l'identifiant technique du pilote.
   expect(screen.queryByText(/cuda:0/)).toBeNull()
 })

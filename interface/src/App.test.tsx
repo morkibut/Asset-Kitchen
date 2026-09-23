@@ -21419,17 +21419,9 @@ describe("B0 — la navigation de l'atelier", () => {
     })
     fireEvent.click(screen.getByRole("button", { name: "Créer le sujet" }))
 
-    const onglets = await screen.findByRole("tablist", { name: "Les onglets de sa fiche" })
-    await waitFor(() =>
-      expect(within(onglets).getByRole("tab", { name: "Images" })).toHaveAttribute(
-        "aria-selected",
-        "true",
-      ),
-    )
-    expect(within(onglets).getByRole("tab", { name: "Animations" })).toHaveAttribute(
-      "aria-selected",
-      "false",
-    )
+    await screen.findByRole("tablist", { name: "Les onglets de sa fiche" })
+    await waitFor(() => expect(ouverture("Images")).toBe("true"))
+    expect(ouverture("Animations")).toBe("false")
   })
 
   // ── B5 — la barre de complétude, les manques, et la feuille en attente ────

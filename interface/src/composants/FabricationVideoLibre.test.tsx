@@ -111,7 +111,7 @@ test("le modèle local montre la mémoire libre en clair, et avertit sous le bes
   await screen.findByRole("option", { name: /maison\/wan/ })
   fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: local.identifiant } })
   expect(await screen.findByText(/Mémoire libre : 0,9 Go/)).toBeInTheDocument()
-  expect(screen.getByText(/environ 6 Go.*ferme les autres calculs/)).toBeInTheDocument()
+  expect(screen.getByText(/environ 6 Go.*ferme les autres programmes/)).toBeInTheDocument()
   // Jamais l'identifiant technique du pilote.
   expect(screen.queryByText(/cuda:0/)).not.toBeInTheDocument()
 })

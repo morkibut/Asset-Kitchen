@@ -777,11 +777,11 @@ export function ReglagesDuDetourage({
       return (
         // **Une passe, une carte** (22 septembre 2026) : un simple filet ne
         // séparait pas une passe de la suivante ni du reste du panneau.
-        <section key={rang} data-passe={rang} className="flex flex-col gap-[12px] rounded-8 border border-trait bg-papier p-[12px]">
+        <section key={rang} data-passe={rang} className="flex flex-col gap-[14px] rounded-8 border border-trait bg-papier p-[14px]">
           <div className={`flex items-center justify-between gap-[8px] ${repliees.has(rang) ? "" : "border-b border-trait-faible pb-[8px]"}`}>
             <h3 className={`min-w-0 text-[13px] font-medium text-encre ${passe.masquee ? "line-through opacity-60" : ""}`}>
               <button type="button" data-replier-passe={rang} aria-expanded={!repliees.has(rang)} onClick={() => replier(rang)} className="flex items-center gap-[6px] text-left hover:text-encre-2">
-                <span aria-hidden className={`inline-block text-[10px] text-encre-3 transition-transform duration-120 ${repliees.has(rang) ? "" : "rotate-90"}`}>▶</span>
+                <span aria-hidden className={`inline-block text-[10.5px] text-encre-3 transition-transform duration-120 ${repliees.has(rang) ? "" : "rotate-90"}`}>▶</span>
                 <span>Passe {rang + 1}<span className="font-normal text-encre-3"> · {MOTEUR[passe.moteur]}</span></span>
               </button>
             </h3>
@@ -964,7 +964,7 @@ export function ReglagesDuDetourage({
               qui n'a rien à viser serait un réglage qui n'a l'air que de
               marcher. */}
           {passe.moteur === "bord" && univers.fond && (
-            <Reglage nom="Couleur du fond" aide="Devinée sur les bords de l'image, ou prise dans les règles du jeu si le sujet touche un bord.">
+            <Reglage nom="Couleur du fond" aide="Le moteur « bord » devine sur les bordures de l'image, sauf si cette passe vise la couleur déclarée du jeu — à choisir ici.">
               <Choix
                 valeurs={["", univers.fond] as const}
                 valeur={passe.couleur_du_jeu ?? ""}
@@ -1117,7 +1117,7 @@ export function ReglagesDuDetourage({
       <button
         type="button"
         onClick={() => void poser({ ...recette, passes: [...passes, PASSE_PAR_DEFAUT] })}
-        className="h-[32px] rounded-7 border border-dashed border-contour bg-carte text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+        className="h-[30px] rounded-7 border border-dashed border-contour bg-carte text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
       >
         + Ajouter une passe
       </button>
@@ -4664,7 +4664,7 @@ export function Retouche({
             ) : (
             <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
             {(panneau === "calques" || (ouverte === "main" && raison === null && !endormie)) && (
-              <button type="button" data-ouvrir-l-editeur onClick={() => setEditeur(true)} className="h-[34px] shrink-0 rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal">Éditer les pixels…</button>
+              <button type="button" data-ouvrir-l-editeur onClick={() => setEditeur(true)} className="h-[34px] shrink-0 rounded-7 border border-trait bg-carte px-[14px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre">Éditer les pixels…</button>
             )}
             {panneau === "calques" ? <ReglagesDeLaMain {...poste} section="calques" /> : raison !== null ? (
               /* **Une table indisponible s'ouvre quand même**, et son panneau

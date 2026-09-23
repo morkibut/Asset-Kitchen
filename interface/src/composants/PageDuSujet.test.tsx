@@ -203,6 +203,10 @@ function construireDouble() {
     if (url.startsWith("/api/characters/le-pelerin/export"))
       return rendre({ compte: 4, dossier: "D:/jeu", chemins: [] })
     if (/\/characters\/[^/]+\/style$/.test(url)) return rendre(HABILLAGE_VIDE)
+    if (url.includes("/styles/for-character/")) {
+      const personnage = url.split("/styles/for-character/")[1].split("?")[0]
+      return rendre({ personnage: decodeURIComponent(personnage), styles: [] })
+    }
     if (/\/characters\/[^/]+\/references$/.test(url) && (init?.method ?? "GET") === "GET")
       return rendre(REFERENCES_VIDES)
     if (/\/characters\/[^/]+\/objective/.test(url) && (init?.method ?? "GET") === "GET")
