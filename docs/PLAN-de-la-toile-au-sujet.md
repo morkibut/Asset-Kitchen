@@ -366,8 +366,11 @@ essaie ; ce qui en sort n'est pas encore un asset du jeu.
       — à trancher avec l'auteur : une case « avec le style du jeu », décochée par défaut ?
 - [x] ce qui part se relit depuis la barre avant de cliquer (le texte exact, la taille, les
       références), comme partout ailleurs
-- [x] le bouton annonce le temps ou le prix **pour la taille choisie**, et non plus « 12 s en
-      512, 16 s en 1024 »
+- [x] le bouton annonce le temps ou le prix **pour la taille choisie** tant qu'aucun tirage n'a
+      réussi ici, sur la vitesse déclarée du style, qui distingue déjà 512 et 1024 ; une fois
+      mesuré sur cette machine, il dit une **moyenne toutes tailles**, faute pour la file locale
+      de garder la taille de chaque tirage — dit en clair, jamais laissé deviner *(critère réécrit
+      le 24 septembre 2026 après relecture, voir plus bas)*
 - [x] le choix est retenu d'une fabrication à l'autre, comme le modèle et le nombre
 - [x] une image de la toile qu'on fait entrer dans un sujet (TS2) reçoit alors la recette du jeu,
       comme une image importée — l'image brute reste gardée (*traitement non destructif*)
@@ -398,10 +401,20 @@ image. Désormais `brut` et `repris` ensemble (`sans_le_style_du_jeu`, `generati
 l'ambiance et les artworks, à la soumission, à l'aperçu et dans le compte de « Ce qui part » — une
 seule fonction pour les trois. Case cochée, ou hors de la toile, rien ne change : `repris` seul ne
 touche toujours que le texte (R2). `/outgoing` et `/prompt/preview` reçoivent `brut` pour le dire.
-**Reste une ligne** : la relecture « Ce qui part » de la barre (`RepliCeQuiPart`,
-`ToileFabrique.tsx`) doit envoyer `brut: true` à `api.envoi` — sans elle, elle annonce encore
-l'artwork que l'appel n'envoie plus. Essais : `tests/test_ts4_artworks.py` (sept, dont trois qui
+La relecture « Ce qui part » de la barre (`RepliCeQuiPart`, `ToileFabrique.tsx`) envoie
+`brut: true` à `api.envoi`, et `ToileFabrique.test.tsx` le vérifie. Essais : `tests/test_ts4_artworks.py` (sept, dont trois qui
 vérifient que les autres chemins ne bougent pas), vérifié en défaisant le correctif.
+
+**Corrigé le 24 septembre 2026 après relecture.** Le critère du temps par taille ne tenait
+qu'à moitié : `ToileFabrique.tsx` (`annonce`) mesurait bien « 12 s en 512, 16 s en 1024 » quand
+aucun tirage n'avait encore réussi (la vitesse déclarée du style, coupée à la bonne clause), mais
+une fois `temps.secondes` mesuré sur cette machine, c'était la médiane de *tous* les tirages, 512
+et 1024 confondus (`atelier/services/file_locale.py`, `mesures()` ne groupe pas par taille) — le
+bouton annonçait alors un chiffre qui semblait tenir la taille choisie sans la tenir. Réparé côté
+bouton, pas côté serveur (`atelier/services/generation.py`, où vit la mesure, était hors de cette
+tranche) : `annonce` ajoute « , moyenne toutes tailles » au temps mesuré, pour dire ce qu'il est
+plutôt que de laisser deviner. Mesurer réellement par taille reste à faire côté serveur, à
+part.
 
 ### TS5 · Le texte d'une image reste sur sa carte
 

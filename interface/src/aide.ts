@@ -1126,6 +1126,21 @@ export const AIDE: Record<string, Explication> = {
       "Rien de pris : on part de rien. **Prendre comme référence**, dans le menu d'une carte, l'ajoute au-dessus de la barre ; sa croix la retire. Une taille grisée, le modèle ne la rend pas. Trop de références pour lui : le bouton refuse et le dit. « avec le style du jeu » ajoute la bible du jeu au texte. « Ce qui part » montre le texte exact. Un échec reste à sa place avec sa raison.",
   },
 
+  // **Ajoutée le 24 septembre 2026 (défaut 7 de la relecture)** : le bouton
+  // existait depuis TS7, sans entrée du recueil pour le désigner — et, à la
+  // différence de « Développer ce sujet », il ne vit que dans `Toile.tsx`,
+  // hors des fichiers touchés par cette tranche. Sa marque d'aide reste à
+  // poser, à part.
+  "toile.combiner": {
+    nom: "Combiner",
+    ou: "inspiration",
+    groupe: "La barre du tableau",
+    quoi: "Prendre plusieurs cartes choisies sur la toile comme références d'un coup, pour les mélanger en une image.",
+    change:
+      "Le champ se vide, un exemple grisé propose une piste (« les deux dans la même scène »…). Rien n'est payé avant Fabriquer.",
+    origine: "toi · choisis plusieurs cartes image sur la toile, puis clique Combiner",
+  },
+
   // Le menu d'une carte
 
   "carte.groupe": {
@@ -1231,7 +1246,7 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Une carte image",
     quoi: "Le texte tapé pour fabriquer cette image sur la toile — jamais le texte composé qui est parti au modèle.",
     change:
-      "Rien à la génération. « Reprendre ce texte » remet cette phrase dans la barre, avec le modèle et la taille d'origine, pour la corriger et relancer. « Encore » relance telle quelle, références comprises.",
+      "Rien à la génération. « Reprendre ce texte » et « Encore » remettent cette phrase dans la barre, avec le modèle, la taille et les références d'origine — prête à relancer, mais rien ne part avant que tu cliques Fabriquer.",
     origine: "la génération qui a produit cette carte · vide sur une note, une image collée, un clip, ou une carte d'avant cette tranche",
     long:
       "Ce n'est pas ce que le modèle a lu — bible du jeu repliée en tête, consignes de planche en queue comprises — c'est le texte que tu as tapé dans la barre, gardé à part avant d'être noyé dans le reste. « Reprendre ce texte » ne rejoue rien : il ouvre la barre sur ce texte-là, prête à corriger avant de relancer, exactement comme si tu venais de le taper.",
@@ -1271,6 +1286,18 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · rien tant que tu n'as pas cliqué",
     long:
       "La fenêtre « Créer un sujet » s'ouvre pré-remplie : le nom vient de la première ligne de la note, la famille de celle de la carte, la description du reste de la note. Tu peux tout corriger avant de valider. Une carte texte n'a pas ce bouton — ce qui part en portrait, ce sont des octets d'image.",
+  },
+
+  // **Ajoutée le 24 septembre 2026 (défaut 7 de la relecture)** : le bouton
+  // existait depuis TS10, sans entrée du recueil pour le désigner.
+  "carte.developper": {
+    nom: "Développer ce sujet",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "Reprendre cette image en référence pour en fabriquer une variante, dans la barre de la toile.",
+    change:
+      "Le champ se vide, un exemple grisé propose une piste (« une variante plus sombre »…). Rien n'est payé avant de cliquer Fabriquer ; le résultat se pose relié à cette carte-ci.",
+    origine: "toi · en référence d'édition, jamais retenue comme un artwork officiel",
   },
 
   "carte.source": {
@@ -1542,6 +1569,29 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Les autres planches sont dépromues. L'image reste en bibliothèque — rien n'est supprimé, rien n'est payé.",
     origine: "une planche faite par « Faire la planche des directions »",
+  },
+
+  // **Ajoutées le 24 septembre 2026 (défaut 7 de la relecture)** : les deux
+  // gestes de fin du bandeau « Pas encore rangé » (RV22), sans entrée du
+  // recueil pour les désigner.
+  "bandeau.ecarter": {
+    nom: "Écarter",
+    groupe: "Pas encore rangé",
+    ou: "sujet",
+    quoi: "Détacher cette image du sujet sans la supprimer — elle retourne à la bibliothèque, libre pour un autre sujet.",
+    change:
+      "Rien n'est perdu ni repayé. Un bref instant pour l'annuler : elle se rattache alors avec la pose et la direction qu'elle portait avant.",
+    origine: "toi · dans « Pas encore rangé »",
+  },
+
+  "bandeau.supprimer": {
+    nom: "Supprimer",
+    groupe: "Pas encore rangé",
+    ou: "sujet",
+    quoi: "Le jugement de la Galerie, ici même : l'image quitte la bibliothèque — le même geste, la même annulation.",
+    change:
+      "Un bref instant pour l'annuler. Une planche partagée par d'autres images refuse ici et renvoie vers la Galerie, qui pose la question entière.",
+    origine: "toi · dans « Pas encore rangé »",
   },
 
   // ── La barre qui paie — ce qu'on touche à chaque génération (GU6) ─────────
@@ -3289,10 +3339,10 @@ export const AIDE: Record<string, Explication> = {
     nom: "Parcourir et juger les animations",
     ou: "sujet",
     groupe: "Ses animations",
-    quoi: "Une pose ou un mouvement repliable, puis une rangée par direction ; une galerie en grand se filtre en dessous.",
-    change: "Le jugement distingue la retenue, les versions à juger et les écartées. Les filtres changent uniquement la vue.",
-    origine: "Ses animations · Mouvement / Direction / Jugement",
-    long: "La retenue reste à gauche, les essais arrivent à sa suite, puis les écartées à droite. La flèche des écartées les masque sans les supprimer. Survole une vignette ou donne-lui le focus au clavier pour voir toute son animation dans son cadre commun. Ouvrir une animation puis revenir retrouve la sélection et les filtres du sujet.",
+    quoi: "Une rangée par direction — la retenue à gauche, les versions à juger ensuite, les clips pas encore montés à droite.",
+    change: "Deux onglets seulement : toutes, ou à départager. Le jugement distingue la retenue, les gardées et les écartées.",
+    origine: "Ses animations · toutes / à départager",
+    long: "La retenue reste à gauche, les versions à juger arrivent à sa suite, puis les clips pas encore montés tout à droite. Survole une vignette ou donne-lui le focus au clavier pour voir toute son animation dans son cadre commun. « à départager » n'isole que les rangées où un choix reste à faire.",
   },
   // **Déplacée sous `ou: "montage"` en GU11** : son propre `origine` le
   // disait déjà — « montage vidéo · Classement de l'animation » — le

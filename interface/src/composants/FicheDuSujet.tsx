@@ -49,7 +49,7 @@ import {
 } from "../api"
 import { BandeQuiTourne, sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
-import { EnTeteDeSection } from "./pieces"
+import { EnTeteDeSection, Libelle } from "./pieces"
 import { naturesChoisissables } from "../natures"
 import { ObjectifDuSujet } from "./ObjectifDuSujet"
 
@@ -119,6 +119,23 @@ export function portraitDe(personnage: Personnage, plan: Pose[]): {
   return null
 }
 
+/** Le nom du réglage que `reglerPersonnage` vient de toucher — pour le
+ *  récapitulatif « Modifié : … » du pied de la fiche (RV21, relu le 24
+ *  septembre 2026). Un seul champ part par appel (voir `poserHabillage`),
+ *  donc le premier trouvé est le bon. */
+function libelleHabillage(champs: Parameters<typeof api.reglerPersonnage>[1]): string {
+  if (champs.type !== undefined) return "Type d’objet"
+  if (champs.ambiance !== undefined) return "Ambiance"
+  if (champs.prend !== undefined) return "Ce qu’elle prend à son ambiance"
+  if (champs.eteindre) return `« ${NOM_CHAMP[champs.eteindre] ?? champs.eteindre} » éteint`
+  if (champs.rallumer) return `« ${NOM_CHAMP[champs.rallumer] ?? champs.rallumer} » rallumé`
+  if (champs.textes) {
+    const cle = Object.keys(champs.textes)[0]
+    return NOM_CHAMP[cle] ?? cle
+  }
+  return "un réglage"
+}
+
 /** Résumé toujours visible ; les réglages n'apparaissent qu'à la demande. */
 export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, onPersonnage, onErreur, onImages, onObjectifChange, demandeEdition }: {
   personnage: Personnage; plan: Pose[]; collections: Collection[] | null; groupes: GroupeDeRangement[];
@@ -161,6 +178,14 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   // **La palette de ses images** (TS12) : les palettes nommées du jeu, lues
   // dans le même aller-retour que les ambiances.
   const [palettes, setPalettes] = useState<PaletteNommee[]>([])
+  // **Ce qui a changé depuis l'ouverture** (RV21, relu le 24 septembre 2026) :
+  // la plupart des réglages de cette fiche s'enregistrent au changement, pas
+  // au clic sur « Garder la fiche » — voir la note sous `garder` plus bas
+  // pour pourquoi ce n'est pas corrigé en un « Enregistrer » unique. Ce que
+  // cette liste peut faire, c'est dire tout de suite ce qui a bougé, au pied
+  // de la fenêtre, plutôt que de laisser deviner.
+  const [changements, setChangements] = useState<string[]>([])
+  const noter = (libelle: string) => setChangements((c) => (c.includes(libelle) ? c : [...c, libelle]))
   const [occupe, setOccupe] = useState(false)
   const [survol, setSurvol] = useState(false)
   // **Changer la vignette en deux clics** (16 septembre 2026) : un bouton sur
@@ -172,7 +197,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   const bandes = [...new Map(personnage.cases.flatMap(c => c.bandes ?? []).filter(b => !b.piece && !b.supprime).map(b => [b.identifiant, b])).values()]
   const bande = bandes.find(b => b.favori) ?? bandes[0]
   const modifie = nom !== personnage.nom || description !== personnage.description
-  const ouvrir = (onglet: OngletFiche = "essentiel") => { setNom(personnage.nom); setDescription(personnage.description); setOngletFiche(onglet); setEdition(true) }
+  const ouvrir = (onglet: OngletFiche = "essentiel") => { setNom(personnage.nom); setDescription(personnage.description); setOngletFiche(onglet); setChangements([]); setEdition(true) }
   const fermer = () => { if (!modifie || window.confirm("Abandonner les modifications de la fiche ?")) setEdition(false) }
   useEffect(() => { setEdition(false) }, [personnage.identifiant])
   // **Une demande venue de l'extérieur** (RV12) — un lien qui visait autrefois
@@ -225,6 +250,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   const poserStyles = async (styles: string[]) => {
     try {
       setStyleDuPersonnage(await api.choisirStylesDuPersonnage(personnage.identifiant, styles, personnage.projet))
+      noter("Styles de combat")
     } catch (erreur) { onErreur(erreur, "le style a été refusé") }
   }
   const poserHabillage = async (champs: Parameters<typeof api.reglerPersonnage>[1]) => {
@@ -232,6 +258,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
       const rendu = await api.reglerPersonnage(personnage.identifiant, champs)
       onPersonnage(rendu.personnage)
       relireReglages()
+      noter(libelleHabillage(champs))
     } catch (erreur) { onErreur(erreur, "réglage refusé") }
   }
 
@@ -239,6 +266,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     try {
       const rendu = await api.poserRecetteDuSujet(personnage.identifiant, recette, personnage.projet)
       onPersonnage(rendu.personnage)
+      noter("Recette de ses images")
     } catch (erreur) { onErreur(erreur, "la recette a été refusée") }
   }
 
@@ -246,19 +274,40 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     try {
       const rendu = await api.poserPaletteDuSujet(personnage.identifiant, palette, personnage.projet)
       onPersonnage(rendu.personnage)
+      noter("Palette par défaut")
     } catch (erreur) { onErreur(erreur, "la palette a été refusée") }
   }
   const saPalette = palettes.find((p) => p.identifiant === personnage.palette)
 
+  // **Le seul geste qui attend « Garder la fiche »** (RV21, relu le 24
+  // septembre 2026). Le nom et la description se tapent au fil de la lettre :
+  // les enregistrer à chaque frappe ferait un appel par lettre. Les autres
+  // réglages de cette fiche (type, ambiance, recette, palette, styles de
+  // combat, textes, portrait, collections, images d'exemple) sont chacun un
+  // choix entier en un clic ou un blur — il n'y a rien à protéger d'un envoi
+  // trop tôt, et les enregistrer tout de suite évite de perdre un choix si la
+  // fenêtre se ferme d'un coup. Un seul « Enregistrer » qui retiendrait tout
+  // ferait attendre ces choix-là sans raison ; le récapitulatif ci-dessous dit
+  // ce qui a déjà été gardé, pour que rien ne reste à deviner.
   const garder = async () => {
     setOccupe(true)
-    try { const resultat = await api.reglerPersonnage(personnage.identifiant, { nom: nom.trim(), description }); onPersonnage(resultat.personnage); setEdition(false) }
+    try {
+      const resultat = await api.reglerPersonnage(personnage.identifiant, { nom: nom.trim(), description })
+      onPersonnage(resultat.personnage)
+      setEdition(false)
+    }
     catch (e) { onErreur(e, "La fiche n’a pas pu être conservée.") }
     finally { setOccupe(false) }
   }
   const ranger = async (id: string, retirer = false) => {
     setOccupe(true)
-    try { if (retirer) await api.retirerSujet(id, personnage.projet, personnage.identifiant); else await api.rangerSujet(id, personnage.projet, personnage.identifiant); setCollection(""); onRange() }
+    try {
+      if (retirer) await api.retirerSujet(id, personnage.projet, personnage.identifiant)
+      else await api.rangerSujet(id, personnage.projet, personnage.identifiant)
+      setCollection("")
+      onRange()
+      noter("Collections")
+    }
     catch (e) { onErreur(e, "Le rangement n’a pas pu être conservé.") }
     finally { setOccupe(false) }
   }
@@ -267,6 +316,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
       const rendu = await api.poserImageDeReference(personnage.identifiant, asset)
       onPersonnage(rendu.personnage)
       setChoixDuPortrait(false)
+      noter("Portrait")
     } catch (e) { onErreur(e, "L’image de référence a été refusée.") }
   }
   const retirer = async () => {
@@ -401,7 +451,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
               Une palette supprimée depuis le choix est dite en clair : le sujet
               est retombé sur aucune. */}
           <section data-palette-du-sujet className="flex flex-col gap-[4px]">
-            <label className="flex items-center gap-[8px] text-[13px]">Palette par défaut :
+            <label className="flex items-center gap-[8px] text-[13px]"><Libelle aide="codex.chose.palette">Palette par défaut :</Libelle>
               <select aria-label="Palette par défaut" className="h-[34px] min-w-0 rounded-7 border border-contour bg-carte px-[8px] text-[13px]" value={personnage.palette ?? ""} onChange={(e) => void poserPalette(e.target.value || null)}>
                 <option value="">aucune</option>
                 {personnage.palette && !saPalette && <option value={personnage.palette}>{personnage.palette}</option>}
@@ -426,7 +476,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
               onPromouvoir={(asset, promue) =>
                 void api
                   .promouvoirReference(personnage.identifiant, asset, promue)
-                  .then((recu) => { onPersonnage(recu.personnage); setReferences(recu.references) })
+                  .then((recu) => { onPersonnage(recu.personnage); setReferences(recu.references); noter("Images d’exemple") })
                   .catch((erreur) => onErreur(erreur, "promotion refusée"))
               }
             />
@@ -467,7 +517,24 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
           <button className={`${BOUTON} self-start text-echec`} disabled={occupe} onClick={() => void retirer()}>Le retirer du jeu</button>
         </section>}
       </div>
-      <footer className="flex justify-end gap-[8px] border-t border-trait p-[14px]"><button className={BOUTON} onClick={fermer}>Annuler</button><button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50" disabled={occupe || !nom.trim() || !modifie} onClick={() => void garder()}>Garder la fiche</button></footer>
+      <footer className="flex flex-col gap-[8px] border-t border-trait p-[14px]">
+        {/* **Le récapitulatif** (RV21, relu le 24 septembre 2026) : la plupart
+            des réglages de cette fiche s'enregistrent dès qu'on les touche,
+            pas au clic sur « Garder la fiche » — voir la note sous `garder`.
+            Cette ligne dit ce qui a déjà bougé plutôt que de le laisser
+            deviner. */}
+        {(changements.length > 0 || modifie) && (
+          <p data-recapitulatif-fiche className="text-[12px] text-encre-3">
+            Modifié : {[...changements, ...(modifie ? ["nom / description"] : [])].join(" · ")}.{" "}
+            {changements.length > 0 && "Déjà enregistré. "}
+            {modifie && "Le nom et la description attendent « Garder la fiche »."}
+          </p>
+        )}
+        <div className="flex justify-end gap-[8px]">
+          <button className={BOUTON} onClick={fermer}>Annuler</button>
+          <button className="h-[34px] rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal disabled:opacity-50" disabled={occupe || !nom.trim() || !modifie} onClick={() => void garder()}>Garder la fiche</button>
+        </div>
+      </footer>
     </>} />}
   </>
 }

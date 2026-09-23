@@ -129,7 +129,7 @@ test("chaque image du bandeau porte Écarter et Supprimer, à côté de Ranger d
   expect(within(carte).getByRole("button", { name: "Supprimer" })).toBeEnabled()
 })
 
-test("Écarter détache l'image du sujet (personnage: null) et la fait disparaître du bandeau", async () => {
+test("Écarter détache l'image du sujet (personnage: null) et laisse une annulation, comme Supprimer", async () => {
   vi.spyOn(api, "enAttenteDuSujet")
     .mockResolvedValueOnce({ ...VIDE, images: [image({ identifiant: "a1" })] })
     .mockResolvedValueOnce(VIDE)
@@ -138,9 +138,30 @@ test("Écarter détache l'image du sujet (personnage: null) et la fait disparaî
   await ouvrirLeBandeau()
   fireEvent.click(screen.getByRole("button", { name: "Écarter" }))
   expect(designer).toHaveBeenCalledWith("a1", null, null, null)
+  // Le bandeau se vide (l'image est partie) mais reste monté : l'annulation
+  // y vit encore, un instant — comme pour Supprimer (RV22, relu le 24 sept.).
+  expect(await screen.findByText("Plus rien à ranger pour Le pèlerin.")).toBeTruthy()
+  expect(screen.getByText(/1 écarté/)).toBeTruthy()
   await waitFor(() => expect(onChange).toHaveBeenCalled())
-  // Rien à ranger, aucune suppression en cours : le bandeau s'efface entier.
-  await waitFor(() => expect(document.querySelector("[data-bandeau-pas-encore-range]")).toBeNull())
+})
+
+test("Annuler l'écart rattache l'image avec sa pose et sa direction d'avant", async () => {
+  vi.spyOn(api, "enAttenteDuSujet")
+    .mockResolvedValueOnce({ ...VIDE, images: [image({ identifiant: "a1", direction: "ouest" })] })
+    .mockResolvedValueOnce(VIDE)
+    .mockResolvedValueOnce({ ...VIDE, images: [image({ identifiant: "a1", direction: "ouest" })] })
+  const designer = vi.spyOn(api, "designer").mockResolvedValue(image({ identifiant: "a1", personnage: null }))
+  monter()
+  await ouvrirLeBandeau()
+  fireEvent.click(screen.getByRole("button", { name: "Écarter" }))
+  const annuler = await screen.findByRole("button", { name: "Annuler ›" })
+  fireEvent.click(annuler)
+  // Rattache au même sujet, avec la pose (null ici — c'est un « pas encore
+  // rangé ») et la direction (« ouest ») qu'elle portait avant Écarter —
+  // jamais null en dur, qui perdrait une image « à confirmer ».
+  await waitFor(() => expect(designer).toHaveBeenNthCalledWith(2, "a1", "le-pelerin", null, "ouest"))
+  await waitFor(() => expect(screen.queryByText(/1 écarté/)).toBeNull())
+  expect(await screen.findByText("image a1")).toBeTruthy()
 })
 
 test("Supprimer rejoue le geste de jugement de la Galerie, avec sa même annulation", async () => {

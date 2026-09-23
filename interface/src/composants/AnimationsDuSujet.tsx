@@ -62,6 +62,7 @@ import { demandeDeRelance, type OptionsAnimer } from "../fabrication"
 import { travaux, type CaseSerie, type Retour } from "../api-travaux"
 import { retoursDeLaRangee, useRetoursDuSujet } from "../retours"
 import { CaseEnCours } from "./CaseEnCours"
+import { Libelle } from "./pieces"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. */
 const COTE = 81
@@ -793,6 +794,14 @@ export function AnimationsDuSujet({
       {/* `min-w-0` : sans lui, la surface pousse le volet hors de la fenêtre —
           voir la note d'`ImagesDuSujet.tsx`. */}
       <section className="flex min-w-0 flex-1 flex-col gap-[14px]">
+        {/* **Marque d'aide** (défaut 7 de la relecture du 24 septembre 2026) :
+            `bande.galerie` décrivait une galerie en grand avec des filtres
+            Mouvement/Direction/Jugement retirés par RV10, et rien ici ne la
+            reliait à cet écran. Réécrite pour dire les deux onglets réels ;
+            ce petit titre est le seul endroit où l'accrocher. */}
+        <h3 className="text-[13px] font-medium text-encre-2">
+          <Libelle aide="bande.galerie">Ses animations</Libelle>
+        </h3>
         <div className="flex items-center justify-between gap-[14px]">
           <p className="text-[13px] text-encre-2">
             {objectifExplicite

@@ -207,7 +207,10 @@ describe("les règles de la barre, sans écran", () => {
     // jamais cinq fois (point 8 : le prix suit les appels, pas les cases).
     expect(annonce(PAYANT, { [PAYANT.identifiant]: 0.04 }, 2)).toBe("$0,0800")
     expect(annonce(PAYANT, {}, 1)).toBe("Coût inconnu")
-    expect(annonce(QWEN, {}, 3)).toBe("≈ 12 secondes par image")
+    // **Défaut 6 de la relecture du 24 septembre 2026** : une fois mesuré, ce
+    // temps est la médiane de tous les tirages, 512 et 1024 confondus — le
+    // bouton le dit plutôt que de laisser croire à une mesure par taille.
+    expect(annonce(QWEN, {}, 3)).toBe("≈ 12 secondes par image, moyenne toutes tailles")
   })
 
   test("seules les cartes prises partent, et seules les images arrivées (TS6)", () => {
@@ -451,6 +454,9 @@ describe("la barre de fabrication", () => {
     expect(await screen.findByText("[[un héron]]")).toBeTruthy()
     expect(screen.getByText(/512 px/)).toBeTruthy()
     expect(screen.getByText(/1 image jointe/)).toBeTruthy()
+    // La relecture compte comme l'envoi : brute, donc sans les artworks du jeu (relecture du 24 sept.).
+    const relu = appels.find((a) => a.url === "/api/outgoing")
+    expect((relu?.corps as { brut?: boolean }).brut).toBe(true)
     // Un aperçu, jamais un appel qui paie.
     expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
   })

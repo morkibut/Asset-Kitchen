@@ -15,6 +15,38 @@ const BATON: StyleDeCombat = {
   masque: false,
 }
 
+// **Le récapitulatif « Modifié : … »** (RV21, relu le 24 septembre 2026) :
+// type et ambiance s'enregistrent tous les deux au changement, et le pied de
+// la fenêtre le dit — sans quoi rien ne distinguait plus « Garder la fiche »
+// de ce qui est déjà parti.
+test("le récapitulatif dit ce qui a déjà été enregistré, réglage par réglage", async () => {
+  const pelerin = { identifiant: "pelerin", nom: "Le pèlerin", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type: "", ambiance: "" } as unknown as Personnage
+  vi.spyOn(api, "objectifPersonnage").mockRejectedValue(new Error("hors sujet"))
+  vi.spyOn(api, "habillage").mockResolvedValue(null as never)
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(null as never)
+  vi.spyOn(api, "posesDesTypes").mockResolvedValue({ types: [{ nom: "coffre", poses: ["ferme", "ouvert"] }] } as never)
+  vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [{ identifiant: "brume", nom: "Brume" }] } as never)
+  vi.spyOn(api, "reglerPersonnage").mockImplementation(async (_id, champs) => ({ personnage: { ...pelerin, ...champs } }) as never)
+  render(<FicheDuSujet personnage={pelerin} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={vi.fn()} onErreur={vi.fn()} onImages={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  expect(screen.queryByText(/Modifié :/)).toBeNull()
+
+  const type = screen.getByLabelText("Type d'objet")
+  await screen.findByRole("option", { name: "coffre — 2 poses" })
+  fireEvent.change(type, { target: { value: "coffre" } })
+  await screen.findByText(/Modifié :/)
+  expect(screen.getByText(/Modifié :/)).toHaveTextContent("Modifié : Type d’objet. Déjà enregistré.")
+
+  fireEvent.change(await screen.findByLabelText("Son ambiance"), { target: { value: "brume" } })
+  await waitFor(() => expect(screen.getByText(/Modifié :/)).toHaveTextContent("Modifié : Type d’objet · Ambiance. Déjà enregistré."))
+
+  // Le nom, lui, attend « Garder la fiche » — le récapitulatif le dit à part.
+  fireEvent.change(screen.getByLabelText("Nom du sujet"), { target: { value: "Le pèlerin roux" } })
+  await waitFor(() => expect(screen.getByText(/Modifié :/)).toHaveTextContent(
+    "Modifié : Type d’objet · Ambiance · nom / description. Déjà enregistré. Le nom et la description attendent « Garder la fiche »."
+  ))
+})
+
 test("le type d'objet et l'ambiance se règlent dans la fiche du sujet", async () => {
   const pelerin = { identifiant: "pelerin", nom: "Le pèlerin", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type: "", ambiance: "" } as unknown as Personnage
   vi.spyOn(api, "objectifPersonnage").mockRejectedValue(new Error("hors sujet"))
