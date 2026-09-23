@@ -865,9 +865,26 @@ de l'auteur* : « il y a beaucoup de choses et on doit scroller très longtemps 
 
 ---
 
+## RV22 · Ce qui n'est pas encore rangé se supprime ou s'écarte
+
+**Bloquée par** : RV12 (le bandeau « Pas encore rangé »). *Ajoutée le 23 septembre 2026, sur un
+retour de l'auteur* : « si elle ne va nulle part, elle reste là pour rien ».
+
+### Critères d'acceptation
+
+- [ ] chaque image du bandeau « Pas encore rangé » porte, à côté de « Ranger », **« Écarter »**
+      (elle quitte le sujet et retourne à la Galerie, sans être supprimée) et **« Supprimer »**
+      (le geste de jugement du produit, le même que dans la Galerie, avec la même confirmation)
+- [ ] les deux gestes se défont (« Annuler » un instant, comme ailleurs dans l'atelier) ; aucun
+      ne supprime un fichier du disque sans passer par ce que la Galerie fait déjà
+- [ ] le bandeau se met à jour tout de suite et disparaît quand il n'y a plus rien à ranger
+- [ ] l'agent (MCP) sait les mêmes gestes par les mêmes services (*T7*), s'ils ne les a pas déjà
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21, RV22.
 
 ### Ce qu'on livre
 
