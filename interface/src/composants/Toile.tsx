@@ -928,11 +928,20 @@ export function originesReliees(
  * prise à la main. `referencesPrises`, à l'appel, filtre d'elle-même ce qui
  * n'existe plus ou n'est plus une image prête.
  *
+ * **Sans les références de rôle `style`** (corrigé le 24 septembre 2026 après
+ * relecture) : ce sont celles que le produit ajoute de lui-même — artworks du
+ * jeu, images d'ambiance —, jamais une carte prise à la main, qui part toujours
+ * en `edition` (`ROLE_DES_CARTES`). Les reprendre en ferait des images à
+ * modifier, et relierait le résultat à un artwork qu'on n'a pas choisi. Si la
+ * case « avec le style du jeu » revient cochée, le serveur les rajoute seul.
+ *
  * **Pure, et exportée pour ça** : c'est un filtre sur une liste, et un
  * filtre se vérifie sans navigateur.
  */
 export function referencesDEncore(phrase: PhraseDeCarte): string[] {
-  return phrase.references.filter((r) => r.origine === "carte").map((r) => r.asset)
+  return phrase.references
+    .filter((r) => r.origine === "carte" && r.role !== "style")
+    .map((r) => r.asset)
 }
 
 /** Les trois gestes du lot, **au-dessus de la toile** (`RP9`).

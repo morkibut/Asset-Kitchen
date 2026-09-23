@@ -3710,10 +3710,25 @@ class ServiceProduction:
         pas *ce qui est rangé dans telle table*.
         """
         vise = self.personnage(projet, personnage)
+        siens = self._base.assets_du_personnage(vise.identifiant, projet=projet)
+        # **Une planche dont les vues sont rangées n'attend plus** (corrigé le
+        # 24 septembre 2026 après relecture, TS8) — la règle des clips
+        # ci-dessous, pour la même raison : ce qui est rangé, ce sont ses vues,
+        # dépliées dans leurs cases à l'arrivée. La montrer ici en faisait une
+        # image perdue, proposée à « Écarter » et à « Supprimer » alors qu'elle
+        # est la référence du sujet (ou la candidate du bandeau
+        # « C'est la référence », `ProchainGeste.tsx`). Elle reste en Galerie,
+        # et sa fiche s'ouvre depuis ses vues. Une planche dont aucune vue
+        # n'est plus rangée revient ici d'elle-même.
+        feuilles_rangees = {
+            a.planche for a in siens if a.planche and a.pose is not None
+        }
         images = [
             a.en_json()
-            for a in self._base.assets_du_personnage(vise.identifiant, projet=projet)
-            if a.pose is None and not a.piece
+            for a in siens
+            if a.pose is None
+            and not a.piece
+            and a.identifiant not in feuilles_rangees
         ]
         # **Le jeu des clips est celui du sujet, et le sans-jeu compte aussi** —
         # la règle exacte d'`assets_du_personnage` juste au-dessus, et pour sa

@@ -253,12 +253,16 @@ class ServiceUnivers:
             "modele": generation.modele,
             "resolution": demande.get("resolution"),
             "repris": bool(demande.get("repris", False)),
-            # **Les références de cet appel-là, pour « Encore » (TS7).** Ce que
-            # `generation.references` porte déjà — l'auteur a posé, rien de
-            # plus, puisque `echelle` part vide depuis la barre et qu'aucun
-            # personnage n'accompagne un appel du tableau : `_reinjections` n'y
-            # ajoute donc aucun artwork de famille. Relancer exactement la même
-            # demande, c'est relancer avec exactement cette liste.
+            # **Les références de cet appel-là, pour « Encore » (TS7)** — ce que
+            # `generation.references` porte, c'est-à-dire **tout ce qui est
+            # parti**, pas seulement ce que l'auteur a posé. `echelle` vide ne
+            # retire que les artworks d'une famille : ceux marqués « tous »
+            # partent quand la case « avec le style du jeu » est cochée (rôle
+            # `style`). Case décochée, la toile part brute et il n'y en a aucun
+            # (`sans_le_style_du_jeu`, corrigé le 24 septembre 2026). C'est
+            # l'écran qui écarte le rôle `style` en reprenant la liste
+            # (`referencesDEncore`, `Toile.tsx`) : le serveur les rajoute seul
+            # si la case revient cochée.
             "references": [r.en_json() for r in generation.references],
         }
 

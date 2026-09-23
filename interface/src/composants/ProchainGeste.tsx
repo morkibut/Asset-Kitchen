@@ -14,13 +14,15 @@
  * déjà, jamais sur la façon dont il est né :
  *
  * 1. **Rien nulle part** → « Fabriquer sa première image ». Le geste le
- *    plus simple pour le cas le plus dépourvu : ni concept art, ni image.
+ *    plus simple pour le cas le plus dépourvu : ni concept art, ni image —
+ *    ni posée, ni en attente d'être rangée.
  * 2. **Un concept art (ou un portrait) et une image déjà posée, mais aucune
  *    planche choisie** → « C'est la référence ». Une planche vaut aussi
  *    pour un jeu à une seule vue (`TS3`, décision 3) : même une image seule
  *    en est une valable, et la choisir est plus urgent que d'en refaire
  *    une — sans ça, un double clic sur « Faire la planche » repaierait un
- *    appel pour rien.
+ *    appel pour rien. **Ce qui se propose est la planche entière** dès que
+ *    l'image posée en est une vue (`idDeLaCandidate`), jamais la vue.
  * 3. **Un concept art (ou un portrait) et rien de posé encore** → « Faire
  *    la planche des directions » (`TS3`), l'image qui servira à côté.
  * 4. **Une planche déjà choisie** → ce bandeau n'a plus rien à imposer : le
@@ -60,37 +62,65 @@ const VIGNETTE =
 const GRAND_BOUTON =
   "h-[34px] shrink-0 self-start rounded-7 bg-signal px-[22px] text-[13px] text-encre-sur-signal hover:bg-echec disabled:opacity-50 sm:self-auto"
 
-/** La candidate à promouvoir planche — la retenue, sinon la plus récente,
- *  toutes cases confondues. Le seul état que ce bandeau lit sur les images
- *  du sujet : y en a-t-il au moins une, et laquelle proposer. */
-function imageCandidate(personnage: Personnage): Asset | null {
+/** La candidate à promouvoir planche, **par son identifiant** — la retenue,
+ *  sinon la plus récente, toutes cases confondues.
+ *
+ *  **Une vue dépliée n'est jamais la candidate : sa planche l'est** (corrigé
+ *  le 24 septembre 2026 après relecture). Après une première planche, les
+ *  cases ne portent que ses vues ; la feuille entière, elle, n'occupe aucune
+ *  case. Proposer une vue faisait promouvoir **un seul angle** en planche du
+ *  sujet, sans ordre de vues, et toutes les poses suivantes partaient avec
+ *  lui. Les vues qui viennent d'une planche passent donc devant les images
+ *  isolées, et c'est leur `planche` qu'on propose. Une image isolée reste une
+ *  candidate valable quand il n'y a aucune vue (`TS3`, décision 3 : un jeu à
+ *  une seule vue). */
+export function idDeLaCandidate(personnage: Personnage): string | null {
   const toutes = personnage.cases.flatMap((c) => c.images)
-  if (toutes.length === 0) return null
-  const { retenue, gardees } = rangerLaLigne(toutes)
-  return retenue ?? gardees.at(-1) ?? null
+  const vues = toutes.filter((a) => a.planche)
+  const lot = vues.length > 0 ? vues : toutes
+  if (lot.length === 0) return null
+  const { retenue, gardees } = rangerLaLigne(lot)
+  const choisie = retenue ?? gardees.at(-1) ?? null
+  return choisie ? (choisie.planche ?? choisie.identifiant) : null
 }
 
 type Geste =
   | { genre: "premiere-image" }
-  | { genre: "planche-a-choisir"; candidat: Asset }
+  | { genre: "planche-a-choisir"; candidat: string }
   | { genre: "planche-a-faire" }
 
 /** **La règle, en une phrase par cas** — voir l'en-tête du fichier. `null` :
- *  rien à proposer ici, le bandeau ne se montre pas. */
+ *  rien à proposer ici, le bandeau ne se montre pas.
+ *
+ *  `enAttente` compte ce qui est à ce sujet **sans occuper de case** (« Pas
+ *  encore rangé ») : un sujet dont toutes les images attendent d'être rangées
+ *  n'est pas un sujet où il n'y a « rien encore » (corrigé le 24 septembre
+ *  2026 après relecture) — le bandeau « Pas encore rangé » prend alors le
+ *  relais. */
 export function calculerLeGeste(
   personnage: Personnage,
   references: ReferencesDeLaChose | null,
+  enAttente = 0,
 ): Geste | null {
   const planchePromue = (references?.lignes ?? []).some((l) => l.usage === "planche")
   if (planchePromue) return null
 
   const aUneSource = personnage.concept_arts.length > 0 || Boolean(personnage.image_de_reference)
   if (aUneSource) {
-    const candidat = imageCandidate(personnage)
+    const candidat = idDeLaCandidate(personnage)
     return candidat ? { genre: "planche-a-choisir", candidat } : { genre: "planche-a-faire" }
   }
 
-  return personnage.cases.some((c) => c.images.length > 0) ? null : { genre: "premiere-image" }
+  const aDesImages = personnage.cases.some((c) => c.images.length > 0) || enAttente > 0
+  return aDesImages ? null : { genre: "premiere-image" }
+}
+
+/** La vignette de la candidate : l'image posée elle-même, ou — pour une
+ *  planche, qui n'occupe aucune case — l'asset relu par son identifiant. */
+function imagePosee(personnage: Personnage, identifiant: string): Asset | null {
+  for (const c of personnage.cases)
+    for (const a of c.images) if (a.identifiant === identifiant) return a
+  return null
 }
 
 /** L'image qui servira de design — la carte de concept art, montrée telle
@@ -140,16 +170,54 @@ export function ProchainGeste({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personnage.identifiant, personnage.references.join(",")])
 
+  // **Ce qui attend d'être rangé** — la même route que le bandeau « Pas encore
+  // rangé » (`EnAttenteDuSujet.tsx`), relue quand les cases bougent. Un échec
+  // de lecture compte zéro : le bandeau retombe alors sur les seules cases,
+  // comme avant la correction.
+  const [enAttente, setEnAttente] = useState<number | null>(null)
+  useEffect(() => {
+    let vivant = true
+    void api
+      .enAttenteDuSujet(personnage.identifiant, personnage.projet)
+      .then((recu) => {
+        if (vivant)
+          setEnAttente(
+            (recu?.images?.length ?? 0) + (recu?.clips?.length ?? 0) + (recu?.animations?.length ?? 0),
+          )
+      })
+      .catch(() => { if (vivant) setEnAttente(0) })
+    return () => { vivant = false }
+  }, [personnage.identifiant, personnage.projet, personnage.cases])
+
+  // **La vignette d'une planche candidate** : elle n'occupe aucune case, donc
+  // le sujet ne la porte pas — on la relit par son identifiant.
+  const candidate = idDeLaCandidate(personnage)
+  const posee = candidate ? imagePosee(personnage, candidate) : null
+  const [feuille, setFeuille] = useState<Asset | null>(null)
+  useEffect(() => {
+    setFeuille(null)
+    if (!candidate || posee) return
+    let vivant = true
+    void api
+      .lireAsset(candidate)
+      .then((recu) => { if (vivant) setFeuille(recu?.identifiant ? recu : null) })
+      .catch(() => { if (vivant) setFeuille(null) })
+    return () => { vivant = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidate, Boolean(posee)])
+
   const [preparant, setPreparant] = useState(false)
   const [refus, setRefus] = useState<string | null>(null)
   const [choisissant, setChoisissant] = useState(false)
 
   // **Tant que la première lecture des références n'est pas revenue, rien ne
   // se montre** : sans cette garde, un sujet qui a déjà sa planche verrait
-  // le bandeau clignoter une fraction de seconde avant de disparaître.
-  if (!references) return null
+  // le bandeau clignoter une fraction de seconde avant de disparaître. Même
+  // garde pour ce qui attend d'être rangé : sans elle, « Rien encore »
+  // paraîtrait un instant sur un sujet qui a des images à ranger.
+  if (!references || enAttente === null) return null
 
-  const geste = calculerLeGeste(personnage, references)
+  const geste = calculerLeGeste(personnage, references, enAttente)
   if (!geste) return null
 
   const demanderLaPlanche = async () => {
@@ -253,16 +321,19 @@ export function ProchainGeste({
   }
 
   // geste.genre === "planche-a-choisir"
+  const montree = posee ?? feuille
   return (
-    <div data-prochain-geste="planche-a-choisir" className={CARTE}>
+    <div data-prochain-geste="planche-a-choisir" data-candidate={geste.candidat} className={CARTE}>
       <div className="flex items-center gap-[14px]">
-        <span className={VIGNETTE}>
-          <img
-            src={api.vignette(geste.candidat.identifiant, geste.candidat.empreinte, 68)}
-            alt=""
-            className="h-full w-full object-contain"
-          />
-        </span>
+        {montree && (
+          <span className={VIGNETTE}>
+            <img
+              src={api.vignette(montree.identifiant, montree.empreinte, 68)}
+              alt=""
+              className="h-full w-full object-contain"
+            />
+          </span>
+        )}
         <div>
           <p className="text-[10.5px] uppercase tracking-[0.14em] text-encre-4">Prochain geste</p>
           <h2 className="mt-[4px] font-serif text-[25px] leading-[1.15] text-encre">
@@ -276,7 +347,7 @@ export function ProchainGeste({
       <button
         type="button"
         disabled={choisissant}
-        onClick={() => void choisirLaPlanche(geste.candidat.identifiant)}
+        onClick={() => void choisirLaPlanche(geste.candidat)}
         className={GRAND_BOUTON}
       >
         C'est la référence

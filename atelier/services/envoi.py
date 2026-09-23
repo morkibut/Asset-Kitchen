@@ -72,7 +72,7 @@ from atelier.domaine.recette import NOM_DU_MOTEUR, Passe
 # valent la même chaîne, si bien que la collision ne casse rien — elle rend
 # seulement illisible lequel on lit, ce qui est pire qu'une panne.
 from atelier.domaine.projet import PLANCHE as NATURE_PLANCHE
-from atelier.services.generation import ServiceGenerations
+from atelier.services.generation import ServiceGenerations, sans_le_style_du_jeu
 from atelier.services.montre import de_quoi_montrer
 from atelier.services.prix import prix_de
 from atelier.services.production import ServiceProduction, _tailles_annoncees
@@ -161,6 +161,9 @@ class ServiceEnvoi:
         # pose et les directions se remplissent ici, par la même lecture que la
         # soumission, pour que les cases et le prix soient ceux de la planche.
         premiere_planche: bool = False,
+        # **La toile** (TS4) : avec `repris`, ni ambiance ni artworks ne
+        # partent — ici comme à la soumission (`sans_le_style_du_jeu`).
+        brut: bool = False,
     ) -> dict[str, Any]:
         """Tout ce que l'écran montre, en un aller-retour.
 
@@ -210,6 +213,7 @@ class ServiceEnvoi:
             garder_mise_en_page=garder_mise_en_page,
             sujets=sujets,
             premiere_planche=premiere_planche,
+            brut=brut,
         )
         lignes = apercu["lignes"]
         cases = self._cases(poses, directions, piece, sujets)
@@ -241,6 +245,7 @@ class ServiceEnvoi:
             # (relecture ML, défaut 1) : le compte le sait par le modèle, avec
             # les fonctions mêmes de l'envoi.
             modele=modele,
+            sans_le_style=sans_le_style_du_jeu(brut, repris),
         )
         mesure = self._generations.appels_mesures(modele)
         modele_lu = self._modele(modele)

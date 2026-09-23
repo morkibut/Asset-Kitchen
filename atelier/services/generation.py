@@ -907,6 +907,7 @@ class ServiceGenerations:
             # Refaire une planche emporte la planche du sujet (RS2).
             mise_en_page=demande.garder_mise_en_page,
             premiere_planche=demande.premiere_planche,
+            sans_le_style=sans_le_style_du_jeu(demande.brut, demande.repris),
         )
         # **L'image dont on garde la mise en page** (RS2), choisie sur ce qui
         # part vraiment — ou le refus, avant tout paiement.
@@ -2833,6 +2834,9 @@ class ServiceGenerations:
         # vérifiées par `cases_de_premiere_planche`, le concept art nommé comme le personnage à
         # reproduire — mêmes refus qu'à la soumission.
         premiere_planche: bool = False,
+        # **La toile** (TS4) : avec `repris`, ni ambiance ni artworks —
+        # `sans_le_style_du_jeu`, la règle de la soumission.
+        brut: bool = False,
     ) -> dict[str, Any]:
         """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
 
@@ -2884,6 +2888,7 @@ class ServiceGenerations:
                 directions=directions,
                 mise_en_page=garder_mise_en_page,
                 premiere_planche=premiere_planche,
+                sans_le_style=sans_le_style_du_jeu(brut, repris),
             )
             # **Exactement la liste de `preparer`, par la même fonction** (R7) :
             # gabarit ou planche, puis bande de couleurs, dans l'ordre où les
@@ -3160,6 +3165,7 @@ class ServiceGenerations:
         directions: Sequence[str] | None = None,
         mise_en_page: bool = False,
         premiere_planche: bool = False,
+        sans_le_style: bool = False,
     ) -> tuple[tuple[Reinjection, ...], tuple[Reinjection, ...]]:
         """Ce qui part en image, et ce que le plafond laisse au sol.
 
@@ -3179,6 +3185,9 @@ class ServiceGenerations:
         **Les références promues se choisissent selon le contexte** (RS1) : la
         direction de la case, ou la planche de ses directions. Voir
         `_contexte_des_references`, que le compte de l'écran lit aussi.
+
+        **`sans_le_style` retire l'ambiance et les artworks** : la toile qui
+        essaie, case « avec le style du jeu » décochée (`sans_le_style_du_jeu`).
         """
         planche, angle = _contexte_des_references(
             direction, directions, mise_en_page=mise_en_page
@@ -3195,8 +3204,8 @@ class ServiceGenerations:
         reinjectes = _reinjectes(
             _sans_le_design(references, concepts)
             + concepts
-            + self._de_lambiance(projet, personnage)
-            + self._artworks(echelle, projet)
+            + (() if sans_le_style else self._de_lambiance(projet, personnage))
+            + (() if sans_le_style else self._artworks(echelle, projet))
         )
         # **Le personnage à reproduire est la demande** (TS3), comme le gabarit
         # d'une planche : il ne s'écarte pas et ne cède pas devant le plafond —
@@ -3266,6 +3275,10 @@ class ServiceGenerations:
         # **La première planche** (TS3) : le concept art se compte comme le
         # personnage à reproduire, et il ne s'écarte pas.
         premiere_planche: bool = False,
+        # **La toile sans le style du jeu** (TS4) : ni ambiance ni artworks, pas
+        # même en ligne écartée — ils ne sont pas candidats, comme à la
+        # soumission (`sans_le_style_du_jeu`).
+        sans_le_style: bool = False,
     ) -> dict[str, Any]:
         """Ce qui partira, **ligne par ligne, avec sa provenance** (US-52, US-127).
 
@@ -3280,7 +3293,7 @@ class ServiceGenerations:
         si quelque chose l'écarte, à quelle portée. Le total, lui, ne compte que
         ce qui part vraiment — c'est lui qui décide du grisé du modèle.
         """
-        artworks = self._artworks(echelle, projet)
+        artworks = () if sans_le_style else self._artworks(echelle, projet)
         planche, angle = _contexte_des_references(
             direction, directions, mise_en_page=mise_en_page
         )
@@ -3294,7 +3307,7 @@ class ServiceGenerations:
             premiere_planche=premiere_planche,
         )
         design = {r.asset for r in concepts if r.usage == USAGE_DESIGN}
-        de_lambiance = self._de_lambiance(projet, personnage)
+        de_lambiance = () if sans_le_style else self._de_lambiance(projet, personnage)
         ecartees = (
             self._production.ecartees(projet, personnage)
             if self._production is not None and projet
@@ -4066,6 +4079,23 @@ class ServiceGenerations:
             "options": gardees,
             "prompt_negatif_replie": bool(demande.prompt_negatif.strip()),
         }
+
+
+def sans_le_style_du_jeu(brut: bool, repris: bool) -> bool:
+    """**La toile part vraiment brute** (TS4, corrigé le 24 septembre 2026).
+
+    `brut` n'est envoyé que par la toile ; `repris` y est la case « avec le
+    style du jeu » décochée. Les deux ensemble, ni l'ambiance ni les artworks
+    ne partent en image — le style du jeu ne se glisse pas par les images quand
+    on l'a retiré du texte. Case cochée (`repris` faux), rien ne change : le
+    texte et les images du style partent ensemble, comme avant.
+
+    ⚠️ **`repris` seul ne suffit pas** : ailleurs il ne touche que le texte
+    (`Demande.repris`, R2) — l'échelle continue d'y décider des artworks. Une
+    seule fonction, lue par la soumission, l'aperçu et le compte de « Ce qui
+    part » : trois lectures de la même règle auraient fini par diverger.
+    """
+    return brut and repris
 
 
 def _contexte_des_references(
