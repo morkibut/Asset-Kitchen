@@ -2,6 +2,24 @@
 
 from typing import Any, Callable
 
+from atelier.domaine.erreurs import ErreurAtelier
+
+
+def palette_du_sujet(atelier: Any, projet: str, personnage: Any) -> dict[str, Any] | None:
+    """La palette par défaut d'un sujet, dite à l'agent (TS12) — ou `None`.
+
+    `removed` nomme une palette supprimée depuis le choix : le sujet est
+    retombé sur aucune, et l'agent doit pouvoir le lire comme l'auteur.
+    """
+    if not personnage.palette:
+        return {"id": None, "name": None, "removed": personnage.palette_supprimee} \
+            if personnage.palette_supprimee else None
+    trouvee = next((p for p in atelier.ambiances.palettes(projet)
+                    if p.identifiant == personnage.palette), None)
+    return {"id": personnage.palette,
+            "name": trouvee.nom if trouvee is not None else None,
+            "colors": list(trouvee.rendue) if trouvee is not None else []}
+
 
 def installer_outils_objectifs(serveur: Any, atelier: Any, refus: Callable,
                                projet_vise: Callable, personnage_vise: Callable) -> None:
@@ -22,13 +40,28 @@ def installer_outils_objectifs(serveur: Any, atelier: Any, refus: Callable,
                   "Set the same persisted objective as the desktop UI, without generating. "
                   "objective: {sorties:[{nature:'animation'|'image',pose:pose_id,direction:direction_id,quantite:1}], "
                   "largeur:64,hauteur:64,cadence:8,boucle:true,repere:{x:32,y:64}}. "
-                  "An empty sorties list requests no output. Read the character and game directions first.")
+                  "An empty sorties list requests no output. Read the character and game directions first. "
+                  "palette (optional): the id or name of one of the game's named palettes (made on the board); "
+                  "every image born afterwards for this character is reduced to its colors — images already "
+                  "made keep theirs. '' removes it. Omit objective to set only the palette. "
+                  "list_characters shows each character's current palette.")
     @refus
-    async def set_character_objective(character: str, objective: dict[str, Any],
-                                       project: str | None = None) -> dict[str, Any]:
+    async def set_character_objective(character: str, objective: dict[str, Any] | None = None,
+                                       project: str | None = None,
+                                       palette: str | None = None) -> dict[str, Any]:
+        # **La palette par défaut passe par le même service que la fiche**
+        # (TS12, *T7*) : `poser_palette_du_sujet`, refus compris. Elle rejoint
+        # l'outil qui règle déjà un sujet plutôt qu'un outil neuf.
         projet = projet_vise(atelier, project)
         personnage = personnage_vise(atelier, projet, character)
-        return atelier.production.definir_objectif(projet, personnage.identifiant, objective)
+        if objective is None and palette is None:
+            raise ErreurAtelier("rien à régler — donne objective, palette, ou les deux")
+        if palette is not None:
+            personnage = atelier.production.poser_palette_du_sujet(
+                projet, personnage.identifiant, palette or None)
+        rendu = (atelier.production.definir_objectif(projet, personnage.identifiant, objective)
+                 if objective is not None else atelier.production.objectif_de(projet, personnage.identifiant))
+        return {**rendu, "palette": palette_du_sujet(atelier, projet, personnage)}
 
     @serveur.tool(name="create_character", meta=fiche("Créer un personnage"), description=
                   "Create a named asset in an existing project without generation. "

@@ -157,6 +157,23 @@ class Personnage:
     # sur la recette du jeu. Absent vaut rien : aucune migration.
     recette: str = ""
 
+    # ── La palette de ses images (TS12) ──────────────────────────────────────
+    #
+    # **L'identifiant d'une palette nommée du jeu, ou rien.** Posée ici, elle
+    # quantifie chaque image qui naît ensuite pour ce sujet, par-dessus la
+    # recette (du sujet ou du jeu) ; une image déjà née ne change pas. Comme
+    # pour la recette : **un renvoi, jamais une copie** — la palette corrigée
+    # sur la toile vaut pour les images suivantes, et c'est **la recette de
+    # chaque image** qui en garde la copie (`atelier/domaine/recette.py`).
+    #
+    # **Une palette supprimée ne laisse pas un renvoi mort** : un identifiant
+    # peut resservir à une palette neuve du même nom, et le sujet la prendrait
+    # sans qu'on l'ait choisie. La suppression vide donc `palette` et écrit le
+    # nom perdu dans `palette_supprimee`, que la fiche dit ; choisir de nouveau
+    # l'efface. Absentes valent rien : aucune migration.
+    palette: str = ""
+    palette_supprimee: str = ""
+
     # ── L'image de référence de sa fiche (RP19)─────────────────────────────
     #
     # **Celle qui dit à quoi le sujet ressemble** (`docs/vocabulaire.html`), et
@@ -322,6 +339,8 @@ class Personnage:
                 asset: list(ordre) for asset, ordre in self.ordres_des_vues.items()
             },
             "recette": self.recette,
+            "palette": self.palette,
+            "palette_supprimee": self.palette_supprimee,
             "image_de_reference": self.image_de_reference,
             "hors_calibrage": list(self.hors_calibrage),
             "directions_ecartees": {
@@ -376,6 +395,9 @@ class Personnage:
             # **Absente, rien** (RS6) : un fichier d'avant la tranche n'a pas
             # la clé, et ses images gardent la recette du jeu.
             recette=str(d.get("recette") or "").strip(),
+            # **Absentes, rien** (TS12) : ses images gardent la recette seule.
+            palette=str(d.get("palette") or "").strip(),
+            palette_supprimee=str(d.get("palette_supprimee") or ""),
             # **Absente par défaut** (RP19) : un fichier écrit avant la tranche
             # n'a pas la clé, et la chaîne vide dit « rien n'a été choisi ».
             image_de_reference=str(d.get("image_de_reference") or ""),

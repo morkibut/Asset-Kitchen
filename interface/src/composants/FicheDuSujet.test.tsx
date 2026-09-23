@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { useState } from "react"
 import { afterEach, expect, test, vi } from "vitest"
 import { api, type Personnage, type StyleDeCombat, type StyleDuPersonnage } from "../api"
 import { FicheDuSujet } from "./FicheDuSujet"
@@ -217,4 +218,68 @@ test("la recette de ses images se choisit parmi les recettes nommées, et se ret
   // « aucune » retire le choix : `null`, pas une chaîne vide.
   fireEvent.change(screen.getByRole("combobox", { name: "Recette de ses images" }), { target: { value: "" } })
   await waitFor(() => expect(poser).toHaveBeenLastCalledWith("champy", null, "marais"))
+})
+
+// ── La palette de ses images (TS12, 23 septembre 2026) ───────────────────────
+
+const BRAISES = { identifiant: "braises", nom: "Braises", rendue: ["#aa2211", "#ffcc88", "#221111"] }
+const VIDE = { identifiant: "vide", nom: "Vide", rendue: [] }
+
+function monterLaFicheQuiSeRelit(depart: Personnage) {
+  // **Le parent garde le sujet que le serveur rend**, comme `PageDuSujet` :
+  // c'est ce qui fait qu'une fiche refermée puis rouverte relit la valeur
+  // gardée, et non l'état local du dialogue (`AGENTS.md`, 8septies).
+  function Parent() {
+    const [personnage, setPersonnage] = useState(depart)
+    return <FicheDuSujet personnage={personnage} plan={[]} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={(p) => setPersonnage(p)} onErreur={vi.fn()} onImages={vi.fn()} />
+  }
+  return render(<Parent />)
+}
+
+function doublerLaFiche() {
+  vi.spyOn(api, "objectifPersonnage").mockRejectedValue(new Error("hors sujet"))
+  vi.spyOn(api, "habillage").mockResolvedValue(null as never)
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(null as never)
+  vi.spyOn(api, "posesDesTypes").mockResolvedValue({ types: [] } as never)
+  vi.spyOn(api, "coteAmbiances").mockResolvedValue({ ambiances: [], palettes: [BRAISES, VIDE] } as never)
+  vi.spyOn(api, "recettesNommees").mockResolvedValue({ recettes: {} } as never)
+}
+
+test("la palette par défaut se choisit, se garde, et se relit en rouvrant la fiche", async () => {
+  const mara = { identifiant: "mara", nom: "Mara", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type: "", ambiance: "", famille: "decors", palette: "" } as unknown as Personnage
+  doublerLaFiche()
+  const poser = vi.spyOn(api, "poserPaletteDuSujet").mockImplementation(async (_id, palette) => ({ personnage: { ...mara, palette: palette ?? "", palette_supprimee: "" } }) as never)
+  monterLaFicheQuiSeRelit(mara)
+
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  const select = screen.getByRole("combobox", { name: "Palette par défaut" }) as HTMLSelectElement
+  expect(select.value).toBe("")
+  await screen.findByRole("option", { name: "Braises — 3 couleurs" })
+  // Une palette sans couleur est proposée grisée, jamais retirée.
+  expect((screen.getByRole("option", { name: "Vide — aucune couleur" }) as HTMLOptionElement).disabled).toBe(true)
+
+  fireEvent.change(select, { target: { value: "braises" } })
+  await waitFor(() => expect(poser).toHaveBeenCalledWith("mara", "braises", "marais"))
+
+  // **Refermée, puis rouverte** : la valeur qui n'est pas celle du défaut se relit.
+  fireEvent.click(screen.getAllByRole("button", { name: "Fermer" })[0])
+  await waitFor(() => expect(screen.queryByRole("combobox", { name: "Palette par défaut" })).toBeNull())
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  await screen.findByRole("option", { name: "Braises — 3 couleurs" })
+  expect((screen.getByRole("combobox", { name: "Palette par défaut" }) as HTMLSelectElement).value).toBe("braises")
+  // Et ses pastilles se montrent sous le choix.
+  expect(document.querySelectorAll("[data-pastille-du-sujet]")).toHaveLength(3)
+
+  // « aucune » retire le choix : `null`, pas une chaîne vide.
+  fireEvent.change(screen.getByRole("combobox", { name: "Palette par défaut" }), { target: { value: "" } })
+  await waitFor(() => expect(poser).toHaveBeenLastCalledWith("mara", null, "marais"))
+})
+
+test("une palette supprimée se dit sur la fiche, et le sujet est retombé sur aucune", async () => {
+  const mara = { identifiant: "mara", nom: "Mara", projet: "marais", description: "", cases: [], plan: [], ecartees: [], type: "", ambiance: "", famille: "decors", palette: "", palette_supprimee: "Cendres" } as unknown as Personnage
+  doublerLaFiche()
+  monterLaFicheQuiSeRelit(mara)
+  fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
+  expect((screen.getByRole("combobox", { name: "Palette par défaut" }) as HTMLSelectElement).value).toBe("")
+  expect(document.querySelector("[data-palette-supprimee]")?.textContent).toContain("La palette « Cendres » a été supprimée")
 })

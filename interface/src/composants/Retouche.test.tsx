@@ -227,6 +227,9 @@ const IMPOSE_PAR_DEFAUT = {
  *  doit les retrouver — exactement ce qu'un second `construireDouble` par
  *  montage ne permettrait pas. Vidée à chaque essai par `beforeEach`. */
 let nommeesDouble: Record<string, Recette> = {}
+/** Les palettes nommées que le double rend sur `/moods` (TS12). Vides par
+ *  défaut : aucun essai d'avant ne les voit. */
+let palettesDouble: { identifiant: string; nom: string; rendue: string[] }[] = []
 
 function construireDouble(
   mesures: unknown = MESURES,
@@ -254,6 +257,8 @@ function construireDouble(
     // suffit ; le double par défaut plus bas a un champ `pose` qui n'a rien à
     // voir (celui d'un personnage) et ferait planter le calage.
     if (url.includes("/overlay")) return rendre({})
+    if (url.includes("/moods"))
+      return rendre({ projet: "le-marais", palettes: palettesDouble, ambiances: [], du_jeu: [] })
 
     if (url.endsWith("/recipes") && methode === "GET")
       return rendre({ recettes: { ...nommeesDouble } })
@@ -2557,5 +2562,85 @@ describe("associer le rendu à une pièce", () => {
   test("sans jeu ouvert, la retouche n'invente pas cette porte", () => {
     monter()
     expect(screen.queryByRole("button", { name: "Utiliser comme équipement…" })).toBeNull()
+  })
+})
+
+// ── Les palettes nommées de la toile (TS12, 23 septembre 2026) ──────────────
+
+describe("couleurs de — les palettes nommées du jeu", () => {
+  const BRAISES = {
+    identifiant: "braises",
+    nom: "Braises",
+    rendue: ["#aa2211", "#ffcc88", "#221111"],
+  }
+  const quantifieeAvec = (palette: string[], nommee = "braises", nom = "Braises") =>
+    recetteDeTravail({
+      quantification: {
+        couleurs: palette.length,
+        palette,
+        tramage: "floyd",
+        palette_nommee: nommee,
+        palette_nom: nom,
+      },
+    } as Partial<Recette>)
+
+  afterEach(() => {
+    palettesDouble = []
+  })
+
+  test("la liste montre chaque palette avec ses pastilles, et en choisir une copie ses couleurs", async () => {
+    palettesDouble = [BRAISES, { identifiant: "vide", nom: "Vide", rendue: [] }]
+    const { appels } = monter()
+    fireEvent.click(within(barre()).getByRole("button", { name: "Couleurs" }))
+
+    const braises = await within(colonne()).findByRole("button", { name: "palette Braises" })
+    expect(braises.querySelectorAll("[data-pastille-de-palette]")).toHaveLength(3)
+    expect(braises.getAttribute("aria-pressed")).toBe("false")
+    // Une palette sans couleur est grisée avec sa raison, jamais retirée.
+    expect(
+      (within(colonne()).getByRole("button", { name: "palette Vide" }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+    expect(within(colonne()).getByText(/une palette sans couleur ne se choisit pas/)).toBeTruthy()
+
+    fireEvent.click(braises)
+    await waitFor(() =>
+      expect(dernierePose(appels)?.quantification).toMatchObject({
+        palette: BRAISES.rendue,
+        palette_nommee: "braises",
+        palette_nom: "Braises",
+      }),
+    )
+
+    // Revenir au jeu efface la provenance : la copie ne vient plus d'elle.
+    fireEvent.click(within(colonne()).getByRole("button", { name: "le jeu" }))
+    await waitFor(() => expect(dernierePose(appels)?.quantification?.palette).toEqual(["#241d16", "#8a5a2c"]))
+    expect(dernierePose(appels)?.quantification?.palette_nommee).toBeUndefined()
+  })
+
+  test("une recette dont la palette a changé depuis garde ses couleurs, et propose de reprendre les nouvelles", async () => {
+    palettesDouble = [BRAISES]
+    const { appels } = monter({ asset: image({ recette: quantifieeAvec(["#010101", "#020202"]) }) })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Couleurs" }))
+
+    const braises = await within(colonne()).findByRole("button", { name: "palette Braises" })
+    expect(braises.getAttribute("aria-pressed")).toBe("true")
+    expect(within(colonne()).getByRole("button", { name: "le jeu" }).getAttribute("aria-pressed")).toBe("false")
+    expect(within(colonne()).getByText(/la palette « Braises » a changé depuis/)).toBeTruthy()
+    // Rien n'est posé tant qu'on ne le demande pas : la recette rend la même image.
+    expect(dernierePose(appels)).toBeUndefined()
+
+    fireEvent.click(within(colonne()).getByRole("button", { name: "Reprendre ses couleurs" }))
+    await waitFor(() => expect(dernierePose(appels)?.quantification?.palette).toEqual(BRAISES.rendue))
+    // Le reste de la table ne bouge pas.
+    expect(dernierePose(appels)?.quantification?.tramage).toBe("floyd")
+  })
+
+  test("une palette supprimée depuis laisse ses couleurs dans la recette, et le dit", async () => {
+    palettesDouble = []
+    monter({ asset: image({ recette: quantifieeAvec(["#010101", "#020202"], "cendres", "Cendres") }) })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Couleurs" }))
+    expect(
+      await within(colonne()).findByText("la palette « Cendres » n'existe plus — ses 2 couleurs restent dans la recette"),
+    ).toBeTruthy()
   })
 })

@@ -55,6 +55,26 @@ tant que cette étape-là n'est pas tenue.
 §4 : « un preset *est* une recette nommée »). Le nom ne fait pas partie de
 l'empreinte : deux recettes identiques rendent le même fichier, qu'elles portent
 un nom ou pas.
+
+**Une palette nommée entre dans une recette par copie, jamais par renvoi**
+(TS12, 23 septembre 2026). La quantification peut prendre ses couleurs du jeu,
+de l'image, ou d'une palette nommée fabriquée sur la toile. Dans le troisième
+cas la recette garde **la copie des couleurs** au moment du choix (`palette`,
+comme pour le jeu depuis T2), plus l'identifiant et le nom de la palette
+(`palette_nommee`, `palette_nom`) — pour la relire, rien de plus. Trois
+conséquences, voulues :
+
+- **la recette rend toujours la même image** : modifier ou supprimer la
+  palette sur la toile ne touche aucune recette. L'écran compare la copie aux
+  couleurs actuelles et propose de les reprendre — un geste, jamais un
+  glissement silencieux ;
+- **l'identifiant et le nom n'entrent pas dans l'empreinte**, comme le nom de la
+  recette : ils ne changent aucun pixel. Choisir « le jeu » ou une palette aux
+  mêmes couleurs rend le même fichier, sous le même nom de rendu ;
+- **une recette d'avant se relit à l'identique** : les deux clés ne s'écrivent
+  que remplies (la règle de `B1`), donc aucune empreinte existante ne bouge et
+  aucun rendu existant ne change — il n'y a pas de prix à écrire dans
+  `AGENTS.md`.
 """
 
 from __future__ import annotations
@@ -1408,6 +1428,28 @@ class Quantification:
     #: grenouille laisse six places à l'algorithme.
     gardees: tuple[str, ...] = ()
 
+    # ── D'où vient la copie des couleurs (TS12) ──────────────────────────────
+    #
+    # **De quoi `palette` est la copie, quand c'est une palette nommée du jeu.**
+    # L'identifiant sert à la retrouver (et à dire « elle a changé depuis ») ;
+    # le nom sert à la nommer même quand elle a été supprimée. Aucun des deux ne
+    # change un pixel : `quantifier` ne lit que `palette`, et l'empreinte les
+    # retire (`Recette.empreinte`). Vides veut dire « pas une palette nommée » —
+    # le jeu, ou l'image —, et c'est l'état de toute recette d'avant.
+    palette_nommee: str = ""
+    palette_nom: str = ""
+
+    def sans_provenance(self) -> "Quantification":
+        """La même réduction, sans dire de quelle palette nommée elle vient.
+
+        C'est ce qui entre dans l'empreinte : deux quantifications aux mêmes
+        couleurs rendent le même fichier, qu'elles aient été copiées du jeu ou
+        d'une palette de la toile.
+        """
+        if not self.palette_nommee and not self.palette_nom:
+            return self
+        return replace(self, palette_nommee="", palette_nom="")
+
     @property
     def gardees_vives(self) -> tuple[str, ...]:
         """Les couleurs gardées qui **nomment quelque chose**, sans doublon.
@@ -1505,6 +1547,9 @@ class Quantification:
             **({"distance": self.distance} if self.distance != BRUTE else {}),
             **({"visibles_seuls": True} if self.visibles_seuls else {}),
             **({"gardees": list(gardees)} if gardees else {}),
+            # ── La palette nommée d'où vient la copie (TS12), même règle ──────
+            **({"palette_nommee": self.palette_nommee} if self.palette_nommee else {}),
+            **({"palette_nom": self.palette_nom} if self.palette_nom else {}),
         }
 
     @staticmethod
@@ -1535,6 +1580,10 @@ class Quantification:
             distance=distance_connue(d.get("distance", BRUTE)),
             visibles_seuls=bool(d.get("visibles_seuls", False)),
             gardees=tuple(str(c) for c in (d.get("gardees") or ()) if c),
+            # **Absentes, pas une palette nommée** (TS12) : une recette d'avant
+            # se relit et se réécrit à l'identique.
+            palette_nommee=str(d.get("palette_nommee") or ""),
+            palette_nom=str(d.get("palette_nom") or ""),
         )
 
 
@@ -2299,9 +2348,13 @@ class Recette:
         nommée, réappliquée ailleurs, donne exactement le même résultat » — deux
         recettes égales ont la même empreinte, donc le même calcul.
         """
-        canonique = json.dumps(
-            self.sans_nom().en_json(), sort_keys=True, ensure_ascii=False
-        )
+        # **La palette nommée n'y entre pas non plus** (TS12) : seule sa copie
+        # des couleurs change les pixels. Sans provenance, une recette d'avant
+        # est inchangée — `sans_provenance` rend alors l'objet lui-même.
+        sans = self.sans_nom()
+        if sans.quantification is not None:
+            sans = replace(sans, quantification=sans.quantification.sans_provenance())
+        canonique = json.dumps(sans.en_json(), sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(canonique.encode("utf-8")).hexdigest()[:16]
 
     def empreinte_passes(self) -> str:

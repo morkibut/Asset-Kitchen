@@ -1478,6 +1478,16 @@ export const AIDE: Record<string, Explication> = {
     origine: "le jeu, ou l'ambiance choisie, ou toi",
   },
 
+  "codex.chose.palette": {
+    nom: "Palette par défaut",
+    ou: "sujet",
+    groupe: "La fiche du sujet",
+    quoi: "Une palette faite sur la toile, dont les couleurs s'appliquent à chaque nouvelle image de ce sujet.",
+    change:
+      "Les images qui arrivent ensuite pour ce sujet sont ramenées à ses couleurs, par-dessus sa recette. Celles déjà faites ne bougent pas. Si la palette est supprimée, le sujet retombe sur aucune, et sa fiche le dit.",
+    origine: "toi · aucune au départ",
+  },
+
   "codex.chose.exemples": {
     nom: "Ses images d'exemple",
     ou: "sujet",
@@ -2010,10 +2020,12 @@ export const AIDE: Record<string, Explication> = {
     nom: "couleurs de",
     groupe: "La table Couleurs",
     ou: "tables",
-    quoi: "D'où viennent les couleurs de la palette : celles du jeu, copiées telles quelles, ou celles que l'algorithme choisit sur l'image.",
+    quoi: "D'où viennent les couleurs : celles du jeu, celles d'une palette faite sur la toile, ou celles que l'algorithme choisit sur l'image.",
     change:
-      "Copie la palette du jeu dans la recette au moment du choix, comme celle d'une passe « palette » du détourage, ou la vide pour laisser l'algorithme décider sur l'image seule.",
+      "Copie la palette du jeu, ou celle d'une palette nommée, dans la recette au moment du choix ; ou la vide pour laisser l'algorithme décider sur l'image seule.",
     origine: "l'univers du projet · « le jeu » par défaut s'il a une palette, sinon « l'image »",
+    long:
+      "Une palette nommée est copiée : si tu la changes ensuite sur la toile, cette image garde ses couleurs, et la table te dit « la palette a changé depuis » avec un bouton pour reprendre les nouvelles. Supprimer la palette ne touche à aucune image.",
   },
 
   "quantification.couleurs": {
