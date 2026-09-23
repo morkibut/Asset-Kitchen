@@ -93,6 +93,7 @@ import {
   NoeudFantome,
   referencesPrises,
   useFabricationSurToile,
+  type DemandeFabrication,
   type Reprise,
 } from "./ToileFabrique"
 
@@ -1803,7 +1804,7 @@ function Plan({
    *  montre**, en rangée. Le centre se mesure sur le plan rendu, comme pour
    *  `+ note`. */
   const fabriquer = useCallback(
-    (demande: Omit<Parameters<typeof fabrication.lancer>[0], "places">) => {
+    (demande: DemandeFabrication) => {
       if (!crans) return
       const cote = crans[1]
       const ecart = cote + GOUTTIERE * 3
@@ -1857,7 +1858,21 @@ function Plan({
         posees.push(place)
         occupees.push({ ...place, ...taille })
       }
-      void fabrication.lancer({ ...demande, places: posees })
+      // **Autant d'appels qu'il faut au plafond du modèle** (TS9) : `lancer`
+      // découpe lui-même `posees` en lots d'au plus `variations_max`, un
+      // appel par lot, l'un après l'autre — ici on ne fait que poser les
+      // fantômes de toutes les images voulues, où l'appel qui les produira
+      // ira les chercher.
+      void fabrication.lancer({
+        prompt: demande.prompt,
+        modele: demande.modele,
+        proportions: demande.proportions,
+        taille: demande.taille,
+        variations_max: demande.variations_max,
+        references: demande.references,
+        repris: demande.repris,
+        places: posees,
+      })
       // Les références prises sont consommées par l'appel qui part — comme un
       // brouillon qu'on vide en l'envoyant, pas comme un choix qui resterait
       // coché pour la suivante.

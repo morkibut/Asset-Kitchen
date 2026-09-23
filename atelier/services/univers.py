@@ -224,9 +224,17 @@ class ServiceUnivers:
         d'avant le 1ᵉʳ septembre 2026 ; on retombe alors sur `prompt` en entier,
         ce qui est le comportement d'avant cette date.
 
-        **Appelée depuis `/board`, qui est la seule lecture que la toile fait
-        de ses cartes** — jamais une route à elle, qui aurait fait une requête
-        par carte pour un tableau qui en tient des dizaines.
+        **Appelée depuis `/board`, `_sauver` et `montre.de_quoi_montrer`**
+        (TS9) — jamais une route à elle, qui aurait fait une requête par
+        carte pour un tableau qui en tient des dizaines. `/board` la remonte
+        pour la lecture complète du tableau ; `_sauver` pour l'annonce en
+        direct qu'une carte vient de naître ou de changer — c'est par cette
+        seconde voie qu'une carte fabriquée depuis la barre arrive à l'écran,
+        jamais par la réponse du `POST` qui l'a posée ; `montre.py` pour que
+        l'écran de confirmation et la fiche d'une chose montrent, d'une
+        carte, **le même objet, mot pour mot** — sans elle, ces deux écrans
+        auraient montré une carte plus pauvre que celle de la toile
+        (`tests/test_u9.py`).
         """
         if carte.genre != IMAGE or not carte.source.startswith("asset:"):
             return None
@@ -1755,9 +1763,20 @@ class ServiceUnivers:
 
         Écrire d'abord, annoncer ensuite — comme un asset, comme une génération.
         Ce qui est annoncé est donc toujours déjà sur le disque.
+
+        **La phrase part avec l'annonce** (TS9, retour de l'auteur du
+        23 septembre : une carte fabriquée depuis la barre ne montrait sa
+        phrase et « Reprendre ce texte » qu'après un rechargement). `poser()`
+        de `ToileFabrique.tsx` ne lit jamais la réponse du `POST` qui pose
+        l'image — la carte arrive à l'écran par cet évènement-là, comme
+        partout ailleurs (`flux.ts`) — donc c'est lui, et non `/board`, qui
+        doit déjà porter `phrase_de_carte`. Même forme que ce que `/board`
+        rend pour chaque carte : un seul calcul, deux lectures.
         """
         self._fichiers.ecrire_carte(carte.projet, carte.identifiant, carte.en_disque())
-        self._diffusion.publier("carte", carte.en_json())
+        self._diffusion.publier(
+            "carte", {**carte.en_json(), "phrase": self.phrase_de_carte(carte)}
+        )
 
     def _accorder(self, projet: str, *, annoncer: bool = True) -> Projet:
         """Remet la palette d'accord avec les artworks, si elle ne l'est plus.
