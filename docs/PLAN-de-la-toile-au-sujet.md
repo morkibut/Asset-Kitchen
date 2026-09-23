@@ -353,15 +353,17 @@ prix, sans jamais rogner la liste pour faire tenir l'appel. Lancer une fabricati
 des références prises, comme un brouillon envoyé. Non vérifié au navigateur — vérifié par essais
 seulement (`ToileFabrique.test.tsx`, `Toile.test.tsx`, `Tableau.test.tsx`, `App.test.tsx`).
 
-### TS7 · Les gestes de Mixboard — à valider par l'auteur avant d'écrire
+### TS7 · Les gestes de Mixboard
 
-Propositions, à trier avec l'auteur ; aucune n'est décidée.
+**Triés par l'auteur le 23 septembre 2026 : les trois restants sont retenus.** « Modifier » est
+devenu `TS10` (« Développer ce sujet »). À faire après `TS10`, dont `TS7` reprend la pose reliée.
 
-- [ ] sur une carte : « Modifier » — une phrase qui change cette image-là, le résultat posé à côté
-- [ ] plusieurs cartes choisies : « Combiner » — une phrase, les cartes en référence, le résultat
-      posé entre elles
-- [ ] « Encore » — refaire la même demande, posé à côté de l'original
-- [ ] le lien entre une image et celles qui l'ont produite reste visible sur la toile
+- [ ] plusieurs cartes image choisies : « Combiner » — une phrase, les cartes en référence, le
+      résultat posé entre elles
+- [ ] « Encore » sur une carte fabriquée : la même demande (phrase, modèle, taille, références,
+      case « style du jeu ») repart sans rien retaper, le résultat posé à côté de l'original
+- [ ] le lien entre une image fabriquée et celles qui ont servi de référence est visible sur la
+      toile (un trait de la toile, comme les liens existants), pour toute fabrication de la barre
 
 ## Ce que ce plan ne couvre pas
 

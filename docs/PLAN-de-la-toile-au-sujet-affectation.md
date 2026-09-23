@@ -31,7 +31,7 @@
 | **TS6** · Prendre une carte comme référence | `[EASY]` | les références de la barre existent ; il manque un geste visible et leur liste lisible |
 | **TS9** · Les deux défauts du premier usage | `[EASY]` | un appel par version quand le modèle n'en fait qu'une, et la phrase portée par la carte posée ; deux causes lues |
 | **TS10** · « Développer ce sujet » | `[MEDIUM]` | une image devient la référence d'édition de la barre, le résultat se pose relié à elle ; réutilise TS6 et la pose de TS4 |
-| **TS7** · Les gestes de Mixboard | `[MEDIUM]` | à découper après le tri de l'auteur ; « Modifier » et « Combiner » réutilisent l'envoi existant avec des références |
+| **TS7** · Les gestes de Mixboard | `[MEDIUM]` | triés par l'auteur : Combiner, Encore, et le lien visible ; tous reposent sur l'envoi et la pose reliée de TS10 |
 
 **Compte** : 0 `[VERY-HARD]`, 1 `[HARD]`, 6 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
 
