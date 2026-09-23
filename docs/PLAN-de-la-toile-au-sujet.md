@@ -260,6 +260,28 @@ personnage à reproduire » avec le texte `DESIGN` — aucun envoi lancé. Reste
 `GET /models` ne connaît pas `premiere_planche` (il compte la carte comme une image jointe, ce
 qui tombe juste en nombre) ; l'essai payé de `TS3` peut maintenant se faire.
 
+### TS12 · Les palettes de la toile servent à la retouche et au sujet
+
+*Demandé par l'auteur le 23 septembre 2026*, dans l'atelier d'une animation (Mara, marche ·
+droite, table « Couleurs », section Quantification) : « couleurs de » ne propose que **le jeu**
+ou **l'image** ; les palettes nommées qu'il fabrique sur la toile (un paquet → « Faire une
+palette », `Toile.tsx`, `Palette` dans `atelier/domaine/ambiance.py`) n'y sont pas. Et « Modifier
+la fiche » d'un sujet ne permet pas de lui donner une palette par défaut, comme on lui donne
+une recette.
+
+- [ ] la quantification propose **le jeu**, **l'image**, et **chaque palette nommée du jeu**,
+      montrée avec ses pastilles ; choisir une palette réduit l'image à ses couleurs
+- [ ] **déterminisme** (règle durable d'AGENTS.md) : une recette qui nomme une palette garde
+      **la copie de ses couleurs** au moment du choix ; si la palette change ensuite sur la
+      toile, la recette rend toujours la même image, et l'écran dit « la palette X a changé
+      depuis » avec un geste pour reprendre ses nouvelles couleurs
+- [ ] « Modifier la fiche » d'un sujet porte **« Palette par défaut »** (aucune, ou une palette
+      nommée) ; les images qui arrivent ensuite pour ce sujet sont quantifiées avec elle ; celles
+      déjà faites ne bougent pas (*traitement non destructif*) tant qu'on ne réapplique pas
+- [ ] l'agent (MCP) lit et pose la palette d'un sujet par le même service (*T7*)
+- [ ] une palette supprimée de la toile ne casse aucune recette (la copie des couleurs reste) ;
+      le sujet qui la portait par défaut retombe sur « aucune », et sa fiche le dit
+
 ## La toile qui fabrique — façon Mixboard
 
 *Ajouté le 23 septembre 2026, sur les retours de l'auteur au premier usage.* La barre
