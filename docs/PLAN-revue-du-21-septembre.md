@@ -362,6 +362,24 @@ propre choix de sujet et de type. `interface/src/aide.ts` a suivi : les fiches d
 retirées, celles de la liste réécrites pour la réalité fusionnée. **Pas vu au navigateur** : vérifié
 par les essais d'écran et `tsc --noEmit` seulement.
 
+### Retours de l'auteur au premier usage (23 septembre 2026)
+
+Vu dans son atelier, sur The Way Out reborn : **les vignettes restent des carrés gris** — aucune
+ligne ne montre ce qu'elle a fabriqué. Et la liste affiche encore l'identifiant technique d'un
+modèle local (« ComfyUI · qwen21-qualite@e3563da64c0c7b8eecc0e4afc6782acb… »), ce que `RV4` avait
+retiré partout ailleurs.
+
+- [ ] chaque ligne terminée montre **la vignette de ce qu'elle a fabriqué** (la première image,
+      ou l'image de départ d'un clip) ; une ligne en cours montre son fantôme, une ratée sa
+      marque ; une série repliée montre la vignette de sa première image
+- [ ] **aucun identifiant technique** : le nom lisible du modèle (celui que `RV4` affiche
+      ailleurs) ; la demande de l'auteur en titre quand il y en a une, plutôt que « Image ·
+      modèle »
+- [ ] « Création manuelle » dit quelque chose de lisible (ou disparaît s'il ne distingue rien)
+- [ ] un essai d'écran qui **lit l'attribut `src`** d'une vignette et vérifie qu'il pointe l'image
+      d'un résultat — les essais d'avant passaient avec des carrés gris
+- [ ] vu au navigateur, sur un atelier jetable avec des fabrications terminées
+
 ---
 
 ## RV10 · La fiche d'un sujet perd ses doublons
