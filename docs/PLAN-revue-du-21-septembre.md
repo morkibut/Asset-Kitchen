@@ -508,9 +508,61 @@ pas comment se servir du chutier, ni quelle image est choisie.
 
 ---
 
+## RV18 · « Sa vue » dit vrai, et se voit en scène
+
+**Bloquée par** : aucune. *Ajoutée le 23 septembre 2026, sur un retour de l'auteur* (Réglages ›
+Univers › étape 3 « Sa vue », avec des captures d'A Link to the Past, du premier Zelda, de
+Hotline Miami, d'EarthBound, de Diablo 2 et de Hollow Knight à l'appui). Deux problèmes : des
+jeux cités en exemple ne correspondent pas à la vue, et une vignette du rôdeur seul sur fond gris
+ne fait pas comprendre quel jeu on pourra construire.
+
+### Le relevé, vue par vue (fait le 23 septembre contre les captures de l'auteur)
+
+La liste vit dans `atelier/domaine/vue.py`. ⚠️ Le texte « CAMERA » de chaque vue **part au
+modèle** et certains y nomment les jeux : changer un exemple là change ce qui part, et les
+tirages d'avant ne se comparent plus.
+
+| Vue | Exemples aujourd'hui | Verdict |
+|---|---|---|
+| De face, fixe (1) | « les écrans de combat au tour par tour » | juste ; nommer des jeux : Dragon Quest, les combats d'EarthBound |
+| De dessus, verticale (1) | « les jeux de tir à défilement vertical » | juste ; nommer : 1942, Raiden |
+| De côté — plateforme (2) | Mario, Celeste, Hollow Knight | **juste** (la capture de Hollow Knight le confirme) |
+| De côté — défilement (2) | « les jeux de baston de rue » | juste ; nommer : Streets of Rage, Final Fight |
+| De dessus, stricte (4) | le premier Zelda, Hotline Miami | **faux à moitié.** Hotline Miami est bien vu de dessus (on voit le crâne), mais ses personnages **tournent librement**, pas 4 directions. Le premier Zelda n'est **pas** vu de dessus au sens strict : le décor est à plat, mais Link est dessiné de face ou de profil — il appartient à la famille 3/4 |
+| De dessus, 3/4 (4) | Zelda A Link to the Past, Stardew Valley | **juste** (la capture le confirme : murs vus de face, sol vu de dessus). Y ajouter le premier Zelda, en plus plat |
+| Oblique (cavalière) (4) | Ultima, EarthBound | projection **juste** pour EarthBound (dallages et étals en biais sur les captures) ; « Ultima » est trop vague — c'est Ultima VII. Mais EarthBound dessine **8 directions**, pas 4 |
+| Isométrique (4) | Diablo 2, Age of Empires 2 | projection **juste** (vue d'un coin, losanges) ; mais ces deux jeux dessinent **8 directions**. Pour 4 : Final Fantasy Tactics, Into the Breach |
+
+### Critères d'acceptation
+
+- [ ] Chaque exemple cité correspond à la vue **et** au nombre de directions annoncé ; un jeu qui
+      n'y correspond pas est retiré ou déplacé (tableau ci-dessus).
+- [ ] « De dessus, stricte » dit la vérité sur les directions : soit elle passe à un personnage
+      qui tourne (une image, que le jeu fait pivoter — comme la verticale), soit elle garde 4
+      directions avec des exemples qui en ont 4. **À trancher par l'auteur.**
+- [ ] L'oblique et l'isométrique disent si elles proposent 4 ou 8 directions ; si l'atelier ne
+      sait faire que 4, l'écran le dit au lieu de citer des jeux à 8.
+- [ ] Le texte envoyé au modèle suit les exemples corrigés, et l'écart est noté ici (*les tirages
+      d'avant ne se comparent plus*).
+- [ ] **Chaque vue se montre en scène** : le rôdeur dans un décor construit pour cette vue (sol,
+      un mur ou un obstacle, un objet), à la place du rôdeur seul sur fond gris.
+- [ ] **Au survol, la scène joue** : le rôdeur marche dans le décor, dans les directions de la
+      vue — on comprend en deux secondes à quel jeu ça ressemble.
+- [ ] Les scènes sont des fichiers du dépôt, fabriqués une fois (pas à chaque ouverture), et ne
+      dépensent rien à l'usage.
+
+**Choix à faire avec l'auteur avant d'écrire** : (a) scènes fabriquées par l'atelier lui-même —
+le rôdeur et un petit décor par vue, puis animées au survol à partir de ses sprites
+(recommandé : c'est le produit qui se montre, et il n'y a pas de droits sur des captures) ;
+(b) captures de vrais jeux (plus parlant, plus simple, mais des images qui ne sont pas à nous) ;
+(c) les deux : la scène du rôdeur, et un nom de jeu cliquable qui ouvre une capture. Le coût
+d'une fabrication de huit scènes est à annoncer avant de lancer quoi que ce soit.
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18.
 
 ### Ce qu'on livre
 
