@@ -535,20 +535,20 @@ tirages d'avant ne se comparent plus.
 
 ### Critères d'acceptation
 
-- [ ] Chaque exemple cité correspond à la vue **et** au nombre de directions annoncé ; un jeu qui
+- [x] Chaque exemple cité correspond à la vue **et** au nombre de directions annoncé ; un jeu qui
       n'y correspond pas est retiré ou déplacé (tableau ci-dessus).
-- [ ] « De dessus, stricte » dit la vérité sur les directions : soit elle passe à un personnage
+- [x] « De dessus, stricte » dit la vérité sur les directions : soit elle passe à un personnage
       qui tourne (une image, que le jeu fait pivoter — comme la verticale), soit elle garde 4
       directions avec des exemples qui en ont 4. **À trancher par l'auteur.**
-- [ ] L'oblique et l'isométrique disent si elles proposent 4 ou 8 directions ; si l'atelier ne
+- [x] L'oblique et l'isométrique disent si elles proposent 4 ou 8 directions ; si l'atelier ne
       sait faire que 4, l'écran le dit au lieu de citer des jeux à 8.
-- [ ] Le texte envoyé au modèle suit les exemples corrigés, et l'écart est noté ici (*les tirages
+- [x] Le texte envoyé au modèle suit les exemples corrigés, et l'écart est noté ici (*les tirages
       d'avant ne se comparent plus*).
-- [ ] **Chaque vue se montre en scène** : le rôdeur dans un décor construit pour cette vue (sol,
+- [x] **Chaque vue se montre en scène** : le rôdeur dans un décor construit pour cette vue (sol,
       un mur ou un obstacle, un objet), à la place du rôdeur seul sur fond gris.
-- [ ] **Au survol, la scène joue** : le rôdeur marche dans le décor, dans les directions de la
+- [x] **Au survol, la scène joue** : le rôdeur marche dans le décor, dans les directions de la
       vue — on comprend en deux secondes à quel jeu ça ressemble.
-- [ ] Les scènes sont des fichiers du dépôt, fabriqués une fois (pas à chaque ouverture), et ne
+- [x] Les scènes sont des fichiers du dépôt, fabriqués une fois (pas à chaque ouverture), et ne
       dépensent rien à l'usage.
 
 **Tranché par l'auteur le 23 septembre 2026** : **(a)**, le rôdeur en scène animée ; et « De
@@ -561,6 +561,61 @@ le rôdeur et un petit décor par vue, puis animées au survol à partir de ses 
 (b) captures de vrais jeux (plus parlant, plus simple, mais des images qui ne sont pas à nous) ;
 (c) les deux : la scène du rôdeur, et un nom de jeu cliquable qui ouvre une capture. Le coût
 d'une fabrication de huit scènes est à annoncer avant de lancer quoi que ce soit.
+
+*Fait le 23 septembre 2026.* `atelier/domaine/vue.py` : les huit exemples corrigés comme au
+tableau — Dragon Quest / EarthBound pour la face fixe, 1942 / Raiden pour la verticale,
+Streets of Rage / Final Fight pour le défilement, le premier Zelda ajouté à la 3/4 (« en plus
+plat »), Ultima VII / EarthBound annotés « dessinent 8 directions, l'atelier en fait 4 » pour
+l'oblique, et Final Fantasy Tactics / Into the Breach en remplacement de Diablo 2 / Age of
+Empires 2 pour l'isométrique, qui dessinaient 8. « De dessus, stricte » (`vue-dessus-stricte`)
+passe de `QUATRE_DU_CADRE` (4 directions) à `()` — une image, `images` à 1 — exactement le
+motif déjà tenu par `vue-dessus-verticale` ; sa phrase de caméra ne change pas, seule sa liste
+de directions change. ⚠️ **Les tirages faits avant sur cette vue, quand elle demandait quatre
+directions, ne se comparent plus aux suivants.** Vérifié que `Pose.images` (le nombre d'images
+*par* direction, depuis E10) ne lit jamais `Vue.images` : aucune conséquence sur les cases déjà
+remplies d'un projet. Vérifié aussi que `Univers.directions_du_jeu()` ne suit la vue que si la
+liste n'a jamais été touchée à la main (E10) — un jeu existant qui a renommé ou gardé ses
+quatre directions sur cette vue les garde à la relecture, sans réécriture. Aucun essai (serveur
+ou écran) ne nommait `vue-dessus-stricte` en dur ; le changement ne casse rien.
+
+Scène : `interface/src/composants/SceneDeVue.tsx`, appelée par `SaVue` (`ReglesDuJeu.tsx`) à la
+place de l'ancienne `Vignette`. **Découverte en ouvrant le chantier** : les huit
+`interface/public/vignettes/vue-*.png` ne portent déjà *plus* de fond gris — elles sont
+transparentes depuis leur génération (E8, prompt « truly transparent alpha background ») ; le
+détourage attendu du plan n'avait donc rien à retirer. `essais/decouper_sujets_de_vue.py`
+recadre chacune à la boîte de son sujet plus une marge (`boite_opaque`, le même utilitaire que
+le contrôle d'arrivée d'un détourage) et écrit les huit `<identifiant>-sujet.png`, commités.
+Le décor (sol, un mur ou obstacle, un objet) est du CSS pur aux couleurs des jetons
+(`--color-apercu-herbe`, `--color-apercu-pierre`, `--color-ilot-paille`) — pas de matière du
+chantier des tuiles réutilisée : ces matières sont générées par projet dans `donnees/`, aucune
+n'est un fichier du dépôt à embarquer dans l'interface. Le sol de chaque carte reprend la forme
+de la dalle que sa vignette de production demandait déjà (trait fin de profil, carré plein
+d'aplomb, rectangle large pour la stricte, parallélogramme pour l'oblique, losange pour
+l'isométrique). Trois mouvements au survol, un par nombre de directions — 0 : pivote sur place
+(`vue-face-fixe`, `vue-dessus-verticale`, `vue-dessus-stricte`) ; 2 : aller-retour avec
+retournement ; 4 : marche en boucle sur le sol — animés par quatre classes `scene-vue-*`
+ajoutées à `index.css`, sous `@media (prefers-reduced-motion: no-preference)` (donc rien ne
+bouge si le système demande moins de mouvement, et l'écran reste lisible fixe). Ces classes
+sont sciemment hors de la liste close du § Motion de `docs/DESIGN.md` : comme le fondu d'une
+carte du tableau (`.paraitre`, déjà commenté « hors liste ») et la vidéo d'un clip qui se lit au
+survol de sa vignette (`AnimationsDuSujet.tsx`), c'est un contenu qui montre le jeu, pas une
+transition de chrome — noté en tête de la nouvelle règle dans `index.css` plutôt que laissé
+implicite. `interface/src/aide.ts` (« assistant.vue ») dit la nouvelle scène en une phrase.
+
+**Décisions prises seul, faute d'arbitrage dans le plan** : le décor reste des aplats de jetons,
+pas une matière du chantier des tuiles (aucune n'est un fichier du dépôt, la génération à la
+volée aurait dépensé) ; la case « N directions » de chaque carte lit désormais `directions.length`
+au lieu de `images` — les deux concordaient déjà pour cinq vues sur huit, et cela rend vrai le
+texte des trois vues à une image (« une image, qui tourne » plutôt que « 1 direction ») sans
+inventer un champ serveur de plus.
+
+**Pas vérifié au navigateur** : la fenêtre de session n'a pas pu ouvrir d'atelier jetable sur le
+port 8430 pour cette tranche (à faire avant `RV16`, qui referait de toute façon le relevé des 26
+écrans). Vérifié en revanche par la suite d'essais : `npx tsc --noEmit` propre, `ReglesDuJeu.test.tsx`
+(37/37), `App.test.tsx` (547/547), `aide.test.ts` (855/855), `essai_vocabulaire.py`,
+`essai_jetons.py` (mêmes 4 manquements préexistants, dans `Retouche.tsx`, hors de cette
+tranche), `essai_tutoiement.py`, `essai_imports.py` et les suites serveur `test_e8/e10/e12/e13/e14.py`
+(116 essais) tous verts.
 
 ---
 
