@@ -350,17 +350,46 @@ a trouvé le vrai défaut. Non vérifié au navigateur : vérifié par essais se
 part **d'une image** au lieu de son texte. C'est le « Modifier » de `TS7`, choisi par l'auteur ;
 le reste de `TS7` attend toujours son tri.
 
-- [ ] le menu d'une carte image porte **« Développer ce sujet »**, à côté de « Reprendre ce
+- [x] le menu d'une carte image porte **« Développer ce sujet »**, à côté de « Reprendre ce
       texte » (et sur toute carte image, pas seulement celles fabriquées par la barre)
-- [ ] le geste met l'image **en référence** dans la barre (la liste de `TS6`, avec sa vignette et
+- [x] le geste met l'image **en référence** dans la barre (la liste de `TS6`, avec sa vignette et
       sa croix) et place le curseur dans le champ, **vide**, avec un exemple en gris qui dit quoi
       écrire : « une variante plus sombre », « la même de dos », « sans la cape »…
-- [ ] ce qui part dit au modèle de **partir de cette image** (rôle d'édition, comme la
+- [x] ce qui part dit au modèle de **partir de cette image** (rôle d'édition, comme la
       référence d'une carte en `TS6`) et d'appliquer la demande ; « Ce qui part » (`TS4`) le
       montre avant de cliquer
-- [ ] le résultat se pose **à côté de l'image d'origine**, reliée à elle par un lien de la toile,
+- [x] le résultat se pose **à côté de l'image d'origine**, reliée à elle par un lien de la toile,
       pour qu'on voie d'où il vient
-- [ ] plusieurs versions (`TS9`) marchent de même : N variantes de la même image
+- [x] plusieurs versions (`TS9`) marchent de même : N variantes de la même image
+
+*Fait le 23 septembre 2026.* Aucune route neuve : le geste recompose entièrement des chemins qui
+existaient déjà — `prises` (`TS6`), le drapeau `brut` et le rôle `edition` (`TS4`), le découpage en
+appels (`TS9`), `api.lier`/`/board/links` (`T9`). « Développer ce sujet » (`DEVELOPPER`, contexte de
+`Tableau.tsx`, à côté de `PRENDRE_REFERENCE`) remplace `prises` par **la seule** carte cliquée — une
+décision : mélanger le développement avec d'anciennes références prises aurait rendu ambigu ce que le
+lien final doit désigner — et retient son identifiant à part (`origineDeveloppement`), parce que
+`prises` peut encore changer (une croix) entre le clic sur « Développer » et le clic sur « Fabriquer ».
+`origineDeLiaison` (`ToileFabrique.tsx`, fonction pure) revérifie cette appartenance **au moment du
+lancement**, pas au clic sur « Développer » : retirer la vignette entre les deux annule la liaison
+comme elle annule déjà la référence. Le champ vide et l'exemple grisé suivent le motif de `Reprise`
+(TS5) — une `cle` qui change à chaque clic, portée par un nouveau type `Developpement` — avec trois
+amorces tirées au hasard (`EXEMPLES_DEVELOPPEMENT`). Le lien se tire **après la pose**, dans
+`useFabricationSurToile.poser` (`ToileFabrique.tsx`) qui reçoit désormais un paramètre `lier`, pour
+qu'il appelle **la même fonction que l'écran** (`tirer`, remontée dans `Toile.tsx` avant le crochet de
+fabrication pour rester utilisable par lui) — un trait tiré à la main et un trait tiré par une
+fabrication empruntent donc la même route, y compris pour l'annulation (`pile`). Un échec de la
+liaison ne défait pas la pose : l'image posée reste, elle n'a rien coûté de plus à garder sans son
+lien. `Fantome` porte un champ `origines?: string[]` — au pluriel, pas pour ce chantier-ci mais pour
+que `TS7` (« Combiner », plusieurs cartes vers un seul résultat) puisse le remplir sans retoucher la
+mécanique de pose. Le placement « à côté de l'image d'origine » n'a rien demandé de neuf : `fabriquer`
+(`Toile.tsx`) pose déjà ses fantômes à droite des références présentes sur le plan (TS6/TS9), et
+l'image en développement en fait partie dès qu'elle y est. Essais : `ToileFabrique.test.tsx` (le champ
+qui se vide avec l'exemple, la reliaison au retour, N versions reliées à la même origine, une
+fabrication ordinaire qui ne tire aucun lien — vérifiée en retirant l'appel à `lier` dans `poser`,
+8octies), `Toile.test.tsx` (`origineDeLiaison`, dont le cas de la croix retirée entre les deux clics),
+`Tableau.test.tsx` (le bouton sur toute carte image, absent sur une note ou une image pas encore
+arrivée, absent hors toile). Non vérifié au navigateur : pas d'`interface/dist` dans ce worktree
+(`AGENTS.md`).
 
 ### TS6 · Prendre une carte comme référence
 

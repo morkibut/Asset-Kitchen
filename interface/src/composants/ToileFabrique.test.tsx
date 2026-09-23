@@ -9,16 +9,18 @@ import { useRef } from "react"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 
-import type { Carte, Modele } from "../api"
+import type { Bout, Carte, Modele } from "../api"
 import {
   annonce,
   BarreDeFabrication,
+  EXEMPLES_DEVELOPPEMENT,
   modeleParDefaut,
   refusDeLaTaille,
   refusDesReferences,
   referencesPrises,
   tailleRetenue,
   useFabricationSurToile,
+  type Developpement,
   type Reprise,
 } from "./ToileFabrique"
 
@@ -116,7 +118,12 @@ function serveur() {
       return reponse(generation("en_cours"), 202)
     }
     if (url === "/api/generations/gen1") return reponse(generation("reussie"))
-    if (url.includes("/board/assets/")) return reponse({ carte: {}, deja_presente: false })
+    if (url.includes("/board/assets/")) {
+      // L'identifiant posé se déduit de l'adresse (`gen1-0` → `carte-gen1-0`) —
+      // de quoi vérifier, dans les essais TS10, quelle carte un lien désigne.
+      const asset = url.split("/board/assets/")[1]
+      return reponse({ carte: { identifiant: `carte-${asset}` }, deja_presente: false })
+    }
     if (url === "/api/outgoing" && methode === "POST")
       return reponse({ texte: `[[${(corps as { prompt: string }).prompt}]]` })
     return reponse({}, 404)
@@ -124,8 +131,22 @@ function serveur() {
   return { fetchDouble, appels }
 }
 
-function Banc({ references = [] as Carte[], reprise }: { references?: Carte[]; reprise?: Reprise | null }) {
-  const fabrication = useFabricationSurToile(() => {})
+function Banc({
+  references = [] as Carte[],
+  reprise,
+  developpement,
+  origines,
+  lier,
+}: {
+  references?: Carte[]
+  reprise?: Reprise | null
+  developpement?: Developpement | null
+  /** TS10 — la carte à relier, transmise telle qu'une « Développer ce sujet »
+   *  de `Toile.tsx` la calculerait au moment du clic sur Fabriquer. */
+  origines?: string[]
+  lier?: (de: Bout, vers: Bout) => void
+}) {
+  const fabrication = useFabricationSurToile(() => {}, lier)
   const champ = useRef<HTMLInputElement>(null)
   return (
     <>
@@ -134,6 +155,7 @@ function Banc({ references = [] as Carte[], reprise }: { references?: Carte[]; r
         onRetirerReference={() => {}}
         champ={champ}
         reprise={reprise}
+        developpement={developpement}
         onLancer={(demande) =>
           void fabrication.lancer({
             prompt: demande.prompt,
@@ -144,6 +166,7 @@ function Banc({ references = [] as Carte[], reprise }: { references?: Carte[]; r
             references: demande.references,
             repris: demande.repris,
             places: Array.from({ length: demande.variations }, (_, i) => ({ x: 100 * i, y: 7 })),
+            origines,
           })
         }
       />
@@ -659,5 +682,98 @@ describe("la barre de fabrication", () => {
       expect(appels.filter((a) => a.url.includes("/board/assets/"))).toHaveLength(2),
     )
     await waitFor(() => expect(screen.queryAllByTestId("fantome")).toHaveLength(1))
+  })
+
+  // TS10 — « Développer ce sujet » : l'image part en référence d'édition, le
+  // champ se vide avec un exemple grisé, et le résultat se relie à l'image
+  // d'origine une fois posé.
+
+  test("« Développer ce sujet » vide le champ, y met le curseur, et montre un exemple", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const { rerender } = render(<Banc developpement={null} />)
+    const champ = (await screen.findByLabelText("Décris une image")) as HTMLInputElement
+    fireEvent.change(champ, { target: { value: "un texte à moitié tapé" } })
+
+    rerender(<Banc developpement={{ cle: "dev-1", exemple: "une variante plus sombre" }} />)
+
+    await waitFor(() => expect(champ.value).toBe(""))
+    expect(champ.placeholder).toBe("une variante plus sombre")
+    expect(EXEMPLES_DEVELOPPEMENT).toContain(champ.placeholder)
+    expect(document.activeElement).toBe(champ)
+  })
+
+  test("développer deux cartes de suite redéclenche l'effet — la clé change", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const { rerender } = render(
+      <Banc developpement={{ cle: "dev-1", exemple: "la même de dos" }} />,
+    )
+    const champ = (await screen.findByLabelText("Décris une image")) as HTMLInputElement
+    await waitFor(() => expect(champ.placeholder).toBe("la même de dos"))
+
+    fireEvent.change(champ, { target: { value: "encore un brouillon" } })
+    rerender(<Banc developpement={{ cle: "dev-2", exemple: "sans la cape" }} />)
+
+    await waitFor(() => expect(champ.value).toBe(""))
+    expect(champ.placeholder).toBe("sans la cape")
+  })
+
+  test("l'image posée se relie à sa carte d'origine (TS10)", async () => {
+    const { fetchDouble, appels } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const liens: { de: Bout; vers: Bout }[] = []
+    const refs = referencesPrises([carte("heron")], ["heron"])
+    render(<Banc references={refs} origines={["heron"]} lier={(de, vers) => liens.push({ de, vers })} />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "le même, de dos" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() =>
+      expect(appels.some((a) => a.url.includes("/board/assets/"))).toBe(true),
+    )
+    await waitFor(() => expect(liens).toHaveLength(1))
+    expect(liens[0]).toEqual({
+      de: { genre: "carte", valeur: "heron" },
+      vers: { genre: "carte", valeur: "carte-gen1-0" },
+    })
+  })
+
+  test("plusieurs versions développées se relient chacune à la même origine (TS10)", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const liens: { de: Bout; vers: Bout }[] = []
+    const refs = referencesPrises([carte("heron")], ["heron"])
+    render(<Banc references={refs} origines={["heron"]} lier={(de, vers) => liens.push({ de, vers })} />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+
+    fireEvent.click(screen.getByRole("button", { name: "2" }))
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "deux variantes" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() => expect(liens).toHaveLength(2))
+    expect(liens.every((l) => l.de.valeur === "heron")).toBe(true)
+    expect(liens.map((l) => l.vers.valeur).sort()).toEqual(["carte-gen1-0", "carte-gen1-1"])
+  })
+
+  test("une fabrication ordinaire, sans origine, ne tire aucun lien", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const liens: unknown[] = []
+    render(<Banc lier={(de, vers) => liens.push({ de, vers })} />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "un héron" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() => expect(screen.queryAllByTestId("fantome")).toHaveLength(0))
+    expect(liens).toHaveLength(0)
   })
 })

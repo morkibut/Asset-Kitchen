@@ -75,6 +75,7 @@ import type { CibleAmbiances } from "./Ambiances"
 import {
   BarreTableau,
   CarteTuile,
+  DEVELOPPER,
   EST_REFERENCE,
   GLISSE_CARTE,
   GOUTTIERE,
@@ -90,10 +91,13 @@ import {
 import { Libelle, Raison } from "./pieces"
 import {
   BarreDeFabrication,
+  EXEMPLES_DEVELOPPEMENT,
   NoeudFantome,
+  origineDeLiaison,
   referencesPrises,
   useFabricationSurToile,
   type DemandeFabrication,
+  type Developpement,
   type Reprise,
 } from "./ToileFabrique"
 
@@ -1151,6 +1155,22 @@ function Plan({
   // le champ ne bouge pas.
   const [brouillon, setBrouillon] = useState<Place | null>(null)
 
+  // **Tirer un trait — définie ici, avant la fabrication, pour que le crochet
+  // ci-dessous puisse s'en servir.** « Développer ce sujet » (TS10) relie
+  // l'image qui revient à celle dont elle est partie **par la même route que
+  // l'écran** : un geste tiré à la main et un geste tiré par une fabrication
+  // ne doivent pas inventer deux façons de tirer un trait — seule l'origine du
+  // geste diffère, pas ce qu'il produit ni son annulation (`pile`).
+  const tirer = useCallback(
+    (de: Lien["de"], vers: Lien["de"]) => {
+      void api
+        .lier(de, vers)
+        .then((ne) => pile.current.push({ genre: "lien-cree", lien: ne.identifiant }))
+        .catch((e) => echouer(e, "le lien n'a pas pu être tiré"))
+    },
+    [echouer, pile],
+  )
+
   // ── Fabriquer sur la toile ───────────────────────────────────────────────
   //
   // **La sélection propose, le bouton prend** (TS6, retour de l'auteur du
@@ -1160,13 +1180,31 @@ function Plan({
   // `prises` — la liste explicite, et la seule, que la barre montre en
   // vignettes. Les fantômes sont des nœuds comme les autres : ils sont *sur*
   // le plan, là où les images vont se poser.
-  const fabrication = useFabricationSurToile(onErreur)
+  const fabrication = useFabricationSurToile(onErreur, tirer)
   const [prises, setPrises] = useState<string[]>([])
   const champFabrique = useRef<HTMLInputElement>(null)
   const referencesFabrique = useMemo(
     () => referencesPrises(cartes, prises),
     [cartes, prises],
   )
+
+  // **« Développer ce sujet »** (TS10) : l'image d'origine, retenue à part de
+  // `prises` — la liste peut se vider ou changer d'ici le clic sur
+  // Fabriquer (une croix, une seconde prise), et seule cette identité-là dit
+  // « le résultat doit se relier à celle-ci ». `null` hors développement :
+  // une fabrication ordinaire ne relie rien.
+  const [origineDeveloppement, setOrigineDeveloppement] = useState<string | null>(null)
+  const [developpement, setDeveloppement] = useState<Developpement | null>(null)
+  const developper = useCallback((carte: Carte) => {
+    setPrises([carte.identifiant])
+    setOrigineDeveloppement(carte.identifiant)
+    setDeveloppement({
+      cle: crypto.randomUUID(),
+      exemple:
+        EXEMPLES_DEVELOPPEMENT[Math.floor(Math.random() * EXEMPLES_DEVELOPPEMENT.length)],
+    })
+    champFabrique.current?.focus({ preventScroll: true })
+  }, [])
 
   // **Chaque nœud porte ses dimensions, et c'est la librairie qui l'exige.** Un
   // nœud dont elle ne connaît pas la taille est rendu `visibility: hidden` en
@@ -1443,16 +1481,10 @@ function Plan({
   // valeur d'avant est vraie même si l'appel échoue. Une création s'empile
   // *après*, parce que son identifiant vient de la réponse — l'empiler avant
   // aurait fait viser un lien qui n'existe pas encore, ou pas du tout.
-
-  const tirer = useCallback(
-    (de: Lien["de"], vers: Lien["de"]) => {
-      void api
-        .lier(de, vers)
-        .then((ne) => pile.current.push({ genre: "lien-cree", lien: ne.identifiant }))
-        .catch((e) => echouer(e, "le lien n'a pas pu être tiré"))
-    },
-    [echouer, pile],
-  )
+  //
+  // **`tirer` est définie plus haut**, avant la fabrication de la toile : elle
+  // sert de route de liaison à « Développer ce sujet » (TS10), qui en a besoin
+  // dès la construction du crochet `useFabricationSurToile`.
 
   const couper = useCallback(
     (un: Lien) => {
@@ -1858,6 +1890,10 @@ function Plan({
         posees.push(place)
         occupees.push({ ...place, ...taille })
       }
+      // **« Développer ce sujet »** (TS10) : si l'image en développement est
+      // toujours parmi les références qui partent, chaque résultat se relie à
+      // elle une fois posé.
+      const origines = origineDeLiaison(origineDeveloppement, referencesFabrique)
       // **Autant d'appels qu'il faut au plafond du modèle** (TS9) : `lancer`
       // découpe lui-même `posees` en lots d'au plus `variations_max`, un
       // appel par lot, l'un après l'autre — ici on ne fait que poser les
@@ -1872,13 +1908,23 @@ function Plan({
         references: demande.references,
         repris: demande.repris,
         places: posees,
+        origines,
       })
       // Les références prises sont consommées par l'appel qui part — comme un
       // brouillon qu'on vide en l'envoyant, pas comme un choix qui resterait
-      // coché pour la suivante.
+      // coché pour la suivante. Le développement en cours part avec elles.
       setPrises([])
+      setOrigineDeveloppement(null)
     },
-    [crans, cartes, referencesFabrique, places, screenToFlowPosition, fabrication],
+    [
+      crans,
+      cartes,
+      referencesFabrique,
+      places,
+      screenToFlowPosition,
+      fabrication,
+      origineDeveloppement,
+    ],
   )
 
   /** « Prendre comme référence » — **une bascule**, pas un remplacement : une
@@ -2151,6 +2197,7 @@ function Plan({
         <PRENDRE_REFERENCE.Provider value={prendreReference}>
         <EST_REFERENCE.Provider value={estReference}>
         <REPRENDRE_TEXTE.Provider value={reprendreTexte}>
+        <DEVELOPPER.Provider value={developper}>
         <CADRE.Provider value={cadre}>
           <ReactFlow
             nodes={noeuds}
@@ -2246,6 +2293,7 @@ function Plan({
             </svg>
           </ReactFlow>
         </CADRE.Provider>
+        </DEVELOPPER.Provider>
         </REPRENDRE_TEXTE.Provider>
         </EST_REFERENCE.Provider>
         </PRENDRE_REFERENCE.Provider>
@@ -2267,6 +2315,7 @@ function Plan({
             onLancer={fabriquer}
             champ={champFabrique}
             reprise={reprise}
+            developpement={developpement}
           />
         )}
       </div>

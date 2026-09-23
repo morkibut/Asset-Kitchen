@@ -13,7 +13,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 
 import type { Carte, Personnage, PhraseDeCarte } from "../api"
-import { CREER_SUJET, CarteTuile, OUVRIR_SUJET, REPRENDRE_TEXTE } from "./Tableau"
+import { CREER_SUJET, CarteTuile, DEVELOPPER, OUVRIR_SUJET, REPRENDRE_TEXTE } from "./Tableau"
 
 afterEach(cleanup)
 
@@ -58,20 +58,23 @@ function monterPanneau(carte: Carte, options: {
   creerSujet?: (c: Carte) => void
   ouvrirSujet?: (id: string) => void
   reprendreTexte?: (p: PhraseDeCarte) => void
+  developper?: (c: Carte) => void
 } = {}) {
   return render(
     <CREER_SUJET.Provider value={options.creerSujet ?? null}>
       <OUVRIR_SUJET.Provider value={options.ouvrirSujet ?? null}>
         <REPRENDRE_TEXTE.Provider value={options.reprendreTexte ?? null}>
-          <CarteTuile
-            carte={carte}
-            personnages={options.personnages ?? []}
-            choisie
-            survolee={false}
-            onSurvol={() => {}}
-            onChoisir={() => {}}
-            onErreur={() => {}}
-          />
+          <DEVELOPPER.Provider value={options.developper ?? null}>
+            <CarteTuile
+              carte={carte}
+              personnages={options.personnages ?? []}
+              choisie
+              survolee={false}
+              onSurvol={() => {}}
+              onChoisir={() => {}}
+              onErreur={() => {}}
+            />
+          </DEVELOPPER.Provider>
         </REPRENDRE_TEXTE.Provider>
       </OUVRIR_SUJET.Provider>
     </CREER_SUJET.Provider>,
@@ -161,4 +164,32 @@ test("« Reprendre ce texte » rend la phrase entière, le modèle et la taille 
 test("sans le geste fourni, le bouton disparaît — comme « Prendre comme référence » hors toile", () => {
   monterPanneau(carteImage({ phrase: phrase() }))
   expect(screen.queryByRole("button", { name: "Reprendre ce texte ›" })).toBeNull()
+})
+
+// TS10 — « Développer ce sujet » : sur toute carte image arrivée, pas
+// seulement celles que la barre a fabriquées (`phrase` absente ici, à la
+// différence des essais de TS5 ci-dessus) — c'est le critère qui distingue
+// ce bouton de « Reprendre ce texte ».
+
+test("toute carte image arrivée porte « Développer ce sujet », même sans phrase ni geste de TS5", () => {
+  const developper = vi.fn()
+  monterPanneau(carteImage({ phrase: null }), { developper })
+
+  fireEvent.click(boutonNomme("Développer ce sujet"))
+  expect(developper).toHaveBeenCalledWith(expect.objectContaining({ identifiant: "carte-1" }))
+})
+
+test("une carte texte ne porte pas « Développer ce sujet » — rien à développer sans image", () => {
+  monterPanneau(carteTexte(), { developper: vi.fn() })
+  expect(screen.queryByRole("button", { name: "Développer ce sujet" })).toBeNull()
+})
+
+test("une carte pas encore arrivée ne porte pas « Développer ce sujet » — pas d'image à envoyer", () => {
+  monterPanneau(carteImage({ statut: "attente" }), { developper: vi.fn() })
+  expect(screen.queryByRole("button", { name: "Développer ce sujet" })).toBeNull()
+})
+
+test("sans le geste fourni, « Développer ce sujet » disparaît — même règle que les autres gestes de la toile", () => {
+  monterPanneau(carteImage())
+  expect(screen.queryByRole("button", { name: "Développer ce sujet" })).toBeNull()
 })
