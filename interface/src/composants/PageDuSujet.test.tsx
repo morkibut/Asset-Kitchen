@@ -441,10 +441,18 @@ test("le portrait et le nom ne sont pas écrits deux fois quand la fiche s'ouvre
 })
 
 test("les trois réglages sont visibles avec leur aide, lue dans le recueil", () => {
+  // **Répartis sur deux onglets depuis `RV21`** : « Ce qu'il est » vit dans
+  // « L'essentiel » (l'onglet par défaut), « Ce qui l'habille » et « Ses
+  // images d'exemple » dans « Apparence ».
   monter()
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   const dialogue = screen.getByRole("dialog")
-  for (const clef of ["codex.chose.sujet", "codex.chose.habillage", "codex.chose.exemples"]) {
+  const sujetAide = AIDE["codex.chose.sujet"]
+  expect(within(dialogue).getByText(sujetAide.nom)).toBeTruthy()
+  expect(within(dialogue).getByText(sujetAide.quoi)).toBeTruthy()
+
+  fireEvent.click(within(dialogue).getByRole("tab", { name: "Apparence" }))
+  for (const clef of ["codex.chose.habillage", "codex.chose.exemples"]) {
     const entree = AIDE[clef]
     expect(within(dialogue).getByText(entree.nom)).toBeTruthy()
     expect(within(dialogue).getByText(entree.quoi)).toBeTruthy()
@@ -457,6 +465,7 @@ test("un texte de style se règle depuis la fiche, et son origine se lit sans cl
   const { appels } = monter()
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   const dialogue = screen.getByRole("dialog")
+  fireEvent.click(within(dialogue).getByRole("tab", { name: "Apparence" }))
   const zone = await within(dialogue).findByLabelText("monde")
   expect(within(dialogue).getByText("du jeu", { exact: true })).toBeTruthy()
   fireEvent.change(zone, { target: { value: "des salles de forge" } })
@@ -489,6 +498,7 @@ test("une image d'exemple proposée se retient d'un clic", async () => {
   monter()
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   const dialogue = screen.getByRole("dialog")
+  fireEvent.click(within(dialogue).getByRole("tab", { name: "Apparence" }))
   fireEvent.click(await within(dialogue).findByRole("button", { name: /^retenir/ }))
   await waitFor(() => expect(promouvoir).toHaveBeenCalledWith("le-pelerin", "img-1", true))
 })
@@ -497,6 +507,7 @@ test("sans référence d'exemple, la fiche dit ce que ça coûte", async () => {
   monter()
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   const dialogue = screen.getByRole("dialog")
+  fireEvent.click(within(dialogue).getByRole("tab", { name: "Apparence" }))
   expect(await within(dialogue).findByText(/Dix-sept générations payées sur vingt-huit/)).toBeTruthy()
 })
 
@@ -513,6 +524,7 @@ test("éteindre un texte de style écrit un refus, et rallumer le défait", asyn
   const { appels } = monter()
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   const dialogue = screen.getByRole("dialog")
+  fireEvent.click(within(dialogue).getByRole("tab", { name: "Apparence" }))
   fireEvent.click(await within(dialogue).findByRole("button", { name: "éteindre" }))
   await waitFor(() =>
     expect(
@@ -537,6 +549,7 @@ test("un texte de style écrit ici montre en dessous, barré, celui qu'il rempla
   monter()
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   const dialogue = screen.getByRole("dialog")
+  fireEvent.click(within(dialogue).getByRole("tab", { name: "Apparence" }))
   await within(dialogue).findByLabelText("vue et cadrage")
   expect(within(dialogue).getByText("3/4 top-down")).toBeTruthy()
 })
@@ -546,6 +559,7 @@ test("le désaccord entre la grille annoncée et celle qui s'applique se voit", 
   monter()
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   const dialogue = screen.getByRole("dialog")
+  fireEvent.click(within(dialogue).getByRole("tab", { name: "Apparence" }))
   expect(await within(dialogue).findByText("128 px de grille")).toBeTruthy()
   expect(within(dialogue).getByText(/annonce une autre grille dans le texte qui part/)).toBeTruthy()
 })
@@ -556,6 +570,7 @@ test("une image d'exemple disparue laisse sa ligne, sans vignette", async () => 
   monter()
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
   const dialogue = screen.getByRole("dialog")
+  fireEvent.click(within(dialogue).getByRole("tab", { name: "Apparence" }))
   await within(dialogue).findByText("une image promue")
   const vignettes = within(dialogue).getByText("une image promue").closest("li")?.querySelectorAll("[data-vignette-exemple]")
   expect(vignettes).toHaveLength(1)
@@ -599,7 +614,7 @@ test("retirer l’asset reste disponible dans la modification de la fiche", asyn
   vi.spyOn(window, "confirm").mockReturnValue(true)
   const retirer = vi.spyOn(api, "supprimerPersonnage").mockResolvedValue({} as never)
   fireEvent.click(screen.getByRole("button", { name: "Modifier la fiche" }))
-  fireEvent.click(screen.getByText("Rangement et retrait du jeu"))
+  fireEvent.click(screen.getByRole("tab", { name: "Supprimer" }))
   fireEvent.click(screen.getByRole("button", { name: "Le retirer du jeu" }))
   await waitFor(() => expect(retirer).toHaveBeenCalledWith("le-pelerin"))
   expect(onPersonnage).toHaveBeenCalledWith(expect.objectContaining({ supprime: true }))

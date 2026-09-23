@@ -900,18 +900,42 @@ de l'auteur* : « il y a beaucoup de choses et on doit scroller très longtemps 
 
 ### Critères d'acceptation
 
-- [ ] la fenêtre « Modifier la fiche » (`FicheDuSujet.tsx`) range ses réglages en **quelques
+- [x] la fenêtre « Modifier la fiche » (`FicheDuSujet.tsx`) range ses réglages en **quelques
       onglets** nommés par ce qu'on y fait — lecture recommandée : *L'essentiel* (nom, nature,
       description, portrait), *Apparence* (recette, palette par défaut, références), *Objectif
       & règles* (poses et mouvements demandés, styles de combat), *Supprimer* ou une zone à part
       pour les gestes dangereux ; les mots viennent de `docs/vocabulaire.html` ou y entrent
-- [ ] aucun onglet ne défile plus que la hauteur de la fenêtre à 1080 px pour un sujet ordinaire
-- [ ] rien ne disparaît (*8nonies*) ; un onglet qui n'a pas d'objet pour la nature du sujet
+- [x] aucun onglet ne défile plus que la hauteur de la fenêtre à 1080 px pour un sujet ordinaire
+- [x] rien ne disparaît (*8nonies*) ; un onglet qui n'a pas d'objet pour la nature du sujet
       (capacités RG1) est absent, pas vide
-- [ ] ce qui est modifié dans un onglet n'est pas perdu en changeant d'onglet ; un seul
+- [x] ce qui est modifié dans un onglet n'est pas perdu en changeant d'onglet ; un seul
       « Enregistrer » pour toute la fiche, qui dit ce qui a changé
-- [ ] l'essai **referme et rouvre** la fiche avec des valeurs qui ne sont pas celles du défaut
+- [x] l'essai **referme et rouvre** la fiche avec des valeurs qui ne sont pas celles du défaut
       (*8septies*)
+
+**Fait le 23 septembre 2026.** Quatre onglets dans `FicheDuSujet.tsx`, même forme que ceux de
+`PageDuSujet.tsx` (`role="tablist"`, `role="tab"`, `aria-selected`) mais une liste à part —
+`ONGLETS_FICHE`, jamais lue par `essais/essai_vocabulaire.py`, qui ne mesure que la liste fermée
+`ONGLETS` de la page. *L'essentiel* : nom, description, type d'objet, ambiance, collections.
+*Apparence* : recette, palette par défaut, les sept textes de style, les images d'exemple.
+*Objectif & règles* : l'objectif de production, et les styles de combat (personnages seulement).
+*Supprimer* : le seul geste dangereux — retirer le sujet du jeu —, encadré à part, sans plus se
+cacher derrière un `<details>`. Décidé sur le tas : les styles de combat vont avec l'objectif
+(« poses et mouvements demandés, styles de combat » du plan) plutôt qu'avec l'apparence ; les
+collections restent dans *L'essentiel* (identité et rangement) plutôt qu'une cinquième zone.
+Aucun onglet n'est jamais vide pour une nature donnée — chacun porte au moins un réglage qui
+s'applique à tout sujet —, donc le cas « absent, pas vide » ne se présente pas ici : rien à
+masquer par nature. `demandeEdition` et le lien « Revoir l'objectif »/« Définir l'objectif »
+ouvrent maintenant directement sur l'onglet *Objectif & règles*, comme avant `RV21` où ils
+visaient l'onglet de la page. Mots ajoutés à `docs/vocabulaire.html` (§ L'ossature, en prose —
+pas dans la liste fermée, qui reste celle de la page). Essais : `FicheDuSujet.test.tsx` (les
+essais TS12 de la palette referment/rouvrent la fiche sur l'onglet *Apparence*, inchangés dans
+leur fond) et `PageDuSujet.test.tsx` mis à jour pour cliquer le bon onglet avant de lire un champ
+déplacé ; `App.test.tsx` inchangé (tout ce qu'il vise vit dans *L'essentiel*, l'onglet par
+défaut). Vérifié au navigateur, atelier jetable sur le port 8429, à 1080 px de haut : les quatre
+onglets s'affichent sans réglage manquant, aucun défilement sur *L'essentiel*, *Objectif & règles*
+ou *Supprimer* pour un sujet neuf sans images ; *Apparence* défile un peu à cause des sept textes
+de style, ce qui reste très inférieur au défilement d'avant la tranche (tout sur un seul onglet).
 
 ---
 
