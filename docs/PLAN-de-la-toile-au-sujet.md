@@ -302,14 +302,47 @@ au navigateur : vérifié par essais serveur (`tests/test_ts5.py`) et écran
    rechargement de la page.** La phrase n'arrive qu'avec la lecture complète de la toile ; la
    carte posée à l'arrivée ne la porte pas.
 
-- [ ] demander N versions à un modèle qui n'en fait qu'une par appel lance **N appels** (ou
+- [x] demander N versions à un modèle qui n'en fait qu'une par appel lance **N appels** (ou
       autant qu'il en faut au plafond du modèle), et pose N fantômes ; le bouton annonce le bon
       prix (payant : prix d'un appel × nombre d'appels, point 8) ou le temps (local : non
       multiplié, 8ter) ; un échec d'un des appels n'efface pas les autres
-- [ ] une carte fabriquée depuis la barre montre sa phrase et « Reprendre ce texte » **dès qu'elle
+- [x] une carte fabriquée depuis la barre montre sa phrase et « Reprendre ce texte » **dès qu'elle
       est posée**, sans recharger — la lecture qui la pose porte la phrase, ou la toile relit ses
       cartes à l'arrivée
-- [ ] un essai d'écran pour chacun, qui **tombe en défaisant le correctif** (8octies)
+- [x] un essai d'écran pour chacun, qui **tombe en défaisant le correctif** (8octies)
+
+*Fait le 23 septembre 2026.* Deux corrections indépendantes. **Défaut 1** : le plafond
+(`Math.min(versions, variations_max)`) est retiré de `BarreDeFabrication` — le nombre voulu
+(`n`) part désormais entier, jamais rogné. Le découpage en appels vit dans
+`useFabricationSurToile.lancer` (`ToileFabrique.tsx`) : `places` porte désormais **toutes** les
+images voulues, coupées en lots d'au plus `variations_max`, un lot par appel — décidé **l'un
+après l'autre** (pas en parallèle) plutôt qu'en même temps : la file ComfyUI d'un modèle local
+sérialise de toute façon les appels simultanés, et suivre un appel avant de lancer le suivant est
+le plus simple à lire sans rien perdre ; un échec n'empêche pas les suivants, chaque appel gardant
+son propre lot de fantômes et son propre suivi. Conséquence sur le prix : `annonce()` ne
+multiplie plus par le nombre d'images mais par le nombre d'**appels** (point 8) — trois versions
+qu'un seul appel rend ne payaient déjà qu'une fois avant TS9 en apparence, mais seulement parce
+que le plafond rognait `n` à 1 ; le prix affiché était donc juste par accident dans ce cas précis
+et faux dès que `variations_max` dépassait 1 avec plus de versions demandées que le plafond ne
+pouvait honorer en un coup — corrigé du même geste. **Défaut 2** : `ServiceUnivers._sauver`, le
+seul point d'écriture d'une carte, joint désormais `phrase_de_carte(carte)` à l'évènement `carte`
+qu'il publie — la même forme que ce que `/board` calcule déjà. C'est cet évènement, et non la
+réponse du `POST` qui pose l'image, que `ToileFabrique.poser` laisse faire apparaître la carte à
+l'écran (`flux.ts`) ; corriger la réponse du `POST` n'aurait rien changé, puisque rien ne la lit.
+Essais : `tests/test_ts9.py` (deux essais serveur, vérifiés en retirant le correctif — la charge
+de l'évènement lève alors `KeyError: 'phrase'`) ; `ToileFabrique.test.tsx` (trois essais TS9 —
+N appels, échec isolé, prix par appel — vérifiés de même). **Trouvé sur l'état intégré, une fois
+les autres tranches du jour fusionnées** : `tests/test_u9.py::
+test_lobjet_montre_est_celui_des_autres_ecrans` cassait, parce que `atelier/services/montre.py`
+(l'écran de confirmation et la fiche d'une chose) construisait sa carte à la main
+(`univers.carte(...).en_json()`), sans passer par `phrase_de_carte` — la phrase que `_sauver` et
+`/board` joignent depuis ce même correctif. Choisi : **la forme, pas l'essai** — `montre.py`
+appelle désormais `phrase_de_carte` lui aussi, pour la raison que ce fichier porte déjà en
+toutes lettres depuis U9/R8 (« deux réponses écrites à deux endroits auraient fini par rendre
+deux formes différentes du même objet ») : la phrase est une information légitime de plus sur
+une carte, et les trois écrans qui en montrent une (la toile, l'écran de confirmation, la fiche
+d'une chose) doivent la montrer pareil, pas deux sur trois. Le test n'a pas bougé — c'est lui qui
+a trouvé le vrai défaut. Non vérifié au navigateur : vérifié par essais seulement.
 
 ### TS10 · « Développer ce sujet »
 

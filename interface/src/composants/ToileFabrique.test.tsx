@@ -46,6 +46,15 @@ const QWEN = modele("ComfyUI:qwen21-rapide@3", {
   ...({ temps: { secondes: 12, mesures: 3, vitesse: null } } as object),
 })
 const GRISE = modele("ComfyUI:qwen21-rapide@2", { refus: "workflow absent" })
+// **Un style local qui ne rend qu'une variation par appel** (TS9) — le cas
+// exact du défaut de l'auteur : demander « 3 » à un modèle pareil doit
+// lancer trois appels, jamais un seul borné en silence à une image.
+const UNE_A_LA_FOIS = modele("ComfyUI:un-style-a-la-fois", {
+  locale: true,
+  variations_max: 1,
+  unite: "seconde",
+  ...({ temps: { secondes: 5, mesures: 1, vitesse: null } } as object),
+})
 
 const carte = (identifiant: string, sur: Partial<Carte> = {}): Carte => ({
   identifiant,
@@ -127,7 +136,13 @@ function Banc({ references = [] as Carte[], reprise }: { references?: Carte[]; r
         reprise={reprise}
         onLancer={(demande) =>
           void fabrication.lancer({
-            ...demande,
+            prompt: demande.prompt,
+            modele: demande.modele,
+            proportions: demande.proportions,
+            taille: demande.taille,
+            variations_max: demande.variations_max,
+            references: demande.references,
+            repris: demande.repris,
             places: Array.from({ length: demande.variations }, (_, i) => ({ x: 100 * i, y: 7 })),
           })
         }
@@ -162,9 +177,13 @@ describe("les règles de la barre, sans écran", () => {
     expect(modeleParDefaut([GRISE])).toBeNull()
   })
 
-  test("un payant annonce son prix multiplié, un local un temps qui ne l'est pas", () => {
-    expect(annonce(PAYANT, { [PAYANT.identifiant]: 0.04 }, 3)).toBe("$0,1200")
-    expect(annonce(PAYANT, {}, 3)).toBe("Coût inconnu")
+  test("un payant annonce le prix d'un appel multiplié par le nombre d'appels, un local un temps qui ne l'est pas (TS9)", () => {
+    // Trois versions qu'un seul appel rend (appels=1) ne payent qu'une fois.
+    expect(annonce(PAYANT, { [PAYANT.identifiant]: 0.04 }, 1)).toBe("$0,0400")
+    // Cinq versions qu'il a fallu deux appels pour obtenir payent deux fois —
+    // jamais cinq fois (point 8 : le prix suit les appels, pas les cases).
+    expect(annonce(PAYANT, { [PAYANT.identifiant]: 0.04 }, 2)).toBe("$0,0800")
+    expect(annonce(PAYANT, {}, 1)).toBe("Coût inconnu")
     expect(annonce(QWEN, {}, 3)).toBe("≈ 12 secondes par image")
   })
 
@@ -334,7 +353,9 @@ describe("la barre de fabrication", () => {
     const relue = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
     await waitFor(() => expect(relue.value).toBe(PAYANT.identifiant))
     expect(screen.getByRole("button", { name: "3" }).getAttribute("aria-pressed")).toBe("true")
-    expect(screen.getByRole("button", { name: /Fabriquer 3 · \$0,1200/ })).toBeTruthy()
+    // PAYANT rend 4 variations par appel (défaut de la fabrique d'essai) :
+    // 3 versions tiennent dans un seul appel, donc un seul prix (TS9).
+    expect(screen.getByRole("button", { name: /Fabriquer 3 · \$0,0400/ })).toBeTruthy()
   })
 
   test("l'image arrive brute, en 512 par défaut, et sans le style du jeu (TS4)", async () => {
@@ -516,5 +537,127 @@ describe("la barre de fabrication", () => {
     // revenir à la phrase d'origine, malgré une correction en cours.
     rerender(<Banc reprise={uneReprise()} />)
     await waitFor(() => expect(champ.value).toBe("un héron"))
+  })
+
+  // TS9 — le premier défaut vu au navigateur : « 3 » ne faisait qu'une image
+  // avec un style local qui ne rend qu'une variation par appel, en silence.
+
+  /** Le serveur doublé, mais **par lot** : chaque appel a son propre
+   *  identifiant de génération (celui que le client envoie), pour ne pas
+   *  confondre trois appels sous un seul « gen1 » comme `serveur()` le fait —
+   *  ce que ce test doit justement distinguer. */
+  function serveurParLot() {
+    const appels: Appel[] = []
+    const variationsParLot = new Map<string, number>()
+    const reponse = (corps: unknown, statut = 200) =>
+      Promise.resolve(
+        new Response(JSON.stringify(corps), {
+          status: statut,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+    const emplacements = (lot: string, statut: string) =>
+      Array.from({ length: variationsParLot.get(lot) ?? 1 }, (_, rang) => ({
+        rang,
+        statut,
+        raison: null,
+      }))
+    const fetchDouble = vi.fn((entree: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(entree)
+      const methode = init?.method ?? "GET"
+      const corps = init?.body ? JSON.parse(String(init.body)) : null
+      appels.push({ url, methode, corps })
+      if (url.startsWith("/api/models"))
+        return reponse({ modeles: [UNE_A_LA_FOIS], couts: {} })
+      if (url === "/api/generations" && methode === "POST") {
+        const { identifiant: lot, variations } = corps as { identifiant: string; variations: number }
+        variationsParLot.set(lot, variations)
+        return reponse(
+          { identifiant: lot, modele: "", projet: "marais", emplacements: emplacements(lot, "en_cours") },
+          202,
+        )
+      }
+      const lot = url.match(/^\/api\/generations\/([^/]+)$/)?.[1]
+      if (lot)
+        return reponse({ identifiant: lot, projet: "marais", emplacements: emplacements(lot, "reussie") })
+      if (url.includes("/board/assets/")) return reponse({ carte: {}, deja_presente: false })
+      return reponse({}, 404)
+    })
+    return { fetchDouble, appels }
+  }
+
+  test("3 versions avec un modèle qui n'en rend qu'une par appel lancent 3 appels et posent 3 images (TS9)", async () => {
+    const { fetchDouble, appels } = serveurParLot()
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(UNE_A_LA_FOIS.identifiant))
+
+    fireEvent.click(screen.getByRole("button", { name: "3" }))
+    // Le bouton annonce le bon compte, jamais rogné en silence.
+    expect(screen.getByRole("button", { name: /^Fabriquer 3 ·/ })).toBeTruthy()
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "un renard" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    // **Trois appels, jamais un seul** — le cœur du défaut.
+    await waitFor(() =>
+      expect(appels.filter((a) => a.url === "/api/generations" && a.methode === "POST")).toHaveLength(3),
+    )
+    const corps = appels
+      .filter((a) => a.url === "/api/generations")
+      .map((a) => a.corps as Record<string, unknown>)
+    expect(corps.every((c) => c.variations === 1)).toBe(true)
+
+    // Et les trois posent leur image — trois fantômes résolus, pas un.
+    await waitFor(() =>
+      expect(appels.filter((a) => a.url.includes("/board/assets/"))).toHaveLength(3),
+    )
+    await waitFor(() => expect(screen.queryAllByTestId("fantome")).toHaveLength(0))
+  })
+
+  test("un appel raté au milieu du lot garde son fantôme sans effacer les autres (TS9)", async () => {
+    const { fetchDouble, appels } = serveurParLot()
+    let comptePosts = 0
+    const base = fetchDouble.getMockImplementation()!
+    fetchDouble.mockImplementation((entree, init) => {
+      const url = String(entree)
+      const methode = init?.method ?? "GET"
+      if (url === "/api/generations" && methode === "POST") {
+        comptePosts += 1
+        // Le deuxième appel échoue tout de suite, les deux autres partent
+        // normalement — un échec isolé ne doit rien empêcher d'autre.
+        if (comptePosts === 2) {
+          const corps = init?.body ? JSON.parse(String(init.body)) : null
+          appels.push({ url, methode, corps })
+          return Promise.resolve(
+            new Response(JSON.stringify({ raison: "crédit épuisé" }), {
+              status: 402,
+              headers: { "Content-Type": "application/json" },
+            }),
+          )
+        }
+      }
+      return base(entree, init)
+    })
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(UNE_A_LA_FOIS.identifiant))
+
+    fireEvent.click(screen.getByRole("button", { name: "3" }))
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "un renard" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    // Les trois appels partent malgré l'échec du deuxième.
+    await waitFor(() =>
+      expect(appels.filter((a) => a.url === "/api/generations" && a.methode === "POST")).toHaveLength(3),
+    )
+    // Deux images se posent, un fantôme reste affiché avec sa raison.
+    await waitFor(() =>
+      expect(appels.filter((a) => a.url.includes("/board/assets/"))).toHaveLength(2),
+    )
+    await waitFor(() => expect(screen.queryAllByTestId("fantome")).toHaveLength(1))
   })
 })

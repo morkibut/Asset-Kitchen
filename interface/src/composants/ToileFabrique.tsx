@@ -96,19 +96,22 @@ function vitessePourLaTaille(vitesse: string | null, taille: Taille): string | n
   return (clause ?? vitesse).trim()
 }
 
-/** Ce que le bouton annonce pour `n` versions, à la `taille` choisie.
+/** Ce que le bouton annonce pour un lot réparti sur `appels` appels, à la
+ *  `taille` choisie (TS9).
  *
  *  **Un modèle local annonce un temps, et ce temps ne se multiplie pas** (8ter)
- *  : le premier tirage charge le modèle, les suivants non. Un modèle payant
- *  annonce le prix mesuré sur cette machine, multiplié par le nombre d'images —
- *  ou « Coût inconnu » quand il n'a jamais été appelé ici. **Le prix ne dépend
- *  pas de la taille** (point 8 d'AGENTS.md : une planche coûte le prix d'un
- *  appel, quel que soit ce qu'elle porte) — seul le temps d'un modèle local en
- *  dépend. */
+ *  : le premier tirage charge le modèle, les suivants non — `appels` ne
+ *  compte donc pour rien ici. Un modèle payant annonce le prix d'un appel,
+ *  **multiplié par le nombre d'appels** que ce choix demande (point 8
+ *  d'AGENTS.md : « une planche coûte le prix d'un appel, quel que soit ce
+ *  qu'elle porte » — deux versions qu'un seul appel rend tiennent dans un
+ *  seul prix, trois qu'un modèle ne rend qu'une par appel en payent trois) —
+ *  ou « Coût inconnu » quand il n'a jamais été appelé ici. **Le prix ne
+ *  dépend pas de la taille** — seul le temps d'un modèle local en dépend. */
 export function annonce(
   modele: Modele | null,
   couts: Record<string, number>,
-  n: number,
+  appels: number,
   taille: Taille = "512",
 ): string {
   if (!modele) return "aucun modèle"
@@ -118,7 +121,7 @@ export function annonce(
     return vitessePourLaTaille(temps?.vitesse ?? null, taille) ?? "temps non mesuré"
   }
   const unitaire = couts[modele.identifiant]
-  return prix(unitaire === undefined ? null : unitaire * n, modele.unite)
+  return prix(unitaire === undefined ? null : unitaire * appels, modele.unite)
 }
 
 /** Les cartes prises comme référence — **le bouton prend, la sélection ne
@@ -261,19 +264,17 @@ export function useFabricationSurToile(onErreur: (raison: string) => void) {
     }
   }
 
-  const lancer = useCallback(
+  /** Lancer, pour **un seul appel** — jusqu'à `places.length` images, jamais
+   *  plus que ce que le modèle rend en un coup. Chaque appel a son propre
+   *  lot de fantômes, son propre suivi, et son propre échec : c'est ce qui
+   *  fait qu'un appel raté n'efface pas les fantômes des autres (TS9). */
+  const appeler = useCallback(
     async (demande: {
       prompt: string
       modele: string
       proportions: string
-      /** Vide quand le modèle ne connaît pas la notion (`refusDeLaTaille`) —
-       *  la demande part alors sans, comme avant TS4. */
       taille: Taille | ""
-      variations: number
       references: Reinjection[]
-      /** **Le texte tapé part seul par défaut** — la case « avec le style du
-       *  jeu » de la barre la fait passer à `false` (US-159/US-160 réemployés :
-       *  `repris` décide déjà de ne pas replier la bible en tête). */
       repris: boolean
       places: Place[]
     }) => {
@@ -293,7 +294,7 @@ export function useFabricationSurToile(onErreur: (raison: string) => void) {
           prompt_negatif: "",
           proportions: demande.proportions,
           resolution: demande.taille || null,
-          variations: demande.variations,
+          variations: demande.places.length,
           options: {},
           identifiant: lot,
           references: demande.references,
@@ -325,6 +326,52 @@ export function useFabricationSurToile(onErreur: (raison: string) => void) {
       }
     },
     [onErreur, suivre],
+  )
+
+  /** Lancer une fabrication entière — **autant d'appels qu'il en faut** au
+   *  plafond du modèle (TS9, retour de l'auteur du 23 septembre : « 3 » ne
+   *  faisait qu'une image avec un style local qui ne rend qu'une variation
+   *  par appel, en silence). `places` porte toutes les images voulues ;
+   *  découpées en lots d'au plus `variations_max`, chacun part dans son
+   *  propre appel, suivi et posé pour son propre compte.
+   *
+   *  **Un appel à la fois, décidé ici** : la file ComfyUI d'un modèle local
+   *  sérialise de toute façon les appels simultanés, et les envoyer l'un
+   *  après l'autre est ce qu'il y a de plus simple à suivre sans rien
+   *  perdre — un échec sur l'un n'empêche pas les suivants de partir. */
+  const lancer = useCallback(
+    async (demande: {
+      prompt: string
+      modele: string
+      proportions: string
+      /** Vide quand le modèle ne connaît pas la notion (`refusDeLaTaille`) —
+       *  la demande part alors sans, comme avant TS4. */
+      taille: Taille | ""
+      /** Ce qu'un seul appel de ce modèle sait rendre — le catalogue le dit
+       *  (`Modele.variations_max`). Jamais 0 : un modèle qui ne le déclare
+       *  pas rend une image par appel. */
+      variations_max: number
+      references: Reinjection[]
+      /** **Le texte tapé part seul par défaut** — la case « avec le style du
+       *  jeu » de la barre la fait passer à `false` (US-159/US-160 réemployés :
+       *  `repris` décide déjà de ne pas replier la bible en tête). */
+      repris: boolean
+      places: Place[]
+    }) => {
+      const max = Math.max(1, demande.variations_max)
+      for (let i = 0; i < demande.places.length; i += max) {
+        await appeler({
+          prompt: demande.prompt,
+          modele: demande.modele,
+          proportions: demande.proportions,
+          taille: demande.taille,
+          references: demande.references,
+          repris: demande.repris,
+          places: demande.places.slice(i, i + max),
+        })
+      }
+    },
+    [appeler],
   )
 
   const retirer = useCallback(
@@ -484,6 +531,21 @@ function RepliCeQuiPart({
  *  même phrase que le premier. */
 export type Reprise = PhraseDeCarte & { cle: string }
 
+/** Ce que la barre transmet pour lancer une fabrication (TS9). `variations`
+ *  est le nombre total d'images voulues, **jamais rogné en silence** ; c'est
+ *  Toile qui le découpe en autant d'appels que `variations_max` — ce qu'un
+ *  seul appel du modèle choisi sait rendre — l'exige. */
+export type DemandeFabrication = {
+  prompt: string
+  modele: string
+  proportions: string
+  taille: Taille
+  variations: number
+  variations_max: number
+  references: Reinjection[]
+  repris: boolean
+}
+
 /** La barre flottante, en bas au centre du plan : une phrase, 1/2/3, le
  *  modèle, et le bouton qui porte ce que ça coûte. Entrée lance. */
 export function BarreDeFabrication({
@@ -496,15 +558,7 @@ export function BarreDeFabrication({
   references: Carte[]
   /** Retirer **une seule** référence prise — la croix de sa vignette. */
   onRetirerReference: (identifiant: string) => void
-  onLancer: (demande: {
-    prompt: string
-    modele: string
-    proportions: string
-    taille: Taille
-    variations: number
-    references: Reinjection[]
-    repris: boolean
-  }) => void
+  onLancer: (demande: DemandeFabrication) => void
   champ: React.RefObject<HTMLInputElement | null>
   /** « Reprendre ce texte » (TS5) : la phrase, le modèle et la taille d'une
    *  carte reviennent dans la barre, prêts à corriger et relancer. `null` au
@@ -565,7 +619,14 @@ export function BarreDeFabrication({
     modeles.find((m) => m.identifiant === choix && !m.refus)?.identifiant ??
     modeleParDefaut(modeles)
   const modele = modeles.find((m) => m.identifiant === retenu) ?? null
-  const n = Math.min(versions, modele?.variations_max ?? versions)
+  // **Le nombre voulu n'est plus rogné en silence** (TS9, retour de l'auteur
+  // du 23 septembre : « 3 » ne faisait qu'une image avec un style local qui
+  // ne rend qu'une variation par appel). `n` est ce que l'auteur a demandé ;
+  // `appels` est ce que ça coûte de coups de fil, arrondi au-dessus — c'est
+  // lui, et seulement lui, qui multiplie le prix (point 8 d'AGENTS.md).
+  const n = versions
+  const variationsMax = Math.max(1, modele?.variations_max ?? n)
+  const appels = Math.max(1, Math.ceil(n / variationsMax))
   const tailleRetenu = tailleRetenue(modele, taille)
   // **Le plafond ne cède jamais devant ce que l'auteur a joint** (point 4) :
   // trop de références prises pour ce modèle refuse de partir, et le dit au
@@ -583,6 +644,7 @@ export function BarreDeFabrication({
         : (modele.proportions[0] ?? PROPORTIONS),
       taille: tailleRetenu,
       variations: n,
+      variations_max: variationsMax,
       references: references.map((c) => ({
         asset: c.identifiant,
         role: ROLE_DES_CARTES,
@@ -741,7 +803,7 @@ export function BarreDeFabrication({
         >
           {refusReferences
             ? "Trop de références pour ce modèle"
-            : `Fabriquer ${n > 1 ? `${n} ` : ""}· ${annonce(modele, catalogue?.couts ?? {}, n, tailleRetenu)}`}
+            : `Fabriquer ${n > 1 ? `${n} ` : ""}· ${annonce(modele, catalogue?.couts ?? {}, appels, tailleRetenu)}`}
         </button>
       </div>
       <RepliCeQuiPart

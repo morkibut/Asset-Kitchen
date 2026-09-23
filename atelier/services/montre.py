@@ -18,6 +18,15 @@ confirmation la posait depuis U9 ; la fiche d'une chose la pose depuis R8, pour
 ses images d'exemple. Deux réponses écrites à deux endroits auraient fini par
 rendre deux formes différentes du même objet, et l'écran aurait eu deux façons de
 montrer la même image.
+
+**La phrase en fait partie, depuis TS9.** `/board` (`ServiceUnivers.tableau`) et
+l'évènement `carte` (`ServiceUnivers._sauver`) joignent tous deux
+`phrase_de_carte` à ce qu'ils rendent d'une carte — ce module doit donc en
+faire autant, sous peine de montrer ici une carte plus pauvre que celle que la
+toile affiche, et de rompre « le même objet, mot pour mot » que ce fichier
+promet en toutes lettres (`tests/test_u9.py::
+test_lobjet_montre_est_celui_des_autres_ecrans`, trouvé sur l'état intégré :
+la toile portait déjà la phrase, cet écran-ci ne l'avait pas encore).
 """
 
 from __future__ import annotations
@@ -47,7 +56,11 @@ def de_quoi_montrer(
         if carte:
             if univers is None or not projet:
                 return None
-            return {"sorte": "carte", "carte": univers.carte(projet, identifiant).en_json()}
+            objet = univers.carte(projet, identifiant)
+            return {
+                "sorte": "carte",
+                "carte": {**objet.en_json(), "phrase": univers.phrase_de_carte(objet)},
+            }
         lu = assets.lire(identifiant) if assets else None
         return {"sorte": "asset", "asset": lu.en_json()} if lu else None
     except Exception:  # noqa: BLE001 — une image disparue se voit en moins
