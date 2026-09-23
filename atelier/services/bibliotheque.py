@@ -1513,6 +1513,14 @@ class ServiceBibliotheque:
         faire disparaître empêcherait d'expliquer une facture.
         """
         generations = self._base.generations_du_projet(projet, limite)
+        # **RV9 : la vignette du journal se joint ici, pas ligne par ligne.**
+        # La liste des fabrications lisait ce journal sans jamais savoir ce
+        # qu'un appel avait produit — d'où ses vignettes toujours grises pour
+        # les images qui ne venaient pas d'un clip. Une seule requête pour le
+        # lot entier, même règle que `rangs_vivants` juste au-dessus.
+        vignettes = self._base.premiere_image_vivante(
+            [g.identifiant for g in generations]
+        )
         appels = []
         rates = 0
         cout_rate = 0.0
@@ -1543,6 +1551,10 @@ class ServiceBibliotheque:
                     "statut": generation.statut.value,
                     "reussies": generation.reussies,
                     "rates": manques,
+                    # **RV9** : l'asset de la première image encore vivante,
+                    # ou `None` — un clip vidéo n'en produit pas ici, la case
+                    # de l'écran retombe alors sur sa propre vignette.
+                    "vignette": vignettes.get(generation.identifiant),
                 }
             )
         return {

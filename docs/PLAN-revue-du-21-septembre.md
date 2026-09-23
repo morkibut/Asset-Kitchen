@@ -369,16 +369,66 @@ ligne ne montre ce qu'elle a fabriqué. Et la liste affiche encore l'identifiant
 modèle local (« ComfyUI · qwen21-qualite@e3563da64c0c7b8eecc0e4afc6782acb… »), ce que `RV4` avait
 retiré partout ailleurs.
 
-- [ ] chaque ligne terminée montre **la vignette de ce qu'elle a fabriqué** (la première image,
+- [x] chaque ligne terminée montre **la vignette de ce qu'elle a fabriqué** (la première image,
       ou l'image de départ d'un clip) ; une ligne en cours montre son fantôme, une ratée sa
       marque ; une série repliée montre la vignette de sa première image
-- [ ] **aucun identifiant technique** : le nom lisible du modèle (celui que `RV4` affiche
+- [x] **aucun identifiant technique** : le nom lisible du modèle (celui que `RV4` affiche
       ailleurs) ; la demande de l'auteur en titre quand il y en a une, plutôt que « Image ·
       modèle »
-- [ ] « Création manuelle » dit quelque chose de lisible (ou disparaît s'il ne distingue rien)
-- [ ] un essai d'écran qui **lit l'attribut `src`** d'une vignette et vérifie qu'il pointe l'image
+- [x] « Création manuelle » dit quelque chose de lisible (ou disparaît s'il ne distingue rien)
+- [x] un essai d'écran qui **lit l'attribut `src`** d'une vignette et vérifie qu'il pointe l'image
       d'un résultat — les essais d'avant passaient avec des carrés gris
-- [ ] vu au navigateur, sur un atelier jetable avec des fabrications terminées
+- [x] vu au navigateur, sur un atelier jetable avec des fabrications terminées
+
+*Fait le 23 septembre 2026.* **La vignette manquait parce que rien ne joignait, à la lecture,
+ce qu'un appel avait produit.** `bibliotheque.journal()` savait dire le modèle, le prompt et le
+coût d'un appel, jamais l'image qu'il avait rendue : `Appel` ne portait pas d'asset. Une seule
+requête de lot (`base.premiere_image_vivante`, même forme que `rangs_vivants` pour l'écran des
+dépenses) joint maintenant l'asset du plus petit rang encore vivant à chaque appel du journal —
+`null` pour un appel raté, un clip vidéo (qui garde sa propre couverture), ou une image supprimée
+depuis. Toujours **une requête pour tout le lot**, jamais une par ligne. Pour l'origine « travail »,
+deux cas ne montraient rien alors que le résultat existait déjà sur la fiche : une image locale
+terminée (`TravailImageLocale.assets`, posé à l'arrivée par `travaux_workflow.py`) et une pièce
+d'équipement (`TravailEquipement.cibles[0].url`, dès qu'une case est couverte — pas seulement le
+travail entier terminé, une pièce pouvant couvrir certaines cases avant les autres).
+
+**L'identifiant technique venait d'un formateur différent de celui que `RV4` avait posé partout
+ailleurs.** `nomDuModele` (Fiche.tsx) coupe la chaîne brute sur `:` et l'affiche telle quelle —
+c'est lui, pas `libelleModele`, que la fusion de `SuiviDesTravaux` appelait pour la file locale et
+pour le journal. `libelleModele` lit le nom que le catalogue donne, mais il faut le catalogue :
+`SuiviDesTravaux` charge maintenant une fois, à son ouverture, les modèles image et vidéo
+(`api.modeles`/`api.modelesVideo`, `Promise.allSettled` — l'un des deux catalogues peut échouer
+sans priver l'autre de ses noms) et en tire une table `identifiant → {nom, fournisseur}` ; un
+identifiant absent de la table retombe sur `nomDuModele`, pour une entrée d'avant la V2.2 ou un
+modèle retiré du catalogue.
+
+**« Création manuelle » distingue déjà quelque chose** — l'auteur d'un « Agent » — et reste tel
+quel ; rien à corriger là.
+
+**Une limite reste, et elle est de construction plutôt que d'oubli : une entrée de la file locale
+qui n'est rattachée à aucun travail garde sa lettre.** La file locale « ne connaît ni [le] prompt
+ni la forme des fichiers produits » de ce qu'elle exécute (`atelier/services/file_locale.py`, en
+tête) — c'est la frontière qui sépare l'exécuteur générique du travail qui sait ce qu'il a
+demandé. Les jobs d'animation, de 3D, de son et d'image locale posent tous `etape_locale` sur leur
+travail et sont donc **dédoublonnés** avant d'atteindre l'écran (`etapesDeTravaux`, RV9 § Fait) ;
+une pièce d'équipement lancée en local ne le fait pas (`travaux_equipement.py` ne l'écrit jamais
+sur le travail), et reste alors visible deux fois — une fois comme travail, avec sa vraie
+vignette, une fois comme entrée brute de la file locale, avec sa lettre. Corriger cela demanderait
+de porter `etape_locale` sur un travail à plusieurs appels, ce qu'aucune autre nature ne fait
+aujourd'hui ; ouvrir cet invariant-là n'est pas dans le périmètre de ce retour, et rien dans le
+screenshot de l'auteur n'a permis de confirmer que c'est bien cette entrée-là qu'il a vue. Noté
+pour la prochaine fois que la liste des fabrications est rouverte.
+
+**Essais** : `interface/src/composants/Fabrications.test.tsx` gagne deux essais — l'un lit `src`
+sur les vignettes d'une ligne « appel » (asset joint par le journal) et d'une ligne « travail »
+(image locale terminée), et vérifie qu'aucune n'est réduite à une lettre ; l'autre vérifie que le
+nom du modèle reste lisible (« ComfyUI · Qwen 2.1 qualité ») et que l'identifiant technique brut ne
+paraît nulle part dans l'écran. `tests/test_rv9_vignette.py` (nouveau) tient le côté serveur : le
+journal joint l'asset d'un appel réussi, n'en joint aucun pour un appel raté, et ne le joint plus
+après une suppression. **Vu au navigateur** : atelier jetable sur 8426, un appel payé terminé —
+la vignette de la liste des fabrications est la même image que celle de la Galerie (confirmé par
+la requête réseau, `GET /api/assets/<id>/vignette` → 200), et le modèle se lit « essai · Essai
+PNG », jamais l'identifiant brut.
 
 ---
 

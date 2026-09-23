@@ -15,6 +15,8 @@ import { RelectureEquipement } from "./RelectureEquipement"
 import { FabricationVideoLibre } from "./FabricationVideoLibre"
 import { FabricationAudio } from "./FabricationAudio"
 import { FabricationImageLocale } from "./WorkflowsLocaux"
+import type { TravailImageLocale } from "../api-workflows"
+import type { TravailEquipement } from "../api-travaux-equipement"
 import type { CibleCalque } from "../api-calques"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { nomsDesNaturesMatiere, type NatureDuJeu } from "../natures"
@@ -707,6 +709,13 @@ function vignetteDuTravail(t: TravailSuivi): { src: string | null; lettre: strin
   const { clip, entree_video: entreeVideo } = champsAnimes(t)
   if (anime && clip && t.etat === "termine") return { src: api.couvertureDuClip(clip, 108), lettre: "" }
   if ((t.nature === undefined || t.nature === "animation") && entreeVideo) return { src: entreeVideo.url, lettre: "" }
+  // **RV9, retour de l'auteur du 23 septembre** : une image locale terminée
+  // montre l'image qu'elle a produite (`assets`, posé à l'arrivée par
+  // `travaux_workflow.py`) ; une pièce d'équipement montre la première case
+  // déjà couverte, dès qu'elle en a une — pas seulement le travail entier
+  // terminé, une pièce pouvant couvrir certaines cases avant les autres.
+  if (t.nature === "image-locale") { const assets = (t as TravailImageLocale).assets; if (t.etat === "termine" && assets?.length) return { src: api.vignette(assets[0], "", 108), lettre: "" } }
+  if (t.nature === "equipement") { const cibles = (t as TravailEquipement).cibles; if (cibles?.length) return { src: cibles[0].url, lettre: "" } }
   return { src: null, lettre: LETTRE_DU_TRAVAIL[t.nature ?? "animation"] ?? "A" }
 }
 
@@ -736,6 +745,29 @@ export function SuiviDesTravaux({ projet, personnages, chantier = [], clips = []
   const [recherche, setRecherche] = useState("")
   const [deplies, setDeplies] = useState<Set<string>>(new Set())
   const [occupeLocal, setOccupeLocal] = useState<string | null>(null)
+  // **RV9, retour de l'auteur du 23 septembre : plus d'identifiant technique.**
+  // Le journal et la file locale ne connaissent chacun qu'une chaîne brute
+  // (« ComfyUI:qwen21-qualite@empreinte… ») ; le nom lisible qu'`RV4` a mis
+  // partout ailleurs (`libelleModele`) vient du catalogue des modèles, image
+  // et vidéo, chargé une fois ici — jamais recalculé depuis la chaîne.
+  const [catalogueModeles, setCatalogueModeles] = useState<Map<string, { nom: string; fournisseur: string }>>(new Map())
+  useEffect(() => {
+    let vivant = true
+    // `allSettled` : un catalogue qui échoue (vidéo, par exemple, sans clip en
+    // cours) ne doit pas priver l'autre de ses noms.
+    Promise.allSettled([api.modeles("1:1"), api.modelesVideo(1.5, "480p", "1:1")])
+      .then((resultats) => {
+        if (!vivant) return
+        const carte = new Map<string, { nom: string; fournisseur: string }>()
+        for (const r of resultats) if (r.status === "fulfilled") for (const m of r.value.modeles) carte.set(m.identifiant, { nom: m.nom, fournisseur: m.fournisseur })
+        setCatalogueModeles(carte)
+      })
+    return () => { vivant = false }
+  }, [])
+  const libelleDuModele = (identifiant: string): string => {
+    const m = catalogueModeles.get(identifiant)
+    return m ? libelleModele(m) : nomDuModele(identifiant)
+  }
 
   useEffect(() => {
     if (!projet) { setListe([]); return }
@@ -786,10 +818,16 @@ export function SuiviDesTravaux({ projet, personnages, chantier = [], clips = []
       parGeneration.set(g.identifiant, { appel: { identifiant: g.identifiant, modele: g.modele, prompt: g.demande.prompt, cree_le: g.cree_le, cout_usd: g.cout_usd, statut: g.statut, reussies: g.reussies, rates: [] }, generation: g }))
     const dAppels: LigneFabrication[] = [...parGeneration.values()].map(({ appel: a, generation: g }) => ({
       cle: `appel:${a.identifiant}`, origine: "appel" as const,
-      titre: a.prompt || "Demande sans texte", sousTitre: a.modele,
+      titre: a.prompt || "Demande sans texte", sousTitre: libelleDuModele(a.modele),
       humeur: humeurDeLAppel(a.statut), raison: a.rates.find((r) => r.raison)?.raison ?? null,
       laceLe: a.cree_le, serieCle: null,
-      vignette: g?.clip ? { src: api.couvertureDuClip(a.identifiant, 108), lettre: "" } : { src: null, lettre: "I" },
+      // **RV9, retour de l'auteur du 23 septembre** : un clip garde sa
+      // couverture ; une image lit l'asset que le journal joint désormais
+      // (`vignette`, servi par `bibliotheque.journal`) — plus de carré gris
+      // pour un appel réussi dont l'image existe toujours.
+      vignette: g?.clip ? { src: api.couvertureDuClip(a.identifiant, 108), lettre: "" }
+        : a.vignette ? { src: api.vignette(a.vignette, "", 108), lettre: "" }
+        : { src: null, lettre: "I" },
       appel: a, generation: g,
     }))
 
@@ -797,7 +835,7 @@ export function SuiviDesTravaux({ projet, personnages, chantier = [], clips = []
       .filter((e) => !etapesDeTravaux.has(e.identifiant) && (e.projet === projet || e.projet === null))
       .map((e) => ({
         cle: `locale:${e.identifiant}`, origine: "locale" as const,
-        titre: `${NATURES_LOCALES[e.nature]} · ${nomDuModele(e.modele)}`, sousTitre: e.acteur === "agent" ? "Agent" : "Création manuelle",
+        titre: `${NATURES_LOCALES[e.nature]} · ${libelleDuModele(e.modele)}`, sousTitre: e.acteur === "agent" ? "Agent" : "Création manuelle",
         humeur: humeurLocale(e.etat), raison: e.raison || null,
         laceLe: e.cree_le, serieCle: null,
         vignette: { src: null, lettre: LETTRES_LOCALES[e.nature] },
@@ -805,7 +843,7 @@ export function SuiviDesTravaux({ projet, personnages, chantier = [], clips = []
       }))
 
     return [...deTravaux, ...dAppels, ...deLocales].sort((a, b) => b.laceLe - a.laceLe)
-  }, [liste, appels, locales, chantier, clips, projet, personnages])
+  }, [liste, appels, locales, chantier, clips, projet, personnages, catalogueModeles])
 
   const texteDeRecherche = recherche.trim().toLocaleLowerCase("fr")
   const filtrees = lignes.filter((l) =>
