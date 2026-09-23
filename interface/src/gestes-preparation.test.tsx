@@ -53,7 +53,8 @@ it("réinjecte dans le contexte et attend la génération avant d'ouvrir la pré
 // **TS3** : « Faire la planche des directions » arme la cible avec le
 // drapeau `premierePlanche`, les images du concept art en référence, et
 // ouvre la préparation — rien n'est facturé ici.
-it("arme la planche des directions avec ce que le serveur a rendu", () => {
+it("arme la planche des directions avec ce que le serveur a rendu", async () => {
+  const sujet = vi.spyOn(api, "sujetDeCase").mockResolvedValue({ sujet: "un pèlerin en capuche" })
   const ouvrirPreparation = vi.fn()
   const c = contexte(ouvrirPreparation)
   const { result } = renderHook(() => useGestes(c))
@@ -68,7 +69,7 @@ it("arme la planche des directions avec ce que le serveur a rendu", () => {
     design: [{ asset: "concept-1", role: "reference", origine: "asset", usage: "design" }],
   }
 
-  act(() => result.current.armerPremierePlanche(personnage, reponse))
+  await act(async () => { await result.current.armerPremierePlanche(personnage, reponse) })
 
   expect(c.setCible).toHaveBeenCalledWith({
     personnage: "pelerin",
@@ -78,7 +79,10 @@ it("arme la planche des directions avec ce que le serveur a rendu", () => {
     directions: ["sud", "nord"],
     premierePlanche: true,
   })
-  expect(c.setReinjections).toHaveBeenCalledWith([{ asset: "concept-1", role: "reference" }])
+  // **TS11** : l'origine voyage avec l'image, et le champ reçoit le signalement.
+  expect(c.setReinjections).toHaveBeenCalledWith([{ asset: "concept-1", role: "reference", origine: "asset" }])
+  expect(sujet).toHaveBeenCalledWith({ personnage: "pelerin", piece: null, projet: "jeu" })
+  expect(c.setPrompt).toHaveBeenLastCalledWith("un pèlerin en capuche")
   expect(c.setGarderMiseEnPage).toHaveBeenCalledWith(false)
   expect(c.setRepris).toHaveBeenCalledWith(false)
   expect(ouvrirPreparation).toHaveBeenCalledOnce()

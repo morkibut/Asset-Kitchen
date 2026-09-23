@@ -188,7 +188,7 @@ export function useGestes({
    *  personnage à reproduire. Rien n'est facturé ici : c'est
    *  `premiere_planche: true`, posé sur la cible, qui fera le reste au
    *  moment de payer (`paiement.ts`). */
-  const armerPremierePlanche = (personnage: Personnage, reponse: PremierePlanche) => {
+  const armerPremierePlanche = async (personnage: Personnage, reponse: PremierePlanche) => {
     setCible({
       personnage: personnage.identifiant,
       poses: [reponse.pose],
@@ -200,11 +200,34 @@ export function useGestes({
     // **Le concept art (ou portrait) part comme personnage à reproduire.**
     // Le serveur le sait déjà par le sujet ; ce qu'on montre ici sert à ce
     // que l'écran de confirmation le voie sous les yeux.
-    setReinjections(reponse.design.map((d) => ({ asset: d.asset, role: "reference" as Role })))
-    setPrompt("")
-    setProvenance(
-      `proposé, d'après son signalement · ${reponse.pose_nom} dans ${reponse.directions_noms.join(", ")}`,
+    //
+    // **Avec son origine** (TS11) : un concept art est le plus souvent une
+    // *carte* de la toile, pas un asset. Sans elle, l'image se demandait à la
+    // bibliothèque (404, vignette cassée) et l'appel l'aurait cherchée là
+    // aussi. Le serveur fait passer sa propre réinjection devant celle-ci
+    // (`_sans_le_design`), pour qu'elle garde son nom de personnage à
+    // reproduire.
+    setReinjections(
+      reponse.design.map((d) => ({ asset: d.asset, role: "reference" as Role, origine: d.origine })),
     )
+    // **Le champ reçoit le signalement, comme pour toute case** (TS11). Il
+    // restait vide : le pied disait « aucun prompt » et « Relire avant
+    // l'envoi » restait grisé, alors que la provenance annonçait déjà « d'après
+    // son signalement ». Un refus n'empêche pas d'armer, comme dans `armer`.
+    try {
+      const recu = await api.sujetDeCase({
+        personnage: personnage.identifiant,
+        piece: null,
+        projet: bibliotheque.courant,
+      })
+      setPrompt(recu.sujet)
+      setProvenance(
+        `proposé, d'après son signalement · ${reponse.pose_nom} dans ${reponse.directions_noms.join(", ")}`,
+      )
+    } catch {
+      setPrompt("")
+      setProvenance(null)
+    }
     setRepris(false)
     // **Incompatible avec « Garder la mise en page »** (point 6 d'`AGENTS.md`).
     setGarderMiseEnPage(false)

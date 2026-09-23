@@ -41,6 +41,7 @@ import { COULEUR_TEINTE, NOM_TEINTE, PASSE_PAR_DEFAUT, RECETTE_VIDE, TEINTES } f
 import { UNIVERS_VIDE } from "./api"
 import type {
   Envoi,
+  PremierePlanche,
   Tri,
   Asset,
   BilanDuJeu,
@@ -1566,6 +1567,9 @@ function serveurDouble(options: {
    *  touche à rien. Un essai qui joue une case arrivée bien plus grande que le
    *  corps pose la sienne. */
   cadrage?: Cadrage
+  /** Ce que `GET /characters/{id}/first-sheet` rend (TS3). Absent, la route
+   *  n'est pas doublée — aucun essai d'avant `TS11` ne la demandait. */
+  premierePlanche?: PremierePlanche
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -3676,6 +3680,11 @@ function serveurDouble(options: {
         const cree = personnage(String(corps.nom))
         etat.personnages = [...etat.personnages, cree]
         return rendre({ personnage: cree })
+      }
+      // **La première planche** (TS3, TS11) : ce que le test a posé, tel quel —
+      // la pose de repos, les directions et l'image du personnage à reproduire.
+      if (url.endsWith("/first-sheet") && options.premierePlanche) {
+        return rendre(options.premierePlanche)
       }
       // **Le sujet qu'une case arme, composé par le serveur** (C5). Le double
       // rejoue ses trois règles, parce que c'est le contrat qu'il double : une
@@ -21913,3 +21922,112 @@ function dernierEtageDuFil(): string | null {
   const fil = screen.queryByRole("navigation", { name: "Où l'on est" })
   return fil?.querySelector("[aria-current='page']")?.textContent ?? null
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  TS11 — la première planche d'un sujet dont le concept art est une carte
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Vu par l'auteur le 23 septembre 2026 sur Elias : son concept art est une
+// **carte de la toile, jamais copiée en asset**. « Faire la planche des
+// directions » ouvrait la préparation avec la référence cassée — l'écran la
+// demandait à la bibliothèque (`/api/assets/…`, 404) — et un champ vide, donc
+// « Relire avant l'envoi » grisé. `TS3` n'avait été essayé que sur un sujet né
+// de `TS2`, et au niveau du geste seul : ces essais-ci partent du vrai
+// parcours, **depuis les deux portes**, jusqu'à la relecture.
+
+describe("TS11 — la première planche d'un sujet dont le concept art est une carte", () => {
+  const CARTE = "9c09adf6b8d745ac"
+
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const monterElias = async () => {
+    const double = serveurDouble({
+      cartes: [carteImage(CARTE)],
+      personnages: [
+        personnage("Elias", { description: "un jeune mage en robe bleue", concept_arts: [CARTE] }),
+      ],
+      premierePlanche: {
+        personnage: "elias",
+        pose: "repos",
+        pose_nom: "repos",
+        directions: [],
+        directions_noms: [],
+        design: [{ asset: CARTE, role: "reference", origine: "carte", usage: "design" }],
+      },
+    })
+    await monter(double.fetchDouble)
+    const page = await ouvrirLEtabli("Elias")
+    return { ...double, page }
+  }
+
+  /** La préparation armée : la référence est l'image **de la carte**, le champ
+   *  porte le signalement, et la relecture part avec la carte nommée carte. */
+  const verifierLaPreparation = async (
+    appels: { url: string; corps: unknown }[],
+  ) => {
+    const fenetre = within(
+      await screen.findByRole("dialog", { name: "Préparer une fabrication" }),
+    )
+    const reference = (await fenetre.findByAltText("Référence 1")) as HTMLImageElement
+    expect(reference.getAttribute("src")).toContain(`/api/board/${CARTE}/image`)
+    expect(reference.getAttribute("src")).not.toContain("/api/assets/")
+    await waitFor(() =>
+      expect(
+        (fenetre.getByPlaceholderText(PLACEHOLDER_DU_PROMPT) as HTMLTextAreaElement).value,
+      ).toBe("un jeune mage en robe bleue"),
+    )
+    const relire = fenetre.getByRole("button", { name: BOUTON_DE_RELECTURE }) as HTMLButtonElement
+    await waitFor(() => expect(relire.disabled).toBe(false))
+    fireEvent.click(relire)
+    await waitFor(() => {
+      const parti = appels.find((a) => a.url === "/api/outgoing")?.corps as
+        | { references?: unknown; premiere_planche?: boolean; prompt?: string }
+        | undefined
+      expect(parti?.premiere_planche).toBe(true)
+      expect(parti?.prompt).toBe("un jeune mage en robe bleue")
+      expect(parti?.references).toEqual([
+        { asset: CARTE, role: "reference", origine: "carte" },
+      ])
+    })
+  }
+
+  test("depuis le bandeau « Prochain geste »", async () => {
+    const { appels } = await monterElias()
+
+    const bandeau = await waitFor(() => {
+      const b = document.querySelector("[data-prochain-geste='planche-a-faire']")
+      if (!b) throw new Error("le bandeau n'est pas encore là")
+      return b as HTMLElement
+    })
+    fireEvent.click(within(bandeau).getByRole("button", { name: "Faire la planche des directions" }))
+
+    await verifierLaPreparation(appels)
+  })
+
+  test("depuis le bloc *Planche* de l'onglet Images", async () => {
+    const { appels, page } = await monterElias()
+
+    fireEvent.click(await page.findByRole("tab", { name: "Images" }))
+    const bouton = await waitFor(() => {
+      const hors = screen
+        .getAllByRole("button", { name: "Faire la planche des directions" })
+        .find((b) => !b.closest("[data-prochain-geste]"))
+      if (!hors) throw new Error("le bloc Planche n'est pas encore monté")
+      return hors
+    })
+    fireEvent.click(bouton)
+
+    await verifierLaPreparation(appels)
+  })
+})
