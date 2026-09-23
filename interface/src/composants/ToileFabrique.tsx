@@ -108,7 +108,19 @@ function vitessePourLaTaille(vitesse: string | null, taille: Taille): string | n
  *  qu'elle porte » — deux versions qu'un seul appel rend tiennent dans un
  *  seul prix, trois qu'un modèle ne rend qu'une par appel en payent trois) —
  *  ou « Coût inconnu » quand il n'a jamais été appelé ici. **Le prix ne
- *  dépend pas de la taille** — seul le temps d'un modèle local en dépend. */
+ *  dépend pas de la taille** — seul le temps d'un modèle local en dépend.
+ *
+ *  **Deux sources pour ce temps, et elles ne savent pas la même chose**
+ *  (défaut 6 de la relecture du 24 septembre 2026). Tant qu'aucun tirage n'a
+ *  réussi ici, `vitesse` est la phrase déclarée par le style sc-clone, qui
+ *  distingue déjà 512 et 1024 (« ≈ 12 s en 512, ≈ 16 en 1024 ») —
+ *  `vitessePourLaTaille` en garde la bonne moitié. **Une fois mesuré**,
+ *  `temps.secondes` est la médiane de *tous* les tirages faits ici, 512 et
+ *  1024 confondus : la file locale (`atelier/services/file_locale.py`) ne
+ *  garde pas la taille de chaque étape, seulement sa durée — corriger ça
+ *  touche le service qui prépare l'appel (`atelier/services/generation.py`),
+ *  hors de cette tranche-ci. Le bouton le dit plutôt que de laisser croire à
+ *  une mesure par taille qu'il n'a pas. */
 export function annonce(
   modele: Modele | null,
   couts: Record<string, number>,
@@ -118,7 +130,10 @@ export function annonce(
   if (!modele) return "aucun modèle"
   if (modele.locale) {
     const temps = (modele as Modele & ModeleAvecReference).temps
-    if (temps?.secondes != null) return tempsParImage(temps) ?? "temps non mesuré"
+    if (temps?.secondes != null) {
+      const mesure = tempsParImage(temps)
+      return mesure ? `${mesure}, moyenne toutes tailles` : "temps non mesuré"
+    }
     return vitessePourLaTaille(temps?.vitesse ?? null, taille) ?? "temps non mesuré"
   }
   const unitaire = couts[modele.identifiant]

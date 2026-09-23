@@ -69,6 +69,7 @@ import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
 import { Fiche } from "./Fiche"
 import { OrdreDesVues } from "./OrdreDesVues"
 import { EcranPlanche } from "./Planche"
+import { Libelle } from "./pieces"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. Le double part au
  *  serveur : un écran à deux pixels par point rend l'image floue sinon. */
@@ -403,15 +404,27 @@ function BoutonPremierePlanche({
       </div>
     )
   return (
-    <button
-      type="button"
-      onClick={onDemander}
-      disabled={enCours}
-      title="Sa pose de repos, dans les directions du jeu, d'après son concept art — rien n'est payé ici."
-      className="self-start rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[12.5px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
-    >
-      {enCours ? "Ça se prépare…" : "Faire la planche des directions"}
-    </button>
+    <div className="flex flex-col items-start gap-[4px]">
+      <button
+        type="button"
+        onClick={onDemander}
+        disabled={enCours}
+        className="self-start rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[12.5px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
+      >
+        {enCours ? "Ça se prépare…" : "Faire la planche des directions"}
+      </button>
+      {/* **Marque d'aide** (défaut 7 de la relecture du 24 septembre 2026) :
+          le `title` d'avant disait la même chose que l'entrée du recueil, en
+          double. `Libelle` ne peut pas se nicher dans le bouton lui-même — un
+          élément focalisable imbriqué dans un bouton est un piège au clavier
+          (`Infobulle.tsx`, note sur `declencheurs`) — d'où cette légende à
+          part, comme les autres légendes sous un bouton de cet écran. */}
+      {!enCours && (
+        <p className="text-[10.5px] text-encre-4">
+          <Libelle aide="fabrique.premiere-planche">Sa pose de repos, dans les directions du jeu, d’après son concept art — rien n’est payé ici.</Libelle>
+        </p>
+      )}
+    </div>
   )
 }
 

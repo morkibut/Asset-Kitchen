@@ -1814,13 +1814,22 @@ function Reglages({
             référence d'édition, le champ se vide pour la demande, et le
             résultat se pose relié à cette carte-ci. */}
         {developper && carte.genre === "image" && carte.statut === "prete" && (
-          <button
-            type="button"
-            onClick={() => developper(carte)}
-            className="mesure text-[10.5px] text-signal hover:opacity-70"
-          >
-            Développer ce sujet
-          </button>
+          <div className="flex flex-col items-start gap-0.5">
+            <button
+              type="button"
+              onClick={() => developper(carte)}
+              className="mesure text-[10.5px] text-signal hover:opacity-70"
+            >
+              Développer ce sujet
+            </button>
+            {/* **Marque d'aide** (défaut 7 de la relecture du 24 septembre
+                2026) : `Libelle` ne se niche pas dans le bouton — un élément
+                focalisable imbriqué dans un bouton est un piège au clavier
+                (`Infobulle.tsx`) — d'où cette légende à part, sous lui. */}
+            <p className="mesure text-[10.5px] text-encre-4">
+              <Libelle aide="carte.developper">en référence pour une variante</Libelle>
+            </p>
+          </div>
         )}
         {carte.source && carte.statut === "echouee" && (
           <button

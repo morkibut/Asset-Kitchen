@@ -443,14 +443,18 @@ function Exporter({
  * **Exportée depuis `RV22`** : le bandeau « Pas encore rangé » d'un sujet
  * (`EnAttenteDuSujet.tsx`) supprime une image avec le même geste que la
  * galerie, et lui doit donc la même annulation — pas une deuxième forme du
- * même revers écrite à un second endroit.
+ * même revers écrite à un second endroit. **Depuis RV24, le même bandeau
+ * annule aussi Écarter** avec ce composant : `verbe` change le seul mot qui
+ * dit ce qui s'annule, la fente et le décompte restent les mêmes.
  */
 export function FenteAnnulation({
   annulation,
   onAnnuler,
+  verbe = "supprimé",
 }: {
   annulation: Annulation
   onAnnuler: () => void
+  verbe?: string
 }) {
   const [reste, setReste] = useState(() => restant(annulation.expireLe))
 
@@ -467,7 +471,7 @@ export function FenteAnnulation({
     <p className="mesure arrivee flex items-center gap-1.5 text-[10.5px] leading-4 whitespace-nowrap text-encre-attention">
       <span aria-hidden className="inline-block h-px w-2 bg-encre-attention" />
       <span>
-        {combien} supprimé{combien > 1 ? "s" : ""} · {Math.ceil(reste)} s
+        {combien} {verbe}{combien > 1 ? "s" : ""} · {Math.ceil(reste)} s
       </span>
       <button
         type="button"

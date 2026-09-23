@@ -513,6 +513,15 @@ export function Fiche({
                 onClick={onChoisirLaPlanche}
                 enfants="C'est la référence"
               />
+              {/* **Marque d'aide** (défaut 7 de la relecture du 24 septembre
+                  2026) : `Libelle` ne se niche pas dans `Bouton` — un élément
+                  focalisable imbriqué dans un bouton est un piège au clavier
+                  (`Infobulle.tsx`) — d'où cette légende à part, sous lui. */}
+              {!estLaPlanche && (
+                <p className="text-[11px] leading-4 text-encre-3">
+                  <Libelle aide="fabrique.cest-la-reference">Fait de cette planche la planche du sujet : ses vues se rangent dans ses directions.</Libelle>
+                </p>
+              )}
               {estLaPlanche && <Raison texte="c'est déjà la planche de ce sujet" />}
               {erreurPlanche && (
                 <p className="text-[11px] leading-4 text-echec">{erreurPlanche}</p>

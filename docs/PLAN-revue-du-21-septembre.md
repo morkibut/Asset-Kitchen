@@ -908,8 +908,9 @@ de l'auteur* : « il y a beaucoup de choses et on doit scroller très longtemps 
 - [x] aucun onglet ne défile plus que la hauteur de la fenêtre à 1080 px pour un sujet ordinaire
 - [x] rien ne disparaît (*8nonies*) ; un onglet qui n'a pas d'objet pour la nature du sujet
       (capacités RG1) est absent, pas vide
-- [x] ce qui est modifié dans un onglet n'est pas perdu en changeant d'onglet ; un seul
-      « Enregistrer » pour toute la fiche, qui dit ce qui a changé
+- [x] ce qui est modifié dans un onglet n'est pas perdu en changeant d'onglet ; le pied de la
+      fenêtre dit ce qui a changé depuis l'ouverture *(critère réécrit le 24 septembre 2026 après
+      relecture : ce n'est pas un « Enregistrer » unique qui retient tout, voir plus bas)*
 - [x] l'essai **referme et rouvre** la fiche avec des valeurs qui ne sont pas celles du défaut
       (*8septies*)
 
@@ -936,6 +937,20 @@ défaut). Vérifié au navigateur, atelier jetable sur le port 8429, à 1080 px 
 onglets s'affichent sans réglage manquant, aucun défilement sur *L'essentiel*, *Objectif & règles*
 ou *Supprimer* pour un sujet neuf sans images ; *Apparence* défile un peu à cause des sept textes
 de style, ce qui reste très inférieur au défilement d'avant la tranche (tout sur un seul onglet).
+
+**Corrigé le 24 septembre 2026 après relecture.** Le critère du geste unique ne tenait pas :
+type, ambiance, recette, palette, styles de combat, textes de style, portrait et collections
+s'enregistraient déjà au changement — seuls le nom et la description attendaient « Garder la
+fiche ». Deux formes possibles : basculer tout en brouillon jusqu'à un seul geste, ou garder
+l'enregistrement au changement et le dire. La première aurait touché huit chemins d'écriture
+différents et cassé les essais TS12 qui vérifient l'enregistrement immédiat de la palette en la
+refermant puis rouvrant ; la seconde tient le critère réel de la tranche — « rien ne se perd, on
+sait ce qui a été gardé » — sans rouvrir ce que RS6/TS12/SC4 avaient déjà validé. Choisi : la
+seconde. `FicheDuSujet.tsx` porte maintenant `changements`, une liste des réglages touchés depuis
+l'ouverture (remise à vide par `ouvrir`), et le pied de la fenêtre l'affiche — « Modifié :
+Type d'objet · Palette par défaut. Déjà enregistré. » — en distinguant le nom et la description,
+qui restent seuls à attendre le bouton. Nouvel essai dans `FicheDuSujet.test.tsx` qui vérifie le
+récapitulatif au fil de trois changements (type, ambiance, nom).
 
 ---
 
@@ -974,6 +989,18 @@ matière) et `import_asset`/`import_clip` (qui *posent* un personnage à l'entr�
 retirent). Inventer une paire d'outils `detach_asset`/`delete_asset` sort du geste `[EASY]` de
 cette tranche ; à faire à part, sur le modèle d'`edit_asset` (mêmes services que l'écran, refus
 lisible, `planche_a_confirmer` remonté tel quel).
+
+**Corrigé le 24 septembre 2026 après relecture.** Le second critère ne tenait qu'à moitié :
+« Écarter » n'avait pas d'annulation, seul « Supprimer » en portait une — un sujet né de la toile
+dont la copie-portrait était détachée par erreur ne pouvait pas revenir en arrière.
+`EnAttenteDuSujet.tsx` porte maintenant une seconde fente (`ecarte`, même `FenteAnnulation`,
+`verbe="écarté"`), à un détail près : le délai est tenu **côté client** (8 s, comme le sursis
+serveur de la suppression), parce que `designer` n'a pas de sursis serveur à décompter — il agit
+tout de suite, à la différence de la suppression douce. L'annulation rattache l'image avec la
+pose et la direction qu'elle portait avant Écarter — `null`/`null` la plupart du temps, puisque
+c'est la définition même de « pas encore rangé », mais jamais forcées à `null` en dur : une image
+« à confirmer » qui porterait une direction sans pose ne la perdrait pas. Essais mis à jour dans
+`EnAttenteDuSujet.test.tsx`.
 
 ---
 

@@ -25,6 +25,7 @@ import { useCallback, useEffect, useState } from "react"
 import { api, PlancheAConfirmer, type Asset, type Bande, type Generation, type Personnage, type Pose } from "../api"
 import { useVisee, sujetVideo } from "./Apercu"
 import { FenteAnnulation, type Annulation } from "./BarreOutils"
+import { Libelle } from "./pieces"
 
 const BOUTON = "h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50"
 
@@ -35,6 +36,14 @@ type EnAttente = {
 }
 
 const VIDE: EnAttente = { images: [], clips: [], animations: [] }
+
+/** Même délai que le sursis serveur de la suppression (`ANNULATION_S`,
+ *  `atelier/services/bibliotheque.py`) — pour que les deux fentes du bandeau
+ *  décomptent pareil — mais tenu côté client : Écarter n'a pas de sursis
+ *  serveur à décompter, `designer` agit tout de suite. */
+const DELAI_ANNULATION_ECART_S = 8
+
+type AnnulationEcart = Annulation & { pose: string | null; direction: string | null }
 
 /** Une vidéo qui s'ouvre en grand à la barre d'espace, comme une image. */
 function VideoDuClip({ clip, titre }: { clip: string; titre: string }) {
@@ -79,6 +88,7 @@ export function EnAttenteDuSujet({
 
   const [ouvert, setOuvert] = useState(false)
   const [annulation, setAnnulation] = useState<Annulation | null>(null)
+  const [ecarte, setEcarte] = useState<AnnulationEcart | null>(null)
 
   const relire = useCallback(async () => {
     try {
@@ -141,18 +151,49 @@ export function EnAttenteDuSujet({
 
   /** Écarter : l'image quitte le sujet et retourne à la Galerie, intacte —
    *  le même `personnage: null` que la fiche pose déjà pour en détacher une
-   *  (US-122, `api.designer`). Rien n'est supprimé, rien n'est payé. */
+   *  (US-122, `api.designer`). Rien n'est supprimé, rien n'est payé.
+   *
+   *  **S'annule comme Supprimer** (RV22, relu le 24 septembre 2026) : même
+   *  fente, même délai de 8 s — client-only ici, `designer` n'ayant pas de
+   *  sursis serveur comme la suppression. L'annulation rattache l'image avec
+   *  la pose et la direction qu'elle portait avant, jamais `null` en dur :
+   *  dans ce bandeau elles valent `null` la plupart du temps (c'est la
+   *  définition de « pas encore rangé »), mais une image « à confirmer » peut
+   *  porter une direction sans pose, et l'écraser la perdrait. */
   async function ecarterImage(asset: Asset) {
     if (occupe) return
     setOccupe(asset.identifiant)
     try {
       await api.designer(asset.identifiant, null, null, null)
+      setEcarte({
+        identifiants: [asset.identifiant],
+        expireLe: Date.now() / 1000 + DELAI_ANNULATION_ECART_S,
+        pose: asset.pose,
+        direction: asset.direction,
+      })
       await relire()
       onChange?.()
     } catch (erreur) {
       onErreur?.(erreur, "cette image n’a pas pu être écartée")
     } finally {
       setOccupe("")
+    }
+  }
+
+  /** Rendre ce qui vient d'être écarté — même geste qu'`annulerSuppression`,
+   *  mais qui rattache plutôt que restaure : l'image n'a jamais quitté la
+   *  bibliothèque, seul son lien au sujet a bougé. */
+  async function annulerEcart() {
+    if (!ecarte) return
+    const [identifiant] = ecarte.identifiants
+    try {
+      await api.designer(identifiant, personnage.identifiant, ecarte.pose, ecarte.direction)
+      setEcarte(null)
+      await relire()
+      onChange?.()
+    } catch (erreur) {
+      setEcarte(null)
+      onErreur?.(erreur, "annulation refusée")
     }
   }
 
@@ -198,10 +239,10 @@ export function EnAttenteDuSujet({
 
   // **Le bandeau ne paraît que s'il y a quelque chose à ranger** — replié le
   // temps de la lecture, absent une fois qu'on sait qu'il n'y a rien. **Sauf
-  // une annulation encore possible** : supprimer le dernier élément vide
-  // `total` au même rendu, et un bandeau qui s'efface avec lui emporterait
-  // le seul endroit où « Annuler » se trouve.
-  if (!charge || (total === 0 && !annulation)) return null
+  // une annulation encore possible** (suppression ou écart) : vider le
+  // dernier élément au même rendu, et un bandeau qui s'efface avec lui
+  // emporterait le seul endroit où « Annuler » se trouve.
+  if (!charge || (total === 0 && !annulation && !ecarte)) return null
 
   const choixDePose = (surChoix: (pose: string) => void, desactive: boolean) => (
     <select
@@ -248,6 +289,7 @@ export function EnAttenteDuSujet({
         )}
         <div className="flex shrink-0 items-center gap-[14px]">
           {annulation && <FenteAnnulation annulation={annulation} onAnnuler={() => void annulerSuppression()} />}
+          {ecarte && <FenteAnnulation annulation={ecarte} onAnnuler={() => void annulerEcart()} verbe="écarté" />}
           {ouvert && total > 0 && (
             <button className={BOUTON} onClick={() => void relire()}>
               Relire
@@ -263,6 +305,17 @@ export function EnAttenteDuSujet({
           <h3 className="text-[13px] text-encre-2">
             Images · {lu.images.length}
           </h3>
+          {/* **Marque d'aide** (défaut 7 de la relecture du 24 septembre
+              2026) : les deux gestes de fin de chaque carte, sans entrée
+              reliée jusqu'ici. Une seule légende pour les deux, plutôt qu'une
+              par carte répétée quatre fois par rangée. **Le mot du libellé
+              n'est jamais celui du bouton** : le même mot, avec le même rôle
+              de survol, ferait deux éléments « Écarter », et un essai qui
+              cherche le bouton par son nom tomberait sur les deux. */}
+          <p className="mt-[4px] text-[10.5px] text-encre-4">
+            <Libelle aide="bandeau.ecarter">détacher</Libelle> renvoie à la bibliothèque sans supprimer ;{" "}
+            <Libelle aide="bandeau.supprimer">supprimer</Libelle> juge, comme la Galerie.
+          </p>
           <div className="mt-[14px] grid grid-cols-4 gap-[14px]">
             {lu.images.map((a) => (
               <article
