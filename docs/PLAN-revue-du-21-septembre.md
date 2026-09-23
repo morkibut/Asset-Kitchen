@@ -564,9 +564,37 @@ d'une fabrication de huit scènes est à annoncer avant de lancer quoi que ce so
 
 ---
 
+## RV19 · L'image de départ se voit avant de choisir
+
+**Bloquée par** : RV7, RV9 (même fenêtre). *Ajoutée le 23 septembre 2026, sur un retour de
+l'auteur* : « Animer les directions » sur un personnage ; au point 2 de la fenêtre, « Image de
+départ », on ne voit que « La référence existante du personnage sera proposée à la relecture »
+et une liste de quatre-vingts modèles « pour créer la référence si elle manque ». « On pourrait
+pas avoir les propositions déjà calculées et affichées ici ? Peut-être que ce point doit arriver
+après le point 3, quand on a choisi le geste et le style de combat ? »
+
+### Critères d'acceptation
+
+- [ ] **Dès l'ouverture, le point « Image de départ » montre, case par case, l'image qui
+      partira** (la référence de la direction, sinon celle que la relecture proposerait), en
+      vignette, avec « Changer » à côté. Elle est calculée par le serveur par **la même règle**
+      que la relecture — pas une seconde règle côté écran.
+- [ ] Une case sans image le dit en clair (« aucune image pour gauche ») ; **la liste des modèles
+      n'apparaît que dans ce cas**, pour ces cases-là. Quand toutes les cases ont leur image, la
+      liste disparaît et laisse une phrase (*un contrôle inerte disparaît*, 8nonies).
+- [ ] Quand elle apparaît, la liste des modèles propose d'abord celui que le jeu recommande,
+      présélectionné, et ne montre pas quatre-vingts lignes à plat (les modèles grisés restent
+      grisés avec leur raison).
+- [ ] **L'ordre de la fenêtre suit le geste** : 1. l'animation à créer (sujet, mouvement,
+      directions) ; 2. le geste et le style de combat ; 3. l'image de départ ; 4. le clip ; 5.
+      l'animation à obtenir. L'image proposée se recalcule quand le mouvement ou les directions
+      changent.
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19.
 
 ### Ce qu'on livre
 

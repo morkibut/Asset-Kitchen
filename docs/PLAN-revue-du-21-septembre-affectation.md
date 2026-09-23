@@ -22,7 +22,7 @@
 
 ---
 
-## Les 19 tranches
+## Les 20 tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -44,9 +44,10 @@
 | **RV15** · Les premiers pas | `[EASY]` | Changer l'écran d'arrivée et brancher « Échap » là où il manque. |
 | **RV17** · Sous le ruban d'une animation | `[MEDIUM]` | Remettre en page un écran existant sans perdre un réglage ; le point dur est de rendre le chutier évident sans le réécrire. |
 | **RV18** · « Sa vue » dit vrai, et se voit en scène | `[MEDIUM]` | corriger les exemples est facile ; les scènes animées au survol sont un petit sous-système d'affichage neuf, et le texte qui part au modèle change |
+| **RV19** · L'image de départ se voit avant de choisir | `[MEDIUM]` | le serveur sait déjà choisir l'image à la relecture ; il faut l'exposer avant, par la même règle, et réordonner la fenêtre |
 | **RV16** · La maquette, remesurée | `[MEDIUM]` | Un relevé au navigateur qui juge 26 écrans contre la maquette, avec la grille du 13 septembre. |
 
-**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 10 `[MEDIUM]`, 6 `[EASY]`, 1 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 11 `[MEDIUM]`, 6 `[EASY]`, 1 `[VERY-EASY]`.
 
 ---
 
