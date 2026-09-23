@@ -76,6 +76,7 @@ import {
   BarreTableau,
   CarteTuile,
   DEVELOPPER,
+  ENCORE,
   EST_REFERENCE,
   GLISSE_CARTE,
   GOUTTIERE,
@@ -91,6 +92,7 @@ import {
 import { Libelle, Raison } from "./pieces"
 import {
   BarreDeFabrication,
+  EXEMPLES_COMBINAISON,
   EXEMPLES_DEVELOPPEMENT,
   NoeudFantome,
   origineDeLiaison,
@@ -275,6 +277,36 @@ function englober(boites: Boite[]): Boite | null {
   const droite = Math.max(...boites.map((b) => b.x + b.l))
   const bas = Math.max(...boites.map((b) => b.y + b.h))
   return { x, y, l: droite - x, h: bas - y }
+}
+
+/**
+ * Où une fabrication se pose par rapport à ses références — **entre elles**
+ * quand il y en a plusieurs (« Combiner », TS7), **à côté** quand il y en a
+ * une ou aucune (TS10, inchangé).
+ *
+ * `null` quand il n'y a aucune référence posée sur le plan : c'est à
+ * l'appelant de retomber sur le centre de ce que l'écran montre, comme pour
+ * `+ note` — cette fonction ne connaît que la géométrie des boîtes, jamais
+ * la vue.
+ *
+ * **Pure, et exportée pour ça** : c'est de l'arithmétique sur un englobant,
+ * et l'arithmétique se vérifie sans navigateur. `placeLibre`, à l'appel,
+ * écarte le résultat des cartes qu'il recouvrirait — cette fonction ne vise
+ * qu'un point de départ, jamais une place garantie libre.
+ */
+export function departDeFabrication(
+  autour: Boite | null,
+  nombreDeReferences: number,
+  largeurDuLot: number,
+  cote: number,
+): Place | null {
+  if (!autour) return null
+  if (nombreDeReferences >= 2)
+    return {
+      x: autour.x + autour.l / 2 - largeurDuLot / 2,
+      y: autour.y + autour.h / 2 - cote / 2,
+    }
+  return { x: autour.x + autour.l + GOUTTIERE * 3, y: autour.y }
 }
 
 // ── Où chaque carte se pose ─────────────────────────────────────────────────
@@ -860,6 +892,49 @@ export function texteACorriger(carte: Carte, valeur: string): string | null {
   return corrige
 }
 
+/**
+ * **Le lien visible, généralisé** (TS7) : toute fabrication qui part avec
+ * des références relie son résultat à **chacune** d'elles — plus seulement
+ * à l'origine d'un développement (TS10), qui n'était jamais qu'une
+ * référence parmi d'autres.
+ *
+ * `origineEncore` ajoute la carte qu'« Encore » relance **sans** la
+ * réinjecter comme référence — elle ne peut donc pas se lire dans
+ * `references`, et sans cet ajout son lien ne se tirerait jamais.
+ * `origineDeveloppement` revérifie, par `origineDeLiaison`, que l'origine
+ * d'un développement est toujours présente au moment du lancement — son
+ * résultat est déjà inclus dans `references` quand elle l'est encore, ce
+ * qui dit pourquoi l'ajouter ici ne change jamais rien en pratique : c'est
+ * de la clarté, pas une seconde source de vérité.
+ *
+ * **Pure, et exportée pour ça** : c'est un ensemble d'identifiants, et un
+ * ensemble se vérifie sans navigateur.
+ */
+export function originesReliees(
+  references: readonly Carte[],
+  origineDeveloppement: string | null,
+  origineEncore: string | null,
+): string[] | undefined {
+  const relies = new Set(references.map((c) => c.identifiant))
+  if (origineEncore) relies.add(origineEncore)
+  for (const id of origineDeLiaison(origineDeveloppement, references) ?? []) relies.add(id)
+  return relies.size ? [...relies] : undefined
+}
+
+/**
+ * « Encore » (TS7) : les références de l'appel d'origine, reconstituées en
+ * identifiants de cartes — seules celles qui venaient du tableau
+ * (`origine === "carte"`) se reprennent en vignettes, exactement comme une
+ * prise à la main. `referencesPrises`, à l'appel, filtre d'elle-même ce qui
+ * n'existe plus ou n'est plus une image prête.
+ *
+ * **Pure, et exportée pour ça** : c'est un filtre sur une liste, et un
+ * filtre se vérifie sans navigateur.
+ */
+export function referencesDEncore(phrase: PhraseDeCarte): string[] {
+  return phrase.references.filter((r) => r.origine === "carte").map((r) => r.asset)
+}
+
 /** Les trois gestes du lot, **au-dessus de la toile** (`RP9`).
  *
  * La maquette compte la sélection au-dessus du plan, et c'est le bon endroit :
@@ -1198,6 +1273,7 @@ function Plan({
   const developper = useCallback((carte: Carte) => {
     setPrises([carte.identifiant])
     setOrigineDeveloppement(carte.identifiant)
+    setOrigineEncore(null)
     setDeveloppement({
       cle: crypto.randomUUID(),
       exemple:
@@ -1205,6 +1281,44 @@ function Plan({
     })
     champFabrique.current?.focus({ preventScroll: true })
   }, [])
+
+  // **« Encore »** (TS7) : la carte fabriquée qu'on relance, retenue à part —
+  // le même besoin que `origineDeveloppement`, sauf que l'original **n'est
+  // pas** renvoyé comme référence (« Encore » relance la demande telle
+  // quelle, il ne la modifie pas) : il ne peut donc pas se lire dans
+  // `prises`, et il lui faut sa propre variable pour que le résultat se
+  // relie quand même à lui.
+  const [origineEncore, setOrigineEncore] = useState<string | null>(null)
+  const encore = useCallback((carte: Carte, phrase: PhraseDeCarte) => {
+    // **Les références de l'appel d'origine, rejouées telles quelles**
+    // (TS7) : seules celles qui venaient d'une carte du tableau
+    // (`origine === "carte"`) se reconstituent en vignettes — `referencesPrises`
+    // filtre d'elle-même ce qui n'existe plus ou n'est plus une image prête,
+    // exactement comme pour une prise à la main.
+    setPrises(referencesDEncore(phrase))
+    setOrigineEncore(carte.identifiant)
+    setOrigineDeveloppement(null)
+    // **Même motif que « Reprendre ce texte »** (TS5) : la phrase, le
+    // modèle, la taille et la case « avec le style du jeu » reviennent
+    // toutes dans la barre, prêtes à relancer sans rien retaper.
+    setReprise({ ...phrase, cle: crypto.randomUUID() })
+    champFabrique.current?.focus({ preventScroll: true })
+  }, [])
+
+  // **« Combiner »** (TS7) : plusieurs cartes image choisies sur la toile
+  // (`selection`, pas `prises`) entrent toutes en référence d'un coup — le
+  // même geste que « Développer », étendu à plusieurs cartes à la fois.
+  const combinables = useMemo(() => referencesPrises(cartes, selection), [cartes, selection])
+  const combiner = useCallback(() => {
+    setPrises(combinables.map((c) => c.identifiant))
+    setOrigineDeveloppement(null)
+    setOrigineEncore(null)
+    setDeveloppement({
+      cle: crypto.randomUUID(),
+      exemple: EXEMPLES_COMBINAISON[Math.floor(Math.random() * EXEMPLES_COMBINAISON.length)],
+    })
+    champFabrique.current?.focus({ preventScroll: true })
+  }, [combinables])
 
   // **Chaque nœud porte ses dimensions, et c'est la librairie qui l'exige.** Un
   // nœud dont elle ne connaît pas la taille est rendu `visibility: hidden` en
@@ -1831,10 +1945,11 @@ function Plan({
     [crans, ilots, echouer],
   )
 
-  /** Lancer une fabrication : ses fantômes se posent **à droite des images
-   *  de référence** qui sont sur le plan, sinon **au centre de ce que l'écran
-   *  montre**, en rangée. Le centre se mesure sur le plan rendu, comme pour
-   *  `+ note`. */
+  /** Lancer une fabrication : ses fantômes se posent **entre les images de
+   *  référence** quand il y en a plusieurs (« Combiner », TS7), **à droite**
+   *  quand il y en a une ou aucune (comportement de TS10, inchangé), sinon
+   *  **au centre de ce que l'écran montre**, en rangée. Le centre se mesure
+   *  sur le plan rendu, comme pour `+ note`. */
   const fabriquer = useCallback(
     (demande: DemandeFabrication) => {
       if (!crans) return
@@ -1849,15 +1964,15 @@ function Plan({
         })
         .filter((b): b is Boite => b !== null)
       const autour = englober(boites)
-      let depart: Place = { x: 0, y: 0 }
-      if (autour) depart = { x: autour.x + autour.l + GOUTTIERE * 3, y: autour.y }
-      else if (plan.current) {
+      const large = demande.variations * ecart - GOUTTIERE * 3
+      let depart: Place =
+        departDeFabrication(autour, boites.length, large, cote) ?? { x: 0, y: 0 }
+      if (!autour && plan.current) {
         const vue = plan.current.getBoundingClientRect()
         const centre = screenToFlowPosition({
           x: vue.left + vue.width / 2,
           y: vue.top + vue.height / 2,
         })
-        const large = demande.variations * ecart - GOUTTIERE * 3
         depart = { x: centre.x - large / 2, y: centre.y - cote / 2 }
       }
       // **Jamais par-dessus une carte ni un autre fantôme** — `placeLibre`, la
@@ -1890,10 +2005,8 @@ function Plan({
         posees.push(place)
         occupees.push({ ...place, ...taille })
       }
-      // **« Développer ce sujet »** (TS10) : si l'image en développement est
-      // toujours parmi les références qui partent, chaque résultat se relie à
-      // elle une fois posé.
-      const origines = origineDeLiaison(origineDeveloppement, referencesFabrique)
+      // **Le lien visible, généralisé** (TS7) — voir `originesReliees`.
+      const origines = originesReliees(referencesFabrique, origineDeveloppement, origineEncore)
       // **Autant d'appels qu'il faut au plafond du modèle** (TS9) : `lancer`
       // découpe lui-même `posees` en lots d'au plus `variations_max`, un
       // appel par lot, l'un après l'autre — ici on ne fait que poser les
@@ -1912,9 +2025,11 @@ function Plan({
       })
       // Les références prises sont consommées par l'appel qui part — comme un
       // brouillon qu'on vide en l'envoyant, pas comme un choix qui resterait
-      // coché pour la suivante. Le développement en cours part avec elles.
+      // coché pour la suivante. Le développement et l'« Encore » en cours
+      // partent avec elles.
       setPrises([])
       setOrigineDeveloppement(null)
+      setOrigineEncore(null)
     },
     [
       crans,
@@ -1924,6 +2039,7 @@ function Plan({
       screenToFlowPosition,
       fabrication,
       origineDeveloppement,
+      origineEncore,
     ],
   )
 
@@ -2198,6 +2314,7 @@ function Plan({
         <EST_REFERENCE.Provider value={estReference}>
         <REPRENDRE_TEXTE.Provider value={reprendreTexte}>
         <DEVELOPPER.Provider value={developper}>
+        <ENCORE.Provider value={encore}>
         <CADRE.Provider value={cadre}>
           <ReactFlow
             nodes={noeuds}
@@ -2293,6 +2410,7 @@ function Plan({
             </svg>
           </ReactFlow>
         </CADRE.Provider>
+        </ENCORE.Provider>
         </DEVELOPPER.Provider>
         </REPRENDRE_TEXTE.Provider>
         </EST_REFERENCE.Provider>
@@ -2304,6 +2422,22 @@ function Plan({
           </p>
         ) : (
           !cartes.some((c) => !c.en_reserve) && <ToileNue />
+        )}
+
+        {/* **« Combiner »** (TS7) : paraît dès que la sélection de la toile
+            tient au moins deux images prêtes — un geste de la sélection, pas
+            d'une carte, donc posé au-dessus de la barre plutôt que dans son
+            menu. */}
+        {crans && combinables.length >= 2 && (
+          <div className="pointer-events-none absolute bottom-[58px] left-1/2 z-10 -translate-x-1/2">
+            <button
+              type="button"
+              onClick={combiner}
+              className="pointer-events-auto mesure h-[26px] rounded-7 border border-signal bg-carte px-3 text-[11px] text-signal shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:bg-papier-cote"
+            >
+              Combiner {combinables.length} images
+            </button>
+          </div>
         )}
 
         {crans && (

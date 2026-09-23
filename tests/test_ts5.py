@@ -93,6 +93,7 @@ def test_la_phrase_est_celle_que_l_auteur_a_tapee_meme_avec_une_bible(client, at
         "modele": MODELE,
         "resolution": "512",
         "repris": False,
+        "references": [],
     }
 
 

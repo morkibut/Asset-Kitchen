@@ -87,6 +87,7 @@ def test_l_evenement_carte_porte_deja_la_phrase_sans_recharger_le_board(client, 
         "modele": MODELE,
         "resolution": "512",
         "repris": False,
+        "references": [],
     }
 
 

@@ -187,6 +187,14 @@ export const EXEMPLES_DEVELOPPEMENT = [
   "sans la cape",
 ] as const
 
+/** « Combiner » (TS7) : même motif que `EXEMPLES_DEVELOPPEMENT`, pour
+ *  plusieurs cartes prises à la fois plutôt qu'une seule. */
+export const EXEMPLES_COMBINAISON = [
+  "le personnage avec cette tenue",
+  "les deux dans la même scène",
+  "l'un à côté de l'autre",
+] as const
+
 /** Ce que « Développer ce sujet » envoie à la barre : vider le champ, y
  *  remettre le curseur, montrer un exemple. Même motif que `Reprise` — une
  *  `cle` qui change à chaque clic, pour que développer deux fois la même

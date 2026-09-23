@@ -492,12 +492,47 @@ seulement (`ToileFabrique.test.tsx`, `Toile.test.tsx`, `Tableau.test.tsx`, `App.
 **Triés par l'auteur le 23 septembre 2026 : les trois restants sont retenus.** « Modifier » est
 devenu `TS10` (« Développer ce sujet »). À faire après `TS10`, dont `TS7` reprend la pose reliée.
 
-- [ ] plusieurs cartes image choisies : « Combiner » — une phrase, les cartes en référence, le
+- [x] plusieurs cartes image choisies : « Combiner » — une phrase, les cartes en référence, le
       résultat posé entre elles
-- [ ] « Encore » sur une carte fabriquée : la même demande (phrase, modèle, taille, références,
+- [x] « Encore » sur une carte fabriquée : la même demande (phrase, modèle, taille, références,
       case « style du jeu ») repart sans rien retaper, le résultat posé à côté de l'original
-- [ ] le lien entre une image fabriquée et celles qui ont servi de référence est visible sur la
+- [x] le lien entre une image fabriquée et celles qui ont servi de référence est visible sur la
       toile (un trait de la toile, comme les liens existants), pour toute fabrication de la barre
+
+*Fait le 23 septembre 2026.* **Le lien visible porte les deux autres gestes** : `originesReliees`
+(`Toile.tsx`) remplace l'usage de `origineDeLiaison` (TS10) dans `fabriquer` par une union —
+toutes les références qui partent avec l'appel, plus l'origine d'un développement, plus la carte
+qu'« Encore » relance sans la réinjecter comme référence. TS10 ne reliait qu'à l'origine d'un
+développement ; depuis cette tranche, **toute** fabrication de la barre avec des références relie
+son résultat à chacune d'elles — une carte prise à la main (`TS6`, sans Développer ni Encore) tire
+donc désormais un lien aussi, ce qui est la généralisation demandée. « Combiner » : un bouton
+au-dessus de la barre, visible dès que la sélection de la toile (`selection`, pas `prises`) tient
+au moins deux images prêtes — `referencesPrises(cartes, selection)` (déjà écrite pour `TS6`), pas
+une seconde fonction. Il remplit `prises` avec les cartes combinées et réutilise **exactement** le
+mécanisme de vidage-avec-exemple de `Développer` (`Developpement`, `EXEMPLES_COMBINAISON`) — un
+`Developpement` ne porte aucune contrainte sur le nombre de références, la généralisation n'a rien
+demandé de neuf à ce type. Le placement « entre elles » vit dans `departDeFabrication` (pure,
+`Toile.tsx`) : à côté d'une seule référence ou d'aucune (TS10, inchangé), centré sur leur englobant
+dès qu'il y en a deux ou plus — `placeLibre`, en aval, écarte le résultat des cartes qu'il
+recouvrirait. « Encore » : un nouveau contexte `ENCORE` (`Tableau.tsx`), à côté du bloc *Phrase*
+existant (`carte.phrase`, TS5) — un bouton `Encore ›` qui reçoit la carte et sa phrase. Décision :
+« Encore » ne peut pas réutiliser `origineDeveloppement` tel quel, parce que l'original n'est
+**jamais** renvoyé comme référence (relancer la même demande, ce n'est pas la modifier) — il lui
+faut sa propre variable (`origineEncore`) pour que le résultat se relie quand même à lui. Les
+références se relisent sur `PhraseDeCarte.references` — **champ serveur neuf** (`ServiceUnivers.
+phrase_de_carte`, `atelier/services/univers.py`) : `generation.references` porte déjà, sans
+retouche, exactement ce que l'auteur a joint à cet appel-là — aucune passe locale
+(`_reinjections`) ne s'y ajoute pour un appel de la barre, puisqu'il part sans personnage et avec
+une échelle vide. `referencesDEncore` (pure) n'en reprend que les entrées `origine === "carte"` :
+une référence venue de la bibliothèque (un artwork promu) n'a pas de vignette à rouvrir depuis la
+barre. Le reste de la demande (phrase, modèle, taille, case « style du jeu ») suit **le même
+chemin que « Reprendre ce texte »** (`setReprise`, TS5) — aucune retouche à `BarreDeFabrication`.
+Essais serveur : `tests/test_ts7.py` (deux essais — `phrase.references` telle que l'appel les a
+reçues, et une liste vide plutôt qu'absente). Essais d'écran : `Toile.test.tsx`
+(`originesReliees`, `departDeFabrication`, `referencesDEncore` — chacun avec un cas qui tombe sans
+le correctif, 8octies), `Tableau.test.tsx` (le bouton `Encore ›`, gardé par `carte.phrase` comme
+`Reprendre ce texte`). Non vérifié au navigateur : pas d'`interface/dist` dans ce worktree
+(`AGENTS.md`).
 
 ## Ce que ce plan ne couvre pas
 

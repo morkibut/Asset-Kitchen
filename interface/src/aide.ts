@@ -1231,7 +1231,7 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Une carte image",
     quoi: "Le texte tapé pour fabriquer cette image sur la toile — jamais le texte composé qui est parti au modèle.",
     change:
-      "Rien à la génération. « Reprendre ce texte » remet cette phrase dans la barre, avec le modèle et la taille d'origine, pour la corriger et relancer.",
+      "Rien à la génération. « Reprendre ce texte » remet cette phrase dans la barre, avec le modèle et la taille d'origine, pour la corriger et relancer. « Encore » relance telle quelle, références comprises.",
     origine: "la génération qui a produit cette carte · vide sur une note, une image collée, un clip, ou une carte d'avant cette tranche",
     long:
       "Ce n'est pas ce que le modèle a lu — bible du jeu repliée en tête, consignes de planche en queue comprises — c'est le texte que tu as tapé dans la barre, gardé à part avant d'être noyé dans le reste. « Reprendre ce texte » ne rejoue rien : il ouvre la barre sur ce texte-là, prête à corriger avant de relancer, exactement comme si tu venais de le taper.",

@@ -3261,6 +3261,12 @@ export type PhraseDeCarte = {
   modele: string
   resolution: string | null
   repris: boolean
+  /** Les références de l'appel qui a produit cette carte (TS7, « Encore »).
+   *  Toujours présente, vide quand l'appel n'en avait aucune — jamais
+   *  `undefined` : le serveur la calcule dans la même forme que ce qu'il a
+   *  reçu (`asset`, `role`, `origine`), et « Encore » la rejoue telle
+   *  quelle, sans deviner. */
+  references: Reinjection[]
 }
 
 export type Champ = { nom: string; texte: string; actif: boolean }
