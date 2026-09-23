@@ -22,7 +22,7 @@
 
 ---
 
-## Les 17 tranches
+## Les 18 tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -42,9 +42,10 @@
 | **RV13** · La page d'un son et la Galerie | `[EASY]` | Marges, titres et filtres sur des données déjà remontées. |
 | **RV14** · Le montage, le calibrage, les mouvements | `[EASY]` | Remise sur la grille du design, sans changer ce que les écrans font. |
 | **RV15** · Les premiers pas | `[EASY]` | Changer l'écran d'arrivée et brancher « Échap » là où il manque. |
+| **RV17** · Sous le ruban d'une animation | `[MEDIUM]` | Remettre en page un écran existant sans perdre un réglage ; le point dur est de rendre le chutier évident sans le réécrire. |
 | **RV16** · La maquette, remesurée | `[MEDIUM]` | Un relevé au navigateur qui juge 26 écrans contre la maquette, avec la grille du 13 septembre. |
 
-**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 8 `[MEDIUM]`, 6 `[EASY]`, 1 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 9 `[MEDIUM]`, 6 `[EASY]`, 1 `[VERY-EASY]`.
 
 ---
 

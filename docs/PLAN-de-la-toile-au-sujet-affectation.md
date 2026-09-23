@@ -18,15 +18,22 @@
 
 ---
 
-## Les trois tranches
+## Les huit tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
 | **TS1** · Le Codex montre le portrait | `[EASY]` | le portrait est déjà choisi et déjà calculé aux deux bouts ; il s'agit de le lire là où la grille prend encore la plus récente |
 | **TS2** · Créer un sujet depuis une carte | `[MEDIUM]` | une route neuve qui enchaîne des services existants, avec un seul point dur sorti plus bas |
 | **TS3** · La première planche | `[HARD]` | elle change ce qui part au modèle — un concept art cesse d'être un style pour devenir le design à reproduire — et chaque essai coûte de l'argent |
+| **TS8** · Le sujet neuf dit quoi faire ensuite | `[MEDIUM]` | une règle neuve — quel est le prochain geste d'un sujet selon ce qu'il a — et une place en tête de page ; à accorder avec `RV15` |
+| **TS4** · L'image arrive brute, en 512 ou 1024 | `[MEDIUM]` | une règle neuve : la toile échappe à l'univers et à la recette du jeu, sans que les autres chemins d'envoi changent ; le choix 512/1024 lui-même est simple |
+| **TS5** · Le texte reste sur la carte | `[MEDIUM]` | la phrase vit sur la génération, pas sur la carte : il faut la faire remonter jusqu'à la toile, puis la rejouer dans la barre |
+| **TS6** · Prendre une carte comme référence | `[EASY]` | les références de la barre existent ; il manque un geste visible et leur liste lisible |
+| **TS7** · Les gestes de Mixboard | `[MEDIUM]` | à découper après le tri de l'auteur ; « Modifier » et « Combiner » réutilisent l'envoi existant avec des références |
 
-**Compte** : 0 `[VERY-HARD]`, 1 `[HARD]`, 1 `[MEDIUM]`, 1 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 1 `[HARD]`, 5 `[MEDIUM]`, 2 `[EASY]`, 0 `[VERY-EASY]`.
+
+*TS4 à TS8 ajoutées le 23 septembre 2026.*
 
 ---
 

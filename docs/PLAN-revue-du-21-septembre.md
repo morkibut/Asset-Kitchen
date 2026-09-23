@@ -280,6 +280,22 @@ cliquable signale l'arrivée ailleurs dans l'atelier.
 - [ ] Une notification cliquable mène à la case.
 - [ ] Vérifié au navigateur sur un atelier jetable, et pas seulement par les essais d'écran.
 
+### Retours de l'auteur au test de RV6 (23 septembre 2026)
+
+Vus sur Mara, fenêtre « Préparer une fabrication », clip local, deux directions (droite, gauche).
+Les deux tiennent à la **relecture d'une série** (`RelectureDeSerie`, `FabricationSuivie.tsx`),
+plus pauvre que celle d'un clip seul, qu'elle devrait égaler.
+
+- [ ] **Avant de lancer, on voit ce qui part** : pour chaque case de la série, l'image de départ
+      et les références envoyées, comme la relecture d'un clip seul les montre déjà. Aujourd'hui
+      une série n'affiche que « droite · Prête à lancer ».
+- [ ] **Après « Lancer », la fenêtre ne laisse pas l'auteur sans retour** : chaque case dit son
+      étape (image, vidéo, découpage), le temps écoulé sur le temps attendu, puis devient sa
+      vignette ou « ratée » avec sa raison — sans avoir à déplier la ligne. Aujourd'hui l'écran
+      reste figé sur « En cours », le bouton du bas disparaît, et rien ne dit qu'on peut fermer.
+- [ ] Le pied de la fenêtre dit qu'on peut la fermer et que la fabrication continue, avec un
+      bouton pour le faire.
+
 ---
 
 ## RV8 · Un seul écran de livraison
@@ -461,9 +477,40 @@ qu'on vient de créer s'ouvre sur ses images, avec un grand bouton « Fabriquer 
 
 ---
 
+## RV17 · Sous le ruban d'une animation
+
+**Bloquée par** : aucune. *Ajoutée le 23 septembre 2026, sur un retour de l'auteur au test de
+`RV6` (Mara, marche · droite).*
+
+### Ce qu'on livre
+
+Dans l'atelier d'une animation, ce qui est sous le ruban des images devient clair et
+utilisable. Aujourd'hui tout est tassé dans un petit encart qui défile (le chutier, puis
+« Animation · boucle, repère et fenêtre commune » : le découpage, la boucle, le point d'ancrage…),
+en texte à chasse fixe, avec des phrases d'explication à la place des gestes. L'auteur ne voit
+pas comment se servir du chutier, ni quelle image est choisie.
+
+### Critères d'acceptation
+
+- [ ] **L'image choisie se voit au premier coup d'œil** dans le ruban — plus qu'un fin liseré.
+- [ ] **« Retirer » et « Dupliquer » sont visibles** à côté de l'image choisie, et non cachés.
+- [ ] **Le chutier se comprend sans lire** : une zone visible où tombent les images retirées, en
+      vignettes, qu'on peut remettre dans le ruban par un geste évident. Vide, il montre ce qu'on
+      y fait en une ligne, pas un paragraphe.
+- [ ] **Ce qui vaut pour toute l'animation** (boucle ou aller-retour, point d'ancrage, reprendre
+      le découpage) n'est plus écrasé dans un encart à défilement : il a une place lisible, sans
+      barre de défilement interne sur un écran de 1080 px de haut.
+- [ ] Les explications en paragraphe deviennent des libellés courts ; plus de texte à chasse fixe
+      pour des phrases.
+- [ ] Rien de ce qu'on sait faire aujourd'hui ne disparaît (*8nonies* : chaque réglage garde un
+      chemin depuis l'écran).
+- [ ] Vérifié au navigateur, l'animation **en lecture** (*8octies*).
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17.
 
 ### Ce qu'on livre
 

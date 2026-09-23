@@ -158,6 +158,87 @@ défaut serveur — l'auteur les corrige avant de valider, il ne les redemande p
 - le refus (409, « rien à reproduire ») remplace le bouton par la phrase du serveur et un lien
   « Aller à la toile › », dans le même bloc — il n'y a pas de second endroit où avertir.
 
+### TS8 · Le sujet neuf dit quoi faire ensuite
+
+*Ajoutée le 23 septembre 2026, au test de `TS3` par l'auteur* : « je ne trouve pas où on crée
+cette planche… quand je crée le personnage j'arrive dans l'onglet Objectifs mais rien ne me dit
+ce que je dois faire. » Le bouton de `TS3` existe, mais il est enterré : onglet **Images**,
+tout en bas, section *Ses références*, bloc *Planche*, à la place de « rien encore ». Un sujet
+créé depuis la toile s'ouvre ailleurs, sur un onglet qui ne propose rien.
+
+- [ ] un sujet qui vient d'être créé s'ouvre sur **son prochain geste**, pas sur un onglet de
+      réglages : pour un personnage avec un concept art et sans planche, c'est « Faire la planche
+      des directions », en grand, en haut, avec l'image qui servira à côté
+- [ ] tant que le sujet n'a pas de planche, ce geste reste visible en tête de la page du sujet,
+      quel que soit l'onglet ouvert — pas seulement dans le bloc *Planche* en bas des Images
+- [ ] une fois la planche revenue, la même place propose « C'est la référence » sur elle, puis le
+      geste suivant (les poses, les animations)
+- [ ] l'onglet Objectifs, ouvert seul, dit en une ligne à quoi il sert et renvoie au prochain
+      geste
+- [ ] à régler avec `RV15` (*un nouveau sujet s'ouvre sur ses images, avec « Fabriquer sa
+      première image »*) : une seule règle d'arrivée pour tout sujet neuf, pas deux
+
+## La toile qui fabrique — façon Mixboard
+
+*Ajouté le 23 septembre 2026, sur les retours de l'auteur au premier usage.* La barre
+« Fabriquer » en bas de la toile existe depuis le 22 septembre (commits `793ccae`, `0eed66f`) :
+une phrase, 1, 2 ou 3 versions, un modèle, et le bouton qui annonce le prix ou le temps ; des
+fantômes se posent pendant la fabrication ; la sélection de la toile part en référence
+(« à partir de 1 image »). **Ce que l'usage a montré** : on ne choisit pas la taille, on perd
+le texte d'une image une fois faite, et prendre une carte en référence n'est pas un geste
+visible — il faut savoir que la sélection compte. L'auteur demande de se rapprocher de
+Mixboard : la toile est l'endroit où l'on essaie, et chaque image garde de quoi repartir.
+
+### TS4 · L'image arrive brute, en 512 ou 1024 — **à faire en premier**
+
+L'auteur, le 23 septembre : la barre sort « des merdouilles en 64 px ». La carte l'affiche
+(« 64×64 posée ») : l'image ne revient pas brute. **Cause probable, à confirmer en lisant le
+chemin** : la barre envoie la demande comme une image du jeu (`repris: false`), donc le serveur
+enveloppe la phrase de l'univers du jeu et applique au retour la recette du jeu, dont la
+réduction à sa taille de sprite. **Décidé par l'auteur** : la toile est l'endroit où l'on
+essaie ; ce qui en sort n'est pas encore un asset du jeu.
+
+- [ ] une image fabriquée depuis la toile arrive **brute** : aucune recette appliquée — ni
+      détourage, ni réduction, ni grille, ni palette. La carte montre la taille reçue
+- [ ] la barre propose **512 et 1024**, 512 par défaut ; une taille que le modèle choisi ne sait
+      pas faire est grisée avec sa raison (*le catalogue décide*)
+- [ ] le texte qui part est **celui que l'auteur a tapé**, sans le style du jeu ajouté d'office
+      — à trancher avec l'auteur : une case « avec le style du jeu », décochée par défaut ?
+- [ ] ce qui part se relit depuis la barre avant de cliquer (le texte exact, la taille, les
+      références), comme partout ailleurs
+- [ ] le bouton annonce le temps ou le prix **pour la taille choisie**, et non plus « 12 s en
+      512, 16 s en 1024 »
+- [ ] le choix est retenu d'une fabrication à l'autre, comme le modèle et le nombre
+- [ ] une image de la toile qu'on fait entrer dans un sujet (TS2) reçoit alors la recette du jeu,
+      comme une image importée — l'image brute reste gardée (*traitement non destructif*)
+
+### TS5 · Le texte d'une image reste sur sa carte
+
+- [ ] une carte fabriquée depuis la toile montre sa phrase (repliée si elle est longue)
+- [ ] un geste « Reprendre ce texte » remet la phrase dans la barre, avec le modèle et la taille
+      d'origine, pour la corriger et relancer
+- [ ] une image fabriquée ailleurs et posée sur la toile montre aussi son texte, s'il existe
+
+### TS6 · Prendre une carte comme référence
+
+- [ ] chaque carte image porte un bouton visible « Prendre comme référence » (sur la carte ou
+      dans son panneau) ; les références prises apparaissent en vignettes au-dessus de la barre,
+      chacune avec sa croix
+- [ ] la sélection de la toile ne décide plus seule en silence : ce qui part se lit dans la barre
+      avant de cliquer
+- [ ] le plafond d'images du modèle s'applique comme ailleurs (*point 4* : ce que l'auteur a joint
+      ne cède pas — la barre le dit au lieu de lancer)
+
+### TS7 · Les gestes de Mixboard — à valider par l'auteur avant d'écrire
+
+Propositions, à trier avec l'auteur ; aucune n'est décidée.
+
+- [ ] sur une carte : « Modifier » — une phrase qui change cette image-là, le résultat posé à côté
+- [ ] plusieurs cartes choisies : « Combiner » — une phrase, les cartes en référence, le résultat
+      posé entre elles
+- [ ] « Encore » — refaire la même demande, posé à côté de l'original
+- [ ] le lien entre une image et celles qui l'ont produite reste visible sur la toile
+
 ## Ce que ce plan ne couvre pas
 
 - Les autres poses (marche, attaque…) : elles partent de la planche choisie par les chemins qui
