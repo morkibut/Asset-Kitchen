@@ -17,6 +17,7 @@ import {
   api,
   RECETTE_VIDE,
   type Asset,
+  type Carte,
   type Case,
   type Personnage,
   type Pose,
@@ -211,7 +212,7 @@ function construireDouble() {
   return { fetchDouble, appels }
 }
 
-function monter(surplus: Partial<Personnage> = {}, _dossierJeu = "D:/jeu", onLivrer?: () => void, avecMemoire = false) {
+function monter(surplus: Partial<Personnage> = {}, _dossierJeu = "D:/jeu", onLivrer?: () => void, avecMemoire = false, extra: Record<string, unknown> = {}) {
   const { fetchDouble, appels } = construireDouble()
   vi.stubGlobal("fetch", fetchDouble)
   const rappels = {
@@ -237,6 +238,7 @@ function monter(surplus: Partial<Personnage> = {}, _dossierJeu = "D:/jeu", onLiv
     onImporter: vi.fn(),
     onDecouper: vi.fn(),
     onExtraire: vi.fn(),
+    ...extra,
   }
   const page = (
     <PageDuSujet
@@ -727,4 +729,107 @@ test("un meuble s'anime, mais n'a pas de directions : l'onglet Animations reste 
   fireEvent.click(await screen.findByRole("tab", { name: "Animations" }))
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
   expect(document.querySelector("[data-onglet-animations]")).toBeTruthy()
+})
+
+// ── TS8 — le prochain geste ─────────────────────────────────────────────────
+//
+// « Je crée le personnage, j'arrive dans l'onglet Objectifs, rien ne me dit
+// ce que je dois faire. » La règle : rien nulle part → sa première image ;
+// un concept art et une image déjà posée mais aucune planche choisie →
+// « C'est la référence » ; un concept art et rien de posé → « Faire la
+// planche des directions » ; une planche déjà choisie → rien à imposer.
+
+/** TS2 — une carte de concept art, minimale : ce que le bandeau en lit. */
+function carteImage(champs: Partial<Carte> = {}): Carte {
+  return {
+    identifiant: "carte-1", projet: "le-marais", genre: "image", texte: "",
+    statut: "prete", raison: null, source: "", cree_le: 0, groupe: "",
+    note: "", taille: 1, position: null, largeur_libre: null, teinte: "",
+    officiel: false, famille: "personnages", empreinte: "v1", largeur: 512,
+    hauteur: 512, type_media: "image/png", octets: 100, montrable: true,
+    artwork: false, en_reserve: false,
+    ...champs,
+  } as Carte
+}
+
+const LIGNE_CONCEPT_ART = {
+  reference: "carte-1",
+  genre: "carte" as const,
+  provenance: "concept art",
+  detail: "épinglé sur cette chose",
+  ecartee: false,
+  montre: { sorte: "carte" as const, carte: carteImage() },
+}
+
+test("un sujet sans rien propose de fabriquer sa première image", async () => {
+  const { onArmer } = monter({ cases: [sienne({ pose: "repos" }), sienne({ pose: "marche" })] })
+  const bouton = await screen.findByRole("button", { name: "Fabriquer sa première image" })
+  expect(bouton.closest("[data-prochain-geste]")?.getAttribute("data-prochain-geste")).toBe(
+    "premiere-image",
+  )
+  fireEvent.click(bouton)
+  expect(onArmer).toHaveBeenCalledWith(expect.objectContaining({ identifiant: "le-pelerin" }), [
+    PLAN[0],
+  ])
+})
+
+test("un concept art et rien de posé propose de faire la planche", async () => {
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue({ ...REFERENCES_VIDES, lignes: [LIGNE_CONCEPT_ART] })
+  const reponse = {
+    personnage: "le-pelerin", pose: "repos", pose_nom: "repos",
+    directions: [], directions_noms: [],
+    design: [{ asset: "carte-1", role: "reference" as const, origine: "carte" as const, usage: "design" as const }],
+  }
+  const demander = vi.spyOn(api, "premierePlanche").mockResolvedValue(reponse)
+  const onPremierePlanche = vi.fn()
+  monter(
+    { concept_arts: ["carte-1"], cases: [sienne({ pose: "repos" }), sienne({ pose: "marche" })] },
+    undefined,
+    undefined,
+    false,
+    { onPremierePlanche },
+  )
+  fireEvent.click(await screen.findByRole("button", { name: "Faire la planche des directions" }))
+  await waitFor(() => expect(demander).toHaveBeenCalledWith("le-pelerin"))
+  await waitFor(() =>
+    expect(onPremierePlanche).toHaveBeenCalledWith(
+      expect.objectContaining({ identifiant: "le-pelerin" }),
+      reponse,
+    ),
+  )
+})
+
+test("une image déjà posée, un concept art et aucune planche : « C'est la référence »", async () => {
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue({ ...REFERENCES_VIDES, lignes: [LIGNE_CONCEPT_ART] })
+  const rendu = { personnage: sujet({ concept_arts: ["carte-1"], references: ["a"] }), references: { ...REFERENCES_VIDES, lignes: [LIGNE_CONCEPT_ART] } }
+  const choisir = vi.spyOn(api, "choisirLaPlanche").mockResolvedValue(rendu)
+  const onPersonnage = vi.fn()
+  monter({ concept_arts: ["carte-1"] }, undefined, undefined, false, { onPersonnage })
+  // La fiche par défaut (`sujet()`) porte déjà une image dans « repos » —
+  // c'est elle, la candidate : la planche, en attente d'être choisie.
+  expect(await screen.findByText("Sa planche est arrivée")).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "C'est la référence" }))
+  await waitFor(() => expect(choisir).toHaveBeenCalledWith("le-pelerin", "a"))
+  await waitFor(() => expect(onPersonnage).toHaveBeenCalledWith(rendu.personnage))
+})
+
+test("une planche déjà choisie : le bandeau n'a plus rien à imposer", async () => {
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue({
+    ...REFERENCES_VIDES,
+    lignes: [{ ...LIGNE_CONCEPT_ART }, { reference: "a", genre: "asset" as const, provenance: "image promue", detail: "", ecartee: false, montre: null, usage: "planche", usage_nom: "planche" }],
+  })
+  monter({ concept_arts: ["carte-1"] })
+  await waitFor(() => expect(vi.mocked(api.referencesDeLaChose)).toHaveBeenCalled())
+  expect(screen.queryByText("Sa planche est arrivée")).toBeNull()
+  expect(screen.queryByText("Faire la planche des directions")).toBeNull()
+  expect(document.querySelector("[data-prochain-geste]")).toBeNull()
+})
+
+test("le prochain geste reste visible quel que soit l'onglet ouvert", async () => {
+  vi.spyOn(api, "referencesDeLaChose").mockResolvedValue({ ...REFERENCES_VIDES, lignes: [LIGNE_CONCEPT_ART] })
+  monter({ concept_arts: ["carte-1"] })
+  expect(await screen.findByText("Sa planche est arrivée")).toBeTruthy()
+  fireEvent.click(onglet("Images"))
+  await waitFor(() => expect(onglet("Images").getAttribute("aria-selected")).toBe("true"))
+  expect(screen.getByText("Sa planche est arrivée")).toBeTruthy()
 })

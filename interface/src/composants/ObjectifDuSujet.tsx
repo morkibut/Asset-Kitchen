@@ -149,6 +149,9 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
       <div>
         <h2 id="objectif-titre" className="font-serif text-[25px] text-encre">Ce qui doit exister dans le jeu</h2>
         <p className="mt-[8px] text-[13px] text-encre-4">Choisis les mouvements et les directions utiles. Une référence aide à fabriquer ; elle ne remplace pas une animation.</p>
+        {/* **TS8** : cet écran règle les quantités, il ne dit pas quoi faire
+            ensuite — cette réponse-là est en tête de la page, pas ici. */}
+        <p className="mt-[4px] text-[11.5px] text-encre-4">Le prochain geste, s’il y en a un, reste en tête de sa page.</p>
       </div>
       {!edition && <button type="button" className={bouton} onClick={() => { setEdition(true); setMessage("") }}>Modifier l’objectif</button>}
     </div>

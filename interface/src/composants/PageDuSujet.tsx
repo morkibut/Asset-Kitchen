@@ -15,6 +15,7 @@ import { SonsDuSujet } from "./SonsDuSujet"
 import { useSonsCales } from "../api-reperes-sonores"
 import { FicheDuSujet, portraitDe } from "./FicheDuSujet"
 import { useScrollDuParcours } from "./MemoireDuParcours"
+import { ProchainGeste } from "./ProchainGeste"
 
 // **Quatre onglets, au plus** (`RV12`) — la revue du 21 septembre 2026 en
 // comptait sept, trois de plus que ce que la maquette autorise. Trois sont
@@ -364,6 +365,15 @@ export function PageDuSujet(proprietes: {
   const portrait = useMemo(() => portraitDe(ouvert, sienPlan), [ouvert, sienPlan])
   const imageCible = regardee ?? portrait?.asset.identifiant ?? null
 
+  /** « Fabriquer sa première image » (`RV15`, `TS8`) — **le même choix de
+   *  pose que le bouton *Fabriquer…* du haut de la page**, sans dépendre de
+   *  l'onglet ouvert : le bandeau du prochain geste reste visible quel qu'il
+   *  soit, et il parle toujours d'une image, jamais d'un clip. */
+  const fabriquerLaPremiereImage = useCallback(() => {
+    const pose = sienPlan.find((p) => !ouvert.ecartees.includes(p.identifiant))
+    if (pose) proprietes.onArmer(ouvert, [pose])
+  }, [sienPlan, ouvert, proprietes])
+
   // **La matrice prend toute la page, la barre qui paie comprise** : elle est
   // l'un des deux lieux d'où l'argent part, et la lui retirer aurait obligé à
   // remonter d'un cran pour dépenser.
@@ -415,6 +425,19 @@ export function PageDuSujet(proprietes: {
             {proprietes.onLivrer && <button className={BOUTON} onClick={proprietes.onLivrer}>Livrer…</button>}
           </div>
         </header>
+
+        {/* **Le prochain geste** (`TS8`) — en tête, quel que soit l'onglet
+            ouvert, tant qu'il a quelque chose à proposer. Un sujet neuf
+            l'ouvre déjà sur l'onglet *Images* (`RV15`) : c'est la même règle
+            d'arrivée, pas une seconde. */}
+        <ProchainGeste
+          personnage={ouvert}
+          onPersonnage={proprietes.onPersonnage}
+          onPremierePlanche={proprietes.onPremierePlanche}
+          onAllerALaToile={proprietes.onAllerALaToile}
+          onFabriquerLaPremiereImage={fabriquerLaPremiereImage}
+          onErreur={echouer}
+        />
 
         <FicheDuSujet personnage={ouvert} plan={sienPlan} collections={lu.siennes} groupes={lu.groupes}
           onRange={() => setRange(n => n + 1)} onPersonnage={proprietes.onPersonnage} onErreur={echouer}
