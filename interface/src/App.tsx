@@ -1479,6 +1479,9 @@ function AtelierApp() {
         // défaut devient le modèle d'édition du projet — habiller un corps est
         // une édition, pas une création de planche.
         cible?.piece ?? "",
+        // **Et la première planche** (TS3) : le concept art qui part comme le
+        // personnage à reproduire grise d'avance un modèle sans image d'entrée.
+        cible?.premierePlanche ?? false,
       )
       setModeles(catalogue.modeles)
       setDefaut(catalogue.defaut)
@@ -1503,7 +1506,7 @@ function AtelierApp() {
     } catch (erreur) {
       echouer(erreur, "l'atelier ne répond pas")
     }
-  }, [proportions, reinjections.length, echelle, cible?.personnage, cases])
+  }, [proportions, reinjections.length, echelle, cible?.personnage, cases, cible?.premierePlanche])
 
   useEffect(() => {
     void relireCatalogue()

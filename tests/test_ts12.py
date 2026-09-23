@@ -339,6 +339,92 @@ def test_le_balayage_du_projet_laisse_une_palette_nommee(client, atelier):
     assert q.palette_nommee == "" and q.palette_nom == ""
 
 
+# ── Les vues d'une planche (corrigé le 24 septembre 2026 après relecture) ────
+
+
+def _premiere_planche(client, double):
+    """Un sujet né de la toile (TS2), prêt pour sa première planche (TS3) :
+    le double rend quatre sujets. Rend (sujet, fonction d'envoi)."""
+    from tests.conftest import planche_sujets
+    from tests.test_ts3 import _generer as envoyer
+    from tests.test_ts3 import _sujet_de_la_toile, _vue
+
+    _vue(client)
+    double.rendre = lambda: planche_sujets(4)
+    sujet = _sujet_de_la_toile(client, 14)
+    return sujet["personnage"]["identifiant"], envoyer
+
+
+def test_les_vues_d_une_premiere_planche_prennent_la_palette_du_sujet(
+    client, double, atelier
+):
+    """**La fiche promet la palette à chaque nouvelle image**, et une première
+    planche en fait naître quatre d'un coup. Chaque vue la reçoit — par copie —,
+    la feuille non ; et relue d'un atelier **refermé puis rouvert**, chaque vue
+    la garde, même quand la palette a changé depuis (8septies)."""
+    from dataclasses import replace
+
+    from atelier.services import Atelier
+    from atelier.domaine.projet import PLANCHE
+    from tests.test_ts3 import _attendre
+
+    ident, envoyer = _premiere_planche(client, double)
+    palette = _palette(client, "Braises", ROUGES)
+    assert _poser(client, ident, palette["identifiant"]).status_code == 200
+
+    appel = envoyer(client, personnage=ident, premiere_planche=True)
+    assert appel.status_code == 202, appel.text
+    generation = appel.json()["identifiant"]
+    assert _attendre(client, generation)["statut"] == "reussie"
+    lue = atelier.generations._base.lire(generation)
+    rangs = [100 + i for i in range(len(lue.pliage.cases))]
+    assert len(rangs) == 4
+    # **La fiche dit la même chose que le dépliage** : aucun faux écart.
+    for rang in rangs:
+        vue = atelier.assets.lire(f"{generation}-{rang}")
+        assert atelier.assets.impose(vue.identifiant)["impose"] == vue.recette.en_json()
+
+    # La palette bouge ensuite : les vues gardent leur copie.
+    _retoucher(client, palette["identifiant"], BLEUS)
+
+    autre = Atelier(racine=atelier.fichiers.racine, fabrique_fournisseur=lambda: double)
+    autre.bibliotheque.ouvrir()
+    jeu = autre.assets.recette_du_projet(lue, PLANCHE)
+    for rang in rangs:
+        vue = autre.assets.lire(f"{generation}-{rang}")
+        q = vue.recette.quantification
+        assert q is not None, rang
+        assert q.palette == ROUGES
+        assert q.palette_nommee == palette["identifiant"] and q.palette_nom == "Braises"
+        # **Le reste est la recette du jeu pour un morceau de planche** :
+        # la palette ne remplace que la source des couleurs.
+        assert replace(vue.recette, quantification=jeu.quantification) == jeu
+
+    # La feuille, elle, reste ce qu'on a payé : sa recette vide.
+    feuille = autre.assets.lire(f"{generation}-0")
+    assert feuille.recette.quantification is None
+
+
+def test_sans_palette_de_sujet_une_planche_rend_ce_qu_elle_rendait(
+    client, double, atelier
+):
+    """Le correctif n'ajoute rien quand le sujet n'a pas de palette : chaque
+    vue porte exactement la recette du jeu pour un morceau de planche."""
+    from atelier.domaine.projet import PLANCHE
+    from tests.test_ts3 import _attendre
+
+    ident, envoyer = _premiere_planche(client, double)
+    appel = envoyer(client, personnage=ident, premiere_planche=True)
+    generation = appel.json()["identifiant"]
+    assert _attendre(client, generation)["statut"] == "reussie"
+    lue = atelier.generations._base.lire(generation)
+    jeu = atelier.assets.recette_du_projet(lue, PLANCHE)
+    for i in range(len(lue.pliage.cases)):
+        vue = atelier.assets.lire(f"{generation}-{100 + i}")
+        assert vue.recette == jeu
+        assert atelier.assets.impose(vue.identifiant)["impose"] == jeu.en_json()
+
+
 # ── L'agent (T7) ─────────────────────────────────────────────────────────────
 
 

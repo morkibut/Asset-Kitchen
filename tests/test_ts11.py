@@ -17,6 +17,7 @@ copiée en asset : c'est le cas d'Elias, vu par l'auteur le 23 septembre 2026.
 
 from __future__ import annotations
 
+from atelier.services.generation import PROVENANCE_DESIGN_CARTE
 from atelier.services.univers import CarteInconnue
 from tests.conftest import image_sujet, planche_sujets
 from tests.test_ts3 import DESIGN, _attendre, _envoi, _generer, _vue
@@ -129,3 +130,78 @@ def test_une_carte_a_reproduire_introuvable_arrete_l_appel(client, double, monke
     else:
         assert appel.status_code == 409, appel.text
     assert double.appels == 0
+
+
+# ── Le catalogue connaît la première planche (corrigé le 24 septembre 2026) ──
+
+
+SANS_IMAGE = "essai:rend-du-jpeg"  # `references_max=0` dans le catalogue d'essai
+AVEC_IMAGES = "essai:rend-du-png"  # deux images d'entrée
+
+
+def _catalogue(client, personnage: str, references: int, cases: int = 0, **autres):
+    parametres = {"references": references, "personnage": personnage, "cases": cases, **autres}
+    lue = client.get("/api/models", params=parametres)
+    assert lue.status_code == 200, lue.text
+    corps = lue.json()
+    return {m["identifiant"]: m["refus"] for m in corps["modeles"]}, corps["references"]
+
+
+def test_le_catalogue_grise_d_avance_un_modele_sans_image_pour_la_premiere_planche(
+    client, double
+):
+    """**Grisé avec sa raison, jamais proposé puis refusé** (AGENTS.md, *le
+    catalogue décide*). Un jeu vu de face : une seule direction, donc pas de
+    gabarit — seul le concept art peut griser le modèle, et l'écran l'a
+    peut-être retiré des images jointes : le serveur le réinjecte quand même."""
+    client.put("/api/universe", json={"vue": "vue-face-fixe"})
+    sujet = _sujet_a_carte_non_copiee(client, 9)
+    ident = sujet["personnage"]
+    assert client.get(f"/api/characters/{ident}/first-sheet").json()["directions"] == []
+
+    # Sans le drapeau : rien ne grise — c'était le défaut.
+    refus, _ = _catalogue(client, ident, 0)
+    assert refus[SANS_IMAGE] is None
+
+    refus, compte = _catalogue(client, ident, 0, premiere_planche="true")
+    assert refus[SANS_IMAGE] == "n'accepte aucune image de référence"
+    assert refus[AVEC_IMAGES] is None
+    assert compte["incompressibles"] == 1 and compte["total"] == 1
+
+    # **Ce que l'écran joint est ce concept art-là** : compté une fois, comme
+    # `_sans_le_design` le fait à l'envoi — pas deux.
+    refus, compte = _catalogue(client, ident, 1, premiere_planche="true")
+    assert refus[SANS_IMAGE] == "n'accepte aucune image de référence"
+    assert compte["incompressibles"] == 1 and compte["total"] == 1
+    assert [(l["asset"], l["provenance"]) for l in compte["lignes"]] == [
+        (sujet["carte"], PROVENANCE_DESIGN_CARTE)
+    ]
+
+    # **Le 409 reste le filet** : ce qui partirait quand même se refuse avant
+    # de payer.
+    appel = _generer(
+        client,
+        modele=SANS_IMAGE,
+        prompt="a young mage",
+        personnage=ident,
+        premiere_planche=True,
+        references=_comme_l_ecran(sujet),
+    )
+    assert appel.status_code == 409, appel.text
+    assert "n'accepte aucune image" in appel.text
+    assert double.appels == 0
+
+
+def test_hors_premiere_planche_le_catalogue_compte_comme_avant(client):
+    """Le drapeau ne change rien à qui ne le pose pas — et un sujet sans rien à
+    reproduire ne fait pas lever la liste."""
+    client.put("/api/universe", json={"vue": "vue-face-fixe"})
+    sujet = _sujet_a_carte_non_copiee(client, 10)
+    avant = _catalogue(client, sujet["personnage"], 1)
+    assert avant[0][SANS_IMAGE] == "n'accepte aucune image de référence"
+    assert avant[1]["incompressibles"] == 1
+
+    vide = client.post("/api/characters", json={"nom": "Personne", "description": "x"})
+    ident = vide.json()["personnage"]["identifiant"]
+    refus, compte = _catalogue(client, ident, 0, premiere_planche="true")
+    assert refus[SANS_IMAGE] is None and compte["incompressibles"] == 0

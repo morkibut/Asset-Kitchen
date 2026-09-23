@@ -59,7 +59,6 @@ from atelier.domaine.pliage import (
     MesuresLot,
     Pliage,
 )
-from atelier.domaine.projet import PLANCHE
 from atelier.domaine.recette import BORD, Passe, Recette
 from atelier.image import Boite, decouper, detourer, grille_fixe, mesurer, zones_opaques
 from atelier.image.decoupe import MARGE
@@ -1025,7 +1024,11 @@ class ServicePliage:
                 # de détourage se règle par nature d'image, et celle-ci en
                 # est une. La génération ne suffirait pas à le deviner —
                 # c'est la même qui a rendu la planche entière.
-                recette=self._assets.recette_du_projet(generation, PLANCHE),
+                # Et la palette par défaut du sujet de sa case (TS12) : une vue
+                # dépliée est une nouvelle image du sujet comme une autre.
+                recette=self._assets.recette_d_une_vue_depliee(
+                    generation, _sujet_de(generation, case)
+                ),
                 # **Une image dépliée n'a rien coûté seule.** L'argent a été
                 # dépensé une fois, pour l'appel, et le journal du projet le
                 # porte. Lui attribuer une part du prix inventerait un chiffre

@@ -386,6 +386,10 @@ class ServiceAssets:
             impose = self.recette_de_naissance(generation, asset.rang)
         elif morceau_refait and asset.lot is None:
             impose = self.recette_d_un_morceau_refait(generation)
+        elif generation.pliage is not None and not asset.recette.calque:
+            # Une vue dépliée : la recette du jeu plus la palette de son sujet
+            # (TS12), par le chemin même du dépliage.
+            impose = self.recette_d_une_vue_depliee(generation, asset.personnage)
         else:
             impose = self.recette_du_projet(generation, nature)
         return {
@@ -906,19 +910,51 @@ class ServiceAssets:
 
         Rend la recette inchangée dans les mêmes cas que `recette_du_sujet`
         (image entrée telle quelle, image brute de la toile, lot plié, appel
-        sans sujet) — et quand la palette n'existe plus ou n'a encore aucune
-        couleur : on ne quantifie pas sur une liste vide, qui voudrait dire
+        sans sujet ; les vues d'un lot plié la reçoivent au dépliage, par
+        `recette_d_une_vue_depliee`) — et quand la palette n'existe plus ou
+        n'a encore aucune couleur : on ne quantifie pas sur une liste vide, qui voudrait dire
         « les couleurs de l'image ».
         """
-        if generation.demande.get("traiter") is False or generation.demande.get("brut"):
-            return recette
         if generation.pliage is not None:
             return recette
-        if not generation.personnage or generation.projet is None:
-            return recette
-        contenu = self._fichiers.lire_personnage(
-            generation.projet, generation.personnage
+        return self._poser_la_palette(generation, recette, generation.personnage)
+
+    def recette_d_une_vue_depliee(
+        self, generation: Generation, personnage: str | None
+    ) -> Recette:
+        """La recette d'une vue coupée dans une planche pliée, à sa naissance.
+
+        La recette du jeu pour un morceau de planche — jamais celle du sujet :
+        le dépliage habille toujours de la recette du jeu (RS6) —, **plus la
+        palette par défaut du sujet de la case** (TS12, corrigé le 24 septembre
+        2026 après relecture). La fiche du sujet promet la palette à « chaque
+        nouvelle image », et une première planche en fait naître quatre d'un
+        coup : elles la reçoivent, par la même copie qu'une image seule.
+
+        **Le sujet est celui de la case**, pas celui de la génération : sur une
+        planche à plusieurs sujets (P2), chaque vue prend la palette du sien, et
+        une coupe qui n'est à personne n'en prend aucune. La feuille elle-même
+        garde sa recette vide (`asset_de_planche`) : elle n'est pas une image du
+        jeu, elle est ce qu'on a payé.
+
+        Écrite ici pour que le dépliage et la fiche (`impose`) lisent la même
+        chose. Sans palette au sujet, c'est exactement `recette_du_projet(…,
+        PLANCHE)`, comme avant.
+        """
+        return self._poser_la_palette(
+            generation, self.recette_du_projet(generation, PLANCHE), personnage
         )
+
+    def _poser_la_palette(
+        self, generation: Generation, recette: Recette, personnage: str | None
+    ) -> Recette:
+        """La palette par défaut de `personnage` posée sur `recette` — la règle
+        de `avec_la_palette_du_sujet`, sans le refus du lot plié."""
+        if generation.demande.get("traiter") is False or generation.demande.get("brut"):
+            return recette
+        if not personnage or generation.projet is None:
+            return recette
+        contenu = self._fichiers.lire_personnage(generation.projet, personnage)
         if contenu is None:
             return recette
         choisie = Personnage.depuis_json(contenu).palette

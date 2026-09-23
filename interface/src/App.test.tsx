@@ -21987,6 +21987,16 @@ describe("TS11 — la première planche d'un sujet dont le concept art est une c
         (fenetre.getByPlaceholderText(PLACEHOLDER_DU_PROMPT) as HTMLTextAreaElement).value,
       ).toBe("un jeune mage en robe bleue"),
     )
+    // **Le catalogue sait que c'est une première planche** (corrigé le
+    // 24 septembre 2026) : un modèle sans image d'entrée se grise d'avance
+    // avec sa raison, au lieu d'être refusé en 409 à l'envoi.
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) => a.url.startsWith("/api/models?") && a.url.includes("premiere_planche=true"),
+        ),
+      ).toBe(true),
+    )
     const relire = fenetre.getByRole("button", { name: BOUTON_DE_RELECTURE }) as HTMLButtonElement
     await waitFor(() => expect(relire.disabled).toBe(false))
     fireEvent.click(relire)
