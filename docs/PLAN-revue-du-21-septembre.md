@@ -589,6 +589,11 @@ après le point 3, quand on a choisi le geste et le style de combat ? »
       directions) ; 2. le geste et le style de combat ; 3. l'image de départ ; 4. le clip ; 5.
       l'animation à obtenir. L'image proposée se recalcule quand le mouvement ou les directions
       changent.
+- [ ] **« Corriger le geste » part du texte existant** (retour de l'auteur du même jour) : en
+      ouvrant la correction, le champ est **rempli** avec le geste actuel, modifiable — pas
+      montré en texte d'exemple grisé qu'il faudrait retaper pour changer un mot. Une correction
+      qui revient au texte d'origine n'en est pas une (rien ne part en plus) ; « remettre le
+      texte du mouvement » reste là.
 
 ---
 
