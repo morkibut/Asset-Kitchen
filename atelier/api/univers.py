@@ -405,9 +405,19 @@ async def coller(
     }
 
 
+class CorpsPoseAsset(BaseModel):
+    """Où poser la copie — facultatif : sans corps, elle se range au bout."""
+
+    position: list[float] | None = None
+
+
 @routeur.post("/projects/{projet}/board/assets/{asset}")
-async def poser_asset(requete: Request, projet: str, asset: str) -> dict[str, Any]:
-    return _atelier(requete).univers.poser_asset(projet, asset)
+async def poser_asset(
+    requete: Request, projet: str, asset: str, corps: CorpsPoseAsset | None = None
+) -> dict[str, Any]:
+    return _atelier(requete).univers.poser_asset(
+        projet, asset, position=corps.position if corps else None
+    )
 
 
 @routeur.post("/projects/{projet}/board/clips/{clip}", status_code=201)

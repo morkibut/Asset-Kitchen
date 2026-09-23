@@ -4290,6 +4290,12 @@ function allerA(nom: string | RegExp) {
   fireEvent.click(leLieu(nom))
 }
 
+/** L'Univers s'ouvre sur la toile depuis le 23 septembre 2026 : les essais
+ *  qui regardent la grille la demandent. */
+async function enGrille() {
+  fireEvent.click(await screen.findByRole("button", { name: "grille" }))
+}
+
 /** La galerie, **sur ses vidéos**.
  *
  *  La galerie unifiée range les médias en onglets — Images, Animations, Vidéos,
@@ -4595,6 +4601,7 @@ describe("l'écran de l'atelier", () => {
     const { fetchDouble } = serveurDouble()
     const flux = await monter(fetchDouble)
     allerA("Univers")
+    await enGrille()
     expect(await screen.findByText("Le tableau est vide.")).toBeTruthy()
 
     flux.emettre(
@@ -4630,6 +4637,7 @@ describe("l'écran de l'atelier", () => {
     const { fetchDouble } = serveurDouble()
     const flux = await monter(fetchDouble)
     allerA("Univers")
+    await enGrille()
     await screen.findByText("Le tableau est vide.")
 
     flux.emettre(
@@ -4659,6 +4667,7 @@ describe("l'écran de l'atelier", () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
     allerA("Univers")
+    await enGrille()
     await screen.findByText("Le tableau est vide.")
 
     // `DataTransfer` n'existe pas hors navigateur : on double ce que l'écran
@@ -4682,6 +4691,7 @@ describe("l'écran de l'atelier", () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
     allerA("Univers")
+    await enGrille()
     await screen.findByText("Le tableau est vide.")
 
     // L'écoute est posée sur la fenêtre : elle voit passer aussi les collages
@@ -6428,6 +6438,7 @@ describe("l'agent, vu de l'atelier", () => {
     const { fetchDouble, appels } = serveurDouble({ cartes: compose9() })
     await monter(fetchDouble)
     allerA("Univers")
+    await enGrille()
 
     fireEvent.click(await screen.findByRole("button", { name: "+ note" }))
     const champ = await waitFor(() => {
@@ -8529,7 +8540,7 @@ describe("les trois onglets", () => {
     expect(await screen.findByLabelText(CHAMP_DE_RECHERCHE)).toBeTruthy()
 
     fireEvent.click(onglet("Univers"))
-    await screen.findByText("Le tableau est vide.")
+    await screen.findByRole("button", { name: "grille" })
     expect(allume("Univers")).toBe(true)
     expect(allume("Galerie")).toBe(false)
     expect(screen.queryByLabelText(CHAMP_DE_RECHERCHE)).toBeNull()
@@ -8608,7 +8619,7 @@ describe("les trois onglets", () => {
     // ouverte derrière rendrait le produit à ce qu'il vient de quitter — un
     // écran par-dessus un autre, ce que la tranche supprime.
     fireEvent.click(onglet("Univers"))
-    await screen.findByText("Le tableau est vide.")
+    await screen.findByRole("button", { name: "grille" })
     expect(dernierEtageDuFil()).toBe("Univers & toile")
 
     fireEvent.click(onglet("Galerie"))
@@ -8685,6 +8696,9 @@ describe("les trois onglets", () => {
     expect(screen.queryByRole("button", { name: "univers" })).toBeNull()
 
     fireEvent.click(onglet("Univers"))
+    // L'Univers s'ouvre sur la toile (23 septembre 2026) : on passe en grille
+    // pour vérifier que la bascule de la réserve y disparaît.
+    await enGrille()
     await screen.findByText("Le tableau est vide.")
     expect(screen.queryByRole("button", { name: "arbre" })).toBeNull()
     // **La réserve n'a de bascule qu'en toile.** Sans elle il n'y a pas de
@@ -8709,8 +8723,8 @@ describe("les trois onglets", () => {
     await monter(fetchDouble)
 
     fireEvent.click(onglet("Univers"))
-    await screen.findByText("Le tableau est vide.")
-    fireEvent.click(screen.getByRole("button", { name: "toile" }))
+    // L'Univers s'ouvre sur la toile : rien à basculer.
+    await screen.findByRole("button", { name: "grille" })
 
     const colonnes = () =>
       (document.querySelector("[data-colonnes]") as HTMLElement).style.gridTemplateColumns
@@ -17289,6 +17303,10 @@ describe("découper une carte du tableau", () => {
       cartes: [carteImage(CARTE, { groupe: "trouvailles" })],
     })
     await monter(fetchDouble)
+    // La carte n'a pas de place : on la cherche en grille, la toile la
+    // garderait en réserve.
+    allerA("Univers")
+    await enGrille()
     await ouvrirLeMenu()
 
     fireEvent.click(await screen.findByRole("button", { name: "Découper ›" }))

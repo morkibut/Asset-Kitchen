@@ -1150,9 +1150,21 @@ export const AIDE: Record<string, Explication> = {
     quoi: "Les deux façons de regarder le tableau : la grille, tout d'un coup d'œil, ou la toile, où une carte se pose où tu veux et garde sa place.",
     change:
       "Rien à la génération. Mais tirer une carte dans un îlot écrit son groupe, et l'en sortir le vide : sur la toile, composer et classer sont le même geste.",
-    origine: "toi · la grille au départ · rien ne s'enregistre",
+    origine: "toi · la toile au départ · rien ne s'enregistre",
     long:
       "La règle tient en une phrase : la toile montre ce qui est classé, la réserve contient ce qui reste à classer. Une carte posée sans être classée reste sur le plan nu, son pied dit « posée ». Double-cliquer sur le plan nu écrit une note à cet endroit précis ; le bouton **+ note** de la barre fait la même chose sans viser.",
+  },
+
+  "toile.fabriquer": {
+    nom: "Fabriquer",
+    ou: "inspiration",
+    groupe: "La barre du tableau",
+    quoi: "Décris une image, choisis 1, 2 ou 3 versions, Entrée : les images se fabriquent et se posent sur la toile.",
+    change:
+      "Une vraie génération : le bouton dit ce qu'elle coûte avant de partir — un prix pour un modèle payant, un temps pour un modèle local. Chaque image entre aussi dans la galerie.",
+    origine: "toi · Qwen rapide par défaut, sinon le premier modèle disponible · le modèle et le nombre sont retenus",
+    long:
+      "Sans rien de choisi, on part de rien. Avec une ou plusieurs images choisies sur la toile — ou **Varier** dans le menu d'une carte —, elles partent comme images à modifier ; la croix les laisse de côté. Plusieurs fabrications peuvent tourner en même temps ; un échec reste à sa place avec sa raison, et la croix le retire.",
   },
 
   // Le menu d'une carte

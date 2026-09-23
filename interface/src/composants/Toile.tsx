@@ -81,9 +81,16 @@ import {
   useCollage,
   useDepot,
   useSurvol,
+  VARIER,
   type Vue,
 } from "./Tableau"
 import { Libelle, Raison } from "./pieces"
+import {
+  BarreDeFabrication,
+  NoeudFantome,
+  referencesDeLaToile,
+  useFabricationSurToile,
+} from "./ToileFabrique"
 
 // ── Les mesures de l'îlot ───────────────────────────────────────────────────
 //
@@ -998,7 +1005,7 @@ const cleCarte = (identifiant: string) => `carte:${identifiant}`
 const cleLien = (identifiant: string) => `lien:${identifiant}`
 const cleIlot = (nom: string) => `ilot:${nom}`
 
-const TYPES = { ilot: NoeudIlot, carte: NoeudCarte, brouillon: NoeudBrouillon }
+const TYPES = { ilot: NoeudIlot, carte: NoeudCarte, brouillon: NoeudBrouillon, fantome: NoeudFantome }
 const TYPES_ARETE = { lien: AreteLien }
 
 // ── L'écran ─────────────────────────────────────────────────────────────────
@@ -1139,6 +1146,25 @@ function Plan({
   // le champ ne bouge pas.
   const [brouillon, setBrouillon] = useState<Place | null>(null)
 
+  // ── Fabriquer sur la toile ───────────────────────────────────────────────
+  //
+  // La barre du bas part de ce qui est choisi sur la toile, ou de la carte
+  // qu'on a demandé de varier ; la croix laisse les deux de côté jusqu'à ce que
+  // la sélection change. Les fantômes sont des nœuds comme les autres : ils
+  // sont *sur* le plan, là où les images vont se poser.
+  const fabrication = useFabricationSurToile(onErreur)
+  const [variee, setVariee] = useState<string | null>(null)
+  const [sansReferences, setSansReferences] = useState(false)
+  const champFabrique = useRef<HTMLInputElement>(null)
+  // Par sa signature : la sélection arrive recalculée à chaque rendu.
+  const signatureSelection = `${choisie ?? ""}|${selection.join(",")}`
+  useEffect(() => setSansReferences(false), [signatureSelection])
+  const referencesFabrique = useMemo(
+    () =>
+      sansReferences ? [] : referencesDeLaToile(cartes, selection, choisie, variee),
+    [sansReferences, cartes, selection, choisie, variee],
+  )
+
   // **Chaque nœud porte ses dimensions, et c'est la librairie qui l'exige.** Un
   // nœud dont elle ne connaît pas la taille est rendu `visibility: hidden` en
   // attendant que son `ResizeObserver` la lui livre — et *un `ResizeObserver` ne
@@ -1183,6 +1209,17 @@ function Plan({
           handles: ANCRAGES,
           zIndex: 1,
         })),
+      ...fabrication.fantomes.map<Node>((fantome) => ({
+        id: `fantome:${fantome.cle}`,
+        type: "fantome",
+        position: fantome.place,
+        data: { fantome, onRetirer: fabrication.retirer },
+        width: crans[1],
+        height: crans[1],
+        draggable: false,
+        selectable: false,
+        zIndex: 2,
+      })),
       ...(brouillon
         ? [
             {
@@ -1199,7 +1236,7 @@ function Plan({
           ]
         : []),
     ])
-  }, [cartes, ilots, places, crans, brouillon, setNoeuds])
+  }, [cartes, ilots, places, crans, brouillon, fabrication.fantomes, fabrication.retirer, setNoeuds])
 
   // ── Les traits ───────────────────────────────────────────────────────────
   //
@@ -1759,6 +1796,77 @@ function Plan({
     [crans, ilots, echouer],
   )
 
+  /** Lancer une fabrication : ses fantômes se posent **à droite des images
+   *  de référence** qui sont sur le plan, sinon **au centre de ce que l'écran
+   *  montre**, en rangée. Le centre se mesure sur le plan rendu, comme pour
+   *  `+ note`. */
+  const fabriquer = useCallback(
+    (demande: Omit<Parameters<typeof fabrication.lancer>[0], "places">) => {
+      if (!crans) return
+      const cote = crans[1]
+      const ecart = cote + GOUTTIERE * 3
+      const boites = referencesFabrique
+        .map((c) => {
+          const p = places.get(c.identifiant)
+          return p && !c.en_reserve
+            ? { ...p, l: largeurDe(c, crans), h: hauteurDe(c, crans) }
+            : null
+        })
+        .filter((b): b is Boite => b !== null)
+      const autour = englober(boites)
+      let depart: Place = { x: 0, y: 0 }
+      if (autour) depart = { x: autour.x + autour.l + GOUTTIERE * 3, y: autour.y }
+      else if (plan.current) {
+        const vue = plan.current.getBoundingClientRect()
+        const centre = screenToFlowPosition({
+          x: vue.left + vue.width / 2,
+          y: vue.top + vue.height / 2,
+        })
+        const large = demande.variations * ecart - GOUTTIERE * 3
+        depart = { x: centre.x - large / 2, y: centre.y - cote / 2 }
+      }
+      // **Jamais par-dessus une carte ni un autre fantôme** — `placeLibre`, la
+      // règle de la carte tirée de la réserve : l'endroit visé, sinon la
+      // première place libre à sa droite, puis à la ligne.
+      const taille = { l: cote, h: cote }
+      const occupees: Boite[] = [
+        ...cartes
+          .filter((c) => !c.en_reserve)
+          .map((c) => {
+            const p = places.get(c.identifiant)
+            return p ? { ...p, l: largeurDe(c, crans), h: hauteurDe(c, crans) } : null
+          })
+          .filter((b): b is Boite => b !== null),
+        ...fabrication.fantomes.map((f) => ({ ...f.place, ...taille })),
+      ]
+      const tout = englober(occupees)
+      const borne = Math.max(
+        tout ? tout.x + tout.l : depart.x,
+        depart.x + demande.variations * ecart,
+      )
+      const posees: Place[] = []
+      for (let i = 0; i < demande.variations; i++) {
+        const place = placeLibre(
+          { x: depart.x + i * ecart, y: depart.y },
+          taille,
+          occupees,
+          borne,
+        )
+        posees.push(place)
+        occupees.push({ ...place, ...taille })
+      }
+      void fabrication.lancer({ ...demande, places: posees })
+      setVariee(null)
+    },
+    [crans, cartes, referencesFabrique, places, screenToFlowPosition, fabrication],
+  )
+
+  const varier = useCallback((carte: Carte) => {
+    setVariee(carte.identifiant)
+    setSansReferences(false)
+    champFabrique.current?.focus({ preventScroll: true })
+  }, [])
+
   /** Défaire un geste — trois formes, trois chemins.
    *
    *  L'ordre compte pour l'îlot rendu : son groupe doit être réécrit **avant**
@@ -1998,6 +2106,7 @@ function Plan({
         data-plan
         className="relative min-h-0 min-w-0 flex-1"
       >
+        <VARIER.Provider value={varier}>
         <CADRE.Provider value={cadre}>
           <ReactFlow
             nodes={noeuds}
@@ -2093,6 +2202,7 @@ function Plan({
             </svg>
           </ReactFlow>
         </CADRE.Provider>
+        </VARIER.Provider>
 
         {!crans ? (
           <p className="mesure pointer-events-none absolute inset-0 flex items-center justify-center text-[10.5px] text-encre-4">
@@ -2100,6 +2210,18 @@ function Plan({
           </p>
         ) : (
           !cartes.some((c) => !c.en_reserve) && <ToileNue />
+        )}
+
+        {crans && (
+          <BarreDeFabrication
+            references={referencesFabrique}
+            onOublierReferences={() => {
+              setVariee(null)
+              setSansReferences(true)
+            }}
+            onLancer={fabriquer}
+            champ={champFabrique}
+          />
         )}
       </div>
     </section>
