@@ -58,7 +58,7 @@ import { useEtatDuParcours } from "./MemoireDuParcours"
 import { useMainDuParcours } from "./MainDuParcours"
 import { EnregistrerSous, raisonDEnregistrerSous } from "./EnregistrerSous"
 import { FrameVivante, passagesEnAttente, type Attente } from "./MainVivante"
-import { EditeurDePixels, type Coup } from "./EditeurDePixels"
+import { EditeurDePixels, mainAvecLesCoups, type Coup } from "./EditeurDePixels"
 import { priseRetournee } from "./RetournerLesRetouches"
 // **Les six postes viennent de la retouche** (`B26`). L'atelier d'une animation
 // montait jusqu'ici les six panneaux de l'ancien châssis ; celui-ci s'en va, et
@@ -1268,22 +1268,8 @@ export function EcranAtelierDeBande({
     setCourante(cible)
     setPrises((liste) => liste.map((prise, index) => {
       if (index !== cible) return prise
-      let main = mainDe({ ...(prise.recette ?? recette ?? RECETTE_VIDE), main: prise.main_apres_placement ?? null })
-      let calque = etatMain.actif !== OPACITE && main.calques[etatMain.actif] ? etatMain.actif : main.calques.findIndex((c) => c.visible)
-      for (const coup of coups) {
-        if (coup.sorte === "peindre") {
-          if (calque < 0) {
-            main = { ...main, calques: [...main.calques, { nom: `calque ${main.calques.length + 1}`, visible: true, passages: [] }] }
-            calque = main.calques.length - 1
-          }
-          main = avecPassage(main, calque, coup.trait)
-        } else {
-          const gomme = { ...coup.trait, garde: false, couleur: "" }
-          main = avecPassage(main, OPACITE, gomme)
-          for (let i = 0; i < main.calques.length; i++) main = avecPassage(main, i, gomme)
-        }
-      }
-      return { ...prise, main_apres_placement: main }
+      const main = mainDe({ ...(prise.recette ?? recette ?? RECETTE_VIDE), main: prise.main_apres_placement ?? null })
+      return { ...prise, main_apres_placement: mainAvecLesCoups(main, etatMain.actif, coups) }
     }))
     setEditeur(false)
   }

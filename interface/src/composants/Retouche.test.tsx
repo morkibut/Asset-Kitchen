@@ -580,15 +580,6 @@ describe("le grisé porte sa raison, et le geste qui le rallume", () => {
     }
   })
 
-  test("le détourage dit que la couleur du fond se devine, sauf si une passe la vise", async () => {
-    monter()
-    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
-    expect(
-      await within(colonne()).findByText(
-        /sauf si elle vise la couleur déclarée du jeu/i,
-      ),
-    ).toBeTruthy()
-  })
 })
 
 describe("le plafond : la case en pixel art, la finesse en dessin", () => {
@@ -1352,11 +1343,10 @@ describe("les deux fabriques s'ouvrent dans le cadre, sans repasser par l'ancien
 })
 
 describe("on n'annule pas un calcul", () => {
-  test("l'écran le dit, et n'offre aucun bouton qui aurait l'air de le faire", () => {
+  // La phrase qui le disait est retirée le 22 septembre 2026 (jugée inutile
+  // par l'auteur) ; reste la promesse : aucun bouton d'annulation.
+  test("l'écran n'offre aucun bouton qui aurait l'air d'annuler un calcul", () => {
     monter()
-    expect(
-      within(colonne()).getByText(/un calcul ne s[’']interrompt pas/i),
-    ).toBeTruthy()
     expect(within(colonne()).queryByRole("button", { name: /Annuler/i })).toBeNull()
   })
 })

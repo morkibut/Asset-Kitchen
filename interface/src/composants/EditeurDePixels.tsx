@@ -13,11 +13,35 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
-import type { Trait } from "../api"
+import type { Main, Trait } from "../api"
+import { avecPassage, OPACITE } from "../recette"
 import { CadreDialogue } from "./CadreDialogue"
 import { couverture, rejouer, type Attente } from "./MainVivante"
 
 export type Coup = { sorte: "peindre" | "effacer"; trait: Trait }
+
+/** Range les coups de l'éditeur dans la Main — la même règle pour une frame
+ *  d'animation et pour une image (22 septembre 2026). Un coup de pinceau va
+ *  sur le calque actif, ou le premier visible, ou un calque neuf ; un coup de
+ *  gomme efface l'opacité *et* chaque calque. */
+export function mainAvecLesCoups(depart: Main, actif: number, coups: Coup[]): Main {
+  let main = depart
+  let calque = actif !== OPACITE && main.calques[actif] ? actif : main.calques.findIndex((c) => c.visible)
+  for (const coup of coups) {
+    if (coup.sorte === "peindre") {
+      if (calque < 0) {
+        main = { ...main, calques: [...main.calques, { nom: `calque ${main.calques.length + 1}`, visible: true, passages: [] }] }
+        calque = main.calques.length - 1
+      }
+      main = avecPassage(main, calque, coup.trait)
+    } else {
+      const gomme = { ...coup.trait, garde: false, couleur: "" }
+      main = avecPassage(main, OPACITE, gomme)
+      for (let i = 0; i < main.calques.length; i++) main = avecPassage(main, i, gomme)
+    }
+  }
+  return main
+}
 type Outil = "pinceau" | "gomme" | "pipette"
 
 const TAILLES = [1, 3, 5, 7] as const

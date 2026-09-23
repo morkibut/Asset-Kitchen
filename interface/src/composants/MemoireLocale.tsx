@@ -35,9 +35,10 @@ export function MemoireLocale({ etat }: { etat: EtatDuMoteur | null }) {
       </p>
       {manque && (
         <p role="status" className={AVERTISSEMENT}>
-          Il manque de la mémoire pour ce modèle — il lui faut environ{" "}
-          {gigas(etat.besoin_go!)} : ferme les autres calculs sur ta carte
-          graphique.
+          Ce modèle demande environ {gigas(etat.besoin_go!)}. ComfyUI
+          libérera de lui-même les modèles qu'il garde en mémoire ; si le
+          calcul échoue quand même, ferme les autres programmes qui utilisent
+          ta carte graphique.
         </p>
       )}
       {etat.occupe && (

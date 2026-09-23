@@ -101,6 +101,7 @@ import { CommandesDuZoom } from "./CommandesDuZoom"
 import { useMainDuParcours } from "./MainDuParcours"
 import { useRetoucheBrouillon } from "./RetoucheBrouillon"
 import { CadreDialogue } from "./CadreDialogue"
+import { EditeurDePixels, mainAvecLesCoups } from "./EditeurDePixels"
 import { EnregistrerSous, raisonDEnregistrerSous } from "./EnregistrerSous"
 // **Le vocabulaire vient d'un module sans écran** (`B26`). Les listes fermées,
 // les fonctions pures et les trois crochets de la recette ne sont pas du
@@ -374,20 +375,25 @@ function Pourquoi({
 function Reglage({
   nom,
   dit,
+  aide,
   children,
 }: {
   nom: string
   /** Ce que la commande ne dit pas elle-même. Un curseur et un choix portent
    *  déjà leur valeur : ils ne passent rien ici. */
   dit?: string
+  /** Ce que fait le réglage, en une phrase simple, sous son nom (22 septembre
+   *  2026) — l'auteur ne devinait pas à quoi servaient la moitié d'entre eux. */
+  aide?: string
   children: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-[4px]">
       <div className="flex items-baseline justify-between gap-[8px]">
-        <span className="text-[12px] text-encre-2">{nom}</span>
+        <span className="text-[12px] font-medium text-encre">{nom}</span>
         {dit && <span className="mesure text-[10.5px] text-encre-4">{dit}</span>}
       </div>
+      {aide && <p className="text-[11.5px] leading-[1.45] text-encre-3">{aide}</p>}
       {children}
     </div>
   )
@@ -664,6 +670,15 @@ function secondesLisibles(secondes: number): string {
   return `${secondes.toFixed(1).replace(".", ",")} s`
 }
 
+/** Ce que fait chaque méthode, en une phrase (22 septembre 2026). */
+const AIDE_DU_MOTEUR: Record<Passe["moteur"], string> = {
+  bord: "Retire le fond uni qui touche les bords de l'image. Le plus rapide, pour un fond d'une seule couleur.",
+  couleur: "Tu cliques sur une couleur dans l'image, elle est retirée.",
+  modele: "Une IA locale repère le sujet et retire tout le reste. Pour les fonds chargés ou dégradés.",
+  trace: "Tu entoures le sujet à la main ; le bord est cherché à l'intérieur.",
+  palette: "Les couleurs de la palette du jeu sont protégées ; toute autre couleur reliée au bord de l'image est retirée.",
+}
+
 export function ReglagesDuDetourage({
   recette,
   univers,
@@ -694,6 +709,13 @@ export function ReglagesDuDetourage({
   onUnivers?: (univers: Univers) => void
 }) {
   const passes = recette.passes
+  /** Les passes repliées (22 septembre 2026) — un état d'écran, pas de recette. */
+  const [repliees, setRepliees] = useState<ReadonlySet<number>>(new Set())
+  const replier = (rang: number) => setRepliees((avant) => {
+    const suite = new Set(avant)
+    if (suite.has(rang)) suite.delete(rang); else suite.add(rang)
+    return suite
+  })
   /** **Aucune image brute sous la main** — l'atelier d'une animation montre la
    *  planche déjà traitée. Les deux gestes qui visent un pixel s'absentent au
    *  lieu d'offrir un bouton qui ne fait rien, et la colonne dit ce qui est
@@ -753,15 +775,22 @@ export function ReglagesDuDetourage({
        *  côté de lui serait une copie que plus rien ne met à jour. */
       const couleurVisee = mesures?.visees?.[rang] ?? null
       return (
-        <div key={rang} className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
-          <div className="flex items-baseline justify-between gap-[8px]">
-            <Etiquette barree={passe.masquee}>passe {rang + 1}</Etiquette>
+        // **Une passe, une carte** (22 septembre 2026) : un simple filet ne
+        // séparait pas une passe de la suivante ni du reste du panneau.
+        <section key={rang} data-passe={rang} className="flex flex-col gap-[12px] rounded-8 border border-trait bg-papier p-[12px]">
+          <div className={`flex items-center justify-between gap-[8px] ${repliees.has(rang) ? "" : "border-b border-trait-faible pb-[8px]"}`}>
+            <h3 className={`min-w-0 text-[13px] font-medium text-encre ${passe.masquee ? "line-through opacity-60" : ""}`}>
+              <button type="button" data-replier-passe={rang} aria-expanded={!repliees.has(rang)} onClick={() => replier(rang)} className="flex items-center gap-[6px] text-left hover:text-encre-2">
+                <span aria-hidden className={`inline-block text-[10px] text-encre-3 transition-transform duration-120 ${repliees.has(rang) ? "" : "rotate-90"}`}>▶</span>
+                <span>Passe {rang + 1}<span className="font-normal text-encre-3"> · {MOTEUR[passe.moteur]}</span></span>
+              </button>
+            </h3>
             {/* **Masquer n'est pas retirer, et les deux mots le disent** (U10,
                 rattrapé en `B26` — le geste ne vivait que dans `BlocPasse`) :
                 l'un rend la passe au calcul d'un clic, l'autre la perd. Ils
                 sont côte à côte parce que c'est là qu'on hésite entre les
                 deux. */}
-            <div className="flex items-baseline gap-[8px]">
+            <div className="flex items-center gap-[4px]">
               <button
                 type="button"
                 role="switch"
@@ -775,7 +804,7 @@ export function ReglagesDuDetourage({
                     ),
                   })
                 }
-                className="text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre"
+                className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
               >
                 {passe.masquee ? "La montrer" : "La masquer"}
               </button>
@@ -784,12 +813,13 @@ export function ReglagesDuDetourage({
                 onClick={() =>
                   void poser({ ...recette, passes: passes.filter((_, i) => i !== rang) })
                 }
-                className="text-[12px] text-encre-3 transition-colors duration-120 hover:text-encre"
+                className="h-[26px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
               >
                 La retirer
               </button>
             </div>
           </div>
+          {!repliees.has(rang) && <>
           {passe.masquee && (
             <Pourquoi texte="masquée : retirée du calcul, elle garde tous ses réglages — la remontrer rend l'image d'avant" />
           )}
@@ -803,7 +833,7 @@ export function ReglagesDuDetourage({
               passe.masquee ? "opacity-50" : "",
             ].join(" ")}
           >
-          <Reglage nom="moteur">
+          <Reglage nom="Méthode" aide={AIDE_DU_MOTEUR[passe.moteur]}>
             <Choix
               valeurs={["bord", "couleur", "modele", "trace", "palette"] as const}
               valeur={passe.moteur}
@@ -846,7 +876,7 @@ export function ReglagesDuDetourage({
               silhouettes[0]
             return (
               <>
-                <Reglage nom="modèle">
+                <Reglage nom="Modèle" aide="Les modèles plus lourds suivent mieux les cheveux, la fourrure et les détails fins, mais prennent plus de temps.">
                   <Choix
                     valeurs={silhouettes.map((s) => s.nom)}
                     valeur={choisi.nom}
@@ -884,7 +914,7 @@ export function ReglagesDuDetourage({
           })()}
 
           {(passe.moteur === "bord" || passe.moteur === "couleur" || passe.moteur === "trace") && (
-            <Reglage nom="tolérance">
+            <Reglage nom="Tolérance" aide="Plus c'est haut, plus les couleurs proches du fond partent avec lui. Trop haut, le sujet commence à être mangé.">
               <Glissiere
                 nom={`tolérance de la passe ${rang + 1}`}
                 valeur={passe.tolerance}
@@ -899,7 +929,7 @@ export function ReglagesDuDetourage({
               />
             </Reglage>
           )}
-          <Reglage nom="bord rongé">
+          <Reglage nom="Grignoter le contour" aide="Retire 0 à 4 pixels autour du sujet, pour effacer le liseré de fond qui reste souvent collé au bord.">
             <Choix
               valeurs={[0, 1, 2, 3, 4] as const}
               valeur={passe.durcissement}
@@ -915,7 +945,7 @@ export function ReglagesDuDetourage({
               (l'écart par canal) en a besoin d'une tolérance plus large — qui
               mange alors une peau ou un pelage qui n'a rien à voir. */}
           {(passe.moteur === "bord" || passe.moteur === "couleur") && (
-            <Reglage nom="comparaison">
+            <Reglage nom="Comparer les couleurs" aide="« Par teinte » ignore les ombres et dégradés du fond ; « par canal » est plus strict.">
               <Choix
                 valeurs={["canal", "teinte"] as const}
                 valeur={passe.teinte ? "teinte" : "canal"}
@@ -934,7 +964,7 @@ export function ReglagesDuDetourage({
               qui n'a rien à viser serait un réglage qui n'a l'air que de
               marcher. */}
           {passe.moteur === "bord" && univers.fond && (
-            <Reglage nom="couleur visée">
+            <Reglage nom="Couleur du fond" aide="Devinée sur les bords de l'image, ou prise dans les règles du jeu si le sujet touche un bord.">
               <Choix
                 valeurs={["", univers.fond] as const}
                 valeur={passe.couleur_du_jeu ?? ""}
@@ -950,7 +980,7 @@ export function ReglagesDuDetourage({
           )}
 
           {passe.moteur === "couleur" && (
-            <Reglage nom="portée">
+            <Reglage nom="Où retirer" aide="« Cette tache » retire seulement la zone touchée autour du point ; « partout » retire cette couleur dans toute l'image.">
               <Choix
                 valeurs={["tache", "partout"] as const}
                 valeur={passe.portee}
@@ -989,7 +1019,7 @@ export function ReglagesDuDetourage({
               qui est posé, et elle ouvre la surface — elle ne règle pas quatre
               nombres à sa place. */}
           {passe.moteur === "couleur" && (
-            <Reglage nom="couleur visée">
+            <Reglage nom="Couleur à retirer" aide="Clique dans l'image sur la couleur du fond.">
               <div className="flex flex-col gap-[4px]">
                 {passe.point && couleurVisee && (
                   <span className="flex items-center gap-[8px]">
@@ -1043,7 +1073,7 @@ export function ReglagesDuDetourage({
           )}
 
           {passe.moteur === "trace" && (
-            <Reglage nom="forme entourée">
+            <Reglage nom="Zone du sujet" aide="Entoure le sujet dans l'image : tout ce qui est dehors est retiré.">
               {sansSurface ? (
                 <span className="mesure text-[11.5px] text-encre-4">
                   {passe.trace.length > 0
@@ -1079,17 +1109,19 @@ export function ReglagesDuDetourage({
             />
           )}
           </div>
-        </div>
+          </>}
+        </section>
       )
       })}
 
       <button
         type="button"
         onClick={() => void poser({ ...recette, passes: [...passes, PASSE_PAR_DEFAUT] })}
-        className="h-[30px] rounded-7 border border-trait bg-carte text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+        className="h-[32px] rounded-7 border border-dashed border-contour bg-carte text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
       >
-        Une passe de plus
+        + Ajouter une passe
       </button>
+      {passes.length > 0 && <p className="text-[11.5px] leading-[1.45] text-encre-3">Les passes s'appliquent l'une après l'autre : chacune retire ce que la précédente a laissé.</p>}
 
       {/* **La couleur du fond se devine par défaut, et se vise depuis B18.**
           Le jeu la déclare dans ses règles, elle part dans le prompt — et
@@ -1098,7 +1130,6 @@ export function ReglagesDuDetourage({
           ci-dessus, qui copie la couleur déclarée au lieu de la relire en
           direct. Sans lui, le détourage reprend la médiane des bordures,
           qu'un sujet débordant sur un bord fait basculer. */}
-      <Pourquoi texte="chaque passe « bord » devine sur les bordures, sauf si elle vise la couleur déclarée du jeu — réglage « couleur visée » ci-dessus" />
 
       {/* **Promouvoir suppose une image à promouvoir.** Le geste écrit le
           détourage de *cette image-ci* dans les règles du jeu, avec sa portée —
@@ -3732,6 +3763,9 @@ export function Retouche({
   // La raison se lit **avant** le clic : un bouton grisé sans phrase est un
   // bouton cassé (`docs/DESIGN.md`).
   const [enregistrerSous, setEnregistrerSous] = useState(false)
+  // **L'éditeur de pixels** (22 septembre 2026) — le même que sur une frame
+  // d'animation, ouvert depuis la main.
+  const [editeur, setEditeur] = useState(false)
   const sortir = (action: () => void) => { if (!enregistrementImmediat && session.modifie) setSortie(() => action); else action() }
   const [ouverte, setOuverte] = useEtatDuParcours<Table>(`retouche:${asset.projet ?? ""}:table`, tableDeLaPorte ?? "detourage")
   const [panneau, setPanneau] = useEtatDuParcours<"retouche" | "calques" | "recettes">(`retouche:${asset.projet ?? ""}:panneau`, "retouche")
@@ -4629,6 +4663,9 @@ export function Retouche({
             </div>
             ) : (
             <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
+            {(panneau === "calques" || (ouverte === "main" && raison === null && !endormie)) && (
+              <button type="button" data-ouvrir-l-editeur onClick={() => setEditeur(true)} className="h-[34px] shrink-0 rounded-7 bg-signal px-[14px] text-[12px] text-encre-sur-signal">Éditer les pixels…</button>
+            )}
             {panneau === "calques" ? <ReglagesDeLaMain {...poste} section="calques" /> : raison !== null ? (
               /* **Une table indisponible s'ouvre quand même**, et son panneau
                  porte la raison à la place de ses réglages. C'est la règle de
@@ -4673,7 +4710,6 @@ export function Retouche({
                   synchrone, le calcul a lieu dans le gestionnaire de requête,
                   et couper la connexion n'arrêterait pas la machine. Le dire
                   vaut mieux qu'un bouton qui aurait l'air de le faire. */}
-              <details className="text-[12px] text-encre-3"><summary className="cursor-pointer">Ce que fait cette table</summary><p className="pt-[8px]">{CE_QUE_LA_TABLE_FAIT[ouverte]} Chaque étape reste réversible, sans nouvelle génération. Un calcul ne s’interrompt pas : ce qui se défait, c’est le réglage.</p></details>
             </div>
             </div>
             )}
@@ -4707,6 +4743,18 @@ export function Retouche({
         )}
       </div>
       {enregistrerSous && <EnregistrerSous quoi="image" identifiant={originale.identifiant} recette={recette} onFermer={() => setEnregistrerSous(false)} />}
+      {editeur && <EditeurDePixels
+        titre={asset.label}
+        planche={imageVisible()}
+        rang={0}
+        large={asset.rendu_largeur || asset.largeur}
+        haut={asset.rendu_hauteur || asset.hauteur}
+        attente={null}
+        palette={univers.palette}
+        couleurDepart={etatMain.couleur}
+        onValider={(coups) => { setEditeur(false); void poser({ ...recette, main: mainAvecLesCoups(mainDe(recette), etatMain.actif, coups) }) }}
+        onFermer={() => setEditeur(false)}
+      />}
       {sortie && <CadreDialogue titre="Quitter les retouches" format="preparation" onFermer={() => setSortie(null)} enfants={<section className="w-full max-w-[880px] rounded-8 border border-trait bg-papier p-[22px]"><h2 className="font-serif text-[25px]">Des retouches attendent</h2><p className="mt-[14px] text-[13px]">La version enregistrée reste intacte. Garde le brouillon pour plus tard, ou enregistrez les retouches avant de continuer. La découpe, l’extraction et l’équipement utilisent la version enregistrée.</p><div className="mt-[22px] flex flex-wrap gap-[8px]"><button type="button" onClick={() => setSortie(null)} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Continuer à retoucher</button><button type="button" onClick={() => { const action = sortie; setSortie(null); action() }} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Garder le brouillon et continuer</button><button type="button" onClick={() => { const action = sortie; session.abandonner(); setSortie(null); action() }} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Abandonner les retouches</button><button type="button" disabled={!session.valide || !!enVol || session.enregistre} onClick={async () => { if (await session.enregistrer()) { const action = sortie; setSortie(null); action() } }} className="h-[34px] rounded-7 border border-signal bg-carte px-[14px] text-[12px] text-signal disabled:opacity-50">Enregistrer et continuer</button></div></section>} />}
     </main>
   )

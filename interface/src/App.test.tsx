@@ -9542,7 +9542,7 @@ describe("le châssis des tables", () => {
     // « pas de contrôle » vaut mieux qu'un contrôle qui ne fait rien.
     const { cadre } = await ouvrirUneTable()
 
-    await cadre.findByRole("button", { name: "Une passe de plus" })
+    await cadre.findByRole("button", { name: "+ Ajouter une passe" })
     expect(
       cadre.queryByRole("button", {
         name: /enregistrer ce réglage comme défaut du jeu/,
@@ -19233,7 +19233,7 @@ describe("A7 · l'atelier d'une animation", () => {
     })
 
     expect(await atelier.findByText(/ne détoure rien/)).toBeTruthy()
-    fireEvent.click(atelier.getByRole("button", { name: "Une passe de plus" }))
+    fireEvent.click(atelier.getByRole("button", { name: "+ Ajouter une passe" }))
 
     expect(await atelier.findByLabelText(/tolérance de la passe 1, en chiffres/)).toBeTruthy()
     expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
