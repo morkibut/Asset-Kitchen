@@ -22,6 +22,15 @@
 // **coupé**, et il faut un endroit où le lire en entier. C'est ici, et l'aperçu
 // s'y pose en **colonne de prose** au lieu d'une image : la seconde et dernière
 // exception à *aucune largeur maximale* (`docs/DESIGN.md` § Layout).
+//
+// **Espace agrandit toute image, partout, depuis `RV23`.** Déclarer sa visée
+// (`useVisee`) donne la réponse riche — titre, mesures, animation — mais rien
+// n'y oblige : une vignette oubliée n'est plus muette, elle reçoit le repli
+// général, *l'image sous le pointeur, telle qu'affichée*. Trouvé en usage sur
+// *Ses références* d'un sujet, qui ne déclarait rien. Voir `sujetDuRepli`
+// plus bas, et **son contrat avec les surfaces qui réservent déjà Espace**
+// pour elles-mêmes (glisser la vue, choisir la frame en lecture) — une visée
+// déclarée garde toujours la priorité sur le repli.
 
 import {
   useCallback,
@@ -323,6 +332,81 @@ export function viser(sujet: Sujet | null) {
   ecrit = false
 }
 
+// ── Le repli général (RV23) ──────────────────────────────────────────────
+//
+// **Une vignette qui n'a jamais appelé `useVisee` reste muette** — vu par
+// l'auteur sur *Ses références* d'un sujet, où les vignettes « Direction —
+// droite / gauche » ne répondaient pas à Espace. Plutôt que de faire
+// déclarer sa visée à chaque écran (une retouche par écran, et il y en a
+// partout), le repli reprend **l'image sous le dernier pointeur connu** :
+// son adresse affichée (`currentSrc`), sa taille naturelle, pixelisée si
+// son `image-rendering` calculé l'est. Une visée déclarée garde toujours la
+// priorité — le repli ne s'essaie que si rien ne s'est déclaré.
+//
+// **La taille minimale écarte les icônes, pas les vignettes.** Les boutons
+// d'icône du produit font au plus 22 px de côté ; la plus petite vignette
+// qui montre vraiment un sujet — celle d'une référence promue, sur la fiche
+// — en fait 34 (`ImagesDuSujet.tsx`, `SelecteurDUsage`). Le seuil se pose
+// entre les deux : sans lui, un glyphe de 16 px s'ouvrirait à Espace ; trop
+// haut, il aurait exclu la vignette même que l'auteur a signalée muette.
+const TAILLE_MIN_REPLI = 28
+
+// **Les surfaces qui réservent déjà Espace pour un autre geste ne se le font
+// pas voler.** L'atelier d'une animation (`AtelierDeBande.tsx`, glisser la
+// vue) et le montage d'un clip (`Montage.tsx`, garder/laisser la frame
+// regardée) portent chacun un marqueur sur leur racine ; une surface
+// zoomable (`SurfaceZoomable.tsx`, glisser la vue à Espace + souris) porte
+// le sien. `GrilleEcoute.tsx` n'a pas besoin d'entrer ici : elle n'affiche
+// aucune image ni vidéo sous le pointeur, seulement des ondes en SVG, hors
+// du filtre `<img>`/`<video>` ci-dessous — et elle recule d'elle-même sur
+// `defaultPrevented`. `Montage.tsx` et `EditeurCalqueCible.tsx` font de même
+// pour leurs propres raccourcis, sans qu'il faille les lister ici.
+const SELECTEUR_ESPACE_RESERVE = "[data-atelier-de-bande], [data-montage], [data-surface-zoomable]"
+
+/** Le dernier point connu du pointeur — les touches n'en portent pas, et
+ *  c'est pourtant sous ce point qu'Espace doit agir. Mis à jour en continu,
+ *  sans jamais provoquer de rendu : un survol ne doit rien coûter. */
+let dernierPointeur: { x: number; y: number } | null = null
+
+/** L'image ou la vidéo sous le pointeur, en écartant les icônes et les
+ *  surfaces qui réservent déjà Espace pour elles-mêmes. */
+function elementDuRepli(): HTMLImageElement | HTMLVideoElement | null {
+  // `elementsFromPoint` manque à jsdom (les essais d'écran) — se taire plutôt
+  // que jeter est le même geste que « sans mesure, l'aperçu se tait sur le
+  // facteur » un peu plus haut : une capacité absente n'est pas une panne.
+  if (!dernierPointeur || typeof document.elementsFromPoint !== "function") return null
+  const pile = document.elementsFromPoint(dernierPointeur.x, dernierPointeur.y)
+  for (const element of pile) {
+    if (!(element instanceof HTMLImageElement || element instanceof HTMLVideoElement)) continue
+    if (element.closest(SELECTEUR_ESPACE_RESERVE)) continue
+    if (element.closest("input, textarea, select, [contenteditable=true]")) continue
+    const boite = element.getBoundingClientRect()
+    if (boite.width < TAILLE_MIN_REPLI || boite.height < TAILLE_MIN_REPLI) continue
+    return element
+  }
+  return null
+}
+
+/** Le sujet par défaut d'une image ou vidéo qui n'a rien déclaré — la
+ *  réponse pauvre du repli, contre la réponse riche d'une visée (titre,
+ *  mesures, animation). */
+function sujetDuRepli(): Sujet | null {
+  const element = elementDuRepli()
+  if (!element) return null
+  const estVideo = element instanceof HTMLVideoElement
+  const src = element.currentSrc || element.src
+  if (!src) return null
+  return {
+    cle: `repli:${src}`,
+    src,
+    titre: element.getAttribute("alt") || element.title || (estVideo ? "vidéo" : "image"),
+    largeur: estVideo ? element.videoWidth : element.naturalWidth,
+    hauteur: estVideo ? element.videoHeight : element.naturalHeight,
+    pixelise: window.getComputedStyle(element).imageRendering === "pixelated",
+    video: estVideo || undefined,
+  }
+}
+
 /**
  * Le pointeur est sorti — **si c'est bien de là qu'il sort**.
  *
@@ -389,6 +473,17 @@ export function useVisee(sujet: Sujet | null) {
  */
 export function useApercu(): Sujet | null {
   useEffect(() => {
+    // Le pointeur ne porte pas ses coordonnées dans un événement clavier :
+    // on les garde à jour en continu, pour que le repli sache où regarder
+    // au moment où Espace tombe.
+    const surPointeur = (evenement: PointerEvent) => {
+      dernierPointeur = { x: evenement.clientX, y: evenement.clientY }
+    }
+    window.addEventListener("pointermove", surPointeur)
+    return () => window.removeEventListener("pointermove", surPointeur)
+  }, [])
+
+  useEffect(() => {
     const surTouche = (evenement: KeyboardEvent) => {
       if (evenement.ctrlKey || evenement.metaKey || evenement.altKey) return
       const espace = evenement.key === " " || evenement.key === "Spacebar"
@@ -414,12 +509,16 @@ export function useApercu(): Sujet | null {
       // Fermé : Échap appartient à qui le veut, Espace à ce qu'on écrit.
       if (!espace) return
       if (ecrit && champFocalise()) return
-      if (!vise) return
+      // Une visée déclarée l'emporte toujours ; sans elle, le repli général
+      // (RV23) reprend l'image sous le pointeur — sauf si rien ne s'y prête
+      // (aucune image, une icône, une surface qui réserve déjà Espace).
+      const sujet = vise ?? sujetDuRepli()
+      if (!sujet) return
       // `preventDefault` fait ici un second travail : un bouton qui a le focus
       // — la tuile qu'on vient de cliquer — s'active à la barre d'espace, et
       // deux gestes partiraient pour une pression.
       consommer()
-      ouvrirApercu(vise)
+      ouvrirApercu(sujet)
     }
     window.addEventListener("keydown", surTouche, true)
     return () => window.removeEventListener("keydown", surTouche, true)

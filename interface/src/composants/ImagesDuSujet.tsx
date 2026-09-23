@@ -416,8 +416,13 @@ function BoutonPremierePlanche({
 }
 
 /** Les références promues, rangées par usage — la planche, une place par
- *  direction du sujet, puis les libres (RS3). */
-function SesReferencesParUsage({
+ *  direction du sujet, puis les libres (RS3).
+ *
+ *  **Exportée depuis `RV23`** pour que l'essai du repli général
+ *  (`Apercu.test.tsx`) la monte telle quelle : c'est le bloc que l'auteur a
+ *  vu muet à Espace, faute d'y déclarer une visée (`useVisee`) — le cas que
+ *  le repli couvre, pas une exception à corriger ici. */
+export function SesReferencesParUsage({
   personnage,
   references,
   erreurs,

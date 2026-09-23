@@ -49,7 +49,7 @@ export function SurfaceZoomable({ largeur, hauteur, children, libelle = "la surf
   return <div className="flex min-h-0 min-w-0 flex-1 flex-col">
     <BarreDuZoom zoom={zoom} ajuste={Math.round(ajuste * 100)} maximum={3200} libelle={`Zoom de ${libelle}`}
       onZoom={(suite) => { setZoom(suite); if (suite === "ajuste" && vue.current) { vue.current.scrollLeft = 0; vue.current.scrollTop = 0 } }} />
-    <div ref={vue} tabIndex={0} aria-label={`Vue de ${libelle}`} className="defile flex min-h-0 min-w-0 flex-1 overflow-auto p-[14px] outline-none"
+    <div ref={vue} data-surface-zoomable tabIndex={0} aria-label={`Vue de ${libelle}`} className="defile flex min-h-0 min-w-0 flex-1 overflow-auto p-[14px] outline-none"
       onPointerDownCapture={(e) => {
         if (!espace && e.button !== 1) return
         e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId)
