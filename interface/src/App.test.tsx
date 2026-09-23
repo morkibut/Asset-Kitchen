@@ -21392,6 +21392,36 @@ describe("B0 — la navigation de l'atelier", () => {
     expect(await screen.findByRole("heading", { name: "Créer un sujet" })).toBeTruthy()
   })
 
+  /** **RV15** : un sujet neuf s'ouvre sur ses images, jamais sur « Objectifs »
+   *  — qui ne dit rien à faire. Avant cette tranche, `onPersonnage`
+   *  mémorisait l'onglet « objectif », lequel se redirigeait (`RV12`) vers
+   *  `ongletInitial`, qui bascule sur *Animations* dès que la famille est
+   *  « personnages » — un onglet vide pour un sujet qui vient de naître. */
+  test("un sujet neuf s'ouvre sur l'onglet des images", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Le jeu" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Créer un sujet" }))
+
+    fireEvent.change(screen.getByLabelText("Nom du sujet"), {
+      target: { value: "Champy" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Créer le sujet" }))
+
+    const onglets = await screen.findByRole("tablist", { name: "Les onglets de sa fiche" })
+    await waitFor(() =>
+      expect(within(onglets).getByRole("tab", { name: "Images" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      ),
+    )
+    expect(within(onglets).getByRole("tab", { name: "Animations" })).toHaveAttribute(
+      "aria-selected",
+      "false",
+    )
+  })
+
   // ── B5 — la barre de complétude, les manques, et la feuille en attente ────
 
   /** Une planche arrivée qui attend un choix — le pendant minimal de celle de
@@ -21685,6 +21715,67 @@ describe("B4 — l'ouverture", () => {
         }),
       ).toBe(true),
     )
+  })
+
+  /** **RV15** : fermer le parcours de création d'un jeu remet le fil
+   *  d'Ariane à zéro. Avant cette tranche, `onFerme` ne touchait pas la
+   *  pile : le jeu neuf s'ouvrait là où l'auteur regardait dans le jeu
+   *  d'avant — parfois un sujet dont l'identifiant n'existe même pas ici. */
+  test("fermer l'assistant d'un nouveau jeu mène à l'accueil de ce jeu, fil d'Ariane remis à zéro", async () => {
+    const NOUVEAU: Projet = {
+      identifiant: "second-jeu",
+      nom: "Second jeu",
+      cree_le: 1_787_950_000,
+      dernier_travail_le: 1_787_950_000,
+      assets: 0,
+      total_usd: 0,
+      univers: UNIVERS_VIDE,
+      pieces: [],
+    }
+    const socle = serveurDouble()
+    const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
+      const url = String(chemin)
+      if (url === "/api/projects" && init?.method === "POST") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            projet: NOUVEAU,
+            avertissement: "",
+            bibliotheque: { ...BIBLIOTHEQUE, courant: "second-jeu", projets: [...BIBLIOTHEQUE.projets, NOUVEAU] },
+          }),
+        } as Response
+      }
+      return socle.fetchDouble(chemin, init)
+    })
+    await monter(fetchDouble)
+
+    // On part de la galerie — l'écran de départ (`lieux.ts`, `PILE_INITIALE`)
+    // — et non de l'accueil, pour prouver que la fermeture *remet* le fil à
+    // zéro plutôt que de le laisser tel quel par coïncidence.
+    expect(await screen.findByRole("region", { name: "Grille des images" })).toBeTruthy()
+    expect(document.querySelector("[data-tableau-de-bord]")).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: /Changer de jeu/ }))
+    fireEvent.click(await screen.findByText("+ Commencer un jeu"))
+
+    const ecran = await screen.findByRole("main", { name: "Commencer un jeu" })
+    fireEvent.change(within(ecran).getByLabelText("Le nom du jeu"), {
+      target: { value: "Second jeu" },
+    })
+    fireEvent.click(within(ecran).getByRole("button", { name: "Créer et choisir son allure" }))
+
+    await waitFor(() =>
+      expect(fetchDouble.mock.calls.some(([u, i]) => String(u) === "/api/projects" && (i as RequestInit | undefined)?.method === "POST")).toBe(true),
+    )
+
+    // Le jeu est créé ; on ferme le parcours sans aller plus loin dans ses
+    // étapes — c'est le geste de l'auteur qui a vu ce qu'il voulait.
+    fireEvent.click(await screen.findByRole("button", { name: "Fermer" }))
+
+    await waitFor(() => expect(document.querySelector("[data-tableau-de-bord]")).toBeTruthy())
+    expect(screen.queryByRole("main", { name: "Commencer un jeu" })).toBeNull()
+    expect(screen.queryByRole("region", { name: "Grille des images" })).toBeNull()
   })
 })
 

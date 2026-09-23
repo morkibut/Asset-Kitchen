@@ -505,9 +505,27 @@ qu'on vient de créer s'ouvre sur ses images, avec un grand bouton « Fabriquer 
 
 ### Critères d'acceptation
 
-- [ ] Fermer l'assistant d'un nouveau jeu mène à l'accueil de ce jeu, fil d'Ariane remis à zéro.
-- [ ] Un nouveau sujet s'ouvre sur l'onglet des images, et le bouton y mène à la fenêtre remplie.
-- [ ] « Échap » ferme « Préparer une fabrication » et toute autre fenêtre (un essai les parcourt).
+- [x] Fermer l'assistant d'un nouveau jeu mène à l'accueil de ce jeu, fil d'Ariane remis à zéro.
+- [x] Un nouveau sujet s'ouvre sur l'onglet des images, et le bouton y mène à la fenêtre remplie.
+- [x] « Échap » ferme « Préparer une fabrication » et toute autre fenêtre (un essai les parcourt).
+
+*Fait le 23 septembre 2026.* Trois correctifs ciblés, aucun nouvel écouteur : (1) `onFerme` du
+parcours de création (`App.tsx`, mode `"creer"`) posait déjà `choixDuJeu` et `creeParLeParcours` à
+`null` mais ne touchait jamais la pile — un jeu neuf s'ouvrait donc là où l'auteur regardait dans
+le jeu d'avant, parfois un sujet dont l'identifiant n'existe même pas ici ; il pose maintenant la
+racine sur `tableau-de-bord`, comme choisir un jeu dans le carnet. (2) `onPersonnage` (création
+d'un sujet, `CreerUnAsset`) mémorisait l'onglet `"objectif"`, qui se redirige depuis `RV12` vers
+`ongletInitial` — lequel bascule sur *Animations* dès que la famille est « personnages », onglet
+vide pour un sujet qui vient de naître ; il mémorise désormais `"images"` directement, sans passer
+par cette redirection. (3) Échap fermait déjà « Préparer une fabrication » et les vingt fenêtres
+posées par `CadreDialogue.tsx` — le `<dialog>` natif ferme sur son événement `cancel`, et
+`GU16` avait déjà réglé la coordination avec le guide ; aucun essai ne le vérifiait, d'où
+`CadreDialogue.test.tsx`, qui couvre le cadre commun une fois pour ses vingt appelants plutôt que
+chacun séparément. Les fenêtres qui ne passent pas par ce cadre (`Famille.tsx`, `Montage.tsx`,
+`Reglages.tsx`…) portaient déjà chacune leur propre écouteur `"Escape"`, vérifié à la lecture.
+Essais : `interface/src/App.test.tsx` (2 essais neufs, describe *B4 — l'ouverture*),
+`interface/src/composants/CadreDialogue.test.tsx` (neuf). Suite complète : 549/549. Pas encore vu
+au navigateur.
 
 ---
 
