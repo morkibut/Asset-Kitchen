@@ -551,7 +551,11 @@ tirages d'avant ne se comparent plus.
 - [ ] Les scènes sont des fichiers du dépôt, fabriqués une fois (pas à chaque ouverture), et ne
       dépensent rien à l'usage.
 
-**Choix à faire avec l'auteur avant d'écrire** : (a) scènes fabriquées par l'atelier lui-même —
+**Tranché par l'auteur le 23 septembre 2026** : **(a)**, le rôdeur en scène animée ; et « De
+dessus, stricte » devient **une image qui tourne** (le jeu la fait pivoter, comme la verticale),
+avec Hotline Miami et GTA 1-2 pour exemples — le premier Zelda passe en 3/4.
+
+*Les choix qui étaient proposés* : (a) scènes fabriquées par l'atelier lui-même —
 le rôdeur et un petit décor par vue, puis animées au survol à partir de ses sprites
 (recommandé : c'est le produit qui se montre, et il n'y a pas de droits sur des captures) ;
 (b) captures de vrais jeux (plus parlant, plus simple, mais des images qui ne sont pas à nous) ;
