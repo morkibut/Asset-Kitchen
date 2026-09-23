@@ -27,6 +27,7 @@ from atelier.domaine.erreurs import ClipVideApresDetourage
 from atelier.domaine.generation import AUTEUR, AGENT, Generation, Reinjection, Statut
 from atelier.domaine.recette import Grille, Recette
 from atelier.image import controle_clip
+from atelier.services import retours as _retours
 from atelier.domaine.travail import (TravailRefuse, cadre_valide, demande_normalisee, moteur_sonore_permis,
                                      pour_l_empreinte)
 from atelier.services.texte_clip import composer
@@ -107,7 +108,14 @@ class ServiceTravaux:
     def _garder(self, travail: dict[str, Any]) -> None:
         travail["modifie_le"] = time.time()
         self._ecrire(self._dossier(travail["projet"], travail["identifiant"]) / "travail.json", travail)
-        self.a.diffusion.publier("travail", {"projet": travail["projet"], "identifiant": travail["identifiant"], "etat": travail["etat"]})
+        # **RV7** : l'annonce dit aussi *quelle case* bouge, pour que l'écran
+        # qui la montre relise ses retours — et que l'avis d'arrivée sache où
+        # mener. La vérité reste le travail relu (`retours`), jamais ce message.
+        demande = travail.get("demande") or {}
+        self.a.diffusion.publier("travail", {"projet": travail["projet"], "identifiant": travail["identifiant"], "etat": travail["etat"],
+            "nature": travail.get("nature"), "personnage": demande.get("personnage") or travail.get("personnage"),
+            "pose": demande.get("pose"), "direction": demande.get("direction"),
+            "controle": travail.get("controle"), "raison": travail.get("raison")})
 
     def cadre(self, projet: str) -> dict[str, Any]:
         ecrit = self._lire(self._projet(projet) / "cadre.json")
@@ -163,7 +171,19 @@ class ServiceTravaux:
             retour["prochaine_action"] = "monter_et_classer"
         if retour.get("nature") == "audio" and retour.get("son"):
             retour["prochaine_action"] = "ecouter_et_retoucher"
+        # **RV7** : l'étape en un mot et le temps attendu, calculés au même
+        # endroit que pour la case visée (`services/retours.py`).
+        if retour.get("nature") in (None, "animation"):
+            retour["phase"] = _retours.phase(retour)
+            retour["attendu_s"] = _retours.attendu_s(retour)
         return retour
+
+    def retours(self, projet: str, personnage: str | None = None) -> dict[str, Any]:
+        """**RV7** — ce qui est parti, rangé par case visée : les clips des
+        travaux et les images du chantier (`services/retours.py`, qui porte la
+        décision). Relu à chaque appel ; rien n'est gardé à part."""
+        chantier = self.a.generations.chantier(projet=projet)
+        return _retours.retours_par_case(self.lister(projet), chantier, personnage)
 
     def lister(self, projet: str) -> list[dict[str, Any]]:
         return sorted([self.lire(projet, p.parent.name) for p in self._projet(projet).glob("*/travail.json")],
@@ -500,6 +520,9 @@ class ServiceTravaux:
             raise TravailRefuse("Associer le projet Godot avant d'autoriser cette livraison provisoire.")
         travail["demarrage_recu"] = True
         travail["etat"] = "en_cours"
+        # **RV7** : l'heure du départ, d'où l'écran compte le temps écoulé.
+        # Une reprise repart d'ici : c'est un nouveau tour de suivi.
+        travail["lance_le"] = time.time()
         return travail
 
     def _lancer(self, projet: str, identifiant: str, executer, reprise: bool) -> None:

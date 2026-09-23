@@ -25,6 +25,7 @@ import {
   type Univers,
 } from "./api"
 import type { Repli } from "./composants/BarreEtat"
+import { annoncerUneFabrication } from "./retours"
 
 type Pose_<T> = React.Dispatch<React.SetStateAction<T>>
 
@@ -173,12 +174,16 @@ useEffect(() => {
     // génération qui tourne dans un autre projet — un autre onglet, ou
     // l'agent — arrive sur le même flux : elle n'a rien à faire dans le
     // chantier qu'on regarde, ni à y rester si on vient de changer de jeu.
-    generation: (recue) =>
+    generation: (recue) => {
       setChantier((liste) =>
         recue.projet === vivant.current.courant
           ? fondre(liste, recue)
           : liste.filter((g) => g.identifiant !== recue.identifiant),
-      ),
+      )
+      // **RV7** : une image qui vise une case part, arrive ou échoue — la
+      // case « en cours » de son sujet se relit.
+      if (recue.personnage) annoncerUneFabrication({ genre: "generation", projet: recue.projet ?? null, personnage: recue.personnage })
+    },
     asset: (recu) => {
       setGrille((liste) =>
         fondreAsset(liste, recu, vivant.current.filtre, vivant.current.courant),
@@ -346,6 +351,9 @@ useEffect(() => {
     // plafond. Rien d'autre à redemander — la charge porte le cadre entier et
     // sa consommation, et rien ici ne les recalcule.
     agent: (agent) => setEtat((e) => (e ? { ...e, agent } : e)),
+    // **RV7** : un travail a bougé. Rien ne se pose ici — on le dit aux
+    // écrans qui montrent sa case (`retours.ts`), qui relisent au serveur.
+    travail: (annonce) => annoncerUneFabrication({ genre: "travail", annonce }),
     liaison: setLiaison,
   })
 }, [])

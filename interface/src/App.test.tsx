@@ -3962,7 +3962,7 @@ async function champDePrompt() {
   allerA("Créer")
   // La porte ne monte pas sa surface de façon synchrone : attendre la vraie
   // action de Fabrications évite de rappeler ce helper pendant le rendu.
-  fireEvent.click(await screen.findByRole("button", { name: "Préparer une image" }))
+  fireEvent.click(await screen.findByRole("button", { name: "Nouvelle fabrication" }))
   return await screen.findByPlaceholderText(PLACEHOLDER_DU_PROMPT)
 }
 
@@ -5358,9 +5358,10 @@ describe("l'infobulle et le guide", () => {
     await screen.findByRole("heading", { name: "Guide", level: 1 })
     const volet = document.querySelector("[data-volet-du-guide]") as HTMLElement
     expect(volet.textContent).toContain("Fabrications")
-    // Les neuf fiches sont bien ici…
-    expect(volet.textContent).toContain("État des fabrications")
-    expect(volet.textContent).toContain("Le suivi des calculs locaux")
+    // Les fiches de cet écran sont bien ici, RV9 les a fondues avec les
+    // trois listes qu'elles décrivaient…
+    expect(volet.textContent).toContain("La liste des fabrications")
+    expect(volet.textContent).toContain("Les boutons d'une ligne")
     // …et le résumé du clip ne s'y invite plus.
     expect(volet.textContent).not.toContain("Le clip — l'image de départ choisie")
   })
@@ -7430,9 +7431,10 @@ describe("l'écran des personnages", () => {
 
     // **La cible se désarme dès que l'appel est parti** : la garder enverrait
     // l'image suivante — un tonneau, un décor — dans la case d'un personnage.
-    // Le guichet le dit à la place de la bande « Pour » : il ne vise plus une
-    // case, il vise une image libre.
-    await waitFor(() => expect(cibleDuGuichet()).toBe("Image libre"))
+    // **Et depuis RV7, la fenêtre se referme** : rouverte, elle serait revenue
+    // « Sans case visée », ce que l'auteur a lu comme un oubli (23 septembre
+    // 2026). Le retour se lit dans la case, « en cours » puis la vignette.
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Préparer une fabrication" })).toBeNull())
   })
 
   // ── C2 · Le lot d'images, relogé dans l'onglet Images (RV10, 22 sept.
@@ -8555,7 +8557,7 @@ describe("les trois onglets", () => {
     // La barre permanente a laissé la place à une porte nommée ; ce qui n'a
     // pas changé est qu'il n'y a qu'un endroit d'où l'argent part.
     expect(
-      await screen.findByRole("button", { name: "Préparer une image" }),
+      await screen.findByRole("button", { name: "Nouvelle fabrication" }),
     ).toBeTruthy()
 
     fireEvent.click(onglet("Galerie"))
@@ -8563,7 +8565,7 @@ describe("les trois onglets", () => {
     expect(document.querySelector("[data-univers]")).toBeNull()
     // **La porte qui paie disparaît de tout écran incapable de dépenser.** La
     // galerie juge, elle ne paie jamais.
-    expect(screen.queryByRole("button", { name: "Préparer une image" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Nouvelle fabrication" })).toBeNull()
   })
 
   // ── « Descendre dans une chose du jeu remplace le nom de l'onglet par un
@@ -13978,7 +13980,15 @@ describe("l'écran de confirmation", () => {
     fireEvent.click(await screen.findByRole("button", { name: /^Payer et lancer/ }))
 
     // Le bloc a pris la place du bouton, et il porte le compte.
-    const enRoute = await screen.findByRole("status")
+    // **RV9** : l'écran Fabrications reste monté sous le guichet et porte
+    // désormais lui aussi des rôles `status` (une ligne, un profil local en
+    // lecture…) — la requête cible donc le seul bloc qui parle d'« en route »
+    // plutôt que le premier `status` trouvé sur la page.
+    const enRoute = await waitFor(() => {
+      const trouve = screen.getAllByRole("status").find((e) => e.textContent?.includes("en route"))
+      if (!trouve) throw new Error("le bloc « en route » n'est pas encore là")
+      return trouve
+    })
     expect(enRoute.textContent).toContain("1 image en route")
 
     // **Le bouton plein n'est plus là** : le geste est descendu dans la fente,

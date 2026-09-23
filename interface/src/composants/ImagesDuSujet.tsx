@@ -46,6 +46,9 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { useEtatDuParcours } from "./MemoireDuParcours"
+import { CaseEnCours } from "./CaseEnCours"
+import { retoursDeLaRangee, useRetoursDuSujet } from "../retours"
+import type { Retour } from "../api-travaux"
 import {
   api,
   Refus,
@@ -659,6 +662,8 @@ function CaseDImport({ onImporter, quoi }: { onImporter: () => void; quoi: strin
 
 function LigneDeRangee({
   rangee,
+  retours = [],
+  maintenant = 0,
   choisie,
   onChoisir,
   onRetenir,
@@ -668,6 +673,10 @@ function LigneDeRangee({
   onImporter,
 }: {
   rangee: Rangee
+  /** **RV7** : les images parties vers cette rangée et pas encore arrivées,
+   *  relues au serveur (`atelier/services/retours.py`). */
+  retours?: Retour[]
+  maintenant?: number
   choisie: string | null
   onChoisir: (image: Asset) => void
   onRetenir: (image: Asset, rangee: Rangee) => void
@@ -721,7 +730,7 @@ function LigneDeRangee({
       <span className="min-w-0">
         {rangee.compte === 0 ? (
           <span className="flex h-[81px] items-center text-[12px] text-eteint">
-            rien encore
+            {retours.length ? "" : "rien encore"}
           </span>
         ) : (
           <span className="defile flex items-start gap-[8px] overflow-x-auto overflow-y-hidden py-[4px]">
@@ -750,6 +759,9 @@ function LigneDeRangee({
           s'intitule « à confirmer » : c'est bien cette direction-là qu'on
           remplit. */}
       <span className="flex shrink-0 gap-[8px]">
+        {retours.map((retour) => (
+          <CaseEnCours key={retour.generation ?? retour.travail} retour={retour} maintenant={maintenant} />
+        ))}
         {onImporter && (
           <CaseDImport
             onImporter={() => onImporter(rangee)}
@@ -849,6 +861,11 @@ export function ImagesDuSujet({
   // carnet. La première ouverte, parce qu'un écran replié en entier n'a rien à
   // montrer de ce qu'on vient chercher.
   const cle = `images:${personnage.projet}:${personnage.identifiant}`
+  // **RV7** : une image partie vers une case y paraît « en cours » jusqu'à son
+  // arrivée — relue au serveur, donc encore là après un rechargement. Les
+  // clips ont leur case dans l'onglet des animations.
+  const { retours: tousLesRetours, maintenant } = useRetoursDuSujet(personnage.projet, personnage.identifiant)
+  const retoursDImages = tousLesRetours.filter((r) => r.nature === "image")
   const [poseOuverte, setPoseOuverte] = useEtatDuParcours<string | null>(`${cle}:pose`, personnage.cases[0]?.pose ?? null)
   const [filtre, setFiltre] = useEtatDuParcours<Filtre>(`${cle}:filtre`, "toutes")
   const [choisie, setChoisie] = useEtatDuParcours<string | null>(`${cle}:choisie`, null)
@@ -1242,10 +1259,12 @@ export function ImagesDuSujet({
                 </div>
                 {ouverte && (
                   <div className="flex flex-col pb-[8px]">
-                    {rangees.map((rangee) => (
+                    {rangees.map((rangee, rang) => (
                       <LigneDeRangee
                         key={rangee.cle}
                         rangee={rangee}
+                        retours={retoursDeLaRangee(retoursDImages, rangee.pose, rangee.direction, rang === 0, rangees.map((r) => r.direction))}
+                        maintenant={maintenant}
                         choisie={image?.identifiant ?? null}
                         onChoisir={(cible) => setChoisie(cible.identifiant)}
                         onRetenir={(cible, sa) => void retenir(cible, sa)}

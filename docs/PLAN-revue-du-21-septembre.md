@@ -271,14 +271,14 @@ cliquable signale l'arrivée ailleurs dans l'atelier.
 
 ### Critères d'acceptation
 
-- [ ] La case « en cours » est remontée par le serveur, pas poussée par l'écran : elle survit à un
+- [x] La case « en cours » est remontée par le serveur, pas poussée par l'écran : elle survit à un
       rechargement de la page.
-- [ ] Elle devient la vignette sans rechargement.
-- [ ] Un échec l'affiche « ratée » avec la raison et « Relancer ».
-- [ ] Après « Lancer » depuis Fabrications, la fenêtre montre le résultat arrivé, ou se ferme ; le
+- [x] Elle devient la vignette sans rechargement.
+- [x] Un échec l'affiche « ratée » avec la raison et « Relancer ».
+- [x] Après « Lancer » depuis Fabrications, la fenêtre montre le résultat arrivé, ou se ferme ; le
       mouvement et la direction visés ne reviennent pas à « Sans case visée ».
-- [ ] Une notification cliquable mène à la case.
-- [ ] Vérifié au navigateur sur un atelier jetable, et pas seulement par les essais d'écran.
+- [x] Une notification cliquable mène à la case.
+- [x] Vérifié au navigateur sur un atelier jetable, et pas seulement par les essais d'écran.
 
 ### Retours de l'auteur au test de RV6 (23 septembre 2026)
 
@@ -286,15 +286,17 @@ Vus sur Mara, fenêtre « Préparer une fabrication », clip local, deux directi
 Les deux tiennent à la **relecture d'une série** (`RelectureDeSerie`, `FabricationSuivie.tsx`),
 plus pauvre que celle d'un clip seul, qu'elle devrait égaler.
 
-- [ ] **Avant de lancer, on voit ce qui part** : pour chaque case de la série, l'image de départ
+- [x] **Avant de lancer, on voit ce qui part** : pour chaque case de la série, l'image de départ
       et les références envoyées, comme la relecture d'un clip seul les montre déjà. Aujourd'hui
       une série n'affiche que « droite · Prête à lancer ».
-- [ ] **Après « Lancer », la fenêtre ne laisse pas l'auteur sans retour** : chaque case dit son
+- [x] **Après « Lancer », la fenêtre ne laisse pas l'auteur sans retour** : chaque case dit son
       étape (image, vidéo, découpage), le temps écoulé sur le temps attendu, puis devient sa
       vignette ou « ratée » avec sa raison — sans avoir à déplier la ligne. Aujourd'hui l'écran
       reste figé sur « En cours », le bouton du bas disparaît, et rien ne dit qu'on peut fermer.
-- [ ] Le pied de la fenêtre dit qu'on peut la fermer et que la fabrication continue, avec un
+- [x] Le pied de la fenêtre dit qu'on peut la fermer et que la fabrication continue, avec un
       bouton pour le faire.
+
+*Fait le 23 septembre 2026.* **Le point dur, tranché** (écrit en tête de `atelier/services/retours.py`) : un retour se **déduit** des travaux conservés et du chantier des images, il ne s'enregistre nulle part — une liste plate par case visée (`personnage`, `pose`, `direction`), avec `lance_le` (l'écran compte l'écoulé), `attendu_s` compté depuis le départ (`secondes + rang × secondes_suivant` pour une série locale, `null` pour un payant), l'étape en un mot (image, vidéo, découpage), la raison et la demande à relancer ; servie par `GET …/production-jobs/by-case`. Le flux annonce désormais quelle case bouge ; l'écran relit alors. Un échec reste affiché **jusqu'au travail suivant sur la même case**. Les clips portés par un travail ne paraissent plus une seconde fois parmi les clips à monter. **Tranché aussi** : « Relancer » d'une case rouvre la fenêtre remplie de la demande à l'identique (rien ne part sans son clic) ; une case « interrompue » propose « Reprendre » ; l'avis d'arrivée passe par la fente du châssis (arrivée ou ratée d'un clip, lien « voir la case » qui ouvre la fiche sur les animations, pose dépliée) — une seule fente, donc le dernier avis remplace le précédent, et changer d'écran l'efface ; une **image** partie vers une case referme la fenêtre de préparation (rouverte, elle revenait « Sans case visée » après le désarmement voulu par US-120) — une image libre garde la fenêtre et son « Générer encore ». Les images fixes n'ont que l'état « en cours » dans leur rangée : leur issue se lit déjà ailleurs. **Vu au navigateur** sur un atelier jetable (`essais/atelier_jetable_rv7.py`, port 8426, animateur doublé qui met 45 s et rend le second clip noir) : relecture d'une série avec l'image de départ par case ; après « Lancer », « Vidéo · 2 s » par case et le pied « Tu peux fermer… » avec son bouton ; les deux cases « en cours » dans leurs rangées, **encore là après un rechargement** ; sans recharger, la première devient sa vignette et la seconde « ratée — la vidéo est revenue noire » avec « Relancer », qui rouvre la fenêtre remplie ; relancée depuis la Galerie, l'avis « l'animation est arrivée — voir la case » mène à la rangée. **Pas vu au navigateur** : la case « en cours » d'une image fixe (le fournisseur doublé rend l'image aussitôt) et la fermeture de la fenêtre après une image — tenues par les essais seulement. Le temps attendu d'un clip local n'a pas été vu non plus (le double est payant : l'écoulé seul s'affiche).
 
 ---
 
@@ -336,11 +338,29 @@ autres. Les boutons de départ se réduisent à « Nouvelle fabrication ».
 
 ### Critères d'acceptation
 
-- [ ] Une seule liste ; les sections « Les calculs locaux » et « Rechercher une fabrication » sont
+- [x] Une seule liste ; les sections « Les calculs locaux » et « Rechercher une fabrication » sont
       fondues dedans.
-- [ ] Toute génération (image, clip, son, équipement, locale ou payée) y apparaît dès son départ.
-- [ ] Les séries identiques se regroupent.
-- [ ] L'état des moteurs locaux reste lisible en une ligne en tête.
+- [x] Toute génération (image, clip, son, équipement, locale ou payée) y apparaît dès son départ.
+- [x] Les séries identiques se regroupent.
+- [x] L'état des moteurs locaux reste lisible en une ligne en tête.
+
+*Fait le 23 septembre 2026.* Les trois listes (travaux suivis, file locale, journal des appels)
+vivent maintenant dans `SuiviDesTravaux` (`FabricationSuivie.tsx`), fusionnées et dédoublonnées :
+un travail porte déjà `generation_image`, `clip` et `etape_locale` — les identifiants **des mêmes
+lignes** que le journal et la file locale connaissent sous leur propre nom —, donc la fusion les
+en retire avant de tout trier par date de départ. **Tranché** : pas de route serveur — ces trois
+champs voyagent déjà dans le JSON d'un travail depuis leur tranche d'origine, seul leur type
+TypeScript manquait ; les ajouter là a suffi, sans dupliquer la question à un second endroit.
+Le regroupement d'une série suit la même règle que le mouvement/nom lancés dans la même minute
+proposée par le plan quand le serveur ne porte pas de `serie` ; la règle est écrite en tête du
+code qui la porte. Quatre humeurs (en cours, terminées, ratées, à reprendre) valent pour les trois
+origines ; une fabrication encore « prête à lancer » (jamais partie) n'y figure pas — elle reste
+dans le tiroir des brouillons. Les boutons de départ se réduisent à « Nouvelle fabrication » et
+« Consommation » (dépenses, un écran de lecture) ; « Animer un sujet », « Préparer une image »,
+« Préparer une vidéo » et « Préparer un son » disparaissent — la fenêtre unique porte déjà son
+propre choix de sujet et de type. `interface/src/aide.ts` a suivi : les fiches des portes disparues sont
+retirées, celles de la liste réécrites pour la réalité fusionnée. **Pas vu au navigateur** : vérifié
+par les essais d'écran et `tsc --noEmit` seulement.
 
 ---
 
@@ -390,9 +410,35 @@ qu'un champ de recherche.
 
 ### Critères d'acceptation
 
-- [ ] Aucune liste de sujets ne propose « Matières ».
-- [ ] Une seule page gère les méthodes locales.
-- [ ] Un seul champ de recherche dans le Codex.
+- [x] Aucune liste de sujets ne propose « Matières ».
+- [x] Une seule page gère les méthodes locales.
+- [x] Un seul champ de recherche dans le Codex.
+
+**Fait le 23 septembre 2026.** Trois décisions non tranchées par le plan, une contrainte
+trouvée par un essai existant. (1) Un sujet dont la nature est une matière (`capacites.matiere`)
+reste une carte du Codex quand il en porte déjà une : `App.test.tsx` (« un ancien sujet de
+nature "matière" la garde affichée ») fige ce comportement depuis le rangement D4, pour que sa
+fiche reste l'endroit où corriger son type — un premier essai plus large (excluant ces sujets de
+`sujetsCharges` dans `Famille.tsx`) le faisait échouer, corrigé en resserrant le filtre aux
+listes de travail. (2) « Animer », « livrer », « classer au montage » sont les sélecteurs de
+sujet de `FabricationSuivie.tsx` (le champ « Sujet », ligne ~386 — pas
+`PreparerUneFabrication.tsx`, qui ne montre pas de liste pour une animation), `Livraisons.tsx`
+(`PorteeAnimation`/`PorteeSujet`) et `Montage.tsx` (« Classement de l'animation »), tous les
+trois filtrés par `nomsDesNaturesMatiere` (`interface/src/natures.ts`) — la liste brute reste
+gardée pour la résolution d'un identifiant déjà choisi, seule la liste proposée est filtrée.
+(3) « Une seule page gère les méthodes locales » : le `<details>` de `Fabrications.tsx` qui
+montait `ProfilsWorkflow` en double de Réglages › Moteurs & workflows devient un lien
+(`onMethodesLocales`, nouveau prop, câblé sur `ouvrirLesReglages("moteurs")` dans `App.tsx`) ;
+lancer une fabrication depuis un modèle local se fait maintenant par « Nouvelle fabrication »
+(qui sait déjà choisir un workflow) plutôt que par un raccourci direct depuis la liste, retiré
+avec elle. Le doublon de recherche du Codex (deux champs sur `recherche`) est retiré côté
+colonne des familles ; celui de la barre d'outils reste, et cherche déjà sujets et collections.
+Essais : `Famille.test.tsx` (35/35), `FabricationSuivie.test.tsx`, `Livraisons.test.tsx`,
+`Fabrications.test.tsx`, `AtelierUnifie.test.tsx` au vert (le seul échec de
+`FabricationSuivie.test.tsx` est la mémoire libre du moteur local, connu, hors tranche) ;
+`App.test.tsx` entier, **549/549**. `essai_vocabulaire.py`, `essai_jetons.py` (mêmes 4
+manquements préexistants sur `Retouche.tsx`, hors tranche), `essai_tutoiement.py` et
+`essai_imports.py` au vert. `tsc --noEmit` propre. Non vérifié au navigateur.
 
 ---
 
@@ -705,25 +751,38 @@ après le point 3, quand on a choisi le geste et le style de combat ? »
 
 ### Critères d'acceptation
 
-- [ ] **Dès l'ouverture, le point « Image de départ » montre, case par case, l'image qui
+- [x] **Dès l'ouverture, le point « Image de départ » montre, case par case, l'image qui
       partira** (la référence de la direction, sinon celle que la relecture proposerait), en
       vignette, avec « Changer » à côté. Elle est calculée par le serveur par **la même règle**
       que la relecture — pas une seconde règle côté écran.
-- [ ] Une case sans image le dit en clair (« aucune image pour gauche ») ; **la liste des modèles
+- [x] Une case sans image le dit en clair (« aucune image pour gauche ») ; **la liste des modèles
       n'apparaît que dans ce cas**, pour ces cases-là. Quand toutes les cases ont leur image, la
       liste disparaît et laisse une phrase (*un contrôle inerte disparaît*, 8nonies).
-- [ ] Quand elle apparaît, la liste des modèles propose d'abord celui que le jeu recommande,
+- [x] Quand elle apparaît, la liste des modèles propose d'abord celui que le jeu recommande,
       présélectionné, et ne montre pas quatre-vingts lignes à plat (les modèles grisés restent
       grisés avec leur raison).
-- [ ] **L'ordre de la fenêtre suit le geste** : 1. l'animation à créer (sujet, mouvement,
+- [x] **L'ordre de la fenêtre suit le geste** : 1. l'animation à créer (sujet, mouvement,
       directions) ; 2. le geste et le style de combat ; 3. l'image de départ ; 4. le clip ; 5.
       l'animation à obtenir. L'image proposée se recalcule quand le mouvement ou les directions
       changent.
-- [ ] **« Corriger le geste » part du texte existant** (retour de l'auteur du même jour) : en
+- [x] **« Corriger le geste » part du texte existant** (retour de l'auteur du même jour) : en
       ouvrant la correction, le champ est **rempli** avec le geste actuel, modifiable — pas
       montré en texte d'exemple grisé qu'il faudrait retaper pour changer un mot. Une correction
       qui revient au texte d'origine n'en est pas une (rien ne part en plus) ; « remettre le
       texte du mouvement » reste là.
+
+Fait le 23 septembre 2026. Une seule route neuve, en lecture, `GET
+/characters/{id}/starting-image` — elle appelle `production.image_de_depart` case par case, la
+même fonction que `services/travaux.py` (`preparer`) utilise à la préparation ; aucune seconde
+règle côté écran. Tranché : la liste des modèles ne se cache que sur un « oui » sûr (chaque case
+a sa réponse, et c'est une image) — pendant le chargement, elle reste, pour ne jamais clignoter
+sur un silence qui n'est pas une réponse ; le plan ne tranchait pas ce cas. Le modèle recommandé
+réutilise `modeleParDefaut` de `ToileFabrique.tsx` (la barre d'image fixe) plutôt que d'inventer
+une seconde préférence. Non vu au navigateur : le worktree n'a pas d'`interface/dist` à
+reconstruire sans y toucher (règle du worktree) ; vérifié par `npx tsc --noEmit`, les essais
+d'écran de `FabricationSuivie.tsx` (24/25, le 25<sup>e</sup> est l'échec connu de la mémoire
+locale) et la suite entière (`App.test.tsx`, 547/547), plus quatre essais serveur neufs
+(`tests/test_rv19.py`).
 
 ---
 
@@ -735,7 +794,7 @@ bulle au survol — « je peux le lire mais pas le récupérer »).
 
 ### Critères d'acceptation
 
-- [ ] Partout où l'atelier montre un texte parti au modèle — le volet d'un clip et la fiche d'une
+- [x] Partout où l'atelier montre un texte parti au modèle — le volet d'un clip et la fiche d'une
       image dans la Galerie, la relecture avant l'envoi, la carte de la toile (`TS5`) —, un bouton
       **« Copier »** met le texte entier dans le presse-papiers et le dit (« copié ») un instant.
 - [x] Le texte coupé se déplie au clic, au lieu de n'exister qu'en bulle au survol.
@@ -748,13 +807,20 @@ bulle au survol — « je peux le lire mais pas le récupérer »).
 trois des quatre endroits listés : le volet d'un clip (`FicheDuClip.tsx`, qui montrait le texte
 tronqué sans bouton), la fiche d'une image (`Fiche.tsx`, `LeTexteQuiLAFaite` — le bouton copiait
 déjà mais échouait en silence ; il dit maintenant l'échec), et le tiroir de relecture avant
-l'envoi côté image fixe (`Envoi.tsx`, à côté de « Reprendre le texte › »). **Restent à brancher,
-hors de cette tranche** — un autre agent tient ces fichiers : la carte de la toile (`TS5`,
-`Tableau.tsx` / `ToileFabrique.tsx`) et la fenêtre des clips (`FabricationSuivie.tsx`) ; les deux
-peuvent importer `TexteEnvoye`/`BoutonCopierTexte` de `interface/src/composants/TexteEnvoye.tsx`
-sans rien recomposer. Essais : `interface/src/composants/TexteEnvoye.test.tsx` (copie du texte
-entier, échec dit, dépliage au clic) plus les essais existants de `Fiche.tsx` et `Envoi.tsx`, tous
-au vert.
+l'envoi côté image fixe (`Envoi.tsx`, à côté de « Reprendre le texte › »).
+
+**Suite le 23 septembre 2026** : les deux derniers endroits. La fenêtre des clips
+(`FabricationSuivie.tsx`) portait trois textes non copiables — la relecture d'un clip seul (« Image
+de départ » et « Vidéo à fabriquer », deux `<p>` sans bouton) et, par case d'une série
+(`CaseDeLaSerie`), le texte de l'image de départ tronqué à deux lignes sans recours
+(`line-clamp-2`) et le texte vidéo, déjà repliable dans un `<details>` mais sans bouton
+« Copier ». Les quatre passent à `TexteEnvoye` ; le `<details>` disparaît, `TexteEnvoye` portant
+déjà son propre dépliage au clic. La carte de la toile (`TS5`, `Tableau.tsx`) montrait la phrase
+d'une carte tronquée à trois lignes (`line-clamp-3`, sans recours ni bouton) à côté de « Reprendre
+ce texte › » — remplacée par `TexteEnvoye`, le bouton de reprise restant à part sous elle.
+Essais : `interface/src/composants/TexteEnvoye.test.tsx`, `FabricationSuivie.test.tsx` (24/25, le
+25<sup>e</sup> est l'échec connu de la mémoire locale, hors tranche) et `Tableau.test.tsx` (9/9),
+plus `App.test.tsx` entier, **549/549**. `tsc --noEmit` propre. Non vérifié au navigateur.
 
 ---
 

@@ -1,11 +1,15 @@
 import { SuiviFabrication3D } from "./Fabrication3D"
-import { useEffect, useRef, useState } from "react"
-import { api, dollars, duree, prix, Refus, type Asset, type EtatDuMoteur, type Modele, type ModeleVideo, type Mouvement, type MouvementDeLaPose, type Personnage } from "../api"
-import { nomDuTravail, travaux, NOM_DE_L_ETAPE, NOM_DE_L_ETAT, type CaseSerie, type DemandeTravail, type Serie, type Travail, type TravailSuivi } from "../api-travaux"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { api, dollars, duree, prix, Refus, type Appel, type Asset, type CaseImageDeDepart, type EtatDuMoteur, type Generation, type Modele, type ModeleVideo, type Mouvement, type MouvementDeLaPose, type Personnage, type Statut } from "../api"
+import { modeleParDefaut } from "./ToileFabrique"
+import { nomDuTravail, travaux, NOM_DE_L_ETAPE, NOM_DE_L_ETAT, NOM_DE_LA_PHASE, type CaseSerie, type DemandeTravail, type Serie, type Travail, type TravailSuivi } from "../api-travaux"
+import { fileLocale, type EtapeLocale, type MoteurLocal } from "../api-file-locale"
+import { tempsDuRetour } from "../retours"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE, type OptionsAnimer } from "../fabrication"
 import { vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
 import { MemoireLocale } from "./MemoireLocale"
+import { nomDuModele } from "./Fiche"
 import { Libelle, libelleModele } from "./pieces"
 import { RelectureEquipement } from "./RelectureEquipement"
 import { FabricationVideoLibre } from "./FabricationVideoLibre"
@@ -13,6 +17,8 @@ import { FabricationAudio } from "./FabricationAudio"
 import { FabricationImageLocale } from "./WorkflowsLocaux"
 import type { CibleCalque } from "../api-calques"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
+import { nomsDesNaturesMatiere, type NatureDuJeu } from "../natures"
+import { TexteEnvoye } from "./TexteEnvoye"
 
 // **RV5** : le nombre de clips que la fenêtre propose d'un coup — la même
 // borne que l'ancien lot de `Clip.tsx` (`SERIE_MAX` côté serveur).
@@ -113,7 +119,20 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   )
   const [nombre, setNombre] = useState<number>(1)
   const [serie, setSerie] = useState<Serie | null>(null)
+  // **RV19** : l'image de départ que chaque case proposerait, lue au serveur
+  // par la même règle que la relecture — pas recalculée ici.
+  const [imagesDeDepart, setImagesDeDepart] = useState<CaseImageDeDepart[]>([])
   const personnage = personnages.find((p) => p.identifiant === demande.personnage)
+  // **Une matière ne se propose plus au choix du sujet à animer** (RV11) :
+  // elle n'est plus un sujet — la bibliothèque des matières l'a remplacée.
+  // `personnages` garde tout, pour qu'une fabrication déjà rattachée à une
+  // ancienne matière continue de se résoudre.
+  const [naturesDuJeu, setNaturesDuJeu] = useState<NatureDuJeu[]>([])
+  useEffect(() => {
+    api.posesDesTypes().then((recu) => setNaturesDuJeu(recu?.types ?? [])).catch(() => {})
+  }, [])
+  const naturesMatiere = useMemo(() => nomsDesNaturesMatiere(naturesDuJeu), [naturesDuJeu])
+  const sujetsProposables = useMemo(() => personnages.filter((p) => !naturesMatiere.has(p.type)), [personnages, naturesMatiere])
   const brouillon = useBrouillonLocal({
     cle: `fabrication-video:${projet}:${initiale?.identifiant ?? (cibleInitiale ? `${cibleInitiale.personnage}:${cibleInitiale.pose}:${cibleInitiale.direction}` : "nouvelle")}:${modeleInitial ?? "auto"}`, pret: edition,
     reference: { demande: depart, optionsVideo: JSON.stringify(depart.options_video ?? {}, null, 2), optionsImage: JSON.stringify(depart.options_image ?? {}, null, 2) },
@@ -148,6 +167,20 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   const casesChoisies: CaseSerie[] = [{ pose: demande.pose, direction: demande.direction }, ...autresCases]
     .filter((c, i, tous) => tous.findIndex((a) => a.pose === c.pose && a.direction === c.direction) === i)
   const enSerie = casesChoisies.length > 1 || nombre > 1
+  // **RV19** : les directions à interroger pour l'image de départ — celle du
+  // champ « Direction » plus celles cochées en plus, **de la pose courante
+  // seulement** ; les cases d'autres poses armées par « Tout animer » restent
+  // un compte (ligne 359 ci-dessous), pas une vignette de plus ici.
+  const directionsPourImageDeDepart = [...new Set(
+    [demande.direction, ...autresCases.filter((c) => c.pose === demande.pose).map((c) => c.direction)],
+  )]
+  const nomDirection = (id: string) => id ? (directions.find((d) => d.identifiant === id)?.nom ?? id) : "sans direction"
+  const casesPretes = demande.pose ? imagesDeDepart : []
+  // **8nonies : la liste ne disparaît que confirmée inutile.** Tant que la
+  // lecture n'a pas prouvé que chaque case a déjà son image — y compris
+  // pendant le chargement —, la liste reste ; elle ne se cache que sur un
+  // « oui » sûr, jamais sur un silence qui pourrait être un chargement.
+  const toutesLesCasesOntLeurImage = !!demande.pose && casesPretes.length > 0 && casesPretes.every((c) => !!c.asset)
   // **La case à cocher ne touche que la pose courante** : d'autres
   // directions de `demande.pose`, ajoutées ou retirées une à une.
   const basculerDirection = (identifiant: string) => {
@@ -180,6 +213,27 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
       .then((c) => { if (vivant) { setVideos(c.modeles); setVideosLues(true) } }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
     return () => { vivant = false }
   }, [edition, demande.secondes, demande.resolution, demande.proportions])
+  // **RV19** : l'image de départ de chaque case, lue au serveur par la même
+  // règle que la relecture — recalculée quand le mouvement (la pose) ou les
+  // directions changent, jamais devinée ici.
+  useEffect(() => {
+    if (!edition || !demande.personnage || !demande.pose) { setImagesDeDepart([]); return }
+    let vivant = true
+    api.imageDeDepart(demande.personnage, demande.pose, directionsPourImageDeDepart, projet)
+      .then((r) => { if (vivant) setImagesDeDepart(r.cases ?? []) })
+      .catch(() => { if (vivant) setImagesDeDepart([]) })
+    return () => { vivant = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- la liste de directions se compare jointe, pas par référence.
+  }, [edition, demande.personnage, demande.pose, projet, directionsPourImageDeDepart.join("|")])
+  // **Le modèle recommandé se présélectionne** dès qu'une case manque son
+  // image — la même règle que la barre d'image fixe (`modeleParDefaut`,
+  // `ToileFabrique.tsx`), pas une seconde préférence inventée ici.
+  useEffect(() => {
+    if (!edition || !demande.pose || demande.reference_asset || demande.modele_image || toutesLesCasesOntLeurImage) return
+    const recommande = modeleParDefaut(modeles)
+    if (recommande) changer({ modele_image: recommande })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `changer` est stable ; seule la présélection nous intéresse.
+  }, [edition, demande.pose, demande.reference_asset, demande.modele_image, toutesLesCasesOntLeurImage, modeles])
   // **RV2 : la carte prévient avant de lancer**, seulement quand le modèle
   // choisi est local — un modèle payant n'a pas de carte à regarder.
   useEffect(() => {
@@ -203,6 +257,20 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   // **La série suit chacun de ses travaux**, même bascule à 2 s que pour un
   // travail seul, tant qu'il en reste un « en_cours ».
   const serieEnCours = !!serie?.travaux.some((t) => t.etat === "en_cours")
+  // **RV7 : le temps écoulé bouge sans rien redemander** — une seconde à la
+  // fois, tant qu'un travail tourne. Le départ (`lance_le`) et le temps
+  // attendu (`attendu_s`) viennent du serveur ; seul l'écoulé se compte ici.
+  const tourne = serieEnCours || travail?.etat === "en_cours"
+  const [maintenant, setMaintenant] = useState(() => Date.now() / 1000)
+  useEffect(() => {
+    if (!tourne) return
+    setMaintenant(Date.now() / 1000)
+    const intervalle = window.setInterval(() => setMaintenant(Date.now() / 1000), 1000)
+    return () => window.clearInterval(intervalle)
+  }, [tourne])
+  // **Lancé : la fenêtre peut se fermer** (RV7, retour de l'auteur du
+  // 23 septembre) — la fabrication continue au serveur, et sa case la montre.
+  const lance = serie ? serie.travaux.some((t) => t.etat !== "prepare") : !!travail && travail.etat !== "prepare"
   useEffect(() => {
     if (!serie || !serieEnCours) return
     let vivant = true
@@ -277,6 +345,16 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
     catch (e) { setErreur(message(e)) }
     finally { setOccupe(false) }
   }
+  /** **Relancer une case ratée d'une série** (RV7) : la fenêtre repart en
+   *  préparation, remplie de sa demande à l'identique sous une clé neuve —
+   *  rien ne part avant la relecture et son « Lancer ». */
+  function relancer(t: Travail) {
+    setDemande({ ...t.demande, cle: crypto.randomUUID() })
+    setOptionsImage(JSON.stringify(t.demande.options_image ?? {}, null, 2))
+    setOptionsVideo(JSON.stringify(t.demande.options_video ?? {}, null, 2))
+    setAutresCases([]); setNombre(1); setSerie(null); setTravail(null)
+    setEdition(true); setErreur("")
+  }
   function modifier() {
     if (!travail) return
     setDemande({ ...travail.demande, cle: crypto.randomUUID(),
@@ -317,7 +395,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
         <AvisBrouillon brouillon={brouillon} />
         {demande.modele_video && videosLues && (!video || video.grise) && <p role="status" className="rounded-7 border border-trait-attention bg-fond-attention p-[14px] text-[13px]">Le modèle choisi « {demande.modele_video} » est indisponible : {video?.grise || "il n’est plus proposé par le catalogue"}. Modifie les réglages du clip ou choisis un autre modèle.</p>}
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">1. Animation à créer</legend><div className="grid grid-cols-3 gap-[14px]">
-          <label className="flex flex-col gap-[4px] text-[12px]">Sujet<select className={CHAMP} value={demande.personnage} onChange={(e) => changer({ personnage: e.target.value, pose: "", direction: "", reference_asset: null })}>{personnages.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
+          <label className="flex flex-col gap-[4px] text-[12px]">Sujet<select className={CHAMP} value={demande.personnage} onChange={(e) => changer({ personnage: e.target.value, pose: "", direction: "", reference_asset: null })}>{sujetsProposables.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
           <label className="flex flex-col gap-[4px] text-[12px]">Mouvement<select className={CHAMP} value={demande.pose} onChange={(e) => choisirPose(e.target.value)}><option value="">Choisir…</option>{poses.map((p) => <option key={p.identifiant} value={p.identifiant}>{p.nom}</option>)}</select></label>
           <label className="flex flex-col gap-[4px] text-[12px]">Direction<select className={CHAMP} value={demande.direction} onChange={(e) => { setAutresCases((l) => l.filter((c) => !(c.pose === demande.pose && c.direction === e.target.value))); changer({ direction: e.target.value }) }}>{!directions.length && <option value="">Sans direction</option>}{directions.map((d) => <option key={d.identifiant} value={d.identifiant}>{d.nom}</option>)}</select></label>
         </div>{!poses.length && <p className="mt-[14px] text-[13px] text-encre-3">Ajoute d’abord une animation demandée dans « Objectif & règles » de cet asset.</p>}
@@ -334,16 +412,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
         </p>}
         <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.lot">Combien de clips par case</Libelle><select aria-label="Nombre de clips" className={CHAMP} value={nombre} onChange={(e) => setNombre(Number(e.target.value))}>{NOMBRES_DE_CLIPS.map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
         {nombre > 1 && !demande.reference_asset && <p className="mt-[8px] text-[12px] text-encre-attention">Plusieurs clips d’une même case partent d’une image existante : choisis une image de départ, sinon chacun paierait la sienne.</p>}</fieldset>
-        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">2. Image de départ</legend>
-          <p className="text-[13px] text-encre-3">La référence existante du personnage sera proposée à la relecture. Tu peux en choisir une autre ; si aucune n’existe, le modèle d’image la créera.</p>
-          <div className="mt-[14px] flex items-center gap-[14px]">{demande.reference_asset && <img alt="Image de départ choisie" src={api.vignette(demande.reference_asset, "", 128)} className="h-[128px] w-[128px] object-contain" />}<button className={BOUTON} onClick={() => setChoix("depart")}>Choisir dans la bibliothèque</button>{demande.reference_asset && <button className={BOUTON} onClick={() => changer({ reference_asset: null })}>‹ La proposition</button>}</div>
-          {!demande.reference_asset && <div className="mt-[14px] space-y-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Modèle pour créer la référence si elle manque<select className={CHAMP} value={demande.modele_image ?? ""} onChange={(e) => changer({ modele_image: e.target.value || null })}><option value="">Utiliser seulement une image existante</option>{modeles.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{libelleModele(m)}{m.refus ? ` — ${m.refus}` : ""}</option>)}</select></label>
-          {demande.modele_image && <><label className="flex flex-col gap-[4px] text-[12px]">{demande.repris_image ? "Texte complet de l’image, édité pour cet envoi" : "Description de l’image à créer"}<textarea rows={3} value={demande.prompt_image ?? ""} onChange={(e) => changer({ prompt_image: e.target.value })} className="rounded-7 border border-contour bg-papier p-[14px] text-[13px]" /></label><label className="flex flex-col gap-[4px] text-[12px]">Réservation estimée pour l’image, en dollars (si son coût n’est pas encore mesuré)<input type="number" min={0} step="0.01" className={CHAMP} value={demande.plafond_image_usd ?? ""} onChange={(e) => changer({ plafond_image_usd: e.target.value === "" ? null : Number(e.target.value) })} /></label>
-          <div className="flex flex-wrap gap-[8px]">{(demande.references_image ?? []).map((id) => <button key={id} className="rounded-7 border border-contour p-[4px]" title="Retirer cette référence" onClick={() => changer({ references_image: demande.references_image?.filter((r) => r !== id) })}><img className="h-[54px] w-[54px] object-contain" src={api.vignette(id, "", 128)} alt="Référence jointe, cliquer pour retirer" /></button>)}<button className={BOUTON} onClick={() => setChoix("reference")}>Ajouter des références</button></div>
-          {travail?.references.filter((r) => r.asset && !(demande.references_image_ecartees ?? []).includes(r.asset)).map((r) => <div className="flex items-center gap-[8px]" key={r.nom}><img alt="Référence composée à la relecture" src={r.url} className="h-[54px] w-[54px] object-contain" /><button className={BOUTON} onClick={() => changer({ references_image_ecartees: [...(demande.references_image_ecartees ?? []), r.asset!] })}>Retirer de cet envoi</button></div>)}
-          <details><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres du modèle d’image</summary><p className="my-[8px] text-[12px] text-encre-3">Paramètres disponibles : {Object.keys(image?.options ?? {}).join(", ") || "aucun paramètre supplémentaire déclaré"}.</p><textarea aria-label="Paramètres d’image JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsImage} onChange={(e) => setOptionsImage(e.target.value)} /></details></> }</div>}
-        </fieldset>
-        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">3. Mouvement et clip vidéo</legend>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">2. Le geste et le style de combat</legend>
           <label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="mouvement.texte">Geste</Libelle><select aria-label="Geste" className={CHAMP} value={demande.mouvement ?? ""} onChange={(e) => choisirMouvement(e.target.value)}><option value="">— texte libre —</option>{mouvements.map((m) => <option key={m.identifiant} value={m.identifiant}>{m.nom}</option>)}</select></label>
           {demande.mouvement ? <div className="mt-[14px]">
             {/* **Le style se coche à chaque envoi, jamais d'office** (22 septembre
@@ -359,39 +428,105 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
               {!!demande.correction_geste?.trim() && <button type="button" className="text-[12px] text-signal hover:opacity-70" onClick={() => changer({ correction_geste: "" })}>remettre le texte du mouvement</button>}
             </div>
             {correctionOuverte && <div className="mt-[8px] space-y-[8px]">
-              <textarea aria-label="Corriger le geste pour cet appel" rows={2} className="mesure w-full rounded-7 border border-signal bg-carte p-[14px] text-[13px]" value={demande.correction_geste ?? ""} onChange={(e) => changer({ correction_geste: e.target.value })} placeholder={composition?.geste || "geste en anglais"} />
+              {/* **RV19** : le champ s'ouvre rempli du geste actuel, modifiable —
+                  jamais montré en texte d'exemple grisé qu'il faudrait retaper
+                  pour changer un mot. Retrouver exactement ce texte n'est pas
+                  une correction : rien ne part en plus (`changer` ci-dessous
+                  revient alors à `""`). */}
+              <textarea aria-label="Corriger le geste pour cet appel" rows={2} className="mesure w-full rounded-7 border border-signal bg-carte p-[14px] text-[13px]"
+                value={demande.correction_geste || composition?.geste || ""}
+                onChange={(e) => { const texte = e.target.value; const original = (composition?.geste ?? "").trim(); changer({ correction_geste: texte.trim() && texte.trim() !== original ? texte : "" }) }}
+                placeholder="geste en anglais" />
               <p className="text-[12px] text-encre-3">Cette correction part avec cet appel ; le mouvement de la bibliothèque ne bouge pas.</p>
               <button type="button" className={BOUTON} disabled={occupe || !demande.correction_geste?.trim()} onClick={() => void garderPourLeJeu()}>Garder pour le jeu</button>
             </div>}
           </div> : <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">Décrire l’animation<textarea rows={3} className="rounded-7 border border-contour p-[14px] text-[13px]" value={demande.prompt_video} onChange={(e) => changer({ prompt_video: e.target.value })} placeholder="Le personnage marche sur place, cycle régulier, caméra fixe…" /></label>}
-          <div className="mt-[14px] grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Durée du clip</Libelle><select className={CHAMP} value={demande.secondes} onChange={(e) => changer({ secondes: Number(e.target.value) })}>{[...new Set([demande.secondes, 1, 1.5, 2, 3, 4, 5, ...(video?.durees ?? [])])].sort((a, b) => a - b).map((n) => <option key={n} value={n} disabled={!!video && !video.durees.includes(n)}>{n} s{video && !video.durees.includes(n) ? " — non accepté par ce modèle" : ""}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Résolution</Libelle><select className={CHAMP} value={demande.resolution} onChange={(e) => changer({ resolution: e.target.value })}>{[...new Set([demande.resolution, ...videos.flatMap((m) => m.resolutions)])].map((v) => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Proportions</Libelle><select className={CHAMP} value={demande.proportions} onChange={(e) => changer({ proportions: e.target.value })}>{[...new Set([demande.proportions, ...videos.flatMap((m) => m.proportions)])].map((v) => <option key={v}>{v}</option>)}</select></label></div>
+        </fieldset>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">3. Image de départ</legend>
+          {demande.reference_asset
+            ? <div className="mt-[8px] flex items-center gap-[14px]"><img alt="Image de départ choisie" src={api.vignette(demande.reference_asset, "", 128)} className="h-[128px] w-[128px] object-contain" /><button className={BOUTON} onClick={() => setChoix("depart")}>Choisir dans la bibliothèque</button><button className={BOUTON} onClick={() => changer({ reference_asset: null })}>‹ La proposition</button></div>
+            : <>
+              <p className="text-[13px] text-encre-3">L’image qui partira pour chaque case, calculée comme à la relecture. Choisis-en une autre si besoin.</p>
+              {!demande.pose
+                ? <p className="mt-[14px] text-[13px] text-encre-3">Choisis un mouvement au point 1 pour voir l’image de départ proposée.</p>
+                : <div className="mt-[14px] flex flex-wrap gap-[14px]">{casesPretes.map((c) => <div key={c.direction} className="w-[128px] text-center">
+                  {c.asset
+                    ? <img alt={`Image de départ proposée — ${nomDirection(c.direction)}`} src={api.vignette(c.asset.identifiant, "", 128)} className="h-[128px] w-[128px] rounded-7 border border-trait object-contain" title={c.raison} />
+                    : <div role="status" className="flex h-[128px] w-[128px] items-center justify-center rounded-7 border border-dashed border-trait p-[8px] text-[11px] text-encre-3">aucune image pour {nomDirection(c.direction)}</div>}
+                  <p className="mt-[4px] truncate text-[12px] text-encre-3">{nomDirection(c.direction)}</p>
+                </div>)}</div>}
+              <button className={`${BOUTON} mt-[14px]`} onClick={() => setChoix("depart")}>Choisir une autre image dans la bibliothèque</button>
+            </>}
+          {/* **8nonies** : un contrôle inerte disparaît — la liste des modèles
+              ne se cache que sur un « oui » sûr (chaque case a sa réponse, et
+              c'est une image) ; tant que ce n'est pas prouvé — chargement
+              compris —, elle reste, pour ne jamais clignoter sur un silence
+              qui n'est pas une réponse. */}
+          {!demande.reference_asset && demande.pose && (toutesLesCasesOntLeurImage
+            ? <p className="mt-[14px] text-[13px] text-encre-3">Chaque case ci-dessus a déjà son image de départ.</p>
+            : <div className="mt-[14px] space-y-[14px]">
+              <div className="space-y-[4px]">
+                <p className="text-[12px] text-encre-3">Modèle pour créer l’image des cases qui en manquent</p>
+                <label className="flex items-center gap-[8px] text-[13px]"><input type="radio" name="modele-image" checked={!demande.modele_image} onChange={() => changer({ modele_image: null })} />Utiliser seulement une image existante</label>
+                {(() => {
+                  const recommande = modeleParDefaut(modeles)
+                  const modeleRecommande = modeles.find((m) => m.identifiant === recommande)
+                  const locaux = modeles.filter((m) => m.locale && m.identifiant !== recommande)
+                  const autresModeles = modeles.filter((m) => !m.locale && m.identifiant !== recommande)
+                  const ligne = (m: Modele, suffixe?: string) => <label key={m.identifiant} className="flex items-center gap-[8px] text-[13px]"><input type="radio" name="modele-image" disabled={!!m.refus} checked={demande.modele_image === m.identifiant} onChange={() => changer({ modele_image: m.identifiant })} />{libelleModele(m)}{m.refus ? ` — ${m.refus}` : suffixe}</label>
+                  return <>
+                    {modeleRecommande && ligne(modeleRecommande, " · recommandé")}
+                    {locaux.map((m) => ligne(m, " · local"))}
+                    {!!autresModeles.length && <details><summary className="cursor-pointer text-[12px] text-encre-3">Autres modèles ({autresModeles.length})</summary><div className="mt-[8px] space-y-[4px]">{autresModeles.map((m) => ligne(m))}</div></details>}
+                  </>
+                })()}
+              </div>
+              {demande.modele_image && <><label className="flex flex-col gap-[4px] text-[12px]">{demande.repris_image ? "Texte complet de l’image, édité pour cet envoi" : "Description de l’image à créer"}<textarea rows={3} value={demande.prompt_image ?? ""} onChange={(e) => changer({ prompt_image: e.target.value })} className="rounded-7 border border-contour bg-papier p-[14px] text-[13px]" /></label><label className="flex flex-col gap-[4px] text-[12px]">Réservation estimée pour l’image, en dollars (si son coût n’est pas encore mesuré)<input type="number" min={0} step="0.01" className={CHAMP} value={demande.plafond_image_usd ?? ""} onChange={(e) => changer({ plafond_image_usd: e.target.value === "" ? null : Number(e.target.value) })} /></label>
+              <div className="flex flex-wrap gap-[8px]">{(demande.references_image ?? []).map((id) => <button key={id} className="rounded-7 border border-contour p-[4px]" title="Retirer cette référence" onClick={() => changer({ references_image: demande.references_image?.filter((r) => r !== id) })}><img className="h-[54px] w-[54px] object-contain" src={api.vignette(id, "", 128)} alt="Référence jointe, cliquer pour retirer" /></button>)}<button className={BOUTON} onClick={() => setChoix("reference")}>Ajouter des références</button></div>
+              {travail?.references.filter((r) => r.asset && !(demande.references_image_ecartees ?? []).includes(r.asset)).map((r) => <div className="flex items-center gap-[8px]" key={r.nom}><img alt="Référence composée à la relecture" src={r.url} className="h-[54px] w-[54px] object-contain" /><button className={BOUTON} onClick={() => changer({ references_image_ecartees: [...(demande.references_image_ecartees ?? []), r.asset!] })}>Retirer de cet envoi</button></div>)}
+              <details><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres du modèle d’image</summary><p className="my-[8px] text-[12px] text-encre-3">Paramètres disponibles : {Object.keys(image?.options ?? {}).join(", ") || "aucun paramètre supplémentaire déclaré"}.</p><textarea aria-label="Paramètres d’image JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsImage} onChange={(e) => setOptionsImage(e.target.value)} /></details></> }
+            </div>)}
+        </fieldset>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">4. Le clip</legend>
+          <div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Durée du clip</Libelle><select className={CHAMP} value={demande.secondes} onChange={(e) => changer({ secondes: Number(e.target.value) })}>{[...new Set([demande.secondes, 1, 1.5, 2, 3, 4, 5, ...(video?.durees ?? [])])].sort((a, b) => a - b).map((n) => <option key={n} value={n} disabled={!!video && !video.durees.includes(n)}>{n} s{video && !video.durees.includes(n) ? " — non accepté par ce modèle" : ""}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Résolution</Libelle><select className={CHAMP} value={demande.resolution} onChange={(e) => changer({ resolution: e.target.value })}>{[...new Set([demande.resolution, ...videos.flatMap((m) => m.resolutions)])].map((v) => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.format">Proportions</Libelle><select className={CHAMP} value={demande.proportions} onChange={(e) => changer({ proportions: e.target.value })}>{[...new Set([demande.proportions, ...videos.flatMap((m) => m.proportions)])].map((v) => <option key={v}>{v}</option>)}</select></label></div>
           <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.prix">{CHAMP_DU_MODELE}</Libelle><select className={CHAMP} value={demande.modele_video} onChange={(e) => changer({ modele_video: e.target.value })}><option value="">Choisir un modèle…</option>{demande.modele_video && !video && <option value={demande.modele_video} disabled>{videosLues ? "modèle indisponible" : "chargement…"}</option>}{videos.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.grise}>{libelleModele(m)}{m.grise ? ` — ${m.grise}` : m.de_la_maison ? " · local" : ` · ${prix(m.prix.montant)}`}</option>)}</select></label>
           {video?.de_la_maison && <div className="mt-[8px]"><MemoireLocale etat={moteur} /></div>}
           <details className="mt-[14px]"><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres avancés du workflow</summary><p className="my-[8px] text-[12px] text-encre-3">Réglages nommés du workflow, par exemple la seed. Le fournisseur vérifie les paramètres avant l’envoi.</p><textarea aria-label="Paramètres vidéo JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsVideo} onChange={(e) => setOptionsVideo(e.target.value)} /></details>
         </fieldset>
-        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">4. Animation à obtenir</legend><div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Images à extraire<input className={CHAMP} type="number" min={1} max={64} value={demande.nombre_images} onChange={(e) => changer({ nombre_images: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Cadence (images/s)<input className={CHAMP} type="number" min={0.1} max={120} step={0.1} value={demande.cadence} onChange={(e) => changer({ cadence: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Lecture<select className={CHAMP} value={demande.sens} onChange={(e) => changer({ sens: e.target.value as DemandeTravail["sens"] })}><option value="boucle">En boucle</option><option value="aller-retour">Aller-retour</option></select></label></div><label className="mt-[14px] flex items-center gap-[8px] text-[13px]"><input type="checkbox" checked={!!demande.livrer_provisoire} onChange={(e) => changer({ livrer_provisoire: e.target.checked })} />Livrer automatiquement cette première version dans le projet Godot associé</label><p className="mt-[8px] text-[12px] text-encre-3">Le clip et ses images restent conservés. Le montage permet ensuite de choisir un passage, réordonner les images et retoucher chaque image.</p></fieldset>
+        <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">5. Animation à obtenir</legend><div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[4px] text-[12px]">Images à extraire<input className={CHAMP} type="number" min={1} max={64} value={demande.nombre_images} onChange={(e) => changer({ nombre_images: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Cadence (images/s)<input className={CHAMP} type="number" min={0.1} max={120} step={0.1} value={demande.cadence} onChange={(e) => changer({ cadence: Number(e.target.value) })} /></label><label className="flex flex-col gap-[4px] text-[12px]">Lecture<select className={CHAMP} value={demande.sens} onChange={(e) => changer({ sens: e.target.value as DemandeTravail["sens"] })}><option value="boucle">En boucle</option><option value="aller-retour">Aller-retour</option></select></label></div><label className="mt-[14px] flex items-center gap-[8px] text-[13px]"><input type="checkbox" checked={!!demande.livrer_provisoire} onChange={(e) => changer({ livrer_provisoire: e.target.checked })} />Livrer automatiquement cette première version dans le projet Godot associé</label><p className="mt-[8px] text-[12px] text-encre-3">Le clip et ses images restent conservés. Le montage permet ensuite de choisir un passage, réordonner les images et retoucher chaque image.</p></fieldset>
       </div> : travail ? <div className="mx-auto max-w-[880px] space-y-[22px]">
-        <div className="rounded-8 border border-trait bg-carte p-[22px]"><div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px]">{personnage?.nom ?? travail.demande.personnage}</h2><span role="status" className="text-[13px] text-encre-3">{ETATS[travail.etat]} · {ETAPES[travail.etape] ?? travail.etape}</span></div><p className="mt-[8px] text-[13px]">{personnage?.plan.find((p) => p.identifiant === travail.demande.pose)?.nom ?? travail.demande.pose} · {travail.demande.direction || "Sans direction"} · {travail.demande.nombre_images} images à {travail.demande.cadence} i/s · {travail.objectif.largeur} × {travail.objectif.hauteur} px</p>{travail.raison && <p className="mt-[14px] text-[13px] text-echec">{travail.raison}</p>}</div>
+        <div className="rounded-8 border border-trait bg-carte p-[22px]"><div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px]">{personnage?.nom ?? travail.demande.personnage}</h2><span role="status" className="text-[13px] text-encre-3">{travail.etat === "en_cours" && travail.phase ? `${NOM_DE_LA_PHASE[travail.phase]} · ${tempsDuRetour(travail.lance_le, travail.attendu_s, maintenant) || ETATS.en_cours}` : `${ETATS[travail.etat]} · ${ETAPES[travail.etape] ?? travail.etape}`}</span></div><p className="mt-[8px] text-[13px]">{personnage?.plan.find((p) => p.identifiant === travail.demande.pose)?.nom ?? travail.demande.pose} · {travail.demande.direction || "Sans direction"} · {travail.demande.nombre_images} images à {travail.demande.cadence} i/s · {travail.objectif.largeur} × {travail.objectif.hauteur} px</p>{travail.raison && <p className="mt-[14px] text-[13px] text-echec">{travail.raison}</p>}</div>
         <div className="grid grid-cols-2 gap-[22px]">
-          <article className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Image de départ</h2>{travail.entree_video ? <><img className="mt-[14px] h-[128px] w-full object-contain" src={travail.entree_video.url} alt="Image exacte envoyée à la vidéo" /><p className="mt-[8px] text-[12px] text-encre-3">Image conservée et préparée au format du clip.</p></> : <><p className="mesure mt-[14px] break-words text-[12px]">{(() => { const m = modeles.find((v) => v.identifiant === travail.demande.modele_image); return m ? libelleModele(m) : travail.demande.modele_image })()}</p><p className="mt-[14px] whitespace-pre-wrap text-[13px]">{travail.envoi_image?.prompt ?? travail.demande.prompt_image}</p><p className="mt-[14px] text-[13px]">Estimation : {dollars(travail.annonce.image_usd)}</p></>}<div className="mt-[14px] flex flex-wrap gap-[8px]">{travail.references.map((r) => <img key={r.nom} src={r.url} alt="Référence exacte envoyée pour créer l’image" className="h-[54px] w-[54px] rounded-7 border border-trait object-contain" />)}</div></article>
-          <article className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Vidéo à fabriquer</h2><p className="mesure mt-[14px] break-words text-[12px]">{(() => { const m = videos.find((v) => v.identifiant === travail.demande.modele_video); return m ? libelleModele(m) : travail.demande.modele_video })()}</p><p className="mt-[14px] whitespace-pre-wrap text-[13px]">{travail.demande.prompt_video}</p><p className="mt-[14px] text-[13px]">1 clip · {travail.demande.secondes} s · {travail.demande.resolution} · {travail.demande.proportions}</p><p className="mt-[8px] text-[13px]">{travail.annonce.video_locale ? `Local · ${travail.annonce.temps_local ? `${Math.ceil(travail.annonce.temps_local.secondes)} s mesurées` : "temps non mesuré"}` : `Estimation vidéo : ${prix(travail.annonce.video.montant)}`}</p><dl className="mt-[14px] text-[12px] text-encre-3">{Object.entries(travail.demande.options_video ?? {}).map(([k, v]) => <div key={k} className="flex justify-between gap-[14px]"><dt>{k}</dt><dd>{String(v)}</dd></div>)}</dl></article>
+          <article className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Image de départ</h2>{travail.entree_video ? <><img className="mt-[14px] h-[128px] w-full object-contain" src={travail.entree_video.url} alt="Image exacte envoyée à la vidéo" /><p className="mt-[8px] text-[12px] text-encre-3">Image conservée et préparée au format du clip.</p></> : <><p className="mesure mt-[14px] break-words text-[12px]">{(() => { const m = modeles.find((v) => v.identifiant === travail.demande.modele_image); return m ? libelleModele(m) : travail.demande.modele_image })()}</p><div className="mt-[14px]"><TexteEnvoye texte={travail.envoi_image?.prompt ?? travail.demande.prompt_image ?? ""} /></div><p className="mt-[14px] text-[13px]">Estimation : {dollars(travail.annonce.image_usd)}</p></>}<div className="mt-[14px] flex flex-wrap gap-[8px]">{travail.references.map((r) => <img key={r.nom} src={r.url} alt="Référence exacte envoyée pour créer l’image" className="h-[54px] w-[54px] rounded-7 border border-trait object-contain" />)}</div></article>
+          <article className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">Vidéo à fabriquer</h2><p className="mesure mt-[14px] break-words text-[12px]">{(() => { const m = videos.find((v) => v.identifiant === travail.demande.modele_video); return m ? libelleModele(m) : travail.demande.modele_video })()}</p><div className="mt-[14px]"><TexteEnvoye texte={travail.demande.prompt_video} /></div><p className="mt-[14px] text-[13px]">1 clip · {travail.demande.secondes} s · {travail.demande.resolution} · {travail.demande.proportions}</p><p className="mt-[8px] text-[13px]">{travail.annonce.video_locale ? `Local · ${travail.annonce.temps_local ? `${Math.ceil(travail.annonce.temps_local.secondes)} s mesurées` : "temps non mesuré"}` : `Estimation vidéo : ${prix(travail.annonce.video.montant)}`}</p><dl className="mt-[14px] text-[12px] text-encre-3">{Object.entries(travail.demande.options_video ?? {}).map(([k, v]) => <div key={k} className="flex justify-between gap-[14px]"><dt>{k}</dt><dd>{String(v)}</dd></div>)}</dl></article>
         </div><div className="rounded-8 border border-trait bg-carte p-[22px]"><h2 className="font-serif text-[25px]">{travail.annonce.appels} génération{travail.annonce.appels > 1 ? "s" : ""} prévue{travail.annonce.appels > 1 ? "s" : ""}</h2><p className="mt-[8px] text-[14px]">Réservation totale : {dollars(travail.annonce.reservation_usd)}</p><p className="mt-[8px] text-[12px] text-encre-3">{travail.annonce.limite}</p>{travail.consommations.map((c, i) => <p key={i} className="mesure mt-[8px] text-[12px]">{c.modele} : {c.consomme} {c.unite || "usd"} consommé{c.consomme > 1 ? "s" : ""}</p>)}</div>
         {travail.clip && <button className={BOUTON} onClick={() => onClip(travail.clip!)}>Ouvrir le clip et son montage</button>}{travail.bandes.map((id) => onBande && <button key={id} className={`${BOUTON} ml-[8px]`} onClick={() => onBande(id)}>Retoucher l’animation</button>)}{onLivraisons && !!travail.bandes.length && <button className={`${BOUTON} ml-[8px]`} onClick={onLivraisons}>{travail.livraison ? "Voir la livraison dans La sortie" : "Livrer dans le jeu"}</button>}{travail.livraison && <p className="mesure text-[13px]">Livraison terminée. Retrouvez les fichiers et la révision dans « La sortie ».</p>}
-      </div> : serie ? <RelectureDeSerie serie={serie} personnage={personnage} onClip={onClip} /> : null}
+      </div> : serie ? <RelectureDeSerie serie={serie} personnage={personnage} maintenant={maintenant} onClip={onClip} onBande={onBande} onRelancer={relancer} /> : null}
     </div>
-    <footer className="flex shrink-0 items-center justify-between gap-[14px] border-t border-trait bg-carte p-[14px]"><p className="text-[12px] text-encre-3">{edition ? "Rien ne part avant la relecture." : "La demande et ses résultats restent accessibles depuis Fabrications."}</p><div className="flex gap-[8px]">{edition ? <button disabled={occupe || !demande.pose || !video || !!video.grise || !(demande.mouvement || demande.prompt_video.trim())} onClick={() => void relire()} className={PRINCIPAL}>{occupe ? "Préparation…" : VERS_LA_RELECTURE}</button> : serie ? (serie.travaux.every((t) => t.etat === "prepare") && <button className={PRINCIPAL} disabled={occupe} onClick={() => void lancer()}>{libelleLancement(serie.annonce_serie.locale, serie.annonce_serie.temps_s, serie.annonce_serie.reservation_usd, serie.serie.total)}</button>) : travail && <>{travail.etat === "prepare" && <><button className={BOUTON} onClick={modifier}>Modifier le texte et les images</button><button className={PRINCIPAL} disabled={occupe} onClick={() => void lancer()}>{libelleLancement(travail.annonce.video_locale, travail.annonce.temps_local?.secondes ?? null, travail.annonce.reservation_usd, 1)}</button></>}{["a_reprendre", "a_verifier"].includes(travail.etat) && <button className={BOUTON} disabled={occupe} onClick={() => void lancer(true)}>Reprendre ce travail</button>}{["termine", "annule"].includes(travail.etat) && <button className={BOUTON} onClick={modifier}>Préparer une nouvelle version</button>}</>}</div></footer>
+    <footer className="flex shrink-0 items-center justify-between gap-[14px] border-t border-trait bg-carte p-[14px]"><p className="text-[12px] text-encre-3">{edition ? "Rien ne part avant la relecture." : lance ? "Tu peux fermer cette fenêtre : la fabrication continue, et tu la retrouves dans Fabrications et dans sa case." : "La demande et ses résultats restent accessibles depuis Fabrications."}</p><div className="flex gap-[8px]">{!edition && lance && <button className={BOUTON} onClick={onFermer}>Fermer, ça continue</button>}{edition ? <button disabled={occupe || !demande.pose || !video || !!video.grise || !(demande.mouvement || demande.prompt_video.trim())} onClick={() => void relire()} className={PRINCIPAL}>{occupe ? "Préparation…" : VERS_LA_RELECTURE}</button> : serie ? (serie.travaux.every((t) => t.etat === "prepare") && <button className={PRINCIPAL} disabled={occupe} onClick={() => void lancer()}>{libelleLancement(serie.annonce_serie.locale, serie.annonce_serie.temps_s, serie.annonce_serie.reservation_usd, serie.serie.total)}</button>) : travail && <>{travail.etat === "prepare" && <><button className={BOUTON} onClick={modifier}>Modifier le texte et les images</button><button className={PRINCIPAL} disabled={occupe} onClick={() => void lancer()}>{libelleLancement(travail.annonce.video_locale, travail.annonce.temps_local?.secondes ?? null, travail.annonce.reservation_usd, 1)}</button></>}{["a_reprendre", "a_verifier"].includes(travail.etat) && <button className={BOUTON} disabled={occupe} onClick={() => void lancer(true)}>Reprendre ce travail</button>}{["termine", "annule"].includes(travail.etat) && <button className={BOUTON} onClick={modifier}>Préparer une nouvelle version</button>}</>}</div></footer>
     {choix && <CadreDialogue titre="Choisir des images dans la bibliothèque" onFermer={() => setChoix(null)} enfants={<div className="flex min-h-0 flex-1 flex-col bg-papier p-[22px]"><header className="flex items-center justify-between"><h2 className="font-serif text-[38px]">{choix === "depart" ? "Choisir l’image de départ" : "Joindre des références"}</h2><button className={BOUTON} onClick={() => setChoix(null)}>Terminer le choix</button></header><div className="my-[22px] flex items-center gap-[14px]"><input type="search" aria-label="Rechercher une image" className={`${CHAMP} flex-1`} value={recherche} onChange={(e) => { setRecherche(e.target.value); setPlafondImages(48) }} /><label className="flex items-center gap-[8px] text-[13px]"><input type="checkbox" checked={favoris} onChange={(e) => setFavoris(e.target.checked)} />Retenues seulement</label><span className="text-[12px] text-encre-3">{totalImages} images</span></div><div className="defile flex min-h-0 flex-1 flex-wrap content-start gap-[14px] overflow-y-auto">{images.map((a) => <button key={a.identifiant} aria-pressed={choix === "depart" ? demande.reference_asset === a.identifiant : (demande.references_image ?? []).includes(a.identifiant)} className="w-[128px] rounded-8 border border-contour bg-carte p-[8px] aria-pressed:border-signal" onClick={() => { if (choix === "depart") { changer({ reference_asset: a.identifiant }); setChoix(null) } else changer({ references_image: [...new Set([...(demande.references_image ?? []), a.identifiant])] }) }}><img alt={a.label || "Image sans nom"} className="h-[128px] w-full object-contain" src={vignetteAsset(a, 128)} /><span className="mt-[4px] block truncate text-[12px]">{a.label || "Image sans nom"}</span></button>)}{images.length < totalImages && <button className={BOUTON} onClick={() => setPlafondImages((n) => n + 48)}>Afficher davantage d’images</button>}</div></div>} />}
   </section>
   return autonome ? <CadreDialogue titre="Fabrication d’une animation" onFermer={onFermer} enfants={corps} /> : corps
 }
 
 /** **La relecture d'une série** (RV5) : un en-tête commun — ce qui vaut pour
- *  toutes les cases —, puis chaque case, repliée. Un travail seul reste la
- *  relecture d'avant ; c'est ici seulement pour plus d'un clip. */
-function RelectureDeSerie({ serie, personnage, onClip }: {
-  serie: Serie; personnage: Personnage | undefined; onClip: (id: string) => void
+ *  toutes les cases —, puis chaque case. Un travail seul reste la relecture
+ *  d'avant ; c'est ici seulement pour plus d'un clip.
+ *
+ *  **RV7, retours de l'auteur du 23 septembre** : chaque case montre ce qui
+ *  part — son image de départ et les références envoyées, comme la relecture
+ *  d'un clip seul —, puis, une fois lancée, son étape et son temps, et enfin
+ *  sa vignette ou « ratée » avec sa raison.
+ *
+ *  **Fin de RV20** : les deux textes qui partent — celui de l'image de départ
+ *  et celui envoyé à la vidéo — se lisent et se copient en entier avec
+ *  `TexteEnvoye`, comme sur la relecture d'un clip seul. */
+function RelectureDeSerie({ serie, personnage, maintenant, onClip, onBande, onRelancer }: {
+  serie: Serie; personnage: Personnage | undefined; maintenant: number
+  onClip: (id: string) => void; onBande?: (id: string) => void; onRelancer: (t: Travail) => void
 }) {
   const premier = serie.travaux[0]
+  const plusieursPoses = serie.travaux.some((v) => v.demande.pose !== premier?.demande.pose)
   return <div className="mx-auto max-w-[880px] space-y-[22px]">
     <div className="rounded-8 border border-trait bg-carte p-[22px]">
       <div className="flex items-center justify-between gap-[14px]"><h2 className="font-serif text-[25px]">{personnage?.nom ?? premier?.demande.personnage}</h2><span className="text-[13px] text-encre-3">{serie.serie.total} clip{serie.serie.total > 1 ? "s" : ""}</span></div>
@@ -405,21 +540,56 @@ function RelectureDeSerie({ serie, personnage, onClip }: {
     </div>
     {/* **Le nom de la pose ne paraît que si elle varie** (RV6) : une série
         d'« Animer les directions » reste sur une seule pose, et la répéter à
-        chaque case n'ajouterait rien à côté du titre qui la nomme déjà. Une
-        série de « Tout animer » en mélange plusieurs — c'est là qu'il faut
-        la voir, case par case. */}
+        chaque case n'ajouterait rien à côté du titre qui la nomme déjà. */}
     <div className="space-y-[8px]">{serie.travaux.map((t) => {
-      const plusieursPoses = serie.travaux.some((v) => v.demande.pose !== premier?.demande.pose)
       const pose = personnage?.plan.find((p) => p.identifiant === t.demande.pose)?.nom ?? t.demande.pose
-      const direction = personnage?.cases.find((c) => c.pose === t.demande.pose)?.directions.find((d) => d.identifiant === t.demande.direction)?.nom ?? t.demande.direction ?? "Sans direction"
-      return <details key={t.identifiant} className="rounded-8 border border-trait bg-carte p-[14px]">
-        <summary className="flex cursor-pointer items-center justify-between gap-[14px] text-[13px]"><span>{plusieursPoses ? `${pose} · ${direction}` : direction}</span><span className="text-encre-3">{ETATS[t.etat]}</span></summary>
-        <p className="mt-[8px] whitespace-pre-wrap text-[13px]">{t.demande.prompt_video}</p>
-        {t.raison && <p className="mt-[8px] text-[13px] text-echec">{t.raison}</p>}
-        {t.clip && <button className={BOUTON} onClick={() => onClip(t.clip!)}>Ouvrir le clip et son montage</button>}
-      </details>
+      const direction = personnage?.cases.find((c) => c.pose === t.demande.pose)?.directions.find((d) => d.identifiant === t.demande.direction)?.nom ?? (t.demande.direction || "Sans direction")
+      return <CaseDeLaSerie key={t.identifiant} travail={t} titre={plusieursPoses ? `${pose} · ${direction}` : direction}
+        maintenant={maintenant} onClip={onClip} onBande={onBande} onRelancer={() => onRelancer(t)} />
     })}</div>
   </div>
+}
+
+/** Une case d'une série : **ce qui part** à gauche, **ce qui revient** à
+ *  droite. Le même cadre avant et après « Lancer » — la case ne change pas de
+ *  place, seul son contenu avance. */
+function CaseDeLaSerie({ travail: t, titre, maintenant, onClip, onBande, onRelancer }: {
+  travail: Travail; titre: string; maintenant: number
+  onClip: (id: string) => void; onBande?: (id: string) => void; onRelancer: () => void
+}) {
+  const ratee = !!t.controle || t.etat === "a_verifier"
+  const etat = t.etat === "en_cours"
+    ? `${t.phase ? NOM_DE_LA_PHASE[t.phase] : ETATS.en_cours}${t.lance_le ? ` · ${tempsDuRetour(t.lance_le, t.attendu_s, maintenant)}` : ""}`
+    : ratee ? "Ratée" : t.etat === "termine" ? "Arrivée" : ETATS[t.etat]
+  const vignette = "h-[81px] w-[81px] shrink-0 rounded-7 border border-trait bg-pourtour object-contain"
+  return <article data-case-de-serie={t.identifiant} className="rounded-8 border border-trait bg-carte p-[14px]">
+    <div className="flex items-start gap-[14px]">
+      {t.entree_video
+        ? <img className={vignette} src={t.entree_video.url} alt="Image de départ envoyée à la vidéo" />
+        : <span className={`${vignette} flex items-center justify-center p-[4px] text-center text-[10.5px] leading-[1.2] text-encre-3`}>image de départ à créer</span>}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-[14px]">
+          <span className="text-[13px] text-encre">{titre}</span>
+          <span role="status" className={`mesure text-[12px] ${ratee ? "text-echec" : t.etat === "en_cours" ? "text-signal" : "text-encre-3"}`}>{etat}</span>
+        </div>
+        {!t.entree_video && (t.envoi_image?.prompt ?? t.demande.prompt_image) && <div className="mt-[4px]"><TexteEnvoye texte={t.envoi_image?.prompt ?? t.demande.prompt_image ?? ""} /></div>}
+        {t.references.length > 0 && <div className="mt-[8px] flex flex-wrap items-center gap-[4px]"><span className="text-[11.5px] text-encre-3">Références envoyées</span>{t.references.map((r) => <img key={r.nom} src={r.url} alt="Référence envoyée" className="h-[54px] w-[54px] rounded-5 border border-trait object-contain" />)}</div>}
+        {ratee && <p className="mt-[8px] text-[13px] text-echec">{t.raison || "la fabrication n’a pas abouti"}</p>}
+        {!ratee && t.etat !== "en_cours" && t.etat !== "termine" && t.etat !== "prepare" && t.raison && <p className="mt-[8px] text-[13px] text-encre-attention">{t.raison}</p>}
+        <div className="mt-[8px]"><span className="text-[12px] text-encre-3">Texte envoyé à la vidéo</span><TexteEnvoye texte={t.demande.prompt_video} /></div>
+      </div>
+      <div className="flex w-[81px] shrink-0 flex-col items-center gap-[4px]">
+        {t.etat === "termine" && t.clip
+          ? <button type="button" aria-label={`Ouvrir ${titre}`} onClick={() => t.bandes[0] && onBande ? onBande(t.bandes[0]) : onClip(t.clip!)}><img className={vignette} src={api.couvertureDuClip(t.clip, 162)} alt="" /></button>
+          : t.etat === "en_cours"
+            ? <span className={`${vignette} flex items-center justify-center border-dashed border-signal`}><span aria-hidden className="inline-block h-[14px] w-[14px] animate-spin rounded-full border-[1.5px] border-encre-4 border-t-signal" /></span>
+            : ratee
+              ? <button type="button" className={`${BOUTON} w-full px-[8px]`} onClick={onRelancer}>Relancer</button>
+              : null}
+        {t.etat === "termine" && t.clip && <button type="button" className="text-[11.5px] text-encre-controle underline underline-offset-2 hover:text-encre" onClick={() => onClip(t.clip!)}>le clip</button>}
+      </div>
+    </div>
+  </article>
 }
 
 type OuvrirCalqueEquipement = (piece: string, emploi: string, cible: CibleCalque, variante?: string) => void
@@ -436,29 +606,307 @@ function FenetreDuTravail({ travail, projet, personnages, onClip, onBande, onFer
   return <FabricationSuivie projet={projet} personnages={personnages} initiale={travail} onClip={onClip} onBande={onBande} onFermer={onFermer} />
 }
 
-export function SuiviDesTravaux({ projet, personnages, onClip, onBande, onCalqueEquipement, onAsset, onToile, onSon, onPreparer }: {
-  projet: string; personnages: readonly Personnage[]; onClip: (id: string) => void; onBande?: (id: string) => void; onCalqueEquipement?: OuvrirCalqueEquipement; onAsset?: (id: string) => void; onToile?: (id: string) => void; onSon?: (id: string) => void
-  /** **Une animation neuve passe par la fenêtre unique** (RP4) : c'était la
-   *  neuvième porte de préparation du produit. */
-  onPreparer?: (type: "clip") => void
+// ── RV9 : une seule liste de fabrications ───────────────────────────────────
+//
+// Trois listes vivaient côte à côte sur l'écran Fabrications : « Créer et
+// suivre » (les travaux suivis), « Les calculs locaux » (la file locale) et
+// « Rechercher une fabrication » (le journal des appels). La même fabrication
+// pouvait déjà y paraître deux fois — un travail garde `generation_image`,
+// `clip` et `etape_locale`, les identifiants **des mêmes lignes** que le
+// journal et la file locale connaissent sous leur propre nom : ce ne sont pas
+// trois fabrications, c'est une fabrication racontée à trois endroits.
+//
+// La fusion ci-dessous **retire** du journal et de la file locale ce qu'un
+// travail porte déjà, avant de tout trier ensemble par date de départ. Elle
+// vit ici, dans le seul écran qui la montre — une route serveur n'apportait
+// rien que le client n'ait déjà : `generation_image`, `clip` et
+// `etape_locale` voyagent tous les trois dans le JSON d'un travail depuis
+// leur tranche d'origine, seul leur type TypeScript manquait.
+
+/** Les quatre humeurs qu'un filtre reconnaît, toutes origines confondues — un
+ *  travail suivi, un calcul local ou une ligne du journal. Une fabrication
+ *  encore « prête à lancer » (jamais partie) n'en porte aucune : elle vit dans
+ *  le tiroir des brouillons, pas ici — cette liste ne montre que ce qui est
+ *  **parti**. */
+type Humeur = "en_cours" | "terminee" | "ratee" | "a_reprendre"
+const NOM_DE_L_HUMEUR: Record<Humeur, string> = { en_cours: "En cours", terminee: "Terminées", ratee: "Ratées", a_reprendre: "À reprendre" }
+const NATURES_LOCALES: Record<EtapeLocale["nature"], string> = { image: "Image", video: "Vidéo", modele3d: "Modèle 3D", rig: "Rigging", rendu3d: "Rendu 3D", audio: "Son" }
+const LETTRES_LOCALES: Record<EtapeLocale["nature"], string> = { image: "I", video: "V", modele3d: "3D", rig: "3D", rendu3d: "3D", audio: "S" }
+const MOTEURS_LABEL: Record<MoteurLocal["etat"], string> = { disponible: "Disponible", occupe: "Occupé", inconnu: "État inconnu" }
+
+function humeurDuTravail(etat: Travail["etat"]): Humeur | null {
+  if (etat === "en_cours") return "en_cours"
+  if (etat === "termine" || etat === "annule") return "terminee"
+  if (etat === "a_verifier") return "ratee"
+  if (etat === "a_reprendre" || etat === "externe_inconnu") return "a_reprendre"
+  return null // "prepare" : pas encore parti, le tiroir des brouillons le porte déjà
+}
+function humeurDeLAppel(statut: Statut): Humeur {
+  if (statut === "en_attente" || statut === "en_cours") return "en_cours"
+  if (statut === "reussie") return "terminee"
+  if (statut === "echouee") return "ratee"
+  return "a_reprendre"
+}
+function humeurLocale(etat: EtapeLocale["etat"]): Humeur {
+  if (etat === "en_attente" || etat === "en_cours") return "en_cours"
+  if (etat === "termine" || etat === "annule") return "terminee"
+  if (etat === "echoue") return "ratee"
+  return "a_reprendre"
+}
+// La série d'un travail d'animation (RV5/RV6) n'est pas encore typée sur
+// `Travail` : un travail son (`TravailAudio`) porte un champ du même nom mais
+// d'une autre forme (`{identifiant,rang}`, sans `cle`). Lire les deux à la
+// prudence évite de figer un type commun aux deux, qui n'existe pas côté
+// serveur.
+function cleDeLaSerieDuTravail(t: TravailSuivi): string | null {
+  const s = (t as unknown as { serie?: { cle?: string; identifiant?: string } }).serie
+  return s?.cle ?? s?.identifiant ?? null
+}
+
+type LigneFabrication = {
+  cle: string
+  origine: "travail" | "locale" | "appel"
+  titre: string
+  sousTitre: string
+  humeur: Humeur
+  raison: string | null
+  laceLe: number
+  serieCle: string | null
+  vignette: { src: string | null; lettre: string }
+  travail?: TravailSuivi
+  locale?: EtapeLocale
+  appel?: Appel
+  generation?: Generation
+}
+
+/** **RV9 : le regroupement d'une série.** Deux lignes se regroupent quand le
+ *  serveur leur connaît la même série (RV5/RV6 : plusieurs clips d'une même
+ *  case, ou plusieurs directions lancées d'un coup). Sans série — un son ou un
+ *  calcul local relancés à la main plusieurs fois de suite —, elles se
+ *  regroupent quand elles partagent l'origine et le titre et sont parties à
+ *  moins d'une minute d'écart : passé la minute, ce n'est plus le même geste. */
+function cleDeGroupe(l: LigneFabrication): string {
+  if (l.serieCle) return `serie:${l.serieCle}`
+  return `seule:${l.origine}:${l.titre}:${Math.floor(l.laceLe / 60)}`
+}
+
+const LETTRE_DU_TRAVAIL: Record<string, string> = { equipement: "É", audio: "S", "3d": "3D", "image-locale": "I", "video-libre": "V" }
+
+/** **Quatre champs qu'un travail d'animation porte, et que deux natures
+ *  (équipement, 3D) ne portent pas du tout** — `TravailEquipement` et
+ *  `Travail3D` ne dérivent pas de `Travail` (`api-travaux-equipement.ts`,
+ *  `api-3d.ts`). Lus à la prudence plutôt que d'importer les cinq types
+ *  satellites pour un champ optionnel chacun : à l'exécution, ils sont
+ *  simplement absents pour les natures qui ne les portent pas. */
+function champsAnimes(t: TravailSuivi) {
+  return t as unknown as { clip?: string | null; entree_video?: { url: string }; lance_le?: number; modifie_le?: number; generation_image?: string | null; etape_locale?: string | null }
+}
+
+function vignetteDuTravail(t: TravailSuivi): { src: string | null; lettre: string } {
+  const anime = t.nature === undefined || t.nature === "animation" || t.nature === "video-libre"
+  const { clip, entree_video: entreeVideo } = champsAnimes(t)
+  if (anime && clip && t.etat === "termine") return { src: api.couvertureDuClip(clip, 108), lettre: "" }
+  if ((t.nature === undefined || t.nature === "animation") && entreeVideo) return { src: entreeVideo.url, lettre: "" }
+  return { src: null, lettre: LETTRE_DU_TRAVAIL[t.nature ?? "animation"] ?? "A" }
+}
+
+export function SuiviDesTravaux({ projet, personnages, chantier = [], clips = [], onClip, onBande, onGalerie, onSujet, onCalqueEquipement, onAsset, onToile, onSon }: {
+  /** **RV9** : sans jeu ouvert, les travaux suivis restent vides — il n'y a
+   *  pas de production-jobs sans jeu —, mais le journal et la file locale
+   *  savent tous les deux lire « sans projet » : la liste ne disparaît pas. */
+  projet: string | null; personnages: readonly Personnage[]
+  /** **RV9** : le chantier et les clips déjà connus de l'écran qui monte
+   *  celle-ci (flux SSE) — pour ne pas relire deux fois la même chose en
+   *  attendant le prochain tour du journal. Facultatifs : un travail seul
+   *  (l'onglet Agent MCP des réglages, par exemple) n'en a aucun à offrir. */
+  chantier?: readonly Generation[]; clips?: readonly Generation[]
+  onClip: (id: string) => void; onBande?: (id: string) => void
+  /** Absent, les boutons qui mènent à la galerie d'une ligne du journal ne
+   *  paraissent pas — un travail seul n'a pas de galerie à côté de lui. */
+  onGalerie?: () => void; onSujet?: (id: string) => void
+  onCalqueEquipement?: OuvrirCalqueEquipement; onAsset?: (id: string) => void; onToile?: (id: string) => void; onSon?: (id: string) => void
 }) {
   const [liste, setListe] = useState<TravailSuivi[]>([])
+  const [appels, setAppels] = useState<Appel[]>([])
+  const [locales, setLocales] = useState<EtapeLocale[]>([])
+  const [moteurs, setMoteurs] = useState<MoteurLocal[]>([])
   const [ouvert, setOuvert] = useState<TravailSuivi | null>(null)
   const [erreur, setErreur] = useState("")
+  const [humeur, setHumeur] = useState<Humeur | "">("")
+  const [recherche, setRecherche] = useState("")
+  const [deplies, setDeplies] = useState<Set<string>>(new Set())
+  const [occupeLocal, setOccupeLocal] = useState<string | null>(null)
+
   useEffect(() => {
+    if (!projet) { setListe([]); return }
     let vivant = true
     const lire = () => void travaux.lister(projet).then((r) => { if (vivant) setListe(r) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
     lire(); const intervalle = window.setInterval(lire, 5000)
     return () => { vivant = false; window.clearInterval(intervalle) }
   }, [projet, ouvert])
+  useEffect(() => {
+    let vivant = true
+    const lire = () => void api.journal(projet).then((j) => { if (vivant) setAppels(j.appels) }).catch(() => {})
+    lire(); const intervalle = window.setInterval(lire, 5000)
+    return () => { vivant = false; window.clearInterval(intervalle) }
+  }, [projet])
+  useEffect(() => {
+    let vivant = true
+    const lire = () => void fileLocale.lire().then((f) => { if (vivant) setLocales(f.etapes) }).catch(() => {})
+    lire(); const intervalle = window.setInterval(lire, 5000)
+    return () => { vivant = false; window.clearInterval(intervalle) }
+  }, [])
+  useEffect(() => {
+    let vivant = true
+    fileLocale.moteurs().then((r) => { if (vivant) setMoteurs(r.moteurs) }).catch(() => {})
+    return () => { vivant = false }
+  }, [])
+
+  const lignes = useMemo<LigneFabrication[]>(() => {
+    const generationsDeTravaux = new Set(liste.flatMap((t) => { const c = champsAnimes(t); return [c.generation_image, c.clip].filter((x): x is string => !!x) }))
+    const etapesDeTravaux = new Set(liste.map((t) => champsAnimes(t).etape_locale).filter((x): x is string => !!x))
+
+    const deTravaux: LigneFabrication[] = liste.flatMap((t) => {
+      const h = humeurDuTravail(t.etat)
+      if (!h) return []
+      return [{
+        cle: `travail:${t.identifiant}`, origine: "travail" as const,
+        titre: nomDuTravail(t, personnages), sousTitre: t.acteur === "agent" ? "Agent" : "Création manuelle",
+        humeur: h, raison: h !== "en_cours" ? (t.raison ?? null) : null,
+        laceLe: champsAnimes(t).lance_le ?? champsAnimes(t).modifie_le ?? t.cree_le, serieCle: cleDeLaSerieDuTravail(t),
+        vignette: vignetteDuTravail(t), travail: t,
+      }]
+    })
+
+    // **Le même mélange qu'avant RV9** (chantier et clips l'emportent sur le
+    // journal à identifiant égal, RP11) — sauf ce qu'un travail porte déjà.
+    const parGeneration = new Map<string, { appel: Appel; generation?: Generation }>()
+    appels.forEach((a) => { if (!generationsDeTravaux.has(a.identifiant)) parGeneration.set(a.identifiant, { appel: a }) })
+    ;[...clips, ...chantier].filter((g) => g.projet === projet && !generationsDeTravaux.has(g.identifiant)).forEach((g) =>
+      parGeneration.set(g.identifiant, { appel: { identifiant: g.identifiant, modele: g.modele, prompt: g.demande.prompt, cree_le: g.cree_le, cout_usd: g.cout_usd, statut: g.statut, reussies: g.reussies, rates: [] }, generation: g }))
+    const dAppels: LigneFabrication[] = [...parGeneration.values()].map(({ appel: a, generation: g }) => ({
+      cle: `appel:${a.identifiant}`, origine: "appel" as const,
+      titre: a.prompt || "Demande sans texte", sousTitre: a.modele,
+      humeur: humeurDeLAppel(a.statut), raison: a.rates.find((r) => r.raison)?.raison ?? null,
+      laceLe: a.cree_le, serieCle: null,
+      vignette: g?.clip ? { src: api.couvertureDuClip(a.identifiant, 108), lettre: "" } : { src: null, lettre: "I" },
+      appel: a, generation: g,
+    }))
+
+    const deLocales: LigneFabrication[] = locales
+      .filter((e) => !etapesDeTravaux.has(e.identifiant) && (e.projet === projet || e.projet === null))
+      .map((e) => ({
+        cle: `locale:${e.identifiant}`, origine: "locale" as const,
+        titre: `${NATURES_LOCALES[e.nature]} · ${nomDuModele(e.modele)}`, sousTitre: e.acteur === "agent" ? "Agent" : "Création manuelle",
+        humeur: humeurLocale(e.etat), raison: e.raison || null,
+        laceLe: e.cree_le, serieCle: null,
+        vignette: { src: null, lettre: LETTRES_LOCALES[e.nature] },
+        locale: e,
+      }))
+
+    return [...deTravaux, ...dAppels, ...deLocales].sort((a, b) => b.laceLe - a.laceLe)
+  }, [liste, appels, locales, chantier, clips, projet, personnages])
+
+  const texteDeRecherche = recherche.trim().toLocaleLowerCase("fr")
+  const filtrees = lignes.filter((l) =>
+    (!humeur || l.humeur === humeur) &&
+    (!texteDeRecherche || `${l.titre} ${l.sousTitre}`.toLocaleLowerCase("fr").includes(texteDeRecherche)))
+  const groupes = useMemo(() => {
+    const parCle = new Map<string, LigneFabrication[]>()
+    for (const l of filtrees) {
+      const cle = cleDeGroupe(l)
+      const groupe = parCle.get(cle)
+      if (groupe) groupe.push(l); else parCle.set(cle, [l])
+    }
+    return [...parCle.values()].sort((a, b) => b[0].laceLe - a[0].laceLe)
+  }, [filtrees])
+
+  async function agirLocal(e: EtapeLocale, annuler: boolean) {
+    setOccupeLocal(e.identifiant); setErreur("")
+    try {
+      await (annuler ? fileLocale.annuler(e.identifiant) : fileLocale.reprendre(e.identifiant))
+      setLocales((ls) => ls.map((x) => x.identifiant === e.identifiant ? { ...x, etat: annuler ? "annule" : "en_attente" } : x))
+    } catch (err) { setErreur(message(err)) }
+    finally { setOccupeLocal(null) }
+  }
+
   return <section aria-label="Fabrications suivies" className="mt-[22px] rounded-8 border border-trait bg-carte p-[22px]">
-    <div className="flex items-center justify-between gap-[14px]"><div><h2 className="font-serif text-[25px]">Créer et suivre les fabrications</h2><p className="mt-[8px] text-[13px] text-encre-3">Images, clips, équipements et sons : retrouvez chaque demande et ses résultats ici.</p></div><button className={BOUTON} disabled={!personnages.length || !onPreparer} onClick={() => onPreparer?.("clip")}>Nouvelle animation</button></div>
+    <div><h2 className="font-serif text-[25px]">Les fabrications</h2>
+      <p className="mt-[4px] text-[13px] text-encre-3">{moteurs.length ? moteurs.map((m) => `${m.nom} : ${MOTEURS_LABEL[m.etat]}`).join(" · ") : "Images, clips, équipements et sons : chaque demande et son résultat, dès qu'elle part."}</p></div>
+    <div className="mt-[14px] flex flex-wrap items-end gap-[14px]">
+      <label className="flex flex-1 flex-col gap-[4px] text-[12px] text-encre-3"><Libelle aide="fabrication.recherche">Rechercher une fabrication</Libelle><input type="search" value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder="Demande ou modèle…" className={CHAMP} /></label>
+      <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">État<select value={humeur} onChange={(e) => setHumeur(e.target.value as Humeur | "")} className={CHAMP}><option value="">Toutes</option>{(Object.keys(NOM_DE_L_HUMEUR) as Humeur[]).map((h) => <option key={h} value={h}>{NOM_DE_L_HUMEUR[h]}</option>)}</select></label>
+    </div>
     {erreur && <p role="alert" className="mt-[14px] text-echec">{erreur}</p>}
-    <div className="mt-[14px] space-y-[8px]">{liste.map((t) => <button key={t.identifiant} className="flex w-full items-center justify-between gap-[14px] rounded-7 border border-trait p-[14px] text-left hover:border-contour" onClick={() => setOuvert(t)}>
-      <span className="text-[13px]">{nomDuTravail(t, personnages)}<small className="mt-[4px] block text-encre-3">{t.acteur === "agent" ? "Agent" : "Création manuelle"} · {new Date(t.cree_le * 1000).toLocaleString("fr-FR")}</small></span><span className="text-[12px] text-encre-3">{ETATS[t.etat]}</span>
-    </button>)}</div>
-    {ouvert && <FenetreDuTravail key={ouvert.identifiant} travail={ouvert} projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} onFermer={() => setOuvert(null)} onCalqueEquipement={onCalqueEquipement} onAsset={onAsset} onToile={onToile} onSon={onSon} />}
+    <div className="mt-[14px] space-y-[8px]">
+      {groupes.map((groupe) => {
+        const cle = cleDeGroupe(groupe[0])
+        return <LigneDeLaListe key={cle} groupe={groupe} deplie={deplies.has(cle)}
+          onDeplier={() => setDeplies((d) => { const n = new Set(d); n.has(cle) ? n.delete(cle) : n.add(cle); return n })}
+          onOuvrir={(l) => l.travail && setOuvert(l.travail)}
+          occupeLocal={occupeLocal} onAgirLocal={agirLocal}
+          onClip={onClip} onSujet={onSujet} onGalerie={onGalerie} />
+      })}
+      {!groupes.length && <p className="text-[13px] text-encre-3">Aucune fabrication pour ces filtres.</p>}
+    </div>
+    {projet && ouvert && <FenetreDuTravail key={ouvert.identifiant} travail={ouvert} projet={projet} personnages={personnages} onClip={onClip} onBande={onBande} onFermer={() => setOuvert(null)} onCalqueEquipement={onCalqueEquipement} onAsset={onAsset} onToile={onToile} onSon={onSon} />}
   </section>
+}
+
+function Vignette({ v }: { v: { src: string | null; lettre: string } }) {
+  return v.src
+    ? <img src={v.src} alt="" className="h-[34px] w-[34px] shrink-0 rounded-7 border border-trait object-contain" />
+    : <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-7 border border-trait bg-pourtour text-[12px] text-encre-3">{v.lettre}</span>
+}
+
+function LigneDeLaListe({ groupe, deplie, onDeplier, onOuvrir, occupeLocal, onAgirLocal, onClip, onSujet, onGalerie }: {
+  groupe: LigneFabrication[]; deplie: boolean; onDeplier: () => void
+  onOuvrir: (l: LigneFabrication) => void
+  occupeLocal: string | null; onAgirLocal: (e: EtapeLocale, annuler: boolean) => void
+  onClip: (id: string) => void; onSujet?: (id: string) => void; onGalerie?: () => void
+}) {
+  const premiere = groupe[0]
+  if (groupe.length === 1) return <LigneUnique ligne={premiere} onOuvrir={onOuvrir} occupeLocal={occupeLocal} onAgirLocal={onAgirLocal} onClip={onClip} onSujet={onSujet} onGalerie={onGalerie} />
+  const humeurGroupe: Humeur = groupe.some((l) => l.humeur === "en_cours") ? "en_cours"
+    : groupe.some((l) => l.humeur === "ratee") ? "ratee" : groupe.some((l) => l.humeur === "a_reprendre") ? "a_reprendre" : "terminee"
+  return <article className="rounded-7 border border-trait p-[14px]">
+    <button type="button" className="flex w-full items-center justify-between gap-[14px] text-left" onClick={onDeplier} aria-expanded={deplie}>
+      <span className="flex min-w-0 items-center gap-[14px]"><Vignette v={premiere.vignette} /><span className="min-w-0 truncate text-[13px]">{premiere.titre}<small className="mt-[4px] block text-encre-3">× {groupe.length}</small></span></span>
+      <span className="shrink-0 text-[12px] text-encre-3">{NOM_DE_L_HUMEUR[humeurGroupe]} · {deplie ? "replier ›" : "déplier ›"}</span>
+    </button>
+    {deplie && <div className="mt-[14px] space-y-[8px] border-t border-trait pt-[14px]">{groupe.map((l) => <LigneUnique key={l.cle} ligne={l} onOuvrir={onOuvrir} occupeLocal={occupeLocal} onAgirLocal={onAgirLocal} onClip={onClip} onSujet={onSujet} onGalerie={onGalerie} />)}</div>}
+  </article>
+}
+
+function LigneUnique({ ligne: l, onOuvrir, occupeLocal, onAgirLocal, onClip, onSujet, onGalerie }: {
+  ligne: LigneFabrication; onOuvrir: (l: LigneFabrication) => void
+  occupeLocal: string | null; onAgirLocal: (e: EtapeLocale, annuler: boolean) => void
+  onClip: (id: string) => void; onSujet?: (id: string) => void; onGalerie?: () => void
+}) {
+  return <article className="rounded-7 border border-trait p-[14px]">
+    <div className="flex items-center gap-[14px]">
+      <Vignette v={l.vignette} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-[14px]">
+          {l.origine === "travail"
+            ? <button type="button" className="min-w-0 flex-1 truncate text-left text-[13px] text-encre" onClick={() => onOuvrir(l)}>{l.titre}</button>
+            : <span className="min-w-0 flex-1 truncate text-[13px] text-encre">{l.titre}</span>}
+          <span className={`shrink-0 text-[12px] ${l.humeur === "ratee" ? "text-echec" : l.humeur === "en_cours" ? "text-signal" : "text-encre-3"}`}>{NOM_DE_L_HUMEUR[l.humeur]}</span>
+        </div>
+        <p className="mesure mt-[4px] text-[11px] text-encre-3">{l.sousTitre} · {new Date(l.laceLe * 1000).toLocaleString("fr-FR")}</p>
+        {l.raison && <p className="mt-[4px] text-[12px] text-echec">{l.raison}</p>}
+        {l.origine === "appel" && l.appel && <div className="mt-[8px] flex flex-wrap gap-[8px]">
+          {l.appel.statut === "reussie" && (l.generation?.clip || onGalerie) && <button className={BOUTON} onClick={() => l.generation?.clip ? onClip(l.appel!.identifiant) : onGalerie?.()}>{l.generation?.clip ? "Ouvrir le montage du clip" : "Voir les résultats dans la galerie"}</button>}
+          {l.generation?.personnage && <button className={BOUTON} onClick={() => onSujet?.(l.generation!.personnage!)}>Ouvrir le sujet</button>}
+          {onGalerie && (l.appel.statut === "echouee" || l.appel.statut === "interrompue") && <button className={BOUTON} onClick={onGalerie}>Reprendre depuis la galerie</button>}
+        </div>}
+        {l.origine === "locale" && l.locale && (l.locale.etat === "a_reprendre" || (l.locale.etat === "en_attente" && !l.locale.soumission_engagee)) && <div className="mt-[8px]">
+          {l.locale.etat === "a_reprendre" && <button disabled={occupeLocal !== null} className={BOUTON} onClick={() => onAgirLocal(l.locale!, false)}>Reprendre le suivi</button>}
+          {l.locale.etat === "en_attente" && !l.locale.soumission_engagee && <button disabled={occupeLocal !== null} className={BOUTON} onClick={() => onAgirLocal(l.locale!, true)}>Annuler cette attente</button>}
+        </div>}
+      </div>
+    </div>
+  </article>
 }
 
 export function TravailConserve({ projet, identifiant, personnages, onClip, onBande, onFermer, onCalqueEquipement, onAsset, onToile, onSon }: {

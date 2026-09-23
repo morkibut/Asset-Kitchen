@@ -850,6 +850,36 @@ async def premiere_planche(
     return atelier.generations.premiere_planche(vise, identifiant)
 
 
+@routeur.get("/characters/{identifiant}/starting-image")
+async def image_de_depart(
+    requete: Request,
+    identifiant: str,
+    pose: str = Query(...),
+    direction: list[str] = Query(default_factory=list),
+    projet: str | None = Query(None),
+) -> dict[str, Any]:
+    """**RV19** : l'image que la fenêtre « Animer » proposerait pour chaque
+    direction demandée, calculée par `production.image_de_depart` — **la
+    même règle que la relecture** (`services/travaux.py`, `preparer`), pas une
+    seconde version côté écran. Une seule direction absente vaut « sans
+    direction ». Rien n'est facturé ni appelé : elle lit la bibliothèque.
+
+    **Une route du même nom (`GET /clips/start-image`) avait été retirée le
+    21 septembre 2026, faute d'appelant** (`tests/test_a9.py`). Celle-ci en a
+    un : le point « Image de départ » de `FabricationSuivie.tsx`, qui
+    l'affiche case par case avant de choisir.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    directions = direction or [""]
+    return {
+        "cases": [
+            {"direction": d, **atelier.production.image_de_depart(vise, identifiant, pose, d or None)}
+            for d in directions
+        ]
+    }
+
+
 @routeur.put("/characters/{identifiant}/reference-image")
 async def poser_image_de_reference(
     requete: Request, identifiant: str, corps: CorpsImageDeReference

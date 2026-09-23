@@ -22,6 +22,9 @@ beforeEach(() => {
   vi.spyOn(travaux, "lire").mockResolvedValue({ ...t, etat: "termine" })
   vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [], masques: [] })
   vi.spyOn(api, "mouvementDeLaPose").mockRejectedValue(new Error("non mocké dans cet essai"))
+  // **RV19** : par défaut, aucune case n'a d'image — chaque essai qui s'y
+  // intéresse précise sa propre réponse.
+  vi.spyOn(api, "imageDeDepart").mockResolvedValue({ cases: [] })
 })
 afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks() })
 
@@ -223,6 +226,50 @@ test("corriger le geste puis « Garder pour le jeu » écrit le texte dans la bi
   await waitFor(() => expect(regler).toHaveBeenCalledWith("flotte", { texte: "it drifts gently" }, "jeu"))
 })
 
+// ── RV19 : l'image de départ se voit avant de choisir ───────────────────────
+
+test("« corriger le geste » ouvre le champ déjà rempli du geste actuel, modifiable", async () => {
+  vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
+  vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue({
+    pose: "marche", mouvement: mouvementFlotte, texte: "Facing south. it floats", direction: "Facing south.",
+    geste: "it floats", origine: "mouvement", style: null, styles_proposes: [],
+  })
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  await waitFor(() => expect(screen.getByLabelText("Geste")).toHaveValue("flotte"))
+  fireEvent.click(screen.getByText("corriger le geste ›"))
+  // **Rempli, pas grisé** : le champ porte déjà le geste actuel, prêt à modifier.
+  expect(screen.getByLabelText("Corriger le geste pour cet appel")).toHaveValue("it floats")
+  // Retrouver exactement ce texte n'est pas une correction : rien ne part en plus.
+  expect(screen.queryByText("remettre le texte du mouvement")).toBeNull()
+})
+
+test("une case sans image le dit, et propose le modèle recommandé, présélectionné", async () => {
+  vi.spyOn(api, "imageDeDepart").mockResolvedValue({
+    cases: [{ direction: "sud", asset: null, origine: "aucune", raison: "« Pèlerin » n’a encore aucune image." }],
+  })
+  vi.spyOn(api, "modeles").mockResolvedValue({
+    modeles: [
+      { identifiant: "Local:qwen21-rapide", nom: "Qwen rapide", fournisseur: "Local", locale: true, options: {}, refus: null },
+      { identifiant: "Images:payant", nom: "Modèle payant", fournisseur: "Images", options: {}, refus: null },
+    ],
+  } as Awaited<ReturnType<typeof api.modeles>>)
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  expect(await screen.findByText("aucune image pour Sud")).toBeTruthy()
+  const recommande = await screen.findByRole("radio", { name: /Qwen rapide.*recommandé/ })
+  await waitFor(() => expect(recommande).toBeChecked())
+  expect(screen.getByLabelText("Description de l’image à créer")).toBeTruthy()
+})
+
+test("quand chaque case a déjà son image, la liste des modèles disparaît et laisse une phrase", async () => {
+  vi.spyOn(api, "imageDeDepart").mockResolvedValue({
+    cases: [{ direction: "sud", asset: { identifiant: "portrait-1", label: "Portrait" } as Awaited<ReturnType<typeof api.imageDeDepart>>["cases"][number]["asset"], origine: "portrait", raison: "le portrait de Pèlerin" }],
+  })
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  expect(await screen.findByAltText("Image de départ proposée — Sud")).toHaveAttribute("src", expect.stringContaining("portrait-1"))
+  expect(screen.getByText("Chaque case ci-dessus a déjà son image de départ.")).toBeTruthy()
+  expect(screen.queryByText(/Modèle pour créer/)).toBeNull()
+})
+
 test("un geste hérité d’un style se garde sur le style, pas sur le mouvement", async () => {
   vi.spyOn(api, "mouvements").mockResolvedValue({ mouvements: [mouvementFlotte], masques: [] })
   vi.spyOn(api, "mouvementDeLaPose").mockResolvedValue({
@@ -360,4 +407,61 @@ test("« Tout animer » arme des cases de poses différentes dans la même séri
   ]))
   expect(nombre).toBe(1)
   expect(await screen.findByText("4 clips")).toBeTruthy()
+})
+
+// **RV7 — retours de l'auteur au test de RV6 (23 septembre 2026)** : la
+// relecture d'une série égale celle d'un clip seul, case par case ; après
+// « Lancer », chaque case dit son étape et son temps, puis sa vignette ou
+// « ratée », sans rien déplier ; et le pied dit qu'on peut fermer.
+test("une série montre ce qui part par case, puis l'étape, le temps, la vignette ou « ratée », et qu'on peut fermer", async () => {
+  const deuxDirections = { ...personnage, cases: [{ pose: "marche", directions: [{ identifiant: "sud", nom: "Sud" }, { identifiant: "est", nom: "Est" }] }] } as unknown as Personnage
+  const depart = { entree_video: { url: "/depart-sud.png", empreinte: "e" }, references: [] }
+  const serieReponse: Serie = {
+    serie: { cle: "cle-rv7", identifiant: "id-rv7", total: 2 },
+    travaux: [
+      { ...t, identifiant: "t-sud", demande: { ...t.demande, direction: "sud" }, etat: "prepare", ...depart },
+      { ...t, identifiant: "t-est", demande: { ...t.demande, direction: "est" }, etat: "prepare" },
+    ] as unknown as Travail[],
+    annonce_serie: { reservation_usd: 1, temps_s: null, appels: 2, locale: false },
+  }
+  vi.spyOn(travaux, "preparerSerie").mockResolvedValue(serieReponse)
+  const lance = Date.now() / 1000 - 80
+  vi.spyOn(travaux, "demarrerSerie").mockResolvedValue({
+    ...serieReponse, travaux: serieReponse.travaux.map((v) => ({ ...v, etat: "en_cours", phase: "video", lance_le: lance, attendu_s: 180 }) as Travail),
+  })
+  vi.spyOn(travaux, "lire").mockImplementation(async (_p, id) => (id === "t-sud"
+    ? { ...serieReponse.travaux[0], etat: "termine", clip: "t-sud-video", bandes: ["t-sud-bande"] }
+    : { ...serieReponse.travaux[1], etat: "a_verifier", controle: "noire", raison: "la vidéo est revenue noire" }) as Travail)
+  const onFermer = vi.fn()
+  const onBande = vi.fn()
+  render(<FabricationSuivie projet="jeu" personnages={[deuxDirections]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} modeleInitial="Video:modele" onClip={() => {}} onBande={onBande} onFermer={onFermer} />)
+  await screen.findByRole("option", { name: /Vidéo test/ })
+  fireEvent.click(screen.getByLabelText("Est"))
+  fireEvent.change(screen.getByLabelText("Décrire l’animation"), { target: { value: "Il marche" } })
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
+
+  // Avant de lancer : l'image de départ de la case sud, et les références que
+  // la case est enverra pour créer la sienne.
+  expect(await screen.findByAltText("Image de départ envoyée à la vidéo")).toHaveAttribute("src", "/depart-sud.png")
+  expect(screen.getByText("image de départ à créer")).toBeTruthy()
+  expect(screen.getByAltText("Référence envoyée")).toHaveAttribute("src", "/reference-figee.png")
+  expect(screen.queryByRole("button", { name: "Fermer, ça continue" })).toBeNull()
+
+  fireEvent.click(screen.getByRole("button", { name: /Lancer 2 clips/ }))
+  // Lancé : l'étape et le temps écoulé sur le temps attendu, sans déplier.
+  expect(await screen.findAllByText(/^Vidéo · 1 min 2\d \/ ≈ 3 min$/)).toHaveLength(2)
+  expect(screen.getByText(/Tu peux fermer cette fenêtre : la fabrication continue/)).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "Fermer, ça continue" }))
+  expect(onFermer).toHaveBeenCalledOnce()
+
+  // Relu deux secondes plus tard : sud est arrivée, est a raté.
+  expect(await screen.findByText("Arrivée", {}, { timeout: 3000 })).toBeTruthy()
+  expect(screen.getByText("Ratée")).toBeTruthy()
+  expect(screen.getByText("la vidéo est revenue noire")).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "Ouvrir Sud" }))
+  expect(onBande).toHaveBeenCalledWith("t-sud-bande")
+  // « Relancer » rouvre la préparation, remplie ; rien ne part.
+  fireEvent.click(screen.getByRole("button", { name: "Relancer" }))
+  expect(await screen.findByRole("button", { name: "Relire avant l’envoi" })).toBeTruthy()
+  expect(travaux.demarrerSerie).toHaveBeenCalledOnce()
 })

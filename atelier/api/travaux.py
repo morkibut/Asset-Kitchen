@@ -22,6 +22,15 @@ def lister(requete: Request, projet: str):
     return requete.app.state.atelier.travaux.lister(projet)
 
 
+# **RV7** : ce qui est parti, rangé par case visée — déclarée avant
+# `production-jobs/{identifiant}`, qui prendrait sinon « by-case » pour un
+# identifiant. `personnage` restreint à un sujet ; la forme est écrite en tête
+# de `atelier/services/retours.py`.
+@routeur.get("/projects/{projet}/production-jobs/by-case")
+def retours(requete: Request, projet: str, personnage: str | None = None):
+    return requete.app.state.atelier.travaux.retours(projet, personnage)
+
+
 @routeur.post("/projects/{projet}/production-jobs/preview")
 async def preparer(requete: Request, projet: str, corps: dict[str, Any]):
     return await requete.app.state.atelier.travaux.preparer(projet, corps, "auteur")

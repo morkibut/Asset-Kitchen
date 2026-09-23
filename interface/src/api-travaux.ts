@@ -48,9 +48,18 @@ export type Travail = {
   nature?: "animation"
   identifiant: string; projet: string; cle: string; acteur: "auteur" | "agent"
   etat: "prepare" | "en_cours" | "a_reprendre" | "a_verifier" | "externe_inconnu" | "termine" | "annule"
+  /** **RV9** : l'étape de la file locale que ce travail a fait tourner, quand
+   *  il tourne ou a tourné en local — la liste unique des fabrications l'utilise
+   *  pour ne pas montrer deux fois le même calcul (une fois comme travail, une
+   *  fois comme ligne de la file locale). */
   etape_locale?: string | null
   etape: string; demande: DemandeTravail; cree_le: number; modifie_le?: number
   reference_asset: string | null; clip: string | null; bandes: string[]
+  /** **RV9** : la génération de l'image de départ, quand ce travail en a créé
+   *  une — c'est elle que le journal des appels connaît sous son propre
+   *  identifiant. Même raison qu'`etape_locale` : ne pas montrer deux fois le
+   *  même appel (une fois comme travail, une fois comme ligne de journal). */
+  generation_image?: string | null
   references: { asset?: string | null; nom: string; url: string; empreinte: string }[]
   entree_video?: { url: string; empreinte: string }
   envoi_image?: { prompt: string; prompt_negatif?: string; options: Record<string, unknown>; proportions: string; resolution?: string | null }
@@ -59,7 +68,30 @@ export type Travail = {
     reservation_usd: number; appels: number; limite: string; video_locale: boolean }
   consommations: { generation: string; modele: string; consomme: number; unite: string; cout_usd: number }[]
   raison?: string; prochaine_action: string; livraison?: string | null
+  /** RV1 : le contrôle d'arrivée qui a rejeté le clip (noire, immobile, vide). */
+  controle?: string | null
+  /** **RV7** : l'heure du départ, l'étape en un mot et le temps attendu depuis
+   *  le départ (`null` : personne ne sait) — calculés au serveur, au même
+   *  endroit que pour la case visée (`atelier/services/retours.py`). */
+  lance_le?: number; phase?: Phase; attendu_s?: number | null
 }
+/** **RV7** : ce qu'un travail attend, en un mot. */
+export type Phase = "image" | "video" | "decoupage" | "livraison" | "termine"
+export const NOM_DE_LA_PHASE: Record<Phase, string> = { image: "Image de départ", video: "Vidéo", decoupage: "Découpage", livraison: "Livraison", termine: "Terminée" }
+/** **RV7 — ce qui est parti, rangé par case visée.** La forme est écrite en
+ *  tête de `atelier/services/retours.py` ; l'écran la relit, il ne la pousse
+ *  jamais. */
+export type Retour = {
+  nature: "clip" | "image"
+  travail: string | null; generation: string | null; serie: string | null
+  personnage: string; pose: string; direction: string
+  etat: "en_cours" | "ratee" | "interrompue"
+  phase: Phase
+  lance_le: number; attendu_s: number | null
+  raison: string | null; clip: string | null
+  demande: DemandeTravail | null
+}
+export type RetoursParCase = { retours: Retour[]; clips_suivis: string[] }
 export type TravailSuivi = Travail | TravailEquipement | TravailImageLocale | TravailVideoLibre | Travail3D | TravailAudio
 export type EtatDeTravail = Travail["etat"]
 
@@ -103,6 +135,9 @@ export const travaux = {
     return appeler<CadreDelegation>(`${chemin(projet)}/delegation`, { method: "PUT", body: JSON.stringify(reglages) })
   },
   lister: (projet: string) => appeler<TravailSuivi[]>(`${chemin(projet)}/production-jobs`),
+  /** **RV7** : ce qui est parti pour ce sujet, rangé par case visée. */
+  retours: (projet: string, personnage: string) =>
+    appeler<RetoursParCase>(`${chemin(projet)}/production-jobs/by-case?personnage=${encodeURIComponent(personnage)}`),
   preparer: (projet: string, demande: DemandeTravail) => appeler<Travail>(`${chemin(projet)}/production-jobs/preview`, { method: "POST", body: JSON.stringify(demande) }),
   /** **RV5** : prépare `cases.length × nombre` travaux d'un coup — une case
    *  vide reprend celle de `commune`. `commune` est une `DemandeTravail` sans

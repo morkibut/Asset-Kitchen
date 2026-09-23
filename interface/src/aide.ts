@@ -498,90 +498,65 @@ export const AIDE: Record<string, Explication> = {
 
   // ── Fabrications — la racine du même nom (`Fabrications.tsx`) ─────────────
   //
-  // **Ces neuf fiches empruntaient `ou: "clip"`, et aucune ne parle d'un
-  // clip** (`GU15`, 1/2). Elles décrivent l'écran *Fabrications* : le journal
-  // des appels, la file des calculs locaux, les méthodes locales, la vidéo
-  // libre, et les demandes qu'on rouvre depuis *Créer et suivre les
-  // fabrications*. L'écran n'avait pas de valeur à lui ; il en a une, et les
-  // neuf y sont rangées sur six zones, dans l'ordre où `Fabrications.tsx` les
-  // montre. Textes inchangés, sauf trois `quoi` ramenés sous les 140 signes de
-  // `GU3` — la phrase de trop est retirée, aucun mot n'est réécrit.
+  // **RV9 a fondu trois listes en une** (« Créer et suivre les
+  // fabrications », « Les calculs locaux », le journal et sa recherche) dans
+  // `SuiviDesTravaux` (`FabricationSuivie.tsx`), et les boutons de départ
+  // dans « Nouvelle fabrication » seul. Les fiches qui décrivaient les portes
+  // disparues (« Animer un sujet », « Préparer un son », « Actualiser », la
+  // file locale à part) sont retirées avec elles ; celles qui restent
+  // décrivent la liste unique, sa recherche et ses filtres, et la fenêtre
+  // d'une demande — inchangée, RV9 ne touche à rien de ce qu'elle montre.
   //
-  // ⚠️ **Six des neuf décrivent la fenêtre d'une demande**, celle que
-  // `SuiviDesTravaux` ouvre ici même (`FenetreDuTravail`) et que le lieu
-  // `travail` rouvre par sa seconde porte, l'onglet *Agent MCP* des réglages.
-  // C'est ce qui fait que `travail` hérite de cet écran-ci plutôt que du sien
-  // (`ecranDuGuide`, `App.tsx`).
+  // **La fenêtre d'une demande** est celle que `SuiviDesTravaux` ouvre ici
+  // même (`FenetreDuTravail`), et que le lieu `travail` rouvre par sa seconde
+  // porte, l'onglet *Agent MCP* des réglages — c'est ce qui fait que
+  // `travail` hérite de cet écran-ci plutôt que du sien (`ecranDuGuide`,
+  // `App.tsx`).
   //
-  // **Neuf fiches de plus depuis `GU15` (2/2)**, pour ce que l'écran montre
-  // sans que rien ne l'explique : les portes qui ouvrent la préparation, la
-  // liste des travaux suivis, et le journal — sa recherche, ses boutons
-  // *Actualiser* et *Consommation*, ses lignes et leurs quatre boutons.
-  // L'ordre du fichier est
-  // celui de l'écran, de haut en bas ; le journal, qui est en bas, passe donc
-  // avant le rendu 3D rouvert, qui n'est dans aucune page mais dans la fenêtre
-  // d'un travail.
-  //
-  // **Rien de ce qui se lit ici ne paie.** Les portes ouvrent la fenêtre de
-  // préparation, qui n'envoie rien ; l'argent ne part que du bouton de
-  // *Relire avant l'envoi* (`ou: "envoi"`). *Consommation* mène aux dépenses,
-  // un écran de lecture. Chaque fiche qui ouvre quelque chose le dit.
+  // **Rien de ce qui se lit ici ne paie.** La liste et ses filtres ne font
+  // que relire ; l'argent ne part que du bouton de *Relire avant l'envoi*
+  // (`ou: "envoi"`). *Consommation* mène aux dépenses, un écran de lecture.
+  // Chaque fiche qui ouvre quelque chose le dit.
 
   "fabrication.commencer": {
-    nom: "Nouvelle fabrication, Préparer une image",
-    groupe: "Commencer une fabrication — une image, un sujet, un son",
-    quoi: "Les deux boutons ouvrent la même fenêtre, sur une image libre : le modèle, la demande et les références se choisissent dedans.",
+    nom: "Nouvelle fabrication",
+    groupe: "La liste des fabrications",
+    quoi: "Le seul bouton de départ : il ouvre la fenêtre de préparation, sur une image libre, sans sujet visé.",
     change: "Rien ne part à l'ouverture. La fenêtre change de type — image, clip, son — sans qu'on la referme ; le prix se lit ensuite sur Relire avant l'envoi, et c'est ce bouton-là qui paie.",
     origine: "toi · une demande neuve, sans sujet visé",
     ou: "fabrications",
   },
-  "fabrication.animer-un-sujet": {
-    nom: "Animer un sujet",
-    groupe: "Commencer une fabrication — une image, un sujet, un son",
-    quoi: "On choisit un sujet : la fenêtre d'animation s'ouvre sur lui, pour régler le mouvement et la direction.",
-    change: "Rien ne part à l'ouverture : la demande se prépare, puis se relit avant l'envoi. La liste est celle des sujets du jeu ouvert.",
-    origine: "les sujets du jeu",
-    ou: "fabrications",
-  },
-  "fabrication.un-son": {
-    nom: "Préparer un son",
-    groupe: "Commencer une fabrication — une image, un sujet, un son",
-    quoi: "Ouvre la fenêtre de préparation sur le type Son : on décrit un effet, une ambiance ou une musique.",
-    change: "Rien à payer : les moteurs de son tournent sur cette machine, et le résultat rejoint l'atelier des sons. L'écran Un son détaille chaque geste.",
-    origine: "toi · une demande de son neuve",
-    ou: "fabrications",
-  },
-  "fabrication.nouvelle-animation": {
-    nom: "Nouvelle animation",
-    groupe: "Créer et suivre les fabrications",
-    quoi: "Le bouton du haut de la liste ouvre la fenêtre de préparation sur le type Clip, comme Préparer une vidéo plus bas.",
-    change: "Rien ne part à l'ouverture : la demande se prépare, puis se relit avant l'envoi. Le bouton ne mène pas à un sujet précis — pour animer un sujet donné, on passe par sa page.",
-    origine: "toi · une demande de clip neuve",
-    ou: "fabrications",
-  },
   "fabrication.liste-des-travaux": {
-    nom: "La liste des travaux suivis",
-    groupe: "Créer et suivre les fabrications",
-    quoi: "Chaque ligne est un travail conservé : son nom, qui l'a demandé — l'agent ou toi —, la date, et où il en est.",
-    change: "Cliquer une ligne la rouvre pour la relire et la suivre ; rien ne part tant qu'on n'a pas pressé le bouton de sa relecture. La liste se relit d'elle-même toutes les cinq secondes.",
-    origine: "l'atelier · les travaux conservés pour ce jeu",
-    long: "Les états sont ceux du travail, pas ceux du journal plus bas : Prête à lancer, En cours, À reprendre, À vérifier, État à vérifier chez le fournisseur, Terminée, Annulée. « Agent » dit qu'un agent MCP a demandé le travail ; « Création manuelle », que c'est toi.",
+    nom: "La liste des fabrications",
+    groupe: "La liste des fabrications",
+    quoi: "Une ligne par fabrication partie — image, clip, équipement, son ou calcul local —, la plus récente en haut, avec sa vignette et son état.",
+    change: "Une ligne d'un travail suivi s'ouvre pour le relire ; une ligne du journal ou d'un calcul local propose ses propres boutons. La liste se relit d'elle-même toutes les cinq secondes.",
+    origine: "l'atelier · travaux suivis, journal des appels et file locale de ce jeu",
+    long: "Les états regroupent les trois origines sous quatre mots : En cours, Terminées, Ratées, À reprendre. Une fabrication encore « prête à lancer », jamais partie, ne paraît pas ici — elle vit dans le tiroir des brouillons.",
+    ou: "fabrications",
+  },
+  "fabrication.serie": {
+    nom: "Une série repliée",
+    groupe: "La liste des fabrications",
+    quoi: "Des lignes identiques, parties ensemble ou coup sur coup, se replient sous une seule ligne « × N » qu'on déplie.",
+    change: "Déplier ne relance rien : on y retrouve chaque ligne de la série, avec son propre état et ses propres boutons.",
+    origine: "l'atelier · même série côté serveur, ou même demande à moins d'une minute d'écart",
+    ou: "fabrications",
+  },
+  "fabrication.recherche": {
+    nom: "Rechercher une fabrication",
+    groupe: "La liste des fabrications",
+    quoi: "Un mot cherché dans le titre et le modèle de chaque ligne, sans tenir compte des majuscules.",
+    change: "Se combine avec le filtre État : les deux s'appliquent ensemble. Ne change que ce qui s'affiche, rien n'est effacé.",
+    origine: "toi · vide au départ",
     ou: "fabrications",
   },
   "fabrication.relecture": {
     nom: "La demande relue avant l’envoi",
-    groupe: "Créer et suivre les fabrications",
+    groupe: "La liste des fabrications",
     quoi: "Le texte composé, les références, le fournisseur, le modèle et ses réglages se relisent ensemble avant de lancer une fabrication.",
     change: "Modifier prépare une nouvelle version de la demande. Reprendre garde l’envoi précédent et son identifiant : un travail déjà accepté ne se paie pas une seconde fois.",
     origine: "toi · demande conservée avec ses résultats",
-    ou: "fabrications",
-  },
-  "fabrication.file-locale": {
-    nom: "Le suivi des calculs locaux",
-    groupe: "Les calculs locaux",
-    quoi: "La file ordonne les calculs de l’atelier et distingue un moteur disponible, occupé ou non vérifiable.",
-    change: "Annuler retire une attente avant son envoi. Reprendre retrouve le travail conservé. Les durées sont mesurées ; un chargement inconnu n’est pas annoncé comme un modèle déjà prêt.",
-    origine: "atelier · observation des moteurs et historique conservé sur cette machine",
     ou: "fabrications",
   },
   "fabrication.video-libre": {
@@ -602,44 +577,28 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · profil importé ; ComfyUI · prérequis observés",
     ou: "fabrications",
   },
-  "fabrication.recherche": {
-    nom: "Rechercher une fabrication",
-    groupe: "Le journal — chercher, filtrer, rouvrir",
-    quoi: "Un mot cherché dans le texte de la demande et dans le nom du modèle, sans tenir compte des majuscules.",
-    change: "Se combine avec le filtre État : les deux s'appliquent ensemble. Ne change que ce qui s'affiche, rien n'est effacé du journal.",
-    origine: "toi · vide au départ",
-    ou: "fabrications",
-  },
-  "fabrications-etat": {
-    nom: "État des fabrications",
-    groupe: "Le journal — chercher, filtrer, rouvrir",
-    quoi: "Le journal réunit les demandes conservées et les appels encore en cours.",
-    change: "Le filtre À reprendre montre les échecs et les interruptions. Une demande terminée ouvre ses résultats ; un clip ouvre son montage sans commander une nouvelle vidéo.",
-    origine: "atelier · journal des appels",
-    ou: "fabrications",
-  },
-  "fabrication.actualiser": {
-    nom: "Actualiser, Consommation",
-    groupe: "Le journal — chercher, filtrer, rouvrir",
-    quoi: "Actualiser relit le journal sur le disque ; Consommation quitte cet écran pour celui des dépenses.",
-    change: "Rien à payer ni à envoyer. Le journal se relit aussi tout seul quand une fabrication change d'état. Les dépenses sont un écran de lecture : on y voit ce que chaque appel a coûté.",
-    origine: "l'atelier · le journal des appels de ce jeu",
-    ou: "fabrications",
-  },
-  "fabrication.ligne": {
-    nom: "Une ligne du journal",
-    groupe: "Le journal — chercher, filtrer, rouvrir",
-    quoi: "La date, Vidéo ou Images, l'état, la demande, le modèle — et, en rouge, la raison de chaque image ratée.",
-    change: "États : En attente, En cours, Terminé, Échec, Interrompu ; les deux derniers sont en rouge. Une demande sans texte s'écrit « Demande sans texte ». Rien à la génération : on lit.",
-    origine: "l'atelier · journal des appels, complété par les fabrications en cours",
+  "fabrication.filtre-etat": {
+    nom: "État",
+    groupe: "La liste des fabrications",
+    quoi: "Filtre la liste sur une seule humeur : En cours, Terminées, Ratées, À reprendre.",
+    change: "Se combine avec la recherche : les deux s'appliquent ensemble. Ne change que ce qui s'affiche.",
+    origine: "toi · Toutes au départ",
     ou: "fabrications",
   },
   "fabrication.boutons-de-la-ligne": {
     nom: "Les boutons d'une ligne",
-    groupe: "Le journal — chercher, filtrer, rouvrir",
-    quoi: "Selon la ligne : ouvrir le montage du clip, voir les résultats dans la galerie, ouvrir le sujet, ou reprendre depuis la galerie.",
+    groupe: "La liste des fabrications",
+    quoi: "Selon la ligne : ouvrir le montage du clip, voir les résultats dans la galerie, ouvrir le sujet, reprendre ou annuler un calcul local.",
     change: "Aucun ne lance ni ne paie. Reprendre depuis la galerie ne fait qu'ouvrir la galerie, sur une demande échouée ou interrompue : un nouvel appel se prépare et se relit à part. Ouvrir le sujet paraît quand la demande en vise un.",
     origine: "l'état de la ligne · le sujet visé par la demande",
+    ou: "fabrications",
+  },
+  "fabrication.consommation": {
+    nom: "Consommation",
+    groupe: "La liste des fabrications",
+    quoi: "Quitte cet écran pour celui des dépenses : ce que chaque appel a coûté.",
+    change: "Rien à payer ni à envoyer. Un écran de lecture.",
+    origine: "l'atelier · les dépenses de ce jeu",
     ou: "fabrications",
   },
   "source3d.import": {
