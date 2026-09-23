@@ -439,8 +439,13 @@ function Exporter({
  * délai, et deux délais écrits à deux endroits finiraient par se contredire.
  * Elle disparaît quand l'instant est passé — pas parce qu'elle a été comptée
  * juste, mais parce qu'à ce moment-là le geste n'existe plus.
+ *
+ * **Exportée depuis `RV22`** : le bandeau « Pas encore rangé » d'un sujet
+ * (`EnAttenteDuSujet.tsx`) supprime une image avec le même geste que la
+ * galerie, et lui doit donc la même annulation — pas une deuxième forme du
+ * même revers écrite à un second endroit.
  */
-function FenteAnnulation({
+export function FenteAnnulation({
   annulation,
   onAnnuler,
 }: {
