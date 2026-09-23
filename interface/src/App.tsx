@@ -134,6 +134,7 @@ import { useVestiaire } from "./vestiaire"
 import { useRelectures } from "./relectures"
 import { usePaiement } from "./paiement"
 import { nommerLeLieu } from "./lieux-noms"
+import { ecouterLesFabrications } from "./retours"
 import { BarreEtat, type Repli } from "./composants/BarreEtat"
 import { Galerie, useGalerie } from "./composants/Galerie"
 // ⚠️ **`EcranTables` n'est plus monté nulle part** (`B25`) : les six portes de
@@ -1667,7 +1668,54 @@ function AtelierApp() {
     setTriDe,
     univers,
     variations,
+    // **RV7** : une image partie **vers une case** referme la fenêtre de
+    // préparation — rouverte derrière l'écran de confirmation, elle serait
+    // revenue « Sans case visée », la cible venant d'être désarmée (US-120).
+    // Le retour se lit dans la case, « en cours » puis la vignette. Une image
+    // libre garde la fenêtre et son « Générer encore ».
+    apresLeDepart: (versUneCase) => { if (versUneCase) setPreparation(null) },
   })
+
+  // ── RV7 : l'avis d'arrivée, dans la fente du châssis ──────────────────────
+  //
+  // **Un clip qui arrive, ou qui rate, se dit là où l'on est** — la fente est
+  // la place des comptes rendus, sur tous les écrans. Le lien mène à la case :
+  // la fiche du sujet, onglet des animations, sa pose dépliée. Un avis par
+  // travail et par issue : le flux peut redire la même chose, l'écran non.
+  const avisDonnes = useRef(new Set<string>())
+  useEffect(() => ecouterLesFabrications((d) => {
+    if (d.genre !== "travail") return
+    const a = d.annonce
+    if (a.projet !== bibliotheque.courant || !a.personnage || (a.nature && a.nature !== "animation")) return
+    const ratee = a.etat === "a_verifier"
+    if (a.etat !== "termine" && !ratee) return
+    const cle = `${a.identifiant}:${a.etat}`
+    if (avisDonnes.current.has(cle)) return
+    avisDonnes.current.add(cle)
+    const sujet = personnages.find((p) => p.identifiant === a.personnage)
+    const pose = plan.find((p) => p.identifiant === a.pose)?.nom ?? a.pose ?? ""
+    const direction = sujet?.cases.find((c) => c.pose === a.pose)?.directions.find((x) => x.identifiant === a.direction)?.nom ?? a.direction ?? ""
+    const quoi = [sujet?.nom ?? a.personnage, pose, direction].filter(Boolean).join(" · ")
+    const projet = a.projet
+    const allerALaCase = () => {
+      memoriserParcours(`sujet:${projet}:${a.personnage}:onglet`, "animations")
+      if (a.pose) memoriserParcours(`animations:${projet}:${a.personnage}:pose`, a.pose)
+      setPreparation(null)
+      setFente(null)
+      setPile(entrer(poser("codex"), { genre: "sujet", sujet: a.personnage! }))
+    }
+    setFente({
+      ton: ratee ? "echec" : "ok",
+      texte: (
+        <>
+          {quoi} : {ratee ? `ratée${a.raison ? ` — ${a.raison}` : ""}` : "l’animation est arrivée"} —{" "}
+          <button type="button" data-avis-d-arrivee={a.identifiant} onClick={allerALaCase} className="underline underline-offset-2 hover:text-encre">
+            voir la case
+          </button>
+        </>
+      ),
+    })
+  }), [bibliotheque.courant, personnages, plan, memoriserParcours])
 
 
   // ── Les gestes du vestiaire et des calques d'animation (`C4`) ─────────────

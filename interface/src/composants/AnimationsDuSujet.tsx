@@ -59,7 +59,9 @@ import { BandeQuiTourne, sujetVideo, useVisee } from "./Apercu"
 import { useEtatDuParcours } from "./MemoireDuParcours"
 import { clipsNonMontes, etatDeLaCase, imageDeDepartDuClip, type CaseAAnimer } from "../bande"
 import { demandeDeRelance, type OptionsAnimer } from "../fabrication"
-import type { CaseSerie } from "../api-travaux"
+import { travaux, type CaseSerie, type Retour } from "../api-travaux"
+import { retoursDeLaRangee, useRetoursDuSujet } from "../retours"
+import { CaseEnCours } from "./CaseEnCours"
 
 /** Le côté d'une vignette de rangée, en pixels d'écran. */
 const COTE = 81
@@ -372,6 +374,10 @@ function VignetteDeClip({ clip, onMonter, onRelancer }: { clip: Generation; onMo
 
 function LigneDeRangee({
   rangee,
+  retours,
+  maintenant,
+  onRelancerRetour,
+  onReprendreRetour,
   enAttente,
   onMonter,
   cleMemoire,
@@ -385,6 +391,11 @@ function LigneDeRangee({
   onRelancer,
 }: {
   rangee: Rangee
+  /** **RV7** : ce qui est parti vers cette rangée, relu au serveur. */
+  retours: Retour[]
+  maintenant: number
+  onRelancerRetour: (retour: Retour, rangee: Rangee) => void
+  onReprendreRetour: (retour: Retour) => void
   enAttente: Generation[]
   onMonter?: (clip: string) => void
   cleMemoire: string
@@ -439,7 +450,7 @@ function LigneDeRangee({
       </span>
 
       <span className="min-w-0">
-        {rangee.compte === 0 && rangee.ecartees.length === 0 && enAttente.length === 0 ? (
+        {rangee.compte === 0 && rangee.ecartees.length === 0 && enAttente.length === 0 && retours.length === 0 ? (
           <span className="flex h-[81px] items-center text-[12px] text-eteint">
             {rangee.demandee
               ? "aucun clip encore — à fabriquer"
@@ -513,6 +524,11 @@ function LigneDeRangee({
           (demandé le 18 septembre 2026) : hors de la piste qui défile, ils
           restent en vue quelle que soit la longueur de la rangée. */}
       <span className="flex shrink-0 items-start gap-[8px]">
+        {retours.map((retour) => (
+          <CaseEnCours key={retour.travail ?? retour.generation} retour={retour} maintenant={maintenant}
+            onRelancer={retour.demande ? () => onRelancerRetour(retour, rangee) : undefined}
+            onReprendre={retour.travail ? () => onReprendreRetour(retour) : undefined} />
+        ))}
         {enAttente.map((clip) => (
           <VignetteDeClip key={clip.identifiant} clip={clip} onMonter={onMonter} onRelancer={() => onRelancer(clip, rangee)} />
         ))}
@@ -568,7 +584,14 @@ export function AnimationsDuSujet({
   clips?: readonly Generation[]
   onMonterLeClip?: (clip: string) => void
 }) {
-  const nonMontes = useMemo(() => clipsNonMontes(clips, personnage), [clips, personnage])
+  // **RV7** : ce qui est parti, relu au serveur. Les clips qu'un travail
+  // porte se montrent par sa case à lui, jamais une seconde fois parmi les
+  // clips à monter.
+  const { retours, clips_suivis: clipsSuivis, maintenant } = useRetoursDuSujet(personnage.projet, personnage.identifiant)
+  const nonMontes = useMemo(
+    () => clipsNonMontes(clips, personnage).filter((g) => !clipsSuivis.includes(g.identifiant)),
+    [clips, personnage, clipsSuivis],
+  )
   const nomDePose = useMemo(
     () => new Map(plan.map((p) => [p.identifiant, p.nom])),
     [plan],
@@ -611,7 +634,11 @@ export function AnimationsDuSujet({
         poseNom: nom,
         direction: r.direction,
         directionNom: r.direction ? r.angle ?? r.nom : null,
-        etat: etatDeLaCase(r, nonMontes),
+        // Une case dont un travail tourne est « en route », même avant que
+        // son clip existe (l'image de départ se fabrique encore).
+        etat: retours.some((x) => x.etat === "en_cours" && x.pose === sienne.pose && x.direction === (r.direction ?? ""))
+          ? "en-route"
+          : etatDeLaCase(r, nonMontes),
       })),
     )
   /** **« Tout animer » et « Animer les directions »** (RV6) : elles
@@ -885,11 +912,28 @@ export function AnimationsDuSujet({
                 </div>
                 {ouverte && (
                   <div className="flex flex-col pb-[8px]">
-                    {rangees.map((rangee) => (
+                    {rangees.map((rangee, rang) => (
                       <LigneDeRangee
                         key={rangee.cle}
                         cleMemoire={`${cle}:${rangee.cle}`}
                         rangee={rangee}
+                        retours={retoursDeLaRangee(retours, sienne.pose, rangee.direction, rang === 0, rangees.map((r) => r.direction))}
+                        maintenant={maintenant}
+                        onRelancerRetour={(retour, sa) => {
+                          const pose = poseDe(sa.pose)
+                          if (pose && retour.demande)
+                            onAnimer(
+                              personnage,
+                              pose,
+                              sa.direction ? { identifiant: sa.direction, nom: sa.angle ?? sa.nom } : null,
+                              { relance: retour.demande },
+                            )
+                        }}
+                        onReprendreRetour={(retour) => {
+                          if (retour.travail)
+                            travaux.reprendre(personnage.projet, retour.travail)
+                              .catch((erreur: unknown) => onErreur(erreur, "la reprise a été refusée"))
+                        }}
                         enAttente={enAttenteDe(rangee)}
                         onMonter={onMonterLeClip}
                         choisie={bande?.identifiant ?? null}

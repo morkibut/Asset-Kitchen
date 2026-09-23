@@ -271,14 +271,14 @@ cliquable signale l'arrivée ailleurs dans l'atelier.
 
 ### Critères d'acceptation
 
-- [ ] La case « en cours » est remontée par le serveur, pas poussée par l'écran : elle survit à un
+- [x] La case « en cours » est remontée par le serveur, pas poussée par l'écran : elle survit à un
       rechargement de la page.
-- [ ] Elle devient la vignette sans rechargement.
-- [ ] Un échec l'affiche « ratée » avec la raison et « Relancer ».
-- [ ] Après « Lancer » depuis Fabrications, la fenêtre montre le résultat arrivé, ou se ferme ; le
+- [x] Elle devient la vignette sans rechargement.
+- [x] Un échec l'affiche « ratée » avec la raison et « Relancer ».
+- [x] Après « Lancer » depuis Fabrications, la fenêtre montre le résultat arrivé, ou se ferme ; le
       mouvement et la direction visés ne reviennent pas à « Sans case visée ».
-- [ ] Une notification cliquable mène à la case.
-- [ ] Vérifié au navigateur sur un atelier jetable, et pas seulement par les essais d'écran.
+- [x] Une notification cliquable mène à la case.
+- [x] Vérifié au navigateur sur un atelier jetable, et pas seulement par les essais d'écran.
 
 ### Retours de l'auteur au test de RV6 (23 septembre 2026)
 
@@ -286,15 +286,17 @@ Vus sur Mara, fenêtre « Préparer une fabrication », clip local, deux directi
 Les deux tiennent à la **relecture d'une série** (`RelectureDeSerie`, `FabricationSuivie.tsx`),
 plus pauvre que celle d'un clip seul, qu'elle devrait égaler.
 
-- [ ] **Avant de lancer, on voit ce qui part** : pour chaque case de la série, l'image de départ
+- [x] **Avant de lancer, on voit ce qui part** : pour chaque case de la série, l'image de départ
       et les références envoyées, comme la relecture d'un clip seul les montre déjà. Aujourd'hui
       une série n'affiche que « droite · Prête à lancer ».
-- [ ] **Après « Lancer », la fenêtre ne laisse pas l'auteur sans retour** : chaque case dit son
+- [x] **Après « Lancer », la fenêtre ne laisse pas l'auteur sans retour** : chaque case dit son
       étape (image, vidéo, découpage), le temps écoulé sur le temps attendu, puis devient sa
       vignette ou « ratée » avec sa raison — sans avoir à déplier la ligne. Aujourd'hui l'écran
       reste figé sur « En cours », le bouton du bas disparaît, et rien ne dit qu'on peut fermer.
-- [ ] Le pied de la fenêtre dit qu'on peut la fermer et que la fabrication continue, avec un
+- [x] Le pied de la fenêtre dit qu'on peut la fermer et que la fabrication continue, avec un
       bouton pour le faire.
+
+*Fait le 23 septembre 2026.* **Le point dur, tranché** (écrit en tête de `atelier/services/retours.py`) : un retour se **déduit** des travaux conservés et du chantier des images, il ne s'enregistre nulle part — une liste plate par case visée (`personnage`, `pose`, `direction`), avec `lance_le` (l'écran compte l'écoulé), `attendu_s` compté depuis le départ (`secondes + rang × secondes_suivant` pour une série locale, `null` pour un payant), l'étape en un mot (image, vidéo, découpage), la raison et la demande à relancer ; servie par `GET …/production-jobs/by-case`. Le flux annonce désormais quelle case bouge ; l'écran relit alors. Un échec reste affiché **jusqu'au travail suivant sur la même case**. Les clips portés par un travail ne paraissent plus une seconde fois parmi les clips à monter. **Tranché aussi** : « Relancer » d'une case rouvre la fenêtre remplie de la demande à l'identique (rien ne part sans son clic) ; une case « interrompue » propose « Reprendre » ; l'avis d'arrivée passe par la fente du châssis (arrivée ou ratée d'un clip, lien « voir la case » qui ouvre la fiche sur les animations, pose dépliée) — une seule fente, donc le dernier avis remplace le précédent, et changer d'écran l'efface ; une **image** partie vers une case referme la fenêtre de préparation (rouverte, elle revenait « Sans case visée » après le désarmement voulu par US-120) — une image libre garde la fenêtre et son « Générer encore ». Les images fixes n'ont que l'état « en cours » dans leur rangée : leur issue se lit déjà ailleurs. **Vu au navigateur** sur un atelier jetable (`essais/atelier_jetable_rv7.py`, port 8426, animateur doublé qui met 45 s et rend le second clip noir) : relecture d'une série avec l'image de départ par case ; après « Lancer », « Vidéo · 2 s » par case et le pied « Tu peux fermer… » avec son bouton ; les deux cases « en cours » dans leurs rangées, **encore là après un rechargement** ; sans recharger, la première devient sa vignette et la seconde « ratée — la vidéo est revenue noire » avec « Relancer », qui rouvre la fenêtre remplie ; relancée depuis la Galerie, l'avis « l'animation est arrivée — voir la case » mène à la rangée. **Pas vu au navigateur** : la case « en cours » d'une image fixe (le fournisseur doublé rend l'image aussitôt) et la fermeture de la fenêtre après une image — tenues par les essais seulement. Le temps attendu d'un clip local n'a pas été vu non plus (le double est payant : l'écoulé seul s'affiche).
 
 ---
 

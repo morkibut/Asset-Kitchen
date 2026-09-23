@@ -7430,9 +7430,10 @@ describe("l'écran des personnages", () => {
 
     // **La cible se désarme dès que l'appel est parti** : la garder enverrait
     // l'image suivante — un tonneau, un décor — dans la case d'un personnage.
-    // Le guichet le dit à la place de la bande « Pour » : il ne vise plus une
-    // case, il vise une image libre.
-    await waitFor(() => expect(cibleDuGuichet()).toBe("Image libre"))
+    // **Et depuis RV7, la fenêtre se referme** : rouverte, elle serait revenue
+    // « Sans case visée », ce que l'auteur a lu comme un oubli (23 septembre
+    // 2026). Le retour se lit dans la case, « en cours » puis la vignette.
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Préparer une fabrication" })).toBeNull())
   })
 
   // ── C2 · Le lot d'images, relogé dans l'onglet Images (RV10, 22 sept.

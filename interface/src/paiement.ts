@@ -100,6 +100,12 @@ export type CeQueLePaiementLit = {
   setTriDe: Pose_<string | null>
   univers: Univers
   variations: number
+  /** **RV7** : ce que l'atelier fait une fois l'appel parti. `versUneCase` :
+   *  l'appel visait une case d'un sujet — la cible vient d'être désarmée, et
+   *  la fenêtre de préparation, rouverte derrière l'écran de confirmation,
+   *  serait revenue « Sans case visée ». L'atelier la referme alors : le
+   *  retour se lit dans la case, « en cours » puis la vignette. */
+  apresLeDepart?: (versUneCase: boolean) => void
 }
 
 export function usePaiement({
@@ -144,6 +150,7 @@ export function usePaiement({
   setTriDe,
   univers,
   variations,
+  apresLeDepart,
 }: CeQueLePaiementLit) {
   const [actualisationEnvoi, setActualisationEnvoi] = useState(false)
   /** **La case, telle qu'elle part** (RS2). Elle ne vaut que pour une image
@@ -497,6 +504,7 @@ export function usePaiement({
       // volontairement identiques, demandées deux fois de suite, n'en feraient
       // qu'une, et rien ne le dirait.
       intention.current = null
+      apresLeDepart?.(!!cible && cible.poses.length > 0)
     } catch (erreur) {
       // **L'identifiant reste**, et c'est voulu : rien n'a été enregistré côté
       // serveur, donc réessayer est la *même* intention. Le bouton redevient

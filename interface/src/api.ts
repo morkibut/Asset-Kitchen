@@ -7900,6 +7900,15 @@ export type Ecoute = {
    *  garde-fou posé depuis un autre onglet arrive par là, et le compteur bouge
    *  au moment où l'agent dépense — l'auteur n'a rien à recharger. */
   agent: (agent: EtatAgent) => void
+  /** **RV7** : un travail des fabrications suivies a changé — lancé, passé à
+   *  l'étape suivante, fini ou raté. La charge dit lequel et quelle case il
+   *  vise ; la vérité reste le travail relu (`atelier/services/retours.py`).
+   *  Facultatif : un écran qui ne suit pas les fabrications ne l'écoute pas. */
+  travail?: (annonce: {
+    projet: string; identifiant: string; etat: string; nature?: string | null
+    personnage?: string | null; pose?: string | null; direction?: string | null
+    controle?: string | null; raison?: string | null
+  }) => void
   /** Vrai quand la liaison est vivante, faux quand elle est rompue. */
   liaison: (vivante: boolean) => void
 }
@@ -7927,6 +7936,7 @@ export function ecouter(ecoute: Ecoute): () => void {
   lire<Vestiaire>("vestiaire", ecoute.vestiaire)
   lire<Bande & { oubliee?: boolean }>("bande", ecoute.bande)
   lire<EtatAgent>("agent", ecoute.agent)
+  if (ecoute.travail) lire<Parameters<NonNullable<Ecoute["travail"]>>[0]>("travail", ecoute.travail)
 
   source.onopen = () => ecoute.liaison(true)
   source.onerror = () => ecoute.liaison(false)

@@ -59,7 +59,30 @@ export type Travail = {
     reservation_usd: number; appels: number; limite: string; video_locale: boolean }
   consommations: { generation: string; modele: string; consomme: number; unite: string; cout_usd: number }[]
   raison?: string; prochaine_action: string; livraison?: string | null
+  /** RV1 : le contrôle d'arrivée qui a rejeté le clip (noire, immobile, vide). */
+  controle?: string | null
+  /** **RV7** : l'heure du départ, l'étape en un mot et le temps attendu depuis
+   *  le départ (`null` : personne ne sait) — calculés au serveur, au même
+   *  endroit que pour la case visée (`atelier/services/retours.py`). */
+  lance_le?: number; phase?: Phase; attendu_s?: number | null
 }
+/** **RV7** : ce qu'un travail attend, en un mot. */
+export type Phase = "image" | "video" | "decoupage" | "livraison" | "termine"
+export const NOM_DE_LA_PHASE: Record<Phase, string> = { image: "Image de départ", video: "Vidéo", decoupage: "Découpage", livraison: "Livraison", termine: "Terminée" }
+/** **RV7 — ce qui est parti, rangé par case visée.** La forme est écrite en
+ *  tête de `atelier/services/retours.py` ; l'écran la relit, il ne la pousse
+ *  jamais. */
+export type Retour = {
+  nature: "clip" | "image"
+  travail: string | null; generation: string | null; serie: string | null
+  personnage: string; pose: string; direction: string
+  etat: "en_cours" | "ratee" | "interrompue"
+  phase: Phase
+  lance_le: number; attendu_s: number | null
+  raison: string | null; clip: string | null
+  demande: DemandeTravail | null
+}
+export type RetoursParCase = { retours: Retour[]; clips_suivis: string[] }
 export type TravailSuivi = Travail | TravailEquipement | TravailImageLocale | TravailVideoLibre | Travail3D | TravailAudio
 export type EtatDeTravail = Travail["etat"]
 
@@ -103,6 +126,9 @@ export const travaux = {
     return appeler<CadreDelegation>(`${chemin(projet)}/delegation`, { method: "PUT", body: JSON.stringify(reglages) })
   },
   lister: (projet: string) => appeler<TravailSuivi[]>(`${chemin(projet)}/production-jobs`),
+  /** **RV7** : ce qui est parti pour ce sujet, rangé par case visée. */
+  retours: (projet: string, personnage: string) =>
+    appeler<RetoursParCase>(`${chemin(projet)}/production-jobs/by-case?personnage=${encodeURIComponent(personnage)}`),
   preparer: (projet: string, demande: DemandeTravail) => appeler<Travail>(`${chemin(projet)}/production-jobs/preview`, { method: "POST", body: JSON.stringify(demande) }),
   /** **RV5** : prépare `cases.length × nombre` travaux d'un coup — une case
    *  vide reprend celle de `commune`. `commune` est une `DemandeTravail` sans

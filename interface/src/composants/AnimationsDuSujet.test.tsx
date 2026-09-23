@@ -14,7 +14,9 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { AnimationsDuSujet, rangerLaLigne, rangeesDeLaCase } from "./AnimationsDuSujet"
-import { RECETTE_VIDE, type Bande, type Case, type ObjectifProduction, type Personnage, type Pose } from "../api"
+import { RECETTE_VIDE, type Bande, type Case, type Generation, type ObjectifProduction, type Personnage, type Pose } from "../api"
+import type { Retour, RetoursParCase } from "../api-travaux"
+import { annoncerUneFabrication } from "../retours"
 
 afterEach(() => {
   cleanup()
@@ -150,9 +152,13 @@ const CASE_SUD = sienne({
   ],
 })
 
-function construireDouble() {
+function construireDouble(retours: RetoursParCase = { retours: [], clips_suivis: [] }) {
   const appels: { url: string; methode: string; corps: unknown }[] = []
   const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
+    // **RV7** : la relecture de ce qui est parti n'est pas un geste de
+    // l'auteur — elle ne compte pas parmi les appels que ces essais regardent.
+    if (String(chemin).includes("/production-jobs/by-case"))
+      return { ok: true, status: 200, json: async () => retours } as Response
     appels.push({
       url: String(chemin),
       methode: init?.method ?? "GET",
@@ -166,8 +172,8 @@ function construireDouble() {
   return { fetchDouble, appels }
 }
 
-function monter(cases: Case[] = [CASE_SUD], objectif?: ObjectifProduction) {
-  const { fetchDouble, appels } = construireDouble()
+function monter(cases: Case[] = [CASE_SUD], objectif?: ObjectifProduction, retours?: RetoursParCase) {
+  const { fetchDouble, appels } = construireDouble(retours)
   vi.stubGlobal("fetch", fetchDouble)
   const rappels = {
     onAnimer: vi.fn(),
@@ -693,4 +699,87 @@ test("le volet déplace l'animation choisie vers une autre pose", async () => {
   fireEvent.click(within(volet).getByRole("button", { name: "Déplacer" }))
   await waitFor(() => expect(appels.some((a) => a.url === "/api/strips/b/case" && a.methode === "PUT")).toBe(true))
   expect(appels.find((a) => a.url === "/api/strips/b/case")!.corps).toEqual({ pose: "marche", direction: "est" })
+})
+
+// ── RV7 : le retour, là où l'on a cliqué ────────────────────────────────────
+//
+// La case « en cours » vient du serveur (`/production-jobs/by-case`) : ces
+// essais la font répondre par le double, et regardent ce que la rangée en
+// montre. Ce que le serveur remonte est tenu par `tests/test_rv7.py`.
+
+function retour(surplus: Partial<Retour>): Retour {
+  return {
+    nature: "clip", travail: "t1", generation: null, serie: null,
+    personnage: "pelerin", pose: "repos", direction: "nord",
+    etat: "en_cours", phase: "video", lance_le: Date.now() / 1000 - 80, attendu_s: 180,
+    raison: null, clip: null, demande: null,
+    ...surplus,
+  }
+}
+
+describe("RV7 · la case de ce qui est parti", () => {
+  test("en cours : la rangée visée montre l'étape et le temps écoulé sur le temps attendu", async () => {
+    monter(undefined, undefined, { retours: [retour({})], clips_suivis: [] })
+    const nord = await waitFor(() => {
+      const r = rangee("repos/nord")
+      expect(within(r).getByRole("status", { name: "En cours : Vidéo" })).toBeTruthy()
+      return r
+    })
+    expect(within(nord).getByText(/^1 min 2\d \/ ≈ 3 min$/)).toBeTruthy()
+    // Et pas dans la rangée d'à côté.
+    expect(rangee("repos/sud").querySelector("[data-case-en-cours]")).toBeNull()
+  })
+
+  test("ratée : la raison, et « Relancer » rouvre la fenêtre avec la demande à l'identique", async () => {
+    const demande = { cle: "k", personnage: "pelerin", pose: "repos", direction: "nord", modele_video: "m", prompt_video: "walk",
+      secondes: 1.5, resolution: "480p", proportions: "1:1", nombre_images: 8, cadence: 8, sens: "boucle" as const }
+    const { onAnimer, appels } = monter(undefined, undefined, {
+      retours: [retour({ etat: "ratee", raison: "la vidéo est revenue noire", demande })], clips_suivis: [] })
+    const bouton = await screen.findByRole("button", { name: "Relancer" })
+    expect(within(rangee("repos/nord")).getByText("la vidéo est revenue noire")).toBeTruthy()
+    fireEvent.click(bouton)
+    expect(onAnimer).toHaveBeenCalledTimes(1)
+    expect(onAnimer.mock.calls[0][2]).toEqual({ identifiant: "nord", nom: "nord" })
+    expect(onAnimer.mock.calls[0][3]).toEqual({ relance: demande })
+    // Rien ne part d'ici : la fenêtre relit, et c'est son bouton qui lance.
+    expect(appels).toHaveLength(0)
+  })
+
+  test("un clip porté par un travail ne paraît pas une seconde fois parmi les clips à monter", async () => {
+    const clip = { identifiant: "t1-video", personnage: "pelerin", pose: "repos", direction: "nord", statut: "en_cours",
+      clip: { nature: "video" }, demande: { prompt: "walk" }, emplacements: [] } as unknown as Generation
+    const { fetchDouble } = construireDouble({ retours: [retour({ clip: "t1-video" })], clips_suivis: ["t1-video"] })
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<AnimationsDuSujet personnage={personnage([CASE_SUD])} plan={PLAN} onAnimer={vi.fn()} onOuvrirLaBande={vi.fn()} onErreur={vi.fn()} clips={[clip]} />)
+    await waitFor(() => expect(rangee("repos/nord").querySelector("[data-case-en-cours]")).toBeTruthy())
+    expect(document.querySelector("[data-clip-non-monte]")).toBeNull()
+  })
+
+  test("elle devient la vignette sans rechargement : l'annonce du flux fait relire la case", async () => {
+    let reponse: RetoursParCase = { retours: [retour({})], clips_suivis: [] }
+    const lectures: string[] = []
+    vi.stubGlobal("fetch", vi.fn(async (chemin: string) => {
+      if (String(chemin).includes("/production-jobs/by-case")) {
+        lectures.push(String(chemin))
+        return { ok: true, status: 200, json: async () => reponse } as Response
+      }
+      return { ok: true, status: 200, json: async () => ({}) } as Response
+    }))
+    const { rerender } = render(<AnimationsDuSujet personnage={personnage([CASE_SUD])} plan={PLAN} onAnimer={vi.fn()} onOuvrirLaBande={vi.fn()} onErreur={vi.fn()} />)
+    await waitFor(() => expect(rangee("repos/nord").querySelector("[data-case-en-cours]")).toBeTruthy())
+    expect(lectures[0]).toBe("/api/projects/le-marais/production-jobs/by-case?personnage=pelerin")
+    // Le travail finit : le serveur ne rend plus de retour, et la bande arrive
+    // dans la case par son chemin à elle (la charge du sujet relue).
+    reponse = { retours: [], clips_suivis: [] }
+    const arrivee = bande({ identifiant: "n", cree_le: 400, direction: "nord" })
+    act(() => annoncerUneFabrication({ genre: "travail", annonce: { projet: "le-marais", identifiant: "t1", etat: "termine", personnage: "pelerin" } }))
+    rerender(<AnimationsDuSujet personnage={personnage([sienne({ ...CASE_SUD, directions: [CASE_SUD.directions[0], { ...DIRECTION, identifiant: "nord", nom: "nord", bandes: [arrivee] }] })])} plan={PLAN} onAnimer={vi.fn()} onOuvrirLaBande={vi.fn()} onErreur={vi.fn()} />)
+    await waitFor(() => expect(rangee("repos/nord").querySelector("[data-case-en-cours]")).toBeNull())
+    expect(rangee("repos/nord").querySelector('[data-vignette-de-bande="n"]')).toBeTruthy()
+    // Une annonce pour un autre sujet ne fait rien relire.
+    const avant = lectures.length
+    act(() => annoncerUneFabrication({ genre: "travail", annonce: { projet: "le-marais", identifiant: "x", etat: "en_cours", personnage: "autre" } }))
+    await new Promise((r) => setTimeout(r, 400))
+    expect(lectures.length).toBe(avant)
+  })
 })
