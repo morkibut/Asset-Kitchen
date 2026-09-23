@@ -153,6 +153,21 @@ const REFERENCES_VIDES = {
   disponibles: 0,
 }
 
+// **Depuis `RV12`, « Modifier la fiche » embarque `ObjectifDuSujet.tsx`** :
+// tout essai qui ouvre ce dialogue le monte, et lui, contrairement au résumé
+// d'avancement de la fiche, ne se protège pas d'une réponse vide — sans cette
+// entrée, chaque essai qui clique « Modifier la fiche » lève en lisant
+// `lecture.couverture.cases`.
+const COMPTE_VIDE = { demande: 0, produit: 0, retenu: 0, manquant: 0, a_retenir: 0 }
+const FRACTION_VIDE = { pretes: 0, demandees: 0, a_fabriquer: 0, a_departager: 0 }
+const OBJECTIF_VIDE = {
+  personnage: "le-pelerin",
+  objectif: { sorties: [], largeur: 64, hauteur: 64, cadence: 8, boucle: false, repere: { x: 0, y: 0 } },
+  origine: "plan-existant",
+  couverture: { images: COMPTE_VIDE, animations: COMPTE_VIDE, cases: [] },
+  avancement: { images: FRACTION_VIDE, animations: FRACTION_VIDE, complet: false, hors_plan: 0 },
+}
+
 const FAMILLE = {
   personnages: [
     {
@@ -189,6 +204,8 @@ function construireDouble() {
     if (/\/characters\/[^/]+\/style$/.test(url)) return rendre(HABILLAGE_VIDE)
     if (/\/characters\/[^/]+\/references$/.test(url) && (init?.method ?? "GET") === "GET")
       return rendre(REFERENCES_VIDES)
+    if (/\/characters\/[^/]+\/objective/.test(url) && (init?.method ?? "GET") === "GET")
+      return rendre(OBJECTIF_VIDE)
     return rendre({})
   })
   return { fetchDouble, appels }
@@ -247,20 +264,19 @@ function monter(surplus: Partial<Personnage> = {}, _dossierJeu = "D:/jeu", onLiv
 
 const onglet = (nom: string) => screen.getByRole("tab", { name: nom })
 
-// **Six onglets depuis `AU20`** : « Pas encore rangé » s'est intercalé après
-// les sources. Les trois premiers montrent des cases pleines ; celui-là montre
-// ce qui appartient au sujet **sans** case — et sans lui, ce qui n'est rangé
-// nulle part n'était nulle part. **Sept depuis `SN6`** : « Sons » avant
-// « Objectif & règles », comme la liste fermée de `docs/vocabulaire.html`.
-test("la fiche validée ouvre sur sept onglets, sans formulaire ni barre permanente", async () => {
+// **Quatre onglets, au plus depuis `RV12`** : la fiche en comptait sept,
+// trois de plus que la maquette n'en autorise. Rien de ce qu'ils portaient
+// n'est devenu inatteignable — voir `PageDuSujet.tsx`, l'en-tête de
+// `ONGLETS`, et les essais dédiés plus bas.
+test("la fiche validée ouvre sur quatre onglets, sans formulaire ni barre permanente", async () => {
   monter()
   expect(document.querySelector("[data-page-du-sujet]")).toBeTruthy()
-  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images de référence", "Galerie", "Pas encore rangé", "Équipement", "Sons", "Objectif & règles"])
+  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images", "Sons", "Équipement"])
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
   expect(screen.queryByLabelText("Nom du sujet")).toBeNull()
   expect(document.querySelector("[data-ce-qui-lui-manque]")).toBeNull()
   expect(document.querySelector("[data-barre-qui-paie]")).toBeNull()
-  fireEvent.click(onglet("Images de référence"))
+  fireEvent.click(onglet("Images"))
   expect(document.querySelector("[data-onglet-images]")).toBeTruthy()
   expect(document.querySelector("[data-barre-qui-paie]")).toBeNull()
   expect(await screen.findByText("Les héros")).toBeTruthy()
@@ -290,7 +306,7 @@ test("un objectif d’animation n’ajoute aucun manque d’image fixe au résum
 
 test("un asset destiné aux images fixes ouvre directement ses images", () => {
   monter({ objectif: { sorties: [{ nature: "image", pose: "repos", direction: "", quantite: 1 }], largeur: 32, hauteur: 48, cadence: 8, boucle: false, repere: { x: 16, y: 48 } } })
-  expect(onglet("Images de référence").getAttribute("aria-selected")).toBe("true")
+  expect(onglet("Images").getAttribute("aria-selected")).toBe("true")
 })
 
 test("la description se modifie à la demande puis se garde en une seule fois", async () => {
@@ -338,7 +354,7 @@ test("la référence compacte mène à la rangée de ses images", () => {
   const portrait = document.querySelector("[data-portrait-du-sujet]") as HTMLElement
   expect(within(portrait).getByAltText("Référence de Le pèlerin")).toBeTruthy()
   fireEvent.click(portrait)
-  expect(onglet("Images de référence").getAttribute("aria-selected")).toBe("true")
+  expect(onglet("Images").getAttribute("aria-selected")).toBe("true")
 })
 
 test("un asset sans source montre un état vide compact", () => {
@@ -606,17 +622,18 @@ test("chaque onglet retrouve la position où on l'avait laissé", () => {
   const defileur = (document.querySelector("[data-onglet-animations]") as HTMLElement).closest(".overflow-y-auto") as HTMLElement
   defileur.scrollTop = 456
   fireEvent.scroll(defileur)
-  fireEvent.click(onglet("Images de référence"))
+  fireEvent.click(onglet("Images"))
   defileur.scrollTop = 120
   fireEvent.scroll(defileur)
   fireEvent.click(onglet("Animations"))
   expect(defileur.scrollTop).toBe(456)
-  fireEvent.click(onglet("Images de référence"))
+  fireEvent.click(onglet("Images"))
   expect(defileur.scrollTop).toBe(120)
 })
 
-// ── Une pastille sur « Galerie » quand un clip arrive (16 sept. 2026) ──
-test("un clip arrivé pour ce sujet allume une pastille sur « Galerie », éteinte à la visite", async () => {
+// ── Une pastille sur « Sources » quand un clip arrive (16 sept. 2026,
+// reprise sur la section « Sources » de l'onglet *Animations* par `RV12`) ──
+test("un clip arrivé pour ce sujet allume une pastille sur « Sources », éteinte à la visite", async () => {
   window.localStorage.clear()
   const { fetchDouble } = construireDouble()
   vi.stubGlobal("fetch", fetchDouble)
@@ -633,13 +650,16 @@ test("un clip arrivé pour ce sujet allume une pastille sur « Galerie », étei
   const { rerender } = render(page([clip("ancien")]))
   await waitFor(() => expect(window.localStorage.getItem(`clips-vus:${personnage.projet}:${personnage.identifiant}`)).toContain("ancien"))
   expect(document.querySelector("[data-nouveaux-clips]")).toBeNull()
+  expect(document.querySelector("[data-nouveaux-clips-sources]")).toBeNull()
   rerender(page([clip("ancien"), clip("neuf")]))
   await waitFor(() => expect(document.querySelector("[data-nouveaux-clips]")).toBeTruthy())
+  expect(document.querySelector("[data-nouveaux-clips-sources]")).toBeTruthy()
   const { sources3d } = await import("../api-3d")
   vi.spyOn(sources3d, "lister").mockResolvedValue({ sources: [] } as never)
   vi.spyOn(sources3d, "connexion").mockResolvedValue({ adresse: "" } as never)
-  fireEvent.click(onglet("Galerie"))
+  fireEvent.click(screen.getByText("Sources — clips vidéo et modèles 3D"))
   await waitFor(() => expect(document.querySelector("[data-nouveaux-clips]")).toBeNull())
+  expect(document.querySelector("[data-nouveaux-clips-sources]")).toBeNull()
 })
 
 test("« Changer » sur le portrait ouvre ses images, et un clic en fait la vignette", async () => {
@@ -668,13 +688,13 @@ test("la page d'une matière n'a ni onglet Animations, ni onglet Sons, ni bouton
     ],
   })
   monter({ type: "matière", famille: "decors", plan: [], ecartees: [] })
-  await waitFor(() => expect(onglet("Images de référence").getAttribute("aria-selected")).toBe("true"))
+  await waitFor(() => expect(onglet("Images").getAttribute("aria-selected")).toBe("true"))
   expect(screen.queryByRole("tab", { name: "Animations" })).toBeNull()
   expect(screen.queryByRole("tab", { name: "Sons" })).toBeNull()
   expect(screen.queryByRole("button", { name: "Découper une image" })).toBeNull()
   // Les autres onglets, eux, portent toujours — une matière se range et se
   // livre comme le reste.
-  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Images de référence", "Galerie", "Pas encore rangé", "Équipement", "Objectif & règles"])
+  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Images", "Équipement"])
 })
 
 test("la page d'un personnage reste inchangée quand les capacités répondent", async () => {
@@ -686,7 +706,7 @@ test("la page d'un personnage reste inchangée quand les capacités répondent",
   })
   monter()
   await waitFor(() => expect(vi.mocked(api.posesDesTypes)).toHaveBeenCalled())
-  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images de référence", "Galerie", "Pas encore rangé", "Équipement", "Sons", "Objectif & règles"])
+  expect(within(screen.getByRole("tablist", { name: "Les onglets de sa fiche" })).getAllByRole("tab").map(t => t.textContent)).toEqual(["Animations", "Images", "Sons", "Équipement"])
   expect(onglet("Animations").getAttribute("aria-selected")).toBe("true")
   expect(screen.getByRole("button", { name: "Découper une image" })).toBeTruthy()
 })

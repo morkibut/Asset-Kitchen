@@ -9,13 +9,20 @@
  *  et « Modifier la fiche » tient tout ce que les deux savaient.
  *
  *  **Ce qui n'a pas suivi, et pourquoi.** La fiche longue montrait aussi
- *  « ce que le jeu réclame » et « ce qui est fait », pose par pose : c'est
- *  exactement l'onglet *Objectif & règles* et les onglets *Images fixes* /
- *  *Animations* de la même page, à un clic d'ici plutôt qu'enterrés sous
- *  *Cases, planches et calibrage*. Les redire ici aurait fait deux endroits à
- *  tenir d'accord pour la même information. Le calibrage et la vitrine, eux,
- *  restent à leur place : la matrice les porte déjà en gestes directs, sans
- *  passer par une fiche.
+ *  « ce qui est fait », pose par pose : c'est exactement les onglets
+ *  *Images* / *Animations* de la même page, à un clic d'ici plutôt qu'enterrés
+ *  sous *Cases, planches et calibrage*. Les redire ici aurait fait deux
+ *  endroits à tenir d'accord pour la même information. Le calibrage et la
+ *  vitrine, eux, restent à leur place : la matrice les porte déjà en gestes
+ *  directs, sans passer par une fiche.
+ *
+ *  **Depuis `RV12`, elle porte aussi l'objectif.** La fiche à quatre onglets
+ *  n'a plus de place pour un cinquième onglet *Objectif & règles* : ce qu'il
+ *  faut produire et ce que le jeu impose s'édite maintenant ici, dans
+ *  « Modifier la fiche », comme les sept textes de style et les images
+ *  d'exemple avant lui. Rien de ce qu'il montrait ne devient inatteignable
+ *  (`AGENTS.md`, point 8nonies) : c'est le même composant
+ *  `ObjectifDuSujet.tsx`, monté ici plutôt qu'à la place de la page.
  */
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
@@ -43,6 +50,7 @@ import { BandeQuiTourne, sujetAsset, sujetCarte, useVisee, vignetteAsset } from 
 import { CadreDialogue } from "./CadreDialogue"
 import { EnTeteDeSection } from "./pieces"
 import { naturesChoisissables } from "../natures"
+import { ObjectifDuSujet } from "./ObjectifDuSujet"
 
 const BOUTON = "h-[30px] rounded-7 border border-contour bg-carte px-[14px] text-[13px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
 
@@ -95,10 +103,20 @@ export function portraitDe(personnage: Personnage, plan: Pose[]): {
 }
 
 /** Résumé toujours visible ; les réglages n'apparaissent qu'à la demande. */
-export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, onPersonnage, onErreur, onImages, onObjectif }: {
+export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, onPersonnage, onErreur, onImages, onObjectifChange, demandeEdition }: {
   personnage: Personnage; plan: Pose[]; collections: Collection[] | null; groupes: GroupeDeRangement[];
   onRange: () => void; onPersonnage: (p: Personnage & { supprime?: boolean }) => void; onErreur: (e: unknown, defaut: string) => void;
-  onImages: () => void; onObjectif: () => void;
+  onImages: () => void;
+  /** L'objectif vient de changer, depuis le bloc édité ici (RV12) — remonté
+   *  pour que le reste du produit (le compte d'avancement du Codex, par
+   *  exemple) se relise. */
+  onObjectifChange?: () => void;
+  /** **Ouvrir « Modifier la fiche » depuis l'extérieur** (RV12) : un lien vers
+   *  « Objectif & règles » ne mène plus à un onglet mais à cette fenêtre.
+   *  Un compteur, jamais un booléen — le comparer au précédent est ce qui
+   *  permet de rouvrir deux fois de suite sans qu'un état bloqué l'en
+   *  empêche. */
+  demandeEdition?: number;
 }) {
   const [edition, setEdition] = useState(false)
   const [nom, setNom] = useState(personnage.nom)
@@ -133,12 +151,24 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
   const ouvrir = () => { setNom(personnage.nom); setDescription(personnage.description); setEdition(true) }
   const fermer = () => { if (!modifie || window.confirm("Abandonner les modifications de la fiche ?")) setEdition(false) }
   useEffect(() => { setEdition(false) }, [personnage.identifiant])
+  // **Une demande venue de l'extérieur** (RV12) — un lien qui visait autrefois
+  // l'onglet « Objectif & règles » ouvre maintenant ce dialogue. `0` (aucune
+  // demande) ne déclenche rien, y compris au montage.
+  useEffect(() => { if (demandeEdition) ouvrir() }, [demandeEdition])
   useEffect(() => {
     let vivant = true
     setObjectif(null)
     api.objectifPersonnage(personnage.identifiant, personnage.projet).then(o => { if (vivant && o.couverture) setObjectif(o) }).catch(e => { if (vivant) onErreur(e, "L’objectif ne peut pas être relu.") })
     return () => { vivant = false }
   }, [personnage, onErreur])
+  // **Le résumé se relit après une écriture faite dans le bloc édité plus bas**
+  // (RV12) : `personnage` ne porte pas l'objectif, donc l'effet ci-dessus, qui
+  // ne dépend que de lui, ne le referait pas tout seul.
+  const relireObjectif = useCallback(() => {
+    void api.objectifPersonnage(personnage.identifiant, personnage.projet)
+      .then(o => { if (o.couverture) setObjectif(o) })
+      .catch(e => onErreur(e, "L’objectif ne peut pas être relu."))
+  }, [personnage.identifiant, personnage.projet, onErreur])
   useEffect(() => { if (!edition || !modifie) return; const avertir = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = "" }; window.addEventListener("beforeunload", avertir); return () => window.removeEventListener("beforeunload", avertir) }, [edition, modifie])
 
   // **Le signalement, les textes de style et les images de référence** —
@@ -259,7 +289,7 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
             objectif.avancement.animations.a_departager ? `${objectif.avancement.animations.a_departager} à départager` : "",
             objectif.avancement.images.a_fabriquer ? `${objectif.avancement.images.a_fabriquer} images à fabriquer` : "",
           ].filter(Boolean).join(" · ")}</span>}
-          <button className="underline" onClick={onObjectif}>{objectif.objectif.sorties.length ? "Revoir l’objectif" : "Définir l’objectif"}</button>
+          <button className="underline" onClick={ouvrir}>{objectif.objectif.sorties.length ? "Revoir l’objectif" : "Définir l’objectif"}</button>
         </div>}
       </div>
     </section>
@@ -302,6 +332,17 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
               {CE_QU_ON_PREND.map((quoi) => <option key={quoi} value={quoi}>elle lui prend {NOM_DE_CE_QU_ON_PREND[quoi]}</option>)}
             </select>}
           </div>
+        </section>
+
+        {/* **Ce qu'il faut produire, et ce que le jeu impose** (RV12) — l'ancien
+            onglet *Objectif & règles*, ici plutôt qu'à un clic de plus : il se
+            montre déjà lui-même, avec son propre titre. */}
+        <section data-objectif-du-sujet className="border-t border-trait pt-[22px]">
+          <ObjectifDuSujet
+            personnage={personnage}
+            projet={personnage.projet}
+            onChange={() => { relireObjectif(); onObjectifChange?.() }}
+          />
         </section>
 
         {/* **La recette de ses images** (RS6) — en une ligne. Seules les

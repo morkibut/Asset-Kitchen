@@ -47,7 +47,13 @@ export function ObjectifDuSujet({ personnage, projet, onChange }: Props) {
 
   const mouvements = useMemo(() => {
     const parPose = new Map<string, { nom: string; directions: { id: string; nom: string }[] }>()
-    for (const case_ of lecture?.couverture.cases ?? []) {
+    // **Un repli défensif** (`RV12`) : `ObjectifDuSujet` se monte maintenant à
+    // chaque ouverture de « Modifier la fiche » plutôt que sur un clic
+    // d'onglet dédié — un double de test qui ne connaît pas encore la route
+    // `/characters/…/objective` rend souvent `{}`, une lecture tronquée sans
+    // `couverture`. Ce calcul tourne à chaque rendu, avant le repli plus bas
+    // qui attend une lecture complète.
+    for (const case_ of lecture?.couverture?.cases ?? []) {
       if (!parPose.has(case_.pose)) parPose.set(case_.pose, { nom: case_.nom_pose, directions: [] })
       const mouvement = parPose.get(case_.pose)!
       if (!mouvement.directions.some((d) => d.id === case_.direction)) {

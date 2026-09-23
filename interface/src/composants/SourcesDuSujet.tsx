@@ -1,17 +1,19 @@
-// L'onglet « Galerie » d'un sujet : tout ce qui a été fait pour lui, rangé par
-// type de contenu — images, animations, clips vidéo, sons, sources 3D.
+// « Ses sources » — ce dont on tire des animations : les clips vidéo et les
+// modèles 3D. C'était l'onglet « Galerie » de la fiche d'un sujet ; depuis
+// `RV12` (la fiche à quatre onglets), ce n'est plus un onglet mais une section
+// repliable de l'onglet *Animations* — les images et les animations qu'elle
+// montrait aussi faisaient double emploi avec les onglets *Images* et
+// *Animations* eux-mêmes, qui les montrent déjà rangées par pose.
 //
-// **Chaque vignette dit à quoi elle sert** : la pose, l'animation ou la
-// référence qu'elle tient, ou « pas utilisée ». Les filtres du haut valent pour
-// tous les onglets : utilisé ou non, un mouvement, l'ordre des dates.
+// **Chaque vignette dit à quoi elle sert** : le mouvement qu'elle a nourri, ou
+// « pas utilisée ». Les filtres du haut valent pour les clips.
 //
-// Rien n'est enregistré ici. Les images et les animations rangées viennent des
-// cases du sujet ; celles qui ne sont rangées nulle part viennent de
-// `enAttenteDuSujet` ; les clips viennent de la liste que la page tient déjà.
+// Rien n'est enregistré ici. Les clips viennent de la liste que la page tient
+// déjà ; les sources 3D vivent à part (`Sources3D.tsx`).
 
 import { useEffect, useMemo, useState, type ReactNode } from "react"
-import { api, type Asset, type Bande, type Generation, type Personnage, type Piece, type Pose } from "../api"
-import { BandeQuiTourne, sujetVideo, useVisee, vignetteAsset } from "./Apercu"
+import { api, type Bande, type Generation, type Personnage, type Pose } from "../api"
+import { sujetVideo, useVisee } from "./Apercu"
 import { Sources3D } from "./Sources3D"
 import { nomDuModele } from "./Fiche"
 
@@ -23,7 +25,7 @@ const HEURE = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-dig
 const dire = (format: Intl.DateTimeFormat, secondes: number | undefined) =>
   Number.isFinite(secondes) && secondes ? format.format(new Date(secondes * 1000)) : "date inconnue"
 
-export type OngletDeGalerie = "images" | "animations" | "clips" | "sons" | "3d"
+export type OngletDeGalerie = "clips" | "3d"
 type Usage = "tout" | "utilises" | "libres"
 type Ordre = "recent" | "ancien"
 
@@ -44,15 +46,12 @@ type Element<T> = {
 /** Une vidéo importée n'a rien coûté, et sa carte le dit. */
 const importe = (g: Generation) => g.clip?.nature === "importe"
 
-export function SourcesDuSujet({ personnage, clips, pieces = [], ongletInitial = "images", onMontage, onAnimer, onBande, onOuvrirImage, onClipsChange, onErreur }: {
+export function SourcesDuSujet({ personnage, clips, ongletInitial = "clips", onMontage, onAnimer, onBande, onClipsChange, onErreur }: {
   personnage: Personnage
   clips: readonly Generation[]
-  /** Pour nommer la pièce d'un calque. */
-  pieces?: readonly Piece[]
   ongletInitial?: OngletDeGalerie
   onMontage: (clip: string) => void
   onBande?: (id: string) => void
-  onOuvrirImage?: (asset: string) => void
   onAnimer: (pose: Pose, direction: { identifiant: string; nom: string } | null) => void
   /** Une vidéo vient d'entrer ou de partir : la liste des clips est à relire. */
   onClipsChange?: () => void
@@ -63,15 +62,16 @@ export function SourcesDuSujet({ personnage, clips, pieces = [], ongletInitial =
   const [mouvement, setMouvement] = useState("")
   const [ordre, setOrdre] = useState<Ordre>("recent")
   const [recherche, setRecherche] = useState("")
-  const [attente, setAttente] = useState<{ images: Asset[]; animations: Bande[] }>({ images: [], animations: [] })
+  const [attente, setAttente] = useState<{ animations: Bande[] }>({ animations: [] })
 
-  // Ce qui n'occupe aucune case n'est pas dans `personnage.cases` : on va le
-  // chercher, et on le relit quand les cases bougent.
+  // Une animation qui n'occupe aucune case n'est pas dans `personnage.cases` :
+  // sans elle, un clip déjà taillé mais pas encore rangé se dirait « pas
+  // utilisé » à tort.
   useEffect(() => {
     let vivant = true
     api.enAttenteDuSujet(personnage.identifiant, personnage.projet)
-      .then((recu) => { if (vivant) setAttente({ images: recu.images ?? [], animations: recu.animations ?? [] }) })
-      .catch(() => { if (vivant) setAttente({ images: [], animations: [] }) })
+      .then((recu) => { if (vivant) setAttente({ animations: recu.animations ?? [] }) })
+      .catch(() => { if (vivant) setAttente({ animations: [] }) })
     return () => { vivant = false }
   }, [personnage.identifiant, personnage.projet, personnage.cases])
 
@@ -83,24 +83,9 @@ export function SourcesDuSujet({ personnage, clips, pieces = [], ongletInitial =
     return d?.nom ?? id
   }
   const ouEst = (pose: string | null, direction: string | null) => [nomPose(pose), nomDirection(pose, direction)].filter(Boolean).join(" · ")
-  const nomPiece = (id: string | null) => pieces.find((p) => p.identifiant === id)?.nom ?? id ?? ""
 
-  const images = useMemo<Element<Asset>[]>(() => {
-    const tous = new Map<string, Asset>()
-    for (const c of personnage.cases) {
-      for (const a of [...(c.images ?? []), ...Object.values(c.calques ?? {}).flat(), ...(c.directions ?? []).flatMap((d) => d.images ?? []), ...(c.sans_direction ?? [])]) tous.set(a.identifiant, a)
-    }
-    for (const a of attente.images) tous.set(a.identifiant, a)
-    return [...tous.values()].filter((a) => !a.supprime_le).map((a) => {
-      const liens: string[] = []
-      if (personnage.image_de_reference === a.identifiant) liens.push("Image de référence du sujet")
-      if (a.pose) liens.push(`${a.piece ? `Calque ${nomPiece(a.piece)}` : "Pose"} · ${ouEst(a.pose, a.direction)}${a.favori ? " · retenue" : ""}`)
-      return { cle: a.identifiant, date: a.cree_le, objet: a, liens, poses: a.pose ? [a.pose] : [], texte: `${a.label} ${a.modele}` }
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [personnage, attente.images, pieces])
-
-  /** Toutes les animations du sujet, écartées comprises, avec leur état. */
+  /** Toutes les animations du sujet, écartées comprises — pour dire d'un clip
+   *  qu'une bande en est déjà taillée. */
   const bandes = useMemo(() => {
     const toutes = new Map<string, { bande: Bande; ecartee: boolean }>()
     for (const c of personnage.cases) {
@@ -110,17 +95,6 @@ export function SourcesDuSujet({ personnage, clips, pieces = [], ongletInitial =
     for (const b of attente.animations) if (!toutes.has(b.identifiant)) toutes.set(b.identifiant, { bande: b, ecartee: false })
     return [...toutes.values()]
   }, [personnage.cases, attente.animations])
-
-  const animations = useMemo<Element<Bande>[]>(() => bandes.map(({ bande: b, ecartee }) => ({
-    cle: b.identifiant,
-    date: b.cree_le,
-    objet: b,
-    liens: !ecartee && b.pose ? [`Mouvement · ${ouEst(b.pose, b.direction)}${b.piece ? ` · avec ${nomPiece(b.piece)}` : ""}${b.favori ? " · retenue" : ""}`] : [],
-    note: ecartee ? "Écartée" : undefined,
-    poses: b.pose ? [b.pose] : [],
-    texte: b.nom,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  })), [bandes, pieces])
 
   const videos = useMemo<Element<Generation>[]>(() => clips
     .filter((g) => g.personnage === personnage.identifiant && g.clip && (!g.clip.nature || g.clip.nature === "video" || g.clip.nature === "importe") && !g.clip.jete)
@@ -147,19 +121,16 @@ export function SourcesDuSujet({ personnage, clips, pieces = [], ongletInitial =
       .filter((e) => !cherche || e.texte.toLocaleLowerCase("fr").includes(cherche))
       .sort((a, b) => ordre === "recent" ? (b.date || 0) - (a.date || 0) : (a.date || 0) - (b.date || 0))
   }
-  const vus = { images: filtrer(images), animations: filtrer(animations), clips: filtrer(videos) }
+  const vus = { clips: filtrer(videos) }
 
   const ONGLETS: { clef: OngletDeGalerie; nom: string; compte?: number }[] = [
-    { clef: "images", nom: "Images", compte: vus.images.length },
-    { clef: "animations", nom: "Animations", compte: vus.animations.length },
     { clef: "clips", nom: "Clips vidéo", compte: vus.clips.length },
-    { clef: "sons", nom: "Sons", compte: 0 },
     { clef: "3d", nom: "Sources 3D" },
   ]
-  const filtrable = onglet === "images" || onglet === "animations" || onglet === "clips"
+  const filtrable = onglet === "clips"
 
-  return <section aria-label="Galerie du sujet" className="flex flex-col gap-[14px]">
-    <nav aria-label="Type de contenu" className="flex flex-wrap gap-[4px]">
+  return <section aria-label="Ses sources — clips et modèles 3D" className="flex flex-col gap-[14px]">
+    <nav aria-label="Type de source" className="flex flex-wrap gap-[4px]">
       {ONGLETS.map(({ clef, nom, compte }) => <button key={clef} type="button" aria-pressed={onglet === clef} onClick={() => setOnglet(clef)}
         className={`h-[30px] rounded-7 border px-[14px] text-[12px] ${onglet === clef ? "border-signal bg-ligne-ouverte text-signal" : "border-trait bg-carte text-encre-2 hover:bg-papier-cote"}`}>
         {nom}{compte !== undefined && <span className="mesure ml-[8px] text-encre-4">{compte}</span>}
@@ -188,13 +159,10 @@ export function SourcesDuSujet({ personnage, clips, pieces = [], ongletInitial =
       </label>
     </div>}
 
-    {onglet === "images" && <ParJour elements={vus.images} vide="Aucune image pour ces filtres." rendu={(e) => <CarteImage key={e.cle} element={e} onOuvrir={onOuvrirImage} />} />}
-    {onglet === "animations" && <ParJour elements={vus.animations} vide="Aucune animation pour ces filtres." rendu={(e) => <CarteAnimation key={e.cle} element={e} onOuvrir={onBande} />} />}
     {onglet === "clips" && <>
       <PreparerUnClip personnage={personnage} poses={poses} onAnimer={onAnimer} onClipsChange={onClipsChange} onErreur={onErreur} />
       <ParJour elements={vus.clips} vide="Aucun clip pour ces filtres. Les clips terminés restent ici après la fermeture de l’atelier." rendu={(e) => <CarteClip key={e.cle} element={e} personnage={personnage} onMontage={onMontage} onClipsChange={onClipsChange} onErreur={onErreur} />} />
     </>}
-    {onglet === "sons" && <p className="rounded-8 border border-dashed border-contour p-[22px] text-[13px] text-encre-3">Aucun son pour {personnage.nom}. Les sons ne se rattachent pas encore à un sujet : cet onglet se remplira quand ce sera possible.</p>}
     {onglet === "3d" && <Sources3D personnage={personnage} onBande={onBande} />}
   </section>
 }
@@ -223,36 +191,6 @@ function Rattachement({ liens, note }: { liens: string[]; note?: string }) {
       : <p className="text-[12px] text-encre-4">Pas utilisé</p>}
     {note && <p className="text-[11px] text-encre-3">{note}</p>}
   </div>
-}
-
-function CarteImage({ element, onOuvrir }: { element: Element<Asset>; onOuvrir?: (asset: string) => void }) {
-  const a = element.objet
-  return <article data-galerie-image={a.identifiant} className="flex flex-col overflow-hidden rounded-8 border border-trait bg-carte">
-    <button type="button" disabled={!onOuvrir} onClick={() => onOuvrir?.(a.identifiant)} title="Ouvrir l’image" className="damier-papier flex aspect-square w-full items-center justify-center">
-      <img src={vignetteAsset(a, 256)} alt={a.label || a.identifiant} loading="lazy" className="h-full w-full object-contain [image-rendering:pixelated]" />
-    </button>
-    <div className="flex flex-1 flex-col gap-[6px] p-[8px]">
-      <p className="truncate text-[12px] text-encre" title={a.label}>{a.label || "Image sans nom"}</p>
-      <p className="mesure truncate text-[11px] text-encre-4">{dire(HEURE, a.cree_le)} · {a.modele === "import" ? "importée" : a.modele || "modèle inconnu"}</p>
-      <Rattachement liens={element.liens} note={element.note} />
-    </div>
-  </article>
-}
-
-function CarteAnimation({ element, onOuvrir }: { element: Element<Bande>; onOuvrir?: (id: string) => void }) {
-  const b = element.objet
-  const [joue, setJoue] = useState(false)
-  return <article data-galerie-animation={b.identifiant} className="flex flex-col overflow-hidden rounded-8 border border-trait bg-carte">
-    <div onPointerEnter={() => setJoue(true)} onPointerLeave={() => setJoue(false)} className="flex aspect-square w-full items-center justify-center bg-pourtour">
-      <BandeQuiTourne bande={b} cote={180} joue={joue} titre={b.nom} />
-    </div>
-    <div className="flex flex-1 flex-col gap-[6px] p-[8px]">
-      <p className="truncate text-[12px] text-encre" title={b.nom}>{b.nom}</p>
-      <p className="mesure text-[11px] text-encre-4">{dire(HEURE, b.cree_le)} · {b.compte} images · {b.cadence} i/s</p>
-      <Rattachement liens={element.liens} note={element.note} />
-      {onOuvrir && <button type="button" className={`${PETIT} mt-auto self-start`} onClick={() => onOuvrir(b.identifiant)}>Ouvrir l’animation</button>}
-    </div>
-  </article>
 }
 
 function CarteClip({ element, personnage, onMontage, onClipsChange, onErreur }: {

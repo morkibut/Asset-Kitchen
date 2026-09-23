@@ -1,4 +1,4 @@
-// L'onglet « Pas encore rangé » — ce qui est à ce sujet sans occuper de case.
+// « Pas encore rangé » — ce qui est à ce sujet sans occuper de case.
 //
 // **Il existe parce que « ranger plus tard » voulait dire « perdre »** (`AU20`).
 // Le produit n'a jamais voulu qu'on range au moment d'importer : on fait entrer
@@ -14,6 +14,12 @@
 //
 // **Ranger se fait ici, sans changer d'écran.** Une liste qui montre un problème
 // sans porter son geste est une liste qu'on relit trois fois.
+//
+// **Depuis `RV12`, ce n'est plus un onglet, c'est un bandeau** (la fiche à
+// quatre onglets n'en a plus la place) : il ne s'affiche que lorsqu'il y a
+// vraiment quelque chose à ranger, replié par défaut — un bandeau qui
+// paraîtrait toujours, même vide, cesserait d'être un signal. La liste
+// elle-même, une fois dépliée, n'a pas changé de forme.
 
 import { useCallback, useEffect, useState } from "react"
 import { api, type Asset, type Bande, type Generation, type Personnage, type Pose } from "../api"
@@ -70,10 +76,16 @@ export function EnAttenteDuSujet({
   const directionsDe = (pose: string) =>
     personnage.cases.find((c) => c.pose === pose)?.directions ?? []
 
+  const [ouvert, setOuvert] = useState(false)
+
   const relire = useCallback(async () => {
     try {
       const recu = await api.enAttenteDuSujet(personnage.identifiant, personnage.projet)
-      setLu({ images: recu.images, clips: recu.clips, animations: recu.animations })
+      // **Un repli défensif** : le double d'un essai qui ne connaît pas
+      // encore cette route rend `{}`, et un bandeau qui plante à l'affichage
+      // ferait tomber toutes les pages du produit, puisqu'il est monté
+      // partout depuis `RV12`.
+      setLu({ images: recu.images ?? [], clips: recu.clips ?? [], animations: recu.animations ?? [] })
     } catch (erreur) {
       onErreur?.(erreur, "la liste de ce qui attend n’a pas pu être lue")
     } finally {
@@ -127,6 +139,10 @@ export function EnAttenteDuSujet({
 
   const total = lu.images.length + lu.clips.length + lu.animations.length
 
+  // **Le bandeau ne paraît que s'il y a quelque chose à ranger** — replié le
+  // temps de la lecture, absent une fois qu'on sait qu'il n'y a rien.
+  if (!charge || total === 0) return null
+
   const choixDePose = (surChoix: (pose: string) => void, desactive: boolean) => (
     <select
       className={BOUTON}
@@ -146,30 +162,29 @@ export function EnAttenteDuSujet({
     </select>
   )
 
-  if (!charge)
-    return (
-      <section aria-label="Pas encore rangé">
-        <p className="text-[13px] text-encre-3">Lecture…</p>
-      </section>
-    )
-
   return (
-    <section aria-label="Pas encore rangé" className="space-y-[22px]">
-      <div className="flex items-end justify-between gap-[14px]">
-        <div>
-          <h2 className="font-serif text-[25px] text-encre">Pas encore rangé</h2>
-          <p className="mt-[8px] text-[13px] text-encre-3">
-            {total
-              ? `${total} élément${total > 1 ? "s" : ""} appartiennent à ${personnage.nom} sans occuper de case. Rien n’est perdu : choisis un mouvement pour les ranger.`
-              : `Tout ce qui appartient à ${personnage.nom} est rangé sur un mouvement.`}
-          </p>
-        </div>
-        {total > 0 && (
+    <section data-bandeau-pas-encore-range aria-label="Pas encore rangé" className="shrink-0 rounded-8 border border-trait-attention bg-fond-attention px-[14px] py-[8px]">
+      <div className="flex flex-wrap items-center justify-between gap-[14px]">
+        <button
+          type="button"
+          onClick={() => setOuvert((v) => !v)}
+          aria-expanded={ouvert}
+          className="flex min-w-0 flex-1 items-center gap-[8px] py-[4px] text-left"
+        >
+          <span aria-hidden className="text-[12px] text-encre-attention">{ouvert ? "▾" : "▸"}</span>
+          <span className="font-serif text-[13px] text-encre-attention">Pas encore rangé</span>
+          <span className="text-[12.5px] text-encre-attention">
+            {total} élément{total > 1 ? "s" : ""} appartiennent à {personnage.nom} sans occuper de case — rien n’est perdu, choisis un mouvement pour les ranger.
+          </span>
+        </button>
+        {ouvert && (
           <button className={BOUTON} onClick={() => void relire()}>
             Relire
           </button>
         )}
       </div>
+
+      {ouvert && <div className="mt-[14px] space-y-[22px]">
 
       {lu.images.length > 0 && (
         <div>
@@ -240,7 +255,7 @@ export function EnAttenteDuSujet({
               est bloqué. */}
           <p className="mt-[4px] text-[12px] text-encre-3">
             Rien n’a encore été tiré de ceux-ci. Ouvre leur montage depuis
-            « Galerie › Clips vidéo » pour en tailler une animation.
+            « Animations › Sources » pour en tailler une animation.
           </p>
           <div className="mt-[14px] grid grid-cols-2 gap-[14px]">
             {lu.clips.map((g) => (
@@ -260,6 +275,7 @@ export function EnAttenteDuSujet({
           </div>
         </div>
       )}
+      </div>}
     </section>
   )
 }
