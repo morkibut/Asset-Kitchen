@@ -882,9 +882,34 @@ retour de l'auteur* : « si elle ne va nulle part, elle reste là pour rien ».
 
 ---
 
+## RV23 · Espace agrandit toute image, partout
+
+**Bloquée par** : aucune. *Ajoutée le 23 septembre 2026, sur un retour de l'auteur* (fiche d'un
+sujet, *Ses références*, vignettes « Direction — droite / gauche » : Espace n'y fait rien). « Il
+doit fonctionner partout. »
+
+Aujourd'hui l'aperçu (`Apercu.tsx`) ne s'ouvre que sur les surfaces qui ont déclaré leur vignette
+(`useVisee`) ; toute vignette oubliée reste muette, et il y en a partout.
+
+### Critères d'acceptation
+
+- [ ] **toute image affichée par l'atelier** s'agrandit avec Espace quand le pointeur est dessus —
+      vignettes de références, relectures, fenêtres, Fabrications, bandeau « Prochain geste »,
+      toile, chutier… — sans que chaque écran ait à le déclarer : une surface qui déclare sa
+      vignette (`useVisee`) garde sa réponse plus riche (titre, mesures, animation) ; les autres
+      reçoivent une réponse par défaut tirée de l'image elle-même (son adresse affichée, sa taille
+      naturelle, pixelisée si l'image l'est à l'écran)
+- [ ] Espace ne s'ouvre jamais pendant qu'on écrit dans un champ, et ne vole pas l'Espace d'un
+      écran qui s'en sert déjà (le lecteur d'une animation, l'éditeur de pixels, la toile qui
+      glisse la vue)
+- [ ] un essai parcourt quelques vignettes **qui ne déclaraient rien** (dont celles de *Ses
+      références*) et vérifie que l'aperçu s'ouvre sur la bonne image
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21, RV22.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21, RV22, RV23.
 
 ### Ce qu'on livre
 

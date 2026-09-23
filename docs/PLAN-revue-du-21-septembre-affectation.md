@@ -22,7 +22,7 @@
 
 ---
 
-## Les 23 tranches
+## Les 24 tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -48,9 +48,10 @@
 | **RV20** · Un texte envoyé se copie | `[EASY]` | un petit composant « Copier » posé là où le texte est déjà affiché |
 | **RV21** · « Modifier la fiche » se range en onglets | `[MEDIUM]` | remettre en page une fenêtre existante sans perdre un réglage, avec un état partagé entre onglets |
 | **RV22** · Ce qui n'est pas encore rangé se supprime ou s'écarte | `[EASY]` | deux gestes qui existent déjà ailleurs, posés dans le bandeau |
+| **RV23** · Espace agrandit toute image, partout | `[MEDIUM]` | une règle par défaut au niveau de l'atelier, qui doit céder aux surfaces qui se servent déjà d'Espace |
 | **RV16** · La maquette, remesurée | `[MEDIUM]` | Un relevé au navigateur qui juge 26 écrans contre la maquette, avec la grille du 13 septembre. |
 
-**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 12 `[MEDIUM]`, 8 `[EASY]`, 1 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 13 `[MEDIUM]`, 8 `[EASY]`, 1 `[VERY-EASY]`.
 
 ---
 
