@@ -1089,15 +1089,17 @@ celle qu'on veut garder ou remplacer.
 ## RV25 · Le fond enfermé dans le sujet se voit, et s'enlève
 
 *Même retour, même image.* Le vert vif vu dans les vitres du bus est **le fond vert de l'image
-brute**, vu à travers les vitres. Le détourage « bord » n'enlève que le fond **relié au bord de
-l'image** (`detourer_bord`, `atelier/image/traitement.py`) : c'est voulu, pour garder le blanc
-d'un os ou le reflet d'une fiole. Mais une poche de fond enfermée par le sujet reste alors
-opaque, et rien ne le dit. Le moyen de l'enlever existe déjà : une passe « couleur », en cliquant
+brute**, vu à travers les vitres. Vérifié sur l'image enregistrée : détourée par le modèle
+(`u2net`), elle garde quatre verts dans son rendu, dont `#3ca649` sur environ 2 000 pixels. Le
+modèle découpe l'objet entier, vitres comprises ; le détourage « bord » ferait pareil, puisqu'il
+n'enlève que le fond **relié au bord de l'image** (`detourer_bord`, `atelier/image/traitement.py`)
+— c'est voulu, pour garder le blanc d'un os ou le reflet d'une fiole. Une poche de fond enfermée
+par le sujet reste donc opaque, quel que soit le moteur, et rien ne le dit. Le moyen de l'enlever existe déjà : une passe « couleur », en cliquant
 le vert, avec « Où retirer : partout ». Il n'est simplement proposé nulle part.
 
 ### Critères d'acceptation
 
-- [ ] après un détourage par le bord, quand des pixels de la couleur du fond restent opaques à
+- [ ] après tout détourage (bord ou modèle), quand des pixels de la couleur du fond restent opaques à
       l'intérieur du sujet, la table le dit en une phrase (« des morceaux du fond restent dans le
       sujet : 3 zones ») et propose « les retirer aussi »
 - [ ] ce bouton ajoute la passe « couleur » déjà existante (couleur du fond visée, « partout »),
