@@ -286,7 +286,7 @@ export function EcranEnvoi({
         empeche: !!refus || !envoi || enPaiement || actualisation,
       }}
       enfants={envoi && <>
-        <div className="grid grid-cols-[minmax(0,1fr)_300px] items-start gap-[22px]">
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,32%)] items-start gap-[22px]">
           <div className="space-y-[22px]">
             <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="mb-[14px] font-serif text-[25px]">Textes envoyés</h2>{edition ? <div className="space-y-[14px] [&_.mesure]:text-[12px]">{envoi.groupes.filter(g => envoi.lignes.some(l => l.groupe === g.clef)).map(g => <section key={g.clef}><h3 className="font-medium">{g.nom}</h3><ul>{envoi.lignes.filter(l => l.groupe === g.clef).map(l => <Ligne key={l.clef} ligne={l} onBasculer={() => basculer(l.clef, l.allumee)} onCorriger={t => corriger(l.clef, t)} onRemettre={() => remettre(l.clef)} onGarder={() => onGarder(l)} />)}</ul></section>)}</div> : local ? <TexteLocalQuiPart local={local} /> : <div className="space-y-[22px]">{parties.filter(p => p.texte.trim()).map(p => <section key={p.clef}><h3 className="mb-[8px] font-medium">{p.nom}</h3><p className="mesure whitespace-pre-wrap break-words rounded-7 border border-trait bg-papier p-[14px] text-[12px] leading-relaxed">{p.titre && `${p.titre}\n\n`}{p.texte}</p></section>)}{!envoi.texte && <p className="text-encre-3">Aucun texte à envoyer.</p>}</div>}{edition && <button className={`${bouton} mt-[14px]`} onClick={() => onReprendre(envoi.texte)} disabled={!envoi.texte}>Modifier le texte complet à la main</button>}</section>
             {/* **Le fond ne se cache jamais avec le négatif** (défaut 3 de la
@@ -297,7 +297,7 @@ export function EcranEnvoi({
             <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="mb-[14px] font-serif text-[25px]">{local && !negatifLu ? "Fond" : "Fond et prompt négatif"}</h2>{edition ? <div className="[&_.mesure]:text-[12px]"><SectionFond fond={envoi.fond} onFond={couleur => onTri({ ...tri, fond: couleur })} /></div> : <><p>Fond : {envoi.fond.couleur || "aucun fond imposé"}{envoi.fond.nom && ` ${envoi.fond.nom}`}</p>{envoi.fond.motif && <p className="mesure mt-[4px] text-[12px] text-encre-3">fond {envoi.fond.nom || envoi.fond.couleur} : {envoi.fond.motif}</p>}{!(local && !negatifLu) && <p className="mesure mt-[14px] whitespace-pre-wrap text-[12px] leading-relaxed">{envoi.fond.interdiction || "Aucune consigne négative."}</p>}</>}</section>
             {envoi.retour.length > 0 && <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Traitements appliqués au retour · sur la machine</summary><ul className="mt-[14px] space-y-[8px]">{envoi.retour.map(r => <li key={r.nom}>{r.nom} · {r.detail}</li>)}</ul><p className="mt-[14px] text-encre-3">Les originaux sont conservés. Ces traitements se modifient dans la retouche.</p></details>}
           </div>
-          <div className="space-y-[22px]">
+          <div className="min-w-0 space-y-[22px]">
             <section className="rounded-7 border border-trait bg-carte p-[22px]"><div><h2 className="font-serif text-[25px]">Images envoyées</h2><p className="mt-[8px] text-encre-3">{envoi.images.partent ?? envoi.images.cochees} image{(envoi.images.partent ?? envoi.images.cochees) > 1 ? "s" : ""} · {envoi.images.places} places</p>
               {/* **Ce qu'un style local fait d'une image jointe** (ML3, ML5) :
                   il la garde comme sujet, ou repeint par-dessus. C'est le
@@ -1394,7 +1394,7 @@ function LigneImage({
  *  auraient divergé au premier changement de gris. */
 function Legende({ texte }: { texte: string }) {
   return (
-    <p className="mesure pl-[58px] text-[9.5px] leading-4 text-encre-4">
+    <p className="mesure whitespace-pre-wrap break-words pl-[58px] text-[9.5px] leading-4 text-encre-4">
       {texte}
     </p>
   )
@@ -1526,7 +1526,7 @@ function LigneOption({
             {option.detail}
           </span>
         </div>
-        <p className="mesure text-[10.5px] leading-[1.45] text-encre-3">
+        <p className="mesure whitespace-pre-wrap break-words text-[10.5px] leading-[1.45] text-encre-3">
           {option.texte}
         </p>
         {option.refus && <Raison texte={`indisponible : ${option.refus}`} />}
