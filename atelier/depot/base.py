@@ -562,6 +562,28 @@ class Base:
                     couts.append(float(quantite))
         return couts
 
+    def comptes_par_modele(self) -> dict[str, int]:
+        """Combien d'appels réussis chaque modèle a rendus, **tous projets
+        confondus** (TS17) — un appel compte une fois, qu'il ait rendu une
+        image ou trois.
+
+        C'est la matière des « habitués » : le panneau de choix du modèle
+        met en tête les trois gratuits et les trois payants les plus repris.
+        **Tous les projets, jamais un seul** — décision de la tranche : les
+        habitudes d'un auteur ne se réinventent pas d'un jeu à l'autre, et un
+        projet tout neuf n'aurait sinon jamais de modèle habituel à montrer.
+
+        `statut = 'reussie'` est la colonne, pas une relecture du contenu :
+        elle porte déjà `Generation.statut`, dérivé des emplacements — *un
+        lot où une image est arrivée n'est pas perdu* (`domaine/generation.py`).
+        """
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT modele, COUNT(*) AS total FROM generations "
+                "WHERE statut = 'reussie' GROUP BY modele"
+            ).fetchall()
+        return {str(l["modele"]): int(l["total"]) for l in lignes}
+
     def couts_par_references(
         self, modele: str, limite: int = 60
     ) -> list[tuple[int, float]]:

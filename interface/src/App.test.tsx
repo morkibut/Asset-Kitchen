@@ -249,6 +249,9 @@ const CATALOGUE: EtatCatalogue = {
     },
   ],
   defaut: { modele: MODELE.identifiant, options: {} },
+  // Les habitués (TS17) : vide dans un atelier neuf, aucune génération n'a
+  // encore été comptée — c'est ce que le produit dit plutôt que d'inventer.
+  habitues: { gratuits: [], payants: [] },
   // Ce qui partira vraiment, artworks compris — calculé par le serveur (US-52),
   // et depuis C1 **ligne par ligne, avec sa provenance** (US-127).
   references: {

@@ -7,7 +7,7 @@
 
 import { useRef } from "react"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 
 import type { Bout, Carte, Modele } from "../api"
 import {
@@ -89,8 +89,14 @@ const carte = (identifiant: string, sur: Partial<Carte> = {}): Carte => ({
 type Appel = { url: string; methode: string; corps: unknown }
 
 /** Le serveur doublé : un catalogue, une génération qui revient aussitôt
- *  réussie avec autant d'emplacements qu'on en a demandé, et la pose. */
-function serveur() {
+ *  réussie avec autant d'emplacements qu'on en a demandé, et la pose.
+ *
+ *  **`habitues` (TS17)** : absent par défaut — comme le fait un serveur qui
+ *  n'a encore rien compté —, ce qui exerce déjà le critère « sans historique,
+ *  la liste complète paraît directement » dans tous les essais existants. */
+function serveur({
+  habitues,
+}: { habitues?: { gratuits: string[]; payants: string[] } } = {}) {
   const appels: Appel[] = []
   let variations = 1
   const reponse = (corps: unknown, statut = 200) =>
@@ -112,7 +118,11 @@ function serveur() {
     const corps = init?.body ? JSON.parse(String(init.body)) : null
     appels.push({ url, methode, corps })
     if (url.startsWith("/api/models"))
-      return reponse({ modeles: [PAYANT, GRISE, QWEN], couts: { [PAYANT.identifiant]: 0.04 } })
+      return reponse({
+        modeles: [PAYANT, GRISE, QWEN],
+        couts: { [PAYANT.identifiant]: 0.04 },
+        ...(habitues ? { habitues } : {}),
+      })
     if (url === "/api/generations" && methode === "POST") {
       variations = (corps as { variations: number }).variations
       return reponse(generation("en_cours"), 202)
@@ -272,9 +282,13 @@ describe("la barre de fabrication", () => {
     render(<Banc />)
     const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
     await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
-    const grise = [...liste.options].find((o) => o.value === GRISE.identifiant)!
-    expect(grise.disabled).toBe(true)
-    expect(grise.title).toBe("workflow absent")
+    // TS17 : sans habitués annoncés par ce serveur doublé, ouvrir le panneau
+    // affiche directement la liste complète (critère 3 du plan).
+    fireEvent.click(liste)
+    const grise = await screen.findByRole("option", { name: new RegExp(GRISE.nom) })
+    const bouton = within(grise).getByRole("button")
+    expect(bouton.hasAttribute("disabled")).toBe(true)
+    expect(bouton.getAttribute("title")).toBe("workflow absent")
     // Le bouton porte l'annonce — un temps, pour un local.
     expect(screen.getByRole("button", { name: /Fabriquer · ≈ 12 secondes par image/ })).toBeTruthy()
   })
@@ -371,7 +385,9 @@ describe("la barre de fabrication", () => {
     const { unmount } = render(<Banc />)
     const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
     await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
-    fireEvent.change(liste, { target: { value: PAYANT.identifiant } })
+    fireEvent.click(liste)
+    const option = await screen.findByRole("option", { name: new RegExp(PAYANT.nom) })
+    fireEvent.click(within(option).getByRole("button"))
     fireEvent.click(screen.getByRole("button", { name: "3" }))
     unmount()
 
@@ -830,5 +846,118 @@ describe("la barre de fabrication", () => {
 
     await waitFor(() => expect(screen.queryAllByTestId("fantome")).toHaveLength(0))
     expect(liens).toHaveLength(0)
+  })
+})
+
+// TS17 — le choix du modèle : les habitués d'abord, « voir plus de modèles »
+// pour la liste complète avec sa recherche.
+
+describe("TS17 — le choix du modèle, les habitués d'abord", () => {
+  const ouvrirLeChoix = async () => fireEvent.click(await screen.findByLabelText("Modèle"))
+
+  test("les habitués paraissent en tête, gratuits puis payants, et « voir plus » ouvre le reste", async () => {
+    const { fetchDouble } = serveur({
+      habitues: { gratuits: [QWEN.identifiant], payants: [PAYANT.identifiant] },
+    })
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    await ouvrirLeChoix()
+
+    // Les deux habitués sont là, chacun sous son titre — et rien d'autre :
+    // GRISE n'est pas un habitué, il ne paraît pas encore.
+    expect(screen.getByText("Les plus utilisés · gratuits")).toBeTruthy()
+    expect(screen.getByText("Les plus utilisés · payants")).toBeTruthy()
+    expect(screen.getAllByRole("option")).toHaveLength(2)
+    expect(screen.queryByLabelText("Rechercher un modèle")).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "voir plus de modèles" }))
+    // Dépliée, la recherche paraît, et la liste complète — GRISE compris.
+    expect(await screen.findByLabelText("Rechercher un modèle")).toBeTruthy()
+    expect(screen.getAllByRole("option")).toHaveLength(3)
+  })
+
+  test("un top vide reste masqué — ici, aucun habitué payant", async () => {
+    const { fetchDouble } = serveur({ habitues: { gratuits: [QWEN.identifiant], payants: [] } })
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    await ouvrirLeChoix()
+
+    expect(screen.getByText("Les plus utilisés · gratuits")).toBeTruthy()
+    expect(screen.queryByText("Les plus utilisés · payants")).toBeNull()
+    expect(screen.getAllByRole("option")).toHaveLength(1)
+  })
+
+  test("sans historique, la liste complète paraît directement — pas de cases vides", async () => {
+    const { fetchDouble } = serveur({ habitues: { gratuits: [], payants: [] } })
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    await ouvrirLeChoix()
+
+    expect(screen.queryByText(/Les plus utilisés/)).toBeNull()
+    expect(await screen.findByLabelText("Rechercher un modèle")).toBeTruthy()
+    expect(screen.getAllByRole("option")).toHaveLength(3)
+  })
+
+  test("la recherche filtre par nom", async () => {
+    const { fetchDouble } = serveur({ habitues: { gratuits: [], payants: [] } })
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    await ouvrirLeChoix()
+    const recherche = await screen.findByLabelText("Rechercher un modèle")
+
+    fireEvent.change(recherche, { target: { value: "gpt-image" } })
+    const options = screen.getAllByRole("option")
+    expect(options).toHaveLength(1)
+    expect(within(options[0]).getByRole("button").textContent).toContain(PAYANT.nom)
+  })
+
+  test("un modèle grisé, dans les habitués, ne se choisit pas", async () => {
+    // GRISE lui-même en habitué payant, pour vérifier que le grisé résiste au
+    // raccourci des tops autant qu'à la liste complète.
+    const { fetchDouble } = serveur({
+      habitues: { gratuits: [QWEN.identifiant], payants: [GRISE.identifiant] },
+    })
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+    await ouvrirLeChoix()
+
+    const option = screen.getByRole("option", { name: new RegExp(GRISE.nom) })
+    const bouton = within(option).getByRole("button")
+    expect(bouton.hasAttribute("disabled")).toBe(true)
+    fireEvent.click(bouton)
+    // Le clic n'a rien fait : le modèle retenu n'a pas bougé.
+    expect(liste.value).toBe(QWEN.identifiant)
+  })
+
+  test("Échap ferme le panneau", async () => {
+    const { fetchDouble } = serveur({ habitues: { gratuits: [], payants: [] } })
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    const liste = await screen.findByLabelText("Modèle")
+    await ouvrirLeChoix()
+    expect(await screen.findByLabelText("Rechercher un modèle")).toBeTruthy()
+
+    fireEvent.keyDown(liste, { key: "Escape" })
+    expect(screen.queryByLabelText("Rechercher un modèle")).toBeNull()
+  })
+
+  test("les flèches déplacent la ligne active, et Entrée choisit", async () => {
+    const { fetchDouble } = serveur({
+      habitues: { gratuits: [QWEN.identifiant], payants: [PAYANT.identifiant] },
+    })
+    vi.stubGlobal("fetch", fetchDouble)
+    render(<Banc />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+    await ouvrirLeChoix()
+    expect(await screen.findByText("Les plus utilisés · gratuits")).toBeTruthy()
+
+    // Le gratuit (QWEN, déjà retenu) est actif en premier ; une flèche descend
+    // sur le payant, et Entrée le choisit.
+    fireEvent.keyDown(liste, { key: "ArrowDown" })
+    fireEvent.keyDown(liste, { key: "Enter" })
+    await waitFor(() => expect(liste.value).toBe(PAYANT.identifiant))
   })
 })
