@@ -201,8 +201,10 @@ LARGEURS = {300, 380, 880, 128, 240, 76}
 LARGEURS_DE_CONTROLE = {70}
 # § Spacing — vignettes. `81` est entrée le 19 septembre 2026 : les vignettes
 # des animations et des tenues d'un sujet, agrandies d'une fois et demie
-# depuis 54 pour que le pixel art se lise.
-VIGNETTES = {81}
+# depuis 54 pour que le pixel art se lise. `150` est entrée le 24 septembre
+# 2026 (TS15) : le plafond de hauteur de la miniature en tête du détail d'une
+# carte, dans la colonne de droite de la toile.
+VIGNETTES = {81, 150}
 # § Typography — l'échelle. `11.5` y est entrée parce que six planches
 # d'atelier l'emploient 280 fois ; rien ne descend sous 10.5.
 TEXTES = {52, 38, 25, 15, 14, 13.5, 13, 12.5, 12, 11.5, 11, 10.5}

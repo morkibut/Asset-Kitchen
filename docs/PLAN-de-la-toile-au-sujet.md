@@ -703,16 +703,47 @@ ce correctif. Non vérifié au navigateur (essais d'écran seulement).
 Cliquer une carte ou un îlot n'ouvre plus de fenêtre par-dessus la toile. Leur détail prend la
 place de la réserve, dans la colonne de droite, et la réserve revient quand on le ferme.
 
-- [ ] une carte cliquée montre, dans la colonne de droite : sa miniature (150 px de haut au
+- [x] une carte cliquée montre, dans la colonne de droite : sa miniature (150 px de haut au
       plus, si c'est une image), puis tout ce que la fenêtre montrait, et toutes ses actions
-- [ ] même chose pour un îlot : son nom, ses cartes, sa palette, son ambiance, ses actions
-- [ ] rien ne disparaît (*8nonies*) : chaque action de l'ancienne fenêtre a sa place dans le panneau
-- [ ] une croix, Échap, ou un clic sur la toile vide ferme le détail et rend la réserve
-- [ ] cliquer une autre carte change le détail sans le fermer
-- [ ] la mise en page suit `docs/DESIGN.md` : des groupes titrés, les actions dangereuses à part
-- [ ] le guide (`aide.ts`) dit où se trouve désormais le détail
+- [x] même chose pour un îlot : son nom, ses cartes, sa palette, son ambiance, ses actions
+- [x] rien ne disparaît (*8nonies*) : chaque action de l'ancienne fenêtre a sa place dans le panneau
+- [x] une croix, Échap, ou un clic sur la toile vide ferme le détail et rend la réserve
+- [x] cliquer une autre carte change le détail sans le fermer
+- [x] la mise en page suit `docs/DESIGN.md` : des groupes titrés, les actions dangereuses à part
+- [x] le guide (`aide.ts`) dit où se trouve désormais le détail
 
 **Bloquée par** : TS16, qui touche la même fenêtre d'îlot.
+
+*Fait le 24 septembre 2026.* Tranché : le détail (carte ou îlot) est **porté par un
+`createPortal`** (`Toile.tsx`, `PanneauDetail`) plutôt que reconstruit côté `Univers.tsx` —
+`Reglages` (désormais exporté de `Tableau.tsx`) et les gestes de la barre de fabrication
+(« Prendre comme référence », « Développer ce sujet », « Encore »…) vivent dans les contextes
+que seule la toile fournit ; un portail déplace le nœud DOM sans quitter cet arbre React, donc
+sans rien perdre de ces contextes. `epingle` (jusque-là local à `Toile.tsx`) est monté d'un cran
+et tenu par `Univers.tsx`, à côté de `choisie` : c'est ce couple qui décide, en toile, si la
+colonne de droite montre un détail ou la réserve — une carte choisie l'emporte sur un îlot
+épinglé, et réciproquement (`choisirSurLaToile` / `epinglerSurLaToile`). Le menu local d'un îlot
+(la teinte, « faire/ouvrir une palette », « faire/ouvrir une ambiance », posés par TS16) a
+disparu de `NoeudIlot` ; son contenu, à l'identique, vit maintenant dans `PanneauDetail`. La
+miniature d'une carte (150 px de haut au plus) est une addition au système de design
+(`docs/DESIGN.md` § Vignettes) plutôt qu'une valeur en dur ; les cartes d'un îlot, dans le même
+panneau, sont cliquables et changent le détail sans jamais rouvrir la réserve entre les deux —
+elles reprennent une hauteur de contrôle déjà déclarée (34) plutôt que d'en ajouter une.
+**Décision sur la vue grille** (point à trancher du plan) : elle **garde sa forme actuelle** — le
+menu flottant de `Tableau.tsx` — parce qu'elle n'a pas de troisième colonne où loger un détail ;
+la recommandation d'« un seul composant » est tenue par `Reglages`, réutilisé tel quel des deux
+côtés, sans dupliquer un seul champ. **Pour TS18** : le panneau d'une carte a sa rangée d'actions
+en bas (« Découper › », « Prendre comme référence », « Développer ce sujet », puis « Supprimer »,
+séparé par un trait) — c'est là que « Retoucher dans l'atelier » prendra sa place, à côté des
+autres liens plutôt que dans le bloc d'artwork qui n'existe que pour une image promue. Six essais
+d'écran dans `App.test.tsx` (« le détail d'une carte et d'un îlot, dans la colonne de droite »),
+plus la mise à jour de `docs/DESIGN.md` et `essais/essai_jetons.py` (150 en `VIGNETTES`, la
+miniature ; réutilisation de 34 pour les cartes d'un îlot, sans extension de liste). **Vérifié au
+navigateur**, sur un atelier jetable (`essais/atelier_jetable_ts15.py`, port 8433) : cliquer une
+carte puis l'autre, cliquer l'îlot, la croix, Échap et le clic sur le plan vide, à 1920 et
+1280 px — les trois referment le détail et rendent la réserve, sans jamais de fenêtre par-dessus
+la toile. Le proxy `vite.config.ts` vise 8420 en dur (pas de `VITE_API_PORT`) : pointé sur 8433 le
+temps de la vérification, puis rendu tel quel — aucune trace dans le diff.
 
 ### TS17 · Choisir un modèle : les habitués d'abord
 

@@ -350,6 +350,11 @@ traîne, 300 dévore la barre d'outils.
 **81**, la vignette d'une animation ou d'une tenue sur la page d'un sujet (19 septembre 2026).
 Elle était à 54 ; agrandie d'une fois et demie pour que le pixel art se lise sans ouvrir l'image.
 
+**150**, la hauteur maximale de la miniature en tête du détail d'une carte, dans la colonne de
+droite de la toile (TS15, 24 septembre 2026). Ni un écart ni une colonne : c'est un plafond sur
+une image dont la largeur suit celle du panneau, pour qu'une carte très haute n'y prenne pas tout
+l'espace avant même d'atteindre ses réglages.
+
 ---
 
 ## Layout

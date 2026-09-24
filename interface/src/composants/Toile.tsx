@@ -39,6 +39,7 @@ import {
   useState,
   type ReactNode,
 } from "react"
+import { createPortal } from "react-dom"
 import {
   Background,
   BackgroundVariant,
@@ -81,6 +82,7 @@ import {
   GLISSE_CARTE,
   GOUTTIERE,
   Pastilles,
+  Reglages,
   groupesDe,
   useCollage,
   useDepot,
@@ -1111,6 +1113,19 @@ type Parametres = {
   onVue: (vue: Vue) => void
   choisie: string | null
   onChoisir: (identifiant: string | null, multiple?: boolean) => void
+  /** Ce qui est épinglé sans être une carte : un lien, un îlot (`ilot:<nom>`).
+   *  **Tenu par l'écran Univers depuis TS15**, comme `choisie` : c'est lui qui
+   *  décide, avec `choisie`, si la colonne de droite montre un détail ou la
+   *  réserve — la toile ne sait pas ce qu'il y a à côté d'elle. */
+  epingle: string | null
+  onEpingler: (cle: string | null) => void
+  /** Le nœud DOM de la colonne de droite, posé par l'écran Univers quand elle
+   *  montre un détail au lieu de la réserve (TS15). Le détail s'y porte par
+   *  `createPortal` : le nœud change de place, l'arbre React ne change pas —
+   *  c'est ce qui lui garde `PRENDRE_REFERENCE`, `DEVELOPPER`, `ENCORE`… les
+   *  contextes que seule la toile fournit. `null` tant que rien n'est choisi
+   *  ou que la colonne n'est pas encore montée. */
+  detailCible: HTMLDivElement | null
   /** **La sélection de la toile** (`RP9`) — déjà réduite à ce que le plan
    *  montre par `selectionVive`, et tenue par l'écran Univers parce qu'elle
    *  meurt avec lui, comme la pile d'annulation. */
@@ -1158,6 +1173,9 @@ function Plan({
   onVue,
   choisie,
   onChoisir,
+  epingle,
+  onEpingler,
+  detailCible,
   selection,
   gestes,
   onErreur,
@@ -1170,9 +1188,6 @@ function Plan({
   onRelire,
 }: Parametres) {
   const { screenToFlowPosition, getZoom, setViewport } = useReactFlow()
-  // Ce qui est épinglé sans être une carte : un lien, un îlot. Local au plan,
-  // parce que rien d'autre que le plan n'en dessine.
-  const [epingle, setEpingle] = useState<string | null>(null)
   // Le glissement en cours, et ce qu'il ferait aux îlots qu'il touche. Local au
   // plan, comme `epingle` : rien d'autre que le plan n'en dessine, et ça meurt
   // avec le geste.
@@ -2136,7 +2151,7 @@ function Plan({
       tailleDe,
       onSurvol: survoler,
       onChoisir,
-      onEpingler: setEpingle,
+      onEpingler,
       onErreur,
       onLargeur: (carte, largeur) => poser(carte, { largeur_libre: largeur }),
       onCorrigerTexte: (carte, texte) => poser(carte, { texte }),
@@ -2215,6 +2230,7 @@ function Plan({
       tailleDe,
       survoler,
       onChoisir,
+      onEpingler,
       onErreur,
       poser,
       couper,
@@ -2249,6 +2265,56 @@ function Plan({
     },
     [liens],
   )
+
+  // ── Le détail d'une carte ou d'un îlot, dans la colonne de droite (TS15) ──
+  //
+  // **Une carte l'emporte sur un îlot** quand les deux tiennent une valeur —
+  // l'écran Univers les rend exclusifs à l'écriture (choisir l'un efface
+  // l'autre), mais rien n'empêche ici de coder les deux au repos, et un seul
+  // panneau ne peut montrer qu'une chose.
+  const carteDuDetail = cartes.find((c) => c.identifiant === choisie) ?? null
+  const nomDeLIlotDuDetail =
+    !carteDuDetail && epingle?.startsWith("ilot:") ? epingle.slice("ilot:".length) : null
+  const ilotDuDetail = useMemo(() => {
+    if (!nomDeLIlotDuDetail) return null
+    const membres = cartes.filter((c) => !c.en_reserve && c.groupe === nomDeLIlotDuDetail)
+    // Le dernier membre vient de sortir (glissement, suppression…) : l'îlot
+    // n'existe plus, et le panneau ne doit pas montrer une coquille vide.
+    if (!membres.length) return null
+    const fait = fabriques[nomDeLIlotDuDetail]
+    return {
+      nom: nomDeLIlotDuDetail,
+      membres,
+      teinte: teintes[nomDeLIlotDuDetail] ?? "",
+      dejaPalette: !!fait?.palette,
+      dejaAmbiance: !!fait?.ambiance,
+      onTeinter: (t: Teinte) => cadre.onTeinterIlot(nomDeLIlotDuDetail, t),
+      onPalette: () => cadre.onFairePalette(nomDeLIlotDuDetail),
+      onAmbiance: () => cadre.onFaireAmbiance(nomDeLIlotDuDetail),
+    }
+  }, [nomDeLIlotDuDetail, cartes, fabriques, teintes, cadre])
+
+  const fermerLeDetail = useCallback(() => {
+    onChoisir(null)
+    onEpingler(null)
+  }, [onChoisir, onEpingler])
+
+  // **Échap ferme le détail et rend la réserve**, comme la croix et le clic
+  // sur la toile vide (`onPaneClick`, la même paire d'appels). Un écouteur sur
+  // `window` plutôt que sur le plan : le panneau vit dans la colonne de
+  // droite, hors du `<div data-plan>` qui capte le clavier de la toile. Sans
+  // effet tant que rien n'est ouvert — et tout ce qui traite déjà `Escape`
+  // ailleurs (le brouillon d'une note, le champ de correction d'un texte, la
+  // recherche de modèle) l'arrête à la source par `stopPropagation`, donc
+  // n'atteint jamais cet écouteur-ci.
+  useEffect(() => {
+    if (!choisie && !epingle) return
+    const surTouche = (evenement: KeyboardEvent) => {
+      if (evenement.key === "Escape") fermerLeDetail()
+    }
+    window.addEventListener("keydown", surTouche)
+    return () => window.removeEventListener("keydown", surTouche)
+  }, [choisie, epingle, fermerLeDetail])
 
   return (
     <section
@@ -2324,7 +2390,7 @@ function Plan({
             }}
             onPaneClick={() => {
               onChoisir(null)
-              setEpingle(null)
+              onEpingler(null)
             }}
             minZoom={0.2}
             maxZoom={2.5}
@@ -2395,6 +2461,25 @@ function Plan({
               </defs>
             </svg>
           </ReactFlow>
+
+          {/* **Le détail, porté dans la colonne de droite** (TS15). Encore à
+              l'intérieur des cinq fournisseurs ci-dessus : `createPortal` ne
+              déplace que le nœud DOM, jamais l'ancêtre React — c'est ce qui
+              laisse `Reglages` retrouver `PRENDRE_REFERENCE`, `DEVELOPPER`,
+              `ENCORE`… exactement comme dans le menu qu'il remplace. */}
+          {detailCible &&
+            (carteDuDetail || ilotDuDetail) &&
+            createPortal(
+              <PanneauDetail
+                carte={carteDuDetail}
+                ilot={ilotDuDetail}
+                personnages={personnages}
+                onErreur={onErreur}
+                onFermer={fermerLeDetail}
+                onChoisirCarte={(identifiant) => onChoisir(identifiant)}
+              />,
+              detailCible,
+            )}
         </CADRE.Provider>
         </ENCORE.Provider>
         </DEVELOPPER.Provider>
@@ -2507,6 +2592,158 @@ function Ancrage() {
       isConnectable={false}
       className="!pointer-events-none !h-0 !w-0 !min-w-0 !border-0 !bg-transparent !opacity-0"
     />
+  )
+}
+
+/**
+ * Le détail d'une carte ou d'un îlot, dans la colonne de droite (TS15).
+ *
+ * **Cliquer une carte ou un îlot n'ouvre plus de fenêtre par-dessus la
+ * toile** : leur détail prend la place de la réserve, et la réserve revient
+ * quand il se ferme (`Univers.tsx`, qui pose ce panneau à la place de
+ * `<Reserve>` et lui fournit son nœud DOM par `detailCible`). Ce composant-ci
+ * ne sait pas où il est posé — la colonne, sa largeur, sa bascule sont
+ * l'affaire d'Univers — il ne sait que dessiner ce qu'on lui donne.
+ *
+ * **Rien ne disparaît** (8nonies) : le corps d'une carte est exactement
+ * `Reglages` (`Tableau.tsx`), le même panneau que la grille pose encore dans
+ * sa fenêtre flottante — un seul jeu de champs et de gestes, jamais deux à
+ * tenir synchronisés. Le corps d'un îlot reprend, mot pour mot, ce que son
+ * ancien menu local montrait : la teinte, « faire/ouvrir une palette »,
+ * « faire/ouvrir une ambiance ». Sa seule addition est la miniature en tête
+ * d'une carte image (150 px de haut au plus) et la liste des cartes d'un
+ * îlot — ni l'une ni l'autre n'avaient de raison d'exister dans un menu posé
+ * juste à côté de l'image qu'il réglait.
+ */
+function PanneauDetail({
+  carte,
+  ilot,
+  personnages,
+  onErreur,
+  onFermer,
+  onChoisirCarte,
+}: {
+  carte: Carte | null
+  ilot: {
+    nom: string
+    membres: Carte[]
+    teinte: Teinte
+    dejaPalette: boolean
+    dejaAmbiance: boolean
+    onTeinter: (teinte: Teinte) => void
+    onPalette: () => void
+    onAmbiance: () => void
+  } | null
+  personnages: Personnage[]
+  onErreur: (raison: string) => void
+  onFermer: () => void
+  /** Une miniature de l'îlot cliquée montre le détail de cette carte-là — le
+   *  panneau ne quitte pas la colonne, il change simplement de sujet. */
+  onChoisirCarte: (identifiant: string) => void
+}) {
+  if (!carte && !ilot) return null
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-[34px] shrink-0 items-center justify-between border-b border-trait px-3">
+        <span className="mesure truncate text-[12.5px] font-medium text-encre">
+          {carte ? (carte.genre === "texte" ? "Note" : "Carte") : ilot!.nom}
+        </span>
+        <button
+          type="button"
+          aria-label="Fermer le détail"
+          onClick={onFermer}
+          className="mesure shrink-0 text-[14px] leading-none text-encre-4 hover:text-encre"
+        >
+          ×
+        </button>
+      </div>
+      <div className="defile min-h-0 flex-1 overflow-y-auto">
+        {carte ? (
+          <>
+            {carte.genre === "image" && carte.montrable && (
+              <img
+                src={api.imageCarte(carte.identifiant, carte.empreinte)}
+                alt={carte.note || carte.source || "carte"}
+                className="max-h-[150px] w-full bg-pourtour object-contain"
+              />
+            )}
+            <Reglages carte={carte} personnages={personnages} onErreur={onErreur} />
+          </>
+        ) : (
+          <div className="flex flex-col gap-2 p-2">
+            <div className="flex flex-col gap-1.5">
+              <Libelle aide="ilot.teinte">Teinte de l'îlot</Libelle>
+              <Pastilles teinte={ilot!.teinte} onChoisir={ilot!.onTeinter} />
+            </div>
+
+            <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
+              <Libelle aide="ilot.cartes">
+                {ilot!.membres.length} carte{ilot!.membres.length > 1 ? "s" : ""}
+              </Libelle>
+              <div className="flex flex-wrap gap-1.5">
+                {ilot!.membres.map((membre) => (
+                  <button
+                    key={membre.identifiant}
+                    type="button"
+                    aria-label={membre.genre === "texte" ? "Voir cette note" : "Voir cette carte"}
+                    title={membre.genre === "texte" ? membre.texte : membre.source}
+                    onClick={() => onChoisirCarte(membre.identifiant)}
+                    className="h-[34px] w-[34px] shrink-0 overflow-hidden rounded-5 border border-trait bg-carte hover:border-signal"
+                  >
+                    {membre.genre === "image" && membre.montrable ? (
+                      <img
+                        src={api.imageCarte(membre.identifiant, membre.empreinte)}
+                        alt={membre.note || membre.source || "carte"}
+                        className="h-full w-full bg-pourtour object-contain"
+                      />
+                    ) : (
+                      <span className="text-[10.5px] text-encre-4">
+                        {membre.genre === "texte" ? "note" : "…"}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* **Les deux gestes de fabrication du paquet** (E7, ouverts en
+                E11, déplacés ici depuis leur menu local par TS15) : ils
+                partent d'un paquet parce que c'est là qu'on a réuni ce qui va
+                ensemble, et le geste mène directement à ce qui existe déjà
+                (U7, TS16) sans jamais fabriquer un doublon. */}
+            <div className="mt-1 flex flex-col gap-1 border-t border-trait pt-2">
+              <button
+                type="button"
+                data-aller-palette={ilot!.dejaPalette ? "" : undefined}
+                onClick={ilot!.onPalette}
+                title={
+                  ilot!.dejaPalette
+                    ? "elle existe déjà — ce geste y mène"
+                    : "l'atelier lit les couleurs de ces images — rien n'est payé"
+                }
+                className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-left text-[10.5px] text-encre-3 hover:text-signal"
+              >
+                {ilot!.dejaPalette ? "ouvrir sa palette ›" : "faire une palette de cet îlot"}
+              </button>
+              <button
+                type="button"
+                data-aller-ambiance={ilot!.dejaAmbiance ? "" : undefined}
+                onClick={ilot!.onAmbiance}
+                title={
+                  ilot!.dejaAmbiance
+                    ? "elle existe déjà — ce geste y mène"
+                    : "la palette, l'ambiance qui la porte, et il ne reste qu'à écrire les trois cases"
+                }
+                className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-left text-[10.5px] text-encre-3 hover:text-signal"
+              >
+                {ilot!.dejaAmbiance ? "ouvrir son ambiance ›" : "faire une ambiance de cet îlot"}
+              </button>
+              <Raison texte="elles vivent dans l'onglet Univers, côté Ambiances et couleurs — et survivent au paquet" />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -2851,94 +3088,12 @@ function NoeudIlot({ data }: NodeProps) {
         </div>
       </div>
 
-      {/* **Le menu porte le survol de l'îlot, comme le menu d'une carte porte
-          celui de sa carte.** Là-bas il est *dans* la carte, donc aller le
-          chercher n'est pas la quitter ; ici il est le **frère** du bandeau, et
-          le pointeur qui montait vers lui quittait la seule surface qui le
-          tenait ouvert. Il se refermait à trois pixels du but, et la teinte d'un
-          îlot était inatteignable à la souris. Il redit donc `onSurvol(…, true)`
-          en entrant, ce qui annule la grâce de 150 ms, et `false` en sortant.
-
-          **Et l'écart de 3 px passe dedans.** En marge, il était un couloir mort
-          entre deux surfaces vivantes, que la traversée quittait toutes les
-          deux ; en padding, le dessin ne bouge pas d'un pixel et la zone
-          sensible touche le bandeau.
-
-          **Il se cale sur le haut du bandeau, pas sur celui de la boîte** —
-          les deux ne coïncident qu'à 1×, et un menu qui se poserait sur le nom
-          qu'il explique serait le contraire de la règle du menu de carte.
-
-          `nodrag nopan`, comme le pavé d'un lien : sans elles, choisir une
-          teinte déplace le plan sous le menu. */}
-      {ouvert && (
-        <div
-          style={{
-            pointerEvents: "auto",
-            position: "absolute",
-            left: 0,
-            top: haut,
-            transform: "translateY(-100%)",
-            paddingBottom: 3,
-          }}
-          onPointerEnter={() => cadre.onSurvol(cle, true)}
-          onPointerLeave={() => cadre.onSurvol(cle, false)}
-          className="nodrag nopan"
-        >
-          <div className="paraitre flex w-[300px] flex-col gap-1.5 rounded-8 border border-trait bg-papier-cote p-2">
-            <Libelle aide="ilot.teinte">Teinte de l'îlot</Libelle>
-            <Pastilles teinte={teinte} onChoisir={(t) => cadre.onTeinterIlot(nom, t)} />
-
-            {/* **Les deux gestes de fabrication du tableau** (E7), **ouverts
-                en E11**. Ils partent d'un paquet parce que c'est là qu'on a
-                réuni ce qui va ensemble : l'atelier lit les couleurs des images
-                du paquet et en fait une palette nommée du nom du paquet, ou une
-                ambiance qui porte cette palette.
-
-                Ils étaient grisés avec leur raison — « les palettes et les
-                ambiances n'ont pas encore d'écran où vivre » — jusqu'à ce que
-                cet écran existe. La raison a disparu parce qu'elle a cessé
-                d'être vraie, et non parce qu'on l'a effacée. */}
-            {/* **Le geste change de mot quand il a déjà été fait, et il navigue
-                lui-même** (U7, corrigé par TS16). Un second clic ne fabrique
-                pas un doublon : il mène directement à ce qui existe — il n'y a
-                plus de second bouton « aller la voir » à cliquer après coup.
-                La question « ce paquet a-t-il déjà une palette ? » est celle
-                que le bandeau pose déjà pour porter sa marque, et elle n'a
-                qu'une réponse — celle du serveur. */}
-            <div className="mt-1 flex flex-col gap-1 border-t border-trait pt-2">
-              <button
-                type="button"
-                data-aller-palette={fait?.palette ? "" : undefined}
-                onClick={() => cadre.onFairePalette(nom)}
-                title={
-                  fait?.palette
-                    ? "elle existe déjà — ce geste y mène"
-                    : "l'atelier lit les couleurs de ces images — rien n'est payé"
-                }
-                className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-left text-[10.5px] text-encre-3 hover:text-signal"
-              >
-                {fait?.palette ? "ouvrir sa palette ›" : "faire une palette de cet îlot"}
-              </button>
-              <button
-                type="button"
-                data-aller-ambiance={fait?.ambiance ? "" : undefined}
-                onClick={() => cadre.onFaireAmbiance(nom)}
-                title={
-                  fait?.ambiance
-                    ? "elle existe déjà — ce geste y mène"
-                    : "la palette, l'ambiance qui la porte, et il ne reste qu'à écrire les trois cases"
-                }
-                className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-left text-[10.5px] text-encre-3 hover:text-signal"
-              >
-                {fait?.ambiance
-                  ? "ouvrir son ambiance ›"
-                  : "faire une ambiance de cet îlot"}
-              </button>
-              <Raison texte="elles vivent dans l'onglet Univers, côté Ambiances et couleurs — et survivent au paquet" />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* **Le menu local a disparu avec TS15.** Ce que le bandeau ouvrait ici
+          — la teinte, « faire/ouvrir une palette », « faire/ouvrir une
+          ambiance » — vit maintenant dans la colonne de droite
+          (`PanneauDetail`, plus haut dans ce fichier), à la place de la
+          réserve : `cadre.onEpingler` reste le même appel, c'est l'écran
+          Univers qui décide d'en faire un panneau plutôt qu'un popup. */}
     </div>
   )
 }
@@ -3040,9 +3195,12 @@ function NoeudCarte({ data }: NodeProps) {
            menu : un menu règle une carte, et ce qu'on fait de plusieurs se lit
            au-dessus de la toile (`RP9`). */
         selectionnee={cadre.selection.includes(carte.identifiant)}
-        // Le menu du tableau referme pendant qu'on écrit : les deux champs
-        // *Texte* se contrediraient sinon, posés l'un sur l'autre.
-        menu={!enEdition && cadre.selection.length < 2}
+        // **Jamais de menu flottant sur la toile** (TS15) : le clic choisit la
+        // carte (`onChoisir`, ci-dessous), et c'est ce choix que l'écran
+        // Univers lit pour ouvrir le détail dans sa colonne de droite. Le
+        // survol ne fait plus rien ouvrir non plus — il n'y a plus de fenêtre
+        // à faire paraître au survol.
+        menu={false}
         survolee={!enEdition && cleCarte(carte.identifiant) === cadre.survolee}
         onSurvol={(dedans) => cadre.onSurvol(cleCarte(carte.identifiant), dedans)}
         onChoisir={(evenement) =>

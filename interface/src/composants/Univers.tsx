@@ -151,6 +151,15 @@ export function EcranUnivers({
 }) {
   const [choisie, setChoisir] = useState<string | null>(null)
 
+  // ── Ce qui est épinglé sur la toile, sans être une carte (TS15) ─────────
+  //
+  // **Tenu ici, à côté de `choisie`, pour la même raison** : c'est de ce
+  // couple que dépend ce que la colonne de droite montre, en vue toile — le
+  // détail d'une carte, celui d'un îlot, ou la réserve quand aucun des deux
+  // n'est ouvert. `Toile.tsx` continue d'en faire ce qu'il en faisait déjà
+  // (le pavé d'un lien) ; seul l'îlot (`ilot:<nom>`) est nouveau ici.
+  const [epingle, setEpingle] = useState<string | null>(null)
+
   // ── La sélection de la toile (`RP9`) ─────────────────────────────────────
   //
   // **Elle vit ici, à côté de la carte choisie, et elle meurt avec l'écran** —
@@ -183,9 +192,23 @@ export function EcranUnivers({
 
   /** Le clic sur une carte du plan. Ctrl ou ⌘ ajoute ; sinon il remplace. La
    *  carte choisie **est** la sélection quand elle vaut un — la grammaire de la
-   *  galerie, et la seule du produit. */
-  const choisirSurLaToile = (identifiant: string | null, multiple = false) =>
+   *  galerie, et la seule du produit.
+   *
+   *  **Choisir une carte ferme le détail d'un îlot** (TS15) : la colonne de
+   *  droite ne montre qu'une chose à la fois, et une carte l'emporte —
+   *  cliquer une autre carte *change* le détail, il ne l'empile pas. */
+  const choisirSurLaToile = (identifiant: string | null, multiple = false) => {
+    if (identifiant !== null && epingle?.startsWith("ilot:")) setEpingle(null)
     poserLaSelection(basculerLaSelection(vive, identifiant, multiple))
+  }
+
+  /** Épingler un îlot ou un lien de la toile. Un îlot ferme le détail d'une
+   *  carte pour la même raison que l'inverse (TS15) ; un lien, lui, garde le
+   *  comportement d'avant — son pavé ne dispute rien à la carte choisie. */
+  const epinglerSurLaToile = (cle: string | null) => {
+    if (cle !== null && cle.startsWith("ilot:")) poserLaSelection([])
+    setEpingle(cle)
+  }
 
   /** Le clic dans la grille ou la réserve : il n'y a pas de lot là-bas, et il
    *  n'en reste pas un derrière soi. */
@@ -292,6 +315,17 @@ export function EcranUnivers({
     ...(vue === "toile" ? [`${replies.reserve ? 0 : 380}px`] : []),
   ].join(" ")
 
+  // ── Le détail d'une carte ou d'un îlot, à la place de la réserve (TS15) ──
+  //
+  // **La colonne de droite montre l'un ou l'autre, jamais les deux à la
+  // fois** : la réserve quand rien n'est choisi ni épinglé sur la toile, le
+  // détail sinon. `cibleDetail` est le nœud DOM que `Toile.tsx` porte par
+  // `createPortal` — un `useState` et non un `useRef`, parce qu'un `ref` posé
+  // en `callback` doit déclencher un rendu quand il change, pour que le
+  // portail puisse s'y ancrer dès que la case existe.
+  const detailOuvert = vue === "toile" && (choisie !== null || Boolean(epingle?.startsWith("ilot:")))
+  const [cibleDetail, setCibleDetail] = useState<HTMLDivElement | null>(null)
+
   return (
     // `data-univers` marque ce qui appartient à cet écran : c'est ce qui permet
     // à Ctrl+Z de distinguer un champ qu'on est en train d'écrire *ici* d'un
@@ -395,6 +429,9 @@ export function EcranUnivers({
                   onVue={onVue}
                   choisie={choisie}
                   onChoisir={choisirSurLaToile}
+                  epingle={epingle}
+                  onEpingler={epinglerSurLaToile}
+                  detailCible={detailOuvert ? cibleDetail : null}
                   selection={vive}
                   gestes={
                     <GestesDeLaSelection
@@ -421,16 +458,33 @@ export function EcranUnivers({
 
             {vue === "toile" && (
               <div className="flex min-h-0 overflow-hidden">
-                <Reserve
-                  cartes={cartes}
-                  personnages={personnages}
-                  choisie={choisie}
-                  onChoisir={choisirDansLaColonne}
-                  onErreur={setRefus}
-                  collage={collage}
-                  cadre={grilleReserve}
-                  onDepot={rendre}
+                {/* **La case du détail existe toujours** — c'est le nœud que
+                    la toile porte par `createPortal` —, mais elle ne prend de
+                    place que quand il y a un détail à montrer ; sinon c'est la
+                    réserve qui occupe la colonne. `hidden` plutôt qu'un
+                    montage conditionnel : un nœud démonté ne peut pas recevoir
+                    de portail, et la toile ne saurait plus où poser le sien
+                    pendant l'instant où React le remonte. */}
+                <div
+                  ref={setCibleDetail}
+                  className={
+                    detailOuvert
+                      ? "flex min-h-0 w-full flex-col border-l border-trait bg-papier-cote"
+                      : "hidden"
+                  }
                 />
+                {!detailOuvert && (
+                  <Reserve
+                    cartes={cartes}
+                    personnages={personnages}
+                    choisie={choisie}
+                    onChoisir={choisirDansLaColonne}
+                    onErreur={setRefus}
+                    collage={collage}
+                    cadre={grilleReserve}
+                    onDepot={rendre}
+                  />
+                )}
               </div>
             )}
           </div>
