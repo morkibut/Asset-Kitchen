@@ -114,12 +114,36 @@ ne la touche pas, et tout disparaît quand on a fini.
 Le petit adaptateur `/chat/completions` : un modèle, une consigne, un texte, une réponse en
 flux. Court délai, abandon silencieux, erreurs traduites comme celles de l'autre adaptateur.
 
-- [ ] Le service répond en flux, et la première syllabe arrive avant la fin de la phrase.
-- [ ] Sans clé, il dit « indisponible » sans lever d'erreur, et rien ne casse ailleurs.
-- [ ] Le délai dépassé abandonne l'appel côté serveur — jamais un appel qu'on paie et qu'on
+- [x] Le service répond en flux, et la première syllabe arrive avant la fin de la phrase.
+- [x] Sans clé, il dit « indisponible » sans lever d'erreur, et rien ne casse ailleurs.
+- [x] Le délai dépassé abandonne l'appel côté serveur — jamais un appel qu'on paie et qu'on
       n'affiche pas.
-- [ ] Ce que l'appel a coûté est compté, comme une génération d'image.
-- [ ] Aucun essai n'appelle le vrai modèle ; le fournisseur est doublé, comme partout.
+- [x] Ce que l'appel a coûté est compté, comme une génération d'image.
+- [x] Aucun essai n'appelle le vrai modèle ; le fournisseur est doublé, comme partout.
+
+*Fait le 25 septembre 2026.* **Ce que CM3 à CM6 appellent** :
+`atelier.coup_de_main.repondre(consigne, texte, metier=…)`, un flux de `Morceau` — `texte`
+au fil de l'eau, puis **un** `fin` (issue, raison, `consomme`, `unite`, `cout_usd`,
+`cout_inconnu`), ou un seul `indisponible` ; jamais d'exception pour ce qui vient du
+fournisseur. `etat()` dit si la marque paraît ; `depense(depuis)` dit ce qui est parti.
+Côté écran, `GET /api/assist` et `POST /api/assist/{metier}` (une ligne JSON par morceau).
+**Tranché** : un appel de texte **n'est pas une génération** — dix lecteurs de `generations`
+supposent qu'une image peut en sortir — mais il se compte avec les mêmes mots (`consomme`,
+`unite`, `cout_usd` déduit ; modèle `OpenRouter:deepseek/deepseek-v4-flash`). La dépense
+s'écrit dans `donnees/appels-texte/<AAAA-MM>.jsonl` (une ligne par appel, jamais réécrite),
+puis dans une table `appels_texte` de l'index, refaite de là quand on l'efface. Elle entre
+dans le **total de l'atelier** et paraît « par modèle » dans les dépenses ; elle n'appartient
+à **aucun jeu** (`texte_usd` dit l'écart entre le total et la somme des jeux). Les textes ne
+sont pas gardés, seulement leurs longueurs. Délai total de 15 s, mesuré à chaque ligne ;
+réponse bornée à 1 024 jetons. Un appel coupé avant le dernier message n'a pas de coût connu :
+il est écrit `cout_inconnu`, jamais « gratuit », avec son numéro chez OpenRouter pour pouvoir
+le relire un jour. **Ce qui reste** : la table des métiers (`CONSIGNES`) est **vide** — les
+deux routes **attendent CM3** (8nonies), qui écrit la première consigne et pose la marque ; le
+plafond (CM6) se branche dans `_empechement`, et devra **réserver sous verrou** pour tenir en
+rafale ; aucune route ni outil MCP pour l'agent (décision 9, vérifié par un essai). **Pas vu** :
+le vrai service — l'identifiant du modèle et la forme du coût en flux (`usage.cost` dans le
+dernier message) sont pris de la documentation d'OpenRouter, sans aucun appel payé ; rien
+n'est visible au navigateur, aucun écran ne s'en sert encore.
 
 ### CM2 · La fiche du produit
 

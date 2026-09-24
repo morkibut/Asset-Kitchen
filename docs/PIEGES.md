@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Deux cent trois pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Deux cent quatre pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1992,3 +1992,15 @@ la prochaine réécriture retrouvera.
   le 24 septembre 2026, éteint, la suite complète a tourné 1 h 40 sur quatre essais du son.
   Corrigé dans `raccorder` (`tests/test_au7_au8.py`), qui réinscrit ces moteurs comme libres.
   **Un essai qui touche la file locale sans passer par `raccorder` doit faire de même.**
+- **Un générateur asynchrone abandonné se referme quand même — plus tard, et c'est ce qui
+  cachait l'oubli.** Le service du coup de main (`atelier/services/coup_de_main.py`) lit le
+  flux de l'adaptateur de texte dans un `async for`. Refermé par l'écran (Échap), il ne
+  refermait pas celui de l'adaptateur : asyncio le ramasse ensuite dans une tâche à lui, et
+  la liaison chez le fournisseur restait ouverte — à écrire, donc à facturer — jusque-là.
+  **L'essai d'Échap passait sans le correctif**, vérifié en le défaisant : il refermait sous
+  un `asyncio.wait_for`, qui laisse tourner la boucle, donc la tâche de ramassage, avant de
+  regarder. Corrigé par `contextlib.aclosing` autour du flux de l'adaptateur, et l'essai
+  (`tests/test_cm1_modele_de_texte.py`) referme **sans rien attendre d'autre** avant de
+  regarder (CM1, 25 septembre 2026). **Tout générateur asynchrone lu par un autre se lit
+  sous `aclosing`**, et un essai de fermeture ne laisse pas la boucle tourner entre le geste
+  et la vérification.

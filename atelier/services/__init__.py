@@ -21,6 +21,7 @@ from typing import Any, Callable
 from atelier.depot import Base, Fichiers
 from atelier.fournisseur import OpenRouter, Pollinations, PortFournisseur
 from atelier.fournisseur.maison import BASE_PAR_DEFAUT, MoteurDeLaMaison
+from atelier.fournisseur.openrouter_texte import OpenRouterTexte
 from atelier.fournisseur.openrouter_video import OpenRouterVideo
 from atelier.fournisseur.port import PortAnimateur
 from atelier.fournisseur.openrouter import CLE
@@ -44,6 +45,7 @@ from atelier.services.bibliotheque import (
     ServiceBibliotheque,
 )
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
+from atelier.services.coup_de_main import ServiceCoupDeMain
 from atelier.services.reserves import ServiceReserves
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
 from atelier.services.enregistrer_sous import (
@@ -203,6 +205,15 @@ def _openrouter_video() -> PortAnimateur:
     return OpenRouterVideo(lire_secret(CLE.nom))
 
 
+def _openrouter_texte() -> OpenRouterTexte:
+    """Le modèle de texte du coup de main, arrivé en CM1. **Le même compte, la
+    même clé, un troisième port** — ni fournisseur d'images, ni animateur : il
+    n'entre dans aucune des deux listes, et rien de ce qui les parcourt (le
+    catalogue, le grisé, le tiroir à secrets) n'a à le connaître. La clé se
+    relit ici comme ailleurs, à chaque appel."""
+    return OpenRouterTexte(lire_secret(CLE.nom))
+
+
 _LA_MAISON: MoteurDeLaMaison | None = None
 
 
@@ -270,6 +281,10 @@ class Atelier:
         # unique — c'est ce que font tous les essais d'`A9` et d'`A10` — tandis
         # que le produit en a deux, le payant et celui de la maison.
         fabriques_animateurs: list[Callable[[], PortAnimateur]] | None = None,
+        # **Le modèle de texte du coup de main, arrivé en CM1.** Un essai le
+        # double ici par `httpx.MockTransport` ; sans lui, c'est le vrai, qui
+        # ne part jamais sans un geste de l'auteur — et sans clé, jamais.
+        fabrique_texte: Callable[[], OpenRouterTexte] | None = None,
     ) -> None:
         self.fichiers = Fichiers(racine)
         self.fichiers.preparer()
@@ -332,6 +347,11 @@ class Atelier:
         # fournisseur. C'est ce qui fait qu'une planche se découpe réseau coupé.
         self.decoupe = ServiceDecoupe(
             self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
+        )
+        # **Le coup de main** (CM1) : il ne connaît que le disque, l'index et
+        # son modèle — ni catalogue, ni bibliothèque, ni agent (décision 9).
+        self.coup_de_main = ServiceCoupDeMain(
+            self.fichiers, self.base, fabrique_texte or _openrouter_texte
         )
         # **La troisième fabrique, au même rang et pour la même raison** (B1) :
         # retourner une image déjà payée ne demande ni catalogue ni fournisseur,

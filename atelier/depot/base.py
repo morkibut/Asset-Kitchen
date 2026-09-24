@@ -59,6 +59,7 @@ _ORDRES = {
     "ancien": "cree_le ASC, rang ASC",
     "nom": "(label = '') ASC, label COLLATE NOCASE ASC, cree_le DESC, rang ASC",
 }
+from atelier.domaine.coup_de_main import AppelTexte
 from atelier.domaine.generation import Generation
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.projet import SUJET, Collection, Projet
@@ -234,6 +235,25 @@ CREATE TABLE IF NOT EXISTS bandes (
 );
 CREATE INDEX IF NOT EXISTS bandes_par_clip ON bandes (clip);
 CREATE INDEX IF NOT EXISTS bandes_par_personnage ON bandes (personnage);
+
+-- **Ce que le coup de main a coûté** (CM1). Une table à part des générations :
+-- un appel de texte ne produit rien qu'on range, et dix lecteurs de
+-- `generations` supposent qu'une image peut en sortir. Mêmes colonnes d'argent
+-- qu'elle, et pour la même raison : `cout_usd` est la part en argent, **déduite**
+-- de `consomme` et `unite`, et c'est lui que somme le total de l'atelier.
+-- Reconstruite depuis `donnees/appels-texte/`, comme le reste de l'index.
+CREATE TABLE IF NOT EXISTS appels_texte (
+    identifiant TEXT PRIMARY KEY,
+    modele      TEXT NOT NULL,
+    metier      TEXT NOT NULL,
+    issue       TEXT NOT NULL,
+    cout_usd    REAL NOT NULL DEFAULT 0,
+    consomme    REAL NOT NULL DEFAULT 0,
+    unite       TEXT NOT NULL DEFAULT 'usd',
+    cree_le     REAL NOT NULL,
+    contenu     TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS appels_texte_par_date ON appels_texte (cree_le DESC);
 """
 
 TABLES = (
@@ -244,6 +264,7 @@ TABLES = (
     "collections",
     "bandes",
     "personnages",
+    "appels_texte",
 )
 
 
@@ -1373,11 +1394,20 @@ class Base:
         ]
 
     def total_par_projet(self, projet: str | None) -> float:
-        """Le total des coûts, **appels ratés compris** (US-14, achevée en T3)."""
+        """Le total des coûts, **appels ratés compris** (US-14, achevée en T3).
+
+        **Le total de l'atelier (`projet` à `None`) compte aussi le coup de
+        main** (CM1) : un appel de texte payé est de l'argent parti, et la barre
+        de tête doit le dire. Le total d'un jeu, lui, ne le compte pas — un
+        appel de texte appartient à l'atelier, pas à un jeu, exactement comme
+        l'aide qu'on demande n'est pas un asset qu'on range.
+        """
         with self._connexion() as connexion:
             if projet is None:
                 ligne = connexion.execute(
-                    "SELECT COALESCE(SUM(cout_usd), 0) AS total FROM generations"
+                    "SELECT (SELECT COALESCE(SUM(cout_usd), 0) FROM generations)"
+                    " + (SELECT COALESCE(SUM(cout_usd), 0) FROM appels_texte)"
+                    " AS total"
                 ).fetchone()
             else:
                 ligne = connexion.execute(
@@ -1396,6 +1426,78 @@ class Base:
                 "FROM generations GROUP BY projet"
             ).fetchall()
         return {l["projet"]: round(float(l["total"]), 6) for l in lignes}
+
+    # ── Les appels de texte (CM1) ────────────────────────────────────────────
+
+    def enregistrer_appel_texte(self, appel: AppelTexte) -> None:
+        with self._connexion() as connexion:
+            connexion.execute(
+                """
+                INSERT INTO appels_texte
+                    (identifiant, modele, metier, issue, cout_usd, consomme,
+                     unite, cree_le, contenu)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(identifiant) DO UPDATE SET
+                    issue = excluded.issue,
+                    cout_usd = excluded.cout_usd,
+                    consomme = excluded.consomme,
+                    unite = excluded.unite,
+                    contenu = excluded.contenu
+                """,
+                (
+                    appel.identifiant,
+                    appel.modele,
+                    appel.metier,
+                    appel.issue,
+                    appel.cout_usd,
+                    appel.consomme,
+                    appel.unite,
+                    appel.cree_le,
+                    json.dumps(appel.en_json(), ensure_ascii=False),
+                ),
+            )
+
+    def appels_texte(self, limite: int = 200) -> list[AppelTexte]:
+        """Les derniers appels de texte, du plus récent au plus ancien."""
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT contenu FROM appels_texte ORDER BY cree_le DESC LIMIT ?",
+                (limite,),
+            ).fetchall()
+        return [AppelTexte.depuis_json(json.loads(l["contenu"])) for l in lignes]
+
+    def depense_texte(self, depuis: float = 0.0) -> dict[str, Any]:
+        """Ce que le coup de main a coûté depuis `depuis` — **une question, une
+        requête** : c'est celle que posera le plafond du mois (CM6), et un
+        plafond qui relirait tout le journal en mémoire à chaque appel ne
+        tiendrait pas en rafale.
+
+        `par_modele` porte une ligne par modèle, avec sa quantité **dans son
+        unité** : un total en argent ne compte que de l'argent (`cout_usd`).
+        """
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT modele, unite, COUNT(*) AS appels,"
+                " COALESCE(SUM(cout_usd), 0) AS cout,"
+                " COALESCE(SUM(consomme), 0) AS consomme"
+                " FROM appels_texte WHERE cree_le >= ? GROUP BY modele, unite",
+                (depuis,),
+            ).fetchall()
+        par_modele = [
+            {
+                "modele": str(l["modele"]),
+                "cout_usd": round(float(l["cout"]), 6),
+                "consomme": round(float(l["consomme"]), 6),
+                "unite": str(l["unite"]),
+                "appels": int(l["appels"]),
+            }
+            for l in lignes
+        ]
+        return {
+            "cout_usd": round(sum(m["cout_usd"] for m in par_modele), 6),
+            "appels": sum(m["appels"] for m in par_modele),
+            "par_modele": par_modele,
+        }
 
     # ── Projets et collections ───────────────────────────────────────────────
 
@@ -1721,6 +1823,7 @@ class Base:
         collections: Iterable[Collection] = (),
         bandes: Iterable[Bande] = (),
         personnages: Iterable[Personnage] = (),
+        appels_texte: Iterable[AppelTexte] = (),
     ) -> None:
         """Repose en bloc ce qu'on vient de relire du disque (US-40)."""
         for projet in projets:
@@ -1735,3 +1838,5 @@ class Base:
             self.enregistrer_bande(bande)
         for personnage in personnages:
             self.enregistrer_personnage(personnage)
+        for appel in appels_texte:
+            self.enregistrer_appel_texte(appel)

@@ -20,6 +20,9 @@
     │  ├─ <rang>-brut.<ext>       l'image telle qu'elle est arrivée
     │  ├─ <rang>-asset.json       l'asset : sa recette, son rangement, ses mesures
     │  └─ <rang>-rendu.png        le rendu — **un cache, effaçable**
+    ├─ appels-texte/<AAAA-MM>.jsonl
+    │                             ce que le coup de main a coûté (CM1) — une ligne
+    │                             par appel, ajoutée et jamais réécrite
     └─ apercus/v<version>-<empreinte du rôdeur>/<taille>-<methode>-<couleurs>.png
        l'aperçu de « Son allure » (RT1) — **un cache, effaçable**, à part des
        générations : il ne porte aucun jeu, aucune bibliothèque, rien qu'une
@@ -49,6 +52,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import time
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -110,6 +114,13 @@ class Fichiers:
         # `atelier/services/apercu_allure.py` pour ce qui nomme un dossier et
         # un fichier ici.
         self.apercus = self.racine / "apercus"
+        # **Ce que le coup de main a coûté** (CM1). Un journal par mois, une
+        # ligne par appel, **ajoutée et jamais réécrite** — ni un dossier par
+        # appel comme une génération : un appel de texte ne laisse aucun fichier
+        # à ranger à côté, et des centaines de dossiers vides pour quelques
+        # centièmes de centime chacun rendraient `generations/` illisible à la
+        # main. C'est ici que l'index se refait quand on l'efface.
+        self.appels_texte = self.racine / "appels-texte"
 
     def preparer(self) -> None:
         self.generations.mkdir(parents=True, exist_ok=True)
@@ -199,6 +210,39 @@ class Fichiers:
 
     def ecrire_enregistrement(self, identifiant: str, contenu: dict[str, Any]) -> None:
         self._ecrire_json(self.dossier_generation(identifiant) / "generation.json", contenu)
+
+    # ── Les appels de texte (CM1) ────────────────────────────────────────────
+
+    def ajouter_appel_texte(self, contenu: dict[str, Any]) -> None:
+        """Une ligne de plus au journal du mois où l'appel est parti.
+
+        **Ajoutée, jamais réécrite** : la règle de `_poser` (écrire à côté puis
+        renommer) protège un fichier qu'on remplace, et celui-ci ne se remplace
+        jamais. Une ligne tronquée par un arrêt brutal est la seule perte
+        possible, et `parcourir_appels_texte` la saute au lieu de lever.
+        """
+        mois = time.strftime("%Y-%m", time.localtime(float(contenu.get("cree_le") or 0)))
+        self.appels_texte.mkdir(parents=True, exist_ok=True)
+        ligne = json.dumps(contenu, ensure_ascii=False) + "\n"
+        with (self.appels_texte / f"{mois}.jsonl").open("a", encoding="utf-8") as fichier:
+            fichier.write(ligne)
+
+    def parcourir_appels_texte(self) -> Iterator[dict[str, Any]]:
+        """Tous les appels de texte gardés, mois après mois. **Ne lève jamais.**"""
+        if not self.appels_texte.is_dir():
+            return
+        for chemin in sorted(self.appels_texte.glob("*.jsonl")):
+            try:
+                texte = chemin.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            for ligne in texte.splitlines():
+                try:
+                    contenu = json.loads(ligne)
+                except ValueError:
+                    continue
+                if isinstance(contenu, dict) and contenu.get("identifiant"):
+                    yield contenu
 
     def dossier_images_clip(self, identifiant: str, rang: int) -> Path:
         """Où vivent les images tirées d'un clip (A9).

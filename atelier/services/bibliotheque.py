@@ -37,6 +37,7 @@ from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset
 from atelier.domaine.bande import Bande
 from atelier.domaine.consommation import est_argent
+from atelier.domaine.coup_de_main import AppelTexte
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.galerie import (
     JUGEMENT_PAR_DEFAUT,
@@ -328,6 +329,13 @@ class ServiceBibliotheque:
             if clip in connus
         ]
 
+        # **Ce que le coup de main a coûté se relit aussi** (CM1) : l'argent
+        # parti ne disparaît pas du total parce qu'on a effacé l'index.
+        appels_texte = [
+            AppelTexte.depuis_json(contenu)
+            for contenu in self._fichiers.parcourir_appels_texte()
+        ]
+
         self._base.remplir(
             generations=generations,
             assets=assets,
@@ -335,6 +343,7 @@ class ServiceBibliotheque:
             collections=collections,
             bandes=bandes,
             personnages=personnages,
+            appels_texte=appels_texte,
         )
         return {
             "projets": len(projets),
@@ -343,6 +352,7 @@ class ServiceBibliotheque:
             "assets": len(assets),
             "bandes": len(bandes),
             "personnages": len(personnages),
+            "appels_texte": len(appels_texte),
         }
 
     # ── Les projets ──────────────────────────────────────────────────────────
@@ -1712,8 +1722,17 @@ class ServiceBibliotheque:
         for compte in par_unite.values():
             compte["quantite"] = round(compte["quantite"], 6)
 
+        # **Le coup de main se compte avec le reste** (CM1) : une ligne par
+        # modèle de texte, à côté des modèles d'image — même forme, même argent
+        # déduit. Il n'est rattaché à aucun jeu : `total_usd` le compte,
+        # `par_projet` et `sans_projet_usd` non, et `texte_usd` dit l'écart.
+        texte = self._base.depense_texte()
+        for ligne in texte["par_modele"]:
+            par_modele[ligne["modele"]] = dict(ligne)
+
         return {
             "total_usd": self._base.total_par_projet(None),
+            "texte_usd": texte["cout_usd"],
             # **Les onze pour cent qu'aucun écran ne montrait** : ce qui a été
             # dépensé sans qu'aucun jeu soit ouvert. Ce n'est pas une erreur,
             # c'est un fait sur la façon dont l'atelier sert — et le seul endroit
