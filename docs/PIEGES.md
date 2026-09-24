@@ -1975,3 +1975,11 @@ la prochaine réécriture retrouvera.
   posé sur le sujet. Repéré en relecture croisée le 19 septembre 2026 (plausible, non rejoué en
   conditions réelles de jeu — seul le démarrage simultané est vérifié par
   `tests/test_sn7_reperes_sonores.py`).
+- **Une fenêtre ouverte par `showModal()` passe devant tout ce que la page pose, quel que soit son
+  `z-index`.** Elle vit dans la couche du dessus du navigateur. L'agrandissement d'Espace
+  (`Apercu.tsx`), un `fixed z-50` ordinaire, s'ouvrait donc **derrière** « Modifier la fiche », et
+  aucun essai jsdom ne pouvait le voir : jsdom ne connaît pas cette couche. Corrigé en ouvrant
+  l'aperçu lui-même par un `<dialog>` en `showModal()` (RV26, 24 septembre 2026) — le dernier
+  ouvert passe devant. **Et un `<dialog>` ne remplit pas l'écran avec `fixed inset-0` seul** : sa
+  feuille de style par défaut fixe `width` et `height` à `fit-content` ; il faut `h-full w-full`
+  (constaté au navigateur : un aperçu de 337×26 px).
