@@ -32,6 +32,7 @@ import {
   tempsParImage,
 } from "../api-workflows"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
+import { AvecCoupDeMain } from "./CoupDeMain"
 import { usePli } from "./pieces"
 import { nomDuModele } from "./Fiche"
 import { Cible, Reinjections } from "./Galerie"
@@ -286,7 +287,12 @@ export function BarreQuiPaie({
       </section>
       <section className="space-y-[8px]">
         <label className="block font-medium" htmlFor="preparation-image-prompt">{repris ? "Texte complet à envoyer" : "Ce que tu veux fabriquer"}</label>
-        <textarea id="preparation-image-prompt" autoFocus rows={5} className={`${champ} resize-y leading-relaxed`} value={prompt} placeholder="Décris le sujet, son apparence et l’image attendue…" onChange={(e) => onPrompt(e.target.value)} onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !refus && !enPaiement) { e.preventDefault(); onGenerer() } }} />
+        {/* CM7 : même champ partagé (`prompt_image`) que `ChampPrompt.tsx` — cet
+            écran de préparation a son propre textarea, mais décrit la même
+            chose. */}
+        <AvecCoupDeMain champ="prompt_image" projet={projetNom ?? undefined} texte={prompt} onGarder={onPrompt}>
+          <textarea id="preparation-image-prompt" autoFocus rows={5} className={`${champ} resize-y leading-relaxed`} value={prompt} placeholder="Décris le sujet, son apparence et l’image attendue…" onChange={(e) => onPrompt(e.target.value)} onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !refus && !enPaiement) { e.preventDefault(); onGenerer() } }} />
+        </AvecCoupDeMain>
         {provenance && <p className="text-encre-3">{provenance} <button type="button" className="text-signal" onClick={onDefaireProvenance}>Effacer ce texte</button></p>}
         {repris ? <p className="text-signal">Ce texte part mot pour mot. <button type="button" className="underline" onClick={onRendre}>Rétablir les consignes de l’univers</button></p> : <p className="text-encre-3">Le style du jeu et la cible complètent cette description. Tu pourras relire et modifier le texte complet avant l’envoi.</p>}
       </section>
@@ -514,6 +520,7 @@ export function BarreQuiPaie({
         promptNegatif={promptNegatif}
         onPromptNegatif={onPromptNegatif}
         repris={repris}
+        projet={projetNom}
         /* Rendre la main : le champ redevient le sujet seul. **Il ne se vide
            pas** — on ne perd pas ce qui a été écrit —, et l'atelier reprend son
            habillage par-dessus. Reprendre, lui, s'est déplacé avec le texte

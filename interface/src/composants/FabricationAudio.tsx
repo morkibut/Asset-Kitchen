@@ -12,6 +12,7 @@ import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { dureeTexte, secondesTexte, tempsTexte, virgule } from "../son-textes"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { CadreDialogue } from "./CadreDialogue"
+import { AvecCoupDeMain } from "./CoupDeMain"
 import { SerieSon } from "./SerieSon"
 import { SonRetro } from "./SonRetro"
 import { MusiqueAdaptative } from "./MusiqueAdaptative"
@@ -413,9 +414,15 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
         {d.famille === "chanson" && <div className="flex flex-wrap items-center gap-[8px]" role="group" aria-label="Jingle ou chanson">
           {([["jingle", "Jingle"], ["chanson", "Chanson"]] as const).map(([v, nom]) => <button key={v} type="button" className={PUCE} aria-pressed={d.mode === v} onClick={() => changer({ mode: v, manuel: null })}>{nom}</button>)}
         </div>}
-        <textarea aria-label="Ce qu’on doit entendre" rows={2} className="min-h-[54px] w-full resize-y rounded-7 border border-contour bg-carte p-[14px] text-[15px] leading-[1.55] text-encre placeholder:text-eteint"
-          placeholder={d.famille === "chanson" && d.mode === "chanson" ? EXEMPLE_CHANSON : F.exemple} value={texteDe(d)}
-          onChange={(e) => changer({ textes: { ...d.textes, [d.famille]: e.target.value } })} />
+        {/* CM7 : champ de prompt partagé `prompt_son` — la phrase qui décrit ce
+            qu'on doit entendre. Les paroles, en dessous, ne le reçoivent pas :
+            traduire un texte à chanter en changerait la langue. */}
+        <AvecCoupDeMain champ="prompt_son" projet={projet} texte={texteDe(d)}
+          onGarder={(t) => changer({ textes: { ...d.textes, [d.famille]: t } })}>
+          <textarea aria-label="Ce qu’on doit entendre" rows={2} className="min-h-[54px] w-full resize-y rounded-7 border border-contour bg-carte p-[14px] text-[15px] leading-[1.55] text-encre placeholder:text-eteint"
+            placeholder={d.famille === "chanson" && d.mode === "chanson" ? EXEMPLE_CHANSON : F.exemple} value={texteDe(d)}
+            onChange={(e) => changer({ textes: { ...d.textes, [d.famille]: e.target.value } })} />
+        </AvecCoupDeMain>
         {d.famille === "chanson" && d.mode === "chanson" && <textarea aria-label="Paroles" className="min-h-[128px] w-full rounded-7 border border-contour bg-carte p-[14px] text-[13px] leading-[1.55]" value={d.paroles} onChange={(e) => changer({ paroles: e.target.value })} />}
         {d.famille === "chanson" && d.mode === "chanson" && <PartitionYue2 projet={projet} texte={texte} paroles={d.paroles} profils={profils} onSon={onSon} />}
         {d.manuel === null && compo?.langue?.non_anglais && <p className={ATTENTION}>Le moteur comprend l’anglais. Ce texte part tel quel, sans traduction.</p>}
