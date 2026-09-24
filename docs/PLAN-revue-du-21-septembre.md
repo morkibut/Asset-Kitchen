@@ -1142,12 +1142,28 @@ fixe, ne passent pas à la ligne : elles débordent, et la page gagne un défile
 
 ### Critères d'acceptation
 
-- [ ] la colonne des images est assez large pour lire une vignette, son rôle et sa phrase sans
+- [x] la colonne des images est assez large pour lire une vignette, son rôle et sa phrase sans
       déborder, à 1920 px comme à 1280 px de large
-- [ ] les phrases longues passent à la ligne ; aucun défilement horizontal dans l'écran
-- [ ] « Consignes facultatives », dans la même colonne, suit la même règle
-- [ ] un essai d'écran vérifie que les phrases passent à la ligne (la classe ou le style qui le
+- [x] les phrases longues passent à la ligne ; aucun défilement horizontal dans l'écran
+- [x] « Consignes facultatives », dans la même colonne, suit la même règle
+- [x] un essai d'écran vérifie que les phrases passent à la ligne (la classe ou le style qui le
       permet), et il tombe sans le correctif
+
+**Fait le 24 septembre 2026.** La colonne passe de `300px` fixe à
+`minmax(340px,32%)` — Envoi.tsx est hors des listes fermées de tailles
+(`LA_GEOMETRIE_D_AVANT` dans `essai_jetons.py`), donc la valeur n'avait pas à
+être ajoutée aux jetons déclarés. La légende sous chaque image
+(`Legende`, l. ~1397) et le texte d'une consigne facultative
+(`LigneOption`, l. ~1529) portent désormais `whitespace-pre-wrap
+break-words` ; le conteneur direct de la grille (colonne de droite,
+l. ~300) porte `min-w-0` pour que la piste fixe du grid ne s'étire plus au
+contenu. Essai d'écran ajouté dans `Envoi.test.tsx` : vérifie la classe de
+la légende et l'absence de `_300px]` dans la grille, tombe sans le
+correctif (vérifié à la main). Vérifié au navigateur sur un atelier
+jetable (port 8432, dossier temporaire) à 1920 et 1280 px : aucun
+`scrollWidth > innerWidth`, la légende ne déborde pas de son conteneur.
+Non vu : rendu sur un troisième palier de largeur (au-delà de 1920 ou en
+deçà de 1280) — hors du critère demandé.
 
 ---
 

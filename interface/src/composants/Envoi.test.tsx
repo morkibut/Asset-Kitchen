@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 import { EcranEnvoi, TRI_VIDE } from "./Envoi"
-import type { Envoi } from "../api"
+import type { Envoi, ImageQuiPart } from "../api"
 import type { TexteLocal } from "../api-workflows"
 
 afterEach(cleanup)
@@ -183,4 +183,36 @@ test("un modèle distant garde l’écran habituel — aucun bloc de texte local
   const distant = { ...BASE, local: null, modele: { ...BASE.modele, reference_nom: null }, fond: { ...BASE.fond, negatif_lu: true } } as unknown as Envoi
   render(<EcranEnvoi {...props(distant)} />)
   expect(screen.getByText("Fond et prompt négatif")).toBeInTheDocument()
+})
+
+test("la colonne « Images envoyées » tient sa phrase — elle passe à la ligne, la colonne n'est plus figée à 300 px (RV27)", () => {
+  const image = {
+    asset: "a1",
+    role: "style",
+    origine: "asset",
+    provenance: "artwork officiel",
+    ecartee_par: null,
+    cochee: true,
+    hors_plafond: false,
+    rang: 1,
+    prix: null,
+    montre: null,
+    // une phrase sans espace, pour que seul `break-words` (et non le seul
+    // découpage aux espaces du navigateur) la fasse passer à la ligne.
+    legende: "Image 1 — THE-CHARACTER-DESIGN-TO-REPRODUCE-WITHOUT-ANY-SPACE-EVER-WRITTEN-HERE-UNBROKEN-AND-VERY-LONG",
+  } as unknown as ImageQuiPart
+  const envoi = {
+    ...BASE,
+    images: { ...BASE.images, lignes: [image], cochees: 1 },
+  } as unknown as Envoi
+  render(<EcranEnvoi {...props(envoi)} />)
+
+  const legende = screen.getByText(/THE-CHARACTER-DESIGN/)
+  expect(legende.className).toMatch(/whitespace-pre-wrap/)
+  expect(legende.className).toMatch(/break-words/)
+
+  // La grille des deux colonnes ne fige plus la colonne de droite à 300 px.
+  const grille = document.querySelector(".grid")
+  expect(grille).not.toBeNull()
+  expect(grille?.className ?? "").not.toMatch(/_300px\]/)
 })
