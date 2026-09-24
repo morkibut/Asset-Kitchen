@@ -505,7 +505,15 @@ export function NoeudFantome({ data }: NodeProps) {
 
 // ── La barre ────────────────────────────────────────────────────────────────
 
-type Memoire = { modele?: string; versions?: number; taille?: string; avecStyle?: boolean }
+type Memoire = {
+  modele?: string
+  versions?: number
+  taille?: string
+  avecStyle?: boolean
+  /** La barre se replie en une ligne, façon Mixboard (TS14) — retenu d'une
+   *  visite à l'autre, comme le reste des réglages de la barre. */
+  replie?: boolean
+}
 
 function lireMemoire(): Memoire {
   try {
@@ -671,6 +679,22 @@ export function BarreDeFabrication({
   // planche — c'est la même chose que « reprendre le texte » (US-159/US-160),
   // pour une raison qui n'a rien à voir avec la reprise : on **essaie**.
   const [avecStyle, setAvecStyle] = useState<boolean>(() => lireMemoire().avecStyle ?? false)
+  // **La barre se replie en une ligne** (TS14, façon Mixboard) : repliée, elle
+  // ne cache plus la toile. L'état se retient comme le reste des réglages —
+  // même fichier, même garde try/catch (8septies : un réglage qu'on ne sait
+  // pas relire à la prochaine visite n'est pas fini).
+  const [replie, setReplie] = useState<boolean>(() => lireMemoire().replie ?? false)
+  /** Réécrit la mémoire entière à chaque réglage — `sur` porte la valeur qui
+   *  vient de changer, les autres viennent de l'état courant. Sans ça, un clic
+   *  sur la taille pendant que la barre est repliée effacerait le repli retenu
+   *  au tour précédent : `ecrireMemoire` remplace tout, il ne fusionne rien. */
+  const enregistrer = (sur: Partial<Memoire>) =>
+    ecrireMemoire({ modele: choix ?? undefined, versions, taille, avecStyle, replie, ...sur })
+  const basculerRepli = () => {
+    const v = !replie
+    setReplie(v)
+    enregistrer({ replie: v })
+  }
 
   // **« Reprendre ce texte »** (TS5) : la phrase, le modèle et la taille d'une
   // carte remplacent ceux de la barre. Sur `reprise.cle`, jamais sur les
@@ -758,9 +782,38 @@ export function BarreDeFabrication({
     setPrompt("")
   }
 
+  // **Repliée** (TS14, façon Mixboard) : une seule ligne, le bouton pour
+  // déplier et le début du texte en cours — rien d'autre, pour ne plus cacher
+  // la toile. Le texte, les références, le modèle et la taille ne bougent
+  // pas : c'est le même composant, monté, qui montre juste moins.
+  if (replie) {
+    return (
+      <div
+        data-fabrique
+        data-repli="repliee"
+        onDoubleClick={(e) => e.stopPropagation()}
+        className="pointer-events-auto absolute bottom-[14px] left-1/2 z-10 flex w-[min(640px,calc(100%-28px))] -translate-x-1/2 items-center gap-2 rounded-8 border border-contour bg-carte px-[8px] py-[8px] shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
+      >
+        <button
+          type="button"
+          aria-label="Déplier la barre Fabriquer"
+          aria-expanded={false}
+          onClick={basculerRepli}
+          className="mesure flex h-[26px] shrink-0 items-center gap-1 rounded-5 px-[8px] text-[11.5px] text-encre hover:text-signal"
+        >
+          ▸ Fabriquer
+        </button>
+        {prompt.trim() && (
+          <span className="truncate text-[11.5px] text-encre-3">{prompt.trim()}</span>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div
       data-fabrique
+      data-repli="depliee"
       onDoubleClick={(e) => e.stopPropagation()}
       className="pointer-events-auto absolute bottom-[14px] left-1/2 z-10 flex w-[min(640px,calc(100%-28px))] -translate-x-1/2 flex-col gap-1.5 rounded-8 border border-contour bg-carte px-[8px] py-[8px] shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
     >
@@ -799,6 +852,15 @@ export function BarreDeFabrication({
         <p className="mesure text-[10.5px] leading-snug text-echec">{refusReferences}</p>
       )}
       <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="Replier la barre Fabriquer"
+          aria-expanded={true}
+          onClick={basculerRepli}
+          className="mesure shrink-0 rounded-5 px-[4px] text-[12px] text-encre-3 hover:text-encre"
+        >
+          ▾
+        </button>
         <Libelle aide="toile.fabriquer">Fabriquer</Libelle>
         <input
           ref={champ}
@@ -826,7 +888,7 @@ export function BarreDeFabrication({
               aria-pressed={versions === v}
               onClick={() => {
                 setVersions(v)
-                ecrireMemoire({ modele: choix ?? undefined, versions: v, taille, avecStyle })
+                enregistrer({ versions: v })
               }}
               className={[
                 "mesure h-[30px] w-[30px] rounded-5 border text-[11px]",
@@ -851,7 +913,7 @@ export function BarreDeFabrication({
                 title={refus ?? undefined}
                 onClick={() => {
                   setTaille(t)
-                  ecrireMemoire({ modele: choix ?? undefined, versions, taille: t, avecStyle })
+                  enregistrer({ taille: t })
                 }}
                 className={[
                   "mesure h-[30px] rounded-5 border px-[8px] text-[11px] disabled:opacity-40",
@@ -870,7 +932,7 @@ export function BarreDeFabrication({
           value={retenu ?? ""}
           onChange={(e) => {
             setChoix(e.target.value)
-            ecrireMemoire({ modele: e.target.value, versions, taille, avecStyle })
+            enregistrer({ modele: e.target.value })
           }}
           className="h-[30px] max-w-[240px] min-w-0 flex-1 rounded-7 border border-trait bg-carte px-[8px] text-[11.5px] text-encre-controle"
         >
@@ -892,7 +954,7 @@ export function BarreDeFabrication({
             checked={avecStyle}
             onChange={(e) => {
               setAvecStyle(e.target.checked)
-              ecrireMemoire({ modele: choix ?? undefined, versions, taille, avecStyle: e.target.checked })
+              enregistrer({ avecStyle: e.target.checked })
             }}
           />
           avec le style du jeu
