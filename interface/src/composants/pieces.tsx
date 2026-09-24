@@ -24,6 +24,7 @@ import {
   coteDuSujet,
   quantite,
   secondes,
+  type Modele,
   type Reserve,
 } from "../api"
 import { POINTILLE, useInfobulle } from "./Infobulle"
@@ -42,6 +43,265 @@ import { explication } from "../aide"
  *  paie**, qui est une autre question. */
 export function libelleModele(modele: { fournisseur?: string | null; nom: string }): string {
   return modele.fournisseur ? `${modele.fournisseur} · ${modele.nom}` : modele.nom
+}
+
+// ── Le choix d'un modèle, les habitués d'abord (TS17) ───────────────────────
+//
+// **La demande de l'auteur** : « je me sers presque toujours des mêmes
+// modèles, gratuits ou payants ». Le panneau montre d'abord ses trois plus
+// utilisés de chaque côté — comptés côté serveur, jamais recalculés ici — puis
+// « voir plus de modèles » ouvre la liste complète avec sa recherche.
+//
+// **Un seul composant, posé partout où un modèle d'image se choisit** : la
+// barre de fabrication de la toile d'abord, pour ne pas en maintenir un
+// second gabarit ailleurs qui finirait par diverger.
+
+export type Habitues = { gratuits: string[]; payants: string[] }
+
+function OptionModele({
+  modele,
+  actif,
+  onChoisir,
+}: {
+  modele: Modele
+  actif: boolean
+  onChoisir: () => void
+}) {
+  return (
+    <li role="option" aria-selected={actif} aria-disabled={!!modele.refus}>
+      <button
+        type="button"
+        disabled={!!modele.refus}
+        title={modele.refus ?? undefined}
+        onClick={onChoisir}
+        className={[
+          "flex w-full items-center justify-between gap-2 rounded-5 px-[8px] py-[8px] text-left text-[11.5px]",
+          modele.refus ? "cursor-not-allowed text-encre-4" : "text-encre hover:bg-papier-cote",
+          actif && !modele.refus ? "bg-papier-cote" : "",
+        ].join(" ")}
+      >
+        <span className="truncate">{libelleModele(modele)}</span>
+        {modele.refus && (
+          <span className="shrink-0 truncate text-[10.5px] text-echec">{modele.refus}</span>
+        )}
+      </button>
+    </li>
+  )
+}
+
+function SectionDeModeles({
+  titre,
+  modeles,
+  visibles,
+  actif,
+  onChoisir,
+}: {
+  titre: string
+  modeles: Modele[]
+  visibles: Modele[]
+  actif: number
+  onChoisir: (m: Modele) => void
+}) {
+  return (
+    <div className="mb-1">
+      <p className="px-[8px] py-[4px] text-[10.5px] tracking-wide text-encre-4 uppercase">{titre}</p>
+      <ul>
+        {modeles.map((m) => (
+          <OptionModele
+            key={m.identifiant}
+            modele={m}
+            actif={visibles.indexOf(m) === actif}
+            onChoisir={() => onChoisir(m)}
+          />
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/** Le panneau de choix d'un modèle (TS17). **Sans historique, la liste
+ *  complète paraît directement** (critère 3 du plan) : `habitues` vide des
+ *  deux côtés saute droit à la recherche, sans un « voir plus » qui n'aurait
+ *  rien à montrer avant lui.
+ *
+ *  **Le catalogue décide toujours** : un modèle grisé reste affiché, avec sa
+ *  raison, dans son top comme dans la liste complète — il ne se choisit pas,
+ *  il ne disparaît pas non plus.
+ *
+ *  Échap ferme. Les flèches déplacent la ligne active parmi ce qui est
+ *  **affiché** — les habitués repliés, ou la liste filtrée une fois
+ *  dépliée —, Entrée choisit la ligne active si elle n'est pas grisée. */
+export function ChoixModele({
+  modeles,
+  valeur,
+  onChange,
+  habitues,
+  ariaLabel = "Modèle",
+  className = "",
+}: {
+  modeles: readonly Modele[]
+  valeur: string | null
+  onChange: (identifiant: string) => void
+  /** `null`/`undefined` se lit comme « rien compté encore » — les deux tops
+   *  vides, donc la liste complète directement. */
+  habitues?: Habitues | null
+  ariaLabel?: string
+  className?: string
+}) {
+  const [ouvert, setOuvert] = useState(false)
+  const [etendu, setEtendu] = useState(false)
+  const [recherche, setRecherche] = useState("")
+  const [actif, setActif] = useState(0)
+  const boite = useRef<HTMLDivElement>(null)
+
+  const parIdentifiant = new Map(modeles.map((m) => [m.identifiant, m]))
+  const gratuits = (habitues?.gratuits ?? [])
+    .map((id) => parIdentifiant.get(id))
+    .filter((m): m is Modele => !!m)
+  const payants = (habitues?.payants ?? [])
+    .map((id) => parIdentifiant.get(id))
+    .filter((m): m is Modele => !!m)
+  const sansHistorique = gratuits.length === 0 && payants.length === 0
+
+  useEffect(() => {
+    if (!ouvert) return
+    setEtendu(sansHistorique)
+    setRecherche("")
+    setActif(0)
+    // N'y répondre qu'à l'ouverture — `sansHistorique` ne doit pas replier une
+    // recherche en cours si le catalogue se rafraîchit pendant que c'est ouvert.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ouvert])
+
+  useEffect(() => {
+    if (!ouvert) return
+    const fermer = (e: MouseEvent) => {
+      if (boite.current && !boite.current.contains(e.target as Node)) setOuvert(false)
+    }
+    window.addEventListener("mousedown", fermer)
+    return () => window.removeEventListener("mousedown", fermer)
+  }, [ouvert])
+
+  const actuel = modeles.find((m) => m.identifiant === valeur) ?? null
+  const filtres = etendu
+    ? modeles.filter((m) =>
+        libelleModele(m).toLowerCase().includes(recherche.trim().toLowerCase()),
+      )
+    : []
+  const visibles = etendu ? filtres : [...gratuits, ...payants]
+
+  useEffect(() => setActif(0), [etendu, recherche])
+
+  const choisir = (m: Modele) => {
+    if (m.refus) return
+    onChange(m.identifiant)
+    setOuvert(false)
+  }
+
+  const surTouche = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.stopPropagation()
+      setOuvert(false)
+      return
+    }
+    if (!ouvert || visibles.length === 0) return
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      setActif((i) => Math.min(i + 1, visibles.length - 1))
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault()
+      setActif((i) => Math.max(i - 1, 0))
+    } else if (e.key === "Enter") {
+      const m = visibles[actif]
+      if (m) {
+        e.preventDefault()
+        choisir(m)
+      }
+    }
+  }
+
+  return (
+    <div ref={boite} className={`relative ${className}`} onKeyDown={surTouche}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={ouvert}
+        aria-label={ariaLabel}
+        // **Un `value` lisible comme celui d'un `<select>`** — l'écran de
+        // fabrication et ses essais relisaient déjà `.value` pour savoir le
+        // modèle retenu ; le panneau garde ce contrat plutôt que d'en ouvrir
+        // un second.
+        value={actuel?.identifiant ?? ""}
+        onClick={() => setOuvert((v) => !v)}
+        className="h-[30px] w-full min-w-0 truncate rounded-7 border border-trait bg-carte px-[8px] text-left text-[11.5px] text-encre-controle"
+      >
+        {actuel ? libelleModele(actuel) : "Choisir un modèle…"}
+      </button>
+      {ouvert && (
+        <div
+          role="listbox"
+          aria-label="Liste des modèles"
+          className="absolute bottom-full z-20 mb-1 max-h-[380px] w-[240px] overflow-auto rounded-7 border border-trait bg-carte p-[8px] shadow-[0_2px_10px_rgba(0,0,0,.12)]"
+        >
+          {!etendu && (
+            <>
+              {gratuits.length > 0 && (
+                <SectionDeModeles
+                  titre="Les plus utilisés · gratuits"
+                  modeles={gratuits}
+                  visibles={visibles}
+                  actif={actif}
+                  onChoisir={choisir}
+                />
+              )}
+              {payants.length > 0 && (
+                <SectionDeModeles
+                  titre="Les plus utilisés · payants"
+                  modeles={payants}
+                  visibles={visibles}
+                  actif={actif}
+                  onChoisir={choisir}
+                />
+              )}
+              <button
+                type="button"
+                className="mt-1 w-full rounded-5 px-[8px] py-[8px] text-left text-[11px] text-encre-3 hover:text-encre"
+                onClick={() => setEtendu(true)}
+              >
+                voir plus de modèles
+              </button>
+            </>
+          )}
+          {etendu && (
+            <>
+              <input
+                type="text"
+                aria-label="Rechercher un modèle"
+                placeholder="Chercher un modèle…"
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+                autoFocus
+                className="mb-1 h-[26px] w-full rounded-5 border border-trait bg-papier px-[8px] text-[11px] text-encre"
+              />
+              <ul>
+                {filtres.map((m) => (
+                  <OptionModele
+                    key={m.identifiant}
+                    modele={m}
+                    actif={visibles.indexOf(m) === actif}
+                    onChoisir={() => choisir(m)}
+                  />
+                ))}
+                {filtres.length === 0 && (
+                  <li className="px-[8px] py-[8px] text-[11px] text-encre-4">Aucun modèle</li>
+                )}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 /** Ce qui reste chez un fournisseur, **et d'où le chiffre vient** (F2).

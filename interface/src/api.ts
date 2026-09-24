@@ -4874,6 +4874,12 @@ export type EtatCatalogue = {
    *  par famille (US-58). Sans réglage pour cette famille-là, le défaut du
    *  catalogue reprend la main. */
   defaut: { modele: string | null; options: Record<string, string> }
+  /** **Les habitués** (TS17) : les trois gratuits et les trois payants dont
+   *  l'auteur se sert le plus, comptés côté serveur sur ses générations
+   *  passées, tous projets confondus. Un tableau vide dit « jamais utilisé » —
+   *  jamais des cases vides à afficher, l'écran doit alors montrer la liste
+   *  complète directement. */
+  habitues: { gratuits: string[]; payants: string[] }
   /** Ce qui partira vraiment, artworks compris et dédoublonné (US-52). */
   references: CompteReferences
   /** Ce qu'une image a coûté chez chaque modèle, en médiane des derniers appels

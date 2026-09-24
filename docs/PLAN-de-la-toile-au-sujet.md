@@ -692,14 +692,28 @@ Le choix du modèle d'image devient un panneau. Il montre d'abord les modèles d
 le plus, puis la liste complète sur demande. Il sert d'abord à la barre « Fabriquer » de la toile,
 puis à tous les autres endroits où l'on choisit un modèle d'image.
 
-- [ ] en tête, les **3 modèles gratuits les plus utilisés**, puis les **3 modèles payants les plus
+- [x] en tête, les **3 modèles gratuits les plus utilisés**, puis les **3 modèles payants les plus
       utilisés**, comptés sur les générations passées de l'auteur ; un modèle local compte comme gratuit
-- [ ] « voir plus de modèles » ouvre la liste complète, avec un champ de recherche qui filtre par nom
-- [ ] sans historique, les tops sont remplacés par la liste complète (pas de cases vides)
-- [ ] le catalogue décide toujours : un modèle qui ne peut pas honorer la demande reste grisé avec
+- [x] « voir plus de modèles » ouvre la liste complète, avec un champ de recherche qui filtre par nom
+- [x] sans historique, les tops sont remplacés par la liste complète (pas de cases vides)
+- [x] le catalogue décide toujours : un modèle qui ne peut pas honorer la demande reste grisé avec
       sa raison, y compris dans les tops
-- [ ] le compte d'usage vient du serveur (une route, ou un champ du catalogue), pas du navigateur
+- [x] le compte d'usage vient du serveur (une route, ou un champ du catalogue), pas du navigateur
 - [ ] un seul composant, posé dans la barre de la toile et dans les autres choix de modèle d'image
+
+*Fait le 24 septembre 2026.* Le compte d'usage est un champ du catalogue (`GET /api/models` →
+`habitues: { gratuits, payants }`), calculé par `ServiceGenerations.habitues` sur
+`Base.comptes_par_modele` — **toutes les générations réussies, tous projets confondus** (décision :
+les habitudes d'un auteur ne se réinventent pas d'un jeu à l'autre). Tri déterministe : compte
+décroissant, puis ordre du catalogue. Le composant `ChoixModele` (`interface/src/composants/
+pieces.tsx`) est posé dans `BarreDeFabrication` (toile), avec les tops, « voir plus de modèles »,
+la recherche, Échap, et les flèches + Entrée sur ce qui est affiché. Il **n'est pas encore posé**
+dans les trois autres endroits où l'on choisit un modèle d'image — `FabricationSuivie.tsx` (radios,
+pas un `<select>`, remaniement plus large), `RelectureEquipement.tsx` et `FabricationVideoLibre.tsx`
+(risque non nul, hors budget de cette tranche) — à faire dans une tranche suivante. Non vérifié au
+navigateur : le worktree n'a pas d'`interface/dist` et ne doit pas en construire un (`AGENTS.md`) ;
+vérifié par 7 essais serveur (`tests/test_ts17.py`) et 7 essais d'écran dédiés dans
+`ToileFabrique.test.tsx`, plus les 28 essais existants du même fichier, tous verts.
 
 ### TS18 · Une carte s'ouvre dans l'atelier de retouche
 

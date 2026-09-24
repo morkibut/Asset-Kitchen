@@ -29,7 +29,7 @@ import {
   type Reinjection,
 } from "../api"
 import { tempsParImage, type ModeleAvecReference } from "../api-workflows"
-import { Libelle, libelleModele } from "./pieces"
+import { ChoixModele, Libelle } from "./pieces"
 
 type Place = { x: number; y: number }
 
@@ -927,27 +927,16 @@ export function BarreDeFabrication({
             )
           })}
         </div>
-        <select
-          aria-label="Modèle"
-          value={retenu ?? ""}
-          onChange={(e) => {
-            setChoix(e.target.value)
-            enregistrer({ modele: e.target.value })
+        <ChoixModele
+          modeles={modeles}
+          valeur={retenu}
+          habitues={catalogue?.habitues}
+          onChange={(identifiant) => {
+            setChoix(identifiant)
+            enregistrer({ modele: identifiant })
           }}
-          className="h-[30px] max-w-[240px] min-w-0 flex-1 rounded-7 border border-trait bg-carte px-[8px] text-[11.5px] text-encre-controle"
-        >
-          {!modeles.length && <option value="">…</option>}
-          {modeles.map((m) => (
-            <option
-              key={m.identifiant}
-              value={m.identifiant}
-              disabled={!!m.refus}
-              title={m.refus ?? undefined}
-            >
-              {libelleModele(m)}
-            </option>
-          ))}
-        </select>
+          className="max-w-[240px] min-w-0 flex-1"
+        />
         <label className="mesure flex shrink-0 items-center gap-1 text-[10.5px] text-encre-3">
           <input
             type="checkbox"

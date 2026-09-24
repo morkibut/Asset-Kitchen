@@ -44,6 +44,7 @@ from atelier.domaine import (
     Reinjection,
     Resultat,
     Statut,
+    est_argent,
 )
 from atelier.domaine.erreurs import (
     DemandeRefusee,
@@ -534,6 +535,46 @@ class ServiceGenerations:
             "mesures": len(durees),
             "vitesse": vitesse,
         }
+
+    def habitues(self) -> dict[str, list[str]]:
+        """Les trois gratuits et les trois payants dont l'auteur se sert le
+        plus (TS17) — ce que le panneau de choix du modèle met en tête.
+
+        **Compté sur `comptes_par_modele`, tous projets confondus** — même
+        décision que là où il est écrit : les habitudes ne se réinventent pas
+        d'un jeu à l'autre. Le tri est déterministe : à compte égal, l'ordre
+        du catalogue tranche, jamais un tirage au sort.
+
+        **Un modèle local compte comme gratuit même sans réserve déclarée**
+        (`AGENTS.md`, point 1). `ServiceCatalogue.unite_de` rend `None` pour
+        ComfyUI — aucun `compte()` annoncé — et `est_argent(None)` vaut vrai
+        faute de mieux ; c'est exactement le piège que ce calcul-ci doit
+        éviter, en tranchant par `modele.locale` **avant** de demander l'unité.
+
+        **Un modèle grisé reste dans son top** : cette méthode ne connaît que
+        le compte, jamais le grisé — c'est `_modele_en_json` qui porte `refus`
+        sur la fiche, et l'écran continue de montrer, grisé, l'habituel dont
+        la clé manque aujourd'hui plutôt que de le faire disparaître.
+        """
+        comptes = self._base.comptes_par_modele()
+        modeles = self._catalogue.etat.modeles
+        ordre = {m.identifiant: rang for rang, m in enumerate(modeles)}
+
+        def gratuit(modele: Modele) -> bool:
+            return modele.locale or not est_argent(
+                self._catalogue.unite_de(modele.identifiant)
+            )
+
+        def trie(veut_gratuit: bool) -> list[str]:
+            candidats = [
+                m
+                for m in modeles
+                if comptes.get(m.identifiant, 0) > 0 and gratuit(m) == veut_gratuit
+            ]
+            candidats.sort(key=lambda m: (-comptes[m.identifiant], ordre[m.identifiant]))
+            return [m.identifiant for m in candidats[:3]]
+
+        return {"gratuits": trie(True), "payants": trie(False)}
 
     def _durees_locales(self, modele: str) -> tuple[list[float], list[float]]:
         """Les durées propres des étapes de ce modèle — **(à chaud, à froid)**,

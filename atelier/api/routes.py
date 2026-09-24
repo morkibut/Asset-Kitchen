@@ -556,6 +556,11 @@ async def modeles(
             for f in etat.fournisseurs
         ],
         "defaut": {"modele": du_projet or defaut.modele, "options": defaut.options},
+        # **Les habitués, comptés côté serveur** (TS17) : les trois gratuits
+        # et les trois payants les plus repris, tous projets confondus. Un
+        # modèle jamais appelé n'y figure pas — la liste peut être vide, et
+        # l'écran affiche alors la liste complète directement.
+        "habitues": atelier.generations.habitues(),
         "references": compte,
         # **Ce que cet appel-là coûterait chez chaque modèle** (US-121). Une
         # mesure, jamais un tarif : le produit ne porte aucun prix de catalogue,
