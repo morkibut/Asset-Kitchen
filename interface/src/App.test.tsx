@@ -16360,6 +16360,168 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
   })
 })
 
+// ── TS15 · Le détail d'une carte et d'un îlot, dans la colonne de droite ────
+//
+// Avant cette tranche, cliquer une carte ou un îlot sur la toile ouvrait un
+// panneau **par-dessus** le plan — le menu de `Tableau.tsx` pour une carte,
+// un menu local pour un îlot (TS16). Depuis TS15, le même contenu prend la
+// place de la réserve, dans la colonne de droite ; la réserve revient quand
+// on le ferme. Ce que ces essais vérifient et que rien d'autre ne voit :
+// le détail vit **hors** du plan (`[data-plan]`), la croix et Échap le
+// referment, une autre carte le change sans jamais laisser réapparaître la
+// réserve entre les deux, et les gestes de chaque groupe de l'ancienne
+// fenêtre restent joignables depuis le panneau.
+
+describe("le détail d'une carte et d'un îlot, dans la colonne de droite", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    doublerLaGrille(160)
+    toutReplier()
+    // Le bandeau d'un îlot capture le pointeur pour tenir son geste ; jsdom
+    // ne le connaît pas, comme dans les essais TS16 ci-dessus.
+    Element.prototype.setPointerCapture = () => {}
+    Element.prototype.hasPointerCapture = () => false
+    Element.prototype.releasePointerCapture = () => {}
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const CARTES = [
+    carteImage("m1", { groupe: "marais", note: "premier tirage" }),
+    carteImage("m2", { groupe: "marais", position: [200, 0], note: "second tirage" }),
+  ]
+
+  const plan = () => document.querySelector("[data-plan]") as HTMLElement
+  const reserve = () => document.querySelector("[data-reserve]")
+  const cartesDuPlan = () =>
+    within(plan()).getAllByRole("button", { name: "Ouvrir la carte" })
+
+  const ouvrirLaToileAvecLesCartes = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble({ cartes: CARTES, ...options })
+    await monter(double.fetchDouble)
+    allerA("Univers")
+    fireEvent.click(await screen.findByRole("button", { name: "toile" }))
+    await waitFor(() => expect(reserve()).toBeTruthy())
+    return double
+  }
+
+  test("cliquer une carte montre son détail dans la colonne, pas dans une fenêtre sur la toile", async () => {
+    await ouvrirLaToileAvecLesCartes()
+    await waitFor(() => expect(cartesDuPlan()).toHaveLength(2))
+
+    fireEvent.click(cartesDuPlan()[0])
+
+    // La réserve a cédé la place — c'est le critère même de la tranche.
+    await waitFor(() => expect(reserve()).toBeNull())
+    // Et le panneau qui la remplace n'est **pas** une fenêtre posée sur le
+    // plan : son contenu (le champ « Îlot », commun à `Reglages`) n'existe
+    // nulle part dans `[data-plan]`, seulement dans le reste du document —
+    // la colonne de droite.
+    expect(within(plan()).queryByText("Îlot")).toBeNull()
+    expect(screen.getByText("Îlot")).toBeTruthy()
+  })
+
+  test("la croix referme le détail et rend la réserve", async () => {
+    await ouvrirLaToileAvecLesCartes()
+    fireEvent.click((await waitFor(() => cartesDuPlan()))[0])
+    await waitFor(() => expect(reserve()).toBeNull())
+
+    fireEvent.click(screen.getByRole("button", { name: "Fermer le détail" }))
+
+    await waitFor(() => expect(reserve()).toBeTruthy())
+    expect(screen.queryByText("Îlot")).toBeNull()
+  })
+
+  test("Échap referme le détail et rend la réserve", async () => {
+    await ouvrirLaToileAvecLesCartes()
+    fireEvent.click((await waitFor(() => cartesDuPlan()))[0])
+    await waitFor(() => expect(reserve()).toBeNull())
+
+    fireEvent.keyDown(window, { key: "Escape" })
+
+    await waitFor(() => expect(reserve()).toBeTruthy())
+    expect(screen.queryByText("Îlot")).toBeNull()
+  })
+
+  test("cliquer une autre carte change le détail, sans jamais rendre la réserve entre les deux", async () => {
+    await ouvrirLaToileAvecLesCartes()
+    await waitFor(() => expect(cartesDuPlan()).toHaveLength(2))
+
+    fireEvent.click(cartesDuPlan()[0])
+    await waitFor(() => expect(screen.getByDisplayValue("premier tirage")).toBeTruthy())
+    // À aucun moment entre les deux cartes la réserve ne revient : le
+    // panneau change de sujet, il ne se referme pas.
+    expect(reserve()).toBeNull()
+
+    fireEvent.click(cartesDuPlan()[1])
+    await waitFor(() => expect(screen.getByDisplayValue("second tirage")).toBeTruthy())
+    expect(screen.queryByDisplayValue("premier tirage")).toBeNull()
+    expect(reserve()).toBeNull()
+  })
+
+  test("les gestes de l'ancienne fenêtre restent joignables : référence, sujet, suppression", async () => {
+    const { appels } = await ouvrirLaToileAvecLesCartes()
+    fireEvent.click((await waitFor(() => cartesDuPlan()))[0])
+    await waitFor(() => expect(screen.getByText("Îlot")).toBeTruthy())
+
+    // « Prendre comme référence » — la vignette paraît dans la barre.
+    fireEvent.click(screen.getByRole("button", { name: "Prendre comme référence" }))
+    expect(await screen.findByLabelText(/1 image prise en référence/)).toBeTruthy()
+
+    // « Créer un sujet avec cette image » — la fenêtre de création s'ouvre.
+    // **Deux éléments portent ce nom** : le vrai bouton, et le libellé
+    // infobulle qui porte aussi `role="button"` (`Libelle`, `pieces.tsx`) —
+    // même filtre que `Tableau.test.tsx` (`boutonNomme`).
+    const boutonCreerSujet = screen
+      .getAllByRole("button", { name: "Créer un sujet avec cette image" })
+      .find((b) => b.tagName === "BUTTON")
+    if (!boutonCreerSujet) throw new Error("aucun <button> « Créer un sujet avec cette image »")
+    fireEvent.click(boutonCreerSujet)
+    expect(await screen.findByRole("dialog", { name: "Créer un sujet" })).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "Fermer" }))
+
+    // « Supprimer » — l'appel part vers la carte qu'on regardait.
+    fireEvent.click(screen.getByRole("button", { name: "Supprimer" }))
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/board/m1" && a.corps === undefined)).toBe(
+        true,
+      ),
+    )
+  })
+
+  test("le détail d'un îlot montre son nom, ses cartes, et mène à sa palette — depuis la colonne", async () => {
+    await ouvrirLaToileAvecLesCartes()
+    const bandeau = await waitFor(() => {
+      const trouve = document.querySelector("[data-ilot='marais'] [data-nom-ilot]")
+      if (!trouve) throw new Error("l'îlot du marais n'est pas dessiné")
+      return trouve as HTMLElement
+    })
+    // Le clic clavier, comme dans les essais TS16 : `detail` vaut 0.
+    fireEvent.click(bandeau)
+
+    await waitFor(() => expect(reserve()).toBeNull())
+    // Le compte de cartes reste visible sur le bandeau lui-même (inchangé) ;
+    // ce qui est nouveau, et vérifié ici, c'est que ses gestes — « faire une
+    // palette » — vivent maintenant hors du plan, dans la colonne.
+    expect(within(plan()).queryByRole("button", { name: "faire une palette de cet îlot" })).toBeNull()
+    const boutonPalette = await screen.findByRole("button", { name: "faire une palette de cet îlot" })
+    expect(boutonPalette).toBeTruthy()
+
+    fireEvent.click(boutonPalette)
+    await waitFor(() =>
+      expect(leLieu("Ambiances et couleurs").getAttribute("aria-selected")).toBe("true"),
+    )
+  })
+})
+
 // ── U8 · La galerie rend le prompt, et son bouton rentre dans la vignette ────
 //
 // Deux points de la séance, et ils n'ont rien à voir l'un avec l'autre sinon

@@ -1141,6 +1141,18 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · choisis plusieurs cartes image sur la toile, puis clique Combiner",
   },
 
+  // Le détail, dans la colonne de droite (TS15)
+
+  "toile.detail": {
+    nom: "Détail",
+    ou: "inspiration",
+    groupe: "La barre du tableau",
+    quoi: "Sur la toile, cliquer une carte ou un îlot montre son détail dans la colonne de droite, à la place de la réserve.",
+    change: "Rien à la génération.",
+    origine: "toi · rien ne s'enregistre",
+    long: "La croix, Échap, ou un clic sur la toile vide referment le détail et rendent la réserve. Cliquer une autre carte ou un autre îlot change le détail sans le fermer.",
+  },
+
   // Le menu d'une carte
 
   "carte.groupe": {
@@ -1348,6 +1360,15 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · sans teinte au départ · part avec le dernier membre",
     long:
       "Elle ne vit pas sur les cartes de l'îlot — six membres feraient six réponses pour un seul cadre — mais avec le projet, une entrée par nom de groupe. Corollaire de « un îlot *est* son groupe » : quand la dernière carte en sort, l'îlot cesse d'exister, et sa couleur s'en va avec lui, comme les liens qui y aboutissaient.",
+  },
+
+  "ilot.cartes": {
+    nom: "cartes de l'îlot",
+    ou: "inspiration",
+    groupe: "Le menu d'un îlot",
+    quoi: "Les cartes qui composent cet îlot — une miniature par carte, cliquable pour voir son détail.",
+    change: "Rien à la génération.",
+    origine: "toi · le groupe écrit sur chaque carte",
   },
 
   // ── L'univers, côté Ambiances — les palettes, et les lots de style ────────

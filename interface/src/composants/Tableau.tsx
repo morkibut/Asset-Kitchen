@@ -1469,7 +1469,11 @@ function Attente({ carte, plan = false }: { carte: Carte; plan?: boolean }) {
  *  sur la toile, et le dernier membre qui en sort l'emporte. Un bouton
  *  « nouvel îlot » aurait créé un îlot vide, c'est-à-dire un groupe qui n'est
  *  écrit sur aucune carte — donc rien. */
-function Reglages({
+/** Exporté depuis TS15 : la toile pose ce même panneau dans sa colonne de
+ *  droite au lieu de la fenêtre flottante — voir `Toile.tsx`, `PanneauDetail`.
+ *  Le menu de la grille, lui, ne change pas : il reste la fenêtre posée
+ *  par-dessus, faute d'une troisième colonne où se ranger. */
+export function Reglages({
   carte,
   personnages,
   onErreur,
