@@ -1609,7 +1609,7 @@ async def impose_sur_asset(requete: Request, identifiant: str) -> dict[str, Any]
 
 
 @routeur.get("/assets/{identifiant}/spots")
-async def taches_de_asset(
+def taches_de_asset(
     requete: Request, identifiant: str, limite: int = Query(200, ge=1, le=2000)
 ) -> dict[str, Any]:
     """Ce qu'une table a besoin de savoir de l'image (E3).
@@ -1627,6 +1627,11 @@ async def taches_de_asset(
     `POST .../recipe/preview`, qui répond sans rien enregistrer — c'est aussi
     ce qu'il faut pour un brouillon non posé, et un seul chemin en moins à
     tenir d'accord avec l'autre.
+
+    **`def` et non `async def`** (relecture du 24 septembre 2026) : c'est du
+    calcul pur, et une route `async` qui calcule tient toute la boucle du
+    serveur pendant ce temps — FastAPI passe une route synchrone dans un fil à
+    part. Même règle pour l'aperçu, juste en dessous.
     """
     return _atelier(requete).assets.taches_de(identifiant, limite)
 
@@ -1648,7 +1653,7 @@ async def poser_recette(
 
 
 @routeur.post("/assets/{identifiant}/recipe/preview")
-async def apercu_recette(requete: Request, identifiant: str, corps: CorpsApercuRecette) -> dict[str, Any]:
+def apercu_recette(requete: Request, identifiant: str, corps: CorpsApercuRecette) -> dict[str, Any]:
     """Aperçu du brouillon : aucune recette, image ou événement enregistré."""
     return _atelier(requete).assets.apercu_recette(
         identifiant, corps.recette.en_recette(), voyageuse=corps.voyageuse,

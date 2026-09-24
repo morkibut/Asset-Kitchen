@@ -1158,10 +1158,21 @@ def couleurs_obtenues(rgba: np.ndarray) -> int:
     autrement rendrait 15 là où l'écran montre 14, et le chiffre servirait à
     expliquer un écart en en créant un autre.
     """
-    visibles = rgba[:, :, :3][rgba[:, :, 3] > 0]
-    if not visibles.size:
-        return 0
-    return int(np.unique(visibles.reshape(-1, 3), axis=0).shape[0])
+    return int(np.unique(_codes_visibles(rgba)).size)
+
+
+def _codes_visibles(rgba: np.ndarray) -> np.ndarray:
+    """Les pixels visibles, chacun rangé dans un seul entier `0xRRVVBB`.
+
+    **Un entier par pixel plutôt qu'un triplet, et c'est une question de
+    temps** (relecture du 24 septembre 2026) : `np.unique` sur des lignes de
+    trois octets trie un tableau structuré, une seconde et demie sur une image
+    de 1024 ; sur des entiers, quelques dizaines de millisecondes. L'ordre
+    croissant des entiers est celui des triplets (rouge, puis vert, puis
+    bleu), donc rien de ce qu'on en tire ne change.
+    """
+    visibles = rgba[:, :, :3][rgba[:, :, 3] > 0].astype(np.uint32)
+    return (visibles[:, 0] << 16) | (visibles[:, 1] << 8) | visibles[:, 2]
 
 
 def couleurs_visibles(rgba: np.ndarray) -> tuple[str, ...]:
@@ -1182,17 +1193,12 @@ def couleurs_visibles(rgba: np.ndarray) -> tuple[str, ...]:
     qu'un ordre de première rencontre, qui dépendrait du sens de balayage de
     l'image — un détail d'implémentation que personne n'a à retrouver à l'œil.
     """
-    visibles = rgba[:, :, :3][rgba[:, :, 3] > 0]
-    if not visibles.size:
+    codes = _codes_visibles(rgba)
+    if not codes.size:
         return ()
-    uniques, comptes = np.unique(
-        visibles.reshape(-1, 3), axis=0, return_counts=True
-    )
-    ordre = sorted(
-        range(len(uniques)),
-        key=lambda i: (-int(comptes[i]), tuple(int(c) for c in uniques[i])),
-    )
-    return tuple(_hexa(uniques[i]) for i in ordre)
+    uniques, comptes = np.unique(codes, return_counts=True)
+    ordre = sorted(range(len(uniques)), key=lambda i: (-int(comptes[i]), int(uniques[i])))
+    return tuple("#%06x" % int(uniques[i]) for i in ordre)
 
 
 def rampes(palette: Sequence[str]) -> tuple[tuple[str, ...], ...]:

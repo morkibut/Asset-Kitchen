@@ -101,8 +101,8 @@ from atelier.image import (
 )
 from atelier.image.traitement import (
     boite_opaque,
-    composantes,
     etat_des_silhouettes,
+    nombre_de_composantes,
     peindre,
     pinceau,
     pose_du_calque,
@@ -463,24 +463,35 @@ class ServiceAssets:
 
     def _taches_de(
         self, asset: Asset, plafond: int = 200, *, viser: tuple[int, int] | None = None,
+        rendu: np.ndarray | None = None,
     ) -> dict[str, Any]:
         # Avant les bords : la liste doit montrer ce que le seuil va effacer, et
         # une liste prise après lui aurait déjà perdu ce qu'elle décrit.
         avant_les_bords = replace(
             sans_les_deux_dernieres(asset.recette), bords=None
         )
-        rgba = self._tableau_avec(asset, avant_les_bords)
-        trouvees = taches(rgba, plafond=plafond)
-        # **Ce qui est coupé se dit**, jamais tu en silence : une image bruitée
-        # peut porter des milliers de taches d'un pixel, et une liste tronquée
-        # sans le dire se lirait comme la liste entière.
-        toutes = len([m for m, _ in composantes(rgba[:, :, 3] > 0)])
         # **Le rendu final, calculé une seule fois** (RV25) : `_couleurs_de` le
         # demandait déjà, mais seulement quand la table « Couleurs » est posée
         # — la mesure des poches de fond enfermées en a besoin dans tous les
         # cas, un détourage par modèle n'attendant aucune quantification pour
-        # laisser du vert dans les vitres d'un bus.
-        rendu = self._tableau_avec(asset, asset.recette)
+        # laisser du vert dans les vitres d'un bus. **Et pas une fois de plus**
+        # (relecture du 24 septembre 2026) : l'aperçu d'un brouillon vient de
+        # le calculer pour en faire le PNG, et le passe ici.
+        if rendu is None:
+            rendu = self._tableau_avec(asset, asset.recette)
+        # Sans bords, contour ni main, les deux recettes sont la même : le
+        # rendu sert alors aux deux, au lieu d'une seconde queue.
+        rgba = (
+            rendu
+            if avant_les_bords == asset.recette
+            else self._tableau_avec(asset, avant_les_bords)
+        )
+        trouvees = taches(rgba, plafond=plafond)
+        # **Ce qui est coupé se dit**, jamais tu en silence : une image bruitée
+        # peut porter des milliers de taches d'un pixel, et une liste tronquée
+        # sans le dire se lirait comme la liste entière. Un compte, et rien
+        # de plus : `nombre_de_composantes` n'alloue aucun masque par tache.
+        toutes = nombre_de_composantes(rgba[:, :, 3] > 0)
         return {
             "taches": [t.en_json() for t in trouvees],
             "coupees": max(0, toutes - len(trouvees)),
@@ -524,7 +535,10 @@ class ServiceAssets:
             # *« rien à l'écran ne dit l'écart, donc l'auteur monte le réglage en
             # croyant gagner du détail »*. C'est le seul nombre qui explique
             # pourquoi monter le réglage ne change plus rien.
-            "couleurs": self._couleurs_de(asset, viser=viser, rendu=rendu),
+            "couleurs": self._couleurs_de(
+                asset, viser=viser, rendu=rendu,
+                reduit=self._reduit(asset, avant_les_bords, rgba),
+            ),
             # **Ce que le fond a laissé, encore opaque, dans le rendu qu'on
             # regarde vraiment** (RV25) — la vitre d'un bus détouré par un
             # modèle, verte du fond qu'elle laisse passer. Ni « bord » ni le
@@ -540,36 +554,49 @@ class ServiceAssets:
         asset: Asset,
         *,
         viser: tuple[int, int] | None = None,
-        rendu: np.ndarray | None = None,
+        rendu: np.ndarray,
+        reduit: np.ndarray,
     ) -> dict[str, Any]:
         """Combien de couleurs cette image demande, et combien elle en obtient.
 
-        **Sur le rendu final, et c'est le seul endroit juste.** Les autres
-        mesures de cette route se prennent sur l'image *avant les bords*, parce
-        qu'elles décrivent ce qu'un réglage va faire ; celle-ci décrit ce qu'on
-        **a**, donc elle se lit sur l'image telle qu'elle sort — bords, contour
-        et main compris, qui tous peuvent ajouter ou retirer une couleur.
+        **Le compte, sur le rendu final, et c'est le seul endroit juste.** Les
+        autres mesures de cette route se prennent sur l'image *avant les
+        bords*, parce qu'elles décrivent ce qu'un réglage va faire ; celle-ci
+        décrit ce qu'on **a**, donc elle se lit sur l'image telle qu'elle sort
+        — bords, contour et main compris, qui tous peuvent ajouter ou retirer
+        une couleur.
+
+        **La liste et la pipette, elles, sur l'image telle qu'elle sort de la
+        réduction** (`reduit`, voir `_reduit`) — corrigé le 24 septembre 2026
+        après relecture. Elles servent à *choisir* une paire d'échange, et un
+        échange se lit sur l'image que la réduction lui tend, jamais sur ce
+        que les échanges d'avant, les bords, le contour ou la main en ont
+        fait : avec une paire rouge → bleu déjà posée, viser la cape (bleue
+        à l'écran) mettait ce bleu dans « celle qui part », où il n'existe
+        pas, le rouge disparaissait des pastilles et la couleur du contour y
+        entrait. Le compte peut donc dépasser la liste d'une couleur de
+        contour : ils ne décrivent plus la même étape, et c'est voulu.
 
         `demandees` est nul quand la table dort ou n'est pas posée : il n'y a
         alors aucun écart à expliquer, et l'écran n'a rien à montrer.
 
         `viser` est le point d'une pipette qui ne vise **pas** une passe de
         détourage (RV24) — celle de la table d'échange, « celle qui part » —
-        et se sample donc ici plutôt que dans `_couleurs_visees`, avec les
-        mêmes coordonnées que `liste` : celles du **rendu final**, la seule
-        image que l'échange voit vraiment. Rendu même quand la table dort :
-        le geste de viser ne demande rien de plus que l'image telle qu'elle
-        est déjà, une palette posée ou non.
+        et se sample donc ici plutôt que dans `_couleurs_visees`. Il arrive
+        en coordonnées du **rendu final**, celles de l'image montrée ; un
+        contour extérieur y ajoute une marge égale des quatre côtés, qu'on
+        retranche pour tomber sur le même pixel de `reduit`. Rendu même quand
+        la table dort : le geste de viser ne demande rien de plus que l'image
+        telle qu'elle est déjà, une palette posée ou non.
 
-        `rendu`, déjà calculé, évite de le refaire (RV25) : `_taches_de` en a
-        besoin dans tous les cas, pour la mesure des poches de fond enfermées.
+        `rendu` et `reduit` arrivent déjà calculés (RV25) : `_taches_de` a
+        besoin du premier dans tous les cas, pour la mesure des poches de fond
+        enfermées, et le second est le plus souvent son image d'avant les bords.
         """
         quantification = asset.recette.quantification
         dort = quantification is None or asset.recette.dort(QUANTIFICATION)
         if dort and viser is None:
             return {"demandees": 0, "obtenues": 0, "liste": []}
-        if rendu is None:
-            rendu = self._tableau_avec(asset, asset.recette)
         resultat: dict[str, Any] = (
             {"demandees": 0, "obtenues": 0, "liste": []}
             if dort
@@ -582,14 +609,43 @@ class ServiceAssets:
                 "obtenues": couleurs_obtenues(rendu),
                 # **La liste, pas seulement le compte** (RV24) — ce que la
                 # table « Couleurs » propose en premier dans les pastilles,
-                # avant la palette du jeu. Mêmes pixels que `obtenues` : la
-                # liste et le compte ne peuvent pas se contredire.
-                "liste": list(couleurs_visibles(rendu)),
+                # avant la palette du jeu. Sur l'image réduite, avant les
+                # échanges : voir plus haut.
+                "liste": list(couleurs_visibles(reduit)),
             }
         )
         if viser is not None:
-            resultat["visee"] = self._couleur_au_point(rendu, viser)
+            # Le débord d'un contour extérieur est le même des quatre côtés
+            # (`contourner`), et le miroir comme la main gardent la taille.
+            x, y = viser
+            dx = (rendu.shape[1] - reduit.shape[1]) // 2
+            dy = (rendu.shape[0] - reduit.shape[0]) // 2
+            resultat["visee"] = self._couleur_au_point(reduit, (x - dx, y - dy))
         return resultat
+
+    def _reduit(
+        self, asset: Asset, avant_les_bords: Recette, rgba: np.ndarray
+    ) -> np.ndarray:
+        """L'image **telle qu'elle sort de la réduction**, avant les échanges,
+        les bords, le contour et la main — celle que lisent les pastilles et
+        la pipette de l'échange (relecture du 24 septembre 2026).
+
+        C'est l'image d'avant les bords, `rgba`, déjà calculée, **tant
+        qu'aucun échange n'agit** : les deux recettes ne diffèrent alors de
+        rien, et c'est presque toujours le cas. Sinon on la rejoue sans ses
+        échanges. Le miroir y reste, pour une seule raison : il déplace des
+        pixels sans en créer, et la pipette vise l'image montrée.
+        """
+        quantification = avant_les_bords.quantification
+        if (
+            quantification is None
+            or avant_les_bords.dort(QUANTIFICATION)
+            or not quantification.echanges_vifs
+        ):
+            return rgba
+        return self._tableau_avec(
+            asset, replace(avant_les_bords, quantification=replace(quantification, echanges=()))
+        )
 
     @staticmethod
     def _couleur_au_point(rgba: np.ndarray, point: tuple[int, int]) -> str | None:
@@ -1487,8 +1543,11 @@ class ServiceAssets:
         copie = replace(asset, recette=recette)
         marque = _BROUILLON_RECETTE.set(True)
         try:
-            rendu = self._calculer(copie)
-            mesures = self._taches_de(copie, viser=viser)
+            # **Un seul rendu pour l'image et pour les mesures** (relecture du
+            # 24 septembre 2026) : `_taches_de` le recalculait à côté.
+            tableau = self._tableau_avec(copie, copie.recette)
+            rendu = en_rendu(tableau)
+            mesures = self._taches_de(copie, viser=viser, rendu=tableau)
         finally:
             _BROUILLON_RECETTE.reset(marque)
         return {
