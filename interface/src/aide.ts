@@ -1592,6 +1592,17 @@ export const AIDE: Record<string, Explication> = {
     origine: "le concept art ou le portrait du sujet · absent sans l'un des deux",
   },
 
+  // **TS20** : refaire la planche d'un sujet qui en a déjà une choisie.
+  "fabrique.refaire-planche": {
+    nom: "Refaire la planche des directions",
+    groupe: "La fiche du sujet",
+    ou: "sujet",
+    quoi: "Fabrique une nouvelle planche à partir du concept art, sans repartir de l'ancienne.",
+    change:
+      "L'ancienne planche reste la référence tant que tu n'as pas cliqué « C'est la référence » sur la nouvelle — elle reste alors en bibliothèque, dépromue.",
+    origine: "le concept art du sujet, jamais l'ancienne planche",
+  },
+
   "fabrique.cest-la-reference": {
     nom: "C'est la référence",
     groupe: "La fiche du sujet",

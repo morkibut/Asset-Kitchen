@@ -376,17 +376,25 @@ function PropositionDeDirection({
  *  neuf, quand il n'a pas encore de planche. Un clic demande au serveur ce
  *  qu'il faudrait pour la fabriquer ; rien n'est facturé ici, l'atelier
  *  s'ouvre déjà rempli. Refusé (409) : la phrase du serveur remplace le
- *  bouton, avec un lien vers la toile — c'est là qu'on pose un concept art. */
+ *  bouton, avec un lien vers la toile — c'est là qu'on pose un concept art.
+ *
+ *  **Refaire** (`TS20`) : le même geste, montré quand une planche est déjà
+ *  choisie — seul le libellé et l'entrée du guide changent. La demande qui
+ *  part est identique : le concept art, jamais l'ancienne planche
+ *  (`atelier/services/generation.py`, `_concepts`, drapeau `premiere_planche`). */
 function BoutonPremierePlanche({
   enCours,
   refus,
   onDemander,
   onAllerALaToile,
+  refaire = false,
 }: {
   enCours: boolean
   refus: string | null
   onDemander: () => void
   onAllerALaToile?: () => void
+  /** Une planche est déjà choisie : « Refaire » plutôt que « Faire ». */
+  refaire?: boolean
 }) {
   if (refus)
     return (
@@ -411,7 +419,11 @@ function BoutonPremierePlanche({
         disabled={enCours}
         className="self-start rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[12.5px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
       >
-        {enCours ? "Ça se prépare…" : "Faire la planche des directions"}
+        {enCours
+          ? "Ça se prépare…"
+          : refaire
+            ? "Refaire la planche des directions"
+            : "Faire la planche des directions"}
       </button>
       {/* **Marque d'aide** (défaut 7 de la relecture du 24 septembre 2026) :
           le `title` d'avant disait la même chose que l'entrée du recueil, en
@@ -419,7 +431,12 @@ function BoutonPremierePlanche({
           élément focalisable imbriqué dans un bouton est un piège au clavier
           (`Infobulle.tsx`, note sur `declencheurs`) — d'où cette légende à
           part, comme les autres légendes sous un bouton de cet écran. */}
-      {!enCours && (
+      {!enCours && refaire && (
+        <p className="text-[10.5px] text-encre-4">
+          <Libelle aide="fabrique.refaire-planche">Une nouvelle planche d’après son concept art — l’ancienne reste la référence tant que tu n’as pas choisi la nouvelle.</Libelle>
+        </p>
+      )}
+      {!enCours && !refaire && (
         <p className="text-[10.5px] text-encre-4">
           <Libelle aide="fabrique.premiere-planche">Sa pose de repos, dans les directions du jeu, d’après son concept art — rien n’est payé ici.</Libelle>
         </p>
@@ -442,6 +459,7 @@ export function SesReferencesParUsage({
   onChangerUsage,
   onUtiliserPourDirection,
   boutonPlanche,
+  boutonRefairePlanche,
 }: {
   personnage: Personnage
   references: ReferencesDeLaChose | null
@@ -451,6 +469,11 @@ export function SesReferencesParUsage({
   /** **Faire la planche des directions** (TS3) — montré dans le bloc
    *  *Planche* seulement quand il n'y en a pas encore. */
   boutonPlanche?: ReactNode
+  /** **Refaire la planche des directions** (TS20) — montré sous la planche
+   *  choisie, tant qu'il y en a une : le seul chemin, avant cette tranche,
+   *  était de retirer la planche des images d'exemple pour faire revenir
+   *  `boutonPlanche`. */
+  boutonRefairePlanche?: ReactNode
 }) {
   const directions = useMemo(() => directionsDuSujet(personnage), [personnage])
   // **Seules les lignes d'images promues portent un usage** (RS1) : une carte
@@ -482,6 +505,7 @@ export function SesReferencesParUsage({
         {planche[0] && (
           <OrdreDesVues personnage={personnage.identifiant} planche={planche[0]} directions={directions} />
         )}
+        {planche.length > 0 && boutonRefairePlanche}
         {directions.map((direction) => {
           const lignes = promues.filter((l) => l.usage === usageDeDirection(direction.identifiant))
           const proposee = lignes.length === 0 ? imageProposeeDeDirection(personnage, direction.identifiant) : null
@@ -1342,6 +1366,17 @@ export function ImagesDuSujet({
           boutonPlanche={
             onPremierePlanche && (
               <BoutonPremierePlanche
+                enCours={preparantPlanche}
+                refus={refusPlanche}
+                onDemander={() => void demanderLaPlanche()}
+                onAllerALaToile={onAllerALaToile}
+              />
+            )
+          }
+          boutonRefairePlanche={
+            onPremierePlanche && (
+              <BoutonPremierePlanche
+                refaire
                 enCours={preparantPlanche}
                 refus={refusPlanche}
                 onDemander={() => void demanderLaPlanche()}
