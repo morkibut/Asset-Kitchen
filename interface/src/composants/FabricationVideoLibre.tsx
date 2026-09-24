@@ -6,7 +6,7 @@ import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { MemoireLocale } from "./MemoireLocale"
-import { Libelle } from "./pieces"
+import { ChoixModele, Libelle, type Habitues } from "./pieces"
 
 const CHAMP = "min-w-0 rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[13px] text-encre-controle"
 const BOUTON = `${CHAMP} hover:border-encre-3 disabled:opacity-50`
@@ -30,6 +30,7 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
   const [edition, setEdition] = useState(!identifiantInitial)
   const [videos, setVideos] = useState<ModeleVideo[]>([])
   const [images, setImages] = useState<Modele[]>([])
+  const [habituesImage, setHabituesImage] = useState<Habitues | null>(null)
   const [profils, setProfils] = useState<ProfilWorkflow[]>([])
   const [lecture, setLecture] = useState(true)
   const [occupe, setOccupe] = useState(false)
@@ -78,7 +79,7 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
   useEffect(() => {
     if (!edition || !fabriquerImage) return
     let vivant = true
-    api.modeles(demande.proportions_image || "1:1", refs.length).then(r => vivant && setImages(r.modeles)).catch(e => vivant && setErreur(message(e)))
+    api.modeles(demande.proportions_image || "1:1", refs.length).then(r => { if (vivant) { setImages(r.modeles); setHabituesImage(r.habitues) } }).catch(e => vivant && setErreur(message(e)))
     return () => { vivant = false }
   }, [edition, fabriquerImage, demande.proportions_image, refs.length])
   useEffect(() => {
@@ -124,10 +125,16 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
         <div className="flex flex-wrap items-center gap-[8px]"><button type="button" className={BOUTON} onClick={() => setChoix("depart")}>Choisir dans la bibliothèque</button><label className={`${BOUTON} cursor-pointer`}>Importer l’image de départ<input className="sr-only" type="file" accept="image/*" onChange={e => void importer(e.target.files?.[0])} /></label><button type="button" className={BOUTON} aria-pressed={fabriquerImage} onClick={() => { setFabriquerImage(true); changer({ reference_asset: null }) }}>Fabriquer une nouvelle image</button></div>
         {demande.reference_asset && <img src={api.fichier(demande.reference_asset)} alt="Image de départ choisie" className="damier-papier h-[128px] w-[128px] object-contain" />}
         {fabriquerImage && <div className="space-y-[14px]">
-          <label className="flex flex-col gap-[8px] text-[13px]">Modèle d’image<select className={CHAMP} value={demande.modele_image || ""} onChange={e => {
-            const p = profils.find(p => p.modele === e.target.value), m = images.find(m => m.identifiant === e.target.value)
-            changer({ modele_image: e.target.value || null, options_image: defauts(p), resolution_image: p?.formats[0].resolution || m?.resolutions[0] || null, proportions_image: p?.formats[0].proportions || m?.proportions[0] || "1:1" })
-          }}><option value="">Choisir un modèle</option>{images.map(m => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.identifiant}{m.refus ? ` — ${m.refus}` : ""}</option>)}</select></label>
+          <label className="flex flex-col gap-[8px] text-[13px]">Modèle d’image<ChoixModele
+            modeles={images}
+            valeur={demande.modele_image || null}
+            habitues={habituesImage}
+            onChange={identifiant => {
+              const p = profils.find(p => p.modele === identifiant), m = images.find(m => m.identifiant === identifiant)
+              changer({ modele_image: identifiant || null, options_image: defauts(p), resolution_image: p?.formats[0].resolution || m?.resolutions[0] || null, proportions_image: p?.formats[0].proportions || m?.proportions[0] || "1:1" })
+            }}
+            ariaLabel="Modèle d’image"
+          /></label>
           <label className="flex flex-col gap-[8px] text-[13px]">Description de l’image<textarea className={`${CHAMP} min-h-[128px]`} value={demande.prompt_image || ""} onChange={e => changer({ prompt_image: e.target.value })} /></label>
           <label className="text-[13px]"><input type="checkbox" checked={!demande.repris_image} onChange={e => changer({ repris_image: !e.target.checked })} /> Ajouter les règles de l’univers au texte de l’image</label>
           {(!profilImage || profilImage.liaisons.prompt_negatif) && <label className="flex flex-col gap-[8px] text-[13px]">Éviter dans l’image<textarea className={CHAMP} value={demande.prompt_negatif_image || ""} onChange={e => changer({ prompt_negatif_image: e.target.value })} /></label>}
@@ -142,6 +149,15 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
       <fieldset disabled={occupe} className={`${SURFACE} space-y-[14px]`}><legend className="font-serif text-[25px]">2. Le clip à fabriquer</legend>
         <label className="flex flex-col gap-[8px] text-[13px]">Mouvement et consignes pour la vidéo<textarea className={`${CHAMP} min-h-[128px]`} value={demande.prompt_video} onChange={e => changer({ prompt_video: e.target.value })} /></label>
         <div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[8px] text-[13px]">Durée du clip<select className={CHAMP} value={demande.secondes} onChange={e => changer({ secondes: Number(e.target.value) })}>{uniques([demande.secondes, ...videos.flatMap(m => m.durees)]).sort((a, b) => a - b).map(v => <option key={v} value={v}>{v} s</option>)}</select></label><label className="flex flex-col gap-[8px] text-[13px]">Résolution du clip<select className={CHAMP} value={demande.resolution} onChange={e => changer({ resolution: e.target.value })}>{uniques([demande.resolution, ...videos.flatMap(m => m.resolutions)]).map(v => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[8px] text-[13px]">Proportions du clip<select className={CHAMP} value={demande.proportions} onChange={e => changer({ proportions: e.target.value })}>{uniques([demande.proportions, ...videos.flatMap(m => m.proportions)]).map(v => <option key={v}>{v}</option>)}</select></label></div>
+        {/* **TS17, décision** : ce sélecteur choisit un modèle *vidéo*, pas
+         *  un modèle d'image — `habitues` (TS17) ne compte que les
+         *  générations d'images (`ServiceGenerations.habitues`, sur la table
+         *  `generations` que le port vidéo n'alimente pas, `AGENTS.md`
+         *  point 8bis : un appel vidéo se soumet et s'attend, ce n'est pas
+         *  un modèle de plus). Le poser sous `ChoixModele` demanderait
+         *  d'abord de compter les habitudes vidéo côté serveur — hors
+         *  budget de cette tranche. Ce `<select>` reste donc tel quel, avec
+         *  son prix par modèle. */}
         <label className="flex flex-col gap-[8px] text-[13px]">{CHAMP_DU_MODELE}<select className={CHAMP} value={demande.modele_video} onChange={e => changer({ modele_video: e.target.value, options_video: defauts(profils.find(p => p.modele === e.target.value)) })}><option value="">{lecture ? "Lecture des modèles…" : "Choisir une méthode compatible"}</option>{videos.map(m => <option key={m.identifiant} value={m.identifiant} disabled={!!m.grise}>{m.identifiant}{m.grise ? ` — ${m.grise}` : m.de_la_maison ? " · calcul local" : ` · ${prix(m.prix.montant)}`}</option>)}</select></label>
         {video?.grise && <p role="status" className="text-[13px] text-echec">{video.grise}</p>}
         {video?.de_la_maison && <p className="text-[12px] text-encre-3">{video.attente ? `Attente mesurée : ${Math.round(video.attente.secondes)} s · ${video.attente.mesure}` : "Aucune durée mesurée pour ces réglages. Le calcul reste local et gratuit."}</p>}

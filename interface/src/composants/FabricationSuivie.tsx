@@ -10,7 +10,7 @@ import { vignetteAsset } from "./Apercu"
 import { CadreDialogue } from "./CadreDialogue"
 import { MemoireLocale } from "./MemoireLocale"
 import { nomDuModele } from "./Fiche"
-import { Libelle, libelleModele } from "./pieces"
+import { ChoixModele, Libelle, libelleModele, type Habitues } from "./pieces"
 import { RelectureEquipement } from "./RelectureEquipement"
 import { FabricationVideoLibre } from "./FabricationVideoLibre"
 import { FabricationAudio } from "./FabricationAudio"
@@ -91,6 +91,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
   const [erreur, setErreur] = useState("")
   const [occupe, setOccupe] = useState(false)
   const [modeles, setModeles] = useState<Modele[]>([])
+  const [habituesImage, setHabituesImage] = useState<Habitues | null>(null)
   const [videos, setVideos] = useState<ModeleVideo[]>([])
   const [images, setImages] = useState<Asset[]>([])
   const [recherche, setRecherche] = useState("")
@@ -205,7 +206,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
     if (!edition) return
     let vivant = true
     api.modeles(demande.proportions, demande.references_image?.length ?? 0, personnage?.type, demande.personnage)
-      .then((c) => { if (vivant) setModeles(c.modeles) }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
+      .then((c) => { if (vivant) { setModeles(c.modeles); setHabituesImage(c.habitues) } }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
     return () => { vivant = false }
   }, [edition, demande.proportions, demande.personnage, demande.references_image?.length, personnage?.type])
   useEffect(() => {
@@ -469,19 +470,21 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
             : <div className="mt-[14px] space-y-[14px]">
               <div className="space-y-[4px]">
                 <p className="text-[12px] text-encre-3">Modèle pour créer l’image des cases qui en manquent</p>
-                <label className="flex items-center gap-[8px] text-[13px]"><input type="radio" name="modele-image" checked={!demande.modele_image} onChange={() => changer({ modele_image: null })} />Utiliser seulement une image existante</label>
-                {(() => {
-                  const recommande = modeleParDefaut(modeles)
-                  const modeleRecommande = modeles.find((m) => m.identifiant === recommande)
-                  const locaux = modeles.filter((m) => m.locale && m.identifiant !== recommande)
-                  const autresModeles = modeles.filter((m) => !m.locale && m.identifiant !== recommande)
-                  const ligne = (m: Modele, suffixe?: string) => <label key={m.identifiant} className="flex items-center gap-[8px] text-[13px]"><input type="radio" name="modele-image" disabled={!!m.refus} checked={demande.modele_image === m.identifiant} onChange={() => changer({ modele_image: m.identifiant })} />{libelleModele(m)}{m.refus ? ` — ${m.refus}` : suffixe}</label>
-                  return <>
-                    {modeleRecommande && ligne(modeleRecommande, " · recommandé")}
-                    {locaux.map((m) => ligne(m, " · local"))}
-                    {!!autresModeles.length && <details><summary className="cursor-pointer text-[12px] text-encre-3">Autres modèles ({autresModeles.length})</summary><div className="mt-[8px] space-y-[4px]">{autresModeles.map((m) => ligne(m))}</div></details>}
-                  </>
-                })()}
+                {/* **TS17** : les boutons radio de la tranche précédente
+                 *  cédent la place au panneau des habitués, comme partout
+                 *  ailleurs où l'on choisit un modèle d'image. « Utiliser
+                 *  seulement une image existante » n'est pas un modèle du
+                 *  catalogue — `optionVide` le porte, toujours en tête,
+                 *  jamais grisé. */}
+                <ChoixModele
+                  modeles={modeles}
+                  valeur={demande.modele_image || null}
+                  habitues={habituesImage}
+                  optionVide={{ libelle: "Utiliser seulement une image existante" }}
+                  onChange={(identifiant) => changer({ modele_image: identifiant || null })}
+                  ariaLabel="Modèle pour créer l’image des cases qui en manquent"
+                  className="max-w-[240px]"
+                />
               </div>
               {demande.modele_image && <><label className="flex flex-col gap-[4px] text-[12px]">{demande.repris_image ? "Texte complet de l’image, édité pour cet envoi" : "Description de l’image à créer"}<textarea rows={3} value={demande.prompt_image ?? ""} onChange={(e) => changer({ prompt_image: e.target.value })} className="rounded-7 border border-contour bg-papier p-[14px] text-[13px]" /></label><label className="flex flex-col gap-[4px] text-[12px]">Réservation estimée pour l’image, en dollars (si son coût n’est pas encore mesuré)<input type="number" min={0} step="0.01" className={CHAMP} value={demande.plafond_image_usd ?? ""} onChange={(e) => changer({ plafond_image_usd: e.target.value === "" ? null : Number(e.target.value) })} /></label>
               <div className="flex flex-wrap gap-[8px]">{(demande.references_image ?? []).map((id) => <button key={id} className="rounded-7 border border-contour p-[4px]" title="Retirer cette référence" onClick={() => changer({ references_image: demande.references_image?.filter((r) => r !== id) })}><img className="h-[54px] w-[54px] object-contain" src={api.vignette(id, "", 128)} alt="Référence jointe, cliquer pour retirer" /></button>)}<button className={BOUTON} onClick={() => setChoix("reference")}>Ajouter des références</button></div>

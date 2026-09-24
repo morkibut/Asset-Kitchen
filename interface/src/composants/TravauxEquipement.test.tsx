@@ -23,7 +23,7 @@ beforeEach(() => {
   // La sélection et la lecture vivent dans le stockage de séance : un essai qui
   // en laisserait derrière lui déciderait de l'écran du suivant.
   sessionStorage.clear()
-  vi.spyOn(api, "modeles").mockResolvedValue({ modeles: [{ identifiant: "essai:image", references_max: 2, resolutions: ["1K", "2K"], options: { quality: { nom: "Qualité", genre: "choix", valeurs: ["low", "high"] } }, refus: null }] } as unknown as Awaited<ReturnType<typeof api.modeles>>)
+  vi.spyOn(api, "modeles").mockResolvedValue({ modeles: [{ identifiant: "essai:image", nom: "essai:image", references_max: 2, resolutions: ["1K", "2K"], options: { quality: { nom: "Qualité", genre: "choix", valeurs: ["low", "high"] } }, refus: null }], habitues: { gratuits: [], payants: [] } } as unknown as Awaited<ReturnType<typeof api.modeles>>)
   vi.spyOn(equipements, "preparer").mockImplementation(async (_c, demande) => ({ ...t, identifiant: "nouveau-travail", demande }))
   vi.spyOn(equipements, "demarrer").mockResolvedValue({ ...t, etat: "en_cours" })
   vi.spyOn(equipements, "lire").mockResolvedValue(t)
@@ -42,6 +42,33 @@ test("relire montre les références figées, le modèle, la consommation et les
   expect(screen.getByText("générations distinctes")).toBeInTheDocument()
   expect(screen.getByText("essai:image")).toBeInTheDocument()
   expect(equipements.demarrer).not.toHaveBeenCalled()
+})
+
+// **TS17** : `RelectureEquipement` pose désormais `ChoixModele` — les habitués
+// en tête, et un modèle qui n'accepte aucune image d'entrée reste affiché,
+// grisé avec sa propre raison, jamais choisissable (cet écran exige toujours
+// une planche de bases, même quand le catalogue ne refuse pas le modèle
+// ailleurs).
+test("TS17 — les habitués paraissent en tête et un modèle sans image d’entrée ne se choisit pas", async () => {
+  vi.spyOn(api, "modeles").mockResolvedValue({
+    modeles: [
+      { identifiant: "essai:image", nom: "essai:image", references_max: 2, resolutions: ["1K"], options: {}, refus: null },
+      { identifiant: "essai:texte-seul", nom: "Texte seul", references_max: 0, resolutions: [], options: {}, refus: null },
+    ],
+    habitues: { gratuits: ["essai:image"], payants: [] },
+  } as unknown as Awaited<ReturnType<typeof api.modeles>>)
+  render(<RelectureEquipement chemin={chemin} onFermer={vi.fn()} />)
+  fireEvent.click(await screen.findByLabelText("Fournisseur et modèle"))
+  expect(screen.getByText("Les plus utilisés · gratuits")).toBeInTheDocument()
+  fireEvent.click(screen.getByRole("button", { name: "voir plus de modèles" }))
+  const optionSansImage = await screen.findByRole("option", { name: /Texte seul/ })
+  const boutonSansImage = within(optionSansImage).getByRole("button")
+  expect(boutonSansImage).toHaveTextContent("sans image d’entrée")
+  expect(boutonSansImage).toBeDisabled()
+  fireEvent.click(boutonSansImage)
+  expect(screen.getByLabelText("Fournisseur et modèle")).toHaveTextContent("Choisir un modèle…")
+  fireEvent.click(within(await screen.findByRole("option", { name: /essai:image/ })).getByRole("button"))
+  expect(screen.getByLabelText("Fournisseur et modèle")).toHaveTextContent("essai:image")
 })
 
 test("éditer un texte exact et retirer une référence crée une nouvelle relecture avant le lancement", async () => {
@@ -86,7 +113,8 @@ test("la couverture n’invente aucune frame pour une animation absente et fabri
   expect(screen.getAllByRole("checkbox")).toHaveLength(1)
   fireEvent.click(screen.getByRole("button", { name: "Fabriquer les 1 manques" }))
   expect(await screen.findByLabelText("Fournisseur et modèle")).toBeInTheDocument()
-  fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: "essai:image" } })
+  fireEvent.click(screen.getByLabelText("Fournisseur et modèle"))
+  fireEvent.click(await screen.findByRole("button", { name: "essai:image" }))
   fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await waitFor(() => expect(equipements.preparer).toHaveBeenCalledOnce())
   expect(vi.mocked(equipements.preparer).mock.calls[0][1].cibles).toEqual([cible])
@@ -123,7 +151,8 @@ test("les références communes de la pièce se voient et s’écartent avant la
   expect(await screen.findByAltText("Vue de ref-commune-1")).toBeInTheDocument()
   // Et les références ajoutées à cet envoi restent un compte distinct.
   expect(screen.getByText("Références ajoutées à cet envoi (0)")).toBeInTheDocument()
-  fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: "essai:image" } })
+  fireEvent.click(screen.getByLabelText("Fournisseur et modèle"))
+  fireEvent.click(await screen.findByRole("button", { name: "essai:image" }))
   fireEvent.click(screen.getByRole("checkbox", { name: "Référence commune 2" }))
   fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
   await waitFor(() => expect(equipements.preparer).toHaveBeenCalledOnce())

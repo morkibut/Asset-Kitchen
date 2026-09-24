@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { api, type Personnage } from "../api"
 import { travaux, type Serie, type Travail } from "../api-travaux"
 import { brouillonsLaissesEnPlan } from "../brouillons"
@@ -255,9 +255,37 @@ test("une case sans image le dit, et propose le modèle recommandé, présélect
   } as Awaited<ReturnType<typeof api.modeles>>)
   render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
   expect(await screen.findByText("aucune image pour Sud")).toBeTruthy()
-  const recommande = await screen.findByRole("radio", { name: /Qwen rapide.*recommandé/ })
-  await waitFor(() => expect(recommande).toBeChecked())
+  // **TS17** : le panneau des habitués remplace les boutons radio, présélectionné
+  // par la même règle qu'avant (`modeleParDefaut`).
+  const choix = await screen.findByLabelText("Modèle pour créer l’image des cases qui en manquent")
+  await waitFor(() => expect(choix).toHaveTextContent("Qwen rapide"))
   expect(screen.getByLabelText("Description de l’image à créer")).toBeTruthy()
+})
+
+test("TS17 — le panneau des habitués propose « utiliser seulement une image existante » et grise un modèle refusé", async () => {
+  vi.spyOn(api, "imageDeDepart").mockResolvedValue({
+    cases: [{ direction: "sud", asset: null, origine: "aucune", raison: "« Pèlerin » n’a encore aucune image." }],
+  })
+  vi.spyOn(api, "modeles").mockResolvedValue({
+    modeles: [
+      { identifiant: "Local:qwen21-rapide", nom: "Qwen rapide", fournisseur: "Local", locale: true, options: {}, refus: null },
+      { identifiant: "Images:refuse", nom: "Modèle épuisé", fournisseur: "Images", options: {}, refus: "réserve épuisée" },
+    ],
+    habitues: { gratuits: ["Local:qwen21-rapide"], payants: [] },
+  } as unknown as Awaited<ReturnType<typeof api.modeles>>)
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} cibleInitiale={{ personnage: "pelerin", pose: "marche", direction: "sud" }} onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByText("aucune image pour Sud")
+  fireEvent.click(await screen.findByLabelText("Modèle pour créer l’image des cases qui en manquent"))
+  expect(screen.getByRole("option", { name: "Utiliser seulement une image existante" })).toBeTruthy()
+  // Le modèle refusé n'est pas un habitué : « voir plus de modèles » ouvre la
+  // liste complète, où il paraît grisé.
+  fireEvent.click(screen.getByRole("button", { name: "voir plus de modèles" }))
+  const optionRefusee = await screen.findByRole("option", { name: /Modèle épuisé/ })
+  const boutonRefus = within(optionRefusee).getByRole("button")
+  expect(boutonRefus).toBeDisabled()
+  fireEvent.click(boutonRefus)
+  // Le clic sur un modèle grisé n'a rien changé : toujours le recommandé.
+  expect(await screen.findByLabelText("Modèle pour créer l’image des cases qui en manquent")).toHaveTextContent("Qwen rapide")
 })
 
 test("quand chaque case a déjà son image, la liste des modèles disparaît et laisse une phrase", async () => {
