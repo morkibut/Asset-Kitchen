@@ -1163,6 +1163,31 @@ loin du fond que dans le rendu quantifié ; l'auteur garde la main pour monter l
 cette passe-là, comme pour toute passe. Ce point n'est pas un critère de RV25 — la mesure, elle,
 est exacte — et reste à regarder séparément.
 
+**Corrigé le 24 septembre 2026 : le bouton enlève vraiment.** *Mesuré d'abord* : ramenés à la
+géométrie du brut, les 2 139 pixels des 22 poches du rendu sont, dans le brut, un vert bleuté
+(`#43926c` en médiane), à **49 du fond visé en médiane, 59 au 95e percentile** — contre 18 dans
+le rendu, où la réduction à 32 couleurs les a fondus avec le vert du fond resté sous la
+transparence. Une passe lit la couleur d'origine (AGENTS.md, point 5) : viser le fond depuis le bord
+de l'image ne pouvait pas les atteindre, et élargir la tolérance d'une passe « partout » mange la
+carrosserie avant de vider les vitres (visée dans une vitre, à 40 : encore 89 pixels verts, 473
+autres pixels perdus). *Ce que la correction sépare* : le reflet du fond dans une vitre, reconnu dans
+sa propre couleur d'origine, de la carrosserie qui l'entoure. *Corrigé* : le bouton pose **une passe
+« couleur », « cette tache », par poche**, amorcée **dans** la poche — le pixel du brut dont la
+couleur est la plus proche de la médiane de la poche —, tolérance par défaut (28), aucun moteur
+neuf. Du rendu au brut, `coordonnees_du_rendu` (`atelier/image/traitement.py`) rejoue la géométrie
+de `queue` sur une image qui porte ses propres coordonnées, plutôt que de la recalculer à côté ;
+`amorces_des_poches` choisit l'amorce, et la réponse passe de `point` à `points` (une par poche).
+*Vérifié en calcul local et gratuit sur l'image réelle*, sans rien écrire dans `donnees/` : **vert vif
+opaque de 2 200 à 86 pixels**, 22 zones à 2 (un second clic : 72 pixels, 1 zone) ; **opaques de
+111 891 à 109 677**, soit 2 214 perdus dont 145 qui n'étaient pas vert vif — tous sauf un à moins
+de trois pixels d'une vitre (le liseré gris-olive du cadre, `#636347`), aucun dans le corps du bus.
+Un essai neuf (`test_une_vitre_plus_loin_du_fond_dans_le_brut_que_dans_le_rendu_part_au_clic`) : une
+vitre à 47 du fond dans le brut, fondue avec lui par la réduction, sur une case qui change la
+géométrie — l'ancien bouton la laisse, le nouveau la vide sans toucher la carrosserie. L'essai « une
+couleur proche mais distincte n'est pas une poche » reste. Limite écrite : sous un recadrage à taille
+imposée (lissé), les coordonnées ne sont qu'approchées. Non vu au navigateur réel : sur le bus, le
+clic ajoute 22 passes à la liste d'un coup.
+
 ---
 
 ## RV26 · L'agrandissement d'Espace passe devant les fenêtres

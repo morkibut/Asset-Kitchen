@@ -1885,7 +1885,7 @@ export const AIDE: Record<string, Explication> = {
       "Tout ce qui suit en dépend — le recadrage cherche le sujet dans l'alpha, la grille mesure son occupation dessus. C'est aussi l'étape la plus chère : environ 130 ms, contre 28 pour les quatre autres réunies.",
     origine: "posé par l'univers quand le sujet a une silhouette",
     long:
-      "Une étape peut porter plusieurs passes, qui s'enchaînent sur le résultat de la précédente — un remplissage large, puis un durcissement de contour. Bouger un curseur de grille ou de couleurs ne relance pas le détourage : la retouche reste instantanée ; un cran de tolérance, lui, coûte environ 1,5 s. Si une poche de fond reste enfermée dans le sujet — les vitres d'un bus détouré par un modèle, par exemple —, la table le dit et propose de l'ajouter en une passe « couleur » ; rien ne bouge sans ce clic.",
+      "Une étape peut porter plusieurs passes, qui s'enchaînent sur le résultat de la précédente — un remplissage large, puis un durcissement de contour. Bouger un curseur de grille ou de couleurs ne relance pas le détourage : la retouche reste instantanée ; un cran de tolérance, lui, coûte environ 1,5 s. Si une poche de fond reste enfermée dans le sujet — les vitres d'un bus détouré par un modèle, par exemple —, la table le dit et propose de les retirer : une passe « couleur » par poche, visée dans la poche ; rien ne bouge sans ce clic.",
   },
 
   "detourage.moteur": {

@@ -1129,19 +1129,25 @@ export function ReglagesDuDetourage({
           et le vert du fond reste opaque derrière elles — ni « bord » ni le
           nettoyage des bords ne le disent. La phrase **propose**, elle
           n'agit jamais seule : rien ne change sans ce clic, et ce qu'il ajoute
-          est la passe « couleur » qui existe déjà, visant le fond, partout. */}
-      {(mesures?.fond_enferme?.zones ?? 0) > 0 && mesures?.fond_enferme.point && (
+          est la passe « couleur » qui existe déjà, « cette tache », **une par
+          poche**, amorcée dans la poche par le serveur — la passe lit la
+          couleur d'origine, et c'est dans la vitre qu'elle se trouve, pas sur
+          le fond du bord de l'image. */}
+      {mesures && (mesures.fond_enferme?.zones ?? 0) > 0 && (mesures.fond_enferme?.points?.length ?? 0) > 0 && (
         <Pourquoi
           texte={`des morceaux du fond restent dans le sujet : ${mesures.fond_enferme.zones} ${pluriel(mesures.fond_enferme.zones, "zone", "zones")}`}
           geste="les retirer aussi"
           onGeste={() => {
-            const point = mesures.fond_enferme.point
-            if (!point) return
             void poser({
               ...recette,
               passes: [
                 ...passes,
-                { ...PASSE_PAR_DEFAUT, moteur: "couleur", portee: "partout", point },
+                ...mesures.fond_enferme.points.map((point) => ({
+                  ...PASSE_PAR_DEFAUT,
+                  moteur: "couleur" as const,
+                  portee: "tache" as const,
+                  point,
+                })),
               ],
             })
           }}

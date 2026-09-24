@@ -179,7 +179,7 @@ const MESURES = {
   poches_total: 0,
   // **Aucune poche par défaut** (RV25) : un essai qui ne la configure pas ne
   // doit voir ni phrase ni bouton — ce que `RV25` vérifie à part.
-  fond_enferme: { zones: 0, couleur: "#ff00ff", point: null },
+  fond_enferme: { zones: 0, couleur: "#ff00ff", points: [] },
   trous: [{ aire: 5, boite: [3, 3, 4, 4], couleur: "#000000", point: [3, 3] }],
   crans_occupation: [100],
   hauteur: { carres: 64, personnages: 1, max: 800, sujet: 64 },
@@ -2758,7 +2758,15 @@ describe("RV24 — les couleurs de l'image, avant celles du jeu", () => {
 describe("RV25 — le fond enfermé dans le sujet se voit, et s'enlève", () => {
   const MESURES_AVEC_UNE_POCHE = {
     ...MESURES,
-    fond_enferme: { zones: 3, couleur: "#3ca649", point: [2, 4] as [number, number] },
+    fond_enferme: {
+      zones: 3,
+      couleur: "#3ca649",
+      points: [
+        [2, 4],
+        [10, 4],
+        [20, 12],
+      ] as [number, number][],
+    },
   }
 
   test("la phrase et le bouton paraissent quand des poches de fond enfermées restent", async () => {
@@ -2784,7 +2792,7 @@ describe("RV25 — le fond enfermé dans le sujet se voit, et s'enlève", () => 
     ).toBeNull()
   })
 
-  test("le bouton ajoute la passe « couleur » déjà existante, visant le fond, partout — rien ne change avant le clic", async () => {
+  test("le bouton ajoute la passe « couleur » déjà existante, une par poche, amorcée dans la poche — rien ne change avant le clic", async () => {
     const { appels } = monter({
       asset: image({ recette: recetteDeTravail() }),
       mesures: MESURES_AVEC_UNE_POCHE,
@@ -2799,12 +2807,18 @@ describe("RV25 — le fond enfermé dans le sujet se voit, et s'enlève", () => 
       await within(colonne()).findByRole("button", { name: "les retirer aussi ›" }),
     )
 
+    // **Une passe par poche, « cette tache », au point que le serveur a pris
+    // dans la poche** : « partout » depuis un pixel du fond ne retirait que
+    // 101 pixels verts sur 2 200 sur le bus de l'auteur.
     await waitFor(() => {
-      const passes = dernierePose(appels)?.passes ?? []
-      const ajoutee = passes[passes.length - 1]
-      expect(ajoutee?.moteur).toBe("couleur")
-      expect(ajoutee?.portee).toBe("partout")
-      expect(ajoutee?.point).toEqual([2, 4])
+      const ajoutees = (dernierePose(appels)?.passes ?? []).slice(1)
+      expect(ajoutees.map((p) => p.moteur)).toEqual(["couleur", "couleur", "couleur"])
+      expect(ajoutees.map((p) => p.portee)).toEqual(["tache", "tache", "tache"])
+      expect(ajoutees.map((p) => p.point)).toEqual([
+        [2, 4],
+        [10, 4],
+        [20, 12],
+      ])
     })
     // **La passe du bord posée avant survit** — le bouton ajoute, il ne
     // remplace rien.

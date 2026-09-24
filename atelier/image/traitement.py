@@ -536,26 +536,99 @@ def _couleur_du_bord(rgb: np.ndarray) -> np.ndarray:
     return np.median(bordure.astype(np.int16), axis=0)
 
 
-def _point_du_bord(rgb: np.ndarray, cible: np.ndarray) -> tuple[int, int]:
-    """Le pixel de bordure le plus proche de `cible`, en `(x, y)` (RV25).
+def amorces_des_poches(
+    detoure: np.ndarray, recette: Recette, poches: Sequence[np.ndarray]
+) -> list[tuple[int, int]]:
+    """Pour chaque poche **du rendu**, un pixel **du brut** où amorcer la passe
+    « couleur » qui la retire — en `(x, y)` (RV25).
 
-    **`_couleur_du_bord` rend une couleur, pas un pixel** : c'est une médiane,
-    qui n'existe peut-être sous ce nom exact nulle part dans l'image. Une
-    passe « couleur » vise un point, pas un nombre — voir `detourer_couleur`,
-    qui lit `rgb[y, x]` — donc « ajouter la passe qui vise le fond » a besoin
-    d'un pixel réel, pas d'une moyenne. Sur un fond plat, celui-ci est presque
-    toujours à distance nulle de `cible`.
+    **Pourquoi pas un pixel du fond, sur le bord de l'image** — ce que le
+    bouton visait d'abord : sur le bus de l'auteur, il ne retirait que 101
+    pixels verts sur 2 200. La mesure lit les poches sur le rendu **quantifié**,
+    où le vert des vitres est à 18 du fond ; mais la passe lit la couleur
+    **d'origine** (AGENTS.md, point 5), et sous ces vitres le brut est un vert
+    bleuté, `#43926c` en médiane, à 49 du fond — hors de toute tolérance d'une
+    passe. **Ce qu'il faut séparer**, en une phrase : le reflet du fond dans une
+    vitre, reconnu dans sa propre couleur d'origine, de la carrosserie qui
+    l'entoure.
+
+    D'où l'amorce **dans** la poche, et une par poche : la passe « cette tache »
+    part de ce pixel et s'arrête d'elle-même au cadre de la vitre, sans jamais
+    toucher une autre partie du sujet qui aurait la même couleur. L'amorce est
+    le pixel de la poche dont la couleur d'origine est la plus proche de leur
+    médiane — un pixel réel, jamais une moyenne, puisque `detourer_couleur` lit
+    `rgb[y, x]` —, et toujours encore opaque : un pixel déjà effacé n'est plus
+    un chemin pour la passe (U10).
+
+    **Du rendu au brut, par la géométrie de la chaîne elle-même** (voir
+    `coordonnees_du_rendu`) : recadrage, case et miroir, rejoués par `queue`, et
+    jamais recalculés à côté.
     """
-    hauteur, largeur = rgb.shape[:2]
-    points = (
-        [(x, 0) for x in range(largeur)]
-        + [(x, hauteur - 1) for x in range(largeur)]
-        + [(0, y) for y in range(hauteur)]
-        + [(largeur - 1, y) for y in range(hauteur)]
+    if not poches:
+        return []
+    xs, ys = coordonnees_du_rendu(detoure, recette)
+    hauteur, largeur = detoure.shape[:2]
+    rgb = detoure[:, :, :3].astype(np.int16)
+    amorces: list[tuple[int, int]] = []
+    for poche in poches:
+        bx = np.clip(xs[poche], 0, largeur - 1)
+        by = np.clip(ys[poche], 0, hauteur - 1)
+        opaques = detoure[by, bx, 3] > 0
+        if not opaques.any():
+            continue
+        bx, by = bx[opaques], by[opaques]
+        couleurs = rgb[by, bx]
+        mediane = np.median(couleurs, axis=0)
+        rang = int(np.argmin(np.abs(couleurs - mediane).max(axis=1)))
+        amorce = (int(bx[rang]), int(by[rang]))
+        if amorce not in amorces:
+            amorces.append(amorce)
+    return amorces
+
+
+def coordonnees_du_rendu(
+    detoure: np.ndarray, recette: Recette
+) -> tuple[np.ndarray, np.ndarray]:
+    """Pour chaque pixel du rendu, de quel pixel de l'image détourée il vient —
+    `(xs, ys)`, deux tableaux à la taille du rendu (RV25).
+
+    **La chaîne rejouée sur une image qui porte ses propres coordonnées**, au
+    lieu d'une géométrie recalculée à côté : les places qui déplacent des
+    pixels — recadrage, case, miroir — sont celles de `queue`, lues au même
+    endroit, et une seconde façon de les calculer finirait par tomber à côté
+    sans que rien ne lève (voir `avant_la_grille`). Les places qui ne font que
+    repeindre — couleurs, bords, contour, main — sont retirées : elles
+    brouilleraient le code sans rien déplacer. La réduction passe « au plus
+    proche », qui garde un pixel existant par bloc — le centre du bloc, là où
+    les autres méthodes le moyennent.
+
+    ⚠️ **Un recadrage à taille imposée lisse l'image** (`loger_dans`, Lanczos) :
+    les coordonnées y sont alors approchées. Pour l'usage d'ici — choisir une
+    amorce dans une poche — c'est une amorce moins bien placée, jamais un pixel
+    effacé : `amorces_des_poches` écarte ce qui n'est plus opaque.
+    """
+    grille = recette.grille
+    geometrie = replace(
+        recette,
+        grille=None if grille is None else replace(grille, methode=AU_PLUS_PROCHE),
+        quantification=None,
+        bords=None,
+        contours=None,
+        main=None,
     )
-    couleurs = np.array([rgb[y, x] for x, y in points], dtype=np.int16)
-    ecarts = np.abs(couleurs - cible.astype(np.int16)).max(axis=1)
-    return points[int(np.argmin(ecarts))]
+    hauteur, largeur = detoure.shape[:2]
+    lignes, colonnes = np.mgrid[0:hauteur, 0:largeur]
+
+    def porter(valeurs: np.ndarray) -> np.ndarray:
+        code = np.zeros((hauteur, largeur, 4), dtype=np.uint8)
+        code[:, :, 0] = valeurs & 0xFF
+        code[:, :, 1] = (valeurs >> 8) & 0xFF
+        code[:, :, 2] = (valeurs >> 16) & 0xFF
+        code[:, :, 3] = detoure[:, :, 3]
+        sortie = queue(code, geometrie).astype(np.int64)
+        return sortie[:, :, 0] | (sortie[:, :, 1] << 8) | (sortie[:, :, 2] << 16)
+
+    return porter(colonnes), porter(lignes)
 
 
 # ── La teinte, plutôt que la valeur (B18) ────────────────────────────────────

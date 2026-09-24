@@ -235,7 +235,18 @@ def zones_de_fond_enferme(
     tolerance: int = TOLERANCE_FOND_VISE,
 ) -> int:
     """Combien de poches, à la couleur *visée* par le détourage, restent
-    opaques dans le rendu final (RV25).
+    opaques dans le rendu final (RV25). Le compte de
+    `poches_de_fond_enferme`, qui dit tout le reste."""
+    return len(poches_de_fond_enferme(rendu, cible, tolerance))
+
+
+def poches_de_fond_enferme(
+    rendu: np.ndarray,
+    cible: tuple[int, int, int],
+    tolerance: int = TOLERANCE_FOND_VISE,
+) -> list[np.ndarray]:
+    """Les poches, à la couleur *visée* par le détourage, qui restent
+    opaques dans le rendu final (RV25) — un masque par poche.
 
     **Ce qu'elle sépare, en une phrase** (AGENTS.md, 8sexies) : un pixel dont
     la couleur est presque exactement celle que le détourage visait pour le
@@ -254,10 +265,13 @@ def zones_de_fond_enferme(
       trouver, comme `_mesures_du_fond` le fait déjà pour `bord` ;
     - **une tolérance serrée et fixe** — voir `TOLERANCE_FOND_VISE`.
 
-    Rend un **compte**, pas une liste : rien à l'écran ne montre les poches
-    une par une ici, seulement leur nombre et un bouton, donc décrire chaque
-    zone — trois balayages de l'image entière, voir `taches` — coûterait sans
-    rien servir.
+    Rend **les masques, sans les décrire** : rien à l'écran ne montre les
+    poches une par une, seulement leur nombre et un bouton, donc décrire
+    chaque zone — trois balayages de l'image entière, voir `taches` —
+    coûterait sans rien servir. Les masques, eux, servent : le bouton pose
+    une passe **par poche**, amorcée *dans* la poche (voir
+    `_fond_enferme_de`, `atelier/services/assets.py`), et `composantes` les
+    a déjà construits pour compter.
     """
     from atelier.image.traitement import _graines_du_bord, _remplir
 
@@ -265,12 +279,12 @@ def zones_de_fond_enferme(
     reference = np.asarray(cible, dtype=np.int16)
     proche = np.abs(rgb.astype(np.int16) - reference).max(axis=2) <= tolerance
     if not proche.any():
-        return 0
+        return []
     joignable = _remplir(proche, _graines_du_bord(proche))
     enferme = proche & ~joignable & (rendu[:, :, 3] > 0)
     if not enferme.any():
-        return 0
-    return sum(1 for _, aire in composantes(enferme) if aire >= AIRE_MIN_FOND_VISE)
+        return []
+    return [m for m, aire in composantes(enferme) if aire >= AIRE_MIN_FOND_VISE]
 
 
 def trous(rgba: np.ndarray) -> list[Tache]:

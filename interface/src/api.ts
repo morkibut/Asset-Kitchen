@@ -3991,11 +3991,14 @@ export type TachesDeLAsset = {
    *  le nettoyage des bords ne le disent, le premier ne relie que ce qui
    *  touche le cadre, le second efface par aire et pas par couleur.
    *
-   *  `couleur` est celle que la passe « couleur » visera si on clique « les
-   *  retirer aussi ». `point`, en pixels du brut, est un pixel réel de cette
-   *  couleur — celui que cette passe visera ; `null` quand `zones` vaut 0,
-   *  rien à proposer. */
-  fond_enferme: { zones: number; couleur: string; point: [number, number] | null }
+   *  `couleur` est celle que la mesure vise pour le fond. `points`, en pixels
+   *  du brut, porte **une amorce par poche, prise dans la poche** : « les
+   *  retirer aussi » pose une passe « couleur », « cette tache », sur
+   *  chacune. Pas un point du fond sur le bord de l'image : la passe lit la
+   *  couleur d'origine, et sous les vitres du bus elle était trop loin du
+   *  fond pour être atteinte (101 pixels retirés sur 2 200). Vide quand
+   *  `zones` vaut 0, rien à proposer. */
+  fond_enferme: { zones: number; couleur: string; points: [number, number][] }
 }
 
 /** Ce que le recadrage garde et ce qu'il jette — **cinq lectures, aucun

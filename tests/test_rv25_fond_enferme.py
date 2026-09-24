@@ -202,8 +202,8 @@ def _generer(client, double, image: bytes) -> str:
 
 def test_la_route_des_mesures_compte_une_zone_sur_le_bus_de_l_auteur(client, double):
     """La phrase à l'écran a besoin d'un nombre et d'une couleur ; le bouton a
-    besoin d'un point. Les trois arrivent ensemble, par la route déjà en
-    place — aucune route neuve."""
+    besoin d'une amorce par poche, prise **dans** la poche. Les trois arrivent
+    ensemble, par la route déjà en place — aucune route neuve."""
     identifiant = _generer(client, double, _bus(poche=True))
 
     mesures = client.get(f"/api/assets/{identifiant}/spots").json()
@@ -211,9 +211,10 @@ def test_la_route_des_mesures_compte_une_zone_sur_le_bus_de_l_auteur(client, dou
 
     assert fond_enferme["zones"] == 1
     assert fond_enferme["couleur"].startswith("#")
-    assert fond_enferme["point"] is not None
-    x, y = fond_enferme["point"]
+    assert len(fond_enferme["points"]) == 1
+    x, y = fond_enferme["points"][0]
     assert isinstance(x, int) and isinstance(y, int)
+    assert 16 <= x <= 27 and 16 <= y <= 27, "l'amorce est dans la poche, pas sur le fond du bord"
 
 
 def test_la_meme_image_sans_poche_ne_compte_aucune_zone(client, double):
@@ -223,7 +224,7 @@ def test_la_meme_image_sans_poche_ne_compte_aucune_zone(client, double):
     fond_enferme = mesures["fond_enferme"]
 
     assert fond_enferme["zones"] == 0
-    assert fond_enferme["point"] is None
+    assert fond_enferme["points"] == []
 
 
 def test_une_couleur_proche_mais_distincte_ne_compte_aucune_zone(client, double):
@@ -275,40 +276,142 @@ def test_la_cible_declaree_du_jeu_est_visee_plutot_que_la_mediane_des_bordures(c
     assert fond_enferme["zones"] == 0
 
 
-def test_le_point_et_la_couleur_rendus_permettent_de_retirer_la_poche(client, double):
+def _recette(passes: list[dict], **places) -> dict:
+    """Une recette complète pour `PUT /recipe` — les places non nommées vides."""
+    recette = {
+        "passes": passes,
+        "recadrage": None,
+        "grille": None,
+        "quantification": None,
+        "bords": None,
+        "contours": None,
+        "main": None,
+        "nom": None,
+    }
+    recette.update(places)
+    return recette
+
+
+def _passe_couleur(point, portee: str) -> dict:
+    """La passe que pose le bouton — `PASSE_PAR_DEFAUT` de l'écran, moteur
+    « couleur »."""
+    return {
+        "moteur": "couleur",
+        "tolerance": 28,
+        "seuil_alpha": 128,
+        "durcissement": 0,
+        "point": point,
+        "portee": portee,
+    }
+
+
+def _poser(client, identifiant: str, recette: dict) -> None:
+    reponse = client.put(f"/api/assets/{identifiant}/recipe", json=recette)
+    assert reponse.status_code == 200, reponse.text
+
+
+def _image(client, identifiant: str) -> np.ndarray:
+    reponse = client.get(f"/api/assets/{identifiant}/image")
+    assert reponse.status_code == 200, reponse.text
+    with Image.open(io.BytesIO(reponse.content)) as image:
+        return np.asarray(image.convert("RGBA"))
+
+
+def test_les_amorces_rendues_permettent_de_retirer_la_poche(client, double):
     """**Le geste complet du bouton « les retirer aussi »**, rejoué côté
-    serveur : ajouter une passe « couleur », avec le point et la portée
-    « partout » qu'un clic poserait, retire bien la poche que la mesure
-    annonçait — et la mesure retombe à zéro."""
+    serveur : une passe « couleur », « cette tache », par amorce rendue,
+    retire la poche que la mesure annonçait — et la mesure retombe à zéro."""
     identifiant = _generer(client, double, _bus(poche=True))
 
     avant = client.get(f"/api/assets/{identifiant}/spots").json()["fond_enferme"]
     assert avant["zones"] == 1
-    point = avant["point"]
 
-    reponse = client.put(
-        f"/api/assets/{identifiant}/recipe",
-        json={
-            "passes": [
-                {
-                    "moteur": "couleur",
-                    "tolerance": 28,
-                    "seuil_alpha": 128,
-                    "durcissement": 0,
-                    "point": point,
-                    "portee": "partout",
-                }
-            ],
-            "recadrage": None,
-            "grille": None,
-            "quantification": None,
-            "bords": None,
-            "contours": None,
-            "main": None,
-            "nom": None,
-        },
-    )
-    assert reponse.status_code == 200, reponse.text
+    _poser(client, identifiant, _recette([_passe_couleur(p, "tache") for p in avant["points"]]))
 
     apres = client.get(f"/api/assets/{identifiant}/spots").json()["fond_enferme"]
     assert apres["zones"] == 0
+
+
+# ── Le bouton retire vraiment (corrigé le 24 septembre 2026) ─────────────────
+#
+# Sur le bus de l'auteur, le bouton ne retirait que 101 pixels verts sur
+# 2 200 : la mesure lit le rendu **quantifié**, où le vert des vitres est à 18
+# du fond, mais la passe lit la couleur **d'origine** (AGENTS.md, point 5), et
+# sous les vitres le brut est un vert bleuté à 49 du fond. Viser le fond depuis
+# le bord de l'image, « partout », ne pouvait pas l'atteindre.
+
+VERT_DU_FOND = (0x38, 0xB8, 0x3C)  # le fond du bus de l'auteur
+VITRE = (0x44, 0x92, 0x6B)  # la médiane du brut sous ses vitres, à 47 du fond
+CARROSSERIE = (200, 160, 40)
+
+
+def _bus_a_vitre_teintee() -> bytes:
+    image = Image.new("RGB", (48, 48), VERT_DU_FOND)
+    dessin = ImageDraw.Draw(image)
+    dessin.rectangle([10, 10, 37, 37], fill=CARROSSERIE)
+    dessin.rectangle([16, 16, 27, 27], fill=VITRE)  # la vitre, 12×12
+    # Deux rétroviseurs aux coins : la boîte du sujet garde du fond autour de
+    # la carrosserie, comme autour des roues du bus — c'est ce vert-là, sous la
+    # transparence, que la quantification fond avec la vitre.
+    dessin.rectangle([2, 2, 5, 5], fill=CARROSSERIE)
+    dessin.rectangle([42, 42, 45, 45], fill=CARROSSERIE)
+    tampon = io.BytesIO()
+    image.save(tampon, format="PNG")
+    return tampon.getvalue()
+
+
+#: Détourée par le bord, **ramenée sur une case de 32** — la géométrie du
+#: rendu n'est plus celle du brut — puis réduite à deux couleurs : la coupe
+#: médiane fond la vitre avec le vert du fond, resté sous la transparence.
+_DETOURE_REDUIT = dict(
+    grille={"cible": 32, "occupation": 100},
+    quantification={"couleurs": 2, "palette": [], "tramage": "aucun"},
+)
+_PASSE_BORD = {"moteur": "bord", "tolerance": 28, "seuil_alpha": 128, "durcissement": 0}
+
+
+def _vitre_opaque(rendu: np.ndarray) -> int:
+    """Les pixels opaques à la couleur du fond, dans le rendu."""
+    ecart = np.abs(rendu[:, :, :3].astype(int) - np.array(VERT_DU_FOND)).max(axis=2)
+    return int(((ecart <= TOLERANCE_FOND_VISE) & (rendu[:, :, 3] > 0)).sum())
+
+
+def test_une_vitre_plus_loin_du_fond_dans_le_brut_que_dans_le_rendu_part_au_clic(client, double):
+    """**Le cas réel, sans le fichier de l'auteur.** Dans le brut, la vitre est
+    à 47 du fond — au-delà des 28 d'une passe ; dans le rendu, la quantification
+    l'a fondue dans le vert du fond, et la mesure la voit. L'amorce doit donc
+    être prise **dans la vitre**, en pixels du brut — la case de 32 a changé la
+    géométrie —, et un seul clic doit la vider sans toucher la carrosserie.
+
+    **Tombe avec l'ancien bouton** : la passe « partout » visée sur le fond du
+    bord de l'image laisse la vitre entière, et la mesure la compte encore.
+    """
+    assert max(abs(a - b) for a, b in zip(VITRE, VERT_DU_FOND)) > 28
+    identifiant = _generer(client, double, _bus_a_vitre_teintee())
+    _poser(client, identifiant, _recette([_PASSE_BORD], **_DETOURE_REDUIT))
+
+    avant = client.get(f"/api/assets/{identifiant}/spots").json()["fond_enferme"]
+    assert avant["zones"] == 1
+    rendu_avant = _image(client, identifiant)
+    assert _vitre_opaque(rendu_avant) > 50
+    opaques_avant = int((rendu_avant[:, :, 3] > 0).sum())
+
+    # L'ancien bouton : un pixel du fond sur le bord de l'image, « partout ».
+    _poser(client, identifiant, _recette([_PASSE_BORD, _passe_couleur([0, 0], "partout")], **_DETOURE_REDUIT))
+    assert client.get(f"/api/assets/{identifiant}/spots").json()["fond_enferme"]["zones"] == 1
+
+    # Le bouton d'aujourd'hui : une passe « cette tache » par amorce rendue.
+    (x, y), = avant["points"]
+    assert 16 <= x <= 27 and 16 <= y <= 27, "l'amorce est dans la vitre, en pixels du brut"
+    _poser(
+        client,
+        identifiant,
+        _recette([_PASSE_BORD] + [_passe_couleur(p, "tache") for p in avant["points"]], **_DETOURE_REDUIT),
+    )
+
+    assert client.get(f"/api/assets/{identifiant}/spots").json()["fond_enferme"]["zones"] == 0
+    rendu_apres = _image(client, identifiant)
+    assert _vitre_opaque(rendu_apres) == 0
+    # La carrosserie n'est pas mangée : seule la vitre est partie.
+    perdus = opaques_avant - int((rendu_apres[:, :, 3] > 0).sum())
+    assert perdus == _vitre_opaque(rendu_avant)

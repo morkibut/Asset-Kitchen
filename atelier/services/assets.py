@@ -97,7 +97,7 @@ from atelier.image import (
     retrouver_grille,
     taches,
     trous,
-    zones_de_fond_enferme,
+    poches_de_fond_enferme,
 )
 from atelier.image.traitement import (
     boite_opaque,
@@ -641,16 +641,20 @@ class ServiceAssets:
         relue sur le disque : mêmes couleurs que le brut — *effacer un pixel
         ne change pas sa couleur* —, et déjà en cache.
 
-        `point` est un pixel réel de cette couleur, en pixels du brut — celui
-        qu'une passe « couleur » visera si l'auteur clique « les retirer
-        aussi » : la passe lit un pixel, jamais une moyenne (voir
-        `detourer_couleur`). `None` quand il n'y a rien à retirer : proposer
-        un bouton qui viserait un point inutile serait proposer un geste sans
-        effet.
+        `points` porte **une amorce par poche**, en pixels du brut, **prise
+        dans la poche** — le bouton « les retirer aussi » pose une passe
+        « couleur », « cette tache », sur chacune (voir `amorces_des_poches`).
+        Jusqu'au 24 septembre 2026 c'était un seul point, sur le bord de
+        l'image, à la couleur du fond, portée « partout » : sur le bus de
+        l'auteur il ne retirait que 101 pixels verts sur 2 200, parce que la
+        passe lit la couleur d'origine et que, dans le brut, le vert des
+        vitres est à 49 du fond. Liste vide quand il n'y a rien à retirer :
+        proposer un bouton sans effet serait proposer un geste pour rien.
         """
-        from atelier.image.traitement import _couleur_du_bord, _point_du_bord, _rvb
+        from atelier.image.traitement import _couleur_du_bord, _rvb, amorces_des_poches
 
-        rgb_brut = self.detourage(asset)[:, :, :3]
+        detoure = self.detourage(asset)
+        rgb_brut = detoure[:, :, :3]
         vives = asset.recette.passes_vives()
         declaree = next(
             (p.couleur_du_jeu for p in vives if p.moteur == BORD and p.couleur_du_jeu),
@@ -661,12 +665,14 @@ class ServiceAssets:
             if declaree
             else tuple(int(round(c)) for c in _couleur_du_bord(rgb_brut))
         )
-        zones = zones_de_fond_enferme(rendu, cible)
+        poches = poches_de_fond_enferme(rendu, cible)
         couleur = "#%02x%02x%02x" % cible
-        if not zones:
-            return {"zones": 0, "couleur": couleur, "point": None}
-        point = _point_du_bord(rgb_brut, np.asarray(cible, dtype=np.int16))
-        return {"zones": zones, "couleur": couleur, "point": list(point)}
+        amorces = amorces_des_poches(detoure, asset.recette, poches)
+        return {
+            "zones": len(poches),
+            "couleur": couleur,
+            "points": [list(a) for a in amorces],
+        }
 
     def _grille_du_modele(self, asset: Asset) -> dict[str, Any]:
         """Sur quelle grille le modèle a peint cette image-là — **ou rien** (D2).
