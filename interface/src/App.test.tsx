@@ -6146,6 +6146,18 @@ describe("l'agent, vu de l'atelier", () => {
     expect(colonnes).toHaveLength(1)
   })
 
+  // **TS13 — le retour d'Ambiances et couleurs ne se voit pas d'ici.** Un
+  // essai qui clique « Ambiances et couleurs » puis « Inspiration » et
+  // vérifie que les îlots reparaissent passe même sans le correctif : `<Toile>`
+  // se démonte et se remonte en entier avec l'onglet (elle vit dans le même
+  // bloc conditionnel que la réserve), et au remontage elle reçoit tout de
+  // suite la dernière valeur non nulle de `crans` que l'écran parent — lui,
+  // ne démonte pas — n'a jamais reperdue. Le défaut ne vit que dans le
+  // crochet `useCrans` (`Toile.tsx`), sur la mesure elle-même, qui reste
+  // figée sur ce qu'elle valait avant l'aller-retour ; un essai d'écran ne
+  // regarde que ce qui en sort. L'essai qui le voit et tombe sans le
+  // correctif est `composants/useCrans.test.tsx`.
+
   test("la réserve se replie, et la toile prend alors toute la largeur", async () => {
     // « Replier un panneau est un choix, jamais une contrainte de place »
     // (US-97). Il n'en reste qu'un à replier depuis E7, et c'est le seul qui

@@ -208,9 +208,11 @@ export function EcranUnivers({
   const collage = useCollage({ projet, onErreur: setRefus, onRafraichir: onRelire })
 
   // La grille de la réserve, mesurée pour donner ses trois crans à l'aimant de
-  // la largeur libre. Une seule mesure, trois déclencheurs.
+  // la largeur libre. Une seule mesure, quatre déclencheurs — dont le retour
+  // sur Inspiration depuis Ambiances et couleurs, qui démonte puis remonte la
+  // réserve sans changer `vue` (TS13).
   const grilleReserve = useRef<HTMLDivElement>(null)
-  const crans = useCrans(grilleReserve, vue)
+  const crans = useCrans(grilleReserve, vue, cote === "inspiration")
 
   // **La pile d'annulation vit ici, donc elle meurt avec l'écran** (`docs/archive/plan-versions-tenues.md`
   // T8) : ce n'est pas de l'historique de projet, c'est le rattrapage du geste en
