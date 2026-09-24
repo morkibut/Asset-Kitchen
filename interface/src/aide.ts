@@ -1121,9 +1121,9 @@ export const AIDE: Record<string, Explication> = {
     quoi: "Décris une image, choisis 1, 2 ou 3 versions, une taille, Entrée : les images se fabriquent et se posent sur la toile.",
     change:
       "Une vraie génération : le bouton dit ce qu'elle coûte avant de partir — un prix pour un modèle payant, un temps pour un modèle local, pour la taille choisie. Chaque image entre aussi dans la galerie, mais **brute** : ni détourage, ni réduction, ni grille, ni palette — la toile est l'endroit où l'on essaie, ce n'est pas encore une chose du jeu.",
-    origine: "toi · Qwen rapide par défaut, sinon le premier modèle disponible · le modèle, le nombre et la taille sont retenus",
+    origine: "toi · Qwen rapide par défaut, sinon le premier modèle disponible · le modèle, le nombre, la taille et le repli sont retenus",
     long:
-      "Rien de pris : on part de rien. **Prendre comme référence**, dans le menu d'une carte, l'ajoute au-dessus de la barre ; sa croix la retire. Une taille grisée, le modèle ne la rend pas. Trop de références pour lui : le bouton refuse et le dit. « avec le style du jeu » ajoute la bible du jeu au texte. « Ce qui part » montre le texte exact. Un échec reste à sa place avec sa raison.",
+      "Rien de pris : on part de rien. **Prendre comme référence**, dans le menu d'une carte, l'ajoute au-dessus de la barre ; sa croix la retire. Une taille grisée, le modèle ne la rend pas. Trop de références pour lui : le bouton refuse et le dit. « avec le style du jeu » ajoute la bible du jeu au texte. « Ce qui part » montre le texte exact. Un échec reste à sa place avec sa raison. Le chevron replie la barre en une ligne ; le texte, les références, le modèle et la taille restent en dessous, intacts.",
   },
 
   // **Ajoutée le 24 septembre 2026 (défaut 7 de la relecture)** : le bouton

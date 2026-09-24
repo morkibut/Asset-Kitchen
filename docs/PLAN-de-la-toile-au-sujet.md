@@ -639,10 +639,27 @@ corriger : sans doute une mesure prise pendant que la toile était cachée, et j
 
 ### TS14 · La barre « Fabriquer » se replie
 
-- [ ] la barre de fabrication en bas de la toile se replie en une ligne et se déplie, comme sur
+- [x] la barre de fabrication en bas de la toile se replie en une ligne et se déplie, comme sur
       Mixboard ; repliée, elle ne cache plus la toile
-- [ ] le texte en cours, les références prises, le modèle et la taille survivent au repli
-- [ ] l'état replié ou déplié est retenu d'une visite à l'autre (préférence du navigateur)
+- [x] le texte en cours, les références prises, le modèle et la taille survivent au repli
+- [x] l'état replié ou déplié est retenu d'une visite à l'autre (préférence du navigateur)
+
+**Fait le 24 septembre 2026.** `BarreDeFabrication` (`interface/src/composants/ToileFabrique.tsx`)
+reste le même composant monté dans les deux états — replier ne fait que rendre moins de JSX,
+rien n'est réinitialisé. Repliée, une seule ligne : le bouton « ▸ Fabriquer » pour déplier, et
+le début du texte en cours s'il y en a un. Le chevron « ▾ » à côté du libellé « Fabriquer »
+replie. L'état suit le même garde `localStorage` (try/catch) que le modèle, le nombre de
+versions et la taille — une seule clé, `atelier.toile.fabrique`, réécrite en entier à chaque
+réglage via un nouvel `enregistrer()` qui porte toujours les cinq champs pour ne pas en perdre un
+au passage. Une ligne ajoutée dans `interface/src/aide.ts`, entrée `toile.fabriquer` (origine et
+long) plutôt qu'une entrée neuve — c'est un réglage de plus sur un écran déjà décrit, pas un
+écran nouveau. Deux essais dans `ToileFabrique.test.tsx` : repli/dépli garde texte, référence et
+taille ; démonter puis remonter la barre relit le repli retenu — les deux tombent si on
+neutralise le rendu replié (vérifié en défaisant le correctif). Pas de vérification au
+navigateur : le worktree n'a pas de `dist` construit et monter un atelier jetable complet avec un
+projet et des cartes pour ce geste aurait coûté plus que ce que les essais d'écran, sabotés puis
+rétablis, ne couvrent déjà. `Toile.tsx` n'a pas été touché — la barre reste montée telle quelle,
+sans changement de ses props.
 
 ### TS16 · « ouvrir sa palette » d'un îlot marche, et n'existe qu'une fois
 

@@ -384,6 +384,53 @@ describe("la barre de fabrication", () => {
     expect(screen.getByRole("button", { name: /Fabriquer 3 · \$0,0400/ })).toBeTruthy()
   })
 
+  test("repliée puis dépliée, la barre tient le texte et les références (TS14)", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const refs = referencesPrises([carte("heron")], ["heron"])
+    render(<Banc references={refs} />)
+    const liste = (await screen.findByLabelText("Modèle")) as HTMLSelectElement
+    await waitFor(() => expect(liste.value).toBe(QWEN.identifiant))
+
+    const champ = screen.getByLabelText("Décris une image")
+    fireEvent.change(champ, { target: { value: "un héron dans la brume" } })
+    fireEvent.click(screen.getByRole("button", { name: "1024" }))
+
+    fireEvent.click(screen.getByRole("button", { name: "Replier la barre Fabriquer" }))
+    // Repliée : une ligne, le bouton pour déplier, le début du texte — et plus
+    // le champ ni les vignettes de référence.
+    expect(screen.queryByLabelText("Décris une image")).toBeNull()
+    expect(screen.getByText("un héron dans la brume")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "Déplier la barre Fabriquer" })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Déplier la barre Fabriquer" }))
+    // Dépliée : le texte, la référence et la taille choisie sont toujours là —
+    // rien n'a été perdu par le repli, le composant n'a fait que montrer moins.
+    expect((screen.getByLabelText("Décris une image") as HTMLInputElement).value).toBe(
+      "un héron dans la brume",
+    )
+    expect(screen.getByLabelText("1 image prise en référence")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "1024" }).getAttribute("aria-pressed")).toBe("true")
+  })
+
+  test("le repli est retenu d'une visite à l'autre (8septies)", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const { unmount } = render(<Banc />)
+    await waitFor(() =>
+      expect((screen.getByLabelText("Modèle") as HTMLSelectElement).value).toBe(QWEN.identifiant),
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Replier la barre Fabriquer" }))
+    expect(screen.getByRole("button", { name: "Déplier la barre Fabriquer" })).toBeTruthy()
+    unmount()
+
+    // Une visite neuve : sans le repli retenu, la barre reprendrait déployée —
+    // c'est bien l'état retenu qu'on relit, pas un défaut qui l'écrase.
+    render(<Banc />)
+    expect(await screen.findByRole("button", { name: "Déplier la barre Fabriquer" })).toBeTruthy()
+    expect(screen.queryByLabelText("Décris une image")).toBeNull()
+  })
+
   test("l'image arrive brute, en 512 par défaut, et sans le style du jeu (TS4)", async () => {
     const { fetchDouble, appels } = serveur()
     vi.stubGlobal("fetch", fetchDouble)
