@@ -92,6 +92,7 @@ import {
   type Vue,
 } from "./Tableau"
 import { Libelle, Raison } from "./pieces"
+import { guideEstOuvert } from "./Guide"
 import {
   BarreDeFabrication,
   EXEMPLES_COMBINAISON,
@@ -2307,10 +2308,21 @@ function Plan({
   // ailleurs (le brouillon d'une note, le champ de correction d'un texte, la
   // recherche de modèle) l'arrête à la source par `stopPropagation`, donc
   // n'atteint jamais cet écouteur-ci.
+  //
+  // **Et rien si le guide ou une `CadreDialogue` sont ouverts par-dessus**
+  // (relecture du 24 septembre 2026, défaut 5) : « Le guide › » depuis une
+  // bulle, ou « Créer un sujet » depuis le détail, s'ouvrent tous les deux
+  // sans démonter la toile — un Échap qui les visait fermait donc les deux à
+  // la fois. `guideEstOuvert()` et `dialog[open]` se lisent à l'instant de la
+  // touche, sans dépendre de l'ordre des écouteurs `keydown` ; `defaultPrevented`
+  // couvre ce qu'un autre écouteur aurait déjà traité par `preventDefault`
+  // plutôt que `stopPropagation`.
   useEffect(() => {
     if (!choisie && !epingle) return
     const surTouche = (evenement: KeyboardEvent) => {
-      if (evenement.key === "Escape") fermerLeDetail()
+      if (evenement.key !== "Escape" || evenement.defaultPrevented) return
+      if (guideEstOuvert() || document.querySelector("dialog[open]")) return
+      fermerLeDetail()
     }
     window.addEventListener("keydown", surTouche)
     return () => window.removeEventListener("keydown", surTouche)

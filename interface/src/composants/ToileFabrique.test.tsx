@@ -447,6 +447,73 @@ describe("la barre de fabrication", () => {
     expect(screen.queryByLabelText("Décris une image")).toBeNull()
   })
 
+  // Relecture du 24 septembre 2026 (défaut 8) : repliée, la barre se
+  // déplie d'elle-même quand « Reprendre ce texte », « Développer ce sujet »
+  // ou « Prendre comme référence » la remplissent — sinon le résultat du
+  // geste ne se voit nulle part.
+
+  const replier = async () => {
+    await waitFor(() =>
+      expect((screen.getByLabelText("Modèle") as HTMLSelectElement).value).toBe(QWEN.identifiant),
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Replier la barre Fabriquer" }))
+    expect(screen.getByRole("button", { name: "Déplier la barre Fabriquer" })).toBeTruthy()
+  }
+
+  test("« Reprendre ce texte » déplie la barre repliée", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const { rerender } = render(<Banc />)
+    await replier()
+
+    const reprise: Reprise = {
+      cle: "carte-1",
+      texte: "un héron au bord de l'eau",
+      modele: QWEN.identifiant,
+      resolution: "512",
+      repris: false,
+      references: [],
+    }
+    rerender(<Banc reprise={reprise} />)
+
+    expect(screen.getByRole("button", { name: "Replier la barre Fabriquer" })).toBeTruthy()
+    expect((screen.getByLabelText("Décris une image") as HTMLInputElement).value).toBe(
+      "un héron au bord de l'eau",
+    )
+  })
+
+  test("« Développer ce sujet » déplie la barre repliée", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const { rerender } = render(<Banc />)
+    await replier()
+
+    const developpement: Developpement = { cle: "carte-1", exemple: EXEMPLES_DEVELOPPEMENT[0] }
+    rerender(<Banc developpement={developpement} />)
+
+    expect(screen.getByRole("button", { name: "Replier la barre Fabriquer" })).toBeTruthy()
+    expect(screen.getByLabelText("Décris une image")).toBeTruthy()
+  })
+
+  test("« Prendre comme référence » déplie la barre repliée, la retirer ne la replie pas", async () => {
+    const { fetchDouble } = serveur()
+    vi.stubGlobal("fetch", fetchDouble)
+    const { rerender } = render(<Banc />)
+    await replier()
+
+    const refs = referencesPrises([carte("heron")], ["heron"])
+    rerender(<Banc references={refs} />)
+
+    expect(screen.getByRole("button", { name: "Replier la barre Fabriquer" })).toBeTruthy()
+    expect(screen.getByLabelText("1 image prise en référence")).toBeTruthy()
+
+    // Replier à nouveau, puis retirer la référence : ça ne doit pas rouvrir
+    // la barre que l'auteur vient de replier de sa main.
+    fireEvent.click(screen.getByRole("button", { name: "Replier la barre Fabriquer" }))
+    rerender(<Banc references={[]} />)
+    expect(screen.getByRole("button", { name: "Déplier la barre Fabriquer" })).toBeTruthy()
+  })
+
   test("l'image arrive brute, en 512 par défaut, et sans le style du jeu (TS4)", async () => {
     const { fetchDouble, appels } = serveur()
     vi.stubGlobal("fetch", fetchDouble)

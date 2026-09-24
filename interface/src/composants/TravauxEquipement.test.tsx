@@ -71,6 +71,32 @@ test("TS17 — les habitués paraissent en tête et un modèle sans image d’en
   expect(screen.getByLabelText("Fournisseur et modèle")).toHaveTextContent("essai:image")
 })
 
+// Relecture du 24 septembre 2026 (défaut 9) : `ChoixModele` avalait Échap
+// même liste fermée (`stopPropagation` sans condition), et ouverte, elle ne
+// posait pas `preventDefault` — le `cancel` natif de la `CadreDialogue` qui
+// la porte partait quand même, refermant toute la fenêtre pour une touche
+// qui ne visait que la liste. `dispatchEvent` (ce que `fireEvent` renvoie)
+// dit si l'événement est resté `preventDefault`-able : `true` s'il ne l'a
+// pas été, `false` s'il l'a été — exactement ce que la `CadreDialogue` lit
+// pour savoir si elle doit, elle aussi, réagir à la touche.
+test("Échap : rien liste fermée, ferme la liste seule (avec preventDefault) liste ouverte (défaut 9)", async () => {
+  render(<RelectureEquipement chemin={chemin} initiale={t} onFermer={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Passer en édition" }))
+  const bouton = await screen.findByLabelText("Fournisseur et modèle")
+
+  // Liste fermée : rien à faire ici, la touche doit rester libre pour la
+  // fenêtre au-dessus.
+  const nonAvale = fireEvent.keyDown(bouton, { key: "Escape", cancelable: true, bubbles: true })
+  expect(nonAvale).toBe(true)
+
+  fireEvent.click(bouton)
+  expect(await screen.findByRole("listbox")).toBeTruthy()
+
+  const avale = fireEvent.keyDown(bouton, { key: "Escape", cancelable: true, bubbles: true })
+  expect(avale).toBe(false) // `preventDefault` posé : la fenêtre ne doit pas se refermer avec la liste
+  expect(screen.queryByRole("listbox")).toBeNull()
+})
+
 test("éditer un texte exact et retirer une référence crée une nouvelle relecture avant le lancement", async () => {
   render(<RelectureEquipement chemin={chemin} initiale={t} onFermer={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Passer en édition" }))

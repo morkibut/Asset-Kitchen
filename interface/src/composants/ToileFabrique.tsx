@@ -703,6 +703,10 @@ export function BarreDeFabrication({
   // **La case « avec le style du jeu » suit aussi** : reprendre veut dire
   // relancer *exactement* la même demande pour la corriger, pas la moitié
   // d'entre elle.
+  // **Et elle se déplie d'elle-même** (relecture du 24 septembre 2026,
+  // défaut 8) : repliée, elle ne montre qu'une ligne — un « Reprendre ce
+  // texte » ou un « Développer ce sujet » cliqué depuis cet état-là remplit
+  // un champ que rien ne montre, et l'auteur croit n'avoir rien déclenché.
   useEffect(() => {
     if (!reprise) return
     setPrompt(reprise.texte)
@@ -710,6 +714,7 @@ export function BarreDeFabrication({
     if ((TAILLES as readonly string[]).includes(reprise.resolution ?? ""))
       setTaille(reprise.resolution as Taille)
     setAvecStyle(!reprise.repris)
+    setReplie(false)
     champ.current?.focus()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reprise?.cle])
@@ -723,9 +728,20 @@ export function BarreDeFabrication({
     if (!developpement) return
     setPrompt("")
     setExemple(developpement.exemple)
+    setReplie(false)
     champ.current?.focus()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [developpement?.cle])
+
+  // **« Prendre comme référence »** fait le même effet (défaut 8) : une
+  // vignette qui s'ajoute à une barre repliée ne se voit pas non plus. Sur la
+  // *longueur* qui grandit, pas sur la liste entière — retirer une référence
+  // ne doit pas rouvrir la barre qu'on venait de replier à la main.
+  const longueurReferences = useRef(references.length)
+  useEffect(() => {
+    if (references.length > longueurReferences.current) setReplie(false)
+    longueurReferences.current = references.length
+  }, [references.length])
 
   // Le catalogue dépend du nombre d'images jointes : un modèle qui n'en prend
   // aucune se grise avec sa raison dès qu'on en joint une.

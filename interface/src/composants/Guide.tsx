@@ -184,6 +184,17 @@ export function echapVientDeFermerLeGuide(): boolean {
   return performance.now() - echapDuGuide < 150
 }
 
+/** Vrai si le volet est ouvert, à l'instant où on le demande — pas une
+ *  souscription comme `useGuide`, une simple lecture. Sert à un écran qui a
+ *  son propre Échap (le détail d'une carte ou d'un îlot sur la toile, TS15)
+ *  pour se taire pendant que le volet est par-dessus lui : contrairement à
+ *  `echapVientDeFermerLeGuide`, ça ne dépend pas de l'ordre d'enregistrement
+ *  des deux écouteurs `keydown` sur `window` (relecture du 24 septembre 2026,
+ *  défaut 5). */
+export function guideEstOuvert(): boolean {
+  return ouvert
+}
+
 // ── L'écran, en toutes lettres ───────────────────────────────────────────────
 
 /** Comment un écran se nomme dans l'en-tête du volet. Fermée : ajouter un

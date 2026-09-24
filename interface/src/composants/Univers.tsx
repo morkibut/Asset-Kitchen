@@ -238,9 +238,17 @@ export function EcranUnivers({
   // La grille de la réserve, mesurée pour donner ses trois crans à l'aimant de
   // la largeur libre. Une seule mesure, quatre déclencheurs — dont le retour
   // sur Inspiration depuis Ambiances et couleurs, qui démonte puis remonte la
-  // réserve sans changer `vue` (TS13).
+  // réserve sans changer `vue` (TS13). **Et le détail d'une carte ou d'un
+  // îlot en fait un cinquième** (relecture du 24 septembre 2026, défaut 3) :
+  // ouvert, il prend la place de la réserve dans la même case de grille — le
+  // même démontage que « Ambiances et couleurs », par le même mécanisme.
+  // Sans `!detailOuvert` ici, `actif` restait vrai pendant l'absence, la
+  // mesure tombait sur un `cadre.current` nul, et rien ne la reprenait au
+  // retour : la toile restait bloquée sur « la toile se règle sur la
+  // grille… » jusqu'au prochain redimensionnement de fenêtre.
   const grilleReserve = useRef<HTMLDivElement>(null)
-  const crans = useCrans(grilleReserve, vue, cote === "inspiration")
+  const detailOuvert = vue === "toile" && (choisie !== null || Boolean(epingle?.startsWith("ilot:")))
+  const crans = useCrans(grilleReserve, vue, cote === "inspiration" && !detailOuvert)
 
   // **La pile d'annulation vit ici, donc elle meurt avec l'écran** (`docs/archive/plan-versions-tenues.md`
   // T8) : ce n'est pas de l'historique de projet, c'est le rattrapage du geste en
@@ -327,8 +335,9 @@ export function EcranUnivers({
   // détail sinon. `cibleDetail` est le nœud DOM que `Toile.tsx` porte par
   // `createPortal` — un `useState` et non un `useRef`, parce qu'un `ref` posé
   // en `callback` doit déclencher un rendu quand il change, pour que le
-  // portail puisse s'y ancrer dès que la case existe.
-  const detailOuvert = vue === "toile" && (choisie !== null || Boolean(epingle?.startsWith("ilot:")))
+  // portail puisse s'y ancrer dès que la case existe. `detailOuvert` lui-même
+  // est calculé plus haut, avant `useCrans` : c'est le même booléen qui sert
+  // ici et l'aimant de la réserve (défaut 3).
   const [cibleDetail, setCibleDetail] = useState<HTMLDivElement | null>(null)
 
   return (
