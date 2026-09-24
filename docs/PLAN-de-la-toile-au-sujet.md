@@ -715,7 +715,7 @@ puis à tous les autres endroits où l'on choisit un modèle d'image.
 - [x] le catalogue décide toujours : un modèle qui ne peut pas honorer la demande reste grisé avec
       sa raison, y compris dans les tops
 - [x] le compte d'usage vient du serveur (une route, ou un champ du catalogue), pas du navigateur
-- [ ] un seul composant, posé dans la barre de la toile et dans les autres choix de modèle d'image
+- [x] un seul composant, posé dans la barre de la toile et dans les autres choix de modèle d'image
 
 *Fait le 24 septembre 2026.* Le compte d'usage est un champ du catalogue (`GET /api/models` →
 `habitues: { gratuits, payants }`), calculé par `ServiceGenerations.habitues` sur
@@ -723,13 +723,37 @@ puis à tous les autres endroits où l'on choisit un modèle d'image.
 les habitudes d'un auteur ne se réinventent pas d'un jeu à l'autre). Tri déterministe : compte
 décroissant, puis ordre du catalogue. Le composant `ChoixModele` (`interface/src/composants/
 pieces.tsx`) est posé dans `BarreDeFabrication` (toile), avec les tops, « voir plus de modèles »,
-la recherche, Échap, et les flèches + Entrée sur ce qui est affiché. Il **n'est pas encore posé**
-dans les trois autres endroits où l'on choisit un modèle d'image — `FabricationSuivie.tsx` (radios,
-pas un `<select>`, remaniement plus large), `RelectureEquipement.tsx` et `FabricationVideoLibre.tsx`
-(risque non nul, hors budget de cette tranche) — à faire dans une tranche suivante. Non vérifié au
-navigateur : le worktree n'a pas d'`interface/dist` et ne doit pas en construire un (`AGENTS.md`) ;
-vérifié par 7 essais serveur (`tests/test_ts17.py`) et 7 essais d'écran dédiés dans
-`ToileFabrique.test.tsx`, plus les 28 essais existants du même fichier, tous verts.
+la recherche, Échap, et les flèches + Entrée sur ce qui est affiché.
+
+*Fait le 24 septembre 2026, suite.* `ChoixModele` est posé aux trois endroits restants —
+`FabricationSuivie.tsx` (les boutons radio du modèle d'image, dans « Modèle pour créer l'image des
+cases qui en manquent »), `RelectureEquipement.tsx` (le sélecteur du modèle d'une planche à équiper)
+et `FabricationVideoLibre.tsx` (le sélecteur du modèle qui fabrique l'image de départ d'un clip) —
+sans rien perdre de ce que chacun montrait : le grisé et sa raison, et pour `FabricationSuivie.tsx`
+le choix « utiliser seulement une image existante », qui n'est pas un modèle du catalogue. Le
+composant gagne pour ça une option, `optionVide` — une ligne hors catalogue, toujours en tête,
+jamais filtrée par la recherche, jamais grisée. `RelectureEquipement.tsx` a sa propre raison de
+grisé, locale à cet emploi : un modèle qui n'accepte aucune image d'entrée (`references_max < 1`)
+ne peut pas honorer une planche à équiper, même si le catalogue ne le refuse pas ailleurs ; cette
+raison s'ajoute au `refus` du catalogue avant de passer au composant, elle ne le remplace jamais.
+
+**Décision sur le sélecteur du modèle *vidéo*** (`FabricationVideoLibre.tsx`, et son jumeau non
+touché de `FabricationSuivie.tsx`) : il reste un `<select>` ordinaire. `habitues` ne compte que les
+générations d'images (`Base.comptes_par_modele`, sur la table `generations`) ; un appel vidéo
+n'alimente pas cette table — c'est un port distinct depuis la V3 (`AGENTS.md`, point 8bis), qui se
+soumet et s'attend plutôt que de se compter comme un modèle de plus. Poser `ChoixModele` là
+demanderait d'abord de compter les habitudes vidéo côté serveur, hors budget de cette tranche ; ce
+sélecteur garde aussi son prix par modèle, que `ChoixModele` ne sait pas encore afficher.
+
+Non vérifié au navigateur : le worktree n'a pas d'`interface/dist` et ne doit pas en construire un
+(`AGENTS.md`). Vérifié par les 7 essais serveur existants (`tests/test_ts17.py`, inchangés — rien ne
+change côté serveur dans cette suite) et par des essais d'écran neufs ou étendus, tous verts :
+`ToileFabrique.test.tsx` (28 essais existants, inchangés), `FabricationSuivie.test.tsx` (25 essais
+existants adaptés au panneau + 1 essai neuf sur l'option vide et le grisé), `FabricationVideoLibre.test.tsx`
+(6 essais existants adaptés + 1 essai neuf sur les habitués et le grisé), `TravauxEquipement.test.tsx`
+(8 essais existants adaptés + 1 essai neuf sur la raison de grisé propre à cet écran), `App.test.tsx`
+(585 essais, un échec « Reprendre « marche »… » sur la pellicule du montage, sans rapport avec cette
+tranche — passe seul, isolé du reste de la suite) et `npx tsc --noEmit` sans erreur.
 
 ### TS18 · Une carte s'ouvre dans l'atelier de retouche
 

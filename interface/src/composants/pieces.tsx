@@ -130,12 +130,20 @@ function SectionDeModeles({
  *
  *  Échap ferme. Les flèches déplacent la ligne active parmi ce qui est
  *  **affiché** — les habitués repliés, ou la liste filtrée une fois
- *  dépliée —, Entrée choisit la ligne active si elle n'est pas grisée. */
+ *  dépliée —, Entrée choisit la ligne active si elle n'est pas grisée.
+ *
+ *  **`optionVide`** (posé le 24 septembre 2026, en posant le composant dans
+ *  `FabricationSuivie.tsx`) : une ligne hors catalogue, toujours visible,
+ *  jamais filtrée par la recherche — « utiliser seulement une image
+ *  existante » n'est pas un modèle que le catalogue connaît, c'est l'absence
+ *  d'un modèle. Sans elle, un écran qui a besoin de ce choix-là devrait
+ *  garder un second contrôle à côté, ce que ce point du plan interdit. */
 export function ChoixModele({
   modeles,
   valeur,
   onChange,
   habitues,
+  optionVide,
   ariaLabel = "Modèle",
   className = "",
 }: {
@@ -145,6 +153,8 @@ export function ChoixModele({
   /** `null`/`undefined` se lit comme « rien compté encore » — les deux tops
    *  vides, donc la liste complète directement. */
   habitues?: Habitues | null
+  /** Une ligne de plus, avant tout le reste, qui choisit la chaîne vide. */
+  optionVide?: { libelle: string }
   ariaLabel?: string
   className?: string
 }) {
@@ -183,12 +193,35 @@ export function ChoixModele({
   }, [ouvert])
 
   const actuel = modeles.find((m) => m.identifiant === valeur) ?? null
+  // **La ligne vide** : un pseudo-modèle sans fournisseur — `libelleModele`
+  // rend alors son `nom` tel quel — jamais grisé, toujours en tête, jamais
+  // filtré par la recherche puisqu'il ne vient pas du catalogue.
+  const modeleVide: Modele | null = optionVide
+    ? {
+        identifiant: "",
+        nom: optionVide.libelle,
+        fournisseur: "",
+        chez_lui: "",
+        references_max: 0,
+        proportions: [],
+        resolutions: [],
+        variations_max: 0,
+        options: {},
+        refus: null,
+        repli: false,
+        recu_le: 0,
+        unite: "usd",
+      }
+    : null
   const filtres = etendu
     ? modeles.filter((m) =>
         libelleModele(m).toLowerCase().includes(recherche.trim().toLowerCase()),
       )
     : []
-  const visibles = etendu ? filtres : [...gratuits, ...payants]
+  const visibles = [
+    ...(modeleVide ? [modeleVide] : []),
+    ...(etendu ? filtres : [...gratuits, ...payants]),
+  ]
 
   useEffect(() => setActif(0), [etendu, recherche])
 
@@ -235,7 +268,11 @@ export function ChoixModele({
         onClick={() => setOuvert((v) => !v)}
         className="h-[30px] w-full min-w-0 truncate rounded-7 border border-trait bg-carte px-[8px] text-left text-[11.5px] text-encre-controle"
       >
-        {actuel ? libelleModele(actuel) : "Choisir un modèle…"}
+        {actuel
+          ? libelleModele(actuel)
+          : modeleVide && !valeur
+            ? modeleVide.nom
+            : "Choisir un modèle…"}
       </button>
       {ouvert && (
         <div
@@ -243,6 +280,15 @@ export function ChoixModele({
           aria-label="Liste des modèles"
           className="absolute bottom-full z-20 mb-1 max-h-[380px] w-[240px] overflow-auto rounded-7 border border-trait bg-carte p-[8px] shadow-[0_2px_10px_rgba(0,0,0,.12)]"
         >
+          {modeleVide && (
+            <ul className="mb-1 border-b border-trait pb-1">
+              <OptionModele
+                modele={modeleVide}
+                actif={visibles.indexOf(modeleVide) === actif}
+                onChoisir={() => choisir(modeleVide)}
+              />
+            </ul>
+          )}
           {!etendu && (
             <>
               {gratuits.length > 0 && (

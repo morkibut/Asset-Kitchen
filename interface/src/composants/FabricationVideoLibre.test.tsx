@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { FabricationVideoLibre } from "./FabricationVideoLibre"
 import { api, type Asset, type ModeleVideo } from "../api"
@@ -28,7 +28,7 @@ beforeEach(() => {
   vi.clearAllMocks(); localStorage.clear()
   vi.mocked(workflows.lister).mockResolvedValue({ profils: [] })
   vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [modele] } as never)
-  vi.spyOn(api, "modeles").mockResolvedValue({ modeles: [{ identifiant: "Image:dessin", refus: null, options: {}, proportions: ["1:1"], resolutions: ["1024"], references_max: 4, unite: "usd" }] } as never)
+  vi.spyOn(api, "modeles").mockResolvedValue({ modeles: [{ identifiant: "Image:dessin", nom: "Image:dessin", refus: null, options: {}, proportions: ["1:1"], resolutions: ["1024"], references_max: 4, unite: "usd" }], habitues: { gratuits: [], payants: [] } } as never)
   vi.mocked(videoLibre.preparer).mockResolvedValue(travail)
   vi.mocked(videoLibre.demarrer).mockResolvedValue({ ...travail, etat: "termine", clip: "clip-produit" })
 })
@@ -76,8 +76,8 @@ test("fabriquer l’image annonce deux étapes et fige le texte composé avant l
     annonce: { ...travail.annonce, appels: 2, image_usd: 0.05, reservation_usd: 0.17 } })
   render(<FabricationVideoLibre projet="jeu" onClip={vi.fn()} />)
   fireEvent.click(screen.getByRole("button", { name: "Fabriquer une nouvelle image" }))
-  await screen.findByRole("option", { name: "Image:dessin" })
-  fireEvent.change(screen.getByLabelText("Modèle d’image"), { target: { value: "Image:dessin" } })
+  fireEvent.click(screen.getByLabelText("Modèle d’image"))
+  fireEvent.click(await screen.findByRole("button", { name: "Image:dessin" }))
   fireEvent.change(screen.getByLabelText("Description de l’image"), { target: { value: "Une île" } })
   fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: modele.identifiant } })
   fireEvent.change(screen.getByLabelText("Mouvement et consignes pour la vidéo"), { target: { value: "Les feuilles bougent" } })
@@ -87,6 +87,29 @@ test("fabriquer l’image annonce deux étapes et fige le texte composé avant l
   expect(screen.getByText(/2 génération/)).toBeInTheDocument()
   expect(videoLibre.demarrer).not.toHaveBeenCalled()
   expect(videoLibre.preparer).toHaveBeenCalledWith("jeu", expect.objectContaining({ modele_image: "Image:dessin", prompt_image: "Une île", reference_asset: null }))
+})
+
+// **TS17** : le sélecteur de l'image de départ pose `ChoixModele`, comme
+// partout ailleurs où l'on choisit un modèle d'image — habitués en tête, et
+// un modèle grisé reste affiché sans jamais se choisir.
+test("TS17 — le modèle d’image montre ses habitués et un modèle grisé ne se choisit pas", async () => {
+  vi.spyOn(api, "modeles").mockResolvedValue({
+    modeles: [
+      { identifiant: "Image:dessin", nom: "Image:dessin", refus: null, options: {}, proportions: ["1:1"], resolutions: ["1024"], references_max: 4, unite: "usd" },
+      { identifiant: "Image:epuise", nom: "Modèle épuisé", refus: "réserve épuisée", options: {}, proportions: ["1:1"], resolutions: [], references_max: 4, unite: "usd" },
+    ],
+    habitues: { gratuits: ["Image:dessin"], payants: [] },
+  } as never)
+  render(<FabricationVideoLibre projet="jeu" onClip={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Fabriquer une nouvelle image" }))
+  fireEvent.click(await screen.findByLabelText("Modèle d’image"))
+  expect(screen.getByText("Les plus utilisés · gratuits")).toBeInTheDocument()
+  fireEvent.click(screen.getByRole("button", { name: "voir plus de modèles" }))
+  const optionGrisee = await screen.findByRole("option", { name: /Modèle épuisé/ })
+  const boutonGrise = within(optionGrisee).getByRole("button")
+  expect(boutonGrise).toBeDisabled()
+  fireEvent.click(boutonGrise)
+  expect(screen.getByLabelText("Modèle d’image")).toHaveTextContent("Choisir un modèle…")
 })
 
 test("importer garde l’image en bibliothèque sans lancer de modèle", async () => {
