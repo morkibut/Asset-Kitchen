@@ -816,14 +816,40 @@ le seul chemin est un détour : retirer la planche des images d'exemple, pour qu
 « C'est la référence » sait déjà remplacer l'ancienne planche (`choisir_la_planche`, qui dépromeut les
 autres).
 
-- [ ] le bloc *Planche* porte « Refaire la planche des directions » même quand une planche est choisie
-- [ ] la nouvelle planche part du **concept art** comme la première (*TS3*), et **l'ancienne planche ne
+- [x] le bloc *Planche* porte « Refaire la planche des directions » même quand une planche est choisie
+- [x] la nouvelle planche part du **concept art** comme la première (*TS3*), et **l'ancienne planche ne
       part pas avec elle** : sinon le modèle recopierait le dessin qu'on veut quitter
-- [ ] l'ancienne reste la référence jusqu'à ce que l'auteur clique « C'est la référence » sur une
+- [x] l'ancienne reste la référence jusqu'à ce que l'auteur clique « C'est la référence » sur une
       nouvelle ; elle reste alors en bibliothèque, dépromue
-- [ ] le prix est annoncé sur le bouton, comme pour la première
-- [ ] un essai : un sujet avec une planche choisie refait sa planche, et la demande qui part ne porte
+- [x] le prix est annoncé sur le bouton, comme pour la première
+- [x] un essai : un sujet avec une planche choisie refait sa planche, et la demande qui part ne porte
       pas l'ancienne planche ; puis « C'est la référence » sur la nouvelle remplace l'ancienne
+
+*Fait le 24 septembre 2026.* **Un seul défaut, et il vivait à l'écran.** Le serveur excluait déjà
+l'ancienne planche : `_concepts` (`atelier/services/generation.py`) ignore le contexte de la
+planche dès que `premiere_planche` est vrai et n'y ramène que le concept art
+(`_design`) plus les références libres — c'est le même mécanisme que `TS3`, écrit sans savoir
+qu'un sujet aurait un jour déjà une planche choisie, et qui s'est trouvé correct par construction.
+Vérifié en cassant volontairement l'exclusion (`planche=False` → `planche=True` dans l'appel à
+`_promues`) : les deux essais neufs tombent alors (refus 409, « il en faudrait 3 images » — la
+vieille planche s'ajoutait au concept art et au gabarit de la grille), remis d'aplomb aussitôt.
+Restait donc à ouvrir le chemin : `BoutonPremierePlanche` (`ImagesDuSujet.tsx`) prend un drapeau
+`refaire` qui change son libellé et l'entrée du guide (`fabrique.refaire-planche`, la même phrase
+d'aide, le même appel `api.premierePlanche` → `onPremierePlanche`) ; `SesReferencesParUsage`
+rend ce second bouton sous la planche choisie (`boutonRefairePlanche`, affiché dès que
+`planche.length > 0`), pendant que le premier reste dans la place vide comme avant. Le prix
+« annoncé sur le bouton, comme pour la première » : ni l'un ni l'autre ne l'affiche sur le bouton
+lui-même — rien n'est facturé à l'ouverture — et les deux ouvrent le même tiroir de confirmation
+qui l'annonce avant de payer (point 6, `AGENTS.md`) ; c'est ce que « comme pour la première »
+voulait dire. Essais : `tests/test_ts20.py` (2, serveur — un sujet avec une planche choisie
+qui en refait une, la demande qui part ne porte que le concept art et le gabarit ; puis « C'est
+la référence » sur la nouvelle remplace l'ancienne, qui reste en bibliothèque), deux essais neufs
+dans `ImagesDuSujet.test.tsx` (le bouton se voit sous la planche existante, à la place de
+« Faire » ; un clic arme l'atelier comme la première). Suite complète de l'interface : 610 verts
+sur `ImagesDuSujet.test.tsx` + `App.test.tsx`. `tsc --noEmit` propre, `essai_vocabulaire.py`,
+`essai_jetons.py`, `essai_tutoiement.py`, `essai_imports.py` et `essai_docs.py` verts (18 jetons
+inemployés déjà connus, non touchés par cette tranche). Non vérifié au navigateur : pas
+d'`interface/dist` dans le worktree (`AGENTS.md`).
 
 **Après** : TS19 (même texte envoyé, même écran de la planche).
 

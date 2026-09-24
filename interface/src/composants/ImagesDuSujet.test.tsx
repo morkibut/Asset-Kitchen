@@ -1064,3 +1064,49 @@ describe("« Faire la planche des directions » (TS3)", () => {
     expect(onAllerALaToile).toHaveBeenCalledTimes(1)
   })
 })
+
+// ── « Refaire la planche des directions » (TS20) ─────────────────────────────
+//
+// Le seul chemin, avant cette tranche, était un détour : retirer la planche
+// des images d'exemple pour faire revenir « Faire la planche des
+// directions ». Le bouton « Refaire » vit désormais sous la planche choisie,
+// et appelle le même geste que la première planche (`api.premierePlanche`,
+// `onPremierePlanche`) — c'est le service qui écarte l'ancienne planche de
+// la demande (`atelier/services/generation.py`).
+
+describe("« Refaire la planche des directions » (TS20)", () => {
+  const avecPlanche: ReferencesDeLaChose = {
+    personnage: "pelerin",
+    lignes: [ligneReference({ reference: "p", usage: "planche" })],
+    propositions: [],
+    disponibles: 1,
+  }
+
+  test("se voit quand une planche existe déjà, à la place de « Faire »", async () => {
+    monterAvecPlanche(avecPlanche)
+    await waitFor(() => expect(document.querySelector("[data-references-par-usage]")).toBeTruthy())
+    expect(
+      await screen.findByRole("button", { name: "Refaire la planche des directions" }),
+    ).toBeTruthy()
+    expect(
+      screen.queryByRole("button", { name: "Faire la planche des directions" }),
+    ).toBeNull()
+  })
+
+  test("un clic demande la planche et arme l'atelier, comme la première", async () => {
+    const reponse = {
+      personnage: "pelerin",
+      pose: "repos",
+      pose_nom: "repos",
+      directions: ["sud", "nord"],
+      directions_noms: ["sud", "nord"],
+      design: [{ asset: "concept-1", role: "reference" as const, origine: "asset" as const, usage: "design" as const }],
+    }
+    const lire = vi.spyOn(api, "premierePlanche").mockResolvedValue(reponse)
+    const { onPremierePlanche } = monterAvecPlanche(avecPlanche)
+    const bouton = await screen.findByRole("button", { name: "Refaire la planche des directions" })
+    fireEvent.click(bouton)
+    await waitFor(() => expect(lire).toHaveBeenCalledWith("pelerin"))
+    await waitFor(() => expect(onPremierePlanche).toHaveBeenCalledWith(personnage([CASE_SUD]), reponse))
+  })
+})
