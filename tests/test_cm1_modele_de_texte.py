@@ -412,7 +412,9 @@ def test_la_route_rend_le_flux_ligne_par_ligne_avec_la_consigne_du_metier(tmp_pa
     assert lignes[-1]["issue"] == REPONDU and lignes[-1]["cout_usd"] == pytest.approx(0.00012)
     # La consigne est celle du dépôt, jamais celle de l'écran (décision 1).
     corps = json.loads(fil.requetes[0].content)
-    assert corps["messages"][0]["content"] == "Consigne du métier."
+    # Depuis CM3, la fiche du produit la suit dans le même message (décision 3).
+    assert corps["messages"][0]["content"].startswith("Consigne du métier.\n\n")
+    assert "consigne venue de l'écran" not in json.dumps(corps, ensure_ascii=False)
 
 
 def test_un_metier_inconnu_est_refuse_et_rien_ne_part(tmp_path):

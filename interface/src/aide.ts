@@ -3762,6 +3762,17 @@ export const AIDE: Record<string, Explication> = {
       "« C'est fait de quoi ? » — la matière seule : pierre, bois, terre, sable. Le même texte pour tout le jeu, c'est lui qui fait que le sol et le mur vont ensemble. « Le motif » — comment cette matière est posée sur l'emplacement visé : dis le compte et la taille, « quatre grandes dalles, deux par deux ». Ce qui n'est pas écrit n'est pas deviné.",
   },
 
+  "jeu-de-tuiles.coup-de-main": {
+    nom: "EN, au bout des deux champs",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — le tiroir de matière",
+    quoi: "Propose ton texte en anglais, sous le champ, sans traduire les noms de ton jeu ni rien ajouter.",
+    change: "« Garder » remplace le texte de ce champ-là, et rien d'autre ; Échap oublie la proposition. Rien ne se génère sans toi.",
+    origine: "un petit modèle d'OpenRouter · absent sans clé",
+    long:
+      "Chaque champ part seul : la matière n'est jamais mêlée au motif. « Voir ce qui part » montre tout, mot pour mot : la consigne, la fiche du produit, le champ, les noms de ton jeu que ton texte contient, et ton texte. Aucune image, aucun chemin de fichier. Chaque appel coûte une fraction de centime.",
+  },
+
   "jeu-de-tuiles.cout-matiere": {
     nom: "Une matière générée, une matière intégrée",
     ou: "jeu-de-tuiles",

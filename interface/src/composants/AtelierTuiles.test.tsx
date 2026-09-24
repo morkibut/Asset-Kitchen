@@ -7,6 +7,7 @@ import { Tuiles } from "./Tuiles"
 import { AtelierDuJeu, doublerLaLecture, type Edition } from "./AtelierTuiles"
 import { tuiles, matieres as apiMatieres, type EnsembleTuiles, type EnvoiFabrique } from "../api-tuiles"
 import { fileLocale, type FileLocale } from "../api-file-locale"
+import { coupDeMain } from "../api-coup-de-main"
 import { api, type ApercuLivraison } from "../api"
 import { installerBouchonCanvas } from "../tuiles/moteur/__tests__/canvas-shim"
 import { EXEMPLES_MATIERE, atlasDe, jeuDepuisRecette, nouveauJeu, oublierLesRendus, type Recette } from "../tuiles/atelier"
@@ -340,6 +341,32 @@ describe("Les tuiles du jeu", () => {
       fireEvent.change(screen.getByLabelText("Tirages"), { target: { value: "3" } })
       fireEvent.click(await screen.findByRole("button", { name: "Générer 3 tirages" }))
       await waitFor(() => expect(generer).toHaveBeenCalledWith("jeu", { pierre: "de la pierre", motif: "des dalles", cadrage: "surface", tirages: 3 }))
+    })
+
+    it("le coup de main (CM3) : une marque par champ, « Garder » remplit ce champ-là, et rien ne génère", async () => {
+      vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
+      vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
+      const generer = vi.spyOn(apiMatieres, "generer")
+      vi.spyOn(coupDeMain, "etat").mockResolvedValue({ disponible: true, raison: null, modele: "OpenRouter:deepseek/deepseek-v4-flash" })
+      const demander = vi.spyOn(coupDeMain, "demander").mockImplementation(async (_m, _d, onMorceau) => {
+        onMorceau({ genre: "texte", texte: "old grey granite" })
+        const fin = { genre: "fin" as const, issue: "repondu" as const, raison: null, consomme: 0, unite: "USD", cout_usd: 0, cout_inconnu: false }
+        onMorceau(fin)
+        return fin
+      })
+      await ouvrirGenerer()
+      // Un champ vide ne porte pas de marque : il n'y a rien à rendre.
+      expect(screen.queryByRole("button", { name: "Proposer en anglais" })).toBeNull()
+      fireEvent.change(screen.getByLabelText("C’est fait de quoi ?"), { target: { value: "du vieux granit gris" } })
+      fireEvent.change(screen.getByLabelText("Le motif"), { target: { value: "des dalles" } })
+      await waitFor(() => expect(screen.getAllByRole("button", { name: "Proposer en anglais" })).toHaveLength(2))
+      fireEvent.click(screen.getAllByRole("button", { name: "Proposer en anglais" })[0])
+      expect(demander.mock.calls[0][0]).toBe("ameliorer")
+      expect(demander.mock.calls[0][1]).toEqual({ texte: "du vieux granit gris", champ: "matiere", projet: "jeu" })
+      fireEvent.click(await screen.findByRole("button", { name: "Garder" }))
+      expect((screen.getByLabelText("C’est fait de quoi ?") as HTMLInputElement).value).toBe("old grey granite")
+      expect((screen.getByLabelText("Le motif") as HTMLInputElement).value).toBe("des dalles")
+      expect(generer).not.toHaveBeenCalled()
     })
 
     it("indisponible : le bouton est désactivé et dit ce qui manque, sans rien lancer", async () => {
