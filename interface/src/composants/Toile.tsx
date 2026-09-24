@@ -3472,18 +3472,26 @@ function Poignee({
  * mesure prise sur une carte serait indisponible sur une réserve vide — d'où la
  * grille, qui est là même quand elle ne contient rien.
  *
- * **Trois déclencheurs, une seule mesure** — le montage, le redimensionnement de
- * la fenêtre, et le changement de vue. Un `ResizeObserver` ne livre rien à un
- * onglet qui ne compose pas ses images (T5), et la largeur d'une colonne ne
- * bouge pas autrement.
+ * **Quatre déclencheurs, une seule mesure** — le montage, le redimensionnement
+ * de la fenêtre, le changement de vue, et le retour d'un onglet qui démonte le
+ * cadre (TS13). Un `ResizeObserver` ne livre rien à un onglet qui ne compose
+ * pas ses images (T5), et la largeur d'une colonne ne bouge pas autrement —
+ * mais le `ref` que la grille démontée puis remontée pose sur `cadre` ne
+ * change pas d'identité, donc rien dans les dépendances de l'effet ne le
+ * signale. `actif` porte ce quatrième signal : il vaut faux pendant que le
+ * cadre est démonté (par exemple sur « Ambiances et couleurs »), et son
+ * retour à vrai force la mesure — sans lui, la toile reste sur la dernière
+ * mesure prise pendant qu'elle était cachée, c'est-à-dire aucune.
  */
 export function useCrans(
   cadre: React.RefObject<HTMLDivElement | null>,
   vue: Vue,
+  actif = true,
 ): Crans | null {
   const [crans, setCrans] = useState<Crans | null>(null)
 
   useLayoutEffect(() => {
+    if (!actif) return
     const mesurer = () => {
       const el = cadre.current
       if (!el) return
@@ -3500,7 +3508,7 @@ export function useCrans(
     mesurer()
     window.addEventListener("resize", mesurer)
     return () => window.removeEventListener("resize", mesurer)
-  }, [cadre, vue])
+  }, [cadre, vue, actif])
 
   return crans
 }

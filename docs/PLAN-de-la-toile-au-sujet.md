@@ -634,8 +634,24 @@ vide sur « la toile se règle sur la grille… » (`Toile.tsx`, l'état `crans`
 par « grille » puis revenir sur « toile » pour qu'elle s'affiche. La cause est à lire avant de
 corriger : sans doute une mesure prise pendant que la toile était cachée, et jamais reprise.
 
-- [ ] revenir d'« Ambiances et couleurs » à « Inspiration » montre la toile, sans détour par la grille
-- [ ] un essai d'écran fait l'aller-retour et tombe sans le correctif (*8octies*)
+- [x] revenir d'« Ambiances et couleurs » à « Inspiration » montre la toile, sans détour par la grille
+- [x] un essai fait l'aller-retour et tombe sans le correctif (*8octies*)
+
+**Fait le 24 septembre 2026.** La cause : `useCrans` (`Toile.tsx`) ne remesurait qu'au montage,
+au redimensionnement et au changement de `vue` — jamais au retour d'un côté qui démonte la
+grille de la réserve sans toucher `vue` (« Ambiances et couleurs » démonte tout le bloc
+Inspiration, réserve comprise). Le `ref` remonté ne change pas d'identité, donc rien dans les
+dépendances de l'effet ne le signalait. Correctif : un quatrième paramètre `actif` (vrai sur
+`cote === "inspiration"`), ajouté aux dépendances de l'effet, qui force la remesure au retour.
+**8octies vérifié en direct** : un essai d'écran (`App.test.tsx`) qui clique les deux onglets
+passe même sans le correctif — `<Toile>` se démonte et remonte en entier avec l'onglet et reçoit
+tout de suite la dernière valeur non nulle de `crans` que l'écran parent (lui, ne démonte pas)
+n'a jamais reperdue ; le défaut ne se voit que sur la valeur de la mesure elle-même, jamais sur
+ce qu'un écran en affiche après coup. L'essai qui porte le défaut est donc
+`interface/src/composants/useCrans.test.tsx`, sur le crochet directement, avec une grille
+doublée (comme `doublerLaGrille` dans `App.test.tsx`) : il tombe si on retire le paramètre
+`actif`, confirmé en défaisant le correctif à la main. Non vérifié au navigateur : `AGENTS.md`
+interdit de construire `interface/dist` dans ce worktree.
 
 ### TS14 · La barre « Fabriquer » se replie
 
