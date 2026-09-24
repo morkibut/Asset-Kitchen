@@ -771,6 +771,25 @@ autres).
 
 **Après** : TS19 (même texte envoyé, même écran de la planche).
 
+### TS21 · La Galerie sait faire d'une image la planche d'un sujet
+
+*Ajoutée le 24 septembre 2026, sur un retour de l'auteur* : il a refait une planche d'Elias et ne
+savait pas comment l'attribuer au personnage depuis la Galerie.
+
+**Aujourd'hui** : « C'est la référence » n'est proposé que sur la page du sujet, onglet *Images*,
+quand on ouvre la fiche d'une planche fabriquée par « Faire la planche des directions »
+(`ImagesDuSujet.tsx` passe `onChoisirLaPlanche` à `Fiche.tsx` ; la Galerie ne le passe pas).
+
+- [ ] la fiche d'une image dans la Galerie porte « En faire la planche de Elias » quand l'image est
+      rangée dans un sujet et qu'elle est une planche (une planche fabriquée, refaite, ou pliée par
+      directions) ; même route que la page du sujet (`choisir_la_planche`)
+- [ ] une image qui n'est pas une planche ne le propose pas ; une planche qui n'est rangée dans aucun
+      sujet dit d'abord de choisir le sujet (le menu « Sujet » de la fiche est juste au-dessus)
+- [ ] l'état se voit : « c'est la planche de Elias » quand elle l'est déjà
+- [ ] un essai d'écran dans la Galerie, qui tombe sans le correctif
+
+**Après** : TS19 et TS20 (même bouton, même fiche).
+
 ## Ce que ce plan ne couvre pas
 
 - Les autres poses (marche, attaque…) : elles partent de la planche choisie par les chemins qui
