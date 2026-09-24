@@ -1131,9 +1131,29 @@ ordinaire, et aucun `z-index` ne passe devant cette couche.
 
 ---
 
+## RV27 · « Relire avant l'envoi » : la colonne des images tient son texte
+
+*Ajoutée le 24 septembre 2026, sur un retour de l'auteur* : dans « Relire avant l'envoi », la colonne
+de droite est trop étroite et le texte en sort.
+
+**La cause, lue dans le code** : `Envoi.tsx` pose la colonne « Images envoyées » en largeur fixe
+(`grid-cols-[minmax(0,1fr)_300px]`) et les phrases qui décrivent chaque image, en police à chasse
+fixe, ne passent pas à la ligne : elles débordent, et la page gagne un défilement horizontal.
+
+### Critères d'acceptation
+
+- [ ] la colonne des images est assez large pour lire une vignette, son rôle et sa phrase sans
+      déborder, à 1920 px comme à 1280 px de large
+- [ ] les phrases longues passent à la ligne ; aucun défilement horizontal dans l'écran
+- [ ] « Consignes facultatives », dans la même colonne, suit la même règle
+- [ ] un essai d'écran vérifie que les phrases passent à la ligne (la classe ou le style qui le
+      permet), et il tombe sans le correctif
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21, RV22, RV23, RV24, RV25, RV26.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21, RV22, RV23, RV24, RV25, RV26, RV27.
 
 ### Ce qu'on livre
 
