@@ -14,6 +14,7 @@ import type { RGBAImage } from "../tuiles/moteur/types"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 import { CadreDialogue } from "./CadreDialogue"
 import { AvecCoupDeMain } from "./CoupDeMain"
+import { AvecDemande } from "./DemanderIci"
 
 /** Une matière du jeu : une image de la bibliothèque que le jeu a marquée comme matière (`RG6`). */
 /** `detouree` (RG8) : l'image a été découpée comme un personnage — « Mes matières » le signale, sa fiche la répare. */
@@ -825,8 +826,11 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
   const bloque = !dispo ? "Vérification de la disponibilité…" : !dispo.disponible ? dispo.manque.join(" · ") : !remplis ? manquant : ""
 
   return <div className="space-y-[14px]">
-    {/* Le coup de main (CM3) : une marque au bout de **chacun** des deux champs, et
-        chacun part seul — la proposition de l'un ne remplit jamais l'autre (TU12). */}
+    {/* Le coup de main : une marque au bout de **chacun** des deux champs (CM3), et
+        une touche, `Ctrl+/`, qui demande à propos de cette zone entière (CM4) —
+        deux gestes, deux métiers, un seul service en dessous. Chaque proposition
+        part seule — celle d'un champ ne remplit jamais l'autre (TU12). */}
+    <AvecDemande ecran="jeu-de-tuiles">
     <div>
       <AvecCoupDeMain champ="matiere" projet={projet} texte={pierre} onGarder={changerPierre}>
       <label className="flex flex-col gap-[4px] text-[13px] text-encre-controle">C’est fait de quoi ?
@@ -849,6 +853,7 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
         Comment cette matière est posée sur {nomCible(j, cible)} : dis le compte et la taille, « quatre grandes dalles, deux par deux ». Ce qui n’est pas écrit n’est pas deviné.
       </small>
     </div>
+    </AvecDemande>
     <div>
       <button type="button" className={LIEN} onClick={poserExemple}>{remplis || pierre.trim() || motif.trim() ? "Remplacer par un exemple" : "Remplir avec un exemple"}</button>
       <small className="ml-[8px] text-[12px] text-encre-3">Les deux champs à la fois, accordés au cadrage choisi.</small>

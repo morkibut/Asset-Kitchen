@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Le coup de main, côté écran — trois routes, et **aucune pour l'agent** (CM1, CM3).
+"""Le coup de main, côté écran — trois routes, et **aucune pour l'agent** (CM1, CM3, CM4).
 
 - `GET /api/assist` — la marque paraît-elle ? `disponible`, et sinon pourquoi.
 - `POST /api/assist/{metier}/preview` — **ce qui partirait, mot pour mot, sans
@@ -11,16 +11,30 @@
   fournisseur** : l'issue est dans le morceau de fin, et l'écran se tait
   (décision 6).
 
-Le corps : `{"texte", "projet"?, "champ"?}`. **La consigne vient du dépôt**
-(`CONSIGNES`), jamais de l'écran : l'atelier n'ouvre aucune discussion libre
-avec un modèle payé (décision 1). **Le contexte aussi** : l'écran nomme un champ
-de `CHAMPS`, et c'est le dépôt qui dit ce qu'il attend. Le projet ne sert qu'à
-trouver les noms du jeu que le texte contient (`noms_presents`). Les deux
-routes composent par **la même fonction** — ce que l'écran montre est ce qui
-part, puisque l'un est fait de l'autre.
+Le corps varie **selon le métier**, jamais selon l'écran qui l'envoie :
 
-Depuis CM3, un écran les appelle : le tiroir des matières des jeux de tuiles
-(`interface/src/composants/CoupDeMain.tsx`), sur ses deux champs.
+- `ameliorer` (CM3) : `{"texte", "projet"?, "champ"}` — le champ vient de
+  `CHAMPS`, obligatoire ;
+- `question` (CM4) : `{"texte", "ecran", "champ"?, "valeur"?, "blocage"?}` —
+  l'écran vient d'`ECRANS`, obligatoire ; le reste dit ce qu'on regardait au
+  moment de la question, et peut manquer (une question peut porter sur
+  l'écran seul).
+
+**La consigne vient du dépôt** (`CONSIGNES`), jamais de l'écran : l'atelier
+n'ouvre aucune discussion libre avec un modèle payé (décision 1). **Le
+contexte aussi** : l'écran ne nomme qu'une clé (`champ` ou `ecran`), et c'est
+le dépôt qui dit ce qu'elle veut dire — `composer` pour « améliorer »,
+`contexte_instant` pour « question » (`atelier/services/contexte_coup_de_main
+.py`), la même fonction que réutilisera CM5. Le projet ne sert qu'à trouver
+les noms du jeu que le texte contient (`noms_presents`), et seulement pour
+« améliorer ». Les deux formes composent par **la même fonction** `composer`
+— ce que l'écran montre dans « Voir ce qui part » est ce qui part, puisque
+l'un est fait de l'autre.
+
+Depuis CM3, un écran appelle « améliorer » : le tiroir des matières des jeux
+de tuiles (`interface/src/composants/CoupDeMain.tsx`), sur ses deux champs.
+Depuis CM4, le même écran appelle aussi « question », par
+`interface/src/composants/DemanderIci.tsx`.
 
 **Aucune de ces routes n'est un outil MCP, ni n'entre dans le cadre de l'agent**
 (décision 9, RP2) : elles ne sont montées que sous `/api`, et un essai le
@@ -39,12 +53,18 @@ from atelier.domaine.coup_de_main import (
     AMELIORER,
     CHAMPS,
     CONSIGNES,
+    ECRANS,
+    QUESTION,
     SIGNES_MAX,
     Envoi,
     composer,
     noms_presents,
 )
-from atelier.services.contexte_coup_de_main import fiche_du_produit, noms_du_jeu
+from atelier.services.contexte_coup_de_main import (
+    contexte_instant,
+    fiche_du_produit,
+    noms_du_jeu,
+)
 
 routeur = APIRouter()
 
@@ -52,9 +72,19 @@ routeur = APIRouter()
 #: modèle ne saurait pas ce que le champ attend, ni que l'autre champ existe.
 AVEC_CHAMP = {AMELIORER}
 
+#: Les métiers qui ne partent jamais sans nommer leur écran (CM4) : sans lui,
+#: « l'écran nomme, le serveur dit » n'a rien à dire.
+AVEC_ECRAN = {QUESTION}
+
 
 def _refus(statut: int, code: str, raison: str) -> JSONResponse:
     return JSONResponse(status_code=statut, content={"code": code, "raison": raison})
+
+
+def _texte(corps: dict, cle: str) -> str | None:
+    """Un champ de texte facultatif du corps — `None` s'il manque ou n'en est pas un."""
+    v = corps.get(cle)
+    return v if isinstance(v, str) and v.strip() else None
 
 
 async def _envoi(requete: Request, metier: str) -> Envoi | JSONResponse:
@@ -72,6 +102,22 @@ async def _envoi(requete: Request, metier: str) -> Envoi | JSONResponse:
         return _refus(422, "texte_absent", "il n'y a rien à envoyer")
     if len(texte) > SIGNES_MAX:
         return _refus(422, "texte_trop_long", f"le texte dépasse {SIGNES_MAX} signes")
+
+    if metier in AVEC_ECRAN:
+        # CM4 : l'écran remplace le champ comme façon de dire « où ça se passe ».
+        ecran = corps.get("ecran")
+        if ecran is None:
+            return _refus(422, "ecran_absent", "ce métier part avec l'écran où l'on est")
+        if ecran not in ECRANS:
+            return _refus(422, "ecran_inconnu", f"aucun écran « {ecran} »")
+        contexte = contexte_instant(
+            ecran,
+            champ=_texte(corps, "champ"),
+            valeur=_texte(corps, "valeur"),
+            blocage=_texte(corps, "blocage"),
+        )
+        return composer(consigne, fiche_du_produit(), texte, contexte=contexte)
+
     champ = corps.get("champ")
     if champ is not None and champ not in CHAMPS:
         return _refus(422, "champ_inconnu", f"aucun champ « {champ} »")

@@ -3660,6 +3660,19 @@ export const AIDE: Record<string, Explication> = {
       "« Intégrée » vient du fond du moteur, dessinée à la volée depuis la graine. « Mes matières » vient d'une image de la bibliothèque. « Vide » veut dire qu'une couleur provisoire tient la place. « Sur la carte seulement » ne sert que le sol de fond, qui n'entre dans aucune pièce fabriquée.",
   },
 
+  // CM4 (`docs/PLAN-assistant.md`) : la touche qui demande, posée sur cette même
+  // zone — au bout des deux champs juste au-dessus, pas un troisième champ à elle.
+  "jeu-de-tuiles.demander": {
+    nom: "Demander, là où on est",
+    ou: "jeu-de-tuiles",
+    groupe: "L'atelier — les matières",
+    quoi: "Ctrl+/ ouvre une ligne pour poser une question sur cet écran, sans quitter ce que tu écrivais.",
+    change: "Une réponse courte s'affiche en dessous ; Échap referme sans rien changer à ce qui était écrit.",
+    origine: "le coup de main · rien ne part sans ta question",
+    long:
+      "Hors sujet, ou si la fiche du produit ne dit rien qui réponde, le coup de main le dit plutôt que d'inventer. Il ne connaît que l'atelier, jamais le jeu que tu fabriques. Comme la marque « EN », il se tait s'il ne peut rien : sans clé ou plafond atteint, Ctrl+/ n'ouvre rien.",
+  },
+
   "jeu-de-tuiles.bordures-liees": {
     nom: "Bordure liée à sa surface",
     ou: "jeu-de-tuiles",
