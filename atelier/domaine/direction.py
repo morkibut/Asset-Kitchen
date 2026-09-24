@@ -164,6 +164,45 @@ def direction_au_miroir(identifiant: str | None) -> str | None:
     return _AU_MIROIR.get(identifiant or "")
 
 
+def paires_opposees(
+    directions: Iterable[str | None],
+) -> tuple[tuple[int, int], ...]:
+    """Les cases d'une planche qui se regardent **de part et d'autre** (TS19).
+
+    Deux directions forment une paire quand l'une est le miroir gauche-droite
+    de l'autre — est et ouest, gauche et droite, et leurs diagonales
+    (`_AU_MIROIR`). Ce sont exactement les deux vues qu'un modèle peut « tenir »
+    en retournant une image : *facing right* et *facing left* ne disent pas
+    que le personnage montre l'autre côté de son corps. Relevé sur la planche
+    d'Elias le 24 septembre 2026 — la trousse de soin changeait de hanche.
+
+    `sud` et `nord` se rendent eux-mêmes et ne font jamais une paire ; une
+    direction que le produit ne livre pas non plus — même idiome que
+    `direction_au_miroir`, *ce qu'on ne connaît pas ne produit rien*. Chaque
+    case n'entre que dans une paire, la première qu'elle rencontre ; les
+    indices sont ceux de l'ordre reçu, c'est-à-dire l'ordre de lecture de la
+    planche.
+
+    **Une seule règle pour les deux bouts** : le texte qui part la lit pour
+    écrire sa phrase, l'arrivée pour savoir quelles vues comparer.
+    """
+    liste = list(directions)
+    prises: set[int] = set()
+    paires: list[tuple[int, int]] = []
+    for i, une in enumerate(liste):
+        if i in prises or not une:
+            continue
+        opposee = direction_au_miroir(une)
+        if not opposee or opposee == une:
+            continue
+        for j in range(i + 1, len(liste)):
+            if j not in prises and liste[j] == opposee:
+                paires.append((i, j))
+                prises.update((i, j))
+                break
+    return tuple(paires)
+
+
 # ── Ce qu'une direction dit en tête d'une animation (18 septembre 2026) ──────
 #
 # **Relevé sur l'usage** : l'auteur écrivait à la main *The character is shown

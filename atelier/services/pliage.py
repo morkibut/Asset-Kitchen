@@ -47,6 +47,7 @@ import numpy as np
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
+from atelier.domaine.direction import paires_opposees
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Emplacement, Generation, Statut
 from atelier.domaine.planche import asset_de_planche
@@ -62,7 +63,7 @@ from atelier.domaine.pliage import (
 from atelier.domaine.recette import BORD, Passe, Recette
 from atelier.image import Boite, decouper, detourer, grille_fixe, mesurer, zones_opaques
 from atelier.image.decoupe import MARGE
-from atelier.image.pliage import gabarit, mesurer_lot
+from atelier.image.pliage import gabarit, mesurer_lot, vues_en_miroir
 from atelier.services.assets import ServiceAssets
 from atelier.services.bibliotheque import ServiceBibliotheque
 from atelier.services.evenements import Diffusion
@@ -268,7 +269,10 @@ def _creer(pliage: Pliage) -> str:
         f"sprite the same height, each one aligned the same way inside its cell. "
         f"The cells, in reading order, show: {liste}. "
         f"It must be the same subject in every cell: same colors, same outfit, same "
-        f"proportions, same size, same style. Plain flat light gray background, no cell "
+        f"proportions, same size, same style. "
+        # **Deux vues opposées, et pas un miroir** (TS19) — vide sans paire.
+        f"{phrase_des_cotes(pliage.cases)}"
+        f"Plain flat light gray background, no cell "
         f"borders, no grid lines, no text, no numbers, no frames, no ground shadow."
     )
     # **La consigne du gabarit dit deux choses, et la seconde est la piégeuse.**
@@ -283,6 +287,40 @@ def _creer(pliage: Pliage) -> str:
         f"one sprite inside each cell, keeping the cells at their positions and sizes. "
         f"Do NOT draw the cell outlines in your image — the background must stay one "
         f"plain flat light gray, with no visible cell borders and no separating lines."
+    )
+
+
+def phrase_des_cotes(cases: Sequence[CasePliee]) -> str:
+    """Ce que la planche dit de deux vues opposées — **l'autre côté, pas un
+    miroir** (TS19). Vide quand elle n'en porte aucune paire.
+
+    *Relevé le 24 septembre 2026 sur la planche d'Elias* : ses deux profils
+    étaient la même image retournée — la trousse de soin, le fusil et le sac
+    changeaient de côté avec lui. « facing right » et « facing left » ne disent
+    rien de plus que l'orientation, et **retourner l'image est la façon la plus
+    simple de tenir ces deux phrases**.
+
+    La phrase est courte et concrète, parce qu'un modèle d'image lit mal une
+    négation abstraite : elle nomme les cases, dit ce qui ne bouge pas (ce qui
+    est d'un côté du corps y reste), et le montre sur un objet — une sacoche sur
+    la hanche gauche se voit d'un profil et se cache de l'autre. Elle ne touche
+    pas au personnage à reproduire (*TS3*) : elle précise ce que « le même
+    personnage » veut dire quand on en fait le tour.
+
+    Les paires viennent de `paires_opposees` — est et ouest, gauche et droite,
+    et leurs diagonales —, la même règle que la mesure d'arrivée
+    (`vues_en_miroir`). Une case se nomme par son rang de lecture, comme dans la
+    liste juste au-dessus.
+    """
+    paires = paires_opposees(c.direction for c in cases)
+    if not paires:
+        return ""
+    nommees = ", and cells ".join(f"{i + 1} and {j + 1}" for i, j in paires)
+    verbe = "each show" if len(paires) > 1 else "show"
+    return (
+        f"Cells {nommees} {verbe} the same subject from opposite sides, not a "
+        f"mirrored copy: anything on one side of its body stays on that side — a "
+        f"pouch on its left hip shows in one view and is hidden in the other. "
     )
 
 
@@ -472,6 +510,12 @@ class ServicePliage:
             raise CompteFaux(_compte(len(gardees), pliage.nombre))
 
         boites = [toutes[index] for index in gardees]
+        # **Deux vues opposées qui ne sont qu'un miroir** (TS19) : mesuré ici,
+        # sur les vues qui entrent, dans l'ordre de leurs cases. Un signal —
+        # la planche entre quand même, et l'écran le dit.
+        pliage.miroirs = vues_en_miroir(
+            rgba, boites, [case.direction for case in pliage.cases]
+        )
         # **Les mesures des images qui entrent se reprennent sur elles seules**,
         # jamais sur celles du regard d'avant. La ressemblance est *« le plus
         # fort recouvrement avec une autre case du lot »*, et le lot est

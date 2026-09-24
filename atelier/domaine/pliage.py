@@ -456,6 +456,14 @@ class Pliage:
     mesures: tuple[MesuresLot, ...] = ()
     ecartees: tuple[int, ...] | None = None
 
+    # **Les vues opposées qui ne sont qu'un miroir** (TS19) — des paires de
+    # cases, dans l'ordre de lecture. Un fait sur l'arrivée, comme `mesures` :
+    # mesuré une fois, au dépliage, et relu tel quel. Un signal, jamais un
+    # refus : la planche entre, et l'écran dit « ces deux vues sont un
+    # miroir ». Vide pour une planche d'avant TS19 — personne ne l'avait
+    # mesurée, et rien ne l'invente pour elle.
+    miroirs: tuple[tuple[int, int], ...] = ()
+
     # ── La grille sur laquelle la planche a été demandée (P1) ────────────────
     #
     # **Écrite à la naissance du pliage**, c'est-à-dire quand la demande pliée
@@ -653,6 +661,8 @@ class Pliage:
         # déplié, garde exactement la forme de fichier qu'il avait.
         if self.depliages:
             contenu["depliages"] = [dep.en_json() for dep in self.depliages]
+        if self.miroirs:
+            contenu["miroirs"] = [list(paire) for paire in self.miroirs]
         return contenu
 
     @staticmethod
@@ -690,6 +700,11 @@ class Pliage:
                 dep
                 for dep in (Depliage.depuis_json(x) for x in d.get("depliages") or ())
                 if dep is not None
+            ),
+            miroirs=tuple(
+                (int(p[0]), int(p[1]))
+                for p in d.get("miroirs") or ()
+                if isinstance(p, (list, tuple)) and len(p) == 2
             ),
         )
 

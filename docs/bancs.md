@@ -164,6 +164,26 @@ py essais/monter_bande_video.py      les huit images d'un cycle figé dans le ra
 py essais/verdict_essais.py          les six relevés `essais/notes-<essai>.json` relus, et
                                      chaque règle du cahier appliquée telle qu'écrite —
                                      gratuit, ne conclut rien au-delà
+
+py essais/banc_miroir_ts19.py preparer --sujet elias
+                                     TS19 — la planche des directions sort-elle encore en
+                                     miroir ? `preparer` est GRATUIT : il copie le jeu du
+                                     sujet dans un dossier temporaire et montre les deux
+                                     textes (sans et avec la phrase « the same subject from
+                                     opposite sides, not a mirrored copy ») et le prix.
+                                     `payer --sujet elias` : BANC PAYANT, seize appels —
+                                     huit par phrase, alternés — sur
+                                     `OpenRouter:openai/gpt-image-2.5-sunburst`. Prix
+                                     annoncé : **environ $0,80** (un appel ≈ $0,05, relevé
+                                     sur les deux planches d'Elias du 24 septembre 2026 :
+                                     $0,031 et $0,071, donc entre $0,50 et $1,15). Il
+                                     annonce le prix du jour et attend « oui » ; plafond
+                                     $1,50 (`--plafond`). Se lance depuis le dépôt
+                                     principal (il lit `donnees/`) ; l'atelier de l'auteur
+                                     n'est pas touché. Il relève le signal « ces deux vues
+                                     sont un miroir » et l'écart de chaque paire ; le
+                                     verdict se fait à l'œil. Sortie :
+                                     `essais/resultats/miroir-ts19/`
 ```
 
 Les six essais et leur cahier vivent dans `revue-externe-2026-09-02/cahier-des-essais.md`,

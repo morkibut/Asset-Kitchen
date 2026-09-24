@@ -2084,6 +2084,13 @@ export type Pliage = {
   /** La planche est là, quelque chose cloche, et personne n'a tranché. Rien
    *  n'est entré en bibliothèque tant que c'est vrai. */
   attend_un_choix: boolean
+  /** Les cases demandées, dans l'ordre de lecture — ici, seulement leur
+   *  direction. */
+  cases?: { direction?: string | null }[]
+  /** **Les vues opposées qui ne sont qu'un miroir** (TS19) : des paires de
+   *  cases, mesurées à l'arrivée. Absent quand il n'y en a aucune, et sur une
+   *  planche d'avant TS19. */
+  miroirs?: [number, number][]
 }
 
 /** Ce que la différence a lu d'un calque (C3, US-147).

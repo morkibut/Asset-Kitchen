@@ -519,4 +519,48 @@ describe("la fiche — « C'est la référence » (TS3)", () => {
 
     expect(await screen.findByText("image d'un autre sujet")).toBeInTheDocument()
   })
+
+  // ── TS19 : deux vues opposées qui ne sont qu'un miroir ──────────────────
+  const PLIAGE = {
+    nombre: 2,
+    colonnes: 2,
+    lignes: 1,
+    refus: null,
+    trouvees: 2,
+    mesures: [],
+    ecartees: null,
+    surplus: 0,
+    pleines: [],
+    attend_un_choix: false,
+    cases: [{ direction: "droite" }, { direction: "gauche" }],
+  }
+
+  test("une planche en miroir le dit, avec ses deux directions, au-dessus de « C'est la référence »", async () => {
+    vi.spyOn(api, "generation").mockResolvedValue({
+      ...GENERATION_PLANCHE,
+      pliage: { ...PLIAGE, miroirs: [[0, 1]] },
+    } as unknown as Generation)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+    const { container } = monter({ onChoisirLaPlanche: () => {} })
+
+    expect(await screen.findByText("Ces deux vues sont un miroir")).toBeInTheDocument()
+    const signal = container.querySelector("[data-vues-en-miroir]")
+    expect(signal?.textContent).toContain("droite et gauche")
+    // Avant le bouton, dans l'ordre du document : c'est avant de la choisir
+    // qu'il faut le savoir.
+    const bouton = screen.getByRole("button", { name: "C'est la référence" })
+    expect(signal!.compareDocumentPosition(bouton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  test("une planche qui montre l'autre côté ne dit rien", async () => {
+    vi.spyOn(api, "generation").mockResolvedValue({
+      ...GENERATION_PLANCHE,
+      pliage: PLIAGE,
+    } as unknown as Generation)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+    const { container } = monter({ onChoisirLaPlanche: () => {} })
+
+    await screen.findByRole("button", { name: "C'est la référence" })
+    expect(container.querySelector("[data-vues-en-miroir]")).toBeNull()
+  })
 })

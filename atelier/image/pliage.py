@@ -20,11 +20,20 @@ import itertools
 import numpy as np
 from PIL import Image, ImageDraw
 
+from atelier.domaine.direction import paires_opposees
 from atelier.domaine.pliage import Geometrie, MesuresLot
 from atelier.image.decoupe import Boite
 from atelier.image.traitement import retrouver_grille
 
-__all__ = ["COTE", "cote_de_case", "gabarit", "mesurer_lot"]
+__all__ = [
+    "COTE",
+    "SEUIL_MIROIR",
+    "cote_de_case",
+    "ecart_au_miroir",
+    "gabarit",
+    "mesurer_lot",
+    "vues_en_miroir",
+]
 
 
 # Le côté du gabarit, en pixels. 1024 — le format sur lequel l'essai du 28 août
@@ -184,6 +193,114 @@ def mesurer_lot(rgba: np.ndarray, boites: list[Boite]) -> list[MesuresLot]:
         )
         for index in range(len(crops))
     ]
+
+
+# ── Deux vues opposées qui ne sont qu'un miroir (TS19) ───────────────────────
+#
+# **Ce que la mesure sépare, en une phrase** (AGENTS.md, 8sexies) : une vue qui
+# n'est que l'autre retournée — chaque couleur retombe à sa place une fois
+# l'image retournée — d'une vue qui montre vraiment l'autre côté du corps, où
+# ce qui est porté d'un seul côté disparaît ou change de place et laisse des
+# couleurs qui ne se superposent plus.
+#
+# Le côté du carré de comparaison. Petit exprès : un modèle qui retourne son
+# image la **redessine** quand même, à un ou deux pixels près — vu sur les
+# planches d'Elias —, et c'est la place des masses de couleur qui compte, pas
+# le trait.
+COTE_MIROIR = 32
+
+# **Au-dessous, les deux vues sont un miroir.** Choisi sur les exemples
+# fabriqués de `tests/test_ts19.py` — un miroir redessiné (décalé de trois
+# pixels, bruité) mesure 0,005 ; l'autre côté du même voyageur, de silhouette
+# *identique* et qui ne diffère que par la sacoche cachée et la gourde vue,
+# 0,059 —, puis relu sans rien payer sur les planches d'Elias du disque de
+# l'auteur (24 septembre 2026) : les deux faites par `gpt-image-2.5`, en miroir
+# à l'œil, mesurent 0,016 et 0,020. **Ce qu'il ne voit pas** : la planche faite
+# en local, un miroir *redessiné* où le fusil a raccourci et la gourde disparu,
+# mesure 0,34 — elle n'est pas « presque identique », et elle passe. Un
+# signal, jamais un refus : il ne retient rien, il fait regarder.
+SEUIL_MIROIR = 0.035
+
+
+def ecart_au_miroir(une: np.ndarray, autre: np.ndarray) -> float:
+    """Ce qui distingue `une` de `autre` retournée, entre 0 et 1.
+
+    Chaque vue est recadrée sur son sujet (l'alpha du détourage), mise à la
+    même taille, puis l'une est retournée de gauche à droite. Sur la réunion
+    des deux silhouettes, un pixel opaque d'un côté et vide de l'autre compte
+    pour 1 ; un pixel opaque des deux côtés compte l'écart de ses couleurs.
+    **Zéro : un miroir parfait.** Pur, déterministe, sans tirage.
+    """
+    a = _vue_carree(une)
+    b = _vue_carree(autre)
+    if a is None or b is None:
+        return 1.0
+    b = b[:, ::-1]
+    pa = a[:, :, 3] >= OPACITE
+    pb = b[:, :, 3] >= OPACITE
+    union = pa | pb
+    if not union.any():  # pragma: no cover — deux vues trouvées ont un sujet
+        return 1.0
+    couleur = np.abs(a[:, :, :3] - b[:, :, :3]).mean(axis=2) / 255.0
+    ecart = np.where(pa & pb, couleur, 1.0)
+    return round(float(ecart[union].mean()), 4)
+
+
+def vues_en_miroir(
+    rgba: np.ndarray,
+    boites: list[Boite],
+    directions: list[str | None],
+) -> tuple[tuple[int, int], ...]:
+    """Les paires de cases opposées qui ne sont que le miroir l'une de l'autre.
+
+    `boites` et `directions` sont alignées dans l'ordre des cases. Seules les
+    paires que `paires_opposees` reconnaît sont comparées — est et ouest,
+    gauche et droite, et leurs diagonales : le sud et le nord d'un même
+    personnage ne se ressemblent pas en miroir, et deux vues sans direction ne
+    disent pas ce qu'elles devraient montrer.
+    """
+    rendues: list[tuple[int, int]] = []
+    for i, j in paires_opposees(directions[: len(boites)]):
+        if ecart_au_miroir(_dans(rgba, boites[i]), _dans(rgba, boites[j])) < SEUIL_MIROIR:
+            rendues.append((i, j))
+    return tuple(rendues)
+
+
+def _dans(rgba: np.ndarray, boite: Boite) -> np.ndarray:
+    x0, y0, x1, y1 = boite
+    return rgba[y0 : y1 + 1, x0 : x1 + 1]
+
+
+def _vue_carree(vue: np.ndarray) -> np.ndarray | None:
+    """Le sujet seul, recadré sur son alpha et réduit au carré de comparaison.
+
+    Les couleurs sont **prémultipliées** avant la réduction, canal par canal :
+    un pixel transparent garde la couleur du fond d'où il a été détouré, et la
+    moyenne d'une réduction la ferait baver sur le contour du sujet.
+    """
+    opaque = vue[:, :, 3] >= OPACITE
+    if not opaque.any():
+        return None
+    lignes = np.flatnonzero(opaque.any(axis=1))
+    colonnes = np.flatnonzero(opaque.any(axis=0))
+    coupe = vue[lignes[0] : lignes[-1] + 1, colonnes[0] : colonnes[-1] + 1].astype(
+        np.float32
+    )
+    alpha = coupe[:, :, 3] / 255.0
+    canaux = [coupe[:, :, c] * alpha for c in range(3)] + [coupe[:, :, 3]]
+    reduits = [
+        np.asarray(
+            Image.fromarray(np.ascontiguousarray(canal), "F").resize(
+                (COTE_MIROIR, COTE_MIROIR), Image.Resampling.BOX
+            ),
+            dtype=np.float64,
+        )
+        for canal in canaux
+    ]
+    a = reduits[3] / 255.0
+    with np.errstate(divide="ignore", invalid="ignore"):
+        rgb = [np.where(a > 0, r / a, 0.0) for r in reduits[:3]]
+    return np.stack(rgb + [reduits[3]], axis=2)
 
 
 # ── Le dedans ────────────────────────────────────────────────────────────────
