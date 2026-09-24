@@ -18,23 +18,31 @@ Le corps varie **selon le métier**, jamais selon l'écran qui l'envoie :
 - `question` (CM4) : `{"texte", "ecran", "champ"?, "valeur"?, "blocage"?}` —
   l'écran vient d'`ECRANS`, obligatoire ; le reste dit ce qu'on regardait au
   moment de la question, et peut manquer (une question peut porter sur
-  l'écran seul).
+  l'écran seul) ;
+- `blocage` (CM5) : `{"texte", "ecran", "champ"?, "blocage"}` — l'écran vient
+  d'`ECRANS`, la raison courte déjà affichée (`blocage`) sont les deux
+  obligatoires : sans elle, il n'y a rien à développer. `texte` porte la même
+  raison — c'est elle, encadrée, que la consigne développe.
 
 **La consigne vient du dépôt** (`CONSIGNES`), jamais de l'écran : l'atelier
 n'ouvre aucune discussion libre avec un modèle payé (décision 1). **Le
 contexte aussi** : l'écran ne nomme qu'une clé (`champ` ou `ecran`), et c'est
 le dépôt qui dit ce qu'elle veut dire — `composer` pour « améliorer »,
-`contexte_instant` pour « question » (`atelier/services/contexte_coup_de_main
-.py`), la même fonction que réutilisera CM5. Le projet ne sert qu'à trouver
-les noms du jeu que le texte contient (`noms_presents`), et seulement pour
-« améliorer ». Les deux formes composent par **la même fonction** `composer`
-— ce que l'écran montre dans « Voir ce qui part » est ce qui part, puisque
-l'un est fait de l'autre.
+`contexte_instant` pour « question » et pour « blocage »
+(`atelier/services/contexte_coup_de_main.py`), la même fonction pour les
+deux, `blocage` rempli cette fois pour le second. Le projet ne sert qu'à
+trouver les noms du jeu que le texte contient (`noms_presents`), et
+seulement pour « améliorer ». Les trois formes composent par **la même
+fonction** `composer` — ce que l'écran montre dans « Voir ce qui part » est
+ce qui part, puisque l'un est fait de l'autre.
 
 Depuis CM3, un écran appelle « améliorer » : le tiroir des matières des jeux
 de tuiles (`interface/src/composants/CoupDeMain.tsx`), sur ses deux champs.
 Depuis CM4, le même écran appelle aussi « question », par
-`interface/src/composants/DemanderIci.tsx`.
+`interface/src/composants/DemanderIci.tsx`. Depuis CM5, « blocage » est
+appelé par la petite marque posée à côté d'une raison de blocage
+(`interface/src/composants/pieces.tsx`, `Raison`) — aujourd'hui sur l'écran
+*Relire avant l'envoi* seulement.
 
 **Aucune de ces routes n'est un outil MCP, ni n'entre dans le cadre de l'agent**
 (décision 9, RP2) : elles ne sont montées que sous `/api`, et un essai le
@@ -51,6 +59,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from atelier.domaine.coup_de_main import (
     AMELIORER,
+    BLOCAGE,
     CHAMPS,
     CONSIGNES,
     ECRANS,
@@ -72,9 +81,14 @@ routeur = APIRouter()
 #: modèle ne saurait pas ce que le champ attend, ni que l'autre champ existe.
 AVEC_CHAMP = {AMELIORER}
 
-#: Les métiers qui ne partent jamais sans nommer leur écran (CM4) : sans lui,
-#: « l'écran nomme, le serveur dit » n'a rien à dire.
-AVEC_ECRAN = {QUESTION}
+#: Les métiers qui ne partent jamais sans nommer leur écran (CM4, CM5) : sans
+#: lui, « l'écran nomme, le serveur dit » n'a rien à dire.
+AVEC_ECRAN = {QUESTION, BLOCAGE}
+
+#: CM5 — le seul métier qui ne part jamais sans la raison courte à
+#: développer : sans elle, il n'y a rien à expliquer, et rien ne distingue un
+#: appel de « blocage » d'un appel de « question » sur l'écran seul.
+AVEC_BLOCAGE = {BLOCAGE}
 
 
 def _refus(statut: int, code: str, raison: str) -> JSONResponse:
@@ -110,11 +124,15 @@ async def _envoi(requete: Request, metier: str) -> Envoi | JSONResponse:
             return _refus(422, "ecran_absent", "ce métier part avec l'écran où l'on est")
         if ecran not in ECRANS:
             return _refus(422, "ecran_inconnu", f"aucun écran « {ecran} »")
+        blocage = _texte(corps, "blocage")
+        if metier in AVEC_BLOCAGE and blocage is None:
+            # CM5 : sans raison courte, il n'y a rien à développer.
+            return _refus(422, "blocage_absent", "ce métier part avec la raison à développer")
         contexte = contexte_instant(
             ecran,
             champ=_texte(corps, "champ"),
             valeur=_texte(corps, "valeur"),
-            blocage=_texte(corps, "blocage"),
+            blocage=blocage,
         )
         return composer(consigne, fiche_du_produit(), texte, contexte=contexte)
 
