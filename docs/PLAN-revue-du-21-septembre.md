@@ -1064,9 +1064,54 @@ vérifié à la lecture, aucun marqueur n'y était donc nécessaire.
 
 ---
 
+## RV24 · La table « Couleurs » montre les couleurs de l'image
+
+*Ajoutée le 24 septembre 2026, sur un retour de l'auteur en retouchant un bus* : « dans la grille
+des couleurs affichée, il n'y a pas le vert que je vois sur l'image ».
+
+**La cause, lue dans le code** : les pastilles de « couleurs gardées » et de « celle qui part /
+celle qui vient » (`Retouche.tsx`, `CouleursGardees` et `TableDEchange`) montrent **la palette du
+jeu** (`univers.palette`), jamais les couleurs de l'image qu'on retouche. Une couleur présente dans
+l'image mais absente de la palette du jeu ne se choisit donc pas au clic, alors que c'est justement
+celle qu'on veut garder ou remplacer.
+
+### Critères d'acceptation
+
+- [ ] les pastilles proposent d'abord **les couleurs de l'image telle qu'elle sort de la
+      réduction**, puis la palette du jeu, sous deux petits titres qui disent laquelle est laquelle
+- [ ] « celle qui part » se choisit aussi **à la pipette, en cliquant dans l'image**, comme la
+      couleur à retirer d'un détourage
+- [ ] les couleurs de l'image viennent du serveur, qui les calcule déjà
+      (`couleurs_obtenues`, `atelier/image/palette.py`), pas d'une lecture de pixels dans le navigateur
+- [ ] un essai retouche une image qui porte une couleur hors de la palette du jeu, et la trouve
+      dans les pastilles ; il tombe sans le correctif (*8octies*)
+
+## RV25 · Le fond enfermé dans le sujet se voit, et s'enlève
+
+*Même retour, même image.* Le vert vif vu dans les vitres du bus est **le fond vert de l'image
+brute**, vu à travers les vitres. Le détourage « bord » n'enlève que le fond **relié au bord de
+l'image** (`detourer_bord`, `atelier/image/traitement.py`) : c'est voulu, pour garder le blanc
+d'un os ou le reflet d'une fiole. Mais une poche de fond enfermée par le sujet reste alors
+opaque, et rien ne le dit. Le moyen de l'enlever existe déjà : une passe « couleur », en cliquant
+le vert, avec « Où retirer : partout ». Il n'est simplement proposé nulle part.
+
+### Critères d'acceptation
+
+- [ ] après un détourage par le bord, quand des pixels de la couleur du fond restent opaques à
+      l'intérieur du sujet, la table le dit en une phrase (« des morceaux du fond restent dans le
+      sujet : 3 zones ») et propose « les retirer aussi »
+- [ ] ce bouton ajoute la passe « couleur » déjà existante (couleur du fond visée, « partout »),
+      sans nouveau moteur ; elle s'annule comme toute passe
+- [ ] un sujet qui porte légitimement une couleur proche du fond n'est jamais retouché sans ce
+      clic : la phrase propose, elle n'agit pas
+- [ ] le compte des poches se fait côté serveur, de façon déterministe, et un essai le vérifie sur
+      une image qui a une poche enfermée et sur une qui n'en a pas
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21, RV22, RV23.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21, RV22, RV23, RV24, RV25.
 
 ### Ce qu'on livre
 
