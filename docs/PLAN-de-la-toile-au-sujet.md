@@ -965,15 +965,37 @@ savait pas comment l'attribuer au personnage depuis la Galerie.
 quand on ouvre la fiche d'une planche fabriquée par « Faire la planche des directions »
 (`ImagesDuSujet.tsx` passe `onChoisirLaPlanche` à `Fiche.tsx` ; la Galerie ne le passe pas).
 
-- [ ] la fiche d'une image dans la Galerie porte « En faire la planche de Elias » quand l'image est
+- [x] la fiche d'une image dans la Galerie porte « En faire la planche de Elias » quand l'image est
       rangée dans un sujet et qu'elle est une planche (une planche fabriquée, refaite, ou pliée par
       directions) ; même route que la page du sujet (`choisir_la_planche`)
-- [ ] une image qui n'est pas une planche ne le propose pas ; une planche qui n'est rangée dans aucun
+- [x] une image qui n'est pas une planche ne le propose pas ; une planche qui n'est rangée dans aucun
       sujet dit d'abord de choisir le sujet (le menu « Sujet » de la fiche est juste au-dessus)
-- [ ] l'état se voit : « c'est la planche de Elias » quand elle l'est déjà
-- [ ] un essai d'écran dans la Galerie, qui tombe sans le correctif
+- [x] l'état se voit : « c'est la planche de Elias » quand elle l'est déjà
+- [x] un essai d'écran dans la Galerie, qui tombe sans le correctif
 
 **Après** : TS19 et TS20 (même bouton, même fiche).
+
+*Fait le 24 septembre 2026.* **Une seule condition élargie, partagée par les deux appelants.**
+`estUnePlanche(asset, generation)` (`Fiche.tsx`) reconnaît les trois cas — `demande.premiere_planche`
+(TS3), `demande.garder_mise_en_page` (RS2, `est_une_planche_refaite`), ou `generation.pliage` (C2/G16,
+tout lot plié) — et exclut un morceau découpé (`asset.planche` le dit). La page du sujet ne passait
+jusqu'ici que le premier cas ; l'élargir ne change rien pour elle, elle ne montrait jamais les deux
+autres faute de les tester. **Un nouveau prop, `nomDuSujetPourPlanche`**, distingue les deux
+appelants sans dupliquer le bloc : absent sur la page du sujet (le texte générique « C'est la
+référence » ne bouge pas, tous les essais existants passent sans y toucher), posé par la Galerie
+(même vide) pour nommer le sujet — « En faire la planche de Elias » — et faire paraître la phrase
+« Choisis d'abord son sujet, dans le menu « Sujet » ci-dessus. » sur une planche encore sans sujet.
+La Galerie ne connaît pas le sujet d'une image ouverte à l'avance (contrairement à la page d'un
+sujet) : `useGalerie` relit `api.referencesDeLaChose` dès qu'une image rangée s'ouvre, pour savoir si
+elle **est déjà** la planche promue, et appelle `api.choisirLaPlanche` au clic — la même route,
+la même réponse relue. `USAGE_PLANCHE` est exporté d'`ImagesDuSujet.tsx` plutôt que redéfini, pour
+que les deux écrans parlent du même usage. Le signal TS19 (« ces deux vues sont un miroir ») était
+déjà inconditionnel dans `Fiche.tsx` : rien à faire pour qu'il paraisse aussi dans la Galerie.
+**Non vu au navigateur** — vérifié par les essais (`Fiche.test.tsx`, `Galerie.test.tsx`), pas par un
+clic réel : la Galerie mockée du fichier d'essai n'ouvre pas de fiche par un clic de tuile (`Tuile`
+y est doublée sans geste), donc la preuve à l'écran vit sur `<Fiche>` monté seul avec
+`nomDuSujetPourPlanche`, et le branchement de la Galerie (`useGalerie().choisirLaPlanche`,
+`referencesDuSujetOuvert`) est prouvé séparément, au niveau du crochet.
 
 ## Ce que ce plan ne couvre pas
 

@@ -28,6 +28,7 @@ import {
   poserLeFichier,
   vueRestreint,
   JUGEMENTS,
+  Refus,
   ROLES_DE_GALERIE,
   TRIS_DE_GALERIE,
   VUE_PAR_DEFAUT,
@@ -39,6 +40,7 @@ import {
   type GroupeDeGalerie,
   type VueDeLaGalerie,
   type Personnage,
+  type ReferencesDeLaChose,
   type Univers,
   type Pose,
   type Reinjection,
@@ -57,6 +59,7 @@ import { EcranMontage } from "./Montage"
 import { Fiche } from "./Fiche"
 import { FicheDuClip } from "./FicheDuClip"
 import { GalerieMedias } from "./GalerieMedias"
+import { USAGE_PLANCHE } from "./ImagesDuSujet"
 import type { Racine } from "../lieux"
 import type { Table } from "../recette"
 import type { Fente } from "./EnTeteDeSurface"
@@ -1142,6 +1145,33 @@ export function useGalerie({
     }
   }
 
+  // ── « En faire la planche de… » (TS21) ────────────────────────────────────
+  //
+  // **Le même geste que la page du sujet** (`choisirLaPlanche`,
+  // `ImagesDuSujet.tsx`), sur la fiche de la Galerie : elle ne connaît pas
+  // d'avance le sujet de l'image ouverte, contrairement à la page d'un sujet,
+  // donc elle relit ses usages promus dès que la fiche s'ouvre sur une image
+  // rangée — c'est le seul moyen de savoir si celle-ci **est déjà** sa
+  // planche.
+  const [referencesDuSujetOuvert, setReferencesDuSujetOuvert] =
+    useState<ReferencesDeLaChose | null>(null)
+  const [erreursPlanche, setErreursPlanche] = useState<Record<string, string>>({})
+
+  const choisirLaPlanche = async (asset: Asset) => {
+    if (!asset.personnage) return
+    setErreursPlanche((e) => {
+      const { [asset.identifiant]: _ignore, ...reste } = e
+      return reste
+    })
+    try {
+      const rendu = await api.choisirLaPlanche(asset.personnage, asset.identifiant)
+      setReferencesDuSujetOuvert(rendu.references)
+    } catch (erreur) {
+      const message = erreur instanceof Refus ? erreur.message : "la référence a été refusée"
+      setErreursPlanche((e) => ({ ...e, [asset.identifiant]: message }))
+    }
+  }
+
   const ranger = async (rangement: {
     projet?: string | null
     collection?: string | null
@@ -1165,6 +1195,31 @@ export function useGalerie({
   ].join(" ")
 
   const ouverte = fiche ? grille.find((a) => a.identifiant === fiche) : undefined
+
+  /** **Ses usages promus**, relus à chaque sujet ouvert (TS21) — le même appel
+   *  que `ImagesDuSujet.tsx`, ici parce que la Galerie change de sujet à
+   *  chaque fiche, contrairement à la page d'un sujet qui n'en connaît qu'un.
+   *  Absent (et la question ne se pose pas) tant que l'image ouverte n'a pas
+   *  de sujet. */
+  useEffect(() => {
+    const personnage = ouverte?.personnage
+    if (!personnage) {
+      setReferencesDuSujetOuvert(null)
+      return
+    }
+    let vivant = true
+    void api
+      .referencesDeLaChose(personnage)
+      .then((recu) => {
+        if (vivant) setReferencesDuSujetOuvert(recu ?? null)
+      })
+      .catch(() => {
+        if (vivant) setReferencesDuSujetOuvert(null)
+      })
+    return () => {
+      vivant = false
+    }
+  }, [ouverte?.personnage])
 
   /** **Le clip dont la fiche est ouverte**, relu dans ce que la galerie tient
    *  déjà — jamais un aller-retour pour ouvrir : la fiche se bâtit de ce qui
@@ -1212,12 +1267,14 @@ export function useGalerie({
     annulation,
     annuler,
     chargerLaSuiteGrille,
+    choisirLaPlanche,
     clipEnFiche,
     clips: clipsDuJeu,
     colonnes,
     depliage,
     entree,
     entrees,
+    erreursPlanche,
     exportEnCours,
     exporter,
     famille,
@@ -1231,6 +1288,7 @@ export function useGalerie({
     mesurerCentre,
     ouverte,
     ouvrir,
+    referencesDuSujetOuvert,
     plancheAChoisir,
     plancheAConfirmer,
     setPlancheAConfirmer,
@@ -1318,11 +1376,13 @@ export function Galerie({
     annuler,
     centre,
     chargerLaSuiteGrille,
+    choisirLaPlanche,
     clipEnFiche,
     clips,
     colonnes,
     entree,
     entrees,
+    erreursPlanche,
     exportEnCours,
     exporter,
     famille,
@@ -1335,6 +1395,7 @@ export function Galerie({
     mesurerCentre,
     ouverte,
     ouvrir,
+    referencesDuSujetOuvert,
     plancheAChoisir,
     plancheAConfirmer,
     setPlancheAConfirmer,
@@ -1646,6 +1707,20 @@ export function Galerie({
               // P1c (V3.5) : refaire ou supprimer un découpage change ce que
               // la grille montre.
               onDecoupageChange={() => void relireGrille()}
+              // **« En faire la planche de… »** (TS21) — le retour de
+              // l'auteur qui avait refait une planche d'Elias sans savoir
+              // comment l'attribuer depuis ici. `nomDuSujetPourPlanche` est
+              // posé même vide (`""`), ce qui distingue cet appel de celui de
+              // la page du sujet et déclenche la phrase « choisis d'abord le
+              // sujet » sur une planche non rangée.
+              onChoisirLaPlanche={() => void choisirLaPlanche(ouverte)}
+              estLaPlanche={(referencesDuSujetOuvert?.lignes ?? []).some(
+                (l) => l.reference === ouverte.identifiant && l.usage === USAGE_PLANCHE,
+              )}
+              erreurPlanche={erreursPlanche[ouverte.identifiant]}
+              nomDuSujetPourPlanche={
+                personnages.find((p) => p.identifiant === ouverte.personnage)?.nom ?? ""
+              }
             />
           )}
           {clipEnFiche && (

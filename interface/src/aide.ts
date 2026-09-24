@@ -1603,14 +1603,17 @@ export const AIDE: Record<string, Explication> = {
     origine: "le concept art du sujet, jamais l'ancienne planche",
   },
 
+  // **TS21** : le même geste, retrouvé depuis la Galerie — où le bouton se
+  // nomme « En faire la planche de <nom> » plutôt que « C'est la référence »,
+  // faute de savoir d'avance de quel sujet il parle.
   "fabrique.cest-la-reference": {
     nom: "C'est la référence",
     groupe: "La fiche du sujet",
     ou: "sujet",
-    quoi: "Fait de cette planche la planche du sujet : ses vues se rangent dans ses directions.",
+    quoi: "Fait de cette planche la planche du sujet : ses vues se rangent dans ses directions. Depuis la Galerie, le bouton porte le nom du sujet.",
     change:
       "Les autres planches sont dépromues. L'image reste en bibliothèque — rien n'est supprimé, rien n'est payé.",
-    origine: "une planche faite par « Faire la planche des directions »",
+    origine: "une planche faite par « Faire la planche des directions », refaite, ou pliée",
   },
 
   // **TS19** : le signal d'une planche dont deux vues opposées ne sont que la

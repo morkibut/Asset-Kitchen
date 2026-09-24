@@ -8,10 +8,19 @@
 // `fetch`.
 
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react"
-import { afterEach, beforeEach, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { Galerie, Grille, useGalerie } from "./Galerie"
 import type { Entree } from "./Tuile"
-import { PlancheAConfirmer, type Asset, type Bibliotheque, type Univers } from "../api"
+import {
+  api,
+  PlancheAConfirmer,
+  Refus,
+  type Asset,
+  type Bibliotheque,
+  type Personnage,
+  type ReferencesDeLaChose,
+  type Univers,
+} from "../api"
 
 const { assets, supprimerAssetsConfirmable } = vi.hoisted(() => ({
   assets: vi.fn(),
@@ -324,4 +333,105 @@ test("l'onglet Vidéos n'affiche ni la barre de filtres ni le compteur des image
   expect(screen.queryByText(/montrées sur/)).toBeNull()
   // Le pied de grille, lui, reste : ce n'est pas un compteur d'images.
   expect(screen.getByText(/aucune génération ne part d'ici/)).toBeTruthy()
+})
+
+// ── TS21 : « En faire la planche de… », le fil que la Galerie tend ─────────
+//
+// **La preuve à l'écran — le bouton, sa phrase, le clic — vit dans
+// `Fiche.test.tsx`** : c'est là que la logique habite (`estUnePlanche`,
+// `nomDuSujetPourPlanche`), et c'est elle qui déciderait si le correctif
+// manquait. Ici, on prouve le fil que la Galerie tend jusqu'à elle — la
+// Galerie ne connaît pas le sujet d'avance, contrairement à la page d'un
+// sujet, donc elle relit les usages promus du sujet dès qu'une image rangée
+// s'ouvre, et son geste appelle la même route que `ImagesDuSujet.tsx`.
+
+describe("TS21 — le fil que la Galerie tend vers « choisirLaPlanche »", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+const REFERENCES_VIDES: ReferencesDeLaChose = {
+  personnage: "elias",
+  lignes: [],
+  propositions: [],
+  disponibles: 0,
+}
+
+test("une image ouverte, rangée dans un sujet, relit ses usages promus", async () => {
+  const lire = vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(REFERENCES_VIDES)
+  assets.mockResolvedValue({
+    assets: [{ identifiant: "planche-1", personnage: "elias" } as unknown as Asset],
+    total: 1,
+  })
+  const vue = monterLaGalerie()
+  await waitFor(() => expect(assets).toHaveBeenCalled())
+
+  expect(lire).not.toHaveBeenCalled()
+  act(() => vue.result.current.setSelection(["planche-1"]))
+  await waitFor(() => expect(lire).toHaveBeenCalledWith("elias"))
+  await waitFor(() =>
+    expect(vue.result.current.referencesDuSujetOuvert).toEqual(REFERENCES_VIDES),
+  )
+})
+
+test("une image sans sujet ne redemande rien", async () => {
+  const lire = vi.spyOn(api, "referencesDeLaChose").mockResolvedValue(REFERENCES_VIDES)
+  assets.mockResolvedValue({
+    assets: [{ identifiant: "seule-1", personnage: null } as unknown as Asset],
+    total: 1,
+  })
+  const vue = monterLaGalerie()
+  await waitFor(() => expect(assets).toHaveBeenCalled())
+
+  act(() => vue.result.current.setSelection(["seule-1"]))
+  await new Promise((r) => setTimeout(r, 0))
+  expect(lire).not.toHaveBeenCalled()
+  expect(vue.result.current.referencesDuSujetOuvert).toBeNull()
+})
+
+test("choisirLaPlanche appelle la même route que la page du sujet, et relit ce qu'elle rend", async () => {
+  const promue: ReferencesDeLaChose = {
+    personnage: "elias",
+    lignes: [
+      {
+        reference: "planche-1",
+        genre: "asset",
+        provenance: "image promue",
+        detail: "fabriquée puis retenue comme référence",
+        ecartee: false,
+        montre: null,
+        usage: "planche",
+      },
+    ],
+    propositions: [],
+    disponibles: 0,
+  }
+  const choisir = vi.spyOn(api, "choisirLaPlanche").mockResolvedValue({
+    personnage: { identifiant: "elias" } as unknown as Personnage,
+    references: promue,
+  })
+  const vue = monterLaGalerie()
+  await waitFor(() => expect(assets).toHaveBeenCalled())
+
+  const asset = { identifiant: "planche-1", personnage: "elias" } as unknown as Asset
+  await act(async () => {
+    await vue.result.current.choisirLaPlanche(asset)
+  })
+  expect(choisir).toHaveBeenCalledWith("elias", "planche-1")
+  expect(vue.result.current.referencesDuSujetOuvert).toEqual(promue)
+})
+
+test("un refus du serveur se garde par asset, en clair", async () => {
+  vi.spyOn(api, "choisirLaPlanche").mockRejectedValue(
+    new Refus("image d'un autre sujet", "planche_refusee"),
+  )
+  const vue = monterLaGalerie()
+  await waitFor(() => expect(assets).toHaveBeenCalled())
+
+  const asset = { identifiant: "planche-1", personnage: "elias" } as unknown as Asset
+  await act(async () => {
+    await vue.result.current.choisirLaPlanche(asset)
+  })
+  expect(vue.result.current.erreursPlanche["planche-1"]).toBe("image d'un autre sujet")
+})
 })

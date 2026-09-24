@@ -563,4 +563,64 @@ describe("la fiche — « C'est la référence » (TS3)", () => {
     await screen.findByRole("button", { name: "C'est la référence" })
     expect(container.querySelector("[data-vues-en-miroir]")).toBeNull()
   })
+
+  // ── TS21 : « En faire la planche de… », depuis la Galerie ─────────────────
+  //
+  // **Le retour de l'auteur** : il a refait une planche d'Elias et ne savait
+  // pas comment l'attribuer au personnage depuis la Galerie — cette page-là ne
+  // sait rien du sujet à l'avance, contrairement à `ImagesDuSujet.tsx`, d'où
+  // `nomDuSujetPourPlanche` : posé (même vide), il nomme le bouton et signale
+  // qu'on est dans ce second appelant.
+  describe("« En faire la planche de… » (TS21, la Galerie)", () => {
+    afterEach(() => {
+      cleanup()
+      vi.restoreAllMocks()
+    })
+
+    test("apparaît sur une planche rangée dans un sujet, nommé, et appelle le geste au clic", async () => {
+      vi.spyOn(api, "generation").mockResolvedValue(GENERATION_PLANCHE)
+      vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+      const onChoisirLaPlanche = vi.fn()
+      monter({
+        asset: { ...UN_ASSET, personnage: "elias" } as Asset,
+        onChoisirLaPlanche,
+        nomDuSujetPourPlanche: "Elias",
+      })
+
+      const bouton = await screen.findByRole("button", { name: "En faire la planche de Elias" })
+      fireEvent.click(bouton)
+      expect(onChoisirLaPlanche).toHaveBeenCalledTimes(1)
+    })
+
+    test("absente sur une image ordinaire — sa génération n'est ni une planche fabriquée, refaite ou pliée", async () => {
+      vi.spyOn(api, "generation").mockResolvedValue({
+        ...GENERATION_PLANCHE,
+        demande: { ...GENERATION_PLANCHE.demande, premiere_planche: undefined },
+      } as unknown as Generation)
+      vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+      monter({
+        asset: { ...UN_ASSET, personnage: "elias" } as Asset,
+        onChoisirLaPlanche: vi.fn(),
+        nomDuSujetPourPlanche: "Elias",
+      })
+      await new Promise((r) => setTimeout(r, 0))
+      expect(screen.queryByRole("button", { name: /En faire la planche de/ })).toBeNull()
+    })
+
+    test("une planche qui n'est rangée dans aucun sujet dit de choisir d'abord, et ne propose pas le bouton", async () => {
+      vi.spyOn(api, "generation").mockResolvedValue(GENERATION_PLANCHE)
+      vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+      monter({
+        asset: { ...UN_ASSET, personnage: null } as Asset,
+        onChoisirLaPlanche: vi.fn(),
+        nomDuSujetPourPlanche: "",
+      })
+
+      expect(
+        await screen.findByText("Choisis d'abord son sujet, dans le menu « Sujet » ci-dessus."),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: /En faire la planche de/ })).toBeNull()
+      expect(screen.queryByRole("button", { name: "C'est la référence" })).toBeNull()
+    })
+  })
 })

@@ -237,7 +237,9 @@ export function imageProposeeDeDirection(
 }
 
 const USAGE_LIBRE = "libre"
-const USAGE_PLANCHE = "planche"
+/** Exporté pour la Galerie (TS21), qui reconnaît « c'est déjà la planche du
+ *  sujet » sur ses usages promus de la même façon que cet écran. */
+export const USAGE_PLANCHE = "planche"
 const usageDeDirection = (id: string) => `direction:${id}`
 
 /** Le sélecteur d'usage d'une référence promue — Toujours, Planche, ou une

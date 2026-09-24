@@ -105,6 +105,31 @@ export const nomDuModele = (modele: string): string => {
   return `${modele.slice(0, coupe)} · ${modele.slice(coupe + 1)}`
 }
 
+/** Cette image est-elle une planche, au sens qui rend « C'est la référence »
+ *  proposable (TS21) — élargi depuis TS3, qui ne connaissait que la première.
+ *  Trois chemins, jamais un morceau qu'une planche a fait sortir (`asset.
+ *  planche` le dit — la découpe range ses morceaux à part, ils n'ont plus la
+ *  mise en page qui a coûté l'appel) :
+ *  - **la première planche** (TS3) — `demande.premiere_planche` ;
+ *  - **une planche refaite** (RS2) — `demande.garder_mise_en_page`,
+ *    `atelier/domaine/planche.py`, `est_une_planche_refaite` ;
+ *  - **une planche pliée** (C2/G16) — `generation.pliage`, N vues d'un seul
+ *    appel, qu'elle soit sortie du chemin des directions ou d'un lot de poses
+ *    cochées ensemble.
+ *  La décision : côté écran, la distinction fine que fait `est_une_planche_
+ *  refaite` entre la feuille et ses morceaux se lit déjà sur `asset.planche`,
+ *  qui n'existe que sur un morceau — inutile de redemander les emplacements
+ *  de la génération pour la même réponse. */
+export function estUnePlanche(asset: Asset, generation: Generation | null): boolean {
+  if (asset.planche) return false
+  if (!generation) return false
+  return Boolean(
+    generation.demande.premiere_planche ||
+      generation.demande.garder_mise_en_page ||
+      generation.pliage,
+  )
+}
+
 export function Fiche({
   asset,
   univers,
@@ -130,6 +155,7 @@ export function Fiche({
   onChoisirLaPlanche,
   estLaPlanche = false,
   erreurPlanche,
+  nomDuSujetPourPlanche,
   // P1c (V3.5) : refaire ou supprimer un découpage change ce que la grille
   // montre — absent, la fiche se contente de se relire elle-même.
   onDecoupageChange,
@@ -219,6 +245,14 @@ export function Fiche({
   estLaPlanche?: boolean
   /** Le refus du serveur (409), en clair, sur celle qu'on vient d'essayer. */
   erreurPlanche?: string
+  /** **Nomme le sujet, pour la Galerie** (TS21). Absent sur la page d'un sujet
+   *  — elle sait déjà de qui elle parle, et garde son « C'est la référence »
+   *  générique. Présent (même à vide) signale l'appel de la Galerie : le
+   *  bouton se nomme alors « En faire la planche de <nom> », et une planche
+   *  qui n'est rangée dans aucun sujet dit de choisir d'abord, dans le menu
+   *  « Sujet » ci-dessus, plutôt que de rester muette ou de proposer un geste
+   *  que le serveur refuserait. */
+  nomDuSujetPourPlanche?: string
   /** Refaire ou supprimer un découpage de planche a changé la bibliothèque —
    *  la grille qui l'a ouverte se relit. */
   onDecoupageChange?: () => void
@@ -509,31 +543,52 @@ export function Fiche({
               parce que c'est avant de la choisir qu'il faut le savoir. Un
               signal, jamais un refus. */}
           <VuesEnMiroir generation={generation} />
-          {/* **« C'est la référence »** (TS3). Montré seulement sur une
-              planche faite en première planche — `generation.demande.
-              premiere_planche` — le seul signe qu'on sait lire ici sans
-              redemander les usages du sujet. */}
-          {onChoisirLaPlanche && generation?.demande.premiere_planche && (
-            <>
-              <Bouton
-                inactif={estLaPlanche}
-                onClick={onChoisirLaPlanche}
-                enfants="C'est la référence"
-              />
-              {/* **Marque d'aide** (défaut 7 de la relecture du 24 septembre
-                  2026) : `Libelle` ne se niche pas dans `Bouton` — un élément
-                  focalisable imbriqué dans un bouton est un piège au clavier
-                  (`Infobulle.tsx`) — d'où cette légende à part, sous lui. */}
-              {!estLaPlanche && (
-                <p className="text-[11px] leading-4 text-encre-3">
-                  <Libelle aide="fabrique.cest-la-reference">Fait de cette planche la planche du sujet : ses vues se rangent dans ses directions.</Libelle>
-                </p>
-              )}
-              {estLaPlanche && <Raison texte="c'est déjà la planche de ce sujet" />}
-              {erreurPlanche && (
-                <p className="text-[11px] leading-4 text-echec">{erreurPlanche}</p>
-              )}
-            </>
+          {/* **« C'est la référence »** (TS3), élargi à la Galerie (TS21).
+              Montré sur toute planche — `estUnePlanche`, ci-dessus. Sur la
+              page d'un sujet, le sujet est connu d'avance et le bouton garde
+              son texte générique ; dans la Galerie, `nomDuSujetPourPlanche`
+              est posé (même vide) et nomme le sujet — ou, faute de sujet
+              encore choisi, renvoie au menu « Sujet » juste au-dessus plutôt
+              que de proposer un geste que le serveur refuserait. */}
+          {onChoisirLaPlanche && estUnePlanche(asset, generation) && (
+            nomDuSujetPourPlanche !== undefined && !asset.personnage ? (
+              <p className="text-[11px] leading-4 text-encre-3">
+                Choisis d'abord son sujet, dans le menu « Sujet » ci-dessus.
+              </p>
+            ) : (
+              <>
+                <Bouton
+                  inactif={estLaPlanche}
+                  onClick={onChoisirLaPlanche}
+                  enfants={
+                    nomDuSujetPourPlanche !== undefined
+                      ? `En faire la planche de ${nomDuSujetPourPlanche}`
+                      : "C'est la référence"
+                  }
+                />
+                {/* **Marque d'aide** (défaut 7 de la relecture du 24 septembre
+                    2026) : `Libelle` ne se niche pas dans `Bouton` — un élément
+                    focalisable imbriqué dans un bouton est un piège au clavier
+                    (`Infobulle.tsx`) — d'où cette légende à part, sous lui. */}
+                {!estLaPlanche && (
+                  <p className="text-[11px] leading-4 text-encre-3">
+                    <Libelle aide="fabrique.cest-la-reference">Fait de cette planche la planche du sujet : ses vues se rangent dans ses directions.</Libelle>
+                  </p>
+                )}
+                {estLaPlanche && (
+                  <Raison
+                    texte={
+                      nomDuSujetPourPlanche !== undefined
+                        ? `c'est la planche de ${nomDuSujetPourPlanche}`
+                        : "c'est déjà la planche de ce sujet"
+                    }
+                  />
+                )}
+                {erreurPlanche && (
+                  <p className="text-[11px] leading-4 text-echec">{erreurPlanche}</p>
+                )}
+              </>
+            )
           )}
           {onEcarter && (
             <>
