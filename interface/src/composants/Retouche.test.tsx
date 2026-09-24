@@ -62,6 +62,7 @@ beforeEach(() => {
   // partageraient un presse-papiers se raconteraient l'un l'autre.
   reinitialiserPressePapier()
   nommeesDouble = {}
+  viseeEchangeDouble = null
 })
 
 // ── Ce sur quoi on travaille ────────────────────────────────────────────────
@@ -230,6 +231,9 @@ let nommeesDouble: Record<string, Recette> = {}
 /** Les palettes nommées que le double rend sur `/moods` (TS12). Vides par
  *  défaut : aucun essai d'avant ne les voit. */
 let palettesDouble: { identifiant: string; nom: string; rendue: string[] }[] = []
+/** Ce que la pipette de « celle qui part » trouve sous le point visé (RV24).
+ *  `null` par défaut : un essai qui ne la configure pas ne doit rien poser. */
+let viseeEchangeDouble: string | null = null
 
 function construireDouble(
   mesures: unknown = MESURES,
@@ -248,6 +252,29 @@ function construireDouble(
     const corps = options?.body ? JSON.parse(String(options.body)) : null
     appels.push({ url, methode, corps })
 
+    if (url.includes("/recipe/preview")) {
+      // **La pipette de « celle qui part »** (RV24) — le seul appel de
+      // `apercuRecette` que ces essais font : un `viser` dans le corps rend
+      // la couleur que le test a posée dans `viseeEchangeDouble`, `null`
+      // sinon, comme le vrai serveur sur un point transparent ou hors image.
+      const demande = corps as { recette: Recette; viser?: [number, number] }
+      return rendre({
+        recette: demande.recette,
+        rendu: "data:image/png;base64,",
+        largeur: 64,
+        hauteur: 64,
+        mesures: {
+          ...(typeof mesures === "object" && mesures ? mesures : {}),
+          couleurs: {
+            demandees: 0,
+            obtenues: 0,
+            liste: [],
+            visee: demande.viser ? viseeEchangeDouble : null,
+          },
+        },
+        laisse: [],
+      })
+    }
     if (url.includes("/spots")) return rendre(mesures)
     if (url.includes("/imposed")) return rendre(impose)
     // **`EcranSuperposition` s'ouvre ici, en plein cadre** (`B24`) : ce que
@@ -2642,5 +2669,78 @@ describe("couleurs de — les palettes nommées du jeu", () => {
     expect(
       await within(colonne()).findByText("la palette « Cendres » n'existe plus — ses 2 couleurs restent dans la recette"),
     ).toBeTruthy()
+  })
+})
+
+// ── RV24 · la table « Couleurs » montre les couleurs de l'image ─────────────
+//
+// Le retour de l'auteur, mot pour mot : « dans la grille des couleurs
+// affichée, il n'y a pas le vert que je vois sur l'image ». La cause était que
+// `CouleursGardees` et `TableDEchange` ne recevaient que `univers.palette` —
+// jamais les couleurs que le serveur mesure sur le rendu du brouillon
+// (`mesures.couleurs.liste`).
+
+describe("RV24 — les couleurs de l'image, avant celles du jeu", () => {
+  const QUANTIFIEE_AVEC_UN_ECHANGE = recetteDeTravail({
+    quantification: {
+      couleurs: 8,
+      palette: [],
+      tramage: "aucun",
+      echanges: [{ depuis: "#000000", vers: "#ffffff", tolerance: 0 }],
+    },
+  } as Partial<Recette>)
+
+  /** Un vert que la palette du jeu (`#241d16`, `#8a5a2c`) ne porte pas — le
+   *  vert du bus de l'auteur, `#3ca649`. */
+  const MESURES_AVEC_UN_VERT_HORS_PALETTE = {
+    ...MESURES,
+    couleurs: { demandees: 8, obtenues: 5, liste: ["#3ca649", "#8a5a2c"] },
+  }
+
+  test("une couleur de l'image absente de la palette du jeu paraît dans les pastilles, sous son propre titre", async () => {
+    monter({
+      asset: image({ recette: QUANTIFIEE_AVEC_UN_ECHANGE }),
+      mesures: MESURES_AVEC_UN_VERT_HORS_PALETTE,
+    })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Couleurs" }))
+
+    // **Trois groupes de pastilles portent les deux titres** — les couleurs
+    // gardées et les deux couleurs de l'échange — d'où `findAllByText` plutôt
+    // que `findByText`, qui exigerait une occurrence unique.
+    expect((await within(colonne()).findAllByText("les couleurs de l'image")).length).toBeGreaterThan(0)
+    // La palette du jeu porte deux couleurs, distinctes du vert — les deux
+    // groupes sont donc montrés, chacun sous son titre.
+    expect(within(colonne()).getAllByText("la palette du jeu").length).toBeGreaterThan(0)
+    expect(within(colonne()).getAllByLabelText(/#3ca649/i).length).toBeGreaterThan(0)
+  })
+
+  test("la pipette de « celle qui part » vise un point de l'image et remplit l'échange", async () => {
+    viseeEchangeDouble = "#3ca649"
+    const { appels } = monter({
+      asset: image({ recette: QUANTIFIEE_AVEC_UN_ECHANGE }),
+      mesures: MESURES_AVEC_UN_VERT_HORS_PALETTE,
+    })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Couleurs" }))
+
+    // **Pas de surface avant d'armer** — même garde que la pipette du
+    // détourage : une pipette permanente ferait de chaque regard un risque de
+    // clic.
+    expect(document.querySelector('[data-surface="echange"]')).toBeNull()
+    fireEvent.click(await within(colonne()).findByRole("button", { name: "pipette ›" }))
+
+    const toile = document.querySelector('[data-surface="echange"] [data-pipette]') as HTMLElement
+    expect(toile).toBeTruthy()
+    poserLaSurface(toile, 512)
+    fireEvent.click(toile, { clientX: 64, clientY: 128 })
+
+    await waitFor(() => {
+      expect(dernierePose(appels)?.quantification?.echanges).toEqual([
+        { depuis: "#3ca649", vers: "#ffffff", tolerance: 0 },
+      ])
+    })
+    // **Le clic désarme**, comme les trois autres pipettes de l'écran.
+    await waitFor(() =>
+      expect(document.querySelector('[data-surface="echange"]')).toBeNull(),
+    )
   })
 })

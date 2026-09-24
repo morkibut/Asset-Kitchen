@@ -3971,8 +3971,13 @@ export type TachesDeLAsset = {
    *  `obtenues` ne compte que les pixels **visibles** : une couleur cachée sous
    *  la transparence n'est pas une couleur qu'on a obtenue. Les deux valent zéro
    *  quand la table dort ou n'est pas posée — il n'y a alors aucun écart à
-   *  expliquer. */
-  couleurs: { demandees: number; obtenues: number }
+   *  expliquer. `liste` porte les mêmes couleurs, en hexadécimal, triées du
+   *  plus fréquent au plus rare (RV24) — c'est elle que la table « Couleurs »
+   *  montre en premier, avant la palette du jeu. `visee` ne paraît que
+   *  lorsqu'on a demandé `viser` à `apercuRecette` — la couleur sous le point
+   *  de la pipette de « celle qui part », `null` sur un point transparent ou
+   *  hors image. */
+  couleurs: { demandees: number; obtenues: number; liste: string[]; visee?: string | null }
 }
 
 /** Ce que le recadrage garde et ce qu'il jette — **cinq lectures, aucun
@@ -5273,7 +5278,14 @@ export const api = {
       body: JSON.stringify(recette),
     }),
 
-  apercuRecette: (identifiant: string, recette: Recette, options: { voyageuse?: boolean; nom?: string; reinitialiser?: boolean } = {}) =>
+  apercuRecette: (
+    identifiant: string,
+    recette: Recette,
+    // **`viser`** (RV24) : le point de la pipette de « celle qui part », dans
+    // la table d'échange — sur le rendu final, pas sur une passe de
+    // détourage. La réponse porte alors `mesures.couleurs.visee`.
+    options: { voyageuse?: boolean; nom?: string; reinitialiser?: boolean; viser?: [number, number] } = {},
+  ) =>
     appeler<{ recette: Recette; rendu: string; largeur: number; hauteur: number; mesures: TachesDeLAsset; laisse: string[] }>(`/assets/${encodeURIComponent(identifiant)}/recipe/preview`, { method: "POST", body: JSON.stringify({ recette, ...options }) }),
 
   revenirAuBrut: (identifiant: string) =>

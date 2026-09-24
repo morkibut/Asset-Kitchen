@@ -112,7 +112,7 @@ from atelier.image.traitement import (
     silhouette,
 )
 from atelier.image.calque import avec_alpha, differencier
-from atelier.image.palette import couleurs_obtenues, rampes
+from atelier.image.palette import couleurs_obtenues, couleurs_visibles, rampes
 from atelier.services.evenements import Diffusion
 
 # Les bornes des réglages, et le seul endroit qui les dise. Une recette venue
@@ -460,7 +460,9 @@ class ServiceAssets:
         asset = self._trouver(identifiant)
         return self._taches_de(asset, plafond)
 
-    def _taches_de(self, asset: Asset, plafond: int = 200) -> dict[str, Any]:
+    def _taches_de(
+        self, asset: Asset, plafond: int = 200, *, viser: tuple[int, int] | None = None,
+    ) -> dict[str, Any]:
         # Avant les bords : la liste doit montrer ce que le seuil va effacer, et
         # une liste prise après lui aurait déjà perdu ce qu'elle décrit.
         avant_les_bords = replace(
@@ -515,10 +517,12 @@ class ServiceAssets:
             # *« rien à l'écran ne dit l'écart, donc l'auteur monte le réglage en
             # croyant gagner du détail »*. C'est le seul nombre qui explique
             # pourquoi monter le réglage ne change plus rien.
-            "couleurs": self._couleurs_de(asset),
+            "couleurs": self._couleurs_de(asset, viser=viser),
         }
 
-    def _couleurs_de(self, asset: Asset) -> dict[str, Any]:
+    def _couleurs_de(
+        self, asset: Asset, *, viser: tuple[int, int] | None = None,
+    ) -> dict[str, Any]:
         """Combien de couleurs cette image demande, et combien elle en obtient.
 
         **Sur le rendu final, et c'est le seul endroit juste.** Les autres
@@ -529,19 +533,57 @@ class ServiceAssets:
 
         `demandees` est nul quand la table dort ou n'est pas posée : il n'y a
         alors aucun écart à expliquer, et l'écran n'a rien à montrer.
+
+        `viser` est le point d'une pipette qui ne vise **pas** une passe de
+        détourage (RV24) — celle de la table d'échange, « celle qui part » —
+        et se sample donc ici plutôt que dans `_couleurs_visees`, avec les
+        mêmes coordonnées que `liste` : celles du **rendu final**, la seule
+        image que l'échange voit vraiment. Rendu même quand la table dort :
+        le geste de viser ne demande rien de plus que l'image telle qu'elle
+        est déjà, une palette posée ou non.
         """
         quantification = asset.recette.quantification
-        if quantification is None or asset.recette.dort(QUANTIFICATION):
-            return {"demandees": 0, "obtenues": 0}
-        demandees = (
-            len(quantification.palette)
-            if quantification.palette
-            else quantification.couleurs
+        dort = quantification is None or asset.recette.dort(QUANTIFICATION)
+        if dort and viser is None:
+            return {"demandees": 0, "obtenues": 0, "liste": []}
+        rendu = self._tableau_avec(asset, asset.recette)
+        resultat: dict[str, Any] = (
+            {"demandees": 0, "obtenues": 0, "liste": []}
+            if dort
+            else {
+                "demandees": (
+                    len(quantification.palette)
+                    if quantification.palette
+                    else quantification.couleurs
+                ),
+                "obtenues": couleurs_obtenues(rendu),
+                # **La liste, pas seulement le compte** (RV24) — ce que la
+                # table « Couleurs » propose en premier dans les pastilles,
+                # avant la palette du jeu. Mêmes pixels que `obtenues` : la
+                # liste et le compte ne peuvent pas se contredire.
+                "liste": list(couleurs_visibles(rendu)),
+            }
         )
-        return {
-            "demandees": demandees,
-            "obtenues": couleurs_obtenues(self._tableau_avec(asset, asset.recette)),
-        }
+        if viser is not None:
+            resultat["visee"] = self._couleur_au_point(rendu, viser)
+        return resultat
+
+    @staticmethod
+    def _couleur_au_point(rgba: np.ndarray, point: tuple[int, int]) -> str | None:
+        """La couleur sous ce point du rendu final, ou `None` (RV24).
+
+        **`None` pour un point transparent ou hors image**, jamais une couleur
+        inventée : un pixel effacé n'est la couleur d'aucun échange possible,
+        et le hasarder ferait choisir « celle qui part » sur du vide.
+        """
+        x, y = point
+        hauteur, largeur = rgba.shape[:2]
+        if not (0 <= x < largeur and 0 <= y < hauteur):
+            return None
+        pixel = rgba[y, x]
+        if int(pixel[3]) == 0:
+            return None
+        return "#%02x%02x%02x" % (int(pixel[0]), int(pixel[1]), int(pixel[2]))
 
     def _mesures_du_fond(self, asset: Asset) -> dict[str, Any]:
         """Ce que cette image-là dit du fond sur lequel elle a été demandée (D3).
@@ -1352,6 +1394,7 @@ class ServiceAssets:
     def apercu_recette(
         self, identifiant: str, recette: Recette, *, voyageuse: bool = False,
         nom: str | None = None, reinitialiser: bool = False,
+        viser: tuple[int, int] | None = None,
     ) -> dict[str, Any]:
         """Rejouer un brouillon sans écrire l’asset ni son cache durable.
 
@@ -1374,7 +1417,7 @@ class ServiceAssets:
         marque = _BROUILLON_RECETTE.set(True)
         try:
             rendu = self._calculer(copie)
-            mesures = self._taches_de(copie)
+            mesures = self._taches_de(copie, viser=viser)
         finally:
             _BROUILLON_RECETTE.reset(marque)
         return {
