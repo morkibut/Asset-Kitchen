@@ -1077,14 +1077,28 @@ celle qu'on veut garder ou remplacer.
 
 ### Critères d'acceptation
 
-- [ ] les pastilles proposent d'abord **les couleurs de l'image telle qu'elle sort de la
+- [x] les pastilles proposent d'abord **les couleurs de l'image telle qu'elle sort de la
       réduction**, puis la palette du jeu, sous deux petits titres qui disent laquelle est laquelle
-- [ ] « celle qui part » se choisit aussi **à la pipette, en cliquant dans l'image**, comme la
+- [x] « celle qui part » se choisit aussi **à la pipette, en cliquant dans l'image**, comme la
       couleur à retirer d'un détourage
-- [ ] les couleurs de l'image viennent du serveur, qui les calcule déjà
+- [x] les couleurs de l'image viennent du serveur, qui les calcule déjà
       (`couleurs_obtenues`, `atelier/image/palette.py`), pas d'une lecture de pixels dans le navigateur
-- [ ] un essai retouche une image qui porte une couleur hors de la palette du jeu, et la trouve
+- [x] un essai retouche une image qui porte une couleur hors de la palette du jeu, et la trouve
       dans les pastilles ; il tombe sans le correctif (*8octies*)
+
+*Fait le 24 septembre 2026.* `atelier/image/palette.py` gagne `couleurs_visibles` (les mêmes
+pixels que `couleurs_obtenues`, triés par fréquence) ; `_couleurs_de` (`atelier/services/assets.py`)
+rend `couleurs.liste`, sur `_taches_de`/`apercu_recette` — donc sur `/spots` **et**
+`/recipe/preview`, qui suit déjà le brouillon en cours sans aller-retour supplémentaire. La pipette
+de « celle qui part » vise un point du **rendu final** (pas une passe de détourage) : un champ
+`viser` ajouté à `CorpsApercuRecette`, résolu en couleur par `_couleur_au_point` et rendu dans
+`couleurs.visee` — `None` sur un point transparent ou hors image, jamais une couleur inventée. Côté
+écran, `CouleursGardees` et `TableDEchange` reçoivent maintenant `couleursImage` en plus de
+`palette`, groupées par `GroupesDeCouleurs` sous deux titres ; la pipette (bouton « pipette › »)
+n'est proposée que sur une paire déjà nommée — pas sur celle en train de se faire, qui n'a pas
+encore de rang dans `echanges` — c'est la seule réduction de portée du critère. Six essais serveur
+(`tests/test_rv24_couleurs.py`) et deux essais écran (`Retouche.test.tsx`, describe RV24). Non vu
+au navigateur : seulement vérifié par essais doublés.
 
 ## RV25 · Le fond enfermé dans le sujet se voit, et s'enlève
 

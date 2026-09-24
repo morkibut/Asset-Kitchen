@@ -2166,7 +2166,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "tables",
     quoi: "Les couleurs qu'aucune réduction ne doit fondre avec une voisine, six au plus.",
     change:
-      "Elles sont posées d'office dans la palette, avant que l'algorithme ne choisisse le reste : à 8 couleurs, en garder deux lui en laisse six.\n\nPique le noir d'un contour et le vert d'une grenouille, et à 8 couleurs le contour reste noir au lieu de virer brun foncé, la grenouille reste verte au milieu des bruns. Au-delà de six, il ne resterait plus rien à choisir.",
+      "Elles sont posées d'office dans la palette, avant que l'algorithme ne choisisse le reste : à 8 couleurs, en garder deux lui en laisse six.\n\nPique le noir d'un contour et le vert d'une grenouille, et à 8 couleurs le contour reste noir au lieu de virer brun foncé, la grenouille reste verte au milieu des bruns. Au-delà de six, il ne resterait plus rien à choisir. Les pastilles montrent d'abord les couleurs de ton image, puis celles du jeu.",
     origine: "toi · défaut aucune",
   },
 
@@ -2176,7 +2176,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "tables",
     quoi: "Des paires — cette couleur-là devient celle-ci — appliquées après la réduction.",
     change:
-      "Donne une variante sans payer une image : la même cape en bleu, en vert, en rouge. La silhouette est identique à l'octet près, puisque seule la couleur des pixels opaques change.",
+      "Donne une variante sans payer une image : la même cape en bleu, en vert, en rouge. La silhouette est identique à l'octet près, puisque seule la couleur des pixels opaques change.\n\nPour « celle qui part », choisis une pastille — d'abord les couleurs de ton image, puis celles du jeu — ou clique-la directement dans l'image avec la pipette.",
     origine: "toi · aucune paire par défaut",
     long:
       "Vient après la réduction, quand l'image ne porte déjà plus qu'une poignée de couleurs franches — avant, la même couleur existe en cent nuances. Toutes les paires se lisent sur l'image reçue, jamais sur le résultat d'une autre : « rouge devient bleu » puis « bleu devient vert » ne fait pas passer le rouge au vert. La transparence n'est jamais touchée.",

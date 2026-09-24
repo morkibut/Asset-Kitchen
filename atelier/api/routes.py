@@ -1439,6 +1439,10 @@ class CorpsApercuRecette(BaseModel):
     voyageuse: bool = False
     nom: str | None = None
     reinitialiser: bool = False
+    # **La pipette de la table d'échange** (RV24) — un point cliqué dans
+    # l'image, jamais une passe de détourage : celle-ci s'appuie déjà sur
+    # `passe.point`. `None` ne demande rien de plus que le brouillon habituel.
+    viser: tuple[int, int] | None = None
 
 
 class CorpsImport(BaseModel):
@@ -1613,6 +1617,11 @@ async def taches_de_asset(
     À part de l'asset pour la raison de `imposed` : la charge d'un asset part
     deux cents fois par relecture de grille, et un remplissage par plages sur
     mille pixels de côté n'a rien à y faire.
+
+    **Pas de pipette ici** (RV24) : celle de la table d'échange passe par
+    `POST .../recipe/preview`, qui répond sans rien enregistrer — c'est aussi
+    ce qu'il faut pour un brouillon non posé, et un seul chemin en moins à
+    tenir d'accord avec l'autre.
     """
     return _atelier(requete).assets.taches_de(identifiant, limite)
 
@@ -1638,7 +1647,7 @@ async def apercu_recette(requete: Request, identifiant: str, corps: CorpsApercuR
     """Aperçu du brouillon : aucune recette, image ou événement enregistré."""
     return _atelier(requete).assets.apercu_recette(
         identifiant, corps.recette.en_recette(), voyageuse=corps.voyageuse,
-        nom=corps.nom, reinitialiser=corps.reinitialiser,
+        nom=corps.nom, reinitialiser=corps.reinitialiser, viser=corps.viser,
     )
 
 

@@ -654,6 +654,15 @@ export type Poste = {
    *  d'un seul côté aurait laissé l'autre l'ignorer. */
   armee?: number | null
   onArmer?: (rang: number | null) => void
+  /** Le rang de l'échange (table « Couleurs ») qui attend un clic dans
+   *  l'image pour « celle qui part » (RV24) — comme `armee`, mais pour une
+   *  pipette qui ne désigne aucune passe de détourage. Un état à part : les
+   *  deux pipettes partagent la même surface à coordonnées, jamais le même
+   *  rang, et confondre les deux ferait viser une passe en croyant régler un
+   *  échange. Absent là où il n'y a pas de surface à coordonnées — l'atelier
+   *  d'une bande, qui montre la planche déjà traitée. */
+  viseeEchange?: number | null
+  onViserEchange?: (rang: number | null) => void
   /** Ce que l'écran tient de la main — le calque actif, le sens, le diamètre et
    *  la couleur. Ils décrivent la **main**, pas l'image : les écrire dans la
    *  recette les aurait fait entrer dans l'empreinte, donc changer de pinceau
@@ -1661,9 +1670,27 @@ export function ReglagesDesCouleurs({
   mesures,
   regler,
   poser,
-}: Poste) {
+  viseeEchange,
+  onViserEchange,
+  asset,
+}: Poste & {
+  /** L'image sur laquelle la pipette de « celle qui part » se pose (RV24).
+   *
+   *  **Absente dans l'atelier d'une bande** (`AtelierDeBande.tsx`), qui règle
+   *  la recette d'une planche et non l'image d'un asset — même absence que
+   *  `asset` sur `ReglagesDuDetourage`, pour la même raison : le geste
+   *  s'efface plutôt que d'offrir un bouton qui ne ferait rien. */
+  asset?: Asset
+}) {
   const valeurs = quantificationDe(recette, univers)
   const paliers = paliersDeCouleurs(recette.grille?.cible ?? 64)
+  /** **Les couleurs de l'image telle qu'elle sort de la réduction** (RV24) —
+   *  avant celles du jeu, puisque c'est elles qui manquaient : *« dans la
+   *  grille des couleurs affichée, il n'y a pas le vert que je vois sur
+   *  l'image »*. Mesurées par le serveur sur le rendu du brouillon en cours,
+   *  jamais lues dans le navigateur — la liste change donc avec la recette,
+   *  sans second calcul côté écran. */
+  const couleursImage = mesures?.couleurs?.liste ?? []
   /** **Une palette vide veut dire *déduite de l'image elle-même***, et le
    *  domaine le dit depuis `T2`. L'écran lisait déjà ce fait — c'est lui qui
    *  grise l'algorithme —, mais aucun poste ne le **posait** : on reposait
@@ -1922,6 +1949,7 @@ export function ReglagesDesCouleurs({
           l'algorithme. Grisées sous une palette de jeu, qui décide seule. */}
       <CouleursGardees
         gardees={valeurs.gardees ?? []}
+        couleursImage={couleursImage}
         palette={univers.palette}
         eteint={valeurs.palette.length > 0}
         onChange={(gardees) => void poser(avec({ gardees }))}
@@ -1932,7 +1960,11 @@ export function ReglagesDesCouleurs({
           couleur écrite au plus proche de la palette. */}
       <TableDEchange
         echanges={valeurs.echanges ?? []}
+        couleursImage={couleursImage}
         palette={univers.palette}
+        asset={asset}
+        viseeEchange={viseeEchange ?? null}
+        onViserEchange={onViserEchange}
         onChange={(echanges) => void poser(avec({ echanges }))}
       />
     </div>
@@ -2039,11 +2071,47 @@ function PalettesDuJeu({
  *  plus dire la même chose. */
 const SOUS_LA_PALETTE = "la palette choisie décide seule des couleurs"
 
+/** Deux petits titres au-dessus des pastilles, jamais un seul tas (RV24).
+ *
+ *  **L'image d'abord, le jeu ensuite** — c'est l'ordre du retour de l'auteur :
+ *  *« dans la grille des couleurs affichée, il n'y a pas le vert que je vois
+ *  sur l'image »*. Une couleur de l'image absente de la palette du jeu ne se
+ *  choisissait donc nulle part ; les deux groupes disent maintenant laquelle
+ *  est laquelle, plutôt que de les mêler dans une seule rangée où rien ne le
+ *  dirait. `null` quand aucune des deux sources n'a de couleur à proposer. */
+function GroupesDeCouleurs({
+  couleursImage,
+  palette,
+  rendre,
+}: {
+  couleursImage: string[]
+  palette: string[]
+  rendre: (couleur: string) => ReactNode
+}) {
+  if (couleursImage.length === 0 && palette.length === 0) return null
+  return (
+    <div className="flex flex-col gap-[8px]">
+      {couleursImage.length > 0 && (
+        <div className="flex flex-col gap-[4px]">
+          <span className="mesure text-[10.5px] text-encre-4">les couleurs de l'image</span>
+          <div className="flex flex-wrap gap-[6px]">{couleursImage.map(rendre)}</div>
+        </div>
+      )}
+      {palette.length > 0 && (
+        <div className="flex flex-col gap-[4px]">
+          <span className="mesure text-[10.5px] text-encre-4">la palette du jeu</span>
+          <div className="flex flex-wrap gap-[6px]">{palette.map(rendre)}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** Les couleurs qu'aucune fusion n'emporte (`B18`).
  *
  *  **Le même geste que la table d'échange, en plus court** : une pastille, une
- *  couleur, et rien d'autre. Elle se pique sur la palette du jeu quand il y en
- *  a une, et se tape à la main sinon.
+ *  couleur, et rien d'autre. Elle se pique sur les couleurs de l'image et sur
+ *  la palette du jeu (RV24) quand il y en a, et se tape à la main sinon.
  *
  *  ⚠️ **La planche la veut à la pipette sur l'image** ; ce qui est livré ici est
  *  le choix parmi les couleurs connues. La surface à coordonnées de cet écran ne
@@ -2051,15 +2119,19 @@ const SOUS_LA_PALETTE = "la palette choisie décide seule des couleurs"
  *  cinquième geste demanderait de savoir, au clic, lequel des cinq on fait. */
 function CouleursGardees({
   gardees,
+  couleursImage,
   palette,
   eteint,
   onChange,
 }: {
   gardees: string[]
+  couleursImage: string[]
   palette: string[]
   eteint: boolean
   onChange: (gardees: string[]) => void
 }) {
+  const pasEncoreGardee = (c: string) =>
+    !gardees.some((g) => g.toLowerCase() === c.toLowerCase())
   return (
     <div className="flex flex-col gap-[8px] border-t border-trait-faible pt-[8px]">
       <Etiquette>couleurs gardées — jamais fondues avec une voisine</Etiquette>
@@ -2079,30 +2151,36 @@ function CouleursGardees({
         </div>
       )}
 
-      {eteint ? (
-        <Pourquoi texte={SOUS_LA_PALETTE} />
-      ) : gardees.length >= GARDEES_MAX ? (
-        <Pourquoi
-          texte={`${GARDEES_MAX} couleurs gardées au plus — au-delà il ne reste rien à choisir`}
-        />
-      ) : palette.length > 0 ? (
-        <div className="flex flex-wrap gap-[6px]">
-          {palette
-            .filter((c) => !gardees.includes(c))
-            .map((couleur) => (
+      {(() => {
+        const image = couleursImage.filter(pasEncoreGardee)
+        const jeu = palette.filter(pasEncoreGardee)
+        if (eteint) return <Pourquoi texte={SOUS_LA_PALETTE} />
+        if (gardees.length >= GARDEES_MAX)
+          return (
+            <Pourquoi
+              texte={`${GARDEES_MAX} couleurs gardées au plus — au-delà il ne reste rien à choisir`}
+            />
+          )
+        if (image.length === 0 && jeu.length === 0)
+          return <Pourquoi texte="ni l'image ni le jeu n'ont encore de couleur où piquer" />
+        return (
+          <GroupesDeCouleurs
+            couleursImage={image}
+            palette={jeu}
+            rendre={(couleur) => (
               <button
                 key={couleur}
                 type="button"
                 aria-label={`garder ${couleur}`}
+                title={couleur}
                 className="h-[14px] w-[14px] rounded-5 border border-trait-faible opacity-60 hover:opacity-100"
                 style={{ background: couleur }}
                 onClick={() => onChange([...gardees, couleur])}
               />
-            ))}
-        </div>
-      ) : (
-        <Pourquoi texte="le jeu n'a pas encore de palette où piquer une couleur" />
-      )}
+            )}
+          />
+        )
+      })()}
     </div>
   )
 }
@@ -2115,11 +2193,20 @@ function CouleursGardees({
  *  refuse (*une paire nomme deux couleurs*), trouvé au navigateur. */
 function TableDEchange({
   echanges,
+  couleursImage,
   palette,
+  asset,
+  viseeEchange,
+  onViserEchange,
   onChange,
 }: {
   echanges: Echange[]
+  couleursImage: string[]
   palette: string[]
+  /** Pour la pipette de « celle qui part » (RV24) — voir `ReglagesDesCouleurs`. */
+  asset?: Asset
+  viseeEchange: number | null
+  onViserEchange?: (rang: number | null) => void
   onChange: (echanges: Echange[]) => void
 }) {
   const [brouillon, setBrouillon] = useState<Echange | null>(null)
@@ -2151,15 +2238,29 @@ function TableDEchange({
           <Reglage nom="celle qui part">
             <ChoixDeCouleur
               couleur={echange.depuis}
+              couleursImage={couleursImage}
               palette={palette}
               onChange={(depuis) =>
                 encours ? changerLeBrouillon({ depuis }) : changer(rang, { depuis })
+              }
+              // **Pas sur la paire en train de se faire** (RV24) : la
+              // surface à coordonnées désigne un rang de `echanges`, et cette
+              // ligne-là n'y est pas encore — elle n'a pas de rang à viser
+              // tant qu'elle n'a pas rejoint la recette.
+              pipette={
+                !encours && asset && onViserEchange
+                  ? {
+                      armee: viseeEchange === rang,
+                      onArmer: () => onViserEchange(viseeEchange === rang ? null : rang),
+                    }
+                  : undefined
               }
             />
           </Reglage>
           <Reglage nom="celle qui vient">
             <ChoixDeCouleur
               couleur={echange.vers}
+              couleursImage={couleursImage}
               palette={palette}
               onChange={(vers) =>
                 encours ? changerLeBrouillon({ vers }) : changer(rang, { vers })
@@ -2213,18 +2314,38 @@ function TableDEchange({
   )
 }
 
-/** Une couleur, choisie par pipette de palette ou entrée en clair — la règle
- *  d'US-210 : *proposée, jamais imposée*. Rien ici ne désigne un endroit de
- *  cette image-là, donc rien n'appartient au pinceau. */
+/** Une couleur, choisie par pipette de palette, par pipette dans l'image ou
+ *  entrée en clair — la règle d'US-210 : *proposée, jamais imposée*.
+ *
+ *  **Deux pipettes, et elles ne se confondent pas** (RV24). L'une pique une
+ *  pastille déjà connue — palette du jeu, et depuis RV24 les couleurs de
+ *  l'image ; l'autre, `pipette`, vise un pixel de l'image elle-même, comme la
+ *  couleur à retirer d'un détourage. Rien d'autre ici ne désigne un endroit de
+ *  cette image-là, donc rien d'autre n'appartient au pinceau. */
 function ChoixDeCouleur({
   couleur,
+  couleursImage = [],
   palette,
   onChange,
+  pipette,
 }: {
   couleur: string
+  /** Absente sur les deux postes qui n'ont pas de rendu de brouillon à lire —
+   *  la couleur du contour et celle du pinceau : ni l'un ni l'autre n'ouvre
+   *  la table « Couleurs », donc `mesures.couleurs.liste` ne les concerne
+   *  pas. La table « Couleurs » (RV24), elle, la passe toujours. */
+  couleursImage?: string[]
   palette: string[]
   onChange: (couleur: string) => void
+  /** La pipette dans l'image, réservée à « celle qui part » (RV24) — armée ou
+   *  non, jamais les deux. La surface à coordonnées qui reçoit le clic vit
+   *  dans le cadre central de `Retouche`, pas ici : ce bouton ne fait
+   *  qu'armer, exactement comme « viser dans l'image › » du détourage. */
+  pipette?: { armee: boolean; onArmer: () => void }
 }) {
+  const dansUneSource = (c: string) =>
+    couleursImage.some((k) => k.toLowerCase() === c.toLowerCase()) ||
+    palette.some((k) => k.toLowerCase() === c.toLowerCase())
   return (
     <div className="flex flex-col gap-[4px]">
       <div className="flex items-center gap-[8px]">
@@ -2248,42 +2369,47 @@ function ChoixDeCouleur({
           onChange={(e) => onChange(e.target.value)}
           className="mesure h-[26px] min-w-0 flex-1 rounded-7 border border-trait bg-carte px-[8px] text-[11.5px] text-encre"
         />
+        {pipette && (
+          <button
+            type="button"
+            aria-pressed={pipette.armee}
+            onClick={pipette.onArmer}
+            className="h-[26px] shrink-0 rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre"
+          >
+            {pipette.armee ? "clique dans l'image" : "pipette ›"}
+          </button>
+        )}
       </div>
-      {palette.length > 0 && (
-        <div className="flex flex-wrap gap-[4px]">
-          {palette.map((c) => (
-            <button
-              key={c}
-              type="button"
-              title={c}
-              aria-label={`Prendre ${c}`}
-              onClick={() => onChange(c)}
-              style={{ background: c }}
-              className={[
-                "h-[14px] w-[14px] border",
-                c.toLowerCase() === couleur.toLowerCase() ? "border-encre" : "border-trait",
-              ].join(" ")}
-            />
-          ))}
-        </div>
-      )}
+      <GroupesDeCouleurs
+        couleursImage={couleursImage}
+        palette={palette}
+        rendre={(c) => (
+          <button
+            key={c}
+            type="button"
+            title={c}
+            aria-label={`Prendre ${c}`}
+            onClick={() => onChange(c)}
+            style={{ background: c }}
+            className={[
+              "h-[14px] w-[14px] border",
+              c.toLowerCase() === couleur.toLowerCase() ? "border-encre" : "border-trait",
+            ].join(" ")}
+          />
+        )}
+      />
       {/* **Le produit constate ; il ne refuse pas** (D4, rattrapé en `B26`).
           Une couleur de plus dans un jeu est un fait qui se lit, et il mérite
           d'être dit ici puisque la réduction des couleurs est déjà passée et ne
           la rattrapera pas. */}
-      {palette.length > 0 && (
+      {(couleursImage.length > 0 || palette.length > 0) && (
         <span
           className={[
             "mesure text-[10.5px]",
-            palette.some((c) => c.toLowerCase() === couleur.toLowerCase())
-              ? "text-encre-4"
-              : "text-epingle",
+            dansUneSource(couleur) ? "text-encre-4" : "text-epingle",
           ].join(" ")}
         >
-          {couleur} ·{" "}
-          {palette.some((c) => c.toLowerCase() === couleur.toLowerCase())
-            ? "dans la palette"
-            : "hors palette"}
+          {couleur} · {dansUneSource(couleur) ? "dans la palette" : "hors palette"}
         </span>
       )}
     </div>
@@ -3835,11 +3961,15 @@ const FONDS_APERCU: Record<FondApercu, string | null> = {
 
 /** Ce que la surface fait, écrit sous elle — **le geste, jamais le nom de la
  *  table**, qui est déjà en haut de la colonne. */
-const CE_QUE_LA_SURFACE_DIT: Record<"main" | "pipette" | "trace" | "recadrage", string> = {
+const CE_QUE_LA_SURFACE_DIT: Record<"main" | "pipette" | "trace" | "recadrage" | "echange", string> = {
   main: "on repeint",
   pipette: "on vise un pixel",
   trace: "on entoure le sujet",
   recadrage: "on trace le rectangle",
+  // **RV24** : la pipette de « celle qui part » vise, comme celle du
+  // détourage, mais sur le rendu — d'où le mot différent, pour ne pas laisser
+  // croire qu'on retire quelque chose.
+  echange: "on vise la couleur qui part",
 }
 
 export function Retouche({
@@ -3974,25 +4104,42 @@ export function Retouche({
       ? viseeArmee
       : null
 
+  /** La pipette de la table d'échange — « celle qui part » (RV24). **Un état
+   *  à part de `viseeArmee`** : elle ne vise aucune passe de détourage, mais
+   *  un rang de `recette.quantification.echanges`, et confondre les deux
+   *  ferait viser une passe en croyant régler un échange. */
+  const [viseeEchangeArmee, setViseeEchangeArmee] = useState<number | null>(null)
+  /** **Dérivée, comme `visee`** : retirer l'échange qu'on vise laisserait un
+   *  rang armé qui ne désigne plus rien. */
+  const echangeVise =
+    viseeEchangeArmee !== null &&
+    (recette.quantification?.echanges?.[viseeEchangeArmee] ?? null) !== null
+      ? viseeEchangeArmee
+      : null
+
   /** La surface que la table ouverte pose sur l'image, ou `null` quand elle
    *  n'en porte aucune. **Une seule à la fois** : une surface qui recevrait
    *  deux gestes ne saurait pas lequel on vient de faire. */
-  const surface: "main" | "pipette" | "trace" | "recadrage" | null =
+  const surface: "main" | "pipette" | "trace" | "recadrage" | "echange" | null =
     ouverte === "main"
       ? "main"
       : ouverte === "detourage" && visee !== null
         ? "pipette"
         : ouverte === "detourage" && entourage !== null
           ? "trace"
-          : ouverte === "recadrage"
-            ? "recadrage"
-            : null
+          : ouverte === "quantification" && echangeVise !== null
+            ? "echange"
+            : ouverte === "recadrage"
+              ? "recadrage"
+              : null
 
   /** Le côté de ce que la surface montre. **Trois travaillent sur le brut, la
-   *  main sur le rendu** : c'est la convention de coordonnées de chacune, et
-   *  la mesurer autrement décalerait ce qu'on pose dessus. */
+   *  main et l'échange sur le rendu** : c'est la convention de coordonnées de
+   *  chacune, et la mesurer autrement décalerait ce qu'on pose dessus. La
+   *  pipette d'un échange vise une couleur « après la réduction » (B17) —
+   *  donc le rendu, jamais le brut, exactement comme la main. */
   const coteDeLaSurface: [number, number] =
-    surface === "main"
+    surface === "main" || surface === "echange"
       ? [asset.rendu_largeur || asset.largeur, asset.rendu_hauteur || asset.hauteur]
       : [asset.largeur, asset.hauteur]
 
@@ -4211,6 +4358,8 @@ export function Retouche({
     ouvrir: setOuverte,
     armee: viseeArmee,
     onArmer: setViseeArmee,
+    viseeEchange: echangeVise,
+    onViserEchange: setViseeEchangeArmee,
     etatMain,
   }
 
@@ -4648,6 +4797,54 @@ export function Retouche({
                           setViseeArmee(null)
                         }}
                       />
+                    ) : surface === "echange" && echangeVise !== null ? (
+                      // **La pipette de « celle qui part » (RV24)** — même
+                      // geste que celle du détourage, sur le rendu plutôt que
+                      // le brut : c'est là qu'existe la couleur que l'échange
+                      // remplace. Le point ne se garde pas, contrairement à
+                      // `passe.point` : une seule paire vise, jamais un
+                      // historique, et le serveur qui répond dit directement
+                      // la couleur — pas un point qui resterait à relire.
+                      <PipetteSurImage
+                        asset={{ ...asset, largeur: coteDeLaSurface[0], hauteur: coteDeLaSurface[1] }}
+                        source={imageVisible(false)}
+                        point={null}
+                        onPoint={(point) => {
+                          // **Le clic désarme**, comme les trois autres
+                          // pipettes de cet écran.
+                          setViseeEchangeArmee(null)
+                          const quantification = recette.quantification
+                          if (!quantification) return
+                          const echanges = quantification.echanges ?? []
+                          void api
+                            .apercuRecette(asset.identifiant, recette, { viser: point })
+                            .then((reponse) => {
+                              const couleur = reponse.mesures.couleurs.visee
+                              // `undefined` sur un serveur plus vieux que la
+                              // route, `null` sur un point transparent ou hors
+                              // image (`atelier/services/assets.py`,
+                              // `_couleur_au_point`) : dans les deux cas rien
+                              // à poser — « celle qui part » reste ce qu'elle
+                              // était plutôt que de devenir une couleur
+                              // inventée.
+                              if (!couleur) return
+                              void poser({
+                                ...recette,
+                                quantification: {
+                                  ...quantification,
+                                  echanges: echanges.map((e, i) =>
+                                    i === echangeVise ? { ...e, depuis: couleur } : e,
+                                  ),
+                                },
+                              })
+                            })
+                            .catch(() => {
+                              // Un échec de réseau laisse « celle qui part »
+                              // telle qu'elle était — rien de pire qu'un geste
+                              // qui n'a pas eu lieu.
+                            })
+                        }}
+                      />
                     ) : (
                       <CadreDeRecadrage
                         asset={asset}
@@ -4836,7 +5033,7 @@ export function Retouche({
             ) : ouverte === "grille" ? (
               <ReglagesDeLaGrille {...poste} />
             ) : ouverte === "quantification" ? (
-              <ReglagesDesCouleurs {...poste} />
+              <ReglagesDesCouleurs {...poste} asset={asset} />
             ) : ouverte === "bords" ? (
               <ReglagesDuNettoyage {...poste} />
             ) : ouverte === "contours" ? (

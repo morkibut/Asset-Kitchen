@@ -1164,6 +1164,37 @@ def couleurs_obtenues(rgba: np.ndarray) -> int:
     return int(np.unique(visibles.reshape(-1, 3), axis=0).shape[0])
 
 
+def couleurs_visibles(rgba: np.ndarray) -> tuple[str, ...]:
+    """La liste — pas seulement le compte — des couleurs que `couleurs_obtenues`
+    dénombre (RV24).
+
+    *« dans la grille des couleurs affichée, il n'y a pas le vert que je vois
+    sur l'image »* — le retour qui a montré que la table « Couleurs » montrait
+    la palette du **jeu**, jamais celle que la réduction a vraiment posée sur
+    **cette** image. Une couleur peut être dans l'image et absente de la
+    palette du jeu : c'est exactement le cas qui manquait de pastille.
+
+    Mêmes pixels que `couleurs_obtenues` — **visibles seulement**, alpha nul
+    exclu — pour que la liste et le compte racontent toujours la même image.
+
+    **Triée par nombre de pixels, du plus fréquent au plus rare.** Un ordre
+    déterministe (les égalités se tranchent sur la couleur elle-même) plutôt
+    qu'un ordre de première rencontre, qui dépendrait du sens de balayage de
+    l'image — un détail d'implémentation que personne n'a à retrouver à l'œil.
+    """
+    visibles = rgba[:, :, :3][rgba[:, :, 3] > 0]
+    if not visibles.size:
+        return ()
+    uniques, comptes = np.unique(
+        visibles.reshape(-1, 3), axis=0, return_counts=True
+    )
+    ordre = sorted(
+        range(len(uniques)),
+        key=lambda i: (-int(comptes[i]), tuple(int(c) for c in uniques[i])),
+    )
+    return tuple(_hexa(uniques[i]) for i in ordre)
+
+
 def rampes(palette: Sequence[str]) -> tuple[tuple[str, ...], ...]:
     """La palette rangée **en rampes d'ombre** : les bruns ensemble, du sombre au clair.
 
