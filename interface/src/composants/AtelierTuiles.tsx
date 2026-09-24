@@ -13,6 +13,7 @@ import {
 import type { RGBAImage } from "../tuiles/moteur/types"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 import { CadreDialogue } from "./CadreDialogue"
+import { AvecCoupDeMain } from "./CoupDeMain"
 
 /** Une matière du jeu : une image de la bibliothèque que le jeu a marquée comme matière (`RG6`). */
 /** `detouree` (RG8) : l'image a été découpée comme un personnage — « Mes matières » le signale, sa fiche la répare. */
@@ -824,20 +825,26 @@ function OngletGenerer({ projet, jeu: j, cible, lecture, onPoser, onErreur, onPo
   const bloque = !dispo ? "Vérification de la disponibilité…" : !dispo.disponible ? dispo.manque.join(" · ") : !remplis ? manquant : ""
 
   return <div className="space-y-[14px]">
+    {/* Le coup de main (CM3) : une marque au bout de **chacun** des deux champs, et
+        chacun part seul — la proposition de l'un ne remplit jamais l'autre (TU12). */}
     <div>
+      <AvecCoupDeMain champ="matiere" projet={projet} texte={pierre} onGarder={changerPierre}>
       <label className="flex flex-col gap-[4px] text-[13px] text-encre-controle">C’est fait de quoi ?
         <input type="text" value={pierre} onChange={(e) => changerPierre(e.target.value)} placeholder="de la pierre grise usée"
           aria-invalid={manquePierre || undefined} aria-describedby="aide-pierre"
           className={`min-h-[30px] rounded-7 border bg-carte px-[8px] text-[13px] text-encre-controle ${manquePierre ? "border-echec" : "border-contour"}`} /></label>
+      </AvecCoupDeMain>
       <small id="aide-pierre" className="mt-[4px] block text-[12px] text-encre-3">
         La matière seule : pierre, bois, terre, sable. Le même texte pour tout le jeu — c’est lui qui fait que le sol et le mur vont ensemble.
       </small>
     </div>
     <div>
+      <AvecCoupDeMain champ="motif" projet={projet} texte={motif} onGarder={changerMotif}>
       <label className="flex flex-col gap-[4px] text-[13px] text-encre-controle">Le motif
         <input type="text" value={motif} onChange={(e) => changerMotif(e.target.value)} placeholder="de grandes dalles carrées, deux par deux"
           aria-invalid={manqueMotif || undefined} aria-describedby="aide-motif"
           className={`min-h-[30px] rounded-7 border bg-carte px-[8px] text-[13px] text-encre-controle ${manqueMotif ? "border-echec" : "border-contour"}`} /></label>
+      </AvecCoupDeMain>
       <small id="aide-motif" className="mt-[4px] block text-[12px] text-encre-3">
         Comment cette matière est posée sur {nomCible(j, cible)} : dis le compte et la taille, « quatre grandes dalles, deux par deux ». Ce qui n’est pas écrit n’est pas deviné.
       </small>
