@@ -177,6 +177,9 @@ const MESURES = {
   taches_total: 2,
   poches: [],
   poches_total: 0,
+  // **Aucune poche par défaut** (RV25) : un essai qui ne la configure pas ne
+  // doit voir ni phrase ni bouton — ce que `RV25` vérifie à part.
+  fond_enferme: { zones: 0, couleur: "#ff00ff", point: null },
   trous: [{ aire: 5, boite: [3, 3, 4, 4], couleur: "#000000", point: [3, 3] }],
   crans_occupation: [100],
   hauteur: { carres: 64, personnages: 1, max: 800, sujet: 64 },
@@ -2742,5 +2745,69 @@ describe("RV24 — les couleurs de l'image, avant celles du jeu", () => {
     await waitFor(() =>
       expect(document.querySelector('[data-surface="echange"]')).toBeNull(),
     )
+  })
+})
+
+// ── RV25 · le fond enfermé dans le sujet se voit, et s'enlève ───────────────
+//
+// Le cas de l'auteur : un bus détouré par un modèle garde le vert du fond
+// dans ses vitres, opaque, sans qu'aucune table ne le dise. La mesure
+// (`atelier/image/taches.py::zones_de_fond_enferme`) est testée côté serveur ;
+// ici, seuls la phrase et le bouton sont mesurés.
+
+describe("RV25 — le fond enfermé dans le sujet se voit, et s'enlève", () => {
+  const MESURES_AVEC_UNE_POCHE = {
+    ...MESURES,
+    fond_enferme: { zones: 3, couleur: "#3ca649", point: [2, 4] as [number, number] },
+  }
+
+  test("la phrase et le bouton paraissent quand des poches de fond enfermées restent", async () => {
+    monter({ mesures: MESURES_AVEC_UNE_POCHE })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
+
+    expect(
+      await within(colonne()).findByText("des morceaux du fond restent dans le sujet : 3 zones"),
+    ).toBeTruthy()
+    expect(
+      within(colonne()).getByRole("button", { name: "les retirer aussi ›" }),
+    ).toBeTruthy()
+  })
+
+  test("rien ne s'affiche quand aucune poche de fond n'est enfermée", async () => {
+    monter({ mesures: MESURES })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
+
+    await within(colonne()).findByText(/Ajouter une passe/)
+    expect(within(colonne()).queryByText(/restent dans le sujet/)).toBeNull()
+    expect(
+      within(colonne()).queryByRole("button", { name: "les retirer aussi ›" }),
+    ).toBeNull()
+  })
+
+  test("le bouton ajoute la passe « couleur » déjà existante, visant le fond, partout — rien ne change avant le clic", async () => {
+    const { appels } = monter({
+      asset: image({ recette: recetteDeTravail() }),
+      mesures: MESURES_AVEC_UNE_POCHE,
+    })
+    fireEvent.click(within(barre()).getByRole("button", { name: "Détourage" }))
+
+    // **La phrase propose, elle n'agit pas** : aucun appel de recette avant
+    // le clic.
+    expect(appels.some((a) => a.url.includes("/recipe") && a.methode === "PUT")).toBe(false)
+
+    fireEvent.click(
+      await within(colonne()).findByRole("button", { name: "les retirer aussi ›" }),
+    )
+
+    await waitFor(() => {
+      const passes = dernierePose(appels)?.passes ?? []
+      const ajoutee = passes[passes.length - 1]
+      expect(ajoutee?.moteur).toBe("couleur")
+      expect(ajoutee?.portee).toBe("partout")
+      expect(ajoutee?.point).toEqual([2, 4])
+    })
+    // **La passe du bord posée avant survit** — le bouton ajoute, il ne
+    // remplace rien.
+    expect(dernierePose(appels)?.passes?.[0]?.moteur).toBe("bord")
   })
 })

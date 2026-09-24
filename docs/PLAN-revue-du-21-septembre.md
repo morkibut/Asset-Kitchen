@@ -1113,15 +1113,34 @@ le vert, avec « Où retirer : partout ». Il n'est simplement proposé nulle pa
 
 ### Critères d'acceptation
 
-- [ ] après tout détourage (bord ou modèle), quand des pixels de la couleur du fond restent opaques à
+- [x] après tout détourage (bord ou modèle), quand des pixels de la couleur du fond restent opaques à
       l'intérieur du sujet, la table le dit en une phrase (« des morceaux du fond restent dans le
       sujet : 3 zones ») et propose « les retirer aussi »
-- [ ] ce bouton ajoute la passe « couleur » déjà existante (couleur du fond visée, « partout »),
+- [x] ce bouton ajoute la passe « couleur » déjà existante (couleur du fond visée, « partout »),
       sans nouveau moteur ; elle s'annule comme toute passe
-- [ ] un sujet qui porte légitimement une couleur proche du fond n'est jamais retouché sans ce
+- [x] un sujet qui porte légitimement une couleur proche du fond n'est jamais retouché sans ce
       clic : la phrase propose, elle n'agit pas
-- [ ] le compte des poches se fait côté serveur, de façon déterministe, et un essai le vérifie sur
+- [x] le compte des poches se fait côté serveur, de façon déterministe, et un essai le vérifie sur
       une image qui a une poche enfermée et sur une qui n'en a pas
+
+*Fait le 24 septembre 2026.* La mesure vit dans `atelier/image/taches.py::zones_de_fond_enferme` —
+tolérance serrée et fixe (16, indépendante du réglage de l'auteur), poches de moins de neuf pixels
+écartées comme du bruit — et se lit sur le **rendu final**, jamais sur l'image avant les bords :
+un fond enfermé par un modèle de silhouette reste opaque quoi qu'il arrive ensuite. La couleur
+visée est celle qu'une passe « bord » a déclarée (`couleur_du_jeu`) si elle existe, sinon la
+médiane des bordures de l'image brute — la même devinette que `detourer_bord` ferait. Rendue par
+`_fond_enferme_de` dans `atelier/services/assets.py`, ajoutée à la réponse existante de
+`_taches_de` (`GET /spots`, `POST /recipe/preview`) : aucune route neuve. Le point qu'une passe
+« couleur » viserait est calculé côté serveur (`_point_du_bord`, `atelier/image/traitement.py`) —
+un pixel réel de la couleur visée, jamais une moyenne, puisque `detourer_couleur` lit un pixel. Le
+bouton compose la passe avec `PASSE_PAR_DEFAUT` (tolérance 28, la valeur par défaut du produit —
+pas celle, plus serrée, de la mesure) ; rien à l'écran ne montre les poches une à une, seulement
+leur compte, donc la mesure ne construit jamais la liste — un simple compteur, plus rapide sur une
+image bruitée. Douze essais serveur (`tests/test_rv25_fond_enferme.py`, mesure seule et bout en
+bout par `/spots`) et trois essais d'écran (`Retouche.test.tsx`, § RV25) ; `Retouche.test.tsx` en
+entier (111) et les essais serveur de détourage existants (`test_e3.py`, `test_b18_detourer.py`,
+`test_d3.py`, `test_e5.py`, `test_rv24_couleurs.py`) passent sans régression. Non vérifié au
+navigateur réel — seulement par les essais doublés.
 
 ---
 

@@ -1124,6 +1124,30 @@ export function ReglagesDuDetourage({
       )
       })}
 
+      {/* **Le fond enfermé dans le sujet, et le moyen de l'enlever** (RV25).
+          Le cas du bus : un modèle détoure l'objet entier, vitres comprises,
+          et le vert du fond reste opaque derrière elles — ni « bord » ni le
+          nettoyage des bords ne le disent. La phrase **propose**, elle
+          n'agit jamais seule : rien ne change sans ce clic, et ce qu'il ajoute
+          est la passe « couleur » qui existe déjà, visant le fond, partout. */}
+      {(mesures?.fond_enferme?.zones ?? 0) > 0 && mesures?.fond_enferme.point && (
+        <Pourquoi
+          texte={`des morceaux du fond restent dans le sujet : ${mesures.fond_enferme.zones} ${pluriel(mesures.fond_enferme.zones, "zone", "zones")}`}
+          geste="les retirer aussi"
+          onGeste={() => {
+            const point = mesures.fond_enferme.point
+            if (!point) return
+            void poser({
+              ...recette,
+              passes: [
+                ...passes,
+                { ...PASSE_PAR_DEFAUT, moteur: "couleur", portee: "partout", point },
+              ],
+            })
+          }}
+        />
+      )}
+
       <button
         type="button"
         onClick={() => void poser({ ...recette, passes: [...passes, PASSE_PAR_DEFAUT] })}

@@ -97,6 +97,7 @@ from atelier.image import (
     retrouver_grille,
     taches,
     trous,
+    zones_de_fond_enferme,
 )
 from atelier.image.traitement import (
     boite_opaque,
@@ -474,6 +475,12 @@ class ServiceAssets:
         # peut porter des milliers de taches d'un pixel, et une liste tronquée
         # sans le dire se lirait comme la liste entière.
         toutes = len([m for m, _ in composantes(rgba[:, :, 3] > 0)])
+        # **Le rendu final, calculé une seule fois** (RV25) : `_couleurs_de` le
+        # demandait déjà, mais seulement quand la table « Couleurs » est posée
+        # — la mesure des poches de fond enfermées en a besoin dans tous les
+        # cas, un détourage par modèle n'attendant aucune quantification pour
+        # laisser du vert dans les vitres d'un bus.
+        rendu = self._tableau_avec(asset, asset.recette)
         return {
             "taches": [t.en_json() for t in trouvees],
             "coupees": max(0, toutes - len(trouvees)),
@@ -517,11 +524,23 @@ class ServiceAssets:
             # *« rien à l'écran ne dit l'écart, donc l'auteur monte le réglage en
             # croyant gagner du détail »*. C'est le seul nombre qui explique
             # pourquoi monter le réglage ne change plus rien.
-            "couleurs": self._couleurs_de(asset, viser=viser),
+            "couleurs": self._couleurs_de(asset, viser=viser, rendu=rendu),
+            # **Ce que le fond a laissé, encore opaque, dans le rendu qu'on
+            # regarde vraiment** (RV25) — la vitre d'un bus détouré par un
+            # modèle, verte du fond qu'elle laisse passer. Ni « bord » ni le
+            # nettoyage des bords ne le disent : le premier ne relie que ce
+            # qui touche le cadre, le second efface par aire et pas par
+            # couleur. La table le propose, elle ne le fait jamais toute
+            # seule.
+            "fond_enferme": self._fond_enferme_de(asset, rendu),
         }
 
     def _couleurs_de(
-        self, asset: Asset, *, viser: tuple[int, int] | None = None,
+        self,
+        asset: Asset,
+        *,
+        viser: tuple[int, int] | None = None,
+        rendu: np.ndarray | None = None,
     ) -> dict[str, Any]:
         """Combien de couleurs cette image demande, et combien elle en obtient.
 
@@ -541,12 +560,16 @@ class ServiceAssets:
         image que l'échange voit vraiment. Rendu même quand la table dort :
         le geste de viser ne demande rien de plus que l'image telle qu'elle
         est déjà, une palette posée ou non.
+
+        `rendu`, déjà calculé, évite de le refaire (RV25) : `_taches_de` en a
+        besoin dans tous les cas, pour la mesure des poches de fond enfermées.
         """
         quantification = asset.recette.quantification
         dort = quantification is None or asset.recette.dort(QUANTIFICATION)
         if dort and viser is None:
             return {"demandees": 0, "obtenues": 0, "liste": []}
-        rendu = self._tableau_avec(asset, asset.recette)
+        if rendu is None:
+            rendu = self._tableau_avec(asset, asset.recette)
         resultat: dict[str, Any] = (
             {"demandees": 0, "obtenues": 0, "liste": []}
             if dort
@@ -602,6 +625,48 @@ class ServiceAssets:
         vives = asset.recette.passes_vives()
         tolerance = vives[-1].tolerance if vives else Passe().tolerance
         return mesures_du_fond(self.detourage(asset), tolerance).en_json()
+
+    def _fond_enferme_de(self, asset: Asset, rendu: np.ndarray) -> dict[str, Any]:
+        """Ce que le fond enferme encore dans le rendu, à la couleur qu'il
+        visait (RV25) — le cas du bus dont les vitres restent vertes après un
+        détourage par modèle, vitres comprises.
+
+        **La couleur visée est celle que le détourage a réellement visée,
+        jamais celle du rendu** : la cible déclarée du jeu quand une passe
+        `bord` la porte (B18) — même lecture que `couleur_du_jeu` — sinon la
+        médiane des bordures de **l'image brute**, la devinette que
+        `detourer_bord` ferait par défaut. Jamais celle du rendu lui-même :
+        il peut être recadré à ras du sujet, sans plus un seul pixel de
+        bordure pour la deviner. Prise sur `self.detourage(asset)` plutôt que
+        relue sur le disque : mêmes couleurs que le brut — *effacer un pixel
+        ne change pas sa couleur* —, et déjà en cache.
+
+        `point` est un pixel réel de cette couleur, en pixels du brut — celui
+        qu'une passe « couleur » visera si l'auteur clique « les retirer
+        aussi » : la passe lit un pixel, jamais une moyenne (voir
+        `detourer_couleur`). `None` quand il n'y a rien à retirer : proposer
+        un bouton qui viserait un point inutile serait proposer un geste sans
+        effet.
+        """
+        from atelier.image.traitement import _couleur_du_bord, _point_du_bord, _rvb
+
+        rgb_brut = self.detourage(asset)[:, :, :3]
+        vives = asset.recette.passes_vives()
+        declaree = next(
+            (p.couleur_du_jeu for p in vives if p.moteur == BORD and p.couleur_du_jeu),
+            "",
+        )
+        cible = (
+            _rvb(declaree)
+            if declaree
+            else tuple(int(round(c)) for c in _couleur_du_bord(rgb_brut))
+        )
+        zones = zones_de_fond_enferme(rendu, cible)
+        couleur = "#%02x%02x%02x" % cible
+        if not zones:
+            return {"zones": 0, "couleur": couleur, "point": None}
+        point = _point_du_bord(rgb_brut, np.asarray(cible, dtype=np.int16))
+        return {"zones": zones, "couleur": couleur, "point": list(point)}
 
     def _grille_du_modele(self, asset: Asset) -> dict[str, Any]:
         """Sur quelle grille le modèle a peint cette image-là — **ou rien** (D2).
