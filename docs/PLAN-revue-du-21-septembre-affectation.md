@@ -22,7 +22,7 @@
 
 ---
 
-## Les 26 tranches
+## Les 27 tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -51,9 +51,10 @@
 | **RV23** · Espace agrandit toute image, partout | `[MEDIUM]` | une règle par défaut au niveau de l'atelier, qui doit céder aux surfaces qui se servent déjà d'Espace |
 | **RV24** · La table « Couleurs » montre les couleurs de l'image | `[MEDIUM]` | la liste existe côté serveur ; il faut la faire remonter, et une pipette de plus sur un geste qui existe |
 | **RV25** · Le fond enfermé se voit, et s'enlève | `[MEDIUM]` | un compte neuf et déterministe des poches de fond, qui propose une passe existante sans jamais agir seul |
+| **RV26** · L'agrandissement passe devant les fenêtres | `[EASY]` | une couche d'affichage à changer, la cause est déjà lue |
 | **RV16** · La maquette, remesurée | `[MEDIUM]` | Un relevé au navigateur qui juge 26 écrans contre la maquette, avec la grille du 13 septembre. |
 
-**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 15 `[MEDIUM]`, 8 `[EASY]`, 1 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 15 `[MEDIUM]`, 9 `[EASY]`, 1 `[VERY-EASY]`.
 
 ---
 

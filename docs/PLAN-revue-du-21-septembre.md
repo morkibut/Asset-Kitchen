@@ -1111,9 +1111,29 @@ le vert, avec « Où retirer : partout ». Il n'est simplement proposé nulle pa
 
 ---
 
+## RV26 · L'agrandissement d'Espace passe devant les fenêtres
+
+*Ajoutée le 24 septembre 2026, sur un retour de l'auteur* : dans « Modifier la fiche », Espace sur
+une vignette ouvre l'agrandissement **derrière** la fenêtre.
+
+**La cause, lue dans le code** : `CadreDialogue.tsx` ouvre ses fenêtres par `showModal()`, qui les
+pose dans la couche du dessus du navigateur ; l'aperçu (`Apercu.tsx`) est un `fixed z-50` de la page
+ordinaire, et aucun `z-index` ne passe devant cette couche.
+
+### Critères d'acceptation
+
+- [ ] l'agrandissement ouvert depuis une fenêtre (fiche du sujet, et toute fenêtre de `CadreDialogue`)
+      passe devant elle ; hors fenêtre, rien ne change
+- [ ] Échap ferme l'agrandissement **seul**, sans fermer la fenêtre qui est dessous
+- [ ] le focus revient dans la fenêtre à la fermeture
+- [ ] un essai d'écran ouvre l'agrandissement depuis une fenêtre et vérifie qu'il est dans la couche
+      du dessus (ou monté dans la fenêtre) ; il tombe sans le correctif (*8octies*)
+
+---
+
 ## RV16 · La maquette, remesurée
 
-**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21, RV22, RV23, RV24, RV25.
+**Bloquée par** : RV6, RV8, RV9, RV10, RV11, RV12, RV13, RV14, RV15, RV17, RV18, RV19, RV20, RV21, RV22, RV23, RV24, RV25, RV26.
 
 ### Ce qu'on livre
 
