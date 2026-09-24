@@ -1124,23 +1124,44 @@ le vert, avec « Où retirer : partout ». Il n'est simplement proposé nulle pa
       une image qui a une poche enfermée et sur une qui n'en a pas
 
 *Fait le 24 septembre 2026.* La mesure vit dans `atelier/image/taches.py::zones_de_fond_enferme` —
-tolérance serrée et fixe (16, indépendante du réglage de l'auteur), poches de moins de neuf pixels
-écartées comme du bruit — et se lit sur le **rendu final**, jamais sur l'image avant les bords :
-un fond enfermé par un modèle de silhouette reste opaque quoi qu'il arrive ensuite. La couleur
-visée est celle qu'une passe « bord » a déclarée (`couleur_du_jeu`) si elle existe, sinon la
-médiane des bordures de l'image brute — la même devinette que `detourer_bord` ferait. Rendue par
-`_fond_enferme_de` dans `atelier/services/assets.py`, ajoutée à la réponse existante de
-`_taches_de` (`GET /spots`, `POST /recipe/preview`) : aucune route neuve. Le point qu'une passe
-« couleur » viserait est calculé côté serveur (`_point_du_bord`, `atelier/image/traitement.py`) —
-un pixel réel de la couleur visée, jamais une moyenne, puisque `detourer_couleur` lit un pixel. Le
-bouton compose la passe avec `PASSE_PAR_DEFAUT` (tolérance 28, la valeur par défaut du produit —
-pas celle, plus serrée, de la mesure) ; rien à l'écran ne montre les poches une à une, seulement
-leur compte, donc la mesure ne construit jamais la liste — un simple compteur, plus rapide sur une
-image bruitée. Douze essais serveur (`tests/test_rv25_fond_enferme.py`, mesure seule et bout en
-bout par `/spots`) et trois essais d'écran (`Retouche.test.tsx`, § RV25) ; `Retouche.test.tsx` en
-entier (111) et les essais serveur de détourage existants (`test_e3.py`, `test_b18_detourer.py`,
-`test_d3.py`, `test_e5.py`, `test_rv24_couleurs.py`) passent sans régression. Non vérifié au
-navigateur réel — seulement par les essais doublés.
+tolérance serrée et fixe, poches de moins de neuf pixels écartées comme du bruit — et se lit sur
+le **rendu final**, jamais sur l'image avant les bords : un fond enfermé par un modèle de
+silhouette reste opaque quoi qu'il arrive ensuite. La couleur visée est celle qu'une passe « bord »
+a déclarée (`couleur_du_jeu`) si elle existe, sinon la médiane des bordures de l'image brute — la
+même devinette que `detourer_bord` ferait. Rendue par `_fond_enferme_de` dans
+`atelier/services/assets.py`, ajoutée à la réponse existante de `_taches_de` (`GET /spots`,
+`POST /recipe/preview`) : aucune route neuve. Le point qu'une passe « couleur » viserait est
+calculé côté serveur (`_point_du_bord`, `atelier/image/traitement.py`) — un pixel réel de la
+couleur visée, jamais une moyenne, puisque `detourer_couleur` lit un pixel. Le bouton compose la
+passe avec `PASSE_PAR_DEFAUT` (tolérance 28, la valeur par défaut du produit — pas celle de la
+mesure) ; rien à l'écran ne montre les poches une à une, seulement leur compte, donc la mesure ne
+construit jamais la liste — un simple compteur, plus rapide sur une image bruitée. Treize essais
+serveur (`tests/test_rv25_fond_enferme.py`, mesure seule et bout en bout par `/spots`) et trois
+essais d'écran (`Retouche.test.tsx`, § RV25) ; `Retouche.test.tsx` en entier (111) et les essais
+serveur de détourage existants (`test_e3.py`, `test_b18_detourer.py`, `test_d3.py`, `test_e5.py`,
+`test_rv24_couleurs.py`) passent sans régression. Non vérifié au navigateur réel — seulement par
+les essais doublés.
+
+**Corrigé le 24 septembre 2026 sur l'image réelle.** La mesure ratait le cas exact qu'elle devait
+voir : sur le bus de l'auteur, les vitres du rendu final sont `#3ca649`, à 18 de `#38b83c` visé —
+un écart que la tolérance 16 n'atteignait pas (3 zones vues, 132 pixels), quand 20 et au-delà s'y
+stabilisent (22 zones, ~2 200 pixels, plateau net mesuré par l'orchestrateur). **La cause** : la
+quantification à 32 couleurs décale la couleur du fond dans le rendu, et la mesure travaille sur le
+rendu — pas sur le brut, elle ne le pourrait pas, le rendu a une autre géométrie (recadrage,
+grille). `TOLERANCE_FOND_VISE` passe donc de 16 à **24** — sous les 28 d'une passe de détourage,
+au milieu du plateau — plutôt que de mesurer sur les couleurs d'origine, écarté comme trop risqué
+pour la géométrie qui diverge entre brut et rendu. Un essai neuf
+(`test_une_poche_decalee_par_la_quantification_est_quand_meme_comptee`) reproduit le cas sans le
+fichier de l'auteur — un fond fabriqué, une poche décalée de 18 — et tombe avec l'ancien seuil de
+16. Vérifié en calcul local et gratuit sur l'image réelle (`05b6ecf05eab42efa900b4f7ca17d0eb-0`,
+recette de l'asset rejouée avec `detourer` + `queue`, sans rien écrire dans `donnees/`) : la
+mesure passe de 3 à 22 zones, exactement le plateau relevé. Le bouton, lui, avec sa propre
+tolérance par défaut (28, celle de `PASSE_PAR_DEFAUT`, inchangée par cette correction), ne vide
+qu'une partie des poches sur cette image — 22 zones tombent à 18, et le vert vif opaque de
+2 200 à 2 099 pixels — parce qu'il vise la couleur du **brut**, où le vert des vitres est plus
+loin du fond que dans le rendu quantifié ; l'auteur garde la main pour monter la tolérance de
+cette passe-là, comme pour toute passe. Ce point n'est pas un critère de RV25 — la mesure, elle,
+est exacte — et reste à regarder séparément.
 
 ---
 
