@@ -62,6 +62,7 @@ from atelier.image import (
     zones_opaques,
 )
 from atelier.image.decoupe import ordre_des_vues
+from atelier.image.pliage import vues_en_miroir
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ServiceBibliotheque
 from atelier.services.evenements import Diffusion
@@ -515,7 +516,30 @@ class ServiceDecoupe:
                 attendu=attendu,
                 trouvees=trouvees,
             )
-        return _Vues(boites=boites, attendu=attendu, trouvees=trouvees)
+        return _Vues(
+            boites=boites,
+            attendu=attendu,
+            trouvees=trouvees,
+            miroirs=self._miroirs(generation, planche, boites),
+        )
+
+    def _miroirs(
+        self, generation: Generation, planche: Asset, boites: list[Boite]
+    ) -> tuple[tuple[int, int], ...]:
+        """**Les vues opposées qui ne sont qu'un miroir** (TS19 étendu à RS2,
+        corrigé le 24 septembre 2026 après relecture) — mesurées ici, sur les
+        morceaux qui vont naître, quand l'ordre parti avec l'appel dit la
+        direction de chacun. Sans ordre, rien : deux vues sans direction ne
+        disent pas ce qu'elles devraient montrer.
+
+        Le même détourage que la détection (`_zones`), gardé en cache par
+        `ServiceAssets.detourage` : la mesure ne le repaie pas. Un signal,
+        jamais un refus — la découpe coupe quand même.
+        """
+        directions, _ = _directions_des_vues(generation, len(boites))
+        if directions is None:
+            return ()
+        return vues_en_miroir(self._detoure(planche), boites, list(directions))
 
     def _vues_attendues(self, generation: Generation) -> tuple[int | None, str | None]:
         """Le nombre de vues de **la référence planche partie avec l'appel** —
@@ -553,9 +577,13 @@ class ServiceDecoupe:
 
     def _zones(self, asset: Asset) -> list[Boite]:
         """Les zones opaques d'une image — le mode « auto » de `proposer`."""
+        return zones_opaques(self._detoure(asset)[:, :, 3], cote_min=COTE_MIN)
+
+    def _detoure(self, asset: Asset) -> Any:
+        """L'image détourée que la détection lit — celle de la recette, sinon
+        le moteur du geste courant."""
         passes = asset.recette.passes_vives() or (Passe(),)
-        alpha = self._assets.detourage(asset, passes)[:, :, 3]
-        return zones_opaques(alpha, cote_min=COTE_MIN)
+        return self._assets.detourage(asset, passes)
 
     def _poser(
         self, generation: Generation, emplacement: Emplacement, vues: "_Vues"
@@ -606,6 +634,13 @@ class ServiceDecoupe:
             "attendu": vues.attendu,
             "directions": list(directions) if directions is not None else None,
             **({"sans_direction": sans_direction} if sans_direction else {}),
+            # **Les vues opposées qui ne sont qu'un miroir** (TS19 étendu à
+            # RS2) : des paires d'indices dans `morceaux`, absentes sans paire.
+            **(
+                {"miroirs": [list(paire) for paire in vues.miroirs]}
+                if vues.miroirs
+                else {}
+            ),
         }
         self._sauver(generation)
 
@@ -693,6 +728,7 @@ class _Vues:
     raison: str | None = None
     attendu: int | None = None
     trouvees: int | None = None
+    miroirs: tuple[tuple[int, int], ...] = ()
 
 
 def _directions_des_vues(

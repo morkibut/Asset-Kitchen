@@ -99,7 +99,8 @@ def installer_outils_objectifs(serveur: Any, atelier: Any, refus: Callable,
                   "the image stays in the library), and its views are ranked in their directions: the "
                   "order is read on the call that made it (the directions of a first sheet / folded "
                   "sheet, or the frozen order of a redone sheet). Later poses and animations start "
-                  "from this sheet. Refused: an image of another character, a layer, a discarded image.")
+                  "from this sheet. Refused: an image of another character, a layer, a discarded image, "
+                  "a piece cut or unfolded from a sheet, and a sheet of poses — pass the whole sheet.")
     @refus
     async def choose_character_sheet(character: str, asset: str,
                                   project: str | None = None) -> dict[str, Any]:

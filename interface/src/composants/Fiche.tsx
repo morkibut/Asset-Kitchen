@@ -107,26 +107,33 @@ export const nomDuModele = (modele: string): string => {
 
 /** Cette image est-elle une planche, au sens qui rend « C'est la référence »
  *  proposable (TS21) — élargi depuis TS3, qui ne connaissait que la première.
- *  Trois chemins, jamais un morceau qu'une planche a fait sortir (`asset.
- *  planche` le dit — la découpe range ses morceaux à part, ils n'ont plus la
- *  mise en page qui a coûté l'appel) :
+ *  Trois chemins :
  *  - **la première planche** (TS3) — `demande.premiere_planche` ;
- *  - **une planche refaite** (RS2) — `demande.garder_mise_en_page`,
- *    `atelier/domaine/planche.py`, `est_une_planche_refaite` ;
- *  - **une planche pliée** (C2/G16) — `generation.pliage`, N vues d'un seul
- *    appel, qu'elle soit sortie du chemin des directions ou d'un lot de poses
- *    cochées ensemble.
- *  La décision : côté écran, la distinction fine que fait `est_une_planche_
- *  refaite` entre la feuille et ses morceaux se lit déjà sur `asset.planche`,
- *  qui n'existe que sur un morceau — inutile de redemander les emplacements
- *  de la génération pour la même réponse. */
+ *  - **une planche refaite** (RS2) — `demande.garder_mise_en_page` ;
+ *  - **une planche pliée par directions** (C2/G16, E13) — `generation.pliage`
+ *    dont chaque case dit sa direction, et d'un seul sujet. Une planche de
+ *    poses n'a aucune vue à ranger dans des directions.
+ *
+ *  **Et jamais un morceau** (corrigé le 24 septembre 2026 après relecture) :
+ *  la règle du serveur, `refus_de_la_planche` (`atelier/domaine/planche.py`),
+ *  que `choisir_la_planche` applique aussi. Seul un rang d'emplacement est une
+ *  planche. Les morceaux d'une planche refaite découpée n'ont pas `planche`
+ *  mais `parent`, et gardent la génération de leur feuille : lire `asset.
+ *  planche` seul leur proposait « C'est la référence », et un clic rangeait un
+ *  sprite comme planche du sujet. Un `parent` que l'appel lui-même donne (une
+ *  image jointe en édition) ne compte pas : c'est la filiation de la feuille. */
 export function estUnePlanche(asset: Asset, generation: Generation | null): boolean {
   if (asset.planche) return false
   if (!generation) return false
+  if (asset.parent && asset.parent !== generation.parent) return false
+  if (!generation.emplacements.some((e) => e.rang === asset.rang)) return false
+  const pliage = generation.pliage
+  if (pliage && !generation.demande.premiere_planche) {
+    const cases = pliage.cases ?? []
+    return cases.length > 0 && cases.every((c) => Boolean(c.direction) && !c.sujet)
+  }
   return Boolean(
-    generation.demande.premiere_planche ||
-      generation.demande.garder_mise_en_page ||
-      generation.pliage,
+    generation.demande.premiere_planche || generation.demande.garder_mise_en_page,
   )
 }
 
@@ -542,7 +549,7 @@ export function Fiche({
               vues le disent pareil. Juste au-dessus de « C'est la référence »,
               parce que c'est avant de la choisir qu'il faut le savoir. Un
               signal, jamais un refus. */}
-          <VuesEnMiroir generation={generation} />
+          <VuesEnMiroir asset={asset} generation={generation} />
           {/* **« C'est la référence »** (TS3), élargi à la Galerie (TS21).
               Montré sur toute planche — `estUnePlanche`, ci-dessus. Sur la
               page d'un sujet, le sujet est connu d'avance et le bouton garde
@@ -1019,12 +1026,27 @@ function SansLeStyleDuJeu({ generation }: { generation: Generation | null }) {
  * Les directions se lisent sur les cases de la même planche ; une paire se
  * nomme par elles, pas par un numéro de case que l'auteur ne voit nulle part.
  */
-function VuesEnMiroir({ generation }: { generation: Generation | null }) {
+function VuesEnMiroir({
+  asset,
+  generation,
+}: {
+  asset: Asset
+  generation: Generation | null
+}) {
   const pliage = generation?.pliage
-  const paires = pliage?.miroirs ?? []
+  // **Ou la découpe à l'arrivée d'une planche refaite** (TS19 étendu à RS2,
+  // corrigé le 24 septembre 2026 après relecture) : sa marque porte les paires,
+  // dans l'ordre de ses morceaux. Lue sur la feuille comme sur ses morceaux,
+  // pour que la planche et ses vues le disent pareil — comme un pliage.
+  const decoupe = generation?.emplacements
+    .map((e) => (e.decoupe && "morceaux" in e.decoupe ? { rang: e.rang, ...e.decoupe } : null))
+    .find((d) => d && (d.rang === asset.rang || d.morceaux.includes(asset.identifiant)))
+  const paires = pliage?.miroirs ?? decoupe?.miroirs ?? []
   if (paires.length === 0) return null
-  const cases = pliage?.cases ?? []
-  const nom = (i: number) => cases[i]?.direction || `vue ${i + 1}`
+  const directions: (string | null | undefined)[] = pliage
+    ? (pliage.cases ?? []).map((c) => c.direction)
+    : (decoupe?.directions ?? [])
+  const nom = (i: number) => directions[i] || `vue ${i + 1}`
 
   return (
     <div

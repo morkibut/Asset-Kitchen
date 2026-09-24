@@ -924,7 +924,8 @@ autres).
       part pas avec elle** : sinon le modèle recopierait le dessin qu'on veut quitter
 - [x] l'ancienne reste la référence jusqu'à ce que l'auteur clique « C'est la référence » sur une
       nouvelle ; elle reste alors en bibliothèque, dépromue
-- [x] le prix est annoncé sur le bouton, comme pour la première
+- [ ] le prix est annoncé sur le bouton, comme pour la première — *non tenu : aucun des deux boutons
+      ne le porte ; le prix s'annonce dans le tiroir de confirmation, avant de payer (voir plus bas)*
 - [x] un essai : un sujet avec une planche choisie refait sa planche, et la demande qui part ne porte
       pas l'ancienne planche ; puis « C'est la référence » sur la nouvelle remplace l'ancienne
 
@@ -956,6 +957,10 @@ d'`interface/dist` dans le worktree (`AGENTS.md`).
 
 **Après** : TS19 (même texte envoyé, même écran de la planche).
 
+*Corrigé le 24 septembre 2026 après relecture.* Le critère du prix était coché alors que le
+paragraphe ci-dessus admet que le bouton ne l'affiche pas : il est décoché. Afficher le prix sur le
+bouton reste à faire, pour la première planche comme pour la refaite.
+
 ### TS21 · La Galerie sait faire d'une image la planche d'un sujet
 
 *Ajoutée le 24 septembre 2026, sur un retour de l'auteur* : il a refait une planche d'Elias et ne
@@ -974,6 +979,25 @@ quand on ouvre la fiche d'une planche fabriquée par « Faire la planche des dir
 - [x] un essai d'écran dans la Galerie, qui tombe sans le correctif
 
 **Après** : TS19 et TS20 (même bouton, même fiche).
+
+*Corrigé le 24 septembre 2026 après relecture.* Le deuxième critère était coché et faux : les
+morceaux d'une planche refaite découpée (à l'arrivée ou à la main) ont `parent` mais pas `planche`,
+et gardent la génération de leur feuille — leur fiche proposait « C'est la référence » et « En faire
+la planche de X », et un clic rangeait un sprite comme planche du sujet en retirant la vraie. Idem
+pour une planche de **poses**, alors que le premier critère ne vise que le pliage par directions.
+**Une seule règle, aux deux bouts** : `refus_de_la_planche` (`atelier/domaine/planche.py`) — seul un
+rang d'emplacement est une planche ; un `parent` qui n'est pas celui de l'appel, un `planche` posé,
+un rang hors des emplacements, ou un pliage qui n'est pas par directions (hors première planche)
+sont refusés. `choisir_la_planche` refuse avec la phrase (409, l'agent MCP compris) ; `estUnePlanche`
+(`Fiche.tsx`) reprend la même règle. Une image isolée reste acceptée (le bandeau du sujet neuf la
+propose pour un jeu à une seule vue, *TS3*). Les deux critères disent maintenant vrai.
+**Et TS19 s'étend à la planche refaite** (même relecture) : sa consigne de mise en page porte la
+phrase anti-miroir (« Views 1 and 2 … ») dès que l'ordre des vues de la planche à reproduire est
+dit, et la découpe à l'arrivée mesure les miroirs sur ses morceaux quand l'ordre figé avec l'appel
+nomme leurs directions — écrits sur la marque (`decoupe.miroirs`), montrés par le même encart de la
+fiche, sur la feuille comme sur ses morceaux. Essais : `tests/test_ts21.py` (3),
+`tests/test_ts19_planche_refaite.py` (4), quatre de plus dans `Fiche.test.tsx` ; tous tombent en
+défaisant le correctif. Non vu au navigateur.
 
 *Fait le 24 septembre 2026.* **Une seule condition élargie, partagée par les deux appelants.**
 `estUnePlanche(asset, generation)` (`Fiche.tsx`) reconnaît les trois cas — `demande.premiere_planche`

@@ -153,6 +153,10 @@ export type DecoupeALArrivee =
       attendu: number | null
       directions: string[] | null
       sans_direction?: string
+      /** **Les vues opposées qui ne sont qu'un miroir** (TS19 étendu à RS2) :
+       *  des paires d'indices dans `morceaux`. Absent sans paire, et quand
+       *  l'ordre des vues n'était pas dit. */
+      miroirs?: [number, number][]
     }
   | { raison: string; attendu?: number | null; trouvees?: number }
   | { en_cours: true }
@@ -2086,7 +2090,7 @@ export type Pliage = {
   attend_un_choix: boolean
   /** Les cases demandées, dans l'ordre de lecture — ici, seulement leur
    *  direction. */
-  cases?: { direction?: string | null }[]
+  cases?: { direction?: string | null; sujet?: string | null }[]
   /** **Les vues opposées qui ne sont qu'un miroir** (TS19) : des paires de
    *  cases, mesurées à l'arrivée. Absent quand il n'y en a aucune, et sur une
    *  planche d'avant TS19. */

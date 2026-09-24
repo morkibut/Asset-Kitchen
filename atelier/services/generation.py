@@ -124,6 +124,7 @@ from atelier.services.pliage import (
     ServicePliage,
     accorde,
     consignes,
+    phrase_des_cotes_opposes,
     reference,
 )
 from atelier.services.prix import mesures as mesures_de_prix
@@ -1015,6 +1016,9 @@ class ServiceGenerations:
                     mise_en_page=source,
                 ),
                 mise_en_page=demande.garder_mise_en_page,
+                vues_de_la_planche=self._vues_de_la_mise_en_page(
+                    projet, personnage, source
+                ),
                 fond=fond,
             ),
         )
@@ -2200,6 +2204,11 @@ class ServiceGenerations:
         # **Refaire une planche** (RS2) : le calage passe au pluriel, le cadre
         # cède sa place à la consigne de mise en page, la caméra cesse de primer.
         mise_en_page: bool = False,
+        # **Les directions des vues de la planche à refaire**, dans l'ordre de
+        # lecture (corrigé le 24 septembre 2026 après relecture) — ce qui fait
+        # porter à la consigne la phrase anti-miroir de TS19. Vide quand
+        # l'ordre n'est pas dit : aucune phrase, comme avant.
+        vues_de_la_planche: Sequence[str] = (),
         # **Le fond calculé pour cet appel-ci** (RT3). `None` veut dire *aucun
         # fond* : la phrase de calage est alors celle d'avant D3. Seuls les deux
         # chemins qui voient les images jointes — la soumission et son aperçu —
@@ -2425,7 +2434,18 @@ class ServiceGenerations:
                     "nom": "la planche à refaire",
                     "texte": tri.texte(
                         clef(CADRAGE, "mise-en-page"),
-                        consigne_de_mise_en_page(rang),
+                        # **Et les deux vues opposées, pas un miroir** (TS19
+                        # étendu à RS2) — vide sans paire ni ordre dit.
+                        " ".join(
+                            partie
+                            for partie in (
+                                consigne_de_mise_en_page(rang),
+                                phrase_des_cotes_opposes(
+                                    vues_de_la_planche, nom="view"
+                                ).strip(),
+                            )
+                            if partie
+                        ),
                     ),
                     "origine": DES_IMAGES,
                     "allumee": True,
@@ -2774,6 +2794,7 @@ class ServiceGenerations:
         tri: Tri | None = None,
         roles: Sequence[str] = (),
         mise_en_page: bool = False,
+        vues_de_la_planche: Sequence[str] = (),
         fond: str | None = None,
     ) -> str:
         """Les lignes allumées, jointes — **le seul endroit qui écrive le prompt**.
@@ -2797,6 +2818,7 @@ class ServiceGenerations:
             tri=tri,
             roles=roles,
             mise_en_page=mise_en_page,
+            vues_de_la_planche=vues_de_la_planche,
             fond=fond,
         )
         local = self._texte_local(lignes, modele, pliage)
@@ -2916,6 +2938,7 @@ class ServiceGenerations:
             _mise_en_page_permise(pliage, piece, pose, direction)
         roles: tuple[str, ...] = ()
         partantes: tuple[Reinjection, ...] = ()
+        source: str | None = None
         if modele:
             partantes, _ = self._reinjections(
                 projet,
@@ -2936,14 +2959,15 @@ class ServiceGenerations:
             # octets partent. Sans ça l'écran montrerait un texte plus court que
             # celui qui part, ou pire, numéroterait les images autrement — et
             # l'invariant d'E14 tomberait sur le seul point que R7 ajoute.
+            source = _source_de_mise_en_page(
+                garder_mise_en_page, partantes, references
+            )
             roles = self._roles_qui_partent(
                 partantes,
                 pliage,
                 modele,
                 self._bande_jointe(palette, projet, personnage, modele),
-                mise_en_page=_source_de_mise_en_page(
-                    garder_mise_en_page, partantes, references
-                ),
+                mise_en_page=source,
             )
         # **Le fond de l'appel, calculé sur les mêmes images qu'à la soumission**
         # (RT3). C'est la promesse de cet aperçu prise à la lettre sur le seul
@@ -2970,6 +2994,7 @@ class ServiceGenerations:
             tri=tri,
             roles=roles,
             mise_en_page=garder_mise_en_page,
+            vues_de_la_planche=self._vues_de_la_mise_en_page(projet, personnage, source),
             fond=fond,
         )
         # **Un style local lit les mêmes lignes, jointes autrement** (ML4) : une
@@ -3937,6 +3962,19 @@ class ServiceGenerations:
                 projet, personnage, planche=planche, direction=direction
             )
         )
+
+    def _vues_de_la_mise_en_page(
+        self, projet: str | None, personnage: str | None, source: str | None
+    ) -> tuple[str, ...]:
+        """Les directions des vues de la planche dont l'appel garde la mise en
+        page, dans l'ordre de lecture — ou rien quand l'ordre n'est pas dit
+        (corrigé le 24 septembre 2026 après relecture). C'est ce qui fait porter
+        à une planche refaite la phrase anti-miroir de TS19 : même ordre que
+        celui que la découpe à l'arrivée figera (`_ordre_parti`), lu sur la même
+        fiche."""
+        if not source or self._production is None:
+            return ()
+        return self._production.ordre_des_vues(projet, personnage, source)
 
     def _ordre_parti(
         self,

@@ -312,13 +312,29 @@ def phrase_des_cotes(cases: Sequence[CasePliee]) -> str:
     (`vues_en_miroir`). Une case se nomme par son rang de lecture, comme dans la
     liste juste au-dessus.
     """
-    paires = paires_opposees(c.direction for c in cases)
+    return phrase_des_cotes_opposes([c.direction for c in cases])
+
+
+def phrase_des_cotes_opposes(
+    directions: Sequence[str | None], *, nom: str = "cell"
+) -> str:
+    """La phrase de `phrase_des_cotes`, **lue sur une liste de directions**.
+
+    Deux planches la portent : celle d'un pliage, où chaque case dit sa
+    direction, et **une planche refaite** (RS2, corrigé le 24 septembre 2026
+    après relecture), où c'est l'ordre des vues de la planche à reproduire qui
+    la dit — `nom="view"`, parce qu'une planche refaite n'a pas de cases
+    demandées, seulement les vues de celle qu'elle recopie, dans l'ordre de
+    lecture. Sans elle, refaire une planche revenait à redemander le miroir
+    que TS19 venait d'interdire à la première.
+    """
+    paires = paires_opposees(directions)
     if not paires:
         return ""
-    nommees = ", and cells ".join(f"{i + 1} and {j + 1}" for i, j in paires)
+    nommees = f", and {nom}s ".join(f"{i + 1} and {j + 1}" for i, j in paires)
     verbe = "each show" if len(paires) > 1 else "show"
     return (
-        f"Cells {nommees} {verbe} the same subject from opposite sides, not a "
+        f"{nom.capitalize()}s {nommees} {verbe} the same subject from opposite sides, not a "
         f"mirrored copy: anything on one side of its body stays on that side — a "
         f"pouch on its left hip shows in one view and is hidden in the other. "
     )

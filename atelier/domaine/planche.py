@@ -129,6 +129,60 @@ def est_une_planche_refaite(generation: Generation, rang: int) -> bool:
     return any(e.rang == rang for e in generation.emplacements)
 
 
+def refus_de_la_planche(asset: Asset, generation: Generation | None) -> str | None:
+    """Pourquoi cette image ne peut pas devenir **la** planche d'un sujet — ou
+    rien quand elle le peut (corrigé le 24 septembre 2026 après relecture).
+
+    **Seul un rang d'emplacement est une planche** : c'est l'image que le modèle
+    a rendue, avec la mise en page qui a coûté l'appel. Les morceaux vivent dans
+    la même génération que leur feuille — une découpe, un miroir ou une vue
+    dépliée prennent un rang au-dessus des emplacements —, et un morceau d'une
+    planche refaite garde même la génération qui porte `garder_mise_en_page`.
+    Sans cette règle, « C'est la référence » sur un morceau rangeait un sprite
+    comme planche du sujet, et retirait la vraie.
+
+    Trois refus, et une image **isolée** reste acceptée : un jeu à une seule vue
+    n'a pas d'autre planche qu'elle (TS3, décision 3).
+
+    - **tirée d'une autre image** — `parent` posé, et pas par l'appel lui-même
+      (une feuille refaite depuis une image jointe en édition hérite de la
+      filiation de son appel, et reste sa feuille) ;
+    - **un morceau** — `planche` posé (P1), ou un rang hors des emplacements ;
+    - **une planche de poses** — seul un pliage **par directions** range des
+      vues dans des directions ; une planche de poses ou à plusieurs sujets
+      n'en a aucune à ranger.
+    """
+    if asset.planche:
+        return (
+            "c'est une vue sortie d'une planche, pas la planche — choisis la "
+            "feuille entière dont elle vient"
+        )
+    appel_parent = generation.parent if generation is not None else None
+    if asset.parent and asset.parent != appel_parent:
+        return (
+            "c'est une image tirée d'une autre (un morceau découpé, un miroir, "
+            "une superposition), pas une planche — choisis la feuille dont elle vient"
+        )
+    if generation is None:
+        return None
+    if not any(e.rang == asset.rang for e in generation.emplacements):
+        return (
+            "c'est un morceau découpé d'une planche, pas la planche — choisis la "
+            "feuille entière dont il vient"
+        )
+    pliage = generation.pliage
+    if pliage is not None and not generation.demande.get("premiere_planche") and (
+        pliage.plusieurs
+        or not pliage.cases
+        or not all(case.direction for case in pliage.cases)
+    ):
+        return (
+            "c'est une planche de poses, pas des directions du sujet — seule une "
+            "planche des directions devient sa planche"
+        )
+    return None
+
+
 def recette_de_planche_refaite(du_projet: Recette) -> Recette:
     """Ce que le projet impose à une feuille entière : **son détourage, seul**.
 

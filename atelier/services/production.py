@@ -57,7 +57,7 @@ from atelier.domaine.envoi import (
     resoudre,
 )
 from atelier.domaine.projet import CHAMPS_BIBLE
-from atelier.domaine.planche import est_une_planche_refaite
+from atelier.domaine.planche import est_une_planche_refaite, refus_de_la_planche
 from atelier.domaine.plan import (
     Pose,
     capacites_de,
@@ -1530,6 +1530,15 @@ class ServiceProduction:
             raise ProductionRefusee(
                 "cette image est écartée de la bibliothèque — la rendre d'abord"
             )
+        # **Seule une vraie planche devient la planche** (corrigé le 24
+        # septembre 2026 après relecture) : un morceau découpé, une vue dépliée
+        # ou une planche de poses se refusent ici, pour l'écran comme pour
+        # l'agent — `refus_de_la_planche`, la règle que la fiche reprend.
+        refus = refus_de_la_planche(
+            objet, self._base.lire(objet.generation) if objet.generation else None
+        )
+        if refus is not None:
+            raise ProductionRefusee(refus)
 
         ordre = self._ordre_de_la_planche(objet) or personnage.ordre_des_vues(asset)
         tenues = {d.identifiant for d in self.directions_du_sujet(projet, personnage)}

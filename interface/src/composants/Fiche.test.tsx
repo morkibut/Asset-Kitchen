@@ -446,7 +446,9 @@ describe("la fiche — « C'est la référence » (TS3)", () => {
     },
     parametres_resolus: {},
     ecartees: [],
-    emplacements: [],
+    // **La feuille est un rang d'emplacement** (corrigé le 24 septembre 2026
+    // après relecture) : `estUnePlanche` le vérifie, comme le serveur.
+    emplacements: [{ rang: 0, statut: "reussie" }],
     cree_le: 1_787_800_100,
     projet: "bac-a-sable",
     references: [],
@@ -562,6 +564,89 @@ describe("la fiche — « C'est la référence » (TS3)", () => {
 
     await screen.findByRole("button", { name: "C'est la référence" })
     expect(container.querySelector("[data-vues-en-miroir]")).toBeNull()
+  })
+
+  // ── Seule une vraie planche (corrigé le 24 septembre 2026 après relecture)
+  //
+  // **Le défaut** : les morceaux d'une planche refaite découpée ont `parent`
+  // mais pas `planche`, et gardent la génération de leur feuille — le bouton
+  // leur paraissait, et un clic rangeait un sprite comme planche du sujet.
+  // La règle est celle du serveur (`refus_de_la_planche`).
+  const GENERATION_REFAITE = {
+    ...GENERATION_PLANCHE,
+    demande: {
+      ...GENERATION_PLANCHE.demande,
+      premiere_planche: undefined,
+      garder_mise_en_page: true,
+      decouper_a_l_arrivee: true,
+    },
+    emplacements: [
+      {
+        rang: 0,
+        statut: "reussie",
+        decoupe: {
+          morceaux: ["aaaa1111-100", "aaaa1111-101"],
+          attendu: 2,
+          directions: ["droite", "gauche"],
+          miroirs: [[0, 1]],
+        },
+      },
+    ],
+  } as unknown as Generation
+  const MORCEAU = {
+    ...UN_ASSET,
+    identifiant: "aaaa1111-100",
+    rang: 100,
+    parent: "aaaa1111-0",
+  } as Asset
+
+  test("paraît sur la feuille d'une planche refaite", async () => {
+    vi.spyOn(api, "generation").mockResolvedValue(GENERATION_REFAITE)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+    monter({ onChoisirLaPlanche: vi.fn() })
+
+    expect(await screen.findByRole("button", { name: "C'est la référence" })).toBeInTheDocument()
+  })
+
+  test("absent sur un morceau d'une planche refaite découpée — ni sur la page du sujet, ni dans la Galerie", async () => {
+    vi.spyOn(api, "generation").mockResolvedValue(GENERATION_REFAITE)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+    monter({ asset: MORCEAU, onChoisirLaPlanche: vi.fn() })
+    // Le signal miroir se lit sur le morceau : la génération est chargée.
+    await screen.findByText("Ces deux vues sont un miroir")
+    expect(screen.queryByRole("button", { name: "C'est la référence" })).toBeNull()
+
+    cleanup()
+    monter({
+      asset: { ...MORCEAU, personnage: "elias" } as Asset,
+      onChoisirLaPlanche: vi.fn(),
+      nomDuSujetPourPlanche: "Elias",
+    })
+    await screen.findByText("Ces deux vues sont un miroir")
+    expect(screen.queryByRole("button", { name: /En faire la planche de/ })).toBeNull()
+  })
+
+  test("absent sur une planche de poses — seul un pliage par directions compte", async () => {
+    vi.spyOn(api, "generation").mockResolvedValue({
+      ...GENERATION_PLANCHE,
+      demande: { ...GENERATION_PLANCHE.demande, premiere_planche: undefined },
+      pliage: { ...PLIAGE, cases: [{ direction: null }, { direction: null }] },
+    } as unknown as Generation)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+    monter({ onChoisirLaPlanche: vi.fn() })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(screen.queryByRole("button", { name: "C'est la référence" })).toBeNull()
+  })
+
+  test("une planche refaite en miroir le dit, avec les directions de sa découpe (TS19 étendu à RS2)", async () => {
+    vi.spyOn(api, "generation").mockResolvedValue(GENERATION_REFAITE)
+    vi.spyOn(api, "imposeSurAsset").mockRejectedValue(new Error("essai : aucun serveur"))
+    const { container } = monter({ onChoisirLaPlanche: () => {} })
+
+    expect(await screen.findByText("Ces deux vues sont un miroir")).toBeInTheDocument()
+    expect(container.querySelector("[data-vues-en-miroir]")?.textContent).toContain(
+      "droite et gauche",
+    )
   })
 
   // ── TS21 : « En faire la planche de… », depuis la Galerie ─────────────────
