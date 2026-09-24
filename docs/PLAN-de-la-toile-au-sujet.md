@@ -684,6 +684,30 @@ puis à tous les autres endroits où l'on choisit un modèle d'image.
 - [ ] le compte d'usage vient du serveur (une route, ou un champ du catalogue), pas du navigateur
 - [ ] un seul composant, posé dans la barre de la toile et dans les autres choix de modèle d'image
 
+### TS18 · Une carte s'ouvre dans l'atelier de retouche
+
+Depuis le détail d'une carte image (colonne de droite, TS15), « Retoucher dans l'atelier » ouvre
+son image dans l'atelier de retouche, avec tous ses outils, comme un clic sur une image de la
+Galerie.
+
+**Le point à trancher** : une carte n'est pas un asset (`Carte.fichier`, `atelier/domaine/carte.py`).
+Lecture recommandée :
+- une carte fabriquée par la toile, ou posée depuis la bibliothèque, a déjà son asset : on ouvre
+  celui-là ;
+- sinon (une image collée ou importée), on reprend la copie en bibliothèque de TS2
+  (`sujet_depuis_carte.py`), sans rattacher l'image à un sujet ;
+- la retouche ne touche ni l'image de la carte ni l'image brute ; « Poser sur la toile », depuis
+  l'atelier, pose la version retouchée **reliée** à la carte d'origine (le lien de TS10).
+
+- [ ] le détail d'une carte image porte « Retoucher dans l'atelier », qui ouvre l'atelier de retouche
+- [ ] une carte qui a déjà son image en bibliothèque n'en crée pas une seconde copie
+- [ ] la version retouchée revient sur la toile, reliée à la carte, sans remplacer l'originale
+- [ ] un essai referme puis rouvre l'atelier sur la même carte, avec une retouche qui n'est pas
+      celle par défaut, et la relit (*8septies*)
+- [ ] aucun appel payé : retoucher reste du traitement local
+
+**Bloquée par** : TS15 (le bouton vit dans le détail de la colonne de droite).
+
 ## Ce que ce plan ne couvre pas
 
 - Les autres poses (marche, attaque…) : elles partent de la planche choisie par les chemins qui

@@ -18,7 +18,7 @@
 
 ---
 
-## Les dix-sept tranches
+## Les dix-huit tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -39,10 +39,11 @@
 | **TS16** · « ouvrir sa palette » d'un îlot | `[EASY]` | un bouton qui ne mène nulle part et son doublon à retirer |
 | **TS15** · Le détail dans la colonne de droite | `[MEDIUM]` | remettre en page deux fenêtres dans un panneau sans perdre une action, avec un état partagé entre la toile et la colonne |
 | **TS17** · Choisir un modèle : les habitués d'abord | `[MEDIUM]` | un compte d'usage neuf côté serveur, et un composant posé à plusieurs endroits sans que le catalogue cesse de griser |
+| **TS18** · Une carte s'ouvre dans l'atelier de retouche | `[MEDIUM]` | reprend la copie en bibliothèque de TS2 et le lien de TS10 ; le point dur est de ne jamais créer de doublon ni toucher l'image de la carte |
 
-**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 9 `[MEDIUM]`, 6 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 10 `[MEDIUM]`, 6 `[EASY]`, 0 `[VERY-EASY]`.
 
-*TS4 à TS12 ajoutées le 23 septembre 2026 ; TS13 à TS17 le 24.*
+*TS4 à TS12 ajoutées le 23 septembre 2026 ; TS13 à TS18 le 24.*
 
 ---
 
