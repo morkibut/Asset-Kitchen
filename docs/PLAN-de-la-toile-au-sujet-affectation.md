@@ -18,7 +18,7 @@
 
 ---
 
-## Les dix-neuf tranches
+## Les vingt tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -41,10 +41,11 @@
 | **TS17** · Choisir un modèle : les habitués d'abord | `[MEDIUM]` | un compte d'usage neuf côté serveur, et un composant posé à plusieurs endroits sans que le catalogue cesse de griser |
 | **TS18** · Une carte s'ouvre dans l'atelier de retouche | `[MEDIUM]` | reprend la copie en bibliothèque de TS2 et le lien de TS10 ; le point dur est de ne jamais créer de doublon ni toucher l'image de la carte |
 | **TS19** · La planche des directions ne dessine pas un miroir | `[MEDIUM]` | une phrase de plus dans ce qui part, et une mesure locale et nommée (une vue contre l'autre retournée) ; le point dur est la phrase, qui touche toutes les planches de directions |
+| **TS20** · Refaire la planche des directions | `[MEDIUM]` | une règle neuve sur ce qui part (le concept art, jamais l'ancienne planche) ; le remplacement existe déjà |
 
-**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 11 `[MEDIUM]`, 6 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 12 `[MEDIUM]`, 6 `[EASY]`, 0 `[VERY-EASY]`.
 
-*TS4 à TS12 ajoutées le 23 septembre 2026 ; TS13 à TS19 le 24.*
+*TS4 à TS12 ajoutées le 23 septembre 2026 ; TS13 à TS20 le 24.*
 
 ---
 

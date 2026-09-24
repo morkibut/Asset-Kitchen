@@ -732,6 +732,28 @@ est la façon la plus simple de tenir cette phrase.
 - [ ] **un banc payé, lancé à la main par l'auteur**, compare l'ancienne phrase et la nouvelle sur
       huit tirages chacune ; son prix est annoncé avant de partir
 
+### TS20 · Refaire la planche des directions
+
+*Ajoutée le 24 septembre 2026, sur une question de l'auteur* : « comment je fais si je veux refaire
+une nouvelle planche de référence sur le même personnage parce que la première ne me va plus ? »
+
+**Aujourd'hui** : « Faire la planche des directions » ne se montre que dans le bloc *Planche* vide
+(`ImagesDuSujet.tsx`, `boutonPlanche`) et dans le bandeau du sujet neuf. Une fois une planche choisie,
+le seul chemin est un détour : retirer la planche des images d'exemple, pour que le bouton revienne.
+« C'est la référence » sait déjà remplacer l'ancienne planche (`choisir_la_planche`, qui dépromeut les
+autres).
+
+- [ ] le bloc *Planche* porte « Refaire la planche des directions » même quand une planche est choisie
+- [ ] la nouvelle planche part du **concept art** comme la première (*TS3*), et **l'ancienne planche ne
+      part pas avec elle** : sinon le modèle recopierait le dessin qu'on veut quitter
+- [ ] l'ancienne reste la référence jusqu'à ce que l'auteur clique « C'est la référence » sur une
+      nouvelle ; elle reste alors en bibliothèque, dépromue
+- [ ] le prix est annoncé sur le bouton, comme pour la première
+- [ ] un essai : un sujet avec une planche choisie refait sa planche, et la demande qui part ne porte
+      pas l'ancienne planche ; puis « C'est la référence » sur la nouvelle remplace l'ancienne
+
+**Après** : TS19 (même texte envoyé, même écran de la planche).
+
 ## Ce que ce plan ne couvre pas
 
 - Les autres poses (marche, attaque…) : elles partent de la planche choisie par les chemins qui
