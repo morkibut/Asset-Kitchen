@@ -4009,12 +4009,19 @@ export function Retouche({
   onErreur,
   onUnivers,
   onAssocierEquipement,
+  onPoserSurLaToile,
   enregistrementImmediat = false,
 }: {
   asset: Asset
   /** Compatibilité des anciens bancs des tables ; l’application utilise le brouillon. */
   enregistrementImmediat?: boolean
   onAssocierEquipement?: () => void
+  /** « Poser sur la toile » (TS18) — **seulement quand on est entré ici
+   *  depuis une carte** : la version retouchée se pose sur la toile, reliée à
+   *  la carte d'origine. `undefined` ailleurs (la Galerie, un sujet) : ce
+   *  geste-là vit déjà sur la fiche d'un asset, et le répéter ici sans lien à
+   *  offrir ferait deux boutons pour deux choses différentes. */
+  onPoserSurLaToile?: () => void
   /** Les images voisines — les attitudes de la chose quand elle en a une, les
    *  voisines de la grille quand elle n'en a pas (`B24`, déménagé de
    *  `Tables.tsx` ; `B25` pour le second cas). **On passe à l'image voisine sans
@@ -5016,6 +5023,7 @@ export function Retouche({
               <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("decoupage") })} className="rounded-7 border border-trait px-[8px] py-[4px]">Découper une image</button>
               <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("superposition") })} className="rounded-7 border border-trait px-[8px] py-[4px]">Extraire un élément</button>
               {onAssocierEquipement && <button type="button" onClick={() => sortir(onAssocierEquipement)} className="rounded-7 border border-trait px-[8px] py-[4px]">Utiliser comme équipement…</button>}
+              {onPoserSurLaToile && <button type="button" onClick={() => sortir(onPoserSurLaToile)} className="rounded-7 border border-trait px-[8px] py-[4px]">Poser sur la toile</button>}
             </div>
             {panneau === "recettes" ? (
             <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto">
@@ -5126,7 +5134,7 @@ export function Retouche({
         onValider={(coups) => { setEditeur(false); void poser({ ...recette, main: mainAvecLesCoups(mainDe(recette), etatMain.actif, coups) }) }}
         onFermer={() => setEditeur(false)}
       />}
-      {sortie && <CadreDialogue titre="Quitter les retouches" format="preparation" onFermer={() => setSortie(null)} enfants={<section className="w-full max-w-[880px] rounded-8 border border-trait bg-papier p-[22px]"><h2 className="font-serif text-[25px]">Des retouches attendent</h2><p className="mt-[14px] text-[13px]">La version enregistrée reste intacte. Garde le brouillon pour plus tard, ou enregistrez les retouches avant de continuer. La découpe, l’extraction et l’équipement utilisent la version enregistrée.</p><div className="mt-[22px] flex flex-wrap gap-[8px]"><button type="button" onClick={() => setSortie(null)} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Continuer à retoucher</button><button type="button" onClick={() => { const action = sortie; setSortie(null); action() }} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Garder le brouillon et continuer</button><button type="button" onClick={() => { const action = sortie; session.abandonner(); setSortie(null); action() }} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Abandonner les retouches</button><button type="button" disabled={!session.valide || !!enVol || session.enregistre} onClick={async () => { if (await session.enregistrer()) { const action = sortie; setSortie(null); action() } }} className="h-[34px] rounded-7 border border-signal bg-carte px-[14px] text-[12px] text-signal disabled:opacity-50">Enregistrer et continuer</button></div></section>} />}
+      {sortie && <CadreDialogue titre="Quitter les retouches" format="preparation" onFermer={() => setSortie(null)} enfants={<section className="w-full max-w-[880px] rounded-8 border border-trait bg-papier p-[22px]"><h2 className="font-serif text-[25px]">Des retouches attendent</h2><p className="mt-[14px] text-[13px]">La version enregistrée reste intacte. Garde le brouillon pour plus tard, ou enregistrez les retouches avant de continuer. La découpe, l’extraction, l’équipement et la pose sur la toile utilisent la version enregistrée.</p><div className="mt-[22px] flex flex-wrap gap-[8px]"><button type="button" onClick={() => setSortie(null)} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Continuer à retoucher</button><button type="button" onClick={() => { const action = sortie; setSortie(null); action() }} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Garder le brouillon et continuer</button><button type="button" onClick={() => { const action = sortie; session.abandonner(); setSortie(null); action() }} className="h-[34px] rounded-7 border border-trait bg-carte px-[14px] text-[12px]">Abandonner les retouches</button><button type="button" disabled={!session.valide || !!enVol || session.enregistre} onClick={async () => { if (await session.enregistrer()) { const action = sortie; setSortie(null); action() } }} className="h-[34px] rounded-7 border border-signal bg-carte px-[14px] text-[12px] text-signal disabled:opacity-50">Enregistrer et continuer</button></div></section>} />}
     </main>
   )
 }

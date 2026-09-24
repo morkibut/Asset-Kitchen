@@ -6670,6 +6670,17 @@ export const api = {
       }),
     }),
 
+  /** TS18 — l'asset de cette carte, pour l'ouvrir dans l'atelier de retouche :
+   *  celui qu'elle porte déjà si elle vient de la bibliothèque ou d'une
+   *  fabrication de la toile, une copie neuve sinon, sans la rattacher à un
+   *  sujet. **Jamais de doublon** : rappelée sur la même carte, elle rend
+   *  toujours le même asset. */
+  assetDeLaCarte: (carte: string) =>
+    appeler<{ projet: string; asset: Asset }>(
+      `/board/${encodeURIComponent(carte)}/asset`,
+      { method: "POST" },
+    ),
+
   /** **En un seul geste** : les champs se remplissent ensemble à l'écran, et un
    *  appel par champ ferait autant d'allers-retours qu'il y a de cases. Ce
    *  qu'on n'envoie pas ne bouge pas. `poses` part en **positif** — ce que

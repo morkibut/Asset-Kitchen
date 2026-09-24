@@ -617,6 +617,11 @@ class Atelier:
         # l'import des générations et l'univers, sans qu'aucun n'apprenne l'autre.
         from atelier.services.sujet_depuis_carte import ServiceSujetDepuisCarte
         self.sujet_depuis_carte = ServiceSujetDepuisCarte(self)
+        # TS18 : l'asset d'une carte de la toile — le sien s'il en a déjà un,
+        # une copie neuve sinon. Même composition que `sujet_depuis_carte`,
+        # monté juste après lui pour la même raison.
+        from atelier.services.asset_depuis_carte import ServiceAssetDepuisCarte
+        self.asset_depuis_carte = ServiceAssetDepuisCarte(self)
         self.livraison_images = ServiceLivraisonImages(self)
         self.tuiles = ServiceTuiles(self)
         # TU5 : les matières générées sur la machine, pour un jeu de tuiles —

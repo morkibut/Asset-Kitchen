@@ -990,12 +990,89 @@ function AtelierApp() {
    *  porte, lue au montage — l'écran est toujours fermé quand une porte
    *  l'ouvre, et une seconde demande le remonte donc à neuf. */
   const [tableDeLaPorte, setTableDeLaPorte] = useState<Table | null>(null)
+  /** **La carte d'où l'on vient** (TS18) — posée par « Retoucher dans
+   *  l'atelier », depuis le détail d'une carte de la toile. Même statut que
+   *  `tableDeLaPorte` : une demande de la porte, pas un lieu (`lieux.ts`, §
+   *  *Ce qui n'est pas un lieu*). Elle dit à « Poser sur la toile » à quoi
+   *  relier ce qui revient — absente, le geste pose une carte neuve sans
+   *  lien, comme depuis la Galerie. */
+  const [carteDeLaRetouche, setCarteDeLaRetouche] = useState<string | null>(null)
+  /** **L'asset ouvert depuis une carte** (TS18), quand ni le sujet ouvert ni
+   *  la grille de la galerie ne le portent — une copie neuve tout juste
+   *  créée, par exemple. `imageDeLaRetouche` (plus bas) le lit en dernier
+   *  recours : sans lui, l'écran resterait fermé faute de le trouver nulle
+   *  part. Vidé dès qu'on referme, ou qu'on passe à une sœur. */
+  const [assetDeLaCarteEnRetouche, setAssetDeLaCarteEnRetouche] = useState<Asset | null>(null)
   /** **Le seul endroit du produit qui écrive la retouche dans la pile.** */
-  const ouvrirLaRetouche = (asset: string | null, table: Table | null = null) => {
+  const ouvrirLaRetouche = (
+    asset: string | null,
+    table: Table | null = null,
+    carte: string | null = null,
+  ) => {
     setTableDeLaPorte(table)
+    setCarteDeLaRetouche(carte)
+    if (!carte) setAssetDeLaCarteEnRetouche(null)
     setPile((p) =>
       asset ? entrer(p, { genre: "retouche", asset }) : sortir(p, "retouche"),
     )
+  }
+  /** TS18 — « Retoucher dans l'atelier », depuis le détail d'une carte de la
+   *  toile : résout l'asset de la carte (le sien s'il en a déjà un, une copie
+   *  neuve sinon — `assetDeLaCarte`) et ouvre la retouche dessus, en gardant
+   *  la carte d'origine pour « Poser sur la toile ». */
+  const retoucherCarte = (carte: Carte) => {
+    void api
+      .assetDeLaCarte(carte.identifiant)
+      .then(({ asset }) => {
+        setAssetDeLaCarteEnRetouche(asset)
+        ouvrirLaRetouche(asset.identifiant, null, carte.identifiant)
+      })
+      .catch((e) => echouer(e, "cette carte n’a pas pu s’ouvrir dans l’atelier de retouche"))
+  }
+  /** TS18 — « Poser sur la toile », depuis l'atelier de retouche entré par une
+   *  carte : la version retouchée se pose comme une carte neuve (la même
+   *  route que la Galerie, `poserAssetSurToile`), reliée à la carte d'origine
+   *  par un lien de la toile (`api.lier`, TS10) — jamais l'inverse, l'image
+   *  d'origine ne change pas (traitement non destructif). Un lien déjà tiré
+   *  entre les deux (l'image posée sans y toucher, par exemple) ne fait pas
+   *  échouer la pose : elle a déjà réussi, ce refus-là ne compte pas. */
+  const poserLaRetoucheSurLaToile = () => {
+    const projet = bibliotheque.courant
+    const asset = imageDeLaRetouche
+    const origine = carteDeLaRetouche
+    if (!projet || !asset || !origine) return
+    void api
+      .poserAssetSurToile(projet, asset.identifiant)
+      .then(async ({ carte, deja_presente }) => {
+        // **Rien à relier à soi-même** : sans retouche, le rendu peut retomber
+        // sur les mêmes octets que la carte d'origine — `poser_asset` rend
+        // alors cette carte-là (`deja_presente`), pas une neuve. Un lien vers
+        // soi est refusé par le serveur (« un lien joint deux objets, jamais
+        // un objet à lui-même ») ; inutile de le tenter.
+        let reliee = false
+        if (carte.identifiant !== origine) {
+          try {
+            await api.lier(
+              { genre: "carte", valeur: origine },
+              { genre: "carte", valeur: carte.identifiant },
+            )
+            reliee = true
+          } catch (e) {
+            if (!(e instanceof Refus && e.message.includes("déjà joints"))) throw e
+            reliee = true
+          }
+        }
+        await relireTableau()
+        setFente({
+          ton: "ok",
+          texte: reliee
+            ? "Posée sur la toile, reliée à l’image d’origine."
+            : deja_presente
+              ? "Déjà posée sur la toile — identique à l’originale, rien à relier."
+              : "Posée sur la toile.",
+        })
+      })
+      .catch((e) => echouer(e, "l’image n’a pas pu être posée sur la toile"))
   }
   /** D'où vient ce qui est écrit dans le champ, quand ce n'est pas l'auteur.
    *  Posée en armant une case vide, effacée dès qu'on écrit dedans : un texte
@@ -1051,6 +1128,15 @@ function AtelierApp() {
    *  l'ancien. Le sujet d'abord, la grille ensuite : une image qui est dans les
    *  deux est d'abord celle du sujet qu'on regarde. */
   const imageDeLaRetouche =
+    // **TS18, en premier** : entré depuis une carte, `assetDeLaCarteEnRetouche`
+    // vient d'être résolu **pour celle-ci** (`retoucheOuverte`) — le plus
+    // frais des trois. Une grille de la galerie chargée avant un
+    // enregistrement porterait une recette périmée, ce que ce geste-là ne
+    // doit jamais montrer (8septies). Passer à une sœur ou fermer l'écran le
+    // vide déjà.
+    (assetDeLaCarteEnRetouche?.identifiant === retoucheOuverte
+      ? assetDeLaCarteEnRetouche
+      : null) ??
     imageDuSujetEnRetouche ??
     grille.find((a) => a.identifiant === retoucheOuverte) ??
     null
@@ -1061,7 +1147,12 @@ function AtelierApp() {
    *  l'autre sans que la table ouverte se referme. */
   const soeursDeLaRetouche = imageDuSujetEnRetouche
     ? (choseOuverte?.cases ?? []).flatMap((c) => c.images)
-    : grille
+    // **TS18** : une image ouverte depuis une carte de la toile n'a pas de
+    // voisines — ce ne sont pas ses sœurs, ce sont les autres assets de la
+    // bibliothèque, sans rapport avec la carte qu'on retouche.
+    : carteDeLaRetouche
+      ? []
+      : grille
 
   // ── T5 : la découpe — **retirée en `B0`, parce qu'elle était morte** ──────
   //
@@ -2572,7 +2663,11 @@ function AtelierApp() {
           existait parce que le côté Réglages avait besoin de savoir quelles
           façons de réduire cette machine-ci sait faire. Les deux côtés qui
           restent ne lisent que le tableau. */}
-      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && surface === "univers" && (
+      {surfaceDisponible && !bandeOuverte && !depensesOuvertes && !envoiOuvert && surface === "univers" &&
+        // **TS18** : la retouche remplace la toile, comme elle remplace déjà
+        // la galerie et le codex — même garde qu'eux, sinon les deux se
+        // rendraient ensemble.
+        !imageDeLaRetouche && (
         <EcranUnivers
           projet={bibliotheque.courant ?? ""}
           cartes={cartes}
@@ -2612,6 +2707,7 @@ function AtelierApp() {
             memoriserParcours(`sujet:${bibliotheque.courant}:${id}:onglet`, "objectif")
             setPile(entrer(poser("codex"), { genre: "sujet", sujet: id }))
           }}
+          onRetoucher={retoucherCarte}
           // **Une carte découpée en animation ouvre son atelier** (`RP21`),
           // la même porte que depuis la découpe d'une planche.
           onAnimerCarte={(bandes) => {
@@ -2913,7 +3009,9 @@ function AtelierApp() {
       )}
 
       {surfaceDisponible && !depensesOuvertes && !envoiOuvert && !tableauDeBord &&
-        (surface === "galerie" || surface === "codex") &&
+        // **TS18** : la toile ouvre aussi la retouche, depuis le détail d'une
+        // carte — une troisième racine, à côté de la galerie et du codex.
+        (surface === "galerie" || surface === "codex" || surface === "univers") &&
         imageDeLaRetouche && etat && !bandeOuverte && (
         /* **La retouche** (B16) — la chaîne redessinée sur le papier du
            carnet : huit tables dans leur ordre, un trait, deux fabriques à
@@ -2956,12 +3054,19 @@ function AtelierApp() {
               ? libelleDEmploi(emploiOuvert)
               : surface === "galerie"
                 ? "Galerie"
-                : "Ses images"
+                : surface === "univers"
+                  ? "Univers & toile"
+                  : "Ses images"
           }
           tableDeLaPorte={tableDeLaPorte}
           onFermer={() => ouvrirLaRetouche(null)}
           onSoeur={(identifiant) => ouvrirLaRetouche(identifiant)}
           onAssocierEquipement={bibliotheque.courant ? () => setImageAEquiper(imageDeLaRetouche) : undefined}
+          // **TS18** : « Poser sur la toile » n'existe que si l'on est entré
+          // ici depuis une carte — le seul cas où il y a une carte d'origine
+          // à quoi relier le résultat. Depuis la Galerie ou un sujet, ce
+          // geste-là vit déjà sur la fiche d'un asset (`Fiche.tsx`).
+          onPoserSurLaToile={carteDeLaRetouche ? poserLaRetoucheSurLaToile : undefined}
           decoupe={(fermerLaFabrique) => (
             <EcranDecoupe
               sujet={{
