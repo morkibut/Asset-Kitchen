@@ -17,11 +17,29 @@ règles que CM1 pose une fois :
    fournisseur, **avant** que le flux se termine pour qui l'écoute : dans
    `donnees/appels-texte/` d'abord (la vérité), dans l'index ensuite.
 
-**Ce que CM6 branchera ici** : le plafond du mois. Sa place est marquée dans
-`repondre`, juste après la clé — c'est la même question (*peut-il partir ?*) et
-la même réponse (`indisponible`, avec sa raison). ⚠️ Un plafond « qui tient en
-rafale » demandera de **réserver** avant de partir, sous un verrou : deux
-appels simultanés liraient sinon le même reste. Rien de tel n'est posé en CM1.
+**Le plafond du mois** (CM6, décision 8) se lit à la même porte que la clé —
+c'est la même question (*peut-il partir ?*) et la même réponse
+(`indisponible`, avec sa raison). **La règle qui le fait tenir en rafale** :
+*sous un verrou, un appel réserve la borne haute de ce qu'il peut coûter, et ne
+part que si le mois déjà pesé plus les réservations en vol plus la sienne tient
+sous le plafond ; à la fin, toujours sous le verrou, il écrit son coût réel et
+rend sa réservation — ou la garde comme poids s'il ne connaît pas son coût.*
+Sans la réservation, dix appels simultanés lisaient le même reste, puisque
+aucun n'était encore écrit, et partaient tous (`tests/test_cm6_plafond.py`).
+
+**Décisions de CM6, écrites ici parce que c'est ici qu'elles mordent** :
+
+- **L'unité est le dollar**, affiché tel : `$1,00` par défaut. Le plan dit
+  « 1 € » ; toute la dépense du produit est comptée en dollars (`cout_usd`), et
+  une conversion fixe aurait été une vérité de plus à tenir à jour. Un dollar
+  vaut moins qu'un euro : le défaut est donc **plus strict** que celui du plan,
+  jamais plus large.
+- **Le mois est le mois civil local**, celui qui nomme déjà les journaux
+  `appels-texte/<AAAA-MM>.jsonl` : il commence le 1er à minuit, heure de la
+  machine. Un appel appartient au mois où il est **parti**.
+- **La réservation est une borne haute**, pas une moyenne : tous les signes
+  envoyés comptés pour des jetons à deux signes, plus la réponse la plus longue
+  permise (`JETONS_MAX`), au prix plafond de `PRIX_JETON_MAX_USD`.
 
 **L'agent ne s'en sert pas** (décision 9) : aucun outil MCP ne mène ici, et
 rien de ce qui passe par ce service ne compte dans le cadre de l'agent — ses
@@ -32,6 +50,8 @@ celles-là.
 from __future__ import annotations
 
 import contextlib
+import math
+import threading
 import time
 import uuid
 from typing import AsyncIterator, Callable
@@ -53,7 +73,41 @@ from atelier.domaine.erreurs import (
     DelaiDepasse,
     ErreurAtelier,
 )
-from atelier.fournisseur.openrouter_texte import DELAI_S, OpenRouterTexte
+from atelier.fournisseur.openrouter_texte import DELAI_S, JETONS_MAX, OpenRouterTexte
+
+#: Le plafond du mois tant qu'on n'y a pas touché, en dollars (décision 8).
+PLAFOND_DEFAUT_USD = 1.0
+
+#: Le prix d'un jeton **au plus haut**, entrée comme sortie : deux dollars le
+#: million. Le petit modèle du coup de main coûte bien moins (plan § Ce que ce
+#: plan ne couvre pas) ; ⚠️ **jamais vérifié contre le vrai tarif**, comme
+#: l'identifiant du modèle. S'il changeait de modèle pour un plus cher, c'est
+#: cette ligne qui bouge — sinon le plafond pourrait être dépassé d'un appel.
+PRIX_JETON_MAX_USD = 2e-6
+
+#: Ce qu'une requête porte au-delà des signes : les rôles, l'enveloppe.
+JETONS_D_ENVELOPPE = 64
+
+
+def reserve_pour(signes: int) -> float:
+    """La borne haute de ce qu'un appel peut coûter, en dollars.
+
+    Un jeton pour **deux** signes envoyés — le français en fait plutôt trois
+    ou quatre, c'est donc large —, plus la réponse la plus longue permise.
+    """
+    jetons = math.ceil(signes / 2) + JETONS_D_ENVELOPPE + JETONS_MAX
+    return round(jetons * PRIX_JETON_MAX_USD, 6)
+
+
+def debut_du_mois(instant: float) -> float:
+    """Le 1er du mois de `instant`, à minuit **heure locale** — le mois qui
+    nomme les journaux `appels-texte/<AAAA-MM>.jsonl`."""
+    local = time.localtime(instant)
+    return time.mktime((local.tm_year, local.tm_mon, 1, 0, 0, 0, 0, 0, -1))
+
+
+def _en_dollars(montant: float) -> str:
+    return f"${montant:.2f}".replace(".", ",")
 
 
 class ServiceCoupDeMain:
@@ -68,27 +122,103 @@ class ServiceCoupDeMain:
         # **Refabriqué à chaque appel**, comme les adaptateurs d'images : la
         # clé se relit sur le disque, on la dépose sans redémarrer.
         self._fabrique = fabrique
+        # **Le verrou du plafond** (CM6). Un `threading.Lock` et pas un verrou
+        # d'`asyncio` : rien ne s'attend dessous — lire, comparer, noter —, et
+        # `etat()` est aussi lu hors de la boucle. Ce qu'il garde : les
+        # réservations des appels en vol, par identifiant.
+        self._verrou = threading.Lock()
+        self._en_vol: dict[str, float] = {}
+        # L'heure, remplaçable par un essai qui veut changer de mois.
+        self._horloge: Callable[[], float] = time.time
+
+    # ── Le plafond du mois (CM6) ─────────────────────────────────────────────
+
+    def plafond_usd(self) -> float:
+        """Relu **à chaque appel** : un plafond baissé vaut dès le suivant."""
+        brut = self._fichiers.lire_coup_de_main().get("plafond_usd")
+        try:
+            valeur = float(brut)
+        except (TypeError, ValueError):
+            return PLAFOND_DEFAUT_USD
+        return valeur if math.isfinite(valeur) and valeur >= 0 else PLAFOND_DEFAUT_USD
+
+    def regler_plafond(self, plafond_usd: float) -> dict[str, object]:
+        """Pose le plafond du mois. Zéro coupe le coup de main ; négatif est refusé."""
+        valeur = float(plafond_usd)
+        if not math.isfinite(valeur) or valeur < 0:
+            raise ValueError("un plafond est un montant positif ou nul")
+        contenu = self._fichiers.lire_coup_de_main()
+        contenu["plafond_usd"] = round(valeur, 6)
+        self._fichiers.ecrire_coup_de_main(contenu)
+        return self.mois()
+
+    def mois(self) -> dict[str, object]:
+        """Le compteur : ce que le coup de main a pesé ce mois-ci, et ce qui reste.
+
+        `pese_usd` est ce que le plafond compte — les coûts connus, et la
+        réservation des appels au coût inconnu ; `cout_usd` les seuls coûts
+        connus ; `en_vol_usd` ce que les appels en cours retiennent.
+        """
+        depuis = debut_du_mois(self._horloge())
+        depense = self._base.depense_texte(depuis)
+        plafond = self.plafond_usd()
+        with self._verrou:
+            en_vol = sum(self._en_vol.values())
+        pese = float(depense["pese_usd"])
+        reste = max(0.0, plafond - pese - en_vol)
+        return {
+            # Même règle que `etat()` : l'appel le plus court ne tient plus.
+            "atteint": reste + 1e-9 < reserve_pour(0),
+            "depuis": depuis,
+            "plafond_usd": plafond,
+            "pese_usd": round(pese, 6),
+            "cout_usd": depense["cout_usd"],
+            "en_vol_usd": round(en_vol, 6),
+            "reste_usd": round(reste, 6),
+            "appels": depense["appels"],
+            "inconnus": depense["inconnus"],
+        }
+
+    def _plafond_atteint(self, reserve: float) -> str | None:
+        """**À lire sous le verrou** : la raison du plafond, ou `None`."""
+        plafond = self.plafond_usd()
+        pese = float(self._base.depense_texte(debut_du_mois(self._horloge()))["pese_usd"])
+        engage = pese + sum(self._en_vol.values())
+        if engage + reserve <= plafond + 1e-9:
+            return None
+        if plafond <= 0:
+            return "le coup de main est coupé — son plafond du mois est à zéro"
+        return (
+            f"plafond du mois atteint ({_en_dollars(plafond)}) — "
+            "il se relève dans Réglages › Consommations"
+        )
 
     # ── Peut-il partir ? ─────────────────────────────────────────────────────
 
     def etat(self) -> dict[str, object]:
-        """Ce que la marque a besoin de savoir pour paraître ou se taire."""
+        """Ce que la marque a besoin de savoir pour paraître ou se taire.
+
+        Le plafond s'y lit pour **l'appel le plus court possible** : si même
+        celui-là ne tient plus, la marque disparaît et dit pourquoi.
+        """
         fournisseur = self._fabrique()
-        raison = self._empechement(fournisseur)
+        with self._verrou:
+            raison = self._empechement(fournisseur, reserve_pour(0))
         return {
             "disponible": raison is None,
             "raison": raison,
             "modele": fournisseur.modele,
         }
 
-    def _empechement(self, fournisseur: OpenRouterTexte) -> str | None:
+    def _empechement(self, fournisseur: OpenRouterTexte, reserve: float) -> str | None:
         """La raison pour laquelle rien ne partira, ou `None`.
 
         **La seule porte**, lue par `etat` et par `repondre` : ce que la marque
-        annonce et ce que l'appel fait ne peuvent pas diverger. CM6 y ajoute le
-        plafond du mois.
+        annonce et ce que l'appel fait ne peuvent pas diverger. La clé d'abord
+        — sans elle, le plafond ne dit rien d'utile —, le plafond du mois
+        ensuite (CM6). **À lire sous le verrou.**
         """
-        return fournisseur.indisponible()
+        return fournisseur.indisponible() or self._plafond_atteint(reserve)
 
     # ── La réponse ───────────────────────────────────────────────────────────
 
@@ -108,16 +238,26 @@ class ServiceCoupDeMain:
         sont dans le morceau de fin, et c'est l'écran qui décide de se taire.
         """
         fournisseur = self._fabrique()
-        raison = self._empechement(fournisseur)
+        signes = len(consigne) + len(texte)
+        reserve = reserve_pour(signes)
+        identifiant = uuid.uuid4().hex
+        # **Lire le reste et le retenir, d'un seul geste** (CM6) : entre les
+        # deux, un autre appel lirait le même reste. Aucun `yield` entre la
+        # réservation et le `try` qui la rend.
+        with self._verrou:
+            raison = self._empechement(fournisseur, reserve)
+            if raison is None:
+                self._en_vol[identifiant] = reserve
         if raison is not None:
             yield Morceau(INDISPONIBLE, raison=raison)
             return
 
         appel = AppelTexte(
-            identifiant=uuid.uuid4().hex,
+            identifiant=identifiant,
             modele=fournisseur.modele,
             metier=metier,
-            signes_envoyes=len(consigne) + len(texte),
+            signes_envoyes=signes,
+            reserve_usd=reserve,
         )
         debut = time.monotonic()
         cout_lu = False
@@ -165,7 +305,14 @@ class ServiceCoupDeMain:
             appel.cout_inconnu = not cout_lu and (
                 appel.issue in (ABANDONNE, INTERROMPU) or appel.chez_lui is not None
             )
-            self._garder(appel)
+            # **Écrire le coût et rendre la réservation sous le même verrou** :
+            # entre les deux, l'appel ne compterait nulle part — ou deux fois.
+            # Au coût inconnu, il pèse sa réservation (`pese_usd`).
+            with self._verrou:
+                try:
+                    self._garder(appel)
+                finally:
+                    self._en_vol.pop(identifiant, None)
         yield Morceau(FIN, appel=appel)
 
     def _garder(self, appel: AppelTexte) -> None:
@@ -176,6 +323,6 @@ class ServiceCoupDeMain:
     # ── Ce qu'il a coûté ─────────────────────────────────────────────────────
 
     def depense(self, depuis: float = 0.0) -> dict[str, object]:
-        """Ce que le coup de main a coûté depuis `depuis` (CM6 : le mois)."""
+        """Ce que le coup de main a coûté depuis `depuis` (le mois : `mois()`)."""
         return self._base.depense_texte(depuis)
 

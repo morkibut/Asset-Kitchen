@@ -3835,6 +3835,26 @@ export type Depenses = {
   par_unite: { unite: string; quantite: number; appels: number }[]
   appels: Depense[]
   rafales: Rafale[]
+  /** Le compteur du coup de main, ce mois-ci (CM6). Absent d'un serveur
+   *  d'avant CM6 — le bloc ne paraît pas. */
+  coup_de_main?: CompteurCoupDeMain
+}
+
+/** Ce que le coup de main a pesé **ce mois civil-ci**, et son plafond (CM6).
+ *  En dollars, comme toute la dépense du produit. `pese_usd` est ce que le
+ *  plafond compte : les coûts connus, et la réservation d'un appel dont le
+ *  coût n'est jamais revenu — jamais zéro. */
+export type CompteurCoupDeMain = {
+  /** Même règle que la marque : même l'appel le plus court ne tient plus. */
+  atteint: boolean
+  plafond_usd: number
+  pese_usd: number
+  cout_usd: number
+  en_vol_usd: number
+  reste_usd: number
+  appels: number
+  /** Les appels coupés avant que leur coût arrive, comptés au plus haut. */
+  inconnus: number
 }
 
 // ── Ce qu'une table sait de l'image ─────────────────────────────────────────
@@ -5479,6 +5499,12 @@ export const api = {
     ),
 
   depenses: () => appeler<Depenses>("/spending"),
+  /** Le plafond du mois du coup de main, en dollars (CM6). Rend le compteur. */
+  reglerPlafondCoupDeMain: (plafond_usd: number) =>
+    appeler<CompteurCoupDeMain>("/settings/assist", {
+      method: "PUT",
+      body: JSON.stringify({ plafond_usd }),
+    }),
 
   /** Un asset, par son identifiant. L'écran des dépenses en a besoin pour la
    *  seule chose qu'il montre en image — ce qui est revenu de l'appel choisi —

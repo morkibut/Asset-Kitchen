@@ -293,6 +293,26 @@ async def regler_agent(requete: Request, corps: CorpsAgent) -> dict[str, Any]:
     return atelier.agent.en_json()
 
 
+class CorpsPlafondCoupDeMain(BaseModel):
+    """Le plafond du mois du coup de main, **en dollars** (CM6). Zéro le coupe."""
+
+    plafond_usd: float = Field(ge=0, le=1000, allow_inf_nan=False)
+
+
+@routeur.put("/settings/assist")
+async def regler_le_coup_de_main(
+    requete: Request, corps: CorpsPlafondCoupDeMain
+) -> dict[str, Any]:
+    """Pose le plafond du mois et rend le compteur (CM6, décision 8).
+
+    Réglé depuis l'onglet Consommations, **là où le compteur se lit** — le
+    compteur lui-même voyage avec les dépenses (`GET /api/spending`, champ
+    `coup_de_main`). Prend effet à l'appel suivant : le service relit le
+    fichier à chaque appel. **Pas un secret** : il ne passe pas par le `.env`.
+    """
+    return _atelier(requete).coup_de_main.regler_plafond(corps.plafond_usd)
+
+
 # ── L'installation de la machine (B15) ───────────────────────────────────────
 #
 # **Sept routes, et aucune ne déplace ni n'efface quoi que ce soit.** Elles

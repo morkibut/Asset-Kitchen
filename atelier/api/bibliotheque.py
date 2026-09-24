@@ -161,7 +161,12 @@ async def depenses(
     qui a raté dans ce projet-ci*. Celui-ci répond à *où est passé l'argent*, sur
     l'atelier entier, et c'est la seule chose qu'on vient y chercher.
     """
-    return _atelier(requete).bibliotheque.depenses(limite)
+    atelier = _atelier(requete)
+    tout = atelier.bibliotheque.depenses(limite)
+    # **Le compteur du coup de main, à côté du reste** (CM6, décision 8) : ce
+    # qu'il a pesé ce mois-ci, et son plafond — qui se règle depuis cet écran.
+    tout["coup_de_main"] = atelier.coup_de_main.mois()
+    return tout
 
 
 # ── Projets et collections ───────────────────────────────────────────────────

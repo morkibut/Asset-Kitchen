@@ -121,6 +121,11 @@ class Fichiers:
         # centièmes de centime chacun rendraient `generations/` illisible à la
         # main. C'est ici que l'index se refait quand on l'efface.
         self.appels_texte = self.racine / "appels-texte"
+        # **Le plafond du mois du coup de main** (CM6). Un fichier à part, comme
+        # le cadre de l'agent et pour la même raison : il se relit **à chaque
+        # appel**, et un plafond qu'on vient de baisser vaut dès le suivant.
+        # Ce n'est pas un secret : il n'a rien à faire dans le `.env`.
+        self.coup_de_main = self.racine / "coup-de-main.json"
 
     def preparer(self) -> None:
         self.generations.mkdir(parents=True, exist_ok=True)
@@ -805,6 +810,15 @@ class Fichiers:
         touché aux garde-fous.
         """
         contenu = self._lire_json(self.agent)
+        return contenu if isinstance(contenu, dict) else {}
+
+    def ecrire_coup_de_main(self, contenu: dict[str, Any]) -> None:
+        self._ecrire_json(self.coup_de_main, contenu)
+
+    def lire_coup_de_main(self) -> dict[str, Any]:
+        """Le plafond du coup de main (CM6). Absent, `{}` — le défaut s'applique.
+        **Ne lève jamais**, comme le cadre de l'agent."""
+        contenu = self._lire_json(self.coup_de_main)
         return contenu if isinstance(contenu, dict) else {}
 
     def ecrire_sorties(self, contenu: dict[str, Any]) -> None:

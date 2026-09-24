@@ -3036,10 +3036,22 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Consommations",
     quoi: "Tous les appels, du plus récent au plus ancien : date, sujet, modèle, et ce qu'il a réellement consommé — réussi, raté ou interrompu.",
     change:
-      "Rien du tout : on ne règle rien ici, on lit. Une image supprimée fait changer l'état de son appel, jamais disparaître sa ligne — **une dépense ne s'efface jamais**.",
+      "Rien du tout : on lit, on ne paie pas — seul le plafond du coup de main se règle ici. Une image supprimée fait changer l'état de son appel, jamais disparaître sa ligne — **une dépense ne s'efface jamais**.",
     origine: "l'atelier, à chaque appel · rien à remplir",
     long:
       "Deux totaux ne comptent pas la même chose : celui de la barre du haut compte le jeu ouvert, celui d'ici compte l'atelier depuis le premier jour. Un appel gratuit qui consomme quand même dit **gratuit** dans la liste — jamais *0,00 $*, qui se lirait *sans limite* là où il faut lire *sans prix* — et ce qu'il a pris n'est jamais ajouté au total en argent.",
+  },
+
+  "coup-de-main.plafond": {
+    nom: "Plafond du mois du coup de main",
+    ou: "reglages",
+    groupe: "Consommations",
+    quoi: "Ce que le coup de main peut dépenser au plus, en dollars, du 1er du mois à la fin du mois.",
+    change:
+      "Atteint, la marque du coup de main disparaît des champs et dit pourquoi — aucune fenêtre, rien ne t'interrompt. Elle revient le 1er du mois suivant, ou dès que tu relèves le plafond. À zéro, le coup de main est coupé.",
+    origine: "toi · défaut $1,00 · relu à chaque appel",
+    long:
+      "Chaque appel retient d'avance ce qu'il peut coûter au plus, puis rend la différence à la fin : dix appels lancés ensemble ne passent pas par le même reste. Un appel coupé avant d'avoir son prix compte pour ce qu'il avait retenu, jamais pour zéro. En dollars, comme toutes les dépenses : $1,00 vaut un peu moins de 1 €.",
   },
 
   // ── La fiche d'une image — les cinq zones du panneau (`GU12`) ───────────

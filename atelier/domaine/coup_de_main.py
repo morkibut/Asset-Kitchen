@@ -93,11 +93,28 @@ class AppelTexte:
     chez_lui: str | None = None
     signes_envoyes: int = 0
     signes_recus: int = 0
+    # **Ce que l'appel a retenu sur le plafond du mois avant de partir** (CM6).
+    # Une borne haute, jamais une estimation moyenne : c'est elle qui empêche
+    # une rafale de passer toute entière par le même reste.
+    reserve_usd: float = 0.0
 
     @property
     def cout_usd(self) -> float:
         """La part en argent. **Déduite**, jamais enregistrée à part (F2)."""
         return argent(self.consomme, self.unite)
+
+    @property
+    def pese_usd(self) -> float:
+        """Ce que l'appel **pèse sur le plafond du mois** (CM6).
+
+        Son coût quand on le connaît ; **sa réservation quand on ne le connaît
+        pas** — un appel coupé a pu consommer, et un plafond qui le compterait
+        pour zéro laisserait passer, appel coupé après appel coupé, tout ce
+        qu'il est censé retenir.
+        """
+        if self.cout_inconnu:
+            return max(self.cout_usd, self.reserve_usd)
+        return self.cout_usd
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -117,6 +134,10 @@ class AppelTexte:
             "chez_lui": self.chez_lui,
             "signes_envoyes": self.signes_envoyes,
             "signes_recus": self.signes_recus,
+            "reserve_usd": self.reserve_usd,
+            # Déduit lui aussi, et écrit pour la même raison que `cout_usd` :
+            # c'est lui que somme le compteur du plafond (CM6).
+            "pese_usd": self.pese_usd,
         }
 
     @staticmethod
@@ -135,6 +156,7 @@ class AppelTexte:
             chez_lui=d.get("chez_lui"),
             signes_envoyes=int(d.get("signes_envoyes") or 0),
             signes_recus=int(d.get("signes_recus") or 0),
+            reserve_usd=float(d.get("reserve_usd") or 0.0),
         )
 
 
