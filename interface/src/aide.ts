@@ -1123,7 +1123,7 @@ export const AIDE: Record<string, Explication> = {
       "Une vraie génération : le bouton dit ce qu'elle coûte avant de partir — un prix pour un modèle payant, un temps pour un modèle local, pour la taille choisie. Chaque image entre aussi dans la galerie, mais **brute** : ni détourage, ni réduction, ni grille, ni palette — la toile est l'endroit où l'on essaie, ce n'est pas encore une chose du jeu.",
     origine: "toi · Qwen rapide par défaut, sinon le premier modèle disponible · le modèle, le nombre, la taille et le repli sont retenus",
     long:
-      "Rien de pris : on part de rien. **Prendre comme référence**, dans le menu d'une carte, l'ajoute au-dessus de la barre ; sa croix la retire. Une taille grisée, le modèle ne la rend pas. Trop de références pour lui : le bouton refuse et le dit. « avec le style du jeu » ajoute la bible du jeu au texte. « Ce qui part » montre le texte exact. Un échec reste à sa place avec sa raison. Le chevron replie la barre en une ligne ; le texte, les références, le modèle et la taille restent en dessous, intacts. Le choix du modèle ouvre un panneau : tes trois gratuits et tes trois payants les plus utilisés d'abord, « voir plus de modèles » pour tout voir avec une recherche.",
+      "**Prendre comme référence**, dans le détail d'une carte, l'ajoute au-dessus de la barre ; sa croix la retire. « avec le style du jeu » ajoute la bible du jeu. « Ce qui part » montre le texte exact. Le chevron replie la barre sans rien perdre. Le modèle se choisit dans un panneau : tes trois gratuits et tes trois payants les plus utilisés d'abord, puis tout, avec une recherche.",
   },
 
   // **Ajoutée le 24 septembre 2026 (défaut 7 de la relecture)** : le bouton
@@ -1909,7 +1909,7 @@ export const AIDE: Record<string, Explication> = {
       "Tout ce qui suit en dépend — le recadrage cherche le sujet dans l'alpha, la grille mesure son occupation dessus. C'est aussi l'étape la plus chère : environ 130 ms, contre 28 pour les quatre autres réunies.",
     origine: "posé par l'univers quand le sujet a une silhouette",
     long:
-      "Une étape peut porter plusieurs passes, qui s'enchaînent sur le résultat de la précédente — un remplissage large, puis un durcissement de contour. Bouger un curseur de grille ou de couleurs ne relance pas le détourage : la retouche reste instantanée ; un cran de tolérance, lui, coûte environ 1,5 s. Si une poche de fond reste enfermée dans le sujet — les vitres d'un bus détouré par un modèle, par exemple —, la table le dit et propose de les retirer : une passe « couleur » par poche, visée dans la poche ; rien ne bouge sans ce clic.",
+      "Plusieurs passes s'enchaînent, chacune sur le résultat de la précédente. Bouger la grille ou les couleurs ne relance pas le détourage ; un cran de tolérance coûte environ 1,5 s. Si du fond reste enfermé dans le sujet (les vitres d'un bus, par exemple), la table le dit et propose de le retirer : une passe « couleur » par zone. Rien ne bouge sans ce clic.",
   },
 
   "detourage.moteur": {
