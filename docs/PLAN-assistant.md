@@ -298,9 +298,48 @@ d'écran ; la marque qui se tait attend CM3, qui lit `GET /api/assist` (la raiso
 La marque se généralise par le composant partagé : les images, les sons, les animations, les
 tuiles. Une seule pose.
 
-- [ ] Tout champ de prompt du produit porte la marque, sans modification écran par écran.
-- [ ] Ce qui n'est pas un champ de prompt ne la porte pas.
+- [x] Tout champ de prompt du produit porte la marque, sans modification écran par écran.
+- [x] Ce qui n'est pas un champ de prompt ne la porte pas.
 - [ ] Une relecture croisée vérifie qu'aucun écran n'a gagné un second chemin d'aide.
+
+*Fait le 25 septembre 2026.* **La pose unique** : `ChampPrompt.tsx` enveloppe désormais
+lui-même son prompt et son prompt négatif dans `AvecCoupDeMain` (`champ="prompt_image"`,
+`champ="prompt_negatif"`) — tout écran qui le monte (l'établi, la préparation de `CreerUnAsset`,
+l'image de départ d'un clip) l'a sans y toucher. **Recensement des champs qui ne montent pas
+`ChampPrompt`** : posés à la main, chacun avec la bonne entrée de `CHAMPS` — le mouvement d'un
+clip (`FabricationVideoLibre.tsx` « Mouvement et consignes pour la vidéo », `FabricationSuivie.tsx`
+« Décrire l'animation », `champ="prompt_video"`), l'image de départ et son négatif dans
+`FabricationVideoLibre.tsx` (`prompt_image`, `prompt_negatif`), l'image locale et son négatif dans
+`WorkflowsLocaux.tsx` (mêmes champs), la phrase du son dans `FabricationAudio.tsx`
+(`prompt_son`). **Quatre entrées neuves dans `CHAMPS`**, pas une de plus (essai
+`test_aucune_sorte_de_plus_que_celles_du_plan`) : `prompt_image`, `prompt_negatif` (un seul
+pour l'image et le clip), `prompt_video`, `prompt_son`. **Décision** : la consigne
+(`CONSIGNE_AMELIORER`) n'est pas dédoublée pour le son ni la vidéo — elle reste celle de CM3,
+qui parle d'un « modèle de génération d'images » ; c'est le contexte du champ (`ecran`,
+`libelle`, `attend`, dans le message, jamais dans la consigne) qui corrige, pour ces deux
+champs, ce que le texte décrit réellement. Les règles qui comptent (une ligne, rien d'ajouté,
+comptes et noms recopiés) ne dépendent pas du support. **Exclus, et pourquoi** : la
+« Description créative » de `CreerUnAsset.tsx` (une fiche qui n'envoie rien à cette étape,
+« Aucune génération n'est lancée à cette étape ») ; les « Paroles » de `FabricationAudio.tsx`
+(un texte à chanter, que traduire changerait de langue — noté dans `CHAMPS["prompt_son"]`) ; la
+correction du geste de combat dans `FabricationSuivie.tsx` (déjà en anglais, une correction à un
+vocabulaire fixe, pas un prompt libre). **Essais** : `tests/test_cm7_champs_partages.py` (5,
+les nouvelles entrées et leur acceptation par la route) et
+`interface/src/composants/ChampsDePromptCM7.test.tsx` (13 — le champ partagé porte la marque à
+l'exécution ; les écrans posés à la main portent le bon champ, lu dans leur source, comme
+`essais/essai_imports.py` lit la sienne, pour ne pas monter un décor par champ ; ce qui n'est pas
+un prompt ne l'a pas) ; 8octies vérifié en défaisant la pose sur `ChampPrompt` : les deux essais
+d'exécution tombent. Les essais existants des écrans touchés (`BarreQuiPaie.test.tsx` et ses deux
+variantes, `AtelierTuiles.test.tsx`, `FabricationAudio.test.tsx`, `FabricationSuivie.test.tsx`,
+`FabricationVideoLibre.test.tsx`, `WorkflowsLocaux.test.tsx`, `CoupDeMain.test.tsx`) restent
+verts ; les trois fichiers `BarreQuiPaie*.test.tsx` ont gagné un doublage de `fetch` (indisponible)
+puisque leur écran de préparation ne connaissait aucune route avant cette tranche. **Ce qui n'est
+pas vérifié** : la relecture croisée elle-même (troisième critère, confiée à un relecteur à
+part) ; aucun appel payé ; la ligne du guide (`aide.ts`) n'a pas été ajoutée pour les nouvelles
+apparitions de la marque — aucune ligne existante ne disait « seulement le tiroir des matières »
+à corriger, et poser une ligne par écran pour un contrôle déjà documenté une fois (`jeu-de-tuiles.coup-de-main`)
+n'a pas semblé proportionné à la taille de la tranche ; à trancher à la relecture si le guide doit
+en dire plus.
 
 ---
 

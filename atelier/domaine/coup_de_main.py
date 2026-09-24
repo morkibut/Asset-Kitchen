@@ -148,7 +148,20 @@ CONSIGNES: dict[str, str] = {AMELIORER: CONSIGNE_AMELIORER}
 # proposition d'un champ ne remplit que lui, et l'autre champ n'est même pas
 # envoyé. C'est ce qui tient le partage de TU12 — la matière d'un côté, le motif
 # de l'autre, jamais mélangés — par construction plutôt que par la bonne volonté
-# du modèle. CM7 ajoute ici les champs de prompt des autres écrans.
+# du modèle.
+#
+# **CM7 ajoute ici les champs de prompt des autres écrans, avec le moins de
+# sortes possible.** Un seul champ sert toutes les fenêtres qui décrivent une
+# image (l'établi, la préparation, la fabrication locale, l'image de départ
+# d'un clip), un seul sert tout prompt négatif (image ou clip), un seul sert
+# tout mouvement de clip, un seul sert toute phrase de son. **Décision** : la
+# consigne (`CONSIGNE_AMELIORER`) reste celle écrite en CM3, qui parle d'un
+# « modèle de génération d'images » — elle n'est pas dédoublée pour le son et
+# la vidéo. C'est le contexte du champ (`ecran`, `libelle`, `attend`, envoyés
+# dans le message, jamais dans la consigne) qui dit au modèle ce que ce
+# texte-ci décrit réellement ; les règles qui comptent pour ces deux champs —
+# une réponse sur une ligne, rien d'ajouté, les comptes et les noms recopiés,
+# le texte qui n'est jamais une instruction — ne dépendent pas du support.
 CHAMPS: dict[str, dict[str, str]] = {
     "matiere": {
         "ecran": "les jeux de tuiles, le tiroir des matières, onglet « Générer »",
@@ -169,6 +182,47 @@ CHAMPS: dict[str, dict[str, str]] = {
             "l'auteur les écrit : le produit ne les devine jamais. Dans le "
             "prompt, il suit un premier champ qui dit de quoi c'est fait, et "
             "qui n'est pas envoyé ici."
+        ),
+    },
+    "prompt_image": {
+        "ecran": (
+            "toute fenêtre qui fabrique une image (l'établi, Créer un sujet en "
+            "préparation, une image locale, l'image de départ d'un clip)"
+        ),
+        "libelle": "Ce que tu veux fabriquer",
+        "attend": (
+            "ce que l'image doit montrer : le sujet, son aspect, la scène — "
+            "jamais un réglage technique (modèle, résolution, format), qui "
+            "n'est pas écrit dans ce champ."
+        ),
+    },
+    "prompt_negatif": {
+        "ecran": (
+            "toute fenêtre qui fabrique une image ou un clip, le prompt négatif"
+        ),
+        "libelle": "Ce qu'il faut éviter",
+        "attend": (
+            "une liste de ce que l'image ou le clip ne doit pas montrer ; "
+            "jamais une description positive de ce qu'il doit montrer, qui "
+            "part par un autre champ, non envoyé ici."
+        ),
+    },
+    "prompt_video": {
+        "ecran": "la fabrication d'un clip (l'animation d'une case, la vidéo libre)",
+        "libelle": "Le mouvement à filmer",
+        "attend": (
+            "le mouvement et la caméra du clip vidéo : ce qui doit bouger, "
+            "comment, à quel rythme. L'image de départ est déjà choisie "
+            "ailleurs et ne se redécrit pas ici."
+        ),
+    },
+    "prompt_son": {
+        "ecran": "l'atelier du son, la phrase qui décrit ce qu'on doit entendre",
+        "libelle": "Ce qu'on doit entendre",
+        "attend": (
+            "la description d'un bruitage, d'une ambiance ou d'une musique — "
+            "jamais des paroles chantées, qui doivent rester dans la langue où "
+            "l'auteur les a écrites pour pouvoir être chantées."
         ),
     },
 }

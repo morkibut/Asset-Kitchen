@@ -7,11 +7,17 @@
 // local vaut toujours `cout_usd = 0`, que le compteur de coût écarte.
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { UNIVERS_VIDE, type Modele } from "../api"
 import { BarreQuiPaie } from "./BarreQuiPaie"
 
-afterEach(cleanup)
+// CM7 : le champ de prompt de cet écran porte désormais le coup de main
+// (`ChampPrompt.tsx`), qui interroge `/api/assist` au montage — doublé ici,
+// indisponible, pour que ces essais restent sans réseau et sans marque.
+beforeEach(() => {
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ disponible: false, raison: null, modele: "" }))))
+})
+afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 const modeleDistant: Modele = {
   identifiant: "OpenRouter:openai/gpt-image-2", nom: "GPT Image", fournisseur: "OpenRouter", chez_lui: "gpt-image-2",

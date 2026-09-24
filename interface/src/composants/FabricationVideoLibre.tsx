@@ -5,6 +5,7 @@ import { workflows, type ProfilWorkflow } from "../api-workflows"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
+import { AvecCoupDeMain } from "./CoupDeMain"
 import { MemoireLocale } from "./MemoireLocale"
 import { ChoixModele, Libelle, type Habitues } from "./pieces"
 
@@ -135,9 +136,12 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
             }}
             ariaLabel="Modèle d’image"
           /></label>
-          <label className="flex flex-col gap-[8px] text-[13px]">Description de l’image<textarea className={`${CHAMP} min-h-[128px]`} value={demande.prompt_image || ""} onChange={e => changer({ prompt_image: e.target.value })} /></label>
+          {/* CM7 : `prompt_image`, le même champ partagé que `ChampPrompt.tsx`. */}
+          <label className="flex flex-col gap-[8px] text-[13px]">Description de l’image<AvecCoupDeMain champ="prompt_image" projet={projet} texte={demande.prompt_image || ""} onGarder={t => changer({ prompt_image: t })}>
+            <textarea className={`${CHAMP} min-h-[128px]`} value={demande.prompt_image || ""} onChange={e => changer({ prompt_image: e.target.value })} /></AvecCoupDeMain></label>
           <label className="text-[13px]"><input type="checkbox" checked={!demande.repris_image} onChange={e => changer({ repris_image: !e.target.checked })} /> Ajouter les règles de l’univers au texte de l’image</label>
-          {(!profilImage || profilImage.liaisons.prompt_negatif) && <label className="flex flex-col gap-[8px] text-[13px]">Éviter dans l’image<textarea className={CHAMP} value={demande.prompt_negatif_image || ""} onChange={e => changer({ prompt_negatif_image: e.target.value })} /></label>}
+          {(!profilImage || profilImage.liaisons.prompt_negatif) && <label className="flex flex-col gap-[8px] text-[13px]">Éviter dans l’image<AvecCoupDeMain champ="prompt_negatif" projet={projet} texte={demande.prompt_negatif_image || ""} onGarder={t => changer({ prompt_negatif_image: t })}>
+            <textarea className={CHAMP} value={demande.prompt_negatif_image || ""} onChange={e => changer({ prompt_negatif_image: e.target.value })} /></AvecCoupDeMain></label>}
           <div className="grid grid-cols-2 gap-[14px]"><label className="flex flex-col gap-[8px] text-[13px]">Proportions de l’image<select className={CHAMP} value={demande.proportions_image || "1:1"} onChange={e => changer({ proportions_image: e.target.value })}>{uniques([demande.proportions_image || "1:1", ...images.flatMap(m => m.proportions)]).map(v => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[8px] text-[13px]">Résolution de l’image<select className={CHAMP} value={demande.resolution_image || ""} onChange={e => changer({ resolution_image: e.target.value || null })}><option value="">Défaut du modèle</option>{image?.resolutions.map(v => <option key={v}>{v}</option>)}</select></label></div>
           <div className="flex flex-wrap gap-[14px]">{refs.map((id, i) => <div key={`${id}-${i}`}><img className="damier-papier h-[128px] w-[128px] object-contain" src={api.fichier(id)} alt={`Référence de l’image ${i + 1}`} /><button className={BOUTON} type="button" onClick={() => changer({ references_image: refs.filter((_, n) => n !== i) })}>Retirer la référence {i + 1}</button></div>)}</div>
           <button type="button" className={BOUTON} onClick={() => setChoix("reference")} disabled={!!image && refs.length >= image.references_max}>Ajouter une référence pour l’image</button>
@@ -147,7 +151,9 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
         </div>}
       </fieldset>
       <fieldset disabled={occupe} className={`${SURFACE} space-y-[14px]`}><legend className="font-serif text-[25px]">2. Le clip à fabriquer</legend>
-        <label className="flex flex-col gap-[8px] text-[13px]">Mouvement et consignes pour la vidéo<textarea className={`${CHAMP} min-h-[128px]`} value={demande.prompt_video} onChange={e => changer({ prompt_video: e.target.value })} /></label>
+        {/* CM7 : `prompt_video`, partagé avec l'animation d'une case (`FabricationSuivie.tsx`). */}
+        <label className="flex flex-col gap-[8px] text-[13px]">Mouvement et consignes pour la vidéo<AvecCoupDeMain champ="prompt_video" projet={projet} texte={demande.prompt_video} onGarder={t => changer({ prompt_video: t })}>
+          <textarea className={`${CHAMP} min-h-[128px]`} value={demande.prompt_video} onChange={e => changer({ prompt_video: e.target.value })} /></AvecCoupDeMain></label>
         <div className="grid grid-cols-3 gap-[14px]"><label className="flex flex-col gap-[8px] text-[13px]">Durée du clip<select className={CHAMP} value={demande.secondes} onChange={e => changer({ secondes: Number(e.target.value) })}>{uniques([demande.secondes, ...videos.flatMap(m => m.durees)]).sort((a, b) => a - b).map(v => <option key={v} value={v}>{v} s</option>)}</select></label><label className="flex flex-col gap-[8px] text-[13px]">Résolution du clip<select className={CHAMP} value={demande.resolution} onChange={e => changer({ resolution: e.target.value })}>{uniques([demande.resolution, ...videos.flatMap(m => m.resolutions)]).map(v => <option key={v}>{v}</option>)}</select></label><label className="flex flex-col gap-[8px] text-[13px]">Proportions du clip<select className={CHAMP} value={demande.proportions} onChange={e => changer({ proportions: e.target.value })}>{uniques([demande.proportions, ...videos.flatMap(m => m.proportions)]).map(v => <option key={v}>{v}</option>)}</select></label></div>
         {/* **TS17, décision** : ce sélecteur choisit un modèle *vidéo*, pas
          *  un modèle d'image — `habitues` (TS17) ne compte que les

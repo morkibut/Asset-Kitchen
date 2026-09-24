@@ -6,9 +6,16 @@
 // s'ajoute ou s'efface selon qu'il en porte une.
 
 import { cleanup, render, screen } from "@testing-library/react"
-import { afterEach, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { api, UNIVERS_VIDE, type Modele, type Personnage, type ReferencesDeLaChose } from "../api"
 import { BarreQuiPaie } from "./BarreQuiPaie"
+
+// CM7 : le champ de prompt porte désormais le coup de main, qui interroge
+// `/api/assist` au montage — doublé, indisponible, pour rester sans réseau.
+beforeEach(() => {
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ disponible: false, raison: null, modele: "" }))))
+})
+afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 const modele: Modele = {
   identifiant: "OpenRouter:openai/gpt-image-2", nom: "GPT Image", fournisseur: "OpenRouter", chez_lui: "gpt-image-2",

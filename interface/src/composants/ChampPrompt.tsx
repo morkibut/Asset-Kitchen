@@ -19,6 +19,7 @@
 
 import { useEffect, useRef } from "react"
 import { secondes } from "../api"
+import { AvecCoupDeMain } from "./CoupDeMain"
 import { Bouton, Jauge, Raison, Revers, useEcoule, usePli } from "./pieces"
 
 /** Ce qui est payé et pas encore arrivé. `null` la plupart du temps. */
@@ -115,6 +116,7 @@ export function ChampPrompt({
   echec = null,
   variations,
   enVol = null,
+  projet,
 }: {
   prompt: string
   onPrompt: (v: string) => void
@@ -161,6 +163,9 @@ export function ChampPrompt({
    *  galerie, alors qu'on paie aussi depuis le codex et depuis l'établi : on
    *  dépensait, l'écran ne bougeait pas, et l'on recliquait. */
   enVol?: EnVol | null
+  /** Le jeu ouvert : passé au coup de main (CM7), pour qu'il y cherche les
+   *  noms que le texte contient. Absent, il propose quand même — sans noms. */
+  projet?: string | null
 }) {
   // **Le repli vit dans le registre du châssis, pas ici.** La galerie était le
   // fond du produit et ce champ ne se démontait jamais ; la V2.1 en fait un
@@ -180,34 +185,40 @@ export function ChampPrompt({
 
   return (
     <div className="flex flex-col gap-2 border-b border-trait bg-carte p-4">
-      <textarea
-        ref={champ}
-        value={prompt}
-        onChange={(e) => onPrompt(e.target.value)}
-        onKeyDown={toucheGenerer}
-        rows={repris ? 6 : 2}
-        placeholder={
-          repris
-            ? "Le texte part exactement tel qu'il est écrit ici."
-            : "Décris ce que tu veux fabriquer."
-        }
-        className={[
-          "resize-y rounded-[3px] border px-3 py-2 placeholder:text-encre-4",
-          repris
-            ? "mesure min-h-[120px] leading-relaxed border-signal bg-papier-cote text-[11.5px] text-encre"
-            : // **56 px, la première des deux exceptions nommées à la liste
-              // fermée des hauteurs** (`docs/DESIGN.md` § Spacing) : ce n'est
-              // pas une bande, c'est une zone de saisie sur plusieurs lignes.
-              //
-              // L'interligne est écrit ici et non hérité, parce que c'est lui
-              // qui fait la mesure : deux lignes à 19 px, plus 8 px de garde en
-              // haut et en bas, plus le trait, font exactement 56. Avec
-              // `leading-relaxed` (1,625 → 22 px) les deux mêmes lignes en
-              // faisaient 62, et le `min-h` n'y pouvait rien — il est un
-              // minimum, pas une hauteur.
-              "min-h-[56px] leading-[19px] border-contour bg-papier-cote text-[13.5px] text-encre",
-        ].join(" ")}
-      />
+      {/* **CM7** : la marque se pose ici, sur le champ partagé — pas
+          écran par écran (décision 10). `champ="prompt_image"` sert toute
+          fenêtre qui décrit une image, quelle que soit celle qui monte ce
+          composant. */}
+      <AvecCoupDeMain champ="prompt_image" projet={projet ?? undefined} texte={prompt} onGarder={onPrompt}>
+        <textarea
+          ref={champ}
+          value={prompt}
+          onChange={(e) => onPrompt(e.target.value)}
+          onKeyDown={toucheGenerer}
+          rows={repris ? 6 : 2}
+          placeholder={
+            repris
+              ? "Le texte part exactement tel qu'il est écrit ici."
+              : "Décris ce que tu veux fabriquer."
+          }
+          className={[
+            "resize-y rounded-[3px] border px-3 py-2 placeholder:text-encre-4",
+            repris
+              ? "mesure min-h-[120px] leading-relaxed border-signal bg-papier-cote text-[11.5px] text-encre"
+              : // **56 px, la première des deux exceptions nommées à la liste
+                // fermée des hauteurs** (`docs/DESIGN.md` § Spacing) : ce n'est
+                // pas une bande, c'est une zone de saisie sur plusieurs lignes.
+                //
+                // L'interligne est écrit ici et non hérité, parce que c'est lui
+                // qui fait la mesure : deux lignes à 19 px, plus 8 px de garde en
+                // haut et en bas, plus le trait, font exactement 56. Avec
+                // `leading-relaxed` (1,625 → 22 px) les deux mêmes lignes en
+                // faisaient 62, et le `min-h` n'y pouvait rien — il est un
+                // minimum, pas une hauteur.
+                "min-h-[56px] leading-[19px] border-contour bg-papier-cote text-[13.5px] text-encre",
+          ].join(" ")}
+        />
+      </AvecCoupDeMain>
 
       {/* La ligne de provenance, **sous le champ** : elle parle de ce qui est
           écrit dedans, pas de ce qui va partir. */}
@@ -226,14 +237,16 @@ export function ChampPrompt({
       )}
 
       {negatifOuvert && (
-        <textarea
-          value={promptNegatif}
-          onChange={(e) => onPromptNegatif(e.target.value)}
-          onKeyDown={toucheGenerer}
-          rows={1}
-          placeholder="Ce que tu ne veux pas."
-          className="min-h-[34px] resize-y rounded-[3px] border border-trait bg-papier-cote px-3 py-2 text-[12.5px] leading-[16px] text-encre-3 placeholder:text-encre-4"
-        />
+        <AvecCoupDeMain champ="prompt_negatif" projet={projet ?? undefined} texte={promptNegatif} onGarder={onPromptNegatif}>
+          <textarea
+            value={promptNegatif}
+            onChange={(e) => onPromptNegatif(e.target.value)}
+            onKeyDown={toucheGenerer}
+            rows={1}
+            placeholder="Ce que tu ne veux pas."
+            className="min-h-[34px] resize-y rounded-[3px] border border-trait bg-papier-cote px-3 py-2 text-[12.5px] leading-[16px] text-encre-3 placeholder:text-encre-4"
+          />
+        </AvecCoupDeMain>
       )}
 
       {/* **Le texte repris se rend là où il a été pris.** Reprendre vit dans
