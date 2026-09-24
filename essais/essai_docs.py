@@ -71,6 +71,23 @@ DEMARRAGE = (
     "docs/DESIGN.md",
 )
 
+# La fiche du coup de main (`CM2`, `docs/PLAN-assistant.md`) : **hors corpus de
+# démarrage**, exprès — elle ne se lit qu'à l'appel du coup de main, jamais à
+# l'ouverture d'une session, et n'a donc rien à faire dans `DEMARRAGE` ni dans
+# son poids.
+VOCABULAIRE_HTML = RACINE / "docs" / "vocabulaire.html"
+FICHE_PRODUIT = RACINE / "docs" / "fiche-produit.md"
+
+# Une cellule de glossaire, hors des tableaux à `data-liste` (l'ossature) : ce
+# sont ceux-là que `docs/vocabulaire.html` remplit à mesure qu'un écran a
+# besoin d'un mot — « Les mots, un par un », « Ce qui coûte, et l'écran »,
+# « Enregistrer sous »... C'est la définition d'« un mot du produit » que ce
+# banc retient : **un mot que le vocabulaire tient pour défini**, ni une
+# porte du carnet ni un titre d'écran, qui se comptent déjà ailleurs
+# (`essais/essai_vocabulaire.py`).
+CELLULE_DE_GLOSSAIRE = re.compile(r'<td class="m">([^<]+)</td>')
+ARTICLE = re.compile(r"^(?:l['’]|une?\s+|les\s+|des\s+|la\s+|le\s+)", re.I)
+
 KO = 1024
 
 # **Pas de plafond.** Un seuil rond refuserait le jour où l'on écrit une phrase
@@ -384,6 +401,66 @@ def relever(fichiers: list[Path], documents: dict[str, Document]) -> list[Renvoi
     return releves
 
 
+# ------------------------------------------------------------- vocabulaire ↔ fiche
+
+
+def mots_du_produit() -> list[str]:
+    """Chaque mot que `docs/vocabulaire.html` tient pour défini — hors ossature.
+
+    On ne relit que les tableaux **sans** `data-liste` : ceux-là portent les
+    portes du carnet et les titres d'écran, déjà comptés par
+    `essais/essai_vocabulaire.py`, pas le vocabulaire d'une chose du jeu."""
+    if not VOCABULAIRE_HTML.exists():
+        return []
+    html = VOCABULAIRE_HTML.read_text(encoding="utf-8")
+    mots: list[str] = []
+    for tableau in re.finditer(r"<table\b([^>]*)>(.*?)</table>", html, re.S):
+        if "data-liste" in tableau.group(1):
+            continue
+        corps = tableau.group(2)
+        # Seuls les tableaux dont la première colonne s'appelle « Le mot » sont
+        # un glossaire : « Ce qu'un sujet peut avoir » et « Les outils qui
+        # n'existent nulle part » partagent la même classe de cellule, mais
+        # nomment des capacités absentes, pas des mots.
+        entete = re.search(r"<th[^>]*>([^<]*)</th>", corps)
+        if entete is None or entete.group(1).strip() != "Le mot":
+            continue
+        mots += CELLULE_DE_GLOSSAIRE.findall(corps)
+    vus: set[str] = set()
+    uniques: list[str] = []
+    for mot in mots:
+        mot = re.sub(r"\s+", " ", mot).strip()
+        if mot and mot.lower() not in vus:
+            vus.add(mot.lower())
+            uniques.append(mot)
+    return uniques
+
+
+def racine_du_mot(mot: str) -> str:
+    """Le mot sans son article, en minuscules — pour le chercher dans une
+    prose qui ne le reprend pas forcément avec le même article ni le même
+    nombre."""
+    return ARTICLE.sub("", mot).strip().lower()
+
+
+def mots_absents_de_la_fiche() -> tuple[list[str], bool]:
+    """Les mots du vocabulaire publié qu'aucune ligne de `fiche-produit.md`
+    ne reprend — et si la fiche elle-même existe.
+
+    **Ce banc nomme, il ne refuse pas** : une fiche d'une page ne peut pas
+    reprendre les quelque cent entrées du vocabulaire, et ce n'est pas son
+    rôle (`docs/PLAN-assistant.md` § CM2, décision d'architecture n°3). Ce qui
+    compte est que l'écart se voie, pas qu'il tombe à zéro."""
+    if not FICHE_PRODUIT.exists():
+        return [], False
+    fiche = FICHE_PRODUIT.read_text(encoding="utf-8").lower()
+    absents = [
+        mot for mot in mots_du_produit()
+        if racine_du_mot(mot) and racine_du_mot(mot) not in fiche
+    ]
+    return absents, True
+
+
 # --------------------------------------------------------------------- journal
 
 
@@ -506,6 +583,31 @@ def ou_est_le_poids(documents: dict[str, Document]) -> None:
             )
 
 
+def rapporter_fiche_produit() -> None:
+    """Le vocabulaire publié, confronté à la fiche du coup de main.
+
+    **Il nomme, il ne refuse pas** — même ton que le reste de ce banc sur le
+    poids du corpus : une fiche d'une page ne reprendra jamais tout le
+    vocabulaire, et ce n'est pas le but. Ce qui compte est qu'un mot neuf,
+    ajouté un jour à `docs/vocabulaire.html`, se voie ici plutôt que de rester
+    invisible jusqu'à ce que le coup de main réponde à côté."""
+    titre("Le vocabulaire publié, contre la fiche du coup de main (CM2)")
+    if not FICHE_PRODUIT.exists():
+        print(f"  {FICHE_PRODUIT.relative_to(RACINE)} est introuvable — rien à confronter.")
+        return
+    total = mots_du_produit()
+    absents, _ = mots_absents_de_la_fiche()
+    print(f"  {len(total)} mots lus dans docs/vocabulaire.html (hors ossature).")
+    if absents:
+        print(
+            f"  {len(absents)} n'ont aucune trace dans"
+            f" {FICHE_PRODUIT.relative_to(RACINE)} :"
+        )
+        print("    " + " · ".join(absents))
+    else:
+        print(f"  Tous se retrouvent dans {FICHE_PRODUIT.relative_to(RACINE)}.")
+
+
 def rapporter(nom: str, releves: list[Renvoi]) -> list[Renvoi]:
     casses = [r for r in releves if not r.resolu]
     par_genre: dict[str, int] = {}
@@ -545,6 +647,7 @@ def principal() -> int:
     bandeau_de_derive(documents)
     total = peser(documents)
     ou_est_le_poids(documents)
+    rapporter_fiche_produit()
 
     depuis_code = relever(fichiers_de_code(), documents)
     casses_code = rapporter("Les renvois du code vers docs/", depuis_code)

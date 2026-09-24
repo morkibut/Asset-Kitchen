@@ -70,5 +70,6 @@
 | `docs/releves/2026-09-13-etat-des-docs.md` | — | on veut savoir quel document dit vrai, et lequel a été descendu dans `archive/` le 13 septembre 2026 |
 | `docs/releves/2026-09-15-desaccords-restants.md` | le plan | on ouvre l'écran d'une tranche de la remise à plat et on veut la liste des mots à corriger et à rayer, tranche par tranche |
 | `docs/releves/2026-09-12-audit-des-cinq-chantiers.md` | — | on se demande si un autre dépôt de la machine fait déjà ce qu'on s'apprête à écrire — cinq dépôts lus, ce qu'on leur prend et ce qu'on leur laisse. *Remonté de `Claude outputs/` le 13 septembre 2026* |
+| **`docs/fiche-produit.md`** | — | **ce que le coup de main (`docs/PLAN-assistant.md`) envoie à chaque appel** : les lieux du produit, son vocabulaire, ce qui surprend, ce qu'il ne fait pas. Écrite à la main, une page. ⚠️ **Hors corpus de démarrage** — elle ne se lit qu'à l'appel du coup de main, jamais à l'ouverture d'une session, et `essais/essai_docs.py` le vérifie en même temps qu'il nomme tout mot du vocabulaire publié qu'elle ne reprend pas. *Écrite le 24 septembre 2026, tranche `CM2`* |
 | `docs/design-preview.html`, `docs/archive/diagrams/`, `docs/archive/maquette-atelier.html` | — | jamais d'office |
 
