@@ -13,7 +13,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest"
 
 import type { Carte, Personnage, PhraseDeCarte } from "../api"
-import { CREER_SUJET, CarteTuile, DEVELOPPER, ENCORE, OUVRIR_SUJET, REPRENDRE_TEXTE } from "./Tableau"
+import { CREER_SUJET, CarteTuile, DEVELOPPER, ENCORE, OUVRIR_SUJET, REPRENDRE_TEXTE, RETOUCHER } from "./Tableau"
 
 afterEach(cleanup)
 
@@ -60,6 +60,7 @@ function monterPanneau(carte: Carte, options: {
   reprendreTexte?: (p: PhraseDeCarte) => void
   developper?: (c: Carte) => void
   encore?: (c: Carte, p: PhraseDeCarte) => void
+  retoucher?: (c: Carte) => void
 } = {}) {
   return render(
     <CREER_SUJET.Provider value={options.creerSujet ?? null}>
@@ -67,15 +68,17 @@ function monterPanneau(carte: Carte, options: {
         <REPRENDRE_TEXTE.Provider value={options.reprendreTexte ?? null}>
           <DEVELOPPER.Provider value={options.developper ?? null}>
             <ENCORE.Provider value={options.encore ?? null}>
-              <CarteTuile
-                carte={carte}
-                personnages={options.personnages ?? []}
-                choisie
-                survolee={false}
-                onSurvol={() => {}}
-                onChoisir={() => {}}
-                onErreur={() => {}}
-              />
+              <RETOUCHER.Provider value={options.retoucher ?? null}>
+                <CarteTuile
+                  carte={carte}
+                  personnages={options.personnages ?? []}
+                  choisie
+                  survolee={false}
+                  onSurvol={() => {}}
+                  onChoisir={() => {}}
+                  onErreur={() => {}}
+                />
+              </RETOUCHER.Provider>
             </ENCORE.Provider>
           </DEVELOPPER.Provider>
         </REPRENDRE_TEXTE.Provider>
@@ -126,6 +129,31 @@ test("une carte déjà concept art d'un sujet dit lequel et l'ouvre, plutôt que
   fireEvent.click(screen.getByRole("button", { name: "Ouvrir Le forgeron" }))
   expect(ouvrirSujet).toHaveBeenCalledWith("le-forgeron")
   expect(creerSujet).not.toHaveBeenCalled()
+})
+
+// TS18 — « Retoucher dans l'atelier », depuis le panneau d'une carte.
+
+test("une carte image propose de la retoucher dans l'atelier", () => {
+  const retoucher = vi.fn()
+  monterPanneau(carteImage(), { retoucher })
+
+  fireEvent.click(boutonNomme("Retoucher dans l’atelier"))
+  expect(retoucher).toHaveBeenCalledWith(expect.objectContaining({ identifiant: "carte-1" }))
+})
+
+test("une carte texte ne porte pas le bouton — la retouche ne connaît que des images", () => {
+  monterPanneau(carteTexte(), { retoucher: vi.fn() })
+  expect(screen.queryByRole("button", { name: "Retoucher dans l’atelier" })).toBeNull()
+})
+
+test("sans le geste fourni, le bouton ne paraît pas — hors de la toile et de la grille", () => {
+  monterPanneau(carteImage())
+  expect(screen.queryByText("Retoucher dans l’atelier")).toBeNull()
+})
+
+test("une carte encore en attente ne porte pas le bouton — pas d'image à retoucher", () => {
+  monterPanneau(carteImage({ statut: "attente", montrable: false }), { retoucher: vi.fn() })
+  expect(screen.queryByRole("button", { name: "Retoucher dans l’atelier" })).toBeNull()
 })
 
 // TS5 — la phrase d'une carte fabriquée depuis la toile, et « Reprendre ce

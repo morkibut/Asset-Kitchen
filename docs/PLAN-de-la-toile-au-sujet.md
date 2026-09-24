@@ -813,14 +813,36 @@ Lecture recommandée :
 - la retouche ne touche ni l'image de la carte ni l'image brute ; « Poser sur la toile », depuis
   l'atelier, pose la version retouchée **reliée** à la carte d'origine (le lien de TS10).
 
-- [ ] le détail d'une carte image porte « Retoucher dans l'atelier », qui ouvre l'atelier de retouche
-- [ ] une carte qui a déjà son image en bibliothèque n'en crée pas une seconde copie
-- [ ] la version retouchée revient sur la toile, reliée à la carte, sans remplacer l'originale
-- [ ] un essai referme puis rouvre l'atelier sur la même carte, avec une retouche qui n'est pas
+- [x] le détail d'une carte image porte « Retoucher dans l'atelier », qui ouvre l'atelier de retouche
+- [x] une carte qui a déjà son image en bibliothèque n'en crée pas une seconde copie
+- [x] la version retouchée revient sur la toile, reliée à la carte, sans remplacer l'originale
+- [x] un essai referme puis rouvre l'atelier sur la même carte, avec une retouche qui n'est pas
       celle par défaut, et la relit (*8septies*)
-- [ ] aucun appel payé : retoucher reste du traitement local
+- [x] aucun appel payé : retoucher reste du traitement local
 
 **Bloquée par** : TS15 (le bouton vit dans le détail de la colonne de droite).
+
+*Fait le 24 septembre 2026.* **La règle tranchée** : `Carte.source` dit tout — `asset:<id>`
+signe une carte fabriquée par la toile ou posée depuis la bibliothèque (`poser_asset`), et
+l'asset existant s'ouvre tel quel ; sinon, une copie neuve entre par
+`ServiceGenerations.importer`, **sans** `forcer` — la même carte rend toujours les mêmes octets,
+donc la même empreinte, et `_deja_importe` évite le doublon d'un appel à l'autre. Nouveau service
+`atelier/services/asset_depuis_carte.py` (composé comme `sujet_depuis_carte.py`, sur `atelier`
+entier), route `POST /board/{carte}/asset`. Côté écran : un contexte `RETOUCHER` de plus dans
+`Tableau.tsx`, fourni par `Univers.tsx`, consommé par `Reglages` (bouton visible en toile et en
+grille, comme les autres gestes de ce fichier). `App.tsx` résout l'asset puis ouvre la retouche en
+gardant la carte d'origine (`carteDeLaRetouche`, `assetDeLaCarteEnRetouche` — ce dernier passe
+**devant** le sujet et la grille dans `imageDeLaRetouche`, sinon une grille chargée avant un
+enregistrement montrerait une recette périmée). **`EcranUnivers` a reçu la garde
+`!imageDeLaRetouche`** que la Galerie et le Codex avaient déjà : sans elle, la toile et la
+retouche se montaient toutes les deux à la fois. « Poser sur la toile » n'apparaît dans l'atelier
+de retouche que si l'on est entré depuis une carte ; il recompose `poserAssetSurToile` (T4) et
+`api.lier` (T9) — aucune route neuve pour le lien. Essais : `tests/test_ts18.py` (6, serveur, sans
+appel payé), `Tableau.test.tsx` (4, le bouton), `App.tsx` (5, dont le 8septies — enregistrer,
+fermer, rouvrir depuis la même carte, relire la table endormie). Vérifié au navigateur, atelier
+jetable sur 8433. **Non vu** : le double de test qui persiste `/assets/{id}/recipe` dans son état
+(nécessaire au 8septies) ne l'écrivait pas avant cette tranche — corrigé au passage, dans
+`App.test.tsx`.
 
 ### TS19 · La planche des directions ne dessine pas un miroir
 

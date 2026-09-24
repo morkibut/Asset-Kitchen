@@ -1312,6 +1312,16 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · en référence d'édition, jamais retenue comme un artwork officiel",
   },
 
+  "carte.retoucher": {
+    nom: "Retoucher dans l'atelier",
+    ou: "inspiration",
+    groupe: "Une carte image",
+    quoi: "Ouvrir l'image de cette carte dans l'atelier de retouche, avec tous ses outils.",
+    change:
+      "Si la carte a déjà son image en bibliothèque, c'est elle qui s'ouvre ; sinon une copie neuve y entre, sans sujet. Ni la carte ni l'image brute ne bougent — « Poser sur la toile » relie le résultat à cette carte-ci.",
+    origine: "toi · rien tant que tu n'as pas cliqué",
+  },
+
   "carte.source": {
     nom: "provenance",
     ou: "inspiration",

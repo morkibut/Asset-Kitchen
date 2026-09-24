@@ -2355,7 +2355,15 @@ function serveurDouble(options: {
       const connu =
         etat.assets.find((a) => a.identifiant === decodeURIComponent(identifiant)) ??
         asset(decodeURIComponent(identifiant))
-      return rendre({ ...connu, recette: corps ?? connu.recette })
+      const ecrit = { ...connu, recette: (corps as Recette | null) ?? connu.recette }
+      // **8septies** (`AGENTS.md`) : écrit dans `etat.assets`, comme le vrai
+      // serveur écrirait sur le disque — sinon un essai qui referme puis
+      // rouvre l'atelier relirait toujours la même recette de naissance, quoi
+      // qu'on ait enregistré entre-temps.
+      etat.assets = etat.assets.some((a) => a.identifiant === ecrit.identifiant)
+        ? etat.assets.map((a) => (a.identifiant === ecrit.identifiant ? ecrit : a))
+        : [...etat.assets, ecrit]
+      return rendre(ecrit)
     }
     if (url.includes("/spots"))
       return rendre({
@@ -2980,6 +2988,33 @@ function serveurDouble(options: {
       etat.cartes = [note, ...etat.cartes]
       FluxDouble.ouverts.at(-1)?.emettre("carte", note)
       return rendre(note)
+    }
+    // **TS18** : l'asset d'une carte, pour l'ouvrir dans l'atelier de
+    // retouche. Le double rejoue la même règle que le vrai serveur — l'asset
+    // existant si la carte le porte déjà (`source == "asset:<id>"`), une
+    // copie neuve sinon.
+    if (url.startsWith("/api/board/") && url.endsWith("/asset") && init?.method === "POST") {
+      const identifiant = url.slice("/api/board/".length, -"/asset".length)
+      const carte = etat.cartes.find((c) => c.identifiant === identifiant)
+      if (!carte)
+        return {
+          ok: false,
+          status: 404,
+          json: async () => ({
+            code: "carte_inconnue",
+            raison: `aucune carte « ${identifiant} »`,
+            ou_aller: null,
+          }),
+        } as Response
+      if (carte.source.startsWith("asset:")) {
+        const existant = etat.assets.find(
+          (a) => a.identifiant === carte.source.slice("asset:".length),
+        )
+        if (existant) return rendre({ projet: "bac-a-sable", asset: existant })
+      }
+      const copie = asset(`copie-${etat.assets.length}`)
+      etat.assets = [...etat.assets, copie]
+      return rendre({ projet: "bac-a-sable", asset: copie })
     }
     if (url.startsWith("/api/board/") && init?.method === "PUT" && !url.endsWith("/official")) {
       const identifiant = url.slice("/api/board/".length)
@@ -16519,6 +16554,176 @@ describe("le détail d'une carte et d'un îlot, dans la colonne de droite", () =
     await waitFor(() =>
       expect(leLieu("Ambiances et couleurs").getAttribute("aria-selected")).toBe("true"),
     )
+  })
+})
+
+// ── TS18 · Une carte s'ouvre dans l'atelier de retouche ─────────────────────
+//
+// « Retoucher dans l'atelier », depuis le détail d'une carte (TS15), ouvre
+// l'asset de cette carte-là — le sien si elle vient de la bibliothèque
+// (`source == "asset:<id>"`), une copie neuve sinon — dans le même écran que
+// « La retoucher » depuis la Galerie. « Poser sur la toile » n'y paraît que
+// si l'on est entré depuis une carte, et relie le résultat à elle.
+
+describe("une carte s'ouvre dans l'atelier de retouche", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    doublerLaGrille(160)
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const plan = () => document.querySelector("[data-plan]") as HTMLElement
+  const cartesDuPlan = () =>
+    within(plan()).getAllByRole("button", { name: "Ouvrir la carte" })
+
+  test("une carte fabriquée par la toile ouvre son asset existant, sans copie", async () => {
+    const planche = asset("aaaa1111-0")
+    const CARTES = [carteImage("m1", { source: "asset:aaaa1111-0", note: "premier tirage", position: [0, 0] })]
+    const double = serveurDouble({ cartes: CARTES, assets: [planche] })
+    await monter(double.fetchDouble, { ...ETAT, assets: [planche] })
+    allerA("Univers")
+    fireEvent.click(await screen.findByRole("button", { name: "toile" }))
+    await waitFor(() => expect(cartesDuPlan()).toHaveLength(1))
+
+    fireEvent.click(cartesDuPlan()[0])
+    fireEvent.click(await screen.findByRole("button", { name: "Retoucher dans l’atelier" }))
+
+    // L'atelier de retouche s'ouvre — sur l'asset de la carte, jamais une
+    // copie : aucun second appel à `/api/board/*/asset` n'est parti.
+    expect((await screen.findAllByText("La retouche")).length).toBeGreaterThan(0)
+    expect(
+      double.appels.filter((a) => a.url === "/api/board/m1/asset"),
+    ).toHaveLength(1)
+  })
+
+  test("une carte collée reçoit une copie, ouverte dans l'atelier", async () => {
+    const CARTES = [carteImage("m2", { source: "", note: "collée à la main", position: [0, 0] })]
+    const double = serveurDouble({ cartes: CARTES })
+    await monter(double.fetchDouble)
+    allerA("Univers")
+    fireEvent.click(await screen.findByRole("button", { name: "toile" }))
+    await waitFor(() => expect(cartesDuPlan()).toHaveLength(1))
+
+    fireEvent.click(cartesDuPlan()[0])
+    fireEvent.click(await screen.findByRole("button", { name: "Retoucher dans l’atelier" }))
+
+    expect((await screen.findAllByText("La retouche")).length).toBeGreaterThan(0)
+  })
+
+  test("« Poser sur la toile » depuis la retouche pose une carte reliée à l'origine", async () => {
+    const planche = asset("aaaa1111-0")
+    const CARTES = [carteImage("m1", { source: "asset:aaaa1111-0", note: "premier tirage", position: [0, 0] })]
+    const double = serveurDouble({ cartes: CARTES, assets: [planche] })
+    await monter(double.fetchDouble, { ...ETAT, assets: [planche] })
+    allerA("Univers")
+    fireEvent.click(await screen.findByRole("button", { name: "toile" }))
+    await waitFor(() => expect(cartesDuPlan()).toHaveLength(1))
+
+    fireEvent.click(cartesDuPlan()[0])
+    fireEvent.click(await screen.findByRole("button", { name: "Retoucher dans l’atelier" }))
+    await screen.findAllByText("La retouche")
+
+    fireEvent.click(await screen.findByRole("button", { name: "Poser sur la toile" }))
+
+    await waitFor(() =>
+      expect(
+        double.appels.some((a) => a.url === "/api/projects/bac-a-sable/board/assets/aaaa1111-0"),
+      ).toBe(true),
+    )
+    await waitFor(() =>
+      expect(double.appels.some((a) => a.url === "/api/board/links")).toBe(true),
+    )
+    const lien = double.appels.find((a) => a.url === "/api/board/links")
+    expect(lien?.corps).toEqual(
+      expect.objectContaining({
+        de: { genre: "carte", valeur: "m1" },
+      }),
+    )
+  })
+
+  test("depuis la Galerie, aucune carte d'origine — « Poser sur la toile » n'est pas dans la retouche", async () => {
+    const planche = asset("aaaa1111-0")
+    const double = serveurDouble({ assets: [planche] })
+    await monter(double.fetchDouble, { ...ETAT, assets: [planche] })
+    fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir le résultat" }))[0])
+    fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
+
+    expect((await screen.findAllByText("La retouche")).length).toBeGreaterThan(0)
+    expect(screen.queryByRole("button", { name: "Poser sur la toile" })).toBeNull()
+  })
+
+  // 8septies (`AGENTS.md`) : un objet qu'on sait écrire et qu'on ne sait pas
+  // relire n'est pas fini — fermer l'atelier puis le rouvrir sur la même
+  // carte doit retrouver une retouche qui n'est pas celle par défaut, pas
+  // repartir des réglages du jeu.
+  test("referme puis rouvre l'atelier sur la même carte : une retouche qui n'est pas celle par défaut se relit", async () => {
+    const PASSE = {
+      moteur: "bord" as const,
+      tolerance: 28,
+      seuil_alpha: 128,
+      durcissement: 0,
+      point: null,
+      portee: "tache" as const,
+      masquee: false as const,
+      trace: [],
+      modele: "",
+    }
+    const planche = {
+      ...asset("aaaa1111-0"),
+      recette: { ...RECETTE_VIDE, passes: [PASSE], veille: [] },
+    } as Asset
+    const CARTES = [carteImage("m1", { source: "asset:aaaa1111-0", note: "premier tirage", position: [0, 0] })]
+    const double = serveurDouble({ cartes: CARTES, assets: [planche] })
+    await monter(double.fetchDouble, { ...ETAT, assets: [planche] })
+    allerA("Univers")
+    fireEvent.click(await screen.findByRole("button", { name: "toile" }))
+    await waitFor(() => expect(cartesDuPlan()).toHaveLength(1))
+
+    const ouvrirLaRetoucheDeLaCarte = async () => {
+      // La retouche remplace la toile (même garde que la Galerie et le
+      // Codex) : chaque fois qu'on la referme, la toile remonte à neuf et sa
+      // sélection repart de zéro — il faut recliquer la carte.
+      fireEvent.click(cartesDuPlan()[0])
+      fireEvent.click(await screen.findByRole("button", { name: "Retoucher dans l’atelier" }))
+      return within(
+        await waitFor(() => {
+          const ecran = document.querySelector("[data-retouche]")
+          if (!ecran) throw new Error("la retouche ne s'est pas ouverte")
+          return ecran as HTMLElement
+        }),
+      )
+    }
+
+    const premiere = await ouvrirLaRetoucheDeLaCarte()
+    // Endormir le détourage — une retouche qui n'est pas celle par défaut
+    // (par défaut, une table déjà réglée reste éveillée).
+    fireEvent.click(premiere.getByRole("button", { name: "L'endormir" }))
+    await waitFor(() => expect(premiere.getByRole("button", { name: "La réveiller" })).toBeTruthy())
+
+    // **Enregistrer**, pas seulement prévisualiser : 8septies parle d'un objet
+    // qu'on sait écrire et rouvrir, pas d'un brouillon de navigateur. Le
+    // bouton s'allume dès que la session porte un changement.
+    fireEvent.click(premiere.getByRole("button", { name: "Enregistrer ›" }))
+    await waitFor(() =>
+      expect(double.appels.some((a) => a.url === "/api/assets/aaaa1111-0/recipe")).toBe(true),
+    )
+
+    // Fermer — enregistré, aucune retouche n'attend plus : pas de dialogue.
+    fireEvent.click(premiere.getByRole("button", { name: /^‹/ }))
+    await waitFor(() => expect(document.querySelector("[data-retouche]")).toBeNull())
+
+    // Rouvrir depuis la même carte : la retouche se relit, elle ne repart pas
+    // des réglages du jeu.
+    const seconde = await ouvrirLaRetoucheDeLaCarte()
+    await waitFor(() => expect(seconde.getByRole("button", { name: "La réveiller" })).toBeTruthy())
   })
 })
 

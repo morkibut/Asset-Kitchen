@@ -116,6 +116,14 @@ export const ENCORE = createContext<((carte: Carte, phrase: PhraseDeCarte) => vo
   null,
 )
 
+/** « Retoucher dans l'atelier » (TS18) : ouvre l'image de cette carte dans
+ *  l'atelier de retouche — l'asset qu'elle porte déjà si elle vient de la
+ *  bibliothèque ou d'une fabrication, une copie neuve sinon (`jamais de
+ *  doublon`). Même règle de `null` que les autres gestes de ce fichier :
+ *  hors de la toile ou de la grille, le bouton disparaît plutôt que de
+ *  paraître grisé sans raison. N'existe que pour une carte image prête. */
+export const RETOUCHER = createContext<((carte: Carte) => void) | null>(null)
+
 /** La gouttière de la grille — un seul vocabulaire d'écart dans tout le produit.
  *  La toile la reprend telle quelle pour ranger ce qu'elle dispose seule. */
 export const GOUTTIERE = 9
@@ -1490,6 +1498,7 @@ export function Reglages({
   const ouvrirSujet = useContext(OUVRIR_SUJET)
   const developper = useContext(DEVELOPPER)
   const encore = useContext(ENCORE)
+  const retoucher = useContext(RETOUCHER)
   const [groupe, setGroupe] = useState(carte.groupe)
   const [note, setNote] = useState(carte.note)
   const [texte, setTexte] = useState(carte.texte)
@@ -1571,6 +1580,24 @@ export function Reglages({
           onChange={(taille) => void regler({ taille })}
         />
       </div>
+
+      {/* **« Retoucher dans l'atelier »** (TS18) : ouvre l'image de cette
+          carte dans l'atelier de retouche, avec tous ses outils — comme un
+          clic sur une image de la Galerie suivi de « La retoucher ». Absent
+          hors de la toile ou de la grille (`retoucher` nul), sur une note, ou
+          tant que l'image n'est pas encore arrivée. */}
+      {carte.genre === "image" && carte.montrable && retoucher && (
+        <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
+          <Libelle aide="carte.retoucher">Retoucher</Libelle>
+          <button
+            type="button"
+            onClick={() => retoucher(carte)}
+            className="mesure h-[26px] self-start rounded-7 border border-trait bg-carte px-2 text-[10.5px] text-encre-3 hover:bg-papier-cote"
+          >
+            Retoucher dans l’atelier
+          </button>
+        </div>
+      )}
 
       {/* **La phrase de la génération qui a fait cette carte** (TS5) — jamais
           le texte composé qui est parti au modèle, seulement celui que

@@ -41,7 +41,7 @@ import {
   type Teinte,
 } from "../api"
 import type { Fente } from "./EnTeteDeSurface"
-import { CREER_SUJET, DECOUPER, OUVRIR_SUJET, Reserve, Tableau, useCollage, type Vue } from "./Tableau"
+import { CREER_SUJET, DECOUPER, OUVRIR_SUJET, RETOUCHER, Reserve, Tableau, useCollage, type Vue } from "./Tableau"
 import { EcranDecoupe } from "./Decoupe"
 import {
   GestesDeLaSelection,
@@ -77,6 +77,7 @@ export function EcranUnivers({
   onDecouperCarte,
   onCreerSujet,
   onOuvrirSujet,
+  onRetoucher,
   onAnimerCarte,
   onFabriquerDepuisLaToile,
   projet,
@@ -136,6 +137,10 @@ export function EcranUnivers({
   /** TS2 — une carte déjà concept art d'un sujet ouvre ce sujet, sans repasser
    *  par la fenêtre de création. */
   onOuvrirSujet: (identifiant: string) => void
+  /** TS18 — « Retoucher dans l'atelier » : `App` résout l'asset de la carte
+   *  (le sien s'il en a déjà un, une copie neuve sinon) et ouvre la retouche
+   *  dessus. C'est `App` qui sait, parce que la retouche n'est pas montée ici. */
+  onRetoucher: (carte: Carte) => void
   /** **Ce que la sélection de la toile donne à faire** (`RP9`) : les cartes
    *  choisies deviennent les références de la prochaine demande d'image, et
    *  les notes la consigne qui l'accompagne — si l'auteur l'a dit.
@@ -398,6 +403,7 @@ export function EcranUnivers({
         <DECOUPER.Provider value={onDecouperCarte}>
         <CREER_SUJET.Provider value={onCreerSujet}>
         <OUVRIR_SUJET.Provider value={onOuvrirSujet}>
+        <RETOUCHER.Provider value={onRetoucher}>
           <div
             data-colonnes
             className="grid min-h-0 flex-1"
@@ -488,6 +494,7 @@ export function EcranUnivers({
               </div>
             )}
           </div>
+        </RETOUCHER.Provider>
         </OUVRIR_SUJET.Provider>
         </CREER_SUJET.Provider>
         </DECOUPER.Provider>

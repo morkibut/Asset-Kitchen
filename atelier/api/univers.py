@@ -745,6 +745,31 @@ async def sujet_depuis_carte(
     return {"projet": identifiant, **resultat}
 
 
+class CorpsAssetDepuisCarte(BaseModel):
+    """`projet` facultatif — sans lui, le projet ouvert."""
+
+    projet: str | None = None
+
+
+@routeur.post("/board/{carte}/asset")
+async def asset_depuis_carte(
+    requete: Request, carte: str, corps: CorpsAssetDepuisCarte | None = None
+) -> dict[str, Any]:
+    """TS18 — l'asset de cette carte, pour l'ouvrir dans l'atelier de retouche.
+
+    Celui qu'elle porte déjà si elle vient de la bibliothèque ou d'une
+    fabrication de la toile ; une copie neuve en bibliothèque sinon, sans la
+    rattacher à un sujet. **Jamais de doublon** : rappelée sur la même carte,
+    elle rend toujours le même asset.
+    """
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, corps.projet if corps else None)
+    return {
+        "projet": identifiant,
+        "asset": atelier.asset_depuis_carte.de_la_carte(identifiant, carte),
+    }
+
+
 @routeur.delete("/board/{carte}")
 async def oublier_carte(
     requete: Request, carte: str, projet: str | None = None
