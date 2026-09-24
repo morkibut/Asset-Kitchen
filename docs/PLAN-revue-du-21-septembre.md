@@ -1304,7 +1304,35 @@ chantier a réellement fermé, et ce qui reste.
 
 ### Critères d'acceptation
 
-- [ ] Un relevé daté dans `docs/releves/`, sur les 26 écrans, avec la même grille que celui du
+- [x] Un relevé daté dans `docs/releves/`, sur les 26 écrans, avec la même grille que celui du
       13 septembre.
-- [ ] Chaque écart restant est nommé, avec l'écran où on le voit.
+- [x] Chaque écart restant est nommé, avec l'écran où on le voit.
 - [ ] Le tableau d'état de `docs/PLAN.md` reprend le compte.
+
+**Fait le 24 septembre 2026.** Relevé écrit dans `docs/releves/maquette-remesuree-2026-09-24.md`,
+mêmes 26 écrans et mêmes 13 surfaces transverses que le 13 septembre, même grille tenu/en
+partie/absent, chaque écart restant nommé avec fichier et ligne. Compte : sur les 26 écrans,
+**1 tenu / 22 en partie / 3 absents** (13 septembre : 0/22/4) ; sur les 39 (26 + 13 surfaces),
+**4 tenus / 32 en partie / 4 absents** (13 septembre : 1/32/6). Passent à tenu : *Réglages* (une
+seule porte à quatre onglets, `RP2`) et *Brouillons à reprendre* (un vrai tiroir,
+`TiroirDesBrouillons`) ; *Quitter cette retouche ?* restait déjà tenu. Le vrai signal dépasse ce
+compte : cinq réparations de fond touchent plusieurs écrans à la fois — la fenêtre de
+fabrication et celle de relecture sont devenues chacune une seule fenêtre (`RP4`), Livrer au jeu
+un seul écran (`RV8`), la fiche d'un sujet quatre onglets assumés au lieu de six dont deux
+fantômes (`RV12`), et une seule barre de zoom sert sept écrans (16 septembre). *Comparer les
+versions*, absent le 13 septembre, a gagné un mode de comparaison de deux animations avec
+lecture synchronisée et jugement par côté (`RP12`) — passe à « en partie ». *Découper une
+image* a gagné le réglage complet d'une zone (renommer, X/Y/largeur/hauteur, annuler le dernier
+réglage). Vu au navigateur sur un atelier jetable (port 8440, `npm run build` de ce worktree) :
+Le jeu, Univers & toile, Codex, Galerie, Fabrications, Livrer au jeu, Réglages (les quatre
+onglets), la fiche d'un sujet neuf et ses onglets, Retouche, le Guide, la colonne de navigation,
+le fil d'Ariane. Non vu au navigateur, faute de données dans cet atelier jetable (équipement,
+clip payé, source 3D, tenue combinée, deux animations à comparer, une image à découper) : les
+onglets Sources & clips / Équipement / Objectif & règles de la fiche, la fiche de la pièce,
+l'emploi et le calque d'un équipement, combiner les équipements, le clip source, le montage, la
+3D, Découper une image, Extraire un élément, Comparer les versions, Relire avant l'envoi hors le
+cas image fixe, Préparer une fabrication, Fabrication libre, Choisir dans la bibliothèque,
+Vérifier les calques en mouvement, Utiliser cette image comme équipement — ces écrans-là sont
+relus dans le code seulement, chaque fois signalé dans le relevé. Le troisième critère (le
+compte dans `docs/PLAN.md`) n'est pas touché par cette tranche : les chiffres ci-dessus sont à y
+reporter à la main.
