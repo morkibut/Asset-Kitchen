@@ -1,11 +1,11 @@
 {
- "releve_le": 1790204674.0617375,
+ "releve_le": 1790288004.0921745,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 183333,
+  "octets": 184445,
   "documents": {
    "AGENTS.md": {
     "octets": 37683,
@@ -260,20 +260,20 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 52159,
+    "octets": 52924,
     "titres": 20,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 51687
+      "octets": 52452
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 44,
-      "octets": 22889
+      "octets": 23654
      },
      {
       "titre": "Ce que la remise à plat a mesuré, le 13 septembre 2026",
@@ -386,14 +386,14 @@
     ]
    },
    "docs/DESIGN.md": {
-    "octets": 29011,
+    "octets": 29358,
     "titres": 32,
     "sections": [
      {
       "titre": "Asset Kitchen — Design System",
       "niveau": 1,
       "ligne": 1,
-      "octets": 28490
+      "octets": 28832
      },
      {
       "titre": "Comment ce document a été obtenu",
@@ -489,7 +489,7 @@
       "titre": "Spacing",
       "niveau": 2,
       "ligne": 298,
-      "octets": 3022
+      "octets": 3364
      },
      {
       "titre": "Hauteurs de contrôle — liste fermée",
@@ -513,72 +513,72 @@
       "titre": "Vignettes — liste fermée",
       "niveau": 3,
       "ligne": 348,
-      "octets": 234
+      "octets": 576
      },
      {
       "titre": "Layout",
       "niveau": 2,
-      "ligne": 355,
+      "ligne": 360,
       "octets": 1539
      },
      {
       "titre": "Les quatre présentations, et la cinquième est interdite",
       "niveau": 3,
-      "ligne": 367,
+      "ligne": 372,
       "octets": 589
      },
      {
       "titre": "Arrondis — liste fermée",
       "niveau": 3,
-      "ligne": 381,
+      "ligne": 386,
       "octets": 312
      },
      {
       "titre": "Les onze pièces",
       "niveau": 2,
-      "ligne": 391,
+      "ligne": 396,
       "octets": 864
      },
      {
       "titre": "Les six règles",
       "niveau": 2,
-      "ligne": 411,
+      "ligne": 416,
       "octets": 961
      },
      {
       "titre": "Motion",
       "niveau": 2,
-      "ligne": 430,
+      "ligne": 435,
       "octets": 565
      },
      {
       "titre": "L'écriture",
       "niveau": 2,
-      "ligne": 446,
+      "ligne": 451,
       "octets": 937
      },
      {
       "titre": "Ce que ce document ne tranche pas",
       "niveau": 2,
-      "ligne": 465,
+      "ligne": 470,
       "octets": 1880
      },
      {
       "titre": "Un défaut d'avant, fermé par construction",
       "niveau": 2,
-      "ligne": 493,
+      "ligne": 498,
       "octets": 1596
      },
      {
       "titre": "Motifs → `docs/design-motifs.md`",
       "niveau": 2,
-      "ligne": 519,
+      "ligne": 524,
       "octets": 39
      },
      {
       "titre": "Journal des décisions → `docs/design-decisions.md`",
       "niveau": 2,
-      "ligne": 521,
+      "ligne": 526,
       "octets": 57
      }
     ]
@@ -587,11 +587,11 @@
  },
  "renvois": {
   "code": {
-   "total": 880,
+   "total": 906,
    "casses": []
   },
   "docs": {
-   "total": 1451,
+   "total": 1460,
    "casses": []
   }
  }

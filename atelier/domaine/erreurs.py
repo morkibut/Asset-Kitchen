@@ -81,6 +81,17 @@ class FournisseurIndisponible(ErreurAtelier):
     code = "fournisseur_indisponible"
 
 
+class DelaiDepasse(FournisseurIndisponible):
+    """Le délai court du coup de main est passé, **et l'appel a été coupé** (CM1).
+
+    Un cas à part d'indisponible parce qu'il ne se lit pas pareil au journal :
+    le fournisseur n'a rien refusé, c'est nous qui avons raccroché — et c'est
+    ce raccroché qui empêche de payer une réponse qu'aucun écran n'affichera.
+    """
+
+    code = "delai_depasse"
+
+
 class AppelRefuse(ErreurAtelier):
     """Le fournisseur a répondu, et il a dit non.
 

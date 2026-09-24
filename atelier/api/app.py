@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 from atelier.api.animation import routeur as routeur_animation
 from atelier.api.bibliotheque import routeur as routeur_bibliotheque
+from atelier.api.coup_de_main import routeur as routeur_coup_de_main
 from atelier.api.depliages import routeur as routeur_depliages
 from atelier.api.enregistrer_sous import routeur as routeur_enregistrer_sous
 from atelier.api.gestes import routeur as routeur_gestes
@@ -302,6 +303,9 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     # **Les dépliages d'une planche** (P1b, V3.5) : refaire un découpage,
     # lister, supprimer, et compter ce qui dépend d'une planche.
     application.include_router(routeur_depliages, prefix="/api")
+    # **Le coup de main** (CM1) : sous `/api` seulement — aucune de ses routes
+    # n'est un outil MCP ni n'entre dans le cadre de l'agent (décision 9).
+    application.include_router(routeur_coup_de_main, prefix="/api")
 
     @application.exception_handler(PlancheAConfirmer)
     async def _confirmer(_: Request, erreur: PlancheAConfirmer) -> JSONResponse:
