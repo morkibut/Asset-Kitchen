@@ -1122,12 +1122,38 @@ ordinaire, et aucun `z-index` ne passe devant cette couche.
 
 ### Critères d'acceptation
 
-- [ ] l'agrandissement ouvert depuis une fenêtre (fiche du sujet, et toute fenêtre de `CadreDialogue`)
+- [x] l'agrandissement ouvert depuis une fenêtre (fiche du sujet, et toute fenêtre de `CadreDialogue`)
       passe devant elle ; hors fenêtre, rien ne change
-- [ ] Échap ferme l'agrandissement **seul**, sans fermer la fenêtre qui est dessous
-- [ ] le focus revient dans la fenêtre à la fermeture
-- [ ] un essai d'écran ouvre l'agrandissement depuis une fenêtre et vérifie qu'il est dans la couche
+- [x] Échap ferme l'agrandissement **seul**, sans fermer la fenêtre qui est dessous
+- [x] le focus revient dans la fenêtre à la fermeture
+- [x] un essai d'écran ouvre l'agrandissement depuis une fenêtre et vérifie qu'il est dans la couche
       du dessus (ou monté dans la fenêtre) ; il tombe sans le correctif (*8octies*)
+
+**Fait le 24 septembre 2026.** `Apercu.tsx` s'ouvre désormais lui-même par un `<dialog>` porté en
+`showModal()` (portail vers `document.body`, exactement le patron de `CadreDialogue`), au lieu d'un
+`fixed z-50` de la page ordinaire — c'est ce qui le fait passer devant une fenêtre déjà ouverte, la
+couche du dessus ignorant tout `z-index`. Piège trouvé en le construisant : l'UA-stylesheet du
+`<dialog>` fixe `width/height: fit-content` (pas `auto`), donc `fixed inset-0` seul ne suffit pas à
+le faire remplir l'écran — il lui faut aussi `h-full w-full`, comme `CadreDialogue` le fait déjà pour
+son format « atelier ». Échap reste intercepté en capture sur la fenêtre (`useApercu`, geste déjà en
+place depuis RV23) *avant* d'atteindre un `<dialog>` quel qu'il soit : aucun `cancel` natif ne part,
+ni sur l'aperçu ni sur la fenêtre dessous — un `onCancel` défensif est posé sur l'aperçu par parité
+avec `CadreDialogue`, mais ne se déclenche jamais en pratique. Le focus qui revient dans la fenêtre
+à la fermeture est la sémantique native du `<dialog>` (même mécanisme, non écrit à la main, que
+`CadreDialogue` utilise déjà) — **non vérifiable au navigateur cette fois** : une reproduction
+minimale, un `<dialog>` isolé sans rapport avec ce dépôt, montre que le Chromium de ce panneau de
+navigateur ne restaure le focus après `close()` dans aucun cas, y compris sur `CadreDialogue` seul,
+non modifié ici — un artefact de l'outillage d'automatisation, pas une régression de ce correctif.
+Deux essais neufs dans `Apercu.test.tsx` (« RV26 — l'agrandissement passe devant une fenêtre
+ouverte ») : le premier vérifie que l'aperçu est un `<dialog>` monté par `showModal()` — vérifié qu'il
+tombe si on défait le correctif (*8octies*, `apercu?.tagName` reste `"DIV"` sans lui) ; le second
+vérifie qu'Échap ne ferme que l'aperçu et n'appelle jamais l'`onFermer` de la fenêtre dessous. Au
+navigateur (atelier jetable, port 8431, dossier de données jetable, interface en `npm run dev` — pas
+de `dist` dans le worktree) : sujet créé sans frais avec une image importée, « Modifier la fiche »
+ouverte, Espace sur sa vignette — `document.elementFromPoint` sur un point recouvert par la fenêtre
+retombe bien sur l'aperçu, capture à l'appui. `essai_docs.py`, `essai_vocabulaire.py` et
+`essai_tutoiement.py` passent ; seul échec du cran rapide, `tests/test_rp17.py` (404 au lieu de 405,
+`interface/dist` absent du worktree — pas de cette tranche, `regles-communes.md` le nomme déjà).
 
 ---
 
