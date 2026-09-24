@@ -18,7 +18,7 @@
 
 ---
 
-## Les dix-huit tranches
+## Les dix-neuf tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -40,10 +40,11 @@
 | **TS15** · Le détail dans la colonne de droite | `[MEDIUM]` | remettre en page deux fenêtres dans un panneau sans perdre une action, avec un état partagé entre la toile et la colonne |
 | **TS17** · Choisir un modèle : les habitués d'abord | `[MEDIUM]` | un compte d'usage neuf côté serveur, et un composant posé à plusieurs endroits sans que le catalogue cesse de griser |
 | **TS18** · Une carte s'ouvre dans l'atelier de retouche | `[MEDIUM]` | reprend la copie en bibliothèque de TS2 et le lien de TS10 ; le point dur est de ne jamais créer de doublon ni toucher l'image de la carte |
+| **TS19** · La planche des directions ne dessine pas un miroir | `[MEDIUM]` | une phrase de plus dans ce qui part, et une mesure locale et nommée (une vue contre l'autre retournée) ; le point dur est la phrase, qui touche toutes les planches de directions |
 
-**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 10 `[MEDIUM]`, 6 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 11 `[MEDIUM]`, 6 `[EASY]`, 0 `[VERY-EASY]`.
 
-*TS4 à TS12 ajoutées le 23 septembre 2026 ; TS13 à TS18 le 24.*
+*TS4 à TS12 ajoutées le 23 septembre 2026 ; TS13 à TS19 le 24.*
 
 ---
 
@@ -53,6 +54,7 @@
 |---|---|---|
 | **TS2** | l'image d'une carte devient un asset du sujet : ce sens n'existe pas, et la copie doit se ranger sans passer pour un doublon ni pour une image générée | `[HARD]` · Opus, sous-agent |
 | **TS3** | la place du concept art dans ce qui part : référence, style, ou les deux, et ce que dit la phrase qui l'accompagne — d'autres chemins en héritent | `[HARD]` · Opus, dans la tranche |
+| **TS19** | la phrase qui interdit le miroir sans que le modèle se mette à inverser les vues ni à perdre le design du concept art — toutes les planches de directions en héritent | `[HARD]` · Opus, sous-agent |
 
 ---
 

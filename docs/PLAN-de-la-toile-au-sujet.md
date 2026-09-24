@@ -708,6 +708,30 @@ Lecture recommandée :
 
 **Bloquée par** : TS15 (le bouton vit dans le détail de la colonne de droite).
 
+### TS19 · La planche des directions ne dessine pas un miroir
+
+*Ajoutée le 24 septembre 2026, sur un retour de l'auteur* : sa planche de référence d'Elias sort
+en miroir. Les deux vues de profil sont la même image retournée : la trousse de soin, le fusil et
+le sac changent de côté avec lui, au lieu de montrer l'autre côté de son corps.
+
+**La cause** : le texte qui part décrit chaque vue de profil par « seen from the side, facing
+right / left » (`atelier/domaine/direction.py`) et rien de plus. Pour un modèle, retourner l'image
+est la façon la plus simple de tenir cette phrase.
+
+- [ ] quand la planche porte deux directions opposées (est et ouest, gauche et droite, et leurs
+      diagonales), le texte dit qu'il s'agit **du même personnage vu de l'autre côté, pas d'un
+      miroir** : ce qu'il porte d'un côté du corps reste de ce côté-là du corps (une sacoche sur sa
+      hanche gauche se voit d'un profil et se cache de l'autre)
+- [ ] la phrase est lisible dans *Relire avant l'envoi*, et le concept art part toujours comme le
+      design à reproduire (*TS3*, *TS11*)
+- [ ] **à l'arrivée**, deux vues opposées qui sont presque exactement le miroir l'une de l'autre
+      sont signalées sur la planche (« ces deux vues sont un miroir ») ; le calcul est local et
+      déterministe (comparer une vue à l'autre retournée), et ne coûte rien
+- [ ] un essai vérifie la phrase qui part, et un autre le signalement, sur une paire miroir et sur
+      une paire qui ne l'est pas
+- [ ] **un banc payé, lancé à la main par l'auteur**, compare l'ancienne phrase et la nouvelle sur
+      huit tirages chacune ; son prix est annoncé avant de partir
+
 ## Ce que ce plan ne couvre pas
 
 - Les autres poses (marche, attaque…) : elles partent de la planche choisie par les chemins qui
