@@ -29,6 +29,8 @@ import {
 } from "../api"
 import { POINTILLE, useInfobulle } from "./Infobulle"
 import { explication } from "../aide"
+import { coupDeMain, type CeQuiPart } from "../api-coup-de-main"
+import { JE_NE_SAIS_PAS } from "../touche-demander"
 
 /** Comment un modèle se dit dans une liste déroulante (F1).
  *
@@ -467,32 +469,181 @@ export const LIBELLES_ZOOM: Partial<Record<string, string>> = {
 }
 
 /**
+ * CM5 (`docs/PLAN-assistant.md` § CM5) — la petite marque qui développe une
+ * raison de blocage. **Posée une seule fois, ici, dans `Raison`** : le
+ * composant commun à tout le produit pour « le grisé porte sa raison »
+ * (comme CM7 a posé la marque « améliorer » une seule fois, sur
+ * `ChampPrompt.tsx`).
+ *
+ * **Elle ne paraît que si l'appelant fournit `ecran`** — une clé d'`ECRANS`
+ * côté serveur. Sans elle, rien ne se propose : ni faux contexte inventé ici,
+ * ni geste qui échouerait en 422. C'est pour ça qu'aujourd'hui elle n'est
+ * branchée que sur l'écran *Relire avant l'envoi* (`Envoi.tsx`, « la barre
+ * qui paie ») — les autres endroits où `Raison` affiche un grisé
+ * (`ChampPrompt.tsx`, `PanneauReglages.tsx`, `BarreQuiPaie.tsx`…) sont
+ * partagés entre plusieurs écrans à la fois, et leur donner un `ecran` fixe
+ * mentirait sur l'un des deux. Ils restent à câbler, un par un, comme `CHAMPS`
+ * l'a été en CM3 puis CM7.
+ *
+ * Décision 6 du plan, comme partout ailleurs dans le coup de main :
+ * indisponible (pas de clé, plafond atteint…), la marque ne paraît pas du
+ * tout.
+ */
+function ExpliquerLeBlocage({
+  ecran,
+  champ,
+  raison,
+}: {
+  ecran: string
+  champ?: string
+  raison: string
+}) {
+  const [dispo, setDispo] = useState(false)
+  const [ouvert, setOuvert] = useState(false)
+  const [reponse, setReponse] = useState<{ texte: string; fini: boolean } | null>(null)
+  const [voir, setVoir] = useState<CeQuiPart | null>(null)
+  const coupure = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    let vivant = true
+    coupDeMain.etat().then((e) => { if (vivant) setDispo(e.disponible === true) }).catch(() => undefined)
+    return () => { vivant = false }
+  }, [])
+
+  function fermer() {
+    coupure.current?.abort()
+    coupure.current = null
+    setOuvert(false)
+    setReponse(null)
+    setVoir(null)
+  }
+
+  // Refermer coupe l'appel en cours, comme le reste du coup de main.
+  useEffect(() => () => coupure.current?.abort(), [])
+
+  // Échap, où que soit le focus tant que l'explication est ouverte — même
+  // geste que `AvecCoupDeMain` et `AvecDemande` : elle referme l'explication,
+  // elle ne referme pas l'écran qui est autour (donc pas l'écran d'envoi).
+  useEffect(() => {
+    if (!ouvert) return
+    const touche = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
+      e.preventDefault(); e.stopPropagation()
+      fermer()
+    }
+    window.addEventListener("keydown", touche, true)
+    return () => window.removeEventListener("keydown", touche, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ouvert])
+
+  async function expliquer() {
+    setOuvert(true)
+    setVoir(null)
+    const coupe = new AbortController()
+    coupure.current = coupe
+    let recu = ""
+    setReponse({ texte: "", fini: false })
+    const corps = { texte: raison, ecran, ...(champ ? { champ } : {}), blocage: raison }
+    try {
+      const fin = await coupDeMain.demander("blocage", corps, (m) => {
+        if (coupe.signal.aborted) return
+        if (m.genre === "texte") { recu += m.texte; setReponse({ texte: recu, fini: false }) }
+      }, coupe.signal)
+      if (coupe.signal.aborted) return
+      if (fin?.genre === "fin" && fin.issue === "repondu" && recu.trim()) {
+        setReponse({ texte: recu.trim(), fini: true })
+        return
+      }
+      // Revenu sans réponse — indisponible, refusé, délai passé : elle se tait.
+      if (fin?.genre === "indisponible") setDispo(false)
+      fermer()
+    } catch {
+      if (!coupe.signal.aborted) { setDispo(false); fermer() }
+    }
+  }
+
+  async function basculerVoir() {
+    if (voir) { setVoir(null); return }
+    const corps = { texte: raison, ecran, ...(champ ? { champ } : {}), blocage: raison }
+    try { setVoir(await coupDeMain.ceQuiPart("blocage", corps)) } catch { setVoir(null) }
+  }
+
+  if (!dispo) return null
+  const jeNeSaisPas = reponse?.fini && reponse.texte.toLowerCase().replace(/[.!]+$/, "") === JE_NE_SAIS_PAS
+
+  return (
+    <span className="mesure inline">
+      {!ouvert && (
+        <button type="button" onClick={() => void expliquer()} className="ml-1 text-signal hover:opacity-70">
+          pourquoi ›
+        </button>
+      )}
+      {ouvert && (
+        <span role="group" aria-label="Pourquoi c'est bloqué" className="mt-1 block max-w-[380px] rounded-7 border border-trait bg-papier p-[8px]">
+          {reponse && (
+            <p aria-live="polite" className="text-[11px] leading-4 text-encre">
+              {jeNeSaisPas ? "Le coup de main ne sait pas expliquer ce blocage-ci." : (reponse.texte || "…")}
+            </p>
+          )}
+          <span className="mt-[8px] flex flex-wrap items-center gap-[8px]">
+            <button type="button" className="text-[11px] text-encre-2 underline underline-offset-2 hover:text-encre" aria-expanded={voir !== null} onClick={() => void basculerVoir()}>
+              {voir ? "Cacher ce qui part" : "Voir ce qui part"}
+            </button>
+            <small className="text-[10.5px] text-encre-3">Échap pour fermer</small>
+          </span>
+          {voir && <span className="mt-[8px] block space-y-[8px]">
+            {voir.morceaux.filter((m) => m.texte).map((m) => <span key={m.titre} className="block">
+              <span className="mesure block text-[10.5px] uppercase tracking-[0.14em] text-encre-3">{m.titre}</span>
+              <pre className="mesure mt-[4px] whitespace-pre-wrap rounded-5 border border-trait bg-carte p-[8px] text-[10.5px] text-encre-2">{m.texte}</pre>
+            </span>)}
+            <small className="block text-[10.5px] text-encre-3">{voir.jamais}</small>
+          </span>}
+        </span>
+      )}
+    </span>
+  )
+}
+
+/**
  * « Le grisé porte sa raison — jamais une infobulle. »
  *
  * Une ligne sœur permanente sous le contrôle indisponible : mono 10 px,
  * `--texte-3`, précédée d'un tiret de 8 px, avec un lien en `--signal` quand il
  * y a un endroit où aller. Le produit interdit de proposer puis de refuser :
  * l'apparence doit donc dire pourquoi sans qu'on ait à chercher.
+ *
+ * **CM5** : `ecran` (facultatif) branche la petite marque « pourquoi › » qui
+ * développe cette raison avec le coup de main — voir `ExpliquerLeBlocage`
+ * ci-dessus pour ce qu'elle fait et où elle est posée aujourd'hui.
  */
 export function Raison({
   texte,
   ouAller,
   onAller,
+  ecran,
+  champ,
 }: {
   texte: string | null
   ouAller?: string
   onAller?: () => void
+  /** La clé d'écran (`ECRANS` côté serveur) où cette raison est affichée. */
+  ecran?: string
+  /** Le geste bloqué, en clair — nommé par l'appelant, jamais deviné. */
+  champ?: string
 }) {
   if (!texte) return null
   return (
-    <p className="mesure mt-1 flex items-center gap-1.5 text-[10.5px] leading-4 text-encre-4">
-      <span aria-hidden className="inline-block h-px w-2 bg-encre-4" />
-      <span>{texte}</span>
-      {ouAller && onAller && (
-        <button type="button" onClick={onAller} className="text-signal hover:opacity-70">
-          {ouAller} ›
-        </button>
-      )}
+    <p className="mesure mt-1 flex flex-col text-[10.5px] leading-4 text-encre-4">
+      <span className="flex items-center gap-1.5">
+        <span aria-hidden className="inline-block h-px w-2 bg-encre-4" />
+        <span>{texte}</span>
+        {ouAller && onAller && (
+          <button type="button" onClick={onAller} className="text-signal hover:opacity-70">
+            {ouAller} ›
+          </button>
+        )}
+        {ecran && <ExpliquerLeBlocage ecran={ecran} champ={champ} raison={texte} />}
+      </span>
     </p>
   )
 }

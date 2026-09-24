@@ -358,9 +358,53 @@ essais d'écran (jsdom) l'ont vérifié ; aucun appel payé n'a été fait, comm
 Un bouton grisé porte déjà sa raison. Quand elle ne suffit pas, le coup de main la développe —
 avec le contexte réel de l'écran, pas une généralité.
 
-- [ ] La raison courte reste affichée telle quelle ; le coup de main ne la remplace pas.
-- [ ] Ce qu'il explique nomme les gestes du produit, pas les fichiers ni les routes.
-- [ ] Il n'invente jamais une cause : sans contexte suffisant, il le dit.
+- [x] La raison courte reste affichée telle quelle ; le coup de main ne la remplace pas.
+- [x] Ce qu'il explique nomme les gestes du produit, pas les fichiers ni les routes.
+- [x] Il n'invente jamais une cause : sans contexte suffisant, il le dit.
+
+*Fait le 25 septembre 2026.* **Un troisième métier**, `BLOCAGE` (« blocage »,
+`atelier/domaine/coup_de_main.py`), qui reprend **exactement** le contexte de
+CM4 (`contexte_instant`, `blocage` rempli) et l'envoie à sa propre consigne
+(`CONSIGNE_BLOCAGE`). **Tranché** : sans une raison courte à développer, rien
+ne part — `blocage` est obligatoire pour ce métier (route `AVEC_BLOCAGE`),
+refus `blocage_absent` sinon ; `texte` porte la même raison, c'est elle,
+encadrée par `———`, que la consigne développe (« reprend le contexte monté
+par CM4 et l'envoie à une consigne de plus »). La consigne ne répète ni ne
+contredit la raison déjà affichée, nomme les gestes et les écrans du produit
+comme celle de « question », et répond `« je ne sais pas »` mot pour mot —
+la même phrase, comparée de la même façon côté écran — quand le contexte ne
+suffit pas pour expliquer honnêtement. **Écran ajouté à `ECRANS`** : `envoi`
+(*Relire avant l'envoi*, le dernier écran avant que l'argent parte).
+**À l'écran** : la marque « pourquoi › » est posée **une seule fois**, dans
+le composant commun `Raison` (`interface/src/composants/pieces.tsx`) — « le
+grisé porte sa raison », déjà partagé par tout le produit — plutôt que sur
+chaque écran qui grise un geste. Elle ne paraît que si l'appelant fournit un
+`ecran` (une clé d'`ECRANS`) *et* que le coup de main est disponible
+(décision 6) ; sans `ecran`, `Raison` se comporte exactement comme avant —
+aucune régression sur les quelque quarante appels du produit qui l'utilisent
+sans le savoir. **Câblée aujourd'hui sur un seul écran** : `Envoi.tsx`
+(`ecran="envoi"`), le refus en tête de la relecture — un écran fixe, sans
+ambiguïté. **Restent à câbler**, listés plutôt que devinés parce que chacun
+sert plusieurs écrans à la fois et qu'un `ecran` fixe y mentirait pour l'un
+d'eux : le bouton qui paie (`ChampPrompt.tsx`), le choix d'un modèle et les
+styles locaux (`PanneauReglages.tsx`), le refus global de la barre qui paie
+et la préparation d'une fabrication (`BarreQuiPaie.tsx`,
+`PreparerUneFabrication.tsx`) — chacun demanderait de faire descendre un
+`ecran` depuis l'écran réel (`ecranDuGuide`, déjà calculé dans `App.tsx`),
+geste que CM7 a fait pour `champ` et qu'une tranche future peut faire à
+l'identique pour `ecran`. Essais : `tests/test_cm5_blocage.py` (9, fournisseur
+doublé, aucun appel payé) — le contexte repris de CM4, « Voir ce qui part »,
+la consigne (ne répète pas, nomme les gestes jamais les fichiers, dit « je ne
+sais pas » sans contexte suffisant), les refus (`blocage_absent` en premier),
+non-régression sur « question ». Côté écran, `pieces.test.tsx` (6) : sans
+`ecran` la marque n'apparaît pas ; indisponible, rien ; la raison courte ne
+bouge jamais, l'explication arrive à côté ; Échap coupe l'appel et efface
+l'explication sans toucher la raison (8octies : pressé **pendant** que ça
+écrit) ; « je ne sais pas » s'annonce sobrement ; « Voir ce qui part ». Une
+ligne du guide (`interface/src/aide.ts`, `envoi.expliquer-le-blocage`, « à
+savoir » à 224 signes). **Pas vu au navigateur** : la marque, l'explication et
+« Voir ce qui part » sur le vrai écran de relecture — seuls les essais
+d'écran (jsdom) l'ont vérifié ; aucun appel payé n'a été fait.
 
 ### CM6 · Le plafond et le compteur
 

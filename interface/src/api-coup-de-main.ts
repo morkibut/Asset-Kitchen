@@ -1,4 +1,4 @@
-// Le coup de main, côté écran (CM3, CM4) — trois routes, `docs/PLAN-assistant.md`.
+// Le coup de main, côté écran (CM3, CM4, CM5) — trois routes, `docs/PLAN-assistant.md`.
 //
 // `demander` lit la réponse **au fil de l'eau** : une ligne JSON par morceau
 // (`application/x-ndjson`), `texte` plusieurs fois, puis un seul `fin` ou un seul
@@ -31,8 +31,14 @@ export type DemandeAmeliorer = { texte: string; champ: string; projet?: string }
  *  sur lui seul. */
 export type DemandeQuestion = { texte: string; ecran: string; champ?: string; valeur?: string; blocage?: string }
 
+/** Ce que l'écran envoie pour « blocage » (CM5) : la raison courte déjà
+ *  affichée (`blocage`, et le même texte dans `texte` — c'est elle, encadrée,
+ *  que la consigne développe), l'écran, et le geste bloqué s'il a un nom.
+ *  Sans `blocage`, le serveur refuse : rien à développer. */
+export type DemandeBlocage = { texte: string; ecran: string; champ?: string; blocage: string }
+
 /** Jamais une consigne : celle-ci vient toujours du dépôt (`CONSIGNES`, décision 1). */
-export type Demande = DemandeAmeliorer | DemandeQuestion
+export type Demande = DemandeAmeliorer | DemandeQuestion | DemandeBlocage
 
 async function lireLeFlux(corps: ReadableStream<Uint8Array>, onMorceau: (m: Morceau) => void): Promise<Morceau | null> {
   const lecteur = corps.getReader()

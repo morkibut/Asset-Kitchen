@@ -4257,6 +4257,21 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · verrouillé à l'ouverture",
   },
 
+  // CM5 (`docs/PLAN-assistant.md`) : la marque « pourquoi › », posée à côté
+  // d'une raison de blocage sur cet écran seulement — les autres endroits où
+  // le produit grise un geste avec sa raison (le bouton qui paie, le choix
+  // d'un modèle) restent à câbler, plan § CM5.
+  "envoi.expliquer-le-blocage": {
+    nom: "Pourquoi c'est bloqué",
+    ou: "envoi",
+    groupe: "Le cadre — ce qui s'ouvre avant la dépense",
+    quoi: "Quand rien ne peut partir, « pourquoi › » développe la raison affichée avec le coup de main.",
+    change: "La raison courte reste affichée telle quelle ; l'explication arrive dessous. Échap l'oublie.",
+    origine: "le coup de main · rien ne part sans cliquer « pourquoi › »",
+    long:
+      "Sans contexte suffisant pour l'expliquer honnêtement, le coup de main le dit plutôt que d'inventer une cause. Comme la marque « EN », il se tait s'il ne peut rien : sans clé ou plafond atteint, « pourquoi › » n'apparaît pas.",
+  },
+
   "envoi.modele-et-resultat": {
     nom: "Fournisseur et modèle, Résultat demandé",
     ou: "envoi",

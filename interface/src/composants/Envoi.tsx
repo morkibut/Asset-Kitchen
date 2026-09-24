@@ -339,7 +339,11 @@ export function EcranEnvoi({
           </button>
         </div>
 
-        {refus && <Raison texte={refus} />}
+        {/* CM5 : « pourquoi › » développe ce refus avec le coup de main —
+            l'écran est fixe ici (« envoi »), donc sans l'ambiguïté que
+            porteraient `ChampPrompt.tsx` ou `PanneauReglages.tsx`, partagés
+            entre plusieurs écrans à la fois. */}
+        {refus && <Raison texte={refus} ecran="envoi" champ="Envoyer" />}
 
         {envoi && (
           <>
