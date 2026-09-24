@@ -1571,6 +1571,20 @@ export const AIDE: Record<string, Explication> = {
     origine: "une planche faite par « Faire la planche des directions »",
   },
 
+  // **TS19** : le signal d'une planche dont deux vues opposées ne sont que la
+  // même image retournée.
+  "fabrique.vues-en-miroir": {
+    nom: "Ces deux vues sont un miroir",
+    groupe: "La fiche du sujet",
+    ou: "sujet",
+    quoi: "Deux vues opposées de la planche sont la même image retournée, au lieu de montrer l'autre côté du sujet.",
+    change:
+      "Rien n'est bloqué : tu peux la garder. Mais ce qu'il porte d'un côté (un sac, une sacoche) change de côté avec lui. Refais la planche si ça compte.",
+    origine: "une mesure faite à l'arrivée de la planche, sans rien payer",
+    long:
+      "Le texte envoyé demande déjà l'autre côté, pas un miroir. Si le modèle retourne quand même l'image, la planche le signale ici. Seules les vues presque identiques une fois retournées sont signalées : un miroir redessiné avec des différences peut passer.",
+  },
+
   // **Ajoutées le 24 septembre 2026 (défaut 7 de la relecture)** : les deux
   // gestes de fin du bandeau « Pas encore rangé » (RV22), sans entrée du
   // recueil pour les désigner.

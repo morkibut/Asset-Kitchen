@@ -718,19 +718,59 @@ le sac changent de côté avec lui, au lieu de montrer l'autre côté de son cor
 right / left » (`atelier/domaine/direction.py`) et rien de plus. Pour un modèle, retourner l'image
 est la façon la plus simple de tenir cette phrase.
 
-- [ ] quand la planche porte deux directions opposées (est et ouest, gauche et droite, et leurs
+- [x] quand la planche porte deux directions opposées (est et ouest, gauche et droite, et leurs
       diagonales), le texte dit qu'il s'agit **du même personnage vu de l'autre côté, pas d'un
       miroir** : ce qu'il porte d'un côté du corps reste de ce côté-là du corps (une sacoche sur sa
       hanche gauche se voit d'un profil et se cache de l'autre)
-- [ ] la phrase est lisible dans *Relire avant l'envoi*, et le concept art part toujours comme le
+- [x] la phrase est lisible dans *Relire avant l'envoi*, et le concept art part toujours comme le
       design à reproduire (*TS3*, *TS11*)
-- [ ] **à l'arrivée**, deux vues opposées qui sont presque exactement le miroir l'une de l'autre
+- [x] **à l'arrivée**, deux vues opposées qui sont presque exactement le miroir l'une de l'autre
       sont signalées sur la planche (« ces deux vues sont un miroir ») ; le calcul est local et
       déterministe (comparer une vue à l'autre retournée), et ne coûte rien
-- [ ] un essai vérifie la phrase qui part, et un autre le signalement, sur une paire miroir et sur
+- [x] un essai vérifie la phrase qui part, et un autre le signalement, sur une paire miroir et sur
       une paire qui ne l'est pas
 - [ ] **un banc payé, lancé à la main par l'auteur**, compare l'ancienne phrase et la nouvelle sur
-      huit tirages chacune ; son prix est annoncé avant de partir
+      huit tirages chacune ; son prix est annoncé avant de partir — *écrit
+      (`essais/banc_miroir_ts19.py`, `docs/bancs.md`), pas lancé*
+
+*Fait le 24 septembre 2026.* **La phrase** part dans la consigne de toute planche à créer
+(`_creer`, `services/pliage.py`) dès que ses cases portent une paire opposée, juste après « same
+style » : *« Cells 1 and 2 show the same subject from opposite sides, not a mirrored copy:
+anything on one side of its body stays on that side — a pouch on its left hip shows in one view
+and is hidden in the other. »* Les paires sont celles d'un miroir gauche-droite
+(`paires_opposees`, `domaine/direction.py`, lue sur `_AU_MIROIR`) : est/ouest, droite/gauche,
+nord-est/nord-ouest, sud-est/sud-ouest ; le sud et le nord n'en font jamais, une direction
+inventée non plus. Sur un jeu à huit directions : « Cells 3 and 4, and cells 5 and 8, and cells
+6 and 7 each show… ». *subject* et pas *character*, comme le reste de la consigne (une planche
+de directions peut porter un objet). Elle ne touche pas la ligne du design à reproduire (TS3) ;
+la planche d'équipement et la planche à plusieurs sujets n'en héritent pas (elles ne demandent
+pas de directions), ni le texte court d'un style local (SDXL lit mal une négation). **Aucun
+essai existant ne figeait l'ancien texte d'une planche à directions** : aucun n'a bougé.
+**Le signal** : *la mesure sépare une vue qui n'est que l'autre retournée — chaque couleur
+retombe à sa place — d'une vue qui montre vraiment l'autre côté, où ce qui est porté d'un seul
+côté disparaît ou change de place.* Chaque vue est recadrée sur son alpha, réduite à 32 × 32
+(couleurs prémultipliées), l'une retournée ; écart = moyenne sur la réunion des silhouettes
+(1 là où une seule est opaque, l'écart de couleur ailleurs) — `ecart_au_miroir`,
+`image/pliage.py`. Seuil `SEUIL_MIROIR = 0,035`, choisi sur les exemples fabriqués de l'essai
+(miroir redessiné, décalé et bruité : 0,005 ; l'autre côté, **même silhouette**, ne différant
+que par la sacoche cachée et la gourde vue : 0,059), puis relu gratuitement sur les trois
+planches d'Elias du disque de l'auteur : les deux de `gpt-image-2.5` mesurent 0,016 et 0,020
+(signalées), celle faite en local 0,34 — un miroir *redessiné*, fusil raccourci et gourde
+perdue, qui n'est pas « presque identique » et **passe**. Mesuré au premier dépliage, sur les
+vues qui entrent (`decouper_retour`), écrit sur le pliage (`miroirs`, paires de cases, absent
+quand il n'y en a pas) et rendu par `GET /generations/{id}`, que la fiche relit déjà. **À
+l'écran** : un encart « Ces deux vues sont un miroir : droite et gauche. » dans la fiche de
+l'image (`Fiche.tsx`, `VuesEnMiroir`), juste au-dessus de « C'est la référence » — sur la planche
+et sur ses vues ; ligne du guide `fabrique.vues-en-miroir`. **Non fait** : le bandeau
+« Sa planche est arrivée » (`ProchainGeste.tsx`) ne le dit pas (il ne charge pas la génération) ;
+un redépliage à la main ne remesure pas ; les planches d'avant TS19 ne sont pas remesurées.
+Essais : `tests/test_ts19.py` (11 — les paires, la phrase avec et sans paire, par l'envoi d'un
+jeu de côté et d'un jeu vu de dessus, la mesure, le signal d'une planche miroir relu du disque
+et son absence sur l'autre côté ; phrase vidée et signal non calculé, cinq tombent — les autres
+portent sur la mesure même, ou sur l'absence de phrase et de signal), deux de `Fiche.test.tsx`
+(le premier tombe sans l'encart). Pas vu au navigateur. **Le banc** :
+`py essais/banc_miroir_ts19.py preparer --sujet elias` (gratuit) puis `payer` — seize appels,
+≈ $0,80 annoncés, confirmation « oui », plafond $1,50.
 
 ## Ce que ce plan ne couvre pas
 

@@ -502,6 +502,13 @@ export function Fiche({
               )}
             </>
           )}
+          {/* **Deux vues opposées qui ne sont qu'un miroir** (TS19). Mesuré
+              par le serveur à l'arrivée de la planche (`pliage.miroirs`), lu
+              ici sur la génération que la fiche relit déjà : la planche et ses
+              vues le disent pareil. Juste au-dessus de « C'est la référence »,
+              parce que c'est avant de la choisir qu'il faut le savoir. Un
+              signal, jamais un refus. */}
+          <VuesEnMiroir generation={generation} />
           {/* **« C'est la référence »** (TS3). Montré seulement sur une
               planche faite en première planche — `generation.demande.
               premiere_planche` — le seul signe qu'on sait lire ici sans
@@ -943,6 +950,45 @@ function SansLeStyleDuJeu({ generation }: { generation: Generation | null }) {
       {laissees.length === 1 ? "image n'a" : "images n'ont"} pas suivi, ce modèle
       n'en accepte pas
     </p>
+  )
+}
+
+/**
+ * **Ces deux vues sont un miroir** (TS19). Le serveur compare, à l'arrivée
+ * d'une planche, chaque paire de vues opposées — l'une contre l'autre
+ * retournée — et écrit celles qui sont presque identiques
+ * (`pliage.miroirs`). Relevé sur Elias le 24 septembre 2026 : ses deux
+ * profils étaient la même image retournée, et la trousse de soin changeait de
+ * hanche avec lui.
+ *
+ * Les directions se lisent sur les cases de la même planche ; une paire se
+ * nomme par elles, pas par un numéro de case que l'auteur ne voit nulle part.
+ */
+function VuesEnMiroir({ generation }: { generation: Generation | null }) {
+  const pliage = generation?.pliage
+  const paires = pliage?.miroirs ?? []
+  if (paires.length === 0) return null
+  const cases = pliage?.cases ?? []
+  const nom = (i: number) => cases[i]?.direction || `vue ${i + 1}`
+
+  return (
+    <div
+      role="status"
+      data-vues-en-miroir
+      className="rounded-7 border border-trait-attention bg-fond-attention p-[8px] text-[11px] leading-4 text-encre-attention"
+    >
+      <p className="font-medium">
+        <Libelle aide="fabrique.vues-en-miroir">
+          {paires.length === 1 ? "Ces deux vues sont un miroir" : "Ces vues sont des miroirs"}
+        </Libelle>
+        {" : "}
+        {paires.map(([a, b]) => `${nom(a)} et ${nom(b)}`).join(", ")}.
+      </p>
+      <p>
+        Le modèle a retourné la même image au lieu de dessiner l'autre côté : ce
+        qu'il porte d'un côté change de côté avec lui.
+      </p>
+    </div>
   )
 }
 
