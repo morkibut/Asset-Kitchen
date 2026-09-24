@@ -622,6 +622,68 @@ rôle `style` — une carte prise part toujours en `edition` —, et le serveur 
 case « avec le style du jeu » revient cochée. Voir aussi la correction de `TS4`. Essai :
 `Toile.test.tsx`, un cas neuf.
 
+## Les retours du 24 septembre sur la toile
+
+> Ajoutées le 24 septembre 2026, sur les retours de l'auteur à l'usage de la toile, une fois
+> TS1 à TS12 fusionnées dans `main`.
+
+### TS13 · La toile revient après « Ambiances et couleurs »
+
+**Le défaut** : passer de l'onglet « Ambiances et couleurs » à « Inspiration » laisse la toile
+vide sur « la toile se règle sur la grille… » (`Toile.tsx`, l'état `crans`). Il faut repasser
+par « grille » puis revenir sur « toile » pour qu'elle s'affiche. La cause est à lire avant de
+corriger : sans doute une mesure prise pendant que la toile était cachée, et jamais reprise.
+
+- [ ] revenir d'« Ambiances et couleurs » à « Inspiration » montre la toile, sans détour par la grille
+- [ ] un essai d'écran fait l'aller-retour et tombe sans le correctif (*8octies*)
+
+### TS14 · La barre « Fabriquer » se replie
+
+- [ ] la barre de fabrication en bas de la toile se replie en une ligne et se déplie, comme sur
+      Mixboard ; repliée, elle ne cache plus la toile
+- [ ] le texte en cours, les références prises, le modèle et la taille survivent au repli
+- [ ] l'état replié ou déplié est retenu d'une visite à l'autre (préférence du navigateur)
+
+### TS16 · « ouvrir sa palette » d'un îlot marche, et n'existe qu'une fois
+
+**Le défaut** : dans la fenêtre d'un îlot, « ouvrir sa palette › » ne mène nulle part, alors que
+son doublon « aller voir sa palette » marche. Les deux disent la même chose.
+
+- [ ] il ne reste qu'un bouton pour aller à la palette de l'îlot, et il y mène
+- [ ] même vérification pour « son ambiance » : un seul bouton, qui marche
+- [ ] un essai clique le bouton qui reste et vérifie où il mène
+
+### TS15 · Le détail d'une carte et d'un îlot s'ouvre dans la colonne de droite
+
+Cliquer une carte ou un îlot n'ouvre plus de fenêtre par-dessus la toile. Leur détail prend la
+place de la réserve, dans la colonne de droite, et la réserve revient quand on le ferme.
+
+- [ ] une carte cliquée montre, dans la colonne de droite : sa miniature (150 px de haut au
+      plus, si c'est une image), puis tout ce que la fenêtre montrait, et toutes ses actions
+- [ ] même chose pour un îlot : son nom, ses cartes, sa palette, son ambiance, ses actions
+- [ ] rien ne disparaît (*8nonies*) : chaque action de l'ancienne fenêtre a sa place dans le panneau
+- [ ] une croix, Échap, ou un clic sur la toile vide ferme le détail et rend la réserve
+- [ ] cliquer une autre carte change le détail sans le fermer
+- [ ] la mise en page suit `docs/DESIGN.md` : des groupes titrés, les actions dangereuses à part
+- [ ] le guide (`aide.ts`) dit où se trouve désormais le détail
+
+**Bloquée par** : TS16, qui touche la même fenêtre d'îlot.
+
+### TS17 · Choisir un modèle : les habitués d'abord
+
+Le choix du modèle d'image devient un panneau. Il montre d'abord les modèles dont l'auteur se sert
+le plus, puis la liste complète sur demande. Il sert d'abord à la barre « Fabriquer » de la toile,
+puis à tous les autres endroits où l'on choisit un modèle d'image.
+
+- [ ] en tête, les **3 modèles gratuits les plus utilisés**, puis les **3 modèles payants les plus
+      utilisés**, comptés sur les générations passées de l'auteur ; un modèle local compte comme gratuit
+- [ ] « voir plus de modèles » ouvre la liste complète, avec un champ de recherche qui filtre par nom
+- [ ] sans historique, les tops sont remplacés par la liste complète (pas de cases vides)
+- [ ] le catalogue décide toujours : un modèle qui ne peut pas honorer la demande reste grisé avec
+      sa raison, y compris dans les tops
+- [ ] le compte d'usage vient du serveur (une route, ou un champ du catalogue), pas du navigateur
+- [ ] un seul composant, posé dans la barre de la toile et dans les autres choix de modèle d'image
+
 ## Ce que ce plan ne couvre pas
 
 - Les autres poses (marche, attaque…) : elles partent de la planche choisie par les chemins qui

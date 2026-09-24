@@ -18,7 +18,7 @@
 
 ---
 
-## Les douze tranches
+## Les dix-sept tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -34,10 +34,15 @@
 | **TS9** · Les deux défauts du premier usage | `[EASY]` | un appel par version quand le modèle n'en fait qu'une, et la phrase portée par la carte posée ; deux causes lues |
 | **TS10** · « Développer ce sujet » | `[MEDIUM]` | une image devient la référence d'édition de la barre, le résultat se pose relié à elle ; réutilise TS6 et la pose de TS4 |
 | **TS7** · Les gestes de Mixboard | `[MEDIUM]` | triés par l'auteur : Combiner, Encore, et le lien visible ; tous reposent sur l'envoi et la pose reliée de TS10 |
+| **TS13** · La toile revient après les ambiances | `[EASY]` | un défaut d'affichage dont la cause est à lire ; ni donnée ni règle neuve |
+| **TS14** · La barre « Fabriquer » se replie | `[EASY]` | un repli sur un composant existant, sans perdre son état |
+| **TS16** · « ouvrir sa palette » d'un îlot | `[EASY]` | un bouton qui ne mène nulle part et son doublon à retirer |
+| **TS15** · Le détail dans la colonne de droite | `[MEDIUM]` | remettre en page deux fenêtres dans un panneau sans perdre une action, avec un état partagé entre la toile et la colonne |
+| **TS17** · Choisir un modèle : les habitués d'abord | `[MEDIUM]` | un compte d'usage neuf côté serveur, et un composant posé à plusieurs endroits sans que le catalogue cesse de griser |
 
-**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 7 `[MEDIUM]`, 3 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 9 `[MEDIUM]`, 6 `[EASY]`, 0 `[VERY-EASY]`.
 
-*TS4 à TS12 ajoutées le 23 septembre 2026.*
+*TS4 à TS12 ajoutées le 23 septembre 2026 ; TS13 à TS17 le 24.*
 
 ---
 
