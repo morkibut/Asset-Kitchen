@@ -1116,8 +1116,9 @@ le vert, avec « Où retirer : partout ». Il n'est simplement proposé nulle pa
 - [x] après tout détourage (bord ou modèle), quand des pixels de la couleur du fond restent opaques à
       l'intérieur du sujet, la table le dit en une phrase (« des morceaux du fond restent dans le
       sujet : 3 zones ») et propose « les retirer aussi »
-- [x] ce bouton ajoute la passe « couleur » déjà existante (couleur du fond visée, « partout »),
-      sans nouveau moteur ; elle s'annule comme toute passe
+- [x] ce bouton ajoute la passe « couleur » déjà existante — **une par poche, « cette tache »,
+      amorcée dans la poche** (et non plus une seule, « partout », visée sur le fond : voir la
+      correction plus bas) —, sans nouveau moteur ; elles s'annulent comme toute passe
 - [x] un sujet qui porte légitimement une couleur proche du fond n'est jamais retouché sans ce
       clic : la phrase propose, elle n'agit pas
 - [x] le compte des poches se fait côté serveur, de façon déterministe, et un essai le vérifie sur
@@ -1130,12 +1131,13 @@ silhouette reste opaque quoi qu'il arrive ensuite. La couleur visée est celle q
 a déclarée (`couleur_du_jeu`) si elle existe, sinon la médiane des bordures de l'image brute — la
 même devinette que `detourer_bord` ferait. Rendue par `_fond_enferme_de` dans
 `atelier/services/assets.py`, ajoutée à la réponse existante de `_taches_de` (`GET /spots`,
-`POST /recipe/preview`) : aucune route neuve. Le point qu'une passe « couleur » viserait est
-calculé côté serveur (`_point_du_bord`, `atelier/image/traitement.py`) — un pixel réel de la
-couleur visée, jamais une moyenne, puisque `detourer_couleur` lit un pixel. Le bouton compose la
-passe avec `PASSE_PAR_DEFAUT` (tolérance 28, la valeur par défaut du produit — pas celle de la
-mesure) ; rien à l'écran ne montre les poches une à une, seulement leur compte, donc la mesure ne
-construit jamais la liste — un simple compteur, plus rapide sur une image bruitée. Treize essais
+`POST /recipe/preview`) : aucune route neuve. Les points qu'une passe « couleur » viserait sont
+calculés côté serveur (`amorces_des_poches`, `atelier/image/traitement.py`, depuis la correction
+plus bas) — des pixels réels, jamais une moyenne, puisque `detourer_couleur` lit un pixel. Le
+bouton compose les passes avec `PASSE_PAR_DEFAUT` (tolérance 28, la valeur par défaut du produit —
+pas celle de la mesure) ; rien à l'écran ne montre les poches une à une, seulement leur compte,
+donc la mesure ne les décrit jamais — mais elle garde un masque par poche retenue, pour y prendre
+l'amorce (`poches_de_fond_enferme`). Treize essais
 serveur (`tests/test_rv25_fond_enferme.py`, mesure seule et bout en bout par `/spots`) et trois
 essais d'écran (`Retouche.test.tsx`, § RV25) ; `Retouche.test.tsx` en entier (111) et les essais
 serveur de détourage existants (`test_e3.py`, `test_b18_detourer.py`, `test_d3.py`, `test_e5.py`,
@@ -1187,6 +1189,24 @@ géométrie — l'ancien bouton la laisse, le nouveau la vide sans toucher la ca
 couleur proche mais distincte n'est pas une poche » reste. Limite écrite : sous un recadrage à taille
 imposée (lissé), les coordonnées ne sont qu'approchées. Non vu au navigateur réel : sur le bus, le
 clic ajoute 22 passes à la liste d'un coup.
+
+*Corrigé le 24 septembre 2026 après relecture.* Trois défauts, et le texte ci-dessus remis
+d'accord avec le code (le critère disait « partout », le paragraphe « un simple compteur » et
+`_point_du_bord`, disparu). **L'aperçu tombait** (500 sur `/spots` et `/recipe/preview`) dès
+qu'une poche existait sous un recadrage « bord uni » — il cherchait sa boîte dans les couleurs de
+l'image codée, donc dans des coordonnées — ou sous un contour extérieur, qui agrandit le rendu et
+pas les coordonnées : la boîte se résout maintenant sur la vraie image et passe fixe dans la
+recette de géométrie, et la marge du contour se retire des poches. **Les pastilles et la pipette de
+l'échange (RV24)** lisent l'image telle qu'elle sort de la réduction, avant échanges, bords,
+contour et main — le compte « obtenues », lui, reste sur le rendu final. **L'aperçu coûtait
+16 secondes** sur une image de 1024 sans case, réduite à 16 couleurs et bruitée : un masque de
+l'image entière par tache, même d'un pixel, le rendu calculé deux fois, et un `np.unique` sur des
+triplets. `etiqueter` rend les aires d'abord et n'alloue un masque qu'à ce qu'on garde, le rendu
+sert une fois, les couleurs se comptent en entiers, et les deux routes passent en `def` pour ne plus
+tenir la boucle du serveur : **`/spots` de 14,3–15,5 s à 0,7–0,8 s, `/recipe/preview` de 16,4–16,6 s
+à 0,9–1,0 s** (PNG compris), réponses identiques au caractère près sur cette image. Huit essais
+neufs (`test_rv25_fond_enferme.py`, `test_rv24_couleurs.py`), dont une référence recopiée de
+l'ancien remplissage.
 
 ---
 

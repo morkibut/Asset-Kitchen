@@ -569,8 +569,15 @@ def amorces_des_poches(
     xs, ys = coordonnees_du_rendu(detoure, recette)
     hauteur, largeur = detoure.shape[:2]
     rgb = detoure[:, :, :3].astype(np.int16)
+    # **Un contour extérieur agrandit le rendu d'une marge égale des quatre
+    # côtés** (`contourner`), et `coordonnees_du_rendu` ne le trace pas : il
+    # ne déplace rien, il ajoute. On retire donc cette marge des poches avant
+    # de les lire — sans quoi l'aperçu tombait comme avec le « bord uni ».
+    dy = (poches[0].shape[0] - xs.shape[0]) // 2
+    dx = (poches[0].shape[1] - xs.shape[1]) // 2
     amorces: list[tuple[int, int]] = []
     for poche in poches:
+        poche = poche[dy : dy + xs.shape[0], dx : dx + xs.shape[1]]
         bx = np.clip(xs[poche], 0, largeur - 1)
         by = np.clip(ys[poche], 0, hauteur - 1)
         opaques = detoure[by, bx, 3] > 0
@@ -608,8 +615,24 @@ def coordonnees_du_rendu(
     effacé : `amorces_des_poches` écarte ce qui n'est plus opaque.
     """
     grille = recette.grille
+    # **Un recadrage « bord uni » se résout ici, sur la vraie image, et passe
+    # en boîte fixe** (relecture du 24 septembre 2026). Il cherche sa boîte
+    # dans les *couleurs*, et l'image codée n'en porte plus : ses canaux sont
+    # des coordonnées, sa bordure n'a rien d'uni, et la boîte trouvée n'était
+    # pas celle du rendu — des tableaux de 100×100 pour un rendu de 40×40, et
+    # l'aperçu tombait dès qu'une poche existait. Les autres recadrages lisent
+    # la transparence, que le code garde telle quelle.
+    recadrage = recette.recadrage
+    if recadrage is not None and recadrage.boite is None and recadrage.bord_uni:
+        boite = boite_hors_bord_uni(detoure[:, :, :3]) or boite_opaque(detoure[:, :, 3])
+        # Sans boîte, `_recadrer` rend l'image telle quelle — taille imposée
+        # comprise : ne rien recadrer du tout est donc la même géométrie.
+        recadrage = (
+            None if boite is None else replace(recadrage, boite=boite, bord_uni=False)
+        )
     geometrie = replace(
         recette,
+        recadrage=recadrage,
         grille=None if grille is None else replace(grille, methode=AU_PLUS_PROCHE),
         quantification=None,
         bords=None,
@@ -617,7 +640,19 @@ def coordonnees_du_rendu(
         main=None,
     )
     hauteur, largeur = detoure.shape[:2]
-    lignes, colonnes = np.mgrid[0:hauteur, 0:largeur]
+    lignes, colonnes = np.mgrid[0:hauteur, 0:largeur].astype(np.int64)
+    # **Rien qui déplace un pixel : chaque pixel du rendu est le sien.** Le
+    # cas d'une carte brute ouverte depuis la toile, sans recadrage ni case ni
+    # miroir ; rejouer la chaîne y coûtait deux queues pour rendre l'identité.
+    if not any(
+        place is not None and not geometrie.dort(nom)
+        for place, nom in (
+            (geometrie.recadrage, RECADRAGE),
+            (geometrie.grille, GRILLE),
+            (geometrie.retournement, RETOURNEMENT),
+        )
+    ):
+        return colonnes, lignes
 
     def porter(valeurs: np.ndarray) -> np.ndarray:
         code = np.zeros((hauteur, largeur, 4), dtype=np.uint8)
@@ -1322,6 +1357,135 @@ def boite_opaque(alpha: np.ndarray) -> tuple[int, int, int, int] | None:
 # ── Les composantes connexes ─────────────────────────────────────────────────
 
 
+class Etiquetage:
+    """Les taches connexes d'un masque, **sans un seul masque par tache** —
+    rendu par `etiqueter`.
+
+    Chaque tache est une liste de plages (une ligne, un début, une fin), et
+    son masque ne se fabrique qu'à la demande, par `masque(k)`. C'est toute la
+    raison d'être de la classe (relecture du 24 septembre 2026) : l'ancien
+    remplissage allouait un masque de l'image entière **par tache**, même
+    d'un pixel, et une image de 1024 réduite à seize couleurs en porte vingt
+    mille — dix-sept secondes par aperçu, pour en garder vingt. On regarde
+    maintenant les aires d'abord, et l'on ne paie un masque qu'à ce qu'on garde.
+
+    L'ordre des taches est celui de `composantes` depuis toujours : **celui du
+    premier pixel de chacune dans le balayage** (ligne par ligne, de gauche à
+    droite), et les aires sont les mêmes. Les deux se répondent donc à
+    l'identique, et `composantes` n'est plus que ce parcours-ci avec tous les
+    masques fabriqués.
+    """
+
+    def __init__(
+        self,
+        forme: tuple[int, int],
+        type_: np.dtype,
+        lignes: np.ndarray,
+        debuts: np.ndarray,
+        fins: np.ndarray,
+        etiquettes: np.ndarray,
+        nombre: int,
+    ) -> None:
+        self.forme = forme
+        self._type = type_
+        self._lignes = lignes
+        self._debuts = debuts
+        self._fins = fins
+        longueurs = (fins - debuts + 1).astype(np.int64)
+        #: L'aire de chaque tache, dans l'ordre des taches.
+        self.aires = np.bincount(etiquettes, weights=longueurs, minlength=nombre).astype(np.int64)
+        # Les plages rangées tache par tache, dans leur ordre de balayage : un
+        # tri stable garde l'ordre d'origine à l'intérieur d'une même tache.
+        self._ordre = np.argsort(etiquettes, kind="stable")
+        self._bornes = np.concatenate(([0], np.cumsum(np.bincount(etiquettes, minlength=nombre))))
+        hauteur, largeur = forme
+        au_bord = (lignes == 0) | (lignes == hauteur - 1) | (debuts == 0) | (fins == largeur - 1)
+        #: Pour chaque tache : touche-t-elle un bord de l'image ?
+        self.au_bord = np.bincount(etiquettes, weights=au_bord, minlength=nombre) > 0
+
+    def __len__(self) -> int:
+        return int(self.aires.size)
+
+    def masque(self, k: int) -> np.ndarray:
+        """Le masque de la tache `k`, à la taille de l'image — le seul endroit
+        qui en alloue un."""
+        tache = np.zeros(self.forme, dtype=self._type)
+        for rang in self._ordre[self._bornes[k] : self._bornes[k + 1]]:
+            tache[self._lignes[rang], self._debuts[rang] : self._fins[rang] + 1] = True
+        return tache
+
+
+def etiqueter(masque: np.ndarray) -> Etiquetage:
+    """Les taches connexes d'un masque, par plages — voir `Etiquetage`.
+
+    **Quatre voisins, comme le remplissage d'avant** : deux plages de lignes
+    voisines se touchent dès qu'elles partagent une colonne, jamais par un
+    coin. Les plages se trouvent d'un coup sur tout le masque, leurs contacts
+    aussi, et seule l'union des contacts passe par une boucle — une par
+    contact, pas une par pixel ni une par tache.
+    """
+    hauteur, largeur = masque.shape
+    plein = masque.astype(bool)
+    borde = np.zeros((hauteur, largeur + 2), dtype=np.int8)
+    borde[:, 1:-1] = plein
+    saut = np.diff(borde, axis=1)
+    lignes, debuts = np.nonzero(saut == 1)
+    _, fins = np.nonzero(saut == -1)
+    fins = fins - 1
+    nombre_de_plages = int(lignes.size)
+    if nombre_de_plages == 0:
+        vide = np.zeros(0, dtype=np.int64)
+        return Etiquetage((hauteur, largeur), masque.dtype, vide, vide, vide, vide, 0)
+
+    # Les contacts entre une plage et celles de la ligne du dessus. Les plages
+    # sont rangées ligne par ligne puis de gauche à droite, sans chevauchement
+    # sur une même ligne : une clé `ligne × pas + colonne` les garde triées par
+    # leur début *et* par leur fin, et deux recherches suffisent.
+    pas = largeur + 1
+    cle_debut = lignes.astype(np.int64) * pas + debuts
+    cle_fin = lignes.astype(np.int64) * pas + fins
+    dessus = (lignes.astype(np.int64) - 1) * pas
+    premier = np.searchsorted(cle_fin, dessus + debuts, side="left")
+    apres = np.searchsorted(cle_debut, dessus + fins, side="right")
+    combien = np.maximum(apres - premier, 0)
+    combien[lignes == 0] = 0
+    du_bas = np.repeat(np.arange(nombre_de_plages), combien)
+    decalage = np.arange(int(combien.sum())) - np.repeat(np.cumsum(combien) - combien, combien)
+    du_haut = np.repeat(premier, combien) + decalage
+
+    parent = list(range(nombre_de_plages))
+
+    def racine(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for a, b in zip(du_haut.tolist(), du_bas.tolist()):
+        ra, rb = racine(a), racine(b)
+        if ra != rb:
+            # La plus ancienne des deux racines gagne : une racine est alors
+            # toujours la première plage de sa tache dans le balayage.
+            if ra < rb:
+                parent[rb] = ra
+            else:
+                parent[ra] = rb
+
+    racines = np.fromiter((racine(i) for i in range(nombre_de_plages)), dtype=np.int64, count=nombre_de_plages)
+    # Une tache par racine, numérotée dans l'ordre de sa première plage —
+    # c'est-à-dire de son premier pixel dans le balayage.
+    premieres, etiquettes = np.unique(racines, return_inverse=True)
+    return Etiquetage(
+        (hauteur, largeur), masque.dtype, lignes, debuts, fins,
+        etiquettes.reshape(-1), int(premieres.size),
+    )
+
+
+def nombre_de_composantes(masque: np.ndarray) -> int:
+    """Combien de taches connexes — le compte seul, sans un masque alloué."""
+    return len(etiqueter(masque))
+
+
 def composantes(masque: np.ndarray) -> list[tuple[np.ndarray, int]]:
     """Les taches opaques, chacune avec son aire. Même remplissage par plages.
 
@@ -1329,43 +1493,15 @@ def composantes(masque: np.ndarray) -> list[tuple[np.ndarray, int]]:
     nettoyage des bords — des taches connexes dans un alpha —, et la seule
     différence est ce qu'on en fait. Deux implémentations du remplissage par
     plages finiraient par se répondre différemment sur la même image.
-    """
-    hauteur, largeur = masque.shape
-    vu = np.zeros_like(masque)
-    taches: list[tuple[np.ndarray, int]] = []
 
-    for y0 in range(hauteur):
-        libres = np.flatnonzero(masque[y0] & ~vu[y0])
-        for x0 in libres:
-            if vu[y0, x0]:
-                continue
-            tache = np.zeros_like(masque)
-            pile = [(y0, int(x0))]
-            aire = 0
-            while pile:
-                y, x = pile.pop()
-                if vu[y, x] or not masque[y, x]:
-                    continue
-                ligne = masque[y] & ~vu[y]
-                fermes = np.flatnonzero(~ligne)
-                avant = fermes[fermes < x]
-                apres = fermes[fermes > x]
-                debut = int(avant[-1]) + 1 if avant.size else 0
-                fin = int(apres[0]) - 1 if apres.size else largeur - 1
-                vu[y, debut : fin + 1] = True
-                tache[y, debut : fin + 1] = True
-                aire += fin - debut + 1
-                for voisin in (y - 1, y + 1):
-                    if not (0 <= voisin < hauteur):
-                        continue
-                    libre = masque[voisin, debut : fin + 1] & ~vu[voisin, debut : fin + 1]
-                    if not libre.any():
-                        continue
-                    borde = np.concatenate(([False], libre, [False])).astype(np.int8)
-                    for depart in np.flatnonzero(np.diff(borde) == 1):
-                        pile.append((voisin, debut + int(depart)))
-            taches.append((tache, aire))
-    return taches
+    **Un masque par tache, toutes** : c'est ce que ses appelants lisent. Qui
+    n'en garde que quelques-unes passe par `etiqueter` et regarde les aires
+    avant de rien allouer (relecture du 24 septembre 2026).
+    """
+    etiquetage = etiqueter(masque)
+    return [
+        (etiquetage.masque(k), int(etiquetage.aires[k])) for k in range(len(etiquetage))
+    ]
 
 
 # Les huit voisins, dans un ordre fixe — mais **aucun résultat ne dépend de cet

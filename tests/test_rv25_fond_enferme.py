@@ -415,3 +415,270 @@ def test_une_vitre_plus_loin_du_fond_dans_le_brut_que_dans_le_rendu_part_au_clic
     # La carrosserie n'est pas mangée : seule la vitre est partie.
     perdus = opaques_avant - int((rendu_apres[:, :, 3] > 0).sum())
     assert perdus == _vitre_opaque(rendu_avant)
+
+
+# ── Relecture du 24 septembre 2026 : l'aperçu ne plante plus ─────────────────
+#
+# `coordonnees_du_rendu` rejoue la géométrie sur une image dont les canaux
+# portent des coordonnées. Un recadrage « bord uni » cherche sa boîte dans les
+# couleurs, donc dans ces coordonnées : autre boîte, tableaux d'une autre
+# taille que le rendu, et `IndexError` dès qu'une poche existait — `/spots` et
+# `/recipe/preview` en 500. Un contour extérieur faisait pareil par l'autre
+# bout : il agrandit le rendu, pas les coordonnées.
+
+
+def _poche_sur_fond_uni() -> np.ndarray:
+    """Le script de preuve du relecteur : un sujet sur un fond gris uni,
+    opaque partout, avec une vitre à la couleur du fond enfermée dedans."""
+    image = np.zeros((100, 100, 4), dtype=np.uint8)
+    image[:, :, :3] = 200
+    image[:, :, 3] = 255
+    image[30:70, 20:60, :3] = (10, 120, 30)
+    image[40:50, 30:40, :3] = 200  # la vitre, 10×10
+    return image
+
+
+def test_un_recadrage_bord_uni_garde_les_coordonnees_du_rendu():
+    """**Tombe avant le correctif** : 100×100 de coordonnées pour un rendu de
+    40×40, et le premier pixel venait de (0, 0) au lieu de (20, 30)."""
+    from atelier.domaine.recette import Recadrage, Recette
+    from atelier.image.traitement import coordonnees_du_rendu, queue
+
+    image = _poche_sur_fond_uni()
+    recette = Recette(recadrage=Recadrage(bord_uni=True))
+    rendu = queue(image, recette)
+    xs, ys = coordonnees_du_rendu(image, recette)
+
+    assert xs.shape == ys.shape == rendu.shape[:2] == (40, 40)
+    assert (int(xs[0, 0]), int(ys[0, 0])) == (20, 30)
+
+
+def test_un_recadrage_bord_uni_ne_fait_plus_tomber_les_amorces():
+    from atelier.domaine.recette import Recadrage, Recette
+    from atelier.image.taches import poches_de_fond_enferme
+    from atelier.image.traitement import amorces_des_poches, queue
+
+    image = _poche_sur_fond_uni()
+    recette = Recette(recadrage=Recadrage(bord_uni=True))
+    poches = poches_de_fond_enferme(queue(image, recette), (200, 200, 200))
+    assert len(poches) == 1
+
+    (x, y), = amorces_des_poches(image, recette, poches)
+    assert 30 <= x < 40 and 40 <= y < 50, "l'amorce est dans la vitre, en pixels du brut"
+
+
+def test_un_contour_exterieur_ne_fait_plus_tomber_les_amorces():
+    """Le même défaut par l'autre bout : le rendu a deux pixels de plus de
+    chaque côté, les coordonnées non."""
+    from atelier.domaine.recette import Contour, Recette
+    from atelier.image.taches import poches_de_fond_enferme
+    from atelier.image.traitement import amorces_des_poches, queue
+
+    image = np.zeros((100, 100, 4), dtype=np.uint8)
+    image[:, :, :3] = 200
+    image[30:70, 20:60] = (10, 120, 30, 255)
+    image[40:50, 30:40] = (200, 200, 200, 255)
+    recette = Recette(contours=Contour(epaisseur=2, couleur="#000000", position="externe"))
+    rendu = queue(image, recette)
+    assert rendu.shape[:2] == (104, 104)
+    poches = poches_de_fond_enferme(rendu, (200, 200, 200))
+    assert len(poches) == 1
+
+    (x, y), = amorces_des_poches(image, recette, poches)
+    assert 30 <= x < 40 and 40 <= y < 50
+
+
+def test_les_mesures_repondent_avec_un_recadrage_bord_uni(client, double):
+    """Bout en bout : la route des mesures et l'aperçu répondaient 500."""
+    identifiant = _generer(client, double, _bus(poche=True))
+    recette = _recette([], recadrage={"bord_uni": True})
+    _poser(client, identifiant, recette)
+
+    mesures = client.get(f"/api/assets/{identifiant}/spots")
+    assert mesures.status_code == 200, mesures.text
+    fond_enferme = mesures.json()["fond_enferme"]
+    assert fond_enferme["zones"] == 1
+    (x, y), = fond_enferme["points"]
+    assert 16 <= x <= 27 and 16 <= y <= 27
+
+    apercu = client.post(f"/api/assets/{identifiant}/recipe/preview", json={"recette": recette})
+    assert apercu.status_code == 200, apercu.text
+    assert apercu.json()["mesures"]["fond_enferme"] == fond_enferme
+
+
+# ── Relecture du 24 septembre 2026 : l'aperçu reste rapide ───────────────────
+#
+# L'ancien remplissage allouait un masque de l'image entière **par tache**,
+# même d'un pixel : dix-sept secondes par aperçu sur une image de 1024 réduite
+# à seize couleurs. `etiqueter` rend les aires d'abord ; ce qui suit vérifie
+# que les réponses n'ont pas bougé d'un pixel, et que les petites ne coûtent
+# plus un masque.
+
+
+def _composantes_d_avant(masque: np.ndarray) -> list[tuple[np.ndarray, int]]:
+    """Le remplissage par plages tel qu'il était jusqu'au 24 septembre 2026,
+    recopié mot pour mot : la référence que le nouveau doit rendre à
+    l'identique — mêmes taches, mêmes aires, même ordre."""
+    hauteur, largeur = masque.shape
+    vu = np.zeros_like(masque)
+    taches: list[tuple[np.ndarray, int]] = []
+    for y0 in range(hauteur):
+        libres = np.flatnonzero(masque[y0] & ~vu[y0])
+        for x0 in libres:
+            if vu[y0, x0]:
+                continue
+            tache = np.zeros_like(masque)
+            pile = [(y0, int(x0))]
+            aire = 0
+            while pile:
+                y, x = pile.pop()
+                if vu[y, x] or not masque[y, x]:
+                    continue
+                ligne = masque[y] & ~vu[y]
+                fermes = np.flatnonzero(~ligne)
+                avant = fermes[fermes < x]
+                apres = fermes[fermes > x]
+                debut = int(avant[-1]) + 1 if avant.size else 0
+                fin = int(apres[0]) - 1 if apres.size else largeur - 1
+                vu[y, debut : fin + 1] = True
+                tache[y, debut : fin + 1] = True
+                aire += fin - debut + 1
+                for voisin in (y - 1, y + 1):
+                    if not (0 <= voisin < hauteur):
+                        continue
+                    libre = masque[voisin, debut : fin + 1] & ~vu[voisin, debut : fin + 1]
+                    if not libre.any():
+                        continue
+                    borde = np.concatenate(([False], libre, [False])).astype(np.int8)
+                    for depart in np.flatnonzero(np.diff(borde) == 1):
+                        pile.append((voisin, debut + int(depart)))
+            taches.append((tache, aire))
+    return taches
+
+
+def _masque_fabrique(graine: int, cote: int = 96) -> np.ndarray:
+    """Du bruit, des serpentins et des anneaux : des taches d'un pixel, des
+    taches qui ne se touchent que par un coin (deux taches, pas une), et des
+    taches qui se rejoignent par en dessous."""
+    rng = np.random.default_rng(graine)
+    masque = rng.random((cote, cote)) < 0.45
+    masque[10:12, 5:90] = True
+    masque[10:80, 88:90] = True
+    masque[40:60, 30:50] = True
+    masque[44:56, 34:46] = False
+    masque[70, 70] = masque[71, 71] = True
+    masque[70, 71] = masque[71, 70] = False
+    return masque
+
+
+def test_les_taches_sont_les_memes_qu_avant_au_pixel_pres():
+    from atelier.image.traitement import composantes, nombre_de_composantes
+
+    for graine in range(6):
+        masque = _masque_fabrique(graine)
+        avant = _composantes_d_avant(masque)
+        apres = composantes(masque)
+        assert nombre_de_composantes(masque) == len(avant) == len(apres)
+        for (masque_avant, aire_avant), (masque_apres, aire_apres) in zip(avant, apres):
+            assert aire_avant == aire_apres
+            assert masque_avant.dtype == masque_apres.dtype
+            assert (masque_avant == masque_apres).all()
+
+
+def test_les_mesures_de_la_table_sont_les_memes_qu_avant():
+    """Les quatre lectures qui passent par l'étiquetage, sur une image
+    fabriquée : le compte des poches enfermées, les taches, les poches de fond
+    et les trous rendent ce que l'ancien remplissage rendait."""
+    from atelier.image.taches import (
+        AIRE_MIN_FOND_VISE,
+        poches_de_fond,
+        poches_de_fond_enferme,
+        taches,
+        trous,
+    )
+
+    rng = np.random.default_rng(7)
+    rendu = np.zeros((96, 96, 4), dtype=np.uint8)
+    rendu[:, :, :3] = FOND
+    rendu[8:88, 8:88, :3] = rng.choice([40, 90, 216], size=(80, 80, 3))
+    rendu[30:40, 30:40, :3] = FOND
+    rendu[:, :, 3] = 255
+    rendu[60:70, 60:70, 3] = 0
+    rendu[rng.random((96, 96)) < 0.05, 3] = 0
+
+    # Le compte des poches enfermées, contre l'ancien remplissage.
+    ecart = np.abs(rendu[:, :, :3].astype(np.int16) - np.array(FOND)).max(axis=2)
+    from atelier.image.traitement import _graines_du_bord, _remplir
+
+    proche = ecart <= TOLERANCE_FOND_VISE
+    enferme = proche & ~_remplir(proche, _graines_du_bord(proche)) & (rendu[:, :, 3] > 0)
+    attendues = [m for m, aire in _composantes_d_avant(enferme) if aire >= AIRE_MIN_FOND_VISE]
+    obtenues = poches_de_fond_enferme(rendu, FOND)
+    assert len(obtenues) == len(attendues) >= 1
+    assert all((a == b).all() for a, b in zip(attendues, obtenues))
+
+    # Les trois autres, contre elles-mêmes rejouées sur l'ancien remplissage.
+    import importlib
+
+    module = importlib.import_module("atelier.image.taches")
+
+    nouvelles = (taches(rendu, plafond=50), poches_de_fond(rendu, 28, plafond=10), trous(rendu))
+    anciennes = _rejouer_avec_l_ancien_remplissage(module, rendu)
+    assert nouvelles == anciennes
+    assert nouvelles[0] and nouvelles[2], "l'image doit porter des taches et des trous"
+
+
+def _rejouer_avec_l_ancien_remplissage(module, rendu):
+    """Les versions d'avant de `taches`, `poches_de_fond` et `trous`, écrites
+    sur `_composantes_d_avant` et le `_decrire` du module."""
+    from atelier.image.traitement import _couleur_du_bord, _graines_du_bord, _remplir
+
+    zones = _composantes_d_avant(rendu[:, :, 3] > 0)
+    zones.sort(key=lambda z: z[1])
+    les_taches = [module._decrire(rendu, m, a) for m, a in zones[:50]]
+
+    rgb = rendu[:, :, :3]
+    proche = np.abs(rgb.astype(np.int16) - _couleur_du_bord(rgb)).max(axis=2) <= 28
+    enferme = proche & ~_remplir(proche, _graines_du_bord(proche)) & (rendu[:, :, 3] > 0)
+    zones = _composantes_d_avant(enferme)
+    zones.sort(key=lambda z: z[1], reverse=True)
+    les_poches = ([module._decrire(rendu, m, a) for m, a in zones[:10]], len(zones))
+
+    hauteur, largeur = rendu.shape[:2]
+    dedans = []
+    for masque, aire in _composantes_d_avant(rendu[:, :, 3] == 0):
+        if masque[0].any() or masque[hauteur - 1].any() or masque[:, 0].any() or masque[:, largeur - 1].any():
+            continue
+        dedans.append(module._decrire(rendu, masque, aire))
+    dedans.sort(key=lambda t: t.aire, reverse=True)
+    return les_taches, les_poches, dedans
+
+
+def test_une_poussiere_de_poches_ne_coute_plus_un_masque_chacune(monkeypatch):
+    """**Ce qui coûtait dix-sept secondes**, réduit à sa cause : mille poches
+    d'un pixel et deux vraies. Seules les deux vraies reçoivent un masque."""
+    from atelier.image import traitement
+    from atelier.image.taches import poches_de_fond_enferme
+
+    rendu = np.zeros((200, 200, 4), dtype=np.uint8)
+    rendu[:, :, :3] = FOND
+    rendu[:, :, 3] = 255
+    rendu[10:190, 10:190, :3] = SUJET
+    grain = np.zeros((180, 180), dtype=bool)
+    grain[::4, ::4] = True
+    rendu[10:190, 10:190][grain, :3] = FOND  # 2 025 poches d'un pixel
+    rendu[40:50, 40:50, :3] = FOND
+    rendu[120:130, 120:130, :3] = FOND
+
+    appels = []
+    masque_d_origine = traitement.Etiquetage.masque
+
+    def compter(self, k):
+        appels.append(k)
+        return masque_d_origine(self, k)
+
+    monkeypatch.setattr(traitement.Etiquetage, "masque", compter)
+    poches = poches_de_fond_enferme(rendu, FOND)
+
+    assert len(poches) == 2
+    assert len(appels) == 2, "un masque par poche gardée, aucun pour la poussière"

@@ -27,7 +27,7 @@ annonçait **zéro poche** là où il y en avait quarante-trois en médiane.
 **Pourquoi elles vivent ici et pas à l'écran.** Elles se lisent dans les pixels,
 et les pixels sont sur le disque. Les recalculer dans le navigateur demanderait
 d'y descendre l'image entière, puis d'y réécrire le remplissage par plages qui
-existe déjà dans `traitement.composantes` — et deux implémentations du même
+existe déjà dans `traitement.etiqueter` — et deux implémentations du même
 remplissage finiraient par se répondre différemment sur la même image.
 
 **Aucune ne modifie quoi que ce soit.** Une table qui propose d'effacer une tache
@@ -43,7 +43,7 @@ from typing import Any
 import numpy as np
 
 from atelier.domaine.recette import Grille, cote_du_sujet, occupation_max
-from atelier.image.traitement import composantes
+from atelier.image.traitement import etiqueter
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,9 +135,11 @@ def taches(rgba: np.ndarray, *, plafond: int = 200) -> list[Tache]:
     alpha = rgba[:, :, 3]
     if not alpha.any():
         return []
-    zones = composantes(alpha > 0)
-    zones.sort(key=lambda z: z[1])
-    return [_decrire(rgba, masque, aire) for masque, aire in zones[:plafond]]
+    # Les aires d'abord, et un masque seulement pour ce qu'on rend — voir
+    # `Etiquetage`. Le tri stable garde, à aire égale, l'ordre du balayage.
+    zones = etiqueter(alpha > 0)
+    rangs = np.argsort(zones.aires, kind="stable")[:plafond]
+    return [_decrire(rgba, zones.masque(k), int(zones.aires[k])) for k in rangs]
 
 
 def poches_de_fond(
@@ -200,9 +202,12 @@ def poches_de_fond(
     # De la plus grande à la plus petite : une poche ne s'efface pas sous un
     # seuil, elle se regarde. Et l'on trie sur l'aire, qui est gratuite, avant
     # de décrire — voir `taches`, où la même faute coûtait 56 secondes.
-    zones = composantes(enferme)
-    zones.sort(key=lambda z: z[1], reverse=True)
-    return [_decrire(rgba, m, a) for m, a in zones[:plafond]], len(zones)
+    zones = etiqueter(enferme)
+    rangs = np.argsort(-zones.aires, kind="stable")[:plafond]
+    return (
+        [_decrire(rgba, zones.masque(k), int(zones.aires[k])) for k in rangs],
+        len(zones),
+    )
 
 
 #: La tolérance de `zones_de_fond_enferme`, volontairement plus serrée que
@@ -270,8 +275,8 @@ def poches_de_fond_enferme(
     chaque zone — trois balayages de l'image entière, voir `taches` —
     coûterait sans rien servir. Les masques, eux, servent : le bouton pose
     une passe **par poche**, amorcée *dans* la poche (voir
-    `_fond_enferme_de`, `atelier/services/assets.py`), et `composantes` les
-    a déjà construits pour compter.
+    `_fond_enferme_de`, `atelier/services/assets.py`), et `etiqueter` les
+    a construits pour compter — pour les seules poches assez grandes.
     """
     from atelier.image.traitement import _graines_du_bord, _remplir
 
@@ -284,7 +289,16 @@ def poches_de_fond_enferme(
     enferme = proche & ~joignable & (rendu[:, :, 3] > 0)
     if not enferme.any():
         return []
-    return [m for m, aire in composantes(enferme) if aire >= AIRE_MIN_FOND_VISE]
+    # **Les petites écartées avant d'allouer quoi que ce soit** (relecture du
+    # 24 septembre 2026) : un rendu bruité réduit à seize couleurs porte des
+    # milliers de poches d'un pixel, et un masque de l'image entière pour
+    # chacune coûtait dix-sept secondes par aperçu.
+    zones = etiqueter(enferme)
+    return [
+        zones.masque(k)
+        for k in range(len(zones))
+        if zones.aires[k] >= AIRE_MIN_FOND_VISE
+    ]
 
 
 def trous(rgba: np.ndarray) -> list[Tache]:
@@ -308,17 +322,12 @@ def trous(rgba: np.ndarray) -> list[Tache]:
     vide = alpha == 0
     if not vide.any():
         return []
-    hauteur, largeur = vide.shape
     dedans: list[Tache] = []
-    for masque, aire in composantes(vide):
-        touche_un_bord = (
-            masque[0].any()
-            or masque[hauteur - 1].any()
-            or masque[:, 0].any()
-            or masque[:, largeur - 1].any()
-        )
-        if touche_un_bord:
+    zones = etiqueter(vide)
+    for k in range(len(zones)):
+        if zones.au_bord[k]:
             continue
+        masque, aire = zones.masque(k), int(zones.aires[k])
         # La couleur d'un trou est celle qu'il **avait** — transparent, il n'en
         # a plus. Les pixels gardent leur teinte d'origine sous une opacité
         # nulle, donc la moyenne rend bien le fond qu'on a retiré : c'est ce qui

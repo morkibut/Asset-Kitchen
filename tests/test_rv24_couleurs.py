@@ -145,6 +145,56 @@ def test_le_point_de_la_pipette_sample_le_rendu_final(client):
     assert apercu["mesures"]["couleurs"]["visee"] == SUJET_HEX
 
 
+def test_les_pastilles_et_la_pipette_lisent_l_image_avant_les_echanges(client):
+    """**Relecture du 24 septembre 2026.** Une paire rouge → bleu est posée,
+    avec un contour vert extérieur : à l'écran la cape est bleue et bordée de
+    vert. Une seconde paire se choisit pourtant sur l'image que la réduction
+    tend aux échanges — le bleu n'y existe pas, le vert non plus. Avant le
+    correctif, les pastilles portaient le bleu et le vert et plus le rouge, et
+    la pipette sur la cape rendait le bleu.
+    """
+    identifiant = _un_asset(client)
+    bleu, vert = "#0000ff", "#00ff00"
+    recette = {
+        "passes": [{"moteur": "bord", "tolerance": 28, "seuil_alpha": 128, "durcissement": 0}],
+        "quantification": {
+            "couleurs": 8,
+            "echanges": [{"depuis": SUJET_HEX, "vers": bleu, "tolerance": 0}],
+        },
+        "contours": {"epaisseur": 1, "couleur": vert, "position": "externe"},
+    }
+    sans_contour = client.post(
+        f"/api/assets/{identifiant}/recipe/preview",
+        json={"recette": {**recette, "contours": None}},
+    ).json()
+    apercu = client.post(
+        f"/api/assets/{identifiant}/recipe/preview", json={"recette": recette}
+    ).json()
+    largeur, hauteur = apercu["largeur"], apercu["hauteur"]
+    # Un bloc du sprite de chaque côté : sans case, le trait se compte sur la
+    # grille que le modèle a peinte (`retrouver_grille`), pas en pixels.
+    marge = largeur - sans_contour["largeur"]
+    assert marge > 0 and marge == hauteur - sans_contour["hauteur"], (
+        "le contour extérieur agrandit l'image montrée, autant de chaque côté"
+    )
+
+    apercu = client.post(
+        f"/api/assets/{identifiant}/recipe/preview",
+        json={"recette": recette, "viser": [largeur // 2, hauteur // 2]},
+    ).json()
+    couleurs = apercu["mesures"]["couleurs"]
+    assert SUJET_HEX in couleurs["liste"], "le rouge d'origine reste proposé"
+    assert bleu not in couleurs["liste"], "le bleu échangé n'est pas une couleur de départ"
+    assert vert not in couleurs["liste"], "la couleur du contour n'est pas une couleur de départ"
+    assert couleurs["visee"] == SUJET_HEX, "la pipette sur la cape rend le rouge"
+
+    # Même lecture sur la recette posée, par la route des mesures.
+    reponse = client.put(f"/api/assets/{identifiant}/recipe", json=recette)
+    assert reponse.status_code == 200, reponse.text
+    posees = client.get(f"/api/assets/{identifiant}/spots").json()["couleurs"]
+    assert posees["liste"] == couleurs["liste"]
+
+
 def test_le_point_de_la_pipette_hors_image_ne_leve_pas_et_rend_rien(client):
     """Ni couleur inventée, ni 500 : un point hors du rendu rend `None` —
     l'écran s'en sert pour ne rien poser plutôt que de poser du vide."""
