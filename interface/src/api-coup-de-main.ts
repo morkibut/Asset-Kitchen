@@ -1,4 +1,4 @@
-// Le coup de main, côté écran (CM3) — trois routes, `docs/PLAN-assistant.md`.
+// Le coup de main, côté écran (CM3, CM4) — trois routes, `docs/PLAN-assistant.md`.
 //
 // `demander` lit la réponse **au fil de l'eau** : une ligne JSON par morceau
 // (`application/x-ndjson`), `texte` plusieurs fois, puis un seul `fin` ou un seul
@@ -22,8 +22,17 @@ export type Fin = {
 }
 export type Morceau = { genre: "texte"; texte: string } | { genre: "indisponible"; raison: string | null } | Fin
 
-/** Ce que l'écran envoie : le texte, le champ qu'il remplit, et le jeu. Jamais une consigne. */
-export type Demande = { texte: string; champ: string; projet?: string }
+/** Ce que l'écran envoie pour « améliorer » (CM3) : le texte, le champ qu'il
+ *  remplit, et le jeu. */
+export type DemandeAmeliorer = { texte: string; champ: string; projet?: string }
+
+/** Ce que l'écran envoie pour « question » (CM4) : le texte, l'écran où l'on est,
+ *  et ce qu'on regardait — tout facultatif sauf l'écran, une question peut porter
+ *  sur lui seul. */
+export type DemandeQuestion = { texte: string; ecran: string; champ?: string; valeur?: string; blocage?: string }
+
+/** Jamais une consigne : celle-ci vient toujours du dépôt (`CONSIGNES`, décision 1). */
+export type Demande = DemandeAmeliorer | DemandeQuestion
 
 async function lireLeFlux(corps: ReadableStream<Uint8Array>, onMorceau: (m: Morceau) => void): Promise<Morceau | null> {
   const lecteur = corps.getReader()

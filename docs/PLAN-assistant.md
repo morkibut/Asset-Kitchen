@@ -250,11 +250,108 @@ se lit ensuite dans les dépenses (CM1 l'enregistre).
 La touche qui ouvre une ligne de question à l'endroit du curseur, la réponse dessous, Échap qui
 referme. L'appel emporte l'écran, le champ visé et ce qui bloque.
 
-- [ ] La touche ne vole aucun raccourci existant du produit ni du navigateur.
-- [ ] La ligne s'ouvre là où on travaille, et ne déplace rien à l'écran.
-- [ ] Une question hors sujet reçoit « je ne sais pas » plutôt qu'une réponse inventée.
-- [ ] Échap referme sans trace, et le travail en cours est exactement où on l'avait laissé.
-- [ ] Au clavier seul, le geste entier se fait : ouvrir, écrire, lire, fermer.
+- [x] La touche ne vole aucun raccourci existant du produit ni du navigateur.
+- [x] La ligne s'ouvre là où on travaille, et ne déplace rien à l'écran.
+- [x] Une question hors sujet reçoit « je ne sais pas » plutôt qu'une réponse inventée.
+- [x] Échap referme sans trace, et le travail en cours est exactement où on l'avait laissé.
+- [x] Au clavier seul, le geste entier se fait : ouvrir, écrire, lire, fermer.
+
+**La touche, et sa preuve — le point dur.** `Ctrl+/` (`Cmd+/` sur Mac). Choisie après un
+recensement de deux moitiés, écrit une fois pour ne jamais avoir à le refaire à l'aveugle :
+`interface/src/touche-demander.ts` porte la seule fonction qui la reconnaît
+(`estLaToucheDemander`), et `interface/src/touche-demander.test.ts` en tient la moitié
+exécutable.
+
+1. *Dans le produit.* Recherche de `keydown`, `key ===`, `ctrlKey`, `metaKey` dans
+   `interface/src`, le 25 septembre 2026. Ce qui est déjà pris, fichier par fichier :
+
+   | Touche | Où | Fichier · ligne |
+   |---|---|---|
+   | `?` (sans modificateur) | ouvrir le guide | `App.tsx:1269` |
+   | `Ctrl+Z` / `Cmd+Z` | défaire | `App.tsx:1517`, `AtelierDeBande.tsx:1154`, `EditeurDePixels.tsx:220`, `Retouche.tsx:4191,4203`, `Toile.tsx:1627` |
+   | `Ctrl+Shift+Z` / `Cmd+Shift+Z` | refaire | les mêmes fichiers, au même endroit (`shiftKey`) |
+   | `Ctrl+Y` | refaire (second raccourci) | `EditeurDePixels.tsx:221` |
+   | `Ctrl+Enter` / `Cmd+Enter` | générer | `BarreQuiPaie.tsx:289`, `ChampPrompt.tsx:175` |
+   | `Ctrl+molette` | zoomer | `SurfaceZoomable.tsx:22`, `EditeurCalqueCible.tsx:265` |
+   | `Alt+←` / `Alt+→` | déplacer d'un cran | `AtelierUnifieRetouche.tsx` (essai `:144,174`), `Montage.tsx:1654` |
+   | `Espace` | lire/panoramiquer | `Apercu.tsx:491`, `GrilleEcoute.tsx:119`, `Montage.tsx:412`, `SurfaceZoomable.tsx:43` |
+   | `g` / `G` (sans modificateur) | geste de la grille d'écoute | `GrilleEcoute.tsx:123` |
+   | `Shift+S` | mode court | `EssaiDuSujet.tsx:705` (essai `:336`) |
+   | `Escape` | fermer | une vingtaine d'écrans (`Barre.tsx`, `Calibrage.tsx`, `Depenses.tsx`, `Envoi.tsx`, `Famille.tsx`, `Montage.tsx`, `Planche.tsx`, `Reglages.tsx`, `ReglagesDeFamille.tsx`, `ReglesDuJeu.tsx`, `Toile.tsx`, `pieces.tsx`, `CoupDeMain.tsx`…) |
+   | `Enter` (dans un champ précis) | valider ce champ | une trentaine d'endroits, toujours porté par le champ lui-même |
+   | Flèches (sans modificateur) | naviguer une liste ouverte | `Barre.tsx`, `GrilleEcoute.tsx`, `pieces.tsx` |
+
+   Aucune de ces lignes ne porte `Ctrl+/`. `touche-demander.test.ts` rejoue chacune contre
+   `estLaToucheDemander` et vérifie qu'elle répond `false` — l'essai casserait si une future
+   touche du produit venait à se poser sur `Ctrl+/` sans qu'on l'ait vu ici.
+2. *Dans les navigateurs visés* (Chrome, Edge, Firefox, sous Windows). `Ctrl+/` n'apparaît
+   dans aucune liste de raccourcis réservés publiée par les trois — à la différence de
+   `Ctrl+N/T/W/F/S/P/O/U/R/L/D/K/E/H/J`, de tout `Ctrl+Shift+*` (outils de développement,
+   fenêtre privée, gestion des onglets), d'`Alt+←`/`Alt+→` (retour/avance dans l'historique,
+   qui aurait justement piégé une combinaison avec les flèches) et de `F1`…`F12`. C'est un
+   fait externe, non exécutable ; il reste noté ici, au même endroit que la preuve interne,
+   pour qu'une seule ligne du plan porte toute la démonstration.
+
+   ⚠️ **Le piège du plan, évité par construction** : `estLaToucheDemander` exige `ctrlKey`
+   (ou `metaKey`) — jamais un caractère seul. Taper `/` dans un champ de texte, y compris
+   avec `Shift` (qui donne `?` sur un clavier français ou américain), ne la déclenche jamais ;
+   l'essai le vérifie explicitement.
+
+**Ce qui existe.** Un second métier, `question` (`atelier/domaine/coup_de_main.py`,
+`CONSIGNE_QUESTION`) : il répond à « comment on fait ça, ici » à partir de la fiche du produit
+et du contexte de l'instant, et répond très exactement `« je ne sais pas »` (`JE_NE_SAIS_PAS`)
+à une question hors sujet ou que la fiche ne couvre pas — la consigne l'exige mot pour mot,
+comme elle interdit de nommer un fichier, une route, une fonction ou une table : seuls les
+gestes et les écrans du produit se nomment. **Le contexte de l'instant** est composé côté
+serveur par une fonction neuve, réutilisable (`atelier/services/contexte_coup_de_main.py`,
+`contexte_instant(ecran, *, champ=None, valeur=None, blocage=None)`), à partir d'une liste
+fermée d'écrans (`ECRANS`, dans `atelier/domaine/coup_de_main.py`) dont les clés reprennent
+volontairement celles d'`Explication["ou"]` (`interface/src/aide.ts`) plutôt que d'en tenir une
+seconde. Une seule entrée y est posée pour cette tranche, `jeu-de-tuiles` — le même principe
+que `CHAMPS` n'avait que deux entrées en CM3 ; CM7 en ajoutera au fil de la généralisation.
+`composer` (même module) accepte maintenant soit `champ` (la façon de CM3), soit un `contexte`
+déjà composé (la façon de CM4 et de CM5) — jamais les deux à la fois — sans changer la forme
+qu'`ameliorer` envoyait déjà (vérifié par un essai de non-régression). La route
+`POST /api/assist/question` (et son `/preview`) refuse un écran absent ou inconnu
+(`ecran_absent`, `ecran_inconnu`) avant que rien ne parte.
+
+**À l'écran**, un fichier neuf et non `CoupDeMain.tsx` — pour que cette tranche et CM7, qui
+travaille en parallèle sur `ChampPrompt.tsx` et `CoupDeMain.tsx`, ne se marchent pas dessus :
+`interface/src/composants/DemanderIci.tsx` exporte `AvecDemande({ ecran, children })`, posée
+en CM4 autour des deux champs du tiroir des matières (`AtelierTuiles.tsx`, `ecran="jeu-de-tuiles"`),
+à côté de `AvecCoupDeMain`, pas à sa place. `Ctrl+/` n'ouvre que si le focus est dans la zone
+enveloppée (ou nulle part en particulier) — une touche pressée ailleurs sur l'écran ne fait
+rien, ce qui vaudra dès qu'une deuxième zone sera enveloppée (CM7). La ligne se pose par
+`createPortal` sur `document.body`, en superposition (`position: fixed`, calée sous
+l'élément qui avait le focus) : rien n'est inséré dans le flux, donc l'écran qu'elle recouvre
+garde exactement son DOM — vérifié par un essai qui compare le DOM avant/après. Échap coupe
+l'appel en cours (comme `AvecCoupDeMain`) et rend le focus **exactement** à l'élément qui
+l'avait avant l'ouverture. **Décision 6, sans marque à cacher cette fois** : la disponibilité
+se lit une fois au montage (`GET /api/assist`, un hook dupliqué à dessein plutôt que partagé
+avec `CoupDeMain.tsx` — même raison que le fichier séparé) ; indisponible, `Ctrl+/` ne fait
+rien et rien ne s'affiche. « Voir ce qui part » (décision 7) y est aussi, la même route de
+prévisualisation que CM3.
+
+Essais : `tests/test_cm4_demander.py` (7, fournisseur doublé, aucun appel payé) —
+l'écran, le champ regardé, ce qu'il porte et ce qui bloque partent en autant de lignes de
+contexte ; une question sans rien à regarder ne porte que l'écran ; « Voir ce qui part » est
+ce qui part ; la consigne exige `« je ne sais pas »` mot pour mot ; les refus (écran absent ou
+inconnu, texte absent ou trop long) ne font rien partir ; non-régression sur la forme du
+contexte d'« améliorer ». Côté écran, `DemanderIci.test.tsx` (7) : indisponible n'ouvre rien ;
+Ctrl+/ ouvre sans rien déplacer autour et pose le focus dans la ligne ; hors de la zone
+enveloppée la touche ne fait rien ; le geste entier au clavier seul (ouvrir, écrire, lire,
+fermer avec Échap qui rend le focus) ; Échap pendant que ça écrit coupe l'appel et ne laisse
+aucune trace (8octies : l'essai presse Échap **pendant** que le flux écrit, jamais après) ;
+une question hors sujet affiche une phrase sobre plutôt que « je ne sais pas » recopié tel
+quel ; « Voir ce qui part ». `touche-demander.test.ts` (13) tient la preuve du point dur.
+Une ligne du guide (`interface/src/aide.ts`, `jeu-de-tuiles.demander`, « à savoir » à 274
+signes) ; `aide.test.ts` la vérifie comme les 229 autres.
+
+**Ce qui reste** : CM5 réutilisera `contexte_instant` avec `blocage` rempli — c'est pour ça
+qu'il est facultatif et testé sans lui ; CM7 posera `ECRANS` et `AvecDemande` sur d'autres
+écrans, un par un, comme `CHAMPS` l'a fait pour « améliorer ». **Pas vu au navigateur** : la
+ligne, sa superposition, et le geste au clavier dans le vrai tiroir des matières — seuls les
+essais d'écran (jsdom) l'ont vérifié ; aucun appel payé n'a été fait, comme pour CM1 et CM3.
 
 ### CM5 · Expliquer ce qui bloque
 
@@ -361,5 +458,5 @@ en dire plus.
 - **La fiche du produit : écrite à la main, ou dérivée des docs existantes ?** La décision 3
   tranche pour la main, et l'expérience dira si elle dérive de la réalité plus vite qu'on ne la
   corrige.
-- **La touche.** Reste à vérifier qu'elle est libre dans le produit et dans les navigateurs
-  visés — la vérification appartient à CM4.
+- ~~**La touche.**~~ **Tranchée le 25 septembre 2026** : `Ctrl+/`, avec le recensement qui la
+  prouve libre écrit sous CM4.
