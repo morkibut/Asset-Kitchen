@@ -43,6 +43,7 @@ from atelier.image.taches import (
     poches_de_fond,
     taches,
     trous,
+    zones_de_fond_enferme,
 )
 from atelier.image.pliage import gabarit, mesurer_lot
 from atelier.image.traitement import (
@@ -69,6 +70,7 @@ __all__ = [
     "poches_de_fond",
     "trous",
     "taches",
+    "zones_de_fond_enferme",
     "COULEURS",
     "COULEURS_MAX",
     "COULEURS_MIN",

@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 """Ce qu'une table a besoin de savoir de l'image, et que seul le serveur peut dire.
 
-**Quatre mesures, et aucune n'est un réglage.** Elles décrivent ce que l'image
+**Cinq mesures, et aucune n'est un réglage.** Elles décrivent ce que l'image
 *contient* — les taches que le nettoyage des bords va effacer, les poches de fond
 que le sujet enferme et qu'aucune tolérance n'atteint, les trous de la silhouette
 que le contour longera ou pas, les crans d'occupation où la remise sur grille
 change vraiment quelque chose. Les quatre répondent à la même question posée
 quatre fois : *qu'est-ce que ce curseur va faire, avant que je le bouge ?*
+
+**La cinquième pose une autre question, celle de RV25** : *qu'est-ce que le
+détourage n'a pas pu atteindre, une fois tout fait ?* `zones_de_fond_enferme`
+compte, sur le **rendu final**, les poches à la couleur que le détourage
+visait pour le fond — pas sur l'image avant les bords, comme les quatre
+premières, parce qu'un fond enfermé par le modèle (les vitres d'un bus
+détouré par un modèle de silhouette) reste opaque quel que soit le moteur, et
+c'est ce que l'auteur voit à l'écran qu'il faut décrire.
 
 **Les deux du milieu sont exactement inverses, et les confondre coûte cher.**
 Une poche de fond enfermée est **opaque** — c'est ce que le remplissage depuis
@@ -195,6 +203,66 @@ def poches_de_fond(
     zones = composantes(enferme)
     zones.sort(key=lambda z: z[1], reverse=True)
     return [_decrire(rgba, m, a) for m, a in zones[:plafond]], len(zones)
+
+
+#: La tolérance de `zones_de_fond_enferme`, volontairement plus serrée que
+#: celle d'une passe de détourage (28 par défaut) et **fixe, indépendante du
+#: réglage de l'auteur** : cette mesure sépare une couleur *presque
+#: identique* à celle que le détourage visait pour le fond de tout le reste —
+#: un vert de feuillage qui ressemble au fond n'est pas *ce* vert-là, et doit
+#: rester du sujet. Élargir la tolérance est le geste d'une passe qui retire ;
+#: ce n'est pas celui d'une mesure qui doit rester fiable quel que soit le
+#: réglage posé à côté.
+TOLERANCE_FOND_VISE = 16
+
+#: En dessous de cette aire — un carré de trois pixels de côté —, une poche
+#: est du bruit de compression ou de quantification, jamais un morceau de
+#: fond qu'on proposerait de retirer d'un clic.
+AIRE_MIN_FOND_VISE = 9
+
+
+def zones_de_fond_enferme(
+    rendu: np.ndarray,
+    cible: tuple[int, int, int],
+    tolerance: int = TOLERANCE_FOND_VISE,
+) -> int:
+    """Combien de poches, à la couleur *visée* par le détourage, restent
+    opaques dans le rendu final (RV25).
+
+    **Ce qu'elle sépare, en une phrase** (AGENTS.md, 8sexies) : un pixel dont
+    la couleur est presque exactement celle que le détourage visait pour le
+    fond, et qu'aucun chemin de cette même couleur ne relie au bord du rendu,
+    d'un pixel qui ne fait que lui ressembler — un vert de feuillage n'est pas
+    *ce* vert-là, et reste du sujet, jamais une poche.
+
+    Le jumeau de `poches_de_fond`, sur trois points qui comptent :
+
+    - **le rendu final** — bords, contour et quantification compris —, parce
+      que c'est ce que l'auteur voit, et c'est de ça que la phrase à l'écran
+      parle, pas d'une image intermédiaire que personne ne regarde ;
+    - **la couleur que le détourage a réellement visée**, `cible`, jamais
+      celle du rendu : un rendu recadré à ras du sujet peut n'avoir plus un
+      seul pixel de bordure pour la deviner — c'est à l'appelant de la
+      trouver, comme `_mesures_du_fond` le fait déjà pour `bord` ;
+    - **une tolérance serrée et fixe** — voir `TOLERANCE_FOND_VISE`.
+
+    Rend un **compte**, pas une liste : rien à l'écran ne montre les poches
+    une par une ici, seulement leur nombre et un bouton, donc décrire chaque
+    zone — trois balayages de l'image entière, voir `taches` — coûterait sans
+    rien servir.
+    """
+    from atelier.image.traitement import _graines_du_bord, _remplir
+
+    rgb = rendu[:, :, :3]
+    reference = np.asarray(cible, dtype=np.int16)
+    proche = np.abs(rgb.astype(np.int16) - reference).max(axis=2) <= tolerance
+    if not proche.any():
+        return 0
+    joignable = _remplir(proche, _graines_du_bord(proche))
+    enferme = proche & ~joignable & (rendu[:, :, 3] > 0)
+    if not enferme.any():
+        return 0
+    return sum(1 for _, aire in composantes(enferme) if aire >= AIRE_MIN_FOND_VISE)
 
 
 def trous(rgba: np.ndarray) -> list[Tache]:

@@ -3978,6 +3978,17 @@ export type TachesDeLAsset = {
    *  de la pipette de « celle qui part », `null` sur un point transparent ou
    *  hors image. */
   couleurs: { demandees: number; obtenues: number; liste: string[]; visee?: string | null }
+  /** **Ce que le fond enferme encore dans le rendu final**, à la couleur que
+   *  le détourage visait (RV25) — le cas du bus dont les vitres restent
+   *  vertes après un détourage par modèle, vitres comprises : ni « bord » ni
+   *  le nettoyage des bords ne le disent, le premier ne relie que ce qui
+   *  touche le cadre, le second efface par aire et pas par couleur.
+   *
+   *  `couleur` est celle que la passe « couleur » visera si on clique « les
+   *  retirer aussi ». `point`, en pixels du brut, est un pixel réel de cette
+   *  couleur — celui que cette passe visera ; `null` quand `zones` vaut 0,
+   *  rien à proposer. */
+  fond_enferme: { zones: number; couleur: string; point: [number, number] | null }
 }
 
 /** Ce que le recadrage garde et ce qu'il jette — **cinq lectures, aucun

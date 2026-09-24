@@ -536,6 +536,28 @@ def _couleur_du_bord(rgb: np.ndarray) -> np.ndarray:
     return np.median(bordure.astype(np.int16), axis=0)
 
 
+def _point_du_bord(rgb: np.ndarray, cible: np.ndarray) -> tuple[int, int]:
+    """Le pixel de bordure le plus proche de `cible`, en `(x, y)` (RV25).
+
+    **`_couleur_du_bord` rend une couleur, pas un pixel** : c'est une médiane,
+    qui n'existe peut-être sous ce nom exact nulle part dans l'image. Une
+    passe « couleur » vise un point, pas un nombre — voir `detourer_couleur`,
+    qui lit `rgb[y, x]` — donc « ajouter la passe qui vise le fond » a besoin
+    d'un pixel réel, pas d'une moyenne. Sur un fond plat, celui-ci est presque
+    toujours à distance nulle de `cible`.
+    """
+    hauteur, largeur = rgb.shape[:2]
+    points = (
+        [(x, 0) for x in range(largeur)]
+        + [(x, hauteur - 1) for x in range(largeur)]
+        + [(0, y) for y in range(hauteur)]
+        + [(largeur - 1, y) for y in range(hauteur)]
+    )
+    couleurs = np.array([rgb[y, x] for x, y in points], dtype=np.int16)
+    ecarts = np.abs(couleurs - cible.astype(np.int16)).max(axis=1)
+    return points[int(np.argmin(ecarts))]
+
+
 # ── La teinte, plutôt que la valeur (B18) ────────────────────────────────────
 #
 # **Ce que `tolerance` compare aujourd'hui : le plus grand écart sur le rouge,
