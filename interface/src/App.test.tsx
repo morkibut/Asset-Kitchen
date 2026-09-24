@@ -16101,17 +16101,24 @@ describe("la palette se règle sans faire attendre", () => {
   })
 })
 
-// ── U7 · La toile dit ce qu'elle a fabriqué ──────────────────────────────────
+// ── U7 · La toile dit ce qu'elle a fabriqué, corrigé par TS16 ────────────────
 //
-// Les deux boutons d'un îlot **partaient sans le moindre retour**. Le serveur
-// répondait correctement et fabriquait bien la palette ; l'écran ne bougeait pas
-// d'un pixel, ne disait rien, ne menait nulle part, et l'objet fabriqué vivait
-// dans un autre côté de l'onglet. De l'endroit où l'on clique, cela ne se
-// distinguait pas d'un bouton mort — et c'est ce que la séance a conclu.
+// Les deux boutons d'un îlot **partaient sans le moindre retour** (U7). Le
+// serveur répondait correctement et fabriquait bien la palette ; l'écran ne
+// bougeait pas d'un pixel, ne menait nulle part, et l'objet fabriqué vivait
+// dans un autre côté de l'onglet. U7 a corrigé ça en ajoutant un compte rendu
+// avec un second bouton, « aller la voir ›» — mais le premier bouton, « ouvrir
+// sa palette › », restait cliquable sans jamais naviguer lui-même : deux
+// boutons pour un seul geste, dont un mort. L'auteur l'a signalé le
+// 20 septembre 2026 : « ouvrir sa palette › ne mène nulle part, alors que son
+// doublon marche. »
+//
+// **TS16 retire le doublon.** Il ne reste qu'un bouton par objet, et il mène
+// lui-même à ce qu'il vient de fabriquer ou à ce qui existait déjà.
 //
 // Ce que le serveur a appris à dire — *ce paquet a-t-il déjà produit quelque
-// chose, et quoi ?* — se mesure dans `tests/test_u7.py`. Ici : le geste le dit,
-// l'îlot porte sa marque, un second clic mène à l'existant.
+// chose, et quoi ?* — se mesure dans `tests/test_u7.py`. Ici : le geste mène,
+// l'îlot porte sa marque, un second clic mène à l'existant sans en refaire un.
 
 describe("la toile dit ce qu'elle a fabriqué", () => {
   beforeEach(() => {
@@ -16166,32 +16173,24 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
 
   const bouton = (nom: RegExp) => screen.getByRole("button", { name: nom })
 
-  // ── « Faire une palette le dit, nomme ce qui a été créé, et propose d'y
-  //     aller » ─────────────────────────────────────────────────────────────
+  // ── « Faire une palette la fabrique et mène directement à l'objet, en un
+  //     seul bouton » (TS16) ───────────────────────────────────────────────
 
-  test("faire une palette dit ce qui a été créé, et mène à l'objet", async () => {
+  test("faire une palette la fabrique et mène directement à l'objet, sans second bouton", async () => {
     const { appels } = await ouvrirLeMenuDeLIlot()
 
+    // **Le doublon a disparu** : il n'existe plus de second bouton « aller la
+    // voir › » à cliquer après coup — le seul bouton présent est celui qu'on
+    // vient de cliquer.
     fireEvent.click(bouton(/faire une palette de cet îlot/))
 
-    const dit = await waitFor(() => {
-      const trouve = document.querySelector("[data-fabrique-faite]")
-      if (!trouve) throw new Error("le geste n'a rien dit")
-      return trouve as HTMLElement
-    })
-    // Il **nomme** ce qui a été créé : « la palette est faite » sans son nom
-    // laisserait l'auteur chercher laquelle, parmi celles qu'il a déjà.
-    expect(dit.textContent).toContain("marais")
-    expect(dit.textContent).toContain("faite")
     expect(appels.some((a) => a.url === "/api/palettes")).toBe(true)
-
-    // Et le chemin y mène : le côté change, l'objet s'ouvre.
-    fireEvent.click(within(dit).getByRole("button", { name: /aller la voir/ }))
+    // Et il mène lui-même : le côté change, l'objet s'ouvre, sans second clic.
     await waitFor(() =>
-      expect(leLieu("Ambiances et couleurs")
-        .getAttribute("aria-selected")).toBe("true"),
+      expect(leLieu("Ambiances et couleurs").getAttribute("aria-selected")).toBe("true"),
     )
     expect(await screen.findByText(/l'aperçu/)).toBeTruthy()
+    expect(screen.queryByRole("button", { name: /aller la voir/ })).toBeNull()
   })
 
   test("faire une ambiance fait de même, et l'ambiance porte la palette du paquet", async () => {
@@ -16199,13 +16198,9 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
 
     fireEvent.click(bouton(/faire une ambiance de cet îlot/))
 
-    const dit = await waitFor(() => {
-      const trouve = document.querySelector("[data-fabrique-faite]")
-      if (!trouve) throw new Error("le geste n'a rien dit")
-      return trouve as HTMLElement
-    })
-    expect(dit.textContent).toContain("ambiance")
-    expect(dit.textContent).toContain("marais")
+    await waitFor(() =>
+      expect(leLieu("Ambiances et couleurs").getAttribute("aria-selected")).toBe("true"),
+    )
 
     // **Les deux objets, et le lien entre eux.** Une ambiance qui ne porterait
     // pas la palette du paquet serait une ambiance vide portant son nom.
@@ -16217,19 +16212,23 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
 
   // ── « Un îlot dont le paquet a une palette le montre sur la toile » ────────
 
-  test("l'îlot porte la marque de ce qu'il a produit", async () => {
+  test("l'îlot porte la marque de ce qu'il a déjà produit", async () => {
     // **Aucun glyphe neuf, aucune couleur dépensée** : le mot se pose là où
-    // l'îlot parle déjà de lui-même, à côté de son compte de cartes.
-    await ouvrirLeMenuDeLIlot()
+    // l'îlot parle déjà de lui-même, à côté de son compte de cartes. Vérifié
+    // au montage plutôt qu'après un clic sur « faire » : ce geste-là mène
+    // maintenant ailleurs, hors de la toile (TS16).
+    await ouvrirLeMenuDeLIlot({
+      palettes: [
+        {
+          ...paletteDouble("marais"),
+          sources: [{ genre: "images", reference: "marais" }],
+        },
+      ],
+    })
     const bandeDeLIlot = () =>
       document.querySelector("[data-ilot='marais']")?.textContent ?? ""
 
-    expect(bandeDeLIlot()).toContain("2 cartes")
-    expect(bandeDeLIlot()).not.toContain("2 cartes · palette")
-
-    fireEvent.click(bouton(/faire une palette de cet îlot/))
-
-    await waitFor(() => expect(bandeDeLIlot()).toContain("2 cartes · palette"))
+    expect(bandeDeLIlot()).toContain("2 cartes · palette")
   })
 
   test("l'ambiance l'emporte sur la palette dans la marque", async () => {
@@ -16252,9 +16251,15 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
     )
   })
 
-  // ── « Refaire le geste ne crée pas de doublon et mène à l'existant » ───────
+  // ── « "Ouvrir sa palette" mène vraiment à la palette, en un seul clic » ────
+  //
+  // Le défaut signalé par l'auteur le 20 septembre 2026 : ce bouton ne menait
+  // nulle part, il ne faisait qu'afficher un second bouton (« aller la
+  // voir › ») qu'il fallait cliquer à son tour. Cet essai clique le bouton qui
+  // reste et vérifie où il mène — c'est-à-dire le changement d'onglet — pour
+  // qu'il tombe si le correctif est défait.
 
-  test("un paquet déjà servi propose d'ouvrir ce qui existe, et ne refait rien", async () => {
+  test("un paquet déjà servi n'a qu'un bouton, qui mène directement à l'objet sans en refaire un", async () => {
     const { appels } = await ouvrirLeMenuDeLIlot({
       palettes: [
         {
@@ -16271,14 +16276,42 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
     const avant = appels.filter((a) => a.url === "/api/palettes").length
     fireEvent.click(ouvrir)
 
-    // Rien n'a été fabriqué, et le chemin mène quand même à l'objet.
+    // Rien n'a été fabriqué...
     expect(appels.filter((a) => a.url === "/api/palettes").length).toBe(avant)
-    const dit = await waitFor(() => {
-      const trouve = document.querySelector("[data-fabrique-faite]")
-      if (!trouve) throw new Error("le geste n'a rien dit")
-      return trouve as HTMLElement
+    // ...et le seul clic mène quand même à l'objet : le côté change et
+    // l'aperçu de la palette s'ouvre, sans second bouton à chercher.
+    await waitFor(() =>
+      expect(leLieu("Ambiances et couleurs").getAttribute("aria-selected")).toBe("true"),
+    )
+    expect(await screen.findByText(/l'aperçu/)).toBeTruthy()
+    expect(screen.queryByRole("button", { name: /aller la voir/ })).toBeNull()
+  })
+
+  test("de même pour « ouvrir son ambiance » : un seul bouton, qui mène", async () => {
+    const { appels } = await ouvrirLeMenuDeLIlot({
+      palettes: [
+        {
+          ...paletteDouble("marais"),
+          sources: [{ genre: "images", reference: "marais" }],
+        },
+      ],
+      ambiances: [ambianceDouble("Marais de cendre", "marais")],
     })
-    expect(dit.textContent).toContain("existe déjà")
+
+    const ouvrir = await screen.findByRole("button", { name: /ouvrir son ambiance/ })
+    expect(screen.queryByRole("button", { name: /faire une ambiance de cet îlot/ })).toBeNull()
+
+    const avant = appels.filter((a) => a.url === "/api/moods" && a.corps).length
+    fireEvent.click(ouvrir)
+
+    // Rien n'a été fabriqué — seule la navigation vers l'aperçu de l'ambiance
+    // existante fait un GET, sans corps.
+    expect(appels.filter((a) => a.url === "/api/moods" && a.corps).length).toBe(avant)
+    await waitFor(() =>
+      expect(leLieu("Ambiances et couleurs").getAttribute("aria-selected")).toBe("true"),
+    )
+    // Le panneau de l'ambiance existante s'ouvre, avec son nom en titre.
+    expect(await screen.findByRole("heading", { name: "Marais de cendre" })).toBeTruthy()
   })
 
   // ── « Un refus se lit à l'endroit où l'on a cliqué » ───────────────────────
@@ -16319,7 +16352,8 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
     fireEvent.click(bouton(/faire une palette de cet îlot/))
 
     expect(await screen.findByText(/existe déjà dans ce jeu/)).toBeTruthy()
-    expect(document.querySelector("[data-fabrique-faite]")).toBeNull()
+    // Un refus ne navigue nulle part : on reste sur la toile.
+    expect(leLieu("Ambiances et couleurs").getAttribute("aria-selected")).toBe("false")
   })
 })
 

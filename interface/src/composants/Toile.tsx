@@ -1068,11 +1068,10 @@ type Cadre = {
    *  Rien n'est payé — la lecture des couleurs se fait sur la machine. */
   onFairePalette: (nom: string) => void
   onFaireAmbiance: (nom: string) => void
-  /** Ce que chaque paquet a déjà produit (U7), et ce que le dernier geste vient
-   *  de faire. Les deux vivent ici parce que les deux se lisent sur l'îlot :
-   *  la marque, en permanence ; le compte rendu, dans le menu où l'on a cliqué. */
+  /** Ce que chaque paquet a déjà produit (U7) — la marque que l'îlot porte en
+   *  permanence, pour changer le mot du bouton et le faire naviguer plutôt que
+   *  fabriquer un doublon (TS16). */
   fabriques: Record<string, Fabrique>
-  fabrique: { paquet: string; texte: string; cible: CibleAmbiances } | null
   onAllerAuxAmbiances: (cible: CibleAmbiances) => void
   /** L'îlot suit la main — sans rien écrire. La formule du dépôt depuis T2 :
    *  *la valeur suit la main, l'écriture suit le relâchement.* */
@@ -1186,25 +1185,6 @@ function Plan({
     (erreur: unknown, defaut: string) =>
       onErreur(erreur instanceof Refus ? erreur.message : defaut),
     [onErreur],
-  )
-
-  /** Ce que le dernier geste de fabrication a fait, et où c'est allé (U7).
-   *
-   *  **Il se lit dans le menu de l'îlot où l'on a cliqué**, jamais dans la
-   *  bande du haut : c'est là que la main est, c'est là que la question se pose.
-   *  Le refus, lui, part par `onErreur` comme partout ailleurs — un refus est
-   *  du même genre partout dans le produit, et lui inventer une seconde place
-   *  ici aurait fait deux grammaires pour une mauvaise nouvelle. */
-  const [fabrique, setFabrique] = useState<{
-    paquet: string
-    texte: string
-    cible: CibleAmbiances
-  } | null>(null)
-
-  const montrer = useCallback(
-    (paquet: string, texte: string, genre: CibleAmbiances["genre"], identifiant: string) =>
-      setFabrique({ paquet, texte, cible: { genre, identifiant } }),
-    [],
   )
 
   // ── Ce que la toile montre ───────────────────────────────────────────────
@@ -2169,30 +2149,31 @@ function Plan({
       // survivent** ; sans quoi ranger son tableau d'inspiration effacerait une
       // palette et trois cases de texte.
       //
-      // **Et le geste dit ce qu'il a fait** (U7). Il partait sans le moindre
-      // retour : le serveur fabriquait bien la palette, mais l'écran ne bougeait
-      // pas d'un pixel et l'objet allait vivre dans un autre côté de l'onglet.
-      // De l'endroit où l'on clique, cela ne se distinguait pas d'un bouton
-      // mort — et c'est ce que la séance a conclu.
+      // **Et le geste mène où il dit** (U7, corrigé par TS16). Il partait sans
+      // le moindre retour : le serveur fabriquait bien la palette, mais l'écran
+      // ne bougeait pas d'un pixel — puis U7 a ajouté un second bouton pour
+      // aller la voir, laissant le premier cliquable sans jamais naviguer. Deux
+      // boutons pour un seul geste, dont un mort : la séance du 20 septembre
+      // 2026 l'a signalé. **Un seul bouton reste, et il navigue lui-même.**
       onFairePalette: (nom) => {
         // **Un paquet déjà servi ne fabrique pas un doublon** : le geste mène à
         // ce qui existe. La question « ce paquet a-t-il déjà une palette ? » est
         // celle que l'îlot pose déjà pour porter sa marque, et elle n'a qu'une
         // réponse — celle du serveur, arrivée avec les cartes.
         const deja = fabriques[nom]?.palette
-        if (deja) return montrer(nom, "sa palette existe déjà", "palette", deja)
+        if (deja) return onAllerAuxAmbiances({ genre: "palette", identifiant: deja })
         void api
           .creerPalette(nom, [{ genre: "images", reference: nom }])
           .then((recu) => {
             const nee = recu.palettes.find((p) => p.nom === nom)
-            if (nee) montrer(nom, `palette « ${nee.nom} » faite`, "palette", nee.identifiant)
             onRelire()
+            if (nee) onAllerAuxAmbiances({ genre: "palette", identifiant: nee.identifiant })
           })
           .catch((e) => echouer(e, "la palette n'a pas pu être faite"))
       },
       onFaireAmbiance: (nom) => {
         const deja = fabriques[nom]?.ambiance
-        if (deja) return montrer(nom, "son ambiance existe déjà", "ambiance", deja)
+        if (deja) return onAllerAuxAmbiances({ genre: "ambiance", identifiant: deja })
         void api
           .creerPalette(nom, [{ genre: "images", reference: nom }])
           .then((recu) =>
@@ -2203,14 +2184,12 @@ function Plan({
           )
           .then((recu) => {
             const nee = recu.ambiances.find((a) => a.nom === nom)
-            if (nee)
-              montrer(nom, `ambiance « ${nee.nom} » faite`, "ambiance", nee.identifiant)
             onRelire()
+            if (nee) onAllerAuxAmbiances({ genre: "ambiance", identifiant: nee.identifiant })
           })
           .catch((e) => echouer(e, "l'ambiance n'a pas pu être faite"))
       },
       fabriques,
-      fabrique,
       onAllerAuxAmbiances,
       onGlisserIlot: glisserIlot,
       onPoserIlot: poserIlot,
@@ -2245,10 +2224,8 @@ function Plan({
       glisserIlot,
       poserIlot,
       fabriques,
-      fabrique,
       onAllerAuxAmbiances,
       onRelire,
-      montrer,
     ],
   )
 
@@ -2921,19 +2898,21 @@ function NoeudIlot({ data }: NodeProps) {
                 ambiances n'ont pas encore d'écran où vivre » — jusqu'à ce que
                 cet écran existe. La raison a disparu parce qu'elle a cessé
                 d'être vraie, et non parce qu'on l'a effacée. */}
-            {/* **Le geste change de mot quand il a déjà été fait** (U7). Un
-                second clic ne fabrique pas un doublon : il mène à ce qui
-                existe, et le bouton le dit *avant* qu'on clique plutôt que de
-                s'excuser après. La question « ce paquet a-t-il déjà une
-                palette ? » est celle que le bandeau pose déjà pour porter sa
-                marque, et elle n'a qu'une réponse — celle du serveur. */}
+            {/* **Le geste change de mot quand il a déjà été fait, et il navigue
+                lui-même** (U7, corrigé par TS16). Un second clic ne fabrique
+                pas un doublon : il mène directement à ce qui existe — il n'y a
+                plus de second bouton « aller la voir » à cliquer après coup.
+                La question « ce paquet a-t-il déjà une palette ? » est celle
+                que le bandeau pose déjà pour porter sa marque, et elle n'a
+                qu'une réponse — celle du serveur. */}
             <div className="mt-1 flex flex-col gap-1 border-t border-trait pt-2">
               <button
                 type="button"
+                data-aller-palette={fait?.palette ? "" : undefined}
                 onClick={() => cadre.onFairePalette(nom)}
                 title={
                   fait?.palette
-                    ? "elle existe déjà — ce geste y mène, il n'en fait pas une seconde"
+                    ? "elle existe déjà — ce geste y mène"
                     : "l'atelier lit les couleurs de ces images — rien n'est payé"
                 }
                 className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-left text-[10.5px] text-encre-3 hover:text-signal"
@@ -2942,10 +2921,11 @@ function NoeudIlot({ data }: NodeProps) {
               </button>
               <button
                 type="button"
+                data-aller-ambiance={fait?.ambiance ? "" : undefined}
                 onClick={() => cadre.onFaireAmbiance(nom)}
                 title={
                   fait?.ambiance
-                    ? "elle existe déjà — ce geste y mène, il n'en fait pas une seconde"
+                    ? "elle existe déjà — ce geste y mène"
                     : "la palette, l'ambiance qui la porte, et il ne reste qu'à écrire les trois cases"
                 }
                 className="mesure h-[26px] rounded-7 border border-contour bg-carte px-2 text-left text-[10.5px] text-encre-3 hover:text-signal"
@@ -2954,29 +2934,7 @@ function NoeudIlot({ data }: NodeProps) {
                   ? "ouvrir son ambiance ›"
                   : "faire une ambiance de cet îlot"}
               </button>
-
-              {/* **Le compte rendu se lit là où l'on a cliqué**, avec le chemin
-                  pour aller voir. Le geste partait sans le moindre retour vers
-                  un objet qui vit dans un autre côté de l'onglet : de l'endroit
-                  où l'on clique, cela ne se distinguait pas d'un bouton mort. */}
-              {cadre.fabrique?.paquet === nom ? (
-                <p
-                  data-fabrique-faite
-                  role="status"
-                  className="mesure text-[10.5px] leading-snug text-encre-3"
-                >
-                  {cadre.fabrique.texte} —{" "}
-                  <button
-                    type="button"
-                    onClick={() => cadre.onAllerAuxAmbiances(cadre.fabrique!.cible)}
-                    className="text-signal underline-offset-2 hover:underline"
-                  >
-                    aller la voir ›
-                  </button>
-                </p>
-              ) : (
-                <Raison texte="elles vivent dans l'onglet Univers, côté Ambiances et couleurs — et survivent au paquet" />
-              )}
+              <Raison texte="elles vivent dans l'onglet Univers, côté Ambiances et couleurs — et survivent au paquet" />
             </div>
           </div>
         </div>

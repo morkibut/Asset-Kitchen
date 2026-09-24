@@ -682,9 +682,21 @@ sans changement de ses props.
 **Le défaut** : dans la fenêtre d'un îlot, « ouvrir sa palette › » ne mène nulle part, alors que
 son doublon « aller voir sa palette » marche. Les deux disent la même chose.
 
-- [ ] il ne reste qu'un bouton pour aller à la palette de l'îlot, et il y mène
-- [ ] même vérification pour « son ambiance » : un seul bouton, qui marche
-- [ ] un essai clique le bouton qui reste et vérifie où il mène
+- [x] il ne reste qu'un bouton pour aller à la palette de l'îlot, et il y mène
+- [x] même vérification pour « son ambiance » : un seul bouton, qui marche
+- [x] un essai clique le bouton qui reste et vérifie où il mène
+
+**Fait le 24 septembre 2026.** Le doublon venait de `onFairePalette`/`onFaireAmbiance` : sur un
+paquet déjà servi, le geste appelait `montrer(...)`, qui ne faisait que poser un état local
+(`fabrique`) affichant un second bouton « aller la voir › » — le premier clic ne naviguait
+jamais lui-même. Tranché : les deux gestes naviguent directement, dans les deux branches (déjà
+fabriqué → `onAllerAuxAmbiances` immédiat ; pas encore fabriqué → créé puis même navigation).
+L'état `fabrique`, `montrer` et le paragraphe de compte rendu ont disparu de `Toile.tsx` — plus
+rien à en faire, la navigation *est* le compte rendu. Les essais U7 d'`App.test.tsx` (« la toile
+dit ce qu'elle a fabriqué ») sont réécrits en conséquence, avec un nouvel essai symétrique pour
+l'ambiance déjà fabriquée ; ils tombent si `onFairePalette`/`onFaireAmbiance` cessent de naviguer.
+Non touché : TS15 réorganisera cette fenêtre dans la colonne de droite, sans repartir de zéro sur
+ce correctif. Non vérifié au navigateur (essais d'écran seulement).
 
 ### TS15 · Le détail d'une carte et d'un îlot s'ouvre dans la colonne de droite
 
