@@ -37,12 +37,14 @@ import {
   estArgent,
   quantite,
   type Asset,
+  type CompteurCoupDeMain,
   type Depense,
   type Depenses,
   type Generation,
 } from "../api"
 import { sujetAsset, useVisee } from "./Apercu"
 import { PANNEAU } from "./Infobulle"
+import { Libelle } from "./pieces"
 
 // ── Ce qu'un appel a donné ──────────────────────────────────────────────────
 
@@ -228,6 +230,8 @@ export function EcranDepenses({
         onAgentSeul={setAgentSeul}
         appels={appels.length}
         parAgent={appels.filter((a) => a.provenance === "agent").length}
+        onCompteur={(compteur) => setTout((t) => (t ? { ...t, coup_de_main: compteur } : t))}
+        onErreur={onErreur}
       />
 
       <section className="flex min-h-0 min-w-0 flex-col border-r border-trait">
@@ -468,6 +472,8 @@ function ColonneTotaux({
   onAgentSeul,
   appels,
   parAgent,
+  onCompteur,
+  onErreur,
 }: {
   tout: Depenses | null
   comptes: Record<Issue, number>
@@ -477,6 +483,8 @@ function ColonneTotaux({
   onAgentSeul: (seul: boolean) => void
   appels: number
   parAgent: number
+  onCompteur: (compteur: CompteurCoupDeMain) => void
+  onErreur: (raison: string) => void
 }) {
   return (
     <aside
@@ -517,6 +525,17 @@ function ColonneTotaux({
           />
         ))}
 
+        {tout?.coup_de_main && (
+          <>
+            <div className="my-[14px] h-px bg-trait" />
+            <CoupDeMainDuMois
+              compteur={tout.coup_de_main}
+              onCompteur={onCompteur}
+              onErreur={onErreur}
+            />
+          </>
+        )}
+
         <div className="my-[14px] h-px bg-trait" />
 
         <EnTeteRubrique>Ne montrer que</EnTeteRubrique>
@@ -551,6 +570,105 @@ function ColonneTotaux({
         />
       </div>
     </aside>
+  )
+}
+
+// ── Le coup de main, ce mois-ci (CM6) ───────────────────────────────────────
+//
+// **Le compteur et son plafond au même endroit**, parce qu'on règle le second
+// en lisant le premier. La règle *annoncer le prix avant de payer* n'est pas
+// abandonnée pour le coup de main, elle est **déplacée** (décision 8) : elle
+// porte sur ce plafond, qu'on règle une fois en connaissance de cause, et non
+// sur chaque clic. Poser un plafond ne dépense rien — le pied de l'écran reste
+// vrai.
+
+/** Un montant tapé à la française ou à l'anglaise ; `null` s'il n'en est pas un. */
+function lireMontant(tape: string): number | null {
+  const propre = tape.trim().replace("$", "").replace(",", ".").trim()
+  if (!/^\d+(\.\d+)?$/.test(propre)) return null
+  return Number(propre)
+}
+
+function CoupDeMainDuMois({
+  compteur,
+  onCompteur,
+  onErreur,
+}: {
+  compteur: CompteurCoupDeMain
+  onCompteur: (compteur: CompteurCoupDeMain) => void
+  onErreur: (raison: string) => void
+}) {
+  const [tape, setTape] = useState<string | null>(null)
+  const [envoi, setEnvoi] = useState(false)
+  const montant = tape === null ? null : lireMontant(tape)
+  const change = tape !== null && montant !== null && montant !== compteur.plafond_usd
+
+  async function poser() {
+    if (montant === null) return
+    setEnvoi(true)
+    try {
+      onCompteur(await api.reglerPlafondCoupDeMain(montant))
+      setTape(null)
+    } catch {
+      onErreur("le plafond n'a pas pu être posé")
+    } finally {
+      setEnvoi(false)
+    }
+  }
+
+  return (
+    <div data-coup-de-main-du-mois>
+      <EnTeteRubrique>Le coup de main · ce mois-ci</EnTeteRubrique>
+      <Total nom="dépensé" montant={compteur.pese_usd} signale={compteur.atteint} />
+      <form
+        className="mesure flex h-[26px] items-center gap-[8px] text-[11px]"
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (change) void poser()
+        }}
+      >
+        <label htmlFor="plafond-coup-de-main" className="flex">
+          <Libelle aide="coup-de-main.plafond">plafond du mois</Libelle>
+        </label>
+        <span className="ml-auto text-encre-3">$</span>
+        <input
+          id="plafond-coup-de-main"
+          inputMode="decimal"
+          value={tape ?? compteur.plafond_usd.toFixed(2).replace(".", ",")}
+          onChange={(e) => setTape(e.target.value)}
+          onKeyDown={(e) => {
+            // Échap efface ce qu'on a tapé sans refermer l'écran.
+            if (e.key === "Escape" && tape !== null) {
+              e.stopPropagation()
+              setTape(null)
+            }
+          }}
+          aria-invalid={tape !== null && montant === null}
+          className="mesure h-[22px] w-[54px] rounded-5 border border-trait bg-carte px-[4px] text-right text-[11px] tabular-nums text-encre outline-none focus:border-encre-4 aria-[invalid=true]:border-echec"
+        />
+        {change && (
+          <button
+            type="submit"
+            disabled={envoi}
+            className="mesure h-[22px] shrink-0 rounded-5 border border-trait bg-carte px-[8px] text-[10.5px] text-encre-2 transition-colors duration-120 hover:border-encre-4 hover:text-encre disabled:opacity-55"
+          >
+            Poser
+          </button>
+        )}
+      </form>
+      {compteur.inconnus > 0 && (
+        <p className="mesure text-[10.5px] text-encre-3">
+          dont {compteur.inconnus} appel{compteur.inconnus > 1 ? "s" : ""} coupé
+          {compteur.inconnus > 1 ? "s" : ""} avant d'avoir un prix, compté
+          {compteur.inconnus > 1 ? "s" : ""} au plus haut
+        </p>
+      )}
+      <p className={`mesure mt-[4px] text-[10.5px] ${compteur.atteint ? "text-signal" : "text-encre-3"}`}>
+        {compteur.atteint
+          ? "plafond atteint : le coup de main se tait jusqu'au 1er du mois, ou jusqu'à ce que tu le relèves"
+          : "au plafond, le coup de main se tait jusqu'au 1er du mois"}
+      </p>
+    </div>
   )
 }
 

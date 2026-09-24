@@ -216,10 +216,28 @@ avec le contexte réel de l'écran, pas une généralité.
 Le plafond mensuel dans les Réglages, le compteur dans les dépenses, et la disparition propre
 quand le plafond est atteint.
 
-- [ ] Le plafond se règle une fois et se voit ; 1 € par défaut.
-- [ ] Le compteur dit ce qui a été dépensé ce mois-ci, à côté du reste des dépenses.
-- [ ] Plafond atteint : la marque disparaît et dit pourquoi, sans fenêtre d'erreur.
-- [ ] Rien ne peut dépenser au-delà du plafond, même en rafale.
+- [x] Le plafond se règle une fois et se voit ; 1 € par défaut.
+- [x] Le compteur dit ce qui a été dépensé ce mois-ci, à côté du reste des dépenses.
+- [x] Plafond atteint : la marque disparaît et dit pourquoi, sans fenêtre d'erreur.
+- [x] Rien ne peut dépenser au-delà du plafond, même en rafale.
+
+*Fait le 25 septembre 2026.* **La règle** : sous un verrou, un appel réserve la borne haute
+de ce qu'il peut coûter et ne part que si *le mois déjà pesé + les réservations en vol + la
+sienne* tient sous le plafond ; à la fin, sous le même verrou, il écrit son coût réel et rend
+sa réservation — ou la garde comme poids (`pese_usd`) si son coût n'est jamais revenu, jamais
+zéro. L'essai de rafale (dix appels retenus en vol, un reste pour un seul) a été écrit avant la
+réservation et **tombe sans elle : dix appels partent au lieu d'un**. **Tranché** : l'unité
+est le **dollar**, affiché tel — `$1,00` par défaut, un peu moins que 1 € donc plus strict que
+le plan, et aucune conversion à tenir à jour ; le mois est le **mois civil local** (celui des
+journaux `<AAAA-MM>`), un appel compte au mois où il est parti ; la réservation vaut un jeton
+pour deux signes envoyés plus la réponse la plus longue permise, à **$2 le million de jetons**
+— une borne haute **prise sans tarif vérifié**, comme l'identifiant du modèle. Le plafond vit
+dans `donnees/coup-de-main.json` (ce n'est pas un secret, il ne passe pas par le `.env`), relu
+à chaque appel ; zéro coupe le coup de main. **Le plafond se règle là où le compteur se lit** :
+l'écran des dépenses, qui est aussi l'onglet Consommations des Réglages — un seul endroit,
+pas deux. Le compteur voyage avec `GET /api/spending` (`coup_de_main`), le plafond se pose par
+`PUT /api/settings/assist`. **Pas vu au navigateur** : le bloc n'a été vérifié qu'en essai
+d'écran ; la marque qui se tait attend CM3, qui lit `GET /api/assist` (la raison y est).
 
 ### CM7 · Partout où il y a un champ de prompt
 

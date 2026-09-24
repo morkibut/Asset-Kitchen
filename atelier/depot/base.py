@@ -1474,12 +1474,21 @@ class Base:
 
         `par_modele` porte une ligne par modèle, avec sa quantité **dans son
         unité** : un total en argent ne compte que de l'argent (`cout_usd`).
+
+        **`pese_usd` est ce que le plafond compte** (CM6) : le coût connu, et la
+        réservation d'un appel au coût inconnu — jamais zéro. Lu dans le
+        contenu gardé plutôt que dans une colonne de plus : une ligne d'avant
+        CM6 n'en a pas, et retombe sur son coût. `inconnus` compte les appels
+        dont on ne connaît pas le coût, pour que l'écran le dise.
         """
         with self._connexion() as connexion:
             lignes = connexion.execute(
                 "SELECT modele, unite, COUNT(*) AS appels,"
                 " COALESCE(SUM(cout_usd), 0) AS cout,"
-                " COALESCE(SUM(consomme), 0) AS consomme"
+                " COALESCE(SUM(consomme), 0) AS consomme,"
+                " COALESCE(SUM(COALESCE(json_extract(contenu, '$.pese_usd'), cout_usd)), 0)"
+                " AS pese,"
+                " COALESCE(SUM(json_extract(contenu, '$.cout_inconnu') = 1), 0) AS inconnus"
                 " FROM appels_texte WHERE cree_le >= ? GROUP BY modele, unite",
                 (depuis,),
             ).fetchall()
@@ -1495,6 +1504,8 @@ class Base:
         ]
         return {
             "cout_usd": round(sum(m["cout_usd"] for m in par_modele), 6),
+            "pese_usd": round(sum(float(l["pese"]) for l in lignes), 6),
+            "inconnus": sum(int(l["inconnus"]) for l in lignes),
             "appels": sum(m["appels"] for m in par_modele),
             "par_modele": par_modele,
         }
