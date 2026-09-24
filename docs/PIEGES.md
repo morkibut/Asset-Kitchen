@@ -1983,3 +1983,12 @@ la prochaine réécriture retrouvera.
   ouvert passe devant. **Et un `<dialog>` ne remplit pas l'écran avec `fixed inset-0` seul** : sa
   feuille de style par défaut fixe `width` et `height` à `fit-content` ; il faut `h-full w-full`
   (constaté au navigateur : un aperçu de 337×26 px).
+- **Les essais du son ne passaient que si le vrai ComfyUI de la machine tournait.** Tout
+  `Atelier(...)` construit sans `fabrique_animateur` inscrit l'animateur maison dans la file
+  locale, et cet animateur sonde la vraie adresse de ComfyUI. ComfyUI éteint, il répond
+  « inconnu » ; la file locale garde alors **tout** calcul en attente, le son compris, et
+  l'essai attend sans fin — aucune erreur, aucun délai dépassé, pytest n'a pas de coupure.
+  Invisible des semaines, parce que ComfyUI était allumé chaque fois qu'on lançait la suite ;
+  le 24 septembre 2026, éteint, la suite complète a tourné 1 h 40 sur quatre essais du son.
+  Corrigé dans `raccorder` (`tests/test_au7_au8.py`), qui réinscrit ces moteurs comme libres.
+  **Un essai qui touche la file locale sans passer par `raccorder` doit faire de même.**

@@ -91,6 +91,13 @@ class ComfyDouble:
 
 
 def raccorder(atelier, comfy):
+    # Les moteurs locaux inscrits à la construction (la vidéo maison) sondent la
+    # vraie machine : ComfyUI éteint, ils disent « inconnu » et la file locale
+    # garde tout calcul en attente — les essais du son tournaient alors sans fin.
+    async def libre():
+        return {"etat": "disponible", "travaux": []}
+    for identifiant, (nom, _) in list(atelier.file_locale._moteurs.items()):
+        atelier.file_locale.inscrire_moteur(identifiant, nom, libre)
     transport = httpx.MockTransport(comfy.repondre)
     fabrique = lambda: MoteurWorkflow("http://comfy.test", transport)
     atelier.profils_workflow.fabrique_moteur = fabrique

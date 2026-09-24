@@ -19,6 +19,7 @@ from atelier.domaine import texte_matiere
 from atelier.domaine.erreurs import ModeleInconnu
 from atelier.domaine.generation import AGENT, AUTEUR, Generation, Reinjection
 from atelier.domaine.tuiles import TuilesRefusees
+from atelier.domaine.workflow import WorkflowRefuse
 from atelier.fournisseur.catalogue_styles import FAMILLES, style as style_de
 
 # **Le seul style que ce chemin peut appeler** (décision 6 du plan : tout est
@@ -75,7 +76,13 @@ class ServiceMatieres:
         supposition : c'est le même diagnostic que l'écran des styles locaux
         (`GET /api/workflow-profiles/styles`), filtré sur le seul style que ce
         chemin appelle."""
-        styles = await self.a.styles_locaux.lister()
+        try:
+            styles = await self.a.styles_locaux.lister()
+        except WorkflowRefuse as refus:
+            # ComfyUI éteint est justement « ce qui manque » : l'écran des
+            # tuiles le dit à sa place, au lieu d'un « n'a pas pu être vérifiée ».
+            return {"disponible": False, "manque": [str(refus)], "modele": None,
+                    "reference_possible": False}
         ligne = next((s for s in styles if s["identifiant"] == STYLE), None)
         if ligne is None:  # pragma: no cover — le style est déclaré en dur au catalogue
             return {"disponible": False, "manque": [f"Style inconnu : {STYLE}."], "modele": None,
