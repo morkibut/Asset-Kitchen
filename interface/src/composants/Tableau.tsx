@@ -1503,11 +1503,17 @@ export function Reglages({
   const [note, setNote] = useState(carte.note)
   const [texte, setTexte] = useState(carte.texte)
 
+  // **Se resynchronise sur les trois champs, pas seulement l'identifiant**
+  // (relecture du 24 septembre 2026, TS15) : une note corrigée au crayon ✎
+  // puis un aller-retour dans le champ Texte, ou une carte glissée dans un
+  // autre îlot, changent `carte.note`/`carte.groupe` sans que `identifiant`
+  // bouge — l'effet ne se relançait pas, et la valeur locale, restée
+  // périmée, écrasait la correction au prochain `onBlur`.
   useEffect(() => {
     setGroupe(carte.groupe)
     setNote(carte.note)
     setTexte(carte.texte)
-  }, [carte.identifiant])
+  }, [carte.identifiant, carte.groupe, carte.note, carte.texte])
 
   const echouer = (erreur: unknown, defaut: string) =>
     onErreur(erreur instanceof Refus ? erreur.message : defaut)

@@ -233,8 +233,19 @@ export function ChoixModele({
 
   const surTouche = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
-      e.stopPropagation()
-      setOuvert(false)
+      // **Seulement quand la liste est ouverte** (relecture du 24 septembre
+      // 2026, défaut 9) : fermée, il n'y a rien à faire ici, et avaler la
+      // touche quand même l'empêchait d'atteindre le `cancel` natif de la
+      // `CadreDialogue` qui porte ce champ — un deuxième Échap était
+      // nécessaire pour fermer la fenêtre. Et ouverte, `preventDefault` en
+      // plus de `stopPropagation` : sans lui, ce même `cancel` natif partait
+      // quand même, refermant la fenêtre entière pour une touche qui ne
+      // visait que la liste.
+      if (ouvert) {
+        e.preventDefault()
+        e.stopPropagation()
+        setOuvert(false)
+      }
       return
     }
     if (!ouvert || visibles.length === 0) return

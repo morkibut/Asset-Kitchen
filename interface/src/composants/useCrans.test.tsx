@@ -86,3 +86,49 @@ describe("useCrans — le retour d'un onglet qui démonte le cadre (TS13)", () =
     expect(result.current).toEqual({ 1: 160, 2: 329, 4: 667 })
   })
 })
+
+// Relecture du 24 septembre 2026 (défaut 3) : le détail d'une carte ou d'un
+// îlot démonte la réserve exactement comme « Ambiances et couleurs » le
+// fait pour TS13 ci-dessus — la même case de grille change de contenu sans
+// que `vue` bouge. `Univers.tsx` doit donc composer `actif` avec le même
+// booléen que `detailOuvert`, sans quoi le mécanisme d'actif ci-dessus ne
+// se déclenche jamais : la réserve resterait mesurée sur `null` (ou sur sa
+// dernière valeur d'avant l'ouverture du détail) après la fermeture. Comme
+// pour TS13, un essai d'écran classique ne voit pas ce défaut — `Toile` ne
+// se démonte pas, seule la réserve à l'intérieur d'`Univers` le fait — donc
+// on l'essaie ici, au niveau du crochet, avec la composition exacte
+// qu'`Univers.tsx` calcule (`cote === "inspiration" && !detailOuvert`).
+describe("useCrans — le détail d'une carte ferme la réserve sans changer `vue` (TS15 × TS13, défaut 3)", () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  test("fermer le détail (`detailOuvert` redevient faux) reprend la mesure", () => {
+    doublerLaColonne(160)
+    const cadre = createRef<HTMLDivElement>()
+    cadre.current = grille()
+    const cote: "inspiration" | "ambiances" = "inspiration"
+
+    const { result, rerender } = renderHook(
+      ({ detailOuvert }: { detailOuvert: boolean }) =>
+        useCrans(cadre, "toile", cote === "inspiration" && !detailOuvert),
+      { initialProps: { detailOuvert: false } },
+    )
+    expect(result.current).toEqual({ 1: 160, 2: 329, 4: 667 })
+
+    // On choisit une carte : le détail prend la place de la réserve, qui se
+    // démonte (`!detailOuvert && <Reserve … cadre={grilleReserve} />`).
+    cadre.current = null
+    act(() => rerender({ detailOuvert: true }))
+    expect(result.current).toEqual({ 1: 160, 2: 329, 4: 667 }) // rien ne bouge, détail ouvert
+
+    // On referme le détail : la réserve remonte, avec une grille plus large
+    // (la fenêtre a bougé pendant qu'elle était cachée).
+    doublerLaColonne(200)
+    cadre.current = grille()
+    act(() => rerender({ detailOuvert: false }))
+
+    // Sans `!detailOuvert` dans l'expression passée à `useCrans` (donc
+    // `actif` resté vrai tout du long), rien ne redéclenche la mesure ici :
+    // la toile resterait sur les 160 d'avant l'ouverture du détail.
+    expect(result.current).toEqual({ 1: 200, 2: 409, 4: 827 })
+  })
+})

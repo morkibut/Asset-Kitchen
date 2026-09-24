@@ -1029,6 +1029,37 @@ function AtelierApp() {
       })
       .catch((e) => echouer(e, "cette carte n’a pas pu s’ouvrir dans l’atelier de retouche"))
   }
+  /** **`assetDeLaCarteEnRetouche` se relit pendant que l'écran est ouvert**
+   *  (relecture du 24 septembre 2026, défaut 11) : `Retouche.tsx` enregistre
+   *  son brouillon lui-même, sans le dire à `App` — il n'y a pas de geste à
+   *  écouter ici. « Abandonner les retouches » retombait donc sur l'image
+   *  d'avant l'enregistrement, avec sa vieille empreinte ; la découpe et les
+   *  mesures, qui lisent `imageDeLaRetouche` directement et non le brouillon,
+   *  faisaient de même. Une relecture toutes les deux secondes, comme
+   *  `Fabrication3D.tsx` et `FabricationAudio.tsx` le font déjà pour un
+   *  travail qui avance sans le dire non plus — et rien n'écrase l'état tant
+   *  que la recette relue est celle déjà tenue ici, pour ne pas imposer un
+   *  rendu à chaque tour d'horloge. */
+  useEffect(() => {
+    if (!carteDeLaRetouche || assetDeLaCarteEnRetouche?.identifiant !== retoucheOuverte) return
+    const carte = carteDeLaRetouche
+    const minuteur = window.setInterval(() => {
+      void api
+        .assetDeLaCarte(carte)
+        .then(({ asset }) => {
+          setAssetDeLaCarteEnRetouche((courant) =>
+            courant && JSON.stringify(courant.recette) === JSON.stringify(asset.recette)
+              ? courant
+              : asset,
+          )
+        })
+        .catch(() => {
+          // Une relecture ratée reste silencieuse : l'écran garde ce qu'il a,
+          // et le prochain tour réessaie.
+        })
+    }, 2000)
+    return () => window.clearInterval(minuteur)
+  }, [carteDeLaRetouche, assetDeLaCarteEnRetouche?.identifiant, retoucheOuverte])
   /** TS18 — « Poser sur la toile », depuis l'atelier de retouche entré par une
    *  carte : la version retouchée se pose comme une carte neuve (la même
    *  route que la Galerie, `poserAssetSurToile`), reliée à la carte d'origine

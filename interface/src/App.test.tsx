@@ -16486,6 +16486,63 @@ describe("le détail d'une carte et d'un îlot, dans la colonne de droite", () =
     expect(screen.queryByText("Îlot")).toBeNull()
   })
 
+  // Relecture du 24 septembre 2026 (défaut 5) : le guide, ou une
+  // `CadreDialogue`, peuvent s'ouvrir par-dessus le détail sans démonter la
+  // toile — Échap fermait alors les deux à la fois.
+
+  test("Échap ne ferme pas le détail quand le guide est ouvert par-dessus", async () => {
+    await ouvrirLaToileAvecLesCartes()
+    fireEvent.click((await waitFor(() => cartesDuPlan()))[0])
+    await waitFor(() => expect(reserve()).toBeNull())
+
+    fireEvent.click(screen.getByRole("button", { name: "Guide" }))
+    expect(await screen.findByRole("heading", { name: "Guide", level: 1 })).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+
+    // Le guide s'est refermé, lui seul — le détail est resté à sa place.
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Guide", level: 1 })).toBeNull(),
+    )
+    expect(reserve()).toBeNull()
+    expect(screen.getByText("Îlot")).toBeTruthy()
+
+    // Un second Échap, le guide fermé cette fois, ferme bien le détail.
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() => expect(reserve()).toBeTruthy())
+  })
+
+  test("Échap ne ferme pas le détail quand « Créer un sujet » est ouverte par-dessus", async () => {
+    await ouvrirLaToileAvecLesCartes()
+    fireEvent.click((await waitFor(() => cartesDuPlan()))[0])
+    await waitFor(() => expect(screen.getByText("Îlot")).toBeTruthy())
+
+    const boutonCreerSujet = screen
+      .getAllByRole("button", { name: "Créer un sujet avec cette image" })
+      .find((b) => b.tagName === "BUTTON")
+    if (!boutonCreerSujet) throw new Error("aucun <button> « Créer un sujet avec cette image »")
+    fireEvent.click(boutonCreerSujet)
+    const dialogue = await screen.findByRole("dialog", { name: "Créer un sujet" })
+
+    // Le `keydown` qui atteint `window`, pendant que le dialogue est encore
+    // dans le document — jsdom ne déclenche pas de lui-même le « cancel »
+    // natif qu'une vraie touche Échap produit sur un `<dialog>` modal,
+    // `CadreDialogue.test.tsx` le simule donc à la main, comme ici.
+    fireEvent.keyDown(window, { key: "Escape" })
+    expect(reserve()).toBeNull()
+    expect(screen.getByText("Îlot")).toBeTruthy()
+
+    fireEvent(dialogue, new Event("cancel", { cancelable: true }))
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Créer un sujet" })).toBeNull())
+    // Le détail n'a pas bougé pendant tout ça.
+    expect(reserve()).toBeNull()
+    expect(screen.getByText("Îlot")).toBeTruthy()
+
+    // Un second Échap, la fenêtre fermée cette fois, ferme bien le détail.
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() => expect(reserve()).toBeTruthy())
+  })
+
   test("cliquer une autre carte change le détail, sans jamais rendre la réserve entre les deux", async () => {
     await ouvrirLaToileAvecLesCartes()
     await waitFor(() => expect(cartesDuPlan()).toHaveLength(2))
@@ -16724,6 +16781,89 @@ describe("une carte s'ouvre dans l'atelier de retouche", () => {
     // des réglages du jeu.
     const seconde = await ouvrirLaRetoucheDeLaCarte()
     await waitFor(() => expect(seconde.getByRole("button", { name: "La réveiller" })).toBeTruthy())
+  })
+
+  // Relecture du 24 septembre 2026 (défaut 11) : `assetDeLaCarteEnRetouche`
+  // n'était jamais relu après « Enregistrer » — « Abandonner les retouches »,
+  // la découpe et les mesures continuaient de lire la vieille recette. Le
+  // double écrit dans `etat.assets` au vrai `PUT …/recipe` (8septies,
+  // ci-dessus) ; `/api/board/m1/asset` le relit depuis là, à intervalle,
+  // tant que l'écran reste ouvert sur l'asset d'une carte. Deux relectures
+  // de plus — une avant, une après « Enregistrer » — sont la preuve directe
+  // que `App.tsx` continue de relire au lieu de garder sa première
+  // résolution pour toujours.
+  test("l'asset ouvert depuis une carte se relit à intervalle, y compris après Enregistrer", async () => {
+    const planche = asset("aaaa1111-0")
+    const CARTES = [carteImage("m1", { source: "asset:aaaa1111-0", note: "premier tirage", position: [0, 0] })]
+    const double = serveurDouble({ cartes: CARTES, assets: [planche] })
+    await monter(double.fetchDouble, { ...ETAT, assets: [planche] })
+    allerA("Univers")
+    fireEvent.click(await screen.findByRole("button", { name: "toile" }))
+    await waitFor(() => expect(cartesDuPlan()).toHaveLength(1))
+
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      fireEvent.click(cartesDuPlan()[0])
+      fireEvent.click(await screen.findByRole("button", { name: "Retoucher dans l’atelier" }))
+      const ecran = within(
+        await waitFor(() => {
+          const trouve = document.querySelector("[data-retouche]")
+          if (!trouve) throw new Error("la retouche ne s'est pas ouverte")
+          return trouve as HTMLElement
+        }),
+      )
+      const appelsAsset = () => double.appels.filter((a) => a.url === "/api/board/m1/asset")
+      expect(appelsAsset()).toHaveLength(1) // la résolution d'ouverture, une seule fois
+
+      // Deux secondes plus tard, sans rien enregistrer : une relecture de
+      // plus — c'est elle qui rattraperait un enregistrement qu'on aurait
+      // manqué d'observer directement.
+      await act(async () => vi.advanceTimersByTime(2100))
+      expect(appelsAsset().length).toBeGreaterThanOrEqual(2)
+      const avantEnregistrement = appelsAsset().length
+
+      fireEvent.click(ecran.getByRole("button", { name: "L'endormir" }))
+      await waitFor(() => expect(ecran.getByRole("button", { name: "La réveiller" })).toBeTruthy())
+      // Le brouillon patiente 180 ms avant de redemander un aperçu — sans
+      // avancer l'horloge, « Enregistrer › » reste grisé (`session.valide`).
+      await act(async () => vi.advanceTimersByTime(250))
+      await waitFor(() => expect(ecran.getByRole("button", { name: "Enregistrer ›" })).toBeEnabled())
+      fireEvent.click(ecran.getByRole("button", { name: "Enregistrer ›" }))
+      await waitFor(() =>
+        expect(double.appels.some((a) => a.url === "/api/assets/aaaa1111-0/recipe")).toBe(true),
+      )
+
+      // Et la relecture continue après Enregistrer — sans elle, la première
+      // résolution resterait celle qu'on montre pour toujours.
+      await act(async () => vi.advanceTimersByTime(2100))
+      await waitFor(() =>
+        expect(appelsAsset().length).toBeGreaterThan(avantEnregistrement),
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("depuis la Galerie, sans carte d'origine, rien ne relit périodiquement l'asset", async () => {
+    const planche = asset("aaaa1111-0")
+    const double = serveurDouble({ assets: [planche] })
+    await monter(double.fetchDouble, { ...ETAT, assets: [planche] })
+
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir le résultat" }))[0])
+      fireEvent.click(await screen.findByRole("button", { name: "La retoucher" }))
+      await screen.findAllByText("La retouche")
+
+      const avant = double.appels.length
+      await act(async () => vi.advanceTimersByTime(4400))
+      // Aucun appel de plus, quel qu'il soit, sur la seule horloge : sans
+      // `carteDeLaRetouche`, l'effet de relecture ne pose même pas son
+      // intervalle.
+      expect(double.appels.length).toBe(avant)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 

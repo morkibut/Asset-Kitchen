@@ -260,3 +260,71 @@ test("sans le geste fourni, « Développer ce sujet » disparaît — même règ
   monterPanneau(carteImage())
   expect(screen.queryByRole("button", { name: "Développer ce sujet" })).toBeNull()
 })
+
+// TS15 — relecture du 24 septembre 2026 (défaut 6) : `Reglages` ne se
+// resynchronisait que sur `carte.identifiant`. Une note corrigée au crayon
+// ✎, ou une carte glissée dans un autre îlot, changent `carte.note` /
+// `carte.groupe` sans que l'identifiant bouge — l'ancienne valeur locale
+// restait affichée, prête à écraser la correction au prochain `onBlur`.
+
+test("le panneau reprend la note à jour quand elle change sans que la carte change", () => {
+  const { rerender } = monterPanneau(carteImage({ note: "Le forgeron" }))
+  expect(screen.getByPlaceholderText("—")).toHaveValue("Le forgeron")
+
+  rerender(
+    <CREER_SUJET.Provider value={null}>
+      <OUVRIR_SUJET.Provider value={null}>
+        <REPRENDRE_TEXTE.Provider value={null}>
+          <DEVELOPPER.Provider value={null}>
+            <ENCORE.Provider value={null}>
+              <RETOUCHER.Provider value={null}>
+                <CarteTuile
+                  carte={carteImage({ note: "Le forgeron, corrigé au crayon" })}
+                  personnages={[]}
+                  choisie
+                  survolee={false}
+                  onSurvol={() => {}}
+                  onChoisir={() => {}}
+                  onErreur={() => {}}
+                />
+              </RETOUCHER.Provider>
+            </ENCORE.Provider>
+          </DEVELOPPER.Provider>
+        </REPRENDRE_TEXTE.Provider>
+      </OUVRIR_SUJET.Provider>
+    </CREER_SUJET.Provider>,
+  )
+
+  expect(screen.getByPlaceholderText("—")).toHaveValue("Le forgeron, corrigé au crayon")
+})
+
+test("le panneau reprend l'îlot à jour après un glisser vers un autre îlot", () => {
+  const { rerender } = monterPanneau(carteImage({ groupe: "grange" }))
+  expect(screen.getByPlaceholderText("aucun")).toHaveValue("grange")
+
+  rerender(
+    <CREER_SUJET.Provider value={null}>
+      <OUVRIR_SUJET.Provider value={null}>
+        <REPRENDRE_TEXTE.Provider value={null}>
+          <DEVELOPPER.Provider value={null}>
+            <ENCORE.Provider value={null}>
+              <RETOUCHER.Provider value={null}>
+                <CarteTuile
+                  carte={carteImage({ groupe: "puits" })}
+                  personnages={[]}
+                  choisie
+                  survolee={false}
+                  onSurvol={() => {}}
+                  onChoisir={() => {}}
+                  onErreur={() => {}}
+                />
+              </RETOUCHER.Provider>
+            </ENCORE.Provider>
+          </DEVELOPPER.Provider>
+        </REPRENDRE_TEXTE.Provider>
+      </OUVRIR_SUJET.Provider>
+    </CREER_SUJET.Provider>,
+  )
+
+  expect(screen.getByPlaceholderText("aucun")).toHaveValue("puits")
+})

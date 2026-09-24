@@ -1153,24 +1153,24 @@ export const AIDE: Record<string, Explication> = {
     long: "La croix, Échap, ou un clic sur la toile vide referment le détail et rendent la réserve. Cliquer une autre carte ou un autre îlot change le détail sans le fermer.",
   },
 
-  // Le menu d'une carte
+  // Le détail d'une carte
 
   "carte.groupe": {
     nom: "îlot",
     ou: "inspiration",
-    groupe: "Le menu d'une carte",
+    groupe: "Le détail d'une carte",
     quoi: "Un nom libre pour ranger les cartes du tableau. Vide = hors îlot.",
     change:
       "Rien à la génération. C'est un rangement pour l'œil. Ce qui décide des références envoyées, c'est artwork officiel + famille.",
     origine: "toi · aucun défaut",
     long:
-      "Un tableau monte vite à cent cartes, et l'îlot est ce qui te permet d'en retrouver douze. Il ne voyage nulle part : ni dans un prompt, ni dans une référence envoyée, ni dans un export. Le champ qui agit vraiment sur la génération, c'est famille — juste à côté, dans le même menu.",
+      "Un tableau monte vite à cent cartes, et l'îlot est ce qui te permet d'en retrouver douze. Il ne voyage nulle part : ni dans un prompt, ni dans une référence envoyée, ni dans un export. Le champ qui agit vraiment sur la génération, c'est famille — plus bas, dans le même détail.",
   },
 
   "carte.note": {
     nom: "note",
     ou: "inspiration",
-    groupe: "Le menu d'une carte",
+    groupe: "Le détail d'une carte",
     quoi: "Une annotation libre sur une carte — pourquoi tu l'as gardée, ce que tu veux en retenir.",
     change: "Rien à la génération. Elle ne part nulle part, comme le groupe.",
     origine: "toi · aucun défaut",
@@ -1179,7 +1179,7 @@ export const AIDE: Record<string, Explication> = {
   "carte.taille": {
     nom: "taille",
     ou: "inspiration",
-    groupe: "Le menu d'une carte",
+    groupe: "Le détail d'une carte",
     quoi: "La place qu'une carte occupe dans le tableau : 1×, 2× ou 4×.",
     change:
       "Rien à la génération. Ce sont les crans du zoom de la galerie, réemployés — un seul vocabulaire de taille dans tout le produit.",
@@ -1358,12 +1358,12 @@ export const AIDE: Record<string, Explication> = {
       "Elle se pose à l'arrivée, celle sur laquelle tu as lâché : la pointe ne fait que rendre visible ce que le tracé a déjà décidé. Pas de troisième état — retourner un lien, c'est le couper et le retirer dans l'autre sens, deux gestes rares plutôt qu'un contrôle permanent.",
   },
 
-  // Le menu d'un îlot
+  // Le détail d'un îlot
 
   "ilot.teinte": {
     nom: "teinte d'un îlot",
     ou: "inspiration",
-    groupe: "Le menu d'un îlot",
+    groupe: "Le détail d'un îlot",
     quoi: "La même palette de dix, posée sur le cadre, le bandeau et le fond d'un îlot.",
     change:
       "Rien à la génération, et rien au groupe. Un îlot teinté et un îlot nu contiennent exactement les mêmes cartes, et envoient exactement les mêmes références.",
@@ -1375,10 +1375,25 @@ export const AIDE: Record<string, Explication> = {
   "ilot.cartes": {
     nom: "cartes de l'îlot",
     ou: "inspiration",
-    groupe: "Le menu d'un îlot",
+    groupe: "Le détail d'un îlot",
     quoi: "Les cartes qui composent cet îlot — une miniature par carte, cliquable pour voir son détail.",
     change: "Rien à la génération.",
     origine: "toi · le groupe écrit sur chaque carte",
+  },
+
+  // **Ajoutée le 24 septembre 2026 (défaut 12 de la relecture)** : les deux
+  // gestes de fin du détail d'un îlot, sans entrée du recueil pour les
+  // désigner.
+  "ilot.palette-ambiance": {
+    nom: "faire une palette · faire une ambiance",
+    ou: "inspiration",
+    groupe: "Le détail d'un îlot",
+    quoi: "Composer une palette ou une ambiance à partir des cartes de cet îlot — ou y mener, si l'une existe déjà.",
+    change:
+      "Rien ici. L'atelier lit les couleurs des cartes de l'îlot, sans payer ; l'ambiance s'ouvre prête, ses trois cases de texte à écrire.",
+    origine: "toi · aucune des deux au départ",
+    long:
+      "Les deux vivent dans l'onglet Univers, côté Ambiances et couleurs, et survivent à l'îlot qui les a fait naître : vider l'îlot ne les efface pas. Un clic n'en fabrique jamais une seconde — il ouvre celle qui existe déjà pour ce nom d'îlot.",
   },
 
   // ── L'univers, côté Ambiances — les palettes, et les lots de style ────────
@@ -1614,6 +1629,8 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Les autres planches sont dépromues. L'image reste en bibliothèque — rien n'est supprimé, rien n'est payé.",
     origine: "une planche faite par « Faire la planche des directions », refaite, ou pliée",
+    long:
+      "Ne paraît que sur une feuille entière — jamais sur un morceau découpé, une vue dépliée ou une planche de poses. Le serveur refuse aussi ces cas-là, même passé par un agent : une seule chose peut être la planche du sujet.",
   },
 
   // **TS19** : le signal d'une planche dont deux vues opposées ne sont que la
@@ -1627,7 +1644,7 @@ export const AIDE: Record<string, Explication> = {
       "Rien n'est bloqué : tu peux la garder. Mais ce qu'il porte d'un côté (un sac, une sacoche) change de côté avec lui. Refais la planche si ça compte.",
     origine: "une mesure faite à l'arrivée de la planche, sans rien payer",
     long:
-      "Le texte envoyé demande déjà l'autre côté, pas un miroir. Si le modèle retourne quand même l'image, la planche le signale ici. Seules les vues presque identiques une fois retournées sont signalées : un miroir redessiné avec des différences peut passer.",
+      "Le texte envoyé demande déjà l'autre côté, pas un miroir. Si le modèle retourne quand même l'image, la planche le signale ici. Seules les vues presque identiques une fois retournées sont signalées : un miroir redessiné avec des différences peut passer. Le signal vaut aussi pour une planche refaite découpée à l'arrivée, quand l'ordre de ses vues est connu.",
   },
 
   // **Ajoutées le 24 septembre 2026 (défaut 7 de la relecture)** : les deux

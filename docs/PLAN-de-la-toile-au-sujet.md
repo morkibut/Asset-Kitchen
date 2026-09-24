@@ -643,6 +643,16 @@ grille de la réserve sans toucher `vue` (« Ambiances et couleurs » démonte t
 Inspiration, réserve comprise). Le `ref` remonté ne change pas d'identité, donc rien dans les
 dépendances de l'effet ne le signalait. Correctif : un quatrième paramètre `actif` (vrai sur
 `cote === "inspiration"`), ajouté aux dépendances de l'effet, qui force la remesure au retour.
+
+**Corrigé le 24 septembre 2026 après relecture (défaut 3).** Le crochet lui-même n'avait plus de
+défaut ; celui qui restait vivait dans son appelant. `Univers.tsx` ne composait `actif` qu'avec
+`cote === "inspiration"`, sans `detailOuvert` (TS15) — or le détail d'une carte ou d'un îlot
+démonte la réserve exactement comme « Ambiances et couleurs » le fait, par le même mécanisme, et
+la toile retombait sur « la toile se règle sur la grille… » sans jamais reprendre la mesure au
+retour. Correctif : `useCrans(grilleReserve, vue, cote === "inspiration" && !detailOuvert)`, et
+`detailOuvert` calculé avant l'appel plutôt qu'après. Essai neuf dans `useCrans.test.tsx`, au
+niveau du crochet comme le premier (un essai d'écran ne voit ni l'un ni l'autre défaut, pour la
+même raison) : il rejoue le scénario avec la composition exacte qu'`Univers.tsx` calcule.
 **8octies vérifié en direct** : un essai d'écran (`App.test.tsx`) qui clique les deux onglets
 passe même sans le correctif — `<Toile>` se démonte et remonte en entier avec l'onglet et reçoit
 tout de suite la dernière valeur non nulle de `crans` que l'écran parent (lui, ne démonte pas)
@@ -676,6 +686,14 @@ navigateur : le worktree n'a pas de `dist` construit et monter un atelier jetabl
 projet et des cartes pour ce geste aurait coûté plus que ce que les essais d'écran, sabotés puis
 rétablis, ne couvrent déjà. `Toile.tsx` n'a pas été touché — la barre reste montée telle quelle,
 sans changement de ses props.
+
+**Corrigé le 24 septembre 2026 après relecture (défaut 8).** Repliée, la barre cachait le
+résultat de « Reprendre ce texte », « Développer ce sujet » et « Prendre comme référence » :
+remplir un champ qu'on ne voit pas ressemble à un clic mort. Correctif dans `ToileFabrique.tsx` :
+`setReplie(false)` ajouté dans les deux effets `reprise`/`developpement`, et un troisième effet
+sur `references.length` qui ne déplie que quand la longueur **grandit** — retirer une référence
+ne doit ni déplier ni replier ce que l'auteur vient de replier à la main. Trois essais neufs dans
+`ToileFabrique.test.tsx`.
 
 ### TS16 · « ouvrir sa palette » d'un îlot marche, et n'existe qu'une fois
 
@@ -745,6 +763,30 @@ carte puis l'autre, cliquer l'îlot, la croix, Échap et le clic sur le plan vid
 la toile. Le proxy `vite.config.ts` vise 8420 en dur (pas de `VITE_API_PORT`) : pointé sur 8433 le
 temps de la vérification, puis rendu tel quel — aucune trace dans le diff.
 
+**Corrigé le 24 septembre 2026 après relecture (défauts 5, 6 et 12).**
+
+- **Défaut 5** : Échap fermait aussi le détail quand le guide, ou une `CadreDialogue` ouverte
+  depuis le détail (« Créer un sujet avec cette image »), étaient ouverts par-dessus — ni l'un ni
+  l'autre ne démonte la toile. Correctif dans `Toile.tsx` : l'écouteur ignore Échap si
+  `guideEstOuvert()` (nouvel export lu à l'instant, sans dépendre de l'ordre des deux écouteurs
+  `keydown`, ajouté à `Guide.tsx`) ou `document.querySelector("dialog[open]")`, ou si l'événement
+  est déjà `defaultPrevented`. Deux essais neufs dans `App.test.tsx`.
+- **Défaut 6** : `Reglages` (`Tableau.tsx`) ne se resynchronisait que sur `carte.identifiant` —
+  une note corrigée au crayon ✎, ou une carte glissée dans un autre îlot, changent `carte.note` /
+  `carte.groupe` sans que l'identifiant bouge, et l'ancienne valeur locale restait prête à
+  écraser la correction au prochain `onBlur`. Correctif : `carte.groupe`, `carte.note` et
+  `carte.texte` ajoutés aux dépendances de l'effet. Deux essais neufs dans `Tableau.test.tsx`.
+- **Défaut 12** : le guide décrivait un « menu » que TS15 avait déjà remplacé par un détail dans
+  la colonne de droite, et les boutons palette/ambiance du détail d'un îlot n'avaient aucune
+  ligne. Dans `aide.ts` : les groupes « Le menu d'une carte » / « Le menu d'un îlot » renommés
+  « Le détail d'une carte » / « Le détail d'un îlot », « dans le même menu » corrigé en « dans le
+  même détail », une entrée `ilot.palette-ambiance` ajoutée, et — sur un mot du coordinateur
+  après la fusion du correctif du défaut 1 — `fabrique.cest-la-reference` précise qu'il ne paraît
+  que sur une feuille entière (jamais un morceau découpé, une vue dépliée ou une planche de
+  poses) et `fabrique.vues-en-miroir` que le signal vaut aussi pour une planche refaite découpée
+  à l'arrivée. `essai_vocabulaire.py` reste vert : ces groupes ne font pas partie de sa liste
+  fermée.
+
 ### TS17 · Choisir un modèle : les habitués d'abord
 
 Le choix du modèle d'image devient un panneau. Il montre d'abord les modèles dont l'auteur se sert
@@ -798,6 +840,14 @@ existants adaptés au panneau + 1 essai neuf sur l'option vide et le grisé), `F
 (585 essais, un échec « Reprendre « marche »… » sur la pellicule du montage, sans rapport avec cette
 tranche — passe seul, isolé du reste de la suite) et `npx tsc --noEmit` sans erreur.
 
+**Corrigé le 24 septembre 2026 après relecture (défaut 9).** `ChoixModele` (`pieces.tsx`) avalait
+Échap même liste fermée — `stopPropagation` sans condition —, et ouverte, elle ne posait pas
+`preventDefault` : le `cancel` natif de la `CadreDialogue` qui la porte partait quand même,
+refermant toute la fenêtre pour une touche qui ne visait que la liste. Correctif :
+`if (ouvert) { e.preventDefault(); e.stopPropagation(); setOuvert(false) }`, rien liste fermée.
+Essai neuf dans `TravauxEquipement.test.tsx`, sur ce que `dispatchEvent` renvoie (`true` non
+empêché, `false` empêché) — exactement ce que la `CadreDialogue` lit.
+
 ### TS18 · Une carte s'ouvre dans l'atelier de retouche
 
 Depuis le détail d'une carte image (colonne de droite, TS15), « Retoucher dans l'atelier » ouvre
@@ -843,6 +893,17 @@ fermer, rouvrir depuis la même carte, relire la table endormie). Vérifié au n
 jetable sur 8433. **Non vu** : le double de test qui persiste `/assets/{id}/recipe` dans son état
 (nécessaire au 8septies) ne l'écrivait pas avant cette tranche — corrigé au passage, dans
 `App.test.tsx`.
+
+**Corrigé le 24 septembre 2026 après relecture (défaut 11).** Le paragraphe ci-dessus tranchait
+que `assetDeLaCarteEnRetouche` passe **devant** pour ne jamais montrer une grille périmée — vrai
+à l'ouverture, faux après « Enregistrer » : cet état n'était jamais relu, et « Abandonner les
+retouches », la découpe et les mesures continuaient de lire la vieille recette indéfiniment.
+Correctif dans `App.tsx` : tant que la retouche reste ouverte sur l'asset d'une carte, une
+relecture toutes les deux secondes de `api.assetDeLaCarte` — même patron que le sondage déjà en
+place dans `Fabrication3D.tsx` et `FabricationAudio.tsx` — qui ne remplace l'état que si la
+recette relue diffère de celle tenue, pour ne pas imposer un rendu à chaque tour d'horloge. Deux
+essais neufs dans `App.test.tsx` (le sondage continue après Enregistrer ; rien ne sonde sans
+carte d'origine, depuis la Galerie).
 
 ### TS19 · La planche des directions ne dessine pas un miroir
 
