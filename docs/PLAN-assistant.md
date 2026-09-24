@@ -127,10 +127,30 @@ Un fichier neuf, `fiche-produit.md`, à côté des autres docs : ce qu'il faut s
 Les lieux, le vocabulaire (un *sujet*, une *famille*, une *collection*, un *jeu de tuiles*,
 une *pièce*), les règles qui surprennent, et ce que le produit ne fait pas.
 
-- [ ] Elle tient en une page et se relit d'un trait.
-- [ ] Elle est écrite à la main, et un essai vérifie qu'elle ne contredit pas le vocabulaire
+- [x] Elle tient en une page et se relit d'un trait.
+- [x] Elle est écrite à la main, et un essai vérifie qu'elle ne contredit pas le vocabulaire
       publié (`docs/vocabulaire.html`).
-- [ ] Un mot nouveau du produit sans entrée dans la fiche est nommé par l'essai des docs.
+- [x] Un mot nouveau du produit sans entrée dans la fiche est nommé par l'essai des docs.
+
+*Fait le 24 septembre 2026.* Écrite à la troisième personne (l'interface tutoie, la fiche
+décrit le produit pour le modèle) — décision notée en tête du fichier. « Contredire »
+tranché en une phrase avant d'écrire l'essai (8sexies) : la fiche contredit le vocabulaire
+publié si elle appelle une chose du jeu par un mot que la liste noire de
+`docs/vocabulaire.html` remplace ; `tests/test_cm2_fiche_produit.py` le vérifie en relisant
+cette seule liste, exactement comme `essais/essai_vocabulaire.py` le fait pour l'ossature —
+préférée à une extension de cet essai, dont le contrat porte sur des libellés d'écran, pas
+sur de la prose. Trois mots français ordinaires (dossier, chose, appel), déjà nommés
+ordinaires par `essai_vocabulaire.py`, sont exclus de la mesure pour la même raison que
+là-bas ; le nom du produit, « Asset Kitchen », est retiré du texte avant la recherche. Le
+troisième critère vit dans `essais/essai_docs.py` (`mots_du_produit`,
+`rapporter_fiche_produit`) : il relit le glossaire de `docs/vocabulaire.html` — hors
+ossature et hors tableau d'outils absents — et nomme, sans jamais refuser, ce qu'aucune
+ligne de la fiche ne reprend ; quinze mots mineurs (une vignette, une échelle, une source…)
+le sont aujourd'hui, et c'est attendu d'une fiche d'une page. La fiche reste hors du
+corpus de démarrage (`DEMARRAGE` d'`essai_docs.py` inchangé) et ne pèse donc pas sur sa
+dérive. Vérifié : les deux essais tombent — le pytest échoue, le relevé de mots absents
+s'allonge — quand la fiche est cassée exprès (8octies), puis la fiche est remise en
+place. Ce qui n'est pas vu au navigateur : rien, CM2 ne touche aucun écran.
 
 ### CM3 · Améliorer un texte de génération
 
