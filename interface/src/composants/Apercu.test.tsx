@@ -13,6 +13,7 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 import type { ReactNode } from "react"
 
 import { Apercu, fermerApercu, reinitialiserApercu, useApercu, useVisee, type Sujet } from "./Apercu"
+import { CadreDialogue } from "./CadreDialogue"
 import { SesReferencesParUsage } from "./ImagesDuSujet"
 import {
   RECETTE_VIDE,
@@ -209,5 +210,79 @@ describe("le repli général (RV23)", () => {
     await waitFor(() => expect(document.querySelector("[data-apercu-scene]")).toBeTruthy())
     const grande = document.querySelector("[data-apercu-scene] img") as HTMLImageElement
     expect(grande.src).toContain("/declare.png")
+  })
+})
+
+// ── RV26 — l'agrandissement d'Espace passe devant les fenêtres ─────────────
+//
+// **La cause** : `CadreDialogue` ouvre ses fenêtres par `showModal()`, qui les
+// pose dans la couche du dessus du navigateur — un `fixed z-50` de la page
+// ordinaire ne passe jamais devant elle, quel que soit son `z-index`. jsdom ne
+// simule pas la couche du dessus (`docs/PIEGES.md` ne le liste même pas, faute
+// d'implémentation) : ce qu'un essai *peut* vérifier ici, c'est que l'aperçu
+// est désormais **lui aussi** un `<dialog>` ouvert par `showModal()` — la
+// mesure au navigateur, elle, est faite à part (voir le compte rendu).
+describe("RV26 — l'agrandissement passe devant une fenêtre ouverte", () => {
+  function FenetreAvecVignette({ onFermer }: { onFermer: () => void }) {
+    return (
+      <CadreDialogue titre="Une fenêtre" onFermer={onFermer} enfants={<img alt="" src="/vignette.png" />}>
+      </CadreDialogue>
+    )
+  }
+
+  test("ouvert depuis une fenêtre, l'aperçu est un <dialog> monté par showModal — il tombe sans le correctif", async () => {
+    const showModal = vi.spyOn(HTMLDialogElement.prototype, "showModal")
+    const onFermerFenetre = vi.fn()
+    render(
+      <HoteDeLApercu>
+        <FenetreAvecVignette onFermer={onFermerFenetre} />
+      </HoteDeLApercu>,
+    )
+    const fenetre = document.querySelector('dialog[aria-label="Une fenêtre"]') as HTMLElement
+    expect(fenetre).toBeTruthy()
+    const vignette = document.querySelector("img") as HTMLImageElement
+    tailleAffichee(vignette, 96)
+    survoler([vignette])
+
+    fireEvent.keyDown(window, { key: " " })
+
+    await waitFor(() => expect(document.querySelector("[data-apercu-scene]")).toBeTruthy())
+    // **Le cœur du correctif** : sans lui, l'aperçu reste un `<div>` — cette
+    // ligne tombe si on le défait. Avec lui, c'est un second `<dialog>`,
+    // ouvert par `showModal()` comme celui de la fenêtre : la même couche.
+    const apercu = document.querySelector('dialog[aria-label="Aperçu"]')
+    expect(apercu?.tagName).toBe("DIALOG")
+    expect(showModal).toHaveBeenCalledWith()
+    // Posé **après** la fenêtre dans le document : le dernier ouvert passe
+    // devant, et les deux vivent hors de tout conteneur qui pourrait le
+    // rogner (portés au corps du document, comme `CadreDialogue`).
+    expect(apercu?.parentElement).toBe(document.body)
+    expect(fenetre.parentElement).toBe(document.body)
+    expect(
+      fenetre.compareDocumentPosition(apercu!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  test("Échap ferme l'aperçu seul — la fenêtre en dessous reste ouverte, et son onFermer n'est jamais appelé", async () => {
+    const onFermerFenetre = vi.fn()
+    render(
+      <HoteDeLApercu>
+        <FenetreAvecVignette onFermer={onFermerFenetre} />
+      </HoteDeLApercu>,
+    )
+    const vignette = document.querySelector("img") as HTMLImageElement
+    tailleAffichee(vignette, 96)
+    survoler([vignette])
+    fireEvent.keyDown(window, { key: " " })
+    await waitFor(() => expect(document.querySelector("[data-apercu-scene]")).toBeTruthy())
+
+    fireEvent.keyDown(window, { key: "Escape" })
+
+    await waitFor(() => expect(document.querySelector("[data-apercu-scene]")).toBeNull())
+    // La fenêtre est intacte, et son propre geste d'Échap (l'événement natif
+    // « cancel » de son `<dialog>`) n'a **pas** tourné en même temps — sans
+    // quoi ce serait les deux surfaces qui se referment pour une pression.
+    expect(document.querySelector('dialog[aria-label="Une fenêtre"]')).toBeTruthy()
+    expect(onFermerFenetre).not.toHaveBeenCalled()
   })
 })

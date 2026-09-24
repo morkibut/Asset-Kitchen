@@ -39,7 +39,9 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type RefObject,
 } from "react"
+import { createPortal } from "react-dom"
 import { api, type Asset, type Bande, type Carte } from "../api"
 
 /** Ce qu'un aperçu montre. Une image, son nom, et ses dimensions **mesurées**. */
@@ -600,7 +602,36 @@ function BandeALEchelle({ bande, facteur }: { bande: Bande; facteur: number }) {
   )
 }
 
+/** **La couche du dessus, comme `CadreDialogue` (RV26).** L'aperçu montait en
+ *  `fixed z-50` de la page ordinaire — sous la couche du dessus où `showModal()`
+ *  pose une fenêtre : Espace sur une vignette de « Modifier la fiche » ouvrait
+ *  l'agrandissement *derrière* elle, aucun `z-index` ne passant devant cette
+ *  couche. Un `<dialog>` ouvert par `showModal()` s'y pose lui aussi, et le
+ *  dernier ouvert y passe devant — c'est la seule chose qui compte ici, la
+ *  fenêtre en dessous n'a rien à savoir de cet aperçu.
+ *
+ *  ⚠️ **Échap ne doit fermer que lui.** La touche est déjà interceptée plus
+ *  haut, en capture sur la fenêtre (`useApercu`), *avant* qu'elle n'atteigne
+ *  ce `<dialog>` ou celui d'une fenêtre dessous — sans quoi l'événement natif
+ *  `cancel` du navigateur fermerait ce `<dialog>`-ci pendant que la capture
+ *  fermerait aussi l'aperçu par l'état React : deux gestes pour une pression.
+ *  `onCancel` ici n'est qu'un filet, au cas où ce `<dialog>` recevrait quand
+ *  même l'événement natif — même geste que `CadreDialogue`. Fermé par
+ *  `onFermer` (jamais par un `close()` direct), le focus revient de lui-même
+ *  dans la fenêtre du dessous : c'est le comportement natif d'un `<dialog>`
+ *  qui se ferme. */
+function useCoucheDuDessus(dialogue: RefObject<HTMLDialogElement | null>) {
+  useEffect(() => {
+    const d = dialogue.current
+    if (!d) return
+    d.showModal()
+    return () => { d.close() }
+  }, [])
+}
+
 export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void }) {
+  const dialogue = useRef<HTMLDialogElement>(null)
+  useCoucheDuDessus(dialogue)
   const scene = useRef<HTMLDivElement>(null)
   const [place, setPlace] = useState({ l: 0, h: 0 })
   const [vue, setVue] = useState(AJUSTE)
@@ -703,12 +734,12 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
     )
 
   if (sujet.prose)
-    return (
-      <div
-        role="dialog"
-        aria-modal
+    return createPortal(
+      <dialog
+        ref={dialogue}
         aria-label="Aperçu"
-        className="fixed inset-0 z-50 flex flex-col bg-encre/92"
+        onCancel={(evenement) => { evenement.preventDefault(); evenement.stopPropagation(); onFermer() }}
+        className="m-0 h-full w-full max-h-full max-w-full border-0 bg-encre/92 p-0 fixed inset-0 z-50 open:flex open:flex-col"
       >
         {/* **Une colonne de prose bornée à 504 px, et elle défile.** C'est la
             seconde et dernière surface du produit qui a le droit à une largeur
@@ -742,15 +773,16 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
             <span>Espace ou Échap · fermer</span>
           </div>
         </footer>
-      </div>
+      </dialog>,
+      document.body,
     )
 
-  return (
-    <div
-      role="dialog"
-      aria-modal
+  return createPortal(
+    <dialog
+      ref={dialogue}
       aria-label="Aperçu"
-      className="fixed inset-0 z-50 flex flex-col bg-encre/92"
+      onCancel={(evenement) => { evenement.preventDefault(); evenement.stopPropagation(); onFermer() }}
+      className="m-0 h-full w-full max-h-full max-w-full border-0 bg-encre/92 p-0 fixed inset-0 z-50 open:flex open:flex-col"
     >
       <div
         ref={scene}
@@ -845,6 +877,7 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
           <span>Espace ou Échap · fermer</span>
         </div>
       </footer>
-    </div>
+    </dialog>,
+    document.body,
   )
 }
