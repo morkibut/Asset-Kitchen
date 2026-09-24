@@ -213,7 +213,15 @@ def poches_de_fond(
 #: rester du sujet. Élargir la tolérance est le geste d'une passe qui retire ;
 #: ce n'est pas celui d'une mesure qui doit rester fiable quel que soit le
 #: réglage posé à côté.
-TOLERANCE_FOND_VISE = 16
+#:
+#: **Relevée de 16 à 24 le 24 septembre 2026, sur l'image réelle de
+#: l'auteur** : la quantification du rendu décale la couleur du fond de
+#: dix-huit sur une vitre de bus (`#38b83c` visé, `#3ca649` rendu, ~2000
+#: pixels), et la mesure travaille sur le rendu (voir la classe) — à 16, elle
+#: ne voyait que 132 pixels en 3 zones ; à 20 et au-delà, elle se stabilise à
+#: 2200 pixels en 22 zones, un plateau net. 24 reste sous les 28 d'une passe
+#: de détourage tout en couvrant ce plateau.
+TOLERANCE_FOND_VISE = 24
 
 #: En dessous de cette aire — un carré de trois pixels de côté —, une poche
 #: est du bruit de compression ou de quantification, jamais un morceau de

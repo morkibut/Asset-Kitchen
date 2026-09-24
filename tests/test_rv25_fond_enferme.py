@@ -110,6 +110,27 @@ def test_deux_poches_se_comptent_toutes_les_deux():
     assert zones_de_fond_enferme(rgba, fond) == 2
 
 
+def test_une_poche_decalee_par_la_quantification_est_quand_meme_comptee():
+    """**Le cas réel de l'auteur, reproduit sans son fichier.** La mesure lit
+    le *rendu final* (voir la classe) — bords, contour et quantification
+    compris —, mais la couleur qu'elle vise est celle que le détourage a
+    réellement demandée pour le fond. Entre les deux, la réduction à une
+    palette peut décaler la couleur d'un fond que le sujet enferme : sur
+    l'image de l'auteur, `#38b83c` visé ressort `#3ca649` dans les vitres
+    d'un bus, un écart de 18 sur le canal le plus large — au-delà de l'ancien
+    seuil de 16, qui ratait donc la poche. **Tombe avec l'ancien seuil** :
+    l'assertion à 16 documente la régression que RV25 a payée.
+    """
+    fond_vise = (0x38, 0xB8, 0x3C)  # le fond réellement visé par le détourage
+    fond_quantifie = (0x3C, 0xA6, 0x49)  # ce que la quantification en fait dans le rendu
+    assert max(abs(a - b) for a, b in zip(fond_vise, fond_quantifie)) == 18
+
+    rendu = _rendu(fond=fond_quantifie, poche=(fond_quantifie, (12, 12, 19, 19)))
+
+    assert zones_de_fond_enferme(rendu, fond_vise, tolerance=16) == 0
+    assert zones_de_fond_enferme(rendu, fond_vise) == 1
+
+
 def test_la_mesure_ne_modifie_rien():
     """Comme les cinq autres mesures de ce module : elle décrit, elle ne
     touche jamais au tableau qu'on lui donne."""
