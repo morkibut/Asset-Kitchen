@@ -437,6 +437,8 @@ texte composé côté serveur, déjà couvert par « Relire avant l'envoi ».
 
 ### TN8 · Ouvrir la transparence aux planches (proposition, non codée)
 
+> **Tranché par l'auteur le 25 septembre 2026** : oui, mais **d'abord un troisième sujet** — un banc de huit planches sur un autre personnage (gratuit, carte graphique) ; s'il est propre, on ouvre aux planches **de création seulement**, la planche d'équipement reste fermée.
+
 **Posée par le banc de TN6, pas codée** : le critère d'ouverture posé au 22 septembre — huit
 planches propres sur huit — est atteint deux fois le 25 septembre (mage 2×2, renard en marche,
 `docs/modeles-et-workflows.md` § Le banc de transparence rejoué par l'atelier). Rien de ce
