@@ -239,6 +239,25 @@ arrive détouré par le modèle, comme depuis l'écran.
 **Critères.** Un essai MCP de bout en bout, avec un ComfyUI doublé : l'image arrive transparente,
 détourage en sommeil.
 
+**Faite le 25 septembre 2026.** `tests/test_tn5_agent.py` (4 essais), bout en bout par le vrai
+serveur MCP (`serveur.call_tool`, comme `tests/test_t7.py`). **Le double reprend celui de TN2 et
+TN3** — un modèle distant de plus qui déclare `transparence=True`, le même `essai:rend-du-vide` —
+plutôt qu'un double ComfyUI : la règle ne distingue jamais le transport, et les trois tranches
+jouent ainsi le même modèle. Un personnage fabriqué par `generate_asset` sur ce modèle reçoit une
+image reprise de `tests/fixtures/banc_tn3/` (« voleur-pixel ») et naît détourée par le modèle —
+`recette.fond_du_modele` et `recette.dort(DETOURAGE)`, lus par le même chemin que l'écran
+(`ServiceGenerations.transparence_de_l_appel`, `demandee_par`). `list_models` montre
+`transparent_background` (posé en TN1). Le cas témoin : un décor par l'agent (`kind="décor"`)
+ne demande pas la transparence. **Un écart trouvé, corrigé dans le montage de l'essai, pas dans
+le service** : `generate_asset` respecte le modèle imposé par défaut (F6, `MODELE_EXPLORATION` =
+`Pollinations:sana`, qui ne déclare pas la transparence) — sans lever ce garde-fou
+(`atelier.agent.regler(modele_actif=False)`, dans le montage du `mcp`), le modèle demandé par
+l'essai était ignoré et la règle de TN5 semblait ne jamais se déclencher. Ce n'est pas un écart
+entre l'écran et l'agent — l'écran n'a pas ce garde-fou — donc rien n'a changé côté service.
+8octies : vérifié en débranchant `ServiceGenerations.transparence_de_l_appel` (`return False`
+ajouté puis retiré) — les deux essais qui portent la règle tombent, les deux autres (`list_models`,
+décor) restent verts.
+
 ### TN6 — Le banc rejoué, puis les planches
 
 **Ce qu'on voit.** Une section du banc dans `docs/modeles-et-workflows.md`.
