@@ -3173,6 +3173,16 @@ export const AIDE: Record<string, Explication> = {
     origine: "la demande de fond vide, et l'image reçue",
   },
 
+  "fiche.sujet-troue": {
+    nom: "Une partie du sujet est sortie transparente",
+    ou: "case",
+    groupe: "Ce que l'image est — imposé par le jeu, sa recette",
+    quoi: "Le modèle a rendu un grand morceau du sujet aussi vide que le fond — une robe blanche, par exemple. Un bras écarté du corps ne compte pas.",
+    change:
+      "« Refaire sur fond coloré » reprend les mêmes réglages sans le fond vide ; l'appel part par la barre qui paie, prix ou temps annoncé.",
+    origine: "l'image reçue, mesurée par l'atelier",
+  },
+
   "tables.png": {
     nom: "PNG ↓",
     ou: "case",

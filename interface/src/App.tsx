@@ -1239,6 +1239,10 @@ function AtelierApp() {
    *  planche du sujet, sinon de la première image jointe. Une intention de cet
    *  appel-ci, comme la cible : elle retombe dès qu'il est parti. */
   const [garderMiseEnPage, setGarderMiseEnPage] = useState(false)
+  /** **Refaire sur fond coloré** (TN4) : cochée par le geste de la fiche d'une
+   *  image dont une partie est sortie transparente. Une intention de cet
+   *  appel-ci : elle retombe dès qu'il est parti. */
+  const [fondColore, setFondColore] = useState(false)
   /** **La couper à l'arrivée** (RS7). Recochée chaque fois que la mise en page
    *  l'est (`BarreQuiPaie`) ; ne part qu'avec elle (`paiement.ts`). */
   const [decouperALArrivee, setDecouperALArrivee] = useState(true)
@@ -1767,6 +1771,8 @@ function AtelierApp() {
     enPlanche,
     garderMiseEnPage,
     setGarderMiseEnPage,
+    fondColore,
+    setFondColore,
     decouperALArrivee,
     setEnvoi,
     envoiOuvert,
@@ -1882,6 +1888,7 @@ function AtelierApp() {
     setModeleChoisi,
     poserLaRacine,
     setGarderMiseEnPage,
+    setFondColore,
     setOptions,
     setPrompt,
     setPromptNegatif,
@@ -2027,6 +2034,8 @@ function AtelierApp() {
       onGarderMiseEnPage={cible?.premierePlanche ? undefined : setGarderMiseEnPage}
       decouperALArrivee={decouperALArrivee}
       onDecouperALArrivee={setDecouperALArrivee}
+      fondColore={fondColore}
+      onFondColore={setFondColore}
       options={options}
       onOptions={setOptions}
       reinjections={reinjections}
@@ -3035,7 +3044,7 @@ function AtelierApp() {
              dans *Ses images* depuis que le produit n'a plus qu'un seul volet de
              fiche, et ces deux gestes-là sont les siens depuis toujours. */
           onReinjecter={reinjecter}
-          onReglages={(asset) => { void reprendreReglages(asset) }}
+          onReglages={(asset, reprise) => { void reprendreReglages(asset, reprise) }}
           onRetirerLEmploi={(piece, emploi) => void retirerUnEmploi(piece, emploi)}
         />
       )}

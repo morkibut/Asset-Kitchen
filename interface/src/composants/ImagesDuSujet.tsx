@@ -881,7 +881,9 @@ export function ImagesDuSujet({
    *  cette image au générateur, et reprendre les réglages de sa génération. Ni
    *  l'un ni l'autre ne dépense — la barre qui paie est au pied de la page. */
   onReinjecter: (asset: string, role: Role) => void
-  onReglages: (asset: Asset) => void
+  /** `fondColore` : « Refaire sur fond coloré » (TN4), la même reprise sans
+   *  le fond vide. */
+  onReglages: (asset: Asset, reprise?: { fondColore?: boolean }) => void
   onErreur: (erreur: unknown, defaut: string) => void
   /** **Le sujet, relu après un geste qui l'écrit** (RP19) : choisir l'image de
    *  référence change la fiche du haut de la page, et elle doit changer
@@ -1476,6 +1478,7 @@ export function ImagesDuSujet({
           onErreur={(raison) => onErreur(raison, raison)}
           onReinjecter={(role) => onReinjecter(image.identifiant, role)}
           onReglages={() => onReglages(image)}
+          onRefaireSurFondColore={() => onReglages(image, { fondColore: true })}
           onSupprimer={() => {
             onEcarter([image.identifiant])
             setChoisie(null)

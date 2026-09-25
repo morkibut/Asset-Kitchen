@@ -803,6 +803,9 @@ class CorpsGeneration(BaseModel):
     # ni palette à sa naissance — la toile qui fabrique en a besoin, une chose
     # du jeu jamais. Ce que l'appel envoie au modèle ne change pas.
     brut: bool = False
+    # **Refaire sur fond coloré** (TN4) : la même demande sans le fond vide,
+    # sur la couleur que l'atelier calcule. Posé par le geste de la fiche.
+    fond_colore: bool = False
 
 
 @routeur.post("/generations", status_code=202)
@@ -826,6 +829,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         decouper_a_l_arrivee=corps.decouper_a_l_arrivee,
         premiere_planche=corps.premiere_planche,
         brut=corps.brut,
+        fond_colore=corps.fond_colore,
     )
     atelier = _atelier(requete)
     generation = await atelier.generations.soumettre(
@@ -898,6 +902,9 @@ class CorpsApercu(BaseModel):
     # retire l'ambiance et les artworks de ce qui part : la relecture doit le
     # recevoir pour le dire.
     brut: bool = False
+    # Refaire sur fond coloré (TN4) — même drapeau que `CorpsGeneration` :
+    # l'écran qui relit avant l'envoi montre le fond qui partira vraiment.
+    fond_colore: bool = False
 
 
 @routeur.post("/prompt/preview")
@@ -938,6 +945,7 @@ async def apercu_prompt(requete: Request, corps: CorpsApercu) -> dict[str, Any]:
         sujets=corps.sujets,
         premiere_planche=corps.premiere_planche,
         brut=corps.brut,
+        fond_colore=corps.fond_colore,
     )
 
 
@@ -993,6 +1001,7 @@ async def envoi(requete: Request, corps: CorpsEnvoi) -> dict[str, Any]:
         sujets=corps.sujets,
         premiere_planche=corps.premiere_planche,
         brut=corps.brut,
+        fond_colore=corps.fond_colore,
     )
 
 

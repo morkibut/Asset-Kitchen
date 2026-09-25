@@ -1361,7 +1361,9 @@ export function Galerie({
   personnages: Personnage[]
   plan: Pose[]
   reinjecter: (asset: string, role: Role) => void
-  reprendreReglages: (asset: Asset) => void
+  /** `fondColore` : « Refaire sur fond coloré » (TN4), la même reprise sans
+   *  le fond vide. */
+  reprendreReglages: (asset: Asset, reprise?: { fondColore?: boolean }) => void
   setChantier: React.Dispatch<React.SetStateAction<Generation[]>>
   setChoseOuverte: (sujet: string | null) => void
   poserLaRacine: (prochaine: Racine) => void
@@ -1678,6 +1680,7 @@ export function Galerie({
               onErreur={setPanne}
               onReinjecter={(role) => reinjecter(ouverte.identifiant, role)}
               onReglages={() => void reprendreReglages(ouverte)}
+              onRefaireSurFondColore={() => void reprendreReglages(ouverte, { fondColore: true })}
               onSupprimer={() => void supprimer([ouverte.identifiant])}
               // **Les deux portes** (E4). L'établi de la chose à qui l'image
               // appartient — un onglet plus loin, à la profondeur de la

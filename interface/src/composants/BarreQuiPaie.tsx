@@ -77,6 +77,8 @@ export function BarreQuiPaie({
   onGarderMiseEnPage,
   decouperALArrivee = true,
   onDecouperALArrivee,
+  fondColore = false,
+  onFondColore,
   options,
   onOptions,
   reinjections,
@@ -135,6 +137,11 @@ export function BarreQuiPaie({
    *  `onDecouperALArrivee`, elle n'est pas montrée. */
   decouperALArrivee?: boolean
   onDecouperALArrivee?: (v: boolean) => void
+  /** **Sur fond coloré** (TN4) : cochée par « Refaire sur fond coloré » sur la
+   *  fiche d'une image trouée. Montrée tant qu'elle est cochée. Sans
+   *  `onFondColore`, jamais. */
+  fondColore?: boolean
+  onFondColore?: (v: boolean) => void
   options: Record<string, string>
   onOptions: (o: Record<string, string>) => void
   reinjections: Reinjection[]
@@ -340,6 +347,12 @@ export function BarreQuiPaie({
             affiché puis remplacé une seconde plus tard apprendrait moins que
             rien du tout. */}
         {onGarderMiseEnPage && onDecouperALArrivee && garderMiseEnPage && decouperALArrivee && cases === 0 && posesCible.length === 0 && personnageCible && ordreDesVues !== null && <p className="col-span-2 pl-[22px] text-encre-3">{phraseDecoupeALArrivee(personnageCible, ordreDesVues)}</p>}
+        {/* **Sur fond coloré** (TN4). Seulement tant qu'elle est cochée — par
+            le geste de la fiche, ou par la reprise d'un appel qui l'était —,
+            pour qu'on voie qu'elle part et qu'on puisse la décocher. Offerte
+            partout, elle serait inerte sur un décor, une planche ou un modèle
+            qui ne rend pas de fond vide (8nonies). */}
+        {onFondColore && fondColore && <label className="col-span-2 flex items-start gap-[8px]"><input type="checkbox" className="mt-[3px]" checked={fondColore} onChange={(e) => onFondColore(e.target.checked)} /><span><span className="block font-medium">Sur fond coloré</span><span className="block text-encre-3">Le modèle peint un fond de couleur au lieu d’un fond vide, et l’atelier détoure l’image à l’arrivée.</span></span></label>}
         {modele && Object.entries(modele.options)
           // **`force` a sa propre section, plus bas, et seulement quand elle
           // agit** (règle 8nonies) — cette liste-ci ne la redit pas.

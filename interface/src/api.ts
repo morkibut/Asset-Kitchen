@@ -222,6 +222,9 @@ export type Generation = {
     decouper_a_l_arrivee?: boolean
     /** **C'était la première planche du sujet** (TS3) — absent sinon. */
     premiere_planche?: boolean
+    /** **L'appel était refait sur fond coloré** (TN4) — absent sinon.
+     *  « Reprendre les réglages » la recoche sur ce champ. */
+    fond_colore?: boolean
   }
   parametres_resolus: Record<string, unknown>
   ecartees: string[]
@@ -4641,6 +4644,11 @@ export type Impose = {
    *  d'origine, jamais sur la recette — que tu as pu réveiller depuis. Absent
    *  d'un serveur d'avant la tranche, ce qui veut dire non. */
   detouree_par_le_modele?: boolean
+  /** **Une partie du sujet est sortie transparente** (TN4) : sur une image
+   *  détourée par le modèle, un grand vide enfermé derrière le trait du
+   *  sujet. Recalculé sur l'image d'origine à chaque lecture. Absent d'un
+   *  serveur d'avant la tranche, ce qui veut dire non. */
+  sujet_troue?: boolean
 }
 
 /** **Comment une image est venue** (D1). Deux, et deux seulement : ce qui
@@ -5263,6 +5271,9 @@ export const api = {
     /** **L'image arrive brute** (TS4) : ni détourage, ni réduction, ni grille,
      *  ni palette à sa naissance — ce que la toile qui fabrique promet. */
     brut?: boolean
+    /** **Refaire sur fond coloré** (TN4) : pas de fond vide demandé au modèle,
+     *  la couleur que l'atelier calcule à la place. */
+    fond_colore?: boolean
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",
@@ -5329,6 +5340,8 @@ export const api = {
      *  l'ambiance ni les artworks ne partent : la relecture doit l'envoyer
      *  pour dire exactement ce qui part. */
     brut?: boolean
+    /** **Refaire sur fond coloré** (TN4) — même drapeau que `generer`. */
+    fond_colore?: boolean
   }) =>
     appeler<Envoi>("/outgoing", {
       method: "POST",

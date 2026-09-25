@@ -164,6 +164,9 @@ class ServiceEnvoi:
         # **La toile** (TS4) : avec `repris`, ni ambiance ni artworks ne
         # partent — ici comme à la soumission (`sans_le_style_du_jeu`).
         brut: bool = False,
+        # **Refaire sur fond coloré** (TN4) : pas de fond vide demandé, et
+        # l'écran montre la couleur calculée — comme à la soumission.
+        fond_colore: bool = False,
     ) -> dict[str, Any]:
         """Tout ce que l'écran montre, en un aller-retour.
 
@@ -214,6 +217,7 @@ class ServiceEnvoi:
             sujets=sujets,
             premiere_planche=premiere_planche,
             brut=brut,
+            fond_colore=fond_colore,
         )
         lignes = apercu["lignes"]
         cases = self._cases(poses, directions, piece, sujets)

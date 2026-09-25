@@ -129,6 +129,15 @@ class Demande:
     # décide si le *rendu* — le cache affiché — s'en écarte ou non.
     brut: bool = False
 
+    # **Refaire sur fond coloré** (TN4, 25 septembre 2026) : l'auteur a vu une
+    # partie du sujet sortir transparente, et il redemande la même image **sans**
+    # le fond vide — sur la couleur que l'atelier calcule, comme pour un modèle
+    # qui n'a pas la capacité. Posé par l'auteur, jamais par le produit (T1 :
+    # rien n'est relancé tout seul). C'est un fond imposé pour cet appel, comme
+    # une couleur choisie sur l'écran de confirmation, sans avoir à en choisir
+    # une (`transparence_demandee`, `fond_impose`).
+    fond_colore: bool = False
+
     # **Le fond vide a été demandé au modèle** (TN2, 25 septembre 2026). Jamais
     # posé par l'appelant : le service le décide (`transparence_demandee`, dans
     # `atelier/domaine/transparence.py`) au moment de composer le texte, et
@@ -197,4 +206,8 @@ class Demande:
         # génération d'avant la tranche dit en se relisant (`demandee_par`).
         if self.transparence:
             resume["transparence"] = True
+        # Même règle (TN4) : la relance et « reprendre les réglages » le relisent
+        # — refaire un appel refait sur fond coloré le refait sur fond coloré.
+        if self.fond_colore:
+            resume["fond_colore"] = True
         return resume
