@@ -262,6 +262,25 @@ PORTEES = (TACHE, PARTOUT)
 # quantification ne fera jamais rien.
 SEUIL_ALPHA = 128
 
+# ── L'alpha rendu par le modèle (TN3) ────────────────────────────────────────
+#
+# **Mesurés le 25 septembre 2026 sur les huit tirages du banc du 22 septembre**
+# (Qwen-Image 2.1, `Comfy-Desktop/ComfyUI-Shared/output/banc-rgba/`).
+#
+# *Le voile.* Sous son fond vide, le modèle laisse un alpha de 1 à 3 sur 30 à
+# 50 % de l'image, et jusqu'à 15 sur les deux tirages en pixel art ; le sujet,
+# lui, est à 250 et plus. Seize coupe le voile avec une marge de chaque côté, et
+# c'est aussi le seuil qui décide qu'un cadre est « vide » (`fond_vide`).
+SEUIL_DU_VIDE = 16
+# *Le pixel du modèle.* Sur les deux tirages en pixel art, **aucun pixel coloré
+# du sujet n'est entre 128 et 240** : tout ce qui y vit est sombre — le trait du
+# contour et les débris que le coffre a semés autour de lui (4,2 % de l'image,
+# contre 1,4 % pour le voleur). À 128, le seuil d'un détourage, les débris
+# ressortent **opaques et noirs** autour du coffre ; à 240 il n'en reste que
+# deux miettes, et le voleur ne change pas à l'œil. À 250, le coffre perd son
+# trait.
+SEUIL_DU_PIXEL_DU_MODELE = 240
+
 
 # En deçà de cet écart par canal, un pixel n'a pas changé. Étalonné le 28 août
 # 2026 par `essais/essai_silhouette.py` : à 64 px de sujet, un contour qui
@@ -2272,6 +2291,27 @@ class Recette:
 
     nom: str | None = None  # une recette nommée est une recette (US-66)
 
+    # **Le fond vide vient du modèle** (TN3, 25 septembre 2026). Posé à la
+    # naissance, et seulement quand la génération a *demandé* la transparence
+    # **et** que le brut est *arrivé* avec un vrai fond vide
+    # (`atelier.image.traitement.fond_vide`) ; la place du détourage dort alors
+    # à côté de lui. Ce n'est pas un réglage mais un fait de l'image — il ne
+    # voyage pas (`voyage`) — et il dit deux choses au traitement :
+    #
+    # · **l'image a une silhouette** quand aucune passe n'agit : la case de la
+    #   grille et le lit de couleur la suivent comme ils suivent un détourage
+    #   (`a_une_silhouette`). Sans lui, endormir le détourage d'un personnage
+    #   rendu transparent l'aurait réduit tout entier au lieu de le mettre en
+    #   case — mesuré sur le banc du 22 septembre ;
+    # · **l'alpha du modèle se finit** (`seuil_du_fond_du_modele`) : sous le
+    #   fond vide, Qwen laisse un voile d'alpha de 1 à 15 sur toute l'image, que
+    #   le recadrage prendrait pour du sujet.
+    #
+    # Écrit **seulement quand il est vrai**, comme le retournement : une recette
+    # qui ne le porte pas garde son JSON canonique, donc son empreinte, à
+    # l'octet près.
+    fond_du_modele: bool = False
+
     # ── Ce qu'elle est ───────────────────────────────────────────────────────
 
     @property
@@ -2303,6 +2343,7 @@ class Recette:
             or self.contours
             or self.retournement
             or self.main
+            or self.fond_du_modele
         )
 
     @property
@@ -2415,6 +2456,8 @@ class Recette:
             # ferait recalculer un rendu déjà en cache.
             "veille": sorted(self.veille),
             "nom": self.nom,
+            # Écrit seulement quand il est vrai (TN3) — la règle du retournement.
+            **({"fond_du_modele": True} if self.fond_du_modele else {}),
         }
 
     @staticmethod
@@ -2457,6 +2500,7 @@ class Recette:
                 sorted({p for p in d.get("veille") or () if p in PLACES})
             ),
             nom=d.get("nom"),
+            fond_du_modele=bool(d.get("fond_du_modele")),
         )
 
     # ── La veille ────────────────────────────────────────────────────────────
@@ -2501,6 +2545,44 @@ class Recette:
             return ()
         return tuple(p for p in self.passes if not p.masquee)
 
+    def a_une_silhouette(self) -> bool:
+        """Ce que la recette traite **a-t-il une silhouette** ? (TN3)
+
+        La question que la case de la grille et le lit de couleur posaient à
+        `passes_vives` — *avoir demandé un détourage, c'est avoir dit que ce
+        qu'on traite est un sprite* — avec une seconde réponse possible : le
+        modèle a rendu le fond vide lui-même (`fond_du_modele`). Une passe qui
+        agit répond d'abord : réveiller le détourage rend donc exactement le
+        chemin d'avant TN3.
+
+        Sans le fond du modèle, c'est `passes_vives` et rien d'autre : la
+        promesse de la veille (U4) tient à l'identique pour toutes les autres
+        recettes.
+        """
+        return bool(self.passes_vives()) or self.fond_du_modele
+
+    def seuil_du_fond_du_modele(self) -> int | None:
+        """Le seuil qui finit l'alpha rendu par le modèle — ou `None` (TN3).
+
+        `None` dès qu'une passe agit : c'est alors le détourage de l'atelier
+        qui pose l'alpha, comme avant. Sinon, deux seuils mesurés sur le banc
+        du 22 septembre 2026 :
+
+        · **sans grille**, `SEUIL_DU_VIDE` : le voile de 1 à 15 que le modèle
+          laisse sous son fond vide tombe à zéro, et le reste de l'alpha — une
+          fumée, le bord adouci d'une fiole — est gardé tel quel ;
+        · **avec une grille éveillée**, `SEUIL_DU_PIXEL_DU_MODELE`, tout ou
+          rien : l'alpha se durcit avant la réduction, comme un détourage le
+          fait (l'en-tête de `atelier/image/traitement.py`), et assez haut pour
+          effacer les débris sombres à demi transparents que le modèle sème
+          autour d'un sprite en pixel art.
+        """
+        if not self.fond_du_modele or self.passes_vives():
+            return None
+        if self.grille is not None and not self.dort(GRILLE):
+            return SEUIL_DU_PIXEL_DU_MODELE
+        return SEUIL_DU_VIDE
+
     @property
     def decoupe(self) -> bool:
         """Cette recette **détoure ou recadre-t-elle** ce qu'elle reçoit ? (RG8)
@@ -2543,7 +2625,7 @@ class Recette:
         return (
             self.grille is not None
             and not self.dort(GRILLE)
-            and bool(self.passes_vives())
+            and self.a_une_silhouette()
         )
 
 
@@ -2630,6 +2712,16 @@ def voyage(recette: Recette) -> tuple[Recette, tuple[str, ...]]:
     if main is not None:
         main = None
 
+    # **Le fond vide rendu par le modèle** (TN3). C'est un fait de *cette*
+    # image — son brut est arrivé transparent —, pas un réglage : posé sur une
+    # image opaque, il la mettrait en case sans rien lui retirer. Il reste
+    # donc ici, et le détourage que ce fond endormait se réveille avec lui :
+    # ailleurs, c'est de nouveau l'atelier qui détoure.
+    veille = recette.veille
+    if recette.fond_du_modele:
+        laisse.append("le fond vide rendu par le modèle — il appartient à cette image-là")
+        veille = tuple(p for p in veille if p != DETOURAGE)
+
     # **Le retournement voyage entier, et il n'y a donc rien à retirer** (B1).
     # Un sens est un réglage : *gauche-droite* dit la même chose sur n'importe
     # quelle image, comme une tolérance de 28. La ligne est écrite quand même,
@@ -2644,6 +2736,8 @@ def voyage(recette: Recette) -> tuple[Recette, tuple[str, ...]]:
             recadrage=recadrage,
             grille=grille,
             main=main,
+            veille=veille,
+            fond_du_modele=False,
         ),
         tuple(laisse),
     )

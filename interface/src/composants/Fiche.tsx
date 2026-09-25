@@ -48,7 +48,8 @@ import { sujetAsset, useVisee } from "./Apercu"
 import { Bloc, Bouton, EnTetePanneau, Libelle, Raison, Segments } from "./pieces"
 import { PANNEAU } from "./Infobulle"
 import { posesTenues } from "../production"
-import { MOTEUR, RESUME } from "../recette"
+import { MOTEUR, RESUME, avecVeille, dort } from "../recette"
+import { Interrupteur } from "./Retouche"
 // P1c (V3.5) : refaire, lister et supprimer les découpages d'une planche.
 import { LesDecoupagesDeLaPlanche } from "./Depliages"
 import { BoutonCopierTexte } from "./TexteEnvoye"
@@ -410,6 +411,16 @@ export function Fiche({
               c'est une décision, et elle doit se voir sans ouvrir le bloc replié
               « Ce que le jeu lui a fait ». Absente de toute image saine. */}
           <MatiereDetouree asset={asset} onErreur={onErreur} />
+
+          {/* **Détourée par le modèle** (TN3) : la découpe de l'atelier dort
+              parce que le modèle a rendu le fond vide. Ici et non dans le bloc
+              replié, parce que c'est là qu'on la réveille — le même
+              interrupteur que les tables de la retouche. */}
+          <DetoureeParLeModele
+            asset={asset}
+            impose={impose}
+            onErreur={onErreur}
+          />
         </div>
 
         {/* ══ Zone 2 · S'en resservir — l'actuel « Réinjecter », et les deux
@@ -735,6 +746,10 @@ function CeQueLeJeuLuiAFait({
       valeurEtRaison = `oui — « ${impose.echelle} » n'est pas au barème du jeu, il la découpe comme un personnage`
     } else if (plainCadre) {
       valeurEtRaison = `non — ${natureAvecArticle(impose.echelle)} remplit son cadre`
+    } else if (impose.detouree_par_le_modele && dort(recette, "detourage")) {
+      // **Le modèle a rendu le fond vide** (TN3) : la découpe de l'atelier
+      // dort, et c'est la naissance qui l'a endormie, pas un oubli.
+      valeurEtRaison = "en sommeil — détourée par le modèle"
     } else if (passesImposees.length > 1) {
       valeurEtRaison = `${passesImposees.length} passes`
     } else {
@@ -747,7 +762,11 @@ function CeQueLeJeuLuiAFait({
     // **La règle qui corrige le défaut** : comparer les passes posées, pas
     // deviner sur une seule. Vide des deux côtés compare égal — jamais
     // « réglé à la main » sur une matière qui n'a jamais eu de détourage.
-    const main = JSON.stringify(recette.passes) !== JSON.stringify(passesImposees)
+    // Et la veille compte aussi : une découpe réveillée sur une image née
+    // transparente est un choix de l'auteur (TN3).
+    const main =
+      JSON.stringify(recette.passes) !== JSON.stringify(passesImposees) ||
+      dort(recette, "detourage") !== pose.veille.includes("detourage")
     lignes.push({ quoi: "Découpe du contour", valeurEtRaison, marque: main ? "main" : null })
   }
 
@@ -1485,6 +1504,55 @@ function RangerEnMatiere({
  * bibliothèque et que l'agent —, et se relit quand la recette de l'image change : après
  * le geste, la fiche se tait d'elle-même.
  */
+/** **Détourée par le modèle** (TN3), et le geste qui réveille la découpe.
+ *
+ *  Ne paraît que sur une image dont la génération a demandé un fond vide **et**
+ *  qui l'a reçu (`impose.detouree_par_le_modele`, relu sur l'image d'origine
+ *  par le serveur). L'interrupteur est celui des tables de la retouche : une
+ *  place s'éteint sans se vider, et se rallume telle qu'elle était. */
+function DetoureeParLeModele({
+  asset,
+  impose,
+  onErreur,
+}: {
+  asset: Asset
+  impose: Impose | null
+  onErreur: (raison: string) => void
+}) {
+  const [occupe, setOccupe] = useState(false)
+  if (!impose?.detouree_par_le_modele) return null
+  const endormie = dort(asset.recette, "detourage")
+
+  const basculer = async () => {
+    if (occupe) return
+    setOccupe(true)
+    try {
+      await api.poserRecette(asset.identifiant, avecVeille(asset.recette, "detourage", !endormie))
+    } catch (erreur) {
+      onErreur(erreur instanceof Error ? erreur.message : "la découpe n'a pas pu changer")
+    } finally {
+      setOccupe(false)
+    }
+  }
+
+  return (
+    <div data-detouree-par-le-modele className="flex flex-col gap-1.5 rounded-5 border border-trait bg-carte p-2">
+      <Libelle aide="fiche.detouree-par-le-modele">Détourée par le modèle</Libelle>
+      <p className="text-[11px] leading-4 text-encre-3">
+        {endormie
+          ? "Le modèle a rendu le fond vide. La découpe du contour est en sommeil : réveille-la si un morceau du sujet est parti avec le fond."
+          : "Le modèle a rendu le fond vide, et la découpe du contour repasse quand même dessus."}
+      </p>
+      <div className="flex items-center gap-2">
+        <Interrupteur endormie={endormie} onBasculer={() => void basculer()} />
+        <span className="mesure text-[10.5px] text-encre-4">
+          {endormie ? "découpe en sommeil" : "découpe réveillée"}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function MatiereDetouree({
   asset,
   onErreur,

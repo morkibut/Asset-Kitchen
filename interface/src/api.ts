@@ -1834,6 +1834,11 @@ export type Recette = {
    *  que l'ordre des clics n'entre pas dans l'empreinte du rendu. */
   veille: Place[]
   nom: string | null
+  /** **Le fond vide vient du modèle** (TN3) — un fait de l'image, pas un
+   *  réglage : absent de presque toutes les recettes, posé à la naissance
+   *  quand la transparence a été demandée **et** reçue. Le serveur le relit sur
+   *  l'asset et ignore ce que l'écran en renvoie. */
+  fond_du_modele?: boolean
 }
 
 /** Les noms que la veille accepte — ceux des places du traitement.
@@ -4631,6 +4636,11 @@ export type Impose = {
     /** La famille du sujet, quand l'échelle en nommait une. */
     famille: string
   } | null
+  /** **Détourée par le modèle** (TN3) : la génération a demandé un fond vide,
+   *  et l'image est arrivée avec. Relu sur la génération et sur l'image
+   *  d'origine, jamais sur la recette — que tu as pu réveiller depuis. Absent
+   *  d'un serveur d'avant la tranche, ce qui veut dire non. */
+  detouree_par_le_modele?: boolean
 }
 
 /** **Comment une image est venue** (D1). Deux, et deux seulement : ce qui

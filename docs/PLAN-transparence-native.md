@@ -181,6 +181,39 @@ grisée « en sommeil », avec un bouton pour la réveiller.
 actif et sans débris visibles sur damier. Réveiller le détourage d'une image redonne le résultat
 d'aujourd'hui.
 
+- [x] Les six sujets isolés arrivent sans détourage actif et sans débris (mesuré sur les images du
+  banc, pas rejoué par un vrai ComfyUI — c'est TN6).
+- [x] Réveiller le détourage redonne le résultat d'aujourd'hui, au pixel près.
+
+**Faite le 25 septembre 2026.** *La mesure, en une phrase et sans chiffre* : un vrai fond vide,
+c'est un cadre d'image transparent autour d'un sujet franchement opaque ; une image opaque, ou
+dont l'alpha n'est qu'un voile presque plein, n'a pas de cadre transparent.
+(`atelier.image.traitement.fond_vide`, lue sur le brut.) **Chiffres du banc** : 100 % du cadre
+sous 16 d'alpha sur les huit tirages, 0 % sur une image opaque comme sur un alpha de bruit ; seuil
+posé à trois quarts du cadre, plus 1 % d'image opaque (le plus petit sujet en a 4 %).
+**Ce que le banc a appris en route** : le fond « vide » de Qwen n'est pas à zéro — un **voile
+d'alpha de 1 à 15** couvre 30 à 50 % de l'image. Endormir le détourage sans rien d'autre gardait
+l'image entière (le recadrage prenait le voile pour du sujet) et la grille la réduisait tout
+entière au lieu de la mettre en case. D'où `Recette.fond_du_modele`, posé à la naissance à côté
+de la veille : l'image a une silhouette (`a_une_silhouette` : case et lit de couleur), et son
+alpha se finit à la place du détourage (`seuil_du_fond_du_modele`) — le voile tombe sous 16 en
+dessin, la fumée de la salamandre garde son alpha. **Les débris du coffre** : le nettoyage
+(contour, îlots) n'est pas posé par défaut, il ne pouvait pas les effacer — et le détourage
+d'aujourd'hui les durcissait à 128, donc **noirs et opaques** autour du coffre. Tranché : avec
+une grille éveillée, l'alpha du modèle se durcit **tout ou rien à 240** (aucun pixel coloré d'un
+sujet en pixel art n'est entre 128 et 240 ; à 250 le coffre perd son trait) : plus aucun débris
+visible, le voleur ne change pas à l'œil. Autres décisions : `fond_du_modele` est un fait de
+l'image — relu sur l'asset par `_places_de` et `poser_recette`, ignoré dans une charge, retiré
+par `voyage` (qui réveille alors le détourage) ; écrit seulement quand il est vrai (aucune
+empreinte d'avant ne bouge) ; « demandé mais reçu opaque » garde le détourage éveillé et la fiche
+ne dit rien. La fiche porte « Détourée par le modèle » avec l'`Interrupteur` des tables de la
+retouche, et la ligne « Découpe du contour » dit « en sommeil — détourée par le modèle ». Essais :
+`tests/test_tn3_detourage_endormi.py` (35, sur six images du banc ramenées à 192 px dans
+`tests/fixtures/banc_tn3/`), `interface/src/composants/Fiche.tn3.test.tsx` (5). **Non vu au
+navigateur.** Reste : les autres lecteurs de `passes_vives` (découpe d'une planche, calques,
+superposition, bande) traitent encore une image née transparente comme non détourée — sans effet
+tant que les planches n'ont pas la transparence (TN6).
+
 ### TN4 — Un trou dans le sujet se voit à l'arrivée
 
 **Ce qu'on voit.** Si le modèle a rendu une partie du sujet transparente (la robe du mage), la

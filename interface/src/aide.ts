@@ -3163,6 +3163,16 @@ export const AIDE: Record<string, Explication> = {
     origine: "l'image elle-même",
   },
 
+  "fiche.detouree-par-le-modele": {
+    nom: "Détourée par le modèle",
+    ou: "case",
+    groupe: "Ce que l'image est — imposé par le jeu, sa recette",
+    quoi: "Le modèle a rendu cette image sur un fond vide : la découpe du contour de l'atelier est en sommeil.",
+    change:
+      "La réveiller redécoupe l'image comme une image sur fond coloré ; l'endormir revient au fond du modèle. Rien n'est regénéré.",
+    origine: "la demande de fond vide, et l'image reçue",
+  },
+
   "tables.png": {
     nom: "PNG ↓",
     ou: "case",

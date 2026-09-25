@@ -98,6 +98,7 @@ from atelier.domaine.recette import (
     Recadrage,
     Recette,
     Retournement,
+    SEUIL_DU_VIDE,
     TOLERANCE_POCHES,
     Trait,
     parts_de,
@@ -129,6 +130,8 @@ __all__ = [
     "etendre",
     "en_rendu",
     "finir",
+    "finir_le_fond_du_modele",
+    "fond_vide",
     "garder_le_sujet_seul",
     "mesurer_grille",
     "mesures_du_fond",
@@ -1338,6 +1341,81 @@ def mesures_du_fond(rgba: np.ndarray, tolerance: int = 28) -> MesuresDuFond:
         colles=colles,
         part_collee=colles / compte,
     )
+
+
+# ── Le fond vide rendu par le modèle (TN3) ───────────────────────────────────
+#
+# **Ce que la mesure sépare, en une phrase et sans chiffre** — écrite avant le
+# code, comme le demande `AGENTS.md` (8sexies) : *un vrai fond vide, c'est un
+# cadre d'image transparent autour d'un sujet franchement opaque ; une image
+# opaque, ou dont l'alpha n'est qu'un voile presque plein partout, n'a pas de
+# cadre transparent et ne passe pas.*
+#
+# **Le cadre, et pas la part de transparent dans l'image** : un personnage qui
+# remplit presque son image reste « fond vide » si son pourtour l'est, et un
+# alpha de bruit (223 à 255, ce que Qwen rend quand on ne lui demande rien) n'a
+# jamais un pixel de cadre sous le seuil. Mesuré sur le banc du 22 septembre
+# 2026 : **100 %** du cadre sous `SEUIL_DU_VIDE` sur les huit tirages, **0 %**
+# sur une image opaque comme sur un alpha de bruit. Les deux seuils ci-dessous
+# sont posés loin de l'un et de l'autre.
+
+# Au moins les trois quarts du cadre transparents : un sujet peut toucher un
+# bord — un bouton large, un pied posé en bas — sans que le fond cesse d'être
+# vide.
+PART_DU_CADRE_VIDE = 0.75
+# Et un sujet : au moins un centième de l'image franchement opaque. Le plus
+# petit du banc (la planche de marche) en a 4 %. Une image toute transparente
+# n'a pas « un fond vide », elle n'a rien.
+PART_DU_SUJET_MIN = 0.01
+
+
+def fond_vide(image: np.ndarray | bytes) -> bool:
+    """L'image est-elle **arrivée avec un vrai fond vide** ? (TN3)
+
+    La moitié « reçu » de *demandé et reçu* : la génération dit ce qu'elle a
+    demandé (`atelier.domaine.transparence.demandee_par`), cette mesure dit ce
+    qui est revenu. Pure et déterministe, sur le brut — qui ne change jamais :
+    la relire donne toujours la même réponse. Reçoit le tableau ou les octets
+    du fichier ; un fichier illisible n'a pas de fond vide.
+    """
+    if isinstance(image, (bytes, bytearray)):
+        try:
+            with Image.open(io.BytesIO(image)) as ouverte:
+                if "A" not in ouverte.getbands() and "transparency" not in ouverte.info:
+                    return False
+                rgba = np.asarray(ouverte.convert("RGBA"))
+        except (OSError, ValueError):
+            return False
+    else:
+        rgba = image
+    if rgba.ndim != 3 or rgba.shape[2] != 4:
+        return False
+    alpha = rgba[:, :, 3]
+    cadre = np.concatenate([alpha[0, :], alpha[-1, :], alpha[:, 0], alpha[:, -1]])
+    if cadre.size == 0 or float((cadre < SEUIL_DU_VIDE).mean()) < PART_DU_CADRE_VIDE:
+        return False
+    return float((alpha >= 128).mean()) >= PART_DU_SUJET_MIN
+
+
+def finir_le_fond_du_modele(rgba: np.ndarray, seuil: int) -> np.ndarray:
+    """L'alpha rendu par le modèle, fini au `seuil` (TN3).
+
+    Au seuil du vide, seul le voile tombe : ce qui est en dessous passe à zéro,
+    le reste garde son alpha — une fumée reste une fumée. Au seuil du pixel,
+    c'est **tout ou rien**, comme `durcir` : c'est le seul endroit où l'alpha
+    d'une image que l'atelier n'a pas détourée se durcit avant la réduction.
+
+    **La couleur ne bouge pas** (`AGENTS.md`, point 5) : effacer un pixel ne
+    change pas sa couleur, et le lit de couleur, en fin de queue, repeint ce
+    qui est sous la transparence.
+    """
+    sortie = rgba.copy()
+    alpha = sortie[:, :, 3]
+    if seuil > SEUIL_DU_VIDE:
+        sortie[:, :, 3] = durcir(alpha, seuil)
+    else:
+        alpha[alpha < seuil] = 0
+    return sortie
 
 
 def boite_opaque(alpha: np.ndarray) -> tuple[int, int, int, int] | None:
@@ -4040,6 +4118,12 @@ def detourer(recette: Recette, octets: bytes) -> np.ndarray:
         if passe.moteur == MODELE and raison_du_modele(passe.modele) is not None:
             continue
         rgba = _detourer(rgba, passe)
+    # **Le fond rendu par le modèle se finit à la place du détourage** (TN3) :
+    # rien quand une passe agit — `seuil_du_fond_du_modele` rend alors `None` —,
+    # et c'est ce qui fait que réveiller le détourage redonne le rendu d'avant.
+    seuil = recette.seuil_du_fond_du_modele()
+    if seuil is not None:
+        rgba = finir_le_fond_du_modele(rgba, seuil)
     return rgba
 
 
@@ -4311,7 +4395,11 @@ def queue(
         # **Et la même fuite guettait au cran d'en dessous** (U10) : lire « des
         # passes sont écrites » plutôt que « des passes agissent » aurait gardé
         # la case pendant qu'on masque la dernière.
-        detoure = bool(recette.passes_vives())
+        # **Et un fond rendu vide par le modèle en est une aussi** (TN3) : son
+        # détourage dort parce que le modèle l'a fait, pas parce que l'image
+        # serait un décor. `a_une_silhouette` rend `passes_vives` à l'identique
+        # pour toute recette qui ne porte pas `fond_du_modele`.
+        detoure = recette.a_une_silhouette()
         # **La fenêtre commune, quand une bande la fournit** (A2). Sans elle,
         # rien ne change d'un cheveu : l'échelle et le centrage se reprennent sur
         # la boîte de l'image, comme depuis T2.
@@ -4384,7 +4472,11 @@ def queue(
     # C'est la même lecture que la case ci-dessus — `passes_vives`, la seule du
     # dépôt qui réponde à *le détourage agit-il ?* Une seconde façon de la poser
     # finirait par répondre autrement.
-    if recette.passes_vives():
+    #
+    # **Le fond du modèle y a droit aussi** (TN3) : Qwen laisse un violet
+    # (autour de `#A037CD`) sous chaque pixel qu'il rend transparent — le même
+    # liseré à venir que le magenta d'un détourage.
+    if recette.a_une_silhouette():
         rgba = etaler_sous_la_transparence(rgba)
 
     return rgba

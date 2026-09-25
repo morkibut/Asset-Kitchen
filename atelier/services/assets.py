@@ -40,6 +40,7 @@ from atelier.domaine.planche import (
     recette_de_planche_refaite,
 )
 from atelier.domaine.projet import IMAGE_SEULE, PLANCHE
+from atelier.domaine.transparence import demandee_par
 from atelier.domaine.recette import (
     ANCRAGES,
     BORD,
@@ -102,6 +103,8 @@ from atelier.image import (
 from atelier.image.traitement import (
     boite_opaque,
     etat_des_silhouettes,
+    finir_le_fond_du_modele,
+    fond_vide,
     nombre_de_composantes,
     peindre,
     pinceau,
@@ -364,7 +367,13 @@ class ServiceAssets:
         asset = self._trouver(identifiant)
         generation = self._base.lire(asset.generation)
         if generation is None:
-            return {"impose": None, "echelle": "", "nature": "", "detourage": None}
+            return {
+                "impose": None,
+                "echelle": "",
+                "nature": "",
+                "detourage": None,
+                "detouree_par_le_modele": False,
+            }
         # **La nature se lit sur l'asset, pas sur la génération** (D1) : le lot
         # est ce qui dit qu'une image est sortie d'une planche, et c'est déjà
         # lui que l'écran interroge partout ailleurs.
@@ -405,6 +414,11 @@ class ServiceAssets:
             # décidé — c'est exactement ce que le critère demande d'éviter.
             "nature": nature,
             "detourage": self._provenance_du_detourage(generation, nature, echelle),
+            # **« Détourée par le modèle »** (TN3) : demandé et reçu, relu sur la
+            # génération et sur le brut — jamais sur la recette, que l'auteur a
+            # pu réveiller depuis. C'est ce qui permet à la fiche de dire que
+            # le détourage dort *parce que* le modèle l'a fait.
+            "detouree_par_le_modele": self.nee_transparente(generation, asset.rang),
         }
 
     def _provenance_du_detourage(
@@ -1041,9 +1055,42 @@ class ServiceAssets:
         # remettrait la grille que RS2 a retirée. Ses morceaux, eux, la
         # reçoivent (`recette_d_un_morceau_refait`).
         du_sujet = self.recette_du_sujet(generation)
-        return self.avec_la_palette_du_sujet(
+        recette = self.avec_la_palette_du_sujet(
             generation, du_sujet if du_sujet is not None else du_projet
         )
+        # **Née transparente, son détourage dort** (TN3). Seulement s'il y a
+        # un détourage à endormir : une recette sans passe n'a rien demandé de
+        # découper, et le fond du modèle ne la mettrait pas en case à sa place.
+        if recette.passes and self.nee_transparente(generation, rang):
+            recette = replace(recette, fond_du_modele=True).endormie(DETOURAGE, True)
+        return recette
+
+    def nee_transparente(self, generation: Generation, rang: int) -> bool:
+        """Cette image est-elle **détourée par le modèle** ? (TN3)
+
+        *Demandé et reçu*, les deux ensemble. **Demandé** se relit sur la
+        génération (`demandee_par`) — ce qui est parti, pas la règle rejouée
+        aujourd'hui sur un barème ou un catalogue qui ont pu changer. **Reçu**
+        se mesure sur le brut (`fond_vide`) : un modèle qui déclare la capacité
+        peut quand même rendre une image opaque, et le détourage doit alors
+        rester éveillé.
+
+        Le brut ne change jamais : la naissance et la fiche, qui posent toutes
+        deux la question, lisent la même réponse, et un index effacé la
+        retrouve telle quelle.
+        """
+        if not demandee_par(generation.demande):
+            return False
+        emplacement = next(
+            (e for e in generation.emplacements if e.rang == rang), None
+        )
+        if emplacement is None or emplacement.resultat is None:
+            return False
+        try:
+            octets = self._fichiers.lire(emplacement.resultat.fichier)
+        except OSError:
+            return False
+        return fond_vide(octets)
 
     def recette_d_un_morceau_refait(self, generation: Generation) -> Recette:
         """La recette d'un morceau coupé dans la feuille d'une planche refaite.
@@ -1562,6 +1609,11 @@ class ServiceAssets:
         return replace(
             recette, difference=None if reinitialiser else asset.recette.difference,
             passes=moteurs_suivis(asset.recette.passes, recette.passes),
+            # **Le fond du modèle est un fait de l'image, pas une place** (TN3) :
+            # il se relit sur l'asset, jamais sur la charge. Un écran qui ne le
+            # connaît pas, un collage ou une recette nommée ne peuvent donc ni
+            # le perdre ni le poser sur une image qui n'est pas née transparente.
+            fond_du_modele=asset.recette.fond_du_modele,
         )
 
     def poser_recette(self, identifiant: str, recette: Recette) -> Asset:
@@ -1578,7 +1630,9 @@ class ServiceAssets:
         """
         asset = self._trouver(identifiant)
         self._verifier(recette, asset.projet)
-        asset.recette = recette
+        # Le fond du modèle se relit sur l'asset, quel que soit l'appelant — un
+        # agent qui écrit ses `steps` à la main compris (TN3, voir `_places_de`).
+        asset.recette = replace(recette, fond_du_modele=asset.recette.fond_du_modele)
         asset.epingle = True
         self._rendre(asset)
         self.sauver(asset)
@@ -2021,10 +2075,19 @@ class ServiceAssets:
             if endormi
             else (asset.recette.passes if passes is None else passes)
         )
+        # **Le fond rendu par le modèle se finit ici aussi** (TN3), et son seuil
+        # entre dans la clé : c'est la même image que le rendu, donc la même
+        # boîte du sujet pour la table du recadrage et la même couleur sous la
+        # pipette. Des passes imposées (le slicer) ne le lisent pas.
+        seuil = asset.recette.seuil_du_fond_du_modele() if passes is None else None
         cle = f"{asset.identifiant}:{recette.empreinte_passes()}"
+        if seuil is not None:
+            cle = f"{cle}:fond{seuil}"
         rgba = self._detourages.get(cle)
         if rgba is None:
             rgba = detourer(recette, self._fichiers.lire(asset.brut))
+            if seuil is not None:
+                rgba = finir_le_fond_du_modele(rgba, seuil)
             self._garder_detourage(cle, rgba)
         return rgba
 
