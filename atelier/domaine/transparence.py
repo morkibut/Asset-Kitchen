@@ -48,6 +48,7 @@ style dériver vers la 3D sous la seule consigne de transparence.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Mapping
 
 # **La consigne officielle, en deux moitiés, mot pour mot.** Qwen-Image 2.1 ne
@@ -140,6 +141,63 @@ def desencadrer(texte: str, a_la_place: str = "") -> str:
     if not phrase.endswith((".", "!", "?")):
         phrase = f"{phrase}."
     return f"{corps}{_separateur(corps)}{phrase}" if corps else phrase
+
+
+# **La phrase de calage d'un appel sur fond coloré**, telle que
+# `vue.phrase_de_calage` l'écrit — avec sa couleur (`… flat solid #FF00FF magenta
+# background`), sans (`… flat background`), ou redite en fin de texte par
+# `desencadrer` (majuscule, point final). Lue ici pour la retirer d'un texte
+# repris qui part demander un fond vide (`sans_fond_colore`).
+_POSE_SUR_UN_FOND = r"[Ss]ingle isolated sprite on a flat (?:solid [^\n,.]*? )?background"
+# Suivie du calage de grille : seule la pose tombe, le calage reste — c'est
+# exactement ce que `phrase_de_calage(cible, FOND_TRANSPARENT)` écrit.
+_POSE_AVANT_LE_CALAGE = re.compile(_POSE_SUR_UN_FOND + r", (?=strict \d+x\d+ px tile snap)")
+# Seule : elle tombe avec la virgule qui la reliait au reste, ou son point.
+_POSE_SEULE = re.compile(r"(?:,[ \t]*)?" + _POSE_SUR_UN_FOND + r"\.?")
+# L'intitulé de la case où la phrase vit (`projet.INTITULES["technique"]`,
+# redit ici : ce module n'importe rien du domaine), resté sans rien derrière.
+_INTITULE_VIDE = re.compile(r"^Technical constraints:[ \t]*$")
+# Un titre de partie (`envoi.TITRE`, redit pour la même raison).
+_TITRE = re.compile(r"^(?:CONTEXT|REFERENCES|REQUEST)$")
+
+
+def sans_fond_colore(texte: str) -> str:
+    """Le texte **sans la phrase qui pose le sujet sur un fond plat** — le
+    pendant de `desencadrer`, dans l'autre sens (relecture du 25 septembre 2026).
+
+    « Reprendre les réglages » d'une image faite sur fond coloré — toute image
+    Qwen d'avant TN2, ou l'appel refait sur fond coloré de TN4 — rend le texte
+    parti, qui nomme sa couleur de fond. Reparti vers un appel qui demande un
+    fond vide, il était encadré de la consigne **sans perdre sa couleur** : le
+    modèle recevait à la fois « sur un fond plat vert » et « un fond
+    transparent ». La phrase tombe donc ici, au même endroit que la consigne
+    se pose, et le calage de grille qui la suivait reste.
+
+    **Seulement pour un texte repris** (l'appelant le vérifie) : c'est la
+    phrase de l'atelier, redite telle qu'elle est partie. Une bible où l'auteur
+    aurait écrit lui-même les mêmes mots n'est jamais touchée.
+
+    Un texte sans cette phrase revient tel quel, au caractère près.
+    """
+    if not _POSE_SEULE.search(texte):
+        return texte
+    texte = _POSE_AVANT_LE_CALAGE.sub("", texte)
+    texte = _POSE_SEULE.sub("", texte)
+    # Ce que la phrase laisse derrière elle quand elle était seule sur sa
+    # ligne : un intitulé vide, puis un titre de partie sans rien dessous.
+    lignes = [l for l in texte.split("\n") if not _INTITULE_VIDE.match(l.strip())]
+    paragraphes = [
+        p.strip() for p in re.split(r"\n{2,}", "\n".join(lignes)) if p.strip()
+    ]
+    gardes = [
+        p
+        for i, p in enumerate(paragraphes)
+        if not (
+            _TITRE.match(p)
+            and (i + 1 == len(paragraphes) or _TITRE.match(paragraphes[i + 1]))
+        )
+    ]
+    return "\n\n".join(p.lstrip(", ") for p in gardes)
 
 
 def consigne() -> str:
