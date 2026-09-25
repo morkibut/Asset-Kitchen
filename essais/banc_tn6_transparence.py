@@ -49,6 +49,15 @@ Usage ::
     <py> essais/banc_tn6_transparence.py --servir       pareil, puis sert sur
                                                          http://127.0.0.1:8421
                                                          (Ctrl-C pour arrêter)
+    <py> essais/banc_tn6_transparence.py --seulement NOM
+                                                         ne rejoue qu'un sujet ou
+                                                         une planche par son nom
+                                                         (§ TN8 : huit planches
+                                                         sur un troisième
+                                                         personnage seul, sans
+                                                         retirer les six sujets
+                                                         ni le mage/renard —
+                                                         `--seulement planche-directions`)
 
 Coût : 0 $ (modèle local). Temps mesuré : voir `docs/bancs.md`.
 """
@@ -177,6 +186,20 @@ PLANCHES = [
             "Hand-drawn 2D game art, cel shading, thick dark outlines, flat "
             "colours. A sprite sheet with four frames of a small fox walking "
             "to the right, in one row, evenly spaced."
+        ),
+    },
+    # ── TN8 : troisième sujet, choisi contre ce qui risque de trouer (voile
+    #    translucide et blanc, plutôt que la robe du mage ou le pelage du
+    #    renard) — et la forme de planche que le produit fait le plus, la
+    #    planche des directions (TS3/TS19), pas 2×2 ni un cycle de marche.
+    {
+        "nom": "planche-directions",
+        "grille": (1, 4),
+        "prompt": (
+            "Hand-drawn 2D game art, cel shading, thick dark outlines, flat "
+            "colours. A 4-direction character sheet of the same pale ghost "
+            "with a translucent flowing white veil: facing down, facing up, "
+            "facing left, facing right, evenly spaced in one row."
         ),
     },
 ]
@@ -457,6 +480,14 @@ def principal() -> int:
         # Un tirage, un seul sujet, une seule planche : valider le câblage
         # (route, style installé pour de vrai, mesures) avant le vrai lot.
         SUJETS, PLANCHES, TIRAGES_PAR_SUJET = SUJETS[:1], PLANCHES[:1], 1
+    if "--seulement" in sys.argv:
+        # Ne rejoue qu'un sujet ou une planche nommé — huit tirages, sans
+        # retirer ni relancer ce que TN6 avait déjà mesuré (§ TN8).
+        nom = sys.argv[sys.argv.index("--seulement") + 1]
+        SUJETS = [s for s in SUJETS if s["nom"] == nom]
+        PLANCHES = [p for p in PLANCHES if p["nom"] == nom]
+        if not SUJETS and not PLANCHES:
+            raise SystemExit(f"--seulement : aucun sujet ni planche nommé {nom!r}")
     DOSSIER.mkdir(parents=True, exist_ok=True)
     print(f"Dossier jetable : {DOSSIER}")
     atelier = Atelier(racine=DOSSIER)

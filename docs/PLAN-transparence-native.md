@@ -458,3 +458,22 @@ qui suit n'est codé ; c'est une proposition à trancher avant de l'ouvrir.
   pas celles d'une planche de création.
 - Reprendre un banc à huit tirages sur au moins un troisième sujet avant d'ouvrir pour de bon :
   deux planches propres sur deux ne couvrent que ce que TN6 a essayé.
+
+**Banc préalable fait le 25 septembre 2026.** Troisième sujet choisi contre ce qui risque de
+trouer — pâle et translucide, à l'opposé de la robe blanche du mage et du pelage du renard : un
+spectre au voile flottant, translucide, en planche des directions (1×4, TS3/TS19 — la forme de
+planche que le produit fait le plus). Huit tirages, même voie directe que TN6
+(`essais/banc_tn6_transparence.py --seulement planche-directions`, ajouté au script en option,
+sans toucher aux six sujets ni au mage/renard déjà mesurés), 128 s de carte graphique, 0 $.
+Chiffres complets : `docs/modeles-et-workflows.md` § Le troisième sujet du banc.
+
+**Verdict : pas propre.** Fond vide reçu 6/8 — deux tirages ne renvoient même pas un fond
+reconnu comme vide, le voile déforme le violet du modèle au point que `T.fond_vide` ne le
+reconnaît plus. Sur les six qui le renvoient, aucune case n'est signalée trouée par le seuil de
+TN4, mais les débris explosent : 0,00 à 74,27 % de la case en pixels semi-transparents hors
+sujet (moyenne 29,56 %), contre 0,00–3,36 % sur les seize planches propres de TN6. Le risque
+nommé avant le tirage — un sujet aux zones pâles/translucides — casse ce que le mage et le
+renard n'avaient pas révélé. **TN8 ne s'ouvre pas** sur ce risque-là : le critère (huit planches
+propres sur huit) n'est pas atteint une troisième fois. Deux images dans
+`docs/releves/banc-tn6-2026-09-25/` (`planche-directions-fond-non-recu.png`,
+`planche-directions-debris-max.png`).

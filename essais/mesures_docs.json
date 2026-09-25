@@ -1,11 +1,11 @@
 {
- "releve_le": 1790331813.1287036,
+ "releve_le": 1790338389.0139582,
  "repere": {
   "quand": "le 6 septembre 2026, avant la troisième descente",
   "octets": 609876
  },
  "corpus": {
-  "octets": 186273,
+  "octets": 186447,
   "documents": {
    "AGENTS.md": {
     "octets": 37683,
@@ -260,20 +260,20 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 54752,
+    "octets": 54926,
     "titres": 20,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 54279
+      "octets": 54453
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 44,
-      "octets": 25481
+      "octets": 25655
      },
      {
       "titre": "Ce que la remise à plat a mesuré, le 13 septembre 2026",
@@ -587,11 +587,11 @@
  },
  "renvois": {
   "code": {
-   "total": 966,
+   "total": 968,
    "casses": []
   },
   "docs": {
-   "total": 1491,
+   "total": 1493,
    "casses": []
   }
  }
