@@ -30,6 +30,7 @@ from typing import Any
 
 from atelier.domaine.direction import Direction
 from atelier.domaine.fond import dit as fond_dit
+from atelier.domaine.transparence import FOND_TRANSPARENT
 
 # Le jeu qui n'a pas déclaré sa vue. **Une valeur, pas un trou** : un univers qui
 # ne dit pas d'où il regarde ne contraint rien, comme un univers sans artwork ne
@@ -515,7 +516,17 @@ def phrase_de_calage(cible: int, fond: str = "") -> str:
     a un fond comme les autres : le sujet isolé part seul, sans la seconde
     moitié. Coller les deux aurait rendu le fond inatteignable à la moitié des
     projets, et la tranche muette là où elle sert autant.
+
+    ── Le fond vide, arrivé en TN2 ──────────────────────────────────────────
+
+    **Un appel qui demande la transparence n'a pas de fond à nommer**
+    (`FOND_TRANSPARENT`, décidé par `transparence_demandee`). « Sur un fond
+    plat » serait alors une consigne contraire à celle qui encadre le texte :
+    la phrase ne garde que le calage de grille, et se tait sans lui. Le fond
+    vide, lui, est dit par la consigne officielle, en tête et en queue.
     """
+    if fond == FOND_TRANSPARENT:
+        return f"strict {cible}x{cible} px tile snap" if cible else ""
     nomme = fond_dit(fond)
     pose = (
         f"single isolated sprite on a flat solid {nomme} background"

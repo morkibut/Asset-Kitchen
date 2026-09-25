@@ -272,7 +272,11 @@ def _profil_capable(**style_):
 async def test_une_image_locale_avec_alpha_de_bruit_arrive_opaque(tmp_path, double):
     """Bout en bout, à travers `ServiceGenerations._executer_emplacement` : un
     profil qui déclare `transparence: true` — n'importe lequel, pas seulement
-    Qwen — voit son alpha de bruit disparaître à l'arrivée."""
+    Qwen — voit son alpha de bruit disparaître à l'arrivée.
+
+    **Un décor, depuis TN2** : c'est le cas « sans demande de transparence »
+    que cet essai éprouve, et un sujet sans type est un personnage, qui la
+    demande désormais (`tests/test_tn2_texte.py`)."""
     comfy = ComfyDouble()
     comfy.image = _sujet_avec_alpha(240)  # 240 : dans la fourchette du bruit mesuré
     atelier = Atelier(racine=tmp_path / "donnees", fabrique_fournisseur=lambda: double, fabrique_animateur=lambda: AnimateurDouble())
@@ -282,7 +286,7 @@ async def test_une_image_locale_avec_alpha_de_bruit_arrive_opaque(tmp_path, doub
         p = await ajouter(atelier, comfy, _profil_capable(transparence=True))
         assert atelier.catalogue.modele(p["modele"]).transparence is True
         projet = atelier.bibliotheque.courant
-        demande = {"cle": "tn1-alpha", "modele": p["modele"], "prompt": "Un test", "repris": True, "resolution": "64"}
+        demande = {"cle": "tn1-alpha", "modele": p["modele"], "prompt": "Un test", "repris": True, "resolution": "64", "echelle": "décor"}
         travail = await atelier.travaux_workflow.preparer(projet, demande)
         await atelier.travaux.demarrer(projet, travail["identifiant"])
         await atelier.travaux.attendre_tout()

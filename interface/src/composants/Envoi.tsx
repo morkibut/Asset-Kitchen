@@ -294,7 +294,7 @@ export function EcranEnvoi({
                 style local ne le lit pas (`negatifLu === false`), mais le
                 fond part toujours dans le texte et sert au retour — le
                 détourage en dépend. Seule la consigne négative disparaît. */}
-            <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="mb-[14px] font-serif text-[25px]">{local && !negatifLu ? "Fond" : "Fond et prompt négatif"}</h2>{edition ? <div className="[&_.mesure]:text-[12px]"><SectionFond fond={envoi.fond} onFond={couleur => onTri({ ...tri, fond: couleur })} /></div> : <><p>Fond : {envoi.fond.couleur || "aucun fond imposé"}{envoi.fond.nom && ` ${envoi.fond.nom}`}</p>{envoi.fond.motif && <p className="mesure mt-[4px] text-[12px] text-encre-3">fond {envoi.fond.nom || envoi.fond.couleur} : {envoi.fond.motif}</p>}{!(local && !negatifLu) && <p className="mesure mt-[14px] whitespace-pre-wrap text-[12px] leading-relaxed">{envoi.fond.interdiction || "Aucune consigne négative."}</p>}</>}</section>
+            <section className="rounded-7 border border-trait bg-carte p-[22px]"><h2 className="mb-[14px] font-serif text-[25px]">{local && !negatifLu ? "Fond" : "Fond et prompt négatif"}</h2>{edition ? <div className="[&_.mesure]:text-[12px]"><SectionFond fond={envoi.fond} onFond={couleur => onTri({ ...tri, fond: couleur })} /></div> : <>{envoi.fond.transparence ? <><p>Fond : transparent, demandé au modèle</p><p className="mesure mt-[4px] whitespace-pre-wrap text-[12px] leading-relaxed text-encre-3">{envoi.fond.consigne}</p></> : <p>Fond : {envoi.fond.couleur || "aucun fond imposé"}{envoi.fond.nom && ` ${envoi.fond.nom}`}</p>}{envoi.fond.motif && <p className="mesure mt-[4px] text-[12px] text-encre-3">fond {envoi.fond.nom || envoi.fond.couleur} : {envoi.fond.motif}</p>}{!(local && !negatifLu) && <p className="mesure mt-[14px] whitespace-pre-wrap text-[12px] leading-relaxed">{envoi.fond.interdiction || "Aucune consigne négative."}</p>}</>}</section>
             {envoi.retour.length > 0 && <details className="rounded-7 border border-trait bg-carte p-[22px]"><summary className="cursor-pointer font-medium">Traitements appliqués au retour · sur la machine</summary><ul className="mt-[14px] space-y-[8px]">{envoi.retour.map(r => <li key={r.nom}>{r.nom} · {r.detail}</li>)}</ul><p className="mt-[14px] text-encre-3">Les originaux sont conservés. Ces traitements se modifient dans la retouche.</p></details>}
           </div>
           <div className="min-w-0 space-y-[22px]">
@@ -937,7 +937,9 @@ function SectionFond({
           <span className="mesure text-[10px] text-encre-3">
             {fond.couleur
               ? `${fond.couleur}${fond.nom ? ` ${fond.nom}` : ""}`
-              : "aucun fond — le modèle rendra ce qu'il voudra"}
+              : fond.transparence
+                ? "fond transparent — demandé au modèle"
+                : "aucun fond — le modèle rendra ce qu'il voudra"}
           </span>
           {/* **Annuler la correction, et retirer le fond, sont deux gestes** :
               l'un rend la main au calcul, l'autre demande un appel sans fond.
@@ -1006,6 +1008,21 @@ function SectionFond({
           </div>
         )}
 
+        {/* **Le fond vide se dit par une consigne, pas par une couleur** (TN2).
+            Elle vient de l'aperçu, donc de la règle même de l'envoi ; elle est
+            aussi dans le texte, en tête et en queue. Prendre une couleur
+            ci-dessus redemande ce tirage-là sur fond coloré. */}
+        {fond.transparence && fond.consigne && (
+          <div className="flex flex-col gap-1">
+            <span className="mesure text-[9.5px] tracking-[.11em] text-encre-4 uppercase">
+              ce qui part à la place de la couleur
+            </span>
+            <p className="mesure whitespace-pre-wrap rounded-[2px] border border-trait bg-carte p-2 text-[10.5px] leading-[1.45] text-encre-3">
+              {fond.consigne}
+            </p>
+          </div>
+        )}
+
         {/* **Ce qui part dans l'autre champ**, mot pour mot et sans repli : il
             fait deux lignes, pas mille deux cents caractères. */}
         {fond.interdiction ? (
@@ -1017,6 +1034,8 @@ function SectionFond({
               {fond.interdiction}
             </p>
           </div>
+        ) : fond.transparence ? (
+          <Raison texte="rien n'est interdit : sans couleur de fond, il n'y a pas de couleur à défendre sur le sujet" />
         ) : (
           <Raison texte="rien n'est interdit à ce modèle — pose un fond, et la couleur lui sera interdite sur le sujet" />
         )}

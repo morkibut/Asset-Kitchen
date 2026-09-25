@@ -408,6 +408,12 @@ class ServiceEnvoi:
             "negatif_lu": apercu["negatif_lu"],
             "corrige": tri.fond is not None,
             "propose": propose,
+            # **Le fond vide, quand l'appel le demande** (TN2). `couleur` est
+            # alors vide et `consigne` dit ce qui part à sa place ; les deux
+            # viennent de l'aperçu, donc de la règle même de l'envoi
+            # (`transparence_de_l_appel`) — jamais d'une composition à côté.
+            "transparence": bool(apercu.get("transparence")),
+            "consigne": apercu.get("consigne_transparence", ""),
         }
 
     def _reserve(

@@ -4575,6 +4575,12 @@ export type Envoi = {
     interdiction: string
     corrige: boolean
     propose: FondPropose
+    /** **Le fond vide, demandé au modèle** (TN2). Vrai quand le modèle sait
+     *  rendre la transparence, que le sujet a un contour et que l'appel n'est
+     *  pas une planche : `couleur` est alors vide, et `consigne` dit ce qui
+     *  part à sa place. Facultatifs pour qu'un envoi d'avant se lise encore. */
+    transparence?: boolean
+    consigne?: string
   }
 }
 
