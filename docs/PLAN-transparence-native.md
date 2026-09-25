@@ -384,6 +384,26 @@ texte repris par celle de l'appel, et ne pas lire la phrase de l'atelier comme u
 
 ### TN7 · Un texte repris retrouve le fond de son appel
 
-- [ ] Un texte repris d'un appel sur fond vert, renvoyé sur fond coloré, perd sa phrase de fond d'avant avant que la couleur de l'appel soit choisie ; la lecture des couleurs de la description (RV3) ne lit pas la phrase de l'atelier.
-- [ ] Le texte envoyé nomme une seule couleur de fond, et le négatif n'interdit que celle-là ; « Relire avant l'envoi » montre exactement ce qui part.
-- [ ] Un texte écrit par l'auteur qui nomme vraiment une couleur (la cape verte de RV3) garde son effet d'aujourd'hui.
+- [x] Un texte repris d'un appel sur fond vert, renvoyé sur fond coloré, perd sa phrase de fond d'avant avant que la couleur de l'appel soit choisie ; la lecture des couleurs de la description (RV3) ne lit pas la phrase de l'atelier.
+- [x] Le texte envoyé nomme une seule couleur de fond, et le négatif n'interdit que celle-là ; « Relire avant l'envoi » montre exactement ce qui part.
+- [x] Un texte écrit par l'auteur qui nomme vraiment une couleur (la cape verte de RV3) garde son effet d'aujourd'hui.
+
+Fait le 25 septembre 2026. Le correctif tient dans le même geste que la
+relecture avait posé pour le fond vide : `ServiceGenerations._sans_le_fond_d_avant`
+(nouveau, `sans_fond_colore(desencadrer(texte))`) retire les deux phrases que
+l'atelier avait lui-même ajoutées — la consigne de transparence, la couleur
+nommée — et sert deux fois. D'abord dans `_repris_au_fond`, qui composait déjà
+le texte d'un fond vide et compose maintenant aussi celui d'un fond coloré :
+une nouvelle couleur ne prend la place de l'ancienne (`transparence.phrase_en_queue`,
+nouveau) que si le corps nu diffère du texte parti — sinon un texte repris qui
+ne nommait aucun fond (les propres mots de l'auteur) n'en reçoit pas un, la
+garde qui protège ML4. Ensuite dans `preparer` et `apercu`, juste avant l'appel
+à `fond.choisir` : la description que RV3 lit est nettoyée quand le texte est
+repris, jamais sinon — un texte que l'auteur écrit lui-même (la cape verte de
+RV3) n'est jamais visé, ses mots ne correspondent pas aux phrases retirées.
+Vérifié en défaisant chacun des deux points (8octies) : sans le premier,
+`test_tn_relecture.py` retombe sur trois essais ; sans le second (raw `sujet`/
+`demande.prompt` repassé à `choisir`), le premier essai de `test_tn7_fond_repris.py`
+reproduit le défaut original au caractère près — `#FF00FF` choisi au lieu de
+`#00B140`. Rien vu au navigateur : ni maquette ni écran neuf, un correctif de
+texte composé côté serveur, déjà couvert par « Relire avant l'envoi ».
