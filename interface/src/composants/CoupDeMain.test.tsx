@@ -77,7 +77,9 @@ describe("Le coup de main au bout d’un champ (CM3)", () => {
   it("sans clé, la marque n’apparaît pas, et rien d’autre ne le dit", async () => {
     const appels = doublerFetch({ disponible: false })
     render(<Tiroir />)
-    await waitFor(() => expect(appels.filter((a) => a.url === "/api/assist")).toHaveLength(2))
+    // Deux champs, **une** lecture : elle est partagée (relecture croisée — un écran de
+    // vingt champs en faisait vingt).
+    await waitFor(() => expect(appels.filter((a) => a.url === "/api/assist")).toHaveLength(1))
     expect(marques()).toHaveLength(0)
     expect(screen.queryByText(/clé/)).toBeNull()
   })

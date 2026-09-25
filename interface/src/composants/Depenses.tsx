@@ -45,6 +45,7 @@ import {
 import { sujetAsset, useVisee } from "./Apercu"
 import { PANNEAU } from "./Infobulle"
 import { Libelle } from "./pieces"
+import { relireDisponibilite } from "../coup-de-main-commun"
 
 // ── Ce qu'un appel a donné ──────────────────────────────────────────────────
 
@@ -609,6 +610,10 @@ function CoupDeMainDuMois({
     try {
       onCompteur(await api.reglerPlafondCoupDeMain(montant))
       setTape(null)
+      // Les marques déjà montées (sous cet écran) se relisent : un plafond
+      // relevé les fait revenir, un plafond baissé les fait taire, sans avoir à
+      // rouvrir l'écran qu'elles habitent.
+      void relireDisponibilite()
     } catch {
       onErreur("le plafond n'a pas pu être posé")
     } finally {

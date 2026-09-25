@@ -5,8 +5,10 @@
 // que l'écran lui donne, sans rien savoir de lui : le texte à rendre, le nom du
 // champ (une entrée de `CHAMPS` côté serveur, jamais un contexte libre) et ce qu'il
 // faut faire quand l'auteur garde. C'est ce qui permettra à CM7 de le poser sur le
-// champ de prompt partagé (`ChampPrompt.tsx`, décision 10) sans le réécrire. En
-// CM3, **il n'est posé que sur les deux champs du tiroir des matières**.
+// champ de prompt partagé (`ChampPrompt.tsx`, décision 10) sans le réécrire. Posé
+// en CM3 sur les deux champs du tiroir des matières, **en CM7 sur tout champ de
+// prompt** (plan § CM7). ⚠️ À poser **autour** du `<label>` qui contient le champ,
+// jamais dedans : la marque et la proposition entreraient dans le nom du champ.
 //
 // Les quatre règles du plan, et où elles tiennent :
 //
@@ -26,21 +28,15 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { coupDeMain, nettoyer, type CeQuiPart, type Demande } from "../api-coup-de-main"
+import { relireDisponibilite, useDisponibilite, useEchap } from "../coup-de-main-commun"
 
 const METIER = "ameliorer"
 const PETIT = "min-h-[26px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50"
 const LIEN = "text-[12px] text-encre-2 underline underline-offset-2 hover:text-encre"
 
-/** La marque paraît-elle ? Lu une fois au montage ; tout échec vaut « non ». */
-function useDisponible(): [boolean, (v: boolean) => void] {
-  const [dispo, setDispo] = useState(false)
-  useEffect(() => {
-    let vivant = true
-    coupDeMain.etat().then((e) => { if (vivant) setDispo(e.disponible === true) }).catch(() => undefined)
-    return () => { vivant = false }
-  }, [])
-  return [dispo, setDispo]
-}
+// La disponibilité et Échap sont **partagés** avec la ligne de question et
+// « pourquoi › » (`coup-de-main-commun.ts`) : une seule lecture pour tous les
+// champs d'un écran, et un Échap qui ne referme que le dernier ouvert.
 
 type Proposition = { envoye: Demande; texte: string; fini: boolean }
 
@@ -56,7 +52,7 @@ export function AvecCoupDeMain({ champ, projet, texte, onGarder, children }: {
   /** Le champ lui-même, avec son libellé : il n'est ni lu ni modifié ici. */
   children: ReactNode
 }) {
-  const [dispo, setDispo] = useDisponible()
+  const [dispo, setDispo] = useDisponibilite()
   const [proposition, setProposition] = useState<Proposition | null>(null)
   const [voir, setVoir] = useState<CeQuiPart | null>(null)
   const coupure = useRef<AbortController | null>(null)
@@ -73,18 +69,10 @@ export function AvecCoupDeMain({ champ, projet, texte, onGarder, children }: {
   useEffect(() => () => coupure.current?.abort(), [])
 
   // Échap, **où que soit le focus** tant qu'une proposition est ouverte — la marque
-  // disparaît au clic, le focus peut être n'importe où. En capture, et arrêté : il
-  // oublie la proposition, il ne ferme pas ce qui est autour.
-  useEffect(() => {
-    if (!proposition) return
-    const touche = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return
-      e.preventDefault(); e.stopPropagation()
-      oublier()
-    }
-    window.addEventListener("keydown", touche, true)
-    return () => window.removeEventListener("keydown", touche, true)
-  }, [proposition !== null])
+  // disparaît au clic, le focus peut être n'importe où. Il oublie la proposition, il
+  // ne ferme pas ce qui est autour — et si une ligne de question s'est ouverte
+  // par-dessus, c'est elle qu'il referme d'abord.
+  useEchap(proposition !== null, oublier)
 
   async function proposer() {
     const envoye: Demande = { texte, champ, ...(projet ? { projet } : {}) }
@@ -106,7 +94,7 @@ export function AvecCoupDeMain({ champ, projet, texte, onGarder, children }: {
       }
       // Revenu sans réponse — indisponible, refusé, délai passé : il se tait.
       if (fin?.genre === "indisponible") setDispo(false)
-      else coupDeMain.etat().then((e) => setDispo(e.disponible === true)).catch(() => setDispo(false))
+      else void relireDisponibilite()
       oublier()
     } catch {
       if (coupe.signal.aborted) return

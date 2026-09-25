@@ -163,6 +163,37 @@ def test_la_fiche_nomme_les_onglets_des_reglages_comme_l_ecran():
         assert f"« {titre} »" in fiche, titre
 
 
+def _ecrans_du_guide() -> set[str]:
+    """Les valeurs de `Explication["ou"]`, lues dans `aide.ts` — la liste des
+    écrans que le produit sait nommer, et que `ecranDuGuide` (`App.tsx`) rend."""
+    source = AIDE_TS.read_text(encoding="utf-8")
+    debut = source.index("  ou:\n    |")
+    fin = source.index("\n}", debut)
+    return set(re.findall(r'\|\s*"([a-z-]+)"', source[debut:fin]))
+
+
+def test_chaque_ecran_du_guide_est_connu_du_coup_de_main():
+    """`Ctrl+/` est posé à l'échelle de l'application avec l'écran du guide :
+    un écran que le serveur ne connaît pas répondrait `ecran_inconnu`, et la
+    touche s'y tairait pour rien. CM4 n'en connaissait qu'un, CM5 deux."""
+    guide = _ecrans_du_guide()
+    assert len(guide) >= 25
+    assert guide - set(ECRANS) == set()
+    assert set(ECRANS) - guide == set()
+
+
+def test_la_question_part_depuis_n_importe_quel_ecran_du_guide(tmp_path):
+    atelier = _atelier(tmp_path, None)
+    with TestClient(creer_application(atelier)) as client:
+        for ecran in sorted(_ecrans_du_guide()):
+            vu = client.post(
+                "/api/assist/question/preview",
+                json={"texte": "à quoi sert ce réglage ?", "ecran": ecran, "champ": "Taille"},
+            )
+            assert vu.status_code == 200, ecran
+            assert vu.json()["morceaux"][2]["texte"].startswith(f"Écran : {ECRANS[ecran]}.")
+
+
 def test_la_fiche_nomme_les_trois_gestes_du_coup_de_main():
     fiche = _fiche()
     for geste in ("« EN »", "Ctrl+/", "« pourquoi › »"):

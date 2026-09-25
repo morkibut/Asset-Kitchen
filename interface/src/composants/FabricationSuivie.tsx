@@ -445,8 +445,8 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
               <button type="button" className={BOUTON} disabled={occupe || !demande.correction_geste?.trim()} onClick={() => void garderPourLeJeu()}>Garder pour le jeu</button>
             </div>}
           </div> : (/* CM7 : `prompt_video`, partagé avec la vidéo libre (`FabricationVideoLibre.tsx`). */
-          <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">Décrire l’animation<AvecCoupDeMain champ="prompt_video" projet={projet} texte={demande.prompt_video} onGarder={t => changer({ prompt_video: t })}>
-            <textarea rows={3} className="rounded-7 border border-contour p-[14px] text-[13px]" value={demande.prompt_video} onChange={(e) => changer({ prompt_video: e.target.value })} placeholder="Le personnage marche sur place, cycle régulier, caméra fixe…" /></AvecCoupDeMain></label>)}
+          <AvecCoupDeMain champ="prompt_video" projet={projet} texte={demande.prompt_video} onGarder={t => changer({ prompt_video: t })}><label className="mt-[14px] flex flex-col gap-[4px] text-[12px]">Décrire l’animation
+            <textarea rows={3} className="rounded-7 border border-contour p-[14px] text-[13px]" value={demande.prompt_video} onChange={(e) => changer({ prompt_video: e.target.value })} placeholder="Le personnage marche sur place, cycle régulier, caméra fixe…" /></label></AvecCoupDeMain>)}
         </fieldset>
         <fieldset className="rounded-8 border border-trait bg-carte p-[22px]"><legend className="font-serif text-[25px]">3. Image de départ</legend>
           {demande.reference_asset

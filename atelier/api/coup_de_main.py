@@ -37,9 +37,11 @@ fonction** `composer` — ce que l'écran montre dans « Voir ce qui part » est
 ce qui part, puisque l'un est fait de l'autre.
 
 Depuis CM3, un écran appelle « améliorer » : le tiroir des matières des jeux
-de tuiles (`interface/src/composants/CoupDeMain.tsx`), sur ses deux champs.
-Depuis CM4, le même écran appelle aussi « question », par
-`interface/src/composants/DemanderIci.tsx`. Depuis CM5, « blocage » est
+de tuiles (`interface/src/composants/CoupDeMain.tsx`), sur ses deux champs ;
+depuis CM7, tout champ de prompt. « question » (CM4) part de
+`interface/src/composants/DemanderIci.tsx`, posé depuis la relecture croisée
+sur **toute l'application** avec l'écran du guide — d'où `ECRANS`, qui les
+connaît tous. Depuis CM5, « blocage » est
 appelé par la petite marque posée à côté d'une raison de blocage
 (`interface/src/composants/pieces.tsx`, `Raison`) — aujourd'hui sur l'écran
 *Relire avant l'envoi* seulement.

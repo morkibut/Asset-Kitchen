@@ -91,6 +91,17 @@ describe("les champs de prompt qui posent la marque à la main portent le bon ch
     })
   }
 
+  // Relecture croisée : la marque et sa proposition posées **dans** un `<label>`
+  // entraient dans le nom du champ (« Description de l’image Proposer en anglais
+  // En anglais — ton texte… »), et un clic sur la proposition renvoyait le focus
+  // au champ. L'enveloppe se pose autour du libellé, jamais dedans.
+  it("aucune marque n'est posée à l'intérieur d'un <label>", () => {
+    for (const fichier of new Set(CHAMPS_HORS_CHAMP_PROMPT.map((c) => c.fichier))) {
+      const dedans = source(fichier).match(/<label\b[^>]*>[^<]*<AvecCoupDeMain/g)
+      expect(dedans, `${fichier} : ${dedans?.join(" | ")}`).toBeNull()
+    }
+  })
+
   it("chacun de ces fichiers importe AvecCoupDeMain", () => {
     for (const fichier of new Set(CHAMPS_HORS_CHAMP_PROMPT.map((c) => c.fichier)))
       expect(source(fichier)).toContain('from "./CoupDeMain"')

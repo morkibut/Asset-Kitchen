@@ -193,6 +193,7 @@ describe("La touche qui demande, là où l'on travaille (CM4)", () => {
       expect(await screen.findByText(m.titre)).toBeInTheDocument()
     }
     const vu = appels.find((a) => a.url === "/api/assist/question/preview")!
-    expect(vu.corps).toEqual({ texte: "à quoi sert le motif ?", ecran: "jeu-de-tuiles" })
+    // Le nom du champ qui avait le focus part avec — jamais sa valeur (décision 7).
+    expect(vu.corps).toEqual({ texte: "à quoi sert le motif ?", ecran: "jeu-de-tuiles", champ: "Le motif" })
   })
 })

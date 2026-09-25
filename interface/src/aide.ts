@@ -3048,7 +3048,7 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Consommations",
     quoi: "Ce que le coup de main peut dépenser au plus, en dollars, du 1er du mois à la fin du mois.",
     change:
-      "Atteint, la marque du coup de main disparaît des champs et dit pourquoi — aucune fenêtre, rien ne t'interrompt. Elle revient le 1er du mois suivant, ou dès que tu relèves le plafond. À zéro, le coup de main est coupé.",
+      "Atteint, le coup de main se tait partout : la marque « EN » disparaît des champs, Ctrl+/ et « pourquoi › » ne font plus rien — aucune fenêtre, rien ne t'interrompt ; c'est ici, sous le compteur, qu'il dit pourquoi. Il revient le 1er du mois suivant, ou dès que tu relèves le plafond. À zéro, il est coupé.",
     origine: "toi · défaut $1,00 · relu à chaque appel",
     long:
       "Chaque appel retient d'avance ce qu'il peut coûter au plus, puis rend la différence à la fin : dix appels lancés ensemble ne passent pas par le même reste. Un appel coupé avant d'avoir son prix compte pour ce qu'il avait retenu, jamais pour zéro. En dollars, comme toutes les dépenses : $1,00 vaut un peu moins de 1 €.",
@@ -3660,17 +3660,19 @@ export const AIDE: Record<string, Explication> = {
       "« Intégrée » vient du fond du moteur, dessinée à la volée depuis la graine. « Mes matières » vient d'une image de la bibliothèque. « Vide » veut dire qu'une couleur provisoire tient la place. « Sur la carte seulement » ne sert que le sol de fond, qui n'entre dans aucune pièce fabriquée.",
   },
 
-  // CM4 (`docs/PLAN-assistant.md`) : la touche qui demande, posée sur cette même
-  // zone — au bout des deux champs juste au-dessus, pas un troisième champ à elle.
+  // CM4 (`docs/PLAN-assistant.md`) : la touche qui demande. Rangée ici, où elle
+  // est née, mais **posée sur toute l'application** depuis la relecture croisée
+  // du 25 septembre 2026 (`DemanderIci`, `App.tsx`) — le guide n'a pas de place
+  // pour un geste valable partout ; plan § Décisions laissées à l'auteur.
   "jeu-de-tuiles.demander": {
     nom: "Demander, là où on est",
     ou: "jeu-de-tuiles",
     groupe: "L'atelier — les matières",
-    quoi: "Ctrl+/ ouvre une ligne pour poser une question sur cet écran, sans quitter ce que tu écrivais.",
+    quoi: "Ctrl+/ ouvre une ligne pour poser une question sur l'écran où tu es — celui-ci, ou n'importe quel autre.",
     change: "Une réponse courte s'affiche en dessous ; Échap referme sans rien changer à ce qui était écrit.",
     origine: "le coup de main · rien ne part sans ta question",
     long:
-      "Hors sujet, ou si la fiche du produit ne dit rien qui réponde, le coup de main le dit plutôt que d'inventer. Il ne connaît que l'atelier, jamais le jeu que tu fabriques. Comme la marque « EN », il se tait s'il ne peut rien : sans clé ou plafond atteint, Ctrl+/ n'ouvre rien.",
+      "Hors sujet, ou si la fiche du produit ne dit rien qui réponde, le coup de main le dit plutôt que d'inventer. Il ne connaît que l'atelier, jamais ton jeu. Le nom du champ où tu étais part avec la question, jamais ce qu'il contient. Sans clé ou plafond atteint, Ctrl+/ n'ouvre rien.",
   },
 
   "jeu-de-tuiles.bordures-liees": {
@@ -3781,9 +3783,9 @@ export const AIDE: Record<string, Explication> = {
     groupe: "L'atelier — le tiroir de matière",
     quoi: "Propose ton texte en anglais, sous le champ, sans traduire les noms de ton jeu ni rien ajouter.",
     change: "« Garder » remplace le texte de ce champ-là, et rien d'autre ; Échap oublie la proposition. Rien ne se génère sans toi.",
-    origine: "un petit modèle d'OpenRouter · absent sans clé",
+    origine: "un petit modèle d'OpenRouter · absent sans clé ou au plafond du mois",
     long:
-      "Chaque champ part seul : la matière n'est jamais mêlée au motif. « Voir ce qui part » montre tout, mot pour mot : la consigne, la fiche du produit, le champ, les noms de ton jeu que ton texte contient, et ton texte. Aucune image, aucun chemin de fichier. Chaque appel coûte une fraction de centime.",
+      "La même marque est au bout de tout champ de prompt : image, prompt négatif, clip, son. Chaque champ part seul : la matière n'est jamais mêlée au motif. « Voir ce qui part » montre tout, mot pour mot : la consigne, la fiche du produit, le champ, les noms de ton jeu que ton texte contient, et ton texte. Aucune image, aucun chemin de fichier. Chaque appel coûte une fraction de centime.",
   },
 
   "jeu-de-tuiles.cout-matiere": {
