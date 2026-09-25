@@ -529,6 +529,8 @@ Chrome) et la ligne posée au centre quand aucun champ n'a le focus.
 
 ## Décisions laissées à l'auteur
 
+> **Tranchées par l'auteur le 25 septembre 2026** : (1) plafond atteint → une **ligne grise discrète** à la place de la marque, « coup de main au plafond du mois » ; (2) **« pourquoi › » seul** explique un bouton grisé, `Ctrl+/` reste la question libre et n'emporte pas le blocage ; (3) le guide décrit « EN » et `Ctrl+/` dans **un groupe commun « Partout »**, une seule entrée par geste. Mises en œuvre dans la tranche **CM8** ci-dessous.
+
 1. **« Plafond atteint : la marque disparaît et dit pourquoi. »** La décision 6 veut qu'elle se
    taise, la décision 8 qu'elle dise pourquoi. Aujourd'hui elle se tait partout, et le pourquoi ne
    se lit que sous le compteur des dépenses. Faut-il une trace à l'endroit même (une ligne grise
@@ -540,6 +542,14 @@ Chrome) et la ligne posée au centre quand aucun champ n'a le focus.
 3. **Le guide n'a pas de place pour un geste valable partout.** `Ctrl+/` et la marque « EN » sont
    décrits sous « Un jeu de tuiles » seulement (`aide.ts`), faute d'un `ou` qui dise « tout écran ».
    Une ligne par écran, un groupe commun, ou le panneau des touches du guide ?
+
+---
+
+### CM8 · Les trois décisions de l'auteur
+
+- [ ] Plafond atteint : là où la marque « EN » paraîtrait, une ligne grise discrète dit « coup de main au plafond du mois », sans fenêtre.
+- [ ] « pourquoi › » est le seul geste qui explique un bouton grisé ; le guide et la fiche du produit le disent.
+- [ ] Le guide a un groupe « Partout » : une entrée pour « EN », une pour `Ctrl+/`, une pour « pourquoi › », lisibles depuis tout écran ; les doublons sous « Un jeu de tuiles » partent.
 
 ---
 

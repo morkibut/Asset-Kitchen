@@ -31,6 +31,7 @@
 | **CM5** · Expliquer ce qui bloque | `[EASY]` | Reprend le contexte déjà monté par CM4 et l'envoie à une consigne de plus. |
 | **CM6** · Le plafond et le compteur | `[HARD]` | Touche à l'argent : un plafond qui ne tient pas en rafale est un plafond qui n'existe pas. |
 | **CM7** · Partout où il y a un champ de prompt | `[EASY]` | Une seule pose sur un composant partagé ; c'est la relecture qui compte, pas le branchement. |
+| **CM8** · Les trois décisions de l'auteur | `[EASY]` | Trois retouches d'écran et de guide sur des pièces déjà posées ; aucune règle neuve. |
 
 **Compte** : 0 `[VERY-HARD]`, 2 `[HARD]`, 3 `[MEDIUM]`, 2 `[EASY]`, 0 `[VERY-EASY]`.
 

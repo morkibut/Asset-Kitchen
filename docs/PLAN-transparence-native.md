@@ -3,6 +3,7 @@
 > **Ouvert le 22 septembre 2026, à la demande de l'auteur**, juste après l'arrivée de Qwen-Image 2.1
 > comme moteur local principal (`docs/modeles-et-workflows.md` § Qwen-Image 2.1). L'auteur a
 > choisi « plan d'abord » : rien n'est codé tant que ce plan n'est pas validé.
+> **Validé par l'auteur le 25 septembre 2026** : les six tranches se codent en autopilote.
 >
 > **Ce chantier ne dépense rien.** Qwen-Image 2.1 tourne sur la machine. Aucune tranche n'appelle
 > un modèle payé.
