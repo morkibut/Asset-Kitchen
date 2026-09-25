@@ -1418,6 +1418,134 @@ def finir_le_fond_du_modele(rgba: np.ndarray, seuil: int) -> np.ndarray:
     return sortie
 
 
+# ── Un trou dans le sujet (TN4) ──────────────────────────────────────────────
+#
+# **Ce que la mesure sépare, en une phrase et sans chiffre** — écrite avant le
+# code (`AGENTS.md`, 8sexies) : *une robe sortie transparente est un grand vide
+# que seul le trait du contour sépare du fond ; l'espace entre un bras et le
+# corps est enfermé lui aussi, mais derrière toute l'épaisseur d'un bras — et
+# une anse, deux jambes jointes n'enferment qu'un petit vide.*
+#
+# Deux conditions, donc, et chacune arrête un des faux trous :
+#
+# · **le vide est enfermé** — sous `SEUIL_DU_TROU` d'alpha, et aucun chemin de
+#   vide (quatre voisins) ne le relie au bord de l'image. C'est la lecture de
+#   `taches.trous`, avec « transparent » à 128 et non à zéro : le fond vide de
+#   Qwen porte un voile de 1 à 15, et c'est à 128 que le banc a mesuré la robe
+#   (« 89 % de la zone du corps sous 128 ») ;
+# · **derrière un trait mince** — une part du pourtour de la zone est à moins
+#   de `mur_mince` pixels du fond du dehors. Un bras, une jambe, une anse
+#   épaisse sont un mur trop large : leur vide ne compte pas.
+#
+# Puis le vide qui reste se pèse **rapporté au sujet** (les pixels à 128 et
+# plus), et au-delà de `PART_ENFERMEE_MAX` l'image est signalée.
+#
+# `zones_de_fond_enferme` (RV25) ne se réemploie pas : elle est l'inverse
+# exact — des poches **opaques** à la couleur du fond, que le remplissage
+# n'a pas atteintes.
+#
+# **Le premier essai, une seule condition, ne tenait pas.** La part enfermée
+# seule rendait 28 % pour le mage et 0,4 % au plus pour les sept autres
+# tirages — mais le banc n'a **aucun** bras écarté du corps, et une silhouette
+# dessinée pour l'essai (deux poings sur les hanches, pieds joints) montait à
+# 14 %, une fiole à anse à 11 %. Le mur mince les ramène à **zéro**.
+#
+# **Les chiffres**, relus par `tests/test_tn4_trou_dans_le_sujet.py` : voir le
+# bloc « Fait le » de TN4 dans `docs/PLAN-transparence-native.md`.
+#
+# ⚠️ **Ce qu'elle ne sait pas séparer** : un anneau fin, un cadre d'interface
+# vide au milieu, une anse en fil — un grand vide *voulu* derrière un trait
+# mince. La fiche le dit ; elle ne relance rien, c'est l'auteur qui juge.
+
+#: Sous cet alpha, un pixel est vide — le fond, ou le sujet sorti transparent.
+SEUIL_DU_TROU = 128
+#: Au-delà, l'image est signalée : bien sous le mage à sa plus petite taille
+#: d'essai (256 px, 21,8 %), et un bras-corps dessiné pèse zéro.
+PART_ENFERMEE_MAX = 0.12
+#: L'épaisseur d'un trait, en part du côté de l'image : 15 px à 1 024. Le trait
+#: de la robe du mage fait 3 à 5 px à 1 024 ; un bras dessiné, trente et plus.
+TRAIT_MINCE = 0.015
+#: La part du pourtour d'une zone qui doit longer un trait mince. Les zones de
+#: la robe du mage en ont de 31 à 92 % ; le vide entre un bras et le corps, 0.
+POURTOUR_MINCE = 0.10
+#: Sous cette part du sujet, une zone enfermée est une miette — un pixel de
+#: compression —, et on ne la mesure pas.
+ZONE_MIN = 0.002
+
+
+def mur_mince(cote: int) -> int:
+    """L'épaisseur, en pixels, en dessous de laquelle un mur est un trait."""
+    return max(2, round(TRAIT_MINCE * cote))
+
+
+def _rgba_lu(image: np.ndarray | bytes) -> np.ndarray | None:
+    if isinstance(image, (bytes, bytearray)):
+        try:
+            with Image.open(io.BytesIO(image)) as ouverte:
+                rgba = np.asarray(ouverte.convert("RGBA"))
+        except (OSError, ValueError):
+            return None
+    else:
+        rgba = image
+    if rgba.ndim != 3 or rgba.shape[2] != 4:
+        return None
+    return rgba
+
+
+def part_enfermee(image: np.ndarray | bytes, *, mince: bool = True) -> float:
+    """Le vide **enfermé dans le sujet derrière un trait mince**, rapporté au
+    sujet (TN4). `mince=False` rend le vide enfermé sans la seconde condition
+    — la mesure du premier essai, gardée pour que l'essai montre ce qu'elle
+    laissait passer.
+
+    **Sous le seuil, elle rend le vide enfermé entier**, sans chercher le
+    trait : il borne le vide mince par au-dessus, donc la réponse de
+    `sujet_troue` est la même, et presque toutes les images s'arrêtent là.
+
+    Pure et déterministe ; lue sur le brut, qui ne change jamais. Un fichier
+    illisible ou sans sujet rend 0.
+    """
+    rgba = _rgba_lu(image)
+    if rgba is None:
+        return 0.0
+    sujet = rgba[:, :, 3] >= SEUIL_DU_TROU
+    aire_du_sujet = int(sujet.sum())
+    if aire_du_sujet == 0:
+        return 0.0
+    vide = ~sujet
+    zones = etiqueter(vide)
+    if not len(zones):
+        return 0.0
+    enfermees = ~zones.au_bord
+    total = int(zones.aires[enfermees].sum())
+    # **Le premier tri est gratuit** : le vide mince est une part du vide
+    # enfermé, et presque toutes les images n'en ont pas assez pour passer le
+    # seuil — elles s'arrêtent ici, sans une dilatation.
+    if not mince or total / aire_du_sujet <= PART_ENFERMEE_MAX:
+        return total / aire_du_sujet
+    dehors = _remplir(vide, _graines_du_bord(vide))
+    pres_du_dehors = etendre(dehors, mur_mince(max(sujet.shape)) + 1)
+    contre_le_sujet = etendre(sujet, 1)
+    retenu = 0
+    for k in np.flatnonzero(enfermees & (zones.aires >= ZONE_MIN * aire_du_sujet)):
+        zone = zones.masque(int(k))
+        pourtour = zone & contre_le_sujet
+        longe = int((pourtour & pres_du_dehors).sum())
+        if longe >= POURTOUR_MINCE * max(1, int(pourtour.sum())):
+            retenu += int(zones.aires[k])
+    return retenu / aire_du_sujet
+
+
+def sujet_troue(image: np.ndarray | bytes) -> bool:
+    """Une partie du sujet est-elle **sortie transparente** ? (TN4)
+
+    Ne se pose que sur une image née transparente — c'est l'appelant qui le
+    vérifie (`ServiceAssets.impose`) : sur une image détourée par l'atelier,
+    un trou est l'affaire du détourage, qui se règle ailleurs.
+    """
+    return part_enfermee(image) > PART_ENFERMEE_MAX
+
+
 def boite_opaque(alpha: np.ndarray) -> tuple[int, int, int, int] | None:
     """La boîte du sujet, ou `None` s'il ne reste rien.
 

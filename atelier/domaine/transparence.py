@@ -115,6 +115,33 @@ def _separateur(texte: str) -> str:
     return "\n\n" if "\n" in texte else " "
 
 
+def desencadrer(texte: str, a_la_place: str = "") -> str:
+    """Le texte **sans la consigne officielle** — l'inverse d'`encadrer` (TN4).
+
+    Un appel qui ne demande pas de fond vide ne l'envoie jamais, même quand
+    son texte en porte une : « Refaire sur fond coloré » reprend le texte
+    parti la première fois, donc encadré. Sans ce retrait, le modèle
+    recevrait à la fois une couleur de fond et la consigne de n'en rendre
+    aucune. Un texte sans consigne revient tel quel, au caractère près.
+
+    `a_la_place` : la phrase qui prend la place de la queue — le fond de cet
+    appel, tel que la phrase de calage le dit (`vue.phrase_de_calage`). Le
+    texte parti la première fois ne nommait aucun fond, puisqu'il n'y en avait
+    pas ; sans elle, le modèle ne saurait pas sur quoi poser le sujet.
+    """
+    if TETE not in texte and QUEUE not in texte:
+        return texte
+    # Les séparateurs qu'`encadrer` avait posés autour — un paragraphe ou une
+    # espace — tombent avec la consigne.
+    corps = texte.replace(TETE, "").replace(QUEUE, "").strip()
+    if not a_la_place:
+        return corps
+    phrase = a_la_place[:1].upper() + a_la_place[1:]
+    if not phrase.endswith((".", "!", "?")):
+        phrase = f"{phrase}."
+    return f"{corps}{_separateur(corps)}{phrase}" if corps else phrase
+
+
 def consigne() -> str:
     """Les deux moitiés, pour l'écran qui les montre à la place de la couleur."""
     return f"{TETE} … {QUEUE}"

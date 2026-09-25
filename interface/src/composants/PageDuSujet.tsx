@@ -125,7 +125,7 @@ export function PageDuSujet(proprietes: {
    *  cette page parce que la fiche est montée dans *Ses images* depuis que le
    *  produit n'a plus qu'un seul volet de fiche d'image. */
   onReinjecter: (asset: string, role: Role) => void
-  onReglages: (asset: Asset) => void
+  onReglages: (asset: Asset, reprise?: { fondColore?: boolean }) => void
   /** Ouvre la grille du jeu pour ce sujet (`B13`) — une profondeur de plus de
    *  cette page, comme la matrice. */
   onGrille: () => void

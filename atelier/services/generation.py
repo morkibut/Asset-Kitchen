@@ -70,6 +70,7 @@ from atelier.domaine.generation import (
     USAGE_DESIGN,
 )
 from atelier.domaine.vue import (
+    phrase_de_calage,
     calage_de_planche,
     camera_sous_la_planche,
     consigne_de_mise_en_page,
@@ -86,6 +87,7 @@ from atelier.domaine.transparence import (
     TETE as TETE_TRANSPARENCE,
     consigne as consigne_transparence,
     demandee_par,
+    desencadrer,
     encadrer,
     transparence_demandee,
 )
@@ -983,6 +985,7 @@ class ServiceGenerations:
             demande.echelle,
             planche=pliage is not None or demande.garder_mise_en_page,
             tri=tri,
+            fond_colore=demande.fond_colore,
         )
         fond = (
             FOND_TRANSPARENT
@@ -1761,6 +1764,8 @@ class ServiceGenerations:
             premiere_planche=bool(demande.get("premiere_planche")),
             # **Et le fond vide** (TN2), pour la même raison.
             transparence=demandee_par(demande),
+            # Et le fond coloré redemandé (TN4), pour la même raison.
+            fond_colore=bool(demande.get("fond_colore")),
             # **Le fond se recalcule, il ne se relit pas** (RT3). Le texte de la
             # génération porte déjà la couleur qui est partie ; les références,
             # elles, se reposent dessus, et le calcul rend la même réponse sur
@@ -2862,7 +2867,7 @@ class ServiceGenerations:
             vues_de_la_planche=vues_de_la_planche,
             fond=fond,
         )
-        texte, _ = self._jonction(lignes, modele, pliage, transparence)
+        texte, _ = self._jonction(lignes, modele, pliage, transparence, fond)
         return texte
 
     def _jonction(
@@ -2871,6 +2876,7 @@ class ServiceGenerations:
         modele: str,
         pliage: Pliage | None,
         transparence: bool,
+        fond: str | None = None,
     ) -> tuple[str, dict[str, Any] | None]:
         """Les lignes jointes en texte — **pour l'envoi et pour son aperçu**.
 
@@ -2887,6 +2893,21 @@ class ServiceGenerations:
         local = self._texte_local(lignes, modele, pliage) if modele else None
         texte = joindre(lignes) if local is None else local["texte"]
         if not transparence:
+            # **Et jamais la consigne sans le fond vide** (TN4) : un texte
+            # repris d'un appel transparent la porte encore — c'est le cas de
+            # « Refaire sur fond coloré ». Elle tombe ici, au même endroit que
+            # celui qui la pose, et **le fond de cet appel prend la place de la
+            # queue** — le texte parti la première fois n'en nommait aucun, et
+            # la phrase est celle du calage, au mot près.
+            a_la_place = phrase_de_calage(0, fond) if fond else ""
+            sans = desencadrer(texte, a_la_place)
+            if sans != texte:
+                texte = sans
+                if local is not None:
+                    local = {**local, "texte": texte, "segments": [
+                        {**s, "texte": desencadrer(str(s.get("texte", "")))}
+                        for s in local.get("segments", [])
+                    ]}
             return texte, local
         texte = encadrer(texte)
         if local is not None:
@@ -2979,6 +3000,8 @@ class ServiceGenerations:
         # **La toile** (TS4) : avec `repris`, ni ambiance ni artworks —
         # `sans_le_style_du_jeu`, la règle de la soumission.
         brut: bool = False,
+        # **Refaire sur fond coloré** (TN4) — `Demande.fond_colore`.
+        fond_colore: bool = False,
     ) -> dict[str, Any]:
         """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
 
@@ -3067,6 +3090,7 @@ class ServiceGenerations:
             echelle,
             planche=pliage is not None or garder_mise_en_page,
             tri=tri,
+            fond_colore=fond_colore,
         )
         fond_choix = (
             Choix(couleur=AUCUN_FOND, nom="")
@@ -3093,7 +3117,7 @@ class ServiceGenerations:
         # **Un style local lit les mêmes lignes, jointes autrement** (ML4) : une
         # seule partie sans titre, et ce qui n'y entre pas est dans `local`.
         # La jonction est celle de l'envoi, consigne de transparence comprise.
-        texte, local = self._jonction(lignes, modele, pliage, transparence)
+        texte, local = self._jonction(lignes, modele, pliage, transparence, fond)
         return {
             "texte": texte,
             # **Les trois parties, telles qu'elles partent** (R7). L'écran de
@@ -3232,6 +3256,7 @@ class ServiceGenerations:
         *,
         planche: bool,
         tri: "Tri | None" = None,
+        fond_colore: bool = False,
     ) -> bool:
         """Cet appel demande-t-il un fond vide ? (TN2) — **les entrées de la règle**.
 
@@ -3266,7 +3291,11 @@ class ServiceGenerations:
             capable=capable,
             silhouette=lue.silhouette if lue is not None else True,
             planche=planche,
-            fond_impose=tri is not None and tri.fond is not None,
+            # **Deux façons de poser le fond à la main** : une couleur choisie
+            # sur l'écran de confirmation (TN2), ou « Refaire sur fond coloré »
+            # depuis la fiche d'une image trouée (TN4), qui laisse l'atelier
+            # calculer la couleur.
+            fond_impose=(tri is not None and tri.fond is not None) or fond_colore,
         )
 
     def _fond_de_l_appel(

@@ -228,6 +228,52 @@ fiche le dit : « une partie du sujet est sortie transparente », avec « Refair
 **Critères.** La planche du mage est signalée. Les sept autres tirages du banc ne le sont pas
 (l'espace entre un bras et le corps ne doit pas suffire).
 
+- [x] La planche du mage est signalée (mesurée sur l'image du banc ramenée à 256 px, pas rejouée
+  par un vrai ComfyUI — c'est TN6).
+- [x] Les sept autres tirages ne le sont pas, ni une silhouette dessinée aux poings sur les
+  hanches et aux pieds joints, ni une fiole à anse.
+
+**Faite le 25 septembre 2026.** *La mesure, en une phrase et sans chiffre* : une robe sortie
+transparente est un grand vide que seul le trait du contour sépare du fond ; l'espace entre un
+bras et le corps est enfermé lui aussi, mais derrière toute l'épaisseur d'un bras — et une anse,
+deux jambes jointes n'enferment qu'un petit vide. (`atelier.image.traitement.part_enfermee` et
+`sujet_troue`, lues sur le brut.) **Le premier essai, une seule condition, ne tenait pas** : la
+part enfermée seule séparait bien le banc — mais le banc n'a **aucun** bras écarté du corps, et
+une silhouette dessinée pour l'essai (poings sur les hanches, pieds joints) montait à 14 %, une
+fiole à anse à 11 %, au niveau du seuil. D'où la seconde condition, le *trait mince* : une zone
+enfermée ne compte que si au moins 10 % de son pourtour est à moins de 1,5 % du côté de l'image
+(15 px à 1 024) du fond du dehors. **Chiffres** (vide enfermé sous 128 d'alpha, derrière un trait
+mince, rapporté aux pixels du sujet à 128 et plus) : mage **28,0 %** à 1 024 px, 25,0 % à 512,
+**21,8 % à 256** (la fixture), 14,8 % à 192 (le trait s'y rompt) ; ses zones longent un trait de
+3 à 5 px sur 31 à 92 % de leur pourtour. Chevalier, fiole, bouton, voleur, objet : 0 ; salamandre
+0,5 %, coffre 0,5 % (192 px), renard 0,03 % (256 px). Silhouettes dessinées : poings sur les hanches **0** (14,1 %
+sans la seconde condition), pieds joints 3,0 %, fiole à anse 10,7 % (sous le seuil par son poids ;
+grossie au-dessus, son mur l'arrête), robes trouées 81 à 117 %. **Seuil : 12 %** — le mage à sa
+plus petite taille d'essai en est à 1,8 fois, le plus haut des sept autres à vingt-quatre fois
+moins. ⚠️ Ce qu'elle ne sait pas séparer : un anneau fin, un cadre d'interface vide au milieu —
+un grand vide voulu derrière un trait mince ; la fiche le dit, elle ne relance rien.
+**Rien n'est gardé** (8septies) : `GET /api/assets/{id}/imposed` rend `sujet_troue`, recalculé à
+chaque lecture sur le brut, et seulement pour une image née transparente (demandé et reçu, TN3) —
+un index effacé retrouve la même réponse. Le coût : 0,1 à 0,2 s à 1 024 px, et presque toutes
+les images s'arrêtent avant toute dilatation (le vide enfermé entier est sous le seuil).
+**Le geste « Refaire sur fond coloré »** reprend les réglages de la génération (texte parti,
+modèle, options) et coche « Sur fond coloré » dans la préparation (montrée tant qu'elle est
+cochée) — il ne paie rien. L'appel part par la barre qui paie, puis « Relire avant l'envoi »
+(`POST /api/outgoing`, qui annonce le prix ou le temps), puis `POST /api/generations`. Tranché en
+route : **un drapeau de la demande, `fond_colore`**, et non une couleur posée dans le tri — le tri
+repart de rien à chaque appel (M5), il ne survit pas au trajet fiche → préparation → envoi ; le
+drapeau compte comme un fond imposé dans `transparence_demandee`, laisse l'atelier calculer la
+couleur, s'enregistre sur la génération (seulement vrai), se relit à la relance et à « reprendre
+les réglages », et retombe dès que l'appel est parti. **La consigne tombe avec le fond vide** :
+un texte repris d'un appel transparent la porte encore ; `transparence.desencadrer` la retire à
+la jonction de tout appel qui ne demande pas de fond vide, et le fond de l'appel prend la place
+de la queue (la phrase de calage, au mot près) — sans quoi le texte repris ne nommait aucun
+fond. Essais : `tests/test_tn4_trou_dans_le_sujet.py` (24 : le banc, les silhouettes, la fiche
+par l'atelier, index effacé, le geste par l'envoi et par la soumission), fixtures du mage et du
+renard à 256 px dans `tests/fixtures/banc_tn4/` ; `interface/src/composants/Fiche.tn4.test.tsx`
+(3) et `interface/src/tn4-fond-colore.test.tsx` (5). **Non vu au navigateur.** Reste : l'agent
+(MCP) n'a pas le geste — il ne voit pas la fiche ; le signal n'est pas dans `list_assets`.
+
 ### TN5 — L'agent fait pareil
 
 **Ce qu'on voit.** Rien de neuf à l'écran. Un personnage fabriqué par l'agent (`generate_asset`)

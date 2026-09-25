@@ -106,6 +106,7 @@ from atelier.image.traitement import (
     finir_le_fond_du_modele,
     fond_vide,
     nombre_de_composantes,
+    sujet_troue,
     peindre,
     pinceau,
     pose_du_calque,
@@ -373,6 +374,7 @@ class ServiceAssets:
                 "nature": "",
                 "detourage": None,
                 "detouree_par_le_modele": False,
+                "sujet_troue": False,
             }
         # **La nature se lit sur l'asset, pas sur la génération** (D1) : le lot
         # est ce qui dit qu'une image est sortie d'une planche, et c'est déjà
@@ -402,6 +404,7 @@ class ServiceAssets:
             impose = self.recette_d_une_vue_depliee(generation, asset.personnage)
         else:
             impose = self.recette_du_projet(generation, nature)
+        nee_transparente = self.nee_transparente(generation, asset.rang)
         return {
             "impose": impose.en_json(),
             # **Ce que l'auteur avait dit fabriquer**, parce que c'est elle qui
@@ -418,7 +421,15 @@ class ServiceAssets:
             # génération et sur le brut — jamais sur la recette, que l'auteur a
             # pu réveiller depuis. C'est ce qui permet à la fiche de dire que
             # le détourage dort *parce que* le modèle l'a fait.
-            "detouree_par_le_modele": self.nee_transparente(generation, asset.rang),
+            "detouree_par_le_modele": nee_transparente,
+            # **« Une partie du sujet est sortie transparente »** (TN4) : un
+            # vide enfermé derrière un trait mince, qui pèse une part du sujet.
+            # Ne se pose que sur une image née transparente — ailleurs, un trou
+            # est l'affaire du détourage. **Recalculé à chaque lecture, sur le
+            # brut** : il ne change jamais et la mesure est déterministe ; rien
+            # n'est gardé, donc un index effacé retrouve la même réponse.
+            "sujet_troue": nee_transparente
+            and self.sujet_sorti_transparent(generation, asset.rang),
         }
 
     def _provenance_du_detourage(
@@ -1081,16 +1092,30 @@ class ServiceAssets:
         """
         if not demandee_par(generation.demande):
             return False
+        octets = self._brut_de(generation, rang)
+        return octets is not None and fond_vide(octets)
+
+    def sujet_sorti_transparent(self, generation: Generation, rang: int) -> bool:
+        """Le modèle a-t-il rendu **une partie du sujet transparente** ? (TN4)
+
+        Lu sur le brut (`sujet_troue`), comme « reçu » : l'image arrivée, pas
+        ce que la recette en a fait. L'appelant ne la pose que sur une image
+        née transparente (`nee_transparente`).
+        """
+        octets = self._brut_de(generation, rang)
+        return octets is not None and sujet_troue(octets)
+
+    def _brut_de(self, generation: Generation, rang: int) -> bytes | None:
+        """Les octets de l'image telle qu'elle est arrivée, ou `None`."""
         emplacement = next(
             (e for e in generation.emplacements if e.rang == rang), None
         )
         if emplacement is None or emplacement.resultat is None:
-            return False
+            return None
         try:
-            octets = self._fichiers.lire(emplacement.resultat.fichier)
+            return self._fichiers.lire(emplacement.resultat.fichier)
         except OSError:
-            return False
-        return fond_vide(octets)
+            return None
 
     def recette_d_un_morceau_refait(self, generation: Generation) -> Recette:
         """La recette d'un morceau coupé dans la feuille d'une planche refaite.

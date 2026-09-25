@@ -25,6 +25,10 @@ import type { CibleDeLAppel } from "./paiement"
 
 type Pose_<T> = React.Dispatch<React.SetStateAction<T>>
 
+/** Ce que « reprendre les réglages » change à la reprise. `fondColore` : le
+ *  geste « Refaire sur fond coloré » de la fiche (TN4). */
+export type RepriseDesReglages = { fondColore?: boolean }
+
 export type CeQueLesGestesLisent = {
   bibliotheque: Bibliotheque
   cible: CibleDeLAppel | null
@@ -38,6 +42,10 @@ export type CeQueLesGestesLisent = {
   /** Recochée par « Reprendre les réglages » (RS4), quand la génération
    *  reprise portait `garder_mise_en_page: true`. Sinon la case se décoche. */
   setGarderMiseEnPage: Pose_<boolean>
+  /** **Refaire sur fond coloré** (TN4) : cochée par le geste de la fiche d'une
+   *  image dont une partie est sortie transparente, et par « Reprendre les
+   *  réglages » d'un appel qui l'avait été. Décochée sinon. */
+  setFondColore?: Pose_<boolean>
   setOptions: Pose_<Record<string, string>>
   setPrompt: Pose_<string>
   setPromptNegatif: Pose_<string>
@@ -59,6 +67,7 @@ export function useGestes({
   poserLaRacine,
   ouvrirPreparation,
   setGarderMiseEnPage,
+  setFondColore,
   setOptions,
   setPrompt,
   setPromptNegatif,
@@ -282,9 +291,14 @@ export function useGestes({
    *  rhabiller une seconde fois : la bible partirait en double, et la planche
    *  demanderait deux grilles. Ce que l'auteur reprend, c'est l'appel — donc il
    *  repart identique. */
-  const reprendreReglages = async (asset: Asset) => {
+  const reprendreReglages = async (asset: Asset, reprise: RepriseDesReglages = {}) => {
     try {
       const generation = await api.generation(asset.generation)
+      // **TN4** : « Refaire sur fond coloré » est cette reprise-ci, avec le
+      // fond vide en moins. Rien ne part : la préparation se remplit, et c'est
+      // la barre qui paie — puis l'écran qui relit avant l'envoi, avec son
+      // prix ou son temps — qui fait partir l'appel.
+      setFondColore?.(Boolean(reprise.fondColore || generation.demande.fond_colore))
       setPrompt(generation.demande.prompt)
       setRepris(true)
       setPromptNegatif(generation.demande.prompt_negatif)

@@ -147,6 +147,7 @@ export function Fiche({
   onErreur,
   onReinjecter,
   onReglages,
+  onRefaireSurFondColore,
   onSupprimer,
   onOuvrirLEtabli,
   onRetoucher,
@@ -187,6 +188,11 @@ export function Fiche({
   /** Le quatrième rôle : reprendre les réglages de la génération qui a produit
    *  cet asset. Aucune image ne part — c'est le générateur qu'on repeuple. */
   onReglages: () => void
+  /** **Refaire sur fond coloré** (TN4) : la reprise des réglages, sans le fond
+   *  vide. Ne paie rien — la préparation se remplit, et l'appel part par la
+   *  barre qui paie et l'écran qui relit avant l'envoi. Absent, la fiche dit
+   *  le trou sans proposer le geste. */
+  onRefaireSurFondColore?: () => void
   onSupprimer: () => void
   /** **Les deux portes de la fiche** (E4). L'établi de la chose à qui l'image
    *  appartient — grisé avec sa raison quand elle n'appartient à personne — et
@@ -421,6 +427,11 @@ export function Fiche({
             impose={impose}
             onErreur={onErreur}
           />
+
+          {/* **Une partie du sujet est sortie transparente** (TN4) : le
+              défaut que la découpe endormie ne rattrape plus. Une décision,
+              donc ici, à côté de l'interrupteur qui peut aussi la réparer. */}
+          <SujetTroue impose={impose} onRefaire={onRefaireSurFondColore} />
         </div>
 
         {/* ══ Zone 2 · S'en resservir — l'actuel « Réinjecter », et les deux
@@ -1549,6 +1560,33 @@ function DetoureeParLeModele({
           {endormie ? "découpe en sommeil" : "découpe réveillée"}
         </span>
       </div>
+    </div>
+  )
+}
+
+/** **Une partie du sujet est sortie transparente** (TN4), et le geste qui la
+ *  refait.
+ *
+ *  Ne paraît que sur une image née transparente dont le serveur a mesuré un
+ *  grand vide enfermé derrière le trait du sujet (`impose.sujet_troue`, relu
+ *  sur l'image d'origine). **Rien ne part d'ici** : le bouton reprend les
+ *  réglages sans le fond vide, et l'appel part — prix ou temps annoncé — par
+ *  le chemin de tous les autres. */
+function SujetTroue({
+  impose,
+  onRefaire,
+}: {
+  impose: Impose | null
+  onRefaire?: () => void
+}) {
+  if (!impose?.sujet_troue) return null
+  return (
+    <div data-sujet-troue className="flex flex-col gap-1.5 rounded-5 border border-trait bg-carte p-2">
+      <Libelle aide="fiche.sujet-troue">Une partie du sujet est sortie transparente</Libelle>
+      <p className="text-[11px] leading-4 text-encre-3">
+        Le modèle a rendu un morceau du sujet aussi vide que le fond. Refais l'image sur un fond de couleur : l'atelier la détourera lui-même.
+      </p>
+      {onRefaire && <Bouton onClick={onRefaire} enfants="Refaire sur fond coloré" />}
     </div>
   )
 }

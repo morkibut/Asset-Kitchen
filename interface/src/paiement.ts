@@ -72,6 +72,10 @@ export type CeQueLePaiementLit = {
   /** **Refaire une planche** (RS2) — une intention de cet appel-ci. */
   garderMiseEnPage: boolean
   setGarderMiseEnPage: Pose_<boolean>
+  /** **Refaire sur fond coloré** (TN4) — une intention de cet appel-ci, comme
+   *  la planche à refaire : consommée dès que l'appel est parti. */
+  fondColore?: boolean
+  setFondColore?: Pose_<boolean>
   /** **La couper à l'arrivée** (RS7) — ne part qu'avec la mise en page. */
   decouperALArrivee: boolean
   setEnvoi: Pose_<Envoi | null>
@@ -123,6 +127,8 @@ export function usePaiement({
   enPlanche,
   garderMiseEnPage,
   setGarderMiseEnPage,
+  fondColore = false,
+  setFondColore,
   decouperALArrivee,
   setEnvoi,
   envoiOuvert,
@@ -478,6 +484,10 @@ export function usePaiement({
         // sont déjà celles que le serveur a rendues — `armerPremierePlanche`
         // les a posées dans la cible.
         ...(cible?.premierePlanche ? { premiere_planche: true } : {}),
+        // **Refaire sur fond coloré** (TN4) : pas de fond vide demandé.
+        // Absent sinon, pour que le corps d'un appel ordinaire reste celui
+        // d'avant.
+        ...(fondColore ? { fond_colore: true } : {}),
       })
       // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
       setChantier((liste) => fondre(liste, generation))
@@ -499,6 +509,8 @@ export function usePaiement({
       // Et la planche à refaire avec elle (RS2) : c'était l'intention de cet
       // appel-là, pas un réglage de la séance.
       setGarderMiseEnPage(false)
+      // Et le fond coloré (TN4), pour la même raison.
+      setFondColore?.(false)
       // **L'intention est consommée** (U1). Le même identifiant réemployé après
       // un appel parti ferait rendre *déjà soumise* par le serveur : deux images
       // volontairement identiques, demandées deux fois de suite, n'en feraient
@@ -569,6 +581,9 @@ export function usePaiement({
           // **La première planche**, lue avant de payer (TS3) — même drapeau
           // que `generer`.
           ...(cible?.premierePlanche ? { premiere_planche: true } : {}),
+          // **Le fond coloré se relit avant de payer** (TN4) : l'écran montre
+          // la couleur qui partira, plus « transparent, demandé au modèle ».
+          ...(fondColore ? { fond_colore: true } : {}),
         })
         .then((recu) => {
           if (!vivant) return
@@ -611,6 +626,7 @@ export function usePaiement({
     promptNegatif,
     univers,
     refaitUnePlanche,
+    fondColore,
   ])
 
   return {
