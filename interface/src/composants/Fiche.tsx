@@ -1496,25 +1496,6 @@ function RangerEnMatiere({
   )
 }
 
-/**
- * **Une matière née détourée** (RG8) : avant le 19 septembre 2026, le barème d'un jeu
- * ne connaissait pas « matière », et chaque matière naissait découpée et recadrée comme
- * un personnage. Le correctif empêche que cela recommence ; il ne répare pas ce qui est
- * déjà né. Cette fiche le dit — seulement quand c'est vrai — et propose de le réparer.
- *
- * - *Son image d'origine est là* (`refaisable`) : un seul bouton remet la recette que
- *   le jeu donne à une matière, à partir de cette image. Rien n'est regénéré, rien ne
- *   coûte. **L'image actuelle est remplacée** : le produit ne garde pas d'historique des
- *   rendus, et la phrase le dit au lieu de le laisser croire.
- * - *Elle n'y est plus* : la phrase dit qu'il faut regénérer, et il n'y a pas de bouton.
- *
- * **Le bouton ne part jamais tout seul** : ni à l'ouverture de la fiche, ni à celle du
- * jeu. C'est l'image de l'auteur ; il clique, ou il ne clique pas.
- *
- * L'état se lit à part de l'asset (`matieres.lire`) — c'est le même calcul que la
- * bibliothèque et que l'agent —, et se relit quand la recette de l'image change : après
- * le geste, la fiche se tait d'elle-même.
- */
 /** **Détourée par le modèle** (TN3), et le geste qui réveille la découpe.
  *
  *  Ne paraît que sur une image dont la génération a demandé un fond vide **et**
@@ -1591,6 +1572,25 @@ function SujetTroue({
   )
 }
 
+/**
+ * **Une matière née détourée** (RG8) : avant le 19 septembre 2026, le barème d'un jeu
+ * ne connaissait pas « matière », et chaque matière naissait découpée et recadrée comme
+ * un personnage. Le correctif empêche que cela recommence ; il ne répare pas ce qui est
+ * déjà né. Cette fiche le dit — seulement quand c'est vrai — et propose de le réparer.
+ *
+ * - *Son image d'origine est là* (`refaisable`) : un seul bouton remet la recette que
+ *   le jeu donne à une matière, à partir de cette image. Rien n'est regénéré, rien ne
+ *   coûte. **L'image actuelle est remplacée** : le produit ne garde pas d'historique des
+ *   rendus, et la phrase le dit au lieu de le laisser croire.
+ * - *Elle n'y est plus* : la phrase dit qu'il faut regénérer, et il n'y a pas de bouton.
+ *
+ * **Le bouton ne part jamais tout seul** : ni à l'ouverture de la fiche, ni à celle du
+ * jeu. C'est l'image de l'auteur ; il clique, ou il ne clique pas.
+ *
+ * L'état se lit à part de l'asset (`matieres.lire`) — c'est le même calcul que la
+ * bibliothèque et que l'agent —, et se relit quand la recette de l'image change : après
+ * le geste, la fiche se tait d'elle-même.
+ */
 function MatiereDetouree({
   asset,
   onErreur,
