@@ -316,6 +316,50 @@ décor) restent verts.
 **Critères.** Les chiffres sont dans la doc. La décision sur les planches est écrite, dans un sens
 ou dans l'autre.
 
+**Ce que la relecture croisée laisse à TN6, si les planches s'ouvrent.** Une vue dépliée, un
+morceau de planche refaite et la découpe à l'arrivée ne posent pas `fond_du_modele` : leurs
+morceaux naîtraient détourés par l'atelier, sur la couleur violette que Qwen laisse sous le vide
+(le banc dit que ça marche, rien ne l'a vérifié par l'atelier). Et la planche d'équipement
+demande désormais explicitement une planche (`preparer(planche=True)`) : l'ouvrir se fera là.
+
+---
+
+## Relecture croisée du 25 septembre 2026
+
+TN2 à TN5 et CM8, relus aux coutures. **Trois défauts confirmés et corrigés**, chacun avec un
+essai qui tombe sans son correctif (`tests/test_tn_relecture.py`) :
+
+- **Un texte repris gardait le fond de son premier appel.** « Reprendre les réglages » d'une image
+  faite sur fond coloré — toute image Qwen d'avant TN2 — puis l'envoyer en fond vide encadrait la
+  consigne autour de « flat solid #00B140 studio green background ». Et un texte repris déjà
+  encadré, sur un style local, recevait son déclencheur **devant** la consigne (qui ne tient
+  qu'en tête et en queue) et en double. Le texte repris est maintenant remis au fond de l'appel
+  **avant** d'être composé (`_repris_au_fond`, soumission et aperçu) ; l'écran montre la même
+  chose dans le texte, ses parties et les morceaux d'un style local, jetons recomptés.
+- **La planche d'équipement demandait le fond vide.** Elle plie ses cases elle-même : rien ne la
+  voyait planche. `preparer` prend `planche=True`, posé par le travail d'équipement.
+- **La superposition disait « sans alpha » une image détourée par le modèle** — le seul lecteur
+  de `passes_vives` que TN3 laissait derrière lui hors des planches. Il lit `a_une_silhouette`.
+
+**Écartés, avec leur raison.** La découpe d'une image isolée née transparente (Decoupe) détoure
+d'abord avec le moteur par défaut, que le banc dit sans perte sur le violet ; les calques d'une
+pièce passent par `voyage`, qui réveille le détourage ; l'image de départ d'une vidéo est le rendu
+posé sur le gris du produit. Les références « sur blanc » ne touchent ni au plafond ni à
+`hors_plafond` (point 4). `fond_colore` retombe après l'appel, part par « Relire avant l'envoi »
+(prix ou temps), et rien ne se relance seul. Les anciennes générations et recettes se relisent à
+l'identique (clés écrites seulement quand elles sont vraies). Les critères de TN3 et TN4 disent
+qu'ils ont été mesurés sur les images du banc, pas rejoués par l'atelier.
+
+### Décisions laissées à l'auteur
+
+1. **« Coup de main au plafond du mois » quand le plafond est à zéro** (CM8). Mettre le plafond à
+   zéro, c'est couper le coup de main exprès ; le serveur rend alors `motif: "plafond"`, et la
+   ligne grise paraît comme au plafond atteint. Silence (comme sans clé) ou ligne grise ? Laissé
+   tel quel ; noté aussi dans `PLAN-assistant.md`.
+2. **Hériter le détourage d'un dessous détouré par le modèle** (superposition). Ses passes
+   dorment : le geste « reprendre les passes du dessous » ne s'offre pas. Faut-il proposer de
+   copier sa passe endormie, éveillée, sur un dessus opaque ?
+
 ---
 
 ## Ordre et dépendances
@@ -329,3 +373,11 @@ sans détourage actif, un trou dans le sujet n'est plus rattrapé par rien.
 `production.py` ne regardent pas le type de sujet. Un décor ou une tuile part donc sur fond
 magenta ou vert studio alors qu'on ne le détoure jamais. C'est un défaut à part, pour tous les
 modèles, relevé le 22 septembre 2026.
+
+**Un texte repris vers un appel sur fond coloré garde sa couleur, et en reçoit une seconde.**
+Relevé à la relecture du 25 septembre 2026, antérieur à ce chantier (RT3, RV3). Le texte repris
+nomme « #00B140 studio green » ; la lecture des couleurs de la description (RV3) y lit « green »
+et choisit le magenta ; le texte part en disant vert, et le négatif interdit le vert **et** le
+magenta. La transparence n'y est pour rien — le fond vide, lui, est maintenant remis d'aplomb
+(`_repris_au_fond`) — mais le même geste réglerait ce cas : remplacer la phrase de fond d'un
+texte repris par celle de l'appel, et ne pas lire la phrase de l'atelier comme une description.

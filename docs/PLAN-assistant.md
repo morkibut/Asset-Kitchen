@@ -542,6 +542,10 @@ Chrome) et la ligne posée au centre quand aucun champ n'a le focus.
 3. **Le guide n'a pas de place pour un geste valable partout.** `Ctrl+/` et la marque « EN » sont
    décrits sous « Un jeu de tuiles » seulement (`aide.ts`), faute d'un `ou` qui dise « tout écran ».
    Une ligne par écran, un groupe commun, ou le panneau des touches du guide ?
+4. **Ouverte à la relecture du 25 septembre 2026 : le plafond à zéro.** Mettre le plafond à zéro,
+   c'est couper le coup de main exprès (« À zéro, il est coupé », dit le guide) ; `etat()` rend
+   pourtant `motif: "plafond"`, et la ligne grise « coup de main au plafond du mois » paraît comme
+   au plafond atteint. Silence, comme sans clé — ou la ligne grise ? Laissé tel quel.
 
 ---
 

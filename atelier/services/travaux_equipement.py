@@ -118,7 +118,10 @@ class ServiceTravauxEquipement(ServiceTravaux):
                     options=d["options"], echelle=personnage.type, repris=d["repris"] or texte_corrige is not None),
                     identifiant=generation_d_appel(identifiant, numero, empreinte), projet=projet,
                     provenance=acteur, references=refs, references_ecartees=d["references_ecartees"],
-                    tri=Tri.depuis_json(d["tri"]))
+                    tri=Tri.depuis_json(d["tri"]),
+                    # Une planche pliée ici, jamais un sujet isolé : pas de fond
+                    # vide demandé (TN2 — les planches attendent TN6).
+                    planche=True)
                 if deja and any(e.demarre_le is not None for e in generation.emplacements):
                     raise TravailRefuse("Cette préparation a déjà été soumise ; relire le travail existant.")
                 snapshot = self.a.generations.demande_preparee(generation)

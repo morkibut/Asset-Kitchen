@@ -89,6 +89,7 @@ from atelier.domaine.transparence import (
     demandee_par,
     desencadrer,
     encadrer,
+    sans_fond_colore,
     transparence_demandee,
 )
 from atelier.domaine.ambiance import COULEURS, REFERENCES, TEXTES, prises_du_mode
@@ -834,6 +835,11 @@ class ServiceGenerations:
         # **Une chose du jeu par case** (P2) : la planche à plusieurs sujets.
         # Présente, ni `personnage` ni `poses` ne l'accompagnent.
         sujets: Sequence[str] | None = None,
+        # **Une planche composée hors d'ici** (relecture de la transparence,
+        # 25 septembre 2026) : la planche d'équipement plie ses cases elle-même
+        # et n'envoie qu'une image à éditer — rien ici ne la voit plier. Elle
+        # le dit, pour que le fond vide ne soit pas demandé à une planche.
+        planche: bool = False,
     ) -> tuple[Generation, Modele | None, bool]:
         """Vérifie, enregistre, et dit si c'est neuf. N'appelle pas le fournisseur.
 
@@ -983,7 +989,7 @@ class ServiceGenerations:
             identifiant_modele,
             projet,
             demande.echelle,
-            planche=pliage is not None or demande.garder_mise_en_page,
+            planche=pliage is not None or demande.garder_mise_en_page or planche,
             tri=tri,
             fond_colore=demande.fond_colore,
         )
@@ -2854,7 +2860,8 @@ class ServiceGenerations:
         relit des mois après sans avoir à reconstituer l'univers du jour.
         """
         lignes = self.lignes(
-            sujet,
+            # Un texte repris, remis au fond de cet appel-ci (`_repris_au_fond`).
+            self._repris_au_fond(sujet, transparence, fond) if repris else sujet,
             repris=repris,
             projet=projet,
             personnage=personnage,
@@ -2899,15 +2906,22 @@ class ServiceGenerations:
             # celui qui la pose, et **le fond de cet appel prend la place de la
             # queue** — le texte parti la première fois n'en nommait aucun, et
             # la phrase est celle du calage, au mot près.
+            #
+            # ⚠️ Un texte **repris** n'arrive plus ici avec la consigne : elle
+            # en est retirée avant la composition (`_repris_au_fond`), sans quoi
+            # le déclencheur d'un style local se posait devant elle. Ce qui
+            # reste est le filet d'un texte qui la porterait autrement.
             a_la_place = phrase_de_calage(0, fond) if fond else ""
             sans = desencadrer(texte, a_la_place)
             if sans != texte:
                 texte = sans
                 if local is not None:
+                    # Et les jetons se recomptent (relecture du 25 septembre
+                    # 2026) : l'écran d'un style SDXL les compare à sa limite.
                     local = {**local, "texte": texte, "segments": [
                         {**s, "texte": desencadrer(str(s.get("texte", "")))}
                         for s in local.get("segments", [])
-                    ]}
+                    ], "jetons": texte_local.compter_jetons(texte)}
             return texte, local
         texte = encadrer(texte)
         if local is not None:
@@ -2923,6 +2937,32 @@ class ServiceGenerations:
                 "jetons": texte_local.compter_jetons(texte),
             }
         return texte, local
+
+    @staticmethod
+    def _repris_au_fond(texte: str, transparence: bool, fond: str | None) -> str:
+        """Un texte repris, **remis au fond de cet appel-ci** — avant d'être
+        composé (relecture du 25 septembre 2026).
+
+        Un texte repris est celui qui *est parti* : il porte le fond de l'appel
+        d'alors — la consigne de transparence, ou la phrase qui nomme une
+        couleur. Le fond de cet appel-ci est peut-être l'autre. Les deux
+        phrases sont celles de l'atelier, pas de l'auteur ; elles changent donc
+        ici, et nulle part ailleurs :
+
+        · **vers un fond vide**, la couleur tombe (`sans_fond_colore`) et la
+          consigne aussi (`desencadrer`) — `_jonction` la repose, **en tête** :
+          laissée dans le texte, le déclencheur d'un style local se posait
+          devant elle, et Qwen ne la lit qu'en tête et en queue ;
+        · **vers un fond coloré**, la consigne tombe et le fond de l'appel
+          prend la place de sa queue (TN4, `desencadrer`).
+
+        Retiré ici plutôt qu'au texte joint, l'écran de confirmation montre la
+        même chose dans le texte entier, dans ses parties et dans les morceaux
+        d'un style local — une seule résolution (`AGENTS.md`, point 6).
+        """
+        if transparence:
+            return sans_fond_colore(desencadrer(texte))
+        return desencadrer(texte, phrase_de_calage(0, fond) if fond else "")
 
     # ── Un style local (ML4) ─────────────────────────────────────────────────
 
@@ -3099,7 +3139,9 @@ class ServiceGenerations:
         )
         fond = FOND_TRANSPARENT if transparence else fond_choix.couleur
         lignes = self.lignes(
-            sujet,
+            # Un texte repris, remis au fond de cet appel-ci — le même geste
+            # que la soumission (`_texte`), donc le même texte.
+            self._repris_au_fond(sujet, transparence, fond) if repris else sujet,
             repris=repris,
             projet=projet,
             personnage=personnage,
