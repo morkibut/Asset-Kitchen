@@ -413,7 +413,10 @@ quand le plafond est atteint.
 
 - [x] Le plafond se règle une fois et se voit ; 1 € par défaut.
 - [x] Le compteur dit ce qui a été dépensé ce mois-ci, à côté du reste des dépenses.
-- [x] Plafond atteint : la marque disparaît et dit pourquoi, sans fenêtre d'erreur.
+- [ ] Plafond atteint : la marque disparaît et dit pourquoi, sans fenêtre d'erreur.
+      *(Relecture croisée : elle disparaît, sans fenêtre — mais le « pourquoi » ne se lit
+      que sous le compteur des dépenses, jamais là où la marque était. Décision 6 contre
+      décision 8 : laissé à l'auteur, § Décisions laissées à l'auteur.)*
 - [x] Rien ne peut dépenser au-delà du plafond, même en rafale.
 
 *Fait le 25 septembre 2026.* **La règle** : sous un verrou, un appel réserve la borne haute
@@ -441,7 +444,7 @@ tuiles. Une seule pose.
 
 - [x] Tout champ de prompt du produit porte la marque, sans modification écran par écran.
 - [x] Ce qui n'est pas un champ de prompt ne la porte pas.
-- [ ] Une relecture croisée vérifie qu'aucun écran n'a gagné un second chemin d'aide.
+- [x] Une relecture croisée vérifie qu'aucun écran n'a gagné un second chemin d'aide.
 
 *Fait le 25 septembre 2026.* **La pose unique** : `ChampPrompt.tsx` enveloppe désormais
 lui-même son prompt et son prompt négatif dans `AvecCoupDeMain` (`champ="prompt_image"`,
@@ -481,6 +484,62 @@ apparitions de la marque — aucune ligne existante ne disait « seulement le ti
 à corriger, et poser une ligne par écran pour un contrôle déjà documenté une fois (`jeu-de-tuiles.coup-de-main`)
 n'a pas semblé proportionné à la taille de la tranche ; à trancher à la relecture si le guide doit
 en dire plus.
+
+### Relecture croisée · 25 septembre 2026
+
+Les sept tranches relues **à leurs coutures**. Ce qui a été trouvé, et corrigé avec un essai qui
+tombe sans le correctif (8octies) :
+
+- **La marque promettait ce que l'appel ne tenait pas** (CM6 × CM3) — l'état jugeait le plafond sur
+  un appel de zéro signe, tout appel emporte la fiche et une consigne ; entre les deux, la marque
+  paraissait et l'appel revenait `indisponible`. Le plancher est le plus court des vrais appels
+  (`5ed5af7`).
+- **La consigne d'« améliorer » disait « image » à un champ de son** (CM7 × CM3), **la fiche
+  contredisait la décision 8** et nommait les onglets des Réglages autrement que l'écran (CM2 ×
+  CM6) — la fiche dit maintenant le plafond, les trois gestes, et « Consommations » (`29804f8`).
+- **Deux copies de trop** (CM3, CM4, CM5) : vingt champs faisaient vingt `GET /api/assist`, et
+  **un seul Échap refermait tout** — une proposition « EN » et la ligne de question ouverte
+  par-dessus partaient ensemble. Une lecture partagée, une pile d'Échap
+  (`interface/src/coup-de-main-commun.ts`) ; le plafond posé dans les dépenses se relit partout.
+- **`Ctrl+/` injoignable sur un clavier français** sans pavé numérique (`!shiftKey` exigé, or « / »
+  s'y tape avec Maj), et **posé sur le seul tiroir des matières** — CM4 comptait sur CM7, qui ne
+  portait que la marque. Posé une fois dans `App.tsx` avec `ecranDuGuide` ; `ECRANS` connaît les
+  vingt-cinq écrans du guide (un essai tient la parité) ; le **nom** du champ qui a le focus part
+  avec la question, **jamais sa valeur** (un champ peut porter un chemin de la machine,
+  décision 7). « Voir ce qui part » se referme quand la question change.
+- **« pourquoi › » imbriquait `<p>` et `<pre>` dans le `<p>` de `Raison`**, et l'explication
+  s'affichait à côté, pas dessous ; **la marque était posée dans cinq `<label>`** et entrait dans
+  le nom du champ (`8e4bb3d` pour ces trois points).
+
+**Écartés, avec leur raison.** L'argent : les trois métiers passent par `repondre`, donc par la
+réservation sous verrou ; un appel coupé par Échap (fetch abandonné) finit `interrompu`, au coût
+inconnu, et pèse sa réservation, jamais zéro ; `/preview` n'appelle pas le service. Le compteur
+(`pese_usd`, le mois) et le total des dépenses (`cout_usd`, depuis le premier jour) ne comptent pas
+la même chose **à dessein**, et l'écran le dit (« comptés au plus haut »). Décision 9 : aucune
+route du coup de main sous `/mcp`, et `ServiceAgent._mesurer` ne lit que les générations. Règle
+8nonies : `/api/assist` (les trois gestes), `/api/assist/{metier}` et `/preview`, `PUT
+/api/settings/assist` (le plafond des dépenses) ont chacun un chemin depuis un écran. Le guide `?`
+et `Ctrl+/` ne se volent rien : le premier refuse toute touche avec Ctrl, et sur un clavier
+américain `Ctrl+Maj+/` donne « ? », pas « / ». Le critère 3 de CM6 est **décoché** : voir
+ci-dessous.
+
+**Pas vu au navigateur** : rien de tout ceci — essais d'écran (jsdom) et serveur doublé seulement ;
+en particulier la touche sur un vrai clavier AZERTY (on lit `key`, d'après le comportement connu de
+Chrome) et la ligne posée au centre quand aucun champ n'a le focus.
+
+## Décisions laissées à l'auteur
+
+1. **« Plafond atteint : la marque disparaît et dit pourquoi. »** La décision 6 veut qu'elle se
+   taise, la décision 8 qu'elle dise pourquoi. Aujourd'hui elle se tait partout, et le pourquoi ne
+   se lit que sous le compteur des dépenses. Faut-il une trace à l'endroit même (une ligne grise
+   « coup de main au plafond » à la place de la marque, par exemple) — ou le silence suffit-il ?
+2. **Le geste 3 du plan dit « la même touche, la même ligne »** pour expliquer ce qui bloque ; CM5
+   a posé une marque à part, « pourquoi › », et `Ctrl+/` n'emporte pas le blocage de l'écran. Les
+   garder toutes deux ferait deux chemins vers la même aide sur l'écran d'envoi ; en garder une
+   demande de choisir laquelle.
+3. **Le guide n'a pas de place pour un geste valable partout.** `Ctrl+/` et la marque « EN » sont
+   décrits sous « Un jeu de tuiles » seulement (`aide.ts`), faute d'un `ou` qui dise « tout écran ».
+   Une ligne par écran, un groupe commun, ou le panneau des touches du guide ?
 
 ---
 
