@@ -114,6 +114,24 @@ py essais/rapport_tout.py            les 111 animations qui tournent, avec leur 
                                      consigne, leurs images jointes et leur prix — gratuit,
                                      ~12 Mo. C'est en s'en servant qu'on a vu que la mesure
                                      était fausse. Sortie : `essais/rapport-animation.html`
+py essais/banc_tn6_transparence.py   TN6 — le banc de transparence du 22 septembre rejoué
+                                     **par l'atelier** (huit tirages par cas, au lieu d'un
+                                     tirage parlant directement à ComfyUI), puis huit
+                                     planches par une voie qui ne passe pas par le produit
+                                     (§ le fichier). GRATUIT — modèle local `qwen21-rapide`
+                                     (0 $), vérifié avant chaque lot ; monte un atelier
+                                     jetable sur le port 8421, dossier hors Git
+                                     (`essais/resultats/atelier-tn6/`). **Fait vraiment
+                                     tourner la carte graphique de la machine** : 64
+                                     générations, 1311 s (≈ 22 min) mesurées le
+                                     25 septembre 2026. A trouvé que huit tirages valent
+                                     mieux qu'un : le seul tirage du 22 septembre avait rendu
+                                     la robe d'un mage transparente sur une planche 2×2, et
+                                     aucun des huit tirages rejoués ne le reproduit. Sortie :
+                                     `essais/resultats/atelier-tn6/mesures_tn6.json`, chiffres
+                                     dans `docs/modeles-et-workflows.md` § Le banc de
+                                     transparence rejoué par l'atelier, images réduites dans
+                                     `docs/releves/banc-tn6-2026-09-25/`
 
 pytest -q tests/test_essais_socle.py  les fonctions pures du socle des six essais du
                                      2 septembre 2026, sur le double, sans un centime
