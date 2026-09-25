@@ -214,6 +214,9 @@ async def test_sans_cle_il_dit_indisponible_sans_lever_et_sans_rien_envoyer(tmp_
     assert atelier.coup_de_main.etat() == {
         "disponible": False,
         "raison": "aucune clé OpenRouter",
+        # CM8 : sans clé, le motif est « indisponible » — jamais « plafond »,
+        # le seul des deux à laisser une trace à l'écran.
+        "motif": "indisponible",
         "modele": NOM_COMPLET,
     }
     # Rien n'est parti, donc rien à compter ni à expliquer.

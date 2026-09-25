@@ -6,7 +6,15 @@
 // avec l'atelier, qui raccroche à son tour chez le fournisseur (CM1).
 import { appeler } from "./api"
 
-export type EtatCoupDeMain = { disponible: boolean; raison: string | null; modele: string }
+/** `motif` (CM8) distingue les deux façons de se taire : `"plafond"` — l'écran
+ *  laisse une trace, une ligne grise — de `"indisponible"` — pas de clé,
+ *  réseau coupé —, où le silence reste total (décision 6). `null` disponible. */
+export type EtatCoupDeMain = {
+  disponible: boolean
+  raison: string | null
+  motif: "plafond" | "indisponible" | null
+  modele: string
+}
 
 /** Ce qui part, en quatre morceaux dont les deux messages sont faits, au caractère près. */
 export type CeQuiPart = {

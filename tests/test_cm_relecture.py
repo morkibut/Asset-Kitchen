@@ -165,11 +165,17 @@ def test_la_fiche_nomme_les_onglets_des_reglages_comme_l_ecran():
 
 def _ecrans_du_guide() -> set[str]:
     """Les valeurs de `Explication["ou"]`, lues dans `aide.ts` — la liste des
-    écrans que le produit sait nommer, et que `ecranDuGuide` (`App.tsx`) rend."""
+    écrans que le produit sait nommer, et que `ecranDuGuide` (`App.tsx`) rend.
+
+    **`"partout"` (CM8) n'est l'écran de rien**, et sort donc de cette liste :
+    aucun écran ne le calcule pour `ecranDuGuide`, `Ctrl+/` n'envoie donc
+    jamais `ecran: "partout"` au serveur, et `ECRANS` n'a pas à le connaître.
+    C'est le groupe commun du guide, pas une porte — voir la note dans
+    `aide.ts` juste au-dessus de `Explication["ou"]`."""
     source = AIDE_TS.read_text(encoding="utf-8")
     debut = source.index("  ou:\n    |")
     fin = source.index("\n}", debut)
-    return set(re.findall(r'\|\s*"([a-z-]+)"', source[debut:fin]))
+    return set(re.findall(r'\|\s*"([a-z-]+)"', source[debut:fin])) - {"partout"}
 
 
 def test_chaque_ecran_du_guide_est_connu_du_coup_de_main():

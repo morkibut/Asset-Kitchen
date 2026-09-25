@@ -36,11 +36,14 @@ const CE_QUI_PART = {
   jamais: "Aucune image, aucune vignette, aucun chemin de fichier : du texte, et rien d'autre.",
 }
 
-function doublerFetch({ disponible = true, flux }: { disponible?: boolean; flux?: ReturnType<typeof fluxOuvert> } = {}) {
+function doublerFetch({ disponible = true, motif = "indisponible", flux }: { disponible?: boolean; motif?: "plafond" | "indisponible"; flux?: ReturnType<typeof fluxOuvert> } = {}) {
   const appels: Appel[] = []
   vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
     appels.push({ url, corps: init?.body ? JSON.parse(String(init.body)) : null, signal: init?.signal })
-    if (url === "/api/assist") return new Response(JSON.stringify({ disponible, raison: disponible ? null : "Il manque la clé OpenRouter.", modele: "OpenRouter:deepseek/deepseek-v4-flash" }))
+    if (url === "/api/assist") {
+      const raison = disponible ? null : motif === "plafond" ? "plafond du mois atteint" : "Il manque la clé OpenRouter."
+      return new Response(JSON.stringify({ disponible, raison, motif: disponible ? null : motif, modele: "OpenRouter:deepseek/deepseek-v4-flash" }))
+    }
     if (url === "/api/assist/ameliorer/preview") return new Response(JSON.stringify(CE_QUI_PART))
     if (url === "/api/assist/ameliorer") {
       if (!flux) throw new Error("aucun flux prévu")
@@ -75,13 +78,27 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 describe("Le coup de main au bout d’un champ (CM3)", () => {
   it("sans clé, la marque n’apparaît pas, et rien d’autre ne le dit", async () => {
-    const appels = doublerFetch({ disponible: false })
+    const appels = doublerFetch({ disponible: false, motif: "indisponible" })
     render(<Tiroir />)
     // Deux champs, **une** lecture : elle est partagée (relecture croisée — un écran de
     // vingt champs en faisait vingt).
     await waitFor(() => expect(appels.filter((a) => a.url === "/api/assist")).toHaveLength(1))
     expect(marques()).toHaveLength(0)
     expect(screen.queryByText(/clé/)).toBeNull()
+    // Le silence est entier : pas de ligne grise non plus (CM8, seul le plafond en laisse une).
+    expect(screen.queryByText(/plafond/)).toBeNull()
+  })
+
+  it("CM8 — au plafond du mois, une ligne grise remplace la marque, sans fenêtre", async () => {
+    const appels = doublerFetch({ disponible: false, motif: "plafond" })
+    render(<Tiroir />)
+    await waitFor(() => expect(appels.filter((a) => a.url === "/api/assist")).toHaveLength(1))
+    expect(marques()).toHaveLength(0)
+    const lignes = await screen.findAllByText("coup de main au plafond du mois")
+    // Une par champ qui porte du texte — les deux champs du tiroir en ont.
+    expect(lignes).toHaveLength(2)
+    // Aucune fenêtre : rien à cliquer sur la ligne elle-même.
+    expect(screen.queryAllByRole("button")).toEqual([screen.getByRole("button", { name: "Générer" })])
   })
 
   it("la proposition s’affiche à côté, le champ garde le texte de l’auteur, et « Garder » remplit ce champ-là seulement", async () => {

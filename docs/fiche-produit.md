@@ -101,9 +101,12 @@ Trois gestes, et rien d'autre. La marque **« EN »** au bout d'un champ de prom
 prompt négatif, mouvement d'un clip, phrase d'un son, matière et motif d'un jeu de
 tuiles — jamais des paroles à chanter) propose le texte en anglais, à côté ; « Garder »
 l'adopte, Échap l'oublie. **Ctrl+/** ouvre, sur l'écran où l'on est, une ligne pour poser
-une question sur l'atelier. **« pourquoi › »**, à côté de la raison d'un geste grisé,
-développe cette raison. Sans clé OpenRouter ou plafond du mois atteint, les trois se
-taisent : la marque n'apparaît pas et la touche ne fait rien.
+une question **libre** sur l'atelier — elle n'explique jamais un geste bloqué. **« pourquoi › »**
+est le **seul** geste qui développe la raison d'un bouton grisé, affichée à côté d'elle.
+Sans clé OpenRouter ou réseau coupé, les trois se taisent : rien n'apparaît, aucune touche
+ne fait rien. **Au plafond du mois, seule la marque « EN » laisse une trace** — une ligne
+grise discrète, « coup de main au plafond du mois », à sa place, sans fenêtre ; Ctrl+/ et
+« pourquoi › » restent muets comme au silence ordinaire.
 
 ## Ce que le produit ne fait pas
 

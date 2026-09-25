@@ -155,7 +155,15 @@ export type Explication = {
    *  pour `envoi` (dont `envoi.ecran`, venue de `sujet`), dix-huit pour
    *  `fabrications` (neuf déjà là, neuf neuves), quatre pour `grille` — clés
    *  `grille-du-jeu.*`, parce que `grille.*` est déjà le préfixe des réglages
-   *  de la retouche — et huit pour `comparer`. */
+   *  de la retouche — et huit pour `comparer`.
+   *
+   *  ⚠️ **`partout` n'est l'écran de rien** (CM8, `docs/PLAN-assistant.md` §
+   *  Décisions laissées à l'auteur). Trois gestes du coup de main valent sur
+   *  n'importe quel écran — la marque « EN », `Ctrl+/`, « pourquoi › » — et
+   *  vivaient chacun sous l'écran où ils étaient nés faute d'un `ou` qui dise
+   *  « tout écran ». `Guide.tsx` ajoute les fiches `ou: "partout"` à la suite
+   *  de celles de l'écran ouvert, quel qu'il soit — la seule exception au
+   *  filtre `e.ou === scope`. */
   ou:
     | "tableau-de-bord"
     | "codex"
@@ -182,6 +190,7 @@ export type Explication = {
     | "envoi"
     | "grille"
     | "comparer"
+    | "partout"
 }
 
 /**
@@ -3048,10 +3057,51 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Consommations",
     quoi: "Ce que le coup de main peut dépenser au plus, en dollars, du 1er du mois à la fin du mois.",
     change:
-      "Atteint, le coup de main se tait partout : la marque « EN » disparaît des champs, Ctrl+/ et « pourquoi › » ne font plus rien — aucune fenêtre, rien ne t'interrompt ; c'est ici, sous le compteur, qu'il dit pourquoi. Il revient le 1er du mois suivant, ou dès que tu relèves le plafond. À zéro, il est coupé.",
+      "Atteint, Ctrl+/ et « pourquoi › » ne font plus rien — aucune fenêtre, rien ne t'interrompt. Seule la marque « EN » laisse une trace, une ligne grise à sa place (CM8) ; c'est ici, sous le compteur, qu'elle dit le montant. Il revient le 1er du mois suivant, ou dès que tu relèves le plafond. À zéro, il est coupé.",
     origine: "toi · défaut $1,00 · relu à chaque appel",
     long:
       "Chaque appel retient d'avance ce qu'il peut coûter au plus, puis rend la différence à la fin : dix appels lancés ensemble ne passent pas par le même reste. Un appel coupé avant d'avoir son prix compte pour ce qu'il avait retenu, jamais pour zéro. En dollars, comme toutes les dépenses : $1,00 vaut un peu moins de 1 €.",
+  },
+
+  // ── Partout — les trois gestes du coup de main, sur n'importe quel écran
+  // (CM8, `docs/PLAN-assistant.md` § Décisions laissées à l'auteur, tranchées
+  // le 25 septembre 2026). Trois entrées, une par geste, jamais recopiées sous
+  // l'écran où chacun était né — `jeu-de-tuiles.coup-de-main` et
+  // `jeu-de-tuiles.demander` sont parties, `envoi.expliquer-le-blocage` est
+  // devenue `partout.pourquoi`. `Guide.tsx` les ajoute à la suite de celles de
+  // l'écran ouvert, quel qu'il soit.
+
+  "partout.en": {
+    nom: "EN, au bout d'un champ de texte",
+    ou: "partout",
+    groupe: "Partout",
+    quoi: "Propose ton texte en anglais, sous le champ, sans traduire les noms de ton jeu ni rien ajouter.",
+    change: "« Garder » remplace le texte de ce champ-là, et rien d'autre ; Échap oublie la proposition. Rien ne se génère sans toi.",
+    origine: "un petit modèle d'OpenRouter · absent sans clé ou réseau coupé · au plafond du mois, une ligne grise le dit à sa place",
+    long:
+      "Au bout de tout champ de prompt : image, prompt négatif, clip, son, matière et motif d'un jeu de tuiles. Chaque champ part seul : rien n'est mêlé. « Voir ce qui part » montre tout, mot pour mot : la consigne, la fiche du produit, le champ, les noms de ton jeu que ton texte contient, et ton texte. Aucune image, aucun chemin de fichier. Chaque appel coûte une fraction de centime.",
+  },
+
+  "partout.demander": {
+    nom: "Demander, là où on est",
+    ou: "partout",
+    groupe: "Partout",
+    quoi: "Ctrl+/ ouvre une ligne pour poser une question libre sur l'écran où tu es — n'importe lequel.",
+    change: "Une réponse courte s'affiche en dessous ; Échap referme sans rien changer à ce qui était écrit.",
+    origine: "le coup de main · rien ne part sans ta question",
+    long:
+      "Hors sujet, ou si la fiche du produit ne dit rien qui réponde, le coup de main le dit plutôt que d'inventer. Il ne connaît que l'atelier, jamais ton jeu. Le nom du champ où tu étais part avec la question, jamais ce qu'il contient. Elle n'explique jamais un bouton grisé — c'est « pourquoi › » qui le fait, seul. Sans clé ou réseau coupé, Ctrl+/ n'ouvre rien ; au plafond du mois non plus.",
+  },
+
+  "partout.pourquoi": {
+    nom: "Pourquoi c'est bloqué",
+    ou: "partout",
+    groupe: "Partout",
+    quoi: "« pourquoi › », à côté d'un bouton grisé, développe la raison déjà affichée avec le coup de main.",
+    change: "La raison courte reste affichée telle quelle ; l'explication arrive dessous. Échap l'oublie.",
+    origine: "le coup de main · rien ne part sans cliquer « pourquoi › »",
+    long:
+      "C'est le seul geste qui explique un bouton grisé — Ctrl+/ reste la question libre, elle n'emporte jamais le blocage. Sans contexte suffisant pour l'expliquer honnêtement, le coup de main le dit plutôt que d'inventer une cause. Comme la marque « EN », il se tait s'il ne peut rien : sans clé ou réseau coupé, « pourquoi › » n'apparaît pas ; au plafond du mois non plus.",
   },
 
   // ── La fiche d'une image — les cinq zones du panneau (`GU12`) ───────────
@@ -3660,20 +3710,11 @@ export const AIDE: Record<string, Explication> = {
       "« Intégrée » vient du fond du moteur, dessinée à la volée depuis la graine. « Mes matières » vient d'une image de la bibliothèque. « Vide » veut dire qu'une couleur provisoire tient la place. « Sur la carte seulement » ne sert que le sol de fond, qui n'entre dans aucune pièce fabriquée.",
   },
 
-  // CM4 (`docs/PLAN-assistant.md`) : la touche qui demande. Rangée ici, où elle
-  // est née, mais **posée sur toute l'application** depuis la relecture croisée
-  // du 25 septembre 2026 (`DemanderIci`, `App.tsx`) — le guide n'a pas de place
-  // pour un geste valable partout ; plan § Décisions laissées à l'auteur.
-  "jeu-de-tuiles.demander": {
-    nom: "Demander, là où on est",
-    ou: "jeu-de-tuiles",
-    groupe: "L'atelier — les matières",
-    quoi: "Ctrl+/ ouvre une ligne pour poser une question sur l'écran où tu es — celui-ci, ou n'importe quel autre.",
-    change: "Une réponse courte s'affiche en dessous ; Échap referme sans rien changer à ce qui était écrit.",
-    origine: "le coup de main · rien ne part sans ta question",
-    long:
-      "Hors sujet, ou si la fiche du produit ne dit rien qui réponde, le coup de main le dit plutôt que d'inventer. Il ne connaît que l'atelier, jamais ton jeu. Le nom du champ où tu étais part avec la question, jamais ce qu'il contient. Sans clé ou plafond atteint, Ctrl+/ n'ouvre rien.",
-  },
+  // CM4 (`docs/PLAN-assistant.md`) : la touche qui demande — posée sur toute
+  // l'application depuis la relecture croisée du 25 septembre 2026
+  // (`DemanderIci`, `App.tsx`). **Partie pour `partout.demander`** (CM8) : le
+  // guide a maintenant un groupe « Partout » pour un geste valable partout,
+  // là où elle n'avait, faute de mieux, que l'écran où elle était née.
 
   "jeu-de-tuiles.bordures-liees": {
     nom: "Bordure liée à sa surface",
@@ -3777,16 +3818,8 @@ export const AIDE: Record<string, Explication> = {
       "« C'est fait de quoi ? » — la matière seule : pierre, bois, terre, sable. Le même texte pour tout le jeu, c'est lui qui fait que le sol et le mur vont ensemble. « Le motif » — comment cette matière est posée sur l'emplacement visé : dis le compte et la taille, « quatre grandes dalles, deux par deux ». Ce qui n'est pas écrit n'est pas deviné.",
   },
 
-  "jeu-de-tuiles.coup-de-main": {
-    nom: "EN, au bout des deux champs",
-    ou: "jeu-de-tuiles",
-    groupe: "L'atelier — le tiroir de matière",
-    quoi: "Propose ton texte en anglais, sous le champ, sans traduire les noms de ton jeu ni rien ajouter.",
-    change: "« Garder » remplace le texte de ce champ-là, et rien d'autre ; Échap oublie la proposition. Rien ne se génère sans toi.",
-    origine: "un petit modèle d'OpenRouter · absent sans clé ou au plafond du mois",
-    long:
-      "La même marque est au bout de tout champ de prompt : image, prompt négatif, clip, son. Chaque champ part seul : la matière n'est jamais mêlée au motif. « Voir ce qui part » montre tout, mot pour mot : la consigne, la fiche du produit, le champ, les noms de ton jeu que ton texte contient, et ton texte. Aucune image, aucun chemin de fichier. Chaque appel coûte une fraction de centime.",
-  },
+  // CM3/CM7 : la marque « EN ». **Partie pour `partout.en`** (CM8) — la même
+  // marque est au bout de tout champ de prompt, jamais seulement celui-ci.
 
   "jeu-de-tuiles.cout-matiere": {
     nom: "Une matière générée, une matière intégrée",
@@ -4260,19 +4293,10 @@ export const AIDE: Record<string, Explication> = {
   },
 
   // CM5 (`docs/PLAN-assistant.md`) : la marque « pourquoi › », posée à côté
-  // d'une raison de blocage sur cet écran seulement — les autres endroits où
-  // le produit grise un geste avec sa raison (le bouton qui paie, le choix
-  // d'un modèle) restent à câbler, plan § CM5.
-  "envoi.expliquer-le-blocage": {
-    nom: "Pourquoi c'est bloqué",
-    ou: "envoi",
-    groupe: "Le cadre — ce qui s'ouvre avant la dépense",
-    quoi: "Quand rien ne peut partir, « pourquoi › » développe la raison affichée avec le coup de main.",
-    change: "La raison courte reste affichée telle quelle ; l'explication arrive dessous. Échap l'oublie.",
-    origine: "le coup de main · rien ne part sans cliquer « pourquoi › »",
-    long:
-      "Sans contexte suffisant pour l'expliquer honnêtement, le coup de main le dit plutôt que d'inventer une cause. Comme la marque « EN », il se tait s'il ne peut rien : sans clé ou plafond atteint, « pourquoi › » n'apparaît pas.",
-  },
+  // d'une raison de blocage sur cet écran — les autres endroits où le produit
+  // grise un geste avec sa raison (le bouton qui paie, le choix d'un modèle)
+  // restent à câbler, plan § CM5. **Partie pour `partout.pourquoi`** (CM8) :
+  // le geste vaut sur n'importe quel écran, jamais seulement celui-ci.
 
   "envoi.modele-et-resultat": {
     nom: "Fournisseur et modèle, Résultat demandé",
