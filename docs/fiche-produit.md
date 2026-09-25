@@ -25,8 +25,9 @@ L'atelier fabrique aussi des jeux de tuiles et des sons, sur le même principe.
 - **Fabrications** — ce qui se fabrique en ce moment, et ce qui l'a été.
 - **Livrer au jeu** — ce qui part de l'atelier vers le dossier du jeu, en une fois ; se
   relit avant de partir.
-- **Réglages** — quatre onglets : le jeu, les moteurs, l'agent, les dépenses.
-- **Guide** — le volet qui explique l'écran ouvert.
+- **Réglages** — quatre onglets, sous ces noms à l'écran : « Univers » (les règles du
+  jeu), « Moteurs & workflows », « Agent MCP », « Consommations » (les dépenses).
+- **Guide** — le volet qui explique l'écran ouvert ; la touche « ? » l'ouvre.
 
 La fiche d'un sujet, ouverte depuis le Codex ou la Galerie, a quatre onglets : Animations,
 Images, Sons, Équipement (celui-ci n'apparaît que si le sujet peut porter quelque chose).
@@ -84,13 +85,25 @@ qui désigne déjà une case de grille ailleurs dans l'atelier.
   résultat — c'est un critère, pas un vœu.
 - **Rien ne part sans que ce que ça coûte soit annoncé d'abord**, en argent ou en temps
   selon le moteur ; et une planche à plusieurs cases coûte le prix d'un appel, pas un
-  prix par case.
+  prix par case. **Une seule exception, le coup de main** : il ne s'annonce pas à chaque
+  appel, il tient sous un plafond du mois (1 $ par défaut), réglé dans Réglages ›
+  Consommations, là où se lit aussi ce qu'il a dépensé ce mois-ci.
 - **« Voir ce qui part »** est le geste qui relit, avant l'envoi, tout ce qu'une demande
   va réellement transporter — jamais une supposition.
 - **Le texte que l'auteur a écrit n'est jamais réécrit en silence.** Une proposition
   s'affiche à côté, et c'est toujours un second geste qui l'adopte.
 - **Une génération rejoint la bibliothèque telle quelle, jugée ou non** ; la choisir pour
   le jeu est une décision distincte de la garder ou de la préférer.
+
+## Le coup de main
+
+Trois gestes, et rien d'autre. La marque **« EN »** au bout d'un champ de prompt (image,
+prompt négatif, mouvement d'un clip, phrase d'un son, matière et motif d'un jeu de
+tuiles — jamais des paroles à chanter) propose le texte en anglais, à côté ; « Garder »
+l'adopte, Échap l'oublie. **Ctrl+/** ouvre, sur l'écran où l'on est, une ligne pour poser
+une question sur l'atelier. **« pourquoi › »**, à côté de la raison d'un geste grisé,
+développe cette raison. Sans clé OpenRouter ou plafond du mois atteint, les trois se
+taisent : la marque n'apparaît pas et la touche ne fait rien.
 
 ## Ce que le produit ne fait pas
 

@@ -117,3 +117,53 @@ def test_par_la_route_la_marque_se_tait_sous_le_plancher(tmp_path):
     with TestClient(creer_application(atelier)) as client:
         assert client.get("/api/assist").json()["disponible"] is False
         assert client.get("/api/spending").json()["coup_de_main"]["atteint"] is True
+
+
+# ── 2 · La consigne d'« améliorer » ne contredit pas le champ ─────────────────
+
+
+def test_la_consigne_ne_dit_pas_image_a_un_champ_de_son_ou_de_clip():
+    """CM7 a gardé une seule consigne pour quatre sortes de champs — bien —,
+    mais elle affirmait « un modèle de génération d'images » et « un prompt
+    d'image » : pour `prompt_son`, le contexte du champ disait l'inverse."""
+    assert "modèle de génération d'images" not in CONSIGNE_AMELIORER
+    assert "prompt d'image" not in CONSIGNE_AMELIORER
+    for support in ("image", "clip", "son"):
+        assert support in CONSIGNE_AMELIORER.split("\n", 1)[0]
+    # Et chaque champ qu'elle sert dit bien, lui, ce qu'il décrit.
+    assert "son" in CHAMPS["prompt_son"]["ecran"] or "son" in CHAMPS["prompt_son"]["attend"]
+    assert "clip" in CHAMPS["prompt_video"]["attend"]
+
+
+# ── 3 · La fiche parle du coup de main, avec les mots de l'écran ─────────────
+
+
+def _fiche() -> str:
+    """La fiche, espaces et retours à la ligne ramenés à un seul espace."""
+    return " ".join(FICHE.read_text(encoding="utf-8").split())
+
+
+def test_la_fiche_dit_l_exception_du_coup_de_main_a_l_annonce_du_prix():
+    """« Rien ne part sans que ce que ça coûte soit annoncé » — sauf le coup de
+    main, décision 8. Sans cette phrase, « pourquoi le coup de main ne
+    m'annonce pas son prix ? » recevait une réponse fausse, tirée de la fiche."""
+    fiche = _fiche()
+    assert "plafond du mois" in fiche
+    assert "Réglages › Consommations" in fiche
+
+
+def test_la_fiche_nomme_les_onglets_des_reglages_comme_l_ecran():
+    """La raison du plafond renvoie à « Réglages › Consommations » ; la fiche
+    disait « les dépenses », un onglet qui n'existe pas sous ce nom."""
+    source = (AIDE_TS.parent / "composants" / "Reglages.tsx").read_text(encoding="utf-8")
+    titres = re.findall(r'\{ clef: "[a-z]+", titre: "([^"]+)" \}', source)
+    assert len(titres) == 4
+    fiche = _fiche()
+    for titre in titres:
+        assert f"« {titre} »" in fiche, titre
+
+
+def test_la_fiche_nomme_les_trois_gestes_du_coup_de_main():
+    fiche = _fiche()
+    for geste in ("« EN »", "Ctrl+/", "« pourquoi › »"):
+        assert geste in fiche, geste

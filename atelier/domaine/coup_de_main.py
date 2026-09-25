@@ -111,10 +111,10 @@ CADRE = "———"
 # Leur qualité réelle ne se mesure qu'avec des appels payés : le protocole est
 # dans `docs/PLAN-assistant.md` § CM3.
 CONSIGNE_AMELIORER = f"""\
-Tu rends en anglais le texte qu'un auteur de jeu vidéo a écrit — en français le plus souvent — pour demander une image à un modèle de génération d'images. Si l'auteur garde ta réponse, elle remplace son texte dans le champ, telle quelle : elle doit pouvoir partir sans retouche.
+Tu rends en anglais le texte qu'un auteur de jeu vidéo a écrit — en français le plus souvent — pour demander une image, un clip vidéo ou un son à un modèle de génération ; le message dit lequel, par le champ où le texte est écrit. Si l'auteur garde ta réponse, elle remplace son texte dans le champ, telle quelle : elle doit pouvoir partir sans retouche.
 
 Ce que tu rends
-- Le même contenu, en anglais, écrit comme un prompt d'image : un groupe nominal, ou quelques fragments séparés par des virgules. Pas de phrase adressée à quelqu'un, pas de point final.
+- Le même contenu, en anglais, écrit comme un prompt de génération : un groupe nominal, ou quelques fragments séparés par des virgules. Pas de phrase adressée à quelqu'un, pas de point final.
 - Ta réponse est uniquement ce texte, sur une seule ligne : ni guillemets autour, ni introduction, ni explication, ni seconde version, ni remarque.
 - Si le texte est déjà en anglais, rends-le tel quel, en corrigeant seulement ses fautes.
 
@@ -244,9 +244,13 @@ CONSIGNES: dict[str, str] = {
 # image (l'établi, la préparation, la fabrication locale, l'image de départ
 # d'un clip), un seul sert tout prompt négatif (image ou clip), un seul sert
 # tout mouvement de clip, un seul sert toute phrase de son. **Décision** : la
-# consigne (`CONSIGNE_AMELIORER`) reste celle écrite en CM3, qui parle d'un
-# « modèle de génération d'images » — elle n'est pas dédoublée pour le son et
-# la vidéo. C'est le contexte du champ (`ecran`, `libelle`, `attend`, envoyés
+# consigne (`CONSIGNE_AMELIORER`) reste celle écrite en CM3 — elle n'est pas
+# dédoublée pour le son et la vidéo. ⚠️ **Elle ne dit plus « image » comme un
+# fait** depuis la relecture croisée du 25 septembre 2026 : elle affirmait
+# « un modèle de génération d'images » à un champ de son, et le contexte du
+# champ disait le contraire — deux messages qui se contredisent, le modèle
+# choisit. Elle nomme désormais les trois supports et renvoie au champ. C'est
+# le contexte du champ (`ecran`, `libelle`, `attend`, envoyés
 # dans le message, jamais dans la consigne) qui dit au modèle ce que ce
 # texte-ci décrit réellement ; les règles qui comptent pour ces deux champs —
 # une réponse sur une ligne, rien d'ajouté, les comptes et les noms recopiés,
