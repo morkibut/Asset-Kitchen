@@ -125,7 +125,7 @@ describe("Raison — « pourquoi › » développe un blocage (CM5)", () => {
 
     for (const m of CE_QUI_PART.morceaux) {
       expect(await screen.findByText(m.titre)).toBeInTheDocument()
-      expect(screen.getByText((_, n) => n?.tagName === "PRE" && n.textContent === m.texte)).toBeInTheDocument()
+      expect(screen.getByText((_, n) => n?.classList.contains("whitespace-pre-wrap") === true && n.textContent === m.texte)).toBeInTheDocument()
     }
     const vu = appels.find((a) => a.url === "/api/assist/blocage/preview")!
     expect(vu.corps).toEqual({ texte: RAISON, ecran: "envoi", champ: "Envoyer", blocage: RAISON })

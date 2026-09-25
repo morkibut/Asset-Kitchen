@@ -9,8 +9,15 @@
 // raccourci déjà posé dans le produit, et les raccourcis réservés de Chrome, Edge
 // et Firefox sous Windows — est écrit sous CM4 dans `docs/PLAN-assistant.md` ;
 // aucun des deux ne porte `Ctrl+/`.
+//
+// ⚠️ **`Maj` est permise, et c'est voulu** (relecture croisée, 25 septembre 2026).
+// Sur un clavier **français**, « / » ne se tape qu'avec `Maj` (la touche « : ») ou
+// sur le pavé numérique : en exigeant `!shiftKey`, la touche n'était joignable,
+// chez l'auteur, que par un pavé que son portable n'a pas. On lit le caractère
+// produit (`key`), pas la position : `Ctrl+Maj+/` sur un clavier américain donne
+// `?`, et ne la déclenche donc toujours pas.
 export function estLaToucheDemander(e: KeyboardEvent): boolean {
-  return Boolean((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key === "/")
+  return Boolean((e.ctrlKey || e.metaKey) && !e.altKey && e.key === "/")
 }
 
 /** La réponse exacte d'une question hors sujet (`atelier/domaine/coup_de_main.py`,

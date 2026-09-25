@@ -99,6 +99,33 @@ def reserve_pour(signes: int) -> float:
     return round(jetons * PRIX_JETON_MAX_USD, 6)
 
 
+def signes_du_plus_petit_appel() -> int:
+    """Ce que **tout** appel du coup de main envoie au moins : la plus courte
+    des consignes, puis la fiche du produit, qui part avec chacune.
+
+    **La marque ne promet que ce que l'appel tient** (relecture croisée du
+    chantier, 25 septembre 2026). `etat()` jugeait le plafond sur un appel de
+    zéro signe — environ deux dixièmes de centime —, alors que le plus court
+    des vrais appels emporte la fiche et sa consigne, dix mille signes et plus
+    d'un centime de réservation. Entre les deux, la marque paraissait, et
+    l'appel qu'elle lançait revenait `indisponible` : exactement *le bouton
+    qui déçoit* que la décision 6 interdit. Une borne **basse** de ce qui
+    partira, jamais plus : elle ne ferme la marque que lorsqu'aucun appel ne
+    pourrait passer.
+    """
+    # Importés ici : le service reste le tuyau, et ne dépend de ce qui part que
+    # pour cette seule mesure.
+    from atelier.domaine.coup_de_main import CONSIGNES, SEPARATEUR
+    from atelier.services.contexte_coup_de_main import fiche_du_produit
+
+    try:
+        fiche = len(fiche_du_produit().strip())
+    except OSError:
+        fiche = 0
+    consigne = min((len(c) for c in CONSIGNES.values()), default=0)
+    return consigne + len(SEPARATEUR) + fiche
+
+
 def debut_du_mois(instant: float) -> float:
     """Le 1er du mois de `instant`, à minuit **heure locale** — le mois qui
     nomme les journaux `appels-texte/<AAAA-MM>.jsonl`."""
@@ -168,7 +195,7 @@ class ServiceCoupDeMain:
         reste = max(0.0, plafond - pese - en_vol)
         return {
             # Même règle que `etat()` : l'appel le plus court ne tient plus.
-            "atteint": reste + 1e-9 < reserve_pour(0),
+            "atteint": reste + 1e-9 < reserve_pour(signes_du_plus_petit_appel()),
             "depuis": depuis,
             "plafond_usd": plafond,
             "pese_usd": round(pese, 6),
@@ -198,12 +225,15 @@ class ServiceCoupDeMain:
     def etat(self) -> dict[str, object]:
         """Ce que la marque a besoin de savoir pour paraître ou se taire.
 
-        Le plafond s'y lit pour **l'appel le plus court possible** : si même
-        celui-là ne tient plus, la marque disparaît et dit pourquoi.
+        Le plafond s'y lit pour **l'appel le plus court possible** — la plus
+        courte consigne et la fiche, qui partent toujours
+        (`signes_du_plus_petit_appel`) : si même celui-là ne tient plus, la
+        marque disparaît et dit pourquoi.
         """
         fournisseur = self._fabrique()
+        plancher = reserve_pour(signes_du_plus_petit_appel())
         with self._verrou:
-            raison = self._empechement(fournisseur, reserve_pour(0))
+            raison = self._empechement(fournisseur, plancher)
         return {
             "disponible": raison is None,
             "raison": raison,

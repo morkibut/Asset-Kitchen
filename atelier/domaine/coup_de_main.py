@@ -111,10 +111,10 @@ CADRE = "———"
 # Leur qualité réelle ne se mesure qu'avec des appels payés : le protocole est
 # dans `docs/PLAN-assistant.md` § CM3.
 CONSIGNE_AMELIORER = f"""\
-Tu rends en anglais le texte qu'un auteur de jeu vidéo a écrit — en français le plus souvent — pour demander une image à un modèle de génération d'images. Si l'auteur garde ta réponse, elle remplace son texte dans le champ, telle quelle : elle doit pouvoir partir sans retouche.
+Tu rends en anglais le texte qu'un auteur de jeu vidéo a écrit — en français le plus souvent — pour demander une image, un clip vidéo ou un son à un modèle de génération ; le message dit lequel, par le champ où le texte est écrit. Si l'auteur garde ta réponse, elle remplace son texte dans le champ, telle quelle : elle doit pouvoir partir sans retouche.
 
 Ce que tu rends
-- Le même contenu, en anglais, écrit comme un prompt d'image : un groupe nominal, ou quelques fragments séparés par des virgules. Pas de phrase adressée à quelqu'un, pas de point final.
+- Le même contenu, en anglais, écrit comme un prompt de génération : un groupe nominal, ou quelques fragments séparés par des virgules. Pas de phrase adressée à quelqu'un, pas de point final.
 - Ta réponse est uniquement ce texte, sur une seule ligne : ni guillemets autour, ni introduction, ni explication, ni seconde version, ni remarque.
 - Si le texte est déjà en anglais, rends-le tel quel, en corrigeant seulement ses fautes.
 
@@ -244,9 +244,13 @@ CONSIGNES: dict[str, str] = {
 # image (l'établi, la préparation, la fabrication locale, l'image de départ
 # d'un clip), un seul sert tout prompt négatif (image ou clip), un seul sert
 # tout mouvement de clip, un seul sert toute phrase de son. **Décision** : la
-# consigne (`CONSIGNE_AMELIORER`) reste celle écrite en CM3, qui parle d'un
-# « modèle de génération d'images » — elle n'est pas dédoublée pour le son et
-# la vidéo. C'est le contexte du champ (`ecran`, `libelle`, `attend`, envoyés
+# consigne (`CONSIGNE_AMELIORER`) reste celle écrite en CM3 — elle n'est pas
+# dédoublée pour le son et la vidéo. ⚠️ **Elle ne dit plus « image » comme un
+# fait** depuis la relecture croisée du 25 septembre 2026 : elle affirmait
+# « un modèle de génération d'images » à un champ de son, et le contexte du
+# champ disait le contraire — deux messages qui se contredisent, le modèle
+# choisit. Elle nomme désormais les trois supports et renvoie au champ. C'est
+# le contexte du champ (`ecran`, `libelle`, `attend`, envoyés
 # dans le message, jamais dans la consigne) qui dit au modèle ce que ce
 # texte-ci décrit réellement ; les règles qui comptent pour ces deux champs —
 # une réponse sur une ligne, rien d'ajouté, les comptes et les noms recopiés,
@@ -327,10 +331,109 @@ CHAMPS: dict[str, dict[str, str]] = {
 # **Les clés reprennent, volontairement, celles d'`Explication["ou"]`**
 # (`interface/src/aide.ts`) : c'est déjà la liste des écrans que le produit
 # sait nommer pour son propre guide, et lui en tenir une seconde, différente,
-# serait une divergence de plus à surveiller. Seuls les écrans **réellement
-# posés** figurent ici — comme `CHAMPS` n'avait que deux entrées en CM3 —, et
-# CM7 en ajoutera au fil de la généralisation à `ChampPrompt.tsx`.
+# serait une divergence de plus à surveiller.
+#
+# ⚠️ **Tous les écrans du guide y sont depuis la relecture croisée du 25
+# septembre 2026**, et un essai le tient (`tests/test_cm_relecture.py`) :
+# CM4 n'avait posé la touche que sur le tiroir des matières, en comptant sur
+# CM7 pour l'étendre — et CM7 ne portait que la marque « EN ». La touche est
+# désormais posée **une fois**, à l'échelle de l'application, avec l'écran que
+# le guide calcule déjà (`ecranDuGuide`, `App.tsx`) : un écran qui manquerait
+# ici ferait répondre 422 à la question, et la touche s'y tairait sans raison.
+# Les phrases reprennent le résumé de chaque écran (`RESUMES`, `aide.ts`).
 ECRANS: dict[str, str] = {
+    "tableau-de-bord": (
+        "Le jeu, l'écran d'accueil du jeu ouvert : ce qu'il contient par "
+        "famille, ce qui manque, et ce qu'il a coûté"
+    ),
+    "codex": (
+        "le Codex, l'inventaire de tout ce que le jeu contient, rangé par "
+        "famille et par collection"
+    ),
+    "sujet": (
+        "la fiche d'un sujet du jeu : qui il est, ce que le jeu lui réclame, "
+        "et ce qui est déjà fait (onglets Animations, Images, Sons, Équipement)"
+    ),
+    "galerie": (
+        "la Galerie, chaque résultat conservé dans le jeu, quel que soit son "
+        "média"
+    ),
+    "case": (
+        "la fiche d'une image : son grand format, sa recette, sa provenance, "
+        "et ce qu'on choisit d'en faire"
+    ),
+    "clip": (
+        "un clip : l'image de départ, le mouvement demandé, le prix des "
+        "modèles, puis ce que la fabrication a rendu"
+    ),
+    "bande": (
+        "l'atelier d'une animation, reprise et corrigée image par image, "
+        "table après table"
+    ),
+    "montage": (
+        "le montage d'un clip déjà payé, taillé en animations choisies image "
+        "par image, sans rien dépenser"
+    ),
+    "tables": (
+        "les tables de la retouche, qui traversent une image déjà faite dans "
+        "l'ordre, du fond qu'on retire au pixel qu'on repeint à la main"
+    ),
+    "depenses": (
+        "les dépenses : chaque appel payé, ce qu'il a rendu, gardé, perdu ou "
+        "refusé ; le plafond du coup de main s'y règle"
+    ),
+    "inspiration": (
+        "Univers & toile, la toile du jeu où l'on classe, note et compose des "
+        "images de référence"
+    ),
+    "jeu": (
+        "Réglages, onglet Univers : ce qu'on pose une fois pour tout le jeu — "
+        "son nom, son allure, sa vue, son monde, ses sons"
+    ),
+    "ambiances": (
+        "Ambiances et couleurs : les palettes du jeu, tirées d'images, et les "
+        "lots de style"
+    ),
+    "reglages": (
+        "les réglages qui ne parlent d'aucun jeu : les moteurs et les "
+        "méthodes, le cadre de l'agent, les consommations, l'installation"
+    ),
+    "equipement": (
+        "une pièce d'équipement : ses emplois possibles sur un personnage, et "
+        "les calques que chacun réclame encore"
+    ),
+    "sortie": (
+        "Livrer au jeu : ce qui part vers le dossier du jeu, où cela va, et ce "
+        "qui a changé depuis la dernière fois"
+    ),
+    "tuiles": (
+        "la liste des jeux de tuiles du jeu : on en ouvre un, ou on part d'une "
+        "image déjà là"
+    ),
+    "livraison-de-tuiles": (
+        "Livrer à Godot, pour un jeu de tuiles : sa planche, sa vérification, "
+        "et le dossier où tout ira s'écrire"
+    ),
+    "son": (
+        "les sons du jeu : chacun s'écoute, se règle en coupe, en boucle et en "
+        "niveau, puis se garde avant de partir"
+    ),
+    "un-son": (
+        "Un son : on décrit ce qu'on veut entendre, plusieurs tirages se "
+        "calculent sur la machine, et on garde ceux qui vont au jeu"
+    ),
+    "fabrications": (
+        "Fabrications : le journal de tout ce qui a été demandé, ce qui tourne "
+        "en ce moment, et les portes pour préparer une demande neuve"
+    ),
+    "grille": (
+        "Sur la grille du jeu : le sujet posé à sa vraie taille sur les cases "
+        "du moteur, sans rien fabriquer"
+    ),
+    "comparer": (
+        "Deux côte à côte : deux images, deux animations ou deux sujets sur la "
+        "même scène, avec l'écart chiffré"
+    ),
     "jeu-de-tuiles": (
         "l'atelier d'un jeu de tuiles, où l'on choisit la matière et le motif "
         "de chaque emplacement (sol, mur, bordure…) avant de fabriquer les "

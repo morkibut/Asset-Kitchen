@@ -48,6 +48,15 @@ describe("CM4 — `Ctrl+/` est libre dans le produit", () => {
     expect(estLaToucheDemander({ key: "/" } as KeyboardEvent)).toBe(false)
   })
 
+  test("sur un clavier français, Ctrl+Maj+: donne « / » avec Maj — la touche doit répondre", () => {
+    // Relecture croisée : `!shiftKey` rendait la touche injoignable sans pavé numérique.
+    expect(estLaToucheDemander({ key: "/", ctrlKey: true, shiftKey: true, code: "Period" } as KeyboardEvent)).toBe(true)
+  })
+
+  test("sur un clavier américain, Ctrl+Maj+/ donne « ? » — la touche ne répond pas", () => {
+    expect(estLaToucheDemander({ key: "?", ctrlKey: true, shiftKey: true, code: "Slash" } as KeyboardEvent)).toBe(false)
+  })
+
   test("Ctrl+/ avec Alt en plus ne la déclenche pas — un raccourci du système d'exploitation reste possible", () => {
     expect(estLaToucheDemander({ key: "/", ctrlKey: true, altKey: true } as KeyboardEvent)).toBe(false)
   })

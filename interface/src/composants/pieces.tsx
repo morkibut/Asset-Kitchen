@@ -30,6 +30,7 @@ import {
 import { POINTILLE, useInfobulle } from "./Infobulle"
 import { explication } from "../aide"
 import { coupDeMain, type CeQuiPart } from "../api-coup-de-main"
+import { relireDisponibilite, useDisponibilite, useEchap } from "../coup-de-main-commun"
 import { JE_NE_SAIS_PAS } from "../touche-demander"
 
 /** Comment un modèle se dit dans une liste déroulante (F1).
@@ -498,17 +499,11 @@ function ExpliquerLeBlocage({
   champ?: string
   raison: string
 }) {
-  const [dispo, setDispo] = useState(false)
+  const [dispo, setDispo] = useDisponibilite()
   const [ouvert, setOuvert] = useState(false)
   const [reponse, setReponse] = useState<{ texte: string; fini: boolean } | null>(null)
   const [voir, setVoir] = useState<CeQuiPart | null>(null)
   const coupure = useRef<AbortController | null>(null)
-
-  useEffect(() => {
-    let vivant = true
-    coupDeMain.etat().then((e) => { if (vivant) setDispo(e.disponible === true) }).catch(() => undefined)
-    return () => { vivant = false }
-  }, [])
 
   function fermer() {
     coupure.current?.abort()
@@ -523,18 +518,9 @@ function ExpliquerLeBlocage({
 
   // Échap, où que soit le focus tant que l'explication est ouverte — même
   // geste que `AvecCoupDeMain` et `AvecDemande` : elle referme l'explication,
-  // elle ne referme pas l'écran qui est autour (donc pas l'écran d'envoi).
-  useEffect(() => {
-    if (!ouvert) return
-    const touche = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return
-      e.preventDefault(); e.stopPropagation()
-      fermer()
-    }
-    window.addEventListener("keydown", touche, true)
-    return () => window.removeEventListener("keydown", touche, true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ouvert])
+  // elle ne referme pas l'écran qui est autour (donc pas l'écran d'envoi), ni
+  // ce qui a été ouvert avant elle (`coup-de-main-commun.ts`).
+  useEchap(ouvert, fermer)
 
   async function expliquer() {
     setOuvert(true)
@@ -556,6 +542,7 @@ function ExpliquerLeBlocage({
       }
       // Revenu sans réponse — indisponible, refusé, délai passé : elle se tait.
       if (fin?.genre === "indisponible") setDispo(false)
+      else void relireDisponibilite()
       fermer()
     } catch {
       if (!coupe.signal.aborted) { setDispo(false); fermer() }
@@ -571,19 +558,23 @@ function ExpliquerLeBlocage({
   if (!dispo) return null
   const jeNeSaisPas = reponse?.fini && reponse.texte.toLowerCase().replace(/[.!]+$/, "") === JE_NE_SAIS_PAS
 
+  // **Rien que des `span`** : tout ceci vit dans le `<p>` de `Raison`, où un
+  // `<p>` ou un `<pre>` n'ont pas le droit d'entrer. Et l'explication passe
+  // **dessous** la raison (`basis-full` dans sa rangée qui se replie), pas à
+  // côté d'elle — le guide le dit, et une colonne étroite n'a pas la place.
   return (
-    <span className="mesure inline">
+    <>
       {!ouvert && (
-        <button type="button" onClick={() => void expliquer()} className="ml-1 text-signal hover:opacity-70">
+        <button type="button" onClick={() => void expliquer()} className="mesure ml-1 text-signal hover:opacity-70">
           pourquoi ›
         </button>
       )}
       {ouvert && (
-        <span role="group" aria-label="Pourquoi c'est bloqué" className="mt-1 block max-w-[380px] rounded-7 border border-trait bg-papier p-[8px]">
+        <span role="group" aria-label="Pourquoi c'est bloqué" className="mesure mt-1 block basis-full max-w-[380px] rounded-7 border border-trait bg-papier p-[8px]">
           {reponse && (
-            <p aria-live="polite" className="text-[11px] leading-4 text-encre">
+            <span aria-live="polite" className="block text-[11px] leading-4 text-encre">
               {jeNeSaisPas ? "Le coup de main ne sait pas expliquer ce blocage-ci." : (reponse.texte || "…")}
-            </p>
+            </span>
           )}
           <span className="mt-[8px] flex flex-wrap items-center gap-[8px]">
             <button type="button" className="text-[11px] text-encre-2 underline underline-offset-2 hover:text-encre" aria-expanded={voir !== null} onClick={() => void basculerVoir()}>
@@ -594,13 +585,13 @@ function ExpliquerLeBlocage({
           {voir && <span className="mt-[8px] block space-y-[8px]">
             {voir.morceaux.filter((m) => m.texte).map((m) => <span key={m.titre} className="block">
               <span className="mesure block text-[10.5px] uppercase tracking-[0.14em] text-encre-3">{m.titre}</span>
-              <pre className="mesure mt-[4px] whitespace-pre-wrap rounded-5 border border-trait bg-carte p-[8px] text-[10.5px] text-encre-2">{m.texte}</pre>
+              <span className="mesure mt-[4px] block whitespace-pre-wrap rounded-5 border border-trait bg-carte p-[8px] text-[10.5px] text-encre-2">{m.texte}</span>
             </span>)}
             <small className="block text-[10.5px] text-encre-3">{voir.jamais}</small>
           </span>}
         </span>
       )}
-    </span>
+    </>
   )
 }
 
@@ -634,7 +625,7 @@ export function Raison({
   if (!texte) return null
   return (
     <p className="mesure mt-1 flex flex-col text-[10.5px] leading-4 text-encre-4">
-      <span className="flex items-center gap-1.5">
+      <span className="flex flex-wrap items-center gap-1.5">
         <span aria-hidden className="inline-block h-px w-2 bg-encre-4" />
         <span>{texte}</span>
         {ouAller && onAller && (

@@ -144,6 +144,7 @@ import type { Table } from "./recette"
 import { EcranAtelierDeBande } from "./composants/AtelierDeBande"
 import { EcranMontage } from "./composants/Montage"
 import { VoletGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
+import { DemanderIci } from "./composants/DemanderIci"
 import type { Explication } from "./aide"
 import { Barre, fermerBarre, ouvrirBarre, useBarre } from "./composants/Barre"
 import { EcranUnivers, type Cote } from "./composants/Univers"
@@ -3325,6 +3326,13 @@ function AtelierApp() {
           `ecranDuGuide` vient de calculer. Il ne porte pas de fente de refus :
           il ne demande rien au serveur, ne dépense rien, ne peut pas échouer. */}
       {guideOuvert && <VoletGuide onFermer={fermerGuide} ecran={ecranDuGuide} />}
+
+      {/* **`Ctrl+/` demande, là où l'on est** (CM4, `docs/PLAN-assistant.md`) —
+          posé une fois ici, avec le même écran que le guide, et non plus sur le
+          seul tiroir des matières (relecture croisée du 25 septembre 2026). Ne
+          rend rien tant qu'on ne presse pas la touche, et rien du tout sans clé
+          ou au plafond (décision 6). */}
+      {ecranDuGuide && <DemanderIci ecran={ecranDuGuide} />}
 
       {/* **La barre est la troisième zone du châssis** (B6) : par-dessus le
           carnet et la surface, appelée au clavier, jamais à côté d'eux.
