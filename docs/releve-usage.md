@@ -9,6 +9,68 @@
 
 ---
 
+## 25 septembre 2026 — ce que montre un tutoriel PixelLab
+
+Source : la vidéo *PixelLab Tutorial: Images Pro Flash, Skeleton V3 & PixMiniMax* (PixelLab,
+18 min), regardée image par image sur les passages cités. Trois idées que l'atelier n'a pas.
+**Rien n'est cadré ni planifié.**
+
+### 1 · Repeindre une zone : le modèle ne touche qu'à ce qu'on a peint
+
+**Ce qu'on voit (5:21 à 7:25).** Sur un personnage torse nu de 64×64, l'auteur peint au pinceau
+une tache grise sur la tête, écrit « coiffure » et lance. Le résultat arrive **sur un calque à
+part** (« New layer with changes ») qui ne contient **que les pixels changés** : les cheveux et
+quelques pixels de front. Il efface ces derniers à la main, et il a un calque de coiffure propre.
+Il recommence avec un tee-shirt sur le torse, puis un pantalon sur les jambes : trois calques
+empilés sur le corps d'origine, qui n'a pas bougé d'un pixel. La fenêtre annonce le prix avant
+de partir (« 5 generations for 1 image at 64x64 »). Le résultat propose ensuite : recommencer,
+jeter, recommencer avec la même graine, et **réduire les couleurs** (automatiquement, ou à un
+nombre choisi — 7 à l'écran).
+
+**Ce qu'on fait nous.** Aucun appel de l'atelier n'envoie de masque au modèle. Le modèle
+redessine l'image entière, puis on retrouve la pièce **par différence** entre avant et après.
+C'est exactement ce qui rate une pièce qui **se substitue** (voir plus bas, 29 août 2026) : un
+tee-shirt qui remplace un torse nu en est le cas type. PixelLab n'a pas ce problème, parce que
+tout ce qui change est par construction dans la zone peinte.
+
+**L'auteur l'a constaté à l'usage** : la retouche de zone marche bien mieux chez PixelLab.
+
+**À vérifier avant de cadrer** : quels modèles du catalogue acceptent un masque (l'édition
+d'image d'OpenAI en prend un ; les workflows ComfyUI de retouche aussi ; à voir par OpenRouter).
+
+### 2 · Une boucle propre : la même image au début et à la fin
+
+**Ce qu'on voit (15:46).** L'écran d'animation a deux cases : « First frame » (obligatoire) et
+« Last frame » (facultative, « la pose où l'animation doit finir »). Pour une animation de repos,
+l'auteur prend une image de l'animation précédente et la met **dans les deux cases**. Le
+mouvement revient donc exactement à son point de départ. Il retire ensuite l'image en double
+pour que la boucle ne saute pas.
+
+**Ce qu'on fait nous.** Nos animations ne prennent qu'une image de départ. Il n'existe aucune
+notion d'image d'arrivée, ni dans le code ni dans la doc.
+
+**À vérifier avant de cadrer** : quels modèles vidéo du catalogue acceptent une image de fin.
+
+### 3 · Donner de la place avant un grand geste
+
+**Ce qu'on voit (8:00).** Un monstre de 64×64 remplit son cadre. Avant de lui faire frapper le
+sol des deux bras, l'auteur ouvre « Reframe Canvas » : il agrandit le cadre à 80×80 en tirant
+les bords ou en tapant la taille, et il peut déplacer le sprite dedans. Sans ça, les bras
+sortent de l'image.
+
+**Ce qu'on fait nous.** Rien ne permet d'ajouter de la marge autour de l'image de départ d'une
+animation. C'est gratuit (aucun appel) et ça évite de payer une animation coupée.
+
+### Au passage, un piège qu'il a rencontré
+
+Son bouton « améliorer la consigne » a lu le personnage vu de face et a écrit « vers la
+caméra ». Envoyée à l'angle nord-est, la phrase a fait déraper le mouvement ; et la couleur de
+l'effet a changé d'un angle à l'autre. Sa solution : une consigne par angle, et la couleur de
+l'effet écrite en toutes lettres. Nos planches envoient déjà un texte par angle ; **non vérifié
+pour les animations**.
+
+---
+
 ## 31 août 2026 — la seconde séance, sur les seules tables de l'atelier
 
 Six points relevés le même soir, en regardant de près ce que la première séance avait
