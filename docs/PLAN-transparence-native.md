@@ -322,6 +322,33 @@ morceaux naîtraient détourés par l'atelier, sur la couleur violette que Qwen 
 (le banc dit que ça marche, rien ne l'a vérifié par l'atelier). Et la planche d'équipement
 demande désormais explicitement une planche (`preparer(planche=True)`) : l'ouvrir se fera là.
 
+**Faite le 25 septembre 2026.** Le banc rejoué par l'atelier jetable (port 8421, dossier hors
+Git, le vrai ComfyUI local) — `essais/banc_tn6_transparence.py`, chiffres dans
+`docs/modeles-et-workflows.md` § Le banc de transparence rejoué par l'atelier. **Huit tirages
+par sujet, sur les six sujets isolés** (48 générations, par l'API ordinaire — la transparence
+part automatiquement, TN2) : fond vide reçu 48/48, détourage endormi à la naissance 48/48,
+aucun trou signalé par TN4. Les débris restants sont presque tous la fumée de la salamandre
+(attendue) ; le coffre, seul sujet à porter des débris le 22 septembre, n'en a plus un seul sur
+ses huit tirages. **TN3 et TN4 n'ont montré aucun écart** sur ces 48 tirages réels — rien à
+décrire, rien à corriger.
+
+**Puis huit planches par sujet** (mage 2×2, renard en marche), par une voie qui ne passe pas par
+`ServiceProduction`/`ServiceGenerations` — TN2 exclut une planche de la transparence
+automatique, donc la mesurer sans rouvrir cette porte demande d'appeler directement le moteur
+de workflow (`MoteurWorkflow.soumettre_graphe`/`etat`/`sortie_de`, les mêmes primitives
+qu'`_executer` appelle) avec le texte encadré à la main (`atelier.domaine.transparence.
+encadrer`) ; chaque case mesurée comme un sujet isolé, la case voisine ne comptant jamais comme
+un débris de la première. **Les seize planches sont propres** : fond vide reçu 16/16, aucune
+case signalée trouée, débris sous 3,4 % partout. Le tirage unique du 22 septembre avait rendu
+la robe du mage transparente (89 % de son corps sous 128 d'alpha) ; aucun des huit tirages
+rejoués le 25 ne reproduit ce défaut.
+
+**Décision sur les planches.** Huit propres sur huit, deux fois : le critère d'ouverture posé au
+22 septembre est atteint. **Ouvrir la transparence aux planches n'est pas codé dans cette
+tranche** — TN6 demande la décision, pas le code — mais elle est écrite comme proposition,
+§ TN8 ci-dessous : la tranche qui la coderait devra aussi régler ce que la relecture croisée
+laisse en suspens juste au-dessus (vue dépliée, morceau refait, découpe à l'arrivée).
+
 ---
 
 ## Relecture croisée du 25 septembre 2026
@@ -387,3 +414,25 @@ texte repris par celle de l'appel, et ne pas lire la phrase de l'atelier comme u
 - [ ] Un texte repris d'un appel sur fond vert, renvoyé sur fond coloré, perd sa phrase de fond d'avant avant que la couleur de l'appel soit choisie ; la lecture des couleurs de la description (RV3) ne lit pas la phrase de l'atelier.
 - [ ] Le texte envoyé nomme une seule couleur de fond, et le négatif n'interdit que celle-là ; « Relire avant l'envoi » montre exactement ce qui part.
 - [ ] Un texte écrit par l'auteur qui nomme vraiment une couleur (la cape verte de RV3) garde son effet d'aujourd'hui.
+
+### TN8 · Ouvrir la transparence aux planches (proposition, non codée)
+
+**Posée par le banc de TN6, pas codée** : le critère d'ouverture posé au 22 septembre — huit
+planches propres sur huit — est atteint deux fois le 25 septembre (mage 2×2, renard en marche,
+`docs/modeles-et-workflows.md` § Le banc de transparence rejoué par l'atelier). Rien de ce
+qui suit n'est codé ; c'est une proposition à trancher avant de l'ouvrir.
+
+- Retirer l'exclusion `planche` de `transparence_demandee` (`atelier/domaine/transparence.py`)
+  pour les planches de *création* (celles que TN6 a mesurées) — pas nécessairement pour une
+  planche *refaite* ou un lot plié, que le banc n'a pas mesurés.
+- **Ce que la relecture croisée du 25 septembre laisse en suspens** (§ TN6 ci-dessus) : une vue
+  dépliée, un morceau de planche refaite et la découpe à l'arrivée ne posent pas
+  `fond_du_modele` à la naissance — leurs morceaux naîtraient détourés par l'atelier sur la
+  couleur violette que Qwen laisse sous le vide. Le banc dit que ce détourage-là ne mange rien
+  sur le violet ; personne ne l'a vérifié par l'atelier. Une tranche qui ouvre TN8 devrait le
+  faire avant, ou le nommer comme risque accepté.
+- La planche d'équipement (`preparer(planche=True)`) resterait fermée par défaut tant qu'elle
+  n'est pas mesurée séparément : ses règles de pose (silhouette imposée, fond du jeu) ne sont
+  pas celles d'une planche de création.
+- Reprendre un banc à huit tirages sur au moins un troisième sujet avant d'ouvrir pour de bon :
+  deux planches propres sur deux ne couvrent que ce que TN6 a essayé.

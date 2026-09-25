@@ -291,6 +291,54 @@ calcul. Au maximum 3 références (le modèle en accepte 10).
 rangé parmi les obligatoires, même quand il en faut zéro. Le contrôle des profils
 (`atelier/fournisseur/workflow.py`) sait lire cette forme depuis le 22 septembre.
 
+### Le banc de transparence rejoué par l'atelier (25 septembre 2026, TN6)
+
+Le banc du 22 septembre (plus haut, `docs/PLAN-transparence-native.md` § Le banc du 22
+septembre 2026) parlait directement à ComfyUI, un tirage par cas. TN6 le rejoue **par
+l'atelier lui-même** — un atelier jetable, port 8421, dossier hors Git
+(`essais/resultats/atelier-tn6/`), le vrai ComfyUI local — pour voir ce que TN2 (la
+transparence demandée), TN3 (le détourage endormi, les débris) et TN4 (un trou dans le sujet)
+font d'un vrai tirage. Script : `essais/banc_tn6_transparence.py` (voir `docs/bancs.md`).
+**Huit tirages par cas**, `qwen21-rapide`, 1024 px — 64 générations, 1311 s (≈ 22 min) de
+carte graphique, 0 $.
+
+| Sujet | Échelle | Fond vide reçu | Détourée par le modèle | Détourage endormi | Trou signalé (TN4) | Débris (min–max, moy.) |
+|---|---|---|---|---|---|---|
+| Chevalier vert, cape verte | personnage | 8/8 | 8/8 | 8/8 | 0/8 | 0,00–0,22 %, 0,06 % |
+| Salamandre, braises et fumée | créature | 8/8 | 8/8 | 8/8 | 0/8 | 0,01–20,17 %, 8,16 % |
+| Fiole de verre | objet posé | 8/8 | 8/8 | 8/8 | 0/8 | 0,00–6,49 %, 0,99 % |
+| Bouton d'interface | élément d'interface | 8/8 | 8/8 | 8/8 | 0/8 | 0,00–1,15 %, 0,28 % |
+| Voleur en pixel art | personnage | 8/8 | 8/8 | 8/8 | 0/8 | 0,00 % partout |
+| Coffre en pixel art | meuble | 8/8 | 8/8 | 8/8 | 0/8 | 0,00 % partout |
+
+**Sur les 48 tirages de sujets isolés, TN3 et TN4 n'ont pas eu un seul écart** : fond vide
+reçu et détourage endormi 48 fois sur 48, aucun faux positif de trou. Les débris qui restent
+sont presque tous la fumée de la salamandre (attendu, `docs/PLAN-transparence-native.md` § TN3 —
+« ce qui reste en dessin est la fumée de la salamandre, qui est à elle ») ; le coffre, qui
+portait les débris du banc du 22 septembre, en a zéro sur ses huit tirages : le tout-ou-rien
+à 240 (`SEUIL_DU_PIXEL_DU_MODELE`) tient sur de vrais tirages, pas seulement sur la fixture.
+
+**Puis huit planches**, par une voie qui ne passe pas par `ServiceProduction` — TN2 exclut une
+planche de la transparence automatique, donc le seul moyen de la mesurer sans changer le
+produit est d'appeler le moteur de workflow directement (`MoteurWorkflow.soumettre_graphe` /
+`etat` / `sortie_de`, exactement ce qu'`_executer` appelle) avec le texte encadré à la main par
+`atelier.domaine.transparence.encadrer`. Chaque case mesurée comme un sujet isolé (la case
+voisine ne compte pas comme un débris de la première) :
+
+| Planche | Fond vide reçu | Case trouée (TN4) | Débris par case (max observé) |
+|---|---|---|---|
+| Mage champignon, 2×2 (avant/gauche/dos/droite) | 8/8 | 0/8 | 0,00–0,19 % |
+| Renard en marche, 1×4 | 8/8 | 0/8 | 0,00–3,36 % |
+
+**Les 16 planches sont propres — 0 trou signalé, débris sous 3,4 % partout.** Le banc du
+22 septembre avait rendu la robe du mage transparente sur son seul tirage (« 89 % de la zone
+du corps sous 128 d'alpha ») ; sur huit tirages rejoués le 25 septembre, aucun ne reproduit ce
+défaut. **Décision** : les huit planches sont propres, donc la porte s'ouvre — mais l'ouvrir au
+produit est une proposition écrite dans `docs/PLAN-transparence-native.md`, pas codée ici (le
+critère de TN6 demande la décision, pas le code).
+
+Quelques images du banc, à taille réduite, sont dans `docs/releves/banc-tn6-2026-09-25/`.
+
 **Pas encore exploité :**
 
 - **La transparence native — demandée depuis TN2, pas encore exploitée au retour.** Le modèle
