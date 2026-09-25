@@ -183,3 +183,28 @@ async def test_une_planche_d_equipement_ne_demande_pas_le_fond_vide(decor, ateli
     assert TETE not in generation.demande["prompt"]
     assert QUEUE not in generation.demande["prompt"]
     assert double.appels == 0
+
+
+# ── 3 · Une image détourée par le modèle a son alpha, partout ────────────────
+#
+# TN3 endort le détourage : aucune passe n'agit, et le fond vide vient du brut.
+# Les lecteurs de `passes_vives` qui demandent « cette image a-t-elle un
+# alpha ? » répondaient non — la superposition disait le dessus « sans alpha,
+# le calque prendrait tout le fond » sur un personnage parfaitement détouré.
+
+
+def test_la_superposition_ne_dit_pas_sans_alpha_une_image_detouree_par_le_modele(
+    client, atelier, double
+):
+    from tests.test_tn3_detourage_endormi import _ne, _octets
+
+    haut, _ = _ne(client, atelier, double, _octets("voleur-pixel"))
+    bas, _ = _ne(client, atelier, double, _octets("chevalier"))
+    assert haut.recette.fond_du_modele and not haut.recette.passes_vives()
+
+    ouvert = client.get(
+        f"/api/assets/{haut.identifiant}/overlay", params={"dessous": bas.identifiant}
+    )
+
+    assert ouvert.status_code == 200, ouvert.text
+    assert ouvert.json()["sans_alpha"] is False

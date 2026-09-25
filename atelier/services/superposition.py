@@ -181,7 +181,12 @@ class ServiceSuperposition:
             # Sans alpha sur le dessus, le calque prendrait tout le fond : le
             # dessous est transparent partout autour du sujet, le dessus est
             # opaque partout, donc tout ce qui entoure remplit la condition.
-            "sans_alpha": len(vives_haut) == 0,
+            #
+            # **Une image détourée par le modèle a son alpha** (TN3, relecture
+            # du 25 septembre 2026) : son détourage dort, aucune passe n'agit,
+            # et le fond vide vient du brut — l'alerte la disait sans alpha.
+            # `a_une_silhouette` est la même question, avec cette réponse-là.
+            "sans_alpha": not haut.recette.a_une_silhouette(),
         }
 
     def heriter(self, dessus: str, dessous: str) -> Asset:
