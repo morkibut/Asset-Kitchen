@@ -229,14 +229,24 @@ class ServiceCoupDeMain:
         courte consigne et la fiche, qui partent toujours
         (`signes_du_plus_petit_appel`) : si même celui-là ne tient plus, la
         marque disparaît et dit pourquoi.
+
+        **`motif`** (CM8) distingue les deux façons de se taire, pour l'écran
+        seul — `raison` reste la phrase à lire : `"plafond"` quand c'est le
+        plafond du mois qui bloque (l'écran y laisse une trace, une ligne
+        grise), `"indisponible"` pour tout le reste (pas de clé, réseau coupé —
+        décision 6, le silence total). `None` quand `disponible` est vrai.
         """
         fournisseur = self._fabrique()
         plancher = reserve_pour(signes_du_plus_petit_appel())
         with self._verrou:
             raison = self._empechement(fournisseur, plancher)
+        motif = None
+        if raison is not None:
+            motif = "indisponible" if fournisseur.indisponible() else "plafond"
         return {
             "disponible": raison is None,
             "raison": raison,
+            "motif": motif,
             "modele": fournisseur.modele,
         }
 

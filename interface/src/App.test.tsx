@@ -5591,6 +5591,9 @@ describe("l'infobulle et le guide", () => {
       "envoi",
       "grille",
       "comparer",
+      // CM8 : le groupe « Partout » — trois gestes du coup de main valables
+      // sur n'importe quel écran, jamais l'écran d'une porte.
+      "partout",
     ])
     // Le corpus a grandi avec les écrans unifiés. Son volume n'est pas un
     // contrat : l'adresse de chaque entrée et l'unicité testée ci-dessus le

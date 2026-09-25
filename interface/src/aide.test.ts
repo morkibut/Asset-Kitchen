@@ -104,9 +104,14 @@ const TOUS_LES_OU = [
   "comparer",
 ] as const satisfies readonly Explication["ou"][]
 
-type ValeurDeOuManquante = Exclude<Explication["ou"], (typeof TOUS_LES_OU)[number]>
+// `"partout"` (CM8) n'est l'écran de rien — aucun écran ne le calcule pour
+// `ecranDuGuide` — donc il n'entre jamais dans `scope` et n'a pas de résumé à
+// lui : l'exclure ici, explicitement, plutôt que de l'ajouter à `TOUS_LES_OU`
+// avec un résumé qui ne se montrerait jamais.
+type ValeurDeOuManquante = Exclude<Explication["ou"], (typeof TOUS_LES_OU)[number] | "partout">
 // Si cette ligne ne compile plus, une valeur a été ajoutée à `Explication["ou"]`
-// sans être ajoutée à `TOUS_LES_OU` ci-dessus.
+// sans être ajoutée à `TOUS_LES_OU` ci-dessus (ou exclue explicitement, comme
+// `"partout"` ci-dessus).
 const _toutesLesValeursDeOuSontCouvertes: ValeurDeOuManquante extends never
   ? true
   : "il manque une valeur de `ou` dans TOUS_LES_OU, voir aide.test.ts" = true

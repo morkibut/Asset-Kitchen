@@ -249,6 +249,11 @@ const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   envoi: "Relire avant l’envoi",
   grille: "Sur la grille du jeu",
   comparer: "Deux côte à côte",
+  // CM8 : `partout` n'est l'écran de rien — aucun écran ne calcule cette
+  // valeur pour `ecranDuGuide`, donc ce nom ne s'affiche jamais dans l'en-tête
+  // du volet. Il n'est là que parce que `NOM_DE_LECRAN` est fermé sur
+  // `Explication["ou"]` en entier (voir la note ci-dessus).
+  partout: "Partout",
 }
 
 // ── Le panneau des touches ────────────────────────────────────────────────
@@ -372,7 +377,17 @@ export function VoletGuide({
     noeud?.scrollIntoView({ block: "start" })
   }, [visee])
 
-  const entrees = scope ? Object.entries(AIDE).filter(([, e]) => e.ou === scope) : []
+  // CM8 : le groupe « Partout » se lit depuis tout écran **connu** — ses
+  // fiches (`ou: "partout"`) suivent celles de l'écran ouvert. `scope in
+  // NOM_DE_LECRAN` écarte à la fois `"partout"` lui-même (n'arrive jamais :
+  // aucun écran ne calcule cette valeur, pour ne pas les compter deux fois)
+  // et un `ou` mal adressé qui ne serait l'écran de rien — la dégradation que
+  // l'essai « une entrée mal adressée ne casse rien » vérifie doit rester
+  // silencieuse, pas se rattraper sur le groupe commun.
+  const ecranConnu = !!scope && scope !== "partout" && scope in NOM_DE_LECRAN
+  const entrees = scope
+    ? Object.entries(AIDE).filter(([, e]) => e.ou === scope || (e.ou === "partout" && ecranConnu))
+    : []
   const groupes = grouper(entrees)
   const resume = scope ? RESUMES[scope] : undefined
   const touches = scope ? TOUCHES[scope] : undefined

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Le coup de main, côté écran — trois routes, et **aucune pour l'agent** (CM1, CM3, CM4).
 
-- `GET /api/assist` — la marque paraît-elle ? `disponible`, et sinon pourquoi.
+- `GET /api/assist` — la marque paraît-elle ? `disponible`, et sinon pourquoi
+  (`raison`) et de quel genre (`motif` : `"plafond"` ou `"indisponible"`,
+  CM8) — le plafond seul laisse une trace à l'écran.
 - `POST /api/assist/{metier}/preview` — **ce qui partirait, mot pour mot, sans
   rien envoyer** : la consigne, la fiche, le contexte, le texte (« Voir ce qui
   part », décision 7). Gratuit.

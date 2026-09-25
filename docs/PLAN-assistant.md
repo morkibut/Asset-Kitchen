@@ -547,9 +547,41 @@ Chrome) et la ligne posée au centre quand aucun champ n'a le focus.
 
 ### CM8 · Les trois décisions de l'auteur
 
-- [ ] Plafond atteint : là où la marque « EN » paraîtrait, une ligne grise discrète dit « coup de main au plafond du mois », sans fenêtre.
-- [ ] « pourquoi › » est le seul geste qui explique un bouton grisé ; le guide et la fiche du produit le disent.
-- [ ] Le guide a un groupe « Partout » : une entrée pour « EN », une pour `Ctrl+/`, une pour « pourquoi › », lisibles depuis tout écran ; les doublons sous « Un jeu de tuiles » partent.
+- [x] Plafond atteint : là où la marque « EN » paraîtrait, une ligne grise discrète dit « coup de main au plafond du mois », sans fenêtre.
+- [x] « pourquoi › » est le seul geste qui explique un bouton grisé ; le guide et la fiche du produit le disent.
+- [x] Le guide a un groupe « Partout » : une entrée pour « EN », une pour `Ctrl+/`, une pour « pourquoi › », lisibles depuis tout écran ; les doublons sous « Un jeu de tuiles » partent.
+
+*Fait le 25 septembre 2026.* **Le plafond, distingué du reste par un `motif`** —
+`atelier/services/coup_de_main.py` `etat()` rend maintenant `"plafond"` ou
+`"indisponible"` à côté de `raison`, sans toucher à la réservation ni au verrou ;
+`_empechement` reste la seule porte. Côté écran, `coup-de-main-commun.ts` partage
+cette lecture comme il partage déjà la disponibilité — un seul appel à
+`GET /api/assist` pour vingt champs, un seul motif. `CoupDeMain.tsx` (la marque
+« EN ») affiche la ligne grise **seulement** quand `motif === "plafond"` ; sans
+clé ou réseau coupé (`"indisponible"`), rien ne remplace le silence de la
+décision 6 — ni sur « EN », ni sur `Ctrl+/`, ni sur « pourquoi › », qui n'ont pas
+changé. **« pourquoi › » était déjà seul à expliquer un blocage** dans
+`DemanderIci.tsx`/`pieces.tsx` (relecture croisée du 25 septembre) : ce critère
+tenait déjà côté code, il ne restait qu'à l'écrire dans `docs/fiche-produit.md`
+— fait, avec le silence hors plafond des trois gestes. **Le guide** : trois
+fiches neuves `ou: "partout"` dans `aide.ts` (« EN, au bout d'un champ de
+texte », « Demander, là où on est », « Pourquoi c'est bloqué »), groupées sous
+« Partout » ; les deux doublons de `jeu-de-tuiles` (`jeu-de-tuiles.coup-de-main`,
+`jeu-de-tuiles.demander`) sont partis, et `envoi.expliquer-le-blocage` est
+devenue `partout.pourquoi` plutôt que de laisser deux fiches dire la même chose
+sur deux écrans. `Guide.tsx` ajoute ces trois fiches à la suite de celles de
+l'écran ouvert dès que cet écran est connu (`scope in NOM_DE_LECRAN`) — c'est
+ce qui empêche un `ou` mal adressé de se rattraper sur le groupe commun, testé
+par « une entrée mal adressée ne casse rien ». `"partout"` n'est l'écran de
+rien : `aide.test.ts` l'exclut explicitement de la parité `TOUS_LES_OU`/résumés,
+et `tests/test_cm_relecture.py` l'exclut de la parité avec `ECRANS` côté
+serveur, chacun avec sa raison écrite en commentaire à côté de l'exclusion.
+**Essais** : `interface/src/composants/CoupDeMain.test.tsx` (la ligne grise
+paraît au plafond, pas sans clé), `Guide.test.tsx` (le groupe se lit depuis
+« ambiances » et « depenses », une seule fois chacune en changeant d'écran),
+`tests/test_cm6_plafond.py` (`motif` vaut `"plafond"` au plafond,
+`"indisponible"` sans clé même à plafond nul). **Pas vu au navigateur** : la
+ligne grise et le groupe « Partout », vérifiés en essai d'écran seulement.
 
 ---
 

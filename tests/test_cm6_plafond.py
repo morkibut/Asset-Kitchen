@@ -252,6 +252,9 @@ async def test_plafond_atteint_rien_ne_part_et_la_raison_est_dite(tmp_path):
     etat = atelier.coup_de_main.etat()
     assert etat["disponible"] is False
     assert "plafond" in etat["raison"]
+    # CM8 : le motif dit lequel des deux silences c'est — celui qui laisse
+    # une trace à l'écran (une ligne grise, là où « EN » serait apparue).
+    assert etat["motif"] == "plafond"
 
     morceaux = await asyncio.wait_for(_un_appel(atelier), GARDE_S)
     assert [m.genre for m in morceaux] == [INDISPONIBLE]
@@ -268,8 +271,11 @@ def test_sans_cle_la_raison_de_la_cle_passe_avant_celle_du_plafond(tmp_path):
         fabrique_texte=lambda: OpenRouterTexte(None),
     )
     atelier.coup_de_main.regler_plafond(0.0)
-    raison = atelier.coup_de_main.etat()["raison"]
-    assert raison and "plafond" not in raison
+    etat = atelier.coup_de_main.etat()
+    assert etat["raison"] and "plafond" not in etat["raison"]
+    # CM8 : sans clé, le motif reste « indisponible » — le plafond à zéro
+    # n'est même pas la première raison lue, la clé passe avant.
+    assert etat["motif"] == "indisponible"
 
 
 def test_un_plafond_a_zero_coupe_le_coup_de_main(tmp_path):

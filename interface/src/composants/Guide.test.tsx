@@ -88,12 +88,18 @@ afterEach(() => {
 })
 
 describe("il montre ce qui concerne l'écran ouvert, pas un sommaire", () => {
-  test("un écran sans aucune entrée ne montre rien à expliquer", () => {
+  test("un écran sans aucune entrée à lui ne montre que le groupe commun « Partout »", () => {
     // "depenses" existe comme lieu ; ni fiche ni résumé n'y sont adressés
     // dans cet essai — le mock ci-dessus vide son résumé pour l'occasion.
+    // **CM8** : « rien à expliquer » n'existe plus pour un écran connu — le
+    // groupe « Partout » (EN, Ctrl+/, pourquoi ›) y paraît toujours.
     render(<VoletGuide onFermer={vi.fn()} ecran="depenses" />)
 
-    expect(screen.getByText("Rien à expliquer ici pour l'instant.")).toBeTruthy()
+    expect(screen.queryByText("Rien à expliquer ici pour l'instant.")).toBeNull()
+    expect(screen.getByText("Partout")).toBeTruthy()
+    expect(screen.getByText("EN, au bout d'un champ de texte")).toBeTruthy()
+    expect(screen.getByText("Demander, là où on est")).toBeTruthy()
+    expect(screen.getByText("Pourquoi c'est bloqué")).toBeTruthy()
   })
 
   test("un écran qui a des entrées ne montre que les siennes", () => {
@@ -126,6 +132,21 @@ describe("il montre ce qui concerne l'écran ouvert, pas un sommaire", () => {
     expect(screen.getByText(AIDE["univers.palette"].quoi)).toBeTruthy()
     fireEvent.click(screen.getByRole("button", { name: "Une palette" }))
     expect(screen.getByText(AIDE["univers.palette"].change)).toBeTruthy()
+  })
+
+  test("CM8 — le groupe « Partout » se lit depuis deux écrans différents", () => {
+    const { rerender } = render(<VoletGuide onFermer={vi.fn()} ecran="ambiances" />)
+    expect(screen.getByText("Partout")).toBeTruthy()
+    expect(screen.getByText("EN, au bout d'un champ de texte")).toBeTruthy()
+    expect(screen.getByText("Demander, là où on est")).toBeTruthy()
+    expect(screen.getByText("Pourquoi c'est bloqué")).toBeTruthy()
+
+    rerender(<VoletGuide onFermer={vi.fn()} ecran="codex" />)
+    // Une seule fois chacune, pas doublées avec les fiches propres à l'écran.
+    expect(screen.getAllByText("Partout")).toHaveLength(1)
+    expect(screen.getAllByText("EN, au bout d'un champ de texte")).toHaveLength(1)
+    expect(screen.getAllByText("Demander, là où on est")).toHaveLength(1)
+    expect(screen.getAllByText("Pourquoi c'est bloqué")).toHaveLength(1)
   })
 })
 

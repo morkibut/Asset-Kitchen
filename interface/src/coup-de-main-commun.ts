@@ -15,22 +15,33 @@
 //   l'arrêtait par `stopPropagation` — qui n'arrête pas les autres écoutes posées
 //   sur le **même** `window`. Une proposition ouverte sous une ligne de question :
 //   un seul Échap refermait les deux.
+//
+// **CM8** (décision de l'auteur, 25 septembre 2026) : le silence de la décision 6
+// se scinde en deux. Au plafond du mois, la marque « EN » laisse une trace — une
+// ligne grise, sans fenêtre — là où elle serait apparue ; sans clé ou réseau coupé,
+// le silence reste entier. `useMotifDIndisponibilite`, ci-dessous, dit lequel des
+// deux, partagé comme `useDisponibilite`, une seule lecture pour tout l'écran.
 
 import { useEffect, useRef, useState } from "react"
 import { coupDeMain } from "./api-coup-de-main"
 
 // ── La disponibilité : lue une fois pour tout l'écran ────────────────────────
 
-let enCours: Promise<boolean> | null = null
+type Motif = "plafond" | "indisponible" | null
+
+let enCours: Promise<{ disponible: boolean; motif: Motif }> | null = null
 const abonnes = new Set<(dispo: boolean) => void>()
+let dernierMotif: Motif = null
+const abonnesMotif = new Set<(motif: Motif) => void>()
 
 /** Une seule lecture à la fois : les vingt champs qui montent ensemble partagent
  *  la même. **Rien n'est gardé une fois la réponse rendue** — un montage plus
  *  tardif relit, comme avant : un plafond relevé entre-temps se voit. */
-function lire(): Promise<boolean> {
+function lire(): Promise<{ disponible: boolean; motif: Motif }> {
   if (!enCours) {
     enCours = coupDeMain.etat()
-      .then((e) => e.disponible === true, () => false)
+      .then((e) => ({ disponible: e.disponible === true, motif: e.disponible ? null : e.motif }))
+      .catch(() => ({ disponible: false, motif: null as Motif }))
       .finally(() => { enCours = null })
   }
   return enCours
@@ -41,10 +52,21 @@ export function annoncerDisponibilite(dispo: boolean): void {
   abonnes.forEach((f) => f(dispo))
 }
 
+/** Dit à **toutes** les lignes du plafond (CM8) ce qu'une seule vient
+ *  d'apprendre. Un échec de flux, isolé, n'apporte aucun motif : il ne fait
+ *  jamais croire au plafond, il retombe sur le silence ordinaire. */
+function annoncerMotif(motif: Motif): void {
+  dernierMotif = motif
+  abonnesMotif.forEach((f) => f(motif))
+}
+
 /** Relit la disponibilité et l'annonce partout — après un plafond relevé, par
  *  exemple, pour que les marques reviennent sans rouvrir l'écran. */
 export function relireDisponibilite(): Promise<void> {
-  return lire().then(annoncerDisponibilite)
+  return lire().then((e) => {
+    annoncerDisponibilite(e.disponible)
+    annoncerMotif(e.motif)
+  })
 }
 
 /** La marque paraît-elle ? Tout échec vaut « non » (décision 6). Le second
@@ -55,10 +77,30 @@ export function useDisponibilite(): [boolean, (dispo: boolean) => void] {
     let vivant = true
     const recevoir = (v: boolean) => { if (vivant) setDispo(v) }
     abonnes.add(recevoir)
-    void lire().then(recevoir)
+    void lire().then((e) => {
+      recevoir(e.disponible)
+      annoncerMotif(e.motif)
+    })
     return () => { vivant = false; abonnes.delete(recevoir) }
   }, [])
   return [dispo, annoncerDisponibilite]
+}
+
+/** CM8 — pourquoi le coup de main se tait, quand il se tait : `"plafond"`
+ *  (une ligne grise le dit, là où la marque « EN » paraîtrait) ou
+ *  `"indisponible"` (pas de clé, réseau coupé — le silence total de la
+ *  décision 6). `null` tant que le coup de main répond, ou qu'on ne sait pas
+ *  encore. Partage la même lecture que `useDisponibilite`. */
+export function useMotifDIndisponibilite(): Motif {
+  const [motif, setMotif] = useState<Motif>(dernierMotif)
+  useEffect(() => {
+    let vivant = true
+    const recevoir = (m: Motif) => { if (vivant) setMotif(m) }
+    abonnesMotif.add(recevoir)
+    void lire().then((e) => recevoir(e.motif))
+    return () => { vivant = false; abonnesMotif.delete(recevoir) }
+  }, [])
+  return motif
 }
 
 // ── Échap : un appui referme **le dernier** ouvert, et lui seul ─────────────

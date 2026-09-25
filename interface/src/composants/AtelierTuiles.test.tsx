@@ -347,7 +347,7 @@ describe("Les tuiles du jeu", () => {
       vi.spyOn(apiMatieres, "disponibilite").mockResolvedValue({ disponible: true, manque: [], modele: null })
       vi.spyOn(apiMatieres, "apercu").mockResolvedValue({ texte: "t", negatif: "", taille: 256, reference: false, cadrages: [] })
       const generer = vi.spyOn(apiMatieres, "generer")
-      vi.spyOn(coupDeMain, "etat").mockResolvedValue({ disponible: true, raison: null, modele: "OpenRouter:deepseek/deepseek-v4-flash" })
+      vi.spyOn(coupDeMain, "etat").mockResolvedValue({ disponible: true, raison: null, motif: null, modele: "OpenRouter:deepseek/deepseek-v4-flash" })
       const demander = vi.spyOn(coupDeMain, "demander").mockImplementation(async (_m, _d, onMorceau) => {
         onMorceau({ genre: "texte", texte: "old grey granite" })
         const fin = { genre: "fin" as const, issue: "repondu" as const, raison: null, consomme: 0, unite: "USD", cout_usd: 0, cout_inconnu: false }

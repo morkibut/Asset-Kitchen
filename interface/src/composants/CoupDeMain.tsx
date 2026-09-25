@@ -14,7 +14,11 @@
 //
 // - **Il se tait quand il ne peut rien** (décision 6) : sans clé, sans réseau, ou
 //   quand un appel revient sans réponse, la marque disparaît. Jamais une phrase
-//   d'erreur, jamais un bouton qui déçoit.
+//   d'erreur, jamais un bouton qui déçoit. **Sauf au plafond du mois** (CM8,
+//   décision de l'auteur) : là où la marque serait apparue, une ligne grise
+//   discrète dit « coup de main au plafond du mois » — sans fenêtre, rien à
+//   cliquer. C'est la seule exception au silence ; sans clé ou réseau coupé, le
+//   silence reste entier.
 // - **Il propose, il ne remplace jamais** (décision 2) : la proposition s'affiche
 //   **sous** le champ, qui garde le texte de l'auteur tant qu'on n'a pas gardé.
 // - **Échap l'oublie sans trace** : l'appel en cours est coupé (l'atelier raccroche
@@ -28,7 +32,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { coupDeMain, nettoyer, type CeQuiPart, type Demande } from "../api-coup-de-main"
-import { relireDisponibilite, useDisponibilite, useEchap } from "../coup-de-main-commun"
+import { relireDisponibilite, useDisponibilite, useEchap, useMotifDIndisponibilite } from "../coup-de-main-commun"
 
 const METIER = "ameliorer"
 const PETIT = "min-h-[26px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50"
@@ -53,6 +57,7 @@ export function AvecCoupDeMain({ champ, projet, texte, onGarder, children }: {
   children: ReactNode
 }) {
   const [dispo, setDispo] = useDisponibilite()
+  const motif = useMotifDIndisponibilite()
   const [proposition, setProposition] = useState<Proposition | null>(null)
   const [voir, setVoir] = useState<CeQuiPart | null>(null)
   const coupure = useRef<AbortController | null>(null)
@@ -115,12 +120,18 @@ export function AvecCoupDeMain({ champ, projet, texte, onGarder, children }: {
   }
 
   const marque = dispo && !proposition && !!texte.trim()
+  // CM8 : là où « EN » serait apparu, une ligne grise dit le plafond — sans
+  // fenêtre. Sans clé ou réseau coupé (`motif === "indisponible"`), le silence
+  // de la décision 6 reste entier : rien ne la remplace.
+  const auPlafond = !dispo && !proposition && !!texte.trim() && motif === "plafond"
 
   return <div>
     <div className="flex items-end gap-[8px]">
       <div className="min-w-0 flex-1">{children}</div>
       {marque && <button type="button" onClick={() => void proposer()} aria-label="Proposer en anglais"
         className="mesure min-h-[30px] shrink-0 rounded-7 border border-contour bg-carte px-[8px] text-[11px] text-encre-3 transition-colors duration-120 hover:text-encre">EN</button>}
+      {auPlafond && <span className="mesure flex min-h-[30px] shrink-0 items-center px-[8px] text-[11px] text-encre-4">
+        coup de main au plafond du mois</span>}
     </div>
     {proposition && <div ref={cadre} tabIndex={-1} role="group" aria-label="Proposition en anglais"
       className="mt-[8px] rounded-7 border border-trait bg-papier p-[8px] outline-none">
