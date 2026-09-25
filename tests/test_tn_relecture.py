@@ -19,6 +19,7 @@ from atelier.domaine.transparence import (
     sans_fond_colore,
 )
 from atelier.domaine.vue import phrase_de_calage
+from tests.test_au15 import decor  # noqa: F401 — le stockage réel commun
 from tests.test_tn2_texte import (
     CAPABLE,
     ORDINAIRE,
@@ -155,3 +156,30 @@ async def test_un_style_local_montre_ce_que_son_texte_dit(tmp_path, double):
         assert morceaux.count(TETE) == 1 and morceaux.count(QUEUE) == 1
     finally:
         await atelier.file_locale.fermer()
+
+
+# ── 2 · Une planche composée hors du pliage ne demande pas de fond vide ──────
+#
+# La planche d'équipement plie ses cases elle-même et n'envoie à `preparer`
+# qu'une image à éditer : rien n'y voyait une planche, et un modèle capable
+# recevait la consigne de transparence — le cas même que TN2 écarte (la robe
+# blanche du mage, trouée sur une planche).
+
+
+async def test_une_planche_d_equipement_ne_demande_pas_le_fond_vide(decor, atelier, double):
+    _, chemin, _, corps, _ = decor
+    travail = await atelier.travaux_equipement.preparer(
+        *chemin,
+        {
+            "cle": "casque",
+            "modele": CAPABLE,
+            "reservation_par_appel_usd": 0.12,
+            "cibles": [{"nature": "image", "resultat": corps}],
+        },
+    )
+
+    generation = atelier.base.lire(travail["appels"][0]["generation"])
+    assert not generation.demande.get("transparence")
+    assert TETE not in generation.demande["prompt"]
+    assert QUEUE not in generation.demande["prompt"]
+    assert double.appels == 0

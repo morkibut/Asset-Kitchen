@@ -835,6 +835,11 @@ class ServiceGenerations:
         # **Une chose du jeu par case** (P2) : la planche à plusieurs sujets.
         # Présente, ni `personnage` ni `poses` ne l'accompagnent.
         sujets: Sequence[str] | None = None,
+        # **Une planche composée hors d'ici** (relecture de la transparence,
+        # 25 septembre 2026) : la planche d'équipement plie ses cases elle-même
+        # et n'envoie qu'une image à éditer — rien ici ne la voit plier. Elle
+        # le dit, pour que le fond vide ne soit pas demandé à une planche.
+        planche: bool = False,
     ) -> tuple[Generation, Modele | None, bool]:
         """Vérifie, enregistre, et dit si c'est neuf. N'appelle pas le fournisseur.
 
@@ -984,7 +989,7 @@ class ServiceGenerations:
             identifiant_modele,
             projet,
             demande.echelle,
-            planche=pliage is not None or demande.garder_mise_en_page,
+            planche=pliage is not None or demande.garder_mise_en_page or planche,
             tri=tri,
             fond_colore=demande.fond_colore,
         )
