@@ -28,6 +28,14 @@ class ServiceTravauxWorkflow(ServiceTravaux):
             "options": brut.get("options", {}), "repris": brut.get("repris", False),
             "personnage": brut.get("personnage"), "pose": brut.get("pose"), "direction": brut.get("direction"),
             "livrer_provisoire": False}
+        # **Le type du sujet, quand l'appelant le dit** (TN2). Écrit seulement
+        # s'il est donné : l'empreinte d'une demande d'avant reste la même, et
+        # sa clé se rejoue. Sans lui, le sujet est un personnage — la règle de
+        # la recette de naissance, et celle du fond vide.
+        if brut.get("echelle"):
+            d["echelle"] = brut["echelle"]
+            if not isinstance(d["echelle"], str):
+                raise TravailRefuse("Le type du sujet doit être un nom du barème.")
         if any(not isinstance(d[k], str) or not d[k].strip() for k in ("cle", "modele", "prompt")):
             raise TravailRefuse("Donner une clé de demande, un workflow et un texte à générer.")
         if not isinstance(d["options"], dict) or not isinstance(d["references"], list) or any(not isinstance(r, str) for r in d["references"]) or not isinstance(d["repris"], bool):
@@ -49,7 +57,8 @@ class ServiceTravauxWorkflow(ServiceTravaux):
             if d["personnage"]:
                 self.a.production.personnage(projet, d["personnage"])
             generation, _, _ = self.a.generations.preparer(d["modele"], Demande(prompt=d["prompt"], prompt_negatif=d["prompt_negatif"],
-                proportions=d["proportions"], resolution=d["resolution"], options=d["options"], repris=d["repris"]),
+                proportions=d["proportions"], resolution=d["resolution"], options=d["options"], repris=d["repris"],
+                echelle=d.get("echelle", "")),
                 identifiant=identifiant + "-image-" + empreinte[:8], projet=projet, provenance=acteur,
                 personnage=d["personnage"], pose=d["pose"], direction=d["direction"], references=[Reinjection(asset=r) for r in d["references"]])
             snapshot = self.a.generations.demande_preparee(generation)

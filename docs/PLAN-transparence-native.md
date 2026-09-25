@@ -146,6 +146,25 @@ la consigne de transparence. La couleur de fond et sa phrase interdite ne parten
 couleur de fond. Pour un décor, une planche ou un autre modèle, rien ne change (essais existants
 verts).
 
+**Faite le 25 septembre 2026.** Les deux critères sont tenus (`tests/test_tn2_texte.py`, 18 essais
+sur un modèle doublé qui déclare la capacité, distant et local). **La règle se décide à un seul
+endroit** : `atelier.domaine.transparence.transparence_demandee(capable, silhouette, planche,
+fond_impose)`, nourrie par `ServiceGenerations.transparence_de_l_appel`, que la soumission et
+l'aperçu (donc « Relire avant l'envoi ») appellent tous deux. **Elle s'enregistre sur la
+génération** — `demande["transparence"]: true`, absent sinon, relu par `demandee_par` : c'est ce
+que TN3 lira (« demandé »), et ce que la relance et l'arrivée lisent déjà (références sur blanc,
+alpha gardé au lieu d'être aplati). Tranché en route : **un fond choisi à la main sur l'écran de
+confirmation passe devant** — c'est dès aujourd'hui le geste « refaire sur fond coloré » de TN4 ;
+**un texte repris est encadré aussi**, sans jamais redoubler la consigne (il part en général de
+l'écran, donc déjà encadré) ; **un sujet sans type est un personnage** et demande le fond vide,
+comme la recette de naissance lui donne un détourage ; `POST workflow-image-jobs/prepare` accepte
+un `echelle` facultatif, et l'essai TN1 « alpha de bruit → opaque » passe désormais par un décor
+(son entrée change, pas ses assertions). La consigne encadre le texte **joint** (distant ou
+local), elle n'est pas une ligne de `resoudre` : l'écran la montre dans la section du fond et
+dans le texte entier, pas dans les trois parties d'un modèle distant. **Non vu au navigateur.**
+Le défaut « les décors reçoivent aussi sprite isolé sur fond coloré » (plus bas) n'est **pas**
+réglé par cette règle : un décor ne demande pas la transparence, il part donc comme avant.
+
 ### TN3 — Le détourage s'endort pour une image née transparente
 
 **Ce qu'on voit.** La fiche de l'image dit « détourée par le modèle ». L'étape de détourage est

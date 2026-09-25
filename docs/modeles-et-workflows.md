@@ -293,9 +293,12 @@ rangé parmi les obligatoires, même quand il en faut zéro. Le contrôle des pr
 
 **Pas encore exploité :**
 
-- **La transparence native.** Le modèle sort un canal alpha si on le lui demande : « This is an
-  RGBA format image with transparency. […] The image has an alpha channel and a transparent
-  background. » Ça pourrait remplacer le détourage pour les sprites.
+- **La transparence native — demandée depuis TN2, pas encore exploitée au retour.** Le modèle
+  sort un canal alpha si on le lui demande : « This is an RGBA format image with transparency.
+  […] The image has an alpha channel and a transparent background. » Depuis le 25 septembre 2026,
+  un sujet à contour (pas un décor, pas une planche) part avec cette consigne et sans couleur de
+  fond (`atelier/domaine/transparence.py`) ; le détourage, lui, tourne encore — il s'endormira en
+  TN3 (`docs/PLAN-transparence-native.md`).
 - **Les textes longs.** Qwen lit un texte long aussi bien que GPT Image. Or le texte local (ML4)
   ne garde que la première phrase des textes du jeu.
 

@@ -129,6 +129,14 @@ class Demande:
     # décide si le *rendu* — le cache affiché — s'en écarte ou non.
     brut: bool = False
 
+    # **Le fond vide a été demandé au modèle** (TN2, 25 septembre 2026). Jamais
+    # posé par l'appelant : le service le décide (`transparence_demandee`, dans
+    # `atelier/domaine/transparence.py`) au moment de composer le texte, et
+    # l'enregistre ici parce que c'est un fait de l'appel — l'arrivée garde
+    # l'alpha au lieu de l'aplatir, la relance repose les références sur le même
+    # blanc, et TN3 endormira le détourage d'une image « demandée et reçue ».
+    transparence: bool = False
+
     def __post_init__(self) -> None:
         if not self.prompt.strip():
             raise ValueError("prompt vide")
@@ -185,4 +193,8 @@ class Demande:
         # relance le relit.
         if self.brut:
             resume["brut"] = True
+        # Même règle (TN2) : absent veut dire non, et c'est ce que toute
+        # génération d'avant la tranche dit en se relisant (`demandee_par`).
+        if self.transparence:
+            resume["transparence"] = True
         return resume

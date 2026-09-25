@@ -50,6 +50,7 @@ from atelier.domaine.carte import PERSONNAGES
 # l'inverse, et ce module ne nomme donc que le domaine.
 from atelier.domaine.equipement import emplois_resolus
 from atelier.domaine.fond import fond_valide, interdiction, replier
+from atelier.domaine.transparence import FOND_TRANSPARENT
 from atelier.domaine.envoi import (
     AMBIANCE as GROUPE_AMBIANCE,
     DE_SA_FICHE,
@@ -886,7 +887,13 @@ class ServiceProduction:
             objet = self._exiger(projet)
         except ProjetInconnu:
             return Couches()
-        univers = replace(objet.univers, fond=fond_valide(fond or ""))
+        # **Le fond vide traverse tel quel** (TN2) : ce n'est pas une couleur,
+        # et `fond_valide` le rendrait vide — la phrase d'avant D3, « sur un
+        # fond plat », que la consigne de transparence contredirait.
+        univers = replace(
+            objet.univers,
+            fond=fond if fond == FOND_TRANSPARENT else fond_valide(fond or ""),
+        )
         # **Ce que la case dit vraiment**, et non ce qu'elle range : depuis le
         # 1ᵉʳ septembre 2026 la phrase de l'atelier — la grille, le calage, le
         # cadrage — se calcule ici plutôt que d'être recopiée dans le texte.

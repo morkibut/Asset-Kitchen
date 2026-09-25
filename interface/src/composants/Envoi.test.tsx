@@ -116,6 +116,33 @@ test("aucune ligne de raison quand le fond n'a pas changé à cause de la descri
   expect(screen.queryByText(/ta description dit/)).not.toBeInTheDocument()
 })
 
+const CONSIGNE = "This is an RGBA format image with transparency. … The image has an alpha channel and a transparent background."
+
+test("un fond vide demandé au modèle montre la consigne à la place de la couleur (TN2)", () => {
+  const envoi = { ...BASE, fond: { ...BASE.fond, transparence: true, consigne: CONSIGNE } } as unknown as Envoi
+  render(<EcranEnvoi {...props(envoi)} />)
+  expect(screen.getByText("Fond : transparent, demandé au modèle")).toBeInTheDocument()
+  expect(screen.getByText(CONSIGNE)).toBeInTheDocument()
+  expect(screen.queryByText(/magenta|studio green|aucun fond imposé/)).not.toBeInTheDocument()
+})
+
+test("en modification, le fond vide se dit transparent, avec la consigne qui part (TN2)", () => {
+  const envoi = {
+    ...BASE,
+    fond: {
+      ...BASE.fond,
+      transparence: true,
+      consigne: CONSIGNE,
+      propose: { couleur: "", nom: "", ecart: 0, voisine: "", raison: "" },
+    },
+  } as unknown as Envoi
+  render(<EcranEnvoi {...props(envoi)} />)
+  fireEvent.click(screen.getByRole("button", { name: "Modifier l’envoi" }))
+  expect(screen.getByText("fond transparent — demandé au modèle")).toBeInTheDocument()
+  expect(screen.getByText(CONSIGNE)).toBeInTheDocument()
+  expect(screen.queryByText(/le modèle rendra ce qu'il voudra/)).not.toBeInTheDocument()
+})
+
 test("en modification, le fond corrigé montre son nom et la raison quand elle existe", () => {
   const envoi = {
     ...BASE,

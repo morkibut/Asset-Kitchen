@@ -78,7 +78,17 @@ from atelier.domaine.personnage import LIBRE
 from atelier.domaine.personnage import PLANCHE as USAGE_PLANCHE
 from atelier.domaine.personnage import direction_de_lusage
 from atelier.domaine.direction import composer
-from atelier.domaine.fond import Choix, choisir, fond_valide, nom_du_fond
+from atelier.domaine.fond import AUCUN_FOND, Choix, choisir, fond_valide, nom_du_fond
+from atelier.domaine.transparence import (
+    FOND_DES_REFERENCES,
+    FOND_TRANSPARENT,
+    QUEUE as QUEUE_TRANSPARENCE,
+    TETE as TETE_TRANSPARENCE,
+    consigne as consigne_transparence,
+    demandee_par,
+    encadrer,
+    transparence_demandee,
+)
 from atelier.domaine.ambiance import COULEURS, REFERENCES, TEXTES, prises_du_mode
 from atelier.domaine.envoi import (
     AMBIANCE,
@@ -961,7 +971,24 @@ class ServiceGenerations:
         # nomme, la phrase d'interdiction le nomme, et les références
         # transparentes s'y posent — trois emplois d'une seule couleur, qui ne
         # peuvent donc pas se contredire.
-        fond = self._fond_de_l_appel(projet, reinjectes, tri, demande.prompt)
+        #
+        # **Sauf quand l'appel demande un fond vide** (TN2) : il n'y a alors
+        # pas de couleur à calculer, et les trois emplois lisent tous
+        # `FOND_TRANSPARENT` — la phrase de calage se tait sur le fond,
+        # l'interdiction n'a rien à interdire, les références se posent sur
+        # blanc. La règle est celle de l'aperçu, par la même méthode.
+        transparence = self.transparence_de_l_appel(
+            identifiant_modele,
+            projet,
+            demande.echelle,
+            planche=pliage is not None or demande.garder_mise_en_page,
+            tri=tri,
+        )
+        fond = (
+            FOND_TRANSPARENT
+            if transparence
+            else self._fond_de_l_appel(projet, reinjectes, tri, demande.prompt)
+        )
         # **Le texte tel qu'il partira, et un seul endroit le compose** (US-158).
         # `_texte` est aussi ce que l'aperçu du champ de prompt montre avant de
         # lancer : deux compositions écrites à deux endroits finiraient par
@@ -1020,7 +1047,11 @@ class ServiceGenerations:
                     projet, personnage, source
                 ),
                 fond=fond,
+                transparence=transparence,
             ),
+            # **Enregistré, parce que c'est un fait de l'appel** (TN2) : voir
+            # `Demande.transparence`.
+            transparence=transparence,
         )
         demande = replace(
             demande,
@@ -1562,11 +1593,12 @@ class ServiceGenerations:
             # que ce qu'un fournisseur vient de produire (`generer`,
             # `generer_suivi`), jamais un fichier déposé par l'auteur.
             #
-            # Tant que rien ne demande la transparence (TN2, pas encore écrit),
-            # ce retrait vaut pour toute image d'un modèle qui déclare la
-            # capacité — c'est exactement ce que rendrait une demande toujours
-            # refusée.
-            octets = aplatir_alpha(image.octets) if modele.transparence else image.octets
+            # **Et seulement quand la génération n'a pas demandé de fond vide**
+            # (TN2) : demandé, l'alpha est ce qu'on a payé pour avoir, et il
+            # arrive tel quel. La réponse se relit sur l'enregistrement
+            # (`demandee_par`), jamais recalculée.
+            aplatir = modele.transparence and not demandee_par(generation.demande)
+            octets = aplatir_alpha(image.octets) if aplatir else image.octets
             mesure = mesurer(octets)
         except ErreurAtelier as erreur:
             # Un refus peut coûter : le fournisseur facture dès que l'appel a
@@ -1727,17 +1759,25 @@ class ServiceGenerations:
             ),
             # Et la première planche (TS3), pour la même raison.
             premiere_planche=bool(demande.get("premiere_planche")),
+            # **Et le fond vide** (TN2), pour la même raison.
+            transparence=demandee_par(demande),
             # **Le fond se recalcule, il ne se relit pas** (RT3). Le texte de la
             # génération porte déjà la couleur qui est partie ; les références,
             # elles, se reposent dessus, et le calcul rend la même réponse sur
             # les mêmes images — c'est ce qui fait qu'un appel et sa relance
             # suivent le même chemin, la promesse de cette méthode.
+            #
+            # **Sauf le fond vide, qui se relit** (TN2) : la règle qui l'a
+            # décidé lit le catalogue et le barème, qui ont pu changer depuis.
+            # Ce qui est parti est ce que la génération dit.
             references=self._octets_references(
                 generation.references,
                 generation.projet,
                 fond=self._fond_des_references(
                     generation.modele,
-                    self._fond_de_l_appel(
+                    FOND_TRANSPARENT
+                    if demandee_par(demande)
+                    else self._fond_de_l_appel(
                         generation.projet,
                         generation.references,
                         description=demande.get("prompt", ""),
@@ -2796,6 +2836,7 @@ class ServiceGenerations:
         mise_en_page: bool = False,
         vues_de_la_planche: Sequence[str] = (),
         fond: str | None = None,
+        transparence: bool = False,
     ) -> str:
         """Les lignes allumées, jointes — **le seul endroit qui écrive le prompt**.
 
@@ -2821,8 +2862,46 @@ class ServiceGenerations:
             vues_de_la_planche=vues_de_la_planche,
             fond=fond,
         )
-        local = self._texte_local(lignes, modele, pliage)
-        return joindre(lignes) if local is None else local["texte"]
+        texte, _ = self._jonction(lignes, modele, pliage, transparence)
+        return texte
+
+    def _jonction(
+        self,
+        lignes: list[dict[str, Any]],
+        modele: str,
+        pliage: Pliage | None,
+        transparence: bool,
+    ) -> tuple[str, dict[str, Any] | None]:
+        """Les lignes jointes en texte — **pour l'envoi et pour son aperçu**.
+
+        `joindre` pour un modèle distant, `texte_local.composer` pour un style
+        local (ML4) ; puis, quand l'appel demande un fond vide, **la consigne
+        officielle autour du tout** (TN2, `encadrer`). Elle encadre le texte
+        joint et non une ligne : c'est la tête et la queue de ce qui part, quel
+        que soit le modèle, et la règle qui la pose ne connaît pas les
+        paragraphes de GPT Image ni les virgules d'un style local.
+
+        Rend aussi le détail du style local, encadré de la même façon, pour que
+        l'écran de confirmation montre la consigne à sa place dans les morceaux.
+        """
+        local = self._texte_local(lignes, modele, pliage) if modele else None
+        texte = joindre(lignes) if local is None else local["texte"]
+        if not transparence:
+            return texte, local
+        texte = encadrer(texte)
+        if local is not None:
+            origine = "de la transparence"
+            local = {
+                **local,
+                "texte": texte,
+                "segments": [
+                    {"clef": "transparence.tete", "nom": "la consigne de transparence", "texte": TETE_TRANSPARENCE, "origine": origine},
+                    *local["segments"],
+                    {"clef": "transparence.queue", "nom": "la consigne de transparence", "texte": QUEUE_TRANSPARENCE, "origine": origine},
+                ],
+                "jetons": texte_local.compter_jetons(texte),
+            }
+        return texte, local
 
     # ── Un style local (ML4) ─────────────────────────────────────────────────
 
@@ -2979,8 +3058,22 @@ class ServiceGenerations:
         # sans image jointe : c'est le même repli, et depuis RV3 (21 septembre
         # 2026) la même lecture de `sujet` quand il nomme une couleur. Un aperçu
         # sans modèle compose donc comme un aperçu sans image, jamais autrement.
-        fond_choix = self._fond_choix_de_l_appel(projet, partantes, tri, sujet)
-        fond = fond_choix.couleur
+        #
+        # **Et le fond vide, décidé par la même méthode que la soumission**
+        # (TN2) — sans modèle, pas de capacité, donc jamais.
+        transparence = self.transparence_de_l_appel(
+            modele,
+            projet,
+            echelle,
+            planche=pliage is not None or garder_mise_en_page,
+            tri=tri,
+        )
+        fond_choix = (
+            Choix(couleur=AUCUN_FOND, nom="")
+            if transparence
+            else self._fond_choix_de_l_appel(projet, partantes, tri, sujet)
+        )
+        fond = FOND_TRANSPARENT if transparence else fond_choix.couleur
         lignes = self.lignes(
             sujet,
             repris=repris,
@@ -2999,9 +3092,10 @@ class ServiceGenerations:
         )
         # **Un style local lit les mêmes lignes, jointes autrement** (ML4) : une
         # seule partie sans titre, et ce qui n'y entre pas est dans `local`.
-        local = self._texte_local(lignes, modele, pliage) if modele else None
+        # La jonction est celle de l'envoi, consigne de transparence comprise.
+        texte, local = self._jonction(lignes, modele, pliage, transparence)
         return {
-            "texte": joindre(lignes) if local is None else local["texte"],
+            "texte": texte,
             # **Les trois parties, telles qu'elles partent** (R7). L'écran de
             # confirmation les montre séparément et n'en recompose aucune : le
             # texte entier est leur jonction, et il est rendu juste au-dessus.
@@ -3045,7 +3139,16 @@ class ServiceGenerations:
             # est *déjà* dans le texte, dans la case `technique` : ce champ ne le
             # double pas, il le nomme, pour que l'écran puisse en dessiner la
             # pastille sans relire de l'anglais.
-            "fond": fond,
+            #
+            # **Vide quand l'appel demande un fond vide** (TN2) : il n'y a pas
+            # de pastille à dessiner, et `transparence` le dit juste dessous.
+            "fond": fond_choix.couleur,
+            # **Le fond vide, et la consigne qui le demande** (TN2). L'écran les
+            # montre à la place de la couleur ; la consigne est déjà dans
+            # `texte`, en tête et en queue — ce champ ne la double pas, il la
+            # nomme, comme `fond` nomme la couleur.
+            "transparence": transparence,
+            "consigne_transparence": consigne_transparence() if transparence else "",
             # **Le nom du fond, et pourquoi il a changé** (RV3, 21 septembre
             # 2026). `fond_nom` est celui de la liste fermée quand l'atelier
             # connaît la couleur (« magenta », « studio green »), vide sur une
@@ -3120,6 +3223,51 @@ class ServiceGenerations:
         except DemandeRefusee:
             octets = ()
         return choisir(couleurs_lues(octets), description)
+
+    def transparence_de_l_appel(
+        self,
+        identifiant_modele: str,
+        projet: str | None,
+        echelle: str,
+        *,
+        planche: bool,
+        tri: "Tri | None" = None,
+    ) -> bool:
+        """Cet appel demande-t-il un fond vide ? (TN2) — **les entrées de la règle**.
+
+        La règle elle-même est `transparence_demandee`, dans le domaine ; cette
+        méthode ne fait que lui apporter ce que le service sait lire : la
+        capacité du modèle au catalogue, la silhouette du type au barème du
+        jeu, et la correction de fond posée sur l'écran de confirmation.
+        `preparer` et `apercu` l'appellent tous deux — la soumission et ce que
+        l'écran montre avant de payer ne peuvent donc pas se contredire.
+
+        **La silhouette se lit comme à la naissance de l'asset**
+        (`Univers.recette_de`) : un type que le barème ne nomme pas est un
+        personnage. Sans projet, il n'y a ni barème ni détourage à la naissance
+        — donc rien à demander.
+
+        Rien ici ne refuse : un modèle inconnu se refuse plus loin avec sa
+        propre phrase, un projet illisible aussi.
+        """
+        if not identifiant_modele or self._catalogue is None or not projet:
+            return False
+        try:
+            capable = self._catalogue.modele(identifiant_modele).transparence
+        except ErreurAtelier:
+            return False
+        if not capable or self._univers is None:
+            return False
+        try:
+            lue = self._univers.univers(projet).echelle(echelle) if echelle else None
+        except ErreurAtelier:
+            return False
+        return transparence_demandee(
+            capable=capable,
+            silhouette=lue.silhouette if lue is not None else True,
+            planche=planche,
+            fond_impose=tri is not None and tri.fond is not None,
+        )
 
     def _fond_de_l_appel(
         self,
@@ -4114,11 +4262,15 @@ class ServiceGenerations:
         `_fond_de_l_appel`, et cette méthode ne décide plus que d'une chose —
         *cet adaptateur-ci veut-il l'image posée, ou telle quelle ?*
         """
+        # **Un appel à fond vide pose ses références sur blanc** (TN2) — ce que
+        # le nœud de vision de Qwen fait de toute façon. Jamais sur le gris
+        # neutre de `sur_le_fond`, qui est le repli d'un appel *sans* fond.
+        pose = FOND_DES_REFERENCES if fond == FOND_TRANSPARENT else fond
         if self._genre_local(modele):
-            return fond
+            return pose
         if modele.startswith("ComfyUI:"):
             return None
-        return fond
+        return pose
 
     # ── Enregistrement ───────────────────────────────────────────────────────
 
