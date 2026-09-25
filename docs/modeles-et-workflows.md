@@ -339,6 +339,32 @@ critère de TN6 demande la décision, pas le code).
 
 Quelques images du banc, à taille réduite, sont dans `docs/releves/banc-tn6-2026-09-25/`.
 
+### Le troisième sujet du banc (25 septembre 2026, TN8)
+
+L'auteur a tranché l'ouverture de TN8 par étapes (`docs/PLAN-transparence-native.md` § TN8) :
+d'abord un troisième sujet, choisi cette fois **contre** ce qui risque de trouer — pâle et
+translucide, à l'opposé de la robe blanche du mage et du pelage du renard. Un spectre au voile
+flottant, translucide, en planche des directions (1×4, TS3/TS19 — la forme de planche que le
+produit fait le plus, pas 2×2 ni un cycle de marche). Même voie directe que TN6 (la planche ne
+passe pas par `ServiceProduction`), même script, ajouté en option
+(`essais/banc_tn6_transparence.py --seulement planche-directions`) sans toucher aux six sujets
+ni au mage/renard déjà mesurés. Huit tirages, 128 s de carte graphique, 0 $ (`qwen21-rapide`).
+
+| Planche | Fond vide reçu | Case trouée (TN4) | Débris par case (min–max, moy.) |
+|---|---|---|---|
+| Spectre au voile, planche des directions 1×4 | 6/8 | 0/8 | 0,00–74,27 %, 29,56 % |
+
+**Pas propre.** Deux tirages sur huit (rang 1 et 5) ne renvoient même pas un fond reconnu comme
+vide : le voile déforme le violet que le modèle laisse sous le vide au point que `T.fond_vide`
+ne le reconnaît plus (`planche-directions-fond-non-recu.png`). Sur les six qui le renvoient,
+aucune case n'est signalée trouée par le seuil de TN4 (12 % de part enfermée), mais les débris
+explosent : de 0 % à 74,27 % de la case en pixels semi-transparents hors sujet, contre
+0,00–3,36 % sur les seize planches propres de TN6. Le voile translucide se détoure en un halo
+qui déborde largement du sujet (`planche-directions-debris-max.png`) — exactement le risque nommé
+par l'auteur avant le tirage. **Verdict : TN8 ne s'ouvre pas** sur ce risque-là ; le critère
+d'ouverture (huit planches propres sur huit) n'est pas atteint une troisième fois. Deux images
+réduites dans `docs/releves/banc-tn6-2026-09-25/`.
+
 **Pas encore exploité :**
 
 - **La transparence native — demandée depuis TN2, pas encore exploitée au retour.** Le modèle
