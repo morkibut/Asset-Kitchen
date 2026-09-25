@@ -89,6 +89,7 @@ from atelier.domaine.transparence import (
     demandee_par,
     desencadrer,
     encadrer,
+    phrase_en_queue,
     sans_fond_colore,
     transparence_demandee,
 )
@@ -996,7 +997,21 @@ class ServiceGenerations:
         fond = (
             FOND_TRANSPARENT
             if transparence
-            else self._fond_de_l_appel(projet, reinjectes, tri, demande.prompt)
+            else self._fond_de_l_appel(
+                projet,
+                reinjectes,
+                tri,
+                # **Jamais la phrase que l'atelier avait lui-même ajoutée**
+                # (TN7) : un texte repris qui nommait « studio green » ferait
+                # lire « green » à RV3 comme si l'auteur l'avait écrit, et le
+                # magenta choisi pour s'en éloigner s'ajouterait à interdire
+                # au vert — sans qu'aucune des deux couleurs ne soit la
+                # sienne. `demande.prompt` sans correction reste la seule
+                # lecture pour un texte que l'auteur écrit lui-même.
+                self._sans_le_fond_d_avant(demande.prompt)
+                if demande.repris
+                else demande.prompt,
+            )
         )
         # **Le texte tel qu'il partira, et un seul endroit le compose** (US-158).
         # `_texte` est aussi ce que l'aperçu du champ de prompt montre avant de
@@ -2939,6 +2954,25 @@ class ServiceGenerations:
         return texte, local
 
     @staticmethod
+    def _sans_le_fond_d_avant(texte: str) -> str:
+        """Un texte repris, **sans les deux phrases que l'atelier y avait
+        lui-même ajoutées pour le fond de son premier appel** — la consigne de
+        transparence (`desencadrer`) et la couleur nommée (`sans_fond_colore`).
+        Ni ajout ni remplacement : c'est le corps nu, réutilisé par
+        `_repris_au_fond` **et** pour lire les couleurs d'une description
+        (relecture du 25 septembre 2026, TN7) — sans quoi la lecture des
+        couleurs de la description (RV3) lisait « green » dans la propre
+        phrase de l'atelier, et le négatif interdisait le vert **et** le
+        magenta choisi pour la contredire.
+
+        Ne touche jamais un texte que l'auteur a écrit lui-même : les deux
+        phrases qu'elle retire sont celles, au mot près, que `encadrer` et
+        `vue.phrase_de_calage` composent — une bible qui les redirait de la
+        main de l'auteur n'est jamais visée par leurs motifs.
+        """
+        return sans_fond_colore(desencadrer(texte))
+
+    @staticmethod
     def _repris_au_fond(texte: str, transparence: bool, fond: str | None) -> str:
         """Un texte repris, **remis au fond de cet appel-ci** — avant d'être
         composé (relecture du 25 septembre 2026).
@@ -2947,22 +2981,46 @@ class ServiceGenerations:
         d'alors — la consigne de transparence, ou la phrase qui nomme une
         couleur. Le fond de cet appel-ci est peut-être l'autre. Les deux
         phrases sont celles de l'atelier, pas de l'auteur ; elles changent donc
-        ici, et nulle part ailleurs :
+        ici, et nulle part ailleurs, en repartant toujours du même corps nu
+        (`_sans_le_fond_d_avant`) :
 
-        · **vers un fond vide**, la couleur tombe (`sans_fond_colore`) et la
-          consigne aussi (`desencadrer`) — `_jonction` la repose, **en tête** :
-          laissée dans le texte, le déclencheur d'un style local se posait
-          devant elle, et Qwen ne la lit qu'en tête et en queue ;
-        · **vers un fond coloré**, la consigne tombe et le fond de l'appel
-          prend la place de sa queue (TN4, `desencadrer`).
+        · **vers un fond vide**, il revient tel quel — `_jonction` repose la
+          consigne, **en tête** : laissée dans le texte, le déclencheur d'un
+          style local se posait devant elle, et Qwen ne la lit qu'en tête et
+          en queue ;
+        · **vers un fond coloré**, la couleur de cet appel prend la place de sa
+          queue (`transparence.phrase_en_queue`) — **mais seulement si le
+          corps nu diffère du texte parti** : l'appel d'alors avait alors la
+          consigne (TN4, « refaire sur fond coloré ») ou une couleur nommée
+          (TN7, un fond vert renvoyé vers un fond magenta), et la nouvelle
+          couleur prend la place de celle qui vient de tomber. **Que le texte
+          reparte d'un fond vide ou d'un fond déjà coloré**, les deux n'ont
+          plus qu'une seule couleur à nommer en arrivant ici — la leur a été
+          ôtée. ⚠️ **C'est le correctif de TN7** : `desencadrer(texte,
+          a_la_place)` seul ne pose `a_la_place` que si `texte` portait
+          encore la consigne — un texte reparti d'un fond déjà coloré ne l'a
+          jamais portée, et l'ancienne couleur restait donc seule à partir,
+          sans jamais céder la sienne.
+
+        **Un texte qui ne nommait aucun fond n'en reçoit pas un** — la garde
+        qui protège « mes propres mots » (ML4) : `sans_avant == texte` dit
+        qu'il n'y avait ni consigne ni couleur à remplacer, donc rien n'est
+        la phrase de l'atelier, et rien n'y est ajouté. Ce n'est pas parce
+        qu'un appel a une couleur de fond que tout texte repris doit la
+        nommer — seul un texte qui **nommait déjà** un fond garde le droit
+        (et le besoin) d'en nommer un.
 
         Retiré ici plutôt qu'au texte joint, l'écran de confirmation montre la
         même chose dans le texte entier, dans ses parties et dans les morceaux
         d'un style local — une seule résolution (`AGENTS.md`, point 6).
         """
+        sans_avant = ServiceGenerations._sans_le_fond_d_avant(texte)
         if transparence:
-            return sans_fond_colore(desencadrer(texte))
-        return desencadrer(texte, phrase_de_calage(0, fond) if fond else "")
+            return sans_avant
+        nommait_un_fond = sans_avant != texte
+        if not fond or not nommait_un_fond:
+            return sans_avant
+        return phrase_en_queue(sans_avant, phrase_de_calage(0, fond))
 
     # ── Un style local (ML4) ─────────────────────────────────────────────────
 
@@ -3135,7 +3193,15 @@ class ServiceGenerations:
         fond_choix = (
             Choix(couleur=AUCUN_FOND, nom="")
             if transparence
-            else self._fond_choix_de_l_appel(projet, partantes, tri, sujet)
+            else self._fond_choix_de_l_appel(
+                projet,
+                partantes,
+                tri,
+                # **Jamais la phrase de l'atelier** (TN7, même correctif que
+                # `preparer`) : l'aperçu et la soumission doivent voir la même
+                # couleur, donc lire la même description.
+                self._sans_le_fond_d_avant(sujet) if repris else sujet,
+            )
         )
         fond = FOND_TRANSPARENT if transparence else fond_choix.couleur
         lignes = self.lignes(

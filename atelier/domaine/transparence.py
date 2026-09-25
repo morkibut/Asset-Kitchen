@@ -137,10 +137,22 @@ def desencadrer(texte: str, a_la_place: str = "") -> str:
     corps = texte.replace(TETE, "").replace(QUEUE, "").strip()
     if not a_la_place:
         return corps
-    phrase = a_la_place[:1].upper() + a_la_place[1:]
-    if not phrase.endswith((".", "!", "?")):
-        phrase = f"{phrase}."
-    return f"{corps}{_separateur(corps)}{phrase}" if corps else phrase
+    return phrase_en_queue(corps, a_la_place)
+
+
+def phrase_en_queue(corps: str, phrase: str) -> str:
+    """`phrase`, posée en queue de `corps` — majuscule, point final, le bon
+    séparateur (`_separateur`). C'est la moitié de `desencadrer` qui pose une
+    phrase à la place de la consigne retirée ; un texte repris qui n'a **pas**
+    porté la consigne en a besoin tout autant (`ServiceGenerations._repris_au_fond`,
+    relecture du 25 septembre 2026, TN7) — un texte repris d'un fond coloré vers
+    un autre fond coloré n'a jamais eu la consigne à remplacer, seulement une
+    couleur, et la sienne n'appelle pas `desencadrer`.
+    """
+    mise = phrase[:1].upper() + phrase[1:]
+    if not mise.endswith((".", "!", "?")):
+        mise = f"{mise}."
+    return f"{corps}{_separateur(corps)}{mise}" if corps else mise
 
 
 # **La phrase de calage d'un appel sur fond coloré**, telle que
