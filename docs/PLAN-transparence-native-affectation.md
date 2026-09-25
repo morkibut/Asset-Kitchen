@@ -33,6 +33,7 @@
 | **TN4** · Un trou dans le sujet se voit à l'arrivée | `[MEDIUM]` | Un algorithme standard (zones transparentes non reliées au bord), un seuil calé sur le banc, un message et un geste. |
 | **TN5** · L'agent fait pareil | `[EASY]` | Le chemin MCP passe par les mêmes services ; il ne reste qu'à le prouver par un essai de bout en bout. |
 | **TN6** · Le banc rejoué, puis les planches | `[EASY]` | Rejouer un script de mesure existant et écrire les chiffres. |
+| **TN7** · Un texte repris retrouve le fond de son appel | `[MEDIUM]` | Une règle de composition du texte sur un chemin déjà verrouillé par des essais (RT3, RV3, TN2) ; pas de forme de données neuve. |
 
 **Compte** : 0 `[VERY-HARD]`, 1 `[HARD]`, 3 `[MEDIUM]`, 2 `[EASY]`, 0 `[VERY-EASY]`.
 

@@ -545,7 +545,7 @@ Chrome) et la ligne posée au centre quand aucun champ n'a le focus.
 4. **Ouverte à la relecture du 25 septembre 2026 : le plafond à zéro.** Mettre le plafond à zéro,
    c'est couper le coup de main exprès (« À zéro, il est coupé », dit le guide) ; `etat()` rend
    pourtant `motif: "plafond"`, et la ligne grise « coup de main au plafond du mois » paraît comme
-   au plafond atteint. Silence, comme sans clé — ou la ligne grise ? Laissé tel quel.
+   au plafond atteint. Silence, comme sans clé — ou la ligne grise ? **Tranché par l'auteur le 25 septembre 2026 : la ligne grise reste**, même à zéro : elle rappelle que c'est le plafond qui bloque.
 
 ---
 

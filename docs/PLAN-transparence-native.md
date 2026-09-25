@@ -354,11 +354,11 @@ qu'ils ont été mesurés sur les images du banc, pas rejoués par l'atelier.
 
 1. **« Coup de main au plafond du mois » quand le plafond est à zéro** (CM8). Mettre le plafond à
    zéro, c'est couper le coup de main exprès ; le serveur rend alors `motif: "plafond"`, et la
-   ligne grise paraît comme au plafond atteint. Silence (comme sans clé) ou ligne grise ? Laissé
+   ligne grise paraît comme au plafond atteint. Silence (comme sans clé) ou ligne grise ? **Tranché le 25 septembre 2026 : la ligne grise reste.** Laissé
    tel quel ; noté aussi dans `PLAN-assistant.md`.
 2. **Hériter le détourage d'un dessous détouré par le modèle** (superposition). Ses passes
    dorment : le geste « reprendre les passes du dessous » ne s'offre pas. Faut-il proposer de
-   copier sa passe endormie, éveillée, sur un dessus opaque ?
+   copier sa passe endormie, éveillée, sur un dessus opaque ? **Tranché le 25 septembre 2026 : non, on laisse ainsi.**
 
 ---
 
@@ -380,4 +380,10 @@ nomme « #00B140 studio green » ; la lecture des couleurs de la description (RV
 et choisit le magenta ; le texte part en disant vert, et le négatif interdit le vert **et** le
 magenta. La transparence n'y est pour rien — le fond vide, lui, est maintenant remis d'aplomb
 (`_repris_au_fond`) — mais le même geste réglerait ce cas : remplacer la phrase de fond d'un
-texte repris par celle de l'appel, et ne pas lire la phrase de l'atelier comme une description.
+texte repris par celle de l'appel, et ne pas lire la phrase de l'atelier comme une description. **L'auteur a demandé la correction le 25 septembre 2026** : tranche `TN7` ci-dessous.
+
+### TN7 · Un texte repris retrouve le fond de son appel
+
+- [ ] Un texte repris d'un appel sur fond vert, renvoyé sur fond coloré, perd sa phrase de fond d'avant avant que la couleur de l'appel soit choisie ; la lecture des couleurs de la description (RV3) ne lit pas la phrase de l'atelier.
+- [ ] Le texte envoyé nomme une seule couleur de fond, et le négatif n'interdit que celle-là ; « Relire avant l'envoi » montre exactement ce qui part.
+- [ ] Un texte écrit par l'auteur qui nomme vraiment une couleur (la cape verte de RV3) garde son effet d'aujourd'hui.
