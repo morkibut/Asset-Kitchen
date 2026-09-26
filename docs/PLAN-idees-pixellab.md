@@ -254,6 +254,54 @@ qui est déjà mesuré. Deux écarts avec PixelLab y sont relevés dans le code 
 toujours une graine neuve (pas de « même graine »), et la réduction des couleurs est fixée à
 l'avance (quatre couleurs neuves au plus) au lieu de se régler après coup.
 
+## PX9 · Repeindre, de A à Z : un résultat qui a un nom
+
+*Ajoutée le 26 septembre 2026, après le premier essai réel de l'auteur (Mara, un sac à dos) —
+voir « Retours de l'auteur » sous PX3. Décision de l'auteur le même jour : **on choisit ce que
+devient le résultat après l'avoir vu.*** Cette tranche reprend les quatre retours et ne livre
+qu'une chose : un parcours sans trou.
+
+### Le parcours, tel qu'il doit se jouer
+
+1. **Ouvrir** une image d'un sujet (Mara, une pose) → atelier de retouche → « Repeindre une zone ».
+2. **Peindre** la zone, **écrire** ce qu'on veut, choisir le modèle, **lancer** (le temps est
+   annoncé).
+3. **Voir** le résultat : l'image avec la zone repeinte, et la pièce seule.
+4. **Décider**, trois boutons qui font vraiment quelque chose :
+   - **« En faire une nouvelle version de cette pose »** — l'image complète (l'image d'origine et la
+     zone repeinte) devient une version de la même pose et direction de Mara, rangée avec elles ;
+     l'image d'origine reste.
+   - **« En faire un équipement de Mara »** — on donne un nom (« Sac à dos ») et un emplacement
+     (proposé d'après la zone : le dos) ; l'atelier crée le sujet « Sac à dos » dans la famille des
+     équipements, et la pièce devient **son calque sur cette pose de Mara**, exactement comme un
+     équipement fabriqué autrement. La suite (le porter sur les autres poses et les animations) est
+     celle qui existe déjà pour les équipements.
+   - **« Jeter »** — rien ne reste. Et « Recommencer » relance un tirage.
+   Tant qu'on n'a pas décidé, le résultat n'encombre ni la Galerie ni les poses : il attend sur
+   l'image, dans la liste « à décider ».
+5. **Retrouver et corriger plus tard** : la nouvelle version se retouche comme toute image ; le
+   calque d'équipement se rouvre depuis l'équipement **et** depuis l'image de Mara, avec la main
+   et l'éditeur de pixels, qui peuvent **ramener** des pixels depuis l'image rendue par le moteur.
+
+### Critères d'acceptation
+
+- [ ] La pièce n'a plus de trous : elle porte **tout ce que le moteur a peint dans la zone**, pas
+      seulement ce qui a changé ; ce qui est vraiment du fond est retiré, et le seuil est vérifié
+      sur la génération de Mara du 26 septembre (relue, jamais modifiée).
+- [ ] Les trois décisions font ce qu'elles disent ; un résultat non décidé n'apparaît ni dans la
+      Galerie ni parmi les poses, et se retrouve sur son image.
+- [ ] « En faire un équipement » crée le sujet équipement avec son emplacement, et le calque est
+      reconnu partout où les calques d'équipement le sont (fiche de l'équipement, fiche de la pose,
+      ordre devant/derrière, export).
+- [ ] Un calque repeint se rouvre et se corrige depuis l'équipement et depuis l'image de base ;
+      la main peut ramener des pixels depuis l'image du moteur.
+- [ ] **Le parcours ci-dessus est joué au navigateur de bout en bout**, sur une copie d'un vrai
+      personnage des projets de l'auteur, sur un atelier jetable, en deux passes : une pour chaque
+      décision.
+- [ ] Le guide dit en une ligne ce que devient le résultat selon le bouton ; les mots suivent
+      `docs/vocabulaire.html`.
+- [ ] L'agent a les mêmes trois décisions.
+
 ## PX4 · La marge avant d'animer
 
 **Livre** un réglage « place autour du sujet » sur l'écran qui prépare une animation : la part
