@@ -254,7 +254,13 @@ double est retirée de la bande pour que la boucle ne saute pas.
 - [x] Une boucle n'a pas l'image en double à sa fin.
 - [x] Un clip gardé avec une image de fin se rouvre avec elle ; l'agent peut la demander.
 - [x] Le guide a sa ligne.
-- [ ] **Laissé à l'auteur** : un essai payé chez OpenRouter, avec son prix annoncé.
+- [x] ~~Un essai payé chez OpenRouter~~ — **remplacé le 26 septembre 2026 par un essai local**,
+      l'auteur travaillant en local : un clip d'une seconde de Michel le nain (*Cœur de pierre*,
+      copie hors de `donnees/`) sur le modèle maison, « Finir sur l'image de départ », 95 s, 0 $.
+      Le graphe passe bien par `WanFirstLastFrameToVideo` ; première et dernière image du clip à
+      8 sur 255 d'écart moyen ; la bande a ses 8 images, sans le doublon de fin. ⚠️ Le mouvement
+      demandé était minuscule : l'essai prouve la mécanique, pas qu'un geste ample se referme.
+      L'appel OpenRouter n'est vérifié que par ses essais automatiques.
 
 **Faite le 26 septembre 2026.** Le réglage s'appelle `image_de_fin` (demande, clip gardé, agent) :
 vide pour une fin libre, `"depart"` pour la boucle, sinon l'identifiant d'une image du jeu. À
