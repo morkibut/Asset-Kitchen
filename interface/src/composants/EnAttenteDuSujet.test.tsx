@@ -221,3 +221,18 @@ test("une planche partagée refuse la suppression ici et renvoie vers la Galerie
     ),
   )
 })
+
+test("PX9 : un résultat de « Repeindre » attend une décision sur son image, pas un rangement", async () => {
+  const resultat = { ...image({ identifiant: "r1", label: "Mara · zone" }), a_decider: { image: "base-1", texte: "a big backpack" } }
+  vi.spyOn(api, "enAttenteDuSujet").mockResolvedValue({ ...VIDE, images: [resultat as Asset] })
+  const onDecider = vi.fn()
+  render(<EnAttenteDuSujet personnage={sujet()} plan={PLAN} onOuvrir={vi.fn()} onDecider={onDecider} />)
+  await ouvrirLeBandeau()
+  const carte = screen.getByText("Mara · zone").closest("article") as HTMLElement
+  expect(within(carte).getByText(/a big backpack/)).toBeTruthy()
+  // Ni « Ranger dans… » ni « Écarter » : le ranger dans une pose en ferait une image sans nom.
+  expect(within(carte).queryByRole("combobox")).toBeNull()
+  expect(within(carte).queryByRole("button", { name: "Écarter" })).toBeNull()
+  fireEvent.click(within(carte).getByRole("button", { name: "Décider sur son image ›" }))
+  expect(onDecider).toHaveBeenCalledWith("base-1")
+})

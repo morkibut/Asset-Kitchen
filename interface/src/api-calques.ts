@@ -45,6 +45,11 @@ export type VarianteCalque = {
   cadre_suivi?: CadreSuivi
   /** L'image équipée sort d'une fabrication : sa planche revenue peut être relue, sans nouvel appel. */
   planche_d_origine?: boolean
+  /** PX9 : un calque qui suit son image — la pièce d'une zone repeinte. Il se
+   *  corrige dans la retouche de cette image, et la variante recopie la
+   *  correction d'elle-même. */
+  calque_asset?: string
+  calque_suit_l_image?: boolean
   etat: "reference" | "a-extraire" | "a-verifier" | "prete" | "a-revoir"; raison: string; retenue: boolean; utilisable: boolean
 }
 /** Une pose du porteur d'après laquelle une image a été fabriquée — relue sur sa génération. */

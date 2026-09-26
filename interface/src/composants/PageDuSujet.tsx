@@ -179,6 +179,9 @@ export function PageDuSujet(proprietes: {
   onImporter?: (cible?: { pose: string; direction?: string }) => void
   onDecouper?: (asset: string) => void
   onExtraire?: (asset: string) => void
+  /** PX9 : un résultat de « Repeindre » à décider — ouvrir son image, la
+   *  fabrique Repeindre ouverte. */
+  onDecider?: (image: string) => void
   /** Ouvrir la fiche d'un son (SN6, onglet *Sons*) : l'écouter et le régler. */
   onSon?: (son: string) => void
 }) {
@@ -457,6 +460,7 @@ export function PageDuSujet(proprietes: {
 
         <EnAttenteDuSujet personnage={ouvert} plan={sienPlan}
           onOuvrir={proprietes.onOuvrirCase}
+          onDecider={proprietes.onDecider}
           onChange={() => setRange(n => n + 1)} onErreur={echouer} />
 
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-[14px]">

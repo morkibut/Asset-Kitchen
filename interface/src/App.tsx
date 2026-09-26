@@ -1017,6 +1017,23 @@ function AtelierApp() {
       asset ? entrer(p, { genre: "retouche", asset }) : sortir(p, "retouche"),
     )
   }
+  /** **PX9 — ouvrir la retouche sur n'importe quelle image**, même une que ni
+   *  le sujet ouvert ni la grille ne portent : la pièce d'une zone repeinte
+   *  « à décider » n'est dans aucune case, la version qu'on vient d'en faire
+   *  pas encore dans la liste lue, et l'image d'origine d'un résultat ouvert
+   *  depuis la galerie n'est pas forcément dans la grille filtrée. L'image est
+   *  lue d'abord, puis la retouche s'ouvre ; `imageDeLaRetouche` ne s'en sert
+   *  qu'en dernier recours, et la relit tant qu'elle est ouverte. */
+  const [assetLuPourLaRetouche, setAssetLuPourLaRetouche] = useState<Asset | null>(null)
+  const ouvrirLaRetoucheSur = (identifiant: string, table: Table | null = null) => {
+    void api
+      .lireAsset(identifiant)
+      .then((lu) => {
+        setAssetLuPourLaRetouche(lu)
+        ouvrirLaRetouche(identifiant, table)
+      })
+      .catch((e) => echouer(e, "cette image n’a pas pu s’ouvrir dans l’atelier de retouche"))
+  }
   /** TS18 — « Retoucher dans l'atelier », depuis le détail d'une carte de la
    *  toile : résout l'asset de la carte (le sien s'il en a déjà un, une copie
    *  neuve sinon — `assetDeLaCarte`) et ouvre la retouche dessus, en gardant
@@ -1061,6 +1078,23 @@ function AtelierApp() {
     }, 2000)
     return () => window.clearInterval(minuteur)
   }, [carteDeLaRetouche, assetDeLaCarteEnRetouche?.identifiant, retoucheOuverte])
+  /** PX9 — la même relecture pour une image lue exprès (`ouvrirLaRetoucheSur`),
+   *  pour la même raison : la retouche enregistre sans le dire ici. */
+  const idLuPourLaRetouche = assetLuPourLaRetouche?.identifiant ?? null
+  useEffect(() => {
+    if (!idLuPourLaRetouche || idLuPourLaRetouche !== retoucheOuverte) return
+    const minuteur = window.setInterval(() => {
+      void api
+        .lireAsset(idLuPourLaRetouche)
+        .then((lu) => {
+          setAssetLuPourLaRetouche((courant) =>
+            courant && courant.identifiant === lu.identifiant && JSON.stringify(courant.recette) === JSON.stringify(lu.recette) ? courant : lu,
+          )
+        })
+        .catch(() => {})
+    }, 2000)
+    return () => window.clearInterval(minuteur)
+  }, [idLuPourLaRetouche, retoucheOuverte])
   /** TS18 — « Poser sur la toile », depuis l'atelier de retouche entré par une
    *  carte : la version retouchée se pose comme une carte neuve (la même
    *  route que la Galerie, `poserAssetSurToile`), reliée à la carte d'origine
@@ -1171,6 +1205,8 @@ function AtelierApp() {
       : null) ??
     imageDuSujetEnRetouche ??
     grille.find((a) => a.identifiant === retoucheOuverte) ??
+    // **PX9, en dernier** : lue exprès pour s'ouvrir (`ouvrirLaRetoucheSur`).
+    (assetLuPourLaRetouche?.identifiant === retoucheOuverte ? assetLuPourLaRetouche : null) ??
     null
 
   /** Les sœurs de l'image en retouche — **ses voisines, selon d'où l'on
@@ -2680,6 +2716,7 @@ function AtelierApp() {
           setMontageOuvert={setMontageOuvert}
           ouvrirLAtelierDeBande={ouvrirLAtelierDeBande}
           ouvrirLaRetouche={ouvrirLaRetouche}
+          ouvrirLaRetoucheSur={ouvrirLaRetoucheSur}
           onSon={ouvrirLesSons}
           onSource3D={setSource3Douverte}
           personnages={personnages}
@@ -2923,6 +2960,9 @@ function AtelierApp() {
           onImporter={(cible) => setImportDuSujet(cible ?? {})}
           onDecouper={(id) => ouvrirLaRetouche(id, "decoupage")}
           onExtraire={(id) => ouvrirLaRetouche(id, "superposition")}
+          // **PX9** : un résultat « à décider » renvoie sur son image, la
+          // fabrique Repeindre ouverte — c'est là qu'on décide.
+          onDecider={(image) => ouvrirLaRetoucheSur(image, "repeint")}
           onLivrer={() => choseOuverteId && setSortieOuverte(true, { genre: "sujet", sujet: choseOuverteId })}
           onSon={ouvrirLesSons}
           ouvert={choseOuverte}
@@ -3102,6 +3142,7 @@ function AtelierApp() {
           tableDeLaPorte={tableDeLaPorte}
           onFermer={() => ouvrirLaRetouche(null)}
           onSoeur={(identifiant) => ouvrirLaRetouche(identifiant)}
+          onOuvrirAsset={(identifiant) => ouvrirLaRetoucheSur(identifiant)}
           onAssocierEquipement={bibliotheque.courant ? () => setImageAEquiper(imageDeLaRetouche) : undefined}
           // **TS18** : « Poser sur la toile » n'existe que si l'on est entré
           // ici depuis une carte — le seul cas où il y a une carte d'origine
@@ -3268,7 +3309,7 @@ function AtelierApp() {
               // l'outil chercher une image absente de la page affichée, le
               // défaut que `Comparer` a payé en `B13`.
               if (emploiOuvert.porteur) setChoseOuverte(emploiOuvert.porteur)
-              ouvrirLaRetouche(asset)
+              ouvrirLaRetoucheSur(asset)
             }}
             onLesAutresEmplois={() => ouvrirLEmploi(null)}
             /* **Le retour au personnage, dans les deux sens** (US-537). Une

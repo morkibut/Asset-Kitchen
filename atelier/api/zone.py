@@ -77,5 +77,21 @@ async def resultat(requete: Request, generation: str) -> dict[str, Any]:
     return _service(requete).resultat(generation)
 
 
+class CorpsDecision(BaseModel):
+    """PX9 — ce que devient le résultat : `version`, `equipement` (avec son
+    nom et son emplacement) ou `jeter`."""
+
+    decision: str
+    nom: str = ""
+    emplacement: str = ""
+
+
+@routeur.post("/zone/results/{identifiant}/decision")
+async def decider(requete: Request, identifiant: str, corps: CorpsDecision) -> dict[str, Any]:
+    """En faire une nouvelle version de la pose, un équipement du sujet, ou le
+    jeter. Chacune se refuse avec sa raison avant d'écrire quoi que ce soit."""
+    return _service(requete).decider(identifiant, corps.decision, nom=corps.nom, emplacement=corps.emplacement)
+
+
 # **Pas de route pour la fiche seule** (règle 8nonies) : l'écran la lit dans
 # `calques` de l'état et dans le résultat, jamais à part.

@@ -1,11 +1,13 @@
-// La fabrique « Repeindre » — une zone, un texte, un calque (PX3).
+// La fabrique « Repeindre » — une zone, un texte, un résultat qui a un nom (PX3, PX9).
 //
 // Le geste de PixelLab : on peint une zone sur l'image, on écrit ce qu'on veut
-// y voir, et un moteur local repeint **la zone seulement**. Ce qui revient est un
-// calque qui ne porte que les pixels changés dans la zone, ramenés à la grille et
-// aux couleurs de l'image. On le garde, on le jette, ou on recommence sur une
-// autre graine — un tirage sur trois ou quatre ne se garde pas (banc PX1), et ce
-// trio de boutons en est la réponse.
+// y voir, et un moteur local repeint **la zone seulement**. Ce qui revient est
+// une pièce — tout ce que le moteur a peint dans la zone, ramené à la grille et
+// aux couleurs de l'image. **On décide ensuite ce qu'elle devient** (PX9) : une
+// nouvelle version de la pose, un équipement du sujet, ou rien (Jeter). Tant
+// qu'on n'a pas décidé, elle reste « à décider » sur son image — rangée comme
+// toute production, jamais mêlée aux poses. « Garder » n'existe plus : il ne
+// faisait rien, et l'auteur croyait choisir.
 //
 // **C'est une fabrique, pas une table** : elle ne touche pas l'image ouverte,
 // elle en écrit une autre. D'où sa place à droite du trait, avec Découper et
@@ -24,7 +26,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { api, type Asset, type Trait } from "../api"
 import { origineDuTemps, stylesLocaux, tempsParImage } from "../api-workflows"
-import { type CalqueRepeint, type EtatDeLaZone, TERMINES, zone as routes } from "../api-zone"
+import { type CalqueRepeint, type EtatDeLaZone, type RenduDeLaDecision, TERMINES, zone as routes } from "../api-zone"
 import { OPACITE, rayonDe, type EtatMain } from "../recette"
 import { PANNEAU } from "./Infobulle"
 import { Libelle, useEcoule } from "./pieces"
@@ -85,6 +87,20 @@ function Vignette({ titre, children }: { titre: string; children: React.ReactNod
 
 const PIXELS = { imageRendering: "pixelated" as const }
 
+/** Une ligne de la liste « à décider » ou des équipements : la pièce, son nom. */
+function LigneDeResultat({ calque, active, onOuvrir }: { calque: CalqueRepeint; active: boolean; onOuvrir: () => void }) {
+  return (
+    <button type="button" aria-pressed={active} onClick={onOuvrir} className="flex min-w-0 flex-1 items-center gap-[8px] rounded-5 border border-trait bg-carte p-[4px] text-left text-[12px] text-encre hover:border-encre-4">
+      <span className="damier-papier relative h-[30px] w-[30px] shrink-0 overflow-hidden rounded-5">
+        <img src={api.rendu(calque.identifiant, calque.empreinte ?? "")} alt="" className="absolute inset-0 h-full w-full object-contain" style={PIXELS} />
+      </span>
+      <span className="min-w-0 truncate">
+        {calque.equipement ? `${calque.equipement.nom} · ${calque.equipement.emplacement}` : calque.texte}
+      </span>
+    </button>
+  )
+}
+
 export function EcranRepeindre({
   asset,
   onErreur,
@@ -94,8 +110,9 @@ export function EcranRepeindre({
   /** L'image ouverte : c'est elle qu'on repeint, et elle ne bouge jamais. */
   asset: Asset
   onErreur: (raison: string) => void
-  /** Ouvre le calque dans l'atelier de retouche — la main et l'éditeur de
-   *  pixels y passent sur lui comme sur un calque d'équipement. */
+  /** Ouvre une image dans l'atelier de retouche — la pièce (la main et
+   *  l'éditeur de pixels y passent, et la main y ramène un pixel de l'image du
+   *  moteur), ou la version qu'on vient d'en faire. */
   onRetoucher?: (identifiant: string) => void
   /** Le pas du suivi d'une zone lancée, en millisecondes. */
   intervalle?: number
@@ -116,6 +133,12 @@ export function EcranRepeindre({
   // pour rien.
   const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
   const [installe, setInstalle] = useState<string | null>(null)
+  // PX9 : **le formulaire de l'équipement appartient à un résultat**, pas à
+  // l'écran. Un nom tapé pour le sac ne doit jamais se retrouver sous le
+  // résultat suivant, arrivé pendant qu'on relançait (point 8octies).
+  const [formulaire, setFormulaire] = useState<{ pour: string; nom: string; emplacement: string } | null>(null)
+  const [decide, setDecide] = useState<RenduDeLaDecision | null>(null)
+  const [enDecision, setEnDecision] = useState(false)
   // **Un seul suivi vivant à la fois.** Une zone relancée ou un calque rouvert
   // pendant qu'une autre tourne : ce qui revient de l'ancienne ne s'affiche pas
   // à la place de ce qu'on regarde.
@@ -235,6 +258,7 @@ export function EcranRepeindre({
         ...(demande.modele !== null ? { modele: demande.modele } : {}),
       })
       setResultat(null)
+      setDecide(null)
       setEnCours({ generation: recu.generation, depuis: Date.now() / 1000 })
     } catch (erreur) {
       onErreur(erreur instanceof Error ? erreur.message : String(erreur))
@@ -247,28 +271,32 @@ export function EcranRepeindre({
     void partir({ texte: texte.trim(), zone: traits, force, couleurs, graine: Number.isInteger(lue) ? lue : null, modele: modeleChoisi })
   }
 
-  const garder = () => {
-    setResultat(null)
-    void charger()
-  }
-
-  const jeter = async (calque: CalqueRepeint) => {
+  // ── PX9 : les trois décisions ─────────────────────────────────────────────
+  const decider = async (calque: CalqueRepeint, decision: "version" | "equipement" | "jeter", champs: { nom?: string; emplacement?: string } = {}) => {
+    setEnDecision(true)
     try {
-      await api.supprimerAssets([calque.identifiant])
+      const rendu = await routes.decider(calque.identifiant, decision, champs)
+      setFormulaire(null)
+      setResultat(decision === "equipement" && rendu.calque ? rendu.calque : null)
+      setDecide(decision === "jeter" ? null : rendu)
+      void charger()
+      return true
     } catch (erreur) {
       onErreur(erreur instanceof Error ? erreur.message : String(erreur))
-      return
+      return false
+    } finally {
+      setEnDecision(false)
     }
-    setResultat(null)
-    void charger()
   }
+
+  const jeter = (calque: CalqueRepeint) => decider(calque, "jeter")
 
   // **Recommencer reprend ce qui est parti pour ce calque-là**, pas ce que le
   // champ porte maintenant : on a pu continuer d'écrire pendant que la zone
   // tournait, et relancer ce brouillon-là serait un autre geste. Une autre
   // graine, tirée par le serveur.
   const recommencer = async (calque: CalqueRepeint) => {
-    await jeter(calque)
+    if (!(await jeter(calque))) return
     await partir({ texte: calque.texte, zone: calque.zone, force: calque.force, couleurs: calque.couleurs, graine: null, modele: calque.modele })
   }
 
@@ -284,6 +312,7 @@ export function EcranRepeindre({
     // même modèle, sinon la fiche mentirait sur ce qui repartirait.
     setModeleChoisi(calque.modele)
     setResultat(calque)
+    setDecide(null)
   }
 
   // PX7 : un outil se demande par son identifiant — sdxl comme les quatre
@@ -300,6 +329,9 @@ export function EcranRepeindre({
       setInstalle(null)
     }
   }
+
+  const aDecider = (etat?.calques ?? []).filter((c) => c.statut !== "equipement")
+  const equipements = (etat?.calques ?? []).filter((c) => c.statut === "equipement")
 
   // Le temps suit le modèle choisi (PX7) — celui du défaut sans choix.
   const temps = modeleActif?.temps ?? etat?.temps ?? null
@@ -339,6 +371,19 @@ export function EcranRepeindre({
           Repeindre
         </div>
         <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[8px]">
+          {/* PX9 : **ce qui attend une décision, en tête** — c'est ici qu'un
+              résultat « à décider » se retrouve, sur son image. */}
+          {aDecider.length > 0 && (
+            <div data-a-decider className="flex flex-col gap-[4px] rounded-7 border border-trait-attention bg-fond-attention p-[8px]">
+              <p className="text-[12px] text-encre-attention">
+                <Libelle aide="repeint.a-decider">à décider sur cette image</Libelle> · {aDecider.length}
+              </p>
+              {aDecider.map((calque) => (
+                <LigneDeResultat key={calque.identifiant} calque={calque} active={resultat?.identifiant === calque.identifiant} onOuvrir={() => rouvrir(calque)} />
+              ))}
+            </div>
+          )}
+
           {/* Pas de modèle du tout : pourquoi, et comment en avoir un. */}
           {etat && !etat.modele && (
             <div data-sans-modele className="flex flex-col gap-[4px] rounded-7 border border-trait bg-carte p-[8px]">
@@ -491,52 +536,128 @@ export function EcranRepeindre({
             )}
           </div>
 
-          {/* Le résultat : l'image avec le calque, le calque seul, et le jugement. */}
+          {/* PX9 : ce qui vient d'être décidé, dit en clair, avec la suite. */}
+          {decide?.decision === "version" && decide.asset && (
+            <div data-decide="version" role="status" className="flex flex-col gap-[4px] border-t border-trait pt-[8px] text-[12px] text-encre">
+              <p>
+                Rangée comme nouvelle version{etat?.pose ? ` de « ${etat.pose.nom} »` : ""}{etat?.sujet ? ` de ${etat.sujet.nom}` : ""}. L'image d'origine n'a pas bougé.
+              </p>
+              {onRetoucher && (
+                <button type="button" onClick={() => onRetoucher(decide.asset!.identifiant)} className="self-start text-[12px] text-encre-2">
+                  Retoucher la nouvelle version ›
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Le résultat : l'image avec la zone repeinte, la pièce seule, et la décision. */}
           {resultat && (
             <div data-resultat-de-la-zone className="flex flex-col gap-[8px] border-t border-trait pt-[8px]">
-              <p className="text-[11px] text-encre-2">le calque « {resultat.texte} »</p>
+              <p className="text-[11px] text-encre-2">le résultat « {resultat.texte} »</p>
               <div className="flex gap-[8px]">
-                <Vignette titre="l'image avec le calque">
+                <Vignette titre="l'image avec la zone repeinte">
                   <img src={api.rendu(asset.identifiant, asset.empreinte ?? "")} alt="" className="absolute inset-0 h-full w-full object-contain" style={PIXELS} />
                   <img src={api.rendu(resultat.identifiant, resultat.empreinte ?? "")} alt="" className="absolute inset-0 h-full w-full object-contain" style={PIXELS} />
                 </Vignette>
-                <Vignette titre="le calque seul">
+                <Vignette titre="la pièce seule">
                   <img src={api.rendu(resultat.identifiant, resultat.empreinte ?? "")} alt="" className="absolute inset-0 h-full w-full object-contain" style={PIXELS} />
                 </Vignette>
               </div>
               {resultat.mesures && (
                 <span className="mesure text-[10.5px] text-encre-4">
-                  {resultat.mesures.pixels_changes} pixels changés · {resultat.mesures.pixels_hors_zone} hors de la zone · {resultat.mesures.couleurs_neuves} couleur{resultat.mesures.couleurs_neuves > 1 ? "s" : ""} neuve{resultat.mesures.couleurs_neuves > 1 ? "s" : ""}
+                  {resultat.mesures.pixels_de_la_piece ?? resultat.mesures.pixels_changes} pixels dans la pièce · {resultat.mesures.pixels_hors_zone} hors de la zone · {resultat.mesures.couleurs_neuves} couleur{resultat.mesures.couleurs_neuves > 1 ? "s" : ""} neuve{resultat.mesures.couleurs_neuves > 1 ? "s" : ""}
                 </span>
               )}
               <span className="mesure text-[10.5px] text-encre-4">
                 graine {resultat.graine ?? "—"} · force {resultat.force ?? "—"}
                 {resultat.parti ? ` · parti : « ${resultat.parti.texte} »` : ""}
               </span>
-              <div className="flex gap-[8px]">
-                <button type="button" onClick={garder} className="h-[30px] rounded-7 border border-encre-4 bg-carte px-[8px] text-[12px] font-medium text-encre">Garder</button>
-                <button type="button" onClick={() => void jeter(resultat)} className="h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle">Jeter</button>
-                <button type="button" disabled={Boolean(enCours) || Boolean(etat?.raison)} onClick={() => void recommencer(resultat)} className="h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50">Recommencer</button>
-              </div>
+
+              {resultat.statut === "equipement" && resultat.equipement ? (
+                <p data-decide="equipement" role="status" className="text-[12px] text-encre">
+                  C'est l'équipement « {resultat.equipement.nom} »{etat?.sujet ? ` de ${etat.sujet.nom}` : ""}, sur {resultat.equipement.emplacement || "son emplacement"}, posé sur cette pose. Il se retrouve dans l'onglet Équipement du sujet.
+                </p>
+              ) : (
+                <div data-decision className="flex flex-col gap-[8px]">
+                  <p className="text-[12px] text-encre-2">
+                    <Libelle aide="repeint.decision">Qu'en faire ?</Libelle> Tant que tu n'as pas décidé, il reste « à décider » sur cette image.
+                  </p>
+                  <button type="button" data-decision-version disabled={enDecision} onClick={() => void decider(resultat, "version")} className="h-[30px] rounded-7 border border-encre-4 bg-carte px-[8px] text-left text-[12px] font-medium text-encre disabled:opacity-50">
+                    En faire une nouvelle version de {etat?.pose ? "cette pose" : "cette image"}
+                  </button>
+                  <button
+                    type="button"
+                    data-decision-equipement
+                    disabled={enDecision || Boolean(etat?.raison_equipement)}
+                    aria-expanded={formulaire?.pour === resultat.identifiant}
+                    onClick={() => setFormulaire((f) => (f?.pour === resultat.identifiant ? null : { pour: resultat.identifiant, nom: "", emplacement: resultat.emplacement_propose ?? "" }))}
+                    className="h-[30px] rounded-7 border border-encre-4 bg-carte px-[8px] text-left text-[12px] font-medium text-encre disabled:opacity-50"
+                  >
+                    En faire un équipement{etat?.sujet ? ` de ${etat.sujet.nom}` : ""}
+                  </button>
+                  {etat?.raison_equipement && <span className="mesure text-[10.5px] text-encre-4">— {etat.raison_equipement}</span>}
+                  {formulaire?.pour === resultat.identifiant && (
+                    <form
+                      data-formulaire-equipement
+                      className="flex flex-col gap-[8px] rounded-7 border border-trait bg-carte p-[8px]"
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        if (formulaire.nom.trim()) void decider(resultat, "equipement", { nom: formulaire.nom.trim(), emplacement: formulaire.emplacement.trim() })
+                      }}
+                    >
+                      <label className="flex flex-col gap-[4px] text-[11px] text-encre-2">
+                        son nom
+                        <input aria-label="Nom de l'équipement" value={formulaire.nom} placeholder="Sac à dos" onChange={(e) => setFormulaire({ ...formulaire, nom: e.target.value })} className="h-[30px] rounded-5 border border-trait bg-papier px-[8px] text-[12px] text-encre" />
+                      </label>
+                      <label className="flex flex-col gap-[4px] text-[11px] text-encre-2">
+                        <span>où il s'accroche{resultat.emplacement_propose ? ` — proposé d'après la zone : ${resultat.emplacement_propose}` : ""}</span>
+                        <input aria-label="Emplacement" list="emplacements-du-jeu" value={formulaire.emplacement} onChange={(e) => setFormulaire({ ...formulaire, emplacement: e.target.value })} className="h-[30px] rounded-5 border border-trait bg-papier px-[8px] text-[12px] text-encre" />
+                        <datalist id="emplacements-du-jeu">
+                          {[...new Set([...(etat?.emplacements ?? []), ...(resultat.emplacement_propose ? [resultat.emplacement_propose] : [])])].map((nom) => (
+                            <option key={nom} value={nom} />
+                          ))}
+                        </datalist>
+                      </label>
+                      <button type="submit" disabled={enDecision || !formulaire.nom.trim()} className="h-[30px] self-start rounded-7 border border-encre-4 bg-carte px-[14px] text-[12px] font-medium text-encre disabled:opacity-50">
+                        Créer l'équipement
+                      </button>
+                      <span className="mesure text-[10.5px] text-encre-4">
+                        Un équipement du même nom reçoit ce calque de plus. La suite — le porter sur les autres poses, devant ou derrière — se règle dans l'équipement.
+                      </span>
+                    </form>
+                  )}
+                  <div className="flex gap-[8px]">
+                    <button type="button" disabled={enDecision} onClick={() => void jeter(resultat)} className="h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50">
+                      Jeter
+                    </button>
+                    <button type="button" disabled={enDecision || Boolean(enCours) || Boolean(etat?.raison)} onClick={() => void recommencer(resultat)} className="h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50">
+                      Recommencer
+                    </button>
+                  </div>
+                </div>
+              )}
               {onRetoucher && (
-                <button type="button" onClick={() => onRetoucher(resultat.identifiant)} className="self-start text-[12px] text-encre-2">
-                  Retoucher ce calque ›
+                <button type="button" onClick={() => onRetoucher(resultat.identifiant)} className="self-start text-[12px] text-encre-2" title="La main y retire un pixel, ou en ramène un de l'image rendue par le moteur">
+                  Retoucher la pièce ›
                 </button>
               )}
             </div>
           )}
 
-          {/* Les calques déjà repeints sur cette image : ils se rouvrent. */}
-          {etat && etat.calques.length > 0 && (
-            <div data-calques-repeints className="flex flex-col gap-[4px] border-t border-trait pt-[8px]">
-              <p className="text-[11px] text-encre-2">les calques repeints sur cette image</p>
-              {etat.calques.map((calque) => (
-                <button key={calque.identifiant} type="button" aria-pressed={resultat?.identifiant === calque.identifiant} onClick={() => rouvrir(calque)} className="flex items-center gap-[8px] rounded-5 border border-trait bg-carte p-[4px] text-left text-[12px] text-encre hover:border-encre-4">
-                  <span className="damier-papier relative h-[30px] w-[30px] shrink-0 overflow-hidden rounded-5">
-                    <img src={api.rendu(calque.identifiant, calque.empreinte ?? "")} alt="" className="absolute inset-0 h-full w-full object-contain" style={PIXELS} />
-                  </span>
-                  <span className="min-w-0 truncate">{calque.texte}</span>
-                </button>
+          {/* Les équipements déjà faits d'une zone repeinte sur cette image :
+              ils se rouvrent, et se corrigent dans la retouche. */}
+          {equipements.length > 0 && (
+            <div data-equipements-repeints className="flex flex-col gap-[4px] border-t border-trait pt-[8px]">
+              <p className="text-[11px] text-encre-2">les équipements repeints sur cette image</p>
+              {equipements.map((calque) => (
+                <div key={calque.identifiant} className="flex items-center gap-[4px]">
+                  <LigneDeResultat calque={calque} active={resultat?.identifiant === calque.identifiant} onOuvrir={() => rouvrir(calque)} />
+                  {onRetoucher && (
+                    <button type="button" onClick={() => onRetoucher(calque.identifiant)} className="shrink-0 text-[12px] text-encre-2">
+                      Retoucher ›
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           )}

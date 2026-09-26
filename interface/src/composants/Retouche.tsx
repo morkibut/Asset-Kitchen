@@ -4014,6 +4014,7 @@ export function Retouche({
   tableDeLaPorte = null,
   onFermer,
   onSoeur,
+  onOuvrirAsset,
   decoupe,
   onErreur,
   onUnivers,
@@ -4059,6 +4060,11 @@ export function Retouche({
   tableDeLaPorte?: Table | null
   onFermer: () => void
   onSoeur: (identifiant: string) => void
+  /** PX9 : ouvrir ici **n'importe quelle image**, même hors des sœurs — la
+   *  pièce d'une zone repeinte « à décider » n'est dans aucune case, et la
+   *  version qu'on vient d'en faire n'est pas encore dans la liste lue. Absent,
+   *  on retombe sur `onSoeur`. */
+  onOuvrirAsset?: (identifiant: string) => void
   /** La fabrique du découpage, **rendue dans le cadre de la retouche** et non
    *  ailleurs — sans repasser par l'ancien `EcranTables` (`B24`). Une
    *  fonction plutôt qu'un nœud déjà construit : `ouverte` vit dans cet écran
@@ -4590,7 +4596,7 @@ export function Retouche({
           </div>
         ) : ouverte === "repeint" ? (
           <div className="col-span-2 row-start-2 row-span-2 flex min-h-0 overflow-hidden pb-[22px]">
-            <EcranRepeindre asset={asset} onErreur={onErreur} onRetoucher={(id) => { setOuverte("main"); onSoeur(id) }} />
+            <EcranRepeindre asset={asset} onErreur={onErreur} onRetoucher={(id) => { setOuverte("main"); (onOuvrirAsset ?? onSoeur)(id) }} />
           </div>
         ) : ouverte === "superposition" ? (
           <div className="col-span-2 row-start-2 row-span-2 flex min-h-0 overflow-hidden pb-[22px]">

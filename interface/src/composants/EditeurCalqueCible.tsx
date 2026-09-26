@@ -326,6 +326,16 @@ export function EditeurCalqueCible({ chemin, variante, cibles = [], onGarde, onS
         </>}
 
         {extrait && <>
+          {/* **PX9 — la pièce d'une zone repeinte suit son image** : elle se
+              corrige dans la retouche de cette image (la main, l'éditeur de
+              pixels, un pixel ramené de l'image du moteur), et la variante
+              recopie la correction à sa prochaine lecture. */}
+          {variante.calque_suit_l_image && variante.calque_asset && onRetoucher && (
+            <Etape titre="La pièce repeinte">
+              <p className="text-[12px] leading-[1.45] text-encre-3">Ce calque vient de « Repeindre ». Il se corrige dans la retouche de sa pièce — y compris pour ramener un pixel de l’image rendue par le moteur — et revient ici corrigé.</p>
+              <button type="button" data-retoucher-la-piece className={CONTROLE} disabled={attente || sale} title={sale ? "Enregistrez ou abandonnez d’abord le calage" : undefined} onClick={() => onRetoucher(variante.calque_asset!)}>Retoucher la pièce…</button>
+            </Etape>
+          )}
           <Etape titre="Retoucher à la main">
             <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Outil<select aria-label="Outil du calque" value={outil} onChange={(e) => setOutil(e.target.value as Outil)} className={CONTROLE}>{Object.entries(outils).map(([cle, nom]) => <option key={cle} value={cle}>{nom}</option>)}</select></label>
             {!["deplacer", "vue"].includes(outil) && <Mesure nom="Rayon du pinceau" valeur={rayon} min={0} max={32} onChange={setRayon} />}

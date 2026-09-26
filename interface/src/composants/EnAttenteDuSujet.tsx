@@ -29,8 +29,12 @@ import { Libelle } from "./pieces"
 
 const BOUTON = "h-[30px] rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50"
 
+/** PX9 : un résultat de « Repeindre » attend une décision, pas un rangement —
+ *  le serveur le marque, avec l'image sur laquelle il a été repeint. */
+type ImageEnAttente = Asset & { a_decider?: { image: string; texte: string } }
+
 type EnAttente = {
-  images: Asset[]
+  images: ImageEnAttente[]
   clips: Generation[]
   animations: Bande[]
 }
@@ -65,6 +69,7 @@ export function EnAttenteDuSujet({
   personnage,
   plan,
   onOuvrir,
+  onDecider,
   onChange,
   onErreur,
 }: {
@@ -74,6 +79,10 @@ export function EnAttenteDuSujet({
   plan: Pose[]
   /** Ouvrir une image dans sa fiche — le même geste que depuis la grille. */
   onOuvrir?: (asset: string) => void
+  /** PX9 : ouvrir l'image d'origine d'un résultat « à décider », la fabrique
+   *  Repeindre ouverte — c'est là qu'on en fait une version, un équipement, ou
+   *  qu'on le jette. */
+  onDecider?: (image: string) => void
   /** Quelque chose vient d'être rangé : les cases de la fiche ont bougé. */
   onChange?: () => void
   onErreur?: (erreur: unknown, defaut: string) => void
@@ -329,6 +338,21 @@ export function EnAttenteDuSujet({
                 />
                 <div className="p-[8px]">
                   <p className="truncate text-[12px] text-encre">{a.label || a.identifiant}</p>
+                  {a.a_decider ? (
+                    // **PX9 — pas un rangement, une décision** : le résultat
+                    // d'une zone repeinte se décide sur son image. Le ranger
+                    // dans une pose en ferait une image de plus, sans nom.
+                    <div data-a-decider-du-sujet className="mt-[8px] flex flex-col gap-[4px]">
+                      <p className="text-[11px] text-encre-attention">
+                        <Libelle aide="repeint.a-decider">à décider</Libelle> — repeint : « {a.a_decider.texte} »
+                      </p>
+                      {onDecider && (
+                        <button className={BOUTON} onClick={() => onDecider(a.a_decider!.image)}>
+                          Décider sur son image ›
+                        </button>
+                      )}
+                    </div>
+                  ) : (
                   <div className="mt-[8px] flex flex-wrap gap-[4px]">
                     {choixDePose((pose) => void rangerImage(a, pose), occupe === a.identifiant)}
                     {onOuvrir && (
@@ -356,6 +380,7 @@ export function EnAttenteDuSujet({
                       Supprimer
                     </button>
                   </div>
+                  )}
                 </div>
               </article>
             ))}

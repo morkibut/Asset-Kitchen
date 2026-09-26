@@ -152,6 +152,7 @@ export function Fiche({
   onOuvrirLEtabli,
   onRetoucher,
   onDecouper,
+  onDecider,
   onPoserSurLaToile,
   onOuvrir,
   identite,
@@ -207,6 +208,10 @@ export function Fiche({
   /** Ouvrir la découpe sur l'image brute (18 septembre 2026). Absent là où
    *  l'écran n'en a pas la porte. */
   onDecouper?: () => void
+  /** PX9 : le résultat d'une zone repeinte se décide sur son image d'origine
+   *  — l'ouvrir, la fabrique Repeindre ouverte. Absent là où l'écran n'a pas
+   *  cette porte. */
+  onDecider?: (image: string) => void
   /** Poser cette image, telle quelle, sur la toile de l'univers — **sans
    *  nouvelle fabrication** (US-540). Absent sur les écrans qui n'ont pas de
    *  projet ouvert ou pas de toile à côté d'eux : la même règle que les deux
@@ -443,6 +448,7 @@ export function Fiche({
           onOuvrirLEtabli={onOuvrirLEtabli}
           onRetoucher={onRetoucher}
           onDecouper={onDecouper}
+          onDecider={onDecider}
         />
 
         {/* ══ Zone 3 · D'où elle vient — tout ce qui se lit, replié (RG3) ══ */}
@@ -1703,6 +1709,7 @@ function SEnResservir({
   onOuvrirLEtabli,
   onRetoucher,
   onDecouper,
+  onDecider,
 }: {
   asset: Asset
   onReinjecter: (role: Role) => void
@@ -1710,9 +1717,24 @@ function SEnResservir({
   onOuvrirLEtabli?: () => void
   onRetoucher: () => void
   onDecouper?: () => void
+  onDecider?: (image: string) => void
 }) {
+  // **PX9 — un résultat de « Repeindre » a un nom** : la recette le dit (sa
+  // différence porte une zone peinte), sans drapeau. Tant qu'il n'est pas un
+  // équipement, il attend une décision sur son image.
+  const repeint = asset.recette?.difference?.zone_peinte?.length ? asset.recette.difference : null
   return (
     <div className="flex flex-col gap-1.5 border-t border-trait pt-2">
+      {repeint && (
+        <div data-fiche-repeinte className="flex flex-col gap-1 rounded-7 border border-trait-attention bg-fond-attention p-2">
+          <p className="text-[12px] text-encre-attention">
+            {asset.piece ? "La pièce d’un équipement" : <><Libelle aide="repeint.a-decider">à décider</Libelle> — le résultat de « Repeindre » sur une autre image</>} : « {repeint.texte} ».
+          </p>
+          {onDecider && !asset.piece && (
+            <Bouton onClick={() => onDecider(repeint.base)} enfants="Décider sur son image ›" />
+          )}
+        </div>
+      )}
       <Libelle aide="fiche.reinjecter">S'en resservir</Libelle>
       <p className="text-[11px] leading-4 text-encre-3">
         Repartir de cette image pour en fabriquer une autre, de quatre façons.

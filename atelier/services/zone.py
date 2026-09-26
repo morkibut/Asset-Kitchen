@@ -48,13 +48,23 @@ from atelier.domaine.recette import (
 from atelier.domaine.workflow import GRAINE_MAX, WorkflowRefuse
 from atelier.fournisseur.catalogue_styles import FAMILLES, style
 from atelier.image.zone import (
+    emplacement_propose,
     fond_de_la_toile,
+    image_entiere,
     masque_de_zone,
     masque_en_png,
     traits_depuis_masque,
     traits_depuis_rectangles,
 )
 from atelier.services.assets import FICHIER_ZONE
+
+#: Ce que devient un résultat de « Repeindre » (PX9). **Dérivé, jamais rangé** :
+#: une pièce qui porte un équipement en est un ; sinon elle attend qu'on
+#: décide — y compris celles faites avant ce jour, relues telles quelles.
+A_DECIDER = "a_decider"
+EQUIPEMENT = "equipement"
+VERSION = "version"
+JETER = "jeter"
 
 #: L'outil local qui sait repeindre une zone (PX2). Nommé ici pour une seule
 #: chose : dire à l'auteur **quoi installer** quand aucun modèle du catalogue ne
@@ -219,7 +229,203 @@ class ServiceZone:
             "force": self._force_du_profil(modele) if modele is not None else None,
             "couleurs": {"defaut": COULEURS_NEUVES, "maximum": COULEURS_NEUVES_MAX},
             "calques": self.calques(identifiant),
+            # PX9 : **à qui l'image appartient**, pour que les trois décisions
+            # disent ce qu'elles font — « une nouvelle version de repos »,
+            # « un équipement de Mara » — et se grisent avec leur raison.
+            **self._contexte(base),
         }
+
+    # ── PX9 : ce que devient le résultat ────────────────────────────────────
+
+    def _contexte(self, base) -> dict[str, Any]:
+        """Le sujet, la pose et la direction de l'image d'en dessous, les
+        emplacements du jeu, et pourquoi on ne pourrait pas en faire un
+        équipement — **une raison, jamais un bouton qui échoue**."""
+        production = self._atelier.production
+        sujet = pose = None
+        raison_equipement: str | None = None
+        emplacements: list[str] = []
+        if base.projet:
+            try:
+                emplacements = [e.nom for e in self._atelier.equipement.emplacements(base.projet)]
+            except ErreurAtelier:
+                emplacements = []
+        if base.projet and base.personnage:
+            try:
+                qui = production.personnage(base.projet, base.personnage)
+                sujet = {"identifiant": qui.identifiant, "nom": qui.nom,
+                         "porte": bool(production.porte_de_lequipement(base.projet, qui))}
+                nom_de_pose = {p.identifiant: p.nom for p in production.plan_de(base.projet, qui)}
+                if base.pose:
+                    pose = {"identifiant": base.pose, "nom": nom_de_pose.get(base.pose, base.pose)}
+            except ErreurAtelier:
+                sujet = None
+        if sujet is None:
+            raison_equipement = "l'image n'appartient à aucun sujet du jeu : range-la d'abord dans une pose"
+        elif not sujet["porte"]:
+            raison_equipement = f"« {sujet['nom']} » ne porte pas d'équipement"
+        elif pose is None:
+            raison_equipement = "l'image n'est rangée dans aucune pose : range-la d'abord"
+        elif base.piece:
+            raison_equipement = "l'image est déjà un équipement : repeins la pose elle-même"
+        return {
+            "sujet": sujet,
+            "pose": pose,
+            "direction": base.direction,
+            "emplacements": emplacements,
+            "raison_equipement": raison_equipement,
+        }
+
+    def _resultat_a_decider(self, identifiant: str):
+        """Le résultat d'une zone et sa différence — refusé s'il n'en est pas un."""
+        asset = self._atelier.assets.lire(identifiant)
+        if asset is None or asset.supprime_le:
+            if self._atelier.base.lire_asset(identifiant) is not None:
+                raise DemandeRefusee("ce résultat a été jeté")
+            asset = self._atelier.assets._trouver(identifiant)
+        repeint = _repeinte(asset)
+        if repeint is None:
+            raise DemandeRefusee("cette image n'est pas le résultat d'une zone repeinte")
+        return asset, repeint
+
+    def en_faire_une_version(self, identifiant: str) -> dict[str, Any]:
+        """**« En faire une nouvelle version de cette pose »** — l'image
+        d'origine avec la zone repeinte devient une image neuve, rangée dans la
+        même pose et la même direction du même sujet. L'image d'origine ne
+        bouge pas ; le résultat, dont l'image neuve porte les pixels, quitte la
+        bibliothèque (il se restaure pendant le sursis ordinaire).
+
+        Le patron d'« Enregistrer sous » (`RP20`) : la même génération, le rang
+        libre suivant, une recette vide — le brut *est* le rendu —, rien de
+        payé. Le parent est l'image d'origine : c'est d'elle que la version
+        dérive."""
+        from atelier.domaine.asset import Asset
+        from atelier.domaine.recette import Recette
+        from atelier.image import extension, mesurer
+        from atelier.image.calques_cibles import png, rgba
+        from atelier.services.decoupe import RANG_DECOUPE
+        from atelier.services.rangs import rang_libre
+
+        assets = self._atelier.assets
+        asset, repeint = self._resultat_a_decider(identifiant)
+        if asset.piece:
+            raise DemandeRefusee("ce résultat est déjà un équipement")
+        base = assets._trouver(repeint.base)
+        corps = assets._corps_repeint(repeint)
+        if corps is None:
+            raise DemandeRefusee("l'image d'origine n'est plus là")
+        calque = rgba(assets.octets(asset)[0])
+        if calque.shape[:2] != corps.shape[:2]:
+            raise DemandeRefusee("l'image d'origine a changé de taille depuis : repeins-la de nouveau")
+        octets = png(image_entiere(corps, calque))
+        mesure = mesurer(octets)
+        rang = rang_libre(self._atelier.base, asset.generation, plancher=RANG_DECOUPE)
+        chemin = self._atelier.fichiers.ecrire_brut(asset.generation, rang, octets, extension(mesure.type_media))
+        neuf = assets.accueillir(Asset(
+            identifiant=identifiant_de(asset.generation, rang), generation=asset.generation, rang=rang,
+            brut=chemin, largeur=mesure.largeur, hauteur=mesure.hauteur, type_media=mesure.type_media,
+            label=(f"{base.label} · {repeint.texte}")[:60], recette=Recette(),
+            consomme=0.0, unite=asset.unite, provenance=asset.provenance, modele=asset.modele,
+            projet=base.projet, personnage=base.personnage, pose=base.pose, direction=base.direction,
+            parent=base.identifiant, cree_le=time.time(),
+        ))
+        self._atelier.bibliotheque.supprimer([asset.identifiant])
+        return {"decision": VERSION, "image": base.identifiant, "asset": neuf.en_json()}
+
+    def en_faire_un_equipement(self, identifiant: str, nom: str, emplacement: str = "") -> dict[str, Any]:
+        """**« En faire un équipement de <sujet> »** — le chemin de tout
+        équipement : la pièce se crée (ou se retrouve, par son nom) dans le
+        jeu, avec son emplacement et l'emploi « porté par ce sujet », et le
+        résultat devient **son calque sur cette pose** — rangé dans la matrice
+        (`piece`, `pose`, `direction`) et retenu sur la cible de l'emploi
+        (`ServiceCalquesCibles.poser_un_calque_qui_suit`), donc lu par la fiche
+        de l'équipement, l'ordre devant/derrière, la tenue et l'export."""
+        from atelier.domaine.equipement import emploi_porte
+
+        assets = self._atelier.assets
+        asset, repeint = self._resultat_a_decider(identifiant)
+        base = assets._trouver(repeint.base)
+        contexte = self._contexte(base)
+        if contexte["raison_equipement"]:
+            raise DemandeRefusee(contexte["raison_equipement"])
+        propre = (nom or "").strip()
+        if not propre:
+            raise DemandeRefusee("donne un nom à l'équipement")
+        projet, porteur = base.projet, base.personnage
+        equipement = self._atelier.equipement
+        emploi = emploi_porte(porteur)
+        objet = self._atelier.base.lire_projet(projet)
+        piece = next((p for p in objet.pieces if p.nom.casefold() == propre.casefold()), None)
+        if piece is None:
+            piece = equipement.ajouter_piece(projet, propre, emplacement=(emplacement or "").strip()
+                                             or self.emplacement_propose(identifiant), porteur=porteur)
+        elif not any(e.identifiant == emploi.identifiant for e in equipement.emplois(projet, piece.identifiant)):
+            equipement.ajouter_emploi(projet, piece.identifiant, porteur=porteur)
+        if asset.piece and asset.piece != piece.identifiant:
+            raise DemandeRefusee("ce résultat est déjà un autre équipement")
+        asset.piece = piece.identifiant
+        asset.personnage, asset.pose, asset.direction = porteur, base.pose, base.direction
+        assets.sauver(asset)
+        variante = self._atelier.calques_cibles.poser_un_calque_qui_suit(
+            projet, piece.identifiant, emploi.identifiant,
+            {"nature": "image", "resultat": base.identifiant}, asset.identifiant,
+        )
+        return {
+            "decision": EQUIPEMENT,
+            "image": base.identifiant,
+            "equipement": {"identifiant": piece.identifiant, "nom": piece.nom, "emploi": emploi.identifiant},
+            "variante": variante["identifiant"],
+            "calque": self.fiche(asset.identifiant),
+        }
+
+    def jeter(self, identifiant: str) -> dict[str, Any]:
+        """**« Jeter »** — le résultat quitte la bibliothèque, comme toute
+        suppression (le sursis ordinaire pour se raviser)."""
+        asset, _ = self._resultat_a_decider(identifiant)
+        if asset.piece:
+            raise DemandeRefusee("ce résultat est un équipement : retire-le depuis l'équipement")
+        return {"decision": JETER, **self._atelier.bibliotheque.supprimer([asset.identifiant])}
+
+    def decider(self, identifiant: str, decision: str, *, nom: str = "", emplacement: str = "") -> dict[str, Any]:
+        """Les trois décisions par un seul nom — pour la route et pour l'agent."""
+        if decision == VERSION:
+            return self.en_faire_une_version(identifiant)
+        if decision == EQUIPEMENT:
+            return self.en_faire_un_equipement(identifiant, nom, emplacement)
+        if decision == JETER:
+            return self.jeter(identifiant)
+        raise DemandeRefusee(f"décision inconnue « {decision} » — {VERSION}, {EQUIPEMENT} ou {JETER}")
+
+    def emplacement_propose(self, identifiant: str) -> str:
+        """L'emplacement proposé d'après la zone — **le nom d'un emplacement du
+        jeu quand il en a un pareil**, sinon le mot proposé tel quel."""
+        assets = self._atelier.assets
+        asset = assets._trouver(identifiant)
+        repeint = _repeinte(asset)
+        if repeint is None:
+            return ""
+        corps = assets._corps_repeint(repeint)
+        if corps is None:
+            return ""
+        mot = emplacement_propose(corps, masque_de_zone(corps.shape[:2], repeint.zone_peinte))
+        base = assets.lire(repeint.base)
+        if base is not None and base.projet:
+            try:
+                for e in self._atelier.equipement.emplacements(base.projet):
+                    if e.nom.casefold() == mot.casefold():
+                        return e.nom
+            except ErreurAtelier:
+                pass
+        return mot
+
+    def a_decider(self, asset) -> dict[str, Any] | None:
+        """Ce que la liste « à décider » dit d'une image — ou rien si elle n'y
+        est pas. **Lu, jamais rangé** : un résultat d'avant ce jour s'y trouve
+        sans qu'on ait rien écrit sur le disque."""
+        repeint = _repeinte(asset)
+        if repeint is None or asset.piece or asset.supprime_le:
+            return None
+        return {"image": repeint.base, "texte": repeint.texte}
 
     def _temps(self, modele: Modele | None, vitesse_repli: str | None) -> dict[str, Any] | None:
         """**Un temps, jamais un prix** (règle 8ter) : la médiane mesurée sur
@@ -242,7 +448,7 @@ class ServiceZone:
         """Les calques repeints sur cette image, **les plus récents d'abord**."""
         enfants = [
             a for a in self._atelier.base.enfants(identifiant)
-            if _repeinte(a) is not None and _repeinte(a).base == identifiant
+            if _repeinte(a) is not None and _repeinte(a).base == identifiant and not a.supprime_le
         ]
         enfants.sort(key=lambda a: (a.cree_le, a.identifiant), reverse=True)
         return [self.fiche(a.identifiant) for a in enfants]
@@ -258,8 +464,21 @@ class ServiceZone:
             raise DemandeRefusee("cette image n'est pas un calque repeint")
         generation = self._atelier.generations.lire(asset.generation)
         recollage = assets.recollage(asset)
+        equipement = None
+        if asset.piece and asset.projet:
+            objet = self._atelier.base.lire_projet(asset.projet)
+            piece = next((p for p in (objet.pieces if objet else ()) if p.identifiant == asset.piece), None)
+            if piece is not None:
+                noms = {e.identifiant: e.nom for e in self._atelier.equipement.emplacements(asset.projet)}
+                equipement = {"identifiant": piece.identifiant, "nom": piece.nom,
+                              "emplacement": noms.get(piece.emplacement, piece.emplacement),
+                              "porteur": asset.personnage}
         return {
             "identifiant": asset.identifiant,
+            # PX9 : ce que le résultat est devenu — dérivé, jamais rangé.
+            "statut": EQUIPEMENT if asset.piece else A_DECIDER,
+            "equipement": equipement,
+            "emplacement_propose": self.emplacement_propose(asset.identifiant) if not asset.piece else None,
             "empreinte": asset.empreinte,
             "label": asset.label,
             "image": repeint.base,

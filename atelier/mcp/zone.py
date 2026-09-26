@@ -37,6 +37,9 @@ def _calque_en_json(atelier, resultat: dict[str, Any]) -> dict[str, Any]:
         "strength": resultat.get("force"),
         "sent_prompt": (resultat.get("parti") or {}).get("texte"),
         "measures": calque.get("mesures") if calque else None,
+        # PX9 : le résultat attend une décision — decide_repainted_zone.
+        "result_status": ({"a_decider": "to_decide", "equipement": "equipment"}.get(calque.get("statut", ""), None)
+                          if calque else None),
     }
 
 
@@ -57,8 +60,8 @@ def installer_zone(serveur, atelier, refus):
         title="Repaint a zone of an image",
         description=(
             "Repaint only a painted zone of an existing image with a local "
-            "ComfyUI engine, and get back a layer that carries only the pixels "
-            "changed inside the zone, brought back to the image's pixel grid "
+            "ComfyUI engine, and get back a layer that carries everything the engine "
+            "painted inside the zone (background removed), brought back to the image's pixel grid "
             "and colours (at most `new_colors` new ones). Pixels outside the "
             "zone never change, and no subject pixel is ever made transparent. "
             "The zone is given in the image's rendered pixels, either as "
@@ -75,7 +78,9 @@ def installer_zone(serveur, atelier, refus):
             "bounded by the agent's frame (local compute allowed, permitted "
             "models, call ceiling). Waits up to `wait_seconds`; past that, poll "
             "`generation_id` with check_generation. Returns the "
-            "layer's asset id once it exists. Refused with a reason when no "
+            "layer's asset id once it exists; the result is marked 'to decide' until "
+            "decide_repainted_zone makes it a new version of the pose, an equipment "
+            "layer, or discards it. Refused with a reason when no "
             "installed model can repaint a zone (install one zone-repaint tool "
             "per available local engine family: 'sdxl-retouche-zone', "
             "'zimage-retouche-zone', 'klein-retouche-zone', "
@@ -124,3 +129,45 @@ def installer_zone(serveur, atelier, refus):
                 "seed": seed, "strength": strength, "sent_prompt": None, "measures": None,
             }
         return {"job_id": identifiant, **_calque_en_json(atelier, service.resultat(generation_id))}
+
+    @serveur.tool(
+        name="decide_repainted_zone",
+        meta={
+            "barre": {
+                "verbe": "travailler",
+                "titre": "Décider d'un résultat repeint",
+                "phrase": "Une nouvelle version de la pose, un équipement du sujet, ou Jeter.",
+                "paiement": "gratuit",
+                "ou": "galerie",
+                "route": "",
+                "besoins": ["images"],
+            }
+        },
+        title="Decide what a repainted zone becomes",
+        description=(
+            "A repaint_zone result stays in the library marked 'to decide' until "
+            "you choose what it becomes. `decision` is one of: 'version' — the "
+            "original image with the repainted zone becomes a new image in the same "
+            "pose and direction of the same subject (the original image is kept, the "
+            "result leaves the library); 'equipment' — `name` (required) and `slot` "
+            "(optional, e.g. 'le dos'; proposed from the zone when left out) create "
+            "the equipment piece in the game, or reuse the piece of that name, worn "
+            "by the subject, and the result becomes its layer on this pose, exactly "
+            "like any equipment layer; 'discard' — the result leaves the library. "
+            "Refused with a reason when the image under the zone is not a pose of a "
+            "subject that wears equipment. Costs nothing."
+        ),
+    )
+    @refus
+    async def decide_repainted_zone(layer_id: str, decision: str, name: str = "", slot: str = "") -> dict[str, Any]:
+        mots = {"version": "version", "equipment": "equipement", "discard": "jeter"}
+        if decision not in mots:
+            raise DemandeRefusee("decision is 'version', 'equipment' or 'discard'")
+        rendu = atelier.zone.decider(layer_id, mots[decision], nom=name, emplacement=slot)
+        if decision == "version":
+            return {"decision": decision, "image_id": rendu["asset"]["identifiant"], "based_on": rendu["image"]}
+        if decision == "equipment":
+            return {"decision": decision, "layer_id": layer_id, "piece_id": rendu["equipement"]["identifiant"],
+                    "piece_name": rendu["equipement"]["nom"], "use_id": rendu["equipement"]["emploi"],
+                    "variant_id": rendu["variante"], "based_on": rendu["image"]}
+        return {"decision": decision, "removed": rendu["supprimes"]}

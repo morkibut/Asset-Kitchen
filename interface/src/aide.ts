@@ -2699,7 +2699,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "tables",
     quoi: "Tu peins une zone de l'image, tu écris ce qu'il faut y mettre : un moteur local la repeint, et le reste ne bouge pas.",
     change:
-      "Rien sur l'image ouverte. Elle en produit un calque posé dessus, qui ne garde que les pixels changés dans la zone — comme un calque d'équipement.",
+      "Rien sur l'image ouverte. Elle en produit une pièce : tout ce que le moteur a peint dans la zone, le fond retiré. Tu décides ensuite ce qu'elle devient.",
     origine: "l'image ouverte, un moteur sur cette machine · rien n'est payé",
     long:
       "Il faut l'outil « Retouche d'une zone » installé ; sinon le bouton est grisé et dit comment l'installer.\n\nLe bouton annonce le temps avant de partir : mesuré sur cette machine, ou la vitesse relevée ailleurs tant qu'aucun tirage n'a eu lieu ici.",
@@ -2710,7 +2710,7 @@ export const AIDE: Record<string, Explication> = {
     groupe: "La fabrique Repeindre",
     ou: "tables",
     quoi: "Ce que le moteur a le droit de repeindre, au pinceau carré, pixel par pixel. La gomme en retire.",
-    change: "Hors de la zone, aucun pixel ne peut changer. Dans la zone, un pixel que le moteur a laissé au fond garde sa couleur d'avant : aucun trou.",
+    change: "Hors de la zone, aucun pixel ne peut changer. Dans la zone, tout ce que le moteur a peint entre dans la pièce, même une couleur déjà là ; ce qu'il a laissé au fond reste vide.",
     origine: "toi · le pinceau sur l'image",
   },
 
@@ -2744,13 +2744,27 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · quatre par défaut",
   },
 
-  "repeint.calque": {
-    nom: "le calque repeint",
+  // **PX9 · ce que devient le résultat** : trois boutons qui font ce qu'ils
+  // disent, et « à décider » tant qu'on n'a pas choisi.
+  "repeint.decision": {
+    nom: "ce que devient le résultat",
     groupe: "La fabrique Repeindre",
     ou: "tables",
-    quoi: "Garder, Jeter ou Recommencer avec une autre graine. Un calque gardé se rouvre avec sa zone, son texte et ses réglages.",
-    change: "« Retoucher ce calque » l'ouvre dans la retouche, table « la main » : on y ôte ou on redessine des pixels comme sur tout calque.",
-    origine: "la génération garde la graine, la force et le texte parti",
+    quoi: "Trois choix : une nouvelle version de la pose, un équipement du sujet, ou Jeter. Tant que tu n'as pas choisi, c'est « à décider ».",
+    change:
+      "Version : l'image entière rejoint la même pose et direction, l'originale reste. Équipement : son nom, son emplacement, et la pièce devient son calque sur cette pose — devant ou derrière, export compris. Jeter : il quitte la bibliothèque.",
+    origine: "toi · l'emplacement est proposé d'après la zone",
+    long:
+      "« Recommencer » jette ce résultat et relance la même zone sur une autre graine.\n\n« Retoucher la pièce » l'ouvre dans la retouche : la main y retire un pixel, ou « remettre » en ramène un de l'image du moteur. Un équipement se corrige pareil, depuis l'image ou depuis l'équipement, qui suit.",
+  },
+
+  "repeint.a-decider": {
+    nom: "à décider",
+    groupe: "La fabrique Repeindre",
+    ou: "tables",
+    quoi: "Un résultat de « Repeindre » pas encore choisi : rangé, jamais perdu, jamais mêlé aux poses du sujet.",
+    change: "Rien tant que tu n'as pas choisi. Il se retrouve en tête de « Repeindre » sur son image, dans « Pas encore rangé » du sujet, et dans la Galerie.",
+    origine: "l'atelier · tout résultat qui n'est pas un équipement, y compris ceux d'avant",
   },
 
   "fabrique.superposition": {

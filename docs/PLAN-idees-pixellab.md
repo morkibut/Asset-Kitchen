@@ -151,7 +151,7 @@ autres poses ou les animations n'est pas dans cette tranche.
 d'affaires récupérées en exploration ».* Mesuré sur la génération gardée
 (`donnees/generations/dc6a9ac8…`, lue sans y toucher) : zone de 1 422 pixels, calque de 739.
 
-- [ ] **L'objet sort plein de trous.** Deux causes, toutes deux voulues par PX3 et fausses pour un
+- [x] **L'objet sort plein de trous.** Deux causes, toutes deux voulues par PX3 et fausses pour un
       objet qu'on veut garder seul :
       - **131 pixels du nouveau sac manquent au calque** parce qu'ils ont gardé la couleur de
         l'ancien : le calque ne porte que les pixels *changés*. Sur Mara on ne le voit pas (l'image
@@ -161,21 +161,21 @@ d'affaires récupérées en exploration ».* Mesuré sur la génération gardée
         jugée proche du fond neutre, le recollage n'a rien posé. Une partie de ces pixels est
         vraisemblablement du sac. Le seuil « c'est du fond » est trop large pour un objet (à
         vérifier sur l'image brute).
-- [ ] **Rien ne permet de rectifier après coup.** « Retoucher ce calque › » n'existe que dans le
+- [x] **Rien ne permet de rectifier après coup.** « Retoucher ce calque › » n'existe que dans le
       panneau du résultat, juste après la génération. Une fois gardé, le calque apparaît dans la
       Galerie comme une image « Mara · sans pose » ; sa fiche porte « La retoucher », mais l'auteur
       n'y a trouvé aucun moyen de corriger les trous (non vérifié : ce que ce bouton ouvre pour un
       calque repeint). Il faut pouvoir rouvrir un calque repeint **depuis sa fiche** et y retoucher :
       retirer, et surtout **ramener** les pixels manquants depuis l'image brute du moteur.
-- [ ] **« Garder » ne fait rien.** Le résultat entre en bibliothèque dès qu'il revient (règle du
+- [x] **« Garder » ne fait rien.** Le résultat entre en bibliothèque dès qu'il revient (règle du
       produit) ; « Garder » ferme seulement le panneau, « Jeter » supprime. L'auteur croit choisir,
       il ne choisit rien.
-- [ ] **Ce que produit « Repeindre » n'a pas de nom dans le produit.** C'est une image rattachée
+- [x] **Ce que produit « Repeindre » n'a pas de nom dans le produit.** C'est une image rattachée
       au sujet Mara, sans pose ni direction, qui connaît l'image d'en dessous ; ce n'est **ni une
       nouvelle version de la pose, ni un équipement** au sens du Codex (un sujet de la famille
       « équipements », avec un emplacement, porté sur les poses et les animations). *Décision de
       l'auteur attendue* : ce que le geste doit produire (voir la question posée le 26 septembre).
-- [ ] **Le parcours de A à Z, pensé d'abord et joué au navigateur** (demande de l'auteur : « ça
+- [x] **Le parcours de A à Z, pensé d'abord et joué au navigateur** (demande de l'auteur : « ça
       doit être simple et intuitif de A à Z »). Ouvrir une image → peindre la zone → écrire →
       lancer → voir le résultat → garder → **retrouver le calque plus tard, sur son image et dans la
       Galerie, et le corriger** → s'en servir. Chaque étape a son chemin à l'écran, sans détour ; le
@@ -286,22 +286,39 @@ qu'une chose : un parcours sans trou.
 
 ### Critères d'acceptation
 
-- [ ] La pièce n'a plus de trous : elle porte **tout ce que le moteur a peint dans la zone**, pas
+- [x] La pièce n'a plus de trous : elle porte **tout ce que le moteur a peint dans la zone**, pas
       seulement ce qui a changé ; ce qui est vraiment du fond est retiré, et le seuil est vérifié
       sur la génération de Mara du 26 septembre (relue, jamais modifiée).
-- [ ] Les trois décisions font ce qu'elles disent ; un résultat non décidé est rangé mais marqué
+- [x] Les trois décisions font ce qu'elles disent ; un résultat non décidé est rangé mais marqué
       « à décider », se retrouve sur son image, et ne se mêle pas aux poses du sujet.
-- [ ] « En faire un équipement » crée le sujet équipement avec son emplacement, et le calque est
+- [x] « En faire un équipement » crée le sujet équipement avec son emplacement, et le calque est
       reconnu partout où les calques d'équipement le sont (fiche de l'équipement, fiche de la pose,
       ordre devant/derrière, export).
-- [ ] Un calque repeint se rouvre et se corrige depuis l'équipement et depuis l'image de base ;
+- [x] Un calque repeint se rouvre et se corrige depuis l'équipement et depuis l'image de base ;
       la main peut ramener des pixels depuis l'image du moteur.
-- [ ] **Le parcours ci-dessus est joué au navigateur de bout en bout**, sur une copie d'un vrai
+- [x] **Le parcours ci-dessus est joué au navigateur de bout en bout**, sur une copie d'un vrai
       personnage des projets de l'auteur, sur un atelier jetable, en deux passes : une pour chaque
       décision.
-- [ ] Le guide dit en une ligne ce que devient le résultat selon le bouton ; les mots suivent
+- [x] Le guide dit en une ligne ce que devient le résultat selon le bouton ; les mots suivent
       `docs/vocabulaire.html`.
-- [ ] L'agent a les mêmes trois décisions.
+- [x] L'agent a les mêmes trois décisions.
+
+**Faite le 26 septembre 2026.** « Repeindre » va jusqu'au bout, et le résultat a un nom. La pièce
+garde tout ce que le moteur a peint dans la zone : sur le sac de Mara (génération relue, jamais
+modifiée), les 42 trous enfermés tombent à zéro, 817 pixels au lieu de 739 ; les pixels vides qui
+restent sont le vrai fond du moteur. « Garder » a disparu ; trois décisions disent ce qu'elles
+font : **« En faire une nouvelle version de cette pose »** (une image neuve de la même pose et
+direction, l'originale reste), **« En faire un équipement de Mara »** (un nom, l'emplacement
+proposé d'après la place de la zone dans la silhouette — le dos —, puis « Créer l'équipement » ;
+un équipement du même nom est rejoint, pas dupliqué ; le chemin est celui des pièces existant),
+**« Jeter »**, et « Recommencer ». Un résultat pas encore choisi est **« à décider »** : il se
+montre en tête de « Repeindre » sur son image, dans « Pas encore rangé » et sur sa fiche de la
+Galerie (« Décider sur son image › ») ; l'état se déduit à la lecture, donc les résultats d'avant
+le prennent sans migration. L'équipement se retouche plus tard depuis l'image ou depuis sa fiche
+(« Retoucher la pièce… ») ; la main peut y **remettre** un pixel du moteur, et le calque de la pose
+suit la correction. **Joué au navigateur deux fois** (version, puis équipement) sur une copie de
+Mara, moteur doublé : onze captures dans `essais/resultats/px9-parcours/` (hors Git). Essais :
+`tests/test_px9_parcours.py` (10).
 
 ## PX4 · La marge avant d'animer
 

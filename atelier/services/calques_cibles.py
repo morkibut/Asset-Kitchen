@@ -455,7 +455,8 @@ class ServiceCalquesCibles:
         return self.depot.lire(chemin) if chemin.exists() else {}
 
     def lire(self, projet, piece, emploi, identifiant):
-        variante = self._brut(projet, piece, emploi, identifiant)
+        variante = self._suivre_l_image(projet, piece, emploi, identifiant,
+                                        self._brut(projet, piece, emploi, identifiant))
         raison = ""
         try:
             _, base = self._base_cible(projet, piece, emploi, CibleCalque.depuis_json(variante["cible"]))
@@ -918,6 +919,71 @@ class ServiceCalquesCibles:
             self._annoncer(variante)
             return self.lire(projet, piece, emploi, identifiant)
 
+    # ── Un calque qui suit son image (PX9) ───────────────────────────────────
+    #
+    # **Un calque déjà taillé sur la grille de la pose** — la pièce d'une zone
+    # repeinte, `docs/PLAN-idees-pixellab.md` § PX9 — n'a ni calage ni
+    # extraction à faire : il est posé tel quel, rembourré comme la base dans
+    # l'écrin. Et **il suit son image** : la variante nomme l'asset
+    # (`calque_asset`) et garde l'empreinte qu'elle en a lue. Une retouche de
+    # l'asset — la main, l'éditeur de pixels, un pixel ramené de l'image du
+    # moteur — change son empreinte, et la prochaine lecture de la variante
+    # recopie le calque. Sans ça, corriger la pièce depuis son image n'aurait
+    # rien changé à l'équipement, ni à l'export.
+
+    def _calque_de_l_image(self, image: Asset, base: dict[str, Any]) -> bytes:
+        pixels = rgba(self.assets.octets(image)[0])
+        r = base.get("rembourrage") or {}
+        pixels = rembourrer(pixels, int(r.get("gauche", 0)), int(r.get("haut", 0)),
+                            int(r.get("droite", 0)), int(r.get("bas", 0)))
+        cadre = base.get("cadre") or {}
+        if cadre and pixels.shape[:2] != (cadre["hauteur"], cadre["largeur"]):
+            pixels = poser_dans(pixels[: cadre["hauteur"], : cadre["largeur"]], cadre["largeur"], cadre["hauteur"], 0, 0)
+        return png(pixels)
+
+    def poser_un_calque_qui_suit(self, projet, piece, emploi, cible: dict, source: str):
+        """La pièce `source`, déjà sur la grille de la pose visée, devient le
+        calque retenu de cette cible — **validé d'office** : l'auteur vient de
+        le voir posé sur l'image, et c'est sa décision qui nous amène ici."""
+        with self.verrou:
+            personnage, piece_objet, _ = self._emploi(projet, piece, emploi)
+            try:
+                visee = CibleCalque.depuis_json(cible)
+            except ValueError as e:
+                raise ProductionRefusee(str(e)) from e
+            image = self.assets.lire(source)
+            if image is None or image.projet != projet:
+                raise ProductionRefusee("la pièce doit appartenir à ce jeu")
+            base_png, base = self._base_dans_l_ecrin(projet, personnage.identifiant, visee, piece_objet.nom)
+            calque = self._calque_de_l_image(image, base)
+            if not np.any(rgba(calque)[:, :, 3]):
+                raise ProductionRefusee("cette pièce ne contient aucun pixel visible")
+            v = self.accueillir_source_preparee(projet, piece, emploi, visee.en_json(), source,
+                                                base_png, base, role="calque", source_png=calque)
+            brut = self._brut(projet, piece, emploi, v["identifiant"])
+            brut.update(calque_asset=image.identifiant, calque_suit_l_image=True, calque_empreinte=image.empreinte)
+            self.depot.ecrire(self._chemin(projet, piece, emploi, v["identifiant"]) / "variante.json", brut)
+            return self.valider(projet, piece, emploi, v["identifiant"], brut["revision"])
+
+    def _suivre_l_image(self, projet, piece, emploi, identifiant, variante):
+        """Recopie le calque d'une variante qui suit son image, si l'image a
+        changé depuis — **sans nouvelle révision** : ce n'est pas un réglage de
+        la variante, c'est la même pièce corrigée."""
+        if not variante.get("calque_suit_l_image"):
+            return variante
+        image = self.assets.lire(variante.get("calque_asset") or "")
+        if image is None or image.supprime_le or image.empreinte == variante.get("calque_empreinte"):
+            return variante
+        with self.verrou:
+            octets = self._calque_de_l_image(image, variante["base"])
+            chemin = self._chemin(projet, piece, emploi, identifiant)
+            (chemin / "calque.png").write_bytes(octets)
+            pixels = rgba(octets)
+            variante = {**variante, "calque_empreinte": image.empreinte,
+                        "calque_cadre": {"largeur": pixels.shape[1], "hauteur": pixels.shape[0]}}
+            self.depot.ecrire(chemin / "variante.json", variante)
+        return variante
+
     def regler(self, projet, piece, emploi, identifiant, revision: int, *, placement=None, masques=None):
         with self.verrou:
             v = self._brut(projet, piece, emploi, identifiant)
@@ -1051,7 +1117,7 @@ class ServiceCalquesCibles:
         return {"echelle": echelle, "dx": dx, "dy": dy, "couverture": couverture}
 
     def apercu(self, projet, piece, emploi, identifiant, vue="composition", *, placement=None, masques=None, extraction=None) -> bytes:
-        v = self._brut(projet, piece, emploi, identifiant)
+        v = self._suivre_l_image(projet, piece, emploi, identifiant, self._brut(projet, piece, emploi, identifiant))
         chemin = self._chemin(projet, piece, emploi, identifiant)
         if vue == "base":
             return (chemin / v["base_fichier"]).read_bytes()

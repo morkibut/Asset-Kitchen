@@ -3739,13 +3739,37 @@ class ServiceProduction:
         feuilles_rangees = {
             a.planche for a in siens if a.planche and a.pose is not None
         }
+        # **Un résultat de « Repeindre » attend qu'on décide** (PX9) : il porte
+        # `a_decider` — l'image sur laquelle il a été repeint et son texte —,
+        # et l'écran l'y renvoie au lieu de proposer de le ranger dans une
+        # pose, ce qui en ferait une image de plus « sans nom ». Lu sur la
+        # recette : un résultat d'avant ce jour y est sans rien écrire.
+        def _en_json(a: Asset) -> dict[str, Any]:
+            difference = a.recette.difference
+            if difference is not None and difference.repeinte:
+                return {**a.en_json(), "a_decider": {"image": difference.base, "texte": difference.texte}}
+            return a.en_json()
+
         images = [
-            a.en_json()
+            _en_json(a)
             for a in siens
             if a.pose is None
             and not a.piece
             and a.identifiant not in feuilles_rangees
         ]
+        # **Et ceux qui n'ont pas reçu le sujet à leur naissance** : un
+        # résultat repeint sur une image du sujet lui appartient, qu'il porte
+        # son nom ou non.
+        deja = {a["identifiant"] for a in images}
+        for mere in siens:
+            if mere.pose is None:
+                continue
+            for a in self._base.enfants(mere.identifiant):
+                difference = a.recette.difference
+                if (difference is not None and difference.repeinte and difference.base == mere.identifiant
+                        and not a.piece and a.pose is None and a.identifiant not in deja):
+                    images.append(_en_json(a))
+                    deja.add(a.identifiant)
         # **Le jeu des clips est celui du sujet, et le sans-jeu compte aussi** —
         # la règle exacte d'`assets_du_personnage` juste au-dessus, et pour sa
         # raison : un clip entré avant que le rattachement au jeu soit réparé

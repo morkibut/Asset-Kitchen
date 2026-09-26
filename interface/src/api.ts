@@ -396,6 +396,10 @@ export type Difference = {
   seuil: number
   affinage: Trait[]
   retouche: Trait[]
+  /** PX3 : présents seulement sur le résultat d'une zone repeinte — la zone
+   *  peinte et le texte. C'est ce qui le reconnaît, sans drapeau (PX9). */
+  zone_peinte?: Trait[]
+  texte?: string
 }
 
 /** Un passage de la main — ce qu'un geste a gardé, ou ôté (C4).

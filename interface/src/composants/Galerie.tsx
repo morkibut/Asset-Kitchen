@@ -1338,6 +1338,7 @@ export function Galerie({
   setMontageOuvert,
   ouvrirLAtelierDeBande,
   ouvrirLaRetouche,
+  ouvrirLaRetoucheSur,
   personnages,
   plan,
   reinjecter,
@@ -1358,6 +1359,9 @@ export function Galerie({
   setMontageOuvert: (clip: string | null) => void
   ouvrirLAtelierDeBande: (identifiant: string | null) => void
   ouvrirLaRetouche: (asset: string | null, table?: Table | null) => void
+  /** PX9 : ouvrir la retouche sur une image qui n'est pas forcément dans la
+   *  grille — l'image d'origine d'un résultat « à décider ». */
+  ouvrirLaRetoucheSur?: (asset: string, table?: Table | null) => void
   personnages: Personnage[]
   plan: Pose[]
   reinjecter: (asset: string, role: Role) => void
@@ -1701,6 +1705,9 @@ export function Galerie({
               // ensuite le traitement du jeu à sa taille — ce qu'une planche
               // demande, et que son rendu d'un seul tenant ne peut pas donner.
               onDecouper={() => ouvrirLaRetouche(ouverte.identifiant, "decoupage")}
+              // **PX9** : le résultat d'une zone repeinte se décide sur son
+              // image, la fabrique Repeindre ouverte.
+              onDecider={ouvrirLaRetoucheSur ? (image) => ouvrirLaRetoucheSur(image, "repeint") : undefined}
               onPoserSurLaToile={
                 bibliotheque.courant
                   ? () => void poserSurLaToile(ouverte.identifiant)
