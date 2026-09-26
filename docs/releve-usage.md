@@ -35,8 +35,17 @@ tout ce qui change est par construction dans la zone peinte.
 
 **L'auteur l'a constaté à l'usage** : la retouche de zone marche bien mieux chez PixelLab.
 
-**À vérifier avant de cadrer** : quels modèles du catalogue acceptent un masque (l'édition
-d'image d'OpenAI en prend un ; les workflows ComfyUI de retouche aussi ; à voir par OpenRouter).
+**Vérifié le 26 septembre 2026 : par OpenRouter, c'est impossible.** Aucun des 55 modèles image
+n'accepte de masque — ni dans les réglages déclarés, ni dans ceux que chaque service laisse
+passer en plus (relevé service par service). Même GPT Image, qui prend un masque chez OpenAI en
+direct, n'en reçoit pas par OpenRouter.
+
+**En local, c'est possible sans rien télécharger.** Le ComfyUI installé a les nœuds de retouche
+de zone (`InpaintModelConditioning`, `SetLatentNoiseMask`, `VAEEncodeForInpaint`) et des
+modèles déjà sur le disque pour s'en servir (Flux 2 Klein, Qwen Image, Z-Image, SDXL). Un profil
+local reçoit déjà jusqu'à 16 images jointes ; le nœud qui charge une image en sort aussi un
+masque, lu dans sa transparence. **Piste à essayer avant d'écrire du code** : un profil de
+retouche dont la seconde image jointe porte la zone en transparence.
 
 ### 2 · Une boucle propre : la même image au début et à la fin
 
@@ -49,7 +58,17 @@ pour que la boucle ne saute pas.
 **Ce qu'on fait nous.** Nos animations ne prennent qu'une image de départ. Il n'existe aucune
 notion d'image d'arrivée, ni dans le code ni dans la doc.
 
-**À vérifier avant de cadrer** : quels modèles vidéo du catalogue acceptent une image de fin.
+**Vérifié le 26 septembre 2026.** OpenRouter le déclare modèle par modèle
+(`supported_frame_images`), et **16 modèles vidéo sur 29** acceptent une image de fin : Kling
+3.0 (pro et std) et Kling O1, Veo 3.1 (et fast, lite), Seedance 1.5 pro, 2.0 (et fast, mini)
+et 2.5, Hailuo 3 (et max), Flux 3 Video, Wan 2.7. L'atelier lit déjà ce champ, mais ne retient
+que « accepte une image de départ » (`atelier/fournisseur/openrouter_video.py`, `_lire_fiche`)
+et n'envoie que celle-là.
+
+**En local aussi, sans rien télécharger** : les poids Wan 2.2 I2V 14B du modèle maison sont
+installés, et ComfyUI a le nœud natif `WanFirstLastFrameToVideo`. Ce qui bloque est dans
+l'atelier : un profil vidéo local exige **exactement une** image jointe
+(`atelier/domaine/workflow.py`), et l'appel maison n'en envoie qu'une.
 
 ### 3 · Donner de la place avant un grand geste
 
