@@ -441,9 +441,17 @@ STYLES: tuple[dict, ...] = (
 #
 # La recette est celle que le banc PX1 a trouvée (`essais/banc_px1_zone.py`,
 # `docs/releve-usage.md` § 25 septembre 2026, point 1) : `VAEEncode` de l'image telle
-# quelle + `SetLatentNoiseMask`, force 0,9, sur le moteur `sdxl-pixelart` —
-# **jamais `VAEEncodeForInpaint`**, qui grise la zone avant de l'encoder et a effacé
-# le visage sous la coiffure au premier essai.
+# quelle + `SetLatentNoiseMask` — **jamais `VAEEncodeForInpaint`**, qui grise la zone
+# avant de l'encoder et a effacé le visage sous la coiffure au premier essai.
+#
+# **PX7 (26 septembre 2026) : un outil par famille de moteur local**, à la demande de
+# l'auteur — la technique doit servir avec les différents modèles, pas avec un seul.
+# Même recette pour les cinq : `VAEEncode` + `SetLatentNoiseMask`, une force réglable
+# (`PARAMETRE_FORCE_ZONE`, `atelier/fournisseur/styles_locaux.py`), et exactement une
+# référence plus la zone. FLUX.2 Klein n'a pas de `denoise` sur son échantillonneur
+# (`SamplerCustomAdvanced`) : `SplitSigmasDenoise` en tient lieu, comme
+# `essais/banc_px1_zone.py` l'avait trouvé. Aucune ne juge la qualité ; on ne vérifie
+# que le fonctionnement (§ PX7 du plan).
 OUTILS: tuple[dict, ...] = (
     {
         'identifiant': 'sdxl-retouche-zone',
@@ -459,6 +467,66 @@ OUTILS: tuple[dict, ...] = (
         'description': 'Repeint seulement la zone peinte sur une image : une coiffure, un vêtement, un objet tenu. Le reste de l’image part tel quel.',
         'etiquette': 'Retouche',
         'source': 'nerijs/pixel-art-xl'
+    },
+    {
+        'identifiant': 'zimage-retouche-zone',
+        'famille': 'zimage',
+        'zone': True,
+        'lora': re.compile(r'pixel_art_style_z_image_turbo', re.I),
+        'declencheur': 'Pixel art style.',
+        'force': 1,
+        'etapes': 9,
+        'genre': 'sprite',
+        'noeuds': ('ImageToMask', 'SetLatentNoiseMask'),
+        'nom': 'Retouche de zone (Z-Image)',
+        'description': 'Repeint seulement la zone peinte sur une image, avec Z-Image Turbo. Le reste de l’image part tel quel.',
+        'etiquette': 'Retouche',
+        'source': 'tarn59/pixel_art_style_lora_z_image_turbo'
+    },
+    {
+        'identifiant': 'klein-retouche-zone',
+        'famille': 'klein',
+        'zone': True,
+        'unet': re.compile(r'flux.?2.?klein.?base.?4b', re.I),
+        'lora': re.compile(r'pixelart_pxart4_klein_base4b', re.I),
+        'declencheur': 'PXART4.',
+        'force': 1,
+        'etapes': 20,
+        'cfg': 5,
+        'genre': 'sprite',
+        'noeuds': ('ImageToMask', 'SetLatentNoiseMask', 'SplitSigmasDenoise'),
+        'nom': 'Retouche de zone (Klein)',
+        'description': 'Repeint seulement la zone peinte sur une image, avec FLUX.2 Klein. Le reste de l’image part tel quel.',
+        'etiquette': 'Retouche',
+        'source': 'adirik/pixel-art-lora-flux.2-klein-4B'
+    },
+    {
+        'identifiant': 'qwen21-retouche-zone',
+        'famille': 'qwen21',
+        'zone': True,
+        'declencheur': '2D game art.',
+        'etapes': 30,
+        'genre': 'asset',
+        'noeuds': ('VAEEncode', 'ImageToMask', 'SetLatentNoiseMask'),
+        'nom': 'Retouche de zone (Qwen-Image 2.1)',
+        'description': 'Repeint seulement la zone peinte sur une image, avec Qwen-Image 2.1 — le moteur local le plus soigné du catalogue. Le reste de l’image part tel quel.',
+        'etiquette': 'Retouche',
+        'source': 'Comfy-Org/Qwen-Image-2.1'
+    },
+    {
+        'identifiant': 'flux1-retouche-zone',
+        'famille': 'flux1dev',
+        'zone': True,
+        'lora': re.compile(r'flux1dev_modern_pixelart', re.I),
+        'declencheur': 'umempart',
+        'force': 1,
+        'etapes': 20,
+        'genre': 'sprite',
+        'noeuds': ('ImageToMask', 'SetLatentNoiseMask'),
+        'nom': 'Retouche de zone (FLUX.1)',
+        'description': 'Repeint seulement la zone peinte sur une image, avec FLUX.1-dev. Le reste de l’image part tel quel.',
+        'etiquette': 'Retouche',
+        'source': 'UmeAiRT/FLUX.1-dev-LoRA-Modern_Pixel_art'
     },
 )
 

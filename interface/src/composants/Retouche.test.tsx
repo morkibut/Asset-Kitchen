@@ -294,6 +294,10 @@ function construireDouble(
         modele: null,
         raison: "aucun modèle de l'atelier ne sait repeindre une zone",
         outil: { identifiant: "sdxl-retouche-zone", nom: "Retouche de zone (pixel)", pret: false, manque: [], modele: null, vitesse: null },
+        // PX7 : un outil par famille de moteur local, et tous les modèles
+        // capables — vide ici, comme `outil.modele` et `modele` ci-dessus.
+        outils: [{ identifiant: "sdxl-retouche-zone", nom: "Retouche de zone (pixel)", pret: false, manque: [], modele: null, vitesse: null }],
+        modeles: [],
         temps: null,
         force: null,
         couleurs: { defaut: 4, maximum: 16 },

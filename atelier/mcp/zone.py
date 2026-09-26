@@ -67,14 +67,19 @@ def installer_zone(serveur, atelier, refus):
             "`prompt` says what to put in the zone and is sent word for word "
             "(the local model reads English best: 'blue spiky hair'). `seed` "
             "and `strength` (0.5 to 1, default 0.9) are optional; retry with "
-            "another seed to get another draw. Runs locally: costs no money, "
+            "another seed to get another draw. `model` picks which installed "
+            "model to use, among those that declare the `repaints_zone` "
+            "capability in list_models; left out, keeps the model already in "
+            "use. Runs locally: costs no money, "
             "takes time (see list_models expected_time). It runs as a durable job "
             "bounded by the agent's frame (local compute allowed, permitted "
             "models, call ceiling). Waits up to `wait_seconds`; past that, poll "
             "`generation_id` with check_generation. Returns the "
             "layer's asset id once it exists. Refused with a reason when no "
-            "installed model can repaint a zone (install the local tool "
-            "'sdxl-retouche-zone')."
+            "installed model can repaint a zone (install one zone-repaint tool "
+            "per available local engine family: 'sdxl-retouche-zone', "
+            "'zimage-retouche-zone', 'klein-retouche-zone', "
+            "'qwen21-retouche-zone', or 'flux1-retouche-zone')."
         ),
     )
     @refus
@@ -87,6 +92,7 @@ def installer_zone(serveur, atelier, refus):
         strength: float | None = None,
         new_colors: int = COULEURS_NEUVES,
         wait_seconds: float = ATTENTE_PAR_DEFAUT,
+        model: str | None = None,
     ) -> dict[str, Any]:
         masque = None
         if mask_png_base64:
@@ -100,7 +106,7 @@ def installer_zone(serveur, atelier, refus):
         # **Un travail durable, comme toute image locale de l'agent** (RP2) :
         # le cadre de l'agent l'autorise, ou le refuse avec sa phrase.
         travail = await service.lancer_pour_l_agent(
-            asset_id, prompt, zone, graine=seed, force=strength, couleurs=new_colors,
+            asset_id, prompt, zone, graine=seed, force=strength, couleurs=new_colors, modele=model,
         )
         projet, identifiant = travail["projet"], travail["identifiant"]
         generation_id = travail["generations_images"][0]

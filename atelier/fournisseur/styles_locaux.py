@@ -354,9 +354,120 @@ def construire_qwen21(entree, fichiers):
     return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="8", etapes=entree["etapes"], variantes=variantes)
 
 
+# PX7 : la même retouche de zone que `construire_sdxl_zone`, une par famille — le
+# latent vide cède la place à l'image telle quelle (`VAEEncode`) sous
+# `SetLatentNoiseMask`. Z-Image et FLUX.1 partagent la même forme que SDXL (un
+# `KSampler` à `denoise` réglable) ; Qwen-Image 2.1 pareil, sur son propre graphe ;
+# FLUX.2 Klein est seul à ne pas avoir de champ `denoise` sur son échantillonneur
+# (`SamplerCustomAdvanced`) — `SplitSigmasDenoise` en tient lieu, comme
+# `essais/banc_px1_zone.py` (`_greffer_inpaint_klein`) l'avait trouvé.
+
+
+def construire_zimage_zone(entree, fichiers):
+    """La retouche de zone sur Z-Image Turbo (PX7)."""
+    base = construire_zimage(entree, fichiers)
+    graphe, liaisons = _copier(base["graphe"], base["liaisons"])
+    del graphe["8"]  # EmptySD3LatentImage — remplacé par l'inpaint
+    graphe["12"] = _noeud("LoadImage", image="")
+    graphe["13"] = _noeud("ImageScale", image=["12", 0], upscale_method="nearest-exact", width=512, height=512, crop="disabled")
+    graphe["14"] = _noeud("VAEEncode", pixels=["13", 0], vae=["3", 0])
+    graphe["15"] = _noeud("LoadImage", image="")
+    graphe["16"] = _noeud("ImageScale", image=["15", 0], upscale_method="nearest-exact", width=512, height=512, crop="disabled")
+    graphe["17"] = _noeud("ImageToMask", image=["16", 0], channel="red")
+    graphe["18"] = _noeud("SetLatentNoiseMask", samples=["14", 0], mask=["17", 0])
+    graphe["9"]["inputs"]["latent_image"] = ["18", 0]
+    liaisons["largeur"] = [{"noeud": "13", "champ": "width"}, {"noeud": "16", "champ": "width"}]
+    liaisons["hauteur"] = [{"noeud": "13", "champ": "height"}, {"noeud": "16", "champ": "height"}]
+    liaisons["reference:0"] = [{"noeud": "12", "champ": "image"}]
+    liaisons["masque"] = [{"noeud": "15", "champ": "image"}]
+    liaisons["option:force"] = [{"noeud": "9", "champ": "denoise"}]
+    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="11", etapes=entree["etapes"],
+        parametres=PARAMETRE_FORCE_ZONE)
+
+
+def construire_flux1_zone(entree, fichiers):
+    """La retouche de zone sur FLUX.1-dev (PX7) — même forme que Z-Image :
+    un `KSampler` (cfg 1, le guidage réel passe par `FluxGuidance`)."""
+    base = construire_flux1(entree, fichiers)
+    graphe, liaisons = _copier(base["graphe"], base["liaisons"])
+    del graphe["8"]  # EmptySD3LatentImage — remplacé par l'inpaint
+    graphe["12"] = _noeud("LoadImage", image="")
+    graphe["13"] = _noeud("ImageScale", image=["12", 0], upscale_method="nearest-exact", width=512, height=512, crop="disabled")
+    graphe["14"] = _noeud("VAEEncode", pixels=["13", 0], vae=["3", 0])
+    graphe["15"] = _noeud("LoadImage", image="")
+    graphe["16"] = _noeud("ImageScale", image=["15", 0], upscale_method="nearest-exact", width=512, height=512, crop="disabled")
+    graphe["17"] = _noeud("ImageToMask", image=["16", 0], channel="red")
+    graphe["18"] = _noeud("SetLatentNoiseMask", samples=["14", 0], mask=["17", 0])
+    graphe["9"]["inputs"]["latent_image"] = ["18", 0]
+    liaisons["largeur"] = [{"noeud": "13", "champ": "width"}, {"noeud": "16", "champ": "width"}]
+    liaisons["hauteur"] = [{"noeud": "13", "champ": "height"}, {"noeud": "16", "champ": "height"}]
+    liaisons["reference:0"] = [{"noeud": "12", "champ": "image"}]
+    liaisons["masque"] = [{"noeud": "15", "champ": "image"}]
+    liaisons["option:force"] = [{"noeud": "9", "champ": "denoise"}]
+    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="11", etapes=entree["etapes"],
+        parametres=PARAMETRE_FORCE_ZONE)
+
+
+def construire_qwen21_zone(entree, fichiers):
+    """La retouche de zone sur Qwen-Image 2.1 (PX7), sur le gabarit
+    `qwen21-qualite` (30 étapes) — le moteur local que l'auteur tient pour le
+    plus soigné. Le nœud de texte (`TextEncodeQwenImage21`) reste un simple
+    encodeur ici : la zone n'emprunte pas son mécanisme de références."""
+    base = construire_qwen21(entree, fichiers)
+    graphe, liaisons = _copier(base["graphe"], base["liaisons"])
+    del graphe["5"]  # EmptyLatentImage — remplacé par l'inpaint
+    graphe["9"] = _noeud("LoadImage", image="")
+    graphe["10"] = _noeud("ImageScale", image=["9", 0], upscale_method="nearest-exact", width=512, height=512, crop="disabled")
+    graphe["11"] = _noeud("VAEEncode", pixels=["10", 0], vae=["3", 0])
+    graphe["12"] = _noeud("LoadImage", image="")
+    graphe["13"] = _noeud("ImageScale", image=["12", 0], upscale_method="nearest-exact", width=512, height=512, crop="disabled")
+    graphe["14"] = _noeud("ImageToMask", image=["13", 0], channel="red")
+    graphe["15"] = _noeud("SetLatentNoiseMask", samples=["11", 0], mask=["14", 0])
+    graphe["6"]["inputs"]["latent_image"] = ["15", 0]
+    liaisons["largeur"] = [{"noeud": "10", "champ": "width"}, {"noeud": "13", "champ": "width"}]
+    liaisons["hauteur"] = [{"noeud": "10", "champ": "height"}, {"noeud": "13", "champ": "height"}]
+    liaisons["reference:0"] = [{"noeud": "9", "champ": "image"}]
+    liaisons["masque"] = [{"noeud": "12", "champ": "image"}]
+    liaisons["option:force"] = [{"noeud": "6", "champ": "denoise"}]
+    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="8", etapes=entree["etapes"],
+        parametres=PARAMETRE_FORCE_ZONE)
+
+
+def construire_klein_zone(entree, fichiers):
+    """La retouche de zone sur FLUX.2 Klein (PX7), gabarit `klein-pxart4` (cfg
+    réel, non distillé). `SamplerCustomAdvanced` n'a pas de champ `denoise` :
+    `SplitSigmasDenoise` coupe la liste des sigmas à la portion basse, comme
+    `essais/banc_px1_zone.py` (`_greffer_inpaint_klein`) l'avait trouvé sur ce
+    même moteur — recette relue ici, pas copiée."""
+    base = construire_klein(entree, fichiers)
+    graphe, liaisons = _copier(base["graphe"], base["liaisons"])
+    graphe.pop("12", None)  # EmptyFlux2LatentImage — remplacé par l'inpaint
+    graphe["16"] = _noeud("LoadImage", image="")
+    graphe["17"] = _noeud("ImageScale", image=["16", 0], upscale_method="nearest-exact", width=512, height=512, crop="disabled")
+    graphe["18"] = _noeud("VAEEncode", pixels=["17", 0], vae=["3", 0])
+    graphe["19"] = _noeud("LoadImage", image="")
+    graphe["20"] = _noeud("ImageScale", image=["19", 0], upscale_method="nearest-exact", width=512, height=512, crop="disabled")
+    graphe["21"] = _noeud("ImageToMask", image=["20", 0], channel="red")
+    graphe["22"] = _noeud("SetLatentNoiseMask", samples=["18", 0], mask=["21", 0])
+    graphe["23"] = _noeud("SplitSigmasDenoise", sigmas=["10", 0], denoise=PARAMETRE_FORCE_ZONE["force"]["defaut"])
+    graphe["13"]["inputs"]["latent_image"] = ["22", 0]
+    graphe["13"]["inputs"]["sigmas"] = ["23", 1]
+    # Le plan de bruit (`Flux2Scheduler`, « 10 ») garde besoin de la résolution
+    # demandée en plus des deux images mises à l'échelle : lui seul décidait déjà
+    # de `largeur`/`hauteur` avant que l'inpaint n'ajoute les deux autres cibles.
+    liaisons["largeur"] = [{"noeud": "10", "champ": "width"}, {"noeud": "17", "champ": "width"}, {"noeud": "20", "champ": "width"}]
+    liaisons["hauteur"] = [{"noeud": "10", "champ": "height"}, {"noeud": "17", "champ": "height"}, {"noeud": "20", "champ": "height"}]
+    liaisons["reference:0"] = [{"noeud": "16", "champ": "image"}]
+    liaisons["masque"] = [{"noeud": "19", "champ": "image"}]
+    liaisons["option:force"] = [{"noeud": "23", "champ": "denoise"}]
+    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="15", etapes=entree["etapes"],
+        parametres=PARAMETRE_FORCE_ZONE)
+
+
 CONSTRUCTEURS = {"zimage": construire_zimage, "klein": construire_klein, "flux1dev": construire_flux1, "sdxl": construire_sdxl,
     "qwen21": construire_qwen21}
-CONSTRUCTEURS_ZONE = {"sdxl": construire_sdxl_zone}
+CONSTRUCTEURS_ZONE = {"sdxl": construire_sdxl_zone, "zimage": construire_zimage_zone, "klein": construire_klein_zone,
+    "flux1dev": construire_flux1_zone, "qwen21": construire_qwen21_zone}
 
 
 # ML6 : le raccord sans couture, port de `applySeamless` (`sc-clone/lib/seamless.mjs`).

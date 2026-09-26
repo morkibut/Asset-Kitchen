@@ -51,12 +51,19 @@ function calque(texte: string, identifiant = "calque-1"): CalqueRepeint {
   }
 }
 
+const OUTIL = { identifiant: "sdxl-retouche-zone", nom: "Retouche d'une zone", pret: true, manque: [], modele: "Local:zone", vitesse: TEMPS.vitesse }
+
 function etat(sur: Partial<EtatDeLaZone> = {}): EtatDeLaZone {
   return {
     image: "img",
     modele: { identifiant: "Local:zone", nom: "Retouche d'une zone" },
     raison: null,
-    outil: { identifiant: "sdxl-retouche-zone", nom: "Retouche d'une zone", pret: true, manque: [], modele: "Local:zone", vitesse: TEMPS.vitesse },
+    outil: OUTIL,
+    // PX7 : un seul moteur dans ces essais-là — les cinq se couvrent dans
+    // `tests/test_px7_moteurs.py`, côté serveur, et dans les essais dédiés au
+    // choix du modèle.
+    outils: [OUTIL],
+    modeles: [{ identifiant: "Local:zone", nom: "Retouche d'une zone", famille: "sdxl", raison: null, temps: TEMPS }],
     temps: TEMPS,
     force: { minimum: 0.5, maximum: 1, defaut: 0.9 },
     couleurs: { defaut: 4, maximum: 16 },
@@ -144,7 +151,11 @@ const lancesAvec = (appels: Appel[]) =>
 
 test("sans modèle capable, le bouton est grisé avec la raison, et l'outil s'installe d'ici", async () => {
   const raison = "Aucun modèle installé ne sait repeindre une zone : installez l'outil « Retouche d'une zone »."
-  const { appels } = doubler({ etatInitial: etat({ modele: null, raison, temps: null }) })
+  const { appels } = doubler({ etatInitial: etat({
+    modele: null, raison, temps: null,
+    outils: [{ ...OUTIL, modele: null }],
+    modeles: [],
+  }) })
   monter()
   await waitFor(() => expect(document.querySelector("[data-sans-modele]")?.textContent).toContain("installez l'outil"))
   await peindreLaTete()

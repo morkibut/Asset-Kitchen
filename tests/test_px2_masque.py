@@ -234,7 +234,12 @@ def test_la_capacite_se_relit_et_vaut_faux_par_defaut():
 
 def test_la_retouche_n_est_pas_dans_la_galerie_des_styles():
     assert ZONE not in {s["identifiant"] for s in STYLES}
-    assert [o["identifiant"] for o in OUTILS] == [ZONE]
+    # PX7 (26 septembre 2026) : un outil de retouche de zone par famille de
+    # moteur local — SDXL en premier (`ZONE`, historique), les quatre autres
+    # ajoutés derrière lui.
+    assert [o["identifiant"] for o in OUTILS] == [
+        ZONE, "zimage-retouche-zone", "klein-retouche-zone", "qwen21-retouche-zone", "flux1-retouche-zone",
+    ]
 
 
 def test_la_retouche_manque_ses_noeuds_et_le_dit():

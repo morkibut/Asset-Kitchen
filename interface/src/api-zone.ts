@@ -54,12 +54,27 @@ export type CalqueRepeint = {
   mesures: MesuresDeLaZone | null
 }
 
+/** PX7 : un modèle qui sait repeindre une zone, grisé ou non. */
+export type ModeleDeZone = {
+  identifiant: string
+  nom: string
+  famille: string | null
+  /** Pourquoi il est grisé — `null` quand il est prêt. */
+  raison: string | null
+  /** Le temps de **ce** modèle-là — le bouton suit celui qu'on a choisi. */
+  temps: TempsLocal | null
+}
+
 export type EtatDeLaZone = {
   image: string
   modele: { identifiant: string; nom: string } | null
   /** Pourquoi on ne peut pas repeindre — `null` quand on peut. */
   raison: string | null
   outil: OutilDeZone
+  /** PX7 : un outil par famille de moteur local, prêt ou non. */
+  outils: OutilDeZone[]
+  /** PX7 : tous les modèles capables, grisés ou non — c'est parmi eux qu'on choisit. */
+  modeles: ModeleDeZone[]
   temps: TempsLocal | null
   force: { minimum: number; maximum: number; defaut: number } | null
   couleurs: { defaut: number; maximum: number }
@@ -82,14 +97,16 @@ export type DemandeDeZone = {
   graine?: number | null
   force?: number | null
   couleurs?: number
+  /** PX7 : le modèle choisi, ou rien pour le défaut du catalogue. */
+  modele?: string | null
 }
 
 export const zone = {
   etat: (image: string) => appeler<EtatDeLaZone>(`/assets/${encodeURIComponent(image)}/zone`),
-  cequiPart: (image: string, texte: string) =>
+  cequiPart: (image: string, texte: string, modele?: string | null) =>
     appeler<{ texte: string; negatif: string; fond: string }>(`/assets/${encodeURIComponent(image)}/zone/preview`, {
       method: "POST",
-      body: JSON.stringify({ texte }),
+      body: JSON.stringify({ texte, modele: modele ?? null }),
     }),
   lancer: (image: string, demande: DemandeDeZone) =>
     appeler<ResultatDeLaZone>(`/assets/${encodeURIComponent(image)}/zone`, {

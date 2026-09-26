@@ -181,13 +181,23 @@ part, il revient, rien ne bouge hors de la zone.
 
 ### Critères d'acceptation
 
-- [ ] Un outil de retouche de zone par famille de moteur local présente sur la machine ; chacun
+- [x] Un outil de retouche de zone par famille de moteur local présente sur la machine ; chacun
       déclare la liaison `masque`.
-- [ ] « Repeindre » et l'agent laissent choisir le modèle ; un modèle absent ou incapable est
+- [x] « Repeindre » et l'agent laissent choisir le modèle ; un modèle absent ou incapable est
       grisé avec sa raison.
-- [ ] Un tirage réel par outil, sur la machine : il revient, 0 pixel hors de la zone. Aucune
+- [x] Un tirage réel par outil, sur la machine : il revient, 0 pixel hors de la zone. Aucune
       comparaison de qualité.
-- [ ] Les deux réparations de PX3bis ont leur essai automatique (le cache, le fond).
+- [x] Les deux réparations de PX3bis ont leur essai automatique (le cache, le fond).
+
+**Faite le 26 septembre 2026.** Cinq outils, une même recette (l'image gardée sous la zone,
+`SetLatentNoiseMask`, jamais `VAEEncodeForInpaint`) : `sdxl-retouche-zone`,
+`zimage-retouche-zone`, `klein-retouche-zone` (avec `SplitSigmasDenoise`, son échantillonneur
+n'ayant pas de force), `qwen21-retouche-zone` (sur le graphe « qualité ») et
+`flux1-retouche-zone`. Dans « Repeindre », une liste choisit le modèle ; un moteur non installé
+y est grisé avec sa raison et propose de s'installer. L'agent passe le même choix à
+`repaint_zone` (`model`). Un tirage réel par outil, 0 $ : les cinq reviennent, 0 pixel hors de la
+zone, 0 pixel de sujet perdu — SDXL 42 s, Z-Image 52 s, Qwen 68 s, Klein 77 s, FLUX.1 189 s. **La
+qualité n'a pas été comparée**, comme demandé. Essais : `tests/test_px7_moteurs.py` (16).
 
 ## PX8 · La liste des pistes d'amélioration
 

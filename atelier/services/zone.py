@@ -92,12 +92,39 @@ class ServiceZone:
     # ── Le modèle ───────────────────────────────────────────────────────────
 
     def modele(self) -> Modele | None:
-        """Le modèle qui repeindra la zone : **le catalogue décide** — le premier
-        qui déclare la capacité et qui n'est pas grisé, sinon le premier qui la
-        déclare (pour dire sa raison), sinon rien."""
-        capables = [m for m in self._atelier.catalogue.etat.modeles if m.masque]
+        """Le modèle par défaut : **le catalogue décide** — le premier qui
+        déclare la capacité et qui n'est pas grisé, sinon le premier qui la
+        déclare (pour dire sa raison), sinon rien. PX7 : ce n'est plus le seul
+        choix possible — l'auteur ou l'agent peut nommer un autre modèle capable
+        (`_modele_choisi`) ; celui-ci reste le repli, et le seul choix quand
+        rien n'est demandé."""
+        capables = self._modeles_capables()
         prets = [m for m in capables if not self._raison_du_modele(m)]
         return (prets or capables or [None])[0]
+
+    def _modeles_capables(self) -> list[Modele]:
+        """Tous les modèles qui déclarent la capacité `masque` — grisés ou non.
+        PX7 : c'est cette liste, entière, que l'écran et l'agent peuvent choisir ;
+        `modele()` n'en prend que le premier prêt."""
+        return [m for m in self._atelier.catalogue.etat.modeles if m.masque]
+
+    def _modele_choisi(self, identifiant: str) -> Modele:
+        """Le modèle nommé par l'auteur ou l'agent (PX7) — refusé s'il ne sait
+        pas repeindre une zone ou n'existe pas, jamais résolu en silence vers un
+        autre : demander un modèle précis et en recevoir un autre serait pire
+        qu'un refus."""
+        trouve = next((m for m in self._modeles_capables() if m.identifiant == identifiant), None)
+        if trouve is None:
+            raise DemandeRefusee(f"« {identifiant} » ne sait pas repeindre une zone, ou n'est pas installé")
+        return trouve
+
+    def _modele_par_identifiant(self, identifiant: str | None) -> Modele | None:
+        """La même recherche que `_modele_choisi`, mais **qui ne refuse rien** —
+        pour l'aperçu (`ce_qui_part`), qui ne doit jamais lever pendant qu'on
+        tape."""
+        if not identifiant:
+            return None
+        return next((m for m in self._modeles_capables() if m.identifiant == identifiant), None)
 
     def _raison_du_modele(self, modele: Modele) -> str | None:
         if modele.indisponible:
@@ -124,6 +151,16 @@ class ServiceZone:
             ligne["manque"] = [refus.raison if hasattr(refus, "raison") else str(refus)]
         return ligne
 
+    async def _outils(self) -> list[dict[str, Any]]:
+        """PX7 : **un outil par famille de moteur local**, prêt ou non, et ce
+        qui manque — pour que l'écran propose d'installer celui qu'on veut,
+        pas seulement celui de SDXL."""
+        try:
+            return list(await self._atelier.styles_locaux.lister_outils())
+        except WorkflowRefuse as refus:
+            return [{"identifiant": OUTIL_DE_ZONE, "nom": OUTIL_DE_ZONE, "pret": False,
+                "manque": [refus.raison if hasattr(refus, "raison") else str(refus)], "modele": None}]
+
     def _force_du_profil(self, modele: Modele) -> dict[str, float]:
         option = modele.options.get("force")
         bornes = {
@@ -148,6 +185,11 @@ class ServiceZone:
         base = self._atelier.assets._trouver(identifiant)
         modele = self.modele()
         outil = await self._outil()
+        outils = await self._outils()
+        # La vitesse relevée de chaque famille (`FAMILLES[x]["vitesse"]`, ou
+        # celle propre à l'outil) — un modèle sans mesure encore prise annonce
+        # celle de **sa** famille, jamais celle de SDXL prêtée aux quatre autres.
+        vitesse_par_famille = {o["famille"]: o.get("vitesse") for o in outils}
         raison: str | None
         if modele is None:
             raison = (
@@ -161,23 +203,39 @@ class ServiceZone:
             "modele": None if modele is None else {"identifiant": modele.identifiant, "nom": modele.nom},
             "raison": raison,
             "outil": outil,
-            "temps": self._temps(modele, outil),
+            # PX7 : un outil par famille de moteur local, prêt ou non — pour
+            # installer celui qu'on veut, pas seulement celui de `outil`.
+            "outils": outils,
+            # PX7 : **tous** les modèles capables, grisés ou non — c'est parmi
+            # eux que l'écran et l'agent choisissent (`_modele_choisi`). `modele`
+            # ci-dessus reste le défaut, celui qu'on garde sans rien choisir.
+            # Chacun porte son propre temps : le bouton suit le modèle choisi.
+            "modeles": [
+                {"identifiant": m.identifiant, "nom": m.nom, "famille": m.famille,
+                 "raison": self._raison_du_modele(m), "temps": self._temps(m, vitesse_par_famille.get(m.famille))}
+                for m in self._modeles_capables()
+            ],
+            "temps": self._temps(modele, vitesse_par_famille.get(modele.famille) if modele else None),
             "force": self._force_du_profil(modele) if modele is not None else None,
             "couleurs": {"defaut": COULEURS_NEUVES, "maximum": COULEURS_NEUVES_MAX},
             "calques": self.calques(identifiant),
         }
 
-    def _temps(self, modele: Modele | None, outil: dict[str, Any]) -> dict[str, Any] | None:
+    def _temps(self, modele: Modele | None, vitesse_repli: str | None) -> dict[str, Any] | None:
         """**Un temps, jamais un prix** (règle 8ter) : la médiane mesurée sur
         cette machine (`ServiceGenerations.temps_attendu`), sinon la vitesse
-        relevée pour la famille du moteur — annoncée comme telle."""
+        relevée pour la famille du moteur — annoncée comme telle.
+
+        PX7 : **le temps suit le modèle choisi**, pas un seul outil — chaque
+        famille a sa vitesse relevée, jamais celle de SDXL prêtée aux quatre
+        autres."""
         if modele is None:
             return None
         temps = self._atelier.generations.temps_attendu(modele.identifiant) or {
             "secondes": None, "mesures": 0, "vitesse": None,
         }
         if temps.get("secondes") is None and not temps.get("vitesse"):
-            temps = {**temps, "vitesse": outil.get("vitesse")}
+            temps = {**temps, "vitesse": vitesse_repli}
         return temps
 
     def calques(self, identifiant: str) -> list[dict[str, Any]]:
@@ -241,15 +299,17 @@ class ServiceZone:
             },
         }
 
-    def ce_qui_part(self, identifiant: str, texte: str) -> dict[str, Any]:
+    def ce_qui_part(self, identifiant: str, texte: str, modele: str | None = None) -> dict[str, Any]:
         """Le texte qui partira, **avant de lancer** — par les méthodes de
-        l'envoi (`ServiceGenerations.texte_d_une_zone`, `AGENTS.md` point 6)."""
+        l'envoi (`ServiceGenerations.texte_d_une_zone`, `AGENTS.md` point 6).
+        PX7 : sur le modèle choisi, quand il en existe un — **ne refuse jamais**,
+        c'est un aperçu qui se redemande à chaque lettre tapée."""
         base = self._atelier.assets._trouver(identifiant)
-        modele = self.modele()
-        if modele is None or not texte.strip():
+        m = self._modele_par_identifiant(modele) if modele else self.modele()
+        if m is None or not texte.strip():
             return {"texte": "", "negatif": "", "fond": ""}
         return self._atelier.generations.texte_d_une_zone(
-            texte.strip(), modele.identifiant, base.projet, base.identifiant
+            texte.strip(), m.identifiant, base.projet, base.identifiant
         )
 
     def resultat(self, generation_id: str) -> dict[str, Any]:
@@ -274,10 +334,14 @@ class ServiceZone:
 
     # ── Le geste ────────────────────────────────────────────────────────────
 
-    def _verifier(self, identifiant, texte, zone, graine, couleurs):
+    def _verifier(self, identifiant, texte, zone, graine, couleurs, modele=None):
         """Tout ce qui se refuse **avant la file**, pour l'écran comme pour
         l'agent — une zone vide, un texte vide, aucun modèle capable, un modèle
-        grisé —, chacun avec sa phrase, jamais un bouton qui échoue."""
+        grisé —, chacun avec sa phrase, jamais un bouton qui échoue.
+
+        PX7 : `modele` nomme celui qu'on veut, parmi ceux qui savent repeindre
+        une zone (`_modele_choisi`, refusé s'il est inconnu) ; `None` reprend le
+        défaut du catalogue (`modele()`, inchangé)."""
         assets = self._atelier.assets
         base = assets._trouver(identifiant)
         texte = (texte or "").strip()
@@ -295,16 +359,16 @@ class ServiceZone:
         masque = masque_de_zone(corps.shape[:2], tuple(zone))
         if not masque.any():
             raise DemandeRefusee(ZONE_VIDE)
-        modele = self.modele()
-        if modele is None:
+        m = self._modele_choisi(modele) if modele is not None else self.modele()
+        if m is None:
             raise DemandeRefusee(
                 "aucun modèle de l'atelier ne sait repeindre une zone — "
                 f"installez l'outil « {OUTIL_DE_ZONE} »"
             )
-        raison = self._raison_du_modele(modele)
+        raison = self._raison_du_modele(m)
         if raison:
-            raise DemandeRefusee(f"{modele.nom} : {raison}")
-        return base, texte, corps, masque, modele
+            raise DemandeRefusee(f"{m.nom} : {raison}")
+        return base, texte, corps, masque, m
 
     async def lancer(
         self,
@@ -317,11 +381,16 @@ class ServiceZone:
         couleurs: int = COULEURS_NEUVES,
         provenance: str = "auteur",
         identifiant_generation: str | None = None,
+        modele: str | None = None,
     ) -> Generation:
         """Peindre, écrire, lancer. **Tout se refuse avant la file** : une zone
         vide, un texte vide, aucun modèle capable, un modèle grisé — chacun avec
-        sa phrase, jamais un bouton qui échoue."""
-        base, texte, corps, masque, modele = self._verifier(identifiant, texte, zone, graine, couleurs)
+        sa phrase, jamais un bouton qui échoue.
+
+        PX7 : `modele` choisit **lequel** des modèles capables de repeindre une
+        zone honore cet appel — l'identifiant du catalogue, pas le nom d'une
+        famille. Sans lui, le défaut du catalogue (`modele()`)."""
+        base, texte, corps, masque, modele = self._verifier(identifiant, texte, zone, graine, couleurs, modele)
         # **La force part toujours, défaut compris** : sans elle, la génération
         # ne la garde pas, et un calque rouvert dirait « force — » alors qu'une
         # force précise a bien servi (vu sur le vrai moteur, 26 septembre 2026).
@@ -391,12 +460,18 @@ class ServiceZone:
         graine: int | None = None,
         force: float | None = None,
         couleurs: int = COULEURS_NEUVES,
+        modele: str | None = None,
     ) -> dict[str, Any]:
         """La même zone, demandée par l'agent : **les mêmes refus d'abord**, puis
         un travail qui nomme la génération avant qu'elle parte, et que le cadre
         de l'agent autorise (calcul local permis, méthode permise, plafond
-        d'appels) — au démarrage, puis quand la carte graphique prend son tour."""
-        base, texte, _, _, modele = self._verifier(identifiant, texte, zone, graine, couleurs)
+        d'appels) — au démarrage, puis quand la carte graphique prend son tour.
+
+        PX7 : `modele` choisit lequel des modèles capables l'agent veut, comme
+        à l'écran ; le travail garde l'identifiant résolu (`travail["modele"]`),
+        et une reprise relance sur **ce même modèle**, jamais sur le défaut du
+        moment (`_executer_agent`)."""
+        base, texte, _, _, modele = self._verifier(identifiant, texte, zone, graine, couleurs, modele)
         if not base.projet:
             raise DemandeRefusee("une zone demandée par l'agent se repeint sur une image rangée dans un jeu")
         travaux = self._atelier.travaux
@@ -438,6 +513,11 @@ class ServiceZone:
                         graine=d.get("graine"), force=d.get("force"),
                         couleurs=d.get("couleurs", COULEURS_NEUVES),
                         provenance=AGENT, identifiant_generation=gid,
+                        # PX7 : **le même modèle qu'au premier essai**, gardé sur
+                        # le travail — jamais le défaut du moment, qui a pu
+                        # changer entre-temps (un autre outil installé, l'ancien
+                        # grisé).
+                        modele=t.get("modele"),
                     )
                 t = travaux._brut(projet, identifiant)
                 t.update(appels_engages=1, etape="image")

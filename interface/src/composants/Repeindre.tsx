@@ -27,7 +27,7 @@ import { origineDuTemps, stylesLocaux, tempsParImage } from "../api-workflows"
 import { type CalqueRepeint, type EtatDeLaZone, TERMINES, zone as routes } from "../api-zone"
 import { OPACITE, rayonDe, type EtatMain } from "../recette"
 import { PANNEAU } from "./Infobulle"
-import { useEcoule } from "./pieces"
+import { Libelle, useEcoule } from "./pieces"
 import { ToileDeLaMain } from "./Retouche"
 
 const DIAMETRES = [1, 3, 5, 9, 15] as const
@@ -111,7 +111,11 @@ export function EcranRepeindre({
   const [apercu, setApercu] = useState<{ texte: string; negatif: string } | null>(null)
   const [enCours, setEnCours] = useState<{ generation: string; depuis: number } | null>(null)
   const [resultat, setResultat] = useState<CalqueRepeint | null>(null)
-  const [installe, setInstalle] = useState(false)
+  // PX7 : le modèle choisi, parmi ceux qui savent repeindre une zone. `null`
+  // veut dire « le défaut du catalogue » — jamais un identifiant vide envoyé
+  // pour rien.
+  const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
+  const [installe, setInstalle] = useState<string | null>(null)
   // **Un seul suivi vivant à la fois.** Une zone relancée ou un calque rouvert
   // pendant qu'une autre tourne : ce qui revient de l'ancienne ne s'affiche pas
   // à la place de ce qu'on regarde.
@@ -137,6 +141,22 @@ export function EcranRepeindre({
     void charger()
   }, [charger])
 
+  // ── Le modèle choisi (PX7) — **le défaut, sauf s'il manque** ──────────────
+  // Un choix déjà fait qui reste dans la liste ne bouge pas ; sinon, le défaut
+  // du catalogue reprend la main (un modèle grisé n'a pas disparu).
+  useEffect(() => {
+    if (!etat) return
+    setModeleChoisi((actuel) => {
+      if (actuel && etat.modeles.some((m) => m.identifiant === actuel)) return actuel
+      return etat.modele?.identifiant ?? null
+    })
+  }, [etat])
+
+  const modeleActif = etat?.modeles.find((m) => m.identifiant === modeleChoisi) ?? null
+  // Le modèle qui partira vraiment : celui qu'on a choisi s'il existe encore,
+  // le défaut du serveur sinon — jamais un identifiant qu'on invente.
+  const raisonDuModele = modeleChoisi ? (modeleActif ? modeleActif.raison : "modèle inconnu") : (etat?.raison ?? null)
+
   // ── Ce qui part, lu sur le serveur ────────────────────────────────────────
   useEffect(() => {
     if (!texte.trim() || !etat?.modele) {
@@ -146,7 +166,7 @@ export function EcranRepeindre({
     let vivant = true
     const attente = setTimeout(() => {
       routes
-        .cequiPart(asset.identifiant, texte)
+        .cequiPart(asset.identifiant, texte, modeleChoisi)
         .then((recu) => vivant && setApercu(recu))
         .catch(() => vivant && setApercu(null))
     }, 250)
@@ -154,7 +174,7 @@ export function EcranRepeindre({
       vivant = false
       clearTimeout(attente)
     }
-  }, [texte, etat?.modele, asset.identifiant])
+  }, [texte, etat?.modele, asset.identifiant, modeleChoisi])
 
   // ── Le suivi d'une zone lancée ────────────────────────────────────────────
   useEffect(() => {
@@ -193,8 +213,8 @@ export function EcranRepeindre({
 
   const raisonDuBouton = !etat
     ? "on lit ce que l'atelier sait faire…"
-    : etat.raison
-      ? etat.raison
+    : raisonDuModele
+      ? raisonDuModele
       : traits.length === 0
         ? "Peignez d'abord la zone à repeindre."
         : !texte.trim()
@@ -203,7 +223,7 @@ export function EcranRepeindre({
             ? "Une zone est déjà en train d'être repeinte."
             : null
 
-  const partir = async (demande: { texte: string; zone: Trait[]; force: number | null; couleurs: number | null; graine: number | null }) => {
+  const partir = async (demande: { texte: string; zone: Trait[]; force: number | null; couleurs: number | null; graine: number | null; modele: string | null }) => {
     suivi.current += 1
     try {
       const recu = await routes.lancer(asset.identifiant, {
@@ -212,6 +232,7 @@ export function EcranRepeindre({
         ...(demande.graine !== null ? { graine: demande.graine } : {}),
         ...(demande.force !== null ? { force: demande.force } : {}),
         ...(demande.couleurs !== null ? { couleurs: demande.couleurs } : {}),
+        ...(demande.modele !== null ? { modele: demande.modele } : {}),
       })
       setResultat(null)
       setEnCours({ generation: recu.generation, depuis: Date.now() / 1000 })
@@ -223,7 +244,7 @@ export function EcranRepeindre({
   const lancer = () => {
     if (raisonDuBouton) return
     const lue = graine.trim() === "" ? null : Number(graine)
-    void partir({ texte: texte.trim(), zone: traits, force, couleurs, graine: Number.isInteger(lue) ? lue : null })
+    void partir({ texte: texte.trim(), zone: traits, force, couleurs, graine: Number.isInteger(lue) ? lue : null, modele: modeleChoisi })
   }
 
   const garder = () => {
@@ -248,7 +269,7 @@ export function EcranRepeindre({
   // graine, tirée par le serveur.
   const recommencer = async (calque: CalqueRepeint) => {
     await jeter(calque)
-    await partir({ texte: calque.texte, zone: calque.zone, force: calque.force, couleurs: calque.couleurs, graine: null })
+    await partir({ texte: calque.texte, zone: calque.zone, force: calque.force, couleurs: calque.couleurs, graine: null, modele: calque.modele })
   }
 
   const rouvrir = (calque: CalqueRepeint) => {
@@ -259,23 +280,29 @@ export function EcranRepeindre({
     setForce(calque.force)
     setCouleurs(calque.couleurs)
     setGraine(calque.graine === null ? "" : String(calque.graine))
+    // Le calque garde le modèle qui l'a repeint — le rouvrir choisit ce
+    // même modèle, sinon la fiche mentirait sur ce qui repartirait.
+    setModeleChoisi(calque.modele)
     setResultat(calque)
   }
 
-  const installer = async () => {
-    if (!etat) return
-    setInstalle(true)
+  // PX7 : un outil se demande par son identifiant — sdxl comme les quatre
+  // autres. `installe` porte celui qui s'installe, pour ne griser que son
+  // propre bouton.
+  const installer = async (identifiant: string) => {
+    setInstalle(identifiant)
     try {
-      await stylesLocaux.installer(etat.outil.identifiant)
+      await stylesLocaux.installer(identifiant)
       await charger()
     } catch (erreur) {
       onErreur(erreur instanceof Error ? erreur.message : String(erreur))
     } finally {
-      setInstalle(false)
+      setInstalle(null)
     }
   }
 
-  const temps = etat?.temps ?? null
+  // Le temps suit le modèle choisi (PX7) — celui du défaut sans choix.
+  const temps = modeleActif?.temps ?? etat?.temps ?? null
   const annonce = tempsParImage(temps) ?? "durée non encore mesurée"
   const forceMontree = force ?? etat?.force?.defaut ?? 0.9
   const couleursMontrees = couleurs ?? etat?.couleurs.defaut ?? 4
@@ -312,13 +339,13 @@ export function EcranRepeindre({
           Repeindre
         </div>
         <div className="defile flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[8px]">
-          {/* Pas de modèle : pourquoi, et comment en avoir un. */}
+          {/* Pas de modèle du tout : pourquoi, et comment en avoir un. */}
           {etat && !etat.modele && (
             <div data-sans-modele className="flex flex-col gap-[4px] rounded-7 border border-trait bg-carte p-[8px]">
               <p className="text-[12px] text-encre">{etat.raison}</p>
               {etat.outil.pret ? (
-                <button type="button" disabled={installe} onClick={() => void installer()} className="h-[30px] self-start rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50">
-                  {installe ? "installation…" : `Installer l’outil « ${etat.outil.nom} »`}
+                <button type="button" disabled={installe === etat.outil.identifiant} onClick={() => void installer(etat.outil.identifiant)} className="h-[30px] self-start rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50">
+                  {installe === etat.outil.identifiant ? "installation…" : `Installer l’outil « ${etat.outil.nom} »`}
                 </button>
               ) : (
                 <p className="mesure text-[10.5px] text-encre-4">
@@ -326,6 +353,57 @@ export function EcranRepeindre({
                 </p>
               )}
             </div>
+          )}
+
+          {/* PX7 : un outil par famille de moteur local — celui qui manque
+              encore s'installe d'ici, qu'un autre soit déjà prêt ou non. */}
+          {etat && etat.outils.some((o) => !o.modele) && (
+            <div data-moteurs-locaux className="flex flex-col gap-[6px] rounded-7 border border-trait bg-carte p-[8px]">
+              <p className="text-[11px] text-encre-2">les moteurs locaux</p>
+              {etat.outils.map((outil) => (
+                <div key={outil.identifiant} className="flex items-center justify-between gap-[8px] text-[12px]">
+                  <span className="min-w-0 truncate text-encre">{outil.nom}</span>
+                  {outil.modele ? (
+                    <span className="mesure shrink-0 text-[10.5px] text-encre-4">installé</span>
+                  ) : outil.pret ? (
+                    <button
+                      type="button"
+                      disabled={installe === outil.identifiant}
+                      onClick={() => void installer(outil.identifiant)}
+                      className="h-[26px] shrink-0 rounded-5 border border-contour bg-carte px-[8px] text-[11px] text-encre-controle disabled:opacity-50"
+                    >
+                      {installe === outil.identifiant ? "installation…" : "Installer"}
+                    </button>
+                  ) : (
+                    <span className="mesure shrink-0 truncate text-[10.5px] text-encre-4" title={outil.manque.join(" · ")}>
+                      manque : {outil.manque.join(" · ") || "ComfyUI ne répond pas"}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* PX7 : le choix du modèle, parmi ceux qui savent repeindre une
+              zone — un modèle absent ou incapable est grisé, avec sa raison. */}
+          {etat && etat.modeles.length > 0 && (
+            <label className="flex flex-col gap-[4px] border-t border-trait pt-[8px] text-[12px] text-encre-2">
+              <Libelle aide="repeint.modele">Modèle</Libelle>
+              <select
+                aria-label="Modèle"
+                data-choix-modele-zone
+                value={modeleChoisi ?? ""}
+                onChange={(e) => setModeleChoisi(e.target.value || null)}
+                className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre"
+              >
+                {etat.modeles.map((m) => (
+                  <option key={m.identifiant} value={m.identifiant} disabled={!!m.raison} title={m.raison ?? undefined}>
+                    {m.nom}
+                    {m.raison ? ` — ${m.raison}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
           )}
 
           {/* La zone : pinceau, gomme, taille, effacer. */}

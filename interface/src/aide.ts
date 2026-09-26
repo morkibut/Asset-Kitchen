@@ -2714,6 +2714,18 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · le pinceau sur l'image",
   },
 
+  // **PX7 · le choix du moteur** : cinq outils locaux savent repeindre une
+  // zone, un par famille (Qwen-Image 2.1, FLUX.2 Klein, Z-Image, FLUX.1,
+  // SDXL) — la même recette partout, jamais un jugement de qualité entre eux.
+  "repeint.modele": {
+    nom: "le modèle de la retouche",
+    groupe: "La fabrique Repeindre",
+    ou: "tables",
+    quoi: "Lequel des moteurs locaux repeint la zone. Un modèle qui n'est pas installé ou qui manque un fichier est grisé, avec sa raison.",
+    change: "Le temps annoncé sur le bouton, et le style de la retouche : chaque moteur a le sien.",
+    origine: "toi · le défaut reste celui déjà choisi, tant qu'il existe encore",
+  },
+
   "repeint.texte": {
     nom: "ce qu'il faut y mettre",
     groupe: "La fabrique Repeindre",

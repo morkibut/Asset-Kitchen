@@ -24,18 +24,21 @@ def _service(requete: Request):
 
 class CorpsTexte(BaseModel):
     texte: str = ""
+    # PX7 : le modèle sur lequel prévisualiser — facultatif, le défaut sinon.
+    modele: str | None = None
 
 
 class CorpsZone(BaseModel):
     """La zone en passages de pinceau (la forme d'un `Trait`), le texte, et les
-    deux réglages de l'appel — tous deux facultatifs : sans graine, elle est
-    tirée ; sans force, celle du profil."""
+    réglages de l'appel — tous facultatifs : sans graine, elle est tirée ;
+    sans force, celle du profil ; sans modèle, le défaut du catalogue (PX7)."""
 
     texte: str = ""
     zone: list[dict[str, Any]] = Field(default_factory=list)
     graine: int | None = None
     force: float | None = None
     couleurs: int = COULEURS_NEUVES
+    modele: str | None = None
 
 
 @routeur.get("/assets/{identifiant}/zone")
@@ -48,7 +51,7 @@ async def etat(requete: Request, identifiant: str) -> dict[str, Any]:
 @routeur.post("/assets/{identifiant}/zone/preview")
 async def ce_qui_part(requete: Request, identifiant: str, corps: CorpsTexte) -> dict[str, Any]:
     """Le texte qui partira, tel que l'envoi le composera. Rien n'est lancé."""
-    return _service(requete).ce_qui_part(identifiant, corps.texte)
+    return _service(requete).ce_qui_part(identifiant, corps.texte, corps.modele)
 
 
 @routeur.post("/assets/{identifiant}/zone", status_code=201)
@@ -63,6 +66,7 @@ async def lancer(requete: Request, identifiant: str, corps: CorpsZone) -> dict[s
         graine=corps.graine,
         force=corps.force,
         couleurs=corps.couleurs,
+        modele=corps.modele,
     )
     return service.resultat(generation.identifiant)
 
