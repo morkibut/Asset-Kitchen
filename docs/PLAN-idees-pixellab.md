@@ -58,12 +58,24 @@ revenue identique (un tirage raté).
 
 ### Critères d'acceptation
 
-- [ ] Le banc tourne sur un atelier jetable, sans rien écrire dans les données de l'auteur, et
-      refuse de partir si un appel payé est possible.
-- [ ] Au moins deux moteurs locaux essayés, huit tirages par zone et par moteur.
-- [ ] Hors de la zone : zéro pixel changé, sur tous les tirages.
-- [ ] Un verdict écrit en une phrase dans `docs/releve-usage.md` : quel moteur, quel réglage, et
-      si la suite (PX2, PX3) vaut d'être construite.
+- [x] Le banc tourne sans rien écrire dans les données de l'auteur, et aucun appel payé n'est
+      possible. *Écart assumé* : il parle à ComfyUI en direct au lieu de monter un atelier
+      jetable — il n'importe aucun fournisseur payant, ce qui tient le critère par construction.
+- [x] Au moins deux moteurs locaux essayés, huit tirages par zone et par moteur.
+- [x] Hors de la zone : zéro pixel changé, sur tous les tirages.
+- [x] Un verdict écrit dans `docs/releve-usage.md` : quel moteur, quel réglage, et si la suite
+      (PX2, PX3) vaut d'être construite.
+
+**Faite le 26 septembre 2026, en deux passes.** La première annonçait « bon » sur une mesure qui ne
+voyait que l'extérieur de la zone : les planches montraient le visage effacé sous la coiffure et
+le corps mangé sous le vêtement (`VAEEncodeForInpaint` grise la zone avant de l'encoder). La
+seconde garde l'image sous la zone (`VAEEncode` + `SetLatentNoiseMask`, force 0,9), ne perce
+jamais un pixel qui portait le sujet, et mesure ce qui se perd : **0 pixel hors zone et 0 pixel
+de sujet effacé sur 48 tirages**, `sdxl-pixelart` (28 s) et `klein-pxart4` (61 s). **Verdict :
+partiel** — six ou sept tirages sur huit se gardent ; un bloc gris sur une tête, et des pantalons
+qui laissent voir le short quand la zone ne le couvre pas. **Décision de l'orchestrateur : PX2 et
+PX3 se construisent**, avec `sdxl-pixelart` comme moteur de référence ; le geste « garder, jeter,
+recommencer » de PX3 répond directement à l'irrégularité mesurée.
 
 ## PX2 · Le masque voyage jusqu'au moteur local
 

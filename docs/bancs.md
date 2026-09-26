@@ -132,6 +132,36 @@ py essais/banc_tn6_transparence.py   TN6 — le banc de transparence du 22 septe
                                      dans `docs/modeles-et-workflows.md` § Le banc de
                                      transparence rejoué par l'atelier, images réduites dans
                                      `docs/releves/banc-tn6-2026-09-25/`
+py essais/banc_px1_zone.py           PX1 — un moteur local repeint-il une zone peinte sans
+                                     toucher au reste ? (`docs/PLAN-idees-pixellab.md` § PX1).
+                                     GRATUIT — ne parle qu'à ComfyUI en local, aucune ligne
+                                     n'importe un fournisseur payant ; ne construit pas
+                                     d'`Atelier()`, ne touche jamais `donnees/`. Un sprite de
+                                     base (torse nu, cheveux courts, short), trois zones
+                                     (tête, torse, jambes) — la tête s'arrête au-dessus du
+                                     visage —, deux moteurs (`sdxl-pixelart`, `klein-pxart4`),
+                                     huit tirages par zone et par moteur — 48 tirages,
+                                     2192 s (≈ 36,5 min) mesurés le 26 septembre 2026, après
+                                     un premier jeu à refaire (§ ci-dessous). **Zéro pixel
+                                     changé hors de la zone, zéro pixel du sujet effacé dans
+                                     la zone, sur les 48 tirages** — encodage `VAEEncode` +
+                                     `SetLatentNoiseMask`, jamais `VAEEncodeForInpaint` qui
+                                     grise le sujet avant de l'encoder. **Un premier jeu (avec
+                                     `VAEEncodeForInpaint`, 48 tirages, `qwen21-rapide` et
+                                     `sdxl-pixelart`) avait annoncé « bon » à tort** : « zéro
+                                     pixel hors zone » était vrai mais ne disait rien de la
+                                     zone elle-même, qui se faisait effacer (visage disparu,
+                                     torse troué) — trouvé à la relecture visuelle stricte des
+                                     planches, pas par la mesure. Verdict détaillé, avec les
+                                     deux essais, dans `docs/releve-usage.md` § 25 septembre
+                                     2026 : **partiel** — l'isolement de zone est acquis, la
+                                     qualité du contenu peint varie encore d'un tirage à
+                                     l'autre. `--fumee` pour un seul tirage de câblage,
+                                     `--seulement <moteur>` pour un seul moteur (accepte aussi
+                                     `qwen21-rapide`, gardé en référence hors du lot noté).
+                                     Sortie : `essais/resultats/banc-px1/mesures.json`,
+                                     planches de comparaison `planche_sdxl-pixelart.png` et
+                                     `planche_klein-pxart4.png`
 
 pytest -q tests/test_essais_socle.py  les fonctions pures du socle des six essais du
                                      2 septembre 2026, sur le double, sans un centime

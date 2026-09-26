@@ -47,6 +47,59 @@ local reçoit déjà jusqu'à 16 images jointes ; le nœud qui charge une image 
 masque, lu dans sa transparence. **Piste à essayer avant d'écrire du code** : un profil de
 retouche dont la seconde image jointe porte la zone en transparence.
 
+**Verdict du banc PX1 (26 septembre 2026, deux passes)** : **partiel**, et la première passe
+s'est trompée en disant « bon ».
+
+**Ce que la première passe avait montré**, sur `qwen21-rapide` et `sdxl-pixelart` : 0 pixel
+changé hors de la zone peinte sur 48 tirages. C'est vrai, et ça ne suffit pas — cette mesure ne
+dit rien de ce qui se passe *dans* la zone. Une relecture visuelle stricte des planches a montré
+que `sdxl-pixelart`, jugé « bon » à tort, **effaçait le sujet sous la zone au lieu de le
+repeindre** : le visage disparaissait entièrement sous la coiffure sur les huit tirages de la
+tête, le torse ressortait troué (de la peau devenue transparente là où le vêtement n'était pas
+allé). La cause était dans le graphe : `VAEEncodeForInpaint` grise les pixels sous le masque
+**avant** de les encoder — le moteur ne voit alors plus ce qu'il y avait, et doit tout
+redessiner de mémoire, ce qu'un modèle généraliste à haut denoise ne sait pas faire proprement.
+Une seconde règle aggravait la fuite : tout pixel repeint dans une couleur proche du fond
+neutre devenait transparent, **y compris quand ce pixel portait déjà le sujet** avant l'appel —
+un trou pur, jamais rattrapé.
+
+**La correction, sur les deux points.** Le graphe encode l'image **telle quelle** (`VAEEncode`,
+jamais grisée) puis pose le masque par-dessus (`SetLatentNoiseMask`) — le visage et le corps
+sous la zone restent dans le latent de départ, et un denoise partiel (0,9, après deux essais à
+0,7 et 0,8 qui changeaient trop peu) les laisse transparaître au lieu de les remplacer par du
+bruit pur. Le recollage ne rend plus transparent un pixel que le moteur a repeint en fond **s'il
+portait déjà le sujet** — dans ce cas l'original reprend sa place, jamais un trou. Et la boîte de
+la tête s'arrête maintenant au-dessus du visage (repérée par la couleur de peau, pas par une
+bande fixe) : on peint la coiffure, plus jamais les yeux.
+
+**Rejoué avec la correction**, sur 48 tirages nouveaux (`sdxl-pixelart` et `klein-pxart4`, huit
+par zone) : **0 pixel hors zone et 0 pixel de sujet effacé, sur les 48**, mesuré (la mesure
+`pixels_sujet_devenus_transparents` de `essais/banc_px1_zone.py`) et vérifié à l'œil sur les deux
+planches — le visage est intact sur chacun des seize tirages de la tête, aucun torse ni aucune
+jambe n'est troué. C'est la bonne nouvelle, et elle est solide : la fuite du premier essai est
+fermée, pas seulement cachée.
+
+**Ce qui reste imparfait, et c'est pourquoi le verdict est « partiel » et non « bon »** : la
+*qualité* de ce qui est peint dans la zone varie d'un tirage à l'autre, sur les deux moteurs.
+`sdxl-pixelart` (28 étapes, cfg 6, ~28 s/tirage) rend une coiffure ou un vêtement propre sur
+la plupart des tirages, mais un tirage sur huit sur la tête est un aplat gris sans forme (g202),
+un autre un empâtement flou (g303) ; sur le torse, un tirage laisse des marques rougeâtres sur
+les bras (g808). `klein-pxart4` (FLUX.2 Klein non distillé, cfg 5, ~61 s/tirage — deux fois plus
+lent) rend une coiffure propre sur les huit tirages de la tête, mais les jambes sont souvent
+un empâtement plutôt qu'un pantalon net (g101 : 7,4 % de la zone à peine peinte). Aucun des deux
+moteurs ne garantit un résultat propre à chaque tirage — ce que huit tirages par zone montrent
+justement, et que huit tirages n'auraient pas montré à un seul essai.
+
+**Verdict pour PX2/PX3** : construire la suite **vaut le coup**, avec la correction ci-dessus
+(encodage non destructif, jamais `VAEEncodeForInpaint`) comme base obligatoire — c'est elle qui
+manquait, pas le principe de la zone. Le geste « garder / jeter / recommencer » que PX3 doit
+livrer n'est pas un confort, c'est la réponse au problème de qualité inégale mesuré ici : un
+tirage sur trois ou quatre ne se garde pas, et c'est exactement ce que PixelLab propose de faire
+à la main. `sdxl-pixelart` reste le moteur de référence recommandé (deux fois plus rapide que
+`klein-pxart4`, qualité comparable) ; `qwen21-rapide` (12 étapes, distillé, cfg 1) reste hors
+jeu pour l'inpainting, déjà écarté à la première passe. Planches de comparaison et mesures :
+`essais/banc_px1_zone.py`, listé dans `docs/bancs.md`.
+
 ### 2 · Une boucle propre : la même image au début et à la fin
 
 **Ce qu'on voit (15:46).** L'écran d'animation a deux cases : « First frame » (obligatoire) et
