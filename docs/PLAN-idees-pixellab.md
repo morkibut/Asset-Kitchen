@@ -145,6 +145,21 @@ tirage sur deux est venu bleu — trop peu pour conclure. ⚠️ Un tirage servi
 compte comme une mesure de temps (3,6 s). Le calque vaut pour **cette image** : le poser sur les
 autres poses ou les animations n'est pas dans cette tranche.
 
+## PX3bis · La couleur demandée obéit
+
+*Ajoutée le 26 septembre 2026, en autopilote, après PX3 : une coiffure demandée bleue revenait
+rouge.* **Livre** un banc gratuit de huit tirages par réglage, sur trois couleurs nommées dans le
+texte, qui choisit la force par défaut de l'outil de retouche de zone ; et un tirage servi par
+le cache de ComfyUI ne compte plus comme une mesure de temps.
+
+### Critères d'acceptation
+
+- [ ] Huit tirages par force essayée et par couleur ; la mesure dit, en une phrase et sans
+      chiffre, ce qu'elle sépare (la couleur demandée est-elle celle qui domine la zone repeinte).
+- [ ] La force par défaut est celle qui obéit le mieux sans effacer le sujet ; si aucune n'obéit,
+      c'est écrit, avec ce qui a été essayé.
+- [ ] Un tirage servi par le cache n'entre pas dans le temps annoncé (essai).
+
 ## PX4 · La marge avant d'animer
 
 **Livre** un réglage « place autour du sujet » sur l'écran qui prépare une animation : la part

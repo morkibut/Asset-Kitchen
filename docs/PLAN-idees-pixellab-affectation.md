@@ -23,18 +23,19 @@
 
 ---
 
-## Les 6 tranches
+## Les 7 tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
 | **PX1** · Le banc de la zone | `[MEDIUM]` | Un banc sur le modèle de `essais/banc_tn6_transparence.py`, un graphe ComfyUI de retouche de zone écrit à la main, une mesure en trois classes. Le point délicat est le passage d'un sprite de 64 px à la taille du moteur et retour. |
 | **PX2** · Le masque voyage jusqu'au moteur local | `[HARD]` | Change la forme d'un profil (une liaison neuve dans une liste fermée) et le dépôt des images ; les essais des moteurs locaux doivent passer tels quels. |
 | **PX3** · Peindre une zone dans l'atelier | `[HARD]` | Un geste neuf sur trois couches (écran, service, agent), un calque qui se rouvre, et le recollage borné à la zone comme invariant. |
+| **PX3bis** · La couleur demandée obéit | `[MEDIUM]` | Un banc gratuit sur le modèle de PX1, une mesure de couleur dominante à définir d'abord en une phrase, et un réglage par défaut qui en découle ; plus une règle neuve (un tirage servi par le cache n'est pas une mesure de temps). |
 | **PX4** · La marge avant d'animer | `[MEDIUM]` | Une constante devient un réglage gardé avec le clip et relu à la réouverture ; pas de forme neuve au-delà d'un champ. |
 | **PX5** · Finir sur une image | `[HARD]` | Change `DemandeClip` et `ModeleVideo`, les deux appels vidéo, le découpage de la bande ; une capacité neuve grisée avec sa raison. |
 | **PX6** · La relecture croisée | `[MEDIUM]` | Confronter les tranches entre elles et au plan ; corriger les coutures. |
 
-**Compte** : 0 `[VERY-HARD]`, 3 `[HARD]`, 3 `[MEDIUM]`, 0 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 3 `[HARD]`, 4 `[MEDIUM]`, 0 `[EASY]`, 0 `[VERY-EASY]`.
 
 ## L'ordre et ce qui part ensemble
 
