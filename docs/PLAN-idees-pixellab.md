@@ -167,6 +167,14 @@ d'affaires récupérées en exploration ».* Mesuré sur la génération gardée
       n'y a trouvé aucun moyen de corriger les trous (non vérifié : ce que ce bouton ouvre pour un
       calque repeint). Il faut pouvoir rouvrir un calque repeint **depuis sa fiche** et y retoucher :
       retirer, et surtout **ramener** les pixels manquants depuis l'image brute du moteur.
+- [ ] **« Garder » ne fait rien.** Le résultat entre en bibliothèque dès qu'il revient (règle du
+      produit) ; « Garder » ferme seulement le panneau, « Jeter » supprime. L'auteur croit choisir,
+      il ne choisit rien.
+- [ ] **Ce que produit « Repeindre » n'a pas de nom dans le produit.** C'est une image rattachée
+      au sujet Mara, sans pose ni direction, qui connaît l'image d'en dessous ; ce n'est **ni une
+      nouvelle version de la pose, ni un équipement** au sens du Codex (un sujet de la famille
+      « équipements », avec un emplacement, porté sur les poses et les animations). *Décision de
+      l'auteur attendue* : ce que le geste doit produire (voir la question posée le 26 septembre).
 - [ ] **Le parcours de A à Z, pensé d'abord et joué au navigateur** (demande de l'auteur : « ça
       doit être simple et intuitif de A à Z »). Ouvrir une image → peindre la zone → écrire →
       lancer → voir le résultat → garder → **retrouver le calque plus tard, sur son image et dans la
