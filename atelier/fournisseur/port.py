@@ -163,12 +163,21 @@ class EtatTravail:
     Trois valeurs et pas une de plus : il travaille, il est prêt, il a échoué.
     Le vocabulaire du fournisseur — `queued`, `in_progress`, `completed`,
     `cancelled` — ne franchit pas son adaptateur.
+
+    **Une quatrième s'ajoute en PX3bis (26 septembre 2026), et elle n'en
+    contredit pas l'esprit** : `noeuds_caches` ne dit rien de *comment* le
+    travail a fini, seulement, quand il a fini, quels nœuds ComfyUI a rendus
+    sans les recalculer — le signal explicite qu'il donne lui-même
+    (`execution_cached`), préféré à une mesure de durée trop courte pour
+    deviner la même chose. Vide tant que rien n'a servi du cache, comme avant
+    cette tranche.
     """
 
     travail: str
     fini: bool = False
     echoue: bool = False
     raison: str = ""
+    noeuds_caches: frozenset[str] = frozenset()
 
 
 class PortAnimateur(Protocol):

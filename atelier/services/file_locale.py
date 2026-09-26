@@ -311,9 +311,15 @@ class ServiceFileLocale:
                                         self._sauver(courante)
                                     resultat = await self._executeurs[etape["nature"]](self._brut(identifiant))
                                     relue = self._brut(identifiant)
+                                    # **PX3bis** : un tirage rendu par le cache de ComfyUI
+                                    # (`resultat["cache"]`, § `FournisseurWorkflowImage._executer`)
+                                    # n'a rien coûté en temps de carte graphique — il n'entre
+                                    # donc jamais dans la médiane du bouton, comme une reprise
+                                    # dont la durée n'est pas connue.
+                                    a_mesurer = etape["demarre_le"] is None and not resultat.get("cache")
                                     self.modifier(identifiant, etat="termine" if resultat.get("reussie", True) else "echoue",
                                         resultat=resultat, termine_le=time.time(), raison=resultat.get("raison", ""),
-                                        duree_s=None if etape["demarre_le"] is not None else max(0, time.time() - relue["demarre_le"]))
+                                        duree_s=max(0, time.time() - relue["demarre_le"]) if a_mesurer else None)
                                     return
                                 raison = (inconnue or occupee).get("raison") or "Un moteur externe n'est pas disponible."
                             if etape["raison"] != raison:

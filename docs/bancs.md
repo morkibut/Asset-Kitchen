@@ -132,6 +132,17 @@ py essais/banc_tn6_transparence.py   TN6 — le banc de transparence du 22 septe
                                      dans `docs/modeles-et-workflows.md` § Le banc de
                                      transparence rejoué par l'atelier, images réduites dans
                                      `docs/releves/banc-tn6-2026-09-25/`
+py essais/banc_px3bis_couleur.py     PX3bis — la couleur écrite dans le texte domine-t-elle
+                                     les pixels que « Repeindre » a changés ?
+                                     (`docs/PLAN-idees-pixellab.md` § PX3bis). GRATUIT —
+                                     ComfyUI en local, même garde que PX1. Passe par le code
+                                     du produit (texte composé, recollage). **Interrompu le
+                                     26 septembre 2026 à la demande de l'auteur** : têtes
+                                     bleu, vert, jaune à 0,9 et 1,0 faites, torse et variante
+                                     « texte court en tête » jamais lancés. Chiffres partiels
+                                     dans `docs/releve-usage.md` § 25 septembre 2026, point 1 ;
+                                     planches dans `essais/resultats/banc-px3bis/` (hors Git).
+                                     Se relance tel quel pour finir le lot
 py essais/banc_px1_zone.py           PX1 — un moteur local repeint-il une zone peinte sans
                                      toucher au reste ? (`docs/PLAN-idees-pixellab.md` § PX1).
                                      GRATUIT — ne parle qu'à ComfyUI en local, aucune ligne

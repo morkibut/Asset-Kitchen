@@ -520,7 +520,7 @@ class MoteurDeLaMaison:
                 travail=travail, fini=True, echoue=True, raison=_pourquoi(statut)
             )
         if statut.get("completed"):
-            return EtatTravail(travail=travail, fini=True)
+            return EtatTravail(travail=travail, fini=True, noeuds_caches=_noeuds_caches(statut))
         return EtatTravail(travail=travail, fini=False)
 
     async def recuperer(self, travail: str) -> ClipProduit:
@@ -860,6 +860,21 @@ def _type_media(nom: str) -> str:
     return {"mp4": "video/mp4", "webm": "video/webm", "webp": "image/webp"}.get(
         fin, "video/mp4"
     )
+
+
+def _noeuds_caches(statut: dict[str, Any]) -> frozenset[str]:
+    """Les nœuds que ComfyUI a rendus **sans les recalculer** — le signal
+    explicite (`execution_cached`), pas une durée trop courte pour le deviner
+    (PX3bis, 26 septembre 2026). Un tirage qui redemande exactement la même
+    image, la même zone et la même graine ressort de ce cache-là ; s'il porte
+    le nœud de sortie du profil, aucun calcul n'a eu lieu — juste un temps de
+    relecture d'historique, jamais la mesure d'un vrai tirage."""
+    noeuds: set[str] = set()
+    for message in statut.get("messages") or []:
+        if isinstance(message, list) and len(message) > 1 and message[0] == "execution_cached":
+            charge = message[1] if isinstance(message[1], dict) else {}
+            noeuds.update(str(n) for n in (charge.get("nodes") or []))
+    return frozenset(noeuds)
 
 
 def _pourquoi(statut: dict[str, Any]) -> str:

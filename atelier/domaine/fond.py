@@ -89,6 +89,7 @@ il n'y avait jusqu'ici rien à regarder.
 
 from __future__ import annotations
 
+import colorsys
 import re
 from dataclasses import dataclass
 from typing import Any, Iterable
@@ -288,6 +289,38 @@ MOTS_COULEUR: dict[str, str] = {
 }
 
 
+def _teinte(couleur: str) -> float:
+    """La teinte HSV d'une couleur, en degrés — pour comparer deux couleurs par
+    **famille perçue** plutôt que par écart de canal (`ecart`, la distance de
+    Tchebychev que le reste de ce module emploie). Les deux questions sont
+    différentes : *ce pixel va-t-il être mangé par le détourage ?* se répond en
+    Tchebychev, *ce fond ressemble-t-il à la couleur qu'on va peindre ?* ne s'y
+    répond pas — voir `_teintes_voisines`."""
+    r, v, b = (c / 255 for c in rvb(couleur))
+    return colorsys.rgb_to_hsv(r, v, b)[0] * 360
+
+
+# **65° — la mesure du 26 septembre 2026, PX3bis.** Le cyan et le bleu ne
+# partagent que deux canaux sur trois (`#00FFFF` contre `#0000FF`, seul le vert
+# bascule) : en Tchebychev c'est un écart de 255, le plus grand qui existe — le
+# cyan est donc apparu **le candidat le plus sûr** contre une coiffure « bleue »,
+# et le fond du 26 septembre 2026 (§ ci-dessous) est retombé dessus. Mais les
+# deux sont voisins de teinte (60°), et l'interdiction qui accompagne le fond —
+# *pas de cyan ni de teinte voisine sur le sujet* — a fini par proscrire le bleu
+# lui-même : la coiffure demandée bleue est revenue rouge sur le vrai moteur.
+# 65° écarte cette paire (et le violet, également voisin du bleu) sans retirer
+# la moitié des six candidats à chaque appel — mesuré sur les couleurs jouées
+# par `essais/banc_px3bis_couleur.py`.
+SEUIL_TEINTES_VOISINES = 65.0
+
+
+def _teintes_voisines(a: str, b: str, seuil: float = SEUIL_TEINTES_VOISINES) -> bool:
+    """Deux couleurs sont-elles la même famille, à l'œil — un cercle, jamais une
+    ligne : le rouge (0°) et le magenta (300°) sont voisins de 60°, pas de 300."""
+    ecart_teinte = abs(_teinte(a) - _teinte(b)) % 360
+    return min(ecart_teinte, 360 - ecart_teinte) <= seuil
+
+
 def choisir_pour_une_zone(couleurs: Iterable[str], description: str) -> Choix:
     """Le fond d'une zone à repeindre (PX3) — **loin de l'image et loin de ce
     que le texte demande**, les deux ensemble.
@@ -298,12 +331,24 @@ def choisir_pour_une_zone(couleurs: Iterable[str], description: str) -> Choix:
     de la peau seule tombait sur le cyan, et l'interdiction qui l'accompagne —
     *pas de cyan ni de teinte voisine sur le sujet* — a donné des cheveux
     rouges au lieu de bleus sur le vrai moteur (26 septembre 2026).
+
+    **La distance de Tchebychev ne dit rien de la famille d'une couleur**
+    (`AGENTS.md`, point 8sexies : une mesure trop large ne dit pas « il n'y a
+    rien », elle dit « je ne sais pas regarder ») — elle a rendu le cyan
+    *maximalement loin* du bleu (`ecart` vaut 255, son plafond) alors que les
+    deux sont voisins de teinte. **Un candidat dont la teinte est voisine
+    d'une couleur demandée est donc écarté avant le calcul de distance, jamais
+    comparé par lui** ; s'il ne reste plus aucun candidat (une description qui
+    nomme presque toutes les familles à la fois), les six reviennent tous en
+    jeu plutôt que de ne rien proposer — mesuré sur `essais/banc_px3bis_couleur.py`,
+    qui a rejoué le sprite et le texte exacts du 26 septembre 2026.
     """
     propres = [c for c in (fond_valide(x) for x in couleurs) if c]
     voulues = [t for _, t in couleurs_nommees(description)]
     if not propres and not voulues:
         return choisir((), description)
-    return _plus_eloigne(CANDIDATS, propres + voulues)
+    surs = tuple(c for c in CANDIDATS if not any(_teintes_voisines(c.couleur, v) for v in voulues)) or CANDIDATS
+    return _plus_eloigne(surs, propres + voulues)
 
 
 def couleurs_nommees(description: str) -> list[tuple[str, str]]:

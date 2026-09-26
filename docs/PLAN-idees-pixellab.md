@@ -154,11 +154,49 @@ le cache de ComfyUI ne compte plus comme une mesure de temps.
 
 ### Critères d'acceptation
 
-- [ ] Huit tirages par force essayée et par couleur ; la mesure dit, en une phrase et sans
-      chiffre, ce qu'elle sépare (la couleur demandée est-elle celle qui domine la zone repeinte).
-- [ ] La force par défaut est celle qui obéit le mieux sans effacer le sujet ; si aucune n'obéit,
-      c'est écrit, avec ce qui a été essayé.
-- [ ] Un tirage servi par le cache n'entre pas dans le temps annoncé (essai).
+- [ ] ~~Huit tirages par force essayée et par couleur~~ — **interrompu**, voir ci-dessous.
+- [ ] ~~La force par défaut est celle qui obéit le mieux~~ — **abandonné** : rien n'a bougé.
+- [x] Un tirage servi par le cache n'entre pas dans le temps annoncé. *Son essai automatique
+      reste à écrire : il part avec PX7.*
+
+**Interrompue le 26 septembre 2026, à la demande de l'auteur.** L'objectif du chantier est
+d'abord **la technique, disponible sur tous les moteurs** ; améliorer vient après, à partir d'une
+liste de pistes (PX8). Ce qui reste de la tranche : deux réparations techniques et des chiffres
+partiels. *Le temps annoncé* ignore désormais un tirage que ComfyUI a resservi depuis son cache
+(signal `execution_cached`). *Le fond neutre* posé derrière le sprite écarte les teintes proches
+d'une couleur nommée dans le texte — il choisissait du cyan pour une demande de bleu. La force par
+défaut (0,9) et la composition du texte **n'ont pas bougé**. Les chiffres partiels, et ce qui n'a
+pas été essayé, sont dans `docs/releve-usage.md` § 25 septembre 2026, point 1.
+
+## PX7 · Repeindre une zone avec chaque moteur local
+
+*Ajoutée le 26 septembre 2026, à la demande de l'auteur : la technique doit servir avec les
+différents modèles, pas avec un seul.* **Livre** un outil de retouche de zone par famille de moteur
+local installée — Qwen-Image 2.1, FLUX.2 Klein, Z-Image, FLUX.1, SDXL — construit sur la même
+recette que `sdxl-retouche-zone` (l'image gardée sous la zone, jamais grisée). Dans « Repeindre »,
+on choisit le modèle ; un modèle dont les fichiers manquent est grisé avec sa raison.
+
+**On ne juge pas la qualité ici** : on vérifie que chaque outil **fonctionne** — il s'installe, il
+part, il revient, rien ne bouge hors de la zone.
+
+### Critères d'acceptation
+
+- [ ] Un outil de retouche de zone par famille de moteur local présente sur la machine ; chacun
+      déclare la liaison `masque`.
+- [ ] « Repeindre » et l'agent laissent choisir le modèle ; un modèle absent ou incapable est
+      grisé avec sa raison.
+- [ ] Un tirage réel par outil, sur la machine : il revient, 0 pixel hors de la zone. Aucune
+      comparaison de qualité.
+- [ ] Les deux réparations de PX3bis ont leur essai automatique (le cache, le fond).
+
+## PX8 · La liste des pistes d'amélioration
+
+*Ajoutée le 26 septembre 2026, à la demande de l'auteur.* **Livre** une liste, dans
+`docs/releve-usage.md`, de ce qu'on pourrait améliorer sur les trois idées, chaque piste avec : ce
+qu'on a vu, ce qu'on essaierait, ce que ça coûterait, et ce qui est déjà mesuré. **Rien ne se
+mesure ni ne se code dans cette tranche** ; c'est l'auteur qui choisira. Au moins : le texte court
+en tête (la piste de l'auteur), la couleur qui n'obéit pas, la force, la qualité selon le moteur,
+les pantalons qui laissent voir le short, et le calque posé sur les autres poses et les animations.
 
 ## PX4 · La marge avant d'animer
 

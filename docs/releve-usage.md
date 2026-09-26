@@ -100,6 +100,27 @@ tirage sur trois ou quatre ne se garde pas, et c'est exactement ce que PixelLab 
 jeu pour l'inpainting, déjà écarté à la première passe. Planches de comparaison et mesures :
 `essais/banc_px1_zone.py`, listé dans `docs/bancs.md`.
 
+**Banc PX3bis (26 septembre 2026) — partiel, interrompu à la demande de l'auteur.** Question : la
+couleur écrite dans le texte est-elle celle qui domine les pixels que l'outil « Repeindre » a
+changés ? Moteur `sdxl-retouche-zone` seul, zone de la tête, huit tirages par case. Chiffre : la
+part médiane des pixels changés qui sont de la teinte demandée.
+
+| Couleur demandée | Force 0,9 | Force 1,0 |
+|---|---|---|
+| bleu | 19 % | 26 % |
+| vert | 25 % | 67 % |
+| jaune | 62 % | 63 % |
+
+**Pas essayé** : la zone du torse (un seul tirage fait, 0 %), la force 1,0 sur le torse, et la
+variante proposée par l'auteur — la description du jeu réduite à quelques mots de style et placée
+*après* la demande. **Ce qui est déjà réparé**, trouvé en relisant le code avant de mesurer : le
+fond neutre posé derrière le sprite était choisi « le plus loin des couleurs de l'image », ce qui
+donnait du cyan pour une demande de bleu ; il écarte maintenant les teintes proches d'une couleur
+nommée dans le texte. Les chiffres ci-dessus ont été faits **après** cette réparation. L'auteur a
+arrêté le banc : l'objectif est d'abord la technique sur tous les moteurs, l'amélioration vient
+après, à partir d'une liste de pistes. Script : `essais/banc_px3bis_couleur.py` ; planches (hors
+Git) : `essais/resultats/banc-px3bis/`.
+
 ### 2 · Une boucle propre : la même image au début et à la fin
 
 **Ce qu'on voit (15:46).** L'écran d'animation a deux cases : « First frame » (obligatoire) et

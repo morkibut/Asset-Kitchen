@@ -270,7 +270,12 @@ class FournisseurWorkflowImage:
                 octets, type_media, reference = await moteur.sortie_de(numero, profil)
                 # Les octets restent acquis même si ce n'est pas une image.
                 self.file_locale.fichiers._poser(self.file_locale._dossier(identifiant) / "resultat", octets)
+                # **PX3bis** : le nœud de sortie du profil, rendu par le cache
+                # de ComfyUI plutôt que recalculé — ce tirage-là n'a rien coûté
+                # en temps de carte graphique, et ne doit pas entrer dans la
+                # médiane du bouton (`ServiceFileLocale._executer`, `duree_s`).
+                cache = str(profil["sortie"]["noeud"]) in etat.noeuds_caches
                 return {"empreinte": hashlib.sha256(octets).hexdigest(), "type_media": type_media,
-                    "sortie": reference, "modele": etape["modele"], "version": profil["version"]}
+                    "sortie": reference, "modele": etape["modele"], "version": profil["version"], "cache": cache}
             await asyncio.sleep(self.intervalle)
         raise SuiviLocalInterrompu("L'attente du workflow est interrompue. Son numéro est conservé pour reprendre sans nouvel appel.")
