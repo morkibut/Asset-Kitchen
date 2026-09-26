@@ -3227,6 +3227,17 @@ export const AIDE: Record<string, Explication> = {
     long: "Une grande frappe a besoin de place pour que ses bras ne sortent pas du cadre ; une pose repliée peut en laisser moins et remplir davantage la toile. Le réglage se garde avec le clip et se relit à sa réouverture — un clip d'avant cette tranche relit 80 %, ce qu'il envoyait déjà.",
   },
 
+  "clip.fin": {
+    nom: "Fin de l’animation",
+    ou: "clip",
+    groupe: "Commander un clip",
+    quoi: "L’image sur laquelle le clip doit finir : libre, l’image de départ (une boucle), ou une autre image du jeu.",
+    change:
+      "Ce qui part vers la vidéo et les modèles possibles : ceux qui ne savent pas finir sur une image choisie se grisent avec leur raison.",
+    origine: "toi · libre",
+    long: "« Revenir à l’image de départ » fait une boucle qui se referme : la dernière image du clip est la première, donc elle est retirée de l’animation pour que le tour ne marque pas un arrêt.\n\nUne autre image est posée sur la même toile et le même fond que le départ, à la même place autour du sujet. Le choix se garde avec le clip et « Relancer » le reprend.",
+  },
+
   "clip.style_combat": {
     nom: "Style de combat",
     ou: "clip",

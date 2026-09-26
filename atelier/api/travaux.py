@@ -76,3 +76,10 @@ def reference(requete: Request, projet: str, identifiant: str, rang: int):
 @routeur.get("/projects/{projet}/production-jobs/{identifiant}/video-reference")
 def entree(requete: Request, projet: str, identifiant: str):
     return Response(requete.app.state.atelier.travaux.reference(projet, identifiant), media_type="image/png")
+
+
+@routeur.get("/projects/{projet}/production-jobs/{identifiant}/video-end")
+def fin(requete: Request, projet: str, identifiant: str):
+    """**PX5** — l'image de fin exacte qui part, quand ce n'est pas le départ.
+    L'écran de confirmation la montre à côté de l'image de départ."""
+    return Response(requete.app.state.atelier.travaux.image_de_fin(projet, identifiant), media_type="image/png")

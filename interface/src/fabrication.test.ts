@@ -28,6 +28,18 @@ describe("demandeDeRelance — la marge du clip d'origine, pas le défaut du pro
     expect(demandeDeRelance(source, null).part_sujet).toBe(0.60)
   })
 
+  test("PX5 — une boucle relancée reste une boucle", () => {
+    const source = clip({ demande: { prompt: "marche", image_de_fin: "depart" } })
+    expect(demandeDeRelance(source, null).image_de_fin).toBe("depart")
+    const autre = clip({ demande: { prompt: "marche", image_de_fin: "asset-fin" } })
+    expect(demandeDeRelance(autre, null).image_de_fin).toBe("asset-fin")
+  })
+
+  test("PX5 — un clip d'avant, sans la clé, relance une fin libre", () => {
+    const source = clip({ demande: { prompt: "marche" } })
+    expect(demandeDeRelance(source, null).image_de_fin).toBeNull()
+  })
+
   test("un clip d'avant PX4, sans la clé, relance une demande à 80 %", () => {
     const source = clip({ demande: { prompt: "marche" } })
     expect(demandeDeRelance(source, null).part_sujet).toBe(0.80)

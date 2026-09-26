@@ -312,6 +312,8 @@ def modele_de_la_maison() -> ModeleVideo:
         resolutions=("480p",),
         proportions=("1:1",),
         accepte_une_image=True,
+        # **PX5** : par le nœud natif `WanFirstLastFrameToVideo` de ComfyUI.
+        accepte_une_image_de_fin=True,
         mesure=MESURE,
         tarification=Tarification(
             genre=MAISON,
@@ -468,7 +470,17 @@ class MoteurDeLaMaison:
 
         largeur, hauteur = taille_demandee(demande.resolution, demande.proportions)
         nom_depose = await self._deposer_image(demande.image)
+        # **PX5** : la dernière image imposée. Une boucle finit sur les octets
+        # mêmes du départ — ils sont déjà déposés, on ne les redépose pas.
+        nom_fin = None
+        if demande.image_de_fin:
+            nom_fin = (
+                nom_depose
+                if demande.image_de_fin == demande.image
+                else await self._deposer_image(demande.image_de_fin, "atelier-fin.png")
+            )
         montage = montage_du_clip(
+            image_de_fin=nom_fin,
             image=nom_depose,
             texte=demande.texte,
             images=modele.images_reelles(demande.secondes),
@@ -698,15 +710,16 @@ class MoteurDeLaMaison:
             timeout=delai, transport=self._transport, follow_redirects=suit
         )
 
-    async def _deposer_image(self, octets: bytes) -> str:
+    async def _deposer_image(self, octets: bytes, nom: str = "atelier-entree.png") -> str:
         """Dépose l'image de départ chez ComfyUI et rend le nom qu'il lui donne.
 
         **Toujours sous le même nom, toujours en écrasant.** Un nom unique par
         clip remplirait le dossier d'entrée de ComfyUI de nos brouillons, et
         c'est très exactement ce que la règle *ne rien modifier chez lui*
-        interdit d'esprit sinon de lettre.
+        interdit d'esprit sinon de lettre. L'image de fin (PX5) a son propre nom
+        fixe, `atelier-fin.png` : sous le même, elle écraserait le départ.
         """
-        fichiers = {"image": ("atelier-entree.png", octets, "image/png")}
+        fichiers = {"image": (nom, octets, "image/png")}
         donnees = {"type": "input", "overwrite": "true"}
         try:
             async with self._ouvrir(DELAI_MOYEN) as client:

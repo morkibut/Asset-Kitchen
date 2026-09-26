@@ -38,6 +38,11 @@ export type DemandeTravail = {
    *  que ses bras ne sortent pas du cadre ; une pose repliée peut en laisser
    *  moins. Gardée avec le clip, relue à la réouverture. */
   part_sujet?: number
+  /** **PX5** : la dernière image imposée au clip. `null` ou absente : il finit
+   *  où il veut. `"depart"` : il revient à l'image de départ (la boucle — et
+   *  l'image en double est retirée de la bande). Sinon, l'identifiant d'une
+   *  image du jeu, posée sur la même toile que le départ. */
+  image_de_fin?: string | null
 }
 /** Une case d'une série (RV5) : sa pose et sa direction, le reste vient de la
  *  demande commune. */
@@ -68,6 +73,9 @@ export type Travail = {
   generation_image?: string | null
   references: { asset?: string | null; nom: string; url: string; empreinte: string }[]
   entree_video?: { url: string; empreinte: string }
+  /** **PX5** : la dernière image imposée — `depart` quand c'est l'image de
+   *  départ elle-même (la boucle), sinon l'image composée et son adresse. */
+  fin_video?: { depart: boolean; url?: string; empreinte?: string }
   envoi_image?: { prompt: string; prompt_negatif?: string; options: Record<string, unknown>; proportions: string; resolution?: string | null }
   objectif: ObjectifProduction
   annonce: { image_usd: number; video: PrixVideo; temps_local: AttenteVideo | null

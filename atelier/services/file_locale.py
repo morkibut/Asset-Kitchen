@@ -100,13 +100,19 @@ class ServiceFileLocale:
             return etape
 
     def preparer(self, cle: str, *, nature: str, moteur: str, modele: str, projet: str | None,
-                 acteur: str, parametres: dict[str, Any], entree: bytes | None = None) -> dict[str, Any]:
+                 acteur: str, parametres: dict[str, Any], entree: bytes | None = None,
+                 fin: bytes | None = None) -> dict[str, Any]:
         if nature not in self._executeurs or moteur not in self._moteurs:
             raise FileLocaleRefusee("Cette méthode locale n'a pas d'exécuteur et de diagnostic raccordés.")
         identifiant = hashlib.sha256(cle.encode()).hexdigest()[:32]
         contrat = {"nature": nature, "moteur": moteur, "modele": modele, "projet": projet,
                    "acteur": acteur, "parametres": parametres,
                    "empreinte_entree": hashlib.sha256(entree).hexdigest() if entree is not None else None}
+        # **PX5** : la seconde entrée d'un clip, sa dernière image. Écrite dans
+        # le contrat seulement quand elle existe : un calcul sans elle garde
+        # l'empreinte d'avant cette tranche.
+        if fin:
+            contrat["empreinte_fin"] = hashlib.sha256(fin).hexdigest()
         empreinte = hashlib.sha256(json.dumps(contrat, sort_keys=True, allow_nan=False).encode()).hexdigest()
         dossier = self._dossier(identifiant)
         with self._registre():
@@ -116,6 +122,8 @@ class ServiceFileLocale:
                 return self.lire(identifiant)
             if entree is not None:
                 self.fichiers._poser(dossier / "entree", entree)
+            if fin:
+                self.fichiers._poser(dossier / "fin", fin)
             self._sauver({**contrat, "identifiant": identifiant, "cle": cle, "empreinte": empreinte,
                 "etat": "en_attente", "cree_le": time.time(), "demarre_le": None, "termine_le": None,
                 "travail_externe": None, "soumission_engagee": False, "raison": "En attente de son tour.",
@@ -152,6 +160,17 @@ class ServiceFileLocale:
         octets = (self._dossier(identifiant) / "entree").read_bytes()
         if hashlib.sha256(octets).hexdigest() != etape["empreinte_entree"]:
             raise FileLocaleRefusee("L'entrée conservée de ce calcul a été modifiée.")
+        return octets
+
+    def fin(self, identifiant: str) -> bytes | None:
+        """La dernière image imposée d'un clip (PX5), ou `None` s'il n'en a pas."""
+        etape = self._brut(identifiant)
+        attendue = etape.get("empreinte_fin")
+        if not attendue:
+            return None
+        octets = (self._dossier(identifiant) / "fin").read_bytes()
+        if hashlib.sha256(octets).hexdigest() != attendue:
+            raise FileLocaleRefusee("L'image de fin conservée de ce calcul a été modifiée.")
         return octets
 
     def engager(self, identifiant: str) -> None:

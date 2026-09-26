@@ -91,5 +91,8 @@ export function demandeDeRelance(clip: Generation, imageDepart: string | null): 
     // une autre valeur (AGENTS 8septies). Absente sur un clip d'avant cette
     // tranche, et c'est la vérité : il est parti à 80 %.
     part_sujet: clip.demande?.part_sujet ?? 0.80,
+    // **PX5** : la fin du clip d'origine — une boucle relancée reste une
+    // boucle. Absente sur un clip d'avant cette tranche : il finissait libre.
+    image_de_fin: clip.demande?.image_de_fin ?? null,
   }
 }

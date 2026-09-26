@@ -284,6 +284,12 @@ class DemandeClip:
     resolution: str = RESOLUTION_DEFAUT
     # Ce que l'auteur a réglé et que l'adaptateur transporte sans l'interpréter.
     options: Mapping[str, Any] = field(default_factory=dict)
+    # **PX5** : la dernière image du clip, ou `None` — le clip finit alors où il
+    # veut. Composée comme l'image de départ, sur la même toile et le même
+    # fond : pour une boucle, ce sont exactement les mêmes octets. Comme
+    # l'image de départ, elle a été **jointe par l'auteur** : aucun plafond ne
+    # la fait céder (AGENTS 4) — un modèle qui ne la prend pas est grisé.
+    image_de_fin: bytes | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "secondes", duree_normalisee(self.secondes))
@@ -291,6 +297,10 @@ class DemandeClip:
     @property
     def a_son_entree(self) -> bool:
         return bool(self.image)
+
+    @property
+    def a_une_fin(self) -> bool:
+        return bool(self.image_de_fin)
 
 
 @dataclass(frozen=True, slots=True)
@@ -308,6 +318,11 @@ class ModeleVideo:
     # modèle est alors sans objet ici, et le produit le dit plutôt que de payer
     # pour l'apprendre. Un modèle vidéo sur vingt-huit est dans ce cas.
     accepte_une_image: bool = True
+    # **PX5** : vrai quand le modèle sait finir le clip sur une image choisie.
+    # Lu chez le fournisseur (`last_frame` dans ce qu'OpenRouter déclare), vrai
+    # pour le moteur de la maison, faux pour un profil de workflow local, qui
+    # n'a qu'une entrée d'image. Faux par défaut : on ne suppose pas un savoir.
+    accepte_une_image_de_fin: bool = False
     # Ce que ce dépôt a mesuré de lui, ou rien. Voir `MESURES_DU_DEPOT`.
     mesure: str = ""
     # Comment il facture, tel que le fournisseur le déclare, **relu au
@@ -494,6 +509,8 @@ class ModeleVideo:
             return "n'anime pas une image, il ne part que d'un texte"
         if not demande.a_son_entree:
             return "demande une image de départ, et il n'y en a pas"
+        if demande.a_une_fin and not self.accepte_une_image_de_fin:
+            return "ne sait pas finir sur une image choisie"
         if self.durees and demande.secondes not in self.durees:
             possibles = ", ".join(f"{_lisible(d)} s" for d in sorted(self.durees)[:6])
             return f"ne fait pas de clip de {_lisible(demande.secondes)} s — seulement {possibles}"

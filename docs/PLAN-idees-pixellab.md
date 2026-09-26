@@ -143,14 +143,27 @@ double est retirée de la bande pour que la boucle ne saute pas.
 
 ### Critères d'acceptation
 
-- [ ] Le catalogue sait quels modèles prennent une image de fin, et grise les autres avec leur
+- [x] Le catalogue sait quels modèles prennent une image de fin, et grise les autres avec leur
       raison quand on en demande une.
-- [ ] L'appel OpenRouter porte l'image de fin (essai sur le corps de l'appel, fournisseur doublé).
-- [ ] Le modèle maison reçoit l'image de fin par `WanFirstLastFrameToVideo` (essai sur le graphe).
-- [ ] Une boucle n'a pas l'image en double à sa fin.
-- [ ] Un clip gardé avec une image de fin se rouvre avec elle ; l'agent peut la demander.
-- [ ] Le guide a sa ligne.
+- [x] L'appel OpenRouter porte l'image de fin (essai sur le corps de l'appel, fournisseur doublé).
+- [x] Le modèle maison reçoit l'image de fin par `WanFirstLastFrameToVideo` (essai sur le graphe).
+- [x] Une boucle n'a pas l'image en double à sa fin.
+- [x] Un clip gardé avec une image de fin se rouvre avec elle ; l'agent peut la demander.
+- [x] Le guide a sa ligne.
 - [ ] **Laissé à l'auteur** : un essai payé chez OpenRouter, avec son prix annoncé.
+
+**Faite le 26 septembre 2026.** Le réglage s'appelle `image_de_fin` (demande, clip gardé, agent) :
+vide pour une fin libre, `"depart"` pour la boucle, sinon l'identifiant d'une image du jeu. À
+l'écran, « Fin de l'animation » dans « 4. Le clip » : *Libre*, *Finir sur l'image de départ
+(boucle)*, *Une autre image…* (la grille de choix d'image existante). L'image de fin est composée
+comme celle de départ (même toile, même fond, même `part_sujet`). Un modèle qui ne la prend pas
+est grisé : « ne sait pas finir sur une image choisie ». Chez le modèle maison, le nœud devient
+`WanFirstLastFrameToVideo` ; sans image de fin, le graphe est inchangé. Pour une boucle, la bande
+prend une image de plus sur le clip et retire la dernière. **Les profils vidéo locaux restent à
+une seule image**, grisés avec la raison. Au 26 septembre 2026, **15** modèles OpenRouter
+acceptent une image de fin (16 la veille). L'essai payé le moins cher :
+`OpenRouter:bytedance/seedance-1-5-pro`, environ 0,026 $ pour 4 s en 480p carré, d'après le
+catalogue du jour. Essais : `tests/test_px5_image_de_fin.py` (21). Pas vu au navigateur.
 
 ## PX6 · La relecture croisée
 

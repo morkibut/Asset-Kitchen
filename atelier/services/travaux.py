@@ -28,8 +28,8 @@ from atelier.domaine.generation import AUTEUR, AGENT, Generation, Reinjection, S
 from atelier.domaine.recette import Grille, Recette
 from atelier.image import controle_clip
 from atelier.services import retours as _retours
-from atelier.domaine.travail import (TravailRefuse, cadre_valide, demande_normalisee, moteur_sonore_permis,
-                                     pour_l_empreinte)
+from atelier.domaine.travail import (FIN_SUR_LE_DEPART, TravailRefuse, cadre_valide, demande_normalisee,
+                                     images_de_la_bande, moteur_sonore_permis, pour_l_empreinte)
 from atelier.services.texte_clip import composer
 
 # **Le plus gros geste d'un coup** : huit clips, la même borne que le lot de
@@ -239,6 +239,10 @@ class ServiceTravaux:
                 travail["reference_asset"] = (choix.get("asset") or {}).get("identifiant")
                 travail["reference_reutilisee"] = bool(travail["reference_asset"])
             prix_image = 0.0
+            # **PX5** : l'image de fin se vérifie et se compose dès maintenant,
+            # avant toute dépense — une image de fin disparue refuse la
+            # demande ici, pas après que la référence a été payée.
+            self._fin(travail)
             if travail["reference_asset"]:
                 self._reference(travail, travail["reference_asset"])
             else:
@@ -272,7 +276,8 @@ class ServiceTravaux:
                     if prix_image is None:
                         raise TravailRefuse("Le coût de la référence n'est pas encore mesuré. Préciser une réservation en dollars pour ce premier appel.")
             modele = self.a.animation.modele(demande["modele_video"])
-            video = self._demande_video(travail, b"reference-prevue")
+            video = self._demande_video(travail, b"reference-prevue",
+                                        b"fin-prevue" if demande["image_de_fin"] else None)
             refus = self.a.animation.grise(modele, video)
             if refus:
                 raise TravailRefuse(refus)
@@ -341,11 +346,51 @@ class ServiceTravaux:
         travail["entree_video"] = {"empreinte": _hash(entree),
             "url": f"/api/projects/{travail['projet']}/production-jobs/{travail['identifiant']}/video-reference"}
 
+    def _fin(self, travail: dict[str, Any]) -> None:
+        """**PX5** — l'image de fin, vérifiée et composée comme le départ.
+
+        `"depart"` : rien à composer, la fin *est* l'image de départ préparée —
+        mêmes octets, donc une boucle qui se referme exactement. Un asset : il
+        doit être une image disponible de ce jeu, et il est posé sur **la même
+        toile, au même fond et à la même part du sujet** que le départ, pour
+        que les deux images s'alignent.
+        """
+        demande = travail["demande"]
+        choix = demande.get("image_de_fin")
+        if not choix:
+            return
+        if choix == FIN_SUR_LE_DEPART:
+            travail["fin_video"] = {"depart": True}
+            return
+        asset = self.a.assets.lire(choix)
+        if not asset or asset.supprime_le is not None or asset.projet != travail["projet"]:
+            raise TravailRefuse("L'image de fin choisie n'est plus une image disponible de ce jeu.")
+        fin = self.a.animation.preparer_entree(
+            self.a.assets.reference(choix), demande["resolution"], demande["proportions"],
+            demande.get("part_sujet", 0.80),
+        )
+        self.a.fichiers._poser(self._dossier(travail["projet"], travail["identifiant"]) / "fin-video.png", fin)
+        travail["fin_video"] = {"depart": False, "empreinte": _hash(fin),
+            "url": f"/api/projects/{travail['projet']}/production-jobs/{travail['identifiant']}/video-end"}
+
+    def _octets_de_fin(self, travail: dict[str, Any], entree: bytes) -> bytes | None:
+        """Les octets de la fin qui part, relus et vérifiés — ou `None`."""
+        fin = travail.get("fin_video")
+        if not travail["demande"].get("image_de_fin") or not fin:
+            return None
+        if fin.get("depart"):
+            return entree
+        octets = (self._dossier(travail["projet"], travail["identifiant"]) / "fin-video.png").read_bytes()
+        if _hash(octets) != fin["empreinte"]:
+            raise TravailRefuse("L'image de fin préparée pour la vidéo a changé sur le disque.")
+        return octets
+
     @staticmethod
-    def _demande_video(travail, image) -> DemandeClip:
+    def _demande_video(travail, image, fin: bytes | None = None) -> DemandeClip:
         d = travail["demande"]
         return DemandeClip(texte=d["prompt_video"], image=image, secondes=d["secondes"],
-                           resolution=d["resolution"], proportions=d["proportions"], options=d["options_video"])
+                           resolution=d["resolution"], proportions=d["proportions"], options=d["options_video"],
+                           image_de_fin=fin)
 
     def _estimation_sonore(self, methode: dict[str, Any]) -> float:
         """Le temps d'un tirage, relu au moment du lancement sur les mesures
@@ -820,12 +865,14 @@ class ServiceTravaux:
                         # du travail quand il est seul, comme avant —, et le
                         # mouvement part avec lui : c'est ce que le montage lit
                         # pour nommer ses bandes.
-                        await self.a.animation.commander(d["modele_video"], self._demande_video(travail, entree),
+                        await self.a.animation.commander(d["modele_video"],
+                            self._demande_video(travail, entree, self._octets_de_fin(travail, entree)),
                             identifiant=travail["clip"], projet=projet, personnage=d["personnage"],
                             pose=d["pose"], direction=d["direction"], provenance=travail["acteur"],
                             mouvement=d.get("mouvement"), lot=self._lot(travail),
                             depart=travail["reference_asset"], attendre=False,
-                            part_sujet=d.get("part_sujet", 0.80))
+                            part_sujet=d.get("part_sujet", 0.80),
+                            image_de_fin=d.get("image_de_fin"))
                     except Exception as erreur:
                         travail["etat"] = "externe_inconnu"
                         travail["raison"] = f"Acceptation externe incertaine : {erreur}. Aucun nouvel appel automatique."
@@ -877,8 +924,8 @@ class ServiceTravaux:
                     return
                 travail["etape"] = "montage"
                 self._garder(travail)
-                n = min(d["nombre_images"], clip.clip.images)
-                images = [round(i * (clip.clip.images - 1) / max(n - 1, 1)) for i in range(n)]
+                images = images_de_la_bande(clip.clip.images, d["nombre_images"],
+                                            boucle_fermee=d.get("image_de_fin") == FIN_SUR_LE_DEPART)
                 try:
                     # **Le second montage automatique, oublié par la revue**
                     # (RV1) : lui aussi contrôle, sur le même signal que
@@ -968,3 +1015,11 @@ class ServiceTravaux:
         if not (dossier / nom).is_file():
             raise TravailRefuse("La référence n'est pas encore disponible.")
         return (dossier / nom).read_bytes()
+
+    def image_de_fin(self, projet: str, identifiant: str) -> bytes:
+        """**PX5** — l'image de fin composée, telle qu'elle partira."""
+        self._brut(projet, identifiant)
+        chemin = self._dossier(projet, identifiant) / "fin-video.png"
+        if not chemin.is_file():
+            raise TravailRefuse("Cette fabrication n'a pas d'image de fin à part de son image de départ.")
+        return chemin.read_bytes()

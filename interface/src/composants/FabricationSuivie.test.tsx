@@ -493,3 +493,36 @@ test("une série montre ce qui part par case, puis l'étape, le temps, la vignet
   expect(await screen.findByRole("button", { name: "Relire avant l’envoi" })).toBeTruthy()
   expect(travaux.demarrerSerie).toHaveBeenCalledOnce()
 })
+
+// ── PX5 : finir sur une image ─────────────────────────────────────────────
+
+test("finir sur l’image de départ grise au serveur les modèles qui ne savent pas, et part avec la demande", async () => {
+  const liste = vi.spyOn(api, "modelesVideo").mockImplementation(async (_s, _r, _p, imageDeFin) => ({
+    modeles: [
+      { identifiant: "Video:modele", nom: "Vidéo test", grise: null, accepte_une_image_de_fin: true, prix: { montant: .3 }, durees: [5, 10], resolutions: ["480p"], proportions: ["1:1"] },
+      { identifiant: "Video:sans-fin", nom: "Sans fin", grise: imageDeFin ? "ne sait pas finir sur une image choisie" : null, accepte_une_image_de_fin: false, prix: { montant: .2 }, durees: [5, 10], resolutions: ["480p"], proportions: ["1:1"] },
+    ],
+  }) as Awaited<ReturnType<typeof api.modelesVideo>>)
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} modeleInitial="Video:modele" onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: /Vidéo test/ })
+  expect(screen.getByLabelText("Fin de l’animation")).toHaveValue("libre")
+  fireEvent.change(screen.getByLabelText("Fin de l’animation"), { target: { value: "depart" } })
+  // La liste se redemande au serveur, qui grise avec sa raison.
+  await waitFor(() => expect(liste).toHaveBeenLastCalledWith(expect.any(Number), "480p", "1:1", true))
+  const grise = await screen.findByRole("option", { name: /Sans fin — ne sait pas finir sur une image choisie/ })
+  expect(grise).toBeDisabled()
+  fireEvent.change(screen.getByLabelText("Mouvement"), { target: { value: "marche" } })
+  fireEvent.change(screen.getByLabelText("Décrire l’animation"), { target: { value: "Il marche" } })
+  fireEvent.click(screen.getByRole("button", { name: "Relire avant l’envoi" }))
+  await waitFor(() => expect(travaux.preparer).toHaveBeenCalledOnce())
+  expect(vi.mocked(travaux.preparer).mock.calls[0][1]).toMatchObject({ image_de_fin: "depart" })
+  // Et la relecture le dit, avant tout envoi.
+  expect(await screen.findByText(/Fin : revient à l’image de départ/)).toBeTruthy()
+  expect(travaux.demarrer).not.toHaveBeenCalled()
+})
+
+test("la relecture montre l’image de fin exacte quand ce n’est pas le départ", () => {
+  const avecFin = { ...t, demande: { ...t.demande, image_de_fin: "asset-fin" }, fin_video: { depart: false, url: "/fin-figee.png", empreinte: "e" } } as unknown as Travail
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} initiale={avecFin} onClip={() => {}} onFermer={() => {}} />)
+  expect(screen.getByAltText("Image de fin exacte envoyée à la vidéo")).toHaveAttribute("src", "/fin-figee.png")
+})

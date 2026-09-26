@@ -412,11 +412,17 @@ class ServiceAnimation:
         depart: str | None = None,
         monter_auto: bool = False,
         part_sujet: float = 0.80,
+        image_de_fin: str | None = None,
     ) -> Generation:
         """Commande un clip et rend la génération **dès que le travail est écrit**.
 
         L'attente se fait ensuite, en fond. L'appelant a déjà de quoi retrouver
         le clip : c'est tout l'intérêt de rendre si tôt.
+
+        **`image_de_fin`** (PX5) : *d'où* vient la dernière image imposée —
+        `"depart"` pour une boucle, sinon l'identifiant d'un asset —, écrit sur
+        la génération pour que « Relancer » la reprenne. Ses octets, eux,
+        voyagent dans `demande.image_de_fin`.
         """
         # **Le catalogue avant tout**, et relu s'il ne l'a jamais été : un
         # modèle qu'on ne connaît pas se refuse ici, avant l'appel, et non chez
@@ -454,6 +460,10 @@ class ServiceAnimation:
                 # produit). Absente sur une génération d'avant cette tranche,
                 # et c'est la vérité : elle est alors partie à 80 %.
                 "part_sujet": part_sujet,
+                # **PX5** : écrite seulement quand il y en a une. Une génération
+                # sans cette clé est un clip qui finissait où il voulait — tous
+                # ceux d'avant cette tranche, et c'est la vérité.
+                **({"image_de_fin": image_de_fin} if image_de_fin and demande.image_de_fin else {}),
             },
             parametres_resolus=_resolus(modele, demande),
             emplacements=[Emplacement(rang=0)],
@@ -487,7 +497,8 @@ class ServiceAnimation:
                 moteur=moteur, modele=modele.identifiant, projet=projet, acteur=provenance,
                 parametres={"generation": generation.identifiant, "demande": generation.demande,
                     "contexte": {"personnage": personnage, "pose": pose, "direction": direction,
-                                 "lot": lot, "depart": depart}}, entree=demande.image)
+                                 "lot": lot, "depart": depart}}, entree=demande.image,
+                fin=demande.image_de_fin)
             if ancienne:
                 return ancienne
             self._sauver(generation)
@@ -534,7 +545,8 @@ class ServiceAnimation:
                 self.avant_soumission_locale(generation)
             d = etape["parametres"]["demande"]
             demande = DemandeClip(texte=d["prompt"], image=self._file_locale.entree(etape["identifiant"]),
-                secondes=d["secondes"], proportions=d["proportions"], resolution=d["resolution"], options=d["options"])
+                secondes=d["secondes"], proportions=d["proportions"], resolution=d["resolution"], options=d["options"],
+                image_de_fin=self._file_locale.fin(etape["identifiant"]))
             manque = indisponible_de(animateur)
             if manque:
                 raise SansCle(manque)
@@ -1150,7 +1162,7 @@ def _resolus(modele: ModeleVideo, demande: DemandeClip) -> dict[str, Any]:
     c'est ce qui la distingue d'une référence, et que c'est la distinction que
     la tranche instaure.
     """
-    return {
+    resolus = {
         "modele": modele.identifiant,
         "secondes": demande.secondes,
         "proportions": demande.proportions,
@@ -1159,6 +1171,11 @@ def _resolus(modele: ModeleVideo, demande: DemandeClip) -> dict[str, Any]:
         "son": False,
         "options": dict(demande.options),
     }
+    # **PX5** : écrite seulement quand elle part — un clip sans image de fin
+    # garde exactement les paramètres résolus d'avant cette tranche.
+    if demande.image_de_fin:
+        resolus["image_de_fin"] = "jointe"
+    return resolus
 
 
 def _modele_en_json(modele: ModeleVideo) -> dict[str, Any]:
@@ -1174,6 +1191,9 @@ def _modele_en_json(modele: ModeleVideo) -> dict[str, Any]:
         # **Ce que ce dépôt a mesuré, et rien d'autre.** Vide veut dire « on n'en
         # sait rien », et l'écran l'écrit plutôt que de laisser croire.
         "mesure": modele.mesure,
+        # **PX5** : sait-il finir sur une image choisie ? L'écran s'en sert pour
+        # dire, avant tout choix, lesquels restent possibles pour une boucle.
+        "accepte_une_image_de_fin": modele.accepte_une_image_de_fin,
         # ── Ce qu'`A11` ajoute, et qui vaut zéro chez un payant ──────────────
         #
         # Écrit pour tous plutôt que pour le seul local : un champ qui n'existe

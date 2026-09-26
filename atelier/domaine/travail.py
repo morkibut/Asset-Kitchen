@@ -38,13 +38,42 @@ DEFAUTS = {
     # défaut est exactement celui d'avant : sans ce réglage, l'image composée
     # est identique octet pour octet à celle d'hier.
     "part_sujet": 0.80,
+    # **PX5** : la dernière image imposée au clip. `None` : il finit où il veut
+    # (tout ce qui existait avant). `"depart"` : il revient à l'image de départ,
+    # c'est la boucle — et l'image en double est retirée de la bande. Sinon,
+    # l'identifiant d'une image de ce jeu, composée sur la même toile que le
+    # départ.
+    "image_de_fin": None,
 }
+
+# La valeur de `image_de_fin` qui veut dire « finir sur l'image de départ ».
+FIN_SUR_LE_DEPART = "depart"
 
 # Les réglages arrivés après que des demandes ont déjà été conservées. Laissés à
 # leur défaut, ils ne comptent pas dans l'empreinte : une demande de l'agent
 # répétée avec sa clé d'avant RV5 se relit, au lieu de se voir refusée comme
 # « une autre demande » parce que le dictionnaire a grandi.
-TARDIFS = {"mouvement": None, "correction_geste": "", "style_combat": None, "part_sujet": 0.80}
+TARDIFS = {"mouvement": None, "correction_geste": "", "style_combat": None, "part_sujet": 0.80,
+           "image_de_fin": None}
+
+
+def images_de_la_bande(total: int, voulues: int, *, boucle_fermee: bool = False) -> list[int]:
+    """Les rangs des images du clip que la bande garde, répartis à pas égal.
+
+    Sans boucle fermée, la première et la dernière image du clip en sont — le
+    geste de toujours. **Avec une boucle fermée** (PX5, fin = départ), la
+    dernière image du clip *est* la première : la garder ferait jouer deux fois
+    la même image à chaque tour, et la boucle sauterait. On répartit donc
+    `voulues + 1` images sur le clip et on laisse tomber la dernière : la bande
+    garde son compte, à pas égal, et le tour se referme sur l'image 0.
+    """
+    if total <= 0 or voulues <= 0:
+        return []
+    if boucle_fermee and total >= 2:
+        n = min(voulues, total - 1)
+        return [round(i * (total - 1) / n) for i in range(n)]
+    n = min(voulues, total)
+    return [round(i * (total - 1) / max(n - 1, 1)) for i in range(n)]
 
 
 def pour_l_empreinte(demande: dict[str, Any]) -> dict[str, Any]:
@@ -91,7 +120,7 @@ def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> 
             raise TravailRefuse(f"Préciser « {nom} » avant de préparer l'animation.")
     if len(demande["cle"]) > 200:
         raise TravailRefuse("La clé de demande ne doit pas dépasser 200 caractères.")
-    for nom in ("reference_asset", "modele_image", "resolution_image"):
+    for nom in ("reference_asset", "modele_image", "resolution_image", "image_de_fin"):
         if demande[nom] is not None and (not isinstance(demande[nom], str) or not demande[nom].strip()):
             raise TravailRefuse(f"« {nom} » doit être un identifiant ou rester vide.")
     for nom in ("prompt_image", "prompt_negatif_image", "proportions_image", "resolution", "proportions"):

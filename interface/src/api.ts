@@ -216,6 +216,10 @@ export type Generation = {
      *  les appels vidéo ; absente sur une génération d'avant cette tranche,
      *  qui est alors partie à 0,80 — le défaut du produit d'avant elle. */
     part_sujet?: number
+    /** **PX5** : la dernière image imposée — `"depart"` pour une boucle,
+     *  sinon l'identifiant de l'image choisie. Absente : le clip finissait
+     *  libre, comme tous ceux d'avant cette tranche. */
+    image_de_fin?: string
     /** **La case « Garder la mise en page de la référence » était cochée**
      *  (RS2). Absent — et non `false` — quand elle ne l'était pas : `resume()`
      *  ne l'écrit que si elle est vraie, pour qu'un `generation.json` d'avant
@@ -885,6 +889,9 @@ export type ModeleVideo = {
    *  modèle proposé a été éprouvé. Aucun des trois n'atteint la barre des huit
    *  tirages : ce sont des propositions étayées, pas un arbitrage clos. */
   mesure: string
+  /** **PX5** : vrai quand ce modèle sait finir le clip sur une image choisie.
+   *  Optionnel : les essais d'avant cette tranche ne le donnent pas. */
+  accepte_une_image_de_fin?: boolean
   prix: PrixVideo
   /** L'attente annoncée, ou `null` chez un payant — et `null` n'est pas un
    *  trou : ce qu'un modèle payant coûte est de l'argent, et une attente
@@ -5946,11 +5953,14 @@ export const api = {
    *  Le prix se recalcule à chaque changement de durée ou de format : une
    *  seconde de plus n'est pas le même prix, et un catalogue chiffré une fois
    *  au démarrage annoncerait le prix d'autre chose. */
-  modelesVideo: (secondes: number, resolution: string, proportions: string) =>
+  modelesVideo: (secondes: number, resolution: string, proportions: string, imageDeFin = false) =>
     appeler<BaseModelesVideo>(
       `/clips/models?secondes=${secondes}` +
         `&resolution=${encodeURIComponent(resolution)}` +
-        `&proportions=${encodeURIComponent(proportions)}`,
+        `&proportions=${encodeURIComponent(proportions)}` +
+        // **PX5** : un clip qui doit finir sur une image grise les modèles
+        // qui ne savent pas le faire, avec leur raison.
+        (imageDeFin ? "&image_de_fin=true" : ""),
     ),
 
   /** Redemander le catalogue vidéo aux fournisseurs — **le pendant exact de

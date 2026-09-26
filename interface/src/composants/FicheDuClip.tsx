@@ -150,6 +150,14 @@ export function FicheDuClip({
               {clip.images} images · {clip.cadence.toFixed(0)} i/s ·{" "}
               {clip.secondes} s demandées · {clip.proportions} · {clip.resolution} ·{" "}
               sujet à {Math.round((generation.demande.part_sujet ?? 0.80) * 100)} % de la toile
+              {/* **PX5** : écrit seulement quand le clip avait une fin
+                  imposée — un clip sans elle finissait libre, et le dire à
+                  chaque fiche n'apprendrait rien. */}
+              {generation.demande.image_de_fin === "depart"
+                ? " · finit sur l'image de départ"
+                : generation.demande.image_de_fin
+                  ? " · finit sur une image choisie"
+                  : ""}
             </p>
           </div>
         ) : (

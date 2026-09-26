@@ -136,8 +136,15 @@ def montage_du_clip(
     graine: int = 1,
     prefixe: str = "atelier/clip",
     force_pixel: float = 1.0,
+    image_de_fin: str | None = None,
 ) -> dict[str, Any]:
     """Le montage complet, au format que `POST /prompt` attend.
+
+    **`image_de_fin`** (PX5) : le nom déposé de la dernière image imposée. Avec
+    elle, l'étape 14 devient `WanFirstLastFrameToVideo` — le nœud natif de
+    ComfyUI, mêmes entrées que `WanImageToVideo` plus `end_image` (relevé sur
+    `/object_info` le 26 septembre 2026) — et une étape 20 la charge. Sans elle,
+    le montage est exactement celui d'avant cette tranche.
 
     `image` est le nom sous lequel l'image de départ a été déposée chez ComfyUI,
     jamais un chemin de notre côté : les deux processus ne partagent pas
@@ -149,6 +156,21 @@ def montage_du_clip(
     l'oublier fait échouer le montage sans rien dire d'utile.
     """
     largeur, hauteur = (largeur // 16) * 16, (hauteur // 16) * 16
+    montage = _montage_du_clip(
+        image=image, texte=texte, images=images, largeur=largeur, hauteur=hauteur,
+        graine=graine, prefixe=prefixe, force_pixel=force_pixel,
+    )
+    if image_de_fin:
+        montage["14"]["class_type"] = "WanFirstLastFrameToVideo"
+        montage["14"]["inputs"]["end_image"] = ["20", 0]
+        montage["20"] = {"class_type": "LoadImage", "inputs": {"image": image_de_fin, "upload": "image"}}
+    return montage
+
+
+def _montage_du_clip(
+    *, image: str, texte: str, images: int, largeur: int, hauteur: int,
+    graine: int, prefixe: str, force_pixel: float,
+) -> dict[str, Any]:
     return {
         # ── Les deux moitiés du moteur, chacune avec ses deux greffons ───────
         "1": {"class_type": "UnetLoaderGGUF", "inputs": {"unet_name": HAUT}},

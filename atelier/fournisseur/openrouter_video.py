@@ -148,6 +148,10 @@ class OpenRouterVideo:
             # lieu de le découvrir à l'appel.
             accepte_une_image="first_frame"
             in (fiche.get("supported_frame_images") or ()),
+            # **PX5** : la même liste dit s'il sait finir sur une image choisie.
+            # Seize sur vingt-neuf le déclaraient le 26 septembre 2026.
+            accepte_une_image_de_fin="last_frame"
+            in (fiche.get("supported_frame_images") or ()),
             mesure=MESURES_DU_DEPOT.get(chez_lui, ""),
             tarification=tarif,
             tarifs_declares=tuple(sorted(fiche.get("pricing_skus") or {})),
@@ -268,19 +272,12 @@ class OpenRouterVideo:
             # **L'image de départ, pas une inspiration.** C'est la différence de
             # nature entre ce port et l'autre : `frame_images` impose la première
             # image du clip, là où `input_references` propose une ressemblance.
-            "frame_images": [
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": "data:"
-                        + _type_media(demande.image)
-                        + ";base64,"
-                        + base64.b64encode(demande.image).decode("ascii")
-                    },
-                    "frame_type": "first_frame",
-                }
-            ],
+            "frame_images": [_image_du_clip(demande.image, "first_frame")],
         }
+        # **PX5** : la dernière image, dans le même champ et avec son rôle.
+        # Absente, le corps est exactement celui d'avant cette tranche.
+        if demande.image_de_fin:
+            corps["frame_images"].append(_image_du_clip(demande.image_de_fin, "last_frame"))
         corps.update(dict(demande.options))
         return corps
 
@@ -342,6 +339,17 @@ class OpenRouterVideo:
             raise FournisseurIndisponible(
                 f"clip injoignable — {_panne(erreur)}"
             ) from None
+
+
+def _image_du_clip(octets: bytes, role: str) -> dict[str, Any]:
+    """Une image imposée au clip, avec son rôle : `first_frame` ou `last_frame`."""
+    return {
+        "type": "image_url",
+        "image_url": {
+            "url": "data:" + _type_media(octets) + ";base64," + base64.b64encode(octets).decode("ascii")
+        },
+        "frame_type": role,
+    }
 
 
 # ── Lecture des déclarations du catalogue ────────────────────────────────────

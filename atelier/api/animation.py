@@ -398,7 +398,7 @@ async def choisir_style_de_la_piece(
 
 
 def _demande_de_jauge(
-    secondes: float, resolution: str, proportions: str
+    secondes: float, resolution: str, proportions: str, image_de_fin: bool = False
 ) -> DemandeClip:
     """La demande qui sert à **jauger** un modèle, sans image et sans texte.
 
@@ -407,6 +407,10 @@ def _demande_de_jauge(
     pas ce que l'auteur a joint. Le refus *« demande une image de départ »* est
     donc écarté volontairement, en lui donnant un octet : l'écran ne va pas
     griser les onze modèles vidéo parce que rien n'est encore sélectionné.
+
+    **L'image de fin, elle, se jauge** (PX5) : quand l'auteur a demandé qu'un
+    clip finisse sur une image, un modèle qui ne sait pas le faire est grisé
+    avec sa raison avant d'être choisi.
     """
     return DemandeClip(
         texte="",
@@ -414,6 +418,7 @@ def _demande_de_jauge(
         secondes=secondes,
         resolution=resolution,
         proportions=proportions,
+        image_de_fin=b"\0" if image_de_fin else None,
     )
 
 
@@ -423,15 +428,17 @@ async def modeles_video(
     secondes: float = Query(SECONDES_DEFAUT, ge=1, le=60),
     resolution: str = Query(RESOLUTION_DEFAUT),
     proportions: str = Query(PROPORTIONS_DEFAUT),
+    image_de_fin: bool = Query(False),
 ) -> dict[str, Any]:
     """Les modèles vidéo, leur prix du jour **avec sa formule**, et leur grisé.
 
     Le prix dépend de ce qu'on demande — une seconde de plus, une résolution de
     plus, et il change. Il se calcule donc pour le réglage courant, transmis en
-    paramètres, et non une fois pour toutes au démarrage.
+    paramètres, et non une fois pour toutes au démarrage. `image_de_fin` (PX5) :
+    le clip demandé finit sur une image choisie.
     """
     atelier = _atelier(requete)
-    demande = _demande_de_jauge(secondes, resolution, proportions)
+    demande = _demande_de_jauge(secondes, resolution, proportions, image_de_fin)
     modeles = await atelier.animation.a_jour()
     etat = atelier.animation.etat()
     lignes = []

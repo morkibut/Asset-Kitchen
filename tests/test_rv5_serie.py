@@ -130,7 +130,7 @@ def test_les_secondes_sont_un_reel_de_0_a_60():
 
 def test_une_demande_d_avant_rv5_garde_son_empreinte():
     brute = {"cle": "k", "personnage": "p", "pose": "marche", "direction": "", "modele_video": "m", "prompt_video": "t"}
-    assert set(pour_l_empreinte(demande_normalisee(brute))) == set(demande_normalisee(brute)) - {"mouvement", "correction_geste", "style_combat", "part_sujet"}
+    assert set(pour_l_empreinte(demande_normalisee(brute))) == set(demande_normalisee(brute)) - {"mouvement", "correction_geste", "style_combat", "part_sujet", "image_de_fin"}
 
 
 def test_la_duree_par_defaut_est_toujours_acceptee():
