@@ -199,7 +199,9 @@ l'auteur qui décidera laquelle devient une tranche.
   l'auteur pense Qwen le plus fort, or Qwen n'a été essayé qu'avec l'ancienne méthode destructrice
   (`VAEEncodeForInpaint`, première passe de PX1) — jamais avec la correction retenue.
 - Ce qu'on essaierait : rejouer un même lot de zones sur les cinq moteurs avec la recette
-  corrigée, et regarder les planches côte à côte.
+  corrigée, et regarder les planches côte à côte — **sur un vrai personnage des projets de
+  l'auteur**, copié hors de `donnees/` : les tirages de PX7 partaient d'un sujet carré et ne
+  permettent aucun jugement.
 - Ce que ça coûterait : moyen — gratuit sur la machine, mais cinq fois plus long (FLUX.1 seul
   prend 189 s par tirage).
 - Ce qui est déjà mesuré : rien sur la qualité ; seuls les temps le sont (`docs/PLAN-idees-pixellab.md`

@@ -216,9 +216,9 @@ export function EcranRepeindre({
     : raisonDuModele
       ? raisonDuModele
       : traits.length === 0
-        ? "Peignez d'abord la zone à repeindre."
+        ? "Peins d'abord la zone à repeindre."
         : !texte.trim()
-          ? "Écrivez ce qu'il faut mettre dans la zone."
+          ? "Écris ce qu'il faut mettre dans la zone."
           : enCours
             ? "Une zone est déjà en train d'être repeinte."
             : null

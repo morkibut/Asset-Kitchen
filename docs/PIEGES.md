@@ -2004,3 +2004,28 @@ la prochaine réécriture retrouvera.
   regarder (CM1, 25 septembre 2026). **Tout générateur asynchrone lu par un autre se lit
   sous `aclosing`**, et un essai de fermeture ne laisse pas la boucle tourner entre le geste
   et la vérification.
+- **Une mesure « zéro pixel changé hors de la zone » ne dit rien de ce qui se passe *dans* la
+  zone, et une première passe l'a annoncée « bon » à tort.** `VAEEncodeForInpaint` grise les
+  pixels sous le masque **avant** de les encoder : le moteur ne voit alors plus ce qu'il y
+  avait, et doit tout redessiner de mémoire — ce qu'un modèle généraliste à haut denoise ne
+  sait pas faire proprement. Sur le banc de la retouche de zone (PX1), le visage disparaissait
+  entièrement sous la coiffure sur les huit tirages de la tête, le torse ressortait troué : la
+  mesure du contour de la zone était vraie, à zéro, par construction — elle ne regardait que
+  l'extérieur, jamais l'intérieur. Une relecture visuelle stricte des planches, pas la mesure,
+  l'a montré. Corrigé en encodant l'image **telle quelle** (`VAEEncode`, jamais grisée) puis en
+  posant le masque par-dessus (`SetLatentNoiseMask`, force 0,9) : le sujet sous la zone reste
+  dans le latent de départ, et un denoise partiel le laisse transparaître au lieu de le
+  remplacer par du bruit pur. **Toute recette de retouche de zone se juge sur deux mesures, pas
+  une** : rien hors de la zone, et rien du sujet effacé dans la zone. PX1, 26 septembre 2026 ;
+  planches et mesure (`pixels_sujet_devenus_transparents`) dans `essais/banc_px1_zone.py`.
+- **Un fond choisi « le plus loin des couleurs de l'image » s'éloigne aussi de la couleur
+  qu'on vient de demander.** Le fond neutre posé derrière le sprite avant une retouche de zone
+  (`atelier/image/zone.py`, `fond_de_la_toile`) cherchait la teinte la plus éloignée de celles
+  déjà présentes ; pour une coiffure demandée bleue, ça choisissait du cyan — une couleur assez
+  proche du bleu pour que le recollage et l'œil la confondent avec ce que le moteur a repeint.
+  Trouvé en relisant le code avant de mesurer la couleur obtenue (PX3bis), pas par un banc : la
+  mesure de couleur dominante n'aurait rien pu distinguer, elle aurait juste rendu un chiffre
+  bas sans dire pourquoi. Corrigé en écartant, parmi les candidats, les teintes voisines d'une
+  couleur nommée dans le texte de la demande (`SEUIL_TEINTES_VOISINES`,
+  `atelier/domaine/fond.py`). **Un choix de fond « le plus différent » doit se différencier de
+  ce qu'on demande, pas seulement de ce qui est déjà là.** PX3bis, 26 septembre 2026.

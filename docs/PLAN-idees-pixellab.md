@@ -197,7 +197,10 @@ n'ayant pas de force), `qwen21-retouche-zone` (sur le graphe « qualité ») et
 y est grisé avec sa raison et propose de s'installer. L'agent passe le même choix à
 `repaint_zone` (`model`). Un tirage réel par outil, 0 $ : les cinq reviennent, 0 pixel hors de la
 zone, 0 pixel de sujet perdu — SDXL 42 s, Z-Image 52 s, Qwen 68 s, Klein 77 s, FLUX.1 189 s. **La
-qualité n'a pas été comparée**, comme demandé. Essais : `tests/test_px7_moteurs.py` (16).
+qualité n'a pas été comparée**, comme demandé. ⚠️ Ces tirages partaient d'un personnage carré
+dessiné par le banc, pas d'un vrai asset : ils prouvent que chaque outil fonctionne, ils ne disent
+rien de ce qu'il dessine. L'auteur l'a relevé : un prochain essai part d'un vrai personnage de ses
+projets, copié hors de `donnees/`. Essais : `tests/test_px7_moteurs.py` (16).
 
 ## PX8 · La liste des pistes d'amélioration
 
@@ -271,3 +274,51 @@ catalogue du jour. Essais : `tests/test_px5_image_de_fin.py` (21). Pas vu au nav
 **Livre** une relecture des tranches faites, confrontées entre elles et au plan : ce que le
 serveur sait rendre a un chemin depuis un écran, les mots suivent `docs/vocabulaire.html`, les
 critères cochés le sont à raison. Le tableau d'état de `docs/PLAN.md` reçoit sa ligne.
+
+**Faite le 26 septembre 2026.** Les coutures tiennent : `part_sujet` et `image_de_fin` (PX4,
+PX5) sont posés au même endroit (« 4. Le clip » de `FabricationSuivie.tsx`), avec les mêmes
+noms partout — la demande, le clip gardé, la fiche du clip (`FicheDuClip.tsx`), l'agent — et se
+relisent à la réouverture. La capacité `masque` (PX2) protège déjà **tout** chemin de
+génération, pas seulement celui de la zone : `Modele.refus` refuse un masque envoyé à un modèle
+qui ne le déclare pas quel que soit l'appelant, donc le « reste pour PX3 » noté par PX2 (« le
+chemin des fabrications suivies refuse un masque avec la raison ») était déjà tenu par
+construction, sans qu'aucune tranche l'écrive exprès. `list_models` expose `repaints_zone`
+(PX2 → PX7) à l'agent, et l'écran « Repeindre » comme `repaint_zone` choisissent le modèle sur
+la même liste `_modeles_capables()` (PX7) ; les cinq outils déclarent tous la liaison `masque`.
+
+**Un défaut trouvé et corrigé** : `Repeindre.tsx` mélangeait deux tutoiements sur le même
+panneau — « ton texte part mot pour mot » (tutoiement, comme le reste de l'atelier — 55
+fichiers le tutoient, un seul, ancien et hors chantier, vouvoie) à côté de deux raisons de
+bouton grisé écrites en vouvoiement, « Peignez d'abord la zone à repeindre. » et « Écrivez ce
+qu'il faut mettre dans la zone. ». Corrigé en « Peins d'abord la zone à repeindre. » et « Écris
+ce qu'il faut mettre dans la zone. » (`interface/src/composants/Repeindre.tsx`,
+`Repeindre.test.tsx`), vérifié au navigateur en peignant réellement une zone. **Laissé tel
+quel** : les messages de refus du serveur (`TEXTE_VIDE`, `ZONE_VIDE` dans
+`atelier/services/zone.py`) restent en vouvoiement — c'est la convention déjà en place pour les
+messages de refus ailleurs dans le serveur (`atelier/audio/texte.py`,
+`atelier/services/generation.py`), une question distincte du ton d'un écran, et hors du
+périmètre de ce chantier.
+
+**Une absence relevée, non comblée** : `FabricationVideoLibre.tsx` (« Faire une vidéo libre »,
+sans sujet) partage le même type de demande et la même route serveur que `FabricationSuivie.tsx`
+(`ServiceTravaux.preparer(..., source_libre=True)`, qui lit `part_sujet` et `image_de_fin`
+exactement pareil), mais son écran ne pose ni « Place autour du sujet » ni « Fin de
+l'animation » — ces deux réglages restent donc hors de portée d'un clip libre, alors que le
+serveur les honorerait. Ni PX4 ni PX5 ne nomment cet écran dans leurs critères (« l'écran qui
+prépare une animation », au singulier), donc rien n'est décoché ; c'est une piste de plus pour
+l'auteur, pas un défaut des critères tenus.
+
+**Vérifié au navigateur** sur un atelier jetable (`essais/atelier_jetable_px6.py`, port 8427,
+fournisseur et ComfyUI doublés, rien payé, rien écrit dans `donnees/`) : la fabrique
+« Repeindre » (le pinceau, `sdxl-retouche-zone` installé et prêt, les quatre autres outils
+grisés avec leur raison, le temps sur le bouton, le tutoiement une fois corrigé) et, sur un
+personnage avec une pose, la fenêtre de préparation d'un clip — « Place autour du sujet · 80 %
+de la toile » et les trois choix de « Fin de l'animation », y compris la sélection de « Finir
+sur l'image de départ (boucle) ». Aucune génération, aucun appel payé, aucun calcul GPU réel :
+le double de ComfyUI a répondu à la place de la machine.
+
+**Essais** : `pytest -q -n4 --dist loadfile` (4 420 passés, 4 sautés, 0 échec) ;
+`npx tsc --noEmit` (rien à dire) ; `npm test` complet (2 échecs isolés, tous deux confirmés
+flaky sous charge en les rejouant seuls — `SonRetro.test.tsx` et un test d'`App.test.tsx`,
+aucun des deux touché par ce chantier) ; `essai_vocabulaire.py`, `essai_jetons.py`,
+`essai_imports.py`, `essai_docs.py` : rien à signaler.

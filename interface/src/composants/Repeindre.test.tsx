@@ -175,9 +175,9 @@ test("peindre, écrire, lancer : le temps est annoncé avant, la zone et le text
   expect(screen.getByText(/Pas encore mesuré sur cette machine/)).toBeTruthy()
   // Rien de peint : grisé, et il dit pourquoi.
   expect(bouton().disabled).toBe(true)
-  expect(screen.getByText("— Peignez d'abord la zone à repeindre.")).toBeTruthy()
+  expect(screen.getByText("— Peins d'abord la zone à repeindre.")).toBeTruthy()
   await peindreLaTete()
-  expect(screen.getByText("— Écrivez ce qu'il faut mettre dans la zone.")).toBeTruthy()
+  expect(screen.getByText("— Écris ce qu'il faut mettre dans la zone.")).toBeTruthy()
   ecrire("blue spiky hair")
   // Ce qui part se lit avant de partir.
   await waitFor(() => expect(document.querySelector("[data-ce-qui-part]")?.textContent).toContain("pixel art, blue spiky hair"))
