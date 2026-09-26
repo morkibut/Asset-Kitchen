@@ -287,6 +287,18 @@ function construireDouble(
     // suffit ; le double par défaut plus bas a un champ `pose` qui n'a rien à
     // voir (celui d'un personnage) et ferait planter le calage.
     if (url.includes("/overlay")) return rendre({})
+    // PX3 : la fabrique « Repeindre », sans modèle capable.
+    if (url.endsWith("/zone") && methode === "GET")
+      return rendre({
+        image: "img",
+        modele: null,
+        raison: "aucun modèle de l'atelier ne sait repeindre une zone",
+        outil: { identifiant: "sdxl-retouche-zone", nom: "Retouche de zone (pixel)", pret: false, manque: [], modele: null, vitesse: null },
+        temps: null,
+        force: null,
+        couleurs: { defaut: 4, maximum: 16 },
+        calques: [],
+      })
     if (url.includes("/moods"))
       return rendre({ projet: "le-marais", palettes: palettesDouble, ambiances: [], du_jeu: [] })
 
@@ -423,7 +435,7 @@ const scene = () => document.querySelector("[data-scene-de-retouche]") as HTMLEl
 // ── Les essais ──────────────────────────────────────────────────────────────
 
 describe("la barre : huit tables, un trait, deux fabriques", () => {
-  test("les dix sont à l'écran, dans l'ordre du domaine, et aucune n'est cachée", () => {
+  test("les onze sont à l'écran, dans l'ordre du domaine, et aucune n'est cachée", () => {
     monter()
     const puces = Array.from(barre().querySelectorAll("[data-table]")).map((b) =>
       b.getAttribute("data-table"),
@@ -441,6 +453,8 @@ describe("la barre : huit tables, un trait, deux fabriques", () => {
       "main",
       "decoupage",
       "superposition",
+      // PX3 : la troisième fabrique, après les deux autres.
+      "repeint",
     ])
   })
 
@@ -468,13 +482,14 @@ describe("la barre : huit tables, un trait, deux fabriques", () => {
     monter()
     const traits = barre().querySelectorAll("[data-trait-des-fabriques]")
     expect(traits.length).toBe(1)
-    // **À droite du trait**, et rien d'autre : les deux fabriques écrivent
-    // d'autres fichiers et ne posent rien sur cette image-ci.
+    // **À droite du trait**, et rien d'autre : les trois fabriques écrivent
+    // d'autres fichiers et ne posent rien sur cette image-ci — « Repeindre »
+    // (PX3) fait naître un calque, elle ne touche pas à l'image ouverte.
     const puces = Array.from(barre().querySelectorAll("[data-table]"))
     const rangDuTrait = Array.from(barre().children).findIndex((n) =>
       n.querySelector("[data-trait-des-fabriques]"),
     )
-    expect(puces.length).toBe(10)
+    expect(puces.length).toBe(11)
     expect(rangDuTrait).toBe(8)
   })
 
@@ -488,6 +503,14 @@ describe("la barre : huit tables, un trait, deux fabriques", () => {
         "[data-pastille]",
       ),
     ).toBeNull()
+  })
+
+  test("« Repeindre une zone » s'ouvre depuis le pied du panneau, à côté des deux autres fabriques", async () => {
+    // **Vu au navigateur** (PX3) : la barre des tables est repliée par
+    // défaut ; sans ce bouton, la fabrique n'avait aucun chemin visible.
+    monter()
+    fireEvent.click(screen.getByRole("button", { name: "Repeindre une zone" }))
+    await waitFor(() => expect(document.querySelector("[data-repeindre]")).toBeTruthy())
   })
 
   test("une place vide se distingue d'une place posée", () => {

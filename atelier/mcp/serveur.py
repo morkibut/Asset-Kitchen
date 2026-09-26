@@ -469,6 +469,9 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     # demande. Une capacité, comme `references_max` ou
                     # `aspect_ratios` — jamais un nom de modèle en dur.
                     "transparent_background": m.transparence,
+                    # PX3 : repeint une zone peinte (repaint_zone) — la même
+                    # capacité que `GET /api/models` (`masque`).
+                    "repaints_zone": m.masque,
                     "unavailable": grises.get(m.fournisseur),
                     # Dans quoi ce modèle-là se paie. `usd` pour tout ce qui
                     # facture ; autre chose pour ce qui consomme sans facturer,
@@ -1609,6 +1612,8 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
     installer_sources_3d(serveur, atelier, _refus_lisible)
     from atelier.mcp.enregistrer_sous import installer_enregistrer_sous
     installer_enregistrer_sous(serveur, atelier, _refus_lisible)
+    from atelier.mcp.zone import installer_zone
+    installer_zone(serveur, atelier, _refus_lisible)
     return serveur
 
 

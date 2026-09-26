@@ -48,6 +48,7 @@ from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.coup_de_main import ServiceCoupDeMain
 from atelier.services.reserves import ServiceReserves
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
+from atelier.services.zone import ServiceZone
 from atelier.services.enregistrer_sous import (
     EnregistrementRefuse,
     ServiceEnregistrerSous,
@@ -648,6 +649,9 @@ class Atelier:
         # montée après `self.tuiles` et `self.generations`, qu'elle appelle
         # toutes les deux sans que ni l'une ni l'autre n'apprenne qu'elle existe.
         self.matieres = ServiceMatieres(self)
+        # PX3 : repeindre une zone — le geste de PixelLab, sur un moteur local.
+        # Après les travaux : une zone de l'agent en est un.
+        self.zone = ServiceZone(self)
         # TU10 : le rendu serveur d'un jeu de tuiles fabriqué, par le code de l'écran
         # lancé sous Node (atelier/tuiles_node/rendre.mjs). Facultatif : sans Node,
         # seuls les gestes de l'agent qui fabriquent un atlas le disent.

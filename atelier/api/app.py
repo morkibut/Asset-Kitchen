@@ -20,6 +20,7 @@ from atelier.api.bibliotheque import routeur as routeur_bibliotheque
 from atelier.api.coup_de_main import routeur as routeur_coup_de_main
 from atelier.api.depliages import routeur as routeur_depliages
 from atelier.api.enregistrer_sous import routeur as routeur_enregistrer_sous
+from atelier.api.zone import routeur as routeur_zone
 from atelier.api.gestes import routeur as routeur_gestes
 from atelier.api.production import routeur as routeur_production
 from atelier.api.sortie import routeur as routeur_sortie
@@ -300,6 +301,7 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     # — les images et les animations — et qu'il n'appartient donc ni à la
     # bibliothèque ni à l'animation.
     application.include_router(routeur_enregistrer_sous, prefix="/api")
+    application.include_router(routeur_zone, prefix="/api")
     # **Les dépliages d'une planche** (P1b, V3.5) : refaire un découpage,
     # lister, supprimer, et compter ce qui dépend d'une planche.
     application.include_router(routeur_depliages, prefix="/api")

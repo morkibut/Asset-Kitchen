@@ -96,6 +96,7 @@ import { imageAsset, sujetAsset, useVisee } from "./Apercu"
 // panne que cette tranche répare ailleurs.
 import { EchantillonDeHauteur, part, rectangleDeLImage, useEcoule } from "./pieces"
 import { EcranSuperposition } from "./Superposition"
+import { EcranRepeindre } from "./Repeindre"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { useEtatDuParcours } from "./MemoireDuParcours"
 import { CommandesDuZoom } from "./CommandesDuZoom"
@@ -174,6 +175,7 @@ const NOM_DE_LA_TABLE: Record<Table, string> = {
   main: "Main",
   decoupage: "Découper",
   superposition: "Superposer",
+  repeint: "Repeindre",
 }
 
 /** Ce que chaque table fait, en une phrase — celles de `Retouche.dc.html`. */
@@ -188,6 +190,7 @@ const CE_QUE_LA_TABLE_FAIT: Record<Table, string> = {
   main: "On repeint soi-même, par-dessus.",
   decoupage: "Une image, plusieurs sujets.",
   superposition: "Deux images, un calque.",
+  repeint: "Une zone, un texte, un calque.",
 }
 
 /** Un chiffre suivi de son mot, accordé. « 1 taches détachées » était vu à
@@ -4500,7 +4503,7 @@ export function Retouche({
   // la place de ses réglages. Elle vit dans le panneau (onglet Retouche) ; et
   // dans l'en-tête tant qu'une fabrique occupe le cadre, panneau compris, pour
   // qu'on passe d'une fabrique ou d'une table à l'autre sans détour.
-  const fabriqueOuverte = ouverte === "decoupage" || ouverte === "superposition"
+  const fabriqueOuverte = ouverte === "decoupage" || ouverte === "superposition" || ouverte === "repeint"
   const barreDesTables = (
     <details className="shrink-0 text-[12px] text-encre-3"><summary className="cursor-pointer">Toutes les tables et leur état</summary>
     <div data-barre-des-tables className="flex flex-wrap items-center gap-[4px] pt-[8px]">
@@ -4584,6 +4587,10 @@ export function Retouche({
         {ouverte === "decoupage" ? (
           <div className="col-span-2 row-start-2 row-span-2 flex min-h-0 overflow-hidden pb-[22px]">
             {decoupe(() => setOuverte("detourage"))}
+          </div>
+        ) : ouverte === "repeint" ? (
+          <div className="col-span-2 row-start-2 row-span-2 flex min-h-0 overflow-hidden pb-[22px]">
+            <EcranRepeindre asset={asset} onErreur={onErreur} onRetoucher={(id) => { setOuverte("main"); onSoeur(id) }} />
           </div>
         ) : ouverte === "superposition" ? (
           <div className="col-span-2 row-start-2 row-span-2 flex min-h-0 overflow-hidden pb-[22px]">
@@ -5028,6 +5035,8 @@ export function Retouche({
             <div className="order-last flex shrink-0 flex-wrap gap-[8px] border-t border-trait pt-[14px] text-[12px]">
               <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("decoupage") })} className="rounded-7 border border-trait px-[8px] py-[4px]">Découper une image</button>
               <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("superposition") })} className="rounded-7 border border-trait px-[8px] py-[4px]">Extraire un élément</button>
+              {/* PX3 : la troisième fabrique, au même pied que les deux autres. */}
+              <button type="button" onClick={() => sortir(() => { setPanneau("retouche"); setOuverte("repeint") })} className="rounded-7 border border-trait px-[8px] py-[4px]">Repeindre une zone</button>
               {onAssocierEquipement && <button type="button" onClick={() => sortir(onAssocierEquipement)} className="rounded-7 border border-trait px-[8px] py-[4px]">Utiliser comme équipement…</button>}
               {onPoserSurLaToile && <button type="button" onClick={() => sortir(onPoserSurLaToile)} className="rounded-7 border border-trait px-[8px] py-[4px]">Poser sur la toile</button>}
             </div>

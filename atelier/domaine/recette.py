@@ -367,6 +367,14 @@ def traits_depuis_json(brut: Any) -> tuple[Trait, ...]:
     return tuple(t for t in relus if t is not None)
 
 
+#: Combien de couleurs neuves une zone repeinte peut apporter à l'image (PX3).
+#: Assez pour une coiffure bleue sur un personnage qui n'a pas de bleu, pas
+#: assez pour ramener le dégradé du moteur : le reste se range sur les couleurs
+#: de l'image d'en dessous.
+COULEURS_NEUVES = 4
+COULEURS_NEUVES_MAX = 16
+
+
 @dataclass(frozen=True, slots=True)
 class Difference:
     """La seconde place — celle qui fait d'une image un **calque** (C3).
@@ -425,6 +433,42 @@ class Difference:
     # (`docs/releve-usage.md`).
     retouche: tuple[Trait, ...] = ()
 
+    # **La zone repeinte** (PX3, 26 septembre 2026) — *une autre source* pour le
+    # même calque. Remplie, le calque ne vient plus de la comparaison au voisin
+    # de 3×3 d'une case revenue : il est **l'ensemble exact des pixels que le
+    # recollage a changés dans la zone peinte** (`atelier.image.zone`). La
+    # comparaison tolérante absorbe une pièce qui *se substitue* — un tee-shirt
+    # sur un torse nu (`docs/releve-usage.md` § 29 août 2026) — et c'est
+    # précisément le défaut que la zone ferme.
+    #
+    # **Tout le reste du calque ne change pas** : `base` est l'image d'en
+    # dessous, le rectangle `zone` et les deux couches de la main (`affinage`,
+    # `retouche`) s'appliquent par-dessus exactement comme sur un calque
+    # d'équipement — la main peut ôter, et `retouche` peut ramener un pixel que
+    # le moteur a peint. Un seul modèle de calque, une seule main.
+    #
+    # `zone_peinte` est la zone en passages de pinceau sur l'image **rendue** de
+    # la base (un vecteur, jamais une image : la règle du `Trait`). `texte` est
+    # ce que l'auteur a demandé d'y mettre, gardé pour rouvrir le calque ; il ne
+    # change aucun pixel. `fond` est la couleur sur laquelle l'image est partie
+    # au moteur — un pixel repeint *en fond* n'est pas de la peinture ; vide,
+    # tout ce que le moteur a peint dans la zone compte. `couleurs` est le
+    # nombre de couleurs neuves permises en plus de celles de la base. La
+    # graine, la force et le modèle sont des faits de l'appel : la génération
+    # les garde.
+    #
+    # **Écrits seulement quand la zone est peinte** (la règle de B1) : le JSON
+    # canonique d'un calque d'équipement, donc son empreinte, ne bouge pas.
+    zone_peinte: tuple[Trait, ...] = ()
+    texte: str = ""
+    fond: str = ""
+    couleurs: int = COULEURS_NEUVES
+
+    @property
+    def repeinte(self) -> bool:
+        """Ce calque vient-il d'une zone repeinte (PX3) plutôt que d'une case ?"""
+        return bool(self.zone_peinte)
+
     @property
     def main_posee(self) -> bool:
         """La main est-elle passée sur ce calque ?
@@ -453,6 +497,16 @@ class Difference:
             "seuil": self.seuil,
             "affinage": [t.en_json() for t in self.affinage],
             "retouche": [t.en_json() for t in self.retouche],
+            **(
+                {
+                    "zone_peinte": [t.en_json() for t in self.zone_peinte],
+                    "texte": self.texte,
+                    "fond": self.fond,
+                    "couleurs": self.couleurs,
+                }
+                if self.zone_peinte
+                else {}
+            ),
         }
 
     @staticmethod
@@ -464,7 +518,13 @@ class Difference:
             seuil=int(d.get("seuil", SEUIL_COULEUR)),
             affinage=traits_depuis_json(d.get("affinage")),
             retouche=traits_depuis_json(d.get("retouche")),
+            zone_peinte=traits_depuis_json(d.get("zone_peinte")),
+            texte=str(d.get("texte") or ""),
+            fond=str(d.get("fond") or ""),
+            couleurs=int(d.get("couleurs", COULEURS_NEUVES)),
         )
+
+
 
 
 @dataclass(frozen=True, slots=True)

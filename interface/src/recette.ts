@@ -558,6 +558,7 @@ export type Table =
   | "main"
   | "decoupage"
   | "superposition"
+  | "repeint"
 
 /** Les huit places, puis le trait, puis les deux fabriques.
  *
@@ -585,6 +586,9 @@ export const TABLES: readonly { cle: Table; nom: string; fabrique?: true }[] = [
   { cle: "main", nom: "la main" },
   { cle: "decoupage", nom: "découpage", fabrique: true },
   { cle: "superposition", nom: "superposition", fabrique: true },
+  // **PX3** — repeindre une zone : une fabrique aussi, elle écrit une autre
+  // image (un calque) sans toucher celle qui est ouverte.
+  { cle: "repeint", nom: "repeint", fabrique: true },
 ]
 
 /** Ce qu'une place vaut, ou rien.
@@ -681,7 +685,7 @@ export function indisponible(
  *  rien à éteindre. Écrit ici, au même endroit que l'ordre des tables, pour que
  *  la correspondance se relise d'un coup d'œil le jour où une place bouge. */
 export function placeDe(table: Table): Place | null {
-  return table === "decoupage" || table === "superposition" ? null : table
+  return table === "decoupage" || table === "superposition" || table === "repeint" ? null : table
 }
 
 /** Cette table dort-elle ? **La seule lecture de la veille dans l'écran.** */

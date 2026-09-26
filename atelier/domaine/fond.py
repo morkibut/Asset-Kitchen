@@ -288,6 +288,24 @@ MOTS_COULEUR: dict[str, str] = {
 }
 
 
+def choisir_pour_une_zone(couleurs: Iterable[str], description: str) -> Choix:
+    """Le fond d'une zone à repeindre (PX3) — **loin de l'image et loin de ce
+    que le texte demande**, les deux ensemble.
+
+    Pour un appel ordinaire, une image de référence tranche seule (RV3). Une
+    zone est l'exception : le texte y dit la couleur de ce qu'on veut *ajouter*
+    (« blue spiky hair »), qui n'est pas encore sur l'image. Le fond pris loin
+    de la peau seule tombait sur le cyan, et l'interdiction qui l'accompagne —
+    *pas de cyan ni de teinte voisine sur le sujet* — a donné des cheveux
+    rouges au lieu de bleus sur le vrai moteur (26 septembre 2026).
+    """
+    propres = [c for c in (fond_valide(x) for x in couleurs) if c]
+    voulues = [t for _, t in couleurs_nommees(description)]
+    if not propres and not voulues:
+        return choisir((), description)
+    return _plus_eloigne(CANDIDATS, propres + voulues)
+
+
 def couleurs_nommees(description: str) -> list[tuple[str, str]]:
     """Les couleurs que cette description nomme, mot lu et teinte, dans l'ordre.
 

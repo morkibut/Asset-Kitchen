@@ -30,7 +30,7 @@ import io
 import time
 import uuid
 from dataclasses import replace
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 
 from PIL import Image, ImageColor
 
@@ -79,7 +79,7 @@ from atelier.domaine.personnage import LIBRE
 from atelier.domaine.personnage import PLANCHE as USAGE_PLANCHE
 from atelier.domaine.personnage import direction_de_lusage
 from atelier.domaine.direction import composer
-from atelier.domaine.fond import AUCUN_FOND, Choix, choisir, fond_valide, nom_du_fond
+from atelier.domaine.fond import AUCUN_FOND, Choix, choisir, choisir_pour_une_zone, fond_valide, nom_du_fond
 from atelier.domaine.transparence import (
     FOND_DES_REFERENCES,
     FOND_TRANSPARENT,
@@ -1199,6 +1199,12 @@ class ServiceGenerations:
         references_ecartees: Sequence[str] | None = None,
         tri: "Tri | None" = None,
         sujets: Sequence[str] | None = None,
+        # **Ce qu'un geste pose à côté de la génération avant qu'elle parte**
+        # (PX3) : appelé une fois, sur l'enregistrement neuf, avant la tâche —
+        # jamais pour une génération déjà soumise. La zone repeinte y écrit ce
+        # que l'image revenue recevra à sa naissance ; rien ne peut donc
+        # arriver avant lui.
+        avant_de_lancer: "Callable[[Generation], None] | None" = None,
     ) -> Generation:
         """Prépare puis lance, sans attendre. L'appelant reçoit l'identifiant."""
         generation, modele, deja = self.preparer(
@@ -1220,6 +1226,8 @@ class ServiceGenerations:
         )
         if deja or modele is None:
             return generation
+        if avant_de_lancer is not None:
+            avant_de_lancer(generation)
 
         # Les octets des références ont été relus dans `preparer` : on repart de
         # l'enregistrement pour que l'appel et le relancer suivent le même chemin.
@@ -1233,6 +1241,34 @@ class ServiceGenerations:
     def demande_preparee(self, generation: Generation) -> Demande:
         """Snapshot d'envoi pour un travail durable : texte et octets résolus ensemble."""
         return self._demande_de(generation)
+
+    def texte_d_une_zone(
+        self, texte: str, modele: str, projet: str | None, base: str
+    ) -> dict[str, str]:
+        """Ce qui partira pour repeindre une zone (PX3), **avant de lancer** —
+        par les mêmes méthodes que `preparer` : un texte repris mot pour mot
+        (le déclencheur du style devant, rien de la bible du jeu), et
+        l'interdiction du fond quand le modèle lit un texte négatif. La
+        génération enregistre ensuite ce qui est vraiment parti."""
+        fond = self.fond_d_une_zone(projet, base, texte)
+        return {
+            "texte": self._texte(texte, True, projet, None, modele=modele, fond=fond),
+            "negatif": self._interdit("", fond) if self._negatif_lu(modele) else "",
+            "fond": fond,
+        }
+
+    def fond_d_une_zone(self, projet: str | None, base: str, texte: str) -> str:
+        """Le fond d'une zone à repeindre (PX3) : loin des couleurs de l'image
+        **et** de celles que le texte nomme (`choisir_pour_une_zone`). La zone
+        le pose sur l'appel comme une correction de l'écran de confirmation
+        (`Tri.fond`), donc la toile, la phrase de calage et l'interdiction
+        partent sur la même couleur."""
+        reinjectes = (Reinjection(asset=base, role=EDITION, origine=ASSET),)
+        try:
+            octets = self._octets_references(reinjectes, projet)
+        except DemandeRefusee:
+            octets = ()
+        return choisir_pour_une_zone(couleurs_lues(octets), texte).couleur
 
     async def soumettre_matiere(
         self,

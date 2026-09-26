@@ -21,6 +21,8 @@ jamais l'interface, qui affiche la phrase qu'elle reçoit :
 
 from __future__ import annotations
 
+import io
+import json
 import time
 import base64
 from dataclasses import replace
@@ -28,6 +30,7 @@ from contextvars import ContextVar
 from typing import Any
 
 import numpy as np
+from PIL import Image
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
@@ -117,6 +120,7 @@ from atelier.image.traitement import (
     silhouette,
 )
 from atelier.image.calque import avec_alpha, differencier
+from atelier.image.zone import Recollage, calque_de_zone
 from atelier.image.palette import couleurs_obtenues, couleurs_visibles, rampes
 from atelier.services.evenements import Diffusion
 
@@ -163,6 +167,10 @@ POCHES_MONTREES = 8
 # reste en coûte 28 : le garder évite de le refaire à chaque cran de curseur.
 # Quatre suffit — on retouche un asset à la fois, deux au plus en comparant.
 DETOURAGES_GARDES = 4
+
+#: Ce qu'une génération de zone repeinte porte à côté d'elle (PX3) : la
+#: différence que l'image revenue recevra à sa naissance.
+FICHIER_ZONE = "zone.json"
 
 # Le nom de l'échelle que porte une matière au barème du projet — le même mot que
 # `naitre` lit sur la demande (`echelle="matière"`), et que `bibliotheque.py`
@@ -1058,6 +1066,13 @@ class ServiceAssets:
         l'une disait « grille » et l'autre non, la fiche montrerait un écart
         que l'auteur n'a jamais créé.
         """
+        # **Une zone repeinte naît calque, et rien d'autre** (PX3) : ni
+        # détourage, ni grille, ni palette du jeu — le calque se tire du brut
+        # par sa seule différence, comme un calque d'équipement. Ce qu'il porte a été posé à côté de la génération
+        # avant son départ (`ServiceZone.lancer`).
+        repeinte = self.zone_repeinte_de(generation)
+        if repeinte is not None:
+            return Recette(difference=repeinte)
         du_projet = self.recette_du_projet(generation)
         if est_une_planche_refaite(generation, rang):
             return recette_de_planche_refaite(du_projet)
@@ -1075,6 +1090,23 @@ class ServiceAssets:
         if recette.passes and self.nee_transparente(generation, rang):
             recette = replace(recette, fond_du_modele=True).endormie(DETOURAGE, True)
         return recette
+
+    def zone_repeinte_de(self, generation: Generation) -> Difference | None:
+        """La différence d'une zone repeinte que cette génération porte, ou rien (PX3).
+
+        Posée à côté de l'enregistrement (`zone.json`), comme la zone elle-même
+        (`masque.png`, PX2) : un `generation.json` reste lisible à l'œil, et la
+        relance comme le rattrapage la relisent au même endroit.
+        """
+        if not generation.demande.get("masque"):
+            return None
+        chemin = self._fichiers.dossier_generation(generation.identifiant) / FICHIER_ZONE
+        if not chemin.is_file():
+            return None
+        try:
+            return Difference.depuis_json(json.loads(chemin.read_text(encoding="utf-8")))
+        except (OSError, ValueError, TypeError):
+            return None
 
     def nee_transparente(self, generation: Generation, rang: int) -> bool:
         """Cette image est-elle **détourée par le modèle** ? (TN3)
@@ -1991,6 +2023,32 @@ class ServiceAssets:
             recette,
         )
 
+    def _corps_repeint(self, difference: Difference) -> np.ndarray | None:
+        """L'image d'en dessous d'une zone repeinte (PX3), **telle qu'elle est
+        partie au moteur** — son rendu, en RGBA, sans détourage de rattrapage :
+        la zone a été peinte sur lui, et le fond lu sur lui."""
+        base = self.lire(difference.base)
+        if base is None:
+            return None
+        if _BROUILLON_RECETTE.get():
+            octets = self._calculer(base).octets
+        else:
+            octets, _ = self.octets(base)
+        with Image.open(io.BytesIO(octets)) as image:
+            return np.asarray(image.convert("RGBA")).copy()
+
+    def recollage(self, asset: Asset) -> Recollage | None:
+        """Le recollage d'une zone repeinte, **avec ce qu'il a compté** (PX3) —
+        hors zone, trous, pixels changés —, ou rien quand ce n'est pas un calque
+        repeint ou que l'image d'en dessous n'est plus là."""
+        difference = asset.recette.difference
+        if difference is None or not difference.repeinte:
+            return None
+        corps = self._corps_repeint(difference)
+        if corps is None:
+            return None
+        return calque_de_zone(corps, self.detourage(asset), difference)[1]
+
     def _avant(self, asset: Asset) -> bytes | None:
         """L'image **avant que la main y passe** (C4 US-151, puis E5).
 
@@ -2058,6 +2116,13 @@ class ServiceAssets:
         """
         if difference is None:
             return rgba
+        if difference.repeinte:
+            # **Une zone repeinte** (PX3) : le même calque, une autre source —
+            # l'ensemble exact des pixels que le recollage a changés, puis la
+            # main de C4 par-dessus. Le brut est l'image du moteur, à sa taille :
+            # le recollage la ramène sur la grille de la base.
+            corps = self._corps_repeint(difference)
+            return rgba if corps is None else calque_de_zone(corps, rgba, difference)[0]
         base = self.lire(difference.base)
         if base is None:
             return rgba

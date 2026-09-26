@@ -2690,6 +2690,57 @@ export const AIDE: Record<string, Explication> = {
   // tables, pas dans le fil d'un emploi — c'est pour ça que son groupe suit
   // les treize de `GU5` plutôt que de s'y mêler. Groupée et vérifiée ici.
 
+  // **PX3 · Repeindre une zone** : la troisième fabrique de la barre des
+  // tables, montée par `Repeindre.tsx` dans `Retouche.tsx`. Une entrée par
+  // réglage, pas une pour l'écran.
+  "fabrique.repeint": {
+    nom: "Repeindre",
+    groupe: "La fabrique Repeindre",
+    ou: "tables",
+    quoi: "Tu peins une zone de l'image, tu écris ce qu'il faut y mettre : un moteur local la repeint, et le reste ne bouge pas.",
+    change:
+      "Rien sur l'image ouverte. Elle en produit un calque posé dessus, qui ne garde que les pixels changés dans la zone — comme un calque d'équipement.",
+    origine: "l'image ouverte, un moteur sur cette machine · rien n'est payé",
+    long:
+      "Il faut l'outil « Retouche d'une zone » installé ; sinon le bouton est grisé et dit comment l'installer.\n\nLe bouton annonce le temps avant de partir : mesuré sur cette machine, ou la vitesse relevée ailleurs tant qu'aucun tirage n'a eu lieu ici.",
+  },
+
+  "repeint.zone": {
+    nom: "la zone",
+    groupe: "La fabrique Repeindre",
+    ou: "tables",
+    quoi: "Ce que le moteur a le droit de repeindre, au pinceau carré, pixel par pixel. La gomme en retire.",
+    change: "Hors de la zone, aucun pixel ne peut changer. Dans la zone, un pixel que le moteur a laissé au fond garde sa couleur d'avant : aucun trou.",
+    origine: "toi · le pinceau sur l'image",
+  },
+
+  "repeint.texte": {
+    nom: "ce qu'il faut y mettre",
+    groupe: "La fabrique Repeindre",
+    ou: "tables",
+    quoi: "Ton texte part mot pour mot, en tête, derrière « pixel art » seulement — ni l'univers du jeu, ni les consignes de pose.",
+    change: "Ce que le moteur peint dans la zone. Il lit l'anglais mieux que le français : « blue spiky hair ».",
+    origine: "toi · « ce qui part » le montre avant le bouton",
+  },
+
+  "repeint.couleurs": {
+    nom: "couleurs neuves",
+    groupe: "La fabrique Repeindre",
+    ou: "tables",
+    quoi: "Combien de couleurs le calque peut ajouter à celles de l'image. Tout le reste est ramené aux couleurs de l'image.",
+    change: "Zéro : le calque n'emploie que des couleurs déjà là. Plus haut : une teinte neuve, comme des cheveux bleus, peut entrer.",
+    origine: "toi · quatre par défaut",
+  },
+
+  "repeint.calque": {
+    nom: "le calque repeint",
+    groupe: "La fabrique Repeindre",
+    ou: "tables",
+    quoi: "Garder, Jeter ou Recommencer avec une autre graine. Un calque gardé se rouvre avec sa zone, son texte et ses réglages.",
+    change: "« Retoucher ce calque » l'ouvre dans la retouche, table « la main » : on y ôte ou on redessine des pixels comme sur tout calque.",
+    origine: "la génération garde la graine, la force et le texte parti",
+  },
+
   "fabrique.superposition": {
     nom: "Superposer",
     groupe: "La fabrique Superposer",

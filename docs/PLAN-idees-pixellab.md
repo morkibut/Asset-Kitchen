@@ -121,12 +121,29 @@ calque gardé se referme et se rouvre avec sa zone et son texte. L'agent a le m�
 
 ### Critères d'acceptation
 
-- [ ] Peindre, écrire, lancer : le calque ne contient aucun pixel hors de la zone.
-- [ ] Le temps est annoncé sur le bouton avant de partir.
-- [ ] Un calque gardé se rouvre avec sa zone et son texte, gardé avec des réglages qui ne sont
+- [x] Peindre, écrire, lancer : le calque ne contient aucun pixel hors de la zone.
+- [x] Le temps est annoncé sur le bouton avant de partir.
+- [x] Un calque gardé se rouvre avec sa zone et son texte, gardé avec des réglages qui ne sont
       pas ceux du défaut.
-- [ ] Le guide a sa ligne pour le nouveau réglage (`interface/src/aide.ts`).
-- [ ] L'agent peut demander la même retouche.
+- [x] Le guide a sa ligne pour le nouveau réglage (`interface/src/aide.ts`).
+- [x] L'agent peut demander la même retouche.
+- [x] *Ajouté par l'auteur en cours de route* : le calque se retouche avec la main et l'éditeur
+      de pixels, comme un calque d'équipement.
+
+**Faite le 26 septembre 2026.** La fabrique « Repeindre » vit dans l'atelier de retouche ; le bouton
+« Repeindre une zone » est aussi posé à côté d'« Extraire un élément ». On peint la zone au pinceau
+carré (gomme, tailles 1 à 15, « Défaire le dernier trait », « Effacer la zone »), on écrit ce qu'il
+faut y mettre, le bouton annonce le temps médian mesuré sur la machine (ou la vitesse de la
+famille, marquée « Pas encore mesuré sur cette machine »). Le résultat se garde, se jette ou se
+recommence. Le calque ne porte **que les pixels changés** — jamais calculé par la différence, dont
+la tolérance avale une substitution —, ramenés aux couleurs de l'image, et il est rangé dans la
+place `difference` comme un calque d'équipement : « Retoucher ce calque › » ouvre la main et
+l'éditeur de pixels, qui y passent tels quels. L'agent a `repaint_zone`. Vérifié sur le vrai
+ComfyUI (0 $, 36 s) : 0 pixel hors zone, 0 pixel de sujet perdu, rouvert à l'identique. ⚠️ **La
+couleur n'obéit pas** : une coiffure demandée bleue est revenue rouge à la force 0,9 ; à 1,0, un
+tirage sur deux est venu bleu — trop peu pour conclure. ⚠️ Un tirage servi par le cache de ComfyUI
+compte comme une mesure de temps (3,6 s). Le calque vaut pour **cette image** : le poser sur les
+autres poses ou les animations n'est pas dans cette tranche.
 
 ## PX4 · La marge avant d'animer
 
