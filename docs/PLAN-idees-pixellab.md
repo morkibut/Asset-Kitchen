@@ -208,6 +208,12 @@ mesure ni ne se code dans cette tranche** ; c'est l'auteur qui choisira. Au moin
 en tête (la piste de l'auteur), la couleur qui n'obéit pas, la force, la qualité selon le moteur,
 les pantalons qui laissent voir le short, et le calque posé sur les autres poses et les animations.
 
+**Faite le 26 septembre 2026.** Onze pistes dans `docs/releve-usage.md` § 25 septembre 2026, « Les
+pistes d'amélioration », chacune avec ce qu'on a vu, ce qu'on essaierait, ce que ça coûterait et ce
+qui est déjà mesuré. Deux écarts avec PixelLab y sont relevés dans le code : « Recommencer » tire
+toujours une graine neuve (pas de « même graine »), et la réduction des couleurs est fixée à
+l'avance (quatre couleurs neuves au plus) au lieu de se régler après coup.
+
 ## PX4 · La marge avant d'animer
 
 **Livre** un réglage « place autour du sujet » sur l'écran qui prépare une animation : la part

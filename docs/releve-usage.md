@@ -96,8 +96,10 @@ manquait, pas le principe de la zone. Le geste « garder / jeter / recommencer �
 livrer n'est pas un confort, c'est la réponse au problème de qualité inégale mesuré ici : un
 tirage sur trois ou quatre ne se garde pas, et c'est exactement ce que PixelLab propose de faire
 à la main. `sdxl-pixelart` reste le moteur de référence recommandé (deux fois plus rapide que
-`klein-pxart4`, qualité comparable) ; `qwen21-rapide` (12 étapes, distillé, cfg 1) reste hors
-jeu pour l'inpainting, déjà écarté à la première passe. Planches de comparaison et mesures :
+`klein-pxart4`, qualité comparable). *Rectifié le 26 septembre 2026* : Qwen n'est **pas** écarté
+— `qwen21-rapide` n'a été essayé qu'à la première passe, avec la méthode qui effaçait le sujet,
+ce qui ne dit rien de sa valeur ; depuis PX7, l'outil de retouche de zone de Qwen part du graphe
+« qualité », et sa qualité n'a jamais été comparée (piste 4 ci-dessous). Planches de comparaison et mesures :
 `essais/banc_px1_zone.py`, listé dans `docs/bancs.md`.
 
 **Banc PX3bis (26 septembre 2026) — partiel, interrompu à la demande de l'auteur.** Question : la
@@ -161,6 +163,116 @@ caméra ». Envoyée à l'angle nord-est, la phrase a fait déraper le mouvement
 l'effet a changé d'un angle à l'autre. Sa solution : une consigne par angle, et la couleur de
 l'effet écrite en toutes lettres. Nos planches envoient déjà un texte par angle ; **non vérifié
 pour les animations**.
+
+### Les pistes d'amélioration — relevées le 26 septembre 2026, rien n'est choisi
+
+La technique de la zone peinte est en place sur les cinq moteurs locaux (PX1 à PX7) : ça marche
+partout. Ce qui suit, ce sont des pistes pour la rendre meilleure — aucune n'est choisie, c'est
+l'auteur qui décidera laquelle devient une tranche.
+
+**1 · Le texte court en tête** (l'idée de l'auteur).
+- Ce qu'on a vu : l'auteur propose d'écrire, après la demande de zone, quelques mots de style au
+  lieu de la description entière du jeu — seulement pour « Repeindre ».
+- Ce qu'on essaierait : composer le texte envoyé au moteur avec les mots de style à la fin,
+  la bible du jeu raccourcie ou ôtée devant.
+- Ce que ça coûterait : petit — un changement de composition de texte, des tirages gratuits.
+- Ce qui est déjà mesuré : rien, la variante n'a jamais été lancée (banc `banc_px3bis_couleur.py`
+  interrompu avant, § 25 septembre 2026 point 1).
+
+**2 · La couleur demandée qui n'obéit pas.**
+- Ce qu'on a vu : une coiffure demandée bleue revient rouge à la force 0,9 ; bleu 19 %, vert
+  25 %, jaune 62 % des pixels changés dans la bonne teinte.
+- Ce qu'on essaierait : reprendre le banc là où il s'est arrêté — le torse, la force 1,0 partout.
+- Ce que ça coûterait : moyen — le banc existe déjà, il reste à finir le lot.
+- Ce qui est déjà mesuré : `essais/banc_px3bis_couleur.py`, chiffres partiels ci-dessus.
+
+**3 · La force par défaut.**
+- Ce qu'on a vu : la force reste à 0,9 ; à 1,0, le vert obéit bien mieux (25 % → 67 %), mais une
+  force plus haute efface davantage le sujet sous la zone.
+- Ce qu'on essaierait : comparer 0,9 et 1,0 sur les trois zones (tête, torse, jambes), pas
+  seulement la tête, avant de changer le défaut.
+- Ce que ça coûterait : moyen — un lot de tirages gratuits, sur le banc déjà écrit.
+- Ce qui est déjà mesuré : les chiffres du point 2 ci-dessus, sur la tête seulement.
+
+**4 · La qualité selon le moteur.**
+- Ce qu'on a vu : cinq moteurs fonctionnent (PX7), mais leur qualité n'a jamais été comparée ;
+  l'auteur pense Qwen le plus fort, or Qwen n'a été essayé qu'avec l'ancienne méthode destructrice
+  (`VAEEncodeForInpaint`, première passe de PX1) — jamais avec la correction retenue.
+- Ce qu'on essaierait : rejouer un même lot de zones sur les cinq moteurs avec la recette
+  corrigée, et regarder les planches côte à côte.
+- Ce que ça coûterait : moyen — gratuit sur la machine, mais cinq fois plus long (FLUX.1 seul
+  prend 189 s par tirage).
+- Ce qui est déjà mesuré : rien sur la qualité ; seuls les temps le sont (`docs/PLAN-idees-pixellab.md`
+  § PX7).
+
+**5 · Les pantalons qui laissent voir le short.**
+- Ce qu'on a vu : quand la zone peinte ne couvre pas tout le vêtement à remplacer, l'ancien
+  vêtement dépasse (relevé sur PX1, planche des jambes).
+- Ce qu'on essaierait : proposer une zone suggérée automatiquement depuis la silhouette du sujet,
+  ou avertir quand la zone peinte est plus petite que la pièce visée.
+- Ce que ça coûterait : gros — ça touche la détection du sujet, pas seulement le pinceau.
+- Ce qui est déjà mesuré : rien, seulement vu à l'œil sur les planches de PX1.
+
+**6 · Poser le calque sur les autres poses et les animations.**
+- Ce qu'on a vu : le calque de PX3 ne vaut que pour l'image sur laquelle on a peint ; le poser
+  sur les autres poses du même sujet ou sur ses animations n'est pas fait.
+- Ce qu'on essaierait : répéter la même zone et le même texte sur chaque pose de la matrice, ou
+  sur chaque image d'une bande animée, et vérifier que le résultat reste cohérent d'une image à
+  l'autre.
+- Ce que ça coûterait : gros — un appel payant ou gratuit par image concernée, et du code neuf.
+- Ce qui est déjà mesuré : rien.
+
+**7 · Réduire les couleurs après coup, comme PixelLab.**
+- Ce qu'on a vu : PixelLab propose un bouton « Reduce colors » après le résultat, à un nombre
+  choisi (7 à l'écran). Chez nous, `zone.py` ramène déjà le calque aux couleurs de l'image plus
+  jusqu'à `COULEURS_NEUVES` (4 par défaut, 16 au maximum) couleurs neuves — mais c'est décidé
+  *avant* de lancer, jamais ajusté après coup en regardant le résultat.
+- Ce qu'on essaierait : un réglage a posteriori sur le calque obtenu, sans relancer le moteur.
+- Ce que ça coûterait : petit à moyen — pas d'appel payant, du traitement d'image seulement.
+- Ce qui est déjà mesuré : rien ; l'écart avec PixelLab est lu dans le code (`atelier/services/zone.py`,
+  `atelier/domaine/recette.py`).
+
+**8 · « Recommencer avec la même graine ».**
+- Ce qu'on a vu : PixelLab propose de refaire un tirage avec la même graine (« Back and reuse
+  seed »). Chez nous, le bouton « Recommencer » de `Repeindre.tsx` tire toujours une graine
+  neuve (`graine: null` envoyé exprès) — vérifié dans le code et son essai
+  (`Repeindre.test.tsx`, « la graine, tirée par le serveur »).
+- Ce qu'on essaierait : un second bouton, ou une case, qui renvoie la graine du calque affiché.
+- Ce que ça coûterait : petit — le paramètre `graine` existe déjà côté serveur, il ne manque que
+  le geste côté écran.
+- Ce qui est déjà mesuré : rien à mesurer, c'est un choix d'écran, pas un chiffre.
+
+**9 · L'image de fin.**
+- Ce qu'on a vu : les profils vidéo locaux ne prennent encore qu'une seule image (l'image de
+  fin est grisée) ; côté OpenRouter, 16 modèles sur 29 l'acceptent, et le moins cher est
+  Seedance 1.5 pro, environ 0,026 $ pour 4 secondes (catalogue du 26 septembre 2026).
+- Ce qu'on essaierait : brancher l'image de fin sur le modèle maison (nœud `WanFirstLastFrameToVideo`,
+  déjà installé) avant de proposer l'appel payant.
+- Ce que ça coûterait : gros pour le modèle maison (code neuf sur le profil vidéo local) ; l'essai
+  payant chez OpenRouter est laissé à l'auteur, prix ci-dessus.
+- Ce qui est déjà mesuré : le prix par appel (catalogue OpenRouter) ; rien sur la qualité du
+  résultat.
+
+**10 · La consigne par angle pour les animations.**
+- Ce qu'on a vu : PixelLab a vu son texte « vers la caméra » déraper le mouvement à l'angle
+  nord-est. Nos planches envoient déjà un texte par angle, mais ce n'est **pas vérifié pour les
+  animations**.
+- Ce qu'on essaierait : rejouer une animation à l'angle nord-est avec une consigne qui nomme
+  la caméra, et regarder si le mouvement dérape comme chez PixelLab.
+- Ce que ça coûterait : petit — un ou deux appels payants ciblés, pour vérifier seulement.
+- Ce qui est déjà mesuré : rien, c'est un risque relevé chez PixelLab, jamais reproduit ici.
+
+**11 · Le temps annoncé au premier lancement.**
+- Ce qu'on a vu : le bouton de « Repeindre » annonce le temps médian mesuré sur la machine, ou
+  « pas encore mesuré sur cette machine », auquel cas il retombe sur la vitesse de la famille.
+- Ce qu'on essaierait : rien à changer tant qu'aucune machine n'a encore de mesure réelle —
+  la première utilisation sur une machine neuve fabriquera cette mesure toute seule.
+- Ce que ça coûterait : rien, c'est déjà fait ; seul le temps réel manque encore, machine par
+  machine.
+- Ce qui est déjà mesuré : les temps par moteur sur la machine de l'auteur (PX7 : SDXL 42 s,
+  Z-Image 52 s, Qwen 68 s, Klein 77 s, FLUX.1 189 s).
+
+**L'auteur choisit** ; une piste choisie devient une tranche du plan.
 
 ---
 
