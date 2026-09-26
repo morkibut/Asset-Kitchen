@@ -277,8 +277,9 @@ qu'une chose : un parcours sans trou.
      équipement fabriqué autrement. La suite (le porter sur les autres poses et les animations) est
      celle qui existe déjà pour les équipements.
    - **« Jeter »** — rien ne reste. Et « Recommencer » relance un tirage.
-   Tant qu'on n'a pas décidé, le résultat n'encombre ni la Galerie ni les poses : il attend sur
-   l'image, dans la liste « à décider ».
+   Tant qu'on n'a pas décidé, le résultat est rangé comme toute production (règle du produit :
+   tout ce qui est produit entre en bibliothèque), mais **marqué « à décider »** : il se montre sur
+   son image, dans la liste « à décider », et ne se mêle pas aux poses.
 5. **Retrouver et corriger plus tard** : la nouvelle version se retouche comme toute image ; le
    calque d'équipement se rouvre depuis l'équipement **et** depuis l'image de Mara, avec la main
    et l'éditeur de pixels, qui peuvent **ramener** des pixels depuis l'image rendue par le moteur.
@@ -288,8 +289,8 @@ qu'une chose : un parcours sans trou.
 - [ ] La pièce n'a plus de trous : elle porte **tout ce que le moteur a peint dans la zone**, pas
       seulement ce qui a changé ; ce qui est vraiment du fond est retiré, et le seuil est vérifié
       sur la génération de Mara du 26 septembre (relue, jamais modifiée).
-- [ ] Les trois décisions font ce qu'elles disent ; un résultat non décidé n'apparaît ni dans la
-      Galerie ni parmi les poses, et se retrouve sur son image.
+- [ ] Les trois décisions font ce qu'elles disent ; un résultat non décidé est rangé mais marqué
+      « à décider », se retrouve sur son image, et ne se mêle pas aux poses du sujet.
 - [ ] « En faire un équipement » crée le sujet équipement avec son emplacement, et le calque est
       reconnu partout où les calques d'équipement le sont (fiche de l'équipement, fiche de la pose,
       ordre devant/derrière, export).
