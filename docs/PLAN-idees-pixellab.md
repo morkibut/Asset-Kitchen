@@ -145,6 +145,35 @@ tirage sur deux est venu bleu — trop peu pour conclure. ⚠️ Un tirage servi
 compte comme une mesure de temps (3,6 s). Le calque vaut pour **cette image** : le poser sur les
 autres poses ou les animations n'est pas dans cette tranche.
 
+### Retours de l'auteur — 26 septembre 2026, premier essai réel
+
+*Mara (The Way Out reborn), 128×128, zone peinte sur le dos, « un gros sac à dos bien rempli
+d'affaires récupérées en exploration ».* Mesuré sur la génération gardée
+(`donnees/generations/dc6a9ac8…`, lue sans y toucher) : zone de 1 422 pixels, calque de 739.
+
+- [ ] **L'objet sort plein de trous.** Deux causes, toutes deux voulues par PX3 et fausses pour un
+      objet qu'on veut garder seul :
+      - **131 pixels du nouveau sac manquent au calque** parce qu'ils ont gardé la couleur de
+        l'ancien : le calque ne porte que les pixels *changés*. Sur Mara on ne le voit pas (l'image
+        de base est dessous) ; sur l'objet seul, ce sont des trous. Le calque doit porter **tout ce
+        que le moteur a peint dans la zone**, y compris ce qui ressemble à l'image de base.
+      - **552 pixels de la zone sont restés vides** : partout où le moteur a peint une couleur
+        jugée proche du fond neutre, le recollage n'a rien posé. Une partie de ces pixels est
+        vraisemblablement du sac. Le seuil « c'est du fond » est trop large pour un objet (à
+        vérifier sur l'image brute).
+- [ ] **Rien ne permet de rectifier après coup.** « Retoucher ce calque › » n'existe que dans le
+      panneau du résultat, juste après la génération. Une fois gardé, le calque apparaît dans la
+      Galerie comme une image « Mara · sans pose » ; sa fiche porte « La retoucher », mais l'auteur
+      n'y a trouvé aucun moyen de corriger les trous (non vérifié : ce que ce bouton ouvre pour un
+      calque repeint). Il faut pouvoir rouvrir un calque repeint **depuis sa fiche** et y retoucher :
+      retirer, et surtout **ramener** les pixels manquants depuis l'image brute du moteur.
+- [ ] **Le parcours de A à Z, pensé d'abord et joué au navigateur** (demande de l'auteur : « ça
+      doit être simple et intuitif de A à Z »). Ouvrir une image → peindre la zone → écrire →
+      lancer → voir le résultat → garder → **retrouver le calque plus tard, sur son image et dans la
+      Galerie, et le corriger** → s'en servir. Chaque étape a son chemin à l'écran, sans détour ; le
+      calque gardé se présente comme un calque de son image (avec son sujet, sa pose, son texte),
+      pas comme une image de plus « sans pose ».
+
 ## PX3bis · La couleur demandée obéit
 
 *Ajoutée le 26 septembre 2026, en autopilote, après PX3 : une coiffure demandée bleue revenait
