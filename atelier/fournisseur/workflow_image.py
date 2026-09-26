@@ -9,8 +9,9 @@ import zipfile
 from typing import Any
 
 from atelier.domaine.catalogue import Modele, Option
-from atelier.domaine.workflow import WorkflowRefuse, composer, normaliser, tirer_graine
+from atelier.domaine.workflow import MASQUE, WorkflowRefuse, composer, normaliser, tirer_graine
 from atelier.fournisseur.port import ImageProduite
+from atelier.fournisseur.workflow import verifier_masque
 from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu
 
 
@@ -105,7 +106,9 @@ class FournisseurWorkflowImage:
                     reference=(p.get("style") or {}).get("reference"),
                     negatif_lu="prompt_negatif" in p["liaisons"],
                     famille=(p.get("style") or {}).get("famille"),
-                    transparence=bool((p.get("style") or {}).get("transparence"))))
+                    transparence=bool((p.get("style") or {}).get("transparence")),
+                    # PX2 : la capacité se lit sur le profil, jamais sur un nom.
+                    masque=MASQUE in p["liaisons"]))
         return modeles
 
     def _versions_a_publier(self, identifiant, versions):
@@ -185,17 +188,28 @@ class FournisseurWorkflowImage:
             if graine is None:
                 graine = explicite
             valeurs["graine"] = tirer_graine() if graine is None else graine
-        composer(p, references=[f"reference-{i}" for i in range(len(demande.references))], **valeurs)
+        # PX2 : la zone peinte. `composer` refuse un masque qu'un profil ne relie
+        # pas, et un profil qui en relie un sans qu'on le lui donne — avant la file.
+        masque = getattr(demande, "masque", None)
+        if masque is not None:
+            verifier_masque(masque, demande.references[0] if demande.references else None)
+        composer(p, references=[f"reference-{i}" for i in range(len(demande.references))],
+            **({"masque": "masque"} if masque is not None else {}), **valeurs)
         archive = io.BytesIO()
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as z:
             for i, octets in enumerate(demande.references):
                 # Horodatage fixe : relire la même demande garde son empreinte.
                 info = zipfile.ZipInfo(str(i), (1980, 1, 1, 0, 0, 0))
                 z.writestr(info, octets)
+            if masque is not None:
+                # Même archive, une entrée de plus — absente sans zone : une
+                # demande sans masque garde son archive d'avant, octet pour octet.
+                z.writestr(zipfile.ZipInfo(MASQUE, (1980, 1, 1, 0, 0, 0)), masque)
         etape = self.file_locale.preparer(f"image:{generation.identifiant}:{rang}", nature="image",
             moteur=self._inscrire_moteur(), modele=modele.identifiant, projet=generation.projet, acteur=generation.provenance,
             parametres={"generation": generation.identifiant, "rang": rang, "valeurs": valeurs,
-                "profil": {**normaliser(p), "version": p["version"]}, "references": len(demande.references)}, entree=archive.getvalue())
+                "profil": {**normaliser(p), "version": p["version"]}, "references": len(demande.references),
+                **({MASQUE: True} if masque is not None else {})}, entree=archive.getvalue())
         await self.file_locale.lancer(etape["identifiant"])
         await self.file_locale.attendre_fin(etape["identifiant"])
         return self._resultat(etape["identifiant"])
@@ -235,9 +249,11 @@ class FournisseurWorkflowImage:
                 raise WorkflowRefuse(" · ".join(diagnostic["problemes"]))
             with zipfile.ZipFile(io.BytesIO(self.file_locale.entree(identifiant))) as z:
                 references = [z.read(str(i)) for i in range(parametres["references"])]
+                masque = z.read(MASQUE) if parametres.get(MASQUE) else None
             self.file_locale.engager(identifiant)
             try:
-                numero = await moteur.soumettre_graphe(profil, parametres["valeurs"], references)
+                numero = await moteur.soumettre_graphe(profil, parametres["valeurs"], references,
+                    **({"masque": masque} if masque is not None else {}))
             except Exception as e:
                 raise AcceptationLocaleInconnue(f"Acceptation du workflow incertaine : {e}") from e
             self.file_locale.connaitre_externe(identifiant, numero)

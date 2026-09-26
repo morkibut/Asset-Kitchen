@@ -122,6 +122,7 @@ from atelier.domaine.carte import DECORS
 from atelier.domaine import texte_local
 from atelier.domaine.workflow import GRAINE_MAX, WorkflowRefuse
 from atelier.fournisseur import PortFournisseur
+from atelier.fournisseur.workflow import verifier_masque
 from atelier.image import aplatir_alpha, bande_de_palette, empreinte_de, mesurer
 from atelier.image.palette import couleurs_lues
 from atelier.image.mesures import extension
@@ -1101,6 +1102,10 @@ class ServiceGenerations:
         refus = modele.refus(_sans_graine(modele, demande))
         if refus is not None:
             raise DemandeRefusee(f"{modele.nom} {refus}")
+        if demande.masque is not None:
+            # PX2 : la zone se vérifie sur l'image qui part vraiment, avant
+            # tout enregistrement — jamais redimensionnée ni convertie ici.
+            verifier_masque(demande.masque, demande.references[0] if demande.references else None)
 
         # **Ce qui manque à *son* fournisseur, pas au produit** (F1). Avant la
         # V2.2 la question était « y a-t-il une clé ? » et la réponse valait pour
@@ -1165,8 +1170,16 @@ class ServiceGenerations:
             ambiance=self._ambiance_de(projet, personnage),
             pris=self._pris(projet, personnage, demande, reinjectes, pose, direction, tri),
         )
+        if demande.masque is not None:
+            # **La zone peinte d'abord, l'enregistrement ensuite** (PX2) : un
+            # `generation.json` qui dit « masque » a toujours son fichier à côté,
+            # et `_demande_de` le relit pour l'appel comme pour la relance.
+            self._fichiers._poser(self._chemin_masque(generation.identifiant), demande.masque)
         self._sauver(generation)
         return generation, modele, False
+
+    def _chemin_masque(self, identifiant: str):
+        return self._fichiers.dossier_generation(identifiant) / "masque.png"
 
     async def soumettre(
         self,
@@ -1823,7 +1836,21 @@ class ServiceGenerations:
                 generation.modele,
             ),
             options=demande.get("options", {}),
+            # **La zone peinte se relit, elle ne se redessine pas** (PX2) : c'est
+            # le geste de l'auteur, posé à côté de l'enregistrement.
+            masque=self._masque_de(generation),
         )
+
+    def _masque_de(self, generation: Generation) -> bytes | None:
+        if not generation.demande.get("masque"):
+            return None
+        chemin = self._chemin_masque(generation.identifiant)
+        if not chemin.is_file():
+            raise DemandeRefusee(
+                "la zone peinte de cet appel n'est plus sur le disque — "
+                "repeindre la zone avant de relancer"
+            )
+        return chemin.read_bytes()
 
     # ── Les jeux de réglages nommés : retirés le 16 septembre 2026 (RP18) ────
     #

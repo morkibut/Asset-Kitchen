@@ -30,7 +30,10 @@ async def importer(requete: Request):
 
 @routeur.get("/workflow-profiles/styles")
 async def lister_styles(requete: Request):
-    return {"styles": await requete.app.state.atelier.styles_locaux.lister()}
+    styles_locaux = requete.app.state.atelier.styles_locaux
+    # PX2 : les outils (la retouche de zone) à part — la galerie ne liste que ce
+    # qu'on choisit pour créer. Même ligne : prêt, et ce qui manque en clair.
+    return {"styles": await styles_locaux.lister(), "outils": await styles_locaux.lister_outils()}
 
 
 @routeur.post("/workflow-profiles/styles/install")

@@ -266,6 +266,44 @@ def construire_sdxl(entree, fichiers):
         parametres=PARAMETRE_FORCE, variantes={"1": {"graphe": variante_graphe, "liaisons": variante_liaisons}})
 
 
+# PX2 : la force de la retouche de zone. 0,9 est le réglage du banc PX1 (48 tirages,
+# 0 pixel hors zone) ; sous 0,5 la zone ne change presque plus, et l'auteur croirait
+# à un tirage raté.
+PARAMETRE_FORCE_ZONE = {"force": {"genre": "intervalle", "minimum": 0.5, "maximum": 1, "defaut": 0.9}}
+
+
+def construire_sdxl_zone(entree, fichiers):
+    """La retouche de zone sur SDXL (PX2), recette du banc PX1 (`essais/banc_px1_zone.py`
+    § `_greffer_inpaint_sdxl`) : le graphe de `construire_sdxl` dont le latent vide
+    (`EmptyLatentImage`) est remplacé par l'image **telle quelle** (`VAEEncode`) sur
+    laquelle `SetLatentNoiseMask` pose la zone. Jamais `VAEEncodeForInpaint` : il grise
+    la zone avant de l'encoder, et le moteur redessine alors de mémoire ce qui s'y
+    trouvait — le visage sous la coiffure, au premier essai du banc.
+
+    Le masque (`liaisons["masque"]`) passe par `ImageToMask` sur le canal rouge : un PNG
+    en niveaux de gris chargé par `LoadImage` a ses trois canaux égaux. L'image et le
+    masque sont ramenés ensemble à la taille du format, au plus proche voisin — un
+    masque interpolé aurait des bords gris que `SetLatentNoiseMask` lirait à moitié."""
+    base = construire_sdxl(entree, fichiers)
+    graphe, liaisons = _copier(base["graphe"], base["liaisons"])
+    del graphe["4"]
+    graphe["8"] = _noeud("LoadImage", image="")
+    graphe["10"] = _noeud("ImageScale", image=["8", 0], upscale_method="nearest-exact", width=512, height=512, crop="disabled")
+    graphe["9"] = _noeud("VAEEncode", pixels=["10", 0], vae=["1", 2])
+    graphe["11"] = _noeud("LoadImage", image="")
+    graphe["12"] = _noeud("ImageScale", image=["11", 0], upscale_method="nearest-exact", width=512, height=512, crop="disabled")
+    graphe["14"] = _noeud("ImageToMask", image=["12", 0], channel="red")
+    graphe["15"] = _noeud("SetLatentNoiseMask", samples=["9", 0], mask=["14", 0])
+    graphe["5"]["inputs"]["latent_image"] = ["15", 0]
+    liaisons["largeur"] = [{"noeud": "10", "champ": "width"}, {"noeud": "12", "champ": "width"}]
+    liaisons["hauteur"] = [{"noeud": "10", "champ": "height"}, {"noeud": "12", "champ": "height"}]
+    liaisons["reference:0"] = [{"noeud": "8", "champ": "image"}]
+    liaisons["masque"] = [{"noeud": "11", "champ": "image"}]
+    liaisons["option:force"] = [{"noeud": "5", "champ": "denoise"}]
+    return _profil(entree, graphe=graphe, liaisons=liaisons, sortie_noeud="7", etapes=entree["etapes"],
+        parametres=PARAMETRE_FORCE_ZONE)
+
+
 # Taille à laquelle Qwen-Image 2.1 ramène chaque image de référence (côté du
 # carré équivalent). Le nœud part de 1024 ; chaque référence ajoute ses propres
 # jetons au calcul, et trois références en 1024 ne tiennent plus sur 8 Go.
@@ -318,6 +356,7 @@ def construire_qwen21(entree, fichiers):
 
 CONSTRUCTEURS = {"zimage": construire_zimage, "klein": construire_klein, "flux1dev": construire_flux1, "sdxl": construire_sdxl,
     "qwen21": construire_qwen21}
+CONSTRUCTEURS_ZONE = {"sdxl": construire_sdxl_zone}
 
 
 # ML6 : le raccord sans couture, port de `applySeamless` (`sc-clone/lib/seamless.mjs`).
@@ -368,6 +407,9 @@ def _rendre_raccordable(profil, famille):
 def construire_profil(entree, fichiers):
     """Le profil gag2 (non normalisé) d'un style, à partir de ses fichiers résolus."""
     constructeur = CONSTRUCTEURS.get(entree["famille"])
+    if entree.get("zone"):
+        # PX2 : seule la famille SDXL a sa retouche de zone, mesurée par PX1.
+        constructeur = CONSTRUCTEURS_ZONE.get(entree["famille"])
     if constructeur is None:
         raise WorkflowRefuse(f"Famille inconnue : {entree['famille']}.")
     profil = constructeur(entree, fichiers)

@@ -146,6 +146,14 @@ class Demande:
     # blanc, et TN3 endormira le détourage d'une image « demandée et reçue ».
     transparence: bool = False
 
+    # **La zone à repeindre** (PX2, 26 septembre 2026) : un PNG en niveaux de
+    # gris de la taille de l'image à retoucher — blanc = repeindre, noir =
+    # garder. Seul un modèle qui déclare la capacité le reçoit
+    # (`Modele.masque`) ; les autres se grisent avec leur raison. Ses octets ne
+    # vont jamais dans l'enregistrement : le service les pose à côté
+    # (`masque.png` dans le dossier de la génération), comme une image reçue.
+    masque: bytes | None = None
+
     def __post_init__(self) -> None:
         if not self.prompt.strip():
             raise ValueError("prompt vide")
@@ -210,4 +218,8 @@ class Demande:
         # — refaire un appel refait sur fond coloré le refait sur fond coloré.
         if self.fond_colore:
             resume["fond_colore"] = True
+        # Même règle (PX2) : absent sans zone. Présent, il dit que `masque.png`
+        # attend dans le dossier de la génération — la relance le relit.
+        if self.masque is not None:
+            resume["masque"] = True
         return resume

@@ -88,12 +88,27 @@ une zone est **grisé avec sa raison** quand on lui en donne une.
 
 ### Critères d'acceptation
 
-- [ ] Un profil déclare la liaison `masque` ; un profil qui ne la déclare pas refuse un masque
+- [x] Un profil déclare la liaison `masque` ; un profil qui ne la déclare pas refuse un masque
       par un message, jamais en silence.
-- [ ] Le masque arrive à ComfyUI tel qu'il est parti (essai qui relit l'image déposée).
-- [ ] Le style de retouche de zone s'installe, se liste, et se grise avec sa raison si ses
+- [x] Le masque arrive à ComfyUI tel qu'il est parti (essai qui relit l'image déposée).
+- [x] Le style de retouche de zone s'installe, se liste, et se grise avec sa raison si ses
       fichiers manquent.
-- [ ] Les essais des moteurs locaux déjà écrits passent sans qu'une assertion bouge.
+- [x] Les essais des moteurs locaux déjà écrits passent sans qu'une assertion bouge.
+
+**Faite le 26 septembre 2026.** La liaison s'appelle `masque` (une au plus, sur un profil image
+qui prend au moins une référence) ; la capacité, `masque` sur la fiche d'un modèle, lisible par
+`GET /api/models`. Le masque est une image en niveaux de gris de la taille de la première
+référence, déposée telle quelle (`atelier-masque-<hash>.png`), jamais aplatie ; il est gardé dans
+le dossier de la génération et relu à la relance. Deux raisons de grisé : « ne sait pas repeindre
+une zone » et « repeint une zone : il lui faut la zone peinte ». Le style
+`sdxl-retouche-zone` (« SDXL · Retouche de zone (pixel) », force 0,5 à 1, 0,9 par défaut) est
+rangé parmi les **outils**, pas parmi les styles : c'est un geste, pas une apparence ; il
+s'installe à l'unité et ne part pas avec « installer tous les styles prêts ». Vérifié sur le vrai
+ComfyUI (0 $, 32 s) : écart moyen 4 hors zone (le bruit du codage), 67 dedans. ⚠️ La coiffure est
+revenue **rouge pour un texte qui la demandait bleue** : l'obéissance au texte est à surveiller
+dans PX3. **Reste pour PX3** : aucun écran ne montre encore la capacité ni l'outil ; la liste des
+modèles de l'agent ne l'expose pas ; le chemin des fabrications suivies refuse un masque avec la
+raison.
 
 ## PX3 · Peindre une zone dans l'atelier
 

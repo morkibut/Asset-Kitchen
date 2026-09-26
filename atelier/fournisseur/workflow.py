@@ -40,6 +40,29 @@ def sur_fond_blanc(octets):
     return sortie.getvalue()
 
 
+def verifier_masque(octets, reference=None):
+    """La zone à repeindre (PX2) : un PNG en niveaux de gris — blanc = repeindre,
+    noir = garder —, de la taille de la première référence. Refusé en clair
+    avant la file, jamais corrigé en silence : un masque redimensionné ou
+    converti ici ne serait plus celui que l'auteur a peint."""
+    try:
+        with Image.open(io.BytesIO(octets)) as image:
+            forme, mode, taille = image.format, image.mode, image.size
+    except (UnidentifiedImageError, OSError) as e:
+        raise WorkflowRefuse("Le masque de la zone n'est pas une image lisible.") from e
+    if forme != "PNG" or mode != "L":
+        raise WorkflowRefuse("Le masque de la zone est un PNG en niveaux de gris : blanc pour repeindre, noir pour garder.")
+    if reference is None:
+        raise WorkflowRefuse("Une zone se peint sur une image : joindre l'image à retoucher.")
+    try:
+        with Image.open(io.BytesIO(reference)) as image:
+            attendue = image.size
+    except (UnidentifiedImageError, OSError):
+        return
+    if taille != attendue:
+        raise WorkflowRefuse(f"Le masque mesure {taille[0]} × {taille[1]} ; l'image à retoucher, {attendue[0]} × {attendue[1]}.")
+
+
 # **Les entrées « qui poussent »** (`io.Autogrow` de ComfyUI récent) : /object_info
 # déclare un seul champ, `images: ["COMFY_AUTOGROW_V3", {"template": …}]`, rangé
 # parmi les obligatoires même quand il en faut zéro (`min: 0`) ; le graphe, lui,
@@ -129,7 +152,15 @@ class MoteurWorkflow(MoteurDeLaMaison):
 
     async def deposer_reference(self, octets):
         octets = sur_fond_blanc(octets)
-        nom = "atelier-" + hashlib.sha256(octets).hexdigest()[:24] + ".png"
+        return await self._deposer(octets, "atelier-" + hashlib.sha256(octets).hexdigest()[:24] + ".png")
+
+    async def deposer_masque(self, octets):
+        """La zone peinte (PX2) part **telle qu'elle est partie** : jamais par
+        `sur_fond_blanc`, qui n'a rien à y faire, et sous un nom à elle — un
+        masque et une image aux mêmes octets ne se confondent pas chez ComfyUI."""
+        return await self._deposer(octets, "atelier-masque-" + hashlib.sha256(octets).hexdigest()[:24] + ".png")
+
+    async def _deposer(self, octets, nom):
         async with self._ouvrir(DELAI_MOYEN) as client:
             reponse = await client.post(self.adresse + "/upload/image",
                 files={"image": (nom, octets, "image/png")}, data={"type": "input", "overwrite": "false"})
@@ -139,12 +170,13 @@ class MoteurWorkflow(MoteurDeLaMaison):
             raise WorkflowRefuse("ComfyUI n'a pas nommé la référence déposée.")
         return (str(rendu.get("subfolder") or "").rstrip("/") + "/" + str(rendu["name"])).lstrip("/")
 
-    async def soumettre_graphe(self, profil, valeurs, references):
+    async def soumettre_graphe(self, profil, valeurs, references, masque=None):
         diagnostic = await self.diagnostiquer_profil(profil)
         if not diagnostic["disponible"]:
             raise WorkflowRefuse(" · ".join(diagnostic["problemes"]))
         noms = [await self.deposer_reference(o) for o in references]
-        graphe = composer(profil, references=noms, **valeurs)
+        zone = {} if masque is None else {"masque": await self.deposer_masque(masque)}
+        graphe = composer(profil, references=noms, **zone, **valeurs)
         rendu = await self._json("POST", "/prompt", {"prompt": graphe, "client_id": self._client_id,
             "extra_data": {"asset_kitchen": {"profil": profil["identifiant"], "version": profil["version"]}}})
         numero = rendu.get("prompt_id")

@@ -6,7 +6,7 @@ de plus : aucun poids n'est téléchargé, aucune génération n'est lancée.
 from __future__ import annotations
 
 from atelier.domaine.workflow import WorkflowRefuse
-from atelier.fournisseur.catalogue_styles import FAMILLES, STYLES, inventaire, resoudre
+from atelier.fournisseur.catalogue_styles import FAMILLES, OUTILS, STYLES, inventaire, resoudre
 from atelier.fournisseur.styles_locaux import construire_profil
 
 
@@ -43,21 +43,28 @@ class ServiceStylesLocaux:
                 return trouve
         return max(versions, key=lambda p: p["cree_le"])
 
+    def _ligne(self, entree, inventaire_):
+        resolu = resoudre(entree, inventaire_)
+        installe = self._installe(entree["identifiant"])
+        return {"identifiant": entree["identifiant"], "nom": entree["nom"], "famille": entree["famille"],
+            "genre": entree.get("genre", "sprite"), "vitesse": entree.get("vitesse") or FAMILLES[entree["famille"]]["vitesse"],
+            "reference": FAMILLES[entree["famille"]]["reference"],
+            "pret": resolu["pret"], "manque": resolu["manque"],
+            "modele": installe["modele"] if installe else None}
+
     async def lister(self):
         inventaire_ = await self._inventaire()
-        sortie = []
-        for entree in STYLES:
-            resolu = resoudre(entree, inventaire_)
-            installe = self._installe(entree["identifiant"])
-            sortie.append({"identifiant": entree["identifiant"], "nom": entree["nom"], "famille": entree["famille"],
-                "genre": entree.get("genre", "sprite"), "vitesse": entree.get("vitesse") or FAMILLES[entree["famille"]]["vitesse"],
-                "reference": FAMILLES[entree["famille"]]["reference"],
-                "pret": resolu["pret"], "manque": resolu["manque"],
-                "modele": installe["modele"] if installe else None})
-        return sortie
+        return [self._ligne(entree, inventaire_) for entree in STYLES]
+
+    async def lister_outils(self):
+        """Les outils locaux (PX2, `catalogue_styles.OUTILS`) : même ligne qu'un
+        style — prêt ou non, et ce qui manque, en clair —, mais à part de la
+        galerie, qui ne liste que ce qu'on choisit pour créer."""
+        inventaire_ = await self._inventaire()
+        return [self._ligne(entree, inventaire_) for entree in OUTILS]
 
     async def installer(self, identifiant):
-        entree = next((s for s in STYLES if s["identifiant"] == identifiant), None)
+        entree = next((s for s in (*STYLES, *OUTILS) if s["identifiant"] == identifiant), None)
         if entree is None:
             raise WorkflowRefuse(f"Style inconnu : {identifiant}.")
         resolu = resoudre(entree, await self._inventaire())

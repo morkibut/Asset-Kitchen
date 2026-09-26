@@ -432,6 +432,37 @@ STYLES: tuple[dict, ...] = (
 )
 
 
+# PX2 (26 septembre 2026) : **les outils locaux** — des styles qui ne dessinent pas
+# une image de rien, mais retouchent celle qu'on leur donne. Ils s'installent comme
+# les styles (`ServiceStylesLocaux.installer`), avec les mêmes fichiers résolus, mais
+# ne se mêlent pas à la galerie de sc-clone : ils ne se choisissent pas pour créer, ils
+# servent un geste précis — ici, repeindre une zone peinte sur la fiche d'une image
+# (PX3). Hors de `STYLES`, donc hors de « installer tous les styles prêts ».
+#
+# La recette est celle que le banc PX1 a trouvée (`essais/banc_px1_zone.py`,
+# `docs/releve-usage.md` § 25 septembre 2026, point 1) : `VAEEncode` de l'image telle
+# quelle + `SetLatentNoiseMask`, force 0,9, sur le moteur `sdxl-pixelart` —
+# **jamais `VAEEncodeForInpaint`**, qui grise la zone avant de l'encoder et a effacé
+# le visage sous la coiffure au premier essai.
+OUTILS: tuple[dict, ...] = (
+    {
+        'identifiant': 'sdxl-retouche-zone',
+        'famille': 'sdxl',
+        'zone': True,
+        'lora': re.compile(r'pixel-art-xl\.safetensors$', re.I),
+        'declencheur': 'pixel art',
+        'force': 0.35,
+        'etapes': 28,
+        'genre': 'sprite',
+        'noeuds': ('ImageToMask', 'SetLatentNoiseMask'),
+        'nom': 'Retouche de zone (pixel)',
+        'description': 'Repeint seulement la zone peinte sur une image : une coiffure, un vêtement, un objet tenu. Le reste de l’image part tel quel.',
+        'etiquette': 'Retouche',
+        'source': 'nerijs/pixel-art-xl'
+    },
+)
+
+
 # ML6 : les deux nœuds du raccord sans couture (`lib/seamless.mjs`) ne viennent pas de
 # ComfyUI lui-même — la même consigne que sc-clone (`lib/workflows.mjs`) quand l'un des
 # deux manque.
@@ -446,8 +477,8 @@ _CONSIGNE_QWEN21 = 'mettre à jour ComfyUI en version 0.37 ou plus récente'
 
 
 def style(identifiant):
-    """Renvoie le dict du style ou None."""
-    for s in STYLES:
+    """Renvoie le dict du style (ou de l'outil, PX2) ou None."""
+    for s in (*STYLES, *OUTILS):
         if s['identifiant'] == identifiant:
             return s
     return None

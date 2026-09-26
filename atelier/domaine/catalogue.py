@@ -111,6 +111,11 @@ class Modele:
     # un fournisseur distant (GPT Image et son `background: transparent`) la
     # déclarera un jour de la même façon.
     transparence: bool = False
+    # **Repeint une zone peinte, et rien d'autre** (PX2, 26 septembre 2026) :
+    # son profil relie un masque (`atelier.domaine.workflow.MASQUE`). Une
+    # capacité comme `transparence` — hors du bloc « locale » — et fausse pour
+    # tout modèle distant : aucun ne reçoit de masque aujourd'hui.
+    masque: bool = False
 
     @property
     def envoi(self) -> str:
@@ -140,6 +145,15 @@ class Modele:
                 f"n'accepte que {self.references_max} {images} de référence, "
                 f"il en faudrait {nombre}"
             )
+
+        # PX2 : la zone peinte ne part que vers un modèle qui sait la lire, et
+        # un modèle qui ne sait que ça ne part pas sans elle. `getattr` : le
+        # contrat minimal (`DemandeLike`) ne l'exige pas des demandes d'essai.
+        zone = getattr(demande, "masque", None) is not None
+        if zone and not self.masque:
+            return "ne sait pas repeindre une zone"
+        if self.masque and not zone:
+            return "repeint une zone : il lui faut la zone peinte"
 
         if demande.proportions and self.proportions:
             if demande.proportions not in self.proportions:
@@ -235,6 +249,8 @@ def modele_en_json(modele: Modele) -> dict[str, Any]:
         # Hors du bloc « locale » : une capacité de modèle, pas un trait de
         # style local (TN1).
         "transparence": modele.transparence,
+        # PX2 : même règle, une capacité de modèle.
+        "masque": modele.masque,
     }
 
 
@@ -256,4 +272,5 @@ def modele_depuis_json(d: dict[str, Any]) -> Modele:
         indisponible=d.get("indisponible"), reference=d.get("reference"),
         negatif_lu=d.get("negatif_lu", True), famille=d.get("famille"),
         transparence=d.get("transparence", False),
+        masque=d.get("masque", False),
     )

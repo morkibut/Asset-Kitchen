@@ -46,6 +46,14 @@ TONALITES = tuple(f"{note} {mode}" for mode in ("major", "minor") for note in
 # Liaisons propres au son : une image ou une vidéo n'en a pas l'usage.
 _LIAISONS_SONORES = set(MUSIQUE)
 
+# **La zone à repeindre** (PX2, `docs/PLAN-idees-pixellab.md`). Une image PNG en
+# niveaux de gris, de la taille de la première référence : blanc = repeindre,
+# noir = garder. Un profil qui la relie ne part jamais sans elle (son graphe la
+# charge), et un profil qui ne la relie pas la refuse — jamais en silence.
+MASQUE = "masque"
+REFUS_SANS_ZONE = "ne sait pas repeindre une zone"
+REFUS_ZONE_ABSENTE = "repeint une zone : il lui faut la zone peinte"
+
 
 def valeur_musicale(nom, valeur):
     """La valeur telle qu'elle part dans le graphe, ou un refus en clair.
@@ -123,7 +131,9 @@ def _verifier_graphe(graphe, liaisons, parametres, quelle=""):
     for nom_champ, liens in liaisons.items():
         # Le nombre de tirages n'est pas une liaison : un graphe rend un son.
         # Une série de N tirages sera N travaux, chacun sa graine (SN3).
-        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine", "partition", *MUSIQUE)
+        # `masque` (PX2) : la zone à repeindre, une image en noir et blanc
+        # déposée telle quelle — une seule par profil, jamais aplatie.
+        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine", "partition", MASQUE, *MUSIQUE)
         if nom_champ.startswith("reference:"):
             try:
                 references.append(int(nom_champ.split(":")[1]))
@@ -298,6 +308,10 @@ def _normaliser(brut: dict) -> dict:
     for cle, p in parametres.items():
         if p.get("reference_seule") and not any("option:" + cle in v["liaisons"] for v in variantes.values()):
             raise WorkflowRefuse(f"Le paramètre {cle}, propre aux références, doit être relié dans au moins une variante.")
+    # La zone se peint sur la première référence : sans image, pas de zone.
+    # `_variantes` garantit déjà qu'une variante relie les mêmes champs.
+    if MASQUE in liaisons and (nature != "image" or minimum < 1):
+        raise WorkflowRefuse("Seul un workflow d'image qui reçoit au moins une référence relie un masque de zone.")
     return {"identifiant": identifiant, "nom": nom, "nature": nature, "graphe": graphe,
         "liaisons": liaisons, "parametres": parametres, "formats": formats,
         "durees": durees if nature in ("video", "audio") else [], "cadence": cadence if nature == "video" else 0,
@@ -343,8 +357,13 @@ _NOMS_MUSIQUE = {"paroles": "de paroles", "tempo": "de tempo", "tonalite": "de t
 
 
 def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=None, proportions="1:1", secondes=0, options=None, graine=None,
-             paroles=None, tempo=None, tonalite=None, mesure=None, partition=None):
+             paroles=None, tempo=None, tonalite=None, mesure=None, partition=None, masque=None):
     graphe_choisi, liaisons = graphe_pour(profil, len(references))
+    # PX2 : `masque` est le nom de l'image déposée chez le moteur, jamais ses octets.
+    if masque is not None and MASQUE not in liaisons:
+        raise WorkflowRefuse(f"Ce profil {REFUS_SANS_ZONE} : il ne relie aucun masque.")
+    if masque is None and MASQUE in liaisons:
+        raise WorkflowRefuse(f"Ce profil {REFUS_ZONE_ABSENTE}.")
     formats = [f for f in profil["formats"] if (resolution is None or f["resolution"] == resolution) and f["proportions"] == proportions]
     if not formats and profil["nature"] != "audio":
         raise WorkflowRefuse("Cette combinaison de résolution et de proportions n'est pas déclarée par le profil.")
@@ -390,6 +409,8 @@ def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=Non
             raise WorkflowRefuse(f"La valeur de {cle} n'est pas acceptée par le profil.")
         valeurs["option:" + cle] = valeur
     valeurs.update({"reference:" + str(i): reference for i, reference in enumerate(references)})
+    if masque is not None:
+        valeurs[MASQUE] = masque
     if "graine" in liaisons:
         if graine is not None and (isinstance(graine, bool) or not isinstance(graine, int) or not 0 <= graine <= GRAINE_MAX):
             raise WorkflowRefuse("La graine est un entier positif.")
