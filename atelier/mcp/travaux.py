@@ -27,6 +27,8 @@ def installer_outils_travaux(serveur: Any, atelier: Any, refus_lisible: Callable
                   "optional reference_asset, modele_image, prompt_image, repris_image, references_image, references_image_ecartees, options_image, options_video, "
                   "prompt_negatif_image, proportions_image, resolution_image, "
                   "secondes, resolution, proportions, nombre_images, cadence, sens, plafond_image_usd, livrer_provisoire, "
+                  "part_sujet (how much of the canvas the subject fills before the video call, 0.40-0.95, default 0.80 — "
+                  "raise it for a big attack whose limbs must not leave the frame, lower it to leave more room around the subject), "
                   "mouvement (a library movement whose text is composed server-side), correction_geste (a per-call correction to that movement's gesture), "
                   "style_combat (optional combat style identifier checked for this request; its text for each case's movement replaces the movement text — "
                   "nothing is applied by default; the character's proposed styles are listed by the for-pose composition). "

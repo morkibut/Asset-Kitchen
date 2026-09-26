@@ -148,7 +148,8 @@ export function FicheDuClip({
             <Libelle aide="clip.fiche">ce qu'il porte</Libelle>
             <p className="mesure text-[10.5px] leading-4 text-encre-2">
               {clip.images} images · {clip.cadence.toFixed(0)} i/s ·{" "}
-              {clip.secondes} s demandées · {clip.proportions} · {clip.resolution}
+              {clip.secondes} s demandées · {clip.proportions} · {clip.resolution} ·{" "}
+              sujet à {Math.round((generation.demande.part_sujet ?? 0.80) * 100)} % de la toile
             </p>
           </div>
         ) : (

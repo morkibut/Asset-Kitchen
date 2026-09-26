@@ -21397,7 +21397,7 @@ describe("V3.02 — la fiche d'un clip", () => {
 
     // Ce qu'il porte, mesuré sur le fichier et jamais déduit.
     expect(
-      panneau.getByText("121 images · 24 i/s · 5 s demandées · 1:1 · 480p"),
+      panneau.getByText("121 images · 24 i/s · 5 s demandées · 1:1 · 480p · sujet à 80 % de la toile"),
     ).toBeTruthy()
     // Le montant de la facture, et la phrase qui dit s'il a été relu.
     expect(panneau.getByText("$0,0670")).toBeTruthy()

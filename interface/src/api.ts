@@ -211,6 +211,11 @@ export type Generation = {
      *  c'est lui que le montage lit pour nommer ses bandes. Présent
      *  uniquement sur les appels vidéo. */
     mouvement?: string
+    /** **PX4** : la part de la toile que le sujet occupait dans l'image de
+     *  départ envoyée au modèle vidéo, de 0,40 à 0,95. Présente uniquement sur
+     *  les appels vidéo ; absente sur une génération d'avant cette tranche,
+     *  qui est alors partie à 0,80 — le défaut du produit d'avant elle. */
+    part_sujet?: number
     /** **La case « Garder la mise en page de la référence » était cochée**
      *  (RS2). Absent — et non `false` — quand elle ne l'était pas : `resume()`
      *  ne l'écrit que si elle est vraie, pour qu'un `generation.json` d'avant

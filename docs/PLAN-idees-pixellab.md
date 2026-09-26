@@ -109,10 +109,18 @@ réouverture, et l'agent peut le donner.
 
 ### Critères d'acceptation
 
-- [ ] Le réglage change l'image envoyée au modèle vidéo (essai sur l'image composée).
-- [ ] Sans réglage, l'image envoyée est identique à celle d'aujourd'hui.
-- [ ] Un clip gardé avec une marge qui n'est pas celle du défaut se rouvre avec elle.
-- [ ] Le guide a sa ligne ; l'agent peut donner la marge.
+- [x] Le réglage change l'image envoyée au modèle vidéo (essai sur l'image composée).
+- [x] Sans réglage, l'image envoyée est identique à celle d'aujourd'hui.
+- [x] Un clip gardé avec une marge qui n'est pas celle du défaut se rouvre avec elle.
+- [x] Le guide a sa ligne ; l'agent peut donner la marge.
+
+**Faite le 26 septembre 2026.** Le réglage s'appelle `part_sujet` partout (code, demande, agent) :
+la part de l'image que le sujet occupe, de 40 à 95 %, 80 par défaut. Il se règle dans « 4. Le
+clip » de la fenêtre de fabrication (« Place autour du sujet »), se relit sur l'écran de
+confirmation et sur la fiche du clip, et il est gardé **sur le clip fini** : « Relancer » le
+reprend. Un clip d'avant ce jour se lit à 80 %. Une première version ne le gardait que sur la
+fabrication en cours, et un clip fini repartait à 80 % en silence : corrigé avant la fermeture
+(`AGENTS.md`, point 8septies). Essais : `tests/test_px4_marge.py`, `interface/src/fabrication.test.ts`.
 
 ## PX5 · Finir sur une image
 

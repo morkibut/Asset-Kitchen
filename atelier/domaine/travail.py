@@ -30,13 +30,21 @@ DEFAUTS = {
     # **Le style de combat coché pour cet envoi** (22 septembre 2026) — jamais
     # un style posé d'office : `None` veut dire le texte du mouvement seul.
     "style_combat": None,
+    # **PX4** : la part de la toile que le sujet occupe avant de partir vers le
+    # modèle vidéo — hier un `0.80` écrit en dur dans `atelier/image/clip.py`.
+    # Inspiré de « Reframe canvas » de PixelLab : un sujet qui va lancer un
+    # grand coup a besoin de place pour que ses bras ne sortent pas du cadre,
+    # une pose repliée peut se permettre de remplir davantage la toile. Le
+    # défaut est exactement celui d'avant : sans ce réglage, l'image composée
+    # est identique octet pour octet à celle d'hier.
+    "part_sujet": 0.80,
 }
 
 # Les réglages arrivés après que des demandes ont déjà été conservées. Laissés à
 # leur défaut, ils ne comptent pas dans l'empreinte : une demande de l'agent
 # répétée avec sa clé d'avant RV5 se relit, au lieu de se voir refusée comme
 # « une autre demande » parce que le dictionnaire a grandi.
-TARDIFS = {"mouvement": None, "correction_geste": "", "style_combat": None}
+TARDIFS = {"mouvement": None, "correction_geste": "", "style_combat": None, "part_sujet": 0.80}
 
 
 def pour_l_empreinte(demande: dict[str, Any]) -> dict[str, Any]:
@@ -106,6 +114,9 @@ def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> 
         raise TravailRefuse("La cadence doit être comprise entre 0,1 et 120 images par seconde.")
     if demande["sens"] not in ("boucle", "aller-retour"):
         raise TravailRefuse("Choisir boucle ou aller-retour pour le sens de lecture.")
+    part = demande["part_sujet"]
+    if isinstance(part, bool) or not isinstance(part, (int, float)) or not math.isfinite(part) or not 0.40 <= part <= 0.95:
+        raise TravailRefuse("« part_sujet » doit être une part de la toile entre 0,40 et 0,95.")
     montant = demande["plafond_image_usd"]
     if montant is not None and (isinstance(montant, bool) or not isinstance(montant, (int, float)) or not math.isfinite(montant) or montant < 0):
         raise TravailRefuse("La réservation de l'image doit être un montant positif ou nul.")

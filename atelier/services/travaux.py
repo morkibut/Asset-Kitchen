@@ -332,7 +332,9 @@ class ServiceTravaux:
             raise TravailRefuse("La référence choisie n'est plus une image disponible de ce jeu.")
         octets = self.a.assets.reference(identifiant)
         demande = travail["demande"]
-        entree = self.a.animation.preparer_entree(octets, demande["resolution"], demande["proportions"])
+        entree = self.a.animation.preparer_entree(
+            octets, demande["resolution"], demande["proportions"], demande.get("part_sujet", 0.80)
+        )
         dossier = self._dossier(travail["projet"], travail["identifiant"])
         self.a.fichiers._poser(dossier / "entree-video.png", entree)
         travail["reference_asset"] = identifiant
@@ -822,7 +824,8 @@ class ServiceTravaux:
                             identifiant=travail["clip"], projet=projet, personnage=d["personnage"],
                             pose=d["pose"], direction=d["direction"], provenance=travail["acteur"],
                             mouvement=d.get("mouvement"), lot=self._lot(travail),
-                            depart=travail["reference_asset"], attendre=False)
+                            depart=travail["reference_asset"], attendre=False,
+                            part_sujet=d.get("part_sujet", 0.80))
                     except Exception as erreur:
                         travail["etat"] = "externe_inconnu"
                         travail["raison"] = f"Acceptation externe incertaine : {erreur}. Aucun nouvel appel automatique."

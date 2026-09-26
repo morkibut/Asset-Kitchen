@@ -32,6 +32,12 @@ export type DemandeTravail = {
    *  laisse le texte du mouvement partir seul. Coché, il écrit son texte pour
    *  le mouvement de chaque case (le repos du fusil n'est pas son tir). */
   style_combat?: string | null
+  /** **PX4** : la part de la toile que le sujet occupe avant de partir vers
+   *  le modèle vidéo — de 0,40 à 0,95, `0.80` par défaut (le chiffre que le
+   *  produit imposait jusqu'ici). Une grande frappe demande de la place pour
+   *  que ses bras ne sortent pas du cadre ; une pose repliée peut en laisser
+   *  moins. Gardée avec le clip, relue à la réouverture. */
+  part_sujet?: number
 }
 /** Une case d'une série (RV5) : sa pose et sa direction, le reste vient de la
  *  demande commune. */

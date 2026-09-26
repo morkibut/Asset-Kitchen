@@ -3216,6 +3216,17 @@ export const AIDE: Record<string, Explication> = {
     long: "Cinq secondes plutôt que quatre, et c'est mesuré : quatre suffisent à un cycle de marche seul, mais le geste de la version est d'en tirer **plusieurs animations dans un clip**, et il faut de la place pour les transitions entre elles.\n\nUn modèle qui ne sait pas faire la durée que tu demandes se grise avec sa raison plutôt que de disparaître : ce qui est impossible se voit avant d'être choisi.",
   },
 
+  "clip.marge": {
+    nom: "Place autour du sujet",
+    ou: "clip",
+    groupe: "Commander un clip",
+    quoi: "La part de la toile que le sujet occupe avant de partir vers le modèle vidéo, de 40 à 95 %.",
+    change:
+      "L'image de départ envoyée à la vidéo, pas le prix : le sujet est agrandi ou réduit sur le même fond franc, et le modèle ne voit que ça.",
+    origine: "toi · 80 %",
+    long: "Une grande frappe a besoin de place pour que ses bras ne sortent pas du cadre ; une pose repliée peut en laisser moins et remplir davantage la toile. Le réglage se garde avec le clip et se relit à sa réouverture — un clip d'avant cette tranche relit 80 %, ce qu'il envoyait déjà.",
+  },
+
   "clip.style_combat": {
     nom: "Style de combat",
     ou: "clip",

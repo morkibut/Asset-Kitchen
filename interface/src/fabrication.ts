@@ -86,5 +86,10 @@ export function demandeDeRelance(clip: Generation, imageDepart: string | null): 
     nombre_images: 8,
     cadence: 8,
     sens: "boucle",
+    // **PX4** : la marge du clip d'origine, pas le défaut du produit —
+    // sinon « Relancer » ramènerait silencieusement à 80 % un clip gardé à
+    // une autre valeur (AGENTS 8septies). Absente sur un clip d'avant cette
+    // tranche, et c'est la vérité : il est parti à 80 %.
+    part_sujet: clip.demande?.part_sujet ?? 0.80,
   }
 }

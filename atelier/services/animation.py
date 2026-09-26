@@ -347,7 +347,7 @@ class ServiceAnimation:
     # ── L'image de départ ────────────────────────────────────────────────────
 
     @staticmethod
-    def preparer_entree(sprite: bytes, resolution: str, proportions: str) -> bytes:
+    def preparer_entree(sprite: bytes, resolution: str, proportions: str, part_sujet: float = 0.80) -> bytes:
         """Le sprite mis à la taille du clip, sur le gris du produit.
 
         **Une toile par format demandé.** Envoyer une image 16:9 à un appel qui
@@ -355,8 +355,14 @@ class ServiceAnimation:
         recadre, il l'invente. La taille se déduit donc de ce qui est demandé,
         et le sujet est agrandi à un facteur entier pour que ses pixels restent
         carrés (`atelier/image/clip.py`).
+
+        **`part_sujet`** (PX4) : la part de cette toile que le sujet occupe,
+        `0.80` par défaut — exactement le chiffre qu'`atelier/image/clip.py`
+        portait en dur avant cette tranche. Une grande frappe veut de la place
+        pour que ses bras ne sortent pas du cadre ; une pose repliée peut en
+        laisser moins.
         """
-        return decodeur.composer_entree(sprite, taille_demandee(resolution, proportions))
+        return decodeur.composer_entree(sprite, taille_demandee(resolution, proportions), part=part_sujet)
 
     # ── Lecture ──────────────────────────────────────────────────────────────
 
@@ -405,6 +411,7 @@ class ServiceAnimation:
         attendre: bool = True,
         depart: str | None = None,
         monter_auto: bool = False,
+        part_sujet: float = 0.80,
     ) -> Generation:
         """Commande un clip et rend la génération **dès que le travail est écrit**.
 
@@ -439,6 +446,14 @@ class ServiceAnimation:
                 # l'a écrit — et c'est ce que le montage d'`A10` lira pour
                 # nommer les bandes qu'il taillera dans ce clip.
                 "mouvement": mouvement,
+                # **PX4** : la part de la toile que le sujet occupait dans
+                # l'image de départ envoyée — écrite sur la génération elle-même
+                # et non seulement sur le travail éphémère qui l'a préparée
+                # (AGENTS 8septies : « Relancer » depuis un clip déjà terminé
+                # doit relire la vraie marge, jamais retomber sur le défaut du
+                # produit). Absente sur une génération d'avant cette tranche,
+                # et c'est la vérité : elle est alors partie à 80 %.
+                "part_sujet": part_sujet,
             },
             parametres_resolus=_resolus(modele, demande),
             emplacements=[Emplacement(rang=0)],
