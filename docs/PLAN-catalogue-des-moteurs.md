@@ -75,7 +75,7 @@ peut pas utiliser.
 - [x] Elle montre le choix du modèle dans un outil (Créer, Repeindre, Animer) : mêmes noms, mêmes
       groupes, moteur non installé grisé avec « l'installer dans Moteurs › ».
       → même maquette, les trois outils (« Aller à » en bandeau).
-- [ ] Validée par l'auteur.
+- [x] Validée par l'auteur.
 
 ## MO1 · Les images de la machine : créer et repeindre, une seule description
 
