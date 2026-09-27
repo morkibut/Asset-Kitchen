@@ -2,19 +2,22 @@
 //
 // « Chaque moteur d'IA est décrit une seule fois, et tous les outils de
 // l'atelier lisent cette description. » (`docs/PLAN-catalogue-des-moteurs.md`
-// § MOM). Cette page-ci ne couvre que l'image — créer et repeindre —, seule
-// portée de MO2 : la vidéo (MO3), le son (MO4), la 3D et le détourage (MO5) et
-// les workflows importés (MO6) ajouteront leurs propres cartes à la suite,
-// dans des tranches séparées. `PageDesMoteurs` est donc volontairement un
-// composant par groupe de capacité (image ici), pas un fourre-tout : une
-// section de plus s'ajoutera sans toucher à celle-ci.
+// § MOM). Cette page-ci couvre l'image — créer et repeindre (MO2) — et le son
+// (MO4) : la vidéo (MO3), la 3D et le détourage (MO5) et les workflows
+// importés (MO6) ajouteront leurs propres cartes à la suite, dans des
+// tranches séparées. `PageDesMoteurs` est donc volontairement un composant
+// par groupe de capacité, pas un fourre-tout : une section de plus s'ajoutera
+// sans toucher aux autres.
 //
 // **Le catalogue décide, jamais une liste en dur** (`AGENTS.md`) : « Sur cette
 // machine » vient des vingt-deux styles de sc-clone
 // (`GET /workflow-profiles/styles`, groupés sous leurs cinq moteurs comme
 // `WorkflowsLocaux.tsx` le faisait déjà) ; « En ligne » vient du même
 // catalogue d'images que la barre qui paie et la fabrique Repeindre lisent
-// déjà (`modeles: Modele[]`) — cette page ne recopie aucun nom, aucun état.
+// déjà (`modeles: Modele[]`) ; « Le son » vient du catalogue des moteurs
+// sonores (`GET /workflow-profiles/sound-engines`,
+// `atelier/services/installation_son.py`, MO4) — cette page ne recopie aucun
+// nom, aucun état.
 //
 // **Ce que MO1 avait annoncé** (`docs/PLAN-catalogue-des-moteurs.md` § MO1) :
 // « un moteur installé pour créer sait repeindre sans rien installer de
@@ -26,9 +29,21 @@
 import { useEffect, useRef, useState } from "react"
 import { api, Refus, type Modele } from "../api"
 import {
-  NOM_MOTEUR_LOCAL, NOM_REFERENCE, ORDRE_MOTEURS_LOCAUX, stylesLocaux, type StyleLocal,
+  NOM_MOTEUR_LOCAL, NOM_REFERENCE, ORDRE_MOTEURS_LOCAUX, moteursSonores, stylesLocaux, workflows,
+  type MoteurSonore, type StyleLocal,
 } from "../api-workflows"
 import { SectionMoteursVideo } from "./MoteursVideo"
+import { ListeManque } from "./WorkflowsLocaux"
+
+/** Le libellé d'une famille de son (`atelier/audio/graphes.py`, `FAMILLES`),
+ *  pour l'étiquette de capacité d'un moteur — les sept clés du domaine sont
+ *  déjà des mots français, seule la casse change. `voix` et `interface`
+ *  n'apparaissent jamais ici : aucun moteur ComfyUI ne les sert encore
+ *  (`FAMILLES["voix"] == ()`, `FAMILLES["interface"] == ("sfxr",)` — sfxr
+ *  n'est pas un graphe ComfyUI, il ne passe pas par ce catalogue). */
+const LIBELLE_FAMILLE: Record<string, string> = {
+  bruitage: "Bruitage", ambiance: "Ambiance", musique: "Musique", jingle: "Jingle", chanson: "Chanson",
+}
 
 const message = (e: unknown) => (e instanceof Refus || e instanceof Error ? e.message : "L’opération n’a pas abouti. Réessayez.")
 
@@ -62,6 +77,7 @@ export function PageDesMoteurs({
   signale,
   onSignale,
   onInstallation,
+  onInstallationSon,
 }: {
   /** Le catalogue d'images déjà lu par l'atelier (`App.tsx`) — la même liste
    *  que la barre qui paie et la fabrique Repeindre, jamais une seconde
@@ -78,11 +94,19 @@ export function PageDesMoteurs({
   /** MO3 : ouvre « L'installation », où les fichiers de Wan se descendent avec
    *  leur taille et leur licence — la page n'a pas de second chemin pour ça. */
   onInstallation?: () => void
+  /** MO4 : prévient l'appelant qu'un moteur sonore vient d'être (ré)installé,
+   *  pour qu'il relise à son tour « Les workflows locaux » (`Reglages.tsx`) —
+   *  même mécanique que `MethodesSonores.onInstalle` avant elle. */
+  onInstallationSon?: () => void
 }) {
   const [styles, setStyles] = useState<StyleLocal[] | null>(null)
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState("")
   const [installation, setInstallation] = useState<string | null>(null)
+  const [sons, setSons] = useState<MoteurSonore[] | null>(null)
+  const [chargementSon, setChargementSon] = useState(true)
+  const [erreurSon, setErreurSon] = useState("")
+  const [installationSon, setInstallationSon] = useState<string | null>(null)
 
   async function relire() {
     setChargement(true)
@@ -98,6 +122,51 @@ export function PageDesMoteurs({
   useEffect(() => {
     void relire()
   }, [])
+
+  // MO4 : le catalogue des moteurs sonores — un `GET` de plus, comme les
+  // styles ci-dessus, qui ne pose jamais de profil (`atelier.installation_son.
+  // catalogue`, jamais `.installer`).
+  async function relireSon() {
+    setChargementSon(true)
+    setErreurSon("")
+    try {
+      setSons((await moteursSonores.lister()).moteurs)
+    } catch (e) {
+      setErreurSon(message(e))
+    } finally {
+      setChargementSon(false)
+    }
+  }
+  useEffect(() => {
+    void relireSon()
+  }, [])
+
+  async function installerSonUn(identifiant: string) {
+    setInstallationSon(identifiant)
+    setErreurSon("")
+    try {
+      await workflows.installerSon([identifiant])
+      await relireSon()
+      onInstallationSon?.()
+    } catch (e) {
+      setErreurSon(message(e))
+    } finally {
+      setInstallationSon(null)
+    }
+  }
+  async function installerLesSonsPrets() {
+    setInstallationSon("*")
+    setErreurSon("")
+    try {
+      await workflows.installerSon()
+      await relireSon()
+      onInstallationSon?.()
+    } catch (e) {
+      setErreurSon(message(e))
+    } finally {
+      setInstallationSon(null)
+    }
+  }
 
   async function installerUn(identifiant: string) {
     setInstallation(identifiant)
@@ -143,7 +212,7 @@ export function PageDesMoteurs({
     const t = setTimeout(onSignale, 2200)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signale, styles])
+  }, [signale, styles, sons])
 
   const parMoteur = new Map<string, StyleLocal[]>()
   for (const s of styles ?? []) {
@@ -157,6 +226,8 @@ export function PageDesMoteurs({
   const pretsTotal = (styles ?? []).filter((s) => s.pret).length
   const pretsNonInstalles = (styles ?? []).filter((s) => s.pret && !s.modele).length
 
+  const sonsPretsNonInstalles = (sons ?? []).filter((s) => s.pret && !s.modele).length
+
   // « En ligne » : le même catalogue d'images que partout ailleurs, réduit
   // aux modèles distants — un fournisseur, puis un nom, pour un ordre stable.
   const enLigne = modeles
@@ -169,8 +240,8 @@ export function PageDesMoteurs({
       <header>
         <h2 className="font-serif text-[38px]">Les moteurs</h2>
         <p className="mt-[8px] text-[13px] text-encre-3">
-          Chaque moteur, décrit une seule fois : ce qu’il sait faire, ses réglages, et son état. Créer et Repeindre lisent cette même liste — un
-          moteur non installé y renvoie d’un clic —, et les deux écrans qui font une vidéo lisent la section « Vidéo ».
+          Chaque moteur, décrit une seule fois : ce qu’il sait faire, ses réglages, et son état. Créer, Repeindre et Fabriquer un son lisent cette même
+          liste — un moteur d’image ou de son non installé y renvoie d’un clic —, et les deux écrans qui font une vidéo lisent la section « Vidéo ».
         </p>
       </header>
 
@@ -239,7 +310,99 @@ export function PageDesMoteurs({
       </section>
 
       <SectionMoteursVideo onInstallation={onInstallation} />
+
+      {/* MO4 : « Le son » — les moteurs sonores du même catalogue
+          (`GET /workflow-profiles/sound-engines`), même geste qu'« Installer
+          les styles prêts » ci-dessus. Fond « Les méthodes sonores »
+          (`WorkflowsLocaux.tsx`), qui tenait sa propre liste de cinq noms. */}
+      <section aria-label="Le son" className="space-y-[8px]">
+        <div className="flex flex-wrap items-baseline justify-between gap-[8px]">
+          <h3 className="font-serif text-[25px]">Le son</h3>
+          {sons && sonsPretsNonInstalles > 0 && (
+            <button type="button" className={BOUTON} onClick={() => void installerLesSonsPrets()} disabled={installationSon !== null}>
+              {installationSon === "*" ? "Installation…" : `Installer les méthodes sonores prêtes (${sonsPretsNonInstalles})`}
+            </button>
+          )}
+        </div>
+        <p className="text-[12px] text-encre-3">
+          Cinq moteurs fabriquent les sons du jeu. Rien n’est jamais téléchargé par l’atelier : c’est toi qui poses les fichiers, l’atelier ne fait que
+          les retrouver.
+        </p>
+        {erreurSon && (
+          <p role="alert" className="text-[13px] text-echec">
+            {erreurSon}
+          </p>
+        )}
+        {!sons && chargementSon && (
+          <p role="status" className="text-[13px] text-encre-3">
+            Lecture des moteurs sonores…
+          </p>
+        )}
+        {sons && (
+          <div className="grid gap-[8px]">
+            {sons.map((m) => (
+              <CarteMoteurSonore
+                key={m.identifiant}
+                moteur={m}
+                installation={installationSon}
+                onInstaller={installerSonUn}
+                signale={signale === m.identifiant}
+                referer={(el) => {
+                  cartes.current[m.identifiant] = el
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </section>
     </section>
+  )
+}
+
+function CarteMoteurSonore({
+  moteur,
+  installation,
+  onInstaller,
+  signale,
+  referer,
+}: {
+  moteur: MoteurSonore
+  installation: string | null
+  onInstaller: (identifiant: string) => void
+  signale: boolean
+  referer: (el: HTMLElement | null) => void
+}) {
+  const etat: EtatMachine = moteur.modele ? "installe" : moteur.pret ? "a-installer" : "manque"
+  return (
+    <article
+      ref={referer}
+      data-moteur-carte={moteur.identifiant}
+      className={`grid gap-[8px] rounded-8 border bg-carte p-[14px] transition-shadow duration-120 ${
+        signale ? "border-signal shadow-[0_0_0_2px_var(--color-signal)]" : "border-trait"
+      }`}
+    >
+      <div className="flex flex-wrap items-center gap-[14px]">
+        <h4 className="text-[14px]">{moteur.nom}</h4>
+        <Badge etat={etat} />
+      </div>
+      <p className="text-[12px] text-encre-3">{moteur.description}</p>
+      <div className="flex flex-wrap gap-[4px]">
+        {moteur.familles.map((f) => (
+          <span key={f} className={CAPACITE}>
+            {LIBELLE_FAMILLE[f] ?? f}
+          </span>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-[8px] border-t border-trait pt-[8px]">
+        <p className="text-[13px] text-encre-3">{moteur.pret ? (moteur.modele ? "prêt · installé" : "prêt") : "il manque des fichiers"}</p>
+        {moteur.pret && (
+          <button type="button" className={BOUTON} disabled={installation !== null} onClick={() => onInstaller(moteur.identifiant)}>
+            {installation === moteur.identifiant ? "Installation…" : moteur.modele ? "Réinstaller" : "Installer"}
+          </button>
+        )}
+      </div>
+      {!moteur.pret && <ListeManque manque={moteur.manque} />}
+    </article>
   )
 }
 

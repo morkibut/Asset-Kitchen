@@ -8,9 +8,9 @@ import pytest
 
 from atelier.audio.graphes import CONSTRUCTEURS, FAMILLES as MOTEURS_PAR_FAMILLE, SECOURS
 from atelier.domaine.son import FAMILLES_SON
-from atelier.domaine.workflow import normaliser
+from atelier.domaine.workflow import WorkflowRefuse, normaliser
 from atelier.services import Atelier
-from atelier.services.installation_son import installer_depuis
+from atelier.services.installation_son import catalogue_depuis, installer_depuis
 from tests.test_au7_au8 import raccorder
 from tests.test_au14_generation import ComfySon, fermer, lancer
 from tests.test_sn1_profils_son import OBJECT_INFO, installe
@@ -107,6 +107,54 @@ async def test_un_moteur_manquant_ne_bloque_pas_les_autres(son):
     sans_le_fichier = {"yue2-int8", "yue2-partition-jouee"}
     assert all(resultats[i]["installe"] is False for i in sans_le_fichier)
     assert all(resultats[i]["installe"] for i in CONSTRUCTEURS if i not in sans_le_fichier)
+
+
+# ── Le catalogue de la page « Moteurs » (MO4) ────────────────────────────
+
+
+async def test_catalogue_dit_ce_que_chaque_moteur_sait_faire_sans_rien_installer(son):
+    atelier, comfy = son
+    catalogue = await atelier.installation_son.catalogue()
+    # « yue2-partition-jouee » (SN9) partage le fichier de poids de
+    # « yue2-int8 » mais n'est jamais un moteur à choisir pour lui-même : le
+    # catalogue ne montre que les cinq moteurs réellement choisissables.
+    assert {m["identifiant"] for m in catalogue} == set(CONSTRUCTEURS) - {"yue2-partition-jouee"}
+    par_id = {m["identifiant"]: m for m in catalogue}
+    assert par_id["sa3-small-sfx"]["familles"] == ["bruitage", "ambiance"]
+    assert par_id["ace-step-15-turbo"]["familles"] == ["musique", "jingle"]
+    assert par_id["yue2-int8"]["familles"] == ["chanson"]
+    # Tout est présent (fixture `son`) : chaque moteur est prêt, aucun n'est
+    # encore installé.
+    assert all(m["pret"] and m["manque"] == [] and m["modele"] is None for m in catalogue)
+    # Un simple `GET` ne pose rien : le catalogue reste lisible sans écrire.
+    assert not atelier.profils_workflow.lister()
+
+
+async def test_catalogue_dit_le_modele_installe_et_ce_qui_manque_sinon(son):
+    atelier, comfy = son
+    info = copy.deepcopy(comfy.informations)
+    info["CheckpointLoaderSimple"]["input"]["required"]["ckpt_name"][0].remove("yue2_3b_int8_convrot.safetensors")
+    comfy.informations = info
+    await atelier.installation_son.installer(identifiants=["sa3-small-sfx"])
+    catalogue = await atelier.installation_son.catalogue()
+    par_id = {m["identifiant"]: m for m in catalogue}
+    assert par_id["sa3-small-sfx"]["pret"] and par_id["sa3-small-sfx"]["modele"] is not None
+    assert par_id["yue2-int8"]["pret"] is False
+    assert par_id["yue2-int8"]["manque"] == [{"nom": "le modèle YuE2 (chansons)",
+        "fichier": "yue2_3b_int8_convrot.safetensors", "dossier": "checkpoints",
+        "source": "https://huggingface.co/Comfy-Org/YuE2/resolve/main/checkpoints/yue2_3b_int8_convrot.safetensors"}]
+    assert par_id["yue2-int8"]["modele"] is None
+
+
+async def test_catalogue_leve_un_refus_lisible_quand_comfyui_est_injoignable(son):
+    atelier, comfy = son
+
+    class MoteurIndisponible:
+        async def _json(self, methode, chemin):
+            raise httpx.ConnectError("réseau coupé", request=httpx.Request(methode, "http://comfy.test" + chemin))
+    atelier.profils_workflow.fabrique_moteur = MoteurIndisponible
+    with pytest.raises(WorkflowRefuse, match="injoignable"):
+        await atelier.installation_son.catalogue()
 
 
 # ── Un bruitage depuis une phrase, sur le profil installé ───────────────

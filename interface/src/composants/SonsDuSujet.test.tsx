@@ -6,12 +6,12 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { SonsDuSujet } from "./SonsDuSujet"
 import { sonsDuSujet, type Emplacement, type SonsDuSujet as Vue } from "../api-sons-du-sujet"
 import { ecoute, jeuxDeVariantes, seriesSon, texteSon } from "../api-series-son"
-import { workflows } from "../api-workflows"
+import { moteursSonores, workflows } from "../api-workflows"
 import { jeu, mesures, serie, tirageRendu } from "../son-essais"
 import { sfxr } from "../api-sfxr"
 
 vi.mock("../api-sons-du-sujet", () => ({ sonsDuSujet: { lire: vi.fn(), index: vi.fn(), ajouter: vi.fn(), retirer: vi.fn(), poser: vi.fn(), vider: vi.fn(), proposer: vi.fn(), preparer: vi.fn() } }))
-vi.mock("../api-workflows", () => ({ workflows: { lister: vi.fn() } }))
+vi.mock("../api-workflows", () => ({ workflows: { lister: vi.fn() }, moteursSonores: { lister: vi.fn() } }))
 vi.mock("../api-series-son", () => ({
   texteSon: { composer: vi.fn(), moteurs: vi.fn() },
   seriesSon: { annoncer: vi.fn(), preparer: vi.fn(), demarrer: vi.fn(), lire: vi.fn(), reprendre: vi.fn(), garder: vi.fn(), lister: vi.fn() },
@@ -36,6 +36,7 @@ beforeEach(() => {
   HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined) as unknown as HTMLMediaElement["play"]
   HTMLMediaElement.prototype.pause = vi.fn()
   vi.mocked(workflows.lister).mockResolvedValue({ profils: [] })
+  vi.mocked(moteursSonores.lister).mockResolvedValue({ moteurs: [] })
   vi.mocked(texteSon.moteurs).mockResolvedValue({ familles: { bruitage: { famille: "bruitage", modele: "ComfyUI:sa3@1", moteur: "sa3-small-sfx", possibles: [] } } as never })
   vi.mocked(texteSon.composer).mockImplementation(async (_p, d) => ({ famille: "bruitage", moteur: "sa3-small-sfx", gabarit: "g", compose: true, texte: `TrackType: SFX. ${d.prompt}`,
     morceaux: [{ texte: d.prompt, source: "description" }], langue: { non_anglais: false, indices: [] }, reglages_recus: [] }))

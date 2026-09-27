@@ -3,7 +3,7 @@ import { api, Refus } from "../api"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import {
   workflows,
-  type DemandeImageLocale, type FichierSonManquant, type ProfilWorkflow, type ResultatMoteurSon,
+  type DemandeImageLocale, type FichierSonManquant, type ProfilWorkflow,
   type TravailImageLocale, type DiagnosticWorkflow,
 } from "../api-workflows"
 import { BibliothequePourImage } from "./BibliothequePourImage"
@@ -19,8 +19,10 @@ const message = (e: unknown) => e instanceof Refus || e instanceof Error ? e.mes
 
 /** Ce qui manque pour un profil sonore (SN1) : chaque fichier en clair, son
  *  dossier et sa page — jamais le texte brut du diagnostic (« Nœud absent :
- *  YuE2GenerateABC (2). »), imprononçable pour qui ne connaît pas ComfyUI. */
-function ListeManque({ manque }: { manque: FichierSonManquant[] }) {
+ *  YuE2GenerateABC (2). »), imprononçable pour qui ne connaît pas ComfyUI.
+ *  Exportée depuis MO4 : `Moteurs.tsx` la réutilise pour « Le son », plutôt
+ *  que de redessiner la même liste. */
+export function ListeManque({ manque }: { manque: FichierSonManquant[] }) {
   return <ul className="space-y-[4px] text-[13px] text-encre-3">{manque.map(f => <li key={f.fichier}><span className="text-echec">{f.nom}</span> — fichier <span className="font-mono text-[12px]">{f.fichier}</span>, à poser dans <span className="font-mono text-[12px]">{f.dossier}</span>{f.source && <> · <a className="underline" href={f.source} target="_blank" rel="noreferrer">sa page</a></>}</li>)}</ul>
 }
 
@@ -91,12 +93,17 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio, actualiserSur }: {
   </section>
 }
 
-// ── Les méthodes sonores (SN1) ──────────────────────────────────────────────
+// ── Les moteurs sonores (SN1, MO4) ───────────────────────────────────────────
 //
-// Cinq moteurs fabriquent les sons du jeu ; leurs profils sont dérivés des
-// modèles de workflow officiels de ComfyUI (`atelier/audio/graphes.py`), pas
-// collés à la main. « Installer » ne fait qu'aller relire ce que ComfyUI sait
-// déjà : rien n'est jamais téléchargé par l'atelier.
+// MO4 : « Les méthodes sonores », l'écran qui listait les cinq moteurs à la
+// main et les installait, est fondue dans la page « Moteurs »
+// (`Moteurs.tsx`, section « Le son ») — même geste que MO2 pour les styles
+// de sc-clone. Ce qui reste ici n'est **pas** un doublon : `nomMoteurSonore`
+// nomme un moteur déjà écrit sur un son produit (`AtelierSon.tsx`, une fiche
+// de provenance) ; il ne choisit ni n'installe rien, et vaut pour un moteur
+// qui a pu disparaître du catalogue depuis. `MOTEURS_SONORES` reste la table
+// qui le porte — à réévaluer si MO7 (« plus aucune liste de moteur écrite en
+// dur ») revient dessus.
 export const MOTEURS_SONORES: readonly { identifiant: string; nom: string; quoi: string }[] = [
   { identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", quoi: "Bruitages et ambiances." },
   { identifiant: "ace-step-15-turbo", nom: "ACE-Step 1.5", quoi: "Musique et jingles." },
@@ -105,45 +112,9 @@ export const MOTEURS_SONORES: readonly { identifiant: string; nom: string; quoi:
   { identifiant: "sa-open-1", nom: "Stable Audio Open 1.0", quoi: "Secours pour les bruitages." },
 ]
 /** Le nom en clair d'un moteur sonore par son identifiant, pour les endroits
- *  qui ne connaissent que l'identifiant (un moteur `possible` mais pas
- *  installé, une provenance) — jamais l'identifiant brut affiché seul. */
+ *  qui ne connaissent que l'identifiant (une provenance déjà écrite) —
+ *  jamais l'identifiant brut affiché seul. */
 export const nomMoteurSonore = (identifiant: string) => MOTEURS_SONORES.find(m => m.identifiant === identifiant)?.nom ?? identifiant
-
-/** « Installer les méthodes sonores » (SN1) n'installe rien sans le clic de
- *  l'auteur : au montage, l'écran ne fait que lister les cinq moteurs
- *  possibles, sans état — aller relire ce que ComfyUI sait déjà reste une
- *  action, pas un effet de bord de l'ouverture de l'écran. */
-export function MethodesSonores({ onInstalle }: {
-  /** Prévient l'appelant qu'une installation a eu lieu, pour qu'il relise à
-   *  son tour « Les workflows locaux » juste au-dessus (SN1). */
-  onInstalle?: () => void
-} = {}) {
-  const [resultat, setResultat] = useState<Record<string, ResultatMoteurSon> | null>(null)
-  const [occupe, setOccupe] = useState(false)
-  const [erreur, setErreur] = useState("")
-  async function installer() {
-    setOccupe(true); setErreur("")
-    try { setResultat((await workflows.installerSon()).moteurs); onInstalle?.() }
-    catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
-  }
-  return <section aria-label="Les méthodes sonores" className="space-y-[22px] text-encre">
-    <header><h2 className="font-serif text-[38px]">Les méthodes sonores</h2><p className="mt-[8px] text-[13px] text-encre-3">Cinq moteurs fabriquent les sons du jeu. Rien n’est jamais téléchargé par l’atelier : c’est toi qui poses les fichiers, l’atelier ne fait que les retrouver.</p></header>
-    {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
-    <button className={BOUTON} disabled={occupe} onClick={() => void installer()}>Installer les méthodes sonores</button>
-    <div className="grid grid-cols-2 gap-[14px]">{MOTEURS_SONORES.map(m => {
-      const r = resultat?.[m.identifiant]
-      return <article key={m.identifiant} className={`${SURFACE} space-y-[8px]`}>
-        <div><h3 className="font-serif text-[25px]">{m.nom}</h3><p className="text-[12px] text-encre-3">{m.quoi}</p></div>
-        {r?.installe
-          ? <p className="text-[13px] text-ok">Installé{r.profil ? ` · version du ${new Date(r.profil.cree_le * 1000).toLocaleString("fr-FR")}` : ""}</p>
-          : r
-            ? <ListeManque manque={r.manque || []} />
-            : <p className="text-[13px] text-encre-3">{occupe ? "Recherche des fichiers…" : "Non vérifié — « Installer les méthodes sonores » relit ce que ComfyUI sait déjà."}</p>}
-      </article>
-    })}</div>
-    <p className="text-[12px] text-encre-3">Réinstaller sans rien changer ne crée pas de nouvelle version. Coller un workflow reste possible, comme pour l’image.</p>
-  </section>
-}
 
 function ConfigurerGraphe({ contenu, garder, occupe }: { contenu: string; garder: (profil: unknown) => Promise<void>; occupe: boolean }) {
   const [nom, setNom] = useState("")

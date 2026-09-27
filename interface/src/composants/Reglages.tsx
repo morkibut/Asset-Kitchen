@@ -40,7 +40,7 @@ import {
   ReglesDuJeu,
   TitreDeLAtelier,
 } from "./ReglesDuJeu"
-import { MethodesSonores, ProfilsWorkflow } from "./WorkflowsLocaux"
+import { ProfilsWorkflow } from "./WorkflowsLocaux"
 
 /** Les quatre onglets, dans l'ordre de la maquette. **La liste est fermée** :
  *  un cinquième onglet serait une porte de plus vers les réglages, et c'est
@@ -216,6 +216,13 @@ export function Reglages({
  * bouton d'installation) et « Les workflows locaux » (les profils importés à
  * la main, vidéo et son compris) restent ce qu'ils étaient : cette tranche ne
  * couvre que l'image.
+ *
+ * **MO4 : la section « Le son » de `PageDesMoteurs` fond « Les méthodes
+ * sonores » du même geste** — même chose, un même écran qui les décrit tous.
+ * `onInstallationSon` relaie l'installation d'un moteur sonore jusqu'ici,
+ * pour que « Les workflows locaux » juste en dessous relise ses profils à son
+ * tour (SN1) : c'est la même mécanique qu'avant, juste déclenchée d'un
+ * endroit différent.
  */
 function MoteursEtWorkflows({
   tiroirs,
@@ -250,7 +257,13 @@ function MoteursEtWorkflows({
         )}
 
         <div className="mt-[34px]">
-          <PageDesMoteurs modeles={modeles} signale={moteurASignaler} onSignale={onMoteurSignale} onInstallation={onInstallation} />
+          <PageDesMoteurs
+            modeles={modeles}
+            signale={moteurASignaler}
+            onSignale={onMoteurSignale}
+            onInstallation={onInstallation}
+            onInstallationSon={() => setActualisationSon((n) => n + 1)}
+          />
         </div>
 
         <section className="mt-[34px] flex flex-col">
@@ -268,12 +281,6 @@ function MoteursEtWorkflows({
             au-dessus ferait lire deux sections là où il n'y en a qu'une. */}
         <div className="mt-[34px]">
           <ProfilsWorkflow actualiserSur={actualisationSon} />
-        </div>
-
-        {/* Les méthodes sonores (SN1) : un geste d'installation à part, parce
-            qu'il ne colle rien — il retrouve ce que ComfyUI sait déjà. */}
-        <div className="mt-[34px]">
-          <MethodesSonores onInstalle={() => setActualisationSon(n => n + 1)} />
         </div>
       </div>
     </main>

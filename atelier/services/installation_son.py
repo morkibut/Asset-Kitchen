@@ -21,6 +21,7 @@ import re
 from atelier.audio.graphes import CONSTRUCTEURS, FAMILLES, FICHIERS, POSSIBLES, postes_fichiers
 from atelier.audio.texte import SFXR
 from atelier.domaine.son import FAMILLES_SON
+from atelier.domaine.workflow import WorkflowRefuse
 
 
 def _motif(nom_fichier):
@@ -93,6 +94,49 @@ def installer_depuis(profils_workflow, object_info, identifiants=None):
     return resultats
 
 
+def _familles_de(identifiant):
+    """Les familles de son où ce moteur sert (`atelier.audio.graphes.FAMILLES`) :
+    ce qu'un moteur « sait faire », jamais recopié en dur côté écran (MO4, « le
+    catalogue décide »). Vide pour un identifiant qui n'apparaît dans aucune
+    famille — `yue2-partition-jouee` (SN9), qui partage le fichier de poids de
+    `yue2-int8` mais n'est jamais un moteur à choisir pour lui-même : le
+    catalogue de la page « Moteurs » l'exclut par construction (voir
+    `catalogue_depuis`)."""
+    return [famille for famille, ordre in FAMILLES.items() if identifiant in ordre]
+
+
+def catalogue_depuis(profils_workflow, object_info):
+    """Fonction pure, comme `installer_depuis`, mais qui **ne pose jamais de
+    profil** : un simple `GET` (la page « Moteurs », MO4) ne doit rien écrire.
+    Pour chaque moteur réellement choisissable — un identifiant qui sert au
+    moins une famille —, dit son nom, ce qu'il sait faire, s'il est prêt, ce
+    qui lui manque sinon, et le modèle qu'il porte s'il est déjà installé."""
+    par_identifiant = {}
+    for profil in profils_workflow.lister():
+        actuel = par_identifiant.get(profil["identifiant"])
+        if actuel is None or profil["cree_le"] > actuel["cree_le"]:
+            par_identifiant[profil["identifiant"]] = profil
+    lignes = []
+    for identifiant, construire in CONSTRUCTEURS.items():
+        familles = _familles_de(identifiant)
+        if not familles:
+            continue
+        brut = construire()
+        manquants, vus = [], set()
+        for poste in postes_fichiers(brut):
+            nom = poste["fichier"]
+            if nom in vus:
+                continue
+            vus.add(nom)
+            if _trouver(poste["classe"], poste["champ"], nom, object_info) is None:
+                manquants.append(_manque(nom))
+        installe = par_identifiant.get(identifiant)
+        lignes.append({"identifiant": identifiant, "nom": brut["nom"], "description": brut["description"],
+            "familles": familles, "pret": not manquants, "manque": manquants,
+            "modele": installe["modele"] if installe else None})
+    return lignes
+
+
 class ServiceInstallationSon:
     def __init__(self, profils_workflow, atelier=None):
         self.profils_workflow = profils_workflow
@@ -105,6 +149,19 @@ class ServiceInstallationSon:
         moteur = self.profils_workflow.fabrique_moteur()
         object_info = await moteur._json("GET", "/object_info")
         return installer_depuis(self.profils_workflow, object_info, identifiants)
+
+    async def catalogue(self):
+        """Le catalogue des moteurs sonores (MO4) : la page « Moteurs » lit
+        ceci, jamais une liste écrite à la main dans l'écran. Un `ComfyUI
+        injoignable` se lève en clair, comme `ServiceStylesLocaux.inventaire`
+        le fait déjà pour l'image — la page grise alors la section entière
+        plutôt que de mentir sur l'état de chaque moteur."""
+        moteur = self.profils_workflow.fabrique_moteur()
+        try:
+            object_info = await moteur._json("GET", "/object_info")
+        except Exception as e:
+            raise WorkflowRefuse(f"ComfyUI est injoignable : {e}") from e
+        return catalogue_depuis(self.profils_workflow, object_info)
 
     def diagnostic_sonore(self, profil, diagnostic):
         """Pour l'écran : les fichiers absents que le diagnostic a signalés,
