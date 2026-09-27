@@ -62,6 +62,7 @@ _ORDRES = {
 from atelier.domaine.coup_de_main import AppelTexte
 from atelier.domaine.generation import Generation
 from atelier.domaine.personnage import Personnage
+from atelier.domaine.portrait import ORDRE_DU_REPLI, Portrait, raison_perdue
 from atelier.domaine.projet import SUJET, Collection, Projet
 
 # Change à chaque évolution du schéma. L'index est alors jeté et refait depuis
@@ -1104,81 +1105,87 @@ class Base:
         """Les animations entières, groupées par sujet — pour le compte d'avancement (RV10)."""
         return self._versions_par_pose("bandes", projet, personnages)
 
-    def vignettes_par_personnage(
+    def portraits_par_personnage(
         self, projet: str, personnages: Sequence[Personnage]
-    ) -> dict[str, Asset]:
-        """Une image par sujet — **celle que sa carte montre** (B9.4, TS1).
+    ) -> dict[str, Portrait]:
+        """Le portrait de chaque sujet — **la règle unique** (`domaine/portrait.py`,
+        PX10), pour la carte du Codex, la fiche et l'agent.
 
         La grille d'une famille dessine deux cents cartes, chacune avec une
         vignette. Relire les images de chaque sujet pour n'en garder qu'une
         serait deux cents allers-retours pour deux cents timbres-poste : c'est
-        exactement ce que `B9.1` a retiré au compte, et le rendre ici par la
-        bande n'aurait aucun sens.
+        exactement ce que `B9.1` a retiré au compte. **Deux lectures pour tout
+        le lot**, quel que soit le nombre de sujets : le repli de chacun, puis
+        les images choisies.
 
-        **Le portrait choisi gagne, sinon la plus fraîche** (TS1) — c'est la
-        même bascule que la fiche du sujet tient déjà
-        (`ServiceProduction.image_de_reference`) : `image_de_reference` posé,
-        et désignant toujours un asset vivant de ce sujet, prime sur la règle
-        d'hier. Sans choix, ou si l'asset choisi n'existe plus, a été écarté,
-        appartient à un autre sujet ou n'est qu'un calque, on retombe sur
-        `MAX(cree_le)` — **la dernière image faite** qui représente son sujet.
-        `MAX(cree_le)` avec les autres colonnes nues est défini en SQLite : la
-        ligne rendue est celle du maximum, pas une ligne au hasard.
+        ⚠️ **Le repli n'est plus « la plus fraîche »** (B9.4, TS1 jusqu'au
+        27 septembre 2026). C'était la moitié du défaut que PX10 ferme : dès
+        qu'un choix cessait de valoir, la dernière image arrivée — un résultat
+        repeint, une planche — devenait le portrait sur la carte, pendant que la
+        fiche en montrait un autre. Le repli est maintenant `ORDRE_DU_REPLI`,
+        qu'une arrivée ne déplace pas.
 
         **Un corps, jamais une pièce** : un casque n'est pas le portrait de
-        celui qui le porte. C'est la même séparation que `piece IS NULL` tient
-        déjà dans le compte des cases, et elle vaut aussi pour un portrait
-        choisi à la main.
+        celui qui le porte — ni en repli, ni en choix.
 
-        **Un seul lot de lecture pour les portraits choisis**, comme pour la
-        règle du jour : deux cents sujets ne valent jamais deux cents requêtes.
+        Un sujet sans image est absent du résultat *seulement* s'il n'a ni
+        choix ni repli ; un choix perdu sans repli rend un portrait vide qui
+        porte sa raison.
         """
-        vignettes: dict[str, Asset] = {}
         identifiants = [p.identifiant for p in personnages]
         if not identifiants:
-            return vignettes
+            return {}
+        replis: dict[str, Asset] = {}
         with self._connexion() as connexion:
             for depart in range(0, len(identifiants), 400):
                 paquet = list(identifiants[depart : depart + 400])
                 trous = ",".join("?" * len(paquet))
                 lignes = connexion.execute(
-                    "SELECT personnage, contenu, MAX(cree_le) FROM assets "
-                    "WHERE supprime_le IS NULL AND piece IS NULL "
+                    "SELECT personnage, contenu FROM ("
+                    "SELECT personnage, contenu, ROW_NUMBER() OVER ("
+                    f"PARTITION BY personnage ORDER BY {ORDRE_DU_REPLI}) AS n "
+                    "FROM assets WHERE supprime_le IS NULL AND piece IS NULL "
                     "AND (projet = ? OR projet IS NULL) "
-                    f"AND personnage IN ({trous}) GROUP BY personnage",
+                    f"AND personnage IN ({trous})) WHERE n = 1",
                     (projet, *paquet),
                 ).fetchall()
                 for ligne in lignes:
-                    vignettes[ligne["personnage"]] = Asset.depuis_json(
+                    replis[ligne["personnage"]] = Asset.depuis_json(
                         json.loads(ligne["contenu"])
                     )
 
+        # Les images choisies se lisent **sans filtre** : une supprimée ou un
+        # calque doit pouvoir dire pourquoi elle ne vaut plus.
         choisis = sorted({p.image_de_reference for p in personnages if p.image_de_reference})
+        lues: dict[str, Asset] = {}
         if choisis:
-            portraits: dict[str, Asset] = {}
             with self._connexion() as connexion:
                 for depart in range(0, len(choisis), 400):
                     paquet = list(choisis[depart : depart + 400])
                     trous = ",".join("?" * len(paquet))
-                    lignes = connexion.execute(
-                        "SELECT identifiant, contenu FROM assets WHERE "
-                        "supprime_le IS NULL AND piece IS NULL "
-                        f"AND identifiant IN ({trous})",
+                    for ligne in connexion.execute(
+                        f"SELECT identifiant, contenu FROM assets WHERE identifiant IN ({trous})",
                         paquet,
-                    ).fetchall()
-                    for ligne in lignes:
-                        portraits[ligne["identifiant"]] = Asset.depuis_json(
+                    ).fetchall():
+                        lues[ligne["identifiant"]] = Asset.depuis_json(
                             json.loads(ligne["contenu"])
                         )
-            for p in personnages:
-                choisi = portraits.get(p.image_de_reference) if p.image_de_reference else None
-                if (
-                    choisi is not None
-                    and choisi.personnage == p.identifiant
-                    and (choisi.projet or "") == projet
-                ):
-                    vignettes[p.identifiant] = choisi
-        return vignettes
+
+        portraits: dict[str, Portrait] = {}
+        for p in personnages:
+            repli = replis.get(p.identifiant)
+            if not p.image_de_reference:
+                if repli is not None:
+                    portraits[p.identifiant] = Portrait(repli)
+                continue
+            choisie = lues.get(p.image_de_reference)
+            perdu = raison_perdue(choisie, p.identifiant, projet)
+            portraits[p.identifiant] = Portrait(
+                choisie if perdu is None else repli,
+                choisi=p.image_de_reference,
+                perdu=perdu,
+            )
+        return portraits
 
     def rangs_vivants(self, generations: Sequence[str]) -> dict[str, set[int]]:
         """Quels emplacements ont **encore** leur image, pour un lot d'appels.

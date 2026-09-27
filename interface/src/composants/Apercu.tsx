@@ -621,7 +621,16 @@ function BandeALEchelle({ bande, facteur }: { bande: Bande; facteur: number }) {
  *  dans la fenêtre du dessous : c'est le comportement natif d'un `<dialog>`
  *  qui se ferme. */
 function useCoucheDuDessus(dialogue: RefObject<HTMLDialogElement | null>) {
-  useEffect(() => {
+  // ⚠️ **Ouvert avant d'être mesuré — un effet de mise en page, jamais un
+  // effet ordinaire** (PX10, 27 septembre 2026). Un `<dialog>` fermé est
+  // `display: none` : la scène qu'il porte mesure 0 × 0. Ouvert par un
+  // `useEffect`, il l'était *après* la mesure (`useLayoutEffect`, plus bas),
+  // l'ajustement valait zéro, et l'aperçu tombait sur son repli « sans
+  // mesure » — le navigateur contient l'image, et le zoom multiplie zéro. La
+  // molette tournait, rien ne bougeait : c'est ce que RV26 avait cassé. Les
+  // effets de mise en page d'un composant partent dans l'ordre où ils sont
+  // écrits, et celui-ci est appelé avant la mesure.
+  useLayoutEffect(() => {
     const d = dialogue.current
     if (!d) return
     d.showModal()

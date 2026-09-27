@@ -46,6 +46,7 @@ from atelier.domaine.demande import Demande
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import AGENT, REFERENCE, Generation, Reinjection
 from atelier.domaine.personnage import Personnage
+from atelier.domaine.portrait import Portrait
 from atelier.domaine.recette import PLACES, Recette, places_inconnues
 from atelier.domaine.sortie import Reglage as ReglageDeSortie
 from atelier.mcp.objectifs import palette_du_sujet
@@ -1099,9 +1100,7 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         """
         projet = _projet_ouvert(atelier, project)
         vestiaire = atelier.equipement.vestiaire(projet)
-        # **Les cases, lues une fois par sujet** (RP19). L'image de référence
-        # retombe dessus quand l'auteur n'en a choisi aucune ; les relire pour
-        # elle paierait le même parcours deux fois.
+        # **Les cases, lues une fois par sujet** (RP19).
         sujets = atelier.production.personnages(projet)
         if search.strip():
             # **La recherche est celle du serveur, pas une d'ici** (RP18) :
@@ -1114,8 +1113,15 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                 for p in atelier.production.rechercher_personnages(projet, search)
             }
             sujets = [p for p in sujets if p.identifiant in retenus]
+        # **Les portraits, lus en lot** (PX10) — la même lecture que la carte
+        # du Codex, donc la même règle.
+        portraits = atelier.base.portraits_par_personnage(projet, sujets)
         cases_par_sujet = [
-            (personnage, atelier.production.cases(projet, personnage))
+            (
+                personnage,
+                atelier.production.cases(projet, personnage),
+                portraits.get(personnage.identifiant, Portrait(None)),
+            )
             for personnage in sujets
         ]
         return {
@@ -1170,10 +1176,15 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     # C'est un jugement de l'auteur sur ce à quoi sa chose
                     # ressemble ; un outil pour l'écrire en ferait une décision
                     # d'agent. `null` quand le sujet n'a encore aucune image.
-                    "reference_image": atelier.production.image_de_reference(
-                        projet, personnage, cases
-                    )
-                    or None,
+                    # **La règle unique du portrait** (PX10) : le choix, sinon
+                    # un repli qu'une image arrivée ne déplace pas — et un
+                    # choix perdu se dit, il ne se remplace pas en silence.
+                    "reference_image": portrait.identifiant or None,
+                    "reference_image_lost": (
+                        {"asset": portrait.choisi, "reason": portrait.perdu}
+                        if portrait.perdu
+                        else None
+                    ),
                     # **Sa palette par défaut** (TS12) — lue ici, posée par
                     # `set_character_objective`. `null` quand il n'en a pas.
                     "palette": palette_du_sujet(atelier, projet, personnage),
@@ -1202,7 +1213,7 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                         for case in cases
                     ],
                 }
-                for personnage, cases in cases_par_sujet
+                for personnage, cases, portrait in cases_par_sujet
             ],
         }
 

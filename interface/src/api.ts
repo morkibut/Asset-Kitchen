@@ -2472,6 +2472,14 @@ export type SujetDepuisCarte = {
   deja: { identifiant: string; nom: string } | null
 }
 
+/** Un portrait choisi qui ne vaut plus (PX10). */
+export type PortraitPerdu = {
+  asset: string
+  raison: "supprimee" | "calque" | "detachee" | "ailleurs" | "introuvable"
+  phrase: string
+  rattachable: boolean
+}
+
 export type Personnage = {
   objectif?: ObjectifProduction | null
   identifiant: string
@@ -2521,11 +2529,19 @@ export type Personnage = {
    *  sujet ressemble. Absente par défaut ; l'identifiant d'une image fixe du
    *  sujet quand l'auteur en a choisi une.
    *
-   *  ⚠️ **Elle ne se résout pas ici** : `portraitDe` (`FicheDuSujet.tsx`) la
-   *  cherche parmi les images du sujet et retombe sur le choix du produit
-   *  quand elle ne désigne plus rien — supprimée, écartée, rattachée ailleurs.
-   *  Facultative : un serveur d'avant la tranche ne l'envoie pas. */
+   *  ⚠️ **Elle ne se résout pas ici** : c'est `portrait`, juste en dessous,
+   *  que le serveur a résolu (PX10). Facultative : un serveur d'avant RP19 ne
+   *  l'envoie pas. */
   image_de_reference?: string
+  /** **Le portrait, résolu par le serveur — la règle unique** (PX10) : le
+   *  choix de l'auteur, sinon un repli qu'une image arrivée ne déplace pas
+   *  (préférée, rangée, la plus ancienne). La carte du Codex et l'agent lisent
+   *  la même. `null` : aucune image. Absent : un serveur d'avant PX10. */
+  portrait?: Asset | null
+  /** **Le choix de l'auteur qui ne vaut plus**, avec sa raison — la fiche le
+   *  dit au lieu de le remplacer en silence. `rattachable` : l'image a
+   *  seulement été détachée, la rattacher suffit. */
+  portrait_perdu?: PortraitPerdu | null
   /** **La recette de ses images** (RS6) — le nom d'une recette nommée, que
    *  reçoit chaque image qui naît pour ce sujet à la place de la recette du
    *  jeu. Vide ou absente : la recette du jeu. */

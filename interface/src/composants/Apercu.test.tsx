@@ -286,3 +286,50 @@ describe("RV26 — l'agrandissement passe devant une fenêtre ouverte", () => {
     expect(onFermerFenetre).not.toHaveBeenCalled()
   })
 })
+
+// ── PX10 — la molette zoome dans l'agrandissement ───────────────────────────
+//
+// **Ce qui l'avait cassée** (RV26) : l'aperçu s'ouvre par `showModal()`, et
+// une fenêtre fermée ne mesure rien — `display: none`. Ouverte *après* la
+// mesure, la scène valait 0 × 0, l'ajustement zéro, et la molette multipliait
+// zéro. jsdom ne mesure jamais rien : le double ci-dessous fait comme le
+// navigateur, **une taille seulement dans une fenêtre ouverte**. Sans lui,
+// l'essai passerait des deux côtés.
+describe("PX10 — la molette zoome et dézoome dans l'agrandissement d'Espace", () => {
+  function mesurerCommeLeNavigateur() {
+    const vraie = HTMLElement.prototype.getBoundingClientRect
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      const fenetre = this.closest("dialog")
+      if (!fenetre) return vraie.call(this)
+      const ouverte = fenetre.hasAttribute("open")
+      const l = ouverte ? 800 : 0
+      const h = ouverte ? 600 : 0
+      return { width: l, height: h, top: 0, left: 0, right: l, bottom: h, x: 0, y: 0, toJSON: () => ({}) } as DOMRect
+    })
+  }
+
+  const SPRITE: Sujet = { cle: "s", src: "/sprite.png", titre: "Le sprite", largeur: 64, hauteur: 64, pixelise: true }
+  const pourcentage = () => /· (\d+) %/.exec(document.querySelector("footer")?.textContent ?? "")?.[1]
+
+  test("la scène est mesurée une fois la fenêtre ouverte : l'image a sa taille calculée", () => {
+    mesurerCommeLeNavigateur()
+    render(<Apercu sujet={SPRITE} onFermer={vi.fn()} />)
+    // (600 − 2 × 24) / 64 = 8,625 → 863 % : l'ajustement, et non le repli.
+    expect(document.querySelector("[data-damier-au-pixel]")).toBeTruthy()
+    expect(pourcentage()).toBe("863")
+  })
+
+  test("un cran de molette vers soi zoome, un cran dans l'autre sens revient", () => {
+    mesurerCommeLeNavigateur()
+    render(<Apercu sujet={SPRITE} onFermer={vi.fn()} />)
+    const scene = document.querySelector("[data-apercu-scene]") as HTMLElement
+    const avant = Number(pourcentage())
+
+    fireEvent.wheel(scene, { deltaY: -100, clientX: 400, clientY: 300 })
+    const zoome = Number(pourcentage())
+    expect(zoome).toBeGreaterThan(avant)
+
+    fireEvent.wheel(scene, { deltaY: 100, clientX: 400, clientY: 300 })
+    expect(Number(pourcentage())).toBe(avant)
+  })
+})

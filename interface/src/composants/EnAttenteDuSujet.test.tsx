@@ -236,3 +236,23 @@ test("PX9 : un résultat de « Repeindre » attend une décision sur son image, 
   fireEvent.click(within(carte).getByRole("button", { name: "Décider sur son image ›" }))
   expect(onDecider).toHaveBeenCalledWith("base-1")
 })
+
+// **PX10 — ce qui a détaché le portrait d'Elias.** Né d'une carte de la toile,
+// son portrait est une image du sujet sans case : elle vit dans ce bandeau par
+// nature, et « Écarter » la sortait du sujet sans rien dire. Le bouton cède la
+// place à ce qu'il faudrait faire ; le serveur refuse aussi.
+test("PX10 : le portrait du sujet ne s'écarte pas d'ici, et la carte dit pourquoi", async () => {
+  vi.spyOn(api, "enAttenteDuSujet").mockResolvedValue({
+    ...VIDE,
+    images: [image({ identifiant: "carte" }), image({ identifiant: "planche" })],
+  })
+  const designer = vi.spyOn(api, "designer").mockResolvedValue({} as never)
+  monter({ image_de_reference: "carte" })
+  await ouvrirLeBandeau()
+  const portrait = screen.getByText("image carte").closest("article") as HTMLElement
+  expect(within(portrait).queryByRole("button", { name: "Écarter" })).toBeNull()
+  expect(within(portrait).getByText(/son portrait — en choisir un autre pour l’écarter/)).toBeTruthy()
+  const planche = screen.getByText("image planche").closest("article") as HTMLElement
+  expect(within(planche).getByRole("button", { name: "Écarter" })).toBeEnabled()
+  expect(designer).not.toHaveBeenCalled()
+})

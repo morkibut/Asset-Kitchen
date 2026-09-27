@@ -1665,7 +1665,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "sujet",
     quoi: "Détacher cette image du sujet sans la supprimer — elle retourne à la bibliothèque, libre pour un autre sujet.",
     change:
-      "Rien n'est perdu ni repayé. Un bref instant pour l'annuler : elle se rattache alors avec la pose et la direction qu'elle portait avant.",
+      "Rien n'est perdu ni repayé. Un bref instant pour l'annuler : elle se rattache alors avec la pose et la direction qu'elle portait avant.\n\nLe portrait du sujet ne s'écarte pas d'ici : choisis-lui d'abord un autre portrait sur sa fiche. Un portrait choisi qui ne vaut plus — supprimé, détaché — se dit en haut de la fiche, avec de quoi le rattacher ou en choisir un autre ; il n'est jamais remplacé en silence par la dernière image arrivée.",
     origine: "toi · dans « Pas encore rangé »",
   },
 
