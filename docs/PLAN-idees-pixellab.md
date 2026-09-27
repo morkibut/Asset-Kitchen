@@ -371,6 +371,9 @@ affichage, et depuis `RV26` la scène n'existe peut-être pas encore à ce momen
 
 ## PX11 · Repeindre avec les mêmes réglages que créer
 
+> **Reprise par `MO1` de `docs/PLAN-catalogue-des-moteurs.md`** le 27 septembre 2026 : l'auteur a
+> choisi de ranger tous les moteurs, pas seulement celui-ci. Ne pas coder ici.
+
 **Retour de l'auteur, 27 septembre 2026.** Dans « Repeindre », Qwen-Image 2.1 n'offre pas le choix
 « Très rapide / Meilleure qualité » qu'il a pour créer. « C'est pas centralisé tout ça ? »
 
