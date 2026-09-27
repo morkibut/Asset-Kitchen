@@ -3138,6 +3138,20 @@ export const AIDE: Record<string, Explication> = {
       "« Sur cette machine » groupe les vingt-deux styles de sc-clone sous leurs cinq moteurs : un moteur installé pour créer sait repeindre une zone sans rien installer de plus. « En ligne » vient du même catalogue que le choix du modèle ailleurs dans l'atelier, jamais une seconde liste. Une clé manquante se répare dans « Les fournisseurs » ; un fichier manquant dit où le poser.",
   },
 
+  // MO3 (27 septembre 2026) : la section « Vidéo » de la même page — Wan, les
+  // workflows vidéo importés et les modèles en ligne, dans une seule liste.
+  "reglages.moteurs-video": {
+    nom: "Les moteurs vidéo",
+    ou: "reglages",
+    groupe: "Les moteurs — la page qui les rassemble",
+    quoi: "Wan, les workflows vidéo importés et les modèles en ligne, en une seule liste : ce que chacun sait faire, ses durées, son état.",
+    change:
+      "Rien à la fabrication en cours. « Faire une vidéo libre » et « 4. Le clip » proposent cette même liste, sous les mêmes noms.",
+    origine: "la carte de cette machine, ComfyUI pour un workflow importé, chaque fournisseur en ligne · rien ne se télécharge ni ne s'appelle depuis cette page",
+    long:
+      "Chaque moteur part d'une image de départ, toujours. « Finir sur une image » : « Fin de l'animation » peut lui demander une boucle ou une autre image.\n\nUn workflow importé le sait quand son graphe charge une image de fin (liaison « image_de_fin »). Sans image de fin demandée, ce qui ne servait qu'à elle est retiré du graphe et le clip finit libre.",
+  },
+
   "reglages.depenses": {
     nom: "Les dépenses",
     ou: "reglages",

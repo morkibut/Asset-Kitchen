@@ -11,7 +11,7 @@ import mimetypes
 
 from PIL import Image, UnidentifiedImageError
 
-from atelier.domaine.workflow import WorkflowRefuse, composer, graphes, octets_json
+from atelier.domaine.workflow import IMAGE_DE_FIN, WorkflowRefuse, composer, graphes, octets_json
 from atelier.fournisseur.maison import MoteurDeLaMaison, DELAI_MOYEN
 from atelier.fournisseur.port import ClipProduit
 
@@ -170,12 +170,17 @@ class MoteurWorkflow(MoteurDeLaMaison):
             raise WorkflowRefuse("ComfyUI n'a pas nommé la référence déposée.")
         return (str(rendu.get("subfolder") or "").rstrip("/") + "/" + str(rendu["name"])).lstrip("/")
 
-    async def soumettre_graphe(self, profil, valeurs, references, masque=None):
+    async def soumettre_graphe(self, profil, valeurs, references, masque=None, fin=None):
         diagnostic = await self.diagnostiquer_profil(profil)
         if not diagnostic["disponible"]:
             raise WorkflowRefuse(" · ".join(diagnostic["problemes"]))
         noms = [await self.deposer_reference(o) for o in references]
         zone = {} if masque is None else {"masque": await self.deposer_masque(masque)}
+        # MO3 : l'image de fin d'un clip part comme l'image de départ (même
+        # passage sur blanc). Une boucle finit sur les octets mêmes du départ :
+        # déjà déposés, on ne les redépose pas — la règle du moteur de la maison.
+        if fin is not None:
+            zone["image_de_fin"] = noms[0] if references and fin == references[0] else await self.deposer_reference(fin)
         graphe = composer(profil, references=noms, **zone, **valeurs)
         rendu = await self._json("POST", "/prompt", {"prompt": graphe, "client_id": self._client_id,
             "extra_data": {"asset_kitchen": {"profil": profil["identifiant"], "version": profil["version"]}}})
@@ -215,6 +220,10 @@ class MoteurWorkflow(MoteurDeLaMaison):
 
 
 class AnimateurWorkflow(MoteurWorkflow):
+    # MO3 : d'où vient un modèle vidéo, pour le catalogue commun — un workflow
+    # importé par l'auteur, à côté de la maison (Wan) et d'un fournisseur en ligne.
+    source = "workflow"
+
     def __init__(self, profils, fichiers, base=None, transport=None):
         super().__init__(base, transport)
         self.profils, self.fichiers = profils, fichiers
@@ -231,6 +240,9 @@ class AnimateurWorkflow(MoteurWorkflow):
                 chez_lui=p["modele"].split(":", 1)[1], durees=tuple(p["durees"]),
                 resolutions=tuple(dict.fromkeys(f["resolution"] for f in p["formats"])),
                 proportions=tuple(dict.fromkeys(f["proportions"] for f in p["formats"])),
+                # MO3 : sait-il finir sur une image choisie ? Son graphe le dit,
+                # par la liaison qui charge l'image de fin — jamais supposé.
+                accepte_une_image_de_fin=IMAGE_DE_FIN in p["liaisons"],
                 tarification=Tarification("maison", 0, "Gratuit — workflow local"),
                 images_par_seconde=p["cadence"], pas_d_images=p["pas_images"],
                 options={n: Option(n, o["genre"], tuple(o.get("valeurs", [])), o.get("minimum"), o.get("maximum")) for n, o in p["parametres"].items()},
@@ -243,7 +255,8 @@ class AnimateurWorkflow(MoteurWorkflow):
     async def verifier_preparation(self, modele, demande):
         p = self.profils.de_modele(modele.identifiant)
         composer(p, prompt=demande.texte, references=["reference"], resolution=demande.resolution,
-            proportions=demande.proportions, secondes=demande.secondes, options=demande.options)
+            proportions=demande.proportions, secondes=demande.secondes, options=demande.options,
+            image_de_fin="fin" if demande.image_de_fin else None)
         diagnostic = await self.diagnostiquer_profil(p)
         if not diagnostic["disponible"]:
             raise WorkflowRefuse(" · ".join(diagnostic["problemes"]))
@@ -251,7 +264,8 @@ class AnimateurWorkflow(MoteurWorkflow):
     async def soumettre(self, modele, demande):
         p = self.profils.de_modele(modele.identifiant)
         numero = await self.soumettre_graphe(p, {"prompt": demande.texte, "resolution": demande.resolution,
-            "proportions": demande.proportions, "secondes": demande.secondes, "options": dict(demande.options)}, [demande.image])
+            "proportions": demande.proportions, "secondes": demande.secondes, "options": dict(demande.options)}, [demande.image],
+            fin=demande.image_de_fin or None)
         # Le port de récupération ne reçoit que le numéro externe. Ce lien
         # durable retrouve la version de sortie après un redémarrage.
         from atelier.domaine.workflow import octets_json

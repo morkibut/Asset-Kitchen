@@ -28,25 +28,31 @@ import { api, Refus, type Modele } from "../api"
 import {
   NOM_MOTEUR_LOCAL, NOM_REFERENCE, ORDRE_MOTEURS_LOCAUX, stylesLocaux, type StyleLocal,
 } from "../api-workflows"
+import { SectionMoteursVideo } from "./MoteursVideo"
 
 const message = (e: unknown) => (e instanceof Refus || e instanceof Error ? e.message : "L’opération n’a pas abouti. Réessayez.")
 
-const BOUTON = "min-w-0 rounded-7 border border-contour bg-carte px-[14px] py-[4px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-3 disabled:opacity-50"
-const CAPACITE = "inline-flex h-[22px] items-center rounded-5 bg-papier-cote px-[8px] text-[11.5px] text-encre-2"
+export const BOUTON = "min-w-0 rounded-7 border border-contour bg-carte px-[14px] py-[4px] text-[12.5px] text-encre-controle transition-colors duration-120 hover:border-encre-3 disabled:opacity-50"
+export const CAPACITE = "inline-flex h-[22px] items-center rounded-5 bg-papier-cote px-[8px] text-[11.5px] text-encre-2"
 
 /** L'état d'un moteur, réduit aux trois badges que cette page montre — un
  *  quatrième (« clé manquante ») vit dans `EtatEnLigne`, ci-dessous : les deux
  *  familles de moteurs ne se grisent pas pour la même raison. */
 type EtatMachine = "installe" | "a-installer" | "manque"
 
-const BADGE: Record<EtatMachine | "indisponible", { texte: string; classe: string }> = {
+/** Les badges de la page, section vidéo (MO3) comprise. */
+export type EtatBadge = EtatMachine | "indisponible" | "cle-manquante"
+
+const BADGE: Record<EtatBadge, { texte: string; classe: string }> = {
   installe: { texte: "Installé", classe: "border-trait-ok bg-fond-ok text-encre-ok" },
   "a-installer": { texte: "À installer", classe: "border-trait-attention bg-fond-attention text-encre-attention" },
   manque: { texte: "Fichiers manquants", classe: "border-trait bg-papier-cote text-encre-3" },
   indisponible: { texte: "Indisponible", classe: "border-trait-attention bg-fond-attention text-encre-attention" },
+  // MO3 : un moteur vidéo en ligne sans sa clé le dit par son nom.
+  "cle-manquante": { texte: "Clé manquante", classe: "border-trait-attention bg-fond-attention text-encre-attention" },
 }
 
-function Badge({ etat }: { etat: EtatMachine | "indisponible" }) {
+export function Badge({ etat }: { etat: EtatBadge }) {
   const b = BADGE[etat]
   return <span className={`ml-auto inline-flex h-[22px] shrink-0 items-center rounded-5 border px-[8px] text-[12px] whitespace-nowrap ${b.classe}`}>{b.texte}</span>
 }
@@ -55,6 +61,7 @@ export function PageDesMoteurs({
   modeles,
   signale,
   onSignale,
+  onInstallation,
 }: {
   /** Le catalogue d'images déjà lu par l'atelier (`App.tsx`) — la même liste
    *  que la barre qui paie et la fabrique Repeindre, jamais une seconde
@@ -68,6 +75,9 @@ export function PageDesMoteurs({
    *  évidence), l'appelant l'efface — sinon un second renvoi vers le même
    *  moteur ne rejouerait rien. */
   onSignale: () => void
+  /** MO3 : ouvre « L'installation », où les fichiers de Wan se descendent avec
+   *  leur taille et leur licence — la page n'a pas de second chemin pour ça. */
+  onInstallation?: () => void
 }) {
   const [styles, setStyles] = useState<StyleLocal[] | null>(null)
   const [chargement, setChargement] = useState(true)
@@ -159,8 +169,8 @@ export function PageDesMoteurs({
       <header>
         <h2 className="font-serif text-[38px]">Les moteurs</h2>
         <p className="mt-[8px] text-[13px] text-encre-3">
-          Chaque moteur d’image, décrit une seule fois : ce qu’il sait faire, ses réglages, et son état. Créer et Repeindre lisent cette même liste — un
-          moteur non installé y renvoie d’un clic.
+          Chaque moteur, décrit une seule fois : ce qu’il sait faire, ses réglages, et son état. Créer et Repeindre lisent cette même liste — un
+          moteur non installé y renvoie d’un clic —, et les deux écrans qui font une vidéo lisent la section « Vidéo ».
         </p>
       </header>
 
@@ -227,6 +237,8 @@ export function PageDesMoteurs({
           </div>
         )}
       </section>
+
+      <SectionMoteursVideo onInstallation={onInstallation} />
     </section>
   )
 }

@@ -111,12 +111,34 @@ Reprend et remplace `PX11` de `docs/PLAN-idees-pixellab.md`.
 
 ## MO3 · La vidéo
 
-- [ ] Wan (la maison), les modèles vidéo d'OpenRouter et les workflows vidéo importés sortent du
+- [x] Wan (la maison), les modèles vidéo d'OpenRouter et les workflows vidéo importés sortent du
       même catalogue, avec les mêmes capacités (image de départ, image de fin, durées).
-- [ ] Un workflow vidéo importé qui sait finir sur une image le dit, et « Fin de l'animation » s'y
-      offre.
-- [ ] « Faire une vidéo libre » et « 4. Le clip » proposent la même liste.
-- [ ] Les moteurs vidéo entrent sur la page « Moteurs ».
+      → `ServiceAnimation.catalogue` (`atelier/services/animation.py`) assemble et trie les trois
+      sources ; `GET /clips/models` ne fait plus que la servir. Chaque ligne porte, dans la même
+      forme, `source` (maison / workflow / en_ligne, déclarée par l'animateur), `capacites`
+      (`image_de_depart: "obligatoire"` — un mot, pas un booléen : 8bis —, `image_de_fin`,
+      `durees`), `cout` (temps ou dollars, 8ter) et `etat` (prêt, à installer, clé manquante,
+      indisponible), qui ne dépend d'aucune demande — le grisé reste à côté.
+- [x] Un workflow vidéo importé qui sait finir sur une image le dit, et « Fin de l'animation » s'y
+      offre. → une liaison `image_de_fin` vers le champ du nœud qui charge l'image de fin
+      (`atelier/domaine/workflow.py`), reliable aussi depuis le formulaire d'import
+      (« Champ recevant l'image de fin (facultatif) »). Sans image de fin demandée, ce qui ne
+      servait qu'à elle quitte le graphe (`sans_image_de_fin`) et le clip finit libre ; une boucle
+      ne redépose pas le départ. Un profil sans cette liaison garde sa forme, donc sa version.
+      ⚠️ Reste, pour `MO6` : la capacité se lit sur la liaison déclarée, pas encore sur le graphe
+      seul (un `end_image` non relié n'est pas deviné), et que ComfyUI tienne l'entrée retirée
+      pour facultative ne se vérifie pas (`/object_info`) — si elle ne l'est pas, ComfyUI refuse le
+      calcul à l'envoi, en local, sans rien payer.
+- [x] « Faire une vidéo libre » et « 4. Le clip » proposent la même liste. → `ChoixModeleVideo`
+      (`interface/src/composants/ChoixModeleVideo.tsx`) : mêmes noms (fournisseur · nom — la vidéo
+      libre montrait l'identifiant brut), mêmes groupes que la page Moteurs, même ordre (le
+      serveur). Un essai monte les deux écrans sur la même réponse et compare ligne à ligne.
+- [x] Les moteurs vidéo entrent sur la page « Moteurs ». → section « Vidéo »
+      (`interface/src/composants/MoteursVideo.tsx`), montée d'une ligne au bas de
+      `PageDesMoteurs` ; Wan « à installer » ouvre « L'installation » (où les fichiers se
+      descendent avec leur taille et leur licence), un payant sans clé renvoie aux fournisseurs.
+      Une ligne au guide (`reglages.moteurs-video`). Pas encore de renvoi ciblé depuis un outil vers
+      une carte vidéo (MO2 ne l'a posé que pour l'image).
 
 ## MO4 · Le son
 

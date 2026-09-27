@@ -350,6 +350,9 @@ class MoteurDeLaMaison:
     """
 
     nom = NOM
+    # MO3 : d'où vient un modèle vidéo, pour le catalogue commun
+    # (`ServiceAnimation.catalogue`) — la carte de la maison.
+    source = "maison"
 
     def __init__(
         self,
