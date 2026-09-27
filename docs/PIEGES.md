@@ -2029,3 +2029,22 @@ la prochaine réécriture retrouvera.
   couleur nommée dans le texte de la demande (`SEUIL_TEINTES_VOISINES`,
   `atelier/domaine/fond.py`). **Un choix de fond « le plus différent » doit se différencier de
   ce qu'on demande, pas seulement de ce qui est déjà là.** PX3bis, 26 septembre 2026.
+- **Un `<dialog>` fermé mesure zéro, et un effet ordinaire l'ouvre après la mesure.**
+  L'agrandissement d'Espace (`Apercu.tsx`) est passé en `<dialog>` ouvert par `showModal()` le
+  24 septembre 2026 (RV26), ouvert dans un `useEffect` ; la scène, elle, se mesurait dans un
+  `useLayoutEffect`, qui part **avant** tout `useEffect`. Fermé, le `<dialog>` est
+  `display: none` : la scène valait 0 × 0, l'ajustement zéro, et l'aperçu tombait sur son repli
+  « sans mesure » où le navigateur contient l'image — la molette tournait et multipliait zéro.
+  Rien ne cassait à l'œil : l'image s'affichait toujours. Invisible aux essais parce que jsdom
+  ne mesure jamais rien, ouvert ou fermé ; l'essai qui le voit double `getBoundingClientRect`
+  **comme le navigateur** — une taille seulement dans un `<dialog>` ouvert. **Un `<dialog>` qui
+  porte ce qu'on mesure s'ouvre dans un effet de mise en page, écrit avant la mesure.**
+  PX10, 27 septembre 2026.
+- **Un repli « la plus récente » fait de chaque image arrivée le portrait dès qu'un choix
+  cesse de valoir.** Trois règles répondaient à « quel portrait ? » (la fiche au serveur, la
+  carte du Codex, l'écran), et la carte prenait la dernière image faite : un résultat repeint,
+  une planche. Le choix d'Elias, lui, avait été détaché par « Écarter » — sa copie de carte
+  n'a pas de case, donc elle vivait dans « Pas encore rangé ». Invisible parce que chaque règle,
+  lue seule, était raisonnable, et que le choix perdu ne se disait nulle part. **Un repli se
+  choisit pour ne pas bouger quand quelque chose arrive, et un choix perdu se dit.** Règle unique
+  dans `atelier/domaine/portrait.py`. PX10, 27 septembre 2026 — la troisième fois.

@@ -343,17 +343,17 @@ première case faite du plan* (`ServiceProduction.image_de_reference`) ; la cart
 résultat repeint, une planche, un import — devient donc le portrait dès que le choix de l'auteur
 perd sa validité, et rien ne le dit.
 
-- [ ] **Une seule règle** pour le portrait, partout (carte du Codex, fiche, agent) : le choix de
+- [x] **Une seule règle** pour le portrait, partout (carte du Codex, fiche, agent) : le choix de
       l'auteur, sinon un repli stable qui **ne change pas quand une image nouvelle arrive**.
-- [ ] **Le choix de l'auteur ne se perd jamais en silence** : si l'image choisie cesse d'être
+- [x] **Le choix de l'auteur ne se perd jamais en silence** : si l'image choisie cesse d'être
       valide (détachée du sujet, supprimée, devenue un calque), l'écran le dit sur la fiche
       (« le portrait choisi n'est plus disponible — en choisir un ») au lieu de le remplacer.
-- [ ] Trouver **ce qui a détaché** le portrait d'Elias de son sujet, et le réparer à la source.
-- [ ] **Un essai qui empêche le retour** : poser un portrait, puis faire arriver une image plus
+- [x] Trouver **ce qui a détaché** le portrait d'Elias de son sujet, et le réparer à la source.
+- [x] **Un essai qui empêche le retour** : poser un portrait, puis faire arriver une image plus
       récente de toutes les façons dont une image arrive (génération, repeinte, import, planche) —
       la carte et la fiche montrent toujours le portrait choisi. L'essai tombe quand on défait la
       correction (`AGENTS.md`, point 8octies).
-- [ ] Les portraits d'Elias et de Mara s'affichent justes sur l'atelier de l'auteur, **sans rien
+- [x] Les portraits d'Elias et de Mara s'affichent justes sur l'atelier de l'auteur, **sans rien
       réécrire à la main dans ses données** (une réparation, si elle en faut une, passe par le
       produit et se dit).
 
@@ -365,9 +365,34 @@ l'agrandissement est `RV26` (« passe devant les fenêtres », qui l'a mis dans 
 `<dialog>`). **Hypothèse, non vérifiée** : l'écoute de la molette se pose une seule fois au premier
 affichage, et depuis `RV26` la scène n'existe peut-être pas encore à ce moment-là.
 
-- [ ] La molette zoome et dézoome dans l'agrandissement d'Espace, partout où Espace marche.
-- [ ] Un essai qui l'empêche de disparaître, et qui tombe quand on défait la correction.
-- [ ] Vérifié au navigateur.
+- [x] La molette zoome et dézoome dans l'agrandissement d'Espace, partout où Espace marche.
+- [x] Un essai qui l'empêche de disparaître, et qui tombe quand on défait la correction.
+- [x] Vérifié au navigateur.
+
+**Faite le 27 septembre 2026.** *Le portrait.* Une seule règle, `atelier/domaine/portrait.py` : le
+choix de l'auteur, sinon un repli qu'une image arrivée ne déplace pas — une préférée d'abord, une
+image rangée dans une case avant une qui ne l'est pas, puis **la plus ancienne**. La carte du Codex
+la lit en lot, la fiche la reçoit toute résolue (`portrait`, `portrait_perdu`), l'agent aussi
+(`reference_image`, `reference_image_lost`) ; l'écran ne la recalcule plus. Un choix qui ne vaut
+plus se dit en haut de la fiche avec sa raison — « Le rattacher à Elias » s'il n'est que détaché,
+« En choisir un », ou « Reprendre le choix automatique » — et la vignette de la fiche le dit au
+lieu de montrer une autre image. **La cause d'Elias** : né d'une carte de la toile, son portrait
+est une image sans case, donc listée dans « Pas encore rangé » — **le seul élément** de son
+bandeau — où « Écarter » l'a détaché le 24 septembre à 13 h 56, trois minutes après sa troisième
+planche ; ses fichiers le datent. Réparé à la source : sortir le portrait choisi de son sujet est
+refusé avec sa raison (écran et agent), et le bandeau remplace le bouton par « son portrait — en
+choisir un autre pour l'écarter ». *La molette.* L'hypothèse du plan était fausse : l'écoute était
+bien posée ; c'est **la mesure** qui se faisait avant l'ouverture du `<dialog>` (fermé, il mesure
+0 × 0), et le zoom multipliait zéro. Le `<dialog>` s'ouvre maintenant avant la mesure
+(`docs/PIEGES.md`). **Vérifié au navigateur** sur une copie des données de l'auteur, fournisseur
+doublé : la carte et la fiche d'Elias désignent la même image, la fiche dit le portrait détaché,
+« Le rattacher à Elias » le rend, et Mara et Brakk sont inchangés ; la molette zoome et dézoome
+dans la Galerie (81 % → 127 % → 81 %) et par-dessus « Choisir la vignette » (645 % → 1 012 %).
+**Rien n'a été écrit dans les données de l'auteur** : sur son atelier, Elias affichera le message
+et le bouton « Le rattacher à Elias » ; c'est à lui de cliquer. Essais : `tests/test_px10_portrait.py`
+(8), `FicheDuSujet.test.tsx` (4), `EnAttenteDuSujet.test.tsx` (1), `Apercu.test.tsx` (2) —
+**tous tombent quand on défait la correction**, vérifié. `test_ts1.py` et `test_b9.py` figeaient
+« la plus fraîche » : réécrits sur le repli stable.
 
 ## PX11 · Repeindre avec les mêmes réglages que créer
 
