@@ -369,6 +369,25 @@ affichage, et depuis `RV26` la scène n'existe peut-être pas encore à ce momen
 - [ ] Un essai qui l'empêche de disparaître, et qui tombe quand on défait la correction.
 - [ ] Vérifié au navigateur.
 
+## PX11 · Repeindre avec les mêmes réglages que créer
+
+**Retour de l'auteur, 27 septembre 2026.** Dans « Repeindre », Qwen-Image 2.1 n'offre pas le choix
+« Très rapide / Meilleure qualité » qu'il a pour créer. « C'est pas centralisé tout ça ? »
+
+**Pourquoi.** Les moteurs locaux ont bien un seul catalogue (`catalogue_styles.py`), mais il tient
+**deux listes** : les styles pour créer, et, depuis PX2/PX7, les outils de retouche de zone, **un
+par famille, recopiés à la main** avec des réglages figés (Qwen repeint toujours en 30 étapes,
+c'est-à-dire en « qualité »). Chaque style neuf ou chaque variante doit donc être recopié une
+seconde fois, et ne l'est pas.
+
+- [ ] La retouche de zone **se déduit des styles** au lieu d'une liste à part : chaque style d'une
+      famille qui sait repeindre propose aussi « repeindre », avec ses propres réglages (étapes,
+      LoRA, déclencheur) — Qwen rapide et qualité compris.
+- [ ] Dans « Repeindre », le choix du modèle montre les mêmes noms que pour créer, groupés pareil.
+- [ ] Rien à installer en double : un style installé pour créer sait repeindre sans nouveau bouton.
+- [ ] Un repeint déjà fait avec l'ancien outil se rouvre et se relance sans erreur
+      (`AGENTS.md`, point 8septies).
+
 ## PX4 · La marge avant d'animer
 
 **Livre** un réglage « place autour du sujet » sur l'écran qui prépare une animation : la part

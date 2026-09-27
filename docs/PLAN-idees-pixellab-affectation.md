@@ -23,7 +23,7 @@
 
 ---
 
-## Les 11 tranches
+## Les 12 tranches
 
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
@@ -35,11 +35,12 @@
 | **PX8** · La liste des pistes d'amélioration | `[EASY]` | Rassembler ce qui est déjà écrit dans le plan et le relevé ; aucun code, aucune mesure. |
 | **PX9** · Repeindre, de A à Z : un résultat qui a un nom | `[HARD]` | Change ce que devient une génération (un résultat marqué « à décider », rangé mais tenu à l'écart des poses), branche le geste sur la création d'un sujet équipement et sur les calques d'équipement existants (AU15–AU17), et un parcours joué de bout en bout. |
 | **PX10** · Deux régressions — le portrait choisi, et la molette d'Espace | `[HARD]` | Deux règles du portrait à fondre en une, lue par la carte, la fiche et l'agent ; trouver ce qui détache une image de son sujet ; des essais qui tombent quand on défait la correction. La molette est un point `[MEDIUM]` à part. |
+| **PX11** · Repeindre avec les mêmes réglages que créer | `[HARD]` | Change la forme du catalogue local (une liste d'outils recopiés devient une capacité déduite des styles) dont héritent l'installation, le choix du modèle et les repeints déjà gardés ; les essais de PX2 et PX7 doivent passer. |
 | **PX4** · La marge avant d'animer | `[MEDIUM]` | Une constante devient un réglage gardé avec le clip et relu à la réouverture ; pas de forme neuve au-delà d'un champ. |
 | **PX5** · Finir sur une image | `[HARD]` | Change `DemandeClip` et `ModeleVideo`, les deux appels vidéo, le découpage de la bande ; une capacité neuve grisée avec sa raison. |
 | **PX6** · La relecture croisée | `[MEDIUM]` | Confronter les tranches entre elles et au plan ; corriger les coutures. |
 
-**Compte** : 0 `[VERY-HARD]`, 5 `[HARD]`, 5 `[MEDIUM]`, 1 `[EASY]`, 0 `[VERY-EASY]`.
+**Compte** : 0 `[VERY-HARD]`, 6 `[HARD]`, 5 `[MEDIUM]`, 1 `[EASY]`, 0 `[VERY-EASY]`.
 
 ## L'ordre et ce qui part ensemble
 
