@@ -87,7 +87,18 @@ def maison() -> AnimateurDouble:
     porte.modeles = [modele_de_la_maison()]
     manquant = FichierDeModele(nom="wan2.2_i2v_low_noise_14B_fp8.safetensors", famille="diffusion_models",
                                adresse="https://exemple.invalid/wan", taille_annoncee=14 * 1024**3)
-    porte.etat_du_moteur = lambda: EtatDuMoteur(allume=True, manquants=(manquant,))
+    etat = EtatDuMoteur(allume=True, manquants=(manquant,))
+    porte.etat_du_moteur = lambda: etat
+    # `GET /clips/engine` (MO8, trouvé au navigateur) : `FabricationSuivie.tsx`
+    # et `FabricationVideoLibre.tsx` l'appellent sans condition au montage pour
+    # la carte « Attente mesurée » — `_moteur()` retrouve ce double par son nom
+    # (« Maison ») et attend la même interface que `MoteurDeLaMaison`, pas
+    # seulement `etat_du_moteur` (lu ailleurs, par le catalogue). Sans elle :
+    # 500 attrapé côté écran (`.catch(() => setMoteur(null))`), donc invisible
+    # à l'usage, mais une trace en clair à chaque ouverture de ces deux écrans.
+    async def visiter() -> EtatDuMoteur:
+        return etat
+    porte.visiter = visiter
     return porte
 
 

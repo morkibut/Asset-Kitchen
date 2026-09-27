@@ -228,7 +228,44 @@ Reprend et remplace `PX11` de `docs/PLAN-idees-pixellab.md`.
 
 ## MO8 · La relecture croisée
 
-- [ ] Les étapes confrontées entre elles et au plan ; les coutures corrigées.
-- [ ] Le parcours de A à Z joué au navigateur pour chaque geste (créer, repeindre, animer, son,
+- [x] Les étapes confrontées entre elles et au plan ; les coutures corrigées.
+      → Les trois points laissés ouverts par les notes précédentes ont été rejoués au
+      navigateur, pas seulement relus :
+      - **MO2** (« Créer ne cible aucun moteur précis ») : encore vrai, et confirmé **non
+        gênant** — `/api/models` ne rend un moteur local qu'une fois installé (ce n'est pas un
+        `Modele` tant qu'il ne l'est pas), donc il n'y a structurellement rien à cibler dans le
+        `<select>` ; un modèle en ligne refusé, lui, montre déjà sa raison dans l'option.
+      - **MO3** (« aucun renvoi ciblé vers une carte vidéo ») : encore vrai — les deux écrans
+        (`ChoixModeleVideo`) n'ont pas de lien vers Moteurs, contrairement à Repeindre. Laissé
+        tel quel, à dessein : contrairement à Créer, rien n'empêcherait de le poser plus tard, mais
+        MO8 ne devait pas ajouter de fonctionnalité neuve.
+      - **MO6** (« un clip importé dans deux sections ») : vu à l'écran, ça se lit comme un
+        renvoi et non une redite (les deux cartes ne disent pas la même chose — l'une compare
+        le moteur aux autres, l'autre diagnostique ce qui a été importé) mais rien ne le disait
+        explicitement. **Corrigé** : la carte de « Vidéo » d'un clip importé porte désormais
+        « Diagnostic complet dans « Les workflows importés », plus bas. » (`MoteursVideo.tsx`).
+      - Vocabulaire et style entre les sections de `Moteurs.tsx` (MO2 à MO6) : lus ensemble à
+        l'écran, cohérents — même gabarit de carte, mêmes badges, même registre de phrase.
+      **Un vrai bug trouvé et corrigé**, hors du texte des notes : `GET /api/clips/engine` levait
+      une 500 (`AttributeError: 'AnimateurDouble' object has no attribute 'visiter'`) à chaque
+      ouverture de « Faire une vidéo libre » ou « 4. Le clip », dans l'atelier jetable de `MO3`
+      seulement (son double du moteur « Maison » ne portait pas `.visiter()`/`.telecharger()`,
+      attendus par `_moteur()` dans `atelier/api/animation.py`). Le vrai `MoteurDeLaMaison` du
+      produit les porte ; ce n'était donc pas un bug produit, mais l'écran le déclenche sans
+      condition et l'erreur était invisible (`.catch(() => setMoteur(null))`) — corrigé dans
+      `essais/atelier_jetable_mo3.py`.
+- [x] Le parcours de A à Z joué au navigateur pour chaque geste (créer, repeindre, animer, son,
       3D), sur un atelier jetable avec de vrais assets des projets de l'auteur.
-- [ ] Rien de payé : les vérifications se font en local.
+      → Quatre ateliers jetables (image `atelier_jetable_mo2.py`, vidéo `atelier_jetable_mo3.py`,
+      workflows importés `atelier_jetable_mo6.py`, son — neuf, `atelier_jetable_mo8_son.py`),
+      chacun avec Mara (*The Way Out reborn*) copiée hors de `donnees/`. **Créer** (moteur en
+      ligne doublé), **Repeindre** (grisé + lien vers Moteurs vérifiés en cliquant vraiment
+      dessus ; zone peinte, moteur local installé choisi, demande envoyée — la file locale de cet
+      atelier-ci ne sait pas simuler `/prompt`/`/queue`, donc la fabrication reste « en cours »,
+      sans conséquence pour ce qui était à vérifier ici), **Animer** (Wan local puis un moteur en
+      ligne, ce dernier terminé pour de vrai, clip récupéré) et **Fabriquer un son** (huit tirages
+      Stable Audio 3 Small-SFX, tous terminés, un gardé) ont tous été joués. La page « Moteurs »
+      a été relue en entier, section par section, sur les quatre ateliers.
+- [x] Rien de payé : les vérifications se font en local.
+      → Fournisseurs et ComfyUI doublés partout ; les deux fabrications terminées (vidéo en
+      ligne, son) l'ont été à $0,0000 / 0 usd consommé.

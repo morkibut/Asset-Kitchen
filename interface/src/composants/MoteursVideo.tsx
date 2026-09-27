@@ -93,6 +93,10 @@ function CarteMoteurVideo({ modele, onInstallation }: { modele: ModeleVideo; onI
       <p className="text-[12px] text-encre-3">
         {ou} · {durees.length ? durees.map(secondes).join(", ") : "durées non déclarées"} · {cout}
       </p>
+      {/* MO8 : la même carte, en plus court, revit sous « Les workflows
+          importés » avec son diagnostic complet — pour qu'un même nom vu deux
+          fois sur la page se comprenne comme un renvoi, pas une redite. */}
+      {modele.source === "workflow" && <p className="text-[12px] text-encre-3">Diagnostic complet dans « Les workflows importés », plus bas.</p>}
       {etat.raison && <p className="text-[12px] text-encre-attention">{etat.raison}</p>}
       {etat.code === "a_installer" && onInstallation && (
         <div>
