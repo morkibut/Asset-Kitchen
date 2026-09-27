@@ -91,16 +91,23 @@ Reprend et remplace `PX11` de `docs/PLAN-idees-pixellab.md`.
 - [x] Les formats vivent avec le moteur, plus à côté.
 - [x] Un repeint fait avec l'ancien outil se rouvre et se relance.
 - [x] Les essais de `PX2`, `PX7`, `PX9` et des moteurs locaux passent.
-      ⚠️ Reste, pour `MO2`/`MO7` : `atelier/mcp/serveur.py` (`repaints_zone`) ne marque encore
-      que les jumeaux déjà créés, pas tout style qui sait repeindre ; et le texte du guide sur
-      « Retouche d'une zone » (`interface/src/aide.ts`, ~ligne 2705) est périmé.
+      ⚠️ Reste, pour `MO7` : `atelier/mcp/serveur.py` (`repaints_zone`) ne marque encore que les
+      jumeaux déjà créés, pas tout style qui sait repeindre (le texte du guide périmé, lui, est
+      corrigé par `MO2`).
 
 ## MO2 · La page « Moteurs »
 
-- [ ] La page de la maquette, dans les Réglages : tous les moteurs d'image, ce que chacun sait
-      faire, son état ; on installe d'ici.
-- [ ] Les boutons « Installer » éparpillés dans les outils laissent place au renvoi vers la page.
-- [ ] Une ligne au guide (`AGENTS.md`, point 7).
+- [x] La page de la maquette, dans les Réglages : tous les moteurs d'image, ce que chacun sait
+      faire, son état ; on installe d'ici. → `PageDesMoteurs`
+      (`interface/src/composants/Moteurs.tsx`), dans l'onglet « Moteurs & workflows » (non
+      renommé — ~11 fichiers/essais nomment déjà ce texte, et rien dans `docs/vocabulaire.html`
+      n'imposait le mot plus court de la maquette).
+- [x] Les boutons « Installer » éparpillés dans les outils laissent place au renvoi vers la page.
+      → Repeindre défile jusqu'à la fiche précise et la met en évidence ; Créer (sélecteur natif
+      dans la barre qui paie) renvoie à l'onglet sans cibler un moteur précis, faute de pouvoir
+      porter un lien par option.
+- [x] Une ligne au guide (`AGENTS.md`, point 7). → l'entrée périmée sur « Retouche d'une zone »
+      (signalée par `MO1`) est corrigée au passage.
 
 ## MO3 · La vidéo
 

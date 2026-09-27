@@ -25,7 +25,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { api, type Asset, type Trait } from "../api"
-import { origineDuTemps, stylesLocaux, tempsParImage } from "../api-workflows"
+import { origineDuTemps, tempsParImage } from "../api-workflows"
 import { type CalqueRepeint, type EtatDeLaZone, type ModeleDeZone, type RenduDeLaDecision, TERMINES, zone as routes } from "../api-zone"
 import { OPACITE, rayonDe, type EtatMain } from "../recette"
 import { PANNEAU } from "./Infobulle"
@@ -106,6 +106,7 @@ export function EcranRepeindre({
   onErreur,
   onRetoucher,
   intervalle = 1000,
+  onOuvrirMoteurs,
 }: {
   /** L'image ouverte : c'est elle qu'on repeint, et elle ne bouge jamais. */
   asset: Asset
@@ -116,6 +117,11 @@ export function EcranRepeindre({
   onRetoucher?: (identifiant: string) => void
   /** Le pas du suivi d'une zone lancée, en millisecondes. */
   intervalle?: number
+  /** MO2 : ouvrir *Réglages › Moteurs & workflows*, défilé et mis en évidence
+   *  sur le moteur désigné (sa clé de famille — `sdxl`, `qwen21`…). Le bouton
+   *  qui installait le moteur d'ici a laissé sa place à ce renvoi. Absent, le
+   *  bloc reste muet plutôt que de proposer un geste qui ne mène nulle part. */
+  onOuvrirMoteurs?: (moteur?: string) => void
 }) {
   const [etat, setEtat] = useState<EtatDeLaZone | null>(null)
   const [traits, setTraits] = useState<Trait[]>([])
@@ -132,7 +138,6 @@ export function EcranRepeindre({
   // veut dire « le défaut du catalogue » — jamais un identifiant vide envoyé
   // pour rien.
   const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
-  const [installe, setInstalle] = useState<string | null>(null)
   // PX9 : **le formulaire de l'équipement appartient à un résultat**, pas à
   // l'écran. Un nom tapé pour le sac ne doit jamais se retrouver sous le
   // résultat suivant, arrivé pendant qu'on relançait (point 8octies).
@@ -320,21 +325,6 @@ export function EcranRepeindre({
     setDecide(null)
   }
 
-  // PX7 : un outil se demande par son identifiant — sdxl comme les quatre
-  // autres. `installe` porte celui qui s'installe, pour ne griser que son
-  // propre bouton.
-  const installer = async (identifiant: string) => {
-    setInstalle(identifiant)
-    try {
-      await stylesLocaux.installer(identifiant)
-      await charger()
-    } catch (erreur) {
-      onErreur(erreur instanceof Error ? erreur.message : String(erreur))
-    } finally {
-      setInstalle(null)
-    }
-  }
-
   const aDecider = (etat?.calques ?? []).filter((c) => c.statut !== "equipement")
   const equipements = (etat?.calques ?? []).filter((c) => c.statut === "equipement")
 
@@ -407,45 +397,50 @@ export function EcranRepeindre({
             </div>
           )}
 
-          {/* Pas de modèle du tout : pourquoi, et comment en avoir un. */}
+          {/* Pas de modèle du tout : pourquoi, et un renvoi vers sa fiche
+              (MO2) — plus d'installation d'ici, les boutons épars ont laissé
+              leur place à la page « Moteurs ». */}
           {etat && !etat.modele && (
             <div data-sans-modele className="flex flex-col gap-[4px] rounded-7 border border-trait bg-carte p-[8px]">
               <p className="text-[12px] text-encre">{etat.raison}</p>
-              {etat.outil.pret ? (
-                <button type="button" disabled={installe === etat.outil.identifiant} onClick={() => void installer(etat.outil.identifiant)} className="h-[30px] self-start rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50">
-                  {installe === etat.outil.identifiant ? "installation…" : `Installer l’outil « ${etat.outil.moteur ? `${etat.outil.moteur} · ` : ""}${etat.outil.nom} »`}
+              {etat.outil.pret && onOuvrirMoteurs ? (
+                <button
+                  type="button"
+                  onClick={() => onOuvrirMoteurs(etat.outil.famille ?? undefined)}
+                  className="self-start text-[12px] text-signal underline"
+                >
+                  {`l’installer dans Moteurs ›`}
                 </button>
-              ) : (
+              ) : !etat.outil.pret ? (
                 <p className="mesure text-[10.5px] text-encre-4">
                   Il manque, dans ComfyUI : {etat.outil.manque.join(" · ") || "ComfyUI ne répond pas"}.
                 </p>
-              )}
+              ) : null}
             </div>
           )}
 
           {/* PX7 : une retouche de référence par moteur local — MO1 : seulement
-              pour un moteur dont aucun style n'est encore installé. L'installer
-              d'ici installe le style avec, pour créer aussi. */}
+              pour un moteur dont aucun style n'est encore installé. MO2 : le
+              renvoi remplace l'installation d'ici. */}
           {etat && moteursAInstaller.length > 0 && (
             <div data-moteurs-locaux className="flex flex-col gap-[6px] rounded-7 border border-trait bg-carte p-[8px]">
               <p className="text-[11px] text-encre-2">les moteurs locaux pas encore installés</p>
               {moteursAInstaller.map((outil) => (
                 <div key={outil.identifiant} className="flex items-center justify-between gap-[8px] text-[12px]">
                   <span className="min-w-0 truncate text-encre">{outil.moteur ? `${outil.moteur} · ${outil.nom}` : outil.nom}</span>
-                  {outil.pret ? (
+                  {outil.pret && onOuvrirMoteurs ? (
                     <button
                       type="button"
-                      disabled={installe === outil.identifiant}
-                      onClick={() => void installer(outil.identifiant)}
-                      className="h-[26px] shrink-0 rounded-5 border border-contour bg-carte px-[8px] text-[11px] text-encre-controle disabled:opacity-50"
+                      onClick={() => onOuvrirMoteurs(outil.famille ?? undefined)}
+                      className="shrink-0 text-[11px] text-signal underline"
                     >
-                      {installe === outil.identifiant ? "installation…" : "Installer"}
+                      {`l’installer dans Moteurs ›`}
                     </button>
-                  ) : (
+                  ) : !outil.pret ? (
                     <span className="mesure shrink-0 truncate text-[10.5px] text-encre-4" title={outil.manque.join(" · ")}>
                       manque : {outil.manque.join(" · ") || "ComfyUI ne répond pas"}
                     </span>
-                  )}
+                  ) : null}
                 </div>
               ))}
             </div>

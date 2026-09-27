@@ -120,6 +120,10 @@ export type StyleLocal = {
   pret: boolean
   manque: string[]
   modele: string | null
+  /** MO2 : sait-il repeindre une zone, une fois installé ? Lu sur le style
+   *  (`sait_repeindre`, `atelier/fournisseur/catalogue_styles.py`), jamais
+   *  supposé côté écran — « le catalogue décide ». */
+  repeint: boolean
 }
 
 export const stylesLocaux = {

@@ -2702,7 +2702,12 @@ export const AIDE: Record<string, Explication> = {
       "Rien sur l'image ouverte. Elle en produit une pièce : tout ce que le moteur a peint dans la zone, le fond retiré. Tu décides ensuite ce qu'elle devient.",
     origine: "l'image ouverte, un moteur sur cette machine · rien n'est payé",
     long:
-      "Il faut l'outil « Retouche d'une zone » installé ; sinon le bouton est grisé et dit comment l'installer.\n\nLe bouton annonce le temps avant de partir : mesuré sur cette machine, ou la vitesse relevée ailleurs tant qu'aucun tirage n'a eu lieu ici.",
+      // MO2 (27 septembre 2026) : périmée depuis MO1, qui a remplacé l'outil
+      // unique « Retouche d'une zone » par une capacité de chaque style
+      // (`FAMILLES[...]['repeint']`) — et depuis MO2, un moteur pas encore
+      // installé renvoie vers sa fiche sur la page Moteurs plutôt que de
+      // s'installer d'ici.
+      "Il faut un moteur qui sait repeindre une zone, installé sur cette machine ; sinon le bouton est grisé, et un lien mène à sa fiche dans Réglages › Moteurs & workflows.\n\nLe bouton annonce le temps avant de partir : mesuré sur cette machine, ou la vitesse relevée ailleurs tant qu'aucun tirage n'a eu lieu ici.",
   },
 
   "repeint.zone": {
@@ -3114,6 +3119,23 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · vide au départ · trois portes, une seule pièce",
     long:
       "Une clé n'apparaît jamais en entier : tu vois ses six derniers caractères. Celle qui vient de l'environnement de la machine ne se retire pas d'ici — l'atelier n'écrit pas là-dedans. La retirer grise les modèles de son fournisseur, et rien d'autre : ni une image, ni une ligne de dépense ne disparaît.",
+  },
+
+  // MO2 (27 septembre 2026) : la page « Moteurs » — un moteur d'image décrit
+  // une seule fois, groupé sur cette machine ou en ligne. Une entrée pour
+  // l'écran entier, pas une par moteur : ce que chaque carte montre (nom,
+  // capacités, réglages, état) se lit d'un coup d'œil, rien à expliquer réglage
+  // par réglage.
+  "reglages.moteurs": {
+    nom: "Les moteurs d'image",
+    ou: "reglages",
+    groupe: "Les moteurs — la page qui les rassemble",
+    quoi: "Chaque moteur d'image, décrit une seule fois : ce qu'il sait faire, ses réglages, et son état — installé, à installer, ou une clé manquante.",
+    change:
+      "Rien à la fabrication en cours : c'est ici qu'on installe un moteur local ou qu'on branche une clé, pas qu'on choisit ce qu'on fabrique. Les outils (Créer, Repeindre) lisent cette même liste — un moteur non installé y renvoie d'un clic.",
+    origine: "ComfyUI pour les moteurs de cette machine, chaque fournisseur pour les moteurs en ligne · rien ne se télécharge ni ne s'appelle depuis cette page",
+    long:
+      "« Sur cette machine » groupe les vingt-deux styles de sc-clone sous leurs cinq moteurs : un moteur installé pour créer sait repeindre une zone sans rien installer de plus. « En ligne » vient du même catalogue que le choix du modèle ailleurs dans l'atelier, jamais une seconde liste. Une clé manquante se répare dans « Les fournisseurs » ; un fichier manquant dit où le poser.",
   },
 
   "reglages.depenses": {

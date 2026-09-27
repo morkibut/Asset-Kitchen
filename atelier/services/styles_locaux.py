@@ -14,7 +14,9 @@ modèles ne double pas chaque style d'une ligne grisée « il lui faut la zone �
 from __future__ import annotations
 
 from atelier.domaine.workflow import WorkflowRefuse
-from atelier.fournisseur.catalogue_styles import FAMILLES, OUTILS, STYLES, createur_de, inventaire, resoudre, style, zone_de
+from atelier.fournisseur.catalogue_styles import (
+    FAMILLES, OUTILS, STYLES, createur_de, inventaire, resoudre, sait_repeindre, style, zone_de,
+)
 from atelier.fournisseur.styles_locaux import construire_profil, profil_de_zone
 
 
@@ -69,7 +71,11 @@ class ServiceStylesLocaux:
             "genre": entree.get("genre", "sprite"), "vitesse": entree.get("vitesse") or famille["vitesse"],
             "reference": famille["reference"],
             "pret": resolu["pret"], "manque": resolu["manque"],
-            "modele": installe["modele"] if installe else None}
+            "modele": installe["modele"] if installe else None,
+            # MO2 : la capacité de repeindre, pour la page « Moteurs » — elle se
+            # lit sur le style (`sait_repeindre`), jamais recopiée en dur côté
+            # écran (« le catalogue décide »).
+            "repeint": sait_repeindre(entree)}
 
     async def lister(self):
         inventaire_ = await self._inventaire()

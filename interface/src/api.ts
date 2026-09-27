@@ -108,6 +108,10 @@ export type Modele = {
    *  du nom d'un modèle gratuit s'écrirait « $0,0000 » — et se lirait *sans
    *  limite* là où il faut lire *sans prix*. */
   unite: string
+  /** **Repeint une zone peinte** (PX2, MO2) : une capacité de modèle comme une
+   *  autre, jamais réservée aux styles locaux — c'est ce que la page
+   *  « Moteurs » lit pour montrer « Repeindre une zone » sans le supposer. */
+  masque?: boolean
 }
 
 export type Resultat = {

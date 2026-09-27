@@ -4021,6 +4021,7 @@ export function Retouche({
   onAssocierEquipement,
   onPoserSurLaToile,
   enregistrementImmediat = false,
+  onOuvrirMoteurs,
 }: {
   asset: Asset
   /** Compatibilité des anciens bancs des tables ; l’application utilise le brouillon. */
@@ -4075,6 +4076,9 @@ export function Retouche({
   /** **Le dossier du jeu vient de changer** (M7) — promouvoir un détourage en
    *  défaut du projet l'écrit. */
   onUnivers?: (univers: Univers) => void
+  /** MO2 : passé tel quel à `EcranRepeindre` — ouvrir *Réglages › Moteurs &
+   *  workflows*, défilé et mis en évidence sur le moteur désigné. */
+  onOuvrirMoteurs?: (moteur?: string) => void
 }) {
   const immediat = useRecette(originale, onErreur)
   const session = useRetoucheBrouillon(originale, onErreur, !enregistrementImmediat)
@@ -4596,7 +4600,7 @@ export function Retouche({
           </div>
         ) : ouverte === "repeint" ? (
           <div className="col-span-2 row-start-2 row-span-2 flex min-h-0 overflow-hidden pb-[22px]">
-            <EcranRepeindre asset={asset} onErreur={onErreur} onRetoucher={(id) => { setOuverte("main"); (onOuvrirAsset ?? onSoeur)(id) }} />
+            <EcranRepeindre asset={asset} onErreur={onErreur} onRetoucher={(id) => { setOuverte("main"); (onOuvrirAsset ?? onSoeur)(id) }} onOuvrirMoteurs={onOuvrirMoteurs} />
           </div>
         ) : ouverte === "superposition" ? (
           <div className="col-span-2 row-start-2 row-span-2 flex min-h-0 overflow-hidden pb-[22px]">
