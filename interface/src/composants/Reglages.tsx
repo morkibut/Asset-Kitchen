@@ -27,7 +27,7 @@
 
 import { useEffect, useState } from "react"
 
-import type { EtatAgent, Modele, Tiroir } from "../api"
+import type { EtatAgent, EtatTraitement, Modele, Tiroir } from "../api"
 import { DelegationDuJeu } from "./DelegationDuJeu"
 import { EcranDepenses } from "./Depenses"
 import { PANNEAU } from "./Infobulle"
@@ -62,6 +62,7 @@ export function Reglages({
   tiroirs,
   agent,
   modeles,
+  traitement,
   onDeposee,
   onAgent,
   onRenomme,
@@ -81,6 +82,9 @@ export function Reglages({
   tiroirs: Tiroir[] | null
   agent: EtatAgent | null
   modeles: Modele[]
+  /** MO5 : le catalogue des cinq modèles de détourage (`traitement.
+   *  silhouettes`) — la page « Moteurs » le montre, elle ne le relit pas. */
+  traitement?: EtatTraitement | null
   onDeposee: () => void
   onAgent: (agent: EtatAgent) => void
   onRenomme: () => void
@@ -166,6 +170,7 @@ export function Reglages({
         <MoteursEtWorkflows
           tiroirs={tiroirs}
           modeles={modeles}
+          traitement={traitement}
           onDeposee={onDeposee}
           onInstallation={onInstallation}
           moteurASignaler={moteurASignaler}
@@ -227,6 +232,7 @@ export function Reglages({
 function MoteursEtWorkflows({
   tiroirs,
   modeles,
+  traitement,
   onDeposee,
   onInstallation,
   moteurASignaler,
@@ -234,6 +240,7 @@ function MoteursEtWorkflows({
 }: {
   tiroirs: Tiroir[] | null
   modeles: Modele[]
+  traitement?: EtatTraitement | null
   onDeposee: () => void
   onInstallation: () => void
   moteurASignaler: string | null
@@ -259,6 +266,7 @@ function MoteursEtWorkflows({
         <div className="mt-[34px]">
           <PageDesMoteurs
             modeles={modeles}
+            traitement={traitement}
             signale={moteurASignaler}
             onSignale={onMoteurSignale}
             onInstallation={onInstallation}

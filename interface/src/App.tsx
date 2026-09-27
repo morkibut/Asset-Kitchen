@@ -2415,6 +2415,7 @@ function AtelierApp() {
             tiroirs={etat?.secrets ?? null}
             agent={etat?.agent ?? null}
             modeles={modeles}
+            traitement={etat?.traitement ?? null}
             onDeposee={() => {
               void api.etat().then(setEtat).catch(() => undefined)
               void relireCatalogue()

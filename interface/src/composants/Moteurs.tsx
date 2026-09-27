@@ -2,12 +2,12 @@
 //
 // « Chaque moteur d'IA est décrit une seule fois, et tous les outils de
 // l'atelier lisent cette description. » (`docs/PLAN-catalogue-des-moteurs.md`
-// § MOM). Cette page-ci couvre l'image — créer et repeindre (MO2) — et le son
-// (MO4) : la vidéo (MO3), la 3D et le détourage (MO5) et les workflows
-// importés (MO6) ajouteront leurs propres cartes à la suite, dans des
-// tranches séparées. `PageDesMoteurs` est donc volontairement un composant
-// par groupe de capacité, pas un fourre-tout : une section de plus s'ajoutera
-// sans toucher aux autres.
+// § MOM). Cette page-ci couvre l'image — créer et repeindre (MO2) —, le son
+// (MO4), la vidéo (MO3, `SectionMoteursVideo`), et la 3D, le détourage et le
+// coup de main (MO5) : les workflows importés (MO6) ajouteront leur propre
+// carte à la suite, dans une tranche séparée. `PageDesMoteurs` est donc
+// volontairement un composant par groupe de capacité, pas un fourre-tout :
+// une section de plus s'ajoutera sans toucher aux autres.
 //
 // **Le catalogue décide, jamais une liste en dur** (`AGENTS.md`) : « Sur cette
 // machine » vient des vingt-deux styles de sc-clone
@@ -27,11 +27,14 @@
 // que comme une capacité de plus.
 
 import { useEffect, useRef, useState } from "react"
-import { api, Refus, type Modele } from "../api"
+import { api, Refus, type EtatTraitement, type Modele, type Silhouette } from "../api"
+import { sources3d } from "../api-3d"
+import { coupDeMain, type EtatCoupDeMain } from "../api-coup-de-main"
 import {
   NOM_MOTEUR_LOCAL, NOM_REFERENCE, ORDRE_MOTEURS_LOCAUX, moteursSonores, stylesLocaux, workflows,
   type MoteurSonore, type StyleLocal,
 } from "../api-workflows"
+import { nomDuModele } from "./Fiche"
 import { SectionMoteursVideo } from "./MoteursVideo"
 import { ListeManque } from "./WorkflowsLocaux"
 
@@ -56,7 +59,19 @@ export const CAPACITE = "inline-flex h-[22px] items-center rounded-5 bg-papier-c
 type EtatMachine = "installe" | "a-installer" | "manque"
 
 /** Les badges de la page, section vidéo (MO3) comprise. */
-export type EtatBadge = EtatMachine | "indisponible" | "cle-manquante"
+export type EtatBadge =
+  | EtatMachine
+  | "indisponible"
+  | "cle-manquante"
+  // MO5 : la 3D (adresse jamais réglée depuis l'atelier), le détourage par
+  // modèle (l'extension manque, ou le poids n'est pas encore descendu — ce
+  // n'est jamais un bouton, `rembg` le télécharge tout seul au premier appel)
+  // et le coup de main (son unique plafond mensuel, distinct d'une clé
+  // absente : la marque le dit déjà par une ligne grise, jamais un silence).
+  | "non-configure"
+  | "extension-absente"
+  | "au-premier-appel"
+  | "plafond-atteint"
 
 const BADGE: Record<EtatBadge, { texte: string; classe: string }> = {
   installe: { texte: "Installé", classe: "border-trait-ok bg-fond-ok text-encre-ok" },
@@ -65,6 +80,10 @@ const BADGE: Record<EtatBadge, { texte: string; classe: string }> = {
   indisponible: { texte: "Indisponible", classe: "border-trait-attention bg-fond-attention text-encre-attention" },
   // MO3 : un moteur vidéo en ligne sans sa clé le dit par son nom.
   "cle-manquante": { texte: "Clé manquante", classe: "border-trait-attention bg-fond-attention text-encre-attention" },
+  "non-configure": { texte: "Non configuré", classe: "border-trait bg-papier-cote text-encre-3" },
+  "extension-absente": { texte: "Extension absente", classe: "border-trait-attention bg-fond-attention text-encre-attention" },
+  "au-premier-appel": { texte: "Au premier appel", classe: "border-trait bg-papier-cote text-encre-3" },
+  "plafond-atteint": { texte: "Plafond atteint", classe: "border-trait-attention bg-fond-attention text-encre-attention" },
 }
 
 export function Badge({ etat }: { etat: EtatBadge }) {
@@ -74,6 +93,7 @@ export function Badge({ etat }: { etat: EtatBadge }) {
 
 export function PageDesMoteurs({
   modeles,
+  traitement,
   signale,
   onSignale,
   onInstallation,
@@ -83,6 +103,13 @@ export function PageDesMoteurs({
    *  que la barre qui paie et la fabrique Repeindre, jamais une seconde
    *  lecture d'ici. */
   modeles: Modele[]
+  /** MO5 : ce que le post-traitement sait faire sur cette machine — porte
+   *  déjà le catalogue des cinq modèles de détourage (`traitement.
+   *  silhouettes`, `atelier/image/traitement.py`, `etat_des_silhouettes`).
+   *  Même donnée que `Retouche.tsx` lit pour le choix d'un modèle dans une
+   *  passe : une seconde lecture d'ici aurait été la même liste deux fois.
+   *  `null` tant que l'état de l'atelier n'est pas encore arrivé. */
+  traitement?: EtatTraitement | null
   /** Le moteur vers lequel un outil vient de renvoyer — la clé de famille
    *  pour un moteur de cette machine (`qwen21`, `zimage`…), l'identifiant du
    *  modèle pour un moteur en ligne. `null` sans renvoi en cours. */
@@ -139,6 +166,50 @@ export function PageDesMoteurs({
   }
   useEffect(() => {
     void relireSon()
+  }, [])
+
+  // MO5 : la 3D — `sources3d.connexion()` dit si une adresse a été posée
+  // (lecture d'un fichier, jamais un ping) ; `sources3d.catalogue()` fait les
+  // deux vrais appels HTTP qui disent si asset3d y répond vraiment
+  // (`atelier/fournisseur/asset3d.py`). Ni l'un ni l'autre ne pose ni ne
+  // télécharge quoi que ce soit — la même règle que « Sur cette machine » et
+  // « Le son » plus haut : rien ne s'installe tout seul.
+  const [connexion3D, setConnexion3D] = useState<{ adresse: string; configure: boolean } | null>(null)
+  const [pret3D, setPret3D] = useState<boolean | null>(null)
+  const [erreur3D, setErreur3D] = useState("")
+  useEffect(() => {
+    let vivant = true
+    void sources3d
+      .connexion()
+      .then((c) => {
+        if (!vivant) return
+        setConnexion3D(c)
+        if (!c.configure) return
+        sources3d
+          .catalogue()
+          .then(() => vivant && setPret3D(true))
+          .catch(() => vivant && setPret3D(false))
+      })
+      .catch((e) => vivant && setErreur3D(message(e)))
+    return () => {
+      vivant = false
+    }
+  }, [])
+
+  // MO5 : le coup de main — `GET /assist` dit s'il peut répondre (clé posée,
+  // plafond du mois non atteint) sans jamais rien envoyer au fournisseur
+  // (`atelier/api/coup_de_main.py`, `atelier/services/coup_de_main.py`).
+  const [assist, setAssist] = useState<EtatCoupDeMain | null>(null)
+  const [erreurAssist, setErreurAssist] = useState("")
+  useEffect(() => {
+    let vivant = true
+    void coupDeMain
+      .etat()
+      .then((e) => vivant && setAssist(e))
+      .catch((e) => vivant && setErreurAssist(message(e)))
+    return () => {
+      vivant = false
+    }
   }, [])
 
   async function installerSonUn(identifiant: string) {
@@ -355,6 +426,75 @@ export function PageDesMoteurs({
           </div>
         )}
       </section>
+
+      {/* MO5 : « La 3D » — un seul programme, jamais un par famille ; son
+          adresse et ses réglages détaillés restent les siens
+          (`docs/PLAN-catalogue-des-moteurs.md` § Ce que ce n'est pas). La
+          page ne fait que dire s'il est réglé et s'il répond — le régler se
+          fait toujours depuis la fiche d'un personnage. */}
+      <section aria-label="La 3D" className="space-y-[8px]">
+        <h3 className="font-serif text-[25px]">La 3D</h3>
+        <p className="text-[12px] text-encre-3">
+          Un programme à part (asset3d), sur cette machine. Son adresse se règle depuis la fiche d’un personnage, « Ses sources 3D ».
+        </p>
+        {erreur3D && (
+          <p role="alert" className="text-[13px] text-echec">
+            {erreur3D}
+          </p>
+        )}
+        {connexion3D === null ? (
+          <p role="status" className="text-[13px] text-encre-3">
+            Lecture de l’état d’asset3d…
+          </p>
+        ) : (
+          <CarteMoteur3D connexion={connexion3D} pret={pret3D} />
+        )}
+      </section>
+
+      {/* MO5 : « Le détourage » — les cinq modèles du catalogue
+          (`traitement.silhouettes`), la même liste que la passe « Modèle » de
+          `Retouche.tsx`. Jamais de bouton installer : `rembg` télécharge le
+          poids tout seul au premier appel (`AGENTS.md` § Lancer) — l’absence
+          qui se grise ici est celle de l’extension elle-même. */}
+      <section aria-label="Le détourage" className="space-y-[8px]">
+        <h3 className="font-serif text-[25px]">Le détourage</h3>
+        <p className="text-[12px] text-encre-3">
+          Cinq modèles pour détourer une image sans dessiner un contour à la main. Le poids de chacun se télécharge tout seul, la première fois qu’on
+          s’en sert.
+        </p>
+        {!traitement ? (
+          <p role="status" className="text-[13px] text-encre-3">
+            Lecture des moteurs de détourage…
+          </p>
+        ) : (
+          <div className="grid gap-[8px]">
+            {traitement.silhouettes.map((s) => (
+              <CarteMoteurDetourage key={s.nom} silhouette={s} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* MO5 : « Le coup de main » — un seul modèle fixe
+          (`docs/PLAN-assistant.md`), déjà exposé par `GET /assist`
+          pour la petite marque posée sur les champs de texte. Cette carte-ci
+          ne fait que le montrer au même endroit que les autres moteurs. */}
+      <section aria-label="Le coup de main" className="space-y-[8px]">
+        <h3 className="font-serif text-[25px]">Le coup de main</h3>
+        <p className="text-[12px] text-encre-3">Un modèle de texte, pour améliorer un champ, répondre à une question ou expliquer un blocage.</p>
+        {erreurAssist && (
+          <p role="alert" className="text-[13px] text-echec">
+            {erreurAssist}
+          </p>
+        )}
+        {assist === null ? (
+          <p role="status" className="text-[13px] text-encre-3">
+            Lecture de l’état du coup de main…
+          </p>
+        ) : (
+          <CarteMoteurCoupDeMain assist={assist} />
+        )}
+      </section>
     </section>
   )
 }
@@ -498,6 +638,104 @@ function CarteMoteurEnLigne({
         {modele.masque && <span className={CAPACITE}>Repeindre une zone</span>}
       </div>
       {indisponible && <p className="text-[12px] text-encre-attention">{indisponible}</p>}
+    </article>
+  )
+}
+
+// ── MO5 ──────────────────────────────────────────────────────────────────────
+
+/** **Un seul programme, jamais un par famille** — asset3d n'a pas de réglage à
+ *  choisir ici : ses trois capacités sont ses trois étapes (`ETAPES`,
+ *  `Fabrication3D.tsx`), et son adresse reste posée depuis la fiche d'un
+ *  personnage. Cette carte ne fait que dire si elle est réglée et si le
+ *  programme y répond — jamais un bouton qui la réglerait à sa place. */
+function CarteMoteur3D({
+  connexion,
+  pret,
+}: {
+  connexion: { adresse: string; configure: boolean }
+  /** `null` : configuré mais pas encore vérifié ; `true`/`false` : le
+   *  résultat du dernier `sources3d.catalogue()`. Toujours `null` sans
+   *  adresse posée — il n'y a rien à vérifier. */
+  pret: boolean | null
+}) {
+  const etat: EtatBadge = !connexion.configure ? "non-configure" : pret === false ? "indisponible" : "installe"
+  return (
+    <article className="grid gap-[8px] rounded-8 border border-trait bg-carte p-[14px]">
+      <div className="flex flex-wrap items-center gap-[14px]">
+        <h4 className="text-[14px]">asset3d</h4>
+        <Badge etat={etat} />
+      </div>
+      <div className="flex flex-wrap gap-[4px]">
+        <span className={CAPACITE}>Créer le modèle 3D</span>
+        <span className={CAPACITE}>Poser le squelette</span>
+        <span className={CAPACITE}>Produire les images</span>
+      </div>
+      {connexion.configure ? (
+        <p className="text-[12px] text-encre-3">
+          {connexion.adresse}
+          {pret === false && " — ne répond pas à cette adresse ; les copies déjà importées restent disponibles"}
+          {pret === null && " — vérification…"}
+        </p>
+      ) : (
+        <p className="text-[12px] text-encre-3">Aucune adresse posée — se règle depuis la fiche d’un personnage, « Ses sources 3D ».</p>
+      )}
+    </article>
+  )
+}
+
+/** **Jamais de bouton installer** : `rembg` télécharge le poids tout seul au
+ *  premier appel (`AGENTS.md` § Lancer). Ce que cette carte grise, c'est
+ *  l'extension elle-même — absente, aucun des cinq modèles ne répond, et
+ *  `s.raison` porte alors la même phrase pour les cinq. */
+function CarteMoteurDetourage({ silhouette: s }: { silhouette: Silhouette }) {
+  const etat: EtatBadge = s.raison ? "extension-absente" : s.descendu ? "installe" : "au-premier-appel"
+  const mo = Math.round(s.octets / 1_000_000)
+  return (
+    <article className="grid gap-[8px] rounded-8 border border-trait bg-carte p-[14px]">
+      <div className="flex flex-wrap items-center gap-[14px]">
+        <h4 className="text-[14px]">
+          {s.titre}
+          <span className="text-encre-3"> · {s.nom}</span>
+          {s.defaut && <span className="text-encre-3"> · défaut</span>}
+        </h4>
+        <Badge etat={etat} />
+      </div>
+      <div className="flex flex-wrap gap-[4px]">
+        <span className={CAPACITE}>Détourer une image</span>
+      </div>
+      {s.raison ? (
+        <p className="text-[12px] text-encre-3">
+          {s.raison} — dans <code>C:\STOCKAGE\PROJET\_DEV\gag2</code> : <code>uv pip install -e ".[detourage]"</code>
+        </p>
+      ) : (
+        <p className="text-[12px] text-encre-3">
+          {mo} Mo · {s.secondes_par_image ? `${s.secondes_par_image} s par image` : "durée encore inconnue"} · {s.licence}
+          {!s.descendu && " · se télécharge tout seul au premier appel"}
+        </p>
+      )}
+    </article>
+  )
+}
+
+/** **Le même modèle fixe partout** (`docs/PLAN-assistant.md`) : une
+ *  seule carte, jamais un choix — `GET /assist` est déjà la porte que la
+ *  petite marque des champs de texte lit, cette carte ne fait que la montrer
+ *  au même endroit que les autres moteurs. */
+function CarteMoteurCoupDeMain({ assist }: { assist: EtatCoupDeMain }) {
+  const etat: EtatBadge = assist.disponible ? "installe" : assist.motif === "plafond" ? "plafond-atteint" : "cle-manquante"
+  return (
+    <article className="grid gap-[8px] rounded-8 border border-trait bg-carte p-[14px]">
+      <div className="flex flex-wrap items-center gap-[14px]">
+        <h4 className="text-[14px]">{nomDuModele(assist.modele)}</h4>
+        <Badge etat={etat} />
+      </div>
+      <div className="flex flex-wrap gap-[4px]">
+        <span className={CAPACITE}>Améliorer un champ</span>
+        <span className={CAPACITE}>Répondre à une question</span>
+        <span className={CAPACITE}>Expliquer un blocage</span>
+      </div>
+      {assist.raison && <p className="text-[12px] text-encre-3">{assist.raison}</p>}
     </article>
   )
 }

@@ -162,9 +162,15 @@ Reprend et remplace `PX11` de `docs/PLAN-idees-pixellab.md`.
 
 ## MO5 · La 3D, le détourage et le texte
 
-- [ ] Le programme 3D, les modèles de détourage et le modèle de texte du coup de main apparaissent
-      sur la page « Moteurs » : nom, ce qu'ils savent faire, état.
-- [ ] Les réglages 3D ne sont plus écrits en double dans l'écran.
+- [x] Le programme 3D, les modèles de détourage et le modèle de texte du coup de main apparaissent
+      sur la page « Moteurs » : nom, ce qu'ils savent faire, état. → trois sections de plus dans
+      `PageDesMoteurs` (`interface/src/composants/Moteurs.tsx`) : la 3D (`GET /3d/connection` puis
+      `/3d/catalogue` pour distinguer adresse posée de « répond vraiment »), le détourage (les cinq
+      modèles déjà lus par `Retouche.tsx`, relayés en prop plutôt que relus), le coup de main
+      (`GET /assist`, déjà consommé ailleurs, relu ici en carte).
+- [x] Les réglages 3D ne sont plus écrits en double dans l'écran. → `Fabrication3D.tsx` n'affiche
+      plus `taille_images`/`cadrage` en clé brute quand ils sont déjà dits en phrase par « Cadre et
+      caméra conservés ».
 
 ## MO6 · Les workflows importés par l'auteur
 

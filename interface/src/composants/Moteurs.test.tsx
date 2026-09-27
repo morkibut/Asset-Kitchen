@@ -11,8 +11,10 @@
 
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
-import type { Modele } from "../api"
+import type { EtatTraitement, Modele, Silhouette } from "../api"
 import { moteursSonores, stylesLocaux, workflows, type MoteurSonore, type ResultatMoteurSon, type StyleLocal } from "../api-workflows"
+import { sources3d } from "../api-3d"
+import { coupDeMain, type EtatCoupDeMain } from "../api-coup-de-main"
 import { api } from "../api"
 import { PageDesMoteurs } from "./Moteurs"
 
@@ -24,6 +26,16 @@ vi.mock("../api-workflows", async () => {
     moteursSonores: { lister: vi.fn() },
     workflows: { ...reel.workflows, installerSon: vi.fn() },
   }
+})
+// MO5 : la 3D et le coup de main lisent chacun leur propre route au montage,
+// jamais celles des styles ni des moteurs sonores ci-dessus.
+vi.mock("../api-3d", async () => {
+  const reel = await vi.importActual<typeof import("../api-3d")>("../api-3d")
+  return { ...reel, sources3d: { ...reel.sources3d, connexion: vi.fn(), catalogue: vi.fn() } }
+})
+vi.mock("../api-coup-de-main", async () => {
+  const reel = await vi.importActual<typeof import("../api-coup-de-main")>("../api-coup-de-main")
+  return { ...reel, coupDeMain: { ...reel.coupDeMain, etat: vi.fn() } }
 })
 
 const moteurSonInstalle: MoteurSonore = {
@@ -52,10 +64,23 @@ const modeleEnLigneIndisponible: Modele = {
   refus: "aucune clé OpenRouter", repli: false, recu_le: 0, unite: "usd", masque: true,
 }
 
-function monter(modeles: Modele[] = [modeleEnLigne], signale: string | null = null) {
+// MO5 : cinq modèles de détourage, un de chaque état — celui qu'aucun n'a
+// encore vu passer par une carte « Moteurs » avant cette tranche.
+const silhouetteInstallee: Silhouette = { nom: "isnet-general-use", titre: "intermédiaire", octets: 178_648_008, lent: false, note: "le défaut du produit", entree: 1024, licence: "Apache-2.0", secondes_par_image: 1.2, defaut: true, descendu: true, raison: null }
+const silhouetteAuPremierAppel: Silhouette = { nom: "u2net", titre: "rapide", octets: 175_997_641, lent: false, note: "le plus rapide", entree: 320, licence: "Apache-2.0", secondes_par_image: 0.4, defaut: false, descendu: false, raison: null }
+const silhouetteSansExtension: Silhouette = { nom: "birefnet-general", titre: "lourd", octets: 972_666_916, lent: true, note: "quatre fois plus lourd", entree: 1024, licence: "MIT", secondes_par_image: 16, defaut: false, descendu: false, raison: "le moteur par modèle n'est pas installé" }
+const traitementFixture: EtatTraitement = {
+  moteurs: [], silhouettes: [silhouetteInstallee, silhouetteAuPremierAppel, silhouetteSansExtension],
+  quantification: { raison: null, note: null }, reductions: [], recettes: [],
+}
+
+const assistDisponible: EtatCoupDeMain = { disponible: true, raison: null, motif: null, modele: "OpenRouter:deepseek/deepseek-v4-flash" }
+const assistClefManquante: EtatCoupDeMain = { disponible: false, raison: "il manque la clé OpenRouter", motif: "indisponible", modele: "OpenRouter:deepseek/deepseek-v4-flash" }
+
+function monter(modeles: Modele[] = [modeleEnLigne], signale: string | null = null, traitement: EtatTraitement | null = null) {
   const onSignale = vi.fn()
   const onInstallationSon = vi.fn()
-  render(<PageDesMoteurs modeles={modeles} signale={signale} onSignale={onSignale} onInstallationSon={onInstallationSon} />)
+  render(<PageDesMoteurs modeles={modeles} traitement={traitement} signale={signale} onSignale={onSignale} onInstallationSon={onInstallationSon} />)
   return { onSignale, onInstallationSon }
 }
 
@@ -64,6 +89,11 @@ beforeEach(() => {
   vi.mocked(stylesLocaux.lister).mockResolvedValue({ styles: [stylePret, styleInstalle, styleManquant] })
   vi.mocked(moteursSonores.lister).mockResolvedValue({ moteurs: [moteurSonInstalle, moteurSonManquant] })
   vi.spyOn(api, "rafraichirCatalogue").mockResolvedValue({} as never)
+  // MO5 : par défaut, non configuré / pas de clé — chaque essai qui veut
+  // autre chose le repose lui-même.
+  vi.mocked(sources3d.connexion).mockResolvedValue({ adresse: "", configure: false })
+  vi.mocked(sources3d.catalogue).mockResolvedValue({} as never)
+  vi.mocked(coupDeMain.etat).mockResolvedValue(assistClefManquante)
 })
 afterEach(cleanup)
 
@@ -167,4 +197,85 @@ test("installer un moteur sonore relit le catalogue et prévient l'appelant", as
   await waitFor(() => expect(workflows.installerSon).toHaveBeenCalledWith(["sa3-small-sfx"]))
   await waitFor(() => expect(moteursSonores.lister).toHaveBeenCalledTimes(2))
   expect(onInstallationSon).toHaveBeenCalledTimes(1)
+})
+
+// ── MO5 · La 3D, le détourage et le coup de main ─────────────────────────────
+
+test("la 3D dit qu'elle n'est pas configurée, sans jamais vérifier une adresse absente", async () => {
+  monter()
+  const carte = (await screen.findByText("asset3d")).closest("article")!
+  expect(carte).toHaveTextContent("Non configuré")
+  expect(carte).toHaveTextContent("fiche d’un personnage")
+  expect(sources3d.connexion).toHaveBeenCalledTimes(1)
+  expect(sources3d.catalogue).not.toHaveBeenCalled()
+})
+
+test("la 3D vérifie une adresse posée, et dit si asset3d y répond", async () => {
+  vi.mocked(sources3d.connexion).mockResolvedValue({ adresse: "http://127.0.0.1:8000", configure: true })
+  vi.mocked(sources3d.catalogue).mockResolvedValue({
+    moteurs_3d: [], moteur_3d_defaut: "", animations: [], defaut: "", angles: [], angle_defaut: "",
+    eclairages: [], eclairage_defaut: "", styles: [], style_defaut: "", bornes: [],
+  })
+  monter()
+  const carte = (await screen.findByText("asset3d")).closest("article")!
+  await waitFor(() => expect(carte).toHaveTextContent("Installé"))
+  expect(carte).toHaveTextContent("http://127.0.0.1:8000")
+})
+
+test("la 3D dit qu'elle ne répond pas, adresse posée mais programme éteint", async () => {
+  vi.mocked(sources3d.connexion).mockResolvedValue({ adresse: "http://127.0.0.1:8000", configure: true })
+  vi.mocked(sources3d.catalogue).mockRejectedValue(new Error("asset3d ne répond pas à son adresse configurée."))
+  monter()
+  const carte = (await screen.findByText("asset3d")).closest("article")!
+  await waitFor(() => expect(carte).toHaveTextContent("Indisponible"))
+  expect(carte).toHaveTextContent("les copies déjà importées restent disponibles")
+})
+
+test("le détourage montre les cinq modèles du catalogue reçu, jamais une seconde lecture", async () => {
+  monter([modeleEnLigne], null, traitementFixture)
+  await screen.findByRole("heading", { name: "Le détourage" })
+
+  const installe = screen.getByText("intermédiaire").closest("article")!
+  expect(installe).toHaveTextContent("isnet-general-use")
+  expect(installe).toHaveTextContent("défaut")
+  expect(installe).toHaveTextContent("Installé")
+
+  const auPremierAppel = screen.getByText("rapide").closest("article")!
+  expect(auPremierAppel).toHaveTextContent("Au premier appel")
+  expect(auPremierAppel).toHaveTextContent("se télécharge tout seul au premier appel")
+
+  const sansExtension = screen.getByText("lourd").closest("article")!
+  expect(sansExtension).toHaveTextContent("Extension absente")
+  expect(sansExtension).toHaveTextContent("le moteur par modèle n'est pas installé")
+  expect(sansExtension).toHaveTextContent('uv pip install -e ".[detourage]"')
+})
+
+test("le détourage attend le catalogue plutôt que de le refaire lui-même", async () => {
+  monter()
+  await screen.findByRole("heading", { name: "Le détourage" })
+  screen.getByText("Lecture des moteurs de détourage…")
+})
+
+test("le coup de main montre le même état que la petite marque des champs", async () => {
+  monter()
+  const carte = (await screen.findByText("OpenRouter · deepseek/deepseek-v4-flash")).closest("article")!
+  expect(carte).toHaveTextContent("Clé manquante")
+  expect(carte).toHaveTextContent("il manque la clé OpenRouter")
+})
+
+test("le coup de main se montre disponible dès que la clé et le plafond le permettent", async () => {
+  vi.mocked(coupDeMain.etat).mockResolvedValue(assistDisponible)
+  monter()
+  const carte = (await screen.findByText("OpenRouter · deepseek/deepseek-v4-flash")).closest("article")!
+  await waitFor(() => expect(carte).toHaveTextContent("Installé"))
+  expect(carte).toHaveTextContent("Améliorer un champ")
+  expect(carte).toHaveTextContent("Répondre à une question")
+  expect(carte).toHaveTextContent("Expliquer un blocage")
+})
+
+test("le coup de main dit « Plafond atteint » sans se confondre avec une clé manquante", async () => {
+  vi.mocked(coupDeMain.etat).mockResolvedValue({ disponible: false, raison: "plafond du mois atteint", motif: "plafond", modele: "OpenRouter:deepseek/deepseek-v4-flash" })
+  monter()
+  const carte = (await screen.findByText("OpenRouter · deepseek/deepseek-v4-flash")).closest("article")!
+  await waitFor(() => expect(carte).toHaveTextContent("Plafond atteint"))
 })
