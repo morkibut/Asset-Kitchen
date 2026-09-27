@@ -31,8 +31,9 @@ async def importer(requete: Request):
 @routeur.get("/workflow-profiles/styles")
 async def lister_styles(requete: Request):
     styles_locaux = requete.app.state.atelier.styles_locaux
-    # PX2 : les outils (la retouche de zone) à part — la galerie ne liste que ce
-    # qu'on choisit pour créer. Même ligne : prêt, et ce qui manque en clair.
+    # PX2 : les retouches de référence (une par moteur, `catalogue_styles.OUTILS`)
+    # à part — la galerie ne liste que ce qu'on choisit pour créer, et depuis MO1
+    # chacun de ces styles sait aussi repeindre. Même ligne : prêt, et ce qui manque.
     return {"styles": await styles_locaux.lister(), "outils": await styles_locaux.lister_outils()}
 
 

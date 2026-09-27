@@ -1,7 +1,23 @@
-"""Les styles d'image locaux, recopiés de sc-clone (lib/catalog.mjs) : un style = un LoRA + le moteur qu'il exige."""
+"""Les styles d'image locaux, recopiés de sc-clone (lib/catalog.mjs) : un style = un LoRA + le moteur qu'il exige.
+
+**MO1 (27 septembre 2026) : une seule description par moteur et par réglage.**
+Un style se décrit une fois, dans `STYLES`, et ce qu'il sait faire s'en déduit :
+créer une image toujours, **repeindre une zone** dès que son moteur le sait
+(`FAMILLES[...]['repeint']`) — avec ses propres réglages (étapes, LoRA,
+déclencheur, formats), jamais des réglages figés recopiés à côté. La retouche de
+zone n'est plus une seconde liste écrite à la main : `ZONES` se calcule sur
+`STYLES`, et `OUTILS` n'en est plus qu'une vue (voir plus bas).
+"""
 from __future__ import annotations
 import re
 
+# `formats` (MO1) : les tailles que le moteur rend, carrées, en pixels de côté —
+# elles vivaient à part, dans `styles_locaux.py`. Un style peut déclarer les
+# siennes (Qwen-Image 2.1, les tuiles), qui remplacent celles de son moteur.
+#
+# `repeint` (PX7, rangé ici par MO1) : les nœuds qu'il faut en plus à ce moteur
+# pour repeindre une zone. Sa présence **est** la capacité : un moteur qui ne la
+# déclare pas ne sait pas repeindre, et aucun de ses styles ne le propose.
 FAMILLES: dict[str, dict] = {
     'zimage': {
         'nom': 'Z-Image Turbo',
@@ -10,7 +26,9 @@ FAMILLES: dict[str, dict] = {
         'clip': re.compile(r'qwen.?3.?4b', re.I),
         'vae': re.compile(r'(^|[\\/])ae\.safetensors$', re.I),
         'vitesse': 'environ 30 secondes par image',
-        'reference': 'depart'
+        'reference': 'depart',
+        'formats': ('512', '1024'),
+        'repeint': ('ImageToMask', 'SetLatentNoiseMask')
     },
     'klein': {
         'nom': 'FLUX.2 Klein',
@@ -22,7 +40,11 @@ FAMILLES: dict[str, dict] = {
         'clip': re.compile(r'qwen.?3.?4b', re.I),
         'vae': re.compile(r'flux2.?vae', re.I),
         'vitesse': '1 à 3 minutes par image',
-        'reference': 'sujet'
+        'reference': 'sujet',
+        'formats': ('512', '1024'),
+        # `SamplerCustomAdvanced` n'a pas de `denoise` : `SplitSigmasDenoise` en
+        # tient lieu pour la zone seulement — jamais exigé pour créer (défaut 9a).
+        'repeint': ('ImageToMask', 'SetLatentNoiseMask', 'SplitSigmasDenoise')
     },
     'flux1dev': {
         'nom': 'FLUX.1-dev',
@@ -32,14 +54,18 @@ FAMILLES: dict[str, dict] = {
         'clip2': re.compile(r'clip_l', re.I),
         'vae': re.compile(r'(^|[\\/])ae\.safetensors$', re.I),
         'vitesse': '3 à 6 minutes par image',
-        'reference': 'depart'
+        'reference': 'depart',
+        'formats': ('512', '1024'),
+        'repeint': ('ImageToMask', 'SetLatentNoiseMask')
     },
     'sdxl': {
         'nom': 'SDXL',
         'noeuds': ('CheckpointLoaderSimple', 'LoraLoader', 'EmptyLatentImage', 'KSampler', 'VAEDecodeTiled', 'LoadImage', 'ImageScale', 'VAEEncode'),
         'checkpoint': re.compile(r'sd_xl_base', re.I),
         'vitesse': 'environ 40 secondes par image',
-        'reference': 'depart'
+        'reference': 'depart',
+        'formats': ('512', '1024'),
+        'repeint': ('ImageToMask', 'SetLatentNoiseMask')
     },
     # Qwen-Image 2.1 (sorti le 20/09/2026, pris en charge par ComfyUI à partir de
     # la 0.37). Pas de LoRA : le modèle de base est le style. Pour une carte de
@@ -63,14 +89,31 @@ FAMILLES: dict[str, dict] = {
         # Capacité déclarée pour TN1 : Qwen-Image 2.1 sait rendre un fond vraiment
         # vide (l'alpha ne redevient du bruit qu'en l'absence de cette demande —
         # voir `construire_qwen21` et `atelier.image.aplatir_alpha`).
-        'transparence': True
+        'transparence': True,
+        'formats': ('512', '1024'),
+        # Son graphe de création n'encode aucune image : la zone y ajoute `VAEEncode`.
+        'repeint': ('VAEEncode', 'ImageToMask', 'SetLatentNoiseMask')
     }
 }
 
+# TU5 : une matière gagne un troisième format, 256 — la taille que sc-clone
+# mesure tenir sans référence (T29, `tailleParDefaut`, `tile-ia-prompt.js`) :
+# sans elle, `EmptyFlux2LatentImage` part de 512 et déroule toutes les sigmas,
+# 8 Go saturés. Posé seulement sur les styles de tuiles : les autres n'ont
+# jamais été mesurés à cette taille, et leur donner une entrée qu'aucun essai
+# ne couvre serait une supposition de plus.
+_FORMATS_TUILE = ('256', '512', '1024')
+
+# `repeint` sur un style (MO1) : l'identifiant sous lequel sa retouche de zone
+# s'installe **quand il n'est pas celui qu'on en déduit** (`<style>-zone`). Cinq
+# styles en portent un : ce sont les cinq outils de PX2/PX7, dont ils avaient
+# exactement les réglages. Ces identifiants sont écrits sur des générations et
+# des images (`AGENTS.md`, point 1) : ils ne changent plus jamais de sens.
 STYLES: tuple[dict, ...] = (
     {
         'identifiant': 'zimage-pixel',
         'famille': 'zimage',
+        'repeint': 'zimage-retouche-zone',
         'lora': re.compile(r'pixel_art_style_z_image_turbo', re.I),
         'declencheur': 'Pixel art style.',
         'force': 1,
@@ -126,6 +169,7 @@ STYLES: tuple[dict, ...] = (
     {
         'identifiant': 'klein-pxart4',
         'famille': 'klein',
+        'repeint': 'klein-retouche-zone',
         'unet': re.compile(r'flux.?2.?klein.?base.?4b', re.I),
         'lora': re.compile(r'pixelart_pxart4_klein_base4b', re.I),
         'declencheur': 'PXART4.',
@@ -195,6 +239,7 @@ STYLES: tuple[dict, ...] = (
         'etapes': 20,
         'cfg': 5,
         'genre': 'tile',
+        'formats': _FORMATS_TUILE,
         'nom': 'Tuiles et décors',
         'description': 'Spécialisé dans les tuiles de décor de jeu : sol, murs, éléments répétables.',
         'etiquette': 'Tilesets',
@@ -245,6 +290,7 @@ STYLES: tuple[dict, ...] = (
     {
         'identifiant': 'flux1-modern',
         'famille': 'flux1dev',
+        'repeint': 'flux1-retouche-zone',
         'lora': re.compile(r'flux1dev_modern_pixelart', re.I),
         'declencheur': 'umempart',
         'force': 1,
@@ -297,6 +343,7 @@ STYLES: tuple[dict, ...] = (
     {
         'identifiant': 'sdxl-pixelart',
         'famille': 'sdxl',
+        'repeint': 'sdxl-retouche-zone',
         'lora': re.compile(r'pixel-art-xl\.safetensors$', re.I),
         'declencheur': 'pixel art',
         'force': 0.35,
@@ -367,6 +414,7 @@ STYLES: tuple[dict, ...] = (
         'force': 0.35,
         'etapes': 28,
         'genre': 'tile',
+        'formats': _FORMATS_TUILE,
         'raccordable': True,
         'noeuds': ('SeamlessTile', 'CircularVAEDecode'),
         'nom': 'Texture raccordable',
@@ -391,6 +439,7 @@ STYLES: tuple[dict, ...] = (
         'etapes': 20,
         'cfg': 5,
         'genre': 'tile',
+        'formats': _FORMATS_TUILE,
         'raccordable': True,
         'noeuds': ('SeamlessTile', 'CircularVAEDecode'),
         'nom': 'Tuiles et décors raccordables',
@@ -419,6 +468,7 @@ STYLES: tuple[dict, ...] = (
     {
         'identifiant': 'qwen21-qualite',
         'famille': 'qwen21',
+        'repeint': 'qwen21-retouche-zone',
         'declencheur': '2D game art.',
         'etapes': 30,
         'genre': 'asset',
@@ -432,103 +482,78 @@ STYLES: tuple[dict, ...] = (
 )
 
 
-# PX2 (26 septembre 2026) : **les outils locaux** — des styles qui ne dessinent pas
-# une image de rien, mais retouchent celle qu'on leur donne. Ils s'installent comme
-# les styles (`ServiceStylesLocaux.installer`), avec les mêmes fichiers résolus, mais
-# ne se mêlent pas à la galerie de sc-clone : ils ne se choisissent pas pour créer, ils
-# servent un geste précis — ici, repeindre une zone peinte sur la fiche d'une image
-# (PX3). Hors de `STYLES`, donc hors de « installer tous les styles prêts ».
+# ── Repeindre une zone : une capacité du style, pas une seconde fiche ────────
 #
-# La recette est celle que le banc PX1 a trouvée (`essais/banc_px1_zone.py`,
-# `docs/releve-usage.md` § 25 septembre 2026, point 1) : `VAEEncode` de l'image telle
-# quelle + `SetLatentNoiseMask` — **jamais `VAEEncodeForInpaint`**, qui grise la zone
-# avant de l'encoder et a effacé le visage sous la coiffure au premier essai.
+# PX2/PX7 tenaient ici une seconde liste, écrite à la main : un outil de retouche
+# par moteur, aux réglages figés — Qwen repeignait toujours en 30 étapes, jamais
+# avec « Très rapide ». MO1 la remplace par une **déduction** : chaque style d'un
+# moteur qui sait repeindre a sa retouche, qui reprend **ses** réglages. Elle
+# s'installe comme un profil à part (un graphe qui relie un masque ne part jamais
+# sans lui — `atelier.domaine.workflow.MASQUE`), mais elle ne se décrit nulle
+# part ailleurs qu'ici.
 #
-# **PX7 (26 septembre 2026) : un outil par famille de moteur local**, à la demande de
-# l'auteur — la technique doit servir avec les différents modèles, pas avec un seul.
-# Même recette pour les cinq : `VAEEncode` + `SetLatentNoiseMask`, une force réglable
-# (`PARAMETRE_FORCE_ZONE`, `atelier/fournisseur/styles_locaux.py`), et exactement une
-# référence plus la zone. FLUX.2 Klein n'a pas de `denoise` sur son échantillonneur
-# (`SamplerCustomAdvanced`) : `SplitSigmasDenoise` en tient lieu, comme
-# `essais/banc_px1_zone.py` l'avait trouvé. Aucune ne juge la qualité ; on ne vérifie
-# que le fonctionnement (§ PX7 du plan).
-OUTILS: tuple[dict, ...] = (
-    {
-        'identifiant': 'sdxl-retouche-zone',
-        'famille': 'sdxl',
-        'zone': True,
-        'lora': re.compile(r'pixel-art-xl\.safetensors$', re.I),
-        'declencheur': 'pixel art',
-        'force': 0.35,
-        'etapes': 28,
-        'genre': 'sprite',
-        'noeuds': ('ImageToMask', 'SetLatentNoiseMask'),
-        'nom': 'Retouche de zone (pixel)',
-        'description': 'Repeint seulement la zone peinte sur une image : une coiffure, un vêtement, un objet tenu. Le reste de l’image part tel quel.',
-        'etiquette': 'Retouche',
-        'source': 'nerijs/pixel-art-xl'
-    },
-    {
-        'identifiant': 'zimage-retouche-zone',
-        'famille': 'zimage',
-        'zone': True,
-        'lora': re.compile(r'pixel_art_style_z_image_turbo', re.I),
-        'declencheur': 'Pixel art style.',
-        'force': 1,
-        'etapes': 9,
-        'genre': 'sprite',
-        'noeuds': ('ImageToMask', 'SetLatentNoiseMask'),
-        'nom': 'Retouche de zone (Z-Image)',
-        'description': 'Repeint seulement la zone peinte sur une image, avec Z-Image Turbo. Le reste de l’image part tel quel.',
-        'etiquette': 'Retouche',
-        'source': 'tarn59/pixel_art_style_lora_z_image_turbo'
-    },
-    {
-        'identifiant': 'klein-retouche-zone',
-        'famille': 'klein',
-        'zone': True,
-        'unet': re.compile(r'flux.?2.?klein.?base.?4b', re.I),
-        'lora': re.compile(r'pixelart_pxart4_klein_base4b', re.I),
-        'declencheur': 'PXART4.',
-        'force': 1,
-        'etapes': 20,
-        'cfg': 5,
-        'genre': 'sprite',
-        'noeuds': ('ImageToMask', 'SetLatentNoiseMask', 'SplitSigmasDenoise'),
-        'nom': 'Retouche de zone (Klein)',
-        'description': 'Repeint seulement la zone peinte sur une image, avec FLUX.2 Klein. Le reste de l’image part tel quel.',
-        'etiquette': 'Retouche',
-        'source': 'adirik/pixel-art-lora-flux.2-klein-4B'
-    },
-    {
-        'identifiant': 'qwen21-retouche-zone',
-        'famille': 'qwen21',
-        'zone': True,
-        'declencheur': '2D game art.',
-        'etapes': 30,
-        'genre': 'asset',
-        'noeuds': ('VAEEncode', 'ImageToMask', 'SetLatentNoiseMask'),
-        'nom': 'Retouche de zone (Qwen-Image 2.1)',
-        'description': 'Repeint seulement la zone peinte sur une image, avec Qwen-Image 2.1 — le moteur local le plus soigné du catalogue. Le reste de l’image part tel quel.',
-        'etiquette': 'Retouche',
-        'source': 'Comfy-Org/Qwen-Image-2.1'
-    },
-    {
-        'identifiant': 'flux1-retouche-zone',
-        'famille': 'flux1dev',
-        'zone': True,
-        'lora': re.compile(r'flux1dev_modern_pixelart', re.I),
-        'declencheur': 'umempart',
-        'force': 1,
-        'etapes': 20,
-        'genre': 'sprite',
-        'noeuds': ('ImageToMask', 'SetLatentNoiseMask'),
-        'nom': 'Retouche de zone (FLUX.1)',
-        'description': 'Repeint seulement la zone peinte sur une image, avec FLUX.1-dev. Le reste de l’image part tel quel.',
-        'etiquette': 'Retouche',
-        'source': 'UmeAiRT/FLUX.1-dev-LoRA-Modern_Pixel_art'
-    },
-)
+# La recette reste celle que le banc PX1 a trouvée (`essais/banc_px1_zone.py`,
+# `docs/releve-usage.md` § 25 septembre 2026, point 1) : `VAEEncode` de l'image
+# telle quelle + `SetLatentNoiseMask` — **jamais `VAEEncodeForInpaint`**, qui grise
+# la zone avant de l'encoder et a effacé le visage sous la coiffure au premier essai.
+#
+# Un style raccordable ne repeint pas : le raccord (`_rendre_raccordable`) réécrit
+# le décodeur et l'entrée du modèle que la zone réutilise, et aucun banc n'a
+# mesuré ce que devient une zone peinte sur une matière qui boucle sur elle-même.
+
+
+def sait_repeindre(entree) -> bool:
+    """Ce style (ou cette retouche) peut-il repeindre une zone ?"""
+    if entree.get('zone'):
+        return True
+    return 'repeint' in FAMILLES[entree['famille']] and not entree.get('raccordable')
+
+
+def _zone_de(entree) -> dict:
+    famille = FAMILLES[entree['famille']]
+    zone = {c: v for c, v in entree.items() if c != 'repeint'}
+    zone.update(
+        identifiant=entree.get('repeint') or entree['identifiant'] + '-zone',
+        zone=True,
+        style_de_creation=entree['identifiant'],
+        noeuds=(*entree.get('noeuds', ()), *famille['repeint']),
+        description=f"Repeint seulement la zone peinte sur une image, avec « {famille['nom']} · {entree['nom']} ». Le reste de l’image part tel quel.",
+    )
+    return zone
+
+
+#: Une retouche de zone par style qui sait repeindre — calculée, jamais recopiée.
+ZONES: tuple[dict, ...] = tuple(_zone_de(s) for s in STYLES if sait_repeindre(s))
+
+_PAR_IDENTIFIANT: dict[str, dict] = {s['identifiant']: s for s in (*STYLES, *ZONES)}
+
+#: **Les cinq retouches de PX7**, une par moteur, dans leur ordre d'alors : ce sont
+#: celles des cinq styles qui gardent leur ancien identifiant. Une vue sur `ZONES`,
+#: pas une liste de plus — elle dit quoi installer quand aucun style installé ne
+#: sait encore repeindre, et c'est sous ces noms que l'agent et les essais les
+#: demandaient avant MO1.
+OUTILS: tuple[dict, ...] = tuple(_PAR_IDENTIFIANT[i] for i in (
+    'sdxl-retouche-zone', 'zimage-retouche-zone', 'klein-retouche-zone', 'qwen21-retouche-zone', 'flux1-retouche-zone'))
+
+
+def zone_de(entree) -> dict | None:
+    """La retouche de zone d'un style, ou `None` s'il ne sait pas repeindre."""
+    if entree.get('zone'):
+        return entree
+    return next((z for z in ZONES if z['style_de_creation'] == entree['identifiant']), None)
+
+
+def createur_de(entree) -> dict:
+    """Le style de création d'une retouche — le style lui-même sinon."""
+    return _PAR_IDENTIFIANT[entree['style_de_creation']] if entree.get('zone') else entree
+
+
+def de_modele(identifiant) -> dict | None:
+    """La description d'un modèle local installé (`ComfyUI:<style>@<version>`),
+    toute version confondue — une ancienne version d'un style reste ce style."""
+    if not isinstance(identifiant, str) or not identifiant.startswith('ComfyUI:'):
+        return None
+    return style(identifiant.removeprefix('ComfyUI:').split('@', 1)[0])
 
 
 # ML6 : les deux nœuds du raccord sans couture (`lib/seamless.mjs`) ne viennent pas de
@@ -545,11 +570,8 @@ _CONSIGNE_QWEN21 = 'mettre à jour ComfyUI en version 0.37 ou plus récente'
 
 
 def style(identifiant):
-    """Renvoie le dict du style (ou de l'outil, PX2) ou None."""
-    for s in (*STYLES, *OUTILS):
-        if s['identifiant'] == identifiant:
-            return s
-    return None
+    """Renvoie le dict du style (ou de sa retouche de zone) ou None."""
+    return _PAR_IDENTIFIANT.get(identifiant)
 
 
 _QUALITE = re.compile(r'Q(\d)(?:_K)?(_[SM])?', re.I)

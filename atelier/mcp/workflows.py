@@ -31,7 +31,7 @@ def installer_outils_workflow(serveur, atelier, refus_lisible):
         serie = await atelier.travaux.preparer_serie(project, request, [], 1, "agent", source_libre=True)
         return serie["travaux"][0]
 
-    @serveur.tool(name="install_local_styles", meta=meta("Installer les styles locaux"), description="List the 22 built-in local sc-clone styles (family, kind, speed, readiness) and install every style whose required ComfyUI files and nodes are already present. Never downloads model weights; a style missing files stays uninstalled and is reported with what's missing.")
+    @serveur.tool(name="install_local_styles", meta=meta("Installer les styles locaux"), description="List the built-in local sc-clone styles (family, kind, speed, readiness) and install every style whose required ComfyUI files and nodes are already present. An installed style whose engine can repaint also serves repaint_zone, with its own settings — nothing more to install. Never downloads model weights; a style missing files stays uninstalled and is reported with what's missing.")
     @refus_lisible
     async def install_local_styles() -> dict[str, Any]:
         styles = await atelier.styles_locaux.lister()

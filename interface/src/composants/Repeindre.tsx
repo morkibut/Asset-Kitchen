@@ -26,7 +26,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { api, type Asset, type Trait } from "../api"
 import { origineDuTemps, stylesLocaux, tempsParImage } from "../api-workflows"
-import { type CalqueRepeint, type EtatDeLaZone, type RenduDeLaDecision, TERMINES, zone as routes } from "../api-zone"
+import { type CalqueRepeint, type EtatDeLaZone, type ModeleDeZone, type RenduDeLaDecision, TERMINES, zone as routes } from "../api-zone"
 import { OPACITE, rayonDe, type EtatMain } from "../recette"
 import { PANNEAU } from "./Infobulle"
 import { Libelle, useEcoule } from "./pieces"
@@ -166,11 +166,14 @@ export function EcranRepeindre({
 
   // ── Le modèle choisi (PX7) — **le défaut, sauf s'il manque** ──────────────
   // Un choix déjà fait qui reste dans la liste ne bouge pas ; sinon, le défaut
-  // du catalogue reprend la main (un modèle grisé n'a pas disparu).
+  // du catalogue reprend la main (un modèle grisé n'a pas disparu). MO1 : un
+  // style choisi avant son premier repeint se désigne ensuite par sa retouche,
+  // qui vient de s'écrire — c'est toujours lui, pas le défaut.
   useEffect(() => {
     if (!etat) return
     setModeleChoisi((actuel) => {
-      if (actuel && etat.modeles.some((m) => m.identifiant === actuel)) return actuel
+      const retrouve = actuel ? etat.modeles.find((m) => m.identifiant === actuel || m.identifiants?.includes(actuel)) : null
+      if (retrouve) return retrouve.identifiant
       return etat.modele?.identifiant ?? null
     })
   }, [etat])
@@ -297,7 +300,7 @@ export function EcranRepeindre({
   // graine, tirée par le serveur.
   const recommencer = async (calque: CalqueRepeint) => {
     if (!(await jeter(calque))) return
-    await partir({ texte: calque.texte, zone: calque.zone, force: calque.force, couleurs: calque.couleurs, graine: null, modele: calque.modele })
+    await partir({ texte: calque.texte, zone: calque.zone, force: calque.force, couleurs: calque.couleurs, graine: null, modele: calque.choix ?? calque.modele })
   }
 
   const rouvrir = (calque: CalqueRepeint) => {
@@ -309,8 +312,10 @@ export function EcranRepeindre({
     setCouleurs(calque.couleurs)
     setGraine(calque.graine === null ? "" : String(calque.graine))
     // Le calque garde le modèle qui l'a repeint — le rouvrir choisit ce
-    // même modèle, sinon la fiche mentirait sur ce qui repartirait.
-    setModeleChoisi(calque.modele)
+    // même modèle, sinon la fiche mentirait sur ce qui repartirait. MO1 : par
+    // son style (`choix`), car un repeint d'avant peut nommer une retouche de
+    // PX7 ou une version qui n'est plus celle en service.
+    setModeleChoisi(calque.choix ?? calque.modele)
     setResultat(calque)
     setDecide(null)
   }
@@ -332,6 +337,24 @@ export function EcranRepeindre({
 
   const aDecider = (etat?.calques ?? []).filter((c) => c.statut !== "equipement")
   const equipements = (etat?.calques ?? []).filter((c) => c.statut === "equipement")
+
+  // MO1 : **les mêmes choix que pour créer, rangés pareil** — un groupe par
+  // moteur, dans l'ordre où le serveur les rend ; un workflow importé à la main
+  // n'a pas de moteur et reste hors groupe.
+  const groupes = useMemo(() => {
+    const parMoteur = new Map<string | null, ModeleDeZone[]>()
+    for (const m of etat?.modeles ?? []) {
+      const cle = m.moteur ?? null
+      parMoteur.set(cle, [...(parMoteur.get(cle) ?? []), m])
+    }
+    return [...parMoteur.entries()]
+  }, [etat])
+  // Un moteur dont **aucun** style n'est installé : le seul cas où il reste
+  // quelque chose à installer d'ici. Un style installé pour créer sait déjà
+  // repeindre — lui proposer un second bouton serait l'installer en double.
+  const moteursAInstaller = (etat?.outils ?? []).filter(
+    (o) => !o.modele && !(o.famille && (etat?.modeles ?? []).some((m) => m.famille === o.famille)),
+  )
 
   // Le temps suit le modèle choisi (PX7) — celui du défaut sans choix.
   const temps = modeleActif?.temps ?? etat?.temps ?? null
@@ -390,7 +413,7 @@ export function EcranRepeindre({
               <p className="text-[12px] text-encre">{etat.raison}</p>
               {etat.outil.pret ? (
                 <button type="button" disabled={installe === etat.outil.identifiant} onClick={() => void installer(etat.outil.identifiant)} className="h-[30px] self-start rounded-7 border border-contour bg-carte px-[8px] text-[12px] text-encre-controle disabled:opacity-50">
-                  {installe === etat.outil.identifiant ? "installation…" : `Installer l’outil « ${etat.outil.nom} »`}
+                  {installe === etat.outil.identifiant ? "installation…" : `Installer l’outil « ${etat.outil.moteur ? `${etat.outil.moteur} · ` : ""}${etat.outil.nom} »`}
                 </button>
               ) : (
                 <p className="mesure text-[10.5px] text-encre-4">
@@ -400,17 +423,16 @@ export function EcranRepeindre({
             </div>
           )}
 
-          {/* PX7 : un outil par famille de moteur local — celui qui manque
-              encore s'installe d'ici, qu'un autre soit déjà prêt ou non. */}
-          {etat && etat.outils.some((o) => !o.modele) && (
+          {/* PX7 : une retouche de référence par moteur local — MO1 : seulement
+              pour un moteur dont aucun style n'est encore installé. L'installer
+              d'ici installe le style avec, pour créer aussi. */}
+          {etat && moteursAInstaller.length > 0 && (
             <div data-moteurs-locaux className="flex flex-col gap-[6px] rounded-7 border border-trait bg-carte p-[8px]">
-              <p className="text-[11px] text-encre-2">les moteurs locaux</p>
-              {etat.outils.map((outil) => (
+              <p className="text-[11px] text-encre-2">les moteurs locaux pas encore installés</p>
+              {moteursAInstaller.map((outil) => (
                 <div key={outil.identifiant} className="flex items-center justify-between gap-[8px] text-[12px]">
-                  <span className="min-w-0 truncate text-encre">{outil.nom}</span>
-                  {outil.modele ? (
-                    <span className="mesure shrink-0 text-[10.5px] text-encre-4">installé</span>
-                  ) : outil.pret ? (
+                  <span className="min-w-0 truncate text-encre">{outil.moteur ? `${outil.moteur} · ${outil.nom}` : outil.nom}</span>
+                  {outil.pret ? (
                     <button
                       type="button"
                       disabled={installe === outil.identifiant}
@@ -430,7 +452,9 @@ export function EcranRepeindre({
           )}
 
           {/* PX7 : le choix du modèle, parmi ceux qui savent repeindre une
-              zone — un modèle absent ou incapable est grisé, avec sa raison. */}
+              zone — un modèle absent ou incapable est grisé, avec sa raison.
+              MO1 : ce sont les styles installés pour créer, sous les mêmes
+              noms et les mêmes groupes que dans « Créer ». */}
           {etat && etat.modeles.length > 0 && (
             <label className="flex flex-col gap-[4px] border-t border-trait pt-[8px] text-[12px] text-encre-2">
               <Libelle aide="repeint.modele">Modèle</Libelle>
@@ -441,12 +465,15 @@ export function EcranRepeindre({
                 onChange={(e) => setModeleChoisi(e.target.value || null)}
                 className="h-[30px] rounded-7 border border-trait bg-carte px-[8px] text-[12px] text-encre"
               >
-                {etat.modeles.map((m) => (
-                  <option key={m.identifiant} value={m.identifiant} disabled={!!m.raison} title={m.raison ?? undefined}>
-                    {m.nom}
-                    {m.raison ? ` — ${m.raison}` : ""}
-                  </option>
-                ))}
+                {groupes.map(([moteur, modeles]) => {
+                  const options = modeles.map((m) => (
+                    <option key={m.identifiant} value={m.identifiant} disabled={!!m.raison} title={m.raison ?? undefined}>
+                      {m.nom}
+                      {m.raison ? ` — ${m.raison}` : ""}
+                    </option>
+                  ))
+                  return moteur ? <optgroup key={moteur} label={moteur}>{options}</optgroup> : options
+                })}
               </select>
             </label>
           )}

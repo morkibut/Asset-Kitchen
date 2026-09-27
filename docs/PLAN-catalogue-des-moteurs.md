@@ -81,14 +81,19 @@ peut pas utiliser.
 
 Reprend et remplace `PX11` de `docs/PLAN-idees-pixellab.md`.
 
-- [ ] Une seule description par moteur et par réglage ; « sait repeindre une zone » en est une
-      capacité, pas une seconde fiche.
-- [ ] Dans Repeindre, les mêmes choix que pour créer — **Qwen « Très rapide » et « Meilleure
+- [x] Une seule description par moteur et par réglage ; « sait repeindre une zone » en est une
+      capacité, pas une seconde fiche. → `ZONES` se calcule depuis `STYLES`
+      (`atelier/fournisseur/catalogue_styles.py`) ; `OUTILS` n'en est plus qu'une vue, pour les
+      cinq anciens identifiants déjà écrits sur des générations.
+- [x] Dans Repeindre, les mêmes choix que pour créer — **Qwen « Très rapide » et « Meilleure
       qualité » compris** —, avec les mêmes noms.
-- [ ] Un moteur installé pour créer sait repeindre sans rien installer de plus.
-- [ ] Les formats vivent avec le moteur, plus à côté.
-- [ ] Un repeint fait avec l'ancien outil se rouvre et se relance.
-- [ ] Les essais de `PX2`, `PX7`, `PX9` et des moteurs locaux passent.
+- [x] Un moteur installé pour créer sait repeindre sans rien installer de plus.
+- [x] Les formats vivent avec le moteur, plus à côté.
+- [x] Un repeint fait avec l'ancien outil se rouvre et se relance.
+- [x] Les essais de `PX2`, `PX7`, `PX9` et des moteurs locaux passent.
+      ⚠️ Reste, pour `MO2`/`MO7` : `atelier/mcp/serveur.py` (`repaints_zone`) ne marque encore
+      que les jumeaux déjà créés, pas tout style qui sait repeindre ; et le texte du guide sur
+      « Retouche d'une zone » (`interface/src/aide.ts`, ~ligne 2705) est périmé.
 
 ## MO2 · La page « Moteurs »
 
