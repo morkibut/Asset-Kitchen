@@ -1,0 +1,86 @@
+/* Maquette des moteurs — s'ajoute à prototype.css. Valeurs prises dans DESIGN.md
+   et dans son.css (mêmes teintes d'état), rien d'inventé. */
+:root {
+  --eteint:#b0a89b; --controle:#3d382f; --pointille:#c9c2b6;
+  --fond-attention:#f4ece2; --trait-attention:#e0cfb8; --encre-attention:#8a5a2c;
+  --fond-ok:#eef1ea; --trait-ok:#cfd9c8; --encre-ok:#4c6644;
+  --fond-eteint:#eeece7; --trait-eteint:#ddd8cb;
+}
+
+.sauts { display:flex; align-items:center; gap:4px }
+.sauts span { margin-right:8px; opacity:.8 }
+.sauts button { font-size:12px; padding:2px 8px; min-height:26px; border-color:transparent }
+.sauts button:hover { border-color:var(--sur) }
+.petit { min-height:26px; padding:2px 8px; font-size:12px }
+.note-attention { margin:0; padding:8px 14px; border:1px solid var(--trait-attention); border-radius:7px; background:var(--fond-attention); color:var(--encre-attention); font-size:12.5px }
+
+/* ── La page « Moteurs » ─────────────────────────────────────────────────── */
+.reglages-tabs { display:flex; align-items:center; gap:4px; border-bottom:1px solid var(--trait); padding-bottom:14px; margin-bottom:22px; flex-wrap:wrap }
+.reglages-tabs button { min-height:30px; padding:2px 14px; font-size:13px; background:transparent; border-color:transparent; color:var(--muted) }
+.reglages-tabs button[aria-current=page] { background:var(--ouvert); color:var(--encre); font-weight:500 }
+.reglages-tabs button[disabled] { cursor:default; color:var(--pointille) }
+
+.demo-bascules { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:0 0 22px; padding:14px; border:1px dashed var(--pointille); border-radius:8px; background:var(--cote) }
+.demo-bascules p { margin:0; font-size:12px; color:var(--muted); flex-basis:100% }
+.demo-bascules button { font-size:12.5px; padding:4px 14px }
+.demo-bascules button[aria-pressed=true] { background:var(--fond-attention); border-color:var(--trait-attention); color:var(--encre-attention) }
+
+.groupe-moteurs { margin-bottom:30px }
+.groupe-moteurs h2 { margin-bottom:4px }
+.groupe-moteurs>p.small { margin:0 0 14px }
+.liste-moteurs { display:grid; gap:8px }
+
+.moteur-carte { display:grid; gap:8px; padding:14px; border:1px solid var(--trait); border-radius:8px; background:var(--carte); transition:box-shadow 160ms }
+.moteur-carte.signale { box-shadow:0 0 0 2px var(--signal) }
+.moteur-tete { display:flex; align-items:center; gap:14px; flex-wrap:wrap }
+.moteur-nom { font-size:16px; margin:0 }
+.moteur-nom .fournisseur { color:var(--muted); font-weight:400 }
+.moteur-tete .pousse { margin-left:auto }
+
+.etat-badge { display:inline-flex; align-items:center; min-height:22px; padding:0 10px; border-radius:5px; font-size:12px; white-space:nowrap }
+.etat-badge.installe { background:var(--fond-ok); border:1px solid var(--trait-ok); color:var(--encre-ok) }
+.etat-badge.a-installer,.etat-badge.cle-manquante { background:var(--fond-attention); border:1px solid var(--trait-attention); color:var(--encre-attention) }
+.etat-badge.non-lance { background:var(--fond-eteint); border:1px solid var(--trait-eteint); color:var(--muted) }
+.etat-badge.en-cours { background:var(--cote); border:1px solid var(--trait); color:var(--controle) }
+
+.capacites { display:flex; flex-wrap:wrap; gap:4px }
+.capacite { display:inline-flex; align-items:center; min-height:22px; padding:0 8px; border-radius:5px; background:var(--cote); color:var(--controle); font-size:11.5px }
+
+.moteur-corps { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:start }
+.reglages-liste { display:flex; flex-wrap:wrap; gap:4px }
+.reglage-tag { display:inline-flex; align-items:center; min-height:22px; padding:0 8px; border-radius:5px; border:1px solid var(--trait); font-size:11.5px; color:var(--texte) }
+.moteur-detail { font-size:12px; color:var(--muted); margin:0 }
+.moteur-manque { margin:0; font-size:12px; color:var(--encre-attention) }
+
+.moteur-actions { display:flex; align-items:center; gap:8px; flex-shrink:0 }
+.moteur-actions button { font-size:12.5px; padding:4px 14px }
+
+.cle-form { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px; margin-top:4px; border-radius:7px; background:var(--cote) }
+.cle-form input { min-height:30px; min-width:220px; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:2px 8px; font-family:'IBM Plex Mono',Consolas,monospace; font-size:12px }
+
+/* ── Le choix d'un modèle dans un outil ──────────────────────────────────── */
+.outil-tabs { display:flex; gap:8px; margin-bottom:22px }
+.outil-tabs button { min-height:30px; padding:2px 14px; font-size:13px; color:var(--controle) }
+.outil-tabs button[aria-pressed=true] { background:var(--ouvert); border-color:var(--muted) }
+
+.outil-surface { max-width:640px; display:grid; gap:14px }
+.outil-champ { display:grid; gap:4px }
+.outil-champ>span { font-size:12px; color:var(--muted) }
+.outil-champ textarea { min-height:64px; border:1px solid var(--contour); border-radius:7px; background:var(--carte); padding:14px; font-size:14px; color:var(--encre) }
+.outil-zone-demo { display:flex; align-items:center; gap:14px; padding:14px; border:1px dashed var(--pointille); border-radius:8px; background:var(--cote) }
+.outil-zone-demo .apercu { width:64px; height:64px; border-radius:5px; background:var(--pourtour); flex-shrink:0 }
+.outil-zone-demo p { margin:0; font-size:12.5px; color:var(--muted) }
+
+.picker { position:relative; max-width:360px }
+.picker-bouton { display:flex; width:100%; align-items:center; justify-content:space-between; gap:8px; min-height:34px; padding:4px 14px; font-size:13px; text-align:left }
+.picker-liste { margin-top:4px; border:1px solid var(--trait); border-radius:8px; background:var(--carte); padding:8px; display:grid; gap:4px }
+.picker-liste.repliee { display:none }
+.picker-section .label { display:block; padding:4px 8px }
+.picker-option-ligne { display:grid; gap:2px }
+.picker-option { width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:32px; padding:2px 8px; text-align:left; font-size:12.5px; border-color:transparent; background:transparent }
+.picker-option:hover:not(.gris) { background:var(--ouvert) }
+.picker-option[aria-pressed=true] { background:var(--ouvert); border-color:var(--muted) }
+.picker-option.gris { cursor:default; color:var(--eteint) }
+.raison { margin:0 0 4px 8px; font-size:11px; color:var(--encre-attention) }
+.picker-lien { min-height:0; border:0; padding:0; margin-left:6px; text-decoration:underline; color:var(--signal); background:transparent }
+.picker-choisi { margin-top:4px; font-size:12px; color:var(--muted) }

@@ -69,10 +69,12 @@ Relevé du 27 septembre 2026, en lecture seule :
 Avant tout code. La page dans les Réglages, et la façon dont un outil montre un moteur qu'il ne
 peut pas utiliser.
 
-- [ ] Une maquette montre la page : les moteurs groupés (sur la machine, en ligne), pour chacun
+- [x] Une maquette montre la page : les moteurs groupés (sur la machine, en ligne), pour chacun
       son nom, ce qu'il sait faire, ses réglages, son état et le bouton qui convient.
-- [ ] Elle montre le choix du modèle dans un outil (Créer, Repeindre, Animer) : mêmes noms, mêmes
+      → `docs/maquettes-atelier-unifie/05-moteurs.html` (+ `moteurs.css`, `moteurs.js`).
+- [x] Elle montre le choix du modèle dans un outil (Créer, Repeindre, Animer) : mêmes noms, mêmes
       groupes, moteur non installé grisé avec « l'installer dans Moteurs › ».
+      → même maquette, les trois outils (« Aller à » en bandeau).
 - [ ] Validée par l'auteur.
 
 ## MO1 · Les images de la machine : créer et repeindre, une seule description
