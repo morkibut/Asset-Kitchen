@@ -75,6 +75,34 @@ export const workflows = {
     appeler<{ familles: Record<string, MoteurParFamille> }>(`/workflow-profiles/sound-defaults?projet=${encodeURIComponent(projet)}`),
 }
 
+// ── MO4 · Le catalogue des moteurs sonores ──────────────────────────────────
+//
+// « Chaque moteur d'IA est décrit une seule fois, et tous les outils de
+// l'atelier lisent cette description » (`docs/PLAN-catalogue-des-moteurs.md`
+// § MOM). Le serveur (`GET /workflow-profiles/sound-engines`,
+// `atelier/services/installation_son.py`, `catalogue_depuis`) dit le nom, ce
+// que chaque moteur sait faire — les familles de son où il sert
+// (`atelier/audio/graphes.py`, `FAMILLES`) — et son état, qu'il soit déjà
+// installé ou non : un simple `GET`, comme `stylesLocaux.lister()` pour
+// l'image, qui ne pose jamais de profil.
+
+/** Un des cinq moteurs sonores, tel que le catalogue le rend. `modele` est
+ *  l'identifiant qu'il porte une fois installé (`ComfyUI:<id>@<version>`),
+ *  `null` tant qu'il ne l'est pas — même prêt. */
+export type MoteurSonore = {
+  identifiant: string
+  nom: string
+  description: string
+  familles: string[]
+  pret: boolean
+  manque: FichierSonManquant[]
+  modele: string | null
+}
+
+export const moteursSonores = {
+  lister: () => appeler<{ moteurs: MoteurSonore[] }>("/workflow-profiles/sound-engines"),
+}
+
 // ── ML5 · Les styles de sc-clone, groupés par moteur ────────────────────────
 //
 // « Les 22 styles sont tous proposés, rangés sous leurs quatre moteurs et

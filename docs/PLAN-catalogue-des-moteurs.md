@@ -120,8 +120,23 @@ Reprend et remplace `PX11` de `docs/PLAN-idees-pixellab.md`.
 
 ## MO4 · Le son
 
-- [ ] Les moteurs de son sortent du même catalogue ; aucun écran ne redit leurs noms.
-- [ ] Ils entrent sur la page « Moteurs ».
+- [x] Les moteurs de son sortent du même catalogue ; aucun écran ne redit leurs noms.
+      → `GET /workflow-profiles/sound-engines` (`atelier/services/installation_son.py`,
+      `catalogue_depuis`) : pour chaque moteur qui sert au moins une famille de son
+      (`atelier/audio/graphes.py`, `FAMILLES`), son nom, sa description, les familles où il
+      sert, s'il est prêt, ce qui lui manque sinon, et le modèle qu'il porte une fois installé
+      — un simple `GET`, qui ne pose jamais de profil. `FabricationAudio.tsx` lit ce même
+      catalogue pour nommer un moteur (`nomMoteur`), au lieu de sa propre table `NOM_MOTEUR`.
+      ⚠️ `nomMoteurSonore` (`WorkflowsLocaux.tsx`) reste une table à part, à dessein : elle nomme
+      un moteur déjà écrit sur un son produit (`AtelierSon.tsx`, une fiche de provenance), pas un
+      choix de moteur — MO7 (« plus aucune liste de moteur écrite en dur ») tranchera si elle
+      doit disparaître à son tour.
+- [x] Ils entrent sur la page « Moteurs ». → section « Le son » de `PageDesMoteurs`
+      (`interface/src/composants/Moteurs.tsx`), même gabarit de carte que MO2 (nom, capacités en
+      étiquettes, badge d'état, bouton installer/réinstaller). « Les méthodes sonores »
+      (`WorkflowsLocaux.tsx`) est fondue dans cette section, comme MO2 l'a fait pour les styles
+      de sc-clone — `onInstallationSon` relaie l'installation jusqu'à « Les workflows locaux »,
+      qui continue de relire ses profils à son tour.
 
 ## MO5 · La 3D, le détourage et le texte
 

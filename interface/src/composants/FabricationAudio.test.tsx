@@ -4,14 +4,14 @@ import { FabricationAudio } from "./FabricationAudio"
 import { SuiviDesTravaux, TravailConserve } from "./FabricationSuivie"
 import { travauxAudio, type TravailAudio } from "../api-travaux-audio"
 import { travaux } from "../api-travaux"
-import { workflows, type ProfilWorkflow } from "../api-workflows"
+import { moteursSonores, workflows, type MoteurSonore, type ProfilWorkflow } from "../api-workflows"
 import { ecoute, seriesSon, texteSon, type Annonce, type Composition } from "../api-series-son"
 import { sfxr } from "../api-sfxr"
 import { partitionSon } from "../api-partition-son"
 import { serie, tirageRendu } from "../son-essais"
 
 vi.mock("../api-travaux-audio", () => ({ travauxAudio: { preparer: vi.fn(), lire: vi.fn(), lancer: vi.fn() } }))
-vi.mock("../api-workflows", () => ({ workflows: { lister: vi.fn() } }))
+vi.mock("../api-workflows", () => ({ workflows: { lister: vi.fn() }, moteursSonores: { lister: vi.fn() } }))
 vi.mock("../api-series-son", () => ({
   texteSon: { composer: vi.fn(), moteurs: vi.fn() },
   seriesSon: { annoncer: vi.fn(), preparer: vi.fn(), demarrer: vi.fn(), lire: vi.fn(), reprendre: vi.fn(), garder: vi.fn(), lister: vi.fn() },
@@ -26,6 +26,16 @@ const profil: ProfilWorkflow = {
   cree_le: 1000, description: "", graphe: {}, liaisons: { prompt: [], secondes: [], graine: [] },
   parametres: {}, formats: [], durees: [], cadence: 0, references_min: 0, references_max: 0, sortie: { noeud: "5", champ: "audio" },
 }
+// MO4 : le catalogue des moteurs sonores (`GET /workflow-profiles/sound-engines`),
+// doublé comme le reste — c'est de là que vient le nom d'un moteur, installé
+// ou non, plutôt que d'une liste écrite dans l'écran.
+const CATALOGUE_SON: MoteurSonore[] = [
+  { identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", description: "Bruitages et ambiances, de 1 à 120 secondes.", familles: ["bruitage", "ambiance"], pret: true, manque: [], modele: profil.modele },
+  { identifiant: "sa-open-1", nom: "Stable Audio Open 1.0", description: "Bruitages de secours, de 1 à 47 secondes, plus lents à calculer.", familles: ["bruitage"], pret: true, manque: [], modele: null },
+  { identifiant: "sa3-medium", nom: "Stable Audio 3 Medium", description: "Ambiances longues et musique de secours.", familles: ["ambiance", "musique", "jingle"], pret: true, manque: [], modele: null },
+  { identifiant: "ace-step-15-turbo", nom: "ACE-Step 1.5 turbo", description: "Musique et jingles.", familles: ["musique", "jingle"], pret: true, manque: [], modele: null },
+  { identifiant: "yue2-int8", nom: "YuE2 (int8)", description: "Chansons chantées.", familles: ["chanson"], pret: true, manque: [], modele: null },
+]
 const t: TravailAudio = {
   nature: "audio", identifiant: "conserve", projet: "jeu", cle: "cle", acteur: "auteur", etat: "prepare", etape: "relecture", cree_le: 1000,
   demande: { cle: "cle", modele: profil.modele, prompt: "Une lame quitte le cuir.", prompt_negatif: "Sans voix", nom: "Épée divine", secondes: 2.5, options: { seed: 357 } },
@@ -47,6 +57,7 @@ beforeEach(() => {
   HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined) as unknown as HTMLMediaElement["play"]
   HTMLMediaElement.prototype.pause = vi.fn()
   vi.mocked(workflows.lister).mockResolvedValue({ profils: [profil] })
+  vi.mocked(moteursSonores.lister).mockResolvedValue({ moteurs: CATALOGUE_SON })
   vi.mocked(texteSon.moteurs).mockResolvedValue({ familles: {
     bruitage: { famille: "bruitage", modele: profil.modele, moteur: "sa3-small-sfx", possibles: ["sa3-small-sfx", "sa-open-1", "sa3-medium"] },
     musique: { famille: "musique", modele: null, moteur: null, raison: "Aucun moteur installé pour « musique » : ace-step-15-turbo, sa3-medium.", possibles: ["ace-step-15-turbo", "sa3-medium"] },

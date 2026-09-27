@@ -66,6 +66,16 @@ async def diagnostiquer(requete: Request, identifiant: str, version: str):
     return {**diagnostic, "manque": atelier.installation_son.diagnostic_sonore(profil, diagnostic)}
 
 
+@routeur.get("/workflow-profiles/sound-engines")
+async def lister_moteurs_sonores(requete: Request):
+    """Le catalogue des moteurs sonores (MO4) : nom, ce qu'ils savent faire
+    (les familles où ils servent) et leur état — jamais installé au passage,
+    à la différence de `install-sound` ci-dessous. C'est ce que la page
+    « Moteurs » lit, et ce que `Fabriquer un son` lit aussi pour ne plus tenir
+    sa propre liste de noms."""
+    return {"moteurs": await requete.app.state.atelier.installation_son.catalogue()}
+
+
 @routeur.post("/workflow-profiles/install-sound")
 async def installer_sonore(requete: Request):
     try:
