@@ -47,8 +47,8 @@ from atelier.services import Atelier
 # nombre d'images réel — n'existaient que du côté du service, si bien que le flux
 # les envoyait et que l'écran des modèles ne les recevait pas. Un modèle qui se
 # décrit de deux façons selon la porte par laquelle on le demande est une panne
-# qui ne se voit qu'à l'usage.
-from atelier.services.animation import _modele_en_json
+# qui ne se voit qu'à l'usage. Depuis MO3, la liste entière s'y assemble aussi
+# (`ServiceAnimation.catalogue`) : cette route ne fait plus que la servir.
 from atelier.services.texte_clip import composer, styles_proposes
 
 routeur = APIRouter()
@@ -439,45 +439,12 @@ async def modeles_video(
     """
     atelier = _atelier(requete)
     demande = _demande_de_jauge(secondes, resolution, proportions, image_de_fin)
-    modeles = await atelier.animation.a_jour()
+    await atelier.animation.a_jour()
     etat = atelier.animation.etat()
-    lignes = []
-    for modele in modeles:
-        prix = atelier.animation.annonce(modele, demande)
-        lignes.append(
-            {
-                **_modele_en_json(modele),
-                # **Une estimation, et le mot y est.** Ce qui s'enregistrera
-                # après l'appel est le montant facturé, et l'écran doit pouvoir
-                # écrire « environ » avant et le chiffre exact après.
-                "prix": prix.en_json(),
-                "grise": atelier.animation.grise(modele, demande),
-                # **Ce que ça coûte en temps, quand c'est du temps que ça
-                # coûte** (A11). `null` chez un payant : ce qu'il coûte est de
-                # l'argent, et une attente inventée serait pire qu'aucune.
-                "attente": _attente_en_json(
-                    atelier.animation.attente(modele, demande)
-                ),
-            }
-        )
-    # **L'ordre dans lequel la liste se lit (V3.01.2), et il se décide ici.**
-    # Le moteur de la maison d'abord — celui qui ne coûte rien passe avant
-    # ceux qui coûtent —, puis les payants **par prix croissant pour la
-    # demande courante** : le prix change avec la durée, le format et la
-    # résolution, et le tri suit, au même endroit où le prix se calcule.
-    # L'écran n'a pas de règle de tri à lui : deux endroits qui trient
-    # finiraient par ne plus trier pareil. Un modèle dont le prix n'a pas pu
-    # être relu — montant `None` — reste en fin de liste, et c'est lui que le
-    # filtre de l'écran retirera ou intercalera avec sa raison.
-    lignes.sort(
-        key=lambda ligne: (
-            # Faux passe après vrai : la maison d'abord (zéro), les payants
-            # ensuite (un).
-            0 if ligne["de_la_maison"] else 1,
-            1 if ligne["prix"]["montant"] is None else 0,
-            ligne["prix"]["montant"] or 0.0,
-        )
-    )
+    # **MO3 : une seule forme pour les trois sources** — Wan, OpenRouter et les
+    # workflows importés —, assemblée et triée dans le service
+    # (`ServiceAnimation.catalogue`), jamais ici ni dans un écran.
+    lignes = atelier.animation.catalogue(demande)
     return {
         "modeles": lignes,
         "recu_le": etat["recu_le"],
@@ -493,10 +460,6 @@ async def modeles_video(
             "proportions": proportions,
         },
     }
-
-
-def _attente_en_json(attente: Any) -> dict[str, Any] | None:
-    return attente.en_json() if attente is not None else None
 
 
 @routeur.post("/clips/models/refresh")

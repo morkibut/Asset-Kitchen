@@ -54,6 +54,58 @@ MASQUE = "masque"
 REFUS_SANS_ZONE = "ne sait pas repeindre une zone"
 REFUS_ZONE_ABSENTE = "repeint une zone : il lui faut la zone peinte"
 
+# **L'image de fin d'un clip** (MO3, `docs/PLAN-catalogue-des-moteurs.md`). Un
+# workflow vidéo importé la relie comme il relie son image de départ — le champ
+# `image` du `LoadImage` qui la charge —, et c'est cette liaison qui dit qu'il
+# sait finir sur une image choisie : la capacité se lit sur le graphe déclaré,
+# jamais supposée. Contrairement au masque, elle ne l'oblige à rien : sans image
+# de fin, ce qui ne servait qu'à la charger quitte le graphe
+# (`sans_image_de_fin`), et le clip finit où il veut.
+IMAGE_DE_FIN = "image_de_fin"
+
+
+def _est_un_lien(valeur):
+    """Une entrée de nœud qui pointe la sortie d'un autre, `["4", 0]` au format API."""
+    return isinstance(valeur, list) and len(valeur) == 2 and isinstance(valeur[0], (str, int)) \
+        and not isinstance(valeur[0], bool) and isinstance(valeur[1], int) and not isinstance(valeur[1], bool)
+
+
+def sans_image_de_fin(graphe, liaisons, sortie):
+    """Le graphe d'un clip qui finit libre, pour un profil qui sait finir sur une image.
+
+    **Ce qui ne sert qu'à l'image de fin part avec elle ; ce qui la reçoit parmi
+    d'autres entrées la perd, et rien de plus.** Le nœud qui la charge part, puis
+    tout nœud dont *chaque* entrée reliée venait d'un nœud parti (un
+    redimensionnement qui ne travaillait que pour elle) ; un nœud qui la recevait
+    à côté d'autres entrées — `WanFirstLastFrameToVideo` et son `end_image` —
+    reste, sans cette entrée-là. Rend une copie ; le graphe du profil ne bouge pas.
+
+    ⚠️ Limite laissée à `MO6` : que ComfyUI tienne l'entrée retirée pour
+    facultative ne se vérifie pas ici (il faudrait `/object_info`). Si elle est
+    obligatoire, ComfyUI refuse le calcul à l'envoi — en local, rien n'est payé.
+    """
+    graphe = copy.deepcopy(graphe)
+    partis = {lien["noeud"] for lien in liaisons.get(IMAGE_DE_FIN, [])}
+    bouge = True
+    while bouge:
+        bouge = False
+        for cle, noeud in graphe.items():
+            if cle in partis:
+                continue
+            liens = [v for v in noeud["inputs"].values() if _est_un_lien(v)]
+            if liens and all(str(v[0]) in partis for v in liens):
+                partis.add(cle)
+                bouge = True
+    if str(sortie) in partis:
+        raise WorkflowRefuse("Sans image de fin, ce graphe perdrait son nœud de sortie : l'image de fin doit arriver par son propre chargement.")
+    for cle in partis:
+        graphe.pop(cle, None)
+    for noeud in graphe.values():
+        for champ, valeur in list(noeud["inputs"].items()):
+            if _est_un_lien(valeur) and str(valeur[0]) in partis:
+                del noeud["inputs"][champ]
+    return graphe
+
 
 def valeur_musicale(nom, valeur):
     """La valeur telle qu'elle part dans le graphe, ou un refus en clair.
@@ -133,7 +185,7 @@ def _verifier_graphe(graphe, liaisons, parametres, quelle=""):
         # Une série de N tirages sera N travaux, chacun sa graine (SN3).
         # `masque` (PX2) : la zone à repeindre, une image en noir et blanc
         # déposée telle quelle — une seule par profil, jamais aplatie.
-        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine", "partition", MASQUE, *MUSIQUE)
+        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine", "partition", MASQUE, IMAGE_DE_FIN, *MUSIQUE)
         if nom_champ.startswith("reference:"):
             try:
                 references.append(int(nom_champ.split(":")[1]))
@@ -312,6 +364,15 @@ def _normaliser(brut: dict) -> dict:
     # `_variantes` garantit déjà qu'une variante relie les mêmes champs.
     if MASQUE in liaisons and (nature != "image" or minimum < 1):
         raise WorkflowRefuse("Seul un workflow d'image qui reçoit au moins une référence relie un masque de zone.")
+    # MO3 : l'image de fin se charge par un nœud à elle — aucun autre champ du
+    # profil n'y arrive —, et le graphe doit tenir debout sans elle.
+    if IMAGE_DE_FIN in liaisons:
+        if nature != "video":
+            raise WorkflowRefuse("Seul un workflow vidéo relie une image de fin.")
+        siens = {l["noeud"] for l in liaisons[IMAGE_DE_FIN]}
+        if any(l["noeud"] in siens for nom_champ, liens in liaisons.items() if nom_champ != IMAGE_DE_FIN for l in liens):
+            raise WorkflowRefuse("L'image de fin se charge par son propre nœud : aucune autre liaison n'y arrive.")
+        sans_image_de_fin(graphe, liaisons, sortie["noeud"])
     return {"identifiant": identifiant, "nom": nom, "nature": nature, "graphe": graphe,
         "liaisons": liaisons, "parametres": parametres, "formats": formats,
         "durees": durees if nature in ("video", "audio") else [], "cadence": cadence if nature == "video" else 0,
@@ -357,8 +418,11 @@ _NOMS_MUSIQUE = {"paroles": "de paroles", "tempo": "de tempo", "tonalite": "de t
 
 
 def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=None, proportions="1:1", secondes=0, options=None, graine=None,
-             paroles=None, tempo=None, tonalite=None, mesure=None, partition=None, masque=None):
+             paroles=None, tempo=None, tonalite=None, mesure=None, partition=None, masque=None, image_de_fin=None):
     graphe_choisi, liaisons = graphe_pour(profil, len(references))
+    # MO3 : `image_de_fin` est, comme le masque, le nom déposé chez le moteur.
+    if image_de_fin is not None and IMAGE_DE_FIN not in liaisons:
+        raise WorkflowRefuse("Ce profil ne sait pas finir sur une image choisie : il ne relie aucune image de fin.")
     # PX2 : `masque` est le nom de l'image déposée chez le moteur, jamais ses octets.
     if masque is not None and MASQUE not in liaisons:
         raise WorkflowRefuse(f"Ce profil {REFUS_SANS_ZONE} : il ne relie aucun masque.")
@@ -415,9 +479,16 @@ def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=Non
         if graine is not None and (isinstance(graine, bool) or not isinstance(graine, int) or not 0 <= graine <= GRAINE_MAX):
             raise WorkflowRefuse("La graine est un entier positif.")
         valeurs["graine"] = tirer_graine() if graine is None else graine
-    graphe = copy.deepcopy(graphe_choisi)
+    if image_de_fin is not None:
+        valeurs[IMAGE_DE_FIN] = image_de_fin
+    if IMAGE_DE_FIN in liaisons and image_de_fin is None:
+        graphe = sans_image_de_fin(graphe_choisi, liaisons, profil["sortie"]["noeud"])
+    else:
+        graphe = copy.deepcopy(graphe_choisi)
     for nom, liens in liaisons.items():
         if nom in _LIAISONS_SONORES | {"partition"} and nom not in valeurs:
+            continue
+        if nom == IMAGE_DE_FIN and nom not in valeurs:
             continue
         for lien in liens:
             graphe[lien["noeud"]]["inputs"][lien["champ"]] = valeurs[nom]

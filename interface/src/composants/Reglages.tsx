@@ -250,7 +250,7 @@ function MoteursEtWorkflows({
         )}
 
         <div className="mt-[34px]">
-          <PageDesMoteurs modeles={modeles} signale={moteurASignaler} onSignale={onMoteurSignale} />
+          <PageDesMoteurs modeles={modeles} signale={moteurASignaler} onSignale={onMoteurSignale} onInstallation={onInstallation} />
         </div>
 
         <section className="mt-[34px] flex flex-col">

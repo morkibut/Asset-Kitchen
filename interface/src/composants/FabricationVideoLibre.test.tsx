@@ -38,7 +38,8 @@ test("une vidéo libre se relit sans personnage et ne part qu’après confirmat
   render(<FabricationVideoLibre projet="jeu" onClip={onClip} />)
   fireEvent.click(screen.getByRole("button", { name: "Choisir dans la bibliothèque" }))
   fireEvent.click(screen.getByRole("button", { name: "Choisir l’image filtrée" }))
-  await screen.findByRole("option", { name: /Moteur:clip/ })
+  // MO3 : le même nom que « 4. Le clip » — fournisseur et nom, plus l'identifiant brut.
+  await screen.findByRole("option", { name: /Moteur · Clip/ })
   fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: modele.identifiant } })
   fireEvent.change(screen.getByLabelText("Mouvement et consignes pour la vidéo"), { target: { value: "Une marche précise" } })
   fireEvent.change(screen.getByLabelText("Durée du clip"), { target: { value: "8" } })
@@ -131,7 +132,7 @@ test("le modèle local montre la mémoire libre en clair, et avertit sous le bes
     carte: "cuda:0 NVIDIA GeForce RTX 3080 Laptop GPU", memoire_libre_go: 0.9, besoin_go: 6, occupe: false, phrase: "",
   })
   render(<FabricationVideoLibre projet="jeu" onClip={vi.fn()} />)
-  await screen.findByRole("option", { name: /maison\/wan/ })
+  await screen.findByRole("option", { name: /Maison · Wan 2.2/ })
   fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: local.identifiant } })
   expect(await screen.findByText(/Mémoire libre : 0,9 Go/)).toBeInTheDocument()
   expect(screen.getByText(/environ 6 Go.*ferme les autres programmes/)).toBeInTheDocument()
@@ -156,7 +157,7 @@ test("ComfyUI déjà occupé par un autre calcul se dit avant le lancement, sans
     carte: "cuda:0 NVIDIA GeForce RTX 3080 Laptop GPU", memoire_libre_go: 6.7, besoin_go: 6, occupe: true, phrase: "",
   })
   render(<FabricationVideoLibre projet="jeu" onClip={vi.fn()} />)
-  await screen.findByRole("option", { name: /maison\/wan/ })
+  await screen.findByRole("option", { name: /Maison · Wan 2.2/ })
   fireEvent.change(screen.getByLabelText("Fournisseur et modèle"), { target: { value: local.identifiant } })
   expect(await screen.findByText(/ComfyUI est déjà occupé par un autre calcul/)).toBeInTheDocument()
 })

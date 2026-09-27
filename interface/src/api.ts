@@ -859,6 +859,11 @@ export type AttenteVideo = {
 }
 
 /** Un modèle vidéo au catalogue, tel que l'écran de commande le montre. */
+/** MO3 : les trois sources du catalogue vidéo. */
+export type SourceVideo = "maison" | "workflow" | "en_ligne"
+/** MO3 : l'état d'un moteur vidéo, dans les mots de la page « Moteurs ». */
+export type EtatMoteurVideo = "pret" | "a_installer" | "cle_manquante" | "indisponible"
+
 export type ModeleVideo = {
   options?: Record<string, Option>
   indisponible?: string | null
@@ -900,6 +905,21 @@ export type ModeleVideo = {
   /** **PX5** : vrai quand ce modèle sait finir le clip sur une image choisie.
    *  Optionnel : les essais d'avant cette tranche ne le donnent pas. */
   accepte_une_image_de_fin?: boolean
+  // ── MO3 : la forme commune aux trois sources (`ServiceAnimation.catalogue`) ──
+  //
+  // Optionnels pour la même raison que le champ ci-dessus : les essais d'avant
+  // MO3 ne les donnent pas, et l'écran retombe alors sur `de_la_maison`.
+  /** D'où vient le moteur : la carte de la maison (Wan), un workflow importé
+   *  par l'auteur, ou un fournisseur en ligne. */
+  source?: SourceVideo
+  /** Ce qu'il sait faire. L'image de départ est **toujours obligatoire** — un
+   *  mot, pas un booléen : ce n'est pas une capacité qui cède (AGENTS 8bis). */
+  capacites?: { image_de_depart: "obligatoire"; image_de_fin: boolean; durees: number[] }
+  /** Ce qu'il consomme : du temps de la carte ici, de l'argent ailleurs (8ter). */
+  cout?: { unite: "temps" | "usd"; libelle: string }
+  /** Son état **hors de toute demande** — ce que la page « Moteurs » montre ;
+   *  le grisé, lui, dépend de la demande et reste dans `grise`. */
+  etat?: { code: EtatMoteurVideo; raison: string | null }
   prix: PrixVideo
   /** L'attente annoncée, ou `null` chez un payant — et `null` n'est pas un
    *  trou : ce qu'un modèle payant coûte est de l'argent, et une attente
