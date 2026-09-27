@@ -11,7 +11,7 @@ import mimetypes
 
 from PIL import Image, UnidentifiedImageError
 
-from atelier.domaine.workflow import IMAGE_DE_FIN, WorkflowRefuse, composer, graphes, octets_json
+from atelier.domaine.workflow import IMAGE_DE_FIN, WorkflowRefuse, composer, graphes, octets_json, sans_image_de_fin
 from atelier.fournisseur.maison import MoteurDeLaMaison, DELAI_MOYEN
 from atelier.fournisseur.port import ClipProduit
 
@@ -97,15 +97,60 @@ def _membre_de_groupe(champ, champs):
     return bool(prefixe) and membre.startswith(prefixe) and membre[len(prefixe):].isdigit()
 
 
+def _fin_libre(profil, info):
+    """Le graphe tient-il **sans** son image de fin, selon ComfyUI ?
+
+    `sans_image_de_fin` retire ce qui ne servait qu'à elle, et l'entrée qui la
+    recevait parmi d'autres (`end_image` de `WanFirstLastFrameToVideo`). Si
+    ComfyUI tient cette entrée pour obligatoire, le clip qui finit libre serait
+    refusé à l'envoi : on le dit ici, avant tout choix (MO6, la limite de MO3)."""
+    exigent = []
+    for graphe, liaisons in graphes(profil):
+        if IMAGE_DE_FIN not in liaisons:
+            continue
+        reste = sans_image_de_fin(graphe, liaisons, profil["sortie"]["noeud"])
+        for cle, noeud in reste.items():
+            requis = ((info.get(noeud["class_type"]) or {}).get("input") or {}).get("required") or {}
+            for champ in requis:
+                if champ in graphe[cle]["inputs"] and champ not in noeud["inputs"] \
+                        and (noeud["class_type"], champ) not in exigent:
+                    exigent.append((noeud["class_type"], champ))
+    if not exigent:
+        return {"fin_libre": True}
+    quoi = " · ".join(f"« {classe} » exige « {champ} »" for classe, champ in exigent)
+    return {"fin_libre": False, "remarques": [
+        f"Sans image de fin, ComfyUI refuserait ce graphe : {quoi}. Ce workflow finit donc toujours sur une image choisie."]}
+
+
 class MoteurWorkflow(MoteurDeLaMaison):
     nom = "ComfyUI"
 
     async def diagnostiquer_profil(self, profil):
-        problemes, noeuds = [], []
+        """Ce qui manque à ce profil pour tourner sur cette installation.
+
+        `problemes` garde ses phrases d'avant (le grisé du catalogue les joint).
+        **MO6 : `a_completer` dit la même chose par élément**, pour la page
+        « Moteurs » : un nœud à installer, un fichier à poser, un champ que
+        cette version de ComfyUI ne connaît plus, une sortie qui n'enregistre
+        rien — chacun avec ce qu'il faut faire, jamais le seul « pas prêt ».
+        Et pour un clip qui relie une image de fin, `fin_libre` dit si ComfyUI
+        accepte le graphe **sans** elle — la limite que MO3 avait laissée."""
+        problemes, noeuds, a_completer = [], [], []
         try:
             info = await self._json("GET", "/object_info")
         except Exception as e:
-            return {"disponible": False, "problemes": [str(e)], "noeuds": []}
+            return {"disponible": False, "problemes": [str(e)], "noeuds": [],
+                    "a_completer": [{"genre": "comfyui", "texte": "ComfyUI ne répond pas : lance-le, puis vérifie de nouveau."}]}
+        # Une même phrase ne se dit qu'une fois : deux nœuds de la même classe
+        # à qui il manque la même chose ne font qu'une ligne, qui les nomme.
+        par_texte = {}
+
+        def signaler(identifiant, **element):
+            if element["texte"] not in par_texte:
+                par_texte[element["texte"]] = {**element, "noeuds": []}
+                a_completer.append(par_texte[element["texte"]])
+            if identifiant not in par_texte[element["texte"]]["noeuds"]:
+                par_texte[element["texte"]]["noeuds"].append(identifiant)
         # Un profil à variantes n'est prêt que si chacun de ses graphes l'est ;
         # un nœud identique d'un graphe à l'autre n'est examiné qu'une fois.
         examines = {}
@@ -118,17 +163,25 @@ class MoteurWorkflow(MoteurDeLaMaison):
             definition = info.get(classe)
             if not definition:
                 problemes.append(f"Nœud absent : {classe} ({identifiant}).")
+                signaler(identifiant, genre="noeud", classe=classe,
+                    texte=f"Le nœud « {classe} » n'est pas installé dans ComfyUI : installe l'extension qui le fournit, puis redémarre ComfyUI.")
                 continue
             if definition.get("api_node"):
                 problemes.append(f"{classe} appelle une API distante ; ce profil est réservé au calcul local.")
+                signaler(identifiant, genre="api", classe=classe,
+                    texte=f"« {classe} » appelle un service en ligne : un workflow importé ne tourne que sur cette machine.")
             entree = definition.get("input", {})
             champs = {**entree.get("required", {}), **entree.get("optional", {})}
             for champ in entree.get("required", {}):
                 if champ not in noeud["inputs"] and not _groupe_facultatif(champs[champ], champ, noeud["inputs"]):
                     problemes.append(f"{classe} : le champ obligatoire {champ} manque.")
+                    signaler(identifiant, genre="champ", classe=classe, champ=champ,
+                        texte=f"« {classe} » attend le champ « {champ} », absent du graphe : réexporte le graphe depuis cette version de ComfyUI.")
             for champ, valeur in noeud["inputs"].items():
                 if champ not in champs and not _membre_de_groupe(champ, champs):
                     problemes.append(f"{classe} : le champ {champ} n'est pas déclaré par cette installation.")
+                    signaler(identifiant, genre="champ", classe=classe, champ=champ,
+                        texte=f"« {classe} » ne connaît pas de champ « {champ} » dans cette version de ComfyUI : réexporte le graphe depuis elle.")
                     continue
                 if (identifiant, champ) in liees:
                     continue
@@ -143,12 +196,19 @@ class MoteurWorkflow(MoteurDeLaMaison):
                         choix = declaration[1].get("options")
                 if isinstance(choix, list) and valeur not in choix:
                     problemes.append(f"{classe} / {champ} : {valeur} est absent des choix installés.")
+                    signaler(identifiant, genre="fichier", classe=classe, champ=champ, fichier=valeur,
+                        texte=f"Le fichier « {valeur} » n'est pas dans ComfyUI (champ « {champ} » de « {classe} ») : pose-le dans le dossier de modèles qui convient, puis vérifie de nouveau.")
             noeuds.append({"identifiant": identifiant, "classe": classe, "disponible": True})
         sortie = profil["sortie"]["noeud"]
         if any(not info.get(g[sortie]["class_type"], {}).get("output_node") for g, _ in graphes(profil)):
             problemes.append("Le nœud de sortie choisi n'est pas déclaré comme une sortie par ComfyUI.")
-        return {"disponible": not problemes, "problemes": problemes, "noeuds": noeuds,
+            signaler(sortie, genre="sortie",
+                texte="Le nœud de sortie choisi n'enregistre rien selon ComfyUI : importe une nouvelle version avec le nœud qui enregistre le résultat.")
+        diagnostic = {"disponible": not problemes, "problemes": problemes, "noeuds": noeuds, "a_completer": a_completer,
             "limite": "Le diagnostic vérifie les nœuds et choix installés. Il ne lance aucun modèle et ne prédit pas sa mémoire nécessaire."}
+        if any(IMAGE_DE_FIN in liaisons for _, liaisons in graphes(profil)):
+            diagnostic.update(_fin_libre(profil, info))
+        return diagnostic
 
     async def deposer_reference(self, octets):
         octets = sur_fond_blanc(octets)
@@ -243,6 +303,9 @@ class AnimateurWorkflow(MoteurWorkflow):
                 # MO3 : sait-il finir sur une image choisie ? Son graphe le dit,
                 # par la liaison qui charge l'image de fin — jamais supposé.
                 accepte_une_image_de_fin=IMAGE_DE_FIN in p["liaisons"],
+                # MO6 : et s'il ne sait finir **que** là — ComfyUI tient l'entrée
+                # pour obligatoire (`_fin_libre`) —, un clip sans fin se grise.
+                exige_une_image_de_fin=diagnostic.get("fin_libre") is False,
                 tarification=Tarification("maison", 0, "Gratuit — workflow local"),
                 images_par_seconde=p["cadence"], pas_d_images=p["pas_images"],
                 options={n: Option(n, o["genre"], tuple(o.get("valeurs", [])), o.get("minimum"), o.get("maximum")) for n, o in p["parametres"].items()},

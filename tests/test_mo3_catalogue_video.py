@@ -195,6 +195,12 @@ async def test_une_autre_image_de_fin_part_deposee_a_part(atelier_workflow):
 async def test_sans_fin_le_meme_workflow_finit_libre(atelier_workflow):
     atelier, comfy = atelier_workflow
     p = await ajouter(atelier, comfy, profil_qui_finit())
+    # Comme `WanFirstLastFrameToVideo` chez ComfyUI : `end_image` est
+    # facultative. Depuis MO6, le diagnostic le lit (`fin_libre`) — tenue pour
+    # obligatoire, le clip sans fin se griserait (`test_mo6_workflows_importes`).
+    requis = comfy.informations["Sampler"]["input"]
+    requis.setdefault("optional", {})["end_image"] = requis["required"].pop("end_image")
+    await atelier.animation.rafraichir()
     projet = atelier.bibliotheque.courant
     fini = await _fabriquer(atelier, projet, {**_demande(atelier, projet), "cle": "libre", "modele_video": p["modele"]})
     graphe = comfy.envois[0]["prompt"]

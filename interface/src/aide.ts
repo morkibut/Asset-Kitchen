@@ -3152,6 +3152,20 @@ export const AIDE: Record<string, Explication> = {
       "Chaque moteur part d'une image de départ, toujours. « Finir sur une image » : « Fin de l'animation » peut lui demander une boucle ou une autre image.\n\nUn workflow importé le sait quand son graphe charge une image de fin (liaison « image_de_fin »). Sans image de fin demandée, ce qui ne servait qu'à elle est retiré du graphe et le clip finit libre.",
   },
 
+  // MO6 (27 septembre 2026) : la section « Les workflows importés » de la même
+  // page — un graphe importé par l'auteur, décrit comme un moteur.
+  "reglages.moteurs-importes": {
+    nom: "Les workflows importés",
+    ou: "reglages",
+    groupe: "Les moteurs — la page qui les rassemble",
+    quoi: "Chaque graphe ComfyUI importé par toi : ce qu'il sait faire, et ce qui lui manque pour tourner.",
+    change:
+      "Rien à la fabrication en cours. Un workflow qui sait repeindre une zone se choisit dans « Repeindre », un clip qui charge une image de fin offre « Fin de l'animation ».",
+    origine: "ComfyUI, relu à l'ouverture et sur « Vérifier de nouveau » · rien ne s'y lance ni ne s'y télécharge",
+    long:
+      "Ce qu'il sait faire se lit sur ce que son graphe reçoit : une zone, une image de fin, un nombre d'images. À l'import, ces champs se préremplissent ; tu relis avant d'enregistrer.\n\n« Relier ce que son graphe reçoit » écrit une nouvelle version ; l'ancienne reste. Un clip dont ComfyUI exige l'image de fin ne se propose plus sans elle.",
+  },
+
   "reglages.depenses": {
     nom: "Les dépenses",
     ou: "reglages",

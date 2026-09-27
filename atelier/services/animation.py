@@ -1266,7 +1266,9 @@ def _modele_en_json(modele: ModeleVideo) -> dict[str, Any]:
         # céder (AGENTS 8bis) — d'où un mot, pas un booléen.
         "capacites": {
             "image_de_depart": "obligatoire",
-            "image_de_fin": modele.accepte_une_image_de_fin,
+            # MO6 : « obligatoire » — le même mot que pour le départ — quand il
+            # ne sait finir que là ; sinon vrai ou faux.
+            "image_de_fin": "obligatoire" if modele.exige_une_image_de_fin else modele.accepte_une_image_de_fin,
             "durees": list(modele.durees),
         },
         # Ce qu'il consomme : de l'argent chez un payant, du temps de la carte

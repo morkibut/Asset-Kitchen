@@ -88,7 +88,7 @@ function CarteMoteurVideo({ modele, onInstallation }: { modele: ModeleVideo; onI
       </div>
       <div className="flex flex-wrap gap-[4px]">
         <span className={CAPACITE}>Animer une image</span>
-        {finit && <span className={CAPACITE}>Finir sur une image</span>}
+        {finit && <span className={CAPACITE}>{finit === "obligatoire" ? "Finit toujours sur une image" : "Finir sur une image"}</span>}
       </div>
       <p className="text-[12px] text-encre-3">
         {ou} · {durees.length ? durees.map(secondes).join(", ") : "durées non déclarées"} · {cout}

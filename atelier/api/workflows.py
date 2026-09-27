@@ -28,6 +28,43 @@ async def importer(requete: Request):
     return profil
 
 
+@routeur.post("/workflow-profiles/read-graph")
+async def lire_un_graphe(requete: Request):
+    """MO6 : ce qu'un graphe au format API semble savoir recevoir — une zone,
+    une image de fin, un nombre d'images —, pour préremplir le formulaire
+    d'import. **Rien n'est écrit** : c'est une proposition, que l'auteur relit
+    avant d'enregistrer. ComfyUI, s'il répond, dit en plus le pas d'un nombre
+    d'images (`/object_info`) ; éteint, la lecture reste entière."""
+    from atelier.domaine.lecture_graphe import lire_le_graphe
+    corps = await requete.json()
+    graphe = corps.get("graphe") if isinstance(corps, dict) and "graphe" in corps else corps
+    try:
+        object_info = await requete.app.state.atelier.profils_workflow.fabrique_moteur()._json("GET", "/object_info")
+    except Exception:
+        object_info = None
+    return lire_le_graphe(graphe, object_info if isinstance(object_info, dict) else None)
+
+
+@routeur.get("/workflow-profiles/imported")
+async def lister_importes(requete: Request):
+    """MO6 : les workflows importés par l'auteur, chacun comme un moteur — ce
+    qu'il sait faire, ce que son graphe saurait recevoir en plus, et son
+    diagnostic élément par élément. Ce que la page « Moteurs » lit."""
+    return {"moteurs": await requete.app.state.atelier.profils_workflow.importes()}
+
+
+@routeur.post("/workflow-profiles/{identifiant}/versions/{version}/bind-deduced")
+async def relier_ce_que_le_graphe_sait(requete: Request, identifiant: str, version: str):
+    """MO6 : une nouvelle version qui relie ce que le graphe sait recevoir (la
+    zone, l'image de fin). Le catalogue se relit aussitôt : le moteur apparaît
+    dans « Repeindre » ou « Fin de l'animation » sans autre geste."""
+    atelier = requete.app.state.atelier
+    profil = atelier.profils_workflow.relier(identifiant, version)
+    await atelier.catalogue.rafraichir()
+    await atelier.animation.rafraichir()
+    return profil
+
+
 @routeur.get("/workflow-profiles/styles")
 async def lister_styles(requete: Request):
     styles_locaux = requete.app.state.atelier.styles_locaux

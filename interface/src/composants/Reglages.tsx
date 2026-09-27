@@ -249,6 +249,9 @@ function MoteursEtWorkflows({
   // Change à chaque installation de méthodes sonores, pour que « Les
   // workflows locaux » juste au-dessus relise ses profils à son tour (SN1).
   const [actualisationSon, setActualisationSon] = useState(0)
+  // MO6 : dans l'autre sens — une version importée dans « Les workflows
+  // locaux » se montre aussitôt dans « Les workflows importés » de la page.
+  const [actualisationImportes, setActualisationImportes] = useState(0)
   return (
     <main
       aria-label="Moteurs & workflows"
@@ -271,6 +274,8 @@ function MoteursEtWorkflows({
             onSignale={onMoteurSignale}
             onInstallation={onInstallation}
             onInstallationSon={() => setActualisationSon((n) => n + 1)}
+            actualiserImportesSur={actualisationImportes}
+            onWorkflowRelie={() => setActualisationSon((n) => n + 1)}
           />
         </div>
 
@@ -288,7 +293,7 @@ function MoteursEtWorkflows({
         {/* Les workflows locaux portent déjà leur titre : en poser un second
             au-dessus ferait lire deux sections là où il n'y en a qu'une. */}
         <div className="mt-[34px]">
-          <ProfilsWorkflow actualiserSur={actualisationSon} />
+          <ProfilsWorkflow actualiserSur={actualisationSon} onImporte={() => setActualisationImportes((n) => n + 1)} />
         </div>
       </div>
     </main>

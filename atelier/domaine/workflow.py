@@ -80,9 +80,10 @@ def sans_image_de_fin(graphe, liaisons, sortie):
     à côté d'autres entrées — `WanFirstLastFrameToVideo` et son `end_image` —
     reste, sans cette entrée-là. Rend une copie ; le graphe du profil ne bouge pas.
 
-    ⚠️ Limite laissée à `MO6` : que ComfyUI tienne l'entrée retirée pour
-    facultative ne se vérifie pas ici (il faudrait `/object_info`). Si elle est
-    obligatoire, ComfyUI refuse le calcul à l'envoi — en local, rien n'est payé.
+    Que ComfyUI tienne l'entrée retirée pour facultative ne se vérifie pas ici
+    (il faut `/object_info`) : depuis MO6, le diagnostic le lit
+    (`atelier/fournisseur/workflow.py`, `_fin_libre`), et un clip sans fin se
+    grise quand elle est obligatoire — jamais proposé puis refusé à l'envoi.
     """
     graphe = copy.deepcopy(graphe)
     partis = {lien["noeud"] for lien in liaisons.get(IMAGE_DE_FIN, [])}

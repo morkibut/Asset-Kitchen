@@ -3,9 +3,9 @@
 // « Chaque moteur d'IA est décrit une seule fois, et tous les outils de
 // l'atelier lisent cette description. » (`docs/PLAN-catalogue-des-moteurs.md`
 // § MOM). Cette page-ci couvre l'image — créer et repeindre (MO2) —, le son
-// (MO4), la vidéo (MO3, `SectionMoteursVideo`), et la 3D, le détourage et le
-// coup de main (MO5) : les workflows importés (MO6) ajouteront leur propre
-// carte à la suite, dans une tranche séparée. `PageDesMoteurs` est donc
+// (MO4), la vidéo (MO3, `SectionMoteursVideo`), les workflows importés par
+// l'auteur (MO6, `SectionWorkflowsImportes`), et la 3D, le détourage et le
+// coup de main (MO5). `PageDesMoteurs` est donc
 // volontairement un composant par groupe de capacité, pas un fourre-tout :
 // une section de plus s'ajoutera sans toucher aux autres.
 //
@@ -35,6 +35,7 @@ import {
   type MoteurSonore, type StyleLocal,
 } from "../api-workflows"
 import { nomDuModele } from "./Fiche"
+import { SectionWorkflowsImportes } from "./MoteursImportes"
 import { SectionMoteursVideo } from "./MoteursVideo"
 import { ListeManque } from "./WorkflowsLocaux"
 
@@ -72,6 +73,10 @@ export type EtatBadge =
   | "extension-absente"
   | "au-premier-appel"
   | "plafond-atteint"
+  // MO6 : un workflow importé à qui il manque un nœud, un fichier ou un champ
+  // — pas forcément un fichier, d'où un mot à lui plutôt que « Fichiers
+  // manquants ».
+  | "a-completer"
 
 const BADGE: Record<EtatBadge, { texte: string; classe: string }> = {
   installe: { texte: "Installé", classe: "border-trait-ok bg-fond-ok text-encre-ok" },
@@ -84,6 +89,7 @@ const BADGE: Record<EtatBadge, { texte: string; classe: string }> = {
   "extension-absente": { texte: "Extension absente", classe: "border-trait-attention bg-fond-attention text-encre-attention" },
   "au-premier-appel": { texte: "Au premier appel", classe: "border-trait bg-papier-cote text-encre-3" },
   "plafond-atteint": { texte: "Plafond atteint", classe: "border-trait-attention bg-fond-attention text-encre-attention" },
+  "a-completer": { texte: "À compléter", classe: "border-trait-attention bg-fond-attention text-encre-attention" },
 }
 
 export function Badge({ etat }: { etat: EtatBadge }) {
@@ -98,6 +104,8 @@ export function PageDesMoteurs({
   onSignale,
   onInstallation,
   onInstallationSon,
+  actualiserImportesSur,
+  onWorkflowRelie,
 }: {
   /** Le catalogue d'images déjà lu par l'atelier (`App.tsx`) — la même liste
    *  que la barre qui paie et la fabrique Repeindre, jamais une seconde
@@ -125,6 +133,13 @@ export function PageDesMoteurs({
    *  pour qu'il relise à son tour « Les workflows locaux » (`Reglages.tsx`) —
    *  même mécanique que `MethodesSonores.onInstalle` avant elle. */
   onInstallationSon?: () => void
+  /** MO6 : change quand « Les workflows locaux » vient d'importer une version
+   *  — « Les workflows importés » se relit. */
+  actualiserImportesSur?: number
+  /** MO6 : une version vient d'être écrite depuis « Les workflows importés »
+   *  (relier ce que le graphe reçoit) — l'appelant relit « Les workflows
+   *  locaux ». */
+  onWorkflowRelie?: () => void
 }) {
   const [styles, setStyles] = useState<StyleLocal[] | null>(null)
   const [chargement, setChargement] = useState(true)
@@ -426,6 +441,11 @@ export function PageDesMoteurs({
           </div>
         )}
       </section>
+
+      {/* MO6 : « Les workflows importés » — ce que l'auteur a importé lui-même,
+          chacun avec ce qu'il sait faire et ce qui lui manque. Dans son propre
+          fichier, comme « Vidéo ». */}
+      <SectionWorkflowsImportes actualiserSur={actualiserImportesSur} onRelie={onWorkflowRelie} />
 
       {/* MO5 : « La 3D » — un seul programme, jamais un par famille ; son
           adresse et ses réglages détaillés restent les siens

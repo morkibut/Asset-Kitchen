@@ -914,7 +914,13 @@ export type ModeleVideo = {
   source?: SourceVideo
   /** Ce qu'il sait faire. L'image de départ est **toujours obligatoire** — un
    *  mot, pas un booléen : ce n'est pas une capacité qui cède (AGENTS 8bis). */
-  capacites?: { image_de_depart: "obligatoire"; image_de_fin: boolean; durees: number[] }
+  capacites?: {
+    image_de_depart: "obligatoire"
+    /** MO6 : « obligatoire » pour un workflow importé dont ComfyUI tient
+     *  l'image de fin pour obligatoire — il ne sait finir que là. */
+    image_de_fin: boolean | "obligatoire"
+    durees: number[]
+  }
   /** Ce qu'il consomme : du temps de la carte ici, de l'argent ailleurs (8ter). */
   cout?: { unite: "temps" | "usd"; libelle: string }
   /** Son état **hors de toute demande** — ce que la page « Moteurs » montre ;

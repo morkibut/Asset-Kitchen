@@ -12,7 +12,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import type { EtatTraitement, Modele, Silhouette } from "../api"
-import { moteursSonores, stylesLocaux, workflows, type MoteurSonore, type ResultatMoteurSon, type StyleLocal } from "../api-workflows"
+import { moteursSonores, stylesLocaux, workflows, workflowsImportes, type MoteurSonore, type ResultatMoteurSon, type StyleLocal } from "../api-workflows"
 import { sources3d } from "../api-3d"
 import { coupDeMain, type EtatCoupDeMain } from "../api-coup-de-main"
 import { api } from "../api"
@@ -25,6 +25,8 @@ vi.mock("../api-workflows", async () => {
     stylesLocaux: { lister: vi.fn(), installer: vi.fn(), installerPrets: vi.fn() },
     moteursSonores: { lister: vi.fn() },
     workflows: { ...reel.workflows, installerSon: vi.fn() },
+    // MO6 : « Les workflows importés » lit sa propre route au montage.
+    workflowsImportes: { lister: vi.fn(), lireGraphe: vi.fn(), relier: vi.fn() },
   }
 })
 // MO5 : la 3D et le coup de main lisent chacun leur propre route au montage,
@@ -94,8 +96,25 @@ beforeEach(() => {
   vi.mocked(sources3d.connexion).mockResolvedValue({ adresse: "", configure: false })
   vi.mocked(sources3d.catalogue).mockResolvedValue({} as never)
   vi.mocked(coupDeMain.etat).mockResolvedValue(assistClefManquante)
+  vi.mocked(workflowsImportes.lister).mockResolvedValue({ moteurs: [] })
 })
 afterEach(cleanup)
+
+// ── MO6 · Les workflows importés ─────────────────────────────────────────────
+
+test("la page montre les workflows importés par l'auteur, à côté des autres moteurs", async () => {
+  vi.mocked(workflowsImportes.lister).mockResolvedValue({ moteurs: [{
+    identifiant: "retouche-maison", nom: "Retouche maison", nature: "image", description: "", modele: "ComfyUI:retouche-maison@v2",
+    version: "v2", cree_le: 1000, versions: 2, references_min: 1, references_max: 1, durees: [], capacites: ["repeindre_zone"], a_relier: [],
+    diagnostic: { disponible: true, problemes: [], noeuds: [], observe_le: 1000, adresse: "http://local", a_completer: [] },
+  }] })
+  monter()
+  await screen.findByRole("heading", { name: "Les workflows importés" })
+  const carte = (await screen.findByText("Retouche maison")).closest("article")!
+  expect(carte).toHaveTextContent("Repeindre une zone")
+  expect(carte).toHaveTextContent("se choisit dans « Repeindre »")
+  expect(workflowsImportes.lister).toHaveBeenCalledTimes(1)
+})
 
 test("les moteurs se groupent bien machine/en ligne", async () => {
   monter([modeleEnLigne, modeleEnLigneIndisponible])

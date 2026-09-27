@@ -75,6 +75,86 @@ export const workflows = {
     appeler<{ familles: Record<string, MoteurParFamille> }>(`/workflow-profiles/sound-defaults?projet=${encodeURIComponent(projet)}`),
 }
 
+// ── MO6 · Les workflows importés, des moteurs comme les autres ──────────────
+//
+// « Ses capacités se déduisent de ce qu'il sait recevoir (une zone, une image
+// de fin, une durée) » (`docs/PLAN-catalogue-des-moteurs.md` § MO6). Deux
+// temps, jamais confondus (`atelier/domaine/lecture_graphe.py`) : la **lecture**
+// d'un graphe propose des champs ; la **liaison** du profil dit ce qu'il reçoit
+// vraiment. Rangé à part de `workflows` : les essais qui doublent `workflows`
+// en entier n'ont pas à connaître ces trois routes.
+
+/** Un champ d'un nœud du graphe. */
+export type ChampDuGraphe = { noeud: string; champ: string }
+
+/** Ce qu'un graphe au format API semble savoir recevoir — une proposition,
+ *  jamais une liaison (`POST /workflow-profiles/read-graph`). */
+export type LectureGraphe = {
+  prompt: ChampDuGraphe | null
+  prompt_negatif: ChampDuGraphe | null
+  references: ChampDuGraphe[]
+  masque: ChampDuGraphe | null
+  image_de_fin: ChampDuGraphe | null
+  images: (ChampDuGraphe & { valeur: number }) | null
+  /** Le pas du nombre d'images, quand ComfyUI le déclare (Wan : 4). */
+  pas_images: number | null
+  cadence: number | null
+  duree: number | null
+  sortie: string | null
+  remarques: string[]
+}
+
+/** Ce qu'un workflow importé sait faire, lu sur ses liaisons. */
+export type CapaciteImportee = "creer_image" | "repeindre_zone" | "animer" | "finir_sur_image" | "faire_un_son"
+
+/** Un élément de ce qui manque pour tourner, en clair — un nœud à installer,
+ *  un fichier à poser, un champ que ComfyUI ne connaît plus, une sortie qui
+ *  n'enregistre rien, ComfyUI éteint. */
+export type ACompleter = {
+  genre: "noeud" | "fichier" | "champ" | "api" | "sortie" | "comfyui"
+  texte: string
+  classe?: string
+  noeuds?: string[]
+  champ?: string
+  fichier?: string
+}
+
+export type DiagnosticImporte = DiagnosticWorkflow & {
+  a_completer?: ACompleter[]
+  /** Un clip qui relie une image de fin : ComfyUI accepte-t-il le graphe sans elle ? */
+  fin_libre?: boolean
+  remarques?: string[]
+}
+
+/** Un workflow importé par l'auteur, tel que la page « Moteurs » le lit
+ *  (`GET /workflow-profiles/imported`) : sa dernière version. */
+export type MoteurImporte = {
+  identifiant: string
+  nom: string
+  nature: "image" | "video" | "audio"
+  description: string
+  modele: string
+  version: string
+  cree_le: number
+  versions: number
+  references_min: number
+  references_max: number
+  durees: number[]
+  capacites: CapaciteImportee[]
+  /** Ce que son graphe saurait recevoir en plus ; `reliable` : le geste
+   *  « relier » l'ajoute seul, dans une nouvelle version. */
+  a_relier: { capacite: CapaciteImportee | "durees"; texte: string; reliable: boolean }[]
+  diagnostic: DiagnosticImporte
+}
+
+export const workflowsImportes = {
+  lireGraphe: (graphe: unknown) =>
+    appeler<LectureGraphe>("/workflow-profiles/read-graph", { method: "POST", body: JSON.stringify({ graphe }) }),
+  lister: () => appeler<{ moteurs: MoteurImporte[] }>("/workflow-profiles/imported"),
+  relier: (identifiant: string, version: string) =>
+    appeler<ProfilWorkflow>(`${profil(identifiant, version)}/bind-deduced`, { method: "POST" }),
+}
+
 // ── MO4 · Le catalogue des moteurs sonores ──────────────────────────────────
 //
 // « Chaque moteur d'IA est décrit une seule fois, et tous les outils de

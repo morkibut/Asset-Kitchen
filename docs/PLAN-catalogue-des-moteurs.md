@@ -174,10 +174,34 @@ Reprend et remplace `PX11` de `docs/PLAN-idees-pixellab.md`.
 
 ## MO6 · Les workflows importés par l'auteur
 
-- [ ] Un workflow importé devient un moteur comme les autres : ses capacités se déduisent de ce
+- [x] Un workflow importé devient un moteur comme les autres : ses capacités se déduisent de ce
       qu'il sait recevoir (une zone, une image de fin, une durée), et il apparaît dans tous les
-      outils qui peuvent s'en servir.
-- [ ] Il apparaît sur la page « Moteurs », avec son diagnostic.
+      outils qui peuvent s'en servir. → deux temps jamais confondus
+      (`atelier/domaine/lecture_graphe.py`) : la **lecture** d'un graphe seul propose des champs
+      — la zone (une entrée `mask`, et le `LoadImage` qui ne sert qu'à elle, jamais la
+      transparence de l'image de départ), l'image de fin (`end_image`), le nombre d'images
+      (`length`… et son pas, lu dans `/object_info`) ; la **liaison** dit ce que le profil reçoit,
+      et la capacité ne se lit que sur elle (MO3, PX2). La lecture préremplit le formulaire
+      d'import (`POST /workflow-profiles/read-graph`), qui gagne « Champ recevant la zone à
+      repeindre » et « Champ recevant le nombre d'images » avec des durées proposées. Pour un
+      profil déjà importé, « Relier ce que son graphe reçoit » écrit une **nouvelle version**
+      (`bind-deduced`) ; l'ancienne se relit. Une zone reliée fait entrer le workflow dans
+      « Repeindre » (déjà par `m.masque` depuis PX2 : rien à changer dans `ServiceZone`).
+      La limite laissée par MO3 est levée : le diagnostic lit si ComfyUI tient `end_image` pour
+      obligatoire (`fin_libre`) ; si oui, le clip sans fin se grise (« ne sait finir que sur une
+      image choisie ») au lieu d'être refusé à l'envoi, et `capacites.image_de_fin` vaut
+      `"obligatoire"`.
+      ⚠️ Reste : une durée écrite dans le graphe d'un profil déjà importé se **dit** sur sa carte
+      mais ne se relie pas d'un geste — il faut à l'auteur choisir les durées à proposer, donc
+      réimporter.
+- [x] Il apparaît sur la page « Moteurs », avec son diagnostic. → section « Les workflows
+      importés » (`interface/src/composants/MoteursImportes.tsx`, `GET
+      /workflow-profiles/imported`) : un moteur par profil importé à la main — ni style de
+      sc-clone, ni moteur sonore —, ce qu'il sait faire, où le retrouver, et ce qui lui manque
+      **élément par élément** (`diagnostic.a_completer` : nœud à installer, fichier à poser,
+      champ inconnu, sortie qui n'enregistre rien, ComfyUI éteint ; une même phrase pour deux
+      nœuds ne fait qu'une ligne). Un clip importé reste aussi dans « Vidéo ». Une ligne au
+      guide (`reglages.moteurs-importes`). Joué au navigateur sur `essais/atelier_jetable_mo6.py`.
 
 ## MO7 · Les écrans ne tiennent plus de liste à eux
 
