@@ -587,6 +587,27 @@
         "C:/Users/damie/AppData/Local/Temp/claude/C--STOCKAGE-PROJET--DEV-gag2/cfdad752-2483-4cc0-b37b-2c96577f7232/scratchpad/dist-mo6"
       ],
       "port": 8512
+    },
+    {
+      "name": "atelier-jetable-cailloux",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_cailloux.py"
+      ],
+      "port": 8426
+    },
+    {
+      "name": "interface-jetable",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--prefix",
+        "interface",
+        "vite",
+        "--config",
+        "interface/vite.jetable.config.ts",
+        "interface"
+      ],
+      "port": 5174
     }
   ]
 }

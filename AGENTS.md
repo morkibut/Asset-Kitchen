@@ -439,6 +439,13 @@ deux vivent côte à côte.
   un peu différente. *Et le moteur par défaut du détourage par modèle* passe de `u2net` à
   `isnet-general-use` : une recette qui ne nomme aucun moteur — c'est-à-dire toute recette
   d'avant `U13` — retombe sur le nouveau et change. Celles qui nomment `u2net` ne bougent pas.
+
+  **Le 27 septembre 2026, les cailloux au bord des jeux de tuiles ont changé de forme.** Une
+  recette d'avant qui portait « léger » ou « dense » rend désormais de **petits cailloux
+  détachés** au lieu des blocs soudés d'un quart de tuile, et ne peint plus rien sur la
+  matière : les nouveaux réglages (`caillouxTaille`, `caillouxNombre`, `caillouxEcart`,
+  `caillouxColles`) prennent leur défaut. Le tirage des cases, lui, ne bouge pas. L'atlas
+  déjà livré reste celui qui a été livré ; seule une réouverture le redessine.
 - **Génération locale autorisée depuis le 11 septembre 2026.** ComfyUI et asset3d restent
   des moteurs externes, pilotés par des adaptateurs de l'atelier. Ne pas modifier leur
   installation ni télécharger leurs poids implicitement. L'import reste disponible.

@@ -39,9 +39,18 @@ Ce qui n'a **pas** été copié, et pourquoi :
   l'appelant HTTP du fournisseur d'images, hors moteur pur. Les essais qui en dépendent
   sont marqués `.skip` dans `__tests__/` avec la raison.
 
-**Ne pas modifier la logique ici.** Toute évolution du moteur se fait d'abord dans
-sc-clone, puis se recopie ; ou, si sc-clone n'est plus la source de vérité, se note dans ce
-fichier avec la date et la raison de l'écart.
+**Depuis le 27 septembre 2026, ce moteur appartient à Asset Kitchen.** L'auteur a levé la
+règle « ne pas modifier, corriger d'abord dans sc-clone » : le moteur évolue ici, et sc-clone
+n'est plus la source de vérité. Chaque écart se note ci-dessous avec sa date et sa raison.
+
+## Écarts avec sc-clone f27f054
+
+- **27 septembre 2026 — les cailloux au bord.** Six crans de quantité au lieu de trois
+  (`rare`, `moyen` et `partout` s'ajoutent ; `leger` et `dense` gardent leur seuil), et une
+  nouvelle forme réglable (`decorOptions` : taille, nombre, écart, accrochés) où chaque galet
+  tient entier dans sa case. Sans `decorOptions`, le moteur rend l'ancienne forme au bit
+  près. Raison : à l'usage, même « léger » posait des blocs d'un quart de tuile, coupés net
+  par les côtés de leur case, et une moitié peinte sur la matière cassait son motif.
 
 ## Licences
 
@@ -57,7 +66,6 @@ fichier avec la date et la raison de l'écart.
 
 ## Comment les essais vérifient la fidélité
 
-`__tests__/empreinte-provenance.test.ts` calcule l'empreinte SHA-256 de chaque module,
-après normalisation des fins de ligne (LF) et des lignes d'import (dont seul le chemin a pu
-bouger), et la compare à une liste figée relevée sur sc-clone au commit `f27f054`. Toute
-modification de logique — une ligne qui n'est pas un `import` — fait échouer cet essai.
+Les essais recopiés de sc-clone (`__tests__/`) tournent toujours : ils vérifient le moteur
+tel qu'il est ici. L'essai d'empreinte qui refusait toute modification a été retiré le
+27 septembre 2026, avec la règle qu'il tenait.

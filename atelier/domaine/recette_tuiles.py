@@ -66,7 +66,15 @@ REGLAGES: dict[str, tuple[str, Any, Any, frozenset, str]] = {
     "secondTerrain": ("booleen", None, False, _A_MASQUES, "Le second terrain"),
     "couleurDessous": ("couleur", None, "#d6b476", _A_MASQUES, "La couleur de repli du sol dessous"),
     "couleurContourDessous": ("couleur", None, "#96764a", _A_MASQUES, "La couleur de repli du contour du dessous"),
-    "decor": ("parmi", ("aucun", "leger", "dense"), "aucun", _DECOR, "Le décor"),
+    # Les cailloux au bord — refaits le 27 septembre 2026 : six crans de quantité (le cran
+    # ne change que la pose, jamais la forme), et trois réglages fins de la forme. Une
+    # recette d'avant n'a que `decor` : elle prend les défauts ci-dessous, donc des
+    # cailloux détachés et petits — le défaut d'avant était jugé trop gros à l'usage.
+    "decor": ("parmi", ("aucun", "rare", "leger", "moyen", "dense", "partout"), "aucun", _DECOR, "Le décor"),
+    "caillouxTaille": ("entier", (1, 10), 3, _DECOR, "La taille des cailloux"),
+    "caillouxNombre": ("entier", (1, 10), 4, _DECOR, "Le nombre de cailloux par bord"),
+    "caillouxEcart": ("entier", (1, 10), 4, _DECOR, "L’écart des cailloux au bord"),
+    "caillouxColles": ("booleen", None, False, _DECOR, "Les cailloux accrochés au bord"),
     "hauteurMur": ("entier", (1, 8), 2, frozenset({"mur"}), "La hauteur du mur"),
     "ombreMur": ("parmi", _NIVEAUX, "discrete", frozenset({"mur"}), "L’ombre portée du mur"),
     "penombre": ("parmi", _NIVEAUX, "discrete", frozenset({"mur"}), "La pénombre d’angle du mur"),

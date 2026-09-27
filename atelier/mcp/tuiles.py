@@ -21,7 +21,9 @@ RECETTE = ("recipe = {sorte: sol|chemin|mur|coins-15|pieces-17, taille: 8|16|24|
            "a bordure/bordureBas takes lie: true to follow its surface (default) or lie: false with its own source — "
            "an asset on a surface requires lie: false on its bordure}, "
            "reglages: {bordures, arrondi, irregularite, nuances, relief, reduction, variantes, animation, animationAtlas, "
-           "secondTerrain, decor (aucun|leger|dense), hauteurMur, ombreMur, penombre, … — omitted ones take their default}}. "
+           "secondTerrain, decor (pebbles along edges: aucun|rare|leger|moyen|dense|partout), caillouxTaille (1-10, pebble size), "
+           "caillouxNombre (1-10, pebbles per edge), caillouxEcart (1-10, how far they spread from the edge), "
+           "caillouxColles (bool, some pebbles fused to the edge; default detached), hauteurMur, ombreMur, penombre, … — omitted ones take their default}}. "
            "read_tile_set returns the complete recipe with every default filled in.")
 CARTE = ("map = optional list of rows of '#' (painted) and '.' (empty) — one character per cell, or per cell corner "
          "for coins-15 (rows+1 lines of columns+1); omitted, the screen's default test map is painted. pieces-17 takes "

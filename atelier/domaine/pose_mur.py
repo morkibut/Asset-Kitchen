@@ -255,7 +255,7 @@ def cellules_pente(emprise: frozenset, hauteur: int) -> set[tuple[int, int]]:
 
 
 def decor(emprise: Iterable[tuple[int, int]], hauteur: int, colonnes: int, lignes: int,
-          densite: str, graine: int = 0) -> list[dict]:
+          densite: str, graine: int = 0, colles: bool = True) -> list[dict]:
     """Le décor d'un mur : `pose_decor.emplacements` sur `occupationMur`, les cases de
     pente comptées occupées pour ne pas y faire naître un gravat (T44), puis retirées de
     la sortie — une pente n'a pas de rentrée à couvrir, elle EST déjà le comblement."""
@@ -263,5 +263,5 @@ def decor(emprise: Iterable[tuple[int, int]], hauteur: int, colonnes: int, ligne
     pentes = cellules_pente(emprise, hauteur)
     occupation = occupation_mur(emprise, hauteur)
     occupe = lambda x, y: occupation(x, y) or (x, y) in pentes
-    pieces = pose_decor.emplacements(occupe, colonnes, lignes, densite, graine)
+    pieces = pose_decor.emplacements(occupe, colonnes, lignes, densite, graine, colles=colles)
     return [p for p in pieces if (p["x"], p["y"]) not in pentes]

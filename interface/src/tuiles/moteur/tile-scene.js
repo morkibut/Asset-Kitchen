@@ -537,7 +537,9 @@ export function occupationMur(grille, hauteur) {
 // comptes : chaque case de bord tire son propre nombre et se compare à celui de
 // son cran, si bien qu'une case ne dépend jamais de ce qui a été posé ailleurs —
 // la condition du déterminisme (voir `hachage01`).
-const DECOR_SEUILS = { aucun: 0, leger: 0.42, dense: 0.88 };
+// Six crans depuis le 27 septembre 2026 (Asset Kitchen) ; « leger » et « dense » gardent
+// leur seuil d'avant, au bit près.
+const DECOR_SEUILS = { aucun: 0, rare: 0.15, leger: 0.42, moyen: 0.65, dense: 0.88, partout: 1 };
 
 // Décalages de graine du décor, distincts les uns des autres : présence,
 // orientation et variante doivent être trois tirages indépendants, sinon toutes
@@ -583,7 +585,7 @@ const DECOR_VECTEUR = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
  * couche de tuiles ne porte qu'une tuile par case ; c'est la frontière du
  * mécanisme, pas un raté.
  */
-export function emplacementsDecor(occupe, { colonnes, lignes, densite = 'aucun', graine = 0, variantes = 3, orientations = ['n', 'e', 's', 'w'] }) {
+export function emplacementsDecor(occupe, { colonnes, lignes, densite = 'aucun', graine = 0, variantes = 3, orientations = ['n', 'e', 's', 'w'], colles = true }) {
   const seuil = DECOR_SEUILS[densite] || 0;
   if (!seuil) return [];
   const pieces = [];
@@ -602,6 +604,10 @@ export function emplacementsDecor(occupe, { colonnes, lignes, densite = 'aucun',
       const orientation = cotes[Math.min(cotes.length - 1, Math.floor(hachage01(x, y, graine + DECOR_GRAINE_ORIENTATION) * cotes.length))];
       const variant = Math.min(variantes - 1, Math.floor(hachage01(x, y, graine + DECOR_GRAINE_VARIANTE) * variantes));
       pieces.push({ x, y, orientation, variant, moitie: 'exterieure' });
+      // Des cailloux détachés (`colles` faux) tiennent entiers dans leur case : rien à
+      // raccorder, donc pas de moitié intérieure peinte sur la matière — c'est elle qui
+      // cassait le motif du chemin.
+      if (!colles) continue;
       const [dx, dy] = DECOR_VECTEUR[orientation];
       const ix = x + dx;
       const iy = y + dy;
@@ -798,6 +804,7 @@ export function dessinerScene(peintre, options) {
       lignes,
       densite: decor.densite,
       graine: decor.graine || 0,
+      colles: decor.colles !== false,
       variantes: decor.descripteur.variants,
       orientations: decor.descripteur.orientations,
     })) {

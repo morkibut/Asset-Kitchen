@@ -88,6 +88,11 @@ const REGLAGES_DE_L_ECRAN: Record<string, { defaut: string | number | boolean; s
   // `_DECOR = _A_MASQUES | {"mur"}`) ; « aucun » reste le défaut, identique au bit près à
   // avant cette tranche.
   decor: { defaut: "aucun", sortes: A_MASQUES_ET_MUR },
+  // Les réglages fins des cailloux (27 septembre 2026) : la forme, pas la quantité.
+  caillouxTaille: { defaut: 3, sortes: A_MASQUES_ET_MUR },
+  caillouxNombre: { defaut: 4, sortes: A_MASQUES_ET_MUR },
+  caillouxEcart: { defaut: 4, sortes: A_MASQUES_ET_MUR },
+  caillouxColles: { defaut: false, sortes: A_MASQUES_ET_MUR },
   // TU6 — la palette commune (T26 bis) est cochée par défaut ; la palette du jeu (T31)
   // ne l'est pas, et n'a d'effet que si l'univers en a une (voir `reglagesMoteur`).
   memesCouleurs: { defaut: true },
@@ -584,6 +589,7 @@ export function reglagesMoteur(j: JeuEdite): Record<string, unknown> & { tileset
     whiteBackground: r.fondBlanc === true, showGrid: false, pixelFlecks: true,
     variants: masques ? n("variantes", 0) : 0, texturePhase: j.etat.surface.source === "matiere" && tolerePhase(j.etat.surface.matiere),
     decor: masques || S.mur ? (r.decor as string) || "aucun" : "aucun",
+    decorOptions: { taille: n("caillouxTaille", 3), nombre: n("caillouxNombre", 4), ecart: n("caillouxEcart", 4), colles: r.caillouxColles === true },
     animatedFrames: masques ? n("animation", 0) : 0, animatedAtlasCopies: masques ? n("animationAtlas", 0) : 0,
     surfaceTexture: tex.surfaceTexture, edgeTexture: tex.edgeTexture, faceTexture: S.mur ? tex.faceTexture : null,
     lowerTerrain: aSecondTerrain(j) ? { baseColor: couleur(r, "couleurDessous"), edgeColor: couleur(r, "couleurContourDessous"), surfaceTexture: tex.lowerSurfaceTexture, edgeTexture: tex.lowerEdgeTexture } : null,
@@ -718,7 +724,7 @@ export function dessinerCarte(
     sol: { couleur: fond.couleur, motif: natif ? versCanvas(fond.image) : fond.image },
     animation: ad ? { col: ad.col, row: ad.row, pas: ad.rowStride, images: ad.count, duree: ad.frameDurationMs } : null, image,
     variants: vd ? { mask: vd.mask, count: vd.variants.length, list: vd.variants, seed: j.graine } : null,
-    decor: dd ? { descripteur: dd, densite: dd.density, graine: j.graine } : null,
+    decor: dd ? { descripteur: dd, densite: dd.density, graine: j.graine, colles: r.caillouxColles === true } : null,
     heros: heros ? { x: cols * 0.7, y: rows * 0.62, image: 0 } : null, reperes: false,
   })
   if (tampon) ctx.putImageData(tampon, 0, 0)

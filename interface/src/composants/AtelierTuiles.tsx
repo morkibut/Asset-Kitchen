@@ -230,11 +230,15 @@ const OPTIONS: Record<string, [string | number, string][]> = {
   nuances: [[2, "2"], [4, "4"], [8, "8"]],
   ombreMur: [["aucune", "Aucune"], ["discrete", "Discrète"], ["marquee", "Marquée"]],
   penombre: [["aucune", "Aucune"], ["discrete", "Discrète"], ["marquee", "Marquée"]],
-  decor: [["aucun", "Aucun"], ["leger", "Léger"], ["dense", "Dense"]],
+  decor: [["aucun", "Aucun"], ["rare", "Rares"], ["leger", "Quelques-uns"], ["moyen", "Moyen"], ["dense", "Nombreux"], ["partout", "Partout"]],
   reduction: [["contraste", "Garder le trait"], ["moyenne", "Moyenne"], ["compensee", "Moyenne compensée"]],
   variantes: [[0, "Aucune"], [1, "1"], [2, "2"], [3, "3"]],
   animation: [[0, "Aucune"], [2, "2 images"], [4, "4 images"], [6, "6 images"], [8, "8 images"]],
 }
+
+/** Les crans de zoom de la carte, boutons et molette ensemble. En dessous de 1, la carte
+ *  se peint à ×1 et le navigateur la réduit : `dessinerCarte` ne peint que des pixels entiers. */
+const CRANS_ZOOM = [0.2, 0.5, 1, 2, 3, 4]
 
 export type Edition = { jeu: JeuEdite; signature: string; carte: string; nom: string }
 
@@ -267,6 +271,8 @@ export function AtelierDuJeu({ projet, edition, matieres, matieresErreur = "", s
   const [enEvidence, setEnEvidence] = useState<{ col: number; row: number; n: number } | null>(null)
   const surligner = (p: { col: number; row: number } | null) => { if (!p) return; setEnEvidence({ ...p, n: Date.now() }); setOnglet("planche") }
   const [zoom, setZoom] = useState(0)
+  const zoomRef = useRef(0)
+  zoomRef.current = zoom
   const [heros, setHeros] = useState(true)
   const [image, setImage] = useState(0)
   const [atlas, setAtlas] = useState<Atlas | null>(null)
@@ -293,8 +299,8 @@ export function AtelierDuJeu({ projet, edition, matieres, matieresErreur = "", s
   useEffect(() => {
     if (zoom || !j.carte) return
     const v = vue.current
-    let z = 1
-    if (v) for (const k of [2, 3]) if (j.carte.columns * j.taille * k <= v.clientWidth - 28 && j.carte.rows * j.taille * k <= v.clientHeight - 28) z = k
+    let z = 0.2
+    if (v) for (const k of [0.2, 0.5, 1, 2, 3]) if (j.carte.columns * j.taille * k <= v.clientWidth - 28 && j.carte.rows * j.taille * k <= v.clientHeight - 28) z = k
     setZoom(z)
   }, [zoom, j.carte, j.taille])
 
@@ -311,10 +317,34 @@ export function AtelierDuJeu({ projet, edition, matieres, matieresErreur = "", s
     const c = scene.current
     if (!c || !atlas || !j.carte) return
     const t0 = performance.now()
-    dessinerCarte(c, j, atlas, j.carte, zoom || 1, { image, heros, survol: survol.current, fond: imageDuFond(j, imagesChargees()) })
+    const z = zoom || 1
+    dessinerCarte(c, j, atlas, j.carte, Math.max(1, z), { image, heros, survol: survol.current, fond: imageDuFond(j, imagesChargees()) })
+    c.style.width = z < 1 ? `${Math.round(c.width * z)}px` : ""
+    c.style.height = z < 1 ? `${Math.round(c.height * z)}px` : ""
     c.dataset.renduMs = String(Math.round(atlas.duree + performance.now() - t0))
   }
   useEffect(dessinerLaScene)
+
+  // La molette zoome la carte, cran par cran, en gardant sous la souris ce qui y était.
+  // Écouteur natif : celui de React est passif et ne peut pas empêcher le défilement.
+  const aLaCarte = onglet === "carte" && !!j.carte
+  useEffect(() => {
+    const v = vue.current
+    if (!v) return
+    const molette = (e: WheelEvent) => {
+      e.preventDefault()
+      const avant = zoomRef.current || 1
+      const i = CRANS_ZOOM.indexOf(avant)
+      const apres = CRANS_ZOOM[Math.max(0, Math.min(CRANS_ZOOM.length - 1, (i < 0 ? CRANS_ZOOM.indexOf(1) : i) + (e.deltaY < 0 ? 1 : -1)))]
+      if (apres === avant) return
+      const r = v.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top
+      const k = apres / avant, sx = (v.scrollLeft + mx) * k - mx, sy = (v.scrollTop + my) * k - my
+      setZoom(apres)
+      requestAnimationFrame(() => { v.scrollLeft = sx; v.scrollTop = sy })
+    }
+    v.addEventListener("wheel", molette, { passive: false })
+    return () => v.removeEventListener("wheel", molette)
+  }, [aLaCarte])
 
   const verification = useMemo(() => (atlas && onglet === "verifier" ? verifier(j, atlas) : null), [atlas, onglet, j])
 
@@ -426,8 +456,9 @@ export function AtelierDuJeu({ projet, edition, matieres, matieresErreur = "", s
                 {"asset" in j.fond && <option value="">{j.fond.nom}</option>}
                 {fonds.map((m) => <option key={m.id} value={m.id}>{m.nom}</option>)}</select></label>}
             <label className="flex items-center gap-[4px] text-encre-controle"><input type="checkbox" checked={heros} onChange={(e) => setHeros(e.target.checked)} />Personnage</label>
-            <span className="ml-auto flex gap-[4px]">{[1, 2, 3].map((z) => <button key={z} type="button" aria-pressed={(zoom || 1) === z} onClick={() => setZoom(z)}
-              className={`${PETIT} ${(zoom || 1) === z ? "border-encre-3 bg-ligne-ouverte text-encre" : ""}`}>×{z}</button>)}</span>
+            <span className="ml-auto flex gap-[4px]">{CRANS_ZOOM.map((z) => <button key={z} type="button" aria-pressed={(zoom || 1) === z} onClick={() => setZoom(z)}
+              title="Ou la molette de la souris sur la carte" aria-label={`Zoom ×${String(z).replace(".", ",")}`}
+              className={`${PETIT} ${(zoom || 1) === z ? "border-encre-3 bg-ligne-ouverte text-encre" : ""}`}>×{String(z).replace(".", ",")}</button>)}</span>
             <span className="mesure text-[11.5px] text-encre-4">{casesPosees(j.carte)} cases</span>
           </div>
         </> : <div className="grid min-h-0 flex-1 place-items-center rounded-8 bg-pourtour p-[22px] text-center text-[13px] text-carte">Ces 17 pièces se posent à la main dans Godot : il n’y a pas de carte à peindre ici. Elles sont toutes dans l’onglet Planche.</div>)}
@@ -453,7 +484,19 @@ export function AtelierDuJeu({ projet, edition, matieres, matieresErreur = "", s
               <Choix nom="Bords" cle="bordures" jeu={j} onChange={reglage} />
               <Choix nom="Nuances par matière" cle="nuances" jeu={j} onChange={reglage} />
               {S.mur && <><Choix nom="Ombre du mur" cle="ombreMur" jeu={j} onChange={reglage} /><Choix nom="Pénombre dans les angles" cle="penombre" jeu={j} onChange={reglage} /></>}
-              {(S.set || S.mur) && <Choix nom="Cailloux au bord" cle="decor" jeu={j} onChange={reglage} aide="Ils débordent sur la case voisine : le bord ne suit plus la grille." />}
+              {(S.set || S.mur) && <Choix nom="Cailloux au bord" cle="decor" jeu={j} onChange={reglage} aide="Combien de bords en reçoivent. Ils cassent la ligne droite de la grille." />}
+              {(S.set || S.mur) && j.reglages.decor !== "aucun" && <div className="ml-[8px] grid gap-[4px] border-l border-trait pl-[8px]">
+                <Curseur nom="Taille des cailloux" valeur={Number(j.reglages.caillouxTaille ?? 3)} min={1} max={10} onChange={(v) => reglage("caillouxTaille", v)} />
+                <Curseur nom="Cailloux par bord" valeur={Number(j.reglages.caillouxNombre ?? 4)} min={1} max={10} onChange={(v) => reglage("caillouxNombre", v)} />
+                <Curseur nom="Écart au bord" valeur={Number(j.reglages.caillouxEcart ?? 4)} min={1} max={10} onChange={(v) => reglage("caillouxEcart", v)} />
+                <label className="flex items-center gap-[8px] py-[4px] text-[13px] text-encre-controle">
+                  <input type="checkbox" checked={j.reglages.caillouxColles === true} onChange={(e) => reglage("caillouxColles", e.target.checked)} />
+                  Accrochés au bord
+                </label>
+                <p className="mb-[4px] text-[12px] text-encre-3">{j.reglages.caillouxColles === true
+                  ? "Une partie des cailloux se soude au bord et mord sur la case d’à côté."
+                  : "Chaque caillou est posé à part, sans toucher au motif de la matière."}</p>
+              </div>}
               <Choix nom="Réduire une image" cle="reduction" jeu={j} onChange={reglage} aide="Pour une image plus grande qu’une pièce." />
               <label className="flex items-center gap-[8px] py-[4px] text-[13px] text-encre-controle">
                 <input type="checkbox" checked={j.reglages.paletteJeu === true} disabled={!j.paletteUnivers.length}

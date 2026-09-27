@@ -205,13 +205,13 @@ async def test_le_mur_se_livre_avec_sa_carte_et_ses_regles(fixe):
     assert noeuds[0] == ("Carte", "Node2D") and {"Ombre", "Base", "Face_1", "Face_2", "Dessus"} <= {n for n, _ in noeuds}
     assert 'y_sort_origin = 40' in tscn and 'y_sort_origin = 56' in tscn and "z_index = -1" in tscn
     lisez = fichiers["LISEZMOI.txt"].decode("utf-8")
-    for regle in ("Le bord sud du dessus est toujours fermé", "Les courses", "par paires", "Seule la base bloque",
+    for regle in ("Le bord sud du dessus est toujours fermé", "Les courses", "un par un", "Seule la base bloque",
                   "le dessus va en (x, y - 3)", "l'ombre en (x, y + 1)"):
         assert regle in lisez, regle
     # Sans décor, la section du décor n'y est pas.
     e2 = mur(a, p, "Muret", scene("escalier", 1))
     lisez2 = a.tuiles.paquet(p, e2["identifiant"])[1]["LISEZMOI.txt"].decode("utf-8")
-    assert "par paires" not in lisez2 and "pas de face" in lisez2 and "Face_1" not in lisez2
+    assert "un par un" not in lisez2 and "par paires" not in lisez2 and "pas de face" in lisez2 and "Face_1" not in lisez2
     a.tuiles.archive(p, e2["identifiant"])  # plus de refus
 
 

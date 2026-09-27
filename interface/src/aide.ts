@@ -3911,7 +3911,7 @@ export const AIDE: Record<string, Explication> = {
     change: "Change seulement l'aperçu de test de ce jeu ; rien ne part tant que tu ne livres pas.",
     origine: "toi · une île au hasard pour commencer, sur simple demande",
     long:
-      "« Île/chemins/pièces au hasard » et « Tout effacer » repartent d'un coup ; le sol de fond et le personnage ne changent que l'aperçu, pas le paquet livré. Les dix-sept pièces libres n'ont pas de carte : elles se posent à la main dans Godot, et l'onglet Planche seul les montre.",
+      "« Île/chemins/pièces au hasard » et « Tout effacer » repartent d'un coup ; le sol de fond et le personnage ne changent que l'aperçu, pas le paquet livré. Les dix-sept pièces libres n'ont pas de carte : elles se posent à la main dans Godot, et l'onglet Planche seul les montre. La molette de la souris sur la carte zoome et dézoome, de ×0,2 à ×4, comme les boutons sous la carte.",
   },
 
   "jeu-de-tuiles.planche": {
@@ -3942,7 +3942,7 @@ export const AIDE: Record<string, Explication> = {
     change: "Chaque changement refait toutes les pièces sur ta machine, gratuitement ; rien ne part tant que tu ne livres pas.",
     origine: "toi · valeurs par défaut raisonnables à la création",
     long:
-      "Propres au mur : l'ombre du mur et la pénombre dans les angles. Propres à un sol ou un mur : les cailloux qui débordent sur la case voisine. « Réduire une image » ne sert que pour une image plus grande qu'une pièce. Variantes et animation de la pièce pleine n'existent que pour les sortes à raccords, hors les dix-sept pièces libres.",
+      "Mur seulement : l'ombre et la pénombre des angles. Sol, chemin ou mur : les cailloux au bord, leur quantité puis leur taille, leur nombre et leur écart ; « Accrochés au bord » en soude une partie au bord. « Réduire une image » sert pour une image plus grande qu'une pièce. Variantes et animation : sortes à raccords seulement.",
   },
 
   "jeu-de-tuiles.palette-jeu": {
