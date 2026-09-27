@@ -92,6 +92,7 @@ import { TableauDeBord } from "./composants/TableauDeBord"
 import { CreerUnAsset } from "./composants/CreerUnAsset"
 import { Fabrications } from "./composants/Fabrications"
 import { TravailConserve } from "./composants/FabricationSuivie"
+import { SuiviDuCarnet } from "./composants/SuiviDuCarnet"
 import { Ouverture } from "./composants/Ouverture"
 import { Installation } from "./composants/Installation"
 import { Livraisons } from "./composants/Livraisons"
@@ -2333,6 +2334,12 @@ function AtelierApp() {
         onGuide={() => ouvrirGuide()}
         onRecherche={ouvrirBarre}
         etatAtelier={!liaison ? "L’atelier ne répond pas" : undefined}
+        // **Ce qui tourne et ce qui est arrivé**, vu de partout (27 septembre 2026).
+        suivi={<SuiviDuCarnet projet={bibliotheque.courant} personnages={personnages} chantier={chantier} clips={clipsDuJeu} replie={navigationRepliee}
+          onTravail={(travail) => setPile((p) => entrer(p, { genre: "travail", travail }))}
+          onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))}
+          onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))}
+          onFabrications={() => { setFente(null); allerA("fabrications") }} />}
       />
 
       <div className="grid min-w-0 flex-1 grid-rows-[34px_minmax(0,1fr)_26px] bg-papier">
