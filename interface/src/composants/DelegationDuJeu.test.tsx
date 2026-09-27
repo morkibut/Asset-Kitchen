@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { api, type Modele, type ModeleVideo } from "../api"
 import { travaux, type CadreDelegation, type Travail } from "../api-travaux"
-import { workflows } from "../api-workflows"
+import { moteursSonores, workflows } from "../api-workflows"
 import { DelegationDuJeu } from "./DelegationDuJeu"
 
 const initial: CadreDelegation = {
@@ -17,6 +17,7 @@ beforeEach(() => {
   vi.spyOn(api, "modeles").mockResolvedValue({ modeles: [{ identifiant: "images:reference", references_max: 3, unite: "usd", refus: null } as Modele] } as Awaited<ReturnType<typeof api.modeles>>)
   vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [{ identifiant: "local:animation", de_la_maison: true, grise: null } as ModeleVideo] } as Awaited<ReturnType<typeof api.modelesVideo>>)
   vi.spyOn(workflows, "lister").mockResolvedValue({ profils: [] })
+  vi.spyOn(moteursSonores, "lister").mockResolvedValue({ moteurs: [] })
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 

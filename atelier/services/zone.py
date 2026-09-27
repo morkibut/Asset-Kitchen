@@ -111,6 +111,19 @@ class ServiceZone:
     # profil de création (`ServiceStylesLocaux.repeint`). Un modèle importé à la
     # main qui relie un masque reste un choix à lui seul.
 
+    def sait_repeindre_zone(self, modele: Any) -> bool:
+        """La capacité « sait repeindre une zone » d'un modèle, **la même règle
+        que `_choix`** ci-dessous — pour un appelant qui n'a pas le droit
+        d'importer `atelier.fournisseur` lui-même (MO7 : le MCP, qui ne connaît
+        que les services). `modele.masque` seul ne marque que les jumeaux de
+        zone déjà installés (les anciens `OUTILS` de PX7), pas tout style qui
+        sait repeindre depuis que MO1 l'a posé en capacité du moteur."""
+        if modele.locale:
+            entree = de_modele(modele.identifiant)
+            if entree is not None:
+                return sait_repeindre(createur_de(entree))
+        return modele.masque
+
     def _choix(self, noeuds: Sequence[str] | None = None) -> list[dict[str, Any]]:
         """Les choix de « Repeindre », dans l'ordre du catalogue — grisés ou non.
         `noeuds` (ce que ComfyUI déclare) grise un style dont la retouche n'est

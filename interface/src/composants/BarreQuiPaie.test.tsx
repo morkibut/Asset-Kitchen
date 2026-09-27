@@ -6,7 +6,7 @@
 // « jamais généré » qui ne bougeait plus jamais pour un style local — un appel
 // local vaut toujours `cout_usd = 0`, que le compteur de coût écarte.
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { UNIVERS_VIDE, type Modele } from "../api"
 import { BarreQuiPaie } from "./BarreQuiPaie"
@@ -14,8 +14,21 @@ import { BarreQuiPaie } from "./BarreQuiPaie"
 // CM7 : le champ de prompt de cet écran porte désormais le coup de main
 // (`ChampPrompt.tsx`), qui interroge `/api/assist` au montage — doublé ici,
 // indisponible, pour que ces essais restent sans réseau et sans marque.
+//
+// MO7 : le nom d'un moteur local (l'`optgroup` de la liste des modèles) vient
+// désormais de `GET /workflow-profiles/styles` (`StyleLocal.moteur`), pas
+// d'une table écrite dans l'écran — doublé ici pour les deux familles que ces
+// essais utilisent.
 beforeEach(() => {
-  vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ disponible: false, raison: null, modele: "" }))))
+  vi.stubGlobal("fetch", vi.fn(async (chemin: unknown) => {
+    if (String(chemin) === "/api/workflow-profiles/styles") {
+      return new Response(JSON.stringify({ styles: [
+        { identifiant: "zimage-pixel", nom: "Pixel art net et rapide", famille: "zimage", moteur: "Z-Image Turbo", genre: "sprite", vitesse: "environ 30 secondes par image", reference: "depart", pret: true, manque: [], modele: "ComfyUI:zimage-pixel@v1", repeint: true },
+        { identifiant: "klein-edit", nom: "FLUX.2 Klein · Édition", famille: "klein", moteur: "FLUX.2 Klein", genre: "sprite", vitesse: "1 à 3 minutes par image", reference: "sujet", pret: true, manque: [], modele: "ComfyUI:klein-edit@v1", repeint: true },
+      ] }))
+    }
+    return new Response(JSON.stringify({ disponible: false, raison: null, modele: "" }))
+  }))
 })
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
@@ -62,11 +75,14 @@ const props = {
   onDefaireProvenance: vi.fn(), onGenerer: vi.fn(),
 }
 
-test("les styles locaux sont groupés par moteur dans la liste des modèles", () => {
+test("les styles locaux sont groupés par moteur dans la liste des modèles", async () => {
   render(<BarreQuiPaie {...props} />)
   const select = screen.getByLabelText("Fournisseur et modèle")
-  const groupes = [...select.querySelectorAll("optgroup")].map((g) => g.label)
-  expect(groupes).toEqual(["Z-Image Turbo", "FLUX.2 Klein"])
+  // Le nom du moteur vient d'un appel (MO7) : il paraît une fois le catalogue lu.
+  await waitFor(() => {
+    const groupes = [...select.querySelectorAll("optgroup")].map((g) => g.label)
+    expect(groupes).toEqual(["Z-Image Turbo", "FLUX.2 Klein"])
+  })
   // Le modèle distant reste en tête, hors de tout groupe.
   expect(screen.getByRole("option", { name: /GPT Image/ }).closest("optgroup")).toBeNull()
 })

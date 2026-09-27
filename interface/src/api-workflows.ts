@@ -187,21 +187,16 @@ export const moteursSonores = {
 //
 // « Les 22 styles sont tous proposés, rangés sous leurs quatre moteurs et
 // repliés par défaut » (`docs/PLAN-moteurs-locaux.md`, décision 9). Le serveur
-// (`GET /workflow-profiles/styles`, `atelier/services/styles_locaux.py`) ne
-// rend que la **clé** du moteur (`zimage`, `klein`, `flux1dev`, `sdxl`) : le
-// nom à afficher n'a rien à faire côté domaine, et cette liste est fermée —
-// elle ne bougera pas au gré d'un style de plus dans le même moteur.
-
-export const NOM_MOTEUR_LOCAL: Record<string, string> = {
-  qwen21: "Qwen-Image 2.1",
-  zimage: "Z-Image Turbo",
-  klein: "FLUX.2 Klein",
-  flux1dev: "FLUX.1-dev",
-  sdxl: "SDXL",
-}
+// (`GET /workflow-profiles/styles`, `atelier/services/styles_locaux.py`,
+// `_ligne`) rend directement **le nom à afficher** du moteur, sur chaque style
+// (`StyleLocal.moteur`, `famille["nom"]` côté service) — MO7 : la table qui
+// dupliquait ces cinq noms ici (`NOM_MOTEUR_LOCAL`) a disparu, un style de
+// plus sur un moteur déjà connu s'affiche donc sans y toucher.
 
 /** L'ordre d'affichage des moteurs — celui du plan et de `docs/PLAN-moteurs-locaux.md`,
- *  avec Qwen-Image 2.1 en tête depuis le 22/09/2026 : c'est le moteur local principal. */
+ *  avec Qwen-Image 2.1 en tête depuis le 22/09/2026 : c'est le moteur local principal.
+ *  **Reste une constante d'écran** (MO7) : ce sont des clés internes de tri, jamais un
+ *  nom affiché, et aucune route ne rend un ordre de moteur — seul leur nom l'est. */
 export const ORDRE_MOTEURS_LOCAUX = ["qwen21", "zimage", "klein", "flux1dev", "sdxl"] as const
 
 /** Ce qu'un style local fait d'une image jointe (ML3) : il *garde le sujet*
@@ -222,6 +217,9 @@ export type StyleLocal = {
   identifiant: string
   nom: string
   famille: string
+  /** Le nom à afficher du moteur (`famille["nom"]` côté service) — MO7 :
+   *  c'est lui, jamais une table à part, qui nomme le groupe à l'écran. */
+  moteur: string
   genre: string
   vitesse: string
   reference: GenreReference | null

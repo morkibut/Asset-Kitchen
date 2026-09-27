@@ -121,10 +121,9 @@ import {
   type Univers,
   type VueDuJeu,
 } from "../api"
-import { workflows, type MoteurParFamille, type ProfilWorkflow } from "../api-workflows"
+import { moteursSonores, workflows, type MoteurParFamille, type MoteurSonore, type ProfilWorkflow } from "../api-workflows"
 import { Bouton, Curseur, Libelle, Raison, libelleModele } from "./pieces"
 import { nomDuModele } from "./Fiche"
-import { nomMoteurSonore } from "./WorkflowsLocaux"
 import { BlocDirectionsAnimees, BlocMouvements, BlocStyles } from "./Mouvements"
 import { SceneDeVue } from "./SceneDeVue"
 
@@ -1201,6 +1200,11 @@ function LeSon({
   const [ouverte, setOuverte] = useState<string | null>(null)
   const [profils, setProfils] = useState<ProfilWorkflow[]>([])
   const [defauts, setDefauts] = useState<Record<string, MoteurParFamille>>({})
+  // MO4/MO7 : le nom d'un moteur sonore non installé — celui que
+  // `defaut.possibles` propose sans qu'aucun profil ne le porte encore — vient
+  // du même catalogue que la page « Moteurs » (`GET
+  // /workflow-profiles/sound-engines`), jamais d'une table écrite ici.
+  const [catalogueSon, setCatalogueSon] = useState<MoteurSonore[]>([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState("")
 
@@ -1231,8 +1235,8 @@ function LeSon({
     }
     let vivant = true
     setChargement(true)
-    Promise.all([workflows.lister(), workflows.moteursParFamille(projet)])
-      .then(([liste, def]) => {
+    Promise.all([workflows.lister(), workflows.moteursParFamille(projet), moteursSonores.lister()])
+      .then(([liste, def, catalogue]) => {
         if (!vivant) return
         // Un profil garde chacune de ses versions ; cet écran ne montre que
         // la plus récente par identifiant, sinon un même moteur offrirait
@@ -1245,6 +1249,7 @@ function LeSon({
         }
         setProfils([...parIdentifiant.values()])
         setDefauts(def.familles)
+        setCatalogueSon(catalogue.moteurs)
       })
       .catch(
         (erreur: unknown) =>
@@ -1435,7 +1440,7 @@ function LeSon({
                       ))}
                       {nonInstalles.map((id) => (
                         <option key={id} value={id} disabled>
-                          {nomMoteurSonore(id)} — pas installé
+                          {catalogueSon.find((m) => m.identifiant === id)?.nom ?? id} — pas installé
                         </option>
                       ))}
                     </select>

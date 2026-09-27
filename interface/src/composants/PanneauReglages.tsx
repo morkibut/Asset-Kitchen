@@ -23,7 +23,6 @@ import {
   type Univers,
 } from "../api"
 import {
-  NOM_MOTEUR_LOCAL,
   NOM_REFERENCE,
   ORDRE_MOTEURS_LOCAUX,
   stylesLocaux,
@@ -561,7 +560,8 @@ function StylesLocauxAccordion({ onChoisir }: { onChoisir: (identifiant: string)
           return (
             <details key={moteur} className="rounded-[2px] border border-trait">
               <summary className="mesure cursor-pointer px-2 py-1 text-[10.5px] text-encre-3">
-                {NOM_MOTEUR_LOCAL[moteur] ?? moteur}
+                {/* MO7 : le nom du moteur vient du style (`StyleLocal.moteur`), pas d'une table à part. */}
+                {lignes[0]?.moteur ?? moteur}
                 <span className="text-encre-4"> · {lignes.length}</span>
               </summary>
               <ul>

@@ -33,10 +33,10 @@ const modeleDistant: Modele = {
 
 // `repeint` (MO2) n'est lu par aucun essai de ce fichier — seule sa présence
 // est exigée par le type `StyleLocal` ; `true` partout, sans conséquence ici.
-const stylePret: StyleLocal = { identifiant: "zimage-pixel", nom: "Pixel art net et rapide", famille: "zimage", genre: "sprite", vitesse: "environ 30 secondes par image", reference: "depart", pret: true, manque: [], modele: null, repeint: true }
-const styleManquant: StyleLocal = { identifiant: "sdxl-toon", nom: "Toon SDXL", famille: "sdxl", genre: "sprite", vitesse: "environ 40 secondes par image", reference: "depart", pret: false, manque: ["le checkpoint SDXL de base"], modele: null, repeint: true }
+const stylePret: StyleLocal = { identifiant: "zimage-pixel", nom: "Pixel art net et rapide", famille: "zimage", moteur: "Z-Image Turbo", genre: "sprite", vitesse: "environ 30 secondes par image", reference: "depart", pret: true, manque: [], modele: null, repeint: true }
+const styleManquant: StyleLocal = { identifiant: "sdxl-toon", nom: "Toon SDXL", famille: "sdxl", moteur: "SDXL", genre: "sprite", vitesse: "environ 40 secondes par image", reference: "depart", pret: false, manque: ["le checkpoint SDXL de base"], modele: null, repeint: true }
 // Déjà installé — le bouton qui l'installait doit devenir celui qui le réinstalle (défaut 4).
-const styleInstalle: StyleLocal = { identifiant: "zimage-pixel", nom: "Pixel art net et rapide", famille: "zimage", genre: "sprite", vitesse: "environ 30 secondes par image", reference: "depart", pret: true, manque: [], modele: "ComfyUI:zimage-pixel@v1", repeint: true }
+const styleInstalle: StyleLocal = { identifiant: "zimage-pixel", nom: "Pixel art net et rapide", famille: "zimage", moteur: "Z-Image Turbo", genre: "sprite", vitesse: "environ 30 secondes par image", reference: "depart", pret: true, manque: [], modele: "ComfyUI:zimage-pixel@v1", repeint: true }
 
 const props = {
   modeles: [modeleDistant], choisi: modeleDistant, onChoisir: vi.fn(),

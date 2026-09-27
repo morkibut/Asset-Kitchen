@@ -102,23 +102,12 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio, actualiserSur, onIm
 // MO4 : « Les méthodes sonores », l'écran qui listait les cinq moteurs à la
 // main et les installait, est fondue dans la page « Moteurs »
 // (`Moteurs.tsx`, section « Le son ») — même geste que MO2 pour les styles
-// de sc-clone. Ce qui reste ici n'est **pas** un doublon : `nomMoteurSonore`
-// nomme un moteur déjà écrit sur un son produit (`AtelierSon.tsx`, une fiche
-// de provenance) ; il ne choisit ni n'installe rien, et vaut pour un moteur
-// qui a pu disparaître du catalogue depuis. `MOTEURS_SONORES` reste la table
-// qui le porte — à réévaluer si MO7 (« plus aucune liste de moteur écrite en
-// dur ») revient dessus.
-export const MOTEURS_SONORES: readonly { identifiant: string; nom: string; quoi: string }[] = [
-  { identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", quoi: "Bruitages et ambiances." },
-  { identifiant: "ace-step-15-turbo", nom: "ACE-Step 1.5", quoi: "Musique et jingles." },
-  { identifiant: "yue2-int8", nom: "YuE2", quoi: "Chansons chantées." },
-  { identifiant: "sa3-medium", nom: "Stable Audio 3 Medium", quoi: "Secours pour les ambiances longues et la musique." },
-  { identifiant: "sa-open-1", nom: "Stable Audio Open 1.0", quoi: "Secours pour les bruitages." },
-]
-/** Le nom en clair d'un moteur sonore par son identifiant, pour les endroits
- *  qui ne connaissent que l'identifiant (une provenance déjà écrite) —
- *  jamais l'identifiant brut affiché seul. */
-export const nomMoteurSonore = (identifiant: string) => MOTEURS_SONORES.find(m => m.identifiant === identifiant)?.nom ?? identifiant
+// de sc-clone. MO7 : la table qui restait ici (`MOTEURS_SONORES`,
+// `nomMoteurSonore`) pour nommer un moteur déjà écrit sur un son produit a
+// disparu à son tour — `AtelierSon.tsx`, `DelegationDuJeu.tsx` et
+// `ReglesDuJeu.tsx` lisent maintenant le même catalogue que `Moteurs.tsx`
+// (`GET /workflow-profiles/sound-engines`), avec le même repli sur
+// l'identifiant brut pour un moteur qui en a disparu depuis.
 
 /** Un graphe seul, au format API — ou `null` pour tout autre document. */
 function grapheSeul(contenu: string): ProfilWorkflow["graphe"] | null {

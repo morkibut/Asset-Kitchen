@@ -470,9 +470,10 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     # demande. Une capacité, comme `references_max` ou
                     # `aspect_ratios` — jamais un nom de modèle en dur.
                     "transparent_background": m.transparence,
-                    # PX3 : repeint une zone peinte (repaint_zone) — la même
-                    # capacité que `GET /api/models` (`masque`).
-                    "repaints_zone": m.masque,
+                    # PX3 : repeint une zone peinte (repaint_zone). MO7 : la
+                    # vraie capacité du moteur (`ServiceZone.sait_repeindre_zone`),
+                    # pas seulement `m.masque` — voir sa docstring.
+                    "repaints_zone": atelier.zone.sait_repeindre_zone(m),
                     "unavailable": grises.get(m.fournisseur),
                     # Dans quoi ce modèle-là se paie. `usd` pour tout ce qui
                     # facture ; autre chose pour ce qui consomme sans facturer,

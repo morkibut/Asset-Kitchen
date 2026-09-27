@@ -205,9 +205,26 @@ Reprend et remplace `PX11` de `docs/PLAN-idees-pixellab.md`.
 
 ## MO7 · Les écrans ne tiennent plus de liste à eux
 
-- [ ] Plus aucun nom de moteur, de famille ni de réglage écrit en dur dans l'interface : un essai
-      le vérifie.
-- [ ] Une question, une route : les doublons relevés plus haut n'en font plus qu'une.
+- [x] Plus aucun nom de moteur, de famille ni de réglage écrit en dur dans l'interface : un essai
+      le vérifie. → Le reste ouvert par `MO1` est fermé : `list_models` (MCP) annonce
+      `repaints_zone` sur la vraie capacité du style (`catalogue_styles.sait_repeindre`), pas
+      seulement sur les jumeaux de zone déjà installés (`atelier/mcp/serveur.py`,
+      `_repeint_une_zone`). `nomMoteurSonore`/`MOTEURS_SONORES` (`WorkflowsLocaux.tsx`) ont
+      disparu : `AtelierSon.tsx`, `DelegationDuJeu.tsx` et `ReglesDuJeu.tsx` lisent le même
+      catalogue que `Moteurs.tsx` (`GET /workflow-profiles/sound-engines`), avec le même repli
+      sur l'identifiant brut pour un moteur disparu depuis. `NOM_MOTEUR_LOCAL` a disparu à son
+      tour : le serveur nommait déjà le moteur sur chaque style (`_ligne`, « moteur »,
+      jamais porté par le type `StyleLocal`) — `Moteurs.tsx`, `PanneauReglages.tsx` et
+      `BarreQuiPaie.tsx` lisent ce champ. `ORDRE_MOTEURS_LOCAUX` reste une constante d'écran,
+      à dessein : ce sont des clés de tri, jamais un nom, et aucune route ne rend un ordre.
+      Nouveau garde-fou : `essais/essai_moteurs_en_dur.py` (lu depuis le catalogue serveur,
+      jamais recopié — même règle qu'`essai_vocabulaire.py`), tenu par la suite via
+      `tests/test_mo7_moteurs_en_dur.py`.
+- [x] Une question, une route : les doublons relevés plus haut n'en font plus qu'une. → Audité :
+      les trois sujets du relevé (styles, zone, vidéo importée) sont déjà résorbés par `MO1`
+      (`OUTILS` n'est qu'une vue de `STYLES`), `MO3`/`MO6` (`GET /clips/models`, catalogue
+      unique) — aucune route en double ne subsiste. `GET /workflow-profiles/imported` répond à
+      une question différente (le diagnostic d'un profil importé), pas un second catalogue.
 
 ## MO8 · La relecture croisée
 

@@ -31,7 +31,7 @@ import { api, Refus, type EtatTraitement, type Modele, type Silhouette } from ".
 import { sources3d } from "../api-3d"
 import { coupDeMain, type EtatCoupDeMain } from "../api-coup-de-main"
 import {
-  NOM_MOTEUR_LOCAL, NOM_REFERENCE, ORDRE_MOTEURS_LOCAUX, moteursSonores, stylesLocaux, workflows,
+  NOM_REFERENCE, ORDRE_MOTEURS_LOCAUX, moteursSonores, stylesLocaux, workflows,
   type MoteurSonore, type StyleLocal,
 } from "../api-workflows"
 import { nomDuModele } from "./Fiche"
@@ -594,7 +594,9 @@ function CarteMoteurMachine({
       }`}
     >
       <div className="flex flex-wrap items-center gap-[14px]">
-        <h4 className="text-[14px]">{NOM_MOTEUR_LOCAL[famille] ?? famille}</h4>
+        {/* MO7 : le nom du moteur vient du style lui-même (`StyleLocal.moteur`,
+            servi par `GET /workflow-profiles/styles`), jamais d'une table à part. */}
+        <h4 className="text-[14px]">{styles[0]?.moteur ?? famille}</h4>
         <Badge etat={etat} />
       </div>
       <div className="flex flex-wrap gap-[4px]">
