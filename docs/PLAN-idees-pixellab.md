@@ -320,6 +320,55 @@ suit la correction. **Joué au navigateur deux fois** (version, puis équipement
 Mara, moteur doublé : onze captures dans `essais/resultats/px9-parcours/` (hors Git). Essais :
 `tests/test_px9_parcours.py` (10).
 
+## PX10 · Deux régressions vues à l'usage — le portrait choisi, et la molette d'Espace
+
+*Ajoutée le 27 septembre 2026, sur les retours de l'auteur en testant PX9.* **Ni l'une ni l'autre
+ne vient de ce chantier** (PX9 ne touche jamais au portrait ; la molette a été touchée par `RV26`),
+mais l'auteur les rencontre en s'en servant, et la première est **la troisième fois** qu'elle
+revient : elle doit être fermée **avec un essai qui empêche son retour**.
+
+### 1 · La carte du Codex ne montre pas le portrait choisi
+
+**Ce qu'on a vu.** La carte de Mara montrait le dernier résultat fait (la pièce repeinte), pas son
+portrait. Relevé le 27 septembre en lecture seule : le fichier de Mara désigne bien son portrait
+(`…-102`, valide), et l'atelier en service le montre désormais — le fichier a été réécrit à
+10 h 21 ce jour-là, sans qu'on sache ce qui le désignait au moment de la capture. **Elias montre le
+défaut en ce moment même** : son portrait choisi (`a00a…-0`) existe toujours, mais il n'est **plus
+rattaché à Elias** dans l'index (sujet vide) ; la carte le refuse alors en silence et retombe sur
+**l'image la plus récente**.
+
+**Pourquoi ça revient.** Deux règles pour la même question : la fiche du sujet retombe sur *la
+première case faite du plan* (`ServiceProduction.image_de_reference`) ; la carte du Codex retombe sur
+*la dernière image faite* (`vignettes_par_personnage`, `MAX(cree_le)`). Toute nouvelle image — un
+résultat repeint, une planche, un import — devient donc le portrait dès que le choix de l'auteur
+perd sa validité, et rien ne le dit.
+
+- [ ] **Une seule règle** pour le portrait, partout (carte du Codex, fiche, agent) : le choix de
+      l'auteur, sinon un repli stable qui **ne change pas quand une image nouvelle arrive**.
+- [ ] **Le choix de l'auteur ne se perd jamais en silence** : si l'image choisie cesse d'être
+      valide (détachée du sujet, supprimée, devenue un calque), l'écran le dit sur la fiche
+      (« le portrait choisi n'est plus disponible — en choisir un ») au lieu de le remplacer.
+- [ ] Trouver **ce qui a détaché** le portrait d'Elias de son sujet, et le réparer à la source.
+- [ ] **Un essai qui empêche le retour** : poser un portrait, puis faire arriver une image plus
+      récente de toutes les façons dont une image arrive (génération, repeinte, import, planche) —
+      la carte et la fiche montrent toujours le portrait choisi. L'essai tombe quand on défait la
+      correction (`AGENTS.md`, point 8octies).
+- [ ] Les portraits d'Elias et de Mara s'affichent justes sur l'atelier de l'auteur, **sans rien
+      réécrire à la main dans ses données** (une réparation, si elle en faut une, passe par le
+      produit et se dit).
+
+### 2 · Espace n'a plus le zoom à la molette
+
+**Ce qu'on a vu.** Espace agrandit toujours une image, mais la molette ne zoome plus. Le code du
+zoom est toujours là (`interface/src/composants/Apercu.tsx`) ; la dernière modification de
+l'agrandissement est `RV26` (« passe devant les fenêtres », qui l'a mis dans une couche
+`<dialog>`). **Hypothèse, non vérifiée** : l'écoute de la molette se pose une seule fois au premier
+affichage, et depuis `RV26` la scène n'existe peut-être pas encore à ce moment-là.
+
+- [ ] La molette zoome et dézoome dans l'agrandissement d'Espace, partout où Espace marche.
+- [ ] Un essai qui l'empêche de disparaître, et qui tombe quand on défait la correction.
+- [ ] Vérifié au navigateur.
+
 ## PX4 · La marge avant d'animer
 
 **Livre** un réglage « place autour du sujet » sur l'écran qui prépare une animation : la part
