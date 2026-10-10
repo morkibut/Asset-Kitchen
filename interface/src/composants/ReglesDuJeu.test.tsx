@@ -818,8 +818,9 @@ describe("l'étape du son", () => {
     expect(corps.son.champs.find((c) => c.nom === "epoque")?.texte).toBe(
       "medieval fantasy, wood, leather, iron",
     )
-    // Les trois autres cases voyagent avec leur texte du moment — vide ici.
-    expect(corps.son.champs).toHaveLength(4)
+    // Les six autres cases (dont les trois de la bande originale, 10 octobre
+    // 2026) voyagent avec leur texte du moment — vide ici.
+    expect(corps.son.champs).toHaveLength(7)
   })
 
   test("la tonalité et le tempo de référence se posent chacun par leur propre appel", async () => {

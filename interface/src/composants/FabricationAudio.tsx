@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react"
 import { travauxAudio, type TravailAudio } from "../api-travaux-audio"
 import { partitionSon, type PartitionSon } from "../api-partition-son"
-import { seriesSon, texteSon, type Annonce, type Composition, type DemandeSon, type FamilleSon, type MoteurDeFamille, type ReglageMusique, type SerieSon as Serie } from "../api-series-son"
+import { seriesSon, texteSon, type Annonce, type Composition, type DemandeSon, type FamilleSon, type Gabarits, type MoteurDeFamille, type ReglageMusique, type SerieSon as Serie, type UsageMusique } from "../api-series-son"
 import { workflows, type ProfilWorkflow } from "../api-workflows"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { dureeTexte, secondesTexte, tempsTexte, virgule } from "../son-textes"
@@ -73,18 +73,28 @@ const NOTES: [string, string][] = [["C", "do"], ["C#", "do♯"], ["D", "ré"], [
 const TONALITES = (["minor", "major"] as const).flatMap((mode) => NOTES.map(([en, fr]) => [`${en} ${mode}`, `${fr} ${mode === "minor" ? "mineur" : "majeur"}`] as const))
 const tonaliteFr = (t: string) => TONALITES.find(([en]) => en === t)?.[1] ?? t
 const MESURES: [number, string][] = [[2, "2/4"], [3, "3/4"], [4, "4/4"], [6, "6/8"]]
+/** Les usages de bande originale qu'offre une musique (le jingle et la chanson ont leur puce). */
+const USAGES_MUSIQUE: [UsageMusique, string][] = [["titre", "Écran titre"], ["village", "Village, camp"], ["exploration", "Exploration"], ["danger", "Danger, combat"]]
 
 type Demande = {
   famille: FamilleEcran; mode: "jingle" | "chanson"
   textes: Partial<Record<FamilleEcran, string>>; durees: Partial<Record<FamilleEcran, number>>; tirages: Partial<Record<FamilleEcran, number>>
   moteurs: Partial<Record<FamilleSon, string>>
-  musique: { tempo: number | null; tonalite: string; mesure: number; mesures: number }
+  /** `usage` : le gabarit de bande originale ; il donne structure, tempo, mesure et
+   *  nombre de mesures tant qu'ils ne sont pas réglés à la main. `structure` : la
+   *  structure corrigée à la main (`null` : celle de l'usage ou du gabarit). */
+  musique: { tempo: number | null; tonalite: string; mesure: number | null; mesures: number | null; usage?: UsageMusique | null; structure?: string | null; graine?: number | null }
+  /** Les réglages du moteur (compositeur, température…) changés à la main ; les autres gardent le défaut du profil. */
+  options?: Record<string, number | boolean>
   paroles: string
   /** Le texte relu à la main, qui part à la place du texte composé. */
   manuel: string | null
 }
 const nouvelle = (modele?: string): Demande => ({ famille: "bruitage", mode: "jingle", textes: {}, durees: {}, tirages: {}, moteurs: modele ? { bruitage: modele } : {},
-  musique: { tempo: null, tonalite: "", mesure: 4, mesures: 16 }, paroles: PAROLES, manuel: null })
+  musique: { tempo: null, tonalite: "", mesure: null, mesures: null, usage: null, structure: null, graine: null }, options: {}, paroles: PAROLES, manuel: null })
+/** Le nombre de mesures d'une musique : réglé, sinon celui de l'usage, sinon 16. */
+const mesuresDe = (d: Demande, g: Gabarits | null) => d.musique.mesures ?? (d.musique.usage && g?.usages[d.musique.usage]?.mesures) ?? 16
+const mesureDe = (d: Demande, g: Gabarits | null) => d.musique.mesure ?? (d.musique.usage && g?.usages[d.musique.usage]?.mesure) ?? 4
 /** La famille du serveur, en puce de l'écran (« Chanson et jingle » en porte deux). */
 const familleEcran = (f: FamilleSon): FamilleEcran => f === "jingle" ? "chanson" : f
 /** La demande d'un emplacement (SN6) : sa famille, et le texte proposé tel qu'il est. */
@@ -122,10 +132,16 @@ function demandeSon(d: Demande, defaut: string | null, recus: readonly ReglageMu
   if (aDuree(d)) r.secondes = dureeDe(d)
   const recoit = (k: ReglageMusique) => !!recus?.includes(k)
   if (d.famille === "musique") {
-    r.mesures = d.musique.mesures
-    if (recoit("mesure")) r.mesure = d.musique.mesure
+    // Avec un usage, seul ce qui est réglé à la main part : l'usage donne le reste.
+    const usage = d.musique.usage ?? null
+    if (usage) r.usage = usage
+    if (d.musique.mesures != null || !usage) r.mesures = d.musique.mesures ?? 16
+    if (recoit("mesure") && (d.musique.mesure != null || !usage)) r.mesure = d.musique.mesure ?? 4
     if (d.musique.tempo && recoit("tempo")) r.tempo = d.musique.tempo
     if (d.musique.tonalite && recoit("tonalite")) r.tonalite = d.musique.tonalite
+    if (d.musique.structure != null && d.musique.structure.trim() && recoit("paroles")) r.paroles = d.musique.structure
+    if (d.musique.graine != null) r.graine = d.musique.graine
+    if (d.options && Object.keys(d.options).length) r.options = { ...d.options }
   }
   if (famille === "chanson" && d.paroles.trim() && recoit("paroles")) r.paroles = d.paroles
   if (d.manuel !== null && d.manuel.trim()) r.texte_relu = d.manuel
@@ -295,9 +311,11 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
   const [occupe, setOccupe] = useState(false)
   const brouillon = useBrouillonLocal({ cle: emplacement ? `son:${projet}:${emplacement.cle}` : `son:${projet}`, pret: true, reference: depart, etat: d, appliquer: setD, ecran: emplacement ? emplacement.nom : "Un son", quoi: texteDe(d) || FAMILLES[d.famille].nom })
 
+  const [gabarits, setGabarits] = useState<Gabarits | null>(null)
   useEffect(() => {
     let vivant = true
     texteSon.moteurs(projet).then((r) => { if (vivant) setDefauts(r.familles) }).catch(() => {})
+    Promise.resolve().then(() => texteSon.gabarits()).then((g) => { if (vivant && g?.usages) setGabarits(g) }).catch(() => {})
     workflows.lister().then((r) => { if (vivant) setProfils(r.profils.filter((p) => p.nature === "audio")) }).catch(() => {})
     // « Un son » retrouve ses séries récentes (celles d'un emplacement restent sur la fiche du sujet).
     if (!emplacement) Promise.resolve().then(() => seriesSon.lister(projet)).then((liste) => {
@@ -382,7 +400,14 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
   const nomChoisi = options.find((o) => o.valeur === moteurChoisi)?.nom ?? "Ce moteur"
 
   const F = FAMILLES[d.famille]
-  const resume = [d.famille === "musique" ? `${d.musique.mesures} mesures` : aDuree(d) ? secondesTexte(dureeDe(d)!) : null, `${n} tirages`].filter(Boolean).join(" · ")
+  const nbMesures = mesuresDe(d, gabarits)
+  const carrure = mesureDe(d, gabarits)
+  // Les réglages propres au moteur choisi (compositeur, température…), lus dans son profil.
+  const profilChoisi = profils.find((p) => p.modele === moteurChoisi)
+  const reglagesMoteur = Object.entries(profilChoisi?.parametres ?? {}).filter(([cle, p]) => cle !== "langue" && (p.genre === "booleen" || p.genre === "intervalle"))
+  const usage = d.musique.usage ?? null
+  const structure = d.musique.structure ?? (compo?.parametres?.paroles ? String(compo.parametres.paroles.valeur) : "")
+  const resume = [d.famille === "musique" ? `${nbMesures} mesures` : aDuree(d) ? secondesTexte(dureeDe(d)!) : null, `${n} tirages`].filter(Boolean).join(" · ")
   // Un réglage de musique que le moteur ne reçoit pas se grise, avec sa raison (la relecture le dit).
   const refuse = (k: ReglageMusique) => !!recus && !recus.includes(k)
   const nonRecus = (["tempo", "tonalite", "mesure"] as const).filter(refuse)
@@ -395,7 +420,7 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
   // à annoncer : rien plutôt qu'une durée à un tempo qu'il ne suivra pas.
   const boucle = refuse("tempo") ? null
     : compo?.mesures && compo.secondes != null && compo.source_secondes === "mesures" ? compo.secondes * compo.mesures.demandees / compo.mesures.total
-    : d.musique.mesures * (refuse("mesure") ? 4 : d.musique.mesure) * 60 / (d.musique.tempo || tempoCompo?.valeur || 90)
+    : nbMesures * (refuse("mesure") ? 4 : carrure) * 60 / (d.musique.tempo || tempoCompo?.valeur || 90)
   const serieCourante = series.find((s) => s.identifiant === courante)
   const precedentes = series.filter((s) => s.identifiant !== courante)
   const temps = annonce?.annonce.temps_s
@@ -427,16 +452,46 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
         {d.famille === "chanson" && d.mode === "chanson" && <PartitionYue2 projet={projet} texte={texte} paroles={d.paroles} profils={profils} onSon={onSon} />}
         {d.manuel === null && compo?.langue?.non_anglais && <p className={ATTENTION}>Le moteur comprend l’anglais. Ce texte part tel quel, sans traduction.</p>}
         {compo?.avertissement && <p className={ATTENTION}>{compo.avertissement}</p>}
+        {(compo?.alertes ?? []).map((a) => <p key={a} role="status" className={ATTENTION}>{a}</p>)}
+        {d.famille === "musique" && <div className="flex flex-wrap items-center gap-[8px]" role="group" aria-label="Usage">
+          <span className="text-[12px] text-encre-3">Usage</span>
+          {USAGES_MUSIQUE.map(([u, nom]) => <button key={u} type="button" className={PUCE} aria-pressed={usage === u}
+            onClick={() => changer({ musique: { ...d.musique, usage: usage === u ? null : u, structure: null } })}>{nom}</button>)}
+          {usage && gabarits?.usages[usage] && <button type="button" className={PETIT}
+            onClick={() => changer({ textes: { ...d.textes, musique: gabarits.usages[usage].description } })}>Texte d’exemple</button>}
+        </div>}
         {d.famille === "musique" && <div className="flex flex-wrap items-end gap-[14px] text-[12px] text-encre-3">
           <label className="grid gap-[4px]">Tempo<span className="flex items-center gap-[4px] text-encre-controle"><input aria-label="Tempo" type="number" min={40} max={200} disabled={refuse("tempo")} className={`${PETIT_CHAMP} w-[70px] disabled:opacity-50`} placeholder={refuse("tempo") ? "" : String(tempoUnivers ?? tempoCompo?.valeur ?? 90)} value={refuse("tempo") ? "" : d.musique.tempo ?? ""} onChange={(e) => changer({ musique: { ...d.musique, tempo: e.target.value ? Number(e.target.value) : null } })} /> BPM</span></label>
           <label className="grid gap-[4px]">Tonalité<select aria-label="Tonalité" disabled={refuse("tonalite")} className={`${PETIT_CHAMP} disabled:opacity-50`} value={refuse("tonalite") ? "" : d.musique.tonalite} onChange={(e) => changer({ musique: { ...d.musique, tonalite: e.target.value } })}>
             <option value="">{refuse("tonalite") ? "aucune" : tonUnivers ? `celle de l’univers (${tonaliteFr(tonUnivers)})` : "celle de l’univers"}</option>
             {TONALITES.map(([en, fr]) => <option key={en} value={en}>{fr}</option>)}
           </select></label>
-          <label className="grid gap-[4px]">Mesure<select aria-label="Mesure" disabled={refuse("mesure")} className={`${PETIT_CHAMP} disabled:opacity-50`} value={refuse("mesure") ? 4 : d.musique.mesure} onChange={(e) => changer({ musique: { ...d.musique, mesure: Number(e.target.value) } })}>{MESURES.map(([v, nom]) => <option key={v} value={v}>{nom}</option>)}</select></label>
-          <label className="grid gap-[4px]">Mesures<input aria-label="Nombre de mesures" type="number" min={1} max={999} className={`${PETIT_CHAMP} w-[70px]`} value={d.musique.mesures} onChange={(e) => changer({ musique: { ...d.musique, mesures: Math.max(1, Number(e.target.value) || 1) } })} /></label>
+          <label className="grid gap-[4px]">Mesure<select aria-label="Mesure" disabled={refuse("mesure")} className={`${PETIT_CHAMP} disabled:opacity-50`} value={refuse("mesure") ? 4 : carrure} onChange={(e) => changer({ musique: { ...d.musique, mesure: Number(e.target.value) } })}>{MESURES.map(([v, nom]) => <option key={v} value={v}>{nom}</option>)}</select></label>
+          <label className="grid gap-[4px]">Mesures<input aria-label="Nombre de mesures" type="number" min={1} max={999} className={`${PETIT_CHAMP} w-[70px]`} value={nbMesures} onChange={(e) => changer({ musique: { ...d.musique, mesures: Math.max(1, Number(e.target.value) || 1) } })} /></label>
           {boucle != null && <span className="grid gap-[4px]">Durée de la boucle<strong className="flex min-h-[30px] items-center font-mono text-[13px] font-normal text-encre">{dureeTexte(boucle)}</strong></span>}
           {nonRecus.length > 0 && <p className="basis-full text-[12px] text-encre-3">{nomChoisi} ne reçoit pas {nonRecus.map((k) => NOMS_REGLAGE_RECU[k]).join(" ni ")}{refuse("mesure") ? " : la boucle se compte en 4/4" : ""}.</p>}
+        </div>}
+
+        {d.famille === "musique" && !refuse("paroles") && <label className="grid gap-[4px] text-[12px] text-encre-3">
+          <span>Structure du morceau — une section par ligne, avec ce qui y joue{d.musique.structure == null ? (usage ? " (celle de l’usage)" : " (celle du gabarit)") : " (corrigée à la main)"}</span>
+          <textarea aria-label="Structure du morceau" rows={4} className="min-h-[128px] w-full resize-y rounded-7 border border-contour bg-carte p-[8px] font-mono text-[12px] leading-[1.6] text-encre-controle"
+            value={structure} onChange={(e) => changer({ musique: { ...d.musique, structure: e.target.value } })} />
+          {d.musique.structure != null && <span><button type="button" className={PETIT} onClick={() => changer({ musique: { ...d.musique, structure: null } })}>Reprendre la structure proposée</button></span>}
+        </label>}
+        {d.famille === "musique" && reglagesMoteur.length > 0 && <div className="flex flex-wrap items-end gap-[14px] text-[12px] text-encre-3" role="group" aria-label="Réglages du moteur">
+          {reglagesMoteur.map(([cle, p]) => {
+            const valeur = d.options?.[cle] ?? p.defaut
+            const poser = (v: number | boolean) => changer({ options: { ...(d.options ?? {}), [cle]: v } })
+            return p.genre === "booleen"
+              ? <label key={cle} title={p.aide} className="flex min-h-[30px] items-center gap-[8px] text-encre-controle"><input type="checkbox" aria-label={p.nom ?? cle} checked={!!valeur} onChange={(e) => poser(e.target.checked)} />{p.nom ?? cle}</label>
+              : <label key={cle} title={p.aide} className="grid gap-[4px]">{p.nom ?? cle}<input aria-label={p.nom ?? cle} type="number" step={Number.isInteger(p.defaut) ? 1 : 0.05} min={p.minimum ?? undefined} max={p.maximum ?? undefined}
+                  className={`${PETIT_CHAMP} w-[70px]`} value={Number(valeur)} onChange={(e) => { const v = Number(e.target.value); if (Number.isFinite(v)) poser(v) }} /></label>
+          })}
+          <label className="grid gap-[4px]" title="La graine du premier tirage ; les suivants prennent la suivante. La même graine sur plusieurs séries garde le même style (des intensités d’une même musique).">Graine de départ
+            <input aria-label="Graine de départ" type="number" min={0} className={`${PETIT_CHAMP} w-[128px]`} placeholder="au hasard" value={d.musique.graine ?? ""}
+              onChange={(e) => changer({ musique: { ...d.musique, graine: e.target.value === "" ? null : Math.max(0, Math.floor(Number(e.target.value)) || 0) } })} /></label>
+          {profilChoisi?.parametres?.compositeur && (d.options?.compositeur ?? profilChoisi.parametres.compositeur.defaut) === false
+            && <p className="basis-full text-[12px] text-encre-3">Sans le compositeur, le calcul est six fois plus rapide mais le morceau perd sa mélodie et sa structure.</p>}
         </div>}
 
         <div className="flex flex-wrap items-center gap-[8px] pt-[4px]">
@@ -458,7 +513,7 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
           <div className="flex flex-wrap items-center gap-[8px]" role="group" aria-label="Tirages"><span className="min-w-[54px] text-[12px] text-encre-3">Tirages</span>
             {F.tirages.map((v) => <button key={v} type="button" className={PUCE} aria-pressed={v === n} onClick={() => changer({ tirages: { ...d.tirages, [d.famille]: v } })}>{v}</button>)}</div>
           <label className="flex flex-wrap items-center gap-[8px] text-[12px]">{CHAMP_DU_MODELE}
-            <select aria-label={CHAMP_DU_MODELE} className={PETIT_CHAMP} value={moteurChoisi} onChange={(e) => changer({ moteurs: { ...d.moteurs, [fs]: e.target.value } })}>
+            <select aria-label={CHAMP_DU_MODELE} className={PETIT_CHAMP} value={moteurChoisi} onChange={(e) => changer({ moteurs: { ...d.moteurs, [fs]: e.target.value }, options: {} })}>
               {!moteurChoisi && <option value="">{defauts[fs]?.raison ?? "Aucun moteur installé"}</option>}
               {options.map((o) => <option key={o.valeur} value={o.valeur} disabled={!!o.raison}>Cette machine · {o.nom}{o.raison ? ` — ${o.raison}` : ""}</option>)}
             </select>

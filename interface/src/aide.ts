@@ -909,12 +909,12 @@ export const AIDE: Record<string, Explication> = {
   // « Son monde », pour l'oreille.
 
   "univers.son.cases": {
-    nom: "Les quatre lignes du son",
+    nom: "Les lignes du son",
     ou: "jeu",
     groupe: "Ses sons — le style sonore du jeu",
-    quoi: "Époque et matière, rendu sonore, orchestre, humeur : quatre lignes en anglais qui disent comment ce monde sonne.",
+    quoi: "Sept lignes en anglais qui disent comment ce monde sonne, de l'époque aux interdits de sa bande originale.",
     change:
-      "Elles se posent devant chaque description de son, comme la bible se pose devant chaque description d'image. Chacune ne part qu'avec les familles qu'elle concerne : l'époque avec les bruitages et les ambiances, l'orchestre avec la musique. Une ligne vide ne part pas.",
+      "Elles se posent devant chaque description de son, comme la bible se pose devant chaque description d'image. Chacune ne part qu'avec les familles qu'elle concerne : l'époque avec les bruitages et les ambiances, l'orchestre, le mode et le leitmotiv avec la musique. Les interdits ne partent jamais : ils font alerter la relecture d'une musique. Une ligne vide ne part pas.",
     origine: "toi · quatre lignes vides au départ",
     long:
       "Un jeu sans ce bloc ne contraint rien : la description d'un son part seule, avec la prise de son de sa famille. Le compte en tête de l'étape — « 0 ligne sur 4 écrite » — dit où en est le bloc sans qu'on l'ouvre.",
@@ -4287,6 +4287,28 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Seuls les réglages que le moteur reçoit partent ; les autres sont grisés, et la boucle se compte alors en 4/4. La durée de la boucle affichée compte une marge pour la couper proprement.",
     origine: "toi · 16 mesures en 4/4 ; tempo et tonalité de l'univers, sinon 90",
+  },
+
+  "son.musique.usage": {
+    nom: "Usage, structure du morceau",
+    ou: "un-son",
+    groupe: "Musique — tempo, tonalité, mesures",
+    quoi: "À quoi sert la musique — écran titre, village, exploration, danger — et la suite de ses sections, une par ligne avec ce qui y joue.",
+    change:
+      "L'usage propose une structure, un tempo, une mesure et un nombre de mesures, et un texte d'exemple écrit en mots de musique. La structure part dans les paroles d'ACE-Step, le seul champ qui la lit ; corrigée à la main, elle part telle quelle.",
+    origine: "aucun usage · la structure du gabarit",
+    long:
+      "Une musique demandée sans structure ni mélodie revient en nappe : c'est ce qu'ont donné trois musiques d'accueil le 10 octobre 2026. Des mots comme « ambient », « drones » ou « no drums » déclenchent une alerte, jamais un refus.",
+  },
+
+  "son.musique.compositeur": {
+    nom: "Compositeur, température, guidage, pas, graine",
+    ou: "un-son",
+    groupe: "Musique — tempo, tonalité, mesures",
+    quoi: "Les réglages propres au moteur de musique. Le compositeur est le modèle de langage qui écrit le plan du morceau avant le rendu.",
+    change:
+      "Coupé, le compositeur rend six fois plus vite mais le morceau perd sa mélodie. La graine de départ fixe le premier tirage ; deux séries de même graine tirent rang pour rang sur les mêmes, ce qui garde un même style entre les intensités d'une musique.",
+    origine: "le profil · compositeur allumé, 0,85, 2, 8 pas, graine au hasard",
   },
 
   "son.adaptative": {

@@ -6,10 +6,10 @@ import time
 
 from atelier.domaine.travail import TravailRefuse
 from atelier.audio.graphes import CONSTRUCTEURS, FAMILLES
-from atelier.audio.texte import SFXR, composer_texte, langue
+from atelier.audio.texte import SFXR, alertes, composer_texte, langue
 from atelier.domaine.projet import FAMILLES_SON
 from atelier.domaine.son import RecetteSon
-from atelier.domaine.workflow import MUSIQUE, composer, duree_acceptee, musique_du_graphe, tirer_graine
+from atelier.domaine.workflow import GRAINE_MAX, MUSIQUE, composer, duree_acceptee, musique_du_graphe, tirer_graine
 from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu, FINIS
 from atelier.services.travaux import ServiceTravaux, _hash, _json, _verrou
 from atelier.domaine.erreurs import FournisseurIndisponible
@@ -100,7 +100,7 @@ class ServiceTravauxAudio(ServiceTravaux):
         if profil is not None and profil["nature"] != "audio":
             raise TravailRefuse("Choisissez un workflow sonore.")
         demande = {"description": brut.get("prompt"),
-                   **{k: brut[k] for k in ("secondes", "mesures", *MUSIQUE) if brut.get(k) is not None}}
+                   **{k: brut[k] for k in ("secondes", "mesures", "usage", *MUSIQUE) if brut.get(k) is not None}}
         try:
             compo = composer_texte(famille, moteur, demande, univers)
         except ValueError as e:
@@ -151,7 +151,8 @@ class ServiceTravauxAudio(ServiceTravaux):
             # Le court-circuit : un texte relu à la main part tel quel, et le
             # texte que l'atelier aurait composé reste lisible à côté.
             compo.update(relu=True, texte_compose=compo.get("texte"), texte=relu,
-                         morceaux=[{"texte": relu, "source": "relu"}], langue=langue(relu))
+                         morceaux=[{"texte": relu, "source": "relu"}], langue=langue(relu),
+                         alertes=alertes(famille, relu, univers))
         if "prompt_negatif" in brut and isinstance(brut["prompt_negatif"], str):
             compo.update(texte_negatif=brut["prompt_negatif"],
                          morceaux_negatif=[{"texte": brut["prompt_negatif"], "source": "demande"}] if brut["prompt_negatif"] else [])
@@ -160,8 +161,10 @@ class ServiceTravauxAudio(ServiceTravaux):
     def ce_qui_partira(self, projet, brut):
         """« Voir ce qui partira » : rien n'est lancé, rien n'est écrit."""
         self._projet(projet)
+        # « options » et « graine » ne changent pas le texte : acceptés pour que
+        # l'écran relise avec le corps même de l'envoi, et ignorés ici.
         if not isinstance(brut, dict) or set(brut) - {"famille", "modele", "prompt", "prompt_negatif", "secondes",
-                                                      "mesures", "texte_relu", *MUSIQUE}:
+                                                      "mesures", "texte_relu", "usage", "options", "graine", *MUSIQUE}:
             raise TravailRefuse("La demande sonore contient un réglage inconnu.")
         compo, _ = self._composition(projet, brut)
         return compo
@@ -184,12 +187,17 @@ class ServiceTravauxAudio(ServiceTravaux):
         décide, comme un texte relu à la main."""
         self._projet(projet)
         permis = {"cle", "modele", "prompt", "prompt_negatif", "secondes", "options", "nom", *MUSIQUE,
-                  "famille", "texte_relu", "mesures", "partition"}
+                  "famille", "texte_relu", "mesures", "partition", "usage", "graine"}
         if acteur not in ("auteur", "agent") or not isinstance(brut, dict) or set(brut) - permis:
             raise TravailRefuse("La demande sonore contient un réglage inconnu.")
         famille = "famille" in brut
-        if not famille and ("texte_relu" in brut or "mesures" in brut or "partition" in brut):
-            raise TravailRefuse("Un texte relu, une durée en mesures ou une partition demandent une famille de sons.")
+        if not famille and ("texte_relu" in brut or "mesures" in brut or "partition" in brut or "usage" in brut):
+            raise TravailRefuse("Un texte relu, une durée en mesures, un usage ou une partition demandent une famille de sons.")
+        # La graine donnée (10 octobre 2026) : trois intensités d'une même
+        # musique se tirent sur les mêmes graines, pour garder le même style.
+        if "graine" in brut and (isinstance(brut["graine"], bool) or not isinstance(brut["graine"], int)
+                                 or not 0 <= brut["graine"] <= GRAINE_MAX):
+            raise TravailRefuse("La graine est un entier positif.")
         if "partition" in brut and (not isinstance(brut["partition"], str) or not brut["partition"].strip()):
             raise TravailRefuse("La partition est un texte non vide.")
         compo = profil = None
@@ -215,7 +223,7 @@ class ServiceTravauxAudio(ServiceTravaux):
              "options": brut.get("options", {}), "nom": brut.get("nom", ""), "livrer_provisoire": False,
              # Seulement s'ils sont demandés : l'empreinte d'une demande d'avant ne bouge pas.
              **{k: brut[k] for k in MUSIQUE if k in brut},
-             **{k: brut[k] for k in ("famille", "texte_relu", "mesures", "partition") if k in brut}}
+             **{k: brut[k] for k in ("famille", "texte_relu", "mesures", "partition", "usage", "graine") if k in brut}}
         if any(not isinstance(d[k], str) or not d[k].strip() for k in ("cle", "modele", "prompt")) or len(d["cle"]) > 200:
             raise TravailRefuse("Donnez une clé, un workflow sonore et la description du bruitage.")
         if not isinstance(d["options"], dict) or not isinstance(d["nom"], str) or not isinstance(d["prompt_negatif"], str):
@@ -252,7 +260,9 @@ class ServiceTravauxAudio(ServiceTravaux):
         # La graine (liaison de ML1) se tire une fois, ici : une reprise renvoie
         # la même, et la provenance du son la garde pour refaire ce tirage.
         if "graine" in profil["liaisons"]:
-            valeurs["graine"] = tirer_graine()
+            valeurs["graine"] = d["graine"] if "graine" in d else tirer_graine()
+        elif "graine" in d:
+            raise TravailRefuse(f"Le moteur « {profil['nom']} » ne reçoit pas de graine.")
         with _verrou(dossier / ".travail"):
             avant = self._lire(dossier / "travail.json")
             if avant:

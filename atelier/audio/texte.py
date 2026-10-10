@@ -58,9 +58,11 @@ CASES_PAR_FAMILLE = {
     "bruitage": ("epoque", "rendu"),
     "interface": ("rendu",),
     "ambiance": ("epoque", "humeur"),
-    "musique": ("orchestre", "humeur"),
-    "jingle": ("orchestre", "humeur"),
-    "chanson": ("orchestre",),
+    # La bande originale (10 octobre 2026) : le mode et le leitmotiv partent
+    # avec chaque piste ; les interdits ne partent jamais (voir `alertes`).
+    "musique": ("orchestre", "mode", "leitmotiv", "humeur"),
+    "jingle": ("orchestre", "mode", "leitmotiv", "humeur"),
+    "chanson": ("orchestre", "mode"),
     "voix": (),
 }
 assert set(CASES_PAR_FAMILLE) == set(FAMILLES_SON)
@@ -91,6 +93,91 @@ STRUCTURES = {
     "yue_instrumental": "[Intro]\n[Instrumental]\n[Instrumental]\n[Outro]",
 }
 _COMBAT = re.compile(r"\b(battle|combat|boss|fight)\b", re.IGNORECASE)
+
+# ── Les gabarits de bande originale, par usage (10 octobre 2026) ────────────
+#
+# Relevé « Univers musical » de Cœur de Pierre : trois musiques d'accueil
+# demandées en mots d'ambiance (« drones, minimal, no drums ») et rendues sans
+# structure sont revenues en nappes. Un usage donne à ACE-Step ce qu'une
+# musique de jeu demande : une **structure en sections**, chacune avec ce qui
+# y joue, un tempo et une carrure. La structure part dans les paroles (c'est le
+# seul champ d'ACE qui la lit) et se corrige à l'écran avant l'envoi. Les
+# descriptions d'exemple sont des textes de musique : un genre, un instrument
+# qui porte la mélodie, un rythme — jamais des mots de nappe.
+USAGES = {
+    "titre": {"nom": "Écran titre",
+        "description": "epic fantasy orchestral main theme, heroic and memorable melody, slow build to a full tutti",
+        "structure": "[Intro - solo cello and low male choir humming the theme]\n"
+                     "[Verse - french horns carry the main melody over war drums]\n"
+                     "[Build - strings rise, choir swells, timpani rolls]\n"
+                     "[Chorus - full orchestra tutti, choir and horns, heroic]\n"
+                     "[Bridge - tin whistle and celtic harp, calm]\n"
+                     "[Chorus - tutti reprise, war drums]\n"
+                     "[Outro - fade back to choir humming]",
+        "tempo": 78, "mesure": 4, "mesures": 40},
+    "village": {"nom": "Village, camp",
+        "description": "warm celtic folk tavern tune, lively fiddle melody, tin whistle, lute strumming, bodhran groove, cozy and hopeful",
+        "structure": "[Intro - solo fiddle states the tune]\n"
+                     "[Verse - tin whistle melody, lute strumming, bodhran]\n"
+                     "[Chorus - full folk band, fiddle and whistle in unison]\n"
+                     "[Verse - variation, harp answers]\n"
+                     "[Chorus - full folk band]\n"
+                     "[Outro - fiddle alone, ends on the tonic]",
+        "tempo": 104, "mesure": 6, "mesures": 48},
+    "exploration": {"nom": "Exploration",
+        "description": "fantasy adventure exploration theme, mysterious but melodic, harp ostinato, cello melody, soft frame drum pulse",
+        "structure": "[Intro - harp ostinato]\n"
+                     "[Verse - cello melody over steady frame drum]\n"
+                     "[Verse - flute answers the cello, strings join]\n"
+                     "[Bridge - low brass, tension rises]\n"
+                     "[Verse - main melody returns]\n"
+                     "[Outro - harp ostinato alone]",
+        "tempo": 92, "mesure": 4, "mesures": 32},
+    "danger": {"nom": "Danger, combat",
+        "description": "dark epic battle music, pounding war drums, driving low brass ostinato, staccato strings, urgent and powerful",
+        "structure": "[Intro - war drums alone]\n"
+                     "[Verse - low brass ostinato, staccato strings]\n"
+                     "[Build - choir shouts, rising strings]\n"
+                     "[Chorus - full orchestra, war drums, heroic brass melody]\n"
+                     "[Verse - ostinato returns]\n"
+                     "[Chorus - full orchestra]",
+        "tempo": 140, "mesure": 4, "mesures": 48},
+    "jingle": {"nom": "Jingle",
+        "description": "short triumphant fanfare, french horns and war drums, resolves on the tonic",
+        "structure": "[Instrumental - short fanfare]\n[Fade Out]",
+        "tempo": 100, "mesure": 4, "mesures": 3},
+    "chanson": {"nom": "Chanson",
+        "description": "dwarven drinking song, deep male choir singing in unison, fiddle and bodhran, stomping rhythm",
+        "structure": "[Intro]\n\n[Verse]\n\n[Chorus]\n\n[Verse]\n\n[Chorus]\n\n[Outro]",
+        "tempo": 100, "mesure": 4, "mesures": 48},
+}
+
+# Les mots qui font d'une musique une nappe : ACE-Step les prend au pied de la
+# lettre. Une alerte, jamais un refus ni une réécriture — une ambiance
+# musicale reste un choix possible.
+_MOTS_NAPPE = re.compile(
+    r"\b(dark ambient|ambient|drones?|droning|pads?|minimal(?:ist)?|sparse|soundscapes?|atmospheric|"
+    r"textures?|textural|field recording|no drums|no melody|no percussion|static)\b", re.IGNORECASE)
+
+
+def alertes(famille: str, texte: str, univers: UniversSonore | None = None) -> list[str]:
+    """Ce qui menace une musique, en phrases pour l'écran : des mots de nappe
+    dans le texte, ou un interdit de la bande originale. Rien hors musique,
+    jingle et chanson ; rien n'est retiré du texte."""
+    if famille not in ("musique", "jingle", "chanson") or not texte:
+        return []
+    dites = []
+    nappe = list(dict.fromkeys(m.group(0).lower() for m in _MOTS_NAPPE.finditer(texte)))
+    if nappe:
+        dites.append("Ces mots demandent une nappe plutôt qu'une musique : « " + " », « ".join(nappe)
+                     + " ». Pour une mélodie, nommez un instrument qui la porte, un rythme et une structure.")
+    univers = univers or UniversSonore.depuis_json(None)
+    bas = texte.lower()
+    interdits = [m.strip() for m in re.split(r"[,;\n]", univers.texte("interdits")) if m.strip()]
+    trouves = [m for m in interdits if re.search(r"\b" + re.escape(m.lower()) + r"\b", bas)]
+    if trouves:
+        dites.append("La bande originale du jeu interdit : « " + " », « ".join(trouves) + " ».")
+    return dites
 
 MOTEURS_SA3 = ("sa3-small-sfx", "sa3-medium")
 MOTEUR_SAO = "sa-open-1"
@@ -229,6 +316,10 @@ def composer_texte(famille: str, moteur: str | None, demande: dict[str, Any],
     if paroles_d is not None and not isinstance(paroles_d, str):
         raise ValueError("Les paroles sont un texte.")
     mesures_d = _entier(demande, "mesures", 1, 999, "Le nombre de mesures est un entier de 1 à 999.")
+    usage_d = demande.get("usage")
+    if usage_d is not None and usage_d not in USAGES:
+        raise ValueError("L'usage d'une musique est l'un de : " + ", ".join(USAGES) + ".")
+    usage = USAGES.get(usage_d) if famille in ("musique", "jingle", "chanson") else None
     secondes_d = demande.get("secondes")
     if secondes_d is not None and (isinstance(secondes_d, bool) or not isinstance(secondes_d, (int, float))
                                    or not math.isfinite(secondes_d) or secondes_d <= 0):
@@ -237,14 +328,19 @@ def composer_texte(famille: str, moteur: str | None, demande: dict[str, Any],
         raise ValueError("Donnez une durée ou un nombre de mesures, pas les deux.")
 
     musical = famille in ("musique", "jingle", "chanson")
-    # Tempo, tonalité, mesure : la demande, sinon l'univers, sinon le gabarit.
+    # Tempo, tonalité, mesure : la demande, sinon l'usage choisi (tempo et
+    # mesure seulement : une BO garde sa tonalité), sinon l'univers, sinon le
+    # gabarit.
     if tempo_d is not None:
         tempo = (tempo_d, "demande")
+    elif usage:
+        tempo = (usage["tempo"], "usage")
     elif univers.tempo:
         tempo = (univers.tempo, "univers")
     else:
         tempo = (TEMPO_GABARIT, "gabarit")
-    mesure = (mesure_d, "demande") if mesure_d is not None else (MESURE_GABARIT, "gabarit")
+    mesure = (mesure_d, "demande") if mesure_d is not None else (usage["mesure"], "usage") if usage \
+        else (MESURE_GABARIT, "gabarit")
     if tonalite_d is not None:
         tonalite = (tonalite_d, "demande")
     elif univers.tonalite:
@@ -257,9 +353,9 @@ def composer_texte(famille: str, moteur: str | None, demande: dict[str, Any],
     if secondes_d is not None:
         secondes, source_secondes = secondes_d, "demande"
     elif famille in MESURES_PAR_DEFAUT and gabarit != "yue-chanson":
-        demandees = mesures_d if mesures_d is not None else MESURES_PAR_DEFAUT[famille]
+        demandees = mesures_d if mesures_d is not None else usage["mesures"] if usage else MESURES_PAR_DEFAUT[famille]
         mesures = {"demandees": demandees, "marge": MARGE_MESURES, "total": demandees + MARGE_MESURES,
-            "source": "demande" if mesures_d is not None else "gabarit"}
+            "source": "demande" if mesures_d is not None else "usage" if usage else "gabarit"}
         secondes, source_secondes = duree_en_mesures(demandees, tempo[0], mesure[0]), "mesures"
     else:
         if mesures_d is not None:
@@ -295,6 +391,8 @@ def composer_texte(famille: str, moteur: str | None, demande: dict[str, Any],
         morceaux += [desc, *cases]
         if paroles_d is not None:
             parametres["paroles"] = {"valeur": paroles_d, "source": "demande"}
+        elif usage:
+            parametres["paroles"] = {"valeur": usage["structure"], "source": "usage"}
         else:
             cle = "jingle" if famille == "jingle" else "combat" if _COMBAT.search(description) else "musique"
             parametres["paroles"] = {"valeur": STRUCTURES[cle], "source": "gabarit"}
@@ -333,7 +431,9 @@ def composer_texte(famille: str, moteur: str | None, demande: dict[str, Any],
         "texte_negatif": _joindre(negatif), "morceaux_negatif": negatif,
         "secondes": secondes, "source_secondes": source_secondes, "mesures": mesures,
         "parametres": parametres,
-        "langue": langue(demande.get("description") or "")}
+        "langue": langue(demande.get("description") or ""),
+        **({"usage": usage_d} if usage else {}),
+        "alertes": alertes(famille, texte, univers)}
 
 
 def _joindre(morceaux: list[dict[str, Any]]) -> str:
@@ -379,14 +479,14 @@ EXEMPLES = {
     "musique": [
         {"description": "cozy village theme, acoustic guitar, flute, light hand percussion, pizzicato strings",
          "tempo": 96, "tonalite": "G major", "mesure": 4, "mesures": 24},
-        {"description": "ambient exploration, soft pads, celesta, harp arpeggios, sparse percussion, loopable",
-         "tempo": 90, "tonalite": "D minor", "mesure": 4, "mesures": 24},
+        {"description": "fantasy exploration theme, harp ostinato, cello melody, soft frame drum pulse, loopable",
+         "tempo": 92, "tonalite": "D minor", "mesure": 4, "mesures": 24},
         {"description": "JRPG battle theme, driving drums, electric bass, staccato strings, brass",
          "tempo": 150, "tonalite": "E minor", "mesure": 4, "mesures": 40},
         {"description": "epic boss battle, choir, taiko, distorted guitar, orchestral hits",
          "tempo": 165, "tonalite": "C minor", "mesure": 4, "mesures": 64},
-        {"description": "title screen, gentle piano, strings, minimal",
-         "tempo": 80, "tonalite": "F major", "mesure": 4, "mesures": 16},
+        {"description": "title screen main theme, memorable horn melody, strings and choir, slow build to a full tutti",
+         "tempo": 80, "tonalite": "F major", "mesure": 4, "mesures": 32},
     ],
     "jingle": [
         {"description": "victory fanfare, brass, timpani, snare roll, triumphant, short jingle", "mesures": 3},
@@ -413,5 +513,6 @@ def gabarits() -> dict[str, Any]:
         "mesures_par_defaut": dict(MESURES_PAR_DEFAUT),
         "marge_mesures": MARGE_MESURES,
         "structures": dict(STRUCTURES),
+        "usages": {u: dict(g) for u, g in USAGES.items()},
         "exemples": {f: [dict(e) for e in l] for f, l in EXEMPLES.items()},
     }

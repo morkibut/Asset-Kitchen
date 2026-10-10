@@ -24,8 +24,15 @@ export type Composition = {
    *  cette famille. L'écran n'envoie que ceux-là (un réglage qui ne part
    *  nulle part est refusé) et grise les autres. */
   reglages_recus?: ReglageMusique[]
+  /** L'usage de bande originale retenu (titre, village…), s'il y en a un. */
+  usage?: UsageMusique
+  /** Ce qui menace une musique : mots de nappe, interdits de la bande originale. */
+  alertes?: string[]
 }
 export type ReglageMusique = "paroles" | "tempo" | "tonalite" | "mesure"
+/** Les usages de bande originale (`atelier.audio.texte.USAGES`). */
+export type UsageMusique = "titre" | "village" | "exploration" | "danger" | "jingle" | "chanson"
+export type Gabarits = { usages: Record<UsageMusique, { nom: string; description: string; structure: string; tempo: number; mesure: number; mesures: number }> }
 
 /** Ce qu'une demande de son dit — le corps commun à compose, estimate et prepare. */
 export type DemandeSon = {
@@ -33,6 +40,11 @@ export type DemandeSon = {
   secondes?: number; mesures?: number
   tempo?: number; tonalite?: string; mesure?: number; paroles?: string
   texte_relu?: string
+  usage?: UsageMusique
+  /** Les réglages propres au moteur (compositeur, température…), par leur clé de profil. */
+  options?: Record<string, string | number | boolean>
+  /** La graine du premier tirage ; les suivants prennent la suivante. */
+  graine?: number
 }
 export type AnnonceTemps = { temps_s: number | null; mesures: number; cout_usd: number; phrase: string }
 export type Annonce = { nombre: number; famille: FamilleSon | null; modele: string; graine_par_tirage: boolean; annonce: AnnonceTemps; composition: Composition | null }
@@ -83,6 +95,8 @@ export const texteSon = {
   composer: (p: string, d: DemandeSon) => appeler<Composition>(`${base(p)}/audio-jobs/compose`, poster(d)),
   /** Le moteur par défaut de chaque famille pour ce jeu, ou pourquoi il n'y en a pas. */
   moteurs: (p: string) => appeler<{ familles: Record<FamilleSon, MoteurDeFamille> }>(`/workflow-profiles/sound-defaults?projet=${encodeURIComponent(p)}`),
+  /** Les gabarits livrés : les usages de bande originale, leurs structures et leurs exemples. */
+  gabarits: () => appeler<Gabarits>(`/sound-templates`),
 }
 
 export const seriesSon = {

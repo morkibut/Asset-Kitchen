@@ -103,7 +103,10 @@ async def test_nombre_par_famille_et_bornes(son):  # noqa: F811
         with pytest.raises(VariantesRefusees):
             atelier.series_son.annoncer(projet, {**PAS, "nombre": mauvais})
     with pytest.raises(TravailRefuse, match="inconnu"):
-        await atelier.series_son.preparer(projet, {"cle": "x", **PAS, "graine": 3})
+        await atelier.series_son.preparer(projet, {"cle": "x", **PAS, "couleur": 3})
+    # Une graine de départ est acceptée depuis le 10 octobre 2026, mais pas n'importe laquelle.
+    with pytest.raises(TravailRefuse, match="graine"):
+        await atelier.series_son.preparer(projet, {"cle": "y", **PAS, "graine": -1})
 
 
 async def test_un_workflow_sans_graine_ne_tire_pas_huit_fois_le_meme_son(sonore):  # noqa: F811

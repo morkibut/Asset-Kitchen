@@ -1132,21 +1132,30 @@ const PART_VERS_SON: Record<string, string> = {
   epoque: "bruitages, ambiances",
   rendu: "bruitages, interface",
   orchestre: "musique",
+  mode: "musique, jingles, chansons",
+  leitmotiv: "musique, jingles",
   humeur: "musique, ambiances",
+  interdits: "rien — ces mots ne partent jamais : un mot nié appelle le mot chez ces moteurs. La relecture d'une musique alerte s'il y figure",
 }
 
 const NOM_CHAMP_SON: Record<string, string> = {
   epoque: "époque et matière",
   rendu: "rendu sonore",
   orchestre: "orchestre",
+  mode: "mode de la bande originale",
+  leitmotiv: "leitmotiv",
   humeur: "humeur",
+  interdits: "interdits de la bande originale",
 }
 
 const QUESTION_DE_LA_CASE_SON: Record<string, string> = {
   epoque: "quand ça se passe, et de quoi c'est fait — en anglais",
   rendu: "la prise de son : rétro 8 bits, réaliste et proche…",
   orchestre: "quels instruments jouent",
+  mode: "le mode commun à toute la BO, en anglais — « D dorian mode »",
+  leitmotiv: "le motif qui revient d'une piste à l'autre, en anglais",
   humeur: "l'humeur générale de la musique",
+  interdits: "ce que la BO ne doit jamais contenir, séparé par des virgules — « synth, piano »",
 }
 
 /** Les 34 tonalités que le serveur reconnaît (`atelier.domaine.workflow.
@@ -1287,7 +1296,9 @@ function LeSon({
     <div className="flex max-w-[880px] flex-col gap-[22px]">
       <p className="text-[13px] leading-[1.55] text-encre-2">
         Le même geste que pour l'image : on décrit le son à fabriquer, et ces
-        quatre lignes ajoutent le style du jeu devant chaque description.
+        lignes ajoutent le style du jeu devant chaque description. Le mode, le
+        leitmotiv et les interdits font de chaque musique un morceau de la même
+        bande originale.
       </p>
 
       {erreur && (
