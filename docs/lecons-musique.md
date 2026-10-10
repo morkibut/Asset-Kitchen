@@ -76,10 +76,24 @@ Il a fallu cinq versions pour y arriver. Chacune corrigeait un des défauts ci-d
    le style du projet : les autres pistes (camp, chanson) en reprennent les timbres et
    la salle, et ne changent que l'humeur et le rythme.
 
+8. **La reprise d'un son passe par le turbo, même quand le XL est le moteur choisi.** Le
+   XL ne sait pas faire de reprise (cover) : la musique qui part d'un son du jeu tourne
+   donc sur les poids du turbo, et la planche l'affiche (« reprise faite avec le moteur
+   turbo »). Sans ce renvoi, toute reprise serait refusée dès que le XL est installé.
+   C'est un choix assumé, pas un repli honteux : la reprise colle à la source, et le grain
+   du XL compte moins que pour une composition libre.
+9. **Remesurer chaque fichier livré, après tout traitement.** Le réglage de volume en une
+   passe (`loudnorm`) a raté la cible de 1 à 2 dB sur la livraison du 11 octobre 2026
+   (−14,1 au lieu de −16), et le fondu croisé de la boucle déplace encore le niveau. On
+   remesure le fichier final et on corrige d'un gain, crête vraie gardée sous −1 dBTP :
+   les 13 fichiers sont alors tombés à ±0,1 LU de leur cible.
+10. **Un jingle se rend sur 10 s, puis se coupe.** Le moteur ne sait pas faire 3 s
+    proprement ; on rend 10 s, on coupe au premier son, on coupe quand il retombe, et on
+    pose un fondu de sortie de 0,3 à 0,8 s. Les jingles livrés font 2 à 5 s.
+
 ## Ce qui reste ouvert
 
-- La **reprise d'un son** (cover) n'existe que sur les poids du turbo : pas encore de
-  reprise en XL.
+- La **reprise en XL** n'existe pas : voir le point 8 ci-dessus pour le renvoi au turbo.
 - Le **compositeur 4b** que le gabarit officiel associe au XL (8,4 Go) n'a pas été
   essayé ; le 1.7b déjà installé écrit les mêmes codes.
 - L'oreille reste juge : **aucune mesure n'a su prédire la préférence de l'auteur**. Les
