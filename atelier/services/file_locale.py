@@ -221,8 +221,14 @@ class ServiceFileLocale:
         if self._changement is None or self._boucle is not boucle:
             self._boucle, self._changement = boucle, asyncio.Event()
         evenement = self._changement
-        with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(evenement.wait(), self.attente_tour)
+        # `asyncio.timeout` et non `wait_for` : sous Python 3.11, une
+        # annulation qui arrive pendant que l'évènement se lève est avalée par
+        # `wait_for`, et la tâche, marquée « cancelling », attend son tour
+        # pour toujours — `fermer` ne revenait plus (tests/test_sn3_series.py,
+        # atelier fermé en plein calcul).
+        with contextlib.suppress(TimeoutError):
+            async with asyncio.timeout(self.attente_tour):
+                await evenement.wait()
 
     @contextlib.contextmanager
     def _registre(self):
