@@ -24,7 +24,7 @@ from atelier.domaine.travail import TravailRefuse
 from atelier.domaine.variantes_son import nombre_de_tirages
 from atelier.domaine.workflow import GRAINE_MAX, MUSIQUE
 from atelier.services.travaux import _hash, _json
-from atelier.services.travaux_audio import ETIQUETTES
+from atelier.services.travaux_audio import ETIQUETTES, reglage_de_calcul
 
 CLE_MAX = 150
 # Ce qu'une série accepte : la demande d'un son (AU14 + SN2), plus le nombre.
@@ -62,12 +62,15 @@ class ServiceSeriesSon:
 
     # ── Le temps annoncé ─────────────────────────────────────────────────
 
-    def temps(self, modele, nombre):
+    def temps(self, modele, nombre, options=None):
         """Le temps de `nombre` tirages, d'après les calculs déjà faits sur
-        cette machine par ce modèle (médianes de la file locale). Le premier
+        cette machine par ce modèle **avec le même réglage** (médianes de la
+        file locale) : ACE sans compositeur va six fois plus vite, et une
+        médiane commune annonçait la moitié du temps réel. Le premier
         prend la mesure « froid », les suivants la mesure « chaud » quand elles
         existent. Sans mesure, le temps est inconnu, et l'écran le dit."""
-        groupes = [m for m in self.a.file_locale.mesures() if m["modele"] == modele]
+        reglage = reglage_de_calcul(options)
+        groupes = [m for m in self.a.file_locale.mesures() if m["modele"] == modele and m.get("reglage") == reglage]
         if not groupes or nombre <= 0:
             return {"temps_s": None if nombre else 0, "mesures": 0, "cout_usd": 0,
                     "phrase": ("Aucun calcul à faire." if not nombre else
@@ -117,7 +120,7 @@ class ServiceSeriesSon:
         _, nombre, _, demande = self._lire_demande({**brut, "cle": "annonce"})
         profil, compo = self._profil(projet, demande)
         return {"nombre": nombre, "famille": demande.get("famille"), "modele": profil["modele"],
-                "graine_par_tirage": "graine" in profil["liaisons"], "annonce": self.temps(profil["modele"], nombre),
+                "graine_par_tirage": "graine" in profil["liaisons"], "annonce": self.temps(profil["modele"], nombre, demande.get("options")),
                 "composition": compo}
 
     def _nom_de_base(self, nom, demande):
@@ -163,7 +166,7 @@ class ServiceSeriesSon:
                  "nom": base, "famille": demande.get("famille"), "modele": profil["modele"], "nombre": nombre,
                  "demande": demande, "cree_le": time.time(),
                  "tirages": [{"rang": r, "cle": f"serie:{cle}:{r:02d}", "nom": base} for r in range(1, nombre + 1)],
-                 "annonce": self.temps(profil["modele"], nombre)}
+                 "annonce": self.temps(profil["modele"], nombre, demande.get("options"))}
         if emplacement is not None:
             serie["emplacement"] = {"sujet": emplacement["sujet"], "cle": emplacement["cle"]}
         if compo is not None and "texte_relu" not in demande:
@@ -273,7 +276,7 @@ class ServiceSeriesSon:
             extra["emplacement"] = self.a.sons_du_sujet.decrire(projet, serie["emplacement"])
         return {k: v for k, v in serie.items() if k not in ("empreinte",)} | {
             "tirages": tirages, "compte": compte, "etat": etat, "prochaine_action": action,
-            "reste": self.temps(serie["modele"], restants), "jeux": jeux} | extra
+            "reste": self.temps(serie["modele"], restants, serie["demande"].get("options")), "jeux": jeux} | extra
 
     def lister(self, projet):
         dossier = self._dossier(projet)
