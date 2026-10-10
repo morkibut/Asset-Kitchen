@@ -63,6 +63,24 @@ REFUS_ZONE_ABSENTE = "repeint une zone : il lui faut la zone peinte"
 # (`sans_image_de_fin`), et le clip finit où il veut.
 IMAGE_DE_FIN = "image_de_fin"
 
+# **La reprise d'un son** (BO, 10 octobre 2026). `source` : le nom du son de
+# départ déposé chez le moteur, comme le masque — jamais ses octets. `force` :
+# à quel point suivre ce son, de 0,1 (presque rien) à 0,95 (presque tout) ;
+# elle part dans le débruitage du KSampler sous la forme `1 − force`, seule
+# valeur qu'une liaison ne transmet pas telle quelle (voir
+# `atelier.audio.graphes.ace_step_15_reprise`). Un profil qui relie `source`
+# ne part jamais sans son de départ ; un profil qui ne la relie pas le refuse.
+SOURCE, FORCE = "source", "force"
+FORCE_MIN, FORCE_MAX, FORCE_DEFAUT = 0.1, 0.95, 0.6
+REFUS_SANS_SOURCE = "ne sait pas partir d'un son existant"
+
+
+def force_acceptee(valeur):
+    """La force telle qu'elle est donnée, ou un refus en clair."""
+    if not _nombre(valeur) or not FORCE_MIN <= valeur <= FORCE_MAX:
+        raise WorkflowRefuse("La fidélité au son de départ va de 0,1 à 0,95.")
+    return valeur
+
 
 def _est_un_lien(valeur):
     """Une entrée de nœud qui pointe la sortie d'un autre, `["4", 0]` au format API."""
@@ -186,7 +204,7 @@ def _verifier_graphe(graphe, liaisons, parametres, quelle=""):
         # Une série de N tirages sera N travaux, chacun sa graine (SN3).
         # `masque` (PX2) : la zone à repeindre, une image en noir et blanc
         # déposée telle quelle — une seule par profil, jamais aplatie.
-        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine", "partition", MASQUE, IMAGE_DE_FIN, *MUSIQUE)
+        connu = nom_champ in ("prompt", "prompt_negatif", "largeur", "hauteur", "secondes", "images", "cadence", "graine", "partition", MASQUE, IMAGE_DE_FIN, SOURCE, FORCE, *MUSIQUE)
         if nom_champ.startswith("reference:"):
             try:
                 references.append(int(nom_champ.split(":")[1]))
@@ -374,6 +392,11 @@ def _normaliser(brut: dict) -> dict:
         if any(l["noeud"] in siens for nom_champ, liens in liaisons.items() if nom_champ != IMAGE_DE_FIN for l in liens):
             raise WorkflowRefuse("L'image de fin se charge par son propre nœud : aucune autre liaison n'y arrive.")
         sans_image_de_fin(graphe, liaisons, sortie["noeud"])
+    # La reprise d'un son : un son de départ et sa force vont ensemble, et ne
+    # se relient que dans un profil sonore.
+    if SOURCE in liaisons or FORCE in liaisons:
+        if nature != "audio" or not {SOURCE, FORCE} <= set(liaisons):
+            raise WorkflowRefuse("Seul un profil sonore relie un son de départ, et toujours avec sa force.")
     return {"identifiant": identifiant, "nom": nom, "nature": nature, "graphe": graphe,
         "liaisons": liaisons, "parametres": parametres, "formats": formats,
         "durees": durees if nature in ("video", "audio") else [], "cadence": cadence if nature == "video" else 0,
@@ -419,8 +442,14 @@ _NOMS_MUSIQUE = {"paroles": "de paroles", "tempo": "de tempo", "tonalite": "de t
 
 
 def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=None, proportions="1:1", secondes=0, options=None, graine=None,
-             paroles=None, tempo=None, tonalite=None, mesure=None, partition=None, masque=None, image_de_fin=None):
+             paroles=None, tempo=None, tonalite=None, mesure=None, partition=None, masque=None, image_de_fin=None,
+             source=None, force=None):
     graphe_choisi, liaisons = graphe_pour(profil, len(references))
+    # La reprise d'un son : `source` est le nom déposé chez le moteur.
+    if (source is not None or force is not None) and SOURCE not in liaisons:
+        raise WorkflowRefuse(f"Ce profil {REFUS_SANS_SOURCE} : il ne relie aucun son de départ.")
+    if SOURCE in liaisons and (not isinstance(source, str) or not source):
+        raise WorkflowRefuse("Ce profil reprend un son : il lui faut le son de départ.")
     # MO3 : `image_de_fin` est, comme le masque, le nom déposé chez le moteur.
     if image_de_fin is not None and IMAGE_DE_FIN not in liaisons:
         raise WorkflowRefuse("Ce profil ne sait pas finir sur une image choisie : il ne relie aucune image de fin.")
@@ -482,6 +511,10 @@ def composer(profil, *, prompt, prompt_negatif="", references=(), resolution=Non
         valeurs["graine"] = tirer_graine() if graine is None else graine
     if image_de_fin is not None:
         valeurs[IMAGE_DE_FIN] = image_de_fin
+    if SOURCE in liaisons:
+        valeurs[SOURCE] = source
+        # Arrondi au dix-millième : 1 − 0,6 rend 0,4 et non 0,399999…
+        valeurs[FORCE] = round(1 - force_acceptee(FORCE_DEFAUT if force is None else force), 4)
     if IMAGE_DE_FIN in liaisons and image_de_fin is None:
         graphe = sans_image_de_fin(graphe_choisi, liaisons, profil["sortie"]["noeud"])
     else:

@@ -1418,6 +1418,122 @@
   "python_module": "nodes",
   "search_aliases": []
  },
+ "LoadAudio": {
+  "api_node": false,
+  "category": "audio",
+  "deprecated": false,
+  "description": "",
+  "display_name": "Load Audio",
+  "experimental": false,
+  "input": {
+   "required": {
+    "audio": [
+     "COMBO",
+     {
+      "audio_upload": true,
+      "options": []
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "audio"
+   ]
+  },
+  "name": "LoadAudio",
+  "output": [
+   "AUDIO"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "AUDIO"
+  ],
+  "output_node": false,
+  "python_module": "comfy_extras.nodes_audio"
+ },
+ "ReferenceTimbreAudio": {
+  "api_node": false,
+  "category": "advanced/conditioning/audio",
+  "deprecated": false,
+  "description": "This node sets the reference audio for ace step 1.5",
+  "display_name": "Reference Audio",
+  "experimental": true,
+  "input": {
+   "optional": {
+    "latent": [
+     "LATENT",
+     {}
+    ]
+   },
+   "required": {
+    "conditioning": [
+     "CONDITIONING",
+     {}
+    ]
+   }
+  },
+  "input_order": {
+   "optional": [
+    "latent"
+   ],
+   "required": [
+    "conditioning"
+   ]
+  },
+  "name": "ReferenceTimbreAudio",
+  "output": [
+   "CONDITIONING"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "CONDITIONING"
+  ],
+  "output_node": false,
+  "python_module": "comfy_extras.nodes_ace"
+ },
+ "VAEEncodeAudio": {
+  "api_node": false,
+  "category": "model/latent",
+  "deprecated": false,
+  "description": "",
+  "display_name": "VAE Encode Audio",
+  "experimental": false,
+  "input": {
+   "required": {
+    "audio": [
+     "AUDIO",
+     {}
+    ],
+    "vae": [
+     "VAE",
+     {}
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "audio",
+    "vae"
+   ]
+  },
+  "name": "VAEEncodeAudio",
+  "output": [
+   "LATENT"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_name": [
+   "LATENT"
+  ],
+  "output_node": false,
+  "python_module": "comfy_extras.nodes_audio"
+ },
  "VAEDecodeAudio": {
   "api_node": false,
   "category": "model/latent",

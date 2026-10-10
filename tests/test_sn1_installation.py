@@ -117,8 +117,9 @@ async def test_catalogue_dit_ce_que_chaque_moteur_sait_faire_sans_rien_installer
     catalogue = await atelier.installation_son.catalogue()
     # « yue2-partition-jouee » (SN9) partage le fichier de poids de
     # « yue2-int8 » mais n'est jamais un moteur à choisir pour lui-même : le
-    # catalogue ne montre que les cinq moteurs réellement choisissables.
-    assert {m["identifiant"] for m in catalogue} == set(CONSTRUCTEURS) - {"yue2-partition-jouee"}
+    # catalogue ne montre que les cinq moteurs réellement choisissables. Même
+    # règle pour « ace-step-15-reprise » (BO) : on y passe en partant d'un son.
+    assert {m["identifiant"] for m in catalogue} == set(CONSTRUCTEURS) - {"yue2-partition-jouee", "ace-step-15-reprise"}
     par_id = {m["identifiant"]: m for m in catalogue}
     assert par_id["sa3-small-sfx"]["familles"] == ["bruitage", "ambiance"]
     assert par_id["ace-step-15-turbo"]["familles"] == ["musique", "jingle"]

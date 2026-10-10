@@ -1,7 +1,10 @@
 """SN1 : les profils sonores que l'atelier écrit, la durée libre, et les
 réglages de musique (paroles, tempo, tonalité, mesure). ComfyUI est doublé ;
 son /object_info est un extrait réel (ComfyUI 0.36, 18 septembre 2026),
-réduit aux nœuds utilisés : tests/object_info_son.json."""
+réduit aux nœuds utilisés : tests/object_info_son.json. Trois nœuds y ont été
+ajoutés à la main pour la reprise d'un son (BO, 10 octobre 2026), d'après le
+code de ComfyUI et non d'un relevé : `LoadAudio`, `VAEEncodeAudio`
+(comfy_extras/nodes_audio.py) et `ReferenceTimbreAudio` (nodes_ace.py)."""
 import copy
 import json
 from pathlib import Path
@@ -67,6 +70,9 @@ def test_chaque_constructeur_rend_un_profil_que_normaliser_accepte(identifiant):
 @pytest.mark.parametrize("identifiant", list(CONSTRUCTEURS))
 def test_chaque_noeud_existe_dans_l_object_info_releve(identifiant):
     graphe = CONSTRUCTEURS[identifiant]()["graphe"]
+    # Un champ relié reçoit sa valeur à l'envoi (le son de départ de `LoadAudio`,
+    # BO) : la valeur d'attente du graphe n'a pas à figurer parmi les choix.
+    relies = {(l["noeud"], l["champ"]) for liens in CONSTRUCTEURS[identifiant]()["liaisons"].values() for l in liens}
     for cle, noeud in graphe.items():
         definition = OBJECT_INFO.get(noeud["class_type"])
         assert definition, f"{noeud['class_type']} absent de ComfyUI 0.36"
@@ -83,7 +89,7 @@ def test_chaque_noeud_existe_dans_l_object_info_releve(identifiant):
                 assert attendu in ("*", sortie), (cle, champ, sortie, attendu)
                 continue
             choix = _choix(declares[champ])
-            if choix is not None and champ not in CHAMPS_FICHIER:
+            if choix is not None and champ not in CHAMPS_FICHIER and (cle, champ) not in relies:
                 assert str(valeur) in choix or valeur in choix, (cle, champ, valeur)
     sortie = CONSTRUCTEURS[identifiant]()["sortie"]
     assert OBJECT_INFO[graphe[sortie["noeud"]]["class_type"]]["output_node"]

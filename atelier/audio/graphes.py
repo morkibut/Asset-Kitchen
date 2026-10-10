@@ -233,6 +233,69 @@ def ace_step_15_turbo(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen
                        "le compositeur 1.7b écrit le plan du morceau avant le rendu."}
 
 
+def ace_step_15_reprise(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen_0.6b_ace15.safetensors",
+                        compositeur="qwen_1.7b_ace15.safetensors", vae="ace_1.5_vae.safetensors"):
+    """**La reprise d'un son** : un morceau déjà fait, rejoué avec un autre
+    texte en gardant sa mélodie et sa carrure (« qui revit », « désert », tirés
+    d'un air de fête). Aucun nœud officiel de reprise n'existe : c'est la
+    méthode générique « image vers image » de ComfyUI appliquée au son.
+
+    - `LoadAudio` charge le son de départ, déposé chez ComfyUI à l'envoi
+      (liaison `source`) ; `VAEEncodeAudio` le passe en latent, et ce latent
+      remplace le latent vide du turbo à l'entrée `latent_image` du KSampler.
+    - `ReferenceTimbreAudio` donne le même latent comme référence de timbre au
+      conditionnement (comfy_extras/nodes_ace.py).
+    - **La force (0,1 à 0,95) n'est pas une option du profil** : elle part dans
+      le `denoise` du KSampler sous la forme `1 − force` (liaison `force`,
+      calculée par `composer`). C'est la seule valeur du profil qui ne part pas
+      telle qu'elle est dite, et la raison est d'usage : « à quel point suivre
+      le son de départ » se lit dans le bon sens, un débruitage non.
+    - Les codes audio sont coupés (`generate_audio_codes` faux) : le nœud le
+      demande dès qu'on lui donne une référence sonore, et la mélodie vient du
+      son de départ. Température et guidage, qui ne servent qu'au compositeur,
+      ne sont donc pas proposés. Le 1.7b reste chargé : `DualCLIPLoader` de
+      type `ace` attend la paire, et les mêmes fichiers que le turbo suffisent.
+    - La durée (`duration` du texte) est celle du son de départ ; il n'y a pas
+      de latent vide à régler.
+    """
+    graphe = {
+        "1": {"class_type": "UNETLoader", "inputs": {"unet_name": modele, "weight_dtype": "default"}},
+        "2": {"class_type": "ModelSamplingAuraFlow", "inputs": {"model": ["1", 0], "shift": 3}},
+        "3": {"class_type": "DualCLIPLoader", "inputs": {"clip_name1": encodeur, "clip_name2": compositeur, "type": "ace", "device": "default"}},
+        "4": {"class_type": "VAELoader", "inputs": {"vae_name": vae}},
+        "5": {"class_type": "TextEncodeAceStepAudio1.5", "inputs": {"clip": ["3", 0], "tags": "", "lyrics": "[Instrumental]",
+            "seed": 0, "bpm": 90, "duration": 60, "timesignature": "4", "language": "en", "keyscale": "D minor",
+            "generate_audio_codes": False, "cfg_scale": 2.0, "temperature": 0.85, "top_p": 0.9, "top_k": 0, "min_p": 0.0}},
+        "6": {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["5", 0]}},
+        "7": {"class_type": "LoadAudio", "inputs": {"audio": ""}},
+        "8": {"class_type": "VAEEncodeAudio", "inputs": {"audio": ["7", 0], "vae": ["4", 0]}},
+        "9": {"class_type": "ReferenceTimbreAudio", "inputs": {"conditioning": ["5", 0], "latent": ["8", 0]}},
+        "10": {"class_type": "KSampler", "inputs": {"seed": 0, "steps": 8, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
+            "denoise": 0.4, "model": ["2", 0], "positive": ["9", 0], "negative": ["6", 0], "latent_image": ["8", 0]}},
+        "11": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["10", 0], "vae": ["4", 0]}},
+        "12": _sortie("ace-step-15-reprise", ["11", 0]),
+    }
+    liaisons = {"prompt": [_lien("5", "tags")], "paroles": [_lien("5", "lyrics")], "tempo": [_lien("5", "bpm")],
+        "tonalite": [_lien("5", "keyscale")], "mesure": [_lien("5", "timesignature")],
+        "secondes": [_lien("5", "duration")], "graine": [_lien("10", "seed"), _lien("5", "seed")],
+        "source": [_lien("7", "audio")], "force": [_lien("10", "denoise")],
+        "option:langue": [_lien("5", "language")], "option:pas": [_lien("10", "steps")]}
+    parametres = {"langue": {"genre": "choix", "valeurs": list(LANGUES_ACE), "defaut": "en"},
+        "pas": dict(PARAMETRES_ACE["pas"])}
+    return {"identifiant": "ace-step-15-reprise", "nom": "ACE-Step 1.5 — reprise d'un son", "nature": "audio",
+        "graphe": graphe, "liaisons": liaisons, "parametres": parametres,
+        "formats": [], "durees": [30, 60, 90, 120], "duree_libre": {"min": 2, "max": 600},
+        "sortie": {"noeud": "12", "champ": "audio"},
+        "description": "Rejoue un son déjà fait avec un autre texte : la mélodie et la structure restent, "
+                       "l'orchestration et l'humeur changent. La durée est celle du son de départ."}
+
+
+# Le profil de reprise de chaque moteur qui en a un : une demande qui part
+# d'un son existant (`source`) passe du premier au second. Un moteur absent
+# d'ici ne sait pas reprendre un son, et la demande est refusée en clair.
+REPRISES = {"ace-step-15-turbo": "ace-step-15-reprise"}
+
+
 def yue2_int8(*, checkpoint="yue2_3b_int8_convrot.safetensors"):
     """Les chansons : style et paroles, partition ABC écrite d'abord par le
     modèle puis rendue (audio_yue2_text2music, planification ABC activée).
@@ -327,6 +390,10 @@ CONSTRUCTEURS = {
     # (voir sa docstring) ; `ServicePartitionSon` le construit à la volée en
     # reprenant le fichier de poids déjà résolu pour `yue2-partition-jouee`.
     "yue2-partition-jouee": yue2_depuis_partition,
+    # « ace-step-15-reprise » : installé à côté du turbo (mêmes fichiers),
+    # jamais le moteur d'une famille — une demande y passe quand elle part
+    # d'un son existant (`REPRISES`).
+    "ace-step-15-reprise": ace_step_15_reprise,
 }
 
 
