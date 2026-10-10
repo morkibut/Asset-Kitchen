@@ -528,3 +528,14 @@ def atelier(tmp_path, double) -> Atelier:
 def client(atelier) -> TestClient:
     with TestClient(creer_application(atelier)) as client:
         yield client
+
+
+@pytest.fixture(autouse=True)
+def _object_info_oublie():
+    """Chaque essai part sans `/object_info` retenu : les doubles de ComfyUI
+    partagent une adresse, et un essai qui retire un nœud ne doit pas lire la
+    liste d'un autre (`atelier.fournisseur.workflow._object_info`)."""
+    from atelier.fournisseur import workflow
+    workflow._OBJECT_INFO.clear()
+    yield
+    workflow._OBJECT_INFO.clear()

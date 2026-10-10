@@ -755,10 +755,13 @@ async def test_quatre_prises_de_deux_secondes_sortent_en_moins_de_trente_seconde
     atelier, comfy, p = sonore
     atelier.travaux_audio.intervalle = 1  # le pas réel, pas celui des essais
     rendus_le = {}
+    lectures_outils = []
     repondre = comfy.repondre
 
     def comfy_qui_met_deux_secondes(requete):
         chemin = requete.url.path
+        if chemin == "/object_info":
+            lectures_outils.append(chemin)
         maintenant = time.monotonic()
         for numero in comfy.jobs:
             rendus_le.setdefault(numero, maintenant + 2.0)
@@ -777,6 +780,7 @@ async def test_quatre_prises_de_deux_secondes_sortent_en_moins_de_trente_seconde
             projet=None, acteur="auteur", parametres={"ancienne": i})
         atelier.file_locale.modifier(e["identifiant"], etat="termine", duree_s=3.0)
     prises = [await preparer_son(atelier, p, f"prise-{i}") for i in range(4)]
+    lectures_outils.clear()  # la préparation lit sa copie fraîche ; la série, non
     debut = time.monotonic()
     for t in prises:
         await atelier.travaux.demarrer(t["projet"], t["identifiant"], t["acteur"])
@@ -786,3 +790,7 @@ async def test_quatre_prises_de_deux_secondes_sortent_en_moins_de_trente_seconde
     assert all(f["etat"] == "termine" for f in finis), [f["etat"] for f in finis]
     assert len(comfy.envois) == 4
     assert duree < 30, duree
+    # Mesuré le 10 octobre : `/object_info` pèse 2 Mo et 3 s à lire, et il était
+    # lu deux fois par prise — 6 s de trou entre deux sons. La série reprend la
+    # copie lue à la préparation : au plus une lecture, si elle a vieilli.
+    assert len(lectures_outils) <= 1, len(lectures_outils)

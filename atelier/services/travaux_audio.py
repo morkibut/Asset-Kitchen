@@ -305,7 +305,7 @@ class ServiceTravauxAudio(ServiceTravaux):
         if not numero:
             if e["soumission_engagee"]:
                 raise AcceptationLocaleInconnue("L’acceptation du son est inconnue. Associez son numéro ComfyUI conservé avant de reprendre.")
-            diagnostic = await m.diagnostiquer_profil(t["profil"])
+            diagnostic = await m.diagnostiquer_profil(t["profil"], retenu_permis=True)
             if not diagnostic["disponible"]: raise TravailRefuse(" · ".join(diagnostic["problemes"]))
             with _verrou(self._projet(t["projet"]) / ".budget"):
                 self._autoriser(t)
