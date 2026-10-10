@@ -561,9 +561,9 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
         <div className="flex flex-wrap items-center gap-[8px] pt-[4px]">
           <button type="button" className={BASCULE} aria-expanded={panneau === "relire"} onClick={() => setPanneau((p) => p === "relire" ? null : "relire")}>{VERS_LA_RELECTURE}{d.manuel !== null ? " · modifié à la main" : ""} {panneau === "relire" ? "▾" : "▸"}</button>
           <button type="button" className={BASCULE} aria-expanded={panneau === "reglages"} onClick={() => setPanneau((p) => p === "reglages" ? null : "reglages")}>Réglages · <span className="font-mono">{resume}</span> {panneau === "reglages" ? "▾" : "▸"}</button>
-          <span className="ml-auto text-[12.5px] text-encre-3">{raison || (relecture ? "" : temps == null && annonce ? "Temps inconnu : le premier tirage le mesurera." : "")}</span>
+          <span className="ml-auto text-[12.5px] text-encre-3">{raison || (relecture ? "" : temps == null && annonce ? "Temps inconnu : le premier tirage le mesurera." : annonce?.annonce.repli ? "Temps estimé, pas encore mesuré ici : le premier tirage le mesurera." : "")}</span>
           <button type="button" className={PRINCIPAL} disabled={!!raison || relecture || occupe || !annonce} onClick={(e) => void lancer(e.currentTarget)}>
-            Lancer {n} tirages{temps != null && !raison ? ` · ${tempsTexte(temps)}` : ""}
+            Lancer {n} tirages{temps != null && !raison ? ` · ${tempsTexte(temps)}${annonce?.annonce.repli ? " (estimé)" : ""}` : ""}
           </button>
         </div>
 

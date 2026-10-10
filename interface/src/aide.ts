@@ -4413,10 +4413,10 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Lancer, écouter, garder",
     quoi: "Le bouton qui envoie la demande au moteur local, avec le temps que le calcul prendra sur cette machine.",
     change:
-      "Le temps vient des calculs déjà faits ici ; s'il est inconnu, le premier tirage le mesure. Rien ne se paie : c'est ta carte graphique qui travaille. Une série coupée se reprend d'un geste, sans refaire les tirages rendus.",
+      "Le temps vient des calculs déjà faits ici. Avant le premier tirage d'ACE-Step 1.5, il est **estimé** d'après la durée du son et le modèle, et le bouton le dit ; ailleurs, il reste inconnu jusqu'au premier tirage, qui le mesure. Rien ne se paie : c'est ta carte graphique qui travaille. Une série coupée se reprend d'un geste, sans refaire les tirages rendus.",
     origine: "les calculs déjà faits sur ta machine",
     long:
-      "De l'ordre d'une seconde par bruitage, quelques secondes pour ACE-Step, 35 à 95 s pour un tirage de YuE2 (relevé du 19 septembre 2026, carte de 8 Go). Le premier tirage de chaque moteur paie en plus son chargement.",
+      "De l'ordre d'une seconde par bruitage, quelques secondes pour ACE-Step, 35 à 95 s pour un tirage de YuE2 (relevé du 19 septembre 2026, carte de 8 Go). Le premier tirage de chaque moteur paie en plus son chargement.\n\nL'estimation d'ACE-Step 1.5 avec le compositeur vient de temps relevés le 10 octobre 2026 sur une carte de 8 Go : le XL turbo met environ 35 s pour 10 s de son, 80 s pour une minute et 3 min 35 pour deux minutes et demie ; le turbo et le base, 3 min 05 et 3 min 50 pour deux minutes et demie. Dès qu'un tirage a été mesuré ici, c'est la mesure qui parle.",
   },
 
   "son.serie": {

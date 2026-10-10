@@ -20,6 +20,7 @@ import time
 
 from atelier.depot.verrou import VerrouOccupe, verrou
 from atelier.domaine.son import SonRefuse
+from atelier.domaine.temps_de_calcul import estimation_de_repli
 from atelier.domaine.travail import TravailRefuse
 from atelier.domaine.variantes_son import nombre_de_tirages
 from atelier.domaine.workflow import GRAINE_MAX, MUSIQUE
@@ -38,6 +39,14 @@ def duree_lisible(secondes):
     if secondes < 90:
         return f"{max(1, round(secondes))} s"
     return f"{round(secondes / 60)} min"
+
+
+def _secondes(demande, compo):
+    """La durée de son qui partira : celle que la composition a arrêtée pour
+    une famille, sinon celle de la demande."""
+    if compo is not None and compo.get("secondes") is not None:
+        return compo["secondes"]
+    return demande.get("secondes")
 
 
 class ServiceSeriesSon:
@@ -64,15 +73,23 @@ class ServiceSeriesSon:
 
     # ── Le temps annoncé ─────────────────────────────────────────────────
 
-    def temps(self, modele, nombre, options=None):
+    def temps(self, modele, nombre, options=None, secondes=None):
         """Le temps de `nombre` tirages, d'après les calculs déjà faits sur
         cette machine par ce modèle **avec le même réglage** (médianes de la
         file locale) : ACE sans compositeur va six fois plus vite, et une
         médiane commune annonçait la moitié du temps réel. Le premier
         prend la mesure « froid », les suivants la mesure « chaud » quand elles
-        existent. Sans mesure, le temps est inconnu, et l'écran le dit."""
+        existent. Sans mesure, une estimation de repli par moteur et par durée
+        de son (`domaine.temps_de_calcul`) quand elle existe, marquée `repli` et
+        dite telle quelle ; sinon le temps est inconnu, et l'écran le dit."""
         reglage = reglage_de_calcul(options)
         groupes = [m for m in self.a.file_locale.mesures() if m["modele"] == modele and m.get("reglage") == reglage]
+        repli = estimation_de_repli(modele, secondes, reglage) if not groupes and nombre > 0 else None
+        if repli is not None:
+            total = repli * nombre
+            return {"temps_s": round(total, 1), "mesures": 0, "cout_usd": 0, "repli": True,
+                    "phrase": f"Environ {duree_lisible(total)} de calcul local pour {nombre} tirage{'s' if nombre > 1 else ''} : "
+                              "estimation de repli, pas encore de mesure de ce moteur sur cette machine. Aucun coût en argent."}
         if not groupes or nombre <= 0:
             return {"temps_s": None if nombre else 0, "mesures": 0, "cout_usd": 0,
                     "phrase": ("Aucun calcul à faire." if not nombre else
@@ -122,7 +139,8 @@ class ServiceSeriesSon:
         _, nombre, _, demande = self._lire_demande({**brut, "cle": "annonce"})
         profil, compo = self._profil(projet, demande)
         return {"nombre": nombre, "famille": demande.get("famille"), "modele": profil["modele"],
-                "graine_par_tirage": "graine" in profil["liaisons"], "annonce": self.temps(profil["modele"], nombre, demande.get("options")),
+                "graine_par_tirage": "graine" in profil["liaisons"],
+                "annonce": self.temps(profil["modele"], nombre, demande.get("options"), _secondes(demande, compo)),
                 "composition": compo}
 
     def _nom_de_base(self, nom, demande):
@@ -168,7 +186,7 @@ class ServiceSeriesSon:
                  "nom": base, "famille": demande.get("famille"), "modele": profil["modele"], "nombre": nombre,
                  "demande": demande, "cree_le": time.time(),
                  "tirages": [{"rang": r, "cle": f"serie:{cle}:{r:02d}", "nom": base} for r in range(1, nombre + 1)],
-                 "annonce": self.temps(profil["modele"], nombre, demande.get("options"))}
+                 "annonce": self.temps(profil["modele"], nombre, demande.get("options"), _secondes(demande, compo))}
         if emplacement is not None:
             serie["emplacement"] = {"sujet": emplacement["sujet"], "cle": emplacement["cle"]}
         if compo is not None and "texte_relu" not in demande:
@@ -235,7 +253,7 @@ class ServiceSeriesSon:
 
     def lire(self, projet, identifiant):
         serie = self._brut(projet, identifiant)
-        tirages, restants = [], 0
+        tirages, restants, secondes = [], 0, None
         for tirage in serie["tirages"]:
             travail = None
             if tirage.get("travail"):
@@ -248,6 +266,7 @@ class ServiceSeriesSon:
                       "raison": "Ce tirage n'est pas encore préparé.", "prochaine_action": "reprendre", "son": None}
             else:
                 envoi = travail.get("snapshot_audio") or {}
+                secondes = secondes if secondes is not None else envoi.get("secondes")
                 vu = {"rang": tirage["rang"], "travail": travail["identifiant"], "graine": envoi.get("graine"),
                       "etat": "rendu" if travail.get("son") else travail["etat"], "raison": travail.get("raison", ""),
                       "prochaine_action": travail["prochaine_action"],
@@ -278,7 +297,7 @@ class ServiceSeriesSon:
             extra["emplacement"] = self.a.sons_du_sujet.decrire(projet, serie["emplacement"])
         return {k: v for k, v in serie.items() if k not in ("empreinte",)} | {
             "tirages": tirages, "compte": compte, "etat": etat, "prochaine_action": action,
-            "reste": self.temps(serie["modele"], restants, serie["demande"].get("options")), "jeux": jeux} | extra
+            "reste": self.temps(serie["modele"], restants, serie["demande"].get("options"), secondes), "jeux": jeux} | extra
 
     def lister(self, projet):
         dossier = self._dossier(projet)

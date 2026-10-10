@@ -38,6 +38,7 @@ from typing import Any, Awaitable, Callable
 
 from atelier.depot.verrou import VerrouOccupe, verrou
 from atelier.domaine.erreurs import ErreurAtelier
+from atelier.domaine.temps_de_calcul import estimation_de_repli
 
 
 class FileLocaleRefusee(ErreurAtelier):
@@ -83,6 +84,12 @@ ApresFin = Callable[[dict[str, Any]], Awaitable[None]]
 # jamais couper un premier calcul honnête.
 MARGE_ECHEANCE = 0.2
 ESTIMATION_PAR_DEFAUT_S = 600.0
+# Avant toute mesure, un moteur qui a une estimation de repli par durée de son
+# (ACE-Step 1.5, `domaine.temps_de_calcul`) la prend à la place, **doublée** :
+# ce n'est pas une mesure de cette machine, et une échéance trop courte ferait
+# reprendre un calcul honnête. Elle corrige aussi l'autre sens : une musique
+# de dix minutes sur le modèle base dépasse de loin les dix minutes par défaut.
+MARGE_REPLI = 2.0
 # Une prolongation vaut 20 % de l'estimation, et jamais moins d'une minute :
 # un son de trois secondes ne se revérifierait sinon que 0,6 s plus tard.
 PROLONGATION_MIN_S = 60.0
@@ -250,7 +257,8 @@ class ServiceFileLocale:
 
     def preparer(self, cle: str, *, nature: str, moteur: str, modele: str, projet: str | None,
                  acteur: str, parametres: dict[str, Any], entree: bytes | None = None,
-                 fin: bytes | None = None, reglage: str | None = None) -> dict[str, Any]:
+                 fin: bytes | None = None, reglage: str | None = None,
+                 secondes: float | None = None) -> dict[str, Any]:
         if nature not in self._executeurs or moteur not in self._moteurs:
             raise FileLocaleRefusee("Cette méthode locale n'a pas d'exécuteur et de diagnostic raccordés.")
         identifiant = hashlib.sha256(cle.encode()).hexdigest()[:32]
@@ -280,7 +288,10 @@ class ServiceFileLocale:
                 "etat": "en_attente", "cree_le": time.time(), "demarre_le": None, "termine_le": None,
                 "travail_externe": None, "soumission_engagee": False, "raison": "En attente de son tour.",
                 "resultat": None, "duree_s": None, "temperature": "inconnue",
-                **({"reglage": reglage} if reglage else {})})
+                **({"reglage": reglage} if reglage else {}),
+                # La durée de son demandée, hors du contrat aussi : elle ne
+                # sert qu'à l'estimation de repli (`estimation`).
+                **({"secondes": secondes} if secondes is not None else {})})
         return self.lire(identifiant)
 
     def trouver(self, cle: str) -> dict[str, Any] | None:
@@ -501,8 +512,11 @@ class ServiceFileLocale:
         """Combien de secondes l'atelier attend pour ce calcul : la médiane
         mesurée pour le même moteur, le même modèle et la même température ;
         à défaut, la plus longue des médianes de ce modèle sur ce moteur ; à
-        défaut encore, `ESTIMATION_PAR_DEFAUT_S`. C'est le même chiffre que
-        l'écran annonce (« Environ N s de calcul »)."""
+        défaut encore, l'estimation de repli du moteur pour cette durée de son
+        (`domaine.temps_de_calcul`), doublée ; à défaut enfin,
+        `ESTIMATION_PAR_DEFAUT_S`. Mesurée, c'est le même chiffre que l'écran
+        annonce (« Environ N s de calcul ») ; de repli, la veille prend le
+        double de ce que l'écran annonce."""
         mesures = [m for m in self.mesures(etapes) if m["moteur"] == etape["moteur"] and m["modele"] == etape["modele"]
                    and m.get("reglage") == etape.get("reglage")]
         exacte = next((m for m in mesures if m["temperature"] == etape.get("temperature", "inconnue")), None)
@@ -510,6 +524,9 @@ class ServiceFileLocale:
             return float(exacte["mediane_s"])
         if mesures:
             return float(max(m["mediane_s"] for m in mesures))
+        repli = estimation_de_repli(etape["modele"], etape.get("secondes"), etape.get("reglage"))
+        if repli is not None:
+            return repli * MARGE_REPLI
         return ESTIMATION_PAR_DEFAUT_S
 
     @staticmethod

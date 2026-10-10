@@ -356,7 +356,7 @@ class ServiceTravauxAudio(ServiceTravaux):
                      # au lancement (`ServiceTravaux._estimation_sonore`), et refuse
                      # dès que le plafond est atteint, mesure ou pas.
                      "methodes": [{"nature": "audio", "modele": d["modele"], "locale": True, "payante": False,
-                                   "secondes": self.a.series_son.temps(d["modele"], 1, d.get("options"))["temps_s"]}],
+                                   "secondes": self.a.series_son.temps(d["modele"], 1, d.get("options"), valeurs.get("secondes"))["temps_s"]}],
                      "mesures": [m for m in self.a.file_locale.mesures() if m["modele"] == d["modele"]],
                      "limite": "Un calcul local, aucun coût fournisseur en argent. La durée demandée est celle du son, pas le temps de calcul."}}
             if compo is not None:
@@ -429,7 +429,7 @@ class ServiceTravauxAudio(ServiceTravaux):
                 self._raccorder()
                 e = file.preparer("audio:" + identifiant, nature="audio", moteur=t["moteur"], modele=t["demande"]["modele"],
                     projet=projet, acteur=t["acteur"], parametres={"travail": identifiant},
-                    reglage=reglage_de_calcul(t["demande"].get("options")))
+                    reglage=reglage_de_calcul(t["demande"].get("options")), secondes=t["snapshot_audio"].get("secondes"))
                 t.update(etape_locale=e["identifiant"], etape="calcul"); self._garder(t)
                 await file.lancer(e["identifiant"], reprise=reprise, acteur=t["acteur"])
                 e = await file.attendre_fin(e["identifiant"])

@@ -98,6 +98,14 @@ test("une phrase, la relecture de ce qui part, et le bouton porte le temps annon
   expect(within(relu).getByText("TrackType: SFX.")).toHaveClass("text-encre-4")
 })
 
+test("sans mesure, un temps de repli se dit estimé, sur le bouton et à côté", async () => {
+  vi.mocked(seriesSon.annoncer).mockResolvedValue({ ...annonce(70), annonce: { temps_s: 70, mesures: 0, cout_usd: 0, phrase: "", repli: true } })
+  render(<FabricationAudio projet="jeu" onFermer={vi.fn()} />)
+  fireEvent.change(screen.getByLabelText("Ce qu’on doit entendre"), { target: { value: "Fanfare" } })
+  expect(await lancer("Lancer 8 tirages · environ 1 min (estimé)")).toBeEnabled()
+  expect(screen.getByText("Temps estimé, pas encore mesuré ici : le premier tirage le mesurera.")).toBeInTheDocument()
+})
+
 test("le texte relu à la main part tel quel ; lancer prépare puis démarre la série, qui arrive dans la grille", async () => {
   vi.mocked(seriesSon.preparer).mockImplementation(async (_p, d) => serie(Array.from({ length: d.nombre }, (_, i) => ({ rang: i + 1, travail: `t${i}`, graine: i, etat: "prepare" as const, raison: "", prochaine_action: "demarrer", son: null })), { etat: "preparee" }))
   vi.mocked(seriesSon.demarrer).mockResolvedValue(serie([tirageRendu(1), tirageRendu(2), tirageRendu(3), tirageRendu(4)]))

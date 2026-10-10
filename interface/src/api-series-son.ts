@@ -54,7 +54,9 @@ export type DemandeSon = {
   source?: string
   force?: number
 }
-export type AnnonceTemps = { temps_s: number | null; mesures: number; cout_usd: number; phrase: string }
+/** `repli` : aucune mesure de ce moteur ici, le temps est l'estimation de
+ *  repli par durée de son (ACE-Step 1.5), pas une mesure. */
+export type AnnonceTemps = { temps_s: number | null; mesures: number; cout_usd: number; phrase: string; repli?: boolean }
 export type Annonce = { nombre: number; famille: FamilleSon | null; modele: string; graine_par_tirage: boolean; annonce: AnnonceTemps; composition: Composition | null }
 
 export type SonDuTirage = {
