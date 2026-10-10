@@ -918,3 +918,118 @@ async def test_reprise_usee_mais_rendu_dans_l_historique_il_est_recupere(file):
         reprises_auto=1, recupere_auto=True, raison="Rendu illisible.")
     await file.verifier()
     assert file.lire(autre["identifiant"])["etat"] == "echoue"
+
+
+async def test_le_son_suivant_part_pendant_le_post_traitement_du_precedent(sonore):
+    """Relevé le 10 octobre 2026 : décoder, mesurer et encoder une piste ACE de
+    3 min prend 12 s ou plus, et cela tournait sur la boucle de l'atelier —
+    rien d'autre n'avançait, ComfyUI restait inactif 21 à 41 s entre deux
+    musiques. Ici, un post-traitement qui bloque 1,5 s : le second son doit
+    partir chez ComfyUI pendant ce temps, et chaque son finir dans l'ordre."""
+    atelier, comfy, p = sonore
+    importer = atelier.sons.importer_octets
+    imports = []
+
+    def importer_lent(*args, **kwargs):
+        debut = time.monotonic()
+        time.sleep(1.5)  # du calcul, pas une attente : il tient le fil qui l'exécute
+        son = importer(*args, **kwargs)
+        imports.append((debut, time.monotonic()))
+        return son
+
+    atelier.sons.importer_octets = importer_lent
+    envois_le = []
+    repondre = comfy.repondre
+
+    def comfy_qui_note(requete):
+        if requete.url.path == "/prompt":
+            envois_le.append(time.monotonic())
+        return repondre(requete)
+
+    comfy.repondre = comfy_qui_note
+    raccorder(atelier, comfy)
+    prises = [await preparer_son(atelier, p, f"suite-{i}") for i in range(2)]
+    # Le pouls de l'atelier : un réveil tous les 50 ms, et son plus grand retard.
+    retards = [0.0]
+    async def pouls():
+        while True:
+            avant = time.monotonic()
+            await asyncio.sleep(0.05)
+            retards.append(time.monotonic() - avant - 0.05)
+    battement = asyncio.create_task(pouls())
+    for t in prises:
+        await atelier.travaux.demarrer(t["projet"], t["identifiant"], t["acteur"])
+    try:
+        await asyncio.wait_for(atelier.travaux.attendre_tout(), 30)
+    finally:
+        battement.cancel()
+    finis = [atelier.travaux.lire(t["projet"], t["identifiant"]) for t in prises]
+    assert [f["etat"] for f in finis] == ["termine", "termine"]
+    assert len(envois_le) == 2 and len(imports) == 2
+    premier_import_debut, premier_import_fin = imports[0]
+    # Le post-traitement ne tient plus l'atelier : il reste à l'écoute (suivi,
+    # envois) pendant les 1,5 s de chaque import…
+    assert max(retards) < 0.5, max(retards)
+    # … et le second son est parti chez ComfyUI avant la fin du premier import.
+    assert envois_le[1] < premier_import_fin, (envois_le[1] - premier_import_debut)
+    etapes = [atelier.file_locale.lire(f["etape_locale"]) for f in finis]
+    assert etapes[0]["termine_le"] <= etapes[1]["termine_le"]
+
+
+async def test_dix_etapes_en_attente_ne_reparcourent_pas_le_registre(file):
+    """Mesuré le 10 octobre 2026 : relire le registre réel (269 étapes) coûtait
+    150 à 190 ms, à chaque réveil de chaque étape en attente et à chaque
+    lecture d'API — dix étapes en attente suffisaient à saturer la boucle.
+    Le registre ne se reparcourt plus que s'il a changé : dix étapes qui
+    attendent derrière une retenue, pendant 1,5 s, n'en font aucun parcours,
+    et une lecture coûte quelques millisecondes."""
+    async def rien(e):
+        return {}
+    file.inscrire_executeur("video", rien)
+    for i in range(250):
+        e = preparer(file, f"ancienne-{i}")
+        file.modifier(e["identifiant"], etat="termine", duree_s=3.0)
+    retenue = preparer(file, "retenue")
+    file.modifier(retenue["identifiant"], etat="a_reprendre", soumission_engagee=True,
+        travail_externe="retenue", raison="retenue pour l'essai")
+    attente = [preparer(file, f"attente-{i}")["identifiant"] for i in range(10)]
+    for identifiant in attente:
+        await file.lancer(identifiant)
+    await asyncio.sleep(0.3)
+    parcours = file.parcours_complets
+    await asyncio.sleep(1.5)
+    assert file.parcours_complets - parcours <= 1, file.parcours_complets - parcours
+    debut = time.perf_counter()
+    for _ in range(20):
+        assert len(file.lister()["etapes"]) == 261
+    assert (time.perf_counter() - debut) / 20 < 0.05, (time.perf_counter() - debut) / 20
+    file.modifier(retenue["identifiant"], etat="termine")
+    await asyncio.wait_for(asyncio.gather(*(file.attendre_fin(i) for i in attente)), 10)
+    assert all(file.lire(i)["etat"] == "termine" for i in attente)
+
+
+async def test_le_registre_reste_exact_si_un_autre_processus_ou_la_main_l_ecrit(file, monkeypatch):
+    """La lecture gardée ne ment jamais longtemps : une écriture d'un autre
+    atelier (autre processus, même dossier) se voit tout de suite, par la
+    marque ; un fichier modifié à la main, sans marque, à la relecture
+    complète suivante."""
+    import atelier.services.file_locale as module
+    async def rien(e):
+        return {}
+    file.inscrire_executeur("video", rien)
+    e = preparer(file, "partagee")
+    assert [x["etat"] for x in file.lister()["etapes"]] == ["en_attente"]
+    autre = ServiceFileLocale(file.fichiers, Diffusion())
+    autre.inscrire_moteur("moteur-test", "Moteur doublé", disponible)
+    autre.inscrire_executeur("video", rien)
+    autre.modifier(e["identifiant"], etat="annule", raison="annulée ailleurs")
+    assert [x["etat"] for x in file.lister()["etapes"]] == ["annule"]
+    f = preparer(autre, "nouvelle")
+    assert {x["identifiant"] for x in file.lister()["etapes"]} == {e["identifiant"], f["identifiant"]}
+    # À la main : le fichier change, la marque non.
+    chemin = file.racine / e["identifiant"] / "etape.json"
+    brut = json.loads(chemin.read_text(encoding="utf-8"))
+    brut["raison"] = "corrigée à la main"
+    chemin.write_text(json.dumps(brut), encoding="utf-8")
+    monkeypatch.setattr(module, "RELECTURE_COMPLETE_S", 0.0)
+    assert next(x for x in file.lister()["etapes"] if x["identifiant"] == e["identifiant"])["raison"] == "corrigée à la main"

@@ -396,7 +396,11 @@ class ServiceTravauxAudio(ServiceTravaux):
                 etiquette = ETIQUETTES.get(compo["famille"], "Son") if compo else "Son"
                 nom = t["demande"]["nom"] or (t["demande"]["prompt"] or "").strip()[:60] or etiquette
                 recette = RecetteSon(fin=compo["recette_proposee"]["fin"]) if compo and compo.get("recette_proposee") else None
-                son = self.a.sons.importer_octets(projet, octets, nom=nom,
+                # Hors de la boucle (10 octobre 2026) : décoder, mesurer et
+                # encoder une piste de 3 min prend 12 s ou plus ; sur la boucle,
+                # rien d'autre n'avançait — ni le suivi, ni l'envoi suivant, et
+                # ComfyUI restait inactif 21 à 41 s entre deux musiques.
+                son = await asyncio.to_thread(self.a.sons.importer_octets, projet, octets, nom=nom,
                     provenance=provenance, cle="travail:" + identifiant, recette=recette)
                 t.update(etat="termine" if son["pret"] else "a_verifier", etape="termine", son=son["identifiant"], reserve=None, raison=son.get("raison", ""))
                 self._garder(t)

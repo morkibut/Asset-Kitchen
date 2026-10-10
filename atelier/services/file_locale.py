@@ -33,6 +33,7 @@ import hashlib
 import json
 import statistics
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 
@@ -98,10 +99,15 @@ INTERVALLE_VEILLE_S = 5.0
 # 10 octobre 2026 : 2,5 s pour une route triviale, et jusqu'à 280 s pour voir
 # la fin d'un calcul de 3 s).
 ATTENTE_TOUR_S = 1.0
-# Les étapes qui attendent au même moment partagent une seule lecture du
-# registre, fraîche au plus de ce délai — et toujours relue après une écriture
-# de cet atelier.
-FRAICHEUR_LISTE_S = 0.2
+# Le registre se relit en entier (deux cent soixante-neuf fichiers : 150 à
+# 190 ms le 10 octobre 2026, à chaque réveil de chaque étape en attente et à
+# chaque lecture d'API) seulement quand il a changé. Chaque écriture — de cet
+# atelier ou d'un autre processus — remplace la marque `.generation` : un
+# seul `stat` dit si la lecture gardée vaut encore. Un fichier modifié à la
+# main, sans marque, est vu à la relecture complète suivante, au plus tard
+# après ce délai.
+MARQUE = ".generation"
+RELECTURE_COMPLETE_S = 5.0
 
 ETATS_LISIBLES = {"en_attente": "en attente de son tour", "en_cours": "en cours de calcul",
                   "a_reprendre": "à reprendre", "externe_inconnu": "dont l'acceptation par le moteur est inconnue"}
@@ -138,7 +144,11 @@ class ServiceFileLocale:
         # fichier remplacé par `_poser` change de numéro, un fichier inchangé
         # ne se relit pas. Un `stat` coûte quatre fois moins qu'une lecture.
         self._textes: dict[Path, tuple[tuple[int, int, int], str]] = {}
-        self._memo: tuple[float, list[str]] | None = None
+        # La lecture gardée : (marque lue avant le parcours, heure du parcours,
+        # texte de chaque `etape.json` par chemin). Une nouvelle à chaque
+        # changement — `mesures` s'y fie par identité.
+        self._memo: tuple[tuple[int, int, int] | None, float, dict[Path, str]] | None = None
+        self.parcours_complets = 0  # compté pour l'essai de charge, rien d'autre
         self._mesures_memo: tuple[object, list[dict[str, Any]]] | None = None
         self._changement: asyncio.Event | None = None
         self._boucle: asyncio.AbstractEventLoop | None = None
@@ -188,12 +198,40 @@ class ServiceFileLocale:
         except (OSError, ValueError) as erreur:
             raise FileLocaleRefusee("Cette étape locale ne peut pas être relue.") from erreur
 
+    def _cle_marque(self) -> tuple[int, int, int] | None:
+        try:
+            etat = (self.racine / MARQUE).stat()
+        except OSError:
+            return None
+        return (etat.st_ino, etat.st_mtime_ns, etat.st_size)
+
+    def _marquer(self) -> tuple[int, int, int] | None:
+        """Remplace la marque, et rend sa clé si personne ne l'a remplacée
+        depuis — sinon `None`, et la prochaine lecture reparcourt tout."""
+        jeton = uuid.uuid4().hex.encode()
+        chemin = self.racine / MARQUE
+        try:
+            self.fichiers._poser(chemin, jeton)
+            cle = self._cle_marque()
+            return cle if chemin.read_bytes() == jeton else None
+        except OSError:
+            return None
+
     def _sauver(self, etape: dict[str, Any]) -> None:
         etape["modifie_le"] = time.time()
         chemin = self._dossier(etape["identifiant"]) / "etape.json"
-        self.fichiers._poser(chemin,
-            json.dumps(etape, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8"))
+        texte = json.dumps(etape, ensure_ascii=False, sort_keys=True, allow_nan=False)
+        # Sous le verrou du registre : aucun autre processus n'écrit entre la
+        # marque lue ici et la nôtre. La lecture gardée, si elle était à jour,
+        # prend cette étape sans reparcourir le registre.
+        avant, memo = self._cle_marque(), self._memo
+        self.fichiers._poser(chemin, texte.encode("utf-8"))
         self._textes.pop(chemin, None)
+        apres = self._marquer()
+        if memo is not None and avant is not None and memo[0] == avant and apres is not None:
+            self._memo = (apres, memo[1], {**memo[2], chemin: texte})
+        else:
+            self._memo = None
         self._signaler()
         self.diffusion.publier("file_locale", {"identifiant": etape["identifiant"], "etat": etape["etat"], "projet": etape["projet"]})
 
@@ -202,7 +240,6 @@ class ServiceFileLocale:
         qui attendent leur tour se réveillent pour la relire. Appelable depuis
         un fil de travail (une route synchrone) : le réveil passe alors par la
         boucle, seule à pouvoir toucher son `asyncio.Event`."""
-        self._memo = None
         boucle, evenement = self._boucle, self._changement
         if evenement is None or boucle is None or boucle.is_closed():
             return
@@ -326,22 +363,24 @@ class ServiceFileLocale:
             return True
 
     def lister(self) -> dict[str, Any]:
-        # Une seule lecture du registre sert tous ceux qui le demandent dans la
-        # même fraction de seconde (`FRAICHEUR_LISTE_S`), et chaque fichier
-        # inchangé n'y est même pas relu (`_lire_texte`). Ce qui est rendu est
-        # toujours neuf : chacun reçoit ses propres dictionnaires.
-        memo = self._memo
-        if memo is None or time.monotonic() - memo[0] > FRAICHEUR_LISTE_S:
-            textes = []
+        # Le registre ne se reparcourt que s'il a changé (`MARQUE`) ou après
+        # `RELECTURE_COMPLETE_S` ; un fichier inchangé n'y est même pas relu
+        # (`_lire_texte`). Ce qui est rendu est toujours neuf : chacun reçoit
+        # ses propres dictionnaires.
+        memo, marque = self._memo, self._cle_marque()
+        if (memo is None or marque is None or memo[0] != marque
+                or time.monotonic() - memo[1] >= RELECTURE_COMPLETE_S):
+            textes = {}
             for chemin in self.racine.glob("*/etape.json"):
                 try:
-                    textes.append(self._lire_texte(chemin))
+                    textes[chemin] = self._lire_texte(chemin)
                 except OSError as erreur:
                     raise FileLocaleRefusee("Cette étape locale ne peut pas être relue.") from erreur
-            memo = (time.monotonic(), textes)
+            self.parcours_complets += 1
+            memo = (marque, time.monotonic(), textes)
             self._memo = memo
         try:
-            etapes = [self._vivante(json.loads(t)) for t in memo[1]]
+            etapes = [self._vivante(json.loads(t)) for t in memo[2].values()]
         except ValueError as erreur:
             raise FileLocaleRefusee("Cette étape locale ne peut pas être relue.") from erreur
         etapes.sort(key=lambda e: (e["cree_le"], e["identifiant"]))

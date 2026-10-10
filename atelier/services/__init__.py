@@ -15,6 +15,7 @@ Pollinations.
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any, Callable
 
@@ -736,7 +737,8 @@ class Atelier:
         repris = False
         if projet:
             try:
-                travaux = self.travaux.lister(projet)
+                # Hors de la boucle : un jeu peut avoir des centaines de travaux.
+                travaux = await asyncio.to_thread(self.travaux.lister, projet)
             except Exception:  # noqa: BLE001 — un jeu supprimé n'a plus rien à reprendre
                 travaux = []
             for travail in travaux:
