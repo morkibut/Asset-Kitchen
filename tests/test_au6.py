@@ -918,3 +918,59 @@ async def test_reprise_usee_mais_rendu_dans_l_historique_il_est_recupere(file):
         reprises_auto=1, recupere_auto=True, raison="Rendu illisible.")
     await file.verifier()
     assert file.lire(autre["identifiant"])["etat"] == "echoue"
+
+
+async def test_le_son_suivant_part_pendant_le_post_traitement_du_precedent(sonore):
+    """Relevé le 10 octobre 2026 : décoder, mesurer et encoder une piste ACE de
+    3 min prend 12 s ou plus, et cela tournait sur la boucle de l'atelier —
+    rien d'autre n'avançait, ComfyUI restait inactif 21 à 41 s entre deux
+    musiques. Ici, un post-traitement qui bloque 1,5 s : le second son doit
+    partir chez ComfyUI pendant ce temps, et chaque son finir dans l'ordre."""
+    atelier, comfy, p = sonore
+    importer = atelier.sons.importer_octets
+    imports = []
+
+    def importer_lent(*args, **kwargs):
+        debut = time.monotonic()
+        time.sleep(1.5)  # du calcul, pas une attente : il tient le fil qui l'exécute
+        son = importer(*args, **kwargs)
+        imports.append((debut, time.monotonic()))
+        return son
+
+    atelier.sons.importer_octets = importer_lent
+    envois_le = []
+    repondre = comfy.repondre
+
+    def comfy_qui_note(requete):
+        if requete.url.path == "/prompt":
+            envois_le.append(time.monotonic())
+        return repondre(requete)
+
+    comfy.repondre = comfy_qui_note
+    raccorder(atelier, comfy)
+    prises = [await preparer_son(atelier, p, f"suite-{i}") for i in range(2)]
+    # Le pouls de l'atelier : un réveil tous les 50 ms, et son plus grand retard.
+    retards = [0.0]
+    async def pouls():
+        while True:
+            avant = time.monotonic()
+            await asyncio.sleep(0.05)
+            retards.append(time.monotonic() - avant - 0.05)
+    battement = asyncio.create_task(pouls())
+    for t in prises:
+        await atelier.travaux.demarrer(t["projet"], t["identifiant"], t["acteur"])
+    try:
+        await asyncio.wait_for(atelier.travaux.attendre_tout(), 30)
+    finally:
+        battement.cancel()
+    finis = [atelier.travaux.lire(t["projet"], t["identifiant"]) for t in prises]
+    assert [f["etat"] for f in finis] == ["termine", "termine"]
+    assert len(envois_le) == 2 and len(imports) == 2
+    premier_import_debut, premier_import_fin = imports[0]
+    # Le post-traitement ne tient plus l'atelier : il reste à l'écoute (suivi,
+    # envois) pendant les 1,5 s de chaque import…
+    assert max(retards) < 0.5, max(retards)
+    # … et le second son est parti chez ComfyUI avant la fin du premier import.
+    assert envois_le[1] < premier_import_fin, (envois_le[1] - premier_import_debut)
+    etapes = [atelier.file_locale.lire(f["etape_locale"]) for f in finis]
+    assert etapes[0]["termine_le"] <= etapes[1]["termine_le"]

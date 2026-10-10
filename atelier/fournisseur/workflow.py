@@ -126,8 +126,12 @@ def _fin_libre(profil, info):
 # `/object_info` retenu par adresse de ComfyUI (voir `MoteurWorkflow._object_info`).
 # Deux minutes : assez pour une série, assez court pour qu'un nœud installé
 # se voie vite — et un manque se revérifie toujours sur une copie fraîche.
-DUREE_OBJECT_INFO_S = 120.0
+DUREE_OBJECT_INFO_S = 600.0
 _OBJECT_INFO: dict[str, tuple[float, dict]] = {}
+# La table des types de fichiers se lit au premier `guess_type` — sous
+# Windows, dans le registre : 1,4 s mesurées, sur la boucle, au premier son
+# rendu (10 octobre 2026). Lue ici, au chargement de l'atelier.
+mimetypes.init()
 
 
 class MoteurWorkflow(MoteurDeLaMaison):
@@ -281,12 +285,26 @@ class MoteurWorkflow(MoteurDeLaMaison):
         if fin is not None:
             zone["image_de_fin"] = noms[0] if references and fin == references[0] else await self.deposer_reference(fin)
         graphe = composer(profil, references=noms, **zone, **valeurs)
-        rendu = await self._json("POST", "/prompt", {"prompt": graphe, "client_id": self._client_id,
-            "extra_data": {"asset_kitchen": {"profil": profil["identifiant"], "version": profil["version"]}}})
+        try:
+            rendu = await self._json("POST", "/prompt", {"prompt": graphe, "client_id": self._client_id,
+                "extra_data": {"asset_kitchen": {"profil": profil["identifiant"], "version": profil["version"]}}})
+        except Exception:
+            # Refusé (un nœud qui manque) ou injoignable (ComfyUI redémarre) :
+            # la copie retenue de `/object_info` ne vaut plus rien.
+            _OBJECT_INFO.pop(self.adresse, None)
+            raise
         numero = rendu.get("prompt_id")
         if not numero:
+            _OBJECT_INFO.pop(self.adresse, None)
             raise WorkflowRefuse("ComfyUI n'a pas rendu l'identifiant de ce calcul.")
         return str(numero)
+
+    async def etat(self, travail):
+        etat = await super().etat(travail)
+        if etat.perdu:
+            # Un travail oublié : ComfyUI a redémarré, ses nœuds ont pu changer.
+            _OBJECT_INFO.pop(self.adresse, None)
+        return etat
 
     async def sortie_de(self, travail, profil):
         histoire = await self._json("GET", "/history/" + travail)
