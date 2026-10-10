@@ -28,6 +28,9 @@ export type Composition = {
   usage?: UsageMusique
   /** Ce qui menace une musique : mots de nappe, interdits de la bande originale. */
   alertes?: string[]
+  /** Une reprise : le son de départ (sa durée devient celle du tirage) et la force retenue. */
+  source?: { son: string; nom: string; revision: number; secondes: number }
+  force?: number
 }
 export type ReglageMusique = "paroles" | "tempo" | "tonalite" | "mesure"
 /** Les usages de bande originale (`atelier.audio.texte.USAGES`). */
@@ -45,6 +48,11 @@ export type DemandeSon = {
   options?: Record<string, string | number | boolean>
   /** La graine du premier tirage ; les suivants prennent la suivante. */
   graine?: number
+  /** **La reprise d'un son** : l'identifiant d'un son prêt du jeu, rejoué
+   *  avec ce texte (même mélodie, même durée). `force` : à quel point le
+   *  suivre, de 0,1 à 0,95 (0,6 si absente). */
+  source?: string
+  force?: number
 }
 export type AnnonceTemps = { temps_s: number | null; mesures: number; cout_usd: number; phrase: string }
 export type Annonce = { nombre: number; famille: FamilleSon | null; modele: string; graine_par_tirage: boolean; annonce: AnnonceTemps; composition: Composition | null }

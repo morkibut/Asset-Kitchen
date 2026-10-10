@@ -8,6 +8,7 @@ import { moteursSonores, workflows, type MoteurSonore, type ProfilWorkflow } fro
 import { ecoute, seriesSon, texteSon, type Annonce, type Composition } from "../api-series-son"
 import { sfxr } from "../api-sfxr"
 import { partitionSon } from "../api-partition-son"
+import { sons } from "../api-sons"
 import { serie, tirageRendu } from "../son-essais"
 
 vi.mock("../api-travaux-audio", () => ({ travauxAudio: { preparer: vi.fn(), lire: vi.fn(), lancer: vi.fn() } }))
@@ -189,6 +190,44 @@ test("une musique de bande originale : usage, structure, réglages du compositeu
     paroles: "[Intro]\n[Verse]\n[Chorus]", graine: 1000, options: { compositeur: false, temperature: 1.1 }, nombre: 4 }))
   fireEvent.change(screen.getByLabelText("Ce qu’on doit entendre"), { target: { value: "dark drones" } })
   expect(await screen.findByText(/demandent une nappe/)).toBeInTheDocument()
+})
+
+test("une musique part d'un son du jeu : le choix, la fidélité, et ce que la reprise rend inerte disparaît", async () => {
+  // BO (10 octobre 2026) : l'air de fête du camp, rejoué plus calme en gardant sa mélodie.
+  const ace: ProfilWorkflow = { ...profil, identifiant: "ace-step-15-turbo", nom: "ACE-Step 1.5 turbo", modele: "ComfyUI:ace@1",
+    parametres: { compositeur: { genre: "booleen", defaut: true, nom: "Compositeur (1.7b)" }, pas: { genre: "intervalle", minimum: 4, maximum: 32, defaut: 8, nom: "Pas de calcul" } } }
+  const reprise: ProfilWorkflow = { ...profil, identifiant: "ace-step-15-reprise", nom: "ACE-Step 1.5 — reprise d'un son", modele: "ComfyUI:reprise@1",
+    parametres: { pas: { genre: "intervalle", minimum: 4, maximum: 32, defaut: 8, nom: "Pas de calcul" } } }
+  vi.mocked(workflows.lister).mockResolvedValue({ profils: [ace, reprise] })
+  vi.mocked(texteSon.moteurs).mockResolvedValue({ familles: { musique: { famille: "musique", modele: ace.modele, moteur: "ace-step-15-turbo", possibles: ["ace-step-15-turbo"] } } as never })
+  const lister = vi.spyOn(sons, "lister").mockResolvedValue([
+    { identifiant: "fete", nom: "Fête du camp", pret: true, mesures: { duree: 42.5 } },
+    { identifiant: "muet", nom: "Prise silencieuse", pret: false, mesures: { duree: 3 } },
+  ] as never)
+  render(<FabricationAudio projet="jeu" onFermer={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Musique" }))
+  fireEvent.change(screen.getByLabelText("Ce qu’on doit entendre"), { target: { value: "camp revives, calm fiddle" } })
+  fireEvent.click(await screen.findByLabelText("Compositeur (1.7b)"))
+  // Les sons du jeu ne se lisent qu'au premier geste ; un son pas prêt n'est pas proposé.
+  expect(lister).not.toHaveBeenCalled()
+  const choix = screen.getByLabelText("Partir d’un son existant")
+  fireEvent.focus(choix)
+  expect(await screen.findByRole("option", { name: /Fête du camp/ })).toBeInTheDocument()
+  expect(screen.queryByRole("option", { name: /Prise silencieuse/ })).not.toBeInTheDocument()
+  fireEvent.change(choix, { target: { value: "fete" } })
+  expect(screen.getByText("« Fête du camp »")).toBeInTheDocument()
+  // Inertes avec une reprise : le nombre de mesures (la durée est celle du son) et le compositeur.
+  expect(screen.queryByLabelText("Nombre de mesures")).not.toBeInTheDocument()
+  expect(screen.queryByLabelText("Compositeur (1.7b)")).not.toBeInTheDocument()
+  expect(screen.getByLabelText("Pas de calcul")).toBeInTheDocument()
+  fireEvent.change(screen.getByLabelText("Fidélité au son de départ"), { target: { value: "0.8" } })
+  expect(screen.getByText("80 %")).toBeInTheDocument()
+  await waitFor(() => expect(seriesSon.annoncer).toHaveBeenLastCalledWith("jeu", { famille: "musique", prompt: "camp revives, calm fiddle",
+    mesure: 4, source: "fete", force: 0.8, nombre: 4 }))
+  // Repartir de zéro rend le nombre de mesures et le compositeur, tel qu'il avait été réglé.
+  fireEvent.click(screen.getByRole("button", { name: "Repartir de zéro" }))
+  expect(screen.getByLabelText("Nombre de mesures")).toBeInTheDocument()
+  expect(screen.getByLabelText("Compositeur (1.7b)")).not.toBeChecked()
 })
 
 test("un moteur qui ne reçoit pas la mesure : elle ne part pas, se grise avec sa raison, et la boucle est celle du serveur", async () => {

@@ -4361,6 +4361,16 @@ export const AIDE: Record<string, Explication> = {
     origine: "le profil · compositeur allumé, 0,85, 2, 8 pas, graine au hasard",
   },
 
+  "son.musique.reprise": {
+    nom: "Partir d'un son existant, fidélité au son de départ",
+    ou: "un-son",
+    groupe: "Musique — tempo, tonalité, mesures",
+    quoi: "Rejoue une musique déjà faite avec un autre texte : la mélodie et la durée restent, l'orchestration et l'humeur changent.",
+    change:
+      "La fidélité dit à quel point suivre le son de départ : haute, la reprise garde son rythme et sa mélodie ; basse, le texte reprend la main. Le compositeur ne sert plus, et le nombre de mesures non plus : la durée est celle du son.",
+    origine: "un morceau neuf · fidélité 60 % dès qu'un son est choisi",
+  },
+
   "son.adaptative": {
     nom: "Une musique qui s'adapte",
     ou: "un-son",
