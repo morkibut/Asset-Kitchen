@@ -12,6 +12,7 @@ from atelier.domaine.son import RecetteSon
 from atelier.domaine.workflow import MUSIQUE, composer, duree_acceptee, musique_du_graphe, tirer_graine
 from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu, FINIS
 from atelier.services.travaux import ServiceTravaux, _hash, _json, _verrou
+from atelier.domaine.erreurs import FournisseurIndisponible
 
 
 # Le nom d'un son fabriqué sans nom donné, par famille — les sept clés de
@@ -302,7 +303,14 @@ class ServiceTravauxAudio(ServiceTravaux):
             file.connaitre_externe(e["identifiant"], numero)
         limite = time.monotonic() + self.delai
         while time.monotonic() < limite:
-            etat = await m.etat(numero)
+            try:
+                etat = await m.etat(numero)
+            except FournisseurIndisponible:
+                # ComfyUI occupé à décoder ne répond pas toujours à temps : une
+                # lecture d'état manquée n'interrompt plus le suivi (10 octobre
+                # 2026, la file restait arrêtée jusqu'à une reprise à la main).
+                await asyncio.sleep(self.intervalle)
+                continue
             if etat.echoue: raise TravailRefuse(etat.raison or "Le moteur n’a pas produit le son.")
             if etat.fini:
                 octets, media, reference = await m.sortie_de(numero, t["profil"])

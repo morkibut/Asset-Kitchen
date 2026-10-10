@@ -13,6 +13,7 @@ from atelier.domaine.workflow import MASQUE, WorkflowRefuse, composer, normalise
 from atelier.fournisseur.port import ImageProduite
 from atelier.fournisseur.workflow import verifier_masque
 from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu
+from atelier.domaine.erreurs import FournisseurIndisponible
 
 
 class _ObjectInfoPartage:
@@ -263,7 +264,14 @@ class FournisseurWorkflowImage:
         # L'état est celui du port vidéo déjà utilisé par Maison : on ne
         # réinterprète pas ici le vocabulaire propre à ComfyUI.
         while time.monotonic() < limite:
-            etat = await moteur.etat(numero)
+            try:
+                etat = await moteur.etat(numero)
+            except FournisseurIndisponible:
+                # ComfyUI occupé à décoder ne répond pas toujours à temps : une
+                # lecture d'état manquée n'interrompt plus le suivi (10 octobre
+                # 2026, la file restait arrêtée jusqu'à une reprise à la main).
+                await asyncio.sleep(self.intervalle)
+                continue
             if etat.echoue:
                 return {"reussie": False, "raison": etat.raison}
             if etat.fini:
