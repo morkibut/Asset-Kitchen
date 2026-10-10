@@ -116,6 +116,10 @@ def _structure(*sections: str) -> str:
 # humeur, instruments, timbre, époque, production, références —, jamais le
 # tempo ni la tonalité (ils ont leurs champs), jamais une négation, et elle
 # dit une évolution dans le temps plutôt que deux styles contradictoires.
+# Le nombre de mesures d'un usage fait un **essai d'une minute au plus**,
+# mesure de marge comprise (`duree_en_mesures`) : titre 60 s, village 57,86 s,
+# exploration 60 s, danger 60 s — choix de l'auteur, 10 octobre 2026 (38, 36,
+# 32 et 48 mesures avant, soit 1 min 30 à 2 min 05). Le jingle ne change pas.
 USAGES = {
     "titre": {"nom": "Écran titre",
         "description": "Epic fantasy film score, main theme of an ancient kingdom. A deep male choir hums a solemn melody, "
@@ -126,28 +130,28 @@ USAGES = {
                                 "Build - war drums enter, building energy", "Chorus - full orchestra, heroic horns, anthemic",
                                 "Bridge - woodwind over harp", "Chorus - choir and full orchestra, powerful",
                                 "Outro - horns and choir fade"),
-        "tempo": 76, "mesure": 4, "mesures": 38},
+        "tempo": 76, "mesure": 4, "mesures": 18},
     "village": {"nom": "Village, camp",
         "description": "Joyful medieval tavern jig, villagers celebrating around the fire. Folk fiddle lead melody, tin whistle, "
                        "strummed lute, bodhran frame drum, hand claps. Warm, cozy, rustic acoustic recording, "
                        "Irish and celtic folk, fantasy RPG village music.",
         "structure": _structure("Intro - fiddle alone", "Verse - whistle and lute join", "Chorus - full band, high energy",
                                 "Breakdown - bodhran and claps", "Chorus - everyone, euphoric", "Outro - fiddle"),
-        "tempo": 112, "mesure": 6, "mesures": 36},
+        "tempo": 112, "mesure": 6, "mesures": 17},
     "exploration": {"nom": "Exploration",
         "description": "Fantasy adventure exploration theme, curious and wondrous. Harp ostinato, expressive cello melody, "
                        "flute answers, soft frame drum pulse. Warm intimate orchestral recording, open and airy, "
                        "classic fantasy RPG overworld music.",
         "structure": _structure("Intro - harp ostinato", "Verse - cello melody", "Verse - flute answers",
                                 "Bridge - low brass, rising tension", "Verse - main melody returns", "Outro - harp"),
-        "tempo": 92, "mesure": 4, "mesures": 32},
+        "tempo": 92, "mesure": 4, "mesures": 22},
     "danger": {"nom": "Danger, combat",
         "description": "Dark epic battle music, urgent and powerful. Pounding war drums, driving low brass ostinato, "
                        "staccato strings, shouting male choir. Big cinematic orchestral recording, punchy and wide, "
                        "fantasy boss fight music.",
         "structure": _structure("Intro - war drums", "Verse - brass ostinato", "Build - choir shouts",
                                 "Chorus - full orchestra, heroic", "Verse - ostinato returns", "Chorus - full orchestra"),
-        "tempo": 140, "mesure": 4, "mesures": 48},
+        "tempo": 140, "mesure": 4, "mesures": 34},
     "jingle": {"nom": "Jingle",
         "description": "Short triumphant fanfare, French horns and war drums, bright and rewarding, resolves on the tonic. "
                        "Crisp orchestral recording.",

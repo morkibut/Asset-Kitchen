@@ -46,7 +46,7 @@ def test_un_usage_donne_sa_structure_son_tempo_et_sa_carrure():
     assert p["paroles"] == {"valeur": USAGES["titre"]["structure"], "source": "usage"}
     assert p["paroles"]["valeur"].count("[") >= 6 and "[Chorus" in p["paroles"]["valeur"]
     assert (p["tempo"], p["mesure"]) == ({"valeur": 76, "source": "usage"}, {"valeur": 4, "source": "usage"})
-    assert c["mesures"]["demandees"] == 38 and c["mesures"]["source"] == "usage" and c["usage"] == "titre"
+    assert c["mesures"]["demandees"] == 18 and c["mesures"]["source"] == "usage" and c["usage"] == "titre"
     # Une demande passe devant l'usage ; l'usage devant l'univers.
     c = composer_texte("musique", ACE, {"description": "camp", "usage": "village", "tempo": 110, "paroles": "[Verse]"},
                        UniversSonore.depuis_json(None).regle({"tempo": 70}))
@@ -120,6 +120,9 @@ def test_les_gabarits_d_usage_suivent_le_guide_officiel():
             balise, instrumental = bloc.split("\n")
             assert instrumental == "[Instrumental]" and balise.count(" - ") <= 1, (cle, bloc)
         assert "bpm" not in usage["description"].lower() and " minor" not in usage["description"], cle
+        # Un essai d'une minute au plus, mesure de marge comprise (10 octobre 2026).
+        from atelier.audio.texte import duree_en_mesures
+        assert 50 <= duree_en_mesures(usage["mesures"], usage["tempo"], usage["mesure"]) <= 60, cle
 
 
 def test_l_alerte_ne_vise_que_la_musique():
