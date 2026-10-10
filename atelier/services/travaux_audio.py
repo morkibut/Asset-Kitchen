@@ -22,6 +22,22 @@ ETIQUETTES = {"bruitage": "Bruitages", "interface": "Interface", "ambiance": "Am
 assert set(ETIQUETTES) == set(FAMILLES_SON)
 
 
+def reglage_de_calcul(options):
+    """Les options d'un son qui changent son temps de calcul, en une étiquette
+    stable (`None` quand rien ne change) : le compositeur ACE coupé, un autre
+    nombre de pas. Les mesures de la file locale se rangent par elle — mêlées,
+    les tirages rapides (≈ 40 s) et compositeur (≈ 2 min 20) annonçaient la
+    moitié du temps réel (relevé d'usage du 10 octobre 2026)."""
+    options = options or {}
+    morceaux = []
+    if options.get("compositeur") is False:
+        morceaux.append("sans-compositeur")
+    pas = options.get("pas")
+    if isinstance(pas, (int, float)) and not isinstance(pas, bool):
+        morceaux.append(f"pas-{int(pas)}")
+    return ",".join(morceaux) or None
+
+
 class ServiceTravauxAudio(ServiceTravaux):
     def __init__(self, atelier):
         super().__init__(atelier)
@@ -284,7 +300,7 @@ class ServiceTravauxAudio(ServiceTravaux):
                      # au lancement (`ServiceTravaux._estimation_sonore`), et refuse
                      # dès que le plafond est atteint, mesure ou pas.
                      "methodes": [{"nature": "audio", "modele": d["modele"], "locale": True, "payante": False,
-                                   "secondes": self.a.series_son.temps(d["modele"], 1)["temps_s"]}],
+                                   "secondes": self.a.series_son.temps(d["modele"], 1, d.get("options"))["temps_s"]}],
                      "mesures": [m for m in self.a.file_locale.mesures() if m["modele"] == d["modele"]],
                      "limite": "Un calcul local, aucun coût fournisseur en argent. La durée demandée est celle du son, pas le temps de calcul."}}
             if compo is not None:
@@ -343,7 +359,8 @@ class ServiceTravauxAudio(ServiceTravaux):
                 t, file = self._brut(projet, identifiant), self.a.file_locale
                 self._raccorder()
                 e = file.preparer("audio:" + identifiant, nature="audio", moteur=t["moteur"], modele=t["demande"]["modele"],
-                    projet=projet, acteur=t["acteur"], parametres={"travail": identifiant})
+                    projet=projet, acteur=t["acteur"], parametres={"travail": identifiant},
+                    reglage=reglage_de_calcul(t["demande"].get("options")))
                 t.update(etape_locale=e["identifiant"], etape="calcul"); self._garder(t)
                 await file.lancer(e["identifiant"], reprise=reprise, acteur=t["acteur"])
                 e = await file.attendre_fin(e["identifiant"])

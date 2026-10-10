@@ -250,7 +250,7 @@ class ServiceFileLocale:
 
     def preparer(self, cle: str, *, nature: str, moteur: str, modele: str, projet: str | None,
                  acteur: str, parametres: dict[str, Any], entree: bytes | None = None,
-                 fin: bytes | None = None) -> dict[str, Any]:
+                 fin: bytes | None = None, reglage: str | None = None) -> dict[str, Any]:
         if nature not in self._executeurs or moteur not in self._moteurs:
             raise FileLocaleRefusee("Cette méthode locale n'a pas d'exécuteur et de diagnostic raccordés.")
         identifiant = hashlib.sha256(cle.encode()).hexdigest()[:32]
@@ -273,10 +273,14 @@ class ServiceFileLocale:
                 self.fichiers._poser(dossier / "entree", entree)
             if fin:
                 self.fichiers._poser(dossier / "fin", fin)
+            # `reglage` : ce qui change le temps de calcul d'un même modèle
+            # (le compositeur ACE coupé, d'autres pas). Hors du contrat — il ne
+            # dit pas un autre calcul — mais il range les mesures à part.
             self._sauver({**contrat, "identifiant": identifiant, "cle": cle, "empreinte": empreinte,
                 "etat": "en_attente", "cree_le": time.time(), "demarre_le": None, "termine_le": None,
                 "travail_externe": None, "soumission_engagee": False, "raison": "En attente de son tour.",
-                "resultat": None, "duree_s": None, "temperature": "inconnue"})
+                "resultat": None, "duree_s": None, "temperature": "inconnue",
+                **({"reglage": reglage} if reglage else {})})
         return self.lire(identifiant)
 
     def trouver(self, cle: str) -> dict[str, Any] | None:
@@ -484,12 +488,14 @@ class ServiceFileLocale:
             calculees = self.mesures(self.lister()["etapes"])
             self._mesures_memo = (memo, calculees)
             return [dict(m) for m in calculees]
-        groupes: dict[tuple[str, str, str], list[float]] = {}
+        groupes: dict[tuple[str, str, str, str | None], list[float]] = {}
         for etape in etapes:
             if etape["duree_s"] is not None and etape["etat"] == "termine":
-                groupes.setdefault((etape["moteur"], etape["modele"], etape["temperature"]), []).append(etape["duree_s"])
+                cle = (etape["moteur"], etape["modele"], etape["temperature"], etape.get("reglage"))
+                groupes.setdefault(cle, []).append(etape["duree_s"])
         return [{"moteur": k[0], "modele": k[1], "temperature": k[2], "mesures": len(v),
-                 "mediane_s": statistics.median(v)} for k, v in groupes.items()]
+                 "mediane_s": statistics.median(v), **({"reglage": k[3]} if k[3] else {})}
+                for k, v in groupes.items()]
 
     def estimation(self, etape: dict[str, Any], etapes: list[dict[str, Any]] | None = None) -> float:
         """Combien de secondes l'atelier attend pour ce calcul : la médiane
@@ -497,7 +503,8 @@ class ServiceFileLocale:
         à défaut, la plus longue des médianes de ce modèle sur ce moteur ; à
         défaut encore, `ESTIMATION_PAR_DEFAUT_S`. C'est le même chiffre que
         l'écran annonce (« Environ N s de calcul »)."""
-        mesures = [m for m in self.mesures(etapes) if m["moteur"] == etape["moteur"] and m["modele"] == etape["modele"]]
+        mesures = [m for m in self.mesures(etapes) if m["moteur"] == etape["moteur"] and m["modele"] == etape["modele"]
+                   and m.get("reglage") == etape.get("reglage")]
         exacte = next((m for m in mesures if m["temperature"] == etape.get("temperature", "inconnue")), None)
         if exacte:
             return float(exacte["mediane_s"])
