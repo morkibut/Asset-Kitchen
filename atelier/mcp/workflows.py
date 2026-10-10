@@ -39,7 +39,7 @@ def installer_outils_workflow(serveur, atelier, refus_lisible):
         await atelier.catalogue.rafraichir()
         return {"styles": styles, "installes": installes}
 
-    @serveur.tool(name="prepare_audio", meta=meta("Préparer un bruitage"), description="Prepare a durable local sound job without starting it. request:{cle,modele,prompt,secondes,nom?,prompt_negatif?,options?}. Use an imported audio workflow and its declared duration/options. Read the exact snapshot then use shared production start/resume tools. Result is stored in the audio library, never automatically approved or delivered.")
+    @serveur.tool(name="prepare_audio", meta=meta("Préparer un bruitage"), description="Prepare a durable local sound job without starting it. request:{cle,modele,prompt,secondes,nom?,prompt_negatif?,options?}. Use an imported audio workflow and its declared duration/options. With famille, source (a ready sound id of the project) and optional force (0.1-0.95, default 0.6) make a cover of that sound: same melody and length, new caption. Read the exact snapshot then use shared production start/resume tools. Result is stored in the audio library, never automatically approved or delivered.")
     @refus_lisible
     async def prepare_audio(project: str, request: dict[str, Any]) -> dict[str, Any]:
         return await atelier.travaux_audio.preparer(project, request, "agent")

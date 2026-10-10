@@ -14,7 +14,11 @@ def installer_variantes_son(serveur, atelier, refus):
     @serveur.tool(name="prepare_sound_series", meta=meta("Préparer une série de sons"), description=(
         "Prepare N local takes of one sound request without starting them (default 8 for sfx/ambience, 4 for "
         "music/song/jingle/voice; 1-16). request: the prepare_audio body {cle, famille or modele, prompt, ...} plus "
-        "optional nombre and nom. Each take is an ordinary audio job with its own seed. Idempotent by cle. The "
+        "optional nombre and nom. Cover of an existing sound (music made with ACE-Step 1.5): add source (the id of a "
+        "ready sound of the same project, from list_sounds) and optional force (0.1-0.95, default 0.6: how closely "
+        "to follow the source; 0.6 keeps melody and structure while the caption changes the arrangement and mood). "
+        "The duration is the source's; secondes and mesures are ignored. Each take is an ordinary audio job with "
+        "its own seed. Idempotent by cle. The "
         "result carries the announced compute time from this machine's measurements; nothing costs money. Next: "
         "start_sound_series to run it, then get_sound_series to poll until every take is rendu, then "
         "keep_sound_takes. A sound engine not allowed by this game's delegation frame, or a series that would cross "

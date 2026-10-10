@@ -7,11 +7,15 @@ sections, un tempo, une carrure), le bloc « bande originale » de l'univers
 (mode, leitmotiv, interdits), l'alerte des mots de nappe, et la graine de
 départ qui fait tirer trois intensités d'une musique sur les mêmes graines.
 Aucun calcul réel : le double de ComfyUI de SN1."""
+import numpy as np
 import pytest
 
+from atelier.audio.graphes import CONSTRUCTEURS, REPRISES, fichiers_requis
 from atelier.audio.texte import USAGES, alertes, composer_texte
+from atelier.audio.traitement import encoder
 from atelier.domaine.projet import UniversSonore
 from atelier.domaine.travail import TravailRefuse
+from atelier.domaine.workflow import WorkflowRefuse, composer, normaliser
 from atelier.services.travaux_audio import reglage_de_calcul
 from tests.test_sn1_installation import son  # noqa: F401 — la fixture
 
@@ -195,3 +199,112 @@ async def test_trois_intensites_tirent_sur_les_memes_graines_avec_leurs_reglages
     with pytest.raises(TravailRefuse, match="usage"):
         await atelier.travaux_audio.preparer(projet, {"cle": "sans", "modele": series[0]["modele"], "prompt": "x",
                                                       "secondes": 30, "usage": "titre"})
+
+
+# ── La reprise d'un son ─────────────────────────────────────────────────
+#
+# Un air de fête du camp, rejoué plus calme (« qui revit », « désert ») en
+# gardant sa mélodie : le son de départ passe en latent à la place du latent
+# vide, et la force dit à quel point le suivre (débruitage = 1 − force).
+
+
+def air_de_fete(secondes=4, taux=16000):
+    t = np.arange(int(secondes * taux)) / taux
+    note = .25 * np.sin(2 * np.pi * 330 * t)
+    return encoder(np.column_stack((note, note * .8)), taux)
+
+
+def test_le_profil_de_reprise_part_du_son_et_non_d_un_latent_vide():
+    profil = normaliser(CONSTRUCTEURS["ace-step-15-reprise"]())
+    assert REPRISES["ace-step-15-turbo"] == "ace-step-15-reprise"
+    # Les mêmes fichiers que le turbo : l'installation n'en demande aucun de plus.
+    assert {r["fichier"] for r in fichiers_requis(profil)} == {
+        r["fichier"] for r in fichiers_requis(normaliser(CONSTRUCTEURS[ACE]()))}
+    graphe = composer(profil, prompt="sparse fiddle, desert dusk", secondes=42.5, graine=9, source="atelier-son-abc.wav",
+                      force=0.6, tempo=96)
+    par_classe = {n["class_type"]: (cle, n) for cle, n in graphe.items()}
+    assert "EmptyAceStep1.5LatentAudio" not in par_classe
+    cle_charge, charge = par_classe["LoadAudio"]
+    cle_latent, latent = par_classe["VAEEncodeAudio"]
+    _, echantillonneur = par_classe["KSampler"]
+    cle_timbre, timbre = par_classe["ReferenceTimbreAudio"]
+    assert charge["inputs"]["audio"] == "atelier-son-abc.wav" and latent["inputs"]["audio"] == [cle_charge, 0]
+    assert echantillonneur["inputs"]["latent_image"] == [cle_latent, 0]
+    assert echantillonneur["inputs"]["positive"] == [cle_timbre, 0] and timbre["inputs"]["latent"] == [cle_latent, 0]
+    assert echantillonneur["inputs"]["denoise"] == 0.4 and echantillonneur["inputs"]["seed"] == 9
+    encodeur = par_classe["TextEncodeAceStepAudio1.5"][1]["inputs"]
+    assert encodeur["generate_audio_codes"] is False and encodeur["duration"] == 42.5 and encodeur["bpm"] == 96
+    assert set(profil["parametres"]) == {"langue", "pas"}  # température et guidage ne servent qu'au compositeur
+    # La force par défaut, ses bornes, et le son de départ obligatoire.
+    assert composer(profil, prompt="x", secondes=10, source="s.wav")[cle_charge]["inputs"]["audio"] == "s.wav"
+    assert composer(profil, prompt="x", secondes=10, source="s.wav", force=0.9)["10"]["inputs"]["denoise"] == 0.1
+    for force in (0.05, 0.99, True, "0.6"):
+        with pytest.raises(WorkflowRefuse, match="fidélité"):
+            composer(profil, prompt="x", secondes=10, source="s.wav", force=force)
+    with pytest.raises(WorkflowRefuse, match="son de départ"):
+        composer(profil, prompt="x", secondes=10)
+    # Le turbo, lui, ne sait pas partir d'un son.
+    with pytest.raises(WorkflowRefuse, match="ne sait pas partir d'un son existant"):
+        composer(normaliser(CONSTRUCTEURS[ACE]()), prompt="x", secondes=10, source="s.wav")
+
+
+def test_seul_un_profil_sonore_relie_un_son_de_depart_et_toujours_avec_sa_force():
+    brut = CONSTRUCTEURS["ace-step-15-reprise"]()
+    del brut["liaisons"]["force"]
+    with pytest.raises(WorkflowRefuse, match="toujours avec sa force"):
+        normaliser(brut)
+
+
+async def test_une_serie_reprend_le_son_depose_avec_sa_duree_et_ses_graines(son):  # noqa: F811
+    atelier, comfy = son
+    await atelier.installation_son.installer()
+    projet = atelier.bibliotheque.courant
+    fete = atelier.sons.importer_octets(projet, air_de_fete(), nom="Fête du camp.wav")
+    assert fete["pret"]
+    demande = {"famille": "musique", "prompt": "camp revives, sparse fiddle", "source": fete["identifiant"], "force": 0.7,
+               "texte_relu": "folk, fiddle and flute, calm", "tempo": 112, "mesure": 6, "tonalite": "D minor",
+               "graine": 500, "mesures": 16}
+    vu = atelier.travaux_audio.ce_qui_partira(projet, demande)
+    assert vu["secondes"] == 4.0 and vu["source_secondes"] == "source" and vu["source"]["nom"] == "Fête du camp.wav"
+    assert vu["force"] == 0.7 and "mesures" not in vu and "reprise" in vu["modele"]
+    s = await atelier.series_son.preparer(projet, {**demande, "cle": "revit", "nombre": 2})
+    assert "ace-step-15-reprise" in s["modele"] and [t["graine"] for t in s["tirages"]] == [500, 501]
+    # Retoucher le son de départ après la préparation ne change pas ce qui part.
+    rendu = atelier.sons.rendu(projet, fete["identifiant"]).read_bytes()
+    atelier.sons.regler(projet, fete["identifiant"], fete["revision"], {"gain_db": -6})
+    assert atelier.sons.rendu(projet, fete["identifiant"]).read_bytes() != rendu
+    await atelier.series_son.demarrer(projet, s["identifiant"])
+    await atelier.travaux.attendre_tout()
+    fini = atelier.series_son.lire(projet, s["identifiant"])
+    assert fini["etat"] == "terminee", fini
+    assert len(comfy.envois) == 2 and len(comfy.fichiers) == 2
+    assert all(b"atelier-son-" in f and b"audio/wav" in f for f in comfy.fichiers)
+    assert all(rendu in f for f in comfy.fichiers)  # le rendu d'avant la retouche, octet pour octet
+    for envoi, graine in zip(sorted(comfy.envois, key=lambda e: e["prompt"]["10"]["inputs"]["seed"]), (500, 501)):
+        graphe = envoi["prompt"]
+        assert graphe["7"]["class_type"] == "LoadAudio" and graphe["7"]["inputs"]["audio"] == "reference-enregistree.png"
+        assert graphe["10"]["inputs"]["denoise"] == 0.3 and graphe["10"]["inputs"]["seed"] == graine
+        assert graphe["5"]["inputs"]["duration"] == 4.0 and graphe["5"]["inputs"]["tags"] == "folk, fiddle and flute, calm"
+        assert graphe["5"]["inputs"]["bpm"] == 112 and graphe["5"]["inputs"]["timesignature"] == "6"
+
+
+async def test_une_reprise_impossible_est_refusee_en_clair(son):  # noqa: F811
+    atelier, _ = son
+    await atelier.installation_son.installer()
+    projet = atelier.bibliotheque.courant
+    with pytest.raises(TravailRefuse, match="n'existe pas"):
+        atelier.travaux_audio.ce_qui_partira(projet, {"famille": "musique", "prompt": "x", "source": "0" * 32})
+    fete = atelier.sons.importer_octets(projet, air_de_fete(), nom="Fête.wav")
+    # Un moteur sans profil de reprise (Stable Audio) ne sait pas partir d'un son.
+    medium = next(p for p in atelier.profils_workflow.lister() if p["identifiant"] == "sa3-medium")
+    with pytest.raises(TravailRefuse, match="ne sait pas partir d'un son existant"):
+        atelier.travaux_audio.ce_qui_partira(projet, {"famille": "musique", "prompt": "x", "modele": medium["modele"],
+                                                      "source": fete["identifiant"]})
+    with pytest.raises(TravailRefuse, match="fidélité"):
+        atelier.travaux_audio.ce_qui_partira(projet, {"famille": "musique", "prompt": "x", "force": 0.5})
+    with pytest.raises(TravailRefuse, match="fidélité"):
+        atelier.travaux_audio.ce_qui_partira(projet, {"famille": "musique", "prompt": "x", "source": fete["identifiant"],
+                                                      "force": 2})
+    with pytest.raises(TravailRefuse, match="famille"):
+        await atelier.travaux_audio.preparer(projet, {"cle": "k", "modele": medium["modele"], "prompt": "x", "secondes": 30,
+                                                      "source": fete["identifiant"]})

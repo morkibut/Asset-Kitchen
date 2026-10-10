@@ -5,11 +5,12 @@ import asyncio
 import time
 
 from atelier.domaine.travail import TravailRefuse
-from atelier.audio.graphes import CONSTRUCTEURS, FAMILLES
+from atelier.audio.graphes import CONSTRUCTEURS, FAMILLES, REPRISES
 from atelier.audio.texte import SFXR, alertes, composer_texte, langue
 from atelier.domaine.projet import FAMILLES_SON
-from atelier.domaine.son import RecetteSon
-from atelier.domaine.workflow import GRAINE_MAX, MUSIQUE, composer, duree_acceptee, musique_du_graphe, tirer_graine
+from atelier.domaine.son import RecetteSon, SonRefuse
+from atelier.domaine.workflow import (GRAINE_MAX, MUSIQUE, REFUS_SANS_SOURCE, SOURCE, WorkflowRefuse, composer, duree_acceptee,
+    FORCE_DEFAUT, force_acceptee, musique_du_graphe, tirer_graine)
 from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu, TravailExternePerdu, FINIS, resoumission_permise
 from atelier.services.travaux import ServiceTravaux, _hash, _json, _verrou
 from atelier.domaine.erreurs import FournisseurIndisponible
@@ -103,6 +104,28 @@ class ServiceTravauxAudio(ServiceTravaux):
                 return identifiant, "famille"
         return (ordre[0] if ordre else None), "famille"
 
+    # ── La reprise d'un son (BO, 10 octobre 2026) ────────────────────────────
+    #
+    # `source` nomme un son du même jeu ; ce qui part est son **rendu courant**
+    # (sa recette appliquée : la coupe, le niveau) — ce que l'auteur écoute et
+    # a gardé, pas la prise brute. Sa durée devient celle du tirage. Les octets
+    # sont copiés dans le dossier du travail à la préparation : retoucher ou
+    # supprimer le son de départ ensuite ne change pas ce qui partira.
+
+    def _son_de_depart(self, projet, identifiant):
+        if not isinstance(identifiant, str) or not identifiant:
+            raise TravailRefuse("Le son de départ se nomme par son identifiant.")
+        try:
+            son = self.a.sons.lire(projet, identifiant)
+            chemin = self.a.sons.rendu(projet, identifiant)
+        except SonRefuse as e:
+            raise TravailRefuse("Le son de départ n'existe pas dans ce jeu : " + e.raison) from e
+        duree = (son.get("mesures") or {}).get("duree")
+        if not son.get("pret") or not duree:
+            raise TravailRefuse("Le son de départ « " + son["nom"] + " » n'est pas prêt : " + (son.get("raison") or "son rendu manque."))
+        return {"son": identifiant, "nom": son["nom"], "revision": son["revision"], "secondes": round(float(duree), 2),
+                "chemin": chemin}
+
     def _composition(self, projet, brut):
         famille = brut.get("famille")
         if famille not in FAMILLES_SON:
@@ -118,6 +141,23 @@ class ServiceTravauxAudio(ServiceTravaux):
             profil = self._profil_recent(moteur) if moteur and moteur != SFXR else None
         if profil is not None and profil["nature"] != "audio":
             raise TravailRefuse("Choisissez un workflow sonore.")
+        depart = None
+        if brut.get("source") is not None:
+            depart = self._son_de_depart(projet, brut["source"])
+            if "force" in brut:
+                try: force_acceptee(brut["force"])
+                except WorkflowRefuse as e: raise TravailRefuse(e.raison) from e
+            # Le moteur de la famille (le turbo) cède la place à son profil de
+            # reprise ; un moteur qui n'en a pas est refusé en clair.
+            base = profil["identifiant"] if profil is not None else moteur
+            if profil is None or SOURCE not in profil["liaisons"]:
+                if base not in REPRISES:
+                    nom = profil["nom"] if profil else (CONSTRUCTEURS[base]()["nom"] if base in CONSTRUCTEURS else str(base))
+                    raise TravailRefuse(f"Le moteur « {nom} » {REFUS_SANS_SOURCE} : une reprise passe par ACE-Step 1.5.")
+                moteur = REPRISES[base]
+                profil = self._profil_recent(moteur)
+        elif "force" in brut:
+            raise TravailRefuse("La fidélité ne se règle que pour une reprise : choisissez d'abord le son de départ.")
         demande = {"description": brut.get("prompt"),
                    **{k: brut[k] for k in ("secondes", "mesures", "usage", *MUSIQUE) if brut.get(k) is not None}}
         try:
@@ -125,6 +165,14 @@ class ServiceTravauxAudio(ServiceTravaux):
         except ValueError as e:
             raise TravailRefuse(str(e)) from e
         compo.update(source_moteur=source_moteur, modele=profil["modele"] if profil else None, relu=False)
+        if depart is not None and compo["compose"]:
+            # La durée est celle du son de départ : le latent vient de lui. Un
+            # nombre de mesures demandé ne compte plus (la boucle est la sienne).
+            for cle in ("mesures", "secondes_demandees", "recette_proposee", "avertissement"):
+                compo.pop(cle, None)
+            compo.update(secondes=depart["secondes"], source_secondes="source",
+                         source={k: depart[k] for k in ("son", "nom", "revision", "secondes")},
+                         force=brut.get("force", FORCE_DEFAUT))
         if profil is None and compo["compose"]:
             # Le nom en clair du moteur (celui de son profil de workflow),
             # jamais son identifiant brut (« sa3-small-sfx ») — imprononçable
@@ -183,7 +231,8 @@ class ServiceTravauxAudio(ServiceTravaux):
         # « options » et « graine » ne changent pas le texte : acceptés pour que
         # l'écran relise avec le corps même de l'envoi, et ignorés ici.
         if not isinstance(brut, dict) or set(brut) - {"famille", "modele", "prompt", "prompt_negatif", "secondes",
-                                                      "mesures", "texte_relu", "usage", "options", "graine", *MUSIQUE}:
+                                                      "mesures", "texte_relu", "usage", "options", "graine", "source",
+                                                      "force", *MUSIQUE}:
             raise TravailRefuse("La demande sonore contient un réglage inconnu.")
         compo, _ = self._composition(projet, brut)
         return compo
@@ -206,12 +255,14 @@ class ServiceTravauxAudio(ServiceTravaux):
         décide, comme un texte relu à la main."""
         self._projet(projet)
         permis = {"cle", "modele", "prompt", "prompt_negatif", "secondes", "options", "nom", *MUSIQUE,
-                  "famille", "texte_relu", "mesures", "partition", "usage", "graine"}
+                  "famille", "texte_relu", "mesures", "partition", "usage", "graine", "source", "force"}
         if acteur not in ("auteur", "agent") or not isinstance(brut, dict) or set(brut) - permis:
             raise TravailRefuse("La demande sonore contient un réglage inconnu.")
         famille = "famille" in brut
-        if not famille and ("texte_relu" in brut or "mesures" in brut or "partition" in brut or "usage" in brut):
-            raise TravailRefuse("Un texte relu, une durée en mesures, un usage ou une partition demandent une famille de sons.")
+        if not famille and ("texte_relu" in brut or "mesures" in brut or "partition" in brut or "usage" in brut
+                            or "source" in brut or "force" in brut):
+            raise TravailRefuse("Un texte relu, une durée en mesures, un usage, une partition ou un son de départ "
+                                "demandent une famille de sons.")
         # La graine donnée (10 octobre 2026) : trois intensités d'une même
         # musique se tirent sur les mêmes graines, pour garder le même style.
         if "graine" in brut and (isinstance(brut["graine"], bool) or not isinstance(brut["graine"], int)
@@ -242,7 +293,8 @@ class ServiceTravauxAudio(ServiceTravaux):
              "options": brut.get("options", {}), "nom": brut.get("nom", ""), "livrer_provisoire": False,
              # Seulement s'ils sont demandés : l'empreinte d'une demande d'avant ne bouge pas.
              **{k: brut[k] for k in MUSIQUE if k in brut},
-             **{k: brut[k] for k in ("famille", "texte_relu", "mesures", "partition", "usage", "graine") if k in brut}}
+             **{k: brut[k] for k in ("famille", "texte_relu", "mesures", "partition", "usage", "graine", "source", "force")
+                if k in brut}}
         if any(not isinstance(d[k], str) or not d[k].strip() for k in ("cle", "modele", "prompt")) or len(d["cle"]) > 200:
             raise TravailRefuse("Donnez une clé, un workflow sonore et la description du bruitage.")
         if not isinstance(d["options"], dict) or not isinstance(d["nom"], str) or not isinstance(d["prompt_negatif"], str):
@@ -256,6 +308,10 @@ class ServiceTravauxAudio(ServiceTravaux):
                 if "partition" not in profil["liaisons"]:
                     raise TravailRefuse(f"Le moteur « {profil['nom']} » ne reçoit pas de partition pour cette famille.")
                 valeurs["partition"] = d["partition"]
+            if compo.get("source"):
+                # La force part dans l'envoi ; le nom du son déposé, lui, ne
+                # se connaît qu'au dépôt, juste avant de soumettre.
+                valeurs["force"] = compo["force"]
         else:
             profil = self.a.profils_workflow.de_modele(d["modele"])
             if profil["nature"] != "audio": raise TravailRefuse("Choisissez un workflow sonore.")
@@ -263,7 +319,7 @@ class ServiceTravauxAudio(ServiceTravaux):
             # Paroles, tempo, tonalité, mesure : ceux du graphe quand la demande
             # n'en dit rien, figés dans l'envoi pour être relus et repris tels quels.
             valeurs.update({**musique_du_graphe(profil), **{k: d[k] for k in MUSIQUE if k in d}})
-        composer(profil, **valeurs)
+        composer(profil, **valeurs, **({"source": "son-de-depart"} if "force" in valeurs else {}))
         try: empreinte = _hash(_json({"demande": d, "acteur": acteur}))
         except (ValueError, TypeError) as e: raise TravailRefuse("Les options doivent contenir des valeurs JSON finies.") from e
         identifiant = _hash((projet + "\0" + d["cle"]).encode())[:32]
@@ -309,6 +365,14 @@ class ServiceTravauxAudio(ServiceTravaux):
                 t["composition"] = compo
             if serie is not None:
                 t["serie"] = serie
+            if compo is not None and compo.get("source"):
+                # Les octets du son de départ, copiés à la préparation : une
+                # retouche ou une suppression de ce son ensuite ne change pas
+                # ce qui partira, et une reprise de suivi renvoie les mêmes.
+                depart = self._son_de_depart(projet, compo["source"]["son"])
+                octets = depart["chemin"].read_bytes()
+                self.a.fichiers._poser(dossier / "source.wav", octets)
+                t["source_son"] = {**compo["source"], "empreinte": _hash(octets), "fichier": "source.wav"}
             self._garder(t)
         return self.lire(projet, identifiant)
 
@@ -327,7 +391,12 @@ class ServiceTravauxAudio(ServiceTravaux):
                 self._autoriser(t)
                 t["appels_engages"] = 1; self._garder(t)
             file.engager(e["identifiant"])
-            try: numero = await m.soumettre_graphe(t["profil"], t["snapshot_audio"], [])
+            son = None
+            if t.get("source_son"):
+                son = (self._dossier(t["projet"], t["identifiant"]) / t["source_son"]["fichier"]).read_bytes()
+                if _hash(son) != t["source_son"]["empreinte"]:
+                    raise TravailRefuse("Le son de départ copié avec ce travail a changé sur le disque.")
+            try: numero = await m.soumettre_graphe(t["profil"], t["snapshot_audio"], [], son=son)
             except Exception as erreur: raise AcceptationLocaleInconnue("Réponse du workflow sonore perdue : " + str(erreur)) from erreur
             file.connaitre_externe(e["identifiant"], numero)
         limite = time.monotonic() + self.delai

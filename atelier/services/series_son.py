@@ -28,8 +28,10 @@ from atelier.services.travaux_audio import ETIQUETTES, reglage_de_calcul
 
 CLE_MAX = 150
 # Ce qu'une série accepte : la demande d'un son (AU14 + SN2), plus le nombre.
+# `source` et `force` (BO) : la reprise d'un son du jeu — chaque tirage repart
+# du même son de départ, chacun sa graine.
 DEMANDE = {"modele", "prompt", "prompt_negatif", "secondes", "options", *MUSIQUE, "famille", "texte_relu", "mesures",
-           "usage", "graine"}
+           "usage", "graine", "source", "force"}
 
 
 def duree_lisible(secondes):
