@@ -25,10 +25,11 @@ import type {
   Univers,
 } from "../api"
 import {
-  NOM_MOTEUR_LOCAL,
   NOM_REFERENCE,
   ORDRE_MOTEURS_LOCAUX,
+  stylesLocaux,
   type ModeleAvecReference,
+  type StyleLocal,
   tempsParImage,
 } from "../api-workflows"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
@@ -203,6 +204,18 @@ export function BarreQuiPaie({
   // global, déjà remis à zéro par les essais, déjà abonné.
   const [reglagesOuverts, basculerReglages] = usePli("barre.reglages")
 
+  // **Le nom d'un moteur local, pour l'`optgroup` ci-dessous** (MO7) : lu sur
+  // le même catalogue que la page « Moteurs » et le panneau des réglages
+  // (`GET /workflow-profiles/styles`, `StyleLocal.moteur`), jamais une table
+  // à part — `/api/models` ne porte que la clé de famille (`famille`), pas
+  // son nom à afficher.
+  const [stylesLocauxNommes, setStylesLocauxNommes] = useState<StyleLocal[]>([])
+  useEffect(() => {
+    let vivant = true
+    stylesLocaux.lister().then((r) => { if (vivant) setStylesLocauxNommes(r.styles ?? []) }).catch(() => {})
+    return () => { vivant = false }
+  }, [])
+
   // **`force` n'existe que quand elle agit** (règle 8nonies) : un style qui
   // *garde le sujet* (Klein) ne la lit pas, et un style *partir de cette
   // image* ne l'applique qu'à l'image jointe qu'on lui donne — sans elle, il
@@ -310,7 +323,7 @@ export function BarreQuiPaie({
             <option value="" disabled>Choisir un modèle</option>
             {modelesDistants.map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.fournisseur} · {m.nom}{m.refus ? ` — ${m.refus}` : ""}</option>)}
             {ORDRE_MOTEURS_LOCAUX.filter((f) => modelesLocaux.has(f)).map((f) => (
-              <optgroup key={f} label={NOM_MOTEUR_LOCAL[f]}>
+              <optgroup key={f} label={stylesLocauxNommes.find((s) => s.famille === f)?.moteur ?? f}>
                 {(modelesLocaux.get(f) ?? []).map((m) => <option key={m.identifiant} value={m.identifiant} disabled={!!m.refus}>{m.nom}{m.refus ? ` — ${m.refus}` : ""}</option>)}
               </optgroup>
             ))}

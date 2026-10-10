@@ -108,6 +108,10 @@ export type Modele = {
    *  du nom d'un modèle gratuit s'écrirait « $0,0000 » — et se lirait *sans
    *  limite* là où il faut lire *sans prix*. */
   unite: string
+  /** **Repeint une zone peinte** (PX2, MO2) : une capacité de modèle comme une
+   *  autre, jamais réservée aux styles locaux — c'est ce que la page
+   *  « Moteurs » lit pour montrer « Repeindre une zone » sans le supposer. */
+  masque?: boolean
 }
 
 export type Resultat = {
@@ -855,6 +859,11 @@ export type AttenteVideo = {
 }
 
 /** Un modèle vidéo au catalogue, tel que l'écran de commande le montre. */
+/** MO3 : les trois sources du catalogue vidéo. */
+export type SourceVideo = "maison" | "workflow" | "en_ligne"
+/** MO3 : l'état d'un moteur vidéo, dans les mots de la page « Moteurs ». */
+export type EtatMoteurVideo = "pret" | "a_installer" | "cle_manquante" | "indisponible"
+
 export type ModeleVideo = {
   options?: Record<string, Option>
   indisponible?: string | null
@@ -896,6 +905,27 @@ export type ModeleVideo = {
   /** **PX5** : vrai quand ce modèle sait finir le clip sur une image choisie.
    *  Optionnel : les essais d'avant cette tranche ne le donnent pas. */
   accepte_une_image_de_fin?: boolean
+  // ── MO3 : la forme commune aux trois sources (`ServiceAnimation.catalogue`) ──
+  //
+  // Optionnels pour la même raison que le champ ci-dessus : les essais d'avant
+  // MO3 ne les donnent pas, et l'écran retombe alors sur `de_la_maison`.
+  /** D'où vient le moteur : la carte de la maison (Wan), un workflow importé
+   *  par l'auteur, ou un fournisseur en ligne. */
+  source?: SourceVideo
+  /** Ce qu'il sait faire. L'image de départ est **toujours obligatoire** — un
+   *  mot, pas un booléen : ce n'est pas une capacité qui cède (AGENTS 8bis). */
+  capacites?: {
+    image_de_depart: "obligatoire"
+    /** MO6 : « obligatoire » pour un workflow importé dont ComfyUI tient
+     *  l'image de fin pour obligatoire — il ne sait finir que là. */
+    image_de_fin: boolean | "obligatoire"
+    durees: number[]
+  }
+  /** Ce qu'il consomme : du temps de la carte ici, de l'argent ailleurs (8ter). */
+  cout?: { unite: "temps" | "usd"; libelle: string }
+  /** Son état **hors de toute demande** — ce que la page « Moteurs » montre ;
+   *  le grisé, lui, dépend de la demande et reste dans `grise`. */
+  etat?: { code: EtatMoteurVideo; raison: string | null }
   prix: PrixVideo
   /** L'attente annoncée, ou `null` chez un payant — et `null` n'est pas un
    *  trou : ce qu'un modèle payant coûte est de l'argent, et une attente
@@ -2472,6 +2502,14 @@ export type SujetDepuisCarte = {
   deja: { identifiant: string; nom: string } | null
 }
 
+/** Un portrait choisi qui ne vaut plus (PX10). */
+export type PortraitPerdu = {
+  asset: string
+  raison: "supprimee" | "calque" | "detachee" | "ailleurs" | "introuvable"
+  phrase: string
+  rattachable: boolean
+}
+
 export type Personnage = {
   objectif?: ObjectifProduction | null
   identifiant: string
@@ -2521,11 +2559,19 @@ export type Personnage = {
    *  sujet ressemble. Absente par défaut ; l'identifiant d'une image fixe du
    *  sujet quand l'auteur en a choisi une.
    *
-   *  ⚠️ **Elle ne se résout pas ici** : `portraitDe` (`FicheDuSujet.tsx`) la
-   *  cherche parmi les images du sujet et retombe sur le choix du produit
-   *  quand elle ne désigne plus rien — supprimée, écartée, rattachée ailleurs.
-   *  Facultative : un serveur d'avant la tranche ne l'envoie pas. */
+   *  ⚠️ **Elle ne se résout pas ici** : c'est `portrait`, juste en dessous,
+   *  que le serveur a résolu (PX10). Facultative : un serveur d'avant RP19 ne
+   *  l'envoie pas. */
   image_de_reference?: string
+  /** **Le portrait, résolu par le serveur — la règle unique** (PX10) : le
+   *  choix de l'auteur, sinon un repli qu'une image arrivée ne déplace pas
+   *  (préférée, rangée, la plus ancienne). La carte du Codex et l'agent lisent
+   *  la même. `null` : aucune image. Absent : un serveur d'avant PX10. */
+  portrait?: Asset | null
+  /** **Le choix de l'auteur qui ne vaut plus**, avec sa raison — la fiche le
+   *  dit au lieu de le remplacer en silence. `rattachable` : l'image a
+   *  seulement été détachée, la rattacher suffit. */
+  portrait_perdu?: PortraitPerdu | null
   /** **La recette de ses images** (RS6) — le nom d'une recette nommée, que
    *  reçoit chaque image qui naît pour ce sujet à la place de la recette du
    *  jeu. Vide ou absente : la recette du jeu. */

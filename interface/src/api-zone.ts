@@ -8,7 +8,8 @@
 import { appeler, type Asset, type Trait } from "./api"
 import type { TempsLocal } from "./api-workflows"
 
-/** L'outil local qui sait repeindre une zone, tel que l'installation le voit. */
+/** La retouche de référence d'un moteur local, telle que l'installation la voit
+ *  — l'installer installe son style avec elle (MO1). */
 export type OutilDeZone = {
   identifiant: string
   nom: string
@@ -17,6 +18,9 @@ export type OutilDeZone = {
   /** Le modèle installé, ou `null` tant que l'outil ne l'est pas. */
   modele: string | null
   vitesse: string | null
+  /** La clé du moteur (`sdxl`, `qwen21`…) et son nom, tels que le catalogue les dit. */
+  famille?: string | null
+  moteur?: string | null
 }
 
 /** Ce que la génération dit être parti — enregistré, jamais recomposé. */
@@ -52,6 +56,9 @@ export type CalqueRepeint = {
   couleurs: number
   fond: string
   modele: string
+  /** MO1 : le choix d'aujourd'hui qui repartirait — celui du même style, même
+   *  quand `modele` nomme une retouche de PX7 ou une ancienne version. */
+  choix?: string | null
   rendu_largeur: number
   rendu_hauteur: number
   cree_le: number
@@ -67,10 +74,15 @@ export type CalqueRepeint = {
   emplacement_propose: string | null
 }
 
-/** PX7 : un modèle qui sait repeindre une zone, grisé ou non. */
+/** Un choix de « Repeindre », grisé ou non — MO1 : un style installé dont le
+ *  moteur sait repeindre, sous le nom qu'il porte pour créer. */
 export type ModeleDeZone = {
   identifiant: string
   nom: string
+  /** Tout ce qui désigne aussi ce choix (le style pour créer, sa retouche). */
+  identifiants?: string[]
+  /** Le moteur sous lequel le ranger — `null` pour un workflow importé à la main. */
+  moteur?: string | null
   famille: string | null
   /** Pourquoi il est grisé — `null` quand il est prêt. */
   raison: string | null
@@ -84,9 +96,9 @@ export type EtatDeLaZone = {
   /** Pourquoi on ne peut pas repeindre — `null` quand on peut. */
   raison: string | null
   outil: OutilDeZone
-  /** PX7 : un outil par famille de moteur local, prêt ou non. */
+  /** PX7 : une retouche de référence par moteur local, prête ou non. */
   outils: OutilDeZone[]
-  /** PX7 : tous les modèles capables, grisés ou non — c'est parmi eux qu'on choisit. */
+  /** Tous les choix, grisés ou non — les mêmes styles que pour créer (MO1). */
   modeles: ModeleDeZone[]
   temps: TempsLocal | null
   force: { minimum: number; maximum: number; defaut: number } | null

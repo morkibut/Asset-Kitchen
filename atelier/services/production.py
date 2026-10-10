@@ -33,6 +33,7 @@ from atelier.depot import Base, Fichiers, projet_lu_une_fois
 from atelier.domaine.asset import Asset
 from atelier.domaine.bande import Bande
 from atelier.domaine.erreurs import ErreurAtelier
+from atelier.domaine.portrait import Portrait
 from atelier.domaine.personnage import (
     LIBRE,
     PLANCHE,
@@ -1764,45 +1765,24 @@ class ServiceProduction:
         self._sauver(personnage)
         return personnage
 
-    def image_de_reference(
-        self,
-        projet: str,
-        personnage: Personnage,
-        cases: Sequence[dict[str, Any]] | None = None,
-    ) -> str:
-        """Le portrait de cette fiche, **résolu** — le choix, sinon le repli.
+    def portrait(self, projet: str, personnage: Personnage) -> Portrait:
+        """Le portrait de cette fiche — **la règle unique** (PX10,
+        `domaine/portrait.py`), celle que la carte du Codex lit en lot.
 
-        **Le repli est le choix du produit, et c'est le même qu'avant la
-        tranche** : le corps retenu de la première case faite, dans l'ordre du
-        plan de la chose. Une image désignée puis supprimée, écartée, rattachée
-        ailleurs ou devenue un calque ne désigne donc plus rien, et la fiche
-        reprend ce repli **sans erreur** : c'est ce que le critère demande.
-
-        ⚠️ **L'écran tient la même règle de son côté** (`portraitDe`,
-        `interface/src/composants/FicheDuSujet.tsx`), parce qu'il a déjà les cases
-        sous la main et qu'un aller-retour pour désigner une image qu'il affiche
-        déjà serait un aller-retour de trop. Ce n'est pas une seconde vérité
-        neuve : l'écran reprenait déjà le départage du serveur au mot.
-
-        `cases` se passe quand l'appelant vient de les calculer — l'outil de
-        l'agent les lit pour la matrice, et les relire ici les paierait deux
-        fois.
+        ⚠️ Jusqu'au 27 septembre 2026, trois règles répondaient : ici *le corps
+        retenu de la première case*, la carte *la dernière image faite*, et
+        l'écran la sienne (`portraitDe`). Un choix perdu montrait donc trois
+        images différentes, et la carte changeait à chaque image arrivée.
         """
-        choisie = personnage.image_de_reference
-        if choisie:
-            objet = self._assets.lire(choisie)
-            if (
-                objet is not None
-                and not objet.piece
-                and objet.supprime_le is None
-                and objet.personnage == personnage.identifiant
-                and (objet.projet or "") == projet
-            ):
-                return choisie
-        for case in cases if cases is not None else self.cases(projet, personnage):
-            if case["corps"]:
-                return str(case["corps"])
-        return ""
+        return self._base.portraits_par_personnage(projet, [personnage]).get(
+            personnage.identifiant, Portrait(None)
+        )
+
+    def image_de_reference(self, projet: str, personnage: Personnage) -> str:
+        """L'identifiant du portrait résolu — le choix, sinon le repli stable —,
+        ou `""`. Ce que l'agent lit, et ce qui part avec un appel comme
+        « le personnage à reproduire »."""
+        return self.portrait(projet, personnage).identifiant
 
     # ── La vitrine (E16) ─────────────────────────────────────────────────────
 
@@ -2511,6 +2491,17 @@ class ServiceProduction:
             # pièces du vestiaire, et les redire ici en entier ferait une seconde
             # copie à tenir d'accord.
             "pieces": list(self.pieces_du_personnage(projet, personnage)),
+            # **Son portrait, résolu ici et nulle part ailleurs** (PX10) :
+            # l'écran le montre tel quel au lieu de le recalculer, et un choix
+            # perdu arrive avec sa raison pour que la fiche le dise.
+            **self._portrait_en_json(projet, personnage),
+        }
+
+    def _portrait_en_json(self, projet: str, personnage: Personnage) -> dict[str, Any]:
+        portrait = self.portrait(projet, personnage)
+        return {
+            "portrait": portrait.asset.en_json() if portrait.asset is not None else None,
+            "portrait_perdu": portrait.perte_en_json(),
         }
 
     def pieces_du_personnage(
@@ -3647,6 +3638,23 @@ class ServiceProduction:
                 "un calque est solidaire de sa pose — il en faut un par pose, "
                 "et c'est le pliage qui en divise le prix"
             )
+
+        # **Le portrait choisi ne quitte pas son sujet en silence** (PX10). Le
+        # 24 septembre 2026, « Écarter » dans « Pas encore rangé » a sorti la
+        # copie de la carte d'Elias — son portrait, qui n'a pas de case par
+        # nature — et la carte du Codex a montré la dernière planche à sa place
+        # pendant trois jours, sans que rien ne le dise. Changer de portrait
+        # d'abord est un clic ; le perdre sans le savoir ne se voyait pas.
+        if objet.personnage and personnage != objet.personnage and objet.projet:
+            try:
+                porteur = self.personnage(objet.projet, objet.personnage)
+            except (PersonnageInconnu, ProjetInconnu):
+                porteur = None
+            if porteur is not None and porteur.image_de_reference == asset:
+                raise ProductionRefusee(
+                    f"c'est le portrait de « {porteur.nom} » — choisis-lui un "
+                    "autre portrait d'abord"
+                )
 
         if personnage is None and pose is None:
             objet.personnage = None

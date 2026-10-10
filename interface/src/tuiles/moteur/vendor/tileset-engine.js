@@ -1712,7 +1712,10 @@ import { rgbVersLab, labVersRgb, paletteLabPonderee, rapprocherVersReference } f
       // Les trois crans du réglage. « aucun » est le défaut, et c'est lui qui garantit
       // que l'atlas d'aujourd'hui ne bouge pas d'un bit : aucune ligne ajoutée, aucun
       // chemin de code atteint.
-      const DECOR_DENSITIES = ["aucun", "leger", "dense"];
+      // Depuis le 27 septembre 2026 (Asset Kitchen), six crans : la forme des pièces ne
+      // dépend pas du cran — seule la pose en dépend (`emplacementsDecor`) —, et tout cran
+      // autre que « aucun » ajoute les mêmes lignes à l'atlas.
+      const DECOR_DENSITIES = ["aucun", "rare", "leger", "moyen", "dense", "partout"];
 
       // Une ligne d'atlas par ORIENTATION — le côté de la case où se trouve la matière
       // contre laquelle la pièce s'appuie — et une colonne par VARIANTE. Quatre
@@ -1769,7 +1772,8 @@ import { rgbVersLab, labVersRgb, paletteLabPonderee, rapprocherVersReference } f
        * comptent autant que la masse : ce sont eux qui font que le bord ne se lit plus
        * comme une ligne, mais comme une zone.
        */
-      function decorShape(orientation, variantIndex, tileSize, seed) {
+      function decorShape(orientation, variantIndex, tileSize, seed, options = null) {
+        if (options) return decorShapeFine(orientation, variantIndex, tileSize, seed, options);
         const o = DECOR_ORIENTATIONS.indexOf(orientation);
         const s = (seed | 0) + DECOR_SEED_STEP * (variantIndex + 1) + o * 131;
         const alea = (k) => hash2(k, o + 1, s + k * 37);
@@ -1806,6 +1810,81 @@ import { rgbVersLab, labVersRgb, paletteLabPonderee, rapprocherVersReference } f
       }
 
       /**
+       * Les réglages fins des cailloux (Asset Kitchen, 27 septembre 2026), chacun de 1 à
+       * 10 : `taille`, `nombre` (galets par pièce), `ecart` (jusqu'où ils s'éloignent du
+       * bord), et `colles` (vrai : une partie des galets s'appuie sur le bord et la pose
+       * les apparie, comme l'ancien gravat ; faux : tous sont détachés).
+       *
+       * Ce que la forme d'avant faisait mal, vu à l'usage : trois ou quatre galets d'un
+       * quart de tuile chacun, soudés et répartis sur TOUTE la largeur de la case — donc
+       * coupés net par ses côtés, ce qui dessinait des blocs carrés au lieu de cailloux,
+       * et aucune façon de les faire plus petits. Ici chaque galet tient ENTIER dans sa
+       * case (sauf, accrochés, par le côté de la matière), avec une marge qui absorbe le
+       * bruit de bord : aucun côté de case ne peut plus le couper.
+       */
+      function clampFin(v, defaut) {
+        const n = Math.round(Number(v));
+        return Number.isFinite(n) ? clamp(n, 1, 10) : defaut;
+      }
+
+      function decorShapeFine(orientation, variantIndex, tileSize, seed, options) {
+        const taille = clampFin(options.taille, 3);
+        const nombre = clampFin(options.nombre, 4);
+        const ecart = clampFin(options.ecart, 4);
+        const colles = options.colles === true;
+        const o = DECOR_ORIENTATIONS.indexOf(orientation);
+        const s = (seed | 0) + DECOR_SEED_STEP * (variantIndex + 1) + o * 131 + 50021;
+        const alea = (k) => hash2(k, o + 1, s + k * 37);
+        const rMax = Math.max(1, tileSize * (0.025 + 0.02 * taille));
+        const portee = tileSize * (0.1 + 0.07 * ecart);
+        const accroches = colles ? Math.max(1, Math.ceil(nombre / 2)) : 0;
+        const galets = [];
+        for (let i = 0; i < nombre; i += 1) {
+          for (let essai = 0; essai < 8; essai += 1) {
+            const k = 200 + i * 16 + essai * 2;
+            // Les galets se serrent près du bord et s'éclaircissent en s'éloignant, et
+            // rapetissent avec la distance : un éboulis, pas une grille de points.
+            const loin = i < accroches ? 0 : Math.pow(alea(k), 1.6);
+            const r = Math.max(1, rMax * (0.5 + 0.5 * alea(k + 1)) * (1 - 0.45 * loin));
+            const marge = r * 0.25 + 1;
+            const cx = r + marge + alea(k + 3) * Math.max(0, tileSize - 2 * (r + marge));
+            const cy = i < accroches
+              ? r * (alea(k + 5) * 0.5 - 0.2)
+              : Math.min(tileSize - r - marge, r + marge + loin * Math.max(0, portee - r - marge));
+            if (galets.some((g) => Math.hypot(g.cx - cx, g.cy - cy) < g.r + r + 1)) continue;
+            // Un caillou n'est pas un disque : un peu écrasé, un peu penché. Le grand axe
+            // reste `r`, donc la marge qui le garde dans sa case tient toujours.
+            galets.push({ cx, cy, r, ratio: 0.62 + 0.38 * alea(k + 7), angle: alea(k + 9) * Math.PI });
+            break;
+          }
+        }
+        return { fine: true, galets };
+      }
+
+      /** Distance (approchée, jamais surestimée hors du galet) à un galet ovale et penché. */
+      function galetSdf(g, u, v) {
+        const du = u - g.cx;
+        const dv = v - g.cy;
+        const c = Math.cos(g.angle);
+        const sn = Math.sin(g.angle);
+        const a = du * c + dv * sn;
+        const b = (-du * sn + dv * c) / g.ratio;
+        return (Math.hypot(a, b) - g.r) * g.ratio;
+      }
+
+      /** Le rayon du galet dont le bord est le plus proche du point — cailloux fins seulement. */
+      function decorRayonProche(shape, orientation, x, y, tileSize) {
+        const [u, v] = decorCanonical(orientation, x, y, tileSize);
+        let best = Infinity;
+        let r = 1;
+        for (const g of shape.galets) {
+          const d = Math.abs(galetSdf(g, u, v));
+          if (d < best) { best = d; r = g.r; }
+        }
+        return r;
+      }
+
+      /**
        * Distance signée à une pièce de décor. `shape` vient de `decorShape` — calculé
        * une fois par case d'atlas, jamais par pixel : la boucle de pixels appelle
        * cette fonction des milliers de fois, et `grazing` quatre fois de plus.
@@ -1813,6 +1892,10 @@ import { rgbVersLab, labVersRgb, paletteLabPonderee, rapprocherVersReference } f
       function decorSdf(shape, orientation, x, y, tileSize) {
         const [u, v] = decorCanonical(orientation, x, y, tileSize);
         let d = Infinity;
+        if (shape.fine) {
+          for (const g of shape.galets) d = Math.min(d, galetSdf(g, u, v));
+          return d;
+        }
         for (const m of shape.masses) {
           const dist = Math.hypot(u - m.cx, v - m.cy) - m.r;
           d = Number.isFinite(d) ? smin(d, dist, m.fillet) : dist;
@@ -3302,7 +3385,7 @@ import { rgbVersLab, labVersRgb, paletteLabPonderee, rapprocherVersReference } f
         // Les douze formes sont calculées UNE fois, hors de la boucle de pixels :
         // elles ne dépendent que de (orientation, variante, graine), jamais du pixel.
         const decorShapes = decorTarget
-          ? decorTarget.cells.map((c) => ({ ...c, shape: decorShape(c.orientation, c.variant, tile, settings.seed) }))
+          ? decorTarget.cells.map((c) => ({ ...c, shape: decorShape(c.orientation, c.variant, tile, settings.seed, settings.decorOptions || null) }))
           : null;
 
         /**
@@ -3323,15 +3406,22 @@ import { rgbVersLab, labVersRgb, paletteLabPonderee, rapprocherVersReference } f
           const ly = ay + 0.5;
           const geo = (x, y) => decorSdf(entry.shape, entry.orientation, x, y, tile);
           const sdf = geo(lx, ly);
+          // Les cailloux fins (Asset Kitchen) : le bruit de bord et le fondu de contour
+          // suivent la taille du galet le plus proche. À pleine force, un bruit de 16 px
+          // sur un galet de 3 le gonflait en tache ou l'effaçait, et un fondu de 6 px le
+          // peignait tout entier de la couleur du contour.
+          const rProche = entry.shape.fine ? decorRayonProche(entry.shape, entry.orientation, lx, ly, tile) : Infinity;
+          const bruit = Math.min(roughness, rProche * 0.4);
+          const fondu = Math.min(settings.edgeFade, Math.max(1, rProche * 0.45));
           const edgeNoise =
             (seamlessFbm((lx * edgeLattice) / tile, (ly * edgeLattice) / tile, settings.seed + 113, edgeLattice) - 0.5) *
-            roughness;
+            bruit;
           const adjusted = sdf + edgeNoise;
           if (adjusted > 0) return bg;
           const grazed =
-            relief > 0 && adjusted > -settings.edgeFade - 1 ? grazing(geo, lx, ly) : 0;
+            relief > 0 && adjusted > -fondu - 1 ? grazing(geo, lx, ly) : 0;
           const edgeDepth = -adjusted;
-          const edgeAmount = settings.edgeFade > 0 ? clamp(1 - edgeDepth / settings.edgeFade, 0, 1) : 0;
+          const edgeAmount = fondu > 0 ? clamp(1 - edgeDepth / fondu, 0, 1) : 0;
           const { ao, lift } = reliefOf(grazed, edgeAmount);
           let level = edgeAmount * (shades - 1) * ao;
           level +=

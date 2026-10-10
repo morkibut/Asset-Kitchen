@@ -69,68 +69,203 @@ Relevé du 27 septembre 2026, en lecture seule :
 Avant tout code. La page dans les Réglages, et la façon dont un outil montre un moteur qu'il ne
 peut pas utiliser.
 
-- [ ] Une maquette montre la page : les moteurs groupés (sur la machine, en ligne), pour chacun
+- [x] Une maquette montre la page : les moteurs groupés (sur la machine, en ligne), pour chacun
       son nom, ce qu'il sait faire, ses réglages, son état et le bouton qui convient.
-- [ ] Elle montre le choix du modèle dans un outil (Créer, Repeindre, Animer) : mêmes noms, mêmes
+      → `docs/maquettes-atelier-unifie/05-moteurs.html` (+ `moteurs.css`, `moteurs.js`).
+- [x] Elle montre le choix du modèle dans un outil (Créer, Repeindre, Animer) : mêmes noms, mêmes
       groupes, moteur non installé grisé avec « l'installer dans Moteurs › ».
-- [ ] Validée par l'auteur.
+      → même maquette, les trois outils (« Aller à » en bandeau).
+- [x] Validée par l'auteur.
 
 ## MO1 · Les images de la machine : créer et repeindre, une seule description
 
 Reprend et remplace `PX11` de `docs/PLAN-idees-pixellab.md`.
 
-- [ ] Une seule description par moteur et par réglage ; « sait repeindre une zone » en est une
-      capacité, pas une seconde fiche.
-- [ ] Dans Repeindre, les mêmes choix que pour créer — **Qwen « Très rapide » et « Meilleure
+- [x] Une seule description par moteur et par réglage ; « sait repeindre une zone » en est une
+      capacité, pas une seconde fiche. → `ZONES` se calcule depuis `STYLES`
+      (`atelier/fournisseur/catalogue_styles.py`) ; `OUTILS` n'en est plus qu'une vue, pour les
+      cinq anciens identifiants déjà écrits sur des générations.
+- [x] Dans Repeindre, les mêmes choix que pour créer — **Qwen « Très rapide » et « Meilleure
       qualité » compris** —, avec les mêmes noms.
-- [ ] Un moteur installé pour créer sait repeindre sans rien installer de plus.
-- [ ] Les formats vivent avec le moteur, plus à côté.
-- [ ] Un repeint fait avec l'ancien outil se rouvre et se relance.
-- [ ] Les essais de `PX2`, `PX7`, `PX9` et des moteurs locaux passent.
+- [x] Un moteur installé pour créer sait repeindre sans rien installer de plus.
+- [x] Les formats vivent avec le moteur, plus à côté.
+- [x] Un repeint fait avec l'ancien outil se rouvre et se relance.
+- [x] Les essais de `PX2`, `PX7`, `PX9` et des moteurs locaux passent.
+      ⚠️ Reste, pour `MO7` : `atelier/mcp/serveur.py` (`repaints_zone`) ne marque encore que les
+      jumeaux déjà créés, pas tout style qui sait repeindre (le texte du guide périmé, lui, est
+      corrigé par `MO2`).
 
 ## MO2 · La page « Moteurs »
 
-- [ ] La page de la maquette, dans les Réglages : tous les moteurs d'image, ce que chacun sait
-      faire, son état ; on installe d'ici.
-- [ ] Les boutons « Installer » éparpillés dans les outils laissent place au renvoi vers la page.
-- [ ] Une ligne au guide (`AGENTS.md`, point 7).
+- [x] La page de la maquette, dans les Réglages : tous les moteurs d'image, ce que chacun sait
+      faire, son état ; on installe d'ici. → `PageDesMoteurs`
+      (`interface/src/composants/Moteurs.tsx`), dans l'onglet « Moteurs & workflows » (non
+      renommé — ~11 fichiers/essais nomment déjà ce texte, et rien dans `docs/vocabulaire.html`
+      n'imposait le mot plus court de la maquette).
+- [x] Les boutons « Installer » éparpillés dans les outils laissent place au renvoi vers la page.
+      → Repeindre défile jusqu'à la fiche précise et la met en évidence ; Créer (sélecteur natif
+      dans la barre qui paie) renvoie à l'onglet sans cibler un moteur précis, faute de pouvoir
+      porter un lien par option.
+- [x] Une ligne au guide (`AGENTS.md`, point 7). → l'entrée périmée sur « Retouche d'une zone »
+      (signalée par `MO1`) est corrigée au passage.
 
 ## MO3 · La vidéo
 
-- [ ] Wan (la maison), les modèles vidéo d'OpenRouter et les workflows vidéo importés sortent du
+- [x] Wan (la maison), les modèles vidéo d'OpenRouter et les workflows vidéo importés sortent du
       même catalogue, avec les mêmes capacités (image de départ, image de fin, durées).
-- [ ] Un workflow vidéo importé qui sait finir sur une image le dit, et « Fin de l'animation » s'y
-      offre.
-- [ ] « Faire une vidéo libre » et « 4. Le clip » proposent la même liste.
-- [ ] Les moteurs vidéo entrent sur la page « Moteurs ».
+      → `ServiceAnimation.catalogue` (`atelier/services/animation.py`) assemble et trie les trois
+      sources ; `GET /clips/models` ne fait plus que la servir. Chaque ligne porte, dans la même
+      forme, `source` (maison / workflow / en_ligne, déclarée par l'animateur), `capacites`
+      (`image_de_depart: "obligatoire"` — un mot, pas un booléen : 8bis —, `image_de_fin`,
+      `durees`), `cout` (temps ou dollars, 8ter) et `etat` (prêt, à installer, clé manquante,
+      indisponible), qui ne dépend d'aucune demande — le grisé reste à côté.
+- [x] Un workflow vidéo importé qui sait finir sur une image le dit, et « Fin de l'animation » s'y
+      offre. → une liaison `image_de_fin` vers le champ du nœud qui charge l'image de fin
+      (`atelier/domaine/workflow.py`), reliable aussi depuis le formulaire d'import
+      (« Champ recevant l'image de fin (facultatif) »). Sans image de fin demandée, ce qui ne
+      servait qu'à elle quitte le graphe (`sans_image_de_fin`) et le clip finit libre ; une boucle
+      ne redépose pas le départ. Un profil sans cette liaison garde sa forme, donc sa version.
+      ⚠️ Reste, pour `MO6` : la capacité se lit sur la liaison déclarée, pas encore sur le graphe
+      seul (un `end_image` non relié n'est pas deviné), et que ComfyUI tienne l'entrée retirée
+      pour facultative ne se vérifie pas (`/object_info`) — si elle ne l'est pas, ComfyUI refuse le
+      calcul à l'envoi, en local, sans rien payer.
+- [x] « Faire une vidéo libre » et « 4. Le clip » proposent la même liste. → `ChoixModeleVideo`
+      (`interface/src/composants/ChoixModeleVideo.tsx`) : mêmes noms (fournisseur · nom — la vidéo
+      libre montrait l'identifiant brut), mêmes groupes que la page Moteurs, même ordre (le
+      serveur). Un essai monte les deux écrans sur la même réponse et compare ligne à ligne.
+- [x] Les moteurs vidéo entrent sur la page « Moteurs ». → section « Vidéo »
+      (`interface/src/composants/MoteursVideo.tsx`), montée d'une ligne au bas de
+      `PageDesMoteurs` ; Wan « à installer » ouvre « L'installation » (où les fichiers se
+      descendent avec leur taille et leur licence), un payant sans clé renvoie aux fournisseurs.
+      Une ligne au guide (`reglages.moteurs-video`). Pas encore de renvoi ciblé depuis un outil vers
+      une carte vidéo (MO2 ne l'a posé que pour l'image).
 
 ## MO4 · Le son
 
-- [ ] Les moteurs de son sortent du même catalogue ; aucun écran ne redit leurs noms.
-- [ ] Ils entrent sur la page « Moteurs ».
+- [x] Les moteurs de son sortent du même catalogue ; aucun écran ne redit leurs noms.
+      → `GET /workflow-profiles/sound-engines` (`atelier/services/installation_son.py`,
+      `catalogue_depuis`) : pour chaque moteur qui sert au moins une famille de son
+      (`atelier/audio/graphes.py`, `FAMILLES`), son nom, sa description, les familles où il
+      sert, s'il est prêt, ce qui lui manque sinon, et le modèle qu'il porte une fois installé
+      — un simple `GET`, qui ne pose jamais de profil. `FabricationAudio.tsx` lit ce même
+      catalogue pour nommer un moteur (`nomMoteur`), au lieu de sa propre table `NOM_MOTEUR`.
+      ⚠️ `nomMoteurSonore` (`WorkflowsLocaux.tsx`) reste une table à part, à dessein : elle nomme
+      un moteur déjà écrit sur un son produit (`AtelierSon.tsx`, une fiche de provenance), pas un
+      choix de moteur — MO7 (« plus aucune liste de moteur écrite en dur ») tranchera si elle
+      doit disparaître à son tour.
+- [x] Ils entrent sur la page « Moteurs ». → section « Le son » de `PageDesMoteurs`
+      (`interface/src/composants/Moteurs.tsx`), même gabarit de carte que MO2 (nom, capacités en
+      étiquettes, badge d'état, bouton installer/réinstaller). « Les méthodes sonores »
+      (`WorkflowsLocaux.tsx`) est fondue dans cette section, comme MO2 l'a fait pour les styles
+      de sc-clone — `onInstallationSon` relaie l'installation jusqu'à « Les workflows locaux »,
+      qui continue de relire ses profils à son tour.
 
 ## MO5 · La 3D, le détourage et le texte
 
-- [ ] Le programme 3D, les modèles de détourage et le modèle de texte du coup de main apparaissent
-      sur la page « Moteurs » : nom, ce qu'ils savent faire, état.
-- [ ] Les réglages 3D ne sont plus écrits en double dans l'écran.
+- [x] Le programme 3D, les modèles de détourage et le modèle de texte du coup de main apparaissent
+      sur la page « Moteurs » : nom, ce qu'ils savent faire, état. → trois sections de plus dans
+      `PageDesMoteurs` (`interface/src/composants/Moteurs.tsx`) : la 3D (`GET /3d/connection` puis
+      `/3d/catalogue` pour distinguer adresse posée de « répond vraiment »), le détourage (les cinq
+      modèles déjà lus par `Retouche.tsx`, relayés en prop plutôt que relus), le coup de main
+      (`GET /assist`, déjà consommé ailleurs, relu ici en carte).
+- [x] Les réglages 3D ne sont plus écrits en double dans l'écran. → `Fabrication3D.tsx` n'affiche
+      plus `taille_images`/`cadrage` en clé brute quand ils sont déjà dits en phrase par « Cadre et
+      caméra conservés ».
 
 ## MO6 · Les workflows importés par l'auteur
 
-- [ ] Un workflow importé devient un moteur comme les autres : ses capacités se déduisent de ce
+- [x] Un workflow importé devient un moteur comme les autres : ses capacités se déduisent de ce
       qu'il sait recevoir (une zone, une image de fin, une durée), et il apparaît dans tous les
-      outils qui peuvent s'en servir.
-- [ ] Il apparaît sur la page « Moteurs », avec son diagnostic.
+      outils qui peuvent s'en servir. → deux temps jamais confondus
+      (`atelier/domaine/lecture_graphe.py`) : la **lecture** d'un graphe seul propose des champs
+      — la zone (une entrée `mask`, et le `LoadImage` qui ne sert qu'à elle, jamais la
+      transparence de l'image de départ), l'image de fin (`end_image`), le nombre d'images
+      (`length`… et son pas, lu dans `/object_info`) ; la **liaison** dit ce que le profil reçoit,
+      et la capacité ne se lit que sur elle (MO3, PX2). La lecture préremplit le formulaire
+      d'import (`POST /workflow-profiles/read-graph`), qui gagne « Champ recevant la zone à
+      repeindre » et « Champ recevant le nombre d'images » avec des durées proposées. Pour un
+      profil déjà importé, « Relier ce que son graphe reçoit » écrit une **nouvelle version**
+      (`bind-deduced`) ; l'ancienne se relit. Une zone reliée fait entrer le workflow dans
+      « Repeindre » (déjà par `m.masque` depuis PX2 : rien à changer dans `ServiceZone`).
+      La limite laissée par MO3 est levée : le diagnostic lit si ComfyUI tient `end_image` pour
+      obligatoire (`fin_libre`) ; si oui, le clip sans fin se grise (« ne sait finir que sur une
+      image choisie ») au lieu d'être refusé à l'envoi, et `capacites.image_de_fin` vaut
+      `"obligatoire"`.
+      ⚠️ Reste : une durée écrite dans le graphe d'un profil déjà importé se **dit** sur sa carte
+      mais ne se relie pas d'un geste — il faut à l'auteur choisir les durées à proposer, donc
+      réimporter.
+- [x] Il apparaît sur la page « Moteurs », avec son diagnostic. → section « Les workflows
+      importés » (`interface/src/composants/MoteursImportes.tsx`, `GET
+      /workflow-profiles/imported`) : un moteur par profil importé à la main — ni style de
+      sc-clone, ni moteur sonore —, ce qu'il sait faire, où le retrouver, et ce qui lui manque
+      **élément par élément** (`diagnostic.a_completer` : nœud à installer, fichier à poser,
+      champ inconnu, sortie qui n'enregistre rien, ComfyUI éteint ; une même phrase pour deux
+      nœuds ne fait qu'une ligne). Un clip importé reste aussi dans « Vidéo ». Une ligne au
+      guide (`reglages.moteurs-importes`). Joué au navigateur sur `essais/atelier_jetable_mo6.py`.
 
 ## MO7 · Les écrans ne tiennent plus de liste à eux
 
-- [ ] Plus aucun nom de moteur, de famille ni de réglage écrit en dur dans l'interface : un essai
-      le vérifie.
-- [ ] Une question, une route : les doublons relevés plus haut n'en font plus qu'une.
+- [x] Plus aucun nom de moteur, de famille ni de réglage écrit en dur dans l'interface : un essai
+      le vérifie. → Le reste ouvert par `MO1` est fermé : `list_models` (MCP) annonce
+      `repaints_zone` sur la vraie capacité du style (`catalogue_styles.sait_repeindre`), pas
+      seulement sur les jumeaux de zone déjà installés (`atelier/mcp/serveur.py`,
+      `_repeint_une_zone`). `nomMoteurSonore`/`MOTEURS_SONORES` (`WorkflowsLocaux.tsx`) ont
+      disparu : `AtelierSon.tsx`, `DelegationDuJeu.tsx` et `ReglesDuJeu.tsx` lisent le même
+      catalogue que `Moteurs.tsx` (`GET /workflow-profiles/sound-engines`), avec le même repli
+      sur l'identifiant brut pour un moteur disparu depuis. `NOM_MOTEUR_LOCAL` a disparu à son
+      tour : le serveur nommait déjà le moteur sur chaque style (`_ligne`, « moteur »,
+      jamais porté par le type `StyleLocal`) — `Moteurs.tsx`, `PanneauReglages.tsx` et
+      `BarreQuiPaie.tsx` lisent ce champ. `ORDRE_MOTEURS_LOCAUX` reste une constante d'écran,
+      à dessein : ce sont des clés de tri, jamais un nom, et aucune route ne rend un ordre.
+      Nouveau garde-fou : `essais/essai_moteurs_en_dur.py` (lu depuis le catalogue serveur,
+      jamais recopié — même règle qu'`essai_vocabulaire.py`), tenu par la suite via
+      `tests/test_mo7_moteurs_en_dur.py`.
+- [x] Une question, une route : les doublons relevés plus haut n'en font plus qu'une. → Audité :
+      les trois sujets du relevé (styles, zone, vidéo importée) sont déjà résorbés par `MO1`
+      (`OUTILS` n'est qu'une vue de `STYLES`), `MO3`/`MO6` (`GET /clips/models`, catalogue
+      unique) — aucune route en double ne subsiste. `GET /workflow-profiles/imported` répond à
+      une question différente (le diagnostic d'un profil importé), pas un second catalogue.
 
 ## MO8 · La relecture croisée
 
-- [ ] Les étapes confrontées entre elles et au plan ; les coutures corrigées.
-- [ ] Le parcours de A à Z joué au navigateur pour chaque geste (créer, repeindre, animer, son,
+- [x] Les étapes confrontées entre elles et au plan ; les coutures corrigées.
+      → Les trois points laissés ouverts par les notes précédentes ont été rejoués au
+      navigateur, pas seulement relus :
+      - **MO2** (« Créer ne cible aucun moteur précis ») : encore vrai, et confirmé **non
+        gênant** — `/api/models` ne rend un moteur local qu'une fois installé (ce n'est pas un
+        `Modele` tant qu'il ne l'est pas), donc il n'y a structurellement rien à cibler dans le
+        `<select>` ; un modèle en ligne refusé, lui, montre déjà sa raison dans l'option.
+      - **MO3** (« aucun renvoi ciblé vers une carte vidéo ») : encore vrai — les deux écrans
+        (`ChoixModeleVideo`) n'ont pas de lien vers Moteurs, contrairement à Repeindre. Laissé
+        tel quel, à dessein : contrairement à Créer, rien n'empêcherait de le poser plus tard, mais
+        MO8 ne devait pas ajouter de fonctionnalité neuve.
+      - **MO6** (« un clip importé dans deux sections ») : vu à l'écran, ça se lit comme un
+        renvoi et non une redite (les deux cartes ne disent pas la même chose — l'une compare
+        le moteur aux autres, l'autre diagnostique ce qui a été importé) mais rien ne le disait
+        explicitement. **Corrigé** : la carte de « Vidéo » d'un clip importé porte désormais
+        « Diagnostic complet dans « Les workflows importés », plus bas. » (`MoteursVideo.tsx`).
+      - Vocabulaire et style entre les sections de `Moteurs.tsx` (MO2 à MO6) : lus ensemble à
+        l'écran, cohérents — même gabarit de carte, mêmes badges, même registre de phrase.
+      **Un vrai bug trouvé et corrigé**, hors du texte des notes : `GET /api/clips/engine` levait
+      une 500 (`AttributeError: 'AnimateurDouble' object has no attribute 'visiter'`) à chaque
+      ouverture de « Faire une vidéo libre » ou « 4. Le clip », dans l'atelier jetable de `MO3`
+      seulement (son double du moteur « Maison » ne portait pas `.visiter()`/`.telecharger()`,
+      attendus par `_moteur()` dans `atelier/api/animation.py`). Le vrai `MoteurDeLaMaison` du
+      produit les porte ; ce n'était donc pas un bug produit, mais l'écran le déclenche sans
+      condition et l'erreur était invisible (`.catch(() => setMoteur(null))`) — corrigé dans
+      `essais/atelier_jetable_mo3.py`.
+- [x] Le parcours de A à Z joué au navigateur pour chaque geste (créer, repeindre, animer, son,
       3D), sur un atelier jetable avec de vrais assets des projets de l'auteur.
-- [ ] Rien de payé : les vérifications se font en local.
+      → Quatre ateliers jetables (image `atelier_jetable_mo2.py`, vidéo `atelier_jetable_mo3.py`,
+      workflows importés `atelier_jetable_mo6.py`, son — neuf, `atelier_jetable_mo8_son.py`),
+      chacun avec Mara (*The Way Out reborn*) copiée hors de `donnees/`. **Créer** (moteur en
+      ligne doublé), **Repeindre** (grisé + lien vers Moteurs vérifiés en cliquant vraiment
+      dessus ; zone peinte, moteur local installé choisi, demande envoyée — la file locale de cet
+      atelier-ci ne sait pas simuler `/prompt`/`/queue`, donc la fabrication reste « en cours »,
+      sans conséquence pour ce qui était à vérifier ici), **Animer** (Wan local puis un moteur en
+      ligne, ce dernier terminé pour de vrai, clip récupéré) et **Fabriquer un son** (huit tirages
+      Stable Audio 3 Small-SFX, tous terminés, un gardé) ont tous été joués. La page « Moteurs »
+      a été relue en entier, section par section, sur les quatre ateliers.
+- [x] Rien de payé : les vérifications se font en local.
+      → Fournisseurs et ComfyUI doublés partout ; les deux fabrications terminées (vidéo en
+      ligne, son) l'ont été à $0,0000 / 0 usd consommé.

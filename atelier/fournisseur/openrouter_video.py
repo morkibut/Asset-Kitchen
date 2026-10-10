@@ -85,6 +85,8 @@ class OpenRouterVideo:
     """Implémente `PortAnimateur`."""
 
     nom = "OpenRouter"
+    # MO3 : d'où vient un modèle vidéo, pour le catalogue commun.
+    source = "en_ligne"
 
     def __init__(self, cle: str | None = None) -> None:
         self._cle = (cle or "").strip()

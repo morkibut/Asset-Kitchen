@@ -406,6 +406,55 @@ describe("TU8 (écran) — le réglage « décor »", () => {
     expect(gravats).toBeGreaterThan(0)
   })
 
+  // Le 27 septembre 2026 : même « léger » posait des blocs d'un quart de tuile, coupés net
+  // par les côtés de leur case. Détachés, les cailloux tiennent ENTIERS dans leur case.
+  function casesDeCailloux(j: JeuEdite) {
+    const a = atlasDe(j).pixels, t = j.taille, sortie: { opaques: number; bord: number }[] = []
+    for (let row = 0; row < a.height / t; row++) for (let col = 0; col < a.width / t; col++) {
+      if (!nomPiece(j, col, row).startsWith("Gravats")) continue
+      let opaques = 0, bord = 0
+      for (let y = 0; y < t; y++) for (let x = 0; x < t; x++) {
+        if (!a.data[((row * t + y) * a.width + col * t + x) * 4 + 3]) continue
+        opaques++
+        if (x === 0 || y === 0 || x === t - 1 || y === t - 1) bord++
+      }
+      sortie.push({ opaques, bord })
+    }
+    return sortie
+  }
+
+  test("détachés, aucun caillou ne touche le bord de sa case, même au plus gros et au plus loin", () => {
+    for (const sorte of ["chemin", "sol", "mur"] as const) {
+      const j = nouveauJeu({ nom: "Essai", sorte, taille: 32, graine: 11 })
+      Object.assign(j.reglages, { decor: "partout", caillouxTaille: 10, caillouxNombre: 10, caillouxEcart: 10, irregularite: 10 })
+      const cases = casesDeCailloux(j)
+      expect(cases.length).toBe(12)
+      expect(cases.every((c) => c.opaques > 0)).toBe(true)
+      expect(cases.map((c) => c.bord)).toEqual(Array(12).fill(0))
+    }
+  })
+
+  test("la taille des cailloux change leur surface, dans le bon sens", () => {
+    const surface = (taille: number) => {
+      const j = nouveauJeu({ nom: "Essai", sorte: "chemin", taille: 64, graine: 5 })
+      Object.assign(j.reglages, { decor: "leger", caillouxTaille: taille })
+      return casesDeCailloux(j).reduce((s, c) => s + c.opaques, 0)
+    }
+    const petits = surface(1), moyens = surface(5), gros = surface(10)
+    expect(petits).toBeLessThan(moyens)
+    expect(moyens).toBeLessThan(gros)
+  })
+
+  test("les réglages fins des cailloux survivent à la réouverture", () => {
+    const j = nouveauJeu({ nom: "Essai", sorte: "chemin", taille: 32, graine: 9 })
+    Object.assign(j.reglages, { decor: "moyen", caillouxTaille: 7, caillouxNombre: 2, caillouxEcart: 9, caillouxColles: true })
+    const avant = Buffer.from(atlasDe(j).pixels.data)
+    oublierLesRendus()
+    const j2 = rouvrir(j)
+    expect(j2.reglages).toMatchObject({ decor: "moyen", caillouxTaille: 7, caillouxNombre: 2, caillouxEcart: 9, caillouxColles: true })
+    expect(Buffer.from(atlasDe(j2).pixels.data)).toEqual(avant)
+  })
+
   test("le mur connaît aussi le réglage, et « aucun » reste son défaut", () => {
     const j = nouveauJeu({ nom: "Essai", sorte: "mur", taille: 32, graine: 3 })
     expect(reglagesMoteur(j).decor).toBe("aucun")

@@ -27,10 +27,11 @@
 
 import { useEffect, useState } from "react"
 
-import type { EtatAgent, Modele, Tiroir } from "../api"
+import type { EtatAgent, EtatTraitement, Modele, Tiroir } from "../api"
 import { DelegationDuJeu } from "./DelegationDuJeu"
 import { EcranDepenses } from "./Depenses"
 import { PANNEAU } from "./Infobulle"
+import { PageDesMoteurs } from "./Moteurs"
 import { Bouton } from "./pieces"
 import {
   BlocAgent,
@@ -39,7 +40,7 @@ import {
   ReglesDuJeu,
   TitreDeLAtelier,
 } from "./ReglesDuJeu"
-import { MethodesSonores, ProfilsWorkflow } from "./WorkflowsLocaux"
+import { ProfilsWorkflow } from "./WorkflowsLocaux"
 
 /** Les quatre onglets, dans l'ordre de la maquette. **La liste est fermée** :
  *  un cinquième onglet serait une porte de plus vers les réglages, et c'est
@@ -61,6 +62,7 @@ export function Reglages({
   tiroirs,
   agent,
   modeles,
+  traitement,
   onDeposee,
   onAgent,
   onRenomme,
@@ -68,6 +70,8 @@ export function Reglages({
   onTravail,
   onFerme,
   onErreur,
+  moteurASignaler = null,
+  onMoteurSignale,
 }: {
   onglet: OngletDesReglages
   onOnglet: (onglet: OngletDesReglages) => void
@@ -78,6 +82,9 @@ export function Reglages({
   tiroirs: Tiroir[] | null
   agent: EtatAgent | null
   modeles: Modele[]
+  /** MO5 : le catalogue des cinq modèles de détourage (`traitement.
+   *  silhouettes`) — la page « Moteurs » le montre, elle ne le relit pas. */
+  traitement?: EtatTraitement | null
   onDeposee: () => void
   onAgent: (agent: EtatAgent) => void
   onRenomme: () => void
@@ -87,6 +94,13 @@ export function Reglages({
   onTravail: (identifiant: string) => void
   onFerme: () => void
   onErreur: (raison: string) => void
+  /** MO2 : le moteur vers lequel un outil (Créer, Repeindre) vient de
+   *  renvoyer — la page « Moteurs » y défile et le met en évidence un
+   *  instant. `null` sans renvoi en cours ; absent, pareil. */
+  moteurASignaler?: string | null
+  /** Le signalement consommé — l'appelant (`App.tsx`) l'efface une fois
+   *  l'effet joué. Sans `moteurASignaler`, jamais appelé. */
+  onMoteurSignale?: () => void
 }) {
   // Échap referme les réglages, d'où qu'on soit dans les quatre onglets — la
   // règle du produit. `defaultPrevented` laisse la main à ce qui est posé
@@ -155,8 +169,12 @@ export function Reglages({
       {onglet === "moteurs" && (
         <MoteursEtWorkflows
           tiroirs={tiroirs}
+          modeles={modeles}
+          traitement={traitement}
           onDeposee={onDeposee}
           onInstallation={onInstallation}
+          moteurASignaler={moteurASignaler}
+          onMoteurSignale={onMoteurSignale ?? (() => undefined)}
         />
       )}
 
@@ -188,26 +206,52 @@ export function Reglages({
 // ── 2 · Moteurs & workflows ─────────────────────────────────────────────────
 
 /**
- * Avec quoi on fabrique : les comptes chez les fournisseurs, la machine, et les
- * méthodes locales qu'on a nommées.
+ * Avec quoi on fabrique : les comptes chez les fournisseurs, la page des
+ * moteurs d'image (MO2), la machine, et les méthodes locales qu'on a nommées.
  *
  * **L'installation garde son écran à elle** et ne s'ouvre pas dans l'onglet :
  * c'est le seul lieu du produit qui ne parle d'aucun jeu — une clé, un dossier
  * de travail et ComfyUI valent pour tous —, et il porte quatre étapes qui se
  * déroulent aussi au premier lancement. On en revient ici.
+ *
+ * **MO2 : `PageDesMoteurs` vient juste après les clés**, pas à la place des
+ * sections qui suivent. Elle remplace la gestion des vingt-deux styles de
+ * sc-clone que `ProfilsWorkflow` montrait jusque-là (`StylesDeScClone`,
+ * fondue ici — une seule page qui les décrit, pas deux) ; « La machine » (le
+ * bouton d'installation) et « Les workflows locaux » (les profils importés à
+ * la main, vidéo et son compris) restent ce qu'ils étaient : cette tranche ne
+ * couvre que l'image.
+ *
+ * **MO4 : la section « Le son » de `PageDesMoteurs` fond « Les méthodes
+ * sonores » du même geste** — même chose, un même écran qui les décrit tous.
+ * `onInstallationSon` relaie l'installation d'un moteur sonore jusqu'ici,
+ * pour que « Les workflows locaux » juste en dessous relise ses profils à son
+ * tour (SN1) : c'est la même mécanique qu'avant, juste déclenchée d'un
+ * endroit différent.
  */
 function MoteursEtWorkflows({
   tiroirs,
+  modeles,
+  traitement,
   onDeposee,
   onInstallation,
+  moteurASignaler,
+  onMoteurSignale,
 }: {
   tiroirs: Tiroir[] | null
+  modeles: Modele[]
+  traitement?: EtatTraitement | null
   onDeposee: () => void
   onInstallation: () => void
+  moteurASignaler: string | null
+  onMoteurSignale: () => void
 }) {
   // Change à chaque installation de méthodes sonores, pour que « Les
   // workflows locaux » juste au-dessus relise ses profils à son tour (SN1).
   const [actualisationSon, setActualisationSon] = useState(0)
+  // MO6 : dans l'autre sens — une version importée dans « Les workflows
+  // locaux » se montre aussitôt dans « Les workflows importés » de la page.
+  const [actualisationImportes, setActualisationImportes] = useState(0)
   return (
     <main
       aria-label="Moteurs & workflows"
@@ -222,7 +266,20 @@ function MoteursEtWorkflows({
           </section>
         )}
 
-        <section className="flex flex-col">
+        <div className="mt-[34px]">
+          <PageDesMoteurs
+            modeles={modeles}
+            traitement={traitement}
+            signale={moteurASignaler}
+            onSignale={onMoteurSignale}
+            onInstallation={onInstallation}
+            onInstallationSon={() => setActualisationSon((n) => n + 1)}
+            actualiserImportesSur={actualisationImportes}
+            onWorkflowRelie={() => setActualisationSon((n) => n + 1)}
+          />
+        </div>
+
+        <section className="mt-[34px] flex flex-col">
           <TitreDeLAtelier>La machine</TitreDeLAtelier>
           <p className="text-[12.5px] leading-[1.5] text-encre-2">
             ComfyUI, le dossier où tout se range et ce que cette machine sait
@@ -236,13 +293,7 @@ function MoteursEtWorkflows({
         {/* Les workflows locaux portent déjà leur titre : en poser un second
             au-dessus ferait lire deux sections là où il n'y en a qu'une. */}
         <div className="mt-[34px]">
-          <ProfilsWorkflow actualiserSur={actualisationSon} />
-        </div>
-
-        {/* Les méthodes sonores (SN1) : un geste d'installation à part, parce
-            qu'il ne colle rien — il retrouve ce que ComfyUI sait déjà. */}
-        <div className="mt-[34px]">
-          <MethodesSonores onInstalle={() => setActualisationSon(n => n + 1)} />
+          <ProfilsWorkflow actualiserSur={actualisationSon} onImporte={() => setActualisationImportes((n) => n + 1)} />
         </div>
       </div>
     </main>

@@ -365,6 +365,16 @@ export function EnAttenteDuSujet({
                         rejoue le même détachement que la fiche (`api.designer`
                         avec `personnage: null`) ; Supprimer rejoue le geste de
                         jugement de la Galerie, avec sa même annulation. */}
+                    {/* **Son portrait ne s'écarte pas d'ici** (PX10) : la
+                        copie de la carte d'un sujet vit dans ce bandeau par
+                        nature, et l'écarter lui retirait son portrait sans que
+                        rien ne le dise. Le serveur le refuse aussi ; ici, le
+                        bouton cède la place à ce qu'il faudrait faire. */}
+                    {a.identifiant === personnage.image_de_reference ? (
+                      <span data-portrait-en-attente className="self-center text-[11px] text-encre-3">
+                        son portrait — en choisir un autre pour l’écarter
+                      </span>
+                    ) : (
                     <button
                       className={BOUTON}
                       disabled={occupe === a.identifiant}
@@ -372,6 +382,7 @@ export function EnAttenteDuSujet({
                     >
                       Écarter
                     </button>
+                    )}
                     <button
                       className={`${BOUTON} hover:text-echec`}
                       disabled={occupe === a.identifiant}

@@ -92,14 +92,15 @@ def _decor_sol(objet):
     """Le décor d'un sol, d'un chemin ou d'un 15 pièces (TU8) : occupation = case peinte
     de la carte d'essai. Rend `{(x, y): (col, row)}`, vide si le réglage est « aucun »."""
     r = objet["recette"]
-    densite = r["reglages"].get("decor", "aucun")
+    densite, colles = pose_decor.reglage(r["reglages"])
     if densite == "aucun":
         return {}
     m = objet["carte"]
     occupees = {(c["x"], c["y"]) for c in m["cases"]}
     forme = masques_tuiles.disposition(r["sorte"], r["reglages"].get("variantes", 0), r["reglages"].get("animation", 0),
                                        r["reglages"].get("animationAtlas", 0), densite)
-    pieces = pose_decor.emplacements(lambda x, y: (x, y) in occupees, m["largeur"], m["hauteur"], densite, r["graine"])
+    pieces = pose_decor.emplacements(lambda x, y: (x, y) in occupees, m["largeur"], m["hauteur"], densite, r["graine"],
+                                     colles=colles)
     return {(p["x"], p["y"]): masques_tuiles.case_decor(forme, p["orientation"], p["variante"]) for p in pieces}
 
 
@@ -107,12 +108,12 @@ def _decor_mur(objet):
     """Le décor d'un mur (TU8) : occupation = `pose_mur.occupation_mur`, pentes
     exclues (T44). Rend `{(x, y): (col, row)}`, vide si le réglage est « aucun »."""
     r = objet["recette"]
-    densite = r["reglages"].get("decor", "aucun")
+    densite, colles = pose_decor.reglage(r["reglages"])
     if densite == "aucun":
         return {}
     m = objet["carte"]
     emprise = {(c["x"], c["y"]) for c in m["cases"]}
-    pieces = pose_mur.decor(emprise, r["reglages"]["hauteurMur"], m["largeur"], m["hauteur"], densite, r["graine"])
+    pieces = pose_mur.decor(emprise, r["reglages"]["hauteurMur"], m["largeur"], m["hauteur"], densite, r["graine"], colles)
     forme = masques_tuiles.disposition("mur", decor=densite)
     return {(p["x"], p["y"]): masques_tuiles.case_decor(forme, p["orientation"], p["variante"]) for p in pieces}
 
@@ -378,11 +379,16 @@ Si la case en bas à gauche est un mur, prenez le coin gauche ; en bas à droite
 
 Collision
 Seule la base bloque. La base coupée d'une marche en biais bloque en triangle. Le dessus et la face ne bloquent pas : sinon le personnage butterait une case trop haut."""
-    if decor != "aucun":
+    if decor != "aucun" and pose_decor.reglage(r["reglages"])[1]:
         texte += """
 
 Le décor (gravats)
 Les dernières lignes de l'atlas sont des gravats. Ce ne sont pas des tuiles de terrain : ils sont posés sur la couche « Décor », à part, toujours devant le mur (z_index 1). Ils sont posés par paires : une moitié sur la case vide qui touche le mur, l'autre sur la case de mur d'en face. Une moitié seule laisse une fente droite ; la carte fournie pose toujours les deux."""
+    elif decor != "aucun":
+        texte += """
+
+Le décor (cailloux)
+Les dernières lignes de l'atlas sont des cailloux. Ce ne sont pas des tuiles de terrain : ils sont posés sur la couche « Décor », à part, toujours devant le mur (z_index 1), sur une case vide qui touche le mur. Chaque caillou tient entier dans sa case : ils se posent un par un, sans paire."""
     return texte + "\n"
 
 

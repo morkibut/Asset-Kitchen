@@ -39,6 +39,7 @@
 
 | **TU12** · Les deux champs se comprennent | `[EASY]` | Des repères, un exemple et une ligne de blocage plus précise, sur un écran et des routes qui existent ; rien ne part vers le serveur. |
 | **TU13** · Une image de référence | `[MEDIUM]` | Le graphe à une référence et son raccord existent déjà : ce qui reste est du passage de paramètre, de l'écran à ComfyUI, plus la parité de l'agent. |
+| **TU14** · La tranche du mur vertical | `[HARD]` | Une bande neuve dans l'atlas du mur, dont la pose doit rester égale entre la scène, le serveur et Godot, et se composer avec le biais et le tri en profondeur de TU7. |
 
 **Compte, les 14 tranches** : 2 `[VERY-HARD]`, 5 `[HARD]`, 5 `[MEDIUM]`, 2 `[EASY]`,
 0 `[VERY-EASY]`.

@@ -1,7 +1,7 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
-import { FabricationImageLocale, MethodesSonores, ProfilsWorkflow } from "./WorkflowsLocaux"
-import { workflows, stylesLocaux, type ProfilWorkflow, type ResultatMoteurSon, type StyleLocal, type TravailImageLocale } from "../api-workflows"
+import { FabricationImageLocale, ProfilsWorkflow } from "./WorkflowsLocaux"
+import { workflows, type ProfilWorkflow, type TravailImageLocale } from "../api-workflows"
 import { api } from "../api"
 
 vi.mock("../api-workflows", async () => {
@@ -16,9 +16,6 @@ vi.mock("../api-workflows", async () => {
   }
 })
 
-const stylePret: StyleLocal = { identifiant: "zimage-pixel", nom: "Pixel art net et rapide", famille: "zimage", genre: "sprite", vitesse: "environ 30 secondes par image", reference: "depart", pret: true, manque: [], modele: null }
-const styleInstalle: StyleLocal = { identifiant: "klein-portrait", nom: "Portrait Klein", famille: "klein", genre: "sprite", vitesse: "1 à 3 minutes par image", reference: "sujet", pret: true, manque: [], modele: "ComfyUI:klein-portrait@v1" }
-const styleManquant: StyleLocal = { identifiant: "sdxl-toon", nom: "Toon SDXL", famille: "sdxl", genre: "sprite", vitesse: "environ 40 secondes par image", reference: "depart", pret: false, manque: ["le checkpoint SDXL de base"], modele: null }
 const profil: ProfilWorkflow = { identifiant: "reference", nom: "Référence dessinée", nature: "image", modele: "ComfyUI:reference@version",
   version: "version", cree_le: 1000, references_min: 0, references_max: 0,
   graphe: { "1": { class_type: "Texte", inputs: { text: "" } }, "2": { class_type: "SaveImage", inputs: {} } },
@@ -35,80 +32,16 @@ beforeEach(() => {
   vi.mocked(workflows.diagnostiquer).mockResolvedValue({ disponible: true, problemes: [], noeuds: [], observe_le: 1000, adresse: "http://local" })
   vi.mocked(workflows.preparerImage).mockResolvedValue(travail)
   vi.mocked(workflows.demarrerImage).mockResolvedValue({ ...travail, etat: "termine", reference_asset: "asset-produit", assets: ["asset-produit"] })
-  vi.mocked(stylesLocaux.lister).mockResolvedValue({ styles: [stylePret, styleInstalle, styleManquant] })
   vi.spyOn(api, "rafraichirCatalogue").mockResolvedValue({} as never)
 })
 afterEach(cleanup)
 
-test("les styles de sc-clone sont groupés par moteur et repliés par défaut", async () => {
-  render(<ProfilsWorkflow />)
-  await screen.findByRole("heading", { name: "Les styles de sc-clone" })
-  // Les quatre groupes sont des `<details>` sans l'attribut `open` — repliés
-  // d'origine, tel que le navigateur les montre, même si jsdom ne masque pas
-  // leur contenu pour une requête de texte.
-  const resume = screen.getByText("Z-Image Turbo", { exact: false, selector: "summary" })
-  expect(resume.closest("details")).not.toHaveAttribute("open")
-  fireEvent.click(resume)
-  const nom = await screen.findByText("Pixel art net et rapide")
-  const ligne = nom.closest("li")!
-  expect(ligne).toHaveTextContent("environ 30 secondes par image")
-  expect(ligne).toHaveTextContent("part de l’image")
-})
-
-test("un style prêt s’installe d’un clic, un style manquant montre ce qu’il faut poser", async () => {
-  vi.mocked(stylesLocaux.installer).mockResolvedValue({ ...profil, modele: "ComfyUI:zimage-pixel@v1" })
-  render(<ProfilsWorkflow />)
-  await screen.findByRole("heading", { name: "Les styles de sc-clone" })
-  fireEvent.click(screen.getByText("Z-Image Turbo", { exact: false, selector: "summary" }))
-  fireEvent.click(await screen.findByRole("button", { name: "Installer" }))
-  await waitFor(() => expect(stylesLocaux.installer).toHaveBeenCalledWith("zimage-pixel"))
-  expect(api.rafraichirCatalogue).toHaveBeenCalled()
-  fireEvent.click(screen.getByText("SDXL", { exact: false, selector: "summary" }))
-  await screen.findByText(/il manque le checkpoint SDXL de base/)
-  expect(screen.getByText("node scripts/install-models.mjs")).toBeInTheDocument()
-})
-
-test("un style déjà installé peut être réinstallé — défaut 4, aucune route neuve", async () => {
-  vi.mocked(stylesLocaux.installer).mockResolvedValue({ ...profil, modele: styleInstalle.modele! })
-  render(<ProfilsWorkflow />)
-  await screen.findByRole("heading", { name: "Les styles de sc-clone" })
-  fireEvent.click(screen.getByText("FLUX.2 Klein", { exact: false, selector: "summary" }))
-  const ligne = (await screen.findByText("Portrait Klein")).closest("li")!
-  expect(ligne).toHaveTextContent("prêt · installé")
-  fireEvent.click(within(ligne).getByRole("button", { name: "Réinstaller" }))
-  await waitFor(() => expect(stylesLocaux.installer).toHaveBeenCalledWith("klein-portrait"))
-  expect(api.rafraichirCatalogue).toHaveBeenCalled()
-})
-
-test("« Installer les styles prêts » devient « Relire les fichiers des styles » une fois tout installé", async () => {
-  vi.mocked(stylesLocaux.lister).mockResolvedValue({ styles: [styleInstalle] })
-  vi.mocked(stylesLocaux.installerPrets).mockResolvedValue({ installes: [] })
-  render(<ProfilsWorkflow />)
-  const bouton = await screen.findByRole("button", { name: "Relire les fichiers des styles" })
-  expect(bouton).not.toBeDisabled()
-  fireEvent.click(bouton)
-  await waitFor(() => expect(stylesLocaux.installerPrets).toHaveBeenCalled())
-})
-
-test("« Installer les styles prêts » relance le relevé de ComfyUI", async () => {
-  vi.mocked(stylesLocaux.installerPrets).mockResolvedValue({ installes: [profil] })
-  render(<ProfilsWorkflow />)
-  const bouton = await screen.findByRole("button", { name: /Installer les styles prêts/ })
-  fireEvent.click(bouton)
-  await waitFor(() => expect(stylesLocaux.installerPrets).toHaveBeenCalled())
-  expect(stylesLocaux.lister).toHaveBeenCalledTimes(2)
-})
-
-test("un style installé apparaît aussitôt dans la liste des méthodes", async () => {
-  const installe: ProfilWorkflow = { ...profil, identifiant: "zimage-pixel", nom: "Z-Image Turbo · Pixel art net et rapide", modele: "ComfyUI:zimage-pixel@v1" }
-  vi.mocked(workflows.lister).mockResolvedValueOnce({ profils: [] }).mockResolvedValue({ profils: [installe] })
-  vi.mocked(stylesLocaux.installerPrets).mockResolvedValue({ installes: [installe] })
-  render(<ProfilsWorkflow />)
-  await screen.findByText(/Aucun workflow importé/)
-  fireEvent.click(await screen.findByRole("button", { name: /Installer les styles prêts/ }))
-  await screen.findByRole("heading", { name: "Z-Image Turbo · Pixel art net et rapide" })
-  expect(screen.queryByText(/Aucun workflow importé/)).toBeNull()
-})
+// MO2 : les vingt-deux styles de sc-clone (« Les styles de sc-clone »,
+// groupés, repliés, installables) ne vivent plus dans `ProfilsWorkflow` — ils
+// sont fondus dans la page « Moteurs » (`Moteurs.tsx`), qui les groupe par
+// moteur avec leur capacité à repeindre. Les cinq essais qui les visaient
+// vivent maintenant dans `Moteurs.test.tsx` ; `ProfilsWorkflow` ne garde que
+// les profils importés à la main (image, vidéo, son).
 
 test("relire conserve le texte composé et ne soumet qu’après le bouton de lancement", async () => {
   const ouvrir = vi.fn(), toile = vi.fn()
@@ -162,39 +95,9 @@ test("importer un profil n’exécute pas son graphe et vérifie ses prérequis 
   expect(workflows.diagnostiquer).toHaveBeenCalledWith(profil.identifiant, profil.version)
 })
 
-// ── Les méthodes sonores (SN1) ──────────────────────────────────────────────
-
-test("les méthodes sonores ne s’installent que sur le clic, jamais à l’ouverture de l’écran", async () => {
-  cleanup()
-  const resultat: Record<string, ResultatMoteurSon> = {
-    "sa3-small-sfx": { identifiant: "sa3-small-sfx", installe: true, profil: { ...profil, identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", cree_le: 2000 } },
-    "ace-step-15-turbo": { identifiant: "ace-step-15-turbo", installe: false, manque: [{ nom: "le modèle ACE-Step 1.5 turbo (musique)", fichier: "acestep_v1.5_turbo.safetensors", dossier: "diffusion_models", source: "https://exemple/ace" }] },
-  }
-  vi.mocked(workflows.installerSon).mockResolvedValue({ moteurs: resultat })
-  const onInstalle = vi.fn()
-  render(<MethodesSonores onInstalle={onInstalle} />)
-
-  // Les cinq moteurs se montrent sans état, sans que rien n'ait été demandé
-  // à ComfyUI — l'atelier n'installe que sur le geste de l'auteur.
-  await screen.findByRole("heading", { name: "Stable Audio 3 Small-SFX" })
-  expect(workflows.installerSon).not.toHaveBeenCalled()
-
-  fireEvent.click(screen.getByRole("button", { name: "Installer les méthodes sonores" }))
-  await screen.findByText(/Installé · version du/)
-  expect(workflows.installerSon).toHaveBeenCalledTimes(1)
-  expect(onInstalle).toHaveBeenCalledTimes(1)
-
-  // Le moteur absent est grisé avec ce qui manque : son nom en clair, le
-  // fichier, le dossier où le poser et un lien vers sa page — jamais proposé
-  // puis refusé.
-  expect(screen.getByText("le modèle ACE-Step 1.5 turbo (musique)")).toBeTruthy()
-  expect(screen.getByText("acestep_v1.5_turbo.safetensors")).toBeTruthy()
-  expect(screen.getByText("diffusion_models")).toBeTruthy()
-  expect(screen.getByRole("link", { name: "sa page" })).toHaveProperty("href", "https://exemple/ace")
-
-  fireEvent.click(screen.getByRole("button", { name: "Installer les méthodes sonores" }))
-  await waitFor(() => expect(workflows.installerSon).toHaveBeenCalledTimes(2))
-})
+// MO4 : « Les méthodes sonores » est fondue dans la page « Moteurs »
+// (`Moteurs.tsx`, section « Le son ») — même geste que MO2 pour les styles de
+// sc-clone. L'essai qui la visait vit maintenant dans `Moteurs.test.tsx`.
 
 test("un profil sonore aux prérequis absents dit ce qui manque en clair, pas le problème brut de ComfyUI", async () => {
   cleanup()

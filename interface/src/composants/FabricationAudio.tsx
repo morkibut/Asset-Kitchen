@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react"
 import { travauxAudio, type TravailAudio } from "../api-travaux-audio"
 import { partitionSon, type PartitionSon } from "../api-partition-son"
 import { seriesSon, texteSon, type Annonce, type Composition, type DemandeSon, type FamilleSon, type Gabarits, type MoteurDeFamille, type ReglageMusique, type SerieSon as Serie, type UsageMusique } from "../api-series-son"
-import { workflows, type ProfilWorkflow } from "../api-workflows"
+import { moteursSonores, workflows, type MoteurSonore, type ProfilWorkflow } from "../api-workflows"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { dureeTexte, secondesTexte, tempsTexte, virgule } from "../son-textes"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
@@ -43,9 +43,9 @@ const EXEMPLE_CHANSON = "Ex. : tavern drinking song, male voice, lively"
 const PAROLES = "[Intro]\n\n[Verse]\n\n[Chorus]\n\n[Outro]"
 
 // Les moteurs proposés pour chaque famille viennent du serveur (`sound-defaults`,
-// champ `possibles`) ; ici, seulement leur nom en clair. Un moteur absent de
-// cette machine est grisé avec sa raison.
-const NOM_MOTEUR: Record<string, string> = { "sa3-small-sfx": "Stable Audio 3 Small-SFX", "sa-open-1": "Stable Audio Open 1.0", "sa3-medium": "Stable Audio 3 Medium", "ace-step-15-turbo": "ACE-Step 1.5", "yue2-int8": "YuE2" }
+// champ `possibles`) ; leur nom en clair vient du catalogue (MO4,
+// `GET /workflow-profiles/sound-engines`) — jamais d'une liste écrite ici. Un
+// moteur absent de cette machine est grisé avec sa raison.
 const PAS_INSTALLE = "pas installé sur cette machine — voir Réglages › Moteurs"
 /** Pourquoi un moteur installé ne peut pas servir : les fichiers qui manquent, nommés en clair, jamais un nom de nœud. */
 function raisonIndisponible(p: ProfilWorkflow) {
@@ -298,6 +298,11 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
   const [panneau, setPanneau] = useState<"relire" | "reglages" | null>(null)
   const [defauts, setDefauts] = useState<Partial<Record<FamilleSon, MoteurDeFamille>>>({})
   const [profils, setProfils] = useState<ProfilWorkflow[]>([])
+  // MO4 : le nom de chaque moteur sonore vient du même catalogue que la page
+  // « Moteurs » (`GET /workflow-profiles/sound-engines`) — plus de liste à
+  // part ici. Vide tant qu'il n'a pas répondu ; `nomDuMoteurSonore` replie
+  // alors sur ce que le profil porte déjà, ou sur l'identifiant brut.
+  const [catalogueSon, setCatalogueSon] = useState<MoteurSonore[]>([])
   const [compo, setCompo] = useState<Composition | null>(null)
   const [annonce, setAnnonce] = useState<Annonce | null>(null)
   const [refus, setRefus] = useState("")
@@ -317,6 +322,7 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
     texteSon.moteurs(projet).then((r) => { if (vivant) setDefauts(r.familles) }).catch(() => {})
     Promise.resolve().then(() => texteSon.gabarits()).then((g) => { if (vivant && g?.usages) setGabarits(g) }).catch(() => {})
     workflows.lister().then((r) => { if (vivant) setProfils(r.profils.filter((p) => p.nature === "audio")) }).catch(() => {})
+    moteursSonores.lister().then((r) => { if (vivant) setCatalogueSon(r.moteurs) }).catch(() => {})
     // « Un son » retrouve ses séries récentes (celles d'un emplacement restent sur la fiche du sujet).
     if (!emplacement) Promise.resolve().then(() => seriesSon.lister(projet)).then((liste) => {
       if (!vivant || !Array.isArray(liste)) return
@@ -389,11 +395,15 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
 
   // Le moteur : celui de la famille par défaut, ou un autre installé ; un moteur absent se grise avec sa raison.
   const plusRecent = (id: string) => profils.filter((p) => p.identifiant === id).sort((a, b) => b.cree_le - a.cree_le)[0]
-  const nomDuModele = (m: string) => { const p = profils.find((x) => x.modele === m); return p ? NOM_MOTEUR[p.identifiant] ?? p.nom : "le moteur de l’univers" }
+  // Le nom d'un moteur par son identifiant (MO4) : le catalogue d'abord — il
+  // répond même pour un moteur jamais installé —, sinon ce que le profil
+  // porte déjà, sinon l'identifiant brut, en tout dernier recours.
+  const nomMoteur = (id: string) => catalogueSon.find((m) => m.identifiant === id)?.nom
+  const nomDuModele = (m: string) => { const p = profils.find((x) => x.modele === m); return p ? nomMoteur(p.identifiant) ?? p.nom : "le moteur de l’univers" }
   const options: { valeur: string; nom: string; raison: string }[] = (defauts[fs]?.possibles ?? []).map((id) => {
     const p = plusRecent(id)
-    return p ? { valeur: p.modele, nom: NOM_MOTEUR[id] ?? p.nom, raison: raisonIndisponible(p) }
-      : { valeur: `absent:${id}`, nom: NOM_MOTEUR[id] ?? id, raison: PAS_INSTALLE }
+    return p ? { valeur: p.modele, nom: nomMoteur(id) ?? p.nom, raison: raisonIndisponible(p) }
+      : { valeur: `absent:${id}`, nom: nomMoteur(id) ?? id, raison: PAS_INSTALLE }
   })
   for (const m of [defaut, d.moteurs[fs]]) if (m && !options.some((o) => o.valeur === m)) options.unshift({ valeur: m, nom: nomDuModele(m), raison: "" })
   const moteurChoisi = d.moteurs[fs] ?? defaut ?? ""

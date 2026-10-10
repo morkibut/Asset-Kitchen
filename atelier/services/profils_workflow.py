@@ -86,3 +86,56 @@ class ServiceProfilsWorkflow:
         diagnostic.update(observe_le=time.time(), adresse=moteur.adresse)
         self._diagnostics[(identifiant, version)] = diagnostic
         return diagnostic
+
+    # ── MO6 · Les workflows importés, des moteurs comme les autres ──────────
+
+    @staticmethod
+    def importe_par_l_auteur(profil):
+        """Un profil que l'auteur a importé lui-même — ni un style de sc-clone
+        (ou sa retouche de zone), ni un moteur sonore : ceux-là ont déjà leur
+        section sur la page « Moteurs », sous leur propre nom."""
+        from atelier.fournisseur.catalogue_styles import style
+        from atelier.services.installation_son import CONSTRUCTEURS
+        return not profil.get("style") and style(profil["identifiant"]) is None and profil["identifiant"] not in CONSTRUCTEURS
+
+    async def importes(self):
+        """Chaque workflow importé par l'auteur, **tel un moteur** : sa dernière
+        version, ce qu'il sait faire (lu sur ses liaisons), ce que son graphe
+        saurait recevoir en plus (`a_relier`), et son diagnostic — ce qui lui
+        manque pour tourner, élément par élément. Un seul `/object_info` pour
+        tous ; rien n'est écrit, rien n'est lancé."""
+        from atelier.domaine.lecture_graphe import a_relier, capacites_du_profil
+        from atelier.fournisseur.workflow_image import _ObjectInfoPartage
+
+        dernieres, versions = {}, {}
+        for profil in self.lister():
+            if not self.importe_par_l_auteur(profil):
+                continue
+            versions[profil["identifiant"]] = versions.get(profil["identifiant"], 0) + 1
+            actuel = dernieres.get(profil["identifiant"])
+            if actuel is None or profil["cree_le"] > actuel["cree_le"]:
+                dernieres[profil["identifiant"]] = profil
+        moteur = self.fabrique_moteur()
+        lignes = []
+        async with _ObjectInfoPartage(moteur):
+            for profil in sorted(dernieres.values(), key=lambda p: p["nom"].casefold()):
+                diagnostic = await moteur.diagnostiquer_profil(profil)
+                diagnostic.update(observe_le=time.time(), adresse=moteur.adresse)
+                self._diagnostics[(profil["identifiant"], profil["version"])] = diagnostic
+                lignes.append({
+                    "identifiant": profil["identifiant"], "nom": profil["nom"], "nature": profil["nature"],
+                    "description": profil.get("description", ""), "modele": profil["modele"],
+                    "version": profil["version"], "cree_le": profil["cree_le"], "versions": versions[profil["identifiant"]],
+                    "references_min": profil["references_min"], "references_max": profil["references_max"],
+                    "durees": profil["durees"], "capacites": capacites_du_profil(profil),
+                    "a_relier": a_relier(profil), "diagnostic": diagnostic,
+                })
+        return lignes
+
+    def relier(self, identifiant, version):
+        """Le geste « relier ce que le graphe sait recevoir » : **une nouvelle
+        version** du profil, qui relie la zone ou l'image de fin que la lecture
+        du graphe a trouvées (`relier_ce_que_le_graphe_sait`). L'ancienne reste
+        lisible — une génération passée la nomme toujours."""
+        from atelier.domaine.lecture_graphe import relier_ce_que_le_graphe_sait
+        return self.importer(relier_ce_que_le_graphe_sait(self.lire(identifiant, version)))

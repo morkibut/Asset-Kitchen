@@ -110,8 +110,9 @@ function imagesDeLaPose(personnage: Personnage, poseId: string): Asset[] {
   return personnage.cases.find((c) => c.pose === poseId)?.images ?? []
 }
 
-/** La retenue, sinon la plus récente — la même règle que `portraitDe`
- *  (`FicheDuSujet.tsx`), reprise pour une pose choisie plutôt que déduite. */
+/** La retenue, sinon la plus récente — l'image d'**une pose** à comparer, qui
+ *  n'est pas le portrait du sujet (celui-là a sa règle au serveur depuis PX10,
+ *  `atelier/domaine/portrait.py`). */
 function imageDeReference(images: Asset[]): Asset | null {
   if (!images.length) return null
   const favori = images.find((i) => i.favori)

@@ -4,6 +4,7 @@ import { videoLibre, type DemandeVideoLibre, type TravailVideoLibre } from "../a
 import { workflows, type ProfilWorkflow } from "../api-workflows"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { BibliothequePourImage } from "./BibliothequePourImage"
+import { ChoixModeleVideo } from "./ChoixModeleVideo"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
 import { AvecCoupDeMain } from "./CoupDeMain"
 import { MemoireLocale } from "./MemoireLocale"
@@ -162,9 +163,12 @@ export function FabricationVideoLibre({ projet, identifiantInitial, modeleInitia
          *  point 8bis : un appel vidéo se soumet et s'attend, ce n'est pas
          *  un modèle de plus). Le poser sous `ChoixModele` demanderait
          *  d'abord de compter les habitudes vidéo côté serveur — hors
-         *  budget de cette tranche. Ce `<select>` reste donc tel quel, avec
-         *  son prix par modèle. */}
-        <label className="flex flex-col gap-[8px] text-[13px]">{CHAMP_DU_MODELE}<select className={CHAMP} value={demande.modele_video} onChange={e => changer({ modele_video: e.target.value, options_video: defauts(profils.find(p => p.modele === e.target.value)) })}><option value="">{lecture ? "Lecture des modèles…" : "Choisir une méthode compatible"}</option>{videos.map(m => <option key={m.identifiant} value={m.identifiant} disabled={!!m.grise}>{m.identifiant}{m.grise ? ` — ${m.grise}` : m.de_la_maison ? " · calcul local" : ` · ${prix(m.prix.montant)}`}</option>)}</select></label>
+         *  budget de cette tranche. Ce `<select>` reste donc natif, avec
+         *  son prix par modèle.
+         *
+         *  **MO3** : c'est `ChoixModeleVideo`, le même que « 4. Le clip » —
+         *  mêmes noms, mêmes groupes, même ordre (celui du serveur). */}
+        <label className="flex flex-col gap-[8px] text-[13px]">{CHAMP_DU_MODELE}<ChoixModeleVideo className={CHAMP} modeles={videos} valeur={demande.modele_video} onChange={identifiant => changer({ modele_video: identifiant, options_video: defauts(profils.find(p => p.modele === identifiant)) })} vide={lecture ? "Lecture des modèles…" : "Choisir une méthode compatible"} /></label>
         {video?.grise && <p role="status" className="text-[13px] text-echec">{video.grise}</p>}
         {video?.de_la_maison && <p className="text-[12px] text-encre-3">{video.attente ? `Attente mesurée : ${Math.round(video.attente.secondes)} s · ${video.attente.mesure}` : "Aucune durée mesurée pour ces réglages. Le calcul reste local et gratuit."}</p>}
         {video?.de_la_maison && <MemoireLocale etat={moteur} />}

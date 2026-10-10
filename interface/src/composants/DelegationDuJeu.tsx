@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react"
 import { api, dollars, Refus } from "../api"
 import { travaux, type CadreDelegation, type TravailSuivi } from "../api-travaux"
-import { workflows } from "../api-workflows"
-import { nomMoteurSonore } from "./WorkflowsLocaux"
+import { moteursSonores, workflows, type MoteurSonore } from "../api-workflows"
 import { Libelle } from "./pieces"
 
 const CHAMP = "min-w-0 rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[13px] text-encre-controle"
@@ -50,20 +49,27 @@ function CadreDuJeu({ projet, onAtelier, onTravail }: {
       setChoisirImages(c.modeles_image.length > 0); setChoisirVideos(c.modeles_video.length > 0)
       setChoisirSons((c.modeles_audio ?? []).length > 0)
     }).catch((e: unknown) => { if (vivant) setErreur(message(e)) })
-    Promise.allSettled([api.modeles("1:1"), api.modelesVideo(5, "480p", "1:1"), workflows.lister()]).then(([i, v, s]) => {
+    Promise.allSettled([api.modeles("1:1"), api.modelesVideo(5, "480p", "1:1"), workflows.lister(), moteursSonores.lister()]).then(([i, v, s, c]) => {
       if (!vivant) return
       if (i.status === "fulfilled") setImages(i.value.modeles.map(m => ({ identifiant: m.identifiant,
         detail: `${m.references_max} référence${m.references_max > 1 ? "s" : ""} au maximum · ${m.unite === "usd" ? "facturé en dollars" : "autre unité : " + m.unite}`, indisponible: m.refus })))
       if (v.status === "fulfilled") setVideos(v.value.modeles.map(m => ({ identifiant: m.identifiant,
         detail: m.de_la_maison ? "Sur cette machine" : "Fournisseur distant", indisponible: m.grise })))
-      if (s.status === "fulfilled") setSons([
-        // sfxr n'a pas de profil installé : c'est un algorithme du code, pas
-        // un moteur ComfyUI à retrouver — il se propose toujours.
-        { identifiant: "sfxr", titre: "sfxr", detail: "Sons rétro calculés sur place, en un instant, sans carte graphique." },
-        // Une seule ligne par moteur : sa version la plus récente.
-        ...s.value.profils.filter(p => p.nature === "audio")
-          .filter((p, _, tous) => !tous.some(q => q.identifiant === p.identifiant && q.cree_le > p.cree_le))
-          .map(p => ({ identifiant: p.modele, titre: p.nom || nomMoteurSonore(p.identifiant), detail: "Calcul sur cette machine" }))])
+      if (s.status === "fulfilled") {
+        // MO4/MO7 : le nom d'un moteur sonore vient du catalogue (`GET
+        // /workflow-profiles/sound-engines`), pas d'une table écrite ici —
+        // en repli du nom que le profil installé porte déjà.
+        const catalogueSon: MoteurSonore[] = c.status === "fulfilled" ? c.value.moteurs : []
+        const nomMoteur = (identifiant: string) => catalogueSon.find(m => m.identifiant === identifiant)?.nom ?? identifiant
+        setSons([
+          // sfxr n'a pas de profil installé : c'est un algorithme du code, pas
+          // un moteur ComfyUI à retrouver — il se propose toujours.
+          { identifiant: "sfxr", titre: "sfxr", detail: "Sons rétro calculés sur place, en un instant, sans carte graphique." },
+          // Une seule ligne par moteur : sa version la plus récente.
+          ...s.value.profils.filter(p => p.nature === "audio")
+            .filter((p, _, tous) => !tous.some(q => q.identifiant === p.identifiant && q.cree_le > p.cree_le))
+            .map(p => ({ identifiant: p.modele, titre: p.nom || nomMoteur(p.identifiant), detail: "Calcul sur cette machine" }))])
+      }
       setCatalogueAbsent(i.status === "rejected" || v.status === "rejected" ? "Une partie du catalogue est indisponible. Les modèles déjà autorisés sont conservés." : "")
     })
     return () => { vivant = false }

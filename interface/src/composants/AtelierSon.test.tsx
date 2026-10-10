@@ -3,6 +3,16 @@ import { afterEach, expect, test, vi } from "vitest"
 import { AtelierSon } from "./AtelierSon"
 import { livraisonSon } from "../api-livraison-son"
 import { sons, type Son } from "../api-sons"
+import { moteursSonores, type MoteurSonore } from "../api-workflows"
+
+vi.mock("../api-workflows", () => ({ moteursSonores: { lister: vi.fn() } }))
+
+// MO4/MO7 : le nom d'un moteur sonore vient du même catalogue que la page
+// « Moteurs » (`GET /workflow-profiles/sound-engines`), doublé ici comme le
+// reste — jamais d'une table écrite dans l'écran.
+const CATALOGUE_SON: MoteurSonore[] = [
+  { identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", description: "", familles: ["bruitage"], pret: true, manque: [], modele: "ComfyUI:sa3-small-sfx@46c1" },
+]
 
 const recetteDeBase = {
   debut: .2, fin: 1.2, rogner_silence: false, seuil_silence_db: -45, marge_silence_ms: 10,
@@ -24,6 +34,7 @@ function monter(valeur = son) {
   vi.spyOn(sons, "lister").mockResolvedValue([valeur])
   vi.spyOn(sons, "lire").mockResolvedValue(valeur)
   vi.spyOn(sons, "onde").mockResolvedValue({ duree: 1, taux: 22050, canaux: 2, canaux_ondes: [{ minimum: [-.2, -.3], maximum: [.3, .2] }, { minimum: [-.3, -.2], maximum: [.2, .3] }] })
+  vi.mocked(moteursSonores.lister).mockResolvedValue({ moteurs: CATALOGUE_SON })
   return render(<AtelierSon projet="jeu" identifiantInitial="son1" />)
 }
 

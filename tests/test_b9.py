@@ -671,11 +671,12 @@ def test_un_sujet_sans_image_porte_une_vignette_nulle_pas_une_clef_absente(clien
     assert carte["vignette"] is None
 
 
-def test_la_vignette_est_la_plus_fraiche_et_jamais_une_piece(
+def test_la_vignette_est_le_repli_stable_et_jamais_une_piece(
     client, atelier, tmp_path
 ):
-    """**C'est la dernière image faite qui représente son sujet** — la même
-    règle que `assets_du_personnage` applique déjà à la matrice.
+    """**Le repli du portrait, qu'une arrivée ne déplace pas** (PX10). Jusqu'au
+    27 septembre 2026 c'était la dernière image faite, et c'est ce qui faisait
+    d'un résultat repeint le portrait d'un sujet (`tests/test_px10_portrait.py`).
 
     Et jamais une pièce d'équipement : un casque n'est pas le portrait de celui
     qui le porte. C'est la séparation que `piece IS NULL` tient dans le compte
@@ -683,10 +684,10 @@ def test_la_vignette_est_la_plus_fraiche_et_jamais_une_piece(
     """
     pelerin = _creer(client, "Le pèlerin")
     plan = _plan(client)
-    _poser(client, tmp_path, pelerin, plan[0])
-    derniere = _poser(client, tmp_path, pelerin, plan[1])["identifiant"]
+    premiere = _poser(client, tmp_path, pelerin, plan[0])["identifiant"]
+    _poser(client, tmp_path, pelerin, plan[1])
 
-    assert _famille(client)["personnages"][0]["vignette"]["identifiant"] == derniere
+    assert _famille(client)["personnages"][0]["vignette"]["identifiant"] == premiere
 
     # Un calque d'équipement posé après coup — écrit dans le dépôt comme la
     # bande de `_poser_une_bande`, parce que la route qui range une image dans
@@ -694,7 +695,7 @@ def test_la_vignette_est_la_plus_fraiche_et_jamais_une_piece(
     casque = Asset.depuis_json(_poser(client, tmp_path, pelerin, plan[0]))
     atelier.base.enregistrer_asset(replace(casque, piece="le-casque"))
 
-    assert _famille(client)["personnages"][0]["vignette"]["identifiant"] == derniere
+    assert _famille(client)["personnages"][0]["vignette"]["identifiant"] == premiere
 
 
 def test_un_sujet_sans_collection_porte_une_liste_vide_pas_une_absence(client):

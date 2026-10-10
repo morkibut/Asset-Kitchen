@@ -114,6 +114,30 @@ def test_le_decor_se_pose_toujours_en_paires():
     assert total_exterieures > 300 and total_dediees > 300 and total_partagees >= 0
 
 
+def test_detaches_les_cailloux_ne_posent_que_la_moitie_exterieure():
+    """27 septembre 2026 : un caillou détaché tient entier dans sa case vide — rien ne se
+    peint sur la matière. Même tirage que les paires, moins les moitiés intérieures."""
+    tirage = random.Random(20260927)
+    for _ in range(30):
+        colonnes, lignes = tirage.randint(6, 14), tirage.randint(6, 14)
+        occupees = {(tirage.randrange(colonnes), tirage.randrange(lignes)) for _ in range(colonnes * lignes // 3)}
+        occupe = lambda x, y: (x, y) in occupees
+        graine = tirage.randint(0, 999999)
+        for cran in pose_decor.CRANS[1:]:
+            paires = pose_decor.emplacements(occupe, colonnes, lignes, cran, graine)
+            seules = pose_decor.emplacements(occupe, colonnes, lignes, cran, graine, colles=False)
+            assert seules == [p for p in paires if p["moitie"] == "exterieure"]
+            assert all((p["x"], p["y"]) not in occupees for p in seules)
+
+
+def test_les_crans_posent_de_plus_en_plus():
+    tirage = random.Random(7)
+    occupees = {(tirage.randrange(20), tirage.randrange(20)) for _ in range(120)}
+    comptes = [len(pose_decor.emplacements(lambda x, y: (x, y) in occupees, 20, 20, c, 3, colles=False))
+               for c in pose_decor.CRANS]
+    assert comptes[0] == 0 and comptes == sorted(comptes) and len(set(comptes)) == len(comptes)
+
+
 # ── 3. Une seconde couche, sans terrain ; « aucun » inchangé ─────────────────
 
 async def test_le_decor_sort_sur_une_seconde_couche_sans_terrain(fixe):

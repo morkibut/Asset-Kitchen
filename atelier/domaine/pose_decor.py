@@ -19,7 +19,9 @@ from __future__ import annotations
 from typing import Callable, Iterable
 
 # Les deux crans qui posent quelque chose : des SEUILS de tirage, pas des comptes.
-SEUILS = {"aucun": 0, "leger": 0.42, "dense": 0.88}
+# Six crans depuis le 27 septembre 2026 ; « leger » et « dense » gardent leur seuil d'avant.
+SEUILS = {"aucun": 0, "rare": 0.15, "leger": 0.42, "moyen": 0.65, "dense": 0.88, "partout": 1}
+CRANS = tuple(SEUILS)
 
 # Décalages de graine, distincts les uns des autres : présence, orientation et variante
 # sont trois tirages indépendants (DECOR_GRAINE_* de tile-scene.js).
@@ -51,7 +53,7 @@ def hachage01(x: int, y: int, graine: int) -> float:
 
 def emplacements(occupe: Callable[[int, int], bool], colonnes: int, lignes: int, densite: str,
                   graine: int = 0, variantes: int = VARIANTES,
-                  orientations: Iterable[str] = ORIENTATIONS) -> list[dict]:
+                  orientations: Iterable[str] = ORIENTATIONS, colles: bool = True) -> list[dict]:
     """`emplacementsDecor` : les pièces de décor d'une carte, une par case au plus.
 
     Chaque pièce est une MOITIÉ d'une jonction, jamais un bout de bord isolé (T24, la
@@ -59,6 +61,10 @@ def emplacements(occupe: Callable[[int, int], bool], colonnes: int, lignes: int,
     matière, la moitié intérieure sur la case de matière d'en face, appuyée sur le bord
     opposé — les deux dans la même instruction, sauf si la case intérieure porte déjà la
     pièce d'une autre jonction (une couche de tuiles ne porte qu'une tuile par case).
+
+    `colles` faux (des cailloux détachés, le défaut des recettes depuis le 27 septembre
+    2026) : la moitié extérieure seule — ses galets tiennent entiers dans leur case, il
+    n'y a rien à raccorder, et rien ne se peint sur la matière.
     """
     seuil = SEUILS.get(densite, 0)
     if not seuil:
@@ -78,6 +84,8 @@ def emplacements(occupe: Callable[[int, int], bool], colonnes: int, lignes: int,
             orientation = cotes[min(len(cotes) - 1, int(hachage01(x, y, graine + GRAINE_ORIENTATION) * len(cotes)))]
             variante = min(variantes - 1, int(hachage01(x, y, graine + GRAINE_VARIANTE) * variantes))
             pieces.append({"x": x, "y": y, "orientation": orientation, "variante": variante, "moitie": "exterieure"})
+            if not colles:
+                continue
             dx, dy = VECTEUR[orientation]
             ix, iy = x + dx, y + dy
             if (ix, iy) in reservees:
@@ -86,3 +94,9 @@ def emplacements(occupe: Callable[[int, int], bool], colonnes: int, lignes: int,
             pieces.append({"x": ix, "y": iy, "orientation": OPPOSE[orientation],
                            "variante": (variante + 1) % variantes, "moitie": "interieure"})
     return pieces
+
+
+def reglage(reglages: dict) -> tuple[str, bool]:
+    """Le cran et le mode d'une recette : `(decor, colles)`. Une recette d'avant le
+    27 septembre 2026 n'a pas `caillouxColles` : elle prend le défaut, détachés."""
+    return reglages.get("decor", "aucun"), bool(reglages.get("caillouxColles", False))

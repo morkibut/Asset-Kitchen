@@ -323,6 +323,11 @@ class ModeleVideo:
     # pour le moteur de la maison, faux pour un profil de workflow local, qui
     # n'a qu'une entrée d'image. Faux par défaut : on ne suppose pas un savoir.
     accepte_une_image_de_fin: bool = False
+    # **MO6** : vrai quand il ne sait finir **que** sur une image choisie — un
+    # workflow importé dont ComfyUI tient l'entrée `end_image` pour obligatoire
+    # (`atelier/fournisseur/workflow.py`, `_fin_libre`). Un clip qui finit libre
+    # s'y grise alors, au lieu d'être refusé par ComfyUI à l'envoi.
+    exige_une_image_de_fin: bool = False
     # Ce que ce dépôt a mesuré de lui, ou rien. Voir `MESURES_DU_DEPOT`.
     mesure: str = ""
     # Comment il facture, tel que le fournisseur le déclare, **relu au
@@ -511,6 +516,8 @@ class ModeleVideo:
             return "demande une image de départ, et il n'y en a pas"
         if demande.a_une_fin and not self.accepte_une_image_de_fin:
             return "ne sait pas finir sur une image choisie"
+        if self.exige_une_image_de_fin and not demande.a_une_fin:
+            return "ne sait finir que sur une image choisie — ComfyUI tient son image de fin pour obligatoire"
         if self.durees and demande.secondes not in self.durees:
             possibles = ", ".join(f"{_lisible(d)} s" for d in sorted(self.durees)[:6])
             return f"ne fait pas de clip de {_lisible(demande.secondes)} s — seulement {possibles}"

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { ApercuLivraisonSon } from "./ApercuLivraisonSon"
 import { ReglagesSon } from "./ReglagesSon"
-import { nomMoteurSonore } from "./WorkflowsLocaux"
+import { moteursSonores, type MoteurSonore } from "../api-workflows"
 import { FAMILLES_AVEC_LUFS, NOMS_FAMILLES_SON, sons, type FamilleSon, type JugementSon, type OndeSon, type RecetteSon, type Son } from "../api-sons"
 import { dureeEnClair } from "../api"
 
@@ -12,18 +12,27 @@ const erreurDe = (e: unknown) => e instanceof Error ? e.message : "Le son n’a 
 
 type ProvenanceLisible = { moteur: string | null; graine: string | null; texte: string | null; serie: string | null }
 
+/** Le nom en clair d'un moteur sonore par son identifiant, lu sur le même
+ *  catalogue que la page « Moteurs » (`GET /workflow-profiles/sound-engines`,
+ *  MO4) — jamais une table écrite ici (MO7). Un moteur qui a disparu du
+ *  catalogue depuis (une provenance ancienne) replie sur son identifiant brut,
+ *  plutôt qu'un nom introuvable. */
+function nomMoteurSonore(catalogue: MoteurSonore[], identifiant: string): string {
+  return catalogue.find((m) => m.identifiant === identifiant)?.nom ?? identifiant
+}
+
 /** Ce que la provenance brute d'un son dit à un auteur, en clair : le moteur
  *  qui l'a fabriqué, sa graine, le texte parti, la série dont il vient — pas
  *  une clé hachée (`sfxr:<sha256>:graine`) ni un identifiant de série. Le
  *  document complet reste replié à côté, pour qui en a vraiment besoin. */
-function provenanceLisible(brut: Record<string, unknown>): ProvenanceLisible {
+function provenanceLisible(brut: Record<string, unknown>, catalogueSon: MoteurSonore[]): ProvenanceLisible {
   const envoi = brut.envoi && typeof brut.envoi === "object" ? brut.envoi as Record<string, unknown> : {}
   const composition = brut.composition && typeof brut.composition === "object" ? brut.composition as Record<string, unknown> : {}
   const serie = brut.serie && typeof brut.serie === "object" ? brut.serie as Record<string, unknown> : null
   let moteur: string | null = null
   if (brut.nature === "sfxr") moteur = "sfxr, calculé sans IA"
   else if (brut.nature === "import") moteur = "Son importé"
-  else if (typeof brut.modele === "string" && brut.modele.includes("@")) moteur = nomMoteurSonore(brut.modele.replace(/^ComfyUI:/, "").split("@")[0])
+  else if (typeof brut.modele === "string" && brut.modele.includes("@")) moteur = nomMoteurSonore(catalogueSon, brut.modele.replace(/^ComfyUI:/, "").split("@")[0])
   const graineBrute = envoi.graine ?? brut.graine
   const texteBrut = envoi.prompt ?? composition.texte
   return {
@@ -80,11 +89,15 @@ export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriqu
   const [erreur, setErreur] = useState("")
   const [choisirFamille, setChoisirFamille] = useState(false)
   const [afficherLivraison, setAfficherLivraison] = useState(false)
+  // MO4/MO7 : le nom d'un moteur sonore vient du catalogue (`GET
+  // /workflow-profiles/sound-engines`), jamais d'une table écrite ici.
+  const [catalogueSon, setCatalogueSon] = useState<MoteurSonore[]>([])
   const lecteur = useRef<HTMLAudioElement>(null)
   const modifie = !!son && !!recette && (nom !== son.nom || JSON.stringify(recette) !== JSON.stringify(son.recette))
   const installer = (s: Son) => { setSon(s); setRecette(s.recette); setNom(s.nom); setPosition(0); setChoisirFamille(false); setAfficherLivraison(false) }
   const faire = async (action: () => Promise<void>) => { setOccupe(true); setErreur(""); try { await action() } catch (e) { setErreur(erreurDe(e)) } finally { setOccupe(false) } }
   useEffect(() => { let actif = true; setSon(null); sons.lister(projet).then(v => { if (actif) setListe(v) }).catch(e => { if (actif) setErreur(erreurDe(e)) }); if (identifiantInitial) sons.lire(projet, identifiantInitial).then(s => { if (actif) installer(s) }).catch(e => { if (actif) setErreur(erreurDe(e)) }); return () => { actif = false } }, [projet, identifiantInitial])
+  useEffect(() => { let actif = true; moteursSonores.lister().then(r => { if (actif) setCatalogueSon(r.moteurs) }).catch(() => {}); return () => { actif = false } }, [])
   useEffect(() => { let actif = true; setOnde(null); if (son?.mesures) sons.onde(son, brut).then(o => { if (actif) setOnde(o) }).catch(e => { if (actif) setErreur(erreurDe(e)) }); return () => { actif = false } }, [son, brut])
   // **L'avertissement d'abandon ne couvre plus la sortie du lieu** (RT8, 20
   // septembre 2026). Il tenait à un bouton « Fermer » du dialogue plein écran ;
@@ -114,7 +127,7 @@ export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriqu
   // renommé peut dire autre chose que ce qui est vraiment parti au moteur.
   // Sans elle, le nom sert de repli, et seulement s'il a été tronqué.
   const titreAffiche = son ? titreCourtSon(son) : "Les sons"
-  const provenanceTexte = son ? provenanceLisible(son.provenance).texte : null
+  const provenanceTexte = son ? provenanceLisible(son.provenance, catalogueSon).texte : null
   const demandeVisible = !son ? null
     : provenanceTexte && provenanceTexte !== son.nom ? provenanceTexte
     : nomCourt(son.nom) !== son.nom ? son.nom
@@ -158,7 +171,7 @@ export function AtelierSon({ projet, identifiantInitial, onLivraisons, onFabriqu
           <p className="text-[12px] text-encre-3">{modifie ? "Réglages modifiés : conserve une version pour entendre le nouveau rendu." : "Tu écoutes la version conservée. Le WAV livré contient exactement ce signal."}</p>
           <label className="flex flex-col gap-[8px] text-[13px]">Nom<input className={CHAMP} value={nom} onChange={e => setNom(e.target.value)} /></label>
           <details className="text-[13px]"><summary className="cursor-pointer">Source et provenance</summary><p className="mt-[8px]">{son.source.nom} · {(son.source.octets / 1024).toFixed(1)} Ko</p>
-            {(() => { const p = provenanceLisible(son.provenance); const rien = !p.moteur && !p.graine && !p.texte && !p.serie
+            {(() => { const p = provenanceLisible(son.provenance, catalogueSon); const rien = !p.moteur && !p.graine && !p.texte && !p.serie
               return rien ? null : <dl className="mt-[8px] grid grid-cols-[max-content_1fr] gap-x-[8px] gap-y-[4px] text-[12px] text-encre-3">
                 {p.moteur && <><dt>Moteur</dt><dd>{p.moteur}</dd></>}
                 {p.graine && <><dt>Graine</dt><dd>{p.graine}</dd></>}

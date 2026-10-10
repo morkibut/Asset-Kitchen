@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react"
 import { api, Refus } from "../api"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import {
-  workflows, stylesLocaux, NOM_MOTEUR_LOCAL, NOM_REFERENCE, ORDRE_MOTEURS_LOCAUX,
-  type DemandeImageLocale, type FichierSonManquant, type ProfilWorkflow, type ResultatMoteurSon,
-  type TravailImageLocale, type DiagnosticWorkflow, type StyleLocal,
+  workflows, workflowsImportes,
+  type ChampDuGraphe, type DemandeImageLocale, type FichierSonManquant, type LectureGraphe, type ProfilWorkflow,
+  type TravailImageLocale, type DiagnosticWorkflow,
 } from "../api-workflows"
 import { BibliothequePourImage } from "./BibliothequePourImage"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
@@ -19,17 +19,22 @@ const message = (e: unknown) => e instanceof Refus || e instanceof Error ? e.mes
 
 /** Ce qui manque pour un profil sonore (SN1) : chaque fichier en clair, son
  *  dossier et sa page — jamais le texte brut du diagnostic (« Nœud absent :
- *  YuE2GenerateABC (2). »), imprononçable pour qui ne connaît pas ComfyUI. */
-function ListeManque({ manque }: { manque: FichierSonManquant[] }) {
+ *  YuE2GenerateABC (2). »), imprononçable pour qui ne connaît pas ComfyUI.
+ *  Exportée depuis MO4 : `Moteurs.tsx` la réutilise pour « Le son », plutôt
+ *  que de redessiner la même liste. */
+export function ListeManque({ manque }: { manque: FichierSonManquant[] }) {
   return <ul className="space-y-[4px] text-[13px] text-encre-3">{manque.map(f => <li key={f.fichier}><span className="text-echec">{f.nom}</span> — fichier <span className="font-mono text-[12px]">{f.fichier}</span>, à poser dans <span className="font-mono text-[12px]">{f.dossier}</span>{f.source && <> · <a className="underline" href={f.source} target="_blank" rel="noreferrer">sa page</a></>}</li>)}</ul>
 }
 
-export function ProfilsWorkflow({ onImage, onVideo, onAudio, actualiserSur }: {
+export function ProfilsWorkflow({ onImage, onVideo, onAudio, actualiserSur, onImporte }: {
   onImage?: (modele: string) => void; onVideo?: (modele: string) => void; onAudio?: (modele: string) => void
   /** Change de valeur : relit les profils (utilisé après une installation de
    *  méthodes sonores, pour que « Les workflows locaux » se rafraîchisse
    *  aussi sans que l'auteur ait à cliquer « Actualiser les profils »). */
   actualiserSur?: number
+  /** MO6 : une version vient d'être enregistrée — la page « Moteurs » relit
+   *  alors « Les workflows importés », qui la montre avec son diagnostic. */
+  onImporte?: () => void
 }) {
   const [profils, setProfils] = useState<ProfilWorkflow[]>([])
   const [erreur, setErreur] = useState("")
@@ -56,6 +61,7 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio, actualiserSur }: {
       const p = await workflows.importer(brut)
       await relire(); setEditeur(false); setContenu("")
       setConfirmation(`« ${p.nom} » enregistré. Vérifie ses prérequis avant de le choisir.`)
+      onImporte?.()
     } catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
   }
   async function verifier(p: ProfilWorkflow) {
@@ -65,7 +71,6 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio, actualiserSur }: {
   }
   return <section aria-label="Workflows locaux" className="space-y-[22px] text-encre">
     <header><h2 className="font-serif text-[38px]">Les workflows locaux</h2><p className="mt-[8px] text-[13px] text-encre-3">Nomme une méthode une fois, puis utilise ses réglages dans tes fabrications. ComfyUI reste installé et lancé séparément.</p></header>
-    <StylesDeScClone onChoisir={onImage} onInstalle={relire} />
     {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}{confirmation && <p role="status" className="text-[13px] text-ok">{confirmation}</p>}
     <div className="flex flex-wrap gap-[8px]"><button className={BOUTON} onClick={() => setEditeur(v => !v)}>Ajouter un workflow</button><button className={BOUTON} onClick={() => void relire()} disabled={chargement}>Actualiser les profils</button></div>
     {editeur && <div className={`${SURFACE} space-y-[14px]`}><h3 className="font-serif text-[25px]">Importer et nommer une méthode</h3><p className="text-[13px] text-encre-3">Un profil existant contient déjà ses réglages. Pour un graphe ComfyUI seul, exportez son format API et reliez ses entrées ci-dessous.</p>
@@ -92,155 +97,109 @@ export function ProfilsWorkflow({ onImage, onVideo, onAudio, actualiserSur }: {
   </section>
 }
 
-/**
- * « Les styles de sc-clone » (ML5) : les vingt-deux styles, groupés sous
- * leurs quatre moteurs et repliés par défaut (décision 9 du plan). Vérifier
- * relit ComfyUI et remet les états à jour ; installer se fait style par style
- * ou tous les prêts d’un coup — aucun poids n’est téléchargé par l’atelier,
- * seulement retrouvé par motif contre ce que ComfyUI expose déjà (ML2).
- */
-function StylesDeScClone({ onChoisir, onInstalle }: { onChoisir?: (modele: string) => void; onInstalle?: () => void }) {
-  const [styles, setStyles] = useState<StyleLocal[] | null>(null)
-  const [chargement, setChargement] = useState(false)
-  const [installation, setInstallation] = useState<string | null>(null)
-  const [erreur, setErreur] = useState("")
-
-  async function relire() {
-    setChargement(true); setErreur("")
-    try { setStyles((await stylesLocaux.lister()).styles) }
-    catch (e) { setErreur(message(e)) } finally { setChargement(false) }
-  }
-  useEffect(() => { void relire() }, [])
-
-  async function installerUn(identifiant: string) {
-    setInstallation(identifiant); setErreur("")
-    try { const p = await stylesLocaux.installer(identifiant); await api.rafraichirCatalogue(); await relire(); onInstalle?.(); onChoisir?.(p.modele) }
-    catch (e) { setErreur(message(e)) } finally { setInstallation(null) }
-  }
-  async function installerLesPrets() {
-    setInstallation("*"); setErreur("")
-    try { await stylesLocaux.installerPrets(); await api.rafraichirCatalogue(); await relire(); onInstalle?.() }
-    catch (e) { setErreur(message(e)) } finally { setInstallation(null) }
-  }
-
-  const parMoteur = new Map<string, StyleLocal[]>()
-  for (const s of styles ?? []) { const l = parMoteur.get(s.famille) ?? []; l.push(s); parMoteur.set(s.famille, l) }
-  // **« Installer les styles prêts » doit aussi pouvoir tout relire** (défaut
-  // 4 de la relecture du 18/09/2026) : un style installé peut avoir vu ses
-  // fichiers déplacés, et la route réinstalle qu'il soit déjà installé ou
-  // non. `pretsTotal` décide si le bouton a quelque chose à faire ;
-  // `pretsNonInstalles` décide seulement de son mot.
-  const pretsTotal = (styles ?? []).filter(s => s.pret).length
-  const pretsNonInstalles = (styles ?? []).filter(s => s.pret && !s.modele).length
-
-  return <section className={`${SURFACE} space-y-[14px]`}>
-    <div className="flex flex-wrap items-start justify-between gap-[8px]">
-      <div><h3 className="font-serif text-[25px]">Les styles de sc-clone</h3><p className="mt-[4px] text-[12px] text-encre-3">Vingt-deux styles d’image, tout prêts, tirés du dépôt sc-clone. Rien n’est téléchargé depuis l’atelier — un style grisé manque un fichier que ComfyUI ne voit pas encore.</p></div>
-      <div className="flex flex-wrap gap-[8px]">
-        <button className={BOUTON} onClick={() => void relire()} disabled={chargement}>{chargement ? "Vérification…" : "Vérifier"}</button>
-        <button className={BOUTON} onClick={() => void installerLesPrets()} disabled={chargement || installation !== null || pretsTotal === 0}>{installation === "*" ? "Installation…" : pretsNonInstalles > 0 ? `Installer les styles prêts (${pretsNonInstalles})` : "Relire les fichiers des styles"}</button>
-      </div>
-    </div>
-    {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
-    {!styles && chargement && <p role="status" className="text-[13px] text-encre-3">Lecture des styles…</p>}
-    {styles && <div className="space-y-[8px]">{ORDRE_MOTEURS_LOCAUX.filter(m => parMoteur.has(m)).map(moteur => {
-      const lignes = parMoteur.get(moteur) || []
-      return <details key={moteur} className="rounded-7 border border-trait">
-        <summary className="cursor-pointer px-[14px] py-[8px] text-[13px]">{NOM_MOTEUR_LOCAL[moteur] || moteur} <span className="text-[12px] text-encre-3">· {lignes.length} style{lignes.length > 1 ? "s" : ""}</span></summary>
-        <ul className="space-y-[8px] border-t border-trait p-[14px] pt-[8px]">{lignes.map(style => <li key={style.identifiant} className={`flex flex-wrap items-center justify-between gap-[8px] ${style.pret ? "" : "opacity-50"}`}>
-          <div>
-            <p className="text-[13px]">{style.nom}</p>
-            <p className="text-[12px] text-encre-3">{style.pret ? (style.modele ? "prêt · installé" : "prêt") : `il manque ${style.manque.join(", ")}`} · {style.vitesse}{style.reference && ` · ${NOM_REFERENCE[style.reference]}`}</p>
-          </div>
-          {style.pret && !style.modele && <button className={BOUTON} disabled={installation !== null} onClick={() => void installerUn(style.identifiant)}>{installation === style.identifiant ? "Installation…" : "Installer"}</button>}
-          {/* **Réinstaller un style déjà prêt** (défaut 4) : les fichiers ont
-              pu être déplacés depuis — même route, `POST …/install`, qui
-              relit ce que ComfyUI expose maintenant. */}
-          {style.pret && style.modele && <button className={BOUTON} disabled={installation !== null} onClick={() => void installerUn(style.identifiant)}>{installation === style.identifiant ? "Installation…" : "Réinstaller"}</button>}
-          {!style.pret && <p className="text-[12px] text-encre-3">dans <code>C:\STOCKAGE\PROJET\_DEV\sc-clone</code> : <code>node scripts/install-models.mjs</code></p>}
-          {style.modele && onChoisir && <button className={BOUTON} onClick={() => onChoisir(style.modele!)}>Utiliser ce style</button>}
-        </li>)}</ul>
-      </details>
-    })}</div>}
-  </section>
-}
-
-// ── Les méthodes sonores (SN1) ──────────────────────────────────────────────
+// ── Les moteurs sonores (SN1, MO4) ───────────────────────────────────────────
 //
-// Cinq moteurs fabriquent les sons du jeu ; leurs profils sont dérivés des
-// modèles de workflow officiels de ComfyUI (`atelier/audio/graphes.py`), pas
-// collés à la main. « Installer » ne fait qu'aller relire ce que ComfyUI sait
-// déjà : rien n'est jamais téléchargé par l'atelier.
-export const MOTEURS_SONORES: readonly { identifiant: string; nom: string; quoi: string }[] = [
-  { identifiant: "sa3-small-sfx", nom: "Stable Audio 3 Small-SFX", quoi: "Bruitages et ambiances." },
-  { identifiant: "ace-step-15-turbo", nom: "ACE-Step 1.5", quoi: "Musique et jingles." },
-  { identifiant: "yue2-int8", nom: "YuE2", quoi: "Chansons chantées." },
-  { identifiant: "sa3-medium", nom: "Stable Audio 3 Medium", quoi: "Secours pour les ambiances longues et la musique." },
-  { identifiant: "sa-open-1", nom: "Stable Audio Open 1.0", quoi: "Secours pour les bruitages." },
-]
-/** Le nom en clair d'un moteur sonore par son identifiant, pour les endroits
- *  qui ne connaissent que l'identifiant (un moteur `possible` mais pas
- *  installé, une provenance) — jamais l'identifiant brut affiché seul. */
-export const nomMoteurSonore = (identifiant: string) => MOTEURS_SONORES.find(m => m.identifiant === identifiant)?.nom ?? identifiant
+// MO4 : « Les méthodes sonores », l'écran qui listait les cinq moteurs à la
+// main et les installait, est fondue dans la page « Moteurs »
+// (`Moteurs.tsx`, section « Le son ») — même geste que MO2 pour les styles
+// de sc-clone. MO7 : la table qui restait ici (`MOTEURS_SONORES`,
+// `nomMoteurSonore`) pour nommer un moteur déjà écrit sur un son produit a
+// disparu à son tour — `AtelierSon.tsx`, `DelegationDuJeu.tsx` et
+// `ReglesDuJeu.tsx` lisent maintenant le même catalogue que `Moteurs.tsx`
+// (`GET /workflow-profiles/sound-engines`), avec le même repli sur
+// l'identifiant brut pour un moteur qui en a disparu depuis.
 
-/** « Installer les méthodes sonores » (SN1) n'installe rien sans le clic de
- *  l'auteur : au montage, l'écran ne fait que lister les cinq moteurs
- *  possibles, sans état — aller relire ce que ComfyUI sait déjà reste une
- *  action, pas un effet de bord de l'ouverture de l'écran. */
-export function MethodesSonores({ onInstalle }: {
-  /** Prévient l'appelant qu'une installation a eu lieu, pour qu'il relise à
-   *  son tour « Les workflows locaux » juste au-dessus (SN1). */
-  onInstalle?: () => void
-} = {}) {
-  const [resultat, setResultat] = useState<Record<string, ResultatMoteurSon> | null>(null)
-  const [occupe, setOccupe] = useState(false)
-  const [erreur, setErreur] = useState("")
-  async function installer() {
-    setOccupe(true); setErreur("")
-    try { setResultat((await workflows.installerSon()).moteurs); onInstalle?.() }
-    catch (e) { setErreur(message(e)) } finally { setOccupe(false) }
-  }
-  return <section aria-label="Les méthodes sonores" className="space-y-[22px] text-encre">
-    <header><h2 className="font-serif text-[38px]">Les méthodes sonores</h2><p className="mt-[8px] text-[13px] text-encre-3">Cinq moteurs fabriquent les sons du jeu. Rien n’est jamais téléchargé par l’atelier : c’est toi qui poses les fichiers, l’atelier ne fait que les retrouver.</p></header>
-    {erreur && <p role="alert" className="text-[13px] text-echec">{erreur}</p>}
-    <button className={BOUTON} disabled={occupe} onClick={() => void installer()}>Installer les méthodes sonores</button>
-    <div className="grid grid-cols-2 gap-[14px]">{MOTEURS_SONORES.map(m => {
-      const r = resultat?.[m.identifiant]
-      return <article key={m.identifiant} className={`${SURFACE} space-y-[8px]`}>
-        <div><h3 className="font-serif text-[25px]">{m.nom}</h3><p className="text-[12px] text-encre-3">{m.quoi}</p></div>
-        {r?.installe
-          ? <p className="text-[13px] text-ok">Installé{r.profil ? ` · version du ${new Date(r.profil.cree_le * 1000).toLocaleString("fr-FR")}` : ""}</p>
-          : r
-            ? <ListeManque manque={r.manque || []} />
-            : <p className="text-[13px] text-encre-3">{occupe ? "Recherche des fichiers…" : "Non vérifié — « Installer les méthodes sonores » relit ce que ComfyUI sait déjà."}</p>}
-      </article>
-    })}</div>
-    <p className="text-[12px] text-encre-3">Réinstaller sans rien changer ne crée pas de nouvelle version. Coller un workflow reste possible, comme pour l’image.</p>
-  </section>
+/** Un graphe seul, au format API — ou `null` pour tout autre document. */
+function grapheSeul(contenu: string): ProfilWorkflow["graphe"] | null {
+  try {
+    const lu = JSON.parse(contenu) as Record<string, unknown>
+    if (!lu || Array.isArray(lu) || lu.nodes || (lu.graphe && lu.liaisons)) return null
+    return Object.values(lu).every(n => typeof n === "object" && n !== null && "class_type" in n && "inputs" in n) ? lu as ProfilWorkflow["graphe"] : null
+  } catch { return null }
 }
+
+const versChamp = (c: ChampDuGraphe | null | undefined) => (c ? `${c.noeud}/${c.champ}` : "")
+
+/** Les durées proposées, écrites « 2, 3, 5 » : des secondes entières de 1 à 120. */
+const dureesLues = (texte: string) => [...new Set(texte.split(/[\s,;]+/).filter(Boolean).map(Number))].filter(s => Number.isInteger(s) && s >= 1 && s <= 120)
 
 function ConfigurerGraphe({ contenu, garder, occupe }: { contenu: string; garder: (profil: unknown) => Promise<void>; occupe: boolean }) {
   const [nom, setNom] = useState("")
   const [nature, setNature] = useState<"image" | "video" | "audio">("image")
   const [prompt, setPrompt] = useState("")
   const [reference, setReference] = useState("")
+  // MO3 : le champ qui charge l'image de fin d'un clip, facultatif — c'est ce
+  // qui dit que ce workflow sait finir sur une image choisie.
+  const [fin, setFin] = useState("")
+  // MO6 : le champ qui charge la zone à repeindre (une image), facultatif —
+  // c'est ce qui fait entrer ce workflow dans « Repeindre ».
+  const [zone, setZone] = useState("")
+  // MO6 : le champ qui porte le nombre d'images d'un clip — relié, le clip
+  // peut proposer plusieurs durées au lieu de la seule que le graphe écrit.
+  const [images, setImages] = useState("")
+  const [durees, setDurees] = useState("")
   const [sortie, setSortie] = useState("")
   const [largeur, setLargeur] = useState(512)
   const [hauteur, setHauteur] = useState(512)
   const [secondes, setSecondes] = useState(5)
   const [cadence, setCadence] = useState(8)
+  // MO6 : ce que l'atelier a lu dans le graphe. **Une proposition** : chaque
+  // champ encore vide se préremplit, l'auteur relit et change avant
+  // d'enregistrer — rien ne part sans le bouton.
+  const [lecture, setLecture] = useState<LectureGraphe | null>(null)
+  const natureTouchee = useRef(false)
+  useEffect(() => {
+    setLecture(null)
+    const graphe = grapheSeul(contenu)
+    if (!graphe) return
+    let vivant = true
+    workflowsImportes.lireGraphe(graphe).then(l => {
+      if (!vivant || !l || typeof l !== "object") return
+      setLecture(l)
+      const clip = Boolean(l.image_de_fin || l.images)
+      if (clip && !natureTouchee.current) setNature("video")
+      setPrompt(v => v || versChamp(l.prompt))
+      setReference(v => v || versChamp(l.references?.[0]))
+      setFin(v => v || versChamp(l.image_de_fin))
+      setZone(v => v || versChamp(l.masque))
+      setImages(v => v || versChamp(l.images))
+      setSortie(v => v || (l.sortie ?? ""))
+      if (l.cadence) setCadence(Math.round(l.cadence))
+      if (l.duree) { setSecondes(l.duree); setDurees(v => v || String(l.duree)) }
+    }).catch(() => undefined) // la lecture est une aide : sans elle, le formulaire reste entier
+    return () => { vivant = false }
+  }, [contenu])
   let lu: Record<string, unknown>
   try { lu = JSON.parse(contenu) as Record<string, unknown> } catch { return <p role="alert" className="text-[13px] text-echec">Ce document n’est pas un JSON valide.</p> }
   if (lu && lu.graphe && lu.liaisons) return <button className={BOUTON} disabled={occupe} onClick={() => void garder(lu)}>Enregistrer cette version de profil</button>
   if (!lu || Array.isArray(lu) || lu.nodes || !Object.values(lu).every(n => typeof n === "object" && n !== null && "class_type" in n && "inputs" in n)) return <p role="alert" className="text-[13px] text-echec">Choisis l’export « format API » de ComfyUI. Le fichier qui décrit seulement la disposition des nœuds ne suffit pas.</p>
   const graphe = lu as ProfilWorkflow["graphe"]
+  const listeDurees = dureesLues(durees)
+  const avecImages = nature === "video" && Boolean(images)
+  const avecZone = nature === "image" && Boolean(zone)
+  const bloque = !nom.trim() ? "Donne un nom au workflow." : !prompt ? "Choisis le champ qui reçoit le prompt." : !sortie ? "Choisis le nœud qui enregistre le résultat."
+    : nature === "video" && !reference ? "Un clip part toujours d’une image de départ : choisis son champ."
+    : avecZone && !reference ? "Une zone se repeint sur une image : choisis aussi le champ qui reçoit l’image d’en dessous."
+    : avecZone && zone === reference ? "La zone et l’image d’en dessous arrivent par deux champs différents."
+    : avecImages && listeDurees.length === 0 ? "Écris au moins une durée, en secondes entières de 1 à 120." : ""
+  const lus = lecture ? [
+    lecture.masque && `reçoit une zone à repeindre (nœud ${lecture.masque.noeud})`,
+    lecture.image_de_fin && `charge une image de fin (nœud ${lecture.image_de_fin.noeud})`,
+    lecture.images && `écrit son nombre d’images (${lecture.images.valeur}${lecture.cadence ? ` à ${lecture.cadence} images/s` : ""})`,
+  ].filter(Boolean) as string[] : []
   const entrees = Object.entries(graphe).flatMap(([id, n]) => Object.entries(n.inputs).filter(([, v]) => !Array.isArray(v)).map(([champ]) => ({ valeur: `${id}/${champ}`, nom: `${n.class_type} · ${id} · ${champ}` })))
   const lien = (v: string) => { const [noeud, champ] = v.split("/"); return [{ noeud, champ }] }
   const choisir = (titre: string, value: string, changer: (v: string) => void) => <label className="flex flex-col gap-[8px] text-[13px]">{titre}<select className={CHAMP} value={value} onChange={e => changer(e.target.value)}><option value="">Choisir le champ</option>{entrees.map(e => <option key={e.valeur} value={e.valeur}>{e.nom}</option>)}</select></label>
-  return <fieldset disabled={occupe} className="space-y-[14px]"><div className="grid grid-cols-2 gap-[14px]"><label className="flex flex-col gap-[8px] text-[13px]">Nom du workflow<input className={CHAMP} value={nom} onChange={e => setNom(e.target.value)} /></label><label className="flex flex-col gap-[8px] text-[13px]">Ce qu’il produit<select className={CHAMP} value={nature} onChange={e => setNature(e.target.value as "image" | "video" | "audio")}><option value="image">Une image</option><option value="video">Un clip vidéo</option><option value="audio">Un son</option></select></label>{choisir("Champ recevant le prompt", prompt, setPrompt)}{nature !== "audio" && choisir(nature === "video" ? "Champ recevant l’image de départ" : "Champ recevant une référence (facultatif)", reference, setReference)}<label className="flex flex-col gap-[8px] text-[13px]">Nœud qui enregistre le résultat<select className={CHAMP} value={sortie} onChange={e => setSortie(e.target.value)}><option value="">Choisir la sortie</option>{Object.entries(graphe).map(([id, n]) => <option key={id} value={id}>{n.class_type} · {id}</option>)}</select></label>{nature !== "audio" && <div className="grid grid-cols-2 gap-[8px]"><label className="text-[13px]">Largeur fixe<input type="number" min={8} max={8192} className={`${CHAMP} mt-[8px] w-full`} value={largeur} onChange={e => setLargeur(Number(e.target.value))} /></label><label className="text-[13px]">Hauteur fixe<input type="number" min={8} max={8192} className={`${CHAMP} mt-[8px] w-full`} value={hauteur} onChange={e => setHauteur(Number(e.target.value))} /></label></div>}</div>
-    {nature !== "image" && <div className="grid grid-cols-2 gap-[14px]"><label className="text-[13px]">Durée du graphe (s)<input type="number" min={nature === "audio" ? 0.1 : 1} max={nature === "audio" ? 600 : 120} step={nature === "audio" ? 0.1 : 1} value={secondes} className={`${CHAMP} ml-[8px]`} onChange={e => setSecondes(Number(e.target.value))} /></label>{nature === "video" && <label className="text-[13px]">Cadence du graphe<input type="number" min={1} max={120} value={cadence} className={`${CHAMP} ml-[8px]`} onChange={e => setCadence(Number(e.target.value))} /></label>}</div>}
+  return <fieldset disabled={occupe} className="space-y-[14px]"><div className="grid grid-cols-2 gap-[14px]"><label className="flex flex-col gap-[8px] text-[13px]">Nom du workflow<input className={CHAMP} value={nom} onChange={e => setNom(e.target.value)} /></label><label className="flex flex-col gap-[8px] text-[13px]">Ce qu’il produit<select className={CHAMP} value={nature} onChange={e => { natureTouchee.current = true; setNature(e.target.value as "image" | "video" | "audio") }}><option value="image">Une image</option><option value="video">Un clip vidéo</option><option value="audio">Un son</option></select></label>{choisir("Champ recevant le prompt", prompt, setPrompt)}{nature !== "audio" && choisir(nature === "video" ? "Champ recevant l’image de départ" : "Champ recevant une référence (facultatif)", reference, setReference)}{nature === "video" && choisir("Champ recevant l’image de fin (facultatif)", fin, setFin)}{nature === "image" && choisir("Champ recevant la zone à repeindre (facultatif)", zone, setZone)}{nature === "video" && choisir("Champ recevant le nombre d’images (facultatif)", images, setImages)}<label className="flex flex-col gap-[8px] text-[13px]">Nœud qui enregistre le résultat<select className={CHAMP} value={sortie} onChange={e => setSortie(e.target.value)}><option value="">Choisir la sortie</option>{Object.entries(graphe).map(([id, n]) => <option key={id} value={id}>{n.class_type} · {id}</option>)}</select></label>{nature !== "audio" && <div className="grid grid-cols-2 gap-[8px]"><label className="text-[13px]">Largeur fixe<input type="number" min={8} max={8192} className={`${CHAMP} mt-[8px] w-full`} value={largeur} onChange={e => setLargeur(Number(e.target.value))} /></label><label className="text-[13px]">Hauteur fixe<input type="number" min={8} max={8192} className={`${CHAMP} mt-[8px] w-full`} value={hauteur} onChange={e => setHauteur(Number(e.target.value))} /></label></div>}</div>
+    {nature !== "image" && <div className="grid grid-cols-2 gap-[14px]">{avecImages
+      ? <label className="flex flex-col gap-[8px] text-[13px]">Durées proposées (secondes, séparées par des virgules)<input aria-label="Durées proposées" value={durees} className={CHAMP} onChange={e => setDurees(e.target.value)} /></label>
+      : <label className="text-[13px]">Durée du graphe (s)<input type="number" min={nature === "audio" ? 0.1 : 1} max={nature === "audio" ? 600 : 120} step={nature === "audio" ? 0.1 : 1} value={secondes} className={`${CHAMP} ml-[8px]`} onChange={e => setSecondes(Number(e.target.value))} /></label>}
+      {nature === "video" && <label className="text-[13px]">Cadence du graphe<input type="number" min={1} max={120} value={cadence} className={`${CHAMP} ml-[8px]`} onChange={e => setCadence(Number(e.target.value))} /></label>}</div>}
+    {avecImages && <p className="text-[12px] text-encre-3">Le nombre d’images part avec chaque clip : durée × cadence{lecture?.pas_images ? `, arrondi au pas de ${lecture.pas_images} que ComfyUI déclare pour ce champ` : ""}.</p>}
+    {avecZone && <p className="text-[12px] text-encre-3">Avec une zone, ce workflow se choisit dans « Repeindre » et ne crée plus d’image seul.</p>}
+    {lecture && (lus.length > 0 || lecture.remarques.length > 0) && <div role="note" aria-label="Lu dans le graphe" className="space-y-[4px] rounded-7 border border-trait bg-papier p-[14px] text-[12px] text-encre-3">{lus.length > 0 && <p>Lu dans le graphe : il {lus.join(" · ")}. Les champs se sont préremplis — relis-les avant d’enregistrer.</p>}{lecture.remarques.map(r => <p key={r}>{r}</p>)}</div>}
     <p className="text-[12px] text-encre-3">Ces dimensions et durées doivent correspondre au graphe importé. Ce premier profil conserve ses autres réglages fixes. Importez un profil complet pour exposer plusieurs formats, références ou paramètres.</p>
-    <button className={BOUTON} disabled={!nom.trim() || !prompt || !sortie || (nature === "video" && !reference)} onClick={() => void garder({ nom, nature, graphe, liaisons: { prompt: lien(prompt), ...(nature !== "audio" && reference ? { "reference:0": lien(reference) } : {}) }, parametres: {}, formats: nature === "audio" ? [] : [{ resolution: nature === "video" ? `${hauteur}p` : String(hauteur), proportions: largeur === hauteur ? "1:1" : `${largeur}:${hauteur}`, largeur, hauteur }], durees: nature !== "image" ? [secondes] : [], cadence, sortie: { noeud: sortie, champ: nature === "image" ? "images" : nature === "audio" ? "audio" : "gifs" } })}>Enregistrer le profil</button>
+    <div className="flex flex-wrap items-center gap-[14px]"><button className={BOUTON} disabled={!!bloque} onClick={() => void garder({ nom, nature, graphe, liaisons: { prompt: lien(prompt), ...(nature !== "audio" && reference ? { "reference:0": lien(reference) } : {}), ...(nature === "video" && fin ? { image_de_fin: lien(fin) } : {}), ...(avecZone ? { masque: lien(zone) } : {}), ...(avecImages ? { images: lien(images) } : {}) }, parametres: {}, formats: nature === "audio" ? [] : [{ resolution: nature === "video" ? `${hauteur}p` : String(hauteur), proportions: largeur === hauteur ? "1:1" : `${largeur}:${hauteur}`, largeur, hauteur }], durees: nature === "image" ? [] : avecImages ? listeDurees : [secondes], cadence, ...(avecImages && lecture?.pas_images ? { pas_images: lecture.pas_images } : {}), sortie: { noeud: sortie, champ: nature === "image" ? "images" : nature === "audio" ? "audio" : "gifs" } })}>Enregistrer le profil</button>{bloque && <p className="text-[12px] text-encre-3">{bloque}</p>}</div>
   </fieldset>
 }
 

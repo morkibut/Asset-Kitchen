@@ -14,7 +14,7 @@ const PORTES: { cle: DestinationAtelier; nom: string; court: string }[] = [
 ]
 
 export function NavigationAtelier({ jeu, descriptionJeu, actif, travauxEnCours = 0, brouillons = 0, replie, onReplier,
-  onAller, onChangerJeu, onGuide, onRecherche, onBrouillons, etatAtelier }: {
+  onAller, onChangerJeu, onGuide, onRecherche, onBrouillons, etatAtelier, suivi }: {
   jeu: string; descriptionJeu?: string; actif: DestinationAtelier | null
   /** **Toutes les fabrications encore en cours** (`RP16`) — les emplacements
    *  d'images de la galerie *et* les travaux du serveur, toutes familles
@@ -26,6 +26,9 @@ export function NavigationAtelier({ jeu, descriptionJeu, actif, travauxEnCours =
   replie: boolean; onReplier: (replie: boolean) => void
   onAller: (destination: DestinationAtelier) => void; onChangerJeu: () => void
   onGuide: () => void; onRecherche: () => void; onBrouillons?: () => void; etatAtelier?: ReactNode
+  /** Ce qui tourne et ce qui est arrivé (`SuiviDuCarnet.tsx`) — posé en tête
+   *  du pied, au-dessus des brouillons : ce n'est pas une porte non plus. */
+  suivi?: ReactNode
 }) {
   const ligne = "flex min-h-[34px] w-full items-center rounded-7 px-[14px] py-[4px] text-left text-[14px] transition-colors duration-120 hover:bg-papier"
   return <aside aria-label="Navigation du jeu" data-navigation-atelier className={`flex h-full min-h-0 shrink-0 flex-col overflow-y-auto border-r border-trait bg-papier-cote ${replie ? 'w-navigation-repliee gap-[8px] p-[8px]' : 'w-navigation-atelier gap-[14px] p-[14px]'}`}>
@@ -52,6 +55,7 @@ export function NavigationAtelier({ jeu, descriptionJeu, actif, travauxEnCours =
         ci-dessus. Aucune couleur d'alerte, aucun rappel : un brouillon attend,
         il ne réclame pas (E2). */}
     <div className="mt-auto border-t border-trait pt-[14px]">
+      {suivi}
       {onBrouillons && <button type="button" onClick={onBrouillons} title="Brouillons à reprendre" aria-label={`Brouillons à reprendre · ${brouillons}`} className={`${ligne} ${replie ? 'justify-center px-[4px] text-[11px]' : 'text-[12px]'}`}>
         <span>{replie ? `Brou. ${brouillons}` : `Brouillons · ${brouillons}`}</span>
       </button>}

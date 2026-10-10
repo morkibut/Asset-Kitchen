@@ -5,8 +5,12 @@
 la carte de sa famille, est son portrait choisi (`Personnage.image_de_reference`,
 posé depuis la fiche — RP19) quand il y en a un et qu'il désigne toujours une
 image vivante de ce sujet. Sans choix, ou si l'asset choisi n'existe plus, est
-écarté ou n'est plus de ce sujet, la règle d'hier s'applique : la plus fraîche
-gagne (B9.4).
+écarté ou n'est plus de ce sujet, le repli s'applique.
+
+⚠️ **Le repli n'est plus « la plus fraîche »** depuis PX10 (27 septembre 2026) :
+c'était lui qui faisait d'un résultat repeint ou d'une planche le portrait dès
+que le choix cessait de valoir. C'est la préférée, sinon une image rangée, sinon
+la plus ancienne — une arrivée ne le déplace pas (`tests/test_px10_portrait.py`).
 
 Aucun essai ne coûte un centime : les images sont importées, jamais générées.
 """
@@ -58,16 +62,17 @@ def _vignette(client, famille: str = "personnages") -> dict | None:
     return page["personnages"][0]["vignette"]
 
 
-def test_sans_portrait_choisi_la_vignette_reste_la_plus_fraiche(
+def test_sans_portrait_choisi_la_vignette_est_le_repli_stable(
     client, atelier, tmp_path
 ):
-    """La règle d'aujourd'hui, intacte tant qu'aucun portrait n'a été choisi."""
+    """Sans choix, la plus ancienne des images rangées — et une image arrivée
+    après ne la déplace pas (PX10)."""
     pelerin = _creer(client)
     plan = _plan(client)
-    _poser(client, tmp_path, pelerin, plan[0])
-    derniere = _poser(client, tmp_path, pelerin, plan[1])
+    premiere = _poser(client, tmp_path, pelerin, plan[0])
+    _poser(client, tmp_path, pelerin, plan[1])
 
-    assert _vignette(client)["identifiant"] == derniere
+    assert _vignette(client)["identifiant"] == premiere
 
 
 def test_un_portrait_choisi_plus_ancien_gagne(client, atelier, tmp_path):
@@ -83,55 +88,55 @@ def test_un_portrait_choisi_plus_ancien_gagne(client, atelier, tmp_path):
     assert _vignette(client)["identifiant"] == ancienne
 
 
-def test_un_portrait_pointant_un_asset_supprime_retombe_sur_la_plus_fraiche(
+def test_un_portrait_pointant_un_asset_supprime_retombe_sur_le_repli(
     client, atelier, tmp_path
 ):
     """Le repli de RP19, tenu aussi par la carte du Codex : une image choisie
     puis écartée de la bibliothèque ne désigne plus rien, et la vignette ne
-    doit pas se taire ni casser — elle reprend la règle d'hier."""
+    doit pas se taire ni casser — elle reprend le repli."""
     pelerin = _creer(client)
     plan = _plan(client)
     choisie = _poser(client, tmp_path, pelerin, plan[0])
-    derniere = _poser(client, tmp_path, pelerin, plan[1])
+    restante = _poser(client, tmp_path, pelerin, plan[1])
     _choisir_le_portrait(client, pelerin, choisie)
     assert _vignette(client)["identifiant"] == choisie
 
     reponse = client.post("/api/assets/delete", json={"identifiants": [choisie]})
     assert reponse.status_code == 200, reponse.text
 
-    assert _vignette(client)["identifiant"] == derniere
+    assert _vignette(client)["identifiant"] == restante
 
 
-def test_retirer_le_portrait_ramene_aussi_la_plus_fraiche(client, atelier, tmp_path):
+def test_retirer_le_portrait_ramene_au_repli(client, atelier, tmp_path):
     """Retirer et choisir sont le même geste (RP19) : une chaîne vide efface
     le choix et la carte retombe sur le repli."""
     pelerin = _creer(client)
     plan = _plan(client)
-    choisie = _poser(client, tmp_path, pelerin, plan[0])
-    derniere = _poser(client, tmp_path, pelerin, plan[1])
+    premiere = _poser(client, tmp_path, pelerin, plan[0])
+    choisie = _poser(client, tmp_path, pelerin, plan[1])
     _choisir_le_portrait(client, pelerin, choisie)
     assert _vignette(client)["identifiant"] == choisie
 
     _choisir_le_portrait(client, pelerin, None)
 
-    assert _vignette(client)["identifiant"] == derniere
+    assert _vignette(client)["identifiant"] == premiere
 
 
 def test_un_portrait_devenu_un_calque_ne_compte_plus(client, atelier, tmp_path):
     """Un corps, jamais une pièce (B9.4) — vaut aussi pour un portrait choisi :
     s'il devient un calque après coup, il ne désigne plus une image fixe de ce
-    sujet et la carte retombe sur la plus fraîche."""
+    sujet et la carte retombe sur le repli."""
     pelerin = _creer(client)
     plan = _plan(client)
     choisie = _poser(client, tmp_path, pelerin, plan[0])
-    derniere = _poser(client, tmp_path, pelerin, plan[1])
+    restante = _poser(client, tmp_path, pelerin, plan[1])
     _choisir_le_portrait(client, pelerin, choisie)
     assert _vignette(client)["identifiant"] == choisie
 
     asset = atelier.base.lire_asset(choisie)
     atelier.base.enregistrer_asset(replace(asset, piece="casque"))
 
-    assert _vignette(client)["identifiant"] == derniere
+    assert _vignette(client)["identifiant"] == restante
 
 
 def test_le_portrait_choisi_n_ajoute_pas_d_aller_retour_par_sujet(

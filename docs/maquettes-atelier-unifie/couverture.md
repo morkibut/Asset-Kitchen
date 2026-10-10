@@ -2,7 +2,8 @@
 
 [Ouvrir l’atelier à essayer](02-atelier.html). La première [proposition de parcours](01-parcours.html)
 reste disponible pour comparer la simplification initiale avec cette version plus large.
-Le son a sa maquette à part : [le son, à essayer](03-son.html).
+Le son a sa maquette à part : [le son, à essayer](03-son.html). Le catalogue des
+moteurs, avant tout code, a la sienne aussi : [les moteurs, à essayer](05-moteurs.html).
 
 Cette version sert à **essayer les parcours et faire apparaître les besoins oubliés**.
 Elle ne remplace pas l’application et ne prouve pas ses traitements. L’identité reste celle
@@ -64,6 +65,7 @@ le bandeau. Les tests de cette révision ont utilisé cette séance séparée de
 | Réglages | Règles de l’univers ; disponibilité indépendante des moteurs ; cadre de l’agent mémorisé et choix de méthode filtré | Pas de clé réelle ; profils de workflow descriptifs ; installations, quotas et états GPU à détailler |
 | Sources 3D | Six étapes : image de départ, versions de modèle, squelette corrigé/contrôlé, mouvements attachés, caméra/style et rendus par mouvement/direction ; mannequin CPU manipulable, contrôles de dépendance, travaux simulés avec échec/reprise, réouverture des versions et retouche des frames produites | Le mannequin ne représente pas l'image jointe ; aucun modèle IA, rigging réel, lecture de maillage/FBX ou appel asset3d. Les fichiers 3D importés ne sont référencés que par leur nom ; les rendus locaux restent en 64 px |
 | Son | Maquette à part : [le son](03-son.html) | Voir cette maquette |
+| Moteurs ([à essayer](05-moteurs.html)) | Page « Moteurs » dans les Réglages : moteurs groupés sur la machine / en ligne, nom, capacités, réglages, état et bouton qui convient ; deux bascules pour éprouver le grisage par fournisseur sans toucher aux autres (ComfyUI, OpenRouter) ; choix du modèle dans Créer, Repeindre et Animer avec les mêmes noms et les mêmes groupes qu'en page Moteurs, et un lien « l'installer dans Moteurs › » sur un moteur grisé | Maquette de la tranche MOM (`docs/PLAN-catalogue-des-moteurs.md`) seule, avant tout code de production ; catalogue, installation et clé simulés, aucun appel ni téléchargement |
 | Tuiles ([à essayer](04-tuiles.html), à servir en HTTP) | Vrai moteur de SpriteForge (copie dans `tuiles-moteur/`) : liste des jeux de tuiles avec aperçus rendus, choix sol / chemin / mur (plus 15 et 17 pièces), atelier où l'on peint la carte (clic, clic droit, île au hasard, zoom, personnage), planche nommée au survol, vérification des raccords par `tile-check.js`, 13 matières intégrées, bordure liée ou déliée, sol dessous, réglages en direct ; texte envoyé composé par `composerPrompt` ; relecture de livraison ; demande de l'agent qui ouvre l'atelier pré-rempli | Génération simulée (attente de 3 s, tirages redessinés à partir des matières intégrées) ; bibliothèque « Mes matières » fictive ; aucun import d'image, aucun fichier Godot écrit, aucune référence de palette ; tailles des `.tres`/`.tscn` non affichées faute d'être calculées ; isométrique absent ; rien gardé au rechargement |
 
 Le prototype est donc **large et interactif, encore incomplet dans le détail des outils**.

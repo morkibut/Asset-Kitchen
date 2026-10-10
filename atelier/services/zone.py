@@ -46,7 +46,8 @@ from atelier.domaine.recette import (
     traits_depuis_json,
 )
 from atelier.domaine.workflow import GRAINE_MAX, WorkflowRefuse
-from atelier.fournisseur.catalogue_styles import FAMILLES, style
+from atelier.fournisseur.catalogue_styles import FAMILLES, createur_de, de_modele, sait_repeindre, style
+from atelier.fournisseur.styles_locaux import PARAMETRE_FORCE_ZONE
 from atelier.image.zone import (
     emplacement_propose,
     fond_de_la_toile,
@@ -66,9 +67,10 @@ EQUIPEMENT = "equipement"
 VERSION = "version"
 JETER = "jeter"
 
-#: L'outil local qui sait repeindre une zone (PX2). Nommé ici pour une seule
-#: chose : dire à l'auteur **quoi installer** quand aucun modèle du catalogue ne
-#: sait le faire. Le modèle, lui, se choisit sur sa capacité (`Modele.masque`).
+#: La retouche que l'écran propose d'installer (PX2) — le style et sa retouche
+#: ensemble, depuis MO1. Nommée ici pour une seule chose : dire à l'auteur **quoi
+#: installer** quand aucun style installé ne sait repeindre. Le modèle, lui, se
+#: choisit parmi les styles installés (`_choix`).
 OUTIL_DE_ZONE = "sdxl-retouche-zone"
 
 #: La résolution à laquelle le moteur travaille — celle du banc PX1 (1 024).
@@ -100,78 +102,160 @@ class ServiceZone:
         atelier.travaux.inscrire_executant(NATURE, self._executer_agent)
 
     # ── Le modèle ───────────────────────────────────────────────────────────
+    #
+    # **MO1 : les mêmes choix que pour créer.** Un choix, c'est un style installé
+    # dont le moteur sait repeindre — sous le nom qu'il porte dans « Créer »
+    # (« Qwen-Image 2.1 · Très rapide »), avec ses propres réglages. Il se désigne
+    # par l'identifiant de sa retouche quand elle est déjà installée, par celui du
+    # style sinon : sa retouche s'écrit alors au premier lancement, tirée du
+    # profil de création (`ServiceStylesLocaux.repeint`). Un modèle importé à la
+    # main qui relie un masque reste un choix à lui seul.
 
-    def modele(self) -> Modele | None:
-        """Le modèle par défaut : **le catalogue décide** — le premier qui
-        déclare la capacité et qui n'est pas grisé, sinon le premier qui la
-        déclare (pour dire sa raison), sinon rien. PX7 : ce n'est plus le seul
-        choix possible — l'auteur ou l'agent peut nommer un autre modèle capable
-        (`_modele_choisi`) ; celui-ci reste le repli, et le seul choix quand
-        rien n'est demandé."""
-        capables = self._modeles_capables()
-        prets = [m for m in capables if not self._raison_du_modele(m)]
-        return (prets or capables or [None])[0]
+    def sait_repeindre_zone(self, modele: Any) -> bool:
+        """La capacité « sait repeindre une zone » d'un modèle, **la même règle
+        que `_choix`** ci-dessous — pour un appelant qui n'a pas le droit
+        d'importer `atelier.fournisseur` lui-même (MO7 : le MCP, qui ne connaît
+        que les services). `modele.masque` seul ne marque que les jumeaux de
+        zone déjà installés (les anciens `OUTILS` de PX7), pas tout style qui
+        sait repeindre depuis que MO1 l'a posé en capacité du moteur."""
+        if modele.locale:
+            entree = de_modele(modele.identifiant)
+            if entree is not None:
+                return sait_repeindre(createur_de(entree))
+        return modele.masque
 
-    def _modeles_capables(self) -> list[Modele]:
-        """Tous les modèles qui déclarent la capacité `masque` — grisés ou non.
-        PX7 : c'est cette liste, entière, que l'écran et l'agent peuvent choisir ;
-        `modele()` n'en prend que le premier prêt."""
-        return [m for m in self._atelier.catalogue.etat.modeles if m.masque]
+    def _choix(self, noeuds: Sequence[str] | None = None) -> list[dict[str, Any]]:
+        """Les choix de « Repeindre », dans l'ordre du catalogue — grisés ou non.
+        `noeuds` (ce que ComfyUI déclare) grise un style dont la retouche n'est
+        pas encore écrite quand il manque un nœud de la zone : jamais proposé
+        puis refusé."""
+        choix: list[dict[str, Any]] = []
+        par_style: dict[str, dict[str, Any]] = {}
+        for m in self._atelier.catalogue.etat.modeles:
+            entree = de_modele(m.identifiant) if m.locale else None
+            if entree is None:
+                if m.masque:
+                    choix.append({"identifiant": m.identifiant, "identifiants": [m.identifiant], "nom": m.nom,
+                                  "moteur": None, "famille": m.famille, "style": None,
+                                  "_modele": m, "_repeint": True, "_vitesse": None})
+                continue
+            createur = createur_de(entree)
+            if not sait_repeindre(createur):
+                continue
+            est_zone = entree is not createur
+            if est_zone and not m.masque:
+                continue
+            ligne = par_style.get(createur["identifiant"])
+            if ligne is None:
+                famille = FAMILLES[createur["famille"]]
+                ligne = {"identifiant": m.identifiant, "identifiants": [], "nom": f"{famille['nom']} · {createur['nom']}",
+                         "moteur": famille["nom"], "famille": createur["famille"], "style": createur["identifiant"],
+                         "_modele": m, "_repeint": est_zone,
+                         "_vitesse": createur.get("vitesse") or famille["vitesse"]}
+                par_style[createur["identifiant"]] = ligne
+                choix.append(ligne)
+            elif est_zone and not ligne["_repeint"]:
+                ligne.update(identifiant=m.identifiant, _modele=m, _repeint=True)
+            # Tout ce qui désigne ce choix : l'écran qui avait choisi le style
+            # le retrouve après son premier repeint, quand sa retouche vient de
+            # s'écrire et qu'il se désigne désormais par elle.
+            ligne["identifiants"].append(m.identifiant)
+        for ligne in choix:
+            raison = self._raison_du_modele(ligne["_modele"])
+            if raison is None and not ligne["_repeint"] and noeuds is not None:
+                manque = [n for n in FAMILLES[ligne["famille"]]["repeint"] if n not in noeuds]
+                if manque:
+                    raison = "il manque, dans ComfyUI : " + " · ".join("le nœud " + n for n in manque)
+            ligne["raison"] = raison
+        return choix
 
-    def _modele_choisi(self, identifiant: str) -> Modele:
-        """Le modèle nommé par l'auteur ou l'agent (PX7) — refusé s'il ne sait
-        pas repeindre une zone ou n'existe pas, jamais résolu en silence vers un
-        autre : demander un modèle précis et en recevoir un autre serait pire
-        qu'un refus."""
-        trouve = next((m for m in self._modeles_capables() if m.identifiant == identifiant), None)
-        if trouve is None:
-            raise DemandeRefusee(f"« {identifiant} » ne sait pas repeindre une zone, ou n'est pas installé")
-        return trouve
+    @staticmethod
+    def _defaut(choix: list[dict[str, Any]]) -> dict[str, Any] | None:
+        """Le choix par défaut : **le catalogue décide** — d'abord un style prêt
+        qui a déjà repeint (sa retouche est installée), puis tout style prêt,
+        sinon le premier (pour dire sa raison), sinon rien. PX7 : ce n'est que le
+        repli — l'auteur ou l'agent peut nommer un autre choix."""
+        prets = [c for c in choix if not c.get("raison", None)]
+        return next((c for c in prets if c["_repeint"]), None) or (prets or choix or [None])[0]
 
-    def _modele_par_identifiant(self, identifiant: str | None) -> Modele | None:
-        """La même recherche que `_modele_choisi`, mais **qui ne refuse rien** —
-        pour l'aperçu (`ce_qui_part`), qui ne doit jamais lever pendant qu'on
-        tape."""
+    def _choix_de(self, identifiant: str | None, choix: list[dict[str, Any]]) -> dict[str, Any] | None:
+        """Le choix qu'un identifiant désigne — le sien, ou **celui de son
+        style** : une ancienne version, une retouche de PX7 (« sdxl-retouche-zone »),
+        le style de création. Jamais un autre style : demander un modèle précis
+        et en recevoir un autre serait pire qu'un refus."""
         if not identifiant:
             return None
-        return next((m for m in self._modeles_capables() if m.identifiant == identifiant), None)
+        exact = next((c for c in choix if identifiant in c["identifiants"]), None)
+        if exact is not None:
+            return exact
+        entree = de_modele(identifiant)
+        if entree is None:
+            return None
+        style_ = createur_de(entree)["identifiant"]
+        return next((c for c in choix if c["style"] == style_), None)
+
+    def modele(self) -> Modele | None:
+        """Le modèle du choix par défaut (voir `_defaut`)."""
+        defaut = self._defaut(self._choix())
+        return None if defaut is None else defaut["_modele"]
+
+    async def _modele_pour_repeindre(self, identifiant: str | None) -> Modele:
+        """Le modèle qui repeindra vraiment — **une retouche**, jamais un style de
+        création — pour l'identifiant qu'on a choisi : celui d'une retouche
+        installée, d'un style installé pour créer (sa retouche s'écrit alors),
+        ou d'un ancien repeint (le même style, dans sa version d'aujourd'hui).
+        Refusé s'il ne désigne aucun style qui sache repeindre."""
+        choix = self._choix()
+        if identifiant is None:
+            ligne = self._defaut(choix)
+            if ligne is None:
+                raise DemandeRefusee(
+                    "aucun modèle de l'atelier ne sait repeindre une zone — "
+                    f"installez l'outil « {OUTIL_DE_ZONE} »"
+                )
+        else:
+            ligne = self._choix_de(identifiant, choix)
+            if ligne is None:
+                raise DemandeRefusee(f"« {identifiant} » ne sait pas repeindre une zone, ou n'est pas installé")
+        if ligne["_repeint"]:
+            return ligne["_modele"]
+        raison = self._raison_du_modele(ligne["_modele"])
+        if raison:
+            raise DemandeRefusee(f"{ligne['nom']} : {raison}")
+        styles_locaux = self._atelier.styles_locaux
+        try:
+            # Le profil que ce choix désigne : la version du style installée pour
+            # créer — même quand on est arrivé ici par un ancien repeint.
+            creation = self._atelier.profils_workflow.de_modele(ligne["identifiant"])
+            installe = await styles_locaux.repeint(creation)
+        except WorkflowRefuse as refus:
+            raise DemandeRefusee(f"{ligne['nom']} : {refus.raison if hasattr(refus, 'raison') else refus}") from refus
+        catalogue = self._atelier.catalogue
+        try:
+            return catalogue.modele(installe["modele"])
+        except ErreurAtelier:
+            await catalogue.rafraichir()
+            return catalogue.modele(installe["modele"])
 
     def _raison_du_modele(self, modele: Modele) -> str | None:
         if modele.indisponible:
             return modele.indisponible
         return self._atelier.catalogue.grise(modele)
 
-    async def _outil(self) -> dict[str, Any]:
-        """L'outil local de la zone tel que l'installation le voit : prêt ou
-        non, et ce qui manque — ou l'injoignable, dit en clair."""
+    def _outil_de_repli(self, raison: str) -> dict[str, Any]:
         entree = style(OUTIL_DE_ZONE) or {}
-        ligne: dict[str, Any] = {
-            "identifiant": OUTIL_DE_ZONE,
-            "nom": entree.get("nom", OUTIL_DE_ZONE),
-            "pret": False,
-            "manque": [],
-            "modele": None,
-            "vitesse": entree.get("vitesse") or FAMILLES.get(entree.get("famille", ""), {}).get("vitesse"),
-        }
-        try:
-            for l in await self._atelier.styles_locaux.lister_outils():
-                if l["identifiant"] == OUTIL_DE_ZONE:
-                    ligne.update(l)
-        except WorkflowRefuse as refus:
-            ligne["manque"] = [refus.raison if hasattr(refus, "raison") else str(refus)]
-        return ligne
-
-    async def _outils(self) -> list[dict[str, Any]]:
-        """PX7 : **un outil par famille de moteur local**, prêt ou non, et ce
-        qui manque — pour que l'écran propose d'installer celui qu'on veut,
-        pas seulement celui de SDXL."""
-        try:
-            return list(await self._atelier.styles_locaux.lister_outils())
-        except WorkflowRefuse as refus:
-            return [{"identifiant": OUTIL_DE_ZONE, "nom": OUTIL_DE_ZONE, "pret": False,
-                "manque": [refus.raison if hasattr(refus, "raison") else str(refus)], "modele": None}]
+        famille = FAMILLES.get(entree.get("famille", ""), {})
+        return {"identifiant": OUTIL_DE_ZONE, "nom": entree.get("nom", OUTIL_DE_ZONE), "famille": entree.get("famille"),
+                "moteur": famille.get("nom"), "pret": False, "manque": [raison], "modele": None,
+                "vitesse": entree.get("vitesse") or famille.get("vitesse")}
 
     def _force_du_profil(self, modele: Modele) -> dict[str, float]:
+        if not modele.masque:
+            # Un style dont la retouche n'est pas encore écrite : les bornes
+            # qu'elle aura, pas celles du style (« partir de l'image », 0 à 1).
+            force = PARAMETRE_FORCE_ZONE["force"]
+            return {"minimum": float(force["minimum"]), "maximum": float(force["maximum"]),
+                    "defaut": float(force["defaut"])}
         option = modele.options.get("force")
         bornes = {
             "minimum": float(option.minimum) if option and option.minimum is not None else 0.5,
@@ -193,42 +277,40 @@ class ServiceZone:
         annoncé, les bornes de la force, et les calques déjà repeints sur cette
         image. Rien n'est écrit."""
         base = self._atelier.assets._trouver(identifiant)
-        modele = self.modele()
-        outil = await self._outil()
-        outils = await self._outils()
-        # La vitesse relevée de chaque famille (`FAMILLES[x]["vitesse"]`, ou
-        # celle propre à l'outil) — un modèle sans mesure encore prise annonce
-        # celle de **sa** famille, jamais celle de SDXL prêtée aux quatre autres.
-        vitesse_par_famille = {o["famille"]: o.get("vitesse") for o in outils}
+        styles_locaux = self._atelier.styles_locaux
+        try:
+            inventaire_ = await styles_locaux.inventaire()
+        except WorkflowRefuse as refus:
+            inventaire_ = None
+            injoignable = refus.raison if hasattr(refus, "raison") else str(refus)
+        # PX7 : une retouche de référence par moteur, prête ou non, et ce qui
+        # lui manque — l'écran propose d'installer celle d'un moteur dont aucun
+        # style n'est encore installé.
+        outils = styles_locaux.lignes_outils(inventaire_) if inventaire_ is not None else [self._outil_de_repli(injoignable)]
+        outil = next((o for o in outils if o["identifiant"] == OUTIL_DE_ZONE), outils[0])
+        choix = self._choix(inventaire_["noeuds"] if inventaire_ is not None else None)
+        defaut = self._defaut(choix)
         raison: str | None
-        if modele is None:
-            raison = (
-                "aucun modèle de l'atelier ne sait repeindre une zone — "
-                f"installez l'outil « {outil['nom']} »"
-            )
+        if defaut is None:
+            nom_outil = f"{outil['moteur']} · {outil['nom']}" if outil.get("moteur") else outil["nom"]
+            raison = f"aucun modèle de l'atelier ne sait repeindre une zone — installez l'outil « {nom_outil} »"
         else:
-            raison = self._raison_du_modele(modele)
+            raison = defaut["raison"]
         return {
             "image": base.identifiant,
-            "modele": None if modele is None else {"identifiant": modele.identifiant, "nom": modele.nom},
+            "modele": None if defaut is None else {"identifiant": defaut["identifiant"], "nom": defaut["nom"]},
             "raison": raison,
             "outil": outil,
-            # PX7 : un outil par famille de moteur local, prêt ou non — pour
-            # installer celui qu'on veut, pas seulement celui de `outil`.
             "outils": outils,
-            # PX7 : **tous** les modèles capables, grisés ou non — c'est parmi
-            # eux que l'écran et l'agent choisissent (`_modele_choisi`). `modele`
-            # ci-dessus reste le défaut, celui qu'on garde sans rien choisir.
-            # Chacun porte son propre temps : le bouton suit le modèle choisi.
-            "modeles": [
-                {"identifiant": m.identifiant, "nom": m.nom, "famille": m.famille,
-                 "raison": self._raison_du_modele(m), "temps": self._temps(m, vitesse_par_famille.get(m.famille))}
-                for m in self._modeles_capables()
-            ],
-            "temps": self._temps(modele, vitesse_par_famille.get(modele.famille) if modele else None),
-            "force": self._force_du_profil(modele) if modele is not None else None,
+            # **Tous** les choix, grisés ou non — c'est parmi eux que l'écran et
+            # l'agent choisissent. `modele` ci-dessus reste le défaut, celui
+            # qu'on garde sans rien choisir. Chacun porte son propre temps : le
+            # bouton suit le choix.
+            "modeles": [self._choix_en_json(c) for c in choix],
+            "temps": self._temps_du_choix(defaut),
+            "force": self._force_du_profil(defaut["_modele"]) if defaut is not None else None,
             "couleurs": {"defaut": COULEURS_NEUVES, "maximum": COULEURS_NEUVES_MAX},
-            "calques": self.calques(identifiant),
+            "calques": self.calques(identifiant, choix),
             # PX9 : **à qui l'image appartient**, pour que les trois décisions
             # disent ce qu'elles font — « une nouvelle version de repos »,
             # « un équipement de Mara » — et se grisent avec leur raison.
@@ -444,19 +526,41 @@ class ServiceZone:
             temps = {**temps, "vitesse": vitesse_repli}
         return temps
 
-    def calques(self, identifiant: str) -> list[dict[str, Any]]:
+    def _temps_du_choix(self, ligne: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Le temps d'un choix. **Une retouche pas encore écrite n'a jamais été
+        mesurée** : la durée d'un tirage *pour créer* n'est pas celle d'une zone,
+        et l'annoncer comme « mesurée sur cette machine » serait deviner — c'est
+        donc la vitesse relevée du style qui parle, dite comme telle."""
+        if ligne is None:
+            return None
+        if not ligne["_repeint"]:
+            return {"secondes": None, "mesures": 0, "vitesse": ligne["_vitesse"]}
+        return self._temps(ligne["_modele"], ligne["_vitesse"])
+
+    def _choix_en_json(self, ligne: dict[str, Any]) -> dict[str, Any]:
+        return {"identifiant": ligne["identifiant"], "identifiants": list(ligne["identifiants"]),
+                "nom": ligne["nom"], "moteur": ligne["moteur"],
+                "famille": ligne["famille"], "style": ligne["style"], "raison": ligne["raison"],
+                "temps": self._temps_du_choix(ligne)}
+
+    def calques(self, identifiant: str, choix: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
         """Les calques repeints sur cette image, **les plus récents d'abord**."""
         enfants = [
             a for a in self._atelier.base.enfants(identifiant)
             if _repeinte(a) is not None and _repeinte(a).base == identifiant and not a.supprime_le
         ]
         enfants.sort(key=lambda a: (a.cree_le, a.identifiant), reverse=True)
-        return [self.fiche(a.identifiant) for a in enfants]
+        choix = self._choix() if choix is None else choix
+        return [self.fiche(a.identifiant, choix) for a in enfants]
 
-    def fiche(self, identifiant: str) -> dict[str, Any]:
+    def fiche(self, identifiant: str, choix: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         """Un calque repeint, **de quoi le rouvrir tel qu'il a été demandé** :
         sa zone, son texte, sa graine, sa force, son modèle, ce qui est parti —
-        et ce que le recollage a compté."""
+        et ce que le recollage a compté.
+
+        MO1 : `choix` dit **lequel des choix d'aujourd'hui** repartirait pour
+        « Recommencer » — son modèle garde le nom qu'il avait (une retouche de
+        PX7, une ancienne version), et c'est son style qui le retrouve."""
         assets = self._atelier.assets
         asset = assets._trouver(identifiant)
         repeint = _repeinte(asset)
@@ -464,6 +568,7 @@ class ServiceZone:
             raise DemandeRefusee("cette image n'est pas un calque repeint")
         generation = self._atelier.generations.lire(asset.generation)
         recollage = assets.recollage(asset)
+        retrouve = self._choix_de(asset.modele, self._choix() if choix is None else choix)
         equipement = None
         if asset.piece and asset.projet:
             objet = self._atelier.base.lire_projet(asset.projet)
@@ -491,6 +596,7 @@ class ServiceZone:
             "couleurs": repeint.couleurs,
             "fond": repeint.fond,
             "modele": asset.modele,
+            "choix": retrouve["identifiant"] if retrouve else None,
             "rendu_largeur": asset.rendu_largeur,
             "rendu_hauteur": asset.rendu_hauteur,
             "cree_le": asset.cree_le,
@@ -522,13 +628,16 @@ class ServiceZone:
         """Le texte qui partira, **avant de lancer** — par les méthodes de
         l'envoi (`ServiceGenerations.texte_d_une_zone`, `AGENTS.md` point 6).
         PX7 : sur le modèle choisi, quand il en existe un — **ne refuse jamais**,
-        c'est un aperçu qui se redemande à chaque lettre tapée."""
+        c'est un aperçu qui se redemande à chaque lettre tapée. MO1 : un style
+        dont la retouche n'est pas encore écrite compose son texte sur son profil
+        de création, qui porte le même déclencheur."""
         base = self._atelier.assets._trouver(identifiant)
-        m = self._modele_par_identifiant(modele) if modele else self.modele()
-        if m is None or not texte.strip():
+        choix = self._choix()
+        ligne = self._choix_de(modele, choix) if modele else self._defaut(choix)
+        if ligne is None or not texte.strip():
             return {"texte": "", "negatif": "", "fond": ""}
         return self._atelier.generations.texte_d_une_zone(
-            texte.strip(), m.identifiant, base.projet, base.identifiant
+            texte.strip(), ligne["_modele"].identifiant, base.projet, base.identifiant
         )
 
     def resultat(self, generation_id: str) -> dict[str, Any]:
@@ -553,14 +662,16 @@ class ServiceZone:
 
     # ── Le geste ────────────────────────────────────────────────────────────
 
-    def _verifier(self, identifiant, texte, zone, graine, couleurs, modele=None):
+    async def _verifier(self, identifiant, texte, zone, graine, couleurs, modele=None):
         """Tout ce qui se refuse **avant la file**, pour l'écran comme pour
         l'agent — une zone vide, un texte vide, aucun modèle capable, un modèle
         grisé —, chacun avec sa phrase, jamais un bouton qui échoue.
 
-        PX7 : `modele` nomme celui qu'on veut, parmi ceux qui savent repeindre
-        une zone (`_modele_choisi`, refusé s'il est inconnu) ; `None` reprend le
-        défaut du catalogue (`modele()`, inchangé)."""
+        PX7 : `modele` nomme celui qu'on veut, parmi les choix de « Repeindre »
+        (`_modele_pour_repeindre`, refusé s'il ne désigne aucun style qui sache
+        repeindre) ; `None` reprend le défaut. Le modèle se résout **en dernier** :
+        c'est là que la retouche d'un style peut s'écrire, et une demande refusée
+        pour un texte vide ne doit rien avoir écrit."""
         assets = self._atelier.assets
         base = assets._trouver(identifiant)
         texte = (texte or "").strip()
@@ -578,12 +689,7 @@ class ServiceZone:
         masque = masque_de_zone(corps.shape[:2], tuple(zone))
         if not masque.any():
             raise DemandeRefusee(ZONE_VIDE)
-        m = self._modele_choisi(modele) if modele is not None else self.modele()
-        if m is None:
-            raise DemandeRefusee(
-                "aucun modèle de l'atelier ne sait repeindre une zone — "
-                f"installez l'outil « {OUTIL_DE_ZONE} »"
-            )
+        m = await self._modele_pour_repeindre(modele)
         raison = self._raison_du_modele(m)
         if raison:
             raise DemandeRefusee(f"{m.nom} : {raison}")
@@ -606,10 +712,10 @@ class ServiceZone:
         vide, un texte vide, aucun modèle capable, un modèle grisé — chacun avec
         sa phrase, jamais un bouton qui échoue.
 
-        PX7 : `modele` choisit **lequel** des modèles capables de repeindre une
-        zone honore cet appel — l'identifiant du catalogue, pas le nom d'une
-        famille. Sans lui, le défaut du catalogue (`modele()`)."""
-        base, texte, corps, masque, modele = self._verifier(identifiant, texte, zone, graine, couleurs, modele)
+        PX7 : `modele` choisit **lequel** des choix de « Repeindre » honore cet
+        appel — l'identifiant du catalogue, pas le nom d'une famille. Sans lui,
+        le défaut (`_defaut`)."""
+        base, texte, corps, masque, modele = await self._verifier(identifiant, texte, zone, graine, couleurs, modele)
         # **La force part toujours, défaut compris** : sans elle, la génération
         # ne la garde pas, et un calque rouvert dirait « force — » alors qu'une
         # force précise a bien servi (vu sur le vrai moteur, 26 septembre 2026).
@@ -690,7 +796,7 @@ class ServiceZone:
         à l'écran ; le travail garde l'identifiant résolu (`travail["modele"]`),
         et une reprise relance sur **ce même modèle**, jamais sur le défaut du
         moment (`_executer_agent`)."""
-        base, texte, _, _, modele = self._verifier(identifiant, texte, zone, graine, couleurs, modele)
+        base, texte, _, _, modele = await self._verifier(identifiant, texte, zone, graine, couleurs, modele)
         if not base.projet:
             raise DemandeRefusee("une zone demandée par l'agent se repeint sur une image rangée dans un jeu")
         travaux = self._atelier.travaux

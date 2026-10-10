@@ -350,6 +350,9 @@ class MoteurDeLaMaison:
     """
 
     nom = NOM
+    # MO3 : d'où vient un modèle vidéo, pour le catalogue commun
+    # (`ServiceAnimation.catalogue`) — la carte de la maison.
+    source = "maison"
 
     def __init__(
         self,
@@ -599,7 +602,15 @@ class MoteurDeLaMaison:
         **Ne lève jamais.** Un moteur éteint est une réponse, pas une panne : le
         catalogue d'images en dit autant depuis `T1`, et l'atelier s'ouvre dans
         tous les cas.
+
+        **Toute visite devient la dernière vue**, d'où qu'elle vienne : sans ça,
+        `GET /clips/engine` voyait ComfyUI allumé pendant que le grisé, lu sur
+        une visite plus ancienne, disait toujours « pas allumé ».
         """
+        self._etat = await self._visiter()
+        return self._etat
+
+    async def _visiter(self) -> EtatDuMoteur:
         try:
             stats = await self._json("GET", "/system_stats", delai=DELAI_COURT)
         except (FournisseurIndisponible, AppelRefuse) as erreur:

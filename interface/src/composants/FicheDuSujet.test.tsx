@@ -324,3 +324,68 @@ test("une palette supprimée se dit sur la fiche, et le sujet est retombé sur a
   expect((screen.getByRole("combobox", { name: "Palette par défaut" }) as HTMLSelectElement).value).toBe("")
   expect(document.querySelector("[data-palette-supprimee]")?.textContent).toContain("La palette « Cendres » a été supprimée")
 })
+
+// ── PX10 · Le portrait choisi ne se perd jamais en silence ────────────────
+//
+// La fiche **lit** le portrait que le serveur a résolu — la règle unique —,
+// et un choix perdu se dit au lieu d'être remplacé par une autre image.
+
+const IMAGE = (identifiant: string, cree_le: number, favori = false) =>
+  ({ identifiant, label: identifiant, cree_le, favori, pose: "repos", piece: null, supprime_le: null, empreinte: "", recette: {} }) as never
+
+function eliasAvec(extra: Record<string, unknown>) {
+  return {
+    identifiant: "elias", nom: "Elias", projet: "marais", description: "un vétéran", ecartees: [], type: "", ambiance: "",
+    plan: [{ identifiant: "repos", nom: "Repos", images: 1 }],
+    cases: [{ pose: "repos", demandees: 1, images: [IMAGE("ancienne", 1), IMAGE("recente", 9)], directions: [], calques: {}, bandes: [] }],
+    ...extra,
+  } as unknown as Personnage
+}
+
+function monterLaFiche(personnage: Personnage, onPersonnage = vi.fn()) {
+  vi.spyOn(api, "objectifPersonnage").mockRejectedValue(new Error("hors sujet"))
+  render(<FicheDuSujet personnage={personnage} plan={personnage.plan} collections={[]} groupes={[]} onRange={vi.fn()} onPersonnage={onPersonnage} onErreur={vi.fn()} onImages={vi.fn()} />)
+  return onPersonnage
+}
+
+test("la fiche montre le portrait résolu par le serveur, pas la dernière image arrivée", () => {
+  monterLaFiche(eliasAvec({ portrait: IMAGE("ancienne", 1), portrait_perdu: null }))
+  expect(screen.getByAltText("Référence de Elias").getAttribute("src")).toContain("/ancienne/")
+  expect(screen.queryByText(/n’est plus disponible/)).toBeNull()
+})
+
+test("un portrait choisi perdu se dit sur la fiche au lieu d'être remplacé", () => {
+  monterLaFiche(eliasAvec({
+    image_de_reference: "carte",
+    portrait: IMAGE("ancienne", 1),
+    portrait_perdu: { asset: "carte", raison: "supprimee", phrase: "l'image choisie a été supprimée", rattachable: false },
+  }))
+  expect(screen.queryByAltText("Référence de Elias")).toBeNull()
+  expect(document.querySelector("[data-portrait-perdu]")).not.toBeNull()
+  expect(document.querySelector("[data-portrait-perdu-bandeau]")).toHaveTextContent(
+    "Le portrait choisi n’est plus disponible (l'image choisie a été supprimée).",
+  )
+  expect(screen.getByRole("button", { name: "En choisir un" })).toBeTruthy()
+  // Supprimée : rien à rattacher.
+  expect(screen.queryByRole("button", { name: /Le rattacher/ })).toBeNull()
+})
+
+test("un portrait seulement détaché se rattache au sujet par le produit", async () => {
+  const designer = vi.spyOn(api, "designer").mockResolvedValue({} as never)
+  const reposer = vi.spyOn(api, "poserImageDeReference").mockResolvedValue({ personnage: eliasAvec({ portrait: IMAGE("carte", 0), portrait_perdu: null }), image_de_reference: "carte" } as never)
+  const onPersonnage = monterLaFiche(eliasAvec({
+    image_de_reference: "carte",
+    portrait: IMAGE("ancienne", 1),
+    portrait_perdu: { asset: "carte", raison: "detachee", phrase: "l'image choisie n'est plus rattachée à ce sujet", rattachable: true },
+  }))
+  fireEvent.click(screen.getByRole("button", { name: "Le rattacher à Elias" }))
+  await waitFor(() => expect(onPersonnage).toHaveBeenCalled())
+  expect(designer).toHaveBeenCalledWith("carte", "elias", null, null)
+  expect(reposer).toHaveBeenCalledWith("elias", "carte")
+})
+
+test("sans le champ du serveur, le repli relu sur les cases est la plus ancienne, pas la plus récente", async () => {
+  const { portraitDe } = await import("./FicheDuSujet")
+  const elias = eliasAvec({})
+  expect(portraitDe(elias, elias.plan)?.asset.identifiant).toBe("ancienne")
+})

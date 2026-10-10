@@ -86,37 +86,32 @@ export function comptes(personnage: Personnage, plan: Pose[]) {
   return { cases, tenues, faites, rangees: plan.length - tenues.length }
 }
 
-/** Le portrait de la chose — **pris parmi ses images déjà faites**.
+/** Le portrait de la chose — **celui que le serveur a résolu** (PX10).
  *
- *  *« celle qu'on a marquée comme préférée, sinon la plus récente »* : la
- *  règle que le produit emploie déjà pour désigner le corps qui part en
- *  planche d'équipement, reprise telle quelle.
+ *  Il y avait trois règles pour la même question — celle-ci (*la préférée,
+ *  sinon la plus récente*), celle de la fiche côté serveur et celle de la
+ *  carte du Codex (*la dernière image faite*) —, et un choix perdu montrait
+ *  trois images différentes. La règle vit maintenant au serveur
+ *  (`atelier/domaine/portrait.py`) : le choix de l'auteur, sinon un repli
+ *  qu'une image arrivée ne déplace pas. L'écran la **lit**.
  *
- *  **Depuis RP19, l'auteur peut le choisir** : `image_de_reference` désigne
- *  une image fixe du sujet, et elle passe devant. Le choix est cherché parmi
- *  les images que la fiche a déjà sous la main — une image supprimée,
- *  écartée ou rattachée ailleurs ne s'y trouve plus, et la règle du dessous
- *  reprend la main sans erreur et sans rien demander. */
+ *  Sans le champ — un serveur d'avant PX10, ou le double d'un essai qui ne le
+ *  connaît pas —, le même ordre est relu sur les cases : le choix s'il est
+ *  parmi elles, sinon la préférée, sinon la plus ancienne. */
 export function portraitDe(personnage: Personnage, plan: Pose[]): {
   asset: Asset
   pose: string
 } | null {
+  const nomDe = (asset: Asset) => plan.find((p) => p.identifiant === asset.pose)?.nom ?? ""
+  if (personnage.portrait !== undefined)
+    return personnage.portrait ? { asset: personnage.portrait, pose: nomDe(personnage.portrait) } : null
   const { cases, tenues } = comptes(personnage, plan)
-  if (personnage.image_de_reference)
-    for (const pose of tenues) {
-      const choisie = (cases[pose.identifiant]?.images ?? []).find(
-        (i) => i.identifiant === personnage.image_de_reference,
-      )
-      if (choisie) return { asset: choisie, pose: pose.nom }
-    }
-  for (const pose of tenues) {
-    const images = cases[pose.identifiant]?.images ?? []
-    if (!images.length) continue
-    const favori = images.find((i) => i.favori)
-    const recente = images.reduce((a, b) => (b.cree_le > a.cree_le ? b : a))
-    return { asset: favori ?? recente, pose: pose.nom }
-  }
-  return null
+  const images = tenues.flatMap((pose) => cases[pose.identifiant]?.images ?? []).filter((i) => !i.piece && !i.supprime_le)
+  if (!images.length) return null
+  const choisie = personnage.image_de_reference ? images.find((i) => i.identifiant === personnage.image_de_reference) : undefined
+  const repli = [...images].sort((a, b) => Number(Boolean(b.favori)) - Number(Boolean(a.favori)) || a.cree_le - b.cree_le)[0]
+  const asset = choisie ?? repli
+  return { asset, pose: nomDe(asset) }
 }
 
 /** Le nom du réglage que `reglerPersonnage` vient de toucher — pour le
@@ -319,6 +314,18 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
       noter("Portrait")
     } catch (e) { onErreur(e, "L’image de référence a été refusée.") }
   }
+  /** **Le portrait choisi a seulement été détaché** (PX10) : le rattacher au
+   *  sujet le rend valide tel quel — une réparation qui passe par le produit,
+   *  jamais par une main dans les fichiers. Le choix est reposé ensuite pour
+   *  relire le sujet entier, portrait résolu compris. */
+  const rattacherLePortrait = async (asset: string) => {
+    try {
+      await api.designer(asset, personnage.identifiant, null, null)
+      const rendu = await api.poserImageDeReference(personnage.identifiant, asset)
+      onPersonnage(rendu.personnage)
+    } catch (e) { onErreur(e, "Le portrait n’a pas pu être rattaché.") }
+  }
+  const perdu = personnage.portrait_perdu ?? null
   const retirer = async () => {
     if (!window.confirm(`Retirer « ${personnage.nom} » du jeu ? Ses fichiers restent conservés dans la bibliothèque.`)) return
     setOccupe(true)
@@ -330,9 +337,9 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
     <section aria-label="Résumé du sujet" className="flex shrink-0 items-center gap-[22px] rounded-8 border border-trait bg-carte p-[14px]">
       <div className="group relative shrink-0">
       <button data-portrait-du-sujet className="damier-papier flex h-[128px] w-[128px] shrink-0 items-center justify-center overflow-hidden rounded-7" onClick={onImages} onMouseEnter={() => setSurvol(true)} onMouseLeave={() => setSurvol(false)} title="Voir ses images et références">
-        {portrait ? <img src={vignetteAsset(portrait.asset, 256)} alt={`Référence de ${personnage.nom}`} className="h-full w-full object-contain" style={{ imageRendering: "pixelated" }} /> : bande ? <BandeQuiTourne bande={bande} cote={128} joue={survol} titre={`Animation de ${personnage.nom}`} /> : <span className="px-[14px] text-center text-[12px] text-encre-4">Référence à créer</span>}
+        {perdu ? <span data-portrait-perdu className="px-[10px] text-center text-[12px] leading-snug text-encre-attention">Le portrait choisi n’est plus disponible</span> : portrait ? <img src={vignetteAsset(portrait.asset, 256)} alt={`Référence de ${personnage.nom}`} className="h-full w-full object-contain" style={{ imageRendering: "pixelated" }} /> : bande ? <BandeQuiTourne bande={bande} cote={128} joue={survol} titre={`Animation de ${personnage.nom}`} /> : <span className="px-[14px] text-center text-[12px] text-encre-4">Référence à créer</span>}
       </button>
-      {images.length > 0 && <button type="button" data-changer-le-portrait onClick={() => setChoixDuPortrait(true)} className="absolute bottom-[4px] right-[4px] rounded-5 border border-contour bg-carte/90 px-[8px] py-[2px] text-[11px] text-encre-controle opacity-0 transition-opacity duration-120 hover:border-encre-3 focus:opacity-100 group-hover:opacity-100">Changer</button>}
+      {!perdu && images.length > 0 && <button type="button" data-changer-le-portrait onClick={() => setChoixDuPortrait(true)} className="absolute bottom-[4px] right-[4px] rounded-5 border border-contour bg-carte/90 px-[8px] py-[2px] text-[11px] text-encre-controle opacity-0 transition-opacity duration-120 hover:border-encre-3 focus:opacity-100 group-hover:opacity-100">Changer</button>}
       </div>
       {choixDuPortrait && <CadreDialogue titre="Choisir la vignette" format="preparation" onFermer={() => setChoixDuPortrait(false)} enfants={<div data-choix-du-portrait className="flex min-h-0 flex-col">
         <header className="flex items-center justify-between gap-[22px] border-b border-trait px-[30px] py-[22px]">
@@ -345,6 +352,15 @@ export function FicheDuSujet({ personnage, plan, collections, groupes, onRange, 
         {personnage.image_de_reference && <footer className="flex justify-end border-t border-trait px-[30px] py-[14px]"><button type="button" className={BOUTON} onClick={() => void choisirLePortrait(null)}>Reprendre le choix automatique</button></footer>}
       </div>} />}
       <div className="min-w-0 flex-1 space-y-[8px]">
+        {/* **Un choix perdu se dit, il ne se remplace pas** (PX10) : l'image
+            choisie ne vaut plus, et la fiche le montre au lieu d'en afficher
+            une autre à sa place. */}
+        {perdu && <div data-portrait-perdu-bandeau className="flex flex-wrap items-center gap-[10px] rounded-5 border border-trait-attention bg-fond-attention px-[10px] py-[6px] text-[13px] text-encre-attention">
+          <span>Le portrait choisi n’est plus disponible ({perdu.phrase}).</span>
+          {perdu.rattachable && <button type="button" className={BOUTON} onClick={() => void rattacherLePortrait(perdu.asset)}>Le rattacher à {personnage.nom}</button>}
+          {images.length > 0 && <button type="button" className={BOUTON} onClick={() => setChoixDuPortrait(true)}>En choisir un</button>}
+          <button type="button" className={BOUTON} onClick={() => void choisirLePortrait(null)}>Reprendre le choix automatique</button>
+        </div>}
         {/* **Une description absente se voit comme un manque**, pas comme un
             texte gris qu'on prend pour du contenu : c'est elle qui préremplit
             chaque génération de ce sujet, et sans elle le champ arrive vide. */}

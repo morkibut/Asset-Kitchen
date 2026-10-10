@@ -10,7 +10,7 @@
 // parti pour ce calque-là, pas le brouillon d'après. Arrêter le suivi pour lire
 // l'écran supprimerait précisément ce défaut.
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import type { Asset } from "../api"
 import type { CalqueRepeint, EtatDeLaZone } from "../api-zone"
@@ -55,7 +55,7 @@ function calque(texte: string, identifiant = "calque-1"): CalqueRepeint {
   }
 }
 
-const OUTIL = { identifiant: "sdxl-retouche-zone", nom: "Retouche d'une zone", pret: true, manque: [], modele: "Local:zone", vitesse: TEMPS.vitesse }
+const OUTIL = { identifiant: "sdxl-retouche-zone", nom: "Retouche d'une zone", pret: true, manque: [], modele: "Local:zone", vitesse: TEMPS.vitesse, famille: "sdxl", moteur: "SDXL" }
 
 function etat(sur: Partial<EtatDeLaZone> = {}): EtatDeLaZone {
   return {
@@ -146,9 +146,9 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-function monter(onRetoucher = vi.fn()) {
+function monter(onRetoucher = vi.fn(), onOuvrirMoteurs?: (moteur?: string) => void) {
   const onErreur = vi.fn()
-  render(<EcranRepeindre asset={ASSET} onErreur={onErreur} onRetoucher={onRetoucher} intervalle={10} />)
+  render(<EcranRepeindre asset={ASSET} onErreur={onErreur} onRetoucher={onRetoucher} intervalle={10} onOuvrirMoteurs={onOuvrirMoteurs} />)
   return { onErreur, onRetoucher }
 }
 
@@ -170,22 +170,28 @@ const ecrire = (texte: string) =>
 const lancesAvec = (appels: Appel[]) =>
   appels.filter((a) => a.url === "/api/assets/img/zone" && a.methode === "POST").map((a) => a.corps as { texte: string; zone: unknown[]; force?: number; couleurs?: number; graine?: number })
 
-test("sans modèle capable, le bouton est grisé avec la raison, et l'outil s'installe d'ici", async () => {
+test("sans modèle capable, le bouton est grisé avec la raison, et un lien renvoie vers sa fiche dans Moteurs (MO2)", async () => {
   const raison = "Aucun modèle installé ne sait repeindre une zone : installez l'outil « Retouche d'une zone »."
   const { appels } = doubler({ etatInitial: etat({
     modele: null, raison, temps: null,
     outils: [{ ...OUTIL, modele: null }],
     modeles: [],
   }) })
-  monter()
-  await waitFor(() => expect(document.querySelector("[data-sans-modele]")?.textContent).toContain("installez l'outil"))
+  const onOuvrirMoteurs = vi.fn()
+  monter(vi.fn(), onOuvrirMoteurs)
+  await waitFor(() => expect(document.querySelector("[data-sans-modele]")).toBeTruthy())
   await peindreLaTete()
   ecrire("blue hair")
   expect(bouton().disabled).toBe(true)
   expect(screen.getAllByText(`— ${raison}`).length).toBe(1)
-  fireEvent.click(screen.getByRole("button", { name: /Installer l’outil/ }))
-  await waitFor(() => expect(bouton().disabled).toBe(false))
-  expect(appels.some((a) => a.url === "/api/workflow-profiles/styles/sdxl-retouche-zone/install")).toBe(true)
+  // MO2 : plus de bouton qui installe d'ici — un lien renvoie vers la fiche
+  // du moteur sur la page Moteurs, scindée par sa clé de famille. Le même
+  // lien apparaît aussi dans « les moteurs locaux pas encore installés »
+  // juste en dessous (PX7) — on clique celui de la raison unique, en
+  // restreignant la recherche à son bloc.
+  fireEvent.click(within(document.querySelector("[data-sans-modele]") as HTMLElement).getByRole("button", { name: /l’installer dans Moteurs/ }))
+  expect(onOuvrirMoteurs).toHaveBeenCalledWith("sdxl")
+  expect(appels.some((a) => a.url.includes("/install"))).toBe(false)
   expect(lancesAvec(appels)).toEqual([])
 })
 

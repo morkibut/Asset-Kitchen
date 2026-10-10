@@ -92,6 +92,7 @@ import { TableauDeBord } from "./composants/TableauDeBord"
 import { CreerUnAsset } from "./composants/CreerUnAsset"
 import { Fabrications } from "./composants/Fabrications"
 import { TravailConserve } from "./composants/FabricationSuivie"
+import { SuiviDuCarnet } from "./composants/SuiviDuCarnet"
 import { Ouverture } from "./composants/Ouverture"
 import { Installation } from "./composants/Installation"
 import { Livraisons } from "./composants/Livraisons"
@@ -310,8 +311,14 @@ function AtelierApp() {
    *  quelle racine ; laissées empilées, celle qui perd la chaîne de gardes
    *  resterait ouverte sans rien montrer, et le fil annoncerait un étage qu'on
    *  n'a pas descendu. */
-  const ouvrirLesReglages = (onglet?: OngletDesReglages) => {
+  /** MO2 : le moteur à faire défiler jusqu'à lui et à mettre en évidence sur
+   *  la page « Moteurs », le temps qu'`onOuvrirMoteurs` d'un outil le désigne.
+   *  `null` sans renvoi en cours — la page l'efface elle-même une fois
+   *  l'effet joué (`Reglages.tsx`, `onMoteurSignale`). */
+  const [moteurASignaler, setMoteurASignaler] = useState<string | null>(null)
+  const ouvrirLesReglages = (onglet?: OngletDesReglages, moteur?: string) => {
     if (onglet) setOngletDesReglages(onglet)
+    setMoteurASignaler(moteur ?? null)
     setPile((p) => entrer(sortir(p, "sortie"), { genre: "regles" }))
   }
 
@@ -2164,6 +2171,11 @@ function AtelierApp() {
          paraissait que dans la grille de la galerie ; le codex et l'établi,
          d'où l'on paie aussi, ne montraient rien du tout. */
       enVol={enVol}
+      /* MO2 : le lien dort depuis ML5, faute d'un écran qui sache y mener —
+         le voilà branché. Générique, pas par moteur précis : le choix du
+         modèle est un `<select>` natif ici, qui ne peut pas porter un lien
+         par option (`docs/PLAN-catalogue-des-moteurs.md` § MO2). */
+      onOuvrirMoteurs={() => ouvrirLesReglages("moteurs")}
     />
   )
 
@@ -2322,6 +2334,12 @@ function AtelierApp() {
         onGuide={() => ouvrirGuide()}
         onRecherche={ouvrirBarre}
         etatAtelier={!liaison ? "L’atelier ne répond pas" : undefined}
+        // **Ce qui tourne et ce qui est arrivé**, vu de partout (27 septembre 2026).
+        suivi={<SuiviDuCarnet projet={bibliotheque.courant} personnages={personnages} chantier={chantier} clips={clipsDuJeu} replie={navigationRepliee}
+          onTravail={(travail) => setPile((p) => entrer(p, { genre: "travail", travail }))}
+          onClip={(id) => setPile(entrer(poser("galerie"), { genre: "montage", clip: id }))}
+          onAsset={(id) => setPile(entrer(poser("galerie"), { genre: "retouche", asset: id }))}
+          onFabrications={() => { setFente(null); allerA("fabrications") }} />}
       />
 
       <div className="grid min-w-0 flex-1 grid-rows-[34px_minmax(0,1fr)_26px] bg-papier">
@@ -2404,6 +2422,7 @@ function AtelierApp() {
             tiroirs={etat?.secrets ?? null}
             agent={etat?.agent ?? null}
             modeles={modeles}
+            traitement={etat?.traitement ?? null}
             onDeposee={() => {
               void api.etat().then(setEtat).catch(() => undefined)
               void relireCatalogue()
@@ -2416,6 +2435,8 @@ function AtelierApp() {
             onRenomme={() => void rafraichirLArbre()}
             onInstallation={() => setInstallationOuverte(true)}
             onTravail={(travail) => setPile((p) => entrer(p, { genre: "travail", travail }))}
+            moteurASignaler={moteurASignaler}
+            onMoteurSignale={() => setMoteurASignaler(null)}
             onFerme={() => setReglesOuvertes(false)}
             onErreur={setPanne}
           />
@@ -3185,6 +3206,7 @@ function AtelierApp() {
           )}
           onErreur={setPanne}
           onUnivers={setUnivers}
+          onOuvrirMoteurs={(moteur) => ouvrirLesReglages("moteurs", moteur)}
         />
       )}
 

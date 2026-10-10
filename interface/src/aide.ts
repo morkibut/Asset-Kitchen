@@ -1665,7 +1665,7 @@ export const AIDE: Record<string, Explication> = {
     ou: "sujet",
     quoi: "Détacher cette image du sujet sans la supprimer — elle retourne à la bibliothèque, libre pour un autre sujet.",
     change:
-      "Rien n'est perdu ni repayé. Un bref instant pour l'annuler : elle se rattache alors avec la pose et la direction qu'elle portait avant.",
+      "Rien n'est perdu ni repayé. Un bref instant pour l'annuler : elle se rattache alors avec la pose et la direction qu'elle portait avant.\n\nLe portrait du sujet ne s'écarte pas d'ici : choisis-lui d'abord un autre portrait sur sa fiche. Un portrait choisi qui ne vaut plus — supprimé, détaché — se dit en haut de la fiche, avec de quoi le rattacher ou en choisir un autre ; il n'est jamais remplacé en silence par la dernière image arrivée.",
     origine: "toi · dans « Pas encore rangé »",
   },
 
@@ -2702,7 +2702,12 @@ export const AIDE: Record<string, Explication> = {
       "Rien sur l'image ouverte. Elle en produit une pièce : tout ce que le moteur a peint dans la zone, le fond retiré. Tu décides ensuite ce qu'elle devient.",
     origine: "l'image ouverte, un moteur sur cette machine · rien n'est payé",
     long:
-      "Il faut l'outil « Retouche d'une zone » installé ; sinon le bouton est grisé et dit comment l'installer.\n\nLe bouton annonce le temps avant de partir : mesuré sur cette machine, ou la vitesse relevée ailleurs tant qu'aucun tirage n'a eu lieu ici.",
+      // MO2 (27 septembre 2026) : périmée depuis MO1, qui a remplacé l'outil
+      // unique « Retouche d'une zone » par une capacité de chaque style
+      // (`FAMILLES[...]['repeint']`) — et depuis MO2, un moteur pas encore
+      // installé renvoie vers sa fiche sur la page Moteurs plutôt que de
+      // s'installer d'ici.
+      "Il faut un moteur qui sait repeindre une zone, installé sur cette machine ; sinon le bouton est grisé, et un lien mène à sa fiche dans Réglages › Moteurs & workflows.\n\nLe bouton annonce le temps avant de partir : mesuré sur cette machine, ou la vitesse relevée ailleurs tant qu'aucun tirage n'a eu lieu ici.",
   },
 
   "repeint.zone": {
@@ -3114,6 +3119,51 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · vide au départ · trois portes, une seule pièce",
     long:
       "Une clé n'apparaît jamais en entier : tu vois ses six derniers caractères. Celle qui vient de l'environnement de la machine ne se retire pas d'ici — l'atelier n'écrit pas là-dedans. La retirer grise les modèles de son fournisseur, et rien d'autre : ni une image, ni une ligne de dépense ne disparaît.",
+  },
+
+  // MO2 (27 septembre 2026) : la page « Moteurs » — un moteur d'image décrit
+  // une seule fois, groupé sur cette machine ou en ligne. Une entrée pour
+  // l'écran entier, pas une par moteur : ce que chaque carte montre (nom,
+  // capacités, réglages, état) se lit d'un coup d'œil, rien à expliquer réglage
+  // par réglage.
+  "reglages.moteurs": {
+    nom: "Les moteurs d'image",
+    ou: "reglages",
+    groupe: "Les moteurs — la page qui les rassemble",
+    quoi: "Chaque moteur d'image, décrit une seule fois : ce qu'il sait faire, ses réglages, et son état — installé, à installer, ou une clé manquante.",
+    change:
+      "Rien à la fabrication en cours : c'est ici qu'on installe un moteur local ou qu'on branche une clé, pas qu'on choisit ce qu'on fabrique. Les outils (Créer, Repeindre) lisent cette même liste — un moteur non installé y renvoie d'un clic.",
+    origine: "ComfyUI pour les moteurs de cette machine, chaque fournisseur pour les moteurs en ligne · rien ne se télécharge ni ne s'appelle depuis cette page",
+    long:
+      "« Sur cette machine » groupe les vingt-deux styles de sc-clone sous leurs cinq moteurs : un moteur installé pour créer sait repeindre une zone sans rien installer de plus. « En ligne » vient du même catalogue que le choix du modèle ailleurs dans l'atelier, jamais une seconde liste. Une clé manquante se répare dans « Les fournisseurs » ; un fichier manquant dit où le poser.",
+  },
+
+  // MO3 (27 septembre 2026) : la section « Vidéo » de la même page — Wan, les
+  // workflows vidéo importés et les modèles en ligne, dans une seule liste.
+  "reglages.moteurs-video": {
+    nom: "Les moteurs vidéo",
+    ou: "reglages",
+    groupe: "Les moteurs — la page qui les rassemble",
+    quoi: "Wan, les workflows vidéo importés et les modèles en ligne, en une seule liste : ce que chacun sait faire, ses durées, son état.",
+    change:
+      "Rien à la fabrication en cours. « Faire une vidéo libre » et « 4. Le clip » proposent cette même liste, sous les mêmes noms.",
+    origine: "la carte de cette machine, ComfyUI pour un workflow importé, chaque fournisseur en ligne · rien ne se télécharge ni ne s'appelle depuis cette page",
+    long:
+      "Chaque moteur part d'une image de départ, toujours. « Finir sur une image » : « Fin de l'animation » peut lui demander une boucle ou une autre image.\n\nUn workflow importé le sait quand son graphe charge une image de fin (liaison « image_de_fin »). Sans image de fin demandée, ce qui ne servait qu'à elle est retiré du graphe et le clip finit libre.",
+  },
+
+  // MO6 (27 septembre 2026) : la section « Les workflows importés » de la même
+  // page — un graphe importé par l'auteur, décrit comme un moteur.
+  "reglages.moteurs-importes": {
+    nom: "Les workflows importés",
+    ou: "reglages",
+    groupe: "Les moteurs — la page qui les rassemble",
+    quoi: "Chaque graphe ComfyUI importé par toi : ce qu'il sait faire, et ce qui lui manque pour tourner.",
+    change:
+      "Rien à la fabrication en cours. Un workflow qui sait repeindre une zone se choisit dans « Repeindre », un clip qui charge une image de fin offre « Fin de l'animation ».",
+    origine: "ComfyUI, relu à l'ouverture et sur « Vérifier de nouveau » · rien ne s'y lance ni ne s'y télécharge",
+    long:
+      "Ce qu'il sait faire se lit sur ce que son graphe reçoit : une zone, une image de fin, un nombre d'images. À l'import, ces champs se préremplissent ; tu relis avant d'enregistrer.\n\n« Relier ce que son graphe reçoit » écrit une nouvelle version ; l'ancienne reste. Un clip dont ComfyUI exige l'image de fin ne se propose plus sans elle.",
   },
 
   "reglages.depenses": {
@@ -3861,7 +3911,7 @@ export const AIDE: Record<string, Explication> = {
     change: "Change seulement l'aperçu de test de ce jeu ; rien ne part tant que tu ne livres pas.",
     origine: "toi · une île au hasard pour commencer, sur simple demande",
     long:
-      "« Île/chemins/pièces au hasard » et « Tout effacer » repartent d'un coup ; le sol de fond et le personnage ne changent que l'aperçu, pas le paquet livré. Les dix-sept pièces libres n'ont pas de carte : elles se posent à la main dans Godot, et l'onglet Planche seul les montre.",
+      "« Île/chemins/pièces au hasard » et « Tout effacer » repartent d'un coup ; le sol de fond et le personnage ne changent que l'aperçu, pas le paquet livré. Les dix-sept pièces libres n'ont pas de carte : elles se posent à la main dans Godot, et l'onglet Planche seul les montre. La molette de la souris sur la carte zoome et dézoome, de ×0,2 à ×4, comme les boutons sous la carte.",
   },
 
   "jeu-de-tuiles.planche": {
@@ -3892,7 +3942,7 @@ export const AIDE: Record<string, Explication> = {
     change: "Chaque changement refait toutes les pièces sur ta machine, gratuitement ; rien ne part tant que tu ne livres pas.",
     origine: "toi · valeurs par défaut raisonnables à la création",
     long:
-      "Propres au mur : l'ombre du mur et la pénombre dans les angles. Propres à un sol ou un mur : les cailloux qui débordent sur la case voisine. « Réduire une image » ne sert que pour une image plus grande qu'une pièce. Variantes et animation de la pièce pleine n'existent que pour les sortes à raccords, hors les dix-sept pièces libres.",
+      "Mur seulement : l'ombre et la pénombre des angles. Sol, chemin ou mur : les cailloux au bord, leur quantité puis leur taille, leur nombre et leur écart ; « Accrochés au bord » en soude une partie au bord. « Réduire une image » sert pour une image plus grande qu'une pièce. Variantes et animation : sortes à raccords seulement.",
   },
 
   "jeu-de-tuiles.palette-jeu": {

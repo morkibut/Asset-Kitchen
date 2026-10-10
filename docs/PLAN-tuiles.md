@@ -680,6 +680,31 @@ déjà faite.
       depuis l'asset à l'appel comme à la reprise — le mécanisme existait déjà pour toutes les
       références du produit, il n'a pas été réinventé ici.)*
 
+### TU14 · La tranche du mur vertical
+
+**Bloquée par** : TU7. **Demandée par l'auteur** le 27 septembre 2026, capture à l'appui.
+
+Un mur qui descend (une course verticale) ne montre aujourd'hui que la pierre de son dessus :
+le moteur ne dessine la face — le bois, la brique — que sur le côté sud d'un mur, et le bas
+d'une course verticale est le seul endroit où elle apparaît. À l'usage, le mur vertical se lit
+comme une bande de pierre posée à plat, sans épaisseur. L'auteur a choisi, parmi trois
+lectures, **une tranche de face étroite le long du côté intérieur** du mur vertical, comme si
+on voyait un peu son flanc.
+
+Ce que la tranche doit trancher avant la première ligne :
+- de quel côté la tranche se voit (les deux flancs, ou le seul côté ouvert sur l'intérieur —
+  la capture en montre un de chaque côté) ;
+- sa largeur, en fraction de pièce, et si elle suit la hauteur du mur ;
+- comment elle se compose avec les pièces en biais (T43 à T45), la pente et l'ombre portée ;
+- sa place dans le tri en profondeur de Godot.
+
+- [ ] Une course verticale montre sa tranche de face sur toute sa hauteur, sans fente avec le
+      dessus ni avec la face du bas.
+- [ ] La pose Python (`pose_mur`) égale celle de la scène, pose pour pose, comme en TU7.
+- [ ] Dans un vrai Godot 4.7, la tranche se pose sur sa couche et le personnage passe
+      derrière et devant elle comme devant le reste du mur.
+- [ ] Un mur sans course verticale rend un atlas et un paquet identiques au bit près à avant.
+
 ## Ce que ce plan ne couvre pas
 
 - **L'isométrique et la vue de plateforme.** SpriteCook les propose ; sc-clone n'a fait

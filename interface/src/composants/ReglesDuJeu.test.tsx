@@ -19,7 +19,7 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { ReglesDuJeu, _reinitialiserCacheApercuAllurePourEssais, dossierPrevu } from "./ReglesDuJeu"
 import { UNIVERS_VIDE, type Champ, type Univers, type VueDuJeu } from "../api"
-import type { MoteurParFamille, ProfilWorkflow } from "../api-workflows"
+import type { MoteurParFamille, MoteurSonore, ProfilWorkflow } from "../api-workflows"
 
 afterEach(() => {
   cleanup()
@@ -113,6 +113,10 @@ function construireDouble(
     /** Le moteur par défaut de chaque famille de sons (SN2), tel que
      *  `GET /workflow-profiles/sound-defaults` le rend. */
     moteursParFamille?: Record<string, MoteurParFamille>
+    /** MO4/MO7 : le catalogue des moteurs sonores (`GET
+     *  /workflow-profiles/sound-engines`) — d'où vient le nom d'un moteur
+     *  possible pour une famille mais pas encore installé. */
+    moteursSonores?: MoteurSonore[]
     /** RT2 : la seule méthode de pixelisation que la machine doublée n'a pas —
      *  comme `pixeloe` sans `torch` sur la vraie machine de l'auteur. Le
      *  double répond alors le refus nommé que rend la route, pour la seule
@@ -280,6 +284,10 @@ function construireDouble(
 
     if (url.startsWith("/api/workflow-profiles/sound-defaults") && methode === "GET") {
       return rendre({ familles: options.moteursParFamille ?? {} })
+    }
+
+    if (url === "/api/workflow-profiles/sound-engines" && methode === "GET") {
+      return rendre({ moteurs: options.moteursSonores ?? [] })
     }
 
     // **RT2 — l'aperçu de « Son allure ».** Chaque case de la rangée des
@@ -854,6 +862,9 @@ describe("l'étape du son", () => {
       moteursParFamille: {
         bruitage: { famille: "bruitage", modele: "ComfyUI:sa3-small-sfx@46c1", moteur: "sa3-small-sfx", possibles: ["sa3-small-sfx", "sa-open-1"] },
       },
+      moteursSonores: [
+        { identifiant: "sa-open-1", nom: "Stable Audio Open 1.0", description: "", familles: ["bruitage"], pret: true, manque: [], modele: null },
+      ],
     })
     monter(fetchDouble)
 

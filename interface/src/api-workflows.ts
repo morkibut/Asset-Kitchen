@@ -77,25 +77,128 @@ export const workflows = {
     appeler<{ familles: Record<string, MoteurParFamille> }>(`/workflow-profiles/sound-defaults?projet=${encodeURIComponent(projet)}`),
 }
 
+// ── MO6 · Les workflows importés, des moteurs comme les autres ──────────────
+//
+// « Ses capacités se déduisent de ce qu'il sait recevoir (une zone, une image
+// de fin, une durée) » (`docs/PLAN-catalogue-des-moteurs.md` § MO6). Deux
+// temps, jamais confondus (`atelier/domaine/lecture_graphe.py`) : la **lecture**
+// d'un graphe propose des champs ; la **liaison** du profil dit ce qu'il reçoit
+// vraiment. Rangé à part de `workflows` : les essais qui doublent `workflows`
+// en entier n'ont pas à connaître ces trois routes.
+
+/** Un champ d'un nœud du graphe. */
+export type ChampDuGraphe = { noeud: string; champ: string }
+
+/** Ce qu'un graphe au format API semble savoir recevoir — une proposition,
+ *  jamais une liaison (`POST /workflow-profiles/read-graph`). */
+export type LectureGraphe = {
+  prompt: ChampDuGraphe | null
+  prompt_negatif: ChampDuGraphe | null
+  references: ChampDuGraphe[]
+  masque: ChampDuGraphe | null
+  image_de_fin: ChampDuGraphe | null
+  images: (ChampDuGraphe & { valeur: number }) | null
+  /** Le pas du nombre d'images, quand ComfyUI le déclare (Wan : 4). */
+  pas_images: number | null
+  cadence: number | null
+  duree: number | null
+  sortie: string | null
+  remarques: string[]
+}
+
+/** Ce qu'un workflow importé sait faire, lu sur ses liaisons. */
+export type CapaciteImportee = "creer_image" | "repeindre_zone" | "animer" | "finir_sur_image" | "faire_un_son"
+
+/** Un élément de ce qui manque pour tourner, en clair — un nœud à installer,
+ *  un fichier à poser, un champ que ComfyUI ne connaît plus, une sortie qui
+ *  n'enregistre rien, ComfyUI éteint. */
+export type ACompleter = {
+  genre: "noeud" | "fichier" | "champ" | "api" | "sortie" | "comfyui"
+  texte: string
+  classe?: string
+  noeuds?: string[]
+  champ?: string
+  fichier?: string
+}
+
+export type DiagnosticImporte = DiagnosticWorkflow & {
+  a_completer?: ACompleter[]
+  /** Un clip qui relie une image de fin : ComfyUI accepte-t-il le graphe sans elle ? */
+  fin_libre?: boolean
+  remarques?: string[]
+}
+
+/** Un workflow importé par l'auteur, tel que la page « Moteurs » le lit
+ *  (`GET /workflow-profiles/imported`) : sa dernière version. */
+export type MoteurImporte = {
+  identifiant: string
+  nom: string
+  nature: "image" | "video" | "audio"
+  description: string
+  modele: string
+  version: string
+  cree_le: number
+  versions: number
+  references_min: number
+  references_max: number
+  durees: number[]
+  capacites: CapaciteImportee[]
+  /** Ce que son graphe saurait recevoir en plus ; `reliable` : le geste
+   *  « relier » l'ajoute seul, dans une nouvelle version. */
+  a_relier: { capacite: CapaciteImportee | "durees"; texte: string; reliable: boolean }[]
+  diagnostic: DiagnosticImporte
+}
+
+export const workflowsImportes = {
+  lireGraphe: (graphe: unknown) =>
+    appeler<LectureGraphe>("/workflow-profiles/read-graph", { method: "POST", body: JSON.stringify({ graphe }) }),
+  lister: () => appeler<{ moteurs: MoteurImporte[] }>("/workflow-profiles/imported"),
+  relier: (identifiant: string, version: string) =>
+    appeler<ProfilWorkflow>(`${profil(identifiant, version)}/bind-deduced`, { method: "POST" }),
+}
+
+// ── MO4 · Le catalogue des moteurs sonores ──────────────────────────────────
+//
+// « Chaque moteur d'IA est décrit une seule fois, et tous les outils de
+// l'atelier lisent cette description » (`docs/PLAN-catalogue-des-moteurs.md`
+// § MOM). Le serveur (`GET /workflow-profiles/sound-engines`,
+// `atelier/services/installation_son.py`, `catalogue_depuis`) dit le nom, ce
+// que chaque moteur sait faire — les familles de son où il sert
+// (`atelier/audio/graphes.py`, `FAMILLES`) — et son état, qu'il soit déjà
+// installé ou non : un simple `GET`, comme `stylesLocaux.lister()` pour
+// l'image, qui ne pose jamais de profil.
+
+/** Un des cinq moteurs sonores, tel que le catalogue le rend. `modele` est
+ *  l'identifiant qu'il porte une fois installé (`ComfyUI:<id>@<version>`),
+ *  `null` tant qu'il ne l'est pas — même prêt. */
+export type MoteurSonore = {
+  identifiant: string
+  nom: string
+  description: string
+  familles: string[]
+  pret: boolean
+  manque: FichierSonManquant[]
+  modele: string | null
+}
+
+export const moteursSonores = {
+  lister: () => appeler<{ moteurs: MoteurSonore[] }>("/workflow-profiles/sound-engines"),
+}
+
 // ── ML5 · Les styles de sc-clone, groupés par moteur ────────────────────────
 //
 // « Les 22 styles sont tous proposés, rangés sous leurs quatre moteurs et
 // repliés par défaut » (`docs/PLAN-moteurs-locaux.md`, décision 9). Le serveur
-// (`GET /workflow-profiles/styles`, `atelier/services/styles_locaux.py`) ne
-// rend que la **clé** du moteur (`zimage`, `klein`, `flux1dev`, `sdxl`) : le
-// nom à afficher n'a rien à faire côté domaine, et cette liste est fermée —
-// elle ne bougera pas au gré d'un style de plus dans le même moteur.
-
-export const NOM_MOTEUR_LOCAL: Record<string, string> = {
-  qwen21: "Qwen-Image 2.1",
-  zimage: "Z-Image Turbo",
-  klein: "FLUX.2 Klein",
-  flux1dev: "FLUX.1-dev",
-  sdxl: "SDXL",
-}
+// (`GET /workflow-profiles/styles`, `atelier/services/styles_locaux.py`,
+// `_ligne`) rend directement **le nom à afficher** du moteur, sur chaque style
+// (`StyleLocal.moteur`, `famille["nom"]` côté service) — MO7 : la table qui
+// dupliquait ces cinq noms ici (`NOM_MOTEUR_LOCAL`) a disparu, un style de
+// plus sur un moteur déjà connu s'affiche donc sans y toucher.
 
 /** L'ordre d'affichage des moteurs — celui du plan et de `docs/PLAN-moteurs-locaux.md`,
- *  avec Qwen-Image 2.1 en tête depuis le 22/09/2026 : c'est le moteur local principal. */
+ *  avec Qwen-Image 2.1 en tête depuis le 22/09/2026 : c'est le moteur local principal.
+ *  **Reste une constante d'écran** (MO7) : ce sont des clés internes de tri, jamais un
+ *  nom affiché, et aucune route ne rend un ordre de moteur — seul leur nom l'est. */
 export const ORDRE_MOTEURS_LOCAUX = ["qwen21", "zimage", "klein", "flux1dev", "sdxl"] as const
 
 /** Ce qu'un style local fait d'une image jointe (ML3) : il *garde le sujet*
@@ -116,12 +219,19 @@ export type StyleLocal = {
   identifiant: string
   nom: string
   famille: string
+  /** Le nom à afficher du moteur (`famille["nom"]` côté service) — MO7 :
+   *  c'est lui, jamais une table à part, qui nomme le groupe à l'écran. */
+  moteur: string
   genre: string
   vitesse: string
   reference: GenreReference | null
   pret: boolean
   manque: string[]
   modele: string | null
+  /** MO2 : sait-il repeindre une zone, une fois installé ? Lu sur le style
+   *  (`sait_repeindre`, `atelier/fournisseur/catalogue_styles.py`), jamais
+   *  supposé côté écran — « le catalogue décide ». */
+  repeint: boolean
 }
 
 export const stylesLocaux = {

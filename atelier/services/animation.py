@@ -216,6 +216,61 @@ class ServiceAnimation:
                 return modele
         raise ModeleInconnu(identifiant)
 
+    # ── Le catalogue commun (MO3) ─────────────────────────────────────────────
+
+    def catalogue(self, demande: DemandeClip) -> list[dict[str, Any]]:
+        """**Tous les moteurs vidéo, une seule forme, un seul ordre** (MO3).
+
+        Wan (la maison), les modèles d'OpenRouter et les workflows vidéo
+        importés sortent d'ici, et nulle part ailleurs : « Faire une vidéo
+        libre », « 4. Le clip » et la page « Moteurs » lisent cette liste-là
+        (`GET /clips/models`). Chaque ligne dit, dans les mêmes mots pour les
+        trois sources, d'où vient le moteur (`source`), ce qu'il sait faire
+        (`capacites` — l'image de départ y est **obligatoire**, jamais une
+        capacité qui cède, AGENTS 8bis), ce qu'il coûte (`cout`, de l'argent ou
+        du temps, 8ter) et son état hors de toute demande (`etat`) ; puis, pour
+        la demande courante, son prix, son attente et son grisé.
+
+        **L'ordre se décide ici** (V3.01.2) : ce qui tourne sur cette machine
+        d'abord — ce qui ne coûte rien passe avant ce qui coûte —, puis les
+        payants par prix croissant pour la demande courante ; un prix qui n'a
+        pas pu être relu reste en fin de liste. L'écran n'a pas de règle de tri
+        à lui : deux endroits qui trient finiraient par ne plus trier pareil.
+        """
+        lignes = []
+        for modele in self.modeles():
+            prix = self.annonce(modele, demande)
+            attente = self.attente(modele, demande)
+            lignes.append({
+                **_modele_en_json(modele),
+                **self.fiche(modele),
+                # **Une estimation, et le mot y est.** Ce qui s'enregistrera
+                # après l'appel est le montant facturé.
+                "prix": prix.en_json(),
+                "grise": self.grise(modele, demande),
+                # Ce que ça coûte en temps, quand c'est du temps (A11) ; `None`
+                # chez un payant, où une attente inventée serait pire qu'aucune.
+                "attente": attente.en_json() if attente is not None else None,
+            })
+        lignes.sort(key=lambda ligne: (
+            0 if ligne["de_la_maison"] else 1,
+            1 if ligne["prix"]["montant"] is None else 0,
+            ligne["prix"]["montant"] or 0.0,
+        ))
+        return lignes
+
+    def fiche(self, modele: ModeleVideo) -> dict[str, Any]:
+        """D'où vient ce moteur et dans quel état il est, **sans aucune demande**.
+
+        C'est ce que la page « Moteurs » montre : un moteur installé ou pas, une
+        clé qui manque, ne dépendent ni de la durée ni du format — le grisé,
+        lui, en dépend, et reste à côté.
+        """
+        porte = self._pour(modele)
+        source = getattr(porte, "source", None) if getattr(porte, "nom", None) == modele.fournisseur else None
+        source = source or ("maison" if modele.de_la_maison else "en_ligne")
+        return {"source": source, "etat": _etat_du_moteur(modele, porte, source)}
+
     # ── Quel animateur pour quel modèle ──────────────────────────────────────
 
     def fabriques(self) -> tuple[Fabrique, ...]:
@@ -1178,8 +1233,51 @@ def _resolus(modele: ModeleVideo, demande: DemandeClip) -> dict[str, Any]:
     return resolus
 
 
+def _etat_du_moteur(modele: ModeleVideo, porte: Any, source: str) -> dict[str, Any]:
+    """L'état d'un moteur vidéo, dans les mots de la page « Moteurs » (MO3).
+
+    `pret`, `a_installer` (des fichiers à descendre, pour la maison),
+    `cle_manquante` (un fournisseur en ligne sans sa clé) ou `indisponible`
+    (ComfyUI éteint, un nœud absent d'un workflow importé…), avec la raison.
+    ⚠️ Ce qui manque à **son** fournisseur ne dit rien des autres (8ter) : on
+    ne lit que la porte de ce modèle-ci.
+    """
+    manque = indisponible_de(porte)
+    if manque:
+        return {"code": "cle_manquante" if source == "en_ligne" else "indisponible", "raison": manque}
+    if source == "maison":
+        detail = getattr(porte, "etat_du_moteur", None)
+        etat = detail() if callable(detail) else None
+        if etat is not None and getattr(etat, "manquants", ()):
+            return {"code": "a_installer", "raison": etat.phrase}
+    if modele.indisponible:
+        return {"code": "indisponible", "raison": modele.indisponible}
+    if modele.tarification is None:
+        return {"code": "indisponible", "raison": "son tarif n'a pas pu être relu chez le fournisseur"}
+    return {"code": "pret", "raison": None}
+
+
 def _modele_en_json(modele: ModeleVideo) -> dict[str, Any]:
     return {
+        # **MO3 : ce qu'il sait faire, dans la même forme pour les trois
+        # sources.** L'image de départ n'est pas une capacité parmi d'autres :
+        # elle est obligatoire pour tout modèle servi ici (`modeles()` écarte
+        # ceux qui ne partent que d'un texte), et aucun plafond ne la fait
+        # céder (AGENTS 8bis) — d'où un mot, pas un booléen.
+        "capacites": {
+            "image_de_depart": "obligatoire",
+            # MO6 : « obligatoire » — le même mot que pour le départ — quand il
+            # ne sait finir que là ; sinon vrai ou faux.
+            "image_de_fin": "obligatoire" if modele.exige_une_image_de_fin else modele.accepte_une_image_de_fin,
+            "durees": list(modele.durees),
+        },
+        # Ce qu'il consomme : de l'argent chez un payant, du temps de la carte
+        # ici (8ter — zéro n'est pas « inconnu »). `libelle` est le nom du tarif
+        # chez le fournisseur, de quoi vérifier sur sa page.
+        "cout": {
+            "unite": "temps" if modele.de_la_maison else USD,
+            "libelle": modele.tarification.libelle if modele.tarification else "",
+        },
         **({"indisponible": modele.indisponible} if modele.indisponible else {}),
         **({"options": {n: {"nom": o.nom, "genre": o.genre, "valeurs": list(o.valeurs), "minimum": o.minimum, "maximum": o.maximum} for n, o in modele.options.items()}} if modele.options else {}),
         "identifiant": modele.identifiant,
