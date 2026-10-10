@@ -679,6 +679,12 @@ class Atelier:
         self.sources_3d = ServiceSources3D(self)
         self.travaux_3d = ServiceTravaux3D(self)
         self.travaux_audio = ServiceTravauxAudio(self)
+        # **Une étape locale terminée sans personne pour l'attendre** (10 octobre
+        # 2026) : reprise par la veille de la file, son travail de production
+        # ou sa génération avaient déjà abandonné — « à vérifier » jusqu'à un
+        # clic. C'est ici, où les trois services se connaissent, qu'ils
+        # reprennent le résultat d'eux-mêmes (`_apres_fin_locale`).
+        self.file_locale.apres_fin.append(self._apres_fin_locale)
         # SN9 : la partition de YuE2, écrite d'abord, relue, puis jouée.
         from atelier.services.partition_son import ServicePartitionSon
         self.partition_son = ServicePartitionSon(self)
@@ -708,6 +714,48 @@ class Atelier:
             # RV8 : le dossier des fichiers se lit sur le jeu Godot rattaché.
             self.livraison,
         )
+
+    async def _apres_fin_locale(self, etape: dict[str, Any]) -> None:
+        """Une étape de la file locale vient de se terminer : ce qui l'attendait
+        et avait abandonné entre-temps relit son résultat.
+
+        D'abord les **travaux de production** (son, clip) qui la nomment
+        (`etape_locale`) ou qui attendent son image (`generation_image`) et
+        sont restés « à vérifier » : ils sont repris exactement comme par
+        `POST /api/projects/{p}/production-jobs/{id}/resume` — la reprise relit
+        l'étape terminée, rien n'est soumis de nouveau. Un travail encore suivi
+        (`en_cours`, sa tâche vivante) n'est pas touché : c'est lui qui
+        attendait, il lira le résultat tout seul.
+
+        Sinon, pour une image seule, la **génération** relit l'emplacement de
+        cette étape (`suivre_locale`) — jamais pendant qu'un emplacement est
+        encore suivi.
+        """
+        projet = etape.get("projet")
+        generation = (etape.get("parametres") or {}).get("generation") if etape["nature"] == "image" else None
+        repris = False
+        if projet:
+            try:
+                travaux = self.travaux.lister(projet)
+            except Exception:  # noqa: BLE001 — un jeu supprimé n'a plus rien à reprendre
+                travaux = []
+            for travail in travaux:
+                attend = travail.get("etape_locale") == etape["identifiant"] or (
+                    generation and generation in [travail.get("generation_image"), *(travail.get("generations_images") or [])])
+                if not attend or travail["etat"] not in ("a_verifier", "a_reprendre") or travail.get("controle"):
+                    continue
+                try:
+                    await self.travaux.demarrer(projet, travail["identifiant"], travail["acteur"], reprise=True)
+                    repris = True
+                except Exception:  # noqa: BLE001 — un refus (cadre de l'agent…) laisse le travail « à vérifier »
+                    pass
+        if generation and not repris:
+            from atelier.domaine.generation import Statut
+            lue = self.base.lire(generation)
+            rang = (etape.get("parametres") or {}).get("rang", 0)
+            if lue and not any(e.statut == Statut.EN_COURS for e in lue.emplacements) and any(
+                    e.rang == rang and e.statut != Statut.REUSSIE for e in lue.emplacements):
+                await self.generations.suivre_locale(generation, rang=rang)
 
     async def ouvrir(self) -> None:
         """Ce qui se passe au démarrage, dans l'ordre, et sans jamais lever.

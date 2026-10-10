@@ -2048,3 +2048,16 @@ la prochaine réécriture retrouvera.
   lue seule, était raisonnable, et que le choix perdu ne se disait nulle part. **Un repli se
   choisit pour ne pas bouger quand quelque chose arrive, et un choix perdu se dit.** Règle unique
   dans `atelier/domaine/portrait.py`. PX10, 27 septembre 2026 — la troisième fois.
+- **Une file qui attend en interrogeant le disque peut affamer la boucle qui doit la faire
+  avancer — et le processeur reste presque à zéro.** Six étapes en attente derrière une étape
+  « à reprendre » relisaient chacune tout le registre (≈ 215 `etape.json`, deux fois) quatre
+  fois par seconde : la boucle de l'atelier passait 95 % de son temps à ces lectures, une route
+  triviale répondait en 2,5 s, et la fin d'un calcul de 3 s se voyait jusqu'à 280 s plus tard
+  — assez pour que les lectures d'état ComfyUI expirent, et que d'autres étapes passent « à
+  reprendre » à leur tour (10 octobre 2026). Mesuré avec un banc, pas deviné : la boucle
+  chronométrée pendant l'attente (`tests/test_au6.py`, l'essai « beaucoup d'étapes en
+  attente »). Corrigé dans `atelier/services/file_locale.py` : une lecture du registre partagée,
+  un fichier inchangé jamais relu, et des étapes qui se réveillent au changement au lieu de
+  sonder. **Une attente qui sonde se mesure à N attentes en même temps, jamais à une seule.**
+  Et une file qui attend doit pouvoir le dire : la veille de la même file porte une échéance par
+  étape, une reprise automatique bornée à une, et une alerte quand plus rien n'avance.

@@ -228,6 +228,9 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     @contextlib.asynccontextmanager
     async def cycle(application: FastAPI) -> AsyncIterator[None]:
         await application.state.atelier.ouvrir()
+        # La veille de la file locale (échéances, reprises automatiques,
+        # alerte) vit avec l'application : lancée ici, arrêtée par `fermer`.
+        application.state.atelier.file_locale.demarrer_veille()
         # Le gestionnaire de sessions du MCP a son propre cycle de vie, et
         # **FastAPI ne le lance pas pour une application montée** : sans cette
         # ligne, l'agent reçoit une erreur de transport à la première connexion,

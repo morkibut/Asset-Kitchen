@@ -10,7 +10,7 @@ from atelier.audio.texte import SFXR, alertes, composer_texte, langue
 from atelier.domaine.projet import FAMILLES_SON
 from atelier.domaine.son import RecetteSon
 from atelier.domaine.workflow import GRAINE_MAX, MUSIQUE, composer, duree_acceptee, musique_du_graphe, tirer_graine
-from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu, FINIS
+from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu, TravailExternePerdu, FINIS, resoumission_permise
 from atelier.services.travaux import ServiceTravaux, _hash, _json, _verrou
 from atelier.domaine.erreurs import FournisseurIndisponible
 
@@ -26,7 +26,10 @@ class ServiceTravauxAudio(ServiceTravaux):
     def __init__(self, atelier):
         super().__init__(atelier)
         self._taches = atelier.travaux._taches
-        self.intervalle, self.delai = 2, 1800
+        # Une prise SA3 calcule en 1 à 5 s (mesuré le 10 octobre 2026) : sonder
+        # toutes les 2 s ajoutait jusqu'à 2 s à chacune. Une lecture de
+        # `/history` ne coûte presque rien ; on sonde chaque seconde.
+        self.intervalle, self.delai = 1, 1800
         atelier.travaux.inscrire_executant("audio", self._executer)
         atelier.file_locale.inscrire_executeur("audio", self._calcul)
         # Un adaptateur disponible dans le code n’est pas un moteur configuré.
@@ -321,6 +324,9 @@ class ServiceTravauxAudio(ServiceTravaux):
                 # 2026, la file restait arrêtée jusqu'à une reprise à la main).
                 await asyncio.sleep(self.intervalle)
                 continue
+            # Oublié par ComfyUI (redémarré) pendant une reprise automatique :
+            # la file le soumettra de nouveau, une fois. Sinon, comme avant.
+            if etat.perdu and resoumission_permise(e): raise TravailExternePerdu(etat.raison)
             if etat.echoue: raise TravailRefuse(etat.raison or "Le moteur n’a pas produit le son.")
             if etat.fini:
                 octets, media, reference = await m.sortie_de(numero, t["profil"])

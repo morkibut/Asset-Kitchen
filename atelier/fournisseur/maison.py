@@ -526,7 +526,7 @@ class MoteurDeLaMaison:
             entree = (await self._json("GET", f"/history/{travail}")).get(travail)
             if not entree:
                 return EtatTravail(
-                    travail=travail, fini=True, echoue=True,
+                    travail=travail, fini=True, echoue=True, perdu=True,
                     raison=(
                         f"ComfyUI ne connaît plus le travail {travail} : ni dans "
                         f"sa file, ni dans son historique. Il a sans doute été "

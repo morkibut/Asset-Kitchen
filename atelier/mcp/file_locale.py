@@ -9,7 +9,7 @@ def installer_outils_file_locale(serveur, atelier, refus_lisible):
     @serveur.tool(name="get_local_queue", meta=meta("Lire la file locale"), description="Read owned local GPU stages and engine diagnostics. Unknown engine state never means the GPU is free. No generation, installation or download.")
     @refus_lisible
     async def get_local_queue() -> dict[str, Any]:
-        return {**atelier.file_locale.lister(), "moteurs": await atelier.file_locale.observer(), "mesures": atelier.file_locale.mesures()}
+        return {**atelier.file_locale.lister(), "moteurs": await atelier.file_locale.observer(), "mesures": atelier.file_locale.mesures(), "alerte": atelier.file_locale.alerte()}
 
     @serveur.tool(name="resume_local_stage", meta=meta("Reprendre le suivi local"), description="Resume an existing agent-owned GPU stage using its saved input and external job ID. Never submits an uncertain request again.")
     @refus_lisible
