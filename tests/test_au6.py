@@ -887,3 +887,34 @@ async def test_deux_reprises_ne_s_attendent_plus_l_une_l_autre(file):
     etats = [file.lire(e["identifiant"])["etat"] for e in (*reprises, derriere)]
     assert etats == ["termine"] * 3, etats
     assert relus[:2] == ["travail-0", "travail-1"]
+
+
+async def test_reprise_usee_mais_rendu_dans_l_historique_il_est_recupere(file):
+    """Relevé le 10 octobre 2026 (3dfe45f8, série « accueil v2 ») : sa reprise
+    automatique s'était usée à attendre son tour pendant un interblocage ; au
+    redémarrage, l'étape passait « échoue » alors que `/history` disait succès.
+    L'historique est relu avant de conclure : le rendu se récupère, sans nouvel
+    envoi, et une fois seulement — un rendu illisible finit par échouer."""
+    async def relire(numero):
+        return SimpleNamespace(fini=True, echoue=False, perdu=False)
+    file.inscrire_moteur("moteur-test", "Moteur doublé", moteur_qui_a([], "disponible"), relire)
+    relus = []
+    async def executer(e):
+        relus.append(e["travail_externe"])
+        return {"fichier": "accueil.flac"}
+    file.inscrire_executeur("audio", executer)
+    e = preparer(file, "reprise-usee", nature="audio")
+    file.modifier(e["identifiant"], etat="a_reprendre", soumission_engagee=True, travail_externe="f917131f",
+        reprises_auto=1, raison="Une étape précédente attend sa fin ou sa reprise.")
+    await file.verifier()
+    await file.attendre_fin(e["identifiant"])
+    fini = file.lire(e["identifiant"])
+    assert fini["etat"] == "termine", fini["raison"]
+    assert relus == ["f917131f"]  # relu, jamais resoumis
+
+    # Déjà récupéré une fois, et de nouveau à reprendre : l'échec reste visible.
+    autre = preparer(file, "reprise-usee-2", nature="audio")
+    file.modifier(autre["identifiant"], etat="a_reprendre", soumission_engagee=True, travail_externe="t2",
+        reprises_auto=1, recupere_auto=True, raison="Rendu illisible.")
+    await file.verifier()
+    assert file.lire(autre["identifiant"])["etat"] == "echoue"
