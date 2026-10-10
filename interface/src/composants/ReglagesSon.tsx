@@ -32,7 +32,8 @@ function resumeBoucle(r: RecetteSon, duree: number) {
   return `${virgule(r.boucle_debut, 1)} → ${virgule(r.boucle_fin ?? duree, 1)} s`
 }
 function resumeNiveau(r: RecetteSon, avecLufs: boolean) {
-  const parts = [r.mono ? "mono" : null, avecLufs && r.cible_lufs != null ? `${r.cible_lufs} LUFS` : null, r.gain_db ? `gain ${r.gain_db > 0 ? "+" : ""}${r.gain_db} dB` : null]
+  const lufs = avecLufs && r.cible_lufs != null
+  const parts = [r.mono ? "mono" : null, lufs ? `${r.cible_lufs} LUFS` : null, lufs && r.limiteur ? "limiteur" : null, r.gain_db ? `gain ${r.gain_db > 0 ? "+" : ""}${r.gain_db} dB` : null]
   const texte = parts.filter(Boolean).join(" · ")
   return texte || "aucun"
 }
@@ -125,7 +126,11 @@ export function ReglagesSon({ son, recette, mesures, famille, occupe, onChange }
           </select>
         </label>
         {avecLufs
-          ? <Curseur nom="Niveau visé (LUFS)" valeur={recette.cible_lufs ?? -18} min={-40} max={-6} step={0.5} disabled={occupe} onChange={v => onChange("cible_lufs", v)} />
+          ? <>
+              <Curseur nom="Niveau visé (LUFS)" valeur={recette.cible_lufs ?? -18} min={-40} max={-6} step={0.5} disabled={occupe} onChange={v => onChange("cible_lufs", v)} />
+              {/* Le limiteur n'agit que sur un niveau visé : sans lui, la case serait inerte (AGENTS.md 8nonies). */}
+              {recette.cible_lufs != null && <label className="block text-[13px]"><input type="checkbox" checked={!!recette.limiteur} disabled={occupe} onChange={e => onChange("limiteur", e.target.checked)} /> Limiteur à crête vraie (−1 dBTP)</label>}
+            </>
           : <>
               <label className="block text-[13px]"><input type="checkbox" checked={recette.normaliser} disabled={occupe} onChange={e => onChange("normaliser", e.target.checked)} /> Normaliser le niveau</label>
               {recette.normaliser && <Curseur nom="Crête cible (dBFS)" valeur={recette.cible_db} min={-60} max={0} step={0.1} disabled={occupe} onChange={v => onChange("cible_db", v)} />}

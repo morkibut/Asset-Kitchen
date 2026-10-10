@@ -103,7 +103,7 @@ def test_reglages_proposes_par_famille():
     assert recette_proposee({}, "bruitage")["cible_db"] == -3 and recette_proposee({}, "bruitage")["cible_lufs"] is None
     assert recette_proposee({"debut": .1}, "ambiance")["cible_lufs"] == -26
     assert recette_proposee({"debut": .1}, "ambiance")["debut"] == .1
-    assert recette_proposee({}, "voix")["mono"] and recette_proposee({}, "musique")["cible_lufs"] == -17
+    assert recette_proposee({}, "voix")["mono"] and recette_proposee({}, "musique")["cible_lufs"] == -16
     assert recette_proposee({"debut": .1}, None) == {"debut": .1}
 
 

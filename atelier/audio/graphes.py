@@ -23,6 +23,8 @@ primitifs) au format API. Trois écarts voulus avec ces modèles :
   pour une minute, banc du 19 septembre).
 - La sortie est `SaveAudio` (FLAC, sans perte) partout, au lieu de
   `SaveAudioAdvanced` ou `SaveAudioMP3` : l'atelier règle et encode lui-même.
+  Pour ACE-Step 1.5, un `AudioAdjustVolume` de −4 dB la précède depuis le
+  10 octobre 2026 (voir `_marge`) : le FLAC entier coupait ce qui dépassait.
 
 Le nombre de tirages n'est pas dans le graphe : une série est N travaux,
 chacun sa graine (SN3).
@@ -119,6 +121,25 @@ def _lien(noeud, champ):
 
 def _sortie(prefixe, audio):
     return {"class_type": "SaveAudio", "inputs": {"audio": audio, "filename_prefix": "asset-kitchen/" + prefixe}}
+
+
+# La marge prise à la source par les graphes d'ACE-Step 1.5, en dB (entier :
+# `AudioAdjustVolume` n'accepte que des entiers de −100 à 100).
+MARGE_ACE_DB = -4
+
+
+def _marge(audio):
+    """Baisse le son décodé de 4 dB avant `SaveAudio`.
+
+    Le décodeur d'ACE-Step 1.5 (`VAEDecodeAudio`) rend des valeurs au-delà de
+    1,0, et `SaveAudio` écrit un FLAC **entier** : tout ce qui dépasse la
+    pleine échelle y est coupé net. Mesuré le 10 octobre 2026 sur quatre
+    rendus de 150 s : crête vraie de +0,5 à +1 dBTP, 3 à 18 échantillons
+    écrêtés dans le fichier brut — que ni la recette ni aucun traitement en
+    aval ne peut réparer, puisque l'atelier garde ce fichier-là. 4 dB de
+    marge laissent le brut sous la pleine échelle ; le niveau se remonte
+    ensuite par la recette (niveau visé et limiteur à crête vraie)."""
+    return {"class_type": "AudioAdjustVolume", "inputs": {"audio": audio, "volume": MARGE_ACE_DB}}
 
 
 def _stable_audio(identifiant, nom, description, *, checkpoint, encodeur, type_encodeur, pas, guidage, echantillonneur,
@@ -254,7 +275,9 @@ def _ace_step_15(identifiant, nom, *, modele, encodeur, compositeur, vae, pas, g
         "8": {"class_type": "KSampler", "inputs": {"seed": 0, "steps": pas, "cfg": guidage, "sampler_name": "euler", "scheduler": "simple",
             "denoise": 1, "model": ["2", 0], "positive": ["5", 0], "negative": ["6", 0], "latent_image": ["7", 0]}},
         "9": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["8", 0], "vae": ["4", 0]}},
-        "10": _sortie(identifiant, ["9", 0]),
+        # Numéro ajouté, pas renuméroté : la sortie reste le nœud 10.
+        "11": _marge(["9", 0]),
+        "10": _sortie(identifiant, ["11", 0]),
     }
     liaisons = {"prompt": [_lien("5", "tags")], "paroles": [_lien("5", "lyrics")], "tempo": [_lien("5", "bpm")],
         "tonalite": [_lien("5", "keyscale")], "mesure": [_lien("5", "timesignature")],
@@ -316,7 +339,9 @@ def ace_step_15_reprise(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qw
         "10": {"class_type": "KSampler", "inputs": {"seed": 0, "steps": 8, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
             "denoise": 0.4, "model": ["2", 0], "positive": ["9", 0], "negative": ["6", 0], "latent_image": ["8", 0]}},
         "11": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["10", 0], "vae": ["4", 0]}},
-        "12": _sortie("ace-step-15-reprise", ["11", 0]),
+        # Numéro ajouté, pas renuméroté : la sortie reste le nœud 12.
+        "13": _marge(["11", 0]),
+        "12": _sortie("ace-step-15-reprise", ["13", 0]),
     }
     liaisons = {"prompt": [_lien("5", "tags")], "paroles": [_lien("5", "lyrics")], "tempo": [_lien("5", "bpm")],
         "tonalite": [_lien("5", "keyscale")], "mesure": [_lien("5", "timesignature")],

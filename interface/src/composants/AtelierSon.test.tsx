@@ -140,6 +140,21 @@ test("le niveau perçu (LUFS) ne s’affiche que pour les familles qui l’utili
   expect(screen.getByText(/−20.0 LUFS|-20.0 LUFS/)).toBeTruthy()
 })
 
+test("le limiteur à crête vraie ne paraît qu’avec un niveau visé, et part dans la recette", async () => {
+  monter({ ...son, famille: "musique", recette: { ...recetteDeBase, cible_lufs: null } })
+  await screen.findByLabelText("Fondu d’entrée (ms)")
+  expect(screen.queryByLabelText(/Limiteur à crête vraie/)).toBeNull()
+  cleanup()
+  monter({ ...son, famille: "musique", recette: { ...recetteDeBase, cible_lufs: -16, limiteur: true } })
+  const caseLimiteur = await screen.findByLabelText(/Limiteur à crête vraie/)
+  expect(caseLimiteur).toHaveProperty("checked", true)
+  expect(screen.getByText(/−16 LUFS · limiteur|-16 LUFS · limiteur/)).toBeTruthy()
+  const regler = vi.spyOn(sons, "regler").mockResolvedValue(son)
+  fireEvent.click(caseLimiteur)
+  fireEvent.click(screen.getByRole("button", { name: "Conserver une version" }))
+  await waitFor(() => expect(regler).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ cible_lufs: -16, limiteur: false }), "Épée"))
+})
+
 test("écouter le raccord joue loop-splice.wav en boucle", async () => {
   monter()
   await screen.findByLabelText("Fondu d’entrée (ms)")

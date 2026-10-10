@@ -11,12 +11,19 @@ export type RecetteSon = {
   taux: number | null; boucle: boolean; boucle_debut: number; boucle_fin: number | null
   boucle_zero: boolean; boucle_fondu_ms: number
   mono: boolean; cible_lufs: number | null; hauteur_demi_tons: number; hauteur_garde_duree: boolean
+  /** Avec `cible_lufs` : gain entier vers la cible, puis limiteur à crête
+   *  vraie à −1 dBTP (au lieu de plafonner le gain). Absent d'une recette
+   *  d'avant le 10 octobre 2026 : coupé. */
+  limiteur?: boolean
 }
 export type MesuresSon = {
   duree: number; taux: number; canaux: number; echantillons: number
   crete_db: number | null; rms_db: number | null; silencieux: boolean; ecretes: number
   lufs?: number | null; crete_vraie_db?: number | null
-  niveau?: { cible_lufs: number | null; applique: boolean; gain_db: number; plafonne: boolean; lufs_avant?: number; raison: string } | null
+  niveau?: {
+    cible_lufs: number | null; applique: boolean; gain_db: number; plafonne: boolean; lufs_avant?: number; raison: string
+    limiteur?: boolean; reduction_max_db?: number; securite_db?: number; lufs_apres?: number | null; crete_vraie_apres_db?: number | null
+  } | null
   boucle?: {
     active: boolean; debut: number; fin: number
     recale_zero?: boolean; fondu_ms?: number

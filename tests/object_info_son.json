@@ -1584,6 +1584,63 @@
    "latent to audio"
   ]
  },
+ "AudioAdjustVolume": {
+  "api_node": false,
+  "category": "audio",
+  "deprecated": false,
+  "description": "Adjust the volume of the audio by a specified amount in decibels (dB).",
+  "dev_only": false,
+  "display_name": "Adjust Audio Volume",
+  "essentials_category": null,
+  "experimental": false,
+  "has_intermediate_output": false,
+  "input": {
+   "required": {
+    "audio": [
+     "AUDIO",
+     {}
+    ],
+    "volume": [
+     "INT",
+     {
+      "default": 1,
+      "max": 100,
+      "min": -100,
+      "tooltip": "Volume adjustment in decibels (dB). 0 = no change, +6 = double, -6 = half, etc"
+     }
+    ]
+   }
+  },
+  "input_order": {
+   "required": [
+    "audio",
+    "volume"
+   ]
+  },
+  "is_input_list": false,
+  "name": "AudioAdjustVolume",
+  "output": [
+   "AUDIO"
+  ],
+  "output_is_list": [
+   false
+  ],
+  "output_matchtypes": null,
+  "output_name": [
+   "AUDIO"
+  ],
+  "output_node": false,
+  "output_tooltips": [
+   null
+  ],
+  "price_badge": null,
+  "python_module": "comfy_extras.nodes_audio",
+  "search_aliases": [
+   "audio gain",
+   "loudness",
+   "audio level"
+  ]
+ },
  "VAELoader": {
   "category": "model/loaders",
   "description": "",

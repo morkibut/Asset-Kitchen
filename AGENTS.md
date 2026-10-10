@@ -446,6 +446,13 @@ deux vivent côte à côte.
   matière : les nouveaux réglages (`caillouxTaille`, `caillouxNombre`, `caillouxEcart`,
   `caillouxColles`) prennent leur défaut. Le tirage des cases, lui, ne bouge pas. L'atlas
   déjà livré reste celui qui a été livré ; seule une réouverture le redessine.
+
+  **Le 10 octobre 2026, les musiques ont une nouvelle recette proposée.** Musique, chanson et
+  jingle proposent désormais −16 LUFS **avec le limiteur à crête vraie** (`limiteur`), au lieu
+  de −17 LUFS en gain plafonné à −1 dBTP — qui n'atteignait presque jamais la cible sur un rendu
+  ACE-Step. **Une recette déjà posée ne change pas** : sans `limiteur`, elle rend les mêmes
+  octets qu'avant (vérifié contre l'ancien code). Ce qui change sans rien demander, ce sont les
+  rendus ACE-Step *neufs* : le graphe baisse le son de 4 dB avant le FLAC, qui ne coupe plus.
 - **Génération locale autorisée depuis le 11 septembre 2026.** ComfyUI et asset3d restent
   des moteurs externes, pilotés par des adaptateurs de l'atelier. Ne pas modifier leur
   installation ni télécharger leurs poids implicitement. L'import reste disponible.

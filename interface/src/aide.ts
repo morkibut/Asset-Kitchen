@@ -4124,7 +4124,7 @@ export const AIDE: Record<string, Explication> = {
       "Poser ou changer la famille ajoute une version, sans toucher aux réglages. Appliquer les réglages de la famille les prend en plus, et ne paraît que s'ils diffèrent des tiens.",
     origine: "toi, ou la demande qui a fabriqué le son",
     long:
-      "Bruitage et interface : WAV en mono, crête à −3 dBFS. Ambiance : Ogg, −26 LUFS. Musique, jingle, chanson : Ogg, −17 LUFS, bus Music. Voix : Ogg en mono, −17 LUFS. Le nom du fichier commence par sfx_, ui_, amb_, mus_ ou vo_, puis suit le nom du son.",
+      "Bruitage et interface : WAV en mono, crête à −3 dBFS. Ambiance : Ogg, −26 LUFS. Musique, jingle, chanson : Ogg, −16 LUFS avec limiteur, bus Music. Voix : Ogg en mono, −17 LUFS. Le nom du fichier commence par sfx_, ui_, amb_, mus_ ou vo_, puis suit le nom du son.",
   },
 
   // ── Les sons — l'écoute ──────────────────────────────────────────────────
@@ -4177,10 +4177,22 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Régler — niveau et hauteur",
     quoi: "La force du son : un niveau perçu visé pour une ambiance ou une musique, une crête pour un bruitage, puis un gain.",
     change:
-      "Le niveau visé (LUFS) est un gain, pas un compresseur, et s'arrête à −1 dBTP de crête. Ailleurs, « Normaliser » ramène la crête à la cible, tous canaux ensemble. Le gain vient après.",
+      "Le niveau visé (LUFS) est un gain, pas un compresseur, et s'arrête à −1 dBTP de crête — sauf avec le limiteur. Ailleurs, « Normaliser » ramène la crête à la cible, tous canaux ensemble. Le gain vient après.",
     origine: "toi · rien au départ, ou les réglages de la famille",
     long:
       "Le niveau visé n'existe que pour l'ambiance, la musique, la chanson, le jingle et la voix ; un bruitage est trop court pour se mesurer ainsi. Une saturation est signalée en haut de la fiche mais n'empêche rien : seul un rendu silencieux bloque la livraison.",
+  },
+
+  "son.limiteur": {
+    nom: "Limiteur à crête vraie (−1 dBTP)",
+    ou: "son",
+    groupe: "Régler — niveau et hauteur",
+    quoi: "Atteindre le niveau visé même quand une crête le bloquerait : le limiteur rabote les crêtes au lieu d'arrêter le gain.",
+    change:
+      "Sans lui, le gain s'arrête dès que la crête touche −1 dBTP et la cible peut manquer. Avec lui, le gain va jusqu'à la cible, puis les crêtes sont ramenées sous −1 dBTP, entre les échantillons compris. La mesure dit de combien.",
+    origine: "toi · coupé ; proposé avec −16 LUFS pour musique, chanson et jingle",
+    long:
+      "Paraît seulement quand un niveau visé est posé. Un limiteur, pas un écrêtage : le son baisse en douceur autour de la crête au lieu d'être coupé net. Une recette déjà posée ne le prend pas d'elle-même.",
   },
 
   "son.format": {

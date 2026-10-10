@@ -331,3 +331,106 @@ def test_les_trois_modeles_d_ace_step_ne_different_que_par_le_poids_les_pas_et_l
         graphe = composer(normaliser(profil), prompt="dwarven work song", secondes=30)
         assert graphe["8"]["inputs"]["steps"] == pas
     assert FAMILLES["musique"][0] == ACE
+
+
+# ── La saturation des musiques (10 octobre 2026) ───────────────────────
+#
+# Quatre rendus ACE-Step de 150 s sortaient à +0,5 à +1 dBTP, 3 à 18
+# échantillons écrêtés, ≈ −12 LUFS : le décodeur rend au-delà de 1,0 et
+# `SaveAudio` (FLAC entier) coupe à l'écriture. Deux parades : une marge de
+# −4 dB dans le graphe, avant le fichier brut ; et, dans la recette, un niveau
+# visé tenu par un limiteur à crête vraie plutôt que par un gain plafonné.
+
+ACE_ET_REPRISE = ("ace-step-15-turbo", "ace-step-15-base", "ace-step-15-xl-turbo", "ace-step-15-reprise")
+
+
+@pytest.mark.parametrize("identifiant", ACE_ET_REPRISE)
+def test_le_graphe_ace_baisse_de_4_db_avant_d_ecrire_le_flac(identifiant):
+    profil = normaliser(CONSTRUCTEURS[identifiant]())
+    graphe = profil["graphe"]
+    sortie = graphe[profil["sortie"]["noeud"]]
+    assert sortie["class_type"] == "SaveAudio"
+    marge = graphe[sortie["inputs"]["audio"][0]]
+    assert marge["class_type"] == "AudioAdjustVolume" and marge["inputs"]["volume"] == -4
+    assert graphe[marge["inputs"]["audio"][0]]["class_type"] == "VAEDecodeAudio"
+    # Un seul chemin du décodeur au fichier : rien ne contourne la marge.
+    assert sum(1 for n in graphe.values() if n["class_type"] == "SaveAudio") == 1
+    # La marge part telle quelle : aucune liaison ne la touche.
+    compose = composer(profil, prompt="x", secondes=10, **({"source": "s.wav"} if "reprise" in identifiant else {}))
+    assert compose[sortie["inputs"]["audio"][0]]["inputs"]["volume"] == -4
+
+
+def _stereo_fort(secondes=10, taux=44100):
+    """≈ −10 LUFS, crêtes à 0 dBFS : deux notes tenues, un souffle, et un
+    coup de 10 ms toutes les 250 ms qui monte à la pleine échelle."""
+    t = np.arange(int(secondes * taux)) / taux
+    bruit = np.random.default_rng(7).standard_normal((len(t), 2))
+    signal = np.column_stack((np.sin(2 * np.pi * 220 * t), np.sin(2 * np.pi * 330 * t))) * .33 + bruit * .03
+    for i in range(0, len(t) - 441, taux // 4):
+        signal[i:i + 441] += .57 * np.hanning(441)[:, None]
+    return signal / np.max(np.abs(signal))
+
+
+def _stereo_pointu(secondes=10, taux=44100):
+    """Deux notes faibles et un claquement bref toutes les 250 ms : la crête
+    est loin au-dessus du niveau perçu."""
+    t = np.arange(int(secondes * taux)) / taux
+    signal = np.column_stack((np.sin(2 * np.pi * 440 * t), np.sin(2 * np.pi * 550 * t))) * .05
+    for i in range(0, len(t) - 44, taux // 4):
+        signal[i:i + 44] += .9 * np.hanning(44)[:, None]
+    return signal
+
+
+def test_le_limiteur_amene_une_musique_forte_a_moins_16_lufs_sans_ecreter():
+    from atelier.audio.traitement import mesurer, traiter
+    from atelier.domaine.son import RecetteSon
+    taux = 44100
+    signal = _stereo_fort(taux=taux)
+    avant = mesurer(signal, taux)
+    assert -12 <= avant["lufs"] <= -8 and avant["crete_vraie_db"] >= -.1
+    rendu, taux_rendu, mesure = traiter(signal, taux, RecetteSon(cible_lufs=-16, limiteur=True))
+    relu = mesurer(rendu, taux_rendu)
+    assert abs(relu["lufs"] - (-16)) <= .5
+    assert relu["crete_vraie_db"] <= -1 and relu["ecretes"] == 0
+    assert mesure["niveau"]["limiteur"] is True and mesure["niveau"]["applique"] and not mesure["niveau"]["plafonne"]
+
+
+def test_le_limiteur_atteint_la_cible_la_ou_le_gain_plafonne_s_arretait():
+    from atelier.audio.traitement import CRETE_VRAIE_MAX_DB, mesurer, traiter
+    from atelier.domaine.son import RecetteSon
+    taux = 44100
+    signal = _stereo_pointu(taux=taux)
+    avant = mesurer(signal, taux)
+    # La cible demanderait de monter la crête vraie à 8 dB au-dessus de −1 dBTP.
+    assert (-16 - avant["lufs"]) + avant["crete_vraie_db"] - CRETE_VRAIE_MAX_DB >= 8
+    reglages = {"cible_lufs": -16, "fondu_entree_ms": 0, "fondu_sortie_ms": 0}
+    rendu, _, avec = traiter(signal, taux, RecetteSon(**reglages, limiteur=True))
+    relu = mesurer(rendu, taux)
+    assert abs(relu["lufs"] - (-16)) <= .5 and relu["crete_vraie_db"] <= -1 and relu["ecretes"] == 0
+    assert avec["niveau"]["limiteur"] and not avec["niveau"]["plafonne"] and avec["niveau"]["reduction_max_db"] >= 7.5
+    # Non-régression : sans limiteur, le gain s'arrête à −1 dBTP comme avant.
+    _, _, sans = traiter(signal, taux, RecetteSon(**reglages, limiteur=False))
+    assert sans["niveau"]["plafonne"] and sans["niveau"]["limiteur"] is False
+    assert sans["niveau"]["gain_db"] == pytest.approx(CRETE_VRAIE_MAX_DB - avant["crete_vraie_db"])
+    assert sans["lufs"] < -22 and sans["crete_vraie_db"] <= -.9
+
+
+def test_une_recette_sans_limiteur_rend_les_memes_octets():
+    from atelier.audio.traitement import traiter
+    from atelier.domaine.son import FAMILLES, RecetteSon, recette_proposee
+    taux = 22050
+    signal = _stereo_pointu(3, taux)
+    ancienne = {"cible_lufs": -17, "gain_db": -1, "fondu_entree_ms": 20}
+    recette = RecetteSon.depuis_json(ancienne)
+    assert recette.limiteur is False
+    rendu, t1, mesure = traiter(signal, taux, recette)
+    explicite, t2, _ = traiter(signal, taux, RecetteSon.depuis_json({**ancienne, "limiteur": False}))
+    assert encoder(rendu, t1) == encoder(explicite, t2)
+    assert mesure["niveau"]["plafonne"] and "reduction_max_db" not in mesure["niveau"]
+    with pytest.raises(Exception, match="limiteur"):
+        RecetteSon.depuis_json({"limiteur": 1})
+    # La recette proposée aux musiques ; ambiance et voix ne bougent pas.
+    for famille in ("musique", "chanson", "jingle"):
+        assert {k: recette_proposee({}, famille)[k] for k in ("cible_lufs", "limiteur")} == {"cible_lufs": -16, "limiteur": True}
+    assert "limiteur" not in FAMILLES["ambiance"].reglages and "limiteur" not in FAMILLES["voix"].reglages
+    assert recette_proposee({}, "ambiance")["cible_lufs"] == -26 and recette_proposee({}, "voix")["cible_lufs"] == -17

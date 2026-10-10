@@ -42,6 +42,10 @@ class RecetteSon:
     cible_lufs: float | None = None  # appliqué comme un gain, crête vraie plafonnée à −1 dBTP
     hauteur_demi_tons: float = 0
     hauteur_garde_duree: bool = False  # False : comme une bande qu'on accélère (la durée change)
+    # Inerte par défaut, comme les réglages SN4. Avec `cible_lufs` posé, le
+    # niveau est amené à la cible par un gain entier, puis un limiteur à
+    # crête vraie tient −1 dBTP — au lieu de plafonner le gain (10 oct. 2026).
+    limiteur: bool = False
 
     def en_json(self):
         return asdict(self)
@@ -58,7 +62,7 @@ class RecetteSon:
             "cible_db": (-60, 0), "gain_db": (-60, 24), "boucle_debut": (0, 600), "boucle_fin": (0, 600),
             "boucle_fondu_ms": (0, 2000), "cible_lufs": (-40, -6), "hauteur_demi_tons": (-24, 24)}
         for nom, valeur in brut.items():
-            if nom in ("rogner_silence", "normaliser", "boucle", "boucle_zero", "mono", "hauteur_garde_duree"):
+            if nom in ("rogner_silence", "normaliser", "boucle", "boucle_zero", "mono", "hauteur_garde_duree", "limiteur"):
                 if not isinstance(valeur, bool):
                     raise SonRefuse(f"Le réglage {nom} doit être activé ou désactivé.")
             elif nom == "taux":
@@ -98,9 +102,12 @@ FAMILLES = {
     "bruitage": Famille("sfx_", "wav", "SFX", {"mono": True, "normaliser": True, "cible_db": -3, "cible_lufs": None}),
     "interface": Famille("ui_", "wav", "UI", {"mono": True, "normaliser": True, "cible_db": -3, "cible_lufs": None}),
     "ambiance": Famille("amb_", "ogg", "SFX", {"mono": False, "normaliser": False, "cible_lufs": -26}),
-    "musique": Famille("mus_", "ogg", "Music", {"mono": False, "normaliser": False, "cible_lufs": -17}),
-    "chanson": Famille("mus_", "ogg", "Music", {"mono": False, "normaliser": False, "cible_lufs": -17}),
-    "jingle": Famille("mus_", "ogg", "Music", {"mono": False, "normaliser": False, "cible_lufs": -17}),
+    # Musique, chanson, jingle : −16 LUFS avec le limiteur à crête vraie depuis
+    # le 10 octobre 2026 (−17 avant, en gain plafonné — rarement atteint sur
+    # un rendu ACE-Step). Une recette déjà posée ne change pas.
+    "musique": Famille("mus_", "ogg", "Music", {"mono": False, "normaliser": False, "cible_lufs": -16, "limiteur": True}),
+    "chanson": Famille("mus_", "ogg", "Music", {"mono": False, "normaliser": False, "cible_lufs": -16, "limiteur": True}),
+    "jingle": Famille("mus_", "ogg", "Music", {"mono": False, "normaliser": False, "cible_lufs": -16, "limiteur": True}),
     "voix": Famille("vo_", "ogg", "Voice", {"mono": True, "normaliser": False, "cible_lufs": -17}, qualite_ogg=4),
 }
 
