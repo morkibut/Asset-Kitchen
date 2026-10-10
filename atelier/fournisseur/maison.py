@@ -51,10 +51,12 @@ from __future__ import annotations
 import asyncio
 import json
 import re
+import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -95,6 +97,35 @@ MODELE = "maison/wan-2.2-i2v-14b-pixel"
 DELAI_COURT = 10.0
 DELAI_MOYEN = 60.0
 DELAI_LONG = 300.0
+# Relevé du 10 octobre 2026 : `/view` de ComfyUI a mis 60 s, puis plus rien,
+# à rendre un FLAC de 2 s qu'il venait d'écrire — alors que `/queue` répondait.
+# Sur la même machine, la sortie se lit dans son dossier (`--output-directory`,
+# lu dans `/system_stats`) ; sinon `/view`, mais sans silence au-delà de ce
+# délai entre deux morceaux reçus.
+DELAI_VIEW = 10.0
+HOTES_LOCAUX = {"127.0.0.1", "localhost", "::1"}
+# Un fichier se lit quand deux relevés espacés le montrent identique (taille,
+# date) : ComfyUI a fini de l'écrire.
+PAS_STABILITE_S = 0.15
+ESSAIS_STABILITE = 14
+DUREE_DOSSIER_SORTIE_S = 600.0
+_DOSSIER_SORTIE: dict[str, tuple[float, Path | None]] = {}
+
+
+def dossier_de_sortie(stats: Any) -> Path | None:
+    """Le dossier `output` que ComfyUI déclare dans sa ligne de commande
+    (`/system_stats` → `system.argv`). Absent, on ne devine pas : `None`."""
+    argv = ((stats or {}).get("system") or {}).get("argv") or []
+    if not isinstance(argv, list):
+        return None
+    for i, mot in enumerate(argv):
+        if not isinstance(mot, str):
+            continue
+        if mot == "--output-directory" and i + 1 < len(argv) and isinstance(argv[i + 1], str):
+            return Path(argv[i + 1])
+        if mot.startswith("--output-directory="):
+            return Path(mot.split("=", 1)[1])
+    return None
 
 GO = 1024**3
 
@@ -782,17 +813,70 @@ class MoteurDeLaMaison:
         sous = rendu.get("subfolder") or ""
         return f"{sous}/{nom}" if sous else str(nom)
 
+    async def _dossier_sortie(self) -> Path | None:
+        """Le dossier de sortie de ComfyUI, s'il est sur cette machine et
+        lisible ; retenu `DUREE_DOSSIER_SORTIE_S`."""
+        if urlsplit(self._base).hostname not in HOTES_LOCAUX:
+            return None
+        garde = _DOSSIER_SORTIE.get(self._base)
+        if garde and time.monotonic() - garde[0] < DUREE_DOSSIER_SORTIE_S:
+            return garde[1]
+        try:
+            dossier = dossier_de_sortie(await self._json("GET", "/system_stats", delai=DELAI_COURT))
+        except Exception:  # noqa: BLE001 — sans réponse, on passe par /view
+            dossier = None
+        if dossier is not None and not dossier.is_dir():
+            dossier = None
+        _DOSSIER_SORTIE[self._base] = (time.monotonic(), dossier)
+        return dossier
+
+    async def _lire_sortie_locale(self, reference: dict[str, Any]) -> bytes | None:
+        """La sortie lue sur le disque, ou `None` pour passer par `/view`."""
+        if reference.get("type", "output") != "output":
+            return None
+        dossier = await self._dossier_sortie()
+        if dossier is None:
+            return None
+        racine = dossier.resolve()
+        chemin = (racine / str(reference.get("subfolder") or "") / str(reference.get("filename") or "")).resolve()
+        if not chemin.is_relative_to(racine) or chemin == racine:
+            return None  # un nom qui sortirait du dossier : jamais lu
+        avant = None
+        for _ in range(ESSAIS_STABILITE):
+            try:
+                etat = chemin.stat()
+            except OSError:
+                etat = None
+            releve = (etat.st_size, etat.st_mtime_ns) if etat else None
+            if releve and releve == avant and releve[0] > 0:
+                try:
+                    octets = await asyncio.to_thread(chemin.read_bytes)
+                except OSError:
+                    return None
+                return octets if len(octets) == releve[0] else None
+            avant = releve
+            await asyncio.sleep(PAS_STABILITE_S)
+        return None
+
     async def _telecharger_sortie(self, reference: dict[str, Any]) -> bytes:
+        octets = await self._lire_sortie_locale(reference)
+        if octets is not None:
+            return octets
         question = {
             "filename": reference.get("filename", ""),
             "subfolder": reference.get("subfolder", ""),
             "type": reference.get("type", "output"),
         }
         try:
-            async with self._ouvrir(DELAI_LONG) as client:
+            async with self._ouvrir(DELAI_VIEW) as client:
                 reponse = await client.get(f"{self._base}/view", params=question)
                 reponse.raise_for_status()
                 return reponse.content
+        except httpx.TimeoutException as erreur:
+            raise FournisseurIndisponible(
+                f"ComfyUI ne rend pas le fichier {question['filename']} : /view est resté muet "
+                f"{DELAI_VIEW:.0f} s. Le calcul est fait et son numéro gardé ; la reprise le relit "
+                f"sans le relancer. Si cela se répète, relancez ComfyUI.") from erreur
         except httpx.HTTPError as erreur:
             raise FournisseurIndisponible(_injoignable(self._base, erreur)) from erreur
 
