@@ -46,6 +46,9 @@ class RecetteSon:
     # niveau est amené à la cible par un gain entier, puis un limiteur à
     # crête vraie tient −1 dBTP — au lieu de plafonner le gain (10 oct. 2026).
     limiteur: bool = False
+    # Inerte par défaut (11 oct. 2026) : la coupe automatique d'un jingle —
+    # silence du début, traîne de la fin, fondus courts —, avant le niveau.
+    coupe_jingle: bool = False
 
     def en_json(self):
         return asdict(self)
@@ -62,7 +65,8 @@ class RecetteSon:
             "cible_db": (-60, 0), "gain_db": (-60, 24), "boucle_debut": (0, 600), "boucle_fin": (0, 600),
             "boucle_fondu_ms": (0, 2000), "cible_lufs": (-40, -6), "hauteur_demi_tons": (-24, 24)}
         for nom, valeur in brut.items():
-            if nom in ("rogner_silence", "normaliser", "boucle", "boucle_zero", "mono", "hauteur_garde_duree", "limiteur"):
+            if nom in ("rogner_silence", "normaliser", "boucle", "boucle_zero", "mono", "hauteur_garde_duree", "limiteur",
+                       "coupe_jingle"):
                 if not isinstance(valeur, bool):
                     raise SonRefuse(f"Le réglage {nom} doit être activé ou désactivé.")
             elif nom == "taux":
@@ -107,7 +111,10 @@ FAMILLES = {
     # un rendu ACE-Step). Une recette déjà posée ne change pas.
     "musique": Famille("mus_", "ogg", "Music", {"mono": False, "normaliser": False, "cible_lufs": -16, "limiteur": True}),
     "chanson": Famille("mus_", "ogg", "Music", {"mono": False, "normaliser": False, "cible_lufs": -16, "limiteur": True}),
-    "jingle": Famille("mus_", "ogg", "Music", {"mono": False, "normaliser": False, "cible_lufs": -16, "limiteur": True}),
+    # Le jingle propose aussi sa coupe automatique (11 octobre 2026) : ACE-Step
+    # rend 10 s, un jingle utile en fait 2 à 5.
+    "jingle": Famille("mus_", "ogg", "Music", {"mono": False, "normaliser": False, "cible_lufs": -16, "limiteur": True,
+                                              "coupe_jingle": True}),
     "voix": Famille("vo_", "ogg", "Voice", {"mono": True, "normaliser": False, "cible_lufs": -17}, qualite_ogg=4),
 }
 

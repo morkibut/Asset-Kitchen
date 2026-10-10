@@ -227,6 +227,9 @@ def traiter(signal, taux, recette: RecetteSon):
     rendu = reechantillonner(rendu, taux, taux_sortie)
     if not len(rendu):
         raise SonRefuse("La sélection ne contient aucun échantillon après la coupe.")
+    coupe_jingle = None
+    if recette.coupe_jingle:
+        rendu, coupe_jingle = couper_jingle(rendu, taux_sortie)
     source_audible = float(np.max(np.abs(rendu))) > 1e-8
     for cote, ms in (("entree", recette.fondu_entree_ms), ("sortie", recette.fondu_sortie_ms)):
         n = min(len(rendu), round(ms * taux_sortie / 1000))
@@ -268,7 +271,59 @@ def traiter(signal, taux, recette: RecetteSon):
         "ecart_raccord": raccord["saut"], "ecart_rms_db": raccord["ecart_rms_db"], "verdict": raccord["verdict"]}
     if niveau is not None:
         mesure["niveau"] = niveau
+    if coupe_jingle is not None:
+        mesure["coupe_jingle"] = coupe_jingle
     return rendu, taux_sortie, mesure
+
+
+# La coupe automatique d'un jingle (recette `coupe_jingle`, 11 octobre 2026),
+# reprise de la recette faite à la main sur les rendus d'ACE-Step :
+# `silenceremove` à −45 dB au début, `atrim` à la fin utile, `afade` 10 ms à
+# l'entrée et 0,3 / 0,5 / 0,8 s à la sortie selon la longueur.
+SEUIL_DEBUT_JINGLE_DB = -45
+SOUS_LE_SOMMET_JINGLE_DB = 30
+FENETRE_JINGLE_S = .05
+PAS_JINGLE_S = .01
+FONDU_ENTREE_JINGLE_MS = 10
+
+
+def _fondu_sortie_jingle(duree):
+    return 300 if duree < 2.5 else 500 if duree < 4 else 800
+
+
+def couper_jingle(rendu, taux):
+    """Coupe le silence du début (premier échantillon au-dessus de −45 dB) et
+    la traîne de la fin : la fin est le dernier point où l'énergie, sur des
+    fenêtres de 50 ms, reste à moins de 30 dB sous son sommet — au-delà, le
+    son est retombé pour de bon. Puis un fondu d'entrée de 10 ms et un fondu
+    de sortie de 300 à 800 ms selon la longueur, jamais plus de la moitié du
+    son. Un son tout entier sous le seuil n'est pas touché. Rend le nouveau
+    tableau et ce qui a été fait, en secondes du son reçu."""
+    amplitude = np.max(np.abs(rendu), axis=1)
+    utiles = np.flatnonzero(amplitude > 10 ** (SEUIL_DEBUT_JINGLE_DB / 20))
+    if not len(utiles):
+        return rendu, {"debut": 0.0, "fin": len(rendu) / taux, "duree": len(rendu) / taux, "fondu_sortie_ms": 0}
+    debut = int(utiles[0])
+    energie = np.mean(rendu[debut:] ** 2, axis=1)
+    fenetre, pas = max(1, round(FENETRE_JINGLE_S * taux)), max(1, round(PAS_JINGLE_S * taux))
+    cumul = np.concatenate(([0.0], np.cumsum(energie)))
+    departs = np.arange(0, max(1, len(energie) - fenetre + 1), pas)
+    fins = np.minimum(departs + fenetre, len(energie))
+    niveaux = 10 * np.log10(np.maximum((cumul[fins] - cumul[departs]) / (fins - departs), 1e-20))
+    retenues = np.flatnonzero(niveaux >= niveaux.max() - SOUS_LE_SOMMET_JINGLE_DB)
+    fin = debut + int(fins[retenues[-1]])
+    coupe = rendu[debut:fin].copy()
+    duree = len(coupe) / taux
+    fondu_sortie = _fondu_sortie_jingle(duree)
+    for ms, sortie in ((FONDU_ENTREE_JINGLE_MS, False), (fondu_sortie, True)):
+        n = min(len(coupe) // 2, round(ms * taux / 1000))
+        if n:
+            rampe = np.linspace(0, 1, n)[:, None]
+            if sortie:
+                coupe[-n:] *= rampe[::-1]
+            else:
+                coupe[:n] *= rampe
+    return coupe, {"debut": debut / taux, "fin": fin / taux, "duree": duree, "fondu_sortie_ms": fondu_sortie}
 
 
 CRETE_VRAIE_MAX_DB = -1.0

@@ -458,7 +458,8 @@ deux vivent côte à côte.
   `cible_lufs`, avec ou sans limiteur, voit son son final remesuré après la boucle et les
   fondus, et corrigé d'un gain au-delà de 0,2 LU d'écart, sans dépasser −1 dBTP : elle peut
   rendre des octets un peu différents d'avant. **Une recette sans `cible_lufs` ne bouge pas
-  d'un octet.**
+  d'un octet.** Le même jour, la famille jingle propose en plus `coupe_jingle` (silence du
+  début, traîne de la fin, fondus courts) ; inerte par défaut, il ne touche aucune recette posée.
 - **Génération locale autorisée depuis le 11 septembre 2026.** ComfyUI et asset3d restent
   des moteurs externes, pilotés par des adaptateurs de l'atelier. Ne pas modifier leur
   installation ni télécharger leurs poids implicitement. L'import reste disponible.

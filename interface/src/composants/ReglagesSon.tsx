@@ -24,8 +24,8 @@ const fonduRegle = (ms: number) => ms !== FONDU_PAR_DEFAUT
 
 function resumeCoupe(r: RecetteSon, duree: number) {
   const aucune = r.debut < 0.005 && (r.fin == null || r.fin > duree - 0.005) && !fonduRegle(r.fondu_entree_ms) && !fonduRegle(r.fondu_sortie_ms) && !r.rogner_silence
-  if (aucune) return "aucune"
-  return `${virgule(r.debut, 2)} → ${r.fin != null ? virgule(r.fin, 2) : virgule(duree, 2)} s`
+  if (aucune) return r.coupe_jingle ? "coupe du jingle" : "aucune"
+  return `${virgule(r.debut, 2)} → ${r.fin != null ? virgule(r.fin, 2) : virgule(duree, 2)} s${r.coupe_jingle ? " · coupe du jingle" : ""}`
 }
 function resumeBoucle(r: RecetteSon, duree: number) {
   if (!r.boucle) return "non"
@@ -64,7 +64,7 @@ export function ReglagesSon({ son, recette, mesures, famille, occupe, onChange }
   // synchroniser (fragile ici : jsdom peut rejouer `toggle` à la pose de
   // l'attribut, hors interaction de l'auteur).
   const initiale = () => ({
-    coupe: recette.debut > 0 || recette.fin != null || fonduRegle(recette.fondu_entree_ms) || fonduRegle(recette.fondu_sortie_ms) || recette.rogner_silence,
+    coupe: recette.debut > 0 || recette.fin != null || fonduRegle(recette.fondu_entree_ms) || fonduRegle(recette.fondu_sortie_ms) || recette.rogner_silence || !!recette.coupe_jingle,
     niveau: recette.mono || recette.cible_lufs != null || !!recette.hauteur_demi_tons || !!recette.gain_db || recette.normaliser || recette.taux != null,
     boucle: recette.boucle,
   })
@@ -90,6 +90,9 @@ export function ReglagesSon({ son, recette, mesures, famille, occupe, onChange }
           <Curseur nom="Seuil de silence (dB)" valeur={recette.seuil_silence_db} min={-100} max={0} disabled={occupe} onChange={v => onChange("seuil_silence_db", v)} />
           <Curseur nom="Marge conservée (ms)" valeur={recette.marge_silence_ms} min={0} max={1000} disabled={occupe} onChange={v => onChange("marge_silence_ms", v)} />
         </>}
+        {/* Proposée par la famille jingle ; ailleurs, la case ne paraît que si la recette la porte déjà. */}
+        {(famille === "jingle" || recette.coupe_jingle) && <label className="block text-[13px]"><input type="checkbox" checked={!!recette.coupe_jingle} disabled={occupe} onChange={e => onChange("coupe_jingle", e.target.checked)} /> Coupe automatique du jingle (silence au début, traîne à la fin)</label>}
+        {recette.coupe_jingle && mesures?.coupe_jingle && <p className="text-[12px] text-encre-3">Coupé de {virgule(mesures.coupe_jingle.debut)} à {virgule(mesures.coupe_jingle.fin)} s · {virgule(mesures.coupe_jingle.duree, 1)} s gardées, fondu de sortie {mesures.coupe_jingle.fondu_sortie_ms} ms</p>}
         <Curseur nom="Fondu d’entrée (ms)" valeur={recette.fondu_entree_ms} min={0} max={Math.max(1000, duree * 1000)} disabled={occupe} onChange={v => onChange("fondu_entree_ms", v)} />
         <Curseur nom="Fondu de sortie (ms)" valeur={recette.fondu_sortie_ms} min={0} max={Math.max(1000, duree * 1000)} disabled={occupe} onChange={v => onChange("fondu_sortie_ms", v)} />
       </div>

@@ -4171,6 +4171,18 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · 5 ms de chaque côté",
   },
 
+  "son.coupe_jingle": {
+    nom: "Coupe automatique du jingle",
+    ou: "son",
+    groupe: "Régler — coupe et fondus",
+    quoi: "Ramène un rendu de 10 s au jingle utile : le silence du début et la traîne de la fin partent, avec des fondus courts.",
+    change:
+      "Le début est le premier son au-dessus de −45 dB ; la fin, le dernier moment à moins de 30 dB sous le sommet. Puis 10 ms de fondu d'entrée et 0,3 à 0,8 s de fondu de sortie selon la longueur. Posée avant le niveau.",
+    origine: "toi · coupée ; proposée par la famille jingle",
+    long:
+      "Reprise de la recette faite à la main le 10 octobre 2026 sur les rendus d'ACE-Step, qui donnait des jingles de 2 à 5 s. La mesure dit où le son a été coupé.",
+  },
+
   "son.niveau": {
     nom: "Niveau : normaliser, niveau visé, gain",
     ou: "son",

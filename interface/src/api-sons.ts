@@ -15,6 +15,9 @@ export type RecetteSon = {
    *  vraie à −1 dBTP (au lieu de plafonner le gain). Absent d'une recette
    *  d'avant le 10 octobre 2026 : coupé. */
   limiteur?: boolean
+  /** Coupe automatique d'un jingle (11 octobre 2026) : silence du début,
+   *  traîne de la fin, fondus courts. Proposée par la famille jingle. */
+  coupe_jingle?: boolean
 }
 export type MesuresSon = {
   duree: number; taux: number; canaux: number; echantillons: number
@@ -23,7 +26,10 @@ export type MesuresSon = {
   niveau?: {
     cible_lufs: number | null; applique: boolean; gain_db: number; plafonne: boolean; lufs_avant?: number; raison: string
     limiteur?: boolean; reduction_max_db?: number; securite_db?: number; lufs_apres?: number | null; crete_vraie_apres_db?: number | null
+    /** La vérification sur le son final (11 octobre 2026). */
+    lufs_final?: number | null; crete_vraie_finale_db?: number | null; correction_db?: number; visee_lufs?: number; relimite?: boolean
   } | null
+  coupe_jingle?: { debut: number; fin: number; duree: number; fondu_sortie_ms: number } | null
   boucle?: {
     active: boolean; debut: number; fin: number
     recale_zero?: boolean; fondu_ms?: number
