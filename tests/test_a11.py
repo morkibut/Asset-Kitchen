@@ -617,11 +617,36 @@ async def test_l_etat_dit_qu_il_travaille_puis_qu_il_a_fini(moteur, comfy):
     assert (await moteur.etat(comfy.travail)).fini is True
 
 
-async def test_un_travail_inconnu_de_comfyui_attend_plutot_que_d_echouer(moteur):
-    """Absent de l'historique veut dire *il attend son tour*, pas *il a raté*.
+async def test_un_travail_dans_la_file_attend_plutot_que_d_echouer(moteur, comfy):
+    """Absent de l'historique mais dans la file veut dire *il attend son tour*.
 
     Confondre les deux ferait déclarer échoué un clip qui n'a pas commencé.
     """
+    comfy.file_occupee = True
+    etat = await moteur.etat("un-autre-travail")
+    assert etat.fini is False and etat.echoue is False
+
+
+async def test_un_travail_oublie_par_comfyui_redemarre_echoue(moteur):
+    """Ni dans la file ni dans l'historique : ComfyUI a été redémarré.
+
+    Trouvé le 10 octobre 2026 : la reprise attendait trente minutes un travail
+    perdu, et toute la file locale restait bloquée derrière lui.
+    """
+    etat = await moteur.etat("un-travail-que-personne-ne-connait")
+    assert etat.fini is True and etat.echoue is True
+    assert "redémarré" in etat.raison and "se relance" in etat.raison
+
+
+async def test_une_file_illisible_ne_fait_pas_echouer(comfy):
+    """Dans le doute, on attend : une file qui ne répond pas n'est pas vide."""
+
+    def sans_file(requete: httpx.Request) -> httpx.Response:
+        if requete.url.path == "/queue":
+            return httpx.Response(500, json={})
+        return comfy.repondre(requete)
+
+    moteur = MoteurDeLaMaison(transport=httpx.MockTransport(sans_file))
     etat = await moteur.etat("un-travail-que-personne-ne-connait")
     assert etat.fini is False and etat.echoue is False
 

@@ -515,8 +515,25 @@ class MoteurDeLaMaison:
         histoire = await self._json("GET", f"/history/{travail}")
         entree = histoire.get(travail)
         if not entree:
-            # Absent de l'historique : soit il attend son tour, soit il calcule.
-            return EtatTravail(travail=travail, fini=False)
+            # Absent de l'historique : soit il attend son tour, soit il calcule
+            # — **et alors il est dans la file**. Absent des deux, c'est que
+            # ComfyUI a été redémarré et l'a oublié : sans cette lecture, la
+            # reprise attendait trente minutes un travail qui n'existe plus, et
+            # bloquait toute la file locale derrière lui (10 octobre 2026).
+            if await self._dans_la_file(travail) is not False:
+                return EtatTravail(travail=travail, fini=False)
+            # Il a pu finir entre les deux lectures : l'historique se relit.
+            entree = (await self._json("GET", f"/history/{travail}")).get(travail)
+            if not entree:
+                return EtatTravail(
+                    travail=travail, fini=True, echoue=True,
+                    raison=(
+                        f"ComfyUI ne connaît plus le travail {travail} : ni dans "
+                        f"sa file, ni dans son historique. Il a sans doute été "
+                        f"redémarré. Le calcul est perdu — il ne coûtait rien, "
+                        f"il se relance."
+                    ),
+                )
         statut = entree.get("status") or {}
         if statut.get("status_str") == "error":
             return EtatTravail(
@@ -525,6 +542,21 @@ class MoteurDeLaMaison:
         if statut.get("completed"):
             return EtatTravail(travail=travail, fini=True, noeuds_caches=_noeuds_caches(statut))
         return EtatTravail(travail=travail, fini=False)
+
+    async def _dans_la_file(self, travail: str) -> bool | None:
+        """Le travail attend-il ou calcule-t-il ? `None` si la file est illisible.
+
+        Illisible ne veut pas dire absent : dans le doute, l'appelant attend.
+        """
+        try:
+            file = await self._json("GET", "/queue", delai=DELAI_COURT)
+            lignes = list(file["queue_running"]) + list(file["queue_pending"])
+            return any(
+                isinstance(ligne, list) and len(ligne) > 1 and str(ligne[1]) == travail
+                for ligne in lignes
+            )
+        except Exception:
+            return None
 
     async def recuperer(self, travail: str) -> ClipProduit:
         """Le clip fini, et **zéro dollar qui n'est pas un zéro d'ignorance**.
