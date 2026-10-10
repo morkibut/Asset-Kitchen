@@ -308,3 +308,26 @@ async def test_une_reprise_impossible_est_refusee_en_clair(son):  # noqa: F811
     with pytest.raises(TravailRefuse, match="famille"):
         await atelier.travaux_audio.preparer(projet, {"cle": "k", "modele": medium["modele"], "prompt": "x", "secondes": 30,
                                                       "source": fete["identifiant"]})
+
+
+def test_les_trois_modeles_d_ace_step_ne_different_que_par_le_poids_les_pas_et_le_guidage():
+    """Base et XL turbo (10 octobre 2026) : même texte, même graphe que le
+    turbo ; seuls le fichier de poids, les pas et le cfg du rendu changent —
+    réglages des gabarits officiels de ComfyUI. Le turbo reste le défaut."""
+    from atelier.audio.graphes import FAMILLES
+    from atelier.audio.texte import gabarit_de
+    attendus = {"ace-step-15-turbo": ("acestep_v1.5_turbo.safetensors", 8, 1),
+                "ace-step-15-base": ("acestep_v1.5_base.safetensors", 50, 6),
+                "ace-step-15-xl-turbo": ("acestep_v1.5_xl_turbo_bf16.safetensors", 8, 1)}
+    turbo = CONSTRUCTEURS[ACE]()
+    for identifiant, (poids, pas, cfg) in attendus.items():
+        profil = CONSTRUCTEURS[identifiant]()
+        assert profil["identifiant"] == identifiant and gabarit_de("musique", identifiant) == "ace-musique"
+        assert profil["graphe"]["1"]["inputs"]["unet_name"] == poids
+        assert (profil["graphe"]["8"]["inputs"]["steps"], profil["graphe"]["8"]["inputs"]["cfg"]) == (pas, cfg)
+        assert profil["parametres"]["pas"]["defaut"] == pas
+        assert profil["liaisons"] == turbo["liaisons"]
+        assert any(f["fichier"] == poids and f.get("source") for f in fichiers_requis(normaliser(profil)))
+        graphe = composer(normaliser(profil), prompt="dwarven work song", secondes=30)
+        assert graphe["8"]["inputs"]["steps"] == pas
+    assert FAMILLES["musique"][0] == ACE

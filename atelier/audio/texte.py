@@ -204,6 +204,8 @@ MOTEUR_SAO = "sa-open-1"
 MOTEUR_ACE = "ace-step-15-turbo"
 # La reprise d'un son (BO) : le même texte que le turbo, seul le graphe change.
 MOTEUR_ACE_REPRISE = "ace-step-15-reprise"
+# Les trois modèles d'ACE-Step 1.5 lisent le même texte (guide officiel).
+MOTEURS_ACE = (MOTEUR_ACE, "ace-step-15-base", "ace-step-15-xl-turbo", MOTEUR_ACE_REPRISE)
 MOTEUR_YUE = "yue2-int8"
 # Le geste en deux temps (SN9) : « Écrire la partition » (le premier étage
 # seul) et « Jouer cette partition » (le second, reçoit `partition`). Même
@@ -278,7 +280,7 @@ def gabarit_de(famille: str, moteur: str | None) -> str:
         if musical:
             return prefixe + "-musique"
         return prefixe + ("-ambiance" if famille == "ambiance" else "-bruitage")
-    if moteur in (MOTEUR_ACE, MOTEUR_ACE_REPRISE):
+    if moteur in MOTEURS_ACE:
         return "ace-musique"
     if moteur in MOTEURS_YUE:
         return "yue-chanson"
