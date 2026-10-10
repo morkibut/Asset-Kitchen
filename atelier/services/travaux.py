@@ -390,7 +390,7 @@ class ServiceTravaux:
         d = travail["demande"]
         return DemandeClip(texte=d["prompt_video"], image=image, secondes=d["secondes"],
                            resolution=d["resolution"], proportions=d["proportions"], options=d["options_video"],
-                           image_de_fin=fin)
+                           image_de_fin=fin, negatif=d.get("prompt_negatif_video", ""))
 
     def _estimation_sonore(self, methode: dict[str, Any]) -> float:
         """Le temps d'un tirage, relu au moment du lancement sur les mesures
@@ -885,7 +885,11 @@ class ServiceTravaux:
                     self._garder(travail)
                     await self.a.animation.suivre(travail["clip"], reprise=reprise)
                     locale = self.a.animation.etape_locale(travail["clip"])
-                    if locale["etat"] != "termine":
+                    # Relevé le 10 octobre 2026 : étape arrêtée par la veille
+                    # (« échoue », « à reprendre ») alors que son clip était
+                    # arrivé, fichiers en place. Le clip fait foi : on conclut.
+                    arrive = self.a.animation.arrive(self.a.animation.lire(travail["clip"]))
+                    if locale["etat"] != "termine" and not arrive:
                         travail["etat"] = "annule" if locale["etat"] == "annule" else "externe_inconnu" if locale["etat"] == "externe_inconnu" else "a_verifier"
                         if locale["etat"] == "annule":
                             travail["reserve"] = None

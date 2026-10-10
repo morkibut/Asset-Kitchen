@@ -475,8 +475,25 @@ class ServiceFileLocale:
         return self.lire(identifiant)
 
     async def attendre_fin(self, identifiant: str) -> dict[str, Any]:
-        if identifiant in self._taches:
-            await asyncio.shield(self._taches[identifiant])
+        """L'étape relue une fois sa tâche finie — **même annulée par la file**.
+
+        Relevé le 10 octobre 2026 (mort du nain, deux clips) : la veille a
+        annulé la tâche d'une étape à l'échéance pendant que son rendu
+        s'encaissait. `asyncio.shield` protège la tâche de l'annulation de
+        celui qui attend, pas l'inverse : l'annulation de l'étape remontait
+        jusqu'au travail de production, qui mourait sans écrire son état —
+        resté « en cours » sur le disque, relu « suivi interrompu ». Une
+        annulation qui n'est pas la nôtre n'est donc pas propagée : celui qui
+        attend relit l'étape, comme pour toute autre fin.
+        """
+        tache = self._taches.get(identifiant)
+        if tache is not None:
+            try:
+                await asyncio.shield(tache)
+            except asyncio.CancelledError:
+                courante = asyncio.current_task()
+                if not tache.cancelled() or (courante is not None and courante.cancelling()):
+                    raise
         return self.lire(identifiant)
 
     async def attendre_tout(self) -> None:

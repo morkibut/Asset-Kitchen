@@ -519,6 +519,10 @@ class ServiceAnimation:
                 # sans cette clé est un clip qui finissait où il voulait — tous
                 # ceux d'avant cette tranche, et c'est la vérité.
                 **({"image_de_fin": image_de_fin} if image_de_fin and demande.image_de_fin else {}),
+                # Le « à éviter » de l'auteur (10 octobre 2026), écrit seulement
+                # quand il y en a un : une génération sans cette clé est partie
+                # avec le texte d'interdiction fixe seul — c'est la vérité.
+                **({"prompt_negatif": demande.negatif} if demande.negatif else {}),
             },
             parametres_resolus=_resolus(modele, demande),
             emplacements=[Emplacement(rang=0)],
@@ -589,6 +593,12 @@ class ServiceAnimation:
         animateur = self._pour(modele)
         if self._inscrire_moteur_local(animateur) != etape["moteur"]:
             raise SuiviLocalInterrompu("L'adresse du moteur a changé. Rétablir le moteur de cette demande avant de reprendre.")
+        if self.arrive(generation):
+            # Relevé le 10 octobre 2026 : une reprise (de la veille ou d'un
+            # travail) d'une étape coupée pendant l'encaissement. Le clip est
+            # déjà sur le disque ; le redemander au moteur ne ferait que risquer
+            # de le rater après coup.
+            return {"generation": generation.identifiant, "reussie": True, "raison": ""}
         if etape["travail_externe"]:
             generation.clip.travail = etape["travail_externe"]
             generation.clip.recupere = True
@@ -601,7 +611,7 @@ class ServiceAnimation:
             d = etape["parametres"]["demande"]
             demande = DemandeClip(texte=d["prompt"], image=self._file_locale.entree(etape["identifiant"]),
                 secondes=d["secondes"], proportions=d["proportions"], resolution=d["resolution"], options=d["options"],
-                image_de_fin=self._file_locale.fin(etape["identifiant"]))
+                image_de_fin=self._file_locale.fin(etape["identifiant"]), negatif=d.get("prompt_negatif", ""))
             manque = indisponible_de(animateur)
             if manque:
                 raise SansCle(manque)
@@ -946,6 +956,13 @@ class ServiceAnimation:
         deja = self._base.lire(identifiant)
         if deja is not None and deja.clip is not None and deja.clip.controle:
             return deja
+        # Relevé le 10 octobre 2026 : un clip déjà arrivé, fichiers en place,
+        # dont l'étape locale a été arrêtée par la veille pendant qu'il
+        # s'encaissait. Le suivre de nouveau relançait l'étape et redemandait
+        # le travail au moteur — qui peut l'avoir oublié et faire rater, après
+        # coup, un clip réussi. Il est là : rien à suivre.
+        if deja is not None and self.arrive(deja):
+            return deja
         if self._file_locale is not None:
             etape = self._file_locale.trouver("video:" + identifiant)
             if etape:
@@ -961,6 +978,21 @@ class ServiceAnimation:
 
     def etape_locale(self, identifiant: str) -> dict[str, Any] | None:
         return self._file_locale.trouver("video:" + identifiant) if self._file_locale is not None else None
+
+    def arrive(self, generation: Generation | None) -> bool:
+        """Vrai quand le clip est **là** : réussi, son fichier brut sur le disque
+        et ses images tirées. C'est le disque qui fait foi, pas l'état de
+        l'étape locale qui l'a fabriqué — celle-ci peut avoir été arrêtée par
+        la veille après coup (relevé du 10 octobre 2026)."""
+        if generation is None or generation.clip is None or generation.statut != Statut.REUSSIE:
+            return False
+        if not generation.clip.images or not generation.emplacements:
+            return False
+        resultat = generation.emplacements[0].resultat
+        if resultat is None or not resultat.fichier or not self._fichiers.existe(resultat.fichier):
+            return False
+        dossier = self._fichiers.generations / generation.identifiant / f"{generation.emplacements[0].rang}-images"
+        return dossier.is_dir() and any(dossier.glob("*.png"))
 
     # ── L'attente et l'encaissement ──────────────────────────────────────────
 

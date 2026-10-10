@@ -44,7 +44,17 @@ DEFAUTS = {
     # l'identifiant d'une image de ce jeu, composée sur la même toile que le
     # départ.
     "image_de_fin": None,
+    # **Ce que la vidéo doit éviter**, en plus du texte d'interdiction fixe du
+    # moteur (relevé le 10 octobre 2026 : la mort du nain n'avait aucun moyen
+    # de dire « pas de fond vert, pas de second personnage »). Même nom que
+    # l'image (`prompt_negatif_image`). **Ajouté au texte fixe, jamais à sa
+    # place** : le texte fixe vient du banc payé et tient le pixel art droit.
+    "prompt_negatif_video": "",
 }
+
+# La longueur d'un « à éviter » vidéo : de quoi nommer une dizaine de défauts,
+# pas de quoi noyer le texte fixe qui le précède dans l'encodeur.
+NEGATIF_VIDEO_MAX = 500
 
 # La valeur de `image_de_fin` qui veut dire « finir sur l'image de départ ».
 FIN_SUR_LE_DEPART = "depart"
@@ -54,7 +64,7 @@ FIN_SUR_LE_DEPART = "depart"
 # répétée avec sa clé d'avant RV5 se relit, au lieu de se voir refusée comme
 # « une autre demande » parce que le dictionnaire a grandi.
 TARDIFS = {"mouvement": None, "correction_geste": "", "style_combat": None, "part_sujet": 0.80,
-           "image_de_fin": None}
+           "image_de_fin": None, "prompt_negatif_video": ""}
 
 
 def images_de_la_bande(total: int, voulues: int, *, boucle_fermee: bool = False) -> list[int]:
@@ -123,9 +133,14 @@ def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> 
     for nom in ("reference_asset", "modele_image", "resolution_image", "image_de_fin"):
         if demande[nom] is not None and (not isinstance(demande[nom], str) or not demande[nom].strip()):
             raise TravailRefuse(f"« {nom} » doit être un identifiant ou rester vide.")
-    for nom in ("prompt_image", "prompt_negatif_image", "proportions_image", "resolution", "proportions"):
+    for nom in ("prompt_image", "prompt_negatif_image", "prompt_negatif_video", "proportions_image", "resolution", "proportions"):
         if not isinstance(demande[nom], str):
             raise TravailRefuse(f"« {nom} » doit être du texte.")
+    demande["prompt_negatif_video"] = demande["prompt_negatif_video"].strip()
+    if len(demande["prompt_negatif_video"]) > NEGATIF_VIDEO_MAX:
+        raise TravailRefuse(f"« prompt_negatif_video » ne doit pas dépasser {NEGATIF_VIDEO_MAX} caractères.")
+    if any(ord(c) < 32 for c in demande["prompt_negatif_video"]):
+        raise TravailRefuse("« prompt_negatif_video » doit tenir sur une ligne, sans caractère de contrôle.")
     for nom in ("livrer_provisoire", "repris_image"):
         if not isinstance(demande[nom], bool):
             raise TravailRefuse(f"« {nom} » doit être activé ou désactivé.")

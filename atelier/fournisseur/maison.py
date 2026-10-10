@@ -517,6 +517,7 @@ class MoteurDeLaMaison:
             image_de_fin=nom_fin,
             image=nom_depose,
             texte=demande.texte,
+            a_eviter=demande.negatif,
             images=modele.images_reelles(demande.secondes),
             largeur=largeur,
             hauteur=hauteur,
