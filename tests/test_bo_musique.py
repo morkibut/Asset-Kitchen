@@ -330,7 +330,11 @@ def test_les_trois_modeles_d_ace_step_ne_different_que_par_le_poids_les_pas_et_l
         assert any(f["fichier"] == poids and f.get("source") for f in fichiers_requis(normaliser(profil)))
         graphe = composer(normaliser(profil), prompt="dwarven work song", secondes=30)
         assert graphe["8"]["inputs"]["steps"] == pas
-    assert FAMILLES["musique"][0] == ACE
+    # Le XL turbo passe devant (jugé à l'oreille, 10 octobre 2026) ; le turbo
+    # reste juste derrière, pour reprendre quand le XL n'est pas installé.
+    assert FAMILLES["musique"][:3] == ("ace-step-15-xl-turbo", ACE, "ace-step-15-base")
+    assert FAMILLES["jingle"][:2] == ("ace-step-15-xl-turbo", ACE)
+    assert REPRISES["ace-step-15-xl-turbo"] == REPRISES[ACE]
 
 
 # ── La saturation des musiques (10 octobre 2026) ───────────────────────

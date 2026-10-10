@@ -191,8 +191,12 @@ async def test_moteurs_par_famille_lit_ce_qui_est_installe(son):
     await atelier.installation_son.installer(identifiants=["sa3-small-sfx", "ace-step-15-turbo"])
     familles = atelier.installation_son.moteurs_par_famille(projet)
     assert familles["bruitage"]["moteur"] == "sa3-small-sfx" and familles["ambiance"]["moteur"] == "sa3-small-sfx"
+    # Le XL turbo, premier de la liste, n'est pas installé : le turbo reprend.
     assert familles["musique"]["moteur"] == "ace-step-15-turbo" and familles["jingle"]["moteur"] == "ace-step-15-turbo"
     assert familles["chanson"]["moteur"] is None
+    await atelier.installation_son.installer(identifiants=["ace-step-15-xl-turbo"])
+    familles = atelier.installation_son.moteurs_par_famille(projet)
+    assert familles["musique"]["moteur"] == "ace-step-15-xl-turbo" and familles["jingle"]["moteur"] == "ace-step-15-xl-turbo"
     # Ce que l'écran propose : les moteurs qui savent faire ce genre de son.
     assert familles["bruitage"]["possibles"] == ["sa3-small-sfx", "sa-open-1", "sa3-medium"]
     assert "yue2-int8" not in familles["ambiance"]["possibles"]

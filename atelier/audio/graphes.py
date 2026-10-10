@@ -88,8 +88,10 @@ FAMILLES = {
     "bruitage": ("sa3-small-sfx", "sa-open-1"),
     "interface": ("sfxr",),
     "ambiance": ("sa3-small-sfx", "sa3-medium"),
-    "musique": ("ace-step-15-turbo", "ace-step-15-base", "ace-step-15-xl-turbo", "sa3-medium"),
-    "jingle": ("ace-step-15-turbo", "sa3-medium"),
+    # Le XL turbo d'abord : jugé bien meilleur à l'oreille par l'auteur le
+    # 10 octobre 2026. S'il n'est pas installé, le turbo reprend la main.
+    "musique": ("ace-step-15-xl-turbo", "ace-step-15-turbo", "ace-step-15-base", "sa3-medium"),
+    "jingle": ("ace-step-15-xl-turbo", "ace-step-15-turbo", "sa3-medium"),
     "chanson": ("yue2-int8",),
     "voix": (),
 }
@@ -361,7 +363,10 @@ def ace_step_15_reprise(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qw
 # Le profil de reprise de chaque moteur qui en a un : une demande qui part
 # d'un son existant (`source`) passe du premier au second. Un moteur absent
 # d'ici ne sait pas reprendre un son, et la demande est refusée en clair.
-REPRISES = {"ace-step-15-turbo": "ace-step-15-reprise"}
+# Le XL turbo, moteur de la musique par défaut depuis le 10 octobre 2026, passe
+# par la même reprise (poids du turbo) : sans cette ligne, toute musique partie
+# d'un son serait refusée dès que le XL est installé.
+REPRISES = {"ace-step-15-turbo": "ace-step-15-reprise", "ace-step-15-xl-turbo": "ace-step-15-reprise"}
 
 
 def yue2_int8(*, checkpoint="yue2_3b_int8_convrot.safetensors"):
