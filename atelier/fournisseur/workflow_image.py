@@ -12,7 +12,8 @@ from atelier.domaine.catalogue import Modele, Option
 from atelier.domaine.workflow import MASQUE, WorkflowRefuse, composer, normaliser, tirer_graine
 from atelier.fournisseur.port import ImageProduite
 from atelier.fournisseur.workflow import verifier_masque
-from atelier.services.file_locale import AcceptationLocaleInconnue, SuiviLocalInterrompu
+from atelier.services.file_locale import (FINIS, AcceptationLocaleInconnue, SuiviLocalInterrompu, TravailExternePerdu,
+    resoumission_permise)
 from atelier.domaine.erreurs import FournisseurIndisponible
 
 
@@ -53,9 +54,17 @@ class FournisseurWorkflowImage:
     def __init__(self, profils, file_locale, fabrique_moteur):
         self.profils, self.file_locale, self.fabrique_moteur = profils, file_locale, fabrique_moteur
         self.avant_soumission = None
-        self.intervalle = 2.0
+        self.intervalle = 1.0  # comme le son : une lecture de `/history` ne coûte presque rien
         self.delai = 1800.0
         file_locale.inscrire_executeur("image", self._executer)
+        # Une image restée ouverte d'une séance précédente doit pouvoir être
+        # reprise par la veille de la file dès le démarrage : son moteur est
+        # raccordé ici, sans attendre qu'une nouvelle image le demande.
+        try:
+            if any(e["nature"] == "image" and e["etat"] not in FINIS for e in file_locale.lister()["etapes"]):
+                self._inscrire_moteur()
+        except Exception:  # noqa: BLE001 — un moteur mal réglé se dira à la reprise
+            pass
 
     def indisponible(self):
         return None
@@ -272,6 +281,11 @@ class FournisseurWorkflowImage:
                 # 2026, la file restait arrêtée jusqu'à une reprise à la main).
                 await asyncio.sleep(self.intervalle)
                 continue
+            if etat.perdu and resoumission_permise(etape):
+                # ComfyUI ne connaît plus ce travail, et c'est une reprise
+                # automatique : la file le soumettra de nouveau, une fois.
+                # Hors de ce cas, il échoue comme avant (juste en dessous).
+                raise TravailExternePerdu(etat.raison)
             if etat.echoue:
                 return {"reussie": False, "raison": etat.raison}
             if etat.fini:

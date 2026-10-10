@@ -8,7 +8,10 @@ routeur = APIRouter()
 @routeur.get("/local-queue")
 def lire(requete: Request):
     file = requete.app.state.atelier.file_locale
-    return {**file.lister(), "mesures": file.mesures()}
+    # `alerte` : la phrase de la veille quand la file n'avance plus, sinon `null`.
+    # `retard_boucle_s` : de combien le dernier réveil de la veille a été en
+    # retard — une boucle affamée se voit là avant de se voir ailleurs.
+    return {**file.lister(), "mesures": file.mesures(), "alerte": file.alerte(), "retard_boucle_s": file.retard_boucle_s}
 
 
 @routeur.get("/local-queue/engines")

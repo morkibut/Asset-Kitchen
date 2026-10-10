@@ -88,6 +88,24 @@ test("l'écran dit « sujet », jamais « asset »", async () => {
     expect(element.getAttribute("aria-label")).not.toMatch(/asset/i)
 })
 
+// La veille de la file locale (10 octobre 2026) : une file qui n'a pas avancé
+// depuis trop longtemps porte une alerte, et l'écran la montre telle quelle.
+test("une file locale arrêtée montre son alerte, qui nomme l'étape qui la tient", async () => {
+  vi.spyOn(fileLocale, "lire").mockResolvedValue({ etapes: [], regle: "", mesures: [], alerte: {
+    phrase: "La file locale n'a pas avancé depuis 14 min. Elle attend l'étape audio « ComfyUI:son » du projet jeu (5b8af19a), à reprendre : délai dépassé.",
+    etape: "5b8af19aff88b77da76cc8bc7417b2c4", depuis_s: 840, seuil_s: 840 } })
+  render(<Fabrications projet="jeu" chantier={[]} clips={[]} personnages={[personnage]} {...RIEN} />)
+  const alerte = await screen.findByRole("alert", { name: "La file locale n'avance plus" })
+  expect(alerte.textContent).toContain("n'a pas avancé depuis 14 min")
+  expect(alerte.textContent).toContain("5b8af19a")
+})
+
+test("sans alerte, aucun bandeau de file arrêtée", async () => {
+  render(<Fabrications projet="jeu" chantier={[]} clips={[]} personnages={[personnage]} {...RIEN} />)
+  await screen.findByText("Aucune fabrication pour ces filtres.")
+  expect(screen.queryByRole("alert", { name: "La file locale n'avance plus" })).toBeNull()
+})
+
 // RV9 : les trois portes « Préparer une image », « Animer un sujet » et
 // « Préparer une vidéo »/« Un son » se réduisent à un seul bouton de départ.
 test("« Nouvelle fabrication » est le seul bouton de départ, et il ouvre la fenêtre", () => {

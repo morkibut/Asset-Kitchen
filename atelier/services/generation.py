@@ -1420,7 +1420,7 @@ class ServiceGenerations:
         return {"cout_usd": 0.0, "nature": "local", "mesures": mesures,
             "raison": "Durée non encore mesurée pour ce workflow." if not mesures else "Durées des calculs déjà terminés, sans multiplier le chargement initial."}
 
-    async def suivre_locale(self, identifiant: str) -> Generation:
+    async def suivre_locale(self, identifiant: str, rang: int | None = None) -> Generation:
         generation = self._base.lire(identifiant)
         if generation is None:
             raise GenerationInconnue(identifiant)
@@ -1430,7 +1430,9 @@ class ServiceGenerations:
         if suivre is None:
             raise DemandeRefusee("Cette génération n'a pas de suivi local récupérable.")
         for emplacement in generation.emplacements:
-            if emplacement.statut == Statut.REUSSIE:
+            # `rang` : un seul emplacement, celui dont l'étape locale vient de
+            # finir (`Atelier._apres_fin_locale`) — sans lui, tous.
+            if emplacement.statut == Statut.REUSSIE or (rang is not None and emplacement.rang != rang):
                 continue
             # Le fournisseur refuse si aucune étape durable n'existe : ce
             # geste ne reconstruit jamais un envoi à partir des réglages actuels.

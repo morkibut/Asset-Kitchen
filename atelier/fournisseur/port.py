@@ -178,6 +178,13 @@ class EtatTravail:
     echoue: bool = False
     raison: str = ""
     noeuds_caches: frozenset[str] = frozenset()
+    # **Le moteur ne connaît plus ce travail** (10 octobre 2026) : ni dans sa
+    # file, ni dans son historique — ComfyUI a été redémarré. C'est un échec
+    # (`echoue` reste vrai, rien ne change pour qui ne lit que lui), mais un
+    # échec d'une sorte précise : le calcul n'a rien produit et rien coûté.
+    # La file locale s'en sert pour le soumettre de nouveau **une fois**, et
+    # seulement pendant une reprise automatique (`ServiceFileLocale.verifier`).
+    perdu: bool = False
 
 
 class PortAnimateur(Protocol):

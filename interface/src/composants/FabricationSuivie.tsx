@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { api, dollars, duree, prix, Refus, type Asset, type CaseImageDeDepart, type EtatDuMoteur, type Generation, type Modele, type ModeleVideo, type Mouvement, type MouvementDeLaPose, type Personnage } from "../api"
 import { modeleParDefaut } from "./ToileFabrique"
 import { travaux, NOM_DE_L_ETAPE, NOM_DE_L_ETAT, NOM_DE_LA_PHASE, type CaseSerie, type DemandeTravail, type Serie, type Travail, type TravailSuivi } from "../api-travaux"
-import { fileLocale, type EtapeLocale, type MoteurLocal } from "../api-file-locale"
+import { fileLocale, type AlerteFileLocale, type EtapeLocale, type MoteurLocal } from "../api-file-locale"
 import { tempsDuRetour } from "../retours"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE, type OptionsAnimer } from "../fabrication"
 import { vignetteAsset } from "./Apercu"
@@ -641,6 +641,14 @@ export function SuiviDesTravaux({ projet, personnages, chantier = [], clips = []
   onCalqueEquipement?: OuvrirCalqueEquipement; onAsset?: (id: string) => void; onToile?: (id: string) => void; onSon?: (id: string) => void
 }) {
   const { lignes, erreur, setErreur, relireLesTravaux, poserEtatLocal } = useLignesDeFabrication({ projet, personnages, chantier, clips })
+  // La veille de la file locale : son alerte se relit avec la file, toutes les 5 s.
+  const [alerteLocale, setAlerteLocale] = useState<AlerteFileLocale | null>(null)
+  useEffect(() => {
+    let vivant = true
+    const lire = () => void fileLocale.lire().then((f) => { if (vivant) setAlerteLocale(f.alerte ?? null) }).catch(() => {})
+    lire(); const intervalle = window.setInterval(lire, 5000)
+    return () => { vivant = false; window.clearInterval(intervalle) }
+  }, [])
   const [moteurs, setMoteurs] = useState<MoteurLocal[]>([])
   const [ouvert, setOuvert] = useState<TravailSuivi | null>(null)
   const [humeur, setHumeur] = useState<Humeur | "">("")
@@ -683,6 +691,9 @@ export function SuiviDesTravaux({ projet, personnages, chantier = [], clips = []
       <label className="flex flex-1 flex-col gap-[4px] text-[12px] text-encre-3"><Libelle aide="fabrication.recherche">Rechercher une fabrication</Libelle><input type="search" value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder="Demande ou modèle…" className={CHAMP} /></label>
       <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">État<select value={humeur} onChange={(e) => setHumeur(e.target.value as Humeur | "")} className={CHAMP}><option value="">Toutes</option>{(Object.keys(NOM_DE_L_HUMEUR) as Humeur[]).map((h) => <option key={h} value={h}>{NOM_DE_L_HUMEUR[h]}</option>)}</select></label>
     </div>
+    {/* La veille de la file locale : une file qui n'avance plus le dit ici,
+        en nommant l'étape qui la tient — elle attendait sinon sans un mot. */}
+    {alerteLocale && <p role="alert" aria-label="La file locale n'avance plus" className="mt-[14px] rounded-7 border border-echec p-[14px] text-[13px] text-echec">{alerteLocale.phrase}</p>}
     {erreur && <p role="alert" className="mt-[14px] text-echec">{erreur}</p>}
     <div className="mt-[14px] space-y-[8px]">
       {groupes.map((groupe) => {

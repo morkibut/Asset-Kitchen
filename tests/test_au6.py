@@ -17,10 +17,13 @@ from atelier.depot import Fichiers
 from atelier.domaine.animation import DemandeClip, Tarification
 from atelier.services import Atelier
 from atelier.services.evenements import Diffusion
-from atelier.services.file_locale import ServiceFileLocale, FileLocaleRefusee
+from atelier.services.file_locale import (ESTIMATION_PAR_DEFAUT_S, MARGE_ECHEANCE, PROLONGATION_MIN_S,
+    FileLocaleRefusee, ServiceFileLocale, SuiviLocalInterrompu, TravailExternePerdu)
 from tests.conftest import image_sujet
 from tests.test_a9 import AnimateurDouble, MELE, clip_mp4
 from tests.test_au3 import production
+from tests.test_au14_generation import sonore, preparer as preparer_son, lancer as lancer_son
+from tests.test_au7_au8 import raccorder
 
 
 async def disponible():
@@ -412,3 +415,374 @@ async def test_une_etape_en_attente_orpheline_ne_bloque_plus_la_file(file):
     await asyncio.wait_for(file.attendre_fin(suivante["identifiant"]), timeout=5)
     assert file.lire(suivante["identifiant"])["etat"] == "termine"
     assert file.lire(orpheline["identifiant"])["etat"] == "en_attente"
+
+
+# ── La veille de la file (10 octobre 2026) ───────────────────────────────────
+#
+# Trouvé en produisant les sons de Cœur de Pierre : des étapes passées « à
+# reprendre » après une seule lecture d'état ratée, alors que ComfyUI avait fini
+# leur calcul ; personne ne les a reprises, et toute la file a attendu derrière
+# elles, sans un mot. Chaque essai ci-dessous avance une horloge doublée au lieu
+# d'attendre, et appelle le passage de veille (`verifier`) à la main — sauf
+# celui qui vérifie que la coroutine de veille, elle, tourne vraiment.
+
+
+class Horloge:
+    def __init__(self):
+        self.t = 1_000_000.0
+
+    def __call__(self):
+        return self.t
+
+
+def moteur_qui_a(travaux, etat=None):
+    """Un moteur doublé dont la file est `travaux` (une liste qu'on remplit
+    après l'envoi) : occupé dès qu'elle porte un travail, libre sinon."""
+    async def observer():
+        return {"etat": etat or ("occupe" if travaux else "disponible"), "travaux": list(travaux), "temperature": "inconnue"}
+    return observer
+
+
+async def attendre_que(condition, secondes=5):
+    limite = time.monotonic() + secondes
+    while not condition() and time.monotonic() < limite:
+        await asyncio.sleep(0.01)
+    assert condition()
+
+
+async def test_orpheline_apres_redemarrage_est_reprise_par_la_veille_sans_nouvel_envoi(file):
+    """Promesse 1 : un atelier arrêté pendant un calcul laisse une étape « en
+    cours » que plus personne ne suit. L'atelier suivant la reprend de lui-même
+    (son numéro de travail est relu, rien n'est soumis) ; une étape qui n'avait
+    rien soumis reste de côté et ne bloque rien (essai juste au-dessus)."""
+    envois, relus = [], []
+    async def premier(e):
+        file.engager(e["identifiant"])
+        file.connaitre_externe(e["identifiant"], "travail-17")
+        envois.append(e["identifiant"])
+        await asyncio.Event().wait()
+    file.inscrire_executeur("video", premier)
+    etape = preparer(file, "coupee-par-l-arret")
+    await file.lancer(etape["identifiant"])
+    await attendre_que(lambda: envois)
+    await file.fermer()  # l'atelier s'arrête
+    assert file.lire(etape["identifiant"])["etat"] == "a_reprendre"
+
+    suivant = ServiceFileLocale(file.fichiers, Diffusion())
+    suivant.inscrire_moteur("moteur-test", "Moteur doublé", disponible)
+    async def relire(e):
+        assert e["travail_externe"] == "travail-17" and e["soumission_engagee"]
+        relus.append(e["travail_externe"])
+        return {"fichier": "relu.png"}
+    suivant.inscrire_executeur("video", relire)
+    suivant.intervalle_veille = 0.01
+    suivant.demarrer_veille()
+    try:
+        await attendre_que(lambda: suivant.lire(etape["identifiant"])["etat"] == "termine")
+    finally:
+        await suivant.fermer()
+    fini = suivant.lire(etape["identifiant"])
+    assert relus == ["travail-17"] and len(envois) == 1
+    assert fini["reprises_auto"] == 1
+
+
+async def test_echeance_depassee_mais_le_moteur_calcule_encore_elle_est_prolongee(file):
+    """Promesse 2, premier cas : l'échéance (l'estimation × 1,2) passe, le moteur
+    a toujours le travail dans sa file — on prolonge de 20 % de l'estimation
+    (au moins une minute), le calcul continue, et on redemandera."""
+    horloge = Horloge()
+    file.horloge = horloge
+    chez_comfy = []
+    file.inscrire_moteur("moteur-test", "Moteur doublé", moteur_qui_a(chez_comfy))
+    parti, finir = asyncio.Event(), asyncio.Event()
+    async def executer(e):
+        file.engager(e["identifiant"])
+        file.connaitre_externe(e["identifiant"], "travail-long")
+        chez_comfy.append("travail-long")
+        parti.set()
+        await finir.wait()
+        return {"fichier": "long.png"}
+    file.inscrire_executeur("video", executer)
+    etape = preparer(file, "long")
+    await file.lancer(etape["identifiant"])
+    await asyncio.wait_for(parti.wait(), 2)
+    lu = file.lire(etape["identifiant"])
+    # Aucune mesure encore : l'estimation de repli, dix minutes.
+    assert lu["estimation_s"] == ESTIMATION_PAR_DEFAUT_S
+    assert lu["echeance"] == pytest.approx(horloge.t + ESTIMATION_PAR_DEFAUT_S * (1 + MARGE_ECHEANCE))
+    horloge.t = lu["echeance"] - 1
+    await file.verifier()
+    assert file.lire(etape["identifiant"]).get("prolongations") == 0
+    horloge.t = lu["echeance"] + 1
+    await file.verifier()
+    prolongee = file.lire(etape["identifiant"])
+    assert prolongee["etat"] == "en_cours" and prolongee["prolongations"] == 1
+    assert prolongee["echeance"] == pytest.approx(horloge.t + max(ESTIMATION_PAR_DEFAUT_S * MARGE_ECHEANCE, PROLONGATION_MIN_S))
+    assert "traite encore" in prolongee["raison"]
+    assert not file._taches[etape["identifiant"]].done()  # le suivi n'a pas été coupé
+    finir.set()
+    await file.attendre_tout()
+    assert file.lire(etape["identifiant"])["etat"] == "termine"
+
+
+async def test_echeance_suit_la_mediane_mesuree_du_meme_calcul(file):
+    """L'estimation est celle que l'écran annonce : la médiane des calculs
+    terminés du même moteur, du même modèle, à la même température."""
+    async def rien(e):
+        return {}
+    file.inscrire_executeur("video", rien)
+    for i, duree in enumerate((10.0, 20.0, 30.0)):
+        e = preparer(file, f"mesure-{i}")
+        file.modifier(e["identifiant"], etat="termine", duree_s=duree)
+    assert file.estimation({"moteur": "moteur-test", "modele": "essai:modele", "temperature": "inconnue"}) == 20.0
+    assert file.estimation({"moteur": "moteur-test", "modele": "autre", "temperature": "inconnue"}) == ESTIMATION_PAR_DEFAUT_S
+
+
+async def test_echeance_depassee_travail_perdu_une_reprise_automatique_puis_echec_visible(file):
+    """Promesse 2, second cas : à l'échéance, le moteur n'a plus le travail (ou
+    ne répond pas). Le suivi est coupé et repris **une fois**, en relisant le
+    même numéro ; si cette reprise échoue aussi, l'étape échoue avec une phrase
+    lisible — et la file passe à la suivante."""
+    horloge = Horloge()
+    file.horloge = horloge
+    file.inscrire_moteur("moteur-test", "Moteur doublé", moteur_qui_a([], "disponible"))
+    appels = []
+    async def executer(e):
+        appels.append(e["travail_externe"])
+        if len(appels) == 1:
+            file.engager(e["identifiant"])
+            file.connaitre_externe(e["identifiant"], "travail-oublie")
+            await asyncio.Event().wait()  # un suivi qui ne voit jamais la fin
+        raise SuiviLocalInterrompu("le moteur de la maison n'est pas allumé — Détail : ")
+    file.inscrire_executeur("video", executer)
+    etape = preparer(file, "perdue")
+    await file.lancer(etape["identifiant"])
+    await attendre_que(lambda: file.lire(etape["identifiant"])["travail_externe"])
+    horloge.t = file.lire(etape["identifiant"])["echeance"] + 1
+    await file.verifier()  # coupe, puis reprend une fois
+    await file.attendre_fin(etape["identifiant"])
+    reprise = file.lire(etape["identifiant"])
+    assert appels == [None, "travail-oublie"], appels  # la reprise relit, elle ne resoumet pas
+    assert reprise["reprises_auto"] == 1 and reprise["etat"] == "a_reprendre"
+    await file.verifier()
+    echouee = file.lire(etape["identifiant"])
+    assert echouee["etat"] == "echoue"
+    assert "reprise automatique a déjà été tentée" in echouee["raison"]
+    await file.verifier()
+    assert len(appels) == 2  # jamais de troisième tentative
+
+
+async def test_travail_oublie_par_comfyui_pendant_une_reprise_automatique_est_resoumis_une_fois(file):
+    """Le seul envoi automatique de la file : pendant une reprise automatique,
+    ComfyUI dit ne plus connaître le travail (redémarré). Un calcul local
+    oublié ne coûtait rien — il est soumis de nouveau, une seule fois."""
+    envois = []
+    async def executer(e):
+        if not e["travail_externe"]:
+            file.engager(e["identifiant"])
+            envois.append(e["identifiant"])
+            file.connaitre_externe(e["identifiant"], f"travail-{len(envois)}")
+            if len(envois) == 1:
+                raise SuiviLocalInterrompu("lecture d'état manquée")
+            return {"fichier": "resoumis.png"}
+        raise TravailExternePerdu("ComfyUI ne connaît plus le travail travail-1.")
+    file.inscrire_executeur("video", executer)
+    etape = preparer(file, "oubliee")
+    await file.lancer(etape["identifiant"])
+    await file.attendre_fin(etape["identifiant"])
+    assert file.lire(etape["identifiant"])["etat"] == "a_reprendre"
+    await file.verifier()  # reprise automatique : le moteur l'a oublié
+    await file.attendre_fin(etape["identifiant"])
+    assert file.lire(etape["identifiant"])["perdu"] is True
+    await file.verifier()  # resoumission, une seule
+    await file.attendre_fin(etape["identifiant"])
+    fini = file.lire(etape["identifiant"])
+    assert fini["etat"] == "termine" and fini["resoumis_auto"] and len(envois) == 2
+
+
+async def test_a_reprendre_sans_suivi_est_repris_une_fois_sans_clic(file):
+    """Promesse 3, le défaut du 10 octobre : une lecture d'état ratée laisse
+    l'étape « à reprendre » alors que ComfyUI a fini. La veille la reprend
+    d'elle-même, une fois — le compte est écrit sur l'étape."""
+    appels = []
+    async def executer(e):
+        appels.append(e["travail_externe"])
+        if e["cle"] == "a-reprendre" and not e["travail_externe"]:
+            file.engager(e["identifiant"])
+            file.connaitre_externe(e["identifiant"], "travail-fini-chez-comfy")
+            raise SuiviLocalInterrompu("le moteur de la maison n'est pas allumé — Détail : ")
+        return {"fichier": "rattrape.png"}
+    file.inscrire_executeur("video", executer)
+    bloquante, derriere = preparer(file, "a-reprendre"), preparer(file, "derriere")
+    await file.lancer(bloquante["identifiant"])
+    await file.attendre_fin(bloquante["identifiant"])
+    assert file.lire(bloquante["identifiant"])["etat"] == "a_reprendre"
+    await file.lancer(derriere["identifiant"])
+    await asyncio.sleep(0.05)
+    assert file.lire(derriere["identifiant"])["etat"] == "en_attente"  # la file attend bien derrière elle
+    await file.verifier()
+    await file.attendre_tout()
+    reprise = file.lire(bloquante["identifiant"])
+    assert reprise["etat"] == "termine" and reprise["reprises_auto"] == 1
+    assert appels == [None, "travail-fini-chez-comfy", None]
+    assert file.lire(derriere["identifiant"])["etat"] == "termine"
+
+
+async def test_le_travail_sonore_reprend_seul_le_son_que_la_file_a_rattrape(sonore):
+    """Promesse 3, second volet : le travail de production qui attendait l'étape
+    était resté « à vérifier » jusqu'à un `POST …/resume` à la main. Quand la
+    veille rattrape l'étape, le travail relit le son de lui-même — sans second
+    envoi à ComfyUI."""
+    atelier, comfy, p = sonore
+    # ComfyUI calcule encore : le travail est dans sa file tant qu'il n'a pas fini.
+    repondre = comfy.repondre
+    def avec_sa_file(requete):
+        if requete.url.path == "/queue" and not comfy.termine:
+            return httpx.Response(200, json={"queue_running": [[0, n] for n in comfy.jobs], "queue_pending": []})
+        return repondre(requete)
+    comfy.repondre = avec_sa_file
+    raccorder(atelier, comfy)
+    comfy.termine = False
+    atelier.travaux_audio.delai = .03
+    t = await preparer_son(atelier, p)
+    interrompu = await lancer_son(atelier, t)
+    assert interrompu["etat"] == "a_verifier", interrompu
+    assert atelier.file_locale.lire(interrompu["etape_locale"])["etat"] == "a_reprendre"
+    comfy.termine = True  # ComfyUI avait fini ; personne ne l'a vu
+    await atelier.file_locale.verifier()
+    await atelier.file_locale.attendre_tout()
+    await atelier.file_locale.attendre_suites()
+    await atelier.travaux.attendre_tout()
+    fini = atelier.travaux.lire(t["projet"], t["identifiant"])
+    assert fini["etat"] == "termine" and fini["son"], fini
+    assert len(comfy.envois) == 1
+
+
+async def test_file_arretee_trop_longtemps_porte_une_alerte_qui_nomme_l_etape(file):
+    """Promesse 4 : une file qui n'avance plus le dit — dans `GET /api/local-queue`
+    et par la diffusion —, en nommant l'étape qui la tient. Le seuil suit les
+    échéances : l'échéance, plus une prolongation."""
+    from types import SimpleNamespace
+    from atelier.api.file_locale import lire as route_file
+    horloge = Horloge()
+    file.horloge = horloge
+    chez_comfy = []
+    file.inscrire_moteur("moteur-test", "Moteur doublé", moteur_qui_a(chez_comfy))
+    finir = asyncio.Event()
+    async def executer(e):
+        file.engager(e["identifiant"])
+        file.connaitre_externe(e["identifiant"], "travail-coince")
+        chez_comfy.append("travail-coince")
+        await finir.wait()
+        return {}
+    file.inscrire_executeur("video", executer)
+    etape = preparer(file, "coince")
+    requete = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(atelier=SimpleNamespace(file_locale=file))))
+    with file.diffusion.abonnement() as annonces:
+        await file.lancer(etape["identifiant"])
+        await attendre_que(lambda: file.lire(etape["identifiant"])["travail_externe"])
+        await file.verifier()
+        assert route_file(requete)["alerte"] is None
+        seuil = ESTIMATION_PAR_DEFAUT_S * (1 + MARGE_ECHEANCE) + max(ESTIMATION_PAR_DEFAUT_S * MARGE_ECHEANCE, PROLONGATION_MIN_S)
+        horloge.t += seuil - 5
+        await file.verifier()
+        assert file.alerte() is None
+        horloge.t += 10
+        await file.verifier()
+        alerte = route_file(requete)["alerte"]
+        assert alerte and alerte["etape"] == etape["identifiant"]
+        assert "n'a pas avancé depuis" in alerte["phrase"] and etape["identifiant"][:8] in alerte["phrase"]
+        annonces_vues = []
+        while not annonces.empty():
+            evenement = annonces.get_nowait()
+            annonces_vues.append((evenement.genre, evenement.charge))
+        assert ("file_locale_alerte", {"alerte": alerte}) in annonces_vues
+        finir.set()
+        await file.attendre_tout()
+        await file.verifier()
+        assert file.alerte() is None
+
+
+async def test_beaucoup_d_etapes_en_attente_ne_bloquent_pas_la_boucle_et_la_file_passe_vite(file):
+    """Mesuré sur l'atelier réel le 10 octobre 2026 : six étapes en attente,
+    chacune relisant tout le registre (≈ 215 fichiers, deux fois) quatre fois
+    par seconde, saturaient la boucle — 2,5 s pour une route triviale, jusqu'à
+    280 s pour voir la fin d'un calcul de 3 s. Désormais elles partagent une
+    lecture, ne relisent pas un fichier inchangé et se réveillent au changement."""
+    async def rien(e):
+        return {}
+    file.inscrire_executeur("video", rien)
+    for i in range(200):
+        e = preparer(file, f"ancienne-{i}")
+        file.modifier(e["identifiant"], etat="termine", duree_s=3.0)
+    async def bloque(e):
+        file.engager(e["identifiant"])
+        file.connaitre_externe(e["identifiant"], "retenue")
+        raise SuiviLocalInterrompu("retenue pour l'essai")
+    file.inscrire_executeur("video", bloque)
+    retenue = preparer(file, "retenue")
+    await file.lancer(retenue["identifiant"])
+    await file.attendre_fin(retenue["identifiant"])
+    file.inscrire_executeur("video", rien)
+    attente = [preparer(file, f"attente-{i}")["identifiant"] for i in range(6)]
+    for identifiant in attente:
+        await file.lancer(identifiant)
+    await asyncio.sleep(0.3)
+    lectures, retards = file.lectures_disque, []
+    debut = time.monotonic()
+    while time.monotonic() - debut < 1.5:
+        avant = time.perf_counter()
+        await asyncio.sleep(0.01)
+        retards.append(time.perf_counter() - avant - 0.01)
+    # Rien n'a changé pendant 1,5 s : rien ne se relit sur le disque.
+    assert file.lectures_disque - lectures < 20, file.lectures_disque - lectures
+    assert max(retards) < 0.25, max(retards)
+    file.modifier(retenue["identifiant"], etat="termine")  # la retenue est levée
+    debut = time.monotonic()
+    await asyncio.wait_for(asyncio.gather(*(file.attendre_fin(i) for i in attente)), 10)
+    assert time.monotonic() - debut < 2.0, time.monotonic() - debut
+    assert all(file.lire(i)["etat"] == "termine" for i in attente)
+
+
+async def test_quatre_prises_de_deux_secondes_sortent_en_moins_de_trente_secondes(sonore):
+    """Mesuré le 10 octobre 2026 sur la série « camp-feu » : chaque prise SA3
+    calcule en 1 à 5 s chez ComfyUI, et la série entière a pris une heure —
+    perdue dans l'atelier, entre la fin réelle et « terminé », puis avant le
+    départ de l'étape suivante. Ici, un ComfyUI doublé qui met 2 s par prise,
+    l'intervalle de sondage réel (1 s), deux cents étapes déjà finies dans le
+    registre, et quatre sons lancés ensemble : ils doivent sortir en moins de
+    trente secondes, pas en une heure."""
+    atelier, comfy, p = sonore
+    atelier.travaux_audio.intervalle = 1  # le pas réel, pas celui des essais
+    rendus_le = {}
+    repondre = comfy.repondre
+
+    def comfy_qui_met_deux_secondes(requete):
+        chemin = requete.url.path
+        maintenant = time.monotonic()
+        for numero in comfy.jobs:
+            rendus_le.setdefault(numero, maintenant + 2.0)
+        en_cours = [n for n, fin in rendus_le.items() if fin > maintenant]
+        if chemin == "/queue":
+            return httpx.Response(200, json={"queue_running": [[0, n] for n in en_cours], "queue_pending": []})
+        if chemin.startswith("/history/") and chemin.split("/")[-1] in en_cours:
+            return httpx.Response(200, json={})
+        return repondre(requete)
+
+    comfy.repondre = comfy_qui_met_deux_secondes
+    raccorder(atelier, comfy)
+    moteur = next(iter(atelier.file_locale._moteurs))
+    for i in range(200):
+        e = atelier.file_locale.preparer(f"ancienne-{i}", nature="audio", moteur=moteur, modele="essai:ancien",
+            projet=None, acteur="auteur", parametres={"ancienne": i})
+        atelier.file_locale.modifier(e["identifiant"], etat="termine", duree_s=3.0)
+    prises = [await preparer_son(atelier, p, f"prise-{i}") for i in range(4)]
+    debut = time.monotonic()
+    for t in prises:
+        await atelier.travaux.demarrer(t["projet"], t["identifiant"], t["acteur"])
+    await asyncio.wait_for(atelier.travaux.attendre_tout(), 60)
+    duree = time.monotonic() - debut
+    finis = [atelier.travaux.lire(t["projet"], t["identifiant"]) for t in prises]
+    assert all(f["etat"] == "termine" for f in finis), [f["etat"] for f in finis]
+    assert len(comfy.envois) == 4
+    assert duree < 30, duree
