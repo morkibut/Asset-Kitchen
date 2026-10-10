@@ -8,6 +8,7 @@ import sys
 import time
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import httpx
@@ -572,6 +573,72 @@ async def test_echeance_depassee_travail_perdu_une_reprise_automatique_puis_eche
     assert len(appels) == 2  # jamais de troisième tentative
 
 
+async def test_echeance_depassee_rendu_dans_l_historique_il_est_recupere_comme_un_succes(file):
+    """Relevé le 10 octobre 2026 (fil musique, ACE-Step) : l'échéance passe,
+    le travail n'est plus dans la file de ComfyUI — il a fini, et l'atelier
+    télécharge et mesure son rendu. L'étape passait « échoue » alors que
+    `/history` disait succès. Désormais l'historique est relu : le rendu y est,
+    le suivi continue et l'étape finit « terminée » ; si le suivi tarde encore,
+    la reprise relit le même numéro et récupère le rendu — jamais d'échec."""
+    horloge = Horloge()
+    file.horloge = horloge
+    historique = []
+    async def relire(numero):
+        return SimpleNamespace(fini=numero in historique, perdu=False)
+    file.inscrire_moteur("moteur-test", "Moteur doublé", moteur_qui_a([], "disponible"), relire)
+    appels, finir = [], asyncio.Event()
+    async def executer(e):
+        appels.append(e["travail_externe"])
+        if len(appels) == 1:
+            file.engager(e["identifiant"])
+            file.connaitre_externe(e["identifiant"], "travail-fini")
+            historique.append("travail-fini")  # absent de /queue, présent dans /history
+            await finir.wait()  # le téléchargement et les mesures du rendu
+        return {"fichier": "musique.flac"}
+    file.inscrire_executeur("audio", executer)
+    etape = preparer(file, "rendu-pret", nature="audio")
+    await file.lancer(etape["identifiant"])
+    await attendre_que(lambda: file.lire(etape["identifiant"])["travail_externe"])
+    horloge.t = file.lire(etape["identifiant"])["echeance"] + 1
+    await file.verifier()
+    vu = file.lire(etape["identifiant"])
+    assert vu["etat"] == "en_cours" and vu["rendu_vu"], vu["raison"]
+    assert "récupère son rendu" in vu["raison"]
+    assert not file._taches[etape["identifiant"]].done()  # le suivi n'a pas été coupé
+    # Le suivi tarde encore : la reprise relit le même numéro, sans resoumettre.
+    horloge.t = vu["echeance"] + 1
+    await file.verifier()
+    await file.attendre_fin(etape["identifiant"])
+    fini = file.lire(etape["identifiant"])
+    assert fini["etat"] == "termine", fini["raison"]
+    assert appels == [None, "travail-fini"]
+
+
+async def test_echeance_depassee_suivi_qui_finit_apres_relecture_de_l_historique(file):
+    """Même cas, le suivi finit dans la prolongation : terminé, sans reprise."""
+    horloge = Horloge()
+    file.horloge = horloge
+    async def relire(numero):
+        return SimpleNamespace(fini=True, perdu=False)
+    file.inscrire_moteur("moteur-test", "Moteur doublé", moteur_qui_a([], "disponible"), relire)
+    finir = asyncio.Event()
+    async def executer(e):
+        file.engager(e["identifiant"])
+        file.connaitre_externe(e["identifiant"], "travail-fini")
+        await finir.wait()
+        return {"fichier": "son.wav"}
+    file.inscrire_executeur("audio", executer)
+    etape = preparer(file, "rendu-pret-2", nature="audio")
+    await file.lancer(etape["identifiant"])
+    await attendre_que(lambda: file.lire(etape["identifiant"])["travail_externe"])
+    horloge.t = file.lire(etape["identifiant"])["echeance"] + 1
+    await file.verifier()
+    finir.set()
+    await file.attendre_tout()
+    fini = file.lire(etape["identifiant"])
+    assert fini["etat"] == "termine" and not fini.get("reprises_auto")
+
+
 async def test_travail_oublie_par_comfyui_pendant_une_reprise_automatique_est_resoumis_une_fois(file):
     """Le seul envoi automatique de la file : pendant une reprise automatique,
     ComfyUI dit ne plus connaître le travail (redémarré). Un calcul local
@@ -755,10 +822,13 @@ async def test_quatre_prises_de_deux_secondes_sortent_en_moins_de_trente_seconde
     atelier, comfy, p = sonore
     atelier.travaux_audio.intervalle = 1  # le pas réel, pas celui des essais
     rendus_le = {}
+    lectures_outils = []
     repondre = comfy.repondre
 
     def comfy_qui_met_deux_secondes(requete):
         chemin = requete.url.path
+        if chemin == "/object_info":
+            lectures_outils.append(chemin)
         maintenant = time.monotonic()
         for numero in comfy.jobs:
             rendus_le.setdefault(numero, maintenant + 2.0)
@@ -777,6 +847,7 @@ async def test_quatre_prises_de_deux_secondes_sortent_en_moins_de_trente_seconde
             projet=None, acteur="auteur", parametres={"ancienne": i})
         atelier.file_locale.modifier(e["identifiant"], etat="termine", duree_s=3.0)
     prises = [await preparer_son(atelier, p, f"prise-{i}") for i in range(4)]
+    lectures_outils.clear()  # la préparation lit sa copie fraîche ; la série, non
     debut = time.monotonic()
     for t in prises:
         await atelier.travaux.demarrer(t["projet"], t["identifiant"], t["acteur"])
@@ -786,3 +857,33 @@ async def test_quatre_prises_de_deux_secondes_sortent_en_moins_de_trente_seconde
     assert all(f["etat"] == "termine" for f in finis), [f["etat"] for f in finis]
     assert len(comfy.envois) == 4
     assert duree < 30, duree
+    # Mesuré le 10 octobre : `/object_info` pèse 2 Mo et 3 s à lire, et il était
+    # lu deux fois par prise — 6 s de trou entre deux sons. La série reprend la
+    # copie lue à la préparation : au plus une lecture, si elle a vieilli.
+    assert len(lectures_outils) <= 1, len(lectures_outils)
+
+
+async def test_deux_reprises_ne_s_attendent_plus_l_une_l_autre(file):
+    """Relevé le 10 octobre 2026 (série « accueil v2 ») : 2c69e43c, à reprendre,
+    attendait 3dfe45f8, à reprendre, qui l'attendait — et la suivante restait
+    derrière, alors que ComfyUI avait rendu les trois. La plus ancienne passe,
+    puis l'autre, puis celle qui attendait."""
+    relus = []
+    async def relire(e):
+        relus.append(e["travail_externe"] or e["identifiant"])
+        return {"fichier": "relu.wav"}
+    file.inscrire_executeur("audio", relire)
+    reprises = []
+    for i in range(2):
+        e = preparer(file, f"reprise-{i}", nature="audio")
+        file.modifier(e["identifiant"], etat="a_reprendre", soumission_engagee=True,
+            travail_externe=f"travail-{i}", raison="Le suivi a été interrompu.")
+        reprises.append(e)
+    derriere = preparer(file, "derriere", nature="audio")
+    for e in reversed(reprises):  # la plus récente relancée d'abord
+        await file.lancer(e["identifiant"], reprise=True)
+    await file.lancer(derriere["identifiant"])
+    await asyncio.wait_for(file.attendre_tout(), 10)
+    etats = [file.lire(e["identifiant"])["etat"] for e in (*reprises, derriere)]
+    assert etats == ["termine"] * 3, etats
+    assert relus[:2] == ["travail-0", "travail-1"]

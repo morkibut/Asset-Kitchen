@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import io
 import mimetypes
+import time
 
 from PIL import Image, UnidentifiedImageError
 
@@ -122,10 +123,17 @@ def _fin_libre(profil, info):
         f"Sans image de fin, ComfyUI refuserait ce graphe : {quoi}. Ce workflow finit donc toujours sur une image choisie."]}
 
 
+# `/object_info` retenu par adresse de ComfyUI (voir `MoteurWorkflow._object_info`).
+# Deux minutes : assez pour une série, assez court pour qu'un nœud installé
+# se voie vite — et un manque se revérifie toujours sur une copie fraîche.
+DUREE_OBJECT_INFO_S = 120.0
+_OBJECT_INFO: dict[str, tuple[float, dict]] = {}
+
+
 class MoteurWorkflow(MoteurDeLaMaison):
     nom = "ComfyUI"
 
-    async def diagnostiquer_profil(self, profil):
+    async def diagnostiquer_profil(self, profil, retenu_permis: bool = False):
         """Ce qui manque à ce profil pour tourner sur cette installation.
 
         `problemes` garde ses phrases d'avant (le grisé du catalogue les joint).
@@ -135,12 +143,43 @@ class MoteurWorkflow(MoteurDeLaMaison):
         rien — chacun avec ce qu'il faut faire, jamais le seul « pas prêt ».
         Et pour un clip qui relie une image de fin, `fin_libre` dit si ComfyUI
         accepte le graphe **sans** elle — la limite que MO3 avait laissée."""
-        problemes, noeuds, a_completer = [], [], []
         try:
-            info = await self._json("GET", "/object_info")
+            info, retenu = await self._object_info(frais=not retenu_permis)
         except Exception as e:
             return {"disponible": False, "problemes": [str(e)], "noeuds": [],
                     "a_completer": [{"genre": "comfyui", "texte": "ComfyUI ne répond pas : lance-le, puis vérifie de nouveau."}]}
+        diagnostic = self._diagnostiquer_avec(profil, info)
+        if retenu and not diagnostic["disponible"]:
+            # Un manque lu sur une copie retenue se vérifie sur une copie
+            # fraîche : un nœud ou un fichier posé entre-temps se voit.
+            try:
+                info, _ = await self._object_info(frais=True)
+            except Exception:  # noqa: BLE001 — la copie retenue a déjà répondu
+                return diagnostic
+            diagnostic = self._diagnostiquer_avec(profil, info)
+        return diagnostic
+
+    async def _object_info(self, frais: bool = False) -> tuple[dict, bool]:
+        """`/object_info`, retenu `DUREE_OBJECT_INFO_S` par adresse de ComfyUI.
+
+        Relevé du 10 octobre 2026 (Cœur de pierre) : 2 Mo, 3 s à lire, et lu
+        **deux fois par son** (le diagnostic avant l'envoi, puis celui de
+        `soumettre_graphe`) — 6 s de trou entre deux prises de 2 s de calcul.
+        Rend `(info, retenu)` : `retenu` dit que la copie vient de la mémoire.
+        Seul l'envoi d'un calcul accepte une copie retenue (`retenu_permis`) —
+        ComfyUI revalide de toute façon le graphe à `/prompt` ; la page
+        « Moteurs » et tout diagnostic demandé lisent une copie fraîche."""
+        if not frais:
+            garde = _OBJECT_INFO.get(self.adresse)
+            if garde and time.monotonic() - garde[0] < DUREE_OBJECT_INFO_S:
+                return garde[1], True
+        info = await self._json("GET", "/object_info")
+        if isinstance(info, dict):
+            _OBJECT_INFO[self.adresse] = (time.monotonic(), info)
+        return info, False
+
+    def _diagnostiquer_avec(self, profil, info):
+        problemes, noeuds, a_completer = [], [], []
         # Une même phrase ne se dit qu'une fois : deux nœuds de la même classe
         # à qui il manque la même chose ne font qu'une ligne, qui les nomme.
         par_texte = {}
@@ -231,7 +270,7 @@ class MoteurWorkflow(MoteurDeLaMaison):
         return (str(rendu.get("subfolder") or "").rstrip("/") + "/" + str(rendu["name"])).lstrip("/")
 
     async def soumettre_graphe(self, profil, valeurs, references, masque=None, fin=None):
-        diagnostic = await self.diagnostiquer_profil(profil)
+        diagnostic = await self.diagnostiquer_profil(profil, retenu_permis=True)
         if not diagnostic["disponible"]:
             raise WorkflowRefuse(" · ".join(diagnostic["problemes"]))
         noms = [await self.deposer_reference(o) for o in references]

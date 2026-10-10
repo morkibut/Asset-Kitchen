@@ -12,6 +12,7 @@ import pytest
 from atelier.audio.texte import USAGES, alertes, composer_texte
 from atelier.domaine.projet import UniversSonore
 from atelier.domaine.travail import TravailRefuse
+from atelier.services.travaux_audio import reglage_de_calcul
 from tests.test_sn1_installation import son  # noqa: F401 — la fixture
 
 ACE = "ace-step-15-turbo"
@@ -119,6 +120,30 @@ async def test_la_relecture_dit_l_alerte_et_le_texte_relu_aussi(son):  # noqa: F
     assert vu["alertes"] == [] and "D dorian mode" in vu["texte"] and vu["parametres"]["paroles"]["source"] == "usage"
     relu = atelier.travaux_audio.ce_qui_partira(projet, {"famille": "musique", "prompt": "x", "texte_relu": "ambient drones"})
     assert relu["alertes"] and "nappe" in relu["alertes"][0]
+
+
+def test_le_reglage_de_calcul_ne_nomme_que_ce_qui_change_le_temps():
+    assert reglage_de_calcul(None) is None and reglage_de_calcul({"compositeur": True, "temperature": 0.7}) is None
+    assert reglage_de_calcul({"compositeur": False}) == "sans-compositeur"
+    assert reglage_de_calcul({"compositeur": False, "pas": 16}) == "sans-compositeur,pas-16"
+    assert reglage_de_calcul({"pas": True}) is None
+
+
+async def test_le_temps_annonce_ne_mele_pas_le_mode_rapide_et_le_compositeur(son):  # noqa: F811
+    """Relevé du 10 octobre 2026 : 305 s annoncées pour quatre tirages
+    compositeur, 550 réelles — la médiane mêlait les tirages rapides."""
+    atelier, _ = son
+    await atelier.installation_son.installer()
+    projet = atelier.bibliotheque.courant
+    rapide = {"famille": "musique", "usage": "jingle", "prompt": "fanfare", "options": {"compositeur": False}}
+    s = await atelier.series_son.preparer(projet, {**rapide, "cle": "rapide", "nombre": 2})
+    await atelier.series_son.demarrer(projet, s["identifiant"])
+    await atelier.travaux.attendre_tout()
+    etapes = [e for e in atelier.file_locale.lister()["etapes"] if e["nature"] == "audio"]
+    assert etapes and all(e["reglage"] == "sans-compositeur" for e in etapes)
+    assert atelier.series_son.temps(s["modele"], 4, {"compositeur": False})["temps_s"] is not None
+    compositeur = atelier.series_son.temps(s["modele"], 4, {"compositeur": True})
+    assert compositeur["temps_s"] is None and compositeur["mesures"] == 0
 
 
 async def test_trois_intensites_tirent_sur_les_memes_graines_avec_leurs_reglages(son):  # noqa: F811

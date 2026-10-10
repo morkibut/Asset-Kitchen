@@ -113,6 +113,9 @@ class ServiceFileLocale:
         self.racine = fichiers.racine / "file-locale"
         self._executeurs: dict[str, Executeur] = {}
         self._moteurs: dict[str, tuple[str, Observateur]] = {}
+        # L'historique du moteur, quand il en a un (ComfyUI : `/history/<n>`) :
+        # relu à l'échéance avant de déclarer perdu un travail sorti de la file.
+        self._relire: dict[str, Callable[[str], Awaitable[Any]]] = {}
         self._observations: dict[str, dict[str, Any]] = {}
         self._taches: dict[str, asyncio.Task] = {}
         # La veille : son horloge et son pas sont injectables, pour que les
@@ -150,8 +153,11 @@ class ServiceFileLocale:
             raise ValueError("nature de calcul local inconnue")
         self._executeurs[nature] = executer
 
-    def inscrire_moteur(self, identifiant: str, nom: str, observer: Observateur) -> None:
+    def inscrire_moteur(self, identifiant: str, nom: str, observer: Observateur,
+                        relire: Callable[[str], Awaitable[Any]] | None = None) -> None:
         self._moteurs[identifiant] = (nom, observer)
+        if relire is not None:
+            self._relire[identifiant] = relire
 
     def retirer_moteur_inutilise(self, identifiant: str) -> None:
         if any(e["moteur"] == identifiant and e["etat"] not in FINIS for e in self.lister()["etapes"]):
@@ -250,7 +256,7 @@ class ServiceFileLocale:
 
     def preparer(self, cle: str, *, nature: str, moteur: str, modele: str, projet: str | None,
                  acteur: str, parametres: dict[str, Any], entree: bytes | None = None,
-                 fin: bytes | None = None) -> dict[str, Any]:
+                 fin: bytes | None = None, reglage: str | None = None) -> dict[str, Any]:
         if nature not in self._executeurs or moteur not in self._moteurs:
             raise FileLocaleRefusee("Cette méthode locale n'a pas d'exécuteur et de diagnostic raccordés.")
         identifiant = hashlib.sha256(cle.encode()).hexdigest()[:32]
@@ -273,10 +279,14 @@ class ServiceFileLocale:
                 self.fichiers._poser(dossier / "entree", entree)
             if fin:
                 self.fichiers._poser(dossier / "fin", fin)
+            # `reglage` : ce qui change le temps de calcul d'un même modèle
+            # (le compositeur ACE coupé, d'autres pas). Hors du contrat — il ne
+            # dit pas un autre calcul — mais il range les mesures à part.
             self._sauver({**contrat, "identifiant": identifiant, "cle": cle, "empreinte": empreinte,
                 "etat": "en_attente", "cree_le": time.time(), "demarre_le": None, "termine_le": None,
                 "travail_externe": None, "soumission_engagee": False, "raison": "En attente de son tour.",
-                "resultat": None, "duree_s": None, "temperature": "inconnue"})
+                "resultat": None, "duree_s": None, "temperature": "inconnue",
+                **({"reglage": reglage} if reglage else {})})
         return self.lire(identifiant)
 
     def trouver(self, cle: str) -> dict[str, Any] | None:
@@ -484,12 +494,14 @@ class ServiceFileLocale:
             calculees = self.mesures(self.lister()["etapes"])
             self._mesures_memo = (memo, calculees)
             return [dict(m) for m in calculees]
-        groupes: dict[tuple[str, str, str], list[float]] = {}
+        groupes: dict[tuple[str, str, str, str | None], list[float]] = {}
         for etape in etapes:
             if etape["duree_s"] is not None and etape["etat"] == "termine":
-                groupes.setdefault((etape["moteur"], etape["modele"], etape["temperature"]), []).append(etape["duree_s"])
+                cle = (etape["moteur"], etape["modele"], etape["temperature"], etape.get("reglage"))
+                groupes.setdefault(cle, []).append(etape["duree_s"])
         return [{"moteur": k[0], "modele": k[1], "temperature": k[2], "mesures": len(v),
-                 "mediane_s": statistics.median(v)} for k, v in groupes.items()]
+                 "mediane_s": statistics.median(v), **({"reglage": k[3]} if k[3] else {})}
+                for k, v in groupes.items()]
 
     def estimation(self, etape: dict[str, Any], etapes: list[dict[str, Any]] | None = None) -> float:
         """Combien de secondes l'atelier attend pour ce calcul : la médiane
@@ -497,7 +509,8 @@ class ServiceFileLocale:
         à défaut, la plus longue des médianes de ce modèle sur ce moteur ; à
         défaut encore, `ESTIMATION_PAR_DEFAUT_S`. C'est le même chiffre que
         l'écran annonce (« Environ N s de calcul »)."""
-        mesures = [m for m in self.mesures(etapes) if m["moteur"] == etape["moteur"] and m["modele"] == etape["modele"]]
+        mesures = [m for m in self.mesures(etapes) if m["moteur"] == etape["moteur"] and m["modele"] == etape["modele"]
+                   and m.get("reglage") == etape.get("reglage")]
         exacte = next((m for m in mesures if m["temperature"] == etape.get("temperature", "inconnue")), None)
         if exacte:
             return float(exacte["mediane_s"])
@@ -570,6 +583,17 @@ class ServiceFileLocale:
                       f"Plus long que prévu (environ {estimation:.0f} s), avant que le moteur ait rendu son numéro de travail.")
             self.modifier(identifiant, echeance=maintenant + marge, prolongations=prolongations, raison=raison)
             return
+        if observation and observation["etat"] != "inconnu" and not etape.get("rendu_vu"):
+            # Sorti de la file ne veut pas dire perdu (10 octobre 2026, fil
+            # musique : ACE-Step fini à 20:33, l'étape passée « échoue ») — il a
+            # pu finir, et l'atelier télécharge et mesure son rendu. On relit
+            # l'historique : le rendu y est, on laisse le suivi le récupérer.
+            rendu = await self._relire_historique(etape["moteur"], numero)
+            if rendu is not None and getattr(rendu, "fini", False) and not getattr(rendu, "perdu", False):
+                self.modifier(identifiant, echeance=maintenant + marge, rendu_vu=True,
+                    raison=f"Le moteur a fini le travail {numero} : l'atelier récupère son rendu. "
+                           f"Nouvelle vérification dans {marge:.0f} s.")
+                return
         motif = ("le moteur ne répond pas" if not observation or observation["etat"] == "inconnu"
                  else f"le moteur n'a plus le travail {numero} dans sa file")
         # Perdu ou injoignable : ce suivi-ci ne sert plus. On l'arrête (il passe
@@ -578,6 +602,18 @@ class ServiceFileLocale:
         tache.cancel()
         await asyncio.gather(tache, return_exceptions=True)
         await self._reprendre_seul(self.lire(identifiant), f"Échéance dépassée ({estimation * (1 + MARGE_ECHEANCE):.0f} s prévues) : {motif}.")
+
+    async def _relire_historique(self, moteur: str, numero: str) -> Any:
+        """L'état du travail dans l'historique du moteur ; `None` sans
+        historique raccordé, ou s'il ne répond pas (le doute ne sauve rien :
+        l'échéance suit alors son cours)."""
+        relire = self._relire.get(moteur)
+        if relire is None:
+            return None
+        try:
+            return await asyncio.wait_for(relire(numero), timeout=10)
+        except Exception:  # noqa: BLE001 — illisible : on n'en conclut rien
+            return None
 
     async def _reprendre_seul(self, etape: dict[str, Any], motif: str | None = None) -> None:
         identifiant = etape["identifiant"]
@@ -684,7 +720,14 @@ class ServiceFileLocale:
                             # l'état vivant suffit — « en cours » sans suivi s'y
                             # lit « à reprendre », retenu dans les deux cas.
                             autres = [e for e in self.lister()["etapes"] if e["identifiant"] != identifiant]
-                            retenu = next((e for e in autres if e["etat"] in RETENUS), None)
+                            # Deux reprises qui se retiennent l'une l'autre ne
+                            # passent jamais (série « accueil v2 », 10 octobre
+                            # 2026 : 2c69e43c attendait 3dfe45f8, qui l'attendait).
+                            # Entre deux étapes à reprendre, la plus ancienne passe ;
+                            # une étape qui calcule vraiment retient toujours.
+                            retenu = next((e for e in autres if e["etat"] in RETENUS
+                                and not (etape["etat"] in RETENUS and e["etat"] != "en_cours"
+                                         and (e["cree_le"], e["identifiant"]) > (etape["cree_le"], identifiant))), None)
                             # Une étape en attente dont plus personne ne tient le
                             # suivi — l'atelier qui l'a lancée a été arrêté — ne
                             # passera jamais : elle ne doit pas bloquer la file. Elle
@@ -718,7 +761,7 @@ class ServiceFileLocale:
                                             return
                                         courante.update(etat="en_cours", raison="Calcul en cours.",
                                             demarre_le=courante["demarre_le"] or time.time(), temperature=temperature,
-                                            estimation_s=estimation, prolongations=0,
+                                            estimation_s=estimation, prolongations=0, rendu_vu=False,
                                             echeance=self.horloge() + estimation * (1 + MARGE_ECHEANCE))
                                         self._sauver(courante)
                                     resultat = await self._executeurs[etape["nature"]](self._brut(identifiant))
