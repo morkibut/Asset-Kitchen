@@ -113,6 +113,9 @@ class ServiceFileLocale:
         self.racine = fichiers.racine / "file-locale"
         self._executeurs: dict[str, Executeur] = {}
         self._moteurs: dict[str, tuple[str, Observateur]] = {}
+        # L'historique du moteur, quand il en a un (ComfyUI : `/history/<n>`) :
+        # relu à l'échéance avant de déclarer perdu un travail sorti de la file.
+        self._relire: dict[str, Callable[[str], Awaitable[Any]]] = {}
         self._observations: dict[str, dict[str, Any]] = {}
         self._taches: dict[str, asyncio.Task] = {}
         # La veille : son horloge et son pas sont injectables, pour que les
@@ -150,8 +153,11 @@ class ServiceFileLocale:
             raise ValueError("nature de calcul local inconnue")
         self._executeurs[nature] = executer
 
-    def inscrire_moteur(self, identifiant: str, nom: str, observer: Observateur) -> None:
+    def inscrire_moteur(self, identifiant: str, nom: str, observer: Observateur,
+                        relire: Callable[[str], Awaitable[Any]] | None = None) -> None:
         self._moteurs[identifiant] = (nom, observer)
+        if relire is not None:
+            self._relire[identifiant] = relire
 
     def retirer_moteur_inutilise(self, identifiant: str) -> None:
         if any(e["moteur"] == identifiant and e["etat"] not in FINIS for e in self.lister()["etapes"]):
@@ -577,6 +583,17 @@ class ServiceFileLocale:
                       f"Plus long que prévu (environ {estimation:.0f} s), avant que le moteur ait rendu son numéro de travail.")
             self.modifier(identifiant, echeance=maintenant + marge, prolongations=prolongations, raison=raison)
             return
+        if observation and observation["etat"] != "inconnu" and not etape.get("rendu_vu"):
+            # Sorti de la file ne veut pas dire perdu (10 octobre 2026, fil
+            # musique : ACE-Step fini à 20:33, l'étape passée « échoue ») — il a
+            # pu finir, et l'atelier télécharge et mesure son rendu. On relit
+            # l'historique : le rendu y est, on laisse le suivi le récupérer.
+            rendu = await self._relire_historique(etape["moteur"], numero)
+            if rendu is not None and getattr(rendu, "fini", False) and not getattr(rendu, "perdu", False):
+                self.modifier(identifiant, echeance=maintenant + marge, rendu_vu=True,
+                    raison=f"Le moteur a fini le travail {numero} : l'atelier récupère son rendu. "
+                           f"Nouvelle vérification dans {marge:.0f} s.")
+                return
         motif = ("le moteur ne répond pas" if not observation or observation["etat"] == "inconnu"
                  else f"le moteur n'a plus le travail {numero} dans sa file")
         # Perdu ou injoignable : ce suivi-ci ne sert plus. On l'arrête (il passe
@@ -585,6 +602,18 @@ class ServiceFileLocale:
         tache.cancel()
         await asyncio.gather(tache, return_exceptions=True)
         await self._reprendre_seul(self.lire(identifiant), f"Échéance dépassée ({estimation * (1 + MARGE_ECHEANCE):.0f} s prévues) : {motif}.")
+
+    async def _relire_historique(self, moteur: str, numero: str) -> Any:
+        """L'état du travail dans l'historique du moteur ; `None` sans
+        historique raccordé, ou s'il ne répond pas (le doute ne sauve rien :
+        l'échéance suit alors son cours)."""
+        relire = self._relire.get(moteur)
+        if relire is None:
+            return None
+        try:
+            return await asyncio.wait_for(relire(numero), timeout=10)
+        except Exception:  # noqa: BLE001 — illisible : on n'en conclut rien
+            return None
 
     async def _reprendre_seul(self, etape: dict[str, Any], motif: str | None = None) -> None:
         identifiant = etape["identifiant"]
@@ -725,7 +754,7 @@ class ServiceFileLocale:
                                             return
                                         courante.update(etat="en_cours", raison="Calcul en cours.",
                                             demarre_le=courante["demarre_le"] or time.time(), temperature=temperature,
-                                            estimation_s=estimation, prolongations=0,
+                                            estimation_s=estimation, prolongations=0, rendu_vu=False,
                                             echeance=self.horloge() + estimation * (1 + MARGE_ECHEANCE))
                                         self._sauver(courante)
                                     resultat = await self._executeurs[etape["nature"]](self._brut(identifiant))

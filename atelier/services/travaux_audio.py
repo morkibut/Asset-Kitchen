@@ -73,7 +73,12 @@ class ServiceTravauxAudio(ServiceTravaux):
             if courant.nom + "@" + courant.adresse != identifiant:
                 return {"etat": "inconnu", "travaux": [], "raison": "Rétablissez l’adresse du moteur sonore conservé avant de reprendre ; son occupation reste inconnue."}
             return await courant.observer_ressource()
-        self.a.file_locale.inscrire_moteur(identifiant, m.nom, observer)
+        async def relire(numero):
+            courant = self._moteur()
+            if courant.nom + "@" + courant.adresse != identifiant:
+                return None  # un autre ComfyUI : son historique ne dit rien de celui-ci
+            return await courant.etat(numero)
+        self.a.file_locale.inscrire_moteur(identifiant, m.nom, observer, relire)
         return identifiant
 
     # ── Le texte qui part (SN2) ──────────────────────────────────────────────

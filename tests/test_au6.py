@@ -8,6 +8,7 @@ import sys
 import time
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import httpx
@@ -570,6 +571,72 @@ async def test_echeance_depassee_travail_perdu_une_reprise_automatique_puis_eche
     assert "reprise automatique a déjà été tentée" in echouee["raison"]
     await file.verifier()
     assert len(appels) == 2  # jamais de troisième tentative
+
+
+async def test_echeance_depassee_rendu_dans_l_historique_il_est_recupere_comme_un_succes(file):
+    """Relevé le 10 octobre 2026 (fil musique, ACE-Step) : l'échéance passe,
+    le travail n'est plus dans la file de ComfyUI — il a fini, et l'atelier
+    télécharge et mesure son rendu. L'étape passait « échoue » alors que
+    `/history` disait succès. Désormais l'historique est relu : le rendu y est,
+    le suivi continue et l'étape finit « terminée » ; si le suivi tarde encore,
+    la reprise relit le même numéro et récupère le rendu — jamais d'échec."""
+    horloge = Horloge()
+    file.horloge = horloge
+    historique = []
+    async def relire(numero):
+        return SimpleNamespace(fini=numero in historique, perdu=False)
+    file.inscrire_moteur("moteur-test", "Moteur doublé", moteur_qui_a([], "disponible"), relire)
+    appels, finir = [], asyncio.Event()
+    async def executer(e):
+        appels.append(e["travail_externe"])
+        if len(appels) == 1:
+            file.engager(e["identifiant"])
+            file.connaitre_externe(e["identifiant"], "travail-fini")
+            historique.append("travail-fini")  # absent de /queue, présent dans /history
+            await finir.wait()  # le téléchargement et les mesures du rendu
+        return {"fichier": "musique.flac"}
+    file.inscrire_executeur("audio", executer)
+    etape = preparer(file, "rendu-pret", nature="audio")
+    await file.lancer(etape["identifiant"])
+    await attendre_que(lambda: file.lire(etape["identifiant"])["travail_externe"])
+    horloge.t = file.lire(etape["identifiant"])["echeance"] + 1
+    await file.verifier()
+    vu = file.lire(etape["identifiant"])
+    assert vu["etat"] == "en_cours" and vu["rendu_vu"], vu["raison"]
+    assert "récupère son rendu" in vu["raison"]
+    assert not file._taches[etape["identifiant"]].done()  # le suivi n'a pas été coupé
+    # Le suivi tarde encore : la reprise relit le même numéro, sans resoumettre.
+    horloge.t = vu["echeance"] + 1
+    await file.verifier()
+    await file.attendre_fin(etape["identifiant"])
+    fini = file.lire(etape["identifiant"])
+    assert fini["etat"] == "termine", fini["raison"]
+    assert appels == [None, "travail-fini"]
+
+
+async def test_echeance_depassee_suivi_qui_finit_apres_relecture_de_l_historique(file):
+    """Même cas, le suivi finit dans la prolongation : terminé, sans reprise."""
+    horloge = Horloge()
+    file.horloge = horloge
+    async def relire(numero):
+        return SimpleNamespace(fini=True, perdu=False)
+    file.inscrire_moteur("moteur-test", "Moteur doublé", moteur_qui_a([], "disponible"), relire)
+    finir = asyncio.Event()
+    async def executer(e):
+        file.engager(e["identifiant"])
+        file.connaitre_externe(e["identifiant"], "travail-fini")
+        await finir.wait()
+        return {"fichier": "son.wav"}
+    file.inscrire_executeur("audio", executer)
+    etape = preparer(file, "rendu-pret-2", nature="audio")
+    await file.lancer(etape["identifiant"])
+    await attendre_que(lambda: file.lire(etape["identifiant"])["travail_externe"])
+    horloge.t = file.lire(etape["identifiant"])["echeance"] + 1
+    await file.verifier()
+    finir.set()
+    await file.attendre_tout()
+    fini = file.lire(etape["identifiant"])
+    assert fini["etat"] == "termine" and not fini.get("reprises_auto")
 
 
 async def test_travail_oublie_par_comfyui_pendant_une_reprise_automatique_est_resoumis_une_fois(file):
