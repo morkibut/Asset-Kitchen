@@ -1151,7 +1151,7 @@ const QUESTION_DE_LA_CASE_SON: Record<string, string> = {
   epoque: "quand ça se passe, et de quoi c'est fait — en anglais",
   rendu: "la prise de son : rétro 8 bits, réaliste et proche…",
   orchestre: "quels instruments jouent",
-  mode: "le mode commun à toute la BO, en anglais — « D dorian mode »",
+  mode: "la couleur commune à toute la BO, en mots anglais — « modal, ancient » ; le moteur ignore « dorian »",
   leitmotiv: "le motif qui revient d'une piste à l'autre, en anglais",
   humeur: "l'humeur générale de la musique",
   interdits: "ce que la BO ne doit jamais contenir, séparé par des virgules — « synth, piano »",
