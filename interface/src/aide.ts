@@ -3240,6 +3240,16 @@ export const AIDE: Record<string, Explication> = {
     origine: "l'image elle-même",
   },
 
+  "fiche.pavage": {
+    nom: "Seule ou pavée 3×3",
+    ou: "case",
+    groupe: "La visionneuse de la fiche",
+    quoi: "L'image répétée neuf fois, bord contre bord, sans un pixel d'écart : on y voit la couture et le motif qui revient.",
+    change:
+      "Rien sur l'image : c'est une façon de la regarder. Une tuile, un décor ou une matière s'ouvrent pavés, parce qu'un mur trop sombre ou un sol qui fait damier ne se voient pas sur une case seule.",
+    origine: "la nature de l'image, au barème du jeu",
+  },
+
   "fiche.detouree-par-le-modele": {
     nom: "Détourée par le modèle",
     ou: "case",
