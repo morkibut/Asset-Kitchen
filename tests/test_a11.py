@@ -865,6 +865,39 @@ async def test_une_cle_absente_chez_le_paye_ne_grise_pas_le_local(service_a_deux
     assert service_a_deux.grise(local, demande(1)) is None
 
 
+async def test_comfyui_allume_apres_l_atelier_leve_le_grise(tmp_path, comfy):
+    """L'auteur ouvre l'atelier, **puis** ComfyUI : la liste suivante le voit.
+
+    Trouvé à l'usage le 27 septembre 2026 — le grisé « pas allumé » restait
+    jusqu'au redémarrage de l'atelier, parce que la liste ne relisait le moteur
+    qu'une fois par séance.
+    """
+    comfy.eteint = True
+    local = MoteurDeLaMaison(transport=httpx.MockTransport(comfy.repondre))
+    service = ServiceAnimation(
+        base=Base(tmp_path / "atelier.sqlite3"),
+        fichiers=Fichiers(tmp_path / "donnees"),
+        animateur=[lambda: local],
+    )
+    await service.a_jour()
+    wan = service.modele("maison/wan-2.2-i2v-14b-pixel")
+    assert service.grise(wan, demande(1)) is not None
+
+    comfy.eteint = False
+    await service.a_jour()
+    assert service.grise(wan, demande(1)) is None
+
+
+async def test_une_visite_d_ecran_met_a_jour_le_grise(moteur, comfy):
+    """`GET /clips/engine` visite ; ce qu'elle voit doit valoir pour le grisé."""
+    comfy.eteint = True
+    await moteur.catalogue_video()
+    assert moteur.indisponible() is not None
+    comfy.eteint = False
+    await moteur.visiter()
+    assert moteur.indisponible() is None
+
+
 async def test_un_animateur_qui_tombe_n_emporte_pas_l_autre(tmp_path, comfy):
     """Une liste, plusieurs sources, **et chacune répond de soi**."""
     fichiers = Fichiers(tmp_path / "donnees")
