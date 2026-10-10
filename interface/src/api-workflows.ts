@@ -4,6 +4,8 @@ import type { Travail } from "./api-travaux"
 export type LiaisonWorkflow = { noeud: string; champ: string }
 export type ParametreWorkflow = Omit<Option, "nom" | "valeurs" | "minimum" | "maximum"> & {
   nom?: string; valeurs?: string[]; minimum?: number | null; maximum?: number | null; defaut: string | number | boolean
+  /** Ce que fait le réglage, en une phrase pour l'écran (profils écrits par l'atelier). */
+  aide?: string
 }
 export type ProfilWorkflow = {
   identifiant: string; nom: string; nature: "image" | "video" | "audio"; description?: string

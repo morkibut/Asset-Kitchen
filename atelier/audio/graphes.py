@@ -13,12 +13,14 @@ primitifs) au format API. Trois écarts voulus avec ces modèles :
 - Stable Audio 3 Medium : la réécriture du texte par un modèle de langage
   (`TextGenerate` sur `qwen3.5_2b_bf16`, derrière un `ComfySwitchNode`) est
   retirée. Le texte montré est le texte qui part.
-- ACE-Step 1.5 : un seul fichier d'encodeur, `qwen_0.6b_ace15`, au lieu de la
-  paire 0.6b + 1.7b. Le 1.7b est le modèle de langage qui écrit les « codes
-  audio » ; sans lui, `generate_audio_codes` est coupé. ComfyUI 0.36 ne sait
-  reconnaître l'encodeur d'ACE-Step 1.5 que par `DualCLIPLoader` (type `ace`) :
-  chargé seul par `CLIPLoader`, le 0.6b est pris pour celui d'Anima. Le même
-  fichier occupe donc les deux places. À éprouver au banc (SN0).
+- ACE-Step 1.5 : la paire 0.6b + 1.7b du modèle officiel, chargée par
+  `DualCLIPLoader` (type `ace`). Le 1.7b est le modèle de langage qui écrit
+  les « codes audio » : le plan du morceau (mélodie, sections, carrure).
+  Jusqu'au 10 octobre 2026 le profil ne chargeait que le 0.6b, codes coupés,
+  et rendait des nappes sans mélodie (relevé « Univers musical » de Cœur de
+  Pierre). Les codes sont désormais une option, `compositeur`, vraie par
+  défaut ; coupée, on retrouve le rendu rapide d'avant (5 s au lieu de 30 s
+  pour une minute, banc du 19 septembre).
 - La sortie est `SaveAudio` (FLAC, sans perte) partout, au lieu de
   `SaveAudioAdvanced` ou `SaveAudioMP3` : l'atelier règle et encode lui-même.
 
@@ -50,6 +52,9 @@ FICHIERS = {
     "qwen_0.6b_ace15.safetensors": {"dossier": "text_encoders", "taille": "1,2 Go",
         "nom": "l'encodeur de texte d'ACE-Step 1.5",
         "source": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/text_encoders/qwen_0.6b_ace15.safetensors"},
+    "qwen_1.7b_ace15.safetensors": {"dossier": "text_encoders", "taille": "3,7 Go",
+        "nom": "le compositeur d'ACE-Step 1.5 (modèle de langage 1.7b)",
+        "source": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/text_encoders/qwen_1.7b_ace15.safetensors"},
     "ace_1.5_vae.safetensors": {"dossier": "vae", "taille": "0,3 Go",
         "nom": "le décodeur (VAE) d'ACE-Step 1.5",
         "source": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/vae/ace_1.5_vae.safetensors"},
@@ -171,19 +176,36 @@ def stable_audio_open_1(*, checkpoint="stable-audio-open-1.0.safetensors", encod
         duree_libre={"min": 1, "max": 47}, negatif=True)
 
 
+# Les réglages d'ACE-Step que l'écran montre (relevé « Univers musical », 10
+# octobre 2026) : ils étaient figés dans le graphe. Bornes d'/object_info,
+# resserrées à ce qui a un sens pour le turbo (fait pour 8 pas).
+PARAMETRES_ACE = {
+    "compositeur": {"genre": "booleen", "defaut": True, "nom": "Compositeur (1.7b)",
+        "aide": "Le modèle de langage écrit d'abord le plan du morceau : mélodie, sections, carrure. "
+                "Coupé, le calcul est six fois plus rapide mais le rendu tourne à la nappe."},
+    "temperature": {"genre": "intervalle", "minimum": 0.1, "maximum": 1.5, "defaut": 0.85, "nom": "Température",
+        "aide": "Plus haut, le compositeur ose davantage ; plus bas, il se répète."},
+    "guidage": {"genre": "intervalle", "minimum": 1.0, "maximum": 7.0, "defaut": 2.0, "nom": "Guidage du compositeur",
+        "aide": "À quel point le plan du morceau suit le texte (cfg du modèle de langage)."},
+    "pas": {"genre": "intervalle", "minimum": 4, "maximum": 32, "defaut": 8, "nom": "Pas de calcul",
+        "aide": "Le turbo est fait pour 8 ; davantage ne garantit rien."},
+}
+
+
 def ace_step_15_turbo(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen_0.6b_ace15.safetensors",
-                      vae="ace_1.5_vae.safetensors"):
-    """La musique : tags, paroles, tempo, tonalité, mesure et durée en réglages
-    directs (audio_ace_step_1_5_split, sans le second encodeur)."""
+                      compositeur="qwen_1.7b_ace15.safetensors", vae="ace_1.5_vae.safetensors"):
+    """La musique : tags, paroles (la structure), tempo, tonalité, mesure et
+    durée en réglages directs, et le compositeur 1.7b qui écrit les codes
+    audio (audio_ace_step_1_5_split, la paire d'encodeurs du modèle officiel)."""
     graphe = {
         "1": {"class_type": "UNETLoader", "inputs": {"unet_name": modele, "weight_dtype": "default"}},
         "2": {"class_type": "ModelSamplingAuraFlow", "inputs": {"model": ["1", 0], "shift": 3}},
-        "3": {"class_type": "DualCLIPLoader", "inputs": {"clip_name1": encodeur, "clip_name2": encodeur, "type": "ace", "device": "default"}},
+        "3": {"class_type": "DualCLIPLoader", "inputs": {"clip_name1": encodeur, "clip_name2": compositeur, "type": "ace", "device": "default"}},
         "4": {"class_type": "VAELoader", "inputs": {"vae_name": vae}},
         "5": {"class_type": "TextEncodeAceStepAudio1.5", "inputs": {"clip": ["3", 0], "tags": "", "lyrics": "[Instrumental]",
             "seed": 0, "bpm": 90, "duration": 60, "timesignature": "4", "language": "en", "keyscale": "D minor",
-            # Défauts du nœud, sauf les codes audio : sans le 1.7b, rien ne les écrit.
-            "generate_audio_codes": False, "cfg_scale": 2.0, "temperature": 0.85, "top_p": 0.9, "top_k": 0, "min_p": 0.0}},
+            # Défauts du nœud ; codes, température, guidage et pas sont des options.
+            "generate_audio_codes": True, "cfg_scale": 2.0, "temperature": 0.85, "top_p": 0.9, "top_k": 0, "min_p": 0.0}},
         "6": {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["5", 0]}},
         "7": {"class_type": "EmptyAceStep1.5LatentAudio", "inputs": {"seconds": 60, "batch_size": 1}},
         "8": {"class_type": "KSampler", "inputs": {"seed": 0, "steps": 8, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
@@ -194,16 +216,21 @@ def ace_step_15_turbo(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen
     liaisons = {"prompt": [_lien("5", "tags")], "paroles": [_lien("5", "lyrics")], "tempo": [_lien("5", "bpm")],
         "tonalite": [_lien("5", "keyscale")], "mesure": [_lien("5", "timesignature")],
         "secondes": [_lien("7", "seconds"), _lien("5", "duration")], "graine": [_lien("8", "seed"), _lien("5", "seed")],
-        "option:langue": [_lien("5", "language")]}
+        "option:langue": [_lien("5", "language")],
+        "option:compositeur": [_lien("5", "generate_audio_codes")], "option:temperature": [_lien("5", "temperature")],
+        "option:guidage": [_lien("5", "cfg_scale")], "option:pas": [_lien("8", "steps")]}
+    parametres = {"langue": {"genre": "choix", "valeurs": list(LANGUES_ACE), "defaut": "en"},
+        **{cle: dict(p) for cle, p in PARAMETRES_ACE.items()}}
     return {"identifiant": "ace-step-15-turbo", "nom": "ACE-Step 1.5 turbo", "nature": "audio", "graphe": graphe,
-        "liaisons": liaisons, "parametres": {"langue": {"genre": "choix", "valeurs": list(LANGUES_ACE), "defaut": "en"}},
+        "liaisons": liaisons, "parametres": parametres,
         # 2 s, non 10 : un jingle par défaut (2 mesures + 1 de marge, 90 BPM)
         # dure 8 s — sous l'ancien minimum, il aurait été proposé puis refusé
         # à l'envoi (correction du 18 septembre 2026 : « ce qui sera refusé ne
         # doit pas être proposé »).
-        "formats": [], "durees": [30, 60, 120], "duree_libre": {"min": 2, "max": 600},
+        "formats": [], "durees": [30, 60, 90, 120], "duree_libre": {"min": 2, "max": 600},
         "sortie": {"noeud": "10", "champ": "audio"},
-        "description": "Musique et jingles : tempo, tonalité, mesure et durée exacte, de 2 à 600 secondes."}
+        "description": "Musique et jingles : structure, tempo, tonalité, mesure et durée exacte, de 2 à 600 secondes ; "
+                       "le compositeur 1.7b écrit le plan du morceau avant le rendu."}
 
 
 def yue2_int8(*, checkpoint="yue2_3b_int8_convrot.safetensors"):

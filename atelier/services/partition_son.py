@@ -45,6 +45,7 @@ from atelier.domaine.generation import AGENT, AUTEUR
 from atelier.domaine.travail import TravailRefuse, moteur_sonore_permis
 from atelier.domaine.workflow import WorkflowRefuse
 from atelier.services.travaux import _hash, _json, _verrou
+from atelier.domaine.erreurs import FournisseurIndisponible
 
 # Le double de la mesure la plus longue relevée par le banc SN0 pour les deux
 # étages de YuE2 (95 s) : de la marge pour le premier étage seul, jamais
@@ -174,7 +175,14 @@ class ServicePartitionSon:
         try:
             limite = debut + DELAI_S
             while _horloge() < limite:
-                etat = await moteur.etat(numero)
+                try:
+                    etat = await moteur.etat(numero)
+                except FournisseurIndisponible:
+                    # ComfyUI occupé à décoder ne répond pas toujours à temps : une
+                    # lecture d'état manquée n'interrompt plus le suivi (10 octobre
+                    # 2026, la file restait arrêtée jusqu'à une reprise à la main).
+                    await asyncio.sleep(self.intervalle)
+                    continue
                 if etat.echoue:
                     raise TravailRefuse(etat.raison or "YuE2 n'a pas écrit de partition.")
                 if etat.fini:

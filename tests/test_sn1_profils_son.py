@@ -122,12 +122,27 @@ def test_small_sfx_est_le_graphe_de_medium_a_8_pas_et_guidage_1():
     assert "prompt_negatif" not in small["liaisons"]
 
 
-def test_ace_step_n_a_qu_un_encodeur_et_ne_demande_pas_de_codes_audio():
-    profil = CONSTRUCTEURS["ace-step-15-turbo"]()
+def test_ace_step_charge_le_compositeur_et_ecrit_les_codes_audio_par_defaut():
+    """Relevé « Univers musical » (10 octobre 2026) : sans le 1.7b ni ses
+    codes, ACE rendait des nappes. La paire du modèle officiel est chargée, et
+    les codes, la température, le guidage et les pas sont des options."""
+    profil = normaliser(CONSTRUCTEURS["ace-step-15-turbo"]())
     assert {r["fichier"] for r in fichiers_requis(profil)} == {
-        "acestep_v1.5_turbo.safetensors", "qwen_0.6b_ace15.safetensors", "ace_1.5_vae.safetensors"}
-    assert "qwen_1.7b" not in json.dumps(profil)
-    assert profil["graphe"]["5"]["inputs"]["generate_audio_codes"] is False
+        "acestep_v1.5_turbo.safetensors", "qwen_0.6b_ace15.safetensors", "qwen_1.7b_ace15.safetensors",
+        "ace_1.5_vae.safetensors"}
+    chargeur = profil["graphe"]["3"]["inputs"]
+    assert (chargeur["clip_name1"], chargeur["clip_name2"]) == ("qwen_0.6b_ace15.safetensors", "qwen_1.7b_ace15.safetensors")
+    defauts = {k: p["defaut"] for k, p in profil["parametres"].items()}
+    assert defauts == {"langue": "en", "compositeur": True, "temperature": 0.85, "guidage": 2.0, "pas": 8}
+    # Coupé, le compositeur retrouve le rendu rapide d'avant ; les réglages partent où il faut.
+    graphe = composer(profil, prompt="folk", secondes=60, graine=3,
+                      options={"compositeur": False, "temperature": 1.1, "guidage": 3.5, "pas": 12})
+    encodeur = graphe["5"]["inputs"]
+    assert (encodeur["generate_audio_codes"], encodeur["temperature"], encodeur["cfg_scale"]) == (False, 1.1, 3.5)
+    assert graphe["8"]["inputs"]["steps"] == 12
+    assert composer(profil, prompt="folk", secondes=60, graine=3)["5"]["inputs"]["generate_audio_codes"] is True
+    with pytest.raises(WorkflowRefuse):
+        composer(profil, prompt="folk", secondes=60, graine=3, options={"temperature": 5})
 
 
 def test_yue2_ecrit_sa_partition_avant_la_musique():
@@ -293,7 +308,8 @@ async def test_preparer_fige_les_reglages_de_musique_et_les_envoie(musique):
         "tempo": 90, "tonalite": "D minor", "mesure": 4})
     envoi = t["snapshot_audio"]
     assert (envoi["secondes"], envoi["tempo"], envoi["tonalite"], envoi["mesure"]) == (42.67, 90, "D minor", 4)
-    assert isinstance(envoi["graine"], int) and envoi["options"] == {"langue": "en"}
+    assert isinstance(envoi["graine"], int) and envoi["options"] == {
+        "langue": "en", "compositeur": True, "temperature": 0.85, "guidage": 2.0, "pas": 8}
     fini = await lancer(atelier, t)
     assert fini["etat"] == "termine", fini
     parti = comfy.envois[0]["prompt"]

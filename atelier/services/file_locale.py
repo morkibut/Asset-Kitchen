@@ -150,6 +150,17 @@ class ServiceFileLocale:
             etape["raison"] = "Le suivi est interrompu. Reprendre vérifie le travail conservé sans le soumettre de nouveau."
         return etape
 
+    def _suivie(self, identifiant: str) -> bool:
+        """Vrai si un atelier vivant suit cette étape : celui-ci, ou un autre
+        processus qui tient son verrou d'exécution."""
+        if identifiant in self._taches and not self._taches[identifiant].done():
+            return True
+        try:
+            with verrou(self._dossier(identifiant) / ".execution"):
+                return False
+        except VerrouOccupe:
+            return True
+
     def lister(self) -> dict[str, Any]:
         etapes = [self.lire(p.parent.name) for p in self.racine.glob("*/etape.json")]
         etapes.sort(key=lambda e: (e["cree_le"], e["identifiant"]))
@@ -285,9 +296,16 @@ class ServiceFileLocale:
                         with verrou(self.racine / ".gpu"):
                             autres = [self._brut(e["identifiant"]) for e in self.lister()["etapes"] if e["identifiant"] != identifiant]
                             retenu = next((e for e in autres if e["etat"] in RETENUS), None)
-                            precedent = next((e for e in autres if e["etat"] == "en_attente" and e["cree_le"] < etape["cree_le"]), None)
+                            # Une étape en attente dont plus personne ne tient le
+                            # suivi — l'atelier qui l'a lancée a été arrêté — ne
+                            # passera jamais : elle ne doit pas bloquer la file. Elle
+                            # n'a rien soumis, elle reste à sa place pour qui la relance.
+                            precedent = next((e for e in autres if e["etat"] == "en_attente"
+                                and e["cree_le"] < etape["cree_le"] and self._suivie(e["identifiant"])), None)
                             if retenu or (precedent and not etape["soumission_engagee"]):
-                                raison = "Une étape précédente attend sa fin ou sa reprise."
+                                bloquante = retenu or precedent
+                                raison = (f"Une étape précédente attend sa fin ou sa reprise : {bloquante['identifiant']} "
+                                          f"({bloquante['nature']}, projet {bloquante['projet']}, {bloquante['etat']}).")
                             else:
                                 # Un travail déjà accepté retrouve son moteur même si
                                 # ce moteur le dit occupé : c'est justement lui qu'on suit.

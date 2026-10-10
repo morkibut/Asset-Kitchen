@@ -398,3 +398,17 @@ async def test_annuler_video_locale_libere_la_reservation_agent_sans_oublier_ref
     assert double.appels == 1 and not animateur.soumissions
     await atelier.travaux.demarrer(projet, travail["identifiant"], "agent", reprise=True)
     assert atelier.travaux.lire(projet, travail["identifiant"])["etat"] == "annule"
+
+
+async def test_une_etape_en_attente_orpheline_ne_bloque_plus_la_file(file):
+    """Trouvé le 10 octobre 2026 : après un redémarrage de l'atelier, des étapes
+    préparées mais jamais relancées bloquaient toute la file sans fin."""
+    async def executer(etape):
+        return {"fichier": etape["cle"]}
+    file.inscrire_executeur("video", executer)
+    orpheline = preparer(file, "orpheline")
+    suivante = preparer(file, "suivante")
+    await file.lancer(suivante["identifiant"])
+    await asyncio.wait_for(file.attendre_fin(suivante["identifiant"]), timeout=5)
+    assert file.lire(suivante["identifiant"])["etat"] == "termine"
+    assert file.lire(orpheline["identifiant"])["etat"] == "en_attente"

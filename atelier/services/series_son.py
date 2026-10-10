@@ -22,13 +22,14 @@ from atelier.depot.verrou import VerrouOccupe, verrou
 from atelier.domaine.son import SonRefuse
 from atelier.domaine.travail import TravailRefuse
 from atelier.domaine.variantes_son import nombre_de_tirages
-from atelier.domaine.workflow import MUSIQUE
+from atelier.domaine.workflow import GRAINE_MAX, MUSIQUE
 from atelier.services.travaux import _hash, _json
 from atelier.services.travaux_audio import ETIQUETTES
 
 CLE_MAX = 150
 # Ce qu'une série accepte : la demande d'un son (AU14 + SN2), plus le nombre.
-DEMANDE = {"modele", "prompt", "prompt_negatif", "secondes", "options", *MUSIQUE, "famille", "texte_relu", "mesures"}
+DEMANDE = {"modele", "prompt", "prompt_negatif", "secondes", "options", *MUSIQUE, "famille", "texte_relu", "mesures",
+           "usage", "graine"}
 
 
 def duree_lisible(secondes):
@@ -103,7 +104,10 @@ class ServiceSeriesSon:
         if not isinstance(nom, str):
             raise TravailRefuse("Le nom de la série est un texte.")
         demande = {k: v for k, v in brut.items() if k in DEMANDE}
-        return cle, nombre_de_tirages(brut.get("nombre"), brut.get("famille")), nom.strip(), demande
+        g = demande.get("graine")
+        if "graine" in demande and (isinstance(g, bool) or not isinstance(g, int) or not 0 <= g <= GRAINE_MAX):
+            raise TravailRefuse("La graine de départ est un entier positif.")
+        return cle,nombre_de_tirages(brut.get("nombre"), brut.get("famille")), nom.strip(), demande
 
     def annoncer(self, projet, brut):
         """Avant le bouton : combien de tirages, combien de temps, quel texte
@@ -188,7 +192,13 @@ class ServiceSeriesSon:
         # depuis — sans toucher à la demande elle-même (l'empreinte d'un
         # tirage préparé sans changement reste celle d'avant).
         figer = {"modele": serie["modele"], "texte": serie["texte_fige"]} if serie.get("texte_fige") is not None else None
-        return await self.a.travaux_audio.preparer(serie["projet"], {**serie["demande"], "cle": tirage["cle"], "nom": tirage["nom"]},
+        demande = {**serie["demande"], "cle": tirage["cle"], "nom": tirage["nom"]}
+        if isinstance(demande.get("graine"), int) and not isinstance(demande["graine"], bool):
+            # Une graine de départ donnée : le tirage de rang r prend graine + r - 1.
+            # Deux séries de même graine (trois intensités d'une musique) tirent
+            # donc rang pour rang sur les mêmes graines.
+            demande["graine"] = (demande["graine"] + tirage["rang"] - 1) % (GRAINE_MAX + 1)
+        return await self.a.travaux_audio.preparer(serie["projet"], demande,
             serie["acteur"], serie={"identifiant": serie["identifiant"], "rang": tirage["rang"]}, figer=figer)
 
     async def _completer(self, serie):

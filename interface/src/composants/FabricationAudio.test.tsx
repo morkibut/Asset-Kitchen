@@ -159,6 +159,38 @@ test("la musique se règle en tempo, tonalité, mesure et nombre de mesures ; la
   await waitFor(() => expect(texteSon.composer).toHaveBeenLastCalledWith("jeu", { famille: "musique", prompt: "Exploration, calm forest path", mesures: 8, mesure: 3, tempo: 120, tonalite: "D minor" }))
 })
 
+test("une musique de bande originale : usage, structure, réglages du compositeur, graine et alerte de nappe", async () => {
+  // Relevé « Univers musical » (10 octobre 2026) : tout ce qui faisait une nappe était figé ou caché.
+  const ace: ProfilWorkflow = { ...profil, identifiant: "ace-step-15-turbo", nom: "ACE-Step 1.5 turbo", modele: "ComfyUI:ace@1",
+    parametres: { langue: { genre: "choix", valeurs: ["en"], defaut: "en" }, compositeur: { genre: "booleen", defaut: true, nom: "Compositeur (1.7b)" },
+      temperature: { genre: "intervalle", minimum: 0.1, maximum: 1.5, defaut: 0.85, nom: "Température" } } }
+  vi.mocked(workflows.lister).mockResolvedValue({ profils: [ace] })
+  vi.mocked(texteSon.moteurs).mockResolvedValue({ familles: { musique: { famille: "musique", modele: ace.modele, moteur: "ace-step-15-turbo", possibles: ["ace-step-15-turbo"] } } as never })
+  const usages = { titre: { nom: "Écran titre", description: "epic fantasy orchestral main theme", structure: "[Intro]\n[Chorus]", tempo: 78, mesure: 4, mesures: 40 } }
+  ;(texteSon as unknown as { gabarits: () => Promise<unknown> }).gabarits = vi.fn().mockResolvedValue({ usages })
+  vi.mocked(texteSon.composer).mockImplementation(async (_p, d) => compo(d.prompt, { famille: "musique", reglages_recus: ["paroles", "tempo", "tonalite", "mesure"],
+    parametres: { paroles: { valeur: d.paroles ?? "[Intro]\n[Chorus]", source: d.paroles ? "demande" : "usage" } },
+    alertes: /drones/.test(d.prompt) ? ["Ces mots demandent une nappe plutôt qu'une musique : « drones »."] : [] }))
+  render(<FabricationAudio projet="jeu" onFermer={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "Musique" }))
+  fireEvent.click(within(screen.getByRole("group", { name: "Usage" })).getByRole("button", { name: "Écran titre" }))
+  fireEvent.click(await screen.findByRole("button", { name: "Texte d’exemple" }))
+  expect(screen.getByLabelText("Ce qu’on doit entendre")).toHaveValue("epic fantasy orchestral main theme")
+  // L'usage donne ses 40 mesures ; elles ne partent pas, le serveur les tient de l'usage.
+  expect(screen.getByLabelText("Nombre de mesures")).toHaveValue(40)
+  await waitFor(() => expect(texteSon.composer).toHaveBeenLastCalledWith("jeu", { famille: "musique", prompt: "epic fantasy orchestral main theme", usage: "titre" }))
+  expect(await screen.findByLabelText("Structure du morceau")).toHaveValue("[Intro]\n[Chorus]")
+  fireEvent.change(screen.getByLabelText("Structure du morceau"), { target: { value: "[Intro]\n[Verse]\n[Chorus]" } })
+  fireEvent.click(screen.getByLabelText("Compositeur (1.7b)"))
+  expect(screen.getByText(/six fois plus rapide/)).toBeInTheDocument()
+  fireEvent.change(screen.getByLabelText("Température"), { target: { value: "1.1" } })
+  fireEvent.change(screen.getByLabelText("Graine de départ"), { target: { value: "1000" } })
+  await waitFor(() => expect(seriesSon.annoncer).toHaveBeenLastCalledWith("jeu", { famille: "musique", prompt: "epic fantasy orchestral main theme", usage: "titre",
+    paroles: "[Intro]\n[Verse]\n[Chorus]", graine: 1000, options: { compositeur: false, temperature: 1.1 }, nombre: 4 }))
+  fireEvent.change(screen.getByLabelText("Ce qu’on doit entendre"), { target: { value: "dark drones" } })
+  expect(await screen.findByText(/demandent une nappe/)).toBeInTheDocument()
+})
+
 test("un moteur qui ne reçoit pas la mesure : elle ne part pas, se grise avec sa raison, et la boucle est celle du serveur", async () => {
   const medium: ProfilWorkflow = { ...profil, identifiant: "sa3-medium", nom: "Stable Audio 3 Medium", modele: "ComfyUI:sa3-medium@1" }
   vi.mocked(workflows.lister).mockResolvedValue({ profils: [profil, medium] })
