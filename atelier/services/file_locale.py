@@ -421,7 +421,8 @@ class ServiceFileLocale:
             # Une reprise voulue — un clic, un travail repris, l'agent — rend à
             # l'étape sa reprise automatique : c'est un nouveau départ, pas la
             # suite de l'ancien. La veille, elle, ne remet jamais son compte à zéro.
-            etape = self.modifier(identifiant, reprises_auto=0, resoumis_auto=False, perdu=False)
+            etape = self.modifier(identifiant, reprises_auto=0, resoumis_auto=False, perdu=False,
+                                  recupere_auto=False)
         self._taches[identifiant] = asyncio.create_task(self._executer(identifiant))
         return self.lire(identifiant)
 
@@ -630,6 +631,20 @@ class ServiceFileLocale:
             return
         fait = int(etape.get("reprises_auto") or 0)
         if fait >= REPRISES_AUTO_MAX or etape.get("resoumis_auto"):
+            # Avant de conclure, l'historique du moteur (10 octobre 2026,
+            # 3dfe45f8) : sa reprise s'était usée à attendre son tour pendant
+            # un interblocage, et l'étape échouait au redémarrage alors que
+            # ComfyUI avait rendu le son. Un rendu réussi se récupère — sans
+            # nouvel envoi —, une fois de plus seulement.
+            rendu = await self._relire_historique(etape["moteur"], etape["travail_externe"])
+            if (rendu is not None and getattr(rendu, "fini", False) and not getattr(rendu, "echoue", False)
+                    and not etape.get("recupere_auto") and etape["nature"] in self._executeurs
+                    and etape["moteur"] in self._moteurs):
+                self.modifier(identifiant, recupere_auto=True,
+                    raison=f"{motif} Le moteur a rendu le travail {etape['travail_externe']} : l'atelier le "
+                           "récupère, sans le soumettre de nouveau.")
+                await self.lancer(identifiant, reprise=True, automatique=True)
+                return
             self.modifier(identifiant, etat="echoue", termine_le=time.time(),
                 raison=f"{motif} La reprise automatique a déjà été tentée sans succès : l'étape est arrêtée pour ne "
                        f"plus bloquer la file. Dernier état connu : {etape['raison']}")
