@@ -9,6 +9,38 @@
 
 ---
 
+## 10 octobre 2026 — la bande originale de *Cœur de Pierre* (séries ACE-Step 1.5)
+
+Séance : accueil (4 essais compositeur + 2 rapides), puis camp en trois ambiances (4 essais
+chacune), sur `feat/idees-pixellab` après la fusion de la musique BO. Trois défauts trouvés.
+**Rien n'est cadré ni planifié.**
+
+### 1 · L'estimation de durée mélange le mode rapide et le compositeur
+
+`ServiceSeriesSon.temps` regroupe les mesures de la file locale **par modèle**, et le modèle
+est l'empreinte du profil ACE : elle est la même que la case `compositeur` soit cochée ou non.
+Les tirages rapides (≈ 40 s) et compositeur (≈ 2 min 20) tombent donc dans la même médiane.
+Mesuré : 305 s annoncées pour 4 tirages compositeur du camp, ≈ 550 s réelles. À séparer
+— par profil **et** par les options qui changent le temps de calcul (au moins `compositeur`).
+
+### 2 · Après un rendu ACE, la file locale croit ComfyUI éteint et se bloque
+
+Deux fois sur quatre pour l'accueil : ComfyUI rend le fichier (`/history` dit `success`),
+mais l'étape passe `a_reprendre` avec « le moteur de la maison n'est pas allumé — connexion
+refusée ». Les tirages suivants restent `en_attente` derrière elle. `audio-series/{id}/resume`
+récupère le fichier sans recalcul. La correction de file en cours de validation
+(`fix/file-locale-sur-pixellab`) vise ce cas.
+
+### 3 · ACE ignore « solo » : l'ambiance la plus dépouillée sort trop fournie
+
+Le camp « désert » demandait *solo folk fiddle … one deep male voice humming*. Les quatre
+essais sortent en gigue d'ensemble, avec percussions. Le contraste entre intensités repose
+alors sur le seul texte, et le moteur le tient mal. Piste à essayer : nommer ce qui est
+absent (*no percussion, no ensemble, sparse*). À vérifier à l'oreille : la règle des
+interdits dit qu'un mot nié appelle le mot.
+
+---
+
 ## 25 septembre 2026 — ce que montre un tutoriel PixelLab
 
 Source : la vidéo *PixelLab Tutorial: Images Pro Flash, Skeleton V3 & PixMiniMax* (PixelLab,
