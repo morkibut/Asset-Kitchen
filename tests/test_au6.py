@@ -974,3 +974,62 @@ async def test_le_son_suivant_part_pendant_le_post_traitement_du_precedent(sonor
     assert envois_le[1] < premier_import_fin, (envois_le[1] - premier_import_debut)
     etapes = [atelier.file_locale.lire(f["etape_locale"]) for f in finis]
     assert etapes[0]["termine_le"] <= etapes[1]["termine_le"]
+
+
+async def test_dix_etapes_en_attente_ne_reparcourent_pas_le_registre(file):
+    """Mesuré le 10 octobre 2026 : relire le registre réel (269 étapes) coûtait
+    150 à 190 ms, à chaque réveil de chaque étape en attente et à chaque
+    lecture d'API — dix étapes en attente suffisaient à saturer la boucle.
+    Le registre ne se reparcourt plus que s'il a changé : dix étapes qui
+    attendent derrière une retenue, pendant 1,5 s, n'en font aucun parcours,
+    et une lecture coûte quelques millisecondes."""
+    async def rien(e):
+        return {}
+    file.inscrire_executeur("video", rien)
+    for i in range(250):
+        e = preparer(file, f"ancienne-{i}")
+        file.modifier(e["identifiant"], etat="termine", duree_s=3.0)
+    retenue = preparer(file, "retenue")
+    file.modifier(retenue["identifiant"], etat="a_reprendre", soumission_engagee=True,
+        travail_externe="retenue", raison="retenue pour l'essai")
+    attente = [preparer(file, f"attente-{i}")["identifiant"] for i in range(10)]
+    for identifiant in attente:
+        await file.lancer(identifiant)
+    await asyncio.sleep(0.3)
+    parcours = file.parcours_complets
+    await asyncio.sleep(1.5)
+    assert file.parcours_complets - parcours <= 1, file.parcours_complets - parcours
+    debut = time.perf_counter()
+    for _ in range(20):
+        assert len(file.lister()["etapes"]) == 261
+    assert (time.perf_counter() - debut) / 20 < 0.05, (time.perf_counter() - debut) / 20
+    file.modifier(retenue["identifiant"], etat="termine")
+    await asyncio.wait_for(asyncio.gather(*(file.attendre_fin(i) for i in attente)), 10)
+    assert all(file.lire(i)["etat"] == "termine" for i in attente)
+
+
+async def test_le_registre_reste_exact_si_un_autre_processus_ou_la_main_l_ecrit(file, monkeypatch):
+    """La lecture gardée ne ment jamais longtemps : une écriture d'un autre
+    atelier (autre processus, même dossier) se voit tout de suite, par la
+    marque ; un fichier modifié à la main, sans marque, à la relecture
+    complète suivante."""
+    import atelier.services.file_locale as module
+    async def rien(e):
+        return {}
+    file.inscrire_executeur("video", rien)
+    e = preparer(file, "partagee")
+    assert [x["etat"] for x in file.lister()["etapes"]] == ["en_attente"]
+    autre = ServiceFileLocale(file.fichiers, Diffusion())
+    autre.inscrire_moteur("moteur-test", "Moteur doublé", disponible)
+    autre.inscrire_executeur("video", rien)
+    autre.modifier(e["identifiant"], etat="annule", raison="annulée ailleurs")
+    assert [x["etat"] for x in file.lister()["etapes"]] == ["annule"]
+    f = preparer(autre, "nouvelle")
+    assert {x["identifiant"] for x in file.lister()["etapes"]} == {e["identifiant"], f["identifiant"]}
+    # À la main : le fichier change, la marque non.
+    chemin = file.racine / e["identifiant"] / "etape.json"
+    brut = json.loads(chemin.read_text(encoding="utf-8"))
+    brut["raison"] = "corrigée à la main"
+    chemin.write_text(json.dumps(brut), encoding="utf-8")
+    monkeypatch.setattr(module, "RELECTURE_COMPLETE_S", 0.0)
+    assert next(x for x in file.lister()["etapes"] if x["identifiant"] == e["identifiant"])["raison"] == "corrigée à la main"
