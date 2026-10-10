@@ -255,6 +255,9 @@ def traiter(signal, taux, recette: RecetteSon):
         raise SonRefuse("La boucle doit rester dans la durée du son après la coupe et les fondus.")
     if recette.boucle and recette.boucle_fondu_ms:
         _fondre_boucle(rendu, boucle_debut, boucle_fin, taux_sortie, recette.boucle_fondu_ms)
+    if niveau is not None and niveau["applique"]:
+        # Après tout le reste : le gain de la recette s'ajoute à la cible.
+        rendu = _verifier_niveau(rendu, taux_sortie, recette.cible_lufs + recette.gain_db, niveau)
     mesure = mesurer(rendu, taux_sortie)
     mesure["silencieux"] = mesure["silencieux"] or not source_audible
     mesure["coupe_source"] = coupe_silence
@@ -326,9 +329,8 @@ def _limiter_crete_vraie(rendu, taux):
 def _viser_lufs_limite(rendu, taux, cible):
     """Le niveau visé avec limiteur (recette `limiteur`) : le gain entier vers
     la cible, puis le limiteur à crête vraie à −1 dBTP. Le limiteur rabote
-    les crêtes, donc un peu de niveau perçu : une seconde passe corrige le
-    gain si l'écart dépasse 0,2 LU. Enfin, une sécurité : si la crête vraie
-    remesurée dépasse encore −1 dBTP, tout le son descend de l'excès.
+    les crêtes, donc un peu de niveau perçu : la seconde passe est celle de
+    tous les niveaux visés, `_verifier_niveau`, à la toute fin du traitement.
     Rend un nouveau tableau (le limiteur n'agit pas en place)."""
     lufs, crete = _lufs_et_crete_vraie(rendu, taux)
     if lufs is None:
@@ -339,26 +341,54 @@ def _viser_lufs_limite(rendu, taux, cible):
         pic = float(np.max(np.abs(rendu)))
         crete = 20 * math.log10(pic) if pic > 0 else LIMITE_LIMITEUR_DB
     gain = cible - lufs
-    for passe in range(2):
-        limite = _limiter_crete_vraie(rendu * 10 ** (gain / 20), taux)
-        lufs_apres, crete_apres = _lufs_et_crete_vraie(limite, taux)
-        if passe or lufs_apres is None or abs(cible - lufs_apres) <= .2:
-            break
-        gain += cible - lufs_apres
+    limite = _limiter_crete_vraie(rendu * 10 ** (gain / 20), taux)
     # La réduction la plus forte du limiteur, estimée simplement : de combien
     # la crête vraie après gain dépassait le seuil du limiteur.
     reduction = max(0.0, crete + gain - LIMITE_LIMITEUR_DB)
-    securite = 0.0
-    if crete_apres is not None and crete_apres > CRETE_VRAIE_MAX_DB:
-        # ebur128 écrit la crête au dixième : 0,1 dB de plus couvre l'arrondi.
-        securite = crete_apres - CRETE_VRAIE_MAX_DB + .1
-        limite *= 10 ** (-securite / 20)
-        lufs_apres, crete_apres = _lufs_et_crete_vraie(limite, taux)
-    plafonne = lufs_apres is not None and abs(cible - lufs_apres) > .5
-    return limite, {"cible_lufs": cible, "applique": True, "gain_db": gain - securite, "plafonne": plafonne,
-        "lufs_avant": lufs, "lufs_apres": lufs_apres, "crete_vraie_apres_db": crete_apres, "limiteur": True,
-        "reduction_max_db": reduction, "securite_db": securite,
-        "raison": "Limiteur à crête vraie : la cible n'est pas atteinte à 0,5 LU près." if plafonne else ""}
+    return limite, {"cible_lufs": cible, "applique": True, "gain_db": gain, "plafonne": False,
+        "lufs_avant": lufs, "limiteur": True, "reduction_max_db": reduction, "securite_db": 0.0, "raison": ""}
+
+
+# L'écart au niveau visé au-delà duquel le fichier final est corrigé.
+TOLERANCE_LUFS = .2
+
+
+def _verifier_niveau(rendu, taux, visee, niveau):
+    """La vérification après coup, commune aux deux chemins du niveau visé.
+    Un gain en une passe peut manquer la cible de 1 à 2 dB, et un fondu
+    croisé de boucle change le niveau (relevé du 10 octobre 2026) : le son
+    final, après la boucle et les fondus, est remesuré (ebur128). Au-delà de
+    0,2 LU d'écart, ou d'une crête vraie au-dessus de −1 dBTP, il reçoit
+    `min(visée − lufs, −1 − crête vraie)`. Avec le limiteur, un plafond qui
+    empêcherait d'atteindre la visée fait repasser le limiteur avec le gain
+    entier. Enfin, une sécurité : une crête vraie remesurée au-dessus de
+    −1 dBTP fait descendre tout le son de l'excès. `niveau` reçoit le
+    résultat ; rend le tableau final (un nouveau si le limiteur repasse)."""
+    lufs, crete = _lufs_et_crete_vraie(rendu, taux)
+    correction, securite, relimite = 0.0, 0.0, False
+    if lufs is not None:
+        ecart = visee - lufs
+        plafond = CRETE_VRAIE_MAX_DB - crete if crete is not None else math.inf
+        if abs(ecart) > TOLERANCE_LUFS or plafond < 0:
+            correction = min(ecart, plafond)
+            if niveau["limiteur"] and ecart - correction > TOLERANCE_LUFS:
+                rendu, correction, relimite = _limiter_crete_vraie(rendu * 10 ** (ecart / 20), taux), ecart, True
+            else:
+                rendu = rendu * 10 ** (correction / 20)
+            lufs, crete = _lufs_et_crete_vraie(rendu, taux)
+        if crete is not None and crete > CRETE_VRAIE_MAX_DB:
+            # ebur128 écrit la crête au dixième : 0,1 dB de plus couvre l'arrondi.
+            securite = crete - CRETE_VRAIE_MAX_DB + .1
+            rendu = rendu * 10 ** (-securite / 20)
+            correction -= securite
+            lufs, crete = _lufs_et_crete_vraie(rendu, taux)
+    niveau.update(lufs_final=lufs, crete_vraie_finale_db=crete, correction_db=correction, visee_lufs=visee,
+                  relimite=relimite)
+    if niveau["limiteur"]:
+        plafonne = lufs is not None and abs(visee - lufs) > .5
+        niveau.update(lufs_apres=lufs, crete_vraie_apres_db=crete, securite_db=securite, plafonne=plafonne,
+            raison="Limiteur à crête vraie : la cible n'est pas atteinte à 0,5 LU près." if plafonne else "")
+    return rendu
 
 
 def changer_hauteur(signal, taux, demi_tons, *, garder_duree):

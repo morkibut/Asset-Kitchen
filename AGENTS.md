@@ -453,6 +453,12 @@ deux vivent côte à côte.
   ACE-Step. **Une recette déjà posée ne change pas** : sans `limiteur`, elle rend les mêmes
   octets qu'avant (vérifié contre l'ancien code). Ce qui change sans rien demander, ce sont les
   rendus ACE-Step *neufs* : le graphe baisse le son de 4 dB avant le FLAC, qui ne coupe plus.
+
+  **Le 11 octobre 2026, tout niveau visé se vérifie après coup.** Une recette qui porte
+  `cible_lufs`, avec ou sans limiteur, voit son son final remesuré après la boucle et les
+  fondus, et corrigé d'un gain au-delà de 0,2 LU d'écart, sans dépasser −1 dBTP : elle peut
+  rendre des octets un peu différents d'avant. **Une recette sans `cible_lufs` ne bouge pas
+  d'un octet.**
 - **Génération locale autorisée depuis le 11 septembre 2026.** ComfyUI et asset3d restent
   des moteurs externes, pilotés par des adaptateurs de l'atelier. Ne pas modifier leur
   installation ni télécharger leurs poids implicitement. L'import reste disponible.

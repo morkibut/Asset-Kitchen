@@ -4180,7 +4180,7 @@ export const AIDE: Record<string, Explication> = {
       "Le niveau visé (LUFS) est un gain, pas un compresseur, et s'arrête à −1 dBTP de crête — sauf avec le limiteur. Ailleurs, « Normaliser » ramène la crête à la cible, tous canaux ensemble. Le gain vient après.",
     origine: "toi · rien au départ, ou les réglages de la famille",
     long:
-      "Le niveau visé n'existe que pour l'ambiance, la musique, la chanson, le jingle et la voix ; un bruitage est trop court pour se mesurer ainsi. Une saturation est signalée en haut de la fiche mais n'empêche rien : seul un rendu silencieux bloque la livraison.",
+      "Le niveau visé n'existe que pour l'ambiance, la musique, la chanson, le jingle et la voix ; un bruitage est trop court pour se mesurer ainsi. Le son fini, boucle comprise, est remesuré et corrigé au-delà de 0,2 LU, sans dépasser −1 dBTP. Une saturation est signalée en haut de la fiche mais n'empêche rien : seul un rendu silencieux bloque la livraison.",
   },
 
   "son.limiteur": {
@@ -4416,7 +4416,7 @@ export const AIDE: Record<string, Explication> = {
       "Le temps vient des calculs déjà faits ici. Avant le premier tirage d'ACE-Step 1.5, il est **estimé** d'après la durée du son et le modèle, et le bouton le dit ; ailleurs, il reste inconnu jusqu'au premier tirage, qui le mesure. Rien ne se paie : c'est ta carte graphique qui travaille. Une série coupée se reprend d'un geste, sans refaire les tirages rendus.",
     origine: "les calculs déjà faits sur ta machine",
     long:
-      "De l'ordre d'une seconde par bruitage, quelques secondes pour ACE-Step, 35 à 95 s pour un tirage de YuE2 (relevé du 19 septembre 2026, carte de 8 Go). Le premier tirage de chaque moteur paie en plus son chargement.\n\nL'estimation d'ACE-Step 1.5 avec le compositeur vient de temps relevés le 10 octobre 2026 sur une carte de 8 Go : le XL turbo met environ 35 s pour 10 s de son, 80 s pour une minute et 3 min 35 pour deux minutes et demie ; le turbo et le base, 3 min 05 et 3 min 50 pour deux minutes et demie. Dès qu'un tirage a été mesuré ici, c'est la mesure qui parle.",
+      "De l'ordre d'une seconde par bruitage, quelques secondes pour ACE-Step, 35 à 95 s pour un tirage de YuE2 (relevé du 19 septembre 2026, carte de 8 Go). Le premier tirage de chaque moteur paie en plus son chargement.\n\nL'estimation d'ACE-Step 1.5 vient de temps relevés le 10 octobre 2026 : environ 35 s pour 10 s de son avec le XL turbo, 3 à 4 min pour deux minutes et demie.",
   },
 
   "son.serie": {
