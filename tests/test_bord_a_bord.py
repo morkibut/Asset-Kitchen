@@ -89,6 +89,10 @@ def test_une_tuile_ne_se_pose_plus_sur_un_fond():
         "single isolated sprite on a flat solid #00FFFF cyan background, strict 64x64 px tile snap"
     ) == f"{POSE_BORD_A_BORD}, strict 64x64 px tile snap"
     assert calage_bord_a_bord("single isolated sprite on a flat background") == POSE_BORD_A_BORD
+    # L'angle de vue reste ; le centrage d'un sujet, non.
+    assert calage_bord_a_bord("3/4 top-down orthographic view, subject centered") == (
+        "3/4 top-down orthographic view"
+    )
     # Un texte d'auteur qui ne porte pas la phrase du produit ressort tel quel.
     assert calage_bord_a_bord("grid-aligned tile assets") == "grid-aligned tile assets"
 

@@ -631,14 +631,20 @@ _ENTOURAGE = re.compile(
 )
 
 
-def calage_bord_a_bord(texte: str) -> str:
-    """La case `technique` d'une nature sans silhouette : une tuile, pas un sprite.
+# « subject centered », la fin des caméras de `VUES` : l'angle reste juste pour
+# une tuile, le centrage non — il n'y a pas de sujet à centrer.
+_SUJET_CENTRE = re.compile(r",\s*subject centered\b")
 
-    Seule la phrase du produit change, comme pour une planche
-    (`calage_de_planche`) ; le calage de grille reste, et un texte d'auteur qui
-    ne la contient pas ressort mot pour mot.
+
+def calage_bord_a_bord(texte: str) -> str:
+    """Les cases `technique` et `vue` d'une nature sans silhouette : une tuile,
+    pas un sprite.
+
+    Seules les phrases du produit changent, comme pour une planche
+    (`calage_de_planche`) ; le calage de grille et l'angle de vue restent, et un
+    texte d'auteur qui ne les contient pas ressort mot pour mot.
     """
-    return _POSE_SUR_UN_FOND_PLAT.sub(POSE_BORD_A_BORD, texte)
+    return _SUJET_CENTRE.sub("", _POSE_SUR_UN_FOND_PLAT.sub(POSE_BORD_A_BORD, texte))
 
 
 def eclairage_sans_entourage(texte: str) -> str:
