@@ -600,6 +600,70 @@ def calage_de_planche(texte: str) -> str:
     return texte.replace(_POSE_SEULE, _POSE_DE_PLANCHE)
 
 
+# ── Le cadrage bord à bord : une tuile, un décor, une matière (10 octobre 2026) ──
+#
+# **Le défaut est payé sur Cœur de Pierre** (`docs/releves/2026-10-10-lot1-parois-
+# coeur-de-pierre.md`, défauts 3 et 9). Une nature sans silhouette — tuile, décor,
+# matière — remplit son cadre ; mais l'appel lui envoyait le cadrage d'un sprite :
+# « single isolated sprite on a flat background », puis « one single sprite and
+# nothing else… the subject is centred ». Le modèle rendait un objet au milieu
+# d'un fond, l'inverse d'une texture bord à bord. Seul le texte repris à la main
+# y échappait.
+#
+# **Et la lumière du jeu disait « entouré d'un noir absolu »** : vraie pour une
+# scène, fausse pour une icône transparente — le modèle peignait le noir, un
+# carré opaque que le détourage par le bord ne voyait pas — et fausse pour une
+# tuile, qui n'a pas d'« autour ». La lumière reste ; seul ce qui entoure tombe.
+
+_POSE_SUR_UN_FOND_PLAT = re.compile(
+    r"single isolated sprite on a flat (?:solid [^\n,.]*? )?background"
+)
+POSE_BORD_A_BORD = "one seamless tile filling the whole frame edge to edge, no background"
+
+# Ce que la lumière met **autour** du sujet : un mot de liaison, puis du noir.
+# Une liste courte et fermée, comme `_NOIRCEURS` côté vitrine — on ne devine pas
+# une phrase, on retire une tournure qu'on sait lire.
+_ENTOURAGE = re.compile(
+    r",?\s*\b(?:surrounded by|set against|against|engulfed (?:in|by)|swallowed by|"
+    r"framed by|in a sea of)\s+(?:an?\s+|the\s+)?(?:[a-z-]+\s+){0,2}"
+    r"(?:blackness|darkness|black|void|shadows?|gloom)\b",
+    re.IGNORECASE,
+)
+
+
+# « subject centered », la fin des caméras de `VUES` : l'angle reste juste pour
+# une tuile, le centrage non — il n'y a pas de sujet à centrer.
+_SUJET_CENTRE = re.compile(r",\s*subject centered\b")
+
+
+def calage_bord_a_bord(texte: str) -> str:
+    """Les cases `technique` et `vue` d'une nature sans silhouette : une tuile,
+    pas un sprite.
+
+    Seules les phrases du produit changent, comme pour une planche
+    (`calage_de_planche`) ; le calage de grille et l'angle de vue restent, et un
+    texte d'auteur qui ne les contient pas ressort mot pour mot.
+    """
+    return _SUJET_CENTRE.sub("", _POSE_SUR_UN_FOND_PLAT.sub(POSE_BORD_A_BORD, texte))
+
+
+def eclairage_sans_entourage(texte: str) -> str:
+    """La lumière du jeu, **sans ce qu'elle met autour du sujet**.
+
+    « Dynamic warm radial lighting (lanterns…) surrounded by absolute
+    blackness, sharp light falloff » devient « Dynamic warm radial lighting
+    (lanterns…), sharp light falloff ». Un texte sans cette tournure ressort au
+    caractère près.
+    """
+    propre = _ENTOURAGE.sub("", texte)
+    if propre == texte:
+        return texte
+    propre = re.sub(r"\s+,", ",", propre)
+    propre = re.sub(r",\s*,", ",", propre)
+    propre = re.sub(r"\s*\.\s*\.", ".", propre)
+    return re.sub(r"[ \t]{2,}", " ", propre).strip(" ,")
+
+
 def camera_sous_la_planche(texte: str) -> str:
     """La caméra du jeu, qui vaut pour chaque vue **sans primer sur la planche**.
 

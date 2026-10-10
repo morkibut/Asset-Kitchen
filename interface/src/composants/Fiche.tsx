@@ -23,7 +23,7 @@
 // *Ses images* (`PageDuSujet`) et personne d'autre — la galerie n'en passe
 // aucun. `data-identite-de-l-image` reste posé au même endroit.
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type Ref } from "react"
 import {
   api,
   NOM_DE_LA_METHODE,
@@ -46,7 +46,7 @@ import { type EmplacementAvecGraine } from "../api-workflows"
 import { matieres } from "../api-tuiles"
 import { sujetAsset, useVisee } from "./Apercu"
 import { Bloc, Bouton, EnTetePanneau, Libelle, Raison, Segments } from "./pieces"
-import { PANNEAU } from "./Infobulle"
+import { PANNEAU, useInfobulle } from "./Infobulle"
 import { posesTenues } from "../production"
 import { MOTEUR, RESUME, avecVeille, dort } from "../recette"
 import { Interrupteur } from "./Retouche"
@@ -277,6 +277,10 @@ export function Fiche({
   onDecoupageChange?: () => void
 }) {
   const [montrerBrut, setMontrerBrut] = useState(false)
+  /** **L'image pavée 3 × 3** (10 octobre 2026) : une tuile se juge répétée. Le
+   *  choix de l'auteur tient tant qu'il regarde la même image ; une autre image
+   *  rouvre selon sa nature (`impose.bord_a_bord`). */
+  const [pavee, setPavee] = useState<boolean | null>(null)
   /** La génération de cette image, **lue une fois pour la fiche entière** (U8) :
    *  deux blocs la lisent — ce que l'ambiance a donné, et le texte qui a fait
    *  l'image —, et deux appels pour le même fichier auraient fait deux instants
@@ -296,6 +300,7 @@ export function Fiche({
   // Changer d'asset remet la fiche sur celui-là.
   useEffect(() => {
     setMontrerBrut(false)
+    setPavee(null)
   }, [asset.identifiant])
 
   // ── Ce que le projet a imposé à cette image ───────────────────────────────
@@ -356,6 +361,8 @@ export function Fiche({
         brut={montrerBrut}
         onBrut={setMontrerBrut}
         traite={!estVide(recette)}
+        pavee={pavee ?? impose?.bord_a_bord === true}
+        onPavee={setPavee}
       />
 
       <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
@@ -2044,11 +2051,16 @@ function Visionneuse({
   brut,
   onBrut,
   traite,
+  pavee,
+  onPavee,
 }: {
   asset: Asset
   brut: boolean
   onBrut: (v: boolean) => void
   traite: boolean
+  /** L'image répétée 3 × 3, bord contre bord, pour voir la couture et le motif. */
+  pavee: boolean
+  onPavee: (v: boolean) => void
   /** Une retouche partie et pas encore revenue. L'image affichée est alors
    *  celle d'avant : c'est ce que la jauge vient dire, au bord bas de la zone
    *  image, à l'endroit exact où une tuile en génération porte la sienne. */
@@ -2063,6 +2075,7 @@ function Visionneuse({
   // question.
   const sujet = sujetAsset(asset, brut)
   const visee = useVisee(sujet)
+  const pavage = useInfobulle("fiche.pavage")
 
   return (
     <div className="flex shrink-0 flex-col gap-1.5 px-2 pt-2">
@@ -2085,12 +2098,41 @@ function Visionneuse({
           traite && !brut ? "damier-papier" : "bg-pourtour"
         }`}
       >
-        <img
-          src={sujet.src}
-          alt={asset.label}
-          className="h-full w-full object-contain"
-          style={{ imageRendering: "pixelated" }}
-        />
+        {pavee ? (
+          /* **Neuf fois la même image, bord contre bord**, sans un pixel
+             d'écart : c'est la couture qu'on vient voir, et un trait de grille
+             la cacherait. La largeur suit le rapport de l'image, pour qu'un mur
+             plus haut que large reste un mur et ne soit pas écrasé. */
+          <div className="flex h-full w-full items-center justify-center overflow-hidden">
+            <div
+              data-pavage
+              className="grid grid-cols-3"
+              style={{
+                width:
+                  asset.hauteur > asset.largeur
+                    ? `${(100 * asset.largeur) / asset.hauteur}%`
+                    : "100%",
+              }}
+            >
+              {Array.from({ length: 9 }, (_, rang) => (
+                <img
+                  key={rang}
+                  src={sujet.src}
+                  alt={rang === 4 ? asset.label : ""}
+                  className="block h-auto w-full"
+                  style={{ imageRendering: "pixelated" }}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <img
+            src={sujet.src}
+            alt={asset.label}
+            className="h-full w-full object-contain"
+            style={{ imageRendering: "pixelated" }}
+          />
+        )}
       </div>
       <div className="flex items-center gap-2">
         {/* La bascule n'est là que s'il y a deux choses à comparer. Un segment
@@ -2105,6 +2147,16 @@ function Visionneuse({
         ) : (
           <span className="mesure text-[10.5px] text-encre-4">brut</span>
         )}
+        {/* **Seule ou pavée** : une tuile se juge répétée — un mur trop sombre,
+            un sol qui fait damier ne se voient pas sur une case seule. */}
+        <span ref={pavage.ancre as Ref<HTMLSpanElement>} {...pavage.declencheurs}>
+          <Segments
+            valeurs={["seule", "pavée 3×3"] as const}
+            valeur={pavee ? "pavée 3×3" : "seule"}
+            onChange={(quoi) => onPavee(quoi === "pavée 3×3")}
+          />
+        </span>
+        {pavage.bulle}
         <span className="mesure ml-auto text-[10.5px] text-encre-4">{dimensions}</span>
       </div>
     </div>

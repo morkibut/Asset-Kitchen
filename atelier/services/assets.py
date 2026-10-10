@@ -383,6 +383,7 @@ class ServiceAssets:
                 "detourage": None,
                 "detouree_par_le_modele": False,
                 "sujet_troue": False,
+                "bord_a_bord": False,
             }
         # **La nature se lit sur l'asset, pas sur la génération** (D1) : le lot
         # est ce qui dit qu'une image est sortie d'une planche, et c'est déjà
@@ -438,7 +439,26 @@ class ServiceAssets:
             # n'est gardé, donc un index effacé retrouve la même réponse.
             "sujet_troue": nee_transparente
             and self.sujet_sorti_transparent(generation, asset.rang),
+            # **Une nature qui remplit son cadre** (10 octobre 2026) — tuile,
+            # décor, matière : la fiche ouvre alors l'image pavée 3 × 3, parce
+            # qu'une tuile se juge répétée. Sur Cœur de Pierre, un mur trop
+            # sombre et trois gravats sur quatre ne se voyaient pas seuls.
+            "bord_a_bord": self._bord_a_bord(generation, echelle),
         }
+
+    def _bord_a_bord(self, generation: Generation, echelle: str) -> bool:
+        """Le barème du jeu dit-il que cette nature n'a pas de silhouette ?
+
+        Lu comme la transparence (`ServiceGenerations._sans_silhouette`) : une
+        nature que le barème ne nomme pas garde son cadrage de sprite.
+        """
+        if not echelle or generation.projet is None:
+            return False
+        objet = self._base.lire_projet(generation.projet)
+        if objet is None:
+            return False
+        lue = objet.univers.echelle(echelle)
+        return lue is not None and not lue.silhouette
 
     def _provenance_du_detourage(
         self, generation: Generation, nature: str, echelle: str

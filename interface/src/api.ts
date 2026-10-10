@@ -4709,6 +4709,10 @@ export type Impose = {
    *  d'origine, jamais sur la recette — que tu as pu réveiller depuis. Absent
    *  d'un serveur d'avant la tranche, ce qui veut dire non. */
   detouree_par_le_modele?: boolean
+  /** **La nature remplit son cadre** — tuile, décor, matière, au barème du
+   *  jeu (10 octobre 2026). La fiche ouvre alors l'image pavée 3 × 3. Absent
+   *  d'un serveur d'avant, ce qui veut dire non. */
+  bord_a_bord?: boolean
   /** **Une partie du sujet est sortie transparente** (TN4) : sur une image
    *  détourée par le modèle, un grand vide enfermé derrière le trait du
    *  sujet. Recalculé sur l'image d'origine à chaque lecture. Absent d'un

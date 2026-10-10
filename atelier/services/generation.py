@@ -72,8 +72,10 @@ from atelier.domaine.generation import (
 from atelier.domaine.vue import (
     phrase_de_calage,
     calage_de_planche,
+    calage_bord_a_bord,
     camera_sous_la_planche,
     consigne_de_mise_en_page,
+    eclairage_sans_entourage,
 )
 from atelier.domaine.personnage import LIBRE
 from atelier.domaine.personnage import PLANCHE as USAGE_PLANCHE
@@ -1053,6 +1055,7 @@ class ServiceGenerations:
                 pose=pose,
                 direction=direction,
                 tri=tri,
+                echelle=demande.echelle,
                 # **Les rôles de ce qui part vraiment, dans l'ordre** (R7). Le
                 # gabarit et la bande de couleurs en font partie : ce sont deux
                 # images de plus dans le sac, et le texte les numérote comme les
@@ -2346,6 +2349,10 @@ class ServiceGenerations:
         # savent le calculer, et ils le passent ; un appelant qui l'ignore
         # compose comme si rien n'était joint.
         fond: str | None = None,
+        # **La nature du sujet** (10 octobre 2026) : une nature sans silhouette
+        # au barème — tuile, décor, matière — part en cadrage bord à bord
+        # (`_bord_a_bord`). Vide : la nature n'est pas dite, rien ne change.
+        echelle: str = "",
     ) -> list[dict[str, Any]]:
         """Ce qui part, **une ligne par chose**, dans l'ordre de l'assemblage (E14).
 
@@ -2399,6 +2406,10 @@ class ServiceGenerations:
                 }
             ]
 
+        bord_a_bord = (
+            pliage is None and not mise_en_page and self._sans_silhouette(projet, echelle)
+        )
+
         lignes: list[dict[str, Any]] = []
         if self._production is not None:
             lignes.extend(
@@ -2426,6 +2437,29 @@ class ServiceGenerations:
                 for ligne in lignes:
                     if ligne["groupe"] == JEU and not ligne.get("corrigee"):
                         ligne["texte"] = calage_de_planche(str(ligne["texte"]))
+            # **Le cadrage bord à bord** (10 octobre 2026) : une tuile n'est pas
+            # un sprite posé sur un fond, et une icône transparente n'a pas de
+            # noir autour d'elle. La lumière reste, ce qui l'entoure tombe — et
+            # l'écran le montre barré, comme tout texte que l'envoi écarte.
+            # Une ligne corrigée à la main part telle que l'auteur l'a écrite.
+            elif bord_a_bord or fond == FOND_TRANSPARENT:
+                for ligne in lignes:
+                    if ligne.get("corrigee") or ligne["groupe"] not in (JEU, AMBIANCE):
+                        continue
+                    avant = str(ligne["texte"])
+                    apres = avant
+                    if ligne["nom"] == "eclairage":
+                        apres = eclairage_sans_entourage(avant)
+                    elif bord_a_bord and ligne["groupe"] == JEU:
+                        apres = calage_bord_a_bord(avant)
+                    if apres != avant:
+                        ligne["texte"] = apres
+                        ligne["remplace"] = ligne.get("remplace") or avant
+                        ligne["raison"] = (
+                            "une tuile remplit son cadre : ni sprite isolé, ni rien autour"
+                            if bord_a_bord
+                            else "le fond est vide : rien ne doit être peint autour du sujet"
+                        )
         elif self._univers is not None and projet is not None:  # pragma: no cover
             # L'atelier monte toujours les deux services ensemble ; ce repli
             # existe pour les essais qui n'en montent qu'un.
@@ -2541,7 +2575,14 @@ class ServiceGenerations:
         # mot. Mesuré : l'aire du sujet passe de 14,7 % à 20,1 % de l'image,
         # soit 37 % de pixels en plus avant le rééchantillonnage.
         cadre = ""
-        if pliage is None and self._production is not None and not mise_en_page:
+        # **Ni avec une tuile** (10 octobre 2026) : « one single sprite… the
+        # subject is centred » est l'inverse d'une texture bord à bord.
+        if (
+            pliage is None
+            and self._production is not None
+            and not mise_en_page
+            and not bord_a_bord
+        ):
             cadre = self._production.cadre(projet)
         # **Ni lui avec une planche à refaire** (RS2) : « one single sprite and
         # nothing else » est exactement ce qui a fait rendre un seul Champy. La
@@ -2928,6 +2969,7 @@ class ServiceGenerations:
         vues_de_la_planche: Sequence[str] = (),
         fond: str | None = None,
         transparence: bool = False,
+        echelle: str = "",
     ) -> str:
         """Les lignes allumées, jointes — **le seul endroit qui écrive le prompt**.
 
@@ -2953,6 +2995,7 @@ class ServiceGenerations:
             mise_en_page=mise_en_page,
             vues_de_la_planche=vues_de_la_planche,
             fond=fond,
+            echelle=echelle,
         )
         texte, _ = self._jonction(lignes, modele, pliage, transparence, fond)
         return texte
@@ -3286,6 +3329,7 @@ class ServiceGenerations:
             mise_en_page=garder_mise_en_page,
             vues_de_la_planche=self._vues_de_la_mise_en_page(projet, personnage, source),
             fond=fond,
+            echelle=echelle,
         )
         # **Un style local lit les mêmes lignes, jointes autrement** (ML4) : une
         # seule partie sans titre, et ce qui n'y entre pas est dans `local`.
@@ -3470,6 +3514,21 @@ class ServiceGenerations:
             # calculer la couleur.
             fond_impose=(tri is not None and tri.fond is not None) or fond_colore,
         )
+
+    def _sans_silhouette(self, projet: str | None, echelle: str) -> bool:
+        """La nature de cet appel remplit-elle son cadre ? — tuile, décor, matière.
+
+        Lue au barème du jeu, comme la transparence (`transparence_de_l_appel`) :
+        une nature que le barème ne nomme pas est un personnage, donc garde son
+        cadrage de sprite. Sans projet ni nature, rien ne change.
+        """
+        if not projet or not echelle or self._univers is None:
+            return False
+        try:
+            lue = self._univers.univers(projet).echelle(echelle)
+        except ErreurAtelier:
+            return False
+        return lue is not None and not lue.silhouette
 
     def _fond_de_l_appel(
         self,
