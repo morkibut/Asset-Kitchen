@@ -720,7 +720,14 @@ class ServiceFileLocale:
                             # l'état vivant suffit — « en cours » sans suivi s'y
                             # lit « à reprendre », retenu dans les deux cas.
                             autres = [e for e in self.lister()["etapes"] if e["identifiant"] != identifiant]
-                            retenu = next((e for e in autres if e["etat"] in RETENUS), None)
+                            # Deux reprises qui se retiennent l'une l'autre ne
+                            # passent jamais (série « accueil v2 », 10 octobre
+                            # 2026 : 2c69e43c attendait 3dfe45f8, qui l'attendait).
+                            # Entre deux étapes à reprendre, la plus ancienne passe ;
+                            # une étape qui calcule vraiment retient toujours.
+                            retenu = next((e for e in autres if e["etat"] in RETENUS
+                                and not (etape["etat"] in RETENUS and e["etat"] != "en_cours"
+                                         and (e["cree_le"], e["identifiant"]) > (etape["cree_le"], identifiant))), None)
                             # Une étape en attente dont plus personne ne tient le
                             # suivi — l'atelier qui l'a lancée a été arrêté — ne
                             # passera jamais : elle ne doit pas bloquer la file. Elle

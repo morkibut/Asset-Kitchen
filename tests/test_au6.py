@@ -861,3 +861,29 @@ async def test_quatre_prises_de_deux_secondes_sortent_en_moins_de_trente_seconde
     # lu deux fois par prise — 6 s de trou entre deux sons. La série reprend la
     # copie lue à la préparation : au plus une lecture, si elle a vieilli.
     assert len(lectures_outils) <= 1, len(lectures_outils)
+
+
+async def test_deux_reprises_ne_s_attendent_plus_l_une_l_autre(file):
+    """Relevé le 10 octobre 2026 (série « accueil v2 ») : 2c69e43c, à reprendre,
+    attendait 3dfe45f8, à reprendre, qui l'attendait — et la suivante restait
+    derrière, alors que ComfyUI avait rendu les trois. La plus ancienne passe,
+    puis l'autre, puis celle qui attendait."""
+    relus = []
+    async def relire(e):
+        relus.append(e["travail_externe"] or e["identifiant"])
+        return {"fichier": "relu.wav"}
+    file.inscrire_executeur("audio", relire)
+    reprises = []
+    for i in range(2):
+        e = preparer(file, f"reprise-{i}", nature="audio")
+        file.modifier(e["identifiant"], etat="a_reprendre", soumission_engagee=True,
+            travail_externe=f"travail-{i}", raison="Le suivi a été interrompu.")
+        reprises.append(e)
+    derriere = preparer(file, "derriere", nature="audio")
+    for e in reversed(reprises):  # la plus récente relancée d'abord
+        await file.lancer(e["identifiant"], reprise=True)
+    await file.lancer(derriere["identifiant"])
+    await asyncio.wait_for(file.attendre_tout(), 10)
+    etats = [file.lire(e["identifiant"])["etat"] for e in (*reprises, derriere)]
+    assert etats == ["termine"] * 3, etats
+    assert relus[:2] == ["travail-0", "travail-1"]
