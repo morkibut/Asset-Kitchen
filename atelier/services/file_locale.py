@@ -135,6 +135,9 @@ class ServiceFileLocale:
         self.apres_fin: list[ApresFin] = []
         self._veille: asyncio.Task | None = None
         self._suites: set[asyncio.Task] = set()
+        # Les tâches coupées par `fermer` : leur annulation, elle, remonte à
+        # celui qui les attend (`attendre_fin`) — l'atelier s'arrête.
+        self._coupees_a_la_fermeture: set[asyncio.Task] = set()
         self._verification = False
         self._alerte: dict[str, Any] | None = None
         self._signature: frozenset | None = None
@@ -484,7 +487,9 @@ class ServiceFileLocale:
         jusqu'au travail de production, qui mourait sans écrire son état —
         resté « en cours » sur le disque, relu « suivi interrompu ». Une
         annulation qui n'est pas la nôtre n'est donc pas propagée : celui qui
-        attend relit l'étape, comme pour toute autre fin.
+        attend relit l'étape, comme pour toute autre fin. **Sauf à la fermeture
+        de l'atelier** (`fermer`) : là, l'annulation remonte comme avant, et ce
+        qui attendait reste « interrompu » pour la réouverture.
         """
         tache = self._taches.get(identifiant)
         if tache is not None:
@@ -492,7 +497,8 @@ class ServiceFileLocale:
                 await asyncio.shield(tache)
             except asyncio.CancelledError:
                 courante = asyncio.current_task()
-                if not tache.cancelled() or (courante is not None and courante.cancelling()):
+                if (not tache.cancelled() or tache in self._coupees_a_la_fermeture
+                        or (courante is not None and courante.cancelling())):
                     raise
         return self.lire(identifiant)
 
@@ -521,6 +527,7 @@ class ServiceFileLocale:
         suites = [t for t in self._suites if t.get_loop() is boucle]
         for tache in [*self._taches.values(), *suites]:
             if not tache.done():
+                self._coupees_a_la_fermeture.add(tache)
                 tache.cancel()
         await self.attendre_tout()
         if suites:
