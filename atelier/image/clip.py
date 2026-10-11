@@ -86,9 +86,18 @@ def fond_le_plus_eloigne(sprite: bytes) -> tuple[int, int, int]:
 
 
 def composer_entree(
-    sprite: bytes, canevas: tuple[int, int], part: float = 0.80
+    sprite: bytes, canevas: tuple[int, int], part: float = 0.80, fond: str = ""
 ) -> bytes:
-    """Le sprite agrandi au plus proche voisin, **entier dans** une toile de fond franc.
+    """Le sprite agrandi au plus proche voisin, **entier dans** une toile de fond uni.
+
+    ── Le fond : celui qui est demandé, gris neutre sinon (10 octobre 2026) ──
+
+    **Ce qui suit sur le fond franc le plus éloigné ne vaut plus.** La mort du
+    nain est partie sur du vert pur alors que son texte demandait un gris
+    neutre, et les cinq premières images du clip ont fondu du vert au gris.
+    `fond` est désormais la couleur demandée (`#rrggbb`, décidée par
+    `atelier.domaine.fond.fond_de_depart_video`) ; vide, c'est
+    `GRIS_NEUTRE_VIDEO`. `fond_le_plus_eloigne` reste, mais ne décide plus.
 
     **Un sprite ne part pas tel quel.** Un modèle vidéo travaille en 480 px ou
     plus ; lui envoyer un sprite de 64 px, c'est lui demander d'inventer tout ce
@@ -150,11 +159,12 @@ def composer_entree(
             f"le sujet mis à l'échelle ({sujet.width}×{sujet.height}) ne tient pas "
             f"dans une toile de {canevas[0]}×{canevas[1]}"
         )
-    # **Le fond se lit sur le sprite reçu, pas sur l'image détourée ci-dessus** :
-    # `couleurs_lues` refait le détourage lui-même, de la façon dont il se fait
-    # partout ailleurs dans l'atelier, et lui donner une image déjà travaillée
-    # aurait été une seconde préparation de la même chose.
-    toile = Image.new("RGB", canevas, fond_le_plus_eloigne(sprite))
+    # **Le fond est celui qui est demandé** (10 octobre 2026), plus celui que
+    # `fond_le_plus_eloigne` lisait sur le sprite : un `#rrggbb` illisible ou
+    # vide retombe sur le gris neutre, jamais sur une couleur franche.
+    from atelier.domaine.fond import GRIS_NEUTRE_VIDEO, fond_valide, rvb
+
+    toile = Image.new("RGB", canevas, rvb(fond_valide(fond) or GRIS_NEUTRE_VIDEO.couleur))
     toile.paste(
         sujet, ((canevas[0] - sujet.width) // 2, (canevas[1] - sujet.height) // 2), sujet
     )

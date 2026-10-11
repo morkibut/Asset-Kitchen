@@ -402,7 +402,8 @@ class ServiceAnimation:
     # ── L'image de départ ────────────────────────────────────────────────────
 
     @staticmethod
-    def preparer_entree(sprite: bytes, resolution: str, proportions: str, part_sujet: float = 0.80) -> bytes:
+    def preparer_entree(sprite: bytes, resolution: str, proportions: str, part_sujet: float = 0.80,
+                        fond: str = "") -> bytes:
         """Le sprite mis à la taille du clip, sur le gris du produit.
 
         **Une toile par format demandé.** Envoyer une image 16:9 à un appel qui
@@ -416,8 +417,13 @@ class ServiceAnimation:
         portait en dur avant cette tranche. Une grande frappe veut de la place
         pour que ses bras ne sortent pas du cadre ; une pose repliée peut en
         laisser moins.
+
+        **`fond`** (10 octobre 2026) : la couleur de la toile, `#rrggbb` ; vide,
+        le gris neutre de `atelier.domaine.fond.GRIS_NEUTRE_VIDEO` — jamais plus
+        le vert pur d'un fond « le plus éloigné » que le texte contredisait.
         """
-        return decodeur.composer_entree(sprite, taille_demandee(resolution, proportions), part=part_sujet)
+        return decodeur.composer_entree(sprite, taille_demandee(resolution, proportions), part=part_sujet,
+                                        fond=fond)
 
     # ── Lecture ──────────────────────────────────────────────────────────────
 

@@ -1270,29 +1270,31 @@ def test_l_adaptateur_distingue_un_cout_absent_d_un_cout_nul():
     assert ClipProduit(octets=b"", consomme=0.0).montant_relu is True
 
 
-def test_l_image_de_depart_d_un_clip_part_sur_le_fond_franc_le_plus_eloigne_du_sujet():
-    """Le gris ressemblait au sujet ; le fond franc est choisi loin de ses couleurs.
-
-    *Repris le 20 septembre 2026 (RT3)* : le choix ne se fait plus sur la liste
-    de trois couleurs que ce module tenait pour lui seul, mais sur les six
-    candidats de `atelier.domaine.fond` — les mêmes que pour une image. Les
-    réponses changent donc là où l'ancienne liste était trop courte : un sujet
-    rouge part maintenant sur du cyan, qui en est plus loin que le vert.
+def test_l_image_de_depart_d_un_clip_part_sur_le_gris_neutre_quel_que_soit_le_sujet():
+    """*Renversé le 10 octobre 2026* : l'image de départ ne part plus sur le
+    fond franc le plus éloigné du sujet (RT3) — la mort du nain est partie sur
+    du vert pur quand son texte demandait un gris neutre, et le clip a fondu
+    du vert au gris sur ses cinq premières images. Sans couleur demandée, la
+    toile est le gris neutre, quelles que soient les couleurs du sujet ; une
+    couleur demandée est tenue telle quelle.
     """
     import io
 
     from PIL import Image
 
+    from atelier.domaine.fond import GRIS_NEUTRE_VIDEO, rvb
     from atelier.image.clip import composer_entree
 
-    def toile_de(couleur):
+    def toile_de(couleur, fond=""):
         sujet = Image.new("RGBA", (40, 60), (0, 0, 0, 0))
         sujet.paste(Image.new("RGBA", (20, 40), couleur), (10, 10))
         tampon = io.BytesIO()
         sujet.save(tampon, format="PNG")
-        with Image.open(io.BytesIO(composer_entree(tampon.getvalue(), (480, 480)))) as toile:
+        with Image.open(io.BytesIO(composer_entree(tampon.getvalue(), (480, 480), fond=fond))) as toile:
             return toile.convert("RGB").getpixel((0, 0))
 
-    assert toile_de((200, 60, 60, 255)) == (0, 255, 255), "un sujet rouge part sur du cyan"
-    assert toile_de((30, 220, 40, 255)) == (255, 0, 255), "un sujet vert part sur du magenta"
-    assert toile_de((230, 40, 230, 255)) == (0, 255, 255), "un sujet magenta part sur du cyan"
+    gris = rvb(GRIS_NEUTRE_VIDEO.couleur)
+    assert toile_de((200, 60, 60, 255)) == gris
+    assert toile_de((30, 220, 40, 255)) == gris
+    assert toile_de((230, 40, 230, 255)) == gris
+    assert toile_de((200, 60, 60, 255), "#00ffff") == (0, 255, 255), "la couleur demandée est tenue"

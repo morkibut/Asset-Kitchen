@@ -50,6 +50,11 @@ DEFAUTS = {
     # l'image (`prompt_negatif_image`). **Ajouté au texte fixe, jamais à sa
     # place** : le texte fixe vient du banc payé et tient le pixel art droit.
     "prompt_negatif_video": "",
+    # **Le fond de l'image de départ** (10 octobre 2026), `#rrggbb`. Vide : la
+    # couleur que le texte donne au fond, sinon un gris neutre
+    # (`atelier.domaine.fond.fond_de_depart_video`) — plus jamais un vert pur
+    # que le texte contredit.
+    "fond_video": "",
 }
 
 # La longueur d'un « à éviter » vidéo : de quoi nommer une dizaine de défauts,
@@ -64,7 +69,7 @@ FIN_SUR_LE_DEPART = "depart"
 # répétée avec sa clé d'avant RV5 se relit, au lieu de se voir refusée comme
 # « une autre demande » parce que le dictionnaire a grandi.
 TARDIFS = {"mouvement": None, "correction_geste": "", "style_combat": None, "part_sujet": 0.80,
-           "image_de_fin": None, "prompt_negatif_video": ""}
+           "image_de_fin": None, "prompt_negatif_video": "", "fond_video": ""}
 
 
 def images_de_la_bande(total: int, voulues: int, *, boucle_fermee: bool = False) -> list[int]:
@@ -133,9 +138,16 @@ def demande_normalisee(brute: dict[str, Any], *, source_libre: bool = False) -> 
     for nom in ("reference_asset", "modele_image", "resolution_image", "image_de_fin"):
         if demande[nom] is not None and (not isinstance(demande[nom], str) or not demande[nom].strip()):
             raise TravailRefuse(f"« {nom} » doit être un identifiant ou rester vide.")
-    for nom in ("prompt_image", "prompt_negatif_image", "prompt_negatif_video", "proportions_image", "resolution", "proportions"):
+    for nom in ("prompt_image", "prompt_negatif_image", "prompt_negatif_video", "fond_video", "proportions_image", "resolution", "proportions"):
         if not isinstance(demande[nom], str):
             raise TravailRefuse(f"« {nom} » doit être du texte.")
+    if demande["fond_video"].strip():
+        from atelier.domaine.fond import fond_valide
+        demande["fond_video"] = fond_valide(demande["fond_video"])
+        if not demande["fond_video"]:
+            raise TravailRefuse("« fond_video » doit être une couleur #rrggbb ou rester vide.")
+    else:
+        demande["fond_video"] = ""
     demande["prompt_negatif_video"] = demande["prompt_negatif_video"].strip()
     if len(demande["prompt_negatif_video"]) > NEGATIF_VIDEO_MAX:
         raise TravailRefuse(f"« prompt_negatif_video » ne doit pas dépasser {NEGATIF_VIDEO_MAX} caractères.")
