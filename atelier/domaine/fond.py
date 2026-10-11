@@ -704,3 +704,75 @@ def replier(interdit: str, ecrit: str) -> str:
     """
     morceaux = [m.strip() for m in (ecrit, interdit) if m and m.strip()]
     return " ; ".join(morceaux)
+
+
+# ── Le fond de l'image de départ d'une vidéo (10 octobre 2026) ───────────────
+#
+# **Relevé le 10 octobre 2026 : la mort du nain.** Le sprite détouré est parti
+# vers Wan posé sur du vert pur — le candidat le plus loin de ses couleurs
+# (`clip.fond_le_plus_eloigne`, RT3) —, alors que le texte demandait *« plain
+# neutral grey background »*. Le modèle a obéi au texte : les images 0 à 4 du
+# clip passent du vert au gris, et la première est verte. Une image de départ
+# qui contredit le texte coûte un clip entier.
+#
+# **Le fond de départ suit donc ce qui est demandé**, dans cet ordre : la
+# couleur posée sur la demande (`fond_video`), puis une couleur de fond nommée
+# dans le texte (« green background », « fond bleu »), puis ce gris neutre.
+# Wan i2v veut une image RVB : laisser la transparence n'est pas possible.
+#
+# **`#808080`, le gris du milieu**, à égale distance du contour sombre d'un
+# sprite et de ses reflets clairs. Le détourage des images du clip ne vise
+# aucune couleur fixe : la passe « bord » lit la médiane des bordures
+# (`traitement.detourer_bord`), donc elle trouve ce gris comme elle trouvait
+# le vert — et le gris que le modèle rend, qui n'est jamais l'hexadécimal exact.
+#
+# ⚠️ Le prix, et il est connu depuis D3 : un gris franc ressemble davantage à
+# une armure ou à une ombre qu'un vert pur. Le remplissage depuis le bord ne
+# mange que ce qui touche le bord par des pixels proches ; un sujet qui le
+# contredirait se pose avec `fond_video`, pour cet appel seulement.
+GRIS_NEUTRE_VIDEO = Candidat("#808080", "neutral grey")
+
+# Les mots neutres qu'un texte peut donner à son fond, à côté de `MOTS_COULEUR`
+# (qui ne nomme que des couleurs franches, pour l'interdiction).
+_MOTS_NEUTRES: dict[str, str] = {
+    "gris": GRIS_NEUTRE_VIDEO.couleur, "grise": GRIS_NEUTRE_VIDEO.couleur,
+    "grey": GRIS_NEUTRE_VIDEO.couleur, "gray": GRIS_NEUTRE_VIDEO.couleur,
+    "blanc": "#FFFFFF", "blanche": "#FFFFFF", "white": "#FFFFFF",
+    "noir": "#000000", "noire": "#000000", "black": "#000000",
+}
+_NEGATIONS = {"no", "not", "without", "sans", "pas", "aucun", "never", "jamais"}
+
+
+def fond_nomme_par_le_texte(texte: str) -> str:
+    """La couleur que le texte donne **à son fond**, ou rien.
+
+    Seule une couleur collée au mot *background* (les trois mots qui le
+    précèdent) ou au mot *fond* (les trois qui le suivent) compte : « cape
+    verte » parle du sujet, « green background » du fond. Une négation dans
+    cette fenêtre (« no green background ») annule la lecture.
+    """
+    mots = re.findall(r"[^\W\d_]+", texte.lower(), flags=re.UNICODE)
+    for rang, mot in enumerate(mots):
+        if mot in ("background", "backdrop"):
+            fenetre = list(reversed(mots[max(0, rang - 3):rang]))
+            avant = mots[max(0, rang - 4):rang]
+        elif mot == "fond":
+            fenetre = mots[rang + 1:rang + 4]
+            avant = mots[max(0, rang - 2):rang]
+        else:
+            continue
+        # La négation se lit **avant** : « grey background, no camera motion »
+        # garde son gris.
+        if any(m in _NEGATIONS for m in avant):
+            continue
+        for voisin in fenetre:
+            couleur = _MOTS_NEUTRES.get(voisin) or MOTS_COULEUR.get(voisin)
+            if couleur:
+                return couleur
+    return AUCUN_FOND
+
+
+def fond_de_depart_video(demande: str, texte: str = "") -> str:
+    """Le fond sur lequel l'image de départ d'une vidéo est posée : la couleur
+    demandée, sinon celle que le texte donne au fond, sinon `GRIS_NEUTRE_VIDEO`."""
+    return fond_valide(demande) or fond_nomme_par_le_texte(texte) or GRIS_NEUTRE_VIDEO.couleur

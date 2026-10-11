@@ -24,6 +24,7 @@ from atelier.domaine.bande import Cadre
 from atelier.domaine.consommation import USD
 from atelier.domaine.demande import Demande
 from atelier.domaine.erreurs import ClipVideApresDetourage
+from atelier.domaine.fond import fond_de_depart_video
 from atelier.domaine.generation import AUTEUR, AGENT, Generation, Reinjection, Statut
 from atelier.domaine.recette import Grille, Recette
 from atelier.image import controle_clip
@@ -338,13 +339,24 @@ class ServiceTravaux:
         octets = self.a.assets.reference(identifiant)
         demande = travail["demande"]
         entree = self.a.animation.preparer_entree(
-            octets, demande["resolution"], demande["proportions"], demande.get("part_sujet", 0.80)
+            octets, demande["resolution"], demande["proportions"], demande.get("part_sujet", 0.80),
+            self._fond_de_depart(demande),
         )
         dossier = self._dossier(travail["projet"], travail["identifiant"])
         self.a.fichiers._poser(dossier / "entree-video.png", entree)
         travail["reference_asset"] = identifiant
-        travail["entree_video"] = {"empreinte": _hash(entree),
+        travail["entree_video"] = {"empreinte": _hash(entree), "fond": self._fond_de_depart(demande),
             "url": f"/api/projects/{travail['projet']}/production-jobs/{travail['identifiant']}/video-reference"}
+
+    @staticmethod
+    def _fond_de_depart(demande: dict[str, Any]) -> str:
+        """Le fond de la toile envoyée au modèle vidéo — départ et fin le même.
+
+        Relevé le 10 octobre 2026 : la toile partait sur le vert pur « le plus
+        éloigné » du sprite alors que le texte demandait un gris neutre. Elle
+        prend la couleur demandée, sinon celle que le texte donne au fond,
+        sinon `GRIS_NEUTRE_VIDEO`."""
+        return fond_de_depart_video(demande.get("fond_video", ""), demande.get("prompt_video", ""))
 
     def _fin(self, travail: dict[str, Any]) -> None:
         """**PX5** — l'image de fin, vérifiée et composée comme le départ.
@@ -367,7 +379,7 @@ class ServiceTravaux:
             raise TravailRefuse("L'image de fin choisie n'est plus une image disponible de ce jeu.")
         fin = self.a.animation.preparer_entree(
             self.a.assets.reference(choix), demande["resolution"], demande["proportions"],
-            demande.get("part_sujet", 0.80),
+            demande.get("part_sujet", 0.80), self._fond_de_depart(demande),
         )
         self.a.fichiers._poser(self._dossier(travail["projet"], travail["identifiant"]) / "fin-video.png", fin)
         travail["fin_video"] = {"depart": False, "empreinte": _hash(fin),
@@ -390,7 +402,7 @@ class ServiceTravaux:
         d = travail["demande"]
         return DemandeClip(texte=d["prompt_video"], image=image, secondes=d["secondes"],
                            resolution=d["resolution"], proportions=d["proportions"], options=d["options_video"],
-                           image_de_fin=fin)
+                           image_de_fin=fin, negatif=d.get("prompt_negatif_video", ""))
 
     def _estimation_sonore(self, methode: dict[str, Any]) -> float:
         """Le temps d'un tirage, relu au moment du lancement sur les mesures
@@ -885,7 +897,11 @@ class ServiceTravaux:
                     self._garder(travail)
                     await self.a.animation.suivre(travail["clip"], reprise=reprise)
                     locale = self.a.animation.etape_locale(travail["clip"])
-                    if locale["etat"] != "termine":
+                    # Relevé le 10 octobre 2026 : étape arrêtée par la veille
+                    # (« échoue », « à reprendre ») alors que son clip était
+                    # arrivé, fichiers en place. Le clip fait foi : on conclut.
+                    arrive = self.a.animation.arrive(self.a.animation.lire(travail["clip"]))
+                    if locale["etat"] != "termine" and not arrive:
                         travail["etat"] = "annule" if locale["etat"] == "annule" else "externe_inconnu" if locale["etat"] == "externe_inconnu" else "a_verifier"
                         if locale["etat"] == "annule":
                             travail["reserve"] = None

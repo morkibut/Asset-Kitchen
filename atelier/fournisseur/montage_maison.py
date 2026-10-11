@@ -94,6 +94,20 @@ NEGATIF = (
     "morphing, changing design, changing colors, text, watermark"
 )
 
+
+def negatif_du_clip(a_eviter: str = "") -> str:
+    """Le texte d'interdiction qui part : **le texte fixe d'abord, puis les mots
+    de l'auteur**, jamais l'un à la place de l'autre.
+
+    Relevé le 10 octobre 2026 : la vidéo n'avait aucun champ « à éviter » —
+    l'image en a un, le son aussi. Le texte fixe reste en tête, mot pour mot :
+    c'est lui que le banc payé a validé, et le comparer au chemin payant n'a de
+    sens que s'il part à l'identique. Sans mots de l'auteur, il part seul,
+    exactement comme avant.
+    """
+    propre = " ".join(a_eviter.split())
+    return f"{NEGATIF}, {propre}" if propre else NEGATIF
+
 # Les quatre étapes du greffon, et la bascule au milieu.
 PAS = 4
 BASCULE = 2
@@ -137,6 +151,7 @@ def montage_du_clip(
     prefixe: str = "atelier/clip",
     force_pixel: float = 1.0,
     image_de_fin: str | None = None,
+    a_eviter: str = "",
 ) -> dict[str, Any]:
     """Le montage complet, au format que `POST /prompt` attend.
 
@@ -145,6 +160,10 @@ def montage_du_clip(
     ComfyUI, mêmes entrées que `WanImageToVideo` plus `end_image` (relevé sur
     `/object_info` le 26 septembre 2026) — et une étape 20 la charge. Sans elle,
     le montage est exactement celui d'avant cette tranche.
+
+    **`a_eviter`** (10 octobre 2026) : les mots de l'auteur, ajoutés à
+    l'étape 13 **après** `NEGATIF` (`negatif_du_clip`). Vide, l'étape 13 porte
+    `NEGATIF` seul, comme avant.
 
     `image` est le nom sous lequel l'image de départ a été déposée chez ComfyUI,
     jamais un chemin de notre côté : les deux processus ne partagent pas
@@ -160,6 +179,7 @@ def montage_du_clip(
         image=image, texte=texte, images=images, largeur=largeur, hauteur=hauteur,
         graine=graine, prefixe=prefixe, force_pixel=force_pixel,
     )
+    montage["13"]["inputs"]["text"] = negatif_du_clip(a_eviter)
     if image_de_fin:
         montage["14"]["class_type"] = "WanFirstLastFrameToVideo"
         montage["14"]["inputs"]["end_image"] = ["20", 0]

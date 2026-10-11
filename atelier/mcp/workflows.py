@@ -21,7 +21,7 @@ def installer_outils_workflow(serveur, atelier, refus_lisible):
     async def prepare_workflow_image(project: str, request: dict[str, Any]) -> dict[str, Any]:
         return await atelier.travaux_workflow.preparer(project, request, "agent")
 
-    @serveur.tool(name="prepare_free_video", meta=meta("Préparer un clip libre"), description="Prepare a durable agent-owned video without a character or animation objective. A starting image is mandatory: provide reference_asset or an image model and prompt. The completed source clip enters the gallery for later montage and classification. Uses the same start/resume production job tools and delegation budget.")
+    @serveur.tool(name="prepare_free_video", meta=meta("Préparer un clip libre"), description="Prepare a durable agent-owned video without a character or animation objective. A starting image is mandatory: provide reference_asset or an image model and prompt. The completed source clip enters the gallery for later montage and classification. Optional prompt_negatif_video: what the video must avoid (at most 500 characters), added after the engine's fixed negative text. Uses the same start/resume production job tools and delegation budget.")
     @refus_lisible
     async def prepare_free_video(project: str, request: dict[str, Any]) -> dict[str, Any]:
         # **RV5, T7** : prépare une série d'un seul clip, par le même chemin

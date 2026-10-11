@@ -26,6 +26,7 @@ def installer_outils_travaux(serveur: Any, atelier: Any, refus_lisible: Callable
                   "request uses French fields: cle, personnage, pose, direction, modele_video, prompt_video; "
                   "optional reference_asset, modele_image, prompt_image, repris_image, references_image, references_image_ecartees, options_image, options_video, "
                   "prompt_negatif_image, proportions_image, resolution_image, "
+                  "prompt_negatif_video (what the video must avoid, at most 500 characters on one line — added after the engine's fixed negative text, never replacing it), "
                   "secondes, resolution, proportions, nombre_images, cadence, sens, plafond_image_usd, livrer_provisoire, "
                   "part_sujet (how much of the canvas the subject fills before the video call, 0.40-0.95, default 0.80 — "
                   "raise it for a big attack whose limbs must not leave the frame, lower it to leave more room around the subject), "

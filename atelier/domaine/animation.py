@@ -290,6 +290,10 @@ class DemandeClip:
     # l'image de départ, elle a été **jointe par l'auteur** : aucun plafond ne
     # la fait céder (AGENTS 4) — un modèle qui ne la prend pas est grisé.
     image_de_fin: bytes | None = None
+    # **Ce que l'auteur veut éviter dans ce clip** (relevé du 10 octobre 2026),
+    # ajouté par l'adaptateur **après** son propre texte d'interdiction, jamais
+    # à sa place. Vide : le texte fixe part seul, exactement comme avant.
+    negatif: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "secondes", duree_normalisee(self.secondes))
