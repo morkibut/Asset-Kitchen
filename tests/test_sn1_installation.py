@@ -117,8 +117,9 @@ async def test_catalogue_dit_ce_que_chaque_moteur_sait_faire_sans_rien_installer
     catalogue = await atelier.installation_son.catalogue()
     # « yue2-partition-jouee » (SN9) partage le fichier de poids de
     # « yue2-int8 » mais n'est jamais un moteur à choisir pour lui-même : le
-    # catalogue ne montre que les cinq moteurs réellement choisissables.
-    assert {m["identifiant"] for m in catalogue} == set(CONSTRUCTEURS) - {"yue2-partition-jouee"}
+    # catalogue ne montre que les cinq moteurs réellement choisissables. Même
+    # règle pour « ace-step-15-reprise » (BO) : on y passe en partant d'un son.
+    assert {m["identifiant"] for m in catalogue} == set(CONSTRUCTEURS) - {"yue2-partition-jouee", "ace-step-15-reprise"}
     par_id = {m["identifiant"]: m for m in catalogue}
     assert par_id["sa3-small-sfx"]["familles"] == ["bruitage", "ambiance"]
     assert par_id["ace-step-15-turbo"]["familles"] == ["musique", "jingle"]
@@ -190,8 +191,12 @@ async def test_moteurs_par_famille_lit_ce_qui_est_installe(son):
     await atelier.installation_son.installer(identifiants=["sa3-small-sfx", "ace-step-15-turbo"])
     familles = atelier.installation_son.moteurs_par_famille(projet)
     assert familles["bruitage"]["moteur"] == "sa3-small-sfx" and familles["ambiance"]["moteur"] == "sa3-small-sfx"
+    # Le XL turbo, premier de la liste, n'est pas installé : le turbo reprend.
     assert familles["musique"]["moteur"] == "ace-step-15-turbo" and familles["jingle"]["moteur"] == "ace-step-15-turbo"
     assert familles["chanson"]["moteur"] is None
+    await atelier.installation_son.installer(identifiants=["ace-step-15-xl-turbo"])
+    familles = atelier.installation_son.moteurs_par_famille(projet)
+    assert familles["musique"]["moteur"] == "ace-step-15-xl-turbo" and familles["jingle"]["moteur"] == "ace-step-15-xl-turbo"
     # Ce que l'écran propose : les moteurs qui savent faire ce genre de son.
     assert familles["bruitage"]["possibles"] == ["sa3-small-sfx", "sa-open-1", "sa3-medium"]
     assert "yue2-int8" not in familles["ambiance"]["possibles"]

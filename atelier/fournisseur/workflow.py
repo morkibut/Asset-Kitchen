@@ -263,22 +263,38 @@ class MoteurWorkflow(MoteurDeLaMaison):
         masque et une image aux mêmes octets ne se confondent pas chez ComfyUI."""
         return await self._deposer(octets, "atelier-masque-" + hashlib.sha256(octets).hexdigest()[:24] + ".png")
 
-    async def _deposer(self, octets, nom):
+    async def deposer_son(self, octets, nom="son.wav"):
+        """Le son de départ d'une reprise : déposé tel quel dans le dossier
+        d'entrée de ComfyUI, où `LoadAudio` le lit. La route s'appelle
+        `/upload/image` mais range n'importe quel fichier — c'est elle que
+        l'écran de ComfyUI emploie pour charger un son. Le nom suit les octets :
+        deux reprises du même son ne le déposent qu'une fois."""
+        extension = ("." + nom.rsplit(".", 1)[-1].lower()) if "." in nom else ".wav"
+        if extension not in (".wav", ".flac", ".ogg", ".mp3"):
+            extension = ".wav"
+        media = {".wav": "audio/wav", ".flac": "audio/flac", ".ogg": "audio/ogg", ".mp3": "audio/mpeg"}[extension]
+        return await self._deposer(octets, "atelier-son-" + hashlib.sha256(octets).hexdigest()[:24] + extension, media)
+
+    async def _deposer(self, octets, nom, media="image/png"):
         async with self._ouvrir(DELAI_MOYEN) as client:
             reponse = await client.post(self.adresse + "/upload/image",
-                files={"image": (nom, octets, "image/png")}, data={"type": "input", "overwrite": "false"})
+                files={"image": (nom, octets, media)}, data={"type": "input", "overwrite": "false"})
             reponse.raise_for_status()
             rendu = reponse.json()
         if not rendu.get("name"):
             raise WorkflowRefuse("ComfyUI n'a pas nommé la référence déposée.")
         return (str(rendu.get("subfolder") or "").rstrip("/") + "/" + str(rendu["name"])).lstrip("/")
 
-    async def soumettre_graphe(self, profil, valeurs, references, masque=None, fin=None):
+    async def soumettre_graphe(self, profil, valeurs, references, masque=None, fin=None, son=None):
+        """`son` : les octets du son de départ d'une reprise, déposés ici,
+        au dernier moment, comme les références d'une image."""
         diagnostic = await self.diagnostiquer_profil(profil, retenu_permis=True)
         if not diagnostic["disponible"]:
             raise WorkflowRefuse(" · ".join(diagnostic["problemes"]))
         noms = [await self.deposer_reference(o) for o in references]
         zone = {} if masque is None else {"masque": await self.deposer_masque(masque)}
+        if son is not None:
+            zone["source"] = await self.deposer_son(son)
         # MO3 : l'image de fin d'un clip part comme l'image de départ (même
         # passage sur blanc). Une boucle finit sur les octets mêmes du départ :
         # déjà déposés, on ne les redépose pas — la règle du moteur de la maison.

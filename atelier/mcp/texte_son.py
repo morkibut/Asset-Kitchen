@@ -31,14 +31,21 @@ def installer_texte_son(serveur: Any, atelier: Any, refus) -> None:
         "negative text, the resolved duration and its source, the picked engine and its source, the music "
         "parameters, and flags: a language flag when the description does not look like English, a duration flag "
         "when it falls outside the engine's declared range (clamped and cropped rather than refused when it's the "
-        "engine's own minimum), and a reason when no engine is installed for the family."))
+        "engine's own minimum), and a reason when no engine is installed for the family. source_sound (a ready "
+        "sound id of the project) previews a cover of it: the engine switches to its cover profile, the duration "
+        "becomes the source's, and force (0.1-0.95, default 0.6) is how closely it follows the source."))
     @refus
     def preview_sound_text(project: str, family: str, description: str, engine: str | None = None,
             lyrics: str | None = None, tempo: int | None = None, key: str | None = None,
-            time_signature: int | None = None) -> dict[str, Any]:
+            time_signature: int | None = None, source_sound: str | None = None,
+            force: float | None = None) -> dict[str, Any]:
         demande: dict[str, Any] = {"famille": family, "prompt": description}
         if engine is not None:
             demande["modele"] = engine
+        if source_sound is not None:
+            demande["source"] = source_sound
+        if force is not None:
+            demande["force"] = force
         for cle, valeur in (("paroles", lyrics), ("tempo", tempo), ("tonalite", key), ("mesure", time_signature)):
             if valeur is not None:
                 demande[cle] = valeur

@@ -140,6 +140,37 @@ test("le niveau perçu (LUFS) ne s’affiche que pour les familles qui l’utili
   expect(screen.getByText(/−20.0 LUFS|-20.0 LUFS/)).toBeTruthy()
 })
 
+test("le limiteur à crête vraie ne paraît qu’avec un niveau visé, et part dans la recette", async () => {
+  monter({ ...son, famille: "musique", recette: { ...recetteDeBase, cible_lufs: null } })
+  await screen.findByLabelText("Fondu d’entrée (ms)")
+  expect(screen.queryByLabelText(/Limiteur à crête vraie/)).toBeNull()
+  cleanup()
+  monter({ ...son, famille: "musique", recette: { ...recetteDeBase, cible_lufs: -16, limiteur: true } })
+  const caseLimiteur = await screen.findByLabelText(/Limiteur à crête vraie/)
+  expect(caseLimiteur).toHaveProperty("checked", true)
+  expect(screen.getByText(/−16 LUFS · limiteur|-16 LUFS · limiteur/)).toBeTruthy()
+  const regler = vi.spyOn(sons, "regler").mockResolvedValue(son)
+  fireEvent.click(caseLimiteur)
+  fireEvent.click(screen.getByRole("button", { name: "Conserver une version" }))
+  await waitFor(() => expect(regler).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ cible_lufs: -16, limiteur: false }), "Épée"))
+})
+
+test("la coupe automatique du jingle paraît pour un jingle, dit où elle a coupé, et part dans la recette", async () => {
+  monter({ ...son, famille: "musique" })
+  await screen.findByLabelText("Fondu d’entrée (ms)")
+  expect(screen.queryByLabelText(/Coupe automatique du jingle/)).toBeNull()
+  cleanup()
+  const mesures = { ...son.mesures!, coupe_jingle: { debut: 0.42, fin: 3.9, duree: 3.48, fondu_sortie_ms: 500 } }
+  monter({ ...son, famille: "jingle", mesures, recette: { ...recetteDeBase, coupe_jingle: true } })
+  const caseCoupe = await screen.findByLabelText(/Coupe automatique du jingle/)
+  expect(caseCoupe).toHaveProperty("checked", true)
+  expect(screen.getByText("Coupé de 0,42 à 3,90 s · 3,5 s gardées, fondu de sortie 500 ms")).toBeTruthy()
+  const regler = vi.spyOn(sons, "regler").mockResolvedValue(son)
+  fireEvent.click(caseCoupe)
+  fireEvent.click(screen.getByRole("button", { name: "Conserver une version" }))
+  await waitFor(() => expect(regler).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ coupe_jingle: false }), "Épée"))
+})
+
 test("écouter le raccord joue loop-splice.wav en boucle", async () => {
   monter()
   await screen.findByLabelText("Fondu d’entrée (ms)")

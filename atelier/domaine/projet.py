@@ -526,8 +526,9 @@ from atelier.domaine.son import FAMILLES_SON  # noqa: E402
 #
 # **La bande originale du jeu** (10 octobre 2026, relevé « Univers musical ») :
 # trois cases de plus, pour que chaque piste d'un même jeu sonne comme la même
-# BO. `mode` (« D dorian mode » : ACE ne connaît que majeur et mineur, le mode
-# part en mots à côté de la tonalité), `leitmotiv` (le motif commun, en mots)
+# BO. `mode` (la couleur en mots, « modal, ancient » : ACE ne connaît que
+# majeur et mineur et ignore « dorian », d'après son guide officiel — la
+# relecture alerte un mode rare), `leitmotiv` (le motif commun, en mots)
 # et `interdits` — ce que la BO ne doit pas contenir. Les interdits **ne
 # partent jamais** : un mot nié (« no synth ») appelle le mot chez ces
 # moteurs ; ils servent à l'alerte de la relecture (`atelier.audio.texte`).

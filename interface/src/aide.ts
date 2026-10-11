@@ -4134,7 +4134,7 @@ export const AIDE: Record<string, Explication> = {
       "Poser ou changer la famille ajoute une version, sans toucher aux réglages. Appliquer les réglages de la famille les prend en plus, et ne paraît que s'ils diffèrent des tiens.",
     origine: "toi, ou la demande qui a fabriqué le son",
     long:
-      "Bruitage et interface : WAV en mono, crête à −3 dBFS. Ambiance : Ogg, −26 LUFS. Musique, jingle, chanson : Ogg, −17 LUFS, bus Music. Voix : Ogg en mono, −17 LUFS. Le nom du fichier commence par sfx_, ui_, amb_, mus_ ou vo_, puis suit le nom du son.",
+      "Bruitage et interface : WAV en mono, crête à −3 dBFS. Ambiance : Ogg, −26 LUFS. Musique, jingle, chanson : Ogg, −16 LUFS avec limiteur, bus Music. Voix : Ogg en mono, −17 LUFS. Le nom du fichier commence par sfx_, ui_, amb_, mus_ ou vo_, puis suit le nom du son.",
   },
 
   // ── Les sons — l'écoute ──────────────────────────────────────────────────
@@ -4181,16 +4181,40 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · 5 ms de chaque côté",
   },
 
+  "son.coupe_jingle": {
+    nom: "Coupe automatique du jingle",
+    ou: "son",
+    groupe: "Régler — coupe et fondus",
+    quoi: "Ramène un rendu de 10 s au jingle utile : le silence du début et la traîne de la fin partent, avec des fondus courts.",
+    change:
+      "Le début est le premier son au-dessus de −45 dB ; la fin, le dernier moment à moins de 30 dB sous le sommet. Puis 10 ms de fondu d'entrée et 0,3 à 0,8 s de fondu de sortie selon la longueur. Posée avant le niveau.",
+    origine: "toi · coupée ; proposée par la famille jingle",
+    long:
+      "Reprise de la recette faite à la main le 10 octobre 2026 sur les rendus d'ACE-Step, qui donnait des jingles de 2 à 5 s. La mesure dit où le son a été coupé.",
+  },
+
   "son.niveau": {
     nom: "Niveau : normaliser, niveau visé, gain",
     ou: "son",
     groupe: "Régler — niveau et hauteur",
     quoi: "La force du son : un niveau perçu visé pour une ambiance ou une musique, une crête pour un bruitage, puis un gain.",
     change:
-      "Le niveau visé (LUFS) est un gain, pas un compresseur, et s'arrête à −1 dBTP de crête. Ailleurs, « Normaliser » ramène la crête à la cible, tous canaux ensemble. Le gain vient après.",
+      "Le niveau visé (LUFS) est un gain, pas un compresseur, et s'arrête à −1 dBTP de crête — sauf avec le limiteur. Ailleurs, « Normaliser » ramène la crête à la cible, tous canaux ensemble. Le gain vient après.",
     origine: "toi · rien au départ, ou les réglages de la famille",
     long:
-      "Le niveau visé n'existe que pour l'ambiance, la musique, la chanson, le jingle et la voix ; un bruitage est trop court pour se mesurer ainsi. Une saturation est signalée en haut de la fiche mais n'empêche rien : seul un rendu silencieux bloque la livraison.",
+      "Le niveau visé n'existe que pour l'ambiance, la musique, la chanson, le jingle et la voix ; un bruitage est trop court pour se mesurer ainsi. Le son fini, boucle comprise, est remesuré et corrigé au-delà de 0,2 LU, sans dépasser −1 dBTP. Une saturation est signalée en haut de la fiche mais n'empêche rien : seul un rendu silencieux bloque la livraison.",
+  },
+
+  "son.limiteur": {
+    nom: "Limiteur à crête vraie (−1 dBTP)",
+    ou: "son",
+    groupe: "Régler — niveau et hauteur",
+    quoi: "Atteindre le niveau visé même quand une crête le bloquerait : le limiteur rabote les crêtes au lieu d'arrêter le gain.",
+    change:
+      "Sans lui, le gain s'arrête dès que la crête touche −1 dBTP et la cible peut manquer. Avec lui, le gain va jusqu'à la cible, puis les crêtes sont ramenées sous −1 dBTP, entre les échantillons compris. La mesure dit de combien.",
+    origine: "toi · coupé ; proposé avec −16 LUFS pour musique, chanson et jingle",
+    long:
+      "Paraît seulement quand un niveau visé est posé. Un limiteur, pas un écrêtage : le son baisse en douceur autour de la crête au lieu d'être coupé net. Une recette déjà posée ne le prend pas d'elle-même.",
   },
 
   "son.format": {
@@ -4371,6 +4395,16 @@ export const AIDE: Record<string, Explication> = {
     origine: "le profil · compositeur allumé, 0,85, 2, 8 pas, graine au hasard",
   },
 
+  "son.musique.reprise": {
+    nom: "Partir d'un son existant, fidélité au son de départ",
+    ou: "un-son",
+    groupe: "Musique — tempo, tonalité, mesures",
+    quoi: "Rejoue une musique déjà faite avec un autre texte : la mélodie et la durée restent, l'orchestration et l'humeur changent.",
+    change:
+      "La fidélité dit à quel point suivre le son de départ : haute, la reprise garde son rythme et sa mélodie ; basse, le texte reprend la main. Le compositeur ne sert plus, et le nombre de mesures non plus : la durée est celle du son.",
+    origine: "un morceau neuf · fidélité 60 % dès qu'un son est choisi",
+  },
+
   "son.adaptative": {
     nom: "Une musique qui s'adapte",
     ou: "un-son",
@@ -4401,10 +4435,10 @@ export const AIDE: Record<string, Explication> = {
     groupe: "Lancer, écouter, garder",
     quoi: "Le bouton qui envoie la demande au moteur local, avec le temps que le calcul prendra sur cette machine.",
     change:
-      "Le temps vient des calculs déjà faits ici ; s'il est inconnu, le premier tirage le mesure. Rien ne se paie : c'est ta carte graphique qui travaille. Une série coupée se reprend d'un geste, sans refaire les tirages rendus.",
+      "Le temps vient des calculs déjà faits ici. Avant le premier tirage d'ACE-Step 1.5, il est **estimé** d'après la durée du son et le modèle, et le bouton le dit ; ailleurs, il reste inconnu jusqu'au premier tirage, qui le mesure. Rien ne se paie : c'est ta carte graphique qui travaille. Une série coupée se reprend d'un geste, sans refaire les tirages rendus.",
     origine: "les calculs déjà faits sur ta machine",
     long:
-      "De l'ordre d'une seconde par bruitage, quelques secondes pour ACE-Step, 35 à 95 s pour un tirage de YuE2 (relevé du 19 septembre 2026, carte de 8 Go). Le premier tirage de chaque moteur paie en plus son chargement.",
+      "De l'ordre d'une seconde par bruitage, quelques secondes pour ACE-Step, 35 à 95 s pour un tirage de YuE2 (relevé du 19 septembre 2026, carte de 8 Go). Le premier tirage de chaque moteur paie en plus son chargement.\n\nL'estimation d'ACE-Step 1.5 vient de temps relevés le 10 octobre 2026 : environ 35 s pour 10 s de son avec le XL turbo, 3 à 4 min pour deux minutes et demie.",
   },
 
   "son.serie": {

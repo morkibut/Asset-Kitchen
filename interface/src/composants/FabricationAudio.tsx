@@ -8,6 +8,7 @@ import { travauxAudio, type TravailAudio } from "../api-travaux-audio"
 import { partitionSon, type PartitionSon } from "../api-partition-son"
 import { seriesSon, texteSon, type Annonce, type Composition, type DemandeSon, type FamilleSon, type Gabarits, type MoteurDeFamille, type ReglageMusique, type SerieSon as Serie, type UsageMusique } from "../api-series-son"
 import { moteursSonores, workflows, type MoteurSonore, type ProfilWorkflow } from "../api-workflows"
+import { sons, type Son } from "../api-sons"
 import { CHAMP_DU_MODELE, VERS_LA_RELECTURE } from "../fabrication"
 import { dureeTexte, secondesTexte, tempsTexte, virgule } from "../son-textes"
 import { AvisBrouillon, useBrouillonLocal } from "./BrouillonLocal"
@@ -89,7 +90,14 @@ type Demande = {
   paroles: string
   /** Le texte relu à la main, qui part à la place du texte composé. */
   manuel: string | null
+  /** **La reprise d'un son** (musique) : le son du jeu dont on part, son nom
+   *  pour l'écran, et la fidélité (force) au son de départ. */
+  reprise?: { source: string; nom: string; secondes: number; force: number } | null
 }
+/** La fidélité au son de départ : les bornes du serveur (`FORCE_MIN`, `FORCE_MAX`, `FORCE_DEFAUT`). */
+const FIDELITE = { min: 0.1, max: 0.95, defaut: 0.6 }
+/** Le profil qu'une musique prend quand elle part d'un son (`atelier.audio.graphes.REPRISES`). */
+const PROFIL_REPRISE = "ace-step-15-reprise"
 const nouvelle = (modele?: string): Demande => ({ famille: "bruitage", mode: "jingle", textes: {}, durees: {}, tirages: {}, moteurs: modele ? { bruitage: modele } : {},
   musique: { tempo: null, tonalite: "", mesure: null, mesures: null, usage: null, structure: null, graine: null }, options: {}, paroles: PAROLES, manuel: null })
 /** Le nombre de mesures d'une musique : réglé, sinon celui de l'usage, sinon 16. */
@@ -124,7 +132,7 @@ const nombreDe = (d: Demande) => d.tirages[d.famille] ?? (FAMILLES[d.famille].ti
  *  relecture). Seuls ceux-là partent : un réglage qui ne part nulle part est
  *  refusé par le serveur, et avec lui toute la musique. Tant qu'on ne sait
  *  pas, aucun ne part. */
-function demandeSon(d: Demande, defaut: string | null, recus: readonly ReglageMusique[] | null): DemandeSon {
+function demandeSon(d: Demande, defaut: string | null, recus: readonly ReglageMusique[] | null, clesReprise: readonly string[]): DemandeSon {
   const famille = familleServeur(d)
   const r: DemandeSon = { famille, prompt: texteDe(d).trim() }
   const choisi = d.moteurs[famille]
@@ -134,14 +142,20 @@ function demandeSon(d: Demande, defaut: string | null, recus: readonly ReglageMu
   if (d.famille === "musique") {
     // Avec un usage, seul ce qui est réglé à la main part : l'usage donne le reste.
     const usage = d.musique.usage ?? null
+    const reprise = d.reprise ?? null
     if (usage) r.usage = usage
-    if (d.musique.mesures != null || !usage) r.mesures = d.musique.mesures ?? 16
+    if (reprise) { r.source = reprise.source; r.force = reprise.force }
+    // Une reprise dure ce que dure son son de départ : le nombre de mesures ne part pas.
+    else if (d.musique.mesures != null || !usage) r.mesures = d.musique.mesures ?? 16
     if (recoit("mesure") && (d.musique.mesure != null || !usage)) r.mesure = d.musique.mesure ?? 4
     if (d.musique.tempo && recoit("tempo")) r.tempo = d.musique.tempo
     if (d.musique.tonalite && recoit("tonalite")) r.tonalite = d.musique.tonalite
     if (d.musique.structure != null && d.musique.structure.trim() && recoit("paroles")) r.paroles = d.musique.structure
     if (d.musique.graine != null) r.graine = d.musique.graine
-    if (d.options && Object.keys(d.options).length) r.options = { ...d.options }
+    // Une reprise passe par son propre profil : seules ses options partent (le
+    // compositeur, sa température et son guidage n'y ont pas cours).
+    const options = Object.entries(d.options ?? {}).filter(([cle]) => !reprise || clesReprise.includes(cle))
+    if (options.length) r.options = Object.fromEntries(options)
   }
   if (famille === "chanson" && d.paroles.trim() && recoit("paroles")) r.paroles = d.paroles
   if (d.manuel !== null && d.manuel.trim()) r.texte_relu = d.manuel
@@ -173,6 +187,7 @@ function Relecture({ compo, manuel, onManuel }: { compo: Composition; manuel: st
       <div>{morceaux.map((m, i) => <span key={i}><span className="text-encre-4">{seps[i]}</span><span className={gris(m.source)} data-source={m.source}>{m.texte}</span></span>)}{compo.texte?.endsWith(".") && !morceaux.at(-1)?.texte.endsWith(".") && <span className="text-encre-4">.</span>}</div>
       {Object.entries(compo.parametres ?? {}).map(([cle, p]) => <div key={cle}><span className="text-encre-4">{NOMS_REGLAGES[cle] ?? cle} : </span><span className={gris(p.source)}>{valeurReglage(cle, p.valeur)}</span></div>)}
       {compo.secondes != null && <div><span className="text-encre-4">Durée : </span><span className={gris(compo.source_secondes)}>{virgule(compo.secondes, compo.secondes % 1 ? 2 : 0)} s</span>{compo.mesures && <span className="text-encre-4"> ({compo.mesures.demandees} mesures, plus {compo.mesures.marge} de marge pour couper la boucle)</span>}</div>}
+      {compo.source && <div><span className="text-encre-4">Part de : </span><span className="text-encre">« {compo.source.nom} »</span><span className="text-encre-4"> · fidélité {Math.round((compo.force ?? FIDELITE.defaut) * 100)} % · la durée est la sienne</span></div>}
       {compo.texte_negatif && <div><span className="text-encre-4">À éviter : </span><span className="text-encre-4">{compo.texte_negatif}</span></div>}
     </div>
     <div className="flex flex-wrap items-center justify-between gap-[8px]">
@@ -339,7 +354,10 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
   const [recusPar, setRecusPar] = useState<Record<string, ReglageMusique[]>>({})
   const cleRecus = `${fs}|${d.moteurs[fs] ?? ""}`
   const recus = recusPar[cleRecus] ?? null
-  const corps = demandeSon(d, defaut, recus)
+  // La reprise d'un son passe par son propre profil : ses réglages remplacent ceux du moteur choisi.
+  const profilReprise = profils.filter((p) => p.identifiant === PROFIL_REPRISE).sort((a, b) => b.cree_le - a.cree_le)[0]
+  const clesReprise = Object.keys(profilReprise?.parametres ?? {})
+  const corps = demandeSon(d, defaut, recus, clesReprise)
   const n = nombreDe(d)
   const cleDemande = JSON.stringify({ ...corps, n })
   const texte = texteDe(d).trim()
@@ -361,7 +379,7 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
         if (!recus || recus.join() !== appris.join()) {
           setRecusPar((x) => ({ ...x, [cleRecus]: appris }))
           // Des réglages vont partir en plus : la relecture repart avec eux.
-          if (JSON.stringify(demandeSon(d, defaut, appris)) !== JSON.stringify(corps)) return
+          if (JSON.stringify(demandeSon(d, defaut, appris, clesReprise)) !== JSON.stringify(corps)) return
         }
         if (c.raison || c.erreur || !c.compose) return
         const a = await seriesSon.annoncer(projet, { ...corps, nombre: n })
@@ -413,11 +431,26 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
   const nbMesures = mesuresDe(d, gabarits)
   const carrure = mesureDe(d, gabarits)
   // Les réglages propres au moteur choisi (compositeur, température…), lus dans son profil.
-  const profilChoisi = profils.find((p) => p.modele === moteurChoisi)
+  const reprise = d.famille === "musique" ? d.reprise ?? null : null
+  const profilChoisi = reprise ? profilReprise : profils.find((p) => p.modele === moteurChoisi)
   const reglagesMoteur = Object.entries(profilChoisi?.parametres ?? {}).filter(([cle, p]) => cle !== "langue" && (p.genre === "booleen" || p.genre === "intervalle"))
   const usage = d.musique.usage ?? null
   const structure = d.musique.structure ?? (compo?.parametres?.paroles ? String(compo.parametres.paroles.valeur) : "")
-  const resume = [d.famille === "musique" ? `${nbMesures} mesures` : aDuree(d) ? secondesTexte(dureeDe(d)!) : null, `${n} tirages`].filter(Boolean).join(" · ")
+  const resume = [reprise ? secondesTexte(reprise.secondes) : d.famille === "musique" ? `${nbMesures} mesures` : aDuree(d) ? secondesTexte(dureeDe(d)!) : null, `${n} tirages`].filter(Boolean).join(" · ")
+  // Les sons du jeu dont une musique peut partir : lus au premier geste, jamais avant.
+  const [sonsDuJeu, setSonsDuJeu] = useState<Son[] | null>(null)
+  const [erreurSons, setErreurSons] = useState("")
+  const sonsDemandes = useRef(false)
+  const chercherSons = () => {
+    if (sonsDemandes.current) return
+    sonsDemandes.current = true; setErreurSons("")
+    sons.lister(projet).then((liste) => setSonsDuJeu(liste.filter((s) => s.pret && s.mesures?.duree)))
+      .catch((e) => { sonsDemandes.current = false; setErreurSons(message(e)) })
+  }
+  const partirDe = (id: string) => {
+    const s = sonsDuJeu?.find((x) => x.identifiant === id)
+    if (s?.mesures) changer({ reprise: { source: s.identifiant, nom: s.nom, secondes: s.mesures.duree, force: FIDELITE.defaut } })
+  }
   // Un réglage de musique que le moteur ne reçoit pas se grise, avec sa raison (la relecture le dit).
   const refuse = (k: ReglageMusique) => !!recus && !recus.includes(k)
   const nonRecus = (["tempo", "tonalite", "mesure"] as const).filter(refuse)
@@ -428,7 +461,7 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
   // La boucle : celle que le serveur a comptée (même tempo, même mesure que l'envoi),
   // sinon le compte d'ici. Un moteur qui ne reçoit pas de tempo n'a pas de boucle
   // à annoncer : rien plutôt qu'une durée à un tempo qu'il ne suivra pas.
-  const boucle = refuse("tempo") ? null
+  const boucle = refuse("tempo") || reprise ? null
     : compo?.mesures && compo.secondes != null && compo.source_secondes === "mesures" ? compo.secondes * compo.mesures.demandees / compo.mesures.total
     : nbMesures * (refuse("mesure") ? 4 : carrure) * 60 / (d.musique.tempo || tempoCompo?.valeur || 90)
   const serieCourante = series.find((s) => s.identifiant === courante)
@@ -470,6 +503,25 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
           {usage && gabarits?.usages[usage] && <button type="button" className={PETIT}
             onClick={() => changer({ textes: { ...d.textes, musique: gabarits.usages[usage].description } })}>Texte d’exemple</button>}
         </div>}
+        {/* La reprise d'un son : un morceau du jeu rejoué avec ce texte, même mélodie, même durée. */}
+        {d.famille === "musique" && <div className="grid gap-[8px] text-[12px] text-encre-3" role="group" aria-label="Son de départ">
+          {reprise ? <>
+            <div className="flex flex-wrap items-center gap-[8px]"><span>Part de</span><strong className="font-normal text-encre">« {reprise.nom} »</strong><span>· {dureeTexte(reprise.secondes)}, durée gardée</span>
+              <button type="button" className={PETIT} onClick={() => changer({ reprise: null })}>Repartir de zéro</button></div>
+            <label className="flex flex-wrap items-center gap-[8px]">Fidélité au son de départ
+              <input type="range" aria-label="Fidélité au son de départ" min={FIDELITE.min} max={FIDELITE.max} step={0.05} value={reprise.force}
+                onChange={(e) => changer({ reprise: { ...reprise, force: Number(e.target.value) } })} />
+              <span className="font-mono text-encre">{Math.round(reprise.force * 100)} %</span></label>
+            <p>Haut, la reprise garde la mélodie et le rythme du son de départ ; bas, le texte reprend la main. Le compositeur n’intervient pas : la mélodie vient du son.</p>
+          </> : <div className="flex flex-wrap items-center gap-[8px]">
+            <label className="flex flex-wrap items-center gap-[8px]">Partir d’un son existant
+              <select aria-label="Partir d’un son existant" className={PETIT_CHAMP} value="" onFocus={chercherSons} onMouseDown={chercherSons} onChange={(e) => partirDe(e.target.value)}>
+                <option value="">{sonsDuJeu && !sonsDuJeu.length ? "aucun son prêt dans ce jeu" : "non, un morceau neuf"}</option>
+                {(sonsDuJeu ?? []).map((s) => <option key={s.identifiant} value={s.identifiant}>{s.nom} · {dureeTexte(s.mesures!.duree)}</option>)}
+              </select></label>
+            {erreurSons && <span role="alert" className="text-echec">{erreurSons}</span>}
+          </div>}
+        </div>}
         {d.famille === "musique" && <div className="flex flex-wrap items-end gap-[14px] text-[12px] text-encre-3">
           <label className="grid gap-[4px]">Tempo<span className="flex items-center gap-[4px] text-encre-controle"><input aria-label="Tempo" type="number" min={40} max={200} disabled={refuse("tempo")} className={`${PETIT_CHAMP} w-[70px] disabled:opacity-50`} placeholder={refuse("tempo") ? "" : String(tempoUnivers ?? tempoCompo?.valeur ?? 90)} value={refuse("tempo") ? "" : d.musique.tempo ?? ""} onChange={(e) => changer({ musique: { ...d.musique, tempo: e.target.value ? Number(e.target.value) : null } })} /> BPM</span></label>
           <label className="grid gap-[4px]">Tonalité<select aria-label="Tonalité" disabled={refuse("tonalite")} className={`${PETIT_CHAMP} disabled:opacity-50`} value={refuse("tonalite") ? "" : d.musique.tonalite} onChange={(e) => changer({ musique: { ...d.musique, tonalite: e.target.value } })}>
@@ -477,7 +529,9 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
             {TONALITES.map(([en, fr]) => <option key={en} value={en}>{fr}</option>)}
           </select></label>
           <label className="grid gap-[4px]">Mesure<select aria-label="Mesure" disabled={refuse("mesure")} className={`${PETIT_CHAMP} disabled:opacity-50`} value={refuse("mesure") ? 4 : carrure} onChange={(e) => changer({ musique: { ...d.musique, mesure: Number(e.target.value) } })}>{MESURES.map(([v, nom]) => <option key={v} value={v}>{nom}</option>)}</select></label>
-          <label className="grid gap-[4px]">Mesures<input aria-label="Nombre de mesures" type="number" min={1} max={999} className={`${PETIT_CHAMP} w-[70px]`} value={nbMesures} onChange={(e) => changer({ musique: { ...d.musique, mesures: Math.max(1, Number(e.target.value) || 1) } })} /></label>
+          {reprise
+            ? <span className="grid gap-[4px]">Durée<strong className="flex min-h-[30px] items-center font-mono text-[13px] font-normal text-encre">{dureeTexte(reprise.secondes)}</strong></span>
+            : <label className="grid gap-[4px]">Mesures<input aria-label="Nombre de mesures" type="number" min={1} max={999} className={`${PETIT_CHAMP} w-[70px]`} value={nbMesures} onChange={(e) => changer({ musique: { ...d.musique, mesures: Math.max(1, Number(e.target.value) || 1) } })} /></label>}
           {boucle != null && <span className="grid gap-[4px]">Durée de la boucle<strong className="flex min-h-[30px] items-center font-mono text-[13px] font-normal text-encre">{dureeTexte(boucle)}</strong></span>}
           {nonRecus.length > 0 && <p className="basis-full text-[12px] text-encre-3">{nomChoisi} ne reçoit pas {nonRecus.map((k) => NOMS_REGLAGE_RECU[k]).join(" ni ")}{refuse("mesure") ? " : la boucle se compte en 4/4" : ""}.</p>}
         </div>}
@@ -507,9 +561,9 @@ export function UnSon({ projet, modeleInitial, onSon, emplacement }: { projet: s
         <div className="flex flex-wrap items-center gap-[8px] pt-[4px]">
           <button type="button" className={BASCULE} aria-expanded={panneau === "relire"} onClick={() => setPanneau((p) => p === "relire" ? null : "relire")}>{VERS_LA_RELECTURE}{d.manuel !== null ? " · modifié à la main" : ""} {panneau === "relire" ? "▾" : "▸"}</button>
           <button type="button" className={BASCULE} aria-expanded={panneau === "reglages"} onClick={() => setPanneau((p) => p === "reglages" ? null : "reglages")}>Réglages · <span className="font-mono">{resume}</span> {panneau === "reglages" ? "▾" : "▸"}</button>
-          <span className="ml-auto text-[12.5px] text-encre-3">{raison || (relecture ? "" : temps == null && annonce ? "Temps inconnu : le premier tirage le mesurera." : "")}</span>
+          <span className="ml-auto text-[12.5px] text-encre-3">{raison || (relecture ? "" : temps == null && annonce ? "Temps inconnu : le premier tirage le mesurera." : annonce?.annonce.repli ? "Temps estimé, pas encore mesuré ici : le premier tirage le mesurera." : "")}</span>
           <button type="button" className={PRINCIPAL} disabled={!!raison || relecture || occupe || !annonce} onClick={(e) => void lancer(e.currentTarget)}>
-            Lancer {n} tirages{temps != null && !raison ? ` · ${tempsTexte(temps)}` : ""}
+            Lancer {n} tirages{temps != null && !raison ? ` · ${tempsTexte(temps)}${annonce?.annonce.repli ? " (estimé)" : ""}` : ""}
           </button>
         </div>
 

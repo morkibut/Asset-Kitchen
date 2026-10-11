@@ -104,46 +104,57 @@ _COMBAT = re.compile(r"\b(battle|combat|boss|fight)\b", re.IGNORECASE)
 # seul champ d'ACE qui la lit) et se corrige à l'écran avant l'envoi. Les
 # descriptions d'exemple sont des textes de musique : un genre, un instrument
 # qui porte la mélodie, un rythme — jamais des mots de nappe.
+def _structure(*sections: str) -> str:
+    """Les sections d'un morceau instrumental à la manière du guide officiel
+    d'ACE-Step 1.5 : `[Section - un seul descripteur]` puis `[Instrumental]`,
+    une ligne vide entre deux. Un descripteur court : une pile de mots dans la
+    balise se fait chanter, et sa place est dans la légende."""
+    return "\n\n".join(f"[{s}]\n[Instrumental]" for s in sections)
+
+
+# La légende d'un usage suit les dimensions du guide officiel — genre,
+# humeur, instruments, timbre, époque, production, références —, jamais le
+# tempo ni la tonalité (ils ont leurs champs), jamais une négation, et elle
+# dit une évolution dans le temps plutôt que deux styles contradictoires.
+# Le nombre de mesures d'un usage fait un **essai d'une minute au plus**,
+# mesure de marge comprise (`duree_en_mesures`) : titre 60 s, village 57,86 s,
+# exploration 60 s, danger 60 s — choix de l'auteur, 10 octobre 2026 (38, 36,
+# 32 et 48 mesures avant, soit 1 min 30 à 2 min 05). Le jingle ne change pas.
 USAGES = {
     "titre": {"nom": "Écran titre",
-        "description": "epic fantasy orchestral main theme, heroic and memorable melody, slow build to a full tutti",
-        "structure": "[Intro - solo cello and low male choir humming the theme]\n"
-                     "[Verse - french horns carry the main melody over war drums]\n"
-                     "[Build - strings rise, choir swells, timpani rolls]\n"
-                     "[Chorus - full orchestra tutti, choir and horns, heroic]\n"
-                     "[Bridge - tin whistle and celtic harp, calm]\n"
-                     "[Chorus - tutti reprise, war drums]\n"
-                     "[Outro - fade back to choir humming]",
-        "tempo": 78, "mesure": 4, "mesures": 40},
+        "description": "Epic fantasy film score, main theme of an ancient kingdom. A deep male choir hums a solemn melody, "
+                       "warm cellos and double basses, noble French horns, harp arpeggios, thunderous war drums and timpani. "
+                       "Begins intimate and mysterious, rises to a majestic heroic full-orchestra climax. "
+                       "Lush cinematic orchestral recording, wide hall reverb.",
+        "structure": _structure("Intro - deep male choir humming", "Verse - cellos and harp carry the melody",
+                                "Build - war drums enter, building energy", "Chorus - full orchestra, heroic horns, anthemic",
+                                "Bridge - woodwind over harp", "Chorus - choir and full orchestra, powerful",
+                                "Outro - horns and choir fade"),
+        "tempo": 76, "mesure": 4, "mesures": 18},
     "village": {"nom": "Village, camp",
-        "description": "warm celtic folk tavern tune, lively fiddle melody, tin whistle, lute strumming, bodhran groove, cozy and hopeful",
-        "structure": "[Intro - solo fiddle states the tune]\n"
-                     "[Verse - tin whistle melody, lute strumming, bodhran]\n"
-                     "[Chorus - full folk band, fiddle and whistle in unison]\n"
-                     "[Verse - variation, harp answers]\n"
-                     "[Chorus - full folk band]\n"
-                     "[Outro - fiddle alone, ends on the tonic]",
-        "tempo": 104, "mesure": 6, "mesures": 48},
+        "description": "Joyful medieval tavern jig, villagers celebrating around the fire. Folk fiddle lead melody, tin whistle, "
+                       "strummed lute, bodhran frame drum, hand claps. Warm, cozy, rustic acoustic recording, "
+                       "Irish and celtic folk, fantasy RPG village music.",
+        "structure": _structure("Intro - fiddle alone", "Verse - whistle and lute join", "Chorus - full band, high energy",
+                                "Breakdown - bodhran and claps", "Chorus - everyone, euphoric", "Outro - fiddle"),
+        "tempo": 112, "mesure": 6, "mesures": 17},
     "exploration": {"nom": "Exploration",
-        "description": "fantasy adventure exploration theme, mysterious but melodic, harp ostinato, cello melody, soft frame drum pulse",
-        "structure": "[Intro - harp ostinato]\n"
-                     "[Verse - cello melody over steady frame drum]\n"
-                     "[Verse - flute answers the cello, strings join]\n"
-                     "[Bridge - low brass, tension rises]\n"
-                     "[Verse - main melody returns]\n"
-                     "[Outro - harp ostinato alone]",
-        "tempo": 92, "mesure": 4, "mesures": 32},
+        "description": "Fantasy adventure exploration theme, curious and wondrous. Harp ostinato, expressive cello melody, "
+                       "flute answers, soft frame drum pulse. Warm intimate orchestral recording, open and airy, "
+                       "classic fantasy RPG overworld music.",
+        "structure": _structure("Intro - harp ostinato", "Verse - cello melody", "Verse - flute answers",
+                                "Bridge - low brass, rising tension", "Verse - main melody returns", "Outro - harp"),
+        "tempo": 92, "mesure": 4, "mesures": 22},
     "danger": {"nom": "Danger, combat",
-        "description": "dark epic battle music, pounding war drums, driving low brass ostinato, staccato strings, urgent and powerful",
-        "structure": "[Intro - war drums alone]\n"
-                     "[Verse - low brass ostinato, staccato strings]\n"
-                     "[Build - choir shouts, rising strings]\n"
-                     "[Chorus - full orchestra, war drums, heroic brass melody]\n"
-                     "[Verse - ostinato returns]\n"
-                     "[Chorus - full orchestra]",
-        "tempo": 140, "mesure": 4, "mesures": 48},
+        "description": "Dark epic battle music, urgent and powerful. Pounding war drums, driving low brass ostinato, "
+                       "staccato strings, shouting male choir. Big cinematic orchestral recording, punchy and wide, "
+                       "fantasy boss fight music.",
+        "structure": _structure("Intro - war drums", "Verse - brass ostinato", "Build - choir shouts",
+                                "Chorus - full orchestra, heroic", "Verse - ostinato returns", "Chorus - full orchestra"),
+        "tempo": 140, "mesure": 4, "mesures": 34},
     "jingle": {"nom": "Jingle",
-        "description": "short triumphant fanfare, french horns and war drums, resolves on the tonic",
+        "description": "Short triumphant fanfare, French horns and war drums, bright and rewarding, resolves on the tonic. "
+                       "Crisp orchestral recording.",
         "structure": "[Instrumental - short fanfare]\n[Fade Out]",
         "tempo": 100, "mesure": 4, "mesures": 3},
     "chanson": {"nom": "Chanson",
@@ -156,8 +167,13 @@ USAGES = {
 # lettre. Une alerte, jamais un refus ni une réécriture — une ambiance
 # musicale reste un choix possible.
 _MOTS_NAPPE = re.compile(
-    r"\b(dark ambient|ambient|drones?|droning|pads?|minimal(?:ist)?|sparse|soundscapes?|atmospheric|"
-    r"textures?|textural|field recording|no drums|no melody|no percussion|static)\b", re.IGNORECASE)
+    r"\b(dark ambient|ambient|drones?|droning|pads?|minimal(?:ist)?|soundscapes?|atmospheric|"
+    r"textures?|textural|field recording|static)\b", re.IGNORECASE)
+# Le guide officiel d'ACE-Step 1.5 : une négation ne s'entend pas (« no drums »
+# appelle les tambours), et une tonalité rare — un mode — est ignorée ou
+# déplacée. Deux alertes de plus, même règle : rien n'est retiré du texte.
+_NEGATIONS = re.compile(r"\b(?:no|without|non|sans)\s+[a-z-]+(?:\s+[a-z-]+)?", re.IGNORECASE)
+_MODES = re.compile(r"\b(dorian|phrygian|lydian|mixolydian|aeolian|locrian)\b", re.IGNORECASE)
 
 
 def alertes(famille: str, texte: str, univers: UniversSonore | None = None) -> list[str]:
@@ -171,6 +187,14 @@ def alertes(famille: str, texte: str, univers: UniversSonore | None = None) -> l
     if nappe:
         dites.append("Ces mots demandent une nappe plutôt qu'une musique : « " + " », « ".join(nappe)
                      + " ». Pour une mélodie, nommez un instrument qui la porte, un rythme et une structure.")
+    niees = list(dict.fromkeys(m.group(0).lower() for m in _NEGATIONS.finditer(texte)))
+    if niees:
+        dites.append("Le moteur n'entend pas la négation : « " + " », « ".join(niees)
+                     + " » appelle ce qu'il nie. Décrivez ce que vous voulez entendre à la place.")
+    modes = list(dict.fromkeys(m.group(0).lower() for m in _MODES.finditer(texte)))
+    if modes:
+        dites.append("Le moteur ignore les modes rares (« " + " », « ".join(modes)
+                     + " ») : choisissez une tonalité majeure ou mineure, et dites la couleur en mots (modal, ancient).")
     univers = univers or UniversSonore.depuis_json(None)
     bas = texte.lower()
     interdits = [m.strip() for m in re.split(r"[,;\n]", univers.texte("interdits")) if m.strip()]
@@ -182,6 +206,10 @@ def alertes(famille: str, texte: str, univers: UniversSonore | None = None) -> l
 MOTEURS_SA3 = ("sa3-small-sfx", "sa3-medium")
 MOTEUR_SAO = "sa-open-1"
 MOTEUR_ACE = "ace-step-15-turbo"
+# La reprise d'un son (BO) : le même texte que le turbo, seul le graphe change.
+MOTEUR_ACE_REPRISE = "ace-step-15-reprise"
+# Les trois modèles d'ACE-Step 1.5 lisent le même texte (guide officiel).
+MOTEURS_ACE = (MOTEUR_ACE, "ace-step-15-base", "ace-step-15-xl-turbo", MOTEUR_ACE_REPRISE)
 MOTEUR_YUE = "yue2-int8"
 # Le geste en deux temps (SN9) : « Écrire la partition » (le premier étage
 # seul) et « Jouer cette partition » (le second, reçoit `partition`). Même
@@ -256,7 +284,7 @@ def gabarit_de(famille: str, moteur: str | None) -> str:
         if musical:
             return prefixe + "-musique"
         return prefixe + ("-ambiance" if famille == "ambiance" else "-bruitage")
-    if moteur == MOTEUR_ACE:
+    if moteur in MOTEURS_ACE:
         return "ace-musique"
     if moteur in MOTEURS_YUE:
         return "yue-chanson"

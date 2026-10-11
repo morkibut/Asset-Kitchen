@@ -227,6 +227,9 @@ def traiter(signal, taux, recette: RecetteSon):
     rendu = reechantillonner(rendu, taux, taux_sortie)
     if not len(rendu):
         raise SonRefuse("La sélection ne contient aucun échantillon après la coupe.")
+    coupe_jingle = None
+    if recette.coupe_jingle:
+        rendu, coupe_jingle = couper_jingle(rendu, taux_sortie)
     source_audible = float(np.max(np.abs(rendu))) > 1e-8
     for cote, ms in (("entree", recette.fondu_entree_ms), ("sortie", recette.fondu_sortie_ms)):
         n = min(len(rendu), round(ms * taux_sortie / 1000))
@@ -239,7 +242,11 @@ def traiter(signal, taux, recette: RecetteSon):
     pic = float(np.max(np.abs(rendu)))
     if recette.normaliser and pic > 1e-8:
         rendu *= 10 ** (recette.cible_db / 20) / pic
-    niveau = _viser_lufs(rendu, taux_sortie, recette.cible_lufs) if recette.cible_lufs is not None else None
+    niveau = None
+    if recette.cible_lufs is not None and recette.limiteur:
+        rendu, niveau = _viser_lufs_limite(rendu, taux_sortie, recette.cible_lufs)
+    elif recette.cible_lufs is not None:
+        niveau = _viser_lufs(rendu, taux_sortie, recette.cible_lufs)
     rendu *= 10 ** (recette.gain_db / 20)
     boucle_debut = round(recette.boucle_debut * taux_sortie)
     boucle_fin = round(recette.boucle_fin * taux_sortie) if recette.boucle_fin is not None else len(rendu)
@@ -251,6 +258,9 @@ def traiter(signal, taux, recette: RecetteSon):
         raise SonRefuse("La boucle doit rester dans la durée du son après la coupe et les fondus.")
     if recette.boucle and recette.boucle_fondu_ms:
         _fondre_boucle(rendu, boucle_debut, boucle_fin, taux_sortie, recette.boucle_fondu_ms)
+    if niveau is not None and niveau["applique"]:
+        # Après tout le reste : le gain de la recette s'ajoute à la cible.
+        rendu = _verifier_niveau(rendu, taux_sortie, recette.cible_lufs + recette.gain_db, niveau)
     mesure = mesurer(rendu, taux_sortie)
     mesure["silencieux"] = mesure["silencieux"] or not source_audible
     mesure["coupe_source"] = coupe_silence
@@ -261,7 +271,59 @@ def traiter(signal, taux, recette: RecetteSon):
         "ecart_raccord": raccord["saut"], "ecart_rms_db": raccord["ecart_rms_db"], "verdict": raccord["verdict"]}
     if niveau is not None:
         mesure["niveau"] = niveau
+    if coupe_jingle is not None:
+        mesure["coupe_jingle"] = coupe_jingle
     return rendu, taux_sortie, mesure
+
+
+# La coupe automatique d'un jingle (recette `coupe_jingle`, 11 octobre 2026),
+# reprise de la recette faite à la main sur les rendus d'ACE-Step :
+# `silenceremove` à −45 dB au début, `atrim` à la fin utile, `afade` 10 ms à
+# l'entrée et 0,3 / 0,5 / 0,8 s à la sortie selon la longueur.
+SEUIL_DEBUT_JINGLE_DB = -45
+SOUS_LE_SOMMET_JINGLE_DB = 30
+FENETRE_JINGLE_S = .05
+PAS_JINGLE_S = .01
+FONDU_ENTREE_JINGLE_MS = 10
+
+
+def _fondu_sortie_jingle(duree):
+    return 300 if duree < 2.5 else 500 if duree < 4 else 800
+
+
+def couper_jingle(rendu, taux):
+    """Coupe le silence du début (premier échantillon au-dessus de −45 dB) et
+    la traîne de la fin : la fin est le dernier point où l'énergie, sur des
+    fenêtres de 50 ms, reste à moins de 30 dB sous son sommet — au-delà, le
+    son est retombé pour de bon. Puis un fondu d'entrée de 10 ms et un fondu
+    de sortie de 300 à 800 ms selon la longueur, jamais plus de la moitié du
+    son. Un son tout entier sous le seuil n'est pas touché. Rend le nouveau
+    tableau et ce qui a été fait, en secondes du son reçu."""
+    amplitude = np.max(np.abs(rendu), axis=1)
+    utiles = np.flatnonzero(amplitude > 10 ** (SEUIL_DEBUT_JINGLE_DB / 20))
+    if not len(utiles):
+        return rendu, {"debut": 0.0, "fin": len(rendu) / taux, "duree": len(rendu) / taux, "fondu_sortie_ms": 0}
+    debut = int(utiles[0])
+    energie = np.mean(rendu[debut:] ** 2, axis=1)
+    fenetre, pas = max(1, round(FENETRE_JINGLE_S * taux)), max(1, round(PAS_JINGLE_S * taux))
+    cumul = np.concatenate(([0.0], np.cumsum(energie)))
+    departs = np.arange(0, max(1, len(energie) - fenetre + 1), pas)
+    fins = np.minimum(departs + fenetre, len(energie))
+    niveaux = 10 * np.log10(np.maximum((cumul[fins] - cumul[departs]) / (fins - departs), 1e-20))
+    retenues = np.flatnonzero(niveaux >= niveaux.max() - SOUS_LE_SOMMET_JINGLE_DB)
+    fin = debut + int(fins[retenues[-1]])
+    coupe = rendu[debut:fin].copy()
+    duree = len(coupe) / taux
+    fondu_sortie = _fondu_sortie_jingle(duree)
+    for ms, sortie in ((FONDU_ENTREE_JINGLE_MS, False), (fondu_sortie, True)):
+        n = min(len(coupe) // 2, round(ms * taux / 1000))
+        if n:
+            rampe = np.linspace(0, 1, n)[:, None]
+            if sortie:
+                coupe[-n:] *= rampe[::-1]
+            else:
+                coupe[:n] *= rampe
+    return coupe, {"debut": debut / taux, "fin": fin / taux, "duree": duree, "fondu_sortie_ms": fondu_sortie}
 
 
 CRETE_VRAIE_MAX_DB = -1.0
@@ -285,7 +347,103 @@ def _viser_lufs(rendu, taux, cible):
         gain = CRETE_VRAIE_MAX_DB - crete
     rendu *= 10 ** (gain / 20)
     return {"cible_lufs": cible, "applique": True, "gain_db": gain, "plafonne": plafonne, "lufs_avant": lufs,
+        "limiteur": False,
         "raison": "Crête vraie plafonnée à −1 dBTP : la cible n'est pas atteinte." if plafonne else ""}
+
+
+# Le seuil du limiteur, un peu sous le plafond : le retour au taux d'origine
+# après le sur-échantillonnage peut faire remonter une crête de quelques
+# dixièmes de dB (ondulation du filtre).
+LIMITE_LIMITEUR_DB = -1.2
+_SUR_ECHANTILLONNAGE = 4
+
+
+def _limiter_crete_vraie(rendu, taux):
+    """Limiteur à crête vraie : sur-échantillonné ×4 (les crêtes entre deux
+    échantillons y deviennent des échantillons), `alimiter` à −1,2 dBFS —
+    niveau automatique coupé, sans quoi il remonterait tout à 0 dBFS ; délai
+    d'anticipation compensé —, puis retour au taux d'origine. Un limiteur,
+    pas un écrêtage : le gain baisse en douceur autour de la crête au lieu
+    de couper l'onde. Déterministe : ffmpeg ne tire rien au sort."""
+    limite = 10 ** (LIMITE_LIMITEUR_DB / 20)
+    filtre = (f"aresample={_SUR_ECHANTILLONNAGE * taux},"
+              f"alimiter=limit={limite:.6f}:level=disabled:attack=5:release=80:latency=enabled,"
+              f"aresample={taux}")
+    canaux = rendu.shape[1]
+    brut = _ffmpeg(["-f", "f64le", "-ar", str(taux), "-ac", str(canaux), "-i", "pipe:0",
+        "-af", filtre, "-ar", str(taux), "-acodec", "pcm_f64le", "-f", "f64le", "pipe:1"], rendu.astype("<f8").tobytes())
+    limite_rendu = np.frombuffer(brut, dtype="<f8").reshape((-1, canaux))
+    # La longueur ne bouge pas : un échantillon de plus ou de moins au retour
+    # du ré-échantillonnage décalerait la boucle.
+    sortie = np.zeros_like(rendu)
+    n = min(len(rendu), len(limite_rendu))
+    sortie[:n] = limite_rendu[:n]
+    return sortie
+
+
+def _viser_lufs_limite(rendu, taux, cible):
+    """Le niveau visé avec limiteur (recette `limiteur`) : le gain entier vers
+    la cible, puis le limiteur à crête vraie à −1 dBTP. Le limiteur rabote
+    les crêtes, donc un peu de niveau perçu : la seconde passe est celle de
+    tous les niveaux visés, `_verifier_niveau`, à la toute fin du traitement.
+    Rend un nouveau tableau (le limiteur n'agit pas en place)."""
+    lufs, crete = _lufs_et_crete_vraie(rendu, taux)
+    if lufs is None:
+        return rendu, {"cible_lufs": cible, "applique": False, "gain_db": 0.0, "plafonne": False, "limiteur": True,
+            "reduction_max_db": 0.0, "securite_db": 0.0,
+            "raison": "Niveau perçu indéfini (moins de 0,4 s ou silence) : aucun gain appliqué."}
+    if crete is None:
+        pic = float(np.max(np.abs(rendu)))
+        crete = 20 * math.log10(pic) if pic > 0 else LIMITE_LIMITEUR_DB
+    gain = cible - lufs
+    limite = _limiter_crete_vraie(rendu * 10 ** (gain / 20), taux)
+    # La réduction la plus forte du limiteur, estimée simplement : de combien
+    # la crête vraie après gain dépassait le seuil du limiteur.
+    reduction = max(0.0, crete + gain - LIMITE_LIMITEUR_DB)
+    return limite, {"cible_lufs": cible, "applique": True, "gain_db": gain, "plafonne": False,
+        "lufs_avant": lufs, "limiteur": True, "reduction_max_db": reduction, "securite_db": 0.0, "raison": ""}
+
+
+# L'écart au niveau visé au-delà duquel le fichier final est corrigé.
+TOLERANCE_LUFS = .2
+
+
+def _verifier_niveau(rendu, taux, visee, niveau):
+    """La vérification après coup, commune aux deux chemins du niveau visé.
+    Un gain en une passe peut manquer la cible de 1 à 2 dB, et un fondu
+    croisé de boucle change le niveau (relevé du 10 octobre 2026) : le son
+    final, après la boucle et les fondus, est remesuré (ebur128). Au-delà de
+    0,2 LU d'écart, ou d'une crête vraie au-dessus de −1 dBTP, il reçoit
+    `min(visée − lufs, −1 − crête vraie)`. Avec le limiteur, un plafond qui
+    empêcherait d'atteindre la visée fait repasser le limiteur avec le gain
+    entier. Enfin, une sécurité : une crête vraie remesurée au-dessus de
+    −1 dBTP fait descendre tout le son de l'excès. `niveau` reçoit le
+    résultat ; rend le tableau final (un nouveau si le limiteur repasse)."""
+    lufs, crete = _lufs_et_crete_vraie(rendu, taux)
+    correction, securite, relimite = 0.0, 0.0, False
+    if lufs is not None:
+        ecart = visee - lufs
+        plafond = CRETE_VRAIE_MAX_DB - crete if crete is not None else math.inf
+        if abs(ecart) > TOLERANCE_LUFS or plafond < 0:
+            correction = min(ecart, plafond)
+            if niveau["limiteur"] and ecart - correction > TOLERANCE_LUFS:
+                rendu, correction, relimite = _limiter_crete_vraie(rendu * 10 ** (ecart / 20), taux), ecart, True
+            else:
+                rendu = rendu * 10 ** (correction / 20)
+            lufs, crete = _lufs_et_crete_vraie(rendu, taux)
+        if crete is not None and crete > CRETE_VRAIE_MAX_DB:
+            # ebur128 écrit la crête au dixième : 0,1 dB de plus couvre l'arrondi.
+            securite = crete - CRETE_VRAIE_MAX_DB + .1
+            rendu = rendu * 10 ** (-securite / 20)
+            correction -= securite
+            lufs, crete = _lufs_et_crete_vraie(rendu, taux)
+    niveau.update(lufs_final=lufs, crete_vraie_finale_db=crete, correction_db=correction, visee_lufs=visee,
+                  relimite=relimite)
+    if niveau["limiteur"]:
+        plafonne = lufs is not None and abs(visee - lufs) > .5
+        niveau.update(lufs_apres=lufs, crete_vraie_apres_db=crete, securite_db=securite, plafonne=plafonne,
+            raison="Limiteur à crête vraie : la cible n'est pas atteinte à 0,5 LU près." if plafonne else "")
+    return rendu
 
 
 def changer_hauteur(signal, taux, demi_tons, *, garder_duree):

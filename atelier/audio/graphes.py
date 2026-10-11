@@ -23,6 +23,8 @@ primitifs) au format API. Trois écarts voulus avec ces modèles :
   pour une minute, banc du 19 septembre).
 - La sortie est `SaveAudio` (FLAC, sans perte) partout, au lieu de
   `SaveAudioAdvanced` ou `SaveAudioMP3` : l'atelier règle et encode lui-même.
+  Pour ACE-Step 1.5, un `AudioAdjustVolume` de −4 dB la précède depuis le
+  10 octobre 2026 (voir `_marge`) : le FLAC entier coupait ce qui dépassait.
 
 Le nombre de tirages n'est pas dans le graphe : une série est N travaux,
 chacun sa graine (SN3).
@@ -49,6 +51,12 @@ FICHIERS = {
     "acestep_v1.5_turbo.safetensors": {"dossier": "diffusion_models", "taille": "4,8 Go",
         "nom": "le modèle ACE-Step 1.5 turbo (musique)",
         "source": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/diffusion_models/acestep_v1.5_turbo.safetensors"},
+    "acestep_v1.5_base.safetensors": {"dossier": "diffusion_models", "taille": "4,8 Go",
+        "nom": "le modèle ACE-Step 1.5 base (musique soignée, 50 pas)",
+        "source": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/diffusion_models/acestep_v1.5_base.safetensors"},
+    "acestep_v1.5_xl_turbo_bf16.safetensors": {"dossier": "diffusion_models", "taille": "10,0 Go",
+        "nom": "le grand modèle ACE-Step 1.5 XL turbo (4B)",
+        "source": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/diffusion_models/acestep_v1.5_xl_turbo_bf16.safetensors"},
     "qwen_0.6b_ace15.safetensors": {"dossier": "text_encoders", "taille": "1,2 Go",
         "nom": "l'encodeur de texte d'ACE-Step 1.5",
         "source": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/text_encoders/qwen_0.6b_ace15.safetensors"},
@@ -80,8 +88,10 @@ FAMILLES = {
     "bruitage": ("sa3-small-sfx", "sa-open-1"),
     "interface": ("sfxr",),
     "ambiance": ("sa3-small-sfx", "sa3-medium"),
-    "musique": ("ace-step-15-turbo", "sa3-medium"),
-    "jingle": ("ace-step-15-turbo", "sa3-medium"),
+    # Le XL turbo d'abord : jugé bien meilleur à l'oreille par l'auteur le
+    # 10 octobre 2026. S'il n'est pas installé, le turbo reprend la main.
+    "musique": ("ace-step-15-xl-turbo", "ace-step-15-turbo", "ace-step-15-base", "sa3-medium"),
+    "jingle": ("ace-step-15-xl-turbo", "ace-step-15-turbo", "sa3-medium"),
     "chanson": ("yue2-int8",),
     "voix": (),
 }
@@ -113,6 +123,25 @@ def _lien(noeud, champ):
 
 def _sortie(prefixe, audio):
     return {"class_type": "SaveAudio", "inputs": {"audio": audio, "filename_prefix": "asset-kitchen/" + prefixe}}
+
+
+# La marge prise à la source par les graphes d'ACE-Step 1.5, en dB (entier :
+# `AudioAdjustVolume` n'accepte que des entiers de −100 à 100).
+MARGE_ACE_DB = -4
+
+
+def _marge(audio):
+    """Baisse le son décodé de 4 dB avant `SaveAudio`.
+
+    Le décodeur d'ACE-Step 1.5 (`VAEDecodeAudio`) rend des valeurs au-delà de
+    1,0, et `SaveAudio` écrit un FLAC **entier** : tout ce qui dépasse la
+    pleine échelle y est coupé net. Mesuré le 10 octobre 2026 sur quatre
+    rendus de 150 s : crête vraie de +0,5 à +1 dBTP, 3 à 18 échantillons
+    écrêtés dans le fichier brut — que ni la recette ni aucun traitement en
+    aval ne peut réparer, puisque l'atelier garde ce fichier-là. 4 dB de
+    marge laissent le brut sous la pleine échelle ; le niveau se remonte
+    ensuite par la recette (niveau visé et limiteur à crête vraie)."""
+    return {"class_type": "AudioAdjustVolume", "inputs": {"audio": audio, "volume": MARGE_ACE_DB}}
 
 
 def _stable_audio(identifiant, nom, description, *, checkpoint, encodeur, type_encodeur, pas, guidage, echantillonneur,
@@ -197,6 +226,43 @@ def ace_step_15_turbo(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen
     """La musique : tags, paroles (la structure), tempo, tonalité, mesure et
     durée en réglages directs, et le compositeur 1.7b qui écrit les codes
     audio (audio_ace_step_1_5_split, la paire d'encodeurs du modèle officiel)."""
+    return _ace_step_15("ace-step-15-turbo", "ACE-Step 1.5 turbo", modele=modele, encodeur=encodeur,
+        compositeur=compositeur, vae=vae, pas=8, guidage=1, pas_max=32, aide_pas="Le turbo est fait pour 8 ; davantage ne garantit rien.",
+        description="Musique et jingles : structure, tempo, tonalité, mesure et durée exacte, de 2 à 600 secondes ; "
+                    "le compositeur 1.7b écrit le plan du morceau avant le rendu.")
+
+
+def ace_step_15_base(*, modele="acestep_v1.5_base.safetensors", encodeur="qwen_0.6b_ace15.safetensors",
+                     compositeur="qwen_1.7b_ace15.safetensors", vae="ace_1.5_vae.safetensors"):
+    """Le même modèle de 2B que le turbo, **non distillé** : 50 pas avec un vrai
+    guidage (cfg 6 du rendu, gabarit officiel audio_ace_step1_5_xl_base de
+    ComfyUI) au lieu de 8 sans guidage. Même texte, même graphe, même taille
+    en mémoire (4,8 Go, tient sur 8 Go) ; le calcul est environ six fois plus
+    long, en échange d'un rendu qui suit mieux la légende."""
+    return _ace_step_15("ace-step-15-base", "ACE-Step 1.5 base", modele=modele, encodeur=encodeur,
+        compositeur=compositeur, vae=vae, pas=50, guidage=6, pas_max=100,
+        aide_pas="Le modèle de base est fait pour 50 ; en dessous, le rendu reste brouillé.",
+        description="La musique soignée : le même modèle que le turbo, sans raccourci (50 pas, guidage). "
+                    "Environ six fois plus long, plus fidèle à la légende.")
+
+
+def ace_step_15_xl_turbo(*, modele="acestep_v1.5_xl_turbo_bf16.safetensors", encodeur="qwen_0.6b_ace15.safetensors",
+                         compositeur="qwen_1.7b_ace15.safetensors", vae="ace_1.5_vae.safetensors"):
+    """Le grand modèle (4B, 10 Go) en version rapide : 8 pas comme le turbo.
+    ⚠️ Il dépasse les 8 Go d'une carte portable : ComfyUI en garde une part en
+    mémoire vive, et le calcul ralentit d'autant — le temps annoncé est celui
+    mesuré sur la machine, jamais deviné. Le gabarit officiel l'associe au
+    compositeur 4b (8,4 Go de plus) ; le 1.7b déjà installé écrit les mêmes
+    codes audio, il est gardé ici pour ne rien télécharger de plus."""
+    return _ace_step_15("ace-step-15-xl-turbo", "ACE-Step 1.5 XL turbo", modele=modele, encodeur=encodeur,
+        compositeur=compositeur, vae=vae, pas=8, guidage=1, pas_max=32, aide_pas="Le XL turbo est fait pour 8.",
+        description="Le grand modèle (4B) en version rapide : plus de détail et de voix, "
+                    "mais plus lourd que la carte graphique — plus lent à calculer.")
+
+
+def _ace_step_15(identifiant, nom, *, modele, encodeur, compositeur, vae, pas, guidage, pas_max, aide_pas, description):
+    """Le graphe commun aux trois modèles d'ACE-Step 1.5 : seuls le fichier de
+    poids, le nombre de pas et le guidage du rendu (cfg du KSampler) changent."""
     graphe = {
         "1": {"class_type": "UNETLoader", "inputs": {"unet_name": modele, "weight_dtype": "default"}},
         "2": {"class_type": "ModelSamplingAuraFlow", "inputs": {"model": ["1", 0], "shift": 3}},
@@ -208,10 +274,12 @@ def ace_step_15_turbo(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen
             "generate_audio_codes": True, "cfg_scale": 2.0, "temperature": 0.85, "top_p": 0.9, "top_k": 0, "min_p": 0.0}},
         "6": {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["5", 0]}},
         "7": {"class_type": "EmptyAceStep1.5LatentAudio", "inputs": {"seconds": 60, "batch_size": 1}},
-        "8": {"class_type": "KSampler", "inputs": {"seed": 0, "steps": 8, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
+        "8": {"class_type": "KSampler", "inputs": {"seed": 0, "steps": pas, "cfg": guidage, "sampler_name": "euler", "scheduler": "simple",
             "denoise": 1, "model": ["2", 0], "positive": ["5", 0], "negative": ["6", 0], "latent_image": ["7", 0]}},
         "9": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["8", 0], "vae": ["4", 0]}},
-        "10": _sortie("ace-step-15-turbo", ["9", 0]),
+        # Numéro ajouté, pas renuméroté : la sortie reste le nœud 10.
+        "11": _marge(["9", 0]),
+        "10": _sortie(identifiant, ["11", 0]),
     }
     liaisons = {"prompt": [_lien("5", "tags")], "paroles": [_lien("5", "lyrics")], "tempo": [_lien("5", "bpm")],
         "tonalite": [_lien("5", "keyscale")], "mesure": [_lien("5", "timesignature")],
@@ -221,7 +289,8 @@ def ace_step_15_turbo(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen
         "option:guidage": [_lien("5", "cfg_scale")], "option:pas": [_lien("8", "steps")]}
     parametres = {"langue": {"genre": "choix", "valeurs": list(LANGUES_ACE), "defaut": "en"},
         **{cle: dict(p) for cle, p in PARAMETRES_ACE.items()}}
-    return {"identifiant": "ace-step-15-turbo", "nom": "ACE-Step 1.5 turbo", "nature": "audio", "graphe": graphe,
+    parametres["pas"].update(defaut=pas, maximum=pas_max, aide=aide_pas)
+    return {"identifiant": identifiant, "nom": nom, "nature": "audio", "graphe": graphe,
         "liaisons": liaisons, "parametres": parametres,
         # 2 s, non 10 : un jingle par défaut (2 mesures + 1 de marge, 90 BPM)
         # dure 8 s — sous l'ancien minimum, il aurait été proposé puis refusé
@@ -229,8 +298,75 @@ def ace_step_15_turbo(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen
         # doit pas être proposé »).
         "formats": [], "durees": [30, 60, 90, 120], "duree_libre": {"min": 2, "max": 600},
         "sortie": {"noeud": "10", "champ": "audio"},
-        "description": "Musique et jingles : structure, tempo, tonalité, mesure et durée exacte, de 2 à 600 secondes ; "
-                       "le compositeur 1.7b écrit le plan du morceau avant le rendu."}
+        "description": description}
+
+
+def ace_step_15_reprise(*, modele="acestep_v1.5_turbo.safetensors", encodeur="qwen_0.6b_ace15.safetensors",
+                        compositeur="qwen_1.7b_ace15.safetensors", vae="ace_1.5_vae.safetensors"):
+    """**La reprise d'un son** : un morceau déjà fait, rejoué avec un autre
+    texte en gardant sa mélodie et sa carrure (« qui revit », « désert », tirés
+    d'un air de fête). Aucun nœud officiel de reprise n'existe : c'est la
+    méthode générique « image vers image » de ComfyUI appliquée au son.
+
+    - `LoadAudio` charge le son de départ, déposé chez ComfyUI à l'envoi
+      (liaison `source`) ; `VAEEncodeAudio` le passe en latent, et ce latent
+      remplace le latent vide du turbo à l'entrée `latent_image` du KSampler.
+    - `ReferenceTimbreAudio` donne le même latent comme référence de timbre au
+      conditionnement (comfy_extras/nodes_ace.py).
+    - **La force (0,1 à 0,95) n'est pas une option du profil** : elle part dans
+      le `denoise` du KSampler sous la forme `1 − force` (liaison `force`,
+      calculée par `composer`). C'est la seule valeur du profil qui ne part pas
+      telle qu'elle est dite, et la raison est d'usage : « à quel point suivre
+      le son de départ » se lit dans le bon sens, un débruitage non.
+    - Les codes audio sont coupés (`generate_audio_codes` faux) : le nœud le
+      demande dès qu'on lui donne une référence sonore, et la mélodie vient du
+      son de départ. Température et guidage, qui ne servent qu'au compositeur,
+      ne sont donc pas proposés. Le 1.7b reste chargé : `DualCLIPLoader` de
+      type `ace` attend la paire, et les mêmes fichiers que le turbo suffisent.
+    - La durée (`duration` du texte) est celle du son de départ ; il n'y a pas
+      de latent vide à régler.
+    """
+    graphe = {
+        "1": {"class_type": "UNETLoader", "inputs": {"unet_name": modele, "weight_dtype": "default"}},
+        "2": {"class_type": "ModelSamplingAuraFlow", "inputs": {"model": ["1", 0], "shift": 3}},
+        "3": {"class_type": "DualCLIPLoader", "inputs": {"clip_name1": encodeur, "clip_name2": compositeur, "type": "ace", "device": "default"}},
+        "4": {"class_type": "VAELoader", "inputs": {"vae_name": vae}},
+        "5": {"class_type": "TextEncodeAceStepAudio1.5", "inputs": {"clip": ["3", 0], "tags": "", "lyrics": "[Instrumental]",
+            "seed": 0, "bpm": 90, "duration": 60, "timesignature": "4", "language": "en", "keyscale": "D minor",
+            "generate_audio_codes": False, "cfg_scale": 2.0, "temperature": 0.85, "top_p": 0.9, "top_k": 0, "min_p": 0.0}},
+        "6": {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["5", 0]}},
+        "7": {"class_type": "LoadAudio", "inputs": {"audio": ""}},
+        "8": {"class_type": "VAEEncodeAudio", "inputs": {"audio": ["7", 0], "vae": ["4", 0]}},
+        "9": {"class_type": "ReferenceTimbreAudio", "inputs": {"conditioning": ["5", 0], "latent": ["8", 0]}},
+        "10": {"class_type": "KSampler", "inputs": {"seed": 0, "steps": 8, "cfg": 1, "sampler_name": "euler", "scheduler": "simple",
+            "denoise": 0.4, "model": ["2", 0], "positive": ["9", 0], "negative": ["6", 0], "latent_image": ["8", 0]}},
+        "11": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["10", 0], "vae": ["4", 0]}},
+        # Numéro ajouté, pas renuméroté : la sortie reste le nœud 12.
+        "13": _marge(["11", 0]),
+        "12": _sortie("ace-step-15-reprise", ["13", 0]),
+    }
+    liaisons = {"prompt": [_lien("5", "tags")], "paroles": [_lien("5", "lyrics")], "tempo": [_lien("5", "bpm")],
+        "tonalite": [_lien("5", "keyscale")], "mesure": [_lien("5", "timesignature")],
+        "secondes": [_lien("5", "duration")], "graine": [_lien("10", "seed"), _lien("5", "seed")],
+        "source": [_lien("7", "audio")], "force": [_lien("10", "denoise")],
+        "option:langue": [_lien("5", "language")], "option:pas": [_lien("10", "steps")]}
+    parametres = {"langue": {"genre": "choix", "valeurs": list(LANGUES_ACE), "defaut": "en"},
+        "pas": dict(PARAMETRES_ACE["pas"])}
+    return {"identifiant": "ace-step-15-reprise", "nom": "ACE-Step 1.5 — reprise d'un son", "nature": "audio",
+        "graphe": graphe, "liaisons": liaisons, "parametres": parametres,
+        "formats": [], "durees": [30, 60, 90, 120], "duree_libre": {"min": 2, "max": 600},
+        "sortie": {"noeud": "12", "champ": "audio"},
+        "description": "Rejoue un son déjà fait avec un autre texte : la mélodie et la structure restent, "
+                       "l'orchestration et l'humeur changent. La durée est celle du son de départ."}
+
+
+# Le profil de reprise de chaque moteur qui en a un : une demande qui part
+# d'un son existant (`source`) passe du premier au second. Un moteur absent
+# d'ici ne sait pas reprendre un son, et la demande est refusée en clair.
+# Le XL turbo, moteur de la musique par défaut depuis le 10 octobre 2026, passe
+# par la même reprise (poids du turbo) : sans cette ligne, toute musique partie
+# d'un son serait refusée dès que le XL est installé.
+REPRISES = {"ace-step-15-turbo": "ace-step-15-reprise", "ace-step-15-xl-turbo": "ace-step-15-reprise"}
 
 
 def yue2_int8(*, checkpoint="yue2_3b_int8_convrot.safetensors"):
@@ -318,6 +454,11 @@ CONSTRUCTEURS = {
     "sa3-small-sfx": stable_audio_3_small_sfx,
     "sa3-medium": stable_audio_3_medium,
     "ace-step-15-turbo": ace_step_15_turbo,
+    # Les deux autres modèles d'ACE-Step 1.5 (10 octobre 2026) : un choix de
+    # moteur de plus pour la musique, jamais le défaut d'une famille — le
+    # turbo reste le premier essai, base et XL se choisissent pour finir.
+    "ace-step-15-base": ace_step_15_base,
+    "ace-step-15-xl-turbo": ace_step_15_xl_turbo,
     "yue2-int8": yue2_int8,
     "sa-open-1": stable_audio_open_1,
     # « yue2-partition-jouee » (SN9) : le second étage de YuE2 seul, installé
@@ -327,6 +468,10 @@ CONSTRUCTEURS = {
     # (voir sa docstring) ; `ServicePartitionSon` le construit à la volée en
     # reprenant le fichier de poids déjà résolu pour `yue2-partition-jouee`.
     "yue2-partition-jouee": yue2_depuis_partition,
+    # « ace-step-15-reprise » : installé à côté du turbo (mêmes fichiers),
+    # jamais le moteur d'une famille — une demande y passe quand elle part
+    # d'un son existant (`REPRISES`).
+    "ace-step-15-reprise": ace_step_15_reprise,
 }
 
 
