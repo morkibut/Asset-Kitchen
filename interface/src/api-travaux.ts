@@ -43,6 +43,12 @@ export type DemandeTravail = {
    *  l'image en double est retirée de la bande). Sinon, l'identifiant d'une
    *  image du jeu, posée sur la même toile que le départ. */
   image_de_fin?: string | null
+  /** Ce que la vidéo doit éviter (10 octobre 2026) — **ajouté** au texte
+   *  d'interdiction fixe du moteur, jamais à sa place. 500 caractères au plus. */
+  prompt_negatif_video?: string
+  /** Le fond de l'image de départ, `#rrggbb`. Vide : la couleur que le texte
+   *  donne au fond, sinon un gris neutre. */
+  fond_video?: string
 }
 /** Une case d'une série (RV5) : sa pose et sa direction, le reste vient de la
  *  demande commune. */
