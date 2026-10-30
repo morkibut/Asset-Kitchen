@@ -424,5 +424,5 @@ la Main historique de la recette conserve son ancien espace.
 
 | | |
 |---|---|
-| `screen_spritecook/` | 30 captures de SpriteCook — la référence d'ergonomie, écran par écran |
-| `Anatomie de SpriteCook.html` | l'analyse fonctionnelle qui a servi de point de départ |
+| *(hors dépôt)* `screen_spritecook/` | 30 captures de SpriteCook — la référence d'ergonomie, écran par écran. Retirées le 30 octobre 2026, au passage en public |
+| *(hors dépôt)* `Anatomie de SpriteCook.html` | l'analyse fonctionnelle qui a servi de point de départ. Retirée le 30 octobre 2026, au passage en public |

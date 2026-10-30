@@ -15,7 +15,7 @@
 Pixel Engine est le moteur d'animation qui alimente Retro Diffusion, SpriteCook, SpriteLab,
 MeowArt et Sprite AI. C'est donc **le fournisseur commun de tous les produits qui servent de
 référence à l'atelier**, SpriteCook compris — dont l'anatomie est relevée par ailleurs
-(`Anatomie de SpriteCook.html`).
+(`Anatomie de SpriteCook.html`, hors dépôt depuis le 30 octobre 2026).
 
 Le relevé répond à une seule question : *qu'est-ce qui fait que leurs sorties sont du vrai pixel
 art, et lesquelles de leurs décisions valent d'être reprises ici ?*

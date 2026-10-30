@@ -1,7 +1,7 @@
 # Asset Kitchen — Architecture
 
 > Établi le 26 août 2026, **tenu à jour au 2 septembre 2026**, à partir de l'analyse de
-> SpriteCook (`Anatomie de SpriteCook.html`, captures dans `screen_spritecook/`)
+> SpriteCook (`Anatomie de SpriteCook.html`, captures dans `screen_spritecook/` — hors dépôt depuis le 30 octobre 2026)
 > et de l'état des trois projets qui précèdent : `_DEV/game-asset-generator` (GAG),
 > `_DEV/MySpriteAi`, `_DEV/game-asset-generator/texel-studio`.
 >
@@ -535,7 +535,7 @@ d'une session.
 | MySpriteAi | `src/lib/pixelPipeline.ts` | **porté en T2**. Les décisions dedans étaient durement acquises et elles sont reprises telles quelles : durcir l'alpha à 128 **avant** la réduction, et ne jamais forcer l'alpha à 255 en quantifiant — les deux moitiés du même liseré clair. Écarté au passage : le k-means++ de la palette, qui tire son initialisation au sort et rendrait deux images différentes pour une même recette nommée |
 | MySpriteAi | `src/lib/audioPipeline.ts` | V5 |
 | MySpriteAi | `workflows/audio/txt2sfx.api.json` | V5, si le local reste au menu |
-| SpriteCook | captures `screen_spritecook/` | référence d'ergonomie, écran par écran |
+| SpriteCook | captures `screen_spritecook/` (hors dépôt depuis le 30 octobre 2026) | référence d'ergonomie, écran par écran |
 | **Le pantin articulé libre** | l'**algorithme** de déformation du maillage, pas le dépôt | **V3, tranche `A8`.** Code et poids sous une licence qui ne pose aucune condition, et — c'est ce qui change la taille de la tranche — **sa partie animation ne dépend d'aucun modèle lourd** : si l'atelier fournit lui-même la silhouette et la position des articulations, ce qu'il sait déjà faire, toute la chaîne tourne sur les deux bibliothèques de calcul déjà installées. Il n'y a **aucun poids d'attache à calculer** : les articulations sont de simples épingles. ⚠️ **On recopie, on ne dépend pas** — le dépôt est archivé depuis septembre 2025, son calcul déborde numériquement au-delà d'un millier de points, et son affichage passe par la carte graphique, à ne pas reprendre |
 | **Les corpus de mouvements** | des mouvements nommés, réutilisables commercialement | **V3, tranche `A6`.** Un cycle de marche complet, une fois ramené à des angles à plat, tient en **quarante-huit nombres**. Une bibliothèque maison se paie une fois en travail et devient gratuite pour tous les personnages suivants |
 | **Les formats de sortie** | le descriptif d'une planche de sprites, et le format de squelette | **V3, tranches `A4` et `A8`. On n'invente aucun format** : celui que les moteurs lisent le plus est connu et ses clés sont relevées, et le format de squelette de référence existe. Un moteur ouvre alors la planche sans la remesurer |

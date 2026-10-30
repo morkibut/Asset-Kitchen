@@ -380,7 +380,7 @@ ne peut énoncer, ou un piège déjà payé.
 | `essais/` | les bancs — ce qui se mesure au lieu de se supposer. Les payants ne partent qu'à la main, et **`docs/bancs.md` dit lesquels et combien** |
 | `donnees/` | ce que le produit écrit : les images payées, leurs recettes, les projets et leurs univers, et un index SQLite **jetable**. Hors Git |
 | `docs/` | les documents ; leur autorité est tranchée plus haut, § Les documents et leur autorité |
-| `screen_spritecook/`, `Anatomie de SpriteCook.html` | la référence d'ergonomie — 30 captures écran par écran, et l'analyse fonctionnelle qui a servi de point de départ |
+| *(hors dépôt)* `screen_spritecook/`, `Anatomie de SpriteCook.html` | la référence d'ergonomie — 30 captures écran par écran, et l'analyse fonctionnelle qui a servi de point de départ. **Retirées du dépôt le 30 octobre 2026**, au passage en public : c'est le contenu d'un autre éditeur. Elles restent sur la machine de l'auteur, dans `D:\DEV-bis\gag2-reference-spritecook\` |
 
 ## Les projets voisins — les lire avant de réinventer
 
