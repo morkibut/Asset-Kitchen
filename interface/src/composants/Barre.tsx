@@ -270,7 +270,8 @@ export function Barre({
     const avantGenerations = sortie.length
     for (const generation of chantier) {
       if (sortie.length - avantGenerations >= 6) break
-      if (!contient(generation.demande.prompt, cherche)) continue
+      // Un rendu enregistré n'a pas de `prompt`, seulement un `nom` (31 octobre 2026).
+      if (!contient(generation.demande.prompt ?? generation.demande.nom ?? "", cherche)) continue
       sortie.push({
         cle: `generation:${generation.identifiant}`,
         verbe: "aller",

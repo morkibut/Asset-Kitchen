@@ -214,7 +214,11 @@ export function useLignesDeFabrication({ projet, personnages, chantier, clips }:
     // le texte et l'image produite, du journal quand il les a (27 septembre 2026).
     ;[...clips, ...chantier].filter((g) => g.projet === projet && !generationsDeTravaux.has(g.identifiant)).forEach((g) => {
       const duJournal = parGeneration.get(g.identifiant)?.appel
-      parGeneration.set(g.identifiant, { appel: { identifiant: g.identifiant, modele: g.modele, prompt: duJournal?.prompt ?? texteDeLAuteur(g.demande.prompt), cree_le: g.cree_le, cout_usd: g.cout_usd, statut: g.statut, reussies: g.reussies, rates: duJournal?.rates ?? [], vignette: duJournal?.vignette ?? null }, generation: g })
+      // ⚠️ Un rendu enregistré (« Enregistrer sous… ») n'a pas de `prompt`,
+      // seulement un `nom` : c'est lui qu'on montre (31 octobre 2026 — sans ce
+      // repli, `texteDeLAuteur(undefined)` faisait tomber l'écran en blanc).
+      const texte = typeof g.demande.prompt === "string" ? texteDeLAuteur(g.demande.prompt) : g.demande.nom ?? ""
+      parGeneration.set(g.identifiant, { appel: { identifiant: g.identifiant, modele: g.modele, prompt: duJournal?.prompt ?? texte, cree_le: g.cree_le, cout_usd: g.cout_usd, statut: g.statut, reussies: g.reussies, rates: duJournal?.rates ?? [], vignette: duJournal?.vignette ?? null }, generation: g })
     })
     const dAppels: LigneFabrication[] = [...parGeneration.values()].map(({ appel: a, generation: g }) => ({
       cle: `appel:${a.identifiant}`, origine: "appel" as const,

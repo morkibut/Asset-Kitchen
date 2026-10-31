@@ -204,3 +204,23 @@ describe("le clavier", () => {
     expect(rappels.onFermer).toHaveBeenCalled()
   })
 })
+
+describe("un rendu enregistré, sans prompt (31 octobre 2026)", () => {
+  // « Enregistrer sous… » écrit une génération qui porte un `nom` et pas de
+  // `prompt`. Taper quoi que ce soit dans la barre la relisait par
+  // `demande.prompt` et faisait tomber l'écran : on cherche dans son nom.
+  const RENDU = {
+    identifiant: "r1", modele: "rendu-enregistre", cree_le: 1_790_000_000, cout_usd: 0,
+    demande: { nom: "Champy saute", bande: "b1" },
+  } as unknown as Generation
+
+  test("la barre le trouve par son nom, sans tomber", () => {
+    monter({ chantier: [RENDU] })
+
+    fireEvent.change(screen.getByLabelText("Chercher un sujet ou un geste"), {
+      target: { value: "saute" },
+    })
+
+    expect(ligne(/La génération qui l'a fabriquée/)).toBeTruthy()
+  })
+})
