@@ -543,13 +543,13 @@
     },
     {
       "name": "maquettes-son",
-      "runtimeExecutable": "C:/STOCKAGE/PROJET/_DEV/gag2/.venv/Scripts/python.exe",
+      "runtimeExecutable": "D:/DEV-bis/gag2/.venv/Scripts/python.exe",
       "runtimeArgs": [
         "-m",
         "http.server",
         "8934",
         "--directory",
-        "C:/STOCKAGE/PROJET/_DEV/gag2/docs/maquettes-atelier-unifie"
+        "D:/DEV-bis/gag2/docs/maquettes-atelier-unifie"
       ],
       "port": 8934
     },
@@ -564,25 +564,25 @@
     },
     {
       "name": "atelier-jetable-son",
-      "runtimeExecutable": "C:/STOCKAGE/PROJET/_DEV/gag2/.venv/Scripts/python.exe",
+      "runtimeExecutable": "D:/DEV-bis/gag2/.venv/Scripts/python.exe",
       "runtimeArgs": [
-        "C:/STOCKAGE/PROJET/_DEV/gag2/essais/atelier_jetable_son.py"
+        "D:/DEV-bis/gag2/essais/atelier_jetable_son.py"
       ],
       "port": 8510
     },
     {
       "name": "atelier-jetable-tu3",
-      "runtimeExecutable": "C:/STOCKAGE/PROJET/_DEV/gag2/.venv/Scripts/python.exe",
+      "runtimeExecutable": "D:/DEV-bis/gag2/.venv/Scripts/python.exe",
       "runtimeArgs": [
-        "C:/STOCKAGE/PROJET/_DEV/gag2/essais/atelier_jetable_tu3.py"
+        "D:/DEV-bis/gag2/essais/atelier_jetable_tu3.py"
       ],
       "port": 8511
     },
     {
       "name": "atelier-jetable-mo6",
-      "runtimeExecutable": "C:/STOCKAGE/PROJET/_DEV/gag2/.venv/Scripts/python.exe",
+      "runtimeExecutable": "D:/DEV-bis/gag2/.venv/Scripts/python.exe",
       "runtimeArgs": [
-        "C:/STOCKAGE/PROJET/_DEV/gag2/essais/atelier_jetable_mo6.py",
+        "D:/DEV-bis/gag2/essais/atelier_jetable_mo6.py",
         "--interface",
         "C:/Users/damie/AppData/Local/Temp/claude/C--STOCKAGE-PROJET--DEV-gag2/cfdad752-2483-4cc0-b37b-2c96577f7232/scratchpad/dist-mo6"
       ],
