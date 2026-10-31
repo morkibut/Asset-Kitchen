@@ -15,9 +15,13 @@
 
 🇫🇷 **[Lire en français](README.fr.md)**
 
-<img src="docs/maquettes-atelier-unifie/marche-demo.png" alt="A hooded traveller with a lantern, five walk-cycle frames made in Asset Kitchen" width="720">
+<img src="docs/vitrine/distribution.png" alt="A cast of characters and props made in Asset Kitchen: a hooded traveller, two dwarf miners, a mushroom mage, a giant, a stalker, a jug, a barrel, a rope and a chest" width="900">
 
-<sub>A walk cycle cooked in the kitchen: one sprite, animated through a video model, frames picked, pixel grid restored.</sub>
+<sub>Every sprite on this page came out of the kitchen, from the author's own games — nothing was retouched outside it.</sub>
+
+<br>
+
+<img src="docs/vitrine/ecran-galerie.jpg" alt="The Gallery screen of Asset Kitchen, showing a game's tiles and mushroom characters" width="900">
 
 </div>
 
@@ -65,15 +69,30 @@ Think of the model as a supplier. Asset Kitchen is the kitchen.
 <table>
 <tr>
 <td width="50%" align="center">
-<img src="docs/releves/banc-tn6-2026-09-25/planche-renard.png" alt="Fox walk sheet with a transparent background" width="320"><br>
-<sub><b>Animation sheets</b> — frames from one generation, cut into cells, transparent background.</sub>
+<img src="docs/vitrine/marche.gif" alt="A hooded traveller with a lantern walking, eight frames" height="260"><br>
+<sub><b>A walk cycle</b> — the sprite animated by a video model, eight frames kept, pixel grid restored.</sub>
 </td>
 <td width="50%" align="center">
-<img src="docs/releves/banc-tn6-2026-09-25/planche-mage.png" alt="Mushroom character seen from four directions" width="320"><br>
-<sub><b>Direction sheets</b> — one character, four views, one call, one price.</sub>
+<img src="docs/vitrine/minage.gif" alt="A dwarf swinging a pickaxe, ten frames" height="260"><br>
+<sub><b>An action</b> — a dwarf mining, ten frames cut from one generation, transparent background.</sub>
 </td>
 </tr>
 </table>
+
+<p align="center">
+<img src="docs/vitrine/directions.png" alt="A mushroom mage seen from the front, the back and both sides" width="720"><br>
+<sub><b>Direction sheets</b> — one character, four views, one call, one price.</sub>
+</p>
+
+<p align="center">
+<img src="docs/vitrine/objets.png" alt="A jug, a rope, wooden planks, a barrel, a chest, a rock and a rusty bus" width="900"><br>
+<sub><b>Objects & props</b> — in the same style as the characters, without a background to remove by hand.</sub>
+</p>
+
+<p align="center">
+<img src="docs/vitrine/matieres.png" alt="Five tileable materials laid out in 3 by 2 grids: moss, sandstone, grey stone and two kinds of earth" width="900"><br>
+<sub><b>Materials</b> — each one repeated 3 × 2 to show it tiles without a seam. The tileset engine cuts the autotile pieces from them.</sub>
+</p>
 
 | Family | What you get |
 |---|---|
@@ -103,6 +122,17 @@ The interface is a **notebook** with eight doors on the left:
 | **Guide** | The `?` key opens a hand-written explanation of the screen you are on — 316 cards over 25 screens |
 
 A **subject sheet** has four tabs: Animations, Images, Sounds, Equipment. `Ctrl K` opens a command bar that searches and does what is not on screen.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/vitrine/ecran-jeux.jpg" alt="The game picker: one card per game with its palette, pixel size and spending"><br><sub><b>Your games</b> — each with its palette, pixel size, camera and what it has cost so far.</sub></td>
+<td width="50%"><img src="docs/vitrine/ecran-toile.jpg" alt="The canvas: groups of reference cards on a free board, and a reserve of dungeon artworks"><br><sub><b>Universe & canvas</b> — references, notes and style groups on a free board; the prompt bar sits at the bottom.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/vitrine/ecran-codex.jpg" alt="The Codex: four dwarf characters and two pieces of equipment"><br><sub><b>Codex</b> — every subject of the game, by family, with how much of it is ready.</sub></td>
+<td width="50%"><img src="docs/vitrine/ecran-fiche.jpg" alt="A subject sheet: the mushroom character Champy, its images sorted by pose and direction"><br><sub><b>A subject sheet</b> — the chosen image per pose and direction, and what is still to make.</sub></td>
+</tr>
+</table>
 
 ### The retouching tables
 

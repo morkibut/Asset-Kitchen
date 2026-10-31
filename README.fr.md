@@ -15,9 +15,13 @@
 
 🇬🇧 **[Read in English](README.md)**
 
-<img src="docs/maquettes-atelier-unifie/marche-demo.png" alt="Un voyageur encapuchonné avec une lanterne, cinq images d'un cycle de marche faites dans Asset Kitchen" width="720">
+<img src="docs/vitrine/distribution.png" alt="Des personnages et objets faits dans Asset Kitchen : un voyageur encapuchonné, deux nains mineurs, un mage champignon, un colosse, un rôdeur, une cruche, un tonneau, une corde et un coffre" width="900">
 
-<sub>Un cycle de marche sorti de la cuisine : un sprite, animé par un modèle vidéo, les images choisies, la grille de pixels retrouvée.</sub>
+<sub>Tous les sprites de cette page sont sortis de la cuisine, depuis les jeux de l'auteur — rien n'a été retouché ailleurs.</sub>
+
+<br>
+
+<img src="docs/vitrine/ecran-galerie.jpg" alt="L'écran Galerie d'Asset Kitchen, avec les tuiles et les personnages champignons d'un jeu" width="900">
 
 </div>
 
@@ -65,15 +69,30 @@ Le modèle est un fournisseur. Asset Kitchen, c'est la cuisine.
 <table>
 <tr>
 <td width="50%" align="center">
-<img src="docs/releves/banc-tn6-2026-09-25/planche-renard.png" alt="Planche de marche d'un renard sur fond transparent" width="320"><br>
-<sub><b>Planches d'animation</b> — les images d'une seule génération, découpées en cases, fond transparent.</sub>
+<img src="docs/vitrine/marche.gif" alt="Un voyageur encapuchonné à la lanterne qui marche, huit images" height="260"><br>
+<sub><b>Un cycle de marche</b> — le sprite animé par un modèle vidéo, huit images gardées, la grille de pixels retrouvée.</sub>
 </td>
 <td width="50%" align="center">
-<img src="docs/releves/banc-tn6-2026-09-25/planche-mage.png" alt="Un personnage champignon vu de quatre côtés" width="320"><br>
-<sub><b>Planches de directions</b> — un personnage, quatre vues, un appel, un prix.</sub>
+<img src="docs/vitrine/minage.gif" alt="Un nain qui donne un coup de pioche, dix images" height="260"><br>
+<sub><b>Une action</b> — un nain qui pioche, dix images découpées dans une seule génération, fond transparent.</sub>
 </td>
 </tr>
 </table>
+
+<p align="center">
+<img src="docs/vitrine/directions.png" alt="Un mage champignon vu de face, de dos et des deux côtés" width="720"><br>
+<sub><b>Planches de directions</b> — un personnage, quatre vues, un appel, un prix.</sub>
+</p>
+
+<p align="center">
+<img src="docs/vitrine/objets.png" alt="Une cruche, une corde, des planches, un tonneau, un coffre, un rocher et un bus rouillé" width="900"><br>
+<sub><b>Objets et décor</b> — dans le même style que les personnages, sans fond à retirer à la main.</sub>
+</p>
+
+<p align="center">
+<img src="docs/vitrine/matieres.png" alt="Cinq matières répétées en grilles de 3 sur 2 : mousse, grès, pierre grise et deux terres" width="900"><br>
+<sub><b>Matières</b> — chacune répétée 3 × 2 pour montrer qu'elle se raccorde sans couture. Le moteur de tuiles en découpe les pièces d'autotile.</sub>
+</p>
 
 | Famille | Ce qu'on obtient |
 |---|---|
@@ -103,6 +122,17 @@ L'interface est un **carnet** avec huit portes, à gauche :
 | **Guide** | La touche `?` ouvre l'explication, écrite à la main, de l'écran où l'on est — 316 fiches sur 25 écrans |
 
 La **fiche d'un sujet** a quatre onglets : Animations, Images, Sons, Équipement. `Ctrl K` ouvre une barre qui cherche, et fait ce qui n'est nulle part à l'écran.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/vitrine/ecran-jeux.jpg" alt="Le choix du jeu : une carte par jeu avec sa palette, sa taille de pixel et ses dépenses"><br><sub><b>Tes jeux</b> — chacun avec sa palette, sa taille de pixel, sa vue et ce qu'il a coûté jusqu'ici.</sub></td>
+<td width="50%"><img src="docs/vitrine/ecran-toile.jpg" alt="La toile : des groupes de cartes de références sur un tableau libre, et une réserve d'illustrations de donjon"><br><sub><b>Univers & toile</b> — références, notes et groupes de style sur un tableau libre ; la barre de demande est en bas.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/vitrine/ecran-codex.jpg" alt="Le Codex : quatre nains et deux pièces d'équipement"><br><sub><b>Codex</b> — chaque sujet du jeu, par famille, avec ce qui en est prêt.</sub></td>
+<td width="50%"><img src="docs/vitrine/ecran-fiche.jpg" alt="La fiche d'un sujet : le champignon Champy, ses images rangées par pose et par direction"><br><sub><b>La fiche d'un sujet</b> — l'image retenue par pose et par direction, et ce qui reste à faire.</sub></td>
+</tr>
+</table>
 
 ### Les tables de retouche
 
