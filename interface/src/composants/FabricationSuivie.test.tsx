@@ -329,6 +329,19 @@ test("la durée proposée suit le modèle choisi, et reste une durée qu’il ac
   await waitFor(() => expect(screen.getByLabelText("Durée du clip")).toHaveValue("3"))
 })
 
+// Trouvé à l'usage le 27 septembre 2026 : 2 s posées, puis Wan choisi, et le
+// lot est parti à 1 s — la durée conseillée du modèle écrasait celle de
+// l'auteur, qu'il savait pourtant faire.
+test("choisir un modèle garde la durée déjà posée quand il sait la faire", async () => {
+  vi.spyOn(api, "modelesVideo").mockResolvedValue({ modeles: [{ identifiant: "maison/wan-2.2-i2v-14b-pixel", nom: "Wan 2.2 pixel", grise: null, de_la_maison: true, prix: { montant: 0 }, durees: [1, 1.5, 2, 3], duree_par_defaut: 1, resolutions: ["480p"], proportions: ["1:1"] }] } as Awaited<ReturnType<typeof api.modelesVideo>>)
+  render(<FabricationSuivie projet="jeu" personnages={[personnage]} onClip={() => {}} onFermer={() => {}} />)
+  await screen.findByRole("option", { name: /Wan 2.2 pixel/ })
+  fireEvent.change(screen.getByLabelText("Durée du clip"), { target: { value: "2" } })
+  fireEvent.change(screen.getByRole("option", { name: /Wan 2.2 pixel/ }).closest("select")!, { target: { value: "maison/wan-2.2-i2v-14b-pixel" } })
+  await waitFor(() => expect(screen.getByRole("option", { name: /Wan 2.2 pixel/ }).closest("select")).toHaveValue("maison/wan-2.2-i2v-14b-pixel"))
+  expect(screen.getByLabelText("Durée du clip")).toHaveValue("2")
+})
+
 test("le bouton porte le temps attendu quand le clip est local", () => {
   const local = { ...t, annonce: { ...t.annonce, video_locale: true,
     temps_local: { secondes: 420, secondes_suivant: 60, premier: true, images: 1, mesure: "essai", nature: "video" } } } as unknown as Travail

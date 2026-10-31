@@ -310,13 +310,24 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
     return () => { vivant = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `changer` est stable ; seuls ces champs font relire la composition.
   }, [edition, demande.pose, demande.direction, demande.personnage, demande.mouvement, demande.style_combat, projet])
-  // **RV5 : la durée proposée suit le modèle choisi**, et seulement quand il
-  // change — sinon un réglage manuel serait effacé à chaque rendu.
+  // **RV5 : la durée proposée suit le modèle choisi**, et seulement au geste
+  // qui le change (`choisirModeleVideo`). ⚠️ Un effet sur `video` la réarmait
+  // aussi au retour en édition et à la reprise d'un brouillon, quand la liste
+  // des modèles arrivait : 2 s choisies partaient à 1 s (27 septembre 2026).
+  // Ici ne reste que le filet : une durée que le modèle ne fait pas.
   useEffect(() => {
-    if (!edition || !video || !video.duree_par_defaut) return
-    changer({ secondes: video.duree_par_defaut })
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- volontaire : seul un changement de modèle réarme la durée.
+    if (!edition || !video?.duree_par_defaut || !video.durees?.length) return
+    if (!video.durees.includes(demande.secondes)) changer({ secondes: video.duree_par_defaut })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- volontaire : seul un changement de modèle vérifie la durée.
   }, [edition, video?.identifiant])
+  // Changer de modèle **garde la durée déjà choisie** quand il sait la faire :
+  // l'auteur règle souvent la durée avant le modèle, et 2 s posées puis Wan
+  // choisi partaient à 1 s sans que rien ne le dise.
+  const choisirModeleVideo = (identifiant: string) => {
+    const choisi = videos.find((m) => m.identifiant === identifiant)
+    const garde = !choisi?.durees?.length || choisi.durees.includes(demande.secondes)
+    changer({ modele_video: identifiant, ...(!garde && choisi?.duree_par_defaut ? { secondes: choisi.duree_par_defaut } : {}) })
+  }
 
   async function relire() {
     setOccupe(true); setErreur("")
@@ -499,7 +510,7 @@ export function FabricationSuivie({ projet, personnages, onClip, onBande, onLivr
           <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.marge">Place autour du sujet · {Math.round((demande.part_sujet ?? 0.80) * 100)} % de la toile</Libelle><input aria-label="Place autour du sujet" className="h-[34px]" type="range" min={40} max={95} step={5} value={Math.round((demande.part_sujet ?? 0.80) * 100)} onChange={(e) => changer({ part_sujet: Number(e.target.value) / 100 })} /></label>
           <div className="mt-[14px] flex flex-col gap-[4px] text-[12px]"><label className="flex flex-col gap-[4px]"><Libelle aide="clip.fin">Fin de l’animation</Libelle><select aria-label="Fin de l’animation" className={CHAMP} value={!demande.image_de_fin ? "libre" : demande.image_de_fin === "depart" ? "depart" : "autre"} onChange={(e) => { if (e.target.value === "autre") setChoix("fin"); else changer({ image_de_fin: e.target.value === "depart" ? "depart" : null }) }}><option value="libre">Libre</option><option value="depart">Finir sur l’image de départ (boucle)</option><option value="autre">Une autre image…</option></select></label>
             {demande.image_de_fin && demande.image_de_fin !== "depart" && <div className="mt-[8px] flex items-center gap-[14px]"><img alt="Image de fin choisie" src={api.vignette(demande.image_de_fin, "", 128)} className="h-[54px] w-[54px] object-contain" /><button className={BOUTON} onClick={() => setChoix("fin")}>Changer l’image de fin</button></div>}</div>
-          <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.prix">{CHAMP_DU_MODELE}</Libelle>{/* MO3 : le même choix que « Faire une vidéo libre » (`ChoixModeleVideo`). */}<ChoixModeleVideo className={CHAMP} modeles={videos} valeur={demande.modele_video} onChange={(identifiant) => changer({ modele_video: identifiant })} vide="Choisir un modèle…" absent={videosLues ? "modèle indisponible" : "chargement…"} /></label>
+          <label className="mt-[14px] flex flex-col gap-[4px] text-[12px]"><Libelle aide="clip.prix">{CHAMP_DU_MODELE}</Libelle>{/* MO3 : le même choix que « Faire une vidéo libre » (`ChoixModeleVideo`). */}<ChoixModeleVideo className={CHAMP} modeles={videos} valeur={demande.modele_video} onChange={choisirModeleVideo} vide="Choisir un modèle…" absent={videosLues ? "modèle indisponible" : "chargement…"} /></label>
           {video?.de_la_maison && <div className="mt-[8px]"><MemoireLocale etat={moteur} /></div>}
           <details className="mt-[14px]"><summary className="cursor-pointer text-[12px] text-encre-3">Paramètres avancés du workflow</summary><p className="my-[8px] text-[12px] text-encre-3">Réglages nommés du workflow, par exemple la seed. Le fournisseur vérifie les paramètres avant l’envoi.</p><textarea aria-label="Paramètres vidéo JSON" className="mesure w-full rounded-7 border border-contour p-[14px] text-[12px]" rows={3} value={optionsVideo} onChange={(e) => setOptionsVideo(e.target.value)} /></details>
         </fieldset>
