@@ -198,7 +198,32 @@ class ServiceAnimation:
         """
         if not self._recu_le:
             await self.rafraichir()
+        else:
+            await self._revoir_les_moteurs_eteints()
         return self.modeles()
+
+    async def _revoir_les_moteurs_eteints(self) -> None:
+        """Un moteur local vu éteint est revu à chaque demande de la liste.
+
+        L'auteur allume souvent ComfyUI **après** l'atelier : sans cette
+        relecture, le grisé « pas allumé » restait jusqu'au redémarrage. Revoir
+        un moteur éteint ne coûte rien — sur cette machine, une connexion
+        refusée répond aussitôt —, et un moteur déjà vu allumé n'est pas revu.
+        """
+        for fabrique in self._fabriques:
+            try:
+                porte = fabrique()
+            except ErreurAtelier:
+                continue
+            etat = getattr(porte, "etat_du_moteur", None)
+            if etat is None or etat().allume:
+                continue
+            # Une relecture ratée garde l'état d'avant : la liste des modèles
+            # ne tombe jamais pour un moteur local qui répond de travers.
+            try:
+                await porte.visiter()
+            except Exception:  # noqa: BLE001 — sonde de confort, jamais bloquante
+                continue
 
     def modeles(self) -> list[ModeleVideo]:
         """Ceux qui **peuvent partir d'une image**, les seuls que le produit sert.
