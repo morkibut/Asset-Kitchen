@@ -8211,6 +8211,10 @@ export function ecouter(ecoute: Ecoute): () => void {
   lire<Bande & { oubliee?: boolean }>("bande", ecoute.bande)
   lire<EtatAgent>("agent", ecoute.agent)
   if (ecoute.travail) lire<Parameters<NonNullable<Ecoute["travail"]>>[0]>("travail", ecoute.travail)
+  // Le registre (`RC1`) : un geste de l'auteur ou d'un agent. L'écran du
+  // registre relit ce qu'il montre ; la charge dit seulement quel jeu et quelle entrée.
+  lire<{ projet: string; entree: string | null }>("registre", (charge) =>
+    window.dispatchEvent(new CustomEvent("atelier:registre", { detail: charge })))
 
   source.onopen = () => ecoute.liaison(true)
   source.onerror = () => ecoute.liaison(false)

@@ -139,6 +139,11 @@ export type Lieu =
   // sujet, la page d'un son, un jeu de tuiles. Sans lui, l'écran ouvre sur
   // « tout le jeu » : c'est la même porte, seulement plus ou moins refermée.
   | { genre: "sortie"; filtre?: FiltreDeSortie }
+  // Le registre du contenu (`RC1`) — **ce qu'on montre à l'auteur et qu'il
+  // juge**. Il se pose sur n'importe quelle racine, comme la sortie : on y
+  // revient de partout, souvent, par petites séances. Une entrée ouverte et
+  // « une décision à la fois » sont des états de l'écran, pas des lieux.
+  | { genre: "registre" }
   // Une pièce d'équipement et ses emplois (`B19`) — **elle se pose sur le
   // codex**, comme la grille d'une famille, et pour la même raison : c'est le
   // même endroit vu par une porte de plus. Le carnet la déplie sous *Les

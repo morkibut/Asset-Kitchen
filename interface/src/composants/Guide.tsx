@@ -235,6 +235,7 @@ const NOM_DE_LECRAN: Record<Explication["ou"], string> = {
   reglages: "L'atelier et sa machine",
   equipement: "Les équipements",
   sortie: "Livrer au jeu",
+  registre: "Le registre",
   tuiles: "Les tuiles du jeu",
   "jeu-de-tuiles": "Un jeu de tuiles",
   "livraison-de-tuiles": "Livrer à Godot",

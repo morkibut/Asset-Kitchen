@@ -5572,6 +5572,8 @@ describe("l'infobulle et le guide", () => {
       "reglages",
       "equipement",
       "sortie",
+      // Le registre du contenu (`RC1`).
+      "registre",
       // Les trois écrans des tuiles (`GU13`, 1/2) : ils n'ont pas encore de
       // fiche, et la boucle ci-dessous ne les verra donc pas — la liste les
       // porte quand même, sans quoi la première fiche écrite par `GU13` (2/2)
@@ -21899,12 +21901,12 @@ describe("B0 — la navigation de l'atelier", () => {
     expect(navigation()).toBeTruthy()
   })
 
-  test("les six portes de la maquette sont présentes une fois chacune", async () => {
+  test("les sept portes (la maquette et le registre de RC1) sont présentes une fois chacune", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
     const atelier = within(navigation()).getByRole("navigation", { name: "Atelier" })
     expect(within(atelier).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
-      "Le jeu", "Univers & toile", "Codex", "Galerie", "Fabrications", "Livrer au jeu",
+      "Le jeu", "Univers & toile", "Codex", "Galerie", "Fabrications", "Le registre", "Livrer au jeu",
     ])
   })
 
