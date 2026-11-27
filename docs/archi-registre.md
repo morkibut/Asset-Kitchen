@@ -5,6 +5,59 @@
 > [PLAN-registre.md](PLAN-registre.md). Les règles pures sont en tête de
 > `atelier/domaine/registre.py`.
 
+## 0. Après le complément du 27 novembre : une fiche par sujet
+
+Ce qui suit dans les sections 1 à 8 décrit `RC1` telle qu'écrite, autour de **l'entrée**. Le
+complément ([prd-registre.md § Une fiche par sujet](prd-registre.md#une-fiche-par-sujet))
+coupe l'entrée en deux, et **ce qui tient reste tel quel** : le journal d'évènements, l'état
+déduit, une décision par fichier, les portes, les remarques, les médias par empreinte, la
+boîte de dépôt, le MCP sans geste de décision.
+
+**Les fichiers, après** :
+
+```
+projets/<jeu>/registre/
+├─ reglages.json                       types → rubrique, variantes admises, textes attendus
+├─ fiches/<sujet>/fiche.json           le sujet de contenu : son texte, ses variantes
+├─ fiches/<sujet>/apports/<apport>.json ce qu'un agent a déposé, toutes versions comprises
+├─ fiches/<sujet>/medias/…             les fichiers venus d'ailleurs, par empreinte
+├─ journal/<repere>.json               inchangé ; un évènement vise un apport, et donc sa fiche
+└─ depot/…                             inchangé, mais un dépôt nomme son sujet
+```
+
+- **`<sujet>` est l'identifiant du sujet de l'atelier** quand le type est une chose dessinée
+  (personnage, bête, lieu, objet) : la fiche *est* le sujet, enrichi. Pour un sujet de
+  contenu (quête, lettre, décision), l'identifiant est propre au registre. Un seul écrivain
+  par fichier, comme avant : `fiche.json` par le geste « écrire le texte », un apport par son
+  dépôt.
+- **Le texte** (R6) vit dans `fiche.json`, pas dans la description du sujet : la description
+  part au modèle à chaque demande, l'histoire ne doit pas y partir.
+- **Une variante** (R7) est une clé de `fiche.json` ; un apport la vise ou vise la fiche.
+- **L'état à deux niveaux** : celui d'un apport se déduit comme celui de l'entrée aujourd'hui
+  (`etat_de_l_entree` devient `etat_de_l_apport`, même ordre) ; celui d'une fiche se déduit de
+  ses apports (à traiter dès qu'un l'est), et celui d'une variante des siens. **Les trois zones
+  de R4 sont un classement de ces états**, calculé à la lecture, jamais rangé par l'agent.
+- **Rattacher** un apport à un autre sujet est un évènement du journal, pas un déplacement de
+  décisions : l'apport garde son identifiant, donc ses décisions et remarques le suivent
+  (R5). Le fichier de l'apport, seul, change de dossier.
+
+**Le MCP, après** — toujours façade, toujours sans geste de décision :
+
+| Outil | Ce qu'il fait |
+|---|---|
+| `list_subjects` | Les fiches d'une rubrique, courtes, triées par état puis par date |
+| `find_subject` | Retrouve un sujet par son nom, à l'orthographe près, pour ne pas en créer un second |
+| `get_subject` | Une fiche : son texte, ses variantes, ses trois zones, **et les décisions déjà prises** |
+| `submit_contribution` | Dépose un apport sur un sujet (et une variante) ; un lot se dépose en un appel et **se répartit** fiche par fiche ; un apport sans sujet est refusé, avec sa raison |
+| `set_subject_story` | Écrit ou met à jour le texte d'un sujet |
+| `move_contribution` | Rattache un apport mal rangé à son vrai sujet, ses décisions avec lui |
+| `read_decisions` | Inchangé, mais chaque décision dit **le sujet, la variante et l'apport** visés |
+| `answer_remark`, `set_contribution_status`, `set_contribution_waiting` | Les anciens gestes de l'agent, sur un apport |
+
+`list_entry_types` devient `list_subject_types` (rubrique, variantes admises, textes attendus).
+La boîte de dépôt suit : `entree.json` devient `apport.json` avec un champ `sujet` obligatoire,
+ou `apports.json` pour un lot, réparti de la même façon.
+
 ## 1. Où vivent les fichiers
 
 Dans le jeu, à côté de sa bible :

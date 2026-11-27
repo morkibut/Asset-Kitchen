@@ -6,6 +6,7 @@
 | Tranche | Étiquette | Pourquoi |
 |---|---|---|
 | **RC1** · Une entrée à choix, de bout en bout | `[HARD]` | Pose la forme des fichiers et l'invariant « l'état se déduit du journal », dont toutes les suivantes héritent. |
+| **RC1b** · Une fiche par sujet | `[HARD]` | Coupe l'objet central en deux (fiche et apport) et déplace les fichiers, sans perdre une décision. |
 | **RC2** · La reprise de l'existant | `[MEDIUM]` | Un script hors produit qui dépose par la boîte ; la difficulté est la fusion des doublons, pas le code. |
 | **RC3** · La remarque sur un morceau, l'avant/après | `[MEDIUM]` | Une cible de remarque plus fine et deux vues d'écran sur des données existantes. |
 | **RC4** · Les liens typés | `[HARD]` | Un objet neuf du modèle, et la règle de ce qui arrive quand une extrémité est écartée. |
