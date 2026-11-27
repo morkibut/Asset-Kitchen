@@ -1049,3 +1049,35 @@ Ces précisions prolongent les stories ci-dessus, sans ajouter de famille d'outi
 - US-523 : aperçu libre, rendu d'essai et résultat conservé portent leurs réglages
   effectifs ; une durée demandée, un nombre de frames et une cadence de lecture
   ne se confondent pas. Une piste absente ne devient pas une animation de poses répétées.
+
+### Le registre du contenu
+
+*Écrites le 27 novembre 2026 pour [le registre du contenu](prd-registre.md). US-546 à US-563
+portent l'étape 1 ; US-564 à US-571 les étapes suivantes.*
+
+- **US-546** — En tant qu'auteur, je veux ouvrir le registre et voir d'abord ce qui attend ma décision, dans l'ordre d'arrivée, afin de ne rien laisser en plan.
+- **US-547** — En tant qu'auteur, je veux passer les entrées à trancher une par une, plein cadre, avec « Suivante », afin de décider sans revenir à une liste.
+- **US-548** — En tant qu'auteur, je veux voir les images d'une entrée à leur taille, avec une loupe et côte à côte, afin de juger sans suivre un lien.
+- **US-549** — En tant qu'auteur, je veux écouter un son, regarder une vidéo sous-titrée et lire un texte long dans l'entrée, afin de tout juger au même endroit.
+- **US-550** — En tant qu'auteur, je veux prendre une, plusieurs ou aucune proposition d'une entrée à choix, et revenir sur mon choix, afin que l'agent sache ce que je retiens.
+- **US-551** — En tant qu'auteur, je veux valider, demander une reprise avec un mot, écarter, mettre en pause ou relancer une entrée, et que l'entrée le dise tout de suite, afin qu'une décision soit un état et pas un message.
+- **US-552** — En tant qu'auteur, je veux qu'un second clic ne crée pas une seconde décision, et pouvoir annuler la mienne, afin de ne jamais valider deux fois.
+- **US-553** — En tant qu'auteur, je veux qu'un texte ait deux portes, le brief puis les textes, et que l'écran ne dise jamais « validé » quand seul le brief l'est, afin que rien n'entre dans le jeu avant ma seconde validation.
+- **US-554** — En tant qu'auteur, je veux écrire une remarque sur une entrée ou sur une de ses images, et lire la réponse de l'agent dessous avec où elle en est, afin de suivre mes retours sans les relancer.
+- **US-555** — En tant qu'auteur, je veux voir la piste que l'agent conseille, distincte de mon choix, et les défauts qu'il a relevés lui-même, afin de décider en connaissance de cause.
+- **US-556** — En tant qu'auteur, je veux voir ce que ma décision débloque quand un agent l'a dit, afin de trancher d'abord ce qui bloque.
+- **US-557** — En tant qu'auteur, je veux que la nouvelle version d'une entrée remplace l'ancienne à l'écran et que l'histoire garde l'ancienne avec ce que j'en avais dit, afin d'avoir une seule entrée par production.
+- **US-558** — En tant qu'auteur, je veux qu'une entrée écartée ou remplacée sorte de la vue sans être perdue, et qu'une pastille dise ce qui est nouveau ou mis à jour depuis ma dernière visite, afin que le registre ne garde que ce qui compte.
+- **US-559** — En tant qu'auteur, je veux créer une entrée moi-même et y mettre mes fichiers, sans aucun agent, afin que le parcours manuel reste complet.
+- **US-560** — En tant qu'agent, je veux déposer une entrée avec ses médias en un geste — fichiers du disque ou assets de la bibliothèque par référence —, et que redéposer la même la mette à jour, afin de ne rien compresser, téléverser ni recopier.
+- **US-561** — En tant qu'agent, je veux relever ce que l'auteur a fait depuis mon dernier passage, avec un repère gardé pour moi, afin qu'aucune décision ne soit lue deux fois ni manquée.
+- **US-562** — En tant qu'agent sans accès au port local, je veux déposer une entrée en posant un dossier et lire les décisions dans des fichiers, et qu'un dépôt mal formé me dise pourquoi, afin de travailler sans réseau vers l'atelier.
+- **US-563** — En tant qu'auteur, je veux une rétrospective déduite du journal — montré, dit, décidé, dans l'ordre —, exportable en Markdown, afin de ne plus la tenir à la main.
+- **US-564** — En tant qu'auteur, je veux que les données de mon ancien outil soient reprises sans rejouer ce qui est déjà validé, afin de changer d'outil sans période sans outil.
+- **US-565** — En tant qu'auteur, je veux poser des liens typés entre entrées et vers les assets (illustre, fait partie de, remplace, dépend de, débloque, contredit, prépare, parle dans), afin que le contenu se tienne.
+- **US-566** — En tant qu'auteur, je veux voir le graphe des décisions — ce qui a été décidé, ce qui en découle, ce qui bloque quoi —, rangé tout seul, afin de ne pas le dessiner à la main.
+- **US-567** — En tant qu'auteur, je veux voir le graphe des quêtes, l'arbre d'un évènement à choix, les fils rouges et le calendrier de la saison, afin de ne plus lire de JSON.
+- **US-568** — En tant qu'auteur, je veux des contrôles qui s'affichent sans rien refuser — quête orpheline, indice sans réponse, personnage à deux endroits à la fois, texte lu trop tôt, asset manquant —, afin de voir les trous.
+- **US-569** — En tant qu'auteur, je veux relire et décider au téléphone, atelier éteint, afin de trancher quand je ne suis pas devant la machine.
+- **US-570** — En tant qu'auteur, je veux envoyer le contenu validé dans les données du jeu par un adaptateur, après avoir relu ce qui change, afin que rien ne s'écrive dans le jeu en silence.
+- **US-571** — En tant qu'auteur, je veux relire les données du jeu pour créer ou rafraîchir les entrées et voir ce qui a divergé, afin que « intégré au jeu » se constate au lieu de se déclarer.

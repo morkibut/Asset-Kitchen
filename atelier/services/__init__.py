@@ -645,6 +645,11 @@ class Atelier:
         from atelier.services.asset_depuis_carte import ServiceAssetDepuisCarte
         self.asset_depuis_carte = ServiceAssetDepuisCarte(self)
         self.livraison_images = ServiceLivraisonImages(self)
+        # RC1 : le registre du contenu — montrer, juger, relever. Il ne compose
+        # que la bibliothèque (un média peut être un asset, par référence) ;
+        # rien ne l'appelle en retour.
+        from atelier.services.registre import ServiceRegistre
+        self.registre = ServiceRegistre(self)
         self.tuiles = ServiceTuiles(self)
         # TU5 : les matières générées sur la machine, pour un jeu de tuiles —
         # montée après `self.tuiles` et `self.generations`, qu'elle appelle

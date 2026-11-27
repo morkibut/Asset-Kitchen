@@ -181,6 +181,7 @@ export type Explication = {
     | "reglages"
     | "equipement"
     | "sortie"
+    | "registre"
     | "tuiles"
     | "jeu-de-tuiles"
     | "livraison-de-tuiles"
@@ -434,6 +435,16 @@ export const RESUMES: Partial<Record<Explication["ou"], ResumeDecran>> = {
     ],
   },
 
+  registre: {
+    aQuoi:
+      "Le registre — ce que les agents te montrent, à juger sur place ; ils relèvent tes décisions sans que tu les recopies.",
+    gestes: [
+      "On ouvre À trancher, ou on passe les entrées une décision à la fois.",
+      "On regarde les médias sur place, on prend une proposition, on valide ou on demande une reprise.",
+      "On laisse une remarque sur l'entrée ou sur une image, et on lit la réponse de l'agent dessous.",
+    ],
+  },
+
   fabrications: {
     aQuoi:
       "Fabrications — le journal de tout ce qui a été demandé, ce qui tourne en ce moment, et les portes pour préparer une demande neuve.",
@@ -526,6 +537,55 @@ export const AIDE: Record<string, Explication> = {
   // que relire ; l'argent ne part que du bouton de *Relire avant l'envoi*
   // (`ou: "envoi"`). *Consommation* mène aux dépenses, un écran de lecture.
   // Chaque fiche qui ouvre quelque chose le dit.
+
+  "registre.a-trancher": {
+    nom: "À trancher",
+    groupe: "L'accueil du registre",
+    quoi: "Les entrées qui attendent ta décision, dans l'ordre où elles sont arrivées, avant tout le reste.",
+    change: "Une entrée en sort dès que tu la valides, l'écartes, la mets en pause ou demandes une reprise. Le nombre à côté de la porte du carnet les compte.",
+    origine: "les agents · déposées par submit_entry ou par la boîte de dépôt",
+    ou: "registre",
+  },
+  "registre.une-a-la-fois": {
+    nom: "Une décision à la fois",
+    groupe: "L'accueil du registre",
+    quoi: "Les entrées à trancher une par une, plein cadre, avec leurs gestes et « Suivante ».",
+    change: "Rien ne se décide en passant : « Suivante » remet l'entrée en fin de file, sans geste.",
+    origine: "toi",
+    ou: "registre",
+  },
+  "registre.je-prends": {
+    nom: "Je prends celle-ci",
+    groupe: "Une entrée",
+    quoi: "Prend une proposition d'une entrée à choix ; une autre s'ajoute, « Reposer » la retire.",
+    change: "L'entrée le dit tout de suite, et un second clic ne crée rien. « Conseillée par l'agent » est son avis, distinct du tien.",
+    origine: "toi · sur la version courante",
+    ou: "registre",
+  },
+  "registre.valider": {
+    nom: "Valider",
+    groupe: "Une entrée",
+    quoi: "Passe la porte courante de l'entrée. Un texte en a deux : le brief, puis les textes.",
+    change: "Rien n'entre dans le jeu avant la dernière porte. Valider deux fois ne crée rien, et le journal de l'entrée permet d'annuler.",
+    origine: "toi · jamais un agent",
+    ou: "registre",
+  },
+  "registre.reprise": {
+    nom: "Demander une reprise",
+    groupe: "Une entrée",
+    quoi: "Renvoie l'entrée à l'agent avec un mot : ce qu'il faut changer.",
+    change: "La version suivante remet l'entrée à trancher ; l'ancienne reste dans l'histoire avec ce que tu en avais dit.",
+    origine: "toi",
+    ou: "registre",
+  },
+  "registre.remarque": {
+    nom: "Une remarque",
+    groupe: "Une entrée",
+    quoi: "Un mot sur l'entrée ou sur une de ses images ; l'agent répond dessous et dit où il en est.",
+    change: "Elle part dans le journal : l'agent la relève avec les décisions, une seule fois.",
+    origine: "toi",
+    ou: "registre",
+  },
 
   "fabrication.commencer": {
     nom: "Nouvelle fabrication",

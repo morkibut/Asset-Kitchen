@@ -139,6 +139,8 @@ return (ou, _profondeur, dedans) => {
 
     // La sortie (`B21`) — même règle que les trois au-dessus : un nom, et le
     // nom du jeu le précède, parce qu'on l'ouvre de partout.
+    case "registre":
+      return "Le registre"
     case "sortie":
       return "Livrer au jeu"
     case "travail":

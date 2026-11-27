@@ -2,7 +2,7 @@
 """Le garde-fou des mots de l'ossature — **il lit le document, il ne le recopie pas.**
 
 `docs/vocabulaire.html` fait foi sur les mots. Depuis `RP3` il porte en plus une
-**liste fermée** : les huit portes du carnet, les quatre onglets de la fiche
+**liste fermée** : les neuf portes du carnet, les quatre onglets de la fiche
 d'un sujet (`RV12`), le titre de chaque écran, et la forme d'un retour en
 arrière. Fermée veut dire la même chose que dans `docs/DESIGN.md` — rien
 d'autre ne s'écrit.
@@ -102,7 +102,7 @@ GUIDE = "interface/src/composants/Guide.tsx"
 # Le fil d'Ariane : le genre de lieu, et le rang de la porte dont il porte le
 # titre. Les genres qui ne sont pas une porte — une image ouverte, un emploi,
 # un montage — ne sont pas de l'ossature et ne sont pas mesurés ici.
-FIL_DARIANE = {"bibliotheque": 3, "fabrications": 5, "sortie": 6, "regles": 7}
+FIL_DARIANE = {"bibliotheque": 3, "fabrications": 5, "registre": 6, "sortie": 7, "regles": 8}
 
 # Le guide nomme l'écran ouvert dans l'en-tête de son volet. Mêmes règles : on
 # ne mesure que les clés qui désignent l'écran d'une porte.
@@ -111,8 +111,9 @@ NOM_DANS_LE_GUIDE = {
     "inspiration": 2,
     "codex": 3,
     "galerie": 4,
-    "sortie": 6,
-    "jeu": 7,
+    "registre": 6,
+    "sortie": 7,
+    "jeu": 8,
 }
 
 # Le titre écrit par l'écran lui-même, quand c'est un texte et non une
@@ -128,8 +129,10 @@ TITRE_A_L_ECRAN = {
     # `RV8` : l'écran unique « Livrer au jeu » vit tout entier dans
     # `Livraisons.tsx` ; `Sortie.tsx` n'en est plus que des pièces reprises
     # (l'arbre B21, « pas prêt », « la dernière sortie »), sans `<h1>` à lui.
-    "interface/src/composants/Livraisons.tsx": 6,
-    "interface/src/composants/Guide.tsx": 8,
+    # `RC1` : le registre du contenu, sixième porte depuis le 27 novembre 2026.
+    "interface/src/composants/Registre.tsx": 6,
+    "interface/src/composants/Livraisons.tsx": 7,
+    "interface/src/composants/Guide.tsx": 9,
 }
 
 # La forme d'un retour en arrière n'est pas réservée à l'ossature : un écran
@@ -213,7 +216,7 @@ def suite_nommee(
 
 
 def portes_du_carnet(propre: str) -> list[tuple[str, int]]:
-    """Les huit portes : les six du tableau, puis les deux de « Préférences ».
+    """Les neuf portes : les sept du tableau, puis les deux de « Préférences ».
 
     Les deux dernières ne sont pas dans le tableau — elles n'ouvrent pas un
     lieu de la même façon —, et elles se lisent sur leur `aria-label`, qui est

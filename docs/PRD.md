@@ -97,6 +97,11 @@ L'export termine le parcours : aperçu animé à la taille du jeu, sélection ex
 dimensions, cadence, pivot et noms vérifiables, puis fichiers accompagnés de leur
 description. Les animations exportées doivent être celles qui ont été prévisualisées.
 
+**Le registre du contenu** (demande du 26 novembre 2026) élargit le périmètre : l'atelier montre
+aussi à l'auteur le contenu du jeu — propositions de visuels et de sons, textes, décisions à
+prendre —, l'auteur le juge sur place d'un geste, et les agents relèvent ses décisions. Il vit
+dans le jeu. L'usage est cadré dans [prd-registre.md](prd-registre.md).
+
 Les tuiles et le son prolongent le même univers et la même bibliothèque. Leur fabrication a
 ses outils propres (`docs/PLAN-tuiles.md`, `docs/PLAN-son.md`) ; ils ne sont pas forcés dans
 un formulaire de personnage.
@@ -125,6 +130,7 @@ collections, la fabrication libre et la galerie de tous les résultats réutilis
 US-541 à US-544 complètent les emplois d'équipement : couverture, correction par frame,
 combinaisons et reprise après modification de l'animation.
 US-545 relie une image déjà retouchée à un équipement sans perdre sa source.
+US-546 à US-571 portent le registre du contenu (27 novembre 2026).
 Les précisions de consolidation du 12 septembre dans ce même document de stories portent
 sur la reprise du travail, le rangement volumineux, l'envoi commun et la vérification animée.
 En cas de conflit, le présent cadrage prévaut ;
@@ -169,6 +175,8 @@ automatique et moteur de jeu intégré. L'atelier ne devient pas un outil géné
 modélisation 3D ni un éditeur universel de procédés graphiques.
 
 L'ancienne exclusion de la génération locale est levée par la demande du 11 septembre.
+Le pilotage du contenu du jeu (le registre) entre dans le périmètre le 27 novembre 2026 ;
+il ne devient ni un moteur de quêtes, ni une gestion de projet ([prd-registre.md](prd-registre.md)).
 La 3D sert d'abord à fabriquer des sprites ; éditer un monde 3D complet reste hors de ce
 parcours. Tuiles et son ont chacun leur chantier, sans faux boutons de production avant livraison.
 

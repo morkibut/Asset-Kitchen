@@ -4,11 +4,11 @@ import { NavigationAtelier } from "./NavigationAtelier"
 
 afterEach(cleanup)
 
-it('garde les six destinations de la maquette et un seul chemin vers les réglages', () => {
+it('garde les sept destinations (la maquette et le registre) et un seul chemin vers les réglages', () => {
   const aller = vi.fn(), replier = vi.fn()
   render(<NavigationAtelier jeu="Le marais" descriptionJeu="Pixel art · 32 px" actif="assets" travauxEnCours={2} replie={false} onReplier={replier} onAller={aller} onChangerJeu={vi.fn()} onGuide={vi.fn()} onRecherche={vi.fn()} />)
   const nav = within(screen.getByRole('navigation', { name: 'Atelier' }))
-  expect(nav.getAllByRole('button').map(b => b.getAttribute('aria-label'))).toEqual(['Le jeu', 'Univers & toile', 'Codex', 'Galerie', 'Fabrications', 'Livrer au jeu'])
+  expect(nav.getAllByRole('button').map(b => b.getAttribute('aria-label'))).toEqual(['Le jeu', 'Univers & toile', 'Codex', 'Galerie', 'Fabrications', 'Le registre', 'Livrer au jeu'])
   expect(nav.getByRole('button', { name: 'Codex' })).toHaveAttribute('aria-current', 'page')
   expect(screen.getAllByRole('button', { name: 'Réglages' })).toHaveLength(1)
   expect(screen.queryByText('Les personnages')).not.toBeInTheDocument()
@@ -48,4 +48,14 @@ it('garde toutes les destinations nommées et atteignables pendant le repli', ()
   fireEvent.click(screen.getByRole('button', { name: 'Univers & toile' }))
   expect(aller).toHaveBeenCalledWith('univers')
   expect(screen.getByRole('button', { name: 'Déplier la navigation' })).toHaveAttribute('aria-expanded', 'false')
+})
+
+it('le registre montre ce qui attend la décision de l’auteur (RC1)', () => {
+  const aller = vi.fn()
+  render(<NavigationAtelier jeu="Le marais" actif="registre" aTrancher={3} replie={false} onReplier={vi.fn()} onAller={aller} onChangerJeu={vi.fn()} onGuide={vi.fn()} onRecherche={vi.fn()} />)
+  const nav = within(screen.getByRole('navigation', { name: 'Atelier' }))
+  expect(nav.getByRole('button', { name: 'Le registre' })).toHaveAttribute('aria-current', 'page')
+  expect(screen.getByLabelText('3 à trancher')).toHaveTextContent('3')
+  fireEvent.click(nav.getByRole('button', { name: 'Le registre' }))
+  expect(aller).toHaveBeenCalledWith('registre')
 })

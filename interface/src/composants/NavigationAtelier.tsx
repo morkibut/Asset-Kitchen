@@ -1,8 +1,8 @@
 import type { ReactNode } from "react"
 
-/** Les six destinations de la maquette validée. Les familles et collections
+/** Les sept destinations (la maquette validée, plus le registre de `RC1`). Les familles et collections
  * appartiennent à la bibliothèque ; elles ne deviennent pas des lieux globaux. */
-export type DestinationAtelier = "jeu" | "univers" | "assets" | "galerie" | "fabrications" | "livraison" | "reglages"
+export type DestinationAtelier = "jeu" | "univers" | "assets" | "galerie" | "fabrications" | "registre" | "livraison" | "reglages"
 
 const PORTES: { cle: DestinationAtelier; nom: string; court: string }[] = [
   { cle: "jeu", nom: "Le jeu", court: "Jeu" },
@@ -10,10 +10,11 @@ const PORTES: { cle: DestinationAtelier; nom: string; court: string }[] = [
   { cle: "assets", nom: "Codex", court: "Codex" },
   { cle: "galerie", nom: "Galerie", court: "Galerie" },
   { cle: "fabrications", nom: "Fabrications", court: "File" },
+  { cle: "registre", nom: "Le registre", court: "Registre" },
   { cle: "livraison", nom: "Livrer au jeu", court: "Livrer" },
 ]
 
-export function NavigationAtelier({ jeu, descriptionJeu, actif, travauxEnCours = 0, brouillons = 0, replie, onReplier,
+export function NavigationAtelier({ jeu, descriptionJeu, actif, travauxEnCours = 0, aTrancher = 0, brouillons = 0, replie, onReplier,
   onAller, onChangerJeu, onGuide, onRecherche, onBrouillons, etatAtelier, suivi }: {
   jeu: string; descriptionJeu?: string; actif: DestinationAtelier | null
   /** **Toutes les fabrications encore en cours** (`RP16`) — les emplacements
@@ -21,6 +22,8 @@ export function NavigationAtelier({ jeu, descriptionJeu, actif, travauxEnCours =
    *  confondues : animations, équipements, images locales, vidéos libres, 3D,
    *  sons. Il ne comptait que la première. */
   travauxEnCours?: number
+  /** Ce qui attend la décision de l'auteur dans le registre (`RC1`). */
+  aTrancher?: number
   /** Ce qui a été commencé sans être enregistré ni envoyé (`RP16`). */
   brouillons?: number
   replie: boolean; onReplier: (replie: boolean) => void
@@ -43,7 +46,7 @@ export function NavigationAtelier({ jeu, descriptionJeu, actif, travauxEnCours =
     </div>}
     <nav aria-label="Atelier" className="flex flex-col gap-[4px]">{PORTES.map(p => <button key={p.cle} type="button" onClick={() => onAller(p.cle)} aria-current={actif === p.cle ? 'page' : undefined} aria-label={p.nom} title={replie ? p.nom : undefined}
       className={`${ligne} ${actif === p.cle ? 'bg-ligne-ouverte text-encre' : 'text-encre-controle'} ${replie ? 'justify-center px-[4px] text-[11px]' : ''}`}>
-      <span>{replie ? p.court : p.nom}</span>{p.cle === 'fabrications' && travauxEnCours > 0 && <span className={`mesure text-[11px] text-encre-3 ${replie ? 'ml-[4px]' : 'ml-auto'}`} aria-label={`${travauxEnCours} fabrication${travauxEnCours > 1 ? 's' : ''} en cours`}>{travauxEnCours}</span>}
+      <span>{replie ? p.court : p.nom}</span>{p.cle === 'fabrications' && travauxEnCours > 0 && <span className={`mesure text-[11px] text-encre-3 ${replie ? 'ml-[4px]' : 'ml-auto'}`} aria-label={`${travauxEnCours} fabrication${travauxEnCours > 1 ? 's' : ''} en cours`}>{travauxEnCours}</span>}{p.cle === 'registre' && aTrancher > 0 && <span className={`mesure text-[11px] text-signal ${replie ? 'ml-[4px]' : 'ml-auto'}`} aria-label={`${aTrancher} à trancher`}>{aTrancher}</span>}
     </button>)}</nav>
     <nav aria-label="Préférences" className="flex flex-col gap-[4px] border-t border-trait pt-[14px]">
       <button type="button" onClick={() => onAller('reglages')} aria-current={actif === 'reglages' ? 'page' : undefined} aria-label="Réglages" title={replie ? 'Réglages' : undefined} className={`${ligne} ${actif === 'reglages' ? 'bg-ligne-ouverte' : ''} ${replie ? 'justify-center px-[4px] text-[11px]' : ''}`}>{replie ? 'Régl.' : 'Réglages'}</button>
@@ -51,7 +54,7 @@ export function NavigationAtelier({ jeu, descriptionJeu, actif, travauxEnCours =
     </nav>
     {/* **Le pied de la colonne** — c'est là que la maquette pose le tiroir des
         brouillons, et ce n'est pas une neuvième porte : la liste fermée des
-        huit portes (`docs/vocabulaire.html`) reste celle des deux `nav`
+        neuf portes (`docs/vocabulaire.html`) reste celle des deux `nav`
         ci-dessus. Aucune couleur d'alerte, aucun rappel : un brouillon attend,
         il ne réclame pas (E2). */}
     <div className="mt-auto border-t border-trait pt-[14px]">

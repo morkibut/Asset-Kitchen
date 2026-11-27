@@ -406,6 +406,10 @@ ECRANS: dict[str, str] = {
         "Livrer au jeu : ce qui part vers le dossier du jeu, où cela va, et ce "
         "qui a changé depuis la dernière fois"
     ),
+    "registre": (
+        "le registre, où les agents montrent le contenu du jeu (propositions, "
+        "textes, décisions) et où l'auteur le juge sur place"
+    ),
     "tuiles": (
         "la liste des jeux de tuiles du jeu : on en ouvre un, ou on part d'une "
         "image déjà là"

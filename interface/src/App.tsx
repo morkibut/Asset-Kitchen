@@ -96,6 +96,8 @@ import { SuiviDuCarnet } from "./composants/SuiviDuCarnet"
 import { Ouverture } from "./composants/Ouverture"
 import { Installation } from "./composants/Installation"
 import { Livraisons } from "./composants/Livraisons"
+import { Registre } from "./composants/Registre"
+import { registre as apiRegistre, EVENEMENT_REGISTRE } from "./api-registre"
 import { Source3DConservee } from "./composants/Source3DConservee"
 import type { Source3D } from "./api-3d"
 import { ReglesDuJeu } from "./composants/ReglesDuJeu"
@@ -351,6 +353,11 @@ function AtelierApp() {
   /** Une demande complète de l'agent, ouverte depuis le cadre de délégation —
    *  l'onglet *Agent MCP* des réglages. */
   const travailOuvert = lieu(pile, "travail")?.travail
+  /** Le registre du contenu (`RC1`) — posé sur n'importe quelle racine, comme
+   *  la sortie. Les réglages, l'installation et la sortie se referment devant lui. */
+  const registreOuvert = dans(pile, "registre")
+  const ouvrirLeRegistre = () =>
+    setPile((p) => entrer(sortir(sortir(sortir(p, "installation"), "regles"), "sortie"), { genre: "registre" }))
   /** `filtre` ouvre l'écran unique déjà posé sur une chose (`RV8`, §4) — la
    *  fiche d'un sujet, la page d'un son, un jeu de tuiles. */
   const setSortieOuverte = (ouvert: boolean, filtre?: FiltreDeSortie) =>
@@ -541,6 +548,18 @@ function AtelierApp() {
   // rend que celles de l'onglet où l'on est. Les deux mots uniques d'avant —
   // `arbre` et `réglages` — servaient les quatre écrans et mentaient sur trois.
   const [navigationRepliee, setNavigationRepliee] = useState(false)
+  /** Ce qui attend l'auteur dans le registre (`RC1`) — le nombre de la porte
+   *  du carnet. Relu à chaque geste du registre, d'où qu'il vienne. */
+  const [aTrancher, setATrancher] = useState(0)
+  useEffect(() => {
+    const courant = bibliotheque.courant
+    if (!courant) { setATrancher(0); return }
+    let vivant = true
+    const relire = () => apiRegistre.accueil(courant).then((a) => { if (vivant) setATrancher(a?.a_trancher?.length ?? 0) }).catch(() => {})
+    relire()
+    window.addEventListener(EVENEMENT_REGISTRE, relire)
+    return () => { vivant = false; window.removeEventListener(EVENEMENT_REGISTRE, relire) }
+  }, [bibliotheque.courant])
   const [grilleARelire, setGrilleARelire] = useState(0)
   const [replies, setReplies] = useState<Record<string, boolean>>({
     arbre: false,
@@ -709,7 +728,7 @@ function AtelierApp() {
   const envoiOuvert = dans(pile, "envoi")
   // Une profondeur de réglages ou de livraison occupe la surface centrale.
   // Sa racine reste dans le fil, elle ne monte pas un second écran dessous.
-  const surfaceDisponible = !reglesOuvertes && !installationOuverte && !sortieOuverte && !travailOuvert && !tuilesOuvertes && !sonsOuverts
+  const surfaceDisponible = !reglesOuvertes && !installationOuverte && !sortieOuverte && !registreOuvert && !travailOuvert && !tuilesOuvertes && !sonsOuverts
   const setEnvoiOuvert = (ouvert: boolean) =>
     setPile((p) => (ouvert ? entrer(p, { genre: "envoi" }) : sortir(p, "envoi")))
   const [envoi, setEnvoi] = useState<Envoi | null>(null)
@@ -1477,6 +1496,8 @@ function AtelierApp() {
           : "reglages"
         : sortieOuverte
           ? "sortie"
+          : registreOuvert
+          ? "registre"
           : livraisonDeTuiles
           ? "livraison-de-tuiles"
           : jeuDeTuiles
@@ -2302,12 +2323,13 @@ function AtelierApp() {
       <NavigationAtelier
         jeu={projetCourant?.nom ?? "Sans jeu"}
         descriptionJeu={`${projetCourant?.assets ?? 0} images dans ce jeu`}
-        actif={installationOuverte || reglesOuvertes ? "reglages" : sortieOuverte ? "livraison" : tuilesOuvertes || sonsOuverts ? "assets" : surface === "fabrications" ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
+        actif={installationOuverte || reglesOuvertes ? "reglages" : sortieOuverte ? "livraison" : registreOuvert ? "registre" : tuilesOuvertes || sonsOuverts ? "assets" : surface === "fabrications" ? "fabrications" : tableauDeBord ? "jeu" : surface === "univers" ? "univers" : surface === "galerie" ? "galerie" : "assets"}
         // **Toutes les familles, pas une seule** (`RP16`) : les emplacements
         // d'images encore en route, et les travaux du serveur qui ne sont ni
         // finis ni annulés — animations, équipements, images locales, vidéos
         // libres, 3D, sons.
         travauxEnCours={(enVol?.images ?? 0) + enPlan.fabricationsEnCours}
+        aTrancher={aTrancher}
         brouillons={enPlan.nombre}
         onBrouillons={() => setTiroirDesBrouillons(true)}
         replie={navigationRepliee}
@@ -2319,11 +2341,12 @@ function AtelierApp() {
           else if (destination === "univers") allerA("univers")
           else if (destination === "galerie") allerA("galerie")
           else if (destination === "fabrications") allerA("fabrications")
+          else if (destination === "registre") ouvrirLeRegistre()
           // Et symétriquement : les réglages et la machine se referment devant
           // la sortie, sinon la porte ne mènerait nulle part.
           else if (destination === "livraison")
             setPile((p) =>
-              entrer(sortir(sortir(p, "installation"), "regles"), { genre: "sortie" }),
+              entrer(sortir(sortir(sortir(p, "installation"), "regles"), "registre"), { genre: "sortie" }),
             )
           // **Le mot *Réglages* ouvre les réglages** (`RP2`). Il ouvrait
           // l'installation de la machine — les clés, ComfyUI, le dossier de
@@ -2489,6 +2512,24 @@ function AtelierApp() {
             filtre={filtreDeSortie}
             onFerme={() => setSortieOuverte(false)}
             onErreur={(refus) => setPanne(refus.message)}
+          />
+        )}
+
+      {/* ── Le registre du contenu (`RC1`) ─────────────────────────────────
+          Même ligne de grille et même chaîne de gardes que la sortie : il se
+          pose sur la racine d'où l'on vient, et le carnet reste visible. */}
+      {registreOuvert &&
+        bibliotheque.courant &&
+        !reglesOuvertes &&
+        !installationOuverte &&
+        !sortieOuverte &&
+        !depensesOuvertes &&
+        !envoiOuvert &&
+        (
+          <Registre
+            key={bibliotheque.courant}
+            projet={bibliotheque.courant}
+            onErreur={(message) => setPanne(message)}
           />
         )}
 
@@ -3449,6 +3490,7 @@ function AtelierApp() {
             // porte unique la déclarent, et sans cette ligne ils menaient à la
             // galerie — un lieu qui ne porte pas le geste qu'ils nomment.
             else if (ou === "sortie") setSortieOuverte(true)
+            else if (ou === "registre") ouvrirLeRegistre()
             else setPile(poser("galerie"))
           }}
           surEnvoi={() => setEnvoiOuvert(true)}
