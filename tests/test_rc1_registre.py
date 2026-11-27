@@ -34,7 +34,7 @@ def _images(tmp_path, n=3):
 def _trois_portraits(atelier, tmp_path, **plus):
     jeu = _jeu(atelier)
     images = _images(tmp_path)
-    vue = atelier.registre.deposer(jeu, {
+    vue = atelier.registre.deposer_entree(jeu, {
         "identifiant": "heron-portrait", "type": "visuel", "titre": "Portrait : le héron",
         "resume": "Trois pistes pour le héron. Prends-en une.", "rayon": "personnages",
         "auteur": "fil-portraits", "choix": True,
@@ -74,7 +74,7 @@ def test_une_entree_a_choix_deposee_jugee_et_relevee(atelier, tmp_path):
 
 def test_redeposer_ne_double_rien(atelier, tmp_path):
     jeu, _ = _trois_portraits(atelier, tmp_path)
-    vue = atelier.registre.deposer(jeu, {
+    vue = atelier.registre.deposer_entree(jeu, {
         "identifiant": "heron-portrait", "type": "visuel", "titre": "Portrait : le héron", "auteur": "fil-portraits",
         "choix": True, "rayon": "personnages",
         "medias": [{"fichier": str(p), "code": c} for p, c in zip(_images(tmp_path), "abc")]})
@@ -88,7 +88,7 @@ def test_une_version_neuve_remplace_a_l_ecran_et_garde_l_histoire(atelier, tmp_p
     atelier.registre.remarquer(jeu, "heron-portrait", "La b est la bonne direction", cible="b")
     neuve = tmp_path / "heron-v2.png"
     neuve.write_bytes(png(couleur=(200, 10, 10)))
-    vue = atelier.registre.deposer(jeu, {
+    vue = atelier.registre.deposer_entree(jeu, {
         "identifiant": "heron-portrait", "type": "visuel", "titre": "Portrait : le héron", "auteur": "fil-portraits",
         "medias": [{"fichier": str(neuve), "code": "b2"}], "change": "Bec allongé"})
     assert vue["change"] == "version" and vue["version"] == 2
@@ -102,12 +102,12 @@ def test_une_version_neuve_remplace_a_l_ecran_et_garde_l_histoire(atelier, tmp_p
 
 def test_un_texte_a_deux_portes(atelier):
     jeu = _jeu(atelier)
-    atelier.registre.deposer(jeu, {"identifiant": "lettre-du-meunier", "type": "texte", "titre": "La lettre du meunier",
+    atelier.registre.deposer_entree(jeu, {"identifiant": "lettre-du-meunier", "type": "texte", "titre": "La lettre du meunier",
                                    "corps": "Brief : une lettre inquiète.", "auteur": "fil-ecriture"})
     vue = atelier.registre.decider(jeu, "lettre-du-meunier", "valider")
     # Le brief est validé, pas le texte : l'écran ne laisse pas croire le contraire.
     assert vue["etat"] == "a-trancher" and vue["porte"] == "textes"
-    vue = atelier.registre.deposer(jeu, {"identifiant": "lettre-du-meunier", "type": "texte",
+    vue = atelier.registre.deposer_entree(jeu, {"identifiant": "lettre-du-meunier", "type": "texte",
                                          "titre": "La lettre du meunier", "corps": "Cher voisin…", "auteur": "fil-ecriture"})
     assert vue["porte"] == "textes"  # la porte passée reste passée d'une version à l'autre
     assert atelier.registre.decider(jeu, "lettre-du-meunier", "valider")["etat"] == "validee"
@@ -137,7 +137,7 @@ def test_ecarter_sort_de_la_vue_sans_se_perdre(atelier, tmp_path):
 
 def test_l_accueil_met_a_trancher_en_tete_puis_le_neuf(atelier, tmp_path):
     jeu, _ = _trois_portraits(atelier, tmp_path)
-    atelier.registre.deposer(jeu, {"identifiant": "carte-du-marais", "type": "reference", "titre": "Carte du marais",
+    atelier.registre.deposer_entree(jeu, {"identifiant": "carte-du-marais", "type": "reference", "titre": "Carte du marais",
                                    "auteur": "fil-lore", "rayon": "lore"})
     accueil = atelier.registre.accueil(jeu)
     assert [v["identifiant"] for v in accueil["a_trancher"]] == ["heron-portrait"]
@@ -172,7 +172,7 @@ def test_un_depot_mal_forme_dit_quoi_corriger(atelier, tmp_path):
         ({"type": "visuel", "titre": "x"}, "qui l'a déposée"),
     ):
         with pytest.raises(RegistreRefuse, match=attendu):
-            atelier.registre.deposer(jeu, brut)
+            atelier.registre.deposer_entree(jeu, brut)
 
 
 def test_la_boite_de_depot_par_fichiers(atelier, tmp_path):
@@ -221,7 +221,7 @@ def test_tout_se_relit_sans_l_index(atelier, tmp_path):
 def test_un_asset_de_la_bibliotheque_par_reference(atelier):
     jeu = _jeu(atelier)
     asset = atelier.generations.importer(png(), "heron.png", projet=jeu)["asset"]
-    vue = atelier.registre.deposer(jeu, {"type": "visuel", "titre": "Depuis la bibliothèque", "auteur": "fil",
+    vue = atelier.registre.deposer_entree(jeu, {"type": "visuel", "titre": "Depuis la bibliothèque", "auteur": "fil",
                                          "medias": [{"asset": asset["identifiant"]}]})
     m = vue["propositions"][0]
     assert m["asset"] == asset["identifiant"] and "fichier" not in m

@@ -140,7 +140,7 @@ class ServiceRegistre:
 
     # ── Déposer ──────────────────────────────────────────────────────────
 
-    def deposer(self, projet, brut, *, base: Path | None = None, par_l_auteur: bool = False) -> dict[str, Any]:
+    def deposer_entree(self, projet, brut, *, base: Path | None = None, par_l_auteur: bool = False) -> dict[str, Any]:
         """Crée ou met à jour une entrée, médias compris, **en un geste**.
 
         Idempotent sur l'identifiant : redéposer la même entrée ne double rien.
@@ -247,7 +247,7 @@ class ServiceRegistre:
         for m in brut.get("medias", []) or []:
             if isinstance(m, dict) and m.get("fichier") and ("/" in m["fichier"] or "\\" in m["fichier"]):
                 raise RegistreRefuse("Depuis l'écran, un média vient d'un fichier téléversé.")
-        return self.deposer(projet, brut | {"auteur": AUTEUR}, base=self._racine(projet) / "televersements",
+        return self.deposer_entree(projet, brut | {"auteur": AUTEUR}, base=self._racine(projet) / "televersements",
                             par_l_auteur=True)
 
     # ── La boîte de dépôt par fichiers ───────────────────────────────────
@@ -272,7 +272,7 @@ class ServiceRegistre:
             try:
                 if brut is None:
                     raise RegistreRefuse("entree.json est illisible (JSON mal formé, ou encore en cours d'écriture).")
-                self.deposer(projet, brut, base=dossier)
+                self.deposer_entree(projet, brut, base=dossier)
             except RegistreRefuse as e:
                 raison = e.raison
                 (dossier / "REFUS.txt").write_text(raison + "\n", encoding="utf-8")

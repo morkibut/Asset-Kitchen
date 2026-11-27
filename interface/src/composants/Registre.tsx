@@ -32,7 +32,7 @@ import {
 
 const bouton = "rounded-7 border border-contour bg-carte px-[14px] py-[8px] text-[13px] text-encre-controle hover:border-encre-3 disabled:opacity-50"
 const boutonFort = `${bouton} border-signal bg-signal text-encre-sur-signal hover:border-signal`
-const pastille = "rounded-5 border border-trait px-[8px] py-[2px] text-[12px]"
+const pastille = "rounded-5 border border-trait px-[8px] py-[4px] text-[12px]"
 
 const TON: Record<string, string> = {
   "a-trancher": "border-signal text-signal",
@@ -81,7 +81,7 @@ export function Registre({ projet, onErreur }: { projet: string; onErreur?: (mes
       {ici
         ? <FicheEntree key={ici.identifiant} projet={projet} identifiant={ici.identifiant} onChange={relire} onErreur={signaler}
             suivante={aTrancher.length > 1 ? () => { void registre.vu(projet, [ici.identifiant]); setAccueil((a) => a && { ...a, a_trancher: [...a.a_trancher.slice(1), a.a_trancher[0]] }) } : undefined} />
-        : <p className="m-[30px] rounded-8 border border-dashed border-contour p-[52px] text-center text-encre-3">Rien n'attend ta décision. Les agents le verront en relevant le registre.</p>}
+        : <p className="m-[30px] rounded-8 border border-dashed border-contour p-[34px] text-center text-encre-3">Rien n'attend ta décision. Les agents le verront en relevant le registre.</p>}
     </section>
   }
 
@@ -116,7 +116,7 @@ export function Registre({ projet, onErreur }: { projet: string; onErreur?: (mes
     {!accueil
       ? <p className="p-[30px] text-[13px] text-encre-3">Lecture du registre…</p>
       : accueil.total === 0
-        ? <div className="m-[30px] rounded-8 border border-dashed border-contour p-[52px] text-center">
+        ? <div className="m-[30px] rounded-8 border border-dashed border-contour p-[34px] text-center">
             <p className="text-encre">Le registre de ce jeu est vide.</p>
             <p className="mt-[8px] text-[13px] text-encre-3">Un agent y dépose par l'outil <span className="mesure">submit_entry</span>, ou en posant un dossier dans <span className="mesure break-all">{accueil.boite_de_depot}</span>. Tu peux aussi créer une entrée toi-même.</p>
           </div>
@@ -145,7 +145,7 @@ function Rayon({ projet, titre, vide, entrees, onOuvrir }: { projet: string; tit
 
 function Vignette({ projet, entree, media }: { projet: string; entree: string; media: Media | null }) {
   const src = media ? adresseDuMedia(projet, entree, media) : null
-  return <div className="damier-papier flex h-[140px] items-center justify-center overflow-hidden rounded-7">
+  return <div className="damier-papier flex h-[150px] items-center justify-center overflow-hidden rounded-7">
     {src ? <img src={src} alt="" className="max-h-full max-w-full object-contain [image-rendering:pixelated]" /> : <span className="text-[12px] text-encre-3">sans image</span>}
   </div>
 }
@@ -204,7 +204,7 @@ function FicheEntree({ projet, identifiant, onChange, onErreur, suivante }: {
 
   return <article className="flex flex-col gap-[22px] p-[30px]" aria-label={entree.titre}>
     <div className="flex flex-wrap items-start justify-between gap-[14px]">
-      <div className="max-w-[760px]">
+      <div className="max-w-[880px]">
         <div className="mb-[8px] flex flex-wrap items-center gap-[4px]">
           <span className={`${pastille} ${TON[entree.etat] ?? "text-encre-3"}`} data-etat={entree.etat}>{entree.nom_etat}</span>
           {entree.portes.length > 1 && entree.portes.map((p) => <span key={p.cle} className={`${pastille} ${p.passee ? "border-trait-ok text-encre-ok" : "text-encre-3"}`}>{p.passee ? "✓ " : ""}{p.nom}</span>)}
@@ -231,9 +231,9 @@ function FicheEntree({ projet, identifiant, onChange, onErreur, suivante }: {
     </div>}
     {entree.choix && <p className="text-[12px] text-encre-3">{pris.size ? `Pris : ${[...pris].join(", ")}.` : "Rien de pris pour l'instant."} « Conseillée » est l'avis de l'agent, pas le tien.</p>}
 
-    {entree.corps && <div className="max-w-[760px] whitespace-pre-wrap rounded-8 border border-trait bg-carte p-[22px] text-[14px] leading-relaxed text-encre-2">{entree.corps}</div>}
+    {entree.corps && <div className="max-w-[880px] whitespace-pre-wrap rounded-8 border border-trait bg-carte p-[22px] text-[14px] leading-relaxed text-encre-2">{entree.corps}</div>}
 
-    <section aria-label="Remarques" className="max-w-[760px]">
+    <section aria-label="Remarques" className="max-w-[880px]">
       <h3 className="mb-[8px] font-serif text-[25px] text-encre">Remarques</h3>
       <ul className="flex flex-col gap-[8px]">
         {entree.remarques.map((r) => <li key={r.repere} className="rounded-7 border border-trait bg-carte p-[14px] text-[13px]">
@@ -253,16 +253,16 @@ function FicheEntree({ projet, identifiant, onChange, onErreur, suivante }: {
       </form>
     </section>
 
-    {entree.histoire.length > 0 && <details className="max-w-[960px]">
+    {entree.histoire.length > 0 && <details className="max-w-[880px]">
       <summary className="cursor-pointer text-[13px] text-encre-3">Les versions précédentes · {entree.histoire.length}</summary>
       <ul className="mt-[14px] flex flex-col gap-[14px]">{entree.histoire.map((v) => <li key={v.numero} className="rounded-8 border border-trait bg-carte p-[14px]">
         <p className="text-[13px] text-encre">v{v.numero} · {date(v.le)}{v.change ? ` · ${v.change}` : ""}</p>
-        <div className="mt-[8px] flex flex-wrap gap-[8px]">{v.medias.filter((m) => m.genre === "image").map((m) => <img key={m.code} src={adresseDuMedia(projet, identifiant, m) ?? ""} alt={m.legende ?? m.code} className="h-[96px] rounded-5 object-contain [image-rendering:pixelated]" />)}</div>
+        <div className="mt-[8px] flex flex-wrap gap-[8px]">{v.medias.filter((m) => m.genre === "image").map((m) => <img key={m.code} src={adresseDuMedia(projet, identifiant, m) ?? ""} alt={m.legende ?? m.code} className="h-[81px] rounded-5 object-contain [image-rendering:pixelated]" />)}</div>
         {v.dit.length > 0 && <ul className="mt-[8px] text-[12.5px] text-encre-2">{v.dit.map((e) => <li key={e.repere}>{date(e.le)} · {decrire(e)}</li>)}</ul>}
       </li>)}</ul>
     </details>}
 
-    <details className="max-w-[760px]">
+    <details className="max-w-[880px]">
       <summary className="cursor-pointer text-[13px] text-encre-3">Le journal de l'entrée · {entree.journal.length}</summary>
       <ul className="mt-[8px] flex flex-col gap-[4px] text-[12.5px]">{entree.journal.map((e) => <li key={e.repere} className="flex items-center justify-between gap-[8px]">
         <span><span className="text-encre-3">{date(e.le)} · {e.qui === "auteur" ? "toi" : e.qui}</span> · {decrire(e)}</span>
@@ -303,7 +303,7 @@ function Gestes({ entree, occupe, mot, setMot, decider }: {
       : <>
           {entree.porte && <button className={boutonFort} disabled={occupe || sansChoix} title={sansChoix ? "Prends d'abord une proposition" : undefined}
             onClick={() => void decider("valider", { porte: entree.porte! }, "Validé.")}>Valider{entree.portes.length > 1 ? ` ${entree.nom_porte?.toLowerCase()}` : ""}</button>}
-          <input aria-label="Ce qu'il faut reprendre" placeholder="Ce qu'il faut reprendre…" value={mot} onChange={(ev) => setMot(ev.target.value)} className="min-h-[34px] w-[260px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" />
+          <input aria-label="Ce qu'il faut reprendre" placeholder="Ce qu'il faut reprendre…" value={mot} onChange={(ev) => setMot(ev.target.value)} className="min-h-[34px] w-[240px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]" />
           <button className={bouton} disabled={occupe || !mot.trim()} onClick={() => void decider("reprise", { mot }, "Reprise demandée.").then(() => setMot(""))}>Demander une reprise</button>
           <button className={bouton} disabled={occupe} onClick={() => void decider("pause", {}, "Mise en pause.")}>Mettre en pause</button>
           <button className={bouton} disabled={occupe} onClick={() => void decider("ecarter", {}, "Écartée : elle sort de la vue, l'histoire la garde.")}>Écarter</button>
@@ -318,12 +318,12 @@ function PropositionVue({ projet, entree, media, choix, prise, unePrise, occupe,
   const src = adresseDuMedia(projet, entree, media)
   const sousTitres = adresseDesSousTitres(projet, entree, media)
   return <figure className={`flex flex-col gap-[8px] rounded-8 border bg-carte p-[14px] ${prise ? "border-encre" : "border-trait"}`} data-prise={prise || undefined}>
-    {media.genre === "image" && src && <button type="button" className="damier-papier flex min-h-[220px] items-center justify-center overflow-hidden rounded-7" onClick={() => onLoupe(src)} aria-label={`Agrandir ${media.code}`}>
-      <img src={src} alt={media.legende ?? media.code} className="max-h-[420px] max-w-full object-contain [image-rendering:pixelated]" />
+    {media.genre === "image" && src && <button type="button" className="damier-papier flex min-h-[240px] items-center justify-center overflow-hidden rounded-7" onClick={() => onLoupe(src)} aria-label={`Agrandir ${media.code}`}>
+      <img src={src} alt={media.legende ?? media.code} className="max-h-[380px] max-w-full object-contain [image-rendering:pixelated]" />
     </button>}
     {media.genre === "video" && src && <video controls src={src} className="w-full rounded-7">{sousTitres && <track kind="subtitles" src={sousTitres} srcLang="fr" label="Français" default />}</video>}
     {media.genre === "audio" && src && <audio controls src={src} className="w-full" />}
-    {media.genre === "texte" && <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap text-[13px] text-encre-2">{media.texte}</pre>}
+    {media.genre === "texte" && <pre className="max-h-[380px] overflow-auto whitespace-pre-wrap text-[13px] text-encre-2">{media.texte}</pre>}
     <figcaption className="flex flex-col gap-[4px] text-[13px]">
       <span className="flex flex-wrap items-center gap-[4px]"><span className="mesure text-encre-3">{media.code}</span>{media.conseil && <span className={`${pastille} text-encre-3`}>Conseillée par l'agent</span>}{prise && <span className={`${pastille} border-encre text-encre`}>Prise</span>}</span>
       {media.legende && <span className="text-encre">{media.legende}</span>}
@@ -354,11 +354,11 @@ function CreerUneEntree({ projet, accueil, onCree, onErreur }: { projet: string;
     } catch (e) { onErreur(e) } finally { setOccupe(false) }
   }
   const champ = "min-h-[34px] rounded-7 border border-contour bg-carte px-[8px] text-[13px]"
-  return <form className="mx-[30px] mt-[14px] grid max-w-[760px] grid-cols-2 gap-[14px] rounded-8 border border-trait bg-carte p-[22px]" onSubmit={(ev) => { ev.preventDefault(); void creer() }} aria-label="Nouvelle entrée">
+  return <form className="mx-[30px] mt-[14px] grid max-w-[880px] grid-cols-2 gap-[14px] rounded-8 border border-trait bg-carte p-[22px]" onSubmit={(ev) => { ev.preventDefault(); void creer() }} aria-label="Nouvelle entrée">
     <label className="col-span-2 flex flex-col gap-[4px] text-[12px] text-encre-3">Titre<input className={champ} value={titre} onChange={(ev) => setTitre(ev.target.value)} required /></label>
     <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Type<select className={champ} value={type} onChange={(ev) => setType(ev.target.value)}>{accueil.reglages.types.map((t) => <option key={t.cle} value={t.cle}>{t.nom}</option>)}</select></label>
     <label className="flex flex-col gap-[4px] text-[12px] text-encre-3">Rayon<select className={champ} value={rayon} onChange={(ev) => setRayon(ev.target.value)}><option value="">Sans rayon</option>{accueil.reglages.rayons.map((r) => <option key={r.cle} value={r.cle}>{r.nom}</option>)}</select></label>
-    <label className="col-span-2 flex flex-col gap-[4px] text-[12px] text-encre-3">Résumé<textarea className={`${champ} min-h-[60px] py-[8px]`} value={resume} onChange={(ev) => setResume(ev.target.value)} /></label>
+    <label className="col-span-2 flex flex-col gap-[4px] text-[12px] text-encre-3">Résumé<textarea className={`${champ} min-h-[76px] py-[8px]`} value={resume} onChange={(ev) => setResume(ev.target.value)} /></label>
     <label className="col-span-2 flex flex-col gap-[4px] text-[12px] text-encre-3">Images, vidéos, sons ou textes{choix ? " · plusieurs fichiers : une entrée à choix" : ""}<input type="file" multiple onChange={(ev) => setFichiers([...(ev.target.files ?? [])])} /></label>
     <button className={`${boutonFort} col-span-2 justify-self-start`} disabled={occupe || !titre.trim()}>Créer l'entrée</button>
   </form>

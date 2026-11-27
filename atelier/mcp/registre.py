@@ -72,7 +72,7 @@ def installer_registre(serveur, atelier, refus):
         brut = {"identifiant": id, "type": type, "titre": title, "resume": summary, "corps": body, "rayon": shelf,
                 "groupe": group, "auteur": author, "choix": choice, "medias": medias, "change": change,
                 "attend": waiting_on}
-        vue = atelier.registre.deposer(project, {k: v for k, v in brut.items() if v is not None})
+        vue = atelier.registre.deposer_entree(project, {k: v for k, v in brut.items() if v is not None})
         return {k: vue[k] for k in ("identifiant", "etat", "porte", "version", "versions", "change", "medias")}
 
     @serveur.tool(name="read_decisions", meta=meta("Relever les décisions de l'auteur"), description=(
